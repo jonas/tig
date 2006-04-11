@@ -119,7 +119,7 @@ init(void)
 
 #define LOG_CMD	\
 	"git-rev-list $(git-rev-parse --since=1.month) HEAD | " \
-	"git-diff-tree --stdin --pretty -r"
+	"git-diff-tree --stdin --pretty -r --root"
 
 static void
 log_filter(char *line, int lineno)
@@ -160,10 +160,12 @@ log_filter(char *line, int lineno)
 		wattrset(mainwin, COLOR_PAIR(COLOR_MAGENTA));
 
 	} else if (line[0] == ':') {
+		pipe_lineno--;
 		log_filter_skip = 1;
 		return;
 
 	} else if (log_filter_skip) {
+		pipe_lineno--;
 		log_filter_skip = 0;
 		return;
 
