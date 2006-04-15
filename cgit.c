@@ -3,31 +3,21 @@
  *
  */
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include <signal.h>
 
 #include <curses.h>
 
+
 #define CGIT_HELP "(q)uit, (s)hell, (j) down, (k) up"
 #define KEY_ESC	27
 #define KEY_TAB	9
 
-/* +------------------------------------+
- * |titlewin				|
- * +------------------------------------+
- * |mainwin				|
- * |					|
- * |					|
- * |					|
- * |					|
- * +------------------------------------+
- * |statuswin				|
- * +------------------------------------+
- */
-
-WINDOW *titlewin;
+//WINDOW *titlewin;
 WINDOW *mainwin;
 WINDOW *statuswin;
 
@@ -36,6 +26,20 @@ typedef void (*pipe_filter_T)(char *, int);
 FILE *pipe;
 long  pipe_lineno;
 pipe_filter_T pipe_filter;
+
+
+static void
+put_status(char *msg, ...)
+{
+	va_list args;
+
+	va_start(args, msg);
+	werase(statuswin);
+	wmove(statuswin, 0, 0);
+	vwprintw(statuswin, msg, args);
+	wrefresh(statuswin);
+	va_end(args);
+}
 
 /*
  * Init and quit
@@ -58,7 +62,7 @@ init_colors(void)
 
 	start_color();
 
-	if (use_default_colors())
+	if (use_default_colors() != ERR)
 		bg = -1;
 
 	init_pair(COLOR_BLACK,	 COLOR_BLACK,	bg);
@@ -82,13 +86,15 @@ init(void)
 	nonl();         /* tell curses not to do NL->CR/NL on output */
 	cbreak();       /* take input chars one at a time, no wait for \n */
 	noecho();       /* don't echo input */
+	leaveok(stdscr, TRUE);
 
 	if (has_colors())
 		init_colors();
 
 	getmaxyx(stdscr, y, x);
 
-	titlewin = newwin(1, 0, 0, 0);
+#if 0
+	titlewin = newwin(1, 0, y - 2, 0);
 
 	wattrset(titlewin, COLOR_PAIR(COLOR_GREEN));
 	waddch(titlewin, ACS_VLINE);
@@ -96,14 +102,13 @@ init(void)
 	waddch(titlewin, ACS_LTEE);
 	whline(titlewin, ACS_HLINE, x);
 	wrefresh(titlewin);
-
+#endif
 	statuswin = newwin(1, 0, y - 1, 0);
 
 	wattrset(statuswin, COLOR_PAIR(COLOR_GREEN));
-	wprintw(statuswin, "%s", CGIT_HELP);
-	wrefresh(statuswin);
+	put_status(CGIT_HELP);
 
-	mainwin = newwin(y - 2, 0, 1, 0);
+	mainwin = newwin(y - 1, 0, 0, 0);
 	scrollok(mainwin, TRUE);
 	keypad(mainwin, TRUE);  /* enable keyboard mapping */
 }
@@ -113,7 +118,7 @@ init(void)
  */
 
 #define DIFF_CMD	\
-	"git-rev-list $(git-rev-parse --since=1.month) HEAD^..HEAD | " \
+	"git-rev-list HEAD^..HEAD | " \
 	"git-diff-tree --stdin --pretty -r --cc --always"
 
 
@@ -180,8 +185,11 @@ static FILE *
 open_pipe(char *cmd, pipe_filter_T filter)
 {
 	pipe = popen(cmd, "r");
-	pipe_lineno = 1;
+	pipe_lineno = 0;
 	pipe_filter = filter;
+	wclear(mainwin);
+	wmove(mainwin, 0, 0);
+	put_status("Loading...");
 	return pipe;
 }
 
@@ -190,11 +198,19 @@ read_pipe(int lines)
 {
 	char buffer[BUFSIZ];
 	char *line;
+	int x, y;
 
 	while ((line = fgets(buffer, sizeof(buffer), pipe))) {
-		pipe_filter(line, pipe_lineno++);
+		int linelen;
+
 		if (!--lines)
 			break;
+
+		linelen = strlen(line);
+		if (linelen)
+			line[linelen - 1] = 0;
+
+		pipe_filter(line, pipe_lineno++);
 	}
 
 	if (feof(pipe) || ferror(pipe)) {
@@ -202,6 +218,7 @@ read_pipe(int lines)
 		pclose(pipe);
 		pipe = NULL;
 		pipe_filter = NULL;
+		put_status("%s (lines %d)", CGIT_HELP, pipe_lineno - 1);
 	}
 }
 
@@ -214,7 +231,7 @@ main(int argc, char *argv[])
 {
 	init();
 
-	pipe = open_pipe(LOG_CMD, log_filter);
+	//pipe = open_pipe(LOG_CMD, log_filter);
 
 	for (;;) {
 		int c;
@@ -226,6 +243,7 @@ main(int argc, char *argv[])
 
 		if (pipe) nodelay(mainwin, FALSE);
 
+		/* No input from wgetch() with nodelay() enabled. */
 		if (c == ERR)
 			continue;
 
@@ -246,45 +264,33 @@ main(int argc, char *argv[])
 			wscrl(mainwin, -1);
 			break;
 
+		case 'c':
+			wclear(mainwin);
+			break;
+
 		case 'd':
 			pipe = open_pipe(DIFF_CMD, log_filter);
-			wclear(mainwin);
-			wmove(mainwin, 0, 0);
 			break;
 
 		case 'l':
 			pipe = open_pipe(LOG_CMD, log_filter);
-			wclear(mainwin);
-			wmove(mainwin, 0, 0);
 			break;
 
 		case 's':
-			mvwaddstr(statuswin, 0, 0, "Shelling out......................");
+			mvwaddstr(statuswin, 0, 0, "Shelling out...");
 			def_prog_mode();           /* save current tty modes */
 			endwin();                  /* restore original tty modes */
 			system("sh");              /* run shell */
 
-			wclear(statuswin);
+			werase(statuswin);
 			mvwaddstr(statuswin, 0, 0, CGIT_HELP);
 			reset_prog_mode();
-			//refresh();                 /* restore save modes, repaint screen */
 			break;
-
-/*                default:*/
-/*                        if (isprint(c) || isspace(c))*/
-/*                                addch(c);*/
 		}
 
 		redrawwin(mainwin);
 		wrefresh(mainwin);
-/*                redrawwin(titlewin);*/
-/*                wrefresh(titlewin);*/
-/*                redrawwin(statuswin);*/
-/*                wrefresh(statuswin);*/
 	}
 
 	quit(0);
 }
-
-/*                        addch(ACS_LTEE);*/
-/*                        addch(ACS_HLINE);*/
