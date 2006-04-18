@@ -1,6 +1,11 @@
-/*
+/* Cursed git browser
  *
+ * Copyright (c) Jonas Fonseca, 2006
  *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  */
 
 #include <stdarg.h>
@@ -13,7 +18,8 @@
 #include <curses.h>
 
 
-#define CGIT_HELP "(q)uit, (s)hell, (j) down, (k) up"
+#define MSG_HELP "(q)uit, (s)hell, (j) down, (k) up"
+
 #define KEY_ESC	27
 #define KEY_TAB	9
 
@@ -21,11 +27,11 @@
 WINDOW *mainwin;
 WINDOW *statuswin;
 
-typedef void (*pipe_filter_T)(char *, int);
+typedef void (*pipe_reader_T)(char *, int);
 
 FILE *pipe;
 long  pipe_lineno;
-pipe_filter_T pipe_filter;
+pipe_reader_T pipe_reader;
 
 
 static void
@@ -106,7 +112,7 @@ init(void)
 	statuswin = newwin(1, 0, y - 1, 0);
 
 	wattrset(statuswin, COLOR_PAIR(COLOR_GREEN));
-	put_status(CGIT_HELP);
+	put_status(MSG_HELP);
 
 	mainwin = newwin(y - 1, 0, 0, 0);
 	scrollok(mainwin, TRUE);
@@ -114,31 +120,34 @@ init(void)
 }
 
 /*
- * Pipe filters
+ * Pipe readers
  */
 
 #define DIFF_CMD	\
 	"git-rev-list HEAD^..HEAD | " \
-	"git-diff-tree --stdin --pretty -r --cc --always"
+	"git-diff-tree --stdin --pretty -r --cc --always --stat"
 
 
-#define LOG_CMD	\
+#define LOG_CMD0 \
 	"git-rev-list $(git-rev-parse --since=1.month) HEAD | " \
 	"git-diff-tree --stdin --pretty -r --root"
 
+#define LOG_CMD	\
+	"git-rev-list HEAD | git-diff-tree --stdin --pretty -r --root"
+
 static void
-log_filter(char *line, int lineno)
+log_reader(char *line, int lineno)
 {
-	static int log_filter_skip;
+	static int log_reader_skip;
 
 	if (!line) {
 		wattrset(mainwin, A_NORMAL);
-		log_filter_skip = 0;
+		log_reader_skip = 0;
 		return;
 	}
 
 	if (!strncmp("commit ", line, 7)) {
-		attrset(COLOR_PAIR(COLOR_GREEN));
+		wattrset(mainwin, COLOR_PAIR(COLOR_GREEN));
 
 	} else if (!strncmp("Author: ", line, 8)) {
 		wattrset(mainwin, COLOR_PAIR(COLOR_CYAN));
@@ -166,12 +175,12 @@ log_filter(char *line, int lineno)
 
 	} else if (line[0] == ':') {
 		pipe_lineno--;
-		log_filter_skip = 1;
+		log_reader_skip = 1;
 		return;
 
-	} else if (log_filter_skip) {
+	} else if (log_reader_skip) {
 		pipe_lineno--;
-		log_filter_skip = 0;
+		log_reader_skip = 0;
 		return;
 
 	} else {
@@ -182,11 +191,11 @@ log_filter(char *line, int lineno)
 }
 
 static FILE *
-open_pipe(char *cmd, pipe_filter_T filter)
+open_pipe(char *cmd, pipe_reader_T reader)
 {
 	pipe = popen(cmd, "r");
 	pipe_lineno = 0;
-	pipe_filter = filter;
+	pipe_reader = reader;
 	wclear(mainwin);
 	wmove(mainwin, 0, 0);
 	put_status("Loading...");
@@ -210,15 +219,15 @@ read_pipe(int lines)
 		if (linelen)
 			line[linelen - 1] = 0;
 
-		pipe_filter(line, pipe_lineno++);
+		pipe_reader(line, pipe_lineno++);
 	}
 
 	if (feof(pipe) || ferror(pipe)) {
-		pipe_filter(NULL, pipe_lineno - 1);
+		pipe_reader(NULL, pipe_lineno - 1);
 		pclose(pipe);
 		pipe = NULL;
-		pipe_filter = NULL;
-		put_status("%s (lines %d)", CGIT_HELP, pipe_lineno - 1);
+		pipe_reader = NULL;
+		put_status("%s (lines %d)", MSG_HELP, pipe_lineno - 1);
 	}
 }
 
@@ -231,7 +240,7 @@ main(int argc, char *argv[])
 {
 	init();
 
-	//pipe = open_pipe(LOG_CMD, log_filter);
+	//pipe = open_pipe(LOG_CMD, log_reader);
 
 	for (;;) {
 		int c;
@@ -269,11 +278,11 @@ main(int argc, char *argv[])
 			break;
 
 		case 'd':
-			pipe = open_pipe(DIFF_CMD, log_filter);
+			pipe = open_pipe(DIFF_CMD, log_reader);
 			break;
 
 		case 'l':
-			pipe = open_pipe(LOG_CMD, log_filter);
+			pipe = open_pipe(LOG_CMD, log_reader);
 			break;
 
 		case 's':
@@ -283,7 +292,7 @@ main(int argc, char *argv[])
 			system("sh");              /* run shell */
 
 			werase(statuswin);
-			mvwaddstr(statuswin, 0, 0, CGIT_HELP);
+			mvwaddstr(statuswin, 0, 0, MSG_HELP);
 			reset_prog_mode();
 			break;
 		}
