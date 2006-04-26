@@ -1,7 +1,8 @@
 LDFLAGS = -lcurses
-CFLAGS	= -g
-PROGS	= cgit
-DOCS	= cgit.1.txt cgit.1 cgit.1.html
+CFLAGS	= -g '-DVERSION="$(VERSION)"' -Wall
+PROGS	= tig
+DOCS	= tig.1.txt tig.1 tig.1.html
+VERSION	= $(shell git-describe)
 
 all: $(PROGS)
 docs: $(DOCS)
@@ -14,12 +15,14 @@ install: all
 clean:
 	rm -f $(PROGS) $(DOCS)
 
-cgit: cgit.c
+.PHONY: all docs install clean
 
-cgit.1.txt: cgit.c
-	sed -n '/\*\*/,/\*\*/p' < $< | \
-	sed '/\*\*/d' | \
-	sed -n 's/^ \* *//p' > $@
+tig: tig.c
+
+tig.1.txt: tig.c
+	sed -n '/^\/\*\*/,/\*\*\//p' < $< | \
+	sed '/^[^*]\*\*/d' | \
+	sed 's/\*\///;s/^[^*]*\* *//' > $@
 
 %.1.html : %.1.txt
 	asciidoc -b xhtml11 -d manpage -f asciidoc.conf $<
