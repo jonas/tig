@@ -223,7 +223,7 @@ scroll_view(struct view *view, int request)
 		lines = y;
 	case REQ_NEXT_LINE:
 		if (view->offset + lines > view->lines)
-			lines = view->lines - view->offset - 1;
+			lines = view->lines - view->offset;
 
 		if (lines == 0 || view->offset + y >= view->lines) {
 			report("already at last line");
