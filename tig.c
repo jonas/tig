@@ -31,12 +31,13 @@
 #define NDEBUG
 #endif
 
-#include <stdarg.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <signal.h>
 #include <assert.h>
+#include <ctype.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <curses.h>
 #include <form.h>
@@ -56,6 +57,7 @@ static void report(const char *msg, ...);
 #define REQ_DIFF	(REQ_OFFSET + 0)
 #define REQ_LOG		(REQ_OFFSET + 1)
 #define REQ_MAIN	(REQ_OFFSET + 2)
+#define REQ_VIEWS	(REQ_OFFSET + 3)
 
 #define REQ_QUIT	(REQ_OFFSET + 11)
 #define REQ_VERSION	(REQ_OFFSET + 12)
@@ -152,8 +154,12 @@ struct view {
 	char *cmd;
 	char *id;
 
+
 	/* Rendering */
-	int (*render)(struct view *, unsigned int);
+	int (*read)(struct view *, char *);
+	int (*draw)(struct view *, unsigned int);
+	size_t objsize;		/* Size of objects in the line index */
+
 	WINDOW *win;
 	int height, width;
 
@@ -163,13 +169,22 @@ struct view {
 
 	/* Buffering */
 	unsigned long lines;	/* Total number of lines */
-	char **line;		/* Line index */
+	void **line;		/* Line index */
 
 	/* Loading */
 	FILE *pipe;
 };
 
-static int default_renderer(struct view *view, unsigned int lineno);
+struct commit {
+	char id[41];
+	char title[75];
+};
+
+static int pager_draw(struct view *view, unsigned int lineno);
+static int pager_read(struct view *view, char *line);
+
+static int main_draw(struct view *view, unsigned int lineno);
+static int main_read(struct view *view, char *line);
 
 #define DIFF_CMD \
 	"git log --stat -n1 %s ; echo; " \
@@ -185,6 +200,7 @@ static int default_renderer(struct view *view, unsigned int lineno);
 static WINDOW *status_win;
 
 #define SIZEOF_ID	1024
+#define SIZEOF_VIEWS	(REQ_VIEWS - REQ_OFFSET)
 
 char head_id[SIZEOF_ID] = "HEAD";
 char commit_id[SIZEOF_ID] = "HEAD";
@@ -192,13 +208,17 @@ char commit_id[SIZEOF_ID] = "HEAD";
 static unsigned int current_view;
 static unsigned int nloading;
 
+static struct view views[];
+static struct view *display[];
+
 static struct view views[] = {
-	{ "diff",	DIFF_CMD,	commit_id,	default_renderer },
-	{ "log",	LOG_CMD,	head_id,	default_renderer },
-	{ "main",	MAIN_CMD,	head_id,	default_renderer },
+	{ "diff",  DIFF_CMD,   commit_id,  pager_read,  pager_draw, sizeof(char) },
+	{ "log",   LOG_CMD,    head_id,    pager_read,  pager_draw, sizeof(struct commit) },
+	{ "main",  MAIN_CMD,   head_id,    main_read,   main_draw },
 };
 
 static struct view *display[ARRAY_SIZE(views)];
+
 
 #define foreach_view(view, i) \
 	for (i = 0; i < sizeof(display) && (view = display[i]); i++)
@@ -212,7 +232,7 @@ redraw_view(struct view *view)
 	wmove(view->win, 0, 0);
 
 	for (lineno = 0; lineno < view->height; lineno++) {
-		if (!view->render(view, lineno))
+		if (!view->draw(view, lineno))
 			break;
 	}
 
@@ -242,13 +262,13 @@ move_view(struct view *view, int lines)
 	assert(lines);
 
 	{
-		int from = lines > 0 ? view->height - lines : 0;
-		int to	 = from + (lines > 0 ? lines : -lines);
+		int line = lines > 0 ? view->height - lines : 0;
+		int end = line + (lines > 0 ? lines : -lines);
 
 		wscrl(view->win, lines);
 
-		for (; from < to; from++) {
-			if (!view->render(view, from))
+		for (; line < end; line++) {
+			if (!view->draw(view, line))
 				break;
 		}
 	}
@@ -256,11 +276,11 @@ move_view(struct view *view, int lines)
 	/* Move current line into the view. */
 	if (view->lineno < view->offset) {
 		view->lineno = view->offset;
-		view->render(view, 0);
+		view->draw(view, 0);
 
 	} else if (view->lineno >= view->offset + view->height) {
 		view->lineno = view->offset + view->height - 1;
-		view->render(view, view->lineno - view->offset);
+		view->draw(view, view->lineno - view->offset);
 	}
 
 	assert(view->offset <= view->lineno && view->lineno <= view->lines);
@@ -338,7 +358,7 @@ navigate_view(struct view *view, int request)
 	}
 
 	view->lineno += steps;
-	view->render(view, view->lineno - steps - view->offset);
+	view->draw(view, view->lineno - steps - view->offset);
 
 	if (view->lineno < view->offset ||
 	    view->lineno >= view->offset + view->height) {
@@ -349,7 +369,7 @@ navigate_view(struct view *view, int request)
 		return;
 	}
 
-	view->render(view, view->lineno - view->offset);
+	view->draw(view, view->lineno - view->offset);
 
 	redrawwin(view->win);
 	wrefresh(view->win);
@@ -424,7 +444,7 @@ update_view(struct view *view)
 {
 	char buffer[BUFSIZ];
 	char *line;
-	char **tmp;
+	void **tmp;
 	int redraw;
 	int lines = view->height;
 
@@ -432,7 +452,8 @@ update_view(struct view *view)
 		return TRUE;
 
 	/* Only redraw after the first reading session. */
-	redraw = !view->line;
+	/* FIXME: ... and possibly more. */
+	redraw = view->height > view->lines;
 
 	tmp = realloc(view->line, sizeof(*view->line) * (view->lines + lines));
 	if (!tmp)
@@ -447,10 +468,8 @@ update_view(struct view *view)
 		if (linelen)
 			line[linelen - 1] = 0;
 
-		view->line[view->lines] = strdup(line);
-		if (!view->line[view->lines])
+		if (!view->read(view, line))
 			goto alloc_error;
-		view->lines++;
 
 		if (lines-- == 1)
 			break;
@@ -622,7 +641,7 @@ static struct attr attrs[] = {
 };
 
 static int
-default_renderer(struct view *view, unsigned int lineno)
+pager_draw(struct view *view, unsigned int lineno)
 {
 	char *line;
 	int linelen;
@@ -658,6 +677,82 @@ default_renderer(struct view *view, unsigned int lineno)
 
 	return TRUE;
 }
+
+static int
+pager_read(struct view *view, char *line)
+{
+	view->line[view->lines] = strdup(line);
+	if (!view->line[view->lines])
+		return FALSE;
+
+	view->lines++;
+	return TRUE;
+}
+
+static int
+main_draw(struct view *view, unsigned int lineno)
+{
+	struct commit *commit;
+	int attr = A_NORMAL;
+
+	if (view->offset + lineno >= view->lines)
+		return FALSE;
+
+	commit = view->line[view->offset + lineno];
+	if (!commit) return FALSE;
+
+	attr = attrs[0].attr;
+
+	if (view->offset + lineno == view->lineno) {
+		strncpy(commit_id, commit->id, SIZEOF_ID);
+		attr = COLOR_PAIR(COLOR_CURSOR) | A_BOLD;
+	}
+
+	mvwaddch(view->win, lineno, 0, ACS_LTEE);
+	wattrset(view->win, attr);
+	mvwaddstr(view->win, lineno, 2, commit->title);
+	wattrset(view->win, A_NORMAL);
+
+	return TRUE;
+}
+
+static int
+main_read(struct view *view, char *line)
+{
+	int linelen = strlen(line);
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(attrs); i++) {
+		if (linelen < attrs[i].linelen
+		    || strncmp(attrs[i].line, line, attrs[i].linelen))
+			continue;
+		break;
+	}
+
+	if (i == 0) {
+		struct commit *commit;
+
+		commit = calloc(1, sizeof(struct commit));
+		if (!commit)
+			return FALSE;
+
+		view->line[view->lines++] = commit;
+
+		strncpy(commit->id, line + 7, 41);
+
+	} else {
+		struct commit *commit = view->line[view->lines - 1];
+
+		if (!commit->title[0] &&
+		    linelen > 5 &&
+		    !strncmp(line, "    ", 4) &&
+		    !isspace(line[5]))
+			strncpy(commit->title, line + 4, sizeof(commit->title));
+	}
+
+	return TRUE;
+}
+
 
 /*
  * Main
