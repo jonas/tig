@@ -46,8 +46,9 @@ static void report(const char *msg, ...);
 
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(x[0]))
 
-#define KEY_ESC		27
 #define KEY_TAB		9
+#define KEY_ESC		27
+#define KEY_DEL		127
 
 #define REQ_OFFSET	(MAX_COMMAND + 1)
 
@@ -61,7 +62,10 @@ static void report(const char *msg, ...);
 #define REQ_STOP	(REQ_OFFSET + 13)
 #define REQ_UPDATE	(REQ_OFFSET + 14)
 #define REQ_REDRAW	(REQ_OFFSET + 15)
+#define REQ_FIRST_LINE	(REQ_OFFSET + 16)
+#define REQ_LAST_LINE	(REQ_OFFSET + 17)
 
+#define COLOR_CURSOR	42
 
 /**
  * KEYS
@@ -96,12 +100,21 @@ struct keymap {
 };
 
 struct keymap keymap[] = {
+	/* Cursor navigation */
 	{ KEY_UP,	REQ_PREV_LINE },
 	{ 'k',		REQ_PREV_LINE },
 	{ KEY_DOWN,	REQ_NEXT_LINE },
 	{ 'j',		REQ_NEXT_LINE },
-	{ KEY_NPAGE,	REQ_NEXT_PAGE },
-	{ KEY_PPAGE,	REQ_PREV_PAGE },
+	{ KEY_HOME,	REQ_FIRST_LINE },
+	{ KEY_END,	REQ_LAST_LINE },
+
+	/* Scrolling */
+	{ KEY_IC,	REQ_SCR_BLINE }, /* scroll field backward a line */
+	{ KEY_DC,	REQ_SCR_FLINE }, /* scroll field forward a line	*/
+	{ KEY_NPAGE,	REQ_SCR_FPAGE }, /* scroll field forward a page	*/
+	{ KEY_PPAGE,	REQ_SCR_BPAGE }, /* scroll field backward a page */
+	{ 'w',		REQ_SCR_FHPAGE }, /* scroll field forward half page */
+	{ 's',		REQ_SCR_BHPAGE }, /* scroll field backward half page */
 
 	{ 'd',		REQ_DIFF },
 	{ 'l',		REQ_LOG },
@@ -137,10 +150,12 @@ get_request(int request)
 struct view {
 	char *name;
 	char *cmd;
+	char *id;
 
 	/* Rendering */
-	int (*render)(struct view *, int);
+	int (*render)(struct view *, unsigned int);
 	WINDOW *win;
+	int height, width;
 
 	/* Navigation */
 	unsigned long offset;	/* Offset of the window top */
@@ -154,27 +169,36 @@ struct view {
 	FILE *pipe;
 };
 
-static int default_renderer(struct view *view, int lineno);
+static int default_renderer(struct view *view, unsigned int lineno);
 
-#define DIFF_CMD	\
+#define DIFF_CMD \
 	"git log --stat -n1 %s ; echo; " \
 	"git diff --find-copies-harder -B -C %s^ %s"
 
 #define LOG_CMD	\
 	"git log --stat -n100 %s"
 
+#define MAIN_CMD \
+	"git log --stat --pretty=raw %s"
+
 /* The status window at the bottom. Used for polling keystrokes. */
 static WINDOW *status_win;
 
+#define SIZEOF_ID	1024
+
+char head_id[SIZEOF_ID] = "HEAD";
+char commit_id[SIZEOF_ID] = "HEAD";
+
+static unsigned int current_view;
+static unsigned int nloading;
+
 static struct view views[] = {
-	{ "diff", DIFF_CMD, default_renderer },
-	{ "log",  LOG_CMD,  default_renderer },
-	{ "main", NULL },
+	{ "diff",	DIFF_CMD,	commit_id,	default_renderer },
+	{ "log",	LOG_CMD,	head_id,	default_renderer },
+	{ "main",	MAIN_CMD,	head_id,	default_renderer },
 };
 
 static struct view *display[ARRAY_SIZE(views)];
-static unsigned int current_view;
-static unsigned int nloading;
 
 #define foreach_view(view, i) \
 	for (i = 0; i < sizeof(display) && (view = display[i]); i++)
@@ -183,15 +207,13 @@ static void
 redraw_view(struct view *view)
 {
 	int lineno;
-	int lines, cols;
 
 	wclear(view->win);
 	wmove(view->win, 0, 0);
 
-	getmaxyx(view->win, lines, cols);
-
-	for (lineno = 0; lineno < lines; lineno++) {
-		view->render(view, lineno);
+	for (lineno = 0; lineno < view->height; lineno++) {
+		if (!view->render(view, lineno))
+			break;
 	}
 
 	redrawwin(view->win);
@@ -211,29 +233,64 @@ report_position(struct view *view, int all)
 }
 
 static void
+move_view(struct view *view, int lines)
+{
+	/* The rendering expects the new offset. */
+	view->offset += lines;
+
+	assert(0 <= view->offset && view->offset < view->lines);
+	assert(lines);
+
+	{
+		int from = lines > 0 ? view->height - lines : 0;
+		int to	 = from + (lines > 0 ? lines : -lines);
+
+		wscrl(view->win, lines);
+
+		for (; from < to; from++) {
+			if (!view->render(view, from))
+				break;
+		}
+	}
+
+	/* Move current line into the view. */
+	if (view->lineno < view->offset) {
+		view->lineno = view->offset;
+		view->render(view, 0);
+
+	} else if (view->lineno >= view->offset + view->height) {
+		view->lineno = view->offset + view->height - 1;
+		view->render(view, view->lineno - view->offset);
+	}
+
+	assert(view->offset <= view->lineno && view->lineno <= view->lines);
+
+	redrawwin(view->win);
+	wrefresh(view->win);
+
+	report_position(view, lines);
+}
+static void
 scroll_view(struct view *view, int request)
 {
-	int x, y, lines = 1;
-	enum { BACKWARD = -1,  FORWARD = 1 } direction = FORWARD;
-
-	getmaxyx(view->win, y, x);
+	int lines = 1;
 
 	switch (request) {
-	case REQ_NEXT_PAGE:
-		lines = y;
-	case REQ_NEXT_LINE:
+	case REQ_SCR_FPAGE:
+		lines = view->height;
+	case REQ_SCR_FLINE:
 		if (view->offset + lines > view->lines)
 			lines = view->lines - view->offset;
 
-		if (lines == 0 || view->offset + y >= view->lines) {
+		if (lines == 0 || view->offset + view->height >= view->lines) {
 			report("already at last line");
 			return;
 		}
 		break;
 
-	case REQ_PREV_PAGE:
-		lines = y;
-	case REQ_PREV_LINE:
+	case REQ_SCR_BPAGE:
+		lines = view->height;
+	case REQ_SCR_BLINE:
 		if (lines > view->offset)
 			lines = view->offset;
 
@@ -242,44 +299,62 @@ scroll_view(struct view *view, int request)
 			return;
 		}
 
-		direction = BACKWARD;
+		lines = -lines;
+		break;
+	}
+
+	move_view(view, lines);
+}
+
+
+static void
+navigate_view(struct view *view, int request)
+{
+	int steps;
+
+	switch (request) {
+	case REQ_PREV_LINE:
+		if (view->lineno == 0) {
+			report("already at first line");
+			return;
+		}
+		steps = -1;
 		break;
 
-	default:
-		lines = 0;
-	}
-
-	report("off=%d lines=%d lineno=%d move=%d", view->offset, view->lines, view->lineno, lines * direction);
-
-	/* The rendering expects the new offset. */
-	view->offset += lines * direction;
-
-	/* Move current line into the view. */
-	if (view->lineno < view->offset)
-		view->lineno = view->offset;
-	if (view->lineno > view->offset + y)
-		view->lineno = view->offset + y;
-
-	assert(0 <= view->offset && view->offset < view->lines);
-	//assert(0 <= view->offset + lines && view->offset + lines < view->lines);
-	assert(view->offset <= view->lineno && view->lineno <= view->lines);
-
-	if (lines) {
-		int from = direction == FORWARD ? y - lines : 0;
-		int to	 = from + lines;
-
-		wscrl(view->win, lines * direction);
-
-		for (; from < to; from++) {
-			if (!view->render(view, from))
-				break;
+	case REQ_NEXT_LINE:
+		if (view->lineno + 1 >= view->lines) {
+			report("already at last line");
+			return;
 		}
+		steps = 1;
+		break;
+
+	case REQ_FIRST_LINE:
+		steps = -view->lineno;
+		break;
+
+	case REQ_LAST_LINE:
+		steps = view->lines - view->lineno - 1;
 	}
+
+	view->lineno += steps;
+	view->render(view, view->lineno - steps - view->offset);
+
+	if (view->lineno < view->offset ||
+	    view->lineno >= view->offset + view->height) {
+		if (steps < 0 && -steps > view->offset) {
+			steps = -view->offset;
+		}
+		move_view(view, steps);
+		return;
+	}
+
+	view->render(view, view->lineno - view->offset);
 
 	redrawwin(view->win);
 	wrefresh(view->win);
 
-	report_position(view, lines);
+	report_position(view, view->height);
 }
 
 static void
@@ -296,11 +371,13 @@ resize_view(struct view *view)
 	} else {
 		view->win = newwin(lines - 1, 0, 0, 0);
 		if (!view->win) {
-			report("Failed to create %s view", view->name);
+			report("failed to create %s view", view->name);
 			return;
 		}
 		scrollok(view->win, TRUE);
 	}
+
+	getmaxyx(view->win, view->height, view->width);
 }
 
 
@@ -310,7 +387,9 @@ begin_update(struct view *view)
 	char buf[1024];
 
 	if (view->cmd) {
-		if (snprintf(buf, sizeof(buf), view->cmd, "HEAD", "HEAD", "HEAD") < sizeof(buf))
+		char *id = view->id;
+
+		if (snprintf(buf, sizeof(buf), view->cmd, id, id, id) < sizeof(buf))
 			view->pipe = popen(buf, "r");
 
 		if (!view->pipe)
@@ -345,15 +424,14 @@ update_view(struct view *view)
 {
 	char buffer[BUFSIZ];
 	char *line;
-	int lines, cols;
 	char **tmp;
 	int redraw;
+	int lines = view->height;
 
 	if (!view->pipe)
 		return TRUE;
 
-	getmaxyx(view->win, lines, cols);
-
+	/* Only redraw after the first reading session. */
 	redraw = !view->line;
 
 	tmp = realloc(view->line, sizeof(*view->line) * (view->lines + lines));
@@ -365,9 +443,6 @@ update_view(struct view *view)
 	while ((line = fgets(buffer, sizeof(buffer), view->pipe))) {
 		int linelen;
 
-		if (!lines--)
-			break;
-
 		linelen = strlen(line);
 		if (linelen)
 			line[linelen - 1] = 0;
@@ -376,13 +451,16 @@ update_view(struct view *view)
 		if (!view->line[view->lines])
 			goto alloc_error;
 		view->lines++;
+
+		if (lines-- == 1)
+			break;
 	}
 
 	if (redraw)
 		redraw_view(view);
 
 	if (ferror(view->pipe)) {
-		report("Failed to read %s", view->cmd);
+		report("failed to read %s", view->cmd);
 		goto end;
 
 	} else if (feof(view->pipe)) {
@@ -393,7 +471,7 @@ update_view(struct view *view)
 	return TRUE;
 
 alloc_error:
-	report("Allocation failure");
+	report("allocation failure");
 
 end:
 	end_update(view);
@@ -412,7 +490,7 @@ switch_view(struct view *prev, int request)
 		foreach_view (displayed, i) ;
 
 		if (i == 1)
-			report("Already in %s view", view->name);
+			report("already in %s view", view->name);
 		else
 			report("FIXME: Maximize");
 
@@ -422,7 +500,7 @@ switch_view(struct view *prev, int request)
 		foreach_view (displayed, i) {
 			if (view == displayed) {
 				current_view = i;
-				report("New current view");
+				report("new current view");
 				return view;
 			}
 		}
@@ -465,9 +543,17 @@ view_driver(struct view *view, int key)
 
 	switch (request) {
 	case REQ_NEXT_LINE:
-	case REQ_NEXT_PAGE:
 	case REQ_PREV_LINE:
-	case REQ_PREV_PAGE:
+	case REQ_FIRST_LINE:
+	case REQ_LAST_LINE:
+		if (view)
+			navigate_view(view, request);
+		break;
+
+	case REQ_SCR_FLINE:
+	case REQ_SCR_BLINE:
+	case REQ_SCR_FPAGE:
+	case REQ_SCR_BPAGE:
 		if (view)
 			scroll_view(view, request);
 		break;
@@ -536,12 +622,15 @@ static struct attr attrs[] = {
 };
 
 static int
-default_renderer(struct view *view, int lineno)
+default_renderer(struct view *view, unsigned int lineno)
 {
 	char *line;
 	int linelen;
 	int attr = A_NORMAL;
 	int i;
+
+	if (view->offset + lineno >= view->lines)
+		return FALSE;
 
 	line = view->line[view->offset + lineno];
 	if (!line) return FALSE;
@@ -557,8 +646,15 @@ default_renderer(struct view *view, int lineno)
 		break;
 	}
 
+	if (view->offset + lineno == view->lineno) {
+		if (i == 0)
+			strncpy(commit_id, line + 7, SIZEOF_ID);
+		attr = COLOR_PAIR(COLOR_CURSOR) | A_BOLD;
+	}
+
 	wattrset(view->win, attr);
-	mvwprintw(view->win, lineno, 0, "%4d: %s", view->offset + lineno, line);
+	//mvwprintw(view->win, lineno, 0, "%4d: %s", view->offset + lineno, line);
+	mvwaddstr(view->win, lineno, 0, line);
 
 	return TRUE;
 }
@@ -604,9 +700,10 @@ report(const char *msg, ...)
 	werase(status_win);
 	wmove(status_win, 0, 0);
 
+#if 0
 	if (display[current_view])
-		wprintw(status_win, "%4s: ", display[current_view]->name);
-
+		wprintw(status_win, "%s %4s: ", commit_id, display[current_view]->name);
+#endif
 	vwprintw(status_win, msg, args);
 	wrefresh(status_win);
 
@@ -631,6 +728,7 @@ init_colors(void)
 	init_pair(COLOR_MAGENTA, COLOR_MAGENTA,	bg);
 	init_pair(COLOR_BLUE,	 COLOR_BLUE,	bg);
 	init_pair(COLOR_YELLOW,	 COLOR_YELLOW,	bg);
+	init_pair(COLOR_CURSOR,	 COLOR_WHITE,	COLOR_GREEN);
 }
 
 int
