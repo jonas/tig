@@ -67,7 +67,124 @@ static void report(const char *msg, ...);
 #define REQ_FIRST_LINE	(REQ_OFFSET + 16)
 #define REQ_LAST_LINE	(REQ_OFFSET + 17)
 
-#define COLOR_CURSOR	42
+#define COLOR_TRANSP	(-1)
+
+
+enum line_type {
+	LINE_AUTHOR,
+	LINE_COMMIT,
+	LINE_DATE,
+	LINE_DIFF,
+	LINE_DIFF_ADD,
+	LINE_DIFF_DEL,
+	LINE_DIFF_CHUNK,
+	LINE_DIFF_TREE,
+	LINE_INDEX,
+	LINE_PARENT,
+	LINE_TREE,
+
+	LINE_UNKNOWN,
+	LINE_CURSOR,
+	LINE_STATUS,
+	LINE_TITLE,
+};
+
+struct line_info {
+	enum line_type type;
+	char *line;
+	int linelen;
+
+	int fg;
+	int bg;
+	int attr;
+};
+
+#define LINE(type, line, fg, bg, attr) \
+	{ LINE_##type, (line), sizeof(line) - 1, (fg), (bg), (attr) }
+
+static struct line_info line_info[] = {
+	LINE(AUTHOR,	 "Author: ",	COLOR_CYAN,	COLOR_TRANSP,	0),
+	//LINE(AUTHOR,	 "author ",	COLOR_CYAN,	COLOR_TRANSP,	0),
+	LINE(COMMIT,	 "commit ",	COLOR_GREEN,	COLOR_TRANSP,	0),
+	LINE(DATE,	 "Date:   ",	COLOR_YELLOW,	COLOR_TRANSP,	0),
+	LINE(DIFF_ADD,	 "+",		COLOR_GREEN,	COLOR_TRANSP,	0),
+	LINE(DIFF_CHUNK, "@",		COLOR_MAGENTA,	COLOR_TRANSP,	0),
+	LINE(DIFF_DEL,	 "-",		COLOR_RED,	COLOR_TRANSP,	0),
+	LINE(DIFF,	 "diff --git ",	COLOR_YELLOW,	COLOR_TRANSP,	0),
+	LINE(DIFF_TREE,	 "diff-tree ",	COLOR_BLUE,	COLOR_TRANSP,	0),
+	LINE(INDEX,	 "index ",	COLOR_BLUE,	COLOR_TRANSP,	0),
+	LINE(PARENT,	 "parent ",	COLOR_GREEN,	COLOR_TRANSP,	0),
+	LINE(TREE,	 "tree ",	COLOR_GREEN,	COLOR_TRANSP,	0),
+
+	LINE(UNKNOWN,	 "",		COLOR_TRANSP,	COLOR_TRANSP,	A_NORMAL),
+
+	LINE(CURSOR,	 "",		COLOR_WHITE,	COLOR_GREEN,	A_BOLD),
+	LINE(STATUS,	 "",		COLOR_GREEN,	COLOR_TRANSP,	0),
+	LINE(TITLE,	 "",		COLOR_YELLOW,	COLOR_BLUE,	A_BOLD),
+};
+
+static struct line_info *
+get_line_info(char *line)
+{
+	int linelen = strlen(line);
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(line_info); i++) {
+		if (linelen < line_info[i].linelen
+		    || strncmp(line_info[i].line, line, line_info[i].linelen))
+			continue;
+
+		return &line_info[i];
+	}
+
+	return NULL;
+}
+
+static enum line_type
+get_line_type(char *line)
+{
+	struct line_info *info = get_line_info(line);
+
+	return info ? info->type : LINE_UNKNOWN;
+}
+
+static int
+get_line_attr(enum line_type type)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(line_info); i++)
+		if (line_info[i].type == type)
+			return COLOR_PAIR(line_info[i].type) | line_info[i].attr;
+
+	return A_NORMAL;
+}
+
+static void
+init_colors(void)
+{
+	int transparent_bg = COLOR_BLACK;
+	int transparent_fg = COLOR_WHITE;
+	int i;
+
+	start_color();
+
+	if (use_default_colors() != ERR) {
+		transparent_bg = -1;
+		transparent_fg = -1;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(line_info); i++) {
+		struct line_info *info = &line_info[i];
+		int bg = info->bg == COLOR_TRANSP ? transparent_bg : info->bg;
+		int fg = info->fg == COLOR_TRANSP ? transparent_fg : info->fg;
+
+		init_pair(info->type, fg, bg);
+	}
+}
+
+
+
 
 /**
  * KEYS
@@ -109,14 +226,14 @@ struct keymap keymap[] = {
 	{ 'j',		REQ_NEXT_LINE },
 	{ KEY_HOME,	REQ_FIRST_LINE },
 	{ KEY_END,	REQ_LAST_LINE },
+	{ KEY_NPAGE,	REQ_NEXT_PAGE },
+	{ KEY_PPAGE,	REQ_PREV_PAGE },
 
 	/* Scrolling */
 	{ KEY_IC,	REQ_SCR_BLINE }, /* scroll field backward a line */
 	{ KEY_DC,	REQ_SCR_FLINE }, /* scroll field forward a line	*/
-	{ KEY_NPAGE,	REQ_SCR_FPAGE }, /* scroll field forward a page	*/
-	{ KEY_PPAGE,	REQ_SCR_BPAGE }, /* scroll field backward a page */
-	{ 'w',		REQ_SCR_FHPAGE }, /* scroll field forward half page */
-	{ 's',		REQ_SCR_BHPAGE }, /* scroll field backward half page */
+	{ 's',		REQ_SCR_FPAGE }, /* scroll field forward a page	*/
+	{ 'w',		REQ_SCR_BPAGE }, /* scroll field backward a page */
 
 	{ 'd',		REQ_DIFF },
 	{ 'l',		REQ_LOG },
@@ -199,6 +316,8 @@ static int main_read(struct view *view, char *line);
 /* The status window at the bottom. Used for polling keystrokes. */
 static WINDOW *status_win;
 
+static WINDOW *title_win;
+
 #define SIZEOF_ID	1024
 #define SIZEOF_VIEWS	(REQ_VIEWS - REQ_OFFSET)
 
@@ -213,8 +332,8 @@ static struct view *display[];
 
 static struct view views[] = {
 	{ "diff",  DIFF_CMD,   commit_id,  pager_read,  pager_draw, sizeof(char) },
-	{ "log",   LOG_CMD,    head_id,    pager_read,  pager_draw, sizeof(struct commit) },
-	{ "main",  MAIN_CMD,   head_id,    main_read,   main_draw },
+	{ "log",   LOG_CMD,    head_id,    pager_read,  pager_draw, sizeof(char) },
+	{ "main",  MAIN_CMD,   head_id,    main_read,   main_draw,  sizeof(struct commit) },
 };
 
 static struct view *display[ARRAY_SIZE(views)];
@@ -251,6 +370,7 @@ report_position(struct view *view, int all)
 	       view->lines ? view->offset * 100 / view->lines : 0,
 	       view->offset);
 }
+
 
 static void
 move_view(struct view *view, int lines)
@@ -290,6 +410,7 @@ move_view(struct view *view, int lines)
 
 	report_position(view, lines);
 }
+
 static void
 scroll_view(struct view *view, int request)
 {
@@ -333,28 +454,40 @@ navigate_view(struct view *view, int request)
 	int steps;
 
 	switch (request) {
-	case REQ_PREV_LINE:
-		if (view->lineno == 0) {
-			report("already at first line");
-			return;
-		}
-		steps = -1;
-		break;
-
-	case REQ_NEXT_LINE:
-		if (view->lineno + 1 >= view->lines) {
-			report("already at last line");
-			return;
-		}
-		steps = 1;
-		break;
-
 	case REQ_FIRST_LINE:
 		steps = -view->lineno;
 		break;
 
 	case REQ_LAST_LINE:
 		steps = view->lines - view->lineno - 1;
+		break;
+
+	case REQ_PREV_PAGE:
+		steps = view->height > view->lineno
+		      ? -view->lineno : -view->height;
+		break;
+
+	case REQ_NEXT_PAGE:
+		steps = view->lineno + view->height >= view->lines
+		      ? view->lines - view->lineno - 1 : view->height;
+		break;
+
+	case REQ_PREV_LINE:
+		steps = -1;
+		break;
+
+	case REQ_NEXT_LINE:
+		steps = 1;
+		break;
+	}
+
+	if (steps < 0 && view->lineno == 0) {
+		report("already at first line");
+		return;
+
+	} else if (steps > 0 && view->lineno + 1 >= view->lines) {
+		report("already at last line");
+		return;
 	}
 
 	view->lineno += steps;
@@ -364,7 +497,10 @@ navigate_view(struct view *view, int request)
 	    view->lineno >= view->offset + view->height) {
 		if (steps < 0 && -steps > view->offset) {
 			steps = -view->offset;
+		} else if (steps > 0 && steps > view->height) {
+			steps -= view->height - 1;
 		}
+
 		move_view(view, steps);
 		return;
 	}
@@ -386,10 +522,10 @@ resize_view(struct view *view)
 
 	if (view->win) {
 		mvwin(view->win, 0, 0);
-		wresize(view->win, lines - 1, cols);
+		wresize(view->win, lines - 2, cols);
 
 	} else {
-		view->win = newwin(lines - 1, 0, 0, 0);
+		view->win = newwin(lines - 2, 0, 0, 0);
 		if (!view->win) {
 			report("failed to create %s view", view->name);
 			return;
@@ -565,6 +701,8 @@ view_driver(struct view *view, int key)
 	case REQ_PREV_LINE:
 	case REQ_FIRST_LINE:
 	case REQ_LAST_LINE:
+	case REQ_NEXT_PAGE:
+	case REQ_PREV_PAGE:
 		if (view)
 			navigate_view(view, request);
 		break;
@@ -620,57 +758,26 @@ view_driver(struct view *view, int key)
  * Rendering
  */
 
-#define ATTR(line, attr) { (line), sizeof(line) - 1, (attr) }
-
-struct attr {
-	char *line;
-	int linelen;
-	int attr;
-};
-
-static struct attr attrs[] = {
-	ATTR("commit ",		COLOR_PAIR(COLOR_GREEN)),
-	ATTR("Author: ",	COLOR_PAIR(COLOR_CYAN)),
-	ATTR("Date:   ",	COLOR_PAIR(COLOR_YELLOW)),
-	ATTR("diff --git ",	COLOR_PAIR(COLOR_YELLOW)),
-	ATTR("diff-tree ",	COLOR_PAIR(COLOR_BLUE)),
-	ATTR("index ",		COLOR_PAIR(COLOR_BLUE)),
-	ATTR("-",		COLOR_PAIR(COLOR_RED)),
-	ATTR("+",		COLOR_PAIR(COLOR_GREEN)),
-	ATTR("@",		COLOR_PAIR(COLOR_MAGENTA)),
-};
-
 static int
 pager_draw(struct view *view, unsigned int lineno)
 {
+	enum line_type type;
 	char *line;
-	int linelen;
-	int attr = A_NORMAL;
-	int i;
+	int attr;
 
 	if (view->offset + lineno >= view->lines)
 		return FALSE;
 
 	line = view->line[view->offset + lineno];
-	if (!line) return FALSE;
-
-	linelen = strlen(line);
-
-	for (i = 0; i < ARRAY_SIZE(attrs); i++) {
-		if (linelen < attrs[i].linelen
-		    || strncmp(attrs[i].line, line, attrs[i].linelen))
-			continue;
-
-		attr = attrs[i].attr;
-		break;
-	}
+	type = get_line_type(line);
 
 	if (view->offset + lineno == view->lineno) {
-		if (i == 0)
+		if (type == LINE_COMMIT)
 			strncpy(commit_id, line + 7, SIZEOF_ID);
-		attr = COLOR_PAIR(COLOR_CURSOR) | A_BOLD;
+		type = LINE_CURSOR;
 	}
 
+	attr = get_line_attr(type);
 	wattrset(view->win, attr);
 	//mvwprintw(view->win, lineno, 0, "%4d: %s", view->offset + lineno, line);
 	mvwaddstr(view->win, lineno, 0, line);
@@ -693,7 +800,7 @@ static int
 main_draw(struct view *view, unsigned int lineno)
 {
 	struct commit *commit;
-	int attr = A_NORMAL;
+	enum line_type type;
 
 	if (view->offset + lineno >= view->lines)
 		return FALSE;
@@ -701,15 +808,15 @@ main_draw(struct view *view, unsigned int lineno)
 	commit = view->line[view->offset + lineno];
 	if (!commit) return FALSE;
 
-	attr = attrs[0].attr;
-
 	if (view->offset + lineno == view->lineno) {
 		strncpy(commit_id, commit->id, SIZEOF_ID);
-		attr = COLOR_PAIR(COLOR_CURSOR) | A_BOLD;
+		type = LINE_CURSOR;
+	} else {
+		type = LINE_COMMIT;
 	}
 
 	mvwaddch(view->win, lineno, 0, ACS_LTEE);
-	wattrset(view->win, attr);
+	wattrset(view->win, get_line_attr(type));
 	mvwaddstr(view->win, lineno, 2, commit->title);
 	wattrset(view->win, A_NORMAL);
 
@@ -719,32 +826,22 @@ main_draw(struct view *view, unsigned int lineno)
 static int
 main_read(struct view *view, char *line)
 {
-	int linelen = strlen(line);
-	int i;
+	enum line_type type = get_line_type(line);
+	struct commit *commit;
 
-	for (i = 0; i < ARRAY_SIZE(attrs); i++) {
-		if (linelen < attrs[i].linelen
-		    || strncmp(attrs[i].line, line, attrs[i].linelen))
-			continue;
-		break;
-	}
-
-	if (i == 0) {
-		struct commit *commit;
-
+	switch (type) {
+	case LINE_COMMIT:
 		commit = calloc(1, sizeof(struct commit));
 		if (!commit)
 			return FALSE;
 
 		view->line[view->lines++] = commit;
-
 		strncpy(commit->id, line + 7, 41);
+		break;
 
-	} else {
-		struct commit *commit = view->line[view->lines - 1];
-
+	default:
+		commit = view->line[view->lines - 1];
 		if (!commit->title[0] &&
-		    linelen > 5 &&
 		    !strncmp(line, "    ", 4) &&
 		    !isspace(line[5]))
 			strncpy(commit->title, line + 4, sizeof(commit->title));
@@ -763,6 +860,8 @@ quit(int sig)
 {
 	if (status_win)
 		delwin(status_win);
+	if (title_win)
+		delwin(title_win);
 	endwin();
 
 	/* FIXME: Shutdown gracefully. */
@@ -803,27 +902,12 @@ report(const char *msg, ...)
 	wrefresh(status_win);
 
 	va_end(args);
-}
 
-static void
-init_colors(void)
-{
-	int bg = COLOR_BLACK;
+	werase(title_win);
+	wmove(title_win, 0, 0);
+	wprintw(title_win, "commit %s", commit_id);
+	wrefresh(title_win);
 
-	start_color();
-
-	if (use_default_colors() != ERR)
-		bg = -1;
-
-	init_pair(COLOR_BLACK,	 COLOR_BLACK,	bg);
-	init_pair(COLOR_GREEN,	 COLOR_GREEN,	bg);
-	init_pair(COLOR_RED,	 COLOR_RED,	bg);
-	init_pair(COLOR_CYAN,	 COLOR_CYAN,	bg);
-	init_pair(COLOR_WHITE,	 COLOR_WHITE,	bg);
-	init_pair(COLOR_MAGENTA, COLOR_MAGENTA,	bg);
-	init_pair(COLOR_BLUE,	 COLOR_BLUE,	bg);
-	init_pair(COLOR_YELLOW,	 COLOR_YELLOW,	bg);
-	init_pair(COLOR_CURSOR,	 COLOR_WHITE,	COLOR_GREEN);
 }
 
 int
@@ -849,9 +933,14 @@ main(int argc, char *argv[])
 	if (!status_win)
 		die("Failed to create status window");
 
+	title_win = newwin(1, 0, y - 2, 0);
+	if (!title_win)
+		die("Failed to create title window");
+
 	/* Enable keyboard mapping */
 	keypad(status_win, TRUE);
-	wattrset(status_win, COLOR_PAIR(COLOR_GREEN));
+	wbkgdset(status_win, get_line_attr(LINE_STATUS));
+	wbkgdset(title_win, get_line_attr(LINE_TITLE));
 
 	while (view_driver(display[current_view], request)) {
 		struct view *view;
@@ -869,8 +958,12 @@ main(int argc, char *argv[])
 			int lines, cols;
 
 			getmaxyx(stdscr, lines, cols);
+
 			mvwin(status_win, lines - 1, 0);
 			wresize(status_win, 1, cols - 1);
+
+			mvwin(title_win, lines - 2, 0);
+			wresize(title_win, 1, cols - 1);
 		}
 	}
 
