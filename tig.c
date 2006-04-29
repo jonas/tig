@@ -9,26 +9,23 @@
  * SYNOPSIS
  * --------
  * [verse]
- * tig
- * tig log  [git log options]
- * tig diff [git diff options]
- * tig < [git log or git diff output]
+ * tig [options]
+ * tig [options] log  [git log options]
+ * tig [options] diff [git diff options]
+ * tig [options] < [git log or git diff output]
  *
  * DESCRIPTION
  * -----------
  * Browse changes in a git repository.
- *
- * OPTIONS
- * -------
- *
- * None.
- *
  **/
 
 #define DEBUG
-
 #ifndef DEBUG
 #define NDEBUG
+#endif
+
+#ifndef	VERSION
+#define VERSION	"tig-0.1"
 #endif
 
 #include <assert.h>
@@ -38,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include <curses.h>
 #include <form.h>
@@ -66,27 +64,132 @@ static void report(const char *msg, ...);
 #define REQ_REDRAW	(REQ_OFFSET + 15)
 #define REQ_FIRST_LINE	(REQ_OFFSET + 16)
 #define REQ_LAST_LINE	(REQ_OFFSET + 17)
+#define REQ_LINE_NUMBER	(REQ_OFFSET + 18)
+
+#define SIZEOF_VIEWS	(REQ_VIEWS - REQ_OFFSET)
+#define SIZEOF_ID	1024
 
 #define COLOR_TRANSP	(-1)
 
 
+/**
+ * OPTIONS
+ * -------
+ **/
+
+static int opt_line_number;
+static int opt_request = REQ_MAIN;
+
+char head_id[SIZEOF_ID] = "HEAD";
+char commit_id[SIZEOF_ID] = "HEAD";
+
+
+/* Returns the index of log or diff command or -1 to exit. */
+static int
+parse_options(int argc, char *argv[])
+{
+	int i;
+
+	for (i = 1; i < argc; i++) {
+		char *opt = argv[i];
+
+		/**
+		 * log [options]::
+		 *	git log options.
+		 **/
+		if (!strcmp(opt, "log")) {
+			opt_request = REQ_LOG;
+			return i;
+
+		/**
+		 * diff [options]::
+		 *	git diff options.
+		 **/
+		} else if (!strcmp(opt, "diff")) {
+			opt_request = REQ_DIFF;
+			return i;
+
+		/**
+		 * -l::
+		 *	Start up in log view.
+		 **/
+		} else if (!strcmp(opt, "-l")) {
+			opt_request = REQ_LOG;
+
+		/**
+		 * -d::
+		 *	Start up in diff view.
+		 **/
+		} else if (!strcmp(opt, "-d")) {
+			opt_request = REQ_DIFF;
+
+		/**
+		 * -n, --line-number::
+		 *	Prefix line numbers in log and diff view.
+		 **/
+		} else if (!strcmp(opt, "-n") ||
+		           !strcmp(opt, "--line-number")) {
+			opt_line_number = 1;
+
+		/**
+		 * -v, --version::
+		 *	Show version and exit.
+		 **/
+		} else if (!strcmp(opt, "-v") ||
+			   !strcmp(opt, "--version")) {
+			printf("tig version %s\n", VERSION);
+			return -1;
+
+		/**
+		 * ref::
+		 *	Commit reference, symbolic or raw SHA1 ID.
+		 **/
+		} else if (opt[0] && opt[0] != '-') {
+			strncpy(head_id, opt, SIZEOF_ID);
+			strncpy(commit_id, opt, SIZEOF_ID);
+
+		} else {
+			die("Unknown command: '%s'", opt);
+		}
+	}
+
+	return i;
+}
+
+
+/*
+ * Line-oriented content detection.
+ */
+
 enum line_type {
+	LINE_DEFAULT,
 	LINE_AUTHOR,
+	LINE_AUTHOR_IDENT,
 	LINE_COMMIT,
+	LINE_COMMITTER,
+	LINE_CURSOR,
 	LINE_DATE,
 	LINE_DIFF,
 	LINE_DIFF_ADD,
-	LINE_DIFF_DEL,
 	LINE_DIFF_CHUNK,
+	LINE_DIFF_COPY,
+	LINE_DIFF_DEL,
+	LINE_DIFF_DISSIM,
+	LINE_DIFF_NEWMODE,
+	LINE_DIFF_OLDMODE,
+	LINE_DIFF_RENAME,
+	LINE_DIFF_SIM,
 	LINE_DIFF_TREE,
 	LINE_INDEX,
+	LINE_MAIN_AUTHOR,
+	LINE_MAIN_COMMIT,
+	LINE_MAIN_DATE,
+	LINE_MAIN_DELIM,
+	LINE_MERGE,
 	LINE_PARENT,
-	LINE_TREE,
-
-	LINE_UNKNOWN,
-	LINE_CURSOR,
 	LINE_STATUS,
 	LINE_TITLE,
+	LINE_TREE,
 };
 
 struct line_info {
@@ -103,24 +206,42 @@ struct line_info {
 	{ LINE_##type, (line), sizeof(line) - 1, (fg), (bg), (attr) }
 
 static struct line_info line_info[] = {
-	LINE(AUTHOR,	 "Author: ",	COLOR_CYAN,	COLOR_TRANSP,	0),
-	//LINE(AUTHOR,	 "author ",	COLOR_CYAN,	COLOR_TRANSP,	0),
-	LINE(COMMIT,	 "commit ",	COLOR_GREEN,	COLOR_TRANSP,	0),
-	LINE(DATE,	 "Date:   ",	COLOR_YELLOW,	COLOR_TRANSP,	0),
-	LINE(DIFF_ADD,	 "+",		COLOR_GREEN,	COLOR_TRANSP,	0),
-	LINE(DIFF_CHUNK, "@",		COLOR_MAGENTA,	COLOR_TRANSP,	0),
-	LINE(DIFF_DEL,	 "-",		COLOR_RED,	COLOR_TRANSP,	0),
-	LINE(DIFF,	 "diff --git ",	COLOR_YELLOW,	COLOR_TRANSP,	0),
-	LINE(DIFF_TREE,	 "diff-tree ",	COLOR_BLUE,	COLOR_TRANSP,	0),
-	LINE(INDEX,	 "index ",	COLOR_BLUE,	COLOR_TRANSP,	0),
-	LINE(PARENT,	 "parent ",	COLOR_GREEN,	COLOR_TRANSP,	0),
-	LINE(TREE,	 "tree ",	COLOR_GREEN,	COLOR_TRANSP,	0),
+	/* Diff markup */
+	LINE(DIFF,	   "diff --git ",	COLOR_YELLOW,	COLOR_TRANSP,	0),
+	LINE(INDEX,	   "index ",		COLOR_BLUE,	COLOR_TRANSP,	0),
+	LINE(DIFF_CHUNK,   "@@",		COLOR_MAGENTA,	COLOR_TRANSP,	0),
+	LINE(DIFF_ADD,	   "+",			COLOR_GREEN,	COLOR_TRANSP,	0),
+	LINE(DIFF_DEL,	   "-",			COLOR_RED,	COLOR_TRANSP,	0),
+	LINE(DIFF_OLDMODE, "old mode ",		COLOR_YELLOW,	COLOR_TRANSP,	0),
+	LINE(DIFF_NEWMODE, "new mode ",		COLOR_YELLOW,	COLOR_TRANSP,	0),
+	LINE(DIFF_COPY,	   "copy ",		COLOR_YELLOW,	COLOR_TRANSP,	0),
+	LINE(DIFF_RENAME,  "rename ",		COLOR_YELLOW,	COLOR_TRANSP,	0),
+	LINE(DIFF_SIM,	   "similarity ",	COLOR_YELLOW,	COLOR_TRANSP,	0),
+	LINE(DIFF_DISSIM,  "dissimilarity ",	COLOR_YELLOW,	COLOR_TRANSP,	0),
 
-	LINE(UNKNOWN,	 "",		COLOR_TRANSP,	COLOR_TRANSP,	A_NORMAL),
+	/* Pretty print commit header */
+	LINE(AUTHOR,	   "Author: ",		COLOR_CYAN,	COLOR_TRANSP,	0),
+	LINE(MERGE,	   "Merge: ",		COLOR_BLUE,	COLOR_TRANSP,	0),
+	LINE(DATE,	   "Date:   ",		COLOR_YELLOW,	COLOR_TRANSP,	0),
 
-	LINE(CURSOR,	 "",		COLOR_WHITE,	COLOR_GREEN,	A_BOLD),
-	LINE(STATUS,	 "",		COLOR_GREEN,	COLOR_TRANSP,	0),
-	LINE(TITLE,	 "",		COLOR_YELLOW,	COLOR_BLUE,	A_BOLD),
+	/* Raw commit header */
+	LINE(COMMIT,	   "commit ",		COLOR_GREEN,	COLOR_TRANSP,	0),
+	LINE(PARENT,	   "parent ",		COLOR_BLUE,	COLOR_TRANSP,	0),
+	LINE(TREE,	   "tree ",		COLOR_BLUE,	COLOR_TRANSP,	0),
+	LINE(AUTHOR_IDENT, "author ",		COLOR_CYAN,	COLOR_TRANSP,	0),
+	LINE(COMMITTER,	   "committer ",	COLOR_MAGENTA,	COLOR_TRANSP,	0),
+
+	LINE(DIFF_TREE,	   "diff-tree ",	COLOR_BLUE,	COLOR_TRANSP,	0),
+
+	/* UI colors */
+	LINE(DEFAULT,	   "",	COLOR_TRANSP,	COLOR_TRANSP,	A_NORMAL),
+	LINE(CURSOR,	   "",	COLOR_WHITE,	COLOR_GREEN,	A_BOLD),
+	LINE(STATUS,	   "",	COLOR_GREEN,	COLOR_TRANSP,	0),
+	LINE(TITLE,	   "",	COLOR_YELLOW,	COLOR_BLUE,	A_BOLD),
+	LINE(MAIN_DATE,    "",	COLOR_BLUE,	COLOR_TRANSP,	0),
+	LINE(MAIN_AUTHOR,  "",	COLOR_GREEN,	COLOR_TRANSP,	0),
+	LINE(MAIN_COMMIT,  "",	COLOR_TRANSP,	COLOR_TRANSP,	0),
+	LINE(MAIN_DELIM,   "",	COLOR_MAGENTA,	COLOR_TRANSP,	0),
 };
 
 static struct line_info *
@@ -145,7 +266,7 @@ get_line_type(char *line)
 {
 	struct line_info *info = get_line_info(line);
 
-	return info ? info->type : LINE_UNKNOWN;
+	return info ? info->type : LINE_DEFAULT;
 }
 
 static int
@@ -182,8 +303,6 @@ init_colors(void)
 		init_pair(info->type, fg, bg);
 	}
 }
-
-
 
 
 /**
@@ -238,6 +357,8 @@ struct keymap keymap[] = {
 	{ 'd',		REQ_DIFF },
 	{ 'l',		REQ_LOG },
 	{ 'm',		REQ_MAIN },
+
+	{ 'n',		REQ_LINE_NUMBER },
 
 	/* No input from wgetch() with nodelay() enabled. */
 	{ ERR,		REQ_UPDATE },
@@ -295,6 +416,8 @@ struct view {
 struct commit {
 	char id[41];
 	char title[75];
+	char author[75];
+	struct tm time;
 };
 
 static int pager_draw(struct view *view, unsigned int lineno);
@@ -317,12 +440,6 @@ static int main_read(struct view *view, char *line);
 static WINDOW *status_win;
 
 static WINDOW *title_win;
-
-#define SIZEOF_ID	1024
-#define SIZEOF_VIEWS	(REQ_VIEWS - REQ_OFFSET)
-
-char head_id[SIZEOF_ID] = "HEAD";
-char commit_id[SIZEOF_ID] = "HEAD";
 
 static unsigned int current_view;
 static unsigned int nloading;
@@ -359,6 +476,29 @@ redraw_view(struct view *view)
 	wrefresh(view->win);
 }
 
+static void
+resize_view(struct view *view)
+{
+	int lines, cols;
+
+	getmaxyx(stdscr, lines, cols);
+
+	if (view->win) {
+		mvwin(view->win, 0, 0);
+		wresize(view->win, lines - 2, cols);
+
+	} else {
+		view->win = newwin(lines - 2, 0, 0, 0);
+		if (!view->win) {
+			report("failed to create %s view", view->name);
+			return;
+		}
+		scrollok(view->win, TRUE);
+	}
+
+	getmaxyx(view->win, view->height, view->width);
+}
+
 /* FIXME: Fix percentage. */
 static void
 report_position(struct view *view, int all)
@@ -381,7 +521,10 @@ move_view(struct view *view, int lines)
 	assert(0 <= view->offset && view->offset < view->lines);
 	assert(lines);
 
-	{
+	if (view->height < (lines > 0 ? lines : -lines)) {
+		redraw_view(view);
+
+	} else {
 		int line = lines > 0 ? view->height - lines : 0;
 		int end = line + (lines > 0 ? lines : -lines);
 
@@ -447,7 +590,6 @@ scroll_view(struct view *view, int request)
 	move_view(view, lines);
 }
 
-
 static void
 navigate_view(struct view *view, int request)
 {
@@ -485,7 +627,7 @@ navigate_view(struct view *view, int request)
 		report("already at first line");
 		return;
 
-	} else if (steps > 0 && view->lineno + 1 >= view->lines) {
+	} else if (steps > 0 && view->lineno + 1 == view->lines) {
 		report("already at last line");
 		return;
 	}
@@ -497,14 +639,21 @@ navigate_view(struct view *view, int request)
 	    view->lineno >= view->offset + view->height) {
 		if (steps < 0 && -steps > view->offset) {
 			steps = -view->offset;
-		} else if (steps > 0 && steps > view->height) {
-			steps -= view->height - 1;
+
+		} else if (steps > 0) {
+			if (view->lineno == view->lines - 1 &&
+			    view->lines > view->height) {
+				steps = view->lines - view->offset - 1;
+				if (steps >= view->height)
+					steps -= view->height - 1;
+			}
 		}
 
 		move_view(view, steps);
 		return;
 	}
 
+	/* Draw the cursor line */
 	view->draw(view, view->lineno - view->offset);
 
 	redrawwin(view->win);
@@ -513,28 +662,6 @@ navigate_view(struct view *view, int request)
 	report_position(view, view->height);
 }
 
-static void
-resize_view(struct view *view)
-{
-	int lines, cols;
-
-	getmaxyx(stdscr, lines, cols);
-
-	if (view->win) {
-		mvwin(view->win, 0, 0);
-		wresize(view->win, lines - 2, cols);
-
-	} else {
-		view->win = newwin(lines - 2, 0, 0, 0);
-		if (!view->win) {
-			report("failed to create %s view", view->name);
-			return;
-		}
-		scrollok(view->win, TRUE);
-	}
-
-	getmaxyx(view->win, view->height, view->width);
-}
 
 
 static bool
@@ -721,6 +848,11 @@ view_driver(struct view *view, int key)
 		view = switch_view(view, request);
 		break;
 
+	case REQ_LINE_NUMBER:
+		opt_line_number = !opt_line_number;
+		redraw_view(view);
+		break;
+
 	case REQ_REDRAW:
 		redraw_view(view);
 		break;
@@ -779,8 +911,31 @@ pager_draw(struct view *view, unsigned int lineno)
 
 	attr = get_line_attr(type);
 	wattrset(view->win, attr);
-	//mvwprintw(view->win, lineno, 0, "%4d: %s", view->offset + lineno, line);
-	mvwaddstr(view->win, lineno, 0, line);
+
+	if (opt_line_number) {
+		mvwprintw(view->win, lineno, 0, "%4d: ", view->offset + lineno + 1);
+		while (line) {
+			if (*line == '\t') {
+				waddstr(view->win, "        ");
+				line++;
+			} else {
+				char *tab = strchr(line, '\t');
+
+				if (tab)
+					waddnstr(view->win, line, tab - line);
+				else
+					waddstr(view->win, line);
+				line = tab;
+			}
+		}
+		waddstr(view->win, line);
+
+	} else {
+		/* No empty lines makes cursor drawing and clearing implicit. */
+		if (!*line)
+			line = " ";
+		mvwaddstr(view->win, lineno, 0, line);
+	}
 
 	return TRUE;
 }
@@ -799,8 +954,11 @@ pager_read(struct view *view, char *line)
 static int
 main_draw(struct view *view, unsigned int lineno)
 {
+	char buf[21];
 	struct commit *commit;
 	enum line_type type;
+	int cols = 0;
+	size_t timelen;
 
 	if (view->offset + lineno >= view->lines)
 		return FALSE;
@@ -812,12 +970,32 @@ main_draw(struct view *view, unsigned int lineno)
 		strncpy(commit_id, commit->id, SIZEOF_ID);
 		type = LINE_CURSOR;
 	} else {
-		type = LINE_COMMIT;
+		type = LINE_MAIN_COMMIT;
 	}
 
-	mvwaddch(view->win, lineno, 0, ACS_LTEE);
+	wmove(view->win, lineno, cols);
+	wattrset(view->win, get_line_attr(LINE_MAIN_DATE));
+
+	timelen = strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S ", &commit->time);
+	waddnstr(view->win, buf, timelen);
+
+	cols += 20;
+	wmove(view->win, lineno, cols);
+	wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
+
+	if (strlen(commit->author) > 19) {
+		waddnstr(view->win, commit->author, 18);
+		wattrset(view->win, get_line_attr(LINE_MAIN_DELIM));
+		waddch(view->win, '~');
+	} else {
+		waddstr(view->win, commit->author);
+	}
+
+	cols += 20;
+	wattrset(view->win, A_NORMAL);
+	mvwaddch(view->win, lineno, cols, ACS_LTEE);
 	wattrset(view->win, get_line_attr(type));
-	mvwaddstr(view->win, lineno, 2, commit->title);
+	mvwaddstr(view->win, lineno, cols + 2, commit->title);
 	wattrset(view->win, A_NORMAL);
 
 	return TRUE;
@@ -835,10 +1013,54 @@ main_read(struct view *view, char *line)
 		if (!commit)
 			return FALSE;
 
+		line += sizeof("commit ") - 1;
+
 		view->line[view->lines++] = commit;
-		strncpy(commit->id, line + 7, 41);
+		strncpy(commit->id, line, sizeof(commit->id));
 		break;
 
+	case LINE_AUTHOR_IDENT:
+	{
+		char *ident = line + sizeof("author ") - 1;
+		char *end = strchr(ident, '<');
+
+		if (end) {
+			for (; end > ident && isspace(end[-1]); end--) ;
+			*end = 0;
+		}
+
+		commit = view->line[view->lines - 1];
+		strncpy(commit->author, ident, sizeof(commit->author));
+
+		if (end) {
+			char *secs = strchr(end + 1, '>');
+			char *zone;
+			time_t time;
+
+			if (!secs || secs[1] != ' ')
+				break;
+
+			secs += 2;
+			time = (time_t) atol(secs);
+			zone = strchr(secs, ' ');
+			if (zone && strlen(zone) == sizeof(" +0700") - 1) {
+				long tz;
+
+				zone++;
+				tz  = ('0' - zone[1]) * 60 * 60 * 10;
+				tz += ('0' - zone[2]) * 60 * 60;
+				tz += ('0' - zone[3]) * 60;
+				tz += ('0' - zone[4]) * 60;
+
+				if (zone[0] == '-')
+					tz = -tz;
+
+				time -= tz;
+			}
+			gmtime_r(&time, &commit->time);
+		}
+		break;
+	}
 	default:
 		commit = view->line[view->lines - 1];
 		if (!commit->title[0] &&
@@ -889,6 +1111,11 @@ report(const char *msg, ...)
 {
 	va_list args;
 
+	werase(title_win);
+	wmove(title_win, 0, 0);
+	wprintw(title_win, "commit %s", commit_id);
+	wrefresh(title_win);
+
 	va_start(args, msg);
 
 	werase(status_win);
@@ -902,21 +1129,22 @@ report(const char *msg, ...)
 	wrefresh(status_win);
 
 	va_end(args);
-
-	werase(title_win);
-	wmove(title_win, 0, 0);
-	wprintw(title_win, "commit %s", commit_id);
-	wrefresh(title_win);
-
 }
 
 int
 main(int argc, char *argv[])
 {
-	int request = REQ_MAIN;
 	int x, y;
+	int request;
+	int git_cmd;
 
 	signal(SIGINT, quit);
+
+	git_cmd = parse_options(argc, argv);
+	if (git_cmd < 0)
+		return 0;
+
+	request = opt_request;
 
 	initscr();      /* initialize the curses library */
 	nonl();         /* tell curses not to do NL->CR/NL on output */
