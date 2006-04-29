@@ -12,7 +12,7 @@
  * tig [options]
  * tig [options] log  [git log options]
  * tig [options] diff [git diff options]
- * tig [options] < [git log or git diff output]
+ * tig [options] <    [git log or git diff output]
  *
  * DESCRIPTION
  * -----------
@@ -29,6 +29,7 @@
 #endif
 
 #include <assert.h>
+#include <errno.h>
 #include <ctype.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -43,33 +44,55 @@
 static void die(const char *err, ...);
 static void report(const char *msg, ...);
 
-#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(x[0]))
-
+/* Some ascii-shorthands that fit into the ncurses namespace. */
 #define KEY_TAB		9
 #define KEY_ESC		27
 #define KEY_DEL		127
 
-#define REQ_OFFSET	(MAX_COMMAND + 1)
+/* View requests */
+enum request {
+	/* REQ_* values from form.h is used as a basis for user actions.
+	 * Offset new values below relative to MAX_COMMAND from form.h. */
+	REQ_OFFSET	= MAX_COMMAND,
 
-/* Requests for switching between the different views. */
-#define REQ_DIFF	(REQ_OFFSET + 0)
-#define REQ_LOG		(REQ_OFFSET + 1)
-#define REQ_MAIN	(REQ_OFFSET + 2)
-#define REQ_VIEWS	(REQ_OFFSET + 3)
+	/* Requests for switching between the different views. */
+	REQ_DIFF,
+	REQ_LOG,
+	REQ_MAIN,
+	REQ_VIEWS,
 
-#define REQ_QUIT	(REQ_OFFSET + 11)
-#define REQ_VERSION	(REQ_OFFSET + 12)
-#define REQ_STOP	(REQ_OFFSET + 13)
-#define REQ_UPDATE	(REQ_OFFSET + 14)
-#define REQ_REDRAW	(REQ_OFFSET + 15)
-#define REQ_FIRST_LINE	(REQ_OFFSET + 16)
-#define REQ_LAST_LINE	(REQ_OFFSET + 17)
-#define REQ_LINE_NUMBER	(REQ_OFFSET + 18)
+	REQ_QUIT,
+	REQ_VERSION,
+	REQ_STOP,
+	REQ_UPDATE,
+	REQ_REDRAW,
+	REQ_FIRST_LINE,
+	REQ_LAST_LINE,
+	REQ_LINE_NUMBER,
+};
 
-#define SIZEOF_VIEWS	(REQ_VIEWS - REQ_OFFSET)
+/* The request are used for adressing the view array. */
+#define VIEW_OFFSET(r)	((r) - REQ_OFFSET - 1)
+
 #define SIZEOF_ID	1024
 
 #define COLOR_TRANSP	(-1)
+
+#define DATE_FORMAT	"%Y-%m-%d %H:%M"
+#define DATE_COLS	(STRING_SIZE("2006-04-29 14:21") + 1)
+
+#define ABS(x)		((x) >= 0 ? (x) : -(x))
+#define MIN(x, y)	((x) < (y) ? (x) : (y))
+
+#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(x[0]))
+#define STRING_SIZE(x)	(sizeof(x) - 1)
+
+struct commit {
+	char id[41];
+	char title[75];
+	char author[75];
+	struct tm time;
+};
 
 
 /**
@@ -82,7 +105,6 @@ static int opt_request = REQ_MAIN;
 
 char head_id[SIZEOF_ID] = "HEAD";
 char commit_id[SIZEOF_ID] = "HEAD";
-
 
 /* Returns the index of log or diff command or -1 to exit. */
 static int
@@ -149,7 +171,7 @@ parse_options(int argc, char *argv[])
 			strncpy(commit_id, opt, SIZEOF_ID);
 
 		} else {
-			die("Unknown command: '%s'", opt);
+			die("unknown command '%s'", opt);
 		}
 	}
 
@@ -187,6 +209,7 @@ enum line_type {
 	LINE_MAIN_DELIM,
 	LINE_MERGE,
 	LINE_PARENT,
+	LINE_SIGNOFF,
 	LINE_STATUS,
 	LINE_TITLE,
 	LINE_TREE,
@@ -203,7 +226,7 @@ struct line_info {
 };
 
 #define LINE(type, line, fg, bg, attr) \
-	{ LINE_##type, (line), sizeof(line) - 1, (fg), (bg), (attr) }
+	{ LINE_##type, (line), STRING_SIZE(line), (fg), (bg), (attr) }
 
 static struct line_info line_info[] = {
 	/* Diff markup */
@@ -231,7 +254,9 @@ static struct line_info line_info[] = {
 	LINE(AUTHOR_IDENT, "author ",		COLOR_CYAN,	COLOR_TRANSP,	0),
 	LINE(COMMITTER,	   "committer ",	COLOR_MAGENTA,	COLOR_TRANSP,	0),
 
+	/* Misc */
 	LINE(DIFF_TREE,	   "diff-tree ",	COLOR_BLUE,	COLOR_TRANSP,	0),
+	LINE(SIGNOFF,	   "    Signed-off-by", COLOR_YELLOW,	COLOR_TRANSP,	0),
 
 	/* UI colors */
 	LINE(DEFAULT,	   "",	COLOR_TRANSP,	COLOR_TRANSP,	A_NORMAL),
@@ -252,7 +277,7 @@ get_line_info(char *line)
 
 	for (i = 0; i < ARRAY_SIZE(line_info); i++) {
 		if (linelen < line_info[i].linelen
-		    || strncmp(line_info[i].line, line, line_info[i].linelen))
+		    || strncasecmp(line_info[i].line, line, line_info[i].linelen))
 			continue;
 
 		return &line_info[i];
@@ -327,7 +352,6 @@ init_colors(void)
  *	help
  * v::
  *	version
- *
  **/
 
 #define HELP "(d)iff, (l)og, (m)ain, (q)uit, (v)ersion, (h)elp"
@@ -413,13 +437,6 @@ struct view {
 	FILE *pipe;
 };
 
-struct commit {
-	char id[41];
-	char title[75];
-	char author[75];
-	struct tm time;
-};
-
 static int pager_draw(struct view *view, unsigned int lineno);
 static int pager_read(struct view *view, char *line);
 
@@ -436,16 +453,13 @@ static int main_read(struct view *view, char *line);
 #define MAIN_CMD \
 	"git log --stat --pretty=raw %s"
 
-/* The status window at the bottom. Used for polling keystrokes. */
+/* The status window is used for polling keystrokes. */
 static WINDOW *status_win;
-
 static WINDOW *title_win;
 
-static unsigned int current_view;
+/* The number of loading views. Controls when nodelay should be in effect when
+ * polling user input. */
 static unsigned int nloading;
-
-static struct view views[];
-static struct view *display[];
 
 static struct view views[] = {
 	{ "diff",  DIFF_CMD,   commit_id,  pager_read,  pager_draw, sizeof(char) },
@@ -453,11 +467,13 @@ static struct view views[] = {
 	{ "main",  MAIN_CMD,   head_id,    main_read,   main_draw,  sizeof(struct commit) },
 };
 
+/* The display array of active views and the index of the current view. */
 static struct view *display[ARRAY_SIZE(views)];
-
+static unsigned int current_view;
 
 #define foreach_view(view, i) \
 	for (i = 0; i < sizeof(display) && (view = display[i]); i++)
+
 
 static void
 redraw_view(struct view *view)
@@ -503,12 +519,11 @@ resize_view(struct view *view)
 static void
 report_position(struct view *view, int all)
 {
-	report(all ? "line %d of %d (%d%%) viewing from %d"
+	report(all ? "line %d of %d (%d%%)"
 		     : "line %d of %d",
 	       view->lineno + 1,
 	       view->lines,
-	       view->lines ? view->offset * 100 / view->lines : 0,
-	       view->offset);
+	       view->lines ? (view->lineno + 1) * 100 / view->lines : 0);
 }
 
 
@@ -521,7 +536,7 @@ move_view(struct view *view, int lines)
 	assert(0 <= view->offset && view->offset < view->lines);
 	assert(lines);
 
-	if (view->height < (lines > 0 ? lines : -lines)) {
+	if (view->height < ABS(lines)) {
 		redraw_view(view);
 
 	} else {
@@ -546,7 +561,7 @@ move_view(struct view *view, int lines)
 		view->draw(view, view->lineno - view->offset);
 	}
 
-	assert(view->offset <= view->lineno && view->lineno <= view->lines);
+	assert(view->offset <= view->lineno && view->lineno < view->lines);
 
 	redrawwin(view->win);
 	wrefresh(view->win);
@@ -623,18 +638,24 @@ navigate_view(struct view *view, int request)
 		break;
 	}
 
-	if (steps < 0 && view->lineno == 0) {
+	if (steps <= 0 && view->lineno == 0) {
 		report("already at first line");
 		return;
 
-	} else if (steps > 0 && view->lineno + 1 == view->lines) {
+	} else if (steps >= 0 && view->lineno + 1 == view->lines) {
 		report("already at last line");
 		return;
 	}
 
+	/* Move the current line */
 	view->lineno += steps;
-	view->draw(view, view->lineno - steps - view->offset);
+	assert(0 <= view->lineno && view->lineno < view->lines);
 
+	/* Repaint the old "current" line if we be scrolling */
+	if (ABS(steps) < view->height)
+		view->draw(view, view->lineno - steps - view->offset);
+
+	/* Check whether the view needs to be scrolled */
 	if (view->lineno < view->offset ||
 	    view->lineno >= view->offset + view->height) {
 		if (steps < 0 && -steps > view->offset) {
@@ -653,7 +674,7 @@ navigate_view(struct view *view, int request)
 		return;
 	}
 
-	/* Draw the cursor line */
+	/* Draw the current line */
 	view->draw(view, view->lineno - view->offset);
 
 	redrawwin(view->win);
@@ -738,11 +759,13 @@ update_view(struct view *view)
 			break;
 	}
 
-	if (redraw)
+	if (redraw) {
+		/* FIXME: This causes flickering. Draw incrementally. */
 		redraw_view(view);
+	}
 
 	if (ferror(view->pipe)) {
-		report("failed to read %s", view->cmd);
+		report("failed to read %s: %s", view->cmd, strerror(errno));
 		goto end;
 
 	} else if (feof(view->pipe)) {
@@ -764,7 +787,7 @@ end:
 static struct view *
 switch_view(struct view *prev, int request)
 {
-	struct view *view = &views[request - REQ_OFFSET];
+	struct view *view = &views[VIEW_OFFSET(request)];
 	struct view *displayed;
 	int i;
 
@@ -895,6 +918,7 @@ pager_draw(struct view *view, unsigned int lineno)
 {
 	enum line_type type;
 	char *line;
+	int linelen;
 	int attr;
 
 	if (view->offset + lineno >= view->lines)
@@ -912,8 +936,17 @@ pager_draw(struct view *view, unsigned int lineno)
 	attr = get_line_attr(type);
 	wattrset(view->win, attr);
 
+	linelen = strlen(line);
+	linelen = MIN(linelen, view->width);
+
 	if (opt_line_number) {
-		mvwprintw(view->win, lineno, 0, "%4d: ", view->offset + lineno + 1);
+		wmove(view->win, lineno, 0);
+		lineno += view->offset + 1;
+		if (lineno == 1 || (lineno % 10) == 0)
+			wprintw(view->win, "%4d: ", lineno);
+		else
+			wprintw(view->win, "    : ", lineno);
+
 		while (line) {
 			if (*line == '\t') {
 				waddstr(view->win, "        ");
@@ -933,8 +966,8 @@ pager_draw(struct view *view, unsigned int lineno)
 	} else {
 		/* No empty lines makes cursor drawing and clearing implicit. */
 		if (!*line)
-			line = " ";
-		mvwaddstr(view->win, lineno, 0, line);
+			line = " ", linelen = 1;
+		mvwaddnstr(view->win, lineno, 0, line, linelen);
 	}
 
 	return TRUE;
@@ -964,7 +997,8 @@ main_draw(struct view *view, unsigned int lineno)
 		return FALSE;
 
 	commit = view->line[view->offset + lineno];
-	if (!commit) return FALSE;
+	if (!*commit->author)
+		return FALSE;
 
 	if (view->offset + lineno == view->lineno) {
 		strncpy(commit_id, commit->id, SIZEOF_ID);
@@ -976,10 +1010,11 @@ main_draw(struct view *view, unsigned int lineno)
 	wmove(view->win, lineno, cols);
 	wattrset(view->win, get_line_attr(LINE_MAIN_DATE));
 
-	timelen = strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S ", &commit->time);
+	timelen = strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time);
 	waddnstr(view->win, buf, timelen);
+	waddstr(view->win, " ");
 
-	cols += 20;
+	cols += DATE_COLS;
 	wmove(view->win, lineno, cols);
 	wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
 
@@ -1001,6 +1036,7 @@ main_draw(struct view *view, unsigned int lineno)
 	return TRUE;
 }
 
+/* Reads git log --pretty=raw output and parses it into the commit struct. */
 static int
 main_read(struct view *view, char *line)
 {
@@ -1013,7 +1049,7 @@ main_read(struct view *view, char *line)
 		if (!commit)
 			return FALSE;
 
-		line += sizeof("commit ") - 1;
+		line += STRING_SIZE("commit ");
 
 		view->line[view->lines++] = commit;
 		strncpy(commit->id, line, sizeof(commit->id));
@@ -1021,7 +1057,7 @@ main_read(struct view *view, char *line)
 
 	case LINE_AUTHOR_IDENT:
 	{
-		char *ident = line + sizeof("author ") - 1;
+		char *ident = line + STRING_SIZE("author ");
 		char *end = strchr(ident, '<');
 
 		if (end) {
@@ -1032,6 +1068,7 @@ main_read(struct view *view, char *line)
 		commit = view->line[view->lines - 1];
 		strncpy(commit->author, ident, sizeof(commit->author));
 
+		/* Parse epoch and timezone */
 		if (end) {
 			char *secs = strchr(end + 1, '>');
 			char *zone;
@@ -1043,7 +1080,7 @@ main_read(struct view *view, char *line)
 			secs += 2;
 			time = (time_t) atol(secs);
 			zone = strchr(secs, ' ');
-			if (zone && strlen(zone) == sizeof(" +0700") - 1) {
+			if (zone && strlen(zone) == STRING_SIZE(" +0700")) {
 				long tz;
 
 				zone++;
@@ -1062,6 +1099,7 @@ main_read(struct view *view, char *line)
 		break;
 	}
 	default:
+		/* Fill in the commit title */
 		commit = view->line[view->lines - 1];
 		if (!commit->title[0] &&
 		    !strncmp(line, "    ", 4) &&
@@ -1201,6 +1239,35 @@ main(int argc, char *argv[])
 }
 
 /**
+ * BUGS
+ * ----
+ * Known bugs and problems:
+ *
+ * Redrawing of the main view while loading::
+ *	If only part of a commit has been parsed not all fields will be visible
+ *	or even redrawn when the whole commit have loaded. This can be
+ *	triggered when continuously moving to the last line. Use 'r' to redraw
+ *	the whole screen.
+ *
+ * TODO
+ * ----
+ * Features that should be explored.
+ *
+ *  - Proper command line handling; ability to take the command that should be
+ *    shown. Example:
+ *
+ *	$ tig log -p
+ *
+ *  - Internal command line (exmode-inspired) which allows to specify what git
+ *    log or git diff command to run. Example:
+ *
+ *	:log -p
+ *
+ * - Proper resizing support. I am yet to figure out whether catching SIGWINCH
+ *   is preferred over using ncurses' built-in support for resizing.
+ *
+ * - Locale support.
+ *
  * COPYRIGHT
  * ---------
  * Copyright (c) Jonas Fonseca, 2006
@@ -1212,6 +1279,9 @@ main(int argc, char *argv[])
  *
  * SEE ALSO
  * --------
+ * [verse]
  * link:http://www.kernel.org/pub/software/scm/git/docs/[git(7)],
  * link:http://www.kernel.org/pub/software/scm/cogito/docs/[cogito(7)]
+ * gitk(1): git repository browser written using tcl/tk,
+ * gitview(1): git repository browser written using python/gtk.
  **/

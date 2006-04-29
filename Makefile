@@ -1,3 +1,4 @@
+PREFIX	= $(HOME)
 LDFLAGS = -lcurses
 CFLAGS	= -g '-DVERSION="$(VERSION)"' -Wall
 PROGS	= tig
@@ -9,7 +10,14 @@ docs: $(DOCS)
 
 install: all
 	for prog in $(PROGS); do \
-		install $$prog $(HOME)/bin; \
+		install $$prog $(PREFIX)/bin; \
+	done
+
+install-docs: docs
+	for doc in $(DOCS); do \
+		case "$$doc" in \
+		*.1) install $$doc $(PREFIX)/man/man1 ;; \
+		esac \
 	done
 
 clean:
@@ -26,10 +34,10 @@ tig.1.txt: tig.c
 	sed 's/\*\///;s/^[^*]*\* *//' > $@
 
 %.1.html : %.1.txt
-	asciidoc -b xhtml11 -d manpage -f asciidoc.conf $<
+	asciidoc -b xhtml11 -d manpage $<
 
 %.1.xml : %.1.txt
-	asciidoc -b docbook -d manpage -f asciidoc.conf $<
+	asciidoc -b docbook -d manpage $<
 
 %.1 : %.1.xml
 	xmlto man $<
