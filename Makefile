@@ -1,11 +1,14 @@
 PREFIX	= $(HOME)
 LDFLAGS = -lcurses
-CFLAGS	= -g '-DVERSION="$(VERSION)"' -Wall
+CFLAGS	= '-DVERSION="$(VERSION)"' -Wall
+DFLAGS	= -g -DDEBUG
 PROGS	= tig
 DOCS	= tig.1.txt tig.1 tig.1.html
 VERSION	= $(shell git-describe)
 
 all: $(PROGS)
+all-debug: $(PROGS)
+all-debug: CFLAGS += $(DFLAGS)
 docs: $(DOCS)
 
 install: all
