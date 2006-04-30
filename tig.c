@@ -278,7 +278,7 @@ static struct line_info line_info[] = {
 	LINE(DEFAULT,	   "",	COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL),
 	LINE(CURSOR,	   "",	COLOR_WHITE,	COLOR_GREEN,	A_BOLD),
 	LINE(STATUS,	   "",	COLOR_GREEN,	COLOR_DEFAULT,	0),
-	LINE(TITLE,	   "",	COLOR_YELLOW,	COLOR_BLUE,	A_BOLD),
+	LINE(TITLE,	   "",	COLOR_WHITE,	COLOR_BLUE,	A_BOLD),
 	LINE(MAIN_DATE,    "",	COLOR_BLUE,	COLOR_DEFAULT,	0),
 	LINE(MAIN_AUTHOR,  "",	COLOR_GREEN,	COLOR_DEFAULT,	0),
 	LINE(MAIN_COMMIT,  "",	COLOR_DEFAULT,	COLOR_DEFAULT,	0),
@@ -466,7 +466,7 @@ static int main_read(struct view *view, char *line);
 	"git diff --find-copies-harder -B -C %s^ %s"
 
 #define LOG_CMD	\
-	"git log --stat -n100 %s"
+	"git log --cc --stat -n100 %s"
 
 #define MAIN_CMD \
 	"git log --stat --pretty=raw %s"
@@ -537,17 +537,6 @@ resize_view(struct view *view)
 	getmaxyx(view->win, view->height, view->width);
 }
 
-/* FIXME: Fix percentage. */
-static void
-report_position(struct view *view, int all)
-{
-	report(all ? "line %d of %d (%d%%)"
-		     : "line %d of %d",
-	       view->lineno + 1,
-	       view->lines,
-	       view->lines ? (view->lineno + 1) * 100 / view->lines : 0);
-}
-
 
 static void
 move_view(struct view *view, int lines)
@@ -588,8 +577,7 @@ move_view(struct view *view, int lines)
 
 	redrawwin(view->win);
 	wrefresh(view->win);
-
-	report_position(view, lines);
+	report("");
 }
 
 static void
@@ -702,8 +690,7 @@ navigate_view(struct view *view, int request)
 
 	redrawwin(view->win);
 	wrefresh(view->win);
-
-	report_position(view, view->height);
+	report("");
 }
 
 
@@ -800,7 +787,7 @@ update_view(struct view *view)
 		goto end;
 
 	} else if (feof(view->pipe)) {
-		report_position(view, 0);
+		report("loaded %d lines", view->lines);
 		goto end;
 	}
 
@@ -1188,11 +1175,23 @@ static void die(const char *err, ...)
 static void
 report(const char *msg, ...)
 {
+	struct view *view = display[current_view];
 	va_list args;
 
 	werase(title_win);
 	wmove(title_win, 0, 0);
-	wprintw(title_win, "commit %s", commit_id);
+	if (view) {
+		wprintw(title_win, "[%s] ref: %s", view->name, commit_id);
+
+		if (view->lines) {
+			wprintw(title_win, " - line %d of %d (%d%%)",
+				view->lineno + 1,
+				view->lines,
+				view->lines ? (view->lineno + 1) * 100 / view->lines : 0);
+		}
+	} else {
+		wprintw(title_win, "commit %s", commit_id);
+	}
 	wrefresh(title_win);
 
 	va_start(args, msg);
