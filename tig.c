@@ -1,3 +1,5 @@
+/* Copyright (c) 2006 Jonas Fonseca <fonseca@diku.dk>
+ * See license info at the bottom. */
 /**
  * TIG(1)
  * ======
@@ -38,39 +40,10 @@
 #include <time.h>
 
 #include <curses.h>
-#include <form.h>
 
 static void die(const char *err, ...);
 static void report(const char *msg, ...);
-
-/* Some ascii-shorthands that fit into the ncurses namespace. */
-#define KEY_TAB		9
-#define KEY_ESC		27
-#define KEY_DEL		127
-
-/* View requests */
-/* REQ_* values from form.h is used as a basis for user actions. */
-enum request {
-	/* Offset new values relative to MAX_COMMAND from form.h. */
-	REQ_OFFSET = MAX_COMMAND,
-
-	/* XXX: Keep the view request first and in sync with views[]. */
-	REQ_DIFF,
-	REQ_LOG,
-	REQ_MAIN,
-
-	REQ_QUIT,
-	REQ_VERSION,
-	REQ_STOP,
-	REQ_UPDATE,
-	REQ_REDRAW,
-	REQ_FIRST_LINE,
-	REQ_LAST_LINE,
-	REQ_LINE_NUMBER,
-};
-
-/* The request are used for adressing the view array. */
-#define VIEW_OFFSET(r)	((r) - REQ_OFFSET - 1)
+static void update_title(void);
 
 /* Size of symbolic or SHA1 ID. */
 #define SIZEOF_REF	256
@@ -80,16 +53,47 @@ enum request {
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
-#define DATE_COLS	(STRING_SIZE("2006-04-29 14:21") + 1)
+#define DATE_COLS	(STRING_SIZE("2006-04-29 14:21 "))
 
 /* The interval between line numbers. */
-#define NUMBER_INTERVAL	5
+#define NUMBER_INTERVAL	1
 
 #define ABS(x)		((x) >= 0 ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) : (y))
 
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(x[0]))
 #define STRING_SIZE(x)	(sizeof(x) - 1)
+
+/* Some ascii-shorthands that fit into the ncurses namespace. */
+#define KEY_TAB		9
+#define KEY_ESC		27
+
+/* User requests. */
+enum request {
+	/* XXX: Keep the view request first and in sync with views[]. */
+	REQ_VIEW_DIFF,
+	REQ_VIEW_LOG,
+	REQ_VIEW_MAIN,
+
+	REQ_QUIT,
+	REQ_SHOW_VERSION,
+	REQ_STOP_LOADING,
+	REQ_SCREEN_REDRAW,
+	REQ_SCREEN_UPDATE,
+	REQ_TOGGLE_LINE_NUMBERS,
+
+	REQ_MOVE_UP,
+	REQ_MOVE_DOWN,
+	REQ_MOVE_PAGE_UP,
+	REQ_MOVE_PAGE_DOWN,
+	REQ_MOVE_FIRST_LINE,
+	REQ_MOVE_LAST_LINE,
+
+	REQ_SCROLL_LINE_UP,
+	REQ_SCROLL_LINE_DOWN,
+	REQ_SCROLL_PAGE_UP,
+	REQ_SCROLL_PAGE_DOWN,
+};
 
 struct commit {
 	char id[41];
@@ -117,7 +121,7 @@ string_ncopy(char *dst, char *src, int dstlen)
  **/
 
 static int opt_line_number;
-static int opt_request = REQ_MAIN;
+static int opt_request = REQ_VIEW_MAIN;
 
 char head_id[SIZEOF_REF] = "HEAD";
 char commit_id[SIZEOF_REF] = "HEAD";
@@ -136,7 +140,7 @@ parse_options(int argc, char *argv[])
 		 *	git log options.
 		 **/
 		if (!strcmp(opt, "log")) {
-			opt_request = REQ_LOG;
+			opt_request = REQ_VIEW_LOG;
 			return i;
 
 		/**
@@ -144,7 +148,7 @@ parse_options(int argc, char *argv[])
 		 *	git diff options.
 		 **/
 		} else if (!strcmp(opt, "diff")) {
-			opt_request = REQ_DIFF;
+			opt_request = REQ_VIEW_DIFF;
 			return i;
 
 		/**
@@ -152,14 +156,14 @@ parse_options(int argc, char *argv[])
 		 *	Start up in log view.
 		 **/
 		} else if (!strcmp(opt, "-l")) {
-			opt_request = REQ_LOG;
+			opt_request = REQ_VIEW_LOG;
 
 		/**
 		 * -d::
 		 *	Start up in diff view.
 		 **/
 		} else if (!strcmp(opt, "-d")) {
-			opt_request = REQ_DIFF;
+			opt_request = REQ_VIEW_DIFF;
 
 		/**
 		 * -n, --line-number::
@@ -192,6 +196,84 @@ parse_options(int argc, char *argv[])
 	}
 
 	return i;
+}
+
+
+/**
+ * KEYS
+ * ----
+ *
+ * d::
+ *	diff
+ * l::
+ *	log
+ * q::
+ *	quit
+ * r::
+ *	redraw screen
+ * s::
+ *	stop all background loading
+ * j::
+ *	down
+ * k::
+ *	up
+ * h, ?::
+ *	help
+ * v::
+ *	version
+ **/
+
+#define HELP "(d)iff, (l)og, (m)ain, (q)uit, (v)ersion, (h)elp"
+
+struct keymap {
+	int alias;
+	int request;
+};
+
+struct keymap keymap[] = {
+	/* Cursor navigation */
+	{ KEY_UP,	REQ_MOVE_UP },
+	{ 'k',		REQ_MOVE_UP },
+	{ KEY_DOWN,	REQ_MOVE_DOWN },
+	{ 'j',		REQ_MOVE_DOWN },
+	{ KEY_HOME,	REQ_MOVE_FIRST_LINE },
+	{ KEY_END,	REQ_MOVE_LAST_LINE },
+	{ KEY_NPAGE,	REQ_MOVE_PAGE_DOWN },
+	{ KEY_PPAGE,	REQ_MOVE_PAGE_UP },
+
+	/* Scrolling */
+	{ KEY_IC,	REQ_SCROLL_LINE_UP }, /* scroll field backward a line */
+	{ KEY_DC,	REQ_SCROLL_LINE_DOWN }, /* scroll field forward a line	*/
+	{ 's',		REQ_SCROLL_PAGE_DOWN }, /* scroll field forward a page	*/
+	{ 'w',		REQ_SCROLL_PAGE_UP }, /* scroll field backward a page */
+
+	/* View switching */
+	{ 'd',		REQ_VIEW_DIFF },
+	{ 'l',		REQ_VIEW_LOG },
+	{ 'm',		REQ_VIEW_MAIN },
+
+	/* Misc */
+	{ KEY_ESC,	REQ_QUIT },
+	{ 'q',		REQ_QUIT },
+	{ 'z',		REQ_STOP_LOADING },
+	{ 'v',		REQ_SHOW_VERSION },
+	{ 'r',		REQ_SCREEN_REDRAW },
+	{ 'n',		REQ_TOGGLE_LINE_NUMBERS },
+
+	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
+	{ ERR,		REQ_SCREEN_UPDATE },
+};
+
+static int
+get_request(int request)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(keymap); i++)
+		if (keymap[i].alias == request)
+			return keymap[i].request;
+
+	return request;
 }
 
 
@@ -346,85 +428,6 @@ init_colors(void)
 }
 
 
-/**
- * KEYS
- * ----
- *
- * d::
- *	diff
- * l::
- *	log
- * q::
- *	quit
- * r::
- *	redraw screen
- * s::
- *	stop all background loading
- * j::
- *	down
- * k::
- *	up
- * h, ?::
- *	help
- * v::
- *	version
- **/
-
-#define HELP "(d)iff, (l)og, (m)ain, (q)uit, (v)ersion, (h)elp"
-
-struct keymap {
-	int alias;
-	int request;
-};
-
-struct keymap keymap[] = {
-	/* Cursor navigation */
-	{ KEY_UP,	REQ_PREV_LINE },
-	{ 'k',		REQ_PREV_LINE },
-	{ KEY_DOWN,	REQ_NEXT_LINE },
-	{ 'j',		REQ_NEXT_LINE },
-	{ KEY_HOME,	REQ_FIRST_LINE },
-	{ KEY_END,	REQ_LAST_LINE },
-	{ KEY_NPAGE,	REQ_NEXT_PAGE },
-	{ KEY_PPAGE,	REQ_PREV_PAGE },
-
-	/* Scrolling */
-	{ KEY_IC,	REQ_SCR_BLINE }, /* scroll field backward a line */
-	{ KEY_DC,	REQ_SCR_FLINE }, /* scroll field forward a line	*/
-	{ 's',		REQ_SCR_FPAGE }, /* scroll field forward a page	*/
-	{ 'w',		REQ_SCR_BPAGE }, /* scroll field backward a page */
-
-	/* View switching */
-	{ 'd',		REQ_DIFF },
-	{ 'l',		REQ_LOG },
-	{ 'm',		REQ_MAIN },
-
-	/* Line number toggling */
-	{ 'n',		REQ_LINE_NUMBER },
-	/* No input from wgetch() with nodelay() enabled. */
-	{ ERR,		REQ_UPDATE },
-
-	/* Misc */
-	{ KEY_ESC,	REQ_QUIT },
-	{ 'q',		REQ_QUIT },
-	{ 's',		REQ_STOP },
-	{ 'v',		REQ_VERSION },
-	{ 'r',		REQ_REDRAW },
-};
-
-static int
-get_request(int request)
-{
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(keymap); i++)
-		if (keymap[i].alias == request)
-			return keymap[i].request;
-
-	return request;
-}
-
-
 /*
  * Viewer
  */
@@ -538,8 +541,9 @@ resize_view(struct view *view)
 }
 
 
+/* Scrolling backend */
 static void
-move_view(struct view *view, int lines)
+do_scroll_view(struct view *view, int lines)
 {
 	/* The rendering expects the new offset. */
 	view->offset += lines;
@@ -580,15 +584,16 @@ move_view(struct view *view, int lines)
 	report("");
 }
 
+/* Scroll frontend */
 static void
 scroll_view(struct view *view, int request)
 {
 	int lines = 1;
 
 	switch (request) {
-	case REQ_SCR_FPAGE:
+	case REQ_SCROLL_PAGE_DOWN:
 		lines = view->height;
-	case REQ_SCR_FLINE:
+	case REQ_SCROLL_LINE_DOWN:
 		if (view->offset + lines > view->lines)
 			lines = view->lines - view->offset;
 
@@ -598,9 +603,9 @@ scroll_view(struct view *view, int request)
 		}
 		break;
 
-	case REQ_SCR_BPAGE:
+	case REQ_SCROLL_PAGE_UP:
 		lines = view->height;
-	case REQ_SCR_BLINE:
+	case REQ_SCROLL_LINE_UP:
 		if (lines > view->offset)
 			lines = view->offset;
 
@@ -613,38 +618,39 @@ scroll_view(struct view *view, int request)
 		break;
 	}
 
-	move_view(view, lines);
+	do_scroll_view(view, lines);
 }
 
+/* Cursor moving */
 static void
-navigate_view(struct view *view, int request)
+move_view(struct view *view, int request)
 {
 	int steps;
 
 	switch (request) {
-	case REQ_FIRST_LINE:
+	case REQ_MOVE_FIRST_LINE:
 		steps = -view->lineno;
 		break;
 
-	case REQ_LAST_LINE:
+	case REQ_MOVE_LAST_LINE:
 		steps = view->lines - view->lineno - 1;
 		break;
 
-	case REQ_PREV_PAGE:
+	case REQ_MOVE_PAGE_UP:
 		steps = view->height > view->lineno
 		      ? -view->lineno : -view->height;
 		break;
 
-	case REQ_NEXT_PAGE:
+	case REQ_MOVE_PAGE_DOWN:
 		steps = view->lineno + view->height >= view->lines
 		      ? view->lines - view->lineno - 1 : view->height;
 		break;
 
-	case REQ_PREV_LINE:
+	case REQ_MOVE_UP:
 		steps = -1;
 		break;
 
-	case REQ_NEXT_LINE:
+	case REQ_MOVE_DOWN:
 		steps = 1;
 		break;
 	}
@@ -681,7 +687,7 @@ navigate_view(struct view *view, int request)
 			}
 		}
 
-		move_view(view, steps);
+		do_scroll_view(view, steps);
 		return;
 	}
 
@@ -772,6 +778,9 @@ update_view(struct view *view)
 			break;
 	}
 
+	/* CPU hogilicious! */
+	update_title();
+
 	if (redraw_from >= 0) {
 		/* If this is an incremental update, redraw the previous line
 		 * since for commits some members could have changed. */
@@ -805,7 +814,7 @@ end:
 static struct view *
 switch_view(struct view *prev, int request)
 {
-	struct view *view = &views[VIEW_OFFSET(request)];
+	struct view *view = &views[request];
 	struct view *displayed;
 	int i;
 
@@ -861,7 +870,7 @@ switch_view(struct view *prev, int request)
 }
 
 
-/* Process a keystroke */
+/* Process keystrokes */
 static int
 view_driver(struct view *view, int key)
 {
@@ -869,53 +878,54 @@ view_driver(struct view *view, int key)
 	int i;
 
 	switch (request) {
-	case REQ_NEXT_LINE:
-	case REQ_PREV_LINE:
-	case REQ_FIRST_LINE:
-	case REQ_LAST_LINE:
-	case REQ_NEXT_PAGE:
-	case REQ_PREV_PAGE:
+	case REQ_MOVE_UP:
+	case REQ_MOVE_DOWN:
+	case REQ_MOVE_PAGE_UP:
+	case REQ_MOVE_PAGE_DOWN:
+	case REQ_MOVE_FIRST_LINE:
+	case REQ_MOVE_LAST_LINE:
 		if (view)
-			navigate_view(view, request);
+			move_view(view, request);
 		break;
 
-	case REQ_SCR_FLINE:
-	case REQ_SCR_BLINE:
-	case REQ_SCR_FPAGE:
-	case REQ_SCR_BPAGE:
+	case REQ_SCROLL_LINE_DOWN:
+	case REQ_SCROLL_LINE_UP:
+	case REQ_SCROLL_PAGE_DOWN:
+	case REQ_SCROLL_PAGE_UP:
 		if (view)
 			scroll_view(view, request);
 		break;
 
-	case REQ_MAIN:
-	case REQ_LOG:
-	case REQ_DIFF:
+	case REQ_VIEW_MAIN:
+	case REQ_VIEW_LOG:
+	case REQ_VIEW_DIFF:
 		view = switch_view(view, request);
 		break;
 
-	case REQ_LINE_NUMBER:
+	case REQ_TOGGLE_LINE_NUMBERS:
 		opt_line_number = !opt_line_number;
-		redraw_view(view);
+		if (view)
+			redraw_view(view);
 		break;
 
-	case REQ_REDRAW:
-		redraw_view(view);
-		break;
-
-	case REQ_STOP:
+	case REQ_STOP_LOADING:
 		foreach_view (view, i) {
 			if (view->pipe) {
 				end_update(view);
-				scroll_view(view, 0);
+				//scroll_view(view, 0);
 			}
 		}
 		break;
 
-	case REQ_VERSION:
+	case REQ_SHOW_VERSION:
 		report("version %s", VERSION);
 		return TRUE;
 
-	case REQ_UPDATE:
+	case REQ_SCREEN_REDRAW:
+		redraw_view(view);
+		break;
+
+	case REQ_SCREEN_UPDATE:
 		doupdate();
 		return TRUE;
 
@@ -1173,14 +1183,14 @@ static void die(const char *err, ...)
 }
 
 static void
-report(const char *msg, ...)
+update_title(void)
 {
 	struct view *view = display[current_view];
-	va_list args;
 
 	werase(title_win);
 	wmove(title_win, 0, 0);
 	if (view) {
+		/* [main] ref: 334b506... - line 6 of 4383 (0%) */
 		wprintw(title_win, "[%s] ref: %s", view->name, commit_id);
 
 		if (view->lines) {
@@ -1193,8 +1203,17 @@ report(const char *msg, ...)
 		wprintw(title_win, "commit %s", commit_id);
 	}
 	wrefresh(title_win);
+}
+
+/* Status and title window updater. */
+static void
+report(const char *msg, ...)
+{
+	va_list args;
 
 	va_start(args, msg);
+
+	update_title();
 
 	werase(status_win);
 	wmove(status_win, 0, 0);
@@ -1282,16 +1301,6 @@ main(int argc, char *argv[])
 }
 
 /**
- * BUGS
- * ----
- * Known bugs and problems:
- *
- * Redrawing of the main view while loading::
- *	If only part of a commit has been parsed not all fields will be visible
- *	or even redrawn when the whole commit have loaded. This can be
- *	triggered when continuously moving to the last line. Use 'r' to redraw
- *	the whole screen.
- *
  * TODO
  * ----
  * Features that should be explored.
@@ -1315,7 +1324,7 @@ main(int argc, char *argv[])
  *
  * COPYRIGHT
  * ---------
- * Copyright (c) Jonas Fonseca, 2006
+ * Copyright (c) Jonas Fonseca <fonseca@diku.dk>, 2006
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
