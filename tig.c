@@ -43,7 +43,6 @@
 
 static void die(const char *err, ...);
 static void report(const char *msg, ...);
-static void update_title(void);
 
 #define SIZEOF_REF	256	/* Size of symbolic or SHA1 ID. */
 #define SIZEOF_CMD	1024	/* Size of command buffer. */
@@ -55,8 +54,10 @@ static void update_title(void);
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
 #define DATE_COLS	(STRING_SIZE("2006-04-29 14:21 "))
 
-/* The interval between line numbers. */
+/* The default interval between line numbers. */
 #define NUMBER_INTERVAL	1
+
+#define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
 
 #define ABS(x)		((x) >= 0 ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) : (y))
@@ -65,11 +66,15 @@ static void update_title(void);
 #define STRING_SIZE(x)	(sizeof(x) - 1)
 
 /* Some ascii-shorthands that fit into the ncurses namespace. */
-#define KEY_TAB		9
+#define KEY_TAB		'\t'
+#define KEY_RETURN	'\r'
 #define KEY_ESC		27
 
-/* User requests. */
+/* User action requests. */
 enum request {
+	/* Offset all requests to avoid conflicts with ncurses getch values. */
+	REQ_OFFSET = KEY_MAX + 1,
+
 	/* XXX: Keep the view request first and in sync with views[]. */
 	REQ_VIEW_MAIN,
 	REQ_VIEW_DIFF,
@@ -78,6 +83,7 @@ enum request {
 
 	REQ_QUIT,
 	REQ_SHOW_VERSION,
+	REQ_SHOW_COMMIT,
 	REQ_STOP_LOADING,
 	REQ_SCREEN_REDRAW,
 	REQ_SCREEN_UPDATE,
@@ -97,10 +103,10 @@ enum request {
 };
 
 struct commit {
-	char id[41];
-	char title[75];
-	char author[75];
-	struct tm time;
+	char id[41];		/* SHA1 ID. */
+	char title[75];		/* The first line of the commit message. */ 
+	char author[75];	/* The author of the commit. */
+	struct tm time;		/* Date from the author ident. */
 };
 
 
@@ -146,7 +152,7 @@ parse_options(int argc, char *argv[])
 		 **/
 		if (!strcmp(opt, "log") ||
 		    !strcmp(opt, "diff")) {
-			opt_request = opt[0] = 'l'
+			opt_request = opt[0] == 'l'
 				    ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
 			return i;
 
@@ -254,10 +260,12 @@ struct keymap keymap[] = {
 	{ KEY_PPAGE,	REQ_MOVE_PAGE_UP },
 
 	/* Scrolling */
-	{ KEY_IC,	REQ_SCROLL_LINE_UP }, /* scroll field backward a line */
-	{ KEY_DC,	REQ_SCROLL_LINE_DOWN }, /* scroll field forward a line	*/
-	{ 's',		REQ_SCROLL_PAGE_DOWN }, /* scroll field forward a page	*/
-	{ 'w',		REQ_SCROLL_PAGE_UP }, /* scroll field backward a page */
+	{ KEY_IC,	REQ_SCROLL_LINE_UP },
+	{ KEY_DC,	REQ_SCROLL_LINE_DOWN },
+	{ 'w',		REQ_SCROLL_PAGE_UP },
+	{ 's',		REQ_SCROLL_PAGE_DOWN },
+
+	{ KEY_RETURN,	REQ_SHOW_COMMIT },
 
 	/* View switching */
 	{ 'm',		REQ_VIEW_MAIN },
@@ -292,45 +300,44 @@ get_request(int request)
 
 /*
  * Line-oriented content detection.
- */
-
-/*	     Line type	   String to match	Foreground	Background	Attr
- *	     ---------     ---------------      ----------      ----------      ---- */
+ *
+ *   Line type	   String to match	Foreground	Background	Attributes
+ *   ---------     ---------------      ----------      ----------      ---------- */
 #define LINE_INFO \
-	/* Diff markup */ \
-	LINE(DIFF,	   "diff --git ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-	LINE(INDEX,	   "index ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
-	LINE(DIFF_CHUNK,   "@@",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-	LINE(DIFF_ADD,	   "+",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
-	LINE(DIFF_DEL,	   "-",			COLOR_RED,	COLOR_DEFAULT,	0), \
-	LINE(DIFF_OLDMODE, "old mode ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-	LINE(DIFF_NEWMODE, "new mode ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-	LINE(DIFF_COPY,	   "copy ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-	LINE(DIFF_RENAME,  "rename ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-	LINE(DIFF_SIM,	   "similarity ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-	LINE(DIFF_DISSIM,  "dissimilarity ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-	/* Pretty print commit header */ \
-	LINE(AUTHOR,	   "Author: ",		COLOR_CYAN,	COLOR_DEFAULT,	0), \
-	LINE(MERGE,	   "Merge: ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
-	LINE(DATE,	   "Date:   ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-	/* Raw commit header */ \
-	LINE(COMMIT,	   "commit ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
-	LINE(PARENT,	   "parent ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
-	LINE(TREE,	   "tree ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
-	LINE(AUTHOR_IDENT, "author ",		COLOR_CYAN,	COLOR_DEFAULT,	0), \
-	LINE(COMMITTER,	   "committer ",	COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-	/* Misc */ \
-	LINE(DIFF_TREE,	   "diff-tree ",	COLOR_BLUE,	COLOR_DEFAULT,	0), \
-	LINE(SIGNOFF,	   "    Signed-off-by", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-	/* UI colors */ \
-	LINE(DEFAULT,	   "",	COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
-	LINE(CURSOR,	   "",	COLOR_WHITE,	COLOR_GREEN,	A_BOLD), \
-	LINE(STATUS,	   "",	COLOR_GREEN,	COLOR_DEFAULT,	0), \
-	LINE(TITLE,	   "",	COLOR_WHITE,	COLOR_BLUE,	A_BOLD), \
-	LINE(MAIN_DATE,    "",	COLOR_BLUE,	COLOR_DEFAULT,	0), \
-	LINE(MAIN_AUTHOR,  "",	COLOR_GREEN,	COLOR_DEFAULT,	0), \
-	LINE(MAIN_COMMIT,  "",	COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
-	LINE(MAIN_DELIM,   "",	COLOR_MAGENTA,	COLOR_DEFAULT,	0),
+/* Diff markup */ \
+LINE(DIFF,	   "diff --git ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(INDEX,	   "index ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
+LINE(DIFF_CHUNK,   "@@",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+LINE(DIFF_ADD,	   "+",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
+LINE(DIFF_DEL,	   "-",			COLOR_RED,	COLOR_DEFAULT,	0), \
+LINE(DIFF_OLDMODE, "old mode ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(DIFF_NEWMODE, "new mode ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(DIFF_COPY,	   "copy ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(DIFF_RENAME,  "rename ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(DIFF_SIM,	   "similarity ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(DIFF_DISSIM,  "dissimilarity ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+/* Pretty print commit header */ \
+LINE(AUTHOR,	   "Author: ",		COLOR_CYAN,	COLOR_DEFAULT,	0), \
+LINE(MERGE,	   "Merge: ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
+LINE(DATE,	   "Date:   ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+/* Raw commit header */ \
+LINE(COMMIT,	   "commit ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
+LINE(PARENT,	   "parent ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
+LINE(TREE,	   "tree ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
+LINE(AUTHOR_IDENT, "author ",		COLOR_CYAN,	COLOR_DEFAULT,	0), \
+LINE(COMMITTER,	   "committer ",	COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+/* Misc */ \
+LINE(DIFF_TREE,	   "diff-tree ",	COLOR_BLUE,	COLOR_DEFAULT,	0), \
+LINE(SIGNOFF,	   "    Signed-off-by", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+/* UI colors */ \
+LINE(DEFAULT,	   "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
+LINE(CURSOR,	   "",			COLOR_WHITE,	COLOR_GREEN,	A_BOLD), \
+LINE(STATUS,	   "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
+LINE(TITLE,	   "",			COLOR_WHITE,	COLOR_BLUE,	0), \
+LINE(MAIN_DATE,    "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
+LINE(MAIN_AUTHOR,  "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
+LINE(MAIN_COMMIT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
+LINE(MAIN_DELIM,   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0),
 
 enum line_type {
 #define LINE(type, line, fg, bg, attr) \
@@ -340,7 +347,6 @@ enum line_type {
 };
 
 struct line_info {
-	enum line_type type;	/* Returned when looking up line type. */
 	char *line;		/* The start of line to match. */
 	int linelen;		/* Size of string to match. */
 	int fg, bg, attr;	/* Color and text attributes for the lines. */
@@ -348,7 +354,7 @@ struct line_info {
 
 static struct line_info line_info[] = {
 #define LINE(type, line, fg, bg, attr) \
-	{ LINE_##type, (line), STRING_SIZE(line), (fg), (bg), (attr) }
+	{ (line), STRING_SIZE(line), (fg), (bg), (attr) }
 	LINE_INFO
 #undef	LINE
 };
@@ -357,13 +363,13 @@ static enum line_type
 get_line_type(char *line)
 {
 	int linelen = strlen(line);
-	int i;
+	enum line_type type;
 
-	for (i = 0; i < ARRAY_SIZE(line_info); i++)
+	for (type = 0; type < ARRAY_SIZE(line_info); type++)
 		/* Case insensitive search matches Signed-off-by lines better. */
-		if (linelen >= line_info[i].linelen &&
-		    !strncasecmp(line_info[i].line, line, line_info[i].linelen))
-			return line_info[i].type;
+		if (linelen >= line_info[type].linelen &&
+		    !strncasecmp(line_info[type].line, line, line_info[type].linelen))
+			return type;
 
 	return LINE_DEFAULT;
 }
@@ -380,7 +386,7 @@ init_colors(void)
 {
 	int default_bg = COLOR_BLACK;
 	int default_fg = COLOR_WHITE;
-	int i;
+	enum line_type type;
 
 	start_color();
 
@@ -389,12 +395,12 @@ init_colors(void)
 		default_fg = -1;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(line_info); i++) {
-		struct line_info *info = &line_info[i];
+	for (type = 0; type < ARRAY_SIZE(line_info); type++) {
+		struct line_info *info = &line_info[type];
 		int bg = info->bg == COLOR_DEFAULT ? default_bg : info->bg;
 		int fg = info->fg == COLOR_DEFAULT ? default_fg : info->fg;
 
-		init_pair(info->type, fg, bg);
+		init_pair(type, fg, bg);
 	}
 }
 
@@ -416,6 +422,7 @@ struct view {
 	char cmdbuf[SIZEOF_CMD];
 
 	WINDOW *win;
+	WINDOW *title;
 	int height, width;
 
 	/* Navigation */
@@ -437,6 +444,8 @@ static int pager_read(struct view *view, char *line);
 static int main_draw(struct view *view, unsigned int lineno);
 static int main_read(struct view *view, char *line);
 
+static void update_title(struct view *view);
+
 #define DIFF_CMD \
 	"git log --stat -n1 %s ; echo; " \
 	"git diff --find-copies-harder -B -C %s^ %s"
@@ -452,7 +461,6 @@ static int main_read(struct view *view, char *line);
 
 /* The status window is used for polling keystrokes. */
 static WINDOW *status_win;
-static WINDOW *title_win;
 
 /* The number of loading views. Controls when nodelay should be in effect when
  * polling user input. */
@@ -464,6 +472,8 @@ static struct view views[] = {
 	{ "log",   LOG_CMD,    ref_head,    pager_read,  pager_draw, sizeof(char) },
 	{ "help",  HELP_CMD,   ref_head,    pager_read,  pager_draw, sizeof(char) },
 };
+
+#define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
 
 /* The display array of active views and the index of the current view. */
 static struct view *display[ARRAY_SIZE(views)];
@@ -494,7 +504,7 @@ redraw_view(struct view *view)
 	redraw_view_from(view, 0);
 }
 
-static void
+static struct view *
 resize_view(struct view *view)
 {
 	int lines, cols;
@@ -509,12 +519,24 @@ resize_view(struct view *view)
 		view->win = newwin(lines - 2, 0, 0, 0);
 		if (!view->win) {
 			report("Failed to create %s view", view->name);
-			return;
+			return NULL;
 		}
 		scrollok(view->win, TRUE);
+
+		view->title = newwin(1, 0, lines - 2, 0);
+		if (!view->title) {
+			delwin(view->win);
+			view->win = NULL;
+			report("Failed to create title window");
+			return NULL;
+		}
+		wbkgdset(view->title, get_line_attr(LINE_TITLE));
+
 	}
 
 	getmaxyx(view->win, view->height, view->width);
+
+	return view;
 }
 
 
@@ -775,11 +797,12 @@ update_view(struct view *view)
 	}
 
 	/* CPU hogilicious! */
-	update_title();
+	update_title(view);
 
 	if (redraw_from >= 0) {
 		/* If this is an incremental update, redraw the previous line
-		 * since for commits some members could have changed. */
+		 * since for commits some members could have changed when
+		 * loading the main view. */
 		if (redraw_from > 0)
 			redraw_from--;
 
@@ -794,8 +817,8 @@ update_view(struct view *view)
 	} else if (feof(view->pipe)) {
 		time_t secs = time(NULL) - view->start_time;
 
-		if (view == &views[REQ_VIEW_HELP]){
-			report(HELP);
+		if (view == VIEW(REQ_VIEW_HELP)) {
+			report("%s", HELP);
 			goto end;
 		}
 
@@ -817,37 +840,59 @@ end:
 static struct view *
 switch_view(struct view *prev, int request)
 {
-	struct view *view = &views[request];
+	struct view *view = VIEW(request);
 	struct view *displayed;
 	int i;
 
-	if (prev && prev->pipe)
-		end_update(prev);
+	if (!view->win && !resize_view(view))
+		return prev;
 
 	if (view == prev) {
-		foreach_view (displayed, i) ;
+		foreach_view (displayed, i)
+			/* count */ ;
 
-		if (i == 1)
+		if (i == 1) {
 			report("Already in %s view", view->name);
-		else
-			report("FIXME: Maximize");
+			return view;
+		}
 
+		report("FIXME: Maximize");
 		return view;
 
 	} else {
 		foreach_view (displayed, i) {
 			if (view == displayed) {
 				current_view = i;
-				report("new current view");
+				/* Blur out the title of the previous view. */
+				update_title(prev);
+				report("Switching to %s view", view->name);
 				return view;
 			}
 		}
+
+		/* Split to diff view */
+		if (i == 1 &&
+		    SCALE_SPLIT_VIEW(prev->height) > 3 &&
+		    prev == VIEW(REQ_VIEW_MAIN) &&
+		    view == VIEW(REQ_VIEW_DIFF)) {
+			view->height  = SCALE_SPLIT_VIEW(prev->height) - 1;
+			prev->height -= view->height + 1;
+
+			wresize(prev->win, prev->height, prev->width);
+			mvwin(prev->title, prev->height, 0);
+
+			wresize(view->win, view->height, view->width);
+			mvwin(view->win,   prev->height + 1, 0);
+			mvwin(view->title, prev->height + 1 + view->height, 0);
+			wrefresh(view->win);
+			current_view++;
+			update_title(prev);
+		}
 	}
 
-	if (!view->win)
-		resize_view(view);
-
-	/* Reload */
+	/* Continue loading split views in the background. */
+	if (prev && prev->pipe && current_view < 1)
+		end_update(prev);
 
 	if (begin_update(view)) {
 		/* Clear the old view and let the incremental updating refill
@@ -868,6 +913,8 @@ view_driver(struct view *view, int key)
 	int request = get_request(key);
 	int i;
 
+	assert(view);
+
 	switch (request) {
 	case REQ_MOVE_UP:
 	case REQ_MOVE_DOWN:
@@ -875,16 +922,14 @@ view_driver(struct view *view, int key)
 	case REQ_MOVE_PAGE_DOWN:
 	case REQ_MOVE_FIRST_LINE:
 	case REQ_MOVE_LAST_LINE:
-		if (view)
-			move_view(view, request);
+		move_view(view, request);
 		break;
 
 	case REQ_SCROLL_LINE_DOWN:
 	case REQ_SCROLL_LINE_UP:
 	case REQ_SCROLL_PAGE_DOWN:
 	case REQ_SCROLL_PAGE_UP:
-		if (view)
-			scroll_view(view, request);
+		scroll_view(view, request);
 		break;
 
 	case REQ_VIEW_MAIN:
@@ -896,8 +941,7 @@ view_driver(struct view *view, int key)
 
 	case REQ_TOGGLE_LINE_NUMBERS:
 		opt_line_number = !opt_line_number;
-		if (view)
-			redraw_view(view);
+		redraw_view(view);
 		break;
 
 	case REQ_STOP_LOADING:
@@ -923,7 +967,7 @@ view_driver(struct view *view, int key)
 
 	default:
 		/* An unknown key will show most commonly used commands. */
-		report(HELP);
+		report("%s", HELP);
 		return TRUE;
 	}
 
@@ -963,7 +1007,7 @@ pager_draw(struct view *view, unsigned int lineno)
 
 	if (opt_line_number) {
 		unsigned int real_lineno = view->offset + lineno + 1;
-		int col = 1;
+		int col = 0;
 
 		if (real_lineno == 1 || (real_lineno % opt_num_interval) == 0)
 			mvwprintw(view->win, lineno, 0, "%4d: ", real_lineno);
@@ -1166,8 +1210,6 @@ quit(int sig)
 {
 	if (status_win)
 		delwin(status_win);
-	if (title_win)
-		delwin(title_win);
 	endwin();
 
 	/* FIXME: Shutdown gracefully. */
@@ -1191,25 +1233,26 @@ static void die(const char *err, ...)
 }
 
 static void
-update_title(void)
+update_title(struct view *view)
 {
-	struct view *view = display[current_view];
+	werase(view->title);
+	wmove(view->title, 0, 0);
 
-	assert(view);
-
-	werase(title_win);
-	wmove(title_win, 0, 0);
+	if (view == &views[current_view])
+		wattrset(view->title, A_BOLD);
+	else
+		wattrset(view->title, A_NORMAL);
 
 	/* [main] ref: 334b506... - line 6 of 4383 (0%) */
-	wprintw(title_win, "[%s] ref: %s", view->name, ref_commit);
+	wprintw(view->title, "[%s] ref: %s", view->name, ref_commit);
 	if (view->lines) {
-		wprintw(title_win, " - line %d of %d (%d%%)",
+		wprintw(view->title, " - line %d of %d (%d%%)",
 			view->lineno + 1,
 			view->lines,
 			(view->lineno + 1) * 100 / view->lines);
 	}
 
-	wrefresh(title_win);
+	wrefresh(view->title);
 }
 
 /* Update status and title window. */
@@ -1222,7 +1265,7 @@ report(const char *msg, ...)
 
 	/* Update the title window first, so the cursor ends up in the status
 	 * window. */
-	update_title();
+	update_title(display[current_view]);
 
 	werase(status_win);
 	wmove(status_win, 0, 0);
@@ -1264,14 +1307,9 @@ main(int argc, char *argv[])
 	if (!status_win)
 		die("Failed to create status window");
 
-	title_win = newwin(1, 0, y - 2, 0);
-	if (!title_win)
-		die("Failed to create title window");
-
 	/* Enable keyboard mapping */
 	keypad(status_win, TRUE);
 	wbkgdset(status_win, get_line_attr(LINE_STATUS));
-	wbkgdset(title_win, get_line_attr(LINE_TITLE));
 
 	while (view_driver(display[current_view], request)) {
 		struct view *view;
@@ -1292,9 +1330,6 @@ main(int argc, char *argv[])
 
 			mvwin(status_win, lines - 1, 0);
 			wresize(status_win, 1, cols - 1);
-
-			mvwin(title_win, lines - 2, 0);
-			wresize(title_win, 1, cols - 1);
 		}
 	}
 
