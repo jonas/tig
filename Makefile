@@ -16,6 +16,7 @@ install: all
 		install $$prog $(PREFIX)/bin; \
 	done
 
+
 install-docs: docs
 	for doc in $(DOCS); do \
 		case "$$doc" in \
