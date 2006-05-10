@@ -11,7 +11,8 @@
  * SYNOPSIS
  * --------
  * [verse]
- * tig [options] [ref]
+ * tig [options]
+ * tig [options] [--] [git log options]
  * tig [options] log  [git log options]
  * tig [options] diff [git diff options]
  * tig [options] <    [git log or git diff output]
@@ -82,13 +83,15 @@ enum request {
 	REQ_VIEW_LOG,
 	REQ_VIEW_HELP,
 
-	REQ_QUIT,
-	REQ_SHOW_VERSION,
 	REQ_ENTER,
-	REQ_STOP_LOADING,
+	REQ_QUIT,
+	REQ_PROMPT,
 	REQ_SCREEN_REDRAW,
 	REQ_SCREEN_UPDATE,
+	REQ_SHOW_VERSION,
+	REQ_STOP_LOADING,
 	REQ_TOGGLE_LINE_NUMBERS,
+	REQ_VIEW_NEXT,
 
 	REQ_MOVE_UP,
 	REQ_MOVE_DOWN,
@@ -110,17 +113,61 @@ struct commit {
 	struct tm time;		/* Date from the author ident. */
 };
 
+/*
+ * String helpers
+ */
 
 static inline void
 string_ncopy(char *dst, char *src, int dstlen)
 {
 	strncpy(dst, src, dstlen - 1);
 	dst[dstlen - 1] = 0;
+
 }
 
 /* Shorthand for safely copying into a fixed buffer. */
 #define string_copy(dst, src) \
 	string_ncopy(dst, src, sizeof(dst))
+
+/* Shell quoting
+ *
+ * NOTE: The following is a slightly modified copy of the git project's shell
+ * quoting routines found in the quote.c file.
+ *
+ * Help to copy the thing properly quoted for the shell safety.  any single
+ * quote is replaced with '\'', any exclamation point is replaced with '\!',
+ * and the whole thing is enclosed in a
+ *
+ * E.g.
+ *  original     sq_quote     result
+ *  name     ==> name      ==> 'name'
+ *  a b      ==> a b       ==> 'a b'
+ *  a'b      ==> a'\''b    ==> 'a'\''b'
+ *  a!b      ==> a'\!'b    ==> 'a'\!'b'
+ */
+
+static size_t
+sq_quote(char buf[SIZEOF_CMD], size_t bufsize, const char *src)
+{
+	char c;
+
+#define BUFPUT(x) ( (bufsize < SIZEOF_CMD) && (buf[bufsize++] = (x)) )
+
+	BUFPUT('\'');
+	while ((c = *src++)) {
+		if (c == '\'' || c == '!') {
+			BUFPUT('\'');
+			BUFPUT('\\');
+			BUFPUT(c);
+			BUFPUT('\'');
+		} else {
+			BUFPUT(c);
+		}
+	}
+	BUFPUT('\'');
+
+	return bufsize;
+}
 
 
 /**
@@ -131,6 +178,7 @@ string_ncopy(char *dst, char *src, int dstlen)
 static int opt_line_number	= FALSE;
 static int opt_num_interval	= NUMBER_INTERVAL;
 static enum request opt_request = REQ_VIEW_MAIN;
+static char opt_cmd[SIZEOF_CMD]	= "";
 
 char ref_head[SIZEOF_REF]	= "HEAD";
 char ref_commit[SIZEOF_REF]	= "HEAD";
@@ -210,14 +258,23 @@ parse_options(int argc, char *argv[])
 		}
 
 		/**
-		 * ref::
-		 *	Commit reference, symbolic or raw SHA1 ID.
+		 * \--::
+		 *	End of tig options. Useful when specifying commands
+		 *	for the main view. Example:
+		 *
+		 *		$ tig -- --pretty=raw tag-1.0..HEAD
 		 **/
-		if (opt[0] && opt[0] != '-') {
-			string_copy(ref_head, opt);
-			string_copy(ref_commit, opt);
-			continue;
-		}
+		if (!strcmp(opt, "--"))
+			return i + 1;
+
+		 /* Make stuff like:
+		  *
+		 *	$ tig tag-1.0..HEAD
+		 *
+		 * work.
+		 */
+		if (opt[0] && opt[0] != '-')
+			return i;
 
 		die("unknown command '%s'", opt);
 	}
@@ -253,12 +310,15 @@ struct keymap keymap[] = {
 	 * Return::
 	 *	If in main view split the view
 	 *	and show the diff in the bottom view.
+	 * Tab::
+	 *	Switch to next view.
 	 **/
 	{ 'm',		REQ_VIEW_MAIN },
 	{ 'd',		REQ_VIEW_DIFF },
 	{ 'l',		REQ_VIEW_LOG },
 	{ 'h',		REQ_VIEW_HELP },
 
+	{ KEY_TAB,	REQ_VIEW_NEXT },
 	{ KEY_RETURN,	REQ_ENTER },
 
 	/**
@@ -316,6 +376,8 @@ struct keymap keymap[] = {
 	 *	Show version.
 	 * n::
 	 *	Toggle line numbers on/off.
+	 * ':'::
+	 *	Open prompt.
 	 **/
 	{ KEY_ESC,	REQ_QUIT },
 	{ 'q',		REQ_QUIT },
@@ -323,6 +385,7 @@ struct keymap keymap[] = {
 	{ 'v',		REQ_SHOW_VERSION },
 	{ 'r',		REQ_SCREEN_REDRAW },
 	{ 'n',		REQ_TOGGLE_LINE_NUMBERS },
+	{ ':',		REQ_PROMPT },
 
 	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
 	{ ERR,		REQ_SCREEN_UPDATE },
@@ -455,11 +518,10 @@ init_colors(void)
  */
 
 struct view {
-	const char *name;
-	const char *cmd;
-	char *id;
-
-	size_t objsize;			/* Size of objects in the line index */
+	const char *name;	/* View name */
+	const char *defcmd;	/* Default command line */
+	char *id;		/* Points to either of ref_{head,commit} */
+	size_t objsize;		/* Size of objects in the line index */
 
 	struct view_ops {
 		bool (*draw)(struct view *view, unsigned int lineno);
@@ -467,8 +529,10 @@ struct view {
 		bool (*enter)(struct view *view);
 	} *ops;
 
-	char cmdbuf[SIZEOF_CMD];
-	char ref[SIZEOF_REF];	/* Commit reference */
+	char cmd[SIZEOF_CMD];	/* Command buffer */
+	char ref[SIZEOF_REF];	/* Hovered Commit reference */
+	/* The view reference that describes the content of this view. */
+	char vref[SIZEOF_REF];
 
 	WINDOW *win;
 	WINDOW *title;
@@ -544,19 +608,20 @@ redraw_view(struct view *view)
 static void
 resize_display(void)
 {
-	int height, width, offset, i;
+	int offset, i;
 	struct view *base = display[0];
 	struct view *view = display[1] ? display[1] : display[0];
 
 	/* Setup window dimensions */
 
-	getmaxyx(stdscr, height, width);
+	getmaxyx(stdscr, base->height, base->width);
 
 	/* Make room for the status window. */
-	base->height = height - 1;
-	base->width  = width;
+	base->height -= 1;
 
 	if (view != base) {
+		/* Horizontal split. */
+		view->width   = base->width;
 		view->height  = SCALE_SPLIT_VIEW(base->height);
 		base->height -= view->height;
 
@@ -604,7 +669,7 @@ update_view_title(struct view *view)
 	wmove(view->title, 0, 0);
 
 	/* [main] ref: 334b506... - commit 6 of 4383 (0%) */
-	wprintw(view->title, "[%s] ref: %s", view->name, ref_commit);
+	wprintw(view->title, "[%s] ref: %s", view->name, view->ref);
 	if (view->lines) {
 		char *type = view == VIEW(REQ_VIEW_MAIN) ? "commit" : "line";
 
@@ -679,7 +744,7 @@ scroll_view(struct view *view, enum request request)
 			lines = view->lines - view->offset;
 
 		if (lines == 0 || view->offset + view->height >= view->lines) {
-			report("Already at last line");
+			report("Already on last line");
 			return;
 		}
 		break;
@@ -691,12 +756,13 @@ scroll_view(struct view *view, enum request request)
 			lines = view->offset;
 
 		if (lines == 0) {
-			report("Already at first line");
+			report("Already on first line");
 			return;
 		}
 
 		lines = -lines;
 		break;
+
 	default:
 		die("request %d not handled in switch", request);
 	}
@@ -742,11 +808,11 @@ move_view(struct view *view, enum request request)
 	}
 
 	if (steps <= 0 && view->lineno == 0) {
-		report("Already at first line");
+		report("Already on first line");
 		return;
 
 	} else if (steps >= 0 && view->lineno + 1 == view->lines) {
-		report("Already at last line");
+		report("Already on last line");
 		return;
 	}
 
@@ -760,7 +826,7 @@ move_view(struct view *view, enum request request)
 
 		wmove(view->win, prev_lineno, 0);
 		wclrtoeol(view->win);
-		view->ops->draw(view, view->lineno - steps - view->offset);
+		view->ops->draw(view, prev_lineno);
 	}
 
 	/* Check whether the view needs to be scrolled */
@@ -795,15 +861,21 @@ move_view(struct view *view, enum request request)
  * Incremental updating
  */
 
-static int
+static bool
 begin_update(struct view *view)
 {
 	char *id = view->id;
 
-	if (snprintf(view->cmdbuf, sizeof(view->cmdbuf), view->cmd,
-		     id, id, id) < sizeof(view->cmdbuf))
-		view->pipe = popen(view->cmdbuf, "r");
+	if (opt_cmd[0]) {
+		string_copy(view->cmd, opt_cmd);
+		opt_cmd[0] = 0;
+	} else {
+		if (snprintf(view->cmd, sizeof(view->cmd), view->defcmd,
+			     id, id, id) >= sizeof(view->cmd))
+			return FALSE;
+	}
 
+	view->pipe = popen(view->cmd, "r");
 	if (!view->pipe)
 		return FALSE;
 
@@ -832,12 +904,14 @@ begin_update(struct view *view)
 static void
 end_update(struct view *view)
 {
+	if (!view->pipe)
+		return;
 	set_nonblocking_input(FALSE);
 	pclose(view->pipe);
 	view->pipe = NULL;
 }
 
-static int
+static bool
 update_view(struct view *view)
 {
 	char buffer[BUFSIZ];
@@ -891,7 +965,7 @@ update_view(struct view *view)
 	}
 
 	if (ferror(view->pipe)) {
-		report("Failed to read %s: %s", view->cmd, strerror(errno));
+		report("Failed to read: %s", strerror(errno));
 		goto end;
 
 	} else if (feof(view->pipe)) {
@@ -925,9 +999,11 @@ switch_view(struct view *prev, enum request request,
 	struct view *displayed;
 	int nviews;
 
-	/* Cycle between displayed views */
+	/* Cycle between displayed views and count the views. */
 	foreach_view (displayed, nviews) {
-		if (view == displayed && prev != view) {
+		if (prev != view &&
+		    view == displayed &&
+		    !strcmp(view->id, prev->id)) {
 			current_view = nviews;
 			/* Blur out the title of the previous view. */
 			update_view_title(prev);
@@ -941,16 +1017,8 @@ switch_view(struct view *prev, enum request request,
 		return;
 	}
 
-	/* Split to diff view? */
-	if (split &&
-	    nviews == 1 &&
-	    SCALE_SPLIT_VIEW(prev->height) > 3 &&
-	    prev == VIEW(REQ_VIEW_MAIN) &&
-	    view == VIEW(REQ_VIEW_DIFF)) {
-		split = TRUE;
-	}
-
-	if (!begin_update(view)) {
+	if (strcmp(view->vref, view->id) &&
+	    !begin_update(view)) {
 		report("Failed to load %s view", view->name);
 		return;
 	}
@@ -968,19 +1036,33 @@ switch_view(struct view *prev, enum request request,
 
 	resize_display();
 
+	if (split && prev->lineno - prev->offset > prev->height) {
+		/* Take the title line into account. */
+		int lines = prev->lineno - prev->height + 1;
+
+		/* Scroll the view that was split if the current line is
+		 * outside the new limited view. */
+		do_scroll_view(prev, lines);
+	}
+
 	if (prev && view != prev) {
 		/* "Blur" the previous view. */
 		update_view_title(prev);
 
 		/* Continue loading split views in the background. */
-		if (!split && prev->pipe)
+		if (!split)
 			end_update(prev);
 	}
 
-	/* Clear the old view and let the incremental updating refill
-	 * the screen. */
-	wclear(view->win);
-	report("Loading...");
+	if (view->pipe) {
+		/* Clear the old view and let the incremental updating refill
+		 * the screen. */
+		wclear(view->win);
+		report("Loading...");
+	} else {
+		redraw_view(view);
+		report("");
+	}
 }
 
 
@@ -1020,15 +1102,37 @@ view_driver(struct view *view, enum request request)
 	case REQ_ENTER:
 		return view->ops->enter(view);
 
+	case REQ_VIEW_NEXT:
+	{
+		int nviews = display[1] ? 2 : 1;
+		int next_view = (current_view + 1) % nviews;
+
+		if (next_view == current_view) {
+			report("Only one view is displayed");
+			break;
+		}
+
+		current_view = next_view;
+		/* Blur out the title of the previous view. */
+		update_view_title(view);
+		report("Switching to %s view", display[current_view]->name);
+		break;
+	}
 	case REQ_TOGGLE_LINE_NUMBERS:
 		opt_line_number = !opt_line_number;
 		redraw_view(view);
 		break;
 
+	case REQ_PROMPT:
+		switch_view(view, opt_request, FALSE, FALSE);
+		break;
+
 	case REQ_STOP_LOADING:
-		foreach_view (view, i)
+		foreach_view (view, i) {
 			if (view->pipe)
-				end_update(view);
+				report("Stopped loaded of %s view", view->name),
+			end_update(view);
+		}
 		break;
 
 	case REQ_SHOW_VERSION:
@@ -1075,8 +1179,11 @@ pager_draw(struct view *view, unsigned int lineno)
 	type = get_line_type(line);
 
 	if (view->offset + lineno == view->lineno) {
-		if (type == LINE_COMMIT)
-			string_copy(ref_commit, line + 7);
+		if (type == LINE_COMMIT) {
+			string_copy(view->ref, line + 7);
+			string_copy(ref_commit, view->ref);
+		}
+
 		type = LINE_CURSOR;
 	}
 
@@ -1150,7 +1257,7 @@ pager_enter(struct view *view)
 	char *line = view->line[view->lineno];
 
 	if (get_line_type(line) == LINE_COMMIT) {
-		report("FIXME: Open commit");
+		switch_view(view, REQ_VIEW_DIFF, FALSE, FALSE);
 	}
 
 	return TRUE;
@@ -1180,7 +1287,7 @@ main_draw(struct view *view, unsigned int lineno)
 		return FALSE;
 
 	if (view->offset + lineno == view->lineno) {
-		string_copy(ref_commit, commit->id);
+		string_copy(view->ref, commit->id);
 		type = LINE_CURSOR;
 	} else {
 		type = LINE_MAIN_COMMIT;
@@ -1303,7 +1410,7 @@ main_read(struct view *view, char *line)
 static bool
 main_enter(struct view *view)
 {
-	switch_view(view, REQ_VIEW_DIFF, FALSE, TRUE);
+	switch_view(view, REQ_VIEW_DIFF, TRUE, TRUE);
 	return TRUE;
 }
 
@@ -1416,16 +1523,34 @@ int
 main(int argc, char *argv[])
 {
 	enum request request;
-	int git_cmd;
+	int git_arg;
 
 	signal(SIGINT, quit);
 
-	git_cmd = parse_options(argc, argv);
-	if (git_cmd < 0)
+	git_arg = parse_options(argc, argv);
+	if (git_arg < 0)
 		return 0;
 
-	if (git_cmd < argc) {
-		die("FIXME: Handle git diff/log options");
+	if (git_arg < argc) {
+		size_t buf_size;
+
+		/* XXX: This is vulnerable to the user overriding options
+		 * required for the main view parser. */
+		if (opt_request == REQ_VIEW_MAIN)
+			string_copy(opt_cmd, "git log --stat --pretty=raw");
+		else
+			string_copy(opt_cmd, "git");
+		buf_size = strlen(opt_cmd);
+
+		while (buf_size < sizeof(opt_cmd) && git_arg < argc) {
+			opt_cmd[buf_size++] = ' ';
+			buf_size = sq_quote(opt_cmd, buf_size, argv[git_arg++]);
+		}
+
+		if (buf_size >= sizeof(opt_cmd))
+			die("command too long");
+
+		opt_cmd[buf_size] = 0;
 	}
 
 	request = opt_request;
@@ -1443,6 +1568,16 @@ main(int argc, char *argv[])
 		/* Refresh, accept single keystroke of input */
 		key = wgetch(status_win);
 		request = get_request(key);
+
+		if (request == REQ_PROMPT) {
+			nocbreak();
+			echo();
+			report(":");
+			if (wgetnstr(status_win, opt_cmd, sizeof(opt_cmd)) == OK)
+				die("%s", opt_cmd);
+			cbreak();       /* Take input chars one at a time, no wait for \n */
+			noecho();       /* Don't echo input */
+		}
 	}
 
 	quit(0);
@@ -1457,18 +1592,13 @@ main(int argc, char *argv[])
  *
  * - Dynamic scaling of line number indentation.
  *
- * - Proper command line handling; ability to take the command that should be
- *   shown. Example:
- *
- *	$ tig log -p
- *
  * - Internal command line (exmode-inspired) which allows to specify what git
  *   log or git diff command to run. Example:
  *
  *	:log -p
  *
- * - Proper resizing support. I am yet to figure out whether catching SIGWINCH
- *   is preferred over using ncurses' built-in support for resizing.
+ * - Terminal resizing support. I am yet to figure out whether catching
+ *   SIGWINCH is preferred over using ncurses' built-in support for resizing.
  *
  * - Locale support.
  *
