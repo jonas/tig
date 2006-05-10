@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <time.h>
 
 #include <curses.h>
@@ -82,6 +83,7 @@ enum request {
 	REQ_VIEW_DIFF,
 	REQ_VIEW_LOG,
 	REQ_VIEW_HELP,
+	REQ_VIEW_PAGER,
 
 	REQ_ENTER,
 	REQ_QUIT,
@@ -179,6 +181,7 @@ static int opt_line_number	= FALSE;
 static int opt_num_interval	= NUMBER_INTERVAL;
 static enum request opt_request = REQ_VIEW_MAIN;
 static char opt_cmd[SIZEOF_CMD]	= "";
+static FILE *opt_pipe		= NULL;
 
 char ref_head[SIZEOF_REF]	= "HEAD";
 char ref_commit[SIZEOF_REF]	= "HEAD";
@@ -203,7 +206,7 @@ parse_options(int argc, char *argv[])
 		    !strcmp(opt, "diff")) {
 			opt_request = opt[0] == 'l'
 				    ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
-			return i;
+			break;
 		}
 
 		/**
@@ -264,8 +267,10 @@ parse_options(int argc, char *argv[])
 		 *
 		 *		$ tig -- --pretty=raw tag-1.0..HEAD
 		 **/
-		if (!strcmp(opt, "--"))
-			return i + 1;
+		if (!strcmp(opt, "--")) {
+			i++;
+			break;
+		}
 
 		 /* Make stuff like:
 		  *
@@ -274,9 +279,38 @@ parse_options(int argc, char *argv[])
 		 * work.
 		 */
 		if (opt[0] && opt[0] != '-')
-			return i;
+			break;
 
 		die("unknown command '%s'", opt);
+	}
+
+	if (!isatty(STDIN_FILENO)) {
+		/* XXX: When pager mode has been requested, silently override
+		 * view startup options. */
+		opt_request = REQ_VIEW_PAGER;
+		opt_pipe = stdin;
+
+	} else if (i < argc) {
+		size_t buf_size;
+
+		/* XXX: This is vulnerable to the user overriding options
+		 * required for the main view parser. */
+		if (opt_request == REQ_VIEW_MAIN)
+			string_copy(opt_cmd, "git log --stat --pretty=raw");
+		else
+			string_copy(opt_cmd, "git");
+		buf_size = strlen(opt_cmd);
+
+		while (buf_size < sizeof(opt_cmd) && i < argc) {
+			opt_cmd[buf_size++] = ' ';
+			buf_size = sq_quote(opt_cmd, buf_size, argv[i++]);
+		}
+
+		if (buf_size >= sizeof(opt_cmd))
+			die("command too long");
+
+		opt_cmd[buf_size] = 0;
+
 	}
 
 	return i;
@@ -424,9 +458,10 @@ LINE(DIFF_RENAME,  "rename ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_SIM,	   "similarity ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_DISSIM,  "dissimilarity ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 /* Pretty print commit header */ \
-LINE(AUTHOR,	   "Author: ",		COLOR_CYAN,	COLOR_DEFAULT,	0), \
-LINE(MERGE,	   "Merge: ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
-LINE(DATE,	   "Date:   ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(PP_AUTHOR,	   "Author: ",		COLOR_CYAN,	COLOR_DEFAULT,	0), \
+LINE(PP_MERGE,	   "Merge: ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
+LINE(PP_DATE,	   "Date:   ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(PP_COMMIT,	   "Commit: ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
 /* Raw commit header */ \
 LINE(COMMIT,	   "commit ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(PARENT,	   "parent ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
@@ -568,10 +603,11 @@ static struct view_ops main_ops;
 	"man tig 2> /dev/null"
 
 static struct view views[] = {
-	{ "main",  MAIN_CMD,   ref_head,    sizeof(struct commit), &main_ops },
-	{ "diff",  DIFF_CMD,   ref_commit,  sizeof(char),	   &pager_ops },
-	{ "log",   LOG_CMD,    ref_head,    sizeof(char),	   &pager_ops },
-	{ "help",  HELP_CMD,   ref_head,    sizeof(char),	   &pager_ops },
+	{ "main",  MAIN_CMD,  ref_head,   sizeof(struct commit), &main_ops },
+	{ "diff",  DIFF_CMD,  ref_commit, sizeof(char),		 &pager_ops },
+	{ "log",   LOG_CMD,   ref_head,   sizeof(char),		 &pager_ops },
+	{ "help",  HELP_CMD,  ref_head,   sizeof(char),		 &pager_ops },
+	{ "pager", "cat",     ref_head,   sizeof(char),		 &pager_ops },
 };
 
 #define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
@@ -669,7 +705,12 @@ update_view_title(struct view *view)
 	wmove(view->title, 0, 0);
 
 	/* [main] ref: 334b506... - commit 6 of 4383 (0%) */
-	wprintw(view->title, "[%s] ref: %s", view->name, view->ref);
+
+	if (*view->ref)
+		wprintw(view->title, "[%s] ref: %s", view->name, view->ref);
+	else
+		wprintw(view->title, "[%s]", view->name);
+
 	if (view->lines) {
 		char *type = view == VIEW(REQ_VIEW_MAIN) ? "commit" : "line";
 
@@ -811,7 +852,7 @@ move_view(struct view *view, enum request request)
 		report("Already on first line");
 		return;
 
-	} else if (steps >= 0 && view->lineno + 1 == view->lines) {
+	} else if (steps >= 0 && view->lineno + 1 >= view->lines) {
 		report("Already on last line");
 		return;
 	}
@@ -875,7 +916,14 @@ begin_update(struct view *view)
 			return FALSE;
 	}
 
-	view->pipe = popen(view->cmd, "r");
+	/* Special case for the pager view. */
+	if (opt_pipe) {
+		view->pipe = opt_pipe;
+		opt_pipe = NULL;
+	} else {
+		view->pipe = popen(view->cmd, "r");
+	}
+
 	if (!view->pipe)
 		return FALSE;
 
@@ -1096,10 +1144,15 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_DIFF:
 	case REQ_VIEW_LOG:
 	case REQ_VIEW_HELP:
+	case REQ_VIEW_PAGER:
 		switch_view(view, request, FALSE, FALSE);
 		break;
 
 	case REQ_ENTER:
+		if (!view->lines) {
+			report("Nothing to enter");
+			break;
+		}
 		return view->ops->enter(view);
 
 	case REQ_VIEW_NEXT:
@@ -1179,11 +1232,17 @@ pager_draw(struct view *view, unsigned int lineno)
 	type = get_line_type(line);
 
 	if (view->offset + lineno == view->lineno) {
-		if (type == LINE_COMMIT) {
+		switch (type) {
+		case LINE_COMMIT:
 			string_copy(view->ref, line + 7);
 			string_copy(ref_commit, view->ref);
+			break;
+		case LINE_PP_COMMIT:
+			string_copy(view->ref, line + 8);
+			string_copy(ref_commit, view->ref);
+		default:
+			break;
 		}
-
 		type = LINE_CURSOR;
 	}
 
@@ -1469,7 +1528,16 @@ init_display(void)
 {
 	int x, y;
 
-	initscr();      /* Initialize the curses library */
+	/* Initialize the curses library */
+	if (isatty(STDIN_FILENO)) {
+		initscr();
+	} else {
+		/* Leave stdin and stdout alone when acting as a pager. */
+		FILE *io = fopen("/dev/tty", "r+");
+
+		newterm(NULL, io, io);
+	}
+
 	nonl();         /* Tell curses not to do NL->CR/NL on output */
 	cbreak();       /* Take input chars one at a time, no wait for \n */
 	noecho();       /* Don't echo input */
@@ -1531,28 +1599,6 @@ main(int argc, char *argv[])
 	if (git_arg < 0)
 		return 0;
 
-	if (git_arg < argc) {
-		size_t buf_size;
-
-		/* XXX: This is vulnerable to the user overriding options
-		 * required for the main view parser. */
-		if (opt_request == REQ_VIEW_MAIN)
-			string_copy(opt_cmd, "git log --stat --pretty=raw");
-		else
-			string_copy(opt_cmd, "git");
-		buf_size = strlen(opt_cmd);
-
-		while (buf_size < sizeof(opt_cmd) && git_arg < argc) {
-			opt_cmd[buf_size++] = ' ';
-			buf_size = sq_quote(opt_cmd, buf_size, argv[git_arg++]);
-		}
-
-		if (buf_size >= sizeof(opt_cmd))
-			die("command too long");
-
-		opt_cmd[buf_size] = 0;
-	}
-
 	request = opt_request;
 
 	init_display();
@@ -1570,13 +1616,15 @@ main(int argc, char *argv[])
 		request = get_request(key);
 
 		if (request == REQ_PROMPT) {
+			report(":");
+			/* Temporarily switch to line-oriented and echoed
+			 * input. */
 			nocbreak();
 			echo();
-			report(":");
 			if (wgetnstr(status_win, opt_cmd, sizeof(opt_cmd)) == OK)
 				die("%s", opt_cmd);
-			cbreak();       /* Take input chars one at a time, no wait for \n */
-			noecho();       /* Don't echo input */
+			noecho();
+			cbreak();
 		}
 	}
 
