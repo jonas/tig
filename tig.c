@@ -259,10 +259,10 @@ parse_options(int argc, char *argv[])
 
 		/**
 		 * \--::
-		 *	End of tig options. Useful when specifying commands
+		 *	End of tig(1) options. Useful when specifying commands
 		 *	for the main view. Example:
 		 *
-		 *		$ tig -- --pretty=raw tag-1.0..HEAD
+		 *		$ tig -- --since=1.month
 		 **/
 		if (!strcmp(opt, "--")) {
 			i++;
@@ -270,7 +270,7 @@ parse_options(int argc, char *argv[])
 		}
 
 		 /* Make stuff like:
-		  *
+		 *
 		 *	$ tig tag-1.0..HEAD
 		 *
 		 * work.
@@ -281,9 +281,18 @@ parse_options(int argc, char *argv[])
 		die("unknown command '%s'", opt);
 	}
 
+	/**
+	 * Pager mode
+	 * ~~~~~~~~~~
+	 * If stdin is a pipe, any log or diff options will be ignored and the
+	 * pager view will be opened loading data from stdin. The pager mode
+	 * can be used for colorizing output from various git commands.
+	 *
+	 * Example on how to colorize the output of git-show(1):
+	 *
+	 *	$ git show | tig
+	 **/
 	if (!isatty(STDIN_FILENO)) {
-		/* XXX: When pager mode has been requested, silently override
-		 * view startup options. */
 		opt_request = REQ_VIEW_PAGER;
 		opt_pipe = stdin;
 
