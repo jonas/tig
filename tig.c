@@ -183,9 +183,6 @@ static enum request opt_request = REQ_VIEW_MAIN;
 static char opt_cmd[SIZEOF_CMD]	= "";
 static FILE *opt_pipe		= NULL;
 
-char ref_head[SIZEOF_REF]	= "HEAD";
-char ref_commit[SIZEOF_REF]	= "HEAD";
-
 /* Returns the index of log or diff command or -1 to exit. */
 static int
 parse_options(int argc, char *argv[])
@@ -554,7 +551,7 @@ init_colors(void)
 
 struct view {
 	const char *name;	/* View name */
-	const char *defcmd;	/* Default command line */
+	const char *cmdfmt;	/* Default command line format */
 	char *id;		/* Points to either of ref_{head,commit} */
 	size_t objsize;		/* Size of objects in the line index */
 
@@ -565,9 +562,8 @@ struct view {
 	} *ops;
 
 	char cmd[SIZEOF_CMD];	/* Command buffer */
-	char ref[SIZEOF_REF];	/* Hovered Commit reference */
-	/* The view reference that describes the content of this view. */
-	char vref[SIZEOF_REF];
+	char ref[SIZEOF_REF];	/* Hovered commit reference */
+	char vid[SIZEOF_REF];	/* View ID. Set to id member when updating. */
 
 	WINDOW *win;
 	WINDOW *title;
@@ -601,6 +597,9 @@ static struct view_ops main_ops;
 
 #define HELP_CMD \
 	"man tig 2> /dev/null"
+
+char ref_head[SIZEOF_REF]	= "HEAD";
+char ref_commit[SIZEOF_REF]	= "HEAD";
 
 static struct view views[] = {
 	{ "main",  MAIN_CMD,  ref_head,   sizeof(struct commit), &main_ops },
@@ -911,7 +910,7 @@ begin_update(struct view *view)
 		string_copy(view->cmd, opt_cmd);
 		opt_cmd[0] = 0;
 	} else {
-		if (snprintf(view->cmd, sizeof(view->cmd), view->defcmd,
+		if (snprintf(view->cmd, sizeof(view->cmd), view->cmdfmt,
 			     id, id, id) >= sizeof(view->cmd))
 			return FALSE;
 	}
@@ -932,6 +931,7 @@ begin_update(struct view *view)
 	view->offset = 0;
 	view->lines  = 0;
 	view->lineno = 0;
+	string_copy(view->vid, id);
 
 	if (view->line) {
 		int i;
@@ -1039,10 +1039,19 @@ end:
 	return FALSE;
 }
 
+enum open_flags {
+	OPEN_DEFAULT = 0,	/* Use default view switching. */
+	OPEN_SPLIT = 1,		/* Split current view. */
+	OPEN_BACKGROUNDED = 2,	/* Backgrounded. */
+	OPEN_RELOAD = 4,	/* Reload view even if it is the current. */
+};
+
 static void
-switch_view(struct view *prev, enum request request,
-	    bool backgrounded, bool split)
+open_view(struct view *prev, enum request request, enum open_flags flags)
 {
+	bool backgrounded = !!(flags & OPEN_BACKGROUNDED);
+	bool split = !!(flags & OPEN_SPLIT);
+	bool reload = !!(flags & OPEN_RELOAD);
 	struct view *view = VIEW(request);
 	struct view *displayed;
 	int nviews;
@@ -1060,12 +1069,12 @@ switch_view(struct view *prev, enum request request,
 		}
 	}
 
-	if (view == prev && nviews == 1) {
+	if (view == prev && nviews == 1 && !reload) {
 		report("Already in %s view", view->name);
 		return;
 	}
 
-	if (strcmp(view->vref, view->id) &&
+	if (strcmp(view->vid, view->id) &&
 	    !begin_update(view)) {
 		report("Failed to load %s view", view->name);
 		return;
@@ -1145,7 +1154,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_LOG:
 	case REQ_VIEW_HELP:
 	case REQ_VIEW_PAGER:
-		switch_view(view, request, FALSE, FALSE);
+		open_view(view, request, OPEN_DEFAULT);
 		break;
 
 	case REQ_ENTER:
@@ -1177,7 +1186,7 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_PROMPT:
-		switch_view(view, opt_request, FALSE, FALSE);
+		open_view(view, opt_request, OPEN_RELOAD);
 		break;
 
 	case REQ_STOP_LOADING:
@@ -1316,7 +1325,7 @@ pager_enter(struct view *view)
 	char *line = view->line[view->lineno];
 
 	if (get_line_type(line) == LINE_COMMIT) {
-		switch_view(view, REQ_VIEW_DIFF, FALSE, FALSE);
+		open_view(view, REQ_VIEW_DIFF, OPEN_DEFAULT);
 	}
 
 	return TRUE;
@@ -1347,6 +1356,7 @@ main_draw(struct view *view, unsigned int lineno)
 
 	if (view->offset + lineno == view->lineno) {
 		string_copy(view->ref, commit->id);
+		string_copy(ref_commit, view->ref);
 		type = LINE_CURSOR;
 	} else {
 		type = LINE_MAIN_COMMIT;
@@ -1469,7 +1479,7 @@ main_read(struct view *view, char *line)
 static bool
 main_enter(struct view *view)
 {
-	switch_view(view, REQ_VIEW_DIFF, TRUE, TRUE);
+	open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT | OPEN_BACKGROUNDED);
 	return TRUE;
 }
 
@@ -1621,8 +1631,14 @@ main(int argc, char *argv[])
 			 * input. */
 			nocbreak();
 			echo();
-			if (wgetnstr(status_win, opt_cmd, sizeof(opt_cmd)) == OK)
-				die("%s", opt_cmd);
+
+			if (wgetnstr(status_win, opt_cmd + 4, sizeof(opt_cmd) - 4) == OK) {
+				memcpy(opt_cmd, "git ", 4);
+				opt_request = REQ_VIEW_PAGER;
+			} else {
+				request = ERR;
+			}
+
 			noecho();
 			cbreak();
 		}
