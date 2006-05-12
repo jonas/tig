@@ -1153,7 +1153,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 
 	resize_display();
 
-	if (split && prev->lineno - prev->offset > prev->height) {
+	if (split && prev->lineno - prev->offset >= prev->height) {
 		/* Take the title line into account. */
 		int lines = prev->lineno - prev->height + 1;
 
