@@ -306,13 +306,12 @@ parse_options(int argc, char *argv[])
 		/**
 		 * Git command options
 		 * ~~~~~~~~~~~~~~~~~~~
-		 *
 		 * All git command options specified on the command line will
 		 * be passed to the given command and all will be shell quoted
 		 * before used.
 		 *
 		 * NOTE: It is possible to specify options even for the main
-		 * view. If doing this you should not touch the --pretty
+		 * view. If doing this you should not touch the `--pretty`
 		 * option.
 		 *
 		 * Example on how to open the log view and show both author and
@@ -827,7 +826,7 @@ scroll_view(struct view *view, enum request request)
 			lines = view->lines - view->offset;
 
 		if (lines == 0 || view->offset + view->height >= view->lines) {
-			report("Already on last line");
+			report("Cannot scroll beyond the last line");
 			return;
 		}
 		break;
@@ -839,7 +838,7 @@ scroll_view(struct view *view, enum request request)
 			lines = view->offset;
 
 		if (lines == 0) {
-			report("Already on first line");
+			report("Cannot scroll beyond the first line");
 			return;
 		}
 
@@ -891,11 +890,11 @@ move_view(struct view *view, enum request request)
 	}
 
 	if (steps <= 0 && view->lineno == 0) {
-		report("Already on first line");
+		report("Cannot move beyond the first line");
 		return;
 
 	} else if (steps >= 0 && view->lineno + 1 >= view->lines) {
-		report("Already on last line");
+		report("Cannot move beyond the last line");
 		return;
 	}
 
@@ -1058,9 +1057,6 @@ update_view(struct view *view)
 		}
 	}
 
-	/* CPU hogilicious! */
-	update_view_title(view);
-
 	if (redraw_from >= 0) {
 		/* If this is an incremental update, redraw the previous line
 		 * since for commits some members could have changed when
@@ -1071,6 +1067,10 @@ update_view(struct view *view)
 		/* Incrementally draw avoids flickering. */
 		redraw_view_from(view, redraw_from);
 	}
+
+	/* Update the title _after_ the redraw so that if the redraw picks up a
+	 * commit reference in view->ref it'll be available here. */
+	update_view_title(view);
 
 	if (ferror(view->pipe)) {
 		report("Failed to read: %s", strerror(errno));
@@ -1155,7 +1155,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 
 	if (split && prev->lineno - prev->offset >= prev->height) {
 		/* Take the title line into account. */
-		int lines = prev->lineno - prev->height + 1;
+		int lines = prev->lineno - prev->offset - prev->height + 1;
 
 		/* Scroll the view that was split if the current line is
 		 * outside the new limited view. */
@@ -1263,7 +1263,10 @@ view_driver(struct view *view, enum request request)
 		return TRUE;
 
 	case REQ_SCREEN_REDRAW:
-		redraw_view(view);
+		foreach_view (view, i) {
+			redraw_view(view);
+			update_view_title(view);
+		}
 		break;
 
 	case REQ_SCREEN_UPDATE:
@@ -1533,8 +1536,10 @@ main_read(struct view *view, char *line)
 
 		/* Require titles to start with a non-space character at the
 		 * offset used by git log. */
+		/* FIXME: More gracefull handling of titles; append "..." to
+		 * shortened titles, etc. */
 		if (strncmp(line, "    ", 4) ||
-		    isspace(line[5]))
+		    isspace(line[4]))
 			break;
 
 		string_copy(commit->title, line + 4);
