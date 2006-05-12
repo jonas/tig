@@ -16,7 +16,6 @@ install: all
 		install $$prog $(PREFIX)/bin; \
 	done
 
-
 install-docs: docs
 	for doc in $(DOCS); do \
 		case "$$doc" in \
@@ -25,7 +24,7 @@ install-docs: docs
 	done
 
 clean:
-	rm -f $(PROGS) $(DOCS)
+	rm -f $(PROGS) $(DOCS) core
 
 .PHONY: all docs install clean
 

@@ -15,19 +15,20 @@
  * tig [options] [--] [git log options]
  * tig [options] log  [git log options]
  * tig [options] diff [git diff options]
- * tig [options] <    [git log or git diff output]
+ * tig [options] show [git show options]
+ * tig [options] <    [git command output]
  *
  * DESCRIPTION
  * -----------
  * Browse changes in a git repository.
  **/
 
-#ifndef DEBUG
-#define NDEBUG
-#endif
-
 #ifndef	VERSION
 #define VERSION	"tig-0.1"
+#endif
+
+#ifndef DEBUG
+#define NDEBUG
 #endif
 
 #include <assert.h>
@@ -68,7 +69,7 @@ static void set_nonblocking_input(int boolean);
 
 #define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
 
-/* Some ascii-shorthands that fit into the ncurses namespace. */
+/* Some ascii-shorthands fitted into the ncurses namespace. */
 #define KEY_TAB		'\t'
 #define KEY_RETURN	'\r'
 #define KEY_ESC		27
@@ -184,27 +185,13 @@ static char opt_cmd[SIZEOF_CMD]	= "";
 static FILE *opt_pipe		= NULL;
 
 /* Returns the index of log or diff command or -1 to exit. */
-static int
+static bool
 parse_options(int argc, char *argv[])
 {
 	int i;
 
 	for (i = 1; i < argc; i++) {
 		char *opt = argv[i];
-
-		/**
-		 * log [options]::
-		 *	git log options.
-		 *
-		 * diff [options]::
-		 *	git diff options.
-		 **/
-		if (!strcmp(opt, "log") ||
-		    !strcmp(opt, "diff")) {
-			opt_request = opt[0] == 'l'
-				    ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
-			break;
-		}
 
 		/**
 		 * -l::
@@ -230,7 +217,7 @@ parse_options(int argc, char *argv[])
 		 *	Optionally, with interval different than each line.
 		 **/
 		if (!strncmp(opt, "-n", 2) ||
-		           !strncmp(opt, "--line-number", 13)) {
+		    !strncmp(opt, "--line-number", 13)) {
 			char *num = opt;
 
 			if (opt[1] == 'n') {
@@ -252,9 +239,9 @@ parse_options(int argc, char *argv[])
 		 *	Show version and exit.
 		 **/
 		if (!strcmp(opt, "-v") ||
-			   !strcmp(opt, "--version")) {
+		    !strcmp(opt, "--version")) {
 			printf("tig version %s\n", VERSION);
-			return -1;
+			return FALSE;
 		}
 
 		/**
@@ -269,39 +256,74 @@ parse_options(int argc, char *argv[])
 			break;
 		}
 
-		 /* Make stuff like:
+		/**
+		 * log [options]::
+		 *	Open log view using the given git log options.
+		 *
+		 * diff [options]::
+		 *	Open diff view using the given git diff options.
+		 *
+		 * show [options]::
+		 *	Open diff view using the given git show options.
+		 **/
+		if (!strcmp(opt, "log") ||
+		    !strcmp(opt, "diff") ||
+		    !strcmp(opt, "show")) {
+			opt_request = opt[0] == 'l'
+				    ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
+			break;
+		}
+
+		/* Make stuff like:
 		 *
 		 *	$ tig tag-1.0..HEAD
 		 *
-		 * work.
-		 */
+		 * work. */
 		if (opt[0] && opt[0] != '-')
 			break;
 
 		die("unknown command '%s'", opt);
 	}
 
-	/**
-	 * Pager mode
-	 * ~~~~~~~~~~
-	 * If stdin is a pipe, any log or diff options will be ignored and the
-	 * pager view will be opened loading data from stdin. The pager mode
-	 * can be used for colorizing output from various git commands.
-	 *
-	 * Example on how to colorize the output of git-show(1):
-	 *
-	 *	$ git show | tig
-	 **/
 	if (!isatty(STDIN_FILENO)) {
+		/**
+		 * Pager mode
+		 * ~~~~~~~~~~
+		 * If stdin is a pipe, any log or diff options will be ignored and the
+		 * pager view will be opened loading data from stdin. The pager mode
+		 * can be used for colorizing output from various git commands.
+		 *
+		 * Example on how to colorize the output of git-show(1):
+		 *
+		 *	$ git show | tig
+		 **/
 		opt_request = REQ_VIEW_PAGER;
 		opt_pipe = stdin;
 
 	} else if (i < argc) {
 		size_t buf_size;
 
-		/* XXX: This is vulnerable to the user overriding options
-		 * required for the main view parser. */
+		/**
+		 * Git command options
+		 * ~~~~~~~~~~~~~~~~~~~
+		 *
+		 * All git command options specified on the command line will
+		 * be passed to the given command and all will be shell quoted
+		 * before used.
+		 *
+		 * NOTE: It is possible to specify options even for the main
+		 * view. If doing this you should not touch the --pretty
+		 * option.
+		 *
+		 * Example on how to open the log view and show both author and
+		 * committer information:
+		 *
+		 *	$ tig log --pretty=fuller
+		 **/
+
 		if (opt_request == REQ_VIEW_MAIN)
+			/* XXX: This is vulnerable to the user overriding
+			 * options required for the main view parser. */
 			string_copy(opt_cmd, "git log --stat --pretty=raw");
 		else
 			string_copy(opt_cmd, "git");
@@ -319,7 +341,7 @@ parse_options(int argc, char *argv[])
 
 	}
 
-	return i;
+	return TRUE;
 }
 
 
@@ -345,6 +367,8 @@ struct keymap keymap[] = {
 	 *	Switch to log view.
 	 * m::
 	 *	Switch to main view.
+	 * p::
+	 *	Switch to pager view.
 	 * h::
 	 *	Show man page.
 	 * Return::
@@ -356,6 +380,7 @@ struct keymap keymap[] = {
 	{ 'm',		REQ_VIEW_MAIN },
 	{ 'd',		REQ_VIEW_DIFF },
 	{ 'l',		REQ_VIEW_LOG },
+	{ 'p',		REQ_VIEW_PAGER },
 	{ 'h',		REQ_VIEW_HELP },
 
 	{ KEY_TAB,	REQ_VIEW_NEXT },
@@ -417,7 +442,11 @@ struct keymap keymap[] = {
 	 * n::
 	 *	Toggle line numbers on/off.
 	 * ':'::
-	 *	Open prompt.
+	 *	Open prompt. This allows you to specify what git command to run.
+	 *	Example:
+	 *
+	 *	:log -p
+	 *
 	 **/
 	{ KEY_ESC,	REQ_QUIT },
 	{ 'q',		REQ_QUIT },
@@ -453,7 +482,7 @@ get_request(int key)
  *   ---------     ---------------      ----------      ----------      ---------- */ \
 /* Diff markup */ \
 LINE(DIFF,	   "diff --git ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(INDEX,	   "index ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
+LINE(DIFF_INDEX,   "index ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(DIFF_CHUNK,   "@@",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(DIFF_ADD,	   "+",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(DIFF_DEL,	   "-",			COLOR_RED,	COLOR_DEFAULT,	0), \
@@ -465,14 +494,16 @@ LINE(DIFF_SIM,	   "similarity ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_DISSIM,  "dissimilarity ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 /* Pretty print commit header */ \
 LINE(PP_AUTHOR,	   "Author: ",		COLOR_CYAN,	COLOR_DEFAULT,	0), \
+LINE(PP_COMMIT,	   "Commit: ",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(PP_MERGE,	   "Merge: ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(PP_DATE,	   "Date:   ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(PP_COMMIT,	   "Commit: ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
+LINE(PP_ADATE,	   "AuthorDate: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(PP_CDATE,	   "CommitDate: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 /* Raw commit header */ \
 LINE(COMMIT,	   "commit ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(PARENT,	   "parent ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(TREE,	   "tree ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
-LINE(AUTHOR_IDENT, "author ",		COLOR_CYAN,	COLOR_DEFAULT,	0), \
+LINE(AUTHOR,	   "author ",		COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(COMMITTER,	   "committer ",	COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 /* Misc */ \
 LINE(DIFF_TREE,	   "diff-tree ",	COLOR_BLUE,	COLOR_DEFAULT,	0), \
@@ -565,8 +596,11 @@ struct view {
 	size_t objsize;		/* Size of objects in the line index */
 
 	struct view_ops {
+		/* Draw one line; @lineno must be < view->height. */
 		bool (*draw)(struct view *view, unsigned int lineno);
+		/* Read one line; updates view->line. */
 		bool (*read)(struct view *view, char *line);
+		/* Depending on view, change display based on current line. */
 		bool (*enter)(struct view *view);
 	} *ops;
 
@@ -574,9 +608,9 @@ struct view {
 	char ref[SIZEOF_REF];	/* Hovered commit reference */
 	char vid[SIZEOF_REF];	/* View ID. Set to id member when updating. */
 
-	WINDOW *win;
-	WINDOW *title;
-	int height, width;
+	int height, width;	/* The width and height of the main window */
+	WINDOW *win;		/* The main window */
+	WINDOW *title;		/* The title window living below the main window */
 
 	/* Navigation */
 	unsigned long offset;	/* Offset of the window top */
@@ -584,7 +618,8 @@ struct view {
 
 	/* Buffering */
 	unsigned long lines;	/* Total number of lines */
-	void **line;		/* Line index */
+	void **line;		/* Line index; each line contains user data */
+	unsigned int digits;	/* Number of digits in the lines member. */
 
 	/* Loading */
 	FILE *pipe;
@@ -595,8 +630,7 @@ static struct view_ops pager_ops;
 static struct view_ops main_ops;
 
 #define DIFF_CMD \
-	"git log --stat -n1 %s ; echo; " \
-	"git diff --find-copies-harder -B -C %s^ %s"
+	"git show --patch-with-stat --find-copies-harder -B -C %s"
 
 #define LOG_CMD	\
 	"git log --cc --stat -n100 %s"
@@ -615,7 +649,7 @@ static struct view views[] = {
 	{ "diff",  DIFF_CMD,  ref_commit, sizeof(char),		 &pager_ops },
 	{ "log",   LOG_CMD,   ref_head,   sizeof(char),		 &pager_ops },
 	{ "help",  HELP_CMD,  ref_head,   sizeof(char),		 &pager_ops },
-	{ "pager", "cat",     ref_head,   sizeof(char),		 &pager_ops },
+	{ "pager", "",	      "static",	  sizeof(char),		 &pager_ops },
 };
 
 #define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
@@ -918,6 +952,9 @@ begin_update(struct view *view)
 	if (opt_cmd[0]) {
 		string_copy(view->cmd, opt_cmd);
 		opt_cmd[0] = 0;
+		/* When running random commands, the view ref could have become
+		 * invalid so clear it. */
+		view->ref[0] = 0;
 	} else {
 		if (snprintf(view->cmd, sizeof(view->cmd), view->cmdfmt,
 			     id, id, id) >= sizeof(view->cmd))
@@ -977,7 +1014,7 @@ update_view(struct view *view)
 	/* The number of lines to read. If too low it will cause too much
 	 * redrawing (and possible flickering), if too high responsiveness
 	 * will suffer. */
-	int lines = view->height;
+	unsigned long lines = view->height;
 	int redraw_from = -1;
 
 	if (!view->pipe)
@@ -1005,6 +1042,20 @@ update_view(struct view *view)
 
 		if (lines-- == 1)
 			break;
+	}
+
+	{
+		int digits;
+
+		lines = view->lines;
+		for (digits = 0; lines; digits++)
+			lines /= 10;
+
+		/* Keep the displayed view in sync with line number scaling. */
+		if (digits != view->digits) {
+			view->digits = digits;
+			redraw_from = 0;
+		}
 	}
 
 	/* CPU hogilicious! */
@@ -1069,7 +1120,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	foreach_view (displayed, nviews) {
 		if (prev != view &&
 		    view == displayed &&
-		    !strcmp(view->id, prev->id)) {
+		    !strcmp(view->vid, prev->vid)) {
 			current_view = nviews;
 			/* Blur out the title of the previous view. */
 			update_view_title(prev);
@@ -1083,7 +1134,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		return;
 	}
 
-	if (strcmp(view->vid, view->id) &&
+	if ((reload || strcmp(view->vid, view->id)) &&
 	    !begin_update(view)) {
 		report("Failed to load %s view", view->name);
 		return;
@@ -1195,6 +1246,7 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_PROMPT:
+		/* Always reload^Wrerun commands from the prompt. */
 		open_view(view, opt_request, OPEN_RELOAD);
 		break;
 
@@ -1250,17 +1302,11 @@ pager_draw(struct view *view, unsigned int lineno)
 	type = get_line_type(line);
 
 	if (view->offset + lineno == view->lineno) {
-		switch (type) {
-		case LINE_COMMIT:
+		if (type == LINE_COMMIT) {
 			string_copy(view->ref, line + 7);
 			string_copy(ref_commit, view->ref);
-			break;
-		case LINE_PP_COMMIT:
-			string_copy(view->ref, line + 8);
-			string_copy(ref_commit, view->ref);
-		default:
-			break;
 		}
+
 		type = LINE_CURSOR;
 	}
 
@@ -1271,13 +1317,17 @@ pager_draw(struct view *view, unsigned int lineno)
 	linelen = MIN(linelen, view->width);
 
 	if (opt_line_number) {
-		unsigned int real_lineno = view->offset + lineno + 1;
+		static char indent[] = "                    ";
+		unsigned long real_lineno = view->offset + lineno + 1;
 		int col = 0;
 
 		if (real_lineno == 1 || (real_lineno % opt_num_interval) == 0)
-			mvwprintw(view->win, lineno, 0, "%4d: ", real_lineno);
-		else
-			mvwaddstr(view->win, lineno, 0, "    : ");
+			mvwprintw(view->win, lineno, 0, "%.*d", view->digits, real_lineno);
+
+		else if (view->digits < sizeof(indent))
+			mvwaddnstr(view->win, lineno, 0, indent, view->digits);
+
+		waddstr(view->win, ": ");
 
 		while (line) {
 			if (*line == '\t') {
@@ -1320,6 +1370,14 @@ pager_draw(struct view *view, unsigned int lineno)
 static bool
 pager_read(struct view *view, char *line)
 {
+	/* For some reason the piped man page has many empty lines
+	 * so skip successive emptys lines to work around it. */
+	if (view == VIEW(REQ_VIEW_HELP) &&
+	    !*line &&
+	    view->lines &&
+	    !*((char *) view->line[view->lines - 1]))
+		return TRUE;
+
 	view->line[view->lines] = strdup(line);
 	if (!view->line[view->lines])
 		return FALSE;
@@ -1419,7 +1477,7 @@ main_read(struct view *view, char *line)
 		string_copy(commit->id, line);
 		break;
 
-	case LINE_AUTHOR_IDENT:
+	case LINE_AUTHOR:
 	{
 		char *ident = line + STRING_SIZE("author ");
 		char *end = strchr(ident, '<');
@@ -1502,6 +1560,9 @@ static struct view_ops main_ops = {
  * Status management
  */
 
+/* Whether or not the curses interface has been initialized. */
+bool cursed = FALSE;
+
 /* The status window is used for polling keystrokes. */
 static WINDOW *status_win;
 
@@ -1549,13 +1610,16 @@ init_display(void)
 
 	/* Initialize the curses library */
 	if (isatty(STDIN_FILENO)) {
-		initscr();
+		cursed = !!initscr();
 	} else {
 		/* Leave stdin and stdout alone when acting as a pager. */
 		FILE *io = fopen("/dev/tty", "r+");
 
-		newterm(NULL, io, io);
+		cursed = !!newterm(NULL, io, io);
 	}
+
+	if (!cursed)
+		die("Failed to initialize curses");
 
 	nonl();         /* Tell curses not to do NL->CR/NL on output */
 	cbreak();       /* Take input chars one at a time, no wait for \n */
@@ -1582,12 +1646,9 @@ init_display(void)
 static void
 quit(int sig)
 {
-	if (status_win)
-		delwin(status_win);
-	endwin();
-
-	/* FIXME: Shutdown gracefully. */
-
+	/* XXX: Restore tty modes and let the OS cleanup the rest! */
+	if (cursed)
+		endwin();
 	exit(0);
 }
 
@@ -1610,12 +1671,10 @@ int
 main(int argc, char *argv[])
 {
 	enum request request;
-	int git_arg;
 
 	signal(SIGINT, quit);
 
-	git_arg = parse_options(argc, argv);
-	if (git_arg < 0)
+	if (!parse_options(argc, argv))
 		return 0;
 
 	request = opt_request;
@@ -1662,13 +1721,6 @@ main(int argc, char *argv[])
  * TODO
  * ----
  * Features that should be explored.
- *
- * - Dynamic scaling of line number indentation.
- *
- * - Internal command line (exmode-inspired) which allows to specify what git
- *   log or git diff command to run. Example:
- *
- *	:log -p
  *
  * - Terminal resizing support. I am yet to figure out whether catching
  *   SIGWINCH is preferred over using ncurses' built-in support for resizing.
