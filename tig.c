@@ -635,7 +635,7 @@ static struct view_ops main_ops;
 	"git log --cc --stat -n100 %s"
 
 #define MAIN_CMD \
-	"git log --stat --pretty=raw %s"
+	"git log --topo-order --stat --pretty=raw %s"
 
 #define HELP_CMD \
 	"man tig 2> /dev/null"
@@ -1000,7 +1000,10 @@ end_update(struct view *view)
 	if (!view->pipe)
 		return;
 	set_nonblocking_input(FALSE);
-	pclose(view->pipe);
+	if (view->pipe == stdin)
+		fclose(view->pipe);
+	else
+		pclose(view->pipe);
 	view->pipe = NULL;
 }
 
@@ -1401,12 +1404,12 @@ pager_enter(struct view *view)
 	return TRUE;
 }
 
-
 static struct view_ops pager_ops = {
 	pager_draw,
 	pager_read,
 	pager_enter,
 };
+
 
 static bool
 main_draw(struct view *view, unsigned int lineno)
