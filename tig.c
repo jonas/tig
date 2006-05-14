@@ -1712,8 +1712,6 @@ static void die(const char *err, ...)
 	exit(1);
 }
 
-#include <readline/readline.h>
-
 int
 main(int argc, char *argv[])
 {
