@@ -110,11 +110,19 @@ enum request {
 	REQ_SCROLL_PAGE_DOWN,
 };
 
+struct ref {
+	char *name;
+	char id[41];
+	unsigned int tag:1;
+	unsigned int next:1;
+};
+
 struct commit {
 	char id[41];		/* SHA1 ID. */
 	char title[75];		/* The first line of the commit message. */
 	char author[75];	/* The author of the commit. */
 	struct tm time;		/* Date from the author ident. */
+	struct ref **refs;	/* Repository references; tags & branch heads. */
 };
 
 /*
@@ -520,7 +528,9 @@ LINE(TITLE_FOCUS,  "",			COLOR_WHITE,	COLOR_BLUE,	A_BOLD), \
 LINE(MAIN_DATE,    "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(MAIN_AUTHOR,  "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_COMMIT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
-LINE(MAIN_DELIM,   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0),
+LINE(MAIN_DELIM,   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
+LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD),
 
 enum line_type {
 #define LINE(type, line, fg, bg, attr) \
@@ -591,6 +601,33 @@ init_colors(void)
 /**
  * ENVIRONMENT VARIABLES
  * ---------------------
+ * Several options related to the interface with git can be configured
+ * via environment options.
+ *
+ * Repository references
+ * ~~~~~~~~~~~~~~~~~~~~~
+ * Commits that are referenced by tags and branch heads will be marked
+ * by the reference name surrounded by '[' and ']':
+ *
+ *	2006-04-18 23:12 Jonas Fonseca       | [tig-0.2] tig version 0.2
+ *
+ * If you want to filter out certain directories under `.git/refs/`, say
+ * `tmp` you can do it by setting the following variable:
+ *
+ *	$ TIG_LS_REMOTE="git ls-remote | sed '/\/tmp\//d'"
+ *
+ * Or set the variable permanently in your environment.
+ *
+ * TIG_LS_REMOTE::
+ *	Set command for retrieving all repository references.private
+ **/
+
+#define TIG_LS_REMOTE \
+	"git ls-remote ."
+
+/**
+ * View commands
+ * ~~~~~~~~~~~~~
  * It is possible to alter which commands are used for the different views.
  * If for example you prefer commits in the main to be sorted by date and
  * only show 500 commits, use:
@@ -1079,9 +1116,8 @@ update_view(struct view *view)
 	view->line = tmp;
 
 	while ((line = fgets(buffer, sizeof(buffer), view->pipe))) {
-		int linelen;
+		int linelen = strlen(line);
 
-		linelen = strlen(line);
 		if (linelen)
 			line[linelen - 1] = 0;
 
@@ -1452,6 +1488,8 @@ static struct view_ops pager_ops = {
 };
 
 
+static struct ref **get_refs(char *id);
+
 static bool
 main_draw(struct view *view, unsigned int lineno)
 {
@@ -1498,8 +1536,26 @@ main_draw(struct view *view, unsigned int lineno)
 	cols += 20;
 	wattrset(view->win, A_NORMAL);
 	mvwaddch(view->win, lineno, cols, ACS_LTEE);
+	wmove(view->win, lineno, cols + 2);
+
+	if (commit->refs) {
+		size_t i = 0;
+
+		do {
+			if (commit->refs[i]->tag)
+				wattrset(view->win, get_line_attr(LINE_MAIN_TAG));
+			else
+				wattrset(view->win, get_line_attr(LINE_MAIN_REF));
+			waddstr(view->win, "[");
+			waddstr(view->win, commit->refs[i]->name);
+			waddstr(view->win, "]");
+			wattrset(view->win, A_NORMAL);
+			waddstr(view->win, " ");
+		} while (commit->refs[i++]->next);
+	}
+
 	wattrset(view->win, get_line_attr(type));
-	mvwaddstr(view->win, lineno, cols + 2, commit->title);
+	waddstr(view->win, commit->title);
 	wattrset(view->win, A_NORMAL);
 
 	return TRUE;
@@ -1522,6 +1578,7 @@ main_read(struct view *view, char *line)
 
 		view->line[view->lines++] = commit;
 		string_copy(commit->id, line);
+		commit->refs = get_refs(commit->id);
 		break;
 
 	case LINE_AUTHOR:
@@ -1605,6 +1662,7 @@ static struct view_ops main_ops = {
 	main_enter,
 };
 
+
 /*
  * Status management
  */
@@ -1684,6 +1742,98 @@ init_display(void)
 	wbkgdset(status_win, get_line_attr(LINE_STATUS));
 }
 
+
+/*
+ * Repository references
+ */
+
+static struct ref *refs;
+size_t refs_size;
+
+static struct ref **
+get_refs(char *id)
+{
+	struct ref **id_refs = NULL;
+	size_t id_refs_size = 0;
+	size_t i;
+
+	for (i = 0; i < refs_size; i++) {
+		struct ref **tmp;
+
+		if (strcmp(id, refs[i].id))
+			continue;
+
+		tmp = realloc(id_refs, (id_refs_size + 1) * sizeof(*id_refs));
+		if (!tmp) {
+			if (id_refs)
+				free(id_refs);
+			return NULL;
+		}
+
+		id_refs = tmp;
+		id_refs[id_refs_size++] = &refs[i];
+		if (id_refs_size > 1)
+			id_refs[id_refs_size - 1]->next = 1;
+	}
+
+	return id_refs;
+}
+
+static int
+load_refs(void)
+{
+	char *cmd_env = getenv("TIG_LS_REMOTE");
+	char *cmd = cmd_env ? cmd_env : TIG_LS_REMOTE;
+	FILE *pipe = popen(cmd, "r");
+	char buffer[BUFSIZ];
+	char *line;
+
+	if (!pipe)
+		return ERR;
+
+	while ((line = fgets(buffer, sizeof(buffer), pipe))) {
+		char *name = strchr(line, '\t');
+		struct ref *ref;
+		int namelen;
+		bool tag = FALSE;
+
+		if (!name)
+			continue;
+
+		*name++ = 0;
+		namelen = strlen(name) - 1;
+		if (name[namelen - 1] == '}') {
+			while (namelen > 0 && name[namelen] != '^')
+				namelen--;
+		}
+		name[namelen] = 0;
+
+		if (!strncmp(name, "refs/tags/", STRING_SIZE("refs/tags/"))) {
+			name += STRING_SIZE("refs/tags/");
+			tag = TRUE;
+		}
+
+		refs = realloc(refs, sizeof(*refs) * (refs_size + 1));
+		if (!refs)
+			return ERR;
+
+		ref = &refs[refs_size++];
+		ref->tag = tag;
+		ref->name = strdup(name);
+		if (!ref->name)
+			return ERR;
+
+		string_copy(ref->id, line);
+	}
+
+	if (ferror(pipe))
+		return ERR;
+
+	pclose(pipe);
+
+	return OK;
+}
+
 /*
  * Main
  */
@@ -1723,6 +1873,9 @@ main(int argc, char *argv[])
 
 	if (!parse_options(argc, argv))
 		return 0;
+
+	if (load_refs() == ERR)
+		die("Failed to load refs.");
 
 	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
 		view->cmd_env = getenv(view->cmd_env);
