@@ -682,6 +682,9 @@ struct view {
 	size_t objsize;		/* Size of objects in the line index */
 
 	struct view_ops {
+		/* What type of content being displayed. Used in the
+		 * title bar. */
+		char *type;
 		/* Draw one line; @lineno must be < view->height. */
 		bool (*draw)(struct view *view, unsigned int lineno);
 		/* Read one line; updates view->line. */
@@ -834,10 +837,8 @@ update_view_title(struct view *view)
 		wprintw(view->title, "[%s]", view->name);
 
 	if (view->lines) {
-		char *type = view == VIEW(REQ_VIEW_MAIN) ? "commit" : "line";
-
 		wprintw(view->title, " - %s %d of %d (%d%%)",
-			type,
+			view->ops->type,
 			view->lineno + 1,
 			view->lines,
 			(view->lineno + 1) * 100 / view->lines);
@@ -1209,7 +1210,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 			current_view = nviews;
 			/* Blur out the title of the previous view. */
 			update_view_title(prev);
-			report("Switching to %s view", view->name);
+			report("");
 			return;
 		}
 	}
@@ -1322,7 +1323,7 @@ view_driver(struct view *view, enum request request)
 		current_view = next_view;
 		/* Blur out the title of the previous view. */
 		update_view_title(view);
-		report("Switching to %s view", display[current_view]->name);
+		report("");
 		break;
 	}
 	case REQ_TOGGLE_LINE_NUMBERS:
@@ -1482,6 +1483,7 @@ pager_enter(struct view *view)
 }
 
 static struct view_ops pager_ops = {
+	"line",
 	pager_draw,
 	pager_read,
 	pager_enter,
@@ -1657,6 +1659,7 @@ main_enter(struct view *view)
 }
 
 static struct view_ops main_ops = {
+	"commit",
 	main_draw,
 	main_read,
 	main_enter,
@@ -1802,6 +1805,7 @@ load_refs(void)
 		struct ref *ref;
 		int namelen;
 		bool tag = FALSE;
+		bool tag_commit = FALSE;
 
 		if (!name)
 			continue;
@@ -1811,10 +1815,14 @@ load_refs(void)
 		if (name[namelen - 1] == '}') {
 			while (namelen > 0 && name[namelen] != '^')
 				namelen--;
+			if (namelen > 0)
+				tag_commit = TRUE;
 		}
 		name[namelen] = 0;
 
 		if (!strncmp(name, "refs/tags/", STRING_SIZE("refs/tags/"))) {
+			if (!tag_commit)
+				continue;
 			name += STRING_SIZE("refs/tags/");
 			tag = TRUE;
 
