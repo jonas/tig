@@ -90,6 +90,7 @@ enum request {
 	REQ_QUIT,
 	REQ_PROMPT,
 	REQ_SCREEN_REDRAW,
+	REQ_SCREEN_RESIZE,
 	REQ_SCREEN_UPDATE,
 	REQ_SHOW_VERSION,
 	REQ_STOP_LOADING,
@@ -457,6 +458,8 @@ struct keymap keymap[] = {
 
 	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
 	{ ERR,		REQ_SCREEN_UPDATE },
+	/* Use the ncurses SIGWINCH handler. */
+	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
 };
 
 static enum request
@@ -1307,6 +1310,9 @@ view_driver(struct view *view, enum request request)
 		report("Version: %s", VERSION);
 		return TRUE;
 
+	case REQ_SCREEN_RESIZE:
+		resize_display();
+		/* Fall-through */
 	case REQ_SCREEN_REDRAW:
 		foreach_view (view, i) {
 			redraw_view(view);
@@ -1418,14 +1424,6 @@ pager_draw(struct view *view, unsigned int lineno)
 static bool
 pager_read(struct view *view, char *line)
 {
-	/* For some reason the piped man page has many empty lines
-	 * so skip successive emptys lines to work around it. */
-	if (view == VIEW(REQ_VIEW_HELP) &&
-	    !*line &&
-	    view->lines &&
-	    !*((char *) view->line[view->lines - 1]))
-		return TRUE;
-
 	view->line[view->lines] = strdup(line);
 	if (!view->line[view->lines])
 		return FALSE;
@@ -1712,6 +1710,8 @@ static void die(const char *err, ...)
 	exit(1);
 }
 
+#include <readline/readline.h>
+
 int
 main(int argc, char *argv[])
 {
@@ -1742,7 +1742,10 @@ main(int argc, char *argv[])
 		key = wgetch(status_win);
 		request = get_request(key);
 
-		if (request == REQ_PROMPT) {
+		/* Some low-level request handling. This keeps handling of
+		 * status_win restricted. */
+		switch (request) {
+		case REQ_PROMPT:
 			report(":");
 			/* Temporarily switch to line-oriented and echoed
 			 * input. */
@@ -1758,6 +1761,23 @@ main(int argc, char *argv[])
 
 			noecho();
 			cbreak();
+			break;
+
+		case REQ_SCREEN_RESIZE:
+		{
+			int height, width;
+
+			getmaxyx(stdscr, height, width);
+
+			/* Resize the status view and let the view driver take
+			 * care of resizing the displayed views. */
+			wresize(status_win, 1, width);
+			mvwin(status_win, height - 1, 0);
+			wrefresh(status_win);
+			break;
+		}
+		default:
+			break;
 		}
 	}
 
@@ -1771,8 +1791,7 @@ main(int argc, char *argv[])
  * ----
  * Features that should be explored.
  *
- * - Terminal resizing support. I am yet to figure out whether catching
- *   SIGWINCH is preferred over using ncurses' built-in support for resizing.
+ * - Searching.
  *
  * - Locale support.
  *
