@@ -497,8 +497,8 @@ LINE(DIFF_INDEX,   "index ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(DIFF_CHUNK,   "@@",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(DIFF_ADD,	   "+",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(DIFF_DEL,	   "-",			COLOR_RED,	COLOR_DEFAULT,	0), \
-LINE(DIFF_OLDMODE, "old mode ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DIFF_NEWMODE, "new mode ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(DIFF_OLDMODE, "old file mode ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(DIFF_NEWMODE, "new file mode ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_COPY,	   "copy ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_RENAME,  "rename ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_SIM,	   "similarity ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
@@ -1771,9 +1771,15 @@ get_refs(char *id)
 		}
 
 		id_refs = tmp;
-		id_refs[id_refs_size++] = &refs[i];
-		if (id_refs_size > 1)
+		if (id_refs_size > 0)
 			id_refs[id_refs_size - 1]->next = 1;
+		id_refs[id_refs_size] = &refs[i];
+
+		/* XXX: The properties of the commit chains ensures that we can
+		 * safely modify the shared ref. The repo references will
+		 * always be similar for the same id. */
+		id_refs[id_refs_size]->next = 0;
+		id_refs_size++;
 	}
 
 	return id_refs;
@@ -1811,6 +1817,12 @@ load_refs(void)
 		if (!strncmp(name, "refs/tags/", STRING_SIZE("refs/tags/"))) {
 			name += STRING_SIZE("refs/tags/");
 			tag = TRUE;
+
+		} else if (!strncmp(name, "refs/heads/", STRING_SIZE("refs/heads/"))) {
+			name += STRING_SIZE("refs/heads/");
+
+		} else if (!strcmp(name, "HEAD")) {
+			continue;
 		}
 
 		refs = realloc(refs, sizeof(*refs) * (refs_size + 1));
