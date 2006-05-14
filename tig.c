@@ -458,6 +458,7 @@ struct keymap keymap[] = {
 
 	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
 	{ ERR,		REQ_SCREEN_UPDATE },
+
 	/* Use the ncurses SIGWINCH handler. */
 	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
 };
@@ -1620,15 +1621,16 @@ report(const char *msg, ...)
 {
 	va_list args;
 
-	va_start(args, msg);
-
 	/* Update the title window first, so the cursor ends up in the status
 	 * window. */
 	update_view_title(display[current_view]);
 
+	va_start(args, msg);
+
 	werase(status_win);
 	wmove(status_win, 0, 0);
-	vwprintw(status_win, msg, args);
+	if (*msg)
+		vwprintw(status_win, msg, args);
 	wrefresh(status_win);
 
 	va_end(args);
