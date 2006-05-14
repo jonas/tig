@@ -46,7 +46,7 @@
 
 static void die(const char *err, ...);
 static void report(const char *msg, ...);
-static void set_nonblocking_input(int boolean);
+static void set_nonblocking_input(bool loading);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -195,7 +195,7 @@ parse_options(int argc, char *argv[])
 
 		/**
 		 * -l::
-		 *	Start up in log view.
+		 *	Start up in log view using the internal log command.
 		 **/
 		if (!strcmp(opt, "-l")) {
 			opt_request = REQ_VIEW_LOG;
@@ -204,7 +204,7 @@ parse_options(int argc, char *argv[])
 
 		/**
 		 * -d::
-		 *	Start up in diff view.
+		 *	Start up in diff view using the internal diff command.
 		 **/
 		if (!strcmp(opt, "-d")) {
 			opt_request = REQ_VIEW_DIFF;
@@ -584,13 +584,59 @@ init_colors(void)
 }
 
 
+/**
+ * ENVIRONMENT VARIABLES
+ * ---------------------
+ * It is possible to alter which commands are used for the different views.
+ * If for example you prefer commits in the main to be sorted by date and
+ * only show 500 commits, use:
+ *
+ *	$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %s" tig
+ *
+ * Or set the variable permanently in your environment.
+ *
+ * Notice, how `%s` is used to specify the commit reference. There can
+ * be a maximum of 5 `%s` ref specifications.
+ *
+ * TIG_DIFF_CMD::
+ *	The command used for the diff view. By default, git show is used
+ *	as a backend.
+ *
+ * TIG_LOG_CMD::
+ *	The command used for the log view.
+ *
+ * TIG_MAIN_CMD::
+ *	The command used for the main view. Note, you must always specify
+ *	the option: `--pretty=raw` since the main view parser expects to
+ *	read that format.
+ **/
+
+#define TIG_DIFF_CMD \
+	"git show --patch-with-stat --find-copies-harder -B -C %s"
+
+#define TIG_LOG_CMD	\
+	"git log --cc --stat -n100 %s"
+
+#define TIG_MAIN_CMD \
+	"git log --topo-order --stat --pretty=raw %s"
+
+/* We silently ignore that the following are also exported. */
+
+#define TIG_HELP_CMD \
+	"man tig 2> /dev/null"
+
+#define TIG_PAGER_CMD \
+	""
+
+
 /*
  * Viewer
  */
 
 struct view {
 	const char *name;	/* View name */
-	const char *cmdfmt;	/* Default command line format */
+	char *cmd_fmt;		/* Default command line format */
+	char *cmd_env;		/* Command line set via environment */
 	char *id;		/* Points to either of ref_{head,commit} */
 	size_t objsize;		/* Size of objects in the line index */
 
@@ -628,27 +674,21 @@ struct view {
 static struct view_ops pager_ops;
 static struct view_ops main_ops;
 
-#define DIFF_CMD \
-	"git show --patch-with-stat --find-copies-harder -B -C %s"
-
-#define LOG_CMD	\
-	"git log --cc --stat -n100 %s"
-
-#define MAIN_CMD \
-	"git log --topo-order --stat --pretty=raw %s"
-
-#define HELP_CMD \
-	"man tig 2> /dev/null"
-
 char ref_head[SIZEOF_REF]	= "HEAD";
 char ref_commit[SIZEOF_REF]	= "HEAD";
 
+#define VIEW_STR(name, cmd, env, ref, objsize, ops) \
+	{ name, cmd, #env, ref, objsize, ops }
+
+#define VIEW_(id, name, ops, ref, objsize) \
+	VIEW_STR(name, TIG_##id##_CMD,  TIG_##id##_CMD, ref, objsize, ops)
+
 static struct view views[] = {
-	{ "main",  MAIN_CMD,  ref_head,   sizeof(struct commit), &main_ops },
-	{ "diff",  DIFF_CMD,  ref_commit, sizeof(char),		 &pager_ops },
-	{ "log",   LOG_CMD,   ref_head,   sizeof(char),		 &pager_ops },
-	{ "help",  HELP_CMD,  ref_head,   sizeof(char),		 &pager_ops },
-	{ "pager", "",	      "static",	  sizeof(char),		 &pager_ops },
+	VIEW_(MAIN,  "main",  &main_ops,  ref_head,   sizeof(struct commit)),
+	VIEW_(DIFF,  "diff",  &pager_ops, ref_commit, sizeof(char)),
+	VIEW_(LOG,   "log",   &pager_ops, ref_head,   sizeof(char)),
+	VIEW_(HELP,  "help",  &pager_ops, ref_head,   sizeof(char)),
+	VIEW_(PAGER, "pager", &pager_ops, "static",   sizeof(char)),
 };
 
 #define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
@@ -955,8 +995,10 @@ begin_update(struct view *view)
 		 * invalid so clear it. */
 		view->ref[0] = 0;
 	} else {
-		if (snprintf(view->cmd, sizeof(view->cmd), view->cmdfmt,
-			     id, id, id) >= sizeof(view->cmd))
+		char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
+
+		if (snprintf(view->cmd, sizeof(view->cmd), format,
+			     id, id, id, id, id) >= sizeof(view->cmd))
 			return FALSE;
 	}
 
@@ -1596,19 +1638,14 @@ report(const char *msg, ...)
 
 /* Controls when nodelay should be in effect when polling user input. */
 static void
-set_nonblocking_input(int loading)
+set_nonblocking_input(bool loading)
 {
 	/* The number of loading views. */
 	static unsigned int nloading;
 
-	if (loading == TRUE) {
-		if (nloading++ == 0)
-			nodelay(status_win, TRUE);
-		return;
-	}
-
-	if (nloading-- == 1)
-		nodelay(status_win, FALSE);
+	if ((loading == FALSE && nloading-- == 1) ||
+	    (loading == TRUE  && nloading++ == 0))
+		nodelay(status_win, loading);
 }
 
 static void
@@ -1678,19 +1715,23 @@ static void die(const char *err, ...)
 int
 main(int argc, char *argv[])
 {
+	struct view *view;
 	enum request request;
+	size_t i;
 
 	signal(SIGINT, quit);
 
 	if (!parse_options(argc, argv))
 		return 0;
 
+	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
+		view->cmd_env = getenv(view->cmd_env);
+
 	request = opt_request;
 
 	init_display();
 
 	while (view_driver(display[current_view], request)) {
-		struct view *view;
 		int key;
 		int i;
 
