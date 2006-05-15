@@ -295,7 +295,7 @@ parse_options(int argc, char *argv[])
 		/**
 		 * \--::
 		 *	End of tig(1) options. Useful when specifying commands
-		 *	for the main view. Example:
+		 *	options for the main view. Example:
 		 *
 		 *		$ tig -- --since=1.month
 		 **/
@@ -305,13 +305,13 @@ parse_options(int argc, char *argv[])
 		}
 
 		/**
-		 * log [options]::
+		 * log [git log options]::
 		 *	Open log view using the given git log options.
 		 *
-		 * diff [options]::
+		 * diff [git diff options]::
 		 *	Open diff view using the given git diff options.
 		 *
-		 * show [options]::
+		 * show [git show options]::
 		 *	Open diff view using the given git show options.
 		 **/
 		if (!strcmp(opt, "log") ||
@@ -322,11 +322,14 @@ parse_options(int argc, char *argv[])
 			break;
 		}
 
-		/* Make stuff like:
+		/**
+		 * [git options]::
+		 *	tig(1) will stop the option parsing when the first
+		 *	command line parameter not starting with "-" is
+		 *	encountered. This makes the following work:
 		 *
 		 *	$ tig tag-1.0..HEAD
-		 *
-		 * work. */
+		 **/
 		if (opt[0] && opt[0] != '-')
 			break;
 
