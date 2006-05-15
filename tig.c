@@ -20,7 +20,40 @@
  *
  * DESCRIPTION
  * -----------
- * Browse changes in a git repository.
+ * Browse changes in a git repository. Additionally, tig(1) can also act
+ * as a pager for output of various git commands.
+ *
+ * Commit limiting
+ * ~~~~~~~~~~~~~~~
+ * To speed up interaction with git, you can limit the amount of commits
+ * to show both for the log and main view. Either limit by date using
+ * e.g. `--since=1.month` or limit by the number of commits using `-n400`.
+ *
+ * Alternatively, commits can be limited to a specific range, such as
+ * "all commits between tag-1.0 and tag-2.0". For example:
+ *
+ *	$ tig log tag-1.0..tag-2.0
+ *
+ * Git interprets this as "all commits reachable from commit-2
+ * but not from commit-1". The above can also be written:
+ *
+ *	$ tig log tag-2.0 ^tag-1.0
+ *
+ * You can think of '^' as a negator. Using this alternate syntax,
+ * it is possible to furthur prune commits by specifying multiple
+ * negators.
+ *
+ * This way of commit limiting makes it trivial to only browse the commit
+ * which hasn't been pushed to a remote branch. Assuming origin is your
+ * upstream remote branch, using:
+ *
+ *	$ tig log origin..HEAD
+ *
+ * Optionally, with "HEAD" left out, will list what will be pushed to
+ * the remote branch.
+ *
+ * See the section on environment variables, on how to further tune the
+ * interaction with git.
  **/
 
 #ifndef	VERSION
@@ -67,12 +100,15 @@ static void set_nonblocking_input(bool loading);
 /* The default interval between line numbers. */
 #define NUMBER_INTERVAL	1
 
+#define TABSIZE		8
+
 #define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
 
 /* Some ascii-shorthands fitted into the ncurses namespace. */
 #define KEY_TAB		'\t'
 #define KEY_RETURN	'\r'
 #define KEY_ESC		27
+
 
 /* User action requests. */
 enum request {
@@ -98,7 +134,9 @@ enum request {
 	REQ_VIEW_NEXT,
 
 	REQ_MOVE_UP,
+	REQ_MOVE_UP_ENTER,
 	REQ_MOVE_DOWN,
+	REQ_MOVE_DOWN_ENTER,
 	REQ_MOVE_PAGE_UP,
 	REQ_MOVE_PAGE_DOWN,
 	REQ_MOVE_FIRST_LINE,
@@ -125,6 +163,7 @@ struct commit {
 	struct ref **refs;	/* Repository references; tags & branch heads. */
 };
 
+
 /*
  * String helpers
  */
@@ -140,6 +179,7 @@ string_ncopy(char *dst, char *src, int dstlen)
 /* Shorthand for safely copying into a fixed buffer. */
 #define string_copy(dst, src) \
 	string_ncopy(dst, src, sizeof(dst))
+
 
 /* Shell quoting
  *
@@ -187,8 +227,10 @@ sq_quote(char buf[SIZEOF_CMD], size_t bufsize, const char *src)
  * -------
  **/
 
-static int opt_line_number	= FALSE;
+/* Option and state variables. */
+static bool opt_line_number	= FALSE;
 static int opt_num_interval	= NUMBER_INTERVAL;
+static int opt_tab_size		= TABSIZE;
 static enum request opt_request = REQ_VIEW_MAIN;
 static char opt_cmd[SIZEOF_CMD]	= "";
 static FILE *opt_pipe		= NULL;
@@ -240,6 +282,26 @@ parse_options(int argc, char *argv[])
 				opt_num_interval = atoi(num);
 
 			opt_line_number = TRUE;
+			continue;
+		}
+
+		/**
+		 * -t[NSPACES], --tab-size[=NSPACES]::
+		 *	Set the number of spaces tabs should be expanded to.
+		 **/
+		if (!strncmp(opt, "-t", 2) ||
+		    !strncmp(opt, "--tab-size", 10)) {
+			char *num = opt;
+
+			if (opt[1] == 't') {
+				num = opt + 2;
+
+			} else if (opt[STRING_SIZE("--tab-size")] == '=') {
+				num = opt + STRING_SIZE("--tab-size=");
+			}
+
+			if (isdigit(*num))
+				opt_tab_size = MIN(atoi(num), TABSIZE);
 			continue;
 		}
 
@@ -356,6 +418,7 @@ parse_options(int argc, char *argv[])
 /**
  * KEYS
  * ----
+ * Below the default key bindings are shown.
  **/
 
 #define HELP "(d)iff, (l)og, (m)ain, (q)uit, (v)ersion, (h)elp"
@@ -380,8 +443,10 @@ struct keymap keymap[] = {
 	 * h::
 	 *	Show man page.
 	 * Return::
-	 *	If in main view split the view
-	 *	and show the diff in the bottom view.
+	 *	If on a commit line show the commit diff. Addiionally, if in
+	 *	main or log view this will split the view. To open the commit
+	 *	diff in full size view either use 'd' or press Return twice.
+	 *
 	 * Tab::
 	 *	Switch to next view.
 	 **/
@@ -397,13 +462,21 @@ struct keymap keymap[] = {
 	/**
 	 * Cursor navigation
 	 * ~~~~~~~~~~~~~~~~~
-	 * Up, k::
+	 * Up::
 	 *	Move curser one line up.
-	 * Down, j::
+	 * Down::
 	 *	Move cursor one line down.
-	 * Page Up::
+	 * k::
+	 *
+	 *	Move curser one line up and enter. When used in the main view
+	 *	this will always show the diff of the current commit in the
+	 *	split diff view.
+	 *
+	 * j::
+	 *	Move cursor one line down and enter.
+	 * PgUp::
 	 *	Move curser one page up.
-	 * Page Down::
+	 * PgDown::
 	 *	Move cursor one page down.
 	 * Home::
 	 *	Jump to first line.
@@ -411,9 +484,9 @@ struct keymap keymap[] = {
 	 *	Jump to last line.
 	 **/
 	{ KEY_UP,	REQ_MOVE_UP },
-	{ 'k',		REQ_MOVE_UP },
 	{ KEY_DOWN,	REQ_MOVE_DOWN },
-	{ 'j',		REQ_MOVE_DOWN },
+	{ 'k',		REQ_MOVE_UP_ENTER },
+	{ 'j',		REQ_MOVE_DOWN_ENTER },
 	{ KEY_HOME,	REQ_MOVE_FIRST_LINE },
 	{ KEY_END,	REQ_MOVE_LAST_LINE },
 	{ KEY_NPAGE,	REQ_MOVE_PAGE_DOWN },
@@ -439,24 +512,25 @@ struct keymap keymap[] = {
 	/**
 	 * Misc
 	 * ~~~~
-	 * q, Escape::
+	 * q::
 	 *	Quit
 	 * r::
 	 *	Redraw screen.
 	 * z::
-	 *	Stop all background loading.
+	 *	Stop all background loading. This can be useful if you ran
+	 *	tig(1) in a repository with a long history without limiting
+	 *	the log output.
 	 * v::
 	 *	Show version.
 	 * n::
 	 *	Toggle line numbers on/off.
 	 * ':'::
-	 *	Open prompt. This allows you to specify what git command to run.
-	 *	Example:
+	 *	Open prompt. This allows you to specify what git command
+	 *	to run. Example:
 	 *
 	 *	:log -p
 	 *
 	 **/
-	{ KEY_ESC,	REQ_QUIT },
 	{ 'q',		REQ_QUIT },
 	{ 'z',		REQ_STOP_LOADING },
 	{ 'v',		REQ_SHOW_VERSION },
@@ -614,12 +688,13 @@ init_colors(void)
  * If you want to filter out certain directories under `.git/refs/`, say
  * `tmp` you can do it by setting the following variable:
  *
- *	$ TIG_LS_REMOTE="git ls-remote | sed '/\/tmp\//d'"
+ *	$ TIG_LS_REMOTE="git ls-remote . | sed /\/tmp\//d" tig
  *
  * Or set the variable permanently in your environment.
  *
  * TIG_LS_REMOTE::
- *	Set command for retrieving all repository references.private
+ *	Set command for retrieving all repository references. The command
+ *	should output data in the same format as git-ls-remote(1).
  **/
 
 #define TIG_LS_REMOTE \
@@ -629,8 +704,8 @@ init_colors(void)
  * View commands
  * ~~~~~~~~~~~~~
  * It is possible to alter which commands are used for the different views.
- * If for example you prefer commits in the main to be sorted by date and
- * only show 500 commits, use:
+ * If for example you prefer commits in the main view to be sorted by date
+ * and only show 500 commits, use:
  *
  *	$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %s" tig
  *
@@ -644,7 +719,9 @@ init_colors(void)
  *	as a backend.
  *
  * TIG_LOG_CMD::
- *	The command used for the log view.
+ *	The command used for the log view. If you prefer to have both
+ *	author and committer shown in the log view be sure to pass
+ *	`--pretty=fuller` to git log.
  *
  * TIG_MAIN_CMD::
  *	The command used for the main view. Note, you must always specify
@@ -796,8 +873,11 @@ resize_display(void)
 	offset = 0;
 
 	foreach_view (view, i) {
+		/* Keep the size of the all view windows one lager than is
+		 * required. This makes current line management easier when the
+		 * cursor will go outside the window. */
 		if (!view->win) {
-			view->win = newwin(view->height, 0, offset, 0);
+			view->win = newwin(view->height + 1, 0, offset, 0);
 			if (!view->win)
 				die("Failed to create %s view", view->name);
 
@@ -808,7 +888,7 @@ resize_display(void)
 				die("Failed to create title window");
 
 		} else {
-			wresize(view->win, view->height, view->width);
+			wresize(view->win, view->height + 1, view->width);
 			mvwin(view->win,   offset, 0);
 			mvwin(view->title, offset + view->height, 0);
 			wrefresh(view->win);
@@ -883,6 +963,12 @@ do_scroll_view(struct view *view, int lines)
 		view->ops->draw(view, 0);
 
 	} else if (view->lineno >= view->offset + view->height) {
+		if (view->lineno == view->offset + view->height) {
+			/* Clear the hidden line so it doesn't show if the view
+			 * is scrolled up. */
+			wmove(view->win, view->height, 0);
+			wclrtoeol(view->win);
+		}
 		view->lineno = view->offset + view->height - 1;
 		view->ops->draw(view, view->lineno - view->offset);
 	}
@@ -960,10 +1046,12 @@ move_view(struct view *view, enum request request)
 		break;
 
 	case REQ_MOVE_UP:
+	case REQ_MOVE_UP_ENTER:
 		steps = -1;
 		break;
 
 	case REQ_MOVE_DOWN:
+	case REQ_MOVE_DOWN_ENTER:
 		steps = 1;
 		break;
 
@@ -1250,7 +1338,8 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 
 	if (prev && view != prev) {
 		/* "Blur" the previous view. */
-		update_view_title(prev);
+		if (!backgrounded)
+			update_view_title(prev);
 
 		/* Continue loading split views in the background. */
 		if (!split)
@@ -1266,6 +1355,11 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		redraw_view(view);
 		report("");
 	}
+
+	/* If the view is backgrounded the above calls to report()
+	 * won't redraw the view title. */
+	if (backgrounded)
+		update_view_title(view);
 }
 
 
@@ -1303,6 +1397,11 @@ view_driver(struct view *view, enum request request)
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
+	case REQ_MOVE_UP_ENTER:
+	case REQ_MOVE_DOWN_ENTER:
+		move_view(view, request);
+		/* Fall-through */
+
 	case REQ_ENTER:
 		if (!view->lines) {
 			report("Nothing to enter");
@@ -1329,6 +1428,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_LINE_NUMBERS:
 		opt_line_number = !opt_line_number;
 		redraw_view(view);
+		update_view_title(view);
 		break;
 
 	case REQ_PROMPT:
@@ -1339,7 +1439,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_STOP_LOADING:
 		foreach_view (view, i) {
 			if (view->pipe)
-				report("Stopped loaded of %s view", view->name),
+				report("Stopped loaded the %s view", view->name),
 			end_update(view);
 		}
 		break;
@@ -1393,6 +1493,8 @@ pager_draw(struct view *view, unsigned int lineno)
 	line = view->line[view->offset + lineno];
 	type = get_line_type(line);
 
+	wmove(view->win, lineno, 0);
+
 	if (view->offset + lineno == view->lineno) {
 		if (type == LINE_COMMIT) {
 			string_copy(view->ref, line + 7);
@@ -1400,61 +1502,62 @@ pager_draw(struct view *view, unsigned int lineno)
 		}
 
 		type = LINE_CURSOR;
+		wchgat(view->win, -1, 0, type, NULL);
 	}
 
 	attr = get_line_attr(type);
 	wattrset(view->win, attr);
 
 	linelen = strlen(line);
-	linelen = MIN(linelen, view->width);
 
-	if (opt_line_number) {
-		static char indent[] = "                    ";
-		unsigned long real_lineno = view->offset + lineno + 1;
-		int col = 0;
+	if (opt_line_number || opt_tab_size < TABSIZE) {
+		static char spaces[] = "                    ";
+		int col_offset = 0, col = 0;
 
-		if (real_lineno == 1 || (real_lineno % opt_num_interval) == 0)
-			mvwprintw(view->win, lineno, 0, "%.*d", view->digits, real_lineno);
+		if (opt_line_number) {
+			unsigned long real_lineno = view->offset + lineno + 1;
 
-		else if (view->digits < sizeof(indent))
-			mvwaddnstr(view->win, lineno, 0, indent, view->digits);
-
-		waddstr(view->win, ": ");
-
-		while (line) {
-			if (*line == '\t') {
-				waddnstr(view->win, "        ", 8 - (col % 8));
-				col += 8 - (col % 8);
-				line++;
+			if (real_lineno == 1 ||
+			    (real_lineno % opt_num_interval) == 0) {
+				wprintw(view->win, "%.*d", view->digits, real_lineno);
 
 			} else {
-				char *tab = strchr(line, '\t');
-
-				if (tab)
-					waddnstr(view->win, line, tab - line);
-				else
-					waddstr(view->win, line);
-				col += tab - line;
-				line = tab;
+				waddnstr(view->win, spaces,
+					 MIN(view->digits, STRING_SIZE(spaces)));
 			}
+			waddstr(view->win, ": ");
+			col_offset = view->digits + 2;
 		}
-		waddstr(view->win, line);
+
+		while (line && col_offset + col < view->width) {
+			int cols_max = view->width - col_offset - col;
+			char *text = line;
+			int cols;
+
+			if (*line == '\t') {
+				assert(sizeof(spaces) > TABSIZE);
+				line++;
+				text = spaces;
+				cols = opt_tab_size - (col % opt_tab_size);
+
+			} else {
+				line = strchr(line, '\t');
+				cols = line ? line - text : strlen(text);
+			}
+
+			waddnstr(view->win, text, MIN(cols, cols_max));
+			col += cols;
+		}
 
 	} else {
-#if 0
-		/* NOTE: Code for only highlighting the text on the cursor line.
-		 * Kept since I've not yet decided whether to highlight the
-		 * entire line or not. --fonseca */
-		/* No empty lines makes cursor drawing and clearing implicit. */
-		if (!*line)
-			line = " ", linelen = 1;
-#endif
-		mvwaddnstr(view->win, lineno, 0, line, linelen);
-	}
+		int col = 0, pos = 0;
 
-	/* Paint the rest of the line if it's the cursor line. */
-	if (type == LINE_CURSOR)
-		wchgat(view->win, -1, 0, type, NULL);
+		for (; pos < linelen && col < view->width; pos++, col++)
+			if (line[pos] == '\t')
+				col += TABSIZE - (col % TABSIZE) - 1;
+
+		waddnstr(view->win, line, pos);
+	}
 
 	return TRUE;
 }
@@ -1462,6 +1565,13 @@ pager_draw(struct view *view, unsigned int lineno)
 static bool
 pager_read(struct view *view, char *line)
 {
+	/* Compress empty lines in the help view. */
+	if (view == VIEW(REQ_VIEW_HELP) &&
+	    !*line &&
+	    view->lines &&
+	    !*((char *) view->line[view->lines - 1]))
+		return TRUE;
+
 	view->line[view->lines] = strdup(line);
 	if (!view->line[view->lines])
 		return FALSE;
@@ -1476,7 +1586,10 @@ pager_enter(struct view *view)
 	char *line = view->line[view->lineno];
 
 	if (get_line_type(line) == LINE_COMMIT) {
-		open_view(view, REQ_VIEW_DIFF, OPEN_DEFAULT);
+		if (view == VIEW(REQ_VIEW_LOG))
+			open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT | OPEN_BACKGROUNDED);
+		else
+			open_view(view, REQ_VIEW_DIFF, OPEN_DEFAULT);
 	}
 
 	return TRUE;
@@ -1498,7 +1611,7 @@ main_draw(struct view *view, unsigned int lineno)
 	char buf[DATE_COLS + 1];
 	struct commit *commit;
 	enum line_type type;
-	int cols = 0;
+	int col = 0;
 	size_t timelen;
 
 	if (view->offset + lineno >= view->lines)
@@ -1508,57 +1621,77 @@ main_draw(struct view *view, unsigned int lineno)
 	if (!*commit->author)
 		return FALSE;
 
+	wmove(view->win, lineno, col);
+
 	if (view->offset + lineno == view->lineno) {
 		string_copy(view->ref, commit->id);
 		string_copy(ref_commit, view->ref);
 		type = LINE_CURSOR;
+		wattrset(view->win, get_line_attr(type));
+		wchgat(view->win, -1, 0, type, NULL);
+
 	} else {
 		type = LINE_MAIN_COMMIT;
+		wattrset(view->win, get_line_attr(LINE_MAIN_DATE));
 	}
-
-	wmove(view->win, lineno, cols);
-	wattrset(view->win, get_line_attr(LINE_MAIN_DATE));
 
 	timelen = strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time);
 	waddnstr(view->win, buf, timelen);
 	waddstr(view->win, " ");
 
-	cols += DATE_COLS;
-	wmove(view->win, lineno, cols);
-	wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
+	col += DATE_COLS;
+	wmove(view->win, lineno, col);
+	if (type != LINE_CURSOR)
+		wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
 
 	if (strlen(commit->author) > 19) {
 		waddnstr(view->win, commit->author, 18);
-		wattrset(view->win, get_line_attr(LINE_MAIN_DELIM));
+		if (type != LINE_CURSOR)
+			wattrset(view->win, get_line_attr(LINE_MAIN_DELIM));
 		waddch(view->win, '~');
 	} else {
 		waddstr(view->win, commit->author);
 	}
 
-	cols += 20;
-	wattrset(view->win, A_NORMAL);
-	mvwaddch(view->win, lineno, cols, ACS_LTEE);
-	wmove(view->win, lineno, cols + 2);
+	col += 20;
+	if (type != LINE_CURSOR)
+		wattrset(view->win, A_NORMAL);
+
+	mvwaddch(view->win, lineno, col, ACS_LTEE);
+	wmove(view->win, lineno, col + 2);
+	col += 2;
 
 	if (commit->refs) {
 		size_t i = 0;
 
 		do {
-			if (commit->refs[i]->tag)
+			if (type == LINE_CURSOR)
+				;
+			else if (commit->refs[i]->tag)
 				wattrset(view->win, get_line_attr(LINE_MAIN_TAG));
 			else
 				wattrset(view->win, get_line_attr(LINE_MAIN_REF));
 			waddstr(view->win, "[");
 			waddstr(view->win, commit->refs[i]->name);
 			waddstr(view->win, "]");
-			wattrset(view->win, A_NORMAL);
+			if (type != LINE_CURSOR)
+				wattrset(view->win, A_NORMAL);
 			waddstr(view->win, " ");
+			col += strlen(commit->refs[i]->name) + STRING_SIZE("[] ");
 		} while (commit->refs[i++]->next);
 	}
 
-	wattrset(view->win, get_line_attr(type));
-	waddstr(view->win, commit->title);
-	wattrset(view->win, A_NORMAL);
+	if (type != LINE_CURSOR)
+		wattrset(view->win, get_line_attr(type));
+
+	{
+		int titlelen = strlen(commit->title);
+
+		if (col + titlelen > view->width)
+			titlelen = view->width - col;
+
+		waddnstr(view->win, commit->title, titlelen);
+	}
 
 	return TRUE;
 }
@@ -1680,32 +1813,47 @@ static WINDOW *status_win;
 static void
 report(const char *msg, ...)
 {
-	va_list args;
+	static bool empty = TRUE;
+	struct view *view = display[current_view];
 
-	/* Update the title window first, so the cursor ends up in the status
-	 * window. */
-	update_view_title(display[current_view]);
+	if (!empty || *msg) {
+		va_list args;
 
-	va_start(args, msg);
+		va_start(args, msg);
 
-	werase(status_win);
-	wmove(status_win, 0, 0);
-	if (*msg)
-		vwprintw(status_win, msg, args);
-	wrefresh(status_win);
+		werase(status_win);
+		wmove(status_win, 0, 0);
+		if (*msg) {
+			vwprintw(status_win, msg, args);
+			empty = FALSE;
+		} else {
+			empty = TRUE;
+		}
+		wrefresh(status_win);
 
-	va_end(args);
+		va_end(args);
+	}
+
+	update_view_title(view);
+
+	/* Move the cursor to the right-most column of the cursor line.
+	 *
+	 * XXX: This could turn out to be a bit expensive, but it ensures that
+	 * the cursor does not jump around. */
+	if (view->lines) {
+		wmove(view->win, view->lineno - view->offset, view->width - 1);
+		wrefresh(view->win);
+	}
 }
 
 /* Controls when nodelay should be in effect when polling user input. */
 static void
 set_nonblocking_input(bool loading)
 {
-	/* The number of loading views. */
-	static unsigned int nloading;
+	static unsigned int loading_views;
 
-	if ((loading == FALSE && nloading-- == 1) ||
-	    (loading == TRUE  && nloading++ == 0))
+	if ((loading == FALSE && loading_views-- == 1) ||
+	    (loading == TRUE  && loading_views++ == 0))
 		nodelay(status_win, loading);
 }
 
@@ -1792,7 +1940,7 @@ static int
 load_refs(void)
 {
 	char *cmd_env = getenv("TIG_LS_REMOTE");
-	char *cmd = cmd_env ? cmd_env : TIG_LS_REMOTE;
+	char *cmd = cmd_env && *cmd_env ? cmd_env : TIG_LS_REMOTE;
 	FILE *pipe = popen(cmd, "r");
 	char buffer[BUFSIZ];
 	char *line;
@@ -1812,6 +1960,8 @@ load_refs(void)
 
 		*name++ = 0;
 		namelen = strlen(name) - 1;
+
+		/* Commits referenced by tags has "^{}" appended. */
 		if (name[namelen - 1] == '}') {
 			while (namelen > 0 && name[namelen] != '^')
 				namelen--;
@@ -1915,7 +2065,7 @@ main(int argc, char *argv[])
 		key = wgetch(status_win);
 		request = get_request(key);
 
-		/* Some low-level request handling. This keeps handling of
+		/* Some low-level request handling. This keeps access to
 		 * status_win restricted. */
 		switch (request) {
 		case REQ_PROMPT:
@@ -1960,6 +2110,13 @@ main(int argc, char *argv[])
 }
 
 /**
+ * BUGS
+ * ----
+ * Known bugs and problems:
+ *
+ * - If the screen width is very small the main view can draw
+ *   outside the current view causing bad wrapping.
+ *
  * TODO
  * ----
  * Features that should be explored.
