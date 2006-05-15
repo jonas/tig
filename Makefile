@@ -3,7 +3,7 @@ LDFLAGS = -lcurses
 CFLAGS	= '-DVERSION="$(VERSION)"' -Wall
 DFLAGS	= -g -DDEBUG
 PROGS	= tig
-DOCS	= tig.1.txt tig.1 tig.1.html
+DOCS	= tig.1.txt tig.1.html tig.1
 VERSION	= $(shell git-describe)
 
 all: $(PROGS)

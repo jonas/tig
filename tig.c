@@ -23,37 +23,12 @@
  * Browse changes in a git repository. Additionally, tig(1) can also act
  * as a pager for output of various git commands.
  *
- * Commit limiting
- * ~~~~~~~~~~~~~~~
- * To speed up interaction with git, you can limit the amount of commits
- * to show both for the log and main view. Either limit by date using
- * e.g. `--since=1.month` or limit by the number of commits using `-n400`.
+ * When browsing repositories, tig(1) uses the underlaying git commands
+ * to present the user with various views, such as summarized commit log
+ * and showing the commit with the log message, diffstat, and the diff.
  *
- * Alternatively, commits can be limited to a specific range, such as
- * "all commits between tag-1.0 and tag-2.0". For example:
- *
- *	$ tig log tag-1.0..tag-2.0
- *
- * Git interprets this as "all commits reachable from commit-2
- * but not from commit-1". The above can also be written:
- *
- *	$ tig log tag-2.0 ^tag-1.0
- *
- * You can think of '^' as a negator. Using this alternate syntax,
- * it is possible to furthur prune commits by specifying multiple
- * negators.
- *
- * This way of commit limiting makes it trivial to only browse the commit
- * which hasn't been pushed to a remote branch. Assuming origin is your
- * upstream remote branch, using:
- *
- *	$ tig log origin..HEAD
- *
- * Optionally, with "HEAD" left out, will list what will be pushed to
- * the remote branch.
- *
- * See the section on environment variables, on how to further tune the
- * interaction with git.
+ * Using tig(1) as a pager, it will display input from stdin and try
+ * to colorize it.
  **/
 
 #ifndef	VERSION
@@ -92,6 +67,8 @@ static void set_nonblocking_input(bool loading);
 
 /* This color name can be used to refer to the default term colors. */
 #define COLOR_DEFAULT	(-1)
+
+#define TIG_HELP	"(d)iff, (l)og, (m)ain, (q)uit, (h)elp, (Enter) show diff"
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
@@ -149,10 +126,10 @@ enum request {
 };
 
 struct ref {
-	char *name;
-	char id[41];
-	unsigned int tag:1;
-	unsigned int next:1;
+	char *name;		/* Ref name; tag or head names are shortened. */
+	char id[41];		/* Commit SHA1 ID */
+	unsigned int tag:1;	/* Is it a tag? */
+	unsigned int next:1;	/* For ref lists: are there more refs? */
 };
 
 struct commit {
@@ -379,16 +356,21 @@ parse_options(int argc, char *argv[])
 		 * ~~~~~~~~~~~~~~~~~~~
 		 * All git command options specified on the command line will
 		 * be passed to the given command and all will be shell quoted
-		 * before used.
+		 * before they are passed to the shell.
 		 *
-		 * NOTE: It is possible to specify options even for the main
-		 * view. If doing this you should not touch the `--pretty`
-		 * option.
+		 * NOTE: If you specify options for the main view, you should
+		 * not use the `--pretty` option as this option will be set
+		 * automatically to the format expected by the main view.
 		 *
 		 * Example on how to open the log view and show both author and
 		 * committer information:
 		 *
 		 *	$ tig log --pretty=fuller
+		 *
+		 * See the "Specifying revisions" section below for an introduction
+		 * to revision options supported by the git commands. For
+		 * details on specific git command options, refer to the man
+		 * page of the command in question.
 		 **/
 
 		if (opt_request == REQ_VIEW_MAIN)
@@ -412,149 +394,6 @@ parse_options(int argc, char *argv[])
 	}
 
 	return TRUE;
-}
-
-
-/**
- * KEYS
- * ----
- * Below the default key bindings are shown.
- **/
-
-#define HELP "(d)iff, (l)og, (m)ain, (q)uit, (v)ersion, (h)elp"
-
-struct keymap {
-	int alias;
-	int request;
-};
-
-struct keymap keymap[] = {
-	/**
-	 * View switching
-	 * ~~~~~~~~~~~~~~
-	 * d::
-	 *	Switch to diff view.
-	 * l::
-	 *	Switch to log view.
-	 * m::
-	 *	Switch to main view.
-	 * p::
-	 *	Switch to pager view.
-	 * h::
-	 *	Show man page.
-	 * Return::
-	 *	If on a commit line show the commit diff. Addiionally, if in
-	 *	main or log view this will split the view. To open the commit
-	 *	diff in full size view either use 'd' or press Return twice.
-	 *
-	 * Tab::
-	 *	Switch to next view.
-	 **/
-	{ 'm',		REQ_VIEW_MAIN },
-	{ 'd',		REQ_VIEW_DIFF },
-	{ 'l',		REQ_VIEW_LOG },
-	{ 'p',		REQ_VIEW_PAGER },
-	{ 'h',		REQ_VIEW_HELP },
-
-	{ KEY_TAB,	REQ_VIEW_NEXT },
-	{ KEY_RETURN,	REQ_ENTER },
-
-	/**
-	 * Cursor navigation
-	 * ~~~~~~~~~~~~~~~~~
-	 * Up::
-	 *	Move curser one line up.
-	 * Down::
-	 *	Move cursor one line down.
-	 * k::
-	 *
-	 *	Move curser one line up and enter. When used in the main view
-	 *	this will always show the diff of the current commit in the
-	 *	split diff view.
-	 *
-	 * j::
-	 *	Move cursor one line down and enter.
-	 * PgUp::
-	 *	Move curser one page up.
-	 * PgDown::
-	 *	Move cursor one page down.
-	 * Home::
-	 *	Jump to first line.
-	 * End::
-	 *	Jump to last line.
-	 **/
-	{ KEY_UP,	REQ_MOVE_UP },
-	{ KEY_DOWN,	REQ_MOVE_DOWN },
-	{ 'k',		REQ_MOVE_UP_ENTER },
-	{ 'j',		REQ_MOVE_DOWN_ENTER },
-	{ KEY_HOME,	REQ_MOVE_FIRST_LINE },
-	{ KEY_END,	REQ_MOVE_LAST_LINE },
-	{ KEY_NPAGE,	REQ_MOVE_PAGE_DOWN },
-	{ KEY_PPAGE,	REQ_MOVE_PAGE_UP },
-
-	/**
-	 * Scrolling
-	 * ~~~~~~~~~
-	 * Insert::
-	 *	Scroll view one line up.
-	 * Delete::
-	 *	Scroll view one line down.
-	 * w::
-	 *	Scroll view one page up.
-	 * s::
-	 *	Scroll view one page down.
-	 **/
-	{ KEY_IC,	REQ_SCROLL_LINE_UP },
-	{ KEY_DC,	REQ_SCROLL_LINE_DOWN },
-	{ 'w',		REQ_SCROLL_PAGE_UP },
-	{ 's',		REQ_SCROLL_PAGE_DOWN },
-
-	/**
-	 * Misc
-	 * ~~~~
-	 * q::
-	 *	Quit
-	 * r::
-	 *	Redraw screen.
-	 * z::
-	 *	Stop all background loading. This can be useful if you ran
-	 *	tig(1) in a repository with a long history without limiting
-	 *	the log output.
-	 * v::
-	 *	Show version.
-	 * n::
-	 *	Toggle line numbers on/off.
-	 * ':'::
-	 *	Open prompt. This allows you to specify what git command
-	 *	to run. Example:
-	 *
-	 *	:log -p
-	 *
-	 **/
-	{ 'q',		REQ_QUIT },
-	{ 'z',		REQ_STOP_LOADING },
-	{ 'v',		REQ_SHOW_VERSION },
-	{ 'r',		REQ_SCREEN_REDRAW },
-	{ 'n',		REQ_TOGGLE_LINE_NUMBERS },
-	{ ':',		REQ_PROMPT },
-
-	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
-	{ ERR,		REQ_SCREEN_UPDATE },
-
-	/* Use the ncurses SIGWINCH handler. */
-	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
-};
-
-static enum request
-get_request(int key)
-{
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(keymap); i++)
-		if (keymap[i].alias == key)
-			return keymap[i].request;
-
-	return (enum request) key;
 }
 
 
@@ -683,7 +522,7 @@ init_colors(void)
  * Commits that are referenced by tags and branch heads will be marked
  * by the reference name surrounded by '[' and ']':
  *
- *	2006-04-18 23:12 Jonas Fonseca       | [tig-0.2] tig version 0.2
+ *	2006-03-26 19:42 Petr Baudis         | [cogito-0.17.1] Cogito 0.17.1
  *
  * If you want to filter out certain directories under `.git/refs/`, say
  * `tmp` you can do it by setting the following variable:
@@ -746,10 +585,36 @@ init_colors(void)
 #define TIG_PAGER_CMD \
 	""
 
-
-/*
- * Viewer
- */
+/**
+ * The viewer
+ * ----------
+ *
+ * tig(1) presents various 'views' of a repository. Each view is based on output
+ * from an external command, most often 'git log', 'git diff', or 'git show'.
+ *
+ * The main view::
+ *	Is the default view, and it shows a one line summary of each commit
+ *	in the chosen list of revision. The summary includes commit date,
+ *	author, and the first line of the log message. Additionally, any
+ *	repository references, such as tags, will be shown.
+ *
+ * The log view::
+ *	Presents a more rich view of the revision log showing the whole log
+ *	message and the diffstat.
+ *
+ * The diff view::
+ *	Shows either the diff of the current working tree, that is, what
+ *	has changed since the last commit, or the commit diff complete
+ *	with log message, diffstat and diff.
+ *
+ * The pager view::
+ *	Is used for displaying both input from stdin and output from git
+ *	commands entered in the internal prompt.
+ *
+ * The help view::
+ *	Displays the information from the tig(1) man page. For the help view
+ *	to work you need to have the tig(1) man page installed.
+ **/
 
 struct view {
 	const char *name;	/* View name */
@@ -912,7 +777,7 @@ update_view_title(struct view *view)
 	/* [main] ref: 334b506... - commit 6 of 4383 (0%) */
 
 	if (*view->ref)
-		wprintw(view->title, "[%s] ref: %s", view->name, view->ref);
+		wprintw(view->title, "[%s] %s", view->name, view->ref);
 	else
 		wprintw(view->title, "[%s]", view->name);
 
@@ -1254,7 +1119,16 @@ update_view(struct view *view)
 		time_t secs = time(NULL) - view->start_time;
 
 		if (view == VIEW(REQ_VIEW_HELP)) {
-			report("%s", HELP);
+			char *msg = TIG_HELP;
+
+			if (view->lines == 0) {
+				/* Slightly ugly, but abusing view->ref keeps
+				 * the error message. */
+				string_copy(view->ref, "No help available");
+				msg = "The tig(1) manpage is not installed";
+			}
+
+			report("%s", msg);
 			goto end;
 		}
 
@@ -1353,7 +1227,10 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		report("Loading...");
 	} else {
 		redraw_view(view);
-		report("");
+		if (view == VIEW(REQ_VIEW_HELP))
+			report("%s", TIG_HELP);
+		else
+			report("");
 	}
 
 	/* If the view is backgrounded the above calls to report()
@@ -1467,7 +1344,7 @@ view_driver(struct view *view, enum request request)
 
 	default:
 		/* An unknown key will show most commonly used commands. */
-		report("%s", HELP);
+		report("Unknown key, press 'h' for help");
 		return TRUE;
 	}
 
@@ -1799,6 +1676,143 @@ static struct view_ops main_ops = {
 };
 
 
+/**
+ * KEYS
+ * ----
+ * Below the default key bindings are shown.
+ **/
+
+struct keymap {
+	int alias;
+	int request;
+};
+
+struct keymap keymap[] = {
+	/**
+	 * View switching
+	 * ~~~~~~~~~~~~~~
+	 * m::
+	 *	Switch to main view.
+	 * d::
+	 *	Switch to diff view.
+	 * l::
+	 *	Switch to log view.
+	 * p::
+	 *	Switch to pager view.
+	 * h::
+	 *	Show man page.
+	 * Return::
+	 *	If on a commit line show the commit diff. Addiionally, if in
+	 *	main or log view this will split the view. To open the commit
+	 *	diff in full size view either use 'd' or press Return twice.
+	 * Tab::
+	 *	Switch to next view.
+	 **/
+	{ 'm',		REQ_VIEW_MAIN },
+	{ 'd',		REQ_VIEW_DIFF },
+	{ 'l',		REQ_VIEW_LOG },
+	{ 'p',		REQ_VIEW_PAGER },
+	{ 'h',		REQ_VIEW_HELP },
+
+	{ KEY_TAB,	REQ_VIEW_NEXT },
+	{ KEY_RETURN,	REQ_ENTER },
+
+	/**
+	 * Cursor navigation
+	 * ~~~~~~~~~~~~~~~~~
+	 * Up::
+	 *	Move curser one line up.
+	 * Down::
+	 *	Move cursor one line down.
+	 * k::
+	 *	Move curser one line up and enter. When used in the main view
+	 *	this will always show the diff of the current commit in the
+	 *	split diff view.
+	 * j::
+	 *	Move cursor one line down and enter.
+	 * PgUp::
+	 *	Move curser one page up.
+	 * PgDown::
+	 *	Move cursor one page down.
+	 * Home::
+	 *	Jump to first line.
+	 * End::
+	 *	Jump to last line.
+	 **/
+	{ KEY_UP,	REQ_MOVE_UP },
+	{ KEY_DOWN,	REQ_MOVE_DOWN },
+	{ 'k',		REQ_MOVE_UP_ENTER },
+	{ 'j',		REQ_MOVE_DOWN_ENTER },
+	{ KEY_HOME,	REQ_MOVE_FIRST_LINE },
+	{ KEY_END,	REQ_MOVE_LAST_LINE },
+	{ KEY_NPAGE,	REQ_MOVE_PAGE_DOWN },
+	{ KEY_PPAGE,	REQ_MOVE_PAGE_UP },
+
+	/**
+	 * Scrolling
+	 * ~~~~~~~~~
+	 * Insert::
+	 *	Scroll view one line up.
+	 * Delete::
+	 *	Scroll view one line down.
+	 * w::
+	 *	Scroll view one page up.
+	 * s::
+	 *	Scroll view one page down.
+	 **/
+	{ KEY_IC,	REQ_SCROLL_LINE_UP },
+	{ KEY_DC,	REQ_SCROLL_LINE_DOWN },
+	{ 'w',		REQ_SCROLL_PAGE_UP },
+	{ 's',		REQ_SCROLL_PAGE_DOWN },
+
+	/**
+	 * Misc
+	 * ~~~~
+	 * q::
+	 *	Quit
+	 * r::
+	 *	Redraw screen.
+	 * z::
+	 *	Stop all background loading. This can be useful if you use
+	 *	tig(1) in a repository with a long history without limiting
+	 *	the log output.
+	 * v::
+	 *	Show version.
+	 * n::
+	 *	Toggle line numbers on/off.
+	 * ':'::
+	 *	Open prompt. This allows you to specify what git command
+	 *	to run. Example:
+	 *
+	 *	:log -p
+	 **/
+	{ 'q',		REQ_QUIT },
+	{ 'z',		REQ_STOP_LOADING },
+	{ 'v',		REQ_SHOW_VERSION },
+	{ 'r',		REQ_SCREEN_REDRAW },
+	{ 'n',		REQ_TOGGLE_LINE_NUMBERS },
+	{ ':',		REQ_PROMPT },
+
+	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
+	{ ERR,		REQ_SCREEN_UPDATE },
+
+	/* Use the ncurses SIGWINCH handler. */
+	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
+};
+
+static enum request
+get_request(int key)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(keymap); i++)
+		if (keymap[i].alias == key)
+			return keymap[i].request;
+
+	return (enum request) key;
+}
+
+
 /*
  * Status management
  */
@@ -2110,12 +2124,58 @@ main(int argc, char *argv[])
 }
 
 /**
+ * Specifying revisions
+ * --------------------
+ * This section describes various ways to specify what revisions to
+ * display or otherwise limit the view to.
+ *
+ * Limit by date or number
+ * ~~~~~~~~~~~~~~~~~~~~~~~
+ * To speed up interaction with git, you can limit the amount of commits
+ * to show both for the log and main view. Either limit by date using
+ * e.g. `--since=1.month` or limit by the number of commits using `-n400`.
+ *
+ * NOTE: You can tune the interaction with git by making use of the options
+ * explained in this section.
+ *
+ * NOTE: tig(1) does not itself parse the revision options
+ * described in this section.
+ *
+ * Ranges
+ * ~~~~~~
+ * Alternatively, commits can be limited to a specific range, such as
+ * "all commits between 'tag-1.0' and 'tag-2.0'". For example:
+ *
+ *	$ tig log tag-1.0..tag-2.0
+ *
+ * This way of commit limiting makes it trivial to only browse the commits
+ * which haven't been pushed to a remote branch. Assuming 'origin' is your
+ * upstream remote branch, using:
+ *
+ *	$ tig log origin..HEAD
+ *
+ * will list what will be pushed to the remote branch. Optionally, the ending
+ * 'HEAD' can be left out since it is implied.
+ *
+ * Limiting by reachability
+ * ~~~~~~~~~~~~~~~~~~~~~~~~
+ * Git interprets the range specifier "tag-1.0..tag-2.0" as
+ * "all commits reachable from 'tag-2.0' but not from 'tag-1.0'".
+ * If you prefer to specify which commit to preview in this way use the
+ * following:
+ *
+ *	$ tig log tag-2.0 ^tag-1.0
+ *
+ * You can think of '^' as a negator. Using this alternate syntax, it is
+ * possible to furthur prune commits by specifying multiple negators.
+ *
  * BUGS
  * ----
  * Known bugs and problems:
  *
  * - If the screen width is very small the main view can draw
- *   outside the current view causing bad wrapping.
+ *   outside the current view causing bad wrapping. Same goes
+ *   for title and status windows.
  *
  * TODO
  * ----
