@@ -3,7 +3,7 @@ LDFLAGS = -lcurses
 CFLAGS	= '-DVERSION="$(VERSION)"' -Wall
 DFLAGS	= -g -DDEBUG
 PROGS	= tig
-DOCS	= tig.1.txt tig.1.html tig.1
+DOCS	= tig.1.txt tig.1.html tig.1 README.html
 VERSION	= $(shell git-describe)
 
 all: $(PROGS)
@@ -38,6 +38,9 @@ tig.1.txt: tig.c
 	sed 's/.*\*\*\///' | \
 	sed '/^[^*]*\*\*/d' | \
 	sed 's/\*\///;s/^[^*]*\* *//' > $@
+
+README.html: README
+	asciidoc -b xhtml11 -d article -f web.conf $<
 
 %.1.html : %.1.txt
 	asciidoc -b xhtml11 -d manpage $<
