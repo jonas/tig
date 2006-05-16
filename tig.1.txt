@@ -263,7 +263,7 @@ or otherwise limit the view to. Note, that tig(1) does not itself parse
 the described revision options.
 
 File history
-------------
+~~~~~~~~~~~~
 If you are interested only in those revisions that made changes to a
 specific file (or even several files) list the files like this:
 
