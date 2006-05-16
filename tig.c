@@ -23,7 +23,7 @@
  * Browse changes in a git repository. Additionally, tig(1) can also act
  * as a pager for output of various git commands.
  *
- * When browsing repositories, tig(1) uses the underlaying git commands
+ * When browsing repositories, tig(1) uses the underlying git commands
  * to present the user with various views, such as summarized commit log
  * and showing the commit with the log message, diffstat, and the diff.
  *
@@ -323,10 +323,12 @@ parse_options(int argc, char *argv[])
 		}
 
 		/**
-		 * [git options]::
+		 * [git log options]::
 		 *	tig(1) will stop the option parsing when the first
 		 *	command line parameter not starting with "-" is
-		 *	encountered. This makes the following work:
+		 *	encountered. All options including this one will be
+		 *	passed to git log when loading the main view.
+		 *	This makes it possible to say:
 		 *
 		 *	$ tig tag-1.0..HEAD
 		 **/
@@ -1705,7 +1707,7 @@ struct keymap keymap[] = {
 	 * h::
 	 *	Show man page.
 	 * Return::
-	 *	If on a commit line show the commit diff. Addiionally, if in
+	 *	If on a commit line show the commit diff. Additionally, if in
 	 *	main or log view this will split the view. To open the commit
 	 *	diff in full size view either use 'd' or press Return twice.
 	 * Tab::
@@ -1724,17 +1726,17 @@ struct keymap keymap[] = {
 	 * Cursor navigation
 	 * ~~~~~~~~~~~~~~~~~
 	 * Up::
-	 *	Move curser one line up.
+	 *	Move cursor one line up.
 	 * Down::
 	 *	Move cursor one line down.
 	 * k::
-	 *	Move curser one line up and enter. When used in the main view
+	 *	Move cursor one line up and enter. When used in the main view
 	 *	this will always show the diff of the current commit in the
 	 *	split diff view.
 	 * j::
 	 *	Move cursor one line down and enter.
 	 * PgUp::
-	 *	Move curser one page up.
+	 *	Move cursor one page up.
 	 * PgDown::
 	 *	Move cursor one page down.
 	 * Home::
@@ -2169,8 +2171,9 @@ main(int argc, char *argv[])
  *
  *	$ tig log tag-2.0 ^tag-1.0
  *
- * You can think of '^' as a negator. Using this alternate syntax, it is
- * possible to furthur prune commits by specifying multiple negators.
+ * You can think of '^' as a negation operator. Using this alternate syntax,
+ * it is possible to further prune commits by specifying multiple branch
+ * cut offs.
  *
  * BUGS
  * ----

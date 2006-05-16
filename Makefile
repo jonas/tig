@@ -26,6 +26,9 @@ install-docs: docs
 clean:
 	rm -f $(PROGS) $(DOCS) core
 
+spell-check:
+	aspell --lang=en --check tig.1.txt
+
 .PHONY: all docs install clean
 
 tig: tig.c
