@@ -2131,14 +2131,20 @@ main(int argc, char *argv[])
 
 /**
  * [[refspec]]
- * Specifying revisions
- * --------------------
+ * Revision specification
+ * ----------------------
  * This section describes various ways to specify what revisions to display
- * or otherwise limit the view to. Note, that tig(1) does not itself parse
- * the described revision options.
+ * or otherwise limit the view to. tig(1) does not itself parse the described
+ * revision options so refer to the relevant git man pages for futher
+ * information. Relevant man pages besides git-log(1) are git-diff(1) and
+ * git-rev-list(1).
  *
- * File history
- * ~~~~~~~~~~~~
+ * You can tune the interaction with git by making use of the options
+ * explained in this section. For example, by configuring the environment
+ * variables described in the  <<view-commands, "View commands">> section.
+ *
+ * Limit by path name
+ * ~~~~~~~~~~~~~~~~~~
  * If you are interested only in those revisions that made changes to a
  * specific file (or even several files) list the files like this:
  *
@@ -2161,12 +2167,16 @@ main(int argc, char *argv[])
  * to show both for the log and main view. Either limit by date using
  * e.g. `--since=1.month` or limit by the number of commits using `-n400`.
  *
- * NOTE: You can tune the interaction with git by making use of the options
- * explained in this section. For example, by configuring the environment
- * variables described in the  <<view-commands, "View commands">> section.
+ * If you are only interested in changed that happened between two dates
+ * you can use:
  *
- * Ranges
- * ~~~~~~
+ *	$ tig -- --after=may.5th --before=2006-05-16.15:44
+ *
+ * NOTE: The dot (".") is used as a separator instead of a space to avoid
+ * having to quote the option value.
+ *
+ * Limiting by commit ranges
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~
  * Alternatively, commits can be limited to a specific range, such as
  * "all commits between 'tag-1.0' and 'tag-2.0'". For example:
  *
@@ -2185,6 +2195,9 @@ main(int argc, char *argv[])
  * ~~~~~~~~~~~~~~~~~~~~~~~~
  * Git interprets the range specifier "tag-1.0..tag-2.0" as
  * "all commits reachable from 'tag-2.0' but not from 'tag-1.0'".
+ * Where reachability refers to what commits are ancestors (or part of the
+ * history) of the branch or tagged revision in question.
+ *
  * If you prefer to specify which commit to preview in this way use the
  * following:
  *
@@ -2193,6 +2206,23 @@ main(int argc, char *argv[])
  * You can think of '^' as a negation operator. Using this alternate syntax,
  * it is possible to further prune commits by specifying multiple branch
  * cut offs.
+ *
+ * Combining revisions specification
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Revisions options can to some degree be combined, which makes it possible
+ * to say "show at most 20 commits from within the last month that changed
+ * files under the Documentation/ directory."
+ *
+ *	$ tig -- --since=1.month -n20 -- Documentation/
+ *
+ * Examining all repository references
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * In some cases, it can be useful to query changes across all references
+ * in a repository. An example is to ask "did any line of development in
+ * this repository change a particular file within the last week". This
+ * can be accomplished using:
+ *
+ *	$ tig -- --all --since=1.week -- Makefile
  *
  * BUGS
  * ----
