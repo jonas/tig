@@ -1,0 +1,106 @@
+<div id="preamble">
+<div class="sectionbody">
+<p>Tig is a git repository browser that additionally can act as a pager for output
+of various git commands.</p>
+<p>When browsing repositories, it uses the underlying git commands to present the
+user with various views, such as summarized commit log and showing the commit
+with the log message, diffstat, and the diff.</p>
+<p>Using it as a pager, it will display input from stdin and try to colorize it.</p>
+</div>
+</div>
+<h2>Getting tig</h2>
+<div class="sectionbody">
+<p>To get tig either grab the Makefile and tig.c files from the tig home page:</p>
+<ul>
+<li>
+<p>
+<a href="http://jonas.nitro.dk/tig/">http://jonas.nitro.dk/tig/</a>
+</p>
+</li>
+</ul>
+<p>or clone the tig repository using the URL:</p>
+<ul>
+<li>
+<p>
+<a href="http://jonas.nitro.dk/tig/tig.git">http://jonas.nitro.dk/tig/tig.git</a>
+</p>
+</li>
+</ul>
+<p>Documentation files are available either at the home page or or in the above
+repository in the branch named <em>docs</em>.</p>
+</div>
+<h2>Installation instructions</h2>
+<div class="sectionbody">
+<p>To install tig simply run:</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>$ make install</tt></pre>
+</div></div>
+<p>To install documentation run:</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>$ make install-docs</tt></pre>
+</div></div>
+<p>The following tools and packages are needed:</p>
+<div class="tableblock">
+<table rules="none"
+frame="hsides"
+cellspacing="0" cellpadding="4">
+<col width="365" />
+<col width="537" />
+<thead>
+  <tr>
+    <th align="left">
+    Tool
+    </th>
+    <th align="left">
+    Description
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    git-core
+    </td>
+    <td align="left">
+    Tig is just a frontend for git.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    ncurses
+    </td>
+    <td align="left">
+    Be sure to also have development files                                 installed. Usually they are available in a
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    
+    </td>
+    <td align="left">
+    separate package ending with <tt>-dev</tt>.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    asciidoc (&gt;= 7.0), xmlto
+    </td>
+    <td align="left">
+    For building documentation. (Optional)
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">You need to install the documentation for the internal help to be
+available.</td>
+</tr></table>
+</div>
+</div>
