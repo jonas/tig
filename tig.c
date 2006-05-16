@@ -2138,7 +2138,7 @@ main(int argc, char *argv[])
  * the described revision options.
  *
  * File history
- * ------------
+ * ~~~~~~~~~~~~
  * If you are interested only in those revisions that made changes to a
  * specific file (or even several files) list the files like this:
  *
