@@ -22,7 +22,7 @@ or clone the tig repository using the URL:
  - http://jonas.nitro.dk/tig/tig.git[]
 
 Documentation files are available either at the home page or or in the above
-repository in the branch named 'docs'.
+repository in the branch named 'release'.
 
 Installation instructions
 -------------------------
