@@ -294,7 +294,7 @@ parse_options(int argc, char *argv[])
 
 		/**
 		 * \--::
-		 *	End of tig(1) options. Useful when specifying commands
+		 *	End of tig(1) options. Useful when specifying command
 		 *	options for the main view. Example:
 		 *
 		 *		$ tig -- --since=1.month
@@ -372,10 +372,10 @@ parse_options(int argc, char *argv[])
 		 *
 		 *	$ tig log --pretty=fuller
 		 *
-		 * See the "Specifying revisions" section below for an introduction
-		 * to revision options supported by the git commands. For
-		 * details on specific git command options, refer to the man
-		 * page of the command in question.
+		 * See the <<refspec, "Specifying revisions">> section below
+		 * for an introduction to revision options supported by the git
+		 * commands. For details on specific git command options, refer
+		 * to the man page of the command in question.
 		 **/
 
 		if (opt_request == REQ_VIEW_MAIN)
@@ -545,6 +545,7 @@ init_colors(void)
 	"git ls-remote ."
 
 /**
+ * [[view-commands]]
  * View commands
  * ~~~~~~~~~~~~~
  * It is possible to alter which commands are used for the different views.
@@ -582,7 +583,7 @@ init_colors(void)
 #define TIG_MAIN_CMD \
 	"git log --topo-order --stat --pretty=raw %s"
 
-/* We silently ignore that the following are also exported. */
+/* ... silently ignore that the following are also exported. */
 
 #define TIG_HELP_CMD \
 	"man tig 2> /dev/null"
@@ -1780,7 +1781,7 @@ struct keymap keymap[] = {
 	 * z::
 	 *	Stop all background loading. This can be useful if you use
 	 *	tig(1) in a repository with a long history without limiting
-	 *	the log output.
+	 *	the revision log.
 	 * v::
 	 *	Show version.
 	 * n::
@@ -2129,10 +2130,12 @@ main(int argc, char *argv[])
 }
 
 /**
+ * [[refspec]]
  * Specifying revisions
  * --------------------
- * This section describes various ways to specify what revisions to
- * display or otherwise limit the view to.
+ * This section describes various ways to specify what revisions to display
+ * or otherwise limit the view to. Note, that tig(1) does not itself parse
+ * the described revision options.
  *
  * Limit by date or number
  * ~~~~~~~~~~~~~~~~~~~~~~~
@@ -2141,10 +2144,8 @@ main(int argc, char *argv[])
  * e.g. `--since=1.month` or limit by the number of commits using `-n400`.
  *
  * NOTE: You can tune the interaction with git by making use of the options
- * explained in this section.
- *
- * NOTE: tig(1) does not itself parse the revision options
- * described in this section.
+ * explained in this section. For example, by configuring the environment
+ * variables described in the  <<view-commands, "View commands">> section.
  *
  * Ranges
  * ~~~~~~
