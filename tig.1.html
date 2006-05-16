@@ -776,12 +776,17 @@ n
 </dd>
 </dl>
 </div>
-<h2><a id="refspec"></a>Specifying revisions</h2>
+<h2><a id="refspec"></a>Revision specification</h2>
 <div class="sectionbody">
 <p>This section describes various ways to specify what revisions to display
-or otherwise limit the view to. Note, that tig(1) does not itself parse
-the described revision options.</p>
-<h3>File history</h3>
+or otherwise limit the view to. tig(1) does not itself parse the described
+revision options so refer to the relevant git man pages for futher
+information. Relevant man pages besides git-log(1) are git-diff(1) and
+git-rev-list(1).</p>
+<p>You can tune the interaction with git by making use of the options
+explained in this section. For example, by configuring the environment
+variables described in the  <a href="#view-commands">"View commands"</a> section.</p>
+<h3>Limit by path name</h3>
 <p>If you are interested only in those revisions that made changes to a
 specific file (or even several files) list the files like this:</p>
 <div class="literalblock">
@@ -810,17 +815,22 @@ option processing and the latter will be passed to git log.</td>
 <p>To speed up interaction with git, you can limit the amount of commits
 to show both for the log and main view. Either limit by date using
 e.g. <tt>--since=1.month</tt> or limit by the number of commits using <tt>-n400</tt>.</p>
+<p>If you are only interested in changed that happened between two dates
+you can use:</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>$ tig -- --after=may.5th --before=2006-05-16.15:44</tt></pre>
+</div></div>
 <div class="admonitionblock">
 <table><tr>
 <td class="icon">
 <div class="title">Note</div>
 </td>
-<td class="content">You can tune the interaction with git by making use of the options
-explained in this section. For example, by configuring the environment
-variables described in the  <a href="#view-commands">"View commands"</a> section.</td>
+<td class="content">The dot (".") is used as a separator instead of a space to avoid
+having to quote the option value.</td>
 </tr></table>
 </div>
-<h3>Ranges</h3>
+<h3>Limiting by commit ranges</h3>
 <p>Alternatively, commits can be limited to a specific range, such as
 "all commits between <em>tag-1.0</em> and <em>tag-2.0</em>". For example:</p>
 <div class="literalblock">
@@ -839,7 +849,9 @@ upstream remote branch, using:</p>
 <h3>Limiting by reachability</h3>
 <p>Git interprets the range specifier "tag-1.0..tag-2.0" as
 "all commits reachable from <em>tag-2.0</em> but not from <em>tag-1.0</em>".
-If you prefer to specify which commit to preview in this way use the
+Where reachability refers to what commits are ancestors (or part of the
+history) of the branch or tagged revision in question.</p>
+<p>If you prefer to specify which commit to preview in this way use the
 following:</p>
 <div class="literalblock">
 <div class="content">
@@ -848,6 +860,23 @@ following:</p>
 <p>You can think of <em>^</em> as a negation operator. Using this alternate syntax,
 it is possible to further prune commits by specifying multiple branch
 cut offs.</p>
+<h3>Combining revisions specification</h3>
+<p>Revisions options can to some degree be combined, which makes it possible
+to say "show at most 20 commits from within the last month that changed
+files under the Documentation/ directory."</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>$ tig -- --since=1.month -n20 -- Documentation/</tt></pre>
+</div></div>
+<h3>Examining all repository references</h3>
+<p>In some cases, it can be useful to query changes across all references
+in a repository. An example is to ask "did any line of development in
+this repository change a particular file within the last week". This
+can be accomplished using:</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>$ tig -- --all --since=1.week -- Makefile</tt></pre>
+</div></div>
 </div>
 <h2>BUGS</h2>
 <div class="sectionbody">
@@ -896,7 +925,7 @@ gitview(1): git repository browser written using python/gtk.</div></div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 16-May-2006 17:54:13 CEST
+Last updated 16-May-2006 20:10:45 CEST
 </div>
 </div>
 </body>

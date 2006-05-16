@@ -324,12 +324,15 @@ Open prompt\&. This allows you to specify what git command to run\&. Example:
 :log \-p
 .fi
 
-.SH "SPECIFYING REVISIONS"
+.SH "REVISION SPECIFICATION"
 
 
-This section describes various ways to specify what revisions to display or otherwise limit the view to\&. Note, that tig(1) does not itself parse the described revision options\&.
+This section describes various ways to specify what revisions to display or otherwise limit the view to\&. tig(1) does not itself parse the described revision options so refer to the relevant git man pages for futher information\&. Relevant man pages besides git\-log(1) are git\-diff(1) and git\-rev\-list(1)\&.
 
-.SS "File history"
+
+You can tune the interaction with git by making use of the options explained in this section\&. For example, by configuring the environment variables described in the "View commands" section\&.
+
+.SS "Limit by path name"
 
 
 If you are interested only in those revisions that made changes to a specific file (or even several files) list the files like this:
@@ -358,15 +361,22 @@ For the main view, avoiding ambiguity will in some cases require you to specify 
 
 To speed up interaction with git, you can limit the amount of commits to show both for the log and main view\&. Either limit by date using e\&.g\&. \-\-since=1\&.month or limit by the number of commits using \-n400\&.
 
+
+If you are only interested in changed that happened between two dates you can use:
+
+.nf
+$ tig \-\- \-\-after=may\&.5th \-\-before=2006\-05\-16\&.15:44
+.fi
+
 .RS
 .Sh "Note"
 
 
-You can tune the interaction with git by making use of the options explained in this section\&. For example, by configuring the environment variables described in the "View commands" section\&.
+The dot ("\&.") is used as a separator instead of a space to avoid having to quote the option value\&.
 
 .RE
 
-.SS "Ranges"
+.SS "Limiting by commit ranges"
 
 
 Alternatively, commits can be limited to a specific range, such as "all commits between \fItag\-1\&.0\fR and \fItag\-2\&.0\fR"\&. For example:
@@ -388,7 +398,10 @@ will list what will be pushed to the remote branch\&. Optionally, the ending \fI
 .SS "Limiting by reachability"
 
 
-Git interprets the range specifier "tag\-1\&.0\&.\&.tag\-2\&.0" as "all commits reachable from \fItag\-2\&.0\fR but not from \fItag\-1\&.0\fR"\&. If you prefer to specify which commit to preview in this way use the following:
+Git interprets the range specifier "tag\-1\&.0\&.\&.tag\-2\&.0" as "all commits reachable from \fItag\-2\&.0\fR but not from \fItag\-1\&.0\fR"\&. Where reachability refers to what commits are ancestors (or part of the history) of the branch or tagged revision in question\&.
+
+
+If you prefer to specify which commit to preview in this way use the following:
 
 .nf
 $ tig log tag\-2\&.0 ^tag\-1\&.0
@@ -396,6 +409,24 @@ $ tig log tag\-2\&.0 ^tag\-1\&.0
 
 
 You can think of \fI^\fR as a negation operator\&. Using this alternate syntax, it is possible to further prune commits by specifying multiple branch cut offs\&.
+
+.SS "Combining revisions specification"
+
+
+Revisions options can to some degree be combined, which makes it possible to say "show at most 20 commits from within the last month that changed files under the Documentation/ directory\&."
+
+.nf
+$ tig \-\- \-\-since=1\&.month \-n20 \-\- Documentation/
+.fi
+
+.SS "Examining all repository references"
+
+
+In some cases, it can be useful to query changes across all references in a repository\&. An example is to ask "did any line of development in this repository change a particular file within the last week"\&. This can be accomplished using:
+
+.nf
+$ tig \-\- \-\-all \-\-since=1\&.week \-\- Makefile
+.fi
 
 .SH "BUGS"
 
