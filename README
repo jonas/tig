@@ -47,5 +47,5 @@ ncurses				Be sure to also have development files \
 asciidoc (>= 7.0), xmlto	For building documentation. (Optional)
 -------------------------------------------------------------------------------
 
-NOTE: You need to install the documentation for the internal help to be
-available.
+NOTE: You need to install the tig(1) man page in order for the internal help to
+be available.
