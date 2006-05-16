@@ -1,10 +1,13 @@
 PREFIX	= $(HOME)
 LDFLAGS = -lcurses
-CFLAGS	= '-DVERSION="$(VERSION)"' -Wall
+CFLAGS	= -Wall
 DFLAGS	= -g -DDEBUG
 PROGS	= tig
 DOCS	= tig.1.txt tig.1.html tig.1 README.html
-VERSION	= $(shell git-describe)
+
+ifneq (,$(wildcard .git))
+CFLAGS += '-DVERSION="$(shell git-describe)"'
+endif
 
 all: $(PROGS)
 all-debug: $(PROGS)
