@@ -2137,6 +2137,24 @@ main(int argc, char *argv[])
  * or otherwise limit the view to. Note, that tig(1) does not itself parse
  * the described revision options.
  *
+ * File history
+ * ------------
+ * If you are interested only in those revisions that made changes to a
+ * specific file (or even several files) list the files like this:
+ *
+ *	$ tig log Makefile
+ *
+ * To avoid ambiguity with repository references such as tag name, be sure
+ * to separate file names from other git options using "\--". So if you
+ * have a file named 'master' it will clash with the reference named
+ * 'master', and thus you will have to use:
+ *
+ *	$ tag log -- master
+ *
+ * NOTE: For the main view, avoiding ambiguity will in some cases require
+ * you to specify two "\--" options. The first will make tig(1) stop
+ * option processing and the latter will be passed to git log.
+ *
  * Limit by date or number
  * ~~~~~~~~~~~~~~~~~~~~~~~
  * To speed up interaction with git, you can limit the amount of commits
