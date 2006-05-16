@@ -10,10 +10,10 @@ with the log message, diffstat, and the diff.
 
 Using it as a pager, it will display input from stdin and try to colorize it.
 
-Getting tig
------------
+Getting it
+----------
 
-To get tig either grab the Makefile and tig.c files from the tig home page:
+To get tig either grab the Makefile and tig.c files from the home page:
 
  - http://jonas.nitro.dk/tig/[]
 
@@ -21,7 +21,7 @@ or clone the tig repository using the URL:
 
  - http://jonas.nitro.dk/tig/tig.git[]
 
-Documentation files are available either at the home page or or in the above
+Documentation files are available either at the home page or in the above
 repository in the branch named 'release'.
 
 Installation instructions
