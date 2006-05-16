@@ -666,8 +666,8 @@ struct view {
 static struct view_ops pager_ops;
 static struct view_ops main_ops;
 
-char ref_head[SIZEOF_REF]	= "HEAD";
-char ref_commit[SIZEOF_REF]	= "HEAD";
+static char ref_head[SIZEOF_REF]	= "HEAD";
+static char ref_commit[SIZEOF_REF]	= "HEAD";
 
 #define VIEW_STR(name, cmd, env, ref, objsize, ops) \
 	{ name, cmd, #env, ref, objsize, ops }
@@ -1693,7 +1693,7 @@ struct keymap {
 	int request;
 };
 
-struct keymap keymap[] = {
+static struct keymap keymap[] = {
 	/**
 	 * View switching
 	 * ~~~~~~~~~~~~~~
@@ -1919,7 +1919,7 @@ init_display(void)
  */
 
 static struct ref *refs;
-size_t refs_size;
+static size_t refs_size;
 
 static struct ref **
 get_refs(char *id)
