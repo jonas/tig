@@ -32,7 +32,7 @@
  **/
 
 #ifndef	VERSION
-#define VERSION	"tig-0.1"
+#define VERSION	"tig-0.3"
 #endif
 
 #ifndef DEBUG
