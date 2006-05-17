@@ -2031,7 +2031,13 @@ load_refs(void)
  * Main
  */
 
-static void
+#if __GNUC__ >= 3
+#define __NORETURN __attribute__((__noreturn__))
+#else
+#define __NORETURN
+#endif
+
+static void __NORETURN
 quit(int sig)
 {
 	/* XXX: Restore tty modes and let the OS cleanup the rest! */
@@ -2040,7 +2046,7 @@ quit(int sig)
 	exit(0);
 }
 
-static void die(const char *err, ...)
+static void __NORETURN die(const char *err, ...)
 {
 	va_list args;
 
