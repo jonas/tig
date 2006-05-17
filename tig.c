@@ -542,7 +542,7 @@ init_colors(void)
  **/
 
 #define TIG_LS_REMOTE \
-	"git ls-remote ."
+	"git ls-remote . 2>/dev/null"
 
 /**
  * [[view-commands]]
@@ -586,7 +586,7 @@ init_colors(void)
 /* ... silently ignore that the following are also exported. */
 
 #define TIG_HELP_CMD \
-	"man tig 2> /dev/null"
+	"man tig 2>/dev/null"
 
 #define TIG_PAGER_CMD \
 	""
@@ -2021,6 +2021,9 @@ load_refs(void)
 
 	pclose(pipe);
 
+	if (refs_size == 0)
+		die("Not a git repository");
+
 	return OK;
 }
 
@@ -2155,7 +2158,7 @@ main(int argc, char *argv[])
  * have a file named 'master' it will clash with the reference named
  * 'master', and thus you will have to use:
  *
- *	$ tag log -- master
+ *	$ tig log -- master
  *
  * NOTE: For the main view, avoiding ambiguity will in some cases require
  * you to specify two "\--" options. The first will make tig(1) stop
@@ -2170,10 +2173,11 @@ main(int argc, char *argv[])
  * If you are only interested in changed that happened between two dates
  * you can use:
  *
- *	$ tig -- --after=may.5th --before=2006-05-16.15:44
+ *	$ tig -- --after=May.5th --before=2006-05-16.15:44
  *
  * NOTE: The dot (".") is used as a separator instead of a space to avoid
- * having to quote the option value.
+ * having to quote the option value. If you prefer use `--after="May 5th"`
+ * instead of `--after="May 5th"`.
  *
  * Limiting by commit ranges
  * ~~~~~~~~~~~~~~~~~~~~~~~~~
