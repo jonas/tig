@@ -773,9 +773,9 @@ resize_display(void)
 	offset = 0;
 
 	foreach_view (view, i) {
-		/* Keep the size of the all view windows one lager than is
-		 * required. This makes current line management easier when the
-		 * cursor will go outside the window. */
+		/* Keep the height of all view->win windows one larger than is
+		 * required so that the cursor can wrap-around on the last line
+		 * without scrolling the window. */
 		if (!view->win) {
 			view->win = newwin(view->height + 1, 0, offset, 0);
 			if (!view->win)
