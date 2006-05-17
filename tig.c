@@ -146,7 +146,7 @@ struct commit {
  */
 
 static inline void
-string_ncopy(char *dst, char *src, int dstlen)
+string_ncopy(char *dst, const char *src, int dstlen)
 {
 	strncpy(dst, src, dstlen - 1);
 	dst[dstlen - 1] = 0;
@@ -458,7 +458,7 @@ enum line_type {
 };
 
 struct line_info {
-	char *line;		/* The start of line to match. */
+	const char *line;	/* The start of line to match. */
 	int linelen;		/* Size of string to match. */
 	int fg, bg, attr;	/* Color and text attributes for the lines. */
 };
@@ -624,15 +624,15 @@ init_colors(void)
 
 struct view {
 	const char *name;	/* View name */
-	char *cmd_fmt;		/* Default command line format */
-	char *cmd_env;		/* Command line set via environment */
-	char *id;		/* Points to either of ref_{head,commit} */
+	const char *cmd_fmt;	/* Default command line format */
+	const char *cmd_env;	/* Command line set via environment */
+	const char *id;		/* Points to either of ref_{head,commit} */
 	size_t objsize;		/* Size of objects in the line index */
 
 	struct view_ops {
 		/* What type of content being displayed. Used in the
 		 * title bar. */
-		char *type;
+		const char *type;
 		/* Draw one line; @lineno must be < view->height. */
 		bool (*draw)(struct view *view, unsigned int lineno);
 		/* Read one line; updates view->line. */
@@ -987,7 +987,7 @@ move_view(struct view *view, enum request request)
 static bool
 begin_update(struct view *view)
 {
-	char *id = view->id;
+	const char *id = view->id;
 
 	if (opt_cmd[0]) {
 		string_copy(view->cmd, opt_cmd);
@@ -996,7 +996,7 @@ begin_update(struct view *view)
 		 * invalid so clear it. */
 		view->ref[0] = 0;
 	} else {
-		char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
+		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
 
 		if (snprintf(view->cmd, sizeof(view->cmd), format,
 			     id, id, id, id, id) >= sizeof(view->cmd))
@@ -1125,7 +1125,7 @@ update_view(struct view *view)
 		time_t secs = time(NULL) - view->start_time;
 
 		if (view == VIEW(REQ_VIEW_HELP)) {
-			char *msg = TIG_HELP;
+			const char *msg = TIG_HELP;
 
 			if (view->lines == 0) {
 				/* Slightly ugly, but abusing view->ref keeps
@@ -1959,8 +1959,8 @@ get_refs(char *id)
 static int
 load_refs(void)
 {
-	char *cmd_env = getenv("TIG_LS_REMOTE");
-	char *cmd = cmd_env && *cmd_env ? cmd_env : TIG_LS_REMOTE;
+	const char *cmd_env = getenv("TIG_LS_REMOTE");
+	const char *cmd = cmd_env && *cmd_env ? cmd_env : TIG_LS_REMOTE;
 	FILE *pipe = popen(cmd, "r");
 	char buffer[BUFSIZ];
 	char *line;
