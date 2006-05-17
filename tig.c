@@ -798,6 +798,19 @@ update_view_title(struct view *view)
 	wrefresh(view->title);
 }
 
+static void
+redraw_display(void)
+{
+	struct view *view;
+	int i;
+
+	foreach_view (view, i) {
+		redraw_view(view);
+		update_view_title(view);
+	}
+}
+
+
 /*
  * Navigation
  */
@@ -1310,8 +1323,7 @@ view_driver(struct view *view, enum request request)
 	}
 	case REQ_TOGGLE_LINE_NUMBERS:
 		opt_line_number = !opt_line_number;
-		redraw_view(view);
-		update_view_title(view);
+		redraw_display();
 		break;
 
 	case REQ_PROMPT:
@@ -1335,10 +1347,7 @@ view_driver(struct view *view, enum request request)
 		resize_display();
 		/* Fall-through */
 	case REQ_SCREEN_REDRAW:
-		foreach_view (view, i) {
-			redraw_view(view);
-			update_view_title(view);
-		}
+		redraw_display();
 		break;
 
 	case REQ_SCREEN_UPDATE:
