@@ -1,5 +1,5 @@
 PREFIX	= $(HOME)
-LDFLAGS = -lcurses
+LDLIBS  = -lcurses
 CFLAGS	= -Wall
 DFLAGS	= -g -DDEBUG
 PROGS	= tig
