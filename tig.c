@@ -180,7 +180,7 @@ sq_quote(char buf[SIZEOF_CMD], size_t bufsize, const char *src)
 {
 	char c;
 
-#define BUFPUT(x) ( (bufsize < SIZEOF_CMD) && (buf[bufsize++] = (x)) )
+#define BUFPUT(x) do { if (bufsize < SIZEOF_CMD) buf[bufsize++] = (x); } while (0)
 
 	BUFPUT('\'');
 	while ((c = *src++)) {
