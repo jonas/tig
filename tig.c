@@ -2158,7 +2158,7 @@ main(int argc, char *argv[])
  * If you are interested only in those revisions that made changes to a
  * specific file (or even several files) list the files like this:
  *
- *	$ tig log Makefile
+ *	$ tig log Makefile README
  *
  * To avoid ambiguity with repository references such as tag name, be sure
  * to separate file names from other git options using "\--". So if you
@@ -2180,11 +2180,10 @@ main(int argc, char *argv[])
  * If you are only interested in changed that happened between two dates
  * you can use:
  *
- *	$ tig -- --after=May.5th --before=2006-05-16.15:44
+ *	$ tig -- --after="May 5th" --before="2006-05-16 15:44"
  *
- * NOTE: The dot (".") is used as a separator instead of a space to avoid
- * having to quote the option value. If you prefer use `--after="May 5th"`
- * instead of `--after="May 5th"`.
+ * NOTE: If you want to avoid having to quote dates containing spaces you
+ * can use "." instead, e.g. `--after=May.5th`.
  *
  * Limiting by commit ranges
  * ~~~~~~~~~~~~~~~~~~~~~~~~~
