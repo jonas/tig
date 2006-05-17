@@ -715,6 +715,35 @@ redraw_view(struct view *view)
 }
 
 static void
+update_view_title(struct view *view)
+{
+	if (view == display[current_view])
+		wbkgdset(view->title, get_line_attr(LINE_TITLE_FOCUS));
+	else
+		wbkgdset(view->title, get_line_attr(LINE_TITLE_BLUR));
+
+	werase(view->title);
+	wmove(view->title, 0, 0);
+
+	/* [main] ref: 334b506... - commit 6 of 4383 (0%) */
+
+	if (*view->ref)
+		wprintw(view->title, "[%s] %s", view->name, view->ref);
+	else
+		wprintw(view->title, "[%s]", view->name);
+
+	if (view->lines) {
+		wprintw(view->title, " - %s %d of %d (%d%%)",
+			view->ops->type,
+			view->lineno + 1,
+			view->lines,
+			(view->lineno + 1) * 100 / view->lines);
+	}
+
+	wrefresh(view->title);
+}
+
+static void
 resize_display(void)
 {
 	int offset, i;
@@ -767,35 +796,6 @@ resize_display(void)
 
 		offset += view->height + 1;
 	}
-}
-
-static void
-update_view_title(struct view *view)
-{
-	if (view == display[current_view])
-		wbkgdset(view->title, get_line_attr(LINE_TITLE_FOCUS));
-	else
-		wbkgdset(view->title, get_line_attr(LINE_TITLE_BLUR));
-
-	werase(view->title);
-	wmove(view->title, 0, 0);
-
-	/* [main] ref: 334b506... - commit 6 of 4383 (0%) */
-
-	if (*view->ref)
-		wprintw(view->title, "[%s] %s", view->name, view->ref);
-	else
-		wprintw(view->title, "[%s]", view->name);
-
-	if (view->lines) {
-		wprintw(view->title, " - %s %d of %d (%d%%)",
-			view->ops->type,
-			view->lineno + 1,
-			view->lines,
-			(view->lineno + 1) * 100 / view->lines);
-	}
-
-	wrefresh(view->title);
 }
 
 static void
