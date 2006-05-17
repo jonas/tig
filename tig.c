@@ -600,7 +600,7 @@ init_colors(void)
  *
  * The main view::
  *	Is the default view, and it shows a one line summary of each commit
- *	in the chosen list of revision. The summary includes commit date,
+ *	in the chosen list of revisions. The summary includes commit date,
  *	author, and the first line of the log message. Additionally, any
  *	repository references, such as tags, will be shown.
  *
@@ -2046,7 +2046,8 @@ quit(int sig)
 	exit(0);
 }
 
-static void __NORETURN die(const char *err, ...)
+static void __NORETURN
+die(const char *err, ...)
 {
 	va_list args;
 
@@ -2265,5 +2266,6 @@ main(int argc, char *argv[])
  * link:http://www.kernel.org/pub/software/scm/git/docs/[git(7)],
  * link:http://www.kernel.org/pub/software/scm/cogito/docs/[cogito(7)]
  * gitk(1): git repository browser written using tcl/tk,
+ * qgit(1): git repository browser written using c++/Qt,
  * gitview(1): git repository browser written using python/gtk.
  **/
