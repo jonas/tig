@@ -345,7 +345,7 @@ $ tig log Makefile
 To avoid ambiguity with repository references such as tag name, be sure to separate file names from other git options using "\-\-"\&. So if you have a file named \fImaster\fR it will clash with the reference named \fImaster\fR, and thus you will have to use:
 
 .nf
-$ tag log \-\- master
+$ tig log \-\- master
 .fi
 
 .RS
@@ -365,14 +365,14 @@ To speed up interaction with git, you can limit the amount of commits to show bo
 If you are only interested in changed that happened between two dates you can use:
 
 .nf
-$ tig \-\- \-\-after=may\&.5th \-\-before=2006\-05\-16\&.15:44
+$ tig \-\- \-\-after=May\&.5th \-\-before=2006\-05\-16\&.15:44
 .fi
 
 .RS
 .Sh "Note"
 
 
-The dot ("\&.") is used as a separator instead of a space to avoid having to quote the option value\&.
+The dot ("\&.") is used as a separator instead of a space to avoid having to quote the option value\&. If you prefer use \-\-after="May 5th" instead of \-\-after="May 5th"\&.
 
 .RE
 
