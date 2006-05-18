@@ -591,36 +591,50 @@ init_colors(void)
 #define TIG_PAGER_CMD \
 	""
 
+
 /**
  * The viewer
  * ----------
+ * The display consists of a status window on the last line of the screen and
+ * one or more views. The default is to only show one view at the time but it
+ * is possible to split both the main and log view to also show the commit
+ * diff.
  *
- * tig(1) presents various 'views' of a repository. Each view is based on output
- * from an external command, most often 'git log', 'git diff', or 'git show'.
+ * If you are in the log view and press 'Enter' when the current line is a
+ * commit line, such as:
  *
- * The main view::
- *	Is the default view, and it shows a one line summary of each commit
- *	in the chosen list of revisions. The summary includes commit date,
- *	author, and the first line of the log message. Additionally, any
- *	repository references, such as tags, will be shown.
+ *	commit 4d55caff4cc89335192f3e566004b4ceef572521
  *
- * The log view::
- *	Presents a more rich view of the revision log showing the whole log
- *	message and the diffstat.
- *
- * The diff view::
- *	Shows either the diff of the current working tree, that is, what
- *	has changed since the last commit, or the commit diff complete
- *	with log message, diffstat and diff.
- *
- * The pager view::
- *	Is used for displaying both input from stdin and output from git
- *	commands entered in the internal prompt.
- *
- * The help view::
- *	Displays the information from the tig(1) man page. For the help view
- *	to work you need to have the tig(1) man page installed.
+ * You will split the view so that the log view is displayed in the top window
+ * and the diff view in the bottom window. You can switch between the two
+ * views by pressing 'Tab'. To maximize the log view again, simply press 'l'.
  **/
+
+struct view;
+
+/* The display array of active views and the index of the current view. */
+static struct view *display[2];
+static unsigned int current_view;
+
+#define foreach_view(view, i) \
+	for (i = 0; i < ARRAY_SIZE(display) && (view = display[i]); i++)
+
+
+/**
+ * Current head and commit ID
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * The viewer keeps track of both what head and commit ID you are currently
+ * viewing. The commit ID will follow the cursor line and change everytime time
+ * you highlight a different commit. Whenever you reopen the diff view it
+ * will be reloaded, if the commit ID changed.
+ *
+ * The head ID is used when opening the main and log view to indicate from
+ * what revision to show history.
+ **/
+
+static char ref_commit[SIZEOF_REF]	= "HEAD";
+static char ref_head[SIZEOF_REF]	= "HEAD";
+
 
 struct view {
 	const char *name;	/* View name */
@@ -666,31 +680,51 @@ struct view {
 static struct view_ops pager_ops;
 static struct view_ops main_ops;
 
-static char ref_head[SIZEOF_REF]	= "HEAD";
-static char ref_commit[SIZEOF_REF]	= "HEAD";
-
 #define VIEW_STR(name, cmd, env, ref, objsize, ops) \
 	{ name, cmd, #env, ref, objsize, ops }
 
 #define VIEW_(id, name, ops, ref, objsize) \
 	VIEW_STR(name, TIG_##id##_CMD,  TIG_##id##_CMD, ref, objsize, ops)
 
+/**
+ * Views
+ * ~~~~~
+ * tig(1) presents various 'views' of a repository. Each view is based on output
+ * from an external command, most often 'git log', 'git diff', or 'git show'.
+ *
+ * The main view::
+ *	Is the default view, and it shows a one line summary of each commit
+ *	in the chosen list of revisions. The summary includes commit date,
+ *	author, and the first line of the log message. Additionally, any
+ *	repository references, such as tags, will be shown.
+ *
+ * The log view::
+ *	Presents a more rich view of the revision log showing the whole log
+ *	message and the diffstat.
+ *
+ * The diff view::
+ *	Shows either the diff of the current working tree, that is, what
+ *	has changed since the last commit, or the commit diff complete
+ *	with log message, diffstat and diff.
+ *
+ * The pager view::
+ *	Is used for displaying both input from stdin and output from git
+ *	commands entered in the internal prompt.
+ *
+ * The help view::
+ *	Displays the information from the tig(1) man page. For the help view
+ *	to work you need to have the tig(1) man page installed.
+ **/
+
 static struct view views[] = {
 	VIEW_(MAIN,  "main",  &main_ops,  ref_head,   sizeof(struct commit)),
 	VIEW_(DIFF,  "diff",  &pager_ops, ref_commit, sizeof(char)),
 	VIEW_(LOG,   "log",   &pager_ops, ref_head,   sizeof(char)),
-	VIEW_(HELP,  "help",  &pager_ops, ref_head,   sizeof(char)),
+	VIEW_(HELP,  "help",  &pager_ops, "static",   sizeof(char)),
 	VIEW_(PAGER, "pager", &pager_ops, "static",   sizeof(char)),
 };
 
 #define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
-
-/* The display array of active views and the index of the current view. */
-static struct view *display[2];
-static unsigned int current_view;
-
-#define foreach_view(view, i) \
-	for (i = 0; i < ARRAY_SIZE(display) && (view = display[i]); i++)
 
 
 static void
@@ -714,6 +748,18 @@ redraw_view(struct view *view)
 	redraw_view_from(view, 0);
 }
 
+
+/**
+ * Title windows
+ * ~~~~~~~~~~~~~
+ * Each view has a title window which shows the name of the view, current
+ * commit ID if available, and where the view is positioned:
+ *
+ *	[main] c622eefaa485995320bc743431bae0d497b1d875 - commit 1 of 61 (1%)
+ *
+ * By default, the title of the current view is highlighted using bold font.
+ **/
+
 static void
 update_view_title(struct view *view)
 {
@@ -724,8 +770,6 @@ update_view_title(struct view *view)
 
 	werase(view->title);
 	wmove(view->title, 0, 0);
-
-	/* [main] ref: 334b506... - commit 6 of 4383 (0%) */
 
 	if (*view->ref)
 		wprintw(view->title, "[%s] %s", view->name, view->ref);
