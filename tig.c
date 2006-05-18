@@ -68,7 +68,7 @@ static void set_nonblocking_input(bool loading);
 /* This color name can be used to refer to the default term colors. */
 #define COLOR_DEFAULT	(-1)
 
-#define TIG_HELP	"(d)iff, (l)og, (m)ain, (q)uit, (h)elp, (Enter) show diff"
+#define TIG_HELP	"(d)iff, (l)og, (m)ain, (q)uit, (h)elp"
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
@@ -1521,6 +1521,11 @@ pager_enter(struct view *view)
 {
 	char *line = view->line[view->lineno];
 
+	if (view == VIEW(REQ_VIEW_DIFF)) {
+		scroll_view(view, REQ_SCROLL_LINE_DOWN);
+		return TRUE;
+	}
+
 	if (get_line_type(line) == LINE_COMMIT) {
 		if (view == VIEW(REQ_VIEW_LOG))
 			open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT | OPEN_BACKGROUNDED);
@@ -1760,10 +1765,11 @@ static struct keymap keymap[] = {
 	 *	Switch to pager view.
 	 * h::
 	 *	Show man page.
-	 * Return::
-	 *	If on a commit line show the commit diff. Additionally, if in
-	 *	main or log view this will split the view. To open the commit
-	 *	diff in full size view either use 'd' or press Return twice.
+	 * Enter::
+	 *	This key is "context sensitive" depending on what view you are
+	 *	currently in. When in log view on a commit line or in the main
+	 *	view, split the view and show the commit diff. In the diff view
+	 *	pressing Enter will simply scroll the view one line down.
 	 * Tab::
 	 *	Switch to next view.
 	 **/
