@@ -109,6 +109,7 @@ enum request {
 	REQ_STOP_LOADING,
 	REQ_TOGGLE_LINE_NUMBERS,
 	REQ_VIEW_NEXT,
+	REQ_VIEW_CLOSE,
 
 	REQ_MOVE_UP,
 	REQ_MOVE_UP_ENTER,
@@ -1398,6 +1399,17 @@ view_driver(struct view *view, enum request request)
 		doupdate();
 		return TRUE;
 
+	case REQ_VIEW_CLOSE:
+		if (display[1]) {
+			view = display[(current_view + 1) % ARRAY_SIZE(display)];
+			memset(display, 0, sizeof(display));
+			current_view = 0;
+			display[current_view] = view;
+			resize_display();
+			redraw_display();
+			break;
+		}
+		/* Fall-through */
 	case REQ_QUIT:
 		return FALSE;
 
@@ -1765,6 +1777,8 @@ static struct keymap keymap[] = {
 	 *	Switch to pager view.
 	 * h::
 	 *	Show man page.
+	 * q::
+	 *	Close view if multiple views are open, else quit.
 	 * Enter::
 	 *	This key is "context sensitive" depending on what view you are
 	 *	currently in. When in log view on a commit line or in the main
@@ -1779,6 +1793,7 @@ static struct keymap keymap[] = {
 	{ 'p',		REQ_VIEW_PAGER },
 	{ 'h',		REQ_VIEW_HELP },
 
+	{ 'q',		REQ_VIEW_CLOSE },
 	{ KEY_TAB,	REQ_VIEW_NEXT },
 	{ KEY_RETURN,	REQ_ENTER },
 
