@@ -1837,8 +1837,8 @@ static struct keymap keymap[] = {
 	/**
 	 * Misc
 	 * ~~~~
-	 * q::
-	 *	Quit
+	 * Q::
+	 *	Quit.
 	 * r::
 	 *	Redraw screen.
 	 * z::
@@ -1855,7 +1855,7 @@ static struct keymap keymap[] = {
 	 *
 	 *	:log -p
 	 **/
-	{ 'q',		REQ_QUIT },
+	{ 'Q',		REQ_QUIT },
 	{ 'z',		REQ_STOP_LOADING },
 	{ 'v',		REQ_SHOW_VERSION },
 	{ 'r',		REQ_SCREEN_REDRAW },
