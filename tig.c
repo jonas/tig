@@ -2014,7 +2014,7 @@ utf8_to_unicode(const char *string, size_t length)
 		unicode += ((string[3] & 0x3f) << 6);
 		unicode +=  (string[4] & 0x3f);
 		break;
-	case 6:	
+	case 6:
 		unicode  =  (string[0] & 0x01) << 30;
 		unicode += ((string[1] & 0x3f) << 24);
 		unicode += ((string[2] & 0x3f) << 18);
@@ -2101,7 +2101,7 @@ utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed)
  */
 
 /* Whether or not the curses interface has been initialized. */
-bool cursed = FALSE;
+static bool cursed = FALSE;
 
 /* The status window is used for polling keystrokes. */
 static WINDOW *status_win;
