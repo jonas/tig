@@ -1748,7 +1748,7 @@ main_read(struct view *view, char *line)
 static bool
 main_enter(struct view *view)
 {
-	open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT | OPEN_BACKGROUNDED);
+	open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT);
 	return TRUE;
 }
 
