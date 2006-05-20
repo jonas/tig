@@ -674,7 +674,6 @@ struct view {
 	const char *cmd_fmt;	/* Default command line format */
 	const char *cmd_env;	/* Command line set via environment */
 	const char *id;		/* Points to either of ref_{head,commit} */
-	size_t objsize;		/* Size of objects in the line index */
 
 	struct view_ops {
 		/* What type of content being displayed. Used in the
@@ -713,11 +712,11 @@ struct view {
 static struct view_ops pager_ops;
 static struct view_ops main_ops;
 
-#define VIEW_STR(name, cmd, env, ref, objsize, ops) \
-	{ name, cmd, #env, ref, objsize, ops }
+#define VIEW_STR(name, cmd, env, ref, ops) \
+	{ name, cmd, #env, ref, ops }
 
-#define VIEW_(id, name, ops, ref, objsize) \
-	VIEW_STR(name, TIG_##id##_CMD,  TIG_##id##_CMD, ref, objsize, ops)
+#define VIEW_(id, name, ops, ref) \
+	VIEW_STR(name, TIG_##id##_CMD,  TIG_##id##_CMD, ref, ops)
 
 /**
  * Views
@@ -750,11 +749,11 @@ static struct view_ops main_ops;
  **/
 
 static struct view views[] = {
-	VIEW_(MAIN,  "main",  &main_ops,  ref_head,   sizeof(struct commit)),
-	VIEW_(DIFF,  "diff",  &pager_ops, ref_commit, sizeof(char)),
-	VIEW_(LOG,   "log",   &pager_ops, ref_head,   sizeof(char)),
-	VIEW_(HELP,  "help",  &pager_ops, "static",   sizeof(char)),
-	VIEW_(PAGER, "pager", &pager_ops, "static",   sizeof(char)),
+	VIEW_(MAIN,  "main",  &main_ops,  ref_head),
+	VIEW_(DIFF,  "diff",  &pager_ops, ref_commit),
+	VIEW_(LOG,   "log",   &pager_ops, ref_head),
+	VIEW_(HELP,  "help",  &pager_ops, "static"),
+	VIEW_(PAGER, "pager", &pager_ops, "static"),
 };
 
 #define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
