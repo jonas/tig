@@ -1564,18 +1564,25 @@ static bool
 pager_enter(struct view *view)
 {
 	char *line = view->line[view->lineno];
+	int split = 0;
 
-	if (view == VIEW(REQ_VIEW_DIFF)) {
-		scroll_view(view, REQ_SCROLL_LINE_DOWN);
-		return TRUE;
+	if ((view == VIEW(REQ_VIEW_LOG) ||
+	     view == VIEW(REQ_VIEW_LOG)) &&
+	    get_line_type(line) == LINE_COMMIT) {
+		open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT);
+		split = 1;
 	}
 
-	if (get_line_type(line) == LINE_COMMIT) {
-		if (view == VIEW(REQ_VIEW_LOG))
-			open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT | OPEN_BACKGROUNDED);
-		else
-			open_view(view, REQ_VIEW_DIFF, OPEN_DEFAULT);
-	}
+	/* Always scroll the view even if it was split. That way
+	 * you can use Enter to scroll through the log view and
+	 * split open each commit diff. */
+	scroll_view(view, REQ_SCROLL_LINE_DOWN);
+
+	/* FIXME: A minor workaround. Scrolling the view will call report("")
+	 * but if we are scolling a non-current view this won't properly update
+	 * the view title. */
+	if (split)
+		update_view_title(view);
 
 	return TRUE;
 }
