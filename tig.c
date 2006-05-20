@@ -208,6 +208,25 @@ sq_quote(char buf[SIZEOF_CMD], size_t bufsize, const char *src)
  * -------
  **/
 
+static const char usage[] =
+VERSION " (" __DATE__ ")\n"
+"\n"
+"Usage: tig [options]\n"
+"   or: tig [options] [--] [git log options]\n"
+"   or: tig [options] log  [git log options]\n"
+"   or: tig [options] diff [git diff options]\n"
+"   or: tig [options] show [git show options]\n"
+"   or: tig [options] <    [git command output]\n"
+"\n"
+"Options:\n"
+"  -l                          Start up in log view\n"
+"  -d                          Start up in diff view\n"
+"  -n[I], --line-number[=I]    Show line numbers with given interval\n"
+"  -t[N], --tab-size[=N]       Set number of spaces for tab expansion\n"
+"  --                          Mark end of tig options\n"
+"  -v, --version               Show version and exit\n"
+"  -h, --help                  Show help message and exit\n";
+
 /* Option and state variables. */
 static bool opt_line_number	= FALSE;
 static int opt_num_interval	= NUMBER_INTERVAL;
@@ -293,6 +312,16 @@ parse_options(int argc, char *argv[])
 		if (!strcmp(opt, "-v") ||
 		    !strcmp(opt, "--version")) {
 			printf("tig version %s\n", VERSION);
+			return FALSE;
+		}
+
+		/**
+		 * -h, --help::
+		 *	Show help message and exit.
+		 **/
+		if (!strcmp(opt, "-h") ||
+		    !strcmp(opt, "--help")) {
+			printf(usage);
 			return FALSE;
 		}
 
