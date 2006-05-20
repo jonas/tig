@@ -1820,6 +1820,7 @@ static struct keymap keymap[] = {
 	 *	Move cursor one line down and enter.
 	 * PgUp::
 	 * b::
+	 * -::
 	 *	Move cursor one page up.
 	 * PgDown::
 	 * Space::
@@ -1839,6 +1840,7 @@ static struct keymap keymap[] = {
 	{ ' ',		REQ_MOVE_PAGE_DOWN },
 	{ KEY_PPAGE,	REQ_MOVE_PAGE_UP },
 	{ 'b',		REQ_MOVE_PAGE_UP },
+	{ '-',		REQ_MOVE_PAGE_UP },
 
 	/**
 	 * Scrolling
