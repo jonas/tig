@@ -1260,21 +1260,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	bool split = !!(flags & OPEN_SPLIT);
 	bool reload = !!(flags & OPEN_RELOAD);
 	struct view *view = VIEW(request);
-	struct view *displayed;
-	int nviews;
-
-	/* Cycle between displayed views and count the views. */
-	foreach_view (displayed, nviews) {
-		if (prev != view &&
-		    view == displayed &&
-		    !strcmp(view->vid, prev->vid)) {
-			current_view = nviews;
-			/* Blur out the title of the previous view. */
-			update_view_title(prev);
-			report("");
-			return;
-		}
-	}
+	int nviews = display[1] ? 2 : 1;
 
 	if (view == prev && nviews == 1 && !reload) {
 		report("Already in %s view", view->name);
