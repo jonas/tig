@@ -699,6 +699,10 @@ struct view {
 	unsigned long offset;	/* Offset of the window top */
 	unsigned long lineno;	/* Current line number */
 
+	/* If non-NULL, points to the view that opened this view. If this view
+	 * is closed tig will switch back to the parent view. */
+	struct view *parent;
+
 	/* Buffering */
 	unsigned long lines;	/* Total number of lines */
 	void **line;		/* Line index; each line contains user data */
@@ -1313,6 +1317,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		/* Continue loading split views in the background. */
 		if (!split)
 			end_update(prev);
+		view->parent = prev;
 	}
 
 	if (view->pipe) {
@@ -1431,11 +1436,11 @@ view_driver(struct view *view, enum request request)
 		return TRUE;
 
 	case REQ_VIEW_CLOSE:
-		if (display[1]) {
-			view = display[(current_view + 1) % ARRAY_SIZE(display)];
+		if (view->parent) {
 			memset(display, 0, sizeof(display));
 			current_view = 0;
-			display[current_view] = view;
+			display[current_view] = view->parent;
+			view->parent = NULL;
 			resize_display();
 			redraw_display();
 			break;
@@ -1821,7 +1826,9 @@ static struct keymap keymap[] = {
 	 * h::
 	 *	Show man page.
 	 * q::
-	 *	Close view if multiple views are open, else quit.
+	 *	Close view, if multiple views are open it will jump back to the
+	 *	previous view in the view stack. If it is the last open view it
+	 *	will quit. Use 'Q' to quit all views at once.
 	 * Enter::
 	 *	This key is "context sensitive" depending on what view you are
 	 *	currently in. When in log view on a commit line or in the main
