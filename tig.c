@@ -55,6 +55,7 @@
 static void die(const char *err, ...);
 static void report(const char *msg, ...);
 static void set_nonblocking_input(bool loading);
+static size_t utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -73,6 +74,8 @@ static void set_nonblocking_input(bool loading);
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
 #define DATE_COLS	STRING_SIZE("2006-04-29 14:21 ")
+
+#define AUTHOR_COLS	20
 
 /* The default interval between line numbers. */
 #define NUMBER_INTERVAL	1
@@ -1566,6 +1569,8 @@ main_draw(struct view *view, unsigned int lineno)
 	enum line_type type;
 	int col = 0;
 	size_t timelen;
+	size_t authorlen;
+	int trimmed;
 
 	if (view->offset + lineno >= view->lines)
 		return FALSE;
@@ -1597,8 +1602,11 @@ main_draw(struct view *view, unsigned int lineno)
 	if (type != LINE_CURSOR)
 		wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
 
-	if (strlen(commit->author) > 19) {
-		waddnstr(view->win, commit->author, 18);
+	/* FIXME: Make this optional, and add i18n.commitEncoding support. */
+	authorlen = utf8_length(commit->author, AUTHOR_COLS - 2, &col, &trimmed);
+
+	if (trimmed) {
+		waddnstr(view->win, commit->author, authorlen);
 		if (type != LINE_CURSOR)
 			wattrset(view->win, get_line_attr(LINE_MAIN_DELIM));
 		waddch(view->win, '~');
@@ -1606,7 +1614,7 @@ main_draw(struct view *view, unsigned int lineno)
 		waddstr(view->win, commit->author);
 	}
 
-	col += 20;
+	col += AUTHOR_COLS;
 	if (type != LINE_CURSOR)
 		wattrset(view->win, A_NORMAL);
 
@@ -1894,6 +1902,166 @@ get_request(int key)
 			return keymap[i].request;
 
 	return (enum request) key;
+}
+
+
+/*
+ * Unicode / UTF-8 handling
+ *
+ * NOTE: Much of the following code for dealing with unicode is derived from
+ * ELinks' UTF-8 code developed by Scrool <scroolik@gmail.com>. Origin file is
+ * src/intl/charset.c from the utf8 branch commit elinks-0.11.0-g31f2c28.
+ */
+
+/* I've (over)annotated a lot of code snippets because I am not entirely
+ * confident that the approach taken by this small UTF-8 interface is correct.
+ * --jonas */
+
+static inline int
+unicode_width(unsigned long c)
+{
+	if (c >= 0x1100 &&
+	   (c <= 0x115f				/* Hangul Jamo */
+	    || c == 0x2329
+	    || c == 0x232a
+	    || (c >= 0x2e80  && c <= 0xa4cf && c != 0x303f)
+	    					/* CJK ... Yi */
+	    || (c >= 0xac00  && c <= 0xd7a3)	/* Hangul Syllables */
+	    || (c >= 0xf900  && c <= 0xfaff)	/* CJK Compatibility Ideographs */
+	    || (c >= 0xfe30  && c <= 0xfe6f)	/* CJK Compatibility Forms */
+	    || (c >= 0xff00  && c <= 0xff60)	/* Fullwidth Forms */
+	    || (c >= 0xffe0  && c <= 0xffe6)
+	    || (c >= 0x20000 && c <= 0x2fffd)
+	    || (c >= 0x30000 && c <= 0x3fffd)))
+		return 2;
+
+	return 1;
+}
+
+/* Number of bytes used for encoding a UTF-8 character indexed by first byte.
+ * Illegal bytes are set one. */
+static const unsigned char utf8_bytes[256] = {
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2,
+	3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 4,4,4,4,4,4,4,4, 5,5,5,5,6,6,1,1,
+};
+
+/* Decode UTF-8 multi-byte representation into a unicode character. */
+static inline unsigned long
+utf8_to_unicode(const char *string, size_t length)
+{
+	unsigned long unicode;
+
+	switch (length) {
+	case 1:
+		unicode  =   string[0];
+		break;
+	case 2:
+		unicode  =  (string[0] & 0x1f) << 6;
+		unicode +=  (string[1] & 0x3f);
+		break;
+	case 3:
+		unicode  =  (string[0] & 0x0f) << 12;
+		unicode += ((string[1] & 0x3f) << 6);
+		unicode +=  (string[2] & 0x3f);
+		break;
+	case 4:
+		unicode  =  (string[0] & 0x0f) << 18;
+		unicode += ((string[1] & 0x3f) << 12);
+		unicode += ((string[2] & 0x3f) << 6);
+		unicode +=  (string[3] & 0x3f);
+		break;
+	case 5:
+		unicode  =  (string[0] & 0x0f) << 24;
+		unicode += ((string[1] & 0x3f) << 18);
+		unicode += ((string[2] & 0x3f) << 12);
+		unicode += ((string[3] & 0x3f) << 6);
+		unicode +=  (string[4] & 0x3f);
+		break;
+	case 6:	
+		unicode  =  (string[0] & 0x01) << 30;
+		unicode += ((string[1] & 0x3f) << 24);
+		unicode += ((string[2] & 0x3f) << 18);
+		unicode += ((string[3] & 0x3f) << 12);
+		unicode += ((string[4] & 0x3f) << 6);
+		unicode +=  (string[5] & 0x3f);
+		break;
+	default:
+		die("Invalid unicode length");
+	}
+
+	/* Invalid characters could return the special 0xfffd value but NUL
+	 * should be just as good. */
+	return unicode > 0xffff ? 0 : unicode;
+}
+
+/* Calculates how much of string can be shown within the given maximum width
+ * and sets trimmed parameter to non-zero value if all of string could not be
+ * shown.
+ *
+ * Additionally, adds to coloffset how many many columns to move to align with
+ * the expected position. Takes into account how multi-byte and double-width
+ * characters will effect the cursor position.
+ *
+ * Returns the number of bytes to output from string to satisfy max_width. */
+static size_t
+utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed)
+{
+	const char *start = string;
+	const char *end = strchr(string, '\0');
+	size_t mbwidth = 0;
+	size_t width = 0;
+
+	*trimmed = 0;
+
+	while (string < end) {
+		int c = *(unsigned char *) string;
+		unsigned char bytes = utf8_bytes[c];
+		size_t ucwidth;
+		unsigned long unicode;
+
+		if (string + bytes > end)
+			break;
+
+		/* Change representation to figure out whether
+		 * it is a single- or double-width character. */
+
+		unicode = utf8_to_unicode(string, bytes);
+		/* FIXME: Graceful handling of invalid unicode character. */
+		if (!unicode)
+			break;
+
+		ucwidth = unicode_width(unicode);
+		width  += ucwidth;
+		if (width > max_width) {
+			*trimmed = 1;
+			break;
+		}
+
+		/* The column offset collects the differences between the
+		 * number of bytes encoding a character and the number of
+		 * columns will be used for rendering said character.
+		 *
+		 * So if some character A is encoded in 2 bytes, but will be
+		 * represented on the screen using only 1 byte this will and up
+		 * adding 1 to the multi-byte column offset.
+		 *
+		 * Assumes that no double-width character can be encoding in
+		 * less than two bytes. */
+		if (bytes > ucwidth)
+			mbwidth += bytes - ucwidth;
+
+		string  += bytes;
+	}
+
+	*coloffset += mbwidth;
+
+	return string - start;
 }
 
 
@@ -2315,6 +2483,8 @@ main(int argc, char *argv[])
  * BUGS
  * ----
  * Known bugs and problems:
+ *
+ * - In it's current state tig is pretty much UTF-8 only.
  *
  * - If the screen width is very small the main view can draw
  *   outside the current view causing bad wrapping. Same goes
