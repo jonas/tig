@@ -1388,7 +1388,7 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_SHOW_VERSION:
-		report("Version: %s", VERSION);
+		report("%s (built %s)", VERSION, __DATE__);
 		return TRUE;
 
 	case REQ_SCREEN_RESIZE:
