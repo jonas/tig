@@ -2297,9 +2297,6 @@ load_refs(void)
 
 	pclose(pipe);
 
-	if (refs_size == 0)
-		die("Not a git repository");
-
 	return OK;
 }
 
@@ -2352,6 +2349,10 @@ main(int argc, char *argv[])
 
 	if (load_refs() == ERR)
 		die("Failed to load refs.");
+
+	/* Require a git repository unless when running in pager mode. */
+	if (refs_size == 0 && opt_request != REQ_VIEW_PAGER)
+		die("Not a git repository");
 
 	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
 		view->cmd_env = getenv(view->cmd_env);
