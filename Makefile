@@ -1,6 +1,6 @@
 PREFIX	= $(HOME)
 LDLIBS  = -lcurses
-CFLAGS	= -Wall
+CFLAGS	= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
 DOCS	= tig.1.txt tig.1.html tig.1 README.html
