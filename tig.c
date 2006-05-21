@@ -1285,7 +1285,8 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		display[current_view] = view;
 	}
 
-	resize_display();
+	if (nviews == 1 || display[1] == NULL)
+		resize_display();
 
 	if (split && prev->lineno - prev->offset >= prev->height) {
 		/* Take the title line into account. */
