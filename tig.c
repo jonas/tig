@@ -113,11 +113,11 @@ enum request {
 	REQ_TOGGLE_LINE_NUMBERS,
 	REQ_VIEW_NEXT,
 	REQ_VIEW_CLOSE,
+	REQ_NEXT,
+	REQ_PREVIOUS,
 
 	REQ_MOVE_UP,
-	REQ_MOVE_UP_ENTER,
 	REQ_MOVE_DOWN,
-	REQ_MOVE_DOWN_ENTER,
 	REQ_MOVE_PAGE_UP,
 	REQ_MOVE_PAGE_DOWN,
 	REQ_MOVE_FIRST_LINE,
@@ -891,7 +891,7 @@ redraw_display(void)
 
 /* Scrolling backend */
 static void
-do_scroll_view(struct view *view, int lines)
+do_scroll_view(struct view *view, int lines, bool redraw)
 {
 	/* The rendering expects the new offset. */
 	view->offset += lines;
@@ -932,6 +932,9 @@ do_scroll_view(struct view *view, int lines)
 	}
 
 	assert(view->offset <= view->lineno && view->lineno < view->lines);
+
+	if (!redraw)
+		return;
 
 	redrawwin(view->win);
 	wrefresh(view->win);
@@ -975,12 +978,12 @@ scroll_view(struct view *view, enum request request)
 		die("request %d not handled in switch", request);
 	}
 
-	do_scroll_view(view, lines);
+	do_scroll_view(view, lines, TRUE);
 }
 
 /* Cursor moving */
 static void
-move_view(struct view *view, enum request request)
+move_view(struct view *view, enum request request, bool redraw)
 {
 	int steps;
 
@@ -1004,12 +1007,10 @@ move_view(struct view *view, enum request request)
 		break;
 
 	case REQ_MOVE_UP:
-	case REQ_MOVE_UP_ENTER:
 		steps = -1;
 		break;
 
 	case REQ_MOVE_DOWN:
-	case REQ_MOVE_DOWN_ENTER:
 		steps = 1;
 		break;
 
@@ -1054,12 +1055,15 @@ move_view(struct view *view, enum request request)
 			}
 		}
 
-		do_scroll_view(view, steps);
+		do_scroll_view(view, steps, redraw);
 		return;
 	}
 
 	/* Draw the current line */
 	view->ops->draw(view, view->lineno - view->offset);
+
+	if (!redraw)
+		return;
 
 	redrawwin(view->win);
 	wrefresh(view->win);
@@ -1286,7 +1290,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 
 		/* Scroll the view that was split if the current line is
 		 * outside the new limited view. */
-		do_scroll_view(prev, lines);
+		do_scroll_view(prev, lines, TRUE);
 	}
 
 	if (prev && view != prev) {
@@ -1336,7 +1340,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_MOVE_PAGE_DOWN:
 	case REQ_MOVE_FIRST_LINE:
 	case REQ_MOVE_LAST_LINE:
-		move_view(view, request);
+		move_view(view, request, TRUE);
 		break;
 
 	case REQ_SCROLL_LINE_DOWN:
@@ -1354,9 +1358,21 @@ view_driver(struct view *view, enum request request)
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
-	case REQ_MOVE_UP_ENTER:
-	case REQ_MOVE_DOWN_ENTER:
-		move_view(view, request);
+	case REQ_NEXT:
+	case REQ_PREVIOUS:
+		request = request == REQ_NEXT ? REQ_MOVE_DOWN : REQ_MOVE_UP;
+
+		if (view == VIEW(REQ_VIEW_DIFF) &&
+		    view->parent == VIEW(REQ_VIEW_MAIN)) {
+			bool redraw = display[0] == VIEW(REQ_VIEW_MAIN);
+
+			view = view->parent;
+			move_view(view, request, redraw);
+			update_view_title(view);
+		} else {
+			move_view(view, request, TRUE);
+			break;
+		}
 		/* Fall-through */
 
 	case REQ_ENTER:
@@ -1778,7 +1794,9 @@ main_read(struct view *view, char *line)
 static bool
 main_enter(struct view *view)
 {
-	open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT);
+	enum open_flags flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
+
+	open_view(view, REQ_VIEW_DIFF, flags);
 	return TRUE;
 }
 
@@ -1815,6 +1833,16 @@ static struct keymap keymap[] = {
 	 *	Switch to pager view.
 	 * h::
 	 *	Show man page.
+	 **/
+	{ 'm',		REQ_VIEW_MAIN },
+	{ 'd',		REQ_VIEW_DIFF },
+	{ 'l',		REQ_VIEW_LOG },
+	{ 'p',		REQ_VIEW_PAGER },
+	{ 'h',		REQ_VIEW_HELP },
+
+	/**
+	 * View manipulation
+	 * ~~~~~~~~~~~~~~~~~
 	 * q::
 	 *	Close view, if multiple views are open it will jump back to the
 	 *	previous view in the view stack. If it is the last open view it
@@ -1826,30 +1854,28 @@ static struct keymap keymap[] = {
 	 *	pressing Enter will simply scroll the view one line down.
 	 * Tab::
 	 *	Switch to next view.
+	 * Up::
+	 *	This key is "context sensitive" and will move the cursor one
+	 *	line up. However, uf you opened a diff view from the main view
+	 *	(split- or full-screen) it will change the cursor to point to
+	 *	the previous commit in the main view and update the diff view
+	 *	to display it.
+	 * Down::
+	 *	Similar to 'Up' but will move down.
 	 **/
-	{ 'm',		REQ_VIEW_MAIN },
-	{ 'd',		REQ_VIEW_DIFF },
-	{ 'l',		REQ_VIEW_LOG },
-	{ 'p',		REQ_VIEW_PAGER },
-	{ 'h',		REQ_VIEW_HELP },
-
 	{ 'q',		REQ_VIEW_CLOSE },
 	{ KEY_TAB,	REQ_VIEW_NEXT },
 	{ KEY_RETURN,	REQ_ENTER },
+	{ KEY_UP,	REQ_PREVIOUS },
+	{ KEY_DOWN,	REQ_NEXT },
 
 	/**
 	 * Cursor navigation
 	 * ~~~~~~~~~~~~~~~~~
-	 * Up::
-	 *	Move cursor one line up.
-	 * Down::
-	 *	Move cursor one line down.
-	 * k::
-	 *	Move cursor one line up and enter. When used in the main view
-	 *	this will always show the diff of the current commit in the
-	 *	split diff view.
 	 * j::
-	 *	Move cursor one line down and enter.
+	 *	Move cursor one line up.
+	 * k::
+	 *	Move cursor one line down.
 	 * PgUp::
 	 * b::
 	 * -::
@@ -1862,10 +1888,8 @@ static struct keymap keymap[] = {
 	 * End::
 	 *	Jump to last line.
 	 **/
-	{ KEY_UP,	REQ_MOVE_UP },
-	{ KEY_DOWN,	REQ_MOVE_DOWN },
-	{ 'k',		REQ_MOVE_UP_ENTER },
-	{ 'j',		REQ_MOVE_DOWN_ENTER },
+	{ 'k',		REQ_MOVE_UP },
+	{ 'j',		REQ_MOVE_DOWN },
 	{ KEY_HOME,	REQ_MOVE_FIRST_LINE },
 	{ KEY_END,	REQ_MOVE_LAST_LINE },
 	{ KEY_NPAGE,	REQ_MOVE_PAGE_DOWN },
