@@ -1297,13 +1297,13 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	}
 
 	if (prev && view != prev) {
-		/* "Blur" the previous view. */
-		if (!backgrounded)
-			update_view_title(prev);
-
 		/* Continue loading split views in the background. */
 		if (!split)
 			end_update(prev);
+		else if (!backgrounded)
+			/* "Blur" the previous view. */
+			update_view_title(prev);
+
 		view->parent = prev;
 	}
 
@@ -1367,11 +1367,12 @@ view_driver(struct view *view, enum request request)
 
 		if (view == VIEW(REQ_VIEW_DIFF) &&
 		    view->parent == VIEW(REQ_VIEW_MAIN)) {
-			bool redraw = display[0] == VIEW(REQ_VIEW_MAIN);
+			bool redraw = display[1] == view;
 
 			view = view->parent;
 			move_view(view, request, redraw);
-			update_view_title(view);
+			if (redraw)
+				update_view_title(view);
 		} else {
 			move_view(view, request, TRUE);
 			break;
