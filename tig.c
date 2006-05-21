@@ -1075,10 +1075,26 @@ move_view(struct view *view, enum request request, bool redraw)
  * Incremental updating
  */
 
+static void
+end_update(struct view *view)
+{
+	if (!view->pipe)
+		return;
+	set_nonblocking_input(FALSE);
+	if (view->pipe == stdin)
+		fclose(view->pipe);
+	else
+		pclose(view->pipe);
+	view->pipe = NULL;
+}
+
 static bool
 begin_update(struct view *view)
 {
 	const char *id = view->id;
+
+	if (view->pipe)
+		end_update(view);
 
 	if (opt_cmd[0]) {
 		string_copy(view->cmd, opt_cmd);
@@ -1126,19 +1142,6 @@ begin_update(struct view *view)
 	view->start_time = time(NULL);
 
 	return TRUE;
-}
-
-static void
-end_update(struct view *view)
-{
-	if (!view->pipe)
-		return;
-	set_nonblocking_input(FALSE);
-	if (view->pipe == stdin)
-		fclose(view->pipe);
-	else
-		pclose(view->pipe);
-	view->pipe = NULL;
 }
 
 static bool
