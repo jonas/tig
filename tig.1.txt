@@ -46,6 +46,9 @@ OPTIONS
 -v, --version::
 	Show version and exit.
 
+-h, --help::
+	Show help message and exit.
+
 \--::
 	End of tig(1) options. Useful when specifying command
 	options for the main view. Example:
@@ -153,7 +156,32 @@ TIG_MAIN_CMD::
 
 The viewer
 ----------
+The display consists of a status window on the last line of the screen and
+one or more views. The default is to only show one view at the time but it
+is possible to split both the main and log view to also show the commit
+diff.
 
+If you are in the log view and press 'Enter' when the current line is a
+commit line, such as:
+
+	commit 4d55caff4cc89335192f3e566004b4ceef572521
+
+You will split the view so that the log view is displayed in the top window
+and the diff view in the bottom window. You can switch between the two
+views by pressing 'Tab'. To maximize the log view again, simply press 'l'.
+
+Current head and commit ID
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+The viewer keeps track of both what head and commit ID you are currently
+viewing. The commit ID will follow the cursor line and change everytime time
+you highlight a different commit. Whenever you reopen the diff view it
+will be reloaded, if the commit ID changed.
+
+The head ID is used when opening the main and log view to indicate from
+what revision to show history.
+
+Views
+~~~~~
 tig(1) presents various 'views' of a repository. Each view is based on output
 from an external command, most often 'git log', 'git diff', or 'git show'.
 
@@ -180,6 +208,15 @@ The help view::
 	Displays the information from the tig(1) man page. For the help view
 	to work you need to have the tig(1) man page installed.
 
+Title windows
+~~~~~~~~~~~~~
+Each view has a title window which shows the name of the view, current
+commit ID if available, and where the view is positioned:
+
+	[main] c622eefaa485995320bc743431bae0d497b1d875 - commit 1 of 61 (1%)
+
+By default, the title of the current view is highlighted using bold font.
+
 KEYS
 ----
 Below the default key bindings are shown.
@@ -196,28 +233,41 @@ p::
 	Switch to pager view.
 h::
 	Show man page.
-Return::
-	If on a commit line show the commit diff. Additionally, if in
-	main or log view this will split the view. To open the commit
-	diff in full size view either use 'd' or press Return twice.
+
+View manipulation
+~~~~~~~~~~~~~~~~~
+q::
+	Close view, if multiple views are open it will jump back to the
+	previous view in the view stack. If it is the last open view it
+	will quit. Use 'Q' to quit all views at once.
+Enter::
+	This key is "context sensitive" depending on what view you are
+	currently in. When in log view on a commit line or in the main
+	view, split the view and show the commit diff. In the diff view
+	pressing Enter will simply scroll the view one line down.
 Tab::
 	Switch to next view.
+Up::
+	This key is "context sensitive" and will move the cursor one
+	line up. However, uf you opened a diff view from the main view
+	(split- or full-screen) it will change the cursor to point to
+	the previous commit in the main view and update the diff view
+	to display it.
+Down::
+	Similar to 'Up' but will move down.
 
 Cursor navigation
 ~~~~~~~~~~~~~~~~~
-Up::
-	Move cursor one line up.
-Down::
-	Move cursor one line down.
-k::
-	Move cursor one line up and enter. When used in the main view
-	this will always show the diff of the current commit in the
-	split diff view.
 j::
-	Move cursor one line down and enter.
+	Move cursor one line up.
+k::
+	Move cursor one line down.
 PgUp::
+b::
+-::
 	Move cursor one page up.
 PgDown::
+Space::
 	Move cursor one page down.
 Home::
 	Jump to first line.
@@ -237,8 +287,8 @@ s::
 
 Misc
 ~~~~
-q::
-	Quit
+Q::
+	Quit.
 r::
 	Redraw screen.
 z::
@@ -273,7 +323,7 @@ Limit by path name
 If you are interested only in those revisions that made changes to a
 specific file (or even several files) list the files like this:
 
-	$ tig log Makefile
+	$ tig log Makefile README
 
 To avoid ambiguity with repository references such as tag name, be sure
 to separate file names from other git options using "\--". So if you
@@ -295,11 +345,10 @@ e.g. `--since=1.month` or limit by the number of commits using `-n400`.
 If you are only interested in changed that happened between two dates
 you can use:
 
-	$ tig -- --after=May.5th --before=2006-05-16.15:44
+	$ tig -- --after="May 5th" --before="2006-05-16 15:44"
 
-NOTE: The dot (".") is used as a separator instead of a space to avoid
-having to quote the option value. If you prefer use `--after="May 5th"`
-instead of `--after="May 5th"`.
+NOTE: If you want to avoid having to quote dates containing spaces you
+can use "." instead, e.g. `--after=May.5th`.
 
 Limiting by commit ranges
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -353,6 +402,8 @@ can be accomplished using:
 BUGS
 ----
 Known bugs and problems:
+
+- In it's current state tig is pretty much UTF-8 only.
 
 - If the screen width is very small the main view can draw
 outside the current view causing bad wrapping. Same goes
