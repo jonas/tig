@@ -2197,12 +2197,27 @@ init_display(void)
 static struct ref *refs;
 static size_t refs_size;
 
+/* Id <-> ref store */
+static struct ref ***id_refs;
+static size_t id_refs_size;
+
 static struct ref **
 get_refs(char *id)
 {
-	struct ref **id_refs = NULL;
-	size_t id_refs_size = 0;
+	struct ref ***tmp_id_refs;
+	struct ref **ref_list = NULL;
+	size_t ref_list_size = 0;
 	size_t i;
+
+	for (i = 0; i < id_refs_size; i++)
+		if (!strcmp(id, id_refs[i][0]->id))
+			return id_refs[i];
+
+	tmp_id_refs = realloc(id_refs, (id_refs_size + 1) * sizeof(*id_refs));
+	if (!tmp_id_refs)
+		return NULL;
+
+	id_refs = tmp_id_refs;
 
 	for (i = 0; i < refs_size; i++) {
 		struct ref **tmp;
@@ -2210,26 +2225,29 @@ get_refs(char *id)
 		if (strcmp(id, refs[i].id))
 			continue;
 
-		tmp = realloc(id_refs, (id_refs_size + 1) * sizeof(*id_refs));
+		tmp = realloc(ref_list, (ref_list_size + 1) * sizeof(*ref_list));
 		if (!tmp) {
-			if (id_refs)
-				free(id_refs);
+			if (ref_list)
+				free(ref_list);
 			return NULL;
 		}
 
-		id_refs = tmp;
-		if (id_refs_size > 0)
-			id_refs[id_refs_size - 1]->next = 1;
-		id_refs[id_refs_size] = &refs[i];
+		ref_list = tmp;
+		if (ref_list_size > 0)
+			ref_list[ref_list_size - 1]->next = 1;
+		ref_list[ref_list_size] = &refs[i];
 
 		/* XXX: The properties of the commit chains ensures that we can
 		 * safely modify the shared ref. The repo references will
 		 * always be similar for the same id. */
-		id_refs[id_refs_size]->next = 0;
-		id_refs_size++;
+		ref_list[ref_list_size]->next = 0;
+		ref_list_size++;
 	}
 
-	return id_refs;
+	if (ref_list)
+		id_refs[id_refs_size++] = ref_list;
+
+	return ref_list;
 }
 
 static int
