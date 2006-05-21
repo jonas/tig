@@ -136,13 +136,7 @@ struct ref {
 	unsigned int next:1;	/* For ref lists: are there more refs? */
 };
 
-struct commit {
-	char id[41];		/* SHA1 ID. */
-	char title[75];		/* The first line of the commit message. */
-	char author[75];	/* The author of the commit. */
-	struct tm time;		/* Date from the author ident. */
-	struct ref **refs;	/* Repository references; tags & branch heads. */
-};
+static struct ref **get_refs(char *id);
 
 
 /*
@@ -1446,7 +1440,7 @@ view_driver(struct view *view, enum request request)
 
 
 /*
- * View backend handlers
+ * Pager backend
  */
 
 static bool
@@ -1585,7 +1579,17 @@ static struct view_ops pager_ops = {
 };
 
 
-static struct ref **get_refs(char *id);
+/*
+ * Main view backend
+ */
+
+struct commit {
+	char id[41];		/* SHA1 ID. */
+	char title[75];		/* The first line of the commit message. */
+	char author[75];	/* The author of the commit. */
+	struct tm time;		/* Date from the author ident. */
+	struct ref **refs;	/* Repository references; tags & branch heads. */
+};
 
 static bool
 main_draw(struct view *view, unsigned int lineno)
