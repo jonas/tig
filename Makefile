@@ -1,12 +1,14 @@
 PREFIX	= $(HOME)
 LDLIBS  = -lcurses
-CFLAGS	= -Wall
-DFLAGS	= -g -DDEBUG
+CFLAGS	= -Wall -O2
+DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
 DOCS	= tig.1.txt tig.1.html tig.1 README.html
 
 ifneq (,$(wildcard .git))
-CFLAGS += '-DVERSION="$(shell git-describe)"'
+VERSION = $(shell git-describe)
+WTDIRTY = $(shell git-diff-index --name-only HEAD 2>/dev/null)
+CFLAGS += '-DVERSION="$(VERSION)$(if $(WTDIRTY),-dirty)"'
 endif
 
 all: $(PROGS)

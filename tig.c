@@ -55,6 +55,7 @@
 static void die(const char *err, ...);
 static void report(const char *msg, ...);
 static void set_nonblocking_input(bool loading);
+static size_t utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -68,11 +69,13 @@ static void set_nonblocking_input(bool loading);
 /* This color name can be used to refer to the default term colors. */
 #define COLOR_DEFAULT	(-1)
 
-#define TIG_HELP	"(d)iff, (l)og, (m)ain, (q)uit, (h)elp, (Enter) show diff"
+#define TIG_HELP	"(d)iff, (l)og, (m)ain, (q)uit, (h)elp"
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
 #define DATE_COLS	STRING_SIZE("2006-04-29 14:21 ")
+
+#define AUTHOR_COLS	20
 
 /* The default interval between line numbers. */
 #define NUMBER_INTERVAL	1
@@ -109,11 +112,12 @@ enum request {
 	REQ_STOP_LOADING,
 	REQ_TOGGLE_LINE_NUMBERS,
 	REQ_VIEW_NEXT,
+	REQ_VIEW_CLOSE,
+	REQ_NEXT,
+	REQ_PREVIOUS,
 
 	REQ_MOVE_UP,
-	REQ_MOVE_UP_ENTER,
 	REQ_MOVE_DOWN,
-	REQ_MOVE_DOWN_ENTER,
 	REQ_MOVE_PAGE_UP,
 	REQ_MOVE_PAGE_DOWN,
 	REQ_MOVE_FIRST_LINE,
@@ -132,13 +136,7 @@ struct ref {
 	unsigned int next:1;	/* For ref lists: are there more refs? */
 };
 
-struct commit {
-	char id[41];		/* SHA1 ID. */
-	char title[75];		/* The first line of the commit message. */
-	char author[75];	/* The author of the commit. */
-	struct tm time;		/* Date from the author ident. */
-	struct ref **refs;	/* Repository references; tags & branch heads. */
-};
+static struct ref **get_refs(char *id);
 
 
 /*
@@ -203,6 +201,25 @@ sq_quote(char buf[SIZEOF_CMD], size_t bufsize, const char *src)
  * OPTIONS
  * -------
  **/
+
+static const char usage[] =
+VERSION " (" __DATE__ ")\n"
+"\n"
+"Usage: tig [options]\n"
+"   or: tig [options] [--] [git log options]\n"
+"   or: tig [options] log  [git log options]\n"
+"   or: tig [options] diff [git diff options]\n"
+"   or: tig [options] show [git show options]\n"
+"   or: tig [options] <    [git command output]\n"
+"\n"
+"Options:\n"
+"  -l                          Start up in log view\n"
+"  -d                          Start up in diff view\n"
+"  -n[I], --line-number[=I]    Show line numbers with given interval\n"
+"  -t[N], --tab-size[=N]       Set number of spaces for tab expansion\n"
+"  --                          Mark end of tig options\n"
+"  -v, --version               Show version and exit\n"
+"  -h, --help                  Show help message and exit\n";
 
 /* Option and state variables. */
 static bool opt_line_number	= FALSE;
@@ -289,6 +306,16 @@ parse_options(int argc, char *argv[])
 		if (!strcmp(opt, "-v") ||
 		    !strcmp(opt, "--version")) {
 			printf("tig version %s\n", VERSION);
+			return FALSE;
+		}
+
+		/**
+		 * -h, --help::
+		 *	Show help message and exit.
+		 **/
+		if (!strcmp(opt, "-h") ||
+		    !strcmp(opt, "--help")) {
+			printf(usage);
 			return FALSE;
 		}
 
@@ -591,10 +618,107 @@ init_colors(void)
 #define TIG_PAGER_CMD \
 	""
 
+
 /**
  * The viewer
  * ----------
+ * The display consists of a status window on the last line of the screen and
+ * one or more views. The default is to only show one view at the time but it
+ * is possible to split both the main and log view to also show the commit
+ * diff.
  *
+ * If you are in the log view and press 'Enter' when the current line is a
+ * commit line, such as:
+ *
+ *	commit 4d55caff4cc89335192f3e566004b4ceef572521
+ *
+ * You will split the view so that the log view is displayed in the top window
+ * and the diff view in the bottom window. You can switch between the two
+ * views by pressing 'Tab'. To maximize the log view again, simply press 'l'.
+ **/
+
+struct view;
+
+/* The display array of active views and the index of the current view. */
+static struct view *display[2];
+static unsigned int current_view;
+
+#define foreach_view(view, i) \
+	for (i = 0; i < ARRAY_SIZE(display) && (view = display[i]); i++)
+
+
+/**
+ * Current head and commit ID
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * The viewer keeps track of both what head and commit ID you are currently
+ * viewing. The commit ID will follow the cursor line and change everytime time
+ * you highlight a different commit. Whenever you reopen the diff view it
+ * will be reloaded, if the commit ID changed.
+ *
+ * The head ID is used when opening the main and log view to indicate from
+ * what revision to show history.
+ **/
+
+static char ref_commit[SIZEOF_REF]	= "HEAD";
+static char ref_head[SIZEOF_REF]	= "HEAD";
+
+
+struct view {
+	const char *name;	/* View name */
+	const char *cmd_fmt;	/* Default command line format */
+	const char *cmd_env;	/* Command line set via environment */
+	const char *id;		/* Points to either of ref_{head,commit} */
+
+	struct view_ops {
+		/* What type of content being displayed. Used in the
+		 * title bar. */
+		const char *type;
+		/* Draw one line; @lineno must be < view->height. */
+		bool (*draw)(struct view *view, unsigned int lineno);
+		/* Read one line; updates view->line. */
+		bool (*read)(struct view *view, char *line);
+		/* Depending on view, change display based on current line. */
+		bool (*enter)(struct view *view);
+	} *ops;
+
+	char cmd[SIZEOF_CMD];	/* Command buffer */
+	char ref[SIZEOF_REF];	/* Hovered commit reference */
+	char vid[SIZEOF_REF];	/* View ID. Set to id member when updating. */
+
+	int height, width;	/* The width and height of the main window */
+	WINDOW *win;		/* The main window */
+	WINDOW *title;		/* The title window living below the main window */
+
+	/* Navigation */
+	unsigned long offset;	/* Offset of the window top */
+	unsigned long lineno;	/* Current line number */
+
+	/* If non-NULL, points to the view that opened this view. If this view
+	 * is closed tig will switch back to the parent view. */
+	struct view *parent;
+
+	/* Buffering */
+	unsigned long lines;	/* Total number of lines */
+	void **line;		/* Line index; each line contains user data */
+	unsigned int digits;	/* Number of digits in the lines member. */
+
+	/* Loading */
+	FILE *pipe;
+	time_t start_time;
+};
+
+static struct view_ops pager_ops;
+static struct view_ops main_ops;
+
+#define VIEW_STR(name, cmd, env, ref, ops) \
+	{ name, cmd, #env, ref, ops }
+
+#define VIEW_(id, name, ops, ref) \
+	VIEW_STR(name, TIG_##id##_CMD,  TIG_##id##_CMD, ref, ops)
+
+/**
+ * Views
+ * ~~~~~
  * tig(1) presents various 'views' of a repository. Each view is based on output
  * from an external command, most often 'git log', 'git diff', or 'git show'.
  *
@@ -622,75 +746,15 @@ init_colors(void)
  *	to work you need to have the tig(1) man page installed.
  **/
 
-struct view {
-	const char *name;	/* View name */
-	const char *cmd_fmt;	/* Default command line format */
-	const char *cmd_env;	/* Command line set via environment */
-	const char *id;		/* Points to either of ref_{head,commit} */
-	size_t objsize;		/* Size of objects in the line index */
-
-	struct view_ops {
-		/* What type of content being displayed. Used in the
-		 * title bar. */
-		const char *type;
-		/* Draw one line; @lineno must be < view->height. */
-		bool (*draw)(struct view *view, unsigned int lineno);
-		/* Read one line; updates view->line. */
-		bool (*read)(struct view *view, char *line);
-		/* Depending on view, change display based on current line. */
-		bool (*enter)(struct view *view);
-	} *ops;
-
-	char cmd[SIZEOF_CMD];	/* Command buffer */
-	char ref[SIZEOF_REF];	/* Hovered commit reference */
-	char vid[SIZEOF_REF];	/* View ID. Set to id member when updating. */
-
-	int height, width;	/* The width and height of the main window */
-	WINDOW *win;		/* The main window */
-	WINDOW *title;		/* The title window living below the main window */
-
-	/* Navigation */
-	unsigned long offset;	/* Offset of the window top */
-	unsigned long lineno;	/* Current line number */
-
-	/* Buffering */
-	unsigned long lines;	/* Total number of lines */
-	void **line;		/* Line index; each line contains user data */
-	unsigned int digits;	/* Number of digits in the lines member. */
-
-	/* Loading */
-	FILE *pipe;
-	time_t start_time;
-};
-
-static struct view_ops pager_ops;
-static struct view_ops main_ops;
-
-static char ref_head[SIZEOF_REF]	= "HEAD";
-static char ref_commit[SIZEOF_REF]	= "HEAD";
-
-#define VIEW_STR(name, cmd, env, ref, objsize, ops) \
-	{ name, cmd, #env, ref, objsize, ops }
-
-#define VIEW_(id, name, ops, ref, objsize) \
-	VIEW_STR(name, TIG_##id##_CMD,  TIG_##id##_CMD, ref, objsize, ops)
-
 static struct view views[] = {
-	VIEW_(MAIN,  "main",  &main_ops,  ref_head,   sizeof(struct commit)),
-	VIEW_(DIFF,  "diff",  &pager_ops, ref_commit, sizeof(char)),
-	VIEW_(LOG,   "log",   &pager_ops, ref_head,   sizeof(char)),
-	VIEW_(HELP,  "help",  &pager_ops, ref_head,   sizeof(char)),
-	VIEW_(PAGER, "pager", &pager_ops, "static",   sizeof(char)),
+	VIEW_(MAIN,  "main",  &main_ops,  ref_head),
+	VIEW_(DIFF,  "diff",  &pager_ops, ref_commit),
+	VIEW_(LOG,   "log",   &pager_ops, ref_head),
+	VIEW_(HELP,  "help",  &pager_ops, "static"),
+	VIEW_(PAGER, "pager", &pager_ops, "static"),
 };
 
 #define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
-
-/* The display array of active views and the index of the current view. */
-static struct view *display[2];
-static unsigned int current_view;
-
-#define foreach_view(view, i) \
-	for (i = 0; i < ARRAY_SIZE(display) && (view = display[i]); i++)
 
 
 static void
@@ -712,6 +776,45 @@ redraw_view(struct view *view)
 {
 	wclear(view->win);
 	redraw_view_from(view, 0);
+}
+
+
+/**
+ * Title windows
+ * ~~~~~~~~~~~~~
+ * Each view has a title window which shows the name of the view, current
+ * commit ID if available, and where the view is positioned:
+ *
+ *	[main] c622eefaa485995320bc743431bae0d497b1d875 - commit 1 of 61 (1%)
+ *
+ * By default, the title of the current view is highlighted using bold font.
+ **/
+
+static void
+update_view_title(struct view *view)
+{
+	if (view == display[current_view])
+		wbkgdset(view->title, get_line_attr(LINE_TITLE_FOCUS));
+	else
+		wbkgdset(view->title, get_line_attr(LINE_TITLE_BLUR));
+
+	werase(view->title);
+	wmove(view->title, 0, 0);
+
+	if (*view->ref)
+		wprintw(view->title, "[%s] %s", view->name, view->ref);
+	else
+		wprintw(view->title, "[%s]", view->name);
+
+	if (view->lines) {
+		wprintw(view->title, " - %s %d of %d (%d%%)",
+			view->ops->type,
+			view->lineno + 1,
+			view->lines,
+			(view->lineno + 1) * 100 / view->lines);
+	}
+
+	wrefresh(view->title);
 }
 
 static void
@@ -744,9 +847,9 @@ resize_display(void)
 	offset = 0;
 
 	foreach_view (view, i) {
-		/* Keep the size of the all view windows one lager than is
-		 * required. This makes current line management easier when the
-		 * cursor will go outside the window. */
+		/* Keep the height of all view->win windows one larger than is
+		 * required so that the cursor can wrap-around on the last line
+		 * without scrolling the window. */
 		if (!view->win) {
 			view->win = newwin(view->height + 1, 0, offset, 0);
 			if (!view->win)
@@ -770,33 +873,17 @@ resize_display(void)
 }
 
 static void
-update_view_title(struct view *view)
+redraw_display(void)
 {
-	if (view == display[current_view])
-		wbkgdset(view->title, get_line_attr(LINE_TITLE_FOCUS));
-	else
-		wbkgdset(view->title, get_line_attr(LINE_TITLE_BLUR));
+	struct view *view;
+	int i;
 
-	werase(view->title);
-	wmove(view->title, 0, 0);
-
-	/* [main] ref: 334b506... - commit 6 of 4383 (0%) */
-
-	if (*view->ref)
-		wprintw(view->title, "[%s] %s", view->name, view->ref);
-	else
-		wprintw(view->title, "[%s]", view->name);
-
-	if (view->lines) {
-		wprintw(view->title, " - %s %d of %d (%d%%)",
-			view->ops->type,
-			view->lineno + 1,
-			view->lines,
-			(view->lineno + 1) * 100 / view->lines);
+	foreach_view (view, i) {
+		redraw_view(view);
+		update_view_title(view);
 	}
-
-	wrefresh(view->title);
 }
+
 
 /*
  * Navigation
@@ -804,7 +891,7 @@ update_view_title(struct view *view)
 
 /* Scrolling backend */
 static void
-do_scroll_view(struct view *view, int lines)
+do_scroll_view(struct view *view, int lines, bool redraw)
 {
 	/* The rendering expects the new offset. */
 	view->offset += lines;
@@ -845,6 +932,9 @@ do_scroll_view(struct view *view, int lines)
 	}
 
 	assert(view->offset <= view->lineno && view->lineno < view->lines);
+
+	if (!redraw)
+		return;
 
 	redrawwin(view->win);
 	wrefresh(view->win);
@@ -888,12 +978,12 @@ scroll_view(struct view *view, enum request request)
 		die("request %d not handled in switch", request);
 	}
 
-	do_scroll_view(view, lines);
+	do_scroll_view(view, lines, TRUE);
 }
 
 /* Cursor moving */
 static void
-move_view(struct view *view, enum request request)
+move_view(struct view *view, enum request request, bool redraw)
 {
 	int steps;
 
@@ -917,12 +1007,10 @@ move_view(struct view *view, enum request request)
 		break;
 
 	case REQ_MOVE_UP:
-	case REQ_MOVE_UP_ENTER:
 		steps = -1;
 		break;
 
 	case REQ_MOVE_DOWN:
-	case REQ_MOVE_DOWN_ENTER:
 		steps = 1;
 		break;
 
@@ -967,12 +1055,15 @@ move_view(struct view *view, enum request request)
 			}
 		}
 
-		do_scroll_view(view, steps);
+		do_scroll_view(view, steps, redraw);
 		return;
 	}
 
 	/* Draw the current line */
 	view->ops->draw(view, view->lineno - view->offset);
+
+	if (!redraw)
+		return;
 
 	redrawwin(view->win);
 	wrefresh(view->win);
@@ -1167,21 +1258,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	bool split = !!(flags & OPEN_SPLIT);
 	bool reload = !!(flags & OPEN_RELOAD);
 	struct view *view = VIEW(request);
-	struct view *displayed;
-	int nviews;
-
-	/* Cycle between displayed views and count the views. */
-	foreach_view (displayed, nviews) {
-		if (prev != view &&
-		    view == displayed &&
-		    !strcmp(view->vid, prev->vid)) {
-			current_view = nviews;
-			/* Blur out the title of the previous view. */
-			update_view_title(prev);
-			report("");
-			return;
-		}
-	}
+	int nviews = display[1] ? 2 : 1;
 
 	if (view == prev && nviews == 1 && !reload) {
 		report("Already in %s view", view->name);
@@ -1213,7 +1290,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 
 		/* Scroll the view that was split if the current line is
 		 * outside the new limited view. */
-		do_scroll_view(prev, lines);
+		do_scroll_view(prev, lines, TRUE);
 	}
 
 	if (prev && view != prev) {
@@ -1224,6 +1301,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		/* Continue loading split views in the background. */
 		if (!split)
 			end_update(prev);
+		view->parent = prev;
 	}
 
 	if (view->pipe) {
@@ -1262,7 +1340,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_MOVE_PAGE_DOWN:
 	case REQ_MOVE_FIRST_LINE:
 	case REQ_MOVE_LAST_LINE:
-		move_view(view, request);
+		move_view(view, request, TRUE);
 		break;
 
 	case REQ_SCROLL_LINE_DOWN:
@@ -1280,9 +1358,21 @@ view_driver(struct view *view, enum request request)
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
-	case REQ_MOVE_UP_ENTER:
-	case REQ_MOVE_DOWN_ENTER:
-		move_view(view, request);
+	case REQ_NEXT:
+	case REQ_PREVIOUS:
+		request = request == REQ_NEXT ? REQ_MOVE_DOWN : REQ_MOVE_UP;
+
+		if (view == VIEW(REQ_VIEW_DIFF) &&
+		    view->parent == VIEW(REQ_VIEW_MAIN)) {
+			bool redraw = display[0] == VIEW(REQ_VIEW_MAIN);
+
+			view = view->parent;
+			move_view(view, request, redraw);
+			update_view_title(view);
+		} else {
+			move_view(view, request, TRUE);
+			break;
+		}
 		/* Fall-through */
 
 	case REQ_ENTER:
@@ -1310,8 +1400,7 @@ view_driver(struct view *view, enum request request)
 	}
 	case REQ_TOGGLE_LINE_NUMBERS:
 		opt_line_number = !opt_line_number;
-		redraw_view(view);
-		update_view_title(view);
+		redraw_display();
 		break;
 
 	case REQ_PROMPT:
@@ -1328,23 +1417,31 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_SHOW_VERSION:
-		report("Version: %s", VERSION);
+		report("%s (built %s)", VERSION, __DATE__);
 		return TRUE;
 
 	case REQ_SCREEN_RESIZE:
 		resize_display();
 		/* Fall-through */
 	case REQ_SCREEN_REDRAW:
-		foreach_view (view, i) {
-			redraw_view(view);
-			update_view_title(view);
-		}
+		redraw_display();
 		break;
 
 	case REQ_SCREEN_UPDATE:
 		doupdate();
 		return TRUE;
 
+	case REQ_VIEW_CLOSE:
+		if (view->parent) {
+			memset(display, 0, sizeof(display));
+			current_view = 0;
+			display[current_view] = view->parent;
+			view->parent = NULL;
+			resize_display();
+			redraw_display();
+			break;
+		}
+		/* Fall-through */
 	case REQ_QUIT:
 		return FALSE;
 
@@ -1359,7 +1456,7 @@ view_driver(struct view *view, enum request request)
 
 
 /*
- * View backend handlers
+ * Pager backend
  */
 
 static bool
@@ -1467,13 +1564,25 @@ static bool
 pager_enter(struct view *view)
 {
 	char *line = view->line[view->lineno];
+	int split = 0;
 
-	if (get_line_type(line) == LINE_COMMIT) {
-		if (view == VIEW(REQ_VIEW_LOG))
-			open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT | OPEN_BACKGROUNDED);
-		else
-			open_view(view, REQ_VIEW_DIFF, OPEN_DEFAULT);
+	if ((view == VIEW(REQ_VIEW_LOG) ||
+	     view == VIEW(REQ_VIEW_PAGER)) &&
+	    get_line_type(line) == LINE_COMMIT) {
+		open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT);
+		split = 1;
 	}
+
+	/* Always scroll the view even if it was split. That way
+	 * you can use Enter to scroll through the log view and
+	 * split open each commit diff. */
+	scroll_view(view, REQ_SCROLL_LINE_DOWN);
+
+	/* FIXME: A minor workaround. Scrolling the view will call report("")
+	 * but if we are scolling a non-current view this won't properly update
+	 * the view title. */
+	if (split)
+		update_view_title(view);
 
 	return TRUE;
 }
@@ -1486,7 +1595,17 @@ static struct view_ops pager_ops = {
 };
 
 
-static struct ref **get_refs(char *id);
+/*
+ * Main view backend
+ */
+
+struct commit {
+	char id[41];		/* SHA1 ID. */
+	char title[75];		/* The first line of the commit message. */
+	char author[75];	/* The author of the commit. */
+	struct tm time;		/* Date from the author ident. */
+	struct ref **refs;	/* Repository references; tags & branch heads. */
+};
 
 static bool
 main_draw(struct view *view, unsigned int lineno)
@@ -1496,6 +1615,8 @@ main_draw(struct view *view, unsigned int lineno)
 	enum line_type type;
 	int col = 0;
 	size_t timelen;
+	size_t authorlen;
+	int trimmed;
 
 	if (view->offset + lineno >= view->lines)
 		return FALSE;
@@ -1527,8 +1648,11 @@ main_draw(struct view *view, unsigned int lineno)
 	if (type != LINE_CURSOR)
 		wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
 
-	if (strlen(commit->author) > 19) {
-		waddnstr(view->win, commit->author, 18);
+	/* FIXME: Make this optional, and add i18n.commitEncoding support. */
+	authorlen = utf8_length(commit->author, AUTHOR_COLS - 2, &col, &trimmed);
+
+	if (trimmed) {
+		waddnstr(view->win, commit->author, authorlen);
 		if (type != LINE_CURSOR)
 			wattrset(view->win, get_line_attr(LINE_MAIN_DELIM));
 		waddch(view->win, '~');
@@ -1536,7 +1660,7 @@ main_draw(struct view *view, unsigned int lineno)
 		waddstr(view->win, commit->author);
 	}
 
-	col += 20;
+	col += AUTHOR_COLS;
 	if (type != LINE_CURSOR)
 		wattrset(view->win, A_NORMAL);
 
@@ -1670,7 +1794,9 @@ main_read(struct view *view, char *line)
 static bool
 main_enter(struct view *view)
 {
-	open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT | OPEN_BACKGROUNDED);
+	enum open_flags flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
+
+	open_view(view, REQ_VIEW_DIFF, flags);
 	return TRUE;
 }
 
@@ -1707,12 +1833,6 @@ static struct keymap keymap[] = {
 	 *	Switch to pager view.
 	 * h::
 	 *	Show man page.
-	 * Return::
-	 *	If on a commit line show the commit diff. Additionally, if in
-	 *	main or log view this will split the view. To open the commit
-	 *	diff in full size view either use 'd' or press Return twice.
-	 * Tab::
-	 *	Switch to next view.
 	 **/
 	{ 'm',		REQ_VIEW_MAIN },
 	{ 'd',		REQ_VIEW_DIFF },
@@ -1720,39 +1840,63 @@ static struct keymap keymap[] = {
 	{ 'p',		REQ_VIEW_PAGER },
 	{ 'h',		REQ_VIEW_HELP },
 
+	/**
+	 * View manipulation
+	 * ~~~~~~~~~~~~~~~~~
+	 * q::
+	 *	Close view, if multiple views are open it will jump back to the
+	 *	previous view in the view stack. If it is the last open view it
+	 *	will quit. Use 'Q' to quit all views at once.
+	 * Enter::
+	 *	This key is "context sensitive" depending on what view you are
+	 *	currently in. When in log view on a commit line or in the main
+	 *	view, split the view and show the commit diff. In the diff view
+	 *	pressing Enter will simply scroll the view one line down.
+	 * Tab::
+	 *	Switch to next view.
+	 * Up::
+	 *	This key is "context sensitive" and will move the cursor one
+	 *	line up. However, uf you opened a diff view from the main view
+	 *	(split- or full-screen) it will change the cursor to point to
+	 *	the previous commit in the main view and update the diff view
+	 *	to display it.
+	 * Down::
+	 *	Similar to 'Up' but will move down.
+	 **/
+	{ 'q',		REQ_VIEW_CLOSE },
 	{ KEY_TAB,	REQ_VIEW_NEXT },
 	{ KEY_RETURN,	REQ_ENTER },
+	{ KEY_UP,	REQ_PREVIOUS },
+	{ KEY_DOWN,	REQ_NEXT },
 
 	/**
 	 * Cursor navigation
 	 * ~~~~~~~~~~~~~~~~~
-	 * Up::
-	 *	Move cursor one line up.
-	 * Down::
-	 *	Move cursor one line down.
-	 * k::
-	 *	Move cursor one line up and enter. When used in the main view
-	 *	this will always show the diff of the current commit in the
-	 *	split diff view.
 	 * j::
-	 *	Move cursor one line down and enter.
+	 *	Move cursor one line up.
+	 * k::
+	 *	Move cursor one line down.
 	 * PgUp::
+	 * b::
+	 * -::
 	 *	Move cursor one page up.
 	 * PgDown::
+	 * Space::
 	 *	Move cursor one page down.
 	 * Home::
 	 *	Jump to first line.
 	 * End::
 	 *	Jump to last line.
 	 **/
-	{ KEY_UP,	REQ_MOVE_UP },
-	{ KEY_DOWN,	REQ_MOVE_DOWN },
-	{ 'k',		REQ_MOVE_UP_ENTER },
-	{ 'j',		REQ_MOVE_DOWN_ENTER },
+	{ 'k',		REQ_MOVE_UP },
+	{ 'j',		REQ_MOVE_DOWN },
 	{ KEY_HOME,	REQ_MOVE_FIRST_LINE },
 	{ KEY_END,	REQ_MOVE_LAST_LINE },
 	{ KEY_NPAGE,	REQ_MOVE_PAGE_DOWN },
+	{ ' ',		REQ_MOVE_PAGE_DOWN },
 	{ KEY_PPAGE,	REQ_MOVE_PAGE_UP },
+	{ 'b',		REQ_MOVE_PAGE_UP },
+	{ '-',		REQ_MOVE_PAGE_UP },
 
 	/**
 	 * Scrolling
@@ -1774,8 +1918,8 @@ static struct keymap keymap[] = {
 	/**
 	 * Misc
 	 * ~~~~
-	 * q::
-	 *	Quit
+	 * Q::
+	 *	Quit.
 	 * r::
 	 *	Redraw screen.
 	 * z::
@@ -1792,7 +1936,7 @@ static struct keymap keymap[] = {
 	 *
 	 *	:log -p
 	 **/
-	{ 'q',		REQ_QUIT },
+	{ 'Q',		REQ_QUIT },
 	{ 'z',		REQ_STOP_LOADING },
 	{ 'v',		REQ_SHOW_VERSION },
 	{ 'r',		REQ_SCREEN_REDRAW },
@@ -1820,11 +1964,171 @@ get_request(int key)
 
 
 /*
+ * Unicode / UTF-8 handling
+ *
+ * NOTE: Much of the following code for dealing with unicode is derived from
+ * ELinks' UTF-8 code developed by Scrool <scroolik@gmail.com>. Origin file is
+ * src/intl/charset.c from the utf8 branch commit elinks-0.11.0-g31f2c28.
+ */
+
+/* I've (over)annotated a lot of code snippets because I am not entirely
+ * confident that the approach taken by this small UTF-8 interface is correct.
+ * --jonas */
+
+static inline int
+unicode_width(unsigned long c)
+{
+	if (c >= 0x1100 &&
+	   (c <= 0x115f				/* Hangul Jamo */
+	    || c == 0x2329
+	    || c == 0x232a
+	    || (c >= 0x2e80  && c <= 0xa4cf && c != 0x303f)
+	    					/* CJK ... Yi */
+	    || (c >= 0xac00  && c <= 0xd7a3)	/* Hangul Syllables */
+	    || (c >= 0xf900  && c <= 0xfaff)	/* CJK Compatibility Ideographs */
+	    || (c >= 0xfe30  && c <= 0xfe6f)	/* CJK Compatibility Forms */
+	    || (c >= 0xff00  && c <= 0xff60)	/* Fullwidth Forms */
+	    || (c >= 0xffe0  && c <= 0xffe6)
+	    || (c >= 0x20000 && c <= 0x2fffd)
+	    || (c >= 0x30000 && c <= 0x3fffd)))
+		return 2;
+
+	return 1;
+}
+
+/* Number of bytes used for encoding a UTF-8 character indexed by first byte.
+ * Illegal bytes are set one. */
+static const unsigned char utf8_bytes[256] = {
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2,
+	3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 4,4,4,4,4,4,4,4, 5,5,5,5,6,6,1,1,
+};
+
+/* Decode UTF-8 multi-byte representation into a unicode character. */
+static inline unsigned long
+utf8_to_unicode(const char *string, size_t length)
+{
+	unsigned long unicode;
+
+	switch (length) {
+	case 1:
+		unicode  =   string[0];
+		break;
+	case 2:
+		unicode  =  (string[0] & 0x1f) << 6;
+		unicode +=  (string[1] & 0x3f);
+		break;
+	case 3:
+		unicode  =  (string[0] & 0x0f) << 12;
+		unicode += ((string[1] & 0x3f) << 6);
+		unicode +=  (string[2] & 0x3f);
+		break;
+	case 4:
+		unicode  =  (string[0] & 0x0f) << 18;
+		unicode += ((string[1] & 0x3f) << 12);
+		unicode += ((string[2] & 0x3f) << 6);
+		unicode +=  (string[3] & 0x3f);
+		break;
+	case 5:
+		unicode  =  (string[0] & 0x0f) << 24;
+		unicode += ((string[1] & 0x3f) << 18);
+		unicode += ((string[2] & 0x3f) << 12);
+		unicode += ((string[3] & 0x3f) << 6);
+		unicode +=  (string[4] & 0x3f);
+		break;
+	case 6:
+		unicode  =  (string[0] & 0x01) << 30;
+		unicode += ((string[1] & 0x3f) << 24);
+		unicode += ((string[2] & 0x3f) << 18);
+		unicode += ((string[3] & 0x3f) << 12);
+		unicode += ((string[4] & 0x3f) << 6);
+		unicode +=  (string[5] & 0x3f);
+		break;
+	default:
+		die("Invalid unicode length");
+	}
+
+	/* Invalid characters could return the special 0xfffd value but NUL
+	 * should be just as good. */
+	return unicode > 0xffff ? 0 : unicode;
+}
+
+/* Calculates how much of string can be shown within the given maximum width
+ * and sets trimmed parameter to non-zero value if all of string could not be
+ * shown.
+ *
+ * Additionally, adds to coloffset how many many columns to move to align with
+ * the expected position. Takes into account how multi-byte and double-width
+ * characters will effect the cursor position.
+ *
+ * Returns the number of bytes to output from string to satisfy max_width. */
+static size_t
+utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed)
+{
+	const char *start = string;
+	const char *end = strchr(string, '\0');
+	size_t mbwidth = 0;
+	size_t width = 0;
+
+	*trimmed = 0;
+
+	while (string < end) {
+		int c = *(unsigned char *) string;
+		unsigned char bytes = utf8_bytes[c];
+		size_t ucwidth;
+		unsigned long unicode;
+
+		if (string + bytes > end)
+			break;
+
+		/* Change representation to figure out whether
+		 * it is a single- or double-width character. */
+
+		unicode = utf8_to_unicode(string, bytes);
+		/* FIXME: Graceful handling of invalid unicode character. */
+		if (!unicode)
+			break;
+
+		ucwidth = unicode_width(unicode);
+		width  += ucwidth;
+		if (width > max_width) {
+			*trimmed = 1;
+			break;
+		}
+
+		/* The column offset collects the differences between the
+		 * number of bytes encoding a character and the number of
+		 * columns will be used for rendering said character.
+		 *
+		 * So if some character A is encoded in 2 bytes, but will be
+		 * represented on the screen using only 1 byte this will and up
+		 * adding 1 to the multi-byte column offset.
+		 *
+		 * Assumes that no double-width character can be encoding in
+		 * less than two bytes. */
+		if (bytes > ucwidth)
+			mbwidth += bytes - ucwidth;
+
+		string  += bytes;
+	}
+
+	*coloffset += mbwidth;
+
+	return string - start;
+}
+
+
+/*
  * Status management
  */
 
 /* Whether or not the curses interface has been initialized. */
-bool cursed = FALSE;
+static bool cursed = FALSE;
 
 /* The status window is used for polling keystrokes. */
 static WINDOW *status_win;
@@ -1921,12 +2225,27 @@ init_display(void)
 static struct ref *refs;
 static size_t refs_size;
 
+/* Id <-> ref store */
+static struct ref ***id_refs;
+static size_t id_refs_size;
+
 static struct ref **
 get_refs(char *id)
 {
-	struct ref **id_refs = NULL;
-	size_t id_refs_size = 0;
+	struct ref ***tmp_id_refs;
+	struct ref **ref_list = NULL;
+	size_t ref_list_size = 0;
 	size_t i;
+
+	for (i = 0; i < id_refs_size; i++)
+		if (!strcmp(id, id_refs[i][0]->id))
+			return id_refs[i];
+
+	tmp_id_refs = realloc(id_refs, (id_refs_size + 1) * sizeof(*id_refs));
+	if (!tmp_id_refs)
+		return NULL;
+
+	id_refs = tmp_id_refs;
 
 	for (i = 0; i < refs_size; i++) {
 		struct ref **tmp;
@@ -1934,26 +2253,29 @@ get_refs(char *id)
 		if (strcmp(id, refs[i].id))
 			continue;
 
-		tmp = realloc(id_refs, (id_refs_size + 1) * sizeof(*id_refs));
+		tmp = realloc(ref_list, (ref_list_size + 1) * sizeof(*ref_list));
 		if (!tmp) {
-			if (id_refs)
-				free(id_refs);
+			if (ref_list)
+				free(ref_list);
 			return NULL;
 		}
 
-		id_refs = tmp;
-		if (id_refs_size > 0)
-			id_refs[id_refs_size - 1]->next = 1;
-		id_refs[id_refs_size] = &refs[i];
+		ref_list = tmp;
+		if (ref_list_size > 0)
+			ref_list[ref_list_size - 1]->next = 1;
+		ref_list[ref_list_size] = &refs[i];
 
 		/* XXX: The properties of the commit chains ensures that we can
 		 * safely modify the shared ref. The repo references will
 		 * always be similar for the same id. */
-		id_refs[id_refs_size]->next = 0;
-		id_refs_size++;
+		ref_list[ref_list_size]->next = 0;
+		ref_list_size++;
 	}
 
-	return id_refs;
+	if (ref_list)
+		id_refs[id_refs_size++] = ref_list;
+
+	return ref_list;
 }
 
 static int
@@ -2021,9 +2343,6 @@ load_refs(void)
 
 	pclose(pipe);
 
-	if (refs_size == 0)
-		die("Not a git repository");
-
 	return OK;
 }
 
@@ -2076,6 +2395,10 @@ main(int argc, char *argv[])
 
 	if (load_refs() == ERR)
 		die("Failed to load refs.");
+
+	/* Require a git repository unless when running in pager mode. */
+	if (refs_size == 0 && opt_request != REQ_VIEW_PAGER)
+		die("Not a git repository");
 
 	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
 		view->cmd_env = getenv(view->cmd_env);
@@ -2158,7 +2481,7 @@ main(int argc, char *argv[])
  * If you are interested only in those revisions that made changes to a
  * specific file (or even several files) list the files like this:
  *
- *	$ tig log Makefile
+ *	$ tig log Makefile README
  *
  * To avoid ambiguity with repository references such as tag name, be sure
  * to separate file names from other git options using "\--". So if you
@@ -2180,11 +2503,10 @@ main(int argc, char *argv[])
  * If you are only interested in changed that happened between two dates
  * you can use:
  *
- *	$ tig -- --after=May.5th --before=2006-05-16.15:44
+ *	$ tig -- --after="May 5th" --before="2006-05-16 15:44"
  *
- * NOTE: The dot (".") is used as a separator instead of a space to avoid
- * having to quote the option value. If you prefer use `--after="May 5th"`
- * instead of `--after="May 5th"`.
+ * NOTE: If you want to avoid having to quote dates containing spaces you
+ * can use "." instead, e.g. `--after=May.5th`.
  *
  * Limiting by commit ranges
  * ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2238,6 +2560,8 @@ main(int argc, char *argv[])
  * BUGS
  * ----
  * Known bugs and problems:
+ *
+ * - In it's current state tig is pretty much UTF-8 only.
  *
  * - If the screen width is very small the main view can draw
  *   outside the current view causing bad wrapping. Same goes
