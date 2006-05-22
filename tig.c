@@ -646,6 +646,7 @@ static unsigned int current_view;
 #define foreach_view(view, i) \
 	for (i = 0; i < ARRAY_SIZE(display) && (view = display[i]); i++)
 
+#define displayed_views()	(display[1] != NULL ? 2 : 1)
 
 /**
  * Current head and commit ID
@@ -1261,7 +1262,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	bool split = !!(flags & OPEN_SPLIT);
 	bool reload = !!(flags & OPEN_RELOAD);
 	struct view *view = VIEW(request);
-	int nviews = display[1] ? 2 : 1;
+	int nviews = displayed_views();
 
 	if (view == prev && nviews == 1 && !reload) {
 		report("Already in %s view", view->name);
@@ -1389,7 +1390,7 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_VIEW_NEXT:
 	{
-		int nviews = display[1] ? 2 : 1;
+		int nviews = displayed_views();
 		int next_view = (current_view + 1) % nviews;
 
 		if (next_view == current_view) {
