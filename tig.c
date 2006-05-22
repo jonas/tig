@@ -1263,6 +1263,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	bool reload = !!(flags & OPEN_RELOAD);
 	struct view *view = VIEW(request);
 	int nviews = displayed_views();
+	struct view *base_view = display[0];
 
 	if (view == prev && nviews == 1 && !reload) {
 		report("Already in %s view", view->name);
@@ -1286,7 +1287,10 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		display[current_view] = view;
 	}
 
-	if (nviews == 1 || display[1] == NULL)
+	/* Resize the view when switching between split- and full-screen,
+	 * or when switching between two different full-screen views. */
+	if (nviews != displayed_views() ||
+	    (nviews == 1 && base_view != display[0]))
 		resize_display();
 
 	if (split && prev->lineno - prev->offset >= prev->height) {
