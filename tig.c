@@ -815,6 +815,15 @@ update_view_title(struct view *view)
 			(view->lineno + 1) * 100 / view->lines);
 	}
 
+	if (view->pipe) {
+		time_t secs = time(NULL) - view->start_time;
+
+		/* Three git seconds are a long time ... */
+		if (secs > 2)
+			wprintw(view->title, " %lds", secs);
+	}
+
+
 	wrefresh(view->title);
 }
 
@@ -1217,8 +1226,6 @@ update_view(struct view *view)
 		goto end;
 
 	} else if (feof(view->pipe)) {
-		time_t secs = time(NULL) - view->start_time;
-
 		if (view == VIEW(REQ_VIEW_HELP)) {
 			const char *msg = TIG_HELP;
 
@@ -1233,8 +1240,7 @@ update_view(struct view *view)
 			goto end;
 		}
 
-		report("Loaded %d lines in %ld second%s", view->lines, secs,
-		       secs == 1 ? "" : "s");
+		report("");
 		goto end;
 	}
 
@@ -1317,7 +1323,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		/* Clear the old view and let the incremental updating refill
 		 * the screen. */
 		wclear(view->win);
-		report("Loading...");
+		report("");
 	} else {
 		redraw_view(view);
 		if (view == VIEW(REQ_VIEW_HELP))
@@ -1993,7 +1999,7 @@ unicode_width(unsigned long c)
 	    || c == 0x2329
 	    || c == 0x232a
 	    || (c >= 0x2e80  && c <= 0xa4cf && c != 0x303f)
-	    					/* CJK ... Yi */
+						/* CJK ... Yi */
 	    || (c >= 0xac00  && c <= 0xd7a3)	/* Hangul Syllables */
 	    || (c >= 0xf900  && c <= 0xfaff)	/* CJK Compatibility Ideographs */
 	    || (c >= 0xfe30  && c <= 0xfe6f)	/* CJK Compatibility Forms */
