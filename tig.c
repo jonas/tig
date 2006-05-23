@@ -807,12 +807,16 @@ update_view_title(struct view *view)
 	else
 		wprintw(view->title, "[%s]", view->name);
 
-	if (view->lines) {
+	if (view->lines || view->pipe) {
+		unsigned int lines = view->lines
+				   ? (view->lineno + 1) * 100 / view->lines
+				   : 0;
+
 		wprintw(view->title, " - %s %d of %d (%d%%)",
 			view->ops->type,
 			view->lineno + 1,
 			view->lines,
-			(view->lineno + 1) * 100 / view->lines);
+			lines);
 	}
 
 	if (view->pipe) {
@@ -857,11 +861,8 @@ resize_display(void)
 	offset = 0;
 
 	foreach_view (view, i) {
-		/* Keep the height of all view->win windows one larger than is
-		 * required so that the cursor can wrap-around on the last line
-		 * without scrolling the window. */
 		if (!view->win) {
-			view->win = newwin(view->height + 1, 0, offset, 0);
+			view->win = newwin(view->height, 0, offset, 0);
 			if (!view->win)
 				die("Failed to create %s view", view->name);
 
@@ -872,7 +873,7 @@ resize_display(void)
 				die("Failed to create title window");
 
 		} else {
-			wresize(view->win, view->height + 1, view->width);
+			wresize(view->win, view->height, view->width);
 			mvwin(view->win,   offset, 0);
 			mvwin(view->title, offset + view->height, 0);
 			wrefresh(view->win);
@@ -2582,6 +2583,9 @@ main(int argc, char *argv[])
  * - If the screen width is very small the main view can draw
  *   outside the current view causing bad wrapping. Same goes
  *   for title and status windows.
+ *
+ * - The cursor can wrap-around on the last line and cause the
+ *   window to scroll.
  *
  * TODO
  * ----
