@@ -438,6 +438,82 @@ parse_options(int argc, char *argv[])
 }
 
 
+/**
+ * ENVIRONMENT VARIABLES
+ * ---------------------
+ * Several options related to the interface with git can be configured
+ * via environment options.
+ *
+ * Repository references
+ * ~~~~~~~~~~~~~~~~~~~~~
+ * Commits that are referenced by tags and branch heads will be marked
+ * by the reference name surrounded by '[' and ']':
+ *
+ *	2006-03-26 19:42 Petr Baudis         | [cogito-0.17.1] Cogito 0.17.1
+ *
+ * If you want to filter out certain directories under `.git/refs/`, say
+ * `tmp` you can do it by setting the following variable:
+ *
+ *	$ TIG_LS_REMOTE="git ls-remote . | sed /\/tmp\//d" tig
+ *
+ * Or set the variable permanently in your environment.
+ *
+ * TIG_LS_REMOTE::
+ *	Set command for retrieving all repository references. The command
+ *	should output data in the same format as git-ls-remote(1).
+ **/
+
+#define TIG_LS_REMOTE \
+	"git ls-remote . 2>/dev/null"
+
+/**
+ * [[view-commands]]
+ * View commands
+ * ~~~~~~~~~~~~~
+ * It is possible to alter which commands are used for the different views.
+ * If for example you prefer commits in the main view to be sorted by date
+ * and only show 500 commits, use:
+ *
+ *	$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %s" tig
+ *
+ * Or set the variable permanently in your environment.
+ *
+ * Notice, how `%s` is used to specify the commit reference. There can
+ * be a maximum of 5 `%s` ref specifications.
+ *
+ * TIG_DIFF_CMD::
+ *	The command used for the diff view. By default, git show is used
+ *	as a backend.
+ *
+ * TIG_LOG_CMD::
+ *	The command used for the log view. If you prefer to have both
+ *	author and committer shown in the log view be sure to pass
+ *	`--pretty=fuller` to git log.
+ *
+ * TIG_MAIN_CMD::
+ *	The command used for the main view. Note, you must always specify
+ *	the option: `--pretty=raw` since the main view parser expects to
+ *	read that format.
+ **/
+
+#define TIG_DIFF_CMD \
+	"git show --patch-with-stat --find-copies-harder -B -C %s"
+
+#define TIG_LOG_CMD	\
+	"git log --cc --stat -n100 %s"
+
+#define TIG_MAIN_CMD \
+	"git log --topo-order --stat --pretty=raw %s"
+
+/* ... silently ignore that the following are also exported. */
+
+#define TIG_HELP_CMD \
+	"man tig 2>/dev/null"
+
+#define TIG_PAGER_CMD \
+	""
+
+
 /*
  * Line-oriented content detection.
  */
@@ -555,82 +631,6 @@ struct line {
 	enum line_type type;
 	void *data;		/* User data */
 };
-
-
-/**
- * ENVIRONMENT VARIABLES
- * ---------------------
- * Several options related to the interface with git can be configured
- * via environment options.
- *
- * Repository references
- * ~~~~~~~~~~~~~~~~~~~~~
- * Commits that are referenced by tags and branch heads will be marked
- * by the reference name surrounded by '[' and ']':
- *
- *	2006-03-26 19:42 Petr Baudis         | [cogito-0.17.1] Cogito 0.17.1
- *
- * If you want to filter out certain directories under `.git/refs/`, say
- * `tmp` you can do it by setting the following variable:
- *
- *	$ TIG_LS_REMOTE="git ls-remote . | sed /\/tmp\//d" tig
- *
- * Or set the variable permanently in your environment.
- *
- * TIG_LS_REMOTE::
- *	Set command for retrieving all repository references. The command
- *	should output data in the same format as git-ls-remote(1).
- **/
-
-#define TIG_LS_REMOTE \
-	"git ls-remote . 2>/dev/null"
-
-/**
- * [[view-commands]]
- * View commands
- * ~~~~~~~~~~~~~
- * It is possible to alter which commands are used for the different views.
- * If for example you prefer commits in the main view to be sorted by date
- * and only show 500 commits, use:
- *
- *	$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %s" tig
- *
- * Or set the variable permanently in your environment.
- *
- * Notice, how `%s` is used to specify the commit reference. There can
- * be a maximum of 5 `%s` ref specifications.
- *
- * TIG_DIFF_CMD::
- *	The command used for the diff view. By default, git show is used
- *	as a backend.
- *
- * TIG_LOG_CMD::
- *	The command used for the log view. If you prefer to have both
- *	author and committer shown in the log view be sure to pass
- *	`--pretty=fuller` to git log.
- *
- * TIG_MAIN_CMD::
- *	The command used for the main view. Note, you must always specify
- *	the option: `--pretty=raw` since the main view parser expects to
- *	read that format.
- **/
-
-#define TIG_DIFF_CMD \
-	"git show --patch-with-stat --find-copies-harder -B -C %s"
-
-#define TIG_LOG_CMD	\
-	"git log --cc --stat -n100 %s"
-
-#define TIG_MAIN_CMD \
-	"git log --topo-order --stat --pretty=raw %s"
-
-/* ... silently ignore that the following are also exported. */
-
-#define TIG_HELP_CMD \
-	"man tig 2>/dev/null"
-
-#define TIG_PAGER_CMD \
-	""
 
 
 /**
