@@ -236,7 +236,8 @@ static int opt_num_interval	= NUMBER_INTERVAL;
 static int opt_tab_size		= TABSIZE;
 static enum request opt_request = REQ_VIEW_MAIN;
 static char opt_cmd[SIZEOF_CMD]	= "";
-static char opt_encoding[20]	= "UTF-8";
+static char opt_encoding[20]	= "";
+static bool opt_utf8		= TRUE;
 static FILE *opt_pipe		= NULL;
 
 /* Returns the index of log or diff command or -1 to exit. */
@@ -1653,7 +1654,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	int col = 0;
 	size_t timelen;
 	size_t authorlen;
-	int trimmed;
+	int trimmed = 1;
 
 	if (!*commit->author)
 		return FALSE;
@@ -1681,8 +1682,15 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (type != LINE_CURSOR)
 		wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
 
-	/* FIXME: Make this optional, and add i18n.commitEncoding support. */
-	authorlen = utf8_length(commit->author, AUTHOR_COLS - 2, &col, &trimmed);
+	if (opt_utf8) {
+		authorlen = utf8_length(commit->author, AUTHOR_COLS - 2, &col, &trimmed);
+	} else {
+		authorlen = strlen(commit->author);
+		if (authorlen > AUTHOR_COLS - 2) {
+			authorlen = AUTHOR_COLS - 2;
+			trimmed = 1;
+		}
+	}
 
 	if (trimmed) {
 		waddnstr(view->win, commit->author, authorlen);
@@ -2479,6 +2487,9 @@ main(int argc, char *argv[])
 
 	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
 		view->cmd_env = getenv(view->cmd_env);
+
+	if (*opt_encoding && strcasecmp(opt_encoding, "UTF-8"))
+		opt_utf8 = FALSE;
 
 	request = opt_request;
 
