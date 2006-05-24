@@ -1621,8 +1621,8 @@ pager_enter(struct view *view, struct line *line)
 	scroll_view(view, REQ_SCROLL_LINE_DOWN);
 
 	/* FIXME: A minor workaround. Scrolling the view will call report("")
-	 * but if we are scolling a non-current view this won't properly update
-	 * the view title. */
+	 * but if we are scrolling a non-current view this won't properly
+	 * update the view title. */
 	if (split)
 		update_view_title(view);
 
@@ -2426,7 +2426,8 @@ read_properties(const char *cmd, int separator,
 			valuelen = 0;
 		}
 
-		state = read_property(name, namelen, value, valuelen);
+		if (namelen)
+			state = read_property(name, namelen, value, valuelen);
 	}
 
 	if (state != ERR && ferror(pipe))
