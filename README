@@ -2,30 +2,29 @@ Tig: text-mode interface for git
 ================================
 
 Tig is a git repository browser that additionally can act as a pager for output
-of various git commands.
+from various git commands.
 
 When browsing repositories, it uses the underlying git commands to present the
 user with various views, such as summarized revision log and showing the commit
 with the log message, diffstat, and the diff.
 
-Using it as a pager, it will display input from stdin and try to colorize it.
+Using it as a pager, it will display input from stdin and colorize it.
 
-Getting it
-----------
+Resources
+---------
 
-To get tig either grab the Makefile and tig.c files from the home page:
-
- - http://jonas.nitro.dk/tig/[]
-
-or clone the tig repository using the URL:
-
- - http://jonas.nitro.dk/tig/tig.git[]
-
-Documentation files are available either at the home page or in the above
-repository in the branch named 'release'.
+ - Homepage: http://jonas.nitro.dk/tig[]
+ - Releases: http://jonas.nitro.dk/tig/releases[]
+ - Git URL:  http://jonas.nitro.dk/tig/tig.git[]
+ - Gitweb: http://pasky.or.cz/gitweb.cgi?p=tig.git;a=summary[]
 
 Installation instructions
 -------------------------
+
+Download a tarball from http://jonas.nitro.dk/tig/releases[] or clone the tig
+repository http://jonas.nitro.dk/tig/tig.git[]. Documentation files are
+available either in the tarballs or in the above repository in the branch named
+'release'.
 
 To install tig simply run:
 
