@@ -63,6 +63,7 @@
 
 static void die(const char *err, ...);
 static void report(const char *msg, ...);
+static int read_properties(const char *cmd, int separator, int (*read)(char *, int, char *, int));
 static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed);
 
@@ -2326,69 +2327,64 @@ get_refs(char *id)
 }
 
 static int
+read_ref(char *id, int idlen, char *name, int namelen)
+{
+	struct ref *ref;
+	bool tag = FALSE;
+	bool tag_commit = FALSE;
+
+	/* Commits referenced by tags has "^{}" appended. */
+	if (name[namelen - 1] == '}') {
+		while (namelen > 0 && name[namelen] != '^')
+			namelen--;
+		if (namelen > 0)
+			tag_commit = TRUE;
+		name[namelen] = 0;
+	}
+
+	if (!strncmp(name, "refs/tags/", STRING_SIZE("refs/tags/"))) {
+		if (!tag_commit)
+			return OK;
+		name += STRING_SIZE("refs/tags/");
+		tag = TRUE;
+
+	} else if (!strncmp(name, "refs/heads/", STRING_SIZE("refs/heads/"))) {
+		name += STRING_SIZE("refs/heads/");
+
+	} else if (!strcmp(name, "HEAD")) {
+		return OK;
+	}
+
+	refs = realloc(refs, sizeof(*refs) * (refs_size + 1));
+	if (!refs)
+		return ERR;
+
+	ref = &refs[refs_size++];
+	ref->name = strdup(name);
+	if (!ref->name)
+		return ERR;
+
+	ref->tag = tag;
+	string_copy(ref->id, id);
+
+	return OK;
+}
+
+static int
 load_refs(void)
 {
 	const char *cmd_env = getenv("TIG_LS_REMOTE");
 	const char *cmd = cmd_env && *cmd_env ? cmd_env : TIG_LS_REMOTE;
-	FILE *pipe = popen(cmd, "r");
-	char buffer[BUFSIZ];
-	char *line;
 
-	if (!pipe)
-		return ERR;
+	return read_properties(cmd, '\t', read_ref);
+}
 
-	while ((line = fgets(buffer, sizeof(buffer), pipe))) {
-		char *name = strchr(line, '\t');
-		struct ref *ref;
-		int namelen;
-		bool tag = FALSE;
-		bool tag_commit = FALSE;
-
-		if (!name)
-			continue;
-
-		*name++ = 0;
-		namelen = strlen(name) - 1;
-
-		/* Commits referenced by tags has "^{}" appended. */
-		if (name[namelen - 1] == '}') {
-			while (namelen > 0 && name[namelen] != '^')
-				namelen--;
-			if (namelen > 0)
-				tag_commit = TRUE;
-		}
-		name[namelen] = 0;
-
-		if (!strncmp(name, "refs/tags/", STRING_SIZE("refs/tags/"))) {
-			if (!tag_commit)
-				continue;
-			name += STRING_SIZE("refs/tags/");
-			tag = TRUE;
-
-		} else if (!strncmp(name, "refs/heads/", STRING_SIZE("refs/heads/"))) {
-			name += STRING_SIZE("refs/heads/");
-
-		} else if (!strcmp(name, "HEAD")) {
-			continue;
-		}
-
-		refs = realloc(refs, sizeof(*refs) * (refs_size + 1));
-		if (!refs)
-			return ERR;
-
-		ref = &refs[refs_size++];
-		ref->tag = tag;
-		ref->name = strdup(name);
-		if (!ref->name)
-			return ERR;
-
-		string_copy(ref->id, line);
+static int
+read_config_option(char *name, int namelen, char *value, int valuelen)
+{
+	if (!strcmp(name, "i18n.commitencoding")) {
+		string_copy(opt_encoding, value);
 	}
-
-	if (ferror(pipe))
-		return ERR;
-
-	pclose(pipe);
 
 	return OK;
 }
@@ -2396,40 +2392,51 @@ load_refs(void)
 static int
 load_config(void)
 {
-	FILE *pipe = popen("git repo-config --list", "r");
+	return read_properties("git repo-config --list", '=',
+			       read_config_option);
+}
+
+static int
+read_properties(const char *cmd, int separator,
+		int (*read_property)(char *, int, char *, int))
+{
+	FILE *pipe = popen(cmd, "r");
 	char buffer[BUFSIZ];
 	char *name;
+	int state = OK;
 
 	if (!pipe)
 		return ERR;
 
-	while ((name = fgets(buffer, sizeof(buffer), pipe))) {
-		char *value = strchr(name, '=');
-		int valuelen, namelen;
+	while (state == OK && (name = fgets(buffer, sizeof(buffer), pipe))) {
+		char *value = strchr(name, separator);
+		int namelen;
+		int valuelen;
 
-		/* No boolean options, yet */
-		if (!value)
-			continue;
+		if (value) {
+			namelen = value - name;
+			*value++ = 0;
+			valuelen = strlen(value);
+			if (valuelen > 0)
+				value[valuelen - 1] = 0;
 
-		namelen  = value - name;
-
-		*value++ = 0;
-		valuelen = strlen(value);
-		if (valuelen > 0)
-			value[valuelen - 1] = 0;
-
-		if (!strcmp(name, "i18n.commitencoding")) {
-			string_copy(opt_encoding, value);
+		} else {
+			namelen = strlen(name);
+			value = "";
+			valuelen = 0;
 		}
+
+		state = read_property(name, namelen, value, valuelen);
 	}
 
-	if (ferror(pipe))
-		return ERR;
+	if (state != ERR && ferror(pipe))
+		state = ERR;
 
 	pclose(pipe);
 
-	return OK;
+	return state;
 }
+
 
 /*
  * Main
