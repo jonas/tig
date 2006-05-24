@@ -2624,10 +2624,12 @@ main(int argc, char *argv[])
  *
  * SEE ALSO
  * --------
- * [verse]
- * link:http://www.kernel.org/pub/software/scm/git/docs/[git(7)],
- * link:http://www.kernel.org/pub/software/scm/cogito/docs/[cogito(7)]
- * gitk(1): git repository browser written using tcl/tk,
- * qgit(1): git repository browser written using c++/Qt,
- * gitview(1): git repository browser written using python/gtk.
+ * - link:http://www.kernel.org/pub/software/scm/git/docs/[git(7)],
+ * - link:http://www.kernel.org/pub/software/scm/cogito/docs/[cogito(7)]
+ *
+ * Other git repository browsers:
+*
+ *  - gitk(1)
+ *  - qgit(1)
+ *  - gitview(1)
  **/
