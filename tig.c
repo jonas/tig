@@ -1593,9 +1593,9 @@ pager_enter(struct view *view, struct line *line)
 {
 	int split = 0;
 
-	if ((view == VIEW(REQ_VIEW_LOG) ||
-	     view == VIEW(REQ_VIEW_PAGER)) &&
-	    line->type == LINE_COMMIT) {
+	if (line->type == LINE_COMMIT &&
+	   (view == VIEW(REQ_VIEW_LOG) ||
+	    view == VIEW(REQ_VIEW_PAGER))) {
 		open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT);
 		split = 1;
 	}
