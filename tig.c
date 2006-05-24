@@ -436,6 +436,9 @@ parse_options(int argc, char *argv[])
 
 	}
 
+	if (*opt_encoding && strcasecmp(opt_encoding, "UTF-8"))
+		opt_utf8 = FALSE;
+
 	return TRUE;
 }
 
@@ -2472,6 +2475,11 @@ main(int argc, char *argv[])
 
 	signal(SIGINT, quit);
 
+	/* Load the repo config file first so options can be overwritten from
+	 * the command line.  */
+	if (load_config() == ERR)
+		die("Failed to load repo config.");
+
 	if (!parse_options(argc, argv))
 		return 0;
 
@@ -2482,14 +2490,8 @@ main(int argc, char *argv[])
 	if (refs_size == 0 && opt_request != REQ_VIEW_PAGER)
 		die("Not a git repository");
 
-	if (load_config() == ERR)
-		die("Failed to load repo config.");
-
 	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
 		view->cmd_env = getenv(view->cmd_env);
-
-	if (*opt_encoding && strcasecmp(opt_encoding, "UTF-8"))
-		opt_utf8 = FALSE;
 
 	request = opt_request;
 
