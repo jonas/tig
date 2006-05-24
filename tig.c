@@ -1,5 +1,14 @@
 /* Copyright (c) 2006 Jonas Fonseca <fonseca@diku.dk>
- * See license info at the bottom. */
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
 /**
  * TIG(1)
  * ======
@@ -2606,7 +2615,7 @@ main(int argc, char *argv[])
  *
  * COPYRIGHT
  * ---------
- * Copyright (c) Jonas Fonseca <fonseca@diku.dk>, 2006
+ * Copyright (c) 2006 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
