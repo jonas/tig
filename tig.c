@@ -542,6 +542,11 @@ init_colors(void)
 	}
 }
 
+struct line {
+	enum line_type type;
+	void *data;		/* User data */
+};
+
 
 /**
  * ENVIRONMENT VARIABLES
@@ -638,6 +643,7 @@ init_colors(void)
  **/
 
 struct view;
+struct view_ops;
 
 /* The display array of active views and the index of the current view. */
 static struct view *display[2];
@@ -663,24 +669,13 @@ static unsigned int current_view;
 static char ref_commit[SIZEOF_REF]	= "HEAD";
 static char ref_head[SIZEOF_REF]	= "HEAD";
 
-
 struct view {
 	const char *name;	/* View name */
 	const char *cmd_fmt;	/* Default command line format */
 	const char *cmd_env;	/* Command line set via environment */
 	const char *id;		/* Points to either of ref_{head,commit} */
 
-	struct view_ops {
-		/* What type of content being displayed. Used in the
-		 * title bar. */
-		const char *type;
-		/* Draw one line; @lineno must be < view->height. */
-		bool (*draw)(struct view *view, unsigned int lineno);
-		/* Read one line; updates view->line. */
-		bool (*read)(struct view *view, char *line);
-		/* Depending on view, change display based on current line. */
-		bool (*enter)(struct view *view);
-	} *ops;
+	struct view_ops *ops;	/* View operations */
 
 	char cmd[SIZEOF_CMD];	/* Command buffer */
 	char ref[SIZEOF_REF];	/* Hovered commit reference */
@@ -700,12 +695,23 @@ struct view {
 
 	/* Buffering */
 	unsigned long lines;	/* Total number of lines */
-	void **line;		/* Line index; each line contains user data */
+	struct line *line;	/* Line index */
 	unsigned int digits;	/* Number of digits in the lines member. */
 
 	/* Loading */
 	FILE *pipe;
 	time_t start_time;
+};
+
+struct view_ops {
+	/* What type of content being displayed. Used in the title bar. */
+	const char *type;
+	/* Draw one line; @lineno must be < view->height. */
+	bool (*draw)(struct view *view, struct line *line, unsigned int lineno);
+	/* Read one line; updates view->line. */
+	bool (*read)(struct view *view, struct line *prev, char *data);
+	/* Depending on view, change display based on current line. */
+	bool (*enter)(struct view *view, struct line *line);
 };
 
 static struct view_ops pager_ops;
@@ -758,13 +764,22 @@ static struct view views[] = {
 #define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
 
 
+static bool
+draw_view_line(struct view *view, unsigned int lineno)
+{
+	if (view->offset + lineno >= view->lines)
+		return FALSE;
+
+	return view->ops->draw(view, &view->line[view->offset + lineno], lineno);
+}
+
 static void
 redraw_view_from(struct view *view, int lineno)
 {
 	assert(0 <= lineno && lineno < view->height);
 
 	for (; lineno < view->height; lineno++) {
-		if (!view->ops->draw(view, lineno))
+		if (!draw_view_line(view, lineno))
 			break;
 	}
 
@@ -921,7 +936,7 @@ do_scroll_view(struct view *view, int lines, bool redraw)
 		wscrl(view->win, lines);
 
 		for (; line < end; line++) {
-			if (!view->ops->draw(view, line))
+			if (!draw_view_line(view, line))
 				break;
 		}
 	}
@@ -929,7 +944,7 @@ do_scroll_view(struct view *view, int lines, bool redraw)
 	/* Move current line into the view. */
 	if (view->lineno < view->offset) {
 		view->lineno = view->offset;
-		view->ops->draw(view, 0);
+		draw_view_line(view, 0);
 
 	} else if (view->lineno >= view->offset + view->height) {
 		if (view->lineno == view->offset + view->height) {
@@ -939,7 +954,7 @@ do_scroll_view(struct view *view, int lines, bool redraw)
 			wclrtoeol(view->win);
 		}
 		view->lineno = view->offset + view->height - 1;
-		view->ops->draw(view, view->lineno - view->offset);
+		draw_view_line(view, view->lineno - view->offset);
 	}
 
 	assert(view->offset <= view->lineno && view->lineno < view->lines);
@@ -1048,7 +1063,7 @@ move_view(struct view *view, enum request request, bool redraw)
 
 		wmove(view->win, prev_lineno, 0);
 		wclrtoeol(view->win);
-		view->ops->draw(view, prev_lineno);
+		draw_view_line(view,  prev_lineno);
 	}
 
 	/* Check whether the view needs to be scrolled */
@@ -1071,7 +1086,7 @@ move_view(struct view *view, enum request request, bool redraw)
 	}
 
 	/* Draw the current line */
-	view->ops->draw(view, view->lineno - view->offset);
+	draw_view_line(view, view->lineno - view->offset);
 
 	if (!redraw)
 		return;
@@ -1143,8 +1158,8 @@ begin_update(struct view *view)
 		int i;
 
 		for (i = 0; i < view->lines; i++)
-			if (view->line[i])
-				free(view->line[i]);
+			if (view->line[i].data)
+				free(view->line[i].data);
 
 		free(view->line);
 		view->line = NULL;
@@ -1160,7 +1175,7 @@ update_view(struct view *view)
 {
 	char buffer[BUFSIZ];
 	char *line;
-	void **tmp;
+	struct line *tmp;
 	/* The number of lines to read. If too low it will cause too much
 	 * redrawing (and possible flickering), if too high responsiveness
 	 * will suffer. */
@@ -1183,10 +1198,14 @@ update_view(struct view *view)
 	while ((line = fgets(buffer, sizeof(buffer), view->pipe))) {
 		int linelen = strlen(line);
 
+		struct line *prev = view->lines
+				  ? &view->line[view->lines - 1]
+				  : NULL;
+
 		if (linelen)
 			line[linelen - 1] = 0;
 
-		if (!view->ops->read(view, line))
+		if (!view->ops->read(view, prev, line))
 			goto alloc_error;
 
 		if (lines-- == 1)
@@ -1397,7 +1416,7 @@ view_driver(struct view *view, enum request request)
 			report("Nothing to enter");
 			break;
 		}
-		return view->ops->enter(view);
+		return view->ops->enter(view, &view->line[view->lineno]);
 
 	case REQ_VIEW_NEXT:
 	{
@@ -1477,24 +1496,18 @@ view_driver(struct view *view, enum request request)
  */
 
 static bool
-pager_draw(struct view *view, unsigned int lineno)
+pager_draw(struct view *view, struct line *line, unsigned int lineno)
 {
-	enum line_type type;
-	char *line;
-	int linelen;
+	char *text = line->data;
+	enum line_type type = line->type;
+	int textlen = strlen(text);
 	int attr;
-
-	if (view->offset + lineno >= view->lines)
-		return FALSE;
-
-	line = view->line[view->offset + lineno];
-	type = get_line_type(line);
 
 	wmove(view->win, lineno, 0);
 
 	if (view->offset + lineno == view->lineno) {
 		if (type == LINE_COMMIT) {
-			string_copy(view->ref, line + 7);
+			string_copy(view->ref, text + 7);
 			string_copy(ref_commit, view->ref);
 		}
 
@@ -1504,8 +1517,6 @@ pager_draw(struct view *view, unsigned int lineno)
 
 	attr = get_line_attr(type);
 	wattrset(view->win, attr);
-
-	linelen = strlen(line);
 
 	if (opt_line_number || opt_tab_size < TABSIZE) {
 		static char spaces[] = "                    ";
@@ -1526,66 +1537,65 @@ pager_draw(struct view *view, unsigned int lineno)
 			col_offset = view->digits + 2;
 		}
 
-		while (line && col_offset + col < view->width) {
+		while (text && col_offset + col < view->width) {
 			int cols_max = view->width - col_offset - col;
-			char *text = line;
+			char *pos = text;
 			int cols;
 
-			if (*line == '\t') {
+			if (*text == '\t') {
+				text++;
 				assert(sizeof(spaces) > TABSIZE);
-				line++;
-				text = spaces;
+				pos = spaces;
 				cols = opt_tab_size - (col % opt_tab_size);
 
 			} else {
-				line = strchr(line, '\t');
-				cols = line ? line - text : strlen(text);
+				text = strchr(text, '\t');
+				cols = line ? text - pos : strlen(pos);
 			}
 
-			waddnstr(view->win, text, MIN(cols, cols_max));
+			waddnstr(view->win, pos, MIN(cols, cols_max));
 			col += cols;
 		}
 
 	} else {
 		int col = 0, pos = 0;
 
-		for (; pos < linelen && col < view->width; pos++, col++)
-			if (line[pos] == '\t')
+		for (; pos < textlen && col < view->width; pos++, col++)
+			if (text[pos] == '\t')
 				col += TABSIZE - (col % TABSIZE) - 1;
 
-		waddnstr(view->win, line, pos);
+		waddnstr(view->win, text, pos);
 	}
 
 	return TRUE;
 }
 
 static bool
-pager_read(struct view *view, char *line)
+pager_read(struct view *view, struct line *prev, char *line)
 {
 	/* Compress empty lines in the help view. */
 	if (view == VIEW(REQ_VIEW_HELP) &&
-	    !*line &&
-	    view->lines &&
-	    !*((char *) view->line[view->lines - 1]))
+	    !*line && prev && !*((char *) prev->data))
 		return TRUE;
 
-	view->line[view->lines] = strdup(line);
-	if (!view->line[view->lines])
+	view->line[view->lines].data = strdup(line);
+	if (!view->line[view->lines].data)
 		return FALSE;
+
+	view->line[view->lines].type = get_line_type(line);
 
 	view->lines++;
 	return TRUE;
 }
 
 static bool
-pager_enter(struct view *view)
+pager_enter(struct view *view, struct line *line)
 {
-	char *line = view->line[view->lineno];
 	int split = 0;
 
 	if ((view == VIEW(REQ_VIEW_LOG) ||
 	     view == VIEW(REQ_VIEW_PAGER)) &&
-	    get_line_type(line) == LINE_COMMIT) {
+	    line->type == LINE_COMMIT) {
 		open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT);
 		split = 1;
 	}
@@ -1625,20 +1635,16 @@ struct commit {
 };
 
 static bool
-main_draw(struct view *view, unsigned int lineno)
+main_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	char buf[DATE_COLS + 1];
-	struct commit *commit;
+	struct commit *commit = line->data;
 	enum line_type type;
 	int col = 0;
 	size_t timelen;
 	size_t authorlen;
 	int trimmed;
 
-	if (view->offset + lineno >= view->lines)
-		return FALSE;
-
-	commit = view->line[view->offset + lineno];
 	if (!*commit->author)
 		return FALSE;
 
@@ -1722,7 +1728,7 @@ main_draw(struct view *view, unsigned int lineno)
 
 /* Reads git log --pretty=raw output and parses it into the commit struct. */
 static bool
-main_read(struct view *view, char *line)
+main_read(struct view *view, struct line *prev, char *line)
 {
 	enum line_type type = get_line_type(line);
 	struct commit *commit;
@@ -1735,7 +1741,7 @@ main_read(struct view *view, char *line)
 
 		line += STRING_SIZE("commit ");
 
-		view->line[view->lines++] = commit;
+		view->line[view->lines++].data = commit;
 		string_copy(commit->id, line);
 		commit->refs = get_refs(commit->id);
 		break;
@@ -1745,12 +1751,16 @@ main_read(struct view *view, char *line)
 		char *ident = line + STRING_SIZE("author ");
 		char *end = strchr(ident, '<');
 
+		if (!prev)
+			break;
+
+		commit = prev->data;
+
 		if (end) {
 			for (; end > ident && isspace(end[-1]); end--) ;
 			*end = 0;
 		}
 
-		commit = view->line[view->lines - 1];
 		string_copy(commit->author, ident);
 
 		/* Parse epoch and timezone */
@@ -1784,13 +1794,12 @@ main_read(struct view *view, char *line)
 		break;
 	}
 	default:
-		/* We should only ever end up here if there has already been a
-		 * commit line, however, be safe. */
-		if (view->lines == 0)
+		if (!prev)
 			break;
 
+		commit = prev->data;
+
 		/* Fill in the commit title if it has not already been set. */
-		commit = view->line[view->lines - 1];
 		if (commit->title[0])
 			break;
 
@@ -1809,7 +1818,7 @@ main_read(struct view *view, char *line)
 }
 
 static bool
-main_enter(struct view *view)
+main_enter(struct view *view, struct line *line)
 {
 	enum open_flags flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
 
