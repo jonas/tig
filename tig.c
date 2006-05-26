@@ -1,8 +1,9 @@
 /* Copyright (c) 2006 Jonas Fonseca <fonseca@diku.dk>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -2696,7 +2697,7 @@ main(int argc, char *argv[])
  * - link:http://www.kernel.org/pub/software/scm/cogito/docs/[cogito(7)]
  *
  * Other git repository browsers:
-*
+ *
  *  - gitk(1)
  *  - qgit(1)
  *  - gitview(1)
