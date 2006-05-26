@@ -906,7 +906,6 @@ resize_display(void)
 			wresize(view->win, view->height, view->width);
 			mvwin(view->win,   offset, 0);
 			mvwin(view->title, offset + view->height, 0);
-			wrefresh(view->win);
 		}
 
 		offset += view->height + 1;
@@ -1344,7 +1343,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	}
 
 	if (prev && view != prev) {
-		if (!backgrounded) {
+		if (split && !backgrounded) {
 			/* "Blur" the previous view. */
 			update_view_title(prev);
 		}
