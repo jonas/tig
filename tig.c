@@ -857,7 +857,7 @@ update_view_title(struct view *view)
 			wprintw(view->title, " %lds", secs);
 	}
 
-
+	wmove(view->title, 0, view->width - 1);
 	wrefresh(view->title);
 }
 
