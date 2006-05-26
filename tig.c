@@ -1344,17 +1344,15 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	}
 
 	if (prev && view != prev) {
-		/* Continue loading split views in the background. */
-		if (!split)
-			end_update(prev);
-		else if (!backgrounded)
+		if (!backgrounded) {
 			/* "Blur" the previous view. */
 			update_view_title(prev);
+		}
 
 		view->parent = prev;
 	}
 
-	if (view->pipe) {
+	if (view->pipe && view->lines == 0) {
 		/* Clear the old view and let the incremental updating refill
 		 * the screen. */
 		wclear(view->win);
