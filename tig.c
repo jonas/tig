@@ -2420,8 +2420,10 @@ read_properties(const char *cmd, int separator,
 			namelen = value - name;
 			*value++ = 0;
 			valuelen = strlen(value);
-			if (valuelen > 0)
-				value[valuelen - 1] = 0;
+			if (valuelen > 0) {
+				valuelen--;
+				value[valuelen] = 0;
+			}
 
 		} else {
 			namelen = strlen(name);
