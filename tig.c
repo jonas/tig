@@ -924,6 +924,20 @@ redraw_display(void)
 	}
 }
 
+static void
+update_display_cursor(void)
+{
+	struct view *view = display[current_view];
+
+	/* Move the cursor to the right-most column of the cursor line.
+	 *
+	 * XXX: This could turn out to be a bit expensive, but it ensures that
+	 * the cursor does not jump around. */
+	if (view->lines) {
+		wmove(view->win, view->lineno - view->offset, view->width - 1);
+		wrefresh(view->win);
+	}
+}
 
 /*
  * Navigation
@@ -2204,15 +2218,7 @@ report(const char *msg, ...)
 	}
 
 	update_view_title(view);
-
-	/* Move the cursor to the right-most column of the cursor line.
-	 *
-	 * XXX: This could turn out to be a bit expensive, but it ensures that
-	 * the cursor does not jump around. */
-	if (view->lines) {
-		wmove(view->win, view->lineno - view->offset, view->width - 1);
-		wrefresh(view->win);
-	}
+	update_display_cursor();
 }
 
 /* Controls when nodelay should be in effect when polling user input. */
