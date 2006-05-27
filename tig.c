@@ -474,9 +474,9 @@ parse_options(int argc, char *argv[])
 	"git ls-remote . 2>/dev/null"
 
 /**
- * [[view-commands]]
- * View commands
- * ~~~~~~~~~~~~~
+ * [[history-commands]]
+ * History commands
+ * ~~~~~~~~~~~~~~~~
  * It is possible to alter which commands are used for the different views.
  * If for example you prefer commits in the main view to be sorted by date
  * and only show 500 commits, use:
@@ -2578,7 +2578,8 @@ main(int argc, char *argv[])
  *
  * You can tune the interaction with git by making use of the options
  * explained in this section. For example, by configuring the environment
- * variables described in the  <<view-commands, "View commands">> section.
+ * variables described in the  <<history-commands, "History commands">>
+ * section.
  *
  * Limit by path name
  * ~~~~~~~~~~~~~~~~~~
