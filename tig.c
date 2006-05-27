@@ -1495,11 +1495,15 @@ view_driver(struct view *view, enum request request)
 		return TRUE;
 
 	case REQ_VIEW_CLOSE:
-		if (view->parent) {
+		/* XXX: Mark closed views by letting view->parent point to the
+		 * view itself. Parents to closed view should never be
+		 * followed. */
+		if (view->parent &&
+		    view->parent->parent != view->parent) {
 			memset(display, 0, sizeof(display));
 			current_view = 0;
 			display[current_view] = view->parent;
-			view->parent = NULL;
+			view->parent = view;
 			resize_display();
 			redraw_display();
 			break;
