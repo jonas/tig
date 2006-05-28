@@ -227,7 +227,7 @@ VERSION " (" __DATE__ ")\n"
 "  -l                          Start up in log view\n"
 "  -d                          Start up in diff view\n"
 "  -n[I], --line-number[=I]    Show line numbers with given interval\n"
-"  -t[N], --tab-size[=N]       Set number of spaces for tab expansion\n"
+"  -b[N], --tab-size[=N]       Set number of spaces for tab expansion\n"
 "  --                          Mark end of tig options\n"
 "  -v, --version               Show version and exit\n"
 "  -h, --help                  Show help message and exit\n";
