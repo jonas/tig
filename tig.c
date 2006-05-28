@@ -820,6 +820,10 @@ redraw_view(struct view *view)
  *	[main] c622eefaa485995320bc743431bae0d497b1d875 - commit 1 of 61 (1%)
  *
  * By default, the title of the current view is highlighted using bold font.
+ * For long loading views (taking over 3 seconds) the time since loading
+ * started will be appended:
+ *
+ *	[main] 77d9e40fbcea3238015aea403e06f61542df9a31 - commit 1 of 779 (0%) 5s
  **/
 
 static void
