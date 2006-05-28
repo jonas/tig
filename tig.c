@@ -1474,7 +1474,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_STOP_LOADING:
 		foreach_view (view, i) {
 			if (view->pipe)
-				report("Stopped loaded the %s view", view->name),
+				report("Stopped loading the %s view", view->name),
 			end_update(view);
 		}
 		break;
@@ -2540,7 +2540,9 @@ main(int argc, char *argv[])
 				memcpy(opt_cmd, "git ", 4);
 				opt_request = REQ_VIEW_PAGER;
 			} else {
-				request = ERR;
+				report("Prompt interrupted by loading view, "
+				       "press 'z' to stop loading views");
+				request = REQ_SCREEN_UPDATE;
 			}
 
 			noecho();
@@ -2678,6 +2680,8 @@ main(int argc, char *argv[])
  *
  * - The cursor can wrap-around on the last line and cause the
  *   window to scroll.
+ *
+ * - The prompt doesn't work while loading.
  *
  * TODO
  * ----
