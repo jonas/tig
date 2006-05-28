@@ -64,7 +64,7 @@
 
 static void die(const char *err, ...);
 static void report(const char *msg, ...);
-static int read_properties(FILE *pipe, int separator, int (*read)(char *, int, char *, int));
+static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, int, char *, int));
 static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed);
 
@@ -165,6 +165,21 @@ string_ncopy(char *dst, const char *src, int dstlen)
 /* Shorthand for safely copying into a fixed buffer. */
 #define string_copy(dst, src) \
 	string_ncopy(dst, src, sizeof(dst))
+
+static char *
+chomp_string(char *name)
+{
+	int namelen;
+
+	while (isspace(*name))
+		name++;
+
+	namelen = strlen(name) - 1;
+	while (namelen > 0 && isspace(name[namelen]))
+		name[namelen--] = 0;
+
+	return name;
+}
 
 
 /* Shell quoting
@@ -2389,7 +2404,7 @@ load_refs(void)
 	const char *cmd_env = getenv("TIG_LS_REMOTE");
 	const char *cmd = cmd_env && *cmd_env ? cmd_env : TIG_LS_REMOTE;
 
-	return read_properties(popen(cmd, "r"), '\t', read_ref);
+	return read_properties(popen(cmd, "r"), "\t", read_ref);
 }
 
 static int
@@ -2410,7 +2425,7 @@ load_repo_config(void)
 }
 
 static int
-read_properties(FILE *pipe, int separator,
+read_properties(FILE *pipe, const char *separators,
 		int (*read_property)(char *, int, char *, int))
 {
 	char buffer[BUFSIZ];
@@ -2421,21 +2436,19 @@ read_properties(FILE *pipe, int separator,
 		return ERR;
 
 	while (state == OK && (name = fgets(buffer, sizeof(buffer), pipe))) {
-		char *value = strchr(name, separator);
-		int namelen;
-		int valuelen;
+		char *value;
+		size_t namelen;
+		size_t valuelen;
 
-		if (value) {
-			namelen = value - name;
-			*value++ = 0;
+		name = chomp_string(name);
+		namelen = strcspn(name, separators);
+
+		if (name[namelen]) {
+			name[namelen] = 0;
+			value = chomp_string(name + namelen + 1);
 			valuelen = strlen(value);
-			if (valuelen > 0) {
-				valuelen--;
-				value[valuelen] = 0;
-			}
 
 		} else {
-			namelen = strlen(name);
 			value = "";
 			valuelen = 0;
 		}
