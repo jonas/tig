@@ -2393,7 +2393,7 @@ load_refs(void)
 }
 
 static int
-read_config_option(char *name, int namelen, char *value, int valuelen)
+read_repo_config_option(char *name, int namelen, char *value, int valuelen)
 {
 	if (!strcmp(name, "i18n.commitencoding")) {
 		string_copy(opt_encoding, value);
@@ -2403,10 +2403,10 @@ read_config_option(char *name, int namelen, char *value, int valuelen)
 }
 
 static int
-load_config(void)
+load_repo_config(void)
 {
 	return read_properties(popen("git repo-config --list", "r"),
-			       '=', read_config_option);
+			       "=", read_repo_config_option);
 }
 
 static int
@@ -2499,7 +2499,7 @@ main(int argc, char *argv[])
 
 	/* Load the repo config file first so options can be overwritten from
 	 * the command line.  */
-	if (load_config() == ERR)
+	if (load_repo_config() == ERR)
 		die("Failed to load repo config.");
 
 	if (!parse_options(argc, argv))
