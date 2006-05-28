@@ -1472,7 +1472,8 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_STOP_LOADING:
-		foreach_view (view, i) {
+		for (i = 0; i < ARRAY_SIZE(views); i++) {
+			view = &views[i];
 			if (view->pipe)
 				report("Stopped loading the %s view", view->name),
 			end_update(view);
