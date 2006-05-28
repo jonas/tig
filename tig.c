@@ -64,7 +64,7 @@
 
 static void die(const char *err, ...);
 static void report(const char *msg, ...);
-static int read_properties(const char *cmd, int separator, int (*read)(char *, int, char *, int));
+static int read_properties(FILE *pipe, int separator, int (*read)(char *, int, char *, int));
 static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed);
 
@@ -2389,7 +2389,7 @@ load_refs(void)
 	const char *cmd_env = getenv("TIG_LS_REMOTE");
 	const char *cmd = cmd_env && *cmd_env ? cmd_env : TIG_LS_REMOTE;
 
-	return read_properties(cmd, '\t', read_ref);
+	return read_properties(popen(cmd, "r"), '\t', read_ref);
 }
 
 static int
@@ -2405,15 +2405,14 @@ read_config_option(char *name, int namelen, char *value, int valuelen)
 static int
 load_config(void)
 {
-	return read_properties("git repo-config --list", '=',
-			       read_config_option);
+	return read_properties(popen("git repo-config --list", "r"),
+			       '=', read_config_option);
 }
 
 static int
-read_properties(const char *cmd, int separator,
+read_properties(FILE *pipe, int separator,
 		int (*read_property)(char *, int, char *, int))
 {
-	FILE *pipe = popen(cmd, "r");
 	char buffer[BUFSIZ];
 	char *name;
 	int state = OK;
