@@ -3015,6 +3015,8 @@ main(int argc, char *argv[])
  *
  * - Locale support.
  *
+ * - Make '?' show a one page keybinding cheat sheet.
+ *
  * COPYRIGHT
  * ---------
  * Copyright (c) 2006 Jonas Fonseca <fonseca@diku.dk>
