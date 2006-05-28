@@ -855,12 +855,61 @@ struct line {
 #define set_attribute(attr, name, namelen) \
 	set_from_int_map(attr_map, ARRAY_SIZE(attr_map), attr, name, namelen)
 
+static int   config_lineno;
+static bool  config_errors;
+static char *config_msg;
+
+static int
+set_option(char *opt, int optlen, char *value, int valuelen)
+{
+	/* Reads: "color" object fgcolor bgcolor [attr] */
+	if (!strcmp(opt, "color")) {
+		struct line_info *info;
+
+		value = chomp_string(value);
+		valuelen = strcspn(value, " \t");
+		info = get_line_info(value, valuelen);
+		if (!info) {
+			config_msg = "Unknown color name";
+			return ERR;
+		}
+
+		value = chomp_string(value + valuelen);
+		valuelen = strcspn(value, " \t");
+		if (set_color(&info->fg, value, valuelen) == ERR) {
+			config_msg = "Unknown color";
+			return ERR;
+		}
+
+		value = chomp_string(value + valuelen);
+		valuelen = strcspn(value, " \t");
+		if (set_color(&info->bg, value, valuelen) == ERR) {
+			config_msg = "Unknown color";
+			return ERR;
+		}
+
+		value = chomp_string(value + valuelen);
+		if (*value &&
+		    set_attribute(&info->attr, value, strlen(value)) == ERR) {
+			config_msg = "Unknown attribute";
+			return ERR;
+		}
+
+		return OK;
+	}
+
+	return ERR;
+}
+
 static int
 read_option(char *opt, int optlen, char *value, int valuelen)
 {
+	config_lineno++;
+	config_msg = "Internal error";
+
 	optlen = strcspn(opt, "#;");
 	if (optlen == 0) {
-		/* The whole line is a comment. */
+		/* The whole line is a commend or empty. */
 		return OK;
 
 	} else if (opt[optlen] != 0) {
@@ -874,35 +923,14 @@ read_option(char *opt, int optlen, char *value, int valuelen)
 		value[valuelen] = 0;
 	}
 
-	/* Reads: "color" object fgcolor bgcolor [attr] */
-	if (!strcmp(opt, "color")) {
-		struct line_info *info;
-
-		value = chomp_string(value);
-		valuelen = strcspn(value, " \t");
-		info = get_line_info(value, valuelen);
-		if (!info)
-			return ERR;
-
-		value = chomp_string(value + valuelen);
-		valuelen = strcspn(value, " \t");
-		if (set_color(&info->fg, value, valuelen) == ERR)
-			return ERR;
-
-		value = chomp_string(value + valuelen);
-		valuelen = strcspn(value, " \t");
-		if (set_color(&info->bg, value, valuelen) == ERR)
-			return ERR;
-
-		value = chomp_string(value + valuelen);
-		if (*value &&
-		    set_attribute(&info->attr, value, strlen(value)) == ERR)
-			return ERR;
-
-		return OK;
+	if (set_option(opt, optlen, value, valuelen) == ERR) {
+		fprintf(stderr, "Error on line %d, near '%.*s' option: %s\n",
+			config_lineno, optlen, opt, config_msg);
+		config_errors = TRUE;
 	}
 
-	return ERR;
+	/* Always keep going if errors are encountered. */
+	return OK;
 }
 
 static int
@@ -911,6 +939,9 @@ load_options(void)
 	char *home = getenv("HOME");
 	char buf[1024];
 	FILE *file;
+
+	config_lineno = 0;
+	config_errors = FALSE;
 
 	if (!home ||
 	    snprintf(buf, sizeof(buf), "%s/.tig", home) >= sizeof(buf))
@@ -921,7 +952,11 @@ load_options(void)
 	if (!file)
 		return OK;
 
-	return read_properties(file, " \t", read_option);
+	if (read_properties(file, " \t", read_option) == ERR ||
+	    config_errors == TRUE)
+		fprintf(stderr, "Errors while loading %s.\n", buf);
+
+	return OK;
 }
 
 
@@ -2723,8 +2758,7 @@ read_properties(FILE *pipe, const char *separators,
 			valuelen = 0;
 		}
 
-		if (namelen)
-			state = read_property(name, namelen, value, valuelen);
+		state = read_property(name, namelen, value, valuelen);
 	}
 
 	if (state != ERR && ferror(pipe))
