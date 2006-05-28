@@ -582,24 +582,33 @@ parse_options(int argc, char *argv[])
  * All text after the comment character to the end of the line is ignored.
  * You can use comments to annotate your initialization file.
  *
- * Configuration Commands
- * ~~~~~~~~~~~~~~~~~~~~~~
+ * Some sample options:
  *
- * --
+ * ==========================================================================
+ *	# Diff colors
+ *	color diff-header	yellow	default
+ *	color diff-index	blue	default
+ *	color diff-chunk	magenta	default
+ *	# UI colors
+ *	color title-blur	white	blue
+ *	color title-focus	white	blue	bold
+ * ==========================================================================
  *
- * *color* object fgcolor bgcolor [attributes]::
- *
+ * [[color-options]]
+ * Color options
+ * ~~~~~~~~~~~~~
+ * Color options control highlighting and the user interface styles.
  * If  your terminal supports color, these commands can be used to assign
- * foreground/backgound combinations to certain objects. Optionally, an
- * attribute can be given as the last parameter.
+ * foreground/backgound combinations to certain areas. Optionally, an
+ * attribute can be given as the last parameter. The syntax is:
  *
- * Valid objects are described in the "<<color-objs, Color objects>>" section
- * below. Note, object names are case-insensitive, and you may use '-', '_',
- * and '.' interchangeably. So "Diff-Header", "DIFF_HEADER", and "diff.header"
- * are the same.
+ * [verse]
+ * ..........................................................................
+ *	*color* 'area' 'fgcolor' 'bgcolor' '[attributes]'
+ * ..........................................................................
  *
- * Valid colors include: 'white', 'black', 'green', 'magenta', 'blue', 'cyan',
- * 'yellow', 'red', 'default'. Use 'default' to refer to the default terminal
+ * Valid colors include: *white*, *black*, *green*, *magenta*, *blue*, *cyan*,
+ * *yellow*, *red*, *default*. Use *default* to refer to the default terminal
  * colors.
  **/
 
@@ -617,8 +626,8 @@ static struct int_map color_map[] = {
 };
 
 /**
- * Valid attributes include: 'normal', 'blink', 'bold', 'dim', 'reverse', 'standout',
- * and 'underline'. Note, not all attributes may be supported by the terminal.
+ * Valid attributes include: *normal*, *blink*, *bold*, *dim*, *reverse*, *standout*,
+ * and *underline*. Note, not all attributes may be supported by the terminal.
  **/
 
 static struct int_map attr_map[] = {
@@ -633,36 +642,19 @@ static struct int_map attr_map[] = {
 };
 
 /**
- * Some example color options:
- *
- * --------------------------------------------------------------------------
- *	# Diff colors
- *	color diff-header	yellow	default
- *	color diff-index	blue	default
- *	color diff-chunk	magenta	default
- *	# UI colors
- *	color title-blur	white	blue
- *	color title-focus	white	blue	bold
- * --------------------------------------------------------------------------
+ * Valid area names are described below. Note, all names are case-insensitive,
+ * and you may use '-', '_', and '.' interchangeably. So "Diff-Header",
+ * "DIFF_HEADER", and "diff.header" are the same.
  *
  * --
  **/
-
-/**
- * [[color-objs]]
- * Color objects
- * ~~~~~~~~~~~~~
- *
- * --
- **/
-
 #define LINE_INFO \
 /**
  * Diff markup::
  *
- * Objects concerning diff start, chunks and lines added and deleted.
+ * Options concerning diff start, chunks and lines added and deleted.
  *
- * 'diff-header', 'diff-chunk', 'diff-add', 'diff-del'
+ * *diff-header*, *diff-chunk*, *diff-add*, *diff-del*
  **/ \
 LINE(DIFF_HEADER,  "diff --git ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_CHUNK,   "@@",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
@@ -674,9 +666,9 @@ LINE(DIFF_DEL,	   "-",			COLOR_RED,	COLOR_DEFAULT,	0), \
  * Extra diff information emitted by the git diff machinery, such as mode
  * changes, rename detection, and similarity.
  *
- * 'diff-oldmode', 'diff-newmode', 'diff-copy-from', 'diff-copy-to',
- * 'diff-rename-from', 'diff-rename-to', 'diff-similarity' 'diff-dissimilarity'
- * 'diff-tree', 'diff-index'
+ * *diff-oldmode*, *diff-newmode*, *diff-copy-from*, *diff-copy-to*,
+ * *diff-rename-from*, *diff-rename-to*, *diff-similarity* *diff-dissimilarity*
+ * *diff-tree*, *diff-index*
  **/ \
 LINE(DIFF_INDEX,	"index ",	  COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(DIFF_OLDMODE,	"old file mode ", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
@@ -695,7 +687,7 @@ LINE(DIFF_TREE,		"diff-tree ",	  COLOR_BLUE,	COLOR_DEFAULT,	0), \
  * printed headers , unless `--pretty=raw` was given. This includes lines,
  * such as merge info, commit ID, and author and comitter date.
  *
- * 'pp-author' 'pp-commit' 'pp-merge' 'pp-date' 'pp-adate' 'pp-cdate'
+ * *pp-author*, *pp-commit*, *pp-merge*, *pp-date*, *pp-adate*, *pp-cdate*
  **/ \
 LINE(PP_AUTHOR,	   "Author: ",		COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(PP_COMMIT,	   "Commit: ",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
@@ -709,7 +701,7 @@ LINE(PP_CDATE,	   "CommitDate: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
  * Usually shown when `--pretty=raw` is given, however 'commit' is pretty
  * much omnipresent.
  *
- * 'commit' 'parent' 'tree' 'author' 'committer'
+ * *commit*, *parent*, *tree*, *author*, *committer*
  **/ \
 LINE(COMMIT,	   "commit ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(PARENT,	   "parent ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
@@ -721,22 +713,22 @@ LINE(COMMITTER,	   "committer ",	COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
  *
  * For now only `Signed-off-by lines` are colorized.
  *
- * 'signoff'
+ * *signoff*
  **/ \
 LINE(SIGNOFF,	   "    Signed-off-by", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 /**
  * UI colors::
  *
- * Colors for text not matching any of the above: 'default'
+ * Colors for text not matching any of the above: *default*
  *
- * Status window colors: 'status'
+ * Status window colors: *status*
  *
- * Title window colors: 'title-blur' 'title-focus'
+ * Title window colors: *title-blur*, *title-focus*
  *
- * Cursor line colors: 'cursor'
+ * Cursor line colors: *cursor*
  *
- * Main view specific: 'main-date' 'main-author' 'main-commit' 'main-delim'
- * 'main-tag' 'main-ref'
+ * Main view specific: *main-date*, *main-author*, *main-commit*, *main-delim*,
+ * *main-tag*, *main-ref*
  **/ \
 LINE(DEFAULT,	   "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(CURSOR,	   "",			COLOR_WHITE,	COLOR_GREEN,	A_BOLD), \
