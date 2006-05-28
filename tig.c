@@ -845,6 +845,10 @@ struct line {
 };
 
 
+/*
+ * User config file handling.
+ */
+
 #define set_color(color, name, namelen) \
 	set_from_int_map(color_map, ARRAY_SIZE(color_map), color, name, namelen)
 
@@ -855,19 +859,20 @@ static int
 read_option(char *opt, int optlen, char *value, int valuelen)
 {
 	optlen = strcspn(opt, "#;");
-	if (optlen == 0)
+	if (optlen == 0) {
 		/* The whole line is a comment. */
 		return OK;
 
-	else if (opt[optlen] != 0)
+	} else if (opt[optlen] != 0) {
 		/* Part of the option name is a comment, so the value part
 		 * should be ignored. */
 		valuelen = 0;
-	else
+		opt[optlen] = value[valuelen] = 0;
+	} else {
 		/* Else look for comment endings in the value. */
 		valuelen = strcspn(value, "#;");
-
-	opt[optlen] = value[valuelen] = 0;
+		value[valuelen] = 0;
+	}
 
 	/* Reads: "color" object fgcolor bgcolor [attr] */
 	if (!strcmp(opt, "color")) {
