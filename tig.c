@@ -293,14 +293,14 @@ parse_options(int argc, char *argv[])
 		}
 
 		/**
-		 * -t[NSPACES], --tab-size[=NSPACES]::
+		 * -b[NSPACES], --tab-size[=NSPACES]::
 		 *	Set the number of spaces tabs should be expanded to.
 		 **/
-		if (!strncmp(opt, "-t", 2) ||
+		if (!strncmp(opt, "-b", 2) ||
 		    !strncmp(opt, "--tab-size", 10)) {
 			char *num = opt;
 
-			if (opt[1] == 't') {
+			if (opt[1] == 'b') {
 				num = opt + 2;
 
 			} else if (opt[STRING_SIZE("--tab-size")] == '=') {
