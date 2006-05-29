@@ -417,44 +417,11 @@ parse_options(int argc, char *argv[])
 	}
 
 	if (!isatty(STDIN_FILENO)) {
-		/**
-		 * Pager mode
-		 * ~~~~~~~~~~
-		 * If stdin is a pipe, any log or diff options will be ignored and the
-		 * pager view will be opened loading data from stdin. The pager mode
-		 * can be used for colorizing output from various git commands.
-		 *
-		 * Example on how to colorize the output of git-show(1):
-		 *
-		 *	$ git show | tig
-		 **/
 		opt_request = REQ_VIEW_PAGER;
 		opt_pipe = stdin;
 
 	} else if (i < argc) {
 		size_t buf_size;
-
-		/**
-		 * Git command options
-		 * ~~~~~~~~~~~~~~~~~~~
-		 * All git command options specified on the command line will
-		 * be passed to the given command and all will be shell quoted
-		 * before they are passed to the shell.
-		 *
-		 * NOTE: If you specify options for the main view, you should
-		 * not use the `--pretty` option as this option will be set
-		 * automatically to the format expected by the main view.
-		 *
-		 * Example on how to open the log view and show both author and
-		 * committer information:
-		 *
-		 *	$ tig log --pretty=fuller
-		 *
-		 * See the <<refspec, "Specifying revisions">> section below
-		 * for an introduction to revision options supported by the git
-		 * commands. For details on specific git command options, refer
-		 * to the man page of the command in question.
-		 **/
 
 		if (opt_request == REQ_VIEW_MAIN)
 			/* XXX: This is vulnerable to the user overriding
@@ -486,23 +453,6 @@ parse_options(int argc, char *argv[])
 /**
  * ENVIRONMENT VARIABLES
  * ---------------------
- * Several options related to the interface with git can be configured
- * via environment options.
- *
- * Repository references
- * ~~~~~~~~~~~~~~~~~~~~~
- * Commits that are referenced by tags and branch heads will be marked
- * by the reference name surrounded by '[' and ']':
- *
- *	2006-03-26 19:42 Petr Baudis         | [cogito-0.17.1] Cogito 0.17.1
- *
- * If you want to filter out certain directories under `.git/refs/`, say
- * `tmp` you can do it by setting the following variable:
- *
- *	$ TIG_LS_REMOTE="git ls-remote . | sed /\/tmp\//d" tig
- *
- * Or set the variable permanently in your environment.
- *
  * TIG_LS_REMOTE::
  *	Set command for retrieving all repository references. The command
  *	should output data in the same format as git-ls-remote(1).
@@ -512,20 +462,6 @@ parse_options(int argc, char *argv[])
 	"git ls-remote . 2>/dev/null"
 
 /**
- * [[history-commands]]
- * History commands
- * ~~~~~~~~~~~~~~~~
- * It is possible to alter which commands are used for the different views.
- * If for example you prefer commits in the main view to be sorted by date
- * and only show 500 commits, use:
- *
- *	$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %s" tig
- *
- * Or set the variable permanently in your environment.
- *
- * Notice, how `%s` is used to specify the commit reference. There can
- * be a maximum of 5 `%s` ref specifications.
- *
  * TIG_DIFF_CMD::
  *	The command used for the diff view. By default, git show is used
  *	as a backend.
@@ -848,23 +784,9 @@ load_options(void)
 }
 
 
-/**
+/*
  * The viewer
- * ----------
- * The display consists of a status window on the last line of the screen and
- * one or more views. The default is to only show one view at the time but it
- * is possible to split both the main and log view to also show the commit
- * diff.
- *
- * If you are in the log view and press 'Enter' when the current line is a
- * commit line, such as:
- *
- *	commit 4d55caff4cc89335192f3e566004b4ceef572521
- *
- * You will split the view so that the log view is displayed in the top window
- * and the diff view in the bottom window. You can switch between the two
- * views by pressing 'Tab'. To maximize the log view again, simply press 'l'.
- **/
+ */
 
 struct view;
 struct view_ops;
@@ -878,18 +800,7 @@ static unsigned int current_view;
 
 #define displayed_views()	(display[1] != NULL ? 2 : 1)
 
-/**
- * Current head and commit ID
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~
- * The viewer keeps track of both what head and commit ID you are currently
- * viewing. The commit ID will follow the cursor line and change everytime time
- * you highlight a different commit. Whenever you reopen the diff view it
- * will be reloaded, if the commit ID changed.
- *
- * The head ID is used when opening the main and log view to indicate from
- * what revision to show history.
- **/
-
+/* Current head and commit ID */
 static char ref_commit[SIZEOF_REF]	= "HEAD";
 static char ref_head[SIZEOF_REF]	= "HEAD";
 
@@ -947,35 +858,6 @@ static struct view_ops main_ops;
 #define VIEW_(id, name, ops, ref) \
 	VIEW_STR(name, TIG_##id##_CMD,  TIG_##id##_CMD, ref, ops)
 
-/**
- * Views
- * ~~~~~
- * tig(1) presents various 'views' of a repository. Each view is based on output
- * from an external command, most often 'git log', 'git diff', or 'git show'.
- *
- * The main view::
- *	Is the default view, and it shows a one line summary of each commit
- *	in the chosen list of revisions. The summary includes commit date,
- *	author, and the first line of the log message. Additionally, any
- *	repository references, such as tags, will be shown.
- *
- * The log view::
- *	Presents a more rich view of the revision log showing the whole log
- *	message and the diffstat.
- *
- * The diff view::
- *	Shows either the diff of the current working tree, that is, what
- *	has changed since the last commit, or the commit diff complete
- *	with log message, diffstat and diff.
- *
- * The pager view::
- *	Is used for displaying both input from stdin and output from git
- *	commands entered in the internal prompt.
- *
- * The help view::
- *	Displays the information from the tig(1) man page. For the help view
- *	to work you need to have the tig(1) man page installed.
- **/
 
 static struct view views[] = {
 	VIEW_(MAIN,  "main",  &main_ops,  ref_head),
@@ -1018,21 +900,6 @@ redraw_view(struct view *view)
 	redraw_view_from(view, 0);
 }
 
-
-/**
- * Title windows
- * ~~~~~~~~~~~~~
- * Each view has a title window which shows the name of the view, current
- * commit ID if available, and where the view is positioned:
- *
- *	[main] c622eefaa485995320bc743431bae0d497b1d875 - commit 1 of 61 (1%)
- *
- * By default, the title of the current view is highlighted using bold font.
- * For long loading views (taking over 3 seconds) the time since loading
- * started will be appended:
- *
- *	[main] 77d9e40fbcea3238015aea403e06f61542df9a31 - commit 1 of 779 (0%) 5s
- **/
 
 static void
 update_view_title(struct view *view)
@@ -2085,11 +1952,9 @@ static struct view_ops main_ops = {
 };
 
 
-/**
- * KEYS
- * ----
- * Below the default key bindings are shown.
- **/
+/*
+ * Keys
+ */
 
 struct keymap {
 	int alias;
@@ -2097,74 +1962,21 @@ struct keymap {
 };
 
 static struct keymap keymap[] = {
-	/**
-	 * View switching
-	 * ~~~~~~~~~~~~~~
-	 * m::
-	 *	Switch to main view.
-	 * d::
-	 *	Switch to diff view.
-	 * l::
-	 *	Switch to log view.
-	 * p::
-	 *	Switch to pager view.
-	 * h::
-	 *	Show man page.
-	 **/
+	/* View switching */
 	{ 'm',		REQ_VIEW_MAIN },
 	{ 'd',		REQ_VIEW_DIFF },
 	{ 'l',		REQ_VIEW_LOG },
 	{ 'p',		REQ_VIEW_PAGER },
 	{ 'h',		REQ_VIEW_HELP },
 
-	/**
-	 * View manipulation
-	 * ~~~~~~~~~~~~~~~~~
-	 * q::
-	 *	Close view, if multiple views are open it will jump back to the
-	 *	previous view in the view stack. If it is the last open view it
-	 *	will quit. Use 'Q' to quit all views at once.
-	 * Enter::
-	 *	This key is "context sensitive" depending on what view you are
-	 *	currently in. When in log view on a commit line or in the main
-	 *	view, split the view and show the commit diff. In the diff view
-	 *	pressing Enter will simply scroll the view one line down.
-	 * Tab::
-	 *	Switch to next view.
-	 * Up::
-	 *	This key is "context sensitive" and will move the cursor one
-	 *	line up. However, uf you opened a diff view from the main view
-	 *	(split- or full-screen) it will change the cursor to point to
-	 *	the previous commit in the main view and update the diff view
-	 *	to display it.
-	 * Down::
-	 *	Similar to 'Up' but will move down.
-	 **/
+	/* View manipulation */
 	{ 'q',		REQ_VIEW_CLOSE },
 	{ KEY_TAB,	REQ_VIEW_NEXT },
 	{ KEY_RETURN,	REQ_ENTER },
 	{ KEY_UP,	REQ_PREVIOUS },
 	{ KEY_DOWN,	REQ_NEXT },
 
-	/**
-	 * Cursor navigation
-	 * ~~~~~~~~~~~~~~~~~
-	 * j::
-	 *	Move cursor one line up.
-	 * k::
-	 *	Move cursor one line down.
-	 * PgUp::
-	 * b::
-	 * -::
-	 *	Move cursor one page up.
-	 * PgDown::
-	 * Space::
-	 *	Move cursor one page down.
-	 * Home::
-	 *	Jump to first line.
-	 * End::
-	 *	Jump to last line.
-	 **/
+	/* Cursor navigation */
 	{ 'k',		REQ_MOVE_UP },
 	{ 'j',		REQ_MOVE_DOWN },
 	{ KEY_HOME,	REQ_MOVE_FIRST_LINE },
@@ -2175,44 +1987,13 @@ static struct keymap keymap[] = {
 	{ 'b',		REQ_MOVE_PAGE_UP },
 	{ '-',		REQ_MOVE_PAGE_UP },
 
-	/**
-	 * Scrolling
-	 * ~~~~~~~~~
-	 * Insert::
-	 *	Scroll view one line up.
-	 * Delete::
-	 *	Scroll view one line down.
-	 * w::
-	 *	Scroll view one page up.
-	 * s::
-	 *	Scroll view one page down.
-	 **/
+	/* Scrolling */
 	{ KEY_IC,	REQ_SCROLL_LINE_UP },
 	{ KEY_DC,	REQ_SCROLL_LINE_DOWN },
 	{ 'w',		REQ_SCROLL_PAGE_UP },
 	{ 's',		REQ_SCROLL_PAGE_DOWN },
 
-	/**
-	 * Misc
-	 * ~~~~
-	 * Q::
-	 *	Quit.
-	 * r::
-	 *	Redraw screen.
-	 * z::
-	 *	Stop all background loading. This can be useful if you use
-	 *	tig(1) in a repository with a long history without limiting
-	 *	the revision log.
-	 * v::
-	 *	Show version.
-	 * n::
-	 *	Toggle line numbers on/off.
-	 * ':'::
-	 *	Open prompt. This allows you to specify what git command
-	 *	to run. Example:
-	 *
-	 *	:log -p
-	 **/
+	/* Misc */
 	{ 'Q',		REQ_QUIT },
 	{ 'z',		REQ_STOP_LOADING },
 	{ 'v',		REQ_SHOW_VERSION },
@@ -2785,104 +2566,7 @@ main(int argc, char *argv[])
 }
 
 /**
- * [[refspec]]
- * Revision specification
- * ----------------------
- * This section describes various ways to specify what revisions to display
- * or otherwise limit the view to. tig(1) does not itself parse the described
- * revision options so refer to the relevant git man pages for futher
- * information. Relevant man pages besides git-log(1) are git-diff(1) and
- * git-rev-list(1).
- *
- * You can tune the interaction with git by making use of the options
- * explained in this section. For example, by configuring the environment
- * variables described in the  <<history-commands, "History commands">>
- * section.
- *
- * Limit by path name
- * ~~~~~~~~~~~~~~~~~~
- * If you are interested only in those revisions that made changes to a
- * specific file (or even several files) list the files like this:
- *
- *	$ tig log Makefile README
- *
- * To avoid ambiguity with repository references such as tag name, be sure
- * to separate file names from other git options using "\--". So if you
- * have a file named 'master' it will clash with the reference named
- * 'master', and thus you will have to use:
- *
- *	$ tig log -- master
- *
- * NOTE: For the main view, avoiding ambiguity will in some cases require
- * you to specify two "\--" options. The first will make tig(1) stop
- * option processing and the latter will be passed to git log.
- *
- * Limit by date or number
- * ~~~~~~~~~~~~~~~~~~~~~~~
- * To speed up interaction with git, you can limit the amount of commits
- * to show both for the log and main view. Either limit by date using
- * e.g. `--since=1.month` or limit by the number of commits using `-n400`.
- *
- * If you are only interested in changed that happened between two dates
- * you can use:
- *
- *	$ tig -- --after="May 5th" --before="2006-05-16 15:44"
- *
- * NOTE: If you want to avoid having to quote dates containing spaces you
- * can use "." instead, e.g. `--after=May.5th`.
- *
- * Limiting by commit ranges
- * ~~~~~~~~~~~~~~~~~~~~~~~~~
- * Alternatively, commits can be limited to a specific range, such as
- * "all commits between 'tag-1.0' and 'tag-2.0'". For example:
- *
- *	$ tig log tag-1.0..tag-2.0
- *
- * This way of commit limiting makes it trivial to only browse the commits
- * which haven't been pushed to a remote branch. Assuming 'origin' is your
- * upstream remote branch, using:
- *
- *	$ tig log origin..HEAD
- *
- * will list what will be pushed to the remote branch. Optionally, the ending
- * 'HEAD' can be left out since it is implied.
- *
- * Limiting by reachability
- * ~~~~~~~~~~~~~~~~~~~~~~~~
- * Git interprets the range specifier "tag-1.0..tag-2.0" as
- * "all commits reachable from 'tag-2.0' but not from 'tag-1.0'".
- * Where reachability refers to what commits are ancestors (or part of the
- * history) of the branch or tagged revision in question.
- *
- * If you prefer to specify which commit to preview in this way use the
- * following:
- *
- *	$ tig log tag-2.0 ^tag-1.0
- *
- * You can think of '^' as a negation operator. Using this alternate syntax,
- * it is possible to further prune commits by specifying multiple branch
- * cut offs.
- *
- * Combining revisions specification
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Revisions options can to some degree be combined, which makes it possible
- * to say "show at most 20 commits from within the last month that changed
- * files under the Documentation/ directory."
- *
- *	$ tig -- --since=1.month -n20 -- Documentation/
- *
- * Examining all repository references
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * In some cases, it can be useful to query changes across all references
- * in a repository. An example is to ask "did any line of development in
- * this repository change a particular file within the last week". This
- * can be accomplished using:
- *
- *	$ tig -- --all --since=1.week -- Makefile
- *
  * include::BUGS[]
- *
- * include::SITES[]
  *
  * COPYRIGHT
  * ---------
@@ -2903,4 +2587,8 @@ main(int argc, char *argv[])
  *  - gitk(1)
  *  - qgit(1)
  *  - gitview(1)
+ *
+ * Sites:
+ *
+ * include::SITES[]
  **/

@@ -3,7 +3,8 @@ LDLIBS  = -lcurses
 CFLAGS	= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
-DOCS	= tig.1.txt tig.1.html tig.1 tigrc.5.html tigrc.5 README.html
+DOCS	= tig.1.txt tig.1.html tig.1 tigrc.5.html tigrc.5 \
+	  manual.html manual.html-chunked README.html
 
 ifneq (,$(wildcard .git))
 VERSION = $(shell git-describe)
@@ -30,6 +31,7 @@ install-docs: docs
 	done
 
 clean:
+	rm -rf manual.html-chunked
 	rm -f $(PROGS) $(DOCS) core
 
 spell-check:
@@ -65,3 +67,12 @@ README.html: README
 
 %.5 : %.5.xml
 	xmlto man $<
+
+%.html : %.txt
+	asciidoc -b xhtml11 -d article $<
+
+%.xml : %.txt
+	asciidoc -b docbook -d article $<
+
+%.html-chunked : %.xml
+	xmlto html -o $@ $<
