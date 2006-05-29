@@ -2880,30 +2880,7 @@ main(int argc, char *argv[])
  *
  *	$ tig -- --all --since=1.week -- Makefile
  *
- * BUGS
- * ----
- * Known bugs and problems:
- *
- * - In it's current state tig is pretty much UTF-8 only.
- *
- * - If the screen width is very small the main view can draw
- *   outside the current view causing bad wrapping. Same goes
- *   for title and status windows.
- *
- * - The cursor can wrap-around on the last line and cause the
- *   window to scroll.
- *
- * - The prompt doesn't work while loading.
- *
- * TODO
- * ----
- * Features that should be explored.
- *
- * - Searching.
- *
- * - Locale support.
- *
- * - Make '?' show a one page keybinding cheat sheet.
+ * include::BUGS[]
  *
  * COPYRIGHT
  * ---------
