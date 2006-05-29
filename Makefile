@@ -3,7 +3,7 @@ LDLIBS  = -lcurses
 CFLAGS	= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
-DOCS	= tig.1.txt tig.1.html tig.1 README.html
+DOCS	= tig.1.txt tig.1.html tig.1 tigrc.5.html tigrc.5 README.html
 
 ifneq (,$(wildcard .git))
 VERSION = $(shell git-describe)
@@ -25,6 +25,7 @@ install-docs: docs
 	for doc in $(DOCS); do \
 		case "$$doc" in \
 		*.1) install $$doc $(PREFIX)/man/man1 ;; \
+		*.5) install $$doc $(PREFIX)/man/man5 ;; \
 		esac \
 	done
 
@@ -54,4 +55,13 @@ README.html: README
 	asciidoc -b docbook -d manpage $<
 
 %.1 : %.1.xml
+	xmlto man $<
+
+%.5.html : %.5.txt
+	asciidoc -b xhtml11 -d manpage $<
+
+%.5.xml : %.5.txt
+	asciidoc -b docbook -d manpage $<
+
+%.5 : %.5.xml
 	xmlto man $<
