@@ -1,0 +1,30 @@
+Installation instructions
+-------------------------
+
+Download a tarball from http://jonas.nitro.dk/tig/releases[] or clone the tig
+repository http://jonas.nitro.dk/tig/tig.git[]. Documentation files are
+available either in the tarballs or in the above repository in the branch named
+'release'.
+
+To install tig simply run:
+
+	$ make install
+
+To install documentation run:
+
+	$ make install-docs
+
+The following tools and packages are needed:
+
+`-------------------------------`----------------------------------------------
+Tool				Description
+-------------------------------------------------------------------------------
+git-core			Tig is just a frontend for git.
+ncurses				Be sure to also have development files \
+				installed. Usually they are available in a
+				separate package ending with `-dev`.
+asciidoc (>= 7.0), xmlto	For building documentation. (Optional)
+-------------------------------------------------------------------------------
+
+NOTE: You need to install the tig(1) man page in order for the internal help to
+be available.
