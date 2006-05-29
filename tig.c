@@ -1411,9 +1411,9 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	}
 
 	if (split) {
-		display[current_view + 1] = view;
+		display[1] = view;
 		if (!backgrounded)
-			current_view++;
+			current_view = 1;
 	} else {
 		/* Maximize the current view. */
 		memset(display, 0, sizeof(display));
