@@ -10,6 +10,9 @@ with the log message, diffstat, and the diff.
 
 Using it as a pager, it will display input from stdin and colorize it.
 
+Resources
+---------
+
 include::SITES[]
 
 include::INSTALL[]
