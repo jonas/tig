@@ -562,7 +562,7 @@ parse_options(int argc, char *argv[])
 /**
  * FILES
  * -----
- * '~/.tig'::
+ * '~/.tigrc'::
  *	User configuration file. See "<<config-options, Configuration options>>"
  *	section for examples.
  *
@@ -574,7 +574,7 @@ parse_options(int argc, char *argv[])
  * [[config-options]]
  * User Configuration file
  * -----------------------
- * You can permanently set an option by putting it in the `~/.tig` file.
+ * You can permanently set an option by putting it in the `~/.tigrc` file.
  * The file consists of a series of 'commands'.  Each
  * line of the file may contain only one command.
  *
@@ -944,7 +944,7 @@ load_options(void)
 	config_errors = FALSE;
 
 	if (!home ||
-	    snprintf(buf, sizeof(buf), "%s/.tig", home) >= sizeof(buf))
+	    snprintf(buf, sizeof(buf), "%s/.tigrc", home) >= sizeof(buf))
 		return ERR;
 
 	/* It's ok that the file doesn't exist. */
