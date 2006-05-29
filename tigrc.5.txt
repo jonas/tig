@@ -1,0 +1,122 @@
+tigrc(5)
+========
+
+NAME
+----
+tigrc - tig user configuration file
+
+SYNOPSIS
+--------
+[verse]
+.............................................................................
+*color* 'fgcolor' 'bgcolor' '[attributes]'
+.............................................................................
+
+DESCRIPTION
+-----------
+You can permanently set an option by putting it in the `~/.tigrc` file.
+The file consists of a series of 'commands'.  Each
+line of the file may contain only one command.
+
+The hash mark ('#'), or semi-colon (';') is used as a 'comment' character.
+All text after the comment character to the end of the line is ignored.
+You can use comments to annotate your initialization file.
+
+Color options
+-------------
+
+Color options control highlighting and the user interface styles.
+If  your terminal supports color, these commands can be used to assign
+foreground/backgound combinations to certain areas. Optionally, an
+attribute can be given as the last parameter. The syntax is:
+
+[verse]
+..........................................................................
+	*color* 'area' 'fgcolor' 'bgcolor' '[attributes]'
+..........................................................................
+
+Valid colors include: *white*, *black*, *green*, *magenta*, *blue*, *cyan*,
+*yellow*, *red*, *default*. Use *default* to refer to the default terminal
+colors.
+
+Valid attributes include: *normal*, *blink*, *bold*, *dim*, *reverse*, *standout*,
+and *underline*. Note, not all attributes may be supported by the terminal.
+
+Valid area names are described below. Note, all names are case-insensitive,
+and you may use '-', '_', and '.' interchangeably. So "Diff-Header",
+"DIFF_HEADER", and "diff.header" are the same.
+
+Diff markup
+~~~~~~~~~~~
+
+Options concerning diff start, chunks and lines added and deleted.
+
+*diff-header*, *diff-chunk*, *diff-add*, *diff-del*
+
+Enhanced git diff markup
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Extra diff information emitted by the git diff machinery, such as mode
+changes, rename detection, and similarity.
+
+*diff-oldmode*, *diff-newmode*, *diff-copy-from*, *diff-copy-to*,
+*diff-rename-from*, *diff-rename-to*, *diff-similarity* *diff-dissimilarity*
+*diff-tree*, *diff-index*
+
+Pretty print commit headers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Commit diffs and the revision logs are usually formatted using pretty
+printed headers , unless `--pretty=raw` was given. This includes lines,
+such as merge info, commit ID, and author and comitter date.
+
+*pp-author*, *pp-commit*, *pp-merge*, *pp-date*, *pp-adate*, *pp-cdate*
+
+Raw commit header
+~~~~~~~~~~~~~~~~~
+
+Usually shown when `--pretty=raw` is given, however 'commit' is pretty
+much omnipresent.
+
+*commit*, *parent*, *tree*, *author*, *committer*
+
+Commit message
+~~~~~~~~~~~~~~
+
+For now only `Signed-off-by lines` are colorized.
+
+*signoff*
+
+UI colors
+~~~~~~~~~
+
+Colors for text not matching any of the above: *default*
+
+Status window colors: *status*
+
+Title window colors: *title-blur*, *title-focus*
+
+Cursor line colors: *cursor*
+
+Main view specific: *main-date*, *main-author*, *main-commit*, *main-delim*,
+*main-tag*, *main-ref*
+
+
+EXAMPLES
+--------
+
+Some sample options:
+
+==========================================================================
+	# Diff colors
+	color diff-header	yellow	default
+	color diff-index	blue	default
+	color diff-chunk	magenta	default
+	# UI colors
+	color title-blur	white	blue
+	color title-focus	white	blue	bold
+==========================================================================
+
+SEE ALSO
+--------
+tig(1)
