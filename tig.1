@@ -57,7 +57,7 @@ Start up in diff view using the internal diff command\&.
 Prefix line numbers in log and diff view\&. Optionally, with interval different than each line\&.
 
 .TP
-\-t[NSPACES], \-\-tab\-size[=NSPACES]
+\-b[NSPACES], \-\-tab\-size[=NSPACES]
 Set the number of spaces tabs should be expanded to\&.
 
 .TP
@@ -96,83 +96,11 @@ tig(1) will stop the option parsing when the first command line parameter not st
 $ tig tag\-1\&.0\&.\&.HEAD
 .fi
 
-.SS "Pager mode"
-
-
-If stdin is a pipe, any log or diff options will be ignored and the pager view will be opened loading data from stdin\&. The pager mode can be used for colorizing output from various git commands\&.
-
-
-Example on how to colorize the output of git\-show(1):
-
-.nf
-$ git show | tig
-.fi
-
-.SS "Git command options"
-
-
-All git command options specified on the command line will be passed to the given command and all will be shell quoted before they are passed to the shell\&.
-
-.RS
-.Sh "Note"
-
-
-If you specify options for the main view, you should not use the \-\-pretty option as this option will be set automatically to the format expected by the main view\&.
-
-.RE
-
-
-Example on how to open the log view and show both author and committer information:
-
-.nf
-$ tig log \-\-pretty=fuller
-.fi
-
-
-See the "Specifying revisions" section below for an introduction to revision options supported by the git commands\&. For details on specific git command options, refer to the man page of the command in question\&.
-
 .SH "ENVIRONMENT VARIABLES"
-
-
-Several options related to the interface with git can be configured via environment options\&.
-
-.SS "Repository references"
-
-
-Commits that are referenced by tags and branch heads will be marked by the reference name surrounded by \fI[\fR and \fI]\fR:
-
-.nf
-2006\-03\-26 19:42 Petr Baudis         | [cogito\-0\&.17\&.1] Cogito 0\&.17\&.1
-.fi
-
-
-If you want to filter out certain directories under \&.git/refs/, say tmp you can do it by setting the following variable:
-
-.nf
-$ TIG_LS_REMOTE="git ls\-remote \&. | sed /\\/tmp\\//d" tig
-.fi
-
-
-Or set the variable permanently in your environment\&.
 
 .TP
 TIG_LS_REMOTE
 Set command for retrieving all repository references\&. The command should output data in the same format as git\-ls\-remote(1)\&.
-
-.SS "View commands"
-
-
-It is possible to alter which commands are used for the different views\&. If for example you prefer commits in the main view to be sorted by date and only show 500 commits, use:
-
-.nf
-$ TIG_MAIN_CMD="git log \-\-date\-order \-n500 \-\-pretty=raw %s" tig
-.fi
-
-
-Or set the variable permanently in your environment\&.
-
-
-Notice, how %s is used to specify the commit reference\&. There can be a maximum of 5 %s ref specifications\&.
 
 .TP
 TIG_DIFF_CMD
@@ -186,292 +114,15 @@ The command used for the log view\&. If you prefer to have both author and commi
 TIG_MAIN_CMD
 The command used for the main view\&. Note, you must always specify the option: \-\-pretty=raw since the main view parser expects to read that format\&.
 
-.SH "THE VIEWER"
-
-
-The display consists of a status window on the last line of the screen and one or more views\&. The default is to only show one view at the time but it is possible to split both the main and log view to also show the commit diff\&.
-
-
-If you are in the log view and press \fIEnter\fR when the current line is a commit line, such as:
-
-.nf
-commit 4d55caff4cc89335192f3e566004b4ceef572521
-.fi
-
-
-You will split the view so that the log view is displayed in the top window and the diff view in the bottom window\&. You can switch between the two views by pressing \fITab\fR\&. To maximize the log view again, simply press \fIl\fR\&.
-
-.SS "Current head and commit ID"
-
-
-The viewer keeps track of both what head and commit ID you are currently viewing\&. The commit ID will follow the cursor line and change everytime time you highlight a different commit\&. Whenever you reopen the diff view it will be reloaded, if the commit ID changed\&.
-
-
-The head ID is used when opening the main and log view to indicate from what revision to show history\&.
-
-.SS "Views"
-
-
-tig(1) presents various \fIviews\fR of a repository\&. Each view is based on output from an external command, most often \fIgit log\fR, \fIgit diff\fR, or \fIgit show\fR\&.
+.SH "FILES"
 
 .TP
-The main view
-Is the default view, and it shows a one line summary of each commit in the chosen list of revisions\&. The summary includes commit date, author, and the first line of the log message\&. Additionally, any repository references, such as tags, will be shown\&.
+\fI~/\&.tigrc\fR
+User configuration file\&. See tigrc(5) for examples\&.
 
 .TP
-The log view
-Presents a more rich view of the revision log showing the whole log message and the diffstat\&.
-
-.TP
-The diff view
-Shows either the diff of the current working tree, that is, what has changed since the last commit, or the commit diff complete with log message, diffstat and diff\&.
-
-.TP
-The pager view
-Is used for displaying both input from stdin and output from git commands entered in the internal prompt\&.
-
-.TP
-The help view
-Displays the information from the tig(1) man page\&. For the help view to work you need to have the tig(1) man page installed\&.
-
-.SS "Title windows"
-
-
-Each view has a title window which shows the name of the view, current commit ID if available, and where the view is positioned:
-
-.nf
-[main] c622eefaa485995320bc743431bae0d497b1d875 \- commit 1 of 61 (1%)
-.fi
-
-
-By default, the title of the current view is highlighted using bold font\&.
-
-.SH "KEYS"
-
-
-Below the default key bindings are shown\&.
-
-.SS "View switching"
-
-.TP
-m
-Switch to main view\&.
-
-.TP
-d
-Switch to diff view\&.
-
-.TP
-l
-Switch to log view\&.
-
-.TP
-p
-Switch to pager view\&.
-
-.TP
-h
-Show man page\&.
-
-.SS "View manipulation"
-
-.TP
-q
-Close view, if multiple views are open it will jump back to the previous view in the view stack\&. If it is the last open view it will quit\&. Use \fIQ\fR to quit all views at once\&.
-
-.TP
-Enter
-This key is "context sensitive" depending on what view you are currently in\&. When in log view on a commit line or in the main view, split the view and show the commit diff\&. In the diff view pressing Enter will simply scroll the view one line down\&.
-
-.TP
-Tab
-Switch to next view\&.
-
-.TP
-Up
-This key is "context sensitive" and will move the cursor one line up\&. However, uf you opened a diff view from the main view (split\- or full\-screen) it will change the cursor to point to the previous commit in the main view and update the diff view to display it\&.
-
-.TP
-Down
-Similar to \fIUp\fR but will move down\&.
-
-.SS "Cursor navigation"
-
-.TP
-j
-Move cursor one line up\&.
-
-.TP
-k
-Move cursor one line down\&.
-
-.TP
-PgUp, b, \-
-Move cursor one page up\&.
-
-.TP
-PgDown, Space
-Move cursor one page down\&.
-
-.TP
-Home
-Jump to first line\&.
-
-.TP
-End
-Jump to last line\&.
-
-.SS "Scrolling"
-
-.TP
-Insert
-Scroll view one line up\&.
-
-.TP
-Delete
-Scroll view one line down\&.
-
-.TP
-w
-Scroll view one page up\&.
-
-.TP
-s
-Scroll view one page down\&.
-
-.SS "Misc"
-
-.TP
-Q
-Quit\&.
-
-.TP
-r
-Redraw screen\&.
-
-.TP
-z
-Stop all background loading\&. This can be useful if you use tig(1) in a repository with a long history without limiting the revision log\&.
-
-.TP
-v
-Show version\&.
-
-.TP
-n
-Toggle line numbers on/off\&.
-
-.TP
-\fI:\fR
-Open prompt\&. This allows you to specify what git command to run\&. Example:
-
-.nf
-:log \-p
-.fi
-
-.SH "REVISION SPECIFICATION"
-
-
-This section describes various ways to specify what revisions to display or otherwise limit the view to\&. tig(1) does not itself parse the described revision options so refer to the relevant git man pages for futher information\&. Relevant man pages besides git\-log(1) are git\-diff(1) and git\-rev\-list(1)\&.
-
-
-You can tune the interaction with git by making use of the options explained in this section\&. For example, by configuring the environment variables described in the "View commands" section\&.
-
-.SS "Limit by path name"
-
-
-If you are interested only in those revisions that made changes to a specific file (or even several files) list the files like this:
-
-.nf
-$ tig log Makefile README
-.fi
-
-
-To avoid ambiguity with repository references such as tag name, be sure to separate file names from other git options using "\-\-"\&. So if you have a file named \fImaster\fR it will clash with the reference named \fImaster\fR, and thus you will have to use:
-
-.nf
-$ tig log \-\- master
-.fi
-
-.RS
-.Sh "Note"
-
-
-For the main view, avoiding ambiguity will in some cases require you to specify two "\-\-" options\&. The first will make tig(1) stop option processing and the latter will be passed to git log\&.
-
-.RE
-
-.SS "Limit by date or number"
-
-
-To speed up interaction with git, you can limit the amount of commits to show both for the log and main view\&. Either limit by date using e\&.g\&. \-\-since=1\&.month or limit by the number of commits using \-n400\&.
-
-
-If you are only interested in changed that happened between two dates you can use:
-
-.nf
-$ tig \-\- \-\-after="May 5th" \-\-before="2006\-05\-16 15:44"
-.fi
-
-.RS
-.Sh "Note"
-
-
-If you want to avoid having to quote dates containing spaces you can use "\&." instead, e\&.g\&. \-\-after=May\&.5th\&.
-
-.RE
-
-.SS "Limiting by commit ranges"
-
-
-Alternatively, commits can be limited to a specific range, such as "all commits between \fItag\-1\&.0\fR and \fItag\-2\&.0\fR"\&. For example:
-
-.nf
-$ tig log tag\-1\&.0\&.\&.tag\-2\&.0
-.fi
-
-
-This way of commit limiting makes it trivial to only browse the commits which haven't been pushed to a remote branch\&. Assuming \fIorigin\fR is your upstream remote branch, using:
-
-.nf
-$ tig log origin\&.\&.HEAD
-.fi
-
-
-will list what will be pushed to the remote branch\&. Optionally, the ending \fIHEAD\fR can be left out since it is implied\&.
-
-.SS "Limiting by reachability"
-
-
-Git interprets the range specifier "tag\-1\&.0\&.\&.tag\-2\&.0" as "all commits reachable from \fItag\-2\&.0\fR but not from \fItag\-1\&.0\fR"\&. Where reachability refers to what commits are ancestors (or part of the history) of the branch or tagged revision in question\&.
-
-
-If you prefer to specify which commit to preview in this way use the following:
-
-.nf
-$ tig log tag\-2\&.0 ^tag\-1\&.0
-.fi
-
-
-You can think of \fI^\fR as a negation operator\&. Using this alternate syntax, it is possible to further prune commits by specifying multiple branch cut offs\&.
-
-.SS "Combining revisions specification"
-
-
-Revisions options can to some degree be combined, which makes it possible to say "show at most 20 commits from within the last month that changed files under the Documentation/ directory\&."
-
-.nf
-$ tig \-\- \-\-since=1\&.month \-n20 \-\- Documentation/
-.fi
-
-.SS "Examining all repository references"
-
-
-In some cases, it can be useful to query changes across all references in a repository\&. An example is to ask "did any line of development in this repository change a particular file within the last week"\&. This can be accomplished using:
-
-.nf
-$ tig \-\- \-\-all \-\-since=1\&.week \-\- Makefile
-.fi
+\fI\&.git/config\fR
+Repository config file\&. Read on startup with the help of git\-repo\-config(1)\&.
 
 .SH "BUGS"
 
@@ -484,36 +135,60 @@ In it's current state tig is pretty much UTF\-8 only\&.
 .TP
 \(bu
 If the screen width is very small the main view can draw outside the current view causing bad wrapping\&. Same goes for title and status windows\&.
-.LP
-
-.SH "TODO"
-
-
-Features that should be explored\&.
-
-.TP 3
-\(bu
-Searching\&.
 .TP
 \(bu
-Locale support\&.
+The cursor can wrap\-around on the last line and cause the window to scroll\&.
+.TP
+\(bu
+The prompt doesn't work while loading\&.
 .LP
 
 .SH "COPYRIGHT"
 
 
-Copyright (c) Jonas Fonseca <fonseca@diku\&.dk>, 2006
+Copyright (c) 2006 Jonas Fonseca <fonseca@diku\&.dk>
 
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version\&.
 
 .SH "SEE ALSO"
 
-.nf
-git(7): \fIhttp://www.kernel.org/pub/software/scm/git/docs/\fR,
-cogito(7): \fIhttp://www.kernel.org/pub/software/scm/cogito/docs/\fR
-gitk(1): git repository browser written using tcl/tk,
-qgit(1): git repository browser written using c++/Qt,
-gitview(1): git repository browser written using python/gtk\&.
-.fi
+.TP 3
+\(bu
+ git(7): \fIhttp://www.kernel.org/pub/software/scm/git/docs/\fR,
+.TP
+\(bu
+ cogito(7): \fIhttp://www.kernel.org/pub/software/scm/cogito/docs/\fR 
+.LP
+
+
+Other git repository browsers:
+
+.TP 3
+\(bu
+gitk(1)
+.TP
+\(bu
+qgit(1)
+.TP
+\(bu
+gitview(1)
+.LP
+
+
+Sites:
+
+.TP 3
+\(bu
+Homepage: http://jonas\&.nitro\&.dk/tig: \fIhttp://jonas.nitro.dk/tig\fR 
+.TP
+\(bu
+Releases: http://jonas\&.nitro\&.dk/tig/releases: \fIhttp://jonas.nitro.dk/tig/releases\fR 
+.TP
+\(bu
+Git URL: http://jonas\&.nitro\&.dk/tig/tig\&.git: \fIhttp://jonas.nitro.dk/tig/tig.git\fR 
+.TP
+\(bu
+Gitweb: http://pasky\&.or\&.cz/gitweb\&.cgi?p=tig\&.git;a=summary: \fIhttp://pasky.or.cz/gitweb.cgi?p=tig.git;a=summary\fR 
+.LP
 

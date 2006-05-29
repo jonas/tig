@@ -319,7 +319,7 @@ to colorize it.</p>
 </p>
 </dd>
 <dt>
--t[NSPACES], --tab-size[=NSPACES]
+-b[NSPACES], --tab-size[=NSPACES]
 </dt>
 <dd>
 <p>
@@ -396,58 +396,9 @@ show [git show options]
 </div></div>
 </dd>
 </dl>
-<h3>Pager mode</h3>
-<p>If stdin is a pipe, any log or diff options will be ignored and the
-pager view will be opened loading data from stdin. The pager mode
-can be used for colorizing output from various git commands.</p>
-<p>Example on how to colorize the output of git-show(1):</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>$ git show | tig</tt></pre>
-</div></div>
-<h3>Git command options</h3>
-<p>All git command options specified on the command line will
-be passed to the given command and all will be shell quoted
-before they are passed to the shell.</p>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">If you specify options for the main view, you should
-not use the <tt>--pretty</tt> option as this option will be set
-automatically to the format expected by the main view.</td>
-</tr></table>
-</div>
-<p>Example on how to open the log view and show both author and
-committer information:</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>$ tig log --pretty=fuller</tt></pre>
-</div></div>
-<p>See the <a href="#refspec">"Specifying revisions"</a> section below
-for an introduction to revision options supported by the git
-commands. For details on specific git command options, refer
-to the man page of the command in question.</p>
 </div>
 <h2>ENVIRONMENT VARIABLES</h2>
 <div class="sectionbody">
-<p>Several options related to the interface with git can be configured
-via environment options.</p>
-<h3>Repository references</h3>
-<p>Commits that are referenced by tags and branch heads will be marked
-by the reference name surrounded by <em>[</em> and <em>]</em>:</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>2006-03-26 19:42 Petr Baudis         | [cogito-0.17.1] Cogito 0.17.1</tt></pre>
-</div></div>
-<p>If you want to filter out certain directories under <tt>.git/refs/</tt>, say
-<tt>tmp</tt> you can do it by setting the following variable:</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>$ TIG_LS_REMOTE="git ls-remote . | sed /\/tmp\//d" tig</tt></pre>
-</div></div>
-<p>Or set the variable permanently in your environment.</p>
 <dl>
 <dt>
 TIG_LS_REMOTE
@@ -458,19 +409,6 @@ TIG_LS_REMOTE
         should output data in the same format as git-ls-remote(1).
 </p>
 </dd>
-</dl>
-<h3><a id="view-commands"></a>View commands</h3>
-<p>It is possible to alter which commands are used for the different views.
-If for example you prefer commits in the main view to be sorted by date
-and only show 500 commits, use:</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %s" tig</tt></pre>
-</div></div>
-<p>Or set the variable permanently in your environment.</p>
-<p>Notice, how <tt>%s</tt> is used to specify the commit reference. There can
-be a maximum of 5 <tt>%s</tt> ref specifications.</p>
-<dl>
 <dt>
 TIG_DIFF_CMD
 </dt>
@@ -502,443 +440,27 @@ TIG_MAIN_CMD
 </dd>
 </dl>
 </div>
-<h2>The viewer</h2>
+<h2>FILES</h2>
 <div class="sectionbody">
-<p>The display consists of a status window on the last line of the screen and
-one or more views. The default is to only show one view at the time but it
-is possible to split both the main and log view to also show the commit
-diff.</p>
-<p>If you are in the log view and press <em>Enter</em> when the current line is a
-commit line, such as:</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>commit 4d55caff4cc89335192f3e566004b4ceef572521</tt></pre>
-</div></div>
-<p>You will split the view so that the log view is displayed in the top window
-and the diff view in the bottom window. You can switch between the two
-views by pressing <em>Tab</em>. To maximize the log view again, simply press <em>l</em>.</p>
-<h3>Current head and commit ID</h3>
-<p>The viewer keeps track of both what head and commit ID you are currently
-viewing. The commit ID will follow the cursor line and change everytime time
-you highlight a different commit. Whenever you reopen the diff view it
-will be reloaded, if the commit ID changed.</p>
-<p>The head ID is used when opening the main and log view to indicate from
-what revision to show history.</p>
-<h3>Views</h3>
-<p>tig(1) presents various <em>views</em> of a repository. Each view is based on output
-from an external command, most often <em>git log</em>, <em>git diff</em>, or <em>git show</em>.</p>
 <dl>
 <dt>
-The main view
+<em>~/.tigrc</em>
 </dt>
 <dd>
 <p>
-        Is the default view, and it shows a one line summary of each commit
-        in the chosen list of revisions. The summary includes commit date,
-        author, and the first line of the log message. Additionally, any
-        repository references, such as tags, will be shown.
+        User configuration file. See tigrc(5) for examples.
 </p>
 </dd>
 <dt>
-The log view
+<em>.git/config</em>
 </dt>
 <dd>
 <p>
-        Presents a more rich view of the revision log showing the whole log
-        message and the diffstat.
-</p>
-</dd>
-<dt>
-The diff view
-</dt>
-<dd>
-<p>
-        Shows either the diff of the current working tree, that is, what
-        has changed since the last commit, or the commit diff complete
-        with log message, diffstat and diff.
-</p>
-</dd>
-<dt>
-The pager view
-</dt>
-<dd>
-<p>
-        Is used for displaying both input from stdin and output from git
-        commands entered in the internal prompt.
-</p>
-</dd>
-<dt>
-The help view
-</dt>
-<dd>
-<p>
-        Displays the information from the tig(1) man page. For the help view
-        to work you need to have the tig(1) man page installed.
+        Repository config file. Read on startup with the help of
+        git-repo-config(1).
 </p>
 </dd>
 </dl>
-<h3>Title windows</h3>
-<p>Each view has a title window which shows the name of the view, current
-commit ID if available, and where the view is positioned:</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>[main] c622eefaa485995320bc743431bae0d497b1d875 - commit 1 of 61 (1%)</tt></pre>
-</div></div>
-<p>By default, the title of the current view is highlighted using bold font.</p>
-</div>
-<h2>KEYS</h2>
-<div class="sectionbody">
-<p>Below the default key bindings are shown.</p>
-<h3>View switching</h3>
-<dl>
-<dt>
-m
-</dt>
-<dd>
-<p>
-        Switch to main view.
-</p>
-</dd>
-<dt>
-d
-</dt>
-<dd>
-<p>
-        Switch to diff view.
-</p>
-</dd>
-<dt>
-l
-</dt>
-<dd>
-<p>
-        Switch to log view.
-</p>
-</dd>
-<dt>
-p
-</dt>
-<dd>
-<p>
-        Switch to pager view.
-</p>
-</dd>
-<dt>
-h
-</dt>
-<dd>
-<p>
-        Show man page.
-</p>
-</dd>
-</dl>
-<h3>View manipulation</h3>
-<dl>
-<dt>
-q
-</dt>
-<dd>
-<p>
-        Close view, if multiple views are open it will jump back to the
-        previous view in the view stack. If it is the last open view it
-        will quit. Use <em>Q</em> to quit all views at once.
-</p>
-</dd>
-<dt>
-Enter
-</dt>
-<dd>
-<p>
-        This key is "context sensitive" depending on what view you are
-        currently in. When in log view on a commit line or in the main
-        view, split the view and show the commit diff. In the diff view
-        pressing Enter will simply scroll the view one line down.
-</p>
-</dd>
-<dt>
-Tab
-</dt>
-<dd>
-<p>
-        Switch to next view.
-</p>
-</dd>
-<dt>
-Up
-</dt>
-<dd>
-<p>
-        This key is "context sensitive" and will move the cursor one
-        line up. However, uf you opened a diff view from the main view
-        (split- or full-screen) it will change the cursor to point to
-        the previous commit in the main view and update the diff view
-        to display it.
-</p>
-</dd>
-<dt>
-Down
-</dt>
-<dd>
-<p>
-        Similar to <em>Up</em> but will move down.
-</p>
-</dd>
-</dl>
-<h3>Cursor navigation</h3>
-<dl>
-<dt>
-j
-</dt>
-<dd>
-<p>
-        Move cursor one line up.
-</p>
-</dd>
-<dt>
-k
-</dt>
-<dd>
-<p>
-        Move cursor one line down.
-</p>
-</dd>
-<dt>
-PgUp
-</dt>
-<dt>
-b
-</dt>
-<dt>
--
-</dt>
-<dd>
-<p>
-        Move cursor one page up.
-</p>
-</dd>
-<dt>
-PgDown
-</dt>
-<dt>
-Space
-</dt>
-<dd>
-<p>
-        Move cursor one page down.
-</p>
-</dd>
-<dt>
-Home
-</dt>
-<dd>
-<p>
-        Jump to first line.
-</p>
-</dd>
-<dt>
-End
-</dt>
-<dd>
-<p>
-        Jump to last line.
-</p>
-</dd>
-</dl>
-<h3>Scrolling</h3>
-<dl>
-<dt>
-Insert
-</dt>
-<dd>
-<p>
-        Scroll view one line up.
-</p>
-</dd>
-<dt>
-Delete
-</dt>
-<dd>
-<p>
-        Scroll view one line down.
-</p>
-</dd>
-<dt>
-w
-</dt>
-<dd>
-<p>
-        Scroll view one page up.
-</p>
-</dd>
-<dt>
-s
-</dt>
-<dd>
-<p>
-        Scroll view one page down.
-</p>
-</dd>
-</dl>
-<h3>Misc</h3>
-<dl>
-<dt>
-Q
-</dt>
-<dd>
-<p>
-        Quit.
-</p>
-</dd>
-<dt>
-r
-</dt>
-<dd>
-<p>
-        Redraw screen.
-</p>
-</dd>
-<dt>
-z
-</dt>
-<dd>
-<p>
-        Stop all background loading. This can be useful if you use
-        tig(1) in a repository with a long history without limiting
-        the revision log.
-</p>
-</dd>
-<dt>
-v
-</dt>
-<dd>
-<p>
-        Show version.
-</p>
-</dd>
-<dt>
-n
-</dt>
-<dd>
-<p>
-        Toggle line numbers on/off.
-</p>
-</dd>
-<dt>
-<em>:</em>
-</dt>
-<dd>
-<p>
-        Open prompt. This allows you to specify what git command
-        to run. Example:
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>:log -p</tt></pre>
-</div></div>
-</dd>
-</dl>
-</div>
-<h2><a id="refspec"></a>Revision specification</h2>
-<div class="sectionbody">
-<p>This section describes various ways to specify what revisions to display
-or otherwise limit the view to. tig(1) does not itself parse the described
-revision options so refer to the relevant git man pages for futher
-information. Relevant man pages besides git-log(1) are git-diff(1) and
-git-rev-list(1).</p>
-<p>You can tune the interaction with git by making use of the options
-explained in this section. For example, by configuring the environment
-variables described in the  <a href="#view-commands">"View commands"</a> section.</p>
-<h3>Limit by path name</h3>
-<p>If you are interested only in those revisions that made changes to a
-specific file (or even several files) list the files like this:</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>$ tig log Makefile README</tt></pre>
-</div></div>
-<p>To avoid ambiguity with repository references such as tag name, be sure
-to separate file names from other git options using "--". So if you
-have a file named <em>master</em> it will clash with the reference named
-<em>master</em>, and thus you will have to use:</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>$ tig log -- master</tt></pre>
-</div></div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">For the main view, avoiding ambiguity will in some cases require
-you to specify two "--" options. The first will make tig(1) stop
-option processing and the latter will be passed to git log.</td>
-</tr></table>
-</div>
-<h3>Limit by date or number</h3>
-<p>To speed up interaction with git, you can limit the amount of commits
-to show both for the log and main view. Either limit by date using
-e.g. <tt>--since=1.month</tt> or limit by the number of commits using <tt>-n400</tt>.</p>
-<p>If you are only interested in changed that happened between two dates
-you can use:</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>$ tig -- --after="May 5th" --before="2006-05-16 15:44"</tt></pre>
-</div></div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">If you want to avoid having to quote dates containing spaces you
-can use "." instead, e.g. <tt>--after=May.5th</tt>.</td>
-</tr></table>
-</div>
-<h3>Limiting by commit ranges</h3>
-<p>Alternatively, commits can be limited to a specific range, such as
-"all commits between <em>tag-1.0</em> and <em>tag-2.0</em>". For example:</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>$ tig log tag-1.0..tag-2.0</tt></pre>
-</div></div>
-<p>This way of commit limiting makes it trivial to only browse the commits
-which haven't been pushed to a remote branch. Assuming <em>origin</em> is your
-upstream remote branch, using:</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>$ tig log origin..HEAD</tt></pre>
-</div></div>
-<p>will list what will be pushed to the remote branch. Optionally, the ending
-<em>HEAD</em> can be left out since it is implied.</p>
-<h3>Limiting by reachability</h3>
-<p>Git interprets the range specifier "tag-1.0..tag-2.0" as
-"all commits reachable from <em>tag-2.0</em> but not from <em>tag-1.0</em>".
-Where reachability refers to what commits are ancestors (or part of the
-history) of the branch or tagged revision in question.</p>
-<p>If you prefer to specify which commit to preview in this way use the
-following:</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>$ tig log tag-2.0 ^tag-1.0</tt></pre>
-</div></div>
-<p>You can think of <em>^</em> as a negation operator. Using this alternate syntax,
-it is possible to further prune commits by specifying multiple branch
-cut offs.</p>
-<h3>Combining revisions specification</h3>
-<p>Revisions options can to some degree be combined, which makes it possible
-to say "show at most 20 commits from within the last month that changed
-files under the Documentation/ directory."</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>$ tig -- --since=1.month -n20 -- Documentation/</tt></pre>
-</div></div>
-<h3>Examining all repository references</h3>
-<p>In some cases, it can be useful to query changes across all references
-in a repository. An example is to ask "did any line of development in
-this repository change a particular file within the last week". This
-can be accomplished using:</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>$ tig -- --all --since=1.week -- Makefile</tt></pre>
-</div></div>
 </div>
 <h2>BUGS</h2>
 <div class="sectionbody">
@@ -952,31 +474,26 @@ In it's current state tig is pretty much UTF-8 only.
 <li>
 <p>
 If the screen width is very small the main view can draw
-outside the current view causing bad wrapping. Same goes
-for title and status windows.
-</p>
-</li>
-</ul>
-</div>
-<h2>TODO</h2>
-<div class="sectionbody">
-<p>Features that should be explored.</p>
-<ul>
-<li>
-<p>
-Searching.
+   outside the current view causing bad wrapping. Same goes
+   for title and status windows.
 </p>
 </li>
 <li>
 <p>
-Locale support.
+The cursor can wrap-around on the last line and cause the
+   window to scroll.
+</p>
+</li>
+<li>
+<p>
+The prompt doesn't work while loading.
 </p>
 </li>
 </ul>
 </div>
 <h2>COPYRIGHT</h2>
 <div class="sectionbody">
-<p>Copyright (c) Jonas Fonseca &lt;fonseca@diku.dk&gt;, 2006</p>
+<p>Copyright (c) 2006 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p>
 <p>This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -984,16 +501,63 @@ the Free Software Foundation; either version 2 of the License, or
 </div>
 <h2>SEE ALSO</h2>
 <div class="sectionbody">
-<div class="verseblock">
-<div class="content"><a href="http://www.kernel.org/pub/software/scm/git/docs/">git(7)</a>,
+<ul>
+<li>
+<p>
+<a href="http://www.kernel.org/pub/software/scm/git/docs/">git(7)</a>,
+</p>
+</li>
+<li>
+<p>
 <a href="http://www.kernel.org/pub/software/scm/cogito/docs/">cogito(7)</a>
-gitk(1): git repository browser written using tcl/tk,
-qgit(1): git repository browser written using c++/Qt,
-gitview(1): git repository browser written using python/gtk.</div></div>
+</p>
+</li>
+</ul>
+<p>Other git repository browsers:</p>
+<ul>
+<li>
+<p>
+gitk(1)
+</p>
+</li>
+<li>
+<p>
+qgit(1)
+</p>
+</li>
+<li>
+<p>
+gitview(1)
+</p>
+</li>
+</ul>
+<p>Sites:</p>
+<ul>
+<li>
+<p>
+Homepage: <a href="http://jonas.nitro.dk/tig">http://jonas.nitro.dk/tig</a>
+</p>
+</li>
+<li>
+<p>
+Releases: <a href="http://jonas.nitro.dk/tig/releases">http://jonas.nitro.dk/tig/releases</a>
+</p>
+</li>
+<li>
+<p>
+Git URL:  <a href="http://jonas.nitro.dk/tig/tig.git">http://jonas.nitro.dk/tig/tig.git</a>
+</p>
+</li>
+<li>
+<p>
+Gitweb: <a href="http://pasky.or.cz/gitweb.cgi?p=tig.git;a=summary">http://pasky.or.cz/gitweb.cgi?p=tig.git;a=summary</a>
+</p>
+</li>
+</ul>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 21-May-2006 05:05:28 CEST
+Last updated 29-May-2006 21:46:27 CEST
 </div>
 </div>
 </body>
