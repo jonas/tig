@@ -2882,6 +2882,8 @@ main(int argc, char *argv[])
  *
  * include::BUGS[]
  *
+ * include::SITES[]
+ *
  * COPYRIGHT
  * ---------
  * Copyright (c) 2006 Jonas Fonseca <fonseca@diku.dk>
