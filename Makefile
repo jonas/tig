@@ -15,14 +15,14 @@ endif
 all: $(PROGS)
 all-debug: $(PROGS)
 all-debug: CFLAGS += $(DFLAGS)
-docs: $(DOCS)
+doc: $(DOCS)
 
 install: all
 	for prog in $(PROGS); do \
 		install $$prog $(PREFIX)/bin; \
 	done
 
-install-docs: docs
+install-doc: doc
 	for doc in $(DOCS); do \
 		case "$$doc" in \
 		*.1) install $$doc $(PREFIX)/man/man1 ;; \
@@ -37,7 +37,7 @@ clean:
 spell-check:
 	aspell --lang=en --check tig.1.txt
 
-.PHONY: all docs install clean
+.PHONY: all all-debug doc install install-doc clean spell-check
 
 tig: tig.c
 
