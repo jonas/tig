@@ -164,6 +164,27 @@ chomp_string(char *name)
 	return name;
 }
 
+static bool
+string_nformat(char *buf, size_t bufsize, int *bufpos, const char *fmt, ...)
+{
+	va_list args;
+	int pos = bufpos ? *bufpos : 0;
+
+	va_start(args, fmt);
+	pos += vsnprintf(buf + pos, bufsize - pos, fmt, args);
+	va_end(args);
+
+	if (bufpos)
+		*bufpos = pos;
+
+	return pos >= bufsize ? FALSE : TRUE;
+}
+
+#define string_format(buf, fmt, args...) \
+	string_nformat(buf, sizeof(buf), NULL, fmt, args)
+
+#define string_format_from(buf, from, fmt, args...) \
+	string_nformat(buf, sizeof(buf), from, fmt, args)
 
 /* Shell quoting
  *
@@ -799,8 +820,7 @@ load_options(void)
 	config_lineno = 0;
 	config_errors = FALSE;
 
-	if (!home ||
-	    snprintf(buf, sizeof(buf), "%s/.tigrc", home) >= sizeof(buf))
+	if (!home || !string_format(buf, "%s/.tigrc", home))
 		return ERR;
 
 	/* It's ok that the file doesn't exist. */
@@ -1272,8 +1292,7 @@ begin_update(struct view *view)
 	} else {
 		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
 
-		if (snprintf(view->cmd, sizeof(view->cmd), format,
-			     id, id, id, id, id) >= sizeof(view->cmd))
+		if (!string_format(view->cmd, format, id, id, id, id, id))
 			return FALSE;
 	}
 
@@ -1725,24 +1744,15 @@ add_pager_refs(struct view *view, struct line *line)
 		return;
 
 	do {
-		char *begin = "", *end = "";
+		struct ref *ref = refs[refpos];
+		char *fmt = ref->tag ? "%s[%s]" : "%s%s";
 
-		if (refs[refpos]->tag) {
-			begin = "[";
-			end = "]";
-		}
-
-		bufpos += snprintf(buf + bufpos, sizeof(buf) - bufpos,
-				   "%s%s%s%s", sep, begin, refs[refpos]->name,
-				   end);
-		if (bufpos >= sizeof(buf))
-			break;
+		if (!string_format_from(buf, &bufpos, fmt, sep, ref->name))
+			return;
 		sep = ", ";
 	} while (refs[refpos++]->next);
 
-	if (!bufpos ||
-	    bufpos >= sizeof(buf) ||
-	    !realloc_lines(view, view->line_size + 1))
+	if (!realloc_lines(view, view->line_size + 1))
 		return;
 
 	line = &view->line[view->lines];
@@ -2163,8 +2173,7 @@ get_key(enum request request)
 		if (!seq)
 			seq = "'?'";
 
-		pos += snprintf(buf + pos, sizeof(buf) - pos, "%s%s", sep, seq);
-		if (pos >= sizeof(buf))
+		if (!string_format_from(buf, &pos, "%s%s", sep, seq))
 			return "Too many keybindings!";
 		sep = ", ";
 	}
@@ -2204,8 +2213,7 @@ static void load_help_page(void)
 		}
 
 		key = get_key(req_info[i].request);
-		if (snprintf(buf, sizeof(buf), "%-25s %s", key, req_info[i].help)
-		    >= sizeof(buf))
+		if (string_format(buf, "%-25s %s", key, req_info[i].help))
 			continue;
 
 		pager_read(view, NULL, buf);
