@@ -897,7 +897,7 @@ struct view_ops {
 	/* Draw one line; @lineno must be < view->height. */
 	bool (*draw)(struct view *view, struct line *line, unsigned int lineno);
 	/* Read one line; updates view->line. */
-	bool (*read)(struct view *view, struct line *prev, char *data);
+	bool (*read)(struct view *view, char *data);
 	/* Depending on view, change display based on current line. */
 	bool (*enter)(struct view *view, struct line *line);
 };
@@ -1367,14 +1367,10 @@ update_view(struct view *view)
 	while ((line = fgets(buffer, sizeof(buffer), view->pipe))) {
 		int linelen = strlen(line);
 
-		struct line *prev = view->lines
-				  ? &view->line[view->lines - 1]
-				  : NULL;
-
 		if (linelen)
 			line[linelen - 1] = 0;
 
-		if (!view->ops->read(view, prev, line))
+		if (!view->ops->read(view, line))
 			goto alloc_error;
 
 		if (lines-- == 1)
@@ -1765,7 +1761,7 @@ add_pager_refs(struct view *view, struct line *line)
 }
 
 static bool
-pager_read(struct view *view, struct line *prev, char *data)
+pager_read(struct view *view, char *data)
 {
 	struct line *line = &view->line[view->lines];
 
@@ -1931,10 +1927,11 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 
 /* Reads git log --pretty=raw output and parses it into the commit struct. */
 static bool
-main_read(struct view *view, struct line *prev, char *line)
+main_read(struct view *view, char *line)
 {
 	enum line_type type = get_line_type(line);
-	struct commit *commit;
+	struct commit *commit = view->lines
+			      ? view->line[view->lines - 1].data : NULL;
 
 	switch (type) {
 	case LINE_COMMIT:
@@ -1954,10 +1951,8 @@ main_read(struct view *view, struct line *prev, char *line)
 		char *ident = line + STRING_SIZE("author ");
 		char *end = strchr(ident, '<');
 
-		if (!prev)
+		if (!commit)
 			break;
-
-		commit = prev->data;
 
 		if (end) {
 			for (; end > ident && isspace(end[-1]); end--) ;
@@ -1997,10 +1992,8 @@ main_read(struct view *view, struct line *prev, char *line)
 		break;
 	}
 	default:
-		if (!prev)
+		if (!commit)
 			break;
-
-		commit = prev->data;
 
 		/* Fill in the commit title if it has not already been set. */
 		if (commit->title[0])
@@ -2201,14 +2194,14 @@ static void load_help_page(void)
 		return;
 	}
 
-	pager_read(view, NULL, "Quick reference for tig keybindings:");
+	pager_read(view, "Quick reference for tig keybindings:");
 
 	for (i = 0; i < ARRAY_SIZE(req_info); i++) {
 		char *key;
 
 		if (!req_info[i].request) {
-			pager_read(view, NULL, "");
-			pager_read(view, NULL, req_info[i].help);
+			pager_read(view, "");
+			pager_read(view, req_info[i].help);
 			continue;
 		}
 
@@ -2216,7 +2209,7 @@ static void load_help_page(void)
 		if (string_format(buf, "%-25s %s", key, req_info[i].help))
 			continue;
 
-		pager_read(view, NULL, buf);
+		pager_read(view, buf);
 	}
 }
 
