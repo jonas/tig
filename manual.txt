@@ -152,8 +152,7 @@ The pager view::
 	commands entered in the internal prompt.
 
 The help view::
-	Displays the information from the tig(1) man page. For the help view
-	to work you need to have the tig(1) man page installed.
+	Displays key binding quick reference.
 
 Title Windows
 ~~~~~~~~~~~~~
@@ -183,7 +182,7 @@ l::
 	Switch to log view.
 p::
 	Switch to pager view.
-h::
+h, ?::
 	Show man page.
 
 View Manipulation

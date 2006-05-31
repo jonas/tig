@@ -67,6 +67,7 @@ static void report(const char *msg, ...);
 static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, int, char *, int));
 static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed);
+static void load_help_page(void);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -79,8 +80,6 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 
 /* This color name can be used to refer to the default term colors. */
 #define COLOR_DEFAULT	(-1)
-
-#define TIG_HELP	"(d)iff, (l)og, (m)ain, (q)uit, (h)elp"
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
@@ -100,45 +99,6 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define KEY_RETURN	'\r'
 #define KEY_ESC		27
 
-
-/* User action requests. */
-enum request {
-	/* Offset all requests to avoid conflicts with ncurses getch values. */
-	REQ_OFFSET = KEY_MAX + 1,
-
-	/* XXX: Keep the view request first and in sync with views[]. */
-	REQ_VIEW_MAIN,
-	REQ_VIEW_DIFF,
-	REQ_VIEW_LOG,
-	REQ_VIEW_HELP,
-	REQ_VIEW_PAGER,
-
-	REQ_ENTER,
-	REQ_QUIT,
-	REQ_PROMPT,
-	REQ_SCREEN_REDRAW,
-	REQ_SCREEN_RESIZE,
-	REQ_SCREEN_UPDATE,
-	REQ_SHOW_VERSION,
-	REQ_STOP_LOADING,
-	REQ_TOGGLE_LINE_NUMBERS,
-	REQ_VIEW_NEXT,
-	REQ_VIEW_CLOSE,
-	REQ_NEXT,
-	REQ_PREVIOUS,
-
-	REQ_MOVE_UP,
-	REQ_MOVE_DOWN,
-	REQ_MOVE_PAGE_UP,
-	REQ_MOVE_PAGE_DOWN,
-	REQ_MOVE_FIRST_LINE,
-	REQ_MOVE_LAST_LINE,
-
-	REQ_SCROLL_LINE_UP,
-	REQ_SCROLL_LINE_DOWN,
-	REQ_SCROLL_PAGE_UP,
-	REQ_SCROLL_PAGE_DOWN,
-};
 
 struct ref {
 	char *name;		/* Ref name; tag or head names are shortened. */
@@ -245,6 +205,77 @@ sq_quote(char buf[SIZEOF_CMD], size_t bufsize, const char *src)
 	return bufsize;
 }
 
+
+/*
+ * User requests
+ */
+
+#define REQ_INFO \
+	/* XXX: Keep the view request first and in sync with views[]. */ \
+	REQ_GROUP("View switching") \
+	REQ_(VIEW_MAIN,		"Show main view"), \
+	REQ_(VIEW_DIFF,		"Show diff view"), \
+	REQ_(VIEW_LOG,		"Show log view"), \
+	REQ_(VIEW_HELP,		"Show help page"), \
+	REQ_(VIEW_PAGER,	"Show pager view"), \
+	\
+	REQ_GROUP("View manipulation") \
+	REQ_(ENTER,		"Enter current line and scroll"), \
+	REQ_(NEXT,		"Move to next"), \
+	REQ_(PREVIOUS,		"Move to previous"), \
+	REQ_(VIEW_NEXT,		"Move focus to next view"), \
+	REQ_(VIEW_CLOSE,	"Close the current view"), \
+	REQ_(QUIT,		"Close all views and quit"), \
+	\
+	REQ_GROUP("Cursor navigation") \
+	REQ_(MOVE_UP,		"Move cursor one line up"), \
+	REQ_(MOVE_DOWN,		"Move cursor one line down"), \
+	REQ_(MOVE_PAGE_DOWN,	"Move cursor one page down"), \
+	REQ_(MOVE_PAGE_UP,	"Move cursor one page up"), \
+	REQ_(MOVE_FIRST_LINE,	"Move cursor to first line"), \
+	REQ_(MOVE_LAST_LINE,	"Move cursor to last line"), \
+	\
+	REQ_GROUP("Scrolling") \
+	REQ_(SCROLL_LINE_UP,	"Scroll one line up"), \
+	REQ_(SCROLL_LINE_DOWN,	"Scroll one line down"), \
+	REQ_(SCROLL_PAGE_UP,	"Scroll one page up"), \
+	REQ_(SCROLL_PAGE_DOWN,	"Scroll one page down"), \
+	\
+	REQ_GROUP("Misc") \
+	REQ_(PROMPT,		"Bring up the prompt"), \
+	REQ_(SCREEN_UPDATE,	"Update the screen"), \
+	REQ_(SCREEN_REDRAW,	"Redraw the screen"), \
+	REQ_(SCREEN_RESIZE,	"Resize the screen"), \
+	REQ_(SHOW_VERSION,	"Show version information"), \
+	REQ_(STOP_LOADING,	"Stop all loading views"), \
+	REQ_(TOGGLE_LINENO,	"Toggle line numbers"),
+
+
+/* User action requests. */
+enum request {
+#define REQ_GROUP(help)
+#define REQ_(req, help) REQ_##req
+
+	/* Offset all requests to avoid conflicts with ncurses getch values. */
+	REQ_OFFSET = KEY_MAX + 1,
+	REQ_INFO
+
+#undef	REQ_GROUP
+#undef	REQ_
+};
+
+struct request_info {
+	enum request request;
+	char *help;
+};
+
+static struct request_info req_info[] = {
+#define REQ_GROUP(help)	{ 0, (help) },
+#define REQ_(req, help)	{ REQ_##req, (help) }
+	REQ_INFO
+#undef	REQ_GROUP
+#undef	REQ_
+};
 
 /**
  * OPTIONS
@@ -489,7 +520,7 @@ parse_options(int argc, char *argv[])
 /* ... silently ignore that the following are also exported. */
 
 #define TIG_HELP_CMD \
-	"man tig 2>/dev/null"
+	""
 
 #define TIG_PAGER_CMD \
 	""
@@ -1354,20 +1385,6 @@ update_view(struct view *view)
 		goto end;
 
 	} else if (feof(view->pipe)) {
-		if (view == VIEW(REQ_VIEW_HELP)) {
-			const char *msg = TIG_HELP;
-
-			if (view->lines == 0) {
-				/* Slightly ugly, but abusing view->ref keeps
-				 * the error message. */
-				string_copy(view->ref, "No help available");
-				msg = "The tig(1) manpage is not installed";
-			}
-
-			report("%s", msg);
-			goto end;
-		}
-
 		report("");
 		goto end;
 	}
@@ -1445,6 +1462,9 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		view->parent = prev;
 	}
 
+	if (view == VIEW(REQ_VIEW_HELP))
+		load_help_page();
+
 	if (view->pipe && view->lines == 0) {
 		/* Clear the old view and let the incremental updating refill
 		 * the screen. */
@@ -1452,10 +1472,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		report("");
 	} else {
 		redraw_view(view);
-		if (view == VIEW(REQ_VIEW_HELP))
-			report("%s", TIG_HELP);
-		else
-			report("");
+		report("");
 	}
 
 	/* If the view is backgrounded the above calls to report()
@@ -1540,7 +1557,7 @@ view_driver(struct view *view, enum request request)
 		report("");
 		break;
 	}
-	case REQ_TOGGLE_LINE_NUMBERS:
+	case REQ_TOGGLE_LINENO:
 		opt_line_number = !opt_line_number;
 		redraw_display();
 		break;
@@ -1684,11 +1701,6 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 static bool
 pager_read(struct view *view, struct line *prev, char *line)
 {
-	/* Compress empty lines in the help view. */
-	if (view == VIEW(REQ_VIEW_HELP) &&
-	    !*line && prev && !*((char *) prev->data))
-		return TRUE;
-
 	view->line[view->lines].data = strdup(line);
 	if (!view->line[view->lines].data)
 		return FALSE;
@@ -1968,6 +1980,7 @@ static struct keymap keymap[] = {
 	{ 'l',		REQ_VIEW_LOG },
 	{ 'p',		REQ_VIEW_PAGER },
 	{ 'h',		REQ_VIEW_HELP },
+	{ '?',		REQ_VIEW_HELP },
 
 	/* View manipulation */
 	{ 'q',		REQ_VIEW_CLOSE },
@@ -1998,7 +2011,7 @@ static struct keymap keymap[] = {
 	{ 'z',		REQ_STOP_LOADING },
 	{ 'v',		REQ_SHOW_VERSION },
 	{ 'r',		REQ_SCREEN_REDRAW },
-	{ 'n',		REQ_TOGGLE_LINE_NUMBERS },
+	{ 'n',		REQ_TOGGLE_LINENO },
 	{ ':',		REQ_PROMPT },
 
 	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
@@ -2018,6 +2031,122 @@ get_request(int key)
 			return keymap[i].request;
 
 	return (enum request) key;
+}
+
+struct key {
+	char *name;
+	int value;
+};
+
+static struct key key_table[] = {
+	{ "Enter",	KEY_RETURN },
+	{ "Space",	' ' },
+	{ "Backspace",	KEY_BACKSPACE },
+	{ "Tab",	KEY_TAB },
+	{ "Escape",	KEY_ESC },
+	{ "Left",	KEY_LEFT },
+	{ "Right",	KEY_RIGHT },
+	{ "Up",		KEY_UP },
+	{ "Down",	KEY_DOWN },
+	{ "Insert",	KEY_IC },
+	{ "Delete",	KEY_DC },
+	{ "Home",	KEY_HOME },
+	{ "End",	KEY_END },
+	{ "PageUp",	KEY_PPAGE },
+	{ "PageDown",	KEY_NPAGE },
+	{ "F1",		KEY_F(1) },
+	{ "F2",		KEY_F(2) },
+	{ "F3",		KEY_F(3) },
+	{ "F4",		KEY_F(4) },
+	{ "F5",		KEY_F(5) },
+	{ "F6",		KEY_F(6) },
+	{ "F7",		KEY_F(7) },
+	{ "F8",		KEY_F(8) },
+	{ "F9",		KEY_F(9) },
+	{ "F10",	KEY_F(10) },
+	{ "F11",	KEY_F(11) },
+	{ "F12",	KEY_F(12) },
+};
+
+static char *
+get_key(enum request request)
+{
+	static char buf[BUFSIZ];
+	static char key_char[] = "'X'";
+	int pos = 0;
+	char *sep = "    ";
+	int i;
+
+	buf[pos] = 0;
+
+	for (i = 0; i < ARRAY_SIZE(keymap); i++) {
+		char *seq = NULL;
+		int key;
+
+		if (keymap[i].request != request)
+			continue;
+
+		for (key = 0; key < ARRAY_SIZE(key_table); key++)
+			if (key_table[key].value == keymap[i].alias)
+				seq = key_table[key].name;
+
+		if (seq == NULL &&
+		    keymap[i].alias < 127 &&
+		    isprint(keymap[i].alias)) {
+			key_char[1] = (char) keymap[i].alias;
+			seq = key_char;
+		}
+
+		if (!seq)
+			seq = "'?'";
+
+		pos += snprintf(buf + pos, sizeof(buf) - pos, "%s%s", sep, seq);
+		if (pos >= sizeof(buf))
+			return "Too many keybindings!";
+		sep = ", ";
+	}
+
+	return buf;
+}
+
+static void load_help_page(void)
+{
+	char buf[BUFSIZ];
+	struct view *view = VIEW(REQ_VIEW_HELP);
+	int lines = ARRAY_SIZE(req_info) + 2;
+	int i;
+
+	if (view->lines > 0)
+		return;
+
+	for (i = 0; i < ARRAY_SIZE(req_info); i++)
+		if (!req_info[i].request)
+			lines++;
+
+	view->line = calloc(lines, sizeof(*view->line));
+	if (!view->line) {
+		report("Allocation failure");
+		return;
+	}
+
+	pager_read(view, NULL, "Quick reference for tig keybindings:");
+
+	for (i = 0; i < ARRAY_SIZE(req_info); i++) {
+		char *key;
+
+		if (!req_info[i].request) {
+			pager_read(view, NULL, "");
+			pager_read(view, NULL, req_info[i].help);
+			continue;
+		}
+
+		key = get_key(req_info[i].request);
+		if (snprintf(buf, sizeof(buf), "%-25s %s", key, req_info[i].help)
+		    >= sizeof(buf))
+			continue;
+
+		pager_read(view, NULL, buf);
+	}
 }
 
 
