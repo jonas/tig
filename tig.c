@@ -582,6 +582,7 @@ LINE(PP_MERGE,	   "Merge: ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(PP_DATE,	   "Date:   ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(PP_ADATE,	   "AuthorDate: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(PP_CDATE,	   "CommitDate: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(PP_REFS,	   "Refs: ",		COLOR_RED,	COLOR_DEFAULT,	0), \
 LINE(COMMIT,	   "commit ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(PARENT,	   "parent ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(TREE,	   "tree ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
@@ -1708,16 +1709,68 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 	return TRUE;
 }
 
-static bool
-pager_read(struct view *view, struct line *prev, char *line)
+static void
+add_pager_refs(struct view *view, struct line *line)
 {
-	view->line[view->lines].data = strdup(line);
-	if (!view->line[view->lines].data)
+	char buf[1024];
+	char *data = line->data;
+	struct ref **refs;
+	int bufpos = 0, refpos = 0;
+	const char *sep = "Refs: ";
+
+	assert(line->type == LINE_COMMIT);
+
+	refs = get_refs(data + STRING_SIZE("commit "));
+	if (!refs)
+		return;
+
+	do {
+		char *begin = "", *end = "";
+
+		if (refs[refpos]->tag) {
+			begin = "[";
+			end = "]";
+		}
+
+		bufpos += snprintf(buf + bufpos, sizeof(buf) - bufpos,
+				   "%s%s%s%s", sep, begin, refs[refpos]->name,
+				   end);
+		if (bufpos >= sizeof(buf))
+			break;
+		sep = ", ";
+	} while (refs[refpos++]->next);
+
+	if (!bufpos ||
+	    bufpos >= sizeof(buf) ||
+	    !realloc_lines(view, view->line_size + 1))
+		return;
+
+	line = &view->line[view->lines];
+	line->data = strdup(buf);
+	if (!line->data)
+		return;
+
+	line->type = LINE_PP_REFS;
+	view->lines++;
+}
+
+static bool
+pager_read(struct view *view, struct line *prev, char *data)
+{
+	struct line *line = &view->line[view->lines];
+
+	line->data = strdup(data);
+	if (!line->data)
 		return FALSE;
 
-	view->line[view->lines].type = get_line_type(line);
-
+	line->type = get_line_type(line->data);
 	view->lines++;
+
+	if (line->type == LINE_COMMIT &&
+	    (view == VIEW(REQ_VIEW_DIFF) ||
+	     view == VIEW(REQ_VIEW_LOG)))
+		add_pager_refs(view, line);
+
 	return TRUE;
 }
 
