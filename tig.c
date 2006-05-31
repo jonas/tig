@@ -2206,7 +2206,7 @@ static void load_help_page(void)
 		}
 
 		key = get_key(req_info[i].request);
-		if (string_format(buf, "%-25s %s", key, req_info[i].help))
+		if (!string_format(buf, "%-25s %s", key, req_info[i].help))
 			continue;
 
 		pager_read(view, buf);
