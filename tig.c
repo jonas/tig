@@ -862,6 +862,7 @@ struct view {
 	/* Buffering */
 	unsigned long lines;	/* Total number of lines */
 	struct line *line;	/* Line index */
+	unsigned long line_size;/* Total number of allocated lines */
 	unsigned int digits;	/* Number of digits in the lines member. */
 
 	/* Loading */
@@ -1309,12 +1310,24 @@ begin_update(struct view *view)
 	return TRUE;
 }
 
+static struct line *
+realloc_lines(struct view *view, size_t line_size)
+{
+	struct line *tmp = realloc(view->line, sizeof(*view->line) * line_size);
+
+	if (!tmp)
+		return NULL;
+
+	view->line = tmp;
+	view->line_size = line_size;
+	return view->line;
+}
+
 static bool
 update_view(struct view *view)
 {
 	char buffer[BUFSIZ];
 	char *line;
-	struct line *tmp;
 	/* The number of lines to read. If too low it will cause too much
 	 * redrawing (and possible flickering), if too high responsiveness
 	 * will suffer. */
@@ -1328,11 +1341,8 @@ update_view(struct view *view)
 	if (view->offset + view->height >= view->lines)
 		redraw_from = view->lines - view->offset;
 
-	tmp = realloc(view->line, sizeof(*view->line) * (view->lines + lines));
-	if (!tmp)
+	if (!realloc_lines(view, view->lines + lines))
 		goto alloc_error;
-
-	view->line = tmp;
 
 	while ((line = fgets(buffer, sizeof(buffer), view->pipe))) {
 		int linelen = strlen(line);
