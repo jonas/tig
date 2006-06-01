@@ -10,36 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-/**
- * TIG(1)
- * ======
- *
- * NAME
- * ----
- * tig - text-mode interface for git
- *
- * SYNOPSIS
- * --------
- * [verse]
- * tig [options]
- * tig [options] [--] [git log options]
- * tig [options] log  [git log options]
- * tig [options] diff [git diff options]
- * tig [options] show [git show options]
- * tig [options] <    [git command output]
- *
- * DESCRIPTION
- * -----------
- * Browse changes in a git repository. Additionally, tig(1) can also act
- * as a pager for output of various git commands.
- *
- * When browsing repositories, tig(1) uses the underlying git commands
- * to present the user with various views, such as summarized commit log
- * and showing the commit with the log message, diffstat, and the diff.
- *
- * Using tig(1) as a pager, it will display input from stdin and try
- * to colorize it.
- **/
 
 #ifndef	VERSION
 #define VERSION	"tig-0.3"
@@ -93,6 +63,22 @@ static void load_help_page(void);
 #define TABSIZE		8
 
 #define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
+
+#define TIG_LS_REMOTE \
+	"git ls-remote . 2>/dev/null"
+
+#define TIG_DIFF_CMD \
+	"git show --patch-with-stat --find-copies-harder -B -C %s"
+
+#define TIG_LOG_CMD	\
+	"git log --cc --stat -n100 %s"
+
+#define TIG_MAIN_CMD \
+	"git log --topo-order --stat --pretty=raw %s"
+
+/* XXX: Needs to be defined to the empty string. */
+#define TIG_HELP_CMD	""
+#define TIG_PAGER_CMD	""
 
 /* Some ascii-shorthands fitted into the ncurses namespace. */
 #define KEY_TAB		'\t'
@@ -298,10 +284,9 @@ static struct request_info req_info[] = {
 #undef	REQ_
 };
 
-/**
- * OPTIONS
- * -------
- **/
+/*
+ * Options
+ */
 
 static const char usage[] =
 VERSION " (" __DATE__ ")\n"
@@ -341,29 +326,16 @@ parse_options(int argc, char *argv[])
 	for (i = 1; i < argc; i++) {
 		char *opt = argv[i];
 
-		/**
-		 * -l::
-		 *	Start up in log view using the internal log command.
-		 **/
 		if (!strcmp(opt, "-l")) {
 			opt_request = REQ_VIEW_LOG;
 			continue;
 		}
 
-		/**
-		 * -d::
-		 *	Start up in diff view using the internal diff command.
-		 **/
 		if (!strcmp(opt, "-d")) {
 			opt_request = REQ_VIEW_DIFF;
 			continue;
 		}
 
-		/**
-		 * -n[INTERVAL], --line-number[=INTERVAL]::
-		 *	Prefix line numbers in log and diff view.
-		 *	Optionally, with interval different than each line.
-		 **/
 		if (!strncmp(opt, "-n", 2) ||
 		    !strncmp(opt, "--line-number", 13)) {
 			char *num = opt;
@@ -382,10 +354,6 @@ parse_options(int argc, char *argv[])
 			continue;
 		}
 
-		/**
-		 * -b[NSPACES], --tab-size[=NSPACES]::
-		 *	Set the number of spaces tabs should be expanded to.
-		 **/
 		if (!strncmp(opt, "-b", 2) ||
 		    !strncmp(opt, "--tab-size", 10)) {
 			char *num = opt;
@@ -402,48 +370,23 @@ parse_options(int argc, char *argv[])
 			continue;
 		}
 
-		/**
-		 * -v, --version::
-		 *	Show version and exit.
-		 **/
 		if (!strcmp(opt, "-v") ||
 		    !strcmp(opt, "--version")) {
 			printf("tig version %s\n", VERSION);
 			return FALSE;
 		}
 
-		/**
-		 * -h, --help::
-		 *	Show help message and exit.
-		 **/
 		if (!strcmp(opt, "-h") ||
 		    !strcmp(opt, "--help")) {
 			printf(usage);
 			return FALSE;
 		}
 
-		/**
-		 * \--::
-		 *	End of tig(1) options. Useful when specifying command
-		 *	options for the main view. Example:
-		 *
-		 *		$ tig -- --since=1.month
-		 **/
 		if (!strcmp(opt, "--")) {
 			i++;
 			break;
 		}
 
-		/**
-		 * log [git log options]::
-		 *	Open log view using the given git log options.
-		 *
-		 * diff [git diff options]::
-		 *	Open diff view using the given git diff options.
-		 *
-		 * show [git show options]::
-		 *	Open diff view using the given git show options.
-		 **/
 		if (!strcmp(opt, "log") ||
 		    !strcmp(opt, "diff") ||
 		    !strcmp(opt, "show")) {
@@ -452,16 +395,6 @@ parse_options(int argc, char *argv[])
 			break;
 		}
 
-		/**
-		 * [git log options]::
-		 *	tig(1) will stop the option parsing when the first
-		 *	command line parameter not starting with "-" is
-		 *	encountered. All options including this one will be
-		 *	passed to git log when loading the main view.
-		 *	This makes it possible to say:
-		 *
-		 *	$ tig tag-1.0..HEAD
-		 **/
 		if (opt[0] && opt[0] != '-')
 			break;
 
@@ -501,62 +434,6 @@ parse_options(int argc, char *argv[])
 	return TRUE;
 }
 
-
-/**
- * ENVIRONMENT VARIABLES
- * ---------------------
- * TIG_LS_REMOTE::
- *	Set command for retrieving all repository references. The command
- *	should output data in the same format as git-ls-remote(1).
- **/
-
-#define TIG_LS_REMOTE \
-	"git ls-remote . 2>/dev/null"
-
-/**
- * TIG_DIFF_CMD::
- *	The command used for the diff view. By default, git show is used
- *	as a backend.
- *
- * TIG_LOG_CMD::
- *	The command used for the log view. If you prefer to have both
- *	author and committer shown in the log view be sure to pass
- *	`--pretty=fuller` to git log.
- *
- * TIG_MAIN_CMD::
- *	The command used for the main view. Note, you must always specify
- *	the option: `--pretty=raw` since the main view parser expects to
- *	read that format.
- **/
-
-#define TIG_DIFF_CMD \
-	"git show --patch-with-stat --find-copies-harder -B -C %s"
-
-#define TIG_LOG_CMD	\
-	"git log --cc --stat -n100 %s"
-
-#define TIG_MAIN_CMD \
-	"git log --topo-order --stat --pretty=raw %s"
-
-/* ... silently ignore that the following are also exported. */
-
-#define TIG_HELP_CMD \
-	""
-
-#define TIG_PAGER_CMD \
-	""
-
-
-/**
- * FILES
- * -----
- * '~/.tigrc'::
- *	User configuration file. See tigrc(5) for examples.
- *
- * '.git/config'::
- *	Repository config file. Read on startup with the help of
- *	git-repo-config(1).
- **/
 
 static struct int_map color_map[] = {
 #define COLOR_MAP(name) { #name, STRING_SIZE(#name), COLOR_##name }
@@ -2757,31 +2634,3 @@ main(int argc, char *argv[])
 
 	return 0;
 }
-
-/**
- * include::BUGS[]
- *
- * COPYRIGHT
- * ---------
- * Copyright (c) 2006 Jonas Fonseca <fonseca@diku.dk>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * SEE ALSO
- * --------
- * - link:http://www.kernel.org/pub/software/scm/git/docs/[git(7)],
- * - link:http://www.kernel.org/pub/software/scm/cogito/docs/[cogito(7)]
- *
- * Other git repository browsers:
- *
- *  - gitk(1)
- *  - qgit(1)
- *  - gitview(1)
- *
- * Sites:
- *
- * include::SITES[]
- **/

@@ -3,7 +3,7 @@ LDLIBS  = -lcurses
 CFLAGS	= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
-DOCS	= tig.1.txt tig.1.html tig.1 tigrc.5.html tigrc.5 \
+DOCS	= tig.1.html tig.1 tigrc.5.html tigrc.5 \
 	  manual.html manual.html-chunked README.html
 
 ifneq (,$(wildcard .git))
@@ -35,17 +35,11 @@ clean:
 	rm -f $(PROGS) $(DOCS) core
 
 spell-check:
-	aspell --lang=en --check tig.1.txt
+	aspell --lang=en --check tig.1.txt tigrc.5.txt manual.txt
 
 .PHONY: all all-debug doc install install-doc clean spell-check
 
 tig: tig.c
-
-tig.1.txt: tig.c
-	sed -n '/\/\*\*/,/\*\*\//p' < $< | \
-	sed 's/.*\*\*\/.*//' | \
-	sed '/^[^*]*\*\*/d' | \
-	sed 's/\*\///;s/^[^*]*\* *//' > $@
 
 README.html: README
 	asciidoc -b xhtml11 -d article -f web.conf $<

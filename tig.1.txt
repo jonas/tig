@@ -1,0 +1,129 @@
+TIG(1)
+======
+
+NAME
+----
+tig - text-mode interface for git
+
+SYNOPSIS
+--------
+[verse]
+tig [options]
+tig [options] [--] [git log options]
+tig [options] log  [git log options]
+tig [options] diff [git diff options]
+tig [options] show [git show options]
+tig [options] <    [git command output]
+
+DESCRIPTION
+-----------
+Browse changes in a git repository. Additionally, tig(1) can also act
+as a pager for output of various git commands.
+
+When browsing repositories, tig(1) uses the underlying git commands
+to present the user with various views, such as summarized commit log
+and showing the commit with the log message, diffstat, and the diff.
+
+Using tig(1) as a pager, it will display input from stdin and try
+to colorize it.
+
+OPTIONS
+-------
+
+-l::
+	Start up in log view using the internal log command.
+
+-d::
+	Start up in diff view using the internal diff command.
+
+-n[INTERVAL], --line-number[=INTERVAL]::
+	Prefix line numbers in log and diff view.
+	Optionally, with interval different than each line.
+
+-b[NSPACES], --tab-size[=NSPACES]::
+	Set the number of spaces tabs should be expanded to.
+
+-v, --version::
+	Show version and exit.
+
+-h, --help::
+	Show help message and exit.
+
+\--::
+	End of tig(1) options. Useful when specifying command
+	options for the main view. Example:
+
+		$ tig -- --since=1.month
+
+log [git log options]::
+	Open log view using the given git log options.
+
+diff [git diff options]::
+	Open diff view using the given git diff options.
+
+show [git show options]::
+	Open diff view using the given git show options.
+
+[git log options]::
+	tig(1) will stop the option parsing when the first
+	command line parameter not starting with "-" is
+	encountered. All options including this one will be
+	passed to git log when loading the main view.
+	This makes it possible to say:
+
+	$ tig tag-1.0..HEAD
+
+ENVIRONMENT VARIABLES
+---------------------
+TIG_LS_REMOTE::
+	Set command for retrieving all repository references. The command
+	should output data in the same format as git-ls-remote(1).
+
+TIG_DIFF_CMD::
+	The command used for the diff view. By default, git show is used
+	as a backend.
+
+TIG_LOG_CMD::
+	The command used for the log view. If you prefer to have both
+	author and committer shown in the log view be sure to pass
+	`--pretty=fuller` to git log.
+
+TIG_MAIN_CMD::
+	The command used for the main view. Note, you must always specify
+	the option: `--pretty=raw` since the main view parser expects to
+	read that format.
+
+FILES
+-----
+'~/.tigrc'::
+	User configuration file. See tigrc(5) for examples.
+
+'.git/config'::
+	Repository config file. Read on startup with the help of
+	git-repo-config(1).
+
+include::BUGS[]
+
+COPYRIGHT
+---------
+Copyright (c) 2006 Jonas Fonseca <fonseca@diku.dk>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+SEE ALSO
+--------
+- link:http://www.kernel.org/pub/software/scm/git/docs/[git(7)],
+- link:http://www.kernel.org/pub/software/scm/cogito/docs/[cogito(7)]
+
+Other git repository browsers:
+
+- gitk(1)
+- qgit(1)
+- gitview(1)
+
+Sites:
+
+include::SITES[]
