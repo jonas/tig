@@ -2471,9 +2471,8 @@ load_refs(void)
 static int
 read_repo_config_option(char *name, int namelen, char *value, int valuelen)
 {
-	if (!strcmp(name, "i18n.commitencoding")) {
+	if (!strcmp(name, "i18n.commitencoding"))
 		string_copy(opt_encoding, value);
-	}
 
 	return OK;
 }
