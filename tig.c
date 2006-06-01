@@ -1341,8 +1341,11 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		return;
 	}
 
-	if ((reload || strcmp(view->vid, view->id)) &&
-	    !begin_update(view)) {
+	if (view == VIEW(REQ_VIEW_HELP)) {
+		load_help_page();
+
+	} else if ((reload || strcmp(view->vid, view->id)) &&
+		   !begin_update(view)) {
 		report("Failed to load %s view", view->name);
 		return;
 	}
@@ -1381,9 +1384,6 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 
 		view->parent = prev;
 	}
-
-	if (view == VIEW(REQ_VIEW_HELP))
-		load_help_page();
 
 	if (view->pipe && view->lines == 0) {
 		/* Clear the old view and let the incremental updating refill
