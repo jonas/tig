@@ -317,6 +317,49 @@ static char opt_encoding[20]	= "";
 static bool opt_utf8		= TRUE;
 static FILE *opt_pipe		= NULL;
 
+enum option_type {
+	OPT_NONE,
+	OPT_INT,
+};
+
+static bool
+check_option(char *opt, char short_name, char *name, enum option_type type, ...)
+{
+	va_list args;
+	char *value = "";
+	int *number;
+
+	if (opt[0] != '-')
+		return FALSE;
+
+	if (opt[1] == '-') {
+		int namelen = strlen(name);
+
+		opt += 2;
+
+		if (strncmp(opt, name, namelen))
+			return FALSE;
+
+		if (opt[namelen] == '=')
+			value = opt + namelen + 1;
+
+	} else {
+		if (!short_name || opt[1] != short_name)
+			return FALSE;
+		value = opt + 2;
+	}
+
+	va_start(args, type);
+	if (type == OPT_INT) {
+		number = va_arg(args, int *);
+		if (isdigit(*value))
+			*number = atoi(value);
+	}
+	va_end(args);
+
+	return TRUE;
+}
+
 /* Returns the index of log or diff command or -1 to exit. */
 static bool
 parse_options(int argc, char *argv[])
@@ -336,48 +379,22 @@ parse_options(int argc, char *argv[])
 			continue;
 		}
 
-		if (!strncmp(opt, "-n", 2) ||
-		    !strncmp(opt, "--line-number", 13)) {
-			char *num = opt;
-
-			if (opt[1] == 'n') {
-				num = opt + 2;
-
-			} else if (opt[STRING_SIZE("--line-number")] == '=') {
-				num = opt + STRING_SIZE("--line-number=");
-			}
-
-			if (isdigit(*num))
-				opt_num_interval = atoi(num);
-
+		if (check_option(opt, 'n', "line-number", OPT_INT, &opt_num_interval)) {
 			opt_line_number = TRUE;
 			continue;
 		}
 
-		if (!strncmp(opt, "-b", 2) ||
-		    !strncmp(opt, "--tab-size", 10)) {
-			char *num = opt;
-
-			if (opt[1] == 'b') {
-				num = opt + 2;
-
-			} else if (opt[STRING_SIZE("--tab-size")] == '=') {
-				num = opt + STRING_SIZE("--tab-size=");
-			}
-
-			if (isdigit(*num))
-				opt_tab_size = MIN(atoi(num), TABSIZE);
+		if (check_option(opt, 'b', "tab-size", OPT_INT, &opt_tab_size)) {
+			opt_tab_size = MIN(opt_tab_size, TABSIZE);
 			continue;
 		}
 
-		if (!strcmp(opt, "-v") ||
-		    !strcmp(opt, "--version")) {
+		if (check_option(opt, 'v', "version", OPT_NONE)) {
 			printf("tig version %s\n", VERSION);
 			return FALSE;
 		}
 
-		if (!strcmp(opt, "-h") ||
-		    !strcmp(opt, "--help")) {
+		if (check_option(opt, 'h', "help", OPT_NONE)) {
 			printf(usage);
 			return FALSE;
 		}
