@@ -452,30 +452,6 @@ parse_options(int argc, char *argv[])
 }
 
 
-static struct int_map color_map[] = {
-#define COLOR_MAP(name) { #name, STRING_SIZE(#name), COLOR_##name }
-	COLOR_MAP(DEFAULT),
-	COLOR_MAP(BLACK),
-	COLOR_MAP(BLUE),
-	COLOR_MAP(CYAN),
-	COLOR_MAP(GREEN),
-	COLOR_MAP(MAGENTA),
-	COLOR_MAP(RED),
-	COLOR_MAP(WHITE),
-	COLOR_MAP(YELLOW),
-};
-
-static struct int_map attr_map[] = {
-#define ATTR_MAP(name) { #name, STRING_SIZE(#name), A_##name }
-	ATTR_MAP(NORMAL),
-	ATTR_MAP(BLINK),
-	ATTR_MAP(BOLD),
-	ATTR_MAP(DIM),
-	ATTR_MAP(REVERSE),
-	ATTR_MAP(STANDOUT),
-	ATTR_MAP(UNDERLINE),
-};
-
 #define LINE_INFO \
 LINE(DIFF_HEADER,  "diff --git ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_CHUNK,   "@@",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
@@ -620,8 +596,32 @@ struct line {
  * User config file handling.
  */
 
+static struct int_map color_map[] = {
+#define COLOR_MAP(name) { #name, STRING_SIZE(#name), COLOR_##name }
+	COLOR_MAP(DEFAULT),
+	COLOR_MAP(BLACK),
+	COLOR_MAP(BLUE),
+	COLOR_MAP(CYAN),
+	COLOR_MAP(GREEN),
+	COLOR_MAP(MAGENTA),
+	COLOR_MAP(RED),
+	COLOR_MAP(WHITE),
+	COLOR_MAP(YELLOW),
+};
+
 #define set_color(color, name, namelen) \
 	set_from_int_map(color_map, ARRAY_SIZE(color_map), color, name, namelen)
+
+static struct int_map attr_map[] = {
+#define ATTR_MAP(name) { #name, STRING_SIZE(#name), A_##name }
+	ATTR_MAP(NORMAL),
+	ATTR_MAP(BLINK),
+	ATTR_MAP(BOLD),
+	ATTR_MAP(DIM),
+	ATTR_MAP(REVERSE),
+	ATTR_MAP(STANDOUT),
+	ATTR_MAP(UNDERLINE),
+};
 
 #define set_attribute(attr, name, namelen) \
 	set_from_int_map(attr_map, ARRAY_SIZE(attr_map), attr, name, namelen)
