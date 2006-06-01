@@ -2420,25 +2420,22 @@ read_ref(char *id, int idlen, char *name, int namelen)
 {
 	struct ref *ref;
 	bool tag = FALSE;
-	bool tag_commit = FALSE;
-
-	/* Commits referenced by tags has "^{}" appended. */
-	if (name[namelen - 1] == '}') {
-		while (namelen > 0 && name[namelen] != '^')
-			namelen--;
-		if (namelen > 0)
-			tag_commit = TRUE;
-		name[namelen] = 0;
-	}
 
 	if (!strncmp(name, "refs/tags/", STRING_SIZE("refs/tags/"))) {
-		if (!tag_commit)
+		/* Commits referenced by tags has "^{}" appended. */
+		if (name[namelen - 1] != '}')
 			return OK;
-		name += STRING_SIZE("refs/tags/");
+
+		while (namelen > 0 && name[namelen] != '^')
+			namelen--;
+
 		tag = TRUE;
+		namelen -= STRING_SIZE("refs/tags/");
+		name	+= STRING_SIZE("refs/tags/");
 
 	} else if (!strncmp(name, "refs/heads/", STRING_SIZE("refs/heads/"))) {
-		name += STRING_SIZE("refs/heads/");
+		namelen -= STRING_SIZE("refs/heads/");
+		name	+= STRING_SIZE("refs/heads/");
 
 	} else if (!strcmp(name, "HEAD")) {
 		return OK;
@@ -2449,10 +2446,12 @@ read_ref(char *id, int idlen, char *name, int namelen)
 		return ERR;
 
 	ref = &refs[refs_size++];
-	ref->name = strdup(name);
+	ref->name = malloc(namelen + 1);
 	if (!ref->name)
 		return ERR;
 
+	strncpy(ref->name, name, namelen);
+	ref->name[namelen] = 0;
 	ref->tag = tag;
 	string_copy(ref->id, id);
 
