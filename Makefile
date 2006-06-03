@@ -37,6 +37,9 @@ clean:
 spell-check:
 	aspell --lang=en --check tig.1.txt tigrc.5.txt manual.txt
 
+strip: all
+	strip $(PROGS)
+
 .PHONY: all all-debug doc install install-doc clean spell-check
 
 tig: tig.c
