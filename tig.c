@@ -47,6 +47,7 @@ static void load_help_page(void);
 
 #define SIZEOF_REF	256	/* Size of symbolic or SHA1 ID. */
 #define SIZEOF_CMD	1024	/* Size of command buffer. */
+#define SIZEOF_REVGRAPH	19	/* Size of revision ancestry graphics. */
 
 /* This color name can be used to refer to the default term colors. */
 #define COLOR_DEFAULT	(-1)
@@ -255,7 +256,8 @@ sq_quote(char buf[SIZEOF_CMD], size_t bufsize, const char *src)
 	REQ_(SCREEN_RESIZE,	"Resize the screen"), \
 	REQ_(SHOW_VERSION,	"Show version information"), \
 	REQ_(STOP_LOADING,	"Stop all loading views"), \
-	REQ_(TOGGLE_LINENO,	"Toggle line numbers"),
+	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
+	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"),
 
 
 /* User action requests. */
@@ -309,6 +311,7 @@ VERSION " (" __DATE__ ")\n"
 
 /* Option and state variables. */
 static bool opt_line_number	= FALSE;
+static bool opt_rev_graph	= TRUE;
 static int opt_num_interval	= NUMBER_INTERVAL;
 static int opt_tab_size		= TABSIZE;
 static enum request opt_request = REQ_VIEW_MAIN;
@@ -452,6 +455,10 @@ parse_options(int argc, char *argv[])
 }
 
 
+/*
+ * Line-oriented content detection.
+ */
+
 #define LINE_INFO \
 LINE(DIFF_HEADER,  "diff --git ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_CHUNK,   "@@",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
@@ -491,11 +498,6 @@ LINE(MAIN_COMMIT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(MAIN_DELIM,   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
-
-
-/*
- * Line-oriented content detection.
- */
 
 enum line_type {
 #define LINE(type, line, fg, bg, attr) \
@@ -1482,6 +1484,11 @@ view_driver(struct view *view, enum request request)
 		redraw_display();
 		break;
 
+	case REQ_TOGGLE_REV_GRAPH:
+		opt_rev_graph = !opt_rev_graph;
+		redraw_display();
+		break;
+
 	case REQ_PROMPT:
 		/* Always reload^Wrerun commands from the prompt. */
 		open_view(view, opt_request, OPEN_RELOAD);
@@ -1713,11 +1720,13 @@ static struct view_ops pager_ops = {
  */
 
 struct commit {
-	char id[41];		/* SHA1 ID. */
-	char title[75];		/* The first line of the commit message. */
-	char author[75];	/* The author of the commit. */
-	struct tm time;		/* Date from the author ident. */
-	struct ref **refs;	/* Repository references; tags & branch heads. */
+	char id[41];			/* SHA1 ID. */
+	char title[75];			/* First line of the commit message. */
+	char author[75];		/* Author of the commit. */
+	struct tm time;			/* Date from the author ident. */
+	struct ref **refs;		/* Repository references. */
+	chtype graph[SIZEOF_REVGRAPH];	/* Ancestry chain graphics. */
+	size_t graph_size;		/* The width of the graph array. */
 };
 
 static bool
@@ -1780,9 +1789,19 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (type != LINE_CURSOR)
 		wattrset(view->win, A_NORMAL);
 
-	mvwaddch(view->win, lineno, col, ACS_LTEE);
-	wmove(view->win, lineno, col + 2);
-	col += 2;
+	if (opt_rev_graph && commit->graph_size) {
+		size_t i;
+
+		wmove(view->win, lineno, col);
+		/* Using waddch() instead of waddnstr() ensures that
+		 * they'll be rendered correctly for the cursor line. */
+		for (i = 0; i < commit->graph_size; i++)
+			waddch(view->win, commit->graph[i]);
+
+		col += commit->graph_size + 1;
+	}
+
+	wmove(view->win, lineno, col);
 
 	if (commit->refs) {
 		size_t i = 0;
@@ -1838,6 +1857,7 @@ main_read(struct view *view, char *line)
 		view->line[view->lines++].data = commit;
 		string_copy(commit->id, line);
 		commit->refs = get_refs(commit->id);
+		commit->graph[commit->graph_size++] = ACS_LTEE;
 		break;
 
 	case LINE_AUTHOR:
@@ -1972,6 +1992,7 @@ static struct keymap keymap[] = {
 	{ 'v',		REQ_SHOW_VERSION },
 	{ 'r',		REQ_SCREEN_REDRAW },
 	{ 'n',		REQ_TOGGLE_LINENO },
+	{ 'g',		REQ_TOGGLE_REV_GRAPH},
 	{ ':',		REQ_PROMPT },
 
 	/* wgetch() with nodelay() enabled returns ERR when there's no input. */

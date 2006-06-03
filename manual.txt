@@ -250,6 +250,8 @@ v::
 	Show version.
 n::
 	Toggle line numbers on/off.
+g::
+	Toggle revision graph visualization on/off.
 ':'::
 	Open prompt. This allows you to specify what git command
 	to run. Example:
