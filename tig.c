@@ -867,8 +867,9 @@ update_view_title(struct view *view)
 		wprintw(view->title, "[%s]", view->name);
 
 	if (view->lines || view->pipe) {
+		unsigned int view_lines = view->offset + view->height;
 		unsigned int lines = view->lines
-				   ? (view->lineno + 1) * 100 / view->lines
+				   ? MIN(view_lines, view->lines) * 100 / view->lines
 				   : 0;
 
 		wprintw(view->title, " - %s %d of %d (%d%%)",
