@@ -1,4 +1,8 @@
-PREFIX	= $(HOME)
+prefix	= $(HOME)
+bindir= $(prefix)/bin
+mandir = $(prefix)/man
+# DESTDIR=
+
 LDLIBS  = -lcurses
 CFLAGS	= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror
@@ -19,14 +23,15 @@ doc: $(DOCS)
 
 install: all
 	for prog in $(PROGS); do \
-		install $$prog $(PREFIX)/bin; \
+		install $$prog $(DESTDIR)$(bindir); \
 	done
 
 install-doc: doc
+	mkdir -p $(DESTDIR)$(mandir)/man1 $(DESTDIR)$(mandir)/man5
 	for doc in $(DOCS); do \
 		case "$$doc" in \
-		*.1) install $$doc $(PREFIX)/man/man1 ;; \
-		*.5) install $$doc $(PREFIX)/man/man5 ;; \
+		*.1) install $$doc $(DESTDIR)$(mandir)/man1 ;; \
+		*.5) install $$doc $(DESTDIR)$(mandir)/man5 ;; \
 		esac \
 	done
 
