@@ -32,7 +32,13 @@
 
 #include <curses.h>
 
-static void die(const char *err, ...);
+#if __GNUC__ >= 3
+#define __NORETURN __attribute__((__noreturn__))
+#else
+#define __NORETURN
+#endif
+
+static void __NORETURN die(const char *err, ...);
 static void report(const char *msg, ...);
 static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, int, char *, int));
 static void set_nonblocking_input(bool loading);
@@ -2549,12 +2555,6 @@ read_properties(FILE *pipe, const char *separators,
 /*
  * Main
  */
-
-#if __GNUC__ >= 3
-#define __NORETURN __attribute__((__noreturn__))
-#else
-#define __NORETURN
-#endif
 
 static void __NORETURN
 quit(int sig)
