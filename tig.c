@@ -10,36 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-/**
- * TIG(1)
- * ======
- *
- * NAME
- * ----
- * tig - text-mode interface for git
- *
- * SYNOPSIS
- * --------
- * [verse]
- * tig [options]
- * tig [options] [--] [git log options]
- * tig [options] log  [git log options]
- * tig [options] diff [git diff options]
- * tig [options] show [git show options]
- * tig [options] <    [git command output]
- *
- * DESCRIPTION
- * -----------
- * Browse changes in a git repository. Additionally, tig(1) can also act
- * as a pager for output of various git commands.
- *
- * When browsing repositories, tig(1) uses the underlying git commands
- * to present the user with various views, such as summarized commit log
- * and showing the commit with the log message, diffstat, and the diff.
- *
- * Using tig(1) as a pager, it will display input from stdin and try
- * to colorize it.
- **/
 
 #ifndef	VERSION
 #define VERSION	"tig-0.3"
@@ -67,6 +37,7 @@ static void report(const char *msg, ...);
 static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, int, char *, int));
 static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed);
+static void load_help_page(void);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -76,11 +47,10 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 
 #define SIZEOF_REF	256	/* Size of symbolic or SHA1 ID. */
 #define SIZEOF_CMD	1024	/* Size of command buffer. */
+#define SIZEOF_REVGRAPH	19	/* Size of revision ancestry graphics. */
 
 /* This color name can be used to refer to the default term colors. */
 #define COLOR_DEFAULT	(-1)
-
-#define TIG_HELP	"(d)iff, (l)og, (m)ain, (q)uit, (h)elp"
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
@@ -95,50 +65,27 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 
 #define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
 
+#define TIG_LS_REMOTE \
+	"git ls-remote . 2>/dev/null"
+
+#define TIG_DIFF_CMD \
+	"git show --patch-with-stat --find-copies-harder -B -C %s"
+
+#define TIG_LOG_CMD	\
+	"git log --cc --stat -n100 %s"
+
+#define TIG_MAIN_CMD \
+	"git log --topo-order --stat --pretty=raw %s"
+
+/* XXX: Needs to be defined to the empty string. */
+#define TIG_HELP_CMD	""
+#define TIG_PAGER_CMD	""
+
 /* Some ascii-shorthands fitted into the ncurses namespace. */
 #define KEY_TAB		'\t'
 #define KEY_RETURN	'\r'
 #define KEY_ESC		27
 
-
-/* User action requests. */
-enum request {
-	/* Offset all requests to avoid conflicts with ncurses getch values. */
-	REQ_OFFSET = KEY_MAX + 1,
-
-	/* XXX: Keep the view request first and in sync with views[]. */
-	REQ_VIEW_MAIN,
-	REQ_VIEW_DIFF,
-	REQ_VIEW_LOG,
-	REQ_VIEW_HELP,
-	REQ_VIEW_PAGER,
-
-	REQ_ENTER,
-	REQ_QUIT,
-	REQ_PROMPT,
-	REQ_SCREEN_REDRAW,
-	REQ_SCREEN_RESIZE,
-	REQ_SCREEN_UPDATE,
-	REQ_SHOW_VERSION,
-	REQ_STOP_LOADING,
-	REQ_TOGGLE_LINE_NUMBERS,
-	REQ_VIEW_NEXT,
-	REQ_VIEW_CLOSE,
-	REQ_NEXT,
-	REQ_PREVIOUS,
-
-	REQ_MOVE_UP,
-	REQ_MOVE_DOWN,
-	REQ_MOVE_PAGE_UP,
-	REQ_MOVE_PAGE_DOWN,
-	REQ_MOVE_FIRST_LINE,
-	REQ_MOVE_LAST_LINE,
-
-	REQ_SCROLL_LINE_UP,
-	REQ_SCROLL_LINE_DOWN,
-	REQ_SCROLL_PAGE_UP,
-	REQ_SCROLL_PAGE_DOWN,
-};
 
 struct ref {
 	char *name;		/* Ref name; tag or head names are shortened. */
@@ -204,6 +151,27 @@ chomp_string(char *name)
 	return name;
 }
 
+static bool
+string_nformat(char *buf, size_t bufsize, int *bufpos, const char *fmt, ...)
+{
+	va_list args;
+	int pos = bufpos ? *bufpos : 0;
+
+	va_start(args, fmt);
+	pos += vsnprintf(buf + pos, bufsize - pos, fmt, args);
+	va_end(args);
+
+	if (bufpos)
+		*bufpos = pos;
+
+	return pos >= bufsize ? FALSE : TRUE;
+}
+
+#define string_format(buf, fmt, args...) \
+	string_nformat(buf, sizeof(buf), NULL, fmt, args)
+
+#define string_format_from(buf, from, fmt, args...) \
+	string_nformat(buf, sizeof(buf), from, fmt, args)
 
 /* Shell quoting
  *
@@ -246,10 +214,81 @@ sq_quote(char buf[SIZEOF_CMD], size_t bufsize, const char *src)
 }
 
 
-/**
- * OPTIONS
- * -------
- **/
+/*
+ * User requests
+ */
+
+#define REQ_INFO \
+	/* XXX: Keep the view request first and in sync with views[]. */ \
+	REQ_GROUP("View switching") \
+	REQ_(VIEW_MAIN,		"Show main view"), \
+	REQ_(VIEW_DIFF,		"Show diff view"), \
+	REQ_(VIEW_LOG,		"Show log view"), \
+	REQ_(VIEW_HELP,		"Show help page"), \
+	REQ_(VIEW_PAGER,	"Show pager view"), \
+	\
+	REQ_GROUP("View manipulation") \
+	REQ_(ENTER,		"Enter current line and scroll"), \
+	REQ_(NEXT,		"Move to next"), \
+	REQ_(PREVIOUS,		"Move to previous"), \
+	REQ_(VIEW_NEXT,		"Move focus to next view"), \
+	REQ_(VIEW_CLOSE,	"Close the current view"), \
+	REQ_(QUIT,		"Close all views and quit"), \
+	\
+	REQ_GROUP("Cursor navigation") \
+	REQ_(MOVE_UP,		"Move cursor one line up"), \
+	REQ_(MOVE_DOWN,		"Move cursor one line down"), \
+	REQ_(MOVE_PAGE_DOWN,	"Move cursor one page down"), \
+	REQ_(MOVE_PAGE_UP,	"Move cursor one page up"), \
+	REQ_(MOVE_FIRST_LINE,	"Move cursor to first line"), \
+	REQ_(MOVE_LAST_LINE,	"Move cursor to last line"), \
+	\
+	REQ_GROUP("Scrolling") \
+	REQ_(SCROLL_LINE_UP,	"Scroll one line up"), \
+	REQ_(SCROLL_LINE_DOWN,	"Scroll one line down"), \
+	REQ_(SCROLL_PAGE_UP,	"Scroll one page up"), \
+	REQ_(SCROLL_PAGE_DOWN,	"Scroll one page down"), \
+	\
+	REQ_GROUP("Misc") \
+	REQ_(PROMPT,		"Bring up the prompt"), \
+	REQ_(SCREEN_UPDATE,	"Update the screen"), \
+	REQ_(SCREEN_REDRAW,	"Redraw the screen"), \
+	REQ_(SCREEN_RESIZE,	"Resize the screen"), \
+	REQ_(SHOW_VERSION,	"Show version information"), \
+	REQ_(STOP_LOADING,	"Stop all loading views"), \
+	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
+	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"),
+
+
+/* User action requests. */
+enum request {
+#define REQ_GROUP(help)
+#define REQ_(req, help) REQ_##req
+
+	/* Offset all requests to avoid conflicts with ncurses getch values. */
+	REQ_OFFSET = KEY_MAX + 1,
+	REQ_INFO
+
+#undef	REQ_GROUP
+#undef	REQ_
+};
+
+struct request_info {
+	enum request request;
+	char *help;
+};
+
+static struct request_info req_info[] = {
+#define REQ_GROUP(help)	{ 0, (help) },
+#define REQ_(req, help)	{ REQ_##req, (help) }
+	REQ_INFO
+#undef	REQ_GROUP
+#undef	REQ_
+};
+
+/*
+ * Options
+ */
 
 static const char usage[] =
 VERSION " (" __DATE__ ")\n"
@@ -272,6 +311,7 @@ VERSION " (" __DATE__ ")\n"
 
 /* Option and state variables. */
 static bool opt_line_number	= FALSE;
+static bool opt_rev_graph	= TRUE;
 static int opt_num_interval	= NUMBER_INTERVAL;
 static int opt_tab_size		= TABSIZE;
 static enum request opt_request = REQ_VIEW_MAIN;
@@ -279,6 +319,49 @@ static char opt_cmd[SIZEOF_CMD]	= "";
 static char opt_encoding[20]	= "";
 static bool opt_utf8		= TRUE;
 static FILE *opt_pipe		= NULL;
+
+enum option_type {
+	OPT_NONE,
+	OPT_INT,
+};
+
+static bool
+check_option(char *opt, char short_name, char *name, enum option_type type, ...)
+{
+	va_list args;
+	char *value = "";
+	int *number;
+
+	if (opt[0] != '-')
+		return FALSE;
+
+	if (opt[1] == '-') {
+		int namelen = strlen(name);
+
+		opt += 2;
+
+		if (strncmp(opt, name, namelen))
+			return FALSE;
+
+		if (opt[namelen] == '=')
+			value = opt + namelen + 1;
+
+	} else {
+		if (!short_name || opt[1] != short_name)
+			return FALSE;
+		value = opt + 2;
+	}
+
+	va_start(args, type);
+	if (type == OPT_INT) {
+		number = va_arg(args, int *);
+		if (isdigit(*value))
+			*number = atoi(value);
+	}
+	va_end(args);
+
+	return TRUE;
+}
 
 /* Returns the index of log or diff command or -1 to exit. */
 static bool
@@ -289,109 +372,41 @@ parse_options(int argc, char *argv[])
 	for (i = 1; i < argc; i++) {
 		char *opt = argv[i];
 
-		/**
-		 * -l::
-		 *	Start up in log view using the internal log command.
-		 **/
 		if (!strcmp(opt, "-l")) {
 			opt_request = REQ_VIEW_LOG;
 			continue;
 		}
 
-		/**
-		 * -d::
-		 *	Start up in diff view using the internal diff command.
-		 **/
 		if (!strcmp(opt, "-d")) {
 			opt_request = REQ_VIEW_DIFF;
 			continue;
 		}
 
-		/**
-		 * -n[INTERVAL], --line-number[=INTERVAL]::
-		 *	Prefix line numbers in log and diff view.
-		 *	Optionally, with interval different than each line.
-		 **/
-		if (!strncmp(opt, "-n", 2) ||
-		    !strncmp(opt, "--line-number", 13)) {
-			char *num = opt;
-
-			if (opt[1] == 'n') {
-				num = opt + 2;
-
-			} else if (opt[STRING_SIZE("--line-number")] == '=') {
-				num = opt + STRING_SIZE("--line-number=");
-			}
-
-			if (isdigit(*num))
-				opt_num_interval = atoi(num);
-
+		if (check_option(opt, 'n', "line-number", OPT_INT, &opt_num_interval)) {
 			opt_line_number = TRUE;
 			continue;
 		}
 
-		/**
-		 * -b[NSPACES], --tab-size[=NSPACES]::
-		 *	Set the number of spaces tabs should be expanded to.
-		 **/
-		if (!strncmp(opt, "-b", 2) ||
-		    !strncmp(opt, "--tab-size", 10)) {
-			char *num = opt;
-
-			if (opt[1] == 'b') {
-				num = opt + 2;
-
-			} else if (opt[STRING_SIZE("--tab-size")] == '=') {
-				num = opt + STRING_SIZE("--tab-size=");
-			}
-
-			if (isdigit(*num))
-				opt_tab_size = MIN(atoi(num), TABSIZE);
+		if (check_option(opt, 'b', "tab-size", OPT_INT, &opt_tab_size)) {
+			opt_tab_size = MIN(opt_tab_size, TABSIZE);
 			continue;
 		}
 
-		/**
-		 * -v, --version::
-		 *	Show version and exit.
-		 **/
-		if (!strcmp(opt, "-v") ||
-		    !strcmp(opt, "--version")) {
+		if (check_option(opt, 'v', "version", OPT_NONE)) {
 			printf("tig version %s\n", VERSION);
 			return FALSE;
 		}
 
-		/**
-		 * -h, --help::
-		 *	Show help message and exit.
-		 **/
-		if (!strcmp(opt, "-h") ||
-		    !strcmp(opt, "--help")) {
+		if (check_option(opt, 'h', "help", OPT_NONE)) {
 			printf(usage);
 			return FALSE;
 		}
 
-		/**
-		 * \--::
-		 *	End of tig(1) options. Useful when specifying command
-		 *	options for the main view. Example:
-		 *
-		 *		$ tig -- --since=1.month
-		 **/
 		if (!strcmp(opt, "--")) {
 			i++;
 			break;
 		}
 
-		/**
-		 * log [git log options]::
-		 *	Open log view using the given git log options.
-		 *
-		 * diff [git diff options]::
-		 *	Open diff view using the given git diff options.
-		 *
-		 * show [git show options]::
-		 *	Open diff view using the given git show options.
-		 **/
 		if (!strcmp(opt, "log") ||
 		    !strcmp(opt, "diff") ||
 		    !strcmp(opt, "show")) {
@@ -400,20 +415,10 @@ parse_options(int argc, char *argv[])
 			break;
 		}
 
-		/**
-		 * [git log options]::
-		 *	tig(1) will stop the option parsing when the first
-		 *	command line parameter not starting with "-" is
-		 *	encountered. All options including this one will be
-		 *	passed to git log when loading the main view.
-		 *	This makes it possible to say:
-		 *
-		 *	$ tig tag-1.0..HEAD
-		 **/
 		if (opt[0] && opt[0] != '-')
 			break;
 
-		die("unknown command '%s'", opt);
+		die("unknown option '%s'\n\n%s", opt, usage);
 	}
 
 	if (!isatty(STDIN_FILENO)) {
@@ -450,85 +455,9 @@ parse_options(int argc, char *argv[])
 }
 
 
-/**
- * ENVIRONMENT VARIABLES
- * ---------------------
- * TIG_LS_REMOTE::
- *	Set command for retrieving all repository references. The command
- *	should output data in the same format as git-ls-remote(1).
- **/
-
-#define TIG_LS_REMOTE \
-	"git ls-remote . 2>/dev/null"
-
-/**
- * TIG_DIFF_CMD::
- *	The command used for the diff view. By default, git show is used
- *	as a backend.
- *
- * TIG_LOG_CMD::
- *	The command used for the log view. If you prefer to have both
- *	author and committer shown in the log view be sure to pass
- *	`--pretty=fuller` to git log.
- *
- * TIG_MAIN_CMD::
- *	The command used for the main view. Note, you must always specify
- *	the option: `--pretty=raw` since the main view parser expects to
- *	read that format.
- **/
-
-#define TIG_DIFF_CMD \
-	"git show --patch-with-stat --find-copies-harder -B -C %s"
-
-#define TIG_LOG_CMD	\
-	"git log --cc --stat -n100 %s"
-
-#define TIG_MAIN_CMD \
-	"git log --topo-order --stat --pretty=raw %s"
-
-/* ... silently ignore that the following are also exported. */
-
-#define TIG_HELP_CMD \
-	"man tig 2>/dev/null"
-
-#define TIG_PAGER_CMD \
-	""
-
-
-/**
- * FILES
- * -----
- * '~/.tigrc'::
- *	User configuration file. See tigrc(5) for examples.
- *
- * '.git/config'::
- *	Repository config file. Read on startup with the help of
- *	git-repo-config(1).
- **/
-
-static struct int_map color_map[] = {
-#define COLOR_MAP(name) { #name, STRING_SIZE(#name), COLOR_##name }
-	COLOR_MAP(DEFAULT),
-	COLOR_MAP(BLACK),
-	COLOR_MAP(BLUE),
-	COLOR_MAP(CYAN),
-	COLOR_MAP(GREEN),
-	COLOR_MAP(MAGENTA),
-	COLOR_MAP(RED),
-	COLOR_MAP(WHITE),
-	COLOR_MAP(YELLOW),
-};
-
-static struct int_map attr_map[] = {
-#define ATTR_MAP(name) { #name, STRING_SIZE(#name), A_##name }
-	ATTR_MAP(NORMAL),
-	ATTR_MAP(BLINK),
-	ATTR_MAP(BOLD),
-	ATTR_MAP(DIM),
-	ATTR_MAP(REVERSE),
-	ATTR_MAP(STANDOUT),
-	ATTR_MAP(UNDERLINE),
-};
+/*
+ * Line-oriented content detection.
+ */
 
 #define LINE_INFO \
 LINE(DIFF_HEADER,  "diff --git ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
@@ -551,6 +480,7 @@ LINE(PP_MERGE,	   "Merge: ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(PP_DATE,	   "Date:   ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(PP_ADATE,	   "AuthorDate: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(PP_CDATE,	   "CommitDate: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(PP_REFS,	   "Refs: ",		COLOR_RED,	COLOR_DEFAULT,	0), \
 LINE(COMMIT,	   "commit ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(PARENT,	   "parent ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(TREE,	   "tree ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
@@ -568,11 +498,6 @@ LINE(MAIN_COMMIT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(MAIN_DELIM,   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
-
-
-/*
- * Line-oriented content detection.
- */
 
 enum line_type {
 #define LINE(type, line, fg, bg, attr) \
@@ -673,8 +598,32 @@ struct line {
  * User config file handling.
  */
 
+static struct int_map color_map[] = {
+#define COLOR_MAP(name) { #name, STRING_SIZE(#name), COLOR_##name }
+	COLOR_MAP(DEFAULT),
+	COLOR_MAP(BLACK),
+	COLOR_MAP(BLUE),
+	COLOR_MAP(CYAN),
+	COLOR_MAP(GREEN),
+	COLOR_MAP(MAGENTA),
+	COLOR_MAP(RED),
+	COLOR_MAP(WHITE),
+	COLOR_MAP(YELLOW),
+};
+
 #define set_color(color, name, namelen) \
 	set_from_int_map(color_map, ARRAY_SIZE(color_map), color, name, namelen)
+
+static struct int_map attr_map[] = {
+#define ATTR_MAP(name) { #name, STRING_SIZE(#name), A_##name }
+	ATTR_MAP(NORMAL),
+	ATTR_MAP(BLINK),
+	ATTR_MAP(BOLD),
+	ATTR_MAP(DIM),
+	ATTR_MAP(REVERSE),
+	ATTR_MAP(STANDOUT),
+	ATTR_MAP(UNDERLINE),
+};
 
 #define set_attribute(attr, name, namelen) \
 	set_from_int_map(attr_map, ARRAY_SIZE(attr_map), attr, name, namelen)
@@ -767,8 +716,7 @@ load_options(void)
 	config_lineno = 0;
 	config_errors = FALSE;
 
-	if (!home ||
-	    snprintf(buf, sizeof(buf), "%s/.tigrc", home) >= sizeof(buf))
+	if (!home || !string_format(buf, "%s/.tigrc", home))
 		return ERR;
 
 	/* It's ok that the file doesn't exist. */
@@ -831,6 +779,7 @@ struct view {
 	/* Buffering */
 	unsigned long lines;	/* Total number of lines */
 	struct line *line;	/* Line index */
+	unsigned long line_size;/* Total number of allocated lines */
 	unsigned int digits;	/* Number of digits in the lines member. */
 
 	/* Loading */
@@ -844,7 +793,7 @@ struct view_ops {
 	/* Draw one line; @lineno must be < view->height. */
 	bool (*draw)(struct view *view, struct line *line, unsigned int lineno);
 	/* Read one line; updates view->line. */
-	bool (*read)(struct view *view, struct line *prev, char *data);
+	bool (*read)(struct view *view, char *data);
 	/* Depending on view, change display based on current line. */
 	bool (*enter)(struct view *view, struct line *line);
 };
@@ -918,8 +867,9 @@ update_view_title(struct view *view)
 		wprintw(view->title, "[%s]", view->name);
 
 	if (view->lines || view->pipe) {
+		unsigned int view_lines = view->offset + view->height;
 		unsigned int lines = view->lines
-				   ? (view->lineno + 1) * 100 / view->lines
+				   ? MIN(view_lines, view->lines) * 100 / view->lines
 				   : 0;
 
 		wprintw(view->title, " - %s %d of %d (%d%%)",
@@ -1239,8 +1189,7 @@ begin_update(struct view *view)
 	} else {
 		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
 
-		if (snprintf(view->cmd, sizeof(view->cmd), format,
-			     id, id, id, id, id) >= sizeof(view->cmd))
+		if (!string_format(view->cmd, format, id, id, id, id, id))
 			return FALSE;
 	}
 
@@ -1278,12 +1227,24 @@ begin_update(struct view *view)
 	return TRUE;
 }
 
+static struct line *
+realloc_lines(struct view *view, size_t line_size)
+{
+	struct line *tmp = realloc(view->line, sizeof(*view->line) * line_size);
+
+	if (!tmp)
+		return NULL;
+
+	view->line = tmp;
+	view->line_size = line_size;
+	return view->line;
+}
+
 static bool
 update_view(struct view *view)
 {
 	char buffer[BUFSIZ];
 	char *line;
-	struct line *tmp;
 	/* The number of lines to read. If too low it will cause too much
 	 * redrawing (and possible flickering), if too high responsiveness
 	 * will suffer. */
@@ -1297,23 +1258,16 @@ update_view(struct view *view)
 	if (view->offset + view->height >= view->lines)
 		redraw_from = view->lines - view->offset;
 
-	tmp = realloc(view->line, sizeof(*view->line) * (view->lines + lines));
-	if (!tmp)
+	if (!realloc_lines(view, view->lines + lines))
 		goto alloc_error;
-
-	view->line = tmp;
 
 	while ((line = fgets(buffer, sizeof(buffer), view->pipe))) {
 		int linelen = strlen(line);
 
-		struct line *prev = view->lines
-				  ? &view->line[view->lines - 1]
-				  : NULL;
-
 		if (linelen)
 			line[linelen - 1] = 0;
 
-		if (!view->ops->read(view, prev, line))
+		if (!view->ops->read(view, line))
 			goto alloc_error;
 
 		if (lines-- == 1)
@@ -1354,20 +1308,6 @@ update_view(struct view *view)
 		goto end;
 
 	} else if (feof(view->pipe)) {
-		if (view == VIEW(REQ_VIEW_HELP)) {
-			const char *msg = TIG_HELP;
-
-			if (view->lines == 0) {
-				/* Slightly ugly, but abusing view->ref keeps
-				 * the error message. */
-				string_copy(view->ref, "No help available");
-				msg = "The tig(1) manpage is not installed";
-			}
-
-			report("%s", msg);
-			goto end;
-		}
-
 		report("");
 		goto end;
 	}
@@ -1404,16 +1344,19 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		return;
 	}
 
-	if ((reload || strcmp(view->vid, view->id)) &&
-	    !begin_update(view)) {
+	if (view == VIEW(REQ_VIEW_HELP)) {
+		load_help_page();
+
+	} else if ((reload || strcmp(view->vid, view->id)) &&
+		   !begin_update(view)) {
 		report("Failed to load %s view", view->name);
 		return;
 	}
 
 	if (split) {
-		display[current_view + 1] = view;
+		display[1] = view;
 		if (!backgrounded)
-			current_view++;
+			current_view = 1;
 	} else {
 		/* Maximize the current view. */
 		memset(display, 0, sizeof(display));
@@ -1452,10 +1395,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		report("");
 	} else {
 		redraw_view(view);
-		if (view == VIEW(REQ_VIEW_HELP))
-			report("%s", TIG_HELP);
-		else
-			report("");
+		report("");
 	}
 
 	/* If the view is backgrounded the above calls to report()
@@ -1540,8 +1480,13 @@ view_driver(struct view *view, enum request request)
 		report("");
 		break;
 	}
-	case REQ_TOGGLE_LINE_NUMBERS:
+	case REQ_TOGGLE_LINENO:
 		opt_line_number = !opt_line_number;
+		redraw_display();
+		break;
+
+	case REQ_TOGGLE_REV_GRAPH:
+		opt_rev_graph = !opt_rev_graph;
 		redraw_display();
 		break;
 
@@ -1681,21 +1626,59 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 	return TRUE;
 }
 
-static bool
-pager_read(struct view *view, struct line *prev, char *line)
+static void
+add_pager_refs(struct view *view, struct line *line)
 {
-	/* Compress empty lines in the help view. */
-	if (view == VIEW(REQ_VIEW_HELP) &&
-	    !*line && prev && !*((char *) prev->data))
-		return TRUE;
+	char buf[1024];
+	char *data = line->data;
+	struct ref **refs;
+	int bufpos = 0, refpos = 0;
+	const char *sep = "Refs: ";
 
-	view->line[view->lines].data = strdup(line);
-	if (!view->line[view->lines].data)
+	assert(line->type == LINE_COMMIT);
+
+	refs = get_refs(data + STRING_SIZE("commit "));
+	if (!refs)
+		return;
+
+	do {
+		struct ref *ref = refs[refpos];
+		char *fmt = ref->tag ? "%s[%s]" : "%s%s";
+
+		if (!string_format_from(buf, &bufpos, fmt, sep, ref->name))
+			return;
+		sep = ", ";
+	} while (refs[refpos++]->next);
+
+	if (!realloc_lines(view, view->line_size + 1))
+		return;
+
+	line = &view->line[view->lines];
+	line->data = strdup(buf);
+	if (!line->data)
+		return;
+
+	line->type = LINE_PP_REFS;
+	view->lines++;
+}
+
+static bool
+pager_read(struct view *view, char *data)
+{
+	struct line *line = &view->line[view->lines];
+
+	line->data = strdup(data);
+	if (!line->data)
 		return FALSE;
 
-	view->line[view->lines].type = get_line_type(line);
-
+	line->type = get_line_type(line->data);
 	view->lines++;
+
+	if (line->type == LINE_COMMIT &&
+	    (view == VIEW(REQ_VIEW_DIFF) ||
+	     view == VIEW(REQ_VIEW_LOG)))
+		add_pager_refs(view, line);
+
 	return TRUE;
 }
 
@@ -1738,11 +1721,13 @@ static struct view_ops pager_ops = {
  */
 
 struct commit {
-	char id[41];		/* SHA1 ID. */
-	char title[75];		/* The first line of the commit message. */
-	char author[75];	/* The author of the commit. */
-	struct tm time;		/* Date from the author ident. */
-	struct ref **refs;	/* Repository references; tags & branch heads. */
+	char id[41];			/* SHA1 ID. */
+	char title[75];			/* First line of the commit message. */
+	char author[75];		/* Author of the commit. */
+	struct tm time;			/* Date from the author ident. */
+	struct ref **refs;		/* Repository references. */
+	chtype graph[SIZEOF_REVGRAPH];	/* Ancestry chain graphics. */
+	size_t graph_size;		/* The width of the graph array. */
 };
 
 static bool
@@ -1805,9 +1790,19 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (type != LINE_CURSOR)
 		wattrset(view->win, A_NORMAL);
 
-	mvwaddch(view->win, lineno, col, ACS_LTEE);
-	wmove(view->win, lineno, col + 2);
-	col += 2;
+	if (opt_rev_graph && commit->graph_size) {
+		size_t i;
+
+		wmove(view->win, lineno, col);
+		/* Using waddch() instead of waddnstr() ensures that
+		 * they'll be rendered correctly for the cursor line. */
+		for (i = 0; i < commit->graph_size; i++)
+			waddch(view->win, commit->graph[i]);
+
+		col += commit->graph_size + 1;
+	}
+
+	wmove(view->win, lineno, col);
 
 	if (commit->refs) {
 		size_t i = 0;
@@ -1846,10 +1841,11 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 
 /* Reads git log --pretty=raw output and parses it into the commit struct. */
 static bool
-main_read(struct view *view, struct line *prev, char *line)
+main_read(struct view *view, char *line)
 {
 	enum line_type type = get_line_type(line);
-	struct commit *commit;
+	struct commit *commit = view->lines
+			      ? view->line[view->lines - 1].data : NULL;
 
 	switch (type) {
 	case LINE_COMMIT:
@@ -1862,6 +1858,7 @@ main_read(struct view *view, struct line *prev, char *line)
 		view->line[view->lines++].data = commit;
 		string_copy(commit->id, line);
 		commit->refs = get_refs(commit->id);
+		commit->graph[commit->graph_size++] = ACS_LTEE;
 		break;
 
 	case LINE_AUTHOR:
@@ -1869,10 +1866,8 @@ main_read(struct view *view, struct line *prev, char *line)
 		char *ident = line + STRING_SIZE("author ");
 		char *end = strchr(ident, '<');
 
-		if (!prev)
+		if (!commit)
 			break;
-
-		commit = prev->data;
 
 		if (end) {
 			for (; end > ident && isspace(end[-1]); end--) ;
@@ -1912,10 +1907,8 @@ main_read(struct view *view, struct line *prev, char *line)
 		break;
 	}
 	default:
-		if (!prev)
+		if (!commit)
 			break;
-
-		commit = prev->data;
 
 		/* Fill in the commit title if it has not already been set. */
 		if (commit->title[0])
@@ -1968,6 +1961,7 @@ static struct keymap keymap[] = {
 	{ 'l',		REQ_VIEW_LOG },
 	{ 'p',		REQ_VIEW_PAGER },
 	{ 'h',		REQ_VIEW_HELP },
+	{ '?',		REQ_VIEW_HELP },
 
 	/* View manipulation */
 	{ 'q',		REQ_VIEW_CLOSE },
@@ -1998,7 +1992,8 @@ static struct keymap keymap[] = {
 	{ 'z',		REQ_STOP_LOADING },
 	{ 'v',		REQ_SHOW_VERSION },
 	{ 'r',		REQ_SCREEN_REDRAW },
-	{ 'n',		REQ_TOGGLE_LINE_NUMBERS },
+	{ 'n',		REQ_TOGGLE_LINENO },
+	{ 'g',		REQ_TOGGLE_REV_GRAPH},
 	{ ':',		REQ_PROMPT },
 
 	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
@@ -2018,6 +2013,120 @@ get_request(int key)
 			return keymap[i].request;
 
 	return (enum request) key;
+}
+
+struct key {
+	char *name;
+	int value;
+};
+
+static struct key key_table[] = {
+	{ "Enter",	KEY_RETURN },
+	{ "Space",	' ' },
+	{ "Backspace",	KEY_BACKSPACE },
+	{ "Tab",	KEY_TAB },
+	{ "Escape",	KEY_ESC },
+	{ "Left",	KEY_LEFT },
+	{ "Right",	KEY_RIGHT },
+	{ "Up",		KEY_UP },
+	{ "Down",	KEY_DOWN },
+	{ "Insert",	KEY_IC },
+	{ "Delete",	KEY_DC },
+	{ "Home",	KEY_HOME },
+	{ "End",	KEY_END },
+	{ "PageUp",	KEY_PPAGE },
+	{ "PageDown",	KEY_NPAGE },
+	{ "F1",		KEY_F(1) },
+	{ "F2",		KEY_F(2) },
+	{ "F3",		KEY_F(3) },
+	{ "F4",		KEY_F(4) },
+	{ "F5",		KEY_F(5) },
+	{ "F6",		KEY_F(6) },
+	{ "F7",		KEY_F(7) },
+	{ "F8",		KEY_F(8) },
+	{ "F9",		KEY_F(9) },
+	{ "F10",	KEY_F(10) },
+	{ "F11",	KEY_F(11) },
+	{ "F12",	KEY_F(12) },
+};
+
+static char *
+get_key(enum request request)
+{
+	static char buf[BUFSIZ];
+	static char key_char[] = "'X'";
+	int pos = 0;
+	char *sep = "    ";
+	int i;
+
+	buf[pos] = 0;
+
+	for (i = 0; i < ARRAY_SIZE(keymap); i++) {
+		char *seq = NULL;
+		int key;
+
+		if (keymap[i].request != request)
+			continue;
+
+		for (key = 0; key < ARRAY_SIZE(key_table); key++)
+			if (key_table[key].value == keymap[i].alias)
+				seq = key_table[key].name;
+
+		if (seq == NULL &&
+		    keymap[i].alias < 127 &&
+		    isprint(keymap[i].alias)) {
+			key_char[1] = (char) keymap[i].alias;
+			seq = key_char;
+		}
+
+		if (!seq)
+			seq = "'?'";
+
+		if (!string_format_from(buf, &pos, "%s%s", sep, seq))
+			return "Too many keybindings!";
+		sep = ", ";
+	}
+
+	return buf;
+}
+
+static void load_help_page(void)
+{
+	char buf[BUFSIZ];
+	struct view *view = VIEW(REQ_VIEW_HELP);
+	int lines = ARRAY_SIZE(req_info) + 2;
+	int i;
+
+	if (view->lines > 0)
+		return;
+
+	for (i = 0; i < ARRAY_SIZE(req_info); i++)
+		if (!req_info[i].request)
+			lines++;
+
+	view->line = calloc(lines, sizeof(*view->line));
+	if (!view->line) {
+		report("Allocation failure");
+		return;
+	}
+
+	pager_read(view, "Quick reference for tig keybindings:");
+
+	for (i = 0; i < ARRAY_SIZE(req_info); i++) {
+		char *key;
+
+		if (!req_info[i].request) {
+			pager_read(view, "");
+			pager_read(view, req_info[i].help);
+			continue;
+		}
+
+		key = get_key(req_info[i].request);
+		if (!string_format(buf, "%-25s %s", key, req_info[i].help))
+			continue;
+
+		pager_read(view, buf);
+	}
 }
 
 
@@ -2333,25 +2442,22 @@ read_ref(char *id, int idlen, char *name, int namelen)
 {
 	struct ref *ref;
 	bool tag = FALSE;
-	bool tag_commit = FALSE;
-
-	/* Commits referenced by tags has "^{}" appended. */
-	if (name[namelen - 1] == '}') {
-		while (namelen > 0 && name[namelen] != '^')
-			namelen--;
-		if (namelen > 0)
-			tag_commit = TRUE;
-		name[namelen] = 0;
-	}
 
 	if (!strncmp(name, "refs/tags/", STRING_SIZE("refs/tags/"))) {
-		if (!tag_commit)
+		/* Commits referenced by tags has "^{}" appended. */
+		if (name[namelen - 1] != '}')
 			return OK;
-		name += STRING_SIZE("refs/tags/");
+
+		while (namelen > 0 && name[namelen] != '^')
+			namelen--;
+
 		tag = TRUE;
+		namelen -= STRING_SIZE("refs/tags/");
+		name	+= STRING_SIZE("refs/tags/");
 
 	} else if (!strncmp(name, "refs/heads/", STRING_SIZE("refs/heads/"))) {
-		name += STRING_SIZE("refs/heads/");
+		namelen -= STRING_SIZE("refs/heads/");
+		name	+= STRING_SIZE("refs/heads/");
 
 	} else if (!strcmp(name, "HEAD")) {
 		return OK;
@@ -2362,10 +2468,12 @@ read_ref(char *id, int idlen, char *name, int namelen)
 		return ERR;
 
 	ref = &refs[refs_size++];
-	ref->name = strdup(name);
+	ref->name = malloc(namelen + 1);
 	if (!ref->name)
 		return ERR;
 
+	strncpy(ref->name, name, namelen);
+	ref->name[namelen] = 0;
 	ref->tag = tag;
 	string_copy(ref->id, id);
 
@@ -2384,9 +2492,8 @@ load_refs(void)
 static int
 read_repo_config_option(char *name, int namelen, char *value, int valuelen)
 {
-	if (!strcmp(name, "i18n.commitencoding")) {
+	if (!strcmp(name, "i18n.commitencoding"))
 		string_copy(opt_encoding, value);
-	}
 
 	return OK;
 }
@@ -2564,31 +2671,3 @@ main(int argc, char *argv[])
 
 	return 0;
 }
-
-/**
- * include::BUGS[]
- *
- * COPYRIGHT
- * ---------
- * Copyright (c) 2006 Jonas Fonseca <fonseca@diku.dk>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * SEE ALSO
- * --------
- * - link:http://www.kernel.org/pub/software/scm/git/docs/[git(7)],
- * - link:http://www.kernel.org/pub/software/scm/cogito/docs/[cogito(7)]
- *
- * Other git repository browsers:
- *
- *  - gitk(1)
- *  - qgit(1)
- *  - gitview(1)
- *
- * Sites:
- *
- * include::SITES[]
- **/

@@ -127,4 +127,3 @@ Other git repository browsers:
 Sites:
 
 include::SITES[]
-
