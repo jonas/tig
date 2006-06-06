@@ -638,44 +638,54 @@ static int   config_lineno;
 static bool  config_errors;
 static char *config_msg;
 
+/* Reads
+ *
+ *	object fgcolor bgcolor [attr]
+ *
+ * from the value string. */
+static int
+set_option_color(char *value, int valuelen)
+{
+	struct line_info *info;
+
+	value = chomp_string(value);
+	valuelen = strcspn(value, " \t");
+	info = get_line_info(value, valuelen);
+	if (!info) {
+		config_msg = "Unknown color name";
+		return ERR;
+	}
+
+	value = chomp_string(value + valuelen);
+	valuelen = strcspn(value, " \t");
+	if (set_color(&info->fg, value, valuelen) == ERR) {
+		config_msg = "Unknown color";
+		return ERR;
+	}
+
+	value = chomp_string(value + valuelen);
+	valuelen = strcspn(value, " \t");
+	if (set_color(&info->bg, value, valuelen) == ERR) {
+		config_msg = "Unknown color";
+		return ERR;
+	}
+
+	value = chomp_string(value + valuelen);
+	if (*value &&
+	    set_attribute(&info->attr, value, strlen(value)) == ERR) {
+		config_msg = "Unknown attribute";
+		return ERR;
+	}
+
+	return OK;
+}
+
 static int
 set_option(char *opt, int optlen, char *value, int valuelen)
 {
-	/* Reads: "color" object fgcolor bgcolor [attr] */
-	if (!strcmp(opt, "color")) {
-		struct line_info *info;
-
-		value = chomp_string(value);
-		valuelen = strcspn(value, " \t");
-		info = get_line_info(value, valuelen);
-		if (!info) {
-			config_msg = "Unknown color name";
-			return ERR;
-		}
-
-		value = chomp_string(value + valuelen);
-		valuelen = strcspn(value, " \t");
-		if (set_color(&info->fg, value, valuelen) == ERR) {
-			config_msg = "Unknown color";
-			return ERR;
-		}
-
-		value = chomp_string(value + valuelen);
-		valuelen = strcspn(value, " \t");
-		if (set_color(&info->bg, value, valuelen) == ERR) {
-			config_msg = "Unknown color";
-			return ERR;
-		}
-
-		value = chomp_string(value + valuelen);
-		if (*value &&
-		    set_attribute(&info->attr, value, strlen(value)) == ERR) {
-			config_msg = "Unknown attribute";
-			return ERR;
-		}
-
-		return OK;
-	}
+	if (optlen == STRING_SIZE("color") &&
+	    !strncmp(opt, "color", optlen))
+		return set_option_color(value, valuelen);
 
 	return ERR;
 }
