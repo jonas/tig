@@ -617,8 +617,8 @@ static struct int_map color_map[] = {
 	COLOR_MAP(YELLOW),
 };
 
-#define set_color(color, name, namelen) \
-	set_from_int_map(color_map, ARRAY_SIZE(color_map), color, name, namelen)
+#define set_color(color, name) \
+	set_from_int_map(color_map, ARRAY_SIZE(color_map), color, name, strlen(name))
 
 static struct int_map attr_map[] = {
 #define ATTR_MAP(name) { #name, STRING_SIZE(#name), A_##name }
@@ -631,8 +631,8 @@ static struct int_map attr_map[] = {
 	ATTR_MAP(UNDERLINE),
 };
 
-#define set_attribute(attr, name, namelen) \
-	set_from_int_map(attr_map, ARRAY_SIZE(attr_map), attr, name, namelen)
+#define set_attribute(attr, name) \
+	set_from_int_map(attr_map, ARRAY_SIZE(attr_map), attr, name, strlen(name))
 
 static int   config_lineno;
 static bool  config_errors;
@@ -644,35 +644,32 @@ static char *config_msg;
  *
  * from the value string. */
 static int
-set_option_color(char *value, int valuelen)
+set_option_color(int argc, char *argv[])
 {
 	struct line_info *info;
 
-	value = chomp_string(value);
-	valuelen = strcspn(value, " \t");
-	info = get_line_info(value, valuelen);
+	if (argc != 3 && argc != 4) {
+		config_msg = "Wrong number of arguments given to color command";
+		return ERR;
+	}
+
+	info = get_line_info(argv[0], strlen(argv[0]));
 	if (!info) {
 		config_msg = "Unknown color name";
 		return ERR;
 	}
 
-	value = chomp_string(value + valuelen);
-	valuelen = strcspn(value, " \t");
-	if (set_color(&info->fg, value, valuelen) == ERR) {
+	if (set_color(&info->fg, argv[1]) == ERR) {
 		config_msg = "Unknown color";
 		return ERR;
 	}
 
-	value = chomp_string(value + valuelen);
-	valuelen = strcspn(value, " \t");
-	if (set_color(&info->bg, value, valuelen) == ERR) {
+	if (set_color(&info->bg, argv[2]) == ERR) {
 		config_msg = "Unknown color";
 		return ERR;
 	}
 
-	value = chomp_string(value + valuelen);
-	if (*value &&
-	    set_attribute(&info->attr, value, strlen(value)) == ERR) {
+	if (argc == 4 && set_attribute(&info->attr, argv[3]) == ERR) {
 		config_msg = "Unknown attribute";
 		return ERR;
 	}
@@ -681,11 +678,27 @@ set_option_color(char *value, int valuelen)
 }
 
 static int
-set_option(char *opt, int optlen, char *value, int valuelen)
+set_option(char *opt, char *value)
 {
-	if (optlen == STRING_SIZE("color") &&
-	    !strncmp(opt, "color", optlen))
-		return set_option_color(value, valuelen);
+	char *argv[16];
+	int valuelen;
+	int argc = 0;
+
+	/* Tokenize */
+	while (argc < ARRAY_SIZE(argv) && (valuelen = strcspn(value, " \t"))) {
+		argv[argc++] = value;
+
+		value += valuelen;
+		if (!*value)
+			break;
+
+		*value++ = 0;
+		while (isspace(*value))
+			value++;
+	}
+
+	if (!strcmp(opt, "color"))
+		return set_option_color(argc, argv);
 
 	return ERR;
 }
@@ -712,7 +725,7 @@ read_option(char *opt, int optlen, char *value, int valuelen)
 		value[valuelen] = 0;
 	}
 
-	if (set_option(opt, optlen, value, valuelen) == ERR) {
+	if (set_option(opt, value) == ERR) {
 		fprintf(stderr, "Error on line %d, near '%.*s' option: %s\n",
 			config_lineno, optlen, opt, config_msg);
 		config_errors = TRUE;
