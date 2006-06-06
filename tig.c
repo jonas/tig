@@ -418,7 +418,7 @@ parse_options(int argc, char *argv[])
 		if (opt[0] && opt[0] != '-')
 			break;
 
-		die("unknown command '%s'", opt);
+		die("unknown option '%s'\n\n%s", opt, usage);
 	}
 
 	if (!isatty(STDIN_FILENO)) {
