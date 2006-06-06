@@ -601,6 +601,152 @@ struct line {
 
 
 /*
+ * Keys
+ */
+
+struct keymap {
+	int alias;
+	int request;
+};
+
+static struct keymap keymap[] = {
+	/* View switching */
+	{ 'm',		REQ_VIEW_MAIN },
+	{ 'd',		REQ_VIEW_DIFF },
+	{ 'l',		REQ_VIEW_LOG },
+	{ 'p',		REQ_VIEW_PAGER },
+	{ 'h',		REQ_VIEW_HELP },
+	{ '?',		REQ_VIEW_HELP },
+
+	/* View manipulation */
+	{ 'q',		REQ_VIEW_CLOSE },
+	{ KEY_TAB,	REQ_VIEW_NEXT },
+	{ KEY_RETURN,	REQ_ENTER },
+	{ KEY_UP,	REQ_PREVIOUS },
+	{ KEY_DOWN,	REQ_NEXT },
+
+	/* Cursor navigation */
+	{ 'k',		REQ_MOVE_UP },
+	{ 'j',		REQ_MOVE_DOWN },
+	{ KEY_HOME,	REQ_MOVE_FIRST_LINE },
+	{ KEY_END,	REQ_MOVE_LAST_LINE },
+	{ KEY_NPAGE,	REQ_MOVE_PAGE_DOWN },
+	{ ' ',		REQ_MOVE_PAGE_DOWN },
+	{ KEY_PPAGE,	REQ_MOVE_PAGE_UP },
+	{ 'b',		REQ_MOVE_PAGE_UP },
+	{ '-',		REQ_MOVE_PAGE_UP },
+
+	/* Scrolling */
+	{ KEY_IC,	REQ_SCROLL_LINE_UP },
+	{ KEY_DC,	REQ_SCROLL_LINE_DOWN },
+	{ 'w',		REQ_SCROLL_PAGE_UP },
+	{ 's',		REQ_SCROLL_PAGE_DOWN },
+
+	/* Misc */
+	{ 'Q',		REQ_QUIT },
+	{ 'z',		REQ_STOP_LOADING },
+	{ 'v',		REQ_SHOW_VERSION },
+	{ 'r',		REQ_SCREEN_REDRAW },
+	{ 'n',		REQ_TOGGLE_LINENO },
+	{ 'g',		REQ_TOGGLE_REV_GRAPH},
+	{ ':',		REQ_PROMPT },
+
+	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
+	{ ERR,		REQ_SCREEN_UPDATE },
+
+	/* Use the ncurses SIGWINCH handler. */
+	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
+};
+
+static enum request
+get_request(int key)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(keymap); i++)
+		if (keymap[i].alias == key)
+			return keymap[i].request;
+
+	return (enum request) key;
+}
+
+struct key {
+	char *name;
+	int value;
+};
+
+static struct key key_table[] = {
+	{ "Enter",	KEY_RETURN },
+	{ "Space",	' ' },
+	{ "Backspace",	KEY_BACKSPACE },
+	{ "Tab",	KEY_TAB },
+	{ "Escape",	KEY_ESC },
+	{ "Left",	KEY_LEFT },
+	{ "Right",	KEY_RIGHT },
+	{ "Up",		KEY_UP },
+	{ "Down",	KEY_DOWN },
+	{ "Insert",	KEY_IC },
+	{ "Delete",	KEY_DC },
+	{ "Home",	KEY_HOME },
+	{ "End",	KEY_END },
+	{ "PageUp",	KEY_PPAGE },
+	{ "PageDown",	KEY_NPAGE },
+	{ "F1",		KEY_F(1) },
+	{ "F2",		KEY_F(2) },
+	{ "F3",		KEY_F(3) },
+	{ "F4",		KEY_F(4) },
+	{ "F5",		KEY_F(5) },
+	{ "F6",		KEY_F(6) },
+	{ "F7",		KEY_F(7) },
+	{ "F8",		KEY_F(8) },
+	{ "F9",		KEY_F(9) },
+	{ "F10",	KEY_F(10) },
+	{ "F11",	KEY_F(11) },
+	{ "F12",	KEY_F(12) },
+};
+
+static char *
+get_key(enum request request)
+{
+	static char buf[BUFSIZ];
+	static char key_char[] = "'X'";
+	int pos = 0;
+	char *sep = "    ";
+	int i;
+
+	buf[pos] = 0;
+
+	for (i = 0; i < ARRAY_SIZE(keymap); i++) {
+		char *seq = NULL;
+		int key;
+
+		if (keymap[i].request != request)
+			continue;
+
+		for (key = 0; key < ARRAY_SIZE(key_table); key++)
+			if (key_table[key].value == keymap[i].alias)
+				seq = key_table[key].name;
+
+		if (seq == NULL &&
+		    keymap[i].alias < 127 &&
+		    isprint(keymap[i].alias)) {
+			key_char[1] = (char) keymap[i].alias;
+			seq = key_char;
+		}
+
+		if (!seq)
+			seq = "'?'";
+
+		if (!string_format_from(buf, &pos, "%s%s", sep, seq))
+			return "Too many keybindings!";
+		sep = ", ";
+	}
+
+	return buf;
+}
+
+
+/*
  * User config file handling.
  */
 
@@ -2011,151 +2157,6 @@ static struct view_ops main_ops = {
 	main_enter,
 };
 
-
-/*
- * Keys
- */
-
-struct keymap {
-	int alias;
-	int request;
-};
-
-static struct keymap keymap[] = {
-	/* View switching */
-	{ 'm',		REQ_VIEW_MAIN },
-	{ 'd',		REQ_VIEW_DIFF },
-	{ 'l',		REQ_VIEW_LOG },
-	{ 'p',		REQ_VIEW_PAGER },
-	{ 'h',		REQ_VIEW_HELP },
-	{ '?',		REQ_VIEW_HELP },
-
-	/* View manipulation */
-	{ 'q',		REQ_VIEW_CLOSE },
-	{ KEY_TAB,	REQ_VIEW_NEXT },
-	{ KEY_RETURN,	REQ_ENTER },
-	{ KEY_UP,	REQ_PREVIOUS },
-	{ KEY_DOWN,	REQ_NEXT },
-
-	/* Cursor navigation */
-	{ 'k',		REQ_MOVE_UP },
-	{ 'j',		REQ_MOVE_DOWN },
-	{ KEY_HOME,	REQ_MOVE_FIRST_LINE },
-	{ KEY_END,	REQ_MOVE_LAST_LINE },
-	{ KEY_NPAGE,	REQ_MOVE_PAGE_DOWN },
-	{ ' ',		REQ_MOVE_PAGE_DOWN },
-	{ KEY_PPAGE,	REQ_MOVE_PAGE_UP },
-	{ 'b',		REQ_MOVE_PAGE_UP },
-	{ '-',		REQ_MOVE_PAGE_UP },
-
-	/* Scrolling */
-	{ KEY_IC,	REQ_SCROLL_LINE_UP },
-	{ KEY_DC,	REQ_SCROLL_LINE_DOWN },
-	{ 'w',		REQ_SCROLL_PAGE_UP },
-	{ 's',		REQ_SCROLL_PAGE_DOWN },
-
-	/* Misc */
-	{ 'Q',		REQ_QUIT },
-	{ 'z',		REQ_STOP_LOADING },
-	{ 'v',		REQ_SHOW_VERSION },
-	{ 'r',		REQ_SCREEN_REDRAW },
-	{ 'n',		REQ_TOGGLE_LINENO },
-	{ 'g',		REQ_TOGGLE_REV_GRAPH},
-	{ ':',		REQ_PROMPT },
-
-	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
-	{ ERR,		REQ_SCREEN_UPDATE },
-
-	/* Use the ncurses SIGWINCH handler. */
-	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
-};
-
-static enum request
-get_request(int key)
-{
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(keymap); i++)
-		if (keymap[i].alias == key)
-			return keymap[i].request;
-
-	return (enum request) key;
-}
-
-struct key {
-	char *name;
-	int value;
-};
-
-static struct key key_table[] = {
-	{ "Enter",	KEY_RETURN },
-	{ "Space",	' ' },
-	{ "Backspace",	KEY_BACKSPACE },
-	{ "Tab",	KEY_TAB },
-	{ "Escape",	KEY_ESC },
-	{ "Left",	KEY_LEFT },
-	{ "Right",	KEY_RIGHT },
-	{ "Up",		KEY_UP },
-	{ "Down",	KEY_DOWN },
-	{ "Insert",	KEY_IC },
-	{ "Delete",	KEY_DC },
-	{ "Home",	KEY_HOME },
-	{ "End",	KEY_END },
-	{ "PageUp",	KEY_PPAGE },
-	{ "PageDown",	KEY_NPAGE },
-	{ "F1",		KEY_F(1) },
-	{ "F2",		KEY_F(2) },
-	{ "F3",		KEY_F(3) },
-	{ "F4",		KEY_F(4) },
-	{ "F5",		KEY_F(5) },
-	{ "F6",		KEY_F(6) },
-	{ "F7",		KEY_F(7) },
-	{ "F8",		KEY_F(8) },
-	{ "F9",		KEY_F(9) },
-	{ "F10",	KEY_F(10) },
-	{ "F11",	KEY_F(11) },
-	{ "F12",	KEY_F(12) },
-};
-
-static char *
-get_key(enum request request)
-{
-	static char buf[BUFSIZ];
-	static char key_char[] = "'X'";
-	int pos = 0;
-	char *sep = "    ";
-	int i;
-
-	buf[pos] = 0;
-
-	for (i = 0; i < ARRAY_SIZE(keymap); i++) {
-		char *seq = NULL;
-		int key;
-
-		if (keymap[i].request != request)
-			continue;
-
-		for (key = 0; key < ARRAY_SIZE(key_table); key++)
-			if (key_table[key].value == keymap[i].alias)
-				seq = key_table[key].name;
-
-		if (seq == NULL &&
-		    keymap[i].alias < 127 &&
-		    isprint(keymap[i].alias)) {
-			key_char[1] = (char) keymap[i].alias;
-			seq = key_char;
-		}
-
-		if (!seq)
-			seq = "'?'";
-
-		if (!string_format_from(buf, &pos, "%s%s", sep, seq))
-			return "Too many keybindings!";
-		sep = ", ";
-	}
-
-	return buf;
-}
 
 static void load_help_page(void)
 {
