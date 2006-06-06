@@ -638,13 +638,9 @@ static int   config_lineno;
 static bool  config_errors;
 static char *config_msg;
 
-/* Reads
- *
- *	object fgcolor bgcolor [attr]
- *
- * from the value string. */
+/* Wants: object fgcolor bgcolor [attr] */
 static int
-set_option_color(int argc, char *argv[])
+option_color_command(int argc, char *argv[])
 {
 	struct line_info *info;
 
@@ -677,6 +673,45 @@ set_option_color(int argc, char *argv[])
 	return OK;
 }
 
+/* Wants: name = value */
+static int
+option_set_command(int argc, char *argv[])
+{
+	if (argc != 3) {
+		config_msg = "Wrong number of arguments given to set command";
+		return ERR;
+	}
+
+	if (strcmp(argv[1], "=")) {
+		config_msg = "No value assigned";
+		return ERR;
+	}
+
+	if (!strcmp(argv[0], "show-rev-graph")) {
+		opt_rev_graph = (!strcmp(argv[2], "1") ||
+				 !strcmp(argv[2], "true") ||
+				 !strcmp(argv[2], "yes"));
+		return OK;
+	}
+
+	if (!strcmp(argv[0], "line-number-interval")) {
+		opt_num_interval = atoi(argv[2]);
+		return OK;
+	}
+
+	if (!strcmp(argv[0], "tab-size")) {
+		opt_tab_size = atoi(argv[2]);
+		return OK;
+	}
+
+	if (!strcmp(argv[0], "encoding")) {
+		string_copy(opt_encoding, argv[2]);
+		return OK;
+	}
+
+	return ERR;
+}
+
 static int
 set_option(char *opt, char *value)
 {
@@ -698,7 +733,10 @@ set_option(char *opt, char *value)
 	}
 
 	if (!strcmp(opt, "color"))
-		return set_option_color(argc, argv);
+		return option_color_command(argc, argv);
+
+	if (!strcmp(opt, "set"))
+		return option_set_command(argc, argv);
 
 	return ERR;
 }
