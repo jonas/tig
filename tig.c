@@ -616,12 +616,12 @@ struct line {
  * Keys
  */
 
-struct keymap {
+struct keybinding {
 	int alias;
-	int request;
+	enum request request;
 };
 
-static struct keymap keymap[] = {
+static struct keybinding default_keybindings[] = {
 	/* View switching */
 	{ 'm',		REQ_VIEW_MAIN },
 	{ 'd',		REQ_VIEW_DIFF },
@@ -671,16 +671,17 @@ static struct keymap keymap[] = {
 };
 
 static enum request
-get_request(int key)
+get_keybinding(int key)
 {
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(keymap); i++)
-		if (keymap[i].alias == key)
-			return keymap[i].request;
+	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++)
+		if (default_keybindings[i].alias == key)
+			return default_keybindings[i].request;
 
 	return (enum request) key;
 }
+
 
 struct key {
 	char *name;
@@ -728,21 +729,22 @@ get_key(enum request request)
 
 	buf[pos] = 0;
 
-	for (i = 0; i < ARRAY_SIZE(keymap); i++) {
+	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++) {
+		struct keybinding *keybinding = &default_keybindings[i];
 		char *seq = NULL;
 		int key;
 
-		if (keymap[i].request != request)
+		if (keybinding->request != request)
 			continue;
 
 		for (key = 0; key < ARRAY_SIZE(key_table); key++)
-			if (key_table[key].value == keymap[i].alias)
+			if (key_table[key].value == keybinding->alias)
 				seq = key_table[key].name;
 
 		if (seq == NULL &&
-		    keymap[i].alias < 127 &&
-		    isprint(keymap[i].alias)) {
-			key_char[1] = (char) keymap[i].alias;
+		    keybinding->alias < 127 &&
+		    isprint(keybinding->alias)) {
+			key_char[1] = (char) keybinding->alias;
 			seq = key_char;
 		}
 
@@ -2701,7 +2703,7 @@ main(int argc, char *argv[])
 
 		/* Refresh, accept single keystroke of input */
 		key = wgetch(status_win);
-		request = get_request(key);
+		request = get_keybinding(key);
 
 		/* Some low-level request handling. This keeps access to
 		 * status_win restricted. */
