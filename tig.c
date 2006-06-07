@@ -1535,6 +1535,10 @@ end:
 }
 
 
+/*
+ * View opening
+ */
+
 static void open_help_view(struct view *view)
 {
 	char buf[BUFSIZ];
@@ -1572,7 +1576,6 @@ static void open_help_view(struct view *view)
 		view->ops->read(view, buf);
 	}
 }
-
 
 enum open_flags {
 	OPEN_DEFAULT = 0,	/* Use default view switching. */
