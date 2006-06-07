@@ -178,6 +178,28 @@ string_nformat(char *buf, size_t bufsize, int *bufpos, const char *fmt, ...)
 #define string_format_from(buf, from, fmt, args...) \
 	string_nformat(buf, sizeof(buf), from, fmt, args)
 
+static int
+string_enum_compare(const char *str1, const char *str2, int len)
+{
+	size_t i;
+
+#define string_enum_sep(x) ((x) == '-' || (x) == '_' || (x) == '.')
+
+	/* Diff-Header == DIFF_HEADER */
+	for (i = 0; i < len; i++) {
+		if (toupper(str1[i]) == toupper(str2[i]))
+			continue;
+
+		if (string_enum_sep(str1[i]) &&
+		    string_enum_sep(str2[i]))
+			continue;
+
+		return str1[i] - str2[i];
+	}
+
+	return 0;
+}
+
 /* Shell quoting
  *
  * NOTE: The following is a slightly modified copy of the git project's shell
@@ -552,19 +574,10 @@ static struct line_info *
 get_line_info(char *name, int namelen)
 {
 	enum line_type type;
-	int i;
-
-	/* Diff-Header -> DIFF_HEADER */
-	for (i = 0; i < namelen; i++) {
-		if (name[i] == '-')
-			name[i] = '_';
-		else if (name[i] == '.')
-			name[i] = '_';
-	}
 
 	for (type = 0; type < ARRAY_SIZE(line_info); type++)
 		if (namelen == line_info[type].namelen &&
-		    !strncasecmp(line_info[type].name, name, namelen))
+		    !string_enum_compare(line_info[type].name, name, namelen))
 			return &line_info[type];
 
 	return NULL;
