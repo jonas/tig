@@ -1,0 +1,61 @@
+#
+# Base configuration
+#
+
+set show-rev-graph = yes	# Show revision graph?
+set line-number-interval = 5	# Interval between line numbers
+set tab-size = 8		# Number of spaces pr tab 
+set encoding = UTF-8		# Commit encoding
+
+#
+# Color configuration
+#
+
+# Diff colors
+color diff-header	 yellow	 default
+color diff-index	 blue	 default
+color diff-chunk	 magenta default
+color diff-add		 green	 default
+color diff-del		 red	 default
+color diff-oldmode	 yellow	 default
+color diff-newmode	 yellow	 default
+color diff-copy-from	 yellow	 default
+color diff-copy-to	 yellow	 default
+color diff-rename-from	 yellow	 default
+color diff-rename-to	 yellow	 default
+color diff-similarity	 yellow	 default
+color diff-dissimilarity yellow	 default
+color diff-tree		 blue	 default
+
+# Pretty print commit header
+color pp-author		cyan	default
+color pp-commit		magenta	default
+color pp-merge		blue	default
+color pp-date		yellow	default
+color pp-adate		yellow	default
+color pp-cdate		yellow	default
+
+# Raw commit header
+color commit		green	default
+color parent		blue	default
+color tree		blue	default
+color author		cyan	default
+color committer		magenta	default
+
+# Misc
+color signoff		yellow	default
+
+# UI colors
+color default		default	default
+color cursor		white	green
+color status		green	default
+color title-blur	white	blue
+color title-focus	white	blue	bold
+color main-date		blue	default
+color main-author	green	default
+color main-commit	default	default
+color main-delim	magenta	default
+color main-tag		magenta	default	bold
+color main-ref		cyan	default	bold
+
+# You can almost use vim: ft=muttrc
