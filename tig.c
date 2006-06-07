@@ -43,7 +43,6 @@ static void report(const char *msg, ...);
 static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, int, char *, int));
 static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed);
-static void load_help_page(void);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -1535,6 +1534,46 @@ end:
 	return FALSE;
 }
 
+
+static void open_help_view(struct view *view)
+{
+	char buf[BUFSIZ];
+	int lines = ARRAY_SIZE(req_info) + 2;
+	int i;
+
+	if (view->lines > 0)
+		return;
+
+	for (i = 0; i < ARRAY_SIZE(req_info); i++)
+		if (!req_info[i].request)
+			lines++;
+
+	view->line = calloc(lines, sizeof(*view->line));
+	if (!view->line) {
+		report("Allocation failure");
+		return;
+	}
+
+	view->ops->read(view, "Quick reference for tig keybindings:");
+
+	for (i = 0; i < ARRAY_SIZE(req_info); i++) {
+		char *key;
+
+		if (!req_info[i].request) {
+			view->ops->read(view, "");
+			view->ops->read(view, req_info[i].help);
+			continue;
+		}
+
+		key = get_key(req_info[i].request);
+		if (!string_format(buf, "%-25s %s", key, req_info[i].help))
+			continue;
+
+		view->ops->read(view, buf);
+	}
+}
+
+
 enum open_flags {
 	OPEN_DEFAULT = 0,	/* Use default view switching. */
 	OPEN_SPLIT = 1,		/* Split current view. */
@@ -1558,7 +1597,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	}
 
 	if (view == VIEW(REQ_VIEW_HELP)) {
-		load_help_page();
+		open_help_view(view);
 
 	} else if ((reload || strcmp(view->vid, view->id)) &&
 		   !begin_update(view)) {
@@ -2156,46 +2195,6 @@ static struct view_ops main_ops = {
 	main_read,
 	main_enter,
 };
-
-
-static void load_help_page(void)
-{
-	char buf[BUFSIZ];
-	struct view *view = VIEW(REQ_VIEW_HELP);
-	int lines = ARRAY_SIZE(req_info) + 2;
-	int i;
-
-	if (view->lines > 0)
-		return;
-
-	for (i = 0; i < ARRAY_SIZE(req_info); i++)
-		if (!req_info[i].request)
-			lines++;
-
-	view->line = calloc(lines, sizeof(*view->line));
-	if (!view->line) {
-		report("Allocation failure");
-		return;
-	}
-
-	pager_read(view, "Quick reference for tig keybindings:");
-
-	for (i = 0; i < ARRAY_SIZE(req_info); i++) {
-		char *key;
-
-		if (!req_info[i].request) {
-			pager_read(view, "");
-			pager_read(view, req_info[i].help);
-			continue;
-		}
-
-		key = get_key(req_info[i].request);
-		if (!string_format(buf, "%-25s %s", key, req_info[i].help))
-			continue;
-
-		pager_read(view, buf);
-	}
-}
 
 
 /*
