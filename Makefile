@@ -50,7 +50,7 @@ strip: all
 tig: tig.c
 
 README.html: README
-	asciidoc -b xhtml11 -d article -f web.conf $<
+	asciidoc -b xhtml11 -d article -a readme $<
 
 %.1.html : %.1.txt
 	asciidoc -b xhtml11 -d manpage $<

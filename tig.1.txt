@@ -96,7 +96,7 @@ TIG_MAIN_CMD::
 FILES
 -----
 '~/.tigrc'::
-	User configuration file. See tigrc(5) for examples.
+	User configuration file. See gitlink:tigrc[5] for examples.
 
 '.git/config'::
 	Repository config file. Read on startup with the help of
@@ -115,6 +115,9 @@ the Free Software Foundation; either version 2 of the License, or
 
 SEE ALSO
 --------
+
+- gitlink:tigrc[5]
+- link:http://jonas.nitro.dk/tig/manual.html[The tig manual],
 - link:http://www.kernel.org/pub/software/scm/git/docs/[git(7)],
 - link:http://www.kernel.org/pub/software/scm/cogito/docs/[cogito(7)]
 
