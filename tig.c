@@ -284,7 +284,7 @@ sq_quote(char buf[SIZEOF_CMD], size_t bufsize, const char *src)
 	REQ_(SHOW_VERSION,	"Show version information"), \
 	REQ_(STOP_LOADING,	"Stop all loading views"), \
 	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
-	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"),
+	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization")
 
 
 /* User action requests. */
@@ -294,7 +294,8 @@ enum request {
 
 	/* Offset all requests to avoid conflicts with ncurses getch values. */
 	REQ_OFFSET = KEY_MAX + 1,
-	REQ_INFO
+	REQ_INFO,
+	REQ_UNKNOWN,
 
 #undef	REQ_GROUP
 #undef	REQ_
@@ -302,16 +303,33 @@ enum request {
 
 struct request_info {
 	enum request request;
+	char *name;
+	int namelen;
 	char *help;
 };
 
 static struct request_info req_info[] = {
-#define REQ_GROUP(help)	{ 0, (help) },
-#define REQ_(req, help)	{ REQ_##req, (help) }
+#define REQ_GROUP(help)	{ 0, NULL, 0, (help) },
+#define REQ_(req, help)	{ REQ_##req, (#req), STRING_SIZE(#req), (help) }
 	REQ_INFO
 #undef	REQ_GROUP
 #undef	REQ_
 };
+
+static enum request
+get_request(const char *name)
+{
+	int namelen = strlen(name);
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(req_info); i++)
+		if (req_info[i].namelen == namelen &&
+		    !string_enum_compare(req_info[i].name, name, namelen))
+			return req_info[i].request;
+
+	return REQ_UNKNOWN;
+}
+
 
 /*
  * Options
@@ -619,6 +637,7 @@ struct line {
 struct keybinding {
 	int alias;
 	enum request request;
+	struct keybinding *next;
 };
 
 static struct keybinding default_keybindings[] = {
@@ -670,10 +689,61 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
 };
 
-static enum request
-get_keybinding(int key)
+#define KEYMAP_INFO \
+	KEYMAP_(GENERIC), \
+	KEYMAP_(MAIN), \
+	KEYMAP_(DIFF), \
+	KEYMAP_(LOG), \
+	KEYMAP_(PAGER), \
+	KEYMAP_(HELP) \
+
+enum keymap {
+#define KEYMAP_(name) KEYMAP_##name
+	KEYMAP_INFO
+#undef	KEYMAP_
+};
+
+static struct int_map keymap_table[] = {
+#define KEYMAP_(name) { #name, STRING_SIZE(#name), KEYMAP_##name }
+	KEYMAP_INFO
+#undef	KEYMAP_
+};
+
+#define set_keymap(map, name) \
+	set_from_int_map(keymap_table, ARRAY_SIZE(keymap_table), map, name, strlen(name))
+
+static struct keybinding *keybindings[ARRAY_SIZE(keymap_table)];
+
+static void
+add_keybinding(enum keymap keymap, enum request request, int key)
 {
+	struct keybinding *keybinding;
+
+	keybinding = calloc(1, sizeof(*keybinding));
+	if (!keybinding)
+		die("Failed to allocate keybinding");
+
+	keybinding->alias = key;
+	keybinding->request = request;
+	keybinding->next = keybindings[keymap];
+	keybindings[keymap] = keybinding;
+}
+
+/* Looks for a key binding first in the given map, then in the generic map, and
+ * lastly in the default keybindings. */
+static enum request
+get_keybinding(enum keymap keymap, int key)
+{
+	struct keybinding *kbd;
 	int i;
+
+	for (kbd = keybindings[keymap]; kbd; kbd = kbd->next)
+		if (kbd->alias == key)
+			return kbd->request;
+
+	for (kbd = keybindings[KEYMAP_GENERIC]; kbd; kbd = kbd->next)
+		if (kbd->alias == key)
+			return kbd->request;
 
 	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++)
 		if (default_keybindings[i].alias == key)
@@ -717,6 +787,21 @@ static struct key key_table[] = {
 	{ "F11",	KEY_F(11) },
 	{ "F12",	KEY_F(12) },
 };
+
+static int
+get_key_value(const char *name)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(key_table); i++)
+		if (!strcasecmp(key_table[i].name, name))
+			return key_table[i].value;
+
+	if (strlen(name) == 1 && isprint(*name))
+		return (int) *name;
+
+	return ERR;
+}
 
 static char *
 get_key(enum request request)
@@ -872,6 +957,41 @@ option_set_command(int argc, char *argv[])
 	return ERR;
 }
 
+/* Wants: mode request key */
+static int
+option_bind_command(int argc, char *argv[])
+{
+	enum request request;
+	int keymap;
+	int key;
+
+	if (argc != 3) {
+		config_msg = "Wrong number of arguments given to bind command";
+		return ERR;
+	}
+
+	if (set_keymap(&keymap, argv[0]) == ERR) {
+		config_msg = "Unknown key map";
+		return ERR;
+	}
+
+	key = get_key_value(argv[1]);
+	if (key == ERR) {
+		config_msg = "Unknown key";
+		return ERR;
+	}
+
+	request = get_request(argv[2]);
+	if (request == REQ_UNKNOWN) {
+		config_msg = "Unknown request name";
+		return ERR;
+	}
+
+	add_keybinding(keymap, request, key);
+
+	return OK;
+}
+
 static int
 set_option(char *opt, char *value)
 {
@@ -897,6 +1017,9 @@ set_option(char *opt, char *value)
 
 	if (!strcmp(opt, "set"))
 		return option_set_command(argc, argv);
+
+	if (!strcmp(opt, "bind"))
+		return option_bind_command(argc, argv);
 
 	return ERR;
 }
@@ -987,6 +1110,8 @@ struct view {
 
 	struct view_ops *ops;	/* View operations */
 
+	enum keymap keymap;	/* What keymap does this view have */
+
 	char cmd[SIZEOF_CMD];	/* Command buffer */
 	char ref[SIZEOF_REF];	/* Hovered commit reference */
 	char vid[SIZEOF_REF];	/* View ID. Set to id member when updating. */
@@ -1028,11 +1153,11 @@ struct view_ops {
 static struct view_ops pager_ops;
 static struct view_ops main_ops;
 
-#define VIEW_STR(name, cmd, env, ref, ops) \
-	{ name, cmd, #env, ref, ops }
+#define VIEW_STR(name, cmd, env, ref, ops, map) \
+	{ name, cmd, #env, ref, ops, map}
 
 #define VIEW_(id, name, ops, ref) \
-	VIEW_STR(name, TIG_##id##_CMD,  TIG_##id##_CMD, ref, ops)
+	VIEW_STR(name, TIG_##id##_CMD,  TIG_##id##_CMD, ref, ops, KEYMAP_##id)
 
 
 static struct view views[] = {
@@ -2703,7 +2828,8 @@ main(int argc, char *argv[])
 
 		/* Refresh, accept single keystroke of input */
 		key = wgetch(status_win);
-		request = get_keybinding(key);
+
+		request = get_keybinding(display[current_view]->keymap, key);
 
 		/* Some low-level request handling. This keeps access to
 		 * status_win restricted. */

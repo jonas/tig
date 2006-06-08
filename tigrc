@@ -1,6 +1,7 @@
 #
 # Base configuration
 #
+# Syntax: set <option> = <value>
 
 set show-rev-graph = yes	# Show revision graph?
 set line-number-interval = 5	# Interval between line numbers
@@ -8,8 +9,23 @@ set tab-size = 8		# Number of spaces pr tab
 set encoding = UTF-8		# Commit encoding
 
 #
+# Key configuration
+#
+# Syntax: bind <keymap> <key> <request>
+
+bind main w scroll-line-up
+bind main s scroll-line-down
+
+bind diff a previous
+bind diff d next
+bind diff b move-first-line
+
+bind generic g view-next
+
+#
 # Color configuration
 #
+# Syntax: color <line> <color> <color> [<attribute>]
 
 # Diff colors
 color diff-header	 yellow	 default
