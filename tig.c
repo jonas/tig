@@ -949,7 +949,7 @@ option_set_command(int argc, char *argv[])
 		return OK;
 	}
 
-	if (!strcmp(argv[0], "encoding")) {
+	if (!strcmp(argv[0], "commit-encoding")) {
 		string_copy(opt_encoding, argv[2]);
 		return OK;
 	}
