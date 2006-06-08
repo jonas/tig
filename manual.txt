@@ -11,9 +11,15 @@ When browsing repositories, tig uses the underlying git commands to present
 the user with various views, such as summarized commit log and showing the
 commit with the log message, diffstat, and the diff.
 
+ifndef::backend-docbook[]
+include::manual.toc[]
+endif::backend-docbook[]
+
+[[calling-conventions]]
 Calling Conventions
 -------------------
 
+[[pager-mode]]
 Pager Mode
 ~~~~~~~~~~
 
@@ -27,6 +33,7 @@ Example on how to colorize the output of git-show(1):
 $ git show | tig
 -----------------------------------------------------------------------------
 
+[[cmd-options]]
 Git Command Options
 ~~~~~~~~~~~~~~~~~~~
 
@@ -49,12 +56,14 @@ See the <<refspec, "Specifying revisions">> section below for an introduction
 to revision options supported by the git commands. For details on specific git
 command options, refer to the man page of the command in question.
 
+[[env-variables]]
 Environment Variables
 ---------------------
 
 Several options related to the interface with git can be configured via
 environment options.
 
+[[repo-refs]]
 Repository References
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -109,6 +118,7 @@ TIG_MAIN_CMD::
 	the option: `--pretty=raw` since the main view parser expects to
 	read that format.
 
+[[viewer]]
 The Viewer
 ----------
 
@@ -127,6 +137,7 @@ You will split the view so that the log view is displayed in the top window
 and the diff view in the bottom window. You can switch between the two views
 by pressing 'Tab'. To maximize the log view again, simply press 'l'.
 
+[[commit-id]]
 Current Head and Commit ID
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -138,6 +149,7 @@ reloaded, if the commit ID changed.
 The head ID is used when opening the main and log view to indicate from what
 revision to show history.
 
+[[views]]
 Views
 ~~~~~
 
@@ -166,6 +178,7 @@ The pager view::
 The help view::
 	Displays key binding quick reference.
 
+[[title-window]]
 Title Windows
 ~~~~~~~~~~~~~
 
@@ -184,10 +197,12 @@ be appended:
 [main] 77d9e40fbcea3238015aea403e06f61542df9a31 - commit 1 of 779 (0%) 5s
 -----------------------------------------------------------------------------
 
+[[keys]]
 Keys
 ----
 Below the default key bindings are shown.
 
+[[view-switching]]
 View Switching
 ~~~~~~~~~~~~~~
 m::
@@ -201,6 +216,7 @@ p::
 h, ?::
 	Show man page.
 
+[[view-manipulation]]
 View Manipulation
 ~~~~~~~~~~~~~~~~~
 q::
@@ -223,6 +239,7 @@ Up::
 Down::
 	Similar to 'Up' but will move down.
 
+[[cursor-nav]]
 Cursor Navigation
 ~~~~~~~~~~~~~~~~~
 j::
@@ -241,6 +258,7 @@ Home::
 End::
 	Jump to last line.
 
+[[view-scrolling]]
 Scrolling
 ~~~~~~~~~
 Insert::
@@ -252,6 +270,7 @@ w::
 s::
 	Scroll view one page down.
 
+[[misc-keys]]
 Misc
 ~~~~
 Q::
@@ -288,6 +307,7 @@ You can tune the interaction with git by making use of the options explained
 in this section. For example, by configuring the environment variables
 described in the  <<history-commands, "History commands">> section.
 
+[[path-limiting]]
 Limit by Path Name
 ~~~~~~~~~~~~~~~~~~
 
@@ -311,6 +331,7 @@ NOTE: For the main view, avoiding ambiguity will in some cases require you to
 specify two "\--" options. The first will make tig stop option processing
 and the latter will be passed to git log.
 
+[[date-number-limiting]]
 Limit by Date or Number
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -328,6 +349,7 @@ $ tig -- --after="May 5th" --before="2006-05-16 15:44"
 NOTE: If you want to avoid having to quote dates containing spaces you can use
 "." instead, e.g. `--after=May.5th`.
 
+[[commit-range-limiting]]
 Limiting by Commit Ranges
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -349,6 +371,7 @@ $ tig log origin..HEAD
 will list what will be pushed to the remote branch. Optionally, the ending
 'HEAD' can be left out since it is implied.
 
+[[reachability-limiting]]
 Limiting by Reachability
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -367,6 +390,7 @@ $ tig log tag-2.0 ^tag-1.0
 You can think of '^' as a negation operator. Using this alternate syntax, it
 is possible to further prune commits by specifying multiple branch cut offs.
 
+[[refspec-combi]]
 Combining Revisions Specification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -378,6 +402,7 @@ under the Documentation/ directory."
 $ tig -- --since=1.month -n20 -- Documentation/
 -----------------------------------------------------------------------------
 
+[[refspec-all]]
 Examining All Repository References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -392,6 +417,7 @@ $ tig -- --all --since=1.week -- Makefile
 
 include::BUGS[]
 
+[[copy-right]]
 Copyright
 ---------
 
@@ -402,6 +428,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 
+[[references]]
 References and Related Tools
 ----------------------------
 

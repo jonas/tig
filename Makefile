@@ -8,7 +8,7 @@ CFLAGS	= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
 DOCS	= tig.1.html tig.1 tigrc.5.html tigrc.5 \
-	  manual.html manual.html-chunked README.html
+	  manual.toc manual.html manual.html-chunked README.html \
 
 ifneq (,$(wildcard .git))
 VERSION = $(shell git-describe)
@@ -47,6 +47,15 @@ strip: all
 
 .PHONY: all all-debug doc install install-doc clean spell-check
 
+manual.toc: manual.txt
+	sed -n '/^\[\[/,/\(---\|~~~\)/p' < $< | while read line; do \
+		case "$$line" in \
+		"-----"*)  echo ". <<$$ref>>"; ref= ;; \
+		"~~~~~"*)  echo "- <<$$ref>>"; ref= ;; \
+		"[["*"]]") ref="$$line" ;; \
+		*)	   ref="$$ref, $$line" ;; \
+		esac; done | sed 's/\[\[\(.*\)\]\]/\1/' > $@
+
 tig: tig.c
 
 README.html: README
@@ -71,7 +80,7 @@ README.html: README
 	xmlto man $<
 
 %.html : %.txt
-	asciidoc -b xhtml11 -d article $<
+	asciidoc -b xhtml11 -d article -n $<
 
 %.xml : %.txt
 	asciidoc -b docbook -d article $<
