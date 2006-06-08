@@ -1,6 +1,7 @@
 prefix	= $(HOME)
 bindir= $(prefix)/bin
 mandir = $(prefix)/man
+docdir = $(prefix)/share/doc
 # DESTDIR=
 
 LDLIBS  = -lcurses
@@ -27,11 +28,14 @@ install: all
 	done
 
 install-doc: doc
-	mkdir -p $(DESTDIR)$(mandir)/man1 $(DESTDIR)$(mandir)/man5
+	mkdir -p $(DESTDIR)$(mandir)/man1 \
+		 $(DESTDIR)$(mandir)/man5 \
+		 $(DESTDIR)$(docdir)/tig
 	for doc in $(DOCS); do \
 		case "$$doc" in \
 		*.1) install $$doc $(DESTDIR)$(mandir)/man1 ;; \
 		*.5) install $$doc $(DESTDIR)$(mandir)/man5 ;; \
+		*.html) install $$doc $(DESTDIR)$(docdir)/tig ;; \
 		esac \
 	done
 
