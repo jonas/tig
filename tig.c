@@ -900,12 +900,8 @@ option_color_command(int argc, char *argv[])
 		return ERR;
 	}
 
-	if (set_color(&info->fg, argv[1]) == ERR) {
-		config_msg = "Unknown color";
-		return ERR;
-	}
-
-	if (set_color(&info->bg, argv[2]) == ERR) {
+	if (set_color(&info->fg, argv[1]) == ERR ||
+	    set_color(&info->bg, argv[2]) == ERR) {
 		config_msg = "Unknown color";
 		return ERR;
 	}
@@ -954,6 +950,7 @@ option_set_command(int argc, char *argv[])
 		return OK;
 	}
 
+	config_msg = "Unknown variable name";
 	return ERR;
 }
 
@@ -1021,33 +1018,42 @@ set_option(char *opt, char *value)
 	if (!strcmp(opt, "bind"))
 		return option_bind_command(argc, argv);
 
+	config_msg = "Unknown option command";
 	return ERR;
 }
 
 static int
 read_option(char *opt, int optlen, char *value, int valuelen)
 {
+	int status = OK;
+
 	config_lineno++;
 	config_msg = "Internal error";
 
+	/* Check for comment markers, since read_properties() will
+	 * only ensure opt and value are split at first " \t". */
 	optlen = strcspn(opt, "#;");
-	if (optlen == 0) {
-		/* The whole line is a commend or empty. */
+	if (optlen == 0)
 		return OK;
 
-	} else if (opt[optlen] != 0) {
-		/* Part of the option name is a comment, so the value part
-		 * should be ignored. */
-		valuelen = 0;
-		opt[optlen] = value[valuelen] = 0;
-	} else {
-		/* Else look for comment endings in the value. */
-		valuelen = strcspn(value, "#;");
-		value[valuelen] = 0;
+	if (opt[optlen] != 0) {
+		config_msg = "No option value";
+		status = ERR;
+
+	}  else {
+		/* Look for comment endings in the value. */
+		int len = strcspn(value, "#;");
+
+		if (len < valuelen) {
+			valuelen = len;
+			value[valuelen] = 0;
+		}
+
+		status = set_option(opt, value);
 	}
 
-	if (set_option(opt, value) == ERR) {
-		fprintf(stderr, "Error on line %d, near '%.*s' option: %s\n",
+	if (status == ERR) {
+		fprintf(stderr, "Error on line %d, near '%.*s': %s\n",
 			config_lineno, optlen, opt, config_msg);
 		config_errors = TRUE;
 	}
