@@ -2592,6 +2592,68 @@ init_display(void)
 	wbkgdset(status_win, get_line_attr(LINE_STATUS));
 }
 
+static int
+read_prompt(void)
+{
+	enum { READING, STOP, CANCEL } status = READING;
+	char buf[sizeof(opt_cmd) - STRING_SIZE("git \0")];
+	int pos = 0;
+
+	while (status == READING) {
+		struct view *view;
+		int i, key;
+
+		foreach_view (view, i)
+			update_view(view);
+
+		report(":%.*s", pos, buf);
+		/* Refresh, accept single keystroke of input */
+		key = wgetch(status_win);
+		switch (key) {
+		case KEY_RETURN:
+		case KEY_ENTER:
+		case '\n':
+			status = pos ? STOP : CANCEL;
+			break;
+
+		case KEY_BACKSPACE:
+			if (pos > 0)
+				pos--;
+			else
+				status = CANCEL;
+			break;
+
+		case KEY_ESC:
+			status = CANCEL;
+			break;
+
+		case ERR:
+			break;
+
+		default:
+			if (pos >= sizeof(buf)) {
+				report("Input string too long");
+				return ERR;
+			}
+
+			if (isprint(key))
+				buf[pos++] = (char) key;
+		}
+	}
+
+	if (status == CANCEL) {
+		/* Clear the status window */
+		report("");
+		return ERR;
+	}
+
+	buf[pos++] = 0;
+	if (!string_format(opt_cmd, "git %s", buf))
+		return ERR;
+	opt_request = REQ_VIEW_PAGER;
+
+	return OK;
+}
 
 /*
  * Repository references
@@ -2841,23 +2903,8 @@ main(int argc, char *argv[])
 		 * status_win restricted. */
 		switch (request) {
 		case REQ_PROMPT:
-			report(":");
-			/* Temporarily switch to line-oriented and echoed
-			 * input. */
-			nocbreak();
-			echo();
-
-			if (wgetnstr(status_win, opt_cmd + 4, sizeof(opt_cmd) - 4) == OK) {
-				memcpy(opt_cmd, "git ", 4);
-				opt_request = REQ_VIEW_PAGER;
-			} else {
-				report("Prompt interrupted by loading view, "
-				       "press 'z' to stop loading views");
+			if (read_prompt() == ERR)
 				request = REQ_SCREEN_UPDATE;
-			}
-
-			noecho();
-			cbreak();
 			break;
 
 		case REQ_SCREEN_RESIZE:
