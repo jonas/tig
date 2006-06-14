@@ -770,6 +770,7 @@ static struct key key_table[] = {
 	{ "Down",	KEY_DOWN },
 	{ "Insert",	KEY_IC },
 	{ "Delete",	KEY_DC },
+	{ "Hash",	'#' },
 	{ "Home",	KEY_HOME },
 	{ "End",	KEY_END },
 	{ "PageUp",	KEY_PPAGE },
@@ -1046,7 +1047,7 @@ read_option(char *opt, int optlen, char *value, int valuelen)
 
 	/* Check for comment markers, since read_properties() will
 	 * only ensure opt and value are split at first " \t". */
-	optlen = strcspn(opt, "#;");
+	optlen = strcspn(opt, "#");
 	if (optlen == 0)
 		return OK;
 
@@ -1056,7 +1057,7 @@ read_option(char *opt, int optlen, char *value, int valuelen)
 
 	}  else {
 		/* Look for comment endings in the value. */
-		int len = strcspn(value, "#;");
+		int len = strcspn(value, "#");
 
 		if (len < valuelen) {
 			valuelen = len;
