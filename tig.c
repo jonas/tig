@@ -946,8 +946,22 @@ option_set_command(int argc, char *argv[])
 	}
 
 	if (!strcmp(argv[0], "commit-encoding")) {
-		string_copy(opt_encoding, argv[2]);
-		return OK;
+		char *arg = argv[2];
+		int delimiter = *arg;
+		int i;
+
+		switch (delimiter) {
+		case '"':
+		case '\'':
+			for (arg++, i = 0; arg[i]; i++)
+				if (arg[i] == delimiter) {
+					arg[i] = 0;
+					break;
+				}
+		default:
+			string_copy(opt_encoding, arg);
+			return OK;
+		}
 	}
 
 	config_msg = "Unknown variable name";
