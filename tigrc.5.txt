@@ -5,56 +5,310 @@ NAME
 ----
 tigrc - tig user configuration file
 
+
 SYNOPSIS
 --------
 [verse]
 .............................................................................
-*color* 'fgcolor' 'bgcolor' '[attributes]'
+*set*   variable *=* value
+*bind*  keymap key action
+*color* area fgcolor bgcolor [attributes]
 .............................................................................
+
 
 DESCRIPTION
 -----------
-You can permanently set an option by putting it in the `~/.tigrc` file.
-The file consists of a series of 'commands'.  Each
-line of the file may contain only one command.
 
-The hash mark ('#'), or semi-colon (';') is used as a 'comment' character.
-All text after the comment character to the end of the line is ignored.
-You can use comments to annotate your initialization file.
+You can permanently set an option by putting it in the `~/.tigrc` file.  The
+file consists of a series of 'commands'.  Each line of the file may contain
+only one command.
 
-Color options
--------------
+The hash mark ('#') is used as a 'comment' character. All text after the
+comment character to the end of the line is ignored. You can use comments to
+annotate your initialization file.
 
-Color options control highlighting and the user interface styles.
-If  your terminal supports color, these commands can be used to assign
-foreground/backgound combinations to certain areas. Optionally, an
-attribute can be given as the last parameter. The syntax is:
+
+Set command
+-----------
+
+A few selective variables can be configured via the set command. The syntax
+is:
 
 [verse]
-..........................................................................
+..............................................................................
+	*set* variables *=* value
+..............................................................................
+
+Examples:
+
+--------------------------------------------------------------------------
+	set show-rev-graph = yes	# Show revision graph?
+	set line-number-interval = 5	# Interval between line numbers
+	set tab-size = 8		# Number of spaces pr tab 
+	set encoding = "UTF-8"		# Commit encoding
+--------------------------------------------------------------------------
+
+The type of variables are either bool, int, and string.
+
+Valid bool values::
+
+	To set a bool variable to true use either "1", "true", or "yes".
+	Any other value will set the variable to false.
+
+Valid int values::
+
+	A non-negative integer.
+
+Valid string values::
+
+	A string of characters. Optionally, use either ' or " as delimiters.
+
+Variables
+~~~~~~~~~
+
+The following variables can be set:
+
+'show-rev-graph' (bool)::
+
+	Show revision graph in the main view on startup. Can be toggled with
+	'g'.
+
+'line-number-interval' (int)::
+
+	Interval between line numbers. Note, you have to toggle on line
+	numbering with 'n' or the `-n` command line option.  The default is to
+	number every line.
+
+'tab-size' (int)::
+
+	Number of spaces per tab. The default is 8 spaces.
+
+'commit-encoding' (string)::
+
+	The encoding used for commits. The default is UTF-8. Not this option
+	is shadowed by the "i18n.commitencoding" option in `.git/config`.
+
+
+Bind command
+------------
+
+Using bind commands keys can be mapped to an action when pressed in a given
+key map. The syntax is:
+
+[verse]
+..............................................................................
+	*bind* 'keymap' 'key' 'action'
+..............................................................................
+
+Examples:
+
+--------------------------------------------------------------------------
+	# A few keybindings
+	bind main w scroll-line-up
+	bind main s scroll-line-down
+	bind main space enter
+	bind diff a previous
+	bind diff d next
+	bind diff b move-first-line
+--------------------------------------------------------------------------
+
+Keys are mapped by first searching the keybindings for the current view, then
+the keybindings for the *generic* keymap, and last the default keybindings.
+Thus, the view keybindings shaddow the generic keybindings which shaddow the
+built-in keybindings.
+
+--
+
+Keymaps::
+
+Valid keymaps are: *main*, *diff*, *log*, *help*, *pager*, and *generic*.  Use
+*generic* to set key mapping in all keymaps.
+
+Key values::
+
+Key values should never be quoted. Use either the ASCII value or one of the
+following symbolic key names. Symbolic key names are case insensitive, Use
+*Hash* to bind to the `#` key, since the hash mark is used as a comment
+character.
+
+*Enter*, *Space*, *Backspace*, *Tab*, *Escape*, *Left*, *Right*, *Up*, *Down*,
+*Insert*, *Delete*, *Hash*, *Home*, *End*, *PageUp*, *PageDown*, *F1*, *F2*, *F3*,
+*F4*, *F5*, *F6*, *F7*, *F8*, *F9*, *F10*, *F11*, *F12*.
+
+Action names::
+
+Valid action names are described below. Note, all names are
+case-insensitive, and you may use '-', '_', and '.' interchangeably,
+e.g. "view-main", "View.Main", and "VIEW_MAIN" are the same.
+
+--
+
+Actions
+~~~~~~~
+
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
+View switching::
+------------------------------------------------------------------------------
+view-main		Show main view
+view-diff		Show diff view
+view-log		Show log view
+view-help		Show help page
+view-pager		Show pager view
+------------------------------------------------------------------------------
+
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
+View manipulation::
+------------------------------------------------------------------------------
+enter			Enter current line and scroll
+next			Move to next
+previous		Move to previous
+view-next		Move focus to next view
+view-close		Close the current view
+quit			Close all views and quit
+------------------------------------------------------------------------------
+
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
+Cursor navigation::
+------------------------------------------------------------------------------
+move-up			Move cursor one line up
+move-down		Move cursor one line down
+move-page_down		Move cursor one page down
+move-page_up		Move cursor one page up
+move-first_line		Move cursor to first line
+move-last_line		Move cursor to last line
+------------------------------------------------------------------------------
+
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
+Scrolling::
+------------------------------------------------------------------------------
+scroll-line_up		Scroll one line up
+scroll-line_down	Scroll one line down
+scroll-page_up		Scroll one page up
+scroll-page_down	Scroll one page down
+------------------------------------------------------------------------------
+
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
+Misc::
+------------------------------------------------------------------------------
+prompt			Bring up the prompt
+screen-update		Update the screen
+screen-redraw		Redraw the screen
+screen-resize		Resize the screen
+show-version		Show version information
+stop-loading		Stop all loading views
+toggle-lineno		Toggle line numbers
+toggle-rev_graph	Toggle revision graph visualization
+------------------------------------------------------------------------------
+
+
+Color command
+-------------
+
+Color commands control highlighting and the user interface styles. If your
+terminal supports color, these commands can be used to assign foreground and
+backgound combinations to certain areas. Optionally, an attribute can be given
+as the last parameter. The syntax is:
+
+[verse]
+..............................................................................
 	*color* 'area' 'fgcolor' 'bgcolor' '[attributes]'
-..........................................................................
+..............................................................................
 
-Valid colors include: *white*, *black*, *green*, *magenta*, *blue*, *cyan*,
-*yellow*, *red*, *default*. Use *default* to refer to the default terminal
-colors.
+Examples:
 
-Valid attributes include: *normal*, *blink*, *bold*, *dim*, *reverse*, *standout*,
-and *underline*. Note, not all attributes may be supported by the terminal.
+------------------------------------------------------------------------------
+	# Diff colors
+	color diff-header	yellow	default
+	color diff-index	blue	default
+	color diff-chunk	magenta	default
+	# A strange looking cursor line
+	color cursor		red	default underline
+	# UI colors
+	color title-blur	white	blue
+	color title-focus	white	blue	bold
+------------------------------------------------------------------------------
 
-Valid area names are described below. Note, all names are case-insensitive,
-and you may use '-', '_', and '.' interchangeably. So "Diff-Header",
-"DIFF_HEADER", and "diff.header" are the same.
+Area names::
 
-Diff markup
-~~~~~~~~~~~
+	Valid area names are described below. Note, all names are
+	case-insensitive, and you may use '-', '_', and '.' interchangeably,
+	e.g. "Diff-Header", "DIFF_HEADER", and "diff.header" are the same.
+
+Color names::
+
+	Valid colors include: *white*, *black*, *green*, *magenta*, *blue*,
+	*cyan*, *yellow*, *red*, *default*. Use *default* to refer to the
+	default terminal colors.
+
+Attribute names::
+
+	Valid attributes include: *normal*, *blink*, *bold*, *dim*, *reverse*,
+	*standout*, and *underline*. Note, not all attributes may be supported
+	by the terminal.
+
+
+UI colors
+~~~~~~~~~
+
+--
+
+Status window colors::
+
+Appearance of the bottom window showing info messages.
+
+*status*
+
+Title window colors::
+
+Appearence of the title windows when they are attached
+to any backgrounded windows and the current window.
+
+*title-blur*, *title-focus*
+
+Cursor line colors::
+
+*cursor*
+
+Main view specific::
+
+Appearance of the various columns in the main view, including the '~' used for
+delimiting long author names and labels for tag and branch references.
+
+*main-date*, *main-author*, *main-commit*, *main-delim*, *main-tag*,
+*main-ref*
+
+--
+
+Highlighting
+~~~~~~~~~~~~
+
+The colors and attributes for text that is not highlighted can be controlled
+by changing the *default* color option.
+
+--
+
+Diff markup::
 
 Options concerning diff start, chunks and lines added and deleted.
 
 *diff-header*, *diff-chunk*, *diff-add*, *diff-del*
 
-Enhanced git diff markup
-~~~~~~~~~~~~~~~~~~~~~~~~
+Enhanced git diff markup::
 
 Extra diff information emitted by the git diff machinery, such as mode
 changes, rename detection, and similarity.
@@ -63,60 +317,35 @@ changes, rename detection, and similarity.
 *diff-rename-from*, *diff-rename-to*, *diff-similarity* *diff-dissimilarity*
 *diff-tree*, *diff-index*
 
-Pretty print commit headers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Pretty print commit headers::
 
-Commit diffs and the revision logs are usually formatted using pretty
-printed headers , unless `--pretty=raw` was given. This includes lines,
-such as merge info, commit ID, and author and comitter date.
+Commit diffs and the revision logs are usually formatted using pretty printed
+headers , unless `--pretty=raw` was given. This includes lines, such as merge
+info, commit ID, and author and comitter date.
 
 *pp-author*, *pp-commit*, *pp-merge*, *pp-date*, *pp-adate*, *pp-cdate*
 
-Raw commit header
-~~~~~~~~~~~~~~~~~
+Raw commit header::
 
-Usually shown when `--pretty=raw` is given, however 'commit' is pretty
-much omnipresent.
+Usually shown when `--pretty=raw` is given, however 'commit' is pretty much
+omnipresent.
 
 *commit*, *parent*, *tree*, *author*, *committer*
 
-Commit message
-~~~~~~~~~~~~~~
+Commit message::
 
-For now only `Signed-off-by lines` are colorized.
+For now only `Signed-off-by` lines are colorized.
 
 *signoff*
 
-UI colors
-~~~~~~~~~
+--
 
-Colors for text not matching any of the above: *default*
+COPYRIGHT
+---------
+Copyright (c) 2006 Jonas Fonseca <fonseca@diku.dk>
 
-Status window colors: *status*
-
-Title window colors: *title-blur*, *title-focus*
-
-Cursor line colors: *cursor*
-
-Main view specific: *main-date*, *main-author*, *main-commit*, *main-delim*,
-*main-tag*, *main-ref*
-
-
-EXAMPLES
---------
-
-Some sample options:
-
-==========================================================================
-	# Diff colors
-	color diff-header	yellow	default
-	color diff-index	blue	default
-	color diff-chunk	magenta	default
-	# UI colors
-	color title-blur	white	blue
-	color title-focus	white	blue	bold
-==========================================================================
+Licensed under the terms of the GNU General Public License.
 
 SEE ALSO
 --------
-tig(1)
+gitlink:tig[1] and the http://jonas.nitro.dk/tig/tig.html[tig manual].

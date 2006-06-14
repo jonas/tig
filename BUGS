@@ -10,5 +10,3 @@ Known bugs and problems:
 
  - The cursor can wrap-around on the last line and cause the
    window to scroll.
-
- - The prompt doesn't work while loading.

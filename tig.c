@@ -32,12 +32,17 @@
 
 #include <curses.h>
 
-static void die(const char *err, ...);
+#if __GNUC__ >= 3
+#define __NORETURN __attribute__((__noreturn__))
+#else
+#define __NORETURN
+#endif
+
+static void __NORETURN die(const char *err, ...);
 static void report(const char *msg, ...);
 static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, int, char *, int));
 static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed);
-static void load_help_page(void);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -173,6 +178,28 @@ string_nformat(char *buf, size_t bufsize, int *bufpos, const char *fmt, ...)
 #define string_format_from(buf, from, fmt, args...) \
 	string_nformat(buf, sizeof(buf), from, fmt, args)
 
+static int
+string_enum_compare(const char *str1, const char *str2, int len)
+{
+	size_t i;
+
+#define string_enum_sep(x) ((x) == '-' || (x) == '_' || (x) == '.')
+
+	/* Diff-Header == DIFF_HEADER */
+	for (i = 0; i < len; i++) {
+		if (toupper(str1[i]) == toupper(str2[i]))
+			continue;
+
+		if (string_enum_sep(str1[i]) &&
+		    string_enum_sep(str2[i]))
+			continue;
+
+		return str1[i] - str2[i];
+	}
+
+	return 0;
+}
+
 /* Shell quoting
  *
  * NOTE: The following is a slightly modified copy of the git project's shell
@@ -257,7 +284,7 @@ sq_quote(char buf[SIZEOF_CMD], size_t bufsize, const char *src)
 	REQ_(SHOW_VERSION,	"Show version information"), \
 	REQ_(STOP_LOADING,	"Stop all loading views"), \
 	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
-	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"),
+	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization")
 
 
 /* User action requests. */
@@ -267,7 +294,8 @@ enum request {
 
 	/* Offset all requests to avoid conflicts with ncurses getch values. */
 	REQ_OFFSET = KEY_MAX + 1,
-	REQ_INFO
+	REQ_INFO,
+	REQ_UNKNOWN,
 
 #undef	REQ_GROUP
 #undef	REQ_
@@ -275,16 +303,33 @@ enum request {
 
 struct request_info {
 	enum request request;
+	char *name;
+	int namelen;
 	char *help;
 };
 
 static struct request_info req_info[] = {
-#define REQ_GROUP(help)	{ 0, (help) },
-#define REQ_(req, help)	{ REQ_##req, (help) }
+#define REQ_GROUP(help)	{ 0, NULL, 0, (help) },
+#define REQ_(req, help)	{ REQ_##req, (#req), STRING_SIZE(#req), (help) }
 	REQ_INFO
 #undef	REQ_GROUP
 #undef	REQ_
 };
+
+static enum request
+get_request(const char *name)
+{
+	int namelen = strlen(name);
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(req_info); i++)
+		if (req_info[i].namelen == namelen &&
+		    !string_enum_compare(req_info[i].name, name, namelen))
+			return req_info[i].request;
+
+	return REQ_UNKNOWN;
+}
+
 
 /*
  * Options
@@ -547,19 +592,10 @@ static struct line_info *
 get_line_info(char *name, int namelen)
 {
 	enum line_type type;
-	int i;
-
-	/* Diff-Header -> DIFF_HEADER */
-	for (i = 0; i < namelen; i++) {
-		if (name[i] == '-')
-			name[i] = '_';
-		else if (name[i] == '.')
-			name[i] = '_';
-	}
 
 	for (type = 0; type < ARRAY_SIZE(line_info); type++)
 		if (namelen == line_info[type].namelen &&
-		    !strncasecmp(line_info[type].name, name, namelen))
+		    !string_enum_compare(line_info[type].name, name, namelen))
 			return &line_info[type];
 
 	return NULL;
@@ -595,6 +631,222 @@ struct line {
 
 
 /*
+ * Keys
+ */
+
+struct keybinding {
+	int alias;
+	enum request request;
+	struct keybinding *next;
+};
+
+static struct keybinding default_keybindings[] = {
+	/* View switching */
+	{ 'm',		REQ_VIEW_MAIN },
+	{ 'd',		REQ_VIEW_DIFF },
+	{ 'l',		REQ_VIEW_LOG },
+	{ 'p',		REQ_VIEW_PAGER },
+	{ 'h',		REQ_VIEW_HELP },
+	{ '?',		REQ_VIEW_HELP },
+
+	/* View manipulation */
+	{ 'q',		REQ_VIEW_CLOSE },
+	{ KEY_TAB,	REQ_VIEW_NEXT },
+	{ KEY_RETURN,	REQ_ENTER },
+	{ KEY_UP,	REQ_PREVIOUS },
+	{ KEY_DOWN,	REQ_NEXT },
+
+	/* Cursor navigation */
+	{ 'k',		REQ_MOVE_UP },
+	{ 'j',		REQ_MOVE_DOWN },
+	{ KEY_HOME,	REQ_MOVE_FIRST_LINE },
+	{ KEY_END,	REQ_MOVE_LAST_LINE },
+	{ KEY_NPAGE,	REQ_MOVE_PAGE_DOWN },
+	{ ' ',		REQ_MOVE_PAGE_DOWN },
+	{ KEY_PPAGE,	REQ_MOVE_PAGE_UP },
+	{ 'b',		REQ_MOVE_PAGE_UP },
+	{ '-',		REQ_MOVE_PAGE_UP },
+
+	/* Scrolling */
+	{ KEY_IC,	REQ_SCROLL_LINE_UP },
+	{ KEY_DC,	REQ_SCROLL_LINE_DOWN },
+	{ 'w',		REQ_SCROLL_PAGE_UP },
+	{ 's',		REQ_SCROLL_PAGE_DOWN },
+
+	/* Misc */
+	{ 'Q',		REQ_QUIT },
+	{ 'z',		REQ_STOP_LOADING },
+	{ 'v',		REQ_SHOW_VERSION },
+	{ 'r',		REQ_SCREEN_REDRAW },
+	{ 'n',		REQ_TOGGLE_LINENO },
+	{ 'g',		REQ_TOGGLE_REV_GRAPH},
+	{ ':',		REQ_PROMPT },
+
+	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
+	{ ERR,		REQ_SCREEN_UPDATE },
+
+	/* Use the ncurses SIGWINCH handler. */
+	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
+};
+
+#define KEYMAP_INFO \
+	KEYMAP_(GENERIC), \
+	KEYMAP_(MAIN), \
+	KEYMAP_(DIFF), \
+	KEYMAP_(LOG), \
+	KEYMAP_(PAGER), \
+	KEYMAP_(HELP) \
+
+enum keymap {
+#define KEYMAP_(name) KEYMAP_##name
+	KEYMAP_INFO
+#undef	KEYMAP_
+};
+
+static struct int_map keymap_table[] = {
+#define KEYMAP_(name) { #name, STRING_SIZE(#name), KEYMAP_##name }
+	KEYMAP_INFO
+#undef	KEYMAP_
+};
+
+#define set_keymap(map, name) \
+	set_from_int_map(keymap_table, ARRAY_SIZE(keymap_table), map, name, strlen(name))
+
+static struct keybinding *keybindings[ARRAY_SIZE(keymap_table)];
+
+static void
+add_keybinding(enum keymap keymap, enum request request, int key)
+{
+	struct keybinding *keybinding;
+
+	keybinding = calloc(1, sizeof(*keybinding));
+	if (!keybinding)
+		die("Failed to allocate keybinding");
+
+	keybinding->alias = key;
+	keybinding->request = request;
+	keybinding->next = keybindings[keymap];
+	keybindings[keymap] = keybinding;
+}
+
+/* Looks for a key binding first in the given map, then in the generic map, and
+ * lastly in the default keybindings. */
+static enum request
+get_keybinding(enum keymap keymap, int key)
+{
+	struct keybinding *kbd;
+	int i;
+
+	for (kbd = keybindings[keymap]; kbd; kbd = kbd->next)
+		if (kbd->alias == key)
+			return kbd->request;
+
+	for (kbd = keybindings[KEYMAP_GENERIC]; kbd; kbd = kbd->next)
+		if (kbd->alias == key)
+			return kbd->request;
+
+	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++)
+		if (default_keybindings[i].alias == key)
+			return default_keybindings[i].request;
+
+	return (enum request) key;
+}
+
+
+struct key {
+	char *name;
+	int value;
+};
+
+static struct key key_table[] = {
+	{ "Enter",	KEY_RETURN },
+	{ "Space",	' ' },
+	{ "Backspace",	KEY_BACKSPACE },
+	{ "Tab",	KEY_TAB },
+	{ "Escape",	KEY_ESC },
+	{ "Left",	KEY_LEFT },
+	{ "Right",	KEY_RIGHT },
+	{ "Up",		KEY_UP },
+	{ "Down",	KEY_DOWN },
+	{ "Insert",	KEY_IC },
+	{ "Delete",	KEY_DC },
+	{ "Hash",	'#' },
+	{ "Home",	KEY_HOME },
+	{ "End",	KEY_END },
+	{ "PageUp",	KEY_PPAGE },
+	{ "PageDown",	KEY_NPAGE },
+	{ "F1",		KEY_F(1) },
+	{ "F2",		KEY_F(2) },
+	{ "F3",		KEY_F(3) },
+	{ "F4",		KEY_F(4) },
+	{ "F5",		KEY_F(5) },
+	{ "F6",		KEY_F(6) },
+	{ "F7",		KEY_F(7) },
+	{ "F8",		KEY_F(8) },
+	{ "F9",		KEY_F(9) },
+	{ "F10",	KEY_F(10) },
+	{ "F11",	KEY_F(11) },
+	{ "F12",	KEY_F(12) },
+};
+
+static int
+get_key_value(const char *name)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(key_table); i++)
+		if (!strcasecmp(key_table[i].name, name))
+			return key_table[i].value;
+
+	if (strlen(name) == 1 && isprint(*name))
+		return (int) *name;
+
+	return ERR;
+}
+
+static char *
+get_key(enum request request)
+{
+	static char buf[BUFSIZ];
+	static char key_char[] = "'X'";
+	int pos = 0;
+	char *sep = "    ";
+	int i;
+
+	buf[pos] = 0;
+
+	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++) {
+		struct keybinding *keybinding = &default_keybindings[i];
+		char *seq = NULL;
+		int key;
+
+		if (keybinding->request != request)
+			continue;
+
+		for (key = 0; key < ARRAY_SIZE(key_table); key++)
+			if (key_table[key].value == keybinding->alias)
+				seq = key_table[key].name;
+
+		if (seq == NULL &&
+		    keybinding->alias < 127 &&
+		    isprint(keybinding->alias)) {
+			key_char[1] = (char) keybinding->alias;
+			seq = key_char;
+		}
+
+		if (!seq)
+			seq = "'?'";
+
+		if (!string_format_from(buf, &pos, "%s%s", sep, seq))
+			return "Too many keybindings!";
+		sep = ", ";
+	}
+
+	return buf;
+}
+
+
+/*
  * User config file handling.
  */
 
@@ -611,8 +863,8 @@ static struct int_map color_map[] = {
 	COLOR_MAP(YELLOW),
 };
 
-#define set_color(color, name, namelen) \
-	set_from_int_map(color_map, ARRAY_SIZE(color_map), color, name, namelen)
+#define set_color(color, name) \
+	set_from_int_map(color_map, ARRAY_SIZE(color_map), color, name, strlen(name))
 
 static struct int_map attr_map[] = {
 #define ATTR_MAP(name) { #name, STRING_SIZE(#name), A_##name }
@@ -625,79 +877,198 @@ static struct int_map attr_map[] = {
 	ATTR_MAP(UNDERLINE),
 };
 
-#define set_attribute(attr, name, namelen) \
-	set_from_int_map(attr_map, ARRAY_SIZE(attr_map), attr, name, namelen)
+#define set_attribute(attr, name) \
+	set_from_int_map(attr_map, ARRAY_SIZE(attr_map), attr, name, strlen(name))
 
 static int   config_lineno;
 static bool  config_errors;
 static char *config_msg;
 
+/* Wants: object fgcolor bgcolor [attr] */
 static int
-set_option(char *opt, int optlen, char *value, int valuelen)
+option_color_command(int argc, char *argv[])
 {
-	/* Reads: "color" object fgcolor bgcolor [attr] */
-	if (!strcmp(opt, "color")) {
-		struct line_info *info;
+	struct line_info *info;
 
-		value = chomp_string(value);
-		valuelen = strcspn(value, " \t");
-		info = get_line_info(value, valuelen);
-		if (!info) {
-			config_msg = "Unknown color name";
-			return ERR;
-		}
+	if (argc != 3 && argc != 4) {
+		config_msg = "Wrong number of arguments given to color command";
+		return ERR;
+	}
 
-		value = chomp_string(value + valuelen);
-		valuelen = strcspn(value, " \t");
-		if (set_color(&info->fg, value, valuelen) == ERR) {
-			config_msg = "Unknown color";
-			return ERR;
-		}
+	info = get_line_info(argv[0], strlen(argv[0]));
+	if (!info) {
+		config_msg = "Unknown color name";
+		return ERR;
+	}
 
-		value = chomp_string(value + valuelen);
-		valuelen = strcspn(value, " \t");
-		if (set_color(&info->bg, value, valuelen) == ERR) {
-			config_msg = "Unknown color";
-			return ERR;
-		}
+	if (set_color(&info->fg, argv[1]) == ERR ||
+	    set_color(&info->bg, argv[2]) == ERR) {
+		config_msg = "Unknown color";
+		return ERR;
+	}
 
-		value = chomp_string(value + valuelen);
-		if (*value &&
-		    set_attribute(&info->attr, value, strlen(value)) == ERR) {
-			config_msg = "Unknown attribute";
-			return ERR;
-		}
+	if (argc == 4 && set_attribute(&info->attr, argv[3]) == ERR) {
+		config_msg = "Unknown attribute";
+		return ERR;
+	}
 
+	return OK;
+}
+
+/* Wants: name = value */
+static int
+option_set_command(int argc, char *argv[])
+{
+	if (argc != 3) {
+		config_msg = "Wrong number of arguments given to set command";
+		return ERR;
+	}
+
+	if (strcmp(argv[1], "=")) {
+		config_msg = "No value assigned";
+		return ERR;
+	}
+
+	if (!strcmp(argv[0], "show-rev-graph")) {
+		opt_rev_graph = (!strcmp(argv[2], "1") ||
+				 !strcmp(argv[2], "true") ||
+				 !strcmp(argv[2], "yes"));
 		return OK;
 	}
 
+	if (!strcmp(argv[0], "line-number-interval")) {
+		opt_num_interval = atoi(argv[2]);
+		return OK;
+	}
+
+	if (!strcmp(argv[0], "tab-size")) {
+		opt_tab_size = atoi(argv[2]);
+		return OK;
+	}
+
+	if (!strcmp(argv[0], "commit-encoding")) {
+		char *arg = argv[2];
+		int delimiter = *arg;
+		int i;
+
+		switch (delimiter) {
+		case '"':
+		case '\'':
+			for (arg++, i = 0; arg[i]; i++)
+				if (arg[i] == delimiter) {
+					arg[i] = 0;
+					break;
+				}
+		default:
+			string_copy(opt_encoding, arg);
+			return OK;
+		}
+	}
+
+	config_msg = "Unknown variable name";
+	return ERR;
+}
+
+/* Wants: mode request key */
+static int
+option_bind_command(int argc, char *argv[])
+{
+	enum request request;
+	int keymap;
+	int key;
+
+	if (argc != 3) {
+		config_msg = "Wrong number of arguments given to bind command";
+		return ERR;
+	}
+
+	if (set_keymap(&keymap, argv[0]) == ERR) {
+		config_msg = "Unknown key map";
+		return ERR;
+	}
+
+	key = get_key_value(argv[1]);
+	if (key == ERR) {
+		config_msg = "Unknown key";
+		return ERR;
+	}
+
+	request = get_request(argv[2]);
+	if (request == REQ_UNKNOWN) {
+		config_msg = "Unknown request name";
+		return ERR;
+	}
+
+	add_keybinding(keymap, request, key);
+
+	return OK;
+}
+
+static int
+set_option(char *opt, char *value)
+{
+	char *argv[16];
+	int valuelen;
+	int argc = 0;
+
+	/* Tokenize */
+	while (argc < ARRAY_SIZE(argv) && (valuelen = strcspn(value, " \t"))) {
+		argv[argc++] = value;
+
+		value += valuelen;
+		if (!*value)
+			break;
+
+		*value++ = 0;
+		while (isspace(*value))
+			value++;
+	}
+
+	if (!strcmp(opt, "color"))
+		return option_color_command(argc, argv);
+
+	if (!strcmp(opt, "set"))
+		return option_set_command(argc, argv);
+
+	if (!strcmp(opt, "bind"))
+		return option_bind_command(argc, argv);
+
+	config_msg = "Unknown option command";
 	return ERR;
 }
 
 static int
 read_option(char *opt, int optlen, char *value, int valuelen)
 {
+	int status = OK;
+
 	config_lineno++;
 	config_msg = "Internal error";
 
-	optlen = strcspn(opt, "#;");
-	if (optlen == 0) {
-		/* The whole line is a commend or empty. */
+	/* Check for comment markers, since read_properties() will
+	 * only ensure opt and value are split at first " \t". */
+	optlen = strcspn(opt, "#");
+	if (optlen == 0)
 		return OK;
 
-	} else if (opt[optlen] != 0) {
-		/* Part of the option name is a comment, so the value part
-		 * should be ignored. */
-		valuelen = 0;
-		opt[optlen] = value[valuelen] = 0;
-	} else {
-		/* Else look for comment endings in the value. */
-		valuelen = strcspn(value, "#;");
-		value[valuelen] = 0;
+	if (opt[optlen] != 0) {
+		config_msg = "No option value";
+		status = ERR;
+
+	}  else {
+		/* Look for comment endings in the value. */
+		int len = strcspn(value, "#");
+
+		if (len < valuelen) {
+			valuelen = len;
+			value[valuelen] = 0;
+		}
+
+		status = set_option(opt, value);
 	}
 
-	if (set_option(opt, optlen, value, valuelen) == ERR) {
-		fprintf(stderr, "Error on line %d, near '%.*s' option: %s\n",
+	if (status == ERR) {
+		fprintf(stderr, "Error on line %d, near '%.*s': %s\n",
 			config_lineno, optlen, opt, config_msg);
 		config_errors = TRUE;
 	}
@@ -760,6 +1131,8 @@ struct view {
 
 	struct view_ops *ops;	/* View operations */
 
+	enum keymap keymap;	/* What keymap does this view have */
+
 	char cmd[SIZEOF_CMD];	/* Command buffer */
 	char ref[SIZEOF_REF];	/* Hovered commit reference */
 	char vid[SIZEOF_REF];	/* View ID. Set to id member when updating. */
@@ -801,11 +1174,11 @@ struct view_ops {
 static struct view_ops pager_ops;
 static struct view_ops main_ops;
 
-#define VIEW_STR(name, cmd, env, ref, ops) \
-	{ name, cmd, #env, ref, ops }
+#define VIEW_STR(name, cmd, env, ref, ops, map) \
+	{ name, cmd, #env, ref, ops, map}
 
 #define VIEW_(id, name, ops, ref) \
-	VIEW_STR(name, TIG_##id##_CMD,  TIG_##id##_CMD, ref, ops)
+	VIEW_STR(name, TIG_##id##_CMD,  TIG_##id##_CMD, ref, ops, KEYMAP_##id)
 
 
 static struct view views[] = {
@@ -1322,6 +1695,49 @@ end:
 	return FALSE;
 }
 
+
+/*
+ * View opening
+ */
+
+static void open_help_view(struct view *view)
+{
+	char buf[BUFSIZ];
+	int lines = ARRAY_SIZE(req_info) + 2;
+	int i;
+
+	if (view->lines > 0)
+		return;
+
+	for (i = 0; i < ARRAY_SIZE(req_info); i++)
+		if (!req_info[i].request)
+			lines++;
+
+	view->line = calloc(lines, sizeof(*view->line));
+	if (!view->line) {
+		report("Allocation failure");
+		return;
+	}
+
+	view->ops->read(view, "Quick reference for tig keybindings:");
+
+	for (i = 0; i < ARRAY_SIZE(req_info); i++) {
+		char *key;
+
+		if (!req_info[i].request) {
+			view->ops->read(view, "");
+			view->ops->read(view, req_info[i].help);
+			continue;
+		}
+
+		key = get_key(req_info[i].request);
+		if (!string_format(buf, "%-25s %s", key, req_info[i].help))
+			continue;
+
+		view->ops->read(view, buf);
+	}
+}
+
 enum open_flags {
 	OPEN_DEFAULT = 0,	/* Use default view switching. */
 	OPEN_SPLIT = 1,		/* Split current view. */
@@ -1345,7 +1761,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	}
 
 	if (view == VIEW(REQ_VIEW_HELP)) {
-		load_help_page();
+		open_help_view(view);
 
 	} else if ((reload || strcmp(view->vid, view->id)) &&
 		   !begin_update(view)) {
@@ -1946,191 +2362,6 @@ static struct view_ops main_ops = {
 
 
 /*
- * Keys
- */
-
-struct keymap {
-	int alias;
-	int request;
-};
-
-static struct keymap keymap[] = {
-	/* View switching */
-	{ 'm',		REQ_VIEW_MAIN },
-	{ 'd',		REQ_VIEW_DIFF },
-	{ 'l',		REQ_VIEW_LOG },
-	{ 'p',		REQ_VIEW_PAGER },
-	{ 'h',		REQ_VIEW_HELP },
-	{ '?',		REQ_VIEW_HELP },
-
-	/* View manipulation */
-	{ 'q',		REQ_VIEW_CLOSE },
-	{ KEY_TAB,	REQ_VIEW_NEXT },
-	{ KEY_RETURN,	REQ_ENTER },
-	{ KEY_UP,	REQ_PREVIOUS },
-	{ KEY_DOWN,	REQ_NEXT },
-
-	/* Cursor navigation */
-	{ 'k',		REQ_MOVE_UP },
-	{ 'j',		REQ_MOVE_DOWN },
-	{ KEY_HOME,	REQ_MOVE_FIRST_LINE },
-	{ KEY_END,	REQ_MOVE_LAST_LINE },
-	{ KEY_NPAGE,	REQ_MOVE_PAGE_DOWN },
-	{ ' ',		REQ_MOVE_PAGE_DOWN },
-	{ KEY_PPAGE,	REQ_MOVE_PAGE_UP },
-	{ 'b',		REQ_MOVE_PAGE_UP },
-	{ '-',		REQ_MOVE_PAGE_UP },
-
-	/* Scrolling */
-	{ KEY_IC,	REQ_SCROLL_LINE_UP },
-	{ KEY_DC,	REQ_SCROLL_LINE_DOWN },
-	{ 'w',		REQ_SCROLL_PAGE_UP },
-	{ 's',		REQ_SCROLL_PAGE_DOWN },
-
-	/* Misc */
-	{ 'Q',		REQ_QUIT },
-	{ 'z',		REQ_STOP_LOADING },
-	{ 'v',		REQ_SHOW_VERSION },
-	{ 'r',		REQ_SCREEN_REDRAW },
-	{ 'n',		REQ_TOGGLE_LINENO },
-	{ 'g',		REQ_TOGGLE_REV_GRAPH},
-	{ ':',		REQ_PROMPT },
-
-	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
-	{ ERR,		REQ_SCREEN_UPDATE },
-
-	/* Use the ncurses SIGWINCH handler. */
-	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
-};
-
-static enum request
-get_request(int key)
-{
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(keymap); i++)
-		if (keymap[i].alias == key)
-			return keymap[i].request;
-
-	return (enum request) key;
-}
-
-struct key {
-	char *name;
-	int value;
-};
-
-static struct key key_table[] = {
-	{ "Enter",	KEY_RETURN },
-	{ "Space",	' ' },
-	{ "Backspace",	KEY_BACKSPACE },
-	{ "Tab",	KEY_TAB },
-	{ "Escape",	KEY_ESC },
-	{ "Left",	KEY_LEFT },
-	{ "Right",	KEY_RIGHT },
-	{ "Up",		KEY_UP },
-	{ "Down",	KEY_DOWN },
-	{ "Insert",	KEY_IC },
-	{ "Delete",	KEY_DC },
-	{ "Home",	KEY_HOME },
-	{ "End",	KEY_END },
-	{ "PageUp",	KEY_PPAGE },
-	{ "PageDown",	KEY_NPAGE },
-	{ "F1",		KEY_F(1) },
-	{ "F2",		KEY_F(2) },
-	{ "F3",		KEY_F(3) },
-	{ "F4",		KEY_F(4) },
-	{ "F5",		KEY_F(5) },
-	{ "F6",		KEY_F(6) },
-	{ "F7",		KEY_F(7) },
-	{ "F8",		KEY_F(8) },
-	{ "F9",		KEY_F(9) },
-	{ "F10",	KEY_F(10) },
-	{ "F11",	KEY_F(11) },
-	{ "F12",	KEY_F(12) },
-};
-
-static char *
-get_key(enum request request)
-{
-	static char buf[BUFSIZ];
-	static char key_char[] = "'X'";
-	int pos = 0;
-	char *sep = "    ";
-	int i;
-
-	buf[pos] = 0;
-
-	for (i = 0; i < ARRAY_SIZE(keymap); i++) {
-		char *seq = NULL;
-		int key;
-
-		if (keymap[i].request != request)
-			continue;
-
-		for (key = 0; key < ARRAY_SIZE(key_table); key++)
-			if (key_table[key].value == keymap[i].alias)
-				seq = key_table[key].name;
-
-		if (seq == NULL &&
-		    keymap[i].alias < 127 &&
-		    isprint(keymap[i].alias)) {
-			key_char[1] = (char) keymap[i].alias;
-			seq = key_char;
-		}
-
-		if (!seq)
-			seq = "'?'";
-
-		if (!string_format_from(buf, &pos, "%s%s", sep, seq))
-			return "Too many keybindings!";
-		sep = ", ";
-	}
-
-	return buf;
-}
-
-static void load_help_page(void)
-{
-	char buf[BUFSIZ];
-	struct view *view = VIEW(REQ_VIEW_HELP);
-	int lines = ARRAY_SIZE(req_info) + 2;
-	int i;
-
-	if (view->lines > 0)
-		return;
-
-	for (i = 0; i < ARRAY_SIZE(req_info); i++)
-		if (!req_info[i].request)
-			lines++;
-
-	view->line = calloc(lines, sizeof(*view->line));
-	if (!view->line) {
-		report("Allocation failure");
-		return;
-	}
-
-	pager_read(view, "Quick reference for tig keybindings:");
-
-	for (i = 0; i < ARRAY_SIZE(req_info); i++) {
-		char *key;
-
-		if (!req_info[i].request) {
-			pager_read(view, "");
-			pager_read(view, req_info[i].help);
-			continue;
-		}
-
-		key = get_key(req_info[i].request);
-		if (!string_format(buf, "%-25s %s", key, req_info[i].help))
-			continue;
-
-		pager_read(view, buf);
-	}
-}
-
-
-/*
  * Unicode / UTF-8 handling
  *
  * NOTE: Much of the following code for dealing with unicode is derived from
@@ -2376,6 +2607,68 @@ init_display(void)
 	wbkgdset(status_win, get_line_attr(LINE_STATUS));
 }
 
+static int
+read_prompt(void)
+{
+	enum { READING, STOP, CANCEL } status = READING;
+	char buf[sizeof(opt_cmd) - STRING_SIZE("git \0")];
+	int pos = 0;
+
+	while (status == READING) {
+		struct view *view;
+		int i, key;
+
+		foreach_view (view, i)
+			update_view(view);
+
+		report(":%.*s", pos, buf);
+		/* Refresh, accept single keystroke of input */
+		key = wgetch(status_win);
+		switch (key) {
+		case KEY_RETURN:
+		case KEY_ENTER:
+		case '\n':
+			status = pos ? STOP : CANCEL;
+			break;
+
+		case KEY_BACKSPACE:
+			if (pos > 0)
+				pos--;
+			else
+				status = CANCEL;
+			break;
+
+		case KEY_ESC:
+			status = CANCEL;
+			break;
+
+		case ERR:
+			break;
+
+		default:
+			if (pos >= sizeof(buf)) {
+				report("Input string too long");
+				return ERR;
+			}
+
+			if (isprint(key))
+				buf[pos++] = (char) key;
+		}
+	}
+
+	if (status == CANCEL) {
+		/* Clear the status window */
+		report("");
+		return ERR;
+	}
+
+	buf[pos++] = 0;
+	if (!string_format(opt_cmd, "git %s", buf))
+		return ERR;
+	opt_request = REQ_VIEW_PAGER;
+
+	return OK;
+}
 
 /*
  * Repository references
@@ -2550,12 +2843,6 @@ read_properties(FILE *pipe, const char *separators,
  * Main
  */
 
-#if __GNUC__ >= 3
-#define __NORETURN __attribute__((__noreturn__))
-#else
-#define __NORETURN
-#endif
-
 static void __NORETURN
 quit(int sig)
 {
@@ -2624,29 +2911,15 @@ main(int argc, char *argv[])
 
 		/* Refresh, accept single keystroke of input */
 		key = wgetch(status_win);
-		request = get_request(key);
+
+		request = get_keybinding(display[current_view]->keymap, key);
 
 		/* Some low-level request handling. This keeps access to
 		 * status_win restricted. */
 		switch (request) {
 		case REQ_PROMPT:
-			report(":");
-			/* Temporarily switch to line-oriented and echoed
-			 * input. */
-			nocbreak();
-			echo();
-
-			if (wgetnstr(status_win, opt_cmd + 4, sizeof(opt_cmd) - 4) == OK) {
-				memcpy(opt_cmd, "git ", 4);
-				opt_request = REQ_VIEW_PAGER;
-			} else {
-				report("Prompt interrupted by loading view, "
-				       "press 'z' to stop loading views");
+			if (read_prompt() == ERR)
 				request = REQ_SCREEN_UPDATE;
-			}
-
-			noecho();
-			cbreak();
 			break;
 
 		case REQ_SCREEN_RESIZE:

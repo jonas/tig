@@ -11,9 +11,17 @@ When browsing repositories, tig uses the underlying git commands to present
 the user with various views, such as summarized commit log and showing the
 commit with the log message, diffstat, and the diff.
 
+ifndef::backend-docbook[]
+*Table of Contents*
+
+include::manual.toc[]
+endif::backend-docbook[]
+
+[[calling-conventions]]
 Calling Conventions
 -------------------
 
+[[pager-mode]]
 Pager Mode
 ~~~~~~~~~~
 
@@ -23,8 +31,11 @@ colorizing output from various git commands.
 
 Example on how to colorize the output of git-show(1):
 
-	$ git show | tig
+-----------------------------------------------------------------------------
+$ git show | tig
+-----------------------------------------------------------------------------
 
+[[cmd-options]]
 Git Command Options
 ~~~~~~~~~~~~~~~~~~~
 
@@ -39,30 +50,38 @@ expected by the main view.
 Example on how to open the log view and show both author and committer
 information:
 
-	$ tig log --pretty=fuller
+-----------------------------------------------------------------------------
+$ tig log --pretty=fuller
+-----------------------------------------------------------------------------
 
 See the <<refspec, "Specifying revisions">> section below for an introduction
 to revision options supported by the git commands. For details on specific git
 command options, refer to the man page of the command in question.
 
+[[env-variables]]
 Environment Variables
 ---------------------
 
 Several options related to the interface with git can be configured via
 environment options.
 
+[[repo-refs]]
 Repository References
 ~~~~~~~~~~~~~~~~~~~~~
 
 Commits that are referenced by tags and branch heads will be marked by the
 reference name surrounded by '[' and ']':
 
-	2006-03-26 19:42 Petr Baudis         | [cogito-0.17.1] Cogito 0.17.1
+-----------------------------------------------------------------------------
+2006-03-26 19:42 Petr Baudis         | [cogito-0.17.1] Cogito 0.17.1
+-----------------------------------------------------------------------------
 
 If you want to filter out certain directories under `.git/refs/`, say `tmp`
 you can do it by setting the following variable:
 
-	$ TIG_LS_REMOTE="git ls-remote . | sed /\/tmp\//d" tig
+-----------------------------------------------------------------------------
+$ TIG_LS_REMOTE="git ls-remote . | sed /\/tmp\//d" tig
+-----------------------------------------------------------------------------
 
 Or set the variable permanently in your environment.
 
@@ -78,7 +97,9 @@ It is possible to alter which commands are used for the different views.  If
 for example you prefer commits in the main view to be sorted by date and only
 show 500 commits, use:
 
-	$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %s" tig
+-----------------------------------------------------------------------------
+$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %s" tig
+-----------------------------------------------------------------------------
 
 Or set the variable permanently in your environment.
 
@@ -99,6 +120,7 @@ TIG_MAIN_CMD::
 	the option: `--pretty=raw` since the main view parser expects to
 	read that format.
 
+[[viewer]]
 The Viewer
 ----------
 
@@ -109,12 +131,15 @@ possible to split both the main and log view to also show the commit diff.
 If you are in the log view and press 'Enter' when the current line is a commit
 line, such as:
 
-	commit 4d55caff4cc89335192f3e566004b4ceef572521
+-----------------------------------------------------------------------------
+commit 4d55caff4cc89335192f3e566004b4ceef572521
+-----------------------------------------------------------------------------
 
 You will split the view so that the log view is displayed in the top window
 and the diff view in the bottom window. You can switch between the two views
 by pressing 'Tab'. To maximize the log view again, simply press 'l'.
 
+[[commit-id]]
 Current Head and Commit ID
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -126,10 +151,11 @@ reloaded, if the commit ID changed.
 The head ID is used when opening the main and log view to indicate from what
 revision to show history.
 
+[[views]]
 Views
 ~~~~~
 
-tig(1) presents various 'views' of a repository. Each view is based on output
+Various 'views' of a repository is presented. Each view is based on output
 from an external command, most often 'git log', 'git diff', or 'git show'.
 
 The main view::
@@ -154,24 +180,31 @@ The pager view::
 The help view::
 	Displays key binding quick reference.
 
+[[title-window]]
 Title Windows
 ~~~~~~~~~~~~~
 
 Each view has a title window which shows the name of the view, current commit
 ID if available, and where the view is positioned:
 
-	[main] c622eefaa485995320bc743431bae0d497b1d875 - commit 1 of 61 (1%)
+-----------------------------------------------------------------------------
+[main] c622eefaa485995320bc743431bae0d497b1d875 - commit 1 of 61 (1%)
+-----------------------------------------------------------------------------
 
 By default, the title of the current view is highlighted using bold font.  For
 long loading views (taking over 3 seconds) the time since loading started will
 be appended:
 
-	[main] 77d9e40fbcea3238015aea403e06f61542df9a31 - commit 1 of 779 (0%) 5s
+-----------------------------------------------------------------------------
+[main] 77d9e40fbcea3238015aea403e06f61542df9a31 - commit 1 of 779 (0%) 5s
+-----------------------------------------------------------------------------
 
+[[keys]]
 Keys
 ----
 Below the default key bindings are shown.
 
+[[view-switching]]
 View Switching
 ~~~~~~~~~~~~~~
 m::
@@ -185,6 +218,7 @@ p::
 h, ?::
 	Show man page.
 
+[[view-manipulation]]
 View Manipulation
 ~~~~~~~~~~~~~~~~~
 q::
@@ -207,6 +241,7 @@ Up::
 Down::
 	Similar to 'Up' but will move down.
 
+[[cursor-nav]]
 Cursor Navigation
 ~~~~~~~~~~~~~~~~~
 j::
@@ -225,6 +260,7 @@ Home::
 End::
 	Jump to last line.
 
+[[view-scrolling]]
 Scrolling
 ~~~~~~~~~
 Insert::
@@ -236,6 +272,7 @@ w::
 s::
 	Scroll view one page down.
 
+[[misc-keys]]
 Misc
 ~~~~
 Q::
@@ -244,7 +281,7 @@ r::
 	Redraw screen.
 z::
 	Stop all background loading. This can be useful if you use
-	tig(1) in a repository with a long history without limiting
+	tig in a repository with a long history without limiting
 	the revision log.
 v::
 	Show version.
@@ -263,7 +300,7 @@ Revision Specification
 ----------------------
 
 This section describes various ways to specify what revisions to display or
-otherwise limit the view to. tig(1) does not itself parse the described
+otherwise limit the view to. Tig does not itself parse the described
 revision options so refer to the relevant git man pages for futher
 information. Relevant man pages besides git-log(1) are git-diff(1) and
 git-rev-list(1).
@@ -272,25 +309,31 @@ You can tune the interaction with git by making use of the options explained
 in this section. For example, by configuring the environment variables
 described in the  <<history-commands, "History commands">> section.
 
+[[path-limiting]]
 Limit by Path Name
 ~~~~~~~~~~~~~~~~~~
 
 If you are interested only in those revisions that made changes to a specific
 file (or even several files) list the files like this:
 
-	$ tig log Makefile README
+-----------------------------------------------------------------------------
+$ tig log Makefile README
+-----------------------------------------------------------------------------
 
 To avoid ambiguity with repository references such as tag name, be sure to
 separate file names from other git options using "\--". So if you have a file
 named 'master' it will clash with the reference named 'master', and thus you
 will have to use:
 
-	$ tig log -- master
+-----------------------------------------------------------------------------
+$ tig log -- master
+-----------------------------------------------------------------------------
 
 NOTE: For the main view, avoiding ambiguity will in some cases require you to
-specify two "\--" options. The first will make tig(1) stop option processing
+specify two "\--" options. The first will make tig stop option processing
 and the latter will be passed to git log.
 
+[[date-number-limiting]]
 Limit by Date or Number
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -301,28 +344,36 @@ both for the log and main view. Either limit by date using e.g.
 If you are only interested in changed that happened between two dates you can
 use:
 
-	$ tig -- --after="May 5th" --before="2006-05-16 15:44"
+-----------------------------------------------------------------------------
+$ tig -- --after="May 5th" --before="2006-05-16 15:44"
+-----------------------------------------------------------------------------
 
 NOTE: If you want to avoid having to quote dates containing spaces you can use
 "." instead, e.g. `--after=May.5th`.
 
+[[commit-range-limiting]]
 Limiting by Commit Ranges
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Alternatively, commits can be limited to a specific range, such as "all
 commits between 'tag-1.0' and 'tag-2.0'". For example:
 
-	$ tig log tag-1.0..tag-2.0
+-----------------------------------------------------------------------------
+$ tig log tag-1.0..tag-2.0
+-----------------------------------------------------------------------------
 
 This way of commit limiting makes it trivial to only browse the commits which
 haven't been pushed to a remote branch. Assuming 'origin' is your upstream
 remote branch, using:
 
-	$ tig log origin..HEAD
+-----------------------------------------------------------------------------
+$ tig log origin..HEAD
+-----------------------------------------------------------------------------
 
 will list what will be pushed to the remote branch. Optionally, the ending
 'HEAD' can be left out since it is implied.
 
+[[reachability-limiting]]
 Limiting by Reachability
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -334,11 +385,14 @@ revision in question.
 If you prefer to specify which commit to preview in this way use the
 following:
 
-	$ tig log tag-2.0 ^tag-1.0
+-----------------------------------------------------------------------------
+$ tig log tag-2.0 ^tag-1.0
+-----------------------------------------------------------------------------
 
 You can think of '^' as a negation operator. Using this alternate syntax, it
 is possible to further prune commits by specifying multiple branch cut offs.
 
+[[refspec-combi]]
 Combining Revisions Specification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -346,8 +400,11 @@ Revisions options can to some degree be combined, which makes it possible to
 say "show at most 20 commits from within the last month that changed files
 under the Documentation/ directory."
 
-	$ tig -- --since=1.month -n20 -- Documentation/
+-----------------------------------------------------------------------------
+$ tig -- --since=1.month -n20 -- Documentation/
+-----------------------------------------------------------------------------
 
+[[refspec-all]]
 Examining All Repository References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -356,10 +413,13 @@ repository. An example is to ask "did any line of development in this
 repository change a particular file within the last week". This can be
 accomplished using:
 
-	$ tig -- --all --since=1.week -- Makefile
+-----------------------------------------------------------------------------
+$ tig -- --all --since=1.week -- Makefile
+-----------------------------------------------------------------------------
 
 include::BUGS[]
 
+[[copy-right]]
 Copyright
 ---------
 
@@ -370,8 +430,16 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 
+[[references]]
 References and Related Tools
 ----------------------------
+
+Manpages:
+
+ - gitlink:tig[1]
+ - gitlink:tigrc[5]
+
+Online resources:
 
 include::SITES[]
 
