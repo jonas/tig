@@ -273,86 +273,655 @@ tigrc(5) Manual Page
 <h2>SYNOPSIS</h2>
 <div class="sectionbody">
 <div class="verseblock">
-<div class="content"><strong>color</strong> <em>fgcolor</em> <em>bgcolor</em> <em>[attributes]</em></div></div>
+<div class="content"><strong>set</strong>   variable <strong>=</strong> value
+<strong>bind</strong>  keymap key action
+<strong>color</strong> area fgcolor bgcolor [attributes]</div></div>
 </div>
 <h2>DESCRIPTION</h2>
 <div class="sectionbody">
-<p>You can permanently set an option by putting it in the <tt>~/.tigrc</tt> file.
-The file consists of a series of <em>commands</em>.  Each
-line of the file may contain only one command.</p>
-<p>The hash mark (<em>#</em>), or semi-colon (<em>;</em>) is used as a <em>comment</em> character.
-All text after the comment character to the end of the line is ignored.
-You can use comments to annotate your initialization file.</p>
+<p>You can permanently set an option by putting it in the <tt>~/.tigrc</tt> file.  The
+file consists of a series of <em>commands</em>.  Each line of the file may contain
+only one command.</p>
+<p>The hash mark (<em>#</em>) is used as a <em>comment</em> character. All text after the
+comment character to the end of the line is ignored. You can use comments to
+annotate your initialization file.</p>
 </div>
-<h2>Color options</h2>
+<h2>Set command</h2>
 <div class="sectionbody">
-<p>Color options control highlighting and the user interface styles.
-If  your terminal supports color, these commands can be used to assign
-foreground/backgound combinations to certain areas. Optionally, an
-attribute can be given as the last parameter. The syntax is:</p>
+<p>A few selective variables can be configured via the set command. The syntax
+is:</p>
+<div class="verseblock">
+<div class="content">        <strong>set</strong> variables <strong>=</strong> value</div></div>
+<p>Examples:</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>        set show-rev-graph = yes        # Show revision graph?
+        set line-number-interval = 5    # Interval between line numbers
+        set tab-size = 8                # Number of spaces pr tab
+        set encoding = "UTF-8"          # Commit encoding</tt></pre>
+</div></div>
+<p>The type of variables are either bool, int, and string.</p>
+<dl>
+<dt>
+Valid bool values
+</dt>
+<dd>
+<p>
+        To set a bool variable to true use either "1", "true", or "yes".
+        Any other value will set the variable to false.
+</p>
+</dd>
+<dt>
+Valid int values
+</dt>
+<dd>
+<p>
+        A non-negative integer.
+</p>
+</dd>
+<dt>
+Valid string values
+</dt>
+<dd>
+<p>
+        A string of characters. Optionally, use either ' or " as delimiters.
+</p>
+</dd>
+</dl>
+<h3>Variables</h3>
+<p>The following variables can be set:</p>
+<dl>
+<dt>
+<em>show-rev-graph</em> (bool)
+</dt>
+<dd>
+<p>
+        Show revision graph in the main view on startup. Can be toggled with
+        <em>g</em>.
+</p>
+</dd>
+<dt>
+<em>line-number-interval</em> (int)
+</dt>
+<dd>
+<p>
+        Interval between line numbers. Note, you have to toggle on line
+        numbering with <em>n</em> or the <tt>-n</tt> command line option.  The default is to
+        number every line.
+</p>
+</dd>
+<dt>
+<em>tab-size</em> (int)
+</dt>
+<dd>
+<p>
+        Number of spaces per tab. The default is 8 spaces.
+</p>
+</dd>
+<dt>
+<em>commit-encoding</em> (string)
+</dt>
+<dd>
+<p>
+        The encoding used for commits. The default is UTF-8. Not this option
+        is shadowed by the "i18n.commitencoding" option in <tt>.git/config</tt>.
+</p>
+</dd>
+</dl>
+</div>
+<h2>Bind command</h2>
+<div class="sectionbody">
+<p>Using bind commands keys can be mapped to an action when pressed in a given
+key map. The syntax is:</p>
+<div class="verseblock">
+<div class="content">        <strong>bind</strong> <em>keymap</em> <em>key</em> <em>action</em></div></div>
+<p>Examples:</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>        # A few keybindings
+        bind main w scroll-line-up
+        bind main s scroll-line-down
+        bind main space enter
+        bind diff a previous
+        bind diff d next
+        bind diff b move-first-line</tt></pre>
+</div></div>
+<p>Keys are mapped by first searching the keybindings for the current view, then
+the keybindings for the <strong>generic</strong> keymap, and last the default keybindings.
+Thus, the view keybindings shaddow the generic keybindings which shaddow the
+built-in keybindings.</p>
+<dl>
+<dt>
+Keymaps
+</dt>
+<dd>
+<p>
+Valid keymaps are: <strong>main</strong>, <strong>diff</strong>, <strong>log</strong>, <strong>help</strong>, <strong>pager</strong>, and <strong>generic</strong>.  Use
+<strong>generic</strong> to set key mapping in all keymaps.
+</p>
+</dd>
+<dt>
+Key values
+</dt>
+<dd>
+<p>
+Key values should never be quoted. Use either the ASCII value or one of the
+following symbolic key names. Symbolic key names are case insensitive, Use
+<strong>Hash</strong> to bind to the <tt>#</tt> key, since the hash mark is used as a comment
+character.
+</p>
+<p><strong>Enter</strong>, <strong>Space</strong>, <strong>Backspace</strong>, <strong>Tab</strong>, <strong>Escape</strong>, <strong>Left</strong>, <strong>Right</strong>, <strong>Up</strong>, <strong>Down</strong>,
+<strong>Insert</strong>, <strong>Delete</strong>, <strong>Hash</strong>, <strong>Home</strong>, <strong>End</strong>, <strong>PageUp</strong>, <strong>PageDown</strong>, <strong>F1</strong>, <strong>F2</strong>, <strong>F3</strong>,
+<strong>F4</strong>, <strong>F5</strong>, <strong>F6</strong>, <strong>F7</strong>, <strong>F8</strong>, <strong>F9</strong>, <strong>F10</strong>, <strong>F11</strong>, <strong>F12</strong>.</p>
+</dd>
+<dt>
+Action names
+</dt>
+<dd>
+<p>
+Valid action names are described below. Note, all names are
+case-insensitive, and you may use <em>-</em>, <em>_</em>, and <em>.</em> interchangeably,
+e.g. "view-main", "View.Main", and "VIEW_MAIN" are the same.
+</p>
+</dd>
+</dl>
+<h3>Actions</h3>
+<div class="tableblock">
+<table rules="none"
+frame="void"
+cellspacing="0" cellpadding="4">
+<col width="274" />
+<col width="617" />
+<thead>
+  <tr>
+    <th align="left">
+    View switching::
+    </th>
+    <th align="left">
+    
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    view-main
+    </td>
+    <td align="left">
+    Show main view
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    view-diff
+    </td>
+    <td align="left">
+    Show diff view
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    view-log
+    </td>
+    <td align="left">
+    Show log view
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    view-help
+    </td>
+    <td align="left">
+    Show help page
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    view-pager
+    </td>
+    <td align="left">
+    Show pager view
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+frame="void"
+cellspacing="0" cellpadding="4">
+<col width="274" />
+<col width="617" />
+<thead>
+  <tr>
+    <th align="left">
+    View manipulation::
+    </th>
+    <th align="left">
+    
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    enter
+    </td>
+    <td align="left">
+    Enter current line and scroll
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    next
+    </td>
+    <td align="left">
+    Move to next
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    previous
+    </td>
+    <td align="left">
+    Move to previous
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    view-next
+    </td>
+    <td align="left">
+    Move focus to next view
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    view-close
+    </td>
+    <td align="left">
+    Close the current view
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    quit
+    </td>
+    <td align="left">
+    Close all views and quit
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+frame="void"
+cellspacing="0" cellpadding="4">
+<col width="274" />
+<col width="617" />
+<thead>
+  <tr>
+    <th align="left">
+    Cursor navigation::
+    </th>
+    <th align="left">
+    
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    move-up
+    </td>
+    <td align="left">
+    Move cursor one line up
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    move-down
+    </td>
+    <td align="left">
+    Move cursor one line down
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    move-page_down
+    </td>
+    <td align="left">
+    Move cursor one page down
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    move-page_up
+    </td>
+    <td align="left">
+    Move cursor one page up
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    move-first_line
+    </td>
+    <td align="left">
+    Move cursor to first line
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    move-last_line
+    </td>
+    <td align="left">
+    Move cursor to last line
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+frame="void"
+cellspacing="0" cellpadding="4">
+<col width="274" />
+<col width="617" />
+<thead>
+  <tr>
+    <th align="left">
+    Scrolling::
+    </th>
+    <th align="left">
+    
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    scroll-line_up
+    </td>
+    <td align="left">
+    Scroll one line up
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    scroll-line_down
+    </td>
+    <td align="left">
+    Scroll one line down
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    scroll-page_up
+    </td>
+    <td align="left">
+    Scroll one page up
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    scroll-page_down
+    </td>
+    <td align="left">
+    Scroll one page down
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+frame="void"
+cellspacing="0" cellpadding="4">
+<col width="274" />
+<col width="617" />
+<thead>
+  <tr>
+    <th align="left">
+    Misc::
+    </th>
+    <th align="left">
+    
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    prompt
+    </td>
+    <td align="left">
+    Bring up the prompt
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    screen-update
+    </td>
+    <td align="left">
+    Update the screen
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    screen-redraw
+    </td>
+    <td align="left">
+    Redraw the screen
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    screen-resize
+    </td>
+    <td align="left">
+    Resize the screen
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    show-version
+    </td>
+    <td align="left">
+    Show version information
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    stop-loading
+    </td>
+    <td align="left">
+    Stop all loading views
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    toggle-lineno
+    </td>
+    <td align="left">
+    Toggle line numbers
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    toggle-rev_graph
+    </td>
+    <td align="left">
+    Toggle revision graph visualization
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+</div>
+<h2>Color command</h2>
+<div class="sectionbody">
+<p>Color commands control highlighting and the user interface styles. If your
+terminal supports color, these commands can be used to assign foreground and
+backgound combinations to certain areas. Optionally, an attribute can be given
+as the last parameter. The syntax is:</p>
 <div class="verseblock">
 <div class="content">        <strong>color</strong> <em>area</em> <em>fgcolor</em> <em>bgcolor</em> <em>[attributes]</em></div></div>
-<p>Valid colors include: <strong>white</strong>, <strong>black</strong>, <strong>green</strong>, <strong>magenta</strong>, <strong>blue</strong>, <strong>cyan</strong>,
-<strong>yellow</strong>, <strong>red</strong>, <strong>default</strong>. Use <strong>default</strong> to refer to the default terminal
-colors.</p>
-<p>Valid attributes include: <strong>normal</strong>, <strong>blink</strong>, <strong>bold</strong>, <strong>dim</strong>, <strong>reverse</strong>, <strong>standout</strong>,
-and <strong>underline</strong>. Note, not all attributes may be supported by the terminal.</p>
-<p>Valid area names are described below. Note, all names are case-insensitive,
-and you may use <em>-</em>, <em>_</em>, and <em>.</em> interchangeably. So "Diff-Header",
-"DIFF_HEADER", and "diff.header" are the same.</p>
-<h3>Diff markup</h3>
-<p>Options concerning diff start, chunks and lines added and deleted.</p>
+<p>Examples:</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>        # Diff colors
+        color diff-header       yellow  default
+        color diff-index        blue    default
+        color diff-chunk        magenta default
+        # A strange looking cursor line
+        color cursor            red     default underline
+        # UI colors
+        color title-blur        white   blue
+        color title-focus       white   blue    bold</tt></pre>
+</div></div>
+<dl>
+<dt>
+Area names
+</dt>
+<dd>
+<p>
+        Valid area names are described below. Note, all names are
+        case-insensitive, and you may use <em>-</em>, <em>_</em>, and <em>.</em> interchangeably,
+        e.g. "Diff-Header", "DIFF_HEADER", and "diff.header" are the same.
+</p>
+</dd>
+<dt>
+Color names
+</dt>
+<dd>
+<p>
+        Valid colors include: <strong>white</strong>, <strong>black</strong>, <strong>green</strong>, <strong>magenta</strong>, <strong>blue</strong>,
+        <strong>cyan</strong>, <strong>yellow</strong>, <strong>red</strong>, <strong>default</strong>. Use <strong>default</strong> to refer to the
+        default terminal colors.
+</p>
+</dd>
+<dt>
+Attribute names
+</dt>
+<dd>
+<p>
+        Valid attributes include: <strong>normal</strong>, <strong>blink</strong>, <strong>bold</strong>, <strong>dim</strong>, <strong>reverse</strong>,
+        <strong>standout</strong>, and <strong>underline</strong>. Note, not all attributes may be supported
+        by the terminal.
+</p>
+</dd>
+</dl>
+<h3>UI colors</h3>
+<dl>
+<dt>
+Status window colors
+</dt>
+<dd>
+<p>
+Appearance of the bottom window showing info messages.
+</p>
+<p><strong>status</strong></p>
+</dd>
+<dt>
+Title window colors
+</dt>
+<dd>
+<p>
+Appearence of the title windows when they are attached
+to any backgrounded windows and the current window.
+</p>
+<p><strong>title-blur</strong>, <strong>title-focus</strong></p>
+</dd>
+<dt>
+Cursor line colors
+</dt>
+<dd>
+<p>
+<strong>cursor</strong>
+</p>
+</dd>
+<dt>
+Main view specific
+</dt>
+<dd>
+<p>
+Appearance of the various columns in the main view, including the <em>~</em> used for
+delimiting long author names and labels for tag and branch references.
+</p>
+<p><strong>main-date</strong>, <strong>main-author</strong>, <strong>main-commit</strong>, <strong>main-delim</strong>, <strong>main-tag</strong>,
+<strong>main-ref</strong></p>
+</dd>
+</dl>
+<h3>Highlighting</h3>
+<p>The colors and attributes for text that is not highlighted can be controlled
+by changing the <strong>default</strong> color option.</p>
+<dl>
+<dt>
+Diff markup
+</dt>
+<dd>
+<p>
+Options concerning diff start, chunks and lines added and deleted.
+</p>
 <p><strong>diff-header</strong>, <strong>diff-chunk</strong>, <strong>diff-add</strong>, <strong>diff-del</strong></p>
-<h3>Enhanced git diff markup</h3>
-<p>Extra diff information emitted by the git diff machinery, such as mode
-changes, rename detection, and similarity.</p>
+</dd>
+<dt>
+Enhanced git diff markup
+</dt>
+<dd>
+<p>
+Extra diff information emitted by the git diff machinery, such as mode
+changes, rename detection, and similarity.
+</p>
 <p><strong>diff-oldmode</strong>, <strong>diff-newmode</strong>, <strong>diff-copy-from</strong>, <strong>diff-copy-to</strong>,
 <strong>diff-rename-from</strong>, <strong>diff-rename-to</strong>, <strong>diff-similarity</strong> <strong>diff-dissimilarity</strong>
 <strong>diff-tree</strong>, <strong>diff-index</strong></p>
-<h3>Pretty print commit headers</h3>
-<p>Commit diffs and the revision logs are usually formatted using pretty
-printed headers , unless <tt>--pretty=raw</tt> was given. This includes lines,
-such as merge info, commit ID, and author and comitter date.</p>
+</dd>
+<dt>
+Pretty print commit headers
+</dt>
+<dd>
+<p>
+Commit diffs and the revision logs are usually formatted using pretty printed
+headers , unless <tt>--pretty=raw</tt> was given. This includes lines, such as merge
+info, commit ID, and author and comitter date.
+</p>
 <p><strong>pp-author</strong>, <strong>pp-commit</strong>, <strong>pp-merge</strong>, <strong>pp-date</strong>, <strong>pp-adate</strong>, <strong>pp-cdate</strong></p>
-<h3>Raw commit header</h3>
-<p>Usually shown when <tt>--pretty=raw</tt> is given, however <em>commit</em> is pretty
-much omnipresent.</p>
+</dd>
+<dt>
+Raw commit header
+</dt>
+<dd>
+<p>
+Usually shown when <tt>--pretty=raw</tt> is given, however <em>commit</em> is pretty much
+omnipresent.
+</p>
 <p><strong>commit</strong>, <strong>parent</strong>, <strong>tree</strong>, <strong>author</strong>, <strong>committer</strong></p>
-<h3>Commit message</h3>
-<p>For now only <tt>Signed-off-by lines</tt> are colorized.</p>
+</dd>
+<dt>
+Commit message
+</dt>
+<dd>
+<p>
+For now only <tt>Signed-off-by</tt> lines are colorized.
+</p>
 <p><strong>signoff</strong></p>
-<h3>UI colors</h3>
-<p>Colors for text not matching any of the above: <strong>default</strong></p>
-<p>Status window colors: <strong>status</strong></p>
-<p>Title window colors: <strong>title-blur</strong>, <strong>title-focus</strong></p>
-<p>Cursor line colors: <strong>cursor</strong></p>
-<p>Main view specific: <strong>main-date</strong>, <strong>main-author</strong>, <strong>main-commit</strong>, <strong>main-delim</strong>,
-<strong>main-tag</strong>, <strong>main-ref</strong></p>
+</dd>
+</dl>
 </div>
-<h2>EXAMPLES</h2>
+<h2>COPYRIGHT</h2>
 <div class="sectionbody">
-<p>Some sample options:</p>
-<div class="exampleblock">
-<div class="exampleblock-content">
-<div class="literalblock">
-<div class="content">
-<pre><tt># Diff colors
-color diff-header       yellow  default
-color diff-index        blue    default
-color diff-chunk        magenta default
-# UI colors
-color title-blur        white   blue
-color title-focus       white   blue    bold</tt></pre>
-</div></div>
-</div></div>
+<p>Copyright (c) 2006 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p>
+<p>Licensed under the terms of the GNU General Public License.</p>
 </div>
 <h2>SEE ALSO</h2>
 <div class="sectionbody">
-<p>tig(1)</p>
+<p><a href="tig.1.html">tig(1)</a> and the <a href="http://jonas.nitro.dk/tig/tig.html">tig manual</a>.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 29-May-2006 21:46:30 CEST
+Last updated 14-Jun-2006 22:28:50 CEST
 </div>
 </div>
 </body>

@@ -23,7 +23,9 @@ tigrc \- tig user configuration file
 .SH "SYNOPSIS"
 
 .nf
-\fIcolor\fR \fIfgcolor\fR \fIbgcolor\fR \fI[attributes]\fR
+\fIset\fR   variable \fI=\fR value
+\fIbind\fR  keymap key action
+\fIcolor\fR area fgcolor bgcolor [attributes]
 .fi
 
 .SH "DESCRIPTION"
@@ -32,102 +34,273 @@ tigrc \- tig user configuration file
 You can permanently set an option by putting it in the ~/\&.tigrc file\&. The file consists of a series of \fIcommands\fR\&. Each line of the file may contain only one command\&.
 
 
-The hash mark (\fI#\fR), or semi\-colon (\fI;\fR) is used as a \fIcomment\fR character\&. All text after the comment character to the end of the line is ignored\&. You can use comments to annotate your initialization file\&.
+The hash mark (\fI#\fR) is used as a \fIcomment\fR character\&. All text after the comment character to the end of the line is ignored\&. You can use comments to annotate your initialization file\&.
 
-.SH "COLOR OPTIONS"
+.SH "SET COMMAND"
 
 
-Color options control highlighting and the user interface styles\&. If your terminal supports color, these commands can be used to assign foreground/backgound combinations to certain areas\&. Optionally, an attribute can be given as the last parameter\&. The syntax is:
+A few selective variables can be configured via the set command\&. The syntax is:
+
+.nf
+        \fIset\fR variables \fI=\fR value
+.fi
+
+
+Examples:
+
+.nf
+        set show\-rev\-graph = yes        # Show revision graph?
+        set line\-number\-interval = 5    # Interval between line numbers
+        set tab\-size = 8                # Number of spaces pr tab
+        set encoding = "UTF\-8"          # Commit encoding
+.fi
+
+
+The type of variables are either bool, int, and string\&.
+
+.TP
+Valid bool values
+To set a bool variable to true use either "1", "true", or "yes"\&. Any other value will set the variable to false\&.
+
+.TP
+Valid int values
+A non\-negative integer\&.
+
+.TP
+Valid string values
+A string of characters\&. Optionally, use either ' or " as delimiters\&.
+
+.SS "Variables"
+
+
+The following variables can be set:
+
+.TP
+\fIshow\-rev\-graph\fR (bool)
+Show revision graph in the main view on startup\&. Can be toggled with \fIg\fR\&.
+
+.TP
+\fIline\-number\-interval\fR (int)
+Interval between line numbers\&. Note, you have to toggle on line numbering with \fIn\fR or the \-n command line option\&. The default is to number every line\&.
+
+.TP
+\fItab\-size\fR (int)
+Number of spaces per tab\&. The default is 8 spaces\&.
+
+.TP
+\fIcommit\-encoding\fR (string)
+The encoding used for commits\&. The default is UTF\-8\&. Not this option is shadowed by the "i18n\&.commitencoding" option in \&.git/config\&.
+
+.SH "BIND COMMAND"
+
+
+Using bind commands keys can be mapped to an action when pressed in a given key map\&. The syntax is:
+
+.nf
+        \fIbind\fR \fIkeymap\fR \fIkey\fR \fIaction\fR
+.fi
+
+
+Examples:
+
+.nf
+        # A few keybindings
+        bind main w scroll\-line\-up
+        bind main s scroll\-line\-down
+        bind main space enter
+        bind diff a previous
+        bind diff d next
+        bind diff b move\-first\-line
+.fi
+
+
+Keys are mapped by first searching the keybindings for the current view, then the keybindings for the \fIgeneric\fR keymap, and last the default keybindings\&. Thus, the view keybindings shaddow the generic keybindings which shaddow the built\-in keybindings\&.
+
+.TP
+Keymaps
+Valid keymaps are: \fImain\fR, \fIdiff\fR, \fIlog\fR, \fIhelp\fR, \fIpager\fR, and \fIgeneric\fR\&. Use \fIgeneric\fR to set key mapping in all keymaps\&.
+
+.TP
+Key values
+Key values should never be quoted\&. Use either the ASCII value or one of the following symbolic key names\&. Symbolic key names are case insensitive, Use \fIHash\fR to bind to the # key, since the hash mark is used as a comment character\&.
+
+\fIEnter\fR, \fISpace\fR, \fIBackspace\fR, \fITab\fR, \fIEscape\fR, \fILeft\fR, \fIRight\fR, \fIUp\fR, \fIDown\fR, \fIInsert\fR, \fIDelete\fR, \fIHash\fR, \fIHome\fR, \fIEnd\fR, \fIPageUp\fR, \fIPageDown\fR, \fIF1\fR, \fIF2\fR, \fIF3\fR, \fIF4\fR, \fIF5\fR, \fIF6\fR, \fIF7\fR, \fIF8\fR, \fIF9\fR, \fIF10\fR, \fIF11\fR, \fIF12\fR\&.
+
+.TP
+Action names
+Valid action names are described below\&. Note, all names are case\-insensitive, and you may use \fI\-\fR, \fI_\fR, and \fI\&.\fR interchangeably, e\&.g\&. "view\-main", "View\&.Main", and "VIEW_MAIN" are the same\&.
+
+.SS "Actions"
+
+.TP
+View switching
+
+
+.nf
+view\-main               Show main view
+view\-diff               Show diff view
+view\-log                Show log view
+view\-help               Show help page
+view\-pager              Show pager view
+.fi
+
+.TP
+View manipulation
+
+
+.nf
+enter                   Enter current line and scroll
+next                    Move to next
+previous                Move to previous
+view\-next               Move focus to next view
+view\-close              Close the current view
+quit                    Close all views and quit
+.fi
+
+.TP
+Cursor navigation
+
+
+.nf
+move\-up                 Move cursor one line up
+move\-down               Move cursor one line down
+move\-page_down          Move cursor one page down
+move\-page_up            Move cursor one page up
+move\-first_line         Move cursor to first line
+move\-last_line          Move cursor to last line
+.fi
+
+.TP
+Scrolling
+
+
+.nf
+scroll\-line_up          Scroll one line up
+scroll\-line_down        Scroll one line down
+scroll\-page_up          Scroll one page up
+scroll\-page_down        Scroll one page down
+.fi
+
+.TP
+Misc
+
+
+.nf
+prompt                  Bring up the prompt
+screen\-update           Update the screen
+screen\-redraw           Redraw the screen
+screen\-resize           Resize the screen
+show\-version            Show version information
+stop\-loading            Stop all loading views
+toggle\-lineno           Toggle line numbers
+toggle\-rev_graph        Toggle revision graph visualization
+.fi
+
+.SH "COLOR COMMAND"
+
+
+Color commands control highlighting and the user interface styles\&. If your terminal supports color, these commands can be used to assign foreground and backgound combinations to certain areas\&. Optionally, an attribute can be given as the last parameter\&. The syntax is:
 
 .nf
         \fIcolor\fR \fIarea\fR \fIfgcolor\fR \fIbgcolor\fR \fI[attributes]\fR
 .fi
 
 
+Examples:
+
+.nf
+        # Diff colors
+        color diff\-header       yellow  default
+        color diff\-index        blue    default
+        color diff\-chunk        magenta default
+        # A strange looking cursor line
+        color cursor            red     default underline
+        # UI colors
+        color title\-blur        white   blue
+        color title\-focus       white   blue    bold
+.fi
+
+.TP
+Area names
+Valid area names are described below\&. Note, all names are case\-insensitive, and you may use \fI\-\fR, \fI_\fR, and \fI\&.\fR interchangeably, e\&.g\&. "Diff\-Header", "DIFF_HEADER", and "diff\&.header" are the same\&.
+
+.TP
+Color names
 Valid colors include: \fIwhite\fR, \fIblack\fR, \fIgreen\fR, \fImagenta\fR, \fIblue\fR, \fIcyan\fR, \fIyellow\fR, \fIred\fR, \fIdefault\fR\&. Use \fIdefault\fR to refer to the default terminal colors\&.
 
-
+.TP
+Attribute names
 Valid attributes include: \fInormal\fR, \fIblink\fR, \fIbold\fR, \fIdim\fR, \fIreverse\fR, \fIstandout\fR, and \fIunderline\fR\&. Note, not all attributes may be supported by the terminal\&.
-
-
-Valid area names are described below\&. Note, all names are case\-insensitive, and you may use \fI\-\fR, \fI_\fR, and \fI\&.\fR interchangeably\&. So "Diff\-Header", "DIFF_HEADER", and "diff\&.header" are the same\&.
-
-.SS "Diff markup"
-
-
-Options concerning diff start, chunks and lines added and deleted\&.
-
-
-\fIdiff\-header\fR, \fIdiff\-chunk\fR, \fIdiff\-add\fR, \fIdiff\-del\fR
-
-.SS "Enhanced git diff markup"
-
-
-Extra diff information emitted by the git diff machinery, such as mode changes, rename detection, and similarity\&.
-
-
-\fIdiff\-oldmode\fR, \fIdiff\-newmode\fR, \fIdiff\-copy\-from\fR, \fIdiff\-copy\-to\fR, \fIdiff\-rename\-from\fR, \fIdiff\-rename\-to\fR, \fIdiff\-similarity\fR \fIdiff\-dissimilarity\fR \fIdiff\-tree\fR, \fIdiff\-index\fR
-
-.SS "Pretty print commit headers"
-
-
-Commit diffs and the revision logs are usually formatted using pretty printed headers , unless \-\-pretty=raw was given\&. This includes lines, such as merge info, commit ID, and author and comitter date\&.
-
-
-\fIpp\-author\fR, \fIpp\-commit\fR, \fIpp\-merge\fR, \fIpp\-date\fR, \fIpp\-adate\fR, \fIpp\-cdate\fR
-
-.SS "Raw commit header"
-
-
-Usually shown when \-\-pretty=raw is given, however \fIcommit\fR is pretty much omnipresent\&.
-
-
-\fIcommit\fR, \fIparent\fR, \fItree\fR, \fIauthor\fR, \fIcommitter\fR
-
-.SS "Commit message"
-
-
-For now only Signed\-off\-by lines are colorized\&.
-
-
-\fIsignoff\fR
 
 .SS "UI colors"
 
+.TP
+Status window colors
+Appearance of the bottom window showing info messages\&.
 
-Colors for text not matching any of the above: \fIdefault\fR
+\fIstatus\fR
+
+.TP
+Title window colors
+Appearence of the title windows when they are attached to any backgrounded windows and the current window\&.
+
+\fItitle\-blur\fR, \fItitle\-focus\fR
+
+.TP
+Cursor line colors
+ \fIcursor\fR 
+
+.TP
+Main view specific
+Appearance of the various columns in the main view, including the \fI~\fR used for delimiting long author names and labels for tag and branch references\&.
+
+\fImain\-date\fR, \fImain\-author\fR, \fImain\-commit\fR, \fImain\-delim\fR, \fImain\-tag\fR, \fImain\-ref\fR
+
+.SS "Highlighting"
 
 
-Status window colors: \fIstatus\fR
+The colors and attributes for text that is not highlighted can be controlled by changing the \fIdefault\fR color option\&.
+
+.TP
+Diff markup
+Options concerning diff start, chunks and lines added and deleted\&.
+
+\fIdiff\-header\fR, \fIdiff\-chunk\fR, \fIdiff\-add\fR, \fIdiff\-del\fR
+
+.TP
+Enhanced git diff markup
+Extra diff information emitted by the git diff machinery, such as mode changes, rename detection, and similarity\&.
+
+\fIdiff\-oldmode\fR, \fIdiff\-newmode\fR, \fIdiff\-copy\-from\fR, \fIdiff\-copy\-to\fR, \fIdiff\-rename\-from\fR, \fIdiff\-rename\-to\fR, \fIdiff\-similarity\fR  \fIdiff\-dissimilarity\fR  \fIdiff\-tree\fR, \fIdiff\-index\fR
+
+.TP
+Pretty print commit headers
+Commit diffs and the revision logs are usually formatted using pretty printed headers , unless \-\-pretty=raw was given\&. This includes lines, such as merge info, commit ID, and author and comitter date\&.
+
+\fIpp\-author\fR, \fIpp\-commit\fR, \fIpp\-merge\fR, \fIpp\-date\fR, \fIpp\-adate\fR, \fIpp\-cdate\fR
+
+.TP
+Raw commit header
+Usually shown when \-\-pretty=raw is given, however \fIcommit\fR is pretty much omnipresent\&.
+
+\fIcommit\fR, \fIparent\fR, \fItree\fR, \fIauthor\fR, \fIcommitter\fR
+
+.TP
+Commit message
+For now only Signed\-off\-by lines are colorized\&.
+
+\fIsignoff\fR
+
+.SH "COPYRIGHT"
 
 
-Title window colors: \fItitle\-blur\fR, \fItitle\-focus\fR
+Copyright (c) 2006 Jonas Fonseca <fonseca@diku\&.dk>
 
 
-Cursor line colors: \fIcursor\fR
-
-
-Main view specific: \fImain\-date\fR, \fImain\-author\fR, \fImain\-commit\fR, \fImain\-delim\fR, \fImain\-tag\fR, \fImain\-ref\fR
-
-.SH "EXAMPLES"
-
-
-Some sample options:
-
-.IP
-
-.nf
-# Diff colors
-color diff\-header       yellow  default
-color diff\-index        blue    default
-color diff\-chunk        magenta default
-# UI colors
-color title\-blur        white   blue
-color title\-focus       white   blue    bold
-.fi
+Licensed under the terms of the GNU General Public License\&.
 
 .SH "SEE ALSO"
 
 
-tig(1)
+\fBtig\fR(1) and the tig manual: \fIhttp://jonas.nitro.dk/tig/tig.html\fR\&.
 
