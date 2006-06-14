@@ -12,6 +12,8 @@ the user with various views, such as summarized commit log and showing the
 commit with the log message, diffstat, and the diff.
 
 ifndef::backend-docbook[]
+*Table of Contents*
+
 include::manual.toc[]
 endif::backend-docbook[]
 
