@@ -9,7 +9,8 @@ CFLAGS	= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
 DOCS	= tig.1.html tig.1 tigrc.5.html tigrc.5 \
-	  manual.toc manual.html manual.html-chunked README.html \
+	  manual.toc manual.html manual.html-chunked manual.pdf \
+	  README.html
 
 ifneq (,$(wildcard .git))
 VERSION = $(shell git-describe)
@@ -41,7 +42,7 @@ install-doc: doc
 
 clean:
 	rm -rf manual.html-chunked
-	rm -f $(PROGS) $(DOCS) core
+	rm -f $(PROGS) $(DOCS) core *.xml
 
 spell-check:
 	aspell --lang=en --check tig.1.txt tigrc.5.txt manual.txt
@@ -64,6 +65,9 @@ tig: tig.c
 
 README.html: README
 	asciidoc -b xhtml11 -d article -a readme $<
+
+%.pdf : %.xml
+	docbook2pdf $<
 
 %.1.html : %.1.txt
 	asciidoc -b xhtml11 -d manpage $<
