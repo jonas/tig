@@ -348,4 +348,4 @@ Licensed under the terms of the GNU General Public License.
 
 SEE ALSO
 --------
-gitlink:tig[1] and the http://jonas.nitro.dk/tig/tig.html[tig manual].
+gitlink:tig[1] and the http://jonas.nitro.dk/tig/manual.html[tig manual].

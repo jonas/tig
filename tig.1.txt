@@ -116,17 +116,9 @@ the Free Software Foundation; either version 2 of the License, or
 SEE ALSO
 --------
 
-- gitlink:tigrc[5]
-- link:http://jonas.nitro.dk/tig/manual.html[The tig manual],
-- link:http://www.kernel.org/pub/software/scm/git/docs/[git(7)],
-- link:http://www.kernel.org/pub/software/scm/cogito/docs/[cogito(7)]
+gitlink:tigrc[5], git(7), cogito(7), as well as other git repository browsers:
+gitk(1), qgit(1), gitview(1).
 
-Other git repository browsers:
-
-- gitk(1)
-- qgit(1)
-- gitview(1)
-
-Sites:
+Online resources:
 
 include::SITES[]

@@ -91,3 +91,12 @@ README.html: README
 
 %.html-chunked : %.xml
 	xmlto html -o $@ $<
+
+# Maintainer stuff
+sync-docs:
+	cg switch release
+	-cg merge -n master
+	cg commit -m "Merge with master"
+	make doc
+	cg commit -m "Sync docs"
+	cg switch master
