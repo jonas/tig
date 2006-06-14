@@ -200,100 +200,94 @@ be appended:
 -----------------------------------------------------------------------------
 
 [[keys]]
-Keys
-----
+Default Keybindings
+-------------------
 Below the default key bindings are shown.
 
 [[view-switching]]
 View Switching
 ~~~~~~~~~~~~~~
-m::
-	Switch to main view.
-d::
-	Switch to diff view.
-l::
-	Switch to log view.
-p::
-	Switch to pager view.
-h, ?::
-	Show man page.
+
+`-------`--------------------------------------------------------------------
+Key	Action
+-----------------------------------------------------------------------------
+m	Switch to main view.
+d	Switch to diff view.
+l	Switch to log view.
+p	Switch to pager view.
+h, ?	Show man page.
+-----------------------------------------------------------------------------
 
 [[view-manipulation]]
 View Manipulation
 ~~~~~~~~~~~~~~~~~
-q::
-	Close view, if multiple views are open it will jump back to the
-	previous view in the view stack. If it is the last open view it
+
+`-------`--------------------------------------------------------------------
+Key	Action
+-----------------------------------------------------------------------------
+q	Close view, if multiple views are open it will jump back to the \
+	previous view in the view stack. If it is the last open view it \
 	will quit. Use 'Q' to quit all views at once.
-Enter::
-	This key is "context sensitive" depending on what view you are
-	currently in. When in log view on a commit line or in the main
-	view, split the view and show the commit diff. In the diff view
+Enter	This key is "context sensitive" depending on what view you are \
+	currently in. When in log view on a commit line or in the main \
+	view, split the view and show the commit diff. In the diff view \
 	pressing Enter will simply scroll the view one line down.
-Tab::
-	Switch to next view.
-Up::
-	This key is "context sensitive" and will move the cursor one
-	line up. However, uf you opened a diff view from the main view
-	(split- or full-screen) it will change the cursor to point to
-	the previous commit in the main view and update the diff view
+Tab	Switch to next view.
+Up	This key is "context sensitive" and will move the cursor one \
+	line up. However, uf you opened a diff view from the main view \
+	(split- or full-screen) it will change the cursor to point to \
+	the previous commit in the main view and update the diff view \
 	to display it.
-Down::
-	Similar to 'Up' but will move down.
+Down	Similar to 'Up' but will move down.
+-----------------------------------------------------------------------------
 
 [[cursor-nav]]
 Cursor Navigation
 ~~~~~~~~~~~~~~~~~
-j::
-	Move cursor one line up.
-k::
-	Move cursor one line down.
-PgUp::
-b::
--::
-	Move cursor one page up.
-PgDown::
-Space::
-	Move cursor one page down.
-Home::
-	Jump to first line.
-End::
-	Jump to last line.
+
+`-------`--------------------------------------------------------------------
+Key	Action
+-----------------------------------------------------------------------------
+j	Move cursor one line up.
+k	Move cursor one line down.
+PgUp b \
+a	Move cursor one page up.
+PgDown	Space	Move cursor one page down.
+Home	Jump to first line.
+End	Jump to last line.
+-----------------------------------------------------------------------------
 
 [[view-scrolling]]
 Scrolling
 ~~~~~~~~~
-Insert::
-	Scroll view one line up.
-Delete::
-	Scroll view one line down.
-w::
-	Scroll view one page up.
-s::
-	Scroll view one page down.
+
+`-------`--------------------------------------------------------------------
+Key	Action
+-----------------------------------------------------------------------------
+Insert	Scroll view one line up.
+Delete	Scroll view one line down.
+w	Scroll view one page up.
+s	Scroll view one page down.
+-----------------------------------------------------------------------------
 
 [[misc-keys]]
 Misc
 ~~~~
-Q::
-	Quit.
-r::
-	Redraw screen.
-z::
-	Stop all background loading. This can be useful if you use
-	tig in a repository with a long history without limiting
-	the revision log.
-v::
-	Show version.
-n::
-	Toggle line numbers on/off.
-g::
-	Toggle revision graph visualization on/off.
-':'::
-	Open prompt. This allows you to specify what git command
-	to run. Example:
 
-	:log -p
+`-------`--------------------------------------------------------------------
+Key	Action
+-----------------------------------------------------------------------------
+Q	Quit.
+r	Redraw screen.
+z	Stop all background loading. This can be useful if you use \
+	tig in a repository with a long history without limiting \
+	the revision log.
+v	Show version.
+n	Toggle line numbers on/off.
+g	Toggle revision graph visualization on/off.
+':'	Open prompt. This allows you to specify what git command \
+	to run. Example `:log -p`
+-----------------------------------------------------------------------------
 
 [[refspec]]
 Revision Specification
