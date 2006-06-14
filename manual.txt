@@ -250,8 +250,8 @@ Key	Action
 -----------------------------------------------------------------------------
 j	Move cursor one line up.
 k	Move cursor one line down.
-PgUp b \
-a	Move cursor one page up.
+PgUp,\
+-,a	Move cursor one page up.
 PgDown	Space	Move cursor one page down.
 Home	Jump to first line.
 End	Jump to last line.
