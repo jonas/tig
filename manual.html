@@ -328,6 +328,13 @@ commit with the log message, diffstat, and the diff.</p>
 <a href="#title-window">Title Windows</a>
 </p>
 </li>
+</ul>
+</li>
+<li>
+<p>
+<a href="#keys">Default Keybindings</a>
+</p>
+<ul>
 <li>
 <p>
 <a href="#view-switching">View Switching</a>
@@ -595,265 +602,330 @@ be appended:</p>
 <pre><tt>[main] 77d9e40fbcea3238015aea403e06f61542df9a31 - commit 1 of 779 (0%) 5s</tt></pre>
 </div></div>
 </div>
-<h2><a id="keys"></a>4. Keys</h2>
+<h2><a id="keys"></a>4. Default Keybindings</h2>
 <div class="sectionbody">
 <p>Below the default key bindings are shown.</p>
 <h3><a id="view-switching"></a>4.1. View Switching</h3>
-<dl>
-<dt>
-m
-</dt>
-<dd>
-<p>
-        Switch to main view.
-</p>
-</dd>
-<dt>
-d
-</dt>
-<dd>
-<p>
-        Switch to diff view.
-</p>
-</dd>
-<dt>
-l
-</dt>
-<dd>
-<p>
-        Switch to log view.
-</p>
-</dd>
-<dt>
-p
-</dt>
-<dd>
-<p>
-        Switch to pager view.
-</p>
-</dd>
-<dt>
-h, ?
-</dt>
-<dd>
-<p>
-        Show man page.
-</p>
-</dd>
-</dl>
+<div class="tableblock">
+<table rules="none"
+frame="hsides"
+cellspacing="0" cellpadding="4">
+<col width="91" />
+<col width="788" />
+<thead>
+  <tr>
+    <th align="left">
+    Key
+    </th>
+    <th align="left">
+    Action
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    m
+    </td>
+    <td align="left">
+    Switch to main view.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    d
+    </td>
+    <td align="left">
+    Switch to diff view.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    l
+    </td>
+    <td align="left">
+    Switch to log view.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    p
+    </td>
+    <td align="left">
+    Switch to pager view.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    h, ?
+    </td>
+    <td align="left">
+    Show man page.
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
 <h3><a id="view-manipulation"></a>4.2. View Manipulation</h3>
-<dl>
-<dt>
-q
-</dt>
-<dd>
-<p>
-        Close view, if multiple views are open it will jump back to the
-        previous view in the view stack. If it is the last open view it
-        will quit. Use <em>Q</em> to quit all views at once.
-</p>
-</dd>
-<dt>
-Enter
-</dt>
-<dd>
-<p>
-        This key is "context sensitive" depending on what view you are
-        currently in. When in log view on a commit line or in the main
-        view, split the view and show the commit diff. In the diff view
-        pressing Enter will simply scroll the view one line down.
-</p>
-</dd>
-<dt>
-Tab
-</dt>
-<dd>
-<p>
-        Switch to next view.
-</p>
-</dd>
-<dt>
-Up
-</dt>
-<dd>
-<p>
-        This key is "context sensitive" and will move the cursor one
-        line up. However, uf you opened a diff view from the main view
-        (split- or full-screen) it will change the cursor to point to
-        the previous commit in the main view and update the diff view
-        to display it.
-</p>
-</dd>
-<dt>
-Down
-</dt>
-<dd>
-<p>
-        Similar to <em>Up</em> but will move down.
-</p>
-</dd>
-</dl>
+<div class="tableblock">
+<table rules="none"
+frame="hsides"
+cellspacing="0" cellpadding="4">
+<col width="91" />
+<col width="788" />
+<thead>
+  <tr>
+    <th align="left">
+    Key
+    </th>
+    <th align="left">
+    Action
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    q
+    </td>
+    <td align="left">
+    Close view, if multiple views are open it will jump back to the         previous view in the view stack. If it is the last open view it         will quit. Use <em>Q</em> to quit all views at once.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    Enter
+    </td>
+    <td align="left">
+    This key is "context sensitive" depending on what view you are         currently in. When in log view on a commit line or in the main         view, split the view and show the commit diff. In the diff view         pressing Enter will simply scroll the view one line down.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    Tab
+    </td>
+    <td align="left">
+    Switch to next view.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    Up
+    </td>
+    <td align="left">
+    This key is "context sensitive" and will move the cursor one         line up. However, uf you opened a diff view from the main view         (split- or full-screen) it will change the cursor to point to         the previous commit in the main view and update the diff view         to display it.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    Down
+    </td>
+    <td align="left">
+    Similar to <em>Up</em> but will move down.
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
 <h3><a id="cursor-nav"></a>4.3. Cursor Navigation</h3>
-<dl>
-<dt>
-j
-</dt>
-<dd>
-<p>
-        Move cursor one line up.
-</p>
-</dd>
-<dt>
-k
-</dt>
-<dd>
-<p>
-        Move cursor one line down.
-</p>
-</dd>
-<dt>
-PgUp
-</dt>
-<dt>
-b
-</dt>
-<dt>
--
-</dt>
-<dd>
-<p>
-        Move cursor one page up.
-</p>
-</dd>
-<dt>
-PgDown
-</dt>
-<dt>
-Space
-</dt>
-<dd>
-<p>
-        Move cursor one page down.
-</p>
-</dd>
-<dt>
-Home
-</dt>
-<dd>
-<p>
-        Jump to first line.
-</p>
-</dd>
-<dt>
-End
-</dt>
-<dd>
-<p>
-        Jump to last line.
-</p>
-</dd>
-</dl>
+<div class="tableblock">
+<table rules="none"
+frame="hsides"
+cellspacing="0" cellpadding="4">
+<col width="91" />
+<col width="788" />
+<thead>
+  <tr>
+    <th align="left">
+    Key
+    </th>
+    <th align="left">
+    Action
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    j
+    </td>
+    <td align="left">
+    Move cursor one line up.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    k
+    </td>
+    <td align="left">
+    Move cursor one line down.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    PgUp b a
+    </td>
+    <td align="left">
+    Move cursor one page up.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    PgDown
+    </td>
+    <td align="left">
+    Space   Move cursor one page down.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    Home
+    </td>
+    <td align="left">
+    Jump to first line.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    End
+    </td>
+    <td align="left">
+    Jump to last line.
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
 <h3><a id="view-scrolling"></a>4.4. Scrolling</h3>
-<dl>
-<dt>
-Insert
-</dt>
-<dd>
-<p>
-        Scroll view one line up.
-</p>
-</dd>
-<dt>
-Delete
-</dt>
-<dd>
-<p>
-        Scroll view one line down.
-</p>
-</dd>
-<dt>
-w
-</dt>
-<dd>
-<p>
-        Scroll view one page up.
-</p>
-</dd>
-<dt>
-s
-</dt>
-<dd>
-<p>
-        Scroll view one page down.
-</p>
-</dd>
-</dl>
+<div class="tableblock">
+<table rules="none"
+frame="hsides"
+cellspacing="0" cellpadding="4">
+<col width="91" />
+<col width="788" />
+<thead>
+  <tr>
+    <th align="left">
+    Key
+    </th>
+    <th align="left">
+    Action
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    Insert
+    </td>
+    <td align="left">
+    Scroll view one line up.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    Delete
+    </td>
+    <td align="left">
+    Scroll view one line down.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    w
+    </td>
+    <td align="left">
+    Scroll view one page up.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    s
+    </td>
+    <td align="left">
+    Scroll view one page down.
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
 <h3><a id="misc-keys"></a>4.5. Misc</h3>
-<dl>
-<dt>
-Q
-</dt>
-<dd>
-<p>
-        Quit.
-</p>
-</dd>
-<dt>
-r
-</dt>
-<dd>
-<p>
-        Redraw screen.
-</p>
-</dd>
-<dt>
-z
-</dt>
-<dd>
-<p>
-        Stop all background loading. This can be useful if you use
-        tig in a repository with a long history without limiting
-        the revision log.
-</p>
-</dd>
-<dt>
-v
-</dt>
-<dd>
-<p>
-        Show version.
-</p>
-</dd>
-<dt>
-n
-</dt>
-<dd>
-<p>
-        Toggle line numbers on/off.
-</p>
-</dd>
-<dt>
-g
-</dt>
-<dd>
-<p>
-        Toggle revision graph visualization on/off.
-</p>
-</dd>
-<dt>
-<em>:</em>
-</dt>
-<dd>
-<p>
-        Open prompt. This allows you to specify what git command
-        to run. Example:
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>:log -p</tt></pre>
-</div></div>
-</dd>
-</dl>
+<div class="tableblock">
+<table rules="none"
+frame="hsides"
+cellspacing="0" cellpadding="4">
+<col width="91" />
+<col width="788" />
+<thead>
+  <tr>
+    <th align="left">
+    Key
+    </th>
+    <th align="left">
+    Action
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    Q
+    </td>
+    <td align="left">
+    Quit.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    r
+    </td>
+    <td align="left">
+    Redraw screen.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    z
+    </td>
+    <td align="left">
+    Stop all background loading. This can be useful if you use         tig in a repository with a long history without limiting         the revision log.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    v
+    </td>
+    <td align="left">
+    Show version.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    n
+    </td>
+    <td align="left">
+    Toggle line numbers on/off.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    g
+    </td>
+    <td align="left">
+    Toggle revision graph visualization on/off.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    <em>:</em>
+    </td>
+    <td align="left">
+    Open prompt. This allows you to specify what git command         to run. Example <tt>:log -p</tt>
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
 </div>
 <h2><a id="refspec"></a>5. Revision Specification</h2>
 <div class="sectionbody">
@@ -1060,7 +1132,7 @@ gitview(1)
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 14-Jun-2006 22:28:53 CEST
+Last updated 14-Jun-2006 23:28:46 CEST
 </div>
 </div>
 </body>
