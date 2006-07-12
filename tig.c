@@ -12,7 +12,7 @@
  */
 
 #ifndef	VERSION
-#define VERSION	"tig-0.3"
+#define VERSION	"tig-0.4.git"
 #endif
 
 #ifndef DEBUG
