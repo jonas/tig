@@ -150,7 +150,7 @@ ifdef::backend-xhtml11[]
 [frame="none"]
 `-----------------------`-----------------------------------------------------
 endif::backend-xhtml11[]
-View switching::
+View switching:
 ------------------------------------------------------------------------------
 view-main		Show main view
 view-diff		Show diff view
@@ -163,7 +163,7 @@ ifdef::backend-xhtml11[]
 [frame="none"]
 `-----------------------`-----------------------------------------------------
 endif::backend-xhtml11[]
-View manipulation::
+View manipulation:
 ------------------------------------------------------------------------------
 enter			Enter current line and scroll
 next			Move to next
@@ -177,7 +177,7 @@ ifdef::backend-xhtml11[]
 [frame="none"]
 `-----------------------`-----------------------------------------------------
 endif::backend-xhtml11[]
-Cursor navigation::
+Cursor navigation:
 ------------------------------------------------------------------------------
 move-up			Move cursor one line up
 move-down		Move cursor one line down
@@ -191,7 +191,7 @@ ifdef::backend-xhtml11[]
 [frame="none"]
 `-----------------------`-----------------------------------------------------
 endif::backend-xhtml11[]
-Scrolling::
+Scrolling:
 ------------------------------------------------------------------------------
 scroll-line_up		Scroll one line up
 scroll-line_down	Scroll one line down
@@ -203,7 +203,7 @@ ifdef::backend-xhtml11[]
 [frame="none"]
 `-----------------------`-----------------------------------------------------
 endif::backend-xhtml11[]
-Misc::
+Misc:
 ------------------------------------------------------------------------------
 prompt			Bring up the prompt
 screen-update		Update the screen
