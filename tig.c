@@ -80,7 +80,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 	"git log --cc --stat -n100 %s"
 
 #define TIG_MAIN_CMD \
-	"git log --topo-order --stat --pretty=raw %s"
+	"git log --topo-order --pretty=raw %s"
 
 /* XXX: Needs to be defined to the empty string. */
 #define TIG_HELP_CMD	""
