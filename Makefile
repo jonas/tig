@@ -24,6 +24,7 @@ all-debug: CFLAGS += $(DFLAGS)
 doc: $(DOCS)
 
 install: all
+	mkdir -p $(DESTDIR)$(bindir) && \
 	for prog in $(PROGS); do \
 		install $$prog $(DESTDIR)$(bindir); \
 	done
