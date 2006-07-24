@@ -2583,6 +2583,8 @@ init_display(void)
 		/* Leave stdin and stdout alone when acting as a pager. */
 		FILE *io = fopen("/dev/tty", "r+");
 
+		if (!io)
+			die("Failed to open /dev/tty");
 		cursed = !!newterm(NULL, io, io);
 	}
 
