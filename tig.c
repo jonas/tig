@@ -74,13 +74,13 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 	"git ls-remote . 2>/dev/null"
 
 #define TIG_DIFF_CMD \
-	"git show --patch-with-stat --find-copies-harder -B -C %s"
+	"git show --patch-with-stat --find-copies-harder -B -C %s 2>/dev/null"
 
 #define TIG_LOG_CMD	\
-	"git log --cc --stat -n100 %s"
+	"git log --cc --stat -n100 %s 2>/dev/null"
 
 #define TIG_MAIN_CMD \
-	"git log --topo-order --pretty=raw %s"
+	"git log --topo-order --pretty=raw %s 2>/dev/null"
 
 /* XXX: Needs to be defined to the empty string. */
 #define TIG_HELP_CMD	""
