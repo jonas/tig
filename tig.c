@@ -2286,9 +2286,21 @@ main_read(struct view *view, char *line)
 			break;
 
 		if (end) {
+			char *email = end + 1;
+
 			for (; end > ident && isspace(end[-1]); end--) ;
+
+			if (end == ident && *email) {
+				ident = email;
+				end = strchr(ident, '>');
+				for (; end > ident && isspace(end[-1]); end--) ;
+			}
 			*end = 0;
 		}
+
+		/* End is NULL or ident meaning there's no author. */
+		if (end <= ident)
+			ident = "Unknown";
 
 		string_copy(commit->author, ident);
 
