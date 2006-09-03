@@ -74,7 +74,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 	"git ls-remote . 2>/dev/null"
 
 #define TIG_DIFF_CMD \
-	"git show --patch-with-stat --find-copies-harder -B -C %s 2>/dev/null"
+	"git show --root --patch-with-stat --find-copies-harder -B -C %s 2>/dev/null"
 
 #define TIG_LOG_CMD	\
 	"git log --cc --stat -n100 %s 2>/dev/null"
@@ -679,7 +679,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'v',		REQ_SHOW_VERSION },
 	{ 'r',		REQ_SCREEN_REDRAW },
 	{ 'n',		REQ_TOGGLE_LINENO },
-	{ 'g',		REQ_TOGGLE_REV_GRAPH},
+	{ 'g',		REQ_TOGGLE_REV_GRAPH },
 	{ ':',		REQ_PROMPT },
 
 	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
