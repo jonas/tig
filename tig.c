@@ -2704,7 +2704,10 @@ read_prompt(void)
 	buf[pos++] = 0;
 	if (!string_format(opt_cmd, "git %s", buf))
 		return ERR;
-	opt_request = REQ_VIEW_PAGER;
+	if (strncmp(buf, "show", 4) && isspace(buf[4]))
+		opt_request = REQ_VIEW_DIFF;
+	else
+		opt_request = REQ_VIEW_PAGER;
 
 	return OK;
 }
