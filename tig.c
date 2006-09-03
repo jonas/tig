@@ -30,6 +30,10 @@
 #include <unistd.h>
 #include <time.h>
 
+#include <locale.h>
+#include <langinfo.h>
+#include <iconv.h>
+
 #include <curses.h>
 
 #if __GNUC__ >= 3
@@ -56,6 +60,8 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 
 /* This color name can be used to refer to the default term colors. */
 #define COLOR_DEFAULT	(-1)
+
+#define ICONV_NONE	((iconv_t) -1)
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
@@ -361,9 +367,11 @@ static int opt_num_interval	= NUMBER_INTERVAL;
 static int opt_tab_size		= TABSIZE;
 static enum request opt_request = REQ_VIEW_MAIN;
 static char opt_cmd[SIZEOF_CMD]	= "";
-static char opt_encoding[20]	= "";
-static bool opt_utf8		= TRUE;
 static FILE *opt_pipe		= NULL;
+static char opt_encoding[20]	= "UTF-8";
+static bool opt_utf8		= TRUE;
+static char opt_codeset[20]	= "UTF-8";
+static iconv_t opt_iconv	= ICONV_NONE;
 
 enum option_type {
 	OPT_NONE,
@@ -1616,7 +1624,8 @@ realloc_lines(struct view *view, size_t line_size)
 static bool
 update_view(struct view *view)
 {
-	char buffer[BUFSIZ];
+	char in_buffer[BUFSIZ];
+	char out_buffer[BUFSIZ * 2];
 	char *line;
 	/* The number of lines to read. If too low it will cause too much
 	 * redrawing (and possible flickering), if too high responsiveness
@@ -1634,11 +1643,27 @@ update_view(struct view *view)
 	if (!realloc_lines(view, view->lines + lines))
 		goto alloc_error;
 
-	while ((line = fgets(buffer, sizeof(buffer), view->pipe))) {
-		int linelen = strlen(line);
+	while ((line = fgets(in_buffer, sizeof(in_buffer), view->pipe))) {
+		size_t linelen = strlen(line);
 
 		if (linelen)
 			line[linelen - 1] = 0;
+
+		if (opt_iconv != ICONV_NONE) {
+			char *inbuf = line;
+			size_t inlen = linelen;
+
+			char *outbuf = out_buffer;
+			size_t outlen = sizeof(out_buffer);
+
+			size_t ret;
+
+			ret = iconv(opt_iconv, &inbuf, &inlen, &outbuf, &outlen);
+			if (ret != (size_t) -1) {
+				line = out_buffer;
+				linelen = strlen(out_buffer);
+			}
+		}
 
 		if (!view->ops->read(view, line))
 			goto alloc_error;
@@ -2891,6 +2916,10 @@ main(int argc, char *argv[])
 
 	signal(SIGINT, quit);
 
+	if (setlocale(LC_ALL, "")) {
+		string_copy(opt_codeset, nl_langinfo(CODESET));
+	}
+
 	if (load_options() == ERR)
 		die("Failed to load user config.");
 
@@ -2901,6 +2930,12 @@ main(int argc, char *argv[])
 
 	if (!parse_options(argc, argv))
 		return 0;
+
+	if (*opt_codeset && strcmp(opt_codeset, opt_encoding)) {
+		opt_iconv = iconv_open(opt_codeset, opt_encoding);
+		if (opt_iconv == (iconv_t) -1)
+			die("Failed to initialize character set conversion");
+	}
 
 	if (load_refs() == ERR)
 		die("Failed to load refs.");
