@@ -2067,6 +2067,34 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 	return TRUE;
 }
 
+static bool
+add_describe_ref(char *buf, int *bufpos, char *commit_id, const char *sep)
+{
+	char refbuf[1024];
+	char *ref = NULL;
+	FILE *pipe;
+
+	if (!string_format(refbuf, "git describe %s", commit_id))
+		return TRUE;
+
+	pipe = popen(refbuf, "r");
+	if (!pipe)
+		return TRUE;
+
+	if ((ref = fgets(refbuf, sizeof(refbuf), pipe)))
+		ref = chomp_string(ref);
+	pclose(pipe);
+
+	if (!ref || !*ref)
+		return TRUE;
+
+	/* This is the only fatal call, since it can "corrupt" the buffer. */
+	if (!string_nformat(buf, 1024, bufpos, "%s%s", sep, ref))
+		return FALSE;
+
+	return TRUE;
+}
+
 static void
 add_pager_refs(struct view *view, struct line *line)
 {
@@ -2075,12 +2103,16 @@ add_pager_refs(struct view *view, struct line *line)
 	struct ref **refs;
 	int bufpos = 0, refpos = 0;
 	const char *sep = "Refs: ";
+	bool is_tag = FALSE;
 
 	assert(line->type == LINE_COMMIT);
 
 	refs = get_refs(commit_id);
-	if (!refs)
+	if (!refs) {
+		if (view == VIEW(REQ_VIEW_DIFF))
+			goto try_add_describe_ref;
 		return;
+	}
 
 	do {
 		struct ref *ref = refs[refpos];
@@ -2089,7 +2121,15 @@ add_pager_refs(struct view *view, struct line *line)
 		if (!string_format_from(buf, &bufpos, fmt, sep, ref->name))
 			return;
 		sep = ", ";
+		if (ref->tag)
+			is_tag = TRUE;
 	} while (refs[refpos++]->next);
+
+	if (!is_tag && view == VIEW(REQ_VIEW_DIFF)) {
+try_add_describe_ref:
+		if (!add_describe_ref(buf, &bufpos, commit_id, sep))
+			return;
+	}
 
 	if (!realloc_lines(view, view->line_size + 1))
 		return;
