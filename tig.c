@@ -2071,14 +2071,14 @@ static void
 add_pager_refs(struct view *view, struct line *line)
 {
 	char buf[1024];
-	char *data = line->data;
+	char *commit_id = line->data + STRING_SIZE("commit ");
 	struct ref **refs;
 	int bufpos = 0, refpos = 0;
 	const char *sep = "Refs: ";
 
 	assert(line->type == LINE_COMMIT);
 
-	refs = get_refs(data + STRING_SIZE("commit "));
+	refs = get_refs(commit_id);
 	if (!refs)
 		return;
 
