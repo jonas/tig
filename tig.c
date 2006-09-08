@@ -54,8 +54,8 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(x[0]))
 #define STRING_SIZE(x)	(sizeof(x) - 1)
 
+#define SIZEOF_STR	1024	/* Default string size. */
 #define SIZEOF_REF	256	/* Size of symbolic or SHA1 ID. */
-#define SIZEOF_CMD	1024	/* Size of command buffer. */
 #define SIZEOF_REVGRAPH	19	/* Size of revision ancestry graphics. */
 
 /* This color name can be used to refer to the default term colors. */
@@ -224,11 +224,11 @@ string_enum_compare(const char *str1, const char *str2, int len)
  */
 
 static size_t
-sq_quote(char buf[SIZEOF_CMD], size_t bufsize, const char *src)
+sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 {
 	char c;
 
-#define BUFPUT(x) do { if (bufsize < SIZEOF_CMD) buf[bufsize++] = (x); } while (0)
+#define BUFPUT(x) do { if (bufsize < SIZEOF_STR) buf[bufsize++] = (x); } while (0)
 
 	BUFPUT('\'');
 	while ((c = *src++)) {
@@ -366,7 +366,7 @@ static bool opt_rev_graph	= TRUE;
 static int opt_num_interval	= NUMBER_INTERVAL;
 static int opt_tab_size		= TABSIZE;
 static enum request opt_request = REQ_VIEW_MAIN;
-static char opt_cmd[SIZEOF_CMD]	= "";
+static char opt_cmd[SIZEOF_STR]	= "";
 static FILE *opt_pipe		= NULL;
 static char opt_encoding[20]	= "UTF-8";
 static bool opt_utf8		= TRUE;
@@ -1089,7 +1089,7 @@ static int
 load_options(void)
 {
 	char *home = getenv("HOME");
-	char buf[1024];
+	char buf[SIZEOF_STR];
 	FILE *file;
 
 	config_lineno = 0;
@@ -1141,7 +1141,7 @@ struct view {
 
 	enum keymap keymap;	/* What keymap does this view have */
 
-	char cmd[SIZEOF_CMD];	/* Command buffer */
+	char cmd[SIZEOF_STR];	/* Command buffer */
 	char ref[SIZEOF_REF];	/* Hovered commit reference */
 	char vid[SIZEOF_REF];	/* View ID. Set to id member when updating. */
 
@@ -2070,7 +2070,7 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 static bool
 add_describe_ref(char *buf, int *bufpos, char *commit_id, const char *sep)
 {
-	char refbuf[1024];
+	char refbuf[SIZEOF_STR];
 	char *ref = NULL;
 	FILE *pipe;
 
@@ -2089,7 +2089,7 @@ add_describe_ref(char *buf, int *bufpos, char *commit_id, const char *sep)
 		return TRUE;
 
 	/* This is the only fatal call, since it can "corrupt" the buffer. */
-	if (!string_nformat(buf, 1024, bufpos, "%s%s", sep, ref))
+	if (!string_nformat(buf, SIZEOF_STR, bufpos, "%s%s", sep, ref))
 		return FALSE;
 
 	return TRUE;
@@ -2098,7 +2098,7 @@ add_describe_ref(char *buf, int *bufpos, char *commit_id, const char *sep)
 static void
 add_pager_refs(struct view *view, struct line *line)
 {
-	char buf[1024];
+	char buf[SIZEOF_STR];
 	char *commit_id = line->data + STRING_SIZE("commit ");
 	struct ref **refs;
 	int bufpos = 0, refpos = 0;
