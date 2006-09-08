@@ -2687,7 +2687,7 @@ init_display(void)
 }
 
 static int
-read_prompt(void)
+read_prompt(const char *prompt)
 {
 	enum { READING, STOP, CANCEL } status = READING;
 	char buf[sizeof(opt_cmd) - STRING_SIZE("git \0")];
@@ -2700,7 +2700,7 @@ read_prompt(void)
 		foreach_view (view, i)
 			update_view(view);
 
-		report(":%.*s", pos, buf);
+		report("%s%.*s", prompt, pos, buf);
 		/* Refresh, accept single keystroke of input */
 		key = wgetch(status_win);
 		switch (key) {
@@ -3010,7 +3010,7 @@ main(int argc, char *argv[])
 		 * status_win restricted. */
 		switch (request) {
 		case REQ_PROMPT:
-			if (read_prompt() == ERR)
+			if (read_prompt(":") == ERR)
 				request = REQ_SCREEN_UPDATE;
 			break;
 
