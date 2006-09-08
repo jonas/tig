@@ -2686,11 +2686,11 @@ init_display(void)
 	wbkgdset(status_win, get_line_attr(LINE_STATUS));
 }
 
-static int
+static char * 
 read_prompt(const char *prompt)
 {
 	enum { READING, STOP, CANCEL } status = READING;
-	char buf[sizeof(opt_cmd) - STRING_SIZE("git \0")];
+	static char buf[sizeof(opt_cmd) - STRING_SIZE("git \0")];
 	int pos = 0;
 
 	while (status == READING) {
@@ -2727,7 +2727,7 @@ read_prompt(const char *prompt)
 		default:
 			if (pos >= sizeof(buf)) {
 				report("Input string too long");
-				return ERR;
+				return NULL;
 			}
 
 			if (isprint(key))
@@ -2738,18 +2738,12 @@ read_prompt(const char *prompt)
 	if (status == CANCEL) {
 		/* Clear the status window */
 		report("");
-		return ERR;
+		return NULL;
 	}
 
 	buf[pos++] = 0;
-	if (!string_format(opt_cmd, "git %s", buf))
-		return ERR;
-	if (strncmp(buf, "show", 4) && isspace(buf[4]))
-		opt_request = REQ_VIEW_DIFF;
-	else
-		opt_request = REQ_VIEW_PAGER;
 
-	return OK;
+	return buf;
 }
 
 /*
@@ -3010,10 +3004,21 @@ main(int argc, char *argv[])
 		 * status_win restricted. */
 		switch (request) {
 		case REQ_PROMPT:
-			if (read_prompt(":") == ERR)
-				request = REQ_SCREEN_UPDATE;
-			break;
+		{
+			char *cmd = read_prompt(":");
 
+			if (cmd && string_format(opt_cmd, "git %s", cmd)) {
+				if (strncmp(cmd, "show", 4) && isspace(cmd[4])) {
+					opt_request = REQ_VIEW_DIFF;
+				} else {
+					opt_request = REQ_VIEW_PAGER;
+				}
+				break;
+			}
+
+			request = REQ_SCREEN_UPDATE;
+			break;
+		}
 		case REQ_SCREEN_RESIZE:
 		{
 			int height, width;
