@@ -110,6 +110,8 @@ Examples:
 	bind diff a previous
 	bind diff d next
 	bind diff b move-first-line
+	# 'unbind' the default quit key binding
+	bind main Q none
 --------------------------------------------------------------------------
 
 Keys are mapped by first searching the keybindings for the current view, then
@@ -205,8 +207,8 @@ ifdef::backend-xhtml11[]
 endif::backend-xhtml11[]
 Misc:
 ------------------------------------------------------------------------------
+none			Do nothing
 prompt			Bring up the prompt
-screen-update		Update the screen
 screen-redraw		Redraw the screen
 screen-resize		Resize the screen
 show-version		Show version information

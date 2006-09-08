@@ -283,8 +283,8 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(SCROLL_PAGE_DOWN,	"Scroll one page down"), \
 	\
 	REQ_GROUP("Misc") \
+	REQ_(NONE,		"Do nothing"), \
 	REQ_(PROMPT,		"Bring up the prompt"), \
-	REQ_(SCREEN_UPDATE,	"Update the screen"), \
 	REQ_(SCREEN_REDRAW,	"Redraw the screen"), \
 	REQ_(SCREEN_RESIZE,	"Resize the screen"), \
 	REQ_(SHOW_VERSION,	"Show version information"), \
@@ -691,9 +691,9 @@ static struct keybinding default_keybindings[] = {
 	{ ':',		REQ_PROMPT },
 
 	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
-	{ ERR,		REQ_SCREEN_UPDATE },
+	{ ERR,		REQ_NONE },
 
-	/* Use the ncurses SIGWINCH handler. */
+	/* Using the ncurses SIGWINCH handler. */
 	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
 };
 
@@ -1956,7 +1956,7 @@ view_driver(struct view *view, enum request request)
 		redraw_display();
 		break;
 
-	case REQ_SCREEN_UPDATE:
+	case REQ_NONE:
 		doupdate();
 		return TRUE;
 
@@ -3016,7 +3016,7 @@ main(int argc, char *argv[])
 				break;
 			}
 
-			request = REQ_SCREEN_UPDATE;
+			request = REQ_NONE;
 			break;
 		}
 		case REQ_SCREEN_RESIZE:
