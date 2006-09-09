@@ -370,18 +370,18 @@ VERSION " (" __DATE__ ")\n"
 "  -h, --help                  Show help message and exit\n";
 
 /* Option and state variables. */
-static bool opt_line_number	= FALSE;
-static bool opt_rev_graph	= TRUE;
-static int opt_num_interval	= NUMBER_INTERVAL;
-static int opt_tab_size		= TABSIZE;
-static enum request opt_request = REQ_VIEW_MAIN;
-static char opt_cmd[SIZEOF_STR]	= "";
-static FILE *opt_pipe		= NULL;
-static char opt_encoding[20]	= "UTF-8";
-static bool opt_utf8		= TRUE;
-static char opt_codeset[20]	= "UTF-8";
-static iconv_t opt_iconv	= ICONV_NONE;
-static char opt_search[SIZEOF_STR] = "";
+static bool opt_line_number		= FALSE;
+static bool opt_rev_graph		= TRUE;
+static int opt_num_interval		= NUMBER_INTERVAL;
+static int opt_tab_size			= TABSIZE;
+static enum request opt_request		= REQ_VIEW_MAIN;
+static char opt_cmd[SIZEOF_STR]		= "";
+static FILE *opt_pipe			= NULL;
+static char opt_encoding[20]		= "UTF-8";
+static bool opt_utf8			= TRUE;
+static char opt_codeset[20]		= "UTF-8";
+static iconv_t opt_iconv		= ICONV_NONE;
+static char opt_search[SIZEOF_STR]	= "";
 
 enum option_type {
 	OPT_NONE,
