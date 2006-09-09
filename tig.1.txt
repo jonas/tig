@@ -9,10 +9,10 @@ SYNOPSIS
 --------
 [verse]
 tig [options]
-tig [options] [--] [git log options]
-tig [options] log  [git log options]
-tig [options] diff [git diff options]
-tig [options] show [git show options]
+tig [options] [--] [git options]
+tig [options] log  [git options]
+tig [options] diff [git options]
+tig [options] show [git options]
 tig [options] <    [git command output]
 
 DESCRIPTION
@@ -55,16 +55,16 @@ OPTIONS
 
 		$ tig -- --since=1.month
 
-log [git log options]::
+log::
 	Open log view using the given git log options.
 
-diff [git diff options]::
+diff::
 	Open diff view using the given git diff options.
 
-show [git show options]::
+show::
 	Open diff view using the given git show options.
 
-[git log options]::
+[git options]::
 	tig(1) will stop the option parsing when the first
 	command line parameter not starting with "-" is
 	encountered. All options including this one will be
