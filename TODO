@@ -2,8 +2,6 @@ TODO
 ----
 Features that should be explored.
  
- - Searching.
- 
  - Locale support.
 
  - When the user wants to "view" a commit, you could show from which branch

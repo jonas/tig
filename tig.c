@@ -30,6 +30,9 @@
 #include <unistd.h>
 #include <time.h>
 
+#include <sys/types.h>
+#include <regex.h>
+
 #include <locale.h>
 #include <langinfo.h>
 #include <iconv.h>
@@ -282,6 +285,12 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(SCROLL_PAGE_UP,	"Scroll one page up"), \
 	REQ_(SCROLL_PAGE_DOWN,	"Scroll one page down"), \
 	\
+	REQ_GROUP("Searching") \
+	REQ_(SEARCH,		"Search the view"), \
+	REQ_(SEARCH_BACK,	"Search backwards in the view"), \
+	REQ_(FIND_NEXT,		"Find next search match"), \
+	REQ_(FIND_PREV,		"Find previous search match"), \
+	\
 	REQ_GROUP("Misc") \
 	REQ_(NONE,		"Do nothing"), \
 	REQ_(PROMPT,		"Bring up the prompt"), \
@@ -372,6 +381,7 @@ static char opt_encoding[20]	= "UTF-8";
 static bool opt_utf8		= TRUE;
 static char opt_codeset[20]	= "UTF-8";
 static iconv_t opt_iconv	= ICONV_NONE;
+static char opt_search[SIZEOF_STR] = "";
 
 enum option_type {
 	OPT_NONE,
@@ -655,7 +665,6 @@ static struct keybinding default_keybindings[] = {
 	{ 'l',		REQ_VIEW_LOG },
 	{ 'p',		REQ_VIEW_PAGER },
 	{ 'h',		REQ_VIEW_HELP },
-	{ '?',		REQ_VIEW_HELP },
 
 	/* View manipulation */
 	{ 'q',		REQ_VIEW_CLOSE },
@@ -680,6 +689,12 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_DC,	REQ_SCROLL_LINE_DOWN },
 	{ 'w',		REQ_SCROLL_PAGE_UP },
 	{ 's',		REQ_SCROLL_PAGE_DOWN },
+
+	/* Searching */
+	{ '/',		REQ_SEARCH },
+	{ '?',		REQ_SEARCH_BACK },
+	{ 'n',		REQ_FIND_NEXT },
+	{ 'N',		REQ_FIND_PREV },
 
 	/* Misc */
 	{ 'Q',		REQ_QUIT },
@@ -1153,6 +1168,10 @@ struct view {
 	unsigned long offset;	/* Offset of the window top */
 	unsigned long lineno;	/* Current line number */
 
+	/* Searching */
+	char grep[SIZEOF_STR];	/* Search string */
+	regex_t regex;		/* Pre-compiled regex */
+
 	/* If non-NULL, points to the view that opened this view. If this view
 	 * is closed tig will switch back to the parent view. */
 	struct view *parent;
@@ -1177,6 +1196,8 @@ struct view_ops {
 	bool (*read)(struct view *view, char *data);
 	/* Depending on view, change display based on current line. */
 	bool (*enter)(struct view *view, struct line *line);
+	/* Search for regex in a line. */
+	bool (*grep)(struct view *view, struct line *line);
 };
 
 static struct view_ops pager_ops;
@@ -1535,6 +1556,109 @@ move_view(struct view *view, enum request request, bool redraw)
 	report("");
 }
 
+
+/*
+ * Searching
+ */
+
+static void search_view(struct view *view, enum request request, const char *search);
+
+static bool
+find_next_line(struct view *view, unsigned long lineno, struct line *line)
+{
+	if (!view->ops->grep(view, line))
+		return FALSE;
+
+	if (lineno - view->offset >= view->height) {
+		view->offset = lineno;
+		view->lineno = lineno;
+		redraw_view(view);
+
+	} else {
+		unsigned long old_lineno = view->lineno - view->offset;
+
+		view->lineno = lineno;
+
+		wmove(view->win, old_lineno, 0);
+		wclrtoeol(view->win);
+		draw_view_line(view, old_lineno);
+
+		draw_view_line(view, view->lineno - view->offset);
+		redrawwin(view->win);
+		wrefresh(view->win);
+	}
+
+	report("Line %ld matches '%s'", lineno + 1, view->grep);
+	return TRUE;
+}
+
+static void
+find_next(struct view *view, enum request request)
+{
+	unsigned long lineno = view->lineno;
+	int direction;
+
+	if (!*view->grep) {
+		if (!*opt_search)
+			report("No previous search");
+		else
+			search_view(view, request, opt_search);
+		return;
+	}
+
+	switch (request) {
+	case REQ_SEARCH:
+	case REQ_FIND_NEXT:
+		direction = 1;
+		break;
+
+	case REQ_SEARCH_BACK:
+	case REQ_FIND_PREV:
+		direction = -1;
+		break;
+
+	default:
+		return;
+	}
+
+	if (request == REQ_FIND_NEXT || request == REQ_FIND_PREV)
+		lineno += direction;
+
+	/* Note, lineno is unsigned long so will wrap around in which case it
+	 * will become bigger than view->lines. */
+	for (; lineno < view->lines; lineno += direction) {
+		struct line *line = &view->line[lineno];
+
+		if (find_next_line(view, lineno, line))
+			return;
+	}
+
+	report("No match found for '%s'", view->grep);
+}
+
+static void
+search_view(struct view *view, enum request request, const char *search)
+{
+	int regex_err;
+
+	if (*view->grep) {
+		regfree(&view->regex);
+		*view->grep = 0;
+	}
+
+	regex_err = regcomp(&view->regex, search, REG_EXTENDED);
+	if (regex_err != 0) {
+		char buf[SIZEOF_STR] = "unknown error";
+
+		regerror(regex_err, &view->regex, buf, sizeof(buf));
+		report("Search failed: %s", buf);;
+		return;
+	}
+
+	string_copy(view->grep, search);
+
+	find_next(view, request);
+}
 
 /*
  * Incremental updating
@@ -1936,6 +2060,16 @@ view_driver(struct view *view, enum request request)
 		open_view(view, opt_request, OPEN_RELOAD);
 		break;
 
+	case REQ_SEARCH:
+	case REQ_SEARCH_BACK:
+		search_view(view, request, opt_search);
+		break;
+
+	case REQ_FIND_NEXT:
+	case REQ_FIND_PREV:
+		find_next(view, request);
+		break;
+
 	case REQ_STOP_LOADING:
 		for (i = 0; i < ARRAY_SIZE(views); i++) {
 			view = &views[i];
@@ -2189,11 +2323,27 @@ pager_enter(struct view *view, struct line *line)
 	return TRUE;
 }
 
+static bool
+pager_grep(struct view *view, struct line *line)
+{
+	regmatch_t pmatch;
+	char *text = line->data;
+
+	if (!*text)
+		return FALSE;
+
+	if (regexec(&view->regex, text, 1, &pmatch, 0) == REG_NOMATCH)
+		return FALSE;
+
+	return TRUE;
+}
+
 static struct view_ops pager_ops = {
 	"line",
 	pager_draw,
 	pager_read,
 	pager_enter,
+	pager_grep,
 };
 
 
@@ -2430,11 +2580,43 @@ main_enter(struct view *view, struct line *line)
 	return TRUE;
 }
 
+static bool
+main_grep(struct view *view, struct line *line)
+{
+	struct commit *commit = line->data;
+	enum { S_TITLE, S_AUTHOR, S_DATE, S_END } state;
+	char buf[DATE_COLS + 1];
+	regmatch_t pmatch;
+
+	for (state = S_TITLE; state < S_END; state++) {
+		char *text;
+
+		switch (state) {
+		case S_TITLE:	text = commit->title;	break;
+		case S_AUTHOR:	text = commit->author;	break;
+		case S_DATE:
+			if (!strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time))
+				continue;
+			text = buf;
+			break;
+
+		default:
+			return FALSE;
+		}
+
+		if (regexec(&view->regex, text, 1, &pmatch, 0) != REG_NOMATCH)
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 static struct view_ops main_ops = {
 	"commit",
 	main_draw,
 	main_read,
 	main_enter,
+	main_grep,
 };
 
 
@@ -2686,7 +2868,7 @@ init_display(void)
 	wbkgdset(status_win, get_line_attr(LINE_STATUS));
 }
 
-static char * 
+static char *
 read_prompt(const char *prompt)
 {
 	enum { READING, STOP, CANCEL } status = READING;
@@ -3017,6 +3199,19 @@ main(int argc, char *argv[])
 			}
 
 			request = REQ_NONE;
+			break;
+		}
+		case REQ_SEARCH:
+		case REQ_SEARCH_BACK:
+		{
+			const char *prompt = request == REQ_SEARCH
+					   ? "/" : "?";
+			char *search = read_prompt(prompt);
+
+			if (search)
+				string_copy(opt_search, search);
+			else
+				request = REQ_NONE;
 			break;
 		}
 		case REQ_SCREEN_RESIZE:
