@@ -3416,7 +3416,7 @@ main(int argc, char *argv[])
 
 	if (*opt_codeset && strcmp(opt_codeset, opt_encoding)) {
 		opt_iconv = iconv_open(opt_codeset, opt_encoding);
-		if (opt_iconv == (iconv_t) -1)
+		if (opt_iconv == ICONV_NONE)
 			die("Failed to initialize character set conversion");
 	}
 
