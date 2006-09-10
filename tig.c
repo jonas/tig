@@ -145,7 +145,7 @@ set_from_int_map(struct int_map *map, size_t map_size,
  */
 
 static inline void
-string_ncopy(char *dst, const char *src, int dstlen)
+string_ncopy(char *dst, const char *src, size_t dstlen)
 {
 	strncpy(dst, src, dstlen - 1);
 	dst[dstlen - 1] = 0;
@@ -172,10 +172,10 @@ chomp_string(char *name)
 }
 
 static bool
-string_nformat(char *buf, size_t bufsize, int *bufpos, const char *fmt, ...)
+string_nformat(char *buf, size_t bufsize, size_t *bufpos, const char *fmt, ...)
 {
 	va_list args;
-	int pos = bufpos ? *bufpos : 0;
+	size_t pos = bufpos ? *bufpos : 0;
 
 	va_start(args, fmt);
 	pos += vsnprintf(buf + pos, bufsize - pos, fmt, args);
@@ -847,7 +847,7 @@ get_key(enum request request)
 {
 	static char buf[BUFSIZ];
 	static char key_char[] = "'X'";
-	int pos = 0;
+	size_t pos = 0;
 	char *sep = "    ";
 	int i;
 
@@ -2270,7 +2270,7 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 }
 
 static bool
-add_describe_ref(char *buf, int *bufpos, char *commit_id, const char *sep)
+add_describe_ref(char *buf, size_t *bufpos, char *commit_id, const char *sep)
 {
 	char refbuf[SIZEOF_STR];
 	char *ref = NULL;
@@ -2303,7 +2303,7 @@ add_pager_refs(struct view *view, struct line *line)
 	char buf[SIZEOF_STR];
 	char *commit_id = line->data + STRING_SIZE("commit ");
 	struct ref **refs;
-	int bufpos = 0, refpos = 0;
+	size_t bufpos = 0, refpos = 0;
 	const char *sep = "Refs: ";
 	bool is_tag = FALSE;
 
@@ -2543,7 +2543,7 @@ tree_enter(struct view *view, struct line *line)
 			dirsep[0] = 0;
 
 		} else {
-			int pathlen = strlen(opt_path);
+			size_t pathlen = strlen(opt_path);
 			char *basename = data + SIZEOF_TREE_ATTR;
 
 			string_format_from(opt_path, &pathlen, "%s/", basename);
