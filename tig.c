@@ -1152,7 +1152,7 @@ struct view_ops;
 static struct view *display[2];
 static unsigned int current_view;
 
-#define foreach_view(view, i) \
+#define foreach_displayed_view(view, i) \
 	for (i = 0; i < ARRAY_SIZE(display) && (view = display[i]); i++)
 
 #define displayed_views()	(display[1] != NULL ? 2 : 1)
@@ -1342,7 +1342,7 @@ resize_display(void)
 
 	offset = 0;
 
-	foreach_view (view, i) {
+	foreach_displayed_view (view, i) {
 		if (!view->win) {
 			view->win = newwin(view->height, 0, offset, 0);
 			if (!view->win)
@@ -1370,7 +1370,7 @@ redraw_display(void)
 	struct view *view;
 	int i;
 
-	foreach_view (view, i) {
+	foreach_displayed_view (view, i) {
 		redraw_view(view);
 		update_view_title(view);
 	}
@@ -3125,7 +3125,7 @@ read_prompt(const char *prompt)
 		struct view *view;
 		int i, key;
 
-		foreach_view (view, i)
+		foreach_displayed_view (view, i)
 			update_view(view);
 
 		report("%s%.*s", prompt, pos, buf);
@@ -3420,7 +3420,7 @@ main(int argc, char *argv[])
 		int key;
 		int i;
 
-		foreach_view (view, i)
+		foreach_displayed_view (view, i)
 			update_view(view);
 
 		/* Refresh, accept single keystroke of input */
