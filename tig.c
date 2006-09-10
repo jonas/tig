@@ -1684,7 +1684,7 @@ search_view(struct view *view, enum request request, const char *search)
 		char buf[SIZEOF_STR] = "unknown error";
 
 		regerror(regex_err, &view->regex, buf, sizeof(buf));
-		report("Search failed: %s", buf);;
+		report("Search failed: %s", buf);
 		return;
 	}
 
