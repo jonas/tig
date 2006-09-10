@@ -93,6 +93,17 @@ TIG_MAIN_CMD::
 	the option: `--pretty=raw` since the main view parser expects to
 	read that format.
 
+Tree commands
+~~~~~~~~~~~~~
+TIG_TREE_CMD::
+    The command used for the tree view. By default, git-ls-tree(1) is
+    used. The commands should expect first the commit ID and second
+    a path.
+                                                                    
+TIG_BLOB_CMD::
+    The command used for the blob view. By default, git-cat-file(1) is
+    used. The command gets the blob ID.
+
 FILES
 -----
 '~/.tigrc'::

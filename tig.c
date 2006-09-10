@@ -91,6 +91,12 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define TIG_MAIN_CMD \
 	"git log --topo-order --pretty=raw %s 2>/dev/null"
 
+#define TIG_TREE_CMD	\
+	"git ls-tree %s %s"
+
+#define TIG_BLOB_CMD	\
+	"git cat-file blob %s"
+
 /* XXX: Needs to be defined to the empty string. */
 #define TIG_HELP_CMD	""
 #define TIG_PAGER_CMD	""
@@ -260,6 +266,8 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(VIEW_MAIN,		"Show main view"), \
 	REQ_(VIEW_DIFF,		"Show diff view"), \
 	REQ_(VIEW_LOG,		"Show log view"), \
+	REQ_(VIEW_TREE,		"Show tree view"), \
+	REQ_(VIEW_BLOB,		"Show blob view"), \
 	REQ_(VIEW_HELP,		"Show help page"), \
 	REQ_(VIEW_PAGER,	"Show pager view"), \
 	\
@@ -376,6 +384,7 @@ static int opt_num_interval		= NUMBER_INTERVAL;
 static int opt_tab_size			= TABSIZE;
 static enum request opt_request		= REQ_VIEW_MAIN;
 static char opt_cmd[SIZEOF_STR]		= "";
+static char opt_path[SIZEOF_STR]	= "";
 static FILE *opt_pipe			= NULL;
 static char opt_encoding[20]		= "UTF-8";
 static bool opt_utf8			= TRUE;
@@ -561,6 +570,8 @@ LINE(MAIN_COMMIT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(MAIN_DELIM,   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
+LINE(TREE_DIR,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
+LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL)
 
 enum line_type {
 #define LINE(type, line, fg, bg, attr) \
@@ -663,6 +674,8 @@ static struct keybinding default_keybindings[] = {
 	{ 'm',		REQ_VIEW_MAIN },
 	{ 'd',		REQ_VIEW_DIFF },
 	{ 'l',		REQ_VIEW_LOG },
+	{ 't',		REQ_VIEW_TREE },
+	{ 'b',		REQ_VIEW_BLOB },
 	{ 'p',		REQ_VIEW_PAGER },
 	{ 'h',		REQ_VIEW_HELP },
 
@@ -717,6 +730,8 @@ static struct keybinding default_keybindings[] = {
 	KEYMAP_(MAIN), \
 	KEYMAP_(DIFF), \
 	KEYMAP_(LOG), \
+	KEYMAP_(TREE), \
+	KEYMAP_(BLOB), \
 	KEYMAP_(PAGER), \
 	KEYMAP_(HELP) \
 
@@ -1143,6 +1158,7 @@ static unsigned int current_view;
 #define displayed_views()	(display[1] != NULL ? 2 : 1)
 
 /* Current head and commit ID */
+static char ref_blob[SIZEOF_REF]	= "";
 static char ref_commit[SIZEOF_REF]	= "HEAD";
 static char ref_head[SIZEOF_REF]	= "HEAD";
 
@@ -1150,7 +1166,7 @@ struct view {
 	const char *name;	/* View name */
 	const char *cmd_fmt;	/* Default command line format */
 	const char *cmd_env;	/* Command line set via environment */
-	const char *id;		/* Points to either of ref_{head,commit} */
+	const char *id;		/* Points to either of ref_{head,commit,blob} */
 
 	struct view_ops *ops;	/* View operations */
 
@@ -1202,6 +1218,8 @@ struct view_ops {
 
 static struct view_ops pager_ops;
 static struct view_ops main_ops;
+static struct view_ops tree_ops;
+static struct view_ops blob_ops;
 
 #define VIEW_STR(name, cmd, env, ref, ops, map) \
 	{ name, cmd, #env, ref, ops, map}
@@ -1214,6 +1232,8 @@ static struct view views[] = {
 	VIEW_(MAIN,  "main",  &main_ops,  ref_head),
 	VIEW_(DIFF,  "diff",  &pager_ops, ref_commit),
 	VIEW_(LOG,   "log",   &pager_ops, ref_head),
+	VIEW_(TREE,  "tree",  &tree_ops,  ref_commit),
+	VIEW_(BLOB,  "blob",  &blob_ops,  ref_blob),
 	VIEW_(HELP,  "help",  &pager_ops, "static"),
 	VIEW_(PAGER, "pager", &pager_ops, "static"),
 };
@@ -1691,6 +1711,17 @@ begin_update(struct view *view)
 		/* When running random commands, the view ref could have become
 		 * invalid so clear it. */
 		view->ref[0] = 0;
+
+	} else if (view == VIEW(REQ_VIEW_TREE)) {
+		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
+
+		if (strcmp(view->vid, view->id))
+			opt_path[0] = 0;
+
+		if (snprintf(view->cmd, sizeof(view->cmd), format, id, opt_path)
+		    >= sizeof(view->cmd))
+			return FALSE;
+
 	} else {
 		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
 
@@ -1810,7 +1841,12 @@ update_view(struct view *view)
 		}
 	}
 
-	if (redraw_from >= 0) {
+	if (view == VIEW(REQ_VIEW_TREE)) {
+		/* Clear the view and redraw everything since the tree sorting
+		 * might have rearranged things. */
+		redraw_view(view);
+
+	} else if (redraw_from >= 0) {
 		/* If this is an incremental update, redraw the previous line
 		 * since for commits some members could have changed when
 		 * loading the main view. */
@@ -1996,9 +2032,16 @@ view_driver(struct view *view, enum request request)
 		scroll_view(view, request);
 		break;
 
+	case REQ_VIEW_BLOB:
+		if (!ref_blob[0]) {
+			report("No file chosen, press 't' to open tree view");
+			break;
+		}
+		/* Fall-through */
 	case REQ_VIEW_MAIN:
 	case REQ_VIEW_DIFF:
 	case REQ_VIEW_LOG:
+	case REQ_VIEW_TREE:
 	case REQ_VIEW_HELP:
 	case REQ_VIEW_PAGER:
 		open_view(view, request, OPEN_DEFAULT);
@@ -2008,8 +2051,10 @@ view_driver(struct view *view, enum request request)
 	case REQ_PREVIOUS:
 		request = request == REQ_NEXT ? REQ_MOVE_DOWN : REQ_MOVE_UP;
 
-		if (view == VIEW(REQ_VIEW_DIFF) &&
-		    view->parent == VIEW(REQ_VIEW_MAIN)) {
+		if ((view == VIEW(REQ_VIEW_DIFF) &&
+		     view->parent == VIEW(REQ_VIEW_MAIN)) ||
+		   (view == VIEW(REQ_VIEW_BLOB) &&
+		     view->parent == VIEW(REQ_VIEW_TREE))) {
 			bool redraw = display[1] == view;
 
 			view = view->parent;
@@ -2140,6 +2185,11 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 		if (type == LINE_COMMIT) {
 			string_copy(view->ref, text + 7);
 			string_copy(ref_commit, view->ref);
+
+		} else if (type == LINE_TREE_DIR || type == LINE_TREE_FILE) {
+			strncpy(view->ref, text + STRING_SIZE("100644 blob "), 41);
+			view->ref[40] = 0;
+			string_copy(ref_blob, view->ref);
 		}
 
 		type = LINE_CURSOR;
@@ -2342,6 +2392,202 @@ static struct view_ops pager_ops = {
 	"line",
 	pager_draw,
 	pager_read,
+	pager_enter,
+	pager_grep,
+};
+
+
+/*
+ * Tree backend
+ */
+
+/* Parse output from git ls-tree:
+ *
+ * 100644 blob fb0e31ea6cc679b7379631188190e975f5789c26	Makefile
+ * 100644 blob 5304ca4260aaddaee6498f9630e7d471b8591ea6	README
+ * 100644 blob f931e1d229c3e185caad4449bf5b66ed72462657	tig.c
+ * 100644 blob ed09fe897f3c7c9af90bcf80cae92558ea88ae38	web.conf
+ */
+
+#define SIZEOF_TREE_ATTR \
+	STRING_SIZE("100644 blob ed09fe897f3c7c9af90bcf80cae92558ea88ae38\t")
+
+#define TREE_UP_FORMAT "040000 tree %s\t.."
+
+static int
+tree_compare_entry(enum line_type type1, char *name1,
+		   enum line_type type2, char *name2)
+{
+	if (type1 != type2) {
+		if (type1 == LINE_TREE_DIR)
+			return -1;
+		return 1;
+	}
+
+	return strcmp(name1, name2);
+}
+
+static bool
+tree_read(struct view *view, char *text)
+{
+	size_t textlen = strlen(text);
+	char buf[SIZEOF_STR];
+	unsigned long pos;
+	enum line_type type;
+
+	if (textlen <= SIZEOF_TREE_ATTR)
+		return FALSE;
+
+	type = text[STRING_SIZE("100644 ")] == 't'
+	     ? LINE_TREE_DIR : LINE_TREE_FILE;
+
+	/* The first time around ... */
+	if (!view->lines) {
+		/* Add path info line */
+		if (snprintf(buf, sizeof(buf), "Directory path /%s", opt_path) < sizeof(buf) &&
+		    realloc_lines(view, view->line_size + 1) &&
+		    pager_read(view, buf))
+			view->line[view->lines - 1].type = LINE_DEFAULT;
+		else
+			return FALSE;
+
+		/* Insert "link" to parent directory. */
+		if (*opt_path &&
+		    snprintf(buf, sizeof(buf), TREE_UP_FORMAT, view->ref) < sizeof(buf) &&
+		    realloc_lines(view, view->line_size + 1) &&
+		    pager_read(view, buf))
+			view->line[view->lines - 1].type = LINE_TREE_DIR;
+		else if (*opt_path)
+			return FALSE;
+	}
+
+	/* Strip the path part ... */
+	if (*opt_path) {
+		size_t pathlen = textlen - SIZEOF_TREE_ATTR;
+		size_t striplen = strlen(opt_path);
+		char *path = text + SIZEOF_TREE_ATTR;
+
+		if (pathlen > striplen)
+			memmove(path, path + striplen,
+				pathlen - striplen + 1);
+	}
+
+	/* Skip "Directory ..." and ".." line. */
+	for (pos = 1 + !!*opt_path; pos < view->lines; pos++) {
+		struct line *line = &view->line[pos];
+		char *path1 = ((char *) line->data) + SIZEOF_TREE_ATTR;
+		char *path2 = text + SIZEOF_TREE_ATTR;
+		int cmp = tree_compare_entry(line->type, path1, type, path2);
+
+		if (cmp <= 0)
+			continue;
+
+		text = strdup(text);
+		if (!text)
+			return FALSE;
+
+		if (view->lines > pos)
+			memmove(&view->line[pos + 1], &view->line[pos],
+				(view->lines - pos) * sizeof(*line));
+
+		line = &view->line[pos];
+		line->data = text;
+		line->type = type;
+		view->lines++;
+		return TRUE;
+	}
+
+	if (!pager_read(view, text))
+		return FALSE;
+
+	view->line[view->lines - 1].type = type;
+	return TRUE;
+}
+
+static bool
+tree_enter(struct view *view, struct line *line)
+{
+	enum open_flags flags = OPEN_DEFAULT;
+	char *data = line->data;
+	enum request request;
+
+	switch (line->type) {
+	case LINE_TREE_DIR:
+		/* Depending on whether it is a subdir or parent (updir?) link
+		 * mangle the path buffer. */
+		if (line == &view->line[1] && *opt_path) {
+			size_t path_len = strlen(opt_path);
+			char *dirsep = opt_path + path_len - 1;
+
+			while (dirsep > opt_path && dirsep[-1] != '/')
+				dirsep--;
+
+			dirsep[0] = 0;
+
+		} else {
+			int pathlen = strlen(opt_path);
+			char *basename = data + SIZEOF_TREE_ATTR;
+
+			string_format_from(opt_path, &pathlen, "%s/", basename);
+		}
+
+		/* Trees and subtrees share the same ID, so they are not not
+		 * unique like blobs. */
+		flags |= OPEN_RELOAD;
+		request = REQ_VIEW_TREE;
+		break;
+
+	case LINE_TREE_FILE:
+		/* This causes the blob view to become split, and not having it
+		 * in the tree dir case will make the blob view automatically
+		 * disappear when moving to a different directory. */
+		flags |= OPEN_SPLIT;
+		request = REQ_VIEW_BLOB;
+		break;
+
+	default:
+		return TRUE;
+	}
+
+	open_view(view, request, flags);
+
+	if (!VIEW(request)->pipe)
+		return TRUE;
+
+	/* For tree views insert the path to the parent as the first line. */
+	if (request == REQ_VIEW_BLOB) {
+		/* Mirror what is showed in the title bar. */
+		string_ncopy(ref_blob, data + STRING_SIZE("100644 blob "), 40);
+		string_copy(VIEW(REQ_VIEW_BLOB)->ref, ref_blob);
+		return TRUE;
+	}
+
+	return TRUE;
+}
+
+static struct view_ops tree_ops = {
+	"file",
+	pager_draw,
+	tree_read,
+	tree_enter,
+	pager_grep,
+};
+
+static bool
+blob_read(struct view *view, char *line)
+{
+	bool state = pager_read(view, line);
+
+	if (state == TRUE)
+		view->line[view->lines - 1].type = LINE_DEFAULT;
+
+	return state;
+}
+
+static struct view_ops blob_ops = {
+	"line",
+	pager_draw,
+	blob_read,
 	pager_enter,
 	pager_grep,
 };
