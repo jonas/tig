@@ -296,7 +296,7 @@ z	Stop all background loading. This can be useful if you use \
 	tig in a repository with a long history without limiting \
 	the revision log.
 v	Show version.
-n	Toggle line numbers on/off.
+'.'	Toggle line numbers on/off.
 g	Toggle revision graph visualization on/off.
 ':'	Open prompt. This allows you to specify what git command \
 	to run. Example `:log -p`

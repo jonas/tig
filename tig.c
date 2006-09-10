@@ -714,7 +714,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'z',		REQ_STOP_LOADING },
 	{ 'v',		REQ_SHOW_VERSION },
 	{ 'r',		REQ_SCREEN_REDRAW },
-	{ 'n',		REQ_TOGGLE_LINENO },
+	{ '.',		REQ_TOGGLE_LINENO },
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
 	{ ':',		REQ_PROMPT },
 
