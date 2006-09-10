@@ -2452,6 +2452,7 @@ tree_read(struct view *view, char *text)
 	char buf[SIZEOF_STR];
 	unsigned long pos;
 	enum line_type type;
+	bool first_read = view->lines == 0;
 
 	if (textlen <= SIZEOF_TREE_ATTR)
 		return FALSE;
@@ -2459,8 +2460,7 @@ tree_read(struct view *view, char *text)
 	type = text[STRING_SIZE("100644 ")] == 't'
 	     ? LINE_TREE_DIR : LINE_TREE_FILE;
 
-	/* The first time around ... */
-	if (!view->lines) {
+	if (first_read) {
 		/* Add path info line */
 		if (snprintf(buf, sizeof(buf), "Directory path /%s", opt_path) < sizeof(buf) &&
 		    realloc_lines(view, view->line_size + 1) &&
@@ -2517,6 +2517,10 @@ tree_read(struct view *view, char *text)
 
 	if (!pager_read(view, text))
 		return FALSE;
+
+	/* Move the current line to the first tree entry. */
+	if (first_read)
+		view->lineno++;
 
 	view->line[view->lines - 1].type = type;
 	return TRUE;
