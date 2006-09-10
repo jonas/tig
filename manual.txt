@@ -173,6 +173,15 @@ The diff view::
 	has changed since the last commit, or the commit diff complete
 	with log message, diffstat and diff.
 
+The tree view::
+	Lists directory trees associated with the current revision allowing
+	subdirectories to be descended or ascended and file blobs to be
+	viewed.
+
+The blob view::
+	Displays the file content or "blob" of data associated with a file
+	name.
+
 The pager view::
 	Is used for displaying both input from stdin and output from git
 	commands entered in the internal prompt.
@@ -215,6 +224,8 @@ m	Switch to main view.
 d	Switch to diff view.
 l	Switch to log view.
 p	Switch to pager view.
+t	Switch to (directory) tree view.
+b	Switch to (file) blob view.
 h	Show man page.
 -----------------------------------------------------------------------------
 
