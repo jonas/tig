@@ -1240,10 +1240,17 @@ static struct view views[] = {
 
 #define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
 
+#define foreach_view(view, i) \
+	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
+
+#define view_is_displayed(view) \
+	(view == display[0] || view == display[1])
 
 static bool
 draw_view_line(struct view *view, unsigned int lineno)
 {
+	assert(view_is_displayed(view));
+
 	if (view->offset + lineno >= view->lines)
 		return FALSE;
 
@@ -1275,6 +1282,8 @@ redraw_view(struct view *view)
 static void
 update_view_title(struct view *view)
 {
+	assert(view_is_displayed(view));
+
 	if (view == display[current_view])
 		wbkgdset(view->title, get_line_attr(LINE_TITLE_FOCUS));
 	else
@@ -1399,6 +1408,8 @@ update_display_cursor(void)
 static void
 do_scroll_view(struct view *view, int lines, bool redraw)
 {
+	assert(view_is_displayed(view));
+
 	/* The rendering expects the new offset. */
 	view->offset += lines;
 
@@ -1586,6 +1597,8 @@ static void search_view(struct view *view, enum request request, const char *sea
 static bool
 find_next_line(struct view *view, unsigned long lineno, struct line *line)
 {
+	assert(view_is_displayed(view));
+
 	if (!view->ops->grep(view, line))
 		return FALSE;
 
@@ -1795,6 +1808,7 @@ update_view(struct view *view)
 	if (view->offset + view->height >= view->lines)
 		redraw_from = view->lines - view->offset;
 
+	/* FIXME: This is probably not perfect for backgrounded views. */
 	if (!realloc_lines(view, view->lines + lines))
 		goto alloc_error;
 
@@ -1841,6 +1855,9 @@ update_view(struct view *view)
 		}
 	}
 
+	if (!view_is_displayed(view))
+		goto check_pipe;
+
 	if (view == VIEW(REQ_VIEW_TREE)) {
 		/* Clear the view and redraw everything since the tree sorting
 		 * might have rearranged things. */
@@ -1861,6 +1878,7 @@ update_view(struct view *view)
 	 * commit reference in view->ref it'll be available here. */
 	update_view_title(view);
 
+check_pipe:
 	if (ferror(view->pipe)) {
 		report("Failed to read: %s", strerror(errno));
 		goto end;
@@ -3125,7 +3143,7 @@ read_prompt(const char *prompt)
 		struct view *view;
 		int i, key;
 
-		foreach_displayed_view (view, i)
+		foreach_view (view, i)
 			update_view(view);
 
 		report("%s%.*s", prompt, pos, buf);
@@ -3420,7 +3438,7 @@ main(int argc, char *argv[])
 		int key;
 		int i;
 
-		foreach_displayed_view (view, i)
+		foreach_view (view, i)
 			update_view(view);
 
 		/* Refresh, accept single keystroke of input */
