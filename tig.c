@@ -1220,6 +1220,8 @@ struct view_ops {
 	bool (*enter)(struct view *view, struct line *line);
 	/* Search for regex in a line. */
 	bool (*grep)(struct view *view, struct line *line);
+	/* Select line */
+	void (*select)(struct view *view, struct line *line);
 };
 
 static struct view_ops pager_ops;
@@ -1255,12 +1257,19 @@ static struct view views[] = {
 static bool
 draw_view_line(struct view *view, unsigned int lineno)
 {
+	struct line *line;
+
 	assert(view_is_displayed(view));
 
 	if (view->offset + lineno >= view->lines)
 		return FALSE;
 
-	return view->ops->draw(view, &view->line[view->offset + lineno], lineno);
+	line = &view->line[view->offset + lineno];
+
+	if (view->offset + lineno == view->lineno)
+		view->ops->select(view, line);
+
+	return view->ops->draw(view, line, lineno);
 }
 
 static void
@@ -2209,15 +2218,6 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 	wmove(view->win, lineno, 0);
 
 	if (view->offset + lineno == view->lineno) {
-		if (type == LINE_COMMIT) {
-			string_copy(view->ref, text + 7);
-			string_copy(ref_commit, view->ref);
-
-		} else if (type == LINE_TREE_DIR || type == LINE_TREE_FILE) {
-			string_ncopy(view->ref, text + STRING_SIZE("100644 blob "), 40);
-			string_copy(ref_blob, view->ref);
-		}
-
 		type = LINE_CURSOR;
 		wchgat(view->win, -1, 0, type, NULL);
 	}
@@ -2418,12 +2418,24 @@ pager_grep(struct view *view, struct line *line)
 	return TRUE;
 }
 
+static void
+pager_select(struct view *view, struct line *line)
+{
+	if (line->type == LINE_COMMIT) {
+		char *text = line->data;
+
+		string_copy(view->ref, text + 7);
+		string_copy(ref_commit, view->ref);
+	}
+}
+
 static struct view_ops pager_ops = {
 	"line",
 	pager_draw,
 	pager_read,
 	pager_enter,
 	pager_grep,
+	pager_select,
 };
 
 
@@ -2603,12 +2615,24 @@ tree_enter(struct view *view, struct line *line)
 	return TRUE;
 }
 
+static void
+tree_select(struct view *view, struct line *line)
+{
+	if (line->type == LINE_TREE_DIR || line->type == LINE_TREE_FILE) {
+		char *text = line->data;
+
+		string_ncopy(view->ref, text + STRING_SIZE("100644 blob "), 40);
+		string_copy(ref_blob, view->ref);
+	}
+}
+
 static struct view_ops tree_ops = {
 	"file",
 	pager_draw,
 	tree_read,
 	tree_enter,
 	pager_grep,
+	tree_select,
 };
 
 static bool
@@ -2628,6 +2652,7 @@ static struct view_ops blob_ops = {
 	blob_read,
 	pager_enter,
 	pager_grep,
+	pager_select,
 };
 
 
@@ -2662,8 +2687,6 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	wmove(view->win, lineno, col);
 
 	if (view->offset + lineno == view->lineno) {
-		string_copy(view->ref, commit->id);
-		string_copy(ref_commit, view->ref);
 		type = LINE_CURSOR;
 		wattrset(view->win, get_line_attr(type));
 		wchgat(view->win, -1, 0, type, NULL);
@@ -2895,12 +2918,22 @@ main_grep(struct view *view, struct line *line)
 	return FALSE;
 }
 
+static void
+main_select(struct view *view, struct line *line)
+{
+	struct commit *commit = line->data;
+
+	string_copy(view->ref, commit->id);
+	string_copy(ref_commit, view->ref);
+}
+
 static struct view_ops main_ops = {
 	"commit",
 	main_draw,
 	main_read,
 	main_enter,
 	main_grep,
+	main_select,
 };
 
 
