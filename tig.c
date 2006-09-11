@@ -1434,6 +1434,8 @@ update_display_cursor(void)
 static void
 do_scroll_view(struct view *view, int lines, bool redraw)
 {
+	bool redraw_current_line = FALSE;
+
 	assert(view_is_displayed(view));
 
 	/* The rendering expects the new offset. */
@@ -1441,6 +1443,17 @@ do_scroll_view(struct view *view, int lines, bool redraw)
 
 	assert(0 <= view->offset && view->offset < view->lines);
 	assert(lines);
+
+	/* Move current line into the view. */
+	if (view->lineno < view->offset) {
+		view->lineno = view->offset;
+		redraw_current_line = TRUE;
+	} else if (view->lineno >= view->offset + view->height) {
+		view->lineno = view->offset + view->height - 1;
+		redraw_current_line = TRUE;
+	}
+
+	assert(view->offset <= view->lineno && view->lineno < view->lines);
 
 	/* Redraw the whole screen if scrolling is pointless. */
 	if (view->height < ABS(lines)) {
@@ -1456,19 +1469,10 @@ do_scroll_view(struct view *view, int lines, bool redraw)
 			if (!draw_view_line(view, line))
 				break;
 		}
+
+		if (redraw_current_line)
+			draw_view_line(view, view->lineno - view->offset);
 	}
-
-	/* Move current line into the view. */
-	if (view->lineno < view->offset) {
-		view->lineno = view->offset;
-		draw_view_line(view, 0);
-
-	} else if (view->lineno >= view->offset + view->height) {
-		view->lineno = view->offset + view->height - 1;
-		draw_view_line(view, view->lineno - view->offset);
-	}
-
-	assert(view->offset <= view->lineno && view->lineno < view->lines);
 
 	if (!redraw)
 		return;
