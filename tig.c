@@ -2557,7 +2557,7 @@ tree_read(struct view *view, char *text)
 static bool
 tree_enter(struct view *view, struct line *line)
 {
-	enum open_flags flags = OPEN_DEFAULT;
+	enum open_flags flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
 	char *data = line->data;
 	enum request request;
 
@@ -2592,10 +2592,6 @@ tree_enter(struct view *view, struct line *line)
 		break;
 
 	case LINE_TREE_FILE:
-		/* This causes the blob view to become split, and not having it
-		 * in the tree dir case will make the blob view automatically
-		 * disappear when moving to a different directory. */
-		flags |= OPEN_SPLIT;
 		request = REQ_VIEW_BLOB;
 		break;
 
