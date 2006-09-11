@@ -2563,7 +2563,7 @@ tree_enter(struct view *view, struct line *line)
 			size_t origlen = pathlen;
 			char *basename = data + SIZEOF_TREE_ATTR;
 
-			if (string_format_from(opt_path, &pathlen, "%s/", basename)) {
+			if (!string_format_from(opt_path, &pathlen, "%s/", basename)) {
 				opt_path[origlen] = 0;
 				return TRUE;
 			}
