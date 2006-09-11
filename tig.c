@@ -1432,11 +1432,9 @@ update_display_cursor(void)
 
 /* Scrolling backend */
 static void
-do_scroll_view(struct view *view, int lines, bool redraw)
+do_scroll_view(struct view *view, int lines)
 {
 	bool redraw_current_line = FALSE;
-
-	assert(view_is_displayed(view));
 
 	/* The rendering expects the new offset. */
 	view->offset += lines;
@@ -1474,9 +1472,6 @@ do_scroll_view(struct view *view, int lines, bool redraw)
 			draw_view_line(view, view->lineno - view->offset);
 	}
 
-	if (!redraw)
-		return;
-
 	redrawwin(view->win);
 	wrefresh(view->win);
 	report("");
@@ -1487,6 +1482,8 @@ static void
 scroll_view(struct view *view, enum request request)
 {
 	int lines = 1;
+
+	assert(view_is_displayed(view));
 
 	switch (request) {
 	case REQ_SCROLL_PAGE_DOWN:
@@ -1519,7 +1516,7 @@ scroll_view(struct view *view, enum request request)
 		die("request %d not handled in switch", request);
 	}
 
-	do_scroll_view(view, lines, TRUE);
+	do_scroll_view(view, lines);
 }
 
 /* Cursor moving */
@@ -1591,7 +1588,7 @@ move_view(struct view *view, enum request request, bool redraw)
 			}
 		}
 
-		do_scroll_view(view, steps, redraw);
+		do_scroll_view(view, steps);
 		return;
 	}
 
@@ -2014,7 +2011,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 
 		/* Scroll the view that was split if the current line is
 		 * outside the new limited view. */
-		do_scroll_view(prev, lines, TRUE);
+		do_scroll_view(prev, lines);
 	}
 
 	if (prev && view != prev) {
