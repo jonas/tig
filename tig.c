@@ -1192,7 +1192,7 @@ struct view {
 
 	/* Searching */
 	char grep[SIZEOF_STR];	/* Search string */
-	regex_t regex;		/* Pre-compiled regex */
+	regex_t *regex;		/* Pre-compiled regex */
 
 	/* If non-NULL, points to the view that opened this view. If this view
 	 * is closed tig will switch back to the parent view. */
@@ -1680,16 +1680,20 @@ search_view(struct view *view, enum request request, const char *search)
 {
 	int regex_err;
 
-	if (*view->grep) {
-		regfree(&view->regex);
+	if (view->regex) {
+		regfree(view->regex);
 		*view->grep = 0;
+	} else {
+		view->regex = calloc(1, sizeof(*view->regex));
+		if (!view->regex)
+			return;
 	}
 
-	regex_err = regcomp(&view->regex, search, REG_EXTENDED);
+	regex_err = regcomp(view->regex, search, REG_EXTENDED);
 	if (regex_err != 0) {
 		char buf[SIZEOF_STR] = "unknown error";
 
-		regerror(regex_err, &view->regex, buf, sizeof(buf));
+		regerror(regex_err, view->regex, buf, sizeof(buf));
 		report("Search failed: %s", buf);
 		return;
 	}
@@ -2408,7 +2412,7 @@ pager_grep(struct view *view, struct line *line)
 	if (!*text)
 		return FALSE;
 
-	if (regexec(&view->regex, text, 1, &pmatch, 0) == REG_NOMATCH)
+	if (regexec(view->regex, text, 1, &pmatch, 0) == REG_NOMATCH)
 		return FALSE;
 
 	return TRUE;
@@ -2884,7 +2888,7 @@ main_grep(struct view *view, struct line *line)
 			return FALSE;
 		}
 
-		if (regexec(&view->regex, text, 1, &pmatch, 0) != REG_NOMATCH)
+		if (regexec(view->regex, text, 1, &pmatch, 0) != REG_NOMATCH)
 			return TRUE;
 	}
 
