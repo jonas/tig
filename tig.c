@@ -2333,9 +2333,13 @@ add_pager_refs(struct view *view, struct line *line)
 
 	if (!is_tag && view == VIEW(REQ_VIEW_DIFF)) {
 try_add_describe_ref:
+		/* Add <tag>-g<commit_id> "fake" reference. */
 		if (!add_describe_ref(buf, &bufpos, commit_id, sep))
 			return;
 	}
+
+	if (bufpos == 0)
+		return;
 
 	if (!realloc_lines(view, view->line_size + 1))
 		return;
