@@ -1521,8 +1521,9 @@ scroll_view(struct view *view, enum request request)
 
 /* Cursor moving */
 static void
-move_view(struct view *view, enum request request, bool redraw)
+move_view(struct view *view, enum request request)
 {
+	bool scroll = FALSE;
 	int steps;
 
 	switch (request) {
@@ -1569,10 +1570,6 @@ move_view(struct view *view, enum request request, bool redraw)
 	view->lineno += steps;
 	assert(0 <= view->lineno && view->lineno < view->lines);
 
-	/* Repaint the old "current" line if we be scrolling */
-	if (ABS(steps) < view->height)
-		draw_view_line(view, view->lineno - steps - view->offset);
-
 	/* Check whether the view needs to be scrolled */
 	if (view->lineno < view->offset ||
 	    view->lineno >= view->offset + view->height) {
@@ -1588,15 +1585,26 @@ move_view(struct view *view, enum request request, bool redraw)
 			}
 		}
 
+		scroll = TRUE;
+	}
+
+	if (!view_is_displayed(view)) {
+		view->offset += steps;
+		view->ops->select(view, &view->line[view->lineno]);
+		return;
+	}
+
+	/* Repaint the old "current" line if we be scrolling */
+	if (ABS(steps) < view->height)
+		draw_view_line(view, view->lineno - steps - view->offset);
+
+	if (scroll) {
 		do_scroll_view(view, steps);
 		return;
 	}
 
 	/* Draw the current line */
 	draw_view_line(view, view->lineno - view->offset);
-
-	if (!redraw)
-		return;
 
 	redrawwin(view->win);
 	wrefresh(view->win);
@@ -2056,7 +2064,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_MOVE_PAGE_DOWN:
 	case REQ_MOVE_FIRST_LINE:
 	case REQ_MOVE_LAST_LINE:
-		move_view(view, request, TRUE);
+		move_view(view, request);
 		break;
 
 	case REQ_SCROLL_LINE_DOWN:
@@ -2089,14 +2097,12 @@ view_driver(struct view *view, enum request request)
 		     view->parent == VIEW(REQ_VIEW_MAIN)) ||
 		   (view == VIEW(REQ_VIEW_BLOB) &&
 		     view->parent == VIEW(REQ_VIEW_TREE))) {
-			bool redraw = display[1] == view;
-
 			view = view->parent;
-			move_view(view, request, redraw);
-			if (redraw)
+			move_view(view, request);
+			if (view_is_displayed(view))
 				update_view_title(view);
 		} else {
-			move_view(view, request, TRUE);
+			move_view(view, request);
 			break;
 		}
 		/* Fall-through */
