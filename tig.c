@@ -1523,7 +1523,7 @@ scroll_view(struct view *view, enum request request)
 static void
 move_view(struct view *view, enum request request)
 {
-	bool scroll = FALSE;
+	int scroll_steps = 0;
 	int steps;
 
 	switch (request) {
@@ -1573,19 +1573,18 @@ move_view(struct view *view, enum request request)
 	/* Check whether the view needs to be scrolled */
 	if (view->lineno < view->offset ||
 	    view->lineno >= view->offset + view->height) {
+		scroll_steps = steps;
 		if (steps < 0 && -steps > view->offset) {
-			steps = -view->offset;
+			scroll_steps = -view->offset;
 
 		} else if (steps > 0) {
 			if (view->lineno == view->lines - 1 &&
 			    view->lines > view->height) {
-				steps = view->lines - view->offset - 1;
-				if (steps >= view->height)
-					steps -= view->height - 1;
+				scroll_steps = view->lines - view->offset - 1;
+				if (scroll_steps >= view->height)
+					scroll_steps -= view->height - 1;
 			}
 		}
-
-		scroll = TRUE;
 	}
 
 	if (!view_is_displayed(view)) {
@@ -1598,8 +1597,8 @@ move_view(struct view *view, enum request request)
 	if (ABS(steps) < view->height)
 		draw_view_line(view, view->lineno - steps - view->offset);
 
-	if (scroll) {
-		do_scroll_view(view, steps);
+	if (scroll_steps) {
+		do_scroll_view(view, scroll_steps);
 		return;
 	}
 
