@@ -145,16 +145,22 @@ set_from_int_map(struct int_map *map, size_t map_size,
  */
 
 static inline void
-string_ncopy(char *dst, const char *src, size_t dstlen)
+string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen)
 {
-	strncpy(dst, src, dstlen - 1);
-	dst[dstlen - 1] = 0;
+	if (srclen > dstlen - 1)
+		srclen = dstlen - 1;
 
+	strncpy(dst, src, srclen);
+	dst[srclen] = 0;
 }
 
-/* Shorthand for safely copying into a fixed buffer. */
+/* Shorthands for safely copying into a fixed buffer. */
+
 #define string_copy(dst, src) \
-	string_ncopy(dst, src, sizeof(dst))
+	string_ncopy_do(dst, sizeof(dst), src, sizeof(dst))
+
+#define string_ncopy(dst, src, srclen) \
+	string_ncopy_do(dst, sizeof(dst), src, srclen)
 
 static char *
 chomp_string(char *name)
@@ -2204,8 +2210,7 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 			string_copy(ref_commit, view->ref);
 
 		} else if (type == LINE_TREE_DIR || type == LINE_TREE_FILE) {
-			strncpy(view->ref, text + STRING_SIZE("100644 blob "), 41);
-			view->ref[40] = 0;
+			string_ncopy(view->ref, text + STRING_SIZE("100644 blob "), 40);
 			string_copy(ref_blob, view->ref);
 		}
 
