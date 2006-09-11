@@ -1731,8 +1731,7 @@ begin_update(struct view *view)
 		if (strcmp(view->vid, view->id))
 			opt_path[0] = 0;
 
-		if (snprintf(view->cmd, sizeof(view->cmd), format, id, opt_path)
-		    >= sizeof(view->cmd))
+		if (!string_format(view->cmd, format, id, opt_path))
 			return FALSE;
 
 	} else {
@@ -2462,7 +2461,7 @@ tree_read(struct view *view, char *text)
 
 	if (first_read) {
 		/* Add path info line */
-		if (snprintf(buf, sizeof(buf), "Directory path /%s", opt_path) < sizeof(buf) &&
+		if (string_format(buf, "Directory path /%s", opt_path) &&
 		    realloc_lines(view, view->line_size + 1) &&
 		    pager_read(view, buf))
 			view->line[view->lines - 1].type = LINE_DEFAULT;
@@ -2471,7 +2470,7 @@ tree_read(struct view *view, char *text)
 
 		/* Insert "link" to parent directory. */
 		if (*opt_path &&
-		    snprintf(buf, sizeof(buf), TREE_UP_FORMAT, view->ref) < sizeof(buf) &&
+		    string_format(buf, TREE_UP_FORMAT, view->ref) &&
 		    realloc_lines(view, view->line_size + 1) &&
 		    pager_read(view, buf))
 			view->line[view->lines - 1].type = LINE_TREE_DIR;
@@ -2548,9 +2547,13 @@ tree_enter(struct view *view, struct line *line)
 
 		} else {
 			size_t pathlen = strlen(opt_path);
+			size_t origlen = pathlen;
 			char *basename = data + SIZEOF_TREE_ATTR;
 
-			string_format_from(opt_path, &pathlen, "%s/", basename);
+			if (string_format_from(opt_path, &pathlen, "%s/", basename)) {
+				opt_path[origlen] = 0;
+				return TRUE;
+			}
 		}
 
 		/* Trees and subtrees share the same ID, so they are not not
