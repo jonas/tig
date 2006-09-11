@@ -336,9 +336,9 @@ omnipresent.
 
 Commit message::
 
-For now only `Signed-off-by` lines are colorized.
+For now only `Signed-off-by` and `Acked-by` lines are colorized.
 
-*signoff*
+*signoff*, *acked*
 
 --
 
