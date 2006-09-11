@@ -1464,12 +1464,6 @@ do_scroll_view(struct view *view, int lines, bool redraw)
 		draw_view_line(view, 0);
 
 	} else if (view->lineno >= view->offset + view->height) {
-		if (view->lineno == view->offset + view->height) {
-			/* Clear the hidden line so it doesn't show if the view
-			 * is scrolled up. */
-			wmove(view->win, view->height, 0);
-			wclrtoeol(view->win);
-		}
 		view->lineno = view->offset + view->height - 1;
 		draw_view_line(view, view->lineno - view->offset);
 	}
