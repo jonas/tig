@@ -661,6 +661,10 @@ init_colors(void)
 
 struct line {
 	enum line_type type;
+
+	/* State flags */
+	unsigned int selected:1;
+
 	void *data;		/* User data */
 };
 
@@ -1267,8 +1271,14 @@ draw_view_line(struct view *view, unsigned int lineno)
 
 	line = &view->line[view->offset + lineno];
 
-	if (selected)
+	if (selected) {
+		line->selected = TRUE;
 		view->ops->select(view, line);
+	} else if (line->selected) {
+		line->selected = FALSE;
+		wmove(view->win, lineno, 0);
+		wclrtoeol(view->win);
+	}
 
 	return view->ops->draw(view, line, lineno, selected);
 }
@@ -1565,13 +1575,8 @@ move_view(struct view *view, enum request request, bool redraw)
 	assert(0 <= view->lineno && view->lineno < view->lines);
 
 	/* Repaint the old "current" line if we be scrolling */
-	if (ABS(steps) < view->height) {
-		int prev_lineno = view->lineno - steps - view->offset;
-
-		wmove(view->win, prev_lineno, 0);
-		wclrtoeol(view->win);
-		draw_view_line(view,  prev_lineno);
-	}
+	if (ABS(steps) < view->height)
+		draw_view_line(view, view->lineno - steps - view->offset);
 
 	/* Check whether the view needs to be scrolled */
 	if (view->lineno < view->offset ||
@@ -1627,9 +1632,6 @@ find_next_line(struct view *view, unsigned long lineno, struct line *line)
 		unsigned long old_lineno = view->lineno - view->offset;
 
 		view->lineno = lineno;
-
-		wmove(view->win, old_lineno, 0);
-		wclrtoeol(view->win);
 		draw_view_line(view, old_lineno);
 
 		draw_view_line(view, view->lineno - view->offset);
