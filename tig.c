@@ -1213,7 +1213,7 @@ struct view_ops {
 	/* What type of content being displayed. Used in the title bar. */
 	const char *type;
 	/* Draw one line; @lineno must be < view->height. */
-	bool (*draw)(struct view *view, struct line *line, unsigned int lineno);
+	bool (*draw)(struct view *view, struct line *line, unsigned int lineno, bool selected);
 	/* Read one line; updates view->line. */
 	bool (*read)(struct view *view, char *data);
 	/* Depending on view, change display based on current line. */
@@ -1258,6 +1258,7 @@ static bool
 draw_view_line(struct view *view, unsigned int lineno)
 {
 	struct line *line;
+	bool selected = (view->offset + lineno == view->lineno);
 
 	assert(view_is_displayed(view));
 
@@ -1266,10 +1267,10 @@ draw_view_line(struct view *view, unsigned int lineno)
 
 	line = &view->line[view->offset + lineno];
 
-	if (view->offset + lineno == view->lineno)
+	if (selected)
 		view->ops->select(view, line);
 
-	return view->ops->draw(view, line, lineno);
+	return view->ops->draw(view, line, lineno, selected);
 }
 
 static void
@@ -2208,7 +2209,7 @@ view_driver(struct view *view, enum request request)
  */
 
 static bool
-pager_draw(struct view *view, struct line *line, unsigned int lineno)
+pager_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
 {
 	char *text = line->data;
 	enum line_type type = line->type;
@@ -2217,7 +2218,7 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 
 	wmove(view->win, lineno, 0);
 
-	if (view->offset + lineno == view->lineno) {
+	if (selected) {
 		type = LINE_CURSOR;
 		wchgat(view->win, -1, 0, type, NULL);
 	}
@@ -2424,7 +2425,7 @@ pager_select(struct view *view, struct line *line)
 	if (line->type == LINE_COMMIT) {
 		char *text = line->data;
 
-		string_copy(view->ref, text + 7);
+		string_copy(view->ref, text + STRING_SIZE("commit "));
 		string_copy(ref_commit, view->ref);
 	}
 }
@@ -2671,7 +2672,7 @@ struct commit {
 };
 
 static bool
-main_draw(struct view *view, struct line *line, unsigned int lineno)
+main_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
 {
 	char buf[DATE_COLS + 1];
 	struct commit *commit = line->data;
@@ -2686,7 +2687,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 
 	wmove(view->win, lineno, col);
 
-	if (view->offset + lineno == view->lineno) {
+	if (selected) {
 		type = LINE_CURSOR;
 		wattrset(view->win, get_line_attr(type));
 		wchgat(view->win, -1, 0, type, NULL);
