@@ -675,7 +675,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'd',		REQ_VIEW_DIFF },
 	{ 'l',		REQ_VIEW_LOG },
 	{ 't',		REQ_VIEW_TREE },
-	{ 'b',		REQ_VIEW_BLOB },
+	{ 'f',		REQ_VIEW_BLOB },
 	{ 'p',		REQ_VIEW_PAGER },
 	{ 'h',		REQ_VIEW_HELP },
 

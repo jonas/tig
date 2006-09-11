@@ -225,7 +225,7 @@ d	Switch to diff view.
 l	Switch to log view.
 p	Switch to pager view.
 t	Switch to (directory) tree view.
-b	Switch to (file) blob view.
+f	Switch to (file) blob view.
 h	Show man page.
 -----------------------------------------------------------------------------
 
