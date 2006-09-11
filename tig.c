@@ -1607,7 +1607,7 @@ move_view(struct view *view, enum request request, bool redraw)
  * Searching
  */
 
-static void search_view(struct view *view, enum request request, const char *search);
+static void search_view(struct view *view, enum request request);
 
 static bool
 find_next_line(struct view *view, unsigned long lineno, struct line *line)
@@ -1647,7 +1647,7 @@ find_next(struct view *view, enum request request)
 		if (!*opt_search)
 			report("No previous search");
 		else
-			search_view(view, request, opt_search);
+			search_view(view, request);
 		return;
 	}
 
@@ -1682,7 +1682,7 @@ find_next(struct view *view, enum request request)
 }
 
 static void
-search_view(struct view *view, enum request request, const char *search)
+search_view(struct view *view, enum request request)
 {
 	int regex_err;
 
@@ -1695,7 +1695,7 @@ search_view(struct view *view, enum request request, const char *search)
 			return;
 	}
 
-	regex_err = regcomp(view->regex, search, REG_EXTENDED);
+	regex_err = regcomp(view->regex, opt_search, REG_EXTENDED);
 	if (regex_err != 0) {
 		char buf[SIZEOF_STR] = "unknown error";
 
@@ -1704,7 +1704,7 @@ search_view(struct view *view, enum request request, const char *search)
 		return;
 	}
 
-	string_copy(view->grep, search);
+	string_copy(view->grep, opt_search);
 
 	find_next(view, request);
 }
@@ -2140,7 +2140,7 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_SEARCH:
 	case REQ_SEARCH_BACK:
-		search_view(view, request, opt_search);
+		search_view(view, request);
 		break;
 
 	case REQ_FIND_NEXT:
