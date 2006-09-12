@@ -2818,32 +2818,13 @@ push_rev_stack(struct rev_stack *stack, char *parent)
 	}
 }
 
-void
-update_rev_graph(struct commit *commit)
+static void
+draw_rev_graph(struct commit *commit, size_t stackpos,
+	       struct rev_stack *stack, struct rev_stack *parents,
+	       struct rev_stack *prev_parents)
 {
-	struct rev_stack *parents = &graph_parents[graph_stack_no & 1];
-	struct rev_stack *stack = &graph_stacks[graph_stack_no++ & 1];
-	struct rev_stack *prev_parents = &graph_parents[graph_stack_no & 1];
-	struct rev_stack *graph = &graph_stacks[graph_stack_no & 1];
 	chtype symbol, separator, line;
-	size_t stackpos = 0;
 	size_t i;
-
-	fprintf(stderr, "\n%p <%s> ", graph, commit->id);
-
-	/* First traverse all lines of revisions up to the active one. */
-	for (stackpos = 0; stackpos < stack->size; stackpos++) {
-		if (!strcmp(stack->rev[stackpos], commit->id)) {
-			break;
-		}
-
-		push_rev_stack(graph, stack->rev[stackpos]);
-	}
-
-	assert(commit->graph_size < ARRAY_SIZE(commit->graph));
-
-	for (i = 0; i < parents->size; i++)
-		push_rev_stack(graph, parents->rev[i]);
 
 	/* Place the symbol for this commit. */
 	if (parents->size == 0)
@@ -2854,12 +2835,6 @@ update_rev_graph(struct commit *commit)
 		symbol = REVGRAPH_BRANCH;
 	else
 		symbol = REVGRAPH_COMMIT;
-
-	i = stackpos + 1;
-
-	/* FIXME: Moving branches left and right when collapsing a branch. */
-	while (i < stack->size)
-		push_rev_stack(graph, stack->rev[i++]);
 
 	separator = ' ';
 	line = REVGRAPH_LINE;
@@ -2890,7 +2865,41 @@ update_rev_graph(struct commit *commit)
 			}
 		}
 	}
+}
 
+void
+update_rev_graph(struct commit *commit)
+{
+	struct rev_stack *parents = &graph_parents[graph_stack_no & 1];
+	struct rev_stack *stack = &graph_stacks[graph_stack_no++ & 1];
+	struct rev_stack *prev_parents = &graph_parents[graph_stack_no & 1];
+	struct rev_stack *graph = &graph_stacks[graph_stack_no & 1];
+	size_t stackpos = 0;
+	size_t i;
+
+	fprintf(stderr, "\n%p <%s> ", graph, commit->id);
+
+	/* First traverse all lines of revisions up to the active one. */
+	for (stackpos = 0; stackpos < stack->size; stackpos++) {
+		if (!strcmp(stack->rev[stackpos], commit->id)) {
+			break;
+		}
+
+		push_rev_stack(graph, stack->rev[stackpos]);
+	}
+
+	assert(commit->graph_size < ARRAY_SIZE(commit->graph));
+
+	for (i = 0; i < parents->size; i++)
+		push_rev_stack(graph, parents->rev[i]);
+
+	i = stackpos + 1;
+
+	/* FIXME: Moving branches left and right when collapsing a branch. */
+	while (i < stack->size)
+		push_rev_stack(graph, stack->rev[i++]);
+
+	draw_rev_graph(commit, stackpos, stack, parents, prev_parents);
 	graph_last_rev = stackpos;
 	stack->size = prev_parents->size = 0;
 }
