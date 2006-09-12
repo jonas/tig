@@ -2766,54 +2766,56 @@ get_rev_graph_symbol(struct rev_graph *graph)
 static void
 draw_rev_graph(struct rev_graph *graph)
 {
-	chtype separator, line;
+	struct rev_filler {
+		chtype separator, line;
+	};
+	enum { DEFAULT, RSHARP, RDIAG, LDIAG };
+	static struct rev_filler fillers[] = {
+		{ ' ',	REVGRAPH_LINE },
+		{ '`',	'.' },
+		{ '\'',	' ' },
+		{ '/',	' ' },
+
+	};
 	chtype symbol = get_rev_graph_symbol(graph);
+	struct rev_filler *filler;
 	size_t i;
 
-	separator = ' ';
-	line = REVGRAPH_LINE;
+	filler = &fillers[DEFAULT];
 
 	for (i = 0; i < graph->pos; i++) {
-		append_to_rev_graph(graph, line);
+		append_to_rev_graph(graph, filler->line);
 		if (graph_parent_is_merge(graph->prev) &&
-		    graph->prev->pos == i) {
-			separator = '`';
-			line = '.';
-		}
-		append_to_rev_graph(graph, separator);
+		    graph->prev->pos == i)
+			filler = &fillers[RSHARP];
+
+		append_to_rev_graph(graph, filler->separator);
 	}
 
 	/* Place the symbol for this revision. */
 	append_to_rev_graph(graph, symbol);
 
-	if (graph->prev->size > graph->size) {
-		separator = '\'';
-		line = ' ';
-	} else {
-		separator = ' ';
-		line = REVGRAPH_LINE;
-	}
+	if (graph->prev->size > graph->size)
+		filler = &fillers[RDIAG];
+	else
+		filler = &fillers[DEFAULT];
+
 	i++;
 
 	for (; i < graph->size; i++) {
-		append_to_rev_graph(graph, separator);
-		append_to_rev_graph(graph, line);
-		if (graph_parent_is_merge(graph->prev)) {
-			if (i < graph->prev->pos + graph->parents->size) {
-				separator = '`';
-				line = '.';
-			}
-		}
-		if (graph->prev->size > graph->size) {
-			separator = '/';
-			line = ' ';
-		}
+		append_to_rev_graph(graph, filler->separator);
+		append_to_rev_graph(graph, filler->line);
+		if (graph_parent_is_merge(graph->prev) &&
+		    i < graph->prev->pos + graph->parents->size)
+			filler = &fillers[RSHARP];
+		if (graph->prev->size > graph->size)
+			filler = &fillers[LDIAG];
 	}
 
 	if (graph->prev->size > graph->size) {
-		append_to_rev_graph(graph, separator);
-		if (line != ' ')
-			append_to_rev_graph(graph, line);
+		append_to_rev_graph(graph, filler->separator);
+		if (filler->line != ' ')
+			append_to_rev_graph(graph, filler->line);
 	}
 }
 
