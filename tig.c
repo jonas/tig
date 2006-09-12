@@ -2925,19 +2925,21 @@ update_rev_graph(struct rev_stack *graph)
 
 	draw_rev_graph(graph);
 
-	if (graph_parent_is_merge(graph->prev) &&
-	    graph->prev->pos < graph->prev->size - 1 &&
-	    graph->size == graph->prev->size + graph->prev->parents->size - 1) {
-		i = graph->prev->pos + graph->prev->parents->size - 1;
-		graph->prev->commit->graph_size = i * 2;
-		while (i < graph->size - 1) {
-			append_to_rev_graph(graph->prev, ' ');
-			append_to_rev_graph(graph->prev, '\\');
+	graph = graph->prev;
+
+	if (graph_parent_is_merge(graph) &&
+	    graph->pos < graph->size - 1 &&
+	    graph->next->size == graph->size + graph->parents->size - 1) {
+		i = graph->pos + graph->parents->size - 1;
+		graph->commit->graph_size = i * 2;
+		while (i < graph->next->size - 1) {
+			append_to_rev_graph(graph, ' ');
+			append_to_rev_graph(graph, '\\');
 			i++;
 		}
 	}
 
-	reset_rev_graph(graph->prev);
+	reset_rev_graph(graph);
 }
 
 /* Reads git log --pretty=raw output and parses it into the commit struct. */
