@@ -2790,25 +2790,36 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 
 
 struct rev_stack {
+	struct rev_stack *prev, *next, *parents;
 	char rev[SIZEOF_REVITEMS][SIZEOF_REV];
 	size_t size;
 	struct commit *commit;
 	size_t pos;
 };
 
-/* The current stack of revisions on the graph. */
-static struct rev_stack graph_stacks[3];
-static size_t graph_stack_no;
-
 /* Parents of the commit being visualized. */
-static struct rev_stack graph_parents[2];
+static struct rev_stack graph_parents[3];
 
-static size_t graph_last_rev;
+/* The current stack of revisions on the graph. */
+static struct rev_stack graph_stacks[3] = {
+	{ &graph_stacks[2], &graph_stacks[1], &graph_parents[0] },
+	{ &graph_stacks[0], &graph_stacks[2], &graph_parents[1] },
+	{ &graph_stacks[1], &graph_stacks[0], &graph_parents[2] },
+};
+
+static void
+reset_rev_graph(struct rev_stack *graph)
+{
+	graph->size = graph->pos = 0;
+	graph->commit = NULL;
+	memset(graph->parents, 0, sizeof(*graph->parents));
+}
 
 static inline void
 append_to_rev_graph(struct rev_stack *stack, chtype symbol)
 {
-	stack->commit->graph[stack->commit->graph_size++] = symbol;
+	if (stack->commit->graph_size < ARRAY_SIZE(stack->commit->graph) - 1)
+		stack->commit->graph[stack->commit->graph_size++] = symbol;
 }
 
 static void
@@ -2825,18 +2836,17 @@ push_rev_stack(struct rev_stack *stack, char *parent)
 }
 
 static void
-draw_rev_graph(struct rev_stack *stack, struct rev_stack *parents,
-	       struct rev_stack *prev_parents)
+draw_rev_graph(struct rev_stack *graph)
 {
 	chtype symbol, separator, line;
 	size_t i;
 
 	/* Place the symbol for this commit. */
-	if (parents->size == 0)
+	if (graph->parents->size == 0)
 		symbol = REVGRAPH_INIT;
-	else if (parents->size > 1)
+	else if (graph->parents->size > 1)
 		symbol = REVGRAPH_MERGE;
-	else if (stack->pos >= stack->size)
+	else if (graph->pos >= graph->size)
 		symbol = REVGRAPH_BRANCH;
 	else
 		symbol = REVGRAPH_COMMIT;
@@ -2844,73 +2854,89 @@ draw_rev_graph(struct rev_stack *stack, struct rev_stack *parents,
 	separator = ' ';
 	line = REVGRAPH_LINE;
 
-	for (i = 0; i < stack->pos; i++) {
-		append_to_rev_graph(stack, line);
-		if (prev_parents->size > 1 &&
-		    i == graph_last_rev) {
+	for (i = 0; i < graph->pos; i++) {
+		append_to_rev_graph(graph, line);
+		if (graph->prev->parents->size > 1 &&
+		    graph->prev->pos == i) {
 			separator = '`';
 			line = '.';
 		}
-		append_to_rev_graph(stack, separator);
+		append_to_rev_graph(graph, separator);
 	}
 
-	append_to_rev_graph(stack, symbol);
+	append_to_rev_graph(graph, symbol);
 
-	separator = ' ';
-	line = REVGRAPH_LINE;
+	if (graph->prev->size > graph->size) {
+		separator = '\'';
+		line = ' ';
+	} else {
+		separator = ' ';
+		line = REVGRAPH_LINE;
+	}
 	i++;
 
-	for (; i < stack->size; i++) {
-		append_to_rev_graph(stack, separator);
-		append_to_rev_graph(stack, line);
-		if (prev_parents->size > 1) {
-			if (i < graph_last_rev + prev_parents->size) {
+	for (; i < graph->size; i++) {
+		append_to_rev_graph(graph, separator);
+		append_to_rev_graph(graph, line);
+		if (graph->prev->parents->size > 1) {
+			if (i < graph->prev->pos + graph->parents->size) {
 				separator = '`';
 				line = '.';
 			}
 		}
+		if (graph->prev->size > graph->size) {
+			separator = '/';
+			line = ' ';
+		}
+	}
+
+	if (graph->prev->size > graph->size) {
+		append_to_rev_graph(graph, separator);
+		if (line != ' ')
+			append_to_rev_graph(graph, line);
 	}
 }
 
 void
-update_rev_graph(struct commit *commit)
+update_rev_graph(struct rev_stack *graph)
 {
-	struct rev_stack *parents = &graph_parents[graph_stack_no & 1];
-	struct rev_stack *stack = &graph_stacks[graph_stack_no++ & 1];
-	struct rev_stack *prev_parents = &graph_parents[graph_stack_no & 1];
-	struct rev_stack *graph = &graph_stacks[graph_stack_no & 1];
 	size_t i;
 
-	stack->commit = commit;
-
 	/* First traverse all lines of revisions up to the active one. */
-	for (stack->pos = 0; stack->pos < stack->size; stack->pos++) {
-		if (!strcmp(stack->rev[stack->pos], commit->id))
+	for (graph->pos = 0; graph->pos < graph->size; graph->pos++) {
+		if (!strcmp(graph->rev[graph->pos], graph->commit->id))
 			break;
 
-		push_rev_stack(graph, stack->rev[stack->pos]);
+		push_rev_stack(graph->next, graph->rev[graph->pos]);
 	}
 
-	assert(commit->graph_size < ARRAY_SIZE(commit->graph));
-
-	for (i = 0; i < parents->size; i++)
-		push_rev_stack(graph, parents->rev[i]);
+	for (i = 0; i < graph->parents->size; i++)
+		push_rev_stack(graph->next, graph->parents->rev[i]);
 
 	/* FIXME: Moving branches left and right when collapsing a branch. */
-	for (i = stack->pos + 1; i < stack->size; i++)
-		push_rev_stack(graph, stack->rev[i]);
+	for (i = graph->pos + 1; i < graph->size; i++)
+		push_rev_stack(graph->next, graph->rev[i]);
 
-	draw_rev_graph(stack, parents, prev_parents);
-
-	graph_last_rev = stack->pos;
-	memset(stack, 0, sizeof(*stack));
-	memset(prev_parents, 0, sizeof(*stack));
+	draw_rev_graph(graph);
+	if (graph->prev->parents->size > 1 &&
+	    graph->prev->pos < graph->prev->size - 1 &&
+	    graph->size == graph->prev->size + graph->prev->parents->size - 1) {
+		i = graph->prev->pos + graph->prev->parents->size - 1;
+		graph->prev->commit->graph_size = i * 2;
+		while (i < graph->size - 1) {
+			append_to_rev_graph(graph->prev, ' ');
+			append_to_rev_graph(graph->prev, '\\');
+			i++;
+		}
+	}
+	reset_rev_graph(graph->prev);
 }
 
 /* Reads git log --pretty=raw output and parses it into the commit struct. */
 static bool
 main_read(struct view *view, char *line)
 {
+	static struct rev_stack *graph = graph_stacks;
 	enum line_type type = get_line_type(line);
 	struct commit *commit = view->lines
 			      ? view->line[view->lines - 1].data : NULL;
@@ -2926,12 +2952,13 @@ main_read(struct view *view, char *line)
 		view->line[view->lines++].data = commit;
 		string_copy(commit->id, line);
 		commit->refs = get_refs(commit->id);
+		graph->commit = commit;
 		break;
 
 	case LINE_PARENT:
 		if (commit) {
 			line += STRING_SIZE("parent ");
-			push_rev_stack(&graph_parents[graph_stack_no & 1], line);
+			push_rev_stack(graph->parents, line);
 		}
 		break;
 
@@ -2943,7 +2970,8 @@ main_read(struct view *view, char *line)
 		if (!commit)
 			break;
 
-		update_rev_graph(commit);
+		update_rev_graph(graph);
+		graph = graph->next;
 
 		if (end) {
 			char *email = end + 1;
