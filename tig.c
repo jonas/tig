@@ -2447,7 +2447,7 @@ static struct view_ops pager_ops = {
  * Tree backend
  */
 
-/* Parse output from git ls-tree:
+/* Parse output from git-ls-tree(1):
  *
  * 100644 blob fb0e31ea6cc679b7379631188190e975f5789c26	Makefile
  * 100644 blob 5304ca4260aaddaee6498f9630e7d471b8591ea6	README
@@ -2558,7 +2558,6 @@ static bool
 tree_enter(struct view *view, struct line *line)
 {
 	enum open_flags flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
-	char *data = line->data;
 	enum request request;
 
 	switch (line->type) {
@@ -2577,6 +2576,7 @@ tree_enter(struct view *view, struct line *line)
 		} else {
 			size_t pathlen = strlen(opt_path);
 			size_t origlen = pathlen;
+			char *data = line->data;
 			char *basename = data + SIZEOF_TREE_ATTR;
 
 			if (!string_format_from(opt_path, &pathlen, "%s/", basename)) {
