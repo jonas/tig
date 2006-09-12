@@ -71,9 +71,6 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 
 #define SIZEOF_REVGRAPH	19	/* Size of revision ancestry graphics. */
 
-/* Size of rev graph with no  "padding" columns */
-#define SIZEOF_REVITEMS	(SIZEOF_REVGRAPH - (SIZEOF_REVGRAPH / 2))
-
 /* This color name can be used to refer to the default term colors. */
 #define COLOR_DEFAULT	(-1)
 
@@ -2668,7 +2665,7 @@ static struct view_ops blob_ops = {
 
 
 /*
- * Main view backend
+ * Revision graph
  */
 
 struct commit {
@@ -2681,113 +2678,8 @@ struct commit {
 	size_t graph_size;		/* The width of the graph array. */
 };
 
-static bool
-main_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
-{
-	char buf[DATE_COLS + 1];
-	struct commit *commit = line->data;
-	enum line_type type;
-	int col = 0;
-	size_t timelen;
-	size_t authorlen;
-	int trimmed = 1;
-
-	if (!*commit->author)
-		return FALSE;
-
-	wmove(view->win, lineno, col);
-
-	if (selected) {
-		type = LINE_CURSOR;
-		wattrset(view->win, get_line_attr(type));
-		wchgat(view->win, -1, 0, type, NULL);
-
-	} else {
-		type = LINE_MAIN_COMMIT;
-		wattrset(view->win, get_line_attr(LINE_MAIN_DATE));
-	}
-
-	timelen = strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time);
-	waddnstr(view->win, buf, timelen);
-	waddstr(view->win, " ");
-
-	col += DATE_COLS;
-	wmove(view->win, lineno, col);
-	if (type != LINE_CURSOR)
-		wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
-
-	if (opt_utf8) {
-		authorlen = utf8_length(commit->author, AUTHOR_COLS - 2, &col, &trimmed);
-	} else {
-		authorlen = strlen(commit->author);
-		if (authorlen > AUTHOR_COLS - 2) {
-			authorlen = AUTHOR_COLS - 2;
-			trimmed = 1;
-		}
-	}
-
-	if (trimmed) {
-		waddnstr(view->win, commit->author, authorlen);
-		if (type != LINE_CURSOR)
-			wattrset(view->win, get_line_attr(LINE_MAIN_DELIM));
-		waddch(view->win, '~');
-	} else {
-		waddstr(view->win, commit->author);
-	}
-
-	col += AUTHOR_COLS;
-	if (type != LINE_CURSOR)
-		wattrset(view->win, A_NORMAL);
-
-	if (opt_rev_graph && commit->graph_size) {
-		size_t i;
-
-		wmove(view->win, lineno, col);
-		/* Using waddch() instead of waddnstr() ensures that
-		 * they'll be rendered correctly for the cursor line. */
-		for (i = 0; i < commit->graph_size; i++)
-			waddch(view->win, commit->graph[i]);
-
-		col += commit->graph_size + 1;
-	}
-
-	wmove(view->win, lineno, col);
-
-	if (commit->refs) {
-		size_t i = 0;
-
-		do {
-			if (type == LINE_CURSOR)
-				;
-			else if (commit->refs[i]->tag)
-				wattrset(view->win, get_line_attr(LINE_MAIN_TAG));
-			else
-				wattrset(view->win, get_line_attr(LINE_MAIN_REF));
-			waddstr(view->win, "[");
-			waddstr(view->win, commit->refs[i]->name);
-			waddstr(view->win, "]");
-			if (type != LINE_CURSOR)
-				wattrset(view->win, A_NORMAL);
-			waddstr(view->win, " ");
-			col += strlen(commit->refs[i]->name) + STRING_SIZE("[] ");
-		} while (commit->refs[i++]->next);
-	}
-
-	if (type != LINE_CURSOR)
-		wattrset(view->win, get_line_attr(type));
-
-	{
-		int titlelen = strlen(commit->title);
-
-		if (col + titlelen > view->width)
-			titlelen = view->width - col;
-
-		waddnstr(view->win, commit->title, titlelen);
-	}
-
-	return TRUE;
-}
-
+/* Size of rev graph with no  "padding" columns */
+#define SIZEOF_REVITEMS	(SIZEOF_REVGRAPH - (SIZEOF_REVGRAPH / 2))
 
 struct rev_stack {
 	struct rev_stack *prev, *next, *parents;
@@ -2938,6 +2830,118 @@ update_rev_graph(struct rev_stack *graph)
 
 	draw_rev_graph(graph);
 	done_rev_graph(graph->prev);
+}
+
+
+/*
+ * Main view backend
+ */
+
+static bool
+main_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
+{
+	char buf[DATE_COLS + 1];
+	struct commit *commit = line->data;
+	enum line_type type;
+	int col = 0;
+	size_t timelen;
+	size_t authorlen;
+	int trimmed = 1;
+
+	if (!*commit->author)
+		return FALSE;
+
+	wmove(view->win, lineno, col);
+
+	if (selected) {
+		type = LINE_CURSOR;
+		wattrset(view->win, get_line_attr(type));
+		wchgat(view->win, -1, 0, type, NULL);
+
+	} else {
+		type = LINE_MAIN_COMMIT;
+		wattrset(view->win, get_line_attr(LINE_MAIN_DATE));
+	}
+
+	timelen = strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time);
+	waddnstr(view->win, buf, timelen);
+	waddstr(view->win, " ");
+
+	col += DATE_COLS;
+	wmove(view->win, lineno, col);
+	if (type != LINE_CURSOR)
+		wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
+
+	if (opt_utf8) {
+		authorlen = utf8_length(commit->author, AUTHOR_COLS - 2, &col, &trimmed);
+	} else {
+		authorlen = strlen(commit->author);
+		if (authorlen > AUTHOR_COLS - 2) {
+			authorlen = AUTHOR_COLS - 2;
+			trimmed = 1;
+		}
+	}
+
+	if (trimmed) {
+		waddnstr(view->win, commit->author, authorlen);
+		if (type != LINE_CURSOR)
+			wattrset(view->win, get_line_attr(LINE_MAIN_DELIM));
+		waddch(view->win, '~');
+	} else {
+		waddstr(view->win, commit->author);
+	}
+
+	col += AUTHOR_COLS;
+	if (type != LINE_CURSOR)
+		wattrset(view->win, A_NORMAL);
+
+	if (opt_rev_graph && commit->graph_size) {
+		size_t i;
+
+		wmove(view->win, lineno, col);
+		/* Using waddch() instead of waddnstr() ensures that
+		 * they'll be rendered correctly for the cursor line. */
+		for (i = 0; i < commit->graph_size; i++)
+			waddch(view->win, commit->graph[i]);
+
+		col += commit->graph_size + 1;
+	}
+
+	wmove(view->win, lineno, col);
+
+	if (commit->refs) {
+		size_t i = 0;
+
+		do {
+			if (type == LINE_CURSOR)
+				;
+			else if (commit->refs[i]->tag)
+				wattrset(view->win, get_line_attr(LINE_MAIN_TAG));
+			else
+				wattrset(view->win, get_line_attr(LINE_MAIN_REF));
+			waddstr(view->win, "[");
+			waddstr(view->win, commit->refs[i]->name);
+			waddstr(view->win, "]");
+			if (type != LINE_CURSOR)
+				wattrset(view->win, A_NORMAL);
+			waddstr(view->win, " ");
+			col += strlen(commit->refs[i]->name) + STRING_SIZE("[] ");
+		} while (commit->refs[i++]->next);
+	}
+
+	if (type != LINE_CURSOR)
+		wattrset(view->win, get_line_attr(type));
+
+	{
+		int titlelen = strlen(commit->title);
+
+		if (col + titlelen > view->width)
+			titlelen = view->width - col;
+
+		waddnstr(view->win, commit->title, titlelen);
+	}
+
+	return TRUE;
 }
 
 /* Reads git log --pretty=raw output and parses it into the commit struct. */
