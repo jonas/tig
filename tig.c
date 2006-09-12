@@ -2881,9 +2881,8 @@ update_rev_graph(struct commit *commit)
 
 	/* First traverse all lines of revisions up to the active one. */
 	for (stackpos = 0; stackpos < stack->size; stackpos++) {
-		if (!strcmp(stack->rev[stackpos], commit->id)) {
+		if (!strcmp(stack->rev[stackpos], commit->id))
 			break;
-		}
 
 		push_rev_stack(graph, stack->rev[stackpos]);
 	}
@@ -2893,11 +2892,9 @@ update_rev_graph(struct commit *commit)
 	for (i = 0; i < parents->size; i++)
 		push_rev_stack(graph, parents->rev[i]);
 
-	i = stackpos + 1;
-
 	/* FIXME: Moving branches left and right when collapsing a branch. */
-	while (i < stack->size)
-		push_rev_stack(graph, stack->rev[i++]);
+	for (i = stackpos + 1; i < stack->size; i++)
+		push_rev_stack(graph, stack->rev[i]);
 
 	draw_rev_graph(commit, stackpos, stack, parents, prev_parents);
 	graph_last_rev = stackpos;
