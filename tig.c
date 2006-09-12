@@ -59,6 +59,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 
 #define SIZEOF_STR	1024	/* Default string size. */
 #define SIZEOF_REF	256	/* Size of symbolic or SHA1 ID. */
+#define SIZEOF_REV	41	/* Holds a SHA-1 and an ending NUL */
 #define SIZEOF_REVGRAPH	19	/* Size of revision ancestry graphics. */
 
 /* This color name can be used to refer to the default term colors. */
@@ -109,7 +110,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 
 struct ref {
 	char *name;		/* Ref name; tag or head names are shortened. */
-	char id[41];		/* Commit SHA1 ID */
+	char id[SIZEOF_REV];	/* Commit SHA1 ID */
 	unsigned int tag:1;	/* Is it a tag? */
 	unsigned int next:1;	/* For ref lists: are there more refs? */
 };
@@ -2659,7 +2660,7 @@ static struct view_ops blob_ops = {
  */
 
 struct commit {
-	char id[41];			/* SHA1 ID. */
+	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[75];			/* First line of the commit message. */
 	char author[75];		/* Author of the commit. */
 	struct tm time;			/* Date from the author ident. */
