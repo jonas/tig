@@ -2807,6 +2807,12 @@ static struct rev_stack graph_stacks[3] = {
 	{ &graph_stacks[1], &graph_stacks[0], &graph_parents[2] },
 };
 
+static inline bool
+graph_parent_is_merge(struct rev_stack *graph)
+{
+	return graph->parents->size > 1;
+}
+
 static void
 reset_rev_graph(struct rev_stack *graph)
 {
@@ -2856,7 +2862,7 @@ draw_rev_graph(struct rev_stack *graph)
 
 	for (i = 0; i < graph->pos; i++) {
 		append_to_rev_graph(graph, line);
-		if (graph->prev->parents->size > 1 &&
+		if (graph_parent_is_merge(graph->prev) &&
 		    graph->prev->pos == i) {
 			separator = '`';
 			line = '.';
@@ -2878,7 +2884,7 @@ draw_rev_graph(struct rev_stack *graph)
 	for (; i < graph->size; i++) {
 		append_to_rev_graph(graph, separator);
 		append_to_rev_graph(graph, line);
-		if (graph->prev->parents->size > 1) {
+		if (graph_parent_is_merge(graph->prev)) {
 			if (i < graph->prev->pos + graph->parents->size) {
 				separator = '`';
 				line = '.';
@@ -2918,7 +2924,8 @@ update_rev_graph(struct rev_stack *graph)
 		push_rev_stack(graph->next, graph->rev[i]);
 
 	draw_rev_graph(graph);
-	if (graph->prev->parents->size > 1 &&
+
+	if (graph_parent_is_merge(graph->prev) &&
 	    graph->prev->pos < graph->prev->size - 1 &&
 	    graph->size == graph->prev->size + graph->prev->parents->size - 1) {
 		i = graph->prev->pos + graph->prev->parents->size - 1;
@@ -2929,6 +2936,7 @@ update_rev_graph(struct rev_stack *graph)
 			i++;
 		}
 	}
+
 	reset_rev_graph(graph->prev);
 }
 
