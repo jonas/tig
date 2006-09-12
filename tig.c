@@ -2601,28 +2601,24 @@ tree_enter(struct view *view, struct line *line)
 
 	open_view(view, request, flags);
 
-	if (!VIEW(request)->pipe)
-		return TRUE;
-
-	/* For tree views insert the path to the parent as the first line. */
-	if (request == REQ_VIEW_BLOB) {
-		/* Mirror what is showed in the title bar. */
-		string_ncopy(ref_blob, data + STRING_SIZE("100644 blob "), 40);
-		string_copy(VIEW(REQ_VIEW_BLOB)->ref, ref_blob);
-		return TRUE;
-	}
-
 	return TRUE;
 }
 
 static void
 tree_select(struct view *view, struct line *line)
 {
-	if (line->type == LINE_TREE_DIR || line->type == LINE_TREE_FILE) {
-		char *text = line->data;
+	char *text = line->data;
 
-		string_ncopy(view->ref, text + STRING_SIZE("100644 blob "), 40);
-		string_copy(ref_blob, view->ref);
+	text += STRING_SIZE("100644 blob ");
+
+	if (line->type == LINE_TREE_FILE) {
+		string_ncopy(ref_blob, text, 40);
+		/* Also update the blob view's ref, since all there must always
+		 * be in sync. */
+		string_copy(VIEW(REQ_VIEW_BLOB)->ref, ref_blob);
+
+	} else if (line->type == LINE_TREE_DIR) {
+		string_ncopy(view->ref, text, 40);
 	}
 }
 
