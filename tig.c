@@ -2806,8 +2806,6 @@ static size_t graph_last_rev;
 static void
 push_rev_stack(struct rev_stack *stack, char *parent)
 {
-	fprintf(stderr, " (%s)", parent);
-
 	/* Combine duplicate parents lines. */
 	if (stack->size > 0 &&
 	    !strncmp(stack->rev[stack->size - 1], parent, SIZEOF_REV))
@@ -2877,8 +2875,6 @@ update_rev_graph(struct commit *commit)
 	size_t stackpos = 0;
 	size_t i;
 
-	fprintf(stderr, "\n%p <%s> ", graph, commit->id);
-
 	/* First traverse all lines of revisions up to the active one. */
 	for (stackpos = 0; stackpos < stack->size; stackpos++) {
 		if (!strcmp(stack->rev[stackpos], commit->id))
@@ -2920,7 +2916,6 @@ main_read(struct view *view, char *line)
 		view->line[view->lines++].data = commit;
 		string_copy(commit->id, line);
 		commit->refs = get_refs(commit->id);
-		fprintf(stderr, "\n%p [%s]", &graph_stacks[graph_stack_no & 1], commit->id);
 		break;
 
 	case LINE_PARENT:
