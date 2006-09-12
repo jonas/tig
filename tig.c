@@ -2746,13 +2746,11 @@ push_rev_graph(struct rev_graph *graph, char *parent)
 	}
 }
 
-static void
-draw_rev_graph(struct rev_graph *graph)
+static chtype
+get_rev_graph_symbol(struct rev_graph *graph)
 {
-	chtype symbol, separator, line;
-	size_t i;
+	chtype symbol;
 
-	/* Place the symbol for this commit. */
 	if (graph->parents->size == 0)
 		symbol = REVGRAPH_INIT;
 	else if (graph->parents->size > 1)
@@ -2761,6 +2759,16 @@ draw_rev_graph(struct rev_graph *graph)
 		symbol = REVGRAPH_BRANCH;
 	else
 		symbol = REVGRAPH_COMMIT;
+
+	return symbol;
+}
+
+static void
+draw_rev_graph(struct rev_graph *graph)
+{
+	chtype separator, line;
+	chtype symbol = get_rev_graph_symbol(graph);
+	size_t i;
 
 	separator = ' ';
 	line = REVGRAPH_LINE;
@@ -2775,6 +2783,7 @@ draw_rev_graph(struct rev_graph *graph)
 		append_to_rev_graph(graph, separator);
 	}
 
+	/* Place the symbol for this revision. */
 	append_to_rev_graph(graph, symbol);
 
 	if (graph->prev->size > graph->size) {
