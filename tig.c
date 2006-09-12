@@ -2753,7 +2753,7 @@ get_rev_graph_symbol(struct rev_graph *graph)
 
 	if (graph->parents->size == 0)
 		symbol = REVGRAPH_INIT;
-	else if (graph->parents->size > 1)
+	else if (graph_parent_is_merge(graph))
 		symbol = REVGRAPH_MERGE;
 	else if (graph->pos >= graph->size)
 		symbol = REVGRAPH_BRANCH;
