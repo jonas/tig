@@ -60,6 +60,15 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define SIZEOF_STR	1024	/* Default string size. */
 #define SIZEOF_REF	256	/* Size of symbolic or SHA1 ID. */
 #define SIZEOF_REV	41	/* Holds a SHA-1 and an ending NUL */
+
+/* Revision graph */
+
+#define REVGRAPH_INIT	'I'
+#define REVGRAPH_MERGE	'M'
+#define REVGRAPH_BRANCH	'+'
+#define REVGRAPH_COMMIT	'*'
+#define REVGRAPH_LINE	'|'
+
 #define SIZEOF_REVGRAPH	19	/* Size of revision ancestry graphics. */
 
 /* Size of rev graph with no  "padding" columns */
@@ -2786,11 +2795,13 @@ struct rev_stack {
 };
 
 /* The current stack of revisions on the graph. */
-static struct rev_stack graph_stacks[2];
-static unsigned int graph_stack_no;
+static struct rev_stack graph_stacks[3];
+static size_t graph_stack_no;
 
 /* Parents of the commit being visualized. */
-static struct rev_stack graph_parents;
+static struct rev_stack graph_parents[2];
+
+static size_t graph_last_rev;
 
 static void
 push_rev_stack(struct rev_stack *stack, char *parent)
@@ -2810,14 +2821,14 @@ push_rev_stack(struct rev_stack *stack, char *parent)
 void
 update_rev_graph(struct commit *commit)
 {
+	struct rev_stack *parents = &graph_parents[graph_stack_no & 1];
 	struct rev_stack *stack = &graph_stacks[graph_stack_no++ & 1];
+	struct rev_stack *prev_parents = &graph_parents[graph_stack_no & 1];
 	struct rev_stack *graph = &graph_stacks[graph_stack_no & 1];
-	static chtype last_symbol;
 	chtype symbol, separator, line;
 	size_t stackpos = 0;
 	size_t i;
 
-	// FIXME: Initial commit ... assert(rev_graph_commit == commit);
 	fprintf(stderr, "\n%p <%s> ", graph, commit->id);
 
 	/* First traverse all lines of revisions up to the active one. */
@@ -2831,18 +2842,18 @@ update_rev_graph(struct commit *commit)
 
 	assert(commit->graph_size < ARRAY_SIZE(commit->graph));
 
-	for (i = 0; i < graph_parents.size; i++)
-		push_rev_stack(graph, graph_parents.rev[i]);
+	for (i = 0; i < parents->size; i++)
+		push_rev_stack(graph, parents->rev[i]);
 
 	/* Place the symbol for this commit. */
-	if (graph_parents.size == 0)
-		symbol = 'I';
-	else if (graph_parents.size > 1)
-		symbol = 'M';
+	if (parents->size == 0)
+		symbol = REVGRAPH_INIT;
+	else if (parents->size > 1)
+		symbol = REVGRAPH_MERGE;
 	else if (stackpos >= stack->size)
-		symbol = '+';
+		symbol = REVGRAPH_BRANCH;
 	else
-		symbol = '*';
+		symbol = REVGRAPH_COMMIT;
 
 	i = stackpos + 1;
 
@@ -2851,11 +2862,12 @@ update_rev_graph(struct commit *commit)
 		push_rev_stack(graph, stack->rev[i++]);
 
 	separator = ' ';
-	line = ACS_VLINE;
+	line = REVGRAPH_LINE;
 
 	for (i = 0; i < stackpos; i++) {
 		commit->graph[commit->graph_size++] = line;
-		if (last_symbol == 'M') {
+		if (prev_parents->size > 1 &&
+		    i == graph_last_rev) {
 			separator = '`';
 			line = '.';
 		}
@@ -2865,22 +2877,22 @@ update_rev_graph(struct commit *commit)
 	commit->graph[commit->graph_size++] = symbol;
 
 	separator = ' ';
-	line = ACS_VLINE;
-	if (last_symbol == 'M') {
-		line = ' ';
-	}
+	line = REVGRAPH_LINE;
+	i++;
 
-	for (i += 1; i < stack->size; i++) {
+	for (; i < stack->size; i++) {
 		commit->graph[commit->graph_size++] = separator;
 		commit->graph[commit->graph_size++] = line;
-		if (last_symbol == 'M') {
-			separator = '`';
-			line = '.';
+		if (prev_parents->size > 1) {
+			if (i < graph_last_rev + prev_parents->size) {
+				separator = '`';
+				line = '.';
+			}
 		}
 	}
 
-	last_symbol = symbol;
-	stack->size = graph_parents.size = 0;
+	graph_last_rev = stackpos;
+	stack->size = prev_parents->size = 0;
 }
 
 /* Reads git log --pretty=raw output and parses it into the commit struct. */
@@ -2902,13 +2914,13 @@ main_read(struct view *view, char *line)
 		view->line[view->lines++].data = commit;
 		string_copy(commit->id, line);
 		commit->refs = get_refs(commit->id);
-		fprintf(stderr, "\n%p [%s]", &graph_stacks[graph_stack_no], commit->id);
+		fprintf(stderr, "\n%p [%s]", &graph_stacks[graph_stack_no & 1], commit->id);
 		break;
 
 	case LINE_PARENT:
 		if (commit) {
 			line += STRING_SIZE("parent ");
-			push_rev_stack(&graph_parents, line);
+			push_rev_stack(&graph_parents[graph_stack_no & 1], line);
 		}
 		break;
 
