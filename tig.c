@@ -2617,9 +2617,11 @@ tree_select(struct view *view, struct line *line)
 		 * be in sync. */
 		string_copy(VIEW(REQ_VIEW_BLOB)->ref, ref_blob);
 
-	} else if (line->type == LINE_TREE_DIR) {
-		string_ncopy(view->ref, text, 40);
+	} else if (line->type != LINE_TREE_DIR) {
+		return;
 	}
+
+	string_ncopy(view->ref, text, 40);
 }
 
 static struct view_ops tree_ops = {
