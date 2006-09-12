@@ -2812,6 +2812,7 @@ update_rev_graph(struct commit *commit)
 {
 	struct rev_stack *stack = &graph_stacks[graph_stack_no++ & 1];
 	struct rev_stack *graph = &graph_stacks[graph_stack_no & 1];
+	chtype symbol;
 	size_t stackpos = 0;
 	size_t i;
 
@@ -2821,7 +2822,7 @@ update_rev_graph(struct commit *commit)
 	/* First traverse all lines of revisions up to the active one. */
 	for (stackpos = 0; stackpos < stack->size; stackpos++) {
 		if (!strcmp(stack->rev[stackpos], commit->id)) {
-			while (stackpos + 1< stack->size &&
+			while (stackpos + 1 < stack->size &&
 			       !strcmp(stack->rev[stackpos + 1], commit->id))
 				stackpos++;
 			break;
@@ -2839,13 +2840,15 @@ update_rev_graph(struct commit *commit)
 
 	/* Place the symbol for this commit. */
 	if (graph_parents.size == 0)
-		commit->graph[commit->graph_size++] = 'I';
+		symbol = 'I';
 	else if (graph_parents.size > 1)
-		commit->graph[commit->graph_size++] = 'M';
+		symbol = 'M';
 	else if (stackpos >= stack->size)
-		commit->graph[commit->graph_size++] = '+';
+		symbol = '+';
 	else
-		commit->graph[commit->graph_size++] = '*';
+		symbol = '*';
+
+	commit->graph[commit->graph_size++] = symbol;
 
 	stackpos++;
 
