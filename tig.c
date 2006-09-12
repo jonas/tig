@@ -2681,8 +2681,8 @@ struct commit {
 /* Size of rev graph with no  "padding" columns */
 #define SIZEOF_REVITEMS	(SIZEOF_REVGRAPH - (SIZEOF_REVGRAPH / 2))
 
-struct rev_stack {
-	struct rev_stack *prev, *next, *parents;
+struct rev_graph {
+	struct rev_graph *prev, *next, *parents;
 	char rev[SIZEOF_REVITEMS][SIZEOF_REV];
 	size_t size;
 	struct commit *commit;
@@ -2690,30 +2690,30 @@ struct rev_stack {
 };
 
 /* Parents of the commit being visualized. */
-static struct rev_stack graph_parents[3];
+static struct rev_graph graph_parents[3];
 
 /* The current stack of revisions on the graph. */
-static struct rev_stack graph_stacks[3] = {
+static struct rev_graph graph_stacks[3] = {
 	{ &graph_stacks[2], &graph_stacks[1], &graph_parents[0] },
 	{ &graph_stacks[0], &graph_stacks[2], &graph_parents[1] },
 	{ &graph_stacks[1], &graph_stacks[0], &graph_parents[2] },
 };
 
 static inline bool
-graph_parent_is_merge(struct rev_stack *graph)
+graph_parent_is_merge(struct rev_graph *graph)
 {
 	return graph->parents->size > 1;
 }
 
 static inline void
-append_to_rev_graph(struct rev_stack *stack, chtype symbol)
+append_to_rev_graph(struct rev_graph *graph, chtype symbol)
 {
-	if (stack->commit->graph_size < ARRAY_SIZE(stack->commit->graph) - 1)
-		stack->commit->graph[stack->commit->graph_size++] = symbol;
+	if (graph->commit->graph_size < ARRAY_SIZE(graph->commit->graph) - 1)
+		graph->commit->graph[graph->commit->graph_size++] = symbol;
 }
 
 static void
-done_rev_graph(struct rev_stack *graph)
+done_rev_graph(struct rev_graph *graph)
 {
 	if (graph_parent_is_merge(graph) &&
 	    graph->pos < graph->size - 1 &&
@@ -2734,20 +2734,20 @@ done_rev_graph(struct rev_stack *graph)
 }
 
 static void
-push_rev_stack(struct rev_stack *stack, char *parent)
+push_rev_graph(struct rev_graph *graph, char *parent)
 {
 	/* Combine duplicate parents lines. */
-	if (stack->size > 0 &&
-	    !strncmp(stack->rev[stack->size - 1], parent, SIZEOF_REV))
+	if (graph->size > 0 &&
+	    !strncmp(graph->rev[graph->size - 1], parent, SIZEOF_REV))
 		return;
 
-	if (stack->size < SIZEOF_REVITEMS) {
-		string_ncopy(stack->rev[stack->size++], parent, SIZEOF_REV);
+	if (graph->size < SIZEOF_REVITEMS) {
+		string_ncopy(graph->rev[graph->size++], parent, SIZEOF_REV);
 	}
 }
 
 static void
-draw_rev_graph(struct rev_stack *graph)
+draw_rev_graph(struct rev_graph *graph)
 {
 	chtype symbol, separator, line;
 	size_t i;
@@ -2809,7 +2809,7 @@ draw_rev_graph(struct rev_stack *graph)
 }
 
 void
-update_rev_graph(struct rev_stack *graph)
+update_rev_graph(struct rev_graph *graph)
 {
 	size_t i;
 
@@ -2818,15 +2818,15 @@ update_rev_graph(struct rev_stack *graph)
 		if (!strcmp(graph->rev[graph->pos], graph->commit->id))
 			break;
 
-		push_rev_stack(graph->next, graph->rev[graph->pos]);
+		push_rev_graph(graph->next, graph->rev[graph->pos]);
 	}
 
 	for (i = 0; i < graph->parents->size; i++)
-		push_rev_stack(graph->next, graph->parents->rev[i]);
+		push_rev_graph(graph->next, graph->parents->rev[i]);
 
 	/* FIXME: Moving branches left and right when collapsing a branch. */
 	for (i = graph->pos + 1; i < graph->size; i++)
-		push_rev_stack(graph->next, graph->rev[i]);
+		push_rev_graph(graph->next, graph->rev[i]);
 
 	draw_rev_graph(graph);
 	done_rev_graph(graph->prev);
@@ -2948,7 +2948,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 static bool
 main_read(struct view *view, char *line)
 {
-	static struct rev_stack *graph = graph_stacks;
+	static struct rev_graph *graph = graph_stacks;
 	enum line_type type = get_line_type(line);
 	struct commit *commit = view->lines
 			      ? view->line[view->lines - 1].data : NULL;
@@ -2970,7 +2970,7 @@ main_read(struct view *view, char *line)
 	case LINE_PARENT:
 		if (commit) {
 			line += STRING_SIZE("parent ");
-			push_rev_stack(graph->parents, line);
+			push_rev_graph(graph->parents, line);
 		}
 		break;
 
