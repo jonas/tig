@@ -62,6 +62,9 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define SIZEOF_REV	41	/* Holds a SHA-1 and an ending NUL */
 #define SIZEOF_REVGRAPH	19	/* Size of revision ancestry graphics. */
 
+/* Size of rev graph with no  "padding" columns */
+#define SIZEOF_REVITEMS	(SIZEOF_REVGRAPH - (SIZEOF_REVGRAPH / 2))
+
 /* This color name can be used to refer to the default term colors. */
 #define COLOR_DEFAULT	(-1)
 
@@ -2776,6 +2779,86 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 	return TRUE;
 }
 
+
+struct rev_stack {
+	char rev[SIZEOF_REVITEMS][SIZEOF_REV];
+	size_t size;
+};
+
+/* The current stack of revisions on the graph. */
+static struct rev_stack graph_stacks[2];
+static unsigned int graph_stack_no;
+
+/* Parents of the commit being visualized. */
+static struct rev_stack graph_parents;
+
+static void
+push_rev_stack(struct rev_stack *stack, char *parent)
+{
+	fprintf(stderr, " (%s)", parent);
+
+	/* Combine duplicate parents lines. */
+	if (stack->size > 0 &&
+	    !strncmp(stack->rev[stack->size - 1], parent, SIZEOF_REV))
+		return;
+
+	if (stack->size < SIZEOF_REVITEMS) {
+		string_ncopy(stack->rev[stack->size++], parent, SIZEOF_REV);
+	}
+}
+
+void
+update_rev_graph(struct commit *commit)
+{
+	struct rev_stack *stack = &graph_stacks[graph_stack_no++ & 1];
+	struct rev_stack *graph = &graph_stacks[graph_stack_no & 1];
+	size_t stackpos = 0;
+	size_t i;
+
+	// FIXME: Initial commit ... assert(rev_graph_commit == commit);
+	fprintf(stderr, "\n%p <%s> ", graph, commit->id);
+
+	/* First traverse all lines of revisions up to the active one. */
+	for (stackpos = 0; stackpos < stack->size; stackpos++) {
+		if (!strcmp(stack->rev[stackpos], commit->id)) {
+			while (stackpos + 1< stack->size &&
+			       !strcmp(stack->rev[stackpos + 1], commit->id))
+				stackpos++;
+			break;
+		}
+
+		push_rev_stack(graph, stack->rev[stackpos]);
+		commit->graph[commit->graph_size++] = ACS_VLINE;
+		commit->graph[commit->graph_size++] = ' ';
+	}
+
+	assert(commit->graph_size < ARRAY_SIZE(commit->graph));
+
+	for (i = 0; i < graph_parents.size; i++)
+		push_rev_stack(graph, graph_parents.rev[i]);
+
+	/* Place the symbol for this commit. */
+	if (graph_parents.size == 0)
+		commit->graph[commit->graph_size++] = 'I';
+	else if (graph_parents.size > 1)
+		commit->graph[commit->graph_size++] = 'M';
+	else if (stackpos >= stack->size)
+		commit->graph[commit->graph_size++] = '+';
+	else
+		commit->graph[commit->graph_size++] = '*';
+
+	stackpos++;
+
+	/* FIXME: Moving branches left and right when collapsing a branch. */
+	while (stackpos < stack->size) {
+		push_rev_stack(graph, stack->rev[stackpos++]);
+		commit->graph[commit->graph_size++] = ' ';
+		commit->graph[commit->graph_size++] = ACS_VLINE;
+	}
+
+	stack->size = graph_parents.size = 0;
+}
+
 /* Reads git log --pretty=raw output and parses it into the commit struct. */
 static bool
 main_read(struct view *view, char *line)
@@ -2795,7 +2878,14 @@ main_read(struct view *view, char *line)
 		view->line[view->lines++].data = commit;
 		string_copy(commit->id, line);
 		commit->refs = get_refs(commit->id);
-		commit->graph[commit->graph_size++] = ACS_LTEE;
+		fprintf(stderr, "\n%p [%s]", &graph_stacks[graph_stack_no], commit->id);
+		break;
+
+	case LINE_PARENT:
+		if (commit) {
+			line += STRING_SIZE("parent ");
+			push_rev_stack(&graph_parents, line);
+		}
 		break;
 
 	case LINE_AUTHOR:
@@ -2805,6 +2895,8 @@ main_read(struct view *view, char *line)
 
 		if (!commit)
 			break;
+
+		update_rev_graph(commit);
 
 		if (end) {
 			char *email = end + 1;
