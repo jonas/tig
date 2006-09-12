@@ -2813,7 +2813,7 @@ update_rev_graph(struct rev_graph *graph)
 {
 	size_t i;
 
-	/* First traverse all lines of revisions up to the active one. */
+	/* First, traverse all lines of revisions up to the active one. */
 	for (graph->pos = 0; graph->pos < graph->size; graph->pos++) {
 		if (!strcmp(graph->rev[graph->pos], graph->commit->id))
 			break;
@@ -2821,10 +2821,11 @@ update_rev_graph(struct rev_graph *graph)
 		push_rev_graph(graph->next, graph->rev[graph->pos]);
 	}
 
+	/* Interleave the new revision parent(s). */
 	for (i = 0; i < graph->parents->size; i++)
 		push_rev_graph(graph->next, graph->parents->rev[i]);
 
-	/* FIXME: Moving branches left and right when collapsing a branch. */
+	/* Lastly, put any remaining revisions. */
 	for (i = graph->pos + 1; i < graph->size; i++)
 		push_rev_graph(graph->next, graph->rev[i]);
 
