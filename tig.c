@@ -2813,19 +2813,32 @@ graph_parent_is_merge(struct rev_stack *graph)
 	return graph->parents->size > 1;
 }
 
-static void
-reset_rev_graph(struct rev_stack *graph)
-{
-	graph->size = graph->pos = 0;
-	graph->commit = NULL;
-	memset(graph->parents, 0, sizeof(*graph->parents));
-}
-
 static inline void
 append_to_rev_graph(struct rev_stack *stack, chtype symbol)
 {
 	if (stack->commit->graph_size < ARRAY_SIZE(stack->commit->graph) - 1)
 		stack->commit->graph[stack->commit->graph_size++] = symbol;
+}
+
+static void
+done_rev_graph(struct rev_stack *graph)
+{
+	if (graph_parent_is_merge(graph) &&
+	    graph->pos < graph->size - 1 &&
+	    graph->next->size == graph->size + graph->parents->size - 1) {
+		size_t i = graph->pos + graph->parents->size - 1;
+
+		graph->commit->graph_size = i * 2;
+		while (i < graph->next->size - 1) {
+			append_to_rev_graph(graph, ' ');
+			append_to_rev_graph(graph, '\\');
+			i++;
+		}
+	}
+
+	graph->size = graph->pos = 0;
+	graph->commit = NULL;
+	memset(graph->parents, 0, sizeof(*graph->parents));
 }
 
 static void
@@ -2924,22 +2937,7 @@ update_rev_graph(struct rev_stack *graph)
 		push_rev_stack(graph->next, graph->rev[i]);
 
 	draw_rev_graph(graph);
-
-	graph = graph->prev;
-
-	if (graph_parent_is_merge(graph) &&
-	    graph->pos < graph->size - 1 &&
-	    graph->next->size == graph->size + graph->parents->size - 1) {
-		i = graph->pos + graph->parents->size - 1;
-		graph->commit->graph_size = i * 2;
-		while (i < graph->next->size - 1) {
-			append_to_rev_graph(graph, ' ');
-			append_to_rev_graph(graph, '\\');
-			i++;
-		}
-	}
-
-	reset_rev_graph(graph);
+	done_rev_graph(graph->prev);
 }
 
 /* Reads git log --pretty=raw output and parses it into the commit struct. */
