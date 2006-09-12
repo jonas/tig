@@ -2812,7 +2812,8 @@ update_rev_graph(struct commit *commit)
 {
 	struct rev_stack *stack = &graph_stacks[graph_stack_no++ & 1];
 	struct rev_stack *graph = &graph_stacks[graph_stack_no & 1];
-	chtype symbol;
+	static chtype last_symbol;
+	chtype symbol, separator, line;
 	size_t stackpos = 0;
 	size_t i;
 
@@ -2822,15 +2823,10 @@ update_rev_graph(struct commit *commit)
 	/* First traverse all lines of revisions up to the active one. */
 	for (stackpos = 0; stackpos < stack->size; stackpos++) {
 		if (!strcmp(stack->rev[stackpos], commit->id)) {
-			while (stackpos + 1 < stack->size &&
-			       !strcmp(stack->rev[stackpos + 1], commit->id))
-				stackpos++;
 			break;
 		}
 
 		push_rev_stack(graph, stack->rev[stackpos]);
-		commit->graph[commit->graph_size++] = ACS_VLINE;
-		commit->graph[commit->graph_size++] = ' ';
 	}
 
 	assert(commit->graph_size < ARRAY_SIZE(commit->graph));
@@ -2848,17 +2844,42 @@ update_rev_graph(struct commit *commit)
 	else
 		symbol = '*';
 
-	commit->graph[commit->graph_size++] = symbol;
-
-	stackpos++;
+	i = stackpos + 1;
 
 	/* FIXME: Moving branches left and right when collapsing a branch. */
-	while (stackpos < stack->size) {
-		push_rev_stack(graph, stack->rev[stackpos++]);
-		commit->graph[commit->graph_size++] = ' ';
-		commit->graph[commit->graph_size++] = ACS_VLINE;
+	while (i < stack->size)
+		push_rev_stack(graph, stack->rev[i++]);
+
+	separator = ' ';
+	line = ACS_VLINE;
+
+	for (i = 0; i < stackpos; i++) {
+		commit->graph[commit->graph_size++] = line;
+		if (last_symbol == 'M') {
+			separator = '`';
+			line = '.';
+		}
+		commit->graph[commit->graph_size++] = separator;
 	}
 
+	commit->graph[commit->graph_size++] = symbol;
+
+	separator = ' ';
+	line = ACS_VLINE;
+	if (last_symbol == 'M') {
+		line = ' ';
+	}
+
+	for (i += 1; i < stack->size; i++) {
+		commit->graph[commit->graph_size++] = separator;
+		commit->graph[commit->graph_size++] = line;
+		if (last_symbol == 'M') {
+			separator = '`';
+			line = '.';
+		}
+	}
+
+	last_symbol = symbol;
 	stack->size = graph_parents.size = 0;
 }
 
