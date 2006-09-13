@@ -2916,6 +2916,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 		for (i = 0; i < commit->graph_size; i++)
 			waddch(view->win, commit->graph[i]);
 
+		waddch(view->win, ' ');
 		col += commit->graph_size + 1;
 	}
 
