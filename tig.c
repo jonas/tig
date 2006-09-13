@@ -2708,8 +2708,10 @@ graph_parent_is_merge(struct rev_graph *graph)
 static inline void
 append_to_rev_graph(struct rev_graph *graph, chtype symbol)
 {
-	if (graph->commit->graph_size < ARRAY_SIZE(graph->commit->graph) - 1)
-		graph->commit->graph[graph->commit->graph_size++] = symbol;
+	struct commit *commit = graph->commit;
+
+	if (commit->graph_size < ARRAY_SIZE(commit->graph) - 1)
+		commit->graph[commit->graph_size++] = symbol;
 }
 
 static void
