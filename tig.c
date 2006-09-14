@@ -1928,6 +1928,7 @@ alloc_error:
 	report("Allocation failure");
 
 end:
+	view->ops->read(view, NULL);
 	end_update(view);
 	return FALSE;
 }
@@ -2376,6 +2377,9 @@ pager_read(struct view *view, char *data)
 {
 	struct line *line = &view->line[view->lines];
 
+	if (!data)
+		return TRUE;
+
 	line->data = strdup(data);
 	if (!line->data)
 		return FALSE;
@@ -2486,7 +2490,7 @@ tree_compare_entry(enum line_type type1, char *name1,
 static bool
 tree_read(struct view *view, char *text)
 {
-	size_t textlen = strlen(text);
+	size_t textlen = text ? strlen(text) : 0;
 	char buf[SIZEOF_STR];
 	unsigned long pos;
 	enum line_type type;
@@ -2777,7 +2781,6 @@ draw_rev_graph(struct rev_graph *graph)
 		{ '`',	'.' },
 		{ '\'',	' ' },
 		{ '/',	' ' },
-
 	};
 	chtype symbol = get_rev_graph_symbol(graph);
 	struct rev_filler *filler;
@@ -2964,9 +2967,15 @@ static bool
 main_read(struct view *view, char *line)
 {
 	static struct rev_graph *graph = graph_stacks;
-	enum line_type type = get_line_type(line);
+	enum line_type type;
 	struct commit *commit = view->lines
 			      ? view->line[view->lines - 1].data : NULL;
+
+	if (!line) {
+		return TRUE;
+	}
+
+	type = get_line_type(line);
 
 	switch (type) {
 	case LINE_COMMIT:
