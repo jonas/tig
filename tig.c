@@ -2824,8 +2824,9 @@ draw_rev_graph(struct rev_graph *graph)
 	}
 }
 
-void
-update_rev_graph(struct rev_graph *graph)
+/* Prepare the next rev graph */
+static void
+prepare_rev_graph(struct rev_graph *graph)
 {
 	size_t i;
 
@@ -2844,9 +2845,15 @@ update_rev_graph(struct rev_graph *graph)
 	/* Lastly, put any remaining revisions. */
 	for (i = graph->pos + 1; i < graph->size; i++)
 		push_rev_graph(graph->next, graph->rev[i]);
+}
 
-	draw_rev_graph(graph);
-	done_rev_graph(graph->prev);
+static void
+update_rev_graph(struct rev_graph *graph)
+{
+	prepare_rev_graph(graph);
+
+	draw_rev_graph(graph->prev);
+	done_rev_graph(graph->prev->prev);
 }
 
 
