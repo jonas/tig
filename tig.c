@@ -2694,13 +2694,14 @@ struct rev_graph {
 };
 
 /* Parents of the commit being visualized. */
-static struct rev_graph graph_parents[3];
+static struct rev_graph graph_parents[4];
 
 /* The current stack of revisions on the graph. */
-static struct rev_graph graph_stacks[3] = {
-	{ &graph_stacks[2], &graph_stacks[1], &graph_parents[0] },
+static struct rev_graph graph_stacks[4] = {
+	{ &graph_stacks[3], &graph_stacks[1], &graph_parents[0] },
 	{ &graph_stacks[0], &graph_stacks[2], &graph_parents[1] },
-	{ &graph_stacks[1], &graph_stacks[0], &graph_parents[2] },
+	{ &graph_stacks[1], &graph_stacks[3], &graph_parents[2] },
+	{ &graph_stacks[2], &graph_stacks[0], &graph_parents[3] },
 };
 
 static inline bool
@@ -2850,7 +2851,14 @@ prepare_rev_graph(struct rev_graph *graph)
 static void
 update_rev_graph(struct rev_graph *graph)
 {
-	prepare_rev_graph(graph);
+	/* If this is the finalizing update ... */
+	if (graph->commit)
+		prepare_rev_graph(graph);
+
+	/* Graph visualization needs a one rev look-ahead,
+	 * so the first update doesn't visualize anything. */
+	if (!graph->prev->commit)
+		return;
 
 	draw_rev_graph(graph->prev);
 	done_rev_graph(graph->prev->prev);
@@ -2979,6 +2987,7 @@ main_read(struct view *view, char *line)
 			      ? view->line[view->lines - 1].data : NULL;
 
 	if (!line) {
+		update_rev_graph(graph);
 		return TRUE;
 	}
 
