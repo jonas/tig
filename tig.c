@@ -1414,10 +1414,8 @@ redraw_display(void)
 }
 
 static void
-update_display_cursor(void)
+update_display_cursor(struct view *view)
 {
-	struct view *view = display[current_view];
-
 	/* Move the cursor to the right-most column of the cursor line.
 	 *
 	 * XXX: This could turn out to be a bit expensive, but it ensures that
@@ -3132,7 +3130,7 @@ report(const char *msg, ...)
 	}
 
 	update_view_title(view);
-	update_display_cursor();
+	update_display_cursor(view);
 }
 
 /* Controls when nodelay should be in effect when polling user input. */
