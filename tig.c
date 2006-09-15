@@ -1265,6 +1265,7 @@ draw_view_line(struct view *view, unsigned int lineno)
 {
 	struct line *line;
 	bool selected = (view->offset + lineno == view->lineno);
+	bool draw_ok;
 
 	assert(view_is_displayed(view));
 
@@ -1282,7 +1283,11 @@ draw_view_line(struct view *view, unsigned int lineno)
 		wclrtoeol(view->win);
 	}
 
-	return view->ops->draw(view, line, lineno, selected);
+	scrollok(view->win, FALSE);
+	draw_ok = view->ops->draw(view, line, lineno, selected);
+	scrollok(view->win, TRUE);
+
+	return draw_ok;
 }
 
 static void

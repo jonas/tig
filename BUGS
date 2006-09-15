@@ -3,10 +3,3 @@ BUGS
 Known bugs and problems:
 
  - In it's current state tig is pretty much UTF-8 only.
-
- - If the screen width is very small the main view can draw
-   outside the current view causing bad wrapping. Same goes
-   for title and status windows.
-
- - The cursor can wrap-around on the last line and cause the
-   window to scroll.
