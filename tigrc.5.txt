@@ -157,8 +157,10 @@ View switching:
 view-main		Show main view
 view-diff		Show diff view
 view-log		Show log view
-view-help		Show help page
+view-tree		Show tree view
+view-blob		Show blob view
 view-pager		Show pager view
+view-help		Show help page
 ------------------------------------------------------------------------------
 
 ifdef::backend-xhtml11[]
@@ -183,10 +185,10 @@ Cursor navigation:
 ------------------------------------------------------------------------------
 move-up			Move cursor one line up
 move-down		Move cursor one line down
-move-page_down		Move cursor one page down
-move-page_up		Move cursor one page up
-move-first_line		Move cursor to first line
-move-last_line		Move cursor to last line
+move-page-down		Move cursor one page down
+move-page-up		Move cursor one page up
+move-first-line		Move cursor to first line
+move-last-line		Move cursor to last line
 ------------------------------------------------------------------------------
 
 ifdef::backend-xhtml11[]
@@ -195,10 +197,10 @@ ifdef::backend-xhtml11[]
 endif::backend-xhtml11[]
 Scrolling:
 ------------------------------------------------------------------------------
-scroll-line_up		Scroll one line up
-scroll-line_down	Scroll one line down
-scroll-page_up		Scroll one page up
-scroll-page_down	Scroll one page down
+scroll-line-up		Scroll one line up
+scroll-line-down	Scroll one line down
+scroll-page-eup		Scroll one page up
+scroll-page-down	Scroll one page down
 ------------------------------------------------------------------------------
 
 ifdef::backend-xhtml11[]
@@ -214,7 +216,7 @@ screen-resize		Resize the screen
 show-version		Show version information
 stop-loading		Stop all loading views
 toggle-lineno		Toggle line numbers
-toggle-rev_graph	Toggle revision graph visualization
+toggle-rev-graph	Toggle revision graph visualization
 ------------------------------------------------------------------------------
 
 
