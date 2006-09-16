@@ -1,8 +1,6 @@
 TODO
 ----
 Features that should be explored.
- 
- - Locale support.
 
  - When the user wants to "view" a commit, you could show from which branch
    heads and from which tags the commit is reachable, and perhaps which tag is
