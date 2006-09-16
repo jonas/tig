@@ -1315,20 +1315,14 @@ redraw_view(struct view *view)
 static void
 update_view_title(struct view *view)
 {
+	char buf[SIZEOF_STR];
+	size_t bufpos = 0;
+
 	assert(view_is_displayed(view));
 
-	if (view == display[current_view])
-		wbkgdset(view->title, get_line_attr(LINE_TITLE_FOCUS));
-	else
-		wbkgdset(view->title, get_line_attr(LINE_TITLE_BLUR));
-
-	werase(view->title);
-	wmove(view->title, 0, 0);
-
+	string_format_from(buf, &bufpos, "[%s]", view->name);
 	if (*view->ref)
-		wprintw(view->title, "[%s] %s", view->name, view->ref);
-	else
-		wprintw(view->title, "[%s]", view->name);
+		string_format_from(buf, &bufpos, " %s", view->ref);
 
 	if (view->lines || view->pipe) {
 		unsigned int view_lines = view->offset + view->height;
@@ -1336,11 +1330,11 @@ update_view_title(struct view *view)
 				   ? MIN(view_lines, view->lines) * 100 / view->lines
 				   : 0;
 
-		wprintw(view->title, " - %s %d of %d (%d%%)",
-			view->ops->type,
-			view->lineno + 1,
-			view->lines,
-			lines);
+		string_format_from(buf, &bufpos, " - %s %d of %d (%d%%)",
+				   view->ops->type,
+				   view->lineno + 1,
+				   view->lines,
+				   lines);
 	}
 
 	if (view->pipe) {
@@ -1348,9 +1342,16 @@ update_view_title(struct view *view)
 
 		/* Three git seconds are a long time ... */
 		if (secs > 2)
-			wprintw(view->title, " %lds", secs);
+			string_format_from(buf, &bufpos, " %lds", secs);
 	}
 
+	if (view == display[current_view])
+		wbkgdset(view->title, get_line_attr(LINE_TITLE_FOCUS));
+	else
+		wbkgdset(view->title, get_line_attr(LINE_TITLE_BLUR));
+
+	werase(view->title);
+	mvwaddnstr(view->title, 0, 0, buf, bufpos);
 	wmove(view->title, 0, view->width - 1);
 	wrefresh(view->title);
 }
