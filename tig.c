@@ -1316,13 +1316,10 @@ static void
 update_view_title(struct view *view)
 {
 	char buf[SIZEOF_STR];
-	size_t bufpos = 0;
+	char state[SIZEOF_STR];
+	size_t bufpos = 0, statelen = 0;
 
 	assert(view_is_displayed(view));
-
-	string_format_from(buf, &bufpos, "[%s]", view->name);
-	if (*view->ref)
-		string_format_from(buf, &bufpos, " %s", view->ref);
 
 	if (view->lines || view->pipe) {
 		unsigned int view_lines = view->offset + view->height;
@@ -1330,7 +1327,7 @@ update_view_title(struct view *view)
 				   ? MIN(view_lines, view->lines) * 100 / view->lines
 				   : 0;
 
-		string_format_from(buf, &bufpos, " - %s %d of %d (%d%%)",
+		string_format_from(state, &statelen, "- %s %d of %d (%d%%)",
 				   view->ops->type,
 				   view->lineno + 1,
 				   view->lines,
@@ -1341,8 +1338,22 @@ update_view_title(struct view *view)
 
 			/* Three git seconds are a long time ... */
 			if (secs > 2)
-				string_format_from(buf, &bufpos, " %lds", secs);
+				string_format_from(state, &statelen, " %lds", secs);
 		}
+	}
+
+	string_format_from(buf, &bufpos, "[%s]", view->name);
+	if (*view->ref && bufpos < view->width) {
+		size_t refsize = strlen(view->ref);
+		size_t minsize = bufpos + 1 + /* abbrev= */ 7 + 1 + statelen;
+
+		if (minsize < view->width)
+			refsize = view->width - minsize + 7;
+		string_format_from(buf, &bufpos, " %.*s", refsize, view->ref);
+	}
+
+	if (statelen && bufpos < view->width) {
+		string_format_from(buf, &bufpos, " %s", state);
 	}
 
 	if (view == display[current_view])
