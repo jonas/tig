@@ -1274,6 +1274,7 @@ draw_view_line(struct view *view, unsigned int lineno)
 {
 	struct line *line;
 	bool selected = (view->offset + lineno == view->lineno);
+	bool draw_ok;
 
 	assert(view_is_displayed(view));
 
@@ -1291,7 +1292,11 @@ draw_view_line(struct view *view, unsigned int lineno)
 		wclrtoeol(view->win);
 	}
 
-	return view->ops->draw(view, line, lineno, selected);
+	scrollok(view->win, FALSE);
+	draw_ok = view->ops->draw(view, line, lineno, selected);
+	scrollok(view->win, TRUE);
+
+	return draw_ok;
 }
 
 static void
@@ -1319,20 +1324,11 @@ redraw_view(struct view *view)
 static void
 update_view_title(struct view *view)
 {
+	char buf[SIZEOF_STR];
+	char state[SIZEOF_STR];
+	size_t bufpos = 0, statelen = 0;
+
 	assert(view_is_displayed(view));
-
-	if (view == display[current_view])
-		wbkgdset(view->title, get_line_attr(LINE_TITLE_FOCUS));
-	else
-		wbkgdset(view->title, get_line_attr(LINE_TITLE_BLUR));
-
-	werase(view->title);
-	wmove(view->title, 0, 0);
-
-	if (*view->ref)
-		wprintw(view->title, "[%s] %s", view->name, view->ref);
-	else
-		wprintw(view->title, "[%s]", view->name);
 
 	if (view->lines || view->pipe) {
 		unsigned int view_lines = view->offset + view->height;
@@ -1340,21 +1336,42 @@ update_view_title(struct view *view)
 				   ? MIN(view_lines, view->lines) * 100 / view->lines
 				   : 0;
 
-		wprintw(view->title, " - %s %d of %d (%d%%)",
-			view->ops->type,
-			view->lineno + 1,
-			view->lines,
-			lines);
+		string_format_from(state, &statelen, "- %s %d of %d (%d%%)",
+				   view->ops->type,
+				   view->lineno + 1,
+				   view->lines,
+				   lines);
+
+		if (view->pipe) {
+			time_t secs = time(NULL) - view->start_time;
+
+			/* Three git seconds are a long time ... */
+			if (secs > 2)
+				string_format_from(state, &statelen, " %lds", secs);
+		}
 	}
 
-	if (view->pipe) {
-		time_t secs = time(NULL) - view->start_time;
+	string_format_from(buf, &bufpos, "[%s]", view->name);
+	if (*view->ref && bufpos < view->width) {
+		size_t refsize = strlen(view->ref);
+		size_t minsize = bufpos + 1 + /* abbrev= */ 7 + 1 + statelen;
 
-		/* Three git seconds are a long time ... */
-		if (secs > 2)
-			wprintw(view->title, " %lds", secs);
+		if (minsize < view->width)
+			refsize = view->width - minsize + 7;
+		string_format_from(buf, &bufpos, " %.*s", refsize, view->ref);
 	}
 
+	if (statelen && bufpos < view->width) {
+		string_format_from(buf, &bufpos, " %s", state);
+	}
+
+	if (view == display[current_view])
+		wbkgdset(view->title, get_line_attr(LINE_TITLE_FOCUS));
+	else
+		wbkgdset(view->title, get_line_attr(LINE_TITLE_BLUR));
+
+	werase(view->title);
+	mvwaddnstr(view->title, 0, 0, buf, bufpos);
 	wmove(view->title, 0, view->width - 1);
 	wrefresh(view->title);
 }
@@ -1423,10 +1440,8 @@ redraw_display(void)
 }
 
 static void
-update_display_cursor(void)
+update_display_cursor(struct view *view)
 {
-	struct view *view = display[current_view];
-
 	/* Move the cursor to the right-most column of the cursor line.
 	 *
 	 * XXX: This could turn out to be a bit expensive, but it ensures that
@@ -3351,7 +3366,7 @@ report(const char *msg, ...)
 	}
 
 	update_view_title(view);
-	update_display_cursor();
+	update_display_cursor(view);
 }
 
 /* Controls when nodelay should be in effect when polling user input. */
