@@ -2758,10 +2758,15 @@ done_rev_graph(struct rev_graph *graph)
 static void
 push_rev_graph(struct rev_graph *graph, char *parent)
 {
-	/* Combine duplicate parents lines. */
-	if (graph->size > 0 &&
-	    !strncmp(graph->rev[graph->size - 1], parent, SIZEOF_REV))
-		return;
+	int i;
+
+	/* "Collapse" duplicate parents lines.
+	 *
+	 * FIXME: This needs to also update update the drawn graph but
+	 * for now it just serves as a method for pruning graph lines. */
+	for (i = 0; i < graph->size; i++)
+		if (!strncmp(graph->rev[i], parent, SIZEOF_REV))
+			return;
 
 	if (graph->size < SIZEOF_REVITEMS) {
 		string_ncopy(graph->rev[graph->size++], parent, SIZEOF_REV);
