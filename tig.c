@@ -1335,14 +1335,14 @@ update_view_title(struct view *view)
 				   view->lineno + 1,
 				   view->lines,
 				   lines);
-	}
 
-	if (view->pipe) {
-		time_t secs = time(NULL) - view->start_time;
+		if (view->pipe) {
+			time_t secs = time(NULL) - view->start_time;
 
-		/* Three git seconds are a long time ... */
-		if (secs > 2)
-			string_format_from(buf, &bufpos, " %lds", secs);
+			/* Three git seconds are a long time ... */
+			if (secs > 2)
+				string_format_from(buf, &bufpos, " %lds", secs);
+		}
 	}
 
 	if (view == display[current_view])
