@@ -144,7 +144,7 @@ Current Head and Commit ID
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The viewer keeps track of both what head and commit ID you are currently
-viewing. The commit ID will follow the cursor line and change everytime time
+viewing. The commit ID will follow the cursor line and change every time
 you highlight a different commit. Whenever you reopen the diff view it will be
 reloaded, if the commit ID changed.
 
@@ -245,7 +245,7 @@ Enter	This key is "context sensitive" depending on what view you are \
 	pressing Enter will simply scroll the view one line down.
 Tab	Switch to next view.
 Up	This key is "context sensitive" and will move the cursor one \
-	line up. However, uf you opened a diff view from the main view \
+	line up. However, if you opened a diff view from the main view \
 	(split- or full-screen) it will change the cursor to point to \
 	the previous commit in the main view and update the diff view \
 	to display it.
@@ -319,7 +319,7 @@ Revision Specification
 
 This section describes various ways to specify what revisions to display or
 otherwise limit the view to. Tig does not itself parse the described
-revision options so refer to the relevant git man pages for futher
+revision options so refer to the relevant git man pages for further
 information. Relevant man pages besides git-log(1) are git-diff(1) and
 git-rev-list(1).
 

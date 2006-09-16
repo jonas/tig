@@ -110,7 +110,7 @@ FILES
 	User configuration file. See gitlink:tigrc[5] for examples.
 
 '.git/config'::
-	Repository config file. Read on startup with the help of
+	Repository config file. Read on start-up with the help of
 	git-repo-config(1).
 
 include::BUGS[]

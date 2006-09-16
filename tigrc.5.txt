@@ -70,7 +70,7 @@ The following variables can be set:
 
 'show-rev-graph' (bool)::
 
-	Show revision graph in the main view on startup. Can be toggled with
+	Show revision graph in the main view on start-up. Can be toggled with
 	'g'.
 
 'line-number-interval' (int)::
@@ -116,7 +116,7 @@ Examples:
 
 Keys are mapped by first searching the keybindings for the current view, then
 the keybindings for the *generic* keymap, and last the default keybindings.
-Thus, the view keybindings shaddow the generic keybindings which shaddow the
+Thus, the view keybindings shadow the generic keybindings which Shadow the
 built-in keybindings.
 
 --
@@ -223,7 +223,7 @@ Color command
 
 Color commands control highlighting and the user interface styles. If your
 terminal supports color, these commands can be used to assign foreground and
-backgound combinations to certain areas. Optionally, an attribute can be given
+background combinations to certain areas. Optionally, an attribute can be given
 as the last parameter. The syntax is:
 
 [verse]
@@ -277,7 +277,7 @@ Appearance of the bottom window showing info messages.
 
 Title window colors::
 
-Appearence of the title windows when they are attached
+Appearance of the title windows when they are attached
 to any backgrounded windows and the current window.
 
 *title-blur*, *title-focus*
@@ -323,7 +323,7 @@ Pretty print commit headers::
 
 Commit diffs and the revision logs are usually formatted using pretty printed
 headers , unless `--pretty=raw` was given. This includes lines, such as merge
-info, commit ID, and author and comitter date.
+info, commit ID, and author and committer date.
 
 *pp-author*, *pp-commit*, *pp-merge*, *pp-date*, *pp-adate*, *pp-cdate*
 
