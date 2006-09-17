@@ -3132,17 +3132,18 @@ static bool cursed = FALSE;
 /* The status window is used for polling keystrokes. */
 static WINDOW *status_win;
 
+static bool status_empty = TRUE;
+
 /* Update status and title window. */
 static void
 report(const char *msg, ...)
 {
-	static bool empty = TRUE;
 	struct view *view = display[current_view];
 
 	if (input_mode)
 		return;
 
-	if (!empty || *msg) {
+	if (!status_empty || *msg) {
 		va_list args;
 
 		va_start(args, msg);
@@ -3151,9 +3152,9 @@ report(const char *msg, ...)
 		wmove(status_win, 0, 0);
 		if (*msg) {
 			vwprintw(status_win, msg, args);
-			empty = FALSE;
+			status_empty = FALSE;
 		} else {
-			empty = TRUE;
+			status_empty = TRUE;
 		}
 		wrefresh(status_win);
 
@@ -3270,6 +3271,7 @@ read_prompt(const char *prompt)
 
 	if (status == CANCEL) {
 		/* Clear the status window */
+		status_empty = FALSE;
 		report("");
 		return NULL;
 	}
