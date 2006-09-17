@@ -2,6 +2,18 @@ TODO
 ----
 Features that should be explored.
 
+ - Repository status view.
+
+ - Better text-input support. From setsyx(3):
+
+	The setsyx routine sets the virtual screen cursor to y, x.  If y and x
+	are both -1, then leaveok is set.  The two routines getsyx and setsyx
+	are designed  to  be used by a library routine, which manipulates
+	curses windows but does not want to change the current position of the
+	program’s cursor.  The library routine would call getsyx at the
+	beginning, do its manipulation of its own windows, do a wnoutrefresh on
+	its windows, call  setsyx,  and then call doupdate.
+
  - When the user wants to "view" a commit, you could show from which branch
    heads and from which tags the commit is reachable, and perhaps which tag is
    the latest among the ones reachable from that commit, as part of the commit
