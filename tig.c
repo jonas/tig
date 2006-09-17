@@ -767,9 +767,10 @@ static struct keybinding *keybindings[ARRAY_SIZE(keymap_table)];
 static void
 add_keybinding(enum keymap keymap, enum request request, int key)
 {
-	struct keybinding *keybinding;
+	struct keybinding *keybinding = keybindings[keymap];
 
-	keybinding = calloc(1, sizeof(*keybinding));
+	if (!keybinding)
+		keybinding = calloc(1, sizeof(*keybinding));
 	if (!keybinding)
 		die("Failed to allocate keybinding");
 
