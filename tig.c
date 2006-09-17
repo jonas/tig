@@ -1165,6 +1165,9 @@ struct view_ops;
 static struct view *display[2];
 static unsigned int current_view;
 
+/* Reading from the prompt? */
+static bool input_mode = FALSE;
+
 #define foreach_displayed_view(view, i) \
 	for (i = 0; i < ARRAY_SIZE(display) && (view = display[i]); i++)
 
@@ -1302,7 +1305,10 @@ redraw_view_from(struct view *view, int lineno)
 	}
 
 	redrawwin(view->win);
-	wrefresh(view->win);
+	if (input_mode)
+		wnoutrefresh(view->win);
+	else
+		wrefresh(view->win);
 }
 
 static void
@@ -1365,7 +1371,11 @@ update_view_title(struct view *view)
 	werase(view->title);
 	mvwaddnstr(view->title, 0, 0, buf, bufpos);
 	wmove(view->title, 0, view->width - 1);
-	wrefresh(view->title);
+
+	if (input_mode)
+		wnoutrefresh(view->title);
+	else
+		wrefresh(view->title);
 }
 
 static void
@@ -3129,6 +3139,9 @@ report(const char *msg, ...)
 	static bool empty = TRUE;
 	struct view *view = display[current_view];
 
+	if (input_mode)
+		return;
+
 	if (!empty || *msg) {
 		va_list args;
 
@@ -3211,10 +3224,16 @@ read_prompt(const char *prompt)
 		struct view *view;
 		int i, key;
 
+		input_mode = TRUE;
+
 		foreach_view (view, i)
 			update_view(view);
 
-		report("%s%.*s", prompt, pos, buf);
+		input_mode = FALSE;
+
+		mvwprintw(status_win, 0, 0, "%s%.*s", prompt, pos, buf);
+		wclrtoeol(status_win);
+
 		/* Refresh, accept single keystroke of input */
 		key = wgetch(status_win);
 		switch (key) {
