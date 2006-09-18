@@ -274,10 +274,10 @@ TIG(1) Manual Page
 <div class="sectionbody">
 <div class="verseblock">
 <div class="content">tig [options]
-tig [options] [--] [git log options]
-tig [options] log  [git log options]
-tig [options] diff [git diff options]
-tig [options] show [git show options]
+tig [options] [--] [git options]
+tig [options] log  [git options]
+tig [options] diff [git options]
+tig [options] show [git options]
 tig [options] &lt;    [git command output]</div></div>
 </div>
 <h2>DESCRIPTION</h2>
@@ -356,7 +356,7 @@ to colorize it.</p>
 </div></div>
 </dd>
 <dt>
-log [git log options]
+log
 </dt>
 <dd>
 <p>
@@ -364,7 +364,7 @@ log [git log options]
 </p>
 </dd>
 <dt>
-diff [git diff options]
+diff
 </dt>
 <dd>
 <p>
@@ -372,7 +372,7 @@ diff [git diff options]
 </p>
 </dd>
 <dt>
-show [git show options]
+show
 </dt>
 <dd>
 <p>
@@ -380,7 +380,7 @@ show [git show options]
 </p>
 </dd>
 <dt>
-[git log options]
+[git options]
 </dt>
 <dd>
 <p>
@@ -439,6 +439,28 @@ TIG_MAIN_CMD
 </p>
 </dd>
 </dl>
+<h3>Tree commands</h3>
+<dl>
+<dt>
+TIG_TREE_CMD
+</dt>
+<dd>
+<p>
+    The command used for the tree view. By default, git-ls-tree(1) is
+    used. The commands should expect first the commit ID and second
+    a path.
+</p>
+</dd>
+<dt>
+TIG_BLOB_CMD
+</dt>
+<dd>
+<p>
+    The command used for the blob view. By default, git-cat-file(1) is
+    used. The command gets the blob ID.
+</p>
+</dd>
+</dl>
 </div>
 <h2>FILES</h2>
 <div class="sectionbody">
@@ -456,7 +478,7 @@ TIG_MAIN_CMD
 </dt>
 <dd>
 <p>
-        Repository config file. Read on startup with the help of
+        Repository config file. Read on start-up with the help of
         git-repo-config(1).
 </p>
 </dd>
@@ -468,20 +490,12 @@ TIG_MAIN_CMD
 <ul>
 <li>
 <p>
-In it's current state tig is pretty much UTF-8 only.
+Proper locale support: in it's current state tig is pretty much UTF-8 only.
 </p>
 </li>
 <li>
 <p>
-If the screen width is very small the main view can draw
-   outside the current view causing bad wrapping. Same goes
-   for title and status windows.
-</p>
-</li>
-<li>
-<p>
-The cursor can wrap-around on the last line and cause the
-   window to scroll.
+Horizontal scrolling.
 </p>
 </li>
 </ul>
@@ -529,7 +543,7 @@ Gitweb: <a href="http://pasky.or.cz/gitweb.cgi?p=tig.git;a=summary">http://pasky
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 15-Jun-2006 01:28:15 CEST
+Last updated 18-Sep-2006 18:23:50 CEST
 </div>
 </div>
 </body>

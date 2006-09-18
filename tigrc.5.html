@@ -336,7 +336,7 @@ Valid string values
 </dt>
 <dd>
 <p>
-        Show revision graph in the main view on startup. Can be toggled with
+        Show revision graph in the main view on start-up. Can be toggled with
         <em>g</em>.
 </p>
 </dd>
@@ -384,11 +384,13 @@ key map. The syntax is:</p>
         bind main space enter
         bind diff a previous
         bind diff d next
-        bind diff b move-first-line</tt></pre>
+        bind diff b move-first-line
+        # 'unbind' the default quit key binding
+        bind main Q none</tt></pre>
 </div></div>
 <p>Keys are mapped by first searching the keybindings for the current view, then
 the keybindings for the <strong>generic</strong> keymap, and last the default keybindings.
-Thus, the view keybindings shaddow the generic keybindings which shaddow the
+Thus, the view keybindings shadow the generic keybindings which Shadow the
 built-in keybindings.</p>
 <dl>
 <dt>
@@ -469,10 +471,18 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
-    view-help
+    view-tree
     </td>
     <td align="left">
-    Show help page
+    Show tree view
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    view-blob
+    </td>
+    <td align="left">
+    Show blob view
     </td>
   </tr>
   <tr>
@@ -481,6 +491,14 @@ cellspacing="0" cellpadding="4">
     </td>
     <td align="left">
     Show pager view
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    view-help
+    </td>
+    <td align="left">
+    Show help page
     </td>
   </tr>
 </tbody>
@@ -589,7 +607,7 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
-    move-page_down
+    move-page-down
     </td>
     <td align="left">
     Move cursor one page down
@@ -597,7 +615,7 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
-    move-page_up
+    move-page-up
     </td>
     <td align="left">
     Move cursor one page up
@@ -605,7 +623,7 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
-    move-first_line
+    move-first-line
     </td>
     <td align="left">
     Move cursor to first line
@@ -613,7 +631,7 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
-    move-last_line
+    move-last-line
     </td>
     <td align="left">
     Move cursor to last line
@@ -641,7 +659,7 @@ cellspacing="0" cellpadding="4">
 <tbody valign="top">
   <tr>
     <td align="left">
-    scroll-line_up
+    scroll-line-up
     </td>
     <td align="left">
     Scroll one line up
@@ -649,7 +667,7 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
-    scroll-line_down
+    scroll-line-down
     </td>
     <td align="left">
     Scroll one line down
@@ -657,7 +675,7 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
-    scroll-page_up
+    scroll-page-eup
     </td>
     <td align="left">
     Scroll one page up
@@ -665,7 +683,7 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
-    scroll-page_down
+    scroll-page-down
     </td>
     <td align="left">
     Scroll one page down
@@ -693,18 +711,18 @@ cellspacing="0" cellpadding="4">
 <tbody valign="top">
   <tr>
     <td align="left">
-    prompt
+    none
     </td>
     <td align="left">
-    Bring up the prompt
+    Do nothing
     </td>
   </tr>
   <tr>
     <td align="left">
-    screen-update
+    prompt
     </td>
     <td align="left">
-    Update the screen
+    Bring up the prompt
     </td>
   </tr>
   <tr>
@@ -749,7 +767,7 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
-    toggle-rev_graph
+    toggle-rev-graph
     </td>
     <td align="left">
     Toggle revision graph visualization
@@ -763,7 +781,7 @@ cellspacing="0" cellpadding="4">
 <div class="sectionbody">
 <p>Color commands control highlighting and the user interface styles. If your
 terminal supports color, these commands can be used to assign foreground and
-backgound combinations to certain areas. Optionally, an attribute can be given
+background combinations to certain areas. Optionally, an attribute can be given
 as the last parameter. The syntax is:</p>
 <div class="verseblock">
 <div class="content">        <strong>color</strong> <em>area</em> <em>fgcolor</em> <em>bgcolor</em> <em>[attributes]</em></div></div>
@@ -828,7 +846,7 @@ Title window colors
 </dt>
 <dd>
 <p>
-Appearence of the title windows when they are attached
+Appearance of the title windows when they are attached
 to any backgrounded windows and the current window.
 </p>
 <p><strong>title-blur</strong>, <strong>title-focus</strong></p>
@@ -885,7 +903,7 @@ Pretty print commit headers
 <p>
 Commit diffs and the revision logs are usually formatted using pretty printed
 headers , unless <tt>--pretty=raw</tt> was given. This includes lines, such as merge
-info, commit ID, and author and comitter date.
+info, commit ID, and author and committer date.
 </p>
 <p><strong>pp-author</strong>, <strong>pp-commit</strong>, <strong>pp-merge</strong>, <strong>pp-date</strong>, <strong>pp-adate</strong>, <strong>pp-cdate</strong></p>
 </dd>
@@ -904,9 +922,9 @@ Commit message
 </dt>
 <dd>
 <p>
-For now only <tt>Signed-off-by</tt> lines are colorized.
+For now only <tt>Signed-off-by</tt> and <tt>Acked-by</tt> lines are colorized.
 </p>
-<p><strong>signoff</strong></p>
+<p><strong>signoff</strong>, <strong>acked</strong></p>
 </dd>
 </dl>
 </div>
@@ -921,7 +939,7 @@ For now only <tt>Signed-off-by</tt> lines are colorized.
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 03-Sep-2006 22:04:39 CEST
+Last updated 18-Sep-2006 18:23:53 CEST
 </div>
 </div>
 </body>

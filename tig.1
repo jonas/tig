@@ -24,10 +24,10 @@ tig \- text-mode interface for git
 
 .nf
 tig [options]
-tig [options] [\-\-] [git log options]
-tig [options] log  [git log options]
-tig [options] diff [git diff options]
-tig [options] show [git show options]
+tig [options] [\-\-] [git options]
+tig [options] log  [git options]
+tig [options] diff [git options]
+tig [options] show [git options]
 tig [options] <    [git command output]
 .fi
 
@@ -77,19 +77,19 @@ $ tig \-\- \-\-since=1\&.month
 .fi
 
 .TP
-log [git log options]
+log
 Open log view using the given git log options\&.
 
 .TP
-diff [git diff options]
+diff
 Open diff view using the given git diff options\&.
 
 .TP
-show [git show options]
+show
 Open diff view using the given git show options\&.
 
 .TP
-[git log options]
+[git options]
 tig(1) will stop the option parsing when the first command line parameter not starting with "\-" is encountered\&. All options including this one will be passed to git log when loading the main view\&. This makes it possible to say:
 
 .nf
@@ -114,6 +114,16 @@ The command used for the log view\&. If you prefer to have both author and commi
 TIG_MAIN_CMD
 The command used for the main view\&. Note, you must always specify the option: \-\-pretty=raw since the main view parser expects to read that format\&.
 
+.SS "Tree commands"
+
+.TP
+TIG_TREE_CMD
+The command used for the tree view\&. By default, git\-ls\-tree(1) is used\&. The commands should expect first the commit ID and second a path\&.
+
+.TP
+TIG_BLOB_CMD
+The command used for the blob view\&. By default, git\-cat\-file(1) is used\&. The command gets the blob ID\&.
+
 .SH "FILES"
 
 .TP
@@ -122,7 +132,7 @@ User configuration file\&. See \fBtigrc\fR(5) for examples\&.
 
 .TP
 \fI\&.git/config\fR
-Repository config file\&. Read on startup with the help of git\-repo\-config(1)\&.
+Repository config file\&. Read on start\-up with the help of git\-repo\-config(1)\&.
 
 .SH "BUGS"
 
@@ -131,13 +141,10 @@ Known bugs and problems:
 
 .TP 3
 \(bu
-In it's current state tig is pretty much UTF\-8 only\&.
+Proper locale support: in it's current state tig is pretty much UTF\-8 only\&.
 .TP
 \(bu
-If the screen width is very small the main view can draw outside the current view causing bad wrapping\&. Same goes for title and status windows\&.
-.TP
-\(bu
-The cursor can wrap\-around on the last line and cause the window to scroll\&.
+Horizontal scrolling\&.
 .LP
 
 .SH "COPYRIGHT"

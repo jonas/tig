@@ -355,6 +355,11 @@ commit with the log message, diffstat, and the diff.</p>
 <a href="#view-scrolling">Scrolling</a>
 </p>
 </li>
+<li>
+<p>
+<a href="#searching">Searching</a>
+</p>
+</li>
 </ul>
 </li>
 <li>
@@ -530,7 +535,7 @@ and the diff view in the bottom window. You can switch between the two views
 by pressing <em>Tab</em>. To maximize the log view again, simply press <em>l</em>.</p>
 <h3><a id="commit-id"></a>3.1. Current Head and Commit ID</h3>
 <p>The viewer keeps track of both what head and commit ID you are currently
-viewing. The commit ID will follow the cursor line and change everytime time
+viewing. The commit ID will follow the cursor line and change every time
 you highlight a different commit. Whenever you reopen the diff view it will be
 reloaded, if the commit ID changed.</p>
 <p>The head ID is used when opening the main and log view to indicate from what
@@ -567,6 +572,25 @@ The diff view
         Shows either the diff of the current working tree, that is, what
         has changed since the last commit, or the commit diff complete
         with log message, diffstat and diff.
+</p>
+</dd>
+<dt>
+The tree view
+</dt>
+<dd>
+<p>
+        Lists directory trees associated with the current revision allowing
+        subdirectories to be descended or ascended and file blobs to be
+        viewed.
+</p>
+</dd>
+<dt>
+The blob view
+</dt>
+<dd>
+<p>
+        Displays the file content or "blob" of data associated with a file
+        name.
 </p>
 </dd>
 <dt>
@@ -657,7 +681,23 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
-    h, ?
+    t
+    </td>
+    <td align="left">
+    Switch to (directory) tree view.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    f
+    </td>
+    <td align="left">
+    Switch to (file) blob view.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    h
     </td>
     <td align="left">
     Show man page.
@@ -713,7 +753,7 @@ cellspacing="0" cellpadding="4">
     Up
     </td>
     <td align="left">
-    This key is "context sensitive" and will move the cursor one         line up. However, uf you opened a diff view from the main view         (split- or full-screen) it will change the cursor to point to         the previous commit in the main view and update the diff view         to display it.
+    This key is "context sensitive" and will move the cursor one         line up. However, if you opened a diff view from the main view         (split- or full-screen) it will change the cursor to point to         the previous commit in the main view and update the diff view         to display it.
     </td>
   </tr>
   <tr>
@@ -849,7 +889,60 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<h3><a id="misc-keys"></a>4.5. Misc</h3>
+<h3><a id="searching"></a>4.5. Searching</h3>
+<div class="tableblock">
+<table rules="none"
+frame="hsides"
+cellspacing="0" cellpadding="4">
+<col width="91" />
+<col width="788" />
+<thead>
+  <tr>
+    <th align="left">
+    Key
+    </th>
+    <th align="left">
+    Action
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    /
+    </td>
+    <td align="left">
+    Search the view. Opens a prompt for entering search regex to use.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    ?
+    </td>
+    <td align="left">
+    Search backwards in the view. Also prompts for regex.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    n
+    </td>
+    <td align="left">
+    Find next match for the current search regex.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    N
+    </td>
+    <td align="left">
+    Find previous match for the current search regex.
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<h3><a id="misc-keys"></a>4.6. Misc</h3>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -901,7 +994,7 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
-    n
+    <em>.</em>
     </td>
     <td align="left">
     Toggle line numbers on/off.
@@ -931,7 +1024,7 @@ cellspacing="0" cellpadding="4">
 <div class="sectionbody">
 <p>This section describes various ways to specify what revisions to display or
 otherwise limit the view to. Tig does not itself parse the described
-revision options so refer to the relevant git man pages for futher
+revision options so refer to the relevant git man pages for further
 information. Relevant man pages besides git-log(1) are git-diff(1) and
 git-rev-list(1).</p>
 <p>You can tune the interaction with git by making use of the options explained
@@ -1034,20 +1127,12 @@ accomplished using:</p>
 <ul>
 <li>
 <p>
-In it's current state tig is pretty much UTF-8 only.
+Proper locale support: in it's current state tig is pretty much UTF-8 only.
 </p>
 </li>
 <li>
 <p>
-If the screen width is very small the main view can draw
-   outside the current view causing bad wrapping. Same goes
-   for title and status windows.
-</p>
-</li>
-<li>
-<p>
-The cursor can wrap-around on the last line and cause the
-   window to scroll.
+Horizontal scrolling.
 </p>
 </li>
 </ul>
@@ -1137,7 +1222,7 @@ gitview(1)
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 15-Jun-2006 01:28:21 CEST
+Last updated 18-Sep-2006 18:23:56 CEST
 </div>
 </div>
 </body>

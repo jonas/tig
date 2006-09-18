@@ -77,7 +77,7 @@ The following variables can be set:
 
 .TP
 \fIshow\-rev\-graph\fR (bool)
-Show revision graph in the main view on startup\&. Can be toggled with \fIg\fR\&.
+Show revision graph in the main view on start\-up\&. Can be toggled with \fIg\fR\&.
 
 .TP
 \fIline\-number\-interval\fR (int)
@@ -111,10 +111,12 @@ Examples:
         bind diff a previous
         bind diff d next
         bind diff b move\-first\-line
+        # 'unbind' the default quit key binding
+        bind main Q none
 .fi
 
 
-Keys are mapped by first searching the keybindings for the current view, then the keybindings for the \fIgeneric\fR keymap, and last the default keybindings\&. Thus, the view keybindings shaddow the generic keybindings which shaddow the built\-in keybindings\&.
+Keys are mapped by first searching the keybindings for the current view, then the keybindings for the \fIgeneric\fR keymap, and last the default keybindings\&. Thus, the view keybindings shadow the generic keybindings which Shadow the built\-in keybindings\&.
 
 .TP
 Keymaps
@@ -139,8 +141,10 @@ View switching:
 view\-main               Show main view
 view\-diff               Show diff view
 view\-log                Show log view
-view\-help               Show help page
+view\-tree               Show tree view
+view\-blob               Show blob view
 view\-pager              Show pager view
+view\-help               Show help page
 .fi
 
 
@@ -161,40 +165,40 @@ Cursor navigation:
 .nf
 move\-up                 Move cursor one line up
 move\-down               Move cursor one line down
-move\-page_down          Move cursor one page down
-move\-page_up            Move cursor one page up
-move\-first_line         Move cursor to first line
-move\-last_line          Move cursor to last line
+move\-page\-down          Move cursor one page down
+move\-page\-up            Move cursor one page up
+move\-first\-line         Move cursor to first line
+move\-last\-line          Move cursor to last line
 .fi
 
 
 Scrolling:
 
 .nf
-scroll\-line_up          Scroll one line up
-scroll\-line_down        Scroll one line down
-scroll\-page_up          Scroll one page up
-scroll\-page_down        Scroll one page down
+scroll\-line\-up          Scroll one line up
+scroll\-line\-down        Scroll one line down
+scroll\-page\-eup         Scroll one page up
+scroll\-page\-down        Scroll one page down
 .fi
 
 
 Misc:
 
 .nf
+none                    Do nothing
 prompt                  Bring up the prompt
-screen\-update           Update the screen
 screen\-redraw           Redraw the screen
 screen\-resize           Resize the screen
 show\-version            Show version information
 stop\-loading            Stop all loading views
 toggle\-lineno           Toggle line numbers
-toggle\-rev_graph        Toggle revision graph visualization
+toggle\-rev\-graph        Toggle revision graph visualization
 .fi
 
 .SH "COLOR COMMAND"
 
 
-Color commands control highlighting and the user interface styles\&. If your terminal supports color, these commands can be used to assign foreground and backgound combinations to certain areas\&. Optionally, an attribute can be given as the last parameter\&. The syntax is:
+Color commands control highlighting and the user interface styles\&. If your terminal supports color, these commands can be used to assign foreground and background combinations to certain areas\&. Optionally, an attribute can be given as the last parameter\&. The syntax is:
 
 .nf
         \fIcolor\fR \fIarea\fR \fIfgcolor\fR \fIbgcolor\fR \fI[attributes]\fR
@@ -237,7 +241,7 @@ Appearance of the bottom window showing info messages\&.
 
 .TP
 Title window colors
-Appearence of the title windows when they are attached to any backgrounded windows and the current window\&.
+Appearance of the title windows when they are attached to any backgrounded windows and the current window\&.
 
 \fItitle\-blur\fR, \fItitle\-focus\fR
 
@@ -270,7 +274,7 @@ Extra diff information emitted by the git diff machinery, such as mode changes, 
 
 .TP
 Pretty print commit headers
-Commit diffs and the revision logs are usually formatted using pretty printed headers , unless \-\-pretty=raw was given\&. This includes lines, such as merge info, commit ID, and author and comitter date\&.
+Commit diffs and the revision logs are usually formatted using pretty printed headers , unless \-\-pretty=raw was given\&. This includes lines, such as merge info, commit ID, and author and committer date\&.
 
 \fIpp\-author\fR, \fIpp\-commit\fR, \fIpp\-merge\fR, \fIpp\-date\fR, \fIpp\-adate\fR, \fIpp\-cdate\fR
 
@@ -282,9 +286,9 @@ Usually shown when \-\-pretty=raw is given, however \fIcommit\fR is pretty much 
 
 .TP
 Commit message
-For now only Signed\-off\-by lines are colorized\&.
+For now only Signed\-off\-by and Acked\-by lines are colorized\&.
 
-\fIsignoff\fR
+\fIsignoff\fR, \fIacked\fR
 
 .SH "COPYRIGHT"
 
