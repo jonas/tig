@@ -1368,8 +1368,8 @@ update_view_title(struct view *view)
 	else
 		wbkgdset(view->title, get_line_attr(LINE_TITLE_BLUR));
 
-	werase(view->title);
 	mvwaddnstr(view->title, 0, 0, buf, bufpos);
+	wclrtoeol(view->title);
 	wmove(view->title, 0, view->width - 1);
 
 	if (input_mode)
@@ -3148,7 +3148,6 @@ report(const char *msg, ...)
 
 		va_start(args, msg);
 
-		werase(status_win);
 		wmove(status_win, 0, 0);
 		if (*msg) {
 			vwprintw(status_win, msg, args);
@@ -3156,6 +3155,7 @@ report(const char *msg, ...)
 		} else {
 			status_empty = TRUE;
 		}
+		wclrtoeol(status_win);
 		wrefresh(status_win);
 
 		va_end(args);
