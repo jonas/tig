@@ -9,10 +9,10 @@ SYNOPSIS
 --------
 [verse]
 tig [options]
-tig [options] [--] [git log options]
-tig [options] log  [git log options]
-tig [options] diff [git diff options]
-tig [options] show [git show options]
+tig [options] [--] [git options]
+tig [options] log  [git options]
+tig [options] diff [git options]
+tig [options] show [git options]
 tig [options] <    [git command output]
 
 DESCRIPTION
@@ -55,16 +55,16 @@ OPTIONS
 
 		$ tig -- --since=1.month
 
-log [git log options]::
+log::
 	Open log view using the given git log options.
 
-diff [git diff options]::
+diff::
 	Open diff view using the given git diff options.
 
-show [git show options]::
+show::
 	Open diff view using the given git show options.
 
-[git log options]::
+[git options]::
 	tig(1) will stop the option parsing when the first
 	command line parameter not starting with "-" is
 	encountered. All options including this one will be
@@ -93,13 +93,24 @@ TIG_MAIN_CMD::
 	the option: `--pretty=raw` since the main view parser expects to
 	read that format.
 
+Tree commands
+~~~~~~~~~~~~~
+TIG_TREE_CMD::
+    The command used for the tree view. By default, git-ls-tree(1) is
+    used. The commands should expect first the commit ID and second
+    a path.
+                                                                    
+TIG_BLOB_CMD::
+    The command used for the blob view. By default, git-cat-file(1) is
+    used. The command gets the blob ID.
+
 FILES
 -----
 '~/.tigrc'::
 	User configuration file. See gitlink:tigrc[5] for examples.
 
 '.git/config'::
-	Repository config file. Read on startup with the help of
+	Repository config file. Read on start-up with the help of
 	git-repo-config(1).
 
 include::BUGS[]

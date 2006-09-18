@@ -144,7 +144,7 @@ Current Head and Commit ID
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The viewer keeps track of both what head and commit ID you are currently
-viewing. The commit ID will follow the cursor line and change everytime time
+viewing. The commit ID will follow the cursor line and change every time
 you highlight a different commit. Whenever you reopen the diff view it will be
 reloaded, if the commit ID changed.
 
@@ -172,6 +172,15 @@ The diff view::
 	Shows either the diff of the current working tree, that is, what
 	has changed since the last commit, or the commit diff complete
 	with log message, diffstat and diff.
+
+The tree view::
+	Lists directory trees associated with the current revision allowing
+	subdirectories to be descended or ascended and file blobs to be
+	viewed.
+
+The blob view::
+	Displays the file content or "blob" of data associated with a file
+	name.
 
 The pager view::
 	Is used for displaying both input from stdin and output from git
@@ -215,7 +224,9 @@ m	Switch to main view.
 d	Switch to diff view.
 l	Switch to log view.
 p	Switch to pager view.
-h, ?	Show man page.
+t	Switch to (directory) tree view.
+f	Switch to (file) blob view.
+h	Show man page.
 -----------------------------------------------------------------------------
 
 [[view-manipulation]]
@@ -234,7 +245,7 @@ Enter	This key is "context sensitive" depending on what view you are \
 	pressing Enter will simply scroll the view one line down.
 Tab	Switch to next view.
 Up	This key is "context sensitive" and will move the cursor one \
-	line up. However, uf you opened a diff view from the main view \
+	line up. However, if you opened a diff view from the main view \
 	(split- or full-screen) it will change the cursor to point to \
 	the previous commit in the main view and update the diff view \
 	to display it.
@@ -270,6 +281,19 @@ w	Scroll view one page up.
 s	Scroll view one page down.
 -----------------------------------------------------------------------------
 
+[[searching]]
+Searching
+~~~~~~~~~
+
+`-------`--------------------------------------------------------------------
+Key	Action
+-----------------------------------------------------------------------------
+/	Search the view. Opens a prompt for entering search regex to use.
+?	Search backwards in the view. Also prompts for regex.
+n	Find next match for the current search regex.
+N	Find previous match for the current search regex.
+-----------------------------------------------------------------------------
+
 [[misc-keys]]
 Misc
 ~~~~
@@ -283,7 +307,7 @@ z	Stop all background loading. This can be useful if you use \
 	tig in a repository with a long history without limiting \
 	the revision log.
 v	Show version.
-n	Toggle line numbers on/off.
+'.'	Toggle line numbers on/off.
 g	Toggle revision graph visualization on/off.
 ':'	Open prompt. This allows you to specify what git command \
 	to run. Example `:log -p`
@@ -295,7 +319,7 @@ Revision Specification
 
 This section describes various ways to specify what revisions to display or
 otherwise limit the view to. Tig does not itself parse the described
-revision options so refer to the relevant git man pages for futher
+revision options so refer to the relevant git man pages for further
 information. Relevant man pages besides git-log(1) are git-diff(1) and
 git-rev-list(1).
 
