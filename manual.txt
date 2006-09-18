@@ -120,6 +120,19 @@ TIG_MAIN_CMD::
 	the option: `--pretty=raw` since the main view parser expects to
 	read that format.
 
+[[tree-commands]]
+Tree Commands
+~~~~~~~~~~~~~
+
+TIG_TREE_CMD::
+	The command used for the tree view. Takes two arguments, the first
+	is the revision ID and the second is the path of the directory tree,
+	empty for the root directory. Defaults to "git ls-tree %s %s".
+
+TIG_BLOB_CMD::
+	The command used for the blob view. Takes one argument which is
+	the blob ID. Defaults to "git cat-file blob %s".
+
 [[viewer]]
 The Viewer
 ----------
