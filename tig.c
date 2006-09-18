@@ -451,6 +451,14 @@ parse_options(int argc, char *argv[])
 	for (i = 1; i < argc; i++) {
 		char *opt = argv[i];
 
+		if (!strcmp(opt, "log") ||
+		    !strcmp(opt, "diff") ||
+		    !strcmp(opt, "show")) {
+			opt_request = opt[0] == 'l'
+				    ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
+			break;
+		}
+
 		if (opt[0] && opt[0] != '-')
 			break;
 
@@ -486,14 +494,6 @@ parse_options(int argc, char *argv[])
 
 		if (!strcmp(opt, "--")) {
 			i++;
-			break;
-		}
-
-		if (!strcmp(opt, "log") ||
-		    !strcmp(opt, "diff") ||
-		    !strcmp(opt, "show")) {
-			opt_request = opt[0] == 'l'
-				    ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
 			break;
 		}
 
