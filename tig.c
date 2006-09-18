@@ -3269,12 +3269,12 @@ read_prompt(const char *prompt)
 		}
 	}
 
-	if (status == CANCEL) {
-		/* Clear the status window */
-		status_empty = FALSE;
-		report("");
+	/* Clear the status window */
+	status_empty = FALSE;
+	report("");
+
+	if (status == CANCEL)
 		return NULL;
-	}
 
 	buf[pos++] = 0;
 
