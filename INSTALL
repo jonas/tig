@@ -14,6 +14,11 @@ To install documentation run:
 
 	$ make install-docs
 
+Edit the Makefile if you need to configure specific compiler or linker flags.
+On FreeBSD for example the c library does not support the iconv interface and
+to compile tig you need to append `-L/usr/local/lib -liconv` to `LDLIBS` and
+`-I/usr/local/include` to the `CFLAGS` variable.
+
 The following tools and packages are needed:
 
 `-------------------------------`----------------------------------------------
@@ -23,5 +28,8 @@ git-core			Tig is just a frontend for git.
 ncurses				Be sure to also have development files \
 				installed. Usually they are available in a \
 				separate package ending with `-dev`.
+iconv				If iconv is not provided by the c library \
+				you need to change the Makefile to link it \
+				into the binary.
 asciidoc (>= 7.0), xmlto	For building documentation. (Optional)
 -------------------------------------------------------------------------------
