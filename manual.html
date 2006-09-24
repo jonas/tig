@@ -306,6 +306,11 @@ commit with the log message, diffstat, and the diff.</p>
 <a href="#history-commands">History Commands</a>
 </p>
 </li>
+<li>
+<p>
+<a href="#tree-commands">Tree Commands</a>
+</p>
+</li>
 </ul>
 </li>
 <li>
@@ -515,6 +520,28 @@ TIG_MAIN_CMD
         The command used for the main view. Note, you must always specify
         the option: <tt>&#8212;pretty=raw</tt> since the main view parser expects to
         read that format.
+</p>
+</dd>
+</dl>
+<h3><a id="tree-commands"></a>2.3. Tree Commands</h3>
+<dl>
+<dt>
+TIG_TREE_CMD
+</dt>
+<dd>
+<p>
+        The command used for the tree view. Takes two arguments, the first
+        is the revision ID and the second is the path of the directory tree,
+        empty for the root directory. Defaults to "git ls-tree %s %s".
+</p>
+</dd>
+<dt>
+TIG_BLOB_CMD
+</dt>
+<dd>
+<p>
+        The command used for the blob view. Takes one argument which is
+        the blob ID. Defaults to "git cat-file blob %s".
 </p>
 </dd>
 </dl>
@@ -1164,27 +1191,28 @@ the Free Software Foundation; either version 2 of the License, or
 <ul>
 <li>
 <p>
-Homepage: <a href="http://jonas.nitro.dk/tig">http://jonas.nitro.dk/tig</a>
+Homepage:    <a href="http://jonas.nitro.dk/tig">http://jonas.nitro.dk/tig</a>
 </p>
 </li>
 <li>
 <p>
-Manual: <a href="http://jonas.nitro.dk/tig/manual.html">http://jonas.nitro.dk/tig/manual.html</a>
+Manual:      <a href="http://jonas.nitro.dk/tig/manual.html">http://jonas.nitro.dk/tig/manual.html</a>
 </p>
 </li>
 <li>
 <p>
-Releases: <a href="http://jonas.nitro.dk/tig/releases">http://jonas.nitro.dk/tig/releases</a>
+Releases:    <a href="http://jonas.nitro.dk/tig/releases">http://jonas.nitro.dk/tig/releases</a>
 </p>
 </li>
 <li>
 <p>
-Git URL:  <a href="http://jonas.nitro.dk/tig/tig.git">http://jonas.nitro.dk/tig/tig.git</a>
+Git URL:     <a href="http://jonas.nitro.dk/tig/tig.git">http://jonas.nitro.dk/tig/tig.git</a> or
+                git://repo.or.cz/tig.git
 </p>
 </li>
 <li>
 <p>
-Gitweb: <a href="http://pasky.or.cz/gitweb.cgi?p=tig.git;a=summary">http://pasky.or.cz/gitweb.cgi?p=tig.git;a=summary</a>
+Gitweb:      <a href="http://repo.or.cz/?p=tig.git;a=summary">http://repo.or.cz/?p=tig.git;a=summary</a>
 </p>
 </li>
 </ul>
@@ -1222,7 +1250,7 @@ gitview(1)
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 18-Sep-2006 18:23:56 CEST
+Last updated 25-Sep-2006 01:14:32 CEST
 </div>
 </div>
 </body>
