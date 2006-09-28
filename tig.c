@@ -767,10 +767,9 @@ static struct keybinding *keybindings[ARRAY_SIZE(keymap_table)];
 static void
 add_keybinding(enum keymap keymap, enum request request, int key)
 {
-	struct keybinding *keybinding = keybindings[keymap];
+	struct keybinding *keybinding;
 
-	if (!keybinding)
-		keybinding = calloc(1, sizeof(*keybinding));
+	keybinding = calloc(1, sizeof(*keybinding));
 	if (!keybinding)
 		die("Failed to allocate keybinding");
 
@@ -3532,6 +3531,8 @@ main(int argc, char *argv[])
 
 		/* Refresh, accept single keystroke of input */
 		key = wgetch(status_win);
+		if (key == ERR)
+			continue;
 
 		request = get_keybinding(display[current_view]->keymap, key);
 
