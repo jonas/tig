@@ -2887,13 +2887,19 @@ main_read(struct view *view, char *line)
 
 		/* Require titles to start with a non-space character at the
 		 * offset used by git log. */
-		/* FIXME: More gracefull handling of titles; append "..." to
-		 * shortened titles, etc. */
-		if (strncmp(line, "    ", 4) ||
-		    isspace(line[4]))
+		if (strncmp(line, "    ", 4))
 			break;
+		line += 4;
+		/* Well, if the title starts with a whitespace character,
+		 * try to be forgiving.  Otherwise we end up with no title. */
+		while (isspace(*line))
+			line++;
+		if (*line == '\0')
+			break;
+		/* FIXME: More graceful handling of titles; append "..." to
+		 * shortened titles, etc. */
 
-		string_copy(commit->title, line + 4);
+		string_copy(commit->title, line);
 	}
 
 	return TRUE;
