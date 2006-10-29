@@ -2683,7 +2683,7 @@ static struct view_ops blob_ops = {
 
 struct commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
-	char title[75];			/* First line of the commit message. */
+	char title[128];		/* First line of the commit message. */
 	char author[75];		/* Author of the commit. */
 	struct tm time;			/* Date from the author ident. */
 	struct ref **refs;		/* Repository references. */
