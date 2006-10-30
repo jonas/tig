@@ -2,4 +2,6 @@ BUGS
 ----
 Known bugs and problems:
 
- - In it's current state tig is pretty much UTF-8 only.
+ - Proper locale support: in it's current state tig is pretty much UTF-8 only.
+
+ - Horizontal scrolling.

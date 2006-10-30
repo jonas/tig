@@ -12,7 +12,7 @@
  */
 
 #ifndef	VERSION
-#define VERSION	"tig-0.4.git"
+#define VERSION	"tig-0.5.git"
 #endif
 
 #ifndef DEBUG
@@ -460,6 +460,17 @@ parse_options(int argc, char *argv[])
 	for (i = 1; i < argc; i++) {
 		char *opt = argv[i];
 
+		if (!strcmp(opt, "log") ||
+		    !strcmp(opt, "diff") ||
+		    !strcmp(opt, "show")) {
+			opt_request = opt[0] == 'l'
+				    ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
+			break;
+		}
+
+		if (opt[0] && opt[0] != '-')
+			break;
+
 		if (!strcmp(opt, "-l")) {
 			opt_request = REQ_VIEW_LOG;
 			continue;
@@ -494,17 +505,6 @@ parse_options(int argc, char *argv[])
 			i++;
 			break;
 		}
-
-		if (!strcmp(opt, "log") ||
-		    !strcmp(opt, "diff") ||
-		    !strcmp(opt, "show")) {
-			opt_request = opt[0] == 'l'
-				    ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
-			break;
-		}
-
-		if (opt[0] && opt[0] != '-')
-			break;
 
 		die("unknown option '%s'\n\n%s", opt, usage);
 	}
@@ -738,9 +738,6 @@ static struct keybinding default_keybindings[] = {
 	{ '.',		REQ_TOGGLE_LINENO },
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
 	{ ':',		REQ_PROMPT },
-
-	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
-	{ ERR,		REQ_NONE },
 
 	/* Using the ncurses SIGWINCH handler. */
 	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
@@ -1173,6 +1170,9 @@ struct view_ops;
 static struct view *display[2];
 static unsigned int current_view;
 
+/* Reading from the prompt? */
+static bool input_mode = FALSE;
+
 #define foreach_displayed_view(view, i) \
 	for (i = 0; i < ARRAY_SIZE(display) && (view = display[i]); i++)
 
@@ -1310,7 +1310,10 @@ redraw_view_from(struct view *view, int lineno)
 	}
 
 	redrawwin(view->win);
-	wrefresh(view->win);
+	if (input_mode)
+		wnoutrefresh(view->win);
+	else
+		wrefresh(view->win);
 }
 
 static void
@@ -1370,10 +1373,14 @@ update_view_title(struct view *view)
 	else
 		wbkgdset(view->title, get_line_attr(LINE_TITLE_BLUR));
 
-	werase(view->title);
 	mvwaddnstr(view->title, 0, 0, buf, bufpos);
+	wclrtoeol(view->title);
 	wmove(view->title, 0, view->width - 1);
-	wrefresh(view->title);
+
+	if (input_mode)
+		wnoutrefresh(view->title);
+	else
+		wrefresh(view->title);
 }
 
 static void
@@ -1876,7 +1883,7 @@ update_view(struct view *view)
 
 			size_t ret;
 
-			ret = iconv(opt_iconv, &inbuf, &inlen, &outbuf, &outlen);
+			ret = iconv(opt_iconv, (const char **) &inbuf, &inlen, &outbuf, &outlen);
 			if (ret != (size_t) -1) {
 				line = out_buffer;
 				linelen = strlen(out_buffer);
@@ -2586,7 +2593,7 @@ tree_read(struct view *view, char *text)
 static bool
 tree_enter(struct view *view, struct line *line)
 {
-	enum open_flags flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
+	enum open_flags flags;
 	enum request request;
 
 	switch (line->type) {
@@ -2616,11 +2623,12 @@ tree_enter(struct view *view, struct line *line)
 
 		/* Trees and subtrees share the same ID, so they are not not
 		 * unique like blobs. */
-		flags |= OPEN_RELOAD;
+		flags = OPEN_RELOAD;
 		request = REQ_VIEW_TREE;
 		break;
 
 	case LINE_TREE_FILE:
+		flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
 		request = REQ_VIEW_BLOB;
 		break;
 
@@ -2689,7 +2697,7 @@ static struct view_ops blob_ops = {
 
 struct commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
-	char title[75];			/* First line of the commit message. */
+	char title[128];		/* First line of the commit message. */
 	char author[75];		/* Author of the commit. */
 	struct tm time;			/* Date from the author ident. */
 	struct ref **refs;		/* Repository references. */
@@ -3104,13 +3112,19 @@ main_read(struct view *view, char *line)
 
 		/* Require titles to start with a non-space character at the
 		 * offset used by git log. */
-		/* FIXME: More gracefull handling of titles; append "..." to
-		 * shortened titles, etc. */
-		if (strncmp(line, "    ", 4) ||
-		    isspace(line[4]))
+		if (strncmp(line, "    ", 4))
 			break;
+		line += 4;
+		/* Well, if the title starts with a whitespace character,
+		 * try to be forgiving.  Otherwise we end up with no title. */
+		while (isspace(*line))
+			line++;
+		if (*line == '\0')
+			break;
+		/* FIXME: More graceful handling of titles; append "..." to
+		 * shortened titles, etc. */
 
-		string_copy(commit->title, line + 4);
+		string_copy(commit->title, line);
 	}
 
 	return TRUE;
@@ -3345,26 +3359,30 @@ static bool cursed = FALSE;
 /* The status window is used for polling keystrokes. */
 static WINDOW *status_win;
 
+static bool status_empty = TRUE;
+
 /* Update status and title window. */
 static void
 report(const char *msg, ...)
 {
-	static bool empty = TRUE;
 	struct view *view = display[current_view];
 
-	if (!empty || *msg) {
+	if (input_mode)
+		return;
+
+	if (!status_empty || *msg) {
 		va_list args;
 
 		va_start(args, msg);
 
-		werase(status_win);
 		wmove(status_win, 0, 0);
 		if (*msg) {
 			vwprintw(status_win, msg, args);
-			empty = FALSE;
+			status_empty = FALSE;
 		} else {
-			empty = TRUE;
+			status_empty = TRUE;
 		}
+		wclrtoeol(status_win);
 		wrefresh(status_win);
 
 		va_end(args);
@@ -3434,10 +3452,16 @@ read_prompt(const char *prompt)
 		struct view *view;
 		int i, key;
 
+		input_mode = TRUE;
+
 		foreach_view (view, i)
 			update_view(view);
 
-		report("%s%.*s", prompt, pos, buf);
+		input_mode = FALSE;
+
+		mvwprintw(status_win, 0, 0, "%s%.*s", prompt, pos, buf);
+		wclrtoeol(status_win);
+
 		/* Refresh, accept single keystroke of input */
 		key = wgetch(status_win);
 		switch (key) {
@@ -3472,11 +3496,12 @@ read_prompt(const char *prompt)
 		}
 	}
 
-	if (status == CANCEL) {
-		/* Clear the status window */
-		report("");
+	/* Clear the status window */
+	status_empty = FALSE;
+	report("");
+
+	if (status == CANCEL)
 		return NULL;
-	}
 
 	buf[pos++] = 0;
 
@@ -3734,6 +3759,13 @@ main(int argc, char *argv[])
 
 		/* Refresh, accept single keystroke of input */
 		key = wgetch(status_win);
+
+		/* wgetch() with nodelay() enabled returns ERR when there's no
+		 * input. */
+		if (key == ERR) {
+			request = REQ_NONE;
+			continue;
+		}
 
 		request = get_keybinding(display[current_view]->keymap, key);
 
