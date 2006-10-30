@@ -2580,7 +2580,7 @@ tree_read(struct view *view, char *text)
 static bool
 tree_enter(struct view *view, struct line *line)
 {
-	enum open_flags flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
+	enum open_flags flags;
 	enum request request;
 
 	switch (line->type) {
@@ -2610,11 +2610,12 @@ tree_enter(struct view *view, struct line *line)
 
 		/* Trees and subtrees share the same ID, so they are not not
 		 * unique like blobs. */
-		flags |= OPEN_RELOAD;
+		flags = OPEN_RELOAD;
 		request = REQ_VIEW_TREE;
 		break;
 
 	case LINE_TREE_FILE:
+		flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
 		request = REQ_VIEW_BLOB;
 		break;
 
