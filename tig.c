@@ -2823,43 +2823,32 @@ main_read(struct view *view, char *line)
 
 	case LINE_AUTHOR:
 	{
+		/* Parse author lines where the name may be empty:
+		 *	author  <email@address.tld> 1138474660 +0100
+		 */
 		char *ident = line + STRING_SIZE("author ");
-		char *end = strchr(ident, '<');
+		char *nameend = strchr(ident, '<');
+		char *emailend = strchr(ident, '>');
 
-		if (!commit)
+		if (!commit || !nameend || !emailend)
 			break;
 
-		if (end) {
-			char *email = end + 1;
-
-			for (; end > ident && isspace(end[-1]); end--) ;
-
-			if (end == ident && *email) {
-				ident = email;
-				end = strchr(ident, '>');
-				for (; end > ident && isspace(end[-1]); end--) ;
-			}
-			*end = 0;
+		*nameend = *emailend = 0;
+		ident = chomp_string(ident);
+		if (!*ident) {
+			ident = chomp_string(nameend + 1);
+			if (!*ident)
+				ident = "Unknown";
 		}
-
-		/* End is NULL or ident meaning there's no author. */
-		if (end <= ident)
-			ident = "Unknown";
 
 		string_copy(commit->author, ident);
 
 		/* Parse epoch and timezone */
-		if (end) {
-			char *secs = strchr(end + 1, '>');
-			char *zone;
-			time_t time;
+		if (emailend[1] == ' ') {
+			char *secs = emailend + 2;
+			char *zone = strchr(secs, ' ');
+			time_t time = (time_t) atol(secs);
 
-			if (!secs || secs[1] != ' ')
-				break;
-
-			secs += 2;
-			time = (time_t) atol(secs);
-			zone = strchr(secs, ' ');
 			if (zone && strlen(zone) == STRING_SIZE(" +0700")) {
 				long tz;
 
@@ -2874,6 +2863,7 @@ main_read(struct view *view, char *line)
 
 				time -= tz;
 			}
+
 			gmtime_r(&time, &commit->time);
 		}
 		break;
