@@ -2311,7 +2311,7 @@ add_describe_ref(char *buf, size_t *bufpos, char *commit_id, const char *sep)
 	char *ref = NULL;
 	FILE *pipe;
 
-	if (!string_format(refbuf, "git describe %s", commit_id))
+	if (!string_format(refbuf, "git describe %s 2>/dev/null", commit_id))
 		return TRUE;
 
 	pipe = popen(refbuf, "r");
