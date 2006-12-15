@@ -10,7 +10,7 @@ Features that should be explored.
 	are both -1, then leaveok is set.  The two routines getsyx and setsyx
 	are designed  to  be used by a library routine, which manipulates
 	curses windows but does not want to change the current position of the
-	program’s cursor.  The library routine would call getsyx at the
+	program cursor.  The library routine would call getsyx at the
 	beginning, do its manipulation of its own windows, do a wnoutrefresh on
 	its windows, call  setsyx,  and then call doupdate.
 
@@ -18,3 +18,7 @@ Features that should be explored.
    heads and from which tags the commit is reachable, and perhaps which tag is
    the latest among the ones reachable from that commit, as part of the commit
    detail information you display on the lower pane (log/diff view).
+
+ - Use autoconf to check for iconv in libc and how it is declared (the
+   2nd argument is 'const' on FreeBSD / Mac OS X). Maybe also check for
+   the AsciiDoc and XmlTo document tools.
