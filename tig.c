@@ -1874,7 +1874,7 @@ update_view(struct view *view)
 
 			size_t ret;
 
-			ret = iconv(opt_iconv, (const char **) &inbuf, &inlen, &outbuf, &outlen);
+			ret = iconv(opt_iconv, &inbuf, &inlen, &outbuf, &outlen);
 			if (ret != (size_t) -1) {
 				line = out_buffer;
 				linelen = strlen(out_buffer);
