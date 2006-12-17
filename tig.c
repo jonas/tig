@@ -510,7 +510,7 @@ parse_options(int argc, char *argv[])
 		if (opt_request == REQ_VIEW_MAIN)
 			/* XXX: This is vulnerable to the user overriding
 			 * options required for the main view parser. */
-			string_copy(opt_cmd, "git log --stat --pretty=raw");
+			string_copy(opt_cmd, "git log --pretty=raw");
 		else
 			string_copy(opt_cmd, "git");
 		buf_size = strlen(opt_cmd);
@@ -524,7 +524,6 @@ parse_options(int argc, char *argv[])
 			die("command too long");
 
 		opt_cmd[buf_size] = 0;
-
 	}
 
 	if (*opt_encoding && strcasecmp(opt_encoding, "UTF-8"))
