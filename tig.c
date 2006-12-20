@@ -81,7 +81,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
 
 #define TIG_LS_REMOTE \
-	"git ls-remote . 2>/dev/null"
+	"git ls-remote $(git rev-parse --git-dir) 2>/dev/null"
 
 #define TIG_DIFF_CMD \
 	"git show --root --patch-with-stat --find-copies-harder -B -C %s 2>/dev/null"
