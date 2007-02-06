@@ -112,6 +112,7 @@ struct ref {
 	char *name;		/* Ref name; tag or head names are shortened. */
 	char id[SIZEOF_REV];	/* Commit SHA1 ID */
 	unsigned int tag:1;	/* Is it a tag? */
+	unsigned int remote:1;	/* Is it a remote ref? */
 	unsigned int next:1;	/* For ref lists: are there more refs? */
 };
 
@@ -576,6 +577,7 @@ LINE(MAIN_AUTHOR,  "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_COMMIT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(MAIN_DELIM,   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
+LINE(MAIN_REMOTE,  "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
 LINE(TREE_DIR,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL)
@@ -2352,7 +2354,8 @@ add_pager_refs(struct view *view, struct line *line)
 
 	do {
 		struct ref *ref = refs[refpos];
-		char *fmt = ref->tag ? "%s[%s]" : "%s%s";
+		char *fmt = ref->tag    ? "%s[%s]" :
+		            ref->remote ? "%s<%s>" : "%s%s";
 
 		if (!string_format_from(buf, &bufpos, fmt, sep, ref->name))
 			return;
@@ -2771,6 +2774,8 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 				;
 			else if (commit->refs[i]->tag)
 				wattrset(view->win, get_line_attr(LINE_MAIN_TAG));
+			else if (commit->refs[i]->remote)
+				wattrset(view->win, get_line_attr(LINE_MAIN_REMOTE));
 			else
 				wattrset(view->win, get_line_attr(LINE_MAIN_REF));
 			waddstr(view->win, "[");
@@ -3338,6 +3343,7 @@ read_ref(char *id, int idlen, char *name, int namelen)
 {
 	struct ref *ref;
 	bool tag = FALSE;
+	bool remote = FALSE;
 
 	if (!strncmp(name, "refs/tags/", STRING_SIZE("refs/tags/"))) {
 		/* Commits referenced by tags has "^{}" appended. */
@@ -3350,6 +3356,11 @@ read_ref(char *id, int idlen, char *name, int namelen)
 		tag = TRUE;
 		namelen -= STRING_SIZE("refs/tags/");
 		name	+= STRING_SIZE("refs/tags/");
+
+	} else if (!strncmp(name, "refs/remotes/", STRING_SIZE("refs/remotes/"))) {
+		remote = TRUE;
+		namelen -= STRING_SIZE("refs/remotes/");
+		name	+= STRING_SIZE("refs/remotes/");
 
 	} else if (!strncmp(name, "refs/heads/", STRING_SIZE("refs/heads/"))) {
 		namelen -= STRING_SIZE("refs/heads/");
@@ -3371,6 +3382,7 @@ read_ref(char *id, int idlen, char *name, int namelen)
 	strncpy(ref->name, name, namelen);
 	ref->name[namelen] = 0;
 	ref->tag = tag;
+	ref->remote = remote;
 	string_copy(ref->id, id);
 
 	return OK;
