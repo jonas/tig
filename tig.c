@@ -396,7 +396,7 @@ VERSION " (" __DATE__ ")\n"
 
 /* Option and state variables. */
 static bool opt_line_number		= FALSE;
-static bool opt_rev_graph		= TRUE;
+static bool opt_rev_graph		= FALSE;
 static int opt_num_interval		= NUMBER_INTERVAL;
 static int opt_tab_size			= TABSIZE;
 static enum request opt_request		= REQ_VIEW_MAIN;
