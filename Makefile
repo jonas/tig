@@ -4,7 +4,7 @@ mandir = $(prefix)/man
 docdir = $(prefix)/share/doc
 # DESTDIR=
 
-LDLIBS  = -lcurses
+LDLIBS  = -lcurses -liconv
 CFLAGS	= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig

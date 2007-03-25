@@ -90,7 +90,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
 
 #define TIG_LS_REMOTE \
-	"git ls-remote . 2>/dev/null"
+	"git ls-remote $(git rev-parse --git-dir) 2>/dev/null"
 
 #define TIG_DIFF_CMD \
 	"git show --root --patch-with-stat --find-copies-harder -B -C %s 2>/dev/null"
@@ -121,6 +121,7 @@ struct ref {
 	char *name;		/* Ref name; tag or head names are shortened. */
 	char id[SIZEOF_REV];	/* Commit SHA1 ID */
 	unsigned int tag:1;	/* Is it a tag? */
+	unsigned int remote:1;	/* Is it a remote ref? */
 	unsigned int next:1;	/* For ref lists: are there more refs? */
 };
 
@@ -519,7 +520,7 @@ parse_options(int argc, char *argv[])
 		if (opt_request == REQ_VIEW_MAIN)
 			/* XXX: This is vulnerable to the user overriding
 			 * options required for the main view parser. */
-			string_copy(opt_cmd, "git log --stat --pretty=raw");
+			string_copy(opt_cmd, "git log --pretty=raw");
 		else
 			string_copy(opt_cmd, "git");
 		buf_size = strlen(opt_cmd);
@@ -533,7 +534,6 @@ parse_options(int argc, char *argv[])
 			die("command too long");
 
 		opt_cmd[buf_size] = 0;
-
 	}
 
 	if (*opt_encoding && strcasecmp(opt_encoding, "UTF-8"))
@@ -586,6 +586,7 @@ LINE(MAIN_AUTHOR,  "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_COMMIT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(MAIN_DELIM,   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
+LINE(MAIN_REMOTE,  "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
 LINE(TREE_DIR,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL)
@@ -1883,7 +1884,7 @@ update_view(struct view *view)
 
 			size_t ret;
 
-			ret = iconv(opt_iconv, (const char **) &inbuf, &inlen, &outbuf, &outlen);
+			ret = iconv(opt_iconv, &inbuf, &inlen, &outbuf, &outlen);
 			if (ret != (size_t) -1) {
 				line = out_buffer;
 				linelen = strlen(out_buffer);
@@ -2321,7 +2322,7 @@ add_describe_ref(char *buf, size_t *bufpos, char *commit_id, const char *sep)
 	char *ref = NULL;
 	FILE *pipe;
 
-	if (!string_format(refbuf, "git describe %s", commit_id))
+	if (!string_format(refbuf, "git describe %s 2>/dev/null", commit_id))
 		return TRUE;
 
 	pipe = popen(refbuf, "r");
@@ -2363,7 +2364,8 @@ add_pager_refs(struct view *view, struct line *line)
 
 	do {
 		struct ref *ref = refs[refpos];
-		char *fmt = ref->tag ? "%s[%s]" : "%s%s";
+		char *fmt = ref->tag    ? "%s[%s]" :
+		            ref->remote ? "%s<%s>" : "%s%s";
 
 		if (!string_format_from(buf, &bufpos, fmt, sep, ref->name))
 			return;
@@ -2978,6 +2980,8 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 				;
 			else if (commit->refs[i]->tag)
 				wattrset(view->win, get_line_attr(LINE_MAIN_TAG));
+			else if (commit->refs[i]->remote)
+				wattrset(view->win, get_line_attr(LINE_MAIN_REMOTE));
 			else
 				wattrset(view->win, get_line_attr(LINE_MAIN_REF));
 			waddstr(view->win, "[");
@@ -3044,46 +3048,35 @@ main_read(struct view *view, char *line)
 
 	case LINE_AUTHOR:
 	{
+		/* Parse author lines where the name may be empty:
+		 *	author  <email@address.tld> 1138474660 +0100
+		 */
 		char *ident = line + STRING_SIZE("author ");
-		char *end = strchr(ident, '<');
+		char *nameend = strchr(ident, '<');
+		char *emailend = strchr(ident, '>');
 
-		if (!commit)
+		if (!commit || !nameend || !emailend)
 			break;
 
 		update_rev_graph(graph);
 		graph = graph->next;
 
-		if (end) {
-			char *email = end + 1;
-
-			for (; end > ident && isspace(end[-1]); end--) ;
-
-			if (end == ident && *email) {
-				ident = email;
-				end = strchr(ident, '>');
-				for (; end > ident && isspace(end[-1]); end--) ;
-			}
-			*end = 0;
+		*nameend = *emailend = 0;
+		ident = chomp_string(ident);
+		if (!*ident) {
+			ident = chomp_string(nameend + 1);
+			if (!*ident)
+				ident = "Unknown";
 		}
-
-		/* End is NULL or ident meaning there's no author. */
-		if (end <= ident)
-			ident = "Unknown";
 
 		string_copy(commit->author, ident);
 
 		/* Parse epoch and timezone */
-		if (end) {
-			char *secs = strchr(end + 1, '>');
-			char *zone;
-			time_t time;
+		if (emailend[1] == ' ') {
+			char *secs = emailend + 2;
+			char *zone = strchr(secs, ' ');
+			time_t time = (time_t) atol(secs);
 
-			if (!secs || secs[1] != ' ')
-				break;
-
-			secs += 2;
-			time = (time_t) atol(secs);
-			zone = strchr(secs, ' ');
 			if (zone && strlen(zone) == STRING_SIZE(" +0700")) {
 				long tz;
 
@@ -3098,6 +3091,7 @@ main_read(struct view *view, char *line)
 
 				time -= tz;
 			}
+
 			gmtime_r(&time, &commit->time);
 		}
 		break;
@@ -3573,6 +3567,7 @@ read_ref(char *id, int idlen, char *name, int namelen)
 {
 	struct ref *ref;
 	bool tag = FALSE;
+	bool remote = FALSE;
 
 	if (!strncmp(name, "refs/tags/", STRING_SIZE("refs/tags/"))) {
 		/* Commits referenced by tags has "^{}" appended. */
@@ -3585,6 +3580,11 @@ read_ref(char *id, int idlen, char *name, int namelen)
 		tag = TRUE;
 		namelen -= STRING_SIZE("refs/tags/");
 		name	+= STRING_SIZE("refs/tags/");
+
+	} else if (!strncmp(name, "refs/remotes/", STRING_SIZE("refs/remotes/"))) {
+		remote = TRUE;
+		namelen -= STRING_SIZE("refs/remotes/");
+		name	+= STRING_SIZE("refs/remotes/");
 
 	} else if (!strncmp(name, "refs/heads/", STRING_SIZE("refs/heads/"))) {
 		namelen -= STRING_SIZE("refs/heads/");
@@ -3606,6 +3606,7 @@ read_ref(char *id, int idlen, char *name, int namelen)
 	strncpy(ref->name, name, namelen);
 	ref->name[namelen] = 0;
 	ref->tag = tag;
+	ref->remote = remote;
 	string_copy(ref->id, id);
 
 	return OK;
