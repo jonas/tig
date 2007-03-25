@@ -12,7 +12,7 @@
  */
 
 #ifndef	VERSION
-#define VERSION	"tig-0.4.git"
+#define VERSION	"tig-0.6"
 #endif
 
 #ifndef DEBUG
@@ -60,6 +60,15 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define SIZEOF_STR	1024	/* Default string size. */
 #define SIZEOF_REF	256	/* Size of symbolic or SHA1 ID. */
 #define SIZEOF_REV	41	/* Holds a SHA-1 and an ending NUL */
+
+/* Revision graph */
+
+#define REVGRAPH_INIT	'I'
+#define REVGRAPH_MERGE	'M'
+#define REVGRAPH_BRANCH	'+'
+#define REVGRAPH_COMMIT	'*'
+#define REVGRAPH_LINE	'|'
+
 #define SIZEOF_REVGRAPH	19	/* Size of revision ancestry graphics. */
 
 /* This color name can be used to refer to the default term colors. */
@@ -81,7 +90,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
 
 #define TIG_LS_REMOTE \
-	"git ls-remote . 2>/dev/null"
+	"git ls-remote $(git rev-parse --git-dir) 2>/dev/null"
 
 #define TIG_DIFF_CMD \
 	"git show --root --patch-with-stat --find-copies-harder -B -C %s 2>/dev/null"
@@ -112,6 +121,7 @@ struct ref {
 	char *name;		/* Ref name; tag or head names are shortened. */
 	char id[SIZEOF_REV];	/* Commit SHA1 ID */
 	unsigned int tag:1;	/* Is it a tag? */
+	unsigned int remote:1;	/* Is it a remote ref? */
 	unsigned int next:1;	/* For ref lists: are there more refs? */
 };
 
@@ -386,7 +396,7 @@ VERSION " (" __DATE__ ")\n"
 
 /* Option and state variables. */
 static bool opt_line_number		= FALSE;
-static bool opt_rev_graph		= TRUE;
+static bool opt_rev_graph		= FALSE;
 static int opt_num_interval		= NUMBER_INTERVAL;
 static int opt_tab_size			= TABSIZE;
 static enum request opt_request		= REQ_VIEW_MAIN;
@@ -510,7 +520,7 @@ parse_options(int argc, char *argv[])
 		if (opt_request == REQ_VIEW_MAIN)
 			/* XXX: This is vulnerable to the user overriding
 			 * options required for the main view parser. */
-			string_copy(opt_cmd, "git log --stat --pretty=raw");
+			string_copy(opt_cmd, "git log --pretty=raw");
 		else
 			string_copy(opt_cmd, "git");
 		buf_size = strlen(opt_cmd);
@@ -524,7 +534,6 @@ parse_options(int argc, char *argv[])
 			die("command too long");
 
 		opt_cmd[buf_size] = 0;
-
 	}
 
 	if (*opt_encoding && strcasecmp(opt_encoding, "UTF-8"))
@@ -577,6 +586,7 @@ LINE(MAIN_AUTHOR,  "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_COMMIT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(MAIN_DELIM,   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
+LINE(MAIN_REMOTE,  "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
 LINE(TREE_DIR,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL)
@@ -730,9 +740,6 @@ static struct keybinding default_keybindings[] = {
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
 	{ ':',		REQ_PROMPT },
 
-	/* wgetch() with nodelay() enabled returns ERR when there's no input. */
-	{ ERR,		REQ_NONE },
-
 	/* Using the ncurses SIGWINCH handler. */
 	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
 };
@@ -767,10 +774,9 @@ static struct keybinding *keybindings[ARRAY_SIZE(keymap_table)];
 static void
 add_keybinding(enum keymap keymap, enum request request, int key)
 {
-	struct keybinding *keybinding = keybindings[keymap];
+	struct keybinding *keybinding;
 
-	if (!keybinding)
-		keybinding = calloc(1, sizeof(*keybinding));
+	keybinding = calloc(1, sizeof(*keybinding));
 	if (!keybinding)
 		die("Failed to allocate keybinding");
 
@@ -1945,6 +1951,7 @@ alloc_error:
 	report("Allocation failure");
 
 end:
+	view->ops->read(view, NULL);
 	end_update(view);
 	return FALSE;
 }
@@ -2315,7 +2322,7 @@ add_describe_ref(char *buf, size_t *bufpos, char *commit_id, const char *sep)
 	char *ref = NULL;
 	FILE *pipe;
 
-	if (!string_format(refbuf, "git describe %s", commit_id))
+	if (!string_format(refbuf, "git describe %s 2>/dev/null", commit_id))
 		return TRUE;
 
 	pipe = popen(refbuf, "r");
@@ -2357,7 +2364,8 @@ add_pager_refs(struct view *view, struct line *line)
 
 	do {
 		struct ref *ref = refs[refpos];
-		char *fmt = ref->tag ? "%s[%s]" : "%s%s";
+		char *fmt = ref->tag    ? "%s[%s]" :
+		            ref->remote ? "%s<%s>" : "%s%s";
 
 		if (!string_format_from(buf, &bufpos, fmt, sep, ref->name))
 			return;
@@ -2392,6 +2400,9 @@ static bool
 pager_read(struct view *view, char *data)
 {
 	struct line *line = &view->line[view->lines];
+
+	if (!data)
+		return TRUE;
 
 	line->data = strdup(data);
 	if (!line->data)
@@ -2503,7 +2514,7 @@ tree_compare_entry(enum line_type type1, char *name1,
 static bool
 tree_read(struct view *view, char *text)
 {
-	size_t textlen = strlen(text);
+	size_t textlen = text ? strlen(text) : 0;
 	char buf[SIZEOF_STR];
 	unsigned long pos;
 	enum line_type type;
@@ -2584,7 +2595,7 @@ tree_read(struct view *view, char *text)
 static bool
 tree_enter(struct view *view, struct line *line)
 {
-	enum open_flags flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
+	enum open_flags flags;
 	enum request request;
 
 	switch (line->type) {
@@ -2614,11 +2625,12 @@ tree_enter(struct view *view, struct line *line)
 
 		/* Trees and subtrees share the same ID, so they are not not
 		 * unique like blobs. */
-		flags |= OPEN_RELOAD;
+		flags = OPEN_RELOAD;
 		request = REQ_VIEW_TREE;
 		break;
 
 	case LINE_TREE_FILE:
+		flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
 		request = REQ_VIEW_BLOB;
 		break;
 
@@ -2682,18 +2694,210 @@ static struct view_ops blob_ops = {
 
 
 /*
- * Main view backend
+ * Revision graph
  */
 
 struct commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
-	char title[75];			/* First line of the commit message. */
+	char title[128];		/* First line of the commit message. */
 	char author[75];		/* Author of the commit. */
 	struct tm time;			/* Date from the author ident. */
 	struct ref **refs;		/* Repository references. */
 	chtype graph[SIZEOF_REVGRAPH];	/* Ancestry chain graphics. */
 	size_t graph_size;		/* The width of the graph array. */
 };
+
+/* Size of rev graph with no  "padding" columns */
+#define SIZEOF_REVITEMS	(SIZEOF_REVGRAPH - (SIZEOF_REVGRAPH / 2))
+
+struct rev_graph {
+	struct rev_graph *prev, *next, *parents;
+	char rev[SIZEOF_REVITEMS][SIZEOF_REV];
+	size_t size;
+	struct commit *commit;
+	size_t pos;
+};
+
+/* Parents of the commit being visualized. */
+static struct rev_graph graph_parents[4];
+
+/* The current stack of revisions on the graph. */
+static struct rev_graph graph_stacks[4] = {
+	{ &graph_stacks[3], &graph_stacks[1], &graph_parents[0] },
+	{ &graph_stacks[0], &graph_stacks[2], &graph_parents[1] },
+	{ &graph_stacks[1], &graph_stacks[3], &graph_parents[2] },
+	{ &graph_stacks[2], &graph_stacks[0], &graph_parents[3] },
+};
+
+static inline bool
+graph_parent_is_merge(struct rev_graph *graph)
+{
+	return graph->parents->size > 1;
+}
+
+static inline void
+append_to_rev_graph(struct rev_graph *graph, chtype symbol)
+{
+	struct commit *commit = graph->commit;
+
+	if (commit->graph_size < ARRAY_SIZE(commit->graph) - 1)
+		commit->graph[commit->graph_size++] = symbol;
+}
+
+static void
+done_rev_graph(struct rev_graph *graph)
+{
+	if (graph_parent_is_merge(graph) &&
+	    graph->pos < graph->size - 1 &&
+	    graph->next->size == graph->size + graph->parents->size - 1) {
+		size_t i = graph->pos + graph->parents->size - 1;
+
+		graph->commit->graph_size = i * 2;
+		while (i < graph->next->size - 1) {
+			append_to_rev_graph(graph, ' ');
+			append_to_rev_graph(graph, '\\');
+			i++;
+		}
+	}
+
+	graph->size = graph->pos = 0;
+	graph->commit = NULL;
+	memset(graph->parents, 0, sizeof(*graph->parents));
+}
+
+static void
+push_rev_graph(struct rev_graph *graph, char *parent)
+{
+	int i;
+
+	/* "Collapse" duplicate parents lines.
+	 *
+	 * FIXME: This needs to also update update the drawn graph but
+	 * for now it just serves as a method for pruning graph lines. */
+	for (i = 0; i < graph->size; i++)
+		if (!strncmp(graph->rev[i], parent, SIZEOF_REV))
+			return;
+
+	if (graph->size < SIZEOF_REVITEMS) {
+		string_ncopy(graph->rev[graph->size++], parent, SIZEOF_REV);
+	}
+}
+
+static chtype
+get_rev_graph_symbol(struct rev_graph *graph)
+{
+	chtype symbol;
+
+	if (graph->parents->size == 0)
+		symbol = REVGRAPH_INIT;
+	else if (graph_parent_is_merge(graph))
+		symbol = REVGRAPH_MERGE;
+	else if (graph->pos >= graph->size)
+		symbol = REVGRAPH_BRANCH;
+	else
+		symbol = REVGRAPH_COMMIT;
+
+	return symbol;
+}
+
+static void
+draw_rev_graph(struct rev_graph *graph)
+{
+	struct rev_filler {
+		chtype separator, line;
+	};
+	enum { DEFAULT, RSHARP, RDIAG, LDIAG };
+	static struct rev_filler fillers[] = {
+		{ ' ',	REVGRAPH_LINE },
+		{ '`',	'.' },
+		{ '\'',	' ' },
+		{ '/',	' ' },
+	};
+	chtype symbol = get_rev_graph_symbol(graph);
+	struct rev_filler *filler;
+	size_t i;
+
+	filler = &fillers[DEFAULT];
+
+	for (i = 0; i < graph->pos; i++) {
+		append_to_rev_graph(graph, filler->line);
+		if (graph_parent_is_merge(graph->prev) &&
+		    graph->prev->pos == i)
+			filler = &fillers[RSHARP];
+
+		append_to_rev_graph(graph, filler->separator);
+	}
+
+	/* Place the symbol for this revision. */
+	append_to_rev_graph(graph, symbol);
+
+	if (graph->prev->size > graph->size)
+		filler = &fillers[RDIAG];
+	else
+		filler = &fillers[DEFAULT];
+
+	i++;
+
+	for (; i < graph->size; i++) {
+		append_to_rev_graph(graph, filler->separator);
+		append_to_rev_graph(graph, filler->line);
+		if (graph_parent_is_merge(graph->prev) &&
+		    i < graph->prev->pos + graph->parents->size)
+			filler = &fillers[RSHARP];
+		if (graph->prev->size > graph->size)
+			filler = &fillers[LDIAG];
+	}
+
+	if (graph->prev->size > graph->size) {
+		append_to_rev_graph(graph, filler->separator);
+		if (filler->line != ' ')
+			append_to_rev_graph(graph, filler->line);
+	}
+}
+
+/* Prepare the next rev graph */
+static void
+prepare_rev_graph(struct rev_graph *graph)
+{
+	size_t i;
+
+	/* First, traverse all lines of revisions up to the active one. */
+	for (graph->pos = 0; graph->pos < graph->size; graph->pos++) {
+		if (!strcmp(graph->rev[graph->pos], graph->commit->id))
+			break;
+
+		push_rev_graph(graph->next, graph->rev[graph->pos]);
+	}
+
+	/* Interleave the new revision parent(s). */
+	for (i = 0; i < graph->parents->size; i++)
+		push_rev_graph(graph->next, graph->parents->rev[i]);
+
+	/* Lastly, put any remaining revisions. */
+	for (i = graph->pos + 1; i < graph->size; i++)
+		push_rev_graph(graph->next, graph->rev[i]);
+}
+
+static void
+update_rev_graph(struct rev_graph *graph)
+{
+	/* If this is the finalizing update ... */
+	if (graph->commit)
+		prepare_rev_graph(graph);
+
+	/* Graph visualization needs a one rev look-ahead,
+	 * so the first update doesn't visualize anything. */
+	if (!graph->prev->commit)
+		return;
+
+	draw_rev_graph(graph->prev);
+	done_rev_graph(graph->prev->prev);
+}
+
+
+/*
+ * Main view backend
+ */
 
 static bool
 main_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
@@ -2762,6 +2966,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 		for (i = 0; i < commit->graph_size; i++)
 			waddch(view->win, commit->graph[i]);
 
+		waddch(view->win, ' ');
 		col += commit->graph_size + 1;
 	}
 
@@ -2775,6 +2980,8 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 				;
 			else if (commit->refs[i]->tag)
 				wattrset(view->win, get_line_attr(LINE_MAIN_TAG));
+			else if (commit->refs[i]->remote)
+				wattrset(view->win, get_line_attr(LINE_MAIN_REMOTE));
 			else
 				wattrset(view->win, get_line_attr(LINE_MAIN_REF));
 			waddstr(view->win, "[");
@@ -2806,9 +3013,17 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 static bool
 main_read(struct view *view, char *line)
 {
-	enum line_type type = get_line_type(line);
+	static struct rev_graph *graph = graph_stacks;
+	enum line_type type;
 	struct commit *commit = view->lines
 			      ? view->line[view->lines - 1].data : NULL;
+
+	if (!line) {
+		update_rev_graph(graph);
+		return TRUE;
+	}
+
+	type = get_line_type(line);
 
 	switch (type) {
 	case LINE_COMMIT:
@@ -2821,48 +3036,47 @@ main_read(struct view *view, char *line)
 		view->line[view->lines++].data = commit;
 		string_copy(commit->id, line);
 		commit->refs = get_refs(commit->id);
-		commit->graph[commit->graph_size++] = ACS_LTEE;
+		graph->commit = commit;
+		break;
+
+	case LINE_PARENT:
+		if (commit) {
+			line += STRING_SIZE("parent ");
+			push_rev_graph(graph->parents, line);
+		}
 		break;
 
 	case LINE_AUTHOR:
 	{
+		/* Parse author lines where the name may be empty:
+		 *	author  <email@address.tld> 1138474660 +0100
+		 */
 		char *ident = line + STRING_SIZE("author ");
-		char *end = strchr(ident, '<');
+		char *nameend = strchr(ident, '<');
+		char *emailend = strchr(ident, '>');
 
-		if (!commit)
+		if (!commit || !nameend || !emailend)
 			break;
 
-		if (end) {
-			char *email = end + 1;
+		update_rev_graph(graph);
+		graph = graph->next;
 
-			for (; end > ident && isspace(end[-1]); end--) ;
-
-			if (end == ident && *email) {
-				ident = email;
-				end = strchr(ident, '>');
-				for (; end > ident && isspace(end[-1]); end--) ;
-			}
-			*end = 0;
+		*nameend = *emailend = 0;
+		ident = chomp_string(ident);
+		if (!*ident) {
+			ident = chomp_string(nameend + 1);
+			if (!*ident)
+				ident = "Unknown";
 		}
-
-		/* End is NULL or ident meaning there's no author. */
-		if (end <= ident)
-			ident = "Unknown";
 
 		string_copy(commit->author, ident);
 
 		/* Parse epoch and timezone */
-		if (end) {
-			char *secs = strchr(end + 1, '>');
-			char *zone;
-			time_t time;
+		if (emailend[1] == ' ') {
+			char *secs = emailend + 2;
+			char *zone = strchr(secs, ' ');
+			time_t time = (time_t) atol(secs);
 
-			if (!secs || secs[1] != ' ')
-				break;
-
-			secs += 2;
-			time = (time_t) atol(secs);
-			zone = strchr(secs, ' ');
 			if (zone && strlen(zone) == STRING_SIZE(" +0700")) {
 				long tz;
 
@@ -2877,6 +3091,7 @@ main_read(struct view *view, char *line)
 
 				time -= tz;
 			}
+
 			gmtime_r(&time, &commit->time);
 		}
 		break;
@@ -2891,13 +3106,19 @@ main_read(struct view *view, char *line)
 
 		/* Require titles to start with a non-space character at the
 		 * offset used by git log. */
-		/* FIXME: More gracefull handling of titles; append "..." to
-		 * shortened titles, etc. */
-		if (strncmp(line, "    ", 4) ||
-		    isspace(line[4]))
+		if (strncmp(line, "    ", 4))
 			break;
+		line += 4;
+		/* Well, if the title starts with a whitespace character,
+		 * try to be forgiving.  Otherwise we end up with no title. */
+		while (isspace(*line))
+			line++;
+		if (*line == '\0')
+			break;
+		/* FIXME: More graceful handling of titles; append "..." to
+		 * shortened titles, etc. */
 
-		string_copy(commit->title, line + 4);
+		string_copy(commit->title, line);
 	}
 
 	return TRUE;
@@ -3346,6 +3567,7 @@ read_ref(char *id, int idlen, char *name, int namelen)
 {
 	struct ref *ref;
 	bool tag = FALSE;
+	bool remote = FALSE;
 
 	if (!strncmp(name, "refs/tags/", STRING_SIZE("refs/tags/"))) {
 		/* Commits referenced by tags has "^{}" appended. */
@@ -3358,6 +3580,11 @@ read_ref(char *id, int idlen, char *name, int namelen)
 		tag = TRUE;
 		namelen -= STRING_SIZE("refs/tags/");
 		name	+= STRING_SIZE("refs/tags/");
+
+	} else if (!strncmp(name, "refs/remotes/", STRING_SIZE("refs/remotes/"))) {
+		remote = TRUE;
+		namelen -= STRING_SIZE("refs/remotes/");
+		name	+= STRING_SIZE("refs/remotes/");
 
 	} else if (!strncmp(name, "refs/heads/", STRING_SIZE("refs/heads/"))) {
 		namelen -= STRING_SIZE("refs/heads/");
@@ -3379,6 +3606,7 @@ read_ref(char *id, int idlen, char *name, int namelen)
 	strncpy(ref->name, name, namelen);
 	ref->name[namelen] = 0;
 	ref->tag = tag;
+	ref->remote = remote;
 	string_copy(ref->id, id);
 
 	return OK;
@@ -3532,6 +3760,13 @@ main(int argc, char *argv[])
 
 		/* Refresh, accept single keystroke of input */
 		key = wgetch(status_win);
+
+		/* wgetch() with nodelay() enabled returns ERR when there's no
+		 * input. */
+		if (key == ERR) {
+			request = REQ_NONE;
+			continue;
+		}
 
 		request = get_keybinding(display[current_view]->keymap, key);
 
