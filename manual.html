@@ -315,34 +315,12 @@ commit with the log message, diffstat, and the diff.</p>
 <a href="#pager-mode">Pager Mode</a>
 </p>
 </li>
-</ul>
-</li>
-<li>
-<p>
-&lt;&lt;, , If stdin is a pipe, any log or diff options will be ignored and the pager view, will be opened loading data from stdin. The pager mode can be used for, colorizing output from various git commands., , Example on how to colorize the output of git-show(1):, &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, $ git show | tig&gt;&gt;
-</p>
-<ul>
 <li>
 <p>
 <a href="#cmd-options">Git Command Options</a>
 </p>
 </li>
 </ul>
-</li>
-<li>
-<p>
-&lt;&lt;, , All git command options specified on the command line will be passed to the, given command and all will be shell quoted before they are passed to the, shell., , NOTE: If you specify options for the main view, you should not use the, <tt>&#8212;pretty</tt> option as this option will be set automatically to the format, expected by the main view., , Example on how to open the log view and show both author and committer, information:, &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, $ tig log &#8212;pretty=fuller&gt;&gt;
-</p>
 </li>
 <li>
 <p>
@@ -354,45 +332,11 @@ commit with the log message, diffstat, and the diff.</p>
 <a href="#repo-refs">Repository References</a>
 </p>
 </li>
-</ul>
-</li>
-<li>
-<p>
-&lt;&lt;, , Commits that are referenced by tags and branch heads will be marked by the, reference name surrounded by <em>[</em> and <em>]</em>:, &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, 2006-03-26 19:42 Petr Baudis         | [cogito-0.17.1] Cogito 0.17.1&gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, , If you want to filter out certain directories under <tt>.git/refs/</tt>, say <tt>tmp</tt>, you can do it by setting the following variable:, &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, $ TIG_LS_REMOTE="git ls-remote . | sed //tmp//d" tig&gt;&gt;
-</p>
-<ul>
 <li>
 <p>
 <a href="#history-commands">History Commands</a>
 </p>
 </li>
-</ul>
-</li>
-<li>
-<p>
-&lt;&lt;, , It is possible to alter which commands are used for the different views.  If, for example you prefer commits in the main view to be sorted by date and only, show 500 commits, use:, &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, $ TIG_MAIN_CMD="git log &#8212;date-order -n500 &#8212;pretty=raw %s" tig&gt;&gt;
-</p>
-<ul>
 <li>
 <p>
 <a href="#tree-commands">Tree Commands</a>
@@ -403,16 +347,6 @@ commit with the log message, diffstat, and the diff.</p>
 <li>
 <p>
 <a href="#viewer">The Viewer</a>
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, , The display consists of a status window on the last line of the screen and one, or more views. The default is to only show one view at the time but it is, possible to split both the main and log view to also show the commit diff., , If you are in the log view and press <em>Enter</em> when the current line is a commit, line, such as:, &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, commit 4d55caff4cc89335192f3e566004b4ceef572521&gt;&gt;
 </p>
 <ul>
 <li>
@@ -434,26 +368,6 @@ commit with the log message, diffstat, and the diff.</p>
 </li>
 <li>
 <p>
-&lt;&lt;, , Each view has a title window which shows the name of the view, current commit, ID if available, and where the view is positioned:, &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, [main] c622eefaa485995320bc743431bae0d497b1d875 - commit 1 of 61 (1%)&gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, , By default, the title of the current view is highlighted using bold font.  For, long loading views (taking over 3 seconds) the time since loading started will, be appended:, &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, [main] 77d9e40fbcea3238015aea403e06f61542df9a31 - commit 1 of 779 (0%) 5s&gt;&gt;
-</p>
-</li>
-<li>
-<p>
 <a href="#keys">Default Keybindings</a>
 </p>
 <ul>
@@ -462,95 +376,27 @@ commit with the log message, diffstat, and the diff.</p>
 <a href="#view-switching">View Switching</a>
 </p>
 </li>
-</ul>
-</li>
-<li>
-<p>
-&lt;&lt;, , <tt>-------</tt>--------------------------------------------------------------------, Key      Action&gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, m Switch to main view., d Switch to diff view., l Switch to log view., p  Switch to pager view., t        Switch to (directory) tree view., f     Switch to (file) blob view., h  Show man page.&gt;&gt;
-</p>
-<ul>
 <li>
 <p>
 <a href="#view-manipulation">View Manipulation</a>
 </p>
 </li>
-</ul>
-</li>
-<li>
-<p>
-&lt;&lt;, , <tt>-------</tt>--------------------------------------------------------------------, Key      Action&gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, q Close view, if multiple views are open it will jump back to the         previous view in the view stack. If it is the last open view it         will quit. Use <em>Q</em> to quit all views at once., Enter    This key is "context sensitive" depending on what view you are  currently in. When in log view on a commit line or in the main  view, split the view and show the commit diff. In the diff view         pressing Enter will simply scroll the view one line down., Tab  Switch to next view., Up        This key is "context sensitive" and will move the cursor one    line up. However, if you opened a diff view from the main view  (split- or full-screen) it will change the cursor to point to   the previous commit in the main view and update the diff view   to display it., Down    Similar to <em>Up</em> but will move down.&gt;&gt;
-</p>
-<ul>
 <li>
 <p>
 <a href="#cursor-nav">Cursor Navigation</a>
 </p>
 </li>
-</ul>
-</li>
-<li>
-<p>
-&lt;&lt;, , <tt>-------</tt>--------------------------------------------------------------------, Key      Action&gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, j Move cursor one line up., k     Move cursor one line down., PgUp,-,a    Move cursor one page up., PgDown        Space   Move cursor one page down., Home        Jump to first line., End        Jump to last line.&gt;&gt;
-</p>
-<ul>
 <li>
 <p>
 <a href="#view-scrolling">Scrolling</a>
 </p>
 </li>
-</ul>
-</li>
-<li>
-<p>
-&lt;&lt;, , <tt>-------</tt>--------------------------------------------------------------------, Key      Action&gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, Insert    Scroll view one line up., Delete        Scroll view one line down., w   Scroll view one page up., s     Scroll view one page down.&gt;&gt;
-</p>
-<ul>
 <li>
 <p>
 <a href="#searching">Searching</a>
 </p>
 </li>
 </ul>
-</li>
-<li>
-<p>
-&lt;&lt;, , <tt>-------</tt>--------------------------------------------------------------------, Key      Action&gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, / Search the view. Opens a prompt for entering search regex to use., ?    Search backwards in the view. Also prompts for regex., n        Find next match for the current search regex., N        Find previous match for the current search regex.&gt;&gt;
-</p>
-</li>
-<li>
-<p>
-<a href="#misc-keys">Misc</a>
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, Q Quit., r        Redraw screen., z       Stop all background loading. This can be useful if you use      tig in a repository with a long history without limiting        the revision log., v    Show version., <em>.</em>      Toggle line numbers on/off., g  Toggle revision graph visualization on/off., <em>:</em>        Open prompt. This allows you to specify what git command        to run. Example <tt>:log -p</tt>&gt;&gt;
-</p>
 </li>
 <li>
 <p>
@@ -562,122 +408,32 @@ commit with the log message, diffstat, and the diff.</p>
 <a href="#path-limiting">Limit by Path Name</a>
 </p>
 </li>
-</ul>
-</li>
-<li>
-<p>
-&lt;&lt;, , If you are interested only in those revisions that made changes to a specific, file (or even several files) list the files like this:, &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, $ tig log Makefile README&gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, , To avoid ambiguity with repository references such as tag name, be sure to, separate file names from other git options using "&#8212;". So if you have a file, named <em>master</em> it will clash with the reference named <em>master</em>, and thus you, will have to use:, &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, $ tig log &#8212; master&gt;&gt;
-</p>
-<ul>
 <li>
 <p>
 <a href="#date-number-limiting">Limit by Date or Number</a>
 </p>
 </li>
-</ul>
-</li>
-<li>
-<p>
-&lt;&lt;, , To speed up interaction with git, you can limit the amount of commits to show, both for the log and main view. Either limit by date using e.g., <tt>&#8212;since=1.month</tt> or limit by the number of commits using <tt>-n400</tt>., , If you are only interested in changed that happened between two dates you can, use:, &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, $ tig &#8212; --after="May 5th" &#8212;before="2006-05-16 15:44"&gt;&gt;
-</p>
-<ul>
 <li>
 <p>
 <a href="#commit-range-limiting">Limiting by Commit Ranges</a>
 </p>
 </li>
-</ul>
-</li>
-<li>
-<p>
-&lt;&lt;, , Alternatively, commits can be limited to a specific range, such as "all, commits between <em>tag-1.0</em> and <em>tag-2.0</em>". For example:, &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, $ tig log tag-1.0..tag-2.0&gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, , This way of commit limiting makes it trivial to only browse the commits which, haven't been pushed to a remote branch. Assuming <em>origin</em> is your upstream, remote branch, using:, &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, $ tig log origin..HEAD&gt;&gt;
-</p>
-<ul>
 <li>
 <p>
 <a href="#reachability-limiting">Limiting by Reachability</a>
 </p>
 </li>
-</ul>
-</li>
-<li>
-<p>
-&lt;&lt;, , Git interprets the range specifier "tag-1.0..tag-2.0" as "all commits, reachable from <em>tag-2.0</em> but not from <em>tag-1.0</em>".  Where reachability refers, to what commits are ancestors (or part of the history) of the branch or tagged, revision in question., , If you prefer to specify which commit to preview in this way use the, following:, &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, $ tig log tag-2.0 ^tag-1.0&gt;&gt;
-</p>
-<ul>
 <li>
 <p>
 <a href="#refspec-combi">Combining Revisions Specification</a>
 </p>
 </li>
-</ul>
-</li>
-<li>
-<p>
-&lt;&lt;, , Revisions options can to some degree be combined, which makes it possible to, say "show at most 20 commits from within the last month that changed files, under the Documentation/ directory.", &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, $ tig &#8212; --since=1.month -n20 &#8212; Documentation/&gt;&gt;
-</p>
-<ul>
 <li>
 <p>
 <a href="#refspec-all">Examining All Repository References</a>
 </p>
 </li>
 </ul>
-</li>
-<li>
-<p>
-&lt;&lt;, , In some cases, it can be useful to query changes across all references in a, repository. An example is to ask "did any line of development in this, repository change a particular file within the last week". This can be, accomplished using:, &gt;&gt;
-</p>
-</li>
-<li>
-<p>
-&lt;&lt;, $ tig &#8212; --all &#8212;since=1.week &#8212; Makefile&gt;&gt;
-</p>
 </li>
 <li>
 <p>
@@ -1525,7 +1281,7 @@ gitview(1)
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 25-Mar-2007 12:14:27 CEST
+Last updated 25-Mar-2007 13:06:31 CEST
 </div>
 </div>
 </body>
