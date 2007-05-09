@@ -8,9 +8,12 @@ LDLIBS  = -lcurses
 CFLAGS	= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
-DOCS	= tig.1.html tig.1 tigrc.5.html tigrc.5 \
-	  manual.toc manual.html manual.html-chunked manual.pdf \
-	  README.html
+DOCS_MAN	= tig.1 tigrc.5
+DOCS_HTML	= tig.1.html tigrc.5.html \
+		  manual.html manual.html-chunked \
+		  README.html
+DOCS	= $(DOCS_MAN) $(DOCS_HTML) \
+	  manual.toc manual.pdf
 
 ifneq (,$(wildcard .git))
 VERSION = $(shell git-describe)
@@ -22,6 +25,8 @@ all: $(PROGS)
 all-debug: $(PROGS)
 all-debug: CFLAGS += $(DFLAGS)
 doc: $(DOCS)
+doc-man: $(DOCS_MAN)
+doc-html: $(DOCS_HTML)
 
 install: all
 	mkdir -p $(DESTDIR)$(bindir) && \
@@ -29,17 +34,25 @@ install: all
 		install $$prog $(DESTDIR)$(bindir); \
 	done
 
-install-doc: doc
+install-doc-man: doc-man
 	mkdir -p $(DESTDIR)$(mandir)/man1 \
-		 $(DESTDIR)$(mandir)/man5 \
-		 $(DESTDIR)$(docdir)/tig
+		 $(DESTDIR)$(mandir)/man5
 	for doc in $(DOCS); do \
 		case "$$doc" in \
 		*.1) install $$doc $(DESTDIR)$(mandir)/man1 ;; \
 		*.5) install $$doc $(DESTDIR)$(mandir)/man5 ;; \
+		esac \
+	done
+
+install-doc-html: doc-html
+	mkdir -p $(DESTDIR)$(docdir)/tig
+	for doc in $(DOCS); do \
+		case "$$doc" in \
 		*.html) install $$doc $(DESTDIR)$(docdir)/tig ;; \
 		esac \
 	done
+
+install-doc: install-doc-man install-doc-html
 
 clean:
 	rm -rf manual.html-chunked
@@ -51,8 +64,9 @@ spell-check:
 strip: all
 	strip $(PROGS)
 
-.PHONY: all all-debug doc install install-doc clean spell-check
+.PHONY: all all-debug doc doc-man doc-html install install-doc install-doc-man install-doc-html clean spell-check
 
+manual.html: manual.toc
 manual.toc: manual.txt
 	sed -n '/^\[\[/,/\(---\|~~~\)/p' < $< | while read line; do \
 		case "$$line" in \
