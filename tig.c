@@ -1927,6 +1927,12 @@ update_view(struct view *view)
 		if (redraw_from > 0)
 			redraw_from--;
 
+		/* Since revision graph visualization requires knowledge
+		 * about the parent commit, it causes a further one-off
+		 * needed to be redrawn for incremental updates. */
+		if (redraw_from > 0 && opt_rev_graph)
+			redraw_from--;
+
 		/* Incrementally draw avoids flickering. */
 		redraw_view_from(view, redraw_from);
 	}
