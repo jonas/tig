@@ -2148,7 +2148,8 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_VIEW_BLOB:
 		if (!ref_blob[0]) {
-			report("No file chosen, press 't' to open tree view");
+			report("No file chosen, press %s to open tree view",
+			       get_key(REQ_VIEW_TREE));
 			break;
 		}
 		/* Fall-through */
