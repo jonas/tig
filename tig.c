@@ -2152,13 +2152,23 @@ view_driver(struct view *view, enum request request)
 			       get_key(REQ_VIEW_TREE));
 			break;
 		}
-		/* Fall-through */
+		open_view(view, request, OPEN_DEFAULT);
+		break;
+
+	case REQ_VIEW_PAGER:
+		if (!VIEW(REQ_VIEW_PAGER)->lines) {
+			report("No pager content, press %s to run command from prompt",
+			       get_key(REQ_PROMPT));
+			break;
+		}
+		open_view(view, request, OPEN_DEFAULT);
+		break;
+
 	case REQ_VIEW_MAIN:
 	case REQ_VIEW_DIFF:
 	case REQ_VIEW_LOG:
 	case REQ_VIEW_TREE:
 	case REQ_VIEW_HELP:
-	case REQ_VIEW_PAGER:
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
