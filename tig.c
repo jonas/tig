@@ -173,6 +173,9 @@ string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen)
 #define string_ncopy(dst, src, srclen) \
 	string_ncopy_do(dst, sizeof(dst), src, srclen)
 
+#define string_copy_rev(dst, src) \
+	string_ncopy_do(dst, SIZEOF_REV, src, SIZEOF_REV - 1)
+
 static char *
 chomp_string(char *name)
 {
@@ -1829,7 +1832,7 @@ begin_update(struct view *view)
 	view->offset = 0;
 	view->lines  = 0;
 	view->lineno = 0;
-	string_copy(view->vid, id);
+	string_copy_rev(view->vid, id);
 
 	if (view->line) {
 		int i;
@@ -2507,8 +2510,8 @@ pager_select(struct view *view, struct line *line)
 		char *text = line->data + STRING_SIZE("commit ");
 
 		if (view != VIEW(REQ_VIEW_PAGER))
-			string_copy(view->ref, text);
-		string_copy(ref_commit, text);
+			string_copy_rev(view->ref, text);
+		string_copy_rev(ref_commit, text);
 	}
 }
 
@@ -2686,13 +2689,13 @@ tree_select(struct view *view, struct line *line)
 	char *text = line->data + STRING_SIZE("100644 blob ");
 
 	if (line->type == LINE_TREE_FILE) {
-		string_ncopy(ref_blob, text, 40);
+		string_copy_rev(ref_blob, text);
 
 	} else if (line->type != LINE_TREE_DIR) {
 		return;
 	}
 
-	string_ncopy(view->ref, text, 40);
+	string_copy_rev(view->ref, text);
 }
 
 static struct view_ops tree_ops = {
@@ -3061,7 +3064,7 @@ main_read(struct view *view, char *line)
 		line += STRING_SIZE("commit ");
 
 		view->line[view->lines++].data = commit;
-		string_copy(commit->id, line);
+		string_copy_rev(commit->id, line);
 		commit->refs = get_refs(commit->id);
 		graph->commit = commit;
 		break;
@@ -3196,8 +3199,8 @@ main_select(struct view *view, struct line *line)
 {
 	struct commit *commit = line->data;
 
-	string_copy(view->ref, commit->id);
-	string_copy(ref_commit, view->ref);
+	string_copy_rev(view->ref, commit->id);
+	string_copy_rev(ref_commit, view->ref);
 }
 
 static struct view_ops main_ops = {
@@ -3634,7 +3637,7 @@ read_ref(char *id, int idlen, char *name, int namelen)
 	ref->name[namelen] = 0;
 	ref->tag = tag;
 	ref->remote = remote;
-	string_copy(ref->id, id);
+	string_copy_rev(ref->id, id);
 
 	return OK;
 }
