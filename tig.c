@@ -1962,6 +1962,24 @@ end:
 	return FALSE;
 }
 
+static struct line *
+add_line_text(struct view *view, char *data, enum line_type type)
+{
+	struct line *line = &view->line[view->lines];
+
+	if (!data)
+		return NULL;
+
+	line->data = strdup(data);
+	if (!line->data)
+		return NULL;
+
+	line->type = type;
+	view->lines++;
+
+	return line;
+}
+
 
 /*
  * View opening
@@ -1986,14 +2004,14 @@ static void open_help_view(struct view *view)
 		return;
 	}
 
-	view->ops->read(view, "Quick reference for tig keybindings:");
+	add_line_text(view, "Quick reference for tig keybindings:", LINE_DEFAULT);
 
 	for (i = 0; i < ARRAY_SIZE(req_info); i++) {
 		char *key;
 
 		if (!req_info[i].request) {
-			view->ops->read(view, "");
-			view->ops->read(view, req_info[i].help);
+			add_line_text(view, "", LINE_DEFAULT);
+			add_line_text(view, req_info[i].help, LINE_DEFAULT);
 			continue;
 		}
 
@@ -2001,7 +2019,7 @@ static void open_help_view(struct view *view)
 		if (!string_format(buf, "%-25s %s", key, req_info[i].help))
 			continue;
 
-		view->ops->read(view, buf);
+		add_line_text(view, buf, LINE_DEFAULT);
 	}
 }
 
@@ -2393,29 +2411,20 @@ try_add_describe_ref:
 	if (!realloc_lines(view, view->line_size + 1))
 		return;
 
-	line = &view->line[view->lines];
-	line->data = strdup(buf);
-	if (!line->data)
-		return;
-
-	line->type = LINE_PP_REFS;
-	view->lines++;
+	add_line_text(view, buf, LINE_PP_REFS);
 }
 
 static bool
 pager_read(struct view *view, char *data)
 {
-	struct line *line = &view->line[view->lines];
+	struct line *line;
 
 	if (!data)
 		return TRUE;
 
-	line->data = strdup(data);
-	if (!line->data)
+	line = add_line_text(view, data, get_line_type(data));
+	if (!line)
 		return FALSE;
-
-	line->type = get_line_type(line->data);
-	view->lines++;
 
 	if (line->type == LINE_COMMIT &&
 	    (view == VIEW(REQ_VIEW_DIFF) ||
@@ -2534,21 +2543,18 @@ tree_read(struct view *view, char *text)
 
 	if (first_read) {
 		/* Add path info line */
-		if (string_format(buf, "Directory path /%s", opt_path) &&
-		    realloc_lines(view, view->line_size + 1) &&
-		    pager_read(view, buf))
-			view->line[view->lines - 1].type = LINE_DEFAULT;
-		else
+		if (!string_format(buf, "Directory path /%s", opt_path) ||
+		    !realloc_lines(view, view->line_size + 1) ||
+		    !add_line_text(view, buf, LINE_DEFAULT))
 			return FALSE;
 
 		/* Insert "link" to parent directory. */
-		if (*opt_path &&
-		    string_format(buf, TREE_UP_FORMAT, view->ref) &&
-		    realloc_lines(view, view->line_size + 1) &&
-		    pager_read(view, buf))
-			view->line[view->lines - 1].type = LINE_TREE_DIR;
-		else if (*opt_path)
-			return FALSE;
+		if (*opt_path) {
+			if (!string_format(buf, TREE_UP_FORMAT, view->ref) ||
+			    !realloc_lines(view, view->line_size + 1) ||
+			    !add_line_text(view, buf, LINE_TREE_DIR))
+				return FALSE;
+		}
 	}
 
 	/* Strip the path part ... */
@@ -2587,14 +2593,13 @@ tree_read(struct view *view, char *text)
 		return TRUE;
 	}
 
-	if (!pager_read(view, text))
+	if (!add_line_text(view, text, type))
 		return FALSE;
 
 	/* Move the current line to the first tree entry. */
 	if (first_read)
 		view->lineno++;
 
-	view->line[view->lines - 1].type = type;
 	return TRUE;
 }
 
@@ -2681,12 +2686,7 @@ static struct view_ops tree_ops = {
 static bool
 blob_read(struct view *view, char *line)
 {
-	bool state = pager_read(view, line);
-
-	if (state == TRUE)
-		view->line[view->lines - 1].type = LINE_DEFAULT;
-
-	return state;
+	return add_line_text(view, line, LINE_DEFAULT);
 }
 
 static struct view_ops blob_ops = {
