@@ -1234,10 +1234,12 @@ struct view {
 struct view_ops {
 	/* What type of content being displayed. Used in the title bar. */
 	const char *type;
-	/* Draw one line; @lineno must be < view->height. */
-	bool (*draw)(struct view *view, struct line *line, unsigned int lineno, bool selected);
+	/* Open and reads in all view content. */
+	bool (*open)(struct view *view);
 	/* Read one line; updates view->line. */
 	bool (*read)(struct view *view, char *data);
+	/* Draw one line; @lineno must be < view->height. */
+	bool (*draw)(struct view *view, struct line *line, unsigned int lineno, bool selected);
 	/* Depending on view, change display based on current line. */
 	bool (*enter)(struct view *view, struct line *line);
 	/* Search for regex in a line. */
@@ -1250,6 +1252,7 @@ static struct view_ops pager_ops;
 static struct view_ops main_ops;
 static struct view_ops tree_ops;
 static struct view_ops blob_ops;
+static struct view_ops help_ops;
 
 #define VIEW_STR(name, cmd, env, ref, ops, map) \
 	{ name, cmd, #env, ref, ops, map}
@@ -1264,7 +1267,7 @@ static struct view views[] = {
 	VIEW_(LOG,   "log",   &pager_ops, ref_head),
 	VIEW_(TREE,  "tree",  &tree_ops,  ref_commit),
 	VIEW_(BLOB,  "blob",  &blob_ops,  ref_blob),
-	VIEW_(HELP,  "help",  &pager_ops, ""),
+	VIEW_(HELP,  "help",  &help_ops,  ""),
 	VIEW_(PAGER, "pager", &pager_ops, ""),
 };
 
@@ -2002,44 +2005,6 @@ add_line_text(struct view *view, char *data, enum line_type type)
  * View opening
  */
 
-static void open_help_view(struct view *view)
-{
-	char buf[BUFSIZ];
-	int lines = ARRAY_SIZE(req_info) + 2;
-	int i;
-
-	if (view->lines > 0)
-		return;
-
-	for (i = 0; i < ARRAY_SIZE(req_info); i++)
-		if (!req_info[i].request)
-			lines++;
-
-	view->line = calloc(lines, sizeof(*view->line));
-	if (!view->line) {
-		report("Allocation failure");
-		return;
-	}
-
-	add_line_text(view, "Quick reference for tig keybindings:", LINE_DEFAULT);
-
-	for (i = 0; i < ARRAY_SIZE(req_info); i++) {
-		char *key;
-
-		if (!req_info[i].request) {
-			add_line_text(view, "", LINE_DEFAULT);
-			add_line_text(view, req_info[i].help, LINE_DEFAULT);
-			continue;
-		}
-
-		key = get_key(req_info[i].request);
-		if (!string_format(buf, "    %-25s %s", key, req_info[i].help))
-			continue;
-
-		add_line_text(view, buf, LINE_DEFAULT);
-	}
-}
-
 enum open_flags {
 	OPEN_DEFAULT = 0,	/* Use default view switching. */
 	OPEN_SPLIT = 1,		/* Split current view. */
@@ -2062,8 +2027,11 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		return;
 	}
 
-	if (view == VIEW(REQ_VIEW_HELP)) {
-		open_help_view(view);
+	if (view->ops->open) {
+		if (!view->ops->open(view)) {
+			report("Failed to load %s view", view->name);
+			return;
+		}
 
 	} else if ((reload || strcmp(view->vid, view->id)) &&
 		   !begin_update(view)) {
@@ -2517,8 +2485,63 @@ pager_select(struct view *view, struct line *line)
 
 static struct view_ops pager_ops = {
 	"line",
-	pager_draw,
+	NULL,
 	pager_read,
+	pager_draw,
+	pager_enter,
+	pager_grep,
+	pager_select,
+};
+
+
+/*
+ * Help backend
+ */
+
+static bool
+help_open(struct view *view)
+{
+	char buf[BUFSIZ];
+	int lines = ARRAY_SIZE(req_info) + 2;
+	int i;
+
+	if (view->lines > 0)
+		return TRUE;
+
+	for (i = 0; i < ARRAY_SIZE(req_info); i++)
+		if (!req_info[i].request)
+			lines++;
+
+	view->line = calloc(lines, sizeof(*view->line));
+	if (!view->line)
+		return FALSE;
+
+	add_line_text(view, "Quick reference for tig keybindings:", LINE_DEFAULT);
+
+	for (i = 0; i < ARRAY_SIZE(req_info); i++) {
+		char *key;
+
+		if (!req_info[i].request) {
+			add_line_text(view, "", LINE_DEFAULT);
+			add_line_text(view, req_info[i].help, LINE_DEFAULT);
+			continue;
+		}
+
+		key = get_key(req_info[i].request);
+		if (!string_format(buf, "    %-25s %s", key, req_info[i].help))
+			continue;
+
+		add_line_text(view, buf, LINE_DEFAULT);
+	}
+
+	return TRUE;
+}
+
+static struct view_ops help_ops = {
+	"line",
+	help_open,
+	NULL,
+	pager_draw,
 	pager_enter,
 	pager_grep,
 	pager_select,
@@ -2700,8 +2723,9 @@ tree_select(struct view *view, struct line *line)
 
 static struct view_ops tree_ops = {
 	"file",
-	pager_draw,
+	NULL,
 	tree_read,
+	pager_draw,
 	tree_enter,
 	pager_grep,
 	tree_select,
@@ -2715,8 +2739,9 @@ blob_read(struct view *view, char *line)
 
 static struct view_ops blob_ops = {
 	"line",
-	pager_draw,
+	NULL,
 	blob_read,
+	pager_draw,
 	pager_enter,
 	pager_grep,
 	pager_select,
@@ -3205,8 +3230,9 @@ main_select(struct view *view, struct line *line)
 
 static struct view_ops main_ops = {
 	"commit",
-	main_draw,
+	NULL,
 	main_read,
+	main_draw,
 	main_enter,
 	main_grep,
 	main_select,
