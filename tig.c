@@ -870,7 +870,7 @@ get_key(enum request request)
 	static char buf[BUFSIZ];
 	static char key_char[] = "'X'";
 	size_t pos = 0;
-	char *sep = "    ";
+	char *sep = "";
 	int i;
 
 	buf[pos] = 0;
@@ -2030,7 +2030,7 @@ static void open_help_view(struct view *view)
 		}
 
 		key = get_key(req_info[i].request);
-		if (!string_format(buf, "%-25s %s", key, req_info[i].help))
+		if (!string_format(buf, "    %-25s %s", key, req_info[i].help))
 			continue;
 
 		add_line_text(view, buf, LINE_DEFAULT);
