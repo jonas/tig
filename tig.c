@@ -269,6 +269,9 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	}
 	BUFPUT('\'');
 
+	if (bufsize < SIZEOF_STR)
+		buf[bufsize] = 0;
+
 	return bufsize;
 }
 
@@ -1786,11 +1789,14 @@ begin_update(struct view *view)
 
 	} else if (view == VIEW(REQ_VIEW_TREE)) {
 		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
+		char path[SIZEOF_STR];
 
 		if (strcmp(view->vid, view->id))
-			opt_path[0] = 0;
+			opt_path[0] = path[0] = 0;
+		else if (sq_quote(path, 0, opt_path) >= sizeof(path))
+			return FALSE;
 
-		if (!string_format(view->cmd, format, id, opt_path))
+		if (!string_format(view->cmd, format, id, path))
 			return FALSE;
 
 	} else {
