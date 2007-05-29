@@ -1261,8 +1261,8 @@ static struct view views[] = {
 	VIEW_(LOG,   "log",   &pager_ops, ref_head),
 	VIEW_(TREE,  "tree",  &tree_ops,  ref_commit),
 	VIEW_(BLOB,  "blob",  &blob_ops,  ref_blob),
-	VIEW_(HELP,  "help",  &pager_ops, "static"),
-	VIEW_(PAGER, "pager", &pager_ops, "static"),
+	VIEW_(HELP,  "help",  &pager_ops, ""),
+	VIEW_(PAGER, "pager", &pager_ops, ""),
 };
 
 #define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
@@ -1783,9 +1783,10 @@ begin_update(struct view *view)
 	if (opt_cmd[0]) {
 		string_copy(view->cmd, opt_cmd);
 		opt_cmd[0] = 0;
-		/* When running random commands, the view ref could have become
-		 * invalid so clear it. */
-		view->ref[0] = 0;
+		/* When running random commands, initially show the
+		 * command in the title. However, it maybe later be
+		 * overwritten if a commit line is selected. */
+		string_copy(view->ref, view->cmd);
 
 	} else if (view == VIEW(REQ_VIEW_TREE)) {
 		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
@@ -1804,6 +1805,12 @@ begin_update(struct view *view)
 
 		if (!string_format(view->cmd, format, id, id, id, id, id))
 			return FALSE;
+
+		/* Put the current ref_* value to the view title ref
+		 * member. This is needed by the blob view. Most other
+		 * views sets it automatically after loading because the
+		 * first line is a commit line. */
+		string_copy(view->ref, id);
 	}
 
 	/* Special case for the pager view. */
@@ -2486,10 +2493,11 @@ static void
 pager_select(struct view *view, struct line *line)
 {
 	if (line->type == LINE_COMMIT) {
-		char *text = line->data;
+		char *text = line->data + STRING_SIZE("commit ");
 
-		string_copy(view->ref, text + STRING_SIZE("commit "));
-		string_copy(ref_commit, view->ref);
+		if (view != VIEW(REQ_VIEW_PAGER))
+			string_copy(view->ref, text);
+		string_copy(ref_commit, text);
 	}
 }
 
@@ -2664,15 +2672,10 @@ tree_enter(struct view *view, struct line *line)
 static void
 tree_select(struct view *view, struct line *line)
 {
-	char *text = line->data;
-
-	text += STRING_SIZE("100644 blob ");
+	char *text = line->data + STRING_SIZE("100644 blob ");
 
 	if (line->type == LINE_TREE_FILE) {
 		string_ncopy(ref_blob, text, 40);
-		/* Also update the blob view's ref, since all there must always
-		 * be in sync. */
-		string_copy(VIEW(REQ_VIEW_BLOB)->ref, ref_blob);
 
 	} else if (line->type != LINE_TREE_DIR) {
 		return;
