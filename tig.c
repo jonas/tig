@@ -1622,7 +1622,8 @@ move_view(struct view *view, enum request request)
 	}
 
 	if (!view_is_displayed(view)) {
-		view->offset += steps;
+		view->offset += scroll_steps;
+		assert(0 <= view->offset && view->offset < view->lines);
 		view->ops->select(view, &view->line[view->lineno]);
 		return;
 	}
