@@ -195,6 +195,10 @@ The blob view::
 	Displays the file content or "blob" of data associated with a file
 	name.
 
+The status view::
+	Displays status of files in the working tree and allows changes to be
+	staged/unstaged as well as adding of untracked files.
+
 The pager view::
 	Is used for displaying both input from stdin and output from git
 	commands entered in the internal prompt.
@@ -239,7 +243,8 @@ l	Switch to log view.
 p	Switch to pager view.
 t	Switch to (directory) tree view.
 f	Switch to (file) blob view.
-h	Show man page.
+h	Switch to help view
+S	Switch to status view
 -----------------------------------------------------------------------------
 
 [[view-manipulation]]

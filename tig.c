@@ -110,6 +110,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 /* XXX: Needs to be defined to the empty string. */
 #define TIG_HELP_CMD	""
 #define TIG_PAGER_CMD	""
+#define TIG_STATUS_CMD	""
 
 /* Some ascii-shorthands fitted into the ncurses namespace. */
 #define KEY_TAB		'\t'
@@ -293,6 +294,7 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(VIEW_BLOB,		"Show blob view"), \
 	REQ_(VIEW_HELP,		"Show help page"), \
 	REQ_(VIEW_PAGER,	"Show pager view"), \
+	REQ_(VIEW_STATUS,	"Show status view"), \
 	\
 	REQ_GROUP("View manipulation") \
 	REQ_(ENTER,		"Enter current line and scroll"), \
@@ -394,6 +396,7 @@ VERSION " (" __DATE__ ")\n"
 "Options:\n"
 "  -l                          Start up in log view\n"
 "  -d                          Start up in diff view\n"
+"  -S                          Start up in status view\n"
 "  -n[I], --line-number[=I]    Show line numbers with given interval\n"
 "  -b[N], --tab-size[=N]       Set number of spaces for tab expansion\n"
 "  --                          Mark end of tig options\n"
@@ -486,6 +489,11 @@ parse_options(int argc, char *argv[])
 		if (!strcmp(opt, "-d")) {
 			opt_request = REQ_VIEW_DIFF;
 			continue;
+		}
+
+		if (!strcmp(opt, "-S")) {
+			opt_request = REQ_VIEW_STATUS;
+			break;
 		}
 
 		if (check_option(opt, 'n', "line-number", OPT_INT, &opt_num_interval)) {
@@ -595,7 +603,12 @@ LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REMOTE,  "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
 LINE(TREE_DIR,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
-LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL)
+LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
+LINE(STAT_SECTION, "",			COLOR_DEFAULT,	COLOR_BLUE,	A_BOLD), \
+LINE(STAT_NONE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
+LINE(STAT_STAGED,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
+LINE(STAT_UNSTAGED,"",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(STAT_UNTRACKED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0)
 
 enum line_type {
 #define LINE(type, line, fg, bg, attr) \
@@ -706,6 +719,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'f',		REQ_VIEW_BLOB },
 	{ 'p',		REQ_VIEW_PAGER },
 	{ 'h',		REQ_VIEW_HELP },
+	{ 'S',		REQ_VIEW_STATUS },
 
 	/* View manipulation */
 	{ 'q',		REQ_VIEW_CLOSE },
@@ -758,7 +772,8 @@ static struct keybinding default_keybindings[] = {
 	KEYMAP_(TREE), \
 	KEYMAP_(BLOB), \
 	KEYMAP_(PAGER), \
-	KEYMAP_(HELP) \
+	KEYMAP_(HELP), \
+	KEYMAP_(STATUS)
 
 enum keymap {
 #define KEYMAP_(name) KEYMAP_##name
@@ -1253,6 +1268,7 @@ static struct view_ops main_ops;
 static struct view_ops tree_ops;
 static struct view_ops blob_ops;
 static struct view_ops help_ops;
+static struct view_ops status_ops;
 
 #define VIEW_STR(name, cmd, env, ref, ops, map) \
 	{ name, cmd, #env, ref, ops, map}
@@ -1262,13 +1278,14 @@ static struct view_ops help_ops;
 
 
 static struct view views[] = {
-	VIEW_(MAIN,  "main",  &main_ops,  ref_head),
-	VIEW_(DIFF,  "diff",  &pager_ops, ref_commit),
-	VIEW_(LOG,   "log",   &pager_ops, ref_head),
-	VIEW_(TREE,  "tree",  &tree_ops,  ref_commit),
-	VIEW_(BLOB,  "blob",  &blob_ops,  ref_blob),
-	VIEW_(HELP,  "help",  &help_ops,  ""),
-	VIEW_(PAGER, "pager", &pager_ops, ""),
+	VIEW_(MAIN,   "main",   &main_ops,   ref_head),
+	VIEW_(DIFF,   "diff",   &pager_ops,  ref_commit),
+	VIEW_(LOG,    "log",    &pager_ops,  ref_head),
+	VIEW_(TREE,   "tree",   &tree_ops,   ref_commit),
+	VIEW_(BLOB,   "blob",   &blob_ops,   ref_blob),
+	VIEW_(HELP,   "help",   &help_ops,  ""),
+	VIEW_(PAGER,  "pager",  &pager_ops,  ""),
+	VIEW_(STATUS, "status", &status_ops, ""),
 };
 
 #define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
@@ -2143,6 +2160,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_LOG:
 	case REQ_VIEW_TREE:
 	case REQ_VIEW_HELP:
+	case REQ_VIEW_STATUS:
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
@@ -2748,6 +2766,344 @@ static struct view_ops blob_ops = {
 	pager_enter,
 	pager_grep,
 	pager_select,
+};
+
+
+/*
+ * Status backend
+ */
+
+struct status {
+	char status;
+	struct {
+		mode_t mode;
+		char rev[SIZEOF_REV];
+	} old;
+	struct {
+		mode_t mode;
+		char rev[SIZEOF_REV];
+	} new;
+	char name[SIZEOF_STR];
+};
+
+/* Get fields from the diff line:
+ * :100644 100644 06a5d6ae9eca55be2e0e585a152e6b1336f2b20e 0000000000000000000000000000000000000000 M
+ */
+static inline bool
+status_get_diff(struct status *file, char *buf, size_t bufsize)
+{
+	char *old_mode = buf +  1;
+	char *new_mode = buf +  8;
+	char *old_rev  = buf + 15;
+	char *new_rev  = buf + 56;
+	char *status   = buf + 97;
+
+	if (bufsize != 99 ||
+	    old_mode[-1] != ':' ||
+	    new_mode[-1] != ' ' ||
+	    old_rev[-1]  != ' ' ||
+	    new_rev[-1]  != ' ' ||
+	    status[-1]   != ' ')
+		return FALSE;
+
+	file->status = *status;
+
+	string_copy_rev(file->old.rev, old_rev);
+	string_copy_rev(file->new.rev, new_rev);
+
+	file->old.mode = strtoul(old_mode, NULL, 8);
+	file->new.mode = strtoul(new_mode, NULL, 8);
+
+	file->name[0] = 0;
+
+	return TRUE;
+}
+
+static bool
+status_run(struct view *view, const char cmd[], bool diff, enum line_type type)
+{
+	struct status *file = NULL;
+	char buf[SIZEOF_STR * 4];
+	size_t bufsize = 0;
+	FILE *pipe;
+
+	pipe = popen(cmd, "r");
+	if (!pipe)
+		return FALSE;
+
+	add_line_data(view, NULL, type);
+
+	while (!feof(pipe) && !ferror(pipe)) {
+		char *sep;
+		size_t readsize;
+
+		readsize = fread(buf + bufsize, 1, sizeof(buf) - bufsize, pipe);
+		if (!readsize)
+			break;
+		bufsize += readsize;
+
+		/* Process while we have NUL chars. */
+		while ((sep = memchr(buf, 0, bufsize))) {
+			size_t sepsize = sep - buf + 1;
+
+			if (!file) {
+				if (!realloc_lines(view, view->line_size + 1))
+					goto error_out;
+
+				file = calloc(1, sizeof(*file));
+				if (!file)
+					goto error_out;
+
+				add_line_data(view, file, type);
+			}
+
+			/* Parse diff info part. */
+			if (!diff) {
+				file->status = '?';
+
+			} else if (!file->status) {
+				if (!status_get_diff(file, buf, sepsize))
+					goto error_out;
+
+				bufsize -= sepsize;
+				memmove(buf, sep + 1, bufsize);
+
+				sep = memchr(buf, 0, bufsize);
+				if (!sep)
+					break;
+				sepsize = sep - buf + 1;
+			}
+
+			/* git-ls-files just delivers a NUL separated
+			 * list of file names similar to the second half
+			 * of the git-diff-* output. */
+			string_ncopy(file->name, buf, sepsize);
+			bufsize -= sepsize;
+			memmove(buf, sep + 1, bufsize);
+			file = NULL;
+		}
+	}
+
+	if (ferror(pipe)) {
+error_out:
+		pclose(pipe);
+		return FALSE;
+	}
+
+	if (!view->line[view->lines - 1].data)
+		add_line_data(view, NULL, LINE_STAT_NONE);
+
+	pclose(pipe);
+	return TRUE;
+}
+
+#define STATUS_DIFF_INDEX_CMD "git diff-index -z --cached HEAD"
+#define STATUS_DIFF_FILES_CMD "git diff-files -z"
+#define STATUS_LIST_OTHER_CMD \
+	"_git_exclude=$(git rev-parse --git-dir)/info/exclude;" \
+	"test -f \"$_git_exclude\" && exclude=\"--exclude-from=$_git_exclude\";" \
+	"git ls-files -z --others --exclude-per-directory=.gitignore \"$exclude\"" \
+
+/* First parse staged info using git-diff-index(1), then parse unstaged
+ * info using git-diff-files(1), and finally untracked files using
+ * git-ls-files(1). */
+static bool
+status_open(struct view *view)
+{
+	size_t i;
+
+	for (i = 0; i < view->lines; i++)
+		free(view->line[i].data);
+	free(view->line);
+	view->lines = view->line_size = 0;
+	view->line = NULL;
+
+	if (!realloc_lines(view, view->line_size + 6))
+		return FALSE;
+
+	if (!status_run(view, STATUS_DIFF_INDEX_CMD, TRUE, LINE_STAT_STAGED) ||
+	    !status_run(view, STATUS_DIFF_FILES_CMD, TRUE, LINE_STAT_UNSTAGED) ||
+	    !status_run(view, STATUS_LIST_OTHER_CMD, FALSE, LINE_STAT_UNTRACKED))
+		return FALSE;
+
+	return TRUE;
+}
+
+static bool
+status_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
+{
+	struct status *status = line->data;
+
+	wmove(view->win, lineno, 0);
+
+	if (selected) {
+		wattrset(view->win, get_line_attr(LINE_CURSOR));
+		wchgat(view->win, -1, 0, LINE_CURSOR, NULL);
+
+	} else if (!status && line->type != LINE_STAT_NONE) {
+		wattrset(view->win, get_line_attr(LINE_STAT_SECTION));
+		wchgat(view->win, -1, 0, LINE_STAT_SECTION, NULL);
+
+	} else {
+		wattrset(view->win, get_line_attr(line->type));
+	}
+
+	if (!status) {
+		char *text;
+
+		switch (line->type) {
+		case LINE_STAT_STAGED:
+			text = "Changes to be committed:";
+			break;
+
+		case LINE_STAT_UNSTAGED:
+			text = "Changed but not updated:";
+			break;
+
+		case LINE_STAT_UNTRACKED:
+			text = "Untracked files:";
+			break;
+
+		case LINE_STAT_NONE:
+			text = "    (no files)";
+			break;
+
+		default:
+			return FALSE;
+		}
+
+		waddstr(view->win, text);
+		return TRUE;
+	}
+
+	waddch(view->win, status->status);
+	if (!selected)
+		wattrset(view->win, A_NORMAL);
+	wmove(view->win, lineno, 4);
+	waddstr(view->win, status->name);
+
+	return TRUE;
+}
+
+static bool
+status_enter(struct view *view, struct line *line)
+{
+	struct status *status = line->data;
+	const char *cmd;
+	char buf[SIZEOF_STR];
+	size_t bufsize = 0;
+	size_t written = 0;
+	FILE *pipe;
+
+	if (!status)
+		return TRUE;
+
+	switch (line->type) {
+	case LINE_STAT_STAGED:
+		if (!string_format_from(buf, &bufsize, "%06o %s\t%s%c",
+				        status->old.mode,
+					status->old.rev,
+					status->name, 0))
+			return FALSE;
+		cmd = "git update-index -z --index-info";
+		break;
+
+	case LINE_STAT_UNSTAGED:
+	case LINE_STAT_UNTRACKED:
+		if (!string_format_from(buf, &bufsize, "%s%c", status->name, 0))
+			return FALSE;
+		cmd = "git update-index -z --add --remove --stdin";
+		break;
+
+	default:
+		die("w00t");
+	}
+
+	pipe = popen(cmd, "w");
+	if (!pipe)
+		return FALSE;
+
+	while (!ferror(pipe) && written < bufsize) {
+		written += fwrite(buf + written, 1, bufsize - written, pipe);
+	}
+
+	pclose(pipe);
+
+	if (written != bufsize)
+		return FALSE;
+
+	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
+	return TRUE;
+}
+
+static void
+status_select(struct view *view, struct line *line)
+{
+	char *text;
+
+	switch (line->type) {
+	case LINE_STAT_STAGED:
+		text = "Press Enter to unstage file for commit";
+		break;
+
+	case LINE_STAT_UNSTAGED:
+		text = "Press Enter to stage file for commit  ";
+		break;
+
+	case LINE_STAT_UNTRACKED:
+		text = "Press Enter to stage file for addition";
+		break;
+
+	case LINE_STAT_NONE:
+		return;
+
+	default:
+		die("w00t");
+	}
+
+	string_ncopy(view->ref, text, strlen(text));
+}
+
+static bool
+status_grep(struct view *view, struct line *line)
+{
+	struct status *status = line->data;
+	enum { S_STATUS, S_NAME, S_END } state;
+	char buf[2] = "?";
+	regmatch_t pmatch;
+
+	if (!status)
+		return FALSE;
+
+	for (state = S_STATUS; state < S_END; state++) {
+		char *text;
+
+		switch (state) {
+		case S_NAME:	text = status->name;	break;
+		case S_STATUS:
+			buf[0] = status->status;
+			text = buf;
+			break;
+
+		default:
+			return FALSE;
+		}
+
+		if (regexec(view->regex, text, 1, &pmatch, 0) != REG_NOMATCH)
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+static struct view_ops status_ops = {
+	"file",
+	status_open,
+	NULL,
+	status_draw,
+	status_enter,
+	status_grep,
+	status_select,
 };
 
 
