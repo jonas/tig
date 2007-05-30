@@ -1983,21 +1983,24 @@ end:
 }
 
 static struct line *
-add_line_text(struct view *view, char *data, enum line_type type)
+add_line_data(struct view *view, void *data, enum line_type type)
 {
-	struct line *line = &view->line[view->lines];
+	struct line *line = &view->line[view->lines++];
 
-	if (!data)
-		return NULL;
-
-	line->data = strdup(data);
-	if (!line->data)
-		return NULL;
-
+	memset(line, 0, sizeof(*line));
 	line->type = type;
-	view->lines++;
+	line->data = data;
 
 	return line;
+}
+
+static struct line *
+add_line_text(struct view *view, char *data, enum line_type type)
+{
+	if (data)
+		data = strdup(data);
+
+	return data ? add_line_data(view, data, type) : NULL;
 }
 
 
@@ -3088,10 +3091,10 @@ main_read(struct view *view, char *line)
 
 		line += STRING_SIZE("commit ");
 
-		view->line[view->lines++].data = commit;
 		string_copy_rev(commit->id, line);
 		commit->refs = get_refs(commit->id);
 		graph->commit = commit;
+		add_line_data(view, commit, LINE_MAIN_COMMIT);
 		break;
 
 	case LINE_PARENT:
