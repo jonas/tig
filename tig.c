@@ -3073,8 +3073,7 @@ main_read(struct view *view, char *line)
 {
 	static struct rev_graph *graph = graph_stacks;
 	enum line_type type;
-	struct commit *commit = view->lines
-			      ? view->line[view->lines - 1].data : NULL;
+	struct commit *commit;
 
 	if (!line) {
 		update_rev_graph(graph);
@@ -3082,26 +3081,25 @@ main_read(struct view *view, char *line)
 	}
 
 	type = get_line_type(line);
-
-	switch (type) {
-	case LINE_COMMIT:
+	if (type == LINE_COMMIT) {
 		commit = calloc(1, sizeof(struct commit));
 		if (!commit)
 			return FALSE;
 
-		line += STRING_SIZE("commit ");
-
-		string_copy_rev(commit->id, line);
+		string_copy_rev(commit->id, line + STRING_SIZE("commit "));
 		commit->refs = get_refs(commit->id);
 		graph->commit = commit;
 		add_line_data(view, commit, LINE_MAIN_COMMIT);
-		break;
+		return TRUE;
+	}
 
+	if (!view->lines)
+		return TRUE;
+	commit = view->line[view->lines - 1].data;
+
+	switch (type) {
 	case LINE_PARENT:
-		if (commit) {
-			line += STRING_SIZE("parent ");
-			push_rev_graph(graph->parents, line);
-		}
+		push_rev_graph(graph->parents, line + STRING_SIZE("parent "));
 		break;
 
 	case LINE_AUTHOR:
@@ -3113,7 +3111,7 @@ main_read(struct view *view, char *line)
 		char *nameend = strchr(ident, '<');
 		char *emailend = strchr(ident, '>');
 
-		if (!commit || !nameend || !emailend)
+		if (!nameend || !emailend)
 			break;
 
 		update_rev_graph(graph);
@@ -3155,9 +3153,6 @@ main_read(struct view *view, char *line)
 		break;
 	}
 	default:
-		if (!commit)
-			break;
-
 		/* Fill in the commit title if it has not already been set. */
 		if (commit->title[0])
 			break;
