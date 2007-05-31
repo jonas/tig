@@ -12,6 +12,7 @@ VERSION = $(GITDESC)$(WTDIRTY)
 else
 VERSION = $(shell test -f VERSION && cat VERSION || echo "unknown-version")
 endif
+RPM_VERSION = $(subst -,.,$(VERSION))
 
 LDLIBS  = -lcurses
 CFLAGS	= -Wall -O2 '-DVERSION="$(VERSION)"'
@@ -23,6 +24,8 @@ DOCS_HTML	= tig.1.html tigrc.5.html \
 		  README.html
 DOCS	= $(DOCS_MAN) $(DOCS_HTML) \
 	  manual.toc manual.pdf
+
+TARNAME = tig-$(RPM_VERSION)
 
 all: $(PROGS)
 all-debug: $(PROGS)
@@ -60,6 +63,9 @@ install-doc: install-doc-man install-doc-html
 clean:
 	rm -rf manual.html-chunked
 	rm -f $(PROGS) $(DOCS) core *.xml
+	rm -f *.spec
+	rm -rf $(TARNAME)
+	rm -f $(TARNAME).tar.gz
 
 spell-check:
 	aspell --lang=en --check tig.1.txt tigrc.5.txt manual.txt
@@ -67,7 +73,24 @@ spell-check:
 strip: all
 	strip $(PROGS)
 
-.PHONY: all all-debug doc doc-man doc-html install install-doc install-doc-man install-doc-html clean spell-check
+dist: tig.spec
+	git-archive --format=tar --prefix=$(TARNAME)/ HEAD > $(TARNAME).tar
+	@mkdir -p $(TARNAME)
+	@cp tig.spec $(TARNAME)
+	tar rf $(TARNAME).tar $(TARNAME)/tig.spec
+	@rm -rf $(TARNAME)
+	gzip -f -9 $(TARNAME).tar
+
+rpm: dist
+	rpmbuild -ta $(TARNAME).tar.gz
+
+.PHONY: all all-debug doc doc-man doc-html install install-doc install-doc-man install-doc-html clean spell-check dist rpm
+
+tig.spec: tig.spec.in
+	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' < $< > $@+
+	mv $@+ $@
+
+tig: tig.c
 
 manual.html: manual.toc
 manual.toc: manual.txt
@@ -78,8 +101,6 @@ manual.toc: manual.txt
 		"[["*"]]") ref="$$line" ;; \
 		*)	   ref="$$ref, $$line" ;; \
 		esac; done | sed 's/\[\[\(.*\)\]\]/\1/' > $@
-
-tig: tig.c
 
 README.html: README
 	asciidoc -b xhtml11 -d article -a readme $<
