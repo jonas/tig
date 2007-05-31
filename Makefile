@@ -1,38 +1,34 @@
 prefix	= $(HOME)
-bindir= $(prefix)/bin
-mandir = $(prefix)/man
-docdir = $(prefix)/share/doc
+bindir	= $(prefix)/bin
+mandir	= $(prefix)/man
+docdir	= $(prefix)/share/doc
 # DESTDIR=
 
 # Get version either via git or from VERSION file
 ifneq (,$(wildcard .git))
-GITDESC = $(subst tig-,,$(shell git describe))
-WTDIRTY = $(if $(shell git-diff-index HEAD 2>/dev/null),-dirty)
-VERSION = $(GITDESC)$(WTDIRTY)
+GITDESC	= $(subst tig-,,$(shell git describe))
+WTDIRTY	= $(if $(shell git-diff-index HEAD 2>/dev/null),-dirty)
+VERSION	= $(GITDESC)$(WTDIRTY)
 else
-VERSION = $(shell test -f VERSION && cat VERSION || echo "unknown-version")
+VERSION	= $(shell test -f VERSION && cat VERSION || echo "unknown-version")
 endif
 RPM_VERSION = $(subst -,.,$(VERSION))
 
-LDLIBS  = -lcurses
+LDLIBS	= -lcurses
 CFLAGS	= -Wall -O2 '-DVERSION="$(VERSION)"'
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
-DOCS_MAN	= tig.1 tigrc.5
-DOCS_HTML	= tig.1.html tigrc.5.html \
-		  manual.html \
-		  README.html
-DOCS	= $(DOCS_MAN) $(DOCS_HTML) \
-	  manual.toc manual.html-chunked manual.pdf
-
-TARNAME = tig-$(RPM_VERSION)
+MANDOC	= tig.1 tigrc.5
+HTMLDOC = tig.1.html tigrc.5.html manual.html README.html
+ALLDOC	= $(MANDOC) $(HTMLDOC) manual.html-chunked manual.pdf
+TARNAME	= tig-$(RPM_VERSION)
 
 all: $(PROGS)
 all-debug: $(PROGS)
 all-debug: CFLAGS += $(DFLAGS)
-doc: $(DOCS)
-doc-man: $(DOCS_MAN)
-doc-html: $(DOCS_HTML)
+doc: $(ALLDOC)
+doc-man: $(MANDOC)
+doc-html: $(HTMLDOC)
 
 install: all
 	mkdir -p $(DESTDIR)$(bindir) && \
@@ -43,7 +39,7 @@ install: all
 install-doc-man: doc-man
 	mkdir -p $(DESTDIR)$(mandir)/man1 \
 		 $(DESTDIR)$(mandir)/man5
-	for doc in $(DOCS); do \
+	for doc in $(MANDOC); do \
 		case "$$doc" in \
 		*.1) install $$doc $(DESTDIR)$(mandir)/man1 ;; \
 		*.5) install $$doc $(DESTDIR)$(mandir)/man5 ;; \
@@ -52,7 +48,7 @@ install-doc-man: doc-man
 
 install-doc-html: doc-html
 	mkdir -p $(DESTDIR)$(docdir)/tig
-	for doc in $(DOCS); do \
+	for doc in $(HTMLDOC); do \
 		case "$$doc" in \
 		*.html) install $$doc $(DESTDIR)$(docdir)/tig ;; \
 		esac \
@@ -61,11 +57,9 @@ install-doc-html: doc-html
 install-doc: install-doc-man install-doc-html
 
 clean:
-	rm -rf manual.html-chunked
-	rm -f $(PROGS) $(DOCS) core *.xml
-	rm -f *.spec
-	rm -rf $(TARNAME)
-	rm -f $(TARNAME).tar.gz
+	rm -rf manual.html-chunked $(TARNAME)
+	rm -f $(PROGS) $(ALLDOC) core *.xml *.toc
+	rm -f *.spec tig-*.tar.gz
 
 spell-check:
 	aspell --lang=en --check tig.1.txt tigrc.5.txt manual.txt
@@ -89,15 +83,15 @@ sync-docs:
 	git checkout release && \
 	git merge master && \
 	make clean doc-man doc-html && \
-	git add $(DOCS_MAN) $(DOCS_HTML) && \
+	git add $(MANDOC) $(HTMLDOC) && \
 	git commit -m "Sync docs" && \
 	git checkout master
 
-.PHONY: all all-debug doc doc-man doc-html install install-doc install-doc-man install-doc-html clean spell-check dist rpm
+.PHONY: all all-debug doc doc-man doc-html install install-doc \
+	install-doc-man install-doc-html clean spell-check dist rpm
 
 tig.spec: tig.spec.in
-	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' < $< > $@+
-	mv $@+ $@
+	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' < $< > $@
 
 tig: tig.c
 
