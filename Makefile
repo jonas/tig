@@ -16,9 +16,10 @@ DOCS	= $(DOCS_MAN) $(DOCS_HTML) \
 	  manual.toc manual.pdf
 
 ifneq (,$(wildcard .git))
-VERSION = $(shell git-describe)
-WTDIRTY = $(shell git-diff-index --name-only HEAD 2>/dev/null)
-CFLAGS += '-DVERSION="$(VERSION)$(if $(WTDIRTY),-dirty)"'
+GITDESC = $(subst tig-,,$(shell git describe))
+WTDIRTY = $(if $(shell git-diff-index HEAD 2>/dev/null),-dirty)
+VERSION = $(GITDESC)$(WTDIRTY)
+CFLAGS += '-DVERSION="tig-$(VERSION)"'
 endif
 
 all: $(PROGS)
@@ -88,7 +89,7 @@ README.html: README
 	asciidoc -b xhtml11 -d manpage $<
 
 %.1.xml : %.1.txt
-	asciidoc -b docbook -d manpage $<
+	asciidoc -b docbook -d manpage -aversion=$(VERSION) $<
 
 %.1 : %.1.xml
 	xmlto -m manpage.xsl man $<
@@ -97,7 +98,7 @@ README.html: README
 	asciidoc -b xhtml11 -d manpage $<
 
 %.5.xml : %.5.txt
-	asciidoc -b docbook -d manpage $<
+	asciidoc -b docbook -d manpage -aversion=$(VERSION) $<
 
 %.5 : %.5.xml
 	xmlto -m manpage.xsl man $<
