@@ -4,24 +4,35 @@ mandir = $(prefix)/man
 docdir = $(prefix)/share/doc
 # DESTDIR=
 
+# Get version either via git or from VERSION file
+ifneq (,$(wildcard .git))
+GITDESC = $(subst tig-,,$(shell git describe))
+WTDIRTY = $(if $(shell git-diff-index HEAD 2>/dev/null),-dirty)
+VERSION = $(GITDESC)$(WTDIRTY)
+else
+VERSION = $(shell test -f VERSION && cat VERSION || echo "unknown-version")
+endif
+RPM_VERSION = $(subst -,.,$(VERSION))
+
 LDLIBS  = -lcurses
-CFLAGS	= -Wall -O2
+CFLAGS	= -Wall -O2 '-DVERSION="$(VERSION)"'
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
-DOCS	= tig.1.html tig.1 tigrc.5.html tigrc.5 \
-	  manual.toc manual.html manual.html-chunked manual.pdf \
-	  README.html
+DOCS_MAN	= tig.1 tigrc.5
+DOCS_HTML	= tig.1.html tigrc.5.html \
+		  manual.html \
+		  README.html
+DOCS	= $(DOCS_MAN) $(DOCS_HTML) \
+	  manual.toc manual.html-chunked manual.pdf
 
-ifneq (,$(wildcard .git))
-VERSION = $(shell git-describe)
-WTDIRTY = $(shell git-diff-index --name-only HEAD 2>/dev/null)
-CFLAGS += '-DVERSION="$(VERSION)$(if $(WTDIRTY),-dirty)"'
-endif
+TARNAME = tig-$(RPM_VERSION)
 
 all: $(PROGS)
 all-debug: $(PROGS)
 all-debug: CFLAGS += $(DFLAGS)
 doc: $(DOCS)
+doc-man: $(DOCS_MAN)
+doc-html: $(DOCS_HTML)
 
 install: all
 	mkdir -p $(DESTDIR)$(bindir) && \
@@ -29,21 +40,32 @@ install: all
 		install $$prog $(DESTDIR)$(bindir); \
 	done
 
-install-doc: doc
+install-doc-man: doc-man
 	mkdir -p $(DESTDIR)$(mandir)/man1 \
-		 $(DESTDIR)$(mandir)/man5 \
-		 $(DESTDIR)$(docdir)/tig
+		 $(DESTDIR)$(mandir)/man5
 	for doc in $(DOCS); do \
 		case "$$doc" in \
 		*.1) install $$doc $(DESTDIR)$(mandir)/man1 ;; \
 		*.5) install $$doc $(DESTDIR)$(mandir)/man5 ;; \
+		esac \
+	done
+
+install-doc-html: doc-html
+	mkdir -p $(DESTDIR)$(docdir)/tig
+	for doc in $(DOCS); do \
+		case "$$doc" in \
 		*.html) install $$doc $(DESTDIR)$(docdir)/tig ;; \
 		esac \
 	done
 
+install-doc: install-doc-man install-doc-html
+
 clean:
 	rm -rf manual.html-chunked
 	rm -f $(PROGS) $(DOCS) core *.xml
+	rm -f *.spec
+	rm -rf $(TARNAME)
+	rm -f $(TARNAME).tar.gz
 
 spell-check:
 	aspell --lang=en --check tig.1.txt tigrc.5.txt manual.txt
@@ -51,8 +73,35 @@ spell-check:
 strip: all
 	strip $(PROGS)
 
-.PHONY: all all-debug doc install install-doc clean spell-check
+dist: tig.spec
+	git-archive --format=tar --prefix=$(TARNAME)/ HEAD > $(TARNAME).tar
+	@mkdir -p $(TARNAME)
+	@cp tig.spec $(TARNAME)
+	tar rf $(TARNAME).tar $(TARNAME)/tig.spec
+	@rm -rf $(TARNAME)
+	gzip -f -9 $(TARNAME).tar
 
+rpm: dist
+	rpmbuild -ta $(TARNAME).tar.gz
+
+# Maintainer stuff
+sync-docs:
+	git checkout release && \
+	git merge master && \
+	make clean doc-man doc-html && \
+	git add $(DOCS_MAN) $(DOCS_HTML) && \
+	git commit -m "Sync docs" && \
+	git checkout master
+
+.PHONY: all all-debug doc doc-man doc-html install install-doc install-doc-man install-doc-html clean spell-check dist rpm
+
+tig.spec: tig.spec.in
+	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' < $< > $@+
+	mv $@+ $@
+
+tig: tig.c
+
+manual.html: manual.toc
 manual.toc: manual.txt
 	sed -n '/^\[\[/,/\(---\|~~~\)/p' < $< | while read line; do \
 		case "$$line" in \
@@ -61,8 +110,6 @@ manual.toc: manual.txt
 		"[["*"]]") ref="$$line" ;; \
 		*)	   ref="$$ref, $$line" ;; \
 		esac; done | sed 's/\[\[\(.*\)\]\]/\1/' > $@
-
-tig: tig.c
 
 README.html: README
 	asciidoc -b xhtml11 -d article -a readme $<
@@ -74,19 +121,19 @@ README.html: README
 	asciidoc -b xhtml11 -d manpage $<
 
 %.1.xml : %.1.txt
-	asciidoc -b docbook -d manpage $<
+	asciidoc -b docbook -d manpage -aversion=$(VERSION) $<
 
 %.1 : %.1.xml
-	xmlto man $<
+	xmlto -m manpage.xsl man $<
 
 %.5.html : %.5.txt
 	asciidoc -b xhtml11 -d manpage $<
 
 %.5.xml : %.5.txt
-	asciidoc -b docbook -d manpage $<
+	asciidoc -b docbook -d manpage -aversion=$(VERSION) $<
 
 %.5 : %.5.xml
-	xmlto man $<
+	xmlto -m manpage.xsl man $<
 
 %.html : %.txt
 	asciidoc -b xhtml11 -d article -n $<
@@ -96,12 +143,3 @@ README.html: README
 
 %.html-chunked : %.xml
 	xmlto html -o $@ $<
-
-# Maintainer stuff
-sync-docs:
-	cg switch release
-	-cg merge -n master
-	cg commit -m "Merge with master"
-	make doc
-	cg commit -m "Sync docs"
-	cg switch master

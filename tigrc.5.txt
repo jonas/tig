@@ -123,8 +123,8 @@ built-in keybindings.
 
 Keymaps::
 
-Valid keymaps are: *main*, *diff*, *log*, *help*, *pager*, and *generic*.  Use
-*generic* to set key mapping in all keymaps.
+Valid keymaps are: *main*, *diff*, *log*, *help*, *pager*, *status*, and
+*generic*.  Use *generic* to set key mapping in all keymaps.
 
 Key values::
 
@@ -159,6 +159,7 @@ view-diff		Show diff view
 view-log		Show log view
 view-tree		Show tree view
 view-blob		Show blob view
+view-status		Show status view
 view-pager		Show pager view
 view-help		Show help page
 ------------------------------------------------------------------------------

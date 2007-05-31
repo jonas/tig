@@ -4,6 +4,9 @@ Features that should be explored.
 
  - Repository status view.
 
+ - Add interface (somewhat like git-gui has) allowing a diff chunk to be
+   staged/unstaged for the next commit.
+
  - Better text-input support. From setsyx(3):
 
 	The setsyx routine sets the virtual screen cursor to y, x.  If y and x

@@ -36,6 +36,9 @@ OPTIONS
 -d::
 	Start up in diff view using the internal diff command.
 
+-S::
+	Start up in status view.
+
 -n[INTERVAL], --line-number[=INTERVAL]::
 	Prefix line numbers in log and diff view.
 	Optionally, with interval different than each line.
