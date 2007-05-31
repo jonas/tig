@@ -4,7 +4,8 @@ mandir	= $(prefix)/man
 docdir	= $(prefix)/share/doc
 # DESTDIR=
 
-# Get version either via git or from VERSION file
+# Get version either via git or from VERSION file. Allow either
+# to be overwritten by setting DIST_VERSION on the command line.
 ifneq (,$(wildcard .git))
 GITDESC	= $(subst tig-,,$(shell git describe))
 WTDIRTY	= $(if $(shell git-diff-index HEAD 2>/dev/null),-dirty)
@@ -12,6 +13,10 @@ VERSION	= $(GITDESC)$(WTDIRTY)
 else
 VERSION	= $(shell test -f VERSION && cat VERSION || echo "unknown-version")
 endif
+ifdef DIST_VERSION
+VERSION = $(DIST_VERSION)
+endif
+
 RPM_VERSION = $(subst -,.,$(VERSION))
 
 LDLIBS	= -lcurses
@@ -79,12 +84,17 @@ rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
 
 # Maintainer stuff
-sync-docs:
+release-doc:
 	git checkout release && \
 	git merge master && \
 	make clean doc-man doc-html && \
 	git add $(MANDOC) $(HTMLDOC) && \
 	git commit -m "Sync docs" && \
+	git checkout master
+
+release-dist: release-doc
+	git checkout release && \
+	make dist && \
 	git checkout master
 
 .PHONY: all all-debug doc doc-man doc-html install install-doc \
