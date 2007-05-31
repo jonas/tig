@@ -38,7 +38,7 @@ doc-html: $(HTMLDOC)
 install: all
 	mkdir -p $(DESTDIR)$(bindir) && \
 	for prog in $(PROGS); do \
-		install $$prog $(DESTDIR)$(bindir); \
+		install -p -m 0755 $$prog $(DESTDIR)$(bindir); \
 	done
 
 install-doc-man: doc-man
@@ -46,8 +46,8 @@ install-doc-man: doc-man
 		 $(DESTDIR)$(mandir)/man5
 	for doc in $(MANDOC); do \
 		case "$$doc" in \
-		*.1) install $$doc $(DESTDIR)$(mandir)/man1 ;; \
-		*.5) install $$doc $(DESTDIR)$(mandir)/man5 ;; \
+		*.1) install -p -m 0644 $$doc $(DESTDIR)$(mandir)/man1 ;; \
+		*.5) install -p -m 0644 $$doc $(DESTDIR)$(mandir)/man5 ;; \
 		esac \
 	done
 
@@ -55,7 +55,7 @@ install-doc-html: doc-html
 	mkdir -p $(DESTDIR)$(docdir)/tig
 	for doc in $(HTMLDOC); do \
 		case "$$doc" in \
-		*.html) install $$doc $(DESTDIR)$(docdir)/tig ;; \
+		*.html) install -p -m 0644 $$doc $(DESTDIR)$(docdir)/tig ;; \
 		esac \
 	done
 
