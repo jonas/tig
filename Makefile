@@ -91,7 +91,7 @@ README.html: README
 	asciidoc -b docbook -d manpage $<
 
 %.1 : %.1.xml
-	xmlto man $<
+	xmlto -m manpage.xsl man $<
 
 %.5.html : %.5.txt
 	asciidoc -b xhtml11 -d manpage $<
@@ -100,7 +100,7 @@ README.html: README
 	asciidoc -b docbook -d manpage $<
 
 %.5 : %.5.xml
-	xmlto man $<
+	xmlto -m manpage.xsl man $<
 
 %.html : %.txt
 	asciidoc -b xhtml11 -d article -n $<
