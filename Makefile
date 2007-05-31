@@ -20,10 +20,10 @@ DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
 DOCS_MAN	= tig.1 tigrc.5
 DOCS_HTML	= tig.1.html tigrc.5.html \
-		  manual.html manual.html-chunked \
+		  manual.html \
 		  README.html
 DOCS	= $(DOCS_MAN) $(DOCS_HTML) \
-	  manual.toc manual.pdf
+	  manual.toc manual.html-chunked manual.pdf
 
 TARNAME = tig-$(RPM_VERSION)
 
@@ -84,6 +84,15 @@ dist: tig.spec
 rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
 
+# Maintainer stuff
+sync-docs:
+	git checkout release && \
+	git merge master && \
+	make clean doc-man doc-html && \
+	git add $(DOCS_MAN) $(DOCS_HTML) && \
+	git commit -m "Sync docs" && \
+	git checkout master
+
 .PHONY: all all-debug doc doc-man doc-html install install-doc install-doc-man install-doc-html clean spell-check dist rpm
 
 tig.spec: tig.spec.in
@@ -134,12 +143,3 @@ README.html: README
 
 %.html-chunked : %.xml
 	xmlto html -o $@ $<
-
-# Maintainer stuff
-sync-docs:
-	cg switch release
-	-cg merge -n master
-	cg commit -m "Merge with master"
-	make doc
-	cg commit -m "Sync docs"
-	cg switch master
