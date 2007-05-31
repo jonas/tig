@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.1.0" />
+<meta name="generator" content="AsciiDoc 7.1.2" />
 <style type="text/css">
 /* Debug borders */
 p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
@@ -75,7 +75,7 @@ span#author {
   color: #527bbd;
   font-family: sans-serif;
   font-weight: bold;
-  font-size: 1.1em;
+  font-size: 1.2em;
 }
 span#email {
 }
@@ -144,9 +144,6 @@ div.sidebarblock > div.content {
   padding: 0.5em;
 }
 
-div.listingblock {
-  margin-right: 0%;
-}
 div.listingblock > div.content {
   border: 1px solid silver;
   background: #f4f4f4;
@@ -237,23 +234,6 @@ td.hlist2 {
 @media print {
   div#footer-badges { display: none; }
 }
-
-div#toctitle {
-  color: #527bbd;
-  font-family: sans-serif;
-  font-size: 1.1em;
-  font-weight: bold;
-  margin-top: 1.0em;
-  margin-bottom: 0.1em;
-}
-
-div.toclevel1, div.toclevel2 {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-div.toclevel2 {
-  margin-left: 2em;
-}
 include1::./stylesheets/xhtml11-manpage.css[]
 /* Workarounds for IE6's broken and incomplete CSS2. */
 
@@ -283,9 +263,6 @@ div.exampleblock-content {
   border-left: 2px solid silver;
   padding-left: 0.5em;
 }
-
-/* IE6 sets dynamically generated links as visited. */
-div#toc a:visited { color: blue; }
 </style>
 <title>tigrc(5)</title>
 </head>
@@ -429,8 +406,8 @@ Keymaps
 </dt>
 <dd>
 <p>
-Valid keymaps are: <strong>main</strong>, <strong>diff</strong>, <strong>log</strong>, <strong>help</strong>, <strong>pager</strong>, and <strong>generic</strong>.  Use
-<strong>generic</strong> to set key mapping in all keymaps.
+Valid keymaps are: <strong>main</strong>, <strong>diff</strong>, <strong>log</strong>, <strong>help</strong>, <strong>pager</strong>, <strong>status</strong>, and
+<strong>generic</strong>.  Use <strong>generic</strong> to set key mapping in all keymaps.
 </p>
 </dd>
 <dt>
@@ -514,6 +491,14 @@ cellspacing="0" cellpadding="4">
     </td>
     <td align="left">
     Show blob view
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    view-status
+    </td>
+    <td align="left">
+    Show status view
     </td>
   </tr>
   <tr>
@@ -970,7 +955,7 @@ For now only <tt>Signed-off-by</tt> and <tt>Acked-by</tt> lines are colorized.
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 25-Mar-2007 11:35:52 CEST
+Last updated 31-May-2007 12:18:45 CEST
 </div>
 </div>
 </body>

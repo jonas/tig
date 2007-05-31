@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.1.0" />
+<meta name="generator" content="AsciiDoc 7.1.2" />
 <style type="text/css">
 /* Debug borders */
 p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
@@ -75,7 +75,7 @@ span#author {
   color: #527bbd;
   font-family: sans-serif;
   font-weight: bold;
-  font-size: 1.1em;
+  font-size: 1.2em;
 }
 span#email {
 }
@@ -144,9 +144,6 @@ div.sidebarblock > div.content {
   padding: 0.5em;
 }
 
-div.listingblock {
-  margin-right: 0%;
-}
 div.listingblock > div.content {
   border: 1px solid silver;
   background: #f4f4f4;
@@ -237,23 +234,6 @@ td.hlist2 {
 @media print {
   div#footer-badges { display: none; }
 }
-
-div#toctitle {
-  color: #527bbd;
-  font-family: sans-serif;
-  font-size: 1.1em;
-  font-weight: bold;
-  margin-top: 1.0em;
-  margin-bottom: 0.1em;
-}
-
-div.toclevel1, div.toclevel2 {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-div.toclevel2 {
-  margin-left: 2em;
-}
 include1::./stylesheets/xhtml11-manpage.css[]
 /* Workarounds for IE6's broken and incomplete CSS2. */
 
@@ -283,9 +263,6 @@ div.exampleblock-content {
   border-left: 2px solid silver;
   padding-left: 0.5em;
 }
-
-/* IE6 sets dynamically generated links as visited. */
-div#toc a:visited { color: blue; }
 </style>
 <title>TIG(1)</title>
 </head>
@@ -338,6 +315,14 @@ to colorize it.</p>
 <dd>
 <p>
         Start up in diff view using the internal diff command.
+</p>
+</dd>
+<dt>
+-S
+</dt>
+<dd>
+<p>
+        Start up in status view.
 </p>
 </dd>
 <dt>
@@ -575,7 +560,7 @@ Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 25-Mar-2007 12:15:08 CEST
+Last updated 31-May-2007 12:18:44 CEST
 </div>
 </div>
 </body>
