@@ -11,8 +11,8 @@
  * GNU General Public License for more details.
  */
 
-#ifndef	VERSION
-#define VERSION	"tig-0.6.git"
+#ifndef VERSION
+#define VERSION "unknown-version"
 #endif
 
 #ifndef DEBUG
@@ -384,7 +384,7 @@ get_request(const char *name)
  */
 
 static const char usage[] =
-VERSION " (" __DATE__ ")\n"
+"tig " VERSION " (" __DATE__ ")\n"
 "\n"
 "Usage: tig [options]\n"
 "   or: tig [options] [--] [git log options]\n"
@@ -2240,7 +2240,7 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_SHOW_VERSION:
-		report("%s (built %s)", VERSION, __DATE__);
+		report("tig-%s (built %s)", VERSION, __DATE__);
 		return TRUE;
 
 	case REQ_SCREEN_RESIZE:

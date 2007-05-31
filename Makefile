@@ -4,8 +4,17 @@ mandir = $(prefix)/man
 docdir = $(prefix)/share/doc
 # DESTDIR=
 
+# Get version either via git or from VERSION file
+ifneq (,$(wildcard .git))
+GITDESC = $(subst tig-,,$(shell git describe))
+WTDIRTY = $(if $(shell git-diff-index HEAD 2>/dev/null),-dirty)
+VERSION = $(GITDESC)$(WTDIRTY)
+else
+VERSION = $(shell test -f VERSION && cat VERSION || echo "unknown-version")
+endif
+
 LDLIBS  = -lcurses
-CFLAGS	= -Wall -O2
+CFLAGS	= -Wall -O2 '-DVERSION="$(VERSION)"'
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
 DOCS_MAN	= tig.1 tigrc.5
@@ -14,13 +23,6 @@ DOCS_HTML	= tig.1.html tigrc.5.html \
 		  README.html
 DOCS	= $(DOCS_MAN) $(DOCS_HTML) \
 	  manual.toc manual.pdf
-
-ifneq (,$(wildcard .git))
-GITDESC = $(subst tig-,,$(shell git describe))
-WTDIRTY = $(if $(shell git-diff-index HEAD 2>/dev/null),-dirty)
-VERSION = $(GITDESC)$(WTDIRTY)
-CFLAGS += '-DVERSION="tig-$(VERSION)"'
-endif
 
 all: $(PROGS)
 all-debug: $(PROGS)
