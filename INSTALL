@@ -12,7 +12,7 @@ To install tig simply run:
 
 To install documentation run:
 
-	$ make install-docs
+	$ make install-doc
 
 Edit the Makefile if you need to configure specific compiler or linker flags.
 On FreeBSD for example the c library does not support the iconv interface and
