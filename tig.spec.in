@@ -10,7 +10,7 @@ Group: 		Development/Tools
 Vendor: 	Jonas Fonseca <fonseca@diku.dk>
 URL: 		http://jonas.nitro.dk/tig/
 Source: 	http://jonas.nitro.dk/tig/releases/%{name}-%{version}.tar.gz
-BuildRequires: 	ncurses-devel%{!?_without_docs:, xmlto, asciidoc > 6.0.3, /usr/bin/docbook2pdf}
+BuildRequires: 	ncurses-devel%{!?_without_docs:, xmlto, asciidoc > 6.0.3}
 BuildRoot: 	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: 	git-core, ncurses
 
@@ -31,7 +31,7 @@ Using it as a pager, it will display input from stdin and colorize it.
 CFLAGS="$RPM_OPT_FLAGS -DVERSION=tig-%{version}-%{release}"
 %{__make} %{_smp_mflags} \
 	prefix=%{_prefix} \
-	all %{!?_without_docs: doc}
+	all %{!?_without_docs: doc-man doc-html}
 
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
@@ -49,8 +49,11 @@ CFLAGS="$RPM_OPT_FLAGS -DVERSION=tig-%{version}-%{release}"
 %doc README COPYING INSTALL SITES BUGS TODO tigrc
 %{!?_without_docs: %{_mandir}/man1/*.1*}
 %{!?_without_docs: %{_mandir}/man5/*.5*}
-%{!?_without_docs: %doc *.html *.pdf}
+%{!?_without_docs: %doc *.html}
 
 %changelog
+* Fri Jun  1 2007 Jakub Narebski <jnareb@gmail.com>
+- Remove PDF version of manual from being build and installed
+
 * Mon May 28 2007 Jakub Narebski <jnareb@gmail.com>
 - Initial tig spec file
