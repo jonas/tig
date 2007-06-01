@@ -1,5 +1,5 @@
 # -*- mode: rpm-spec-mode; encoding: utf-8; -*-
-# Pass '--without docs' to rpmbuild if you don't want the documentation
+# Pass '--without docs' to rpmbuild if you don't want the documentation to be build
 
 Summary: 	Tig: text-mode interface for git
 Name: 		tig
@@ -50,9 +50,11 @@ CFLAGS="$RPM_OPT_FLAGS -DVERSION=tig-%{version}-%{release}"
 %{!?_without_docs: %{_mandir}/man1/*.1*}
 %{!?_without_docs: %{_mandir}/man5/*.5*}
 %{!?_without_docs: %doc *.html}
+%{?_without_docs:  %doc *.txt}
 
 %changelog
 * Fri Jun  1 2007 Jakub Narebski <jnareb@gmail.com>
+- Include documentation sources for --without docs
 - Remove PDF version of manual from being build and installed
 
 * Mon May 28 2007 Jakub Narebski <jnareb@gmail.com>
