@@ -64,7 +64,7 @@ install-doc: install-doc-man install-doc-html
 clean:
 	rm -rf manual.html-chunked $(TARNAME)
 	rm -f $(PROGS) $(ALLDOC) core *.xml *.toc
-	rm -f *.spec tig-*.tar.gz
+	rm -f *.spec tig-*.tar.gz tig-*.tar.gz.md5
 
 spell-check:
 	aspell --lang=en --check tig.1.txt tigrc.5.txt manual.txt
@@ -73,12 +73,13 @@ strip: all
 	strip $(PROGS)
 
 dist: tig.spec
-	git-archive --format=tar --prefix=$(TARNAME)/ HEAD > $(TARNAME).tar
-	@mkdir -p $(TARNAME)
-	@cp tig.spec $(TARNAME)
-	tar rf $(TARNAME).tar $(TARNAME)/tig.spec
+	@mkdir -p $(TARNAME) && \
+	cp tig.spec $(TARNAME)
+	git-archive --format=tar --prefix=$(TARNAME)/ HEAD > $(TARNAME).tar && \
+	tar rf $(TARNAME).tar $(TARNAME)/tig.spec && \
+	gzip -f -9 $(TARNAME).tar && \
+	md5sum $(TARNAME).tar.gz > $(TARNAME).tar.gz.md5
 	@rm -rf $(TARNAME)
-	gzip -f -9 $(TARNAME).tar
 
 rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
