@@ -76,7 +76,10 @@ dist: tig.spec
 	git-archive --format=tar --prefix=$(TARNAME)/ HEAD > $(TARNAME).tar
 	@mkdir -p $(TARNAME)
 	@cp tig.spec $(TARNAME)
-	tar rf $(TARNAME).tar $(TARNAME)/tig.spec
+	echo $(VERSION) > $(TARNAME)/VERSION
+	tar rf $(TARNAME).tar \
+	       $(TARNAME)/tig.spec \
+	       $(TARNAME)/VERSION
 	@rm -rf $(TARNAME)
 	gzip -f -9 $(TARNAME).tar
 
