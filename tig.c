@@ -27,10 +27,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
 
-#include <sys/types.h>
 #include <regex.h>
 
 #include <locale.h>
@@ -421,6 +422,7 @@ static char opt_codeset[20]		= "UTF-8";
 static iconv_t opt_iconv		= ICONV_NONE;
 static char opt_search[SIZEOF_STR]	= "";
 static char opt_cdup[SIZEOF_STR]	= "";
+static char opt_git_dir[SIZEOF_STR]	= "";
 
 enum option_type {
 	OPT_NONE,
@@ -2903,9 +2905,7 @@ error_out:
 #define STATUS_DIFF_INDEX_CMD "git diff-index -z --cached HEAD"
 #define STATUS_DIFF_FILES_CMD "git diff-files -z"
 #define STATUS_LIST_OTHER_CMD \
-	"_git_exclude=$(git rev-parse --git-dir)/info/exclude;" \
-	"test -f \"$_git_exclude\" && exclude=\"--exclude-from=$_git_exclude\";" \
-	"git ls-files -z --others --exclude-per-directory=.gitignore \"$exclude\"" \
+	"git ls-files -z --others --exclude-per-directory=.gitignore"
 
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
@@ -2913,6 +2913,9 @@ error_out:
 static bool
 status_open(struct view *view)
 {
+	struct stat statbuf;
+	char exclude[SIZEOF_STR];
+	char cmd[SIZEOF_STR];
 	size_t i;
 
 	for (i = 0; i < view->lines; i++)
@@ -2924,9 +2927,22 @@ status_open(struct view *view)
 	if (!realloc_lines(view, view->line_size + 6))
 		return FALSE;
 
+	if (!string_format(exclude, "%s/info/exclude", opt_git_dir))
+		return FALSE;
+
+	string_copy(cmd, STATUS_LIST_OTHER_CMD);
+
+	if (stat(exclude, &statbuf) >= 0) {
+		size_t cmdsize = strlen(cmd);
+
+		if (!string_format_from(cmd, &cmdsize, " %s", "--exclude-from=") ||
+		    sq_quote(cmd, cmdsize, exclude) >= sizeof(cmd))
+			return FALSE;
+	}
+
 	if (!status_run(view, STATUS_DIFF_INDEX_CMD, TRUE, LINE_STAT_STAGED) ||
 	    !status_run(view, STATUS_DIFF_FILES_CMD, TRUE, LINE_STAT_UNSTAGED) ||
-	    !status_run(view, STATUS_LIST_OTHER_CMD, FALSE, LINE_STAT_UNTRACKED))
+	    !status_run(view, cmd, FALSE, LINE_STAT_UNTRACKED))
 		return FALSE;
 
 	return TRUE;
@@ -4061,15 +4077,19 @@ load_repo_config(void)
 static int
 read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 {
-	if (!opt_cdup[0])
+	if (!opt_git_dir[0])
+		string_ncopy(opt_git_dir, name, namelen);
+	else
 		string_ncopy(opt_cdup, name, namelen);
 	return OK;
 }
 
+/* XXX: The line outputted by "--show-cdup" can be empty so the option
+ * must be the last one! */
 static int
 load_repo_info(void)
 {
-	return read_properties(popen("git rev-parse --show-cdup", "r"),
+	return read_properties(popen("git rev-parse --git-dir --show-cdup", "r"),
 			       "=", read_repo_info);
 }
 
