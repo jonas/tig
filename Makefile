@@ -74,9 +74,10 @@ strip: all
 
 dist: tig.spec
 	@mkdir -p $(TARNAME) && \
-	cp tig.spec $(TARNAME)
+	cp tig.spec $(TARNAME) && \
+	echo $(VERSION) > $(TARNAME)/VERSION
 	git-archive --format=tar --prefix=$(TARNAME)/ HEAD > $(TARNAME).tar && \
-	tar rf $(TARNAME).tar $(TARNAME)/tig.spec && \
+	tar rf $(TARNAME).tar $(TARNAME)/tig.spec $(TARNAME)/VERSION && \
 	gzip -f -9 $(TARNAME).tar && \
 	md5sum $(TARNAME).tar.gz > $(TARNAME).tar.gz.md5
 	@rm -rf $(TARNAME)
