@@ -177,6 +177,9 @@ string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen)
 #define string_copy_rev(dst, src) \
 	string_ncopy_do(dst, SIZEOF_REV, src, SIZEOF_REV - 1)
 
+#define string_add(dst, from, src) \
+	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
+
 static char *
 chomp_string(char *name)
 {
@@ -417,6 +420,7 @@ static bool opt_utf8			= TRUE;
 static char opt_codeset[20]		= "UTF-8";
 static iconv_t opt_iconv		= ICONV_NONE;
 static char opt_search[SIZEOF_STR]	= "";
+static char opt_cdup[SIZEOF_STR]	= "";
 
 enum option_type {
 	OPT_NONE,
@@ -2989,14 +2993,20 @@ static bool
 status_enter(struct view *view, struct line *line)
 {
 	struct status *status = line->data;
-	const char *cmd;
+	char cmd[SIZEOF_STR];
 	char buf[SIZEOF_STR];
+	size_t cmdsize = 0;
 	size_t bufsize = 0;
 	size_t written = 0;
 	FILE *pipe;
 
 	if (!status)
 		return TRUE;
+
+	if (opt_cdup[0] &&
+	    line->type != LINE_STAT_UNTRACKED &&
+	    !string_format_from(cmd, &cmdsize, "cd %s;", opt_cdup))
+		return FALSE;
 
 	switch (line->type) {
 	case LINE_STAT_STAGED:
@@ -3005,14 +3015,16 @@ status_enter(struct view *view, struct line *line)
 					status->old.rev,
 					status->name, 0))
 			return FALSE;
-		cmd = "git update-index -z --index-info";
+
+		string_add(cmd, cmdsize, "git update-index -z --index-info");
 		break;
 
 	case LINE_STAT_UNSTAGED:
 	case LINE_STAT_UNTRACKED:
 		if (!string_format_from(buf, &bufsize, "%s%c", status->name, 0))
 			return FALSE;
-		cmd = "git update-index -z --add --remove --stdin";
+
+		string_add(cmd, cmdsize, "git update-index -z --add --remove --stdin");
 		break;
 
 	default:
@@ -4048,6 +4060,21 @@ load_repo_config(void)
 }
 
 static int
+read_repo_info(char *name, int namelen, char *value, int valuelen)
+{
+	if (!opt_cdup[0])
+		string_copy(opt_cdup, name);
+	return OK;
+}
+
+static int
+load_repo_info(void)
+{
+	return read_properties(popen("git rev-parse --show-cdup", "r"),
+			       "=", read_repo_info);
+}
+
+static int
 read_properties(FILE *pipe, const char *separators,
 		int (*read_property)(char *, int, char *, int))
 {
@@ -4137,6 +4164,9 @@ main(int argc, char *argv[])
 	 * the command line.  */
 	if (load_repo_config() == ERR)
 		die("Failed to load repo config.");
+
+	if (load_repo_info() == ERR)
+		die("Failed to load repo info.");
 
 	if (!parse_options(argc, argv))
 		return 0;
