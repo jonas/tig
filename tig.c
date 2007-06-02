@@ -169,7 +169,7 @@ string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen)
 /* Shorthands for safely copying into a fixed buffer. */
 
 #define string_copy(dst, src) \
-	string_ncopy_do(dst, sizeof(dst), src, sizeof(dst))
+	string_ncopy_do(dst, sizeof(dst), src, sizeof(src))
 
 #define string_ncopy(dst, src, srclen) \
 	string_ncopy_do(dst, sizeof(dst), src, srclen)
