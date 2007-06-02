@@ -1042,7 +1042,7 @@ option_set_command(int argc, char *argv[])
 					break;
 				}
 		default:
-			string_copy(opt_encoding, arg);
+			string_ncopy(opt_encoding, arg, strlen(arg));
 			return OK;
 		}
 	}
@@ -1802,8 +1802,6 @@ end_update(struct view *view)
 static bool
 begin_update(struct view *view)
 {
-	const char *id = view->id;
-
 	if (view->pipe)
 		end_update(view);
 
@@ -1824,11 +1822,12 @@ begin_update(struct view *view)
 		else if (sq_quote(path, 0, opt_path) >= sizeof(path))
 			return FALSE;
 
-		if (!string_format(view->cmd, format, id, path))
+		if (!string_format(view->cmd, format, view->id, path))
 			return FALSE;
 
 	} else {
 		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
+		const char *id = view->id;
 
 		if (!string_format(view->cmd, format, id, id, id, id, id))
 			return FALSE;
@@ -1837,7 +1836,7 @@ begin_update(struct view *view)
 		 * member. This is needed by the blob view. Most other
 		 * views sets it automatically after loading because the
 		 * first line is a commit line. */
-		string_copy(view->ref, id);
+		string_copy_rev(view->ref, view->id);
 	}
 
 	/* Special case for the pager view. */
@@ -1856,7 +1855,7 @@ begin_update(struct view *view)
 	view->offset = 0;
 	view->lines  = 0;
 	view->lineno = 0;
-	string_copy_rev(view->vid, id);
+	string_copy_rev(view->vid, view->id);
 
 	if (view->line) {
 		int i;
@@ -3205,7 +3204,7 @@ push_rev_graph(struct rev_graph *graph, char *parent)
 			return;
 
 	if (graph->size < SIZEOF_REVITEMS) {
-		string_ncopy(graph->rev[graph->size++], parent, SIZEOF_REV);
+		string_copy_rev(graph->rev[graph->size++], parent);
 	}
 }
 
@@ -3493,7 +3492,7 @@ main_read(struct view *view, char *line)
 				ident = "Unknown";
 		}
 
-		string_copy(commit->author, ident);
+		string_ncopy(commit->author, ident, strlen(ident));
 
 		/* Parse epoch and timezone */
 		if (emailend[1] == ' ') {
@@ -3539,7 +3538,7 @@ main_read(struct view *view, char *line)
 		/* FIXME: More graceful handling of titles; append "..." to
 		 * shortened titles, etc. */
 
-		string_copy(commit->title, line);
+		string_ncopy(commit->title, line, strlen(line));
 	}
 
 	return TRUE;
@@ -4047,7 +4046,7 @@ static int
 read_repo_config_option(char *name, int namelen, char *value, int valuelen)
 {
 	if (!strcmp(name, "i18n.commitencoding"))
-		string_copy(opt_encoding, value);
+		string_ncopy(opt_encoding, value, valuelen);
 
 	return OK;
 }
@@ -4063,7 +4062,7 @@ static int
 read_repo_info(char *name, int namelen, char *value, int valuelen)
 {
 	if (!opt_cdup[0])
-		string_copy(opt_cdup, name);
+		string_ncopy(opt_cdup, name, namelen);
 	return OK;
 }
 
@@ -4154,14 +4153,16 @@ main(int argc, char *argv[])
 	signal(SIGINT, quit);
 
 	if (setlocale(LC_ALL, "")) {
-		string_copy(opt_codeset, nl_langinfo(CODESET));
+		char *codeset = nl_langinfo(CODESET);
+
+		string_ncopy(opt_codeset, codeset, strlen(codeset));
 	}
 
 	if (load_options() == ERR)
 		die("Failed to load user config.");
 
 	/* Load the repo config file so options can be overwritten from
-	 * the command line.  */
+	 * the command line. */
 	if (load_repo_config() == ERR)
 		die("Failed to load repo config.");
 
@@ -4237,7 +4238,7 @@ main(int argc, char *argv[])
 			char *search = read_prompt(prompt);
 
 			if (search)
-				string_copy(opt_search, search);
+				string_ncopy(opt_search, search, strlen(search));
 			else
 				request = REQ_NONE;
 			break;
