@@ -47,7 +47,7 @@
 
 static void __NORETURN die(const char *err, ...);
 static void report(const char *msg, ...);
-static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, int, char *, int));
+static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, size_t, char *, size_t));
 static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed);
 
@@ -1120,7 +1120,7 @@ set_option(char *opt, char *value)
 }
 
 static int
-read_option(char *opt, int optlen, char *value, int valuelen)
+read_option(char *opt, size_t optlen, char *value, size_t valuelen)
 {
 	int status = OK;
 
@@ -1139,7 +1139,7 @@ read_option(char *opt, int optlen, char *value, int valuelen)
 
 	}  else {
 		/* Look for comment endings in the value. */
-		int len = strcspn(value, "#");
+		size_t len = strcspn(value, "#");
 
 		if (len < valuelen) {
 			valuelen = len;
@@ -3984,7 +3984,7 @@ get_refs(char *id)
 }
 
 static int
-read_ref(char *id, int idlen, char *name, int namelen)
+read_ref(char *id, size_t idlen, char *name, size_t namelen)
 {
 	struct ref *ref;
 	bool tag = FALSE;
@@ -4043,7 +4043,7 @@ load_refs(void)
 }
 
 static int
-read_repo_config_option(char *name, int namelen, char *value, int valuelen)
+read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen)
 {
 	if (!strcmp(name, "i18n.commitencoding"))
 		string_ncopy(opt_encoding, value, valuelen);
@@ -4059,7 +4059,7 @@ load_repo_config(void)
 }
 
 static int
-read_repo_info(char *name, int namelen, char *value, int valuelen)
+read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 {
 	if (!opt_cdup[0])
 		string_ncopy(opt_cdup, name, namelen);
@@ -4075,7 +4075,7 @@ load_repo_info(void)
 
 static int
 read_properties(FILE *pipe, const char *separators,
-		int (*read_property)(char *, int, char *, int))
+		int (*read_property)(char *, size_t, char *, size_t))
 {
 	char buffer[BUFSIZ];
 	char *name;
