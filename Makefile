@@ -20,13 +20,15 @@ endif
 RPM_VERSION = $(subst -,.,$(VERSION))
 
 LDLIBS	= -lcurses
-CFLAGS	= -Wall -O2 '-DVERSION="$(VERSION)"'
+CFLAGS	= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
 MANDOC	= tig.1 tigrc.5
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) manual.html-chunked manual.pdf
 TARNAME	= tig-$(RPM_VERSION)
+
+override CFLAGS += '-DVERSION="$(VERSION)"'
 
 all: $(PROGS)
 all-debug: $(PROGS)
