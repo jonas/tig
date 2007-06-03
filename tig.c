@@ -4089,7 +4089,7 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 static int
 load_repo_info(void)
 {
-	return read_properties(popen("git rev-parse --git-dir --show-cdup", "r"),
+	return read_properties(popen("git rev-parse --git-dir --show-cdup 2>/dev/null", "r"),
 			       "=", read_repo_info);
 }
 
@@ -4178,6 +4178,13 @@ main(int argc, char *argv[])
 		string_ncopy(opt_codeset, codeset, strlen(codeset));
 	}
 
+	if (load_repo_info() == ERR)
+		die("Failed to load repo info.");
+
+	/* Require a git repository unless when running in pager mode. */
+	if (!opt_git_dir[0])
+		die("Not a git repository");
+
 	if (load_options() == ERR)
 		die("Failed to load user config.");
 
@@ -4185,9 +4192,6 @@ main(int argc, char *argv[])
 	 * the command line. */
 	if (load_repo_config() == ERR)
 		die("Failed to load repo config.");
-
-	if (load_repo_info() == ERR)
-		die("Failed to load repo info.");
 
 	if (!parse_options(argc, argv))
 		return 0;
@@ -4200,10 +4204,6 @@ main(int argc, char *argv[])
 
 	if (load_refs() == ERR)
 		die("Failed to load refs.");
-
-	/* Require a git repository unless when running in pager mode. */
-	if (refs_size == 0 && opt_request != REQ_VIEW_PAGER)
-		die("Not a git repository");
 
 	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
 		view->cmd_env = getenv(view->cmd_env);
