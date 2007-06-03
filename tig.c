@@ -1153,7 +1153,7 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen)
 
 	if (status == ERR) {
 		fprintf(stderr, "Error on line %d, near '%.*s': %s\n",
-			config_lineno, optlen, opt, config_msg);
+			config_lineno, (int) optlen, opt, config_msg);
 		config_errors = TRUE;
 	}
 
