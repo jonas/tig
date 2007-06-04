@@ -9,18 +9,20 @@ Features that should be explored.
 
  - Better text-input support. From setsyx(3):
 
-	The setsyx routine sets the virtual screen cursor to y, x.  If y and x
-	are both -1, then leaveok is set.  The two routines getsyx and setsyx
-	are designed  to  be used by a library routine, which manipulates
-	curses windows but does not want to change the current position of the
-	program cursor.  The library routine would call getsyx at the
-	beginning, do its manipulation of its own windows, do a wnoutrefresh on
-	its windows, call  setsyx,  and then call doupdate.
+	The setsyx routine sets the virtual screen cursor to y, x. If y
+	and x are both -1, then leaveok is set. The two routines getsyx
+	and setsyx are designed to be used by a library routine, which
+	manipulates curses windows but does not want to change the
+	current position of the program cursor. The library routine
+	would call getsyx at the beginning, do its manipulation of its
+	own windows, do a wnoutrefresh on its windows, call setsyx, and
+	then call doupdate.
 
- - When the user wants to "view" a commit, you could show from which branch
-   heads and from which tags the commit is reachable, and perhaps which tag is
-   the latest among the ones reachable from that commit, as part of the commit
-   detail information you display on the lower pane (log/diff view).
+ - When the user wants to "view" a commit, you could show from which
+   branch heads and from which tags the commit is reachable, and perhaps
+   which tag is the latest among the ones reachable from that commit, as
+   part of the commit detail information you display on the lower pane
+   (log/diff view).
 
  - Use autoconf to check for iconv in libc and how it is declared (the
    2nd argument is 'const' on FreeBSD / Mac OS X). Maybe also check for
@@ -28,3 +30,6 @@ Features that should be explored.
 
  - The autoconf check could also be used to determine whether it is a
    newer git so that git-config will be used instead of git-repo-config.
+
+ - Use non-blocking I/O + select() for incremental loading of view
+   input. (debian bug #427093)
