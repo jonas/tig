@@ -1394,7 +1394,7 @@ update_view_title(struct view *view)
 
 		if (minsize < view->width)
 			refsize = view->width - minsize + 7;
-		string_format_from(buf, &bufpos, " %.*s", refsize, view->ref);
+		string_format_from(buf, &bufpos, " %.*s", (int) refsize, view->ref);
 	}
 
 	if (statelen && bufpos < view->width) {
