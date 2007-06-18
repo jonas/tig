@@ -1289,8 +1289,8 @@ static struct view views[] = {
 	VIEW_(LOG,    "log",    &pager_ops,  ref_head),
 	VIEW_(TREE,   "tree",   &tree_ops,   ref_commit),
 	VIEW_(BLOB,   "blob",   &blob_ops,   ref_blob),
-	VIEW_(HELP,   "help",   &help_ops,  ""),
-	VIEW_(PAGER,  "pager",  &pager_ops,  ""),
+	VIEW_(HELP,   "help",   &help_ops,   ""),
+	VIEW_(PAGER,  "pager",  &pager_ops,  "stdin"),
 	VIEW_(STATUS, "status", &status_ops, ""),
 };
 
@@ -2152,7 +2152,7 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_VIEW_PAGER:
-		if (!VIEW(REQ_VIEW_PAGER)->lines) {
+		if (!opt_pipe && !VIEW(REQ_VIEW_PAGER)->lines) {
 			report("No pager content, press %s to run command from prompt",
 			       get_key(REQ_PROMPT));
 			break;
