@@ -27,10 +27,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
 
-#include <sys/types.h>
 #include <regex.h>
 
 #include <locale.h>
@@ -47,7 +48,7 @@
 
 static void __NORETURN die(const char *err, ...);
 static void report(const char *msg, ...);
-static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, int, char *, int));
+static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, size_t, char *, size_t));
 static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed);
 
@@ -169,13 +170,16 @@ string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen)
 /* Shorthands for safely copying into a fixed buffer. */
 
 #define string_copy(dst, src) \
-	string_ncopy_do(dst, sizeof(dst), src, sizeof(dst))
+	string_ncopy_do(dst, sizeof(dst), src, sizeof(src))
 
 #define string_ncopy(dst, src, srclen) \
 	string_ncopy_do(dst, sizeof(dst), src, srclen)
 
 #define string_copy_rev(dst, src) \
 	string_ncopy_do(dst, SIZEOF_REV, src, SIZEOF_REV - 1)
+
+#define string_add(dst, from, src) \
+	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
 
 static char *
 chomp_string(char *name)
@@ -417,6 +421,8 @@ static bool opt_utf8			= TRUE;
 static char opt_codeset[20]		= "UTF-8";
 static iconv_t opt_iconv		= ICONV_NONE;
 static char opt_search[SIZEOF_STR]	= "";
+static char opt_cdup[SIZEOF_STR]	= "";
+static char opt_git_dir[SIZEOF_STR]	= "";
 
 enum option_type {
 	OPT_NONE,
@@ -1038,7 +1044,7 @@ option_set_command(int argc, char *argv[])
 					break;
 				}
 		default:
-			string_copy(opt_encoding, arg);
+			string_ncopy(opt_encoding, arg, strlen(arg));
 			return OK;
 		}
 	}
@@ -1116,7 +1122,7 @@ set_option(char *opt, char *value)
 }
 
 static int
-read_option(char *opt, int optlen, char *value, int valuelen)
+read_option(char *opt, size_t optlen, char *value, size_t valuelen)
 {
 	int status = OK;
 
@@ -1135,7 +1141,7 @@ read_option(char *opt, int optlen, char *value, int valuelen)
 
 	}  else {
 		/* Look for comment endings in the value. */
-		int len = strcspn(value, "#");
+		size_t len = strcspn(value, "#");
 
 		if (len < valuelen) {
 			valuelen = len;
@@ -1147,7 +1153,7 @@ read_option(char *opt, int optlen, char *value, int valuelen)
 
 	if (status == ERR) {
 		fprintf(stderr, "Error on line %d, near '%.*s': %s\n",
-			config_lineno, optlen, opt, config_msg);
+			config_lineno, (int) optlen, opt, config_msg);
 		config_errors = TRUE;
 	}
 
@@ -1283,8 +1289,8 @@ static struct view views[] = {
 	VIEW_(LOG,    "log",    &pager_ops,  ref_head),
 	VIEW_(TREE,   "tree",   &tree_ops,   ref_commit),
 	VIEW_(BLOB,   "blob",   &blob_ops,   ref_blob),
-	VIEW_(HELP,   "help",   &help_ops,  ""),
-	VIEW_(PAGER,  "pager",  &pager_ops,  ""),
+	VIEW_(HELP,   "help",   &help_ops,   ""),
+	VIEW_(PAGER,  "pager",  &pager_ops,  "stdin"),
 	VIEW_(STATUS, "status", &status_ops, ""),
 };
 
@@ -1388,7 +1394,7 @@ update_view_title(struct view *view)
 
 		if (minsize < view->width)
 			refsize = view->width - minsize + 7;
-		string_format_from(buf, &bufpos, " %.*s", refsize, view->ref);
+		string_format_from(buf, &bufpos, " %.*s", (int) refsize, view->ref);
 	}
 
 	if (statelen && bufpos < view->width) {
@@ -1798,8 +1804,6 @@ end_update(struct view *view)
 static bool
 begin_update(struct view *view)
 {
-	const char *id = view->id;
-
 	if (view->pipe)
 		end_update(view);
 
@@ -1820,11 +1824,12 @@ begin_update(struct view *view)
 		else if (sq_quote(path, 0, opt_path) >= sizeof(path))
 			return FALSE;
 
-		if (!string_format(view->cmd, format, id, path))
+		if (!string_format(view->cmd, format, view->id, path))
 			return FALSE;
 
 	} else {
 		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
+		const char *id = view->id;
 
 		if (!string_format(view->cmd, format, id, id, id, id, id))
 			return FALSE;
@@ -1833,7 +1838,7 @@ begin_update(struct view *view)
 		 * member. This is needed by the blob view. Most other
 		 * views sets it automatically after loading because the
 		 * first line is a commit line. */
-		string_copy(view->ref, id);
+		string_copy_rev(view->ref, view->id);
 	}
 
 	/* Special case for the pager view. */
@@ -1852,7 +1857,7 @@ begin_update(struct view *view)
 	view->offset = 0;
 	view->lines  = 0;
 	view->lineno = 0;
-	string_copy_rev(view->vid, id);
+	string_copy_rev(view->vid, view->id);
 
 	if (view->line) {
 		int i;
@@ -2147,7 +2152,7 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_VIEW_PAGER:
-		if (!VIEW(REQ_VIEW_PAGER)->lines) {
+		if (!opt_pipe && !VIEW(REQ_VIEW_PAGER)->lines) {
 			report("No pager content, press %s to run command from prompt",
 			       get_key(REQ_PROMPT));
 			break;
@@ -2900,9 +2905,7 @@ error_out:
 #define STATUS_DIFF_INDEX_CMD "git diff-index -z --cached HEAD"
 #define STATUS_DIFF_FILES_CMD "git diff-files -z"
 #define STATUS_LIST_OTHER_CMD \
-	"_git_exclude=$(git rev-parse --git-dir)/info/exclude;" \
-	"test -f \"$_git_exclude\" && exclude=\"--exclude-from=$_git_exclude\";" \
-	"git ls-files -z --others --exclude-per-directory=.gitignore \"$exclude\"" \
+	"git ls-files -z --others --exclude-per-directory=.gitignore"
 
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
@@ -2910,6 +2913,9 @@ error_out:
 static bool
 status_open(struct view *view)
 {
+	struct stat statbuf;
+	char exclude[SIZEOF_STR];
+	char cmd[SIZEOF_STR];
 	size_t i;
 
 	for (i = 0; i < view->lines; i++)
@@ -2921,9 +2927,22 @@ status_open(struct view *view)
 	if (!realloc_lines(view, view->line_size + 6))
 		return FALSE;
 
+	if (!string_format(exclude, "%s/info/exclude", opt_git_dir))
+		return FALSE;
+
+	string_copy(cmd, STATUS_LIST_OTHER_CMD);
+
+	if (stat(exclude, &statbuf) >= 0) {
+		size_t cmdsize = strlen(cmd);
+
+		if (!string_format_from(cmd, &cmdsize, " %s", "--exclude-from=") ||
+		    sq_quote(cmd, cmdsize, exclude) >= sizeof(cmd))
+			return FALSE;
+	}
+
 	if (!status_run(view, STATUS_DIFF_INDEX_CMD, TRUE, LINE_STAT_STAGED) ||
 	    !status_run(view, STATUS_DIFF_FILES_CMD, TRUE, LINE_STAT_UNSTAGED) ||
-	    !status_run(view, STATUS_LIST_OTHER_CMD, FALSE, LINE_STAT_UNTRACKED))
+	    !status_run(view, cmd, FALSE, LINE_STAT_UNTRACKED))
 		return FALSE;
 
 	return TRUE;
@@ -2989,14 +3008,20 @@ static bool
 status_enter(struct view *view, struct line *line)
 {
 	struct status *status = line->data;
-	const char *cmd;
+	char cmd[SIZEOF_STR];
 	char buf[SIZEOF_STR];
+	size_t cmdsize = 0;
 	size_t bufsize = 0;
 	size_t written = 0;
 	FILE *pipe;
 
 	if (!status)
 		return TRUE;
+
+	if (opt_cdup[0] &&
+	    line->type != LINE_STAT_UNTRACKED &&
+	    !string_format_from(cmd, &cmdsize, "cd %s;", opt_cdup))
+		return FALSE;
 
 	switch (line->type) {
 	case LINE_STAT_STAGED:
@@ -3005,14 +3030,16 @@ status_enter(struct view *view, struct line *line)
 					status->old.rev,
 					status->name, 0))
 			return FALSE;
-		cmd = "git update-index -z --index-info";
+
+		string_add(cmd, cmdsize, "git update-index -z --index-info");
 		break;
 
 	case LINE_STAT_UNSTAGED:
 	case LINE_STAT_UNTRACKED:
 		if (!string_format_from(buf, &bufsize, "%s%c", status->name, 0))
 			return FALSE;
-		cmd = "git update-index -z --add --remove --stdin";
+
+		string_add(cmd, cmdsize, "git update-index -z --add --remove --stdin");
 		break;
 
 	default:
@@ -3193,7 +3220,7 @@ push_rev_graph(struct rev_graph *graph, char *parent)
 			return;
 
 	if (graph->size < SIZEOF_REVITEMS) {
-		string_ncopy(graph->rev[graph->size++], parent, SIZEOF_REV);
+		string_copy_rev(graph->rev[graph->size++], parent);
 	}
 }
 
@@ -3481,7 +3508,7 @@ main_read(struct view *view, char *line)
 				ident = "Unknown";
 		}
 
-		string_copy(commit->author, ident);
+		string_ncopy(commit->author, ident, strlen(ident));
 
 		/* Parse epoch and timezone */
 		if (emailend[1] == ' ') {
@@ -3527,7 +3554,7 @@ main_read(struct view *view, char *line)
 		/* FIXME: More graceful handling of titles; append "..." to
 		 * shortened titles, etc. */
 
-		string_copy(commit->title, line);
+		string_ncopy(commit->title, line, strlen(line));
 	}
 
 	return TRUE;
@@ -3973,7 +4000,7 @@ get_refs(char *id)
 }
 
 static int
-read_ref(char *id, int idlen, char *name, int namelen)
+read_ref(char *id, size_t idlen, char *name, size_t namelen)
 {
 	struct ref *ref;
 	bool tag = FALSE;
@@ -4032,10 +4059,10 @@ load_refs(void)
 }
 
 static int
-read_repo_config_option(char *name, int namelen, char *value, int valuelen)
+read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen)
 {
 	if (!strcmp(name, "i18n.commitencoding"))
-		string_copy(opt_encoding, value);
+		string_ncopy(opt_encoding, value, valuelen);
 
 	return OK;
 }
@@ -4048,8 +4075,27 @@ load_repo_config(void)
 }
 
 static int
+read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
+{
+	if (!opt_git_dir[0])
+		string_ncopy(opt_git_dir, name, namelen);
+	else
+		string_ncopy(opt_cdup, name, namelen);
+	return OK;
+}
+
+/* XXX: The line outputted by "--show-cdup" can be empty so the option
+ * must be the last one! */
+static int
+load_repo_info(void)
+{
+	return read_properties(popen("git rev-parse --git-dir --show-cdup 2>/dev/null", "r"),
+			       "=", read_repo_info);
+}
+
+static int
 read_properties(FILE *pipe, const char *separators,
-		int (*read_property)(char *, int, char *, int))
+		int (*read_property)(char *, size_t, char *, size_t))
 {
 	char buffer[BUFSIZ];
 	char *name;
@@ -4127,14 +4173,23 @@ main(int argc, char *argv[])
 	signal(SIGINT, quit);
 
 	if (setlocale(LC_ALL, "")) {
-		string_copy(opt_codeset, nl_langinfo(CODESET));
+		char *codeset = nl_langinfo(CODESET);
+
+		string_ncopy(opt_codeset, codeset, strlen(codeset));
 	}
+
+	if (load_repo_info() == ERR)
+		die("Failed to load repo info.");
+
+	/* Require a git repository unless when running in pager mode. */
+	if (!opt_git_dir[0])
+		die("Not a git repository");
 
 	if (load_options() == ERR)
 		die("Failed to load user config.");
 
 	/* Load the repo config file so options can be overwritten from
-	 * the command line.  */
+	 * the command line. */
 	if (load_repo_config() == ERR)
 		die("Failed to load repo config.");
 
@@ -4149,10 +4204,6 @@ main(int argc, char *argv[])
 
 	if (load_refs() == ERR)
 		die("Failed to load refs.");
-
-	/* Require a git repository unless when running in pager mode. */
-	if (refs_size == 0 && opt_request != REQ_VIEW_PAGER)
-		die("Not a git repository");
 
 	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
 		view->cmd_env = getenv(view->cmd_env);
@@ -4207,7 +4258,7 @@ main(int argc, char *argv[])
 			char *search = read_prompt(prompt);
 
 			if (search)
-				string_copy(opt_search, search);
+				string_ncopy(opt_search, search, strlen(search));
 			else
 				request = REQ_NONE;
 			break;

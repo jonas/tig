@@ -20,13 +20,15 @@ endif
 RPM_VERSION = $(subst -,.,$(VERSION))
 
 LDLIBS	= -lcurses
-CFLAGS	= -Wall -O2 '-DVERSION="$(VERSION)"'
+CFLAGS	= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
 MANDOC	= tig.1 tigrc.5
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) manual.html-chunked manual.pdf
 TARNAME	= tig-$(RPM_VERSION)
+
+override CFLAGS += '-DVERSION="$(VERSION)"'
 
 all: $(PROGS)
 all-debug: $(PROGS)
@@ -38,7 +40,7 @@ doc-html: $(HTMLDOC)
 install: all
 	mkdir -p $(DESTDIR)$(bindir) && \
 	for prog in $(PROGS); do \
-		install $$prog $(DESTDIR)$(bindir); \
+		install -p -m 0755 $$prog $(DESTDIR)$(bindir); \
 	done
 
 install-doc-man: doc-man
@@ -46,8 +48,8 @@ install-doc-man: doc-man
 		 $(DESTDIR)$(mandir)/man5
 	for doc in $(MANDOC); do \
 		case "$$doc" in \
-		*.1) install $$doc $(DESTDIR)$(mandir)/man1 ;; \
-		*.5) install $$doc $(DESTDIR)$(mandir)/man5 ;; \
+		*.1) install -p -m 0644 $$doc $(DESTDIR)$(mandir)/man1 ;; \
+		*.5) install -p -m 0644 $$doc $(DESTDIR)$(mandir)/man5 ;; \
 		esac \
 	done
 
@@ -55,7 +57,7 @@ install-doc-html: doc-html
 	mkdir -p $(DESTDIR)$(docdir)/tig
 	for doc in $(HTMLDOC); do \
 		case "$$doc" in \
-		*.html) install $$doc $(DESTDIR)$(docdir)/tig ;; \
+		*.html) install -p -m 0644 $$doc $(DESTDIR)$(docdir)/tig ;; \
 		esac \
 	done
 
@@ -64,7 +66,7 @@ install-doc: install-doc-man install-doc-html
 clean:
 	rm -rf manual.html-chunked $(TARNAME)
 	rm -f $(PROGS) $(ALLDOC) core *.xml *.toc
-	rm -f *.spec tig-*.tar.gz
+	rm -f *.spec tig-*.tar.gz tig-*.tar.gz.md5
 
 spell-check:
 	aspell --lang=en --check tig.1.txt tigrc.5.txt manual.txt
@@ -73,12 +75,14 @@ strip: all
 	strip $(PROGS)
 
 dist: tig.spec
-	git-archive --format=tar --prefix=$(TARNAME)/ HEAD > $(TARNAME).tar
-	@mkdir -p $(TARNAME)
-	@cp tig.spec $(TARNAME)
-	tar rf $(TARNAME).tar $(TARNAME)/tig.spec
+	@mkdir -p $(TARNAME) && \
+	cp tig.spec $(TARNAME) && \
+	echo $(VERSION) > $(TARNAME)/VERSION
+	git-archive --format=tar --prefix=$(TARNAME)/ HEAD > $(TARNAME).tar && \
+	tar rf $(TARNAME).tar $(TARNAME)/tig.spec $(TARNAME)/VERSION && \
+	gzip -f -9 $(TARNAME).tar && \
+	md5sum $(TARNAME).tar.gz > $(TARNAME).tar.gz.md5
 	@rm -rf $(TARNAME)
-	gzip -f -9 $(TARNAME).tar
 
 rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
