@@ -4,7 +4,7 @@
 Summary: 	Tig: text-mode interface for git
 Name: 		tig
 Version: 	@@VERSION@@
-Release: 	1%{?dist}
+Release: 	@@RELEASE@@%{?dist}
 License: 	GPL
 Group: 		Development/Tools
 Vendor: 	Jonas Fonseca <fonseca@diku.dk>

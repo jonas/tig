@@ -17,7 +17,11 @@ ifdef DIST_VERSION
 VERSION = $(DIST_VERSION)
 endif
 
-RPM_VERSION = $(subst -,.,$(VERSION))
+# Split the version "TAG-OFFSET-gSHA1-DIRTY" into "TAG OFFSET"
+# and append 0 as a fallback offset for "exact" tagged versions.
+RPM_VERLIST = $(filter-out g% dirty,$(subst -, ,$(VERSION))) 0
+RPM_VERSION = $(word 1,$(RPM_VERLIST))
+RPM_RELEASE = $(word 2,$(RPM_VERLIST))$(if $(WTDIRTY),.dirty)
 
 LDLIBS	= -lcurses
 CFLAGS	= -Wall -O2
@@ -26,7 +30,7 @@ PROGS	= tig
 MANDOC	= tig.1 tigrc.5
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) manual.html-chunked manual.pdf
-TARNAME	= tig-$(RPM_VERSION)
+TARNAME	= tig-$(RPM_VERSION)-$(RPM_RELEASE)
 
 override CFLAGS += '-DVERSION="$(VERSION)"'
 
@@ -106,7 +110,8 @@ release-dist: release-doc
 	install-doc-man install-doc-html clean spell-check dist rpm
 
 tig.spec: contrib/tig.spec.in
-	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' < $< > $@
+	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' \
+	    -e 's/@@RELEASE@@/$(RPM_RELEASE)/g' < $< > $@
 
 tig: tig.c
 
