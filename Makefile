@@ -105,7 +105,7 @@ release-dist: release-doc
 .PHONY: all all-debug doc doc-man doc-html install install-doc \
 	install-doc-man install-doc-html clean spell-check dist rpm
 
-tig.spec: tig.spec.in
+tig.spec: contrib/tig.spec.in
 	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' < $< > $@
 
 tig: tig.c
