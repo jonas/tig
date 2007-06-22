@@ -46,7 +46,7 @@ CFLAGS="$RPM_OPT_FLAGS -DVERSION=tig-%{version}-%{release}"
 %files
 %defattr(-,root,root)
 %{_bindir}/*
-%doc README COPYING INSTALL SITES BUGS TODO tigrc
+%doc README COPYING INSTALL SITES BUGS TODO contrib/tigrc
 %{!?_without_docs: %{_mandir}/man1/*.1*}
 %{!?_without_docs: %{_mandir}/man5/*.5*}
 %{!?_without_docs: %doc *.html}
