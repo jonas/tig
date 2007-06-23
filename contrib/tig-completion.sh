@@ -217,11 +217,11 @@ _tig ()
 	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
 		case "${COMP_WORDS[COMP_CWORD]}" in
 		--*=*) COMPREPLY=() ;;
-		-*)   __tigcomp "
+		-*)   tigcomp "
 				--line-number= --tab-size= --version --help
 				-b -d -h -l -S -v
 				" ;;
-		*)     __gitcomp "log diff show $(__tig_refs)" ;;
+		*)    tigcomp "log diff show $(__tig_refs)" ;;
 		esac
 		return
 	fi
