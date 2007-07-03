@@ -4,3 +4,5 @@ manual.toc
 tig
 tig.spec
 tig-*.tar.gz
+tig.1
+tigrc.5
