@@ -2,7 +2,9 @@ manual.html-chunked
 manual.pdf
 manual.toc
 tig
-tig.spec
 tig-*.tar.gz
 tig.1
+tig.1.html
+tig.spec
 tigrc.5
+tigrc.5.html
