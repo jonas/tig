@@ -2177,10 +2177,15 @@ view_driver(struct view *view, enum request request)
 		     view->parent == VIEW(REQ_VIEW_MAIN)) ||
 		   (view == VIEW(REQ_VIEW_BLOB) &&
 		     view->parent == VIEW(REQ_VIEW_TREE))) {
+			int line;
+
 			view = view->parent;
+			line = view->lineno;
 			move_view(view, request);
 			if (view_is_displayed(view))
 				update_view_title(view);
+			if (line == view->lineno)
+				break;
 		} else {
 			move_view(view, request);
 			break;
