@@ -3156,15 +3156,15 @@ status_select(struct view *view, struct line *line)
 
 	switch (line->type) {
 	case LINE_STAT_STAGED:
-		text = "Press Enter to unstage file for commit";
+		text = "Press %s to unstage file for commit";
 		break;
 
 	case LINE_STAT_UNSTAGED:
-		text = "Press Enter to stage file for commit  ";
+		text = "Press %s to stage file for commit  ";
 		break;
 
 	case LINE_STAT_UNTRACKED:
-		text = "Press Enter to stage file for addition";
+		text = "Press %s to stage file for addition";
 		break;
 
 	case LINE_STAT_NONE:
@@ -3174,7 +3174,7 @@ status_select(struct view *view, struct line *line)
 		die("w00t");
 	}
 
-	string_ncopy(view->ref, text, strlen(text));
+	string_format(view->ref, text, get_key(REQ_STATUS_UPDATE));
 }
 
 static bool
