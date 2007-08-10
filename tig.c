@@ -336,7 +336,8 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(SHOW_VERSION,	"Show version information"), \
 	REQ_(STOP_LOADING,	"Stop all loading views"), \
 	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
-	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization")
+	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
+	REQ_(STATUS_UPDATE,	"Update file status") \
 
 
 /* User action requests. */
@@ -765,6 +766,7 @@ static struct keybinding default_keybindings[] = {
 	{ '.',		REQ_TOGGLE_LINENO },
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
 	{ ':',		REQ_PROMPT },
+	{ 'u',		REQ_STATUS_UPDATE },
 
 	/* Using the ncurses SIGWINCH handler. */
 	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
@@ -2120,6 +2122,8 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
  * User request switch noodle
  */
 
+static void status_update(struct view *view);
+
 static int
 view_driver(struct view *view, enum request request)
 {
@@ -2258,6 +2262,10 @@ view_driver(struct view *view, enum request request)
 		/* Fall-through */
 	case REQ_SCREEN_REDRAW:
 		redraw_display();
+		break;
+
+	case REQ_STATUS_UPDATE:
+		status_update(view);
 		break;
 
 	case REQ_NONE:
@@ -3012,7 +3020,12 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 static bool
 status_enter(struct view *view, struct line *line)
 {
-	struct status *status = line->data;
+	return TRUE;
+}
+
+static bool
+status_update_file(struct view *view, struct status *status, enum line_type type)
+{
 	char cmd[SIZEOF_STR];
 	char buf[SIZEOF_STR];
 	size_t cmdsize = 0;
@@ -3020,15 +3033,12 @@ status_enter(struct view *view, struct line *line)
 	size_t written = 0;
 	FILE *pipe;
 
-	if (!status)
-		return TRUE;
-
 	if (opt_cdup[0] &&
-	    line->type != LINE_STAT_UNTRACKED &&
+	    type != LINE_STAT_UNTRACKED &&
 	    !string_format_from(cmd, &cmdsize, "cd %s;", opt_cdup))
 		return FALSE;
 
-	switch (line->type) {
+	switch (type) {
 	case LINE_STAT_STAGED:
 		if (!string_format_from(buf, &bufsize, "%06o %s\t%s%c",
 				        status->old.mode,
@@ -3066,6 +3076,25 @@ status_enter(struct view *view, struct line *line)
 
 	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
 	return TRUE;
+}
+
+static void
+status_update(struct view *view)
+{
+	if (view == VIEW(REQ_VIEW_STATUS)) {
+		struct line *line = view->lines
+				  ? &view->line[view->lineno] : NULL;
+
+		if (!line || !line->data) {
+			report("No file chosen for update");
+			return;
+		}
+
+		if (!status_update_file(view, line->data, line->type))
+			report("Failed to update file status");
+	} else {
+		report("This action is only valid for the status view");
+	}
 }
 
 static void
