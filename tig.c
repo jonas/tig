@@ -2920,6 +2920,9 @@ error_out:
 #define STATUS_LIST_OTHER_CMD \
 	"git ls-files -z --others --exclude-per-directory=.gitignore"
 
+#define STATUS_DIFF_SHOW_CMD \
+	"git diff --root --patch-with-stat --find-copies-harder -B -C %s -- %s 2>/dev/null"
+
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
  * git-ls-files(1). */
@@ -3020,6 +3023,55 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 static bool
 status_enter(struct view *view, struct line *line)
 {
+	struct status *status = line->data;
+	char path[SIZEOF_STR];
+	char *info;
+	size_t cmdsize = 0;
+
+	if (!status || line->type == LINE_STAT_NONE) {
+		report("No file has been chosen");
+		return TRUE;
+	}
+
+	if (sq_quote(path, 0, status->name) >= sizeof(path))
+		return FALSE;
+
+	if (opt_cdup[0] &&
+	    line->type != LINE_STAT_UNTRACKED &&
+	    !string_format_from(opt_cmd, &cmdsize, "cd %s;", opt_cdup))
+		return FALSE;
+
+	switch (line->type) {
+	case LINE_STAT_STAGED:
+		if (!string_format_from(opt_cmd, &cmdsize, STATUS_DIFF_SHOW_CMD,
+					"--cached", path))
+			return FALSE;
+		info = "Staged changes to %s";
+		break;
+
+	case LINE_STAT_UNSTAGED:
+		if (!string_format_from(opt_cmd, &cmdsize, STATUS_DIFF_SHOW_CMD,
+					"", path))
+			return FALSE;
+		info = "Unstaged changes to %s";
+		break;
+
+	case LINE_STAT_UNTRACKED:
+		if (opt_pipe)
+			return FALSE;
+		opt_pipe = fopen(status->name, "r");
+		info = "Untracked file %s";
+		break;
+
+	default:
+		die("w00t");
+	}
+
+	open_view(view, REQ_VIEW_DIFF, OPEN_RELOAD | OPEN_SPLIT);
+	if (view_is_displayed(VIEW(REQ_VIEW_DIFF))) {
+		string_format(VIEW(REQ_VIEW_DIFF)->ref, info, status->name);
+	}
+
 	return TRUE;
 }
 
@@ -3086,7 +3138,7 @@ status_update(struct view *view)
 				  ? &view->line[view->lineno] : NULL;
 
 		if (!line || !line->data) {
-			report("No file chosen for update");
+			report("No file has been chosen");
 			return;
 		}
 
