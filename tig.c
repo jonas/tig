@@ -3024,16 +3024,17 @@ static bool
 status_enter(struct view *view, struct line *line)
 {
 	struct status *status = line->data;
-	char path[SIZEOF_STR];
+	char path[SIZEOF_STR] = "";
 	char *info;
 	size_t cmdsize = 0;
 
-	if (!status || line->type == LINE_STAT_NONE) {
-		report("No file has been chosen");
+	if (line->type == LINE_STAT_NONE ||
+	    (!status && line[1].type == LINE_STAT_NONE)) {
+		report("No file to diff");
 		return TRUE;
 	}
 
-	if (sq_quote(path, 0, status->name) >= sizeof(path))
+	if (status && sq_quote(path, 0, status->name) >= sizeof(path))
 		return FALSE;
 
 	if (opt_cdup[0] &&
@@ -3046,19 +3047,31 @@ status_enter(struct view *view, struct line *line)
 		if (!string_format_from(opt_cmd, &cmdsize, STATUS_DIFF_SHOW_CMD,
 					"--cached", path))
 			return FALSE;
-		info = "Staged changes to %s";
+		if (status)
+			info = "Staged changes to %s";
+		else
+			info = "Staged changes";
 		break;
 
 	case LINE_STAT_UNSTAGED:
 		if (!string_format_from(opt_cmd, &cmdsize, STATUS_DIFF_SHOW_CMD,
 					"", path))
 			return FALSE;
-		info = "Unstaged changes to %s";
+		if (status)
+			info = "Unstaged changes to %s";
+		else
+			info = "Unstaged changes";
 		break;
 
 	case LINE_STAT_UNTRACKED:
 		if (opt_pipe)
 			return FALSE;
+
+	    	if (!status) {
+			report("No file to show");
+			return TRUE;
+		}
+
 		opt_pipe = fopen(status->name, "r");
 		info = "Untracked file %s";
 		break;
