@@ -500,7 +500,7 @@ parse_options(int argc, char *argv[])
 
 		if (!strcmp(opt, "-S")) {
 			opt_request = REQ_VIEW_STATUS;
-			break;
+			continue;
 		}
 
 		if (check_option(opt, 'n', "line-number", OPT_INT, &opt_num_interval)) {
