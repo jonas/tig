@@ -1368,7 +1368,7 @@ update_view_title(struct view *view)
 
 	assert(view_is_displayed(view));
 
-	if (view->lines || view->pipe) {
+	if (!VIEW(REQ_VIEW_STATUS) && (view->lines || view->pipe)) {
 		unsigned int view_lines = view->offset + view->height;
 		unsigned int lines = view->lines
 				   ? MIN(view_lines, view->lines) * 100 / view->lines
@@ -3151,15 +3151,16 @@ status_update(struct view *view)
 		assert(view->lines);
 
 		if (!line->data) {
-			if (line[1].type == LINE_STAT_NONE) {
-				report("Nothing to update");
-				return;
-			}
-
 			while (++line < view->line + view->lines && line->data) {
 				if (!status_update_file(view, line->data, line->type))
 					report("Failed to update file status");
 			}
+
+			if (!line[-1].data) {
+				report("Nothing to update");
+				return;
+			}
+
 
 		} else if (!status_update_file(view, line->data, line->type)) {
 			report("Failed to update file status");
@@ -3174,29 +3175,38 @@ status_update(struct view *view)
 static void
 status_select(struct view *view, struct line *line)
 {
+	struct status *status = line->data;
+	char file[SIZEOF_STR] = "all files";
 	char *text;
+
+	if (status && !string_format(file, "'%s'", status->name))
+		return;
+
+	if (!status && line[1].type == LINE_STAT_NONE)
+		line++;
 
 	switch (line->type) {
 	case LINE_STAT_STAGED:
-		text = "Press %s to unstage file for commit";
+		text = "Press %s to unstage %s for commit";
 		break;
 
 	case LINE_STAT_UNSTAGED:
-		text = "Press %s to stage file for commit  ";
+		text = "Press %s to stage %s for commit";
 		break;
 
 	case LINE_STAT_UNTRACKED:
-		text = "Press %s to stage file for addition";
+		text = "Press %s to stage %s for addition";
 		break;
 
 	case LINE_STAT_NONE:
-		return;
+		text = "Nothing to update";
+		break;
 
 	default:
 		die("w00t");
 	}
 
-	string_format(view->ref, text, get_key(REQ_STATUS_UPDATE));
+	string_format(view->ref, text, get_key(REQ_STATUS_UPDATE), file);
 }
 
 static bool
