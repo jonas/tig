@@ -3139,7 +3139,6 @@ status_update_file(struct view *view, struct status *status, enum line_type type
 	if (written != bufsize)
 		return FALSE;
 
-	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
 	return TRUE;
 }
 
@@ -3152,12 +3151,21 @@ status_update(struct view *view)
 		assert(view->lines);
 
 		if (!line->data) {
-			report("No file has been chosen");
-			return;
+			if (line[1].type == LINE_STAT_NONE) {
+				report("Nothing to update");
+				return;
+			}
+
+			while (++line < view->line + view->lines && line->data) {
+				if (!status_update_file(view, line->data, line->type))
+					report("Failed to update file status");
+			}
+
+		} else if (!status_update_file(view, line->data, line->type)) {
+			report("Failed to update file status");
 		}
 
-		if (!status_update_file(view, line->data, line->type))
-			report("Failed to update file status");
+		open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
 	} else {
 		report("This action is only valid for the status view");
 	}
