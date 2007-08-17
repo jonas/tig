@@ -3147,10 +3147,11 @@ static void
 status_update(struct view *view)
 {
 	if (view == VIEW(REQ_VIEW_STATUS)) {
-		struct line *line = view->lines
-				  ? &view->line[view->lineno] : NULL;
+		struct line *line = &view->line[view->lineno];
 
-		if (!line || !line->data) {
+		assert(view->lines);
+
+		if (!line->data) {
 			report("No file has been chosen");
 			return;
 		}
