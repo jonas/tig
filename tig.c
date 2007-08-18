@@ -2122,8 +2122,6 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
  * User request switch noodle
  */
 
-static void status_update(struct view *view);
-
 static int
 view_driver(struct view *view, enum request request)
 {
@@ -2264,9 +2262,6 @@ view_driver(struct view *view, enum request request)
 		redraw_display();
 		break;
 
-	case REQ_STATUS_UPDATE:
-		status_update(view);
-		break;
 
 	case REQ_NONE:
 		doupdate();
@@ -3025,6 +3020,8 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 	return TRUE;
 }
 
+static void status_update(struct view *view);
+
 static enum request
 status_request(struct view *view, enum request request, struct line *line)
 {
@@ -3032,6 +3029,11 @@ status_request(struct view *view, enum request request, struct line *line)
 	char path[SIZEOF_STR] = "";
 	char *info;
 	size_t cmdsize = 0;
+
+	if (request == REQ_STATUS_UPDATE) {
+		status_update(view);
+		return REQ_NONE;
+	}
 
 	if (request != REQ_ENTER)
 		return request;
@@ -3154,31 +3156,26 @@ status_update_file(struct view *view, struct status *status, enum line_type type
 static void
 status_update(struct view *view)
 {
-	if (view == VIEW(REQ_VIEW_STATUS)) {
-		struct line *line = &view->line[view->lineno];
+	struct line *line = &view->line[view->lineno];
 
-		assert(view->lines);
+	assert(view->lines);
 
-		if (!line->data) {
-			while (++line < view->line + view->lines && line->data) {
-				if (!status_update_file(view, line->data, line->type))
-					report("Failed to update file status");
-			}
-
-			if (!line[-1].data) {
-				report("Nothing to update");
-				return;
-			}
-
-
-		} else if (!status_update_file(view, line->data, line->type)) {
-			report("Failed to update file status");
+	if (!line->data) {
+		while (++line < view->line + view->lines && line->data) {
+			if (!status_update_file(view, line->data, line->type))
+				report("Failed to update file status");
 		}
 
-		open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
-	} else {
-		report("This action is only valid for the status view");
+		if (!line[-1].data) {
+			report("Nothing to update");
+			return;
+		}
+
+	} else if (!status_update_file(view, line->data, line->type)) {
+		report("Failed to update file status");
 	}
+
+	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
 }
 
 static void
