@@ -2293,6 +2293,11 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_EDIT:
 		report("Nothing to edit");
+		break;
+
+	case REQ_ENTER:
+		report("Nothing to enter");
+		break;
 
 	case REQ_NONE:
 		doupdate();
