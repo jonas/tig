@@ -337,7 +337,8 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(STOP_LOADING,	"Stop all loading views"), \
 	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
-	REQ_(STATUS_UPDATE,	"Update file status") \
+	REQ_(STATUS_UPDATE,	"Update file status"), \
+	REQ_(EDIT,		"Open in editor")
 
 
 /* User action requests. */
@@ -424,6 +425,7 @@ static iconv_t opt_iconv		= ICONV_NONE;
 static char opt_search[SIZEOF_STR]	= "";
 static char opt_cdup[SIZEOF_STR]	= "";
 static char opt_git_dir[SIZEOF_STR]	= "";
+static char opt_editor[SIZEOF_STR]	= "";
 
 enum option_type {
 	OPT_NONE,
@@ -767,6 +769,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
 	{ ':',		REQ_PROMPT },
 	{ 'u',		REQ_STATUS_UPDATE },
+	{ 'e',		REQ_EDIT },
 
 	/* Using the ncurses SIGWINCH handler. */
 	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
@@ -2117,6 +2120,32 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		update_view_title(view);
 }
 
+static void
+open_editor(struct view *view, char *file)
+{
+	char cmd[SIZEOF_STR];
+	char file_sq[SIZEOF_STR];
+	char *editor;
+
+	editor = getenv("GIT_EDITOR");
+	if (!editor && *opt_editor)
+		editor = opt_editor;
+	if (!editor)
+		editor = getenv("VISUAL");
+	if (!editor)
+		editor = getenv("EDITOR");
+	if (!editor)
+		editor = "vi";
+
+	if (sq_quote(file_sq, 0, file) < sizeof(file_sq) &&
+	    string_format(cmd, "%s %s", editor, file_sq)) {
+		def_prog_mode();           /* save current tty modes */
+		endwin();                  /* restore original tty modes */
+		system(cmd);
+		reset_prog_mode();
+		redraw_display();
+	}
+}
 
 /*
  * User request switch noodle
@@ -2262,6 +2291,8 @@ view_driver(struct view *view, enum request request)
 		redraw_display();
 		break;
 
+	case REQ_EDIT:
+		report("Nothing to edit");
 
 	case REQ_NONE:
 		doupdate();
@@ -3172,9 +3203,18 @@ status_update(struct view *view)
 static enum request
 status_request(struct view *view, enum request request, struct line *line)
 {
+	struct status *status = line->data;
+
 	switch (request) {
 	case REQ_STATUS_UPDATE:
 		status_update(view);
+		break;
+
+	case REQ_EDIT:
+		if (!status)
+			return request;
+
+		open_editor(view, status->name);
 		break;
 
 	case REQ_ENTER:
@@ -4201,6 +4241,9 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 {
 	if (!strcmp(name, "i18n.commitencoding"))
 		string_ncopy(opt_encoding, value, valuelen);
+
+	if (!strcmp(name, "core.editor"))
+		string_ncopy(opt_editor, value, valuelen);
 
 	return OK;
 }
