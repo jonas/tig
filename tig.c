@@ -3020,23 +3020,13 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 	return TRUE;
 }
 
-static void status_update(struct view *view);
-
 static enum request
-status_request(struct view *view, enum request request, struct line *line)
+status_enter(struct view *view, struct line *line)
 {
 	struct status *status = line->data;
 	char path[SIZEOF_STR] = "";
 	char *info;
 	size_t cmdsize = 0;
-
-	if (request == REQ_STATUS_UPDATE) {
-		status_update(view);
-		return REQ_NONE;
-	}
-
-	if (request != REQ_ENTER)
-		return request;
 
 	if (line->type == LINE_STAT_NONE ||
 	    (!status && line[1].type == LINE_STAT_NONE)) {
@@ -3098,6 +3088,7 @@ status_request(struct view *view, enum request request, struct line *line)
 
 	return REQ_NONE;
 }
+
 
 static bool
 status_update_file(struct view *view, struct status *status, enum line_type type)
@@ -3176,6 +3167,25 @@ status_update(struct view *view)
 	}
 
 	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
+}
+
+static enum request
+status_request(struct view *view, enum request request, struct line *line)
+{
+	switch (request) {
+	case REQ_STATUS_UPDATE:
+		status_update(view);
+		break;
+
+	case REQ_ENTER:
+		status_enter(view, line);
+		break;
+
+	default:
+		return request;
+	}
+
+	return REQ_NONE;
 }
 
 static void
