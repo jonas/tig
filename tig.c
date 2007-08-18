@@ -1263,8 +1263,8 @@ struct view_ops {
 	bool (*read)(struct view *view, char *data);
 	/* Draw one line; @lineno must be < view->height. */
 	bool (*draw)(struct view *view, struct line *line, unsigned int lineno, bool selected);
-	/* Depending on view, change display based on current line. */
-	bool (*enter)(struct view *view, struct line *line);
+	/* Depending on view handle a special requests. */
+	enum request (*request)(struct view *view, enum request request, struct line *line);
 	/* Search for regex in a line. */
 	bool (*grep)(struct view *view, struct line *line);
 	/* Select line */
@@ -2129,6 +2129,12 @@ view_driver(struct view *view, enum request request)
 {
 	int i;
 
+	if (view && view->lines) {
+		request = view->ops->request(view, request, &view->line[view->lineno]);
+		if (request == REQ_NONE)
+			return TRUE;
+	}
+
 	switch (request) {
 	case REQ_MOVE_UP:
 	case REQ_MOVE_DOWN:
@@ -2196,12 +2202,6 @@ view_driver(struct view *view, enum request request)
 		}
 		/* Fall-through */
 
-	case REQ_ENTER:
-		if (!view->lines) {
-			report("Nothing to enter");
-			break;
-		}
-		return view->ops->enter(view, &view->line[view->lineno]);
 
 	case REQ_VIEW_NEXT:
 	{
@@ -2469,10 +2469,13 @@ pager_read(struct view *view, char *data)
 	return TRUE;
 }
 
-static bool
-pager_enter(struct view *view, struct line *line)
+static enum request
+pager_request(struct view *view, enum request request, struct line *line)
 {
 	int split = 0;
+
+	if (request != REQ_ENTER)
+		return request;
 
 	if (line->type == LINE_COMMIT &&
 	   (view == VIEW(REQ_VIEW_LOG) ||
@@ -2492,7 +2495,7 @@ pager_enter(struct view *view, struct line *line)
 	if (split)
 		update_view_title(view);
 
-	return TRUE;
+	return REQ_NONE;
 }
 
 static bool
@@ -2527,7 +2530,7 @@ static struct view_ops pager_ops = {
 	NULL,
 	pager_read,
 	pager_draw,
-	pager_enter,
+	pager_request,
 	pager_grep,
 	pager_select,
 };
@@ -2581,7 +2584,7 @@ static struct view_ops help_ops = {
 	help_open,
 	NULL,
 	pager_draw,
-	pager_enter,
+	pager_request,
 	pager_grep,
 	pager_select,
 };
@@ -2694,11 +2697,13 @@ tree_read(struct view *view, char *text)
 	return TRUE;
 }
 
-static bool
-tree_enter(struct view *view, struct line *line)
+static enum request
+tree_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags;
-	enum request request;
+
+	if (request != REQ_ENTER)
+		return request;
 
 	switch (line->type) {
 	case LINE_TREE_DIR:
@@ -2742,7 +2747,7 @@ tree_enter(struct view *view, struct line *line)
 
 	open_view(view, request, flags);
 
-	return TRUE;
+	return REQ_NONE;
 }
 
 static void
@@ -2765,7 +2770,7 @@ static struct view_ops tree_ops = {
 	NULL,
 	tree_read,
 	pager_draw,
-	tree_enter,
+	tree_request,
 	pager_grep,
 	tree_select,
 };
@@ -2781,7 +2786,7 @@ static struct view_ops blob_ops = {
 	NULL,
 	blob_read,
 	pager_draw,
-	pager_enter,
+	pager_request,
 	pager_grep,
 	pager_select,
 };
@@ -3020,33 +3025,36 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 	return TRUE;
 }
 
-static bool
-status_enter(struct view *view, struct line *line)
+static enum request
+status_request(struct view *view, enum request request, struct line *line)
 {
 	struct status *status = line->data;
 	char path[SIZEOF_STR] = "";
 	char *info;
 	size_t cmdsize = 0;
 
+	if (request != REQ_ENTER)
+		return request;
+
 	if (line->type == LINE_STAT_NONE ||
 	    (!status && line[1].type == LINE_STAT_NONE)) {
 		report("No file to diff");
-		return TRUE;
+		return REQ_NONE;
 	}
 
 	if (status && sq_quote(path, 0, status->name) >= sizeof(path))
-		return FALSE;
+		return REQ_QUIT;
 
 	if (opt_cdup[0] &&
 	    line->type != LINE_STAT_UNTRACKED &&
 	    !string_format_from(opt_cmd, &cmdsize, "cd %s;", opt_cdup))
-		return FALSE;
+		return REQ_QUIT;
 
 	switch (line->type) {
 	case LINE_STAT_STAGED:
 		if (!string_format_from(opt_cmd, &cmdsize, STATUS_DIFF_SHOW_CMD,
 					"--cached", path))
-			return FALSE;
+			return REQ_QUIT;
 		if (status)
 			info = "Staged changes to %s";
 		else
@@ -3056,7 +3064,7 @@ status_enter(struct view *view, struct line *line)
 	case LINE_STAT_UNSTAGED:
 		if (!string_format_from(opt_cmd, &cmdsize, STATUS_DIFF_SHOW_CMD,
 					"", path))
-			return FALSE;
+			return REQ_QUIT;
 		if (status)
 			info = "Unstaged changes to %s";
 		else
@@ -3065,11 +3073,12 @@ status_enter(struct view *view, struct line *line)
 
 	case LINE_STAT_UNTRACKED:
 		if (opt_pipe)
-			return FALSE;
+			return REQ_QUIT;
+
 
 	    	if (!status) {
 			report("No file to show");
-			return TRUE;
+			return REQ_NONE;
 		}
 
 		opt_pipe = fopen(status->name, "r");
@@ -3085,7 +3094,7 @@ status_enter(struct view *view, struct line *line)
 		string_format(VIEW(REQ_VIEW_DIFF)->ref, info, status->name);
 	}
 
-	return TRUE;
+	return REQ_NONE;
 }
 
 static bool
@@ -3246,7 +3255,7 @@ static struct view_ops status_ops = {
 	status_open,
 	NULL,
 	status_draw,
-	status_enter,
+	status_request,
 	status_grep,
 	status_select,
 };
@@ -3678,13 +3687,17 @@ main_read(struct view *view, char *line)
 	return TRUE;
 }
 
-static bool
-main_enter(struct view *view, struct line *line)
+static enum request
+main_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
 
-	open_view(view, REQ_VIEW_DIFF, flags);
-	return TRUE;
+	if (request == REQ_ENTER)
+		open_view(view, REQ_VIEW_DIFF, flags);
+	else
+		return request;
+
+	return REQ_NONE;
 }
 
 static bool
@@ -3732,7 +3745,7 @@ static struct view_ops main_ops = {
 	NULL,
 	main_read,
 	main_draw,
-	main_enter,
+	main_request,
 	main_grep,
 	main_select,
 };
