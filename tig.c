@@ -1371,7 +1371,7 @@ update_view_title(struct view *view)
 
 	assert(view_is_displayed(view));
 
-	if (!VIEW(REQ_VIEW_STATUS) && (view->lines || view->pipe)) {
+	if (view != VIEW(REQ_VIEW_STATUS) && (view->lines || view->pipe)) {
 		unsigned int view_lines = view->offset + view->height;
 		unsigned int lines = view->lines
 				   ? MIN(view_lines, view->lines) * 100 / view->lines
