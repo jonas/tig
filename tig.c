@@ -2212,6 +2212,8 @@ view_driver(struct view *view, enum request request)
 
 		if ((view == VIEW(REQ_VIEW_DIFF) &&
 		     view->parent == VIEW(REQ_VIEW_MAIN)) ||
+		   (view == VIEW(REQ_VIEW_DIFF) &&
+		     view->parent == VIEW(REQ_VIEW_STATUS)) ||
 		   (view == VIEW(REQ_VIEW_BLOB) &&
 		     view->parent == VIEW(REQ_VIEW_TREE))) {
 			int line;
