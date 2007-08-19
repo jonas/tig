@@ -2221,14 +2221,14 @@ view_driver(struct view *view, enum request request)
 			move_view(view, request);
 			if (view_is_displayed(view))
 				update_view_title(view);
-			if (line == view->lineno)
-				break;
+			if (line != view->lineno)
+				view->ops->request(view, REQ_ENTER,
+						   &view->line[view->lineno]);
+
 		} else {
 			move_view(view, request);
-			break;
 		}
-		/* Fall-through */
-
+		break;
 
 	case REQ_VIEW_NEXT:
 	{
