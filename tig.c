@@ -92,6 +92,10 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 
 #define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
 
+#ifndef GIT_CONFIG
+#define "git config"
+#endif
+
 #define TIG_LS_REMOTE \
 	"git ls-remote $(git rev-parse --git-dir) 2>/dev/null"
 
@@ -4304,7 +4308,7 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 static int
 load_repo_config(void)
 {
-	return read_properties(popen("git repo-config --list", "r"),
+	return read_properties(popen(GIT_CONFIG " --list", "r"),
 			       "=", read_repo_config_option);
 }
 

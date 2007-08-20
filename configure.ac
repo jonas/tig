@@ -48,6 +48,8 @@ then
 fi
 
 AC_PROG_CC
+AC_CHECK_PROGS(GIT_CONFIG, [git-config git-repo-config])
+AC_DEFINE_UNQUOTED(GIT_CONFIG,"$GIT_CONFIG",[git config program])
 
 AC_CONFIG_FILES([config.make])
 AC_OUTPUT

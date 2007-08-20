@@ -24,8 +24,5 @@ Features that should be explored.
 
  - Use autoconf to check for the AsciiDoc and XmlTo document tools.
 
- - The autoconf check could also be used to determine whether it is a
-   newer git so that git-config will be used instead of git-repo-config.
-
  - Use non-blocking I/O + select() for incremental loading of view
    input. (debian bug #427093)
