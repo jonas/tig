@@ -22,9 +22,7 @@ Features that should be explored.
    part of the commit detail information you display on the lower pane
    (log/diff view).
 
- - Use autoconf to check for iconv in libc and how it is declared (the
-   2nd argument is 'const' on FreeBSD / Mac OS X). Maybe also check for
-   the AsciiDoc and XmlTo document tools.
+ - Use autoconf to check for the AsciiDoc and XmlTo document tools.
 
  - The autoconf check could also be used to determine whether it is a
    newer git so that git-config will be used instead of git-repo-config.

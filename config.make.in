@@ -1,0 +1,9 @@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
+LDLIBS = @LIBS@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+mandir = @mandir@
+docdir = @docdir@
+datarootdir = @datarootdir@

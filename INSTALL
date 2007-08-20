@@ -8,16 +8,16 @@ available either in the tarballs or in the above repository in the branch named
 
 To install tig simply run:
 
+	$ sh autoconf.sh
+	$ ./configure
 	$ make install
 
 To install documentation run:
 
 	$ make install-doc
 
-Edit the Makefile if you need to configure specific compiler or linker flags.
-On FreeBSD for example the c library does not support the iconv interface and
-to compile tig you need to append `-L/usr/local/lib -liconv` to `LDLIBS` and
-`-I/usr/local/include` to the `CFLAGS` variable.
+If you had to install your own copy of libiconv, you'll probably want to pass
+the "--with-libiconv" option to the "configure" script to tell it where to look.
 
 The following tools and packages are needed:
 

@@ -1,7 +1,13 @@
-prefix	= $(HOME)
-bindir	= $(prefix)/bin
-mandir	= $(prefix)/man
-docdir	= $(prefix)/share/doc
+## Makefile for tig
+
+# Include setting from the configure script
+-include config.make
+
+prefix ?= $(HOME)
+bindir ?= $(prefix)/bin
+mandir ?= $(prefix)/man
+datarootdir ?= $(prefix)/share
+docdir ?= $(datarootdir)/doc
 # DESTDIR=
 
 # Get version either via git or from VERSION file. Allow either
@@ -24,7 +30,7 @@ RPM_VERSION = $(word 1,$(RPM_VERLIST))
 RPM_RELEASE = $(word 2,$(RPM_VERLIST))$(if $(WTDIRTY),.dirty)
 
 LDLIBS	= -lcurses
-CFLAGS	= -Wall -O2
+CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
 MANDOC	= tig.1 tigrc.5
@@ -33,6 +39,9 @@ ALLDOC	= $(MANDOC) $(HTMLDOC) manual.html-chunked manual.pdf
 TARNAME	= tig-$(RPM_VERSION)-$(RPM_RELEASE)
 
 override CFLAGS += '-DVERSION="$(VERSION)"'
+
+AUTOHEADER ?= autoheader
+AUTOCONF ?= autoconf
 
 all: $(PROGS)
 all-debug: $(PROGS)
@@ -91,6 +100,10 @@ dist: tig.spec
 
 rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
+
+configure: configure.ac
+	$(AUTOHEADER)
+	$(AUTOCONF)
 
 # Maintainer stuff
 release-doc:

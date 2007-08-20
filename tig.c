@@ -11,8 +11,8 @@
  * GNU General Public License for more details.
  */
 
-#ifndef VERSION
-#define VERSION "unknown-version"
+#ifndef TIG_VERSION
+#define TIG_VERSION "unknown-version"
 #endif
 
 #ifndef DEBUG
@@ -39,6 +39,8 @@
 #include <iconv.h>
 
 #include <curses.h>
+
+#include "config.h"
 
 #if __GNUC__ >= 3
 #define __NORETURN __attribute__((__noreturn__))
@@ -390,7 +392,7 @@ get_request(const char *name)
  */
 
 static const char usage[] =
-"tig " VERSION " (" __DATE__ ")\n"
+"tig " TIG_VERSION " (" __DATE__ ")\n"
 "\n"
 "Usage: tig [options]\n"
 "   or: tig [options] [--] [git log options]\n"
@@ -516,7 +518,7 @@ parse_options(int argc, char *argv[])
 		}
 
 		if (check_option(opt, 'v', "version", OPT_NONE)) {
-			printf("tig version %s\n", VERSION);
+			printf("tig version %s\n", TIG_VERSION);
 			return FALSE;
 		}
 
@@ -1926,7 +1928,7 @@ update_view(struct view *view)
 			line[linelen - 1] = 0;
 
 		if (opt_iconv != ICONV_NONE) {
-			char *inbuf = line;
+			ICONV_INBUF_TYPE inbuf = line;
 			size_t inlen = linelen;
 
 			char *outbuf = out_buffer;
@@ -2286,7 +2288,7 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_SHOW_VERSION:
-		report("tig-%s (built %s)", VERSION, __DATE__);
+		report("tig-%s (built %s)", TIG_VERSION, __DATE__);
 		return TRUE;
 
 	case REQ_SCREEN_RESIZE:
