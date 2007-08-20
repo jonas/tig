@@ -42,6 +42,9 @@ override CFLAGS += '-DVERSION="$(VERSION)"'
 
 AUTOHEADER ?= autoheader
 AUTOCONF ?= autoconf
+ASCIIDOC ?= asciidoc
+XMLTO ?= xmlto
+DOCBOOK2PDF ?= docbook2pdf
 
 all: $(PROGS)
 all-debug: $(PROGS)
@@ -139,34 +142,34 @@ manual.toc: manual.txt
 		esac; done | sed 's/\[\[\(.*\)\]\]/\1/' > $@
 
 README.html: README
-	asciidoc -b xhtml11 -d article -a readme $<
+	$(ASCIIDOC) -b xhtml11 -d article -a readme $<
 
 %.pdf : %.xml
-	docbook2pdf $<
+	$(DOCBOOK2PDF) $<
 
 %.1.html : %.1.txt
-	asciidoc -b xhtml11 -d manpage $<
+	$(ASCIIDOC) -b xhtml11 -d manpage $<
 
 %.1.xml : %.1.txt
-	asciidoc -b docbook -d manpage -aversion=$(VERSION) $<
+	$(ASCIIDOC) -b docbook -d manpage -aversion=$(VERSION) $<
 
 %.1 : %.1.xml
-	xmlto -m manpage.xsl man $<
+	$(XMLTO) -m manpage.xsl man $<
 
 %.5.html : %.5.txt
-	asciidoc -b xhtml11 -d manpage $<
+	$(ASCIIDOC) -b xhtml11 -d manpage $<
 
 %.5.xml : %.5.txt
-	asciidoc -b docbook -d manpage -aversion=$(VERSION) $<
+	$(ASCIIDOC) -b docbook -d manpage -aversion=$(VERSION) $<
 
 %.5 : %.5.xml
-	xmlto -m manpage.xsl man $<
+	$(XMLTO) -m manpage.xsl man $<
 
 %.html : %.txt
-	asciidoc -b xhtml11 -d article -n $<
+	$(ASCIIDOC) -b xhtml11 -d article -n $<
 
 %.xml : %.txt
-	asciidoc -b docbook -d article $<
+	$(ASCIIDOC) -b docbook -d article $<
 
 %.html-chunked : %.xml
-	xmlto html -o $@ $<
+	$(XMLTO) html -o $@ $<

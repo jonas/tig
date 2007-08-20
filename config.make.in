@@ -7,3 +7,6 @@ bindir = @bindir@
 mandir = @mandir@
 docdir = @docdir@
 datarootdir = @datarootdir@
+ASCIIDOC = @ASCIIDOC@
+XMLTO = @XMLTO@
+DOCBOOK2PDF = @DOCBOOK2PDF@
