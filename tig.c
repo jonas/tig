@@ -1818,7 +1818,10 @@ begin_update(struct view *view)
 		/* When running random commands, initially show the
 		 * command in the title. However, it maybe later be
 		 * overwritten if a commit line is selected. */
-		string_copy(view->ref, view->cmd);
+		if (view == VIEW(REQ_VIEW_PAGER))
+			string_copy(view->ref, view->cmd);
+		else
+			view->ref[0] = 0;
 
 	} else if (view == VIEW(REQ_VIEW_TREE)) {
 		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
