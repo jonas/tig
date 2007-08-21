@@ -2630,6 +2630,50 @@ static struct view_ops help_ops = {
  * Tree backend
  */
 
+struct tree_stack_entry {
+	struct tree_stack_entry *prev;	/* Entry below this in the stack */
+	unsigned long lineno;		/* Line number to restore */
+	char *name;			/* Position of name in opt_path */
+};
+
+/* The top of the path stack. */
+static struct tree_stack_entry *tree_stack = NULL;
+unsigned long tree_lineno = 0;
+
+static void
+pop_tree_stack_entry(void)
+{
+	struct tree_stack_entry *entry = tree_stack;
+
+	tree_lineno = entry->lineno;
+	entry->name[0] = 0;
+	tree_stack = entry->prev;
+	free(entry);
+}
+
+static void
+push_tree_stack_entry(char *name, unsigned long lineno)
+{
+	struct tree_stack_entry *entry = calloc(1, sizeof(*entry));
+	size_t pathlen = strlen(opt_path);
+
+	if (!entry)
+		return;
+
+	entry->prev = tree_stack;
+	entry->name = opt_path + pathlen;
+	tree_stack = entry;
+
+	if (!string_format_from(opt_path, &pathlen, "%s/", name)) {
+		pop_tree_stack_entry();
+		return;
+	}
+
+	/* Move the current line to the first tree entry. */
+	tree_lineno = 1;
+	entry->lineno = lineno;
+}
+
 /* Parse output from git-ls-tree(1):
  *
  * 100644 blob fb0e31ea6cc679b7379631188190e975f5789c26	Makefile
@@ -2726,9 +2770,10 @@ tree_read(struct view *view, char *text)
 	if (!add_line_text(view, text, type))
 		return FALSE;
 
-	/* Move the current line to the first tree entry. */
-	if (first_read)
-		view->lineno++;
+	if (tree_lineno > view->lineno) {
+		view->lineno = tree_lineno;
+		tree_lineno = 0;
+	}
 
 	return TRUE;
 }
@@ -2741,29 +2786,22 @@ tree_request(struct view *view, enum request request, struct line *line)
 	if (request != REQ_ENTER)
 		return request;
 
+	/* Cleanup the stack if the tree view is at a different tree. */
+	while (!*opt_path && tree_stack)
+		pop_tree_stack_entry();
+
 	switch (line->type) {
 	case LINE_TREE_DIR:
 		/* Depending on whether it is a subdir or parent (updir?) link
 		 * mangle the path buffer. */
 		if (line == &view->line[1] && *opt_path) {
-			size_t path_len = strlen(opt_path);
-			char *dirsep = opt_path + path_len - 1;
-
-			while (dirsep > opt_path && dirsep[-1] != '/')
-				dirsep--;
-
-			dirsep[0] = 0;
+			pop_tree_stack_entry();
 
 		} else {
-			size_t pathlen = strlen(opt_path);
-			size_t origlen = pathlen;
 			char *data = line->data;
 			char *basename = data + SIZEOF_TREE_ATTR;
 
-			if (!string_format_from(opt_path, &pathlen, "%s/", basename)) {
-				opt_path[origlen] = 0;
-				return TRUE;
-			}
+			push_tree_stack_entry(basename, view->lineno);
 		}
 
 		/* Trees and subtrees share the same ID, so they are not not
@@ -2782,6 +2820,9 @@ tree_request(struct view *view, enum request request, struct line *line)
 	}
 
 	open_view(view, request, flags);
+	if (request == REQ_VIEW_TREE) {
+		view->lineno = tree_lineno;
+	}
 
 	return REQ_NONE;
 }
