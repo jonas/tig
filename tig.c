@@ -2907,6 +2907,9 @@ struct status {
 	char name[SIZEOF_STR];
 };
 
+static struct status stage_status;
+static enum line_type stage_line_type;
+
 /* Get fields from the diff line:
  * :100644 100644 06a5d6ae9eca55be2e0e585a152e6b1336f2b20e 0000000000000000000000000000000000000000 M
  */
@@ -3186,7 +3189,14 @@ status_enter(struct view *view, struct line *line)
 
 	open_view(view, REQ_VIEW_STAGE, OPEN_RELOAD | OPEN_SPLIT);
 	if (view_is_displayed(VIEW(REQ_VIEW_STAGE))) {
-		string_format(VIEW(REQ_VIEW_STAGE)->ref, info, status->name);
+		if (status) {
+			stage_status = *status;
+		} else {
+			memset(&stage_status, 0, sizeof(stage_status));
+		}
+
+		stage_line_type = line->type;
+		string_format(VIEW(REQ_VIEW_STAGE)->ref, info, stage_status.name);
 	}
 
 	return REQ_NONE;
@@ -3379,15 +3389,171 @@ static struct view_ops status_ops = {
 	status_select,
 };
 
+
+static bool
+stage_diff_line(FILE *pipe, struct line *line)
+{
+	char *buf = line->data;
+	size_t bufsize = strlen(buf);
+	size_t written = 0;
+
+	while (!ferror(pipe) && written < bufsize) {
+		written += fwrite(buf + written, 1, bufsize - written, pipe);
+	}
+
+	fputc('\n', pipe);
+
+	return written == bufsize;
+}
+
+static struct line *
+stage_diff_hdr(struct view *view, struct line *line)
+{
+	int diff_hdr_dir = line->type == LINE_DIFF_CHUNK ? -1 : 1;
+	struct line *diff_hdr;
+
+	if (line->type == LINE_DIFF_CHUNK)
+		diff_hdr = line - 1;
+	else
+		diff_hdr = view->line + 1;
+
+	while (diff_hdr > view->line && diff_hdr < view->line + view->lines) {
+		if (diff_hdr->type == LINE_DIFF_HEADER)
+			return diff_hdr;
+
+		diff_hdr += diff_hdr_dir;
+	}
+
+	return NULL;
+}
+
+static bool
+stage_update_chunk(struct view *view, struct line *line)
+{
+	char cmd[SIZEOF_STR];
+	size_t cmdsize = 0;
+	struct line *diff_hdr, *diff_chunk, *diff_end;
+	FILE *pipe;
+
+	diff_hdr = stage_diff_hdr(view, line);
+	if (!diff_hdr)
+		return FALSE;
+
+	if (opt_cdup[0] &&
+	    !string_format_from(cmd, &cmdsize, "cd %s;", opt_cdup))
+		return FALSE;
+
+	if (!string_format_from(cmd, &cmdsize,
+				"git apply --cached %s - && "
+				"git update-index -q --unmerged --refresh 2>/dev/null",
+				stage_line_type == LINE_STAT_STAGED ? "-R" : ""))
+		return FALSE;
+
+	pipe = popen(cmd, "w");
+	if (!pipe)
+		return FALSE;
+
+	diff_end = view->line + view->lines;
+	if (line->type != LINE_DIFF_CHUNK) {
+		diff_chunk = diff_hdr;
+
+	} else {
+		for (diff_chunk = line + 1; diff_chunk < diff_end; diff_chunk++)
+			if (diff_chunk->type == LINE_DIFF_CHUNK ||
+			    diff_chunk->type == LINE_DIFF_HEADER)
+				diff_end = diff_chunk;
+
+		diff_chunk = line;
+
+		while (diff_hdr->type != LINE_DIFF_CHUNK) {
+			switch (diff_hdr->type) {
+			case LINE_DIFF_HEADER:
+			case LINE_DIFF_INDEX:
+			case LINE_DIFF_ADD:
+			case LINE_DIFF_DEL:
+				break;
+
+			default:
+				diff_hdr++;
+				continue;
+			}
+
+			if (!stage_diff_line(pipe, diff_hdr++)) {
+				pclose(pipe);
+				return FALSE;
+			}
+		}
+	}
+
+	while (diff_chunk < diff_end && stage_diff_line(pipe, diff_chunk))
+		diff_chunk++;
+
+	pclose(pipe);
+
+	if (diff_chunk != diff_end)
+		return FALSE;
+
+	return TRUE;
+}
+
+static void
+stage_update(struct view *view, struct line *line)
+{
+	if (stage_line_type != LINE_STAT_UNTRACKED &&
+	    (line->type == LINE_DIFF_CHUNK || !stage_status.status)) {
+		if (!stage_update_chunk(view, line)) {
+			report("Failed to apply chunk");
+			return;
+		}
+
+	} else if (!status_update_file(view, &stage_status, stage_line_type)) {
+		report("Failed to update file");
+		return;
+	}
+
+	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
+
+	view = VIEW(REQ_VIEW_STATUS);
+	if (view_is_displayed(view))
+		status_enter(view, &view->line[view->lineno]);
+}
+
+static enum request
+stage_request(struct view *view, enum request request, struct line *line)
+{
+	switch (request) {
+	case REQ_STATUS_UPDATE:
+		stage_update(view, line);
+		break;
+
+	case REQ_EDIT:
+		if (!stage_status.name[0])
+			return request;
+
+		open_editor(view, stage_status.name);
+		break;
+
+	case REQ_ENTER:
+		pager_request(view, request, line);
+		break;
+
+	default:
+		return request;
+	}
+
+	return REQ_NONE;
+}
+
 static struct view_ops stage_ops = {
 	"line",
 	NULL,
 	pager_read,
 	pager_draw,
-	pager_request,
+	stage_request,
 	pager_grep,
 	pager_select,
 };
+
 
 /*
  * Revision graph
