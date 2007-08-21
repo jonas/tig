@@ -118,6 +118,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define TIG_HELP_CMD	""
 #define TIG_PAGER_CMD	""
 #define TIG_STATUS_CMD	""
+#define TIG_STAGE_CMD	""
 
 /* Some ascii-shorthands fitted into the ncurses namespace. */
 #define KEY_TAB		'\t'
@@ -305,6 +306,7 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(VIEW_HELP,		"Show help page"), \
 	REQ_(VIEW_PAGER,	"Show pager view"), \
 	REQ_(VIEW_STATUS,	"Show status view"), \
+	REQ_(VIEW_STAGE,	"Show stage view"), \
 	\
 	REQ_GROUP("View manipulation") \
 	REQ_(ENTER,		"Enter current line and scroll"), \
@@ -735,6 +737,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'p',		REQ_VIEW_PAGER },
 	{ 'h',		REQ_VIEW_HELP },
 	{ 'S',		REQ_VIEW_STATUS },
+	{ 'c',		REQ_VIEW_STAGE },
 
 	/* View manipulation */
 	{ 'q',		REQ_VIEW_CLOSE },
@@ -790,7 +793,8 @@ static struct keybinding default_keybindings[] = {
 	KEYMAP_(BLOB), \
 	KEYMAP_(PAGER), \
 	KEYMAP_(HELP), \
-	KEYMAP_(STATUS)
+	KEYMAP_(STATUS), \
+	KEYMAP_(STAGE)
 
 enum keymap {
 #define KEYMAP_(name) KEYMAP_##name
@@ -1286,6 +1290,7 @@ static struct view_ops tree_ops;
 static struct view_ops blob_ops;
 static struct view_ops help_ops;
 static struct view_ops status_ops;
+static struct view_ops stage_ops;
 
 #define VIEW_STR(name, cmd, env, ref, ops, map) \
 	{ name, cmd, #env, ref, ops, map}
@@ -1303,6 +1308,7 @@ static struct view views[] = {
 	VIEW_(HELP,   "help",   &help_ops,   ""),
 	VIEW_(PAGER,  "pager",  &pager_ops,  "stdin"),
 	VIEW_(STATUS, "status", &status_ops, ""),
+	VIEW_(STAGE,  "stage",	&stage_ops,  ""),
 };
 
 #define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
@@ -2206,6 +2212,15 @@ view_driver(struct view *view, enum request request)
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
+	case REQ_VIEW_STAGE:
+		if (!VIEW(REQ_VIEW_STAGE)->lines) {
+			report("No stage content, press %s to open the status view and choose file",
+			       get_key(REQ_VIEW_STATUS));
+			break;
+		}
+		open_view(view, request, OPEN_DEFAULT);
+		break;
+
 	case REQ_VIEW_MAIN:
 	case REQ_VIEW_DIFF:
 	case REQ_VIEW_LOG:
@@ -2221,7 +2236,7 @@ view_driver(struct view *view, enum request request)
 
 		if ((view == VIEW(REQ_VIEW_DIFF) &&
 		     view->parent == VIEW(REQ_VIEW_MAIN)) ||
-		   (view == VIEW(REQ_VIEW_DIFF) &&
+		   (view == VIEW(REQ_VIEW_STAGE) &&
 		     view->parent == VIEW(REQ_VIEW_STATUS)) ||
 		   (view == VIEW(REQ_VIEW_BLOB) &&
 		     view->parent == VIEW(REQ_VIEW_TREE))) {
@@ -3169,9 +3184,9 @@ status_enter(struct view *view, struct line *line)
 		die("w00t");
 	}
 
-	open_view(view, REQ_VIEW_DIFF, OPEN_RELOAD | OPEN_SPLIT);
-	if (view_is_displayed(VIEW(REQ_VIEW_DIFF))) {
-		string_format(VIEW(REQ_VIEW_DIFF)->ref, info, status->name);
+	open_view(view, REQ_VIEW_STAGE, OPEN_RELOAD | OPEN_SPLIT);
+	if (view_is_displayed(VIEW(REQ_VIEW_STAGE))) {
+		string_format(VIEW(REQ_VIEW_STAGE)->ref, info, status->name);
 	}
 
 	return REQ_NONE;
@@ -3364,6 +3379,15 @@ static struct view_ops status_ops = {
 	status_select,
 };
 
+static struct view_ops stage_ops = {
+	"line",
+	NULL,
+	pager_read,
+	pager_draw,
+	pager_request,
+	pager_grep,
+	pager_select,
+};
 
 /*
  * Revision graph
