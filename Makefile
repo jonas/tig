@@ -1,5 +1,7 @@
 ## Makefile for tig
 
+all:
+
 # Include setting from the configure script
 -include config.make
 
