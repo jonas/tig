@@ -7,6 +7,7 @@ datarootdir = @datarootdir@
 
 CC = @CC@
 CFLAGS = @CFLAGS@
+CPPFLAGS = @CPPFLAGS@ -DHAVE_CONFIG_H
 LDFLAGS = @LDFLAGS@
 LDLIBS = @LIBS@
 

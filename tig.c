@@ -11,6 +11,10 @@
  * GNU General Public License for more details.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef TIG_VERSION
 #define TIG_VERSION "unknown-version"
 #endif
@@ -39,8 +43,6 @@
 #include <iconv.h>
 
 #include <curses.h>
-
-#include "config.h"
 
 #if __GNUC__ >= 3
 #define __NORETURN __attribute__((__noreturn__))
