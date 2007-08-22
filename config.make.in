@@ -1,12 +1,15 @@
-CFLAGS = @CFLAGS@
-LDFLAGS = @LDFLAGS@
-LDLIBS = @LIBS@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
 mandir = @mandir@
 docdir = @docdir@
 datarootdir = @datarootdir@
+
+CC = @CC@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
+LDLIBS = @LIBS@
+
 ASCIIDOC = @ASCIIDOC@
 XMLTO = @XMLTO@
 DOCBOOK2PDF = @DOCBOOK2PDF@
