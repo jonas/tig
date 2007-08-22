@@ -29,7 +29,7 @@ RPM_VERLIST = $(filter-out g% dirty,$(subst -, ,$(VERSION))) 0
 RPM_VERSION = $(word 1,$(RPM_VERLIST))
 RPM_RELEASE = $(word 2,$(RPM_VERLIST))$(if $(WTDIRTY),.dirty)
 
-LDLIBS	= -lcurses
+LDLIBS ?= -lcurses
 CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
