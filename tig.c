@@ -2876,7 +2876,7 @@ static struct view_ops tree_ops = {
 static bool
 blob_read(struct view *view, char *line)
 {
-	return add_line_text(view, line, LINE_DEFAULT);
+	return add_line_text(view, line, LINE_DEFAULT) != NULL;
 }
 
 static struct view_ops blob_ops = {
