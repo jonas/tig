@@ -80,6 +80,9 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define COLOR_DEFAULT	(-1)
 
 #define ICONV_NONE	((iconv_t) -1)
+#ifndef ICONV_INBUF_TYPE
+#define ICONV_INBUF_TYPE char *
+#endif
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
@@ -95,7 +98,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
 
 #ifndef GIT_CONFIG
-#define "git config"
+#define GIT_CONFIG "git config"
 #endif
 
 #define TIG_LS_REMOTE \
