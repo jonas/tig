@@ -15,4 +15,4 @@ ASCIIDOC = @ASCIIDOC@
 XMLTO = @XMLTO@
 DOCBOOK2PDF = @DOCBOOK2PDF@
 
-tig: config.h
+tig.o: config.h

@@ -15,3 +15,4 @@ tig.1.html
 tig.spec
 tigrc.5
 tigrc.5.html
+*.o

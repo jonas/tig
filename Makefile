@@ -83,13 +83,13 @@ install-doc: install-doc-man install-doc-html
 
 clean:
 	rm -rf manual.html-chunked $(TARNAME)
-	rm -f $(PROGS) $(ALLDOC) core *.xml *.toc
+	rm -f $(PROGS) $(ALLDOC) core *.o *.xml *.toc
 	rm -f *.spec tig-*.tar.gz tig-*.tar.gz.md5
 
 spell-check:
 	aspell --lang=en --check tig.1.txt tigrc.5.txt manual.txt
 
-strip: all
+strip: $(PROGS)
 	strip $(PROGS)
 
 dist: tig.spec
@@ -127,11 +127,12 @@ release-dist: release-doc
 .PHONY: all all-debug doc doc-man doc-html install install-doc \
 	install-doc-man install-doc-html clean spell-check dist rpm
 
+tig.o: tig.c
+tig: tig.o
+
 tig.spec: contrib/tig.spec.in
 	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' \
 	    -e 's/@@RELEASE@@/$(RPM_RELEASE)/g' < $< > $@
-
-tig: tig.c
 
 manual.html: manual.toc
 manual.toc: manual.txt
