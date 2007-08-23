@@ -113,7 +113,7 @@ release-doc:
 	git checkout release && \
 	git merge master && \
 	$(MAKE) clean doc-man doc-html && \
-	git add $(MANDOC) $(HTMLDOC) && \
+	git add -f $(MANDOC) $(HTMLDOC) && \
 	git commit -m "Sync docs" && \
 	git checkout master
 
