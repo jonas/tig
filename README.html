@@ -50,17 +50,17 @@ available either in the tarballs or in the above repository in the branch named
 <p>To install tig simply run:</p>
 <div class="literalblock">
 <div class="content">
-<pre><tt>$ make install</tt></pre>
+<pre><tt>$ autoreconf
+$ ./configure
+$ make install</tt></pre>
 </div></div>
 <p>To install documentation run:</p>
 <div class="literalblock">
 <div class="content">
 <pre><tt>$ make install-doc</tt></pre>
 </div></div>
-<p>Edit the Makefile if you need to configure specific compiler or linker flags.
-On FreeBSD for example the c library does not support the iconv interface and
-to compile tig you need to append <tt>-L/usr/local/lib -liconv</tt> to <tt>LDLIBS</tt> and
-<tt>-I/usr/local/include</tt> to the <tt>CFLAGS</tt> variable.</p>
+<p>If you had to install your own copy of libiconv, you'll probably want to pass
+the "&#8212;with-libiconv" option to the "configure" script to tell it where to look.</p>
 <p>The following tools and packages are needed:</p>
 <div class="tableblock">
 <table rules="none"
