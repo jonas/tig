@@ -218,6 +218,7 @@ show-version		Show version information
 stop-loading		Stop all loading views
 toggle-lineno		Toggle line numbers
 toggle-rev-graph	Toggle revision graph visualization
+status-update		Update file status
 ------------------------------------------------------------------------------
 
 

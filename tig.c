@@ -11,8 +11,12 @@
  * GNU General Public License for more details.
  */
 
-#ifndef VERSION
-#define VERSION "unknown-version"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifndef TIG_VERSION
+#define TIG_VERSION "unknown-version"
 #endif
 
 #ifndef DEBUG
@@ -76,6 +80,9 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define COLOR_DEFAULT	(-1)
 
 #define ICONV_NONE	((iconv_t) -1)
+#ifndef ICONV_INBUF_TYPE
+#define ICONV_INBUF_TYPE char *
+#endif
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
@@ -89,6 +96,10 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define TABSIZE		8
 
 #define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
+
+#ifndef GIT_CONFIG
+#define GIT_CONFIG "git config"
+#endif
 
 #define TIG_LS_REMOTE \
 	"git ls-remote $(git rev-parse --git-dir) 2>/dev/null"
@@ -112,6 +123,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define TIG_HELP_CMD	""
 #define TIG_PAGER_CMD	""
 #define TIG_STATUS_CMD	""
+#define TIG_STAGE_CMD	""
 
 /* Some ascii-shorthands fitted into the ncurses namespace. */
 #define KEY_TAB		'\t'
@@ -299,6 +311,7 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(VIEW_HELP,		"Show help page"), \
 	REQ_(VIEW_PAGER,	"Show pager view"), \
 	REQ_(VIEW_STATUS,	"Show status view"), \
+	REQ_(VIEW_STAGE,	"Show stage view"), \
 	\
 	REQ_GROUP("View manipulation") \
 	REQ_(ENTER,		"Enter current line and scroll"), \
@@ -336,7 +349,9 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(SHOW_VERSION,	"Show version information"), \
 	REQ_(STOP_LOADING,	"Stop all loading views"), \
 	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
-	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization")
+	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
+	REQ_(STATUS_UPDATE,	"Update file status"), \
+	REQ_(EDIT,		"Open in editor")
 
 
 /* User action requests. */
@@ -388,7 +403,7 @@ get_request(const char *name)
  */
 
 static const char usage[] =
-"tig " VERSION " (" __DATE__ ")\n"
+"tig " TIG_VERSION " (" __DATE__ ")\n"
 "\n"
 "Usage: tig [options]\n"
 "   or: tig [options] [--] [git log options]\n"
@@ -423,6 +438,7 @@ static iconv_t opt_iconv		= ICONV_NONE;
 static char opt_search[SIZEOF_STR]	= "";
 static char opt_cdup[SIZEOF_STR]	= "";
 static char opt_git_dir[SIZEOF_STR]	= "";
+static char opt_editor[SIZEOF_STR]	= "";
 
 enum option_type {
 	OPT_NONE,
@@ -499,7 +515,7 @@ parse_options(int argc, char *argv[])
 
 		if (!strcmp(opt, "-S")) {
 			opt_request = REQ_VIEW_STATUS;
-			break;
+			continue;
 		}
 
 		if (check_option(opt, 'n', "line-number", OPT_INT, &opt_num_interval)) {
@@ -513,7 +529,7 @@ parse_options(int argc, char *argv[])
 		}
 
 		if (check_option(opt, 'v', "version", OPT_NONE)) {
-			printf("tig version %s\n", VERSION);
+			printf("tig version %s\n", TIG_VERSION);
 			return FALSE;
 		}
 
@@ -726,6 +742,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'p',		REQ_VIEW_PAGER },
 	{ 'h',		REQ_VIEW_HELP },
 	{ 'S',		REQ_VIEW_STATUS },
+	{ 'c',		REQ_VIEW_STAGE },
 
 	/* View manipulation */
 	{ 'q',		REQ_VIEW_CLOSE },
@@ -765,6 +782,8 @@ static struct keybinding default_keybindings[] = {
 	{ '.',		REQ_TOGGLE_LINENO },
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
 	{ ':',		REQ_PROMPT },
+	{ 'u',		REQ_STATUS_UPDATE },
+	{ 'e',		REQ_EDIT },
 
 	/* Using the ncurses SIGWINCH handler. */
 	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
@@ -779,7 +798,8 @@ static struct keybinding default_keybindings[] = {
 	KEYMAP_(BLOB), \
 	KEYMAP_(PAGER), \
 	KEYMAP_(HELP), \
-	KEYMAP_(STATUS)
+	KEYMAP_(STATUS), \
+	KEYMAP_(STAGE)
 
 enum keymap {
 #define KEYMAP_(name) KEYMAP_##name
@@ -1261,8 +1281,8 @@ struct view_ops {
 	bool (*read)(struct view *view, char *data);
 	/* Draw one line; @lineno must be < view->height. */
 	bool (*draw)(struct view *view, struct line *line, unsigned int lineno, bool selected);
-	/* Depending on view, change display based on current line. */
-	bool (*enter)(struct view *view, struct line *line);
+	/* Depending on view handle a special requests. */
+	enum request (*request)(struct view *view, enum request request, struct line *line);
 	/* Search for regex in a line. */
 	bool (*grep)(struct view *view, struct line *line);
 	/* Select line */
@@ -1275,6 +1295,7 @@ static struct view_ops tree_ops;
 static struct view_ops blob_ops;
 static struct view_ops help_ops;
 static struct view_ops status_ops;
+static struct view_ops stage_ops;
 
 #define VIEW_STR(name, cmd, env, ref, ops, map) \
 	{ name, cmd, #env, ref, ops, map}
@@ -1292,6 +1313,7 @@ static struct view views[] = {
 	VIEW_(HELP,   "help",   &help_ops,   ""),
 	VIEW_(PAGER,  "pager",  &pager_ops,  "stdin"),
 	VIEW_(STATUS, "status", &status_ops, ""),
+	VIEW_(STAGE,  "stage",	&stage_ops,  ""),
 };
 
 #define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
@@ -1366,7 +1388,7 @@ update_view_title(struct view *view)
 
 	assert(view_is_displayed(view));
 
-	if (view->lines || view->pipe) {
+	if (view != VIEW(REQ_VIEW_STATUS) && (view->lines || view->pipe)) {
 		unsigned int view_lines = view->offset + view->height;
 		unsigned int lines = view->lines
 				   ? MIN(view_lines, view->lines) * 100 / view->lines
@@ -1813,7 +1835,10 @@ begin_update(struct view *view)
 		/* When running random commands, initially show the
 		 * command in the title. However, it maybe later be
 		 * overwritten if a commit line is selected. */
-		string_copy(view->ref, view->cmd);
+		if (view == VIEW(REQ_VIEW_PAGER))
+			string_copy(view->ref, view->cmd);
+		else
+			view->ref[0] = 0;
 
 	} else if (view == VIEW(REQ_VIEW_TREE)) {
 		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
@@ -1918,7 +1943,7 @@ update_view(struct view *view)
 			line[linelen - 1] = 0;
 
 		if (opt_iconv != ICONV_NONE) {
-			char *inbuf = line;
+			ICONV_INBUF_TYPE inbuf = line;
 			size_t inlen = linelen;
 
 			char *outbuf = out_buffer;
@@ -2115,6 +2140,32 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		update_view_title(view);
 }
 
+static void
+open_editor(struct view *view, char *file)
+{
+	char cmd[SIZEOF_STR];
+	char file_sq[SIZEOF_STR];
+	char *editor;
+
+	editor = getenv("GIT_EDITOR");
+	if (!editor && *opt_editor)
+		editor = opt_editor;
+	if (!editor)
+		editor = getenv("VISUAL");
+	if (!editor)
+		editor = getenv("EDITOR");
+	if (!editor)
+		editor = "vi";
+
+	if (sq_quote(file_sq, 0, file) < sizeof(file_sq) &&
+	    string_format(cmd, "%s %s", editor, file_sq)) {
+		def_prog_mode();           /* save current tty modes */
+		endwin();                  /* restore original tty modes */
+		system(cmd);
+		reset_prog_mode();
+		redraw_display();
+	}
+}
 
 /*
  * User request switch noodle
@@ -2124,6 +2175,12 @@ static int
 view_driver(struct view *view, enum request request)
 {
 	int i;
+
+	if (view && view->lines) {
+		request = view->ops->request(view, request, &view->line[view->lineno]);
+		if (request == REQ_NONE)
+			return TRUE;
+	}
 
 	switch (request) {
 	case REQ_MOVE_UP:
@@ -2160,6 +2217,15 @@ view_driver(struct view *view, enum request request)
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
+	case REQ_VIEW_STAGE:
+		if (!VIEW(REQ_VIEW_STAGE)->lines) {
+			report("No stage content, press %s to open the status view and choose file",
+			       get_key(REQ_VIEW_STATUS));
+			break;
+		}
+		open_view(view, request, OPEN_DEFAULT);
+		break;
+
 	case REQ_VIEW_MAIN:
 	case REQ_VIEW_DIFF:
 	case REQ_VIEW_LOG:
@@ -2175,24 +2241,25 @@ view_driver(struct view *view, enum request request)
 
 		if ((view == VIEW(REQ_VIEW_DIFF) &&
 		     view->parent == VIEW(REQ_VIEW_MAIN)) ||
+		   (view == VIEW(REQ_VIEW_STAGE) &&
+		     view->parent == VIEW(REQ_VIEW_STATUS)) ||
 		   (view == VIEW(REQ_VIEW_BLOB) &&
 		     view->parent == VIEW(REQ_VIEW_TREE))) {
+			int line;
+
 			view = view->parent;
+			line = view->lineno;
 			move_view(view, request);
 			if (view_is_displayed(view))
 				update_view_title(view);
+			if (line != view->lineno)
+				view->ops->request(view, REQ_ENTER,
+						   &view->line[view->lineno]);
+
 		} else {
 			move_view(view, request);
-			break;
 		}
-		/* Fall-through */
-
-	case REQ_ENTER:
-		if (!view->lines) {
-			report("Nothing to enter");
-			break;
-		}
-		return view->ops->enter(view, &view->line[view->lineno]);
+		break;
 
 	case REQ_VIEW_NEXT:
 	{
@@ -2245,7 +2312,7 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_SHOW_VERSION:
-		report("tig-%s (built %s)", VERSION, __DATE__);
+		report("tig-%s (built %s)", TIG_VERSION, __DATE__);
 		return TRUE;
 
 	case REQ_SCREEN_RESIZE:
@@ -2253,6 +2320,14 @@ view_driver(struct view *view, enum request request)
 		/* Fall-through */
 	case REQ_SCREEN_REDRAW:
 		redraw_display();
+		break;
+
+	case REQ_EDIT:
+		report("Nothing to edit");
+		break;
+
+	case REQ_ENTER:
+		report("Nothing to enter");
 		break;
 
 	case REQ_NONE:
@@ -2456,10 +2531,13 @@ pager_read(struct view *view, char *data)
 	return TRUE;
 }
 
-static bool
-pager_enter(struct view *view, struct line *line)
+static enum request
+pager_request(struct view *view, enum request request, struct line *line)
 {
 	int split = 0;
+
+	if (request != REQ_ENTER)
+		return request;
 
 	if (line->type == LINE_COMMIT &&
 	   (view == VIEW(REQ_VIEW_LOG) ||
@@ -2479,7 +2557,7 @@ pager_enter(struct view *view, struct line *line)
 	if (split)
 		update_view_title(view);
 
-	return TRUE;
+	return REQ_NONE;
 }
 
 static bool
@@ -2514,7 +2592,7 @@ static struct view_ops pager_ops = {
 	NULL,
 	pager_read,
 	pager_draw,
-	pager_enter,
+	pager_request,
 	pager_grep,
 	pager_select,
 };
@@ -2568,7 +2646,7 @@ static struct view_ops help_ops = {
 	help_open,
 	NULL,
 	pager_draw,
-	pager_enter,
+	pager_request,
 	pager_grep,
 	pager_select,
 };
@@ -2577,6 +2655,50 @@ static struct view_ops help_ops = {
 /*
  * Tree backend
  */
+
+struct tree_stack_entry {
+	struct tree_stack_entry *prev;	/* Entry below this in the stack */
+	unsigned long lineno;		/* Line number to restore */
+	char *name;			/* Position of name in opt_path */
+};
+
+/* The top of the path stack. */
+static struct tree_stack_entry *tree_stack = NULL;
+unsigned long tree_lineno = 0;
+
+static void
+pop_tree_stack_entry(void)
+{
+	struct tree_stack_entry *entry = tree_stack;
+
+	tree_lineno = entry->lineno;
+	entry->name[0] = 0;
+	tree_stack = entry->prev;
+	free(entry);
+}
+
+static void
+push_tree_stack_entry(char *name, unsigned long lineno)
+{
+	struct tree_stack_entry *entry = calloc(1, sizeof(*entry));
+	size_t pathlen = strlen(opt_path);
+
+	if (!entry)
+		return;
+
+	entry->prev = tree_stack;
+	entry->name = opt_path + pathlen;
+	tree_stack = entry;
+
+	if (!string_format_from(opt_path, &pathlen, "%s/", name)) {
+		pop_tree_stack_entry();
+		return;
+	}
+
+	/* Move the current line to the first tree entry. */
+	tree_lineno = 1;
+	entry->lineno = lineno;
+}
 
 /* Parse output from git-ls-tree(1):
  *
@@ -2674,42 +2796,38 @@ tree_read(struct view *view, char *text)
 	if (!add_line_text(view, text, type))
 		return FALSE;
 
-	/* Move the current line to the first tree entry. */
-	if (first_read)
-		view->lineno++;
+	if (tree_lineno > view->lineno) {
+		view->lineno = tree_lineno;
+		tree_lineno = 0;
+	}
 
 	return TRUE;
 }
 
-static bool
-tree_enter(struct view *view, struct line *line)
+static enum request
+tree_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags;
-	enum request request;
+
+	if (request != REQ_ENTER)
+		return request;
+
+	/* Cleanup the stack if the tree view is at a different tree. */
+	while (!*opt_path && tree_stack)
+		pop_tree_stack_entry();
 
 	switch (line->type) {
 	case LINE_TREE_DIR:
 		/* Depending on whether it is a subdir or parent (updir?) link
 		 * mangle the path buffer. */
 		if (line == &view->line[1] && *opt_path) {
-			size_t path_len = strlen(opt_path);
-			char *dirsep = opt_path + path_len - 1;
-
-			while (dirsep > opt_path && dirsep[-1] != '/')
-				dirsep--;
-
-			dirsep[0] = 0;
+			pop_tree_stack_entry();
 
 		} else {
-			size_t pathlen = strlen(opt_path);
-			size_t origlen = pathlen;
 			char *data = line->data;
 			char *basename = data + SIZEOF_TREE_ATTR;
 
-			if (!string_format_from(opt_path, &pathlen, "%s/", basename)) {
-				opt_path[origlen] = 0;
-				return TRUE;
-			}
+			push_tree_stack_entry(basename, view->lineno);
 		}
 
 		/* Trees and subtrees share the same ID, so they are not not
@@ -2728,8 +2846,11 @@ tree_enter(struct view *view, struct line *line)
 	}
 
 	open_view(view, request, flags);
+	if (request == REQ_VIEW_TREE) {
+		view->lineno = tree_lineno;
+	}
 
-	return TRUE;
+	return REQ_NONE;
 }
 
 static void
@@ -2752,7 +2873,7 @@ static struct view_ops tree_ops = {
 	NULL,
 	tree_read,
 	pager_draw,
-	tree_enter,
+	tree_request,
 	pager_grep,
 	tree_select,
 };
@@ -2760,7 +2881,7 @@ static struct view_ops tree_ops = {
 static bool
 blob_read(struct view *view, char *line)
 {
-	return add_line_text(view, line, LINE_DEFAULT);
+	return add_line_text(view, line, LINE_DEFAULT) != NULL;
 }
 
 static struct view_ops blob_ops = {
@@ -2768,7 +2889,7 @@ static struct view_ops blob_ops = {
 	NULL,
 	blob_read,
 	pager_draw,
-	pager_enter,
+	pager_request,
 	pager_grep,
 	pager_select,
 };
@@ -2790,6 +2911,9 @@ struct status {
 	} new;
 	char name[SIZEOF_STR];
 };
+
+static struct status stage_status;
+static enum line_type stage_line_type;
 
 /* Get fields from the diff line:
  * :100644 100644 06a5d6ae9eca55be2e0e585a152e6b1336f2b20e 0000000000000000000000000000000000000000 M
@@ -2907,6 +3031,9 @@ error_out:
 #define STATUS_LIST_OTHER_CMD \
 	"git ls-files -z --others --exclude-per-directory=.gitignore"
 
+#define STATUS_DIFF_SHOW_CMD \
+	"git diff --root --patch-with-stat --find-copies-harder -B -C %s -- %s 2>/dev/null"
+
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
  * git-ls-files(1). */
@@ -3004,10 +3131,86 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 	return TRUE;
 }
 
-static bool
+static enum request
 status_enter(struct view *view, struct line *line)
 {
 	struct status *status = line->data;
+	char path[SIZEOF_STR] = "";
+	char *info;
+	size_t cmdsize = 0;
+
+	if (line->type == LINE_STAT_NONE ||
+	    (!status && line[1].type == LINE_STAT_NONE)) {
+		report("No file to diff");
+		return REQ_NONE;
+	}
+
+	if (status && sq_quote(path, 0, status->name) >= sizeof(path))
+		return REQ_QUIT;
+
+	if (opt_cdup[0] &&
+	    line->type != LINE_STAT_UNTRACKED &&
+	    !string_format_from(opt_cmd, &cmdsize, "cd %s;", opt_cdup))
+		return REQ_QUIT;
+
+	switch (line->type) {
+	case LINE_STAT_STAGED:
+		if (!string_format_from(opt_cmd, &cmdsize, STATUS_DIFF_SHOW_CMD,
+					"--cached", path))
+			return REQ_QUIT;
+		if (status)
+			info = "Staged changes to %s";
+		else
+			info = "Staged changes";
+		break;
+
+	case LINE_STAT_UNSTAGED:
+		if (!string_format_from(opt_cmd, &cmdsize, STATUS_DIFF_SHOW_CMD,
+					"", path))
+			return REQ_QUIT;
+		if (status)
+			info = "Unstaged changes to %s";
+		else
+			info = "Unstaged changes";
+		break;
+
+	case LINE_STAT_UNTRACKED:
+		if (opt_pipe)
+			return REQ_QUIT;
+
+
+	    	if (!status) {
+			report("No file to show");
+			return REQ_NONE;
+		}
+
+		opt_pipe = fopen(status->name, "r");
+		info = "Untracked file %s";
+		break;
+
+	default:
+		die("w00t");
+	}
+
+	open_view(view, REQ_VIEW_STAGE, OPEN_RELOAD | OPEN_SPLIT);
+	if (view_is_displayed(VIEW(REQ_VIEW_STAGE))) {
+		if (status) {
+			stage_status = *status;
+		} else {
+			memset(&stage_status, 0, sizeof(stage_status));
+		}
+
+		stage_line_type = line->type;
+		string_format(VIEW(REQ_VIEW_STAGE)->ref, info, stage_status.name);
+	}
+
+	return REQ_NONE;
+}
+
+
+static bool
+status_update_file(struct view *view, struct status *status, enum line_type type)
+{
 	char cmd[SIZEOF_STR];
 	char buf[SIZEOF_STR];
 	size_t cmdsize = 0;
@@ -3015,15 +3218,12 @@ status_enter(struct view *view, struct line *line)
 	size_t written = 0;
 	FILE *pipe;
 
-	if (!status)
-		return TRUE;
-
 	if (opt_cdup[0] &&
-	    line->type != LINE_STAT_UNTRACKED &&
+	    type != LINE_STAT_UNTRACKED &&
 	    !string_format_from(cmd, &cmdsize, "cd %s;", opt_cdup))
 		return FALSE;
 
-	switch (line->type) {
+	switch (type) {
 	case LINE_STAT_STAGED:
 		if (!string_format_from(buf, &bufsize, "%06o %s\t%s%c",
 				        status->old.mode,
@@ -3059,36 +3259,97 @@ status_enter(struct view *view, struct line *line)
 	if (written != bufsize)
 		return FALSE;
 
-	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
 	return TRUE;
+}
+
+static void
+status_update(struct view *view)
+{
+	struct line *line = &view->line[view->lineno];
+
+	assert(view->lines);
+
+	if (!line->data) {
+		while (++line < view->line + view->lines && line->data) {
+			if (!status_update_file(view, line->data, line->type))
+				report("Failed to update file status");
+		}
+
+		if (!line[-1].data) {
+			report("Nothing to update");
+			return;
+		}
+
+	} else if (!status_update_file(view, line->data, line->type)) {
+		report("Failed to update file status");
+	}
+
+	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
+}
+
+static enum request
+status_request(struct view *view, enum request request, struct line *line)
+{
+	struct status *status = line->data;
+
+	switch (request) {
+	case REQ_STATUS_UPDATE:
+		status_update(view);
+		break;
+
+	case REQ_EDIT:
+		if (!status)
+			return request;
+
+		open_editor(view, status->name);
+		break;
+
+	case REQ_ENTER:
+		status_enter(view, line);
+		break;
+
+	default:
+		return request;
+	}
+
+	return REQ_NONE;
 }
 
 static void
 status_select(struct view *view, struct line *line)
 {
+	struct status *status = line->data;
+	char file[SIZEOF_STR] = "all files";
 	char *text;
+
+	if (status && !string_format(file, "'%s'", status->name))
+		return;
+
+	if (!status && line[1].type == LINE_STAT_NONE)
+		line++;
 
 	switch (line->type) {
 	case LINE_STAT_STAGED:
-		text = "Press Enter to unstage file for commit";
+		text = "Press %s to unstage %s for commit";
 		break;
 
 	case LINE_STAT_UNSTAGED:
-		text = "Press Enter to stage file for commit  ";
+		text = "Press %s to stage %s for commit";
 		break;
 
 	case LINE_STAT_UNTRACKED:
-		text = "Press Enter to stage file for addition";
+		text = "Press %s to stage %s for addition";
 		break;
 
 	case LINE_STAT_NONE:
-		return;
+		text = "Nothing to update";
+		break;
 
 	default:
 		die("w00t");
 	}
 
-	string_ncopy(view->ref, text, strlen(text));
+	string_format(view->ref, text, get_key(REQ_STATUS_UPDATE), file);
 }
 
 static bool
@@ -3128,9 +3389,174 @@ static struct view_ops status_ops = {
 	status_open,
 	NULL,
 	status_draw,
-	status_enter,
+	status_request,
 	status_grep,
 	status_select,
+};
+
+
+static bool
+stage_diff_line(FILE *pipe, struct line *line)
+{
+	char *buf = line->data;
+	size_t bufsize = strlen(buf);
+	size_t written = 0;
+
+	while (!ferror(pipe) && written < bufsize) {
+		written += fwrite(buf + written, 1, bufsize - written, pipe);
+	}
+
+	fputc('\n', pipe);
+
+	return written == bufsize;
+}
+
+static struct line *
+stage_diff_hdr(struct view *view, struct line *line)
+{
+	int diff_hdr_dir = line->type == LINE_DIFF_CHUNK ? -1 : 1;
+	struct line *diff_hdr;
+
+	if (line->type == LINE_DIFF_CHUNK)
+		diff_hdr = line - 1;
+	else
+		diff_hdr = view->line + 1;
+
+	while (diff_hdr > view->line && diff_hdr < view->line + view->lines) {
+		if (diff_hdr->type == LINE_DIFF_HEADER)
+			return diff_hdr;
+
+		diff_hdr += diff_hdr_dir;
+	}
+
+	return NULL;
+}
+
+static bool
+stage_update_chunk(struct view *view, struct line *line)
+{
+	char cmd[SIZEOF_STR];
+	size_t cmdsize = 0;
+	struct line *diff_hdr, *diff_chunk, *diff_end;
+	FILE *pipe;
+
+	diff_hdr = stage_diff_hdr(view, line);
+	if (!diff_hdr)
+		return FALSE;
+
+	if (opt_cdup[0] &&
+	    !string_format_from(cmd, &cmdsize, "cd %s;", opt_cdup))
+		return FALSE;
+
+	if (!string_format_from(cmd, &cmdsize,
+				"git apply --cached %s - && "
+				"git update-index -q --unmerged --refresh 2>/dev/null",
+				stage_line_type == LINE_STAT_STAGED ? "-R" : ""))
+		return FALSE;
+
+	pipe = popen(cmd, "w");
+	if (!pipe)
+		return FALSE;
+
+	diff_end = view->line + view->lines;
+	if (line->type != LINE_DIFF_CHUNK) {
+		diff_chunk = diff_hdr;
+
+	} else {
+		for (diff_chunk = line + 1; diff_chunk < diff_end; diff_chunk++)
+			if (diff_chunk->type == LINE_DIFF_CHUNK ||
+			    diff_chunk->type == LINE_DIFF_HEADER)
+				diff_end = diff_chunk;
+
+		diff_chunk = line;
+
+		while (diff_hdr->type != LINE_DIFF_CHUNK) {
+			switch (diff_hdr->type) {
+			case LINE_DIFF_HEADER:
+			case LINE_DIFF_INDEX:
+			case LINE_DIFF_ADD:
+			case LINE_DIFF_DEL:
+				break;
+
+			default:
+				diff_hdr++;
+				continue;
+			}
+
+			if (!stage_diff_line(pipe, diff_hdr++)) {
+				pclose(pipe);
+				return FALSE;
+			}
+		}
+	}
+
+	while (diff_chunk < diff_end && stage_diff_line(pipe, diff_chunk))
+		diff_chunk++;
+
+	pclose(pipe);
+
+	if (diff_chunk != diff_end)
+		return FALSE;
+
+	return TRUE;
+}
+
+static void
+stage_update(struct view *view, struct line *line)
+{
+	if (stage_line_type != LINE_STAT_UNTRACKED &&
+	    (line->type == LINE_DIFF_CHUNK || !stage_status.status)) {
+		if (!stage_update_chunk(view, line)) {
+			report("Failed to apply chunk");
+			return;
+		}
+
+	} else if (!status_update_file(view, &stage_status, stage_line_type)) {
+		report("Failed to update file");
+		return;
+	}
+
+	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
+
+	view = VIEW(REQ_VIEW_STATUS);
+	if (view_is_displayed(view))
+		status_enter(view, &view->line[view->lineno]);
+}
+
+static enum request
+stage_request(struct view *view, enum request request, struct line *line)
+{
+	switch (request) {
+	case REQ_STATUS_UPDATE:
+		stage_update(view, line);
+		break;
+
+	case REQ_EDIT:
+		if (!stage_status.name[0])
+			return request;
+
+		open_editor(view, stage_status.name);
+		break;
+
+	case REQ_ENTER:
+		pager_request(view, request, line);
+		break;
+
+	default:
+		return request;
+	}
+
+	return REQ_NONE;
+}
+
+static struct view_ops stage_ops = {
+	"line",
+	NULL,
+	pager_read,
+	pager_draw,
+	stage_request,
+	pager_grep,
+	pager_select,
 };
 
 
@@ -3560,13 +3986,17 @@ main_read(struct view *view, char *line)
 	return TRUE;
 }
 
-static bool
-main_enter(struct view *view, struct line *line)
+static enum request
+main_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
 
-	open_view(view, REQ_VIEW_DIFF, flags);
-	return TRUE;
+	if (request == REQ_ENTER)
+		open_view(view, REQ_VIEW_DIFF, flags);
+	else
+		return request;
+
+	return REQ_NONE;
 }
 
 static bool
@@ -3614,7 +4044,7 @@ static struct view_ops main_ops = {
 	NULL,
 	main_read,
 	main_draw,
-	main_enter,
+	main_request,
 	main_grep,
 	main_select,
 };
@@ -4064,13 +4494,16 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	if (!strcmp(name, "i18n.commitencoding"))
 		string_ncopy(opt_encoding, value, valuelen);
 
+	if (!strcmp(name, "core.editor"))
+		string_ncopy(opt_editor, value, valuelen);
+
 	return OK;
 }
 
 static int
 load_repo_config(void)
 {
-	return read_properties(popen("git repo-config --list", "r"),
+	return read_properties(popen(GIT_CONFIG " --list", "r"),
 			       "=", read_repo_config_option);
 }
 

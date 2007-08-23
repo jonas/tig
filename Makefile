@@ -1,14 +1,22 @@
-prefix	= $(HOME)
-bindir	= $(prefix)/bin
-mandir	= $(prefix)/man
-docdir	= $(prefix)/share/doc
+## Makefile for tig
+
+all:
+
+# Include setting from the configure script
+-include config.make
+
+prefix ?= $(HOME)
+bindir ?= $(prefix)/bin
+mandir ?= $(prefix)/man
+datarootdir ?= $(prefix)/share
+docdir ?= $(datarootdir)/doc
 # DESTDIR=
 
 # Get version either via git or from VERSION file. Allow either
 # to be overwritten by setting DIST_VERSION on the command line.
 ifneq (,$(wildcard .git))
 GITDESC	= $(subst tig-,,$(shell git describe))
-WTDIRTY	= $(if $(shell git-diff-index HEAD 2>/dev/null),-dirty)
+WTDIRTY	= $(if $(shell git diff-index HEAD 2>/dev/null),-dirty)
 VERSION	= $(GITDESC)$(WTDIRTY)
 else
 VERSION	= $(shell test -f VERSION && cat VERSION || echo "unknown-version")
@@ -17,18 +25,27 @@ ifdef DIST_VERSION
 VERSION = $(DIST_VERSION)
 endif
 
-RPM_VERSION = $(subst -,.,$(VERSION))
+# Split the version "TAG-OFFSET-gSHA1-DIRTY" into "TAG OFFSET"
+# and append 0 as a fallback offset for "exact" tagged versions.
+RPM_VERLIST = $(filter-out g% dirty,$(subst -, ,$(VERSION))) 0
+RPM_VERSION = $(word 1,$(RPM_VERLIST))
+RPM_RELEASE = $(word 2,$(RPM_VERLIST))$(if $(WTDIRTY),.dirty)
 
-LDLIBS	= -lcurses
-CFLAGS	= -Wall -O2
+LDLIBS ?= -lcurses
+CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
 MANDOC	= tig.1 tigrc.5
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) manual.html-chunked manual.pdf
-TARNAME	= tig-$(RPM_VERSION)
+TARNAME	= tig-$(RPM_VERSION)-$(RPM_RELEASE)
 
-override CFLAGS += '-DVERSION="$(VERSION)"'
+override CFLAGS += '-DTIG_VERSION="$(VERSION)"'
+
+AUTORECONF ?= autoreconf
+ASCIIDOC ?= asciidoc
+XMLTO ?= xmlto
+DOCBOOK2PDF ?= docbook2pdf
 
 all: $(PROGS)
 all-debug: $(PROGS)
@@ -65,20 +82,21 @@ install-doc: install-doc-man install-doc-html
 
 clean:
 	rm -rf manual.html-chunked $(TARNAME)
-	rm -f $(PROGS) $(ALLDOC) core *.xml *.toc
+	rm -f $(PROGS) $(ALLDOC) core *.o *.xml *.toc
 	rm -f *.spec tig-*.tar.gz tig-*.tar.gz.md5
 
 spell-check:
 	aspell --lang=en --check tig.1.txt tigrc.5.txt manual.txt
 
-strip: all
+strip: $(PROGS)
 	strip $(PROGS)
 
 dist: tig.spec
 	@mkdir -p $(TARNAME) && \
 	cp tig.spec $(TARNAME) && \
 	echo $(VERSION) > $(TARNAME)/VERSION
-	git-archive --format=tar --prefix=$(TARNAME)/ HEAD > $(TARNAME).tar && \
+	git archive --format=tar --prefix=$(TARNAME)/ HEAD | \
+	tar --delete $(TARNAME)/VERSION > $(TARNAME).tar && \
 	tar rf $(TARNAME).tar $(TARNAME)/tig.spec $(TARNAME)/VERSION && \
 	gzip -f -9 $(TARNAME).tar && \
 	md5sum $(TARNAME).tar.gz > $(TARNAME).tar.gz.md5
@@ -87,27 +105,32 @@ dist: tig.spec
 rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
 
+configure: configure.ac
+	$(AUTORECONF) -v
+
 # Maintainer stuff
 release-doc:
 	git checkout release && \
 	git merge master && \
-	make clean doc-man doc-html && \
-	git add $(MANDOC) $(HTMLDOC) && \
+	$(MAKE) clean doc-man doc-html && \
+	git add -f $(MANDOC) $(HTMLDOC) && \
 	git commit -m "Sync docs" && \
 	git checkout master
 
 release-dist: release-doc
 	git checkout release && \
-	make dist && \
+	$(MAKE) dist && \
 	git checkout master
 
 .PHONY: all all-debug doc doc-man doc-html install install-doc \
 	install-doc-man install-doc-html clean spell-check dist rpm
 
-tig.spec: tig.spec.in
-	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' < $< > $@
+tig.o: tig.c
+tig: tig.o
 
-tig: tig.c
+tig.spec: contrib/tig.spec.in
+	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' \
+	    -e 's/@@RELEASE@@/$(RPM_RELEASE)/g' < $< > $@
 
 manual.html: manual.toc
 manual.toc: manual.txt
@@ -120,34 +143,34 @@ manual.toc: manual.txt
 		esac; done | sed 's/\[\[\(.*\)\]\]/\1/' > $@
 
 README.html: README
-	asciidoc -b xhtml11 -d article -a readme $<
+	$(ASCIIDOC) -b xhtml11 -d article -a readme $<
 
 %.pdf : %.xml
-	docbook2pdf $<
+	$(DOCBOOK2PDF) $<
 
 %.1.html : %.1.txt
-	asciidoc -b xhtml11 -d manpage $<
+	$(ASCIIDOC) -b xhtml11 -d manpage $<
 
 %.1.xml : %.1.txt
-	asciidoc -b docbook -d manpage -aversion=$(VERSION) $<
+	$(ASCIIDOC) -b docbook -d manpage -aversion=$(VERSION) $<
 
 %.1 : %.1.xml
-	xmlto -m manpage.xsl man $<
+	$(XMLTO) -m manpage.xsl man $<
 
 %.5.html : %.5.txt
-	asciidoc -b xhtml11 -d manpage $<
+	$(ASCIIDOC) -b xhtml11 -d manpage $<
 
 %.5.xml : %.5.txt
-	asciidoc -b docbook -d manpage -aversion=$(VERSION) $<
+	$(ASCIIDOC) -b docbook -d manpage -aversion=$(VERSION) $<
 
 %.5 : %.5.xml
-	xmlto -m manpage.xsl man $<
+	$(XMLTO) -m manpage.xsl man $<
 
 %.html : %.txt
-	asciidoc -b xhtml11 -d article -n $<
+	$(ASCIIDOC) -b xhtml11 -d article -n $<
 
 %.xml : %.txt
-	asciidoc -b docbook -d article $<
+	$(ASCIIDOC) -b docbook -d article $<
 
 %.html-chunked : %.xml
-	xmlto html -o $@ $<
+	$(XMLTO) html -o $@ $<
