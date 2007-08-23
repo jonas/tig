@@ -42,8 +42,7 @@ TARNAME	= tig-$(RPM_VERSION)-$(RPM_RELEASE)
 
 override CFLAGS += '-DTIG_VERSION="$(VERSION)"'
 
-AUTOHEADER ?= autoheader
-AUTOCONF ?= autoconf
+AUTORECONF ?= autoreconf
 ASCIIDOC ?= asciidoc
 XMLTO ?= xmlto
 DOCBOOK2PDF ?= docbook2pdf
@@ -107,8 +106,7 @@ rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
 
 configure: configure.ac
-	$(AUTOHEADER)
-	$(AUTOCONF)
+	$(AUTORECONF) -v
 
 # Maintainer stuff
 release-doc:

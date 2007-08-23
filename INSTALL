@@ -8,7 +8,7 @@ available either in the tarballs or in the above repository in the branch named
 
 To install tig simply run:
 
-	$ sh autoconf.sh
+	$ autoreconf
 	$ ./configure
 	$ make install
 
