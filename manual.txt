@@ -199,6 +199,10 @@ The status view::
 	Displays status of files in the working tree and allows changes to be
 	staged/unstaged as well as adding of untracked files.
 
+The stage view::
+	Displays diff changes for staged or unstanged files being tracked or
+	file content of untracked files.
+
 The pager view::
 	Is used for displaying both input from stdin and output from git
 	commands entered in the internal prompt.
@@ -245,6 +249,7 @@ t	Switch to (directory) tree view.
 f	Switch to (file) blob view.
 h	Switch to help view
 S	Switch to status view
+c	Switch to stage view
 -----------------------------------------------------------------------------
 
 [[view-manipulation]]
@@ -329,6 +334,11 @@ v	Show version.
 g	Toggle revision graph visualization on/off.
 ':'	Open prompt. This allows you to specify what git command \
 	to run. Example `:log -p`
+u	Update status of file. In the status view, this allows you to add an \
+	untracked file or stage changes to a file for next commit (similar to \
+	running git-add <filename>). In the stage view, when pressing this on \
+	a diff chunk line stages only that chunk for next commit, when not on \
+	a diff chunk line all changes in the displayed diff is staged.
 -----------------------------------------------------------------------------
 
 [[refspec]]
@@ -459,7 +469,7 @@ include::BUGS[]
 Copyright
 ---------
 
-Copyright (c) 2006 Jonas Fonseca <fonseca@diku.dk>
+Copyright (c) 2006-2007 Jonas Fonseca <fonseca@diku.dk>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

@@ -123,8 +123,8 @@ built-in keybindings.
 
 Keymaps::
 
-Valid keymaps are: *main*, *diff*, *log*, *help*, *pager*, *status*, and
-*generic*.  Use *generic* to set key mapping in all keymaps.
+Valid keymaps are: *main*, *diff*, *log*, *help*, *pager*, *status*, *stage*,
+and *generic*.  Use *generic* to set key mapping in all keymaps.
 
 Key values::
 
@@ -160,6 +160,7 @@ view-log		Show log view
 view-tree		Show tree view
 view-blob		Show blob view
 view-status		Show status view
+view-stage		Show stage view
 view-pager		Show pager view
 view-help		Show help page
 ------------------------------------------------------------------------------
@@ -208,6 +209,18 @@ ifdef::backend-xhtml11[]
 [frame="none"]
 `-----------------------`-----------------------------------------------------
 endif::backend-xhtml11[]
+Searching:
+------------------------------------------------------------------------------
+search			Search the view
+search-back		Search backwards in the view
+find-next		Find next search match
+find-prev		Find previous search match
+------------------------------------------------------------------------------
+
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
 Misc:
 ------------------------------------------------------------------------------
 none			Do nothing
@@ -219,6 +232,7 @@ stop-loading		Stop all loading views
 toggle-lineno		Toggle line numbers
 toggle-rev-graph	Toggle revision graph visualization
 status-update		Update file status
+edit			Open in editor
 ------------------------------------------------------------------------------
 
 
@@ -348,7 +362,7 @@ For now only `Signed-off-by` and `Acked-by` lines are colorized.
 
 COPYRIGHT
 ---------
-Copyright (c) 2006 Jonas Fonseca <fonseca@diku.dk>
+Copyright (c) 2006-2007 Jonas Fonseca <fonseca@diku.dk>
 
 Licensed under the terms of the GNU General Public License.
 

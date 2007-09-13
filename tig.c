@@ -1,4 +1,4 @@
-/* Copyright (c) 2006 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2007 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -626,10 +626,10 @@ LINE(MAIN_REMOTE,  "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
 LINE(TREE_DIR,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
-LINE(STAT_SECTION, "",			COLOR_DEFAULT,	COLOR_BLUE,	A_BOLD), \
+LINE(STAT_SECTION, "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(STAT_NONE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
-LINE(STAT_STAGED,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
-LINE(STAT_UNSTAGED,"",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(STAT_STAGED,  "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+LINE(STAT_UNSTAGED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(STAT_UNTRACKED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0)
 
 enum line_type {
