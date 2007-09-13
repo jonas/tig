@@ -638,6 +638,15 @@ The status view
 </p>
 </dd>
 <dt>
+The stage view
+</dt>
+<dd>
+<p>
+        Displays diff changes for staged or unstanged files being tracked or
+        file content of untracked files.
+</p>
+</dd>
+<dt>
 The pager view
 </dt>
 <dd>
@@ -753,6 +762,14 @@ cellspacing="0" cellpadding="4">
     </td>
     <td align="left">
     Switch to status view
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    c
+    </td>
+    <td align="left">
+    Switch to stage view
     </td>
   </tr>
 </tbody>
@@ -1068,6 +1085,14 @@ cellspacing="0" cellpadding="4">
     Open prompt. This allows you to specify what git command         to run. Example <tt>:log -p</tt>
     </td>
   </tr>
+  <tr>
+    <td align="left">
+    u
+    </td>
+    <td align="left">
+    Update status of file. In the status view, this allows you to add an         untracked file or stage changes to a file for next commit (similar to         running git-add &lt;filename&gt;). In the stage view, when pressing this on         a diff chunk line stages only that chunk for next commit, when not on         a diff chunk line all changes in the displayed diff is staged.
+    </td>
+  </tr>
 </tbody>
 </table>
 </div>
@@ -1191,7 +1216,7 @@ Horizontal scrolling.
 </div>
 <h2><a id="copy-right"></a>7. Copyright</h2>
 <div class="sectionbody">
-<p>Copyright (c) 2006 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p>
+<p>Copyright (c) 2006-2007 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p>
 <p>This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -1275,7 +1300,7 @@ gitview(1)
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 23-Aug-2007 11:18:39 CEST
+Last updated 13-Sep-2007 11:18:05 CEST
 </div>
 </div>
 </body>

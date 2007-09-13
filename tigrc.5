@@ -1,11 +1,11 @@
 .\"     Title: tigrc
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.71.0 <http://docbook.sf.net/>
-.\"      Date: 08/23/2007
+.\"      Date: 09/13/2007
 .\"    Manual: Tig Manual
-.\"    Source: Tig 0.8\-93\-g233c6f3\-dirty
+.\"    Source: Tig 0.9
 .\"
-.TH "TIGRC" "5" "08/23/2007" "Tig 0.8\-93\-g233c6f3\-dirty" "Tig Manual"
+.TH "TIGRC" "5" "09/13/2007" "Tig 0.9" "Tig Manual"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -118,7 +118,7 @@ Keys are mapped by first searching the keybindings for the current view, then th
 .PP
 Keymaps
 .RS 3n
-Valid keymaps are: \fBmain\fR, \fBdiff\fR, \fBlog\fR, \fBhelp\fR, \fBpager\fR, \fBstatus\fR, and \fBgeneric\fR. Use \fBgeneric\fR to set key mapping in all keymaps.
+Valid keymaps are: \fBmain\fR, \fBdiff\fR, \fBlog\fR, \fBhelp\fR, \fBpager\fR, \fBstatus\fR, \fBstage\fR, and \fBgeneric\fR. Use \fBgeneric\fR to set key mapping in all keymaps.
 .sp
 .RE
 .PP
@@ -146,6 +146,7 @@ view\-log                Show log view
 view\-tree               Show tree view
 view\-blob               Show blob view
 view\-status             Show status view
+view\-stage              Show stage view
 view\-pager              Show pager view
 view\-help               Show help page
 
@@ -184,6 +185,16 @@ scroll\-page\-eup         Scroll one page up
 scroll\-page\-down        Scroll one page down
 
 .fi
+Searching:
+.sp
+.sp
+.nf
+search                  Search the view
+search\-back             Search backwards in the view
+find\-next               Find next search match
+find\-prev               Find previous search match
+
+.fi
 Misc:
 .sp
 .sp
@@ -197,6 +208,7 @@ stop\-loading            Stop all loading views
 toggle\-lineno           Toggle line numbers
 toggle\-rev\-graph        Toggle revision graph visualization
 status\-update           Update file status
+edit                    Open in editor
 
 .fi
 .SH "COLOR COMMAND"
@@ -315,7 +327,7 @@ For now only Signed\-off\-by and Acked\-by lines are colorized.
 .sp
 .RE
 .SH "COPYRIGHT"
-Copyright (c) 2006 Jonas Fonseca <fonseca@diku.dk>
+Copyright (c) 2006\-2007 Jonas Fonseca <fonseca@diku.dk>
 .sp
 Licensed under the terms of the GNU General Public License.
 .sp
