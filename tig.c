@@ -80,9 +80,6 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define COLOR_DEFAULT	(-1)
 
 #define ICONV_NONE	((iconv_t) -1)
-#ifndef ICONV_INBUF_TYPE
-#define ICONV_INBUF_TYPE char *
-#endif
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
@@ -1943,7 +1940,7 @@ update_view(struct view *view)
 			line[linelen - 1] = 0;
 
 		if (opt_iconv != ICONV_NONE) {
-			ICONV_INBUF_TYPE inbuf = line;
+			ICONV_CONST char *inbuf = line;
 			size_t inlen = linelen;
 
 			char *outbuf = out_buffer;

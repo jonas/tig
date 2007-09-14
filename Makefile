@@ -105,7 +105,7 @@ dist: tig.spec
 rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
 
-configure: configure.ac
+configure: configure.ac acinclude.m4
 	$(AUTORECONF) -v
 
 # Maintainer stuff
