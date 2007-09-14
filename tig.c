@@ -80,6 +80,9 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define COLOR_DEFAULT	(-1)
 
 #define ICONV_NONE	((iconv_t) -1)
+#ifndef ICONV_CONST
+#define ICONV_CONST	/* nothing */
+#endif
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
@@ -4611,10 +4614,6 @@ main(int argc, char *argv[])
 	if (load_repo_info() == ERR)
 		die("Failed to load repo info.");
 
-	/* Require a git repository unless when running in pager mode. */
-	if (!opt_git_dir[0])
-		die("Not a git repository");
-
 	if (load_options() == ERR)
 		die("Failed to load user config.");
 
@@ -4625,6 +4624,10 @@ main(int argc, char *argv[])
 
 	if (!parse_options(argc, argv))
 		return 0;
+
+	/* Require a git repository unless when running in pager mode. */
+	if (!opt_git_dir[0])
+		die("Not a git repository");
 
 	if (*opt_codeset && strcmp(opt_codeset, opt_encoding)) {
 		opt_iconv = iconv_open(opt_codeset, opt_encoding);
