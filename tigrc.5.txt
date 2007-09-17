@@ -233,6 +233,7 @@ toggle-lineno		Toggle line numbers
 toggle-rev-graph	Toggle revision graph visualization
 status-update		Update file status
 edit			Open in editor
+cherry-pick		Cherry-pick commit to current branch
 ------------------------------------------------------------------------------
 
 

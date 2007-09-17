@@ -351,7 +351,8 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
 	REQ_(STATUS_UPDATE,	"Update file status"), \
-	REQ_(EDIT,		"Open in editor")
+	REQ_(EDIT,		"Open in editor"), \
+	REQ_(CHERRY_PICK,	"Cherry-pick commit to current branch")
 
 
 /* User action requests. */
@@ -784,6 +785,7 @@ static struct keybinding default_keybindings[] = {
 	{ ':',		REQ_PROMPT },
 	{ 'u',		REQ_STATUS_UPDATE },
 	{ 'e',		REQ_EDIT },
+	{ 'C',		REQ_CHERRY_PICK },
 
 	/* Using the ncurses SIGWINCH handler. */
 	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
@@ -2326,13 +2328,14 @@ view_driver(struct view *view, enum request request)
 		report("Nothing to edit");
 		break;
 
+	case REQ_CHERRY_PICK:
+		report("Nothing to cherry-pick");
+		break;
+
 	case REQ_ENTER:
 		report("Nothing to enter");
 		break;
 
-	case REQ_NONE:
-		doupdate();
-		return TRUE;
 
 	case REQ_VIEW_CLOSE:
 		/* XXX: Mark closed views by letting view->parent point to the
@@ -3986,6 +3989,26 @@ main_read(struct view *view, char *line)
 	return TRUE;
 }
 
+static void
+cherry_pick_commit(struct commit *commit)
+{
+	char cmd[SIZEOF_STR];
+	char *cherry_pick = getenv("TIG_CHERRY_PICK");
+
+	if (!cherry_pick)
+		cherry_pick = "git cherry-pick";
+
+	if (string_format(cmd, "%s %s", cherry_pick, commit->id)) {
+		def_prog_mode();           /* save current tty modes */
+		endwin();                  /* restore original tty modes */
+		system(cmd);
+		fprintf(stderr, "Press Enter to continue");
+		getc(stdin);
+		reset_prog_mode();
+		redraw_display();
+	}
+}
+
 static enum request
 main_request(struct view *view, enum request request, struct line *line)
 {
@@ -3993,6 +4016,8 @@ main_request(struct view *view, enum request request, struct line *line)
 
 	if (request == REQ_ENTER)
 		open_view(view, REQ_VIEW_DIFF, flags);
+	else if (request == REQ_CHERRY_PICK)
+		cherry_pick_commit(line->data);
 	else
 		return request;
 
