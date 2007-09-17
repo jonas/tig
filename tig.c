@@ -2178,6 +2178,11 @@ view_driver(struct view *view, enum request request)
 {
 	int i;
 
+	if (request == REQ_NONE) {
+		doupdate();
+		return TRUE;
+	}
+
 	if (view && view->lines) {
 		request = view->ops->request(view, request, &view->line[view->lineno]);
 		if (request == REQ_NONE)
