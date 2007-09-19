@@ -2143,11 +2143,12 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 }
 
 static void
-open_editor(struct view *view, char *file)
+open_editor(struct view *view, bool from_root, char *file)
 {
 	char cmd[SIZEOF_STR];
 	char file_sq[SIZEOF_STR];
 	char *editor;
+	char *prefix = from_root ? opt_cdup : "";
 
 	editor = getenv("GIT_EDITOR");
 	if (!editor && *opt_editor)
@@ -2160,7 +2161,7 @@ open_editor(struct view *view, char *file)
 		editor = "vi";
 
 	if (sq_quote(file_sq, 0, file) < sizeof(file_sq) &&
-	    string_format(cmd, "%s %s", editor, file_sq)) {
+	    string_format(cmd, "%s %s%s", editor, prefix, file_sq)) {
 		def_prog_mode();           /* save current tty modes */
 		endwin();                  /* restore original tty modes */
 		system(cmd);
@@ -3309,7 +3310,7 @@ status_request(struct view *view, enum request request, struct line *line)
 		if (!status)
 			return request;
 
-		open_editor(view, status->name);
+		open_editor(view, status->status != '?', status->name);
 		break;
 
 	case REQ_ENTER:
@@ -3543,7 +3544,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 		if (!stage_status.name[0])
 			return request;
 
-		open_editor(view, stage_status.name);
+		open_editor(view, stage_status.status != '?', stage_status.name);
 		break;
 
 	case REQ_ENTER:
