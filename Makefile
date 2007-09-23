@@ -94,13 +94,13 @@ spell-check:
 strip: $(PROGS)
 	strip $(PROGS)
 
-dist: tig.spec
+dist: configure tig.spec
 	@mkdir -p $(TARNAME) && \
-	cp tig.spec $(TARNAME) && \
+	cp tig.spec configure config.h.in aclocal.m4 $(TARNAME) && \
 	echo $(VERSION) > $(TARNAME)/VERSION
 	git archive --format=tar --prefix=$(TARNAME)/ HEAD | \
 	tar --delete $(TARNAME)/VERSION > $(TARNAME).tar && \
-	tar rf $(TARNAME).tar $(TARNAME)/tig.spec $(TARNAME)/VERSION && \
+	tar rf $(TARNAME).tar `find $(TARNAME)/*` && \
 	gzip -f -9 $(TARNAME).tar && \
 	md5sum $(TARNAME).tar.gz > $(TARNAME).tar.gz.md5
 	@rm -rf $(TARNAME)
