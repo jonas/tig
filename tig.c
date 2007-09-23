@@ -3052,12 +3052,14 @@ status_open(struct view *view)
 	struct stat statbuf;
 	char exclude[SIZEOF_STR];
 	char cmd[SIZEOF_STR];
+	unsigned long prev_lineno = view->lineno;
 	size_t i;
+
 
 	for (i = 0; i < view->lines; i++)
 		free(view->line[i].data);
 	free(view->line);
-	view->lines = view->line_size = 0;
+	view->lines = view->line_size = view->lineno = 0;
 	view->line = NULL;
 
 	if (!realloc_lines(view, view->line_size + 6))
@@ -3080,6 +3082,13 @@ status_open(struct view *view)
 	    !status_run(view, STATUS_DIFF_FILES_CMD, TRUE, LINE_STAT_UNSTAGED) ||
 	    !status_run(view, cmd, FALSE, LINE_STAT_UNTRACKED))
 		return FALSE;
+
+	/* If all went well restore the previous line number to stay in
+	 * the context. */
+	if (prev_lineno < view->lines)
+		view->lineno = prev_lineno;
+	else
+		view->lineno = view->lines - 1;
 
 	return TRUE;
 }
