@@ -2143,7 +2143,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 }
 
 static void
-open_editor(struct view *view, bool from_root, char *file)
+open_editor(bool from_root, char *file)
 {
 	char cmd[SIZEOF_STR];
 	char file_sq[SIZEOF_STR];
@@ -3319,7 +3319,7 @@ status_request(struct view *view, enum request request, struct line *line)
 		if (!status)
 			return request;
 
-		open_editor(view, status->status != '?', status->name);
+		open_editor(status->status != '?', status->name);
 		break;
 
 	case REQ_ENTER:
@@ -3553,7 +3553,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 		if (!stage_status.name[0])
 			return request;
 
-		open_editor(view, stage_status.status != '?', stage_status.name);
+		open_editor(stage_status.status != '?', stage_status.name);
 		break;
 
 	case REQ_ENTER:
