@@ -81,9 +81,12 @@ install-doc-html: doc-html
 install-doc: install-doc-man install-doc-html
 
 clean:
-	rm -rf manual.html-chunked $(TARNAME)
-	rm -f $(PROGS) $(ALLDOC) core *.o *.xml *.toc
-	rm -f *.spec tig-*.tar.gz tig-*.tar.gz.md5
+	$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5
+	$(RM) $(PROGS) core *.o *.xml
+
+distclean: clean
+	$(RM) -r manual.html-chunked *.toc $(ALLDOC)
+	$(RM) -r autom4te.cache aclocal.m4 config.{h,log,make,status} config.h.in configure
 
 spell-check:
 	aspell --lang=en --check tig.1.txt tigrc.5.txt manual.txt
@@ -112,7 +115,7 @@ configure: configure.ac acinclude.m4
 release-doc:
 	git checkout release && \
 	git merge master && \
-	$(MAKE) clean doc-man doc-html && \
+	$(MAKE) distclean doc-man doc-html && \
 	git add -f $(MANDOC) $(HTMLDOC) && \
 	git commit -m "Sync docs" && \
 	git checkout master
