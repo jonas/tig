@@ -318,6 +318,7 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(NEXT,		"Move to next"), \
 	REQ_(PREVIOUS,		"Move to previous"), \
 	REQ_(VIEW_NEXT,		"Move focus to next view"), \
+	REQ_(REFRESH,		"Reload and refresh"), \
 	REQ_(VIEW_CLOSE,	"Close the current view"), \
 	REQ_(QUIT,		"Close all views and quit"), \
 	\
@@ -751,6 +752,7 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_RETURN,	REQ_ENTER },
 	{ KEY_UP,	REQ_PREVIOUS },
 	{ KEY_DOWN,	REQ_NEXT },
+	{ 'R',		REQ_REFRESH },
 
 	/* Cursor navigation */
 	{ 'k',		REQ_MOVE_UP },
@@ -2285,6 +2287,10 @@ view_driver(struct view *view, enum request request)
 		report("");
 		break;
 	}
+	case REQ_REFRESH:
+		report("Refreshing is not yet supported for the %s view", view->name);
+		break;
+
 	case REQ_TOGGLE_LINENO:
 		opt_line_number = !opt_line_number;
 		redraw_display();
@@ -3320,10 +3326,15 @@ status_request(struct view *view, enum request request, struct line *line)
 			return request;
 
 		open_editor(status->status != '?', status->name);
+		open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
 		break;
 
 	case REQ_ENTER:
 		status_enter(view, line);
+		break;
+
+	case REQ_REFRESH:
+		open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
 		break;
 
 	default:
