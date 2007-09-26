@@ -38,7 +38,14 @@ PROGS	= tig
 MANDOC	= tig.1 tigrc.5
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) manual.html-chunked manual.pdf
+
+# Never include the release number in the tarname for tagged
+# versions.
+ifneq ($(if $(DIST_VERSION),$(words $(RPM_VERLIST))),2)
 TARNAME	= tig-$(RPM_VERSION)-$(RPM_RELEASE)
+else
+TARNAME	= tig-$(RPM_VERSION)
+endif
 
 override CFLAGS += '-DTIG_VERSION="$(VERSION)"'
 
