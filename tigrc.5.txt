@@ -175,6 +175,7 @@ enter			Enter current line and scroll
 next			Move to next
 previous		Move to previous
 view-next		Move focus to next view
+refresh			Reload and refresh view
 view-close		Close the current view
 quit			Close all views and quit
 ------------------------------------------------------------------------------

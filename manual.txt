@@ -267,6 +267,7 @@ Enter	This key is "context sensitive" depending on what view you are \
 	view, split the view and show the commit diff. In the diff view \
 	pressing Enter will simply scroll the view one line down.
 Tab	Switch to next view.
+R	Reload and refresh the current view.
 Up	This key is "context sensitive" and will move the cursor one \
 	line up. However, if you opened a diff view from the main view \
 	(split- or full-screen) it will change the cursor to point to \
