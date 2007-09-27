@@ -2640,6 +2640,9 @@ help_open(struct view *view)
 	for (i = 0; i < ARRAY_SIZE(req_info); i++) {
 		char *key;
 
+		if (req_info[i].request == REQ_NONE)
+			continue;
+
 		if (!req_info[i].request) {
 			add_line_text(view, "", LINE_DEFAULT);
 			add_line_text(view, req_info[i].help, LINE_DEFAULT);
@@ -2647,6 +2650,9 @@ help_open(struct view *view)
 		}
 
 		key = get_key(req_info[i].request);
+		if (!*key)
+			key = "(no key defined)";
+
 		if (!string_format(buf, "    %-25s %s", key, req_info[i].help))
 			continue;
 
