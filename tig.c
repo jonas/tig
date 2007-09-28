@@ -440,6 +440,7 @@ static iconv_t opt_iconv		= ICONV_NONE;
 static char opt_search[SIZEOF_STR]	= "";
 static char opt_cdup[SIZEOF_STR]	= "";
 static char opt_git_dir[SIZEOF_STR]	= "";
+static char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
 
 enum option_type {
@@ -2236,12 +2237,19 @@ view_driver(struct view *view, enum request request)
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
+	case REQ_VIEW_STATUS:
+		if (opt_is_inside_work_tree == FALSE) {
+			report("The status view requires a working tree");
+			break;
+		}
+		open_view(view, request, OPEN_DEFAULT);
+		break;
+
 	case REQ_VIEW_MAIN:
 	case REQ_VIEW_DIFF:
 	case REQ_VIEW_LOG:
 	case REQ_VIEW_TREE:
 	case REQ_VIEW_HELP:
-	case REQ_VIEW_STATUS:
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
@@ -3066,7 +3074,6 @@ status_open(struct view *view)
 	char cmd[SIZEOF_STR];
 	unsigned long prev_lineno = view->lineno;
 	size_t i;
-
 
 	for (i = 0; i < view->lines; i++)
 		free(view->line[i].data);
@@ -4288,6 +4295,21 @@ report(const char *msg, ...)
 	if (input_mode)
 		return;
 
+	if (!view) {
+		char buf[SIZEOF_STR];
+		va_list args;
+
+		va_start(args, msg);
+		if (vsnprintf(buf, sizeof(buf), msg, args) >= sizeof(buf)) {
+			buf[sizeof(buf) - 1] = 0;
+			buf[sizeof(buf) - 2] = '.';
+			buf[sizeof(buf) - 3] = '.';
+			buf[sizeof(buf) - 4] = '.';
+		}
+		va_end(args);
+		die("%s", buf);
+	}
+
 	if (!status_empty || *msg) {
 		va_list args;
 
@@ -4567,10 +4589,21 @@ load_repo_config(void)
 static int
 read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 {
-	if (!opt_git_dir[0])
+	if (!opt_git_dir[0]) {
 		string_ncopy(opt_git_dir, name, namelen);
-	else
+
+	} else if (opt_is_inside_work_tree == -1) {
+		/* This can be 3 different values depending on the
+		 * version of git being used. If git-rev-parse does not
+		 * understand --is-inside-work-tree it will simply echo
+		 * the option else either "true" or "false" is printed.
+		 * Default to true for the unknown case. */
+		opt_is_inside_work_tree = strcmp(name, "false") ? TRUE : FALSE;
+
+	} else {
 		string_ncopy(opt_cdup, name, namelen);
+	}
+
 	return OK;
 }
 
@@ -4579,7 +4612,7 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 static int
 load_repo_info(void)
 {
-	return read_properties(popen("git rev-parse --git-dir --show-cdup 2>/dev/null", "r"),
+	return read_properties(popen("git rev-parse --git-dir --is-inside-work-tree --show-cdup 2>/dev/null", "r"),
 			       "=", read_repo_info);
 }
 
