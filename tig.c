@@ -2146,7 +2146,19 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 }
 
 static void
-open_editor(bool from_root, char *file)
+open_external_viewer(const char *cmd)
+{
+	def_prog_mode();           /* save current tty modes */
+	endwin();                  /* restore original tty modes */
+	system(cmd);
+	fprintf(stderr, "Press Enter to continue");
+	getc(stdin);
+	reset_prog_mode();
+	redraw_display();
+}
+
+static void
+open_editor(bool from_root, const char *file)
 {
 	char cmd[SIZEOF_STR];
 	char file_sq[SIZEOF_STR];
@@ -2165,11 +2177,7 @@ open_editor(bool from_root, char *file)
 
 	if (sq_quote(file_sq, 0, file) < sizeof(file_sq) &&
 	    string_format(cmd, "%s %s%s", editor, prefix, file_sq)) {
-		def_prog_mode();           /* save current tty modes */
-		endwin();                  /* restore original tty modes */
-		system(cmd);
-		reset_prog_mode();
-		redraw_display();
+		open_external_viewer(cmd);
 	}
 }
 
@@ -4038,13 +4046,7 @@ cherry_pick_commit(struct commit *commit)
 		cherry_pick = "git cherry-pick";
 
 	if (string_format(cmd, "%s %s", cherry_pick, commit->id)) {
-		def_prog_mode();           /* save current tty modes */
-		endwin();                  /* restore original tty modes */
-		system(cmd);
-		fprintf(stderr, "Press Enter to continue");
-		getc(stdin);
-		reset_prog_mode();
-		redraw_display();
+		open_external_viewer(cmd);
 	}
 }
 
