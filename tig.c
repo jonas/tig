@@ -352,6 +352,7 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
 	REQ_(STATUS_UPDATE,	"Update file status"), \
+	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
 	REQ_(EDIT,		"Open in editor"), \
 	REQ_(CHERRY_PICK,	"Cherry-pick commit to current branch")
 
@@ -787,6 +788,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
 	{ ':',		REQ_PROMPT },
 	{ 'u',		REQ_STATUS_UPDATE },
+	{ 'M',		REQ_STATUS_MERGE },
 	{ 'e',		REQ_EDIT },
 	{ 'C',		REQ_CHERRY_PICK },
 
@@ -2158,6 +2160,18 @@ open_external_viewer(const char *cmd)
 }
 
 static void
+open_mergetool(const char *file)
+{
+	char cmd[SIZEOF_STR];
+	char file_sq[SIZEOF_STR];
+
+	if (sq_quote(file_sq, 0, file) < sizeof(file_sq) &&
+	    string_format(cmd, "git mergetool %s", file_sq)) {
+		open_external_viewer(cmd);
+	}
+}
+
+static void
 open_editor(bool from_root, const char *file)
 {
 	char cmd[SIZEOF_STR];
@@ -2989,6 +3003,7 @@ static bool
 status_run(struct view *view, const char cmd[], bool diff, enum line_type type)
 {
 	struct status *file = NULL;
+	struct status *unmerged = NULL;
 	char buf[SIZEOF_STR * 4];
 	size_t bufsize = 0;
 	FILE *pipe;
@@ -3038,6 +3053,23 @@ status_run(struct view *view, const char cmd[], bool diff, enum line_type type)
 				if (!sep)
 					break;
 				sepsize = sep - buf + 1;
+
+				/* Collapse all 'M'odified entries that
+				 * follow a associated 'U'nmerged entry.
+				 */
+				if (file->status == 'U') {
+					unmerged = file;
+
+				} else if (unmerged) {
+					int collapse = !strcmp(buf, unmerged->name);
+
+					unmerged = NULL;
+					if (collapse) {
+						free(file);
+						view->lines--;
+						continue;
+					}
+				}
 			}
 
 			/* git-ls-files just delivers a NUL separated
@@ -3063,7 +3095,8 @@ error_out:
 	return TRUE;
 }
 
-#define STATUS_DIFF_INDEX_CMD "git diff-index -z --cached HEAD"
+/* Don't show unmerged entries in the staged section. */
+#define STATUS_DIFF_INDEX_CMD "git diff-index -z --diff-filter=ACDMRTXB --cached HEAD"
 #define STATUS_DIFF_FILES_CMD "git diff-files -z"
 #define STATUS_LIST_OTHER_CMD \
 	"git ls-files -z --others --exclude-per-directory=.gitignore"
@@ -3342,6 +3375,11 @@ status_request(struct view *view, enum request request, struct line *line)
 		status_update(view);
 		break;
 
+	case REQ_STATUS_MERGE:
+		open_mergetool(status->name);
+		open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
+		break;
+
 	case REQ_EDIT:
 		if (!status)
 			return request;
@@ -3371,6 +3409,7 @@ status_select(struct view *view, struct line *line)
 	struct status *status = line->data;
 	char file[SIZEOF_STR] = "all files";
 	char *text;
+	char *key;
 
 	if (status && !string_format(file, "'%s'", status->name))
 		return;
@@ -3399,7 +3438,15 @@ status_select(struct view *view, struct line *line)
 		die("w00t");
 	}
 
-	string_format(view->ref, text, get_key(REQ_STATUS_UPDATE), file);
+	if (status && status->status == 'U') {
+		text = "Press %s to resolve conflict in %s";
+		key = get_key(REQ_STATUS_MERGE);
+
+	} else {
+		key = get_key(REQ_STATUS_UPDATE);
+	}
+
+	string_format(view->ref, text, key, file);
 }
 
 static bool

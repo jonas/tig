@@ -340,6 +340,9 @@ u	Update status of file. In the status view, this allows you to add an \
 	running git-add <filename>). In the stage view, when pressing this on \
 	a diff chunk line stages only that chunk for next commit, when not on \
 	a diff chunk line all changes in the displayed diff is staged.
+M	Resolve unmerged file by launching git-mergetool(1). Note, to work \
+	correctly this might require some initial configuration of your \
+	preferred merge tool. See the manpage of git-mergetool(1).
 -----------------------------------------------------------------------------
 
 [[refspec]]

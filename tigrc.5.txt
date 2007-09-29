@@ -233,6 +233,7 @@ stop-loading		Stop all loading views
 toggle-lineno		Toggle line numbers
 toggle-rev-graph	Toggle revision graph visualization
 status-update		Update file status
+status-merge		Resolve unmerged file
 edit			Open in editor
 cherry-pick		Cherry-pick commit to current branch
 ------------------------------------------------------------------------------
