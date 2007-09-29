@@ -3361,8 +3361,6 @@ status_update(struct view *view)
 	} else if (!status_update_file(view, line->data, line->type)) {
 		report("Failed to update file status");
 	}
-
-	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
 }
 
 static enum request
@@ -3377,7 +3375,6 @@ status_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_STATUS_MERGE:
 		open_mergetool(status->name);
-		open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
 		break;
 
 	case REQ_EDIT:
@@ -3385,20 +3382,24 @@ status_request(struct view *view, enum request request, struct line *line)
 			return request;
 
 		open_editor(status->status != '?', status->name);
-		open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
 		break;
 
 	case REQ_ENTER:
+		/* After returning the status view has been split to
+		 * show the stage view. No further reloading is
+		 * necessary. */
 		status_enter(view, line);
-		break;
+		return REQ_NONE;
 
 	case REQ_REFRESH:
-		open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
+		/* Simply reload the view. */
 		break;
 
 	default:
 		return request;
 	}
+
+	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
 
 	return REQ_NONE;
 }
