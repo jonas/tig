@@ -1,11 +1,11 @@
 .\"     Title: tig
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.71.0 <http://docbook.sf.net/>
-.\"      Date: 09/13/2007
+.\"      Date: 09/29/2007
 .\"    Manual: Tig Manual
-.\"    Source: Tig 0.9
+.\"    Source: Tig 0.9.1\-49\-gb11906d\-dirty
 .\"
-.TH "TIG" "1" "09/13/2007" "Tig 0.9" "Tig Manual"
+.TH "TIG" "1" "09/29/2007" "Tig 0.9.1\-49\-gb11906d\-dirty" "Tig Manual"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -121,6 +121,12 @@ Set command for retrieving all repository references. The command should output 
 .sp
 .RE
 .PP
+TIG_CHERRY_PICK
+.RS 3n
+Set command for cherry\-picking a commit. The command should expect a commit SHA as its final argument.
+.sp
+.RE
+.PP
 TIG_DIFF_CMD
 .RS 3n
 The command used for the diff view. By default, git show is used as a backend.
@@ -195,7 +201,7 @@ Manual: \fIhttp://jonas.nitro.dk/tig/manual.html\fR
 .sp
 .TP 3n
 \(bu
-Releases: \fIhttp://jonas.nitro.dk/tig/releases/\fR
+Tarballs: \fIhttp://jonas.nitro.dk/tig/releases/\fR
 .sp
 .TP 3n
 \(bu
