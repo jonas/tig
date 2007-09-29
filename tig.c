@@ -80,8 +80,8 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define COLOR_DEFAULT	(-1)
 
 #define ICONV_NONE	((iconv_t) -1)
-#ifndef ICONV_INBUF_TYPE
-#define ICONV_INBUF_TYPE char *
+#ifndef ICONV_CONST
+#define ICONV_CONST	/* nothing */
 #endif
 
 /* The format and size of the date column in the main view. */
@@ -318,6 +318,7 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(NEXT,		"Move to next"), \
 	REQ_(PREVIOUS,		"Move to previous"), \
 	REQ_(VIEW_NEXT,		"Move focus to next view"), \
+	REQ_(REFRESH,		"Reload and refresh"), \
 	REQ_(VIEW_CLOSE,	"Close the current view"), \
 	REQ_(QUIT,		"Close all views and quit"), \
 	\
@@ -351,7 +352,9 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
 	REQ_(STATUS_UPDATE,	"Update file status"), \
-	REQ_(EDIT,		"Open in editor")
+	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
+	REQ_(EDIT,		"Open in editor"), \
+	REQ_(CHERRY_PICK,	"Cherry-pick commit to current branch")
 
 
 /* User action requests. */
@@ -438,6 +441,7 @@ static iconv_t opt_iconv		= ICONV_NONE;
 static char opt_search[SIZEOF_STR]	= "";
 static char opt_cdup[SIZEOF_STR]	= "";
 static char opt_git_dir[SIZEOF_STR]	= "";
+static char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
 
 enum option_type {
@@ -750,6 +754,7 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_RETURN,	REQ_ENTER },
 	{ KEY_UP,	REQ_PREVIOUS },
 	{ KEY_DOWN,	REQ_NEXT },
+	{ 'R',		REQ_REFRESH },
 
 	/* Cursor navigation */
 	{ 'k',		REQ_MOVE_UP },
@@ -783,7 +788,9 @@ static struct keybinding default_keybindings[] = {
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
 	{ ':',		REQ_PROMPT },
 	{ 'u',		REQ_STATUS_UPDATE },
+	{ 'M',		REQ_STATUS_MERGE },
 	{ 'e',		REQ_EDIT },
+	{ 'C',		REQ_CHERRY_PICK },
 
 	/* Using the ncurses SIGWINCH handler. */
 	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
@@ -1943,7 +1950,7 @@ update_view(struct view *view)
 			line[linelen - 1] = 0;
 
 		if (opt_iconv != ICONV_NONE) {
-			ICONV_INBUF_TYPE inbuf = line;
+			ICONV_CONST char *inbuf = line;
 			size_t inlen = linelen;
 
 			char *outbuf = out_buffer;
@@ -2141,11 +2148,36 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 }
 
 static void
-open_editor(struct view *view, char *file)
+open_external_viewer(const char *cmd)
+{
+	def_prog_mode();           /* save current tty modes */
+	endwin();                  /* restore original tty modes */
+	system(cmd);
+	fprintf(stderr, "Press Enter to continue");
+	getc(stdin);
+	reset_prog_mode();
+	redraw_display();
+}
+
+static void
+open_mergetool(const char *file)
+{
+	char cmd[SIZEOF_STR];
+	char file_sq[SIZEOF_STR];
+
+	if (sq_quote(file_sq, 0, file) < sizeof(file_sq) &&
+	    string_format(cmd, "git mergetool %s", file_sq)) {
+		open_external_viewer(cmd);
+	}
+}
+
+static void
+open_editor(bool from_root, const char *file)
 {
 	char cmd[SIZEOF_STR];
 	char file_sq[SIZEOF_STR];
 	char *editor;
+	char *prefix = from_root ? opt_cdup : "";
 
 	editor = getenv("GIT_EDITOR");
 	if (!editor && *opt_editor)
@@ -2158,12 +2190,8 @@ open_editor(struct view *view, char *file)
 		editor = "vi";
 
 	if (sq_quote(file_sq, 0, file) < sizeof(file_sq) &&
-	    string_format(cmd, "%s %s", editor, file_sq)) {
-		def_prog_mode();           /* save current tty modes */
-		endwin();                  /* restore original tty modes */
-		system(cmd);
-		reset_prog_mode();
-		redraw_display();
+	    string_format(cmd, "%s %s%s", editor, prefix, file_sq)) {
+		open_external_viewer(cmd);
 	}
 }
 
@@ -2175,6 +2203,11 @@ static int
 view_driver(struct view *view, enum request request)
 {
 	int i;
+
+	if (request == REQ_NONE) {
+		doupdate();
+		return TRUE;
+	}
 
 	if (view && view->lines) {
 		request = view->ops->request(view, request, &view->line[view->lineno]);
@@ -2226,12 +2259,19 @@ view_driver(struct view *view, enum request request)
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
+	case REQ_VIEW_STATUS:
+		if (opt_is_inside_work_tree == FALSE) {
+			report("The status view requires a working tree");
+			break;
+		}
+		open_view(view, request, OPEN_DEFAULT);
+		break;
+
 	case REQ_VIEW_MAIN:
 	case REQ_VIEW_DIFF:
 	case REQ_VIEW_LOG:
 	case REQ_VIEW_TREE:
 	case REQ_VIEW_HELP:
-	case REQ_VIEW_STATUS:
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
@@ -2277,6 +2317,10 @@ view_driver(struct view *view, enum request request)
 		report("");
 		break;
 	}
+	case REQ_REFRESH:
+		report("Refreshing is not yet supported for the %s view", view->name);
+		break;
+
 	case REQ_TOGGLE_LINENO:
 		opt_line_number = !opt_line_number;
 		redraw_display();
@@ -2326,13 +2370,14 @@ view_driver(struct view *view, enum request request)
 		report("Nothing to edit");
 		break;
 
+	case REQ_CHERRY_PICK:
+		report("Nothing to cherry-pick");
+		break;
+
 	case REQ_ENTER:
 		report("Nothing to enter");
 		break;
 
-	case REQ_NONE:
-		doupdate();
-		return TRUE;
 
 	case REQ_VIEW_CLOSE:
 		/* XXX: Mark closed views by letting view->parent point to the
@@ -2625,6 +2670,9 @@ help_open(struct view *view)
 	for (i = 0; i < ARRAY_SIZE(req_info); i++) {
 		char *key;
 
+		if (req_info[i].request == REQ_NONE)
+			continue;
+
 		if (!req_info[i].request) {
 			add_line_text(view, "", LINE_DEFAULT);
 			add_line_text(view, req_info[i].help, LINE_DEFAULT);
@@ -2632,6 +2680,9 @@ help_open(struct view *view)
 		}
 
 		key = get_key(req_info[i].request);
+		if (!*key)
+			key = "(no key defined)";
+
 		if (!string_format(buf, "    %-25s %s", key, req_info[i].help))
 			continue;
 
@@ -2952,6 +3003,7 @@ static bool
 status_run(struct view *view, const char cmd[], bool diff, enum line_type type)
 {
 	struct status *file = NULL;
+	struct status *unmerged = NULL;
 	char buf[SIZEOF_STR * 4];
 	size_t bufsize = 0;
 	FILE *pipe;
@@ -3001,6 +3053,23 @@ status_run(struct view *view, const char cmd[], bool diff, enum line_type type)
 				if (!sep)
 					break;
 				sepsize = sep - buf + 1;
+
+				/* Collapse all 'M'odified entries that
+				 * follow a associated 'U'nmerged entry.
+				 */
+				if (file->status == 'U') {
+					unmerged = file;
+
+				} else if (unmerged) {
+					int collapse = !strcmp(buf, unmerged->name);
+
+					unmerged = NULL;
+					if (collapse) {
+						free(file);
+						view->lines--;
+						continue;
+					}
+				}
 			}
 
 			/* git-ls-files just delivers a NUL separated
@@ -3026,7 +3095,8 @@ error_out:
 	return TRUE;
 }
 
-#define STATUS_DIFF_INDEX_CMD "git diff-index -z --cached HEAD"
+/* Don't show unmerged entries in the staged section. */
+#define STATUS_DIFF_INDEX_CMD "git diff-index -z --diff-filter=ACDMRTXB --cached HEAD"
 #define STATUS_DIFF_FILES_CMD "git diff-files -z"
 #define STATUS_LIST_OTHER_CMD \
 	"git ls-files -z --others --exclude-per-directory=.gitignore"
@@ -3043,12 +3113,13 @@ status_open(struct view *view)
 	struct stat statbuf;
 	char exclude[SIZEOF_STR];
 	char cmd[SIZEOF_STR];
+	unsigned long prev_lineno = view->lineno;
 	size_t i;
 
 	for (i = 0; i < view->lines; i++)
 		free(view->line[i].data);
 	free(view->line);
-	view->lines = view->line_size = 0;
+	view->lines = view->line_size = view->lineno = 0;
 	view->line = NULL;
 
 	if (!realloc_lines(view, view->line_size + 6))
@@ -3071,6 +3142,13 @@ status_open(struct view *view)
 	    !status_run(view, STATUS_DIFF_FILES_CMD, TRUE, LINE_STAT_UNSTAGED) ||
 	    !status_run(view, cmd, FALSE, LINE_STAT_UNTRACKED))
 		return FALSE;
+
+	/* If all went well restore the previous line number to stay in
+	 * the context. */
+	if (prev_lineno < view->lines)
+		view->lineno = prev_lineno;
+	else
+		view->lineno = view->lines - 1;
 
 	return TRUE;
 }
@@ -3283,8 +3361,6 @@ status_update(struct view *view)
 	} else if (!status_update_file(view, line->data, line->type)) {
 		report("Failed to update file status");
 	}
-
-	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
 }
 
 static enum request
@@ -3297,20 +3373,33 @@ status_request(struct view *view, enum request request, struct line *line)
 		status_update(view);
 		break;
 
+	case REQ_STATUS_MERGE:
+		open_mergetool(status->name);
+		break;
+
 	case REQ_EDIT:
 		if (!status)
 			return request;
 
-		open_editor(view, status->name);
+		open_editor(status->status != '?', status->name);
 		break;
 
 	case REQ_ENTER:
+		/* After returning the status view has been split to
+		 * show the stage view. No further reloading is
+		 * necessary. */
 		status_enter(view, line);
+		return REQ_NONE;
+
+	case REQ_REFRESH:
+		/* Simply reload the view. */
 		break;
 
 	default:
 		return request;
 	}
+
+	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
 
 	return REQ_NONE;
 }
@@ -3321,6 +3410,7 @@ status_select(struct view *view, struct line *line)
 	struct status *status = line->data;
 	char file[SIZEOF_STR] = "all files";
 	char *text;
+	char *key;
 
 	if (status && !string_format(file, "'%s'", status->name))
 		return;
@@ -3349,7 +3439,15 @@ status_select(struct view *view, struct line *line)
 		die("w00t");
 	}
 
-	string_format(view->ref, text, get_key(REQ_STATUS_UPDATE), file);
+	if (status && status->status == 'U') {
+		text = "Press %s to resolve conflict in %s";
+		key = get_key(REQ_STATUS_MERGE);
+
+	} else {
+		key = get_key(REQ_STATUS_UPDATE);
+	}
+
+	string_format(view->ref, text, key, file);
 }
 
 static bool
@@ -3535,7 +3633,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 		if (!stage_status.name[0])
 			return request;
 
-		open_editor(view, stage_status.name);
+		open_editor(stage_status.status != '?', stage_status.name);
 		break;
 
 	case REQ_ENTER:
@@ -3986,6 +4084,20 @@ main_read(struct view *view, char *line)
 	return TRUE;
 }
 
+static void
+cherry_pick_commit(struct commit *commit)
+{
+	char cmd[SIZEOF_STR];
+	char *cherry_pick = getenv("TIG_CHERRY_PICK");
+
+	if (!cherry_pick)
+		cherry_pick = "git cherry-pick";
+
+	if (string_format(cmd, "%s %s", cherry_pick, commit->id)) {
+		open_external_viewer(cmd);
+	}
+}
+
 static enum request
 main_request(struct view *view, enum request request, struct line *line)
 {
@@ -3993,6 +4105,8 @@ main_request(struct view *view, enum request request, struct line *line)
 
 	if (request == REQ_ENTER)
 		open_view(view, REQ_VIEW_DIFF, flags);
+	else if (request == REQ_CHERRY_PICK)
+		cherry_pick_commit(line->data);
 	else
 		return request;
 
@@ -4230,6 +4344,21 @@ report(const char *msg, ...)
 
 	if (input_mode)
 		return;
+
+	if (!view) {
+		char buf[SIZEOF_STR];
+		va_list args;
+
+		va_start(args, msg);
+		if (vsnprintf(buf, sizeof(buf), msg, args) >= sizeof(buf)) {
+			buf[sizeof(buf) - 1] = 0;
+			buf[sizeof(buf) - 2] = '.';
+			buf[sizeof(buf) - 3] = '.';
+			buf[sizeof(buf) - 4] = '.';
+		}
+		va_end(args);
+		die("%s", buf);
+	}
 
 	if (!status_empty || *msg) {
 		va_list args;
@@ -4510,10 +4639,21 @@ load_repo_config(void)
 static int
 read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 {
-	if (!opt_git_dir[0])
+	if (!opt_git_dir[0]) {
 		string_ncopy(opt_git_dir, name, namelen);
-	else
+
+	} else if (opt_is_inside_work_tree == -1) {
+		/* This can be 3 different values depending on the
+		 * version of git being used. If git-rev-parse does not
+		 * understand --is-inside-work-tree it will simply echo
+		 * the option else either "true" or "false" is printed.
+		 * Default to true for the unknown case. */
+		opt_is_inside_work_tree = strcmp(name, "false") ? TRUE : FALSE;
+
+	} else {
 		string_ncopy(opt_cdup, name, namelen);
+	}
+
 	return OK;
 }
 
@@ -4522,7 +4662,7 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 static int
 load_repo_info(void)
 {
-	return read_properties(popen("git rev-parse --git-dir --show-cdup 2>/dev/null", "r"),
+	return read_properties(popen("git rev-parse --git-dir --is-inside-work-tree --show-cdup 2>/dev/null", "r"),
 			       "=", read_repo_info);
 }
 
@@ -4614,10 +4754,6 @@ main(int argc, char *argv[])
 	if (load_repo_info() == ERR)
 		die("Failed to load repo info.");
 
-	/* Require a git repository unless when running in pager mode. */
-	if (!opt_git_dir[0])
-		die("Not a git repository");
-
 	if (load_options() == ERR)
 		die("Failed to load user config.");
 
@@ -4628,6 +4764,10 @@ main(int argc, char *argv[])
 
 	if (!parse_options(argc, argv))
 		return 0;
+
+	/* Require a git repository unless when running in pager mode. */
+	if (!opt_git_dir[0])
+		die("Not a git repository");
 
 	if (*opt_codeset && strcmp(opt_codeset, opt_encoding)) {
 		opt_iconv = iconv_open(opt_codeset, opt_encoding);

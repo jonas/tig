@@ -1,3 +1,4 @@
+aclocal.m4
 autom4te.cache
 config.h
 config.h.in
@@ -10,6 +11,7 @@ manual.pdf
 manual.toc
 tig
 tig-*.tar.gz
+tig-*.tar.gz.md5
 tig.1
 tig.1.html
 tig.spec

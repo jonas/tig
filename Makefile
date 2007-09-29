@@ -38,7 +38,14 @@ PROGS	= tig
 MANDOC	= tig.1 tigrc.5
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) manual.html-chunked manual.pdf
+
+# Never include the release number in the tarname for tagged
+# versions.
+ifneq ($(if $(DIST_VERSION),$(words $(RPM_VERLIST))),2)
 TARNAME	= tig-$(RPM_VERSION)-$(RPM_RELEASE)
+else
+TARNAME	= tig-$(RPM_VERSION)
+endif
 
 override CFLAGS += '-DTIG_VERSION="$(VERSION)"'
 
@@ -81,9 +88,12 @@ install-doc-html: doc-html
 install-doc: install-doc-man install-doc-html
 
 clean:
-	rm -rf manual.html-chunked $(TARNAME)
-	rm -f $(PROGS) $(ALLDOC) core *.o *.xml *.toc
-	rm -f *.spec tig-*.tar.gz tig-*.tar.gz.md5
+	$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5
+	$(RM) $(PROGS) core *.o *.xml
+
+distclean: clean
+	$(RM) -r manual.html-chunked *.toc $(ALLDOC)
+	$(RM) -r autom4te.cache aclocal.m4 config.{h,log,make,status} config.h.in configure
 
 spell-check:
 	aspell --lang=en --check tig.1.txt tigrc.5.txt manual.txt
@@ -91,13 +101,13 @@ spell-check:
 strip: $(PROGS)
 	strip $(PROGS)
 
-dist: tig.spec
+dist: configure tig.spec
 	@mkdir -p $(TARNAME) && \
-	cp tig.spec $(TARNAME) && \
+	cp tig.spec configure config.h.in aclocal.m4 $(TARNAME) && \
 	echo $(VERSION) > $(TARNAME)/VERSION
 	git archive --format=tar --prefix=$(TARNAME)/ HEAD | \
 	tar --delete $(TARNAME)/VERSION > $(TARNAME).tar && \
-	tar rf $(TARNAME).tar $(TARNAME)/tig.spec $(TARNAME)/VERSION && \
+	tar rf $(TARNAME).tar `find $(TARNAME)/*` && \
 	gzip -f -9 $(TARNAME).tar && \
 	md5sum $(TARNAME).tar.gz > $(TARNAME).tar.gz.md5
 	@rm -rf $(TARNAME)
@@ -105,14 +115,14 @@ dist: tig.spec
 rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
 
-configure: configure.ac
+configure: configure.ac acinclude.m4
 	$(AUTORECONF) -v
 
 # Maintainer stuff
 release-doc:
 	git checkout release && \
 	git merge master && \
-	$(MAKE) clean doc-man doc-html && \
+	$(MAKE) distclean doc-man doc-html && \
 	git add -f $(MANDOC) $(HTMLDOC) && \
 	git commit -m "Sync docs" && \
 	git checkout master
