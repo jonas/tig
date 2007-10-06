@@ -915,6 +915,27 @@ get_key_value(const char *name)
 }
 
 static char *
+get_key_name(int key_value)
+{
+	static char key_char[] = "'X'";
+	char *seq = NULL;
+	int key;
+
+	for (key = 0; key < ARRAY_SIZE(key_table); key++)
+		if (key_table[key].value == key_value)
+			seq = key_table[key].name;
+
+	if (seq == NULL &&
+	    key_value < 127 &&
+	    isprint(key_value)) {
+		key_char[1] = (char) key_value;
+		seq = key_char;
+	}
+
+	return seq ? seq : "'?'";
+}
+
+static char *
 get_key(enum request request)
 {
 	static char buf[BUFSIZ];
@@ -955,6 +976,45 @@ get_key(enum request request)
 	return buf;
 }
 
+struct run_request {
+	enum keymap keymap;
+	int key;
+	char cmd[SIZEOF_STR];
+};
+
+static struct run_request *run_request;
+static size_t run_requests;
+
+static enum request
+add_run_request(enum keymap keymap, int key, int argc, char **argv)
+{
+	struct run_request *tmp;
+	struct run_request req = { keymap, key };
+	size_t bufpos;
+
+	for (bufpos = 0; argc > 0; argc--, argv++)
+		if (!string_format_from(req.cmd, &bufpos, "%s ", *argv))
+			return REQ_NONE;
+
+	req.cmd[bufpos - 1] = 0;
+
+	tmp = realloc(run_request, (run_requests + 1) * sizeof(*run_request));
+	if (!tmp)
+		return REQ_NONE;
+
+	run_request = tmp;
+	run_request[run_requests++] = req;
+
+	return REQ_NONE + run_requests;
+}
+
+static struct run_request *
+get_run_request(enum request request)
+{
+	if (request <= REQ_NONE)
+		return NULL;
+	return &run_request[request - REQ_NONE - 1];
+}
 
 /*
  * User config file handling.
@@ -1087,7 +1147,7 @@ option_bind_command(int argc, char *argv[])
 	int keymap;
 	int key;
 
-	if (argc != 3) {
+	if (argc < 3) {
 		config_msg = "Wrong number of arguments given to bind command";
 		return ERR;
 	}
@@ -1104,6 +1164,8 @@ option_bind_command(int argc, char *argv[])
 	}
 
 	request = get_request(argv[2]);
+	if (request == REQ_NONE && *argv[2]++ == '!')
+		request = add_run_request(keymap, key, argc - 2, argv + 2);
 	if (request == REQ_NONE) {
 		config_msg = "Unknown request name";
 		return ERR;
@@ -2194,6 +2256,56 @@ open_editor(bool from_root, const char *file)
 	}
 }
 
+static void
+open_run_request(enum request request)
+{
+	struct run_request *req = get_run_request(request);
+	char buf[SIZEOF_STR * 2];
+	size_t bufpos;
+	char *cmd;
+
+	if (!req) {
+		report("Unknown run request");
+		return;
+	}
+
+	bufpos = 0;
+	cmd = req->cmd;
+
+	while (cmd) {
+		char *next = strstr(cmd, "%(");
+		int len = next - cmd;
+		char *value;
+
+		if (!next) {
+			len = strlen(cmd);
+			value = "";
+
+		} else if (!strncmp(next, "%(head)", 7)) {
+			value = ref_head;
+
+		} else if (!strncmp(next, "%(commit)", 9)) {
+			value = ref_commit;
+
+		} else if (!strncmp(next, "%(blob)", 7)) {
+			value = ref_blob;
+
+		} else {
+			report("Unknown replacement in run request: `%s`", req->cmd);
+			return;
+		}
+
+		if (!string_format_from(buf, &bufpos, "%.*s%s", len, cmd, value))
+			return;
+
+		if (next)
+			next = strchr(next, ')') + 1;
+		cmd = next;
+	}
+
+	open_external_viewer(buf);
+}
+
 /*
  * User request switch noodle
  */
@@ -2205,6 +2317,11 @@ view_driver(struct view *view, enum request request)
 
 	if (request == REQ_NONE) {
 		doupdate();
+		return TRUE;
+	}
+
+	if (request > REQ_NONE) {
+		open_run_request(request);
 		return TRUE;
 	}
 
@@ -2660,6 +2777,8 @@ help_open(struct view *view)
 		if (!req_info[i].request)
 			lines++;
 
+	lines += run_requests + 1;
+
 	view->line = calloc(lines, sizeof(*view->line));
 	if (!view->line)
 		return FALSE;
@@ -2683,6 +2802,30 @@ help_open(struct view *view)
 			key = "(no key defined)";
 
 		if (!string_format(buf, "    %-25s %s", key, req_info[i].help))
+			continue;
+
+		add_line_text(view, buf, LINE_DEFAULT);
+	}
+
+	if (run_requests) {
+		add_line_text(view, "", LINE_DEFAULT);
+		add_line_text(view, "External commands:", LINE_DEFAULT);
+	}
+
+	for (i = 0; i < run_requests; i++) {
+		struct run_request *req = get_run_request(REQ_NONE + i + 1);
+		char *key;
+
+		if (!req)
+			continue;
+
+		key = get_key_name(req->key);
+		if (!*key)
+			key = "(no key defined)";
+
+		if (!string_format(buf, "    %-10s %-14s `%s`",
+				   keymap_table[req->keymap].name,
+				   key, req->cmd))
 			continue;
 
 		add_line_text(view, buf, LINE_DEFAULT);
