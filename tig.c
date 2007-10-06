@@ -343,7 +343,6 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(FIND_PREV,		"Find previous search match"), \
 	\
 	REQ_GROUP("Misc") \
-	REQ_(NONE,		"Do nothing"), \
 	REQ_(PROMPT,		"Bring up the prompt"), \
 	REQ_(SCREEN_REDRAW,	"Redraw the screen"), \
 	REQ_(SCREEN_RESIZE,	"Resize the screen"), \
@@ -354,7 +353,8 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(STATUS_UPDATE,	"Update file status"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
 	REQ_(EDIT,		"Open in editor"), \
-	REQ_(CHERRY_PICK,	"Cherry-pick commit to current branch")
+	REQ_(CHERRY_PICK,	"Cherry-pick commit to current branch"), \
+	REQ_(NONE,		"Do nothing")
 
 
 /* User action requests. */
@@ -364,8 +364,7 @@ enum request {
 
 	/* Offset all requests to avoid conflicts with ncurses getch values. */
 	REQ_OFFSET = KEY_MAX + 1,
-	REQ_INFO,
-	REQ_UNKNOWN,
+	REQ_INFO
 
 #undef	REQ_GROUP
 #undef	REQ_
@@ -397,7 +396,7 @@ get_request(const char *name)
 		    !string_enum_compare(req_info[i].name, name, namelen))
 			return req_info[i].request;
 
-	return REQ_UNKNOWN;
+	return REQ_NONE;
 }
 
 
@@ -1105,7 +1104,7 @@ option_bind_command(int argc, char *argv[])
 	}
 
 	request = get_request(argv[2]);
-	if (request == REQ_UNKNOWN) {
+	if (request == REQ_NONE) {
 		config_msg = "Unknown request name";
 		return ERR;
 	}
