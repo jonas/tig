@@ -345,6 +345,21 @@ M	Resolve unmerged file by launching git-mergetool(1). Note, to work \
 	preferred merge tool. See the manpage of git-mergetool(1).
 -----------------------------------------------------------------------------
 
+[[external-commands]]
+External Commands
+~~~~~~~~~~~~~~~~~
+
+Tig also comes with a few builtin external commands. These are simple shell
+commands that are run and can take arguments from the current browsing state,
+such as the current commit ID. The default commands are:
+
+`-------`--------------------------------------------------------------------
+Key	Action
+-----------------------------------------------------------------------------
+C	git cherry-pick %(commit)
+G	git gc
+-----------------------------------------------------------------------------
+
 [[refspec]]
 Revision Specification
 ----------------------

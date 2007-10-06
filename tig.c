@@ -353,7 +353,6 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(STATUS_UPDATE,	"Update file status"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
 	REQ_(EDIT,		"Open in editor"), \
-	REQ_(CHERRY_PICK,	"Cherry-pick commit to current branch"), \
 	REQ_(NONE,		"Do nothing")
 
 
@@ -789,7 +788,6 @@ static struct keybinding default_keybindings[] = {
 	{ 'u',		REQ_STATUS_UPDATE },
 	{ 'M',		REQ_STATUS_MERGE },
 	{ 'e',		REQ_EDIT },
-	{ 'C',		REQ_CHERRY_PICK },
 
 	/* Using the ncurses SIGWINCH handler. */
 	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
@@ -1016,6 +1014,28 @@ get_run_request(enum request request)
 	return &run_request[request - REQ_NONE - 1];
 }
 
+static void
+add_builtin_run_requests(void)
+{
+	struct {
+		enum keymap keymap;
+		int key;
+		char *argv[1];
+	} reqs[] = {
+		{ KEYMAP_MAIN,	  'C', { "git cherry-pick %(commit)" } },
+		{ KEYMAP_GENERIC, 'G', { "git gc" } },
+	};
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(reqs); i++) {
+		enum request req;
+
+		req = add_run_request(reqs[i].keymap, reqs[i].key, 1, reqs[i].argv);
+		if (req != REQ_NONE)
+			add_keybinding(reqs[i].keymap, req, reqs[i].key);
+	}
+}
+
 /*
  * User config file handling.
  */
@@ -1164,6 +1184,19 @@ option_bind_command(int argc, char *argv[])
 	}
 
 	request = get_request(argv[2]);
+	if (request = REQ_NONE) {
+		const char *obsolete[] = { "cherry-pick" };
+		size_t namelen = strlen(argv[2]);
+		int i;
+
+		for (i = 0; i < ARRAY_SIZE(obsolete); i++) {
+			if (namelen == strlen(obsolete[i]) &&
+			    !string_enum_compare(obsolete[i], argv[2], namelen)) {
+				config_msg = "Obsolete request name";
+				return ERR;
+			}
+		}
+	}
 	if (request == REQ_NONE && *argv[2]++ == '!')
 		request = add_run_request(keymap, key, argc - 2, argv + 2);
 	if (request == REQ_NONE) {
@@ -1258,6 +1291,8 @@ load_options(void)
 
 	config_lineno = 0;
 	config_errors = FALSE;
+
+	add_builtin_run_requests();
 
 	if (!home || !string_format(buf, "%s/.tigrc", home))
 		return ERR;
@@ -2486,9 +2521,6 @@ view_driver(struct view *view, enum request request)
 		report("Nothing to edit");
 		break;
 
-	case REQ_CHERRY_PICK:
-		report("Nothing to cherry-pick");
-		break;
 
 	case REQ_ENTER:
 		report("Nothing to enter");
@@ -4226,20 +4258,6 @@ main_read(struct view *view, char *line)
 	return TRUE;
 }
 
-static void
-cherry_pick_commit(struct commit *commit)
-{
-	char cmd[SIZEOF_STR];
-	char *cherry_pick = getenv("TIG_CHERRY_PICK");
-
-	if (!cherry_pick)
-		cherry_pick = "git cherry-pick";
-
-	if (string_format(cmd, "%s %s", cherry_pick, commit->id)) {
-		open_external_viewer(cmd);
-	}
-}
-
 static enum request
 main_request(struct view *view, enum request request, struct line *line)
 {
@@ -4247,8 +4265,6 @@ main_request(struct view *view, enum request request, struct line *line)
 
 	if (request == REQ_ENTER)
 		open_view(view, REQ_VIEW_DIFF, flags);
-	else if (request == REQ_CHERRY_PICK)
-		cherry_pick_commit(line->data);
 	else
 		return request;
 

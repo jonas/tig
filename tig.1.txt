@@ -82,10 +82,6 @@ TIG_LS_REMOTE::
 	Set command for retrieving all repository references. The command
 	should output data in the same format as git-ls-remote(1).
 
-TIG_CHERRY_PICK::
-	Set command for cherry-picking a commit. The command should expect
-	a commit SHA as its final argument.
-
 TIG_DIFF_CMD::
 	The command used for the diff view. By default, git show is used
 	as a backend.
