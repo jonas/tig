@@ -3441,7 +3441,7 @@ status_enter(struct view *view, struct line *line)
 		break;
 
 	default:
-		die("w00t");
+		die("line type %d not handled in switch", line->type);
 	}
 
 	open_view(view, REQ_VIEW_STAGE, OPEN_RELOAD | OPEN_SPLIT);
@@ -3495,7 +3495,7 @@ status_update_file(struct view *view, struct status *status, enum line_type type
 		break;
 
 	default:
-		die("w00t");
+		die("line type %d not handled in switch", type);
 	}
 
 	pipe = popen(cmd, "w");
@@ -3610,7 +3610,7 @@ status_select(struct view *view, struct line *line)
 		break;
 
 	default:
-		die("w00t");
+		die("line type %d not handled in switch", line->type);
 	}
 
 	if (status && status->status == 'U') {
