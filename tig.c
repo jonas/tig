@@ -1219,9 +1219,10 @@ set_option(char *opt, char *value)
 	/* Tokenize */
 	while (argc < ARRAY_SIZE(argv) && (valuelen = strcspn(value, " \t"))) {
 		argv[argc++] = value;
-
 		value += valuelen;
-		if (!*value)
+
+		/* Nothing more to tokenize or last available token. */
+		if (!*value || argc >= ARRAY_SIZE(argv))
 			break;
 
 		*value++ = 0;
