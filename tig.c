@@ -1184,7 +1184,7 @@ option_bind_command(int argc, char *argv[])
 	}
 
 	request = get_request(argv[2]);
-	if (request = REQ_NONE) {
+	if (request == REQ_NONE) {
 		const char *obsolete[] = { "cherry-pick" };
 		size_t namelen = strlen(argv[2]);
 		int i;
