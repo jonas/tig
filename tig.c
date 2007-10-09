@@ -937,7 +937,6 @@ static char *
 get_key(enum request request)
 {
 	static char buf[BUFSIZ];
-	static char key_char[] = "'X'";
 	size_t pos = 0;
 	char *sep = "";
 	int i;
@@ -946,27 +945,12 @@ get_key(enum request request)
 
 	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++) {
 		struct keybinding *keybinding = &default_keybindings[i];
-		char *seq = NULL;
-		int key;
 
 		if (keybinding->request != request)
 			continue;
 
-		for (key = 0; key < ARRAY_SIZE(key_table); key++)
-			if (key_table[key].value == keybinding->alias)
-				seq = key_table[key].name;
-
-		if (seq == NULL &&
-		    keybinding->alias < 127 &&
-		    isprint(keybinding->alias)) {
-			key_char[1] = (char) keybinding->alias;
-			seq = key_char;
-		}
-
-		if (!seq)
-			seq = "'?'";
-
-		if (!string_format_from(buf, &pos, "%s%s", sep, seq))
+		if (!string_format_from(buf, &pos, "%s%s", sep,
+					get_key_name(keybinding->alias)))
 			return "Too many keybindings!";
 		sep = ", ";
 	}
