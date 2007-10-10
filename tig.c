@@ -3533,6 +3533,10 @@ status_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_STATUS_MERGE:
+		if (!status || status->status != 'U') {
+			report("Merging only possible for files with unmerged status ('U').");
+			return REQ_NONE;
+		}
 		open_mergetool(status->name);
 		break;
 
