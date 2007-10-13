@@ -505,29 +505,9 @@ parse_options(int argc, char *argv[])
 		if (opt[0] && opt[0] != '-')
 			break;
 
-		if (!strcmp(opt, "-l")) {
-			opt_request = REQ_VIEW_LOG;
-			continue;
-		}
-
-		if (!strcmp(opt, "-d")) {
-			opt_request = REQ_VIEW_DIFF;
-			continue;
-		}
-
-		if (!strcmp(opt, "-S")) {
-			opt_request = REQ_VIEW_STATUS;
-			continue;
-		}
-
-		if (check_option(opt, 'n', "line-number", OPT_INT, &opt_num_interval)) {
-			opt_line_number = TRUE;
-			continue;
-		}
-
-		if (check_option(opt, 'b', "tab-size", OPT_INT, &opt_tab_size)) {
-			opt_tab_size = MIN(opt_tab_size, TABSIZE);
-			continue;
+		if (!strcmp(opt, "--")) {
+			i++;
+			break;
 		}
 
 		if (check_option(opt, 'v', "version", OPT_NONE)) {
@@ -540,9 +520,29 @@ parse_options(int argc, char *argv[])
 			return FALSE;
 		}
 
-		if (!strcmp(opt, "--")) {
-			i++;
-			break;
+		if (!strcmp(opt, "-S")) {
+			opt_request = REQ_VIEW_STATUS;
+			continue;
+		}
+
+		if (!strcmp(opt, "-l")) {
+			opt_request = REQ_VIEW_LOG;
+			continue;
+		}
+
+		if (!strcmp(opt, "-d")) {
+			opt_request = REQ_VIEW_DIFF;
+			continue;
+		}
+
+		if (check_option(opt, 'n', "line-number", OPT_INT, &opt_num_interval)) {
+			opt_line_number = TRUE;
+			continue;
+		}
+
+		if (check_option(opt, 'b', "tab-size", OPT_INT, &opt_tab_size)) {
+			opt_tab_size = MIN(opt_tab_size, TABSIZE);
+			continue;
 		}
 
 		die("unknown option '%s'\n\n%s", opt, usage);
