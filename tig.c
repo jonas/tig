@@ -105,13 +105,13 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 	"git ls-remote $(git rev-parse --git-dir) 2>/dev/null"
 
 #define TIG_DIFF_CMD \
-	"git show --root --patch-with-stat --find-copies-harder -B -C %s 2>/dev/null"
+	"git show --no-color --root --patch-with-stat --find-copies-harder -B -C %s 2>/dev/null"
 
 #define TIG_LOG_CMD	\
-	"git log --cc --stat -n100 %s 2>/dev/null"
+	"git log --no-color --cc --stat -n100 %s 2>/dev/null"
 
 #define TIG_MAIN_CMD \
-	"git log --topo-order --pretty=raw %s 2>/dev/null"
+	"git log --no-color --topo-order --pretty=raw %s 2>/dev/null"
 
 #define TIG_TREE_CMD	\
 	"git ls-tree %s %s"
@@ -558,7 +558,7 @@ parse_options(int argc, char *argv[])
 		if (opt_request == REQ_VIEW_MAIN)
 			/* XXX: This is vulnerable to the user overriding
 			 * options required for the main view parser. */
-			string_copy(opt_cmd, "git log --pretty=raw");
+			string_copy(opt_cmd, "git log --no-color --pretty=raw");
 		else
 			string_copy(opt_cmd, "git");
 		buf_size = strlen(opt_cmd);
@@ -3261,7 +3261,7 @@ error_out:
 	"git ls-files -z --others --exclude-per-directory=.gitignore"
 
 #define STATUS_DIFF_SHOW_CMD \
-	"git diff --root --patch-with-stat --find-copies-harder -B -C %s -- %s 2>/dev/null"
+	"git diff --no-color --root --patch-with-stat --find-copies-harder -B -C %s -- %s 2>/dev/null"
 
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
