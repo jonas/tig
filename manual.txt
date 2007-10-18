@@ -508,11 +508,6 @@ Online resources:
 
 include::SITES[]
 
-Git porcelains:
-
- - link:http://www.kernel.org/pub/software/scm/git/docs/[git],
- - link:http://www.kernel.org/pub/software/scm/cogito/docs/[Cogito]
-
 Other git repository browsers:
 
  - gitk(1)
