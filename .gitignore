@@ -13,8 +13,7 @@ tig
 tig-*.tar.gz
 tig-*.tar.gz.md5
 tig.1
-tig.1.html
 tig.spec
 tigrc.5
-tigrc.5.html
+*.html
 *.o
