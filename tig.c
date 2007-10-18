@@ -3260,8 +3260,11 @@ error_out:
 #define STATUS_LIST_OTHER_CMD \
 	"git ls-files -z --others --exclude-per-directory=.gitignore"
 
-#define STATUS_DIFF_SHOW_CMD \
-	"git diff --no-color --root --patch-with-stat --find-copies-harder -B -C %s -- %s 2>/dev/null"
+#define STATUS_DIFF_INDEX_SHOW_CMD \
+	"git diff-index --root --patch-with-stat --find-copies-harder -B -C --cached HEAD -- %s 2>/dev/null"
+
+#define STATUS_DIFF_FILES_SHOW_CMD \
+	"git diff-files --root --patch-with-stat --find-copies-harder -B -C -- %s 2>/dev/null"
 
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
@@ -3392,8 +3395,8 @@ status_enter(struct view *view, struct line *line)
 
 	switch (line->type) {
 	case LINE_STAT_STAGED:
-		if (!string_format_from(opt_cmd, &cmdsize, STATUS_DIFF_SHOW_CMD,
-					"--cached", path))
+		if (!string_format_from(opt_cmd, &cmdsize,
+					STATUS_DIFF_INDEX_SHOW_CMD, path))
 			return REQ_QUIT;
 		if (status)
 			info = "Staged changes to %s";
@@ -3402,8 +3405,8 @@ status_enter(struct view *view, struct line *line)
 		break;
 
 	case LINE_STAT_UNSTAGED:
-		if (!string_format_from(opt_cmd, &cmdsize, STATUS_DIFF_SHOW_CMD,
-					"", path))
+		if (!string_format_from(opt_cmd, &cmdsize,
+					STATUS_DIFF_FILES_SHOW_CMD, path))
 			return REQ_QUIT;
 		if (status)
 			info = "Unstaged changes to %s";
