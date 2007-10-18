@@ -153,34 +153,34 @@ manual.toc: manual.txt
 		esac; done | sed 's/\[\[\(.*\)\]\]/\1/' > $@
 
 README.html: README
-	$(ASCIIDOC) -b xhtml11 -d article -a readme $<
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -a readme $<
 
 %.pdf : %.xml
 	$(DOCBOOK2PDF) $<
 
 %.1.html : %.1.txt
-	$(ASCIIDOC) -b xhtml11 -d manpage $<
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
 
 %.1.xml : %.1.txt
-	$(ASCIIDOC) -b docbook -d manpage -aversion=$(VERSION) $<
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage -aversion=$(VERSION) $<
 
 %.1 : %.1.xml
 	$(XMLTO) -m manpage.xsl man $<
 
 %.5.html : %.5.txt
-	$(ASCIIDOC) -b xhtml11 -d manpage $<
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
 
 %.5.xml : %.5.txt
-	$(ASCIIDOC) -b docbook -d manpage -aversion=$(VERSION) $<
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage -aversion=$(VERSION) $<
 
 %.5 : %.5.xml
 	$(XMLTO) -m manpage.xsl man $<
 
 %.html : %.txt
-	$(ASCIIDOC) -b xhtml11 -d article -n $<
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -n $<
 
 %.xml : %.txt
-	$(ASCIIDOC) -b docbook -d article $<
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d article $<
 
 %.html-chunked : %.xml
 	$(XMLTO) html -o $@ $<
