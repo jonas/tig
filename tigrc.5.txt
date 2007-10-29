@@ -44,7 +44,7 @@ Examples:
 --------------------------------------------------------------------------
 	set show-rev-graph = yes	# Show revision graph?
 	set line-number-interval = 5	# Interval between line numbers
-	set tab-size = 8		# Number of spaces pr tab 
+	set tab-size = 8		# Number of spaces per tab
 	set encoding = "UTF-8"		# Commit encoding
 --------------------------------------------------------------------------
 
@@ -348,7 +348,7 @@ Extra diff information emitted by the git diff machinery, such as mode
 changes, rename detection, and similarity.
 
 *diff-oldmode*, *diff-newmode*, *diff-copy-from*, *diff-copy-to*,
-*diff-rename-from*, *diff-rename-to*, *diff-similarity* *diff-dissimilarity*
+*diff-rename-from*, *diff-rename-to*, *diff-similarity*, *diff-dissimilarity*
 *diff-tree*, *diff-index*
 
 Pretty print commit headers::
