@@ -357,7 +357,8 @@ Commit diffs and the revision logs are usually formatted using pretty printed
 headers , unless `--pretty=raw` was given. This includes lines, such as merge
 info, commit ID, and author and committer date.
 
-*pp-author*, *pp-commit*, *pp-merge*, *pp-date*, *pp-adate*, *pp-cdate*
+*pp-author*, *pp-commit*, *pp-merge*, *pp-date*, *pp-adate*, *pp-cdate*,
+*pp-refs*
 
 Raw commit header::
 
@@ -371,6 +372,18 @@ Commit message::
 For now only `Signed-off-by` and `Acked-by` lines are colorized.
 
 *signoff*, *acked*
+
+Tree markup::
+
+Colors for information of the tree view.
+
+*tree-dir*, *tree-file*
+
+Status markup::
+
+Colors used in the status view.
+
+*stat-section*, *stat-none*, *stat-staged*, *stat-unstaged*, *stat-untracked*
 
 --
 
