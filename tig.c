@@ -626,6 +626,7 @@ LINE(MAIN_DELIM,   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REMOTE,  "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
+LINE(MAIN_REVGRAPH,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(TREE_DIR,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(STAT_SECTION, "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
@@ -4085,12 +4086,12 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 	}
 
 	col += AUTHOR_COLS;
-	if (type != LINE_CURSOR)
-		wattrset(view->win, A_NORMAL);
 
 	if (opt_rev_graph && commit->graph_size) {
 		size_t i;
 
+		if (type != LINE_CURSOR)
+			wattrset(view->win, get_line_attr(LINE_MAIN_REVGRAPH));
 		wmove(view->win, lineno, col);
 		/* Using waddch() instead of waddnstr() ensures that
 		 * they'll be rendered correctly for the cursor line. */
@@ -4100,6 +4101,8 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 		waddch(view->win, ' ');
 		col += commit->graph_size + 1;
 	}
+	if (type != LINE_CURSOR)
+		wattrset(view->win, A_NORMAL);
 
 	wmove(view->win, lineno, col);
 
