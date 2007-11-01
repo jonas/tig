@@ -343,6 +343,8 @@ u	Update status of file. In the status view, this allows you to add an \
 M	Resolve unmerged file by launching git-mergetool(1). Note, to work \
 	correctly this might require some initial configuration of your \
 	preferred merge tool. See the manpage of git-mergetool(1).
+','	Move tree view to the parent tree.
+e	Open file in editor.
 -----------------------------------------------------------------------------
 
 [[external-commands]]

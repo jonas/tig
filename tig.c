@@ -352,6 +352,7 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
 	REQ_(STATUS_UPDATE,	"Update file status"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
+	REQ_(TREE_PARENT,	"Switch to parent directory in tree view"), \
 	REQ_(EDIT,		"Open in editor"), \
 	REQ_(NONE,		"Do nothing")
 
@@ -788,6 +789,7 @@ static struct keybinding default_keybindings[] = {
 	{ ':',		REQ_PROMPT },
 	{ 'u',		REQ_STATUS_UPDATE },
 	{ 'M',		REQ_STATUS_MERGE },
+	{ ',',		REQ_TREE_PARENT },
 	{ 'e',		REQ_EDIT },
 
 	/* Using the ncurses SIGWINCH handler. */
@@ -3020,6 +3022,16 @@ tree_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags;
 
+	if (request == REQ_TREE_PARENT) {
+		if (*opt_path) {
+			/* fake 'cd  ..' */
+			request = REQ_ENTER;
+			line = &view->line[1];
+		} else {
+			/* quit view if at top of tree */
+			return REQ_VIEW_CLOSE;
+		}
+	}
 	if (request != REQ_ENTER)
 		return request;
 
