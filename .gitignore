@@ -17,3 +17,5 @@ tig.spec
 tigrc.5
 *.html
 *.o
+*.xml
+*~
