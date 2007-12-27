@@ -65,6 +65,21 @@ Environment Variables
 Several options related to the interface with git can be configured via
 environment options.
 
+[[configuration-files]]
+Configuration Files
+~~~~~~~~~~~~~~~~~~~
+
+Upon startup, tig first reads the system wide configuration file
+(`{sysconfdir}/tigrc` by default) and then proceeds to read the user's
+configuration file (`~/.tigrc` by default). The paths to either of these files
+can be overridden through the following environment variables:
+
+TIGRC_USER::
+	Path of the user configuration file.
+
+TIGRC_SYSTEM::
+	Path of the system wide configuration file.
+
 [[repo-refs]]
 Repository References
 ~~~~~~~~~~~~~~~~~~~~~

@@ -8,6 +8,7 @@ all:
 prefix ?= $(HOME)
 bindir ?= $(prefix)/bin
 datarootdir ?= $(prefix)/share
+sysconfdir ?= $(prefix)/etc
 docdir ?= $(datarootdir)/doc
 mandir ?= $(datarootdir)/man
 # DESTDIR=
@@ -47,11 +48,12 @@ else
 TARNAME	= tig-$(RPM_VERSION)
 endif
 
-override CFLAGS += '-DTIG_VERSION="$(VERSION)"'
+override CPPFLAGS += '-DTIG_VERSION="$(VERSION)"'
+override CPPFLAGS += '-DSYSCONFDIR="$(sysconfdir)"'
 
 AUTORECONF ?= autoreconf
 ASCIIDOC ?= asciidoc
-ASCIIDOC_FLAGS = -aversion=$(VERSION)
+ASCIIDOC_FLAGS = -aversion=$(VERSION) -asysconfdir=$(sysconfdir)
 XMLTO ?= xmlto
 DOCBOOK2PDF ?= docbook2pdf
 

@@ -1271,29 +1271,47 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen)
 	return OK;
 }
 
-static int
-load_options(void)
+static void
+load_option_file(const char *path)
 {
-	char *home = getenv("HOME");
-	char buf[SIZEOF_STR];
 	FILE *file;
+
+	/* It's ok that the file doesn't exist. */
+	file = fopen(path, "r");
+	if (!file)
+		return;
 
 	config_lineno = 0;
 	config_errors = FALSE;
 
-	add_builtin_run_requests();
-
-	if (!home || !string_format(buf, "%s/.tigrc", home))
-		return ERR;
-
-	/* It's ok that the file doesn't exist. */
-	file = fopen(buf, "r");
-	if (!file)
-		return OK;
-
 	if (read_properties(file, " \t", read_option) == ERR ||
 	    config_errors == TRUE)
-		fprintf(stderr, "Errors while loading %s.\n", buf);
+		fprintf(stderr, "Errors while loading %s.\n", path);
+}
+
+static int
+load_options(void)
+{
+	char *home = getenv("HOME");
+	char *tigrc_user = getenv("TIGRC_USER");
+	char *tigrc_system = getenv("TIGRC_SYSTEM");
+	char buf[SIZEOF_STR];
+
+	add_builtin_run_requests();
+
+	if (!tigrc_system) {
+		if (!string_format(buf, "%s/tigrc", SYSCONFDIR))
+			return ERR;
+		tigrc_system = buf;
+	}
+	load_option_file(tigrc_system);
+
+	if (!tigrc_user) {
+		if (!home || !string_format(buf, "%s/.tigrc", home))
+			return ERR;
+		tigrc_user = buf;
+	}
+	load_option_file(tigrc_user);
 
 	return OK;
 }

@@ -119,6 +119,13 @@ ENVIRONMENT VARIABLES
 In addition to environment variables used by git (e.g. GIT_DIR), tig defines
 the following:
 
+TIGRC_USER::
+	Path of the user configuration file (defaults to `~/.tigrc`).
+
+TIGRC_SYSTEM::
+	Path of the system wide configuration file (defaults to
+	`{sysconfdir}/tigrc`).
+
 TIG_LS_REMOTE::
 	Set command for retrieving all repository references. The command
 	should output data in the same format as git-ls-remote(1).
@@ -152,6 +159,9 @@ FILES
 -----
 '~/.tigrc'::
 	User configuration file. See gitlink:tigrc[5] for examples.
+
+'{sysconfdir}/tigrc'::
+	System wide configuration file.
 
 '$GIT_DIR/config'::
 	Repository config file. Read on start-up with the help of
