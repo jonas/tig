@@ -1456,6 +1456,50 @@ static struct view views[] = {
 #define view_is_displayed(view) \
 	(view == display[0] || view == display[1])
 
+static int
+draw_text(struct view *view, const char *string, int max_len, int col,
+	  bool use_tilde, int tilde_attr)
+{
+	int n;
+
+	n = 0;
+	if (max_len > 0) {
+		int len;
+		int trimmed = FALSE;
+
+		if (opt_utf8) {
+			int pad = 0;
+
+			len = utf8_length(string, max_len, &pad, &trimmed);
+			if (trimmed && use_tilde) {
+				max_len -= 1;
+				len = utf8_length(
+					string, max_len, &pad, &trimmed);
+			}
+			n = len;
+		} else {
+			len = strlen(string);
+			if (len > max_len) {
+				if (use_tilde) {
+					max_len -= 1;
+				}
+				len = max_len;
+				trimmed = TRUE;
+			}
+			n = len;
+		}
+		waddnstr(view->win, string, n);
+		if (trimmed && use_tilde) {
+			if (tilde_attr != -1)
+				wattrset(view->win, tilde_attr);
+			waddch(view->win, '~');
+			n++;
+		}
+	}
+
+	return n;
+}
+
 static bool
 draw_view_line(struct view *view, unsigned int lineno)
 {
@@ -4120,53 +4164,56 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 	enum line_type type;
 	int col = 0;
 	size_t timelen;
-	size_t authorlen;
-	int trimmed = 1;
+	int tilde_attr;
+	int space;
 
 	if (!*commit->author)
 		return FALSE;
 
+	space = view->width;
 	wmove(view->win, lineno, col);
 
 	if (selected) {
 		type = LINE_CURSOR;
 		wattrset(view->win, get_line_attr(type));
 		wchgat(view->win, -1, 0, type, NULL);
-
+		tilde_attr = -1;
 	} else {
 		type = LINE_MAIN_COMMIT;
 		wattrset(view->win, get_line_attr(LINE_MAIN_DATE));
+		tilde_attr = get_line_attr(LINE_MAIN_DELIM);
 	}
 
-	timelen = strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time);
-	waddnstr(view->win, buf, timelen);
-	waddstr(view->win, " ");
+	{
+		int n;
 
-	col += DATE_COLS;
-	wmove(view->win, lineno, col);
+		timelen = strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time);
+		n = draw_text(
+			view, buf, view->width - col, col, FALSE, tilde_attr);
+		draw_text(
+			view, " ", view->width - col - n, col + n, FALSE,
+			tilde_attr);
+
+		col += DATE_COLS;
+		wmove(view->win, lineno, col);
+		if (col >= view->width)
+			return TRUE;
+	}
 	if (type != LINE_CURSOR)
 		wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
 
-	if (opt_utf8) {
-		authorlen = utf8_length(commit->author, AUTHOR_COLS - 2, &col, &trimmed);
-	} else {
-		authorlen = strlen(commit->author);
-		if (authorlen > AUTHOR_COLS - 2) {
-			authorlen = AUTHOR_COLS - 2;
-			trimmed = 1;
-		}
-	}
+	{
+		int max_len;
 
-	if (trimmed) {
-		waddnstr(view->win, commit->author, authorlen);
-		if (type != LINE_CURSOR)
-			wattrset(view->win, get_line_attr(LINE_MAIN_DELIM));
-		waddch(view->win, '~');
-	} else {
-		waddstr(view->win, commit->author);
+		max_len = view->width - col;
+		if (max_len > AUTHOR_COLS - 1)
+			max_len = AUTHOR_COLS - 1;
+		draw_text(
+			view, commit->author, max_len, col, TRUE, tilde_attr);
+		col += AUTHOR_COLS;
+		if (col >= view->width)
+			return TRUE;
 	}
-
-	col += AUTHOR_COLS;
 
 	if (opt_rev_graph && commit->graph_size) {
 		size_t i;
@@ -4181,6 +4228,8 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 
 		waddch(view->win, ' ');
 		col += commit->graph_size + 1;
+		if (col >= view->width)
+			return TRUE;
 	}
 	if (type != LINE_CURSOR)
 		wattrset(view->win, A_NORMAL);
@@ -4199,27 +4248,31 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 				wattrset(view->win, get_line_attr(LINE_MAIN_REMOTE));
 			else
 				wattrset(view->win, get_line_attr(LINE_MAIN_REF));
-			waddstr(view->win, "[");
-			waddstr(view->win, commit->refs[i]->name);
-			waddstr(view->win, "]");
+
+			col += draw_text(
+				view, "[", view->width - col, col, TRUE,
+				tilde_attr);
+			col += draw_text(
+				view, commit->refs[i]->name, view->width - col,
+				col, TRUE, tilde_attr);
+			col += draw_text(
+				view, "]", view->width - col, col, TRUE,
+				tilde_attr);
 			if (type != LINE_CURSOR)
 				wattrset(view->win, A_NORMAL);
-			waddstr(view->win, " ");
-			col += strlen(commit->refs[i]->name) + STRING_SIZE("[] ");
+			col += draw_text(
+				view, " ", view->width - col, col, TRUE,
+				tilde_attr);
+			if (col >= view->width)
+				return TRUE;
 		} while (commit->refs[i++]->next);
 	}
 
 	if (type != LINE_CURSOR)
 		wattrset(view->win, get_line_attr(type));
 
-	{
-		int titlelen = strlen(commit->title);
-
-		if (col + titlelen > view->width)
-			titlelen = view->width - col;
-
-		waddnstr(view->win, commit->title, titlelen);
-	}
+	col += draw_text(
+		view, commit->title, view->width - col, col, TRUE, tilde_attr);
 
 	return TRUE;
 }
