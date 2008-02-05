@@ -7,9 +7,9 @@ all:
 
 prefix ?= $(HOME)
 bindir ?= $(prefix)/bin
-mandir ?= $(prefix)/man
 datarootdir ?= $(prefix)/share
 docdir ?= $(datarootdir)/doc
+mandir ?= $(datarootdir)/man
 # DESTDIR=
 
 # Get version either via git or from VERSION file. Allow either
