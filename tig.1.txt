@@ -1,4 +1,4 @@
-TIG(1)
+tig(1)
 ======
 
 NAME
@@ -55,8 +55,10 @@ OPTIONS
 \--::
 	End of tig(1) options. Useful when specifying command
 	options for the main view. Example:
-
-		$ tig -- --since=1.month
++
+----------------------------------------------------------------------------
+$ tig -- --since=1.month
+-----------------------------------------------------------------------------
 
 log::
 	Open log view using the given git log options.
@@ -73,8 +75,10 @@ show::
 	encountered. All options including this one will be
 	passed to git log when loading the main view.
 	This makes it possible to say:
-
-	$ tig tag-1.0..HEAD
++
+-----------------------------------------------------------------------------
+$ tig tag-1.0..HEAD
+-----------------------------------------------------------------------------
 
 EXAMPLES
 --------
@@ -111,6 +115,10 @@ $ tig -- --after "2004-01-01" --before="2006-05-16" -- README
 
 ENVIRONMENT VARIABLES
 ---------------------
+
+In addition to environment variables used by git (e.g. GIT_DIR), tig defines
+the following:
+
 TIG_LS_REMOTE::
 	Set command for retrieving all repository references. The command
 	should output data in the same format as git-ls-remote(1).
@@ -145,9 +153,9 @@ FILES
 '~/.tigrc'::
 	User configuration file. See gitlink:tigrc[5] for examples.
 
-'.git/config'::
+'$GIT_DIR/config'::
 	Repository config file. Read on start-up with the help of
-	git-repo-config(1).
+	git-config(1).
 
 include::BUGS[]
 

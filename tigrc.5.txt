@@ -10,9 +10,9 @@ SYNOPSIS
 --------
 [verse]
 .............................................................................
-*set*   variable *=* value
-*bind*  keymap key action
-*color* area fgcolor bgcolor [attributes]
+*set*   'variable' *=* 'value'
+*bind*  'keymap' 'key' 'action'
+*color* 'area' 'fgcolor' 'bgcolor' '[attributes]'
 .............................................................................
 
 
@@ -36,16 +36,16 @@ is:
 
 [verse]
 ..............................................................................
-	*set* variables *=* value
+*set* variables *=* value
 ..............................................................................
 
 Examples:
 
 --------------------------------------------------------------------------
-	set show-rev-graph = yes	# Show revision graph?
-	set line-number-interval = 5	# Interval between line numbers
-	set tab-size = 8		# Number of spaces per tab
-	set encoding = "UTF-8"		# Commit encoding
+set show-rev-graph = yes	# Show revision graph?
+set line-number-interval = 5	# Interval between line numbers
+set tab-size = 8		# Number of spaces per tab
+set encoding = "UTF-8"		# Commit encoding
 --------------------------------------------------------------------------
 
 The type of variables are either bool, int, and string.
@@ -97,25 +97,25 @@ key map. The syntax is:
 
 [verse]
 ..............................................................................
-	*bind* 'keymap' 'key' 'action'
+*bind* 'keymap' 'key' 'action'
 ..............................................................................
 
 Examples:
 
 --------------------------------------------------------------------------
-	# A few keybindings
-	bind main w scroll-line-up
-	bind main s scroll-line-down
-	bind main space enter
-	bind diff a previous
-	bind diff d next
-	bind diff b move-first-line
-	# 'unbind' the default quit key binding
-	bind main Q none
-	# An external command to update from upstream
-	bind generic F !git fetch
-	# Cherry-pick current commit unto current branch
-	bind generic C !git cherry-pick %(commit)
+# A few keybindings
+bind main w scroll-line-up
+bind main s scroll-line-down
+bind main space enter
+bind diff a previous
+bind diff d next
+bind diff b move-first-line
+# 'unbind' the default quit key binding
+bind main Q none
+# An external command to update from upstream
+bind generic F !git fetch
+# Cherry-pick current commit unto current branch
+bind generic C !git cherry-pick %(commit)
 --------------------------------------------------------------------------
 
 Keys are mapped by first searching the keybindings for the current view, then
@@ -261,21 +261,21 @@ as the last parameter. The syntax is:
 
 [verse]
 ..............................................................................
-	*color* 'area' 'fgcolor' 'bgcolor' '[attributes]'
+*color* 'area' 'fgcolor' 'bgcolor' '[attributes]'
 ..............................................................................
 
 Examples:
 
 ------------------------------------------------------------------------------
-	# Diff colors
-	color diff-header	yellow	default
-	color diff-index	blue	default
-	color diff-chunk	magenta	default
-	# A strange looking cursor line
-	color cursor		red	default underline
-	# UI colors
-	color title-blur	white	blue
-	color title-focus	white	blue	bold
+# Diff colors
+color diff-header	yellow	default
+color diff-index	blue	default
+color diff-chunk	magenta	default
+# A strange looking cursor line
+color cursor		red	default underline
+# UI colors
+color title-blur	white	blue
+color title-focus	white	blue	bold
 ------------------------------------------------------------------------------
 
 Area names::
