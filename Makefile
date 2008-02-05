@@ -165,7 +165,7 @@ README.html: README
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage -aversion=$(VERSION) $<
 
 %.1 : %.1.xml
-	$(XMLTO) -m manpage.xsl man $<
+	$(XMLTO) man $<
 
 %.5.html : %.5.txt
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
@@ -174,7 +174,7 @@ README.html: README
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage -aversion=$(VERSION) $<
 
 %.5 : %.5.xml
-	$(XMLTO) -m manpage.xsl man $<
+	$(XMLTO) man $<
 
 %.html : %.txt
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -n $<
