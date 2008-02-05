@@ -51,6 +51,7 @@ override CFLAGS += '-DTIG_VERSION="$(VERSION)"'
 
 AUTORECONF ?= autoreconf
 ASCIIDOC ?= asciidoc
+ASCIIDOC_FLAGS = -aversion=$(VERSION)
 XMLTO ?= xmlto
 DOCBOOK2PDF ?= docbook2pdf
 
@@ -152,35 +153,32 @@ manual.toc: manual.txt
 		*)	   ref="$$ref, $$line" ;; \
 		esac; done | sed 's/\[\[\(.*\)\]\]/\1/' > $@
 
-README.html: README
+README.html: README asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -a readme $<
 
-%.pdf : %.xml
-	$(DOCBOOK2PDF) $<
-
-%.1.html : %.1.txt
+%.1.html : %.1.txt asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
 
-%.1.xml : %.1.txt
-	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage -aversion=$(VERSION) $<
+%.1.xml : %.1.txt asciidoc.conf
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
-%.1 : %.1.xml
-	$(XMLTO) man $<
-
-%.5.html : %.5.txt
+%.5.html : %.5.txt asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
 
-%.5.xml : %.5.txt
-	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage -aversion=$(VERSION) $<
+%.5.xml : %.5.txt asciidoc.conf
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
-%.5 : %.5.xml
-	$(XMLTO) man $<
-
-%.html : %.txt
+%.html : %.txt asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -n $<
 
-%.xml : %.txt
+%.xml : %.txt asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d article $<
+
+% : %.xml
+	$(XMLTO) man $<
 
 %.html-chunked : %.xml
 	$(XMLTO) html -o $@ $<
+
+%.pdf : %.xml
+	$(DOCBOOK2PDF) $<
