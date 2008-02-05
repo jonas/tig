@@ -31,5 +31,15 @@ ncurses				Be sure to also have development files \
 iconv				If iconv is not provided by the c library \
 				you need to change the Makefile to link it \
 				into the binary.
-asciidoc (>= 7.0), xmlto	For building documentation. (Optional)
+-------------------------------------------------------------------------------
+
+The following optional tools and packages are needed for building
+documentation:
+
+`-------------------------------`----------------------------------------------
+asciidoc (>= 8.0)		Generates HTML and (DocBook) XML from text.
+xmlto				Generates manpages and chunked HTML from XML.
+DocBook XSL (>= 1.72.0)		Used by xmlto for building manpages.
+DocBook (DSSL/Jade) tools	Generates PDF from XML. \
+				Also known as docbook-utils.
 -------------------------------------------------------------------------------
