@@ -105,7 +105,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 	"git ls-remote $(git rev-parse --git-dir) 2>/dev/null"
 
 #define TIG_DIFF_CMD \
-	"git show --no-color --root --patch-with-stat --find-copies-harder -B -C %s 2>/dev/null"
+	"git show --no-color --root --patch-with-stat --find-copies-harder -C %s 2>/dev/null"
 
 #define TIG_LOG_CMD	\
 	"git log --no-color --cc --stat -n100 %s 2>/dev/null"
@@ -3274,10 +3274,10 @@ error_out:
 	"git ls-files -z --others --exclude-per-directory=.gitignore"
 
 #define STATUS_DIFF_INDEX_SHOW_CMD \
-	"git diff-index --root --patch-with-stat --find-copies-harder -B -C --cached HEAD -- %s 2>/dev/null"
+	"git diff-index --root --patch-with-stat --find-copies-harder -C --cached HEAD -- %s 2>/dev/null"
 
 #define STATUS_DIFF_FILES_SHOW_CMD \
-	"git diff-files --root --patch-with-stat --find-copies-harder -B -C -- %s 2>/dev/null"
+	"git diff-files --root --patch-with-stat --find-copies-harder -C -- %s 2>/dev/null"
 
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
