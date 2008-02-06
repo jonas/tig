@@ -72,6 +72,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define REVGRAPH_MERGE	'M'
 #define REVGRAPH_BRANCH	'+'
 #define REVGRAPH_COMMIT	'*'
+#define REVGRAPH_BOUND	'^'
 #define REVGRAPH_LINE	'|'
 
 #define SIZEOF_REVGRAPH	19	/* Size of revision ancestry graphics. */
@@ -111,7 +112,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 	"git log --no-color --cc --stat -n100 %s 2>/dev/null"
 
 #define TIG_MAIN_CMD \
-	"git log --no-color --topo-order --pretty=raw %s 2>/dev/null"
+	"git log --no-color --topo-order --boundary --pretty=raw %s 2>/dev/null"
 
 #define TIG_TREE_CMD	\
 	"git ls-tree %s %s"
@@ -559,7 +560,7 @@ parse_options(int argc, char *argv[])
 		if (opt_request == REQ_VIEW_MAIN)
 			/* XXX: This is vulnerable to the user overriding
 			 * options required for the main view parser. */
-			string_copy(opt_cmd, "git log --no-color --pretty=raw");
+			string_copy(opt_cmd, "git log --no-color --pretty=raw --boundary");
 		else
 			string_copy(opt_cmd, "git");
 		buf_size = strlen(opt_cmd);
@@ -3860,6 +3861,7 @@ struct rev_graph {
 	size_t size;
 	struct commit *commit;
 	size_t pos;
+	unsigned int boundary:1;
 };
 
 /* Parents of the commit being visualized. */
@@ -3932,7 +3934,9 @@ get_rev_graph_symbol(struct rev_graph *graph)
 {
 	chtype symbol;
 
-	if (graph->parents->size == 0)
+	if (graph->boundary)
+		symbol = REVGRAPH_BOUND;
+	else if (graph->parents->size == 0)
 		symbol = REVGRAPH_INIT;
 	else if (graph_parent_is_merge(graph))
 		symbol = REVGRAPH_MERGE;
@@ -4014,7 +4018,7 @@ prepare_rev_graph(struct rev_graph *graph)
 	}
 
 	/* Interleave the new revision parent(s). */
-	for (i = 0; i < graph->parents->size; i++)
+	for (i = 0; !graph->boundary && i < graph->parents->size; i++)
 		push_rev_graph(graph->next, graph->parents->rev[i]);
 
 	/* Lastly, put any remaining revisions. */
@@ -4174,7 +4178,13 @@ main_read(struct view *view, char *line)
 		if (!commit)
 			return FALSE;
 
-		string_copy_rev(commit->id, line + STRING_SIZE("commit "));
+		line += STRING_SIZE("commit ");
+		if (*line == '-') {
+			graph->boundary = 1;
+			line++;
+		}
+
+		string_copy_rev(commit->id, line);
 		commit->refs = get_refs(commit->id);
 		graph->commit = commit;
 		add_line_data(view, commit, LINE_MAIN_COMMIT);
