@@ -43,7 +43,7 @@ __tigdir ()
 	fi
 }
 
-tigcomp ()
+_tigcomp ()
 {
 	local all c s=$'\n' IFS=' '$'\t'$'\n'
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -120,7 +120,7 @@ __tig_complete_file ()
 			-- "$cur"))
 		;;
 	*)
-		tigcomp "$(__tig_refs)"
+		_tigcomp "$(__tig_refs)"
 		;;
 	esac
 }
@@ -132,39 +132,34 @@ __tig_complete_revlist ()
 	*...*)
 		pfx="${cur%...*}..."
 		cur="${cur#*...}"
-		tigcomp "$(__tig_refs)" "$pfx" "$cur"
+		_tigcomp "$(__tig_refs)" "$pfx" "$cur"
 		;;
 	*..*)
 		pfx="${cur%..*}.."
 		cur="${cur#*..}"
-		tigcomp "$(__tig_refs)" "$pfx" "$cur"
+		_tigcomp "$(__tig_refs)" "$pfx" "$cur"
 		;;
 	*.)
-		tigcomp "$cur."
+		_tigcomp "$cur."
 		;;
 	*)
-		tigcomp "$(__tig_refs)"
+		_tigcomp "$(__tig_refs)"
 		;;
 	esac
 }
 
-_tig_diff ()
-{
-	__tig_complete_file
-}
-
-_tig_log ()
+_tig_options ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--pretty=*)
-		tigcomp "
+		_tigcomp "
 			oneline short medium full fuller email raw
 			" "" "${cur##--pretty=}"
 		return
 		;;
 	--*)
-		tigcomp "
+		_tigcomp "
 			--max-count= --max-age= --since= --after=
 			--min-age= --before= --until=
 			--root --not --topo-order --date-order
@@ -175,7 +170,12 @@ _tig_log ()
 			--all-match
 			--pretty= --name-status --name-only
 			--not --all
+			--help --version
 			"
+		return
+		;;
+	-*)
+		_tigcomp "-v -h"
 		return
 		;;
 	esac
@@ -187,13 +187,13 @@ _tig_show ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--pretty=*)
-		tigcomp "
+		_tigcomp "
 			oneline short medium full fuller email raw
 			" "" "${cur##--pretty=}"
 		return
 		;;
 	--*)
-		tigcomp "--pretty="
+		_tigcomp "--pretty="
 		return
 		;;
 	esac
@@ -217,20 +217,16 @@ _tig ()
 	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
 		case "${COMP_WORDS[COMP_CWORD]}" in
 		--*=*) COMPREPLY=() ;;
-		-*)   tigcomp "
-				--line-number= --tab-size= --version --help
-				-b -d -h -l -S -v
-				" ;;
-		*)    tigcomp "log diff show $(__tig_refs)" ;;
+		-*)   _tig_options ;;
+		*)    _tigcomp "status show $(__tig_refs)" ;;
 		esac
 		return
 	fi
 
 	case "$command" in
-	diff)   _tig_diff ;;
 	show)   _tig_show ;;
-	log)    _tig_log ;;
-	*)	tigcomp "
+	status) ;;
+	*)	_tigcomp "
 			$(__tig_complete_file)
 			$(__tig_refs)
 		" ;;

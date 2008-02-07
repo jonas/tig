@@ -51,6 +51,7 @@
 #endif
 
 static void __NORETURN die(const char *err, ...);
+static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
 static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, size_t, char *, size_t));
 static void set_nonblocking_input(bool loading);
@@ -408,22 +409,14 @@ get_request(const char *name)
 static const char usage[] =
 "tig " TIG_VERSION " (" __DATE__ ")\n"
 "\n"
-"Usage: tig [options]\n"
-"   or: tig [options] [--] [git log options]\n"
-"   or: tig [options] log  [git log options]\n"
-"   or: tig [options] diff [git diff options]\n"
-"   or: tig [options] show [git show options]\n"
-"   or: tig [options] <    [git command output]\n"
+"Usage: tig        [options] [revs] [--] [paths]\n"
+"   or: tig show   [options] [revs] [--] [paths]\n"
+"   or: tig status\n"
+"   or: tig <      [git command output]\n"
 "\n"
 "Options:\n"
-"  -l                          Start up in log view\n"
-"  -d                          Start up in diff view\n"
-"  -S                          Start up in status view\n"
-"  -n[I], --line-number[=I]    Show line numbers with given interval\n"
-"  -b[N], --tab-size[=N]       Set number of spaces for tab expansion\n"
-"  --                          Mark end of tig options\n"
-"  -v, --version               Show version and exit\n"
-"  -h, --help                  Show help message and exit\n";
+"  -v, --version   Show version and exit\n"
+"  -h, --help      Show help message and exit\n";
 
 /* Option and state variables. */
 static bool opt_line_number		= FALSE;
@@ -491,16 +484,32 @@ check_option(char *opt, char short_name, char *name, enum option_type type, ...)
 static bool
 parse_options(int argc, char *argv[])
 {
+	char *altargv[1024];
+	int altargc = 0;
+	char *subcommand = NULL;
 	int i;
 
 	for (i = 1; i < argc; i++) {
 		char *opt = argv[i];
 
 		if (!strcmp(opt, "log") ||
-		    !strcmp(opt, "diff") ||
-		    !strcmp(opt, "show")) {
+		    !strcmp(opt, "diff")) {
+			subcommand = opt;
 			opt_request = opt[0] == 'l'
 				    ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
+			warn("`tig %s' has been deprecated", opt);
+			break;
+		}
+
+		if (!strcmp(opt, "show")) {
+			subcommand = opt;
+			opt_request = REQ_VIEW_DIFF;
+			break;
+		}
+
+		if (!strcmp(opt, "status")) {
+			subcommand = opt;
+			opt_request = REQ_VIEW_STATUS;
 			break;
 		}
 
@@ -523,38 +532,43 @@ parse_options(int argc, char *argv[])
 		}
 
 		if (!strcmp(opt, "-S")) {
+			warn("`%s' has been deprecated; use `tig status' instead", opt);
 			opt_request = REQ_VIEW_STATUS;
 			continue;
 		}
 
 		if (!strcmp(opt, "-l")) {
 			opt_request = REQ_VIEW_LOG;
-			continue;
-		}
-
-		if (!strcmp(opt, "-d")) {
+		} else if (!strcmp(opt, "-d")) {
 			opt_request = REQ_VIEW_DIFF;
-			continue;
-		}
-
-		if (check_option(opt, 'n', "line-number", OPT_INT, &opt_num_interval)) {
+		} else if (check_option(opt, 'n', "line-number", OPT_INT, &opt_num_interval)) {
 			opt_line_number = TRUE;
-			continue;
-		}
-
-		if (check_option(opt, 'b', "tab-size", OPT_INT, &opt_tab_size)) {
+		} else if (check_option(opt, 'b', "tab-size", OPT_INT, &opt_tab_size)) {
 			opt_tab_size = MIN(opt_tab_size, TABSIZE);
+		} else {
+			if (altargc >= ARRAY_SIZE(altargv))
+				die("maximum number of arguments exceeded");
+			altargv[altargc++] = opt;
 			continue;
 		}
 
-		die("unknown option '%s'\n\n%s", opt, usage);
+		warn("`%s' has been deprecated", opt);
 	}
+
+	/* Check that no 'alt' arguments occured before a subcommand. */
+	if (subcommand && i < argc && altargc > 0)
+		die("unknown arguments before `%s'", argv[i]);
 
 	if (!isatty(STDIN_FILENO)) {
 		opt_request = REQ_VIEW_PAGER;
 		opt_pipe = stdin;
 
-	} else if (i < argc) {
+	} else if (opt_request == REQ_VIEW_STATUS) {
+		if (argc - i > 1)
+			warn("ignoring arguments after `%s'", argv[i]);
+
+	} else if (i < argc || altargc > 0) {
+		int alti = 0;
 		size_t buf_size;
 
 		if (opt_request == REQ_VIEW_MAIN)
@@ -564,6 +578,11 @@ parse_options(int argc, char *argv[])
 		else
 			string_copy(opt_cmd, "git");
 		buf_size = strlen(opt_cmd);
+
+		while (buf_size < sizeof(opt_cmd) && alti < altargc) {
+			opt_cmd[buf_size++] = ' ';
+			buf_size = sq_quote(opt_cmd, buf_size, altargv[alti++]);
+		}
 
 		while (buf_size < sizeof(opt_cmd) && i < argc) {
 			opt_cmd[buf_size++] = ' ';
@@ -4927,6 +4946,18 @@ die(const char *err, ...)
 	va_end(args);
 
 	exit(1);
+}
+
+static void
+warn(const char *msg, ...)
+{
+	va_list args;
+
+	va_start(args, msg);
+	fputs("tig warning: ", stderr);
+	vfprintf(stderr, msg, args);
+	fputs("\n", stderr);
+	va_end(args);
 }
 
 int

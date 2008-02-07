@@ -8,12 +8,10 @@ tig - text-mode interface for git
 SYNOPSIS
 --------
 [verse]
-tig [options]
-tig [options] [--] [git options]
-tig [options] log  [git options]
-tig [options] diff [git options]
-tig [options] show [git options]
-tig [options] <    [git command output]
+tig        [options] [revisions] [--] [paths]
+tig show   [options] [revisions] [--] [paths]
+tig status
+tig <      [git command output]
 
 DESCRIPTION
 -----------
@@ -30,21 +28,18 @@ to colorize it.
 OPTIONS
 -------
 
--l::
-	Start up in log view using the internal log command.
+Command line options recognized by tig include all valid git-log(1) and
+git-diff(1) options, as well as the following subcommands and tig specific
+options. The first command line parameter not starting with "-" is interpreted
+as being either a revision specification or a path and will end the option
+parsing. All following options will be passed untouched to the underlying git
+command.
 
--d::
-	Start up in diff view using the internal diff command.
+show::
+	Open diff view using the given git show options.
 
--S::
+status::
 	Start up in status view.
-
--n[INTERVAL], --line-number[=INTERVAL]::
-	Prefix line numbers in log and diff view.
-	Optionally, with interval different than each line.
-
--b[NSPACES], --tab-size[=NSPACES]::
-	Set the number of spaces tabs should be expanded to.
 
 -v, --version::
 	Show version and exit.
@@ -53,32 +48,9 @@ OPTIONS
 	Show help message and exit.
 
 \--::
-	End of tig(1) options. Useful when specifying command
-	options for the main view. Example:
-+
-----------------------------------------------------------------------------
-$ tig -- --since=1.month
------------------------------------------------------------------------------
-
-log::
-	Open log view using the given git log options.
-
-diff::
-	Open diff view using the given git diff options.
-
-show::
-	Open diff view using the given git show options.
-
-[git options]::
-	tig(1) will stop the option parsing when the first
-	command line parameter not starting with "-" is
-	encountered. All options including this one will be
-	passed to git log when loading the main view.
-	This makes it possible to say:
-+
------------------------------------------------------------------------------
-$ tig tag-1.0..HEAD
------------------------------------------------------------------------------
+	End of tig options. This ends tig option parsing, and passes any
+	following options untouched to the underlying git command. Kept for
+	compatibility and will be deprecated in a future version.
 
 EXAMPLES
 --------
@@ -95,7 +67,7 @@ $ tig test master
 
 Display all branches:
 -----------------------------------------------------------------------------
-$ tig -- --all
+$ tig --all
 -----------------------------------------------------------------------------
 
 Display differences between two branches:
@@ -108,9 +80,14 @@ Display changes for a single file:
 $ tig -- README
 -----------------------------------------------------------------------------
 
+Display contents of the README file in a specific revision:
+-----------------------------------------------------------------------------
+$ tig show tig-0.8:README
+-----------------------------------------------------------------------------
+
 Display revisions between two dates for a specific file:
 -----------------------------------------------------------------------------
-$ tig -- --after "2004-01-01" --before="2006-05-16" -- README
+$ tig --after="2004-01-01" --before="2006-05-16" -- README
 -----------------------------------------------------------------------------
 
 ENVIRONMENT VARIABLES

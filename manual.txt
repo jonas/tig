@@ -47,11 +47,11 @@ NOTE: If you specify options for the main view, you should not use the
 `--pretty` option as this option will be set automatically to the format
 expected by the main view.
 
-Example on how to open the log view and show both author and committer
+Example on how to view a commit and show both author and committer
 information:
 
 -----------------------------------------------------------------------------
-$ tig log --pretty=fuller
+$ tig show --pretty=fuller
 -----------------------------------------------------------------------------
 
 See the <<refspec, "Specifying revisions">> section below for an introduction
@@ -399,16 +399,16 @@ If you are interested only in those revisions that made changes to a specific
 file (or even several files) list the files like this:
 
 -----------------------------------------------------------------------------
-$ tig log Makefile README
+$ tig Makefile README
 -----------------------------------------------------------------------------
 
-To avoid ambiguity with repository references such as tag name, be sure to
-separate file names from other git options using "\--". So if you have a file
-named 'master' it will clash with the reference named 'master', and thus you
-will have to use:
+To avoid ambiguity with tig's subcommands or repository references such as tag
+name, be sure to separate file names from other git options using "\--". So if
+you have a file named 'status' it will clash with the 'status' subcommand, and
+thus you will have to use:
 
 -----------------------------------------------------------------------------
-$ tig log -- master
+$ tig -- status
 -----------------------------------------------------------------------------
 
 NOTE: For the main view, avoiding ambiguity will in some cases require you to
@@ -427,7 +427,7 @@ If you are only interested in changed that happened between two dates you can
 use:
 
 -----------------------------------------------------------------------------
-$ tig -- --after="May 5th" --before="2006-05-16 15:44"
+$ tig --after="May 5th" --before="2006-05-16 15:44"
 -----------------------------------------------------------------------------
 
 NOTE: If you want to avoid having to quote dates containing spaces you can use
@@ -441,7 +441,7 @@ Alternatively, commits can be limited to a specific range, such as "all
 commits between 'tag-1.0' and 'tag-2.0'". For example:
 
 -----------------------------------------------------------------------------
-$ tig log tag-1.0..tag-2.0
+$ tig tag-1.0..tag-2.0
 -----------------------------------------------------------------------------
 
 This way of commit limiting makes it trivial to only browse the commits which
@@ -449,7 +449,7 @@ haven't been pushed to a remote branch. Assuming 'origin' is your upstream
 remote branch, using:
 
 -----------------------------------------------------------------------------
-$ tig log origin..HEAD
+$ tig origin..HEAD
 -----------------------------------------------------------------------------
 
 will list what will be pushed to the remote branch. Optionally, the ending
@@ -468,7 +468,7 @@ If you prefer to specify which commit to preview in this way use the
 following:
 
 -----------------------------------------------------------------------------
-$ tig log tag-2.0 ^tag-1.0
+$ tig tag-2.0 ^tag-1.0
 -----------------------------------------------------------------------------
 
 You can think of '^' as a negation operator. Using this alternate syntax, it
@@ -483,7 +483,7 @@ say "show at most 20 commits from within the last month that changed files
 under the Documentation/ directory."
 
 -----------------------------------------------------------------------------
-$ tig -- --since=1.month -n20 -- Documentation/
+$ tig --since=1.month -n20 -- Documentation/
 -----------------------------------------------------------------------------
 
 [[refspec-all]]
@@ -496,7 +496,7 @@ repository change a particular file within the last week". This can be
 accomplished using:
 
 -----------------------------------------------------------------------------
-$ tig -- --all --since=1.week -- Makefile
+$ tig --all --since=1.week -- Makefile
 -----------------------------------------------------------------------------
 
 include::BUGS[]
