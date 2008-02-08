@@ -110,7 +110,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 	"git ls-remote $(git rev-parse --git-dir) 2>/dev/null"
 
 #define TIG_DIFF_CMD \
-	"git show --no-color --root --patch-with-stat --find-copies-harder -C %s 2>/dev/null"
+	"git show --pretty=fuller --no-color --root --patch-with-stat --find-copies-harder -C %s 2>/dev/null"
 
 #define TIG_LOG_CMD	\
 	"git log --no-color --cc --stat -n100 %s 2>/dev/null"
