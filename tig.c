@@ -2687,7 +2687,7 @@ static void
 add_pager_refs(struct view *view, struct line *line)
 {
 	char buf[SIZEOF_STR];
-	char *commit_id = line->data + STRING_SIZE("commit ");
+	char *commit_id = (char *)line->data + STRING_SIZE("commit ");
 	struct ref **refs;
 	size_t bufpos = 0, refpos = 0;
 	const char *sep = "Refs: ";
@@ -2798,7 +2798,7 @@ static void
 pager_select(struct view *view, struct line *line)
 {
 	if (line->type == LINE_COMMIT) {
-		char *text = line->data + STRING_SIZE("commit ");
+		char *text = (char *)line->data + STRING_SIZE("commit ");
 
 		if (view != VIEW(REQ_VIEW_PAGER))
 			string_copy_rev(view->ref, text);
@@ -3117,7 +3117,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 static void
 tree_select(struct view *view, struct line *line)
 {
-	char *text = line->data + STRING_SIZE("100644 blob ");
+	char *text = (char *)line->data + STRING_SIZE("100644 blob ");
 
 	if (line->type == LINE_TREE_FILE) {
 		string_copy_rev(ref_blob, text);
