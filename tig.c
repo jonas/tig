@@ -3165,12 +3165,13 @@ struct status {
 	struct {
 		mode_t mode;
 		char rev[SIZEOF_REV];
+		char name[SIZEOF_STR];
 	} old;
 	struct {
 		mode_t mode;
 		char rev[SIZEOF_REV];
+		char name[SIZEOF_STR];
 	} new;
-	char name[SIZEOF_STR];
 };
 
 static struct status stage_status;
@@ -3188,7 +3189,7 @@ status_get_diff(struct status *file, char *buf, size_t bufsize)
 	char *new_rev  = buf + 56;
 	char *status   = buf + 97;
 
-	if (bufsize != 99 ||
+	if (bufsize < 99 ||
 	    old_mode[-1] != ':' ||
 	    new_mode[-1] != ' ' ||
 	    old_rev[-1]  != ' ' ||
@@ -3204,7 +3205,7 @@ status_get_diff(struct status *file, char *buf, size_t bufsize)
 	file->old.mode = strtoul(old_mode, NULL, 8);
 	file->new.mode = strtoul(new_mode, NULL, 8);
 
-	file->name[0] = 0;
+	file->old.name[0] = file->new.name[0] = 0;
 
 	return TRUE;
 }
@@ -3271,7 +3272,7 @@ status_run(struct view *view, const char cmd[], bool diff, enum line_type type)
 					unmerged = file;
 
 				} else if (unmerged) {
-					int collapse = !strcmp(buf, unmerged->name);
+					int collapse = !strcmp(buf, unmerged->new.name);
 
 					unmerged = NULL;
 					if (collapse) {
@@ -3282,10 +3283,26 @@ status_run(struct view *view, const char cmd[], bool diff, enum line_type type)
 				}
 			}
 
+			/* Grab the old name for rename/copy. */
+			if (!*file->old.name &&
+			    (file->status == 'R' || file->status == 'C')) {
+				sepsize = sep - buf + 1;
+				string_ncopy(file->old.name, buf, sepsize);
+				bufsize -= sepsize;
+				memmove(buf, sep + 1, bufsize);
+
+				sep = memchr(buf, 0, bufsize);
+				if (!sep)
+					break;
+				sepsize = sep - buf + 1;
+			}
+
 			/* git-ls-files just delivers a NUL separated
 			 * list of file names similar to the second half
 			 * of the git-diff-* output. */
-			string_ncopy(file->name, buf, sepsize);
+			string_ncopy(file->new.name, buf, sepsize);
+			if (!*file->old.name)
+				string_copy(file->old.name, file->new.name);
 			bufsize -= sepsize;
 			memmove(buf, sep + 1, bufsize);
 			file = NULL;
@@ -3306,16 +3323,16 @@ error_out:
 }
 
 /* Don't show unmerged entries in the staged section. */
-#define STATUS_DIFF_INDEX_CMD "git diff-index -z --diff-filter=ACDMRTXB --cached HEAD"
+#define STATUS_DIFF_INDEX_CMD "git diff-index -z --diff-filter=ACDMRTXB --cached -M HEAD"
 #define STATUS_DIFF_FILES_CMD "git diff-files -z"
 #define STATUS_LIST_OTHER_CMD \
 	"git ls-files -z --others --exclude-per-directory=.gitignore"
 
 #define STATUS_DIFF_INDEX_SHOW_CMD \
-	"git diff-index --root --patch-with-stat --find-copies-harder -C --cached HEAD -- %s 2>/dev/null"
+	"git diff-index --root --patch-with-stat -C -M --cached HEAD -- %s %s 2>/dev/null"
 
 #define STATUS_DIFF_FILES_SHOW_CMD \
-	"git diff-files --root --patch-with-stat --find-copies-harder -C -- %s 2>/dev/null"
+	"git diff-files --root --patch-with-stat -C -M -- %s %s 2>/dev/null"
 
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
@@ -3417,7 +3434,7 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 	if (!selected)
 		wattrset(view->win, A_NORMAL);
 	wmove(view->win, lineno, 4);
-	waddstr(view->win, status->name);
+	waddstr(view->win, status->new.name);
 
 	return TRUE;
 }
@@ -3426,7 +3443,8 @@ static enum request
 status_enter(struct view *view, struct line *line)
 {
 	struct status *status = line->data;
-	char path[SIZEOF_STR] = "";
+	char oldpath[SIZEOF_STR] = "";
+	char newpath[SIZEOF_STR] = "";
 	char *info;
 	size_t cmdsize = 0;
 
@@ -3436,8 +3454,15 @@ status_enter(struct view *view, struct line *line)
 		return REQ_NONE;
 	}
 
-	if (status && sq_quote(path, 0, status->name) >= sizeof(path))
-		return REQ_QUIT;
+	if (status) {
+		if (sq_quote(oldpath, 0, status->old.name) >= sizeof(oldpath))
+			return REQ_QUIT;
+		/* Diffs for unmerged entries are empty when pasing the
+		 * new path, so leave it empty. */
+		if (status->status != 'U' &&
+		    sq_quote(newpath, 0, status->new.name) >= sizeof(newpath))
+			return REQ_QUIT;
+	}
 
 	if (opt_cdup[0] &&
 	    line->type != LINE_STAT_UNTRACKED &&
@@ -3447,7 +3472,7 @@ status_enter(struct view *view, struct line *line)
 	switch (line->type) {
 	case LINE_STAT_STAGED:
 		if (!string_format_from(opt_cmd, &cmdsize,
-					STATUS_DIFF_INDEX_SHOW_CMD, path))
+					STATUS_DIFF_INDEX_SHOW_CMD, oldpath, newpath))
 			return REQ_QUIT;
 		if (status)
 			info = "Staged changes to %s";
@@ -3457,7 +3482,7 @@ status_enter(struct view *view, struct line *line)
 
 	case LINE_STAT_UNSTAGED:
 		if (!string_format_from(opt_cmd, &cmdsize,
-					STATUS_DIFF_FILES_SHOW_CMD, path))
+					STATUS_DIFF_FILES_SHOW_CMD, oldpath, newpath))
 			return REQ_QUIT;
 		if (status)
 			info = "Unstaged changes to %s";
@@ -3475,7 +3500,7 @@ status_enter(struct view *view, struct line *line)
 			return REQ_NONE;
 		}
 
-		opt_pipe = fopen(status->name, "r");
+		opt_pipe = fopen(status->new.name, "r");
 		info = "Untracked file %s";
 		break;
 
@@ -3492,7 +3517,7 @@ status_enter(struct view *view, struct line *line)
 		}
 
 		stage_line_type = line->type;
-		string_format(VIEW(REQ_VIEW_STAGE)->ref, info, stage_status.name);
+		string_format(VIEW(REQ_VIEW_STAGE)->ref, info, stage_status.new.name);
 	}
 
 	return REQ_NONE;
@@ -3519,7 +3544,7 @@ status_update_file(struct view *view, struct status *status, enum line_type type
 		if (!string_format_from(buf, &bufsize, "%06o %s\t%s%c",
 				        status->old.mode,
 					status->old.rev,
-					status->name, 0))
+					status->old.name, 0))
 			return FALSE;
 
 		string_add(cmd, cmdsize, "git update-index -z --index-info");
@@ -3527,7 +3552,7 @@ status_update_file(struct view *view, struct status *status, enum line_type type
 
 	case LINE_STAT_UNSTAGED:
 	case LINE_STAT_UNTRACKED:
-		if (!string_format_from(buf, &bufsize, "%s%c", status->name, 0))
+		if (!string_format_from(buf, &bufsize, "%s%c", status->new.name, 0))
 			return FALSE;
 
 		string_add(cmd, cmdsize, "git update-index -z --add --remove --stdin");
@@ -3591,14 +3616,14 @@ status_request(struct view *view, enum request request, struct line *line)
 			report("Merging only possible for files with unmerged status ('U').");
 			return REQ_NONE;
 		}
-		open_mergetool(status->name);
+		open_mergetool(status->new.name);
 		break;
 
 	case REQ_EDIT:
 		if (!status)
 			return request;
 
-		open_editor(status->status != '?', status->name);
+		open_editor(status->status != '?', status->new.name);
 		break;
 
 	case REQ_ENTER:
@@ -3629,7 +3654,7 @@ status_select(struct view *view, struct line *line)
 	char *text;
 	char *key;
 
-	if (status && !string_format(file, "'%s'", status->name))
+	if (status && !string_format(file, "'%s'", status->new.name))
 		return;
 
 	if (!status && line[1].type == LINE_STAT_NONE)
@@ -3682,7 +3707,7 @@ status_grep(struct view *view, struct line *line)
 		char *text;
 
 		switch (state) {
-		case S_NAME:	text = status->name;	break;
+		case S_NAME:	text = status->new.name;	break;
 		case S_STATUS:
 			buf[0] = status->status;
 			text = buf;
@@ -3847,10 +3872,10 @@ stage_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_EDIT:
-		if (!stage_status.name[0])
+		if (!stage_status.new.name[0])
 			return request;
 
-		open_editor(stage_status.status != '?', stage_status.name);
+		open_editor(stage_status.status != '?', stage_status.new.name);
 		break;
 
 	case REQ_ENTER:
