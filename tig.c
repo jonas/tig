@@ -697,15 +697,15 @@ get_line_info(char *name, int namelen)
 static void
 init_colors(void)
 {
-	int default_bg = COLOR_BLACK;
-	int default_fg = COLOR_WHITE;
+	int default_bg = line_info[LINE_DEFAULT].bg;
+	int default_fg = line_info[LINE_DEFAULT].fg;
 	enum line_type type;
 
 	start_color();
 
-	if (use_default_colors() != ERR) {
-		default_bg = -1;
-		default_fg = -1;
+	if (assume_default_colors(default_fg, default_bg) == ERR) {
+		default_bg = COLOR_BLACK;
+		default_fg = COLOR_WHITE;
 	}
 
 	for (type = 0; type < ARRAY_SIZE(line_info); type++) {

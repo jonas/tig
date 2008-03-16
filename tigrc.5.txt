@@ -256,8 +256,8 @@ Color command
 
 Color commands control highlighting and the user interface styles. If your
 terminal supports color, these commands can be used to assign foreground and
-background combinations to certain areas. Optionally, an attribute can be given
-as the last parameter. The syntax is:
+background combinations to certain areas. Optionally, an attribute can be
+given as the last parameter. The syntax is:
 
 [verse]
 ..............................................................................
@@ -267,6 +267,8 @@ as the last parameter. The syntax is:
 Examples:
 
 ------------------------------------------------------------------------------
+# Overwrite the default terminal colors to white on black.
+color default		white	black
 # Diff colors
 color diff-header	yellow	default
 color diff-index	blue	default
@@ -296,11 +298,20 @@ Attribute names::
 	*standout*, and *underline*. Note, not all attributes may be supported
 	by the terminal.
 
-
 UI colors
 ~~~~~~~~~
 
 --
+
+Default terminal colors::
+
+The colors and attributes to be used for the text that is not highlighted or
+that specify the use of the default terminal colors can be controlled by
+setting the *default* color option.
+
+Use the *default* color to use the colors configured for the terminal. This is
+the default and recommended if you are using a terminal with a transparent
+background.
 
 Status window colors::
 
@@ -331,9 +342,6 @@ delimiting long author names and labels for tag and branch references.
 
 Highlighting
 ~~~~~~~~~~~~
-
-The colors and attributes for text that is not highlighted can be controlled
-by changing the *default* color option.
 
 --
 
