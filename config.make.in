@@ -4,6 +4,7 @@ bindir = @bindir@
 mandir = @mandir@
 docdir = @docdir@
 datarootdir = @datarootdir@
+sysconfdir = @sysconfdir@
 
 CC = @CC@
 CFLAGS = @CFLAGS@

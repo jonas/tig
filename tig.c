@@ -51,6 +51,7 @@
 #endif
 
 static void __NORETURN die(const char *err, ...);
+static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
 static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, size_t, char *, size_t));
 static void set_nonblocking_input(bool loading);
@@ -72,6 +73,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 #define REVGRAPH_MERGE	'M'
 #define REVGRAPH_BRANCH	'+'
 #define REVGRAPH_COMMIT	'*'
+#define REVGRAPH_BOUND	'^'
 #define REVGRAPH_LINE	'|'
 
 #define SIZEOF_REVGRAPH	19	/* Size of revision ancestry graphics. */
@@ -105,13 +107,13 @@ static size_t utf8_length(const char *string, size_t max_width, int *coloffset, 
 	"git ls-remote $(git rev-parse --git-dir) 2>/dev/null"
 
 #define TIG_DIFF_CMD \
-	"git show --root --patch-with-stat --find-copies-harder -B -C %s 2>/dev/null"
+	"git show --no-color --root --patch-with-stat --find-copies-harder -C %s 2>/dev/null"
 
 #define TIG_LOG_CMD	\
-	"git log --cc --stat -n100 %s 2>/dev/null"
+	"git log --no-color --cc --stat -n100 %s 2>/dev/null"
 
 #define TIG_MAIN_CMD \
-	"git log --topo-order --pretty=raw %s 2>/dev/null"
+	"git log --no-color --topo-order --boundary --pretty=raw %s 2>/dev/null"
 
 #define TIG_TREE_CMD	\
 	"git ls-tree %s %s"
@@ -343,7 +345,6 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(FIND_PREV,		"Find previous search match"), \
 	\
 	REQ_GROUP("Misc") \
-	REQ_(NONE,		"Do nothing"), \
 	REQ_(PROMPT,		"Bring up the prompt"), \
 	REQ_(SCREEN_REDRAW,	"Redraw the screen"), \
 	REQ_(SCREEN_RESIZE,	"Resize the screen"), \
@@ -353,8 +354,9 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
 	REQ_(STATUS_UPDATE,	"Update file status"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
+	REQ_(TREE_PARENT,	"Switch to parent directory in tree view"), \
 	REQ_(EDIT,		"Open in editor"), \
-	REQ_(CHERRY_PICK,	"Cherry-pick commit to current branch")
+	REQ_(NONE,		"Do nothing")
 
 
 /* User action requests. */
@@ -364,8 +366,7 @@ enum request {
 
 	/* Offset all requests to avoid conflicts with ncurses getch values. */
 	REQ_OFFSET = KEY_MAX + 1,
-	REQ_INFO,
-	REQ_UNKNOWN,
+	REQ_INFO
 
 #undef	REQ_GROUP
 #undef	REQ_
@@ -397,7 +398,7 @@ get_request(const char *name)
 		    !string_enum_compare(req_info[i].name, name, namelen))
 			return req_info[i].request;
 
-	return REQ_UNKNOWN;
+	return REQ_NONE;
 }
 
 
@@ -408,22 +409,14 @@ get_request(const char *name)
 static const char usage[] =
 "tig " TIG_VERSION " (" __DATE__ ")\n"
 "\n"
-"Usage: tig [options]\n"
-"   or: tig [options] [--] [git log options]\n"
-"   or: tig [options] log  [git log options]\n"
-"   or: tig [options] diff [git diff options]\n"
-"   or: tig [options] show [git show options]\n"
-"   or: tig [options] <    [git command output]\n"
+"Usage: tig        [options] [revs] [--] [paths]\n"
+"   or: tig show   [options] [revs] [--] [paths]\n"
+"   or: tig status\n"
+"   or: tig <      [git command output]\n"
 "\n"
 "Options:\n"
-"  -l                          Start up in log view\n"
-"  -d                          Start up in diff view\n"
-"  -S                          Start up in status view\n"
-"  -n[I], --line-number[=I]    Show line numbers with given interval\n"
-"  -b[N], --tab-size[=N]       Set number of spaces for tab expansion\n"
-"  --                          Mark end of tig options\n"
-"  -v, --version               Show version and exit\n"
-"  -h, --help                  Show help message and exit\n";
+"  -v, --version   Show version and exit\n"
+"  -h, --help      Show help message and exit\n";
 
 /* Option and state variables. */
 static bool opt_line_number		= FALSE;
@@ -491,45 +484,41 @@ check_option(char *opt, char short_name, char *name, enum option_type type, ...)
 static bool
 parse_options(int argc, char *argv[])
 {
+	char *altargv[1024];
+	int altargc = 0;
+	char *subcommand = NULL;
 	int i;
 
 	for (i = 1; i < argc; i++) {
 		char *opt = argv[i];
 
 		if (!strcmp(opt, "log") ||
-		    !strcmp(opt, "diff") ||
-		    !strcmp(opt, "show")) {
+		    !strcmp(opt, "diff")) {
+			subcommand = opt;
 			opt_request = opt[0] == 'l'
 				    ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
+			warn("`tig %s' has been deprecated", opt);
+			break;
+		}
+
+		if (!strcmp(opt, "show")) {
+			subcommand = opt;
+			opt_request = REQ_VIEW_DIFF;
+			break;
+		}
+
+		if (!strcmp(opt, "status")) {
+			subcommand = opt;
+			opt_request = REQ_VIEW_STATUS;
 			break;
 		}
 
 		if (opt[0] && opt[0] != '-')
 			break;
 
-		if (!strcmp(opt, "-l")) {
-			opt_request = REQ_VIEW_LOG;
-			continue;
-		}
-
-		if (!strcmp(opt, "-d")) {
-			opt_request = REQ_VIEW_DIFF;
-			continue;
-		}
-
-		if (!strcmp(opt, "-S")) {
-			opt_request = REQ_VIEW_STATUS;
-			continue;
-		}
-
-		if (check_option(opt, 'n', "line-number", OPT_INT, &opt_num_interval)) {
-			opt_line_number = TRUE;
-			continue;
-		}
-
-		if (check_option(opt, 'b', "tab-size", OPT_INT, &opt_tab_size)) {
-			opt_tab_size = MIN(opt_tab_size, TABSIZE);
-			continue;
+		if (!strcmp(opt, "--")) {
+			i++;
+			break;
 		}
 
 		if (check_option(opt, 'v', "version", OPT_NONE)) {
@@ -542,28 +531,58 @@ parse_options(int argc, char *argv[])
 			return FALSE;
 		}
 
-		if (!strcmp(opt, "--")) {
-			i++;
-			break;
+		if (!strcmp(opt, "-S")) {
+			warn("`%s' has been deprecated; use `tig status' instead", opt);
+			opt_request = REQ_VIEW_STATUS;
+			continue;
 		}
 
-		die("unknown option '%s'\n\n%s", opt, usage);
+		if (!strcmp(opt, "-l")) {
+			opt_request = REQ_VIEW_LOG;
+		} else if (!strcmp(opt, "-d")) {
+			opt_request = REQ_VIEW_DIFF;
+		} else if (check_option(opt, 'n', "line-number", OPT_INT, &opt_num_interval)) {
+			opt_line_number = TRUE;
+		} else if (check_option(opt, 'b', "tab-size", OPT_INT, &opt_tab_size)) {
+			opt_tab_size = MIN(opt_tab_size, TABSIZE);
+		} else {
+			if (altargc >= ARRAY_SIZE(altargv))
+				die("maximum number of arguments exceeded");
+			altargv[altargc++] = opt;
+			continue;
+		}
+
+		warn("`%s' has been deprecated", opt);
 	}
+
+	/* Check that no 'alt' arguments occured before a subcommand. */
+	if (subcommand && i < argc && altargc > 0)
+		die("unknown arguments before `%s'", argv[i]);
 
 	if (!isatty(STDIN_FILENO)) {
 		opt_request = REQ_VIEW_PAGER;
 		opt_pipe = stdin;
 
-	} else if (i < argc) {
+	} else if (opt_request == REQ_VIEW_STATUS) {
+		if (argc - i > 1)
+			warn("ignoring arguments after `%s'", argv[i]);
+
+	} else if (i < argc || altargc > 0) {
+		int alti = 0;
 		size_t buf_size;
 
 		if (opt_request == REQ_VIEW_MAIN)
 			/* XXX: This is vulnerable to the user overriding
 			 * options required for the main view parser. */
-			string_copy(opt_cmd, "git log --pretty=raw");
+			string_copy(opt_cmd, "git log --no-color --pretty=raw --boundary");
 		else
 			string_copy(opt_cmd, "git");
 		buf_size = strlen(opt_cmd);
+
+		while (buf_size < sizeof(opt_cmd) && alti < altargc) {
+			opt_cmd[buf_size++] = ' ';
+			buf_size = sq_quote(opt_cmd, buf_size, altargv[alti++]);
+		}
 
 		while (buf_size < sizeof(opt_cmd) && i < argc) {
 			opt_cmd[buf_size++] = ' ';
@@ -628,6 +647,7 @@ LINE(MAIN_DELIM,   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REMOTE,  "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
+LINE(MAIN_REVGRAPH,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(TREE_DIR,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(STAT_SECTION, "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
@@ -696,15 +716,15 @@ get_line_info(char *name, int namelen)
 static void
 init_colors(void)
 {
-	int default_bg = COLOR_BLACK;
-	int default_fg = COLOR_WHITE;
+	int default_bg = line_info[LINE_DEFAULT].bg;
+	int default_fg = line_info[LINE_DEFAULT].fg;
 	enum line_type type;
 
 	start_color();
 
-	if (use_default_colors() != ERR) {
-		default_bg = -1;
-		default_fg = -1;
+	if (assume_default_colors(default_fg, default_bg) == ERR) {
+		default_bg = COLOR_BLACK;
+		default_fg = COLOR_WHITE;
 	}
 
 	for (type = 0; type < ARRAY_SIZE(line_info); type++) {
@@ -789,8 +809,8 @@ static struct keybinding default_keybindings[] = {
 	{ ':',		REQ_PROMPT },
 	{ 'u',		REQ_STATUS_UPDATE },
 	{ 'M',		REQ_STATUS_MERGE },
+	{ ',',		REQ_TREE_PARENT },
 	{ 'e',		REQ_EDIT },
-	{ 'C',		REQ_CHERRY_PICK },
 
 	/* Using the ncurses SIGWINCH handler. */
 	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
@@ -916,10 +936,30 @@ get_key_value(const char *name)
 }
 
 static char *
+get_key_name(int key_value)
+{
+	static char key_char[] = "'X'";
+	char *seq = NULL;
+	int key;
+
+	for (key = 0; key < ARRAY_SIZE(key_table); key++)
+		if (key_table[key].value == key_value)
+			seq = key_table[key].name;
+
+	if (seq == NULL &&
+	    key_value < 127 &&
+	    isprint(key_value)) {
+		key_char[1] = (char) key_value;
+		seq = key_char;
+	}
+
+	return seq ? seq : "'?'";
+}
+
+static char *
 get_key(enum request request)
 {
 	static char buf[BUFSIZ];
-	static char key_char[] = "'X'";
 	size_t pos = 0;
 	char *sep = "";
 	int i;
@@ -928,27 +968,12 @@ get_key(enum request request)
 
 	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++) {
 		struct keybinding *keybinding = &default_keybindings[i];
-		char *seq = NULL;
-		int key;
 
 		if (keybinding->request != request)
 			continue;
 
-		for (key = 0; key < ARRAY_SIZE(key_table); key++)
-			if (key_table[key].value == keybinding->alias)
-				seq = key_table[key].name;
-
-		if (seq == NULL &&
-		    keybinding->alias < 127 &&
-		    isprint(keybinding->alias)) {
-			key_char[1] = (char) keybinding->alias;
-			seq = key_char;
-		}
-
-		if (!seq)
-			seq = "'?'";
-
-		if (!string_format_from(buf, &pos, "%s%s", sep, seq))
+		if (!string_format_from(buf, &pos, "%s%s", sep,
+					get_key_name(keybinding->alias)))
 			return "Too many keybindings!";
 		sep = ", ";
 	}
@@ -956,6 +981,67 @@ get_key(enum request request)
 	return buf;
 }
 
+struct run_request {
+	enum keymap keymap;
+	int key;
+	char cmd[SIZEOF_STR];
+};
+
+static struct run_request *run_request;
+static size_t run_requests;
+
+static enum request
+add_run_request(enum keymap keymap, int key, int argc, char **argv)
+{
+	struct run_request *tmp;
+	struct run_request req = { keymap, key };
+	size_t bufpos;
+
+	for (bufpos = 0; argc > 0; argc--, argv++)
+		if (!string_format_from(req.cmd, &bufpos, "%s ", *argv))
+			return REQ_NONE;
+
+	req.cmd[bufpos - 1] = 0;
+
+	tmp = realloc(run_request, (run_requests + 1) * sizeof(*run_request));
+	if (!tmp)
+		return REQ_NONE;
+
+	run_request = tmp;
+	run_request[run_requests++] = req;
+
+	return REQ_NONE + run_requests;
+}
+
+static struct run_request *
+get_run_request(enum request request)
+{
+	if (request <= REQ_NONE)
+		return NULL;
+	return &run_request[request - REQ_NONE - 1];
+}
+
+static void
+add_builtin_run_requests(void)
+{
+	struct {
+		enum keymap keymap;
+		int key;
+		char *argv[1];
+	} reqs[] = {
+		{ KEYMAP_MAIN,	  'C', { "git cherry-pick %(commit)" } },
+		{ KEYMAP_GENERIC, 'G', { "git gc" } },
+	};
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(reqs); i++) {
+		enum request req;
+
+		req = add_run_request(reqs[i].keymap, reqs[i].key, 1, reqs[i].argv);
+		if (req != REQ_NONE)
+			add_keybinding(reqs[i].keymap, req, reqs[i].key);
+	}
+}
 
 /*
  * User config file handling.
@@ -1088,7 +1174,7 @@ option_bind_command(int argc, char *argv[])
 	int keymap;
 	int key;
 
-	if (argc != 3) {
+	if (argc < 3) {
 		config_msg = "Wrong number of arguments given to bind command";
 		return ERR;
 	}
@@ -1105,7 +1191,22 @@ option_bind_command(int argc, char *argv[])
 	}
 
 	request = get_request(argv[2]);
-	if (request == REQ_UNKNOWN) {
+	if (request == REQ_NONE) {
+		const char *obsolete[] = { "cherry-pick" };
+		size_t namelen = strlen(argv[2]);
+		int i;
+
+		for (i = 0; i < ARRAY_SIZE(obsolete); i++) {
+			if (namelen == strlen(obsolete[i]) &&
+			    !string_enum_compare(obsolete[i], argv[2], namelen)) {
+				config_msg = "Obsolete request name";
+				return ERR;
+			}
+		}
+	}
+	if (request == REQ_NONE && *argv[2]++ == '!')
+		request = add_run_request(keymap, key, argc - 2, argv + 2);
+	if (request == REQ_NONE) {
 		config_msg = "Unknown request name";
 		return ERR;
 	}
@@ -1125,9 +1226,10 @@ set_option(char *opt, char *value)
 	/* Tokenize */
 	while (argc < ARRAY_SIZE(argv) && (valuelen = strcspn(value, " \t"))) {
 		argv[argc++] = value;
-
 		value += valuelen;
-		if (!*value)
+
+		/* Nothing more to tokenize or last available token. */
+		if (!*value || argc >= ARRAY_SIZE(argv))
 			break;
 
 		*value++ = 0;
@@ -1188,27 +1290,47 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen)
 	return OK;
 }
 
-static int
-load_options(void)
+static void
+load_option_file(const char *path)
 {
-	char *home = getenv("HOME");
-	char buf[SIZEOF_STR];
 	FILE *file;
+
+	/* It's ok that the file doesn't exist. */
+	file = fopen(path, "r");
+	if (!file)
+		return;
 
 	config_lineno = 0;
 	config_errors = FALSE;
 
-	if (!home || !string_format(buf, "%s/.tigrc", home))
-		return ERR;
-
-	/* It's ok that the file doesn't exist. */
-	file = fopen(buf, "r");
-	if (!file)
-		return OK;
-
 	if (read_properties(file, " \t", read_option) == ERR ||
 	    config_errors == TRUE)
-		fprintf(stderr, "Errors while loading %s.\n", buf);
+		fprintf(stderr, "Errors while loading %s.\n", path);
+}
+
+static int
+load_options(void)
+{
+	char *home = getenv("HOME");
+	char *tigrc_user = getenv("TIGRC_USER");
+	char *tigrc_system = getenv("TIGRC_SYSTEM");
+	char buf[SIZEOF_STR];
+
+	add_builtin_run_requests();
+
+	if (!tigrc_system) {
+		if (!string_format(buf, "%s/tigrc", SYSCONFDIR))
+			return ERR;
+		tigrc_system = buf;
+	}
+	load_option_file(tigrc_system);
+
+	if (!tigrc_user) {
+		if (!home || !string_format(buf, "%s/.tigrc", home))
+			return ERR;
+		tigrc_user = buf;
+	}
+	load_option_file(tigrc_user);
 
 	return OK;
 }
@@ -2195,6 +2317,56 @@ open_editor(bool from_root, const char *file)
 	}
 }
 
+static void
+open_run_request(enum request request)
+{
+	struct run_request *req = get_run_request(request);
+	char buf[SIZEOF_STR * 2];
+	size_t bufpos;
+	char *cmd;
+
+	if (!req) {
+		report("Unknown run request");
+		return;
+	}
+
+	bufpos = 0;
+	cmd = req->cmd;
+
+	while (cmd) {
+		char *next = strstr(cmd, "%(");
+		int len = next - cmd;
+		char *value;
+
+		if (!next) {
+			len = strlen(cmd);
+			value = "";
+
+		} else if (!strncmp(next, "%(head)", 7)) {
+			value = ref_head;
+
+		} else if (!strncmp(next, "%(commit)", 9)) {
+			value = ref_commit;
+
+		} else if (!strncmp(next, "%(blob)", 7)) {
+			value = ref_blob;
+
+		} else {
+			report("Unknown replacement in run request: `%s`", req->cmd);
+			return;
+		}
+
+		if (!string_format_from(buf, &bufpos, "%.*s%s", len, cmd, value))
+			return;
+
+		if (next)
+			next = strchr(next, ')') + 1;
+		cmd = next;
+	}
+
+	open_external_viewer(buf);
+}
+
 /*
  * User request switch noodle
  */
@@ -2206,6 +2378,11 @@ view_driver(struct view *view, enum request request)
 
 	if (request == REQ_NONE) {
 		doupdate();
+		return TRUE;
+	}
+
+	if (request > REQ_NONE) {
+		open_run_request(request);
 		return TRUE;
 	}
 
@@ -2370,9 +2547,6 @@ view_driver(struct view *view, enum request request)
 		report("Nothing to edit");
 		break;
 
-	case REQ_CHERRY_PICK:
-		report("Nothing to cherry-pick");
-		break;
 
 	case REQ_ENTER:
 		report("Nothing to enter");
@@ -2661,6 +2835,8 @@ help_open(struct view *view)
 		if (!req_info[i].request)
 			lines++;
 
+	lines += run_requests + 1;
+
 	view->line = calloc(lines, sizeof(*view->line));
 	if (!view->line)
 		return FALSE;
@@ -2684,6 +2860,30 @@ help_open(struct view *view)
 			key = "(no key defined)";
 
 		if (!string_format(buf, "    %-25s %s", key, req_info[i].help))
+			continue;
+
+		add_line_text(view, buf, LINE_DEFAULT);
+	}
+
+	if (run_requests) {
+		add_line_text(view, "", LINE_DEFAULT);
+		add_line_text(view, "External commands:", LINE_DEFAULT);
+	}
+
+	for (i = 0; i < run_requests; i++) {
+		struct run_request *req = get_run_request(REQ_NONE + i + 1);
+		char *key;
+
+		if (!req)
+			continue;
+
+		key = get_key_name(req->key);
+		if (!*key)
+			key = "(no key defined)";
+
+		if (!string_format(buf, "    %-10s %-14s `%s`",
+				   keymap_table[req->keymap].name,
+				   key, req->cmd))
 			continue;
 
 		add_line_text(view, buf, LINE_DEFAULT);
@@ -2860,6 +3060,16 @@ tree_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags;
 
+	if (request == REQ_TREE_PARENT) {
+		if (*opt_path) {
+			/* fake 'cd  ..' */
+			request = REQ_ENTER;
+			line = &view->line[1];
+		} else {
+			/* quit view if at top of tree */
+			return REQ_VIEW_CLOSE;
+		}
+	}
 	if (request != REQ_ENTER)
 		return request;
 
@@ -3101,8 +3311,11 @@ error_out:
 #define STATUS_LIST_OTHER_CMD \
 	"git ls-files -z --others --exclude-per-directory=.gitignore"
 
-#define STATUS_DIFF_SHOW_CMD \
-	"git diff --root --patch-with-stat --find-copies-harder -B -C %s -- %s 2>/dev/null"
+#define STATUS_DIFF_INDEX_SHOW_CMD \
+	"git diff-index --root --patch-with-stat --find-copies-harder -C --cached HEAD -- %s 2>/dev/null"
+
+#define STATUS_DIFF_FILES_SHOW_CMD \
+	"git diff-files --root --patch-with-stat --find-copies-harder -C -- %s 2>/dev/null"
 
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
@@ -3233,8 +3446,8 @@ status_enter(struct view *view, struct line *line)
 
 	switch (line->type) {
 	case LINE_STAT_STAGED:
-		if (!string_format_from(opt_cmd, &cmdsize, STATUS_DIFF_SHOW_CMD,
-					"--cached", path))
+		if (!string_format_from(opt_cmd, &cmdsize,
+					STATUS_DIFF_INDEX_SHOW_CMD, path))
 			return REQ_QUIT;
 		if (status)
 			info = "Staged changes to %s";
@@ -3243,8 +3456,8 @@ status_enter(struct view *view, struct line *line)
 		break;
 
 	case LINE_STAT_UNSTAGED:
-		if (!string_format_from(opt_cmd, &cmdsize, STATUS_DIFF_SHOW_CMD,
-					"", path))
+		if (!string_format_from(opt_cmd, &cmdsize,
+					STATUS_DIFF_FILES_SHOW_CMD, path))
 			return REQ_QUIT;
 		if (status)
 			info = "Unstaged changes to %s";
@@ -3267,7 +3480,7 @@ status_enter(struct view *view, struct line *line)
 		break;
 
 	default:
-		die("w00t");
+		die("line type %d not handled in switch", line->type);
 	}
 
 	open_view(view, REQ_VIEW_STAGE, OPEN_RELOAD | OPEN_SPLIT);
@@ -3321,7 +3534,7 @@ status_update_file(struct view *view, struct status *status, enum line_type type
 		break;
 
 	default:
-		die("w00t");
+		die("line type %d not handled in switch", type);
 	}
 
 	pipe = popen(cmd, "w");
@@ -3374,6 +3587,10 @@ status_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_STATUS_MERGE:
+		if (!status || status->status != 'U') {
+			report("Merging only possible for files with unmerged status ('U').");
+			return REQ_NONE;
+		}
 		open_mergetool(status->name);
 		break;
 
@@ -3436,7 +3653,7 @@ status_select(struct view *view, struct line *line)
 		break;
 
 	default:
-		die("w00t");
+		die("line type %d not handled in switch", line->type);
 	}
 
 	if (status && status->status == 'U') {
@@ -3681,6 +3898,7 @@ struct rev_graph {
 	size_t size;
 	struct commit *commit;
 	size_t pos;
+	unsigned int boundary:1;
 };
 
 /* Parents of the commit being visualized. */
@@ -3753,7 +3971,9 @@ get_rev_graph_symbol(struct rev_graph *graph)
 {
 	chtype symbol;
 
-	if (graph->parents->size == 0)
+	if (graph->boundary)
+		symbol = REVGRAPH_BOUND;
+	else if (graph->parents->size == 0)
 		symbol = REVGRAPH_INIT;
 	else if (graph_parent_is_merge(graph))
 		symbol = REVGRAPH_MERGE;
@@ -3835,7 +4055,7 @@ prepare_rev_graph(struct rev_graph *graph)
 	}
 
 	/* Interleave the new revision parent(s). */
-	for (i = 0; i < graph->parents->size; i++)
+	for (i = 0; !graph->boundary && i < graph->parents->size; i++)
 		push_rev_graph(graph->next, graph->parents->rev[i]);
 
 	/* Lastly, put any remaining revisions. */
@@ -3919,12 +4139,12 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 	}
 
 	col += AUTHOR_COLS;
-	if (type != LINE_CURSOR)
-		wattrset(view->win, A_NORMAL);
 
 	if (opt_rev_graph && commit->graph_size) {
 		size_t i;
 
+		if (type != LINE_CURSOR)
+			wattrset(view->win, get_line_attr(LINE_MAIN_REVGRAPH));
 		wmove(view->win, lineno, col);
 		/* Using waddch() instead of waddnstr() ensures that
 		 * they'll be rendered correctly for the cursor line. */
@@ -3934,6 +4154,8 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 		waddch(view->win, ' ');
 		col += commit->graph_size + 1;
 	}
+	if (type != LINE_CURSOR)
+		wattrset(view->win, A_NORMAL);
 
 	wmove(view->win, lineno, col);
 
@@ -3993,7 +4215,13 @@ main_read(struct view *view, char *line)
 		if (!commit)
 			return FALSE;
 
-		string_copy_rev(commit->id, line + STRING_SIZE("commit "));
+		line += STRING_SIZE("commit ");
+		if (*line == '-') {
+			graph->boundary = 1;
+			line++;
+		}
+
+		string_copy_rev(commit->id, line);
 		commit->refs = get_refs(commit->id);
 		graph->commit = commit;
 		add_line_data(view, commit, LINE_MAIN_COMMIT);
@@ -4084,20 +4312,6 @@ main_read(struct view *view, char *line)
 	return TRUE;
 }
 
-static void
-cherry_pick_commit(struct commit *commit)
-{
-	char cmd[SIZEOF_STR];
-	char *cherry_pick = getenv("TIG_CHERRY_PICK");
-
-	if (!cherry_pick)
-		cherry_pick = "git cherry-pick";
-
-	if (string_format(cmd, "%s %s", cherry_pick, commit->id)) {
-		open_external_viewer(cmd);
-	}
-}
-
 static enum request
 main_request(struct view *view, enum request request, struct line *line)
 {
@@ -4105,8 +4319,6 @@ main_request(struct view *view, enum request request, struct line *line)
 
 	if (request == REQ_ENTER)
 		open_view(view, REQ_VIEW_DIFF, flags);
-	else if (request == REQ_CHERRY_PICK)
-		cherry_pick_commit(line->data);
 	else
 		return request;
 
@@ -4734,6 +4946,18 @@ die(const char *err, ...)
 	va_end(args);
 
 	exit(1);
+}
+
+static void
+warn(const char *msg, ...)
+{
+	va_list args;
+
+	va_start(args, msg);
+	fputs("tig warning: ", stderr);
+	vfprintf(stderr, msg, args);
+	fputs("\n", stderr);
+	va_end(args);
 }
 
 int

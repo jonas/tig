@@ -7,9 +7,10 @@ all:
 
 prefix ?= $(HOME)
 bindir ?= $(prefix)/bin
-mandir ?= $(prefix)/man
 datarootdir ?= $(prefix)/share
+sysconfdir ?= $(prefix)/etc
 docdir ?= $(datarootdir)/doc
+mandir ?= $(datarootdir)/man
 # DESTDIR=
 
 # Get version either via git or from VERSION file. Allow either
@@ -47,10 +48,12 @@ else
 TARNAME	= tig-$(RPM_VERSION)
 endif
 
-override CFLAGS += '-DTIG_VERSION="$(VERSION)"'
+override CPPFLAGS += '-DTIG_VERSION="$(VERSION)"'
+override CPPFLAGS += '-DSYSCONFDIR="$(sysconfdir)"'
 
 AUTORECONF ?= autoreconf
 ASCIIDOC ?= asciidoc
+ASCIIDOC_FLAGS = -aversion=$(VERSION) -asysconfdir=$(sysconfdir)
 XMLTO ?= xmlto
 DOCBOOK2PDF ?= docbook2pdf
 
@@ -152,35 +155,32 @@ manual.toc: manual.txt
 		*)	   ref="$$ref, $$line" ;; \
 		esac; done | sed 's/\[\[\(.*\)\]\]/\1/' > $@
 
-README.html: README
-	$(ASCIIDOC) -b xhtml11 -d article -a readme $<
+README.html: README asciidoc.conf
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -a readme $<
 
-%.pdf : %.xml
-	$(DOCBOOK2PDF) $<
+%.1.html : %.1.txt asciidoc.conf
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
 
-%.1.html : %.1.txt
-	$(ASCIIDOC) -b xhtml11 -d manpage $<
+%.1.xml : %.1.txt asciidoc.conf
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
-%.1.xml : %.1.txt
-	$(ASCIIDOC) -b docbook -d manpage -aversion=$(VERSION) $<
+%.5.html : %.5.txt asciidoc.conf
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
 
-%.1 : %.1.xml
-	$(XMLTO) -m manpage.xsl man $<
+%.5.xml : %.5.txt asciidoc.conf
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
-%.5.html : %.5.txt
-	$(ASCIIDOC) -b xhtml11 -d manpage $<
+%.html : %.txt asciidoc.conf
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -n $<
 
-%.5.xml : %.5.txt
-	$(ASCIIDOC) -b docbook -d manpage -aversion=$(VERSION) $<
+%.xml : %.txt asciidoc.conf
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d article $<
 
-%.5 : %.5.xml
-	$(XMLTO) -m manpage.xsl man $<
-
-%.html : %.txt
-	$(ASCIIDOC) -b xhtml11 -d article -n $<
-
-%.xml : %.txt
-	$(ASCIIDOC) -b docbook -d article $<
+% : %.xml
+	$(XMLTO) man $<
 
 %.html-chunked : %.xml
 	$(XMLTO) html -o $@ $<
+
+%.pdf : %.xml
+	$(DOCBOOK2PDF) $<

@@ -1,4 +1,4 @@
-TIG(1)
+tig(1)
 ======
 
 NAME
@@ -8,12 +8,10 @@ tig - text-mode interface for git
 SYNOPSIS
 --------
 [verse]
-tig [options]
-tig [options] [--] [git options]
-tig [options] log  [git options]
-tig [options] diff [git options]
-tig [options] show [git options]
-tig [options] <    [git command output]
+tig        [options] [revisions] [--] [paths]
+tig show   [options] [revisions] [--] [paths]
+tig status
+tig <      [git command output]
 
 DESCRIPTION
 -----------
@@ -30,21 +28,18 @@ to colorize it.
 OPTIONS
 -------
 
--l::
-	Start up in log view using the internal log command.
+Command line options recognized by tig include all valid git-log(1) and
+git-diff(1) options, as well as the following subcommands and tig specific
+options. The first command line parameter not starting with "-" is interpreted
+as being either a revision specification or a path and will end the option
+parsing. All following options will be passed untouched to the underlying git
+command.
 
--d::
-	Start up in diff view using the internal diff command.
+show::
+	Open diff view using the given git show options.
 
--S::
+status::
 	Start up in status view.
-
--n[INTERVAL], --line-number[=INTERVAL]::
-	Prefix line numbers in log and diff view.
-	Optionally, with interval different than each line.
-
--b[NSPACES], --tab-size[=NSPACES]::
-	Set the number of spaces tabs should be expanded to.
 
 -v, --version::
 	Show version and exit.
@@ -53,38 +48,64 @@ OPTIONS
 	Show help message and exit.
 
 \--::
-	End of tig(1) options. Useful when specifying command
-	options for the main view. Example:
+	End of tig options. This ends tig option parsing, and passes any
+	following options untouched to the underlying git command. Kept for
+	compatibility and will be deprecated in a future version.
 
-		$ tig -- --since=1.month
+EXAMPLES
+--------
 
-log::
-	Open log view using the given git log options.
+Display the current branch:
+-----------------------------------------------------------------------------
+$ tig
+-----------------------------------------------------------------------------
 
-diff::
-	Open diff view using the given git diff options.
+Display one or more specific branches:
+-----------------------------------------------------------------------------
+$ tig test master
+-----------------------------------------------------------------------------
 
-show::
-	Open diff view using the given git show options.
+Display all branches:
+-----------------------------------------------------------------------------
+$ tig --all
+-----------------------------------------------------------------------------
 
-[git options]::
-	tig(1) will stop the option parsing when the first
-	command line parameter not starting with "-" is
-	encountered. All options including this one will be
-	passed to git log when loading the main view.
-	This makes it possible to say:
+Display differences between two branches:
+-----------------------------------------------------------------------------
+$ tig test..master
+-----------------------------------------------------------------------------
 
-	$ tig tag-1.0..HEAD
+Display changes for a single file:
+-----------------------------------------------------------------------------
+$ tig -- README
+-----------------------------------------------------------------------------
+
+Display contents of the README file in a specific revision:
+-----------------------------------------------------------------------------
+$ tig show tig-0.8:README
+-----------------------------------------------------------------------------
+
+Display revisions between two dates for a specific file:
+-----------------------------------------------------------------------------
+$ tig --after="2004-01-01" --before="2006-05-16" -- README
+-----------------------------------------------------------------------------
 
 ENVIRONMENT VARIABLES
 ---------------------
+
+In addition to environment variables used by git (e.g. GIT_DIR), tig defines
+the following:
+
+TIGRC_USER::
+	Path of the user configuration file (defaults to `~/.tigrc`).
+
+TIGRC_SYSTEM::
+	Path of the system wide configuration file (defaults to
+	`{sysconfdir}/tigrc`).
+
 TIG_LS_REMOTE::
 	Set command for retrieving all repository references. The command
 	should output data in the same format as git-ls-remote(1).
-
-TIG_CHERRY_PICK::
-	Set command for cherry-picking a commit. The command should expect
-	a commit SHA as its final argument.
 
 TIG_DIFF_CMD::
 	The command used for the diff view. By default, git show is used
@@ -106,7 +127,7 @@ TIG_TREE_CMD::
     The command used for the tree view. By default, git-ls-tree(1) is
     used. The commands should expect first the commit ID and second
     a path.
-                                                                    
+
 TIG_BLOB_CMD::
     The command used for the blob view. By default, git-cat-file(1) is
     used. The command gets the blob ID.
@@ -116,9 +137,12 @@ FILES
 '~/.tigrc'::
 	User configuration file. See gitlink:tigrc[5] for examples.
 
-'.git/config'::
+'{sysconfdir}/tigrc'::
+	System wide configuration file.
+
+'$GIT_DIR/config'::
 	Repository config file. Read on start-up with the help of
-	git-repo-config(1).
+	git-config(1).
 
 include::BUGS[]
 
