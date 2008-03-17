@@ -45,22 +45,28 @@ Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</
 <div class="sectionbody">
 <p>Download a tarball from <a href="http://jonas.nitro.dk/tig/releases">http://jonas.nitro.dk/tig/releases</a> or clone the tig
 repository <a href="http://jonas.nitro.dk/tig/tig.git">http://jonas.nitro.dk/tig/tig.git</a>. Documentation files are
-available either in the tarballs or in the above repository in the branch named
-<em>release</em>.</p>
-<p>To install tig simply run:</p>
+available in the tarballs and in the <em>release</em> branch of the tig repository.</p>
+<p>The quick and simple way to install tig with documentation is to run:</p>
 <div class="literalblock">
 <div class="content">
-<pre><tt>$ autoreconf
-$ ./configure
+<pre><tt>$ make
+$ make install install-doc</tt></pre>
+</div></div>
+<p>Optionally, you can use the <tt>configure</tt> script to detect library location:</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>$ ./configure
+$ make
 $ make install</tt></pre>
 </div></div>
-<p>To install documentation run:</p>
+<p>If your iconv library is not in the default library and include path, you'll
+probably want to pass the "&#8212;with-libiconv" option to the "configure" script to
+tell it where to look. Note, if you are building from the tig repository, you
+need to first make the configure script:</p>
 <div class="literalblock">
 <div class="content">
-<pre><tt>$ make install-doc</tt></pre>
+<pre><tt>$ make configure</tt></pre>
 </div></div>
-<p>If you had to install your own copy of libiconv, you'll probably want to pass
-the "&#8212;with-libiconv" option to the "configure" script to tell it where to look.</p>
 <p>The following tools and packages are needed:</p>
 <div class="tableblock">
 <table rules="none"
@@ -106,8 +112,8 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<p>The following optional tools and packages are needed for building
-documentation:</p>
+<p>The following optional tools and packages are needed for creating the
+configure script and building documentation:</p>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -115,6 +121,14 @@ cellspacing="0" cellpadding="4">
 <col width="365" />
 <col width="537" />
 <tbody valign="top">
+  <tr>
+    <td align="left">
+    autoconf
+    </td>
+    <td align="left">
+    Contains autoreconf for generating configure                                 from configure.ac.
+    </td>
+  </tr>
   <tr>
     <td align="left">
     asciidoc (&gt;= 8.0)
