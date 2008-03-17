@@ -67,25 +67,29 @@ doc-html: $(HTMLDOC)
 install: all
 	mkdir -p $(DESTDIR)$(bindir) && \
 	for prog in $(PROGS); do \
-		install -p -m 0755 $$prog $(DESTDIR)$(bindir); \
+		install -p -m 0755 "$$prog" "$(DESTDIR)$(bindir)"; \
 	done
 
 install-doc-man: doc-man
 	mkdir -p $(DESTDIR)$(mandir)/man1 \
 		 $(DESTDIR)$(mandir)/man5
 	for doc in $(MANDOC); do \
+		sed 's#++SYSCONFDIR++#$(sysconfdir)#' < "$$doc" > "$$doc+"; \
 		case "$$doc" in \
-		*.1) install -p -m 0644 $$doc $(DESTDIR)$(mandir)/man1 ;; \
-		*.5) install -p -m 0644 $$doc $(DESTDIR)$(mandir)/man5 ;; \
-		esac \
+		*.1) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man1/$$doc" ;; \
+		*.5) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man5/$$doc" ;; \
+		esac; \
+		$(RM) "$$doc+"; \
 	done
 
 install-doc-html: doc-html
 	mkdir -p $(DESTDIR)$(docdir)/tig
 	for doc in $(HTMLDOC); do \
+		sed 's#++SYSCONFDIR++#$(sysconfdir)#' < "$$doc" > "$$doc+"; \
 		case "$$doc" in \
-		*.html) install -p -m 0644 $$doc $(DESTDIR)$(docdir)/tig ;; \
-		esac \
+		*.html) install -p -m 0644 "$$doc+" "$(DESTDIR)$(docdir)/tig/$$doc" ;; \
+		esac; \
+		$(RM) "$$doc+"; \
 	done
 
 install-doc: install-doc-man install-doc-html
@@ -113,7 +117,7 @@ dist: configure tig.spec
 	tar rf $(TARNAME).tar `find $(TARNAME)/*` && \
 	gzip -f -9 $(TARNAME).tar && \
 	md5sum $(TARNAME).tar.gz > $(TARNAME).tar.gz.md5
-	@rm -rf $(TARNAME)
+	@$(RM) -r $(TARNAME)
 
 rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
@@ -125,7 +129,7 @@ configure: configure.ac acinclude.m4
 release-doc:
 	git checkout release && \
 	git merge master && \
-	$(MAKE) distclean doc-man doc-html && \
+	$(MAKE) distclean doc-man doc-html sysconfdir=++SYSCONFDIR++ && \
 	git add -f $(MANDOC) $(HTMLDOC) && \
 	git commit -m "Sync docs" && \
 	git checkout master
