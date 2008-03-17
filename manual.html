@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 7.1.2" />
+<meta name="generator" content="AsciiDoc 8.2.1" />
 <style type="text/css">
 /* Debug borders */
 p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
@@ -75,7 +75,7 @@ span#author {
   color: #527bbd;
   font-family: sans-serif;
   font-weight: bold;
-  font-size: 1.2em;
+  font-size: 1.1em;
 }
 span#email {
 }
@@ -144,6 +144,9 @@ div.sidebarblock > div.content {
   padding: 0.5em;
 }
 
+div.listingblock {
+  margin-right: 0%;
+}
 div.listingblock > div.content {
   border: 1px solid silver;
   background: #f4f4f4;
@@ -222,6 +225,9 @@ div.hlist {
   margin-top: 0.8em;
   margin-bottom: 0.8em;
 }
+div.hlist td {
+  padding-bottom: 5px;
+}
 td.hlist1 {
   vertical-align: top;
   font-style: italic;
@@ -233,6 +239,32 @@ td.hlist2 {
 
 @media print {
   div#footer-badges { display: none; }
+}
+
+div#toctitle {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
 }
 /* Workarounds for IE6's broken and incomplete CSS2. */
 
@@ -262,6 +294,9 @@ div.exampleblock-content {
   border-left: 2px solid silver;
   padding-left: 0.5em;
 }
+
+/* IE6 sets dynamically generated links as visited. */
+div#toc a:visited { color: blue; }
 </style>
 <title>The tig Manual</title>
 </head>
@@ -304,6 +339,11 @@ commit with the log message, diffstat, and the diff.</p>
 <a href="#env-variables">Environment Variables</a>
 </p>
 <ul>
+<li>
+<p>
+<a href="#configuration-files">Configuration Files</a>
+</p>
+</li>
 <li>
 <p>
 <a href="#repo-refs">Repository References</a>
@@ -371,6 +411,11 @@ commit with the log message, diffstat, and the diff.</p>
 <li>
 <p>
 <a href="#searching">Searching</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#external-commands">External Commands</a>
 </p>
 </li>
 </ul>
@@ -450,11 +495,11 @@ shell.</p>
 expected by the main view.</td>
 </tr></table>
 </div>
-<p>Example on how to open the log view and show both author and committer
+<p>Example on how to view a commit and show both author and committer
 information:</p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>$ tig log --pretty=fuller</tt></pre>
+<pre><tt>$ tig show --pretty=fuller</tt></pre>
 </div></div>
 <p>See the <a href="#refspec">"Specifying revisions"</a> section below for an introduction
 to revision options supported by the git commands. For details on specific git
@@ -464,7 +509,30 @@ command options, refer to the man page of the command in question.</p>
 <div class="sectionbody">
 <p>Several options related to the interface with git can be configured via
 environment options.</p>
-<h3><a id="repo-refs"></a>2.1. Repository References</h3>
+<h3><a id="configuration-files"></a>2.1. Configuration Files</h3>
+<p>Upon startup, tig first reads the system wide configuration file
+(<tt>/home/fonseca/etc/tigrc</tt> by default) and then proceeds to read the user's
+configuration file (<tt>~/.tigrc</tt> by default). The paths to either of these files
+can be overridden through the following environment variables:</p>
+<dl>
+<dt>
+TIGRC_USER
+</dt>
+<dd>
+<p>
+        Path of the user configuration file.
+</p>
+</dd>
+<dt>
+TIGRC_SYSTEM
+</dt>
+<dd>
+<p>
+        Path of the system wide configuration file.
+</p>
+</dd>
+</dl>
+<h3><a id="repo-refs"></a>2.2. Repository References</h3>
 <p>Commits that are referenced by tags and branch heads will be marked by the
 reference name surrounded by <em>[</em> and <em>]</em>:</p>
 <div class="listingblock">
@@ -489,7 +557,7 @@ TIG_LS_REMOTE
 </p>
 </dd>
 </dl>
-<h3><a id="history-commands"></a>2.2. History Commands</h3>
+<h3><a id="history-commands"></a>2.3. History Commands</h3>
 <p>It is possible to alter which commands are used for the different views.  If
 for example you prefer commits in the main view to be sorted by date and only
 show 500 commits, use:</p>
@@ -531,7 +599,7 @@ TIG_MAIN_CMD
 </p>
 </dd>
 </dl>
-<h3><a id="tree-commands"></a>2.3. Tree Commands</h3>
+<h3><a id="tree-commands"></a>2.4. Tree Commands</h3>
 <dl>
 <dt>
 TIG_TREE_CMD
@@ -1109,6 +1177,62 @@ cellspacing="0" cellpadding="4">
     Resolve unmerged file by launching git-mergetool(1). Note, to work         correctly this might require some initial configuration of your         preferred merge tool. See the manpage of git-mergetool(1).
     </td>
   </tr>
+  <tr>
+    <td align="left">
+    <em>,</em>
+    </td>
+    <td align="left">
+    Move tree view to the parent tree.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    e
+    </td>
+    <td align="left">
+    Open file in editor.
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<h3><a id="external-commands"></a>4.7. External Commands</h3>
+<p>Tig also comes with a few builtin external commands. These are simple shell
+commands that are run and can take arguments from the current browsing state,
+such as the current commit ID. The default commands are:</p>
+<div class="tableblock">
+<table rules="none"
+frame="hsides"
+cellspacing="0" cellpadding="4">
+<col width="91" />
+<col width="788" />
+<thead>
+  <tr>
+    <th align="left">
+    Key
+    </th>
+    <th align="left">
+    Action
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    C
+    </td>
+    <td align="left">
+    git cherry-pick %(commit)
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    G
+    </td>
+    <td align="left">
+    git gc
+    </td>
+  </tr>
 </tbody>
 </table>
 </div>
@@ -1128,15 +1252,15 @@ described in the  <a href="#history-commands">"History commands"</a> section.</p
 file (or even several files) list the files like this:</p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>$ tig log Makefile README</tt></pre>
+<pre><tt>$ tig Makefile README</tt></pre>
 </div></div>
-<p>To avoid ambiguity with repository references such as tag name, be sure to
-separate file names from other git options using "--". So if you have a file
-named <em>master</em> it will clash with the reference named <em>master</em>, and thus you
-will have to use:</p>
+<p>To avoid ambiguity with tig's subcommands or repository references such as tag
+name, be sure to separate file names from other git options using "--". So if
+you have a file named <em>status</em> it will clash with the <em>status</em> subcommand, and
+thus you will have to use:</p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>$ tig log -- master</tt></pre>
+<pre><tt>$ tig -- status</tt></pre>
 </div></div>
 <div class="admonitionblock">
 <table><tr>
@@ -1156,7 +1280,7 @@ both for the log and main view. Either limit by date using e.g.
 use:</p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>$ tig -- --after="May 5th" --before="2006-05-16 15:44"</tt></pre>
+<pre><tt>$ tig --after="May 5th" --before="2006-05-16 15:44"</tt></pre>
 </div></div>
 <div class="admonitionblock">
 <table><tr>
@@ -1172,14 +1296,14 @@ use:</p>
 commits between <em>tag-1.0</em> and <em>tag-2.0</em>". For example:</p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>$ tig log tag-1.0..tag-2.0</tt></pre>
+<pre><tt>$ tig tag-1.0..tag-2.0</tt></pre>
 </div></div>
 <p>This way of commit limiting makes it trivial to only browse the commits which
 haven't been pushed to a remote branch. Assuming <em>origin</em> is your upstream
 remote branch, using:</p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>$ tig log origin..HEAD</tt></pre>
+<pre><tt>$ tig origin..HEAD</tt></pre>
 </div></div>
 <p>will list what will be pushed to the remote branch. Optionally, the ending
 <em>HEAD</em> can be left out since it is implied.</p>
@@ -1192,7 +1316,7 @@ revision in question.</p>
 following:</p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>$ tig log tag-2.0 ^tag-1.0</tt></pre>
+<pre><tt>$ tig tag-2.0 ^tag-1.0</tt></pre>
 </div></div>
 <p>You can think of <em>^</em> as a negation operator. Using this alternate syntax, it
 is possible to further prune commits by specifying multiple branch cut offs.</p>
@@ -1202,7 +1326,7 @@ say "show at most 20 commits from within the last month that changed files
 under the Documentation/ directory."</p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>$ tig -- --since=1.month -n20 -- Documentation/</tt></pre>
+<pre><tt>$ tig --since=1.month -n20 -- Documentation/</tt></pre>
 </div></div>
 <h3><a id="refspec-all"></a>5.6. Examining All Repository References</h3>
 <p>In some cases, it can be useful to query changes across all references in a
@@ -1211,7 +1335,7 @@ repository change a particular file within the last week". This can be
 accomplished using:</p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>$ tig -- --all --since=1.week -- Makefile</tt></pre>
+<pre><tt>$ tig --all --since=1.week -- Makefile</tt></pre>
 </div></div>
 </div>
 <h2>6. BUGS</h2>
@@ -1282,19 +1406,6 @@ Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</
 </p>
 </li>
 </ul>
-<p>Git porcelains:</p>
-<ul>
-<li>
-<p>
-<a href="http://www.kernel.org/pub/software/scm/git/docs/">git</a>,
-</p>
-</li>
-<li>
-<p>
-<a href="http://www.kernel.org/pub/software/scm/cogito/docs/">Cogito</a>
-</p>
-</li>
-</ul>
 <p>Other git repository browsers:</p>
 <ul>
 <li>
@@ -1316,7 +1427,7 @@ gitview(1)
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 29-Sep-2007 23:16:26 CEST
+Last updated 17-Mar-2008 02:26:41 CEST
 </div>
 </div>
 </body>

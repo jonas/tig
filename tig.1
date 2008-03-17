@@ -1,11 +1,11 @@
 .\"     Title: tig
 .\"    Author: 
-.\" Generator: DocBook XSL Stylesheets v1.71.0 <http://docbook.sf.net/>
-.\"      Date: 09/29/2007
+.\" Generator: DocBook XSL Stylesheets v1.72.0 <http://docbook.sf.net/>
+.\"      Date: 03/17/2008
 .\"    Manual: Tig Manual
-.\"    Source: Tig 0.9.1
+.\"    Source: Tig 0.10
 .\"
-.TH "TIG" "1" "09/29/2007" "Tig 0.9.1" "Tig Manual"
+.TH "TIG" "1" "03/17/2008" "Tig 0.10" "Tig Manual"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -14,15 +14,15 @@
 tig \- text\-mode interface for git
 .SH "SYNOPSIS"
 .sp
+.RS 4
 .nf
-tig [options]
-tig [options] [\-\-] [git options]
-tig [options] log  [git options]
-tig [options] diff [git options]
-tig [options] show [git options]
-tig [options] <    [git command output]
-
+tig        [options] [revisions] [\-\-] [paths]
+tig show   [options] [revisions] [\-\-] [paths]
+tig status
+tig <      [git command output]
 .fi
+.RE
+.sp
 .SH "DESCRIPTION"
 Browse changes in a git repository. Additionally, tig(1) can also act as a pager for output of various git commands.
 .sp
@@ -31,156 +31,176 @@ When browsing repositories, tig(1) uses the underlying git commands to present t
 Using tig(1) as a pager, it will display input from stdin and try to colorize it.
 .sp
 .SH "OPTIONS"
-.PP
-\-l
-.RS 3n
-Start up in log view using the internal log command.
+Command line options recognized by tig include all valid git\-log(1) and git\-diff(1) options, as well as the following subcommands and tig specific options. The first command line parameter not starting with "\-" is interpreted as being either a revision specification or a path and will end the option parsing. All following options will be passed untouched to the underlying git command.
 .sp
+.PP
+show
+.RS 4
+Open diff view using the given git show options.
 .RE
 .PP
-\-d
-.RS 3n
-Start up in diff view using the internal diff command.
-.sp
-.RE
-.PP
-\-S
-.RS 3n
+status
+.RS 4
 Start up in status view.
-.sp
-.RE
-.PP
-\-n[INTERVAL], \-\-line\-number[=INTERVAL]
-.RS 3n
-Prefix line numbers in log and diff view. Optionally, with interval different than each line.
-.sp
-.RE
-.PP
-\-b[NSPACES], \-\-tab\-size[=NSPACES]
-.RS 3n
-Set the number of spaces tabs should be expanded to.
-.sp
 .RE
 .PP
 \-v, \-\-version
-.RS 3n
+.RS 4
 Show version and exit.
-.sp
 .RE
 .PP
 \-h, \-\-help
-.RS 3n
+.RS 4
 Show help message and exit.
-.sp
 .RE
 .PP
 \-\-
-.RS 3n
-End of tig(1) options. Useful when specifying command options for the main view. Example:
+.RS 4
+End of tig options. This ends tig option parsing, and passes any following options untouched to the underlying git command. Kept for compatibility and will be deprecated in a future version.
+.RE
+.SH "EXAMPLES"
+Display the current branch:
 .sp
 .sp
+.RS 4
 .nf
-$ tig \-\- \-\-since=1.month
-
+$ tig
 .fi
 .RE
-.PP
-log
-.RS 3n
-Open log view using the given git log options.
 .sp
-.RE
-.PP
-diff
-.RS 3n
-Open diff view using the given git diff options.
-.sp
-.RE
-.PP
-show
-.RS 3n
-Open diff view using the given git show options.
-.sp
-.RE
-.PP
-[git options]
-.RS 3n
-tig(1) will stop the option parsing when the first command line parameter not starting with "\-" is encountered. All options including this one will be passed to git log when loading the main view. This makes it possible to say:
+Display one or more specific branches:
 .sp
 .sp
+.RS 4
 .nf
-$ tig tag\-1.0..HEAD
-
+$ tig test master
 .fi
 .RE
+.sp
+Display all branches:
+.sp
+.sp
+.RS 4
+.nf
+$ tig \-\-all
+.fi
+.RE
+.sp
+Display differences between two branches:
+.sp
+.sp
+.RS 4
+.nf
+$ tig test..master
+.fi
+.RE
+.sp
+Display changes for a single file:
+.sp
+.sp
+.RS 4
+.nf
+$ tig \-\- README
+.fi
+.RE
+.sp
+Display contents of the README file in a specific revision:
+.sp
+.sp
+.RS 4
+.nf
+$ tig show tig\-0.8:README
+.fi
+.RE
+.sp
+Display revisions between two dates for a specific file:
+.sp
+.sp
+.RS 4
+.nf
+$ tig \-\-after="2004\-01\-01" \-\-before="2006\-05\-16" \-\- README
+.fi
+.RE
+.sp
 .SH "ENVIRONMENT VARIABLES"
+In addition to environment variables used by git (e.g. GIT_DIR), tig defines the following:
+.sp
+.PP
+TIGRC_USER
+.RS 4
+Path of the user configuration file (defaults to
+~/.tigrc).
+.RE
+.PP
+TIGRC_SYSTEM
+.RS 4
+Path of the system wide configuration file (defaults to
+/home/fonseca/etc/tigrc).
+.RE
 .PP
 TIG_LS_REMOTE
-.RS 3n
+.RS 4
 Set command for retrieving all repository references. The command should output data in the same format as git\-ls\-remote(1).
-.sp
-.RE
-.PP
-TIG_CHERRY_PICK
-.RS 3n
-Set command for cherry\-picking a commit. The command should expect a commit SHA as its final argument.
-.sp
 .RE
 .PP
 TIG_DIFF_CMD
-.RS 3n
+.RS 4
 The command used for the diff view. By default, git show is used as a backend.
-.sp
 .RE
 .PP
 TIG_LOG_CMD
-.RS 3n
-The command used for the log view. If you prefer to have both author and committer shown in the log view be sure to pass \-\-pretty=fuller to git log.
-.sp
+.RS 4
+The command used for the log view. If you prefer to have both author and committer shown in the log view be sure to pass
+\-\-pretty=fuller
+to git log.
 .RE
 .PP
 TIG_MAIN_CMD
-.RS 3n
-The command used for the main view. Note, you must always specify the option: \-\-pretty=raw since the main view parser expects to read that format.
-.sp
+.RS 4
+The command used for the main view. Note, you must always specify the option:
+\-\-pretty=raw
+since the main view parser expects to read that format.
 .RE
 .SS "Tree commands"
 .PP
 TIG_TREE_CMD
-.RS 3n
+.RS 4
 The command used for the tree view. By default, git\-ls\-tree(1) is used. The commands should expect first the commit ID and second a path.
-.sp
 .RE
 .PP
 TIG_BLOB_CMD
-.RS 3n
+.RS 4
 The command used for the blob view. By default, git\-cat\-file(1) is used. The command gets the blob ID.
-.sp
 .RE
 .SH "FILES"
 .PP
 \fI~/.tigrc\fR
-.RS 3n
-User configuration file. See \fBtigrc\fR(5) for examples.
-.sp
+.RS 4
+User configuration file. See
+\fBtigrc\fR(5)
+for examples.
 .RE
 .PP
-\fI.git/config\fR
-.RS 3n
-Repository config file. Read on start\-up with the help of git\-repo\-config(1).
-.sp
+\fI/home/fonseca/etc/tigrc\fR
+.RS 4
+System wide configuration file.
+.RE
+.PP
+\fI$GIT_DIR/config\fR
+.RS 4
+Repository config file. Read on start\-up with the help of git\-config(1).
 .RE
 .SH "BUGS"
 Known bugs and problems:
 .sp
-.TP 3n
-\(bu
-Proper locale support: in it's current state tig is pretty much UTF\-8 only.
 .sp
-.TP 3n
-\(bu
-Horizontal scrolling.
+.RS 4
+\h'-04'\(bu\h'+03'Proper locale support: in it's current state tig is pretty much UTF\-8 only.
+.RE
 .sp
+.RS 4
+\h'-04'\(bu\h'+03'Horizontal scrolling.
+.RE
 .SH "COPYRIGHT"
 Copyright (c) 2006\-2007 Jonas Fonseca <fonseca@diku.dk>
 .sp
@@ -191,23 +211,29 @@ This program is free software; you can redistribute it and/or modify it under th
 .sp
 Online resources:
 .sp
-.TP 3n
-\(bu
-Homepage: \fIhttp://jonas.nitro.dk/tig/\fR
 .sp
-.TP 3n
-\(bu
-Manual: \fIhttp://jonas.nitro.dk/tig/manual.html\fR
+.RS 4
+\h'-04'\(bu\h'+03'Homepage:
+\fIhttp://jonas.nitro.dk/tig/\fR
+.RE
 .sp
-.TP 3n
-\(bu
-Tarballs: \fIhttp://jonas.nitro.dk/tig/releases/\fR
+.RS 4
+\h'-04'\(bu\h'+03'Manual:
+\fIhttp://jonas.nitro.dk/tig/manual.html\fR
+.RE
 .sp
-.TP 3n
-\(bu
-Git URL: git://repo.or.cz/tig.git (mirror) or \fIhttp://jonas.nitro.dk/tig/tig.git\fR (master)
+.RS 4
+\h'-04'\(bu\h'+03'Tarballs:
+\fIhttp://jonas.nitro.dk/tig/releases/\fR
+.RE
 .sp
-.TP 3n
-\(bu
-Gitweb: \fIhttp://repo.or.cz/w/tig.git\fR
+.RS 4
+\h'-04'\(bu\h'+03'Git URL: git://repo.or.cz/tig.git (mirror) or
+\fIhttp://jonas.nitro.dk/tig/tig.git\fR
+(master)
+.RE
 .sp
+.RS 4
+\h'-04'\(bu\h'+03'Gitweb:
+\fIhttp://repo.or.cz/w/tig.git\fR
+.RE

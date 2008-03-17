@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 7.1.2" />
+<meta name="generator" content="AsciiDoc 8.2.1" />
 <style type="text/css">
 /* Debug borders */
 p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
@@ -75,7 +75,7 @@ span#author {
   color: #527bbd;
   font-family: sans-serif;
   font-weight: bold;
-  font-size: 1.2em;
+  font-size: 1.1em;
 }
 span#email {
 }
@@ -144,6 +144,9 @@ div.sidebarblock > div.content {
   padding: 0.5em;
 }
 
+div.listingblock {
+  margin-right: 0%;
+}
 div.listingblock > div.content {
   border: 1px solid silver;
   background: #f4f4f4;
@@ -222,6 +225,9 @@ div.hlist {
   margin-top: 0.8em;
   margin-bottom: 0.8em;
 }
+div.hlist td {
+  padding-bottom: 5px;
+}
 td.hlist1 {
   vertical-align: top;
   font-style: italic;
@@ -233,6 +239,32 @@ td.hlist2 {
 
 @media print {
   div#footer-badges { display: none; }
+}
+
+div#toctitle {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
 }
 include1::./stylesheets/xhtml11-manpage.css[]
 /* Workarounds for IE6's broken and incomplete CSS2. */
@@ -263,6 +295,9 @@ div.exampleblock-content {
   border-left: 2px solid silver;
   padding-left: 0.5em;
 }
+
+/* IE6 sets dynamically generated links as visited. */
+div#toc a:visited { color: blue; }
 </style>
 <title>tigrc(5)</title>
 </head>
@@ -281,9 +316,9 @@ tigrc(5) Manual Page
 <h2>SYNOPSIS</h2>
 <div class="sectionbody">
 <div class="verseblock">
-<div class="content"><strong>set</strong>   variable <strong>=</strong> value
-<strong>bind</strong>  keymap key action
-<strong>color</strong> area fgcolor bgcolor [attributes]</div></div>
+<div class="content"><strong>set</strong>   <em>variable</em> <strong>=</strong> <em>value</em>
+<strong>bind</strong>  <em>keymap</em> <em>key</em> <em>action</em>
+<strong>color</strong> <em>area</em> <em>fgcolor</em> <em>bgcolor</em> <em>[attributes]</em></div></div>
 </div>
 <h2>DESCRIPTION</h2>
 <div class="sectionbody">
@@ -299,14 +334,14 @@ annotate your initialization file.</p>
 <p>A few selective variables can be configured via the set command. The syntax
 is:</p>
 <div class="verseblock">
-<div class="content">        <strong>set</strong> variables <strong>=</strong> value</div></div>
+<div class="content"><strong>set</strong> variables <strong>=</strong> value</div></div>
 <p>Examples:</p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>        set show-rev-graph = yes        # Show revision graph?
-        set line-number-interval = 5    # Interval between line numbers
-        set tab-size = 8                # Number of spaces pr tab
-        set encoding = "UTF-8"          # Commit encoding</tt></pre>
+<pre><tt>set show-rev-graph = yes        # Show revision graph?
+set line-number-interval = 5    # Interval between line numbers
+set tab-size = 8                # Number of spaces per tab
+set encoding = "UTF-8"          # Commit encoding</tt></pre>
 </div></div>
 <p>The type of variables are either bool, int, and string.</p>
 <dl>
@@ -382,19 +417,23 @@ Valid string values
 <p>Using bind commands keys can be mapped to an action when pressed in a given
 key map. The syntax is:</p>
 <div class="verseblock">
-<div class="content">        <strong>bind</strong> <em>keymap</em> <em>key</em> <em>action</em></div></div>
+<div class="content"><strong>bind</strong> <em>keymap</em> <em>key</em> <em>action</em></div></div>
 <p>Examples:</p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>        # A few keybindings
-        bind main w scroll-line-up
-        bind main s scroll-line-down
-        bind main space enter
-        bind diff a previous
-        bind diff d next
-        bind diff b move-first-line
-        # 'unbind' the default quit key binding
-        bind main Q none</tt></pre>
+<pre><tt># A few keybindings
+bind main w scroll-line-up
+bind main s scroll-line-down
+bind main space enter
+bind diff a previous
+bind diff d next
+bind diff b move-first-line
+# 'unbind' the default quit key binding
+bind main Q none
+# An external command to update from upstream
+bind generic F !git fetch
+# Cherry-pick current commit unto current branch
+bind generic C !git cherry-pick %(commit)</tt></pre>
 </div></div>
 <p>Keys are mapped by first searching the keybindings for the current view, then
 the keybindings for the <strong>generic</strong> keymap, and last the default keybindings.
@@ -436,6 +475,12 @@ e.g. "view-main", "View.Main", and "VIEW_MAIN" are the same.
 </dd>
 </dl>
 <h3>Actions</h3>
+<p>Apart from the action names listed below, all actions starting with a <em>!</em> will
+be available as an external command. External commands can contain variable
+names that will be substituted before the command is run. Valid variable names
+are "%(head)", "%(commit)", and "%(blob)".</p>
+<p>As an example, the following external command will save the current commit as
+a patch file: "!git format-patch %(commit)^..%(commit)".</p>
 <div class="tableblock">
 <table rules="none"
 frame="void"
@@ -875,18 +920,18 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
-    edit
+    tree-parent
     </td>
     <td align="left">
-    Open in editor
+    Switch to parent directory in tree view
     </td>
   </tr>
   <tr>
     <td align="left">
-    cherry-pick
+    edit
     </td>
     <td align="left">
-    Cherry-pick commit to current branch
+    Open in editor
     </td>
   </tr>
 </tbody>
@@ -897,22 +942,24 @@ cellspacing="0" cellpadding="4">
 <div class="sectionbody">
 <p>Color commands control highlighting and the user interface styles. If your
 terminal supports color, these commands can be used to assign foreground and
-background combinations to certain areas. Optionally, an attribute can be given
-as the last parameter. The syntax is:</p>
+background combinations to certain areas. Optionally, an attribute can be
+given as the last parameter. The syntax is:</p>
 <div class="verseblock">
-<div class="content">        <strong>color</strong> <em>area</em> <em>fgcolor</em> <em>bgcolor</em> <em>[attributes]</em></div></div>
+<div class="content"><strong>color</strong> <em>area</em> <em>fgcolor</em> <em>bgcolor</em> <em>[attributes]</em></div></div>
 <p>Examples:</p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>        # Diff colors
-        color diff-header       yellow  default
-        color diff-index        blue    default
-        color diff-chunk        magenta default
-        # A strange looking cursor line
-        color cursor            red     default underline
-        # UI colors
-        color title-blur        white   blue
-        color title-focus       white   blue    bold</tt></pre>
+<pre><tt># Overwrite the default terminal colors to white on black.
+color default           white   black
+# Diff colors
+color diff-header       yellow  default
+color diff-index        blue    default
+color diff-chunk        magenta default
+# A strange looking cursor line
+color cursor            red     default underline
+# UI colors
+color title-blur        white   blue
+color title-focus       white   blue    bold</tt></pre>
 </div></div>
 <dl>
 <dt>
@@ -949,6 +996,19 @@ Attribute names
 <h3>UI colors</h3>
 <dl>
 <dt>
+Default terminal colors
+</dt>
+<dd>
+<p>
+The colors and attributes to be used for the text that is not highlighted or
+that specify the use of the default terminal colors can be controlled by
+setting the <strong>default</strong> color option.
+</p>
+<p>Use the <strong>default</strong> color to use the colors configured for the terminal. This is
+the default and recommended if you are using a terminal with a transparent
+background.</p>
+</dd>
+<dt>
 Status window colors
 </dt>
 <dd>
@@ -984,12 +1044,10 @@ Appearance of the various columns in the main view, including the <em>~</em> use
 delimiting long author names and labels for tag and branch references.
 </p>
 <p><strong>main-date</strong>, <strong>main-author</strong>, <strong>main-commit</strong>, <strong>main-delim</strong>, <strong>main-tag</strong>,
-<strong>main-ref</strong>, <strong>main-remote</strong></p>
+<strong>main-ref</strong>, <strong>main-remote</strong>, <strong>main-revgraph</strong></p>
 </dd>
 </dl>
 <h3>Highlighting</h3>
-<p>The colors and attributes for text that is not highlighted can be controlled
-by changing the <strong>default</strong> color option.</p>
 <dl>
 <dt>
 Diff markup
@@ -1009,7 +1067,7 @@ Extra diff information emitted by the git diff machinery, such as mode
 changes, rename detection, and similarity.
 </p>
 <p><strong>diff-oldmode</strong>, <strong>diff-newmode</strong>, <strong>diff-copy-from</strong>, <strong>diff-copy-to</strong>,
-<strong>diff-rename-from</strong>, <strong>diff-rename-to</strong>, <strong>diff-similarity</strong> <strong>diff-dissimilarity</strong>
+<strong>diff-rename-from</strong>, <strong>diff-rename-to</strong>, <strong>diff-similarity</strong>, <strong>diff-dissimilarity</strong>
 <strong>diff-tree</strong>, <strong>diff-index</strong></p>
 </dd>
 <dt>
@@ -1021,7 +1079,8 @@ Commit diffs and the revision logs are usually formatted using pretty printed
 headers , unless <tt>--pretty=raw</tt> was given. This includes lines, such as merge
 info, commit ID, and author and committer date.
 </p>
-<p><strong>pp-author</strong>, <strong>pp-commit</strong>, <strong>pp-merge</strong>, <strong>pp-date</strong>, <strong>pp-adate</strong>, <strong>pp-cdate</strong></p>
+<p><strong>pp-author</strong>, <strong>pp-commit</strong>, <strong>pp-merge</strong>, <strong>pp-date</strong>, <strong>pp-adate</strong>, <strong>pp-cdate</strong>,
+<strong>pp-refs</strong></p>
 </dd>
 <dt>
 Raw commit header
@@ -1042,6 +1101,24 @@ For now only <tt>Signed-off-by</tt> and <tt>Acked-by</tt> lines are colorized.
 </p>
 <p><strong>signoff</strong>, <strong>acked</strong></p>
 </dd>
+<dt>
+Tree markup
+</dt>
+<dd>
+<p>
+Colors for information of the tree view.
+</p>
+<p><strong>tree-dir</strong>, <strong>tree-file</strong></p>
+</dd>
+<dt>
+Status markup
+</dt>
+<dd>
+<p>
+Colors used in the status view.
+</p>
+<p><strong>stat-section</strong>, <strong>stat-none</strong>, <strong>stat-staged</strong>, <strong>stat-unstaged</strong>, <strong>stat-untracked</strong></p>
+</dd>
 </dl>
 </div>
 <h2>COPYRIGHT</h2>
@@ -1055,7 +1132,7 @@ For now only <tt>Signed-off-by</tt> and <tt>Acked-by</tt> lines are colorized.
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 29-Sep-2007 23:16:25 CEST
+Last updated 17-Mar-2008 02:26:40 CEST
 </div>
 </div>
 </body>

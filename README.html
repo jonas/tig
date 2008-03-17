@@ -103,12 +103,48 @@ cellspacing="0" cellpadding="4">
     If iconv is not provided by the c library                                 you need to change the Makefile to link it                                 into the binary.
     </td>
   </tr>
+</tbody>
+</table>
+</div>
+<p>The following optional tools and packages are needed for building
+documentation:</p>
+<div class="tableblock">
+<table rules="none"
+frame="hsides"
+cellspacing="0" cellpadding="4">
+<col width="365" />
+<col width="537" />
+<tbody valign="top">
   <tr>
     <td align="left">
-    asciidoc (&gt;= 7.0), xmlto
+    asciidoc (&gt;= 8.0)
     </td>
     <td align="left">
-    For building documentation. (Optional)
+    Generates HTML and (DocBook) XML from text.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    xmlto
+    </td>
+    <td align="left">
+    Generates manpages and chunked HTML from XML.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    DocBook XSL (&gt;= 1.72.0)
+    </td>
+    <td align="left">
+    Used by xmlto for building manpages.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    DocBook (DSSL/Jade) tools
+    </td>
+    <td align="left">
+    Generates PDF from XML.                                 Also known as docbook-utils.
     </td>
   </tr>
 </tbody>

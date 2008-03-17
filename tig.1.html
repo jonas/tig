@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 7.1.2" />
+<meta name="generator" content="AsciiDoc 8.2.1" />
 <style type="text/css">
 /* Debug borders */
 p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
@@ -75,7 +75,7 @@ span#author {
   color: #527bbd;
   font-family: sans-serif;
   font-weight: bold;
-  font-size: 1.2em;
+  font-size: 1.1em;
 }
 span#email {
 }
@@ -144,6 +144,9 @@ div.sidebarblock > div.content {
   padding: 0.5em;
 }
 
+div.listingblock {
+  margin-right: 0%;
+}
 div.listingblock > div.content {
   border: 1px solid silver;
   background: #f4f4f4;
@@ -222,6 +225,9 @@ div.hlist {
   margin-top: 0.8em;
   margin-bottom: 0.8em;
 }
+div.hlist td {
+  padding-bottom: 5px;
+}
 td.hlist1 {
   vertical-align: top;
   font-style: italic;
@@ -233,6 +239,32 @@ td.hlist2 {
 
 @media print {
   div#footer-badges { display: none; }
+}
+
+div#toctitle {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
 }
 include1::./stylesheets/xhtml11-manpage.css[]
 /* Workarounds for IE6's broken and incomplete CSS2. */
@@ -263,13 +295,16 @@ div.exampleblock-content {
   border-left: 2px solid silver;
   padding-left: 0.5em;
 }
+
+/* IE6 sets dynamically generated links as visited. */
+div#toc a:visited { color: blue; }
 </style>
-<title>TIG(1)</title>
+<title>tig(1)</title>
 </head>
 <body>
 <div id="header">
 <h1>
-TIG(1) Manual Page
+tig(1) Manual Page
 </h1>
 <h2>NAME</h2>
 <div class="sectionbody">
@@ -281,12 +316,10 @@ TIG(1) Manual Page
 <h2>SYNOPSIS</h2>
 <div class="sectionbody">
 <div class="verseblock">
-<div class="content">tig [options]
-tig [options] [--] [git options]
-tig [options] log  [git options]
-tig [options] diff [git options]
-tig [options] show [git options]
-tig [options] &lt;    [git command output]</div></div>
+<div class="content">tig        [options] [revisions] [--] [paths]
+tig show   [options] [revisions] [--] [paths]
+tig status
+tig &lt;      [git command output]</div></div>
 </div>
 <h2>DESCRIPTION</h2>
 <div class="sectionbody">
@@ -300,46 +333,27 @@ to colorize it.</p>
 </div>
 <h2>OPTIONS</h2>
 <div class="sectionbody">
+<p>Command line options recognized by tig include all valid git-log(1) and
+git-diff(1) options, as well as the following subcommands and tig specific
+options. The first command line parameter not starting with "-" is interpreted
+as being either a revision specification or a path and will end the option
+parsing. All following options will be passed untouched to the underlying git
+command.</p>
 <dl>
 <dt>
--l
+show
 </dt>
 <dd>
 <p>
-        Start up in log view using the internal log command.
+        Open diff view using the given git show options.
 </p>
 </dd>
 <dt>
--d
-</dt>
-<dd>
-<p>
-        Start up in diff view using the internal diff command.
-</p>
-</dd>
-<dt>
--S
+status
 </dt>
 <dd>
 <p>
         Start up in status view.
-</p>
-</dd>
-<dt>
--n[INTERVAL], --line-number[=INTERVAL]
-</dt>
-<dd>
-<p>
-        Prefix line numbers in log and diff view.
-        Optionally, with interval different than each line.
-</p>
-</dd>
-<dt>
--b[NSPACES], --tab-size[=NSPACES]
-</dt>
-<dd>
-<p>
-        Set the number of spaces tabs should be expanded to.
 </p>
 </dd>
 <dt>
@@ -363,59 +377,73 @@ to colorize it.</p>
 </dt>
 <dd>
 <p>
-        End of tig(1) options. Useful when specifying command
-        options for the main view. Example:
+        End of tig options. This ends tig option parsing, and passes any
+        following options untouched to the underlying git command. Kept for
+        compatibility and will be deprecated in a future version.
 </p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>$ tig -- --since=1.month</tt></pre>
-</div></div>
-</dd>
-<dt>
-log
-</dt>
-<dd>
-<p>
-        Open log view using the given git log options.
-</p>
-</dd>
-<dt>
-diff
-</dt>
-<dd>
-<p>
-        Open diff view using the given git diff options.
-</p>
-</dd>
-<dt>
-show
-</dt>
-<dd>
-<p>
-        Open diff view using the given git show options.
-</p>
-</dd>
-<dt>
-[git options]
-</dt>
-<dd>
-<p>
-        tig(1) will stop the option parsing when the first
-        command line parameter not starting with "-" is
-        encountered. All options including this one will be
-        passed to git log when loading the main view.
-        This makes it possible to say:
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>$ tig tag-1.0..HEAD</tt></pre>
-</div></div>
 </dd>
 </dl>
 </div>
+<h2>EXAMPLES</h2>
+<div class="sectionbody">
+<p>Display the current branch:</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ tig</tt></pre>
+</div></div>
+<p>Display one or more specific branches:</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ tig test master</tt></pre>
+</div></div>
+<p>Display all branches:</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ tig --all</tt></pre>
+</div></div>
+<p>Display differences between two branches:</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ tig test..master</tt></pre>
+</div></div>
+<p>Display changes for a single file:</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ tig -- README</tt></pre>
+</div></div>
+<p>Display contents of the README file in a specific revision:</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ tig show tig-0.8:README</tt></pre>
+</div></div>
+<p>Display revisions between two dates for a specific file:</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ tig --after="2004-01-01" --before="2006-05-16" -- README</tt></pre>
+</div></div>
+</div>
 <h2>ENVIRONMENT VARIABLES</h2>
 <div class="sectionbody">
+<p>In addition to environment variables used by git (e.g. GIT_DIR), tig defines
+the following:</p>
 <dl>
+<dt>
+TIGRC_USER
+</dt>
+<dd>
+<p>
+        Path of the user configuration file (defaults to <tt>~/.tigrc</tt>).
+</p>
+</dd>
+<dt>
+TIGRC_SYSTEM
+</dt>
+<dd>
+<p>
+        Path of the system wide configuration file (defaults to
+        <tt>/home/fonseca/etc/tigrc</tt>).
+</p>
+</dd>
 <dt>
 TIG_LS_REMOTE
 </dt>
@@ -423,15 +451,6 @@ TIG_LS_REMOTE
 <p>
         Set command for retrieving all repository references. The command
         should output data in the same format as git-ls-remote(1).
-</p>
-</dd>
-<dt>
-TIG_CHERRY_PICK
-</dt>
-<dd>
-<p>
-        Set command for cherry-picking a commit. The command should expect
-        a commit SHA as its final argument.
 </p>
 </dd>
 <dt>
@@ -499,12 +518,20 @@ TIG_BLOB_CMD
 </p>
 </dd>
 <dt>
-<em>.git/config</em>
+<em>/home/fonseca/etc/tigrc</em>
+</dt>
+<dd>
+<p>
+        System wide configuration file.
+</p>
+</dd>
+<dt>
+<em>$GIT_DIR/config</em>
 </dt>
 <dd>
 <p>
         Repository config file. Read on start-up with the help of
-        git-repo-config(1).
+        git-config(1).
 </p>
 </dd>
 </dl>
@@ -569,7 +596,7 @@ Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 29-Sep-2007 23:16:24 CEST
+Last updated 17-Mar-2008 02:26:39 CEST
 </div>
 </div>
 </body>
