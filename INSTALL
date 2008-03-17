@@ -3,21 +3,25 @@ Installation instructions
 
 Download a tarball from http://jonas.nitro.dk/tig/releases[] or clone the tig
 repository http://jonas.nitro.dk/tig/tig.git[]. Documentation files are
-available either in the tarballs or in the above repository in the branch named
-'release'.
+available in the tarballs and in the 'release' branch of the tig repository.
 
-To install tig simply run:
+The quick and simple way to install tig with documentation is to run:
 
-	$ autoreconf
+	$ make
+	$ make install install-doc
+
+Optionally, you can use the `configure` script to detect library location:
+
 	$ ./configure
+	$ make
 	$ make install
 
-To install documentation run:
+If your iconv library is not in the default library and include path, you'll
+probably want to pass the "--with-libiconv" option to the "configure" script to
+tell it where to look. Note, if you are building from the tig repository, you
+need to first make the configure script:
 
-	$ make install-doc
-
-If you had to install your own copy of libiconv, you'll probably want to pass
-the "--with-libiconv" option to the "configure" script to tell it where to look.
+	$ make configure
 
 The following tools and packages are needed:
 
@@ -33,10 +37,12 @@ iconv				If iconv is not provided by the c library \
 				into the binary.
 -------------------------------------------------------------------------------
 
-The following optional tools and packages are needed for building
-documentation:
+The following optional tools and packages are needed for creating the
+configure script and building documentation:
 
 `-------------------------------`----------------------------------------------
+autoconf			Contains autoreconf for generating configure \
+				from configure.ac.
 asciidoc (>= 8.0)		Generates HTML and (DocBook) XML from text.
 xmlto				Generates manpages and chunked HTML from XML.
 DocBook XSL (>= 1.72.0)		Used by xmlto for building manpages.
