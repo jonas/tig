@@ -10,6 +10,10 @@ AM_ICONV
 
 AC_PROG_CC
 AC_CHECK_PROGS(GIT_CONFIG, [git-config git-repo-config])
+if test "${ac_cv_prog_GIT_CONFIG}" = ""; then
+  AC_CHECK_PROGS(GIT, [git])
+  GIT_CONFIG="${ac_cv_prog_GIT} config"
+fi
 AC_DEFINE_UNQUOTED(GIT_CONFIG,"$GIT_CONFIG",[git config program])
 AC_CHECK_PROGS(ASCIIDOC, [asciidoc false])
 AC_CHECK_PROGS(XMLTO, [xmlto false])
