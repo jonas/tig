@@ -434,7 +434,7 @@ static iconv_t opt_iconv		= ICONV_NONE;
 static char opt_search[SIZEOF_STR]	= "";
 static char opt_cdup[SIZEOF_STR]	= "";
 static char opt_git_dir[SIZEOF_STR]	= "";
-static char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
+static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
 
 enum option_type {
