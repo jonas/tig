@@ -140,6 +140,7 @@ struct ref {
 	char *name;		/* Ref name; tag or head names are shortened. */
 	char id[SIZEOF_REV];	/* Commit SHA1 ID */
 	unsigned int tag:1;	/* Is it a tag? */
+	unsigned int ltag:1;	/* If so, is the tag local? */
 	unsigned int remote:1;	/* Is it a remote ref? */
 	unsigned int next:1;	/* For ref lists: are there more refs? */
 };
@@ -654,6 +655,7 @@ LINE(MAIN_AUTHOR,  "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_COMMIT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(MAIN_DELIM,   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
+LINE(MAIN_LOCAL_TAG,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REMOTE,  "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REVGRAPH,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
@@ -4260,6 +4262,8 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 		do {
 			if (type == LINE_CURSOR)
 				;
+			else if (commit->refs[i]->ltag)
+				wattrset(view->win, get_line_attr(LINE_MAIN_LOCAL_TAG));
 			else if (commit->refs[i]->tag)
 				wattrset(view->win, get_line_attr(LINE_MAIN_TAG));
 			else if (commit->refs[i]->remote)
@@ -4863,15 +4867,19 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 {
 	struct ref *ref;
 	bool tag = FALSE;
+	bool ltag = FALSE;
 	bool remote = FALSE;
+	bool check_replace = FALSE;
 
 	if (!strncmp(name, "refs/tags/", STRING_SIZE("refs/tags/"))) {
-		/* Commits referenced by tags has "^{}" appended. */
-		if (name[namelen - 1] != '}')
-			return OK;
-
-		while (namelen > 0 && name[namelen] != '^')
-			namelen--;
+		if (!strcmp(name + namelen - 3, "^{}")) {
+			namelen -= 3;
+			name[namelen] = 0;
+			if (refs_size > 0 && refs[refs_size - 1].ltag == TRUE)
+				check_replace = TRUE;
+		} else {
+			ltag = TRUE;
+		}
 
 		tag = TRUE;
 		namelen -= STRING_SIZE("refs/tags/");
@@ -4890,6 +4898,16 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 		return OK;
 	}
 
+	if (check_replace && !strcmp(name, refs[refs_size - 1].name)) {
+		/* it's an annotated tag, replace the previous sha1 with the
+		 * resolved commit id; relies on the fact git-ls-remote lists
+		 * the commit id of an annotated tag right beofre the commit id
+		 * it points to. */
+		refs[refs_size - 1].ltag = ltag;
+		string_copy_rev(refs[refs_size - 1].id, id);
+
+		return OK;
+	}
 	refs = realloc(refs, sizeof(*refs) * (refs_size + 1));
 	if (!refs)
 		return ERR;
@@ -4902,6 +4920,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 	strncpy(ref->name, name, namelen);
 	ref->name[namelen] = 0;
 	ref->tag = tag;
+	ref->ltag = ltag;
 	ref->remote = remote;
 	string_copy_rev(ref->id, id);
 
