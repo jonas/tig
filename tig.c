@@ -42,6 +42,9 @@
 #include <langinfo.h>
 #include <iconv.h>
 
+/* ncurses(3): Must be defined to have extended wide-character functions. */
+#define _XOPEN_SOURCE_EXTENDED
+
 #include <curses.h>
 
 #if __GNUC__ >= 3
