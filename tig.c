@@ -2637,7 +2637,6 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 {
 	char *text = line->data;
 	enum line_type type = line->type;
-	int textlen = strlen(text);
 	int attr;
 
 	wmove(view->win, lineno, 0);
@@ -2690,13 +2689,9 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 		}
 
 	} else {
-		int col = 0, pos = 0;
+		int tilde_attr = get_line_attr(LINE_MAIN_DELIM);
 
-		for (; pos < textlen && col < view->width; pos++, col++)
-			if (text[pos] == '\t')
-				col += TABSIZE - (col % TABSIZE) - 1;
-
-		waddnstr(view->win, text, pos);
+		draw_text(view, text, view->width, 0, TRUE, tilde_attr);
 	}
 
 	return TRUE;
@@ -3434,12 +3429,14 @@ static bool
 status_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
 {
 	struct status *status = line->data;
+	int tilde_attr = get_line_attr(LINE_MAIN_DELIM);
 
 	wmove(view->win, lineno, 0);
 
 	if (selected) {
 		wattrset(view->win, get_line_attr(LINE_CURSOR));
 		wchgat(view->win, -1, 0, LINE_CURSOR, NULL);
+		tilde_attr = -1;
 
 	} else if (!status && line->type != LINE_STAT_NONE) {
 		wattrset(view->win, get_line_attr(LINE_STAT_SECTION));
@@ -3473,7 +3470,7 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 			return FALSE;
 		}
 
-		waddstr(view->win, text);
+		draw_text(view, text, view->width, 0, TRUE, tilde_attr);
 		return TRUE;
 	}
 
@@ -3481,8 +3478,10 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 	if (!selected)
 		wattrset(view->win, A_NORMAL);
 	wmove(view->win, lineno, 4);
-	waddstr(view->win, status->new.name);
+	if (view->width < 5)
+		return TRUE;
 
+	draw_text(view, status->new.name, view->width - 5, 5, TRUE, tilde_attr);
 	return TRUE;
 }
 
@@ -4216,20 +4215,23 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 	}
 
 	if (opt_rev_graph && commit->graph_size) {
+		size_t graph_size = view->width - col;
 		size_t i;
 
 		if (type != LINE_CURSOR)
 			wattrset(view->win, get_line_attr(LINE_MAIN_REVGRAPH));
 		wmove(view->win, lineno, col);
+		if (graph_size > commit->graph_size)
+			graph_size = commit->graph_size;
 		/* Using waddch() instead of waddnstr() ensures that
 		 * they'll be rendered correctly for the cursor line. */
-		for (i = 0; i < commit->graph_size; i++)
+		for (i = 0; i < graph_size; i++)
 			waddch(view->win, commit->graph[i]);
 
-		waddch(view->win, ' ');
 		col += commit->graph_size + 1;
 		if (col >= view->width)
 			return TRUE;
+		waddch(view->win, ' ');
 	}
 	if (type != LINE_CURSOR)
 		wattrset(view->win, A_NORMAL);
@@ -4486,6 +4488,9 @@ unicode_width(unsigned long c)
 	    || (c >= 0x20000 && c <= 0x2fffd)
 	    || (c >= 0x30000 && c <= 0x3fffd)))
 		return 2;
+
+	if (c == '\t')
+		return opt_tab_size;
 
 	return 1;
 }
