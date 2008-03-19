@@ -956,22 +956,23 @@ static size_t run_requests;
 static enum request
 add_run_request(enum keymap keymap, int key, int argc, char **argv)
 {
-	struct run_request *tmp;
-	struct run_request req = { keymap, key };
+	struct run_request *req;
+	char cmd[SIZEOF_STR];
 	size_t bufpos;
 
 	for (bufpos = 0; argc > 0; argc--, argv++)
-		if (!string_format_from(req.cmd, &bufpos, "%s ", *argv))
+		if (!string_format_from(cmd, &bufpos, "%s ", *argv))
 			return REQ_NONE;
 
-	req.cmd[bufpos - 1] = 0;
-
-	tmp = realloc(run_request, (run_requests + 1) * sizeof(*run_request));
-	if (!tmp)
+	req = realloc(run_request, (run_requests + 1) * sizeof(*run_request));
+	if (!req)
 		return REQ_NONE;
 
-	run_request = tmp;
-	run_request[run_requests++] = req;
+	run_request = req;
+	req = &run_request[run_requests++];
+	string_copy(req->cmd, cmd);
+	req->keymap = keymap;
+	req->key = key;
 
 	return REQ_NONE + run_requests;
 }
@@ -1465,7 +1466,7 @@ static struct view views[] = {
 
 
 enum line_graphic {
-	LINE_GRAPHIC_VLINE,
+	LINE_GRAPHIC_VLINE
 };
 
 static int line_graphics[] = {
@@ -2422,7 +2423,7 @@ enum open_flags {
 	OPEN_SPLIT = 1,		/* Split current view. */
 	OPEN_BACKGROUNDED = 2,	/* Backgrounded. */
 	OPEN_RELOAD = 4,	/* Reload view even if it is the current. */
-	OPEN_NOMAXIMIZE = 8,	/* Do not maximize the current view. */
+	OPEN_NOMAXIMIZE = 8	/* Do not maximize the current view. */
 };
 
 static void
@@ -4074,8 +4075,9 @@ status_draw(struct view *view, struct line *line, unsigned int lineno)
 			return FALSE;
 		}
 	} else {
-		char buf[] = { status->status, ' ', ' ', ' ', 0 };
+		static char buf[] = { '?', ' ', ' ', ' ', 0 };
 
+		buf[0] = status->status;
 		if (draw_text(view, line->type, buf, TRUE))
 			return TRUE;
 		type = LINE_DEFAULT;
