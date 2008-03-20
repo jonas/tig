@@ -605,9 +605,6 @@ parse_options(int argc, char *argv[])
 		opt_cmd[buf_size] = 0;
 	}
 
-	if (*opt_encoding && strcasecmp(opt_encoding, "UTF-8"))
-		opt_utf8 = FALSE;
-
 	return TRUE;
 }
 
@@ -5147,6 +5144,9 @@ main(int argc, char *argv[])
 	/* Require a git repository unless when running in pager mode. */
 	if (!opt_git_dir[0])
 		die("Not a git repository");
+
+	if (*opt_encoding && strcasecmp(opt_encoding, "UTF-8"))
+		opt_utf8 = FALSE;
 
 	if (*opt_codeset && strcmp(opt_codeset, opt_encoding)) {
 		opt_iconv = iconv_open(opt_codeset, opt_encoding);
