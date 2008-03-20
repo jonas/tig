@@ -1429,9 +1429,10 @@ struct view {
 	struct view *parent;
 
 	/* Buffering */
-	unsigned long lines;	/* Total number of lines */
+	size_t lines;		/* Total number of lines */
 	struct line *line;	/* Line index */
-	unsigned long line_size;/* Total number of allocated lines */
+	size_t line_alloc;	/* Total number of allocated lines */
+	size_t line_size;	/* Total number of used lines */
 	unsigned int digits;	/* Number of digits in the lines member. */
 
 	/* Loading */
@@ -2101,15 +2102,33 @@ begin_update(struct view *view)
 	return TRUE;
 }
 
+#define ITEM_CHUNK_SIZE 256
+static void *
+realloc_items(void *mem, size_t *size, size_t new_size, size_t item_size)
+{
+	size_t num_chunks = *size / ITEM_CHUNK_SIZE;
+	size_t num_chunks_new = (new_size + ITEM_CHUNK_SIZE - 1) / ITEM_CHUNK_SIZE;
+
+	if (mem == NULL || num_chunks != num_chunks_new) {
+		*size = num_chunks_new * ITEM_CHUNK_SIZE;
+		mem = realloc(mem, *size * item_size);
+	}
+
+	return mem;
+}
+
 static struct line *
 realloc_lines(struct view *view, size_t line_size)
 {
-	struct line *tmp = realloc(view->line, sizeof(*view->line) * line_size);
+	size_t alloc = view->line_alloc;
+	struct line *tmp = realloc_items(view->line, &alloc, line_size,
+					 sizeof(*view->line));
 
 	if (!tmp)
 		return NULL;
 
 	view->line = tmp;
+	view->line_alloc = alloc;
 	view->line_size = line_size;
 	return view->line;
 }
@@ -3431,7 +3450,7 @@ status_open(struct view *view)
 	for (i = 0; i < view->lines; i++)
 		free(view->line[i].data);
 	free(view->line);
-	view->lines = view->line_size = view->lineno = 0;
+	view->lines = view->line_alloc = view->line_size = view->lineno = 0;
 	view->line = NULL;
 
 	if (!realloc_lines(view, view->line_size + 6))
@@ -4830,18 +4849,21 @@ read_prompt(const char *prompt)
  * Repository references
  */
 
-static struct ref *refs;
-static size_t refs_size;
+static struct ref *refs = NULL;
+static size_t refs_alloc = 0;
+static size_t refs_size = 0;
 
 /* Id <-> ref store */
-static struct ref ***id_refs;
-static size_t id_refs_size;
+static struct ref ***id_refs = NULL;
+static size_t id_refs_alloc = 0;
+static size_t id_refs_size = 0;
 
 static struct ref **
 get_refs(char *id)
 {
 	struct ref ***tmp_id_refs;
 	struct ref **ref_list = NULL;
+	size_t ref_list_alloc = 0;
 	size_t ref_list_size = 0;
 	size_t i;
 
@@ -4849,7 +4871,8 @@ get_refs(char *id)
 		if (!strcmp(id, id_refs[i][0]->id))
 			return id_refs[i];
 
-	tmp_id_refs = realloc(id_refs, (id_refs_size + 1) * sizeof(*id_refs));
+	tmp_id_refs = realloc_items(id_refs, &id_refs_alloc, id_refs_size + 1,
+				    sizeof(*id_refs));
 	if (!tmp_id_refs)
 		return NULL;
 
@@ -4861,7 +4884,8 @@ get_refs(char *id)
 		if (strcmp(id, refs[i].id))
 			continue;
 
-		tmp = realloc(ref_list, (ref_list_size + 1) * sizeof(*ref_list));
+		tmp = realloc_items(ref_list, &ref_list_alloc,
+				    ref_list_size + 1, sizeof(*ref_list));
 		if (!tmp) {
 			if (ref_list)
 				free(ref_list);
@@ -4932,7 +4956,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 
 		return OK;
 	}
-	refs = realloc(refs, sizeof(*refs) * (refs_size + 1));
+	refs = realloc_items(refs, &refs_alloc, refs_size + 1, sizeof(*refs));
 	if (!refs)
 		return ERR;
 
