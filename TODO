@@ -24,10 +24,8 @@ Features that should be explored.
 
  - Split sources of tig.c into multiple files.
 
- - Rewrite revgraph handling to use --parents and --boundary. The former
-   should help to cleanup this messy part of the code, while the latter
-   is nice for general repository inspection when revision limiters are
-   used.
+ - Rewrite revgraph handling to use --parents, which should help to
+   cleanup this messy part of the code.
 
  - Color the revgraph to make it easier to follow branches. Idea by
    Dominik Vogt
