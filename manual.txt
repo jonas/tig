@@ -347,7 +347,10 @@ z	Stop all background loading. This can be useful if you use \
 	the revision log.
 v	Show version.
 '.'	Toggle line numbers on/off.
+D	Toggle date display on/off.
+A	Toggle author display on/off.
 g	Toggle revision graph visualization on/off.
+F	Toggle reference display on/off (tag and branch names).
 ':'	Open prompt. This allows you to specify what git command \
 	to run. Example `:log -p`
 u	Update status of file. In the status view, this allows you to add an \

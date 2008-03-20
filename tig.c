@@ -354,7 +354,10 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(SHOW_VERSION,	"Show version information"), \
 	REQ_(STOP_LOADING,	"Stop all loading views"), \
 	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
+	REQ_(TOGGLE_DATE,	"Toggle date display"), \
+	REQ_(TOGGLE_AUTHOR,	"Toggle author display"), \
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
+	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
 	REQ_(STATUS_UPDATE,	"Update file status"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
 	REQ_(TREE_PARENT,	"Switch to parent directory in tree view"), \
@@ -422,8 +425,11 @@ static const char usage[] =
 "  -h, --help      Show help message and exit\n";
 
 /* Option and state variables. */
+static bool opt_date			= TRUE;
+static bool opt_author			= TRUE;
 static bool opt_line_number		= FALSE;
 static bool opt_rev_graph		= FALSE;
+static bool opt_show_refs		= TRUE;
 static int opt_num_interval		= NUMBER_INTERVAL;
 static int opt_tab_size			= TABSIZE;
 static enum request opt_request		= REQ_VIEW_MAIN;
@@ -808,7 +814,10 @@ static struct keybinding default_keybindings[] = {
 	{ 'v',		REQ_SHOW_VERSION },
 	{ 'r',		REQ_SCREEN_REDRAW },
 	{ '.',		REQ_TOGGLE_LINENO },
+	{ 'D',		REQ_TOGGLE_DATE },
+	{ 'A',		REQ_TOGGLE_AUTHOR },
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
+	{ 'F',		REQ_TOGGLE_REFS },
 	{ ':',		REQ_PROMPT },
 	{ 'u',		REQ_STATUS_UPDATE },
 	{ 'M',		REQ_STATUS_MERGE },
@@ -2540,8 +2549,23 @@ view_driver(struct view *view, enum request request)
 		redraw_display();
 		break;
 
+	case REQ_TOGGLE_DATE:
+		opt_date = !opt_date;
+		redraw_display();
+		break;
+
+	case REQ_TOGGLE_AUTHOR:
+		opt_author = !opt_author;
+		redraw_display();
+		break;
+
 	case REQ_TOGGLE_REV_GRAPH:
 		opt_rev_graph = !opt_rev_graph;
+		redraw_display();
+		break;
+
+	case REQ_TOGGLE_REFS:
+		opt_show_refs = !opt_show_refs;
 		redraw_display();
 		break;
 
@@ -4175,7 +4199,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 		tilde_attr = get_line_attr(LINE_MAIN_DELIM);
 	}
 
-	{
+	if (opt_date) {
 		int n;
 
 		timelen = strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time);
@@ -4193,7 +4217,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 	if (type != LINE_CURSOR)
 		wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
 
-	{
+	if (opt_author) {
 		int max_len;
 
 		max_len = view->width - col;
@@ -4230,7 +4254,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 
 	wmove(view->win, lineno, col);
 
-	if (commit->refs) {
+	if (opt_show_refs && commit->refs) {
 		size_t i = 0;
 
 		do {
