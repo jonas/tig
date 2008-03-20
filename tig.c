@@ -1460,16 +1460,13 @@ static int
 draw_text(struct view *view, const char *string, int max_len, int col,
 	  bool use_tilde, int tilde_attr)
 {
-	int n;
+	int len = 0;
 
-	n = 0;
 	if (max_len > 0) {
-		int len;
 		int trimmed = FALSE;
 
 		if (opt_utf8) {
 			len = utf8_length(string, max_len, &trimmed, use_tilde);
-			n = len;
 		} else {
 			len = strlen(string);
 			if (len > max_len) {
@@ -1479,18 +1476,17 @@ draw_text(struct view *view, const char *string, int max_len, int col,
 				len = max_len;
 				trimmed = TRUE;
 			}
-			n = len;
 		}
-		waddnstr(view->win, string, n);
+		waddnstr(view->win, string, len);
 		if (trimmed && use_tilde) {
 			if (tilde_attr != -1)
 				wattrset(view->win, tilde_attr);
 			waddch(view->win, '~');
-			n++;
+			len++;
 		}
 	}
 
-	return n;
+	return len;
 }
 
 static bool
