@@ -1126,6 +1126,12 @@ option_color_command(int argc, char *argv[])
 	return OK;
 }
 
+static bool parse_bool(const char *s)
+{
+	return (!strcmp(s, "1") || !strcmp(s, "true") ||
+		!strcmp(s, "yes")) ? TRUE : FALSE;
+}
+
 /* Wants: name = value */
 static int
 option_set_command(int argc, char *argv[])
@@ -1140,10 +1146,28 @@ option_set_command(int argc, char *argv[])
 		return ERR;
 	}
 
+	if (!strcmp(argv[0], "show-author")) {
+		opt_author = parse_bool(argv[2]);
+		return OK;
+	}
+
+	if (!strcmp(argv[0], "show-date")) {
+		opt_date = parse_bool(argv[2]);
+		return OK;
+	}
+
 	if (!strcmp(argv[0], "show-rev-graph")) {
-		opt_rev_graph = (!strcmp(argv[2], "1") ||
-				 !strcmp(argv[2], "true") ||
-				 !strcmp(argv[2], "yes"));
+		opt_rev_graph = parse_bool(argv[2]);
+		return OK;
+	}
+
+	if (!strcmp(argv[0], "show-refs")) {
+		opt_show_refs = parse_bool(argv[2]);
+		return OK;
+	}
+
+	if (!strcmp(argv[0], "show-line-numbers")) {
+		opt_line_number = parse_bool(argv[2]);
 		return OK;
 	}
 

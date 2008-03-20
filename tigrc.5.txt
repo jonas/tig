@@ -42,7 +42,11 @@ is:
 Examples:
 
 --------------------------------------------------------------------------
+set show-author = yes		# Show author?
+set show-date = yes		# Show commit date?
 set show-rev-graph = yes	# Show revision graph?
+set show-refs = yes		# Show references?
+set show-line-numbers = no	# Show line numbers?
 set line-number-interval = 5	# Interval between line numbers
 set tab-size = 8		# Number of spaces per tab
 set encoding = "UTF-8"		# Commit encoding
