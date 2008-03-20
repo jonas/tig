@@ -1461,29 +1461,30 @@ draw_text(struct view *view, const char *string, int max_len, int col,
 	  bool use_tilde, int tilde_attr)
 {
 	int len = 0;
+	int trimmed = FALSE;
 
-	if (max_len > 0) {
-		int trimmed = FALSE;
+	if (max_len <= 0)
+		return 0;
 
-		if (opt_utf8) {
-			len = utf8_length(string, max_len, &trimmed, use_tilde);
-		} else {
-			len = strlen(string);
-			if (len > max_len) {
-				if (use_tilde) {
-					max_len -= 1;
-				}
-				len = max_len;
-				trimmed = TRUE;
+	if (opt_utf8) {
+		len = utf8_length(string, max_len, &trimmed, use_tilde);
+	} else {
+		len = strlen(string);
+		if (len > max_len) {
+			if (use_tilde) {
+				max_len -= 1;
 			}
+			len = max_len;
+			trimmed = TRUE;
 		}
-		waddnstr(view->win, string, len);
-		if (trimmed && use_tilde) {
-			if (tilde_attr != -1)
-				wattrset(view->win, tilde_attr);
-			waddch(view->win, '~');
-			len++;
-		}
+	}
+
+	waddnstr(view->win, string, len);
+	if (trimmed && use_tilde) {
+		if (tilde_attr != -1)
+			wattrset(view->win, tilde_attr);
+		waddch(view->win, '~');
+		len++;
 	}
 
 	return len;
