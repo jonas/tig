@@ -58,7 +58,7 @@ static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
 static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, size_t, char *, size_t));
 static void set_nonblocking_input(bool loading);
-static size_t utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed);
+static size_t utf8_length(const char *string, size_t max_width, int *trimmed, bool reserve);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -1468,14 +1468,7 @@ draw_text(struct view *view, const char *string, int max_len, int col,
 		int trimmed = FALSE;
 
 		if (opt_utf8) {
-			int pad = 0;
-
-			len = utf8_length(string, max_len, &pad, &trimmed);
-			if (trimmed && use_tilde) {
-				max_len -= 1;
-				len = utf8_length(
-					string, max_len, &pad, &trimmed);
-			}
+			len = utf8_length(string, max_len, &trimmed, use_tilde);
 			n = len;
 		} else {
 			len = strlen(string);
@@ -4559,19 +4552,16 @@ utf8_to_unicode(const char *string, size_t length)
 
 /* Calculates how much of string can be shown within the given maximum width
  * and sets trimmed parameter to non-zero value if all of string could not be
- * shown.
- *
- * Additionally, adds to coloffset how many many columns to move to align with
- * the expected position. Takes into account how multi-byte and double-width
- * characters will effect the cursor position.
+ * shown. If the reserve flag is TRUE, it will reserve at least one
+ * trailing character, which can be useful when drawing a delimiter.
  *
  * Returns the number of bytes to output from string to satisfy max_width. */
 static size_t
-utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed)
+utf8_length(const char *string, size_t max_width, int *trimmed, bool reserve)
 {
 	const char *start = string;
 	const char *end = strchr(string, '\0');
-	size_t mbwidth = 0;
+	unsigned char last_bytes = 0;
 	size_t width = 0;
 
 	*trimmed = 0;
@@ -4597,26 +4587,15 @@ utf8_length(const char *string, size_t max_width, int *coloffset, int *trimmed)
 		width  += ucwidth;
 		if (width > max_width) {
 			*trimmed = 1;
+			if (reserve && width - ucwidth == max_width) {
+				string -= last_bytes;
+			}
 			break;
 		}
 
-		/* The column offset collects the differences between the
-		 * number of bytes encoding a character and the number of
-		 * columns will be used for rendering said character.
-		 *
-		 * So if some character A is encoded in 2 bytes, but will be
-		 * represented on the screen using only 1 byte this will and up
-		 * adding 1 to the multi-byte column offset.
-		 *
-		 * Assumes that no double-width character can be encoding in
-		 * less than two bytes. */
-		if (bytes > ucwidth)
-			mbwidth += bytes - ucwidth;
-
 		string  += bytes;
+		last_bytes = bytes;
 	}
-
-	*coloffset += mbwidth;
 
 	return string - start;
 }
