@@ -3356,7 +3356,7 @@ error_out:
 
 /* Don't show unmerged entries in the staged section. */
 #define STATUS_DIFF_INDEX_CMD "git diff-index -z --diff-filter=ACDMRTXB --cached -M HEAD"
-#define STATUS_DIFF_FILES_CMD "git update-index -q --refresh && git diff-files -z"
+#define STATUS_DIFF_FILES_CMD "git diff-files -z"
 #define STATUS_LIST_OTHER_CMD \
 	"git ls-files -z --others --exclude-per-directory=.gitignore"
 
@@ -3399,6 +3399,8 @@ status_open(struct view *view)
 		    sq_quote(cmd, cmdsize, exclude) >= sizeof(cmd))
 			return FALSE;
 	}
+
+	system("git update-index -q --refresh");
 
 	if (!status_run(view, STATUS_DIFF_INDEX_CMD, TRUE, LINE_STAT_STAGED) ||
 	    !status_run(view, STATUS_DIFF_FILES_CMD, TRUE, LINE_STAT_UNSTAGED) ||
