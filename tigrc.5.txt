@@ -72,10 +72,14 @@ Variables
 
 The following variables can be set:
 
+'show-author' (bool)::
+'show-date' (bool)::
 'show-rev-graph' (bool)::
+'show-refs' (bool)::
 
-	Show revision graph in the main view on start-up. Can be toggled with
-	'g'.
+	Whether to show author, date, revision graph, and references
+	(branches, tags, and remotes) in the main view on start-up. Can all be
+	toggled.
 
 'line-number-interval' (int)::
 
