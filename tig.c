@@ -496,32 +496,33 @@ parse_options(int argc, char *argv[])
 {
 	char *altargv[1024];
 	int altargc = 0;
-	char *subcommand = NULL;
+	char *subcommand;
 	int i;
 
-	for (i = 1; i < argc; i++) {
+	if (argc <= 1)
+		return TRUE;
+
+	subcommand = argv[1];
+	if (!strcmp(subcommand, "status")) {
+		opt_request = REQ_VIEW_STATUS;
+		if (argc > 2)
+			warn("ignoring arguments after `%s'", subcommand);
+		return TRUE;
+
+	} else if (!strcmp(subcommand, "show")) {
+		opt_request = REQ_VIEW_DIFF;
+
+	} else if (!strcmp(subcommand, "log") || !strcmp(subcommand, "diff")) {
+		opt_request = subcommand[0] == 'l'
+			    ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
+		warn("`tig %s' has been deprecated", subcommand);
+
+	} else {
+		subcommand = NULL;
+	}
+
+	for (i = 1 + !!subcommand; i < argc; i++) {
 		char *opt = argv[i];
-
-		if (!strcmp(opt, "log") ||
-		    !strcmp(opt, "diff")) {
-			subcommand = opt;
-			opt_request = opt[0] == 'l'
-				    ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
-			warn("`tig %s' has been deprecated", opt);
-			break;
-		}
-
-		if (!strcmp(opt, "show")) {
-			subcommand = opt;
-			opt_request = REQ_VIEW_DIFF;
-			break;
-		}
-
-		if (!strcmp(opt, "status")) {
-			subcommand = opt;
-			opt_request = REQ_VIEW_STATUS;
-			break;
-		}
 
 		if (opt[0] && opt[0] != '-')
 			break;
@@ -565,17 +566,9 @@ parse_options(int argc, char *argv[])
 		warn("`%s' has been deprecated", opt);
 	}
 
-	/* Check that no 'alt' arguments occured before a subcommand. */
-	if (subcommand && i < argc && altargc > 0)
-		die("unknown arguments before `%s'", argv[i]);
-
 	if (!isatty(STDIN_FILENO)) {
 		opt_request = REQ_VIEW_PAGER;
 		opt_pipe = stdin;
-
-	} else if (opt_request == REQ_VIEW_STATUS) {
-		if (argc - i > 1)
-			warn("ignoring arguments after `%s'", argv[i]);
 
 	} else if (i < argc || altargc > 0) {
 		int alti = 0;
@@ -586,7 +579,7 @@ parse_options(int argc, char *argv[])
 			 * options required for the main view parser. */
 			string_copy(opt_cmd, "git log --no-color --pretty=raw --boundary --parents");
 		else
-			string_copy(opt_cmd, "git");
+			string_format(opt_cmd, "git %s", subcommand);
 		buf_size = strlen(opt_cmd);
 
 		while (buf_size < sizeof(opt_cmd) && alti < altargc) {
