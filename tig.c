@@ -116,7 +116,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *trimmed, bo
 	"git log --no-color --cc --stat -n100 %s 2>/dev/null"
 
 #define TIG_MAIN_CMD \
-	"git log --no-color --topo-order --boundary --pretty=raw %s 2>/dev/null"
+	"git log --no-color --topo-order --parents --boundary --pretty=raw %s 2>/dev/null"
 
 #define TIG_TREE_CMD	\
 	"git ls-tree %s %s"
@@ -584,7 +584,7 @@ parse_options(int argc, char *argv[])
 		if (opt_request == REQ_VIEW_MAIN)
 			/* XXX: This is vulnerable to the user overriding
 			 * options required for the main view parser. */
-			string_copy(opt_cmd, "git log --no-color --pretty=raw --boundary");
+			string_copy(opt_cmd, "git log --no-color --pretty=raw --boundary --parents");
 		else
 			string_copy(opt_cmd, "git");
 		buf_size = strlen(opt_cmd);
@@ -4016,6 +4016,7 @@ struct commit {
 	struct ref **refs;		/* Repository references. */
 	chtype graph[SIZEOF_REVGRAPH];	/* Ancestry chain graphics. */
 	size_t graph_size;		/* The width of the graph array. */
+	bool has_parents;		/* Rewritten --parents seen. */
 };
 
 /* Size of rev graph with no  "padding" columns */
@@ -4368,6 +4369,12 @@ main_read(struct view *view, char *line)
 		commit->refs = get_refs(commit->id);
 		graph->commit = commit;
 		add_line_data(view, commit, LINE_MAIN_COMMIT);
+
+		while ((line = strchr(line, ' '))) {
+			line++;
+			push_rev_graph(graph->parents, line);
+			commit->has_parents = TRUE;
+		}
 		return TRUE;
 	}
 
@@ -4377,6 +4384,8 @@ main_read(struct view *view, char *line)
 
 	switch (type) {
 	case LINE_PARENT:
+		if (commit->has_parents)
+			break;
 		push_rev_graph(graph->parents, line + STRING_SIZE("parent "));
 		break;
 
