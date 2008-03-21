@@ -1490,7 +1490,7 @@ static struct view views[] = {
 	(view == display[0] || view == display[1])
 
 static int
-draw_text(struct view *view, const char *string, int max_len, int col,
+draw_text(struct view *view, const char *string, int max_len,
 	  bool use_tilde, int tilde_attr)
 {
 	int len = 0;
@@ -2747,7 +2747,7 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 	} else {
 		int tilde_attr = get_line_attr(LINE_MAIN_DELIM);
 
-		draw_text(view, text, view->width, 0, TRUE, tilde_attr);
+		draw_text(view, text, view->width, TRUE, tilde_attr);
 	}
 
 	return TRUE;
@@ -3528,7 +3528,7 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 			return FALSE;
 		}
 
-		draw_text(view, text, view->width, 0, TRUE, tilde_attr);
+		draw_text(view, text, view->width, TRUE, tilde_attr);
 		return TRUE;
 	}
 
@@ -3539,7 +3539,7 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 	if (view->width < 5)
 		return TRUE;
 
-	draw_text(view, status->new.name, view->width - 5, 5, TRUE, tilde_attr);
+	draw_text(view, status->new.name, view->width - 5, TRUE, tilde_attr);
 	return TRUE;
 }
 
@@ -4246,11 +4246,8 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 		int n;
 
 		timelen = strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time);
-		n = draw_text(
-			view, buf, view->width - col, col, FALSE, tilde_attr);
-		draw_text(
-			view, " ", view->width - col - n, col + n, FALSE,
-			tilde_attr);
+		n = draw_text(view, buf, view->width - col, FALSE, tilde_attr);
+		draw_text(view, " ", view->width - col - n, FALSE, tilde_attr);
 
 		col += DATE_COLS;
 		wmove(view->win, lineno, col);
@@ -4266,8 +4263,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 		max_len = view->width - col;
 		if (max_len > AUTHOR_COLS - 1)
 			max_len = AUTHOR_COLS - 1;
-		draw_text(
-			view, commit->author, max_len, col, TRUE, tilde_attr);
+		draw_text(view, commit->author, max_len, TRUE, tilde_attr);
 		col += AUTHOR_COLS;
 		if (col >= view->width)
 			return TRUE;
@@ -4312,20 +4308,13 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 			else
 				wattrset(view->win, get_line_attr(LINE_MAIN_REF));
 
-			col += draw_text(
-				view, "[", view->width - col, col, TRUE,
-				tilde_attr);
-			col += draw_text(
-				view, commit->refs[i]->name, view->width - col,
-				col, TRUE, tilde_attr);
-			col += draw_text(
-				view, "]", view->width - col, col, TRUE,
-				tilde_attr);
+			col += draw_text(view, "[", view->width - col, TRUE, tilde_attr);
+			col += draw_text(view, commit->refs[i]->name, view->width - col,
+					 TRUE, tilde_attr);
+			col += draw_text(view, "]", view->width - col, TRUE, tilde_attr);
 			if (type != LINE_CURSOR)
 				wattrset(view->win, A_NORMAL);
-			col += draw_text(
-				view, " ", view->width - col, col, TRUE,
-				tilde_attr);
+			col += draw_text(view, " ", view->width - col, TRUE, tilde_attr);
 			if (col >= view->width)
 				return TRUE;
 		} while (commit->refs[i++]->next);
@@ -4334,9 +4323,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 	if (type != LINE_CURSOR)
 		wattrset(view->win, get_line_attr(type));
 
-	col += draw_text(
-		view, commit->title, view->width - col, col, TRUE, tilde_attr);
-
+	draw_text(view, commit->title, view->width - col, TRUE, tilde_attr);
 	return TRUE;
 }
 
