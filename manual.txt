@@ -210,6 +210,9 @@ The blob view::
 	Displays the file content or "blob" of data associated with a file
 	name.
 
+The blame view::
+	Displays the file content annotated or blamed by commits.
+
 The status view::
 	Displays status of files in the working tree and allows changes to be
 	staged/unstaged as well as adding of untracked files.
@@ -262,6 +265,7 @@ l	Switch to log view.
 p	Switch to pager view.
 t	Switch to (directory) tree view.
 f	Switch to (file) blob view.
+B	Switch to blame view.
 h	Switch to help view
 S	Switch to status view
 c	Switch to stage view

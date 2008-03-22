@@ -10,6 +10,7 @@ SYNOPSIS
 [verse]
 tig        [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
+tig blame  [rev] path
 tig status
 tig <      [git command output]
 
@@ -37,6 +38,10 @@ command.
 
 show::
 	Open diff view using the given git show options.
+
+blame::
+	Show given file annotated or blamed by commits.
+	Optionally limited from given revision.
 
 status::
 	Start up in status view.
@@ -148,7 +153,7 @@ include::BUGS[]
 
 COPYRIGHT
 ---------
-Copyright (c) 2006-2007 Jonas Fonseca <fonseca@diku.dk>
+Copyright (c) 2006-2008 Jonas Fonseca <fonseca@diku.dk>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

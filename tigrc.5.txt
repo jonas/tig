@@ -179,6 +179,7 @@ view-diff		Show diff view
 view-log		Show log view
 view-tree		Show tree view
 view-blob		Show blob view
+view-blame		Show blame view
 view-status		Show status view
 view-stage		Show stage view
 view-pager		Show pager view
@@ -348,6 +349,13 @@ delimiting long author names and labels for tag and branch references.
 
 *main-date*, *main-author*, *main-commit*, *main-delim*, *main-tag*,
 *main-local-tag*, *main-ref*, *main-remote*, *main-revgraph*
+
+Blame view colors::
+
+The colors used for the blame view are similar to those in the main view.
+The commit ID color can be colored using *blame-id*.
+
+*blame-date*, *blame-author*, *blame-commit*, *blame-id*, *blame-lineno*
 
 --
 
