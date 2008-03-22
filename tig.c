@@ -2234,8 +2234,8 @@ alloc_error:
 	report("Allocation failure");
 
 end:
-	view->ops->read(view, NULL);
-	end_update(view);
+	if (view->ops->read(view, NULL))
+		end_update(view);
 	return FALSE;
 }
 
@@ -3077,6 +3077,8 @@ tree_read(struct view *view, char *text)
 	enum line_type type;
 	bool first_read = view->lines == 0;
 
+	if (!text)
+		return TRUE;
 	if (textlen <= SIZEOF_TREE_ATTR)
 		return FALSE;
 
