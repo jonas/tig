@@ -52,11 +52,6 @@ status::
 -h, --help::
 	Show help message and exit.
 
-\--::
-	End of tig options. This ends tig option parsing, and passes any
-	following options untouched to the underlying git command. Kept for
-	compatibility and will be deprecated in a future version.
-
 EXAMPLES
 --------
 

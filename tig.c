@@ -453,64 +453,22 @@ static char opt_git_dir[SIZEOF_STR]	= "";
 static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
 
-enum option_type {
-	OPT_NONE,
-	OPT_INT,
-};
-
-static bool
-check_option(char *opt, char short_name, char *name, enum option_type type, ...)
-{
-	va_list args;
-	char *value = "";
-	int *number;
-
-	if (opt[0] != '-')
-		return FALSE;
-
-	if (opt[1] == '-') {
-		int namelen = strlen(name);
-
-		opt += 2;
-
-		if (strncmp(opt, name, namelen))
-			return FALSE;
-
-		if (opt[namelen] == '=')
-			value = opt + namelen + 1;
-
-	} else {
-		if (!short_name || opt[1] != short_name)
-			return FALSE;
-		value = opt + 2;
-	}
-
-	va_start(args, type);
-	if (type == OPT_INT) {
-		number = va_arg(args, int *);
-		if (isdigit(*value))
-			*number = atoi(value);
-	}
-	va_end(args);
-
-	return TRUE;
-}
-
-/* Returns the index of log or diff command or -1 to exit. */
 static bool
 parse_options(int argc, char *argv[])
 {
-	char *altargv[1024];
-	int altargc = 0;
+	size_t buf_size;
 	char *subcommand;
+	bool seen_dashdash = FALSE;
 	int i;
 
 	if (argc <= 1)
 		return TRUE;
 
 	subcommand = argv[1];
-	if (!strcmp(subcommand, "status")) {
+	if (!strcmp(subcommand, "status") || !strcmp(subcommand, "-S")) {
 		opt_request = REQ_VIEW_STATUS;
+		if (!strcmp(subcommand, "-S"))
+			warn("`-S' has been deprecated; use `tig status' instead");
 		if (argc > 2)
 			warn("ignoring arguments after `%s'", subcommand);
 		return TRUE;
@@ -541,82 +499,43 @@ parse_options(int argc, char *argv[])
 		subcommand = NULL;
 	}
 
+	if (!subcommand)
+		/* XXX: This is vulnerable to the user overriding
+		 * options required for the main view parser. */
+		string_copy(opt_cmd, "git log --no-color --pretty=raw --boundary --parents");
+	else
+		string_format(opt_cmd, "git %s", subcommand);
+
+	buf_size = strlen(opt_cmd);
+
 	for (i = 1 + !!subcommand; i < argc; i++) {
 		char *opt = argv[i];
 
-		if (opt[0] && opt[0] != '-')
-			break;
+		if (seen_dashdash || !strcmp(opt, "--")) {
+			seen_dashdash = TRUE;
 
-		if (!strcmp(opt, "--")) {
-			i++;
-			break;
-		}
-
-		if (check_option(opt, 'v', "version", OPT_NONE)) {
+		} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
 			printf("tig version %s\n", TIG_VERSION);
 			return FALSE;
-		}
 
-		if (check_option(opt, 'h', "help", OPT_NONE)) {
+		} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
 			printf(usage);
 			return FALSE;
 		}
 
-		if (!strcmp(opt, "-S")) {
-			warn("`%s' has been deprecated; use `tig status' instead", opt);
-			opt_request = REQ_VIEW_STATUS;
-			continue;
-		}
-
-		if (!strcmp(opt, "-l")) {
-			opt_request = REQ_VIEW_LOG;
-		} else if (!strcmp(opt, "-d")) {
-			opt_request = REQ_VIEW_DIFF;
-		} else if (check_option(opt, 'n', "line-number", OPT_INT, &opt_num_interval)) {
-			opt_line_number = TRUE;
-		} else if (check_option(opt, 'b', "tab-size", OPT_INT, &opt_tab_size)) {
-			opt_tab_size = MIN(opt_tab_size, TABSIZE);
-		} else {
-			if (altargc >= ARRAY_SIZE(altargv))
-				die("maximum number of arguments exceeded");
-			altargv[altargc++] = opt;
-			continue;
-		}
-
-		warn("`%s' has been deprecated", opt);
+		opt_cmd[buf_size++] = ' ';
+		buf_size = sq_quote(opt_cmd, buf_size, opt);
+		if (buf_size >= sizeof(opt_cmd))
+			die("command too long");
 	}
 
 	if (!isatty(STDIN_FILENO)) {
 		opt_request = REQ_VIEW_PAGER;
 		opt_pipe = stdin;
-
-	} else if (i < argc || altargc > 0) {
-		int alti = 0;
-		size_t buf_size;
-
-		if (opt_request == REQ_VIEW_MAIN)
-			/* XXX: This is vulnerable to the user overriding
-			 * options required for the main view parser. */
-			string_copy(opt_cmd, "git log --no-color --pretty=raw --boundary --parents");
-		else
-			string_format(opt_cmd, "git %s", subcommand);
-		buf_size = strlen(opt_cmd);
-
-		while (buf_size < sizeof(opt_cmd) && alti < altargc) {
-			opt_cmd[buf_size++] = ' ';
-			buf_size = sq_quote(opt_cmd, buf_size, altargv[alti++]);
-		}
-
-		while (buf_size < sizeof(opt_cmd) && i < argc) {
-			opt_cmd[buf_size++] = ' ';
-			buf_size = sq_quote(opt_cmd, buf_size, argv[i++]);
-		}
-
-		if (buf_size >= sizeof(opt_cmd))
-			die("command too long");
-
-		opt_cmd[buf_size] = 0;
+		buf_size = 0;
 	}
+
+	opt_cmd[buf_size] = 0;
 
 	return TRUE;
 }
