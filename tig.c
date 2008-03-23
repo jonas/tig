@@ -440,6 +440,7 @@ static int opt_tab_size			= TABSIZE;
 static enum request opt_request		= REQ_VIEW_MAIN;
 static char opt_cmd[SIZEOF_STR]		= "";
 static char opt_path[SIZEOF_STR]	= "";
+static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
 static FILE *opt_pipe			= NULL;
 static char opt_encoding[20]		= "UTF-8";
@@ -525,7 +526,7 @@ parse_options(int argc, char *argv[])
 			i++;
 		}
 
-		string_ncopy(opt_path, argv[i], strlen(argv[i]));
+		string_ncopy(opt_file, argv[i], strlen(argv[i]));
 		return TRUE;
 
 	} else if (!strcmp(subcommand, "show")) {
@@ -2550,16 +2551,11 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_VIEW_BLAME:
-		if (!opt_path[0]) {
+		if (!opt_file[0]) {
 			report("No file chosen, press %s to open tree view",
 			       get_key(REQ_VIEW_TREE));
 			break;
 		}
-		if (opt_path[strlen(opt_path) - 1] == '/') {
-			report("Cannot show blame for directory %s", opt_path);
-			break;
-		}
-		string_copy(opt_ref, ref_commit);
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
@@ -3143,6 +3139,14 @@ tree_compare_entry(enum line_type type1, char *name1,
 	return strcmp(name1, name2);
 }
 
+static char *
+tree_path(struct line *line)
+{
+	char *path = line->data;
+
+	return path + SIZEOF_TREE_ATTR;
+}
+
 static bool
 tree_read(struct view *view, char *text)
 {
@@ -3190,7 +3194,7 @@ tree_read(struct view *view, char *text)
 	/* Skip "Directory ..." and ".." line. */
 	for (pos = 1 + !!*opt_path; pos < view->lines; pos++) {
 		struct line *line = &view->line[pos];
-		char *path1 = ((char *) line->data) + SIZEOF_TREE_ATTR;
+		char *path1 = tree_path(line);
 		char *path2 = text + SIZEOF_TREE_ATTR;
 		int cmp = tree_compare_entry(line->type, path1, type, path2);
 
@@ -3228,6 +3232,18 @@ tree_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags;
 
+	if (request == REQ_VIEW_BLAME) {
+		char *filename = tree_path(line);
+
+		if (line->type == LINE_TREE_DIR) {
+			report("Cannot show blame for directory %s", opt_path);
+			return REQ_NONE;
+		}
+
+		string_copy(opt_ref, ref_commit);
+		string_ncopy(opt_file, filename, strlen(filename));
+		return request;
+	}
 	if (request == REQ_TREE_PARENT) {
 		if (*opt_path) {
 			/* fake 'cd  ..' */
@@ -3253,8 +3269,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 			pop_tree_stack_entry();
 
 		} else {
-			char *data = line->data;
-			char *basename = data + SIZEOF_TREE_ATTR;
+			char *basename = tree_path(line);
 
 			push_tree_stack_entry(basename, view->lineno);
 		}
@@ -3310,6 +3325,8 @@ static struct view_ops tree_ops = {
 static bool
 blob_read(struct view *view, char *line)
 {
+	if (!line)
+		return TRUE;
 	return add_line_text(view, line, LINE_DEFAULT) != NULL;
 }
 
@@ -3328,7 +3345,7 @@ static struct view_ops blob_ops = {
  *
  * Loading the blame view is a two phase job:
  *
- *  1. File content is read either using opt_path from the
+ *  1. File content is read either using opt_file from the
  *     filesystem or using git-cat-file.
  *  2. Then blame information is incrementally added by
  *     reading output from git-blame.
@@ -3357,7 +3374,7 @@ blame_open(struct view *view)
 	char path[SIZEOF_STR];
 	char ref[SIZEOF_STR] = "";
 
-	if (sq_quote(path, 0, opt_path) >= sizeof(path))
+	if (sq_quote(path, 0, opt_file) >= sizeof(path))
 		return FALSE;
 
 	if (*opt_ref && sq_quote(ref, 0, opt_ref) >= sizeof(ref))
@@ -3367,7 +3384,7 @@ blame_open(struct view *view)
 		if (!string_format(view->cmd, BLAME_CAT_FILE_CMD, ref, path))
 			return FALSE;
 	} else {
-		view->pipe = fopen(opt_path, "r");
+		view->pipe = fopen(opt_file, "r");
 		if (!view->pipe &&
 		    !string_format(view->cmd, BLAME_CAT_FILE_CMD, "HEAD", path))
 			return FALSE;
@@ -3381,8 +3398,8 @@ blame_open(struct view *view)
 	if (!string_format(view->cmd, BLAME_INCREMENTAL_CMD, ref, path))
 		return FALSE;
 
-	string_format(view->ref, "%s ...", opt_path);
-	string_copy_rev(view->vid, opt_path);
+	string_format(view->ref, "%s ...", opt_file);
+	string_copy_rev(view->vid, opt_file);
 	set_nonblocking_input(TRUE);
 
 	if (view->line) {
@@ -4244,7 +4261,7 @@ status_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_VIEW_BLAME:
 		if (status) {
-			string_copy(opt_path, status->new.name);
+			string_copy(opt_file, status->new.name);
 			opt_ref[0] = 0;
 		}
 		return request;
@@ -4503,7 +4520,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_VIEW_BLAME:
 		if (stage_status.new.name[0]) {
-			string_copy(opt_path, stage_status.new.name);
+			string_copy(opt_file, stage_status.new.name);
 			opt_ref[0] = 0;
 		}
 		return request;
