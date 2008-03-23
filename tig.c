@@ -3414,6 +3414,8 @@ blame_open(struct view *view)
 	view->offset = view->lines  = view->lineno = 0;
 	view->line = NULL;
 	view->start_time = time(NULL);
+
+	return TRUE;
 }
 
 static struct blame_commit *
@@ -3465,7 +3467,6 @@ parse_blame_commit(struct view *view, char *text, int *blamed)
 	char *pos = text + SIZEOF_REV - 1;
 	size_t lineno;
 	size_t group;
-	struct line *line;
 
 	if (strlen(text) <= SIZEOF_REV || *pos != ' ')
 		return NULL;
