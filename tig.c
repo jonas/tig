@@ -3159,8 +3159,8 @@ tree_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		}
 
-		string_copy(opt_ref, ref_commit);
-		string_ncopy(opt_file, filename, strlen(filename));
+		string_copy(opt_ref, view->vid);
+		string_format(opt_file, "%s%s", opt_path, filename);
 		return request;
 	}
 	if (request == REQ_TREE_PARENT) {
