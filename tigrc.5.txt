@@ -348,7 +348,7 @@ Appearance of the various columns in the main view, including the '~' used for
 delimiting long author names and labels for tag and branch references.
 
 *main-date*, *main-author*, *main-commit*, *main-delim*, *main-tag*,
-*main-local-tag*, *main-ref*, *main-remote*, *main-revgraph*
+*main-local-tag*, *main-ref*, *main-remote*, *main-head*, *main-revgraph*
 
 Blame view colors::
 

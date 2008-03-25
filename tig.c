@@ -145,6 +145,7 @@ struct ref {
 	unsigned int ltag:1;	/* If so, is the tag local? */
 	unsigned int remote:1;	/* Is it a remote ref? */
 	unsigned int next:1;	/* For ref lists: are there more refs? */
+	unsigned int head:1;	/* Is it the current HEAD? */
 };
 
 static struct ref **get_refs(char *id);
@@ -442,6 +443,7 @@ static char opt_cmd[SIZEOF_STR]		= "";
 static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
+static char opt_head[SIZEOF_REF]	= "";
 static FILE *opt_pipe			= NULL;
 static char opt_encoding[20]		= "UTF-8";
 static bool opt_utf8			= TRUE;
@@ -587,6 +589,7 @@ LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_LOCAL_TAG,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REMOTE,  "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
+LINE(MAIN_HEAD,    "",			COLOR_RED,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REVGRAPH,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(TREE_DIR,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
@@ -4762,6 +4765,8 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 		do {
 			if (type == LINE_CURSOR)
 				;
+			else if (commit->refs[i]->head)
+				wattrset(view->win, get_line_attr(LINE_MAIN_HEAD));
 			else if (commit->refs[i]->ltag)
 				wattrset(view->win, get_line_attr(LINE_MAIN_LOCAL_TAG));
 			else if (commit->refs[i]->tag)
@@ -5374,6 +5379,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 	bool ltag = FALSE;
 	bool remote = FALSE;
 	bool check_replace = FALSE;
+	bool head = FALSE;
 
 	if (!strncmp(name, "refs/tags/", STRING_SIZE("refs/tags/"))) {
 		if (!strcmp(name + namelen - 3, "^{}")) {
@@ -5397,6 +5403,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 	} else if (!strncmp(name, "refs/heads/", STRING_SIZE("refs/heads/"))) {
 		namelen -= STRING_SIZE("refs/heads/");
 		name	+= STRING_SIZE("refs/heads/");
+		head	 = !strncmp(opt_head, name, namelen);
 
 	} else if (!strcmp(name, "HEAD")) {
 		return OK;
@@ -5426,6 +5433,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 	ref->tag = tag;
 	ref->ltag = ltag;
 	ref->remote = remote;
+	ref->head = head;
 	string_copy_rev(ref->id, id);
 
 	return OK;
@@ -5473,20 +5481,36 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 		 * Default to true for the unknown case. */
 		opt_is_inside_work_tree = strcmp(name, "false") ? TRUE : FALSE;
 
-	} else {
+	} else if (opt_cdup[0] == ' ') {
 		string_ncopy(opt_cdup, name, namelen);
+	} else {
+		if (!strncmp(name, "refs/heads/", STRING_SIZE("refs/heads/"))) {
+			namelen -= STRING_SIZE("refs/heads/");
+			name	+= STRING_SIZE("refs/heads/");
+			string_ncopy(opt_head, name, namelen);
+		}
 	}
 
 	return OK;
 }
 
-/* XXX: The line outputted by "--show-cdup" can be empty so the option
- * must be the last one! */
 static int
 load_repo_info(void)
 {
-	return read_properties(popen("git rev-parse --git-dir --is-inside-work-tree --show-cdup 2>/dev/null", "r"),
-			       "=", read_repo_info);
+	int result;
+	FILE *pipe = popen("git rev-parse --git-dir --is-inside-work-tree "
+			   " --show-cdup --symbolic-full-name HEAD 2>/dev/null", "r");
+
+	/* XXX: The line outputted by "--show-cdup" can be empty so
+	 * initialize it to something invalid to make it possible to
+	 * detect whether it has been set or not. */
+	opt_cdup[0] = ' ';
+
+	result = read_properties(pipe, "=", read_repo_info);
+	if (opt_cdup[0] == ' ')
+		opt_cdup[0] = 0;
+
+	return result;
 }
 
 static int
