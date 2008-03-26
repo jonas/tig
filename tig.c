@@ -4193,7 +4193,7 @@ status_update_file(struct view *view, struct status *status, enum line_type type
 	return TRUE;
 }
 
-static void
+static bool
 status_update(struct view *view)
 {
 	struct line *line = &view->line[view->lineno];
@@ -4208,12 +4208,14 @@ status_update(struct view *view)
 
 		if (!line[-1].data) {
 			report("Nothing to update");
-			return;
+			return FALSE;
 		}
 
 	} else if (!status_update_file(view, line->data, line->type)) {
 		report("Failed to update file status");
 	}
+
+	return TRUE;
 }
 
 static enum request
@@ -4223,7 +4225,8 @@ status_request(struct view *view, enum request request, struct line *line)
 
 	switch (request) {
 	case REQ_STATUS_UPDATE:
-		status_update(view);
+		if (!status_update(view))
+			return REQ_NONE;
 		break;
 
 	case REQ_STATUS_MERGE:
