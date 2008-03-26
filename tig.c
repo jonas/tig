@@ -593,6 +593,7 @@ LINE(MAIN_HEAD,    "",			COLOR_RED,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REVGRAPH,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(TREE_DIR,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
+LINE(STAT_HEAD,    "",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(STAT_SECTION, "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(STAT_NONE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(STAT_STAGED,  "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
@@ -2175,7 +2176,6 @@ update_view(struct view *view)
 		 * might have rearranged things. */
 		redraw_view(view);
 
-
 	} else if (redraw_from >= 0) {
 		/* If this is an incremental update, redraw the previous line
 		 * since for commits some members could have changed when
@@ -3724,6 +3724,7 @@ struct status {
 	} new;
 };
 
+static char status_onbranch[SIZEOF_STR];
 static struct status stage_status;
 static enum line_type stage_line_type;
 
@@ -3902,7 +3903,13 @@ status_open(struct view *view)
 	view->lines = view->line_alloc = view->line_size = view->lineno = 0;
 	view->line = NULL;
 
-	if (!realloc_lines(view, view->line_size + 6))
+	if (!realloc_lines(view, view->line_size + 7))
+		return FALSE;
+
+	add_line_data(view, NULL, LINE_STAT_HEAD);
+	if (!*opt_head)
+		string_copy(status_onbranch, "Not currently on any branch");
+	else if (!string_format(status_onbranch, "On branch %s", opt_head))
 		return FALSE;
 
 	if (!string_format(exclude, "%s/info/exclude", opt_git_dir))
@@ -3926,11 +3933,18 @@ status_open(struct view *view)
 		return FALSE;
 
 	/* If all went well restore the previous line number to stay in
-	 * the context. */
+	 * the context or select a line with something that can be
+	 * updated. */
+	if (prev_lineno >= view->lines)
+		prev_lineno = view->lines - 1;
+	while (prev_lineno < view->lines && !view->line[prev_lineno].data)
+		prev_lineno++;
+
+	/* If the above fails, always skip the "On branch" line. */
 	if (prev_lineno < view->lines)
 		view->lineno = prev_lineno;
 	else
-		view->lineno = view->lines - 1;
+		view->lineno = 1;
 
 	return TRUE;
 }
@@ -3947,6 +3961,10 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 		wattrset(view->win, get_line_attr(LINE_CURSOR));
 		wchgat(view->win, -1, 0, LINE_CURSOR, NULL);
 		tilde_attr = -1;
+
+	} else if (line->type == LINE_STAT_HEAD) {
+		wattrset(view->win, get_line_attr(LINE_STAT_HEAD));
+		wchgat(view->win, -1, 0, LINE_STAT_HEAD, NULL);
 
 	} else if (!status && line->type != LINE_STAT_NONE) {
 		wattrset(view->win, get_line_attr(LINE_STAT_SECTION));
@@ -3974,6 +3992,10 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 
 		case LINE_STAT_NONE:
 			text = "    (no files)";
+			break;
+
+		case LINE_STAT_HEAD:
+			text = status_onbranch;
 			break;
 
 		default:
@@ -4060,6 +4082,9 @@ status_enter(struct view *view, struct line *line)
 		info = "Untracked file %s";
 		break;
 
+	case LINE_STAT_HEAD:
+		return REQ_NONE;
+
 	default:
 		die("line type %d not handled in switch", line->type);
 	}
@@ -4113,6 +4138,9 @@ status_update_file(struct view *view, struct status *status, enum line_type type
 
 		string_add(cmd, cmdsize, "git update-index -z --add --remove --stdin");
 		break;
+
+	case LINE_STAT_HEAD:
+		return TRUE;
 
 	default:
 		die("line type %d not handled in switch", type);
@@ -4236,6 +4264,7 @@ status_select(struct view *view, struct line *line)
 		text = "Press %s to stage %s for addition";
 		break;
 
+	case LINE_STAT_HEAD:
 	case LINE_STAT_NONE:
 		text = "Nothing to update";
 		break;

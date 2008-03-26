@@ -409,9 +409,11 @@ Colors for information of the tree view.
 
 Status markup::
 
-Colors used in the status view.
+Colors used in the status view for coloring the "On branch"-line, sections,
+"no file" lines and the various file status groups.
 
-*stat-section*, *stat-none*, *stat-staged*, *stat-unstaged*, *stat-untracked*
+*stat-head*, *stat-section*, *stat-none*, *stat-staged*, *stat-unstaged*,
+*stat-untracked*
 
 --
 
