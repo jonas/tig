@@ -344,15 +344,15 @@ Cursor line colors::
 
 Color of delimiter shown for truncated lines::
 
-*main-delim*
+*delimiter*
 
 Main view specific::
 
-Appearance of the various columns in the main view, including the '~' used for
-delimiting long author names and labels for tag and branch references.
+Appearance of the various columns in the main view, including labels for tag
+and branch references.
 
-*main-date*, *main-author*, *main-commit*, *main-tag*,
-*main-local-tag*, *main-ref*, *main-remote*, *main-head*, *main-revgraph*
+*main-date*, *main-author*, *main-commit*, *main-tag*, *main-local-tag*,
+*main-ref*, *main-remote*, *main-head*, *main-revgraph*
 
 Blame view colors::
 
