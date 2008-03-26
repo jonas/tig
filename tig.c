@@ -524,7 +524,7 @@ parse_options(int argc, char *argv[])
 			return FALSE;
 
 		} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
-			printf(usage);
+			printf("%s\n", usage);
 			return FALSE;
 		}
 
