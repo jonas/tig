@@ -579,12 +579,12 @@ LINE(ACKED,	   "    Acked-by",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DEFAULT,	   "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(CURSOR,	   "",			COLOR_WHITE,	COLOR_GREEN,	A_BOLD), \
 LINE(STATUS,	   "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
+LINE(DELIMITER,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(TITLE_BLUR,   "",			COLOR_WHITE,	COLOR_BLUE,	0), \
 LINE(TITLE_FOCUS,  "",			COLOR_WHITE,	COLOR_BLUE,	A_BOLD), \
 LINE(MAIN_DATE,    "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(MAIN_AUTHOR,  "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_COMMIT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
-LINE(MAIN_DELIM,   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_LOCAL_TAG,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REMOTE,  "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
@@ -650,8 +650,9 @@ get_line_attr(enum line_type type)
 }
 
 static struct line_info *
-get_line_info(char *name, int namelen)
+get_line_info(char *name)
 {
+	size_t namelen = strlen(name);
 	enum line_type type;
 
 	for (type = 0; type < ARRAY_SIZE(line_info); type++)
@@ -1047,10 +1048,15 @@ option_color_command(int argc, char *argv[])
 		return ERR;
 	}
 
-	info = get_line_info(argv[0], strlen(argv[0]));
+	info = get_line_info(argv[0]);
 	if (!info) {
-		config_msg = "Unknown color name";
-		return ERR;
+		if (!string_enum_compare(argv[0], "main-delim", strlen("main-delim"))) {
+			info = get_line_info("delimiter");
+
+		} else {
+			config_msg = "Unknown color name";
+			return ERR;
+		}
 	}
 
 	if (set_color(&info->fg, argv[1]) == ERR ||
@@ -1437,7 +1443,7 @@ static struct view views[] = {
 
 static int
 draw_text(struct view *view, const char *string, int max_len,
-	  bool use_tilde, int tilde_attr)
+	  bool use_tilde, bool selected)
 {
 	int len = 0;
 	int trimmed = FALSE;
@@ -1460,8 +1466,8 @@ draw_text(struct view *view, const char *string, int max_len,
 
 	waddnstr(view->win, string, len);
 	if (trimmed && use_tilde) {
-		if (tilde_attr != -1)
-			wattrset(view->win, tilde_attr);
+		if (!selected)
+			wattrset(view->win, get_line_attr(LINE_DELIMITER));
 		waddch(view->win, '~');
 		len++;
 	}
@@ -2731,9 +2737,7 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 		}
 
 	} else {
-		int tilde_attr = get_line_attr(LINE_MAIN_DELIM);
-
-		draw_text(view, text, view->width, TRUE, tilde_attr);
+		draw_text(view, text, view->width, TRUE, selected);
 	}
 
 	return TRUE;
@@ -3519,7 +3523,6 @@ blame_read(struct view *view, char *line)
 static bool
 blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
 {
-	int tilde_attr = -1;
 	struct blame *blame = line->data;
 	int col = 0;
 
@@ -3530,7 +3533,6 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 		wchgat(view->win, -1, 0, LINE_CURSOR, NULL);
 	} else {
 		wattrset(view->win, A_NORMAL);
-		tilde_attr = get_line_attr(LINE_MAIN_DELIM);
 	}
 
 	if (opt_date) {
@@ -3543,8 +3545,8 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 			int timelen;
 
 			timelen = strftime(buf, sizeof(buf), DATE_FORMAT, &blame->commit->time);
-			n = draw_text(view, buf, view->width - col, FALSE, tilde_attr);
-			draw_text(view, " ", view->width - col - n, FALSE, tilde_attr);
+			n = draw_text(view, buf, view->width - col, FALSE, selected);
+			draw_text(view, " ", view->width - col - n, FALSE, selected);
 		}
 
 		col += DATE_COLS;
@@ -3559,7 +3561,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 		if (!selected)
 			wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
 		if (blame->commit)
-			draw_text(view, blame->commit->author, max, TRUE, tilde_attr);
+			draw_text(view, blame->commit->author, max, TRUE, selected);
 		col += AUTHOR_COLS;
 		if (col >= view->width)
 			return TRUE;
@@ -3601,7 +3603,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 			max = view->width - col;
 		if (!selected)
 			wattrset(view->win, get_line_attr(LINE_BLAME_LINENO));
-		col += draw_text(view, number, max, showtrimmed, tilde_attr);
+		col += draw_text(view, number, max, showtrimmed, selected);
 		if (col >= view->width)
 			return TRUE;
 	}
@@ -3617,7 +3619,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 		return TRUE;
 	waddch(view->win, ' ');
 	col++;
-	col += draw_text(view, blame->text, view->width - col, TRUE, tilde_attr);
+	col += draw_text(view, blame->text, view->width - col, TRUE, selected);
 
 	return TRUE;
 }
@@ -3953,14 +3955,12 @@ static bool
 status_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
 {
 	struct status *status = line->data;
-	int tilde_attr = get_line_attr(LINE_MAIN_DELIM);
 
 	wmove(view->win, lineno, 0);
 
 	if (selected) {
 		wattrset(view->win, get_line_attr(LINE_CURSOR));
 		wchgat(view->win, -1, 0, LINE_CURSOR, NULL);
-		tilde_attr = -1;
 
 	} else if (line->type == LINE_STAT_HEAD) {
 		wattrset(view->win, get_line_attr(LINE_STAT_HEAD));
@@ -4002,7 +4002,7 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 			return FALSE;
 		}
 
-		draw_text(view, text, view->width, TRUE, tilde_attr);
+		draw_text(view, text, view->width, TRUE, selected);
 		return TRUE;
 	}
 
@@ -4013,7 +4013,7 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 	if (view->width < 5)
 		return TRUE;
 
-	draw_text(view, status->new.name, view->width - 5, TRUE, tilde_attr);
+	draw_text(view, status->new.name, view->width - 5, TRUE, selected);
 	return TRUE;
 }
 
@@ -4717,7 +4717,6 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 	enum line_type type;
 	int col = 0;
 	size_t timelen;
-	int tilde_attr;
 	int space;
 
 	if (!*commit->author)
@@ -4730,19 +4729,17 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 		type = LINE_CURSOR;
 		wattrset(view->win, get_line_attr(type));
 		wchgat(view->win, -1, 0, type, NULL);
-		tilde_attr = -1;
 	} else {
 		type = LINE_MAIN_COMMIT;
 		wattrset(view->win, get_line_attr(LINE_MAIN_DATE));
-		tilde_attr = get_line_attr(LINE_MAIN_DELIM);
 	}
 
 	if (opt_date) {
 		int n;
 
 		timelen = strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time);
-		n = draw_text(view, buf, view->width - col, FALSE, tilde_attr);
-		draw_text(view, " ", view->width - col - n, FALSE, tilde_attr);
+		n = draw_text(view, buf, view->width - col, FALSE, selected);
+		draw_text(view, " ", view->width - col - n, FALSE, selected);
 
 		col += DATE_COLS;
 		wmove(view->win, lineno, col);
@@ -4758,7 +4755,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 		max_len = view->width - col;
 		if (max_len > AUTHOR_COLS - 1)
 			max_len = AUTHOR_COLS - 1;
-		draw_text(view, commit->author, max_len, TRUE, tilde_attr);
+		draw_text(view, commit->author, max_len, TRUE, selected);
 		col += AUTHOR_COLS;
 		if (col >= view->width)
 			return TRUE;
@@ -4805,13 +4802,13 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 			else
 				wattrset(view->win, get_line_attr(LINE_MAIN_REF));
 
-			col += draw_text(view, "[", view->width - col, TRUE, tilde_attr);
+			col += draw_text(view, "[", view->width - col, TRUE, selected);
 			col += draw_text(view, commit->refs[i]->name, view->width - col,
-					 TRUE, tilde_attr);
-			col += draw_text(view, "]", view->width - col, TRUE, tilde_attr);
+					 TRUE, selected);
+			col += draw_text(view, "]", view->width - col, TRUE, selected);
 			if (type != LINE_CURSOR)
 				wattrset(view->win, A_NORMAL);
-			col += draw_text(view, " ", view->width - col, TRUE, tilde_attr);
+			col += draw_text(view, " ", view->width - col, TRUE, selected);
 			if (col >= view->width)
 				return TRUE;
 		} while (commit->refs[i++]->next);
@@ -4820,7 +4817,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 	if (type != LINE_CURSOR)
 		wattrset(view->win, get_line_attr(type));
 
-	draw_text(view, commit->title, view->width - col, TRUE, tilde_attr);
+	draw_text(view, commit->title, view->width - col, TRUE, selected);
 	return TRUE;
 }
 
