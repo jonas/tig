@@ -103,6 +103,8 @@ static size_t utf8_length(const char *string, size_t max_width, int *trimmed, bo
 
 #define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
 
+#define NULL_ID		"0000000000000000000000000000000000000000"
+
 #ifndef GIT_CONFIG
 #define GIT_CONFIG "git config"
 #endif
@@ -444,6 +446,7 @@ static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
 static char opt_head[SIZEOF_REF]	= "";
+static bool opt_no_head			= TRUE;
 static FILE *opt_pipe			= NULL;
 static char opt_encoding[20]		= "UTF-8";
 static bool opt_utf8			= TRUE;
@@ -3637,7 +3640,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 			break;
 		}
 
-		if (!strcmp(blame->commit->id, "0000000000000000000000000000000000000000")) {
+		if (!strcmp(blame->commit->id, NULL_ID)) {
 			char path[SIZEOF_STR];
 
 			if (sq_quote(path, 0, view->vid) >= sizeof(path))
@@ -3692,7 +3695,7 @@ blame_select(struct view *view, struct line *line)
 	if (!commit)
 		return;
 
-	if (!strcmp(commit->id, "0000000000000000000000000000000000000000"))
+	if (!strcmp(commit->id, NULL_ID))
 		string_ncopy(ref_commit, "HEAD", 4);
 	else
 		string_copy_rev(ref_commit, commit->id);
@@ -3764,7 +3767,7 @@ status_get_diff(struct status *file, char *buf, size_t bufsize)
 }
 
 static bool
-status_run(struct view *view, const char cmd[], bool diff, enum line_type type)
+status_run(struct view *view, const char cmd[], char status, enum line_type type)
 {
 	struct status *file = NULL;
 	struct status *unmerged = NULL;
@@ -3803,8 +3806,10 @@ status_run(struct view *view, const char cmd[], bool diff, enum line_type type)
 			}
 
 			/* Parse diff info part. */
-			if (!diff) {
-				file->status = '?';
+			if (status) {
+				file->status = status;
+				if (status == 'A')
+					string_copy(file->old.rev, NULL_ID);
 
 			} else if (!file->status) {
 				if (!status_get_diff(file, buf, sepsize))
@@ -3880,12 +3885,17 @@ error_out:
 #define STATUS_DIFF_FILES_CMD "git diff-files -z"
 #define STATUS_LIST_OTHER_CMD \
 	"git ls-files -z --others --exclude-per-directory=.gitignore"
+#define STATUS_LIST_NO_HEAD_CMD \
+	"git ls-files -z --cached --exclude-per-directory=.gitignore"
 
 #define STATUS_DIFF_INDEX_SHOW_CMD \
 	"git diff-index --root --patch-with-stat -C -M --cached HEAD -- %s %s 2>/dev/null"
 
 #define STATUS_DIFF_FILES_SHOW_CMD \
 	"git diff-files --root --patch-with-stat -C -M -- %s %s 2>/dev/null"
+
+#define STATUS_DIFF_NO_HEAD_SHOW_CMD \
+	"git diff --no-color --patch-with-stat /dev/null %s 2>/dev/null"
 
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
@@ -3895,8 +3905,10 @@ status_open(struct view *view)
 {
 	struct stat statbuf;
 	char exclude[SIZEOF_STR];
-	char cmd[SIZEOF_STR];
+	char indexcmd[SIZEOF_STR] = STATUS_DIFF_INDEX_CMD;
+	char othercmd[SIZEOF_STR] = STATUS_LIST_OTHER_CMD;
 	unsigned long prev_lineno = view->lineno;
+	char indexstatus = 0;
 	size_t i;
 
 	for (i = 0; i < view->lines; i++)
@@ -3909,29 +3921,40 @@ status_open(struct view *view)
 		return FALSE;
 
 	add_line_data(view, NULL, LINE_STAT_HEAD);
-	if (!*opt_head)
+	if (opt_no_head)
+		string_copy(status_onbranch, "Initial commit");
+	else if (!*opt_head)
 		string_copy(status_onbranch, "Not currently on any branch");
 	else if (!string_format(status_onbranch, "On branch %s", opt_head))
 		return FALSE;
 
+	if (opt_no_head) {
+		string_copy(indexcmd, STATUS_LIST_NO_HEAD_CMD);
+		indexstatus = 'A';
+	}
+
 	if (!string_format(exclude, "%s/info/exclude", opt_git_dir))
 		return FALSE;
 
-	string_copy(cmd, STATUS_LIST_OTHER_CMD);
-
 	if (stat(exclude, &statbuf) >= 0) {
-		size_t cmdsize = strlen(cmd);
+		size_t cmdsize = strlen(othercmd);
 
-		if (!string_format_from(cmd, &cmdsize, " %s", "--exclude-from=") ||
-		    sq_quote(cmd, cmdsize, exclude) >= sizeof(cmd))
+		if (!string_format_from(othercmd, &cmdsize, " %s", "--exclude-from=") ||
+		    sq_quote(othercmd, cmdsize, exclude) >= sizeof(othercmd))
+			return FALSE;
+
+		cmdsize = strlen(indexcmd);
+		if (opt_no_head &&
+		    (!string_format_from(indexcmd, &cmdsize, " %s", "--exclude-from=") ||
+		     sq_quote(indexcmd, cmdsize, exclude) >= sizeof(indexcmd)))
 			return FALSE;
 	}
 
 	system("git update-index -q --refresh");
 
-	if (!status_run(view, STATUS_DIFF_INDEX_CMD, TRUE, LINE_STAT_STAGED) ||
-	    !status_run(view, STATUS_DIFF_FILES_CMD, TRUE, LINE_STAT_UNSTAGED) ||
-	    !status_run(view, cmd, FALSE, LINE_STAT_UNTRACKED))
+	if (!status_run(view, indexcmd, indexstatus, LINE_STAT_STAGED) ||
+	    !status_run(view, STATUS_DIFF_FILES_CMD, 0, LINE_STAT_UNSTAGED) ||
+	    !status_run(view, othercmd, '?', LINE_STAT_UNTRACKED))
 		return FALSE;
 
 	/* If all went well restore the previous line number to stay in
@@ -4049,9 +4072,18 @@ status_enter(struct view *view, struct line *line)
 
 	switch (line->type) {
 	case LINE_STAT_STAGED:
-		if (!string_format_from(opt_cmd, &cmdsize,
-					STATUS_DIFF_INDEX_SHOW_CMD, oldpath, newpath))
-			return REQ_QUIT;
+		if (opt_no_head) {
+			if (!string_format_from(opt_cmd, &cmdsize,
+						STATUS_DIFF_NO_HEAD_SHOW_CMD,
+						newpath))
+				return REQ_QUIT;
+		} else {
+			if (!string_format_from(opt_cmd, &cmdsize,
+						STATUS_DIFF_INDEX_SHOW_CMD,
+						oldpath, newpath))
+				return REQ_QUIT;
+		}
+
 		if (status)
 			info = "Staged changes to %s";
 		else
@@ -4071,7 +4103,6 @@ status_enter(struct view *view, struct line *line)
 	case LINE_STAT_UNTRACKED:
 		if (opt_pipe)
 			return REQ_QUIT;
-
 
 	    	if (!status) {
 			report("No file to show");
@@ -4436,7 +4467,7 @@ stage_update_chunk(struct view *view, struct line *line)
 static void
 stage_update(struct view *view, struct line *line)
 {
-	if (stage_line_type != LINE_STAT_UNTRACKED &&
+	if (!opt_no_head && stage_line_type != LINE_STAT_UNTRACKED &&
 	    (line->type == LINE_DIFF_CHUNK || !stage_status.status)) {
 		if (!stage_update_chunk(view, line)) {
 			report("Failed to apply chunk");
@@ -5432,6 +5463,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 		head	 = !strncmp(opt_head, name, namelen);
 
 	} else if (!strcmp(name, "HEAD")) {
+		opt_no_head = FALSE;
 		return OK;
 	}
 
