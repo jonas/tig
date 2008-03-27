@@ -2278,18 +2278,6 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		return;
 	}
 
-	if (view->ops->open) {
-		if (!view->ops->open(view)) {
-			report("Failed to load %s view", view->name);
-			return;
-		}
-
-	} else if ((reload || strcmp(view->vid, view->id)) &&
-		   !begin_update(view)) {
-		report("Failed to load %s view", view->name);
-		return;
-	}
-
 	if (split) {
 		display[1] = view;
 		if (!backgrounded)
@@ -2306,6 +2294,18 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	if (nviews != displayed_views() ||
 	    (nviews == 1 && base_view != display[0]))
 		resize_display();
+
+	if (view->ops->open) {
+		if (!view->ops->open(view)) {
+			report("Failed to load %s view", view->name);
+			return;
+		}
+
+	} else if ((reload || strcmp(view->vid, view->id)) &&
+		   !begin_update(view)) {
+		report("Failed to load %s view", view->name);
+		return;
+	}
 
 	if (split && prev->lineno - prev->offset >= prev->height) {
 		/* Take the title line into account. */
@@ -3964,12 +3964,19 @@ status_open(struct view *view)
 		prev_lineno = view->lines - 1;
 	while (prev_lineno < view->lines && !view->line[prev_lineno].data)
 		prev_lineno++;
+	while (prev_lineno > 0 && !view->line[prev_lineno].data)
+		prev_lineno--;
 
 	/* If the above fails, always skip the "On branch" line. */
 	if (prev_lineno < view->lines)
 		view->lineno = prev_lineno;
 	else
 		view->lineno = 1;
+
+	if (view->lineno < view->offset)
+		view->offset = view->lineno;
+	else if (view->offset + view->height <= view->lineno)
+		view->offset = view->lineno - view->height + 1;
 
 	return TRUE;
 }
