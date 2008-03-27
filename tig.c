@@ -3414,9 +3414,9 @@ parse_blame_commit(struct view *view, char *text, int *blamed)
 
 		blame = line->data;
 		blame->commit = commit;
+		blame->header = !group;
 		line->dirty = 1;
 	}
-	blame->header = 1;
 
 	return commit;
 }
