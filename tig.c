@@ -4143,61 +4143,110 @@ status_enter(struct view *view, struct line *line)
 }
 
 
-static bool
-status_update_file(struct view *view, struct status *status, enum line_type type)
+static FILE *
+status_update_prepare(enum line_type type)
 {
 	char cmd[SIZEOF_STR];
-	char buf[SIZEOF_STR];
 	size_t cmdsize = 0;
-	size_t bufsize = 0;
-	size_t written = 0;
-	FILE *pipe;
 
 	if (opt_cdup[0] &&
 	    type != LINE_STAT_UNTRACKED &&
 	    !string_format_from(cmd, &cmdsize, "cd %s;", opt_cdup))
-		return FALSE;
+		return NULL;
+
+	switch (type) {
+	case LINE_STAT_STAGED:
+		string_add(cmd, cmdsize, "git update-index -z --index-info");
+		break;
+
+	case LINE_STAT_UNSTAGED:
+	case LINE_STAT_UNTRACKED:
+		string_add(cmd, cmdsize, "git update-index -z --add --remove --stdin");
+		break;
+
+	default:
+		die("line type %d not handled in switch", type);
+	}
+
+	return popen(cmd, "w");
+}
+
+static bool
+status_update_write(FILE *pipe, struct status *status, enum line_type type)
+{
+	char buf[SIZEOF_STR];
+	size_t bufsize = 0;
+	size_t written = 0;
 
 	switch (type) {
 	case LINE_STAT_STAGED:
 		if (!string_format_from(buf, &bufsize, "%06o %s\t%s%c",
-				        status->old.mode,
+					status->old.mode,
 					status->old.rev,
 					status->old.name, 0))
 			return FALSE;
-
-		string_add(cmd, cmdsize, "git update-index -z --index-info");
 		break;
 
 	case LINE_STAT_UNSTAGED:
 	case LINE_STAT_UNTRACKED:
 		if (!string_format_from(buf, &bufsize, "%s%c", status->new.name, 0))
 			return FALSE;
-
-		string_add(cmd, cmdsize, "git update-index -z --add --remove --stdin");
 		break;
-
-	case LINE_STAT_HEAD:
-		return TRUE;
 
 	default:
 		die("line type %d not handled in switch", type);
 	}
 
-	pipe = popen(cmd, "w");
-	if (!pipe)
-		return FALSE;
-
 	while (!ferror(pipe) && written < bufsize) {
 		written += fwrite(buf + written, 1, bufsize - written, pipe);
 	}
 
-	pclose(pipe);
+	return written == bufsize;
+}
 
-	if (written != bufsize)
+static bool
+status_update_file(struct status *status, enum line_type type)
+{
+	FILE *pipe = status_update_prepare(type);
+	bool result;
+
+	if (!pipe)
 		return FALSE;
 
-	return TRUE;
+	result = status_update_write(pipe, status, type);
+	pclose(pipe);
+	return result;
+}
+
+static bool
+status_update_files(struct view *view, struct line *line)
+{
+	FILE *pipe = status_update_prepare(line->type);
+	bool result = TRUE;
+	struct line *pos = view->line + view->lines;
+	int files = 0;
+	int file, done;
+
+	if (!pipe)
+		return FALSE;
+
+	for (pos = line; pos < view->line + view->lines && pos->data; pos++)
+		files++;
+
+	for (file = 0, done = 0; result && file < files; line++, file++) {
+		int almost_done = file * 100 / files;
+
+		if (almost_done > done) {
+			done = almost_done;
+			string_format(view->ref, "updating file %u of %u (%d%% done)",
+				      file, files, done);
+			update_view_title(view);
+		}
+		result = status_update_write(pipe, line->data, line->type);
+	}
+
+	pclose(pipe);
+	return result;
 }
 
 static bool
@@ -4208,17 +4257,16 @@ status_update(struct view *view)
 	assert(view->lines);
 
 	if (!line->data) {
-		while (++line < view->line + view->lines && line->data) {
-			if (!status_update_file(view, line->data, line->type))
-				report("Failed to update file status");
-		}
-
-		if (!line[-1].data) {
+		/* This should work even for the "On branch" line. */
+		if (line < view->line + view->lines && !line[1].data) {
 			report("Nothing to update");
 			return FALSE;
 		}
 
-	} else if (!status_update_file(view, line->data, line->type)) {
+		if (!status_update_files(view, line + 1))
+			report("Failed to update file status");
+
+	} else if (!status_update_file(line->data, line->type)) {
 		report("Failed to update file status");
 	}
 
@@ -4484,7 +4532,7 @@ stage_update(struct view *view, struct line *line)
 			return;
 		}
 
-	} else if (!status_update_file(view, &stage_status, stage_line_type)) {
+	} else if (!status_update_file(&stage_status, stage_line_type)) {
 		report("Failed to update file");
 		return;
 	}
