@@ -1357,6 +1357,7 @@ struct view {
 	struct view_ops *ops;	/* View operations */
 
 	enum keymap keymap;	/* What keymap does this view have */
+	bool git_dir;		/* Whether the view requires a git directory. */
 
 	char cmd[SIZEOF_STR];	/* Command buffer */
 	char ref[SIZEOF_REF];	/* Hovered commit reference */
@@ -1416,24 +1417,24 @@ static struct view_ops help_ops;
 static struct view_ops status_ops;
 static struct view_ops stage_ops;
 
-#define VIEW_STR(name, cmd, env, ref, ops, map) \
-	{ name, cmd, #env, ref, ops, map}
+#define VIEW_STR(name, cmd, env, ref, ops, map, git) \
+	{ name, cmd, #env, ref, ops, map, git }
 
-#define VIEW_(id, name, ops, ref) \
-	VIEW_STR(name, TIG_##id##_CMD,  TIG_##id##_CMD, ref, ops, KEYMAP_##id)
+#define VIEW_(id, name, ops, git, ref) \
+	VIEW_STR(name, TIG_##id##_CMD,  TIG_##id##_CMD, ref, ops, KEYMAP_##id, git)
 
 
 static struct view views[] = {
-	VIEW_(MAIN,   "main",   &main_ops,   ref_head),
-	VIEW_(DIFF,   "diff",   &pager_ops,  ref_commit),
-	VIEW_(LOG,    "log",    &pager_ops,  ref_head),
-	VIEW_(TREE,   "tree",   &tree_ops,   ref_commit),
-	VIEW_(BLOB,   "blob",   &blob_ops,   ref_blob),
-	VIEW_(BLAME,  "blame",  &blame_ops,  ref_commit),
-	VIEW_(HELP,   "help",   &help_ops,   ""),
-	VIEW_(PAGER,  "pager",  &pager_ops,  "stdin"),
-	VIEW_(STATUS, "status", &status_ops, ""),
-	VIEW_(STAGE,  "stage",	&stage_ops,  ""),
+	VIEW_(MAIN,   "main",   &main_ops,   TRUE,  ref_head),
+	VIEW_(DIFF,   "diff",   &pager_ops,  TRUE,  ref_commit),
+	VIEW_(LOG,    "log",    &pager_ops,  TRUE,  ref_head),
+	VIEW_(TREE,   "tree",   &tree_ops,   TRUE,  ref_commit),
+	VIEW_(BLOB,   "blob",   &blob_ops,   TRUE,  ref_blob),
+	VIEW_(BLAME,  "blame",  &blame_ops,  TRUE,  ref_commit),
+	VIEW_(HELP,   "help",   &help_ops,   FALSE, ""),
+	VIEW_(PAGER,  "pager",  &pager_ops,  FALSE, "stdin"),
+	VIEW_(STATUS, "status", &status_ops, TRUE,  ""),
+	VIEW_(STAGE,  "stage",	&stage_ops,  TRUE,  ""),
 };
 
 #define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
@@ -2275,6 +2276,11 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 
 	if (view == prev && nviews == 1 && !reload) {
 		report("Already in %s view", view->name);
+		return;
+	}
+
+	if (view->git_dir && !opt_git_dir[0]) {
+		report("The %s view is disabled in pager view", view->name);
 		return;
 	}
 
