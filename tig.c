@@ -4470,7 +4470,7 @@ stage_update_chunk(struct view *view, struct line *line)
 		return FALSE;
 
 	if (!string_format_from(cmd, &cmdsize,
-				"git apply --cached %s - && "
+				"git apply --whitespace=nowarn --cached %s - && "
 				"git update-index -q --unmerged --refresh 2>/dev/null",
 				stage_line_type == LINE_STAT_STAGED ? "-R" : ""))
 		return FALSE;
