@@ -466,6 +466,12 @@ parse_options(int argc, char *argv[])
 	bool seen_dashdash = FALSE;
 	int i;
 
+	if (!isatty(STDIN_FILENO)) {
+		opt_request = REQ_VIEW_PAGER;
+		opt_pipe = stdin;
+		return TRUE;
+	}
+
 	if (argc <= 1)
 		return TRUE;
 
@@ -532,12 +538,6 @@ parse_options(int argc, char *argv[])
 		buf_size = sq_quote(opt_cmd, buf_size, opt);
 		if (buf_size >= sizeof(opt_cmd))
 			die("command too long");
-	}
-
-	if (!isatty(STDIN_FILENO)) {
-		opt_request = REQ_VIEW_PAGER;
-		opt_pipe = stdin;
-		buf_size = 0;
 	}
 
 	opt_cmd[buf_size] = 0;
@@ -5741,7 +5741,7 @@ main(int argc, char *argv[])
 		return 0;
 
 	/* Require a git repository unless when running in pager mode. */
-	if (!opt_git_dir[0])
+	if (!opt_git_dir[0] && opt_request != REQ_VIEW_PAGER)
 		die("Not a git repository");
 
 	if (*opt_encoding && strcasecmp(opt_encoding, "UTF-8"))
