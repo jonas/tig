@@ -332,6 +332,7 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(PREVIOUS,		"Move to previous"), \
 	REQ_(VIEW_NEXT,		"Move focus to next view"), \
 	REQ_(REFRESH,		"Reload and refresh"), \
+	REQ_(MAXIMIZE,		"Maximize the current view"), \
 	REQ_(VIEW_CLOSE,	"Close the current view"), \
 	REQ_(QUIT,		"Close all views and quit"), \
 	\
@@ -733,6 +734,7 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_UP,	REQ_PREVIOUS },
 	{ KEY_DOWN,	REQ_NEXT },
 	{ 'R',		REQ_REFRESH },
+	{ 'M',		REQ_MAXIMIZE },
 
 	/* Cursor navigation */
 	{ 'k',		REQ_MOVE_UP },
@@ -1440,7 +1442,8 @@ static struct view views[] = {
 	VIEW_(STAGE,  "stage",	&stage_ops,  TRUE,  ""),
 };
 
-#define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
+#define VIEW(req) 	(&views[(req) - REQ_OFFSET - 1])
+#define VIEW_REQ(view)	((view) - views + REQ_OFFSET + 1)
 
 #define foreach_view(view, i) \
 	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
@@ -1480,6 +1483,43 @@ draw_text(struct view *view, const char *string, int max_len,
 	}
 
 	return len;
+}
+
+static int
+draw_lineno(struct view *view, unsigned int lineno, int max, bool selected)
+{
+	static char fmt[] = "%1ld";
+	char number[10] = "          ";
+	int max_number = MIN(view->digits, STRING_SIZE(number));
+	bool showtrimmed = FALSE;
+	int col;
+
+	lineno += view->offset + 1;
+	if (lineno == 1 || (lineno % opt_num_interval) == 0) {
+		if (view->digits <= 9)
+			fmt[1] = '0' + view->digits;
+
+		if (!string_format(number, fmt, lineno))
+			number[0] = 0;
+		showtrimmed = TRUE;
+	}
+
+	if (max < max_number)
+		max_number = max;
+
+	col = draw_text(view, number, max_number, showtrimmed, selected);
+	if (col < max) {
+		if (!selected)
+			wattrset(view->win, A_NORMAL);
+		waddch(view->win, ACS_VLINE);
+		col++;
+	}
+	if (col < max) {
+		waddch(view->win, ' ');
+		col++;
+	}
+
+	return col;
 }
 
 static bool
@@ -2590,6 +2630,11 @@ view_driver(struct view *view, enum request request)
 		report("Refreshing is not yet supported for the %s view", view->name);
 		break;
 
+	case REQ_MAXIMIZE:
+		if (displayed_views() == 2)
+			open_view(view, VIEW_REQ(view), OPEN_DEFAULT);
+		break;
+
 	case REQ_TOGGLE_LINENO:
 		opt_line_number = !opt_line_number;
 		redraw_display();
@@ -2695,39 +2740,35 @@ view_driver(struct view *view, enum request request)
 static bool
 pager_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
 {
+	static char spaces[] = "                    ";
 	char *text = line->data;
 	enum line_type type = line->type;
-	int attr;
+	int attr = A_NORMAL;
+	int col = 0;
 
 	wmove(view->win, lineno, 0);
 
 	if (selected) {
 		type = LINE_CURSOR;
 		wchgat(view->win, -1, 0, type, NULL);
+		attr = get_line_attr(type);
 	}
-
-	attr = get_line_attr(type);
 	wattrset(view->win, attr);
 
-	if (opt_line_number || opt_tab_size < TABSIZE) {
-		static char spaces[] = "                    ";
-		int col_offset = 0, col = 0;
+	if (opt_line_number) {
+		col += draw_lineno(view, lineno, view->width, selected);
+		if (col >= view->width)
+			return TRUE;
+	}
 
-		if (opt_line_number) {
-			unsigned long real_lineno = view->offset + lineno + 1;
+	if (!selected) {
+		attr = get_line_attr(type);
+		wattrset(view->win, attr);
+	}
+	if (opt_tab_size < TABSIZE) {
+		int col_offset = col;
 
-			if (real_lineno == 1 ||
-			    (real_lineno % opt_num_interval) == 0) {
-				wprintw(view->win, "%.*d", view->digits, real_lineno);
-
-			} else {
-				waddnstr(view->win, spaces,
-					 MIN(view->digits, STRING_SIZE(spaces)));
-			}
-			waddstr(view->win, ": ");
-			col_offset = view->digits + 2;
-		}
-
+		col = 0;
 		while (text && col_offset + col < view->width) {
 			int cols_max = view->width - col_offset - col;
 			char *pos = text;
@@ -2749,7 +2790,7 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 		}
 
 	} else {
-		draw_text(view, text, view->width, TRUE, selected);
+		draw_text(view, text, view->width - col, TRUE, selected);
 	}
 
 	return TRUE;
@@ -3594,43 +3635,13 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 	}
 
 	{
-		unsigned long real_lineno = view->offset + lineno + 1;
-		char number[10] = "          ";
-		int max = MIN(view->digits, STRING_SIZE(number));
-		bool showtrimmed = FALSE;
-
-		if (real_lineno == 1 ||
-		    (real_lineno % opt_num_interval) == 0) {
-			char fmt[] = "%1ld";
-
-			if (view->digits <= 9)
-				fmt[1] = '0' + view->digits;
-
-			if (!string_format(number, fmt, real_lineno))
-				number[0] = 0;
-			showtrimmed = TRUE;
-		}
-
-		if (max > view->width - col)
-			max = view->width - col;
 		if (!selected)
 			wattrset(view->win, get_line_attr(LINE_BLAME_LINENO));
-		col += draw_text(view, number, max, showtrimmed, selected);
+		col += draw_lineno(view, lineno, view->width - col, selected);
 		if (col >= view->width)
 			return TRUE;
 	}
 
-	if (!selected)
-		wattrset(view->win, A_NORMAL);
-
-	if (col >= view->width)
-		return TRUE;
-	waddch(view->win, ACS_VLINE);
-	col++;
-	if (col >= view->width)
-		return TRUE;
-	waddch(view->win, ' ');
-	col++;
 	col += draw_text(view, blame->text, view->width - col, TRUE, selected);
 
 	return TRUE;
@@ -3994,6 +4005,8 @@ static bool
 status_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
 {
 	struct status *status = line->data;
+	char *text;
+	int col = 0;
 
 	wmove(view->win, lineno, 0);
 
@@ -4014,8 +4027,6 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 	}
 
 	if (!status) {
-		char *text;
-
 		switch (line->type) {
 		case LINE_STAT_STAGED:
 			text = "Changes to be committed:";
@@ -4040,19 +4051,16 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 		default:
 			return FALSE;
 		}
+	} else {
+		char buf[] = { status->status, ' ', ' ', ' ', 0 };
 
-		draw_text(view, text, view->width, TRUE, selected);
-		return TRUE;
+		col += draw_text(view, buf, view->width, TRUE, selected);
+		if (!selected)
+			wattrset(view->win, A_NORMAL);
+		text = status->new.name;
 	}
 
-	waddch(view->win, status->status);
-	if (!selected)
-		wattrset(view->win, A_NORMAL);
-	wmove(view->win, lineno, 4);
-	if (view->width < 5)
-		return TRUE;
-
-	draw_text(view, status->new.name, view->width - 5, TRUE, selected);
+	draw_text(view, text, view->width - col, TRUE, selected);
 	return TRUE;
 }
 
