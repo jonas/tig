@@ -143,11 +143,12 @@ static size_t utf8_length(const char *string, size_t max_width, int *trimmed, bo
 struct ref {
 	char *name;		/* Ref name; tag or head names are shortened. */
 	char id[SIZEOF_REV];	/* Commit SHA1 ID */
+	unsigned int head:1;	/* Is it the current HEAD? */
 	unsigned int tag:1;	/* Is it a tag? */
 	unsigned int ltag:1;	/* If so, is the tag local? */
 	unsigned int remote:1;	/* Is it a remote ref? */
+	unsigned int tracked:1;	/* Is it the remote for the current HEAD? */
 	unsigned int next:1;	/* For ref lists: are there more refs? */
-	unsigned int head:1;	/* Is it the current HEAD? */
 };
 
 static struct ref **get_refs(char *id);
@@ -446,6 +447,7 @@ static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
 static char opt_head[SIZEOF_REF]	= "";
+static char opt_remote[SIZEOF_REF]	= "";
 static bool opt_no_head			= TRUE;
 static FILE *opt_pipe			= NULL;
 static char opt_encoding[20]		= "UTF-8";
@@ -590,7 +592,8 @@ LINE(MAIN_AUTHOR,  "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_COMMIT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_LOCAL_TAG,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
-LINE(MAIN_REMOTE,  "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
+LINE(MAIN_REMOTE,  "",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(MAIN_TRACKED, "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_HEAD,    "",			COLOR_RED,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REVGRAPH,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
@@ -4892,6 +4895,8 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 				wattrset(view->win, get_line_attr(LINE_MAIN_LOCAL_TAG));
 			else if (commit->refs[i]->tag)
 				wattrset(view->win, get_line_attr(LINE_MAIN_TAG));
+			else if (commit->refs[i]->tracked)
+				wattrset(view->win, get_line_attr(LINE_MAIN_TRACKED));
 			else if (commit->refs[i]->remote)
 				wattrset(view->win, get_line_attr(LINE_MAIN_REMOTE));
 			else
@@ -5499,6 +5504,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 	bool tag = FALSE;
 	bool ltag = FALSE;
 	bool remote = FALSE;
+	bool tracked = FALSE;
 	bool check_replace = FALSE;
 	bool head = FALSE;
 
@@ -5520,6 +5526,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 		remote = TRUE;
 		namelen -= STRING_SIZE("refs/remotes/");
 		name	+= STRING_SIZE("refs/remotes/");
+		tracked  = !strcmp(opt_remote, name);
 
 	} else if (!strncmp(name, "refs/heads/", STRING_SIZE("refs/heads/"))) {
 		namelen -= STRING_SIZE("refs/heads/");
@@ -5552,10 +5559,11 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 
 	strncpy(ref->name, name, namelen);
 	ref->name[namelen] = 0;
+	ref->head = head;
 	ref->tag = tag;
 	ref->ltag = ltag;
 	ref->remote = remote;
-	ref->head = head;
+	ref->tracked = tracked;
 	string_copy_rev(ref->id, id);
 
 	return OK;
@@ -5578,6 +5586,28 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 
 	if (!strcmp(name, "core.editor"))
 		string_ncopy(opt_editor, value, valuelen);
+
+	/* branch.<head>.remote */
+	if (*opt_head &&
+	    !strncmp(name, "branch.", 7) &&
+	    !strncmp(name + 7, opt_head, strlen(opt_head)) &&
+	    !strcmp(name + 7 + strlen(opt_head), ".remote"))
+		string_ncopy(opt_remote, value, valuelen);
+
+	if (*opt_head && *opt_remote &&
+	    !strncmp(name, "branch.", 7) &&
+	    !strncmp(name + 7, opt_head, strlen(opt_head)) &&
+	    !strcmp(name + 7 + strlen(opt_head), ".merge")) {
+		size_t from = strlen(opt_remote);
+
+		if (!strncmp(value, "refs/heads/", STRING_SIZE("refs/heads/"))) {
+			value += STRING_SIZE("refs/heads/");
+			valuelen -= STRING_SIZE("refs/heads/");
+		}
+
+		if (!string_format_from(opt_remote, &from, "/%s", value))
+			opt_remote[0] = 0;
+	}
 
 	return OK;
 }
