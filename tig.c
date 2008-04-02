@@ -4002,6 +4002,8 @@ static bool
 status_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
 {
 	struct status *status = line->data;
+	char *text;
+	int col = 0;
 
 	wmove(view->win, lineno, 0);
 
@@ -4022,8 +4024,6 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 	}
 
 	if (!status) {
-		char *text;
-
 		switch (line->type) {
 		case LINE_STAT_STAGED:
 			text = "Changes to be committed:";
@@ -4048,19 +4048,16 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 		default:
 			return FALSE;
 		}
+	} else {
+		char buf[] = { status->status, ' ', ' ', ' ', 0 };
 
-		draw_text(view, text, view->width, TRUE, selected);
-		return TRUE;
+		col += draw_text(view, buf, view->width, TRUE, selected);
+		if (!selected)
+			wattrset(view->win, A_NORMAL);
+		text = status->new.name;
 	}
 
-	waddch(view->win, status->status);
-	if (!selected)
-		wattrset(view->win, A_NORMAL);
-	wmove(view->win, lineno, 4);
-	if (view->width < 5)
-		return TRUE;
-
-	draw_text(view, status->new.name, view->width - 5, TRUE, selected);
+	draw_text(view, text, view->width - col, TRUE, selected);
 	return TRUE;
 }
 
