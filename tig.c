@@ -331,6 +331,7 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(PREVIOUS,		"Move to previous"), \
 	REQ_(VIEW_NEXT,		"Move focus to next view"), \
 	REQ_(REFRESH,		"Reload and refresh"), \
+	REQ_(MAXIMIZE,		"Maximize the current view"), \
 	REQ_(VIEW_CLOSE,	"Close the current view"), \
 	REQ_(QUIT,		"Close all views and quit"), \
 	\
@@ -730,6 +731,7 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_UP,	REQ_PREVIOUS },
 	{ KEY_DOWN,	REQ_NEXT },
 	{ 'R',		REQ_REFRESH },
+	{ 'M',		REQ_MAXIMIZE },
 
 	/* Cursor navigation */
 	{ 'k',		REQ_MOVE_UP },
@@ -1437,7 +1439,8 @@ static struct view views[] = {
 	VIEW_(STAGE,  "stage",	&stage_ops,  TRUE,  ""),
 };
 
-#define VIEW(req) (&views[(req) - REQ_OFFSET - 1])
+#define VIEW(req) 	(&views[(req) - REQ_OFFSET - 1])
+#define VIEW_REQ(view)	((view) - views + REQ_OFFSET + 1)
 
 #define foreach_view(view, i) \
 	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
@@ -2585,6 +2588,11 @@ view_driver(struct view *view, enum request request)
 	}
 	case REQ_REFRESH:
 		report("Refreshing is not yet supported for the %s view", view->name);
+		break;
+
+	case REQ_MAXIMIZE:
+		if (displayed_views() == 2)
+			open_view(view, VIEW_REQ(view), OPEN_DEFAULT);
 		break;
 
 	case REQ_TOGGLE_LINENO:

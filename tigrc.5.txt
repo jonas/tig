@@ -197,6 +197,7 @@ next			Move to next
 previous		Move to previous
 view-next		Move focus to next view
 refresh			Reload and refresh view
+maximize		Maximize the current view
 view-close		Close the current view
 quit			Close all views and quit
 ------------------------------------------------------------------------------
