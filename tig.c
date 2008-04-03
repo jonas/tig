@@ -3488,6 +3488,8 @@ blame_read_file(struct view *view, char *line)
 
 		if (view->lines > 0)
 			pipe = popen(view->cmd, "r");
+		else if (!view->parent)
+			die("No blame exist for %s", view->vid);
 		view->cmd[0] = 0;
 		if (!pipe) {
 			report("Failed to load blame data");
@@ -4947,6 +4949,8 @@ main_read(struct view *view, char *line)
 	struct commit *commit;
 
 	if (!line) {
+		if (!view->lines && !view->parent)
+			die("No revisions match the given arguments.");
 		update_rev_graph(graph);
 		return TRUE;
 	}
