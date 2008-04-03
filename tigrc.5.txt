@@ -339,13 +339,12 @@ to any backgrounded windows and the current window.
 
 *title-blur*, *title-focus*
 
-Cursor line colors::
+Misc colors::
 
-*cursor*
+Colors for the cursor line, line numbers, and delimiter shown for truncated
+lines.
 
-Color of delimiter shown for truncated lines::
-
-*delimiter*
+*cursor*, *delimiter*, *line-number*
 
 Main view specific::
 
@@ -360,7 +359,7 @@ Blame view colors::
 The colors used for the blame view are similar to those in the main view.
 The commit ID color can be colored using *blame-id*.
 
-*blame-date*, *blame-author*, *blame-commit*, *blame-id*, *blame-lineno*
+*blame-date*, *blame-author*, *blame-commit*, *blame-id*
 
 --
 

@@ -586,6 +586,7 @@ LINE(DEFAULT,	   "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(CURSOR,	   "",			COLOR_WHITE,	COLOR_GREEN,	A_BOLD), \
 LINE(STATUS,	   "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(DELIMITER,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+LINE(LINE_NUMBER,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(TITLE_BLUR,   "",			COLOR_WHITE,	COLOR_BLUE,	0), \
 LINE(TITLE_FOCUS,  "",			COLOR_WHITE,	COLOR_BLUE,	A_BOLD), \
 LINE(MAIN_DATE,    "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
@@ -609,8 +610,7 @@ LINE(STAT_UNTRACKED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(BLAME_DATE,    "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(BLAME_AUTHOR,  "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(BLAME_COMMIT, "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
-LINE(BLAME_ID,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(BLAME_LINENO, "",			COLOR_CYAN,	COLOR_DEFAULT,	0)
+LINE(BLAME_ID,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0)
 
 enum line_type {
 #define LINE(type, line, fg, bg, attr) \
@@ -1507,6 +1507,8 @@ draw_lineno(struct view *view, unsigned int lineno, int max, bool selected)
 	if (max < max_number)
 		max_number = max;
 
+	if (!selected)
+		wattrset(view->win, get_line_attr(LINE_LINE_NUMBER));
 	col = draw_text(view, number, max_number, showtrimmed, selected);
 	if (col < max) {
 		if (!selected)
@@ -3635,8 +3637,6 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 	}
 
 	{
-		if (!selected)
-			wattrset(view->win, get_line_attr(LINE_BLAME_LINENO));
 		col += draw_lineno(view, lineno, view->width - col, selected);
 		if (col >= view->width)
 			return TRUE;
