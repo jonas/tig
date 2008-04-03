@@ -586,10 +586,10 @@ LINE(DEFAULT,	   "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(CURSOR,	   "",			COLOR_WHITE,	COLOR_GREEN,	A_BOLD), \
 LINE(STATUS,	   "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(DELIMITER,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+LINE(DATE,         "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(LINE_NUMBER,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(TITLE_BLUR,   "",			COLOR_WHITE,	COLOR_BLUE,	0), \
 LINE(TITLE_FOCUS,  "",			COLOR_WHITE,	COLOR_BLUE,	A_BOLD), \
-LINE(MAIN_DATE,    "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(MAIN_AUTHOR,  "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_COMMIT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
@@ -607,7 +607,6 @@ LINE(STAT_NONE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(STAT_STAGED,  "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(STAT_UNSTAGED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(STAT_UNTRACKED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(BLAME_DATE,    "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(BLAME_AUTHOR,  "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(BLAME_COMMIT, "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(BLAME_ID,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0)
@@ -1060,6 +1059,9 @@ option_color_command(int argc, char *argv[])
 	if (!info) {
 		if (!string_enum_compare(argv[0], "main-delim", strlen("main-delim"))) {
 			info = get_line_info("delimiter");
+
+		} else if (!string_enum_compare(argv[0], "main-date", strlen("main-date"))) {
+			info = get_line_info("date");
 
 		} else {
 			config_msg = "Unknown color name";
@@ -1518,6 +1520,35 @@ draw_lineno(struct view *view, unsigned int lineno, int max, bool selected)
 		col++;
 	}
 	if (col < max) {
+		waddch(view->win, ' ');
+		col++;
+	}
+
+	return col;
+}
+
+static int
+draw_date(struct view *view, struct tm *time, int max, bool selected)
+{
+	char buf[DATE_COLS];
+	int col;
+	int timelen = 0;
+
+	if (max > DATE_COLS)
+		max = DATE_COLS;
+	if (time)
+		timelen = strftime(buf, sizeof(buf), DATE_FORMAT, time);
+	if (!timelen) {
+		memset(buf, ' ', sizeof(buf) - 1);
+		buf[sizeof(buf) - 1] = 0;
+	}
+
+	if (!selected)
+		wattrset(view->win, get_line_attr(LINE_DATE));
+	col = draw_text(view, buf, max, FALSE, selected);
+	if (col < max) {
+		if (!selected)
+			wattrset(view->win, get_line_attr(LINE_DEFAULT));
 		waddch(view->win, ' ');
 		col++;
 	}
@@ -3601,21 +3632,10 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 	}
 
 	if (opt_date) {
-		int n;
+		struct tm *time = blame->commit && *blame->commit->filename
+				? &blame->commit->time : NULL;
 
-		if (!selected)
-			wattrset(view->win, get_line_attr(LINE_MAIN_DATE));
-		if (blame->commit) {
-			char buf[DATE_COLS + 1];
-			int timelen;
-
-			timelen = strftime(buf, sizeof(buf), DATE_FORMAT, &blame->commit->time);
-			n = draw_text(view, buf, view->width - col, FALSE, selected);
-			draw_text(view, " ", view->width - col - n, FALSE, selected);
-		}
-
-		col += DATE_COLS;
-		wmove(view->win, lineno, col);
+		col += draw_date(view, time, view->width, selected);
 		if (col >= view->width)
 			return TRUE;
 	}
@@ -4832,17 +4852,13 @@ update_rev_graph(struct rev_graph *graph)
 static bool
 main_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
 {
-	char buf[DATE_COLS + 1];
 	struct commit *commit = line->data;
 	enum line_type type;
 	int col = 0;
-	size_t timelen;
-	int space;
 
 	if (!*commit->author)
 		return FALSE;
 
-	space = view->width;
 	wmove(view->win, lineno, col);
 
 	if (selected) {
@@ -4851,18 +4867,10 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 		wchgat(view->win, -1, 0, type, NULL);
 	} else {
 		type = LINE_MAIN_COMMIT;
-		wattrset(view->win, get_line_attr(LINE_MAIN_DATE));
 	}
 
 	if (opt_date) {
-		int n;
-
-		timelen = strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time);
-		n = draw_text(view, buf, view->width - col, FALSE, selected);
-		draw_text(view, " ", view->width - col - n, FALSE, selected);
-
-		col += DATE_COLS;
-		wmove(view->win, lineno, col);
+		col += draw_date(view, &commit->time, view->width, selected);
 		if (col >= view->width)
 			return TRUE;
 	}
