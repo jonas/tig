@@ -4473,36 +4473,39 @@ stage_diff_line(FILE *pipe, struct line *line)
 	return written == bufsize;
 }
 
-static struct line *
-stage_diff_hdr(struct view *view, struct line *line)
+static bool
+stage_diff_write(FILE *pipe, struct line *line, struct line *end)
 {
-	int diff_hdr_dir = line->type == LINE_DIFF_CHUNK ? -1 : 1;
-	struct line *diff_hdr;
-
-	if (line->type == LINE_DIFF_CHUNK)
-		diff_hdr = line - 1;
-	else
-		diff_hdr = view->line + 1;
-
-	while (diff_hdr > view->line && diff_hdr < view->line + view->lines) {
-		if (diff_hdr->type == LINE_DIFF_HEADER)
-			return diff_hdr;
-
-		diff_hdr += diff_hdr_dir;
+	while (line < end) {
+		if (!stage_diff_line(pipe, line++))
+			return FALSE;
+		if (line->type == LINE_DIFF_CHUNK ||
+		    line->type == LINE_DIFF_HEADER)
+			break;
 	}
+
+	return TRUE;
+}
+
+static struct line *
+stage_diff_find(struct view *view, struct line *line, enum line_type type)
+{
+	for (; view->line < line; line--)
+		if (line->type == type)
+			return line;
 
 	return NULL;
 }
 
 static bool
-stage_update_chunk(struct view *view, struct line *line)
+stage_update_chunk(struct view *view, struct line *chunk)
 {
 	char cmd[SIZEOF_STR];
 	size_t cmdsize = 0;
-	struct line *diff_hdr, *diff_chunk, *diff_end;
+	struct line *diff_hdr;
 	FILE *pipe;
 
-	diff_hdr = stage_diff_hdr(view, line);
+	diff_hdr = stage_diff_find(view, chunk, LINE_DIFF_HEADER);
 	if (!diff_hdr)
 		return FALSE;
 
@@ -4520,55 +4523,25 @@ stage_update_chunk(struct view *view, struct line *line)
 	if (!pipe)
 		return FALSE;
 
-	diff_end = view->line + view->lines;
-	if (line->type != LINE_DIFF_CHUNK) {
-		diff_chunk = diff_hdr;
-
-	} else {
-		for (diff_chunk = line + 1; diff_chunk < diff_end; diff_chunk++)
-			if (diff_chunk->type == LINE_DIFF_CHUNK ||
-			    diff_chunk->type == LINE_DIFF_HEADER)
-				diff_end = diff_chunk;
-
-		diff_chunk = line;
-
-		while (diff_hdr->type != LINE_DIFF_CHUNK) {
-			switch (diff_hdr->type) {
-			case LINE_DIFF_HEADER:
-			case LINE_DIFF_INDEX:
-			case LINE_DIFF_ADD:
-			case LINE_DIFF_DEL:
-				break;
-
-			default:
-				diff_hdr++;
-				continue;
-			}
-
-			if (!stage_diff_line(pipe, diff_hdr++)) {
-				pclose(pipe);
-				return FALSE;
-			}
-		}
-	}
-
-	while (diff_chunk < diff_end && stage_diff_line(pipe, diff_chunk))
-		diff_chunk++;
+	if (!stage_diff_write(pipe, diff_hdr, chunk) ||
+	    !stage_diff_write(pipe, chunk, view->line + view->lines))
+		chunk = NULL;
 
 	pclose(pipe);
 
-	if (diff_chunk != diff_end)
-		return FALSE;
-
-	return TRUE;
+	return chunk ? TRUE : FALSE;
 }
 
 static bool
 stage_update(struct view *view, struct line *line)
 {
-	if (!opt_no_head && stage_line_type != LINE_STAT_UNTRACKED &&
-	    (line->type == LINE_DIFF_CHUNK || !stage_status.status)) {
-		if (!stage_update_chunk(view, line)) {
+	struct line *chunk = NULL;
+
+	if (!opt_no_head && stage_line_type != LINE_STAT_UNTRACKED)
+		chunk = stage_diff_find(view, line, LINE_DIFF_CHUNK);
+
+	if (chunk) {
+		if (!stage_update_chunk(view, chunk)) {
 			report("Failed to apply chunk");
 			return FALSE;
 		}
