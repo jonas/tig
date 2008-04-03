@@ -2379,7 +2379,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	if (view->pipe && view->lines == 0) {
 		/* Clear the old view and let the incremental updating refill
 		 * the screen. */
-		wclear(view->win);
+		werase(view->win);
 		report("");
 	} else {
 		redraw_view(view);
