@@ -5621,7 +5621,7 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 }
 
 static int
-load_repo_config(void)
+load_git_config(void)
 {
 	return read_properties(popen(GIT_CONFIG " --list", "r"),
 			       "=", read_repo_config_option);
@@ -5776,9 +5776,7 @@ main(int argc, char *argv[])
 	if (load_options() == ERR)
 		die("Failed to load user config.");
 
-	/* Load the repo config file so options can be overwritten from
-	 * the command line. */
-	if (load_repo_config() == ERR)
+	if (load_git_config() == ERR)
 		die("Failed to load repo config.");
 
 	if (!parse_options(argc, argv))
