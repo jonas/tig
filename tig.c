@@ -2508,7 +2508,12 @@ view_driver(struct view *view, enum request request)
 
 	if (request > REQ_NONE) {
 		open_run_request(request);
-		return TRUE;
+		/* FIXME: When all views can refresh always do this. */
+		if (view == VIEW(REQ_VIEW_STATUS) ||
+		    view == VIEW(REQ_VIEW_STAGE))
+			request = REQ_REFRESH;
+		else
+			return TRUE;
 	}
 
 	if (view && view->lines) {
