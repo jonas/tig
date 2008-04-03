@@ -5671,8 +5671,8 @@ static int
 load_repo_info(void)
 {
 	int result;
-	FILE *pipe = popen("git rev-parse --git-dir --is-inside-work-tree "
-			   " --show-cdup --symbolic-full-name HEAD 2>/dev/null", "r");
+	FILE *pipe = popen("(git rev-parse --git-dir --is-inside-work-tree "
+			   " --show-cdup; git symbolic-ref HEAD) 2>/dev/null", "r");
 
 	/* XXX: The line outputted by "--show-cdup" can be empty so
 	 * initialize it to something invalid to make it possible to
