@@ -5797,7 +5797,7 @@ main(int argc, char *argv[])
 			die("Failed to initialize character set conversion");
 	}
 
-	if (load_refs() == ERR)
+	if (*opt_git_dir && load_refs() == ERR)
 		die("Failed to load refs.");
 
 	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
