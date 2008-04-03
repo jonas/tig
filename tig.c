@@ -2307,6 +2307,7 @@ enum open_flags {
 	OPEN_SPLIT = 1,		/* Split current view. */
 	OPEN_BACKGROUNDED = 2,	/* Backgrounded. */
 	OPEN_RELOAD = 4,	/* Reload view even if it is the current. */
+	OPEN_NOMAXIMIZE = 8,	/* Do not maximize the current view. */
 };
 
 static void
@@ -2315,6 +2316,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	bool backgrounded = !!(flags & OPEN_BACKGROUNDED);
 	bool split = !!(flags & OPEN_SPLIT);
 	bool reload = !!(flags & OPEN_RELOAD);
+	bool nomaximize = !!(flags & OPEN_NOMAXIMIZE);
 	struct view *view = VIEW(request);
 	int nviews = displayed_views();
 	struct view *base_view = display[0];
@@ -2333,7 +2335,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		display[1] = view;
 		if (!backgrounded)
 			current_view = 1;
-	} else {
+	} else if (!nomaximize) {
 		/* Maximize the current view. */
 		memset(display, 0, sizeof(display));
 		current_view = 0;
@@ -4159,6 +4161,23 @@ status_enter(struct view *view, struct line *line)
 	return REQ_NONE;
 }
 
+static bool
+status_exists(struct status *status, enum line_type type)
+{
+	struct view *view = VIEW(REQ_VIEW_STATUS);
+	struct line *line;
+
+	for (line = view->line; line < view->line + view->lines; line++) {
+		struct status *pos = line->data;
+
+		if (line->type == type && pos &&
+		    !strcmp(status->new.name, pos->new.name))
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 
 static FILE *
 status_update_prepare(enum line_type type)
@@ -4539,26 +4558,22 @@ stage_update_chunk(struct view *view, struct line *line)
 	return TRUE;
 }
 
-static void
+static bool
 stage_update(struct view *view, struct line *line)
 {
 	if (!opt_no_head && stage_line_type != LINE_STAT_UNTRACKED &&
 	    (line->type == LINE_DIFF_CHUNK || !stage_status.status)) {
 		if (!stage_update_chunk(view, line)) {
 			report("Failed to apply chunk");
-			return;
+			return FALSE;
 		}
 
 	} else if (!status_update_file(&stage_status, stage_line_type)) {
 		report("Failed to update file");
-		return;
+		return FALSE;
 	}
 
-	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
-
-	view = VIEW(REQ_VIEW_STATUS);
-	if (view_is_displayed(view))
-		status_enter(view, &view->line[view->lineno]);
+	return TRUE;
 }
 
 static enum request
@@ -4576,6 +4591,10 @@ stage_request(struct view *view, enum request request, struct line *line)
 		open_editor(stage_status.status != '?', stage_status.new.name);
 		break;
 
+	case REQ_REFRESH:
+		/* Reload everything ... */
+		break;
+
 	case REQ_VIEW_BLAME:
 		if (stage_status.new.name[0]) {
 			string_copy(opt_file, stage_status.new.name);
@@ -4584,12 +4603,24 @@ stage_request(struct view *view, enum request request, struct line *line)
 		return request;
 
 	case REQ_ENTER:
-		pager_request(view, request, line);
-		break;
+		return pager_request(view, request, line);
 
 	default:
 		return request;
 	}
+
+	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD | OPEN_NOMAXIMIZE);
+
+	/* Check whether the staged entry still exists, and close the
+	 * stage view if it doesn't. */
+	if (!status_exists(&stage_status, stage_line_type))
+		return REQ_VIEW_CLOSE;
+
+	if (stage_line_type == LINE_STAT_UNTRACKED)
+		opt_pipe = fopen(stage_status.new.name, "r");
+	else
+		string_copy(opt_cmd, view->cmd);
+	open_view(view, REQ_VIEW_STAGE, OPEN_RELOAD | OPEN_NOMAXIMIZE);
 
 	return REQ_NONE;
 }
