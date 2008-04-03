@@ -1570,12 +1570,15 @@ draw_view_line(struct view *view, unsigned int lineno)
 
 	line = &view->line[view->offset + lineno];
 
+	wmove(view->win, lineno, 0);
+
 	if (selected) {
 		line->selected = TRUE;
 		view->ops->select(view, line);
+		wchgat(view->win, -1, 0, LINE_CURSOR, NULL);
+		wattrset(view->win, get_line_attr(LINE_CURSOR));
 	} else if (line->selected) {
 		line->selected = FALSE;
-		wmove(view->win, lineno, 0);
 		wclrtoeol(view->win);
 	}
 
@@ -2783,18 +2786,7 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 {
 	static char spaces[] = "                    ";
 	char *text = line->data;
-	enum line_type type = line->type;
-	int attr = A_NORMAL;
 	int col = 0;
-
-	wmove(view->win, lineno, 0);
-
-	if (selected) {
-		type = LINE_CURSOR;
-		wchgat(view->win, -1, 0, type, NULL);
-		attr = get_line_attr(type);
-	}
-	wattrset(view->win, attr);
 
 	if (opt_line_number) {
 		col += draw_lineno(view, lineno, view->width, selected);
@@ -2802,10 +2794,9 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 			return TRUE;
 	}
 
-	if (!selected) {
-		attr = get_line_attr(type);
-		wattrset(view->win, attr);
-	}
+	if (!selected)
+		wattrset(view->win, get_line_attr(line->type));
+
 	if (opt_tab_size < TABSIZE) {
 		int col_offset = col;
 
@@ -3622,15 +3613,6 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 	struct blame *blame = line->data;
 	int col = 0;
 
-	wmove(view->win, lineno, 0);
-
-	if (selected) {
-		wattrset(view->win, get_line_attr(LINE_CURSOR));
-		wchgat(view->win, -1, 0, LINE_CURSOR, NULL);
-	} else {
-		wattrset(view->win, A_NORMAL);
-	}
-
 	if (opt_date) {
 		struct tm *time = blame->commit && *blame->commit->filename
 				? &blame->commit->time : NULL;
@@ -4038,11 +4020,8 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 	char *text;
 	int col = 0;
 
-	wmove(view->win, lineno, 0);
-
 	if (selected) {
-		wattrset(view->win, get_line_attr(LINE_CURSOR));
-		wchgat(view->win, -1, 0, LINE_CURSOR, NULL);
+		/* No attributes. */
 
 	} else if (line->type == LINE_STAT_HEAD) {
 		wattrset(view->win, get_line_attr(LINE_STAT_HEAD));
@@ -4859,12 +4838,8 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 	if (!*commit->author)
 		return FALSE;
 
-	wmove(view->win, lineno, col);
-
 	if (selected) {
 		type = LINE_CURSOR;
-		wattrset(view->win, get_line_attr(type));
-		wchgat(view->win, -1, 0, type, NULL);
 	} else {
 		type = LINE_MAIN_COMMIT;
 	}
