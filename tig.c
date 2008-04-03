@@ -3648,14 +3648,11 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 		wmove(view->win, lineno, col);
 	}
 
-	{
-		col += draw_lineno(view, lineno, view->width - col, selected);
-		if (col >= view->width)
-			return TRUE;
-	}
+	col += draw_lineno(view, lineno, view->width - col, selected);
+	if (col >= view->width)
+		return TRUE;
 
 	col += draw_text(view, blame->text, view->width - col, TRUE, selected);
-
 	return TRUE;
 }
 
