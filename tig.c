@@ -1490,14 +1490,15 @@ draw_lineno(struct view *view, unsigned int lineno, int max, bool selected)
 {
 	static char fmt[] = "%1ld";
 	char number[10] = "          ";
-	int max_number = MIN(view->digits, STRING_SIZE(number));
+	int digits3 = view->digits < 3 ? 3 : view->digits;
+	int max_number = MIN(digits3, STRING_SIZE(number));
 	bool showtrimmed = FALSE;
 	int col;
 
 	lineno += view->offset + 1;
 	if (lineno == 1 || (lineno % opt_num_interval) == 0) {
 		if (view->digits <= 9)
-			fmt[1] = '0' + view->digits;
+			fmt[1] = '0' + digits3;
 
 		if (!string_format(number, fmt, lineno))
 			number[0] = 0;
