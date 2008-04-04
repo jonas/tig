@@ -2646,27 +2646,27 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_TOGGLE_LINENO:
 		opt_line_number = !opt_line_number;
-		redraw_view(view);
+		redraw_display();
 		break;
 
 	case REQ_TOGGLE_DATE:
 		opt_date = !opt_date;
-		redraw_view(view);
+		redraw_display();
 		break;
 
 	case REQ_TOGGLE_AUTHOR:
 		opt_author = !opt_author;
-		redraw_view(view);
+		redraw_display();
 		break;
 
 	case REQ_TOGGLE_REV_GRAPH:
 		opt_rev_graph = !opt_rev_graph;
-		redraw_view(view);
+		redraw_display();
 		break;
 
 	case REQ_TOGGLE_REFS:
 		opt_show_refs = !opt_show_refs;
-		redraw_view(view);
+		redraw_display();
 		break;
 
 	case REQ_PROMPT:
