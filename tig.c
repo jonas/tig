@@ -1401,6 +1401,7 @@ struct view {
 	/* Drawing */
 	struct line *curline;	/* Line currently being drawn. */
 	enum line_type curtype;	/* Attribute currently used for drawing. */
+	unsigned long col;	/* Column when drawing. */
 
 	/* Loading */
 	FILE *pipe;
@@ -1482,8 +1483,8 @@ set_view_attr(struct view *view, enum line_type type)
 }
 
 static int
-draw_text(struct view *view, enum line_type type, const char *string,
-	  int max_len, bool use_tilde)
+draw_chars(struct view *view, enum line_type type, const char *string,
+	   int max_len, bool use_tilde)
 {
 	int len = 0;
 	int col = 0;
@@ -1527,55 +1528,64 @@ draw_space(struct view *view, enum line_type type, int max, int spaces)
 	while (spaces > 0) {
 		int len = MIN(spaces, sizeof(space) - 1);
 
-		col += draw_text(view, type, space, spaces, FALSE);
+		col += draw_chars(view, type, space, spaces, FALSE);
 		spaces -= len;
 	}
 
 	return col;
 }
 
-static int
-draw_lineno(struct view *view, unsigned int lineno, int max)
+static bool
+draw_lineno(struct view *view, unsigned int lineno)
 {
-	static char fmt[] = "%1ld";
-	char number[10] = "          ";
+	char number[10];
 	int digits3 = view->digits < 3 ? 3 : view->digits;
 	int max_number = MIN(digits3, STRING_SIZE(number));
-	bool showtrimmed = FALSE;
+	int max = view->width - view->col;
 	int col;
+
+	if (max < max_number)
+		max_number = max;
 
 	lineno += view->offset + 1;
 	if (lineno == 1 || (lineno % opt_num_interval) == 0) {
+		static char fmt[] = "%1ld";
+
 		if (view->digits <= 9)
 			fmt[1] = '0' + digits3;
 
 		if (!string_format(number, fmt, lineno))
 			number[0] = 0;
-		showtrimmed = TRUE;
+		col = draw_chars(view, LINE_LINE_NUMBER, number, max_number, TRUE);
+	} else {
+		col = draw_space(view, LINE_LINE_NUMBER, max_number, max_number);
 	}
 
-	if (max < max_number)
-		max_number = max;
-
-	col = draw_text(view, LINE_LINE_NUMBER, number, max_number, showtrimmed);
 	if (col < max) {
 		set_view_attr(view, LINE_DEFAULT);
 		waddch(view->win, line_graphics[LINE_GRAPHIC_VLINE]);
 		col++;
 	}
-	if (col < max) {
-		waddch(view->win, ' ');
-		col++;
-	}
 
-	return col;
+	if (col < max)
+		col += draw_space(view, LINE_DEFAULT, max - col, 1);
+	view->col += col;
+
+	return view->width - view->col <= 0;
 }
 
-static int
-draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t size, size_t max)
+static bool
+draw_text(struct view *view, enum line_type type, const char *string, bool trim)
 {
+	view->col += draw_chars(view, type, string, view->width - view->col, trim);
+	return view->width - view->col <= 0;
+}
+
+static bool
+draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t size)
+{
+	int max = view->width - view->col;
 	int i;
-	int col;
 
 	if (max < size)
 		size = max;
@@ -1586,32 +1596,32 @@ draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t si
 	for (i = 0; i < size; i++)
 		waddch(view->win, graphic[i]);
 
-	col = size;
+	view->col += size;
 	if (size < max) {
 		waddch(view->win, ' ');
-		col++;
+		view->col++;
 	}
 
-	return col;
+	return view->width - view->col <= 0;
 }
 
-static int
-draw_field(struct view *view, enum line_type type, char *text, int len, int max_len, bool trim)
+static bool
+draw_field(struct view *view, enum line_type type, char *text, int len, bool trim)
 {
-	int max = MIN(max_len, len);
+	int max = MIN(view->width - view->col, len);
 	int col;
 
 	if (text)
-		col = draw_text(view, type, text, max - 1, trim);
+		col = draw_chars(view, type, text, max - 1, trim);
 	else
 		col = draw_space(view, type, max - 1, max - 1);
 
-	col += draw_space(view, LINE_DEFAULT, max - col, max - col);
-	return col;
+	view->col += col + draw_space(view, LINE_DEFAULT, max - col, max - col);
+	return view->width - view->col <= 0;
 }
 
-static int
-draw_date(struct view *view, struct tm *time, int max)
+static bool
+draw_date(struct view *view, struct tm *time)
 {
 	char buf[DATE_COLS];
 	char *date;
@@ -1621,7 +1631,7 @@ draw_date(struct view *view, struct tm *time, int max)
 		timelen = strftime(buf, sizeof(buf), DATE_FORMAT, time);
 	date = timelen ? buf : NULL;
 
-	return draw_field(view, LINE_DATE, date, DATE_COLS, max, FALSE);
+	return draw_field(view, LINE_DATE, date, DATE_COLS, FALSE);
 }
 
 static bool
@@ -1639,6 +1649,7 @@ draw_view_line(struct view *view, unsigned int lineno)
 	line = &view->line[view->offset + lineno];
 
 	wmove(view->win, lineno, 0);
+	view->col = 0;
 	view->curline = line;
 	view->curtype = LINE_NONE;
 	line->selected = FALSE;
@@ -2854,15 +2865,11 @@ static bool
 pager_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	char *text = line->data;
-	int col = 0;
 
-	if (opt_line_number) {
-		col += draw_lineno(view, lineno, view->width);
-		if (col >= view->width)
-			return TRUE;
-	}
+	if (opt_line_number && draw_lineno(view, lineno))
+		return TRUE;
 
-	draw_text(view, line->type, text, view->width - col, TRUE);
+	draw_text(view, line->type, text, TRUE);
 	return TRUE;
 }
 
@@ -3651,7 +3658,6 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct blame *blame = line->data;
 	struct tm *time = NULL;
 	char *id = NULL, *author = NULL;
-	int col = 0;
 
 	if (blame->commit && *blame->commit->filename) {
 		id = blame->commit->id;
@@ -3659,33 +3665,20 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 		time = &blame->commit->time;
 	}
 
-	if (opt_date) {
-		col += draw_date(view, time, view->width);
-		if (col >= view->width)
-			return TRUE;
-	}
-
-	if (opt_author) {
-		int max = view->width - col;
-
-		col += draw_field(view, LINE_MAIN_AUTHOR, author, AUTHOR_COLS, max, TRUE);
-		if (col >= view->width)
-			return TRUE;
-	}
-
-	{
-		int max = view->width - col;
-
-		col += draw_field(view, LINE_BLAME_ID, id, ID_COLS, max, FALSE);
-		if (col >= view->width)
-			return TRUE;
-	}
-
-	col += draw_lineno(view, lineno, view->width - col);
-	if (col >= view->width)
+	if (opt_date && draw_date(view, time))
 		return TRUE;
 
-	col += draw_text(view, LINE_DEFAULT, blame->text, view->width - col, TRUE);
+	if (opt_author &&
+	    draw_field(view, LINE_MAIN_AUTHOR, author, AUTHOR_COLS, TRUE))
+		return TRUE;
+
+	if (draw_field(view, LINE_BLAME_ID, id, ID_COLS, FALSE))
+		return TRUE;
+
+	if (draw_lineno(view, lineno))
+		return TRUE;
+
+	draw_text(view, LINE_DEFAULT, blame->text, TRUE);
 	return TRUE;
 }
 
@@ -4049,7 +4042,6 @@ status_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct status *status = line->data;
 	enum line_type type;
 	char *text;
-	int col = 0;
 
 	if (!status) {
 		switch (line->type) {
@@ -4084,12 +4076,13 @@ status_draw(struct view *view, struct line *line, unsigned int lineno)
 	} else {
 		char buf[] = { status->status, ' ', ' ', ' ', 0 };
 
-		col += draw_text(view, line->type, buf, view->width, TRUE);
+		if (draw_text(view, line->type, buf, TRUE))
+			return TRUE;
 		type = LINE_DEFAULT;
 		text = status->new.name;
 	}
 
-	draw_text(view, type, text, view->width - col, TRUE);
+	draw_text(view, type, text, TRUE);
 	return TRUE;
 }
 
@@ -4871,32 +4864,20 @@ static bool
 main_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct commit *commit = line->data;
-	int col = 0;
 
 	if (!*commit->author)
 		return FALSE;
 
-	if (opt_date) {
-		col += draw_date(view, &commit->time, view->width);
-		if (col >= view->width)
-			return TRUE;
-	}
+	if (opt_date && draw_date(view, &commit->time))
+		return TRUE;
 
-	if (opt_author) {
-		int max = view->width - col;
+	if (opt_author &&
+	    draw_field(view, LINE_MAIN_AUTHOR, commit->author, AUTHOR_COLS, TRUE))
+		return TRUE;
 
-		col += draw_field(view, LINE_MAIN_AUTHOR, commit->author, AUTHOR_COLS, max, TRUE);
-		if (col >= view->width)
-			return TRUE;
-	}
-
-	if (opt_rev_graph && commit->graph_size) {
-		col += draw_graphic(view, LINE_MAIN_REVGRAPH,
-				    commit->graph, commit->graph_size,
-				    view->width - col);
-		if (col >= view->width)
-			return TRUE;
-	}
+	if (opt_rev_graph && commit->graph_size &&
+	    draw_graphic(view, LINE_MAIN_REVGRAPH, commit->graph, commit->graph_size))
+		return TRUE;
 
 	if (opt_show_refs && commit->refs) {
 		size_t i = 0;
@@ -4917,17 +4898,17 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 			else
 				type = LINE_MAIN_REF;
 
-			col += draw_text(view, type, "[", view->width - col, TRUE);
-			col += draw_text(view, type, commit->refs[i]->name, view->width - col, TRUE);
-			col += draw_text(view, type, "]", view->width - col, TRUE);
+			if (draw_text(view, type, "[", TRUE) ||
+			    draw_text(view, type, commit->refs[i]->name, TRUE) ||
+			    draw_text(view, type, "]", TRUE))
+				return TRUE;
 
-			col += draw_text(view, LINE_DEFAULT, " ", view->width - col, TRUE);
-			if (col >= view->width)
+			if (draw_text(view, LINE_DEFAULT, " ", TRUE))
 				return TRUE;
 		} while (commit->refs[i++]->next);
 	}
 
-	draw_text(view, LINE_DEFAULT, commit->title, view->width - col, TRUE);
+	draw_text(view, LINE_DEFAULT, commit->title, TRUE);
 	return TRUE;
 }
 
