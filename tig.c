@@ -4082,6 +4082,7 @@ status_enter(struct view *view, struct line *line)
 	char newpath[SIZEOF_STR] = "";
 	char *info;
 	size_t cmdsize = 0;
+	enum open_flags split;
 
 	if (line->type == LINE_STAT_NONE ||
 	    (!status && line[1].type == LINE_STAT_NONE)) {
@@ -4154,7 +4155,8 @@ status_enter(struct view *view, struct line *line)
 		die("line type %d not handled in switch", line->type);
 	}
 
-	open_view(view, REQ_VIEW_STAGE, OPEN_RELOAD | OPEN_SPLIT);
+	split = view_is_displayed(view) ? OPEN_SPLIT : 0;
+	open_view(view, REQ_VIEW_STAGE, OPEN_RELOAD | split);
 	if (view_is_displayed(VIEW(REQ_VIEW_STAGE))) {
 		if (status) {
 			stage_status = *status;
