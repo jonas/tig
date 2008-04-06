@@ -42,7 +42,11 @@ is:
 Examples:
 
 --------------------------------------------------------------------------
+set show-author = yes		# Show author?
+set show-date = yes		# Show commit date?
 set show-rev-graph = yes	# Show revision graph?
+set show-refs = yes		# Show references?
+set show-line-numbers = no	# Show line numbers?
 set line-number-interval = 5	# Interval between line numbers
 set tab-size = 8		# Number of spaces per tab
 set encoding = "UTF-8"		# Commit encoding
@@ -68,10 +72,14 @@ Variables
 
 The following variables can be set:
 
+'show-author' (bool)::
+'show-date' (bool)::
 'show-rev-graph' (bool)::
+'show-refs' (bool)::
 
-	Show revision graph in the main view on start-up. Can be toggled with
-	'g'.
+	Whether to show author, date, revision graph, and references
+	(branches, tags, and remotes) in the main view on start-up. Can all be
+	toggled.
 
 'line-number-interval' (int)::
 
@@ -171,6 +179,7 @@ view-diff		Show diff view
 view-log		Show log view
 view-tree		Show tree view
 view-blob		Show blob view
+view-blame		Show blame view
 view-status		Show status view
 view-stage		Show stage view
 view-pager		Show pager view
@@ -188,6 +197,7 @@ next			Move to next
 previous		Move to previous
 view-next		Move focus to next view
 refresh			Reload and refresh view
+maximize		Maximize the current view
 view-close		Close the current view
 quit			Close all views and quit
 ------------------------------------------------------------------------------
@@ -243,7 +253,10 @@ screen-resize		Resize the screen
 show-version		Show version information
 stop-loading		Stop all loading views
 toggle-lineno		Toggle line numbers
+toggle-date		Toggle date display
+toggle-author		Toggle author display
 toggle-rev-graph	Toggle revision graph visualization
+toggle-refs		Toggle reference display
 status-update		Update file status
 status-merge		Resolve unmerged file
 tree-parent		Switch to parent directory in tree view
@@ -290,7 +303,8 @@ Color names::
 
 	Valid colors include: *white*, *black*, *green*, *magenta*, *blue*,
 	*cyan*, *yellow*, *red*, *default*. Use *default* to refer to the
-	default terminal colors.
+	default terminal colors. This is recommended for background colors
+	if you are using a terminal with a transparent background.
 
 Attribute names::
 
@@ -301,44 +315,63 @@ Attribute names::
 UI colors
 ~~~~~~~~~
 
---
-
-Default terminal colors::
-
 The colors and attributes to be used for the text that is not highlighted or
 that specify the use of the default terminal colors can be controlled by
 setting the *default* color option.
 
-Use the *default* color to use the colors configured for the terminal. This is
-the default and recommended if you are using a terminal with a transparent
-background.
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
+General:
+------------------------------------------------------------------------------
+default			Overwrite default terminal colors (see above).
+cursor			The cursor line.
+status			The status window showing info messages.
+title-focus		The title window for the current view.
+title-blur		The title window of any backgrounded view.
+delimiter		Delimiter shown for truncated lines.
+line-number		Line numbers.
+date			The commit date.
+------------------------------------------------------------------------------
 
-Status window colors::
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
+Main view colors:
+------------------------------------------------------------------------------
+main-author		The commit author.
+main-revgraph		The revision graph.
+main-head		Label of the current branch.
+main-remote		Label of a remote.
+main-tracked		Label of the remote tracked by the current branch.
+main-tag		Label of a signed tag.
+main-local-tag		Label of a local tag.
+main-ref		Label of any other reference.
+------------------------------------------------------------------------------
 
-Appearance of the bottom window showing info messages.
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
+Status view:
+------------------------------------------------------------------------------
+stat-head		The "On branch"-line.
+stat-section		Status section titles,
+stat-staged		Status flag of staged files.
+stat-unstaged		Status flag of unstaged files.
+stat-untracked		Status flag of untracked files.
+------------------------------------------------------------------------------
 
-*status*
-
-Title window colors::
-
-Appearance of the title windows when they are attached
-to any backgrounded windows and the current window.
-
-*title-blur*, *title-focus*
-
-Cursor line colors::
-
-*cursor*
-
-Main view specific::
-
-Appearance of the various columns in the main view, including the '~' used for
-delimiting long author names and labels for tag and branch references.
-
-*main-date*, *main-author*, *main-commit*, *main-delim*, *main-tag*,
-*main-ref*, *main-remote*, *main-revgraph*
-
---
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
+Blame view:
+------------------------------------------------------------------------------
+blame-id		The commit ID.
+------------------------------------------------------------------------------
 
 Highlighting
 ~~~~~~~~~~~~
@@ -388,17 +421,11 @@ Colors for information of the tree view.
 
 *tree-dir*, *tree-file*
 
-Status markup::
-
-Colors used in the status view.
-
-*stat-section*, *stat-none*, *stat-staged*, *stat-unstaged*, *stat-untracked*
-
 --
 
 COPYRIGHT
 ---------
-Copyright (c) 2006-2007 Jonas Fonseca <fonseca@diku.dk>
+Copyright (c) 2006-2008 Jonas Fonseca <fonseca@diku.dk>
 
 Licensed under the terms of the GNU General Public License.
 

@@ -210,6 +210,9 @@ The blob view::
 	Displays the file content or "blob" of data associated with a file
 	name.
 
+The blame view::
+	Displays the file content annotated or blamed by commits.
+
 The status view::
 	Displays status of files in the working tree and allows changes to be
 	staged/unstaged as well as adding of untracked files.
@@ -262,6 +265,7 @@ l	Switch to log view.
 p	Switch to pager view.
 t	Switch to (directory) tree view.
 f	Switch to (file) blob view.
+B	Switch to blame view.
 h	Switch to help view
 S	Switch to status view
 c	Switch to stage view
@@ -283,6 +287,7 @@ Enter	This key is "context sensitive" depending on what view you are \
 	pressing Enter will simply scroll the view one line down.
 Tab	Switch to next view.
 R	Reload and refresh the current view.
+M	Maximize the current view to fill the whole display.
 Up	This key is "context sensitive" and will move the cursor one \
 	line up. However, if you opened a diff view from the main view \
 	(split- or full-screen) it will change the cursor to point to \
@@ -347,7 +352,10 @@ z	Stop all background loading. This can be useful if you use \
 	the revision log.
 v	Show version.
 '.'	Toggle line numbers on/off.
+D	Toggle date display on/off.
+A	Toggle author display on/off.
 g	Toggle revision graph visualization on/off.
+F	Toggle reference display on/off (tag and branch names).
 ':'	Open prompt. This allows you to specify what git command \
 	to run. Example `:log -p`
 u	Update status of file. In the status view, this allows you to add an \
@@ -505,7 +513,7 @@ include::BUGS[]
 Copyright
 ---------
 
-Copyright (c) 2006-2007 Jonas Fonseca <fonseca@diku.dk>
+Copyright (c) 2006-2008 Jonas Fonseca <fonseca@diku.dk>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
