@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.2.1" />
+<meta name="generator" content="AsciiDoc 8.2.2" />
 <style type="text/css">
 /* Debug borders */
 p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
@@ -697,6 +697,14 @@ The blob view
 </p>
 </dd>
 <dt>
+The blame view
+</dt>
+<dd>
+<p>
+        Displays the file content annotated or blamed by commits.
+</p>
+</dd>
+<dt>
 The status view
 </dt>
 <dd>
@@ -818,6 +826,14 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
+    B
+    </td>
+    <td align="left">
+    Switch to blame view.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
     h
     </td>
     <td align="left">
@@ -891,6 +907,14 @@ cellspacing="0" cellpadding="4">
     </td>
     <td align="left">
     Reload and refresh the current view.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    M
+    </td>
+    <td align="left">
+    Maximize the current view to fill the whole display.
     </td>
   </tr>
   <tr>
@@ -1147,10 +1171,34 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
+    D
+    </td>
+    <td align="left">
+    Toggle date display on/off.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    A
+    </td>
+    <td align="left">
+    Toggle author display on/off.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
     g
     </td>
     <td align="left">
     Toggle revision graph visualization on/off.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    F
+    </td>
+    <td align="left">
+    Toggle reference display on/off (tag and branch names).
     </td>
   </tr>
   <tr>
@@ -1356,7 +1404,7 @@ Horizontal scrolling.
 </div>
 <h2><a id="copy-right"></a>7. Copyright</h2>
 <div class="sectionbody">
-<p>Copyright (c) 2006-2007 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p>
+<p>Copyright (c) 2006-2008 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p>
 <p>This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -1427,7 +1475,7 @@ gitview(1)
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 19-Mar-2008 23:51:48 CEST
+Last updated 06-Apr-2008 21:30:14 CEST
 </div>
 </div>
 </body>

@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.2.1" />
+<meta name="generator" content="AsciiDoc 8.2.2" />
 <style type="text/css">
 /* Debug borders */
 p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
@@ -318,6 +318,7 @@ tig(1) Manual Page
 <div class="verseblock">
 <div class="content">tig        [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
+tig blame  [rev] path
 tig status
 tig &lt;      [git command output]</div></div>
 </div>
@@ -349,6 +350,15 @@ show
 </p>
 </dd>
 <dt>
+blame
+</dt>
+<dd>
+<p>
+        Show given file annotated or blamed by commits.
+        Optionally limited from given revision.
+</p>
+</dd>
+<dt>
 status
 </dt>
 <dd>
@@ -370,16 +380,6 @@ status
 <dd>
 <p>
         Show help message and exit.
-</p>
-</dd>
-<dt>
---
-</dt>
-<dd>
-<p>
-        End of tig options. This ends tig option parsing, and passes any
-        following options untouched to the underlying git command. Kept for
-        compatibility and will be deprecated in a future version.
 </p>
 </dd>
 </dl>
@@ -554,7 +554,7 @@ Horizontal scrolling.
 </div>
 <h2>COPYRIGHT</h2>
 <div class="sectionbody">
-<p>Copyright (c) 2006-2007 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p>
+<p>Copyright (c) 2006-2008 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p>
 <p>This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -596,7 +596,7 @@ Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 19-Mar-2008 23:51:46 CEST
+Last updated 06-Apr-2008 21:30:13 CEST
 </div>
 </div>
 </body>

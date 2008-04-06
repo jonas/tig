@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.2.1" />
+<meta name="generator" content="AsciiDoc 8.2.2" />
 <style type="text/css">
 /* Debug borders */
 p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
@@ -338,7 +338,11 @@ is:</p>
 <p>Examples:</p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>set show-rev-graph = yes        # Show revision graph?
+<pre><tt>set show-author = yes           # Show author?
+set show-date = yes             # Show commit date?
+set show-rev-graph = yes        # Show revision graph?
+set show-refs = yes             # Show references?
+set show-line-numbers = no      # Show line numbers?
 set line-number-interval = 5    # Interval between line numbers
 set tab-size = 8                # Number of spaces per tab
 set encoding = "UTF-8"          # Commit encoding</tt></pre>
@@ -375,12 +379,22 @@ Valid string values
 <p>The following variables can be set:</p>
 <dl>
 <dt>
+<em>show-author</em> (bool)
+</dt>
+<dt>
+<em>show-date</em> (bool)
+</dt>
+<dt>
 <em>show-rev-graph</em> (bool)
+</dt>
+<dt>
+<em>show-refs</em> (bool)
 </dt>
 <dd>
 <p>
-        Show revision graph in the main view on start-up. Can be toggled with
-        <em>g</em>.
+        Whether to show author, date, revision graph, and references
+        (branches, tags, and remotes) in the main view on start-up. Can all be
+        toggled.
 </p>
 </dd>
 <dt>
@@ -540,6 +554,14 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
+    view-blame
+    </td>
+    <td align="left">
+    Show blame view
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
     view-status
     </td>
     <td align="left">
@@ -628,6 +650,14 @@ cellspacing="0" cellpadding="4">
     </td>
     <td align="left">
     Reload and refresh view
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    maximize
+    </td>
+    <td align="left">
+    Maximize the current view
     </td>
   </tr>
   <tr>
@@ -896,10 +926,34 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
+    toggle-date
+    </td>
+    <td align="left">
+    Toggle date display
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    toggle-author
+    </td>
+    <td align="left">
+    Toggle author display
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
     toggle-rev-graph
     </td>
     <td align="left">
     Toggle revision graph visualization
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    toggle-refs
+    </td>
+    <td align="left">
+    Toggle reference display
     </td>
   </tr>
   <tr>
@@ -979,7 +1033,8 @@ Color names
 <p>
         Valid colors include: <strong>white</strong>, <strong>black</strong>, <strong>green</strong>, <strong>magenta</strong>, <strong>blue</strong>,
         <strong>cyan</strong>, <strong>yellow</strong>, <strong>red</strong>, <strong>default</strong>. Use <strong>default</strong> to refer to the
-        default terminal colors.
+        default terminal colors. This is recommended for background colors
+        if you are using a terminal with a transparent background.
 </p>
 </dd>
 <dt>
@@ -994,59 +1049,265 @@ Attribute names
 </dd>
 </dl>
 <h3>UI colors</h3>
-<dl>
-<dt>
-Default terminal colors
-</dt>
-<dd>
-<p>
-The colors and attributes to be used for the text that is not highlighted or
+<p>The colors and attributes to be used for the text that is not highlighted or
 that specify the use of the default terminal colors can be controlled by
-setting the <strong>default</strong> color option.
-</p>
-<p>Use the <strong>default</strong> color to use the colors configured for the terminal. This is
-the default and recommended if you are using a terminal with a transparent
-background.</p>
-</dd>
-<dt>
-Status window colors
-</dt>
-<dd>
-<p>
-Appearance of the bottom window showing info messages.
-</p>
-<p><strong>status</strong></p>
-</dd>
-<dt>
-Title window colors
-</dt>
-<dd>
-<p>
-Appearance of the title windows when they are attached
-to any backgrounded windows and the current window.
-</p>
-<p><strong>title-blur</strong>, <strong>title-focus</strong></p>
-</dd>
-<dt>
-Cursor line colors
-</dt>
-<dd>
-<p>
-<strong>cursor</strong>
-</p>
-</dd>
-<dt>
-Main view specific
-</dt>
-<dd>
-<p>
-Appearance of the various columns in the main view, including the <em>~</em> used for
-delimiting long author names and labels for tag and branch references.
-</p>
-<p><strong>main-date</strong>, <strong>main-author</strong>, <strong>main-commit</strong>, <strong>main-delim</strong>, <strong>main-tag</strong>,
-<strong>main-ref</strong>, <strong>main-remote</strong>, <strong>main-revgraph</strong></p>
-</dd>
-</dl>
+setting the <strong>default</strong> color option.</p>
+<div class="tableblock">
+<table rules="none"
+frame="void"
+cellspacing="0" cellpadding="4">
+<col width="274" />
+<col width="617" />
+<thead>
+  <tr>
+    <th align="left">
+    General:
+    </th>
+    <th align="left">
+    
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    default
+    </td>
+    <td align="left">
+    Overwrite default terminal colors (see above).
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    cursor
+    </td>
+    <td align="left">
+    The cursor line.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    status
+    </td>
+    <td align="left">
+    The status window showing info messages.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    title-focus
+    </td>
+    <td align="left">
+    The title window for the current view.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    title-blur
+    </td>
+    <td align="left">
+    The title window of any backgrounded view.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    delimiter
+    </td>
+    <td align="left">
+    Delimiter shown for truncated lines.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    line-number
+    </td>
+    <td align="left">
+    Line numbers.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    date
+    </td>
+    <td align="left">
+    The commit date.
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+frame="void"
+cellspacing="0" cellpadding="4">
+<col width="274" />
+<col width="617" />
+<thead>
+  <tr>
+    <th align="left">
+    Main view colors:
+    </th>
+    <th align="left">
+    
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    main-author
+    </td>
+    <td align="left">
+    The commit author.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    main-revgraph
+    </td>
+    <td align="left">
+    The revision graph.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    main-head
+    </td>
+    <td align="left">
+    Label of the current branch.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    main-remote
+    </td>
+    <td align="left">
+    Label of a remote.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    main-tracked
+    </td>
+    <td align="left">
+    Label of the remote tracked by the current branch.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    main-tag
+    </td>
+    <td align="left">
+    Label of a signed tag.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    main-local-tag
+    </td>
+    <td align="left">
+    Label of a local tag.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    main-ref
+    </td>
+    <td align="left">
+    Label of any other reference.
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+frame="void"
+cellspacing="0" cellpadding="4">
+<col width="274" />
+<col width="617" />
+<thead>
+  <tr>
+    <th align="left">
+    Status view:
+    </th>
+    <th align="left">
+    
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    stat-head
+    </td>
+    <td align="left">
+    The "On branch"-line.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    stat-section
+    </td>
+    <td align="left">
+    Status section titles,
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    stat-staged
+    </td>
+    <td align="left">
+    Status flag of staged files.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    stat-unstaged
+    </td>
+    <td align="left">
+    Status flag of unstaged files.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    stat-untracked
+    </td>
+    <td align="left">
+    Status flag of untracked files.
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+frame="void"
+cellspacing="0" cellpadding="4">
+<col width="274" />
+<col width="617" />
+<thead>
+  <tr>
+    <th align="left">
+    Blame view:
+    </th>
+    <th align="left">
+    
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    blame-id
+    </td>
+    <td align="left">
+    The commit ID.
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
 <h3>Highlighting</h3>
 <dl>
 <dt>
@@ -1110,20 +1371,11 @@ Colors for information of the tree view.
 </p>
 <p><strong>tree-dir</strong>, <strong>tree-file</strong></p>
 </dd>
-<dt>
-Status markup
-</dt>
-<dd>
-<p>
-Colors used in the status view.
-</p>
-<p><strong>stat-section</strong>, <strong>stat-none</strong>, <strong>stat-staged</strong>, <strong>stat-unstaged</strong>, <strong>stat-untracked</strong></p>
-</dd>
 </dl>
 </div>
 <h2>COPYRIGHT</h2>
 <div class="sectionbody">
-<p>Copyright (c) 2006-2007 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p>
+<p>Copyright (c) 2006-2008 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p>
 <p>Licensed under the terms of the GNU General Public License.</p>
 </div>
 <h2>SEE ALSO</h2>
@@ -1132,7 +1384,7 @@ Colors used in the status view.
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 19-Mar-2008 23:51:47 CEST
+Last updated 06-Apr-2008 21:30:13 CEST
 </div>
 </div>
 </body>
