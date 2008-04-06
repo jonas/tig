@@ -303,7 +303,8 @@ Color names::
 
 	Valid colors include: *white*, *black*, *green*, *magenta*, *blue*,
 	*cyan*, *yellow*, *red*, *default*. Use *default* to refer to the
-	default terminal colors.
+	default terminal colors. This is recommended for background colors
+	if you are using a terminal with a transparent background.
 
 Attribute names::
 
@@ -314,54 +315,63 @@ Attribute names::
 UI colors
 ~~~~~~~~~
 
---
-
-Default terminal colors::
-
 The colors and attributes to be used for the text that is not highlighted or
 that specify the use of the default terminal colors can be controlled by
 setting the *default* color option.
 
-Use the *default* color to use the colors configured for the terminal. This is
-the default and recommended if you are using a terminal with a transparent
-background.
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
+General:
+------------------------------------------------------------------------------
+default			Overwrite default terminal colors (see above).
+cursor			The cursor line.
+status			The status window showing info messages.
+title-focus		The title window for the current view.
+title-blur		The title window of any backgrounded view.
+delimiter		Delimiter shown for truncated lines.
+line-number		Line numbers.
+date			The commit date.
+------------------------------------------------------------------------------
 
-Status window colors::
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
+Main view colors:
+------------------------------------------------------------------------------
+main-author		The commit author.
+main-revgraph		The revision graph.
+main-head		Label of the current branch.
+main-remote		Label of a remote.
+main-tracked		Label of the remote tracked by the current branch.
+main-tag		Label of a signed tag.
+main-local-tag		Label of a local tag.
+main-ref		Label of any other reference.
+------------------------------------------------------------------------------
 
-Appearance of the bottom window showing info messages.
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
+Status view:
+------------------------------------------------------------------------------
+stat-head		The "On branch"-line.
+stat-section		Status section titles,
+stat-staged		Status flag of staged files.
+stat-unstaged		Status flag of unstaged files.
+stat-untracked		Status flag of untracked files.
+------------------------------------------------------------------------------
 
-*status*
-
-Title window colors::
-
-Appearance of the title windows when they are attached
-to any backgrounded windows and the current window.
-
-*title-blur*, *title-focus*
-
-Misc colors::
-
-Colors for the cursor line, line numbers, and delimiter shown for truncated
-lines.
-
-*cursor*, *delimiter*, *line-number*
-
-Main view specific::
-
-Appearance of the various columns in the main view, including labels for tag
-and branch references.
-
-*main-date*, *main-author*, *main-commit*, *main-tag*, *main-local-tag*,
-*main-ref*, *main-remote*, *main-head*, *main-revgraph*
-
-Blame view colors::
-
-The colors used for the blame view are similar to those in the main view.
-The commit ID color can be colored using *blame-id*.
-
-*blame-date*, *blame-author*, *blame-commit*, *blame-id*
-
---
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
+Blame view:
+------------------------------------------------------------------------------
+blame-id		The commit ID.
+------------------------------------------------------------------------------
 
 Highlighting
 ~~~~~~~~~~~~
@@ -411,19 +421,11 @@ Colors for information of the tree view.
 
 *tree-dir*, *tree-file*
 
-Status markup::
-
-Colors used in the status view for coloring the "On branch"-line, sections,
-"no file" lines and the various file status groups.
-
-*stat-head*, *stat-section*, *stat-none*, *stat-staged*, *stat-unstaged*,
-*stat-untracked*
-
 --
 
 COPYRIGHT
 ---------
-Copyright (c) 2006-2007 Jonas Fonseca <fonseca@diku.dk>
+Copyright (c) 2006-2008 Jonas Fonseca <fonseca@diku.dk>
 
 Licensed under the terms of the GNU General Public License.
 
