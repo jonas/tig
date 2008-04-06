@@ -607,8 +607,6 @@ LINE(STAT_NONE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(STAT_STAGED,  "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(STAT_UNSTAGED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(STAT_UNTRACKED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(BLAME_AUTHOR,  "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
-LINE(BLAME_COMMIT, "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(BLAME_ID,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0)
 
 enum line_type {
@@ -3533,7 +3531,7 @@ blame_read_file(struct view *view, char *line)
 		blame->commit = NULL;
 		strncpy(blame->text, line, linelen);
 		blame->text[linelen] = 0;
-		return add_line_data(view, blame, LINE_BLAME_COMMIT) != NULL;
+		return add_line_data(view, blame, LINE_BLAME_ID) != NULL;
 	}
 }
 
