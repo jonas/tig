@@ -438,6 +438,7 @@ static const char usage[] =
 static bool opt_date			= TRUE;
 static bool opt_author			= TRUE;
 static bool opt_line_number		= FALSE;
+static bool opt_line_graphics		= TRUE;
 static bool opt_rev_graph		= FALSE;
 static bool opt_show_refs		= TRUE;
 static int opt_num_interval		= NUMBER_INTERVAL;
@@ -1127,6 +1128,11 @@ option_set_command(int argc, char *argv[])
 		return OK;
 	}
 
+	if (!strcmp(argv[0], "line-graphics")) {
+		opt_line_graphics = parse_bool(argv[2]);
+		return OK;
+	}
+
 	if (!strcmp(argv[0], "line-number-interval")) {
 		opt_num_interval = atoi(argv[2]);
 		return OK;
@@ -1515,7 +1521,7 @@ draw_lineno(struct view *view, unsigned int lineno, int max, bool selected)
 	if (col < max) {
 		if (!selected)
 			wattrset(view->win, A_NORMAL);
-		waddch(view->win, ACS_VLINE);
+		waddch(view->win, opt_line_graphics ? ACS_VLINE : '|');
 		col++;
 	}
 	if (col < max) {
