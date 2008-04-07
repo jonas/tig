@@ -343,6 +343,7 @@ Main view colors:
 ------------------------------------------------------------------------------
 main-author		The commit author.
 main-revgraph		The revision graph.
+main-commit		The commit comment.
 main-head		Label of the current branch.
 main-remote		Label of a remote.
 main-tracked		Label of the remote tracked by the current branch.
