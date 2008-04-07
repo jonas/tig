@@ -3665,23 +3665,23 @@ blame_grep(struct view *view, struct line *line)
 	struct blame_commit *commit = blame->commit;
 	regmatch_t pmatch;
 
-#define MATCH(text) \
-	(*text && regexec(view->regex, text, 1, &pmatch, 0) != REG_NOMATCH)
+#define MATCH(text, on)							\
+	(on && *text && regexec(view->regex, text, 1, &pmatch, 0) != REG_NOMATCH)
 
 	if (commit) {
 		char buf[DATE_COLS + 1];
 
-		if (MATCH(commit->title) ||
-		    MATCH(commit->author) ||
-		    MATCH(commit->id))
+		if (MATCH(commit->title, 1) ||
+		    MATCH(commit->author, opt_author) ||
+		    MATCH(commit->id, opt_date))
 			return TRUE;
 
 		if (strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time) &&
-		    MATCH(buf))
+		    MATCH(buf, 1))
 			return TRUE;
 	}
 
-	return MATCH(blame->text);
+	return MATCH(blame->text, 1);
 
 #undef MATCH
 }
@@ -5050,10 +5050,26 @@ main_request(struct view *view, enum request request, struct line *line)
 }
 
 static bool
+grep_refs(struct ref **refs, regex_t *regex)
+{
+	regmatch_t pmatch;
+	size_t i = 0;
+
+	if (!refs)
+		return FALSE;
+	do {
+		if (regexec(regex, refs[i]->name, 1, &pmatch, 0) != REG_NOMATCH)
+			return TRUE;
+	} while (refs[i++]->next);
+
+	return FALSE;
+}
+
+static bool
 main_grep(struct view *view, struct line *line)
 {
 	struct commit *commit = line->data;
-	enum { S_TITLE, S_AUTHOR, S_DATE, S_END } state;
+	enum { S_TITLE, S_AUTHOR, S_DATE, S_REFS, S_END } state;
 	char buf[DATE_COLS + 1];
 	regmatch_t pmatch;
 
@@ -5062,13 +5078,24 @@ main_grep(struct view *view, struct line *line)
 
 		switch (state) {
 		case S_TITLE:	text = commit->title;	break;
-		case S_AUTHOR:	text = commit->author;	break;
+		case S_AUTHOR:
+			if (!opt_author)
+				continue;
+			text = commit->author;
+			break;
 		case S_DATE:
+			if (!opt_date)
+				continue;
 			if (!strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time))
 				continue;
 			text = buf;
 			break;
-
+		case S_REFS:
+			if (!opt_show_refs)
+				continue;
+			if (grep_refs(commit->refs, view->regex) == TRUE)
+				return TRUE;
+			continue;
 		default:
 			return FALSE;
 		}
