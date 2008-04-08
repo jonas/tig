@@ -3977,7 +3977,7 @@ status_open(struct view *view)
 			return FALSE;
 	}
 
-	system("git update-index -q --refresh 2>/dev/null");
+	system("git update-index -q --refresh >/dev/null 2>/dev/null");
 
 	if (!status_run(view, indexcmd, indexstatus, LINE_STAT_STAGED) ||
 	    !status_run(view, STATUS_DIFF_FILES_CMD, 0, LINE_STAT_UNSTAGED) ||
