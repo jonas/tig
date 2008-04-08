@@ -731,7 +731,7 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_UP,	REQ_PREVIOUS },
 	{ KEY_DOWN,	REQ_NEXT },
 	{ 'R',		REQ_REFRESH },
-	{ 'M',		REQ_MAXIMIZE },
+	{ 'O',		REQ_MAXIMIZE },
 
 	/* Cursor navigation */
 	{ 'k',		REQ_MOVE_UP },
