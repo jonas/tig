@@ -4548,6 +4548,18 @@ stage_update(struct view *view, struct line *line)
 			return FALSE;
 		}
 
+	} else if (!stage_status.status) {
+		view = VIEW(REQ_VIEW_STATUS);
+
+		for (line = view->line; line < view->line + view->lines; line++)
+			if (line->type == stage_line_type)
+				break;
+
+		if (!status_update_files(view, line + 1)) {
+			report("Failed to update files");
+			return FALSE;
+		}
+
 	} else if (!status_update_file(&stage_status, stage_line_type)) {
 		report("Failed to update file");
 		return FALSE;
