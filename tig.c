@@ -4303,11 +4303,14 @@ status_update(struct view *view)
 			return FALSE;
 		}
 
-		if (!status_update_files(view, line + 1))
+		if (!status_update_files(view, line + 1)) {
 			report("Failed to update file status");
+			return FALSE;
+		}
 
 	} else if (!status_update_file(line->data, line->type)) {
 		report("Failed to update file status");
+		return FALSE;
 	}
 
 	return TRUE;
@@ -4558,7 +4561,8 @@ stage_request(struct view *view, enum request request, struct line *line)
 {
 	switch (request) {
 	case REQ_STATUS_UPDATE:
-		stage_update(view, line);
+		if (!stage_update(view, line))
+			return REQ_NONE;
 		break;
 
 	case REQ_EDIT:
