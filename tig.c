@@ -99,7 +99,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *trimmed, bo
 /* The default interval between line numbers. */
 #define NUMBER_INTERVAL	5
 
-#define TABSIZE		8
+#define TAB_SIZE	8
 
 #define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
 
@@ -441,7 +441,7 @@ static bool opt_line_number		= FALSE;
 static bool opt_rev_graph		= FALSE;
 static bool opt_show_refs		= TRUE;
 static int opt_num_interval		= NUMBER_INTERVAL;
-static int opt_tab_size			= TABSIZE;
+static int opt_tab_size			= TAB_SIZE;
 static enum request opt_request		= REQ_VIEW_MAIN;
 static char opt_cmd[SIZEOF_STR]		= "";
 static char opt_path[SIZEOF_STR]	= "";
@@ -2783,7 +2783,6 @@ view_driver(struct view *view, enum request request)
 static bool
 pager_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
 {
-	static char spaces[] = "                    ";
 	char *text = line->data;
 	int col = 0;
 
@@ -2796,34 +2795,7 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 	if (!selected)
 		wattrset(view->win, get_line_attr(line->type));
 
-	if (opt_tab_size < TABSIZE) {
-		int col_offset = col;
-
-		col = 0;
-		while (text && col_offset + col < view->width) {
-			int cols_max = view->width - col_offset - col;
-			char *pos = text;
-			int cols;
-
-			if (*text == '\t') {
-				text++;
-				assert(sizeof(spaces) > TABSIZE);
-				pos = spaces;
-				cols = opt_tab_size - (col % opt_tab_size);
-
-			} else {
-				text = strchr(text, '\t');
-				cols = line ? text - pos : strlen(pos);
-			}
-
-			waddnstr(view->win, pos, MIN(cols, cols_max));
-			col += cols;
-		}
-
-	} else {
-		draw_text(view, text, view->width - col, TRUE, selected);
-	}
-
+	draw_text(view, text, view->width - col, TRUE, selected);
 	return TRUE;
 }
 
@@ -5382,6 +5354,8 @@ init_display(void)
 	/* Enable keyboard mapping */
 	keypad(status_win, TRUE);
 	wbkgdset(status_win, get_line_attr(LINE_STATUS));
+
+	TABSIZE = opt_tab_size;
 }
 
 static char *
