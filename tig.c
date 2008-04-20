@@ -77,7 +77,6 @@ static size_t utf8_length(const char *string, size_t max_width, int *trimmed, bo
 #define REVGRAPH_BRANCH	'+'
 #define REVGRAPH_COMMIT	'*'
 #define REVGRAPH_BOUND	'^'
-#define REVGRAPH_LINE	'|'
 
 #define SIZEOF_REVGRAPH	19	/* Size of revision ancestry graphics. */
 
@@ -1458,6 +1457,15 @@ static struct view views[] = {
 #define view_is_displayed(view) \
 	(view == display[0] || view == display[1])
 
+
+enum line_graphic {
+	LINE_GRAPHIC_VLINE,
+};
+
+static int line_graphics[] = {
+	/* LINE_GRAPHIC_VLINE: */ '|'
+};
+
 static int
 draw_text(struct view *view, const char *string, int max_len,
 	  bool use_tilde, bool selected)
@@ -1521,7 +1529,7 @@ draw_lineno(struct view *view, unsigned int lineno, int max, bool selected)
 	if (col < max) {
 		if (!selected)
 			wattrset(view->win, A_NORMAL);
-		waddch(view->win, opt_line_graphics ? ACS_VLINE : '|');
+		waddch(view->win, line_graphics[LINE_GRAPHIC_VLINE]);
 		col++;
 	}
 	if (col < max) {
@@ -4727,7 +4735,7 @@ draw_rev_graph(struct rev_graph *graph)
 	};
 	enum { DEFAULT, RSHARP, RDIAG, LDIAG };
 	static struct rev_filler fillers[] = {
-		{ ' ',	REVGRAPH_LINE },
+		{ ' ',	'|' },
 		{ '`',	'.' },
 		{ '\'',	' ' },
 		{ '/',	' ' },
@@ -4735,6 +4743,9 @@ draw_rev_graph(struct rev_graph *graph)
 	chtype symbol = get_rev_graph_symbol(graph);
 	struct rev_filler *filler;
 	size_t i;
+
+	if (opt_line_graphics)
+		fillers[DEFAULT].line = line_graphics[LINE_GRAPHIC_VLINE];
 
 	filler = &fillers[DEFAULT];
 
@@ -5389,6 +5400,9 @@ init_display(void)
 	wbkgdset(status_win, get_line_attr(LINE_STATUS));
 
 	TABSIZE = opt_tab_size;
+	if (opt_line_graphics) {
+		line_graphics[LINE_GRAPHIC_VLINE] = ACS_VLINE;
+	}
 }
 
 static char *
