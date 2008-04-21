@@ -612,7 +612,8 @@ LINE(BLAME_ID,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0)
 enum line_type {
 #define LINE(type, line, fg, bg, attr) \
 	LINE_##type
-	LINE_INFO
+	LINE_INFO,
+	LINE_NONE
 #undef	LINE
 };
 
@@ -1397,6 +1398,10 @@ struct view {
 	size_t line_size;	/* Total number of used lines */
 	unsigned int digits;	/* Number of digits in the lines member. */
 
+	/* Drawing */
+	struct line *curline;	/* Line currently being drawn. */
+	enum line_type curtype;	/* Attribute currently used for drawing. */
+
 	/* Loading */
 	FILE *pipe;
 	time_t start_time;
@@ -1410,7 +1415,7 @@ struct view_ops {
 	/* Read one line; updates view->line. */
 	bool (*read)(struct view *view, char *data);
 	/* Draw one line; @lineno must be < view->height. */
-	bool (*draw)(struct view *view, struct line *line, unsigned int lineno, bool selected);
+	bool (*draw)(struct view *view, struct line *line, unsigned int lineno);
 	/* Depending on view handle a special requests. */
 	enum request (*request)(struct view *view, enum request request, struct line *line);
 	/* Search for regex in a line. */
@@ -1466,9 +1471,19 @@ static int line_graphics[] = {
 	/* LINE_GRAPHIC_VLINE: */ '|'
 };
 
+static inline void
+set_view_attr(struct view *view, enum line_type type)
+{
+	if (!view->curline->selected && view->curtype != type) {
+		wattrset(view->win, get_line_attr(type));
+		wchgat(view->win, -1, 0, type, NULL);
+		view->curtype = type;
+	}
+}
+
 static int
-draw_text(struct view *view, const char *string, int max_len,
-	  bool use_tilde, bool selected)
+draw_text(struct view *view, enum line_type type, const char *string,
+	  int max_len, bool use_tilde)
 {
 	int len = 0;
 	int trimmed = FALSE;
@@ -1489,10 +1504,10 @@ draw_text(struct view *view, const char *string, int max_len,
 		}
 	}
 
+	set_view_attr(view, type);
 	waddnstr(view->win, string, len);
 	if (trimmed && use_tilde) {
-		if (!selected)
-			wattrset(view->win, get_line_attr(LINE_DELIMITER));
+		set_view_attr(view, LINE_DELIMITER);
 		waddch(view->win, '~');
 		len++;
 	}
@@ -1501,7 +1516,7 @@ draw_text(struct view *view, const char *string, int max_len,
 }
 
 static int
-draw_lineno(struct view *view, unsigned int lineno, int max, bool selected)
+draw_lineno(struct view *view, unsigned int lineno, int max)
 {
 	static char fmt[] = "%1ld";
 	char number[10] = "          ";
@@ -1523,12 +1538,9 @@ draw_lineno(struct view *view, unsigned int lineno, int max, bool selected)
 	if (max < max_number)
 		max_number = max;
 
-	if (!selected)
-		wattrset(view->win, get_line_attr(LINE_LINE_NUMBER));
-	col = draw_text(view, number, max_number, showtrimmed, selected);
+	col = draw_text(view, LINE_LINE_NUMBER, number, max_number, showtrimmed);
 	if (col < max) {
-		if (!selected)
-			wattrset(view->win, A_NORMAL);
+		set_view_attr(view, LINE_DEFAULT);
 		waddch(view->win, line_graphics[LINE_GRAPHIC_VLINE]);
 		col++;
 	}
@@ -1541,7 +1553,7 @@ draw_lineno(struct view *view, unsigned int lineno, int max, bool selected)
 }
 
 static int
-draw_date(struct view *view, struct tm *time, int max, bool selected)
+draw_date(struct view *view, struct tm *time, int max)
 {
 	char buf[DATE_COLS];
 	int col;
@@ -1556,12 +1568,9 @@ draw_date(struct view *view, struct tm *time, int max, bool selected)
 		buf[sizeof(buf) - 1] = 0;
 	}
 
-	if (!selected)
-		wattrset(view->win, get_line_attr(LINE_DATE));
-	col = draw_text(view, buf, max, FALSE, selected);
+	col = draw_text(view, LINE_DATE, buf, max, FALSE);
 	if (col < max) {
-		if (!selected)
-			wattrset(view->win, get_line_attr(LINE_DEFAULT));
+		set_view_attr(view, LINE_DEFAULT);
 		waddch(view->win, ' ');
 		col++;
 	}
@@ -1584,19 +1593,20 @@ draw_view_line(struct view *view, unsigned int lineno)
 	line = &view->line[view->offset + lineno];
 
 	wmove(view->win, lineno, 0);
+	view->curline = line;
+	view->curtype = LINE_NONE;
+	line->selected = FALSE;
 
 	if (selected) {
+		set_view_attr(view, LINE_CURSOR);
 		line->selected = TRUE;
 		view->ops->select(view, line);
-		wchgat(view->win, -1, 0, LINE_CURSOR, NULL);
-		wattrset(view->win, get_line_attr(LINE_CURSOR));
 	} else if (line->selected) {
-		line->selected = FALSE;
 		wclrtoeol(view->win);
 	}
 
 	scrollok(view->win, FALSE);
-	draw_ok = view->ops->draw(view, line, lineno, selected);
+	draw_ok = view->ops->draw(view, line, lineno);
 	scrollok(view->win, TRUE);
 
 	return draw_ok;
@@ -2795,21 +2805,18 @@ view_driver(struct view *view, enum request request)
  */
 
 static bool
-pager_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
+pager_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	char *text = line->data;
 	int col = 0;
 
 	if (opt_line_number) {
-		col += draw_lineno(view, lineno, view->width, selected);
+		col += draw_lineno(view, lineno, view->width);
 		if (col >= view->width)
 			return TRUE;
 	}
 
-	if (!selected)
-		wattrset(view->win, get_line_attr(line->type));
-
-	draw_text(view, text, view->width - col, TRUE, selected);
+	draw_text(view, line->type, text, view->width - col, TRUE);
 	return TRUE;
 }
 
@@ -3593,7 +3600,7 @@ blame_read(struct view *view, char *line)
 }
 
 static bool
-blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
+blame_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct blame *blame = line->data;
 	int col = 0;
@@ -3602,7 +3609,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 		struct tm *time = blame->commit && *blame->commit->filename
 				? &blame->commit->time : NULL;
 
-		col += draw_date(view, time, view->width, selected);
+		col += draw_date(view, time, view->width);
 		if (col >= view->width)
 			return TRUE;
 	}
@@ -3610,10 +3617,9 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 	if (opt_author) {
 		int max = MIN(AUTHOR_COLS - 1, view->width - col);
 
-		if (!selected)
-			wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
+		set_view_attr(view, LINE_MAIN_AUTHOR);
 		if (blame->commit)
-			draw_text(view, blame->commit->author, max, TRUE, selected);
+			draw_text(view, LINE_MAIN_AUTHOR, blame->commit->author, max, TRUE);
 		col += AUTHOR_COLS;
 		if (col >= view->width)
 			return TRUE;
@@ -3623,21 +3629,20 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selec
 	{
 		int max = MIN(ID_COLS - 1, view->width - col);
 
-		if (!selected)
-			wattrset(view->win, get_line_attr(LINE_BLAME_ID));
+		set_view_attr(view, LINE_BLAME_ID);
 		if (blame->commit)
-			draw_text(view, blame->commit->id, max, FALSE, -1);
+			draw_text(view, LINE_BLAME_ID, blame->commit->id, max, FALSE);
 		col += ID_COLS;
 		if (col >= view->width)
 			return TRUE;
 		wmove(view->win, lineno, col);
 	}
 
-	col += draw_lineno(view, lineno, view->width - col, selected);
+	col += draw_lineno(view, lineno, view->width - col);
 	if (col >= view->width)
 		return TRUE;
 
-	col += draw_text(view, blame->text, view->width - col, TRUE, selected);
+	col += draw_text(view, LINE_DEFAULT, blame->text, view->width - col, TRUE);
 	return TRUE;
 }
 
@@ -3996,46 +4001,37 @@ status_open(struct view *view)
 }
 
 static bool
-status_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
+status_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct status *status = line->data;
+	enum line_type type;
 	char *text;
 	int col = 0;
-
-	if (selected) {
-		/* No attributes. */
-
-	} else if (line->type == LINE_STAT_HEAD) {
-		wattrset(view->win, get_line_attr(LINE_STAT_HEAD));
-		wchgat(view->win, -1, 0, LINE_STAT_HEAD, NULL);
-
-	} else if (!status && line->type != LINE_STAT_NONE) {
-		wattrset(view->win, get_line_attr(LINE_STAT_SECTION));
-		wchgat(view->win, -1, 0, LINE_STAT_SECTION, NULL);
-
-	} else {
-		wattrset(view->win, get_line_attr(line->type));
-	}
 
 	if (!status) {
 		switch (line->type) {
 		case LINE_STAT_STAGED:
+			type = LINE_STAT_SECTION;
 			text = "Changes to be committed:";
 			break;
 
 		case LINE_STAT_UNSTAGED:
+			type = LINE_STAT_SECTION;
 			text = "Changed but not updated:";
 			break;
 
 		case LINE_STAT_UNTRACKED:
+			type = LINE_STAT_SECTION;
 			text = "Untracked files:";
 			break;
 
 		case LINE_STAT_NONE:
+			type = LINE_DEFAULT;
 			text = "    (no files)";
 			break;
 
 		case LINE_STAT_HEAD:
+			type = LINE_STAT_HEAD;
 			text = status_onbranch;
 			break;
 
@@ -4045,13 +4041,12 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 	} else {
 		char buf[] = { status->status, ' ', ' ', ' ', 0 };
 
-		col += draw_text(view, buf, view->width, TRUE, selected);
-		if (!selected)
-			wattrset(view->win, A_NORMAL);
+		col += draw_text(view, line->type, buf, view->width, TRUE);
+		type = LINE_DEFAULT;
 		text = status->new.name;
 	}
 
-	draw_text(view, text, view->width - col, TRUE, selected);
+	draw_text(view, type, text, view->width - col, TRUE);
 	return TRUE;
 }
 
@@ -4830,28 +4825,19 @@ update_rev_graph(struct rev_graph *graph)
  */
 
 static bool
-main_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
+main_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct commit *commit = line->data;
-	enum line_type type;
 	int col = 0;
 
 	if (!*commit->author)
 		return FALSE;
 
-	if (selected) {
-		type = LINE_CURSOR;
-	} else {
-		type = LINE_MAIN_COMMIT;
-	}
-
 	if (opt_date) {
-		col += draw_date(view, &commit->time, view->width, selected);
+		col += draw_date(view, &commit->time, view->width);
 		if (col >= view->width)
 			return TRUE;
 	}
-	if (type != LINE_CURSOR)
-		wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
 
 	if (opt_author) {
 		int max_len;
@@ -4859,7 +4845,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 		max_len = view->width - col;
 		if (max_len > AUTHOR_COLS - 1)
 			max_len = AUTHOR_COLS - 1;
-		draw_text(view, commit->author, max_len, TRUE, selected);
+		draw_text(view, LINE_MAIN_AUTHOR, commit->author, max_len, TRUE);
 		col += AUTHOR_COLS;
 		if (col >= view->width)
 			return TRUE;
@@ -4869,8 +4855,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 		size_t graph_size = view->width - col;
 		size_t i;
 
-		if (type != LINE_CURSOR)
-			wattrset(view->win, get_line_attr(LINE_MAIN_REVGRAPH));
+		set_view_attr(view, LINE_MAIN_REVGRAPH);
 		wmove(view->win, lineno, col);
 		if (graph_size > commit->graph_size)
 			graph_size = commit->graph_size;
@@ -4884,46 +4869,40 @@ main_draw(struct view *view, struct line *line, unsigned int lineno, bool select
 			return TRUE;
 		waddch(view->win, ' ');
 	}
-	if (type != LINE_CURSOR)
-		wattrset(view->win, A_NORMAL);
 
+	set_view_attr(view, LINE_DEFAULT);
 	wmove(view->win, lineno, col);
 
 	if (opt_show_refs && commit->refs) {
 		size_t i = 0;
 
 		do {
-			if (type == LINE_CURSOR)
-				;
-			else if (commit->refs[i]->head)
-				wattrset(view->win, get_line_attr(LINE_MAIN_HEAD));
-			else if (commit->refs[i]->ltag)
-				wattrset(view->win, get_line_attr(LINE_MAIN_LOCAL_TAG));
-			else if (commit->refs[i]->tag)
-				wattrset(view->win, get_line_attr(LINE_MAIN_TAG));
-			else if (commit->refs[i]->tracked)
-				wattrset(view->win, get_line_attr(LINE_MAIN_TRACKED));
-			else if (commit->refs[i]->remote)
-				wattrset(view->win, get_line_attr(LINE_MAIN_REMOTE));
-			else
-				wattrset(view->win, get_line_attr(LINE_MAIN_REF));
+			enum line_type type;
 
-			col += draw_text(view, "[", view->width - col, TRUE, selected);
-			col += draw_text(view, commit->refs[i]->name, view->width - col,
-					 TRUE, selected);
-			col += draw_text(view, "]", view->width - col, TRUE, selected);
-			if (type != LINE_CURSOR)
-				wattrset(view->win, A_NORMAL);
-			col += draw_text(view, " ", view->width - col, TRUE, selected);
+			if (commit->refs[i]->head)
+				type = LINE_MAIN_HEAD;
+			else if (commit->refs[i]->ltag)
+				type = LINE_MAIN_LOCAL_TAG;
+			else if (commit->refs[i]->tag)
+				type = LINE_MAIN_TAG;
+			else if (commit->refs[i]->tracked)
+				type = LINE_MAIN_TRACKED;
+			else if (commit->refs[i]->remote)
+				type = LINE_MAIN_REMOTE;
+			else
+				type = LINE_MAIN_REF;
+
+			col += draw_text(view, type, "[", view->width - col, TRUE);
+			col += draw_text(view, type, commit->refs[i]->name, view->width - col, TRUE);
+			col += draw_text(view, type, "]", view->width - col, TRUE);
+
+			col += draw_text(view, LINE_DEFAULT, " ", view->width - col, TRUE);
 			if (col >= view->width)
 				return TRUE;
 		} while (commit->refs[i++]->next);
 	}
 
-	if (type != LINE_CURSOR)
-		wattrset(view->win, get_line_attr(type));
-
-	draw_text(view, commit->title, view->width - col, TRUE, selected);
+	draw_text(view, LINE_DEFAULT, commit->title, view->width - col, TRUE);
 	return TRUE;
 }
 
