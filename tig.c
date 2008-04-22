@@ -3603,12 +3603,17 @@ static bool
 blame_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct blame *blame = line->data;
+	struct tm *time = NULL;
+	char *id = NULL, *author = NULL;
 	int col = 0;
 
-	if (opt_date) {
-		struct tm *time = blame->commit && *blame->commit->filename
-				? &blame->commit->time : NULL;
+	if (blame->commit && *blame->commit->filename) {
+		id = blame->commit->id;
+		author = blame->commit->author;
+		time = &blame->commit->time;
+	}
 
+	if (opt_date) {
 		col += draw_date(view, time, view->width);
 		if (col >= view->width)
 			return TRUE;
@@ -3618,8 +3623,8 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 		int max = MIN(AUTHOR_COLS - 1, view->width - col);
 
 		set_view_attr(view, LINE_MAIN_AUTHOR);
-		if (blame->commit)
-			draw_text(view, LINE_MAIN_AUTHOR, blame->commit->author, max, TRUE);
+		if (author)
+			draw_text(view, LINE_MAIN_AUTHOR, author, max, TRUE);
 		col += AUTHOR_COLS;
 		if (col >= view->width)
 			return TRUE;
@@ -3630,8 +3635,8 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 		int max = MIN(ID_COLS - 1, view->width - col);
 
 		set_view_attr(view, LINE_BLAME_ID);
-		if (blame->commit)
-			draw_text(view, LINE_BLAME_ID, blame->commit->id, max, FALSE);
+		if (id)
+			draw_text(view, LINE_BLAME_ID, id, max, FALSE);
 		col += ID_COLS;
 		if (col >= view->width)
 			return TRUE;
