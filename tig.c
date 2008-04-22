@@ -1553,6 +1553,30 @@ draw_lineno(struct view *view, unsigned int lineno, int max)
 }
 
 static int
+draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t size, size_t max)
+{
+	int i;
+	int col;
+
+	if (max < size)
+		size = max;
+
+	set_view_attr(view, type);
+	/* Using waddch() instead of waddnstr() ensures that
+	 * they'll be rendered correctly for the cursor line. */
+	for (i = 0; i < size; i++)
+		waddch(view->win, graphic[i]);
+
+	col = size;
+	if (size < max) {
+		waddch(view->win, ' ');
+		col++;
+	}
+
+	return col;
+}
+
+static int
 draw_date(struct view *view, struct tm *time, int max)
 {
 	char buf[DATE_COLS];
@@ -4854,29 +4878,16 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 		col += AUTHOR_COLS;
 		if (col >= view->width)
 			return TRUE;
+		 wmove(view->win, lineno, col);
 	}
 
 	if (opt_rev_graph && commit->graph_size) {
-		size_t graph_size = view->width - col;
-		size_t i;
-
-		set_view_attr(view, LINE_MAIN_REVGRAPH);
-		wmove(view->win, lineno, col);
-		if (graph_size > commit->graph_size)
-			graph_size = commit->graph_size;
-		/* Using waddch() instead of waddnstr() ensures that
-		 * they'll be rendered correctly for the cursor line. */
-		for (i = 0; i < graph_size; i++)
-			waddch(view->win, commit->graph[i]);
-
-		col += commit->graph_size + 1;
+		col += draw_graphic(view, LINE_MAIN_REVGRAPH,
+				    commit->graph, commit->graph_size,
+				    view->width - col);
 		if (col >= view->width)
 			return TRUE;
-		waddch(view->win, ' ');
 	}
-
-	set_view_attr(view, LINE_DEFAULT);
-	wmove(view->win, lineno, col);
 
 	if (opt_show_refs && commit->refs) {
 		size_t i = 0;
