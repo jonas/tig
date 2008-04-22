@@ -58,7 +58,7 @@ static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
 static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, size_t, char *, size_t));
 static void set_nonblocking_input(bool loading);
-static size_t utf8_length(const char *string, size_t max_width, int *trimmed, bool reserve);
+static size_t utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool reserve);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -1486,20 +1486,21 @@ draw_text(struct view *view, enum line_type type, const char *string,
 	  int max_len, bool use_tilde)
 {
 	int len = 0;
+	int col = 0;
 	int trimmed = FALSE;
 
 	if (max_len <= 0)
 		return 0;
 
 	if (opt_utf8) {
-		len = utf8_length(string, max_len, &trimmed, use_tilde);
+		len = utf8_length(string, &col, max_len, &trimmed, use_tilde);
 	} else {
-		len = strlen(string);
+		col = len = strlen(string);
 		if (len > max_len) {
 			if (use_tilde) {
 				max_len -= 1;
 			}
-			len = max_len;
+			col = len = max_len;
 			trimmed = TRUE;
 		}
 	}
@@ -1509,10 +1510,10 @@ draw_text(struct view *view, enum line_type type, const char *string,
 	if (trimmed && use_tilde) {
 		set_view_attr(view, LINE_DELIMITER);
 		waddch(view->win, '~');
-		len++;
+		col++;
 	}
 
-	return len;
+	return col;
 }
 
 static int
@@ -3665,15 +3666,11 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	}
 
 	if (opt_author) {
-		int max = MIN(AUTHOR_COLS - 1, view->width - col);
+		int max = view->width - col;
 
-		set_view_attr(view, LINE_MAIN_AUTHOR);
-		if (author)
-			draw_text(view, LINE_MAIN_AUTHOR, author, max, TRUE);
-		col += AUTHOR_COLS;
+		col += draw_field(view, LINE_MAIN_AUTHOR, author, AUTHOR_COLS, max, TRUE);
 		if (col >= view->width)
 			return TRUE;
-		wmove(view->win, lineno, col);
 	}
 
 	{
@@ -4886,16 +4883,11 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	}
 
 	if (opt_author) {
-		int max_len;
+		int max = view->width - col;
 
-		max_len = view->width - col;
-		if (max_len > AUTHOR_COLS - 1)
-			max_len = AUTHOR_COLS - 1;
-		draw_text(view, LINE_MAIN_AUTHOR, commit->author, max_len, TRUE);
-		col += AUTHOR_COLS;
+		col += draw_field(view, LINE_MAIN_AUTHOR, commit->author, AUTHOR_COLS, max, TRUE);
 		if (col >= view->width)
 			return TRUE;
-		 wmove(view->win, lineno, col);
 	}
 
 	if (opt_rev_graph && commit->graph_size) {
@@ -5261,13 +5253,14 @@ utf8_to_unicode(const char *string, size_t length)
  *
  * Returns the number of bytes to output from string to satisfy max_width. */
 static size_t
-utf8_length(const char *string, size_t max_width, int *trimmed, bool reserve)
+utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool reserve)
 {
 	const char *start = string;
 	const char *end = strchr(string, '\0');
 	unsigned char last_bytes = 0;
-	size_t width = 0;
+	size_t last_ucwidth = 0;
 
+	*width = 0;
 	*trimmed = 0;
 
 	while (string < end) {
@@ -5288,17 +5281,20 @@ utf8_length(const char *string, size_t max_width, int *trimmed, bool reserve)
 			break;
 
 		ucwidth = unicode_width(unicode);
-		width  += ucwidth;
-		if (width > max_width) {
+		*width  += ucwidth;
+		if (*width > max_width) {
 			*trimmed = 1;
-			if (reserve && width - ucwidth == max_width) {
+			*width -= ucwidth;
+			if (reserve && *width == max_width) {
 				string -= last_bytes;
+				*width -= last_ucwidth;
 			}
 			break;
 		}
 
 		string  += bytes;
 		last_bytes = bytes;
+		last_ucwidth = ucwidth;
 	}
 
 	return string - start;
