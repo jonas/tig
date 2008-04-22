@@ -1516,6 +1516,24 @@ draw_text(struct view *view, enum line_type type, const char *string,
 }
 
 static int
+draw_space(struct view *view, enum line_type type, int max, int spaces)
+{
+	static char space[] = "                    ";
+	int col = 0;
+
+	spaces = MIN(max, spaces);
+
+	while (spaces > 0) {
+		int len = MIN(spaces, sizeof(space) - 1);
+
+		col += draw_text(view, type, space, spaces, FALSE);
+		spaces -= len;
+	}
+
+	return col;
+}
+
+static int
 draw_lineno(struct view *view, unsigned int lineno, int max)
 {
 	static char fmt[] = "%1ld";
@@ -1577,29 +1595,32 @@ draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t si
 }
 
 static int
+draw_field(struct view *view, enum line_type type, char *text, int len, int max_len, bool trim)
+{
+	int max = MIN(max_len, len);
+	int col;
+
+	if (text)
+		col = draw_text(view, type, text, max - 1, trim);
+	else
+		col = draw_space(view, type, max - 1, max - 1);
+
+	col += draw_space(view, LINE_DEFAULT, max - col, max - col);
+	return col;
+}
+
+static int
 draw_date(struct view *view, struct tm *time, int max)
 {
 	char buf[DATE_COLS];
-	int col;
+	char *date;
 	int timelen = 0;
 
-	if (max > DATE_COLS)
-		max = DATE_COLS;
 	if (time)
 		timelen = strftime(buf, sizeof(buf), DATE_FORMAT, time);
-	if (!timelen) {
-		memset(buf, ' ', sizeof(buf) - 1);
-		buf[sizeof(buf) - 1] = 0;
-	}
+	date = timelen ? buf : NULL;
 
-	col = draw_text(view, LINE_DATE, buf, max, FALSE);
-	if (col < max) {
-		set_view_attr(view, LINE_DEFAULT);
-		waddch(view->win, ' ');
-		col++;
-	}
-
-	return col;
+	return draw_field(view, LINE_DATE, date, DATE_COLS, max, FALSE);
 }
 
 static bool
@@ -3656,15 +3677,11 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	}
 
 	{
-		int max = MIN(ID_COLS - 1, view->width - col);
+		int max = view->width - col;
 
-		set_view_attr(view, LINE_BLAME_ID);
-		if (id)
-			draw_text(view, LINE_BLAME_ID, id, max, FALSE);
-		col += ID_COLS;
+		col += draw_field(view, LINE_BLAME_ID, id, ID_COLS, max, FALSE);
 		if (col >= view->width)
 			return TRUE;
-		wmove(view->win, lineno, col);
 	}
 
 	col += draw_lineno(view, lineno, view->width - col);
