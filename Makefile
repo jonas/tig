@@ -37,7 +37,7 @@ CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror
 PROGS	= tig
 MANDOC	= tig.1 tigrc.5
-HTMLDOC = tig.1.html tigrc.5.html manual.html README.html
+HTMLDOC = tig.1.html tigrc.5.html manual.html README.html NEWS.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) manual.html-chunked manual.pdf
 
 # Never include the release number in the tarname for tagged
@@ -161,6 +161,9 @@ manual.toc: manual.txt
 
 README.html: README asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -a readme $<
+
+NEWS.html: NEWS asciidoc.conf
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<
 
 %.1.html : %.1.txt asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<

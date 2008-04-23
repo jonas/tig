@@ -58,7 +58,7 @@ static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
 static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, size_t, char *, size_t));
 static void set_nonblocking_input(bool loading);
-static size_t utf8_length(const char *string, size_t max_width, int *trimmed, bool reserve);
+static size_t utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool reserve);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -77,7 +77,6 @@ static size_t utf8_length(const char *string, size_t max_width, int *trimmed, bo
 #define REVGRAPH_BRANCH	'+'
 #define REVGRAPH_COMMIT	'*'
 #define REVGRAPH_BOUND	'^'
-#define REVGRAPH_LINE	'|'
 
 #define SIZEOF_REVGRAPH	19	/* Size of revision ancestry graphics. */
 
@@ -99,7 +98,7 @@ static size_t utf8_length(const char *string, size_t max_width, int *trimmed, bo
 /* The default interval between line numbers. */
 #define NUMBER_INTERVAL	5
 
-#define TABSIZE		8
+#define TAB_SIZE	8
 
 #define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
 
@@ -438,10 +437,11 @@ static const char usage[] =
 static bool opt_date			= TRUE;
 static bool opt_author			= TRUE;
 static bool opt_line_number		= FALSE;
+static bool opt_line_graphics		= TRUE;
 static bool opt_rev_graph		= FALSE;
 static bool opt_show_refs		= TRUE;
 static int opt_num_interval		= NUMBER_INTERVAL;
-static int opt_tab_size			= TABSIZE;
+static int opt_tab_size			= TAB_SIZE;
 static enum request opt_request		= REQ_VIEW_MAIN;
 static char opt_cmd[SIZEOF_STR]		= "";
 static char opt_path[SIZEOF_STR]	= "";
@@ -612,7 +612,8 @@ LINE(BLAME_ID,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0)
 enum line_type {
 #define LINE(type, line, fg, bg, attr) \
 	LINE_##type
-	LINE_INFO
+	LINE_INFO,
+	LINE_NONE
 #undef	LINE
 };
 
@@ -731,7 +732,8 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_UP,	REQ_PREVIOUS },
 	{ KEY_DOWN,	REQ_NEXT },
 	{ 'R',		REQ_REFRESH },
-	{ 'M',		REQ_MAXIMIZE },
+	{ KEY_F(5),	REQ_REFRESH },
+	{ 'O',		REQ_MAXIMIZE },
 
 	/* Cursor navigation */
 	{ 'k',		REQ_MOVE_UP },
@@ -954,22 +956,23 @@ static size_t run_requests;
 static enum request
 add_run_request(enum keymap keymap, int key, int argc, char **argv)
 {
-	struct run_request *tmp;
-	struct run_request req = { keymap, key };
+	struct run_request *req;
+	char cmd[SIZEOF_STR];
 	size_t bufpos;
 
 	for (bufpos = 0; argc > 0; argc--, argv++)
-		if (!string_format_from(req.cmd, &bufpos, "%s ", *argv))
+		if (!string_format_from(cmd, &bufpos, "%s ", *argv))
 			return REQ_NONE;
 
-	req.cmd[bufpos - 1] = 0;
-
-	tmp = realloc(run_request, (run_requests + 1) * sizeof(*run_request));
-	if (!tmp)
+	req = realloc(run_request, (run_requests + 1) * sizeof(*run_request));
+	if (!req)
 		return REQ_NONE;
 
-	run_request = tmp;
-	run_request[run_requests++] = req;
+	run_request = req;
+	req = &run_request[run_requests++];
+	string_copy(req->cmd, cmd);
+	req->keymap = keymap;
+	req->key = key;
 
 	return REQ_NONE + run_requests;
 }
@@ -1123,6 +1126,11 @@ option_set_command(int argc, char *argv[])
 
 	if (!strcmp(argv[0], "show-line-numbers")) {
 		opt_line_number = parse_bool(argv[2]);
+		return OK;
+	}
+
+	if (!strcmp(argv[0], "line-graphics")) {
+		opt_line_graphics = parse_bool(argv[2]);
 		return OK;
 	}
 
@@ -1391,6 +1399,11 @@ struct view {
 	size_t line_size;	/* Total number of used lines */
 	unsigned int digits;	/* Number of digits in the lines member. */
 
+	/* Drawing */
+	struct line *curline;	/* Line currently being drawn. */
+	enum line_type curtype;	/* Attribute currently used for drawing. */
+	unsigned long col;	/* Column when drawing. */
+
 	/* Loading */
 	FILE *pipe;
 	time_t start_time;
@@ -1404,7 +1417,7 @@ struct view_ops {
 	/* Read one line; updates view->line. */
 	bool (*read)(struct view *view, char *data);
 	/* Draw one line; @lineno must be < view->height. */
-	bool (*draw)(struct view *view, struct line *line, unsigned int lineno, bool selected);
+	bool (*draw)(struct view *view, struct line *line, unsigned int lineno);
 	/* Depending on view handle a special requests. */
 	enum request (*request)(struct view *view, enum request request, struct line *line);
 	/* Search for regex in a line. */
@@ -1451,107 +1464,175 @@ static struct view views[] = {
 #define view_is_displayed(view) \
 	(view == display[0] || view == display[1])
 
+
+enum line_graphic {
+	LINE_GRAPHIC_VLINE
+};
+
+static int line_graphics[] = {
+	/* LINE_GRAPHIC_VLINE: */ '|'
+};
+
+static inline void
+set_view_attr(struct view *view, enum line_type type)
+{
+	if (!view->curline->selected && view->curtype != type) {
+		wattrset(view->win, get_line_attr(type));
+		wchgat(view->win, -1, 0, type, NULL);
+		view->curtype = type;
+	}
+}
+
 static int
-draw_text(struct view *view, const char *string, int max_len,
-	  bool use_tilde, bool selected)
+draw_chars(struct view *view, enum line_type type, const char *string,
+	   int max_len, bool use_tilde)
 {
 	int len = 0;
+	int col = 0;
 	int trimmed = FALSE;
 
 	if (max_len <= 0)
 		return 0;
 
 	if (opt_utf8) {
-		len = utf8_length(string, max_len, &trimmed, use_tilde);
+		len = utf8_length(string, &col, max_len, &trimmed, use_tilde);
 	} else {
-		len = strlen(string);
+		col = len = strlen(string);
 		if (len > max_len) {
 			if (use_tilde) {
 				max_len -= 1;
 			}
-			len = max_len;
+			col = len = max_len;
 			trimmed = TRUE;
 		}
 	}
 
+	set_view_attr(view, type);
 	waddnstr(view->win, string, len);
 	if (trimmed && use_tilde) {
-		if (!selected)
-			wattrset(view->win, get_line_attr(LINE_DELIMITER));
+		set_view_attr(view, LINE_DELIMITER);
 		waddch(view->win, '~');
-		len++;
+		col++;
 	}
 
-	return len;
+	return col;
 }
 
 static int
-draw_lineno(struct view *view, unsigned int lineno, int max, bool selected)
+draw_space(struct view *view, enum line_type type, int max, int spaces)
 {
-	static char fmt[] = "%1ld";
-	char number[10] = "          ";
+	static char space[] = "                    ";
+	int col = 0;
+
+	spaces = MIN(max, spaces);
+
+	while (spaces > 0) {
+		int len = MIN(spaces, sizeof(space) - 1);
+
+		col += draw_chars(view, type, space, spaces, FALSE);
+		spaces -= len;
+	}
+
+	return col;
+}
+
+static bool
+draw_lineno(struct view *view, unsigned int lineno)
+{
+	char number[10];
 	int digits3 = view->digits < 3 ? 3 : view->digits;
 	int max_number = MIN(digits3, STRING_SIZE(number));
-	bool showtrimmed = FALSE;
+	int max = view->width - view->col;
 	int col;
+
+	if (max < max_number)
+		max_number = max;
 
 	lineno += view->offset + 1;
 	if (lineno == 1 || (lineno % opt_num_interval) == 0) {
+		static char fmt[] = "%1ld";
+
 		if (view->digits <= 9)
 			fmt[1] = '0' + digits3;
 
 		if (!string_format(number, fmt, lineno))
 			number[0] = 0;
-		showtrimmed = TRUE;
+		col = draw_chars(view, LINE_LINE_NUMBER, number, max_number, TRUE);
+	} else {
+		col = draw_space(view, LINE_LINE_NUMBER, max_number, max_number);
 	}
 
-	if (max < max_number)
-		max_number = max;
-
-	if (!selected)
-		wattrset(view->win, get_line_attr(LINE_LINE_NUMBER));
-	col = draw_text(view, number, max_number, showtrimmed, selected);
 	if (col < max) {
-		if (!selected)
-			wattrset(view->win, A_NORMAL);
-		waddch(view->win, ACS_VLINE);
-		col++;
-	}
-	if (col < max) {
-		waddch(view->win, ' ');
+		set_view_attr(view, LINE_DEFAULT);
+		waddch(view->win, line_graphics[LINE_GRAPHIC_VLINE]);
 		col++;
 	}
 
-	return col;
+	if (col < max)
+		col += draw_space(view, LINE_DEFAULT, max - col, 1);
+	view->col += col;
+
+	return view->width - view->col <= 0;
 }
 
-static int
-draw_date(struct view *view, struct tm *time, int max, bool selected)
+static bool
+draw_text(struct view *view, enum line_type type, const char *string, bool trim)
+{
+	view->col += draw_chars(view, type, string, view->width - view->col, trim);
+	return view->width - view->col <= 0;
+}
+
+static bool
+draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t size)
+{
+	int max = view->width - view->col;
+	int i;
+
+	if (max < size)
+		size = max;
+
+	set_view_attr(view, type);
+	/* Using waddch() instead of waddnstr() ensures that
+	 * they'll be rendered correctly for the cursor line. */
+	for (i = 0; i < size; i++)
+		waddch(view->win, graphic[i]);
+
+	view->col += size;
+	if (size < max) {
+		waddch(view->win, ' ');
+		view->col++;
+	}
+
+	return view->width - view->col <= 0;
+}
+
+static bool
+draw_field(struct view *view, enum line_type type, char *text, int len, bool trim)
+{
+	int max = MIN(view->width - view->col, len);
+	int col;
+
+	if (text)
+		col = draw_chars(view, type, text, max - 1, trim);
+	else
+		col = draw_space(view, type, max - 1, max - 1);
+
+	view->col += col + draw_space(view, LINE_DEFAULT, max - col, max - col);
+	return view->width - view->col <= 0;
+}
+
+static bool
+draw_date(struct view *view, struct tm *time)
 {
 	char buf[DATE_COLS];
-	int col;
+	char *date;
 	int timelen = 0;
 
-	if (max > DATE_COLS)
-		max = DATE_COLS;
 	if (time)
 		timelen = strftime(buf, sizeof(buf), DATE_FORMAT, time);
-	if (!timelen) {
-		memset(buf, ' ', sizeof(buf) - 1);
-		buf[sizeof(buf) - 1] = 0;
-	}
+	date = timelen ? buf : NULL;
 
-	if (!selected)
-		wattrset(view->win, get_line_attr(LINE_DATE));
-	col = draw_text(view, buf, max, FALSE, selected);
-	if (col < max) {
-		if (!selected)
-			wattrset(view->win, get_line_attr(LINE_DEFAULT));
-		waddch(view->win, ' ');
-		col++;
-	}
-
-	return col;
+	return draw_field(view, LINE_DATE, date, DATE_COLS, FALSE);
 }
 
 static bool
@@ -1569,19 +1650,21 @@ draw_view_line(struct view *view, unsigned int lineno)
 	line = &view->line[view->offset + lineno];
 
 	wmove(view->win, lineno, 0);
+	view->col = 0;
+	view->curline = line;
+	view->curtype = LINE_NONE;
+	line->selected = FALSE;
 
 	if (selected) {
+		set_view_attr(view, LINE_CURSOR);
 		line->selected = TRUE;
 		view->ops->select(view, line);
-		wchgat(view->win, -1, 0, LINE_CURSOR, NULL);
-		wattrset(view->win, get_line_attr(LINE_CURSOR));
 	} else if (line->selected) {
-		line->selected = FALSE;
 		wclrtoeol(view->win);
 	}
 
 	scrollok(view->win, FALSE);
-	draw_ok = view->ops->draw(view, line, lineno, selected);
+	draw_ok = view->ops->draw(view, line, lineno);
 	scrollok(view->win, TRUE);
 
 	return draw_ok;
@@ -2340,7 +2423,7 @@ enum open_flags {
 	OPEN_SPLIT = 1,		/* Split current view. */
 	OPEN_BACKGROUNDED = 2,	/* Backgrounded. */
 	OPEN_RELOAD = 4,	/* Reload view even if it is the current. */
-	OPEN_NOMAXIMIZE = 8,	/* Do not maximize the current view. */
+	OPEN_NOMAXIMIZE = 8	/* Do not maximize the current view. */
 };
 
 static void
@@ -2780,49 +2863,14 @@ view_driver(struct view *view, enum request request)
  */
 
 static bool
-pager_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
+pager_draw(struct view *view, struct line *line, unsigned int lineno)
 {
-	static char spaces[] = "                    ";
 	char *text = line->data;
-	int col = 0;
 
-	if (opt_line_number) {
-		col += draw_lineno(view, lineno, view->width, selected);
-		if (col >= view->width)
-			return TRUE;
-	}
+	if (opt_line_number && draw_lineno(view, lineno))
+		return TRUE;
 
-	if (!selected)
-		wattrset(view->win, get_line_attr(line->type));
-
-	if (opt_tab_size < TABSIZE) {
-		int col_offset = col;
-
-		col = 0;
-		while (text && col_offset + col < view->width) {
-			int cols_max = view->width - col_offset - col;
-			char *pos = text;
-			int cols;
-
-			if (*text == '\t') {
-				text++;
-				assert(sizeof(spaces) > TABSIZE);
-				pos = spaces;
-				cols = opt_tab_size - (col % opt_tab_size);
-
-			} else {
-				text = strchr(text, '\t');
-				cols = line ? text - pos : strlen(pos);
-			}
-
-			waddnstr(view->win, pos, MIN(cols, cols_max));
-			col += cols;
-		}
-
-	} else {
-		draw_text(view, text, view->width - col, TRUE, selected);
-	}
-
+	draw_text(view, line->type, text, TRUE);
 	return TRUE;
 }
 
@@ -3606,51 +3654,32 @@ blame_read(struct view *view, char *line)
 }
 
 static bool
-blame_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
+blame_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct blame *blame = line->data;
-	int col = 0;
+	struct tm *time = NULL;
+	char *id = NULL, *author = NULL;
 
-	if (opt_date) {
-		struct tm *time = blame->commit && *blame->commit->filename
-				? &blame->commit->time : NULL;
-
-		col += draw_date(view, time, view->width, selected);
-		if (col >= view->width)
-			return TRUE;
+	if (blame->commit && *blame->commit->filename) {
+		id = blame->commit->id;
+		author = blame->commit->author;
+		time = &blame->commit->time;
 	}
 
-	if (opt_author) {
-		int max = MIN(AUTHOR_COLS - 1, view->width - col);
-
-		if (!selected)
-			wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
-		if (blame->commit)
-			draw_text(view, blame->commit->author, max, TRUE, selected);
-		col += AUTHOR_COLS;
-		if (col >= view->width)
-			return TRUE;
-		wmove(view->win, lineno, col);
-	}
-
-	{
-		int max = MIN(ID_COLS - 1, view->width - col);
-
-		if (!selected)
-			wattrset(view->win, get_line_attr(LINE_BLAME_ID));
-		if (blame->commit)
-			draw_text(view, blame->commit->id, max, FALSE, -1);
-		col += ID_COLS;
-		if (col >= view->width)
-			return TRUE;
-		wmove(view->win, lineno, col);
-	}
-
-	col += draw_lineno(view, lineno, view->width - col, selected);
-	if (col >= view->width)
+	if (opt_date && draw_date(view, time))
 		return TRUE;
 
-	col += draw_text(view, blame->text, view->width - col, TRUE, selected);
+	if (opt_author &&
+	    draw_field(view, LINE_MAIN_AUTHOR, author, AUTHOR_COLS, TRUE))
+		return TRUE;
+
+	if (draw_field(view, LINE_BLAME_ID, id, ID_COLS, FALSE))
+		return TRUE;
+
+	if (draw_lineno(view, lineno))
+		return TRUE;
+
+	draw_text(view, LINE_DEFAULT, blame->text, TRUE);
 	return TRUE;
 }
 
@@ -3692,23 +3721,23 @@ blame_grep(struct view *view, struct line *line)
 	struct blame_commit *commit = blame->commit;
 	regmatch_t pmatch;
 
-#define MATCH(text) \
-	(*text && regexec(view->regex, text, 1, &pmatch, 0) != REG_NOMATCH)
+#define MATCH(text, on)							\
+	(on && *text && regexec(view->regex, text, 1, &pmatch, 0) != REG_NOMATCH)
 
 	if (commit) {
 		char buf[DATE_COLS + 1];
 
-		if (MATCH(commit->title) ||
-		    MATCH(commit->author) ||
-		    MATCH(commit->id))
+		if (MATCH(commit->title, 1) ||
+		    MATCH(commit->author, opt_author) ||
+		    MATCH(commit->id, opt_date))
 			return TRUE;
 
 		if (strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time) &&
-		    MATCH(buf))
+		    MATCH(buf, 1))
 			return TRUE;
 	}
 
-	return MATCH(blame->text);
+	return MATCH(blame->text, 1);
 
 #undef MATCH
 }
@@ -3977,7 +4006,7 @@ status_open(struct view *view)
 			return FALSE;
 	}
 
-	system("git update-index -q --refresh 2>/dev/null");
+	system("git update-index -q --refresh >/dev/null 2>/dev/null");
 
 	if (!status_run(view, indexcmd, indexstatus, LINE_STAT_STAGED) ||
 	    !status_run(view, STATUS_DIFF_FILES_CMD, 0, LINE_STAT_UNSTAGED) ||
@@ -4009,46 +4038,36 @@ status_open(struct view *view)
 }
 
 static bool
-status_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
+status_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct status *status = line->data;
+	enum line_type type;
 	char *text;
-	int col = 0;
-
-	if (selected) {
-		/* No attributes. */
-
-	} else if (line->type == LINE_STAT_HEAD) {
-		wattrset(view->win, get_line_attr(LINE_STAT_HEAD));
-		wchgat(view->win, -1, 0, LINE_STAT_HEAD, NULL);
-
-	} else if (!status && line->type != LINE_STAT_NONE) {
-		wattrset(view->win, get_line_attr(LINE_STAT_SECTION));
-		wchgat(view->win, -1, 0, LINE_STAT_SECTION, NULL);
-
-	} else {
-		wattrset(view->win, get_line_attr(line->type));
-	}
 
 	if (!status) {
 		switch (line->type) {
 		case LINE_STAT_STAGED:
+			type = LINE_STAT_SECTION;
 			text = "Changes to be committed:";
 			break;
 
 		case LINE_STAT_UNSTAGED:
+			type = LINE_STAT_SECTION;
 			text = "Changed but not updated:";
 			break;
 
 		case LINE_STAT_UNTRACKED:
+			type = LINE_STAT_SECTION;
 			text = "Untracked files:";
 			break;
 
 		case LINE_STAT_NONE:
+			type = LINE_DEFAULT;
 			text = "    (no files)";
 			break;
 
 		case LINE_STAT_HEAD:
+			type = LINE_STAT_HEAD;
 			text = status_onbranch;
 			break;
 
@@ -4056,15 +4075,16 @@ status_draw(struct view *view, struct line *line, unsigned int lineno, bool sele
 			return FALSE;
 		}
 	} else {
-		char buf[] = { status->status, ' ', ' ', ' ', 0 };
+		static char buf[] = { '?', ' ', ' ', ' ', 0 };
 
-		col += draw_text(view, buf, view->width, TRUE, selected);
-		if (!selected)
-			wattrset(view->win, A_NORMAL);
+		buf[0] = status->status;
+		if (draw_text(view, line->type, buf, TRUE))
+			return TRUE;
+		type = LINE_DEFAULT;
 		text = status->new.name;
 	}
 
-	draw_text(view, text, view->width - col, TRUE, selected);
+	draw_text(view, type, text, TRUE);
 	return TRUE;
 }
 
@@ -4303,11 +4323,14 @@ status_update(struct view *view)
 			return FALSE;
 		}
 
-		if (!status_update_files(view, line + 1))
+		if (!status_update_files(view, line + 1)) {
 			report("Failed to update file status");
+			return FALSE;
+		}
 
 	} else if (!status_update_file(line->data, line->type)) {
 		report("Failed to update file status");
+		return FALSE;
 	}
 
 	return TRUE;
@@ -4545,6 +4568,18 @@ stage_update(struct view *view, struct line *line)
 			return FALSE;
 		}
 
+	} else if (!stage_status.status) {
+		view = VIEW(REQ_VIEW_STATUS);
+
+		for (line = view->line; line < view->line + view->lines; line++)
+			if (line->type == stage_line_type)
+				break;
+
+		if (!status_update_files(view, line + 1)) {
+			report("Failed to update files");
+			return FALSE;
+		}
+
 	} else if (!status_update_file(&stage_status, stage_line_type)) {
 		report("Failed to update file");
 		return FALSE;
@@ -4558,7 +4593,8 @@ stage_request(struct view *view, enum request request, struct line *line)
 {
 	switch (request) {
 	case REQ_STATUS_UPDATE:
-		stage_update(view, line);
+		if (!stage_update(view, line))
+			return REQ_NONE;
 		break;
 
 	case REQ_EDIT:
@@ -4732,7 +4768,7 @@ draw_rev_graph(struct rev_graph *graph)
 	};
 	enum { DEFAULT, RSHARP, RDIAG, LDIAG };
 	static struct rev_filler fillers[] = {
-		{ ' ',	REVGRAPH_LINE },
+		{ ' ',	'|' },
 		{ '`',	'.' },
 		{ '\'',	' ' },
 		{ '/',	' ' },
@@ -4740,6 +4776,9 @@ draw_rev_graph(struct rev_graph *graph)
 	chtype symbol = get_rev_graph_symbol(graph);
 	struct rev_filler *filler;
 	size_t i;
+
+	if (opt_line_graphics)
+		fillers[DEFAULT].line = line_graphics[LINE_GRAPHIC_VLINE];
 
 	filler = &fillers[DEFAULT];
 
@@ -4824,100 +4863,54 @@ update_rev_graph(struct rev_graph *graph)
  */
 
 static bool
-main_draw(struct view *view, struct line *line, unsigned int lineno, bool selected)
+main_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct commit *commit = line->data;
-	enum line_type type;
-	int col = 0;
 
 	if (!*commit->author)
 		return FALSE;
 
-	if (selected) {
-		type = LINE_CURSOR;
-	} else {
-		type = LINE_MAIN_COMMIT;
-	}
+	if (opt_date && draw_date(view, &commit->time))
+		return TRUE;
 
-	if (opt_date) {
-		col += draw_date(view, &commit->time, view->width, selected);
-		if (col >= view->width)
-			return TRUE;
-	}
-	if (type != LINE_CURSOR)
-		wattrset(view->win, get_line_attr(LINE_MAIN_AUTHOR));
+	if (opt_author &&
+	    draw_field(view, LINE_MAIN_AUTHOR, commit->author, AUTHOR_COLS, TRUE))
+		return TRUE;
 
-	if (opt_author) {
-		int max_len;
-
-		max_len = view->width - col;
-		if (max_len > AUTHOR_COLS - 1)
-			max_len = AUTHOR_COLS - 1;
-		draw_text(view, commit->author, max_len, TRUE, selected);
-		col += AUTHOR_COLS;
-		if (col >= view->width)
-			return TRUE;
-	}
-
-	if (opt_rev_graph && commit->graph_size) {
-		size_t graph_size = view->width - col;
-		size_t i;
-
-		if (type != LINE_CURSOR)
-			wattrset(view->win, get_line_attr(LINE_MAIN_REVGRAPH));
-		wmove(view->win, lineno, col);
-		if (graph_size > commit->graph_size)
-			graph_size = commit->graph_size;
-		/* Using waddch() instead of waddnstr() ensures that
-		 * they'll be rendered correctly for the cursor line. */
-		for (i = 0; i < graph_size; i++)
-			waddch(view->win, commit->graph[i]);
-
-		col += commit->graph_size + 1;
-		if (col >= view->width)
-			return TRUE;
-		waddch(view->win, ' ');
-	}
-	if (type != LINE_CURSOR)
-		wattrset(view->win, A_NORMAL);
-
-	wmove(view->win, lineno, col);
+	if (opt_rev_graph && commit->graph_size &&
+	    draw_graphic(view, LINE_MAIN_REVGRAPH, commit->graph, commit->graph_size))
+		return TRUE;
 
 	if (opt_show_refs && commit->refs) {
 		size_t i = 0;
 
 		do {
-			if (type == LINE_CURSOR)
-				;
-			else if (commit->refs[i]->head)
-				wattrset(view->win, get_line_attr(LINE_MAIN_HEAD));
-			else if (commit->refs[i]->ltag)
-				wattrset(view->win, get_line_attr(LINE_MAIN_LOCAL_TAG));
-			else if (commit->refs[i]->tag)
-				wattrset(view->win, get_line_attr(LINE_MAIN_TAG));
-			else if (commit->refs[i]->tracked)
-				wattrset(view->win, get_line_attr(LINE_MAIN_TRACKED));
-			else if (commit->refs[i]->remote)
-				wattrset(view->win, get_line_attr(LINE_MAIN_REMOTE));
-			else
-				wattrset(view->win, get_line_attr(LINE_MAIN_REF));
+			enum line_type type;
 
-			col += draw_text(view, "[", view->width - col, TRUE, selected);
-			col += draw_text(view, commit->refs[i]->name, view->width - col,
-					 TRUE, selected);
-			col += draw_text(view, "]", view->width - col, TRUE, selected);
-			if (type != LINE_CURSOR)
-				wattrset(view->win, A_NORMAL);
-			col += draw_text(view, " ", view->width - col, TRUE, selected);
-			if (col >= view->width)
+			if (commit->refs[i]->head)
+				type = LINE_MAIN_HEAD;
+			else if (commit->refs[i]->ltag)
+				type = LINE_MAIN_LOCAL_TAG;
+			else if (commit->refs[i]->tag)
+				type = LINE_MAIN_TAG;
+			else if (commit->refs[i]->tracked)
+				type = LINE_MAIN_TRACKED;
+			else if (commit->refs[i]->remote)
+				type = LINE_MAIN_REMOTE;
+			else
+				type = LINE_MAIN_REF;
+
+			if (draw_text(view, type, "[", TRUE) ||
+			    draw_text(view, type, commit->refs[i]->name, TRUE) ||
+			    draw_text(view, type, "]", TRUE))
+				return TRUE;
+
+			if (draw_text(view, LINE_DEFAULT, " ", TRUE))
 				return TRUE;
 		} while (commit->refs[i++]->next);
 	}
 
-	if (type != LINE_CURSOR)
-		wattrset(view->win, get_line_attr(type));
-
-	draw_text(view, commit->title, view->width - col, TRUE, selected);
+	draw_text(view, LINE_DEFAULT, commit->title, TRUE);
 	return TRUE;
 }
 
@@ -5061,10 +5054,26 @@ main_request(struct view *view, enum request request, struct line *line)
 }
 
 static bool
+grep_refs(struct ref **refs, regex_t *regex)
+{
+	regmatch_t pmatch;
+	size_t i = 0;
+
+	if (!refs)
+		return FALSE;
+	do {
+		if (regexec(regex, refs[i]->name, 1, &pmatch, 0) != REG_NOMATCH)
+			return TRUE;
+	} while (refs[i++]->next);
+
+	return FALSE;
+}
+
+static bool
 main_grep(struct view *view, struct line *line)
 {
 	struct commit *commit = line->data;
-	enum { S_TITLE, S_AUTHOR, S_DATE, S_END } state;
+	enum { S_TITLE, S_AUTHOR, S_DATE, S_REFS, S_END } state;
 	char buf[DATE_COLS + 1];
 	regmatch_t pmatch;
 
@@ -5073,13 +5082,24 @@ main_grep(struct view *view, struct line *line)
 
 		switch (state) {
 		case S_TITLE:	text = commit->title;	break;
-		case S_AUTHOR:	text = commit->author;	break;
+		case S_AUTHOR:
+			if (!opt_author)
+				continue;
+			text = commit->author;
+			break;
 		case S_DATE:
+			if (!opt_date)
+				continue;
 			if (!strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time))
 				continue;
 			text = buf;
 			break;
-
+		case S_REFS:
+			if (!opt_show_refs)
+				continue;
+			if (grep_refs(commit->refs, view->regex) == TRUE)
+				return TRUE;
+			continue;
 		default:
 			return FALSE;
 		}
@@ -5216,13 +5236,14 @@ utf8_to_unicode(const char *string, size_t length)
  *
  * Returns the number of bytes to output from string to satisfy max_width. */
 static size_t
-utf8_length(const char *string, size_t max_width, int *trimmed, bool reserve)
+utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool reserve)
 {
 	const char *start = string;
 	const char *end = strchr(string, '\0');
 	unsigned char last_bytes = 0;
-	size_t width = 0;
+	size_t last_ucwidth = 0;
 
+	*width = 0;
 	*trimmed = 0;
 
 	while (string < end) {
@@ -5243,17 +5264,20 @@ utf8_length(const char *string, size_t max_width, int *trimmed, bool reserve)
 			break;
 
 		ucwidth = unicode_width(unicode);
-		width  += ucwidth;
-		if (width > max_width) {
+		*width  += ucwidth;
+		if (*width > max_width) {
 			*trimmed = 1;
-			if (reserve && width - ucwidth == max_width) {
+			*width -= ucwidth;
+			if (reserve && *width == max_width) {
 				string -= last_bytes;
+				*width -= last_ucwidth;
 			}
 			break;
 		}
 
 		string  += bytes;
 		last_bytes = bytes;
+		last_ucwidth = ucwidth;
 	}
 
 	return string - start;
@@ -5365,6 +5389,11 @@ init_display(void)
 	/* Enable keyboard mapping */
 	keypad(status_win, TRUE);
 	wbkgdset(status_win, get_line_attr(LINE_STATUS));
+
+	TABSIZE = opt_tab_size;
+	if (opt_line_graphics) {
+		line_graphics[LINE_GRAPHIC_VLINE] = ACS_VLINE;
+	}
 }
 
 static char *
