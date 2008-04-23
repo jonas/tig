@@ -45,7 +45,15 @@
 /* ncurses(3): Must be defined to have extended wide-character functions. */
 #define _XOPEN_SOURCE_EXTENDED
 
-#include <curses.h>
+#ifdef HAVE_NCURSESW_NCURSES_H
+#include <ncursesw/ncurses.h>
+#else
+#ifdef HAVE_NCURSES_NCURSES_H
+#include <ncurses/ncurses.h>
+#else
+#include <ncurses.h>
+#endif
+#endif
 
 #if __GNUC__ >= 3
 #define __NORETURN __attribute__((__noreturn__))

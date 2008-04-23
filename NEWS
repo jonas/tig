@@ -9,6 +9,7 @@ Improvements:
  - F5 also refreshes the current view.
  - Allow line graphics to be disabled with new line-graphics option.
  - Also include the reference names when searching.
+ - Configure: check for the ncurses header files.
 
 Bug fixes:
 
