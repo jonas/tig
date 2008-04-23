@@ -343,6 +343,7 @@ set show-date = yes             # Show commit date?
 set show-rev-graph = yes        # Show revision graph?
 set show-refs = yes             # Show references?
 set show-line-numbers = no      # Show line numbers?
+set line-graphics = no          # Disable graphics characters
 set line-number-interval = 5    # Interval between line numbers
 set tab-size = 8                # Number of spaces per tab
 set encoding = "UTF-8"          # Commit encoding</tt></pre>
@@ -395,6 +396,14 @@ Valid string values
         Whether to show author, date, revision graph, and references
         (branches, tags, and remotes) in the main view on start-up. Can all be
         toggled.
+</p>
+</dd>
+<dt>
+<em>line-graphics</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to use graphic characters for line drawing.
 </p>
 </dd>
 <dt>
@@ -1171,6 +1180,14 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
+    main-commit
+    </td>
+    <td align="left">
+    The commit comment.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
     main-head
     </td>
     <td align="left">
@@ -1384,7 +1401,7 @@ Colors for information of the tree view.
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 06-Apr-2008 21:30:13 CEST
+Last updated 23-Apr-2008 02:46:51 CEST
 </div>
 </div>
 </body>

@@ -1,0 +1,665 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="generator" content="AsciiDoc 8.2.2" />
+<style type="text/css">
+/* Debug borders */
+p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
+/*
+  border: 1px solid red;
+*/
+}
+
+body {
+  margin: 1em 5% 1em 5%;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+a:visited {
+  color: fuchsia;
+}
+
+em {
+  font-style: italic;
+}
+
+strong {
+  font-weight: bold;
+}
+
+tt {
+  color: navy;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #527bbd;
+  font-family: sans-serif;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+h1 {
+  border-bottom: 2px solid silver;
+}
+h2 {
+  border-bottom: 2px solid silver;
+  padding-top: 0.5em;
+}
+
+div.sectionbody {
+  font-family: serif;
+  margin-left: 0;
+}
+
+hr {
+  border: 1px solid silver;
+}
+
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+pre {
+  padding: 0;
+  margin: 0;
+}
+
+span#author {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+span#email {
+}
+span#revision {
+  font-family: sans-serif;
+}
+
+div#footer {
+  font-family: sans-serif;
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+div#footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+div#footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
+
+div#preamble,
+div.tableblock, div.imageblock, div.exampleblock, div.verseblock,
+div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
+div.admonitionblock {
+  margin-right: 10%;
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.admonitionblock {
+  margin-top: 2.5em;
+  margin-bottom: 2.5em;
+}
+
+div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+div.title, caption.title {
+  font-family: sans-serif;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 1.0em;
+  margin-bottom: 0.5em;
+}
+div.title + * {
+  margin-top: 0;
+}
+
+td div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content + div.title {
+  margin-top: 0.0em;
+}
+
+div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid silver;
+  padding: 0.5em;
+}
+
+div.listingblock {
+  margin-right: 0%;
+}
+div.listingblock > div.content {
+  border: 1px solid silver;
+  background: #f4f4f4;
+  padding: 0.5em;
+}
+
+div.quoteblock > div.content {
+  padding-left: 2.0em;
+}
+
+div.attribution {
+  text-align: right;
+}
+div.verseblock + div.attribution {
+  text-align: left;
+}
+
+div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 2px solid silver;
+}
+
+div.exampleblock > div.content {
+  border-left: 2px solid silver;
+  padding: 0.5em;
+}
+
+div.verseblock div.content {
+  white-space: pre;
+}
+
+div.imageblock div.content { padding-left: 0; }
+div.imageblock img { border: 1px solid silver; }
+span.image img { border-style: none; }
+
+dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: italic;
+}
+dd > *:first-child {
+  margin-top: 0;
+}
+
+ul, ol {
+    list-style-position: outside;
+}
+ol.olist2 {
+  list-style-type: lower-alpha;
+}
+
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead {
+  font-family: sans-serif;
+  font-weight: bold;
+}
+tfoot {
+  font-weight: bold;
+}
+
+div.hlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+div.hlist td {
+  padding-bottom: 5px;
+}
+td.hlist1 {
+  vertical-align: top;
+  font-style: italic;
+  padding-right: 0.8em;
+}
+td.hlist2 {
+  vertical-align: top;
+}
+
+@media print {
+  div#footer-badges { display: none; }
+}
+
+div#toctitle {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+/* Workarounds for IE6's broken and incomplete CSS2. */
+
+div.sidebar-content {
+  background: #ffffee;
+  border: 1px solid silver;
+  padding: 0.5em;
+}
+div.sidebar-title, div.image-title {
+  font-family: sans-serif;
+  font-weight: bold;
+  margin-top: 0.0em;
+  margin-bottom: 0.5em;
+}
+
+div.listingblock div.content {
+  border: 1px solid silver;
+  background: #f4f4f4;
+  padding: 0.5em;
+}
+
+div.quoteblock-content {
+  padding-left: 2.0em;
+}
+
+div.exampleblock-content {
+  border-left: 2px solid silver;
+  padding-left: 0.5em;
+}
+
+/* IE6 sets dynamically generated links as visited. */
+div#toc a:visited { color: blue; }
+</style>
+<title>Release notes</title>
+</head>
+<body>
+<div id="header">
+<h1>Release notes</h1>
+</div>
+<h2>tig master branch</h2>
+<div class="sectionbody">
+<p>Improvements:</p>
+<ul>
+<li>
+<p>
+F5 also refreshes the current view.
+</p>
+</li>
+<li>
+<p>
+Allow line graphics to be disabled with new line-graphics option.
+</p>
+</li>
+<li>
+<p>
+Also include the reference names when searching.
+</p>
+</li>
+</ul>
+<p>Bug fixes:</p>
+<ul>
+<li>
+<p>
+Fix regression when staging all diff chunks in a section.
+</p>
+</li>
+<li>
+<p>
+Bind the maximize view action to <em>O</em>; it conflicted with the
+   keybinding to launch the merge tool in the status view.
+</p>
+</li>
+</ul>
+</div>
+<h2>tig-0.11</h2>
+<div class="sectionbody">
+<p>Incompatibilities:</p>
+<ul>
+<li>
+<p>
+Remove parsing of deprecated options: -g, -l, -d.
+</p>
+</li>
+<li>
+<p>
+The first seen <em>&#8212;</em> will stop option parsing and is passed to git
+   instead of breaking out of tig's option parsing.
+</p>
+</li>
+</ul>
+<p>New features:</p>
+<ul>
+<li>
+<p>
+Blame view; bound to <em>B</em> by default, reachable from the command line
+   and the tree, status, and stage views.
+</p>
+</li>
+<li>
+<p>
+Blame/main view: allow display of date, author, and references to be
+   toggled on/off. Bound to <em>D</em>, <em>A</em>, and <em>F</em> respectively.
+</p>
+</li>
+<li>
+<p>
+Add action to maximize the current view.
+</p>
+</li>
+</ul>
+<p>Improvements:</p>
+<ul>
+<li>
+<p>
+Show the current branch in the status view.
+</p>
+</li>
+<li>
+<p>
+Show local/light-weight tags.
+</p>
+</li>
+</ul>
+<p>Bug fixes:</p>
+<ul>
+<li>
+<p>
+Fix regressions for the pager mode.
+</p>
+</li>
+<li>
+<p>
+Fix refreshing of the index with working directory info.
+</p>
+</li>
+</ul>
+</div>
+<h2>tig-0.10.1</h2>
+<div class="sectionbody">
+<p>Improvements:</p>
+<ul>
+<li>
+<p>
+Status view: detect renamed files and show them with <em>R</em>.
+</p>
+</li>
+<li>
+<p>
+Status view: refresh the index to avoid "empty diffs".
+</p>
+</li>
+<li>
+<p>
+Diff view: make diff headers more verbose to include e.g. committer.
+</p>
+</li>
+<li>
+<p>
+Configure: check for the ncursesw library.
+</p>
+</li>
+</ul>
+<p>Bug fixes:</p>
+<ul>
+<li>
+<p>
+Fix UTF8 handling for tag names and commit messages.
+</p>
+</li>
+<li>
+<p>
+Fix the check for git-config(1) in configure to handle the case when
+   git has been installed using a libexecdir which is not in the path.
+</p>
+</li>
+<li>
+<p>
+Fix replacing of SYSCONFDIR when installing from released tarballs.
+</p>
+</li>
+</ul>
+</div>
+<h2>tig-0.10</h2>
+<div class="sectionbody">
+<p>Incompatibilities:</p>
+<ul>
+<li>
+<p>
+Deprecate most tig specific command line options to make tig more
+   compatible with gitk. The deprecated options are: -g, -l, -d, and -S.
+   Use of any of them will result in a warning being printed to stderr.
+   Instead of <em>-S</em>, use the new <em>status</em> subcommand.
+</p>
+</li>
+<li>
+<p>
+Make man page building depend on DocBook XSL version &gt;= 1.72.0.
+</p>
+</li>
+<li>
+<p>
+Install man pages in $(prefix)/share/man.
+</p>
+</li>
+<li>
+<p>
+Implement the cherry pick action (bound to <em>C</em>) using new support for
+   running external commands. This obsoletes the TIG_CHEERY_PICK
+   environment variable
+</p>
+</li>
+</ul>
+<p>New features:</p>
+<ul>
+<li>
+<p>
+Add support for binding keys to external commands. To bind <em>.</em> to
+   running git-commit(1), add the line: "bind generic . !git commit" to
+   your ~/.tigrc. Each command can have replacement string such as
+   %(commit), %(head), and %(blob), which are substituted before the
+   command is run.
+</p>
+</li>
+<li>
+<p>
+Add system-wide configuration file defaulting to $(prefix)/etc/tigrc.
+</p>
+</li>
+<li>
+<p>
+Add the environment variables TIGRC_USER and TIGRC_SYSTEM to change
+   user and system-wide configuration files, respectively.
+</p>
+</li>
+</ul>
+<p>Improvements:</p>
+<ul>
+<li>
+<p>
+Main view: color the revision graph.
+</p>
+</li>
+<li>
+<p>
+Main view: show boundary commits; they are marked with <em>^</em> in the
+   revision graph.
+</p>
+</li>
+<li>
+<p>
+Tree view: add tree-parent action to jump to view of the parent tree.
+   Bound to <em>,</em> by default.
+</p>
+</li>
+<li>
+<p>
+Allow the default terminal colors to be overwritten. To use black
+   text on white, add the line "color default white black" to your
+   ~/.tigrc.
+</p>
+</li>
+<li>
+<p>
+Misc. documentation improvements.
+</p>
+</li>
+</ul>
+<p>Bug fixes:</p>
+<ul>
+<li>
+<p>
+Use git-diff-index(1) and git-diff-files(1) instead of git-diff(1) to
+   avoid running external diff drivers.
+</p>
+</li>
+<li>
+<p>
+Use &#8212;no-color when calling git-log(1).
+</p>
+</li>
+<li>
+<p>
+Fix crash when opening mergetool for lines that are not unmerged.
+</p>
+</li>
+</ul>
+</div>
+<h2>tig-0.9.1</h2>
+<div class="sectionbody">
+<p>Incompatibilities:</p>
+<ul>
+<li>
+<p>
+Make the clean rule to never remove generated documentation files.
+   Use the distclean rule for accomplishing this.
+</p>
+</li>
+</ul>
+<p>New features:</p>
+<ul>
+<li>
+<p>
+Add support for cherry-picking commits in the main view to the
+   current branch. Bound to <em>C</em> by default.
+</p>
+</li>
+</ul>
+<p>Improvements:</p>
+<ul>
+<li>
+<p>
+Add support for launching git-mergetool(1) from the status view.
+   Bound to <em>M</em> by default.
+</p>
+</li>
+<li>
+<p>
+Add support for refreshing/reloading the status view
+</p>
+</li>
+<li>
+<p>
+Detect working trees and disable the status view when it is missing.
+</p>
+</li>
+</ul>
+<p>Bug fixes:</p>
+<ul>
+<li>
+<p>
+Fix iconv() checking in configure.
+</p>
+</li>
+<li>
+<p>
+Fix editor invocation to make paths relative to the project root.
+</p>
+</li>
+<li>
+<p>
+Fix out-of-range current line when reloading the status view.
+</p>
+</li>
+<li>
+<p>
+Include autoconf files in the tarball generated by <tt>make dist</tt>.
+</p>
+</li>
+</ul>
+</div>
+<h2>tig-0.9</h2>
+<div class="sectionbody">
+<p>New features:</p>
+<ul>
+<li>
+<p>
+Add bash completion script for tig (contrib/tig-completion.bash).
+</p>
+</li>
+<li>
+<p>
+Add optional autoconf-based build infrastructure.
+</p>
+</li>
+<li>
+<p>
+Add stage view for showing changes in the working tree and add
+   support for staging individual diff chunks for commit.
+</p>
+</li>
+</ul>
+<p>Improvements:</p>
+<ul>
+<li>
+<p>
+Status view: allow all files in a section to be staged for commit.
+</p>
+</li>
+<li>
+<p>
+Status view: Add support for opening files in an editor. Bound to <em>e</em>
+   by default.
+</p>
+</li>
+<li>
+<p>
+Tree view: use a stack for remembering the lines for parent tree.
+</p>
+</li>
+</ul>
+</div>
+<div id="footer">
+<div id="footer-text">
+Last updated 23-Apr-2008 02:46:54 CEST
+</div>
+</div>
+</body>
+</html>
