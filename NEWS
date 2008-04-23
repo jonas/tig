@@ -15,6 +15,8 @@ Bug fixes:
  - Fix regression when staging all diff chunks in a section.
  - Bind the maximize view action to 'O'; it conflicted with the
    keybinding to launch the merge tool in the status view.
+ - Fix problem with $(cmd) usage in shell code. Some shells (jsh)
+   installed as /bin/sh does not support it.
 
 tig-0.11
 --------
