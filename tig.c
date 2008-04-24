@@ -376,6 +376,7 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
 	REQ_(STATUS_UPDATE,	"Update file status"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
+	REQ_(STAGE_NEXT,	"Find next chunk to stage"), \
 	REQ_(TREE_PARENT,	"Switch to parent directory in tree view"), \
 	REQ_(EDIT,		"Open in editor"), \
 	REQ_(NONE,		"Do nothing")
@@ -779,6 +780,7 @@ static struct keybinding default_keybindings[] = {
 	{ ':',		REQ_PROMPT },
 	{ 'u',		REQ_STATUS_UPDATE },
 	{ 'M',		REQ_STATUS_MERGE },
+	{ '@',		REQ_STAGE_NEXT },
 	{ ',',		REQ_TREE_PARENT },
 	{ 'e',		REQ_EDIT },
 
@@ -3796,6 +3798,8 @@ struct status {
 static char status_onbranch[SIZEOF_STR];
 static struct status stage_status;
 static enum line_type stage_line_type;
+static size_t stage_chunks;
+static int *stage_chunk;
 
 /* Get fields from the diff line:
  * :100644 100644 06a5d6ae9eca55be2e0e585a152e6b1336f2b20e 0000000000000000000000000000000000000000 M
@@ -4187,6 +4191,7 @@ status_enter(struct view *view, struct line *line)
 		}
 
 		stage_line_type = line->type;
+		stage_chunks = 0;
 		string_format(VIEW(REQ_VIEW_STAGE)->ref, info, stage_status.new.name);
 	}
 
@@ -4596,6 +4601,42 @@ stage_update(struct view *view, struct line *line)
 	return TRUE;
 }
 
+static void
+stage_next(struct view *view, struct line *line)
+{
+	int i;
+
+	if (!stage_chunks) {
+		static size_t alloc = 0;
+		int *tmp;
+
+		for (line = view->line; line < view->line + view->lines; line++) {
+			if (line->type != LINE_DIFF_CHUNK)
+				continue;
+
+			tmp = realloc_items(stage_chunk, &alloc,
+					    stage_chunks, sizeof(*tmp));
+			if (!tmp) {
+				report("Allocation failure");
+				return;
+			}
+
+			stage_chunk = tmp;
+			stage_chunk[stage_chunks++] = line - view->line;
+		}
+	}
+
+	for (i = 0; i < stage_chunks; i++) {
+		if (stage_chunk[i] > view->lineno) {
+			do_scroll_view(view, stage_chunk[i] - view->lineno);
+			report("Chunk %d of %d", i + 1, stage_chunks);
+			return;
+		}
+	}
+
+	report("No next chunk found");
+}
+
 static enum request
 stage_request(struct view *view, enum request request, struct line *line)
 {
@@ -4604,6 +4645,15 @@ stage_request(struct view *view, enum request request, struct line *line)
 		if (!stage_update(view, line))
 			return REQ_NONE;
 		break;
+
+	case REQ_STAGE_NEXT:
+		if (stage_line_type == LINE_STAT_UNTRACKED) {
+			report("File is untracked; press %s to add",
+			       get_key(REQ_STATUS_UPDATE));
+			return REQ_NONE;
+		}
+		stage_next(view, line);
+		return REQ_NONE;
 
 	case REQ_EDIT:
 		if (!stage_status.new.name[0])

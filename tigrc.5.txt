@@ -264,6 +264,7 @@ toggle-rev-graph	Toggle revision graph visualization
 toggle-refs		Toggle reference display
 status-update		Update file status
 status-merge		Resolve unmerged file
+stage-next		Find next chunk to stage
 tree-parent		Switch to parent directory in tree view
 edit			Open in editor
 ------------------------------------------------------------------------------
