@@ -2163,10 +2163,13 @@ search_view(struct view *view, enum request request)
  */
 
 static void
-end_update(struct view *view)
+end_update(struct view *view, bool force)
 {
 	if (!view->pipe)
 		return;
+	while (!view->ops->read(view, NULL))
+		if (!force)
+			return;
 	set_nonblocking_input(FALSE);
 	if (view->pipe == stdin)
 		fclose(view->pipe);
@@ -2179,7 +2182,7 @@ static bool
 begin_update(struct view *view)
 {
 	if (view->pipe)
-		end_update(view);
+		end_update(view, TRUE);
 
 	if (opt_cmd[0]) {
 		string_copy(view->cmd, opt_cmd);
@@ -2384,21 +2387,18 @@ update_view(struct view *view)
 check_pipe:
 	if (ferror(view->pipe)) {
 		report("Failed to read: %s", strerror(errno));
-		goto end;
+		end_update(view, TRUE);
 
 	} else if (feof(view->pipe)) {
 		report("");
-		goto end;
+		end_update(view, FALSE);
 	}
 
 	return TRUE;
 
 alloc_error:
 	report("Allocation failure");
-
-end:
-	if (view->ops->read(view, NULL))
-		end_update(view);
+	end_update(view, TRUE);
 	return FALSE;
 }
 
@@ -2815,7 +2815,7 @@ view_driver(struct view *view, enum request request)
 			view = &views[i];
 			if (view->pipe)
 				report("Stopped loading the %s view", view->name),
-			end_update(view);
+			end_update(view, TRUE);
 		}
 		break;
 
