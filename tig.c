@@ -2181,9 +2181,6 @@ end_update(struct view *view, bool force)
 static bool
 begin_update(struct view *view)
 {
-	if (view->pipe)
-		end_update(view, TRUE);
-
 	if (opt_cmd[0]) {
 		string_copy(view->cmd, opt_cmd);
 		opt_cmd[0] = 0;
@@ -2473,6 +2470,9 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	if (nviews != displayed_views() ||
 	    (nviews == 1 && base_view != display[0]))
 		resize_display();
+
+	if (view->pipe)
+		end_update(view, TRUE);
 
 	if (view->ops->open) {
 		if (!view->ops->open(view)) {
