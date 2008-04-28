@@ -135,7 +135,7 @@ TIG_BLOB_CMD::
 FILES
 -----
 '~/.tigrc'::
-	User configuration file. See gitlink:tigrc[5] for examples.
+	User configuration file. See manpage:tigrc[5] for examples.
 
 '{sysconfdir}/tigrc'::
 	System wide configuration file.
@@ -158,7 +158,7 @@ the Free Software Foundation; either version 2 of the License, or
 SEE ALSO
 --------
 
-gitlink:tigrc[5], git(7), cogito(7), as well as other git repository browsers:
+manpage:tigrc[5], git(7), cogito(7), as well as other git repository browsers:
 gitk(1), qgit(1), gitview(1).
 
 Online resources:

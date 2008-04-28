@@ -527,8 +527,8 @@ References and Related Tools
 
 Manpages:
 
- - gitlink:tig[1]
- - gitlink:tigrc[5]
+ - manpage:tig[1]
+ - manpage:tigrc[5]
 
 Online resources:
 
