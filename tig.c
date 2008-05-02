@@ -3583,9 +3583,6 @@ blame_read_file(struct view *view, char *line)
 		size_t linelen = strlen(line);
 		struct blame *blame = malloc(sizeof(*blame) + linelen);
 
-		if (!line)
-			return FALSE;
-
 		blame->commit = NULL;
 		strncpy(blame->text, line, linelen);
 		blame->text[linelen] = 0;
