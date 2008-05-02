@@ -9,8 +9,8 @@ Improvements:
  - F5 also refreshes the current view.
  - Allow line graphics to be disabled with new line-graphics option.
  - Main view: also include the reference names when searching.
- - Stage view: add stage-next action to jump to next diff chunk that can be
-   staged. By default bound to '@'.
+ - Stage view: add stage-next action to jump to next diff chunk that can
+   be staged. By default bound to '@'.
  - Configure: check for the ncurses header files.
 
 Bug fixes:
@@ -20,6 +20,7 @@ Bug fixes:
    keybinding to launch the merge tool in the status view.
  - Fix problem with $(cmd) usage in shell code. Some shells (jsh)
    installed as /bin/sh does not support it.
+ - Documentation: Rename gitlink macro to support AsciiDoc 8.2.3.
 
 tig-0.11
 --------
