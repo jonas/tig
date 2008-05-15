@@ -451,6 +451,7 @@ static bool opt_rev_graph		= FALSE;
 static bool opt_show_refs		= TRUE;
 static int opt_num_interval		= NUMBER_INTERVAL;
 static int opt_tab_size			= TAB_SIZE;
+static int opt_author_cols		= AUTHOR_COLS-1;
 static enum request opt_request		= REQ_VIEW_MAIN;
 static char opt_cmd[SIZEOF_STR]		= "";
 static char opt_path[SIZEOF_STR]	= "";
@@ -1146,6 +1147,11 @@ option_set_command(int argc, char *argv[])
 
 	if (!strcmp(argv[0], "line-number-interval")) {
 		opt_num_interval = atoi(argv[2]);
+		return OK;
+	}
+
+	if (!strcmp(argv[0], "author-width")) {
+		opt_author_cols = atoi(argv[2]);
 		return OK;
 	}
 
@@ -3677,7 +3683,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 		return TRUE;
 
 	if (opt_author &&
-	    draw_field(view, LINE_MAIN_AUTHOR, author, AUTHOR_COLS, TRUE))
+	    draw_field(view, LINE_MAIN_AUTHOR, author, opt_author_cols, TRUE))
 		return TRUE;
 
 	if (draw_field(view, LINE_BLAME_ID, id, ID_COLS, FALSE))
@@ -4929,7 +4935,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 		return TRUE;
 
 	if (opt_author &&
-	    draw_field(view, LINE_MAIN_AUTHOR, commit->author, AUTHOR_COLS, TRUE))
+	    draw_field(view, LINE_MAIN_AUTHOR, commit->author, opt_author_cols, TRUE))
 		return TRUE;
 
 	if (opt_rev_graph && commit->graph_size &&

@@ -12,6 +12,8 @@ Improvements:
  - Stage view: add stage-next action to jump to next diff chunk that can
    be staged. By default bound to '@'.
  - Configure: check for the ncurses header files.
+ - Add author-width option to costumize the width of the author column.
+   For example, put the following in ~/.tigrc: set author-width = 10
 
 Bug fixes:
 

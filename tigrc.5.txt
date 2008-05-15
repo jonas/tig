@@ -47,6 +47,7 @@ set show-date = yes		# Show commit date?
 set show-rev-graph = yes	# Show revision graph?
 set show-refs = yes		# Show references?
 set show-line-numbers = no	# Show line numbers?
+set author-width = 10		# Set width of the author column
 set line-graphics = no		# Disable graphics characters
 set line-number-interval = 5	# Interval between line numbers
 set tab-size = 8		# Number of spaces per tab
@@ -81,6 +82,10 @@ The following variables can be set:
 	Whether to show author, date, revision graph, and references
 	(branches, tags, and remotes) in the main view on start-up. Can all be
 	toggled.
+
+'author-width' (int)::
+
+	Width of the author column.
 
 'line-graphics' (bool)::
 
