@@ -1101,6 +1101,14 @@ static bool parse_bool(const char *s)
 		!strcmp(s, "yes")) ? TRUE : FALSE;
 }
 
+static int
+parse_int(const char *s, int default_value, int min, int max)
+{
+	int value = atoi(s);
+
+	return (value < min || value > max) ? default_value : value;
+}
+
 /* Wants: name = value */
 static int
 option_set_command(int argc, char *argv[])
@@ -1146,17 +1154,17 @@ option_set_command(int argc, char *argv[])
 	}
 
 	if (!strcmp(argv[0], "line-number-interval")) {
-		opt_num_interval = atoi(argv[2]);
+		opt_num_interval = parse_int(argv[2], opt_num_interval, 1, 1024);
 		return OK;
 	}
 
 	if (!strcmp(argv[0], "author-width")) {
-		opt_author_cols = atoi(argv[2]);
+		opt_author_cols = parse_int(argv[2], opt_author_cols, 0, 1024);
 		return OK;
 	}
 
 	if (!strcmp(argv[0], "tab-size")) {
-		opt_tab_size = atoi(argv[2]);
+		opt_tab_size = parse_int(argv[2], opt_tab_size, 1, 1024);
 		return OK;
 	}
 
