@@ -28,3 +28,6 @@ Features that should be explored.
 
  - Color the revgraph to make it easier to follow branches. Idea by
    Dominik Vogt
+
+ - Allow names in the author column to be abbreviated to initials.
+   Will optimize screen usage for the blame view.
