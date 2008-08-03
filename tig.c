@@ -452,7 +452,6 @@ static bool opt_show_refs		= TRUE;
 static int opt_num_interval		= NUMBER_INTERVAL;
 static int opt_tab_size			= TAB_SIZE;
 static int opt_author_cols		= AUTHOR_COLS-1;
-static enum request opt_request		= REQ_VIEW_MAIN;
 static char opt_cmd[SIZEOF_STR]		= "";
 static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
@@ -471,34 +470,32 @@ static char opt_git_dir[SIZEOF_STR]	= "";
 static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
 
-static bool
+static enum request
 parse_options(int argc, char *argv[])
 {
+	enum request request = REQ_VIEW_MAIN;
 	size_t buf_size;
 	char *subcommand;
 	bool seen_dashdash = FALSE;
 	int i;
 
 	if (!isatty(STDIN_FILENO)) {
-		opt_request = REQ_VIEW_PAGER;
 		opt_pipe = stdin;
-		return TRUE;
+		return REQ_VIEW_PAGER;
 	}
 
 	if (argc <= 1)
-		return TRUE;
+		return REQ_VIEW_MAIN;
 
 	subcommand = argv[1];
 	if (!strcmp(subcommand, "status") || !strcmp(subcommand, "-S")) {
-		opt_request = REQ_VIEW_STATUS;
 		if (!strcmp(subcommand, "-S"))
 			warn("`-S' has been deprecated; use `tig status' instead");
 		if (argc > 2)
 			warn("ignoring arguments after `%s'", subcommand);
-		return TRUE;
+		return REQ_VIEW_STATUS;
 
 	} else if (!strcmp(subcommand, "blame")) {
-		opt_request = REQ_VIEW_BLAME;
 		if (argc <= 2 || argc > 4)
 			die("invalid number of options to blame\n\n%s", usage);
 
@@ -509,14 +506,13 @@ parse_options(int argc, char *argv[])
 		}
 
 		string_ncopy(opt_file, argv[i], strlen(argv[i]));
-		return TRUE;
+		return REQ_VIEW_BLAME;
 
 	} else if (!strcmp(subcommand, "show")) {
-		opt_request = REQ_VIEW_DIFF;
+		request = REQ_VIEW_DIFF;
 
 	} else if (!strcmp(subcommand, "log") || !strcmp(subcommand, "diff")) {
-		opt_request = subcommand[0] == 'l'
-			    ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
+		request = subcommand[0] == 'l' ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
 		warn("`tig %s' has been deprecated", subcommand);
 
 	} else {
@@ -540,11 +536,11 @@ parse_options(int argc, char *argv[])
 
 		} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
 			printf("tig version %s\n", TIG_VERSION);
-			return FALSE;
+			return REQ_NONE;
 
 		} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
 			printf("%s\n", usage);
-			return FALSE;
+			return REQ_NONE;
 		}
 
 		opt_cmd[buf_size++] = ' ';
@@ -555,7 +551,7 @@ parse_options(int argc, char *argv[])
 
 	opt_cmd[buf_size] = 0;
 
-	return TRUE;
+	return request;
 }
 
 
@@ -2809,11 +2805,6 @@ view_driver(struct view *view, enum request request)
 		redraw_display();
 		break;
 
-	case REQ_PROMPT:
-		/* Always reload^Wrerun commands from the prompt. */
-		open_view(view, opt_request, OPEN_RELOAD);
-		break;
-
 	case REQ_SEARCH:
 	case REQ_SEARCH_BACK:
 		search_view(view, request);
@@ -2848,11 +2839,9 @@ view_driver(struct view *view, enum request request)
 		report("Nothing to edit");
 		break;
 
-
 	case REQ_ENTER:
 		report("Nothing to enter");
 		break;
-
 
 	case REQ_VIEW_CLOSE:
 		/* XXX: Mark closed views by letting view->parent point to the
@@ -5871,11 +5860,12 @@ main(int argc, char *argv[])
 	if (load_git_config() == ERR)
 		die("Failed to load repo config.");
 
-	if (!parse_options(argc, argv))
+	request = parse_options(argc, argv);
+	if (request == REQ_NONE)
 		return 0;
 
 	/* Require a git repository unless when running in pager mode. */
-	if (!opt_git_dir[0] && opt_request != REQ_VIEW_PAGER)
+	if (!opt_git_dir[0] && request != REQ_VIEW_PAGER)
 		die("Not a git repository");
 
 	if (*opt_encoding && strcasecmp(opt_encoding, "UTF-8"))
@@ -5892,8 +5882,6 @@ main(int argc, char *argv[])
 
 	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
 		view->cmd_env = getenv(view->cmd_env);
-
-	request = opt_request;
 
 	init_display();
 
@@ -5925,11 +5913,13 @@ main(int argc, char *argv[])
 
 			if (cmd && string_format(opt_cmd, "git %s", cmd)) {
 				if (strncmp(cmd, "show", 4) && isspace(cmd[4])) {
-					opt_request = REQ_VIEW_DIFF;
+					request = REQ_VIEW_DIFF;
 				} else {
-					opt_request = REQ_VIEW_PAGER;
+					request = REQ_VIEW_PAGER;
 				}
-				break;
+
+				/* Always reload^Wrerun commands from the prompt. */
+				open_view(view, request, OPEN_RELOAD);
 			}
 
 			request = REQ_NONE;
