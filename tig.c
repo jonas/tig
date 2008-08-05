@@ -4983,6 +4983,14 @@ main_read(struct view *view, char *line)
 	if (!line) {
 		if (!view->lines && !view->parent)
 			die("No revisions match the given arguments.");
+		if (view->lines > 0) {
+			commit = view->line[view->lines - 1].data;
+			if (!*commit->author) {
+				view->lines--;
+				free(commit);
+				graph->commit = NULL;
+			}
+		}
 		update_rev_graph(graph);
 		return TRUE;
 	}

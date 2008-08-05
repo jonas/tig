@@ -22,6 +22,7 @@ Bug fixes:
    keybinding to launch the merge tool in the status view.
  - Fix problem with $(cmd) usage in shell code. Some shells (jsh)
    installed as /bin/sh does not support it.
+ - Do not show incomplete boundary commits when --no-walk is used.
  - Documentation: Rename gitlink macro to support AsciiDoc 8.2.3.
 
 tig-0.11
