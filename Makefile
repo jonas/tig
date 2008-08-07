@@ -99,8 +99,9 @@ clean:
 	$(RM) $(PROGS) core *.o *.xml
 
 distclean: clean
-	$(RM) -r manual.html-chunked *.toc $(ALLDOC)
-	$(RM) -r autom4te.cache aclocal.m4 config.{h,log,make,status} config.h.in configure
+	$(RM) -r manual.html-chunked autom4te.cache
+	$(RM) *.toc $(ALLDOC) aclocal.m4 configure
+	$(RM) config.h config.log config.make config.status config.h.in
 
 spell-check:
 	aspell --lang=en --check tig.1.txt tigrc.5.txt manual.txt

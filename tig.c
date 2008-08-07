@@ -45,7 +45,15 @@
 /* ncurses(3): Must be defined to have extended wide-character functions. */
 #define _XOPEN_SOURCE_EXTENDED
 
-#include <curses.h>
+#ifdef HAVE_NCURSESW_NCURSES_H
+#include <ncursesw/ncurses.h>
+#else
+#ifdef HAVE_NCURSES_NCURSES_H
+#include <ncurses/ncurses.h>
+#else
+#include <ncurses.h>
+#endif
+#endif
 
 #if __GNUC__ >= 3
 #define __NORETURN __attribute__((__noreturn__))
@@ -109,7 +117,7 @@ static size_t utf8_length(const char *string, int *width, size_t max_width, int 
 #endif
 
 #define TIG_LS_REMOTE \
-	"git ls-remote $(git rev-parse --git-dir) 2>/dev/null"
+	"git ls-remote . 2>/dev/null"
 
 #define TIG_DIFF_CMD \
 	"git show --pretty=fuller --no-color --root --patch-with-stat --find-copies-harder -C %s 2>/dev/null"
@@ -368,6 +376,7 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
 	REQ_(STATUS_UPDATE,	"Update file status"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
+	REQ_(STAGE_NEXT,	"Find next chunk to stage"), \
 	REQ_(TREE_PARENT,	"Switch to parent directory in tree view"), \
 	REQ_(EDIT,		"Open in editor"), \
 	REQ_(NONE,		"Do nothing")
@@ -442,7 +451,7 @@ static bool opt_rev_graph		= FALSE;
 static bool opt_show_refs		= TRUE;
 static int opt_num_interval		= NUMBER_INTERVAL;
 static int opt_tab_size			= TAB_SIZE;
-static enum request opt_request		= REQ_VIEW_MAIN;
+static int opt_author_cols		= AUTHOR_COLS-1;
 static char opt_cmd[SIZEOF_STR]		= "";
 static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
@@ -461,34 +470,32 @@ static char opt_git_dir[SIZEOF_STR]	= "";
 static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
 
-static bool
+static enum request
 parse_options(int argc, char *argv[])
 {
+	enum request request = REQ_VIEW_MAIN;
 	size_t buf_size;
 	char *subcommand;
 	bool seen_dashdash = FALSE;
 	int i;
 
 	if (!isatty(STDIN_FILENO)) {
-		opt_request = REQ_VIEW_PAGER;
 		opt_pipe = stdin;
-		return TRUE;
+		return REQ_VIEW_PAGER;
 	}
 
 	if (argc <= 1)
-		return TRUE;
+		return REQ_VIEW_MAIN;
 
 	subcommand = argv[1];
 	if (!strcmp(subcommand, "status") || !strcmp(subcommand, "-S")) {
-		opt_request = REQ_VIEW_STATUS;
 		if (!strcmp(subcommand, "-S"))
 			warn("`-S' has been deprecated; use `tig status' instead");
 		if (argc > 2)
 			warn("ignoring arguments after `%s'", subcommand);
-		return TRUE;
+		return REQ_VIEW_STATUS;
 
 	} else if (!strcmp(subcommand, "blame")) {
-		opt_request = REQ_VIEW_BLAME;
 		if (argc <= 2 || argc > 4)
 			die("invalid number of options to blame\n\n%s", usage);
 
@@ -499,14 +506,13 @@ parse_options(int argc, char *argv[])
 		}
 
 		string_ncopy(opt_file, argv[i], strlen(argv[i]));
-		return TRUE;
+		return REQ_VIEW_BLAME;
 
 	} else if (!strcmp(subcommand, "show")) {
-		opt_request = REQ_VIEW_DIFF;
+		request = REQ_VIEW_DIFF;
 
 	} else if (!strcmp(subcommand, "log") || !strcmp(subcommand, "diff")) {
-		opt_request = subcommand[0] == 'l'
-			    ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
+		request = subcommand[0] == 'l' ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
 		warn("`tig %s' has been deprecated", subcommand);
 
 	} else {
@@ -530,11 +536,11 @@ parse_options(int argc, char *argv[])
 
 		} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
 			printf("tig version %s\n", TIG_VERSION);
-			return FALSE;
+			return REQ_NONE;
 
 		} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
 			printf("%s\n", usage);
-			return FALSE;
+			return REQ_NONE;
 		}
 
 		opt_cmd[buf_size++] = ' ';
@@ -545,7 +551,7 @@ parse_options(int argc, char *argv[])
 
 	opt_cmd[buf_size] = 0;
 
-	return TRUE;
+	return request;
 }
 
 
@@ -771,6 +777,7 @@ static struct keybinding default_keybindings[] = {
 	{ ':',		REQ_PROMPT },
 	{ 'u',		REQ_STATUS_UPDATE },
 	{ 'M',		REQ_STATUS_MERGE },
+	{ '@',		REQ_STAGE_NEXT },
 	{ ',',		REQ_TREE_PARENT },
 	{ 'e',		REQ_EDIT },
 
@@ -1090,6 +1097,14 @@ static bool parse_bool(const char *s)
 		!strcmp(s, "yes")) ? TRUE : FALSE;
 }
 
+static int
+parse_int(const char *s, int default_value, int min, int max)
+{
+	int value = atoi(s);
+
+	return (value < min || value > max) ? default_value : value;
+}
+
 /* Wants: name = value */
 static int
 option_set_command(int argc, char *argv[])
@@ -1135,12 +1150,17 @@ option_set_command(int argc, char *argv[])
 	}
 
 	if (!strcmp(argv[0], "line-number-interval")) {
-		opt_num_interval = atoi(argv[2]);
+		opt_num_interval = parse_int(argv[2], opt_num_interval, 1, 1024);
+		return OK;
+	}
+
+	if (!strcmp(argv[0], "author-width")) {
+		opt_author_cols = parse_int(argv[2], opt_author_cols, 0, 1024);
 		return OK;
 	}
 
 	if (!strcmp(argv[0], "tab-size")) {
-		opt_tab_size = atoi(argv[2]);
+		opt_tab_size = parse_int(argv[2], opt_tab_size, 1, 1024);
 		return OK;
 	}
 
@@ -2153,10 +2173,13 @@ search_view(struct view *view, enum request request)
  */
 
 static void
-end_update(struct view *view)
+end_update(struct view *view, bool force)
 {
 	if (!view->pipe)
 		return;
+	while (!view->ops->read(view, NULL))
+		if (!force)
+			return;
 	set_nonblocking_input(FALSE);
 	if (view->pipe == stdin)
 		fclose(view->pipe);
@@ -2168,9 +2191,6 @@ end_update(struct view *view)
 static bool
 begin_update(struct view *view)
 {
-	if (view->pipe)
-		end_update(view);
-
 	if (opt_cmd[0]) {
 		string_copy(view->cmd, opt_cmd);
 		opt_cmd[0] = 0;
@@ -2374,21 +2394,18 @@ update_view(struct view *view)
 check_pipe:
 	if (ferror(view->pipe)) {
 		report("Failed to read: %s", strerror(errno));
-		goto end;
+		end_update(view, TRUE);
 
 	} else if (feof(view->pipe)) {
 		report("");
-		goto end;
+		end_update(view, FALSE);
 	}
 
 	return TRUE;
 
 alloc_error:
 	report("Allocation failure");
-
-end:
-	if (view->ops->read(view, NULL))
-		end_update(view);
+	end_update(view, TRUE);
 	return FALSE;
 }
 
@@ -2463,6 +2480,9 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	if (nviews != displayed_views() ||
 	    (nviews == 1 && base_view != display[0]))
 		resize_display();
+
+	if (view->pipe)
+		end_update(view, TRUE);
 
 	if (view->ops->open) {
 		if (!view->ops->open(view)) {
@@ -2785,11 +2805,6 @@ view_driver(struct view *view, enum request request)
 		redraw_display();
 		break;
 
-	case REQ_PROMPT:
-		/* Always reload^Wrerun commands from the prompt. */
-		open_view(view, opt_request, OPEN_RELOAD);
-		break;
-
 	case REQ_SEARCH:
 	case REQ_SEARCH_BACK:
 		search_view(view, request);
@@ -2805,7 +2820,7 @@ view_driver(struct view *view, enum request request)
 			view = &views[i];
 			if (view->pipe)
 				report("Stopped loading the %s view", view->name),
-			end_update(view);
+			end_update(view, TRUE);
 		}
 		break;
 
@@ -2824,11 +2839,9 @@ view_driver(struct view *view, enum request request)
 		report("Nothing to edit");
 		break;
 
-
 	case REQ_ENTER:
 		report("Nothing to enter");
 		break;
-
 
 	case REQ_VIEW_CLOSE:
 		/* XXX: Mark closed views by letting view->parent point to the
@@ -3573,9 +3586,6 @@ blame_read_file(struct view *view, char *line)
 		size_t linelen = strlen(line);
 		struct blame *blame = malloc(sizeof(*blame) + linelen);
 
-		if (!line)
-			return FALSE;
-
 		blame->commit = NULL;
 		strncpy(blame->text, line, linelen);
 		blame->text[linelen] = 0;
@@ -3670,7 +3680,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 		return TRUE;
 
 	if (opt_author &&
-	    draw_field(view, LINE_MAIN_AUTHOR, author, AUTHOR_COLS, TRUE))
+	    draw_field(view, LINE_MAIN_AUTHOR, author, opt_author_cols, TRUE))
 		return TRUE;
 
 	if (draw_field(view, LINE_BLAME_ID, id, ID_COLS, FALSE))
@@ -3788,6 +3798,8 @@ struct status {
 static char status_onbranch[SIZEOF_STR];
 static struct status stage_status;
 static enum line_type stage_line_type;
+static size_t stage_chunks;
+static int *stage_chunk;
 
 /* Get fields from the diff line:
  * :100644 100644 06a5d6ae9eca55be2e0e585a152e6b1336f2b20e 0000000000000000000000000000000000000000 M
@@ -4179,6 +4191,7 @@ status_enter(struct view *view, struct line *line)
 		}
 
 		stage_line_type = line->type;
+		stage_chunks = 0;
 		string_format(VIEW(REQ_VIEW_STAGE)->ref, info, stage_status.new.name);
 	}
 
@@ -4588,6 +4601,42 @@ stage_update(struct view *view, struct line *line)
 	return TRUE;
 }
 
+static void
+stage_next(struct view *view, struct line *line)
+{
+	int i;
+
+	if (!stage_chunks) {
+		static size_t alloc = 0;
+		int *tmp;
+
+		for (line = view->line; line < view->line + view->lines; line++) {
+			if (line->type != LINE_DIFF_CHUNK)
+				continue;
+
+			tmp = realloc_items(stage_chunk, &alloc,
+					    stage_chunks, sizeof(*tmp));
+			if (!tmp) {
+				report("Allocation failure");
+				return;
+			}
+
+			stage_chunk = tmp;
+			stage_chunk[stage_chunks++] = line - view->line;
+		}
+	}
+
+	for (i = 0; i < stage_chunks; i++) {
+		if (stage_chunk[i] > view->lineno) {
+			do_scroll_view(view, stage_chunk[i] - view->lineno);
+			report("Chunk %d of %d", i + 1, stage_chunks);
+			return;
+		}
+	}
+
+	report("No next chunk found");
+}
+
 static enum request
 stage_request(struct view *view, enum request request, struct line *line)
 {
@@ -4596,6 +4645,15 @@ stage_request(struct view *view, enum request request, struct line *line)
 		if (!stage_update(view, line))
 			return REQ_NONE;
 		break;
+
+	case REQ_STAGE_NEXT:
+		if (stage_line_type == LINE_STAT_UNTRACKED) {
+			report("File is untracked; press %s to add",
+			       get_key(REQ_STATUS_UPDATE));
+			return REQ_NONE;
+		}
+		stage_next(view, line);
+		return REQ_NONE;
 
 	case REQ_EDIT:
 		if (!stage_status.new.name[0])
@@ -4874,7 +4932,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 		return TRUE;
 
 	if (opt_author &&
-	    draw_field(view, LINE_MAIN_AUTHOR, commit->author, AUTHOR_COLS, TRUE))
+	    draw_field(view, LINE_MAIN_AUTHOR, commit->author, opt_author_cols, TRUE))
 		return TRUE;
 
 	if (opt_rev_graph && commit->graph_size &&
@@ -4925,6 +4983,14 @@ main_read(struct view *view, char *line)
 	if (!line) {
 		if (!view->lines && !view->parent)
 			die("No revisions match the given arguments.");
+		if (view->lines > 0) {
+			commit = view->line[view->lines - 1].data;
+			if (!*commit->author) {
+				view->lines--;
+				free(commit);
+				graph->commit = NULL;
+			}
+		}
 		update_rev_graph(graph);
 		return TRUE;
 	}
@@ -5802,11 +5868,12 @@ main(int argc, char *argv[])
 	if (load_git_config() == ERR)
 		die("Failed to load repo config.");
 
-	if (!parse_options(argc, argv))
+	request = parse_options(argc, argv);
+	if (request == REQ_NONE)
 		return 0;
 
 	/* Require a git repository unless when running in pager mode. */
-	if (!opt_git_dir[0] && opt_request != REQ_VIEW_PAGER)
+	if (!opt_git_dir[0] && request != REQ_VIEW_PAGER)
 		die("Not a git repository");
 
 	if (*opt_encoding && strcasecmp(opt_encoding, "UTF-8"))
@@ -5823,8 +5890,6 @@ main(int argc, char *argv[])
 
 	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
 		view->cmd_env = getenv(view->cmd_env);
-
-	request = opt_request;
 
 	init_display();
 
@@ -5856,11 +5921,13 @@ main(int argc, char *argv[])
 
 			if (cmd && string_format(opt_cmd, "git %s", cmd)) {
 				if (strncmp(cmd, "show", 4) && isspace(cmd[4])) {
-					opt_request = REQ_VIEW_DIFF;
+					request = REQ_VIEW_DIFF;
 				} else {
-					opt_request = REQ_VIEW_PAGER;
+					request = REQ_VIEW_PAGER;
 				}
-				break;
+
+				/* Always reload^Wrerun commands from the prompt. */
+				open_view(view, request, OPEN_RELOAD);
 			}
 
 			request = REQ_NONE;

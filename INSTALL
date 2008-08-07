@@ -23,6 +23,10 @@ need to first make the configure script:
 
 	$ make configure
 
+Release notes documenting notable changes are available in the NEWS file. When
+upgrading, you are adviced to also read them after you have completed the
+installation.
+
 The following tools and packages are needed:
 
 `-------------------------------`----------------------------------------------
