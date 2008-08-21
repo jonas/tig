@@ -2392,7 +2392,7 @@ update_view(struct view *view)
 	update_view_title(view);
 
 check_pipe:
-	if (ferror(view->pipe)) {
+	if (ferror(view->pipe) && errno != 0) {
 		report("Failed to read: %s", strerror(errno));
 		end_update(view, TRUE);
 
