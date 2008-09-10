@@ -9,6 +9,7 @@ Improvements:
  - F5 also refreshes the current view.
  - Allow line graphics to be disabled with new line-graphics option.
  - Main view: also include the reference names when searching.
+ - Main view: support for refreshing.
  - Stage view: add stage-next action to jump to next diff chunk that can
    be staged. By default bound to '@'.
  - Configure: check for the ncurses header files.
@@ -24,6 +25,8 @@ Bug fixes:
    installed as /bin/sh does not support it.
  - Do not show incomplete boundary commits when --no-walk is used.
  - Documentation: Rename gitlink macro to support AsciiDoc 8.2.3.
+ - Ignore pipe reads with errno "Success" reported after a signals,
+   for example when refreshing doing background loading.
 
 tig-0.11
 --------

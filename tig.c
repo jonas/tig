@@ -4761,6 +4761,15 @@ append_to_rev_graph(struct rev_graph *graph, chtype symbol)
 }
 
 static void
+clear_rev_graph(struct rev_graph *graph)
+{
+	graph->boundary = 0;
+	graph->size = graph->pos = 0;
+	graph->commit = NULL;
+	memset(graph->parents, 0, sizeof(*graph->parents));
+}
+
+static void
 done_rev_graph(struct rev_graph *graph)
 {
 	if (graph_parent_is_merge(graph) &&
@@ -4776,9 +4785,7 @@ done_rev_graph(struct rev_graph *graph)
 		}
 	}
 
-	graph->size = graph->pos = 0;
-	graph->commit = NULL;
-	memset(graph->parents, 0, sizeof(*graph->parents));
+	clear_rev_graph(graph);
 }
 
 static void
@@ -4981,6 +4988,8 @@ main_read(struct view *view, char *line)
 	struct commit *commit;
 
 	if (!line) {
+		int i;
+
 		if (!view->lines && !view->parent)
 			die("No revisions match the given arguments.");
 		if (view->lines > 0) {
@@ -4992,6 +5001,9 @@ main_read(struct view *view, char *line)
 			}
 		}
 		update_rev_graph(graph);
+
+		for (i = 0; i < ARRAY_SIZE(graph_stacks); i++)
+			clear_rev_graph(&graph_stacks[i]);
 		return TRUE;
 	}
 
@@ -5111,10 +5123,17 @@ main_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
 
-	if (request == REQ_ENTER)
+	switch (request) {
+	case REQ_ENTER:
 		open_view(view, REQ_VIEW_DIFF, flags);
-	else
+		break;
+	case REQ_REFRESH:
+		string_copy(opt_cmd, view->cmd);
+		open_view(view, REQ_VIEW_MAIN, OPEN_RELOAD);
+		break;
+	default:
 		return request;
+	}
 
 	return REQ_NONE;
 }
