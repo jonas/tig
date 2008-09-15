@@ -10,6 +10,8 @@ Improvements:
  - Allow line graphics to be disabled with new line-graphics option.
  - Main view: also include the reference names when searching.
  - Main view: support for refreshing.
+ - Main view: disable boundary commits by default. Use --boundary when
+   they should be shown. (Debian bug 498628)
  - Stage view: add stage-next action to jump to next diff chunk that can
    be staged. By default bound to '@'.
  - Configure: check for the ncurses header files.

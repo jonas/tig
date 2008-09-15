@@ -126,7 +126,7 @@ static size_t utf8_length(const char *string, int *width, size_t max_width, int 
 	"git log --no-color --cc --stat -n100 %s 2>/dev/null"
 
 #define TIG_MAIN_CMD \
-	"git log --no-color --topo-order --parents --boundary --pretty=raw %s 2>/dev/null"
+	"git log --no-color --topo-order --parents --pretty=raw %s 2>/dev/null"
 
 #define TIG_TREE_CMD	\
 	"git ls-tree %s %s"
@@ -522,7 +522,7 @@ parse_options(int argc, char *argv[])
 	if (!subcommand)
 		/* XXX: This is vulnerable to the user overriding
 		 * options required for the main view parser. */
-		string_copy(opt_cmd, "git log --no-color --pretty=raw --boundary --parents");
+		string_copy(opt_cmd, "git log --no-color --pretty=raw --parents");
 	else
 		string_format(opt_cmd, "git %s", subcommand);
 
