@@ -27,7 +27,10 @@ Features that should be explored.
  - Rewrite revgraph handling.
 
  - Color the revgraph to make it easier to follow branches. Idea by
-   Dominik Vogt
+   Dominik Vogt.
 
- - Allow names in the author column to be abbreviated to initials.
-   Will optimize screen usage for the blame view.
+ - Blame view: Allow names in the author column to be abbreviated to
+   initials. Will optimize screen usage for the blame view.
+
+ - Blame view: make it possible to jump/load blame for parents. Idea by
+   Jeff King.
