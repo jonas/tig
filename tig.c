@@ -126,7 +126,7 @@ static size_t utf8_length(const char *string, int *width, size_t max_width, int 
 	"git log --no-color --cc --stat -n100 %s 2>/dev/null"
 
 #define TIG_MAIN_CMD \
-	"git log --no-color --topo-order --parents --boundary --pretty=raw %s 2>/dev/null"
+	"git log --no-color --topo-order --parents --pretty=raw %s 2>/dev/null"
 
 #define TIG_TREE_CMD	\
 	"git ls-tree %s %s"
@@ -522,7 +522,7 @@ parse_options(int argc, char *argv[])
 	if (!subcommand)
 		/* XXX: This is vulnerable to the user overriding
 		 * options required for the main view parser. */
-		string_copy(opt_cmd, "git log --no-color --pretty=raw --boundary --parents");
+		string_copy(opt_cmd, "git log --no-color --pretty=raw --parents");
 	else
 		string_format(opt_cmd, "git %s", subcommand);
 
@@ -2392,7 +2392,7 @@ update_view(struct view *view)
 	update_view_title(view);
 
 check_pipe:
-	if (ferror(view->pipe)) {
+	if (ferror(view->pipe) && errno != 0) {
 		report("Failed to read: %s", strerror(errno));
 		end_update(view, TRUE);
 
@@ -4761,6 +4761,15 @@ append_to_rev_graph(struct rev_graph *graph, chtype symbol)
 }
 
 static void
+clear_rev_graph(struct rev_graph *graph)
+{
+	graph->boundary = 0;
+	graph->size = graph->pos = 0;
+	graph->commit = NULL;
+	memset(graph->parents, 0, sizeof(*graph->parents));
+}
+
+static void
 done_rev_graph(struct rev_graph *graph)
 {
 	if (graph_parent_is_merge(graph) &&
@@ -4776,9 +4785,7 @@ done_rev_graph(struct rev_graph *graph)
 		}
 	}
 
-	graph->size = graph->pos = 0;
-	graph->commit = NULL;
-	memset(graph->parents, 0, sizeof(*graph->parents));
+	clear_rev_graph(graph);
 }
 
 static void
@@ -4981,6 +4988,8 @@ main_read(struct view *view, char *line)
 	struct commit *commit;
 
 	if (!line) {
+		int i;
+
 		if (!view->lines && !view->parent)
 			die("No revisions match the given arguments.");
 		if (view->lines > 0) {
@@ -4992,6 +5001,9 @@ main_read(struct view *view, char *line)
 			}
 		}
 		update_rev_graph(graph);
+
+		for (i = 0; i < ARRAY_SIZE(graph_stacks); i++)
+			clear_rev_graph(&graph_stacks[i]);
 		return TRUE;
 	}
 
@@ -5111,10 +5123,17 @@ main_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
 
-	if (request == REQ_ENTER)
+	switch (request) {
+	case REQ_ENTER:
 		open_view(view, REQ_VIEW_DIFF, flags);
-	else
+		break;
+	case REQ_REFRESH:
+		string_copy(opt_cmd, view->cmd);
+		open_view(view, REQ_VIEW_MAIN, OPEN_RELOAD);
+		break;
+	default:
 		return request;
+	}
 
 	return REQ_NONE;
 }
