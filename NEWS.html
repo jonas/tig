@@ -304,7 +304,7 @@ div#toc a:visited { color: blue; }
 <div id="header">
 <h1>Release notes</h1>
 </div>
-<h2>tig master branch</h2>
+<h2>tig-0.12</h2>
 <div class="sectionbody">
 <p>Improvements:</p>
 <ul>
@@ -321,6 +321,17 @@ Allow line graphics to be disabled with new line-graphics option.
 <li>
 <p>
 Main view: also include the reference names when searching.
+</p>
+</li>
+<li>
+<p>
+Main view: support for refreshing.
+</p>
+</li>
+<li>
+<p>
+Main view: disable boundary commits by default. Use &#8212;boundary when
+   they should be shown. (Debian bug 498628)
 </p>
 </li>
 <li>
@@ -368,6 +379,12 @@ Do not show incomplete boundary commits when &#8212;no-walk is used.
 <li>
 <p>
 Documentation: Rename gitlink macro to support AsciiDoc 8.2.3.
+</p>
+</li>
+<li>
+<p>
+Ignore pipe reads with errno "Success" reported after a signals,
+   for example when refreshing doing background loading.
 </p>
 </li>
 </ul>
@@ -691,7 +708,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 07-Aug-2008 14:52:21 CEST
+Last updated 15-Sep-2008 20:47:18 CEST
 </div>
 </div>
 </body>
