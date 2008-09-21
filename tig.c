@@ -2657,6 +2657,7 @@ view_driver(struct view *view, enum request request)
 		open_run_request(request);
 		/* FIXME: When all views can refresh always do this. */
 		if (view == VIEW(REQ_VIEW_STATUS) ||
+		    view == VIEW(REQ_VIEW_MAIN) ||
 		    view == VIEW(REQ_VIEW_STAGE))
 			request = REQ_REFRESH;
 		else
