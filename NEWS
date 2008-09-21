@@ -1,6 +1,13 @@
 Release notes
 =============
 
+tig master
+----------
+
+Improvements:
+
+ - Checkout files with unstaged changes. Bound to '!' by default.
+
 tig-0.12
 --------
 

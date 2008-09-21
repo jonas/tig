@@ -67,6 +67,7 @@ static void report(const char *msg, ...);
 static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, size_t, char *, size_t));
 static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool reserve);
+static bool prompt_yesno(const char *prompt);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -375,6 +376,7 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
 	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
 	REQ_(STATUS_UPDATE,	"Update file status"), \
+	REQ_(STATUS_CHECKOUT,	"Checkout file"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
 	REQ_(STAGE_NEXT,	"Find next chunk to stage"), \
 	REQ_(TREE_PARENT,	"Switch to parent directory in tree view"), \
@@ -776,6 +778,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'F',		REQ_TOGGLE_REFS },
 	{ ':',		REQ_PROMPT },
 	{ 'u',		REQ_STATUS_UPDATE },
+	{ '!',		REQ_STATUS_CHECKOUT },
 	{ 'M',		REQ_STATUS_MERGE },
 	{ '@',		REQ_STAGE_NEXT },
 	{ ',',		REQ_TREE_PARENT },
@@ -2528,6 +2531,14 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	 * won't redraw the view title. */
 	if (backgrounded)
 		update_view_title(view);
+}
+
+static void
+run_confirm(const char *cmd, const char *prompt)
+{
+	if (prompt_yesno(prompt)) {
+		system(cmd);
+	}
 }
 
 static void
@@ -4349,6 +4360,40 @@ status_update(struct view *view)
 	return TRUE;
 }
 
+static bool
+status_checkout(struct view *view)
+{
+	struct line *line = &view->line[view->lineno];
+
+	assert(view->lines);
+
+	if (!line->data || line->type != LINE_STAT_UNSTAGED) {
+		/* This should work even for the "On branch" line. */
+		if (line < view->line + view->lines && !line[1].data) {
+			report("Nothing to checkout");
+		} else if (line->type == LINE_STAT_UNTRACKED) {
+			report("Cannot checkout untracked files");
+		} else if (line->type == LINE_STAT_STAGED) {
+			report("Cannot checkout staged files");
+		} else {
+			report("Cannot checkout multiple files");
+		}
+		return FALSE;
+
+	} else {
+		struct status *status = line->data;
+		char cmd[SIZEOF_STR];
+		char file_sq[SIZEOF_STR];
+
+		if (sq_quote(file_sq, 0, status->old.name) < sizeof(file_sq) &&
+		    string_format(cmd, "git checkout %s%s", opt_cdup, file_sq)) {
+			run_confirm(cmd, "Are you sure you want to overwrite any changes?");
+		}
+
+		return TRUE;
+	}
+}
+
 static enum request
 status_request(struct view *view, enum request request, struct line *line)
 {
@@ -4357,6 +4402,11 @@ status_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_STATUS_UPDATE:
 		if (!status_update(view))
+			return REQ_NONE;
+		break;
+
+	case REQ_STATUS_CHECKOUT:
+		if (!status_checkout(view))
 			return REQ_NONE;
 		break;
 
@@ -5479,6 +5529,58 @@ init_display(void)
 	if (opt_line_graphics) {
 		line_graphics[LINE_GRAPHIC_VLINE] = ACS_VLINE;
 	}
+}
+
+static bool
+prompt_yesno(const char *prompt)
+{
+	enum { WAIT, STOP, CANCEL  } status = WAIT;
+	bool answer = FALSE;
+
+	while (status == WAIT) {
+		struct view *view;
+		int i, key;
+
+		input_mode = TRUE;
+
+		foreach_view (view, i)
+			update_view(view);
+
+		input_mode = FALSE;
+
+		mvwprintw(status_win, 0, 0, "%s [Yy]/[Nn]", prompt);
+		wclrtoeol(status_win);
+
+		/* Refresh, accept single keystroke of input */
+		key = wgetch(status_win);
+		switch (key) {
+		case ERR:
+			break;
+
+		case 'y':
+		case 'Y':
+			answer = TRUE;
+			status = STOP;
+			break;
+
+		case KEY_ESC:
+		case KEY_RETURN:
+		case KEY_ENTER:
+		case KEY_BACKSPACE:
+		case 'n':
+		case 'N':
+		case '\n':
+		default:
+			answer = FALSE;
+			status = CANCEL;
+		}
+	}
+
+	/* Clear the status window */
+	status_empty = FALSE;
+	report("");
+
+	return answer;
 }
 
 static char *

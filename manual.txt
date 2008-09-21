@@ -366,6 +366,8 @@ u	Update status of file. In the status view, this allows you to add an \
 M	Resolve unmerged file by launching git-mergetool(1). Note, to work \
 	correctly this might require some initial configuration of your \
 	preferred merge tool. See the manpage of git-mergetool(1).
+!	Checkout file with unstaged changes. This will reset the file to \
+	contain the content it had at last commit.
 @	Move to next chunk in the stage view.
 ','	Move tree view to the parent tree.
 e	Open file in editor.
