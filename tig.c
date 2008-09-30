@@ -126,8 +126,11 @@ static bool prompt_yesno(const char *prompt);
 #define TIG_LOG_CMD	\
 	"git log --no-color --cc --stat -n100 %s 2>/dev/null"
 
+#define TIG_MAIN_BASE \
+	"git log --no-color --pretty=raw --parents --topo-order"
+
 #define TIG_MAIN_CMD \
-	"git log --no-color --topo-order --parents --pretty=raw %s 2>/dev/null"
+	TIG_MAIN_BASE " %s 2>/dev/null"
 
 #define TIG_TREE_CMD	\
 	"git ls-tree %s %s"
@@ -524,7 +527,7 @@ parse_options(int argc, char *argv[])
 	if (!subcommand)
 		/* XXX: This is vulnerable to the user overriding
 		 * options required for the main view parser. */
-		string_copy(opt_cmd, "git log --no-color --pretty=raw --parents");
+		string_copy(opt_cmd, TIG_MAIN_BASE);
 	else
 		string_format(opt_cmd, "git %s", subcommand);
 
