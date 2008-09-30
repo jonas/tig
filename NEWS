@@ -10,6 +10,11 @@ Improvements:
  - Main: use --topo-order also when rev-list arguments are given on the
    command line.
 
+Bug fixes:
+
+ - Status: use ls-files' --exclude-standard so user specific ignore
+   rules are effective. The option was added in git version 1.5.4.
+
 tig-0.12
 --------
 

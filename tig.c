@@ -3967,9 +3967,9 @@ error_out:
 #define STATUS_DIFF_INDEX_CMD "git diff-index -z --diff-filter=ACDMRTXB --cached -M HEAD"
 #define STATUS_DIFF_FILES_CMD "git diff-files -z"
 #define STATUS_LIST_OTHER_CMD \
-	"git ls-files -z --others --exclude-per-directory=.gitignore"
+	"git ls-files -z --others --exclude-standard"
 #define STATUS_LIST_NO_HEAD_CMD \
-	"git ls-files -z --cached --exclude-per-directory=.gitignore"
+	"git ls-files -z --cached --exclude-standard"
 
 #define STATUS_DIFF_INDEX_SHOW_CMD \
 	"git diff-index --root --patch-with-stat -C -M --cached HEAD -- %s %s 2>/dev/null"
@@ -3986,12 +3986,7 @@ error_out:
 static bool
 status_open(struct view *view)
 {
-	struct stat statbuf;
-	char exclude[SIZEOF_STR];
-	char indexcmd[SIZEOF_STR] = STATUS_DIFF_INDEX_CMD;
-	char othercmd[SIZEOF_STR] = STATUS_LIST_OTHER_CMD;
 	unsigned long prev_lineno = view->lineno;
-	char indexstatus = 0;
 	size_t i;
 
 	for (i = 0; i < view->lines; i++)
@@ -4011,33 +4006,16 @@ status_open(struct view *view)
 	else if (!string_format(status_onbranch, "On branch %s", opt_head))
 		return FALSE;
 
-	if (opt_no_head) {
-		string_copy(indexcmd, STATUS_LIST_NO_HEAD_CMD);
-		indexstatus = 'A';
-	}
-
-	if (!string_format(exclude, "%s/info/exclude", opt_git_dir))
-		return FALSE;
-
-	if (stat(exclude, &statbuf) >= 0) {
-		size_t cmdsize = strlen(othercmd);
-
-		if (!string_format_from(othercmd, &cmdsize, " %s", "--exclude-from=") ||
-		    sq_quote(othercmd, cmdsize, exclude) >= sizeof(othercmd))
-			return FALSE;
-
-		cmdsize = strlen(indexcmd);
-		if (opt_no_head &&
-		    (!string_format_from(indexcmd, &cmdsize, " %s", "--exclude-from=") ||
-		     sq_quote(indexcmd, cmdsize, exclude) >= sizeof(indexcmd)))
-			return FALSE;
-	}
-
 	system("git update-index -q --refresh >/dev/null 2>/dev/null");
 
-	if (!status_run(view, indexcmd, indexstatus, LINE_STAT_STAGED) ||
-	    !status_run(view, STATUS_DIFF_FILES_CMD, 0, LINE_STAT_UNSTAGED) ||
-	    !status_run(view, othercmd, '?', LINE_STAT_UNTRACKED))
+	if (opt_no_head &&
+	    !status_run(view, STATUS_LIST_NO_HEAD_CMD, 'A', LINE_STAT_STAGED))
+		return FALSE;
+	else if (!status_run(view, STATUS_DIFF_INDEX_CMD, 0, LINE_STAT_STAGED))
+		return FALSE;
+
+	if (!status_run(view, STATUS_DIFF_FILES_CMD, 0, LINE_STAT_UNSTAGED) ||
+	    !status_run(view, STATUS_LIST_OTHER_CMD, '?', LINE_STAT_UNTRACKED))
 		return FALSE;
 
 	/* If all went well restore the previous line number to stay in
