@@ -3816,6 +3816,13 @@ static enum line_type stage_line_type;
 static size_t stage_chunks;
 static int *stage_chunk;
 
+/* This should work even for the "On branch" line. */
+static inline bool
+status_has_none(struct view *view, struct line *line)
+{
+	return line < view->line + view->lines && !line[1].data;
+}
+
 /* Get fields from the diff line:
  * :100644 100644 06a5d6ae9eca55be2e0e585a152e6b1336f2b20e 0000000000000000000000000000000000000000 M
  */
@@ -4343,19 +4350,14 @@ status_update(struct view *view)
 }
 
 static bool
-status_checkout(struct view *view)
+status_checkout(struct status *status, enum line_type type, bool has_next)
 {
-	struct line *line = &view->line[view->lineno];
-
-	assert(view->lines);
-
-	if (!line->data || line->type != LINE_STAT_UNSTAGED) {
-		/* This should work even for the "On branch" line. */
-		if (line < view->line + view->lines && !line[1].data) {
+	if (!status || type != LINE_STAT_UNSTAGED) {
+		if (has_next) {
 			report("Nothing to checkout");
-		} else if (line->type == LINE_STAT_UNTRACKED) {
+		} else if (type == LINE_STAT_UNTRACKED) {
 			report("Cannot checkout untracked files");
-		} else if (line->type == LINE_STAT_STAGED) {
+		} else if (type == LINE_STAT_STAGED) {
 			report("Cannot checkout staged files");
 		} else {
 			report("Cannot checkout multiple files");
@@ -4363,7 +4365,6 @@ status_checkout(struct view *view)
 		return FALSE;
 
 	} else {
-		struct status *status = line->data;
 		char cmd[SIZEOF_STR];
 		char file_sq[SIZEOF_STR];
 
@@ -4388,7 +4389,7 @@ status_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_STATUS_CHECKOUT:
-		if (!status_checkout(view))
+		if (!status_checkout(status, line->type, status_has_none(view, line)))
 			return REQ_NONE;
 		break;
 
@@ -4675,6 +4676,11 @@ stage_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_STATUS_UPDATE:
 		if (!stage_update(view, line))
+			return REQ_NONE;
+		break;
+
+	case REQ_STATUS_CHECKOUT:
+		if (!status_checkout(&stage_status, stage_line_type, FALSE))
 			return REQ_NONE;
 		break;
 
