@@ -2536,12 +2536,15 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		update_view_title(view);
 }
 
-static void
+static bool
 run_confirm(const char *cmd, const char *prompt)
 {
-	if (prompt_yesno(prompt)) {
+	bool confirmation = prompt_yesno(prompt);
+
+	if (confirmation)
 		system(cmd);
-	}
+
+	return confirmation;
 }
 
 static void
@@ -4368,12 +4371,11 @@ status_checkout(struct status *status, enum line_type type, bool has_next)
 		char cmd[SIZEOF_STR];
 		char file_sq[SIZEOF_STR];
 
-		if (sq_quote(file_sq, 0, status->old.name) < sizeof(file_sq) &&
-		    string_format(cmd, "git checkout %s%s", opt_cdup, file_sq)) {
-			run_confirm(cmd, "Are you sure you want to overwrite any changes?");
-		}
+		if (sq_quote(file_sq, 0, status->old.name) >= sizeof(file_sq) ||
+		    !string_format(cmd, "git checkout %s%s", opt_cdup, file_sq))
+			return FALSE;
 
-		return TRUE;
+		return run_confirm(cmd, "Are you sure you want to overwrite any changes?");
 	}
 }
 
