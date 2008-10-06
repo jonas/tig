@@ -4353,15 +4353,15 @@ status_update(struct view *view)
 }
 
 static bool
-status_checkout(struct status *status, enum line_type type, bool has_next)
+status_checkout(struct status *status, enum line_type type, bool has_none)
 {
 	if (!status || type != LINE_STAT_UNSTAGED) {
-		if (has_next) {
-			report("Nothing to checkout");
+		if (type == LINE_STAT_STAGED) {
+			report("Cannot checkout staged files");
 		} else if (type == LINE_STAT_UNTRACKED) {
 			report("Cannot checkout untracked files");
-		} else if (type == LINE_STAT_STAGED) {
-			report("Cannot checkout staged files");
+		} else if (has_none) {
+			report("Nothing to checkout");
 		} else {
 			report("Cannot checkout multiple files");
 		}
@@ -4682,7 +4682,8 @@ stage_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_STATUS_CHECKOUT:
-		if (!status_checkout(&stage_status, stage_line_type, FALSE))
+		if (!status_checkout(stage_status.status ? &stage_status : NULL,
+				     stage_line_type, FALSE))
 			return REQ_NONE;
 		break;
 
