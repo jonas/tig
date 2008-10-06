@@ -77,7 +77,8 @@ static bool prompt_yesno(const char *prompt);
 
 #define SIZEOF_STR	1024	/* Default string size. */
 #define SIZEOF_REF	256	/* Size of symbolic or SHA1 ID. */
-#define SIZEOF_REV	41	/* Holds a SHA-1 and an ending NUL */
+#define SIZEOF_REV	41	/* Holds a SHA-1 and an ending NUL. */
+#define SIZEOF_ARG	32	/* Default argument array size. */
 
 /* Revision graph */
 
@@ -644,7 +645,7 @@ static struct line_info line_info[] = {
 };
 
 static enum line_type
-get_line_type(char *line)
+get_line_type(const char *line)
 {
 	int linelen = strlen(line);
 	enum line_type type;
@@ -666,7 +667,7 @@ get_line_attr(enum line_type type)
 }
 
 static struct line_info *
-get_line_info(char *name)
+get_line_info(const char *name)
 {
 	size_t namelen = strlen(name);
 	enum line_type type;
@@ -967,7 +968,7 @@ static struct run_request *run_request;
 static size_t run_requests;
 
 static enum request
-add_run_request(enum keymap keymap, int key, int argc, char **argv)
+add_run_request(enum keymap keymap, int key, int argc, const char **argv)
 {
 	struct run_request *req;
 	char cmd[SIZEOF_STR];
@@ -1004,7 +1005,7 @@ add_builtin_run_requests(void)
 	struct {
 		enum keymap keymap;
 		int key;
-		char *argv[1];
+		const char *argv[1];
 	} reqs[] = {
 		{ KEYMAP_MAIN,	  'C', { "git cherry-pick %(commit)" } },
 		{ KEYMAP_GENERIC, 'G', { "git gc" } },
@@ -1060,7 +1061,7 @@ static char *config_msg;
 
 /* Wants: object fgcolor bgcolor [attr] */
 static int
-option_color_command(int argc, char *argv[])
+option_color_command(int argc, const char *argv[])
 {
 	struct line_info *info;
 
@@ -1113,7 +1114,7 @@ parse_int(const char *s, int default_value, int min, int max)
 
 /* Wants: name = value */
 static int
-option_set_command(int argc, char *argv[])
+option_set_command(int argc, const char *argv[])
 {
 	if (argc != 3) {
 		config_msg = "Wrong number of arguments given to set command";
@@ -1194,7 +1195,7 @@ option_set_command(int argc, char *argv[])
 
 /* Wants: mode request key */
 static int
-option_bind_command(int argc, char *argv[])
+option_bind_command(int argc, const char *argv[])
 {
 	enum request request;
 	int keymap;
@@ -1245,7 +1246,7 @@ option_bind_command(int argc, char *argv[])
 static int
 set_option(char *opt, char *value)
 {
-	char *argv[16];
+	const char *argv[SIZEOF_ARG];
 	int valuelen;
 	int argc = 0;
 
