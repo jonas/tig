@@ -114,7 +114,7 @@ static bool prompt_yesno(const char *prompt);
 #define NULL_ID		"0000000000000000000000000000000000000000"
 
 #ifndef GIT_CONFIG
-#define GIT_CONFIG "git config"
+#define GIT_CONFIG "config"
 #endif
 
 #define TIG_LS_REMOTE \
@@ -5834,7 +5834,7 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 static int
 load_git_config(void)
 {
-	return read_properties(popen(GIT_CONFIG " --list", "r"),
+	return read_properties(popen("git " GIT_CONFIG " --list", "r"),
 			       "=", read_repo_config_option);
 }
 
