@@ -4967,6 +4967,8 @@ update_rev_graph(struct rev_graph *graph)
  * Main view backend
  */
 
+static int load_refs(void);
+
 static bool
 main_draw(struct view *view, struct line *line, unsigned int lineno)
 {
@@ -5168,6 +5170,7 @@ main_request(struct view *view, enum request request, struct line *line)
 		open_view(view, REQ_VIEW_DIFF, flags);
 		break;
 	case REQ_REFRESH:
+		load_refs();
 		string_copy(opt_cmd, view->cmd);
 		open_view(view, REQ_VIEW_MAIN, OPEN_RELOAD);
 		break;
@@ -5783,6 +5786,14 @@ load_refs(void)
 	const char *cmd_env = getenv("TIG_LS_REMOTE");
 	const char *cmd = cmd_env && *cmd_env ? cmd_env : TIG_LS_REMOTE;
 
+	if (!*opt_git_dir)
+		return OK;
+
+	while (refs_size > 0)
+		free(refs[--refs_size].name);
+	while (id_refs_size > 0)
+		free(id_refs[--id_refs_size]);
+
 	return read_properties(popen(cmd, "r"), "\t", read_ref);
 }
 
@@ -5996,7 +6007,7 @@ main(int argc, char *argv[])
 			die("Failed to initialize character set conversion");
 	}
 
-	if (*opt_git_dir && load_refs() == ERR)
+	if (load_refs() == ERR)
 		die("Failed to load refs.");
 
 	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
