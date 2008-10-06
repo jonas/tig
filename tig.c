@@ -1171,18 +1171,17 @@ option_set_command(int argc, char *argv[])
 	}
 
 	if (!strcmp(argv[0], "commit-encoding")) {
-		char *arg = argv[2];
-		int delimiter = *arg;
-		int i;
+		const char *arg = argv[2];
+		int arglen = strlen(arg);
 
-		switch (delimiter) {
+		switch (arg[0]) {
 		case '"':
 		case '\'':
-			for (arg++, i = 0; arg[i]; i++)
-				if (arg[i] == delimiter) {
-					arg[i] = 0;
-					break;
-				}
+			if (arglen == 1 || arg[arglen - 1] != arg[0]) {
+				config_msg = "Unmatched quotation";
+				return ERR;
+			}
+			arg += 1; arglen -= 2;
 		default:
 			string_ncopy(opt_encoding, arg, strlen(arg));
 			return OK;
