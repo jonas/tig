@@ -20,6 +20,9 @@ NEWS="${root}NEWS"
 SITES="${root}SITES"
 from="$(sed -n '7,/^tig-/p' < "$NEWS" | tail -n 1 | cut -d' ' -f 1)"
 to="${1-HEAD}"
+short=
+
+test -n "$(git rev-list --skip=50 $from..$to)" && short=-s
 
 cat <<EOF
 $to
@@ -42,9 +45,9 @@ $(sed -n '7,/^tig-/p' < "$NEWS" | sed '/^tig-/d')
 
 Change summary
 --------------
-The diffstat and shortlog summary for changes made in this release.
-
-$(git shortlog -s $from..$to)
+The diffstat and log summary for changes made in this release.
 
 $(git diff-tree --stat=72 $from..$to)
+
+$(git shortlog $short $from..$to)
 EOF
