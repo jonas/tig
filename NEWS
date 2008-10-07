@@ -6,9 +6,10 @@ tig master
 
 Improvements:
 
- - Checkout files with unstaged changes. Bound to '!' by default.
- - Main view: use --topo-order also when rev-list arguments are given on the
-   command line.
+ - Status view: revert unstaged files with changes and diff chunks.
+   Bound to '!' by default.
+ - Main view: use --topo-order also when rev-list arguments are given on
+   the command line.
  - Log view: support for refreshing.
 
 Bug fixes:

@@ -351,7 +351,7 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	\
 	REQ_GROUP("View specific requests") \
 	REQ_(STATUS_UPDATE,	"Update file status"), \
-	REQ_(STATUS_CHECKOUT,	"Checkout file"), \
+	REQ_(STATUS_REVERT,	"Revert file changes"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
 	REQ_(STAGE_NEXT,	"Find next chunk to stage"), \
 	REQ_(TREE_PARENT,	"Switch to parent directory in tree view"), \
@@ -787,7 +787,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'F',		REQ_TOGGLE_REFS },
 	{ ':',		REQ_PROMPT },
 	{ 'u',		REQ_STATUS_UPDATE },
-	{ '!',		REQ_STATUS_CHECKOUT },
+	{ '!',		REQ_STATUS_REVERT },
 	{ 'M',		REQ_STATUS_MERGE },
 	{ '@',		REQ_STAGE_NEXT },
 	{ ',',		REQ_TREE_PARENT },
@@ -4374,17 +4374,17 @@ status_update(struct view *view)
 }
 
 static bool
-status_checkout(struct status *status, enum line_type type, bool has_none)
+status_revert(struct status *status, enum line_type type, bool has_none)
 {
 	if (!status || type != LINE_STAT_UNSTAGED) {
 		if (type == LINE_STAT_STAGED) {
-			report("Cannot checkout staged files");
+			report("Cannot revert changes to staged files");
 		} else if (type == LINE_STAT_UNTRACKED) {
-			report("Cannot checkout untracked files");
+			report("Cannot revert changes to untracked files");
 		} else if (has_none) {
-			report("Nothing to checkout");
+			report("Nothing to revert");
 		} else {
-			report("Cannot checkout multiple files");
+			report("Cannot revert changes to multiple files");
 		}
 		return FALSE;
 
@@ -4411,8 +4411,8 @@ status_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		break;
 
-	case REQ_STATUS_CHECKOUT:
-		if (!status_checkout(status, line->type, status_has_none(view, line)))
+	case REQ_STATUS_REVERT:
+		if (!status_revert(status, line->type, status_has_none(view, line)))
 			return REQ_NONE;
 		break;
 
@@ -4589,7 +4589,7 @@ stage_diff_find(struct view *view, struct line *line, enum line_type type)
 }
 
 static bool
-stage_update_chunk(struct view *view, struct line *chunk)
+stage_apply_chunk(struct view *view, struct line *chunk, bool revert)
 {
 	char cmd[SIZEOF_STR];
 	size_t cmdsize = 0;
@@ -4605,9 +4605,10 @@ stage_update_chunk(struct view *view, struct line *chunk)
 		return FALSE;
 
 	if (!string_format_from(cmd, &cmdsize,
-				"git apply --whitespace=nowarn --cached %s - && "
+				"git apply --whitespace=nowarn %s %s - && "
 				"git update-index -q --unmerged --refresh 2>/dev/null",
-				stage_line_type == LINE_STAT_STAGED ? "-R" : ""))
+				revert ? "" : "--cached",
+				revert || stage_line_type == LINE_STAT_STAGED ? "-R" : ""))
 		return FALSE;
 
 	pipe = popen(cmd, "w");
@@ -4632,7 +4633,7 @@ stage_update(struct view *view, struct line *line)
 		chunk = stage_diff_find(view, line, LINE_DIFF_CHUNK);
 
 	if (chunk) {
-		if (!stage_update_chunk(view, chunk)) {
+		if (!stage_apply_chunk(view, chunk, FALSE)) {
 			report("Failed to apply chunk");
 			return FALSE;
 		}
@@ -4656,6 +4657,31 @@ stage_update(struct view *view, struct line *line)
 
 	return TRUE;
 }
+
+static bool
+stage_revert(struct view *view, struct line *line)
+{
+	struct line *chunk = NULL;
+
+	if (!opt_no_head && stage_line_type == LINE_STAT_UNSTAGED)
+		chunk = stage_diff_find(view, line, LINE_DIFF_CHUNK);
+
+	if (chunk) {
+		if (!prompt_yesno("Are you sure you want to revert changes?"))
+			return FALSE;
+
+		if (!stage_apply_chunk(view, chunk, TRUE)) {
+			report("Failed to revert chunk");
+			return FALSE;
+		}
+		return TRUE;
+
+	} else {
+		return status_revert(stage_status.status ? &stage_status : NULL,
+				     stage_line_type, FALSE);
+	}
+}
+
 
 static void
 stage_next(struct view *view, struct line *line)
@@ -4702,9 +4728,8 @@ stage_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		break;
 
-	case REQ_STATUS_CHECKOUT:
-		if (!status_checkout(stage_status.status ? &stage_status : NULL,
-				     stage_line_type, FALSE))
+	case REQ_STATUS_REVERT:
+		if (!stage_revert(view, line))
 			return REQ_NONE;
 		break;
 
