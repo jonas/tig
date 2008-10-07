@@ -931,7 +931,7 @@ get_key_name(int key_value)
 		seq = key_char;
 	}
 
-	return seq ? seq : "'?'";
+	return seq ? seq : "(no key)";
 }
 
 static char *
