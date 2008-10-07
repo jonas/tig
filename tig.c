@@ -68,6 +68,7 @@ static int read_properties(FILE *pipe, const char *separators, int (*read)(char 
 static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool reserve);
 static bool prompt_yesno(const char *prompt);
+static int load_refs(void);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -1452,14 +1453,15 @@ struct view_ops {
 	void (*select)(struct view *view, struct line *line);
 };
 
-static struct view_ops pager_ops;
-static struct view_ops main_ops;
-static struct view_ops tree_ops;
-static struct view_ops blob_ops;
 static struct view_ops blame_ops;
+static struct view_ops blob_ops;
 static struct view_ops help_ops;
-static struct view_ops status_ops;
+static struct view_ops log_ops;
+static struct view_ops main_ops;
+static struct view_ops pager_ops;
 static struct view_ops stage_ops;
+static struct view_ops status_ops;
+static struct view_ops tree_ops;
 
 #define VIEW_STR(name, cmd, env, ref, ops, map, git) \
 	{ name, cmd, #env, ref, ops, map, git }
@@ -1471,7 +1473,7 @@ static struct view_ops stage_ops;
 static struct view views[] = {
 	VIEW_(MAIN,   "main",   &main_ops,   TRUE,  ref_head),
 	VIEW_(DIFF,   "diff",   &pager_ops,  TRUE,  ref_commit),
-	VIEW_(LOG,    "log",    &pager_ops,  TRUE,  ref_head),
+	VIEW_(LOG,    "log",    &log_ops,    TRUE,  ref_head),
 	VIEW_(TREE,   "tree",   &tree_ops,   TRUE,  ref_commit),
 	VIEW_(BLOB,   "blob",   &blob_ops,   TRUE,  ref_blob),
 	VIEW_(BLAME,  "blame",  &blame_ops,  TRUE,  ref_commit),
@@ -2665,6 +2667,7 @@ view_driver(struct view *view, enum request request)
 		/* FIXME: When all views can refresh always do this. */
 		if (view == VIEW(REQ_VIEW_STATUS) ||
 		    view == VIEW(REQ_VIEW_MAIN) ||
+		    view == VIEW(REQ_VIEW_LOG) ||
 		    view == VIEW(REQ_VIEW_STAGE))
 			request = REQ_REFRESH;
 		else
@@ -3063,6 +3066,29 @@ static struct view_ops pager_ops = {
 	pager_read,
 	pager_draw,
 	pager_request,
+	pager_grep,
+	pager_select,
+};
+
+static enum request
+log_request(struct view *view, enum request request, struct line *line)
+{
+	switch (request) {
+	case REQ_REFRESH:
+		load_refs();
+		open_view(view, REQ_VIEW_LOG, OPEN_REFRESH);
+		return REQ_NONE;
+	default:
+		return pager_request(view, request, line);
+	}
+}
+
+static struct view_ops log_ops = {
+	"line",
+	NULL,
+	pager_read,
+	pager_draw,
+	log_request,
 	pager_grep,
 	pager_select,
 };
@@ -4966,8 +4992,6 @@ update_rev_graph(struct rev_graph *graph)
 /*
  * Main view backend
  */
-
-static int load_refs(void);
 
 static bool
 main_draw(struct view *view, struct line *line, unsigned int lineno)
