@@ -2536,7 +2536,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		 * the screen. */
 		werase(view->win);
 		report("");
-	} else {
+	} else if (view_is_displayed(view)) {
 		redraw_view(view);
 		report("");
 	}
