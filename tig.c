@@ -2185,6 +2185,24 @@ search_view(struct view *view, enum request request)
  */
 
 static void
+reset_view(struct view *view)
+{
+	int i;
+
+	for (i = 0; i < view->lines; i++)
+		free(view->line[i].data);
+	free(view->line);
+
+	view->line = NULL;
+	view->offset = 0;
+	view->lines  = 0;
+	view->lineno = 0;
+	view->line_size = 0;
+	view->line_alloc = 0;
+	view->vid[0] = 0;
+}
+
+static void
 end_update(struct view *view, bool force)
 {
 	if (!view->pipe)
@@ -2252,22 +2270,8 @@ begin_update(struct view *view, bool refresh)
 		return FALSE;
 
 	set_nonblocking_input(TRUE);
-
-	view->offset = 0;
-	view->lines  = 0;
-	view->lineno = 0;
+	reset_view(view);
 	string_copy_rev(view->vid, view->id);
-
-	if (view->line) {
-		int i;
-
-		for (i = 0; i < view->lines; i++)
-			if (view->line[i].data)
-				free(view->line[i].data);
-
-		free(view->line);
-		view->line = NULL;
-	}
 
 	view->start_time = time(NULL);
 
@@ -3518,21 +3522,10 @@ blame_open(struct view *view)
 	if (!string_format(view->cmd, BLAME_INCREMENTAL_CMD, ref, path))
 		return FALSE;
 
+	reset_view(view);
 	string_format(view->ref, "%s ...", opt_file);
 	string_copy_rev(view->vid, opt_file);
 	set_nonblocking_input(TRUE);
-
-	if (view->line) {
-		int i;
-
-		for (i = 0; i < view->lines; i++)
-			free(view->line[i].data);
-		free(view->line);
-	}
-
-	view->lines = view->line_alloc = view->line_size = view->lineno = 0;
-	view->offset = view->lines  = view->lineno = 0;
-	view->line = NULL;
 	view->start_time = time(NULL);
 
 	return TRUE;
@@ -4029,13 +4022,8 @@ static bool
 status_open(struct view *view)
 {
 	unsigned long prev_lineno = view->lineno;
-	size_t i;
 
-	for (i = 0; i < view->lines; i++)
-		free(view->line[i].data);
-	free(view->line);
-	view->lines = view->line_alloc = view->line_size = view->lineno = 0;
-	view->line = NULL;
+	reset_view(view);
 
 	if (!realloc_lines(view, view->line_size + 7))
 		return FALSE;
