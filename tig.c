@@ -349,6 +349,13 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(VIEW_CLOSE,	"Close the current view"), \
 	REQ_(QUIT,		"Close all views and quit"), \
 	\
+	REQ_GROUP("View specific requests") \
+	REQ_(STATUS_UPDATE,	"Update file status"), \
+	REQ_(STATUS_CHECKOUT,	"Checkout file"), \
+	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
+	REQ_(STAGE_NEXT,	"Find next chunk to stage"), \
+	REQ_(TREE_PARENT,	"Switch to parent directory in tree view"), \
+	\
 	REQ_GROUP("Cursor navigation") \
 	REQ_(MOVE_UP,		"Move cursor one line up"), \
 	REQ_(MOVE_DOWN,		"Move cursor one line down"), \
@@ -369,22 +376,19 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 	REQ_(FIND_NEXT,		"Find next search match"), \
 	REQ_(FIND_PREV,		"Find previous search match"), \
 	\
+	REQ_GROUP("Option manipulation") \
+	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
+	REQ_(TOGGLE_DATE,	"Toggle date display"), \
+	REQ_(TOGGLE_AUTHOR,	"Toggle author display"), \
+	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
+	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
+	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
 	REQ_(SCREEN_REDRAW,	"Redraw the screen"), \
 	REQ_(SCREEN_RESIZE,	"Resize the screen"), \
 	REQ_(SHOW_VERSION,	"Show version information"), \
 	REQ_(STOP_LOADING,	"Stop all loading views"), \
-	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
-	REQ_(TOGGLE_DATE,	"Toggle date display"), \
-	REQ_(TOGGLE_AUTHOR,	"Toggle author display"), \
-	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
-	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
-	REQ_(STATUS_UPDATE,	"Update file status"), \
-	REQ_(STATUS_CHECKOUT,	"Checkout file"), \
-	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
-	REQ_(STAGE_NEXT,	"Find next chunk to stage"), \
-	REQ_(TREE_PARENT,	"Switch to parent directory in tree view"), \
 	REQ_(EDIT,		"Open in editor"), \
 	REQ_(NONE,		"Do nothing")
 
