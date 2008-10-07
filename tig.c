@@ -4045,11 +4045,12 @@ status_open(struct view *view)
 
 	system("git update-index -q --refresh >/dev/null 2>/dev/null");
 
-	if (opt_no_head &&
-	    !status_run(view, STATUS_LIST_NO_HEAD_CMD, 'A', LINE_STAT_STAGED))
+	if (opt_no_head) {
+		if (!status_run(view, STATUS_LIST_NO_HEAD_CMD, 'A', LINE_STAT_STAGED))
+			return FALSE;
+	} else if (!status_run(view, STATUS_DIFF_INDEX_CMD, 0, LINE_STAT_STAGED)) {
 		return FALSE;
-	else if (!status_run(view, STATUS_DIFF_INDEX_CMD, 0, LINE_STAT_STAGED))
-		return FALSE;
+	}
 
 	if (!status_run(view, STATUS_DIFF_FILES_CMD, 0, LINE_STAT_UNSTAGED) ||
 	    !status_run(view, STATUS_LIST_OTHER_CMD, '?', LINE_STAT_UNTRACKED))
