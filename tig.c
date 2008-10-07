@@ -2877,6 +2877,7 @@ view_driver(struct view *view, enum request request)
 			view->parent = view;
 			resize_display();
 			redraw_display();
+			report("");
 			break;
 		}
 		/* Fall-through */
