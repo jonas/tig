@@ -2456,7 +2456,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	bool backgrounded = !!(flags & OPEN_BACKGROUNDED);
 	bool split = !!(flags & OPEN_SPLIT);
 	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH));
-	bool nomaximize = !!(flags & OPEN_NOMAXIMIZE);
+	bool nomaximize = !!(flags & (OPEN_NOMAXIMIZE | OPEN_REFRESH));
 	struct view *view = VIEW(request);
 	int nviews = displayed_views();
 	struct view *base_view = display[0];
@@ -4731,7 +4731,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 
 	if (stage_line_type == LINE_STAT_UNTRACKED)
 		opt_pipe = fopen(stage_status.new.name, "r");
-	open_view(view, REQ_VIEW_STAGE, OPEN_REFRESH | OPEN_NOMAXIMIZE);
+	open_view(view, REQ_VIEW_STAGE, OPEN_REFRESH);
 
 	return REQ_NONE;
 }
