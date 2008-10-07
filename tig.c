@@ -2195,7 +2195,7 @@ end_update(struct view *view, bool force)
 }
 
 static bool
-begin_update(struct view *view)
+begin_update(struct view *view, bool refresh)
 {
 	if (opt_cmd[0]) {
 		string_copy(view->cmd, opt_cmd);
@@ -2220,7 +2220,7 @@ begin_update(struct view *view)
 		if (!string_format(view->cmd, format, view->id, path))
 			return FALSE;
 
-	} else {
+	} else if (!refresh) {
 		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
 		const char *id = view->id;
 
@@ -2446,7 +2446,8 @@ enum open_flags {
 	OPEN_SPLIT = 1,		/* Split current view. */
 	OPEN_BACKGROUNDED = 2,	/* Backgrounded. */
 	OPEN_RELOAD = 4,	/* Reload view even if it is the current. */
-	OPEN_NOMAXIMIZE = 8	/* Do not maximize the current view. */
+	OPEN_NOMAXIMIZE = 8,	/* Do not maximize the current view. */
+	OPEN_REFRESH = 16,	/* Refresh view using previous command. */
 };
 
 static void
@@ -2454,7 +2455,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 {
 	bool backgrounded = !!(flags & OPEN_BACKGROUNDED);
 	bool split = !!(flags & OPEN_SPLIT);
-	bool reload = !!(flags & OPEN_RELOAD);
+	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH));
 	bool nomaximize = !!(flags & OPEN_NOMAXIMIZE);
 	struct view *view = VIEW(request);
 	int nviews = displayed_views();
@@ -2497,7 +2498,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		}
 
 	} else if ((reload || strcmp(view->vid, view->id)) &&
-		   !begin_update(view)) {
+		   !begin_update(view, flags & OPEN_REFRESH)) {
 		report("Failed to load %s view", view->name);
 		return;
 	}
@@ -4730,9 +4731,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 
 	if (stage_line_type == LINE_STAT_UNTRACKED)
 		opt_pipe = fopen(stage_status.new.name, "r");
-	else
-		string_copy(opt_cmd, view->cmd);
-	open_view(view, REQ_VIEW_STAGE, OPEN_RELOAD | OPEN_NOMAXIMIZE);
+	open_view(view, REQ_VIEW_STAGE, OPEN_REFRESH | OPEN_NOMAXIMIZE);
 
 	return REQ_NONE;
 }
@@ -5172,8 +5171,7 @@ main_request(struct view *view, enum request request, struct line *line)
 		break;
 	case REQ_REFRESH:
 		load_refs();
-		string_copy(opt_cmd, view->cmd);
-		open_view(view, REQ_VIEW_MAIN, OPEN_RELOAD);
+		open_view(view, REQ_VIEW_MAIN, OPEN_REFRESH);
 		break;
 	default:
 		return request;
