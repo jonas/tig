@@ -1,13 +1,13 @@
 Release notes
 =============
 
-tig master
+tig-0.12.1
 ----------
 
 Improvements:
 
- - Status view: revert unstaged files with changes and diff chunks.
-   Bound to '!' by default.
+ - Status view: revert uncommitted diff chunks and unstaged files with
+   changes. Bound to '!' by default.
  - Main view: use --topo-order also when rev-list arguments are given on
    the command line.
  - Log view: support for refreshing.
@@ -16,6 +16,12 @@ Bug fixes:
 
  - Status view: use ls-files' --exclude-standard so user specific ignore
    rules are effective. The option was added in git version 1.5.4.
+ - Stage view: fix assertion failure triggered when updating while
+   status view is not displayed.
+ - Help view: avoid confusion by showing "(no key)" instead of "'?'" for
+   unbound requests.
+ - Reload repository references when refreshing the main (and log) view.
+ - Do not maximize views when refreshing.
 
 tig-0.12
 --------
