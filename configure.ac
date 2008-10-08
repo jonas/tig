@@ -24,11 +24,11 @@ AM_ICONV
 AC_PROG_CC
 
 AC_CHECK_PROG(GIT, [git], [git], [AC_ERROR([git not found])])
-AC_MSG_CHECKING([which config command git supports])
-GIT_CONFIG="git repo-config"
-git config --list >/dev/null && GIT_CONFIG="git config"
+AC_MSG_CHECKING([which config subcommand git supports])
+GIT_CONFIG="repo-config"
+git config --list >/dev/null && GIT_CONFIG="config"
 AC_MSG_RESULT([$GIT_CONFIG])
-AC_DEFINE_UNQUOTED(GIT_CONFIG,"$GIT_CONFIG",[git config program])
+AC_DEFINE_UNQUOTED(GIT_CONFIG,"$GIT_CONFIG",[git config subcommand])
 
 AC_CHECK_PROGS(ASCIIDOC, [asciidoc false])
 AC_CHECK_PROGS(XMLTO, [xmlto false])
