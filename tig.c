@@ -164,7 +164,7 @@ struct ref {
 	unsigned int next:1;	/* For ref lists: are there more refs? */
 };
 
-static struct ref **get_refs(char *id);
+static struct ref **get_refs(const char *id);
 
 struct int_map {
 	const char *name;
@@ -408,9 +408,9 @@ enum request {
 
 struct request_info {
 	enum request request;
-	char *name;
+	const char *name;
 	int namelen;
-	char *help;
+	const char *help;
 };
 
 static struct request_info req_info[] = {
@@ -482,11 +482,11 @@ static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
 
 static enum request
-parse_options(int argc, char *argv[])
+parse_options(int argc, const char *argv[])
 {
 	enum request request = REQ_VIEW_MAIN;
 	size_t buf_size;
-	char *subcommand;
+	const char *subcommand;
 	bool seen_dashdash = FALSE;
 	int i;
 
@@ -540,7 +540,7 @@ parse_options(int argc, char *argv[])
 	buf_size = strlen(opt_cmd);
 
 	for (i = 1 + !!subcommand; i < argc; i++) {
-		char *opt = argv[i];
+		const char *opt = argv[i];
 
 		if (seen_dashdash || !strcmp(opt, "--")) {
 			seen_dashdash = TRUE;
@@ -867,7 +867,7 @@ get_keybinding(enum keymap keymap, int key)
 
 
 struct key {
-	char *name;
+	const char *name;
 	int value;
 };
 
@@ -917,11 +917,11 @@ get_key_value(const char *name)
 	return ERR;
 }
 
-static char *
+static const char *
 get_key_name(int key_value)
 {
 	static char key_char[] = "'X'";
-	char *seq = NULL;
+	const char *seq = NULL;
 	int key;
 
 	for (key = 0; key < ARRAY_SIZE(key_table); key++)
@@ -938,7 +938,7 @@ get_key_name(int key_value)
 	return seq ? seq : "(no key)";
 }
 
-static char *
+static const char *
 get_key(enum request request)
 {
 	static char buf[BUFSIZ];
@@ -1062,7 +1062,7 @@ static struct int_map attr_map[] = {
 
 static int   config_lineno;
 static bool  config_errors;
-static char *config_msg;
+static const char *config_msg;
 
 /* Wants: object fgcolor bgcolor [attr] */
 static int
@@ -1249,7 +1249,7 @@ option_bind_command(int argc, const char *argv[])
 }
 
 static int
-set_option(char *opt, char *value)
+set_option(const char *opt, char *value)
 {
 	const char *argv[SIZEOF_ARG];
 	int valuelen;
@@ -1343,9 +1343,9 @@ load_option_file(const char *path)
 static int
 load_options(void)
 {
-	char *home = getenv("HOME");
-	char *tigrc_user = getenv("TIGRC_USER");
-	char *tigrc_system = getenv("TIGRC_SYSTEM");
+	const char *home = getenv("HOME");
+	const char *tigrc_user = getenv("TIGRC_USER");
+	const char *tigrc_system = getenv("TIGRC_SYSTEM");
 	char buf[SIZEOF_STR];
 
 	add_builtin_run_requests();
@@ -1639,7 +1639,7 @@ draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t si
 }
 
 static bool
-draw_field(struct view *view, enum line_type type, char *text, int len, bool trim)
+draw_field(struct view *view, enum line_type type, const char *text, int len, bool trim)
 {
 	int max = MIN(view->width - view->col, len);
 	int col;
@@ -2438,10 +2438,9 @@ add_line_data(struct view *view, void *data, enum line_type type)
 }
 
 static struct line *
-add_line_text(struct view *view, char *data, enum line_type type)
+add_line_text(struct view *view, const char *text, enum line_type type)
 {
-	if (data)
-		data = strdup(data);
+	char *data = text ? strdup(text) : NULL;
 
 	return data ? add_line_data(view, data, type) : NULL;
 }
@@ -2587,7 +2586,7 @@ open_editor(bool from_root, const char *file)
 {
 	char cmd[SIZEOF_STR];
 	char file_sq[SIZEOF_STR];
-	char *editor;
+	const char *editor;
 	char *prefix = from_root ? opt_cdup : "";
 
 	editor = getenv("GIT_EDITOR");
@@ -2919,7 +2918,7 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 }
 
 static bool
-add_describe_ref(char *buf, size_t *bufpos, char *commit_id, const char *sep)
+add_describe_ref(char *buf, size_t *bufpos, const char *commit_id, const char *sep)
 {
 	char refbuf[SIZEOF_STR];
 	char *ref = NULL;
@@ -2967,8 +2966,8 @@ add_pager_refs(struct view *view, struct line *line)
 
 	do {
 		struct ref *ref = refs[refpos];
-		char *fmt = ref->tag    ? "%s[%s]" :
-		            ref->remote ? "%s<%s>" : "%s%s";
+		const char *fmt = ref->tag    ? "%s[%s]" :
+		                  ref->remote ? "%s<%s>" : "%s%s";
 
 		if (!string_format_from(buf, &bufpos, fmt, sep, ref->name))
 			return;
@@ -3130,7 +3129,7 @@ help_open(struct view *view)
 	add_line_text(view, "Quick reference for tig keybindings:", LINE_DEFAULT);
 
 	for (i = 0; i < ARRAY_SIZE(req_info); i++) {
-		char *key;
+		const char *key;
 
 		if (req_info[i].request == REQ_NONE)
 			continue;
@@ -3158,7 +3157,7 @@ help_open(struct view *view)
 
 	for (i = 0; i < run_requests; i++) {
 		struct run_request *req = get_run_request(REQ_NONE + i + 1);
-		char *key;
+		const char *key;
 
 		if (!req)
 			continue;
@@ -3215,7 +3214,7 @@ pop_tree_stack_entry(void)
 }
 
 static void
-push_tree_stack_entry(char *name, unsigned long lineno)
+push_tree_stack_entry(const char *name, unsigned long lineno)
 {
 	struct tree_stack_entry *entry = calloc(1, sizeof(*entry));
 	size_t pathlen = strlen(opt_path);
@@ -3251,8 +3250,8 @@ push_tree_stack_entry(char *name, unsigned long lineno)
 #define TREE_UP_FORMAT "040000 tree %s\t.."
 
 static int
-tree_compare_entry(enum line_type type1, char *name1,
-		   enum line_type type2, char *name2)
+tree_compare_entry(enum line_type type1, const char *name1,
+		   enum line_type type2, const char *name2)
 {
 	if (type1 != type2) {
 		if (type1 == LINE_TREE_DIR)
@@ -3263,10 +3262,10 @@ tree_compare_entry(enum line_type type1, char *name1,
 	return strcmp(name1, name2);
 }
 
-static char *
+static const char *
 tree_path(struct line *line)
 {
-	char *path = line->data;
+	const char *path = line->data;
 
 	return path + SIZEOF_TREE_ATTR;
 }
@@ -3318,7 +3317,7 @@ tree_read(struct view *view, char *text)
 	/* Skip "Directory ..." and ".." line. */
 	for (pos = 1 + !!*opt_path; pos < view->lines; pos++) {
 		struct line *line = &view->line[pos];
-		char *path1 = tree_path(line);
+		const char *path1 = tree_path(line);
 		char *path2 = text + SIZEOF_TREE_ATTR;
 		int cmp = tree_compare_entry(line->type, path1, type, path2);
 
@@ -3357,7 +3356,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 	enum open_flags flags;
 
 	if (request == REQ_VIEW_BLAME) {
-		char *filename = tree_path(line);
+		const char *filename = tree_path(line);
 
 		if (line->type == LINE_TREE_DIR) {
 			report("Cannot show blame for directory %s", opt_path);
@@ -3393,7 +3392,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 			pop_tree_stack_entry();
 
 		} else {
-			char *basename = tree_path(line);
+			const char *basename = tree_path(line);
 
 			push_tree_stack_entry(basename, view->lineno);
 		}
@@ -3556,9 +3555,9 @@ get_blame_commit(struct view *view, const char *id)
 }
 
 static bool
-parse_number(char **posref, size_t *number, size_t min, size_t max)
+parse_number(const char **posref, size_t *number, size_t min, size_t max)
 {
-	char *pos = *posref;
+	const char *pos = *posref;
 
 	*posref = NULL;
 	pos = strchr(pos + 1, ' ');
@@ -3573,11 +3572,11 @@ parse_number(char **posref, size_t *number, size_t min, size_t max)
 }
 
 static struct blame_commit *
-parse_blame_commit(struct view *view, char *text, int *blamed)
+parse_blame_commit(struct view *view, const char *text, int *blamed)
 {
 	struct blame_commit *commit;
 	struct blame *blame;
-	char *pos = text + SIZEOF_REV - 1;
+	const char *pos = text + SIZEOF_REV - 1;
 	size_t lineno;
 	size_t group;
 
@@ -3606,7 +3605,7 @@ parse_blame_commit(struct view *view, char *text, int *blamed)
 }
 
 static bool
-blame_read_file(struct view *view, char *line)
+blame_read_file(struct view *view, const char *line)
 {
 	if (!line) {
 		FILE *pipe = NULL;
@@ -3711,7 +3710,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct blame *blame = line->data;
 	struct tm *time = NULL;
-	char *id = NULL, *author = NULL;
+	const char *id = NULL, *author = NULL;
 
 	if (blame->commit && *blame->commit->filename) {
 		id = blame->commit->id;
@@ -3855,13 +3854,13 @@ status_has_none(struct view *view, struct line *line)
  * :100644 100644 06a5d6ae9eca55be2e0e585a152e6b1336f2b20e 0000000000000000000000000000000000000000 M
  */
 static inline bool
-status_get_diff(struct status *file, char *buf, size_t bufsize)
+status_get_diff(struct status *file, const char *buf, size_t bufsize)
 {
-	char *old_mode = buf +  1;
-	char *new_mode = buf +  8;
-	char *old_rev  = buf + 15;
-	char *new_rev  = buf + 56;
-	char *status   = buf + 97;
+	const char *old_mode = buf +  1;
+	const char *new_mode = buf +  8;
+	const char *old_rev  = buf + 15;
+	const char *new_rev  = buf + 56;
+	const char *status   = buf + 97;
 
 	if (bufsize < 99 ||
 	    old_mode[-1] != ':' ||
@@ -4078,7 +4077,7 @@ status_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct status *status = line->data;
 	enum line_type type;
-	char *text;
+	const char *text;
 
 	if (!status) {
 		switch (line->type) {
@@ -4130,7 +4129,7 @@ status_enter(struct view *view, struct line *line)
 	struct status *status = line->data;
 	char oldpath[SIZEOF_STR] = "";
 	char newpath[SIZEOF_STR] = "";
-	char *info;
+	const char *info;
 	size_t cmdsize = 0;
 	enum open_flags split;
 
@@ -4463,8 +4462,8 @@ status_select(struct view *view, struct line *line)
 {
 	struct status *status = line->data;
 	char file[SIZEOF_STR] = "all files";
-	char *text;
-	char *key;
+	const char *text;
+	const char *key;
 
 	if (status && !string_format(file, "'%s'", status->new.name))
 		return;
@@ -4517,7 +4516,7 @@ status_grep(struct view *view, struct line *line)
 		return FALSE;
 
 	for (state = S_STATUS; state < S_END; state++) {
-		char *text;
+		const char *text;
 
 		switch (state) {
 		case S_NAME:	text = status->new.name;	break;
@@ -4551,7 +4550,7 @@ static struct view_ops status_ops = {
 static bool
 stage_diff_line(FILE *pipe, struct line *line)
 {
-	char *buf = line->data;
+	const char *buf = line->data;
 	size_t bufsize = strlen(buf);
 	size_t written = 0;
 
@@ -4874,7 +4873,7 @@ done_rev_graph(struct rev_graph *graph)
 }
 
 static void
-push_rev_graph(struct rev_graph *graph, char *parent)
+push_rev_graph(struct rev_graph *graph, const char *parent)
 {
 	int i;
 
@@ -5718,7 +5717,7 @@ compare_refs(const void *ref1_, const void *ref2_)
 }
 
 static struct ref **
-get_refs(char *id)
+get_refs(const char *id)
 {
 	struct ref ***tmp_id_refs;
 	struct ref **ref_list = NULL;
@@ -6029,7 +6028,7 @@ warn(const char *msg, ...)
 }
 
 int
-main(int argc, char *argv[])
+main(int argc, const char *argv[])
 {
 	struct view *view;
 	enum request request;
@@ -6120,8 +6119,7 @@ main(int argc, char *argv[])
 		case REQ_SEARCH:
 		case REQ_SEARCH_BACK:
 		{
-			const char *prompt = request == REQ_SEARCH
-					   ? "/" : "?";
+			const char *prompt = request == REQ_SEARCH ? "/" : "?";
 			char *search = read_prompt(prompt);
 
 			if (search)
