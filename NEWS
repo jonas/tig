@@ -1,6 +1,14 @@
 Release notes
 =============
 
+tig master
+----------
+
+Improvements:
+
+ - Display repository references in the sorted order: tags, heads,
+   tracked remotes, remotes.
+
 tig-0.12.1
 ----------
 

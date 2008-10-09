@@ -5698,6 +5698,25 @@ static struct ref ***id_refs = NULL;
 static size_t id_refs_alloc = 0;
 static size_t id_refs_size = 0;
 
+static int
+compare_refs(const void *ref1_, const void *ref2_)
+{
+	const struct ref *ref1 = *(const struct ref **)ref1_;
+	const struct ref *ref2 = *(const struct ref **)ref2_;
+
+	if (ref1->tag != ref2->tag)
+		return ref2->tag - ref1->tag;
+	if (ref1->ltag != ref2->ltag)
+		return ref2->ltag - ref2->ltag;
+	if (ref1->head != ref2->head)
+		return ref2->head - ref1->head;
+	if (ref1->tracked != ref2->tracked)
+		return ref2->tracked - ref1->tracked;
+	if (ref1->remote != ref2->remote)
+		return ref2->remote - ref1->remote;
+	return strcmp(ref1->name, ref2->name);
+}
+
 static struct ref **
 get_refs(char *id)
 {
@@ -5733,19 +5752,20 @@ get_refs(char *id)
 		}
 
 		ref_list = tmp;
-		if (ref_list_size > 0)
-			ref_list[ref_list_size - 1]->next = 1;
 		ref_list[ref_list_size] = &refs[i];
-
 		/* XXX: The properties of the commit chains ensures that we can
 		 * safely modify the shared ref. The repo references will
 		 * always be similar for the same id. */
-		ref_list[ref_list_size]->next = 0;
+		ref_list[ref_list_size]->next = 1;
+
 		ref_list_size++;
 	}
 
-	if (ref_list)
+	if (ref_list) {
+		qsort(ref_list, ref_list_size, sizeof(*ref_list), compare_refs);
+		ref_list[ref_list_size - 1]->next = 0;
 		id_refs[id_refs_size++] = ref_list;
+	}
 
 	return ref_list;
 }
@@ -5794,7 +5814,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 	if (check_replace && !strcmp(name, refs[refs_size - 1].name)) {
 		/* it's an annotated tag, replace the previous sha1 with the
 		 * resolved commit id; relies on the fact git-ls-remote lists
-		 * the commit id of an annotated tag right beofre the commit id
+		 * the commit id of an annotated tag right before the commit id
 		 * it points to. */
 		refs[refs_size - 1].ltag = ltag;
 		string_copy_rev(refs[refs_size - 1].id, id);
