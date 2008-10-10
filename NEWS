@@ -8,6 +8,7 @@ Improvements:
 
  - Display repository references in the sorted order: tags, heads,
    tracked remotes, remotes.
+ - Add bash completion for blame.
 
 tig-0.12.1
 ----------

@@ -182,6 +182,26 @@ _tig_options ()
 	__tig_complete_revlist
 }
 
+_tig_blame ()
+{
+	local reply="" ref=HEAD cur="${COMP_WORDS[COMP_CWORD]}"
+
+	if test "$COMP_CWORD" -lt 3; then
+		reply="$(__tig_refs)"
+	else
+		ref="${COMP_WORDS[2]}"
+	fi
+
+	reply="$reply $(git --git-dir="$(__tigdir)" ls-tree "$ref" \
+			| sed '/^100... blob /s,^.*	,,
+			       /^040000 tree /{
+			           s,^.*	,,
+			           s,$,/,
+			       }
+			       s/^.*	//')"
+	_tigcomp "$reply"
+}
+
 _tig_show ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -218,12 +238,13 @@ _tig ()
 		case "${COMP_WORDS[COMP_CWORD]}" in
 		--*=*) COMPREPLY=() ;;
 		-*)   _tig_options ;;
-		*)    _tigcomp "status show $(__tig_refs)" ;;
+		*)    _tigcomp "blame status show $(__tig_refs)" ;;
 		esac
 		return
 	fi
 
 	case "$command" in
+	blame)  _tig_blame ;;
 	show)   _tig_show ;;
 	status) ;;
 	*)	_tigcomp "
