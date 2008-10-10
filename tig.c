@@ -2892,7 +2892,6 @@ view_driver(struct view *view, enum request request)
 		return FALSE;
 
 	default:
-		/* An unknown key will show most commonly used commands. */
 		report("Unknown key, press 'h' for help");
 		return TRUE;
 	}
