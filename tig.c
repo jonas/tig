@@ -277,6 +277,9 @@ string_enum_compare(const char *str1, const char *str2, int len)
 	return 0;
 }
 
+#define prefixcmp(str1, str2) \
+	strncmp(str1, str2, STRING_SIZE(str2))
+
 /* Shell quoting
  *
  * NOTE: The following is a slightly modified copy of the git project's shell
@@ -5779,7 +5782,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 	bool check_replace = FALSE;
 	bool head = FALSE;
 
-	if (!strncmp(name, "refs/tags/", STRING_SIZE("refs/tags/"))) {
+	if (!prefixcmp(name, "refs/tags/")) {
 		if (!strcmp(name + namelen - 3, "^{}")) {
 			namelen -= 3;
 			name[namelen] = 0;
@@ -5793,13 +5796,13 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 		namelen -= STRING_SIZE("refs/tags/");
 		name	+= STRING_SIZE("refs/tags/");
 
-	} else if (!strncmp(name, "refs/remotes/", STRING_SIZE("refs/remotes/"))) {
+	} else if (!prefixcmp(name, "refs/remotes/")) {
 		remote = TRUE;
 		namelen -= STRING_SIZE("refs/remotes/");
 		name	+= STRING_SIZE("refs/remotes/");
 		tracked  = !strcmp(opt_remote, name);
 
-	} else if (!strncmp(name, "refs/heads/", STRING_SIZE("refs/heads/"))) {
+	} else if (!prefixcmp(name, "refs/heads/")) {
 		namelen -= STRING_SIZE("refs/heads/");
 		name	+= STRING_SIZE("refs/heads/");
 		head	 = !strncmp(opt_head, name, namelen);
@@ -5879,7 +5882,7 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	    !strcmp(name + 7 + strlen(opt_head), ".merge")) {
 		size_t from = strlen(opt_remote);
 
-		if (!strncmp(value, "refs/heads/", STRING_SIZE("refs/heads/"))) {
+		if (!prefixcmp(value, "refs/heads/")) {
 			value += STRING_SIZE("refs/heads/");
 			valuelen -= STRING_SIZE("refs/heads/");
 		}
@@ -5915,7 +5918,7 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 	} else if (opt_cdup[0] == ' ') {
 		string_ncopy(opt_cdup, name, namelen);
 	} else {
-		if (!strncmp(name, "refs/heads/", STRING_SIZE("refs/heads/"))) {
+		if (!prefixcmp(name, "refs/heads/")) {
 			namelen -= STRING_SIZE("refs/heads/");
 			name	+= STRING_SIZE("refs/heads/");
 			string_ncopy(opt_head, name, namelen);
