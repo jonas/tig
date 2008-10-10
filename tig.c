@@ -3488,7 +3488,7 @@ struct blame {
 };
 
 #define BLAME_CAT_FILE_CMD "git cat-file blob %s:%s"
-#define BLAME_INCREMENTAL_CMD "git blame --incremental %s %s"
+#define BLAME_INCREMENTAL_CMD "git blame --incremental %s -- %s"
 
 static bool
 blame_open(struct view *view)

@@ -10,6 +10,10 @@ Improvements:
    tracked remotes, remotes.
  - Add bash completion for blame.
 
+Bug fixes:
+
+ - Separate blame revision and file argument by "--" to avoid problems.
+
 tig-0.12.1
 ----------
 
