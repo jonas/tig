@@ -422,10 +422,6 @@ thus you will have to use:
 $ tig -- status
 -----------------------------------------------------------------------------
 
-NOTE: For the main view, avoiding ambiguity will in some cases require you to
-specify two "\--" options. The first will make tig stop option processing
-and the latter will be passed to git log.
-
 [[date-number-limiting]]
 Limit by Date or Number
 ~~~~~~~~~~~~~~~~~~~~~~~
