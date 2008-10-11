@@ -6073,7 +6073,7 @@ main(int argc, const char *argv[])
 	if (load_refs() == ERR)
 		die("Failed to load refs.");
 
-	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
+	foreach_view (view, i)
 		view->cmd_env = getenv(view->cmd_env);
 
 	init_display();
@@ -6084,6 +6084,7 @@ main(int argc, const char *argv[])
 
 		foreach_view (view, i)
 			update_view(view);
+		view = display[current_view];
 
 		/* Refresh, accept single keystroke of input */
 		key = wgetch(status_win);
@@ -6095,7 +6096,7 @@ main(int argc, const char *argv[])
 			continue;
 		}
 
-		request = get_keybinding(display[current_view]->keymap, key);
+		request = get_keybinding(view->keymap, key);
 
 		/* Some low-level request handling. This keeps access to
 		 * status_win restricted. */
