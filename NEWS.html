@@ -304,6 +304,31 @@ div#toc a:visited { color: blue; }
 <div id="header">
 <h1>Release notes</h1>
 </div>
+<h2>tig master</h2>
+<div class="sectionbody">
+<p>Improvements:</p>
+<ul>
+<li>
+<p>
+Display repository references in the sorted order: tags, heads,
+   tracked remotes, remotes.
+</p>
+</li>
+<li>
+<p>
+Add bash completion for blame.
+</p>
+</li>
+</ul>
+<p>Bug fixes:</p>
+<ul>
+<li>
+<p>
+Separate blame revision and file argument by "&#8212;" to avoid problems.
+</p>
+</li>
+</ul>
+</div>
 <h2>tig-0.12.1</h2>
 <div class="sectionbody">
 <p>Improvements:</p>
@@ -762,7 +787,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 08-Oct-2008 14:44:57 CEST
+Last updated 11-Oct-2008 13:19:32 CEST
 </div>
 </div>
 </body>

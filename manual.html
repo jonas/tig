@@ -336,6 +336,28 @@ commit with the log message, diffstat, and the diff.</p>
 </li>
 <li>
 <p>
+<a href="#viewer">The Viewer</a>
+</p>
+<ul>
+<li>
+<p>
+<a href="#views">Views</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#commit-id">Browsing State and User-defined Commands</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#title-window">Title Windows</a>
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p>
 <a href="#env-variables">Environment Variables</a>
 </p>
 <ul>
@@ -357,28 +379,6 @@ commit with the log message, diffstat, and the diff.</p>
 <li>
 <p>
 <a href="#tree-commands">Tree Commands</a>
-</p>
-</li>
-</ul>
-</li>
-<li>
-<p>
-<a href="#viewer">The Viewer</a>
-</p>
-<ul>
-<li>
-<p>
-<a href="#commit-id">Current Head and Commit ID</a>
-</p>
-</li>
-<li>
-<p>
-<a href="#views">Views</a>
-</p>
-</li>
-<li>
-<p>
-<a href="#title-window">Title Windows</a>
 </p>
 </li>
 </ul>
@@ -491,7 +491,7 @@ shell.</p>
 <div class="title">Note</div>
 </td>
 <td class="content">If you specify options for the main view, you should not use the
-<tt>&#8212;pretty</tt> option as this option will be set automatically to the format
+<tt>--pretty</tt> option as this option will be set automatically to the format
 expected by the main view.</td>
 </tr></table>
 </div>
@@ -501,128 +501,11 @@ information:</p>
 <div class="content">
 <pre><tt>$ tig show --pretty=fuller</tt></pre>
 </div></div>
-<p>See the <a href="#refspec">"Specifying revisions"</a> section below for an introduction
-to revision options supported by the git commands. For details on specific git
+<p>See the section on <a href="#refspec">specifying revisions</a> for an introduction to
+revision options supported by the git commands. For details on specific git
 command options, refer to the man page of the command in question.</p>
 </div>
-<h2><a id="env-variables"></a>2. Environment Variables</h2>
-<div class="sectionbody">
-<p>Several options related to the interface with git can be configured via
-environment options.</p>
-<h3><a id="configuration-files"></a>2.1. Configuration Files</h3>
-<p>Upon startup, tig first reads the system wide configuration file
-(<tt>++SYSCONFDIR++/tigrc</tt> by default) and then proceeds to read the user's
-configuration file (<tt>~/.tigrc</tt> by default). The paths to either of these files
-can be overridden through the following environment variables:</p>
-<dl>
-<dt>
-TIGRC_USER
-</dt>
-<dd>
-<p>
-        Path of the user configuration file.
-</p>
-</dd>
-<dt>
-TIGRC_SYSTEM
-</dt>
-<dd>
-<p>
-        Path of the system wide configuration file.
-</p>
-</dd>
-</dl>
-<h3><a id="repo-refs"></a>2.2. Repository References</h3>
-<p>Commits that are referenced by tags and branch heads will be marked by the
-reference name surrounded by <em>[</em> and <em>]</em>:</p>
-<div class="listingblock">
-<div class="content">
-<pre><tt>2006-03-26 19:42 Petr Baudis         | [cogito-0.17.1] Cogito 0.17.1</tt></pre>
-</div></div>
-<p>If you want to filter out certain directories under <tt>.git/refs/</tt>, say <tt>tmp</tt>
-you can do it by setting the following variable:</p>
-<div class="listingblock">
-<div class="content">
-<pre><tt>$ TIG_LS_REMOTE="git ls-remote . | sed /\/tmp\//d" tig</tt></pre>
-</div></div>
-<p>Or set the variable permanently in your environment.</p>
-<dl>
-<dt>
-TIG_LS_REMOTE
-</dt>
-<dd>
-<p>
-        Set command for retrieving all repository references. The command
-        should output data in the same format as git-ls-remote(1).
-</p>
-</dd>
-</dl>
-<h3><a id="history-commands"></a>2.3. History Commands</h3>
-<p>It is possible to alter which commands are used for the different views.  If
-for example you prefer commits in the main view to be sorted by date and only
-show 500 commits, use:</p>
-<div class="listingblock">
-<div class="content">
-<pre><tt>$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %s" tig</tt></pre>
-</div></div>
-<p>Or set the variable permanently in your environment.</p>
-<p>Notice, how <tt>%s</tt> is used to specify the commit reference. There can be a
-maximum of 5 <tt>%s</tt> ref specifications.</p>
-<dl>
-<dt>
-TIG_DIFF_CMD
-</dt>
-<dd>
-<p>
-        The command used for the diff view. By default, git show is used
-        as a backend.
-</p>
-</dd>
-<dt>
-TIG_LOG_CMD
-</dt>
-<dd>
-<p>
-        The command used for the log view. If you prefer to have both
-        author and committer shown in the log view be sure to pass
-        <tt>&#8212;pretty=fuller</tt> to git log.
-</p>
-</dd>
-<dt>
-TIG_MAIN_CMD
-</dt>
-<dd>
-<p>
-        The command used for the main view. Note, you must always specify
-        the option: <tt>&#8212;pretty=raw</tt> since the main view parser expects to
-        read that format.
-</p>
-</dd>
-</dl>
-<h3><a id="tree-commands"></a>2.4. Tree Commands</h3>
-<dl>
-<dt>
-TIG_TREE_CMD
-</dt>
-<dd>
-<p>
-        The command used for the tree view. Takes two arguments, the first
-        is the revision ID and the second is the path of the directory tree,
-        empty for the root directory. Defaults to "git ls-tree %s %s".
-</p>
-</dd>
-<dt>
-TIG_BLOB_CMD
-</dt>
-<dd>
-<p>
-        The command used for the blob view. Takes one argument which is
-        the blob ID. Defaults to "git cat-file blob %s".
-</p>
-</dd>
-</dl>
-</div>
-<h2><a id="viewer"></a>3. The Viewer</h2>
+<h2><a id="viewer"></a>2. The Viewer</h2>
 <div class="sectionbody">
 <p>The display consists of a status window on the last line of the screen and one
 or more views. The default is to only show one view at the time but it is
@@ -636,14 +519,7 @@ line, such as:</p>
 <p>You will split the view so that the log view is displayed in the top window
 and the diff view in the bottom window. You can switch between the two views
 by pressing <em>Tab</em>. To maximize the log view again, simply press <em>l</em>.</p>
-<h3><a id="commit-id"></a>3.1. Current Head and Commit ID</h3>
-<p>The viewer keeps track of both what head and commit ID you are currently
-viewing. The commit ID will follow the cursor line and change every time
-you highlight a different commit. Whenever you reopen the diff view it will be
-reloaded, if the commit ID changed.</p>
-<p>The head ID is used when opening the main and log view to indicate from what
-revision to show history.</p>
-<h3><a id="views"></a>3.2. Views</h3>
+<h3><a id="views"></a>2.1. Views</h3>
 <p>Various <em>views</em> of a repository is presented. Each view is based on output
 from an external command, most often <em>git log</em>, <em>git diff</em>, or <em>git show</em>.</p>
 <dl>
@@ -736,11 +612,65 @@ The help view
 </dt>
 <dd>
 <p>
-        Displays key binding quick reference.
+        Displays a quick reference of key bindings.
 </p>
 </dd>
 </dl>
-<h3><a id="title-window"></a>3.3. Title Windows</h3>
+<h3><a id="commit-id"></a>2.2. Browsing State and User-defined Commands</h3>
+<p>The viewer keeps track of both what head and commit ID you are currently
+viewing. The commit ID will follow the cursor line and change every time you
+highlight a different commit. Whenever you reopen the diff view it will be
+reloaded, if the commit ID changed. The head ID is used when opening the main
+and log view to indicate from what revision to show history.</p>
+<p>Some of the commands used or provided by tig can be configured. This goes for
+the <a href="#external-commands">external commands</a>. These user-defined commands can
+use arguments that refer to the current browsing state by using one of the
+following variables.</p>
+<div class="tableblock">
+<table rules="none"
+frame="hsides"
+cellspacing="0" cellpadding="4">
+<col width="274" />
+<col width="617" />
+<thead>
+  <tr>
+    <th align="left">
+    Browsing state variables
+    </th>
+    <th align="left">
+    
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    %(head)
+    </td>
+    <td align="left">
+    The currently viewed <em>head</em> ID. Defaults to HEAD
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    %(commit)
+    </td>
+    <td align="left">
+    The currently selected commit ID.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    %(blob)
+    </td>
+    <td align="left">
+    The currently selected blob ID.
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<h3><a id="title-window"></a>2.3. Title Windows</h3>
 <p>Each view has a title window which shows the name of the view, current commit
 ID if available, and where the view is positioned:</p>
 <div class="listingblock">
@@ -754,6 +684,149 @@ be appended:</p>
 <div class="content">
 <pre><tt>[main] 77d9e40fbcea3238015aea403e06f61542df9a31 - commit 1 of 779 (0%) 5s</tt></pre>
 </div></div>
+</div>
+<h2><a id="env-variables"></a>3. Environment Variables</h2>
+<div class="sectionbody">
+<p>Several options related to the interface with git can be configured via
+environment options.</p>
+<h3><a id="configuration-files"></a>3.1. Configuration Files</h3>
+<p>Upon startup, tig first reads the system wide configuration file
+(<tt>++SYSCONFDIR++/tigrc</tt> by default) and then proceeds to read the user's
+configuration file (<tt>~/.tigrc</tt> by default). The paths to either of these files
+can be overridden through the following environment variables:</p>
+<dl>
+<dt>
+TIGRC_USER
+</dt>
+<dd>
+<p>
+        Path of the user configuration file.
+</p>
+</dd>
+<dt>
+TIGRC_SYSTEM
+</dt>
+<dd>
+<p>
+        Path of the system wide configuration file.
+</p>
+</dd>
+</dl>
+<h3><a id="repo-refs"></a>3.2. Repository References</h3>
+<p>Commits that are referenced by tags and branch heads will be marked by the
+reference name surrounded by <em>[</em> and <em>]</em>:</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>2006-03-26 19:42 Petr Baudis         | [cogito-0.17.1] Cogito 0.17.1</tt></pre>
+</div></div>
+<p>If you want to filter what branches gets shown, say limit to only show
+branches named <tt>master</tt> or which starts with the <tt>jf/</tt> prefix, you can
+do it by setting the following variable:</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ TIG_LS_REMOTE="git ls-remote . master jf/*" tig</tt></pre>
+</div></div>
+<p>Or set the variable permanently in your environment.</p>
+<dl>
+<dt>
+TIG_LS_REMOTE
+</dt>
+<dd>
+<p>
+        Set command for retrieving all repository references. The command
+        should output data in the same format as git-ls-remote(1). Defaults
+        to:
+</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>git ls-remote .</tt></pre>
+</div></div>
+</dd>
+</dl>
+<h3><a id="history-commands"></a>3.3. History Commands</h3>
+<p>It is possible to alter which commands are used for the different views.  If
+for example you prefer commits in the main view to be sorted by date and only
+show 500 commits, use:</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %s" tig</tt></pre>
+</div></div>
+<p>Or set the variable permanently in your environment.</p>
+<p>Notice, how <tt>%s</tt> is used to specify the commit reference. There can be a
+maximum of 5 <tt>%s</tt> ref specifications.</p>
+<dl>
+<dt>
+TIG_DIFF_CMD
+</dt>
+<dd>
+<p>
+        The command used for the diff view. Defaults to:
+</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>git show --pretty=fuller --no-color --root
+         --patch-with-stat --find-copies-harder -C %s</tt></pre>
+</div></div>
+</dd>
+<dt>
+TIG_LOG_CMD
+</dt>
+<dd>
+<p>
+        The command used for the log view. If you prefer to have both
+        author and committer shown in the log view be sure to pass
+        <tt>--pretty=fuller</tt> to git log. Defaults to:
+</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>git log --no-color --cc --stat -n100 %s</tt></pre>
+</div></div>
+</dd>
+<dt>
+TIG_MAIN_CMD
+</dt>
+<dd>
+<p>
+        The command used for the main view. Note, you must always specify
+        the option: <tt>--pretty=raw</tt> since the main view parser expects to
+        read that format.
+</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>git log --no-color --pretty=raw --parents --topo-order %s</tt></pre>
+</div></div>
+</dd>
+</dl>
+<h3><a id="tree-commands"></a>3.4. Tree Commands</h3>
+<dl>
+<dt>
+TIG_TREE_CMD
+</dt>
+<dd>
+<p>
+        The command used for the tree view. Takes two arguments, the first is
+        the revision ID and the second is the path of the directory tree,
+        empty for the root directory. Defaults to:
+</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>git ls-tree %s %s</tt></pre>
+</div></div>
+</dd>
+<dt>
+TIG_BLOB_CMD
+</dt>
+<dd>
+<p>
+        The command used for the blob view. Takes one argument which is the
+        blob ID. Defaults to:
+</p>
+<div class="listingblock">
+<div class="content">
+<pre><tt>git cat-file blob %s</tt></pre>
+</div></div>
+</dd>
+</dl>
 </div>
 <h2><a id="keys"></a>4. Default Keybindings</h2>
 <div class="sectionbody">
@@ -1261,9 +1334,10 @@ cellspacing="0" cellpadding="4">
 </table>
 </div>
 <h3><a id="external-commands"></a>4.7. External Commands</h3>
-<p>Tig also comes with a few builtin external commands. These are simple shell
-commands that are run and can take arguments from the current browsing state,
-such as the current commit ID. The default commands are:</p>
+<p>For more custom needs, external commands provide a way to easily execute
+a script or program. They are bound to keys and use information from the
+current browsing state, such as the current commit ID. Tig comes with
+the following builtin external commands:</p>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -1310,7 +1384,7 @@ information. Relevant man pages besides git-log(1) are git-diff(1) and
 git-rev-list(1).</p>
 <p>You can tune the interaction with git by making use of the options explained
 in this section. For example, by configuring the environment variables
-described in the  <a href="#history-commands">"History commands"</a> section.</p>
+described in the section on <a href="#history-commands">history commands</a>.</p>
 <h3><a id="path-limiting"></a>5.1. Limit by Path Name</h3>
 <p>If you are interested only in those revisions that made changes to a specific
 file (or even several files) list the files like this:</p>
@@ -1326,20 +1400,10 @@ thus you will have to use:</p>
 <div class="content">
 <pre><tt>$ tig -- status</tt></pre>
 </div></div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">For the main view, avoiding ambiguity will in some cases require you to
-specify two "--" options. The first will make tig stop option processing
-and the latter will be passed to git log.</td>
-</tr></table>
-</div>
 <h3><a id="date-number-limiting"></a>5.2. Limit by Date or Number</h3>
 <p>To speed up interaction with git, you can limit the amount of commits to show
 both for the log and main view. Either limit by date using e.g.
-<tt>&#8212;since=1.month</tt> or limit by the number of commits using <tt>-n400</tt>.</p>
+<tt>--since=1.month</tt> or limit by the number of commits using <tt>-n400</tt>.</p>
 <p>If you are only interested in changed that happened between two dates you can
 use:</p>
 <div class="listingblock">
@@ -1352,7 +1416,7 @@ use:</p>
 <div class="title">Note</div>
 </td>
 <td class="content">If you want to avoid having to quote dates containing spaces you can use
-"." instead, e.g. <tt>&#8212;after=May.5th</tt>.</td>
+"." instead, e.g. <tt>--after=May.5th</tt>.</td>
 </tr></table>
 </div>
 <h3><a id="commit-range-limiting"></a>5.3. Limiting by Commit Ranges</h3>
@@ -1491,7 +1555,7 @@ gitview(1)
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 08-Oct-2008 14:44:55 CEST
+Last updated 11-Oct-2008 13:19:30 CEST
 </div>
 </div>
 </body>
