@@ -44,7 +44,7 @@ given command and all will be shell quoted before they are passed to the
 shell.
 
 NOTE: If you specify options for the main view, you should not use the
-`--pretty` option as this option will be set automatically to the format
+`\--pretty` option as this option will be set automatically to the format
 expected by the main view.
 
 Example on how to view a commit and show both author and committer
@@ -54,99 +54,9 @@ information:
 $ tig show --pretty=fuller
 -----------------------------------------------------------------------------
 
-See the <<refspec, "Specifying revisions">> section below for an introduction
-to revision options supported by the git commands. For details on specific git
+See the section on <<refspec, specifying revisions>> for an introduction to
+revision options supported by the git commands. For details on specific git
 command options, refer to the man page of the command in question.
-
-[[env-variables]]
-Environment Variables
----------------------
-
-Several options related to the interface with git can be configured via
-environment options.
-
-[[configuration-files]]
-Configuration Files
-~~~~~~~~~~~~~~~~~~~
-
-Upon startup, tig first reads the system wide configuration file
-(`{sysconfdir}/tigrc` by default) and then proceeds to read the user's
-configuration file (`~/.tigrc` by default). The paths to either of these files
-can be overridden through the following environment variables:
-
-TIGRC_USER::
-	Path of the user configuration file.
-
-TIGRC_SYSTEM::
-	Path of the system wide configuration file.
-
-[[repo-refs]]
-Repository References
-~~~~~~~~~~~~~~~~~~~~~
-
-Commits that are referenced by tags and branch heads will be marked by the
-reference name surrounded by '[' and ']':
-
------------------------------------------------------------------------------
-2006-03-26 19:42 Petr Baudis         | [cogito-0.17.1] Cogito 0.17.1
------------------------------------------------------------------------------
-
-If you want to filter out certain directories under `.git/refs/`, say `tmp`
-you can do it by setting the following variable:
-
------------------------------------------------------------------------------
-$ TIG_LS_REMOTE="git ls-remote . | sed /\/tmp\//d" tig
------------------------------------------------------------------------------
-
-Or set the variable permanently in your environment.
-
-TIG_LS_REMOTE::
-	Set command for retrieving all repository references. The command
-	should output data in the same format as git-ls-remote(1).
-
-[[history-commands]]
-History Commands
-~~~~~~~~~~~~~~~~
-
-It is possible to alter which commands are used for the different views.  If
-for example you prefer commits in the main view to be sorted by date and only
-show 500 commits, use:
-
------------------------------------------------------------------------------
-$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %s" tig
------------------------------------------------------------------------------
-
-Or set the variable permanently in your environment.
-
-Notice, how `%s` is used to specify the commit reference. There can be a
-maximum of 5 `%s` ref specifications.
-
-TIG_DIFF_CMD::
-	The command used for the diff view. By default, git show is used
-	as a backend.
-
-TIG_LOG_CMD::
-	The command used for the log view. If you prefer to have both
-	author and committer shown in the log view be sure to pass
-	`--pretty=fuller` to git log.
-
-TIG_MAIN_CMD::
-	The command used for the main view. Note, you must always specify
-	the option: `--pretty=raw` since the main view parser expects to
-	read that format.
-
-[[tree-commands]]
-Tree Commands
-~~~~~~~~~~~~~
-
-TIG_TREE_CMD::
-	The command used for the tree view. Takes two arguments, the first
-	is the revision ID and the second is the path of the directory tree,
-	empty for the root directory. Defaults to "git ls-tree %s %s".
-
-TIG_BLOB_CMD::
-	The command used for the blob view. Takes one argument which is
-	the blob ID. Defaults to "git cat-file blob %s".
 
 [[viewer]]
 The Viewer
@@ -166,18 +76,6 @@ commit 4d55caff4cc89335192f3e566004b4ceef572521
 You will split the view so that the log view is displayed in the top window
 and the diff view in the bottom window. You can switch between the two views
 by pressing 'Tab'. To maximize the log view again, simply press 'l'.
-
-[[commit-id]]
-Current Head and Commit ID
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The viewer keeps track of both what head and commit ID you are currently
-viewing. The commit ID will follow the cursor line and change every time
-you highlight a different commit. Whenever you reopen the diff view it will be
-reloaded, if the commit ID changed.
-
-The head ID is used when opening the main and log view to indicate from what
-revision to show history.
 
 [[views]]
 Views
@@ -226,7 +124,30 @@ The pager view::
 	commands entered in the internal prompt.
 
 The help view::
-	Displays key binding quick reference.
+	Displays a quick reference of key bindings.
+
+[[commit-id]]
+Browsing State and User-defined Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The viewer keeps track of both what head and commit ID you are currently
+viewing. The commit ID will follow the cursor line and change every time you
+highlight a different commit. Whenever you reopen the diff view it will be
+reloaded, if the commit ID changed. The head ID is used when opening the main
+and log view to indicate from what revision to show history.
+
+Some of the commands used or provided by tig can be configured. This goes for
+the <<external-commands, external commands>>. These user-defined commands can
+use arguments that refer to the current browsing state by using one of the
+following variables.
+
+`-----------------------`-----------------------------------------------------
+Browsing state variables
+------------------------------------------------------------------------------
+%(head)			The currently viewed 'head' ID. Defaults to HEAD
+%(commit)		The currently selected commit ID.
+%(blob)			The currently selected blob ID.
+------------------------------------------------------------------------------
 
 [[title-window]]
 Title Windows
@@ -246,6 +167,134 @@ be appended:
 -----------------------------------------------------------------------------
 [main] 77d9e40fbcea3238015aea403e06f61542df9a31 - commit 1 of 779 (0%) 5s
 -----------------------------------------------------------------------------
+
+[[env-variables]]
+Environment Variables
+---------------------
+
+Several options related to the interface with git can be configured via
+environment options.
+
+[[configuration-files]]
+Configuration Files
+~~~~~~~~~~~~~~~~~~~
+
+Upon startup, tig first reads the system wide configuration file
+(`{sysconfdir}/tigrc` by default) and then proceeds to read the user's
+configuration file (`~/.tigrc` by default). The paths to either of these files
+can be overridden through the following environment variables:
+
+TIGRC_USER::
+	Path of the user configuration file.
+
+TIGRC_SYSTEM::
+	Path of the system wide configuration file.
+
+[[repo-refs]]
+Repository References
+~~~~~~~~~~~~~~~~~~~~~
+
+Commits that are referenced by tags and branch heads will be marked by the
+reference name surrounded by '[' and ']':
+
+-----------------------------------------------------------------------------
+2006-03-26 19:42 Petr Baudis         | [cogito-0.17.1] Cogito 0.17.1
+-----------------------------------------------------------------------------
+
+If you want to filter what branches gets shown, say limit to only show
+branches named `master` or which starts with the `jf/` prefix, you can
+do it by setting the following variable:
+
+-----------------------------------------------------------------------------
+$ TIG_LS_REMOTE="git ls-remote . master jf/*" tig
+-----------------------------------------------------------------------------
+
+Or set the variable permanently in your environment.
+
+--
+
+TIG_LS_REMOTE::
+
+	Set command for retrieving all repository references. The command
+	should output data in the same format as git-ls-remote(1). Defaults
+	to:
+-----------------------------------------------------------------------------
+git ls-remote .
+-----------------------------------------------------------------------------
+
+--
+
+[[history-commands]]
+History Commands
+~~~~~~~~~~~~~~~~
+
+It is possible to alter which commands are used for the different views.  If
+for example you prefer commits in the main view to be sorted by date and only
+show 500 commits, use:
+
+-----------------------------------------------------------------------------
+$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %s" tig
+-----------------------------------------------------------------------------
+
+Or set the variable permanently in your environment.
+
+Notice, how `%s` is used to specify the commit reference. There can be a
+maximum of 5 `%s` ref specifications.
+
+--
+
+TIG_DIFF_CMD::
+
+	The command used for the diff view. Defaults to:
+-----------------------------------------------------------------------------
+git show --pretty=fuller --no-color --root 
+	 --patch-with-stat --find-copies-harder -C %s
+-----------------------------------------------------------------------------
+
+TIG_LOG_CMD::
+
+	The command used for the log view. If you prefer to have both
+	author and committer shown in the log view be sure to pass
+	`\--pretty=fuller` to git log. Defaults to:
+-----------------------------------------------------------------------------
+git log --no-color --cc --stat -n100 %s
+-----------------------------------------------------------------------------
+
+TIG_MAIN_CMD::
+
+	The command used for the main view. Note, you must always specify
+	the option: `\--pretty=raw` since the main view parser expects to
+	read that format.
+-----------------------------------------------------------------------------
+git log --no-color --pretty=raw --parents --topo-order %s
+-----------------------------------------------------------------------------
+
+--
+
+[[tree-commands]]
+Tree Commands
+~~~~~~~~~~~~~
+
+--
+
+TIG_TREE_CMD::
+
+	The command used for the tree view. Takes two arguments, the first is
+	the revision ID and the second is the path of the directory tree,
+	empty for the root directory. Defaults to:
+-----------------------------------------------------------------------------
+git ls-tree %s %s
+-----------------------------------------------------------------------------
+
+TIG_BLOB_CMD::
+
+	The command used for the blob view. Takes one argument which is the
+	blob ID. Defaults to:
+-----------------------------------------------------------------------------
+git cat-file blob %s
+-----------------------------------------------------------------------------
+
+--
 
 [[keys]]
 Default Keybindings
@@ -377,9 +426,10 @@ e	Open file in editor.
 External Commands
 ~~~~~~~~~~~~~~~~~
 
-Tig also comes with a few builtin external commands. These are simple shell
-commands that are run and can take arguments from the current browsing state,
-such as the current commit ID. The default commands are:
+For more custom needs, external commands provide a way to easily execute
+a script or program. They are bound to keys and use information from the
+current browsing state, such as the current commit ID. Tig comes with
+the following builtin external commands:
 
 `-------`--------------------------------------------------------------------
 Key	Action
@@ -400,7 +450,7 @@ git-rev-list(1).
 
 You can tune the interaction with git by making use of the options explained
 in this section. For example, by configuring the environment variables
-described in the  <<history-commands, "History commands">> section.
+described in the section on <<history-commands, history commands>>.
 
 [[path-limiting]]
 Limit by Path Name
@@ -428,7 +478,7 @@ Limit by Date or Number
 
 To speed up interaction with git, you can limit the amount of commits to show
 both for the log and main view. Either limit by date using e.g.
-`--since=1.month` or limit by the number of commits using `-n400`.
+`\--since=1.month` or limit by the number of commits using `-n400`.
 
 If you are only interested in changed that happened between two dates you can
 use:
@@ -438,7 +488,7 @@ $ tig --after="May 5th" --before="2006-05-16 15:44"
 -----------------------------------------------------------------------------
 
 NOTE: If you want to avoid having to quote dates containing spaces you can use
-"." instead, e.g. `--after=May.5th`.
+"." instead, e.g. `\--after=May.5th`.
 
 [[commit-range-limiting]]
 Limiting by Commit Ranges
