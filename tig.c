@@ -4394,7 +4394,7 @@ status_revert(struct status *status, enum line_type type, bool has_none)
 		char file_sq[SIZEOF_STR];
 
 		if (sq_quote(file_sq, 0, status->old.name) >= sizeof(file_sq) ||
-		    !string_format(cmd, "git checkout %s%s", opt_cdup, file_sq))
+		    !string_format(cmd, "git checkout -- %s%s", opt_cdup, file_sq))
 			return FALSE;
 
 		return run_confirm(cmd, "Are you sure you want to overwrite any changes?");
