@@ -483,6 +483,7 @@ static char opt_cdup[SIZEOF_STR]	= "";
 static char opt_git_dir[SIZEOF_STR]	= "";
 static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
+static FILE *opt_tty			= NULL;
 
 static enum request
 parse_options(int argc, const char *argv[])
@@ -2562,7 +2563,7 @@ open_external_viewer(const char *cmd)
 	endwin();                  /* restore original tty modes */
 	system(cmd);
 	fprintf(stderr, "Press Enter to continue");
-	getc(stdin);
+	getc(opt_tty);
 	reset_prog_mode();
 	redraw_display();
 }
@@ -5527,13 +5528,13 @@ init_display(void)
 	/* Initialize the curses library */
 	if (isatty(STDIN_FILENO)) {
 		cursed = !!initscr();
+		opt_tty = stdin;
 	} else {
 		/* Leave stdin and stdout alone when acting as a pager. */
-		FILE *io = fopen("/dev/tty", "r+");
-
-		if (!io)
+		opt_tty = fopen("/dev/tty", "r+");
+		if (!opt_tty)
 			die("Failed to open /dev/tty");
-		cursed = !!newterm(NULL, io, io);
+		cursed = !!newterm(NULL, opt_tty, opt_tty);
 	}
 
 	if (!cursed)

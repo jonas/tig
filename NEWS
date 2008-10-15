@@ -14,6 +14,7 @@ Bug fixes:
 
  - Separate blame revision and file argument by "--" to avoid problems.
  - Main view: fix redrawing of the last commit wrt. the revision graph.
+ - Fix waiting for input after executing a run request in pager mode.
 
 tig-0.12.1
 ----------
