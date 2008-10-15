@@ -2378,8 +2378,14 @@ update_view(struct view *view)
 		}
 	}
 
-	if (!view_is_displayed(view))
-		goto check_pipe;
+	if (ferror(view->pipe) && errno != 0) {
+		report("Failed to read: %s", strerror(errno));
+		end_update(view, TRUE);
+
+	} else if (feof(view->pipe)) {
+		report("");
+		end_update(view, FALSE);
+	}
 
 	if (view == VIEW(REQ_VIEW_TREE)) {
 		/* Clear the view and redraw everything since the tree sorting
@@ -2409,17 +2415,6 @@ update_view(struct view *view)
 	/* Update the title _after_ the redraw so that if the redraw picks up a
 	 * commit reference in view->ref it'll be available here. */
 	update_view_title(view);
-
-check_pipe:
-	if (ferror(view->pipe) && errno != 0) {
-		report("Failed to read: %s", strerror(errno));
-		end_update(view, TRUE);
-
-	} else if (feof(view->pipe)) {
-		report("");
-		end_update(view, FALSE);
-	}
-
 	return TRUE;
 
 alloc_error:

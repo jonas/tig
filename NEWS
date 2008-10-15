@@ -13,6 +13,7 @@ Improvements:
 Bug fixes:
 
  - Separate blame revision and file argument by "--" to avoid problems.
+ - Main view: fix redrawing of the last commit wrt. the revision graph.
 
 tig-0.12.1
 ----------
