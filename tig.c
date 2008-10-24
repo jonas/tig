@@ -1725,6 +1725,9 @@ struct view {
 	/* Navigation */
 	unsigned long offset;	/* Offset of the window top */
 	unsigned long lineno;	/* Current line number */
+	unsigned long p_offset;	/* Previous offset of the window top */
+	unsigned long p_lineno;	/* Previous current line number */
+	bool p_restore;		/* Should the previous position be restored. */
 
 	/* Searching */
 	char grep[SIZEOF_STR];	/* Search string */
@@ -2516,6 +2519,9 @@ reset_view(struct view *view)
 		free(view->line[i].data);
 	free(view->line);
 
+	view->p_offset = view->offset;
+	view->p_lineno = view->lineno;
+
 	view->line = NULL;
 	view->offset = 0;
 	view->lines  = 0;
@@ -2595,6 +2601,43 @@ format_argv(const char *dst_argv[], const char *src_argv[], enum format_flags fl
 	dst_argv[argc] = NULL;
 
 	return src_argv[argc] == NULL;
+}
+
+static bool
+restore_view_position(struct view *view)
+{
+	if (!view->p_restore || (view->pipe && view->lines <= view->p_lineno))
+		return FALSE;
+
+	/* Changing the view position cancels the restoring. */
+	/* FIXME: Changing back to the first line is not detected. */
+	if (view->offset != 0 || view->lineno != 0) {
+		view->p_restore = FALSE;
+		return FALSE;
+	}
+
+	if (view->p_lineno >= view->lines) {
+		view->p_lineno = view->lines > 0 ? view->lines - 1 : 0;
+		if (view->p_offset >= view->p_lineno) {
+			unsigned long half = view->height / 2;
+
+			if (view->p_lineno > half)
+				view->p_offset = view->p_lineno - half;
+			else
+				view->p_offset = 0;
+		}
+	}
+
+	if (view_is_displayed(view) &&
+	    view->offset != view->p_offset &&
+	    view->lineno != view->p_lineno)
+		werase(view->win);
+
+	view->offset = view->p_offset;
+	view->lineno = view->p_lineno;
+	view->p_restore = FALSE;
+
+	return TRUE;
 }
 
 static void
@@ -2768,6 +2811,9 @@ update_view(struct view *view)
 		end_update(view, FALSE);
 	}
 
+	if (restore_view_position(view))
+		redraw = TRUE;
+
 	if (!view_is_displayed(view))
 		return TRUE;
 
@@ -2883,6 +2929,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 			report("Failed to load %s view", view->name);
 			return;
 		}
+		restore_view_position(view);
 
 	} else if ((reload || strcmp(view->vid, view->id)) &&
 		   !begin_update(view, flags & (OPEN_REFRESH | OPEN_PREPARED))) {
@@ -2912,6 +2959,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		/* Clear the old view and let the incremental updating refill
 		 * the screen. */
 		werase(view->win);
+		view->p_restore = flags & (OPEN_RELOAD | OPEN_REFRESH);
 		report("");
 	} else if (view_is_displayed(view)) {
 		redraw_view(view);
@@ -4358,14 +4406,38 @@ static const char *update_index_argv[] = {
 	"git", "update-index", "-q", "--unmerged", "--refresh", NULL
 };
 
+/* Restore the previous line number to stay in the context or select a
+ * line with something that can be updated. */
+static void
+status_restore(struct view *view)
+{
+	if (view->p_lineno >= view->lines)
+		view->p_lineno = view->lines - 1;
+	while (view->p_lineno < view->lines && !view->line[view->p_lineno].data)
+		view->p_lineno++;
+	while (view->p_lineno > 0 && !view->line[view->p_lineno].data)
+		view->p_lineno--;
+
+	/* If the above fails, always skip the "On branch" line. */
+	if (view->p_lineno < view->lines)
+		view->lineno = view->p_lineno;
+	else
+		view->lineno = 1;
+
+	if (view->lineno < view->offset)
+		view->offset = view->lineno;
+	else if (view->offset + view->height <= view->lineno)
+		view->offset = view->lineno - view->height + 1;
+
+	view->p_restore = FALSE;
+}
+
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
  * git-ls-files(1). */
 static bool
 status_open(struct view *view)
 {
-	unsigned long prev_lineno = view->lineno;
-
 	reset_view(view);
 
 	add_line_data(view, NULL, LINE_STAT_HEAD);
@@ -4389,27 +4461,10 @@ status_open(struct view *view)
 	    !status_run(view, status_list_other_argv, '?', LINE_STAT_UNTRACKED))
 		return FALSE;
 
-	/* If all went well restore the previous line number to stay in
-	 * the context or select a line with something that can be
-	 * updated. */
-	if (prev_lineno >= view->lines)
-		prev_lineno = view->lines - 1;
-	while (prev_lineno < view->lines && !view->line[prev_lineno].data)
-		prev_lineno++;
-	while (prev_lineno > 0 && !view->line[prev_lineno].data)
-		prev_lineno--;
-
-	/* If the above fails, always skip the "On branch" line. */
-	if (prev_lineno < view->lines)
-		view->lineno = prev_lineno;
-	else
-		view->lineno = 1;
-
-	if (view->lineno < view->offset)
-		view->offset = view->lineno;
-	else if (view->offset + view->height <= view->lineno)
-		view->offset = view->lineno - view->height + 1;
-
+	/* Restore the exact position or use the specialized restore
+	 * mode? */
+	if (!view->p_restore)
+		status_restore(view);
 	return TRUE;
 }
 
@@ -4548,7 +4603,7 @@ status_enter(struct view *view, struct line *line)
 	}
 
 	split = view_is_displayed(view) ? OPEN_SPLIT : 0;
-	open_view(view, REQ_VIEW_STAGE, OPEN_REFRESH | split);
+	open_view(view, REQ_VIEW_STAGE, OPEN_PREPARED | split);
 	if (view_is_displayed(VIEW(REQ_VIEW_STAGE))) {
 		if (status) {
 			stage_status = *status;
@@ -5101,12 +5156,15 @@ stage_request(struct view *view, enum request request, struct line *line)
 		return request;
 	}
 
+	VIEW(REQ_VIEW_STATUS)->p_restore = TRUE;
 	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD | OPEN_NOMAXIMIZE);
 
 	/* Check whether the staged entry still exists, and close the
 	 * stage view if it doesn't. */
-	if (!status_exists(&stage_status, stage_line_type))
+	if (!status_exists(&stage_status, stage_line_type)) {
+		status_restore(VIEW(REQ_VIEW_STATUS));
 		return REQ_VIEW_CLOSE;
+	}
 
 	if (stage_line_type == LINE_STAT_UNTRACKED) {
 	    	if (!suffixcmp(stage_status.new.name, -1, "/")) {

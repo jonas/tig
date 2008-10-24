@@ -13,6 +13,7 @@ Improvements:
 
  - Tree view: avoid flickering when updating.
  - Tree & blob view: open any blob in an editor.
+ - Stage & main view: restore view position when reloading.
 
 Bug fixes:
 
