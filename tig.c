@@ -280,6 +280,15 @@ string_enum_compare(const char *str1, const char *str2, int len)
 #define prefixcmp(str1, str2) \
 	strncmp(str1, str2, STRING_SIZE(str2))
 
+static inline int
+suffixcmp(const char *str, int slen, const char *suffix)
+{
+	size_t len = slen >= 0 ? slen : strlen(str);
+	size_t suffixlen = strlen(suffix);
+
+	return suffixlen < len ? strcmp(str + len - suffixlen, suffix) : -1;
+}
+
 /* Shell quoting
  *
  * NOTE: The following is a slightly modified copy of the git project's shell
@@ -4191,6 +4200,11 @@ status_enter(struct view *view, struct line *line)
 			return REQ_NONE;
 		}
 
+	    	if (!suffixcmp(status->new.name, -1, "/")) {
+			report("Cannot display a directory");
+			return REQ_NONE;
+		}
+
 		opt_pipe = fopen(status->new.name, "r");
 		info = "Untracked file %s";
 		break;
@@ -4771,8 +4785,14 @@ stage_request(struct view *view, enum request request, struct line *line)
 	if (!status_exists(&stage_status, stage_line_type))
 		return REQ_VIEW_CLOSE;
 
-	if (stage_line_type == LINE_STAT_UNTRACKED)
+	if (stage_line_type == LINE_STAT_UNTRACKED) {
+	    	if (!suffixcmp(stage_status.new.name, -1, "/")) {
+			report("Cannot display a directory");
+			return REQ_NONE;
+		}
+
 		opt_pipe = fopen(stage_status.new.name, "r");
+	}
 	open_view(view, REQ_VIEW_STAGE, OPEN_REFRESH);
 
 	return REQ_NONE;
@@ -5779,7 +5799,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 	bool head = FALSE;
 
 	if (!prefixcmp(name, "refs/tags/")) {
-		if (!strcmp(name + namelen - 3, "^{}")) {
+		if (!suffixcmp(name, namelen, "^{}")) {
 			namelen -= 3;
 			name[namelen] = 0;
 			if (refs_size > 0 && refs[refs_size - 1].ltag == TRUE)
