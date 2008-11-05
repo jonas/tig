@@ -132,7 +132,7 @@ bind diff b move-first-line
 bind main Q none
 # An external command to update from upstream
 bind generic F !git fetch
-# Cherry-pick current commit unto current branch
+# Cherry-pick current commit onto current branch
 bind generic C !git cherry-pick %(commit)
 --------------------------------------------------------------------------
 
@@ -173,10 +173,21 @@ Actions
 Apart from the action names listed below, all actions starting with a '!' will
 be available as an external command. External commands can contain variable
 names that will be substituted before the command is run. Valid variable names
-are "%(head)", "%(commit)", and "%(blob)".
+are:
+
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
+Browsing state variables
+------------------------------------------------------------------------------
+%(head)			The currently viewed 'head' ID. Defaults to HEAD
+%(commit)		The currently selected commit ID.
+%(blob)			The currently selected blob ID.
+------------------------------------------------------------------------------
 
 As an example, the following external command will save the current commit as
-a patch file: "!git format-patch %(commit)^..%(commit)".
+a patch file: "!git format-patch -1 %(commit)".
 
 ifdef::backend-xhtml11[]
 [frame="none"]
