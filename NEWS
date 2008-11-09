@@ -18,6 +18,7 @@ Improvements:
  - Add bash completion for blame.
  - Tree view: edit files of the current branch.
  - Run requests: new identifiers %(directory), %(file), and %(ref)
+ - Improve responsiveness and view loading speed by using select(2).
 
 Bug fixes:
 

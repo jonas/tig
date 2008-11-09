@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 #include <unistd.h>
 #include <time.h>
 #include <fcntl.h>
@@ -507,6 +508,18 @@ static bool
 io_strerror(struct io *io)
 {
 	return strerror(io->error);
+}
+
+static bool
+io_can_read(struct io *io)
+{
+	struct timeval tv = { 0, 500 };
+	fd_set fds;
+
+	FD_ZERO(&fds);
+	FD_SET(io->pipe, &fds);
+
+	return select(io->pipe + 1, &fds, NULL, NULL, &tv) > 0;
 }
 
 static ssize_t
@@ -2666,24 +2679,20 @@ update_view(struct view *view)
 {
 	char out_buffer[BUFSIZ * 2];
 	char *line;
-	/* The number of lines to read. If too low it will cause too much
-	 * redrawing (and possible flickering), if too high responsiveness
-	 * will suffer. */
-	unsigned long lines = view->height;
 	int redraw_from = -1;
+	bool can_read = TRUE;
 
 	if (!view->pipe)
+		return TRUE;
+
+	if (!io_can_read(view->pipe))
 		return TRUE;
 
 	/* Only redraw if lines are visible. */
 	if (view->offset + view->height >= view->lines)
 		redraw_from = view->lines - view->offset;
 
-	/* FIXME: This is probably not perfect for backgrounded views. */
-	if (!realloc_lines(view, view->lines + lines))
-		goto alloc_error;
-
-	while ((line = io_get(view->pipe, '\n', TRUE))) {
+	for (; (line = io_get(view->pipe, '\n', can_read)); can_read = FALSE) {
 		size_t linelen = strlen(line);
 
 		if (opt_iconv != ICONV_NONE) {
@@ -2702,17 +2711,15 @@ update_view(struct view *view)
 			}
 		}
 
-		if (!view->ops->read(view, line))
+		if (!realloc_lines(view, view->lines + 1) ||
+		    !view->ops->read(view, line))
 			goto alloc_error;
-
-		if (lines-- == 1)
-			break;
 	}
 
 	{
+		unsigned long lines = view->lines;
 		int digits;
 
-		lines = view->lines;
 		for (digits = 0; lines; digits++)
 			lines /= 10;
 
