@@ -4438,6 +4438,10 @@ status_request(struct view *view, enum request request, struct line *line)
 	case REQ_EDIT:
 		if (!status)
 			return request;
+		if (status->status == 'D') {
+			report("File has been deleted.");
+			return REQ_NONE;
+		}
 
 		open_editor(status->status != '?', status->new.name);
 		break;
@@ -4756,6 +4760,10 @@ stage_request(struct view *view, enum request request, struct line *line)
 	case REQ_EDIT:
 		if (!stage_status.new.name[0])
 			return request;
+		if (stage_status.status == 'D') {
+			report("File has been deleted.");
+			return REQ_NONE;
+		}
 
 		open_editor(stage_status.status != '?', stage_status.new.name);
 		break;
