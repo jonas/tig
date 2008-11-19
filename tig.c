@@ -1736,6 +1736,7 @@ struct view {
 	struct io io;
 	struct io *pipe;
 	time_t start_time;
+	time_t update_secs;
 };
 
 struct view_ops {
@@ -2063,25 +2064,26 @@ update_view_title(struct view *view)
 
 	assert(view_is_displayed(view));
 
-	if (view != VIEW(REQ_VIEW_STATUS) && (view->lines || view->pipe)) {
+	if (view != VIEW(REQ_VIEW_STATUS) && view->lines) {
 		unsigned int view_lines = view->offset + view->height;
 		unsigned int lines = view->lines
 				   ? MIN(view_lines, view->lines) * 100 / view->lines
 				   : 0;
 
-		string_format_from(state, &statelen, "- %s %d of %d (%d%%)",
+		string_format_from(state, &statelen, " - %s %d of %d (%d%%)",
 				   view->ops->type,
 				   view->lineno + 1,
 				   view->lines,
 				   lines);
 
-		if (view->pipe) {
-			time_t secs = time(NULL) - view->start_time;
+	}
 
-			/* Three git seconds are a long time ... */
-			if (secs > 2)
-				string_format_from(state, &statelen, " %lds", secs);
-		}
+	if (view->pipe) {
+		time_t secs = time(NULL) - view->start_time;
+
+		/* Three git seconds are a long time ... */
+		if (secs > 2)
+			string_format_from(state, &statelen, " loading %lds", secs);
 	}
 
 	string_format_from(buf, &bufpos, "[%s]", view->name);
@@ -2095,7 +2097,7 @@ update_view_title(struct view *view)
 	}
 
 	if (statelen && bufpos < view->width) {
-		string_format_from(buf, &bufpos, " %s", state);
+		string_format_from(buf, &bufpos, "%s", state);
 	}
 
 	if (view == display[current_view])
@@ -2501,6 +2503,7 @@ reset_view(struct view *view)
 	view->line_size = 0;
 	view->line_alloc = 0;
 	view->vid[0] = 0;
+	view->update_secs = 0;
 }
 
 static void
@@ -2685,8 +2688,19 @@ update_view(struct view *view)
 	if (!view->pipe)
 		return TRUE;
 
-	if (!io_can_read(view->pipe))
+	if (!io_can_read(view->pipe)) {
+		if (view->lines == 0) {
+			time_t secs = time(NULL) - view->start_time;
+
+			if (secs > view->update_secs) {
+				if (view->update_secs == 0)
+					redraw_view(view);
+				update_view_title(view);
+				view->update_secs = secs;
+			}
+		}
 		return TRUE;
+	}
 
 	/* Only redraw if lines are visible. */
 	if (view->offset + view->height >= view->lines)
