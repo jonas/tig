@@ -4,6 +4,13 @@ Release notes
 tig master
 ----------
 
+Incompatibilities:
+
+ - Commands from the environment (e.g. TIG_MAIN_CMD) will no longer have
+   access to shell features, such as subshells and variable expansion.
+   The easiest way to upgrade your configuration is to put such commands
+   in a script file.
+
 Improvements:
 
  - Display repository references in the sorted order: tags, heads,

@@ -122,30 +122,8 @@ static int load_refs(void);
 #define TIG_LS_REMOTE \
 	"git ls-remote . 2>/dev/null"
 
-#define TIG_DIFF_CMD \
-	"git show --pretty=fuller --no-color --root --patch-with-stat --find-copies-harder -C %s 2>/dev/null"
-
-#define TIG_LOG_CMD	\
-	"git log --no-color --cc --stat -n100 %s 2>/dev/null"
-
 #define TIG_MAIN_BASE \
 	"git log --no-color --pretty=raw --parents --topo-order"
-
-#define TIG_MAIN_CMD \
-	TIG_MAIN_BASE " %s 2>/dev/null"
-
-#define TIG_TREE_CMD	\
-	"git ls-tree %s %s"
-
-#define TIG_BLOB_CMD	\
-	"git cat-file blob %s"
-
-/* XXX: Needs to be defined to the empty string. */
-#define TIG_HELP_CMD	""
-#define TIG_PAGER_CMD	""
-#define TIG_STATUS_CMD	""
-#define TIG_STAGE_CMD	""
-#define TIG_BLAME_CMD	""
 
 /* Some ascii-shorthands fitted into the ncurses namespace. */
 #define KEY_TAB		'\t'
@@ -359,6 +337,18 @@ argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
 	return *argc < SIZEOF_ARG;
 }
 
+static void
+argv_from_env(const char **argv, const char *name)
+{
+	char *env = argv ? getenv(name) : NULL;
+	int argc = 0;
+
+	if (env && *env)
+		env = strdup(env);
+	if (env && !argv_from_string(argv, &argc, env))
+		die("Too many arguments in the `%s` environment variable", name);
+}
+
 
 /*
  * Executing external commands.
@@ -484,6 +474,12 @@ run_io_format(struct io *io, const char *cmd, ...)
 	va_end(args);
 
 	return io->sh[0] ? start_io(io) : FALSE;
+}
+
+static bool
+run_io_rd(struct io *io, const char **argv, enum format_flags flags)
+{
+	return init_io_rd(io, argv, NULL, flags) && start_io(io);
 }
 
 static bool
@@ -1594,7 +1590,6 @@ static char ref_head[SIZEOF_REF]	= "HEAD";
 
 struct view {
 	const char *name;	/* View name */
-	const char *cmd_fmt;	/* Default command line format */
 	const char *cmd_env;	/* Command line set via environment */
 	const char *id;		/* Points to either of ref_{head,commit,blob} */
 
@@ -1643,6 +1638,8 @@ struct view {
 struct view_ops {
 	/* What type of content being displayed. Used in the title bar. */
 	const char *type;
+	/* Default command arguments. */
+	const char **argv;
 	/* Open and reads in all view content. */
 	bool (*open)(struct view *view);
 	/* Read one line; updates view->line. */
@@ -1659,6 +1656,7 @@ struct view_ops {
 
 static struct view_ops blame_ops;
 static struct view_ops blob_ops;
+static struct view_ops diff_ops;
 static struct view_ops help_ops;
 static struct view_ops log_ops;
 static struct view_ops main_ops;
@@ -1667,16 +1665,16 @@ static struct view_ops stage_ops;
 static struct view_ops status_ops;
 static struct view_ops tree_ops;
 
-#define VIEW_STR(name, cmd, env, ref, ops, map, git) \
-	{ name, cmd, #env, ref, ops, map, git }
+#define VIEW_STR(name, env, ref, ops, map, git) \
+	{ name, #env, ref, ops, map, git }
 
 #define VIEW_(id, name, ops, git, ref) \
-	VIEW_STR(name, TIG_##id##_CMD,  TIG_##id##_CMD, ref, ops, KEYMAP_##id, git)
+	VIEW_STR(name, TIG_##id##_CMD, ref, ops, KEYMAP_##id, git)
 
 
 static struct view views[] = {
 	VIEW_(MAIN,   "main",   &main_ops,   TRUE,  ref_head),
-	VIEW_(DIFF,   "diff",   &pager_ops,  TRUE,  ref_commit),
+	VIEW_(DIFF,   "diff",   &diff_ops,   TRUE,  ref_commit),
 	VIEW_(LOG,    "log",    &log_ops,    TRUE,  ref_head),
 	VIEW_(TREE,   "tree",   &tree_ops,   TRUE,  ref_commit),
 	VIEW_(BLOB,   "blob",   &blob_ops,   TRUE,  ref_blob),
@@ -2548,22 +2546,14 @@ begin_update(struct view *view, bool refresh)
 			return FALSE;
 
 	} else if (view == VIEW(REQ_VIEW_TREE)) {
-		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
-		char path[SIZEOF_STR];
-
 		if (strcmp(view->vid, view->id))
-			opt_path[0] = path[0] = 0;
-		else if (sq_quote(path, 0, opt_path) >= sizeof(path))
-			return FALSE;
+			opt_path[0] = 0;
 
-		if (!run_io_format(&view->io, format, view->id, path))
+		if (!run_io_rd(&view->io, view->ops->argv, FORMAT_ALL))
 			return FALSE;
 
 	} else {
-		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
-		const char *id = view->id;
-
-		if (!run_io_format(&view->io, format, id, id, id, id, id))
+		if (!run_io_rd(&view->io, view->ops->argv, FORMAT_ALL))
 			return FALSE;
 
 		/* Put the current ref_* value to the view title ref
@@ -3315,11 +3305,16 @@ pager_select(struct view *view, struct line *line)
 static struct view_ops pager_ops = {
 	"line",
 	NULL,
+	NULL,
 	pager_read,
 	pager_draw,
 	pager_request,
 	pager_grep,
 	pager_select,
+};
+
+static const char *log_argv[SIZEOF_ARG] = {
+	"git", "log", "--no-color", "--cc", "--stat", "-n100", "%(head)", NULL
 };
 
 static enum request
@@ -3337,6 +3332,7 @@ log_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops log_ops = {
 	"line",
+	log_argv,
 	NULL,
 	pager_read,
 	pager_draw,
@@ -3345,6 +3341,21 @@ static struct view_ops log_ops = {
 	pager_select,
 };
 
+static const char *diff_argv[SIZEOF_ARG] = {
+	"git", "show", "--pretty=fuller", "--no-color", "--root",
+		"--patch-with-stat", "--find-copies-harder", "-C", "%(commit)", NULL
+};
+
+static struct view_ops diff_ops = {
+	"line",
+	diff_argv,
+	NULL,
+	pager_read,
+	pager_draw,
+	pager_request,
+	pager_grep,
+	pager_select,
+};
 
 /*
  * Help backend
@@ -3430,6 +3441,7 @@ help_open(struct view *view)
 
 static struct view_ops help_ops = {
 	"line",
+	NULL,
 	help_open,
 	NULL,
 	pager_draw,
@@ -3698,8 +3710,13 @@ tree_select(struct view *view, struct line *line)
 	string_copy_rev(view->ref, text);
 }
 
+static const char *tree_argv[SIZEOF_ARG] = {
+	"git", "ls-tree", "%(commit)", "%(directory)", NULL
+};
+
 static struct view_ops tree_ops = {
 	"file",
+	tree_argv,
 	NULL,
 	tree_read,
 	pager_draw,
@@ -3716,8 +3733,13 @@ blob_read(struct view *view, char *line)
 	return add_line_text(view, line, LINE_DEFAULT) != NULL;
 }
 
+static const char *blob_argv[SIZEOF_ARG] = {
+	"git", "cat-file", "blob", "%(blob)", NULL
+};
+
 static struct view_ops blob_ops = {
 	"line",
+	blob_argv,
 	NULL,
 	blob_read,
 	pager_draw,
@@ -4077,6 +4099,7 @@ blame_select(struct view *view, struct line *line)
 
 static struct view_ops blame_ops = {
 	"line",
+	NULL,
 	blame_open,
 	blame_read,
 	blame_draw,
@@ -4476,7 +4499,7 @@ status_enter(struct view *view, struct line *line)
 	}
 
 	split = view_is_displayed(view) ? OPEN_SPLIT : 0;
-	open_view(view, REQ_VIEW_STAGE, OPEN_RELOAD | split);
+	open_view(view, REQ_VIEW_STAGE, OPEN_REFRESH | split);
 	if (view_is_displayed(VIEW(REQ_VIEW_STAGE))) {
 		if (status) {
 			stage_status = *status;
@@ -4812,6 +4835,7 @@ status_grep(struct view *view, struct line *line)
 
 static struct view_ops status_ops = {
 	"file",
+	NULL,
 	status_open,
 	NULL,
 	status_draw,
@@ -5067,6 +5091,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 static struct view_ops stage_ops = {
 	"line",
 	NULL,
+	NULL,
 	pager_read,
 	pager_draw,
 	stage_request,
@@ -5294,6 +5319,11 @@ update_rev_graph(struct rev_graph *graph)
 /*
  * Main view backend
  */
+
+static const char *main_argv[SIZEOF_ARG] = {
+	"git", "log", "--no-color", "--pretty=raw", "--parents",
+		      "--topo-order", "%(head)", NULL
+};
 
 static bool
 main_draw(struct view *view, struct line *line, unsigned int lineno)
@@ -5575,6 +5605,7 @@ main_select(struct view *view, struct line *line)
 
 static struct view_ops main_ops = {
 	"commit",
+	main_argv,
 	NULL,
 	main_read,
 	main_draw,
@@ -6356,7 +6387,7 @@ main(int argc, const char *argv[])
 		die("Failed to load refs.");
 
 	foreach_view (view, i)
-		view->cmd_env = getenv(view->cmd_env);
+		argv_from_env(view->ops->argv, view->cmd_env);
 
 	init_display();
 
