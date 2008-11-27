@@ -399,6 +399,14 @@ init_io(struct io *io, const char *dir, enum io_type type)
 }
 
 static bool
+init_io_rd(struct io *io, const char *argv[], const char *dir,
+		enum format_flags flags)
+{
+	init_io(io, dir, IO_RD);
+	return format_command(io->sh, argv, flags);
+}
+
+static bool
 init_io_fd(struct io *io, FILE *pipe)
 {
 	init_io(io, NULL, IO_FD);
@@ -2515,6 +2523,15 @@ setup_update(struct view *view, const char *vid)
 }
 
 static bool
+prepare_update(struct view *view, const char *argv[], const char *dir,
+	       enum format_flags flags)
+{
+	if (view->pipe)
+		end_update(view, TRUE);
+	return init_io_rd(&view->io, argv, dir, flags);
+}
+
+static bool
 begin_update(struct view *view, bool refresh)
 {
 	if (init_io_fd(&view->io, opt_pipe)) {
@@ -2523,13 +2540,7 @@ begin_update(struct view *view, bool refresh)
 	} else if (opt_cmd[0]) {
 		if (!run_io(&view->io, IO_RD, opt_cmd))
 			return FALSE;
-		/* When running random commands, initially show the
-		 * command in the title. However, it maybe later be
-		 * overwritten if a commit line is selected. */
-		if (view == VIEW(REQ_VIEW_PAGER))
-			string_copy(view->ref, opt_cmd);
-		else
-			view->ref[0] = 0;
+		view->ref[0] = 0;
 		opt_cmd[0] = 0;
 
 	} else if (refresh) {
@@ -2743,6 +2754,7 @@ enum open_flags {
 	OPEN_RELOAD = 4,	/* Reload view even if it is the current. */
 	OPEN_NOMAXIMIZE = 8,	/* Do not maximize the current view. */
 	OPEN_REFRESH = 16,	/* Refresh view using previous command. */
+	OPEN_PREPARED = 32,	/* Open already prepared command. */
 };
 
 static void
@@ -2750,7 +2762,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 {
 	bool backgrounded = !!(flags & OPEN_BACKGROUNDED);
 	bool split = !!(flags & OPEN_SPLIT);
-	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH));
+	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED));
 	bool nomaximize = !!(flags & (OPEN_NOMAXIMIZE | OPEN_REFRESH));
 	struct view *view = VIEW(request);
 	int nviews = displayed_views();
@@ -2793,7 +2805,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		}
 
 	} else if ((reload || strcmp(view->vid, view->id)) &&
-		   !begin_update(view, flags & OPEN_REFRESH)) {
+		   !begin_update(view, flags & (OPEN_REFRESH | OPEN_PREPARED))) {
 		report("Failed to load %s view", view->name);
 		return;
 	}
@@ -5893,7 +5905,7 @@ static char *
 read_prompt(const char *prompt)
 {
 	enum { READING, STOP, CANCEL } status = READING;
-	static char buf[sizeof(opt_cmd) - STRING_SIZE("git \0")];
+	static char buf[SIZEOF_STR];
 	int pos = 0;
 
 	while (status == READING) {
@@ -6375,15 +6387,23 @@ main(int argc, const char *argv[])
 		{
 			char *cmd = read_prompt(":");
 
-			if (cmd && string_format(opt_cmd, "git %s", cmd)) {
-				if (strncmp(cmd, "show", 4) && isspace(cmd[4])) {
-					request = REQ_VIEW_DIFF;
-				} else {
-					request = REQ_VIEW_PAGER;
-				}
+			if (cmd) {
+				struct view *next = VIEW(REQ_VIEW_PAGER);
+				const char *argv[SIZEOF_ARG] = { "git" };
+				int argc = 1;
 
-				/* Always reload^Wrerun commands from the prompt. */
-				open_view(view, request, OPEN_RELOAD);
+				/* When running random commands, initially show the
+				 * command in the title. However, it maybe later be
+				 * overwritten if a commit line is selected. */
+				string_ncopy(next->ref, cmd, strlen(cmd));
+
+				if (!argv_from_string(argv, &argc, cmd)) {
+					report("Too many arguments");
+				} else if (!prepare_update(next, argv, NULL, FORMAT_DASH)) {
+					report("Failed to format command");
+				} else {
+					open_view(view, REQ_VIEW_PAGER, OPEN_PREPARED);
+				}
 			}
 
 			request = REQ_NONE;
