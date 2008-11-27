@@ -166,6 +166,15 @@ struct ref {
 
 static struct ref **get_refs(const char *id);
 
+enum format_flags {
+	FORMAT_ALL,		/* Perform replacement in all arguments. */
+	FORMAT_DASH,		/* Perform replacement up until "--". */
+	FORMAT_NONE		/* No replacement should be performed. */
+};
+
+static bool format_command(char dst[], const char *src[], enum format_flags flags);
+static bool format_argv(const char *dst[], const char *src[], enum format_flags flags);
+
 struct int_map {
 	const char *name;
 	int namelen;
@@ -330,6 +339,24 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 		buf[bufsize] = 0;
 
 	return bufsize;
+}
+
+static bool
+argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
+{
+	int valuelen;
+
+	while (*cmd && *argc < SIZEOF_ARG && (valuelen = strcspn(cmd, " \t"))) {
+		bool advance = cmd[valuelen] != 0;
+
+		cmd[valuelen] = 0;
+		argv[(*argc)++] = chomp_string(cmd);
+		cmd += valuelen + advance;
+	}
+
+	if (*argc < SIZEOF_ARG)
+		argv[*argc] = NULL;
+	return *argc < SIZEOF_ARG;
 }
 
 
@@ -1105,7 +1132,7 @@ get_key(enum request request)
 struct run_request {
 	enum keymap keymap;
 	int key;
-	char cmd[SIZEOF_STR];
+	const char *argv[SIZEOF_ARG];
 };
 
 static struct run_request *run_request;
@@ -1115,24 +1142,24 @@ static enum request
 add_run_request(enum keymap keymap, int key, int argc, const char **argv)
 {
 	struct run_request *req;
-	char cmd[SIZEOF_STR];
-	size_t bufpos;
 
-	for (bufpos = 0; argc > 0; argc--, argv++)
-		if (!string_format_from(cmd, &bufpos, "%s ", *argv))
-			return REQ_NONE;
+	if (argc >= ARRAY_SIZE(req->argv) - 1)
+		return REQ_NONE;
 
 	req = realloc(run_request, (run_requests + 1) * sizeof(*run_request));
 	if (!req)
 		return REQ_NONE;
 
 	run_request = req;
-	req = &run_request[run_requests++];
-	string_copy(req->cmd, cmd);
+	req = &run_request[run_requests];
 	req->keymap = keymap;
 	req->key = key;
+	req->argv[0] = NULL;
 
-	return REQ_NONE + run_requests;
+	if (!format_argv(req->argv, argv, FORMAT_NONE))
+		return REQ_NONE;
+
+	return REQ_NONE + ++run_requests;
 }
 
 static struct run_request *
@@ -1146,20 +1173,23 @@ get_run_request(enum request request)
 static void
 add_builtin_run_requests(void)
 {
+	const char *cherry_pick[] = { "git", "cherry-pick", "%(commit)", NULL };
+	const char *gc[] = { "git", "gc", NULL };
 	struct {
 		enum keymap keymap;
 		int key;
-		const char *argv[1];
+		int argc;
+		const char **argv;
 	} reqs[] = {
-		{ KEYMAP_MAIN,	  'C', { "git cherry-pick %(commit)" } },
-		{ KEYMAP_GENERIC, 'G', { "git gc" } },
+		{ KEYMAP_MAIN,	  'C', ARRAY_SIZE(cherry_pick) - 1, cherry_pick },
+		{ KEYMAP_GENERIC, 'G', ARRAY_SIZE(gc) - 1, gc },
 	};
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(reqs); i++) {
 		enum request req;
 
-		req = add_run_request(reqs[i].keymap, reqs[i].key, 1, reqs[i].argv);
+		req = add_run_request(reqs[i].keymap, reqs[i].key, reqs[i].argc, reqs[i].argv);
 		if (req != REQ_NONE)
 			add_keybinding(reqs[i].keymap, req, reqs[i].key);
 	}
@@ -1391,21 +1421,11 @@ static int
 set_option(const char *opt, char *value)
 {
 	const char *argv[SIZEOF_ARG];
-	int valuelen;
 	int argc = 0;
 
-	/* Tokenize */
-	while (argc < ARRAY_SIZE(argv) && (valuelen = strcspn(value, " \t"))) {
-		argv[argc++] = value;
-		value += valuelen;
-
-		/* Nothing more to tokenize or last available token. */
-		if (!*value || argc >= ARRAY_SIZE(argv))
-			break;
-
-		*value++ = 0;
-		while (isspace(*value))
-			value++;
+	if (!argv_from_string(argv, &argc, value)) {
+		config_msg = "Too many option arguments";
+		return ERR;
 	}
 
 	if (!strcmp(opt, "color"))
@@ -2342,6 +2362,103 @@ reset_view(struct view *view)
 }
 
 static void
+free_argv(const char *argv[])
+{
+	int argc;
+
+	for (argc = 0; argv[argc]; argc++)
+		free((void *) argv[argc]);
+}
+
+static bool
+format_argv(const char *dst_argv[], const char *src_argv[], enum format_flags flags)
+{
+	char buf[SIZEOF_STR];
+	int argc;
+	bool noreplace = flags == FORMAT_NONE;
+
+	free_argv(dst_argv);
+
+	for (argc = 0; src_argv[argc]; argc++) {
+		const char *arg = src_argv[argc];
+		size_t bufpos = 0;
+
+		while (arg) {
+			char *next = strstr(arg, "%(");
+			int len = next - arg;
+			const char *value;
+
+			if (!next || noreplace) {
+				if (flags == FORMAT_DASH && !strcmp(arg, "--"))
+					noreplace = TRUE;
+				len = strlen(arg);
+				value = "";
+
+			} else if (!prefixcmp(next, "%(directory)")) {
+				value = opt_path;
+
+			} else if (!prefixcmp(next, "%(file)")) {
+				value = opt_file;
+
+			} else if (!prefixcmp(next, "%(ref)")) {
+				value = *opt_ref ? opt_ref : "HEAD";
+
+			} else if (!prefixcmp(next, "%(head)")) {
+				value = ref_head;
+
+			} else if (!prefixcmp(next, "%(commit)")) {
+				value = ref_commit;
+
+			} else if (!prefixcmp(next, "%(blob)")) {
+				value = ref_blob;
+
+			} else {
+				report("Unknown replacement: `%s`", next);
+				return FALSE;
+			}
+
+			if (!string_format_from(buf, &bufpos, "%.*s%s", len, arg, value))
+				return FALSE;
+
+			arg = next && !noreplace ? strchr(next, ')') + 1 : NULL;
+		}
+
+		dst_argv[argc] = strdup(buf);
+		if (!dst_argv[argc])
+			break;
+	}
+
+	dst_argv[argc] = NULL;
+
+	return src_argv[argc] == NULL;
+}
+
+static bool
+format_command(char dst[], const char *src_argv[], enum format_flags flags)
+{
+	const char *dst_argv[SIZEOF_ARG * 2] = { NULL };
+	int bufsize = 0;
+	int argc;
+
+	if (!format_argv(dst_argv, src_argv, flags)) {
+		free_argv(dst_argv);
+		return FALSE;
+	}
+
+	for (argc = 0; dst_argv[argc] && bufsize < SIZEOF_STR; argc++) {
+		if (bufsize > 0)
+			dst[bufsize++] = ' ';
+		bufsize = sq_quote(dst, bufsize, dst_argv[argc]);
+	}
+
+	if (bufsize < SIZEOF_STR)
+		dst[bufsize] = 0;
+	free_argv(dst_argv);
+
+	return src_argv[argc] == NULL && bufsize < SIZEOF_STR;
+}
+
+static void
 end_update(struct view *view, bool force)
 {
 	if (!view->pipe)
@@ -2746,49 +2863,14 @@ open_run_request(enum request request)
 {
 	struct run_request *req = get_run_request(request);
 	char buf[SIZEOF_STR * 2];
-	size_t bufpos;
-	char *cmd;
 
 	if (!req) {
 		report("Unknown run request");
 		return;
 	}
 
-	bufpos = 0;
-	cmd = req->cmd;
-
-	while (cmd) {
-		char *next = strstr(cmd, "%(");
-		int len = next - cmd;
-		char *value;
-
-		if (!next) {
-			len = strlen(cmd);
-			value = "";
-
-		} else if (!strncmp(next, "%(head)", 7)) {
-			value = ref_head;
-
-		} else if (!strncmp(next, "%(commit)", 9)) {
-			value = ref_commit;
-
-		} else if (!strncmp(next, "%(blob)", 7)) {
-			value = ref_blob;
-
-		} else {
-			report("Unknown replacement in run request: `%s`", req->cmd);
-			return;
-		}
-
-		if (!string_format_from(buf, &bufpos, "%.*s%s", len, cmd, value))
-			return;
-
-		if (next)
-			next = strchr(next, ')') + 1;
-		cmd = next;
-	}
-
-	open_external_viewer(buf);
+	if (format_command(buf, req->argv, FORMAT_ALL))
+		open_external_viewer(buf);
 }
 
 /*
@@ -3293,6 +3375,9 @@ help_open(struct view *view)
 	for (i = 0; i < run_requests; i++) {
 		struct run_request *req = get_run_request(REQ_NONE + i + 1);
 		const char *key;
+		char cmd[SIZEOF_STR];
+		size_t bufpos;
+		int argc;
 
 		if (!req)
 			continue;
@@ -3301,9 +3386,13 @@ help_open(struct view *view)
 		if (!*key)
 			key = "(no key defined)";
 
+		for (bufpos = 0, argc = 0; req->argv[argc]; argc++)
+			if (!string_format_from(cmd, &bufpos, "%s%s",
+					        argc ? " " : "", req->argv[argc]))
+				return REQ_NONE;
+
 		if (!string_format(buf, "    %-10s %-14s `%s`",
-				   keymap_table[req->keymap].name,
-				   key, req->cmd))
+				   keymap_table[req->keymap].name, key, cmd))
 			continue;
 
 		add_line_text(view, buf, LINE_DEFAULT);

@@ -147,6 +147,10 @@ Browsing state variables
 %(head)			The currently viewed 'head' ID. Defaults to HEAD
 %(commit)		The currently selected commit ID.
 %(blob)			The currently selected blob ID.
+%(directory)		The current directory path in the tree view; \
+			empty for the root directory.
+%(file)			The currently selected file.
+%(ref)			The reference given to blame or HEAD if undefined.
 ------------------------------------------------------------------------------
 
 [[title-window]]

@@ -10,6 +10,7 @@ Improvements:
    tracked remotes, remotes.
  - Add bash completion for blame.
  - Tree view: edit files of the current branch.
+ - Run requests: new identifiers %(directory), %(file), and %(ref)
 
 Bug fixes:
 
