@@ -122,9 +122,6 @@ static int load_refs(void);
 #define TIG_LS_REMOTE \
 	"git ls-remote . 2>/dev/null"
 
-#define TIG_MAIN_BASE \
-	"git log --no-color --pretty=raw --parents --topo-order"
-
 /* Some ascii-shorthands fitted into the ncurses namespace. */
 #define KEY_TAB		'\t'
 #define KEY_RETURN	'\r'
@@ -687,13 +684,18 @@ static FILE *opt_tty			= NULL;
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || !strcmp(opt_head_rev, (rev)))
 
 static enum request
-parse_options(int argc, const char *argv[])
+parse_options(int argc, const char *argv[], const char ***run_argv)
 {
 	enum request request = REQ_VIEW_MAIN;
-	size_t buf_size;
 	const char *subcommand;
 	bool seen_dashdash = FALSE;
-	int i;
+	/* XXX: This is vulnerable to the user overriding options
+	 * required for the main view parser. */
+	const char *custom_argv[SIZEOF_ARG] = {
+		"git", "log", "--no-color", "--pretty=raw", "--parents",
+			"--topo-order", NULL
+	};
+	int i, j = 6;
 
 	if (!isatty(STDIN_FILENO)) {
 		opt_pipe = stdin;
@@ -735,14 +737,10 @@ parse_options(int argc, const char *argv[])
 		subcommand = NULL;
 	}
 
-	if (!subcommand)
-		/* XXX: This is vulnerable to the user overriding
-		 * options required for the main view parser. */
-		string_copy(opt_cmd, TIG_MAIN_BASE);
-	else
-		string_format(opt_cmd, "git %s", subcommand);
-
-	buf_size = strlen(opt_cmd);
+	if (subcommand) {
+		custom_argv[1] = subcommand;
+		j = 2;
+	}
 
 	for (i = 1 + !!subcommand; i < argc; i++) {
 		const char *opt = argv[i];
@@ -759,13 +757,13 @@ parse_options(int argc, const char *argv[])
 			return REQ_NONE;
 		}
 
-		opt_cmd[buf_size++] = ' ';
-		buf_size = sq_quote(opt_cmd, buf_size, opt);
-		if (buf_size >= sizeof(opt_cmd))
+		custom_argv[j++] = opt;
+		if (j >= ARRAY_SIZE(custom_argv))
 			die("command too long");
 	}
 
-	opt_cmd[buf_size] = 0;
+	custom_argv[j] = NULL;
+	*run_argv = custom_argv;
 
 	return request;
 }
@@ -6336,6 +6334,7 @@ warn(const char *msg, ...)
 int
 main(int argc, const char *argv[])
 {
+	const char **run_argv = NULL;
 	struct view *view;
 	enum request request;
 	size_t i;
@@ -6357,7 +6356,7 @@ main(int argc, const char *argv[])
 	if (load_git_config() == ERR)
 		die("Failed to load repo config.");
 
-	request = parse_options(argc, argv);
+	request = parse_options(argc, argv, &run_argv);
 	if (request == REQ_NONE)
 		return 0;
 
@@ -6381,6 +6380,13 @@ main(int argc, const char *argv[])
 		argv_from_env(view->ops->argv, view->cmd_env);
 
 	init_display();
+
+	if (run_argv) {
+		if (!prepare_update(VIEW(request), run_argv, NULL, FORMAT_NONE))
+			die("Failed to format arguments");
+		open_view(display[current_view], request, OPEN_PREPARED);
+		request = REQ_NONE;
+	}
 
 	while (view_driver(display[current_view], request)) {
 		int key;
