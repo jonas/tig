@@ -64,7 +64,6 @@
 static void __NORETURN die(const char *err, ...);
 static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
-static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, size_t, char *, size_t));
 static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool reserve);
 static bool prompt_yesno(const char *prompt);
@@ -118,9 +117,6 @@ static int load_refs(void);
 #ifndef GIT_CONFIG
 #define GIT_CONFIG "config"
 #endif
-
-#define TIG_LS_REMOTE \
-	"git ls-remote . 2>/dev/null"
 
 /* Some ascii-shorthands fitted into the ncurses namespace. */
 #define KEY_TAB		'\t'
@@ -548,6 +544,7 @@ run_io_buf(const char **argv, char buf[], size_t bufsize)
 	return done_io(&io) || error;
 }
 
+static int read_properties(struct io *io, const char *separators, int (*read)(char *, size_t, char *, size_t));
 
 /*
  * User requests
@@ -1547,17 +1544,16 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen)
 static void
 load_option_file(const char *path)
 {
-	FILE *file;
+	struct io io = {};
 
 	/* It's ok that the file doesn't exist. */
-	file = fopen(path, "r");
-	if (!file)
+	if (!init_io_fd(&io, fopen(path, "r")))
 		return;
 
 	config_lineno = 0;
 	config_errors = FALSE;
 
-	if (read_properties(file, " \t", read_option) == ERR ||
+	if (read_properties(&io, " \t", read_option) == ERR ||
 	    config_errors == TRUE)
 		fprintf(stderr, "Errors while loading %s.\n", path);
 }
@@ -5992,8 +5988,19 @@ read_prompt(const char *prompt)
 }
 
 /*
- * Repository references
+ * Repository properties
  */
+
+static int
+git_properties(const char **argv, const char *separators,
+	       int (*read_property)(char *, size_t, char *, size_t))
+{
+	struct io io = {};
+
+	if (init_io_rd(&io, argv, NULL, FORMAT_NONE))
+		return read_properties(&io, separators, read_property);
+	return ERR;
+}
 
 static struct ref *refs = NULL;
 static size_t refs_alloc = 0;
@@ -6151,8 +6158,15 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 static int
 load_refs(void)
 {
-	const char *cmd_env = getenv("TIG_LS_REMOTE");
-	const char *cmd = cmd_env && *cmd_env ? cmd_env : TIG_LS_REMOTE;
+	static const char *ls_remote_argv[SIZEOF_ARG] = {
+		"git", "ls-remote", ".", NULL
+	};
+	static bool init = FALSE;
+
+	if (!init) {
+		argv_from_env(ls_remote_argv, "TIG_LS_REMOTE");
+		init = TRUE;
+	}
 
 	if (!*opt_git_dir)
 		return OK;
@@ -6162,7 +6176,7 @@ load_refs(void)
 	while (id_refs_size > 0)
 		free(id_refs[--id_refs_size]);
 
-	return read_properties(popen(cmd, "r"), "\t", read_ref);
+	return git_properties(ls_remote_argv, "\t", read_ref);
 }
 
 static int
@@ -6202,8 +6216,9 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 static int
 load_git_config(void)
 {
-	return read_properties(popen("git " GIT_CONFIG " --list", "r"),
-			       "=", read_repo_config_option);
+	const char *config_list_argv[] = { "git", GIT_CONFIG, "--list", NULL };
+
+	return git_properties(config_list_argv, "=", read_repo_config_option);
 }
 
 static int
@@ -6219,15 +6234,8 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 		 * the option else either "true" or "false" is printed.
 		 * Default to true for the unknown case. */
 		opt_is_inside_work_tree = strcmp(name, "false") ? TRUE : FALSE;
-
-	} else if (opt_cdup[0] == ' ') {
-		string_ncopy(opt_cdup, name, namelen);
 	} else {
-		if (!prefixcmp(name, "refs/heads/")) {
-			namelen -= STRING_SIZE("refs/heads/");
-			name	+= STRING_SIZE("refs/heads/");
-			string_ncopy(opt_head, name, namelen);
-		}
+		string_ncopy(opt_cdup, name, namelen);
 	}
 
 	return OK;
@@ -6236,34 +6244,37 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 static int
 load_repo_info(void)
 {
-	int result;
-	FILE *pipe = popen("(git rev-parse --git-dir --is-inside-work-tree "
-			   " --show-cdup; git symbolic-ref HEAD) 2>/dev/null", "r");
+	const char *head_argv[] = {
+		"git", "symbolic-ref", "HEAD", NULL
+	};
+	const char *rev_parse_argv[] = {
+		"git", "rev-parse", "--git-dir", "--is-inside-work-tree",
+			"--show-cdup", NULL
+	};
 
-	/* XXX: The line outputted by "--show-cdup" can be empty so
-	 * initialize it to something invalid to make it possible to
-	 * detect whether it has been set or not. */
-	opt_cdup[0] = ' ';
+	if (run_io_buf(head_argv, opt_head, sizeof(opt_head))) {
+		chomp_string(opt_head);
+		if (!prefixcmp(opt_head, "refs/heads/")) {
+			char *offset = opt_head + STRING_SIZE("refs/heads/");
 
-	result = read_properties(pipe, "=", read_repo_info);
-	if (opt_cdup[0] == ' ')
-		opt_cdup[0] = 0;
+			memmove(opt_head, offset, strlen(offset) + 1);
+		}
+	}
 
-	return result;
+	return git_properties(rev_parse_argv, "=", read_repo_info);
 }
 
 static int
-read_properties(FILE *pipe, const char *separators,
+read_properties(struct io *io, const char *separators,
 		int (*read_property)(char *, size_t, char *, size_t))
 {
-	char buffer[BUFSIZ];
 	char *name;
 	int state = OK;
 
-	if (!pipe)
+	if (!start_io(io))
 		return ERR;
 
-	while (state == OK && (name = fgets(buffer, sizeof(buffer), pipe))) {
+	while (state == OK && (name = io_gets(io))) {
 		char *value;
 		size_t namelen;
 		size_t valuelen;
@@ -6284,10 +6295,9 @@ read_properties(FILE *pipe, const char *separators,
 		state = read_property(name, namelen, value, valuelen);
 	}
 
-	if (state != ERR && ferror(pipe))
+	if (state != ERR && io_error(io))
 		state = ERR;
-
-	pclose(pipe);
+	done_io(io);
 
 	return state;
 }
