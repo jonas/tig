@@ -462,21 +462,6 @@ run_io_fg(const char **argv, const char *dir)
 }
 
 static bool
-run_io_format(struct io *io, const char *cmd, ...)
-{
-	va_list args;
-
-	va_start(args, cmd);
-	init_io(io, NULL, IO_RD);
-
-	if (vsnprintf(io->sh, sizeof(io->sh), cmd, args) >= sizeof(io->sh))
-		io->sh[0] = 0;
-	va_end(args);
-
-	return io->sh[0] ? start_io(io) : FALSE;
-}
-
-static bool
 run_io_rd(struct io *io, const char **argv, enum format_flags flags)
 {
 	return init_io_rd(io, argv, NULL, flags) && start_io(io);
@@ -3755,6 +3740,18 @@ static struct view_ops blob_ops = {
  *     reading output from git-blame.
  */
 
+static const char *blame_head_argv[] = {
+	"git", "blame", "--incremental", "--", "%(file)", NULL
+};
+
+static const char *blame_ref_argv[] = {
+	"git", "blame", "--incremental", "%(ref)", "--", "%(file)", NULL
+};
+
+static const char *blame_cat_file_argv[] = {
+	"git", "cat-file", "blob", "%(ref):%(file)", NULL
+};
+
 struct blame_commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
@@ -3768,25 +3765,11 @@ struct blame {
 	char text[1];
 };
 
-#define BLAME_CAT_FILE_CMD "git cat-file blob %s:%s"
-#define BLAME_INCREMENTAL_CMD "git blame --incremental %s -- %s"
-
 static bool
 blame_open(struct view *view)
 {
-	char path[SIZEOF_STR];
-	char ref[SIZEOF_STR] = "";
-
-	if (sq_quote(path, 0, opt_file) >= sizeof(path))
-		return FALSE;
-
-	if (*opt_ref && sq_quote(ref, 0, opt_ref) >= sizeof(ref))
-		return FALSE;
-
 	if (*opt_ref || !init_io_fd(&view->io, fopen(opt_file, "r"))) {
-		const char *id = *opt_ref ? ref : "HEAD";
-
-	    	if (!run_io_format(&view->io, BLAME_CAT_FILE_CMD, id, path))
+		if (!run_io_rd(&view->io, blame_cat_file_argv, FORMAT_ALL))
 			return FALSE;
 	}
 
@@ -3873,17 +3856,13 @@ static bool
 blame_read_file(struct view *view, const char *line, bool *read_file)
 {
 	if (!line) {
-		char ref[SIZEOF_STR] = "";
-		char path[SIZEOF_STR];
+		const char **argv = *opt_ref ? blame_ref_argv : blame_head_argv;
 		struct io io = {};
 
 		if (view->lines == 0 && !view->parent)
 			die("No blame exist for %s", view->vid);
 
-		if (view->lines == 0 ||
-		    sq_quote(path, 0, opt_file) >= sizeof(path) ||
-		    (*opt_ref && sq_quote(ref, 0, opt_ref) >= sizeof(ref)) ||
-		    !run_io_format(&io, BLAME_INCREMENTAL_CMD, ref, path)) {
+		if (view->lines == 0 || !run_io_rd(&io, argv, FORMAT_ALL)) {
 			report("Failed to load blame data");
 			return TRUE;
 		}
@@ -4033,11 +4012,18 @@ blame_request(struct view *view, enum request request, struct line *line)
 			break;
 
 		if (!strcmp(blame->commit->id, NULL_ID)) {
-			char path[SIZEOF_STR];
+			struct view *diff = VIEW(REQ_VIEW_DIFF);
+			const char *diff_index_argv[] = {
+				"git", "diff-index", "--root", "--cached",
+					"--patch-with-stat", "-C", "-M",
+					"HEAD", "--", view->vid, NULL
+			};
 
-			if (sq_quote(path, 0, view->vid) >= sizeof(path))
+			if (!prepare_update(diff, diff_index_argv, NULL, FORMAT_DASH)) {
+				report("Failed to allocate diff command");
 				break;
-			string_format(opt_cmd, "git diff-index --root --patch-with-stat -C -M --cached HEAD -- %s 2>/dev/null", path);
+			}
+			flags |= OPEN_PREPARED;
 		}
 
 		open_view(view, REQ_VIEW_DIFF, flags);
