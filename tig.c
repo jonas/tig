@@ -366,12 +366,14 @@ argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
 
 enum io_type {
 	IO_FD,			/* File descriptor based IO. */
+	IO_FG,			/* Execute command with same std{in,out,err}. */
 	IO_RD,			/* Read only fork+exec IO. */
 	IO_WR,			/* Write only fork+exec IO. */
 };
 
 struct io {
-	enum io_type type; /* The requested type of pipe. */
+	enum io_type type;	/* The requested type of pipe. */
+	const char *dir;	/* Directory from which to execute. */
 	FILE *pipe;		/* Pipe for reading or writing. */
 	int error;		/* Error status. */
 	char sh[SIZEOF_STR];	/* Shell command buffer. */
@@ -389,16 +391,17 @@ reset_io(struct io *io)
 }
 
 static void
-init_io(struct io *io, enum io_type type)
+init_io(struct io *io, const char *dir, enum io_type type)
 {
 	reset_io(io);
 	io->type = type;
+	io->dir = dir;
 }
 
 static bool
 init_io_fd(struct io *io, FILE *pipe)
 {
-	init_io(io, IO_FD);
+	init_io(io, NULL, IO_FD);
 	io->pipe = pipe;
 	return io->pipe != NULL;
 }
@@ -409,7 +412,7 @@ done_io(struct io *io)
 	free(io->buf);
 	if (io->type == IO_FD)
 		fclose(io->pipe);
-	else
+	else if (io->type == IO_RD || io->type == IO_WR)
 		pclose(io->pipe);
 	reset_io(io);
 	return TRUE;
@@ -418,6 +421,19 @@ done_io(struct io *io)
 static bool
 start_io(struct io *io)
 {
+	char buf[SIZEOF_STR * 2];
+	size_t bufpos = 0;
+
+	if (io->dir && *io->dir &&
+	    !string_format_from(buf, &bufpos, "cd %s;", io->dir))
+		return FALSE;
+
+	if (!string_format_from(buf, &bufpos, "%s", io->sh))
+		return FALSE;
+
+	if (io->type == IO_FG)
+		return system(buf) == 0;
+
 	io->pipe = popen(io->sh, io->type == IO_RD ? "r" : "w");
 	return io->pipe != NULL;
 }
@@ -425,9 +441,26 @@ start_io(struct io *io)
 static bool
 run_io(struct io *io, enum io_type type, const char *cmd)
 {
-	init_io(io, type);
+	init_io(io, NULL, type);
 	string_ncopy(io->sh, cmd, strlen(cmd));
 	return start_io(io);
+}
+
+static int
+run_io_do(struct io *io)
+{
+	return start_io(io) && done_io(io);
+}
+
+static bool
+run_io_fg(const char **argv, const char *dir)
+{
+	struct io io = {};
+
+	init_io(&io, dir, IO_FG);
+	if (!format_command(io.sh, argv, FORMAT_NONE))
+		return FALSE;
+	return run_io_do(&io);
 }
 
 static bool
@@ -436,7 +469,7 @@ run_io_format(struct io *io, const char *cmd, ...)
 	va_list args;
 
 	va_start(args, cmd);
-	init_io(io, IO_RD);
+	init_io(io, NULL, IO_RD);
 
 	if (vsnprintf(io->sh, sizeof(io->sh), cmd, args) >= sizeof(io->sh))
 		io->sh[0] = 0;
@@ -2811,11 +2844,11 @@ run_confirm(const char *cmd, const char *prompt)
 }
 
 static void
-open_external_viewer(const char *cmd)
+open_external_viewer(const char *argv[], const char *dir)
 {
 	def_prog_mode();           /* save current tty modes */
 	endwin();                  /* restore original tty modes */
-	system(cmd);
+	run_io_fg(argv, dir);
 	fprintf(stderr, "Press Enter to continue");
 	getc(opt_tty);
 	reset_prog_mode();
@@ -2825,22 +2858,16 @@ open_external_viewer(const char *cmd)
 static void
 open_mergetool(const char *file)
 {
-	char cmd[SIZEOF_STR];
-	char file_sq[SIZEOF_STR];
+	const char *mergetool_argv[] = { "git", "mergetool", file, NULL };
 
-	if (sq_quote(file_sq, 0, file) < sizeof(file_sq) &&
-	    string_format(cmd, "git mergetool %s", file_sq)) {
-		open_external_viewer(cmd);
-	}
+	open_external_viewer(mergetool_argv, NULL);
 }
 
 static void
 open_editor(bool from_root, const char *file)
 {
-	char cmd[SIZEOF_STR];
-	char file_sq[SIZEOF_STR];
+	const char *editor_argv[] = { "vi", file, NULL };
 	const char *editor;
-	char *prefix = from_root ? opt_cdup : "";
 
 	editor = getenv("GIT_EDITOR");
 	if (!editor && *opt_editor)
@@ -2852,25 +2879,24 @@ open_editor(bool from_root, const char *file)
 	if (!editor)
 		editor = "vi";
 
-	if (sq_quote(file_sq, 0, file) < sizeof(file_sq) &&
-	    string_format(cmd, "%s %s%s", editor, prefix, file_sq)) {
-		open_external_viewer(cmd);
-	}
+	editor_argv[0] = editor;
+	open_external_viewer(editor_argv, from_root ? opt_cdup : NULL);
 }
 
 static void
 open_run_request(enum request request)
 {
 	struct run_request *req = get_run_request(request);
-	char buf[SIZEOF_STR * 2];
+	const char *argv[ARRAY_SIZE(req->argv)] = { NULL };
 
 	if (!req) {
 		report("Unknown run request");
 		return;
 	}
 
-	if (format_command(buf, req->argv, FORMAT_ALL))
-		open_external_viewer(buf);
+	if (format_argv(argv, req->argv, FORMAT_ALL))
+		open_external_viewer(argv, NULL);
+	free_argv(argv);
 }
 
 /*
