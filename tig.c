@@ -495,6 +495,7 @@ static char opt_editor[SIZEOF_STR]	= "";
 static FILE *opt_tty			= NULL;
 
 #define is_initial_commit()	(!*opt_head_rev)
+#define is_head_commit(rev)	(!strcmp((rev), "HEAD") || !strcmp(opt_head_rev, (rev)))
 
 static enum request
 parse_options(int argc, const char *argv[])
@@ -3372,8 +3373,17 @@ tree_request(struct view *view, enum request request, struct line *line)
 		}
 
 		string_copy(opt_ref, view->vid);
-		string_format(opt_file, "%s%s", opt_path, tree_path(line));
 		return request;
+
+	case REQ_EDIT:
+		if (line->type != LINE_TREE_FILE) {
+			report("Edit only supported for files");
+		} else if (!is_head_commit(view->vid)) {
+			report("Edit only supported for files in the current work tree");
+		} else {
+			open_editor(TRUE, opt_file);
+		}
+		return REQ_NONE;
 
 	case REQ_TREE_PARENT:
 		if (!*opt_path) {
@@ -3438,6 +3448,7 @@ tree_select(struct view *view, struct line *line)
 
 	if (line->type == LINE_TREE_FILE) {
 		string_copy_rev(ref_blob, text);
+		string_format(opt_file, "%s%s", opt_path, tree_path(line));
 
 	} else if (line->type != LINE_TREE_DIR) {
 		return;
