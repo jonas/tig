@@ -3365,8 +3365,8 @@ tree_request(struct view *view, enum request request, struct line *line)
 	if (request == REQ_VIEW_BLAME) {
 		const char *filename = tree_path(line);
 
-		if (line->type == LINE_TREE_DIR) {
-			report("Cannot show blame for directory %s", opt_path);
+		if (line->type != LINE_TREE_FILE) {
+			report("Blame only supported for files");
 			return REQ_NONE;
 		}
 
