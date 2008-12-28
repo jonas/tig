@@ -3362,30 +3362,32 @@ tree_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags;
 
-	if (request == REQ_VIEW_BLAME) {
-		const char *filename = tree_path(line);
-
+	switch (request) {
+	case REQ_VIEW_BLAME:
 		if (line->type != LINE_TREE_FILE) {
 			report("Blame only supported for files");
 			return REQ_NONE;
 		}
 
 		string_copy(opt_ref, view->vid);
-		string_format(opt_file, "%s%s", opt_path, filename);
+		string_format(opt_file, "%s%s", opt_path, tree_path(line));
 		return request;
-	}
-	if (request == REQ_TREE_PARENT) {
-		if (*opt_path) {
-			/* fake 'cd  ..' */
-			request = REQ_ENTER;
-			line = &view->line[1];
-		} else {
+
+	case REQ_TREE_PARENT:
+		if (!*opt_path) {
 			/* quit view if at top of tree */
 			return REQ_VIEW_CLOSE;
 		}
-	}
-	if (request != REQ_ENTER)
+		/* fake 'cd  ..' */
+		line = &view->line[1];
+		break;
+
+	case REQ_ENTER:
+		break;
+
+	default:
 		return request;
+	}
 
 	/* Cleanup the stack if the tree view is at a different tree. */
 	while (!*opt_path && tree_stack)
