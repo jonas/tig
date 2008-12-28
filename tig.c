@@ -480,8 +480,8 @@ static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
 static char opt_head[SIZEOF_REF]	= "";
+static char opt_head_rev[SIZEOF_REV]	= "";
 static char opt_remote[SIZEOF_REF]	= "";
-static bool opt_no_head			= TRUE;
 static FILE *opt_pipe			= NULL;
 static char opt_encoding[20]		= "UTF-8";
 static bool opt_utf8			= TRUE;
@@ -493,6 +493,8 @@ static char opt_git_dir[SIZEOF_STR]	= "";
 static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
 static FILE *opt_tty			= NULL;
+
+#define is_initial_commit()	(!*opt_head_rev)
 
 static enum request
 parse_options(int argc, const char *argv[])
@@ -4037,7 +4039,7 @@ status_open(struct view *view)
 		return FALSE;
 
 	add_line_data(view, NULL, LINE_STAT_HEAD);
-	if (opt_no_head)
+	if (is_initial_commit())
 		string_copy(status_onbranch, "Initial commit");
 	else if (!*opt_head)
 		string_copy(status_onbranch, "Not currently on any branch");
@@ -4046,7 +4048,7 @@ status_open(struct view *view)
 
 	system("git update-index -q --refresh >/dev/null 2>/dev/null");
 
-	if (opt_no_head) {
+	if (is_initial_commit()) {
 		if (!status_run(view, STATUS_LIST_NO_HEAD_CMD, 'A', LINE_STAT_STAGED))
 			return FALSE;
 	} else if (!status_run(view, STATUS_DIFF_INDEX_CMD, 0, LINE_STAT_STAGED)) {
@@ -4165,7 +4167,7 @@ status_enter(struct view *view, struct line *line)
 
 	switch (line->type) {
 	case LINE_STAT_STAGED:
-		if (opt_no_head) {
+		if (is_initial_commit()) {
 			if (!string_format_from(opt_cmd, &cmdsize,
 						STATUS_DIFF_NO_HEAD_SHOW_CMD,
 						newpath))
@@ -4646,7 +4648,7 @@ stage_update(struct view *view, struct line *line)
 {
 	struct line *chunk = NULL;
 
-	if (!opt_no_head && stage_line_type != LINE_STAT_UNTRACKED)
+	if (!is_initial_commit() && stage_line_type != LINE_STAT_UNTRACKED)
 		chunk = stage_diff_find(view, line, LINE_DIFF_CHUNK);
 
 	if (chunk) {
@@ -4680,7 +4682,7 @@ stage_revert(struct view *view, struct line *line)
 {
 	struct line *chunk = NULL;
 
-	if (!opt_no_head && stage_line_type == LINE_STAT_UNSTAGED)
+	if (!is_initial_commit() && stage_line_type == LINE_STAT_UNSTAGED)
 		chunk = stage_diff_find(view, line, LINE_DIFF_CHUNK);
 
 	if (chunk) {
@@ -5834,7 +5836,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 		head	 = !strncmp(opt_head, name, namelen);
 
 	} else if (!strcmp(name, "HEAD")) {
-		opt_no_head = FALSE;
+		string_ncopy(opt_head_rev, id, idlen);
 		return OK;
 	}
 
