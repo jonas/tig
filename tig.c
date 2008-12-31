@@ -504,6 +504,23 @@ io_gets(struct io *io)
 	return io->buf;
 }
 
+static bool
+run_io_buf(const char **argv, char buf[], size_t bufsize)
+{
+	struct io io = {};
+	bool error;
+
+	if (!run_io_rd(&io, argv, FORMAT_NONE))
+		return FALSE;
+
+	io.buf = buf;
+	io.bufalloc = bufsize;
+	error = !io_gets(&io) && io_error(&io);
+	io.buf = NULL;
+
+	return done_io(&io) || error;
+}
+
 
 /*
  * User requests
@@ -3135,20 +3152,12 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 static bool
 add_describe_ref(char *buf, size_t *bufpos, const char *commit_id, const char *sep)
 {
+	const char *describe_argv[] = { "git", "describe", commit_id, NULL };
 	char refbuf[SIZEOF_STR];
 	char *ref = NULL;
-	FILE *pipe;
 
-	if (!string_format(refbuf, "git describe %s 2>/dev/null", commit_id))
-		return TRUE;
-
-	pipe = popen(refbuf, "r");
-	if (!pipe)
-		return TRUE;
-
-	if ((ref = fgets(refbuf, sizeof(refbuf), pipe)))
-		ref = chomp_string(ref);
-	pclose(pipe);
+	if (run_io_buf(describe_argv, refbuf, sizeof(refbuf)))
+		ref = chomp_string(refbuf);
 
 	if (!ref || !*ref)
 		return TRUE;
