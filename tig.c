@@ -334,6 +334,129 @@ sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
 
 
 /*
+ * Executing external commands.
+ */
+
+enum io_type {
+	IO_FD,			/* File descriptor based IO. */
+	IO_RD,			/* Read only fork+exec IO. */
+	IO_WR,			/* Write only fork+exec IO. */
+};
+
+struct io {
+	enum io_type type; /* The requested type of pipe. */
+	FILE *pipe;		/* Pipe for reading or writing. */
+	int error;		/* Error status. */
+	char sh[SIZEOF_STR];	/* Shell command buffer. */
+	char *buf;		/* Read/write buffer. */
+	size_t bufalloc;	/* Allocated buffer size. */
+};
+
+static void
+reset_io(struct io *io)
+{
+	io->pipe = NULL;
+	io->buf = NULL;
+	io->bufalloc = 0;
+	io->error = 0;
+}
+
+static void
+init_io(struct io *io, enum io_type type)
+{
+	reset_io(io);
+	io->type = type;
+}
+
+static bool
+init_io_fd(struct io *io, FILE *pipe)
+{
+	init_io(io, IO_FD);
+	io->pipe = pipe;
+	return io->pipe != NULL;
+}
+
+static bool
+done_io(struct io *io)
+{
+	free(io->buf);
+	if (io->type == IO_FD)
+		fclose(io->pipe);
+	else
+		pclose(io->pipe);
+	reset_io(io);
+	return TRUE;
+}
+
+static bool
+start_io(struct io *io)
+{
+	io->pipe = popen(io->sh, io->type == IO_RD ? "r" : "w");
+	return io->pipe != NULL;
+}
+
+static bool
+run_io(struct io *io, enum io_type type, const char *cmd)
+{
+	init_io(io, type);
+	string_ncopy(io->sh, cmd, strlen(cmd));
+	return start_io(io);
+}
+
+static bool
+run_io_format(struct io *io, const char *cmd, ...)
+{
+	va_list args;
+
+	va_start(args, cmd);
+	init_io(io, IO_RD);
+
+	if (vsnprintf(io->sh, sizeof(io->sh), cmd, args) >= sizeof(io->sh))
+		io->sh[0] = 0;
+	va_end(args);
+
+	return io->sh[0] ? start_io(io) : FALSE;
+}
+
+static bool
+io_eof(struct io *io)
+{
+	return feof(io->pipe);
+}
+
+static int
+io_error(struct io *io)
+{
+	return io->error;
+}
+
+static bool
+io_strerror(struct io *io)
+{
+	return strerror(io->error);
+}
+
+static char *
+io_gets(struct io *io)
+{
+	if (!io->buf) {
+		io->buf = malloc(BUFSIZ);
+		if (!io->buf)
+			return NULL;
+		io->bufalloc = BUFSIZ;
+	}
+
+	if (!fgets(io->buf, io->bufalloc, io->pipe)) {
+		if (ferror(io->pipe))
+			io->error = errno;
+		return NULL;
+	}
+
+	return io->buf;
+}
+
+
+/*
  * User requests
  */
 
@@ -1419,7 +1542,6 @@ struct view {
 	enum keymap keymap;	/* What keymap does this view have */
 	bool git_dir;		/* Whether the view requires a git directory. */
 
-	char cmd[SIZEOF_STR];	/* Command buffer */
 	char ref[SIZEOF_REF];	/* Hovered commit reference */
 	char vid[SIZEOF_REF];	/* View ID. Set to id member when updating. */
 
@@ -1452,7 +1574,8 @@ struct view {
 	unsigned long col;	/* Column when drawing. */
 
 	/* Loading */
-	FILE *pipe;
+	struct io io;
+	struct io *pipe;
 	time_t start_time;
 };
 
@@ -2227,10 +2350,7 @@ end_update(struct view *view, bool force)
 		if (!force)
 			return;
 	set_nonblocking_input(FALSE);
-	if (view->pipe == stdin)
-		fclose(view->pipe);
-	else
-		pclose(view->pipe);
+	done_io(view->pipe);
 	view->pipe = NULL;
 }
 
@@ -2240,22 +2360,31 @@ setup_update(struct view *view, const char *vid)
 	set_nonblocking_input(TRUE);
 	reset_view(view);
 	string_copy_rev(view->vid, vid);
+	view->pipe = &view->io;
 	view->start_time = time(NULL);
 }
 
 static bool
 begin_update(struct view *view, bool refresh)
 {
-	if (opt_cmd[0]) {
-		string_copy(view->cmd, opt_cmd);
-		opt_cmd[0] = 0;
+	if (init_io_fd(&view->io, opt_pipe)) {
+		opt_pipe = NULL;
+
+	} else if (opt_cmd[0]) {
+		if (!run_io(&view->io, IO_RD, opt_cmd))
+			return FALSE;
 		/* When running random commands, initially show the
 		 * command in the title. However, it maybe later be
 		 * overwritten if a commit line is selected. */
 		if (view == VIEW(REQ_VIEW_PAGER))
-			string_copy(view->ref, view->cmd);
+			string_copy(view->ref, opt_cmd);
 		else
 			view->ref[0] = 0;
+		opt_cmd[0] = 0;
+
+	} else if (refresh) {
+		if (!start_io(&view->io))
+			return FALSE;
 
 	} else if (view == VIEW(REQ_VIEW_TREE)) {
 		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
@@ -2266,14 +2395,14 @@ begin_update(struct view *view, bool refresh)
 		else if (sq_quote(path, 0, opt_path) >= sizeof(path))
 			return FALSE;
 
-		if (!string_format(view->cmd, format, view->id, path))
+		if (!run_io_format(&view->io, format, view->id, path))
 			return FALSE;
 
-	} else if (!refresh) {
+	} else {
 		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
 		const char *id = view->id;
 
-		if (!string_format(view->cmd, format, id, id, id, id, id))
+		if (!run_io_format(&view->io, format, id, id, id, id, id))
 			return FALSE;
 
 		/* Put the current ref_* value to the view title ref
@@ -2282,17 +2411,6 @@ begin_update(struct view *view, bool refresh)
 		 * first line is a commit line. */
 		string_copy_rev(view->ref, view->id);
 	}
-
-	/* Special case for the pager view. */
-	if (opt_pipe) {
-		view->pipe = opt_pipe;
-		opt_pipe = NULL;
-	} else {
-		view->pipe = popen(view->cmd, "r");
-	}
-
-	if (!view->pipe)
-		return FALSE;
 
 	setup_update(view, view->id);
 
@@ -2333,7 +2451,6 @@ realloc_lines(struct view *view, size_t line_size)
 static bool
 update_view(struct view *view)
 {
-	char in_buffer[BUFSIZ];
 	char out_buffer[BUFSIZ * 2];
 	char *line;
 	/* The number of lines to read. If too low it will cause too much
@@ -2353,7 +2470,7 @@ update_view(struct view *view)
 	if (!realloc_lines(view, view->lines + lines))
 		goto alloc_error;
 
-	while ((line = fgets(in_buffer, sizeof(in_buffer), view->pipe))) {
+	while ((line = io_gets(view->pipe))) {
 		size_t linelen = strlen(line);
 
 		if (linelen)
@@ -2396,11 +2513,11 @@ update_view(struct view *view)
 		}
 	}
 
-	if (ferror(view->pipe) && errno != 0) {
-		report("Failed to read: %s", strerror(errno));
+	if (io_error(view->pipe)) {
+		report("Failed to read: %s", io_strerror(view->pipe));
 		end_update(view, TRUE);
 
-	} else if (feof(view->pipe)) {
+	} else if (io_eof(view->pipe)) {
 		report("");
 		end_update(view, FALSE);
 	}
@@ -3532,11 +3649,10 @@ blame_open(struct view *view)
 	if (*opt_ref && sq_quote(ref, 0, opt_ref) >= sizeof(ref))
 		return FALSE;
 
-	if (*opt_ref || !(view->pipe = fopen(opt_file, "r"))) {
+	if (*opt_ref || !init_io_fd(&view->io, fopen(opt_file, "r"))) {
 		const char *id = *opt_ref ? ref : "HEAD";
 
-		if (!string_format(view->cmd, BLAME_CAT_FILE_CMD, id, path) ||
-		    !(view->pipe = popen(view->cmd, "r")))
+	    	if (!run_io_format(&view->io, BLAME_CAT_FILE_CMD, id, path))
 			return FALSE;
 	}
 
@@ -3625,7 +3741,7 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 	if (!line) {
 		char ref[SIZEOF_STR] = "";
 		char path[SIZEOF_STR];
-		FILE *pipe = NULL;
+		struct io io = {};
 
 		if (view->lines == 0 && !view->parent)
 			die("No blame exist for %s", view->vid);
@@ -3633,14 +3749,13 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 		if (view->lines == 0 ||
 		    sq_quote(path, 0, opt_file) >= sizeof(path) ||
 		    (*opt_ref && sq_quote(ref, 0, opt_ref) >= sizeof(ref)) ||
-		    !string_format(view->cmd, BLAME_INCREMENTAL_CMD, ref, path) ||
-		    !(pipe = popen(view->cmd, "r"))) {
+		    !run_io_format(&io, BLAME_INCREMENTAL_CMD, ref, path)) {
 			report("Failed to load blame data");
 			return TRUE;
 		}
 
-		fclose(view->pipe);
-		view->pipe = pipe;
+		done_io(view->pipe);
+		view->io = io;
 		*read_file = FALSE;
 		return FALSE;
 
