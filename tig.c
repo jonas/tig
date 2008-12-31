@@ -3536,9 +3536,6 @@ blame_open(struct view *view)
 			return FALSE;
 	}
 
-	if (!string_format(view->cmd, BLAME_INCREMENTAL_CMD, ref, path))
-		return FALSE;
-
 	reset_view(view);
 	string_format(view->ref, "%s ...", opt_file);
 	string_copy_rev(view->vid, opt_file);
@@ -3626,13 +3623,18 @@ static bool
 blame_read_file(struct view *view, const char *line, bool *read_file)
 {
 	if (!line) {
+		char ref[SIZEOF_STR] = "";
+		char path[SIZEOF_STR];
 		FILE *pipe = NULL;
 
-		if (view->lines > 0)
-			pipe = popen(view->cmd, "r");
-		else if (!view->parent)
+		if (view->lines == 0 && !view->parent)
 			die("No blame exist for %s", view->vid);
-		if (!pipe) {
+
+		if (view->lines == 0 ||
+		    sq_quote(path, 0, opt_file) >= sizeof(path) ||
+		    (*opt_ref && sq_quote(ref, 0, opt_ref) >= sizeof(ref)) ||
+		    !string_format(view->cmd, BLAME_INCREMENTAL_CMD, ref, path) ||
+		    !(pipe = popen(view->cmd, "r"))) {
 			report("Failed to load blame data");
 			return TRUE;
 		}
