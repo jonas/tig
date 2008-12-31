@@ -3630,7 +3630,7 @@ parse_blame_commit(struct view *view, const char *text, int *blamed)
 }
 
 static bool
-blame_read_file(struct view *view, const char *line)
+blame_read_file(struct view *view, const char *line, bool *read_file)
 {
 	if (!line) {
 		FILE *pipe = NULL;
@@ -3639,7 +3639,6 @@ blame_read_file(struct view *view, const char *line)
 			pipe = popen(view->cmd, "r");
 		else if (!view->parent)
 			die("No blame exist for %s", view->vid);
-		view->cmd[0] = 0;
 		if (!pipe) {
 			report("Failed to load blame data");
 			return TRUE;
@@ -3647,6 +3646,7 @@ blame_read_file(struct view *view, const char *line)
 
 		fclose(view->pipe);
 		view->pipe = pipe;
+		*read_file = FALSE;
 		return FALSE;
 
 	} else {
@@ -3678,14 +3678,16 @@ blame_read(struct view *view, char *line)
 	static struct blame_commit *commit = NULL;
 	static int blamed = 0;
 	static time_t author_time;
+	static bool read_file = TRUE;
 
-	if (*view->cmd)
-		return blame_read_file(view, line);
+	if (read_file)
+		return blame_read_file(view, line, &read_file);
 
 	if (!line) {
 		/* Reset all! */
 		commit = NULL;
 		blamed = 0;
+		read_file = TRUE;
 		string_format(view->ref, "%s", view->vid);
 		if (view_is_displayed(view)) {
 			update_view_title(view);
