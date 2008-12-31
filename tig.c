@@ -2400,6 +2400,9 @@ update_view(struct view *view)
 		end_update(view, FALSE);
 	}
 
+	if (!view_is_displayed(view))
+		return TRUE;
+
 	if (view == VIEW(REQ_VIEW_TREE)) {
 		/* Clear the view and redraw everything since the tree sorting
 		 * might have rearranged things. */

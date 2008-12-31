@@ -18,6 +18,7 @@ Bug fixes:
  - Fix waiting for input after executing a run request in pager mode.
  - Status & stage view: refuse to open directories and deleted files.
  - Tree view: show error when requesting blame for all non-file entries.
+ - Do not draw loading views, which are not displayed.
 
 tig-0.12.1
 ----------
