@@ -3528,20 +3528,13 @@ blame_open(struct view *view)
 	if (*opt_ref && sq_quote(ref, 0, opt_ref) >= sizeof(ref))
 		return FALSE;
 
-	if (*opt_ref) {
-		if (!string_format(view->cmd, BLAME_CAT_FILE_CMD, ref, path))
-			return FALSE;
-	} else {
-		view->pipe = fopen(opt_file, "r");
-		if (!view->pipe &&
-		    !string_format(view->cmd, BLAME_CAT_FILE_CMD, "HEAD", path))
+	if (*opt_ref || !(view->pipe = fopen(opt_file, "r"))) {
+		const char *id = *opt_ref ? ref : "HEAD";
+
+		if (!string_format(view->cmd, BLAME_CAT_FILE_CMD, id, path) ||
+		    !(view->pipe = popen(view->cmd, "r")))
 			return FALSE;
 	}
-
-	if (!view->pipe)
-		view->pipe = popen(view->cmd, "r");
-	if (!view->pipe)
-		return FALSE;
 
 	if (!string_format(view->cmd, BLAME_INCREMENTAL_CMD, ref, path))
 		return FALSE;
