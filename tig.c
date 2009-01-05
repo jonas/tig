@@ -2832,17 +2832,6 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		update_view_title(view);
 }
 
-static bool
-run_confirm(const char *cmd, const char *prompt)
-{
-	bool confirmation = prompt_yesno(prompt);
-
-	if (confirmation)
-		system(cmd);
-
-	return confirmation;
-}
-
 static void
 open_external_viewer(const char *argv[], const char *dir)
 {
@@ -4658,14 +4647,13 @@ status_revert(struct status *status, enum line_type type, bool has_none)
 		return FALSE;
 
 	} else {
-		char cmd[SIZEOF_STR];
-		char file_sq[SIZEOF_STR];
+		const char *checkout_argv[] = {
+			"git", "checkout", "--", status->old.name, NULL
+		};
 
-		if (sq_quote(file_sq, 0, status->old.name) >= sizeof(file_sq) ||
-		    !string_format(cmd, "git checkout -- %s%s", opt_cdup, file_sq))
+		if (!prompt_yesno("Are you sure you want to overwrite any changes?"))
 			return FALSE;
-
-		return run_confirm(cmd, "Are you sure you want to overwrite any changes?");
+		return run_io_fg(checkout_argv, opt_cdup);
 	}
 }
 
