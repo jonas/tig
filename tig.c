@@ -742,7 +742,6 @@ struct line {
 struct keybinding {
 	int alias;
 	enum request request;
-	struct keybinding *next;
 };
 
 static struct keybinding default_keybindings[] = {
@@ -841,21 +840,23 @@ static struct int_map keymap_table[] = {
 #define set_keymap(map, name) \
 	set_from_int_map(keymap_table, ARRAY_SIZE(keymap_table), map, name, strlen(name))
 
-static struct keybinding *keybindings[ARRAY_SIZE(keymap_table)];
+struct keybinding_table {
+	struct keybinding *data;
+	size_t size;
+};
+
+static struct keybinding_table keybindings[ARRAY_SIZE(keymap_table)];
 
 static void
 add_keybinding(enum keymap keymap, enum request request, int key)
 {
-	struct keybinding *keybinding;
+	struct keybinding_table *table = &keybindings[keymap];
 
-	keybinding = calloc(1, sizeof(*keybinding));
-	if (!keybinding)
+	table->data = realloc(table->data, (table->size + 1) * sizeof(*table->data));
+	if (!table->data)
 		die("Failed to allocate keybinding");
-
-	keybinding->alias = key;
-	keybinding->request = request;
-	keybinding->next = keybindings[keymap];
-	keybindings[keymap] = keybinding;
+	table->data[table->size].alias = key;
+	table->data[table->size++].request = request;
 }
 
 /* Looks for a key binding first in the given map, then in the generic map, and
@@ -863,16 +864,15 @@ add_keybinding(enum keymap keymap, enum request request, int key)
 static enum request
 get_keybinding(enum keymap keymap, int key)
 {
-	struct keybinding *kbd;
-	int i;
+	size_t i;
 
-	for (kbd = keybindings[keymap]; kbd; kbd = kbd->next)
-		if (kbd->alias == key)
-			return kbd->request;
+	for (i = 0; i < keybindings[keymap].size; i++)
+		if (keybindings[keymap].data[i].alias == key)
+			return keybindings[keymap].data[i].request;
 
-	for (kbd = keybindings[KEYMAP_GENERIC]; kbd; kbd = kbd->next)
-		if (kbd->alias == key)
-			return kbd->request;
+	for (i = 0; i < keybindings[KEYMAP_GENERIC].size; i++)
+		if (keybindings[KEYMAP_GENERIC].data[i].alias == key)
+			return keybindings[KEYMAP_GENERIC].data[i].request;
 
 	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++)
 		if (default_keybindings[i].alias == key)
