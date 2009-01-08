@@ -353,6 +353,7 @@ argv_from_env(const char **argv, const char *name)
 
 enum io_type {
 	IO_FD,			/* File descriptor based IO. */
+	IO_BG,			/* Execute command in the background. */
 	IO_FG,			/* Execute command with same std{in,out,err}. */
 	IO_RD,			/* Read only fork+exec IO. */
 	IO_WR,			/* Write only fork+exec IO. */
@@ -429,17 +430,37 @@ start_io(struct io *io)
 	if (!string_format_from(buf, &bufpos, "%s", io->sh))
 		return FALSE;
 
-	if (io->type == IO_FG)
+	if (io->type == IO_FG || io->type == IO_BG)
 		return system(buf) == 0;
 
 	io->pipe = popen(io->sh, io->type == IO_RD ? "r" : "w");
 	return io->pipe != NULL;
 }
 
+static bool
+run_io(struct io *io, const char **argv, const char *dir, enum io_type type)
+{
+	init_io(io, dir, type);
+	if (!format_command(io->sh, argv, FORMAT_NONE))
+		return FALSE;
+	return start_io(io);
+}
+
 static int
 run_io_do(struct io *io)
 {
 	return start_io(io) && done_io(io);
+}
+
+static int
+run_io_bg(const char **argv)
+{
+	struct io io = {};
+
+	init_io(&io, NULL, IO_BG);
+	if (!format_command(io.sh, argv, FORMAT_NONE))
+		return FALSE;
+	return run_io_do(&io);
 }
 
 static bool
@@ -494,6 +515,20 @@ io_gets(struct io *io)
 	}
 
 	return io->buf;
+}
+
+static bool
+io_write(struct io *io, const void *buf, size_t bufsize)
+{
+	size_t written = 0;
+
+	while (!io_error(io) && written < bufsize) {
+		written += fwrite(buf + written, 1, bufsize - written, io->pipe);
+		if (ferror(io->pipe))
+			io->error = errno;
+	}
+
+	return written == bufsize;
 }
 
 static bool
@@ -4273,6 +4308,10 @@ error_out:
 #define STATUS_LIST_NO_HEAD_CMD \
 	"git ls-files -z --cached --exclude-standard"
 
+static const char *update_index_argv[] = {
+	"git", "update-index", "-q", "--unmerged", "--refresh", NULL
+};
+
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
  * git-ls-files(1). */
@@ -4813,27 +4852,13 @@ static struct view_ops status_ops = {
 
 
 static bool
-stage_diff_line(FILE *pipe, struct line *line)
-{
-	const char *buf = line->data;
-	size_t bufsize = strlen(buf);
-	size_t written = 0;
-
-	while (!ferror(pipe) && written < bufsize) {
-		written += fwrite(buf + written, 1, bufsize - written, pipe);
-	}
-
-	fputc('\n', pipe);
-
-	return written == bufsize;
-}
-
-static bool
-stage_diff_write(FILE *pipe, struct line *line, struct line *end)
+stage_diff_write(struct io *io, struct line *line, struct line *end)
 {
 	while (line < end) {
-		if (!stage_diff_line(pipe, line++))
+		if (!io_write(io, line->data, strlen(line->data)) ||
+		    !io_write(io, "\n", 1))
 			return FALSE;
+		line++;
 		if (line->type == LINE_DIFF_CHUNK ||
 		    line->type == LINE_DIFF_HEADER)
 			break;
@@ -4855,35 +4880,32 @@ stage_diff_find(struct view *view, struct line *line, enum line_type type)
 static bool
 stage_apply_chunk(struct view *view, struct line *chunk, bool revert)
 {
-	char cmd[SIZEOF_STR];
-	size_t cmdsize = 0;
+	const char *apply_argv[SIZEOF_ARG] = {
+		"git", "apply", "--whitespace=nowarn", NULL
+	};
 	struct line *diff_hdr;
-	FILE *pipe;
+	struct io io = {};
+	int argc = 3;
 
 	diff_hdr = stage_diff_find(view, chunk, LINE_DIFF_HEADER);
 	if (!diff_hdr)
 		return FALSE;
 
-	if (opt_cdup[0] &&
-	    !string_format_from(cmd, &cmdsize, "cd %s;", opt_cdup))
+	if (!revert)
+		apply_argv[argc++] = "--cached";
+	if (revert || stage_line_type == LINE_STAT_STAGED)
+		apply_argv[argc++] = "-R";
+	apply_argv[argc++] = "-";
+	apply_argv[argc++] = NULL;
+	if (!run_io(&io, apply_argv, opt_cdup, IO_WR))
 		return FALSE;
 
-	if (!string_format_from(cmd, &cmdsize,
-				"git apply --whitespace=nowarn %s %s - && "
-				"git update-index -q --unmerged --refresh 2>/dev/null",
-				revert ? "" : "--cached",
-				revert || stage_line_type == LINE_STAT_STAGED ? "-R" : ""))
-		return FALSE;
-
-	pipe = popen(cmd, "w");
-	if (!pipe)
-		return FALSE;
-
-	if (!stage_diff_write(pipe, diff_hdr, chunk) ||
-	    !stage_diff_write(pipe, chunk, view->line + view->lines))
+	if (!stage_diff_write(&io, diff_hdr, chunk) ||
+	    !stage_diff_write(&io, chunk, view->line + view->lines))
 		chunk = NULL;
 
-	pclose(pipe);
+	done_io(&io);
+	run_io_bg(update_index_argv);
 
 	return chunk ? TRUE : FALSE;
 }
