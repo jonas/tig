@@ -433,14 +433,6 @@ start_io(struct io *io)
 	return io->pipe != NULL;
 }
 
-static bool
-run_io(struct io *io, enum io_type type, const char *cmd)
-{
-	init_io(io, NULL, type);
-	string_ncopy(io->sh, cmd, strlen(cmd));
-	return start_io(io);
-}
-
 static int
 run_io_do(struct io *io)
 {
@@ -661,7 +653,6 @@ static bool opt_show_refs		= TRUE;
 static int opt_num_interval		= NUMBER_INTERVAL;
 static int opt_tab_size			= TAB_SIZE;
 static int opt_author_cols		= AUTHOR_COLS-1;
-static char opt_cmd[SIZEOF_STR]		= "";
 static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
@@ -2535,12 +2526,6 @@ begin_update(struct view *view, bool refresh)
 	if (init_io_fd(&view->io, opt_pipe)) {
 		opt_pipe = NULL;
 
-	} else if (opt_cmd[0]) {
-		if (!run_io(&view->io, IO_RD, opt_cmd))
-			return FALSE;
-		view->ref[0] = 0;
-		opt_cmd[0] = 0;
-
 	} else if (refresh) {
 		if (!start_io(&view->io))
 			return FALSE;
@@ -4283,15 +4268,6 @@ error_out:
 #define STATUS_LIST_NO_HEAD_CMD \
 	"git ls-files -z --cached --exclude-standard"
 
-#define STATUS_DIFF_INDEX_SHOW_CMD \
-	"git diff-index --root --patch-with-stat -C -M --cached HEAD -- %s %s 2>/dev/null"
-
-#define STATUS_DIFF_FILES_SHOW_CMD \
-	"git diff-files --root --patch-with-stat -C -M -- %s %s 2>/dev/null"
-
-#define STATUS_DIFF_NO_HEAD_SHOW_CMD \
-	"git diff --no-color --patch-with-stat /dev/null %s 2>/dev/null"
-
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
  * git-ls-files(1). */
@@ -4405,11 +4381,13 @@ static enum request
 status_enter(struct view *view, struct line *line)
 {
 	struct status *status = line->data;
-	char oldpath[SIZEOF_STR] = "";
-	char newpath[SIZEOF_STR] = "";
+	const char *oldpath = status ? status->old.name : NULL;
+	/* Diffs for unmerged entries are empty when passing the new
+	 * path, so leave it empty. */
+	const char *newpath = status && status->status != 'U' ? status->new.name : NULL;
 	const char *info;
-	size_t cmdsize = 0;
 	enum open_flags split;
+	struct view *stage = VIEW(REQ_VIEW_STAGE);
 
 	if (line->type == LINE_STAT_NONE ||
 	    (!status && line[1].type == LINE_STAT_NONE)) {
@@ -4417,32 +4395,24 @@ status_enter(struct view *view, struct line *line)
 		return REQ_NONE;
 	}
 
-	if (status) {
-		if (sq_quote(oldpath, 0, status->old.name) >= sizeof(oldpath))
-			return REQ_QUIT;
-		/* Diffs for unmerged entries are empty when pasing the
-		 * new path, so leave it empty. */
-		if (status->status != 'U' &&
-		    sq_quote(newpath, 0, status->new.name) >= sizeof(newpath))
-			return REQ_QUIT;
-	}
-
-	if (opt_cdup[0] &&
-	    line->type != LINE_STAT_UNTRACKED &&
-	    !string_format_from(opt_cmd, &cmdsize, "cd %s;", opt_cdup))
-		return REQ_QUIT;
-
 	switch (line->type) {
 	case LINE_STAT_STAGED:
 		if (is_initial_commit()) {
-			if (!string_format_from(opt_cmd, &cmdsize,
-						STATUS_DIFF_NO_HEAD_SHOW_CMD,
-						newpath))
+			const char *no_head_diff_argv[] = {
+				"git", "diff", "--no-color", "--patch-with-stat",
+					"--", "/dev/null", newpath, NULL
+			};
+
+			if (!prepare_update(stage, no_head_diff_argv, opt_cdup, FORMAT_DASH))
 				return REQ_QUIT;
 		} else {
-			if (!string_format_from(opt_cmd, &cmdsize,
-						STATUS_DIFF_INDEX_SHOW_CMD,
-						oldpath, newpath))
+			const char *index_show_argv[] = {
+				"git", "diff-index", "--root", "--patch-with-stat",
+					"-C", "-M", "--cached", "HEAD", "--",
+					oldpath, newpath, NULL
+			};
+
+			if (!prepare_update(stage, index_show_argv, opt_cdup, FORMAT_DASH))
 				return REQ_QUIT;
 		}
 
@@ -4453,20 +4423,25 @@ status_enter(struct view *view, struct line *line)
 		break;
 
 	case LINE_STAT_UNSTAGED:
-		if (!string_format_from(opt_cmd, &cmdsize,
-					STATUS_DIFF_FILES_SHOW_CMD, oldpath, newpath))
+	{
+		const char *files_show_argv[] = {
+			"git", "diff-files", "--root", "--patch-with-stat",
+				"-C", "-M", "--", oldpath, newpath, NULL
+		};
+
+		if (!prepare_update(stage, files_show_argv, opt_cdup, FORMAT_DASH))
 			return REQ_QUIT;
 		if (status)
 			info = "Unstaged changes to %s";
 		else
 			info = "Unstaged changes";
 		break;
-
+	}
 	case LINE_STAT_UNTRACKED:
 		if (opt_pipe)
 			return REQ_QUIT;
 
-	    	if (!status) {
+		if (!newpath) {
 			report("No file to show");
 			return REQ_NONE;
 		}
