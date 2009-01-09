@@ -359,20 +359,26 @@ enum io_type {
 struct io {
 	enum io_type type;	/* The requested type of pipe. */
 	const char *dir;	/* Directory from which to execute. */
-	FILE *pipe;		/* Pipe for reading or writing. */
+	FILE *pid;		/* Pipe for reading or writing. */
+	int pipe;		/* Pipe end for reading or writing. */
 	int error;		/* Error status. */
 	char sh[SIZEOF_STR];	/* Shell command buffer. */
-	char *buf;		/* Read/write buffer. */
+	char *buf;		/* Read buffer. */
 	size_t bufalloc;	/* Allocated buffer size. */
+	size_t bufsize;		/* Buffer content size. */
+	char *bufpos;		/* Current buffer position. */
+	unsigned int eof:1;	/* Has end of file been reached. */
 };
 
 static void
 reset_io(struct io *io)
 {
-	io->pipe = NULL;
-	io->buf = NULL;
-	io->bufalloc = 0;
+	io->pipe = -1;
+	io->pid = NULL;
+	io->buf = io->bufpos = NULL;
+	io->bufalloc = io->bufsize = 0;
 	io->error = 0;
+	io->eof = 0;
 }
 
 static void
@@ -395,8 +401,8 @@ static bool
 io_open(struct io *io, const char *name)
 {
 	init_io(io, NULL, IO_FD);
-	io->pipe = *name ? fopen(name, "r") : stdin;
-	return io->pipe != NULL;
+	io->pipe = *name ? open(name, O_RDONLY) : STDIN_FILENO;
+	return io->pipe != -1;
 }
 
 static bool
@@ -404,9 +410,9 @@ done_io(struct io *io)
 {
 	free(io->buf);
 	if (io->type == IO_FD)
-		fclose(io->pipe);
+		close(io->pipe);
 	else if (io->type == IO_RD || io->type == IO_WR)
-		pclose(io->pipe);
+		pclose(io->pid);
 	reset_io(io);
 	return TRUE;
 }
@@ -430,8 +436,11 @@ start_io(struct io *io)
 	if (io->type == IO_FG || io->type == IO_BG)
 		return system(buf) == 0;
 
-	io->pipe = popen(io->sh, io->type == IO_RD ? "r" : "w");
-	return io->pipe != NULL;
+	io->pid = popen(io->sh, io->type == IO_RD ? "r" : "w");
+	if (!io->pid)
+		return FALSE;
+	io->pipe = fileno(io->pid);
+	return io->pipe != -1;
 }
 
 static bool
@@ -480,7 +489,7 @@ run_io_rd(struct io *io, const char **argv, enum format_flags flags)
 static bool
 io_eof(struct io *io)
 {
-	return feof(io->pipe);
+	return io->eof;
 }
 
 static int
@@ -495,34 +504,67 @@ io_strerror(struct io *io)
 	return strerror(io->error);
 }
 
-static size_t
+static ssize_t
 io_read(struct io *io, void *buf, size_t bufsize)
 {
-	size_t readsize = fread(buf, 1, bufsize, io->pipe);
+	do {
+		ssize_t readsize = read(io->pipe, buf, bufsize);
 
-	if (ferror(io->pipe))
-		io->error = errno;
-
-	return readsize;
+		if (readsize < 0 && (errno == EAGAIN || errno == EINTR))
+			continue;
+		else if (readsize == -1)
+			io->error = errno;
+		else if (readsize == 0)
+			io->eof = 1;
+		return readsize;
+	} while (1);
 }
 
 static char *
 io_gets(struct io *io)
 {
+	char *eol;
+	ssize_t readsize;
+
 	if (!io->buf) {
-		io->buf = malloc(BUFSIZ);
+		io->buf = io->bufpos = malloc(BUFSIZ);
 		if (!io->buf)
 			return NULL;
 		io->bufalloc = BUFSIZ;
+		io->bufsize = 0;
 	}
 
-	if (!fgets(io->buf, io->bufalloc, io->pipe)) {
-		if (ferror(io->pipe))
-			io->error = errno;
-		return NULL;
-	}
+	while (TRUE) {
+		if (io->bufsize > 0) {
+			eol = memchr(io->bufpos, '\n', io->bufsize);
+			if (eol) {
+				char *line = io->bufpos;
 
-	return io->buf;
+				*eol = 0;
+				io->bufpos = eol + 1;
+				io->bufsize -= io->bufpos - line;
+				return line;
+			}
+		}
+
+		if (io_eof(io)) {
+			if (io->bufsize) {
+				io->bufpos[io->bufsize] = 0;
+				io->bufsize = 0;
+				return io->bufpos;
+			}
+			return NULL;
+		}
+
+		if (io->bufsize > 0 && io->bufpos > io->buf)
+			memmove(io->buf, io->bufpos, io->bufsize);
+
+		io->bufpos = io->buf;
+		readsize = io_read(io, io->buf + io->bufsize, io->bufalloc - io->bufsize);
+		if (io_error(io))
+			return NULL;
+		io->bufsize += readsize;
+	}
 }
 
 static bool
@@ -531,9 +573,15 @@ io_write(struct io *io, const void *buf, size_t bufsize)
 	size_t written = 0;
 
 	while (!io_error(io) && written < bufsize) {
-		written += fwrite(buf + written, 1, bufsize - written, io->pipe);
-		if (ferror(io->pipe))
+		ssize_t size;
+
+		size = write(io->pipe, buf + written, bufsize - written);
+		if (size < 0 && (errno == EAGAIN || errno == EINTR))
+			continue;
+		else if (size == -1)
 			io->error = errno;
+		else
+			written += size;
 	}
 
 	return written == bufsize;
@@ -548,7 +596,7 @@ run_io_buf(const char **argv, char buf[], size_t bufsize)
 	if (!run_io_rd(&io, argv, FORMAT_NONE))
 		return FALSE;
 
-	io.buf = buf;
+	io.buf = io.bufpos = buf;
 	io.bufalloc = bufsize;
 	error = !io_gets(&io) && io_error(&io);
 	io.buf = NULL;
@@ -2653,9 +2701,6 @@ update_view(struct view *view)
 	while ((line = io_gets(view->pipe))) {
 		size_t linelen = strlen(line);
 
-		if (linelen)
-			line[linelen - 1] = 0;
-
 		if (opt_iconv != ICONV_NONE) {
 			ICONV_CONST char *inbuf = line;
 			size_t inlen = linelen;
@@ -4210,7 +4255,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 
 	while (!io_eof(&io)) {
 		char *sep;
-		size_t readsize;
+		ssize_t readsize;
 
 		readsize = io_read(&io, buf + bufsize, sizeof(buf) - bufsize);
 		if (io_error(&io))
