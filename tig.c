@@ -35,6 +35,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
+#include <fcntl.h>
 
 #include <regex.h>
 
@@ -391,10 +392,10 @@ init_io_rd(struct io *io, const char *argv[], const char *dir,
 }
 
 static bool
-init_io_fd(struct io *io, FILE *pipe)
+io_open(struct io *io, const char *name)
 {
 	init_io(io, NULL, IO_FD);
-	io->pipe = pipe;
+	io->pipe = *name ? fopen(name, "r") : stdin;
 	return io->pipe != NULL;
 }
 
@@ -1558,7 +1559,7 @@ load_option_file(const char *path)
 	struct io io = {};
 
 	/* It's ok that the file doesn't exist. */
-	if (!init_io_fd(&io, fopen(path, "r")))
+	if (!io_open(&io, path))
 		return;
 
 	config_lineno = 0;
@@ -2567,7 +2568,7 @@ prepare_update_file(struct view *view, const char *name)
 {
 	if (view->pipe)
 		end_update(view, TRUE);
-	return init_io_fd(&view->io, fopen(name, "r"));
+	return io_open(&view->io, name);
 }
 
 static bool
@@ -3807,7 +3808,7 @@ struct blame {
 static bool
 blame_open(struct view *view)
 {
-	if (*opt_ref || !init_io_fd(&view->io, fopen(opt_file, "r"))) {
+	if (*opt_ref || !io_open(&view->io, opt_file)) {
 		if (!run_io_rd(&view->io, blame_cat_file_argv, FORMAT_ALL))
 			return FALSE;
 	}
@@ -6409,7 +6410,7 @@ main(int argc, const char *argv[])
 
 	if (request == REQ_VIEW_PAGER || run_argv) {
 		if (request == REQ_VIEW_PAGER)
-			init_io_fd(&VIEW(request)->io, stdin);
+			io_open(&VIEW(request)->io, "");
 		else if (!prepare_update(VIEW(request), run_argv, NULL, FORMAT_NONE))
 			die("Failed to format arguments");
 		open_view(NULL, request, OPEN_PREPARED);
