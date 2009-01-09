@@ -2234,6 +2234,15 @@ end_update(struct view *view, bool force)
 	view->pipe = NULL;
 }
 
+static void
+setup_update(struct view *view, const char *vid)
+{
+	set_nonblocking_input(TRUE);
+	reset_view(view);
+	string_copy_rev(view->vid, vid);
+	view->start_time = time(NULL);
+}
+
 static bool
 begin_update(struct view *view, bool refresh)
 {
@@ -2285,11 +2294,7 @@ begin_update(struct view *view, bool refresh)
 	if (!view->pipe)
 		return FALSE;
 
-	set_nonblocking_input(TRUE);
-	reset_view(view);
-	string_copy_rev(view->vid, view->id);
-
-	view->start_time = time(NULL);
+	setup_update(view, view->id);
 
 	return TRUE;
 }
@@ -3536,11 +3541,8 @@ blame_open(struct view *view)
 			return FALSE;
 	}
 
-	reset_view(view);
+	setup_update(view, opt_file);
 	string_format(view->ref, "%s ...", opt_file);
-	string_copy_rev(view->vid, opt_file);
-	set_nonblocking_input(TRUE);
-	view->start_time = time(NULL);
 
 	return TRUE;
 }
