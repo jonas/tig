@@ -362,7 +362,7 @@ struct io {
 	FILE *pid;		/* Pipe for reading or writing. */
 	int pipe;		/* Pipe end for reading or writing. */
 	int error;		/* Error status. */
-	char sh[SIZEOF_STR];	/* Shell command buffer. */
+	const char *argv[SIZEOF_ARG];	/* Shell command arguments. */
 	char *buf;		/* Read buffer. */
 	size_t bufalloc;	/* Allocated buffer size. */
 	size_t bufsize;		/* Buffer content size. */
@@ -394,7 +394,7 @@ init_io_rd(struct io *io, const char *argv[], const char *dir,
 		enum format_flags flags)
 {
 	init_io(io, dir, IO_RD);
-	return format_command(io->sh, argv, flags);
+	return format_argv(io->argv, argv, flags);
 }
 
 static bool
@@ -430,13 +430,13 @@ start_io(struct io *io)
 	    !string_format_from(buf, &bufpos, "cd %s;", io->dir))
 		return FALSE;
 
-	if (!string_format_from(buf, &bufpos, "%s", io->sh))
+	if (!format_command(buf + bufpos, io->argv, FORMAT_NONE))
 		return FALSE;
 
 	if (io->type == IO_FG || io->type == IO_BG)
 		return system(buf) == 0;
 
-	io->pid = popen(io->sh, io->type == IO_RD ? "r" : "w");
+	io->pid = popen(buf, io->type == IO_RD ? "r" : "w");
 	if (!io->pid)
 		return FALSE;
 	io->pipe = fileno(io->pid);
@@ -447,7 +447,7 @@ static bool
 run_io(struct io *io, const char **argv, const char *dir, enum io_type type)
 {
 	init_io(io, dir, type);
-	if (!format_command(io->sh, argv, FORMAT_NONE))
+	if (!format_argv(io->argv, argv, FORMAT_NONE))
 		return FALSE;
 	return start_io(io);
 }
@@ -464,7 +464,7 @@ run_io_bg(const char **argv)
 	struct io io = {};
 
 	init_io(&io, NULL, IO_BG);
-	if (!format_command(io.sh, argv, FORMAT_NONE))
+	if (!format_argv(io.argv, argv, FORMAT_NONE))
 		return FALSE;
 	return run_io_do(&io);
 }
@@ -475,7 +475,7 @@ run_io_fg(const char **argv, const char *dir)
 	struct io io = {};
 
 	init_io(&io, dir, IO_FG);
-	if (!format_command(io.sh, argv, FORMAT_NONE))
+	if (!format_argv(io.argv, argv, FORMAT_NONE))
 		return FALSE;
 	return run_io_do(&io);
 }
