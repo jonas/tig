@@ -2545,14 +2545,10 @@ begin_update(struct view *view, bool refresh)
 		if (!start_io(&view->io))
 			return FALSE;
 
-	} else if (view == VIEW(REQ_VIEW_TREE)) {
-		if (strcmp(view->vid, view->id))
+	} else {
+		if (view == VIEW(REQ_VIEW_TREE) && strcmp(view->vid, view->id))
 			opt_path[0] = 0;
 
-		if (!run_io_rd(&view->io, view->ops->argv, FORMAT_ALL))
-			return FALSE;
-
-	} else {
 		if (!run_io_rd(&view->io, view->ops->argv, FORMAT_ALL))
 			return FALSE;
 
