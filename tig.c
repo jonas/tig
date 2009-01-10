@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
@@ -144,7 +145,6 @@ enum format_flags {
 	FORMAT_NONE		/* No replacement should be performed. */
 };
 
-static bool format_command(char dst[], const char *src[], enum format_flags flags);
 static bool format_argv(const char *dst[], const char *src[], enum format_flags flags);
 
 struct int_map {
@@ -270,48 +270,6 @@ suffixcmp(const char *str, int slen, const char *suffix)
 	return suffixlen < len ? strcmp(str + len - suffixlen, suffix) : -1;
 }
 
-/* Shell quoting
- *
- * NOTE: The following is a slightly modified copy of the git project's shell
- * quoting routines found in the quote.c file.
- *
- * Help to copy the thing properly quoted for the shell safety.  any single
- * quote is replaced with '\'', any exclamation point is replaced with '\!',
- * and the whole thing is enclosed in a
- *
- * E.g.
- *  original     sq_quote     result
- *  name     ==> name      ==> 'name'
- *  a b      ==> a b       ==> 'a b'
- *  a'b      ==> a'\''b    ==> 'a'\''b'
- *  a!b      ==> a'\!'b    ==> 'a'\!'b'
- */
-
-static size_t
-sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
-{
-	char c;
-
-#define BUFPUT(x) do { if (bufsize < SIZEOF_STR) buf[bufsize++] = (x); } while (0)
-
-	BUFPUT('\'');
-	while ((c = *src++)) {
-		if (c == '\'' || c == '!') {
-			BUFPUT('\'');
-			BUFPUT('\\');
-			BUFPUT(c);
-			BUFPUT('\'');
-		} else {
-			BUFPUT(c);
-		}
-	}
-	BUFPUT('\'');
-
-	if (bufsize < SIZEOF_STR)
-		buf[bufsize] = 0;
-
-	return bufsize;
-}
 
 static bool
 argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
@@ -359,7 +317,7 @@ enum io_type {
 struct io {
 	enum io_type type;	/* The requested type of pipe. */
 	const char *dir;	/* Directory from which to execute. */
-	FILE *pid;		/* Pipe for reading or writing. */
+	pid_t pid;		/* Pipe for reading or writing. */
 	int pipe;		/* Pipe end for reading or writing. */
 	int error;		/* Error status. */
 	const char *argv[SIZEOF_ARG];	/* Shell command arguments. */
@@ -374,7 +332,7 @@ static void
 reset_io(struct io *io)
 {
 	io->pipe = -1;
-	io->pid = NULL;
+	io->pid = 0;
 	io->buf = io->bufpos = NULL;
 	io->bufalloc = io->bufsize = 0;
 	io->error = 0;
@@ -406,41 +364,88 @@ io_open(struct io *io, const char *name)
 }
 
 static bool
+kill_io(struct io *io)
+{
+	return kill(io->pid, SIGKILL) != -1;
+}
+
+static bool
 done_io(struct io *io)
 {
-	free(io->buf);
-	if (io->type == IO_FD)
+	pid_t pid = io->pid;
+
+	if (io->pipe != -1)
 		close(io->pipe);
-	else if (io->type == IO_RD || io->type == IO_WR)
-		pclose(io->pid);
+	free(io->buf);
 	reset_io(io);
+
+	while (pid > 0) {
+		int status;
+		pid_t waiting = waitpid(pid, &status, 0);
+
+		if (waiting < 0) {
+			if (errno == EINTR)
+				continue;
+			report("waitpid failed (%s)", strerror(errno));
+			return FALSE;
+		}
+
+		return waiting == pid &&
+		       !WIFSIGNALED(status) &&
+		       WIFEXITED(status) &&
+		       !WEXITSTATUS(status);
+	}
+
 	return TRUE;
 }
 
 static bool
 start_io(struct io *io)
 {
-	char buf[SIZEOF_STR * 2];
-	size_t bufpos = 0;
+	int pipefds[2] = { -1, -1 };
 
 	if (io->type == IO_FD)
 		return TRUE;
 
-	if (io->dir && *io->dir &&
-	    !string_format_from(buf, &bufpos, "cd %s;", io->dir))
+	if ((io->type == IO_RD || io->type == IO_WR) &&
+	    pipe(pipefds) < 0)
 		return FALSE;
 
-	if (!format_command(buf + bufpos, io->argv, FORMAT_NONE))
-		return FALSE;
+	if ((io->pid = fork())) {
+		if (pipefds[!(io->type == IO_WR)] != -1)
+			close(pipefds[!(io->type == IO_WR)]);
+		if (io->pid != -1) {
+			io->pipe = pipefds[!!(io->type == IO_WR)];
+			return TRUE;
+		}
 
-	if (io->type == IO_FG || io->type == IO_BG)
-		return system(buf) == 0;
+	} else {
+		if (io->type != IO_FG) {
+			int devnull = open("/dev/null", O_RDWR);
+			int readfd  = io->type == IO_WR ? pipefds[0] : devnull;
+			int writefd = io->type == IO_RD ? pipefds[1] : devnull;
 
-	io->pid = popen(buf, io->type == IO_RD ? "r" : "w");
-	if (!io->pid)
-		return FALSE;
-	io->pipe = fileno(io->pid);
-	return io->pipe != -1;
+			dup2(readfd,  STDIN_FILENO);
+			dup2(writefd, STDOUT_FILENO);
+			dup2(devnull, STDERR_FILENO);
+
+			close(devnull);
+			if (pipefds[0] != -1)
+				close(pipefds[0]);
+			if (pipefds[1] != -1)
+				close(pipefds[1]);
+		}
+
+		if (io->dir && *io->dir && chdir(io->dir) == -1)
+			die("Failed to change directory: %s", strerror(errno));
+
+		execvp(io->argv[0], (char *const*) io->argv);
+		die("Failed to execute program: %s", strerror(errno));
+	}
+
+	if (pipefds[!!(io->type == IO_WR)] != -1)
+		close(pipefds[!!(io->type == IO_WR)]);
+	return FALSE;
 }
 
 static bool
@@ -2554,31 +2559,6 @@ format_argv(const char *dst_argv[], const char *src_argv[], enum format_flags fl
 	return src_argv[argc] == NULL;
 }
 
-static bool
-format_command(char dst[], const char *src_argv[], enum format_flags flags)
-{
-	const char *dst_argv[SIZEOF_ARG * 2] = { NULL };
-	int bufsize = 0;
-	int argc;
-
-	if (!format_argv(dst_argv, src_argv, flags)) {
-		free_argv(dst_argv);
-		return FALSE;
-	}
-
-	for (argc = 0; dst_argv[argc] && bufsize < SIZEOF_STR; argc++) {
-		if (bufsize > 0)
-			dst[bufsize++] = ' ';
-		bufsize = sq_quote(dst, bufsize, dst_argv[argc]);
-	}
-
-	if (bufsize < SIZEOF_STR)
-		dst[bufsize] = 0;
-	free_argv(dst_argv);
-
-	return src_argv[argc] == NULL && bufsize < SIZEOF_STR;
-}
-
 static void
 end_update(struct view *view, bool force)
 {
@@ -2588,6 +2568,8 @@ end_update(struct view *view, bool force)
 		if (!force)
 			return;
 	set_nonblocking_input(FALSE);
+	if (force)
+		kill_io(view->pipe);
 	done_io(view->pipe);
 	view->pipe = NULL;
 }
