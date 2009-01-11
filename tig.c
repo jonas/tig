@@ -419,6 +419,9 @@ start_io(struct io *io)
 	char buf[SIZEOF_STR * 2];
 	size_t bufpos = 0;
 
+	if (io->type == IO_FD)
+		return TRUE;
+
 	if (io->dir && *io->dir &&
 	    !string_format_from(buf, &bufpos, "cd %s;", io->dir))
 		return FALSE;
@@ -659,7 +662,6 @@ static char opt_ref[SIZEOF_REF]		= "";
 static char opt_head[SIZEOF_REF]	= "";
 static char opt_head_rev[SIZEOF_REV]	= "";
 static char opt_remote[SIZEOF_REF]	= "";
-static FILE *opt_pipe			= NULL;
 static char opt_encoding[20]		= "UTF-8";
 static bool opt_utf8			= TRUE;
 static char opt_codeset[20]		= "UTF-8";
@@ -688,10 +690,8 @@ parse_options(int argc, const char *argv[], const char ***run_argv)
 	};
 	int i, j = 6;
 
-	if (!isatty(STDIN_FILENO)) {
-		opt_pipe = stdin;
+	if (!isatty(STDIN_FILENO))
 		return REQ_VIEW_PAGER;
-	}
 
 	if (argc <= 1)
 		return REQ_VIEW_MAIN;
@@ -2521,12 +2521,17 @@ prepare_update(struct view *view, const char *argv[], const char *dir,
 }
 
 static bool
+prepare_update_file(struct view *view, const char *name)
+{
+	if (view->pipe)
+		end_update(view, TRUE);
+	return init_io_fd(&view->io, fopen(name, "r"));
+}
+
+static bool
 begin_update(struct view *view, bool refresh)
 {
-	if (init_io_fd(&view->io, opt_pipe)) {
-		opt_pipe = NULL;
-
-	} else if (refresh) {
+	if (refresh) {
 		if (!start_io(&view->io))
 			return FALSE;
 
@@ -2939,7 +2944,7 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_VIEW_PAGER:
-		if (!opt_pipe && !VIEW(REQ_VIEW_PAGER)->lines) {
+		if (!VIEW(REQ_VIEW_PAGER)->pipe && !VIEW(REQ_VIEW_PAGER)->lines) {
 			report("No pager content, press %s to run command from prompt",
 			       get_key(REQ_PROMPT));
 			break;
@@ -4438,9 +4443,6 @@ status_enter(struct view *view, struct line *line)
 		break;
 	}
 	case LINE_STAT_UNTRACKED:
-		if (opt_pipe)
-			return REQ_QUIT;
-
 		if (!newpath) {
 			report("No file to show");
 			return REQ_NONE;
@@ -4451,7 +4453,8 @@ status_enter(struct view *view, struct line *line)
 			return REQ_NONE;
 		}
 
-		opt_pipe = fopen(status->new.name, "r");
+		if (!prepare_update_file(stage, newpath))
+			return REQ_QUIT;
 		info = "Untracked file %s";
 		break;
 
@@ -5045,7 +5048,10 @@ stage_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		}
 
-		opt_pipe = fopen(stage_status.new.name, "r");
+		if (!prepare_update_file(view, stage_status.new.name)) {
+			report("Failed to open file: %s", strerror(errno));
+			return REQ_NONE;
+		}
 	}
 	open_view(view, REQ_VIEW_STAGE, OPEN_REFRESH);
 
@@ -6356,10 +6362,12 @@ main(int argc, const char *argv[])
 
 	init_display();
 
-	if (run_argv) {
-		if (!prepare_update(VIEW(request), run_argv, NULL, FORMAT_NONE))
+	if (request == REQ_VIEW_PAGER || run_argv) {
+		if (request == REQ_VIEW_PAGER)
+			init_io_fd(&VIEW(request)->io, stdin);
+		else if (!prepare_update(VIEW(request), run_argv, NULL, FORMAT_NONE))
 			die("Failed to format arguments");
-		open_view(display[current_view], request, OPEN_PREPARED);
+		open_view(NULL, request, OPEN_PREPARED);
 		request = REQ_NONE;
 	}
 
