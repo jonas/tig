@@ -494,6 +494,17 @@ io_strerror(struct io *io)
 	return strerror(io->error);
 }
 
+static size_t
+io_read(struct io *io, void *buf, size_t bufsize)
+{
+	size_t readsize = fread(buf, 1, bufsize, io->pipe);
+
+	if (ferror(io->pipe))
+		io->error = errno;
+
+	return readsize;
+}
+
 static char *
 io_gets(struct io *io)
 {
@@ -4183,26 +4194,25 @@ status_get_diff(struct status *file, const char *buf, size_t bufsize)
 }
 
 static bool
-status_run(struct view *view, const char cmd[], char status, enum line_type type)
+status_run(struct view *view, const char *argv[], char status, enum line_type type)
 {
 	struct status *file = NULL;
 	struct status *unmerged = NULL;
 	char buf[SIZEOF_STR * 4];
 	size_t bufsize = 0;
-	FILE *pipe;
+	struct io io = {};
 
-	pipe = popen(cmd, "r");
-	if (!pipe)
+	if (!run_io(&io, argv, NULL, IO_RD))
 		return FALSE;
 
 	add_line_data(view, NULL, type);
 
-	while (!feof(pipe) && !ferror(pipe)) {
+	while (!io_eof(&io)) {
 		char *sep;
 		size_t readsize;
 
-		readsize = fread(buf + bufsize, 1, sizeof(buf) - bufsize, pipe);
-		if (!readsize)
+		readsize = io_read(&io, buf + bufsize, sizeof(buf) - bufsize);
+		if (io_error(&io))
 			break;
 		bufsize += readsize;
 
@@ -4283,26 +4293,36 @@ status_run(struct view *view, const char cmd[], char status, enum line_type type
 		}
 	}
 
-	if (ferror(pipe)) {
+	if (io_error(&io)) {
 error_out:
-		pclose(pipe);
+		done_io(&io);
 		return FALSE;
 	}
 
 	if (!view->line[view->lines - 1].data)
 		add_line_data(view, NULL, LINE_STAT_NONE);
 
-	pclose(pipe);
+	done_io(&io);
 	return TRUE;
 }
 
 /* Don't show unmerged entries in the staged section. */
-#define STATUS_DIFF_INDEX_CMD "git diff-index -z --diff-filter=ACDMRTXB --cached -M HEAD"
-#define STATUS_DIFF_FILES_CMD "git diff-files -z"
-#define STATUS_LIST_OTHER_CMD \
-	"git ls-files -z --others --exclude-standard"
-#define STATUS_LIST_NO_HEAD_CMD \
-	"git ls-files -z --cached --exclude-standard"
+static const char *status_diff_index_argv[] = {
+	"git", "diff-index", "-z", "--diff-filter=ACDMRTXB",
+			     "--cached", "-M", "HEAD", NULL
+};
+
+static const char *status_diff_files_argv[] = {
+	"git", "diff-files", "-z", NULL
+};
+
+static const char *status_list_other_argv[] = {
+	"git", "ls-files", "-z", "--others", "--exclude-standard", NULL
+};
+
+static const char *status_list_no_head_argv[] = {
+	"git", "ls-files", "-z", "--cached", "--exclude-standard", NULL
+};
 
 static const char *update_index_argv[] = {
 	"git", "update-index", "-q", "--unmerged", "--refresh", NULL
@@ -4329,17 +4349,17 @@ status_open(struct view *view)
 	else if (!string_format(status_onbranch, "On branch %s", opt_head))
 		return FALSE;
 
-	system("git update-index -q --refresh >/dev/null 2>/dev/null");
+	run_io_bg(update_index_argv);
 
 	if (is_initial_commit()) {
-		if (!status_run(view, STATUS_LIST_NO_HEAD_CMD, 'A', LINE_STAT_STAGED))
+		if (!status_run(view, status_list_no_head_argv, 'A', LINE_STAT_STAGED))
 			return FALSE;
-	} else if (!status_run(view, STATUS_DIFF_INDEX_CMD, 0, LINE_STAT_STAGED)) {
+	} else if (!status_run(view, status_diff_index_argv, 0, LINE_STAT_STAGED)) {
 		return FALSE;
 	}
 
-	if (!status_run(view, STATUS_DIFF_FILES_CMD, 0, LINE_STAT_UNSTAGED) ||
-	    !status_run(view, STATUS_LIST_OTHER_CMD, '?', LINE_STAT_UNTRACKED))
+	if (!status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED) ||
+	    !status_run(view, status_list_other_argv, '?', LINE_STAT_UNTRACKED))
 		return FALSE;
 
 	/* If all went well restore the previous line number to stay in
@@ -4535,40 +4555,37 @@ status_exists(struct status *status, enum line_type type)
 }
 
 
-static FILE *
-status_update_prepare(enum line_type type)
+static bool
+status_update_prepare(struct io *io, enum line_type type)
 {
-	char cmd[SIZEOF_STR];
-	size_t cmdsize = 0;
-
-	if (opt_cdup[0] &&
-	    type != LINE_STAT_UNTRACKED &&
-	    !string_format_from(cmd, &cmdsize, "cd %s;", opt_cdup))
-		return NULL;
+	const char *staged_argv[] = {
+		"git", "update-index", "-z", "--index-info", NULL
+	};
+	const char *others_argv[] = {
+		"git", "update-index", "-z", "--add", "--remove", "--stdin", NULL
+	};
 
 	switch (type) {
 	case LINE_STAT_STAGED:
-		string_add(cmd, cmdsize, "git update-index -z --index-info");
-		break;
+		return run_io(io, staged_argv, opt_cdup, IO_WR);
 
 	case LINE_STAT_UNSTAGED:
+		return run_io(io, others_argv, opt_cdup, IO_WR);
+
 	case LINE_STAT_UNTRACKED:
-		string_add(cmd, cmdsize, "git update-index -z --add --remove --stdin");
-		break;
+		return run_io(io, others_argv, NULL, IO_WR);
 
 	default:
 		die("line type %d not handled in switch", type);
+		return FALSE;
 	}
-
-	return popen(cmd, "w");
 }
 
 static bool
-status_update_write(FILE *pipe, struct status *status, enum line_type type)
+status_update_write(struct io *io, struct status *status, enum line_type type)
 {
 	char buf[SIZEOF_STR];
 	size_t bufsize = 0;
-	size_t written = 0;
 
 	switch (type) {
 	case LINE_STAT_STAGED:
@@ -4589,37 +4606,33 @@ status_update_write(FILE *pipe, struct status *status, enum line_type type)
 		die("line type %d not handled in switch", type);
 	}
 
-	while (!ferror(pipe) && written < bufsize) {
-		written += fwrite(buf + written, 1, bufsize - written, pipe);
-	}
-
-	return written == bufsize;
+	return io_write(io, buf, bufsize);
 }
 
 static bool
 status_update_file(struct status *status, enum line_type type)
 {
-	FILE *pipe = status_update_prepare(type);
+	struct io io = {};
 	bool result;
 
-	if (!pipe)
+	if (!status_update_prepare(&io, type))
 		return FALSE;
 
-	result = status_update_write(pipe, status, type);
-	pclose(pipe);
+	result = status_update_write(&io, status, type);
+	done_io(&io);
 	return result;
 }
 
 static bool
 status_update_files(struct view *view, struct line *line)
 {
-	FILE *pipe = status_update_prepare(line->type);
+	struct io io = {};
 	bool result = TRUE;
 	struct line *pos = view->line + view->lines;
 	int files = 0;
 	int file, done;
 
-	if (!pipe)
+	if (!status_update_prepare(&io, line->type))
 		return FALSE;
 
 	for (pos = line; pos < view->line + view->lines && pos->data; pos++)
@@ -4634,10 +4647,10 @@ status_update_files(struct view *view, struct line *line)
 				      file, files, done);
 			update_view_title(view);
 		}
-		result = status_update_write(pipe, line->data, line->type);
+		result = status_update_write(&io, line->data, line->type);
 	}
 
-	pclose(pipe);
+	done_io(&io);
 	return result;
 }
 
