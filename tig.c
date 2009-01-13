@@ -526,7 +526,7 @@ io_read(struct io *io, void *buf, size_t bufsize)
 }
 
 static char *
-io_gets(struct io *io)
+io_get(struct io *io, int c, bool can_read)
 {
 	char *eol;
 	ssize_t readsize;
@@ -541,7 +541,7 @@ io_gets(struct io *io)
 
 	while (TRUE) {
 		if (io->bufsize > 0) {
-			eol = memchr(io->bufpos, '\n', io->bufsize);
+			eol = memchr(io->bufpos, c, io->bufsize);
 			if (eol) {
 				char *line = io->bufpos;
 
@@ -560,6 +560,9 @@ io_gets(struct io *io)
 			}
 			return NULL;
 		}
+
+		if (!can_read)
+			return NULL;
 
 		if (io->bufsize > 0 && io->bufpos > io->buf)
 			memmove(io->buf, io->bufpos, io->bufsize);
@@ -603,7 +606,7 @@ run_io_buf(const char **argv, char buf[], size_t bufsize)
 
 	io.buf = io.bufpos = buf;
 	io.bufalloc = bufsize;
-	error = !io_gets(&io) && io_error(&io);
+	error = !io_get(&io, '\n', TRUE) && io_error(&io);
 	io.buf = NULL;
 
 	return done_io(&io) || error;
@@ -2680,7 +2683,7 @@ update_view(struct view *view)
 	if (!realloc_lines(view, view->lines + lines))
 		goto alloc_error;
 
-	while ((line = io_gets(view->pipe))) {
+	while ((line = io_get(view->pipe, '\n', TRUE))) {
 		size_t linelen = strlen(line);
 
 		if (opt_iconv != ICONV_NONE) {
@@ -4200,7 +4203,7 @@ status_get_diff(struct status *file, const char *buf, size_t bufsize)
 	const char *new_rev  = buf + 56;
 	const char *status   = buf + 97;
 
-	if (bufsize < 99 ||
+	if (bufsize < 98 ||
 	    old_mode[-1] != ':' ||
 	    new_mode[-1] != ' ' ||
 	    old_rev[-1]  != ' ' ||
@@ -4226,8 +4229,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 {
 	struct status *file = NULL;
 	struct status *unmerged = NULL;
-	char buf[SIZEOF_STR * 4];
-	size_t bufsize = 0;
+	char *buf;
 	struct io io = {};
 
 	if (!run_io(&io, argv, NULL, IO_RD))
@@ -4235,19 +4237,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 
 	add_line_data(view, NULL, type);
 
-	while (!io_eof(&io)) {
-		char *sep;
-		ssize_t readsize;
-
-		readsize = io_read(&io, buf + bufsize, sizeof(buf) - bufsize);
-		if (io_error(&io))
-			break;
-		bufsize += readsize;
-
-		/* Process while we have NUL chars. */
-		while ((sep = memchr(buf, 0, bufsize))) {
-			size_t sepsize = sep - buf + 1;
-
+		while ((buf = io_get(&io, 0, TRUE))) {
 			if (!file) {
 				if (!realloc_lines(view, view->line_size + 1))
 					goto error_out;
@@ -4266,16 +4256,12 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 					string_copy(file->old.rev, NULL_ID);
 
 			} else if (!file->status) {
-				if (!status_get_diff(file, buf, sepsize))
+				if (!status_get_diff(file, buf, strlen(buf)))
 					goto error_out;
 
-				bufsize -= sepsize;
-				memmove(buf, sep + 1, bufsize);
-
-				sep = memchr(buf, 0, bufsize);
-				if (!sep)
+				buf = io_get(&io, 0, TRUE);
+				if (!buf)
 					break;
-				sepsize = sep - buf + 1;
 
 				/* Collapse all 'M'odified entries that
 				 * follow a associated 'U'nmerged entry.
@@ -4298,28 +4284,21 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 			/* Grab the old name for rename/copy. */
 			if (!*file->old.name &&
 			    (file->status == 'R' || file->status == 'C')) {
-				sepsize = sep - buf + 1;
-				string_ncopy(file->old.name, buf, sepsize);
-				bufsize -= sepsize;
-				memmove(buf, sep + 1, bufsize);
+				string_ncopy(file->old.name, buf, strlen(buf));
 
-				sep = memchr(buf, 0, bufsize);
-				if (!sep)
+				buf = io_get(&io, 0, TRUE);
+				if (!buf)
 					break;
-				sepsize = sep - buf + 1;
 			}
 
 			/* git-ls-files just delivers a NUL separated
 			 * list of file names similar to the second half
 			 * of the git-diff-* output. */
-			string_ncopy(file->new.name, buf, sepsize);
+			string_ncopy(file->new.name, buf, strlen(buf));
 			if (!*file->old.name)
 				string_copy(file->old.name, file->new.name);
-			bufsize -= sepsize;
-			memmove(buf, sep + 1, bufsize);
 			file = NULL;
 		}
-	}
 
 	if (io_error(&io)) {
 error_out:
@@ -6315,7 +6294,7 @@ read_properties(struct io *io, const char *separators,
 	if (!start_io(io))
 		return ERR;
 
-	while (state == OK && (name = io_gets(io))) {
+	while (state == OK && (name = io_get(io, '\n', TRUE))) {
 		char *value;
 		size_t namelen;
 		size_t valuelen;
