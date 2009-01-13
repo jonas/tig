@@ -28,6 +28,7 @@ Bug fixes:
  - Status & stage view: refuse to open directories and deleted files.
  - Tree view: show error when requesting blame for all non-file entries.
  - Do not draw loading views, which are not displayed.
+ - Fix launching of mergetool from a subdirectory.
 
 tig-0.12.1
 ----------
