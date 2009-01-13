@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.2.2" />
+<meta name="generator" content="AsciiDoc 8.2.6" />
 <style type="text/css">
 /* Debug borders */
 p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
@@ -26,10 +26,12 @@ a:visited {
 
 em {
   font-style: italic;
+  color: navy;
 }
 
 strong {
   font-weight: bold;
+  color: #083194;
 }
 
 tt {
@@ -44,12 +46,17 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.3;
 }
 
-h1 {
+h1, h2, h3 {
   border-bottom: 2px solid silver;
 }
 h2 {
-  border-bottom: 2px solid silver;
   padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
 }
 
 div.sectionbody {
@@ -64,6 +71,10 @@ hr {
 p {
   margin-top: 0.5em;
   margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
 }
 
 pre {
@@ -118,6 +129,7 @@ div.content { /* Block element content. */
 
 /* Block element titles. */
 div.title, caption.title {
+  color: #527bbd;
   font-family: sans-serif;
   font-weight: bold;
   text-align: left;
@@ -197,16 +209,19 @@ dl {
 dt {
   margin-top: 0.5em;
   margin-bottom: 0;
-  font-style: italic;
+  font-style: normal;
 }
 dd > *:first-child {
-  margin-top: 0;
+  margin-top: 0.1em;
 }
 
 ul, ol {
     list-style-position: outside;
 }
-ol.olist2 {
+div.olist > ol {
+  list-style-type: decimal;
+}
+div.olist2 > ol {
   list-style-type: lower-alpha;
 }
 
@@ -226,11 +241,11 @@ div.hlist {
   margin-bottom: 0.8em;
 }
 div.hlist td {
-  padding-bottom: 5px;
+  padding-bottom: 15px;
 }
 td.hlist1 {
   vertical-align: top;
-  font-style: italic;
+  font-style: normal;
   padding-right: 0.8em;
 }
 td.hlist2 {
@@ -275,6 +290,7 @@ div.sidebar-content {
   padding: 0.5em;
 }
 div.sidebar-title, div.image-title {
+  color: #527bbd;
   font-family: sans-serif;
   font-weight: bold;
   margin-top: 0.0em;
@@ -298,6 +314,14 @@ div.exampleblock-content {
 
 /* IE6 sets dynamically generated links as visited. */
 div#toc a:visited { color: blue; }
+
+/* Because IE6 child selector is broken. */
+div.olist2 ol {
+  list-style-type: lower-alpha;
+}
+div.olist2 div.olist ol {
+  list-style-type: decimal;
+}
 </style>
 <title>tig(1)</title>
 </head>
@@ -322,25 +346,25 @@ tig blame  [rev] path
 tig status
 tig &lt;      [git command output]</div></div>
 </div>
-<h2>DESCRIPTION</h2>
+<h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
-<p>Browse changes in a git repository. Additionally, tig(1) can also act
-as a pager for output of various git commands.</p>
-<p>When browsing repositories, tig(1) uses the underlying git commands
+<div class="para"><p>Browse changes in a git repository. Additionally, tig(1) can also act
+as a pager for output of various git commands.</p></div>
+<div class="para"><p>When browsing repositories, tig(1) uses the underlying git commands
 to present the user with various views, such as summarized commit log
-and showing the commit with the log message, diffstat, and the diff.</p>
-<p>Using tig(1) as a pager, it will display input from stdin and try
-to colorize it.</p>
+and showing the commit with the log message, diffstat, and the diff.</p></div>
+<div class="para"><p>Using tig(1) as a pager, it will display input from stdin and try
+to colorize it.</p></div>
 </div>
-<h2>OPTIONS</h2>
+<h2 id="_options">OPTIONS</h2>
 <div class="sectionbody">
-<p>Command line options recognized by tig include all valid git-log(1) and
+<div class="para"><p>Command line options recognized by tig include all valid git-log(1) and
 git-diff(1) options, as well as the following subcommands and tig specific
 options. The first command line parameter not starting with "-" is interpreted
 as being either a revision specification or a path and will end the option
 parsing. All following options will be passed untouched to the underlying git
-command.</p>
-<dl>
+command.</p></div>
+<div class="vlist"><dl>
 <dt>
 show
 </dt>
@@ -382,51 +406,53 @@ status
         Show help message and exit.
 </p>
 </dd>
-</dl>
+</dl></div>
 </div>
-<h2>EXAMPLES</h2>
+<h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
-<p>Display the current branch:</p>
+<div class="para"><p>Display the current branch:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig</tt></pre>
 </div></div>
-<p>Display one or more specific branches:</p>
+<div class="para"><p>Display one or more specific branches:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig test master</tt></pre>
 </div></div>
-<p>Display all branches:</p>
+<div class="para"><p>Display all branches:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig --all</tt></pre>
 </div></div>
-<p>Display differences between two branches:</p>
+<div class="para"><p>Display differences between two branches:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig test..master</tt></pre>
 </div></div>
-<p>Display changes for a single file:</p>
+<div class="para"><p>Display changes for a single file:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig -- README</tt></pre>
 </div></div>
-<p>Display contents of the README file in a specific revision:</p>
+<div class="para"><p>Display contents of the README file in a specific revision:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig show tig-0.8:README</tt></pre>
 </div></div>
-<p>Display revisions between two dates for a specific file:</p>
+<div class="para"><p>Display revisions between two dates for a specific file:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig --after="2004-01-01" --before="2006-05-16" -- README</tt></pre>
 </div></div>
 </div>
-<h2>ENVIRONMENT VARIABLES</h2>
+<h2 id="_environment_variables">ENVIRONMENT VARIABLES</h2>
 <div class="sectionbody">
-<p>In addition to environment variables used by git (e.g. GIT_DIR), tig defines
-the following:</p>
-<dl>
+<div class="para"><p>In addition to environment variables used by git (e.g. GIT_DIR), tig defines
+the ones below. The command related environment variables have access to the
+internal state of tig via replacement variabls, such as <tt>%(commit)</tt> and
+<tt>%(blob)</tt>. See <a href="tigrc.5.html">tigrc(5)</a> for a full list.</p></div>
+<div class="vlist"><dl>
 <dt>
 TIGRC_USER
 </dt>
@@ -482,9 +508,9 @@ TIG_MAIN_CMD
         read that format.
 </p>
 </dd>
-</dl>
-<h3>Tree commands</h3>
-<dl>
+</dl></div>
+<h3 id="_tree_commands">Tree commands</h3><div style="clear:left"></div>
+<div class="vlist"><dl>
 <dt>
 TIG_TREE_CMD
 </dt>
@@ -504,11 +530,11 @@ TIG_BLOB_CMD
     used. The command gets the blob ID.
 </p>
 </dd>
-</dl>
+</dl></div>
 </div>
-<h2>FILES</h2>
+<h2 id="_files">FILES</h2>
 <div class="sectionbody">
-<dl>
+<div class="vlist"><dl>
 <dt>
 <em>~/.tigrc</em>
 </dt>
@@ -534,12 +560,12 @@ TIG_BLOB_CMD
         git-config(1).
 </p>
 </dd>
-</dl>
+</dl></div>
 </div>
-<h2>BUGS</h2>
+<h2 id="_bugs">BUGS</h2>
 <div class="sectionbody">
-<p>Known bugs and problems:</p>
-<ul>
+<div class="para"><p>Known bugs and problems:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Proper locale support: in it's current state tig is pretty much UTF-8 only.
@@ -550,22 +576,22 @@ Proper locale support: in it's current state tig is pretty much UTF-8 only.
 Horizontal scrolling.
 </p>
 </li>
-</ul>
+</ul></div>
 </div>
-<h2>COPYRIGHT</h2>
+<h2 id="_copyright">COPYRIGHT</h2>
 <div class="sectionbody">
-<p>Copyright (c) 2006-2008 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p>
-<p>This program is free software; you can redistribute it and/or modify
+<div class="para"><p>Copyright (c) 2006-2009 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p></div>
+<div class="para"><p>This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.</p>
+(at your option) any later version.</p></div>
 </div>
-<h2>SEE ALSO</h2>
+<h2 id="_see_also">SEE ALSO</h2>
 <div class="sectionbody">
-<p><a href="tigrc.5.html">tigrc(5)</a>, git(7), cogito(7), as well as other git repository browsers:
-gitk(1), qgit(1), gitview(1).</p>
-<p>Online resources:</p>
-<ul>
+<div class="para"><p><a href="tigrc.5.html">tigrc(5)</a>, git(7), cogito(7), as well as other git repository browsers:
+gitk(1), qgit(1), gitview(1).</p></div>
+<div class="para"><p>Online resources:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Homepage:    <a href="http://jonas.nitro.dk/tig/">http://jonas.nitro.dk/tig/</a>
@@ -592,11 +618,11 @@ Git URL:     git://repo.or.cz/tig.git (mirror) or
 Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</a>
 </p>
 </li>
-</ul>
+</ul></div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 11-Oct-2008 13:19:28 CEST
+Last updated 2009-01-13 23:10:07 CEST
 </div>
 </div>
 </body>

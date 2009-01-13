@@ -1,17 +1,17 @@
 .\"     Title: tig
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.73.2 <http://docbook.sf.net/>
-.\"      Date: 10/11/2008
+.\"      Date: 01/13/2009
 .\"    Manual: Tig Manual
-.\"    Source: Tig 0.12.1-79-gf44e95e-dirty
+.\"    Source: Tig 0.13
 .\"
-.TH "TIG" "1" "10/11/2008" "Tig 0\.12\.1\-79\-gf44e95e\-di" "Tig Manual"
+.TH "TIG" "1" "01/13/2009" "Tig 0\&.13" "Tig Manual"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
 .ad l
 .SH "NAME"
-tig - text-mode interface for git
+tig \- text-mode interface for git
 .SH "SYNOPSIS"
 .sp
 .RS 4
@@ -25,38 +25,38 @@ tig <      [git command output]
 .RE
 .sp
 .SH "DESCRIPTION"
-Browse changes in a git repository\. Additionally, tig(1) can also act as a pager for output of various git commands\.
+Browse changes in a git repository\&. Additionally, tig(1) can also act as a pager for output of various git commands\&.
 .sp
-When browsing repositories, tig(1) uses the underlying git commands to present the user with various views, such as summarized commit log and showing the commit with the log message, diffstat, and the diff\.
+When browsing repositories, tig(1) uses the underlying git commands to present the user with various views, such as summarized commit log and showing the commit with the log message, diffstat, and the diff\&.
 .sp
-Using tig(1) as a pager, it will display input from stdin and try to colorize it\.
+Using tig(1) as a pager, it will display input from stdin and try to colorize it\&.
 .sp
 .SH "OPTIONS"
-Command line options recognized by tig include all valid git\-log(1) and git\-diff(1) options, as well as the following subcommands and tig specific options\. The first command line parameter not starting with "\-" is interpreted as being either a revision specification or a path and will end the option parsing\. All following options will be passed untouched to the underlying git command\.
+Command line options recognized by tig include all valid git\-log(1) and git\-diff(1) options, as well as the following subcommands and tig specific options\&. The first command line parameter not starting with "\-" is interpreted as being either a revision specification or a path and will end the option parsing\&. All following options will be passed untouched to the underlying git command\&.
 .PP
 show
 .RS 4
-Open diff view using the given git show options\.
+Open diff view using the given git show options\&.
 .RE
 .PP
 blame
 .RS 4
-Show given file annotated or blamed by commits\. Optionally limited from given revision\.
+Show given file annotated or blamed by commits\&. Optionally limited from given revision\&.
 .RE
 .PP
 status
 .RS 4
-Start up in status view\.
+Start up in status view\&.
 .RE
 .PP
 \-v, \-\-version
 .RS 4
-Show version and exit\.
+Show version and exit\&.
 .RE
 .PP
 \-h, \-\-help
 .RS 4
-Show help message and exit\.
+Show help message and exit\&.
 .RE
 .SH "EXAMPLES"
 Display the current branch:
@@ -91,7 +91,7 @@ Display differences between two branches:
 .sp
 .RS 4
 .nf
-$ tig test\.\.master
+$ tig test\&.\&.master
 .fi
 .RE
 .sp
@@ -109,7 +109,7 @@ Display contents of the README file in a specific revision:
 .sp
 .RS 4
 .nf
-$ tig show tig\-0\.8:README
+$ tig show tig\-0\&.8:README
 .fi
 .RE
 .sp
@@ -123,116 +123,116 @@ $ tig \-\-after="2004\-01\-01" \-\-before="2006\-05\-16" \-\- README
 .RE
 .sp
 .SH "ENVIRONMENT VARIABLES"
-In addition to environment variables used by git (e\.g\. GIT_DIR), tig defines the following:
+In addition to environment variables used by git (e\&.g\&. GIT_DIR), tig defines the ones below\&. The command related environment variables have access to the internal state of tig via replacement variabls, such as %(commit) and %(blob)\&. See \fBtigrc\fR(5) for a full list\&.
 .PP
 TIGRC_USER
 .RS 4
 Path of the user configuration file (defaults to
-~/\.tigrc)\.
+~/\&.tigrc)\&.
 .RE
 .PP
 TIGRC_SYSTEM
 .RS 4
 Path of the system wide configuration file (defaults to
-++SYSCONFDIR++/tigrc)\.
+++SYSCONFDIR++/tigrc)\&.
 .RE
 .PP
 TIG_LS_REMOTE
 .RS 4
-Set command for retrieving all repository references\. The command should output data in the same format as git\-ls\-remote(1)\.
+Set command for retrieving all repository references\&. The command should output data in the same format as git\-ls\-remote(1)\&.
 .RE
 .PP
 TIG_DIFF_CMD
 .RS 4
-The command used for the diff view\. By default, git show is used as a backend\.
+The command used for the diff view\&. By default, git show is used as a backend\&.
 .RE
 .PP
 TIG_LOG_CMD
 .RS 4
-The command used for the log view\. If you prefer to have both author and committer shown in the log view be sure to pass
+The command used for the log view\&. If you prefer to have both author and committer shown in the log view be sure to pass
 \-\-pretty=fuller
-to git log\.
+to git log\&.
 .RE
 .PP
 TIG_MAIN_CMD
 .RS 4
-The command used for the main view\. Note, you must always specify the option:
+The command used for the main view\&. Note, you must always specify the option:
 \-\-pretty=raw
-since the main view parser expects to read that format\.
+since the main view parser expects to read that format\&.
 .RE
 .SS "Tree commands"
 .PP
 TIG_TREE_CMD
 .RS 4
-The command used for the tree view\. By default, git\-ls\-tree(1) is used\. The commands should expect first the commit ID and second a path\.
+The command used for the tree view\&. By default, git\-ls\-tree(1) is used\&. The commands should expect first the commit ID and second a path\&.
 .RE
 .PP
 TIG_BLOB_CMD
 .RS 4
-The command used for the blob view\. By default, git\-cat\-file(1) is used\. The command gets the blob ID\.
+The command used for the blob view\&. By default, git\-cat\-file(1) is used\&. The command gets the blob ID\&.
 .RE
 .SH "FILES"
 .PP
-\fI~/\.tigrc\fR
+\fI~/\&.tigrc\fR
 .RS 4
-User configuration file\. See
+User configuration file\&. See
 \fBtigrc\fR(5)
-for examples\.
+for examples\&.
 .RE
 .PP
 \fI++SYSCONFDIR++/tigrc\fR
 .RS 4
-System wide configuration file\.
+System wide configuration file\&.
 .RE
 .PP
 \fI$GIT_DIR/config\fR
 .RS 4
-Repository config file\. Read on start\-up with the help of git\-config(1)\.
+Repository config file\&. Read on start\-up with the help of git\-config(1)\&.
 .RE
 .SH "BUGS"
 Known bugs and problems:
 .sp
 .sp
 .RS 4
-\h'-04'\(bu\h'+03'Proper locale support: in it\'s current state tig is pretty much UTF\-8 only\.
+\h'-04'\(bu\h'+03'Proper locale support: in it\'s current state tig is pretty much UTF\-8 only\&.
 .RE
 .sp
 .RS 4
-\h'-04'\(bu\h'+03'Horizontal scrolling\.
+\h'-04'\(bu\h'+03'Horizontal scrolling\&.
 .RE
 .SH "COPYRIGHT"
-Copyright (c) 2006\-2008 Jonas Fonseca <fonseca@diku\.dk>
+Copyright (c) 2006\-2009 Jonas Fonseca <fonseca@diku\&.dk>
 .sp
-This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version\.
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version\&.
 .sp
 .SH "SEE ALSO"
-\fBtigrc\fR(5), git(7), cogito(7), as well as other git repository browsers: gitk(1), qgit(1), gitview(1)\.
+\fBtigrc\fR(5), git(7), cogito(7), as well as other git repository browsers: gitk(1), qgit(1), gitview(1)\&.
 .sp
 Online resources:
 .sp
 .sp
 .RS 4
 \h'-04'\(bu\h'+03'Homepage:
-\fIhttp://jonas\.nitro\.dk/tig/\fR
+\fIhttp://jonas\&.nitro\&.dk/tig/\fR
 .RE
 .sp
 .RS 4
 \h'-04'\(bu\h'+03'Manual:
-\fIhttp://jonas\.nitro\.dk/tig/manual\.html\fR
+\fIhttp://jonas\&.nitro\&.dk/tig/manual\&.html\fR
 .RE
 .sp
 .RS 4
 \h'-04'\(bu\h'+03'Tarballs:
-\fIhttp://jonas\.nitro\.dk/tig/releases/\fR
+\fIhttp://jonas\&.nitro\&.dk/tig/releases/\fR
 .RE
 .sp
 .RS 4
-\h'-04'\(bu\h'+03'Git URL: git://repo\.or\.cz/tig\.git (mirror) or
-\fIhttp://jonas\.nitro\.dk/tig/tig\.git\fR
+\h'-04'\(bu\h'+03'Git URL: git://repo\&.or\&.cz/tig\&.git (mirror) or
+\fIhttp://jonas\&.nitro\&.dk/tig/tig\&.git\fR
 (master)
 .RE
 .sp
 .RS 4
 \h'-04'\(bu\h'+03'Gitweb:
-\fIhttp://repo\.or\.cz/w/tig\.git\fR
+\fIhttp://repo\&.or\&.cz/w/tig\&.git\fR
 .RE

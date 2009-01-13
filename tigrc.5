@@ -1,17 +1,17 @@
 .\"     Title: tigrc
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.73.2 <http://docbook.sf.net/>
-.\"      Date: 10/11/2008
+.\"      Date: 01/13/2009
 .\"    Manual: Tig Manual
-.\"    Source: Tig 0.12.1-79-gf44e95e-dirty
+.\"    Source: Tig 0.13
 .\"
-.TH "TIGRC" "5" "10/11/2008" "Tig 0\.12\.1\-79\-gf44e95e\-di" "Tig Manual"
+.TH "TIGRC" "5" "01/13/2009" "Tig 0\&.13" "Tig Manual"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
 .ad l
 .SH "NAME"
-tigrc - tig user configuration file
+tigrc \- tig user configuration file
 .SH "SYNOPSIS"
 .sp
 .RS 4
@@ -23,12 +23,12 @@ tigrc - tig user configuration file
 .RE
 .sp
 .SH "DESCRIPTION"
-You can permanently set an option by putting it in the ~/\.tigrc file\. The file consists of a series of \fIcommands\fR\. Each line of the file may contain only one command\.
+You can permanently set an option by putting it in the ~/\&.tigrc file\&. The file consists of a series of \fIcommands\fR\&. Each line of the file may contain only one command\&.
 .sp
-The hash mark (\fI#\fR) is used as a \fIcomment\fR character\. All text after the comment character to the end of the line is ignored\. You can use comments to annotate your initialization file\.
+The hash mark (\fI#\fR) is used as a \fIcomment\fR character\&. All text after the comment character to the end of the line is ignored\&. You can use comments to annotate your initialization file\&.
 .sp
 .SH "SET COMMAND"
-A few selective variables can be configured via the set command\. The syntax is:
+A few selective variables can be configured via the set command\&. The syntax is:
 .sp
 .sp
 .RS 4
@@ -55,61 +55,61 @@ set encoding = "UTF\-8"          # Commit encoding
 .fi
 .RE
 .sp
-The type of variables are either bool, int, and string\.
+The type of variables are either bool, int, and string\&.
 .PP
 Valid bool values
 .RS 4
-To set a bool variable to true use either "1", "true", or "yes"\. Any other value will set the variable to false\.
+To set a bool variable to true use either "1", "true", or "yes"\&. Any other value will set the variable to false\&.
 .RE
 .PP
 Valid int values
 .RS 4
-A non\-negative integer\.
+A non\-negative integer\&.
 .RE
 .PP
 Valid string values
 .RS 4
-A string of characters\. Optionally, use either \' or " as delimiters\.
+A string of characters\&. Optionally, use either \' or " as delimiters\&.
 .RE
 .SS "Variables"
 The following variables can be set:
 .PP
 \fIshow\-author\fR (bool), \fIshow\-date\fR (bool), \fIshow\-rev\-graph\fR (bool), \fIshow\-refs\fR (bool)
 .RS 4
-Whether to show author, date, revision graph, and references (branches, tags, and remotes) in the main view on start\-up\. Can all be toggled\.
+Whether to show author, date, revision graph, and references (branches, tags, and remotes) in the main view on start\-up\&. Can all be toggled\&.
 .RE
 .PP
 \fIauthor\-width\fR (int)
 .RS 4
-Width of the author column\.
+Width of the author column\&.
 .RE
 .PP
 \fIline\-graphics\fR (bool)
 .RS 4
-Whether to use graphic characters for line drawing\.
+Whether to use graphic characters for line drawing\&.
 .RE
 .PP
 \fIline\-number\-interval\fR (int)
 .RS 4
-Interval between line numbers\. Note, you have to toggle on line numbering with
+Interval between line numbers\&. Note, you have to toggle on line numbering with
 \fIn\fR
 or the
 \-n
-command line option\. The default is to number every line\.
+command line option\&. The default is to number every line\&.
 .RE
 .PP
 \fItab\-size\fR (int)
 .RS 4
-Number of spaces per tab\. The default is 8 spaces\.
+Number of spaces per tab\&. The default is 8 spaces\&.
 .RE
 .PP
 \fIcommit\-encoding\fR (string)
 .RS 4
-The encoding used for commits\. The default is UTF\-8\. Not this option is shadowed by the "i18n\.commitencoding" option in
-\.git/config\.
+The encoding used for commits\&. The default is UTF\-8\&. Not this option is shadowed by the "i18n\&.commitencoding" option in
+\&.git/config\&.
 .RE
 .SH "BIND COMMAND"
-Using bind commands keys can be mapped to an action when pressed in a given key map\. The syntax is:
+Using bind commands keys can be mapped to an action when pressed in a given key map\&. The syntax is:
 .sp
 .sp
 .RS 4
@@ -134,12 +134,12 @@ bind diff b move\-first\-line
 bind main Q none
 # An external command to update from upstream
 bind generic F !git fetch
-# Cherry\-pick current commit unto current branch
+# Cherry\-pick current commit onto current branch
 bind generic C !git cherry\-pick %(commit)
 .fi
 .RE
 .sp
-Keys are mapped by first searching the keybindings for the current view, then the keybindings for the \fBgeneric\fR keymap, and last the default keybindings\. Thus, the view keybindings shadow the generic keybindings which Shadow the built\-in keybindings\.
+Keys are mapped by first searching the keybindings for the current view, then the keybindings for the \fBgeneric\fR keymap, and last the default keybindings\&. Thus, the view keybindings shadow the generic keybindings which Shadow the built\-in keybindings\&.
 .PP
 Keymaps
 .RS 4
@@ -151,18 +151,18 @@ Valid keymaps are:
 \fBpager\fR,
 \fBstatus\fR,
 \fBstage\fR, and
-\fBgeneric\fR\. Use
+\fBgeneric\fR\&. Use
 \fBgeneric\fR
-to set key mapping in all keymaps\.
+to set key mapping in all keymaps\&.
 .RE
 .PP
 Key values
 .RS 4
-Key values should never be quoted\. Use either the ASCII value or one of the following symbolic key names\. Symbolic key names are case insensitive, Use
+Key values should never be quoted\&. Use either the ASCII value or one of the following symbolic key names\&. Symbolic key names are case insensitive, Use
 \fBHash\fR
 to bind to the
 #
-key, since the hash mark is used as a comment character\.
+key, since the hash mark is used as a comment character\&.
 .sp
 \fBEnter\fR,
 \fBSpace\fR,
@@ -191,21 +191,36 @@ key, since the hash mark is used as a comment character\.
 \fBF9\fR,
 \fBF10\fR,
 \fBF11\fR,
-\fBF12\fR\.
+\fBF12\fR\&.
 .RE
 .PP
 Action names
 .RS 4
-Valid action names are described below\. Note, all names are case\-insensitive, and you may use
+Valid action names are described below\&. Note, all names are case\-insensitive, and you may use
 \fI\-\fR,
 \fI_\fR, and
-\fI\.\fR
-interchangeably, e\.g\. "view\-main", "View\.Main", and "VIEW_MAIN" are the same\.
+\fI\&.\fR
+interchangeably, e\&.g\&. "view\-main", "View\&.Main", and "VIEW_MAIN" are the same\&.
 .RE
 .SS "Actions"
-Apart from the action names listed below, all actions starting with a \fI!\fR will be available as an external command\. External commands can contain variable names that will be substituted before the command is run\. Valid variable names are "%(head)", "%(commit)", and "%(blob)"\.
+Apart from the action names listed below, all actions starting with a \fI!\fR will be available as an external command\&. External commands can contain variable names that will be substituted before the command is run\&. Valid variable names are:
 .sp
-As an example, the following external command will save the current commit as a patch file: "!git format\-patch %(commit)^\.\.%(commit)"\.
+Browsing state variables
+.sp
+.sp
+.RS 4
+.nf
+%(head)                 The currently viewed \'head\' ID\&. Defaults to HEAD
+%(commit)               The currently selected commit ID\&.
+%(blob)                 The currently selected blob ID\&.
+%(directory)            The current directory path in the tree view; \e
+                        empty for the root directory\&.
+%(file)                 The currently selected file\&.
+%(ref)                  The reference given to blame or HEAD if undefined\&.
+.fi
+.RE
+.sp
+As an example, the following external command will save the current commit as a patch file: "!git format\-patch \-1 %(commit)"\&.
 .sp
 View switching:
 .sp
@@ -304,7 +319,7 @@ edit                    Open in editor
 .RE
 .sp
 .SH "COLOR COMMAND"
-Color commands control highlighting and the user interface styles\. If your terminal supports color, these commands can be used to assign foreground and background combinations to certain areas\. Optionally, an attribute can be given as the last parameter\. The syntax is:
+Color commands control highlighting and the user interface styles\&. If your terminal supports color, these commands can be used to assign foreground and background combinations to certain areas\&. Optionally, an attribute can be given as the last parameter\&. The syntax is:
 .sp
 .sp
 .RS 4
@@ -318,7 +333,7 @@ Examples:
 .sp
 .RS 4
 .nf
-# Overwrite the default terminal colors to white on black\.
+# Overwrite the default terminal colors to white on black\&.
 color default           white   black
 # Diff colors
 color diff\-header       yellow  default
@@ -334,11 +349,11 @@ color title\-focus       white   blue    bold
 .PP
 Area names
 .RS 4
-Valid area names are described below\. Note, all names are case\-insensitive, and you may use
+Valid area names are described below\&. Note, all names are case\-insensitive, and you may use
 \fI\-\fR,
 \fI_\fR, and
-\fI\.\fR
-interchangeably, e\.g\. "Diff\-Header", "DIFF_HEADER", and "diff\.header" are the same\.
+\fI\&.\fR
+interchangeably, e\&.g\&. "Diff\-Header", "DIFF_HEADER", and "diff\&.header" are the same\&.
 .RE
 .PP
 Color names
@@ -352,9 +367,9 @@ Valid colors include:
 \fBcyan\fR,
 \fByellow\fR,
 \fBred\fR,
-\fBdefault\fR\. Use
+\fBdefault\fR\&. Use
 \fBdefault\fR
-to refer to the default terminal colors\. This is recommended for background colors if you are using a terminal with a transparent background\.
+to refer to the default terminal colors\&. This is recommended for background colors if you are using a terminal with a transparent background\&.
 .RE
 .PP
 Attribute names
@@ -366,24 +381,24 @@ Valid attributes include:
 \fBdim\fR,
 \fBreverse\fR,
 \fBstandout\fR, and
-\fBunderline\fR\. Note, not all attributes may be supported by the terminal\.
+\fBunderline\fR\&. Note, not all attributes may be supported by the terminal\&.
 .RE
 .SS "UI colors"
-The colors and attributes to be used for the text that is not highlighted or that specify the use of the default terminal colors can be controlled by setting the \fBdefault\fR color option\.
+The colors and attributes to be used for the text that is not highlighted or that specify the use of the default terminal colors can be controlled by setting the \fBdefault\fR color option\&.
 .sp
 General:
 .sp
 .sp
 .RS 4
 .nf
-default                 Overwrite default terminal colors (see above)\.
-cursor                  The cursor line\.
-status                  The status window showing info messages\.
-title\-focus             The title window for the current view\.
-title\-blur              The title window of any backgrounded view\.
-delimiter               Delimiter shown for truncated lines\.
-line\-number             Line numbers\.
-date                    The commit date\.
+default                 Overwrite default terminal colors (see above)\&.
+cursor                  The cursor line\&.
+status                  The status window showing info messages\&.
+title\-focus             The title window for the current view\&.
+title\-blur              The title window of any backgrounded view\&.
+delimiter               Delimiter shown for truncated lines\&.
+line\-number             Line numbers\&.
+date                    The commit date\&.
 .fi
 .RE
 .sp
@@ -392,15 +407,15 @@ Main view colors:
 .sp
 .RS 4
 .nf
-main\-author             The commit author\.
-main\-revgraph           The revision graph\.
-main\-commit             The commit comment\.
-main\-head               Label of the current branch\.
-main\-remote             Label of a remote\.
-main\-tracked            Label of the remote tracked by the current branch\.
-main\-tag                Label of a signed tag\.
-main\-local\-tag          Label of a local tag\.
-main\-ref                Label of any other reference\.
+main\-author             The commit author\&.
+main\-revgraph           The revision graph\&.
+main\-commit             The commit comment\&.
+main\-head               Label of the current branch\&.
+main\-remote             Label of a remote\&.
+main\-tracked            Label of the remote tracked by the current branch\&.
+main\-tag                Label of a signed tag\&.
+main\-local\-tag          Label of a local tag\&.
+main\-ref                Label of any other reference\&.
 .fi
 .RE
 .sp
@@ -409,11 +424,11 @@ Status view:
 .sp
 .RS 4
 .nf
-stat\-head               The "On branch"\-line\.
+stat\-head               The "On branch"\-line\&.
 stat\-section            Status section titles,
-stat\-staged             Status flag of staged files\.
-stat\-unstaged           Status flag of unstaged files\.
-stat\-untracked          Status flag of untracked files\.
+stat\-staged             Status flag of staged files\&.
+stat\-unstaged           Status flag of unstaged files\&.
+stat\-untracked          Status flag of untracked files\&.
 .fi
 .RE
 .sp
@@ -422,7 +437,7 @@ Blame view:
 .sp
 .RS 4
 .nf
-blame\-id                The commit ID\.
+blame\-id                The commit ID\&.
 .fi
 .RE
 .sp
@@ -430,7 +445,7 @@ blame\-id                The commit ID\.
 .PP
 Diff markup
 .RS 4
-Options concerning diff start, chunks and lines added and deleted\.
+Options concerning diff start, chunks and lines added and deleted\&.
 .sp
 \fBdiff\-header\fR,
 \fBdiff\-chunk\fR,
@@ -440,7 +455,7 @@ Options concerning diff start, chunks and lines added and deleted\.
 .PP
 Enhanced git diff markup
 .RS 4
-Extra diff information emitted by the git diff machinery, such as mode changes, rename detection, and similarity\.
+Extra diff information emitted by the git diff machinery, such as mode changes, rename detection, and similarity\&.
 .sp
 \fBdiff\-oldmode\fR,
 \fBdiff\-newmode\fR,
@@ -458,7 +473,7 @@ Pretty print commit headers
 .RS 4
 Commit diffs and the revision logs are usually formatted using pretty printed headers , unless
 \-\-pretty=raw
-was given\. This includes lines, such as merge info, commit ID, and author and committer date\.
+was given\&. This includes lines, such as merge info, commit ID, and author and committer date\&.
 .sp
 \fBpp\-author\fR,
 \fBpp\-commit\fR,
@@ -475,7 +490,7 @@ Usually shown when
 \-\-pretty=raw
 is given, however
 \fIcommit\fR
-is pretty much omnipresent\.
+is pretty much omnipresent\&.
 .sp
 \fBcommit\fR,
 \fBparent\fR,
@@ -490,7 +505,7 @@ For now only
 Signed\-off\-by
 and
 Acked\-by
-lines are colorized\.
+lines are colorized\&.
 .sp
 \fBsignoff\fR,
 \fBacked\fR
@@ -498,18 +513,18 @@ lines are colorized\.
 .PP
 Tree markup
 .RS 4
-Colors for information of the tree view\.
+Colors for information of the tree view\&.
 .sp
 \fBtree\-dir\fR,
 \fBtree\-file\fR
 .RE
 .SH "COPYRIGHT"
-Copyright (c) 2006\-2008 Jonas Fonseca <fonseca@diku\.dk>
+Copyright (c) 2006\-2009 Jonas Fonseca <fonseca@diku\&.dk>
 .sp
-Licensed under the terms of the GNU General Public License\.
+Licensed under the terms of the GNU General Public License\&.
 .sp
 .SH "SEE ALSO"
-\fBtig\fR(1) and the \fItig manual\fR\&[1]\.
+\fBtig\fR(1) and the \fItig manual\fR\&[1]\&.
 .sp
 .SH "NOTES"
 .IP " 1." 4

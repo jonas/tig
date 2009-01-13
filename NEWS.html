@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.2.2" />
+<meta name="generator" content="AsciiDoc 8.2.6" />
 <style type="text/css">
 /* Debug borders */
 p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
@@ -26,10 +26,12 @@ a:visited {
 
 em {
   font-style: italic;
+  color: navy;
 }
 
 strong {
   font-weight: bold;
+  color: #083194;
 }
 
 tt {
@@ -44,12 +46,17 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.3;
 }
 
-h1 {
+h1, h2, h3 {
   border-bottom: 2px solid silver;
 }
 h2 {
-  border-bottom: 2px solid silver;
   padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
 }
 
 div.sectionbody {
@@ -64,6 +71,10 @@ hr {
 p {
   margin-top: 0.5em;
   margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
 }
 
 pre {
@@ -118,6 +129,7 @@ div.content { /* Block element content. */
 
 /* Block element titles. */
 div.title, caption.title {
+  color: #527bbd;
   font-family: sans-serif;
   font-weight: bold;
   text-align: left;
@@ -197,16 +209,19 @@ dl {
 dt {
   margin-top: 0.5em;
   margin-bottom: 0;
-  font-style: italic;
+  font-style: normal;
 }
 dd > *:first-child {
-  margin-top: 0;
+  margin-top: 0.1em;
 }
 
 ul, ol {
     list-style-position: outside;
 }
-ol.olist2 {
+div.olist > ol {
+  list-style-type: decimal;
+}
+div.olist2 > ol {
   list-style-type: lower-alpha;
 }
 
@@ -226,11 +241,11 @@ div.hlist {
   margin-bottom: 0.8em;
 }
 div.hlist td {
-  padding-bottom: 5px;
+  padding-bottom: 15px;
 }
 td.hlist1 {
   vertical-align: top;
-  font-style: italic;
+  font-style: normal;
   padding-right: 0.8em;
 }
 td.hlist2 {
@@ -274,6 +289,7 @@ div.sidebar-content {
   padding: 0.5em;
 }
 div.sidebar-title, div.image-title {
+  color: #527bbd;
   font-family: sans-serif;
   font-weight: bold;
   margin-top: 0.0em;
@@ -297,6 +313,14 @@ div.exampleblock-content {
 
 /* IE6 sets dynamically generated links as visited. */
 div#toc a:visited { color: blue; }
+
+/* Because IE6 child selector is broken. */
+div.olist2 ol {
+  list-style-type: lower-alpha;
+}
+div.olist2 div.olist ol {
+  list-style-type: decimal;
+}
 </style>
 <title>Release notes</title>
 </head>
@@ -304,10 +328,21 @@ div#toc a:visited { color: blue; }
 <div id="header">
 <h1>Release notes</h1>
 </div>
-<h2>tig master</h2>
+<h2 id="_tig_0_13">tig-0.13</h2>
 <div class="sectionbody">
-<p>Improvements:</p>
-<ul>
+<div class="para"><p>Incompatibilities:</p></div>
+<div class="ilist"><ul>
+<li>
+<p>
+Commands from the environment (e.g. TIG_MAIN_CMD) will no longer have
+   access to shell features, such as subshells and variable expansion.
+   The easiest way to upgrade your configuration is to put such commands
+   in a script file.
+</p>
+</li>
+</ul></div>
+<div class="para"><p>Improvements:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Display repository references in the sorted order: tags, heads,
@@ -319,20 +354,65 @@ Display repository references in the sorted order: tags, heads,
 Add bash completion for blame.
 </p>
 </li>
-</ul>
-<p>Bug fixes:</p>
-<ul>
+<li>
+<p>
+Tree view: edit files of the current branch.
+</p>
+</li>
+<li>
+<p>
+Run requests: new identifiers %(directory), %(file), and %(ref)
+</p>
+</li>
+<li>
+<p>
+Improve responsiveness and view loading speed by using select(2).
+</p>
+</li>
+</ul></div>
+<div class="para"><p>Bug fixes:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Separate blame revision and file argument by "&#8212;" to avoid problems.
 </p>
 </li>
-</ul>
+<li>
+<p>
+Main view: fix redrawing of the last commit wrt. the revision graph.
+</p>
+</li>
+<li>
+<p>
+Fix waiting for input after executing a run request in pager mode.
+</p>
+</li>
+<li>
+<p>
+Status &amp; stage view: refuse to open directories and deleted files.
+</p>
+</li>
+<li>
+<p>
+Tree view: show error when requesting blame for all non-file entries.
+</p>
+</li>
+<li>
+<p>
+Do not draw loading views, which are not displayed.
+</p>
+</li>
+<li>
+<p>
+Fix launching of mergetool from a subdirectory.
+</p>
+</li>
+</ul></div>
 </div>
-<h2>tig-0.12.1</h2>
+<h2 id="_tig_0_12_1">tig-0.12.1</h2>
 <div class="sectionbody">
-<p>Improvements:</p>
-<ul>
+<div class="para"><p>Improvements:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Status view: revert uncommitted diff chunks and unstaged files with
@@ -350,9 +430,9 @@ Main view: use &#8212;topo-order also when rev-list arguments are given on
 Log view: support for refreshing.
 </p>
 </li>
-</ul>
-<p>Bug fixes:</p>
-<ul>
+</ul></div>
+<div class="para"><p>Bug fixes:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Status view: use ls-files' &#8212;exclude-standard so user specific ignore
@@ -381,12 +461,12 @@ Reload repository references when refreshing the main (and log) view.
 Do not maximize views when refreshing.
 </p>
 </li>
-</ul>
+</ul></div>
 </div>
-<h2>tig-0.12</h2>
+<h2 id="_tig_0_12">tig-0.12</h2>
 <div class="sectionbody">
-<p>Improvements:</p>
-<ul>
+<div class="para"><p>Improvements:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 F5 also refreshes the current view.
@@ -430,9 +510,9 @@ Add author-width option to costumize the width of the author column.
    For example, put the following in ~/.tigrc: set author-width = 10
 </p>
 </li>
-</ul>
-<p>Bug fixes:</p>
-<ul>
+</ul></div>
+<div class="para"><p>Bug fixes:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Fix regression when staging all diff chunks in a section.
@@ -466,12 +546,12 @@ Ignore pipe reads with errno "Success" reported after a signals,
    for example when refreshing doing background loading.
 </p>
 </li>
-</ul>
+</ul></div>
 </div>
-<h2>tig-0.11</h2>
+<h2 id="_tig_0_11">tig-0.11</h2>
 <div class="sectionbody">
-<p>Incompatibilities:</p>
-<ul>
+<div class="para"><p>Incompatibilities:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Remove parsing of deprecated options: -g, -l, -d.
@@ -483,9 +563,9 @@ The first seen <em>&#8212;</em> will stop option parsing and is passed to git
    instead of breaking out of tig's option parsing.
 </p>
 </li>
-</ul>
-<p>New features:</p>
-<ul>
+</ul></div>
+<div class="para"><p>New features:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Blame view; bound to <em>B</em> by default, reachable from the command line
@@ -503,9 +583,9 @@ Blame/main view: allow display of date, author, and references to be
 Add action to maximize the current view.
 </p>
 </li>
-</ul>
-<p>Improvements:</p>
-<ul>
+</ul></div>
+<div class="para"><p>Improvements:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Show the current branch in the status view.
@@ -516,9 +596,9 @@ Show the current branch in the status view.
 Show local/light-weight tags.
 </p>
 </li>
-</ul>
-<p>Bug fixes:</p>
-<ul>
+</ul></div>
+<div class="para"><p>Bug fixes:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Fix regressions for the pager mode.
@@ -529,12 +609,12 @@ Fix regressions for the pager mode.
 Fix refreshing of the index with working directory info.
 </p>
 </li>
-</ul>
+</ul></div>
 </div>
-<h2>tig-0.10.1</h2>
+<h2 id="_tig_0_10_1">tig-0.10.1</h2>
 <div class="sectionbody">
-<p>Improvements:</p>
-<ul>
+<div class="para"><p>Improvements:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Status view: detect renamed files and show them with <em>R</em>.
@@ -555,9 +635,9 @@ Diff view: make diff headers more verbose to include e.g. committer.
 Configure: check for the ncursesw library.
 </p>
 </li>
-</ul>
-<p>Bug fixes:</p>
-<ul>
+</ul></div>
+<div class="para"><p>Bug fixes:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Fix UTF8 handling for tag names and commit messages.
@@ -574,12 +654,12 @@ Fix the check for git-config(1) in configure to handle the case when
 Fix replacing of SYSCONFDIR when installing from released tarballs.
 </p>
 </li>
-</ul>
+</ul></div>
 </div>
-<h2>tig-0.10</h2>
+<h2 id="_tig_0_10">tig-0.10</h2>
 <div class="sectionbody">
-<p>Incompatibilities:</p>
-<ul>
+<div class="para"><p>Incompatibilities:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Deprecate most tig specific command line options to make tig more
@@ -605,9 +685,9 @@ Implement the cherry pick action (bound to <em>C</em>) using new support for
    environment variable
 </p>
 </li>
-</ul>
-<p>New features:</p>
-<ul>
+</ul></div>
+<div class="para"><p>New features:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Add support for binding keys to external commands. To bind <em>.</em> to
@@ -628,9 +708,9 @@ Add the environment variables TIGRC_USER and TIGRC_SYSTEM to change
    user and system-wide configuration files, respectively.
 </p>
 </li>
-</ul>
-<p>Improvements:</p>
-<ul>
+</ul></div>
+<div class="para"><p>Improvements:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Main view: color the revision graph.
@@ -660,9 +740,9 @@ Allow the default terminal colors to be overwritten. To use black
 Misc. documentation improvements.
 </p>
 </li>
-</ul>
-<p>Bug fixes:</p>
-<ul>
+</ul></div>
+<div class="para"><p>Bug fixes:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Use git-diff-index(1) and git-diff-files(1) instead of git-diff(1) to
@@ -679,30 +759,30 @@ Use &#8212;no-color when calling git-log(1).
 Fix crash when opening mergetool for lines that are not unmerged.
 </p>
 </li>
-</ul>
+</ul></div>
 </div>
-<h2>tig-0.9.1</h2>
+<h2 id="_tig_0_9_1">tig-0.9.1</h2>
 <div class="sectionbody">
-<p>Incompatibilities:</p>
-<ul>
+<div class="para"><p>Incompatibilities:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Make the clean rule to never remove generated documentation files.
    Use the distclean rule for accomplishing this.
 </p>
 </li>
-</ul>
-<p>New features:</p>
-<ul>
+</ul></div>
+<div class="para"><p>New features:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Add support for cherry-picking commits in the main view to the
    current branch. Bound to <em>C</em> by default.
 </p>
 </li>
-</ul>
-<p>Improvements:</p>
-<ul>
+</ul></div>
+<div class="para"><p>Improvements:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Add support for launching git-mergetool(1) from the status view.
@@ -719,9 +799,9 @@ Add support for refreshing/reloading the status view
 Detect working trees and disable the status view when it is missing.
 </p>
 </li>
-</ul>
-<p>Bug fixes:</p>
-<ul>
+</ul></div>
+<div class="para"><p>Bug fixes:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Fix iconv() checking in configure.
@@ -742,12 +822,12 @@ Fix out-of-range current line when reloading the status view.
 Include autoconf files in the tarball generated by <tt>make dist</tt>.
 </p>
 </li>
-</ul>
+</ul></div>
 </div>
-<h2>tig-0.9</h2>
+<h2 id="_tig_0_9">tig-0.9</h2>
 <div class="sectionbody">
-<p>New features:</p>
-<ul>
+<div class="para"><p>New features:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Add bash completion script for tig (contrib/tig-completion.bash).
@@ -764,9 +844,9 @@ Add stage view for showing changes in the working tree and add
    support for staging individual diff chunks for commit.
 </p>
 </li>
-</ul>
-<p>Improvements:</p>
-<ul>
+</ul></div>
+<div class="para"><p>Improvements:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Status view: allow all files in a section to be staged for commit.
@@ -783,11 +863,11 @@ Status view: Add support for opening files in an editor. Bound to <em>e</em>
 Tree view: use a stack for remembering the lines for parent tree.
 </p>
 </li>
-</ul>
+</ul></div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 11-Oct-2008 13:19:32 CEST
+Last updated 2009-01-13 23:10:11 CEST
 </div>
 </div>
 </body>

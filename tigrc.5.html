@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.2.2" />
+<meta name="generator" content="AsciiDoc 8.2.6" />
 <style type="text/css">
 /* Debug borders */
 p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
@@ -26,10 +26,12 @@ a:visited {
 
 em {
   font-style: italic;
+  color: navy;
 }
 
 strong {
   font-weight: bold;
+  color: #083194;
 }
 
 tt {
@@ -44,12 +46,17 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.3;
 }
 
-h1 {
+h1, h2, h3 {
   border-bottom: 2px solid silver;
 }
 h2 {
-  border-bottom: 2px solid silver;
   padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
 }
 
 div.sectionbody {
@@ -64,6 +71,10 @@ hr {
 p {
   margin-top: 0.5em;
   margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
 }
 
 pre {
@@ -118,6 +129,7 @@ div.content { /* Block element content. */
 
 /* Block element titles. */
 div.title, caption.title {
+  color: #527bbd;
   font-family: sans-serif;
   font-weight: bold;
   text-align: left;
@@ -197,16 +209,19 @@ dl {
 dt {
   margin-top: 0.5em;
   margin-bottom: 0;
-  font-style: italic;
+  font-style: normal;
 }
 dd > *:first-child {
-  margin-top: 0;
+  margin-top: 0.1em;
 }
 
 ul, ol {
     list-style-position: outside;
 }
-ol.olist2 {
+div.olist > ol {
+  list-style-type: decimal;
+}
+div.olist2 > ol {
   list-style-type: lower-alpha;
 }
 
@@ -226,11 +241,11 @@ div.hlist {
   margin-bottom: 0.8em;
 }
 div.hlist td {
-  padding-bottom: 5px;
+  padding-bottom: 15px;
 }
 td.hlist1 {
   vertical-align: top;
-  font-style: italic;
+  font-style: normal;
   padding-right: 0.8em;
 }
 td.hlist2 {
@@ -275,6 +290,7 @@ div.sidebar-content {
   padding: 0.5em;
 }
 div.sidebar-title, div.image-title {
+  color: #527bbd;
   font-family: sans-serif;
   font-weight: bold;
   margin-top: 0.0em;
@@ -298,6 +314,14 @@ div.exampleblock-content {
 
 /* IE6 sets dynamically generated links as visited. */
 div#toc a:visited { color: blue; }
+
+/* Because IE6 child selector is broken. */
+div.olist2 ol {
+  list-style-type: lower-alpha;
+}
+div.olist2 div.olist ol {
+  list-style-type: decimal;
+}
 </style>
 <title>tigrc(5)</title>
 </head>
@@ -320,22 +344,22 @@ tigrc(5) Manual Page
 <strong>bind</strong>  <em>keymap</em> <em>key</em> <em>action</em>
 <strong>color</strong> <em>area</em> <em>fgcolor</em> <em>bgcolor</em> <em>[attributes]</em></div></div>
 </div>
-<h2>DESCRIPTION</h2>
+<h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
-<p>You can permanently set an option by putting it in the <tt>~/.tigrc</tt> file.  The
+<div class="para"><p>You can permanently set an option by putting it in the <tt>~/.tigrc</tt> file.  The
 file consists of a series of <em>commands</em>.  Each line of the file may contain
-only one command.</p>
-<p>The hash mark (<em>#</em>) is used as a <em>comment</em> character. All text after the
+only one command.</p></div>
+<div class="para"><p>The hash mark (<em>#</em>) is used as a <em>comment</em> character. All text after the
 comment character to the end of the line is ignored. You can use comments to
-annotate your initialization file.</p>
+annotate your initialization file.</p></div>
 </div>
-<h2>Set command</h2>
+<h2 id="_set_command">Set command</h2>
 <div class="sectionbody">
-<p>A few selective variables can be configured via the set command. The syntax
-is:</p>
+<div class="para"><p>A few selective variables can be configured via the set command. The syntax
+is:</p></div>
 <div class="verseblock">
 <div class="content"><strong>set</strong> variables <strong>=</strong> value</div></div>
-<p>Examples:</p>
+<div class="para"><p>Examples:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>set show-author = yes           # Show author?
@@ -349,8 +373,8 @@ set line-number-interval = 5    # Interval between line numbers
 set tab-size = 8                # Number of spaces per tab
 set encoding = "UTF-8"          # Commit encoding</tt></pre>
 </div></div>
-<p>The type of variables are either bool, int, and string.</p>
-<dl>
+<div class="para"><p>The type of variables are either bool, int, and string.</p></div>
+<div class="vlist"><dl>
 <dt>
 Valid bool values
 </dt>
@@ -376,10 +400,10 @@ Valid string values
         A string of characters. Optionally, use either ' or " as delimiters.
 </p>
 </dd>
-</dl>
-<h3>Variables</h3>
-<p>The following variables can be set:</p>
-<dl>
+</dl></div>
+<h3 id="_variables">Variables</h3><div style="clear:left"></div>
+<div class="para"><p>The following variables can be set:</p></div>
+<div class="vlist"><dl>
 <dt>
 <em>show-author</em> (bool)
 </dt>
@@ -442,15 +466,15 @@ Valid string values
         is shadowed by the "i18n.commitencoding" option in <tt>.git/config</tt>.
 </p>
 </dd>
-</dl>
+</dl></div>
 </div>
-<h2>Bind command</h2>
+<h2 id="_bind_command">Bind command</h2>
 <div class="sectionbody">
-<p>Using bind commands keys can be mapped to an action when pressed in a given
-key map. The syntax is:</p>
+<div class="para"><p>Using bind commands keys can be mapped to an action when pressed in a given
+key map. The syntax is:</p></div>
 <div class="verseblock">
 <div class="content"><strong>bind</strong> <em>keymap</em> <em>key</em> <em>action</em></div></div>
-<p>Examples:</p>
+<div class="para"><p>Examples:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt># A few keybindings
@@ -464,14 +488,14 @@ bind diff b move-first-line
 bind main Q none
 # An external command to update from upstream
 bind generic F !git fetch
-# Cherry-pick current commit unto current branch
+# Cherry-pick current commit onto current branch
 bind generic C !git cherry-pick %(commit)</tt></pre>
 </div></div>
-<p>Keys are mapped by first searching the keybindings for the current view, then
+<div class="para"><p>Keys are mapped by first searching the keybindings for the current view, then
 the keybindings for the <strong>generic</strong> keymap, and last the default keybindings.
 Thus, the view keybindings shadow the generic keybindings which Shadow the
-built-in keybindings.</p>
-<dl>
+built-in keybindings.</p></div>
+<div class="vlist"><dl>
 <dt>
 Keymaps
 </dt>
@@ -491,9 +515,9 @@ following symbolic key names. Symbolic key names are case insensitive, Use
 <strong>Hash</strong> to bind to the <tt>#</tt> key, since the hash mark is used as a comment
 character.
 </p>
-<p><strong>Enter</strong>, <strong>Space</strong>, <strong>Backspace</strong>, <strong>Tab</strong>, <strong>Escape</strong>, <strong>Left</strong>, <strong>Right</strong>, <strong>Up</strong>, <strong>Down</strong>,
+<div class="para"><p><strong>Enter</strong>, <strong>Space</strong>, <strong>Backspace</strong>, <strong>Tab</strong>, <strong>Escape</strong>, <strong>Left</strong>, <strong>Right</strong>, <strong>Up</strong>, <strong>Down</strong>,
 <strong>Insert</strong>, <strong>Delete</strong>, <strong>Hash</strong>, <strong>Home</strong>, <strong>End</strong>, <strong>PageUp</strong>, <strong>PageDown</strong>, <strong>F1</strong>, <strong>F2</strong>, <strong>F3</strong>,
-<strong>F4</strong>, <strong>F5</strong>, <strong>F6</strong>, <strong>F7</strong>, <strong>F8</strong>, <strong>F9</strong>, <strong>F10</strong>, <strong>F11</strong>, <strong>F12</strong>.</p>
+<strong>F4</strong>, <strong>F5</strong>, <strong>F6</strong>, <strong>F7</strong>, <strong>F8</strong>, <strong>F9</strong>, <strong>F10</strong>, <strong>F11</strong>, <strong>F12</strong>.</p></div>
 </dd>
 <dt>
 Action names
@@ -505,14 +529,81 @@ case-insensitive, and you may use <em>-</em>, <em>_</em>, and <em>.</em> interch
 e.g. "view-main", "View.Main", and "VIEW_MAIN" are the same.
 </p>
 </dd>
-</dl>
-<h3>Actions</h3>
-<p>Apart from the action names listed below, all actions starting with a <em>!</em> will
+</dl></div>
+<h3 id="_actions">Actions</h3><div style="clear:left"></div>
+<div class="para"><p>Apart from the action names listed below, all actions starting with a <em>!</em> will
 be available as an external command. External commands can contain variable
 names that will be substituted before the command is run. Valid variable names
-are "%(head)", "%(commit)", and "%(blob)".</p>
-<p>As an example, the following external command will save the current commit as
-a patch file: "!git format-patch %(commit)^..%(commit)".</p>
+are:</p></div>
+<div class="tableblock">
+<table rules="none"
+frame="void"
+cellspacing="0" cellpadding="4">
+<col width="274" />
+<col width="617" />
+<thead>
+  <tr>
+    <th align="left">
+    Browsing state variables
+    </th>
+    <th align="left">
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    %(head)
+    </td>
+    <td align="left">
+    The currently viewed <em>head</em> ID. Defaults to HEAD
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    %(commit)
+    </td>
+    <td align="left">
+    The currently selected commit ID.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    %(blob)
+    </td>
+    <td align="left">
+    The currently selected blob ID.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    %(directory)
+    </td>
+    <td align="left">
+    The current directory path in the tree view;                         empty for the root directory.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    %(file)
+    </td>
+    <td align="left">
+    The currently selected file.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    %(ref)
+    </td>
+    <td align="left">
+    The reference given to blame or HEAD if undefined.
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<div class="para"><p>As an example, the following external command will save the current commit as
+a patch file: "!git format-patch -1 %(commit)".</p></div>
 <div class="tableblock">
 <table rules="none"
 frame="void"
@@ -525,7 +616,6 @@ cellspacing="0" cellpadding="4">
     View switching:
     </th>
     <th align="left">
-    
     </th>
   </tr>
 </thead>
@@ -625,7 +715,6 @@ cellspacing="0" cellpadding="4">
     View manipulation:
     </th>
     <th align="left">
-    
     </th>
   </tr>
 </thead>
@@ -709,7 +798,6 @@ cellspacing="0" cellpadding="4">
     Cursor navigation:
     </th>
     <th align="left">
-    
     </th>
   </tr>
 </thead>
@@ -777,7 +865,6 @@ cellspacing="0" cellpadding="4">
     Scrolling:
     </th>
     <th align="left">
-    
     </th>
   </tr>
 </thead>
@@ -829,7 +916,6 @@ cellspacing="0" cellpadding="4">
     Searching:
     </th>
     <th align="left">
-    
     </th>
   </tr>
 </thead>
@@ -881,7 +967,6 @@ cellspacing="0" cellpadding="4">
     Misc:
     </th>
     <th align="left">
-    
     </th>
   </tr>
 </thead>
@@ -1018,15 +1103,15 @@ cellspacing="0" cellpadding="4">
 </table>
 </div>
 </div>
-<h2>Color command</h2>
+<h2 id="_color_command">Color command</h2>
 <div class="sectionbody">
-<p>Color commands control highlighting and the user interface styles. If your
+<div class="para"><p>Color commands control highlighting and the user interface styles. If your
 terminal supports color, these commands can be used to assign foreground and
 background combinations to certain areas. Optionally, an attribute can be
-given as the last parameter. The syntax is:</p>
+given as the last parameter. The syntax is:</p></div>
 <div class="verseblock">
 <div class="content"><strong>color</strong> <em>area</em> <em>fgcolor</em> <em>bgcolor</em> <em>[attributes]</em></div></div>
-<p>Examples:</p>
+<div class="para"><p>Examples:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt># Overwrite the default terminal colors to white on black.
@@ -1041,7 +1126,7 @@ color cursor            red     default underline
 color title-blur        white   blue
 color title-focus       white   blue    bold</tt></pre>
 </div></div>
-<dl>
+<div class="vlist"><dl>
 <dt>
 Area names
 </dt>
@@ -1073,11 +1158,11 @@ Attribute names
         by the terminal.
 </p>
 </dd>
-</dl>
-<h3>UI colors</h3>
-<p>The colors and attributes to be used for the text that is not highlighted or
+</dl></div>
+<h3 id="_ui_colors">UI colors</h3><div style="clear:left"></div>
+<div class="para"><p>The colors and attributes to be used for the text that is not highlighted or
 that specify the use of the default terminal colors can be controlled by
-setting the <strong>default</strong> color option.</p>
+setting the <strong>default</strong> color option.</p></div>
 <div class="tableblock">
 <table rules="none"
 frame="void"
@@ -1090,7 +1175,6 @@ cellspacing="0" cellpadding="4">
     General:
     </th>
     <th align="left">
-    
     </th>
   </tr>
 </thead>
@@ -1174,7 +1258,6 @@ cellspacing="0" cellpadding="4">
     Main view colors:
     </th>
     <th align="left">
-    
     </th>
   </tr>
 </thead>
@@ -1266,7 +1349,6 @@ cellspacing="0" cellpadding="4">
     Status view:
     </th>
     <th align="left">
-    
     </th>
   </tr>
 </thead>
@@ -1326,7 +1408,6 @@ cellspacing="0" cellpadding="4">
     Blame view:
     </th>
     <th align="left">
-    
     </th>
   </tr>
 </thead>
@@ -1342,8 +1423,8 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<h3>Highlighting</h3>
-<dl>
+<h3 id="_highlighting">Highlighting</h3><div style="clear:left"></div>
+<div class="vlist"><dl>
 <dt>
 Diff markup
 </dt>
@@ -1351,7 +1432,7 @@ Diff markup
 <p>
 Options concerning diff start, chunks and lines added and deleted.
 </p>
-<p><strong>diff-header</strong>, <strong>diff-chunk</strong>, <strong>diff-add</strong>, <strong>diff-del</strong></p>
+<div class="para"><p><strong>diff-header</strong>, <strong>diff-chunk</strong>, <strong>diff-add</strong>, <strong>diff-del</strong></p></div>
 </dd>
 <dt>
 Enhanced git diff markup
@@ -1361,9 +1442,9 @@ Enhanced git diff markup
 Extra diff information emitted by the git diff machinery, such as mode
 changes, rename detection, and similarity.
 </p>
-<p><strong>diff-oldmode</strong>, <strong>diff-newmode</strong>, <strong>diff-copy-from</strong>, <strong>diff-copy-to</strong>,
+<div class="para"><p><strong>diff-oldmode</strong>, <strong>diff-newmode</strong>, <strong>diff-copy-from</strong>, <strong>diff-copy-to</strong>,
 <strong>diff-rename-from</strong>, <strong>diff-rename-to</strong>, <strong>diff-similarity</strong>, <strong>diff-dissimilarity</strong>
-<strong>diff-tree</strong>, <strong>diff-index</strong></p>
+<strong>diff-tree</strong>, <strong>diff-index</strong></p></div>
 </dd>
 <dt>
 Pretty print commit headers
@@ -1374,8 +1455,8 @@ Commit diffs and the revision logs are usually formatted using pretty printed
 headers , unless <tt>--pretty=raw</tt> was given. This includes lines, such as merge
 info, commit ID, and author and committer date.
 </p>
-<p><strong>pp-author</strong>, <strong>pp-commit</strong>, <strong>pp-merge</strong>, <strong>pp-date</strong>, <strong>pp-adate</strong>, <strong>pp-cdate</strong>,
-<strong>pp-refs</strong></p>
+<div class="para"><p><strong>pp-author</strong>, <strong>pp-commit</strong>, <strong>pp-merge</strong>, <strong>pp-date</strong>, <strong>pp-adate</strong>, <strong>pp-cdate</strong>,
+<strong>pp-refs</strong></p></div>
 </dd>
 <dt>
 Raw commit header
@@ -1385,7 +1466,7 @@ Raw commit header
 Usually shown when <tt>--pretty=raw</tt> is given, however <em>commit</em> is pretty much
 omnipresent.
 </p>
-<p><strong>commit</strong>, <strong>parent</strong>, <strong>tree</strong>, <strong>author</strong>, <strong>committer</strong></p>
+<div class="para"><p><strong>commit</strong>, <strong>parent</strong>, <strong>tree</strong>, <strong>author</strong>, <strong>committer</strong></p></div>
 </dd>
 <dt>
 Commit message
@@ -1394,7 +1475,7 @@ Commit message
 <p>
 For now only <tt>Signed-off-by</tt> and <tt>Acked-by</tt> lines are colorized.
 </p>
-<p><strong>signoff</strong>, <strong>acked</strong></p>
+<div class="para"><p><strong>signoff</strong>, <strong>acked</strong></p></div>
 </dd>
 <dt>
 Tree markup
@@ -1403,22 +1484,22 @@ Tree markup
 <p>
 Colors for information of the tree view.
 </p>
-<p><strong>tree-dir</strong>, <strong>tree-file</strong></p>
+<div class="para"><p><strong>tree-dir</strong>, <strong>tree-file</strong></p></div>
 </dd>
-</dl>
+</dl></div>
 </div>
-<h2>COPYRIGHT</h2>
+<h2 id="_copyright">COPYRIGHT</h2>
 <div class="sectionbody">
-<p>Copyright (c) 2006-2008 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p>
-<p>Licensed under the terms of the GNU General Public License.</p>
+<div class="para"><p>Copyright (c) 2006-2009 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p></div>
+<div class="para"><p>Licensed under the terms of the GNU General Public License.</p></div>
 </div>
-<h2>SEE ALSO</h2>
+<h2 id="_see_also">SEE ALSO</h2>
 <div class="sectionbody">
-<p><a href="tig.1.html">tig(1)</a> and the <a href="http://jonas.nitro.dk/tig/manual.html">tig manual</a>.</p>
+<div class="para"><p><a href="tig.1.html">tig(1)</a> and the <a href="http://jonas.nitro.dk/tig/manual.html">tig manual</a>.</p></div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 11-Oct-2008 13:19:29 CEST
+Last updated 2009-01-13 23:10:08 CEST
 </div>
 </div>
 </body>

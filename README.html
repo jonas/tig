@@ -2,17 +2,17 @@
 <h1>Tig: text-mode interface for git</h1>
 <div id="preamble">
 <div class="sectionbody">
-<p>Tig is a git repository browser that additionally can act as a pager for output
-from various git commands.</p>
-<p>When browsing repositories, it uses the underlying git commands to present the
+<div class="para"><p>Tig is a git repository browser that additionally can act as a pager for output
+from various git commands.</p></div>
+<div class="para"><p>When browsing repositories, it uses the underlying git commands to present the
 user with various views, such as summarized revision log and showing the commit
-with the log message, diffstat, and the diff.</p>
-<p>Using it as a pager, it will display input from stdin and colorize it.</p>
+with the log message, diffstat, and the diff.</p></div>
+<div class="para"><p>Using it as a pager, it will display input from stdin and colorize it.</p></div>
 </div>
 </div>
-<h2>Resources</h2>
+<h2 id="_resources">Resources</h2>
 <div class="sectionbody">
-<ul>
+<div class="ilist"><ul>
 <li>
 <p>
 Homepage:    <a href="http://jonas.nitro.dk/tig/">http://jonas.nitro.dk/tig/</a>
@@ -39,38 +39,38 @@ Git URL:     git://repo.or.cz/tig.git (mirror) or
 Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</a>
 </p>
 </li>
-</ul>
+</ul></div>
 </div>
-<h2>Installation instructions</h2>
+<h2 id="_installation_instructions">Installation instructions</h2>
 <div class="sectionbody">
-<p>Download a tarball from <a href="http://jonas.nitro.dk/tig/releases">http://jonas.nitro.dk/tig/releases</a> or clone the tig
+<div class="para"><p>Download a tarball from <a href="http://jonas.nitro.dk/tig/releases">http://jonas.nitro.dk/tig/releases</a> or clone the tig
 repository <a href="http://jonas.nitro.dk/tig/tig.git">http://jonas.nitro.dk/tig/tig.git</a>. Documentation files are
-available in the tarballs and in the <em>release</em> branch of the tig repository.</p>
-<p>The quick and simple way to install tig with documentation is to run:</p>
+available in the tarballs and in the <em>release</em> branch of the tig repository.</p></div>
+<div class="para"><p>The quick and simple way to install tig with documentation is to run:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><tt>$ make
 $ make install install-doc</tt></pre>
 </div></div>
-<p>Optionally, you can use the <tt>configure</tt> script to detect library location:</p>
+<div class="para"><p>Optionally, you can use the <tt>configure</tt> script to detect library location:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><tt>$ ./configure
 $ make
 $ make install</tt></pre>
 </div></div>
-<p>If your iconv library is not in the default library and include path, you'll
+<div class="para"><p>If your iconv library is not in the default library and include path, you'll
 probably want to pass the "--with-libiconv" option to the "configure" script to
 tell it where to look. Note, if you are building from the tig repository, you
-need to first make the configure script:</p>
+need to first make the configure script:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><tt>$ make configure</tt></pre>
 </div></div>
-<p>Release notes documenting notable changes are available in the NEWS file. When
+<div class="para"><p>Release notes documenting notable changes are available in the NEWS file. When
 upgrading, you are adviced to also read them after you have completed the
-installation.</p>
-<p>The following tools and packages are needed:</p>
+installation.</p></div>
+<div class="para"><p>The following tools and packages are needed:</p></div>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -115,8 +115,8 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<p>The following optional tools and packages are needed for creating the
-configure script and building documentation:</p>
+<div class="para"><p>The following optional tools and packages are needed for creating the
+configure script and building documentation:</p></div>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"

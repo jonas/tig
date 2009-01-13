@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.2.2" />
+<meta name="generator" content="AsciiDoc 8.2.6" />
 <style type="text/css">
 /* Debug borders */
 p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
@@ -26,10 +26,12 @@ a:visited {
 
 em {
   font-style: italic;
+  color: navy;
 }
 
 strong {
   font-weight: bold;
+  color: #083194;
 }
 
 tt {
@@ -44,12 +46,17 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.3;
 }
 
-h1 {
+h1, h2, h3 {
   border-bottom: 2px solid silver;
 }
 h2 {
-  border-bottom: 2px solid silver;
   padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
 }
 
 div.sectionbody {
@@ -64,6 +71,10 @@ hr {
 p {
   margin-top: 0.5em;
   margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
 }
 
 pre {
@@ -118,6 +129,7 @@ div.content { /* Block element content. */
 
 /* Block element titles. */
 div.title, caption.title {
+  color: #527bbd;
   font-family: sans-serif;
   font-weight: bold;
   text-align: left;
@@ -197,16 +209,19 @@ dl {
 dt {
   margin-top: 0.5em;
   margin-bottom: 0;
-  font-style: italic;
+  font-style: normal;
 }
 dd > *:first-child {
-  margin-top: 0;
+  margin-top: 0.1em;
 }
 
 ul, ol {
     list-style-position: outside;
 }
-ol.olist2 {
+div.olist > ol {
+  list-style-type: decimal;
+}
+div.olist2 > ol {
   list-style-type: lower-alpha;
 }
 
@@ -226,11 +241,11 @@ div.hlist {
   margin-bottom: 0.8em;
 }
 div.hlist td {
-  padding-bottom: 5px;
+  padding-bottom: 15px;
 }
 td.hlist1 {
   vertical-align: top;
-  font-style: italic;
+  font-style: normal;
   padding-right: 0.8em;
 }
 td.hlist2 {
@@ -274,6 +289,7 @@ div.sidebar-content {
   padding: 0.5em;
 }
 div.sidebar-title, div.image-title {
+  color: #527bbd;
   font-family: sans-serif;
   font-weight: bold;
   margin-top: 0.0em;
@@ -297,6 +313,14 @@ div.exampleblock-content {
 
 /* IE6 sets dynamically generated links as visited. */
 div#toc a:visited { color: blue; }
+
+/* Because IE6 child selector is broken. */
+div.olist2 ol {
+  list-style-type: lower-alpha;
+}
+div.olist2 div.olist ol {
+  list-style-type: decimal;
+}
 </style>
 <title>The tig Manual</title>
 </head>
@@ -308,20 +332,20 @@ div#toc a:visited { color: blue; }
 </div>
 <div id="preamble">
 <div class="sectionbody">
-<p>This is the manual for tig, the ncurses-based text-mode interface for git.
+<div class="para"><p>This is the manual for tig, the ncurses-based text-mode interface for git.
 Tig allows you to browse changes in a git repository and can additionally act
 as a pager for output of various git commands. When used as a pager, it will
-display input from stdin and colorize it.</p>
-<p>When browsing repositories, tig uses the underlying git commands to present
+display input from stdin and colorize it.</p></div>
+<div class="para"><p>When browsing repositories, tig uses the underlying git commands to present
 the user with various views, such as summarized commit log and showing the
-commit with the log message, diffstat, and the diff.</p>
-<p><strong>Table of Contents</strong></p>
-<ol>
+commit with the log message, diffstat, and the diff.</p></div>
+<div class="para"><p><strong>Table of Contents</strong></p></div>
+<div class="olist"><ol>
 <li>
 <p>
 <a href="#calling-conventions">Calling Conventions</a>
 </p>
-<ul>
+<div class="ilist"><ul>
 <li>
 <p>
 <a href="#pager-mode">Pager Mode</a>
@@ -332,13 +356,13 @@ commit with the log message, diffstat, and the diff.</p>
 <a href="#cmd-options">Git Command Options</a>
 </p>
 </li>
-</ul>
+</ul></div>
 </li>
 <li>
 <p>
 <a href="#viewer">The Viewer</a>
 </p>
-<ul>
+<div class="ilist"><ul>
 <li>
 <p>
 <a href="#views">Views</a>
@@ -354,13 +378,13 @@ commit with the log message, diffstat, and the diff.</p>
 <a href="#title-window">Title Windows</a>
 </p>
 </li>
-</ul>
+</ul></div>
 </li>
 <li>
 <p>
 <a href="#env-variables">Environment Variables</a>
 </p>
-<ul>
+<div class="ilist"><ul>
 <li>
 <p>
 <a href="#configuration-files">Configuration Files</a>
@@ -381,13 +405,13 @@ commit with the log message, diffstat, and the diff.</p>
 <a href="#tree-commands">Tree Commands</a>
 </p>
 </li>
-</ul>
+</ul></div>
 </li>
 <li>
 <p>
 <a href="#keys">Default Keybindings</a>
 </p>
-<ul>
+<div class="ilist"><ul>
 <li>
 <p>
 <a href="#view-switching">View Switching</a>
@@ -418,13 +442,13 @@ commit with the log message, diffstat, and the diff.</p>
 <a href="#external-commands">External Commands</a>
 </p>
 </li>
-</ul>
+</ul></div>
 </li>
 <li>
 <p>
 <a href="#refspec">Revision Specification</a>
 </p>
-<ul>
+<div class="ilist"><ul>
 <li>
 <p>
 <a href="#path-limiting">Limit by Path Name</a>
@@ -455,7 +479,7 @@ commit with the log message, diffstat, and the diff.</p>
 <a href="#refspec-all">Examining All Repository References</a>
 </p>
 </li>
-</ul>
+</ul></div>
 </li>
 <li>
 <p>
@@ -467,24 +491,24 @@ commit with the log message, diffstat, and the diff.</p>
 <a href="#references">References and Related Tools</a>
 </p>
 </li>
-</ol>
+</ol></div>
 </div>
 </div>
-<h2><a id="calling-conventions"></a>1. Calling Conventions</h2>
+<h2 id="calling-conventions">1. Calling Conventions</h2>
 <div class="sectionbody">
-<h3><a id="pager-mode"></a>1.1. Pager Mode</h3>
-<p>If stdin is a pipe, any log or diff options will be ignored and the pager view
+<h3 id="pager-mode">1.1. Pager Mode</h3><div style="clear:left"></div>
+<div class="para"><p>If stdin is a pipe, any log or diff options will be ignored and the pager view
 will be opened loading data from stdin. The pager mode can be used for
-colorizing output from various git commands.</p>
-<p>Example on how to colorize the output of git-show(1):</p>
+colorizing output from various git commands.</p></div>
+<div class="para"><p>Example on how to colorize the output of git-show(1):</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ git show | tig</tt></pre>
 </div></div>
-<h3><a id="cmd-options"></a>1.2. Git Command Options</h3>
-<p>All git command options specified on the command line will be passed to the
+<h3 id="cmd-options">1.2. Git Command Options</h3><div style="clear:left"></div>
+<div class="para"><p>All git command options specified on the command line will be passed to the
 given command and all will be shell quoted before they are passed to the
-shell.</p>
+shell.</p></div>
 <div class="admonitionblock">
 <table><tr>
 <td class="icon">
@@ -495,34 +519,34 @@ shell.</p>
 expected by the main view.</td>
 </tr></table>
 </div>
-<p>Example on how to view a commit and show both author and committer
-information:</p>
+<div class="para"><p>Example on how to view a commit and show both author and committer
+information:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig show --pretty=fuller</tt></pre>
 </div></div>
-<p>See the section on <a href="#refspec">specifying revisions</a> for an introduction to
+<div class="para"><p>See the section on <a href="#refspec">specifying revisions</a> for an introduction to
 revision options supported by the git commands. For details on specific git
-command options, refer to the man page of the command in question.</p>
+command options, refer to the man page of the command in question.</p></div>
 </div>
-<h2><a id="viewer"></a>2. The Viewer</h2>
+<h2 id="viewer">2. The Viewer</h2>
 <div class="sectionbody">
-<p>The display consists of a status window on the last line of the screen and one
+<div class="para"><p>The display consists of a status window on the last line of the screen and one
 or more views. The default is to only show one view at the time but it is
-possible to split both the main and log view to also show the commit diff.</p>
-<p>If you are in the log view and press <em>Enter</em> when the current line is a commit
-line, such as:</p>
+possible to split both the main and log view to also show the commit diff.</p></div>
+<div class="para"><p>If you are in the log view and press <em>Enter</em> when the current line is a commit
+line, such as:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>commit 4d55caff4cc89335192f3e566004b4ceef572521</tt></pre>
 </div></div>
-<p>You will split the view so that the log view is displayed in the top window
+<div class="para"><p>You will split the view so that the log view is displayed in the top window
 and the diff view in the bottom window. You can switch between the two views
-by pressing <em>Tab</em>. To maximize the log view again, simply press <em>l</em>.</p>
-<h3><a id="views"></a>2.1. Views</h3>
-<p>Various <em>views</em> of a repository is presented. Each view is based on output
-from an external command, most often <em>git log</em>, <em>git diff</em>, or <em>git show</em>.</p>
-<dl>
+by pressing <em>Tab</em>. To maximize the log view again, simply press <em>l</em>.</p></div>
+<h3 id="views">2.1. Views</h3><div style="clear:left"></div>
+<div class="para"><p>Various <em>views</em> of a repository is presented. Each view is based on output
+from an external command, most often <em>git log</em>, <em>git diff</em>, or <em>git show</em>.</p></div>
+<div class="vlist"><dl>
 <dt>
 The main view
 </dt>
@@ -615,17 +639,18 @@ The help view
         Displays a quick reference of key bindings.
 </p>
 </dd>
-</dl>
-<h3><a id="commit-id"></a>2.2. Browsing State and User-defined Commands</h3>
-<p>The viewer keeps track of both what head and commit ID you are currently
+</dl></div>
+<h3 id="commit-id">2.2. Browsing State and User-defined Commands</h3><div style="clear:left"></div>
+<div class="para"><p>The viewer keeps track of both what head and commit ID you are currently
 viewing. The commit ID will follow the cursor line and change every time you
 highlight a different commit. Whenever you reopen the diff view it will be
 reloaded, if the commit ID changed. The head ID is used when opening the main
-and log view to indicate from what revision to show history.</p>
-<p>Some of the commands used or provided by tig can be configured. This goes for
-the <a href="#external-commands">external commands</a>. These user-defined commands can
-use arguments that refer to the current browsing state by using one of the
-following variables.</p>
+and log view to indicate from what revision to show history.</p></div>
+<div class="para"><p>Some of the commands used or provided by tig can be configured. This goes for
+some of the <a href="#env-variables">environment variables</a> as well as the
+<a href="#external-commands">external commands</a>. These user-defined commands can use
+arguments that refer to the current browsing state by using one of the
+following variables.</p></div>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -638,7 +663,6 @@ cellspacing="0" cellpadding="4">
     Browsing state variables
     </th>
     <th align="left">
-    
     </th>
   </tr>
 </thead>
@@ -667,34 +691,58 @@ cellspacing="0" cellpadding="4">
     The currently selected blob ID.
     </td>
   </tr>
+  <tr>
+    <td align="left">
+    %(directory)
+    </td>
+    <td align="left">
+    The current directory path in the tree view;                         empty for the root directory.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    %(file)
+    </td>
+    <td align="left">
+    The currently selected file.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    %(ref)
+    </td>
+    <td align="left">
+    The reference given to blame or HEAD if undefined.
+    </td>
+  </tr>
 </tbody>
 </table>
 </div>
-<h3><a id="title-window"></a>2.3. Title Windows</h3>
-<p>Each view has a title window which shows the name of the view, current commit
-ID if available, and where the view is positioned:</p>
+<h3 id="title-window">2.3. Title Windows</h3><div style="clear:left"></div>
+<div class="para"><p>Each view has a title window which shows the name of the view, current commit
+ID if available, and where the view is positioned:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>[main] c622eefaa485995320bc743431bae0d497b1d875 - commit 1 of 61 (1%)</tt></pre>
 </div></div>
-<p>By default, the title of the current view is highlighted using bold font.  For
+<div class="para"><p>By default, the title of the current view is highlighted using bold font.  For
 long loading views (taking over 3 seconds) the time since loading started will
-be appended:</p>
+be appended:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>[main] 77d9e40fbcea3238015aea403e06f61542df9a31 - commit 1 of 779 (0%) 5s</tt></pre>
 </div></div>
 </div>
-<h2><a id="env-variables"></a>3. Environment Variables</h2>
+<h2 id="env-variables">3. Environment Variables</h2>
 <div class="sectionbody">
-<p>Several options related to the interface with git can be configured via
-environment options.</p>
-<h3><a id="configuration-files"></a>3.1. Configuration Files</h3>
-<p>Upon startup, tig first reads the system wide configuration file
+<div class="para"><p>Several options related to the interface with git can be configured via
+environment options.</p></div>
+<h3 id="configuration-files">3.1. Configuration Files</h3><div style="clear:left"></div>
+<div class="para"><p>Upon startup, tig first reads the system wide configuration file
 (<tt>++SYSCONFDIR++/tigrc</tt> by default) and then proceeds to read the user's
 configuration file (<tt>~/.tigrc</tt> by default). The paths to either of these files
-can be overridden through the following environment variables:</p>
-<dl>
+can be overridden through the following environment variables:</p></div>
+<div class="vlist"><dl>
 <dt>
 TIGRC_USER
 </dt>
@@ -711,23 +759,23 @@ TIGRC_SYSTEM
         Path of the system wide configuration file.
 </p>
 </dd>
-</dl>
-<h3><a id="repo-refs"></a>3.2. Repository References</h3>
-<p>Commits that are referenced by tags and branch heads will be marked by the
-reference name surrounded by <em>[</em> and <em>]</em>:</p>
+</dl></div>
+<h3 id="repo-refs">3.2. Repository References</h3><div style="clear:left"></div>
+<div class="para"><p>Commits that are referenced by tags and branch heads will be marked by the
+reference name surrounded by <em>[</em> and <em>]</em>:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>2006-03-26 19:42 Petr Baudis         | [cogito-0.17.1] Cogito 0.17.1</tt></pre>
 </div></div>
-<p>If you want to filter what branches gets shown, say limit to only show
+<div class="para"><p>If you want to filter what branches gets shown, say limit to only show
 branches named <tt>master</tt> or which starts with the <tt>jf/</tt> prefix, you can
-do it by setting the following variable:</p>
+do it by setting the following variable:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ TIG_LS_REMOTE="git ls-remote . master jf/*" tig</tt></pre>
 </div></div>
-<p>Or set the variable permanently in your environment.</p>
-<dl>
+<div class="para"><p>Or set the variable permanently in your environment.</p></div>
+<div class="vlist"><dl>
 <dt>
 TIG_LS_REMOTE
 </dt>
@@ -742,19 +790,18 @@ TIG_LS_REMOTE
 <pre><tt>git ls-remote .</tt></pre>
 </div></div>
 </dd>
-</dl>
-<h3><a id="history-commands"></a>3.3. History Commands</h3>
-<p>It is possible to alter which commands are used for the different views.  If
+</dl></div>
+<h3 id="history-commands">3.3. History Commands</h3><div style="clear:left"></div>
+<div class="para"><p>It is possible to alter which commands are used for the different views.  If
 for example you prefer commits in the main view to be sorted by date and only
-show 500 commits, use:</p>
+show 500 commits, use:</p></div>
 <div class="listingblock">
 <div class="content">
-<pre><tt>$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %s" tig</tt></pre>
+<pre><tt>$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %(head)" tig</tt></pre>
 </div></div>
-<p>Or set the variable permanently in your environment.</p>
-<p>Notice, how <tt>%s</tt> is used to specify the commit reference. There can be a
-maximum of 5 <tt>%s</tt> ref specifications.</p>
-<dl>
+<div class="para"><p>Or set the variable permanently in your environment.</p></div>
+<div class="para"><p>Notice, how <tt>%(head)</tt> is used to specify the commit reference.</p></div>
+<div class="vlist"><dl>
 <dt>
 TIG_DIFF_CMD
 </dt>
@@ -765,7 +812,7 @@ TIG_DIFF_CMD
 <div class="listingblock">
 <div class="content">
 <pre><tt>git show --pretty=fuller --no-color --root
-         --patch-with-stat --find-copies-harder -C %s</tt></pre>
+         --patch-with-stat --find-copies-harder -C %(commit)</tt></pre>
 </div></div>
 </dd>
 <dt>
@@ -779,7 +826,7 @@ TIG_LOG_CMD
 </p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>git log --no-color --cc --stat -n100 %s</tt></pre>
+<pre><tt>git log --no-color --cc --stat -n100 %(head)</tt></pre>
 </div></div>
 </dd>
 <dt>
@@ -793,24 +840,22 @@ TIG_MAIN_CMD
 </p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>git log --no-color --pretty=raw --parents --topo-order %s</tt></pre>
+<pre><tt>git log --no-color --pretty=raw --parents --topo-order %(head)</tt></pre>
 </div></div>
 </dd>
-</dl>
-<h3><a id="tree-commands"></a>3.4. Tree Commands</h3>
-<dl>
+</dl></div>
+<h3 id="tree-commands">3.4. Tree Commands</h3><div style="clear:left"></div>
+<div class="vlist"><dl>
 <dt>
 TIG_TREE_CMD
 </dt>
 <dd>
 <p>
-        The command used for the tree view. Takes two arguments, the first is
-        the revision ID and the second is the path of the directory tree,
-        empty for the root directory. Defaults to:
+        The command used for the tree view. Defaults to:
 </p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>git ls-tree %s %s</tt></pre>
+<pre><tt>git ls-tree %(commit) %(directory)</tt></pre>
 </div></div>
 </dd>
 <dt>
@@ -818,20 +863,19 @@ TIG_BLOB_CMD
 </dt>
 <dd>
 <p>
-        The command used for the blob view. Takes one argument which is the
-        blob ID. Defaults to:
+        The command used for the blob view. Defaults to:
 </p>
 <div class="listingblock">
 <div class="content">
-<pre><tt>git cat-file blob %s</tt></pre>
+<pre><tt>git cat-file blob %(blob)</tt></pre>
 </div></div>
 </dd>
-</dl>
+</dl></div>
 </div>
-<h2><a id="keys"></a>4. Default Keybindings</h2>
+<h2 id="keys">4. Default Keybindings</h2>
 <div class="sectionbody">
-<p>Below the default key bindings are shown.</p>
-<h3><a id="view-switching"></a>4.1. View Switching</h3>
+<div class="para"><p>Below the default key bindings are shown.</p></div>
+<h3 id="view-switching">4.1. View Switching</h3><div style="clear:left"></div>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -932,7 +976,7 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<h3><a id="view-manipulation"></a>4.2. View Manipulation</h3>
+<h3 id="view-manipulation">4.2. View Manipulation</h3><div style="clear:left"></div>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -1009,7 +1053,7 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<h3><a id="cursor-nav"></a>4.3. Cursor Navigation</h3>
+<h3 id="cursor-nav">4.3. Cursor Navigation</h3><div style="clear:left"></div>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -1078,7 +1122,7 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<h3><a id="view-scrolling"></a>4.4. Scrolling</h3>
+<h3 id="view-scrolling">4.4. Scrolling</h3><div style="clear:left"></div>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -1131,7 +1175,7 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<h3><a id="searching"></a>4.5. Searching</h3>
+<h3 id="searching">4.5. Searching</h3><div style="clear:left"></div>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -1184,7 +1228,7 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<h3><a id="misc-keys"></a>4.6. Misc</h3>
+<h3 id="misc-keys">4.6. Misc</h3><div style="clear:left"></div>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -1333,11 +1377,11 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<h3><a id="external-commands"></a>4.7. External Commands</h3>
-<p>For more custom needs, external commands provide a way to easily execute
+<h3 id="external-commands">4.7. External Commands</h3><div style="clear:left"></div>
+<div class="para"><p>For more custom needs, external commands provide a way to easily execute
 a script or program. They are bound to keys and use information from the
 current browsing state, such as the current commit ID. Tig comes with
-the following builtin external commands:</p>
+the following builtin external commands:</p></div>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -1375,37 +1419,37 @@ cellspacing="0" cellpadding="4">
 </table>
 </div>
 </div>
-<h2><a id="refspec"></a>5. Revision Specification</h2>
+<h2 id="refspec">5. Revision Specification</h2>
 <div class="sectionbody">
-<p>This section describes various ways to specify what revisions to display or
+<div class="para"><p>This section describes various ways to specify what revisions to display or
 otherwise limit the view to. Tig does not itself parse the described
 revision options so refer to the relevant git man pages for further
 information. Relevant man pages besides git-log(1) are git-diff(1) and
-git-rev-list(1).</p>
-<p>You can tune the interaction with git by making use of the options explained
+git-rev-list(1).</p></div>
+<div class="para"><p>You can tune the interaction with git by making use of the options explained
 in this section. For example, by configuring the environment variables
-described in the section on <a href="#history-commands">history commands</a>.</p>
-<h3><a id="path-limiting"></a>5.1. Limit by Path Name</h3>
-<p>If you are interested only in those revisions that made changes to a specific
-file (or even several files) list the files like this:</p>
+described in the section on <a href="#history-commands">history commands</a>.</p></div>
+<h3 id="path-limiting">5.1. Limit by Path Name</h3><div style="clear:left"></div>
+<div class="para"><p>If you are interested only in those revisions that made changes to a specific
+file (or even several files) list the files like this:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig Makefile README</tt></pre>
 </div></div>
-<p>To avoid ambiguity with tig's subcommands or repository references such as tag
+<div class="para"><p>To avoid ambiguity with tig's subcommands or repository references such as tag
 name, be sure to separate file names from other git options using "--". So if
 you have a file named <em>status</em> it will clash with the <em>status</em> subcommand, and
-thus you will have to use:</p>
+thus you will have to use:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig -- status</tt></pre>
 </div></div>
-<h3><a id="date-number-limiting"></a>5.2. Limit by Date or Number</h3>
-<p>To speed up interaction with git, you can limit the amount of commits to show
+<h3 id="date-number-limiting">5.2. Limit by Date or Number</h3><div style="clear:left"></div>
+<div class="para"><p>To speed up interaction with git, you can limit the amount of commits to show
 both for the log and main view. Either limit by date using e.g.
-<tt>--since=1.month</tt> or limit by the number of commits using <tt>-n400</tt>.</p>
-<p>If you are only interested in changed that happened between two dates you can
-use:</p>
+<tt>--since=1.month</tt> or limit by the number of commits using <tt>-n400</tt>.</p></div>
+<div class="para"><p>If you are only interested in changed that happened between two dates you can
+use:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig --after="May 5th" --before="2006-05-16 15:44"</tt></pre>
@@ -1419,57 +1463,57 @@ use:</p>
 "." instead, e.g. <tt>--after=May.5th</tt>.</td>
 </tr></table>
 </div>
-<h3><a id="commit-range-limiting"></a>5.3. Limiting by Commit Ranges</h3>
-<p>Alternatively, commits can be limited to a specific range, such as "all
-commits between <em>tag-1.0</em> and <em>tag-2.0</em>". For example:</p>
+<h3 id="commit-range-limiting">5.3. Limiting by Commit Ranges</h3><div style="clear:left"></div>
+<div class="para"><p>Alternatively, commits can be limited to a specific range, such as "all
+commits between <em>tag-1.0</em> and <em>tag-2.0</em>". For example:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig tag-1.0..tag-2.0</tt></pre>
 </div></div>
-<p>This way of commit limiting makes it trivial to only browse the commits which
+<div class="para"><p>This way of commit limiting makes it trivial to only browse the commits which
 haven't been pushed to a remote branch. Assuming <em>origin</em> is your upstream
-remote branch, using:</p>
+remote branch, using:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig origin..HEAD</tt></pre>
 </div></div>
-<p>will list what will be pushed to the remote branch. Optionally, the ending
-<em>HEAD</em> can be left out since it is implied.</p>
-<h3><a id="reachability-limiting"></a>5.4. Limiting by Reachability</h3>
-<p>Git interprets the range specifier "tag-1.0..tag-2.0" as "all commits
+<div class="para"><p>will list what will be pushed to the remote branch. Optionally, the ending
+<em>HEAD</em> can be left out since it is implied.</p></div>
+<h3 id="reachability-limiting">5.4. Limiting by Reachability</h3><div style="clear:left"></div>
+<div class="para"><p>Git interprets the range specifier "tag-1.0..tag-2.0" as "all commits
 reachable from <em>tag-2.0</em> but not from <em>tag-1.0</em>".  Where reachability refers
 to what commits are ancestors (or part of the history) of the branch or tagged
-revision in question.</p>
-<p>If you prefer to specify which commit to preview in this way use the
-following:</p>
+revision in question.</p></div>
+<div class="para"><p>If you prefer to specify which commit to preview in this way use the
+following:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig tag-2.0 ^tag-1.0</tt></pre>
 </div></div>
-<p>You can think of <em>^</em> as a negation operator. Using this alternate syntax, it
-is possible to further prune commits by specifying multiple branch cut offs.</p>
-<h3><a id="refspec-combi"></a>5.5. Combining Revisions Specification</h3>
-<p>Revisions options can to some degree be combined, which makes it possible to
+<div class="para"><p>You can think of <em>^</em> as a negation operator. Using this alternate syntax, it
+is possible to further prune commits by specifying multiple branch cut offs.</p></div>
+<h3 id="refspec-combi">5.5. Combining Revisions Specification</h3><div style="clear:left"></div>
+<div class="para"><p>Revisions options can to some degree be combined, which makes it possible to
 say "show at most 20 commits from within the last month that changed files
-under the Documentation/ directory."</p>
+under the Documentation/ directory."</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig --since=1.month -n20 -- Documentation/</tt></pre>
 </div></div>
-<h3><a id="refspec-all"></a>5.6. Examining All Repository References</h3>
-<p>In some cases, it can be useful to query changes across all references in a
+<h3 id="refspec-all">5.6. Examining All Repository References</h3><div style="clear:left"></div>
+<div class="para"><p>In some cases, it can be useful to query changes across all references in a
 repository. An example is to ask "did any line of development in this
 repository change a particular file within the last week". This can be
-accomplished using:</p>
+accomplished using:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig --all --since=1.week -- Makefile</tt></pre>
 </div></div>
 </div>
-<h2>6. BUGS</h2>
+<h2 id="_bugs">6. BUGS</h2>
 <div class="sectionbody">
-<p>Known bugs and problems:</p>
-<ul>
+<div class="para"><p>Known bugs and problems:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Proper locale support: in it's current state tig is pretty much UTF-8 only.
@@ -1480,20 +1524,20 @@ Proper locale support: in it's current state tig is pretty much UTF-8 only.
 Horizontal scrolling.
 </p>
 </li>
-</ul>
+</ul></div>
 </div>
-<h2><a id="copy-right"></a>7. Copyright</h2>
+<h2 id="copy-right">7. Copyright</h2>
 <div class="sectionbody">
-<p>Copyright (c) 2006-2008 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p>
-<p>This program is free software; you can redistribute it and/or modify
+<div class="para"><p>Copyright (c) 2006-2009 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p></div>
+<div class="para"><p>This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.</p>
+(at your option) any later version.</p></div>
 </div>
-<h2><a id="references"></a>8. References and Related Tools</h2>
+<h2 id="references">8. References and Related Tools</h2>
 <div class="sectionbody">
-<p>Manpages:</p>
-<ul>
+<div class="para"><p>Manpages:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 <a href="tig.1.html">tig(1)</a>
@@ -1504,9 +1548,9 @@ the Free Software Foundation; either version 2 of the License, or
 <a href="tigrc.5.html">tigrc(5)</a>
 </p>
 </li>
-</ul>
-<p>Online resources:</p>
-<ul>
+</ul></div>
+<div class="para"><p>Online resources:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 Homepage:    <a href="http://jonas.nitro.dk/tig/">http://jonas.nitro.dk/tig/</a>
@@ -1533,9 +1577,9 @@ Git URL:     git://repo.or.cz/tig.git (mirror) or
 Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</a>
 </p>
 </li>
-</ul>
-<p>Other git repository browsers:</p>
-<ul>
+</ul></div>
+<div class="para"><p>Other git repository browsers:</p></div>
+<div class="ilist"><ul>
 <li>
 <p>
 gitk(1)
@@ -1551,11 +1595,11 @@ qgit(1)
 gitview(1)
 </p>
 </li>
-</ul>
+</ul></div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 11-Oct-2008 13:19:30 CEST
+Last updated 2009-01-13 23:10:09 CEST
 </div>
 </div>
 </body>
