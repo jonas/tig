@@ -3764,6 +3764,15 @@ blame_request(struct view *view, enum request request, struct line *line)
 	struct blame *blame = line->data;
 
 	switch (request) {
+	case REQ_VIEW_BLAME:
+		if (!blame->commit || !strcmp(blame->commit->id, NULL_ID)) {
+			report("Commit ID unknown");
+			break;
+		}
+		string_copy(opt_ref, blame->commit->id);
+		open_view(view, REQ_VIEW_BLAME, OPEN_REFRESH);
+		return request;
+
 	case REQ_ENTER:
 		if (!blame->commit) {
 			report("No commit loaded yet");
