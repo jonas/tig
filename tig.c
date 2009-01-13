@@ -3779,6 +3779,10 @@ blame_request(struct view *view, enum request request, struct line *line)
 			break;
 		}
 
+		if (view_is_displayed(VIEW(REQ_VIEW_DIFF)) &&
+		    !strcmp(blame->commit->id, VIEW(REQ_VIEW_DIFF)->ref))
+			break;
+
 		if (!strcmp(blame->commit->id, NULL_ID)) {
 			char path[SIZEOF_STR];
 
