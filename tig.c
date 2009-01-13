@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2008 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2009 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -32,9 +32,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 #include <unistd.h>
 #include <time.h>
+#include <fcntl.h>
 
 #include <regex.h>
 
@@ -64,7 +67,6 @@
 static void __NORETURN die(const char *err, ...);
 static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
-static int read_properties(FILE *pipe, const char *separators, int (*read)(char *, size_t, char *, size_t));
 static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool reserve);
 static bool prompt_yesno(const char *prompt);
@@ -119,34 +121,6 @@ static int load_refs(void);
 #define GIT_CONFIG "config"
 #endif
 
-#define TIG_LS_REMOTE \
-	"git ls-remote . 2>/dev/null"
-
-#define TIG_DIFF_CMD \
-	"git show --pretty=fuller --no-color --root --patch-with-stat --find-copies-harder -C %s 2>/dev/null"
-
-#define TIG_LOG_CMD	\
-	"git log --no-color --cc --stat -n100 %s 2>/dev/null"
-
-#define TIG_MAIN_BASE \
-	"git log --no-color --pretty=raw --parents --topo-order"
-
-#define TIG_MAIN_CMD \
-	TIG_MAIN_BASE " %s 2>/dev/null"
-
-#define TIG_TREE_CMD	\
-	"git ls-tree %s %s"
-
-#define TIG_BLOB_CMD	\
-	"git cat-file blob %s"
-
-/* XXX: Needs to be defined to the empty string. */
-#define TIG_HELP_CMD	""
-#define TIG_PAGER_CMD	""
-#define TIG_STATUS_CMD	""
-#define TIG_STAGE_CMD	""
-#define TIG_BLAME_CMD	""
-
 /* Some ascii-shorthands fitted into the ncurses namespace. */
 #define KEY_TAB		'\t'
 #define KEY_RETURN	'\r'
@@ -165,6 +139,14 @@ struct ref {
 };
 
 static struct ref **get_refs(const char *id);
+
+enum format_flags {
+	FORMAT_ALL,		/* Perform replacement in all arguments. */
+	FORMAT_DASH,		/* Perform replacement up until "--". */
+	FORMAT_NONE		/* No replacement should be performed. */
+};
+
+static bool format_argv(const char *dst[], const char *src[], enum format_flags flags);
 
 struct int_map {
 	const char *name;
@@ -280,49 +262,370 @@ string_enum_compare(const char *str1, const char *str2, int len)
 #define prefixcmp(str1, str2) \
 	strncmp(str1, str2, STRING_SIZE(str2))
 
-/* Shell quoting
- *
- * NOTE: The following is a slightly modified copy of the git project's shell
- * quoting routines found in the quote.c file.
- *
- * Help to copy the thing properly quoted for the shell safety.  any single
- * quote is replaced with '\'', any exclamation point is replaced with '\!',
- * and the whole thing is enclosed in a
- *
- * E.g.
- *  original     sq_quote     result
- *  name     ==> name      ==> 'name'
- *  a b      ==> a b       ==> 'a b'
- *  a'b      ==> a'\''b    ==> 'a'\''b'
- *  a!b      ==> a'\!'b    ==> 'a'\!'b'
- */
-
-static size_t
-sq_quote(char buf[SIZEOF_STR], size_t bufsize, const char *src)
+static inline int
+suffixcmp(const char *str, int slen, const char *suffix)
 {
-	char c;
+	size_t len = slen >= 0 ? slen : strlen(str);
+	size_t suffixlen = strlen(suffix);
 
-#define BUFPUT(x) do { if (bufsize < SIZEOF_STR) buf[bufsize++] = (x); } while (0)
-
-	BUFPUT('\'');
-	while ((c = *src++)) {
-		if (c == '\'' || c == '!') {
-			BUFPUT('\'');
-			BUFPUT('\\');
-			BUFPUT(c);
-			BUFPUT('\'');
-		} else {
-			BUFPUT(c);
-		}
-	}
-	BUFPUT('\'');
-
-	if (bufsize < SIZEOF_STR)
-		buf[bufsize] = 0;
-
-	return bufsize;
+	return suffixlen < len ? strcmp(str + len - suffixlen, suffix) : -1;
 }
 
+
+static bool
+argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
+{
+	int valuelen;
+
+	while (*cmd && *argc < SIZEOF_ARG && (valuelen = strcspn(cmd, " \t"))) {
+		bool advance = cmd[valuelen] != 0;
+
+		cmd[valuelen] = 0;
+		argv[(*argc)++] = chomp_string(cmd);
+		cmd += valuelen + advance;
+	}
+
+	if (*argc < SIZEOF_ARG)
+		argv[*argc] = NULL;
+	return *argc < SIZEOF_ARG;
+}
+
+static void
+argv_from_env(const char **argv, const char *name)
+{
+	char *env = argv ? getenv(name) : NULL;
+	int argc = 0;
+
+	if (env && *env)
+		env = strdup(env);
+	if (env && !argv_from_string(argv, &argc, env))
+		die("Too many arguments in the `%s` environment variable", name);
+}
+
+
+/*
+ * Executing external commands.
+ */
+
+enum io_type {
+	IO_FD,			/* File descriptor based IO. */
+	IO_BG,			/* Execute command in the background. */
+	IO_FG,			/* Execute command with same std{in,out,err}. */
+	IO_RD,			/* Read only fork+exec IO. */
+	IO_WR,			/* Write only fork+exec IO. */
+};
+
+struct io {
+	enum io_type type;	/* The requested type of pipe. */
+	const char *dir;	/* Directory from which to execute. */
+	pid_t pid;		/* Pipe for reading or writing. */
+	int pipe;		/* Pipe end for reading or writing. */
+	int error;		/* Error status. */
+	const char *argv[SIZEOF_ARG];	/* Shell command arguments. */
+	char *buf;		/* Read buffer. */
+	size_t bufalloc;	/* Allocated buffer size. */
+	size_t bufsize;		/* Buffer content size. */
+	char *bufpos;		/* Current buffer position. */
+	unsigned int eof:1;	/* Has end of file been reached. */
+};
+
+static void
+reset_io(struct io *io)
+{
+	io->pipe = -1;
+	io->pid = 0;
+	io->buf = io->bufpos = NULL;
+	io->bufalloc = io->bufsize = 0;
+	io->error = 0;
+	io->eof = 0;
+}
+
+static void
+init_io(struct io *io, const char *dir, enum io_type type)
+{
+	reset_io(io);
+	io->type = type;
+	io->dir = dir;
+}
+
+static bool
+init_io_rd(struct io *io, const char *argv[], const char *dir,
+		enum format_flags flags)
+{
+	init_io(io, dir, IO_RD);
+	return format_argv(io->argv, argv, flags);
+}
+
+static bool
+io_open(struct io *io, const char *name)
+{
+	init_io(io, NULL, IO_FD);
+	io->pipe = *name ? open(name, O_RDONLY) : STDIN_FILENO;
+	return io->pipe != -1;
+}
+
+static bool
+kill_io(struct io *io)
+{
+	return kill(io->pid, SIGKILL) != -1;
+}
+
+static bool
+done_io(struct io *io)
+{
+	pid_t pid = io->pid;
+
+	if (io->pipe != -1)
+		close(io->pipe);
+	free(io->buf);
+	reset_io(io);
+
+	while (pid > 0) {
+		int status;
+		pid_t waiting = waitpid(pid, &status, 0);
+
+		if (waiting < 0) {
+			if (errno == EINTR)
+				continue;
+			report("waitpid failed (%s)", strerror(errno));
+			return FALSE;
+		}
+
+		return waiting == pid &&
+		       !WIFSIGNALED(status) &&
+		       WIFEXITED(status) &&
+		       !WEXITSTATUS(status);
+	}
+
+	return TRUE;
+}
+
+static bool
+start_io(struct io *io)
+{
+	int pipefds[2] = { -1, -1 };
+
+	if (io->type == IO_FD)
+		return TRUE;
+
+	if ((io->type == IO_RD || io->type == IO_WR) &&
+	    pipe(pipefds) < 0)
+		return FALSE;
+
+	if ((io->pid = fork())) {
+		if (pipefds[!(io->type == IO_WR)] != -1)
+			close(pipefds[!(io->type == IO_WR)]);
+		if (io->pid != -1) {
+			io->pipe = pipefds[!!(io->type == IO_WR)];
+			return TRUE;
+		}
+
+	} else {
+		if (io->type != IO_FG) {
+			int devnull = open("/dev/null", O_RDWR);
+			int readfd  = io->type == IO_WR ? pipefds[0] : devnull;
+			int writefd = io->type == IO_RD ? pipefds[1] : devnull;
+
+			dup2(readfd,  STDIN_FILENO);
+			dup2(writefd, STDOUT_FILENO);
+			dup2(devnull, STDERR_FILENO);
+
+			close(devnull);
+			if (pipefds[0] != -1)
+				close(pipefds[0]);
+			if (pipefds[1] != -1)
+				close(pipefds[1]);
+		}
+
+		if (io->dir && *io->dir && chdir(io->dir) == -1)
+			die("Failed to change directory: %s", strerror(errno));
+
+		execvp(io->argv[0], (char *const*) io->argv);
+		die("Failed to execute program: %s", strerror(errno));
+	}
+
+	if (pipefds[!!(io->type == IO_WR)] != -1)
+		close(pipefds[!!(io->type == IO_WR)]);
+	return FALSE;
+}
+
+static bool
+run_io(struct io *io, const char **argv, const char *dir, enum io_type type)
+{
+	init_io(io, dir, type);
+	if (!format_argv(io->argv, argv, FORMAT_NONE))
+		return FALSE;
+	return start_io(io);
+}
+
+static int
+run_io_do(struct io *io)
+{
+	return start_io(io) && done_io(io);
+}
+
+static int
+run_io_bg(const char **argv)
+{
+	struct io io = {};
+
+	init_io(&io, NULL, IO_BG);
+	if (!format_argv(io.argv, argv, FORMAT_NONE))
+		return FALSE;
+	return run_io_do(&io);
+}
+
+static bool
+run_io_fg(const char **argv, const char *dir)
+{
+	struct io io = {};
+
+	init_io(&io, dir, IO_FG);
+	if (!format_argv(io.argv, argv, FORMAT_NONE))
+		return FALSE;
+	return run_io_do(&io);
+}
+
+static bool
+run_io_rd(struct io *io, const char **argv, enum format_flags flags)
+{
+	return init_io_rd(io, argv, NULL, flags) && start_io(io);
+}
+
+static bool
+io_eof(struct io *io)
+{
+	return io->eof;
+}
+
+static int
+io_error(struct io *io)
+{
+	return io->error;
+}
+
+static bool
+io_strerror(struct io *io)
+{
+	return strerror(io->error);
+}
+
+static bool
+io_can_read(struct io *io)
+{
+	struct timeval tv = { 0, 500 };
+	fd_set fds;
+
+	FD_ZERO(&fds);
+	FD_SET(io->pipe, &fds);
+
+	return select(io->pipe + 1, &fds, NULL, NULL, &tv) > 0;
+}
+
+static ssize_t
+io_read(struct io *io, void *buf, size_t bufsize)
+{
+	do {
+		ssize_t readsize = read(io->pipe, buf, bufsize);
+
+		if (readsize < 0 && (errno == EAGAIN || errno == EINTR))
+			continue;
+		else if (readsize == -1)
+			io->error = errno;
+		else if (readsize == 0)
+			io->eof = 1;
+		return readsize;
+	} while (1);
+}
+
+static char *
+io_get(struct io *io, int c, bool can_read)
+{
+	char *eol;
+	ssize_t readsize;
+
+	if (!io->buf) {
+		io->buf = io->bufpos = malloc(BUFSIZ);
+		if (!io->buf)
+			return NULL;
+		io->bufalloc = BUFSIZ;
+		io->bufsize = 0;
+	}
+
+	while (TRUE) {
+		if (io->bufsize > 0) {
+			eol = memchr(io->bufpos, c, io->bufsize);
+			if (eol) {
+				char *line = io->bufpos;
+
+				*eol = 0;
+				io->bufpos = eol + 1;
+				io->bufsize -= io->bufpos - line;
+				return line;
+			}
+		}
+
+		if (io_eof(io)) {
+			if (io->bufsize) {
+				io->bufpos[io->bufsize] = 0;
+				io->bufsize = 0;
+				return io->bufpos;
+			}
+			return NULL;
+		}
+
+		if (!can_read)
+			return NULL;
+
+		if (io->bufsize > 0 && io->bufpos > io->buf)
+			memmove(io->buf, io->bufpos, io->bufsize);
+
+		io->bufpos = io->buf;
+		readsize = io_read(io, io->buf + io->bufsize, io->bufalloc - io->bufsize);
+		if (io_error(io))
+			return NULL;
+		io->bufsize += readsize;
+	}
+}
+
+static bool
+io_write(struct io *io, const void *buf, size_t bufsize)
+{
+	size_t written = 0;
+
+	while (!io_error(io) && written < bufsize) {
+		ssize_t size;
+
+		size = write(io->pipe, buf + written, bufsize - written);
+		if (size < 0 && (errno == EAGAIN || errno == EINTR))
+			continue;
+		else if (size == -1)
+			io->error = errno;
+		else
+			written += size;
+	}
+
+	return written == bufsize;
+}
+
+static bool
+run_io_buf(const char **argv, char buf[], size_t bufsize)
+{
+	struct io io = {};
+	bool error;
+
+	if (!run_io_rd(&io, argv, FORMAT_NONE))
+		return FALSE;
+
+	io.buf = io.bufpos = buf;
+	io.bufalloc = bufsize;
+	error = !io_get(&io, '\n', TRUE) && io_error(&io);
+	io.buf = NULL;
+
+	return done_io(&io) || error;
+}
+
+static int read_properties(struct io *io, const char *separators, int (*read)(char *, size_t, char *, size_t));
 
 /*
  * User requests
@@ -466,14 +769,12 @@ static bool opt_show_refs		= TRUE;
 static int opt_num_interval		= NUMBER_INTERVAL;
 static int opt_tab_size			= TAB_SIZE;
 static int opt_author_cols		= AUTHOR_COLS-1;
-static char opt_cmd[SIZEOF_STR]		= "";
 static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
 static char opt_head[SIZEOF_REF]	= "";
+static char opt_head_rev[SIZEOF_REV]	= "";
 static char opt_remote[SIZEOF_REF]	= "";
-static bool opt_no_head			= TRUE;
-static FILE *opt_pipe			= NULL;
 static char opt_encoding[20]		= "UTF-8";
 static bool opt_utf8			= TRUE;
 static char opt_codeset[20]		= "UTF-8";
@@ -483,20 +784,27 @@ static char opt_cdup[SIZEOF_STR]	= "";
 static char opt_git_dir[SIZEOF_STR]	= "";
 static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
+static FILE *opt_tty			= NULL;
+
+#define is_initial_commit()	(!*opt_head_rev)
+#define is_head_commit(rev)	(!strcmp((rev), "HEAD") || !strcmp(opt_head_rev, (rev)))
 
 static enum request
-parse_options(int argc, const char *argv[])
+parse_options(int argc, const char *argv[], const char ***run_argv)
 {
 	enum request request = REQ_VIEW_MAIN;
-	size_t buf_size;
 	const char *subcommand;
 	bool seen_dashdash = FALSE;
-	int i;
+	/* XXX: This is vulnerable to the user overriding options
+	 * required for the main view parser. */
+	const char *custom_argv[SIZEOF_ARG] = {
+		"git", "log", "--no-color", "--pretty=raw", "--parents",
+			"--topo-order", NULL
+	};
+	int i, j = 6;
 
-	if (!isatty(STDIN_FILENO)) {
-		opt_pipe = stdin;
+	if (!isatty(STDIN_FILENO))
 		return REQ_VIEW_PAGER;
-	}
 
 	if (argc <= 1)
 		return REQ_VIEW_MAIN;
@@ -533,14 +841,10 @@ parse_options(int argc, const char *argv[])
 		subcommand = NULL;
 	}
 
-	if (!subcommand)
-		/* XXX: This is vulnerable to the user overriding
-		 * options required for the main view parser. */
-		string_copy(opt_cmd, TIG_MAIN_BASE);
-	else
-		string_format(opt_cmd, "git %s", subcommand);
-
-	buf_size = strlen(opt_cmd);
+	if (subcommand) {
+		custom_argv[1] = subcommand;
+		j = 2;
+	}
 
 	for (i = 1 + !!subcommand; i < argc; i++) {
 		const char *opt = argv[i];
@@ -557,13 +861,13 @@ parse_options(int argc, const char *argv[])
 			return REQ_NONE;
 		}
 
-		opt_cmd[buf_size++] = ' ';
-		buf_size = sq_quote(opt_cmd, buf_size, opt);
-		if (buf_size >= sizeof(opt_cmd))
+		custom_argv[j++] = opt;
+		if (j >= ARRAY_SIZE(custom_argv))
 			die("command too long");
 	}
 
-	opt_cmd[buf_size] = 0;
+	custom_argv[j] = NULL;
+	*run_argv = custom_argv;
 
 	return request;
 }
@@ -729,7 +1033,6 @@ struct line {
 struct keybinding {
 	int alias;
 	enum request request;
-	struct keybinding *next;
 };
 
 static struct keybinding default_keybindings[] = {
@@ -828,21 +1131,23 @@ static struct int_map keymap_table[] = {
 #define set_keymap(map, name) \
 	set_from_int_map(keymap_table, ARRAY_SIZE(keymap_table), map, name, strlen(name))
 
-static struct keybinding *keybindings[ARRAY_SIZE(keymap_table)];
+struct keybinding_table {
+	struct keybinding *data;
+	size_t size;
+};
+
+static struct keybinding_table keybindings[ARRAY_SIZE(keymap_table)];
 
 static void
 add_keybinding(enum keymap keymap, enum request request, int key)
 {
-	struct keybinding *keybinding;
+	struct keybinding_table *table = &keybindings[keymap];
 
-	keybinding = calloc(1, sizeof(*keybinding));
-	if (!keybinding)
+	table->data = realloc(table->data, (table->size + 1) * sizeof(*table->data));
+	if (!table->data)
 		die("Failed to allocate keybinding");
-
-	keybinding->alias = key;
-	keybinding->request = request;
-	keybinding->next = keybindings[keymap];
-	keybindings[keymap] = keybinding;
+	table->data[table->size].alias = key;
+	table->data[table->size++].request = request;
 }
 
 /* Looks for a key binding first in the given map, then in the generic map, and
@@ -850,16 +1155,15 @@ add_keybinding(enum keymap keymap, enum request request, int key)
 static enum request
 get_keybinding(enum keymap keymap, int key)
 {
-	struct keybinding *kbd;
-	int i;
+	size_t i;
 
-	for (kbd = keybindings[keymap]; kbd; kbd = kbd->next)
-		if (kbd->alias == key)
-			return kbd->request;
+	for (i = 0; i < keybindings[keymap].size; i++)
+		if (keybindings[keymap].data[i].alias == key)
+			return keybindings[keymap].data[i].request;
 
-	for (kbd = keybindings[KEYMAP_GENERIC]; kbd; kbd = kbd->next)
-		if (kbd->alias == key)
-			return kbd->request;
+	for (i = 0; i < keybindings[KEYMAP_GENERIC].size; i++)
+		if (keybindings[KEYMAP_GENERIC].data[i].alias == key)
+			return keybindings[KEYMAP_GENERIC].data[i].request;
 
 	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++)
 		if (default_keybindings[i].alias == key)
@@ -969,7 +1273,7 @@ get_key(enum request request)
 struct run_request {
 	enum keymap keymap;
 	int key;
-	char cmd[SIZEOF_STR];
+	const char *argv[SIZEOF_ARG];
 };
 
 static struct run_request *run_request;
@@ -979,24 +1283,24 @@ static enum request
 add_run_request(enum keymap keymap, int key, int argc, const char **argv)
 {
 	struct run_request *req;
-	char cmd[SIZEOF_STR];
-	size_t bufpos;
 
-	for (bufpos = 0; argc > 0; argc--, argv++)
-		if (!string_format_from(cmd, &bufpos, "%s ", *argv))
-			return REQ_NONE;
+	if (argc >= ARRAY_SIZE(req->argv) - 1)
+		return REQ_NONE;
 
 	req = realloc(run_request, (run_requests + 1) * sizeof(*run_request));
 	if (!req)
 		return REQ_NONE;
 
 	run_request = req;
-	req = &run_request[run_requests++];
-	string_copy(req->cmd, cmd);
+	req = &run_request[run_requests];
 	req->keymap = keymap;
 	req->key = key;
+	req->argv[0] = NULL;
 
-	return REQ_NONE + run_requests;
+	if (!format_argv(req->argv, argv, FORMAT_NONE))
+		return REQ_NONE;
+
+	return REQ_NONE + ++run_requests;
 }
 
 static struct run_request *
@@ -1010,20 +1314,23 @@ get_run_request(enum request request)
 static void
 add_builtin_run_requests(void)
 {
+	const char *cherry_pick[] = { "git", "cherry-pick", "%(commit)", NULL };
+	const char *gc[] = { "git", "gc", NULL };
 	struct {
 		enum keymap keymap;
 		int key;
-		const char *argv[1];
+		int argc;
+		const char **argv;
 	} reqs[] = {
-		{ KEYMAP_MAIN,	  'C', { "git cherry-pick %(commit)" } },
-		{ KEYMAP_GENERIC, 'G', { "git gc" } },
+		{ KEYMAP_MAIN,	  'C', ARRAY_SIZE(cherry_pick) - 1, cherry_pick },
+		{ KEYMAP_GENERIC, 'G', ARRAY_SIZE(gc) - 1, gc },
 	};
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(reqs); i++) {
 		enum request req;
 
-		req = add_run_request(reqs[i].keymap, reqs[i].key, 1, reqs[i].argv);
+		req = add_run_request(reqs[i].keymap, reqs[i].key, reqs[i].argc, reqs[i].argv);
 		if (req != REQ_NONE)
 			add_keybinding(reqs[i].keymap, req, reqs[i].key);
 	}
@@ -1255,21 +1562,11 @@ static int
 set_option(const char *opt, char *value)
 {
 	const char *argv[SIZEOF_ARG];
-	int valuelen;
 	int argc = 0;
 
-	/* Tokenize */
-	while (argc < ARRAY_SIZE(argv) && (valuelen = strcspn(value, " \t"))) {
-		argv[argc++] = value;
-		value += valuelen;
-
-		/* Nothing more to tokenize or last available token. */
-		if (!*value || argc >= ARRAY_SIZE(argv))
-			break;
-
-		*value++ = 0;
-		while (isspace(*value))
-			value++;
+	if (!argv_from_string(argv, &argc, value)) {
+		config_msg = "Too many option arguments";
+		return ERR;
 	}
 
 	if (!strcmp(opt, "color"))
@@ -1328,17 +1625,16 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen)
 static void
 load_option_file(const char *path)
 {
-	FILE *file;
+	struct io io = {};
 
 	/* It's ok that the file doesn't exist. */
-	file = fopen(path, "r");
-	if (!file)
+	if (!io_open(&io, path))
 		return;
 
 	config_lineno = 0;
 	config_errors = FALSE;
 
-	if (read_properties(file, " \t", read_option) == ERR ||
+	if (read_properties(&io, " \t", read_option) == ERR ||
 	    config_errors == TRUE)
 		fprintf(stderr, "Errors while loading %s.\n", path);
 }
@@ -1397,7 +1693,6 @@ static char ref_head[SIZEOF_REF]	= "HEAD";
 
 struct view {
 	const char *name;	/* View name */
-	const char *cmd_fmt;	/* Default command line format */
 	const char *cmd_env;	/* Command line set via environment */
 	const char *id;		/* Points to either of ref_{head,commit,blob} */
 
@@ -1406,7 +1701,6 @@ struct view {
 	enum keymap keymap;	/* What keymap does this view have */
 	bool git_dir;		/* Whether the view requires a git directory. */
 
-	char cmd[SIZEOF_STR];	/* Command buffer */
 	char ref[SIZEOF_REF];	/* Hovered commit reference */
 	char vid[SIZEOF_REF];	/* View ID. Set to id member when updating. */
 
@@ -1439,13 +1733,17 @@ struct view {
 	unsigned long col;	/* Column when drawing. */
 
 	/* Loading */
-	FILE *pipe;
+	struct io io;
+	struct io *pipe;
 	time_t start_time;
+	time_t update_secs;
 };
 
 struct view_ops {
 	/* What type of content being displayed. Used in the title bar. */
 	const char *type;
+	/* Default command arguments. */
+	const char **argv;
 	/* Open and reads in all view content. */
 	bool (*open)(struct view *view);
 	/* Read one line; updates view->line. */
@@ -1462,6 +1760,7 @@ struct view_ops {
 
 static struct view_ops blame_ops;
 static struct view_ops blob_ops;
+static struct view_ops diff_ops;
 static struct view_ops help_ops;
 static struct view_ops log_ops;
 static struct view_ops main_ops;
@@ -1470,16 +1769,16 @@ static struct view_ops stage_ops;
 static struct view_ops status_ops;
 static struct view_ops tree_ops;
 
-#define VIEW_STR(name, cmd, env, ref, ops, map, git) \
-	{ name, cmd, #env, ref, ops, map, git }
+#define VIEW_STR(name, env, ref, ops, map, git) \
+	{ name, #env, ref, ops, map, git }
 
 #define VIEW_(id, name, ops, git, ref) \
-	VIEW_STR(name, TIG_##id##_CMD,  TIG_##id##_CMD, ref, ops, KEYMAP_##id, git)
+	VIEW_STR(name, TIG_##id##_CMD, ref, ops, KEYMAP_##id, git)
 
 
 static struct view views[] = {
 	VIEW_(MAIN,   "main",   &main_ops,   TRUE,  ref_head),
-	VIEW_(DIFF,   "diff",   &pager_ops,  TRUE,  ref_commit),
+	VIEW_(DIFF,   "diff",   &diff_ops,   TRUE,  ref_commit),
 	VIEW_(LOG,    "log",    &log_ops,    TRUE,  ref_head),
 	VIEW_(TREE,   "tree",   &tree_ops,   TRUE,  ref_commit),
 	VIEW_(BLOB,   "blob",   &blob_ops,   TRUE,  ref_blob),
@@ -1765,25 +2064,26 @@ update_view_title(struct view *view)
 
 	assert(view_is_displayed(view));
 
-	if (view != VIEW(REQ_VIEW_STATUS) && (view->lines || view->pipe)) {
+	if (view != VIEW(REQ_VIEW_STATUS) && view->lines) {
 		unsigned int view_lines = view->offset + view->height;
 		unsigned int lines = view->lines
 				   ? MIN(view_lines, view->lines) * 100 / view->lines
 				   : 0;
 
-		string_format_from(state, &statelen, "- %s %d of %d (%d%%)",
+		string_format_from(state, &statelen, " - %s %d of %d (%d%%)",
 				   view->ops->type,
 				   view->lineno + 1,
 				   view->lines,
 				   lines);
 
-		if (view->pipe) {
-			time_t secs = time(NULL) - view->start_time;
+	}
 
-			/* Three git seconds are a long time ... */
-			if (secs > 2)
-				string_format_from(state, &statelen, " %lds", secs);
-		}
+	if (view->pipe) {
+		time_t secs = time(NULL) - view->start_time;
+
+		/* Three git seconds are a long time ... */
+		if (secs > 2)
+			string_format_from(state, &statelen, " loading %lds", secs);
 	}
 
 	string_format_from(buf, &bufpos, "[%s]", view->name);
@@ -1797,7 +2097,7 @@ update_view_title(struct view *view)
 	}
 
 	if (statelen && bufpos < view->width) {
-		string_format_from(buf, &bufpos, " %s", state);
+		string_format_from(buf, &bufpos, "%s", state);
 	}
 
 	if (view == display[current_view])
@@ -2203,6 +2503,79 @@ reset_view(struct view *view)
 	view->line_size = 0;
 	view->line_alloc = 0;
 	view->vid[0] = 0;
+	view->update_secs = 0;
+}
+
+static void
+free_argv(const char *argv[])
+{
+	int argc;
+
+	for (argc = 0; argv[argc]; argc++)
+		free((void *) argv[argc]);
+}
+
+static bool
+format_argv(const char *dst_argv[], const char *src_argv[], enum format_flags flags)
+{
+	char buf[SIZEOF_STR];
+	int argc;
+	bool noreplace = flags == FORMAT_NONE;
+
+	free_argv(dst_argv);
+
+	for (argc = 0; src_argv[argc]; argc++) {
+		const char *arg = src_argv[argc];
+		size_t bufpos = 0;
+
+		while (arg) {
+			char *next = strstr(arg, "%(");
+			int len = next - arg;
+			const char *value;
+
+			if (!next || noreplace) {
+				if (flags == FORMAT_DASH && !strcmp(arg, "--"))
+					noreplace = TRUE;
+				len = strlen(arg);
+				value = "";
+
+			} else if (!prefixcmp(next, "%(directory)")) {
+				value = opt_path;
+
+			} else if (!prefixcmp(next, "%(file)")) {
+				value = opt_file;
+
+			} else if (!prefixcmp(next, "%(ref)")) {
+				value = *opt_ref ? opt_ref : "HEAD";
+
+			} else if (!prefixcmp(next, "%(head)")) {
+				value = ref_head;
+
+			} else if (!prefixcmp(next, "%(commit)")) {
+				value = ref_commit;
+
+			} else if (!prefixcmp(next, "%(blob)")) {
+				value = ref_blob;
+
+			} else {
+				report("Unknown replacement: `%s`", next);
+				return FALSE;
+			}
+
+			if (!string_format_from(buf, &bufpos, "%.*s%s", len, arg, value))
+				return FALSE;
+
+			arg = next && !noreplace ? strchr(next, ')') + 1 : NULL;
+		}
+
+		dst_argv[argc] = strdup(buf);
+		if (!dst_argv[argc])
+			break;
+	}
+
+	dst_argv[argc] = NULL;
+
+	return src_argv[argc] == NULL;
 }
 
 static void
@@ -2214,44 +2587,51 @@ end_update(struct view *view, bool force)
 		if (!force)
 			return;
 	set_nonblocking_input(FALSE);
-	if (view->pipe == stdin)
-		fclose(view->pipe);
-	else
-		pclose(view->pipe);
+	if (force)
+		kill_io(view->pipe);
+	done_io(view->pipe);
 	view->pipe = NULL;
+}
+
+static void
+setup_update(struct view *view, const char *vid)
+{
+	set_nonblocking_input(TRUE);
+	reset_view(view);
+	string_copy_rev(view->vid, vid);
+	view->pipe = &view->io;
+	view->start_time = time(NULL);
+}
+
+static bool
+prepare_update(struct view *view, const char *argv[], const char *dir,
+	       enum format_flags flags)
+{
+	if (view->pipe)
+		end_update(view, TRUE);
+	return init_io_rd(&view->io, argv, dir, flags);
+}
+
+static bool
+prepare_update_file(struct view *view, const char *name)
+{
+	if (view->pipe)
+		end_update(view, TRUE);
+	return io_open(&view->io, name);
 }
 
 static bool
 begin_update(struct view *view, bool refresh)
 {
-	if (opt_cmd[0]) {
-		string_copy(view->cmd, opt_cmd);
-		opt_cmd[0] = 0;
-		/* When running random commands, initially show the
-		 * command in the title. However, it maybe later be
-		 * overwritten if a commit line is selected. */
-		if (view == VIEW(REQ_VIEW_PAGER))
-			string_copy(view->ref, view->cmd);
-		else
-			view->ref[0] = 0;
-
-	} else if (view == VIEW(REQ_VIEW_TREE)) {
-		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
-		char path[SIZEOF_STR];
-
-		if (strcmp(view->vid, view->id))
-			opt_path[0] = path[0] = 0;
-		else if (sq_quote(path, 0, opt_path) >= sizeof(path))
+	if (refresh) {
+		if (!start_io(&view->io))
 			return FALSE;
 
-		if (!string_format(view->cmd, format, view->id, path))
-			return FALSE;
+	} else {
+		if (view == VIEW(REQ_VIEW_TREE) && strcmp(view->vid, view->id))
+			opt_path[0] = 0;
 
-	} else if (!refresh) {
-		const char *format = view->cmd_env ? view->cmd_env : view->cmd_fmt;
-		const char *id = view->id;
-
-		if (!string_format(view->cmd, format, id, id, id, id, id))
+		if (!run_io_rd(&view->io, view->ops->argv, FORMAT_ALL))
 			return FALSE;
 
 		/* Put the current ref_* value to the view title ref
@@ -2261,22 +2641,7 @@ begin_update(struct view *view, bool refresh)
 		string_copy_rev(view->ref, view->id);
 	}
 
-	/* Special case for the pager view. */
-	if (opt_pipe) {
-		view->pipe = opt_pipe;
-		opt_pipe = NULL;
-	} else {
-		view->pipe = popen(view->cmd, "r");
-	}
-
-	if (!view->pipe)
-		return FALSE;
-
-	set_nonblocking_input(TRUE);
-	reset_view(view);
-	string_copy_rev(view->vid, view->id);
-
-	view->start_time = time(NULL);
+	setup_update(view, view->id);
 
 	return TRUE;
 }
@@ -2315,31 +2680,34 @@ realloc_lines(struct view *view, size_t line_size)
 static bool
 update_view(struct view *view)
 {
-	char in_buffer[BUFSIZ];
 	char out_buffer[BUFSIZ * 2];
 	char *line;
-	/* The number of lines to read. If too low it will cause too much
-	 * redrawing (and possible flickering), if too high responsiveness
-	 * will suffer. */
-	unsigned long lines = view->height;
 	int redraw_from = -1;
+	bool can_read = TRUE;
 
 	if (!view->pipe)
 		return TRUE;
+
+	if (!io_can_read(view->pipe)) {
+		if (view->lines == 0) {
+			time_t secs = time(NULL) - view->start_time;
+
+			if (secs > view->update_secs) {
+				if (view->update_secs == 0)
+					redraw_view(view);
+				update_view_title(view);
+				view->update_secs = secs;
+			}
+		}
+		return TRUE;
+	}
 
 	/* Only redraw if lines are visible. */
 	if (view->offset + view->height >= view->lines)
 		redraw_from = view->lines - view->offset;
 
-	/* FIXME: This is probably not perfect for backgrounded views. */
-	if (!realloc_lines(view, view->lines + lines))
-		goto alloc_error;
-
-	while ((line = fgets(in_buffer, sizeof(in_buffer), view->pipe))) {
+	for (; (line = io_get(view->pipe, '\n', can_read)); can_read = FALSE) {
 		size_t linelen = strlen(line);
-
-		if (linelen)
-			line[linelen - 1] = 0;
 
 		if (opt_iconv != ICONV_NONE) {
 			ICONV_CONST char *inbuf = line;
@@ -2357,17 +2725,15 @@ update_view(struct view *view)
 			}
 		}
 
-		if (!view->ops->read(view, line))
+		if (!realloc_lines(view, view->lines + 1) ||
+		    !view->ops->read(view, line))
 			goto alloc_error;
-
-		if (lines-- == 1)
-			break;
 	}
 
 	{
+		unsigned long lines = view->lines;
 		int digits;
 
-		lines = view->lines;
 		for (digits = 0; lines; digits++)
 			lines /= 10;
 
@@ -2378,8 +2744,17 @@ update_view(struct view *view)
 		}
 	}
 
+	if (io_error(view->pipe)) {
+		report("Failed to read: %s", io_strerror(view->pipe));
+		end_update(view, TRUE);
+
+	} else if (io_eof(view->pipe)) {
+		report("");
+		end_update(view, FALSE);
+	}
+
 	if (!view_is_displayed(view))
-		goto check_pipe;
+		return TRUE;
 
 	if (view == VIEW(REQ_VIEW_TREE)) {
 		/* Clear the view and redraw everything since the tree sorting
@@ -2409,17 +2784,6 @@ update_view(struct view *view)
 	/* Update the title _after_ the redraw so that if the redraw picks up a
 	 * commit reference in view->ref it'll be available here. */
 	update_view_title(view);
-
-check_pipe:
-	if (ferror(view->pipe) && errno != 0) {
-		report("Failed to read: %s", strerror(errno));
-		end_update(view, TRUE);
-
-	} else if (feof(view->pipe)) {
-		report("");
-		end_update(view, FALSE);
-	}
-
 	return TRUE;
 
 alloc_error:
@@ -2460,6 +2824,7 @@ enum open_flags {
 	OPEN_RELOAD = 4,	/* Reload view even if it is the current. */
 	OPEN_NOMAXIMIZE = 8,	/* Do not maximize the current view. */
 	OPEN_REFRESH = 16,	/* Refresh view using previous command. */
+	OPEN_PREPARED = 32,	/* Open already prepared command. */
 };
 
 static void
@@ -2467,7 +2832,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 {
 	bool backgrounded = !!(flags & OPEN_BACKGROUNDED);
 	bool split = !!(flags & OPEN_SPLIT);
-	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH));
+	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED));
 	bool nomaximize = !!(flags & (OPEN_NOMAXIMIZE | OPEN_REFRESH));
 	struct view *view = VIEW(request);
 	int nviews = displayed_views();
@@ -2510,7 +2875,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		}
 
 	} else if ((reload || strcmp(view->vid, view->id)) &&
-		   !begin_update(view, flags & OPEN_REFRESH)) {
+		   !begin_update(view, flags & (OPEN_REFRESH | OPEN_PREPARED))) {
 		report("Failed to load %s view", view->name);
 		return;
 	}
@@ -2549,25 +2914,14 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		update_view_title(view);
 }
 
-static bool
-run_confirm(const char *cmd, const char *prompt)
-{
-	bool confirmation = prompt_yesno(prompt);
-
-	if (confirmation)
-		system(cmd);
-
-	return confirmation;
-}
-
 static void
-open_external_viewer(const char *cmd)
+open_external_viewer(const char *argv[], const char *dir)
 {
 	def_prog_mode();           /* save current tty modes */
 	endwin();                  /* restore original tty modes */
-	system(cmd);
+	run_io_fg(argv, dir);
 	fprintf(stderr, "Press Enter to continue");
-	getc(stdin);
+	getc(opt_tty);
 	reset_prog_mode();
 	redraw_display();
 }
@@ -2575,22 +2929,16 @@ open_external_viewer(const char *cmd)
 static void
 open_mergetool(const char *file)
 {
-	char cmd[SIZEOF_STR];
-	char file_sq[SIZEOF_STR];
+	const char *mergetool_argv[] = { "git", "mergetool", file, NULL };
 
-	if (sq_quote(file_sq, 0, file) < sizeof(file_sq) &&
-	    string_format(cmd, "git mergetool %s", file_sq)) {
-		open_external_viewer(cmd);
-	}
+	open_external_viewer(mergetool_argv, opt_cdup);
 }
 
 static void
 open_editor(bool from_root, const char *file)
 {
-	char cmd[SIZEOF_STR];
-	char file_sq[SIZEOF_STR];
+	const char *editor_argv[] = { "vi", file, NULL };
 	const char *editor;
-	char *prefix = from_root ? opt_cdup : "";
 
 	editor = getenv("GIT_EDITOR");
 	if (!editor && *opt_editor)
@@ -2602,60 +2950,24 @@ open_editor(bool from_root, const char *file)
 	if (!editor)
 		editor = "vi";
 
-	if (sq_quote(file_sq, 0, file) < sizeof(file_sq) &&
-	    string_format(cmd, "%s %s%s", editor, prefix, file_sq)) {
-		open_external_viewer(cmd);
-	}
+	editor_argv[0] = editor;
+	open_external_viewer(editor_argv, from_root ? opt_cdup : NULL);
 }
 
 static void
 open_run_request(enum request request)
 {
 	struct run_request *req = get_run_request(request);
-	char buf[SIZEOF_STR * 2];
-	size_t bufpos;
-	char *cmd;
+	const char *argv[ARRAY_SIZE(req->argv)] = { NULL };
 
 	if (!req) {
 		report("Unknown run request");
 		return;
 	}
 
-	bufpos = 0;
-	cmd = req->cmd;
-
-	while (cmd) {
-		char *next = strstr(cmd, "%(");
-		int len = next - cmd;
-		char *value;
-
-		if (!next) {
-			len = strlen(cmd);
-			value = "";
-
-		} else if (!strncmp(next, "%(head)", 7)) {
-			value = ref_head;
-
-		} else if (!strncmp(next, "%(commit)", 9)) {
-			value = ref_commit;
-
-		} else if (!strncmp(next, "%(blob)", 7)) {
-			value = ref_blob;
-
-		} else {
-			report("Unknown replacement in run request: `%s`", req->cmd);
-			return;
-		}
-
-		if (!string_format_from(buf, &bufpos, "%.*s%s", len, cmd, value))
-			return;
-
-		if (next)
-			next = strchr(next, ')') + 1;
-		cmd = next;
-	}
-
-	open_external_viewer(buf);
+	if (format_argv(argv, req->argv, FORMAT_ALL))
+		open_external_viewer(argv, NULL);
+	free_argv(argv);
 }
 
 /*
@@ -2726,7 +3038,7 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_VIEW_PAGER:
-		if (!opt_pipe && !VIEW(REQ_VIEW_PAGER)->lines) {
+		if (!VIEW(REQ_VIEW_PAGER)->pipe && !VIEW(REQ_VIEW_PAGER)->lines) {
 			report("No pager content, press %s to run command from prompt",
 			       get_key(REQ_PROMPT));
 			break;
@@ -2922,20 +3234,12 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 static bool
 add_describe_ref(char *buf, size_t *bufpos, const char *commit_id, const char *sep)
 {
+	const char *describe_argv[] = { "git", "describe", commit_id, NULL };
 	char refbuf[SIZEOF_STR];
 	char *ref = NULL;
-	FILE *pipe;
 
-	if (!string_format(refbuf, "git describe %s 2>/dev/null", commit_id))
-		return TRUE;
-
-	pipe = popen(refbuf, "r");
-	if (!pipe)
-		return TRUE;
-
-	if ((ref = fgets(refbuf, sizeof(refbuf), pipe)))
-		ref = chomp_string(ref);
-	pclose(pipe);
+	if (run_io_buf(describe_argv, refbuf, sizeof(refbuf)))
+		ref = chomp_string(refbuf);
 
 	if (!ref || !*ref)
 		return TRUE;
@@ -3073,11 +3377,16 @@ pager_select(struct view *view, struct line *line)
 static struct view_ops pager_ops = {
 	"line",
 	NULL,
+	NULL,
 	pager_read,
 	pager_draw,
 	pager_request,
 	pager_grep,
 	pager_select,
+};
+
+static const char *log_argv[SIZEOF_ARG] = {
+	"git", "log", "--no-color", "--cc", "--stat", "-n100", "%(head)", NULL
 };
 
 static enum request
@@ -3095,6 +3404,7 @@ log_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops log_ops = {
 	"line",
+	log_argv,
 	NULL,
 	pager_read,
 	pager_draw,
@@ -3103,6 +3413,21 @@ static struct view_ops log_ops = {
 	pager_select,
 };
 
+static const char *diff_argv[SIZEOF_ARG] = {
+	"git", "show", "--pretty=fuller", "--no-color", "--root",
+		"--patch-with-stat", "--find-copies-harder", "-C", "%(commit)", NULL
+};
+
+static struct view_ops diff_ops = {
+	"line",
+	diff_argv,
+	NULL,
+	pager_read,
+	pager_draw,
+	pager_request,
+	pager_grep,
+	pager_select,
+};
 
 /*
  * Help backend
@@ -3160,6 +3485,9 @@ help_open(struct view *view)
 	for (i = 0; i < run_requests; i++) {
 		struct run_request *req = get_run_request(REQ_NONE + i + 1);
 		const char *key;
+		char cmd[SIZEOF_STR];
+		size_t bufpos;
+		int argc;
 
 		if (!req)
 			continue;
@@ -3168,9 +3496,13 @@ help_open(struct view *view)
 		if (!*key)
 			key = "(no key defined)";
 
+		for (bufpos = 0, argc = 0; req->argv[argc]; argc++)
+			if (!string_format_from(cmd, &bufpos, "%s%s",
+					        argc ? " " : "", req->argv[argc]))
+				return REQ_NONE;
+
 		if (!string_format(buf, "    %-10s %-14s `%s`",
-				   keymap_table[req->keymap].name,
-				   key, req->cmd))
+				   keymap_table[req->keymap].name, key, cmd))
 			continue;
 
 		add_line_text(view, buf, LINE_DEFAULT);
@@ -3181,6 +3513,7 @@ help_open(struct view *view)
 
 static struct view_ops help_ops = {
 	"line",
+	NULL,
 	help_open,
 	NULL,
 	pager_draw,
@@ -3357,30 +3690,41 @@ tree_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags;
 
-	if (request == REQ_VIEW_BLAME) {
-		const char *filename = tree_path(line);
-
-		if (line->type == LINE_TREE_DIR) {
-			report("Cannot show blame for directory %s", opt_path);
+	switch (request) {
+	case REQ_VIEW_BLAME:
+		if (line->type != LINE_TREE_FILE) {
+			report("Blame only supported for files");
 			return REQ_NONE;
 		}
 
 		string_copy(opt_ref, view->vid);
-		string_format(opt_file, "%s%s", opt_path, filename);
 		return request;
-	}
-	if (request == REQ_TREE_PARENT) {
-		if (*opt_path) {
-			/* fake 'cd  ..' */
-			request = REQ_ENTER;
-			line = &view->line[1];
+
+	case REQ_EDIT:
+		if (line->type != LINE_TREE_FILE) {
+			report("Edit only supported for files");
+		} else if (!is_head_commit(view->vid)) {
+			report("Edit only supported for files in the current work tree");
 		} else {
+			open_editor(TRUE, opt_file);
+		}
+		return REQ_NONE;
+
+	case REQ_TREE_PARENT:
+		if (!*opt_path) {
 			/* quit view if at top of tree */
 			return REQ_VIEW_CLOSE;
 		}
-	}
-	if (request != REQ_ENTER)
+		/* fake 'cd  ..' */
+		line = &view->line[1];
+		break;
+
+	case REQ_ENTER:
+		break;
+
+	default:
 		return request;
+	}
 
 	/* Cleanup the stack if the tree view is at a different tree. */
 	while (!*opt_path && tree_stack)
@@ -3429,6 +3773,7 @@ tree_select(struct view *view, struct line *line)
 
 	if (line->type == LINE_TREE_FILE) {
 		string_copy_rev(ref_blob, text);
+		string_format(opt_file, "%s%s", opt_path, tree_path(line));
 
 	} else if (line->type != LINE_TREE_DIR) {
 		return;
@@ -3437,8 +3782,13 @@ tree_select(struct view *view, struct line *line)
 	string_copy_rev(view->ref, text);
 }
 
+static const char *tree_argv[SIZEOF_ARG] = {
+	"git", "ls-tree", "%(commit)", "%(directory)", NULL
+};
+
 static struct view_ops tree_ops = {
 	"file",
+	tree_argv,
 	NULL,
 	tree_read,
 	pager_draw,
@@ -3455,8 +3805,13 @@ blob_read(struct view *view, char *line)
 	return add_line_text(view, line, LINE_DEFAULT) != NULL;
 }
 
+static const char *blob_argv[SIZEOF_ARG] = {
+	"git", "cat-file", "blob", "%(blob)", NULL
+};
+
 static struct view_ops blob_ops = {
 	"line",
+	blob_argv,
 	NULL,
 	blob_read,
 	pager_draw,
@@ -3476,6 +3831,18 @@ static struct view_ops blob_ops = {
  *     reading output from git-blame.
  */
 
+static const char *blame_head_argv[] = {
+	"git", "blame", "--incremental", "--", "%(file)", NULL
+};
+
+static const char *blame_ref_argv[] = {
+	"git", "blame", "--incremental", "%(ref)", "--", "%(file)", NULL
+};
+
+static const char *blame_cat_file_argv[] = {
+	"git", "cat-file", "blob", "%(ref):%(file)", NULL
+};
+
 struct blame_commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
@@ -3486,48 +3853,19 @@ struct blame_commit {
 
 struct blame {
 	struct blame_commit *commit;
-	unsigned int header:1;
 	char text[1];
 };
-
-#define BLAME_CAT_FILE_CMD "git cat-file blob %s:%s"
-#define BLAME_INCREMENTAL_CMD "git blame --incremental %s -- %s"
 
 static bool
 blame_open(struct view *view)
 {
-	char path[SIZEOF_STR];
-	char ref[SIZEOF_STR] = "";
-
-	if (sq_quote(path, 0, opt_file) >= sizeof(path))
-		return FALSE;
-
-	if (*opt_ref && sq_quote(ref, 0, opt_ref) >= sizeof(ref))
-		return FALSE;
-
-	if (*opt_ref) {
-		if (!string_format(view->cmd, BLAME_CAT_FILE_CMD, ref, path))
-			return FALSE;
-	} else {
-		view->pipe = fopen(opt_file, "r");
-		if (!view->pipe &&
-		    !string_format(view->cmd, BLAME_CAT_FILE_CMD, "HEAD", path))
+	if (*opt_ref || !io_open(&view->io, opt_file)) {
+		if (!run_io_rd(&view->io, blame_cat_file_argv, FORMAT_ALL))
 			return FALSE;
 	}
 
-	if (!view->pipe)
-		view->pipe = popen(view->cmd, "r");
-	if (!view->pipe)
-		return FALSE;
-
-	if (!string_format(view->cmd, BLAME_INCREMENTAL_CMD, ref, path))
-		return FALSE;
-
-	reset_view(view);
+	setup_update(view, opt_file);
 	string_format(view->ref, "%s ...", opt_file);
-	string_copy_rev(view->vid, opt_file);
-	set_nonblocking_input(TRUE);
-	view->start_time = time(NULL);
 
 	return TRUE;
 }
@@ -3599,7 +3937,6 @@ parse_blame_commit(struct view *view, const char *text, int *blamed)
 
 		blame = line->data;
 		blame->commit = commit;
-		blame->header = !group;
 		line->dirty = 1;
 	}
 
@@ -3607,23 +3944,23 @@ parse_blame_commit(struct view *view, const char *text, int *blamed)
 }
 
 static bool
-blame_read_file(struct view *view, const char *line)
+blame_read_file(struct view *view, const char *line, bool *read_file)
 {
 	if (!line) {
-		FILE *pipe = NULL;
+		const char **argv = *opt_ref ? blame_ref_argv : blame_head_argv;
+		struct io io = {};
 
-		if (view->lines > 0)
-			pipe = popen(view->cmd, "r");
-		else if (!view->parent)
+		if (view->lines == 0 && !view->parent)
 			die("No blame exist for %s", view->vid);
-		view->cmd[0] = 0;
-		if (!pipe) {
+
+		if (view->lines == 0 || !run_io_rd(&io, argv, FORMAT_ALL)) {
 			report("Failed to load blame data");
 			return TRUE;
 		}
 
-		fclose(view->pipe);
-		view->pipe = pipe;
+		done_io(view->pipe);
+		view->io = io;
+		*read_file = FALSE;
 		return FALSE;
 
 	} else {
@@ -3655,14 +3992,16 @@ blame_read(struct view *view, char *line)
 	static struct blame_commit *commit = NULL;
 	static int blamed = 0;
 	static time_t author_time;
+	static bool read_file = TRUE;
 
-	if (*view->cmd)
-		return blame_read_file(view, line);
+	if (read_file)
+		return blame_read_file(view, line, &read_file);
 
 	if (!line) {
 		/* Reset all! */
 		commit = NULL;
 		blamed = 0;
+		read_file = TRUE;
 		string_format(view->ref, "%s", view->vid);
 		if (view_is_displayed(view)) {
 			update_view_title(view);
@@ -3744,18 +4083,38 @@ blame_request(struct view *view, enum request request, struct line *line)
 	struct blame *blame = line->data;
 
 	switch (request) {
+	case REQ_VIEW_BLAME:
+		if (!blame->commit || !strcmp(blame->commit->id, NULL_ID)) {
+			report("Commit ID unknown");
+			break;
+		}
+		string_copy(opt_ref, blame->commit->id);
+		open_view(view, REQ_VIEW_BLAME, OPEN_REFRESH);
+		return request;
+
 	case REQ_ENTER:
 		if (!blame->commit) {
 			report("No commit loaded yet");
 			break;
 		}
 
-		if (!strcmp(blame->commit->id, NULL_ID)) {
-			char path[SIZEOF_STR];
+		if (view_is_displayed(VIEW(REQ_VIEW_DIFF)) &&
+		    !strcmp(blame->commit->id, VIEW(REQ_VIEW_DIFF)->ref))
+			break;
 
-			if (sq_quote(path, 0, view->vid) >= sizeof(path))
+		if (!strcmp(blame->commit->id, NULL_ID)) {
+			struct view *diff = VIEW(REQ_VIEW_DIFF);
+			const char *diff_index_argv[] = {
+				"git", "diff-index", "--root", "--cached",
+					"--patch-with-stat", "-C", "-M",
+					"HEAD", "--", view->vid, NULL
+			};
+
+			if (!prepare_update(diff, diff_index_argv, NULL, FORMAT_DASH)) {
+				report("Failed to allocate diff command");
 				break;
-			string_format(opt_cmd, "git diff-index --root --patch-with-stat -C -M --cached HEAD -- %s 2>/dev/null", path);
+			}
+			flags |= OPEN_PREPARED;
 		}
 
 		open_view(view, REQ_VIEW_DIFF, flags);
@@ -3813,6 +4172,7 @@ blame_select(struct view *view, struct line *line)
 
 static struct view_ops blame_ops = {
 	"line",
+	NULL,
 	blame_open,
 	blame_read,
 	blame_draw,
@@ -3864,7 +4224,7 @@ status_get_diff(struct status *file, const char *buf, size_t bufsize)
 	const char *new_rev  = buf + 56;
 	const char *status   = buf + 97;
 
-	if (bufsize < 99 ||
+	if (bufsize < 98 ||
 	    old_mode[-1] != ':' ||
 	    new_mode[-1] != ' ' ||
 	    old_rev[-1]  != ' ' ||
@@ -3886,135 +4246,114 @@ status_get_diff(struct status *file, const char *buf, size_t bufsize)
 }
 
 static bool
-status_run(struct view *view, const char cmd[], char status, enum line_type type)
+status_run(struct view *view, const char *argv[], char status, enum line_type type)
 {
 	struct status *file = NULL;
 	struct status *unmerged = NULL;
-	char buf[SIZEOF_STR * 4];
-	size_t bufsize = 0;
-	FILE *pipe;
+	char *buf;
+	struct io io = {};
 
-	pipe = popen(cmd, "r");
-	if (!pipe)
+	if (!run_io(&io, argv, NULL, IO_RD))
 		return FALSE;
 
 	add_line_data(view, NULL, type);
 
-	while (!feof(pipe) && !ferror(pipe)) {
-		char *sep;
-		size_t readsize;
+	while ((buf = io_get(&io, 0, TRUE))) {
+		if (!file) {
+			if (!realloc_lines(view, view->line_size + 1))
+				goto error_out;
 
-		readsize = fread(buf + bufsize, 1, sizeof(buf) - bufsize, pipe);
-		if (!readsize)
-			break;
-		bufsize += readsize;
+			file = calloc(1, sizeof(*file));
+			if (!file)
+				goto error_out;
 
-		/* Process while we have NUL chars. */
-		while ((sep = memchr(buf, 0, bufsize))) {
-			size_t sepsize = sep - buf + 1;
+			add_line_data(view, file, type);
+		}
 
-			if (!file) {
-				if (!realloc_lines(view, view->line_size + 1))
-					goto error_out;
+		/* Parse diff info part. */
+		if (status) {
+			file->status = status;
+			if (status == 'A')
+				string_copy(file->old.rev, NULL_ID);
 
-				file = calloc(1, sizeof(*file));
-				if (!file)
-					goto error_out;
+		} else if (!file->status) {
+			if (!status_get_diff(file, buf, strlen(buf)))
+				goto error_out;
 
-				add_line_data(view, file, type);
-			}
+			buf = io_get(&io, 0, TRUE);
+			if (!buf)
+				break;
 
-			/* Parse diff info part. */
-			if (status) {
-				file->status = status;
-				if (status == 'A')
-					string_copy(file->old.rev, NULL_ID);
+			/* Collapse all 'M'odified entries that follow a
+			 * associated 'U'nmerged entry. */
+			if (file->status == 'U') {
+				unmerged = file;
 
-			} else if (!file->status) {
-				if (!status_get_diff(file, buf, sepsize))
-					goto error_out;
+			} else if (unmerged) {
+				int collapse = !strcmp(buf, unmerged->new.name);
 
-				bufsize -= sepsize;
-				memmove(buf, sep + 1, bufsize);
-
-				sep = memchr(buf, 0, bufsize);
-				if (!sep)
-					break;
-				sepsize = sep - buf + 1;
-
-				/* Collapse all 'M'odified entries that
-				 * follow a associated 'U'nmerged entry.
-				 */
-				if (file->status == 'U') {
-					unmerged = file;
-
-				} else if (unmerged) {
-					int collapse = !strcmp(buf, unmerged->new.name);
-
-					unmerged = NULL;
-					if (collapse) {
-						free(file);
-						view->lines--;
-						continue;
-					}
+				unmerged = NULL;
+				if (collapse) {
+					free(file);
+					view->lines--;
+					continue;
 				}
 			}
-
-			/* Grab the old name for rename/copy. */
-			if (!*file->old.name &&
-			    (file->status == 'R' || file->status == 'C')) {
-				sepsize = sep - buf + 1;
-				string_ncopy(file->old.name, buf, sepsize);
-				bufsize -= sepsize;
-				memmove(buf, sep + 1, bufsize);
-
-				sep = memchr(buf, 0, bufsize);
-				if (!sep)
-					break;
-				sepsize = sep - buf + 1;
-			}
-
-			/* git-ls-files just delivers a NUL separated
-			 * list of file names similar to the second half
-			 * of the git-diff-* output. */
-			string_ncopy(file->new.name, buf, sepsize);
-			if (!*file->old.name)
-				string_copy(file->old.name, file->new.name);
-			bufsize -= sepsize;
-			memmove(buf, sep + 1, bufsize);
-			file = NULL;
 		}
+
+		/* Grab the old name for rename/copy. */
+		if (!*file->old.name &&
+		    (file->status == 'R' || file->status == 'C')) {
+			string_ncopy(file->old.name, buf, strlen(buf));
+
+			buf = io_get(&io, 0, TRUE);
+			if (!buf)
+				break;
+		}
+
+		/* git-ls-files just delivers a NUL separated list of
+		 * file names similar to the second half of the
+		 * git-diff-* output. */
+		string_ncopy(file->new.name, buf, strlen(buf));
+		if (!*file->old.name)
+			string_copy(file->old.name, file->new.name);
+		file = NULL;
 	}
 
-	if (ferror(pipe)) {
+	if (io_error(&io)) {
 error_out:
-		pclose(pipe);
+		done_io(&io);
 		return FALSE;
 	}
 
 	if (!view->line[view->lines - 1].data)
 		add_line_data(view, NULL, LINE_STAT_NONE);
 
-	pclose(pipe);
+	done_io(&io);
 	return TRUE;
 }
 
 /* Don't show unmerged entries in the staged section. */
-#define STATUS_DIFF_INDEX_CMD "git diff-index -z --diff-filter=ACDMRTXB --cached -M HEAD"
-#define STATUS_DIFF_FILES_CMD "git diff-files -z"
-#define STATUS_LIST_OTHER_CMD \
-	"git ls-files -z --others --exclude-standard"
-#define STATUS_LIST_NO_HEAD_CMD \
-	"git ls-files -z --cached --exclude-standard"
+static const char *status_diff_index_argv[] = {
+	"git", "diff-index", "-z", "--diff-filter=ACDMRTXB",
+			     "--cached", "-M", "HEAD", NULL
+};
 
-#define STATUS_DIFF_INDEX_SHOW_CMD \
-	"git diff-index --root --patch-with-stat -C -M --cached HEAD -- %s %s 2>/dev/null"
+static const char *status_diff_files_argv[] = {
+	"git", "diff-files", "-z", NULL
+};
 
-#define STATUS_DIFF_FILES_SHOW_CMD \
-	"git diff-files --root --patch-with-stat -C -M -- %s %s 2>/dev/null"
+static const char *status_list_other_argv[] = {
+	"git", "ls-files", "-z", "--others", "--exclude-standard", NULL
+};
 
-#define STATUS_DIFF_NO_HEAD_SHOW_CMD \
-	"git diff --no-color --patch-with-stat /dev/null %s 2>/dev/null"
+static const char *status_list_no_head_argv[] = {
+	"git", "ls-files", "-z", "--cached", "--exclude-standard", NULL
+};
+
+static const char *update_index_argv[] = {
+	"git", "update-index", "-q", "--unmerged", "--refresh", NULL
+};
 
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
@@ -4030,24 +4369,24 @@ status_open(struct view *view)
 		return FALSE;
 
 	add_line_data(view, NULL, LINE_STAT_HEAD);
-	if (opt_no_head)
+	if (is_initial_commit())
 		string_copy(status_onbranch, "Initial commit");
 	else if (!*opt_head)
 		string_copy(status_onbranch, "Not currently on any branch");
 	else if (!string_format(status_onbranch, "On branch %s", opt_head))
 		return FALSE;
 
-	system("git update-index -q --refresh >/dev/null 2>/dev/null");
+	run_io_bg(update_index_argv);
 
-	if (opt_no_head) {
-		if (!status_run(view, STATUS_LIST_NO_HEAD_CMD, 'A', LINE_STAT_STAGED))
+	if (is_initial_commit()) {
+		if (!status_run(view, status_list_no_head_argv, 'A', LINE_STAT_STAGED))
 			return FALSE;
-	} else if (!status_run(view, STATUS_DIFF_INDEX_CMD, 0, LINE_STAT_STAGED)) {
+	} else if (!status_run(view, status_diff_index_argv, 0, LINE_STAT_STAGED)) {
 		return FALSE;
 	}
 
-	if (!status_run(view, STATUS_DIFF_FILES_CMD, 0, LINE_STAT_UNSTAGED) ||
-	    !status_run(view, STATUS_LIST_OTHER_CMD, '?', LINE_STAT_UNTRACKED))
+	if (!status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED) ||
+	    !status_run(view, status_list_other_argv, '?', LINE_STAT_UNTRACKED))
 		return FALSE;
 
 	/* If all went well restore the previous line number to stay in
@@ -4129,11 +4468,13 @@ static enum request
 status_enter(struct view *view, struct line *line)
 {
 	struct status *status = line->data;
-	char oldpath[SIZEOF_STR] = "";
-	char newpath[SIZEOF_STR] = "";
+	const char *oldpath = status ? status->old.name : NULL;
+	/* Diffs for unmerged entries are empty when passing the new
+	 * path, so leave it empty. */
+	const char *newpath = status && status->status != 'U' ? status->new.name : NULL;
 	const char *info;
-	size_t cmdsize = 0;
 	enum open_flags split;
+	struct view *stage = VIEW(REQ_VIEW_STAGE);
 
 	if (line->type == LINE_STAT_NONE ||
 	    (!status && line[1].type == LINE_STAT_NONE)) {
@@ -4141,32 +4482,24 @@ status_enter(struct view *view, struct line *line)
 		return REQ_NONE;
 	}
 
-	if (status) {
-		if (sq_quote(oldpath, 0, status->old.name) >= sizeof(oldpath))
-			return REQ_QUIT;
-		/* Diffs for unmerged entries are empty when pasing the
-		 * new path, so leave it empty. */
-		if (status->status != 'U' &&
-		    sq_quote(newpath, 0, status->new.name) >= sizeof(newpath))
-			return REQ_QUIT;
-	}
-
-	if (opt_cdup[0] &&
-	    line->type != LINE_STAT_UNTRACKED &&
-	    !string_format_from(opt_cmd, &cmdsize, "cd %s;", opt_cdup))
-		return REQ_QUIT;
-
 	switch (line->type) {
 	case LINE_STAT_STAGED:
-		if (opt_no_head) {
-			if (!string_format_from(opt_cmd, &cmdsize,
-						STATUS_DIFF_NO_HEAD_SHOW_CMD,
-						newpath))
+		if (is_initial_commit()) {
+			const char *no_head_diff_argv[] = {
+				"git", "diff", "--no-color", "--patch-with-stat",
+					"--", "/dev/null", newpath, NULL
+			};
+
+			if (!prepare_update(stage, no_head_diff_argv, opt_cdup, FORMAT_DASH))
 				return REQ_QUIT;
 		} else {
-			if (!string_format_from(opt_cmd, &cmdsize,
-						STATUS_DIFF_INDEX_SHOW_CMD,
-						oldpath, newpath))
+			const char *index_show_argv[] = {
+				"git", "diff-index", "--root", "--patch-with-stat",
+					"-C", "-M", "--cached", "HEAD", "--",
+					oldpath, newpath, NULL
+			};
+
+			if (!prepare_update(stage, index_show_argv, opt_cdup, FORMAT_DASH))
 				return REQ_QUIT;
 		}
 
@@ -4177,25 +4510,33 @@ status_enter(struct view *view, struct line *line)
 		break;
 
 	case LINE_STAT_UNSTAGED:
-		if (!string_format_from(opt_cmd, &cmdsize,
-					STATUS_DIFF_FILES_SHOW_CMD, oldpath, newpath))
+	{
+		const char *files_show_argv[] = {
+			"git", "diff-files", "--root", "--patch-with-stat",
+				"-C", "-M", "--", oldpath, newpath, NULL
+		};
+
+		if (!prepare_update(stage, files_show_argv, opt_cdup, FORMAT_DASH))
 			return REQ_QUIT;
 		if (status)
 			info = "Unstaged changes to %s";
 		else
 			info = "Unstaged changes";
 		break;
-
+	}
 	case LINE_STAT_UNTRACKED:
-		if (opt_pipe)
-			return REQ_QUIT;
-
-	    	if (!status) {
+		if (!newpath) {
 			report("No file to show");
 			return REQ_NONE;
 		}
 
-		opt_pipe = fopen(status->new.name, "r");
+	    	if (!suffixcmp(status->new.name, -1, "/")) {
+			report("Cannot display a directory");
+			return REQ_NONE;
+		}
+
+		if (!prepare_update_file(stage, newpath))
+			return REQ_QUIT;
 		info = "Untracked file %s";
 		break;
 
@@ -4207,7 +4548,7 @@ status_enter(struct view *view, struct line *line)
 	}
 
 	split = view_is_displayed(view) ? OPEN_SPLIT : 0;
-	open_view(view, REQ_VIEW_STAGE, OPEN_RELOAD | split);
+	open_view(view, REQ_VIEW_STAGE, OPEN_REFRESH | split);
 	if (view_is_displayed(VIEW(REQ_VIEW_STAGE))) {
 		if (status) {
 			stage_status = *status;
@@ -4241,40 +4582,37 @@ status_exists(struct status *status, enum line_type type)
 }
 
 
-static FILE *
-status_update_prepare(enum line_type type)
+static bool
+status_update_prepare(struct io *io, enum line_type type)
 {
-	char cmd[SIZEOF_STR];
-	size_t cmdsize = 0;
-
-	if (opt_cdup[0] &&
-	    type != LINE_STAT_UNTRACKED &&
-	    !string_format_from(cmd, &cmdsize, "cd %s;", opt_cdup))
-		return NULL;
+	const char *staged_argv[] = {
+		"git", "update-index", "-z", "--index-info", NULL
+	};
+	const char *others_argv[] = {
+		"git", "update-index", "-z", "--add", "--remove", "--stdin", NULL
+	};
 
 	switch (type) {
 	case LINE_STAT_STAGED:
-		string_add(cmd, cmdsize, "git update-index -z --index-info");
-		break;
+		return run_io(io, staged_argv, opt_cdup, IO_WR);
 
 	case LINE_STAT_UNSTAGED:
+		return run_io(io, others_argv, opt_cdup, IO_WR);
+
 	case LINE_STAT_UNTRACKED:
-		string_add(cmd, cmdsize, "git update-index -z --add --remove --stdin");
-		break;
+		return run_io(io, others_argv, NULL, IO_WR);
 
 	default:
 		die("line type %d not handled in switch", type);
+		return FALSE;
 	}
-
-	return popen(cmd, "w");
 }
 
 static bool
-status_update_write(FILE *pipe, struct status *status, enum line_type type)
+status_update_write(struct io *io, struct status *status, enum line_type type)
 {
 	char buf[SIZEOF_STR];
 	size_t bufsize = 0;
-	size_t written = 0;
 
 	switch (type) {
 	case LINE_STAT_STAGED:
@@ -4295,37 +4633,33 @@ status_update_write(FILE *pipe, struct status *status, enum line_type type)
 		die("line type %d not handled in switch", type);
 	}
 
-	while (!ferror(pipe) && written < bufsize) {
-		written += fwrite(buf + written, 1, bufsize - written, pipe);
-	}
-
-	return written == bufsize;
+	return io_write(io, buf, bufsize);
 }
 
 static bool
 status_update_file(struct status *status, enum line_type type)
 {
-	FILE *pipe = status_update_prepare(type);
+	struct io io = {};
 	bool result;
 
-	if (!pipe)
+	if (!status_update_prepare(&io, type))
 		return FALSE;
 
-	result = status_update_write(pipe, status, type);
-	pclose(pipe);
+	result = status_update_write(&io, status, type);
+	done_io(&io);
 	return result;
 }
 
 static bool
 status_update_files(struct view *view, struct line *line)
 {
-	FILE *pipe = status_update_prepare(line->type);
+	struct io io = {};
 	bool result = TRUE;
 	struct line *pos = view->line + view->lines;
 	int files = 0;
 	int file, done;
 
-	if (!pipe)
+	if (!status_update_prepare(&io, line->type))
 		return FALSE;
 
 	for (pos = line; pos < view->line + view->lines && pos->data; pos++)
@@ -4340,10 +4674,10 @@ status_update_files(struct view *view, struct line *line)
 				      file, files, done);
 			update_view_title(view);
 		}
-		result = status_update_write(pipe, line->data, line->type);
+		result = status_update_write(&io, line->data, line->type);
 	}
 
-	pclose(pipe);
+	done_io(&io);
 	return result;
 }
 
@@ -4390,14 +4724,13 @@ status_revert(struct status *status, enum line_type type, bool has_none)
 		return FALSE;
 
 	} else {
-		char cmd[SIZEOF_STR];
-		char file_sq[SIZEOF_STR];
+		const char *checkout_argv[] = {
+			"git", "checkout", "--", status->old.name, NULL
+		};
 
-		if (sq_quote(file_sq, 0, status->old.name) >= sizeof(file_sq) ||
-		    !string_format(cmd, "git checkout %s%s", opt_cdup, file_sq))
+		if (!prompt_yesno("Are you sure you want to overwrite any changes?"))
 			return FALSE;
-
-		return run_confirm(cmd, "Are you sure you want to overwrite any changes?");
+		return run_io_fg(checkout_argv, opt_cdup);
 	}
 }
 
@@ -4428,6 +4761,10 @@ status_request(struct view *view, enum request request, struct line *line)
 	case REQ_EDIT:
 		if (!status)
 			return request;
+		if (status->status == 'D') {
+			report("File has been deleted.");
+			return REQ_NONE;
+		}
 
 		open_editor(status->status != '?', status->new.name);
 		break;
@@ -4540,6 +4877,7 @@ status_grep(struct view *view, struct line *line)
 
 static struct view_ops status_ops = {
 	"file",
+	NULL,
 	status_open,
 	NULL,
 	status_draw,
@@ -4550,27 +4888,13 @@ static struct view_ops status_ops = {
 
 
 static bool
-stage_diff_line(FILE *pipe, struct line *line)
-{
-	const char *buf = line->data;
-	size_t bufsize = strlen(buf);
-	size_t written = 0;
-
-	while (!ferror(pipe) && written < bufsize) {
-		written += fwrite(buf + written, 1, bufsize - written, pipe);
-	}
-
-	fputc('\n', pipe);
-
-	return written == bufsize;
-}
-
-static bool
-stage_diff_write(FILE *pipe, struct line *line, struct line *end)
+stage_diff_write(struct io *io, struct line *line, struct line *end)
 {
 	while (line < end) {
-		if (!stage_diff_line(pipe, line++))
+		if (!io_write(io, line->data, strlen(line->data)) ||
+		    !io_write(io, "\n", 1))
 			return FALSE;
+		line++;
 		if (line->type == LINE_DIFF_CHUNK ||
 		    line->type == LINE_DIFF_HEADER)
 			break;
@@ -4592,35 +4916,32 @@ stage_diff_find(struct view *view, struct line *line, enum line_type type)
 static bool
 stage_apply_chunk(struct view *view, struct line *chunk, bool revert)
 {
-	char cmd[SIZEOF_STR];
-	size_t cmdsize = 0;
+	const char *apply_argv[SIZEOF_ARG] = {
+		"git", "apply", "--whitespace=nowarn", NULL
+	};
 	struct line *diff_hdr;
-	FILE *pipe;
+	struct io io = {};
+	int argc = 3;
 
 	diff_hdr = stage_diff_find(view, chunk, LINE_DIFF_HEADER);
 	if (!diff_hdr)
 		return FALSE;
 
-	if (opt_cdup[0] &&
-	    !string_format_from(cmd, &cmdsize, "cd %s;", opt_cdup))
+	if (!revert)
+		apply_argv[argc++] = "--cached";
+	if (revert || stage_line_type == LINE_STAT_STAGED)
+		apply_argv[argc++] = "-R";
+	apply_argv[argc++] = "-";
+	apply_argv[argc++] = NULL;
+	if (!run_io(&io, apply_argv, opt_cdup, IO_WR))
 		return FALSE;
 
-	if (!string_format_from(cmd, &cmdsize,
-				"git apply --whitespace=nowarn %s %s - && "
-				"git update-index -q --unmerged --refresh 2>/dev/null",
-				revert ? "" : "--cached",
-				revert || stage_line_type == LINE_STAT_STAGED ? "-R" : ""))
-		return FALSE;
-
-	pipe = popen(cmd, "w");
-	if (!pipe)
-		return FALSE;
-
-	if (!stage_diff_write(pipe, diff_hdr, chunk) ||
-	    !stage_diff_write(pipe, chunk, view->line + view->lines))
+	if (!stage_diff_write(&io, diff_hdr, chunk) ||
+	    !stage_diff_write(&io, chunk, view->line + view->lines))
 		chunk = NULL;
 
-	pclose(pipe);
+	done_io(&io);
+	run_io_bg(update_index_argv);
 
 	return chunk ? TRUE : FALSE;
 }
@@ -4630,7 +4951,7 @@ stage_update(struct view *view, struct line *line)
 {
 	struct line *chunk = NULL;
 
-	if (!opt_no_head && stage_line_type != LINE_STAT_UNTRACKED)
+	if (!is_initial_commit() && stage_line_type != LINE_STAT_UNTRACKED)
 		chunk = stage_diff_find(view, line, LINE_DIFF_CHUNK);
 
 	if (chunk) {
@@ -4664,7 +4985,7 @@ stage_revert(struct view *view, struct line *line)
 {
 	struct line *chunk = NULL;
 
-	if (!opt_no_head && stage_line_type == LINE_STAT_UNSTAGED)
+	if (!is_initial_commit() && stage_line_type == LINE_STAT_UNSTAGED)
 		chunk = stage_diff_find(view, line, LINE_DIFF_CHUNK);
 
 	if (chunk) {
@@ -4746,6 +5067,10 @@ stage_request(struct view *view, enum request request, struct line *line)
 	case REQ_EDIT:
 		if (!stage_status.new.name[0])
 			return request;
+		if (stage_status.status == 'D') {
+			report("File has been deleted.");
+			return REQ_NONE;
+		}
 
 		open_editor(stage_status.status != '?', stage_status.new.name);
 		break;
@@ -4775,8 +5100,17 @@ stage_request(struct view *view, enum request request, struct line *line)
 	if (!status_exists(&stage_status, stage_line_type))
 		return REQ_VIEW_CLOSE;
 
-	if (stage_line_type == LINE_STAT_UNTRACKED)
-		opt_pipe = fopen(stage_status.new.name, "r");
+	if (stage_line_type == LINE_STAT_UNTRACKED) {
+	    	if (!suffixcmp(stage_status.new.name, -1, "/")) {
+			report("Cannot display a directory");
+			return REQ_NONE;
+		}
+
+		if (!prepare_update_file(view, stage_status.new.name)) {
+			report("Failed to open file: %s", strerror(errno));
+			return REQ_NONE;
+		}
+	}
 	open_view(view, REQ_VIEW_STAGE, OPEN_REFRESH);
 
 	return REQ_NONE;
@@ -4784,6 +5118,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops stage_ops = {
 	"line",
+	NULL,
 	NULL,
 	pager_read,
 	pager_draw,
@@ -5012,6 +5347,11 @@ update_rev_graph(struct rev_graph *graph)
 /*
  * Main view backend
  */
+
+static const char *main_argv[SIZEOF_ARG] = {
+	"git", "log", "--no-color", "--pretty=raw", "--parents",
+		      "--topo-order", "%(head)", NULL
+};
 
 static bool
 main_draw(struct view *view, struct line *line, unsigned int lineno)
@@ -5293,6 +5633,7 @@ main_select(struct view *view, struct line *line)
 
 static struct view_ops main_ops = {
 	"commit",
+	main_argv,
 	NULL,
 	main_read,
 	main_draw,
@@ -5532,13 +5873,13 @@ init_display(void)
 	/* Initialize the curses library */
 	if (isatty(STDIN_FILENO)) {
 		cursed = !!initscr();
+		opt_tty = stdin;
 	} else {
 		/* Leave stdin and stdout alone when acting as a pager. */
-		FILE *io = fopen("/dev/tty", "r+");
-
-		if (!io)
+		opt_tty = fopen("/dev/tty", "r+");
+		if (!opt_tty)
 			die("Failed to open /dev/tty");
-		cursed = !!newterm(NULL, io, io);
+		cursed = !!newterm(NULL, opt_tty, opt_tty);
 	}
 
 	if (!cursed)
@@ -5623,7 +5964,7 @@ static char *
 read_prompt(const char *prompt)
 {
 	enum { READING, STOP, CANCEL } status = READING;
-	static char buf[sizeof(opt_cmd) - STRING_SIZE("git \0")];
+	static char buf[SIZEOF_STR];
 	int pos = 0;
 
 	while (status == READING) {
@@ -5687,8 +6028,19 @@ read_prompt(const char *prompt)
 }
 
 /*
- * Repository references
+ * Repository properties
  */
+
+static int
+git_properties(const char **argv, const char *separators,
+	       int (*read_property)(char *, size_t, char *, size_t))
+{
+	struct io io = {};
+
+	if (init_io_rd(&io, argv, NULL, FORMAT_NONE))
+		return read_properties(&io, separators, read_property);
+	return ERR;
+}
 
 static struct ref *refs = NULL;
 static size_t refs_alloc = 0;
@@ -5783,7 +6135,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 	bool head = FALSE;
 
 	if (!prefixcmp(name, "refs/tags/")) {
-		if (!strcmp(name + namelen - 3, "^{}")) {
+		if (!suffixcmp(name, namelen, "^{}")) {
 			namelen -= 3;
 			name[namelen] = 0;
 			if (refs_size > 0 && refs[refs_size - 1].ltag == TRUE)
@@ -5808,7 +6160,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 		head	 = !strncmp(opt_head, name, namelen);
 
 	} else if (!strcmp(name, "HEAD")) {
-		opt_no_head = FALSE;
+		string_ncopy(opt_head_rev, id, idlen);
 		return OK;
 	}
 
@@ -5846,8 +6198,15 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 static int
 load_refs(void)
 {
-	const char *cmd_env = getenv("TIG_LS_REMOTE");
-	const char *cmd = cmd_env && *cmd_env ? cmd_env : TIG_LS_REMOTE;
+	static const char *ls_remote_argv[SIZEOF_ARG] = {
+		"git", "ls-remote", ".", NULL
+	};
+	static bool init = FALSE;
+
+	if (!init) {
+		argv_from_env(ls_remote_argv, "TIG_LS_REMOTE");
+		init = TRUE;
+	}
 
 	if (!*opt_git_dir)
 		return OK;
@@ -5857,7 +6216,7 @@ load_refs(void)
 	while (id_refs_size > 0)
 		free(id_refs[--id_refs_size]);
 
-	return read_properties(popen(cmd, "r"), "\t", read_ref);
+	return git_properties(ls_remote_argv, "\t", read_ref);
 }
 
 static int
@@ -5897,8 +6256,9 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 static int
 load_git_config(void)
 {
-	return read_properties(popen("git " GIT_CONFIG " --list", "r"),
-			       "=", read_repo_config_option);
+	const char *config_list_argv[] = { "git", GIT_CONFIG, "--list", NULL };
+
+	return git_properties(config_list_argv, "=", read_repo_config_option);
 }
 
 static int
@@ -5914,15 +6274,8 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 		 * the option else either "true" or "false" is printed.
 		 * Default to true for the unknown case. */
 		opt_is_inside_work_tree = strcmp(name, "false") ? TRUE : FALSE;
-
-	} else if (opt_cdup[0] == ' ') {
-		string_ncopy(opt_cdup, name, namelen);
 	} else {
-		if (!prefixcmp(name, "refs/heads/")) {
-			namelen -= STRING_SIZE("refs/heads/");
-			name	+= STRING_SIZE("refs/heads/");
-			string_ncopy(opt_head, name, namelen);
-		}
+		string_ncopy(opt_cdup, name, namelen);
 	}
 
 	return OK;
@@ -5931,34 +6284,37 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 static int
 load_repo_info(void)
 {
-	int result;
-	FILE *pipe = popen("(git rev-parse --git-dir --is-inside-work-tree "
-			   " --show-cdup; git symbolic-ref HEAD) 2>/dev/null", "r");
+	const char *head_argv[] = {
+		"git", "symbolic-ref", "HEAD", NULL
+	};
+	const char *rev_parse_argv[] = {
+		"git", "rev-parse", "--git-dir", "--is-inside-work-tree",
+			"--show-cdup", NULL
+	};
 
-	/* XXX: The line outputted by "--show-cdup" can be empty so
-	 * initialize it to something invalid to make it possible to
-	 * detect whether it has been set or not. */
-	opt_cdup[0] = ' ';
+	if (run_io_buf(head_argv, opt_head, sizeof(opt_head))) {
+		chomp_string(opt_head);
+		if (!prefixcmp(opt_head, "refs/heads/")) {
+			char *offset = opt_head + STRING_SIZE("refs/heads/");
 
-	result = read_properties(pipe, "=", read_repo_info);
-	if (opt_cdup[0] == ' ')
-		opt_cdup[0] = 0;
+			memmove(opt_head, offset, strlen(offset) + 1);
+		}
+	}
 
-	return result;
+	return git_properties(rev_parse_argv, "=", read_repo_info);
 }
 
 static int
-read_properties(FILE *pipe, const char *separators,
+read_properties(struct io *io, const char *separators,
 		int (*read_property)(char *, size_t, char *, size_t))
 {
-	char buffer[BUFSIZ];
 	char *name;
 	int state = OK;
 
-	if (!pipe)
+	if (!start_io(io))
 		return ERR;
 
-	while (state == OK && (name = fgets(buffer, sizeof(buffer), pipe))) {
+	while (state == OK && (name = io_get(io, '\n', TRUE))) {
 		char *value;
 		size_t namelen;
 		size_t valuelen;
@@ -5979,10 +6335,9 @@ read_properties(FILE *pipe, const char *separators,
 		state = read_property(name, namelen, value, valuelen);
 	}
 
-	if (state != ERR && ferror(pipe))
+	if (state != ERR && io_error(io))
 		state = ERR;
-
-	pclose(pipe);
+	done_io(io);
 
 	return state;
 }
@@ -6032,6 +6387,7 @@ warn(const char *msg, ...)
 int
 main(int argc, const char *argv[])
 {
+	const char **run_argv = NULL;
 	struct view *view;
 	enum request request;
 	size_t i;
@@ -6053,7 +6409,7 @@ main(int argc, const char *argv[])
 	if (load_git_config() == ERR)
 		die("Failed to load repo config.");
 
-	request = parse_options(argc, argv);
+	request = parse_options(argc, argv, &run_argv);
 	if (request == REQ_NONE)
 		return 0;
 
@@ -6073,10 +6429,19 @@ main(int argc, const char *argv[])
 	if (load_refs() == ERR)
 		die("Failed to load refs.");
 
-	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
-		view->cmd_env = getenv(view->cmd_env);
+	foreach_view (view, i)
+		argv_from_env(view->ops->argv, view->cmd_env);
 
 	init_display();
+
+	if (request == REQ_VIEW_PAGER || run_argv) {
+		if (request == REQ_VIEW_PAGER)
+			io_open(&VIEW(request)->io, "");
+		else if (!prepare_update(VIEW(request), run_argv, NULL, FORMAT_NONE))
+			die("Failed to format arguments");
+		open_view(NULL, request, OPEN_PREPARED);
+		request = REQ_NONE;
+	}
 
 	while (view_driver(display[current_view], request)) {
 		int key;
@@ -6084,6 +6449,7 @@ main(int argc, const char *argv[])
 
 		foreach_view (view, i)
 			update_view(view);
+		view = display[current_view];
 
 		/* Refresh, accept single keystroke of input */
 		key = wgetch(status_win);
@@ -6095,7 +6461,7 @@ main(int argc, const char *argv[])
 			continue;
 		}
 
-		request = get_keybinding(display[current_view]->keymap, key);
+		request = get_keybinding(view->keymap, key);
 
 		/* Some low-level request handling. This keeps access to
 		 * status_win restricted. */
@@ -6104,15 +6470,23 @@ main(int argc, const char *argv[])
 		{
 			char *cmd = read_prompt(":");
 
-			if (cmd && string_format(opt_cmd, "git %s", cmd)) {
-				if (strncmp(cmd, "show", 4) && isspace(cmd[4])) {
-					request = REQ_VIEW_DIFF;
-				} else {
-					request = REQ_VIEW_PAGER;
-				}
+			if (cmd) {
+				struct view *next = VIEW(REQ_VIEW_PAGER);
+				const char *argv[SIZEOF_ARG] = { "git" };
+				int argc = 1;
 
-				/* Always reload^Wrerun commands from the prompt. */
-				open_view(view, request, OPEN_RELOAD);
+				/* When running random commands, initially show the
+				 * command in the title. However, it maybe later be
+				 * overwritten if a commit line is selected. */
+				string_ncopy(next->ref, cmd, strlen(cmd));
+
+				if (!argv_from_string(argv, &argc, cmd)) {
+					report("Too many arguments");
+				} else if (!prepare_update(next, argv, NULL, FORMAT_DASH)) {
+					report("Failed to format command");
+				} else {
+					open_view(view, REQ_VIEW_PAGER, OPEN_PREPARED);
+				}
 			}
 
 			request = REQ_NONE;

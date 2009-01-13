@@ -3,7 +3,7 @@
 # Prepare the content of the next tig release announcement.
 # Usage: $0 [revision]
 #
-# Copyright (c) 2008 Jonas Fonseca <fonseca@diku.dk>
+# Copyright (c) 2008-2009 Jonas Fonseca <fonseca@diku.dk>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as

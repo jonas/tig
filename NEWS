@@ -1,18 +1,34 @@
 Release notes
 =============
 
-tig master
-----------
+tig-0.13
+--------
+
+Incompatibilities:
+
+ - Commands from the environment (e.g. TIG_MAIN_CMD) will no longer have
+   access to shell features, such as subshells and variable expansion.
+   The easiest way to upgrade your configuration is to put such commands
+   in a script file.
 
 Improvements:
 
  - Display repository references in the sorted order: tags, heads,
    tracked remotes, remotes.
  - Add bash completion for blame.
+ - Tree view: edit files of the current branch.
+ - Run requests: new identifiers %(directory), %(file), and %(ref)
+ - Improve responsiveness and view loading speed by using select(2).
 
 Bug fixes:
 
  - Separate blame revision and file argument by "--" to avoid problems.
+ - Main view: fix redrawing of the last commit wrt. the revision graph.
+ - Fix waiting for input after executing a run request in pager mode.
+ - Status & stage view: refuse to open directories and deleted files.
+ - Tree view: show error when requesting blame for all non-file entries.
+ - Do not draw loading views, which are not displayed.
+ - Fix launching of mergetool from a subdirectory.
 
 tig-0.12.1
 ----------

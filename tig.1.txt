@@ -94,7 +94,9 @@ ENVIRONMENT VARIABLES
 ---------------------
 
 In addition to environment variables used by git (e.g. GIT_DIR), tig defines
-the following:
+the ones below. The command related environment variables have access to the
+internal state of tig via replacement variabls, such as `%(commit)` and
+`%(blob)`. See manpage:tigrc[5] for a full list.
 
 TIGRC_USER::
 	Path of the user configuration file (defaults to `~/.tigrc`).
@@ -148,7 +150,7 @@ include::BUGS[]
 
 COPYRIGHT
 ---------
-Copyright (c) 2006-2008 Jonas Fonseca <fonseca@diku.dk>
+Copyright (c) 2006-2009 Jonas Fonseca <fonseca@diku.dk>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

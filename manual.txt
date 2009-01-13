@@ -137,8 +137,9 @@ reloaded, if the commit ID changed. The head ID is used when opening the main
 and log view to indicate from what revision to show history.
 
 Some of the commands used or provided by tig can be configured. This goes for
-the <<external-commands, external commands>>. These user-defined commands can
-use arguments that refer to the current browsing state by using one of the
+some of the <<env-variables, environment variables>> as well as the
+<<external-commands, external commands>>. These user-defined commands can use
+arguments that refer to the current browsing state by using one of the
 following variables.
 
 `-----------------------`-----------------------------------------------------
@@ -147,6 +148,10 @@ Browsing state variables
 %(head)			The currently viewed 'head' ID. Defaults to HEAD
 %(commit)		The currently selected commit ID.
 %(blob)			The currently selected blob ID.
+%(directory)		The current directory path in the tree view; \
+			empty for the root directory.
+%(file)			The currently selected file.
+%(ref)			The reference given to blame or HEAD if undefined.
 ------------------------------------------------------------------------------
 
 [[title-window]]
@@ -233,13 +238,12 @@ for example you prefer commits in the main view to be sorted by date and only
 show 500 commits, use:
 
 -----------------------------------------------------------------------------
-$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %s" tig
+$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %(head)" tig
 -----------------------------------------------------------------------------
 
 Or set the variable permanently in your environment.
 
-Notice, how `%s` is used to specify the commit reference. There can be a
-maximum of 5 `%s` ref specifications.
+Notice, how `%(head)` is used to specify the commit reference.
 
 --
 
@@ -248,7 +252,7 @@ TIG_DIFF_CMD::
 	The command used for the diff view. Defaults to:
 -----------------------------------------------------------------------------
 git show --pretty=fuller --no-color --root 
-	 --patch-with-stat --find-copies-harder -C %s
+	 --patch-with-stat --find-copies-harder -C %(commit)
 -----------------------------------------------------------------------------
 
 TIG_LOG_CMD::
@@ -257,7 +261,7 @@ TIG_LOG_CMD::
 	author and committer shown in the log view be sure to pass
 	`\--pretty=fuller` to git log. Defaults to:
 -----------------------------------------------------------------------------
-git log --no-color --cc --stat -n100 %s
+git log --no-color --cc --stat -n100 %(head)
 -----------------------------------------------------------------------------
 
 TIG_MAIN_CMD::
@@ -266,7 +270,7 @@ TIG_MAIN_CMD::
 	the option: `\--pretty=raw` since the main view parser expects to
 	read that format.
 -----------------------------------------------------------------------------
-git log --no-color --pretty=raw --parents --topo-order %s
+git log --no-color --pretty=raw --parents --topo-order %(head)
 -----------------------------------------------------------------------------
 
 --
@@ -279,19 +283,16 @@ Tree Commands
 
 TIG_TREE_CMD::
 
-	The command used for the tree view. Takes two arguments, the first is
-	the revision ID and the second is the path of the directory tree,
-	empty for the root directory. Defaults to:
+	The command used for the tree view. Defaults to:
 -----------------------------------------------------------------------------
-git ls-tree %s %s
+git ls-tree %(commit) %(directory)
 -----------------------------------------------------------------------------
 
 TIG_BLOB_CMD::
 
-	The command used for the blob view. Takes one argument which is the
-	blob ID. Defaults to:
+	The command used for the blob view. Defaults to:
 -----------------------------------------------------------------------------
-git cat-file blob %s
+git cat-file blob %(blob)
 -----------------------------------------------------------------------------
 
 --
@@ -562,7 +563,7 @@ include::BUGS[]
 Copyright
 ---------
 
-Copyright (c) 2006-2008 Jonas Fonseca <fonseca@diku.dk>
+Copyright (c) 2006-2009 Jonas Fonseca <fonseca@diku.dk>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
