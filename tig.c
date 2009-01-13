@@ -3514,7 +3514,6 @@ struct blame_commit {
 
 struct blame {
 	struct blame_commit *commit;
-	unsigned int header:1;
 	char text[1];
 };
 
@@ -3614,7 +3613,6 @@ parse_blame_commit(struct view *view, const char *text, int *blamed)
 
 		blame = line->data;
 		blame->commit = commit;
-		blame->header = !group;
 		line->dirty = 1;
 	}
 
