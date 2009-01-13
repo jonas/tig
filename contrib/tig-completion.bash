@@ -1,7 +1,7 @@
 ##
 # bash completion support for tig
 #
-# Copyright (C) 2007 Jonas fonseca
+# Copyright (C) 2007-2009 Jonas fonseca
 # Copyright (C) 2006,2007 Shawn Pearce
 #
 # Based git's git-completion.sh: http://repo.or.cz/w/git/fastimport.git

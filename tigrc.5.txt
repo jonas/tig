@@ -452,7 +452,7 @@ Colors for information of the tree view.
 
 COPYRIGHT
 ---------
-Copyright (c) 2006-2008 Jonas Fonseca <fonseca@diku.dk>
+Copyright (c) 2006-2009 Jonas Fonseca <fonseca@diku.dk>
 
 Licensed under the terms of the GNU General Public License.
 
