@@ -4237,68 +4237,67 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 
 	add_line_data(view, NULL, type);
 
-		while ((buf = io_get(&io, 0, TRUE))) {
-			if (!file) {
-				if (!realloc_lines(view, view->line_size + 1))
-					goto error_out;
+	while ((buf = io_get(&io, 0, TRUE))) {
+		if (!file) {
+			if (!realloc_lines(view, view->line_size + 1))
+				goto error_out;
 
-				file = calloc(1, sizeof(*file));
-				if (!file)
-					goto error_out;
+			file = calloc(1, sizeof(*file));
+			if (!file)
+				goto error_out;
 
-				add_line_data(view, file, type);
-			}
+			add_line_data(view, file, type);
+		}
 
-			/* Parse diff info part. */
-			if (status) {
-				file->status = status;
-				if (status == 'A')
-					string_copy(file->old.rev, NULL_ID);
+		/* Parse diff info part. */
+		if (status) {
+			file->status = status;
+			if (status == 'A')
+				string_copy(file->old.rev, NULL_ID);
 
-			} else if (!file->status) {
-				if (!status_get_diff(file, buf, strlen(buf)))
-					goto error_out;
+		} else if (!file->status) {
+			if (!status_get_diff(file, buf, strlen(buf)))
+				goto error_out;
 
-				buf = io_get(&io, 0, TRUE);
-				if (!buf)
-					break;
+			buf = io_get(&io, 0, TRUE);
+			if (!buf)
+				break;
 
-				/* Collapse all 'M'odified entries that
-				 * follow a associated 'U'nmerged entry.
-				 */
-				if (file->status == 'U') {
-					unmerged = file;
+			/* Collapse all 'M'odified entries that follow a
+			 * associated 'U'nmerged entry. */
+			if (file->status == 'U') {
+				unmerged = file;
 
-				} else if (unmerged) {
-					int collapse = !strcmp(buf, unmerged->new.name);
+			} else if (unmerged) {
+				int collapse = !strcmp(buf, unmerged->new.name);
 
-					unmerged = NULL;
-					if (collapse) {
-						free(file);
-						view->lines--;
-						continue;
-					}
+				unmerged = NULL;
+				if (collapse) {
+					free(file);
+					view->lines--;
+					continue;
 				}
 			}
-
-			/* Grab the old name for rename/copy. */
-			if (!*file->old.name &&
-			    (file->status == 'R' || file->status == 'C')) {
-				string_ncopy(file->old.name, buf, strlen(buf));
-
-				buf = io_get(&io, 0, TRUE);
-				if (!buf)
-					break;
-			}
-
-			/* git-ls-files just delivers a NUL separated
-			 * list of file names similar to the second half
-			 * of the git-diff-* output. */
-			string_ncopy(file->new.name, buf, strlen(buf));
-			if (!*file->old.name)
-				string_copy(file->old.name, file->new.name);
-			file = NULL;
 		}
+
+		/* Grab the old name for rename/copy. */
+		if (!*file->old.name &&
+		    (file->status == 'R' || file->status == 'C')) {
+			string_ncopy(file->old.name, buf, strlen(buf));
+
+			buf = io_get(&io, 0, TRUE);
+			if (!buf)
+				break;
+		}
+
+		/* git-ls-files just delivers a NUL separated list of
+		 * file names similar to the second half of the
+		 * git-diff-* output. */
+		string_ncopy(file->new.name, buf, strlen(buf));
+		if (!*file->old.name)
+			string_copy(file->old.name, file->new.name);
+		file = NULL;
+	}
 
 	if (io_error(&io)) {
 error_out:
