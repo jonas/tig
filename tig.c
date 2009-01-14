@@ -1724,7 +1724,6 @@ struct view {
 	size_t lines;		/* Total number of lines */
 	struct line *line;	/* Line index */
 	size_t line_alloc;	/* Total number of allocated lines */
-	size_t line_size;	/* Total number of used lines */
 	unsigned int digits;	/* Number of digits in the lines member. */
 
 	/* Drawing */
@@ -2500,7 +2499,6 @@ reset_view(struct view *view)
 	view->offset = 0;
 	view->lines  = 0;
 	view->lineno = 0;
-	view->line_size = 0;
 	view->line_alloc = 0;
 	view->vid[0] = 0;
 	view->update_secs = 0;
@@ -2673,7 +2671,6 @@ realloc_lines(struct view *view, size_t line_size)
 
 	view->line = tmp;
 	view->line_alloc = alloc;
-	view->line_size = line_size;
 	return view->line;
 }
 
@@ -2725,8 +2722,7 @@ update_view(struct view *view)
 			}
 		}
 
-		if (!realloc_lines(view, view->lines + 1) ||
-		    !view->ops->read(view, line))
+		if (!view->ops->read(view, line))
 			goto alloc_error;
 	}
 
@@ -2795,11 +2791,16 @@ alloc_error:
 static struct line *
 add_line_data(struct view *view, void *data, enum line_type type)
 {
-	struct line *line = &view->line[view->lines++];
+	struct line *line;
 
+	if (!realloc_lines(view, view->lines + 1))
+		return NULL;
+
+	line = &view->line[view->lines++];
 	memset(line, 0, sizeof(*line));
 	line->type = type;
 	line->data = data;
+	line->dirty = 1;
 
 	return line;
 }
@@ -3292,9 +3293,6 @@ try_add_describe_ref:
 	if (bufpos == 0)
 		return;
 
-	if (!realloc_lines(view, view->line_size + 1))
-		return;
-
 	add_line_text(view, buf, LINE_PP_REFS);
 }
 
@@ -3625,14 +3623,12 @@ tree_read(struct view *view, char *text)
 	if (first_read) {
 		/* Add path info line */
 		if (!string_format(buf, "Directory path /%s", opt_path) ||
-		    !realloc_lines(view, view->line_size + 1) ||
 		    !add_line_text(view, buf, LINE_DEFAULT))
 			return FALSE;
 
 		/* Insert "link" to parent directory. */
 		if (*opt_path) {
 			if (!string_format(buf, TREE_UP_FORMAT, view->ref) ||
-			    !realloc_lines(view, view->line_size + 1) ||
 			    !add_line_text(view, buf, LINE_TREE_DIR))
 				return FALSE;
 		}
@@ -4260,14 +4256,9 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 
 	while ((buf = io_get(&io, 0, TRUE))) {
 		if (!file) {
-			if (!realloc_lines(view, view->line_size + 1))
-				goto error_out;
-
 			file = calloc(1, sizeof(*file));
-			if (!file)
+			if (!file || !add_line_data(view, file, type))
 				goto error_out;
-
-			add_line_data(view, file, type);
 		}
 
 		/* Parse diff info part. */
@@ -4364,9 +4355,6 @@ status_open(struct view *view)
 	unsigned long prev_lineno = view->lineno;
 
 	reset_view(view);
-
-	if (!realloc_lines(view, view->line_size + 7))
-		return FALSE;
 
 	add_line_data(view, NULL, LINE_STAT_HEAD);
 	if (is_initial_commit())
