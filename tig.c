@@ -1987,6 +1987,7 @@ draw_view_line(struct view *view, unsigned int lineno)
 	view->curline = line;
 	view->curtype = LINE_NONE;
 	line->selected = FALSE;
+	line->dirty = 0;
 
 	if (selected) {
 		set_view_attr(view, LINE_CURSOR);
@@ -2014,7 +2015,6 @@ redraw_view_dirty(struct view *view)
 
 		if (!line->dirty)
 			continue;
-		line->dirty = 0;
 		dirty = TRUE;
 		if (!draw_view_line(view, lineno))
 			break;
@@ -2679,7 +2679,9 @@ update_view(struct view *view)
 {
 	char out_buffer[BUFSIZ * 2];
 	char *line;
-	int redraw_from = -1;
+	/* Clear the view and redraw everything since the tree sorting
+	 * might have rearranged things. */
+	bool redraw = view == VIEW(REQ_VIEW_TREE);
 	bool can_read = TRUE;
 
 	if (!view->pipe)
@@ -2698,10 +2700,6 @@ update_view(struct view *view)
 		}
 		return TRUE;
 	}
-
-	/* Only redraw if lines are visible. */
-	if (view->offset + view->height >= view->lines)
-		redraw_from = view->lines - view->offset;
 
 	for (; (line = io_get(view->pipe, '\n', can_read)); can_read = FALSE) {
 		size_t linelen = strlen(line);
@@ -2736,7 +2734,8 @@ update_view(struct view *view)
 		/* Keep the displayed view in sync with line number scaling. */
 		if (digits != view->digits) {
 			view->digits = digits;
-			redraw_from = 0;
+			if (opt_line_number)
+				redraw = TRUE;
 		}
 	}
 
@@ -2752,29 +2751,9 @@ update_view(struct view *view)
 	if (!view_is_displayed(view))
 		return TRUE;
 
-	if (view == VIEW(REQ_VIEW_TREE)) {
-		/* Clear the view and redraw everything since the tree sorting
-		 * might have rearranged things. */
+	if (redraw)
 		redraw_view(view);
-
-	} else if (redraw_from >= 0) {
-		/* If this is an incremental update, redraw the previous line
-		 * since for commits some members could have changed when
-		 * loading the main view. */
-		if (redraw_from > 0)
-			redraw_from--;
-
-		/* Since revision graph visualization requires knowledge
-		 * about the parent commit, it causes a further one-off
-		 * needed to be redrawn for incremental updates. */
-		if (redraw_from > 0 && opt_rev_graph)
-			redraw_from--;
-
-		/* Incrementally draw avoids flickering. */
-		redraw_view_from(view, redraw_from);
-	}
-
-	if (view == VIEW(REQ_VIEW_BLAME))
+	else
 		redraw_view_dirty(view);
 
 	/* Update the title _after_ the redraw so that if the redraw picks up a
@@ -5300,7 +5279,7 @@ prepare_rev_graph(struct rev_graph *graph)
 }
 
 static void
-update_rev_graph(struct rev_graph *graph)
+update_rev_graph(struct view *view, struct rev_graph *graph)
 {
 	/* If this is the finalizing update ... */
 	if (graph->commit)
@@ -5311,6 +5290,10 @@ update_rev_graph(struct rev_graph *graph)
 	if (!graph->prev->commit)
 		return;
 
+	if (view->lines > 2)
+		view->line[view->lines - 3].dirty = 1;
+	if (view->lines > 1)
+		view->line[view->lines - 2].dirty = 1;
 	draw_rev_graph(graph->prev);
 	done_rev_graph(graph->prev->prev);
 }
@@ -5398,7 +5381,7 @@ main_read(struct view *view, char *line)
 				graph->commit = NULL;
 			}
 		}
-		update_rev_graph(graph);
+		update_rev_graph(view, graph);
 
 		for (i = 0; i < ARRAY_SIZE(graph_stacks); i++)
 			clear_rev_graph(&graph_stacks[i]);
@@ -5453,7 +5436,7 @@ main_read(struct view *view, char *line)
 		if (!nameend || !emailend)
 			break;
 
-		update_rev_graph(graph);
+		update_rev_graph(view, graph);
 		graph = graph->next;
 
 		*nameend = *emailend = 0;
@@ -5465,6 +5448,7 @@ main_read(struct view *view, char *line)
 		}
 
 		string_ncopy(commit->author, ident, strlen(ident));
+		view->line[view->lines - 1].dirty = 1;
 
 		/* Parse epoch and timezone */
 		if (emailend[1] == ' ') {
@@ -5511,6 +5495,7 @@ main_read(struct view *view, char *line)
 		 * shortened titles, etc. */
 
 		string_ncopy(commit->title, line, strlen(line));
+		view->line[view->lines - 1].dirty = 1;
 	}
 
 	return TRUE;
