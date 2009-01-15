@@ -2012,9 +2012,9 @@ redraw_view_dirty(struct view *view)
 	int lineno;
 
 	for (lineno = 0; lineno < view->height; lineno++) {
-		struct line *line = &view->line[view->offset + lineno];
-
-		if (!line->dirty)
+		if (view->offset + lineno >= view->lines)
+			break;
+		if (!view->line[view->offset + lineno].dirty)
 			continue;
 		dirty = TRUE;
 		if (!draw_view_line(view, lineno))
@@ -2682,7 +2682,7 @@ update_view(struct view *view)
 	char *line;
 	/* Clear the view and redraw everything since the tree sorting
 	 * might have rearranged things. */
-	bool redraw = FALSE;
+	bool redraw = view->lines == 0;
 	bool can_read = TRUE;
 
 	if (!view->pipe)
@@ -2735,7 +2735,7 @@ update_view(struct view *view)
 		/* Keep the displayed view in sync with line number scaling. */
 		if (digits != view->digits) {
 			view->digits = digits;
-			if (opt_line_number)
+			if (opt_line_number || view == VIEW(REQ_VIEW_BLAME))
 				redraw = TRUE;
 		}
 	}
