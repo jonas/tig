@@ -3337,6 +3337,60 @@ parse_author_line(char *ident, char *author, size_t authorsize, struct tm *tm)
 	}
 }
 
+static enum input_status
+select_commit_parent_handler(void *data, char *buf, int c)
+{
+	size_t parents = *(size_t *) data;
+	int parent = 0;
+
+	if (!isdigit(c))
+		return INPUT_SKIP;
+
+	if (*buf)
+		parent = atoi(buf) * 10;
+	parent += c - '0';
+
+	if (parent > parents)
+		return INPUT_SKIP;
+	return INPUT_OK;
+}
+
+static bool
+select_commit_parent(const char *id, char rev[SIZEOF_REV])
+{
+	char buf[SIZEOF_STR * 4];
+	const char *revlist_argv[] = {
+		"git", "rev-list", "-1", "--parents", id, NULL
+	};
+	int parents;
+
+	if (!run_io_buf(revlist_argv, buf, sizeof(buf)) ||
+	    !*chomp_string(buf) ||
+	    (parents = (strlen(buf) / 40) - 1) < 0) {
+		report("Failed to get parent information");
+		return FALSE;
+
+	} else if (parents == 0) {
+		report("The selected commit has no parents");
+		return FALSE;
+	}
+
+	if (parents > 1) {
+		char prompt[SIZEOF_STR];
+		char *result;
+
+		if (!string_format(prompt, "Which parent? [1..%d] ", parents))
+			return FALSE;
+		result = prompt_input(prompt, select_commit_parent_handler, &parents);
+		if (!result)
+			return FALSE;
+		parents = atoi(result);
+	}
+
+	string_copy_rev(rev, &buf[41 * parents]);
+	return TRUE;
+}
+
 /*
  * Pager backend
  */
@@ -4363,6 +4417,12 @@ blame_request(struct view *view, enum request request, struct line *line)
 			string_copy(opt_ref, blame->commit->id);
 			open_view(view, REQ_VIEW_BLAME, OPEN_REFRESH);
 		}
+		break;
+
+	case REQ_PARENT:
+		if (check_blame_commit(blame) &&
+		    select_commit_parent(blame->commit->id, opt_ref))
+			open_view(view, REQ_VIEW_BLAME, OPEN_REFRESH);
 		break;
 
 	case REQ_ENTER:

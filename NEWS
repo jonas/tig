@@ -17,6 +17,8 @@ Improvements:
  - Tree view: annotate entries with commit information.
  - Tree & blob view: open any blob in an editor.
  - Stage & main view: restore view position when reloading.
+ - Blame view: load blame for parent commit. For merge commits the parent
+   is queried. Bound to ',' by default via the existing "parent" action.
 
 Bug fixes:
 

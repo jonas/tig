@@ -345,7 +345,8 @@ Up	This key is "context sensitive" and will move the cursor one \
 	to display it.
 Down	Similar to 'Up' but will move down.
 ','	Move to parent. In the tree view, this means switch to the parent \
-	directory.
+	directory. In the blame view it will load blame for the parent \
+	commit. For merges the parent is queried.
 -----------------------------------------------------------------------------
 
 [[cursor-nav]]
