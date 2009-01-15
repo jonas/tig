@@ -3589,19 +3589,6 @@ push_tree_stack_entry(const char *name, unsigned long lineno)
 
 #define TREE_UP_FORMAT "040000 tree %s\t.."
 
-static int
-tree_compare_entry(enum line_type type1, const char *name1,
-		   enum line_type type2, const char *name2)
-{
-	if (type1 != type2) {
-		if (type1 == LINE_TREE_DIR)
-			return -1;
-		return 1;
-	}
-
-	return strcmp(name1, name2);
-}
-
 static const char *
 tree_path(struct line *line)
 {
@@ -3610,11 +3597,19 @@ tree_path(struct line *line)
 	return path + SIZEOF_TREE_ATTR;
 }
 
+static int
+tree_compare_entry(struct line *line1, struct line *line2)
+{
+	if (line1->type != line2->type)
+		return line1->type == LINE_TREE_DIR ? -1 : 1;
+	return strcmp(tree_path(line1), tree_path(line2));
+}
+
 static bool
 tree_read(struct view *view, char *text)
 {
 	size_t textlen = text ? strlen(text) : 0;
-	size_t pos;
+	struct line *entry, *line;
 	enum line_type type;
 
 	if (!text)
@@ -3645,25 +3640,18 @@ tree_read(struct view *view, char *text)
 			return FALSE;
 	}
 
-	if (!add_line_text(view, text, type))
+	entry = add_line_text(view, text, type);
+	if (!entry)
 		return FALSE;
-	text = view->line[view->lines - 1].data;
+	text = entry->data;
 
 	/* Skip "Directory ..." and ".." line. */
-	for (pos = 1 + !!*opt_path; pos < view->lines - 1; pos++) {
-		struct line *line = &view->line[pos];
-		const char *path1 = tree_path(line);
-		char *path2 = text + SIZEOF_TREE_ATTR;
-		int cmp = tree_compare_entry(line->type, path1, type, path2);
-
-		if (cmp <= 0)
+	for (line = &view->line[1 + !!*opt_path]; line < entry; line++) {
+		if (tree_compare_entry(line, entry) <= 0)
 			continue;
 
-		if (view->lines - 1 > pos)
-			memmove(&view->line[pos + 1], &view->line[pos],
-				(view->lines - 1 - pos) * sizeof(*line));
+		memmove(line + 1, line, (entry - line) * sizeof(*entry));
 
-		line = &view->line[pos];
 		line->data = text;
 		line->type = type;
 		return TRUE;
