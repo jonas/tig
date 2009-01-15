@@ -1021,6 +1021,7 @@ struct line {
 	/* State flags */
 	unsigned int selected:1;
 	unsigned int dirty:1;
+	unsigned int cleareol:1;
 
 	void *data;		/* User data */
 };
@@ -1983,18 +1984,18 @@ draw_view_line(struct view *view, unsigned int lineno)
 	line = &view->line[view->offset + lineno];
 
 	wmove(view->win, lineno, 0);
+	if (line->cleareol)
+		wclrtoeol(view->win);
 	view->col = 0;
 	view->curline = line;
 	view->curtype = LINE_NONE;
 	line->selected = FALSE;
-	line->dirty = 0;
+	line->dirty = line->cleareol = 0;
 
 	if (selected) {
 		set_view_attr(view, LINE_CURSOR);
 		line->selected = TRUE;
 		view->ops->select(view, line);
-	} else if (line->selected) {
-		wclrtoeol(view->win);
 	}
 
 	scrollok(view->win, FALSE);
@@ -2681,7 +2682,7 @@ update_view(struct view *view)
 	char *line;
 	/* Clear the view and redraw everything since the tree sorting
 	 * might have rearranged things. */
-	bool redraw = view == VIEW(REQ_VIEW_TREE);
+	bool redraw = FALSE;
 	bool can_read = TRUE;
 
 	if (!view->pipe)
@@ -3633,6 +3634,8 @@ tree_read(struct view *view, char *text)
 
 		line->data = text;
 		line->type = type;
+		for (; line <= entry; line++)
+			line->dirty = line->cleareol = 1;
 		return TRUE;
 	}
 

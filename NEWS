@@ -4,6 +4,10 @@ Release notes
 tig master
 ----------
 
+Improvements:
+
+ - Tree view: avoid flickering when updating.
+
 Bug fixes:
 
  - Tree view: fix memory corruption bug when updating.
