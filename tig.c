@@ -2813,6 +2813,19 @@ add_line_text(struct view *view, const char *text, enum line_type type)
 	return data ? add_line_data(view, data, type) : NULL;
 }
 
+static struct line *
+add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
+{
+	char buf[SIZEOF_STR];
+	va_list args;
+
+	va_start(args, fmt);
+	if (vsnprintf(buf, sizeof(buf), fmt, args) >= sizeof(buf))
+		buf[0] = 0;
+	va_end(args);
+
+	return buf[0] ? add_line_text(view, buf, type) : NULL;
+}
 
 /*
  * View opening
@@ -3434,7 +3447,6 @@ static struct view_ops diff_ops = {
 static bool
 help_open(struct view *view)
 {
-	char buf[BUFSIZ];
 	int lines = ARRAY_SIZE(req_info) + 2;
 	int i;
 
@@ -3469,10 +3481,8 @@ help_open(struct view *view)
 		if (!*key)
 			key = "(no key defined)";
 
-		if (!string_format(buf, "    %-25s %s", key, req_info[i].help))
-			continue;
-
-		add_line_text(view, buf, LINE_DEFAULT);
+		add_line_format(view, LINE_DEFAULT, "    %-25s %s",
+				key, req_info[i].help);
 	}
 
 	if (run_requests) {
@@ -3499,11 +3509,8 @@ help_open(struct view *view)
 					        argc ? " " : "", req->argv[argc]))
 				return REQ_NONE;
 
-		if (!string_format(buf, "    %-10s %-14s `%s`",
-				   keymap_table[req->keymap].name, key, cmd))
-			continue;
-
-		add_line_text(view, buf, LINE_DEFAULT);
+		add_line_format(view, LINE_DEFAULT, "    %-10s %-14s `%s`",
+				keymap_table[req->keymap].name, key, cmd);
 	}
 
 	return TRUE;
@@ -3607,10 +3614,8 @@ static bool
 tree_read(struct view *view, char *text)
 {
 	size_t textlen = text ? strlen(text) : 0;
-	char buf[SIZEOF_STR];
 	unsigned long pos;
 	enum line_type type;
-	bool first_read = view->lines == 0;
 
 	if (!text)
 		return TRUE;
@@ -3620,19 +3625,9 @@ tree_read(struct view *view, char *text)
 	type = text[STRING_SIZE("100644 ")] == 't'
 	     ? LINE_TREE_DIR : LINE_TREE_FILE;
 
-	if (first_read) {
-		/* Add path info line */
-		if (!string_format(buf, "Directory path /%s", opt_path) ||
-		    !add_line_text(view, buf, LINE_DEFAULT))
-			return FALSE;
-
-		/* Insert "link" to parent directory. */
-		if (*opt_path) {
-			if (!string_format(buf, TREE_UP_FORMAT, view->ref) ||
-			    !add_line_text(view, buf, LINE_TREE_DIR))
-				return FALSE;
-		}
-	}
+	if (view->lines == 0 &&
+	    !add_line_format(view, LINE_DEFAULT, "Directory path /%s", opt_path))
+		return FALSE;
 
 	/* Strip the path part ... */
 	if (*opt_path) {
@@ -3643,6 +3638,11 @@ tree_read(struct view *view, char *text)
 		if (pathlen > striplen)
 			memmove(path, path + striplen,
 				pathlen - striplen + 1);
+
+		/* Insert "link" to parent directory. */
+		if (view->lines == 1 &&
+		    !add_line_format(view, LINE_TREE_DIR, TREE_UP_FORMAT, view->ref))
+			return FALSE;
 	}
 
 	/* Skip "Directory ..." and ".." line. */
