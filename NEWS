@@ -1,6 +1,13 @@
 Release notes
 =============
 
+tig master
+----------
+
+Bug fixes:
+
+ - Tree view: fix memory corruption bug when updating.
+
 tig-0.13
 --------
 

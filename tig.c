@@ -3614,7 +3614,7 @@ static bool
 tree_read(struct view *view, char *text)
 {
 	size_t textlen = text ? strlen(text) : 0;
-	unsigned long pos;
+	size_t pos;
 	enum line_type type;
 
 	if (!text)
@@ -3645,8 +3645,12 @@ tree_read(struct view *view, char *text)
 			return FALSE;
 	}
 
+	if (!add_line_text(view, text, type))
+		return FALSE;
+	text = view->line[view->lines - 1].data;
+
 	/* Skip "Directory ..." and ".." line. */
-	for (pos = 1 + !!*opt_path; pos < view->lines; pos++) {
+	for (pos = 1 + !!*opt_path; pos < view->lines - 1; pos++) {
 		struct line *line = &view->line[pos];
 		const char *path1 = tree_path(line);
 		char *path2 = text + SIZEOF_TREE_ATTR;
@@ -3655,23 +3659,15 @@ tree_read(struct view *view, char *text)
 		if (cmp <= 0)
 			continue;
 
-		text = strdup(text);
-		if (!text)
-			return FALSE;
-
-		if (view->lines > pos)
+		if (view->lines - 1 > pos)
 			memmove(&view->line[pos + 1], &view->line[pos],
-				(view->lines - pos) * sizeof(*line));
+				(view->lines - 1 - pos) * sizeof(*line));
 
 		line = &view->line[pos];
 		line->data = text;
 		line->type = type;
-		view->lines++;
 		return TRUE;
 	}
-
-	if (!add_line_text(view, text, type))
-		return FALSE;
 
 	if (tree_lineno > view->lineno) {
 		view->lineno = tree_lineno;
