@@ -69,7 +69,6 @@ static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
 static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool reserve);
-static bool prompt_yesno(const char *prompt);
 static int load_refs(void);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
@@ -171,6 +170,17 @@ set_from_int_map(struct int_map *map, size_t map_size,
 	return ERR;
 }
 
+enum input_status {
+	INPUT_OK,
+	INPUT_SKIP,
+	INPUT_STOP,
+	INPUT_CANCEL
+};
+
+typedef enum input_status (*input_handler)(void *data, char *buf, int c);
+
+static char *prompt_input(const char *prompt, input_handler handler, void *data);
+static bool prompt_yesno(const char *prompt);
 
 /*
  * String helpers
@@ -6195,54 +6205,16 @@ get_input(bool prompting)
 	}
 }
 
-static bool
-prompt_yesno(const char *prompt)
-{
-	enum { WAIT, STOP, CANCEL  } status = WAIT;
-	bool answer = FALSE;
-
-	while (status == WAIT) {
-		int key;
-
-		mvwprintw(status_win, 0, 0, "%s [Yy]/[Nn]", prompt);
-		wclrtoeol(status_win);
-
-		key = get_input(TRUE);
-		switch (key) {
-		case 'y':
-		case 'Y':
-			answer = TRUE;
-			status = STOP;
-			break;
-
-		case KEY_ESC:
-		case KEY_RETURN:
-		case KEY_ENTER:
-		case KEY_BACKSPACE:
-		case 'n':
-		case 'N':
-		case '\n':
-		default:
-			answer = FALSE;
-			status = CANCEL;
-		}
-	}
-
-	/* Clear the status window */
-	status_empty = FALSE;
-	report("");
-
-	return answer;
-}
-
 static char *
-read_prompt(const char *prompt)
+prompt_input(const char *prompt, input_handler handler, void *data)
 {
-	enum { READING, STOP, CANCEL } status = READING;
+	enum input_status status = INPUT_OK;
 	static char buf[SIZEOF_STR];
-	int pos = 0;
+	size_t pos = 0;
 
-	while (status == READING) {
+	buf[pos] = 0;
+
+	while (status == INPUT_OK || status == INPUT_SKIP) {
 		int key;
 
 		mvwprintw(status_win, 0, 0, "%s%.*s", prompt, pos, buf);
@@ -6253,18 +6225,18 @@ read_prompt(const char *prompt)
 		case KEY_RETURN:
 		case KEY_ENTER:
 		case '\n':
-			status = pos ? STOP : CANCEL;
+			status = pos ? INPUT_STOP : INPUT_CANCEL;
 			break;
 
 		case KEY_BACKSPACE:
 			if (pos > 0)
-				pos--;
+				buf[--pos] = 0;
 			else
-				status = CANCEL;
+				status = INPUT_CANCEL;
 			break;
 
 		case KEY_ESC:
-			status = CANCEL;
+			status = INPUT_CANCEL;
 			break;
 
 		default:
@@ -6273,7 +6245,8 @@ read_prompt(const char *prompt)
 				return NULL;
 			}
 
-			if (isprint(key))
+			status = handler(data, buf, key);
+			if (status == INPUT_OK)
 				buf[pos++] = (char) key;
 		}
 	}
@@ -6282,12 +6255,45 @@ read_prompt(const char *prompt)
 	status_empty = FALSE;
 	report("");
 
-	if (status == CANCEL)
+	if (status == INPUT_CANCEL)
 		return NULL;
 
 	buf[pos++] = 0;
 
 	return buf;
+}
+
+static enum input_status
+prompt_yesno_handler(void *data, char *buf, int c)
+{
+	if (c == 'y' || c == 'Y')
+		return INPUT_STOP;
+	if (c == 'n' || c == 'N')
+		return INPUT_CANCEL;
+	return INPUT_SKIP;
+}
+
+static bool
+prompt_yesno(const char *prompt)
+{
+	char prompt2[SIZEOF_STR];
+
+	if (!string_format(prompt2, "%s [Yy/Nn]", prompt))
+		return FALSE;
+
+	return !!prompt_input(prompt2, prompt_yesno_handler, NULL);
+}
+
+static enum input_status
+read_prompt_handler(void *data, char *buf, int c)
+{
+	return isprint(c) ? INPUT_OK : INPUT_SKIP;
+}
+
+static char *
+read_prompt(const char *prompt)
+{
+	return prompt_input(prompt, read_prompt_handler, NULL);
 }
 
 /*
