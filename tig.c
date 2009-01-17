@@ -797,7 +797,7 @@ parse_options(int argc, const char *argv[], const char ***run_argv)
 	bool seen_dashdash = FALSE;
 	/* XXX: This is vulnerable to the user overriding options
 	 * required for the main view parser. */
-	const char *custom_argv[SIZEOF_ARG] = {
+	static const char *custom_argv[SIZEOF_ARG] = {
 		"git", "log", "--no-color", "--pretty=raw", "--parents",
 			"--topo-order", NULL
 	};
