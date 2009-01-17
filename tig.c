@@ -4038,6 +4038,18 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	return TRUE;
 }
 
+static bool
+check_blame_commit(struct blame *blame)
+{
+	if (!blame->commit)
+		report("Commit data not loaded yet");
+	else if (!strcmp(blame->commit->id, NULL_ID))
+		report("No commit exist for the selected line");
+	else
+		return TRUE;
+	return FALSE;
+}
+
 static enum request
 blame_request(struct view *view, enum request request, struct line *line)
 {
@@ -4046,13 +4058,11 @@ blame_request(struct view *view, enum request request, struct line *line)
 
 	switch (request) {
 	case REQ_VIEW_BLAME:
-		if (!blame->commit || !strcmp(blame->commit->id, NULL_ID)) {
-			report("Commit ID unknown");
-			break;
+		if (check_blame_commit(blame)) {
+			string_copy(opt_ref, blame->commit->id);
+			open_view(view, REQ_VIEW_BLAME, OPEN_REFRESH);
 		}
-		string_copy(opt_ref, blame->commit->id);
-		open_view(view, REQ_VIEW_BLAME, OPEN_REFRESH);
-		return request;
+		break;
 
 	case REQ_ENTER:
 		if (!blame->commit) {
