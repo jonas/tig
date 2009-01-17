@@ -313,6 +313,7 @@ enum io_type {
 	IO_FG,			/* Execute command with same std{in,out,err}. */
 	IO_RD,			/* Read only fork+exec IO. */
 	IO_WR,			/* Write only fork+exec IO. */
+	IO_AP,			/* Append fork+exec output to file. */
 };
 
 struct io {
@@ -411,6 +412,8 @@ start_io(struct io *io)
 	if ((io->type == IO_RD || io->type == IO_WR) &&
 	    pipe(pipefds) < 0)
 		return FALSE;
+	else if (io->type == IO_AP)
+		pipefds[1] = io->pipe;
 
 	if ((io->pid = fork())) {
 		if (pipefds[!(io->type == IO_WR)] != -1)
@@ -424,7 +427,8 @@ start_io(struct io *io)
 		if (io->type != IO_FG) {
 			int devnull = open("/dev/null", O_RDWR);
 			int readfd  = io->type == IO_WR ? pipefds[0] : devnull;
-			int writefd = io->type == IO_RD ? pipefds[1] : devnull;
+			int writefd = (io->type == IO_RD || io->type == IO_AP)
+							? pipefds[1] : devnull;
 
 			dup2(readfd,  STDIN_FILENO);
 			dup2(writefd, STDOUT_FILENO);
@@ -484,6 +488,19 @@ run_io_fg(const char **argv, const char *dir)
 	if (!format_argv(io.argv, argv, FORMAT_NONE))
 		return FALSE;
 	return run_io_do(&io);
+}
+
+static bool
+run_io_append(const char **argv, enum format_flags flags, int fd)
+{
+	struct io io = {};
+
+	init_io(&io, NULL, IO_AP);
+	io.pipe = fd;
+	if (format_argv(io.argv, argv, flags))
+		return run_io_do(&io);
+	close(fd);
+	return FALSE;
 }
 
 static bool
@@ -3648,6 +3665,22 @@ tree_read(struct view *view, char *text)
 	return TRUE;
 }
 
+static void
+open_blob_editor()
+{
+	char file[SIZEOF_STR] = "/tmp/tigblob.XXXXXX";
+	int fd = mkstemp(file);
+
+	if (fd == -1)
+		report("Failed to create temporary file");
+	else if (!run_io_append(blob_ops.argv, FORMAT_ALL, fd))
+		report("Failed to save blob data to file");
+	else
+		open_editor(FALSE, file);
+	if (fd != -1)
+		unlink(file);
+}
+
 static enum request
 tree_request(struct view *view, enum request request, struct line *line)
 {
@@ -3667,7 +3700,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 		if (line->type != LINE_TREE_FILE) {
 			report("Edit only supported for files");
 		} else if (!is_head_commit(view->vid)) {
-			report("Edit only supported for files in the current work tree");
+			open_blob_editor();
 		} else {
 			open_editor(TRUE, opt_file);
 		}
@@ -3768,6 +3801,18 @@ blob_read(struct view *view, char *line)
 	return add_line_text(view, line, LINE_DEFAULT) != NULL;
 }
 
+static enum request
+blob_request(struct view *view, enum request request, struct line *line)
+{
+	switch (request) {
+	case REQ_EDIT:
+		open_blob_editor();
+		return REQ_NONE;
+	default:
+		return pager_request(view, request, line);
+	}
+}
+
 static const char *blob_argv[SIZEOF_ARG] = {
 	"git", "cat-file", "blob", "%(blob)", NULL
 };
@@ -3778,7 +3823,7 @@ static struct view_ops blob_ops = {
 	NULL,
 	blob_read,
 	pager_draw,
-	pager_request,
+	blob_request,
 	pager_grep,
 	pager_select,
 };
