@@ -2753,7 +2753,7 @@ update_view(struct view *view)
 		return TRUE;
 
 	if (redraw)
-		redraw_view(view);
+		redraw_view_from(view, 0);
 	else
 		redraw_view_dirty(view);
 
