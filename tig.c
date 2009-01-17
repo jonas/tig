@@ -709,7 +709,6 @@ static int read_properties(struct io *io, const char *separators, int (*read)(ch
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
 	REQ_(SCREEN_REDRAW,	"Redraw the screen"), \
-	REQ_(SCREEN_RESIZE,	"Resize the screen"), \
 	REQ_(SHOW_VERSION,	"Show version information"), \
 	REQ_(STOP_LOADING,	"Stop all loading views"), \
 	REQ_(EDIT,		"Open in editor"), \
@@ -1116,9 +1115,6 @@ static struct keybinding default_keybindings[] = {
 	{ '@',		REQ_STAGE_NEXT },
 	{ ',',		REQ_TREE_PARENT },
 	{ 'e',		REQ_EDIT },
-
-	/* Using the ncurses SIGWINCH handler. */
-	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
 };
 
 #define KEYMAP_INFO \
@@ -1552,7 +1548,7 @@ option_bind_command(int argc, const char *argv[])
 
 	request = get_request(argv[2]);
 	if (request == REQ_NONE) {
-		const char *obsolete[] = { "cherry-pick" };
+		const char *obsolete[] = { "cherry-pick", "screen-resize" };
 		size_t namelen = strlen(argv[2]);
 		int i;
 
@@ -3184,9 +3180,6 @@ view_driver(struct view *view, enum request request)
 		report("tig-%s (built %s)", TIG_VERSION, __DATE__);
 		return TRUE;
 
-	case REQ_SCREEN_RESIZE:
-		resize_display();
-		/* Fall-through */
 	case REQ_SCREEN_REDRAW:
 		redraw_display(TRUE);
 		break;
@@ -5928,6 +5921,47 @@ init_display(void)
 	}
 }
 
+static int
+get_input(bool prompting)
+{
+	struct view *view;
+	int i, key;
+
+	if (prompting)
+		input_mode = TRUE;
+
+	while (true) {
+		foreach_view (view, i)
+			update_view(view);
+
+		/* Refresh, accept single keystroke of input */
+		key = wgetch(status_win);
+
+		/* wgetch() with nodelay() enabled returns ERR when
+		 * there's no input. */
+		if (key == ERR) {
+			doupdate();
+
+		} else if (key == KEY_RESIZE) {
+			int height, width;
+
+			getmaxyx(stdscr, height, width);
+
+			/* Resize the status view and let the view driver take
+			 * care of resizing the displayed views. */
+			resize_display();
+			redraw_display(TRUE);
+			wresize(status_win, 1, width);
+			mvwin(status_win, height - 1, 0);
+			wrefresh(status_win);
+
+		} else {
+			input_mode = FALSE;
+			return key;
+		}
+	}
+}
+
 static bool
 prompt_yesno(const char *prompt)
 {
@@ -5935,25 +5969,13 @@ prompt_yesno(const char *prompt)
 	bool answer = FALSE;
 
 	while (status == WAIT) {
-		struct view *view;
-		int i, key;
-
-		input_mode = TRUE;
-
-		foreach_view (view, i)
-			update_view(view);
-
-		input_mode = FALSE;
+		int key;
 
 		mvwprintw(status_win, 0, 0, "%s [Yy]/[Nn]", prompt);
 		wclrtoeol(status_win);
 
-		/* Refresh, accept single keystroke of input */
-		key = wgetch(status_win);
+		key = get_input(TRUE);
 		switch (key) {
-		case ERR:
-			break;
-
 		case 'y':
 		case 'Y':
 			answer = TRUE;
@@ -5988,21 +6010,12 @@ read_prompt(const char *prompt)
 	int pos = 0;
 
 	while (status == READING) {
-		struct view *view;
-		int i, key;
-
-		input_mode = TRUE;
-
-		foreach_view (view, i)
-			update_view(view);
-
-		input_mode = FALSE;
+		int key;
 
 		mvwprintw(status_win, 0, 0, "%s%.*s", prompt, pos, buf);
 		wclrtoeol(status_win);
 
-		/* Refresh, accept single keystroke of input */
-		key = wgetch(status_win);
+		key = get_input(TRUE);
 		switch (key) {
 		case KEY_RETURN:
 		case KEY_ENTER:
@@ -6019,9 +6032,6 @@ read_prompt(const char *prompt)
 
 		case KEY_ESC:
 			status = CANCEL;
-			break;
-
-		case ERR:
 			break;
 
 		default:
@@ -6464,23 +6474,9 @@ main(int argc, const char *argv[])
 	}
 
 	while (view_driver(display[current_view], request)) {
-		int key;
-		int i;
+		int key = get_input(FALSE);
 
-		foreach_view (view, i)
-			update_view(view);
 		view = display[current_view];
-
-		/* Refresh, accept single keystroke of input */
-		key = wgetch(status_win);
-
-		/* wgetch() with nodelay() enabled returns ERR when there's no
-		 * input. */
-		if (key == ERR) {
-			request = REQ_NONE;
-			continue;
-		}
-
 		request = get_keybinding(view->keymap, key);
 
 		/* Some low-level request handling. This keeps access to
@@ -6522,19 +6518,6 @@ main(int argc, const char *argv[])
 				string_ncopy(opt_search, search, strlen(search));
 			else
 				request = REQ_NONE;
-			break;
-		}
-		case REQ_SCREEN_RESIZE:
-		{
-			int height, width;
-
-			getmaxyx(stdscr, height, width);
-
-			/* Resize the status view and let the view driver take
-			 * care of resizing the displayed views. */
-			wresize(status_win, 1, width);
-			mvwin(status_win, height - 1, 0);
-			wrefresh(status_win);
 			break;
 		}
 		default:
