@@ -6661,24 +6661,26 @@ warn(const char *msg, ...)
 }
 
 static enum request
-parse_options(int argc, const char *argv[], const char ***run_argv)
+parse_options(int argc, const char *argv[])
 {
 	enum request request = REQ_VIEW_MAIN;
 	const char *subcommand;
 	bool seen_dashdash = FALSE;
 	/* XXX: This is vulnerable to the user overriding options
 	 * required for the main view parser. */
-	static const char *custom_argv[SIZEOF_ARG] = {
+	const char *custom_argv[SIZEOF_ARG] = {
 		"git", "log", "--no-color", "--pretty=raw", "--parents",
 			"--topo-order", NULL
 	};
 	int i, j = 6;
 
-	if (!isatty(STDIN_FILENO))
+	if (!isatty(STDIN_FILENO)) {
+		io_open(&VIEW(REQ_VIEW_PAGER)->io, "");
 		return REQ_VIEW_PAGER;
+	}
 
 	if (argc <= 1)
-		return REQ_VIEW_MAIN;
+		return REQ_NONE;
 
 	subcommand = argv[1];
 	if (!strcmp(subcommand, "status")) {
@@ -6719,11 +6721,11 @@ parse_options(int argc, const char *argv[], const char ***run_argv)
 
 		} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
 			printf("tig version %s\n", TIG_VERSION);
-			return REQ_NONE;
+			quit(0);
 
 		} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
 			printf("%s\n", usage);
-			return REQ_NONE;
+			quit(0);
 		}
 
 		custom_argv[j++] = opt;
@@ -6731,8 +6733,8 @@ parse_options(int argc, const char *argv[], const char ***run_argv)
 			die("command too long");
 	}
 
-	custom_argv[j] = NULL;
-	*run_argv = custom_argv;
+	if (!prepare_update(VIEW(request), custom_argv, NULL, FORMAT_NONE))                                                                        
+		die("Failed to format arguments"); 
 
 	return request;
 }
@@ -6740,9 +6742,8 @@ parse_options(int argc, const char *argv[], const char ***run_argv)
 int
 main(int argc, const char *argv[])
 {
-	const char **run_argv = NULL;
+	enum request request = parse_options(argc, argv);
 	struct view *view;
-	enum request request;
 	size_t i;
 
 	signal(SIGINT, quit);
@@ -6761,10 +6762,6 @@ main(int argc, const char *argv[])
 
 	if (load_git_config() == ERR)
 		die("Failed to load repo config.");
-
-	request = parse_options(argc, argv, &run_argv);
-	if (request == REQ_NONE)
-		return 0;
 
 	/* Require a git repository unless when running in pager mode. */
 	if (!opt_git_dir[0] && request != REQ_VIEW_PAGER)
@@ -6787,14 +6784,9 @@ main(int argc, const char *argv[])
 
 	init_display();
 
-	if (request == REQ_VIEW_PAGER || run_argv) {
-		if (request == REQ_VIEW_PAGER)
-			io_open(&VIEW(request)->io, "");
-		else if (!prepare_update(VIEW(request), run_argv, NULL, FORMAT_NONE))
-			die("Failed to format arguments");
+	if (request != REQ_NONE)
 		open_view(NULL, request, OPEN_PREPARED);
-		request = REQ_NONE;
-	}
+	request = request == REQ_NONE ? REQ_VIEW_MAIN : REQ_NONE;
 
 	while (view_driver(display[current_view], request)) {
 		int key = get_input(0);
