@@ -863,83 +863,6 @@ static FILE *opt_tty			= NULL;
 #define is_initial_commit()	(!*opt_head_rev)
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || !strcmp(opt_head_rev, (rev)))
 
-static enum request
-parse_options(int argc, const char *argv[], const char ***run_argv)
-{
-	enum request request = REQ_VIEW_MAIN;
-	const char *subcommand;
-	bool seen_dashdash = FALSE;
-	/* XXX: This is vulnerable to the user overriding options
-	 * required for the main view parser. */
-	static const char *custom_argv[SIZEOF_ARG] = {
-		"git", "log", "--no-color", "--pretty=raw", "--parents",
-			"--topo-order", NULL
-	};
-	int i, j = 6;
-
-	if (!isatty(STDIN_FILENO))
-		return REQ_VIEW_PAGER;
-
-	if (argc <= 1)
-		return REQ_VIEW_MAIN;
-
-	subcommand = argv[1];
-	if (!strcmp(subcommand, "status")) {
-		if (argc > 2)
-			warn("ignoring arguments after `%s'", subcommand);
-		return REQ_VIEW_STATUS;
-
-	} else if (!strcmp(subcommand, "blame")) {
-		if (argc <= 2 || argc > 4)
-			die("invalid number of options to blame\n\n%s", usage);
-
-		i = 2;
-		if (argc == 4) {
-			string_ncopy(opt_ref, argv[i], strlen(argv[i]));
-			i++;
-		}
-
-		string_ncopy(opt_file, argv[i], strlen(argv[i]));
-		return REQ_VIEW_BLAME;
-
-	} else if (!strcmp(subcommand, "show")) {
-		request = REQ_VIEW_DIFF;
-
-	} else {
-		subcommand = NULL;
-	}
-
-	if (subcommand) {
-		custom_argv[1] = subcommand;
-		j = 2;
-	}
-
-	for (i = 1 + !!subcommand; i < argc; i++) {
-		const char *opt = argv[i];
-
-		if (seen_dashdash || !strcmp(opt, "--")) {
-			seen_dashdash = TRUE;
-
-		} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
-			printf("tig version %s\n", TIG_VERSION);
-			return REQ_NONE;
-
-		} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
-			printf("%s\n", usage);
-			return REQ_NONE;
-		}
-
-		custom_argv[j++] = opt;
-		if (j >= ARRAY_SIZE(custom_argv))
-			die("command too long");
-	}
-
-	custom_argv[j] = NULL;
-	*run_argv = custom_argv;
-
-	return request;
-}
-
 
 /*
  * Line-oriented content detection.
@@ -6735,6 +6658,83 @@ warn(const char *msg, ...)
 	vfprintf(stderr, msg, args);
 	fputs("\n", stderr);
 	va_end(args);
+}
+
+static enum request
+parse_options(int argc, const char *argv[], const char ***run_argv)
+{
+	enum request request = REQ_VIEW_MAIN;
+	const char *subcommand;
+	bool seen_dashdash = FALSE;
+	/* XXX: This is vulnerable to the user overriding options
+	 * required for the main view parser. */
+	static const char *custom_argv[SIZEOF_ARG] = {
+		"git", "log", "--no-color", "--pretty=raw", "--parents",
+			"--topo-order", NULL
+	};
+	int i, j = 6;
+
+	if (!isatty(STDIN_FILENO))
+		return REQ_VIEW_PAGER;
+
+	if (argc <= 1)
+		return REQ_VIEW_MAIN;
+
+	subcommand = argv[1];
+	if (!strcmp(subcommand, "status")) {
+		if (argc > 2)
+			warn("ignoring arguments after `%s'", subcommand);
+		return REQ_VIEW_STATUS;
+
+	} else if (!strcmp(subcommand, "blame")) {
+		if (argc <= 2 || argc > 4)
+			die("invalid number of options to blame\n\n%s", usage);
+
+		i = 2;
+		if (argc == 4) {
+			string_ncopy(opt_ref, argv[i], strlen(argv[i]));
+			i++;
+		}
+
+		string_ncopy(opt_file, argv[i], strlen(argv[i]));
+		return REQ_VIEW_BLAME;
+
+	} else if (!strcmp(subcommand, "show")) {
+		request = REQ_VIEW_DIFF;
+
+	} else {
+		subcommand = NULL;
+	}
+
+	if (subcommand) {
+		custom_argv[1] = subcommand;
+		j = 2;
+	}
+
+	for (i = 1 + !!subcommand; i < argc; i++) {
+		const char *opt = argv[i];
+
+		if (seen_dashdash || !strcmp(opt, "--")) {
+			seen_dashdash = TRUE;
+
+		} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
+			printf("tig version %s\n", TIG_VERSION);
+			return REQ_NONE;
+
+		} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
+			printf("%s\n", usage);
+			return REQ_NONE;
+		}
+
+		custom_argv[j++] = opt;
+		if (j >= ARRAY_SIZE(custom_argv))
+			die("command too long");
+	}
+
+	custom_argv[j] = NULL;
+	*run_argv = custom_argv;
+
+	return request;
 }
 
 int
