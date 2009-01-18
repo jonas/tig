@@ -2406,13 +2406,10 @@ move_view(struct view *view, enum request request)
 
 static void search_view(struct view *view, enum request request);
 
-static bool
-find_next_line(struct view *view, unsigned long lineno, struct line *line)
+static void
+select_view_line(struct view *view, unsigned long lineno)
 {
 	assert(view_is_displayed(view));
-
-	if (!view->ops->grep(view, line))
-		return FALSE;
 
 	if (lineno - view->offset >= view->height) {
 		view->offset = lineno;
@@ -2429,9 +2426,6 @@ find_next_line(struct view *view, unsigned long lineno, struct line *line)
 		redrawwin(view->win);
 		wrefresh(view->win);
 	}
-
-	report("Line %ld matches '%s'", lineno + 1, view->grep);
-	return TRUE;
 }
 
 static void
@@ -2469,10 +2463,11 @@ find_next(struct view *view, enum request request)
 	/* Note, lineno is unsigned long so will wrap around in which case it
 	 * will become bigger than view->lines. */
 	for (; lineno < view->lines; lineno += direction) {
-		struct line *line = &view->line[lineno];
-
-		if (find_next_line(view, lineno, line))
+		if (view->ops->grep(view, &view->line[lineno])) {
+			select_view_line(view, lineno);
+			report("Line %ld matches '%s'", lineno + 1, view->grep);
 			return;
+		}
 	}
 
 	report("No match found for '%s'", view->grep);
