@@ -2703,11 +2703,9 @@ update_view(struct view *view)
 	}
 
 	for (; (line = io_get(view->pipe, '\n', can_read)); can_read = FALSE) {
-		size_t linelen = strlen(line);
-
 		if (opt_iconv != ICONV_NONE) {
 			ICONV_CONST char *inbuf = line;
-			size_t inlen = linelen + 1;
+			size_t inlen = strlen(line) + 1;
 
 			char *outbuf = out_buffer;
 			size_t outlen = sizeof(out_buffer);
@@ -2715,10 +2713,8 @@ update_view(struct view *view)
 			size_t ret;
 
 			ret = iconv(opt_iconv, &inbuf, &inlen, &outbuf, &outlen);
-			if (ret != (size_t) -1) {
+			if (ret != (size_t) -1)
 				line = out_buffer;
-				linelen = strlen(out_buffer);
-			}
 		}
 
 		if (!view->ops->read(view, line))
