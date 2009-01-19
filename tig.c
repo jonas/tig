@@ -5384,6 +5384,7 @@ main_read(struct view *view, char *line)
 			die("No revisions match the given arguments.");
 		if (view->lines > 0) {
 			commit = view->line[view->lines - 1].data;
+			view->line[view->lines - 1].dirty = 1;
 			if (!*commit->author) {
 				view->lines--;
 				free(commit);
