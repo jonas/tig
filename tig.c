@@ -2707,7 +2707,7 @@ update_view(struct view *view)
 
 		if (opt_iconv != ICONV_NONE) {
 			ICONV_CONST char *inbuf = line;
-			size_t inlen = linelen;
+			size_t inlen = linelen + 1;
 
 			char *outbuf = out_buffer;
 			size_t outlen = sizeof(out_buffer);

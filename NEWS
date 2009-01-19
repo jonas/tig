@@ -11,6 +11,7 @@ Improvements:
 Bug fixes:
 
  - Tree view: fix memory corruption bug when updating.
+ - Fix regression for non-UTF-8 locales corrupting the view data.
 
 tig-0.13
 --------
