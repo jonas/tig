@@ -2191,6 +2191,14 @@ update_display_cursor(struct view *view)
 	}
 }
 
+static void
+toggle_view_option(bool *option, const char *help)
+{
+	*option = !*option;
+	redraw_display();
+	report("%sabling %s", *option ? "En" : "Dis", help);
+}
+
 /*
  * Navigation
  */
@@ -3115,28 +3123,23 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_TOGGLE_LINENO:
-		opt_line_number = !opt_line_number;
-		redraw_display();
+		toggle_view_option(&opt_line_number, "line numbers");
 		break;
 
 	case REQ_TOGGLE_DATE:
-		opt_date = !opt_date;
-		redraw_display();
+		toggle_view_option(&opt_date, "date display");
 		break;
 
 	case REQ_TOGGLE_AUTHOR:
-		opt_author = !opt_author;
-		redraw_display();
+		toggle_view_option(&opt_author, "author display");
 		break;
 
 	case REQ_TOGGLE_REV_GRAPH:
-		opt_rev_graph = !opt_rev_graph;
-		redraw_display();
+		toggle_view_option(&opt_rev_graph, "revision graph display");
 		break;
 
 	case REQ_TOGGLE_REFS:
-		opt_show_refs = !opt_show_refs;
-		redraw_display();
+		toggle_view_option(&opt_show_refs, "reference display");
 		break;
 
 	case REQ_SEARCH:
