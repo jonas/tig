@@ -2050,7 +2050,7 @@ redraw_view_from(struct view *view, int lineno)
 static void
 redraw_view(struct view *view)
 {
-	wclear(view->win);
+	werase(view->win);
 	redraw_view_from(view, 0);
 }
 
@@ -2167,12 +2167,14 @@ resize_display(void)
 }
 
 static void
-redraw_display(void)
+redraw_display(bool clear)
 {
 	struct view *view;
 	int i;
 
 	foreach_displayed_view (view, i) {
+		if (clear)
+			wclear(view->win);
 		redraw_view(view);
 		update_view_title(view);
 	}
@@ -2195,7 +2197,7 @@ static void
 toggle_view_option(bool *option, const char *help)
 {
 	*option = !*option;
-	redraw_display();
+	redraw_display(FALSE);
 	report("%sabling %s", *option ? "En" : "Dis", help);
 }
 
@@ -2921,7 +2923,7 @@ open_external_viewer(const char *argv[], const char *dir)
 	fprintf(stderr, "Press Enter to continue");
 	getc(opt_tty);
 	reset_prog_mode();
-	redraw_display();
+	redraw_display(TRUE);
 }
 
 static void
@@ -3169,7 +3171,7 @@ view_driver(struct view *view, enum request request)
 		resize_display();
 		/* Fall-through */
 	case REQ_SCREEN_REDRAW:
-		redraw_display();
+		redraw_display(TRUE);
 		break;
 
 	case REQ_EDIT:
@@ -3191,7 +3193,7 @@ view_driver(struct view *view, enum request request)
 			display[current_view] = view->parent;
 			view->parent = view;
 			resize_display();
-			redraw_display();
+			redraw_display(FALSE);
 			report("");
 			break;
 		}
