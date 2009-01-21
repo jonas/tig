@@ -4533,8 +4533,11 @@ status_exists(struct status *status, enum line_type type)
 	for (line = view->line; line < view->line + view->lines; line++) {
 		struct status *pos = line->data;
 
-		if (line->type == type && pos &&
-		    !strcmp(status->new.name, pos->new.name))
+		if (line->type != type)
+			continue;
+		if (!pos && (!status || !status->status))
+			return TRUE;
+		if (pos && !strcmp(status->new.name, pos->new.name))
 			return TRUE;
 	}
 
