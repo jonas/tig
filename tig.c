@@ -2622,6 +2622,9 @@ prepare_update_file(struct view *view, const char *name)
 static bool
 begin_update(struct view *view, bool refresh)
 {
+	if (view->pipe)
+		end_update(view, TRUE);
+
 	if (refresh) {
 		if (!start_io(&view->io))
 			return FALSE;
@@ -2854,9 +2857,6 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	if (nviews != displayed_views() ||
 	    (nviews == 1 && base_view != display[0]))
 		resize_display();
-
-	if (view->pipe)
-		end_update(view, TRUE);
 
 	if (view->ops->open) {
 		if (!view->ops->open(view)) {
