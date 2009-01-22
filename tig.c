@@ -2409,22 +2409,24 @@ static void search_view(struct view *view, enum request request);
 static void
 select_view_line(struct view *view, unsigned long lineno)
 {
-	assert(view_is_displayed(view));
-
 	if (lineno - view->offset >= view->height) {
 		view->offset = lineno;
 		view->lineno = lineno;
-		redraw_view(view);
+		if (view_is_displayed(view))
+			redraw_view(view);
 
 	} else {
 		unsigned long old_lineno = view->lineno - view->offset;
 
 		view->lineno = lineno;
-		draw_view_line(view, old_lineno);
-
-		draw_view_line(view, view->lineno - view->offset);
-		redrawwin(view->win);
-		wrefresh(view->win);
+		if (view_is_displayed(view)) {
+			draw_view_line(view, old_lineno);
+			draw_view_line(view, view->lineno - view->offset);
+			redrawwin(view->win);
+			wrefresh(view->win);
+		} else {
+			view->ops->select(view, &view->line[view->lineno]);
+		}
 	}
 }
 
