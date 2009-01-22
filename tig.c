@@ -4568,17 +4568,22 @@ static bool
 status_exists(struct status *status, enum line_type type)
 {
 	struct view *view = VIEW(REQ_VIEW_STATUS);
-	struct line *line;
+	unsigned long lineno;
 
-	for (line = view->line; line < view->line + view->lines; line++) {
+	for (lineno = 0; lineno < view->lines; lineno++) {
+		struct line *line = &view->line[lineno];
 		struct status *pos = line->data;
 
 		if (line->type != type)
 			continue;
-		if (!pos && (!status || !status->status))
+		if (!pos && (!status || !status->status) && line[1].data) {
+			select_view_line(view, lineno);
 			return TRUE;
-		if (pos && !strcmp(status->new.name, pos->new.name))
+		}
+		if (pos && !strcmp(status->new.name, pos->new.name)) {
+			select_view_line(view, lineno);
 			return TRUE;
+		}
 	}
 
 	return FALSE;
