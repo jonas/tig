@@ -368,7 +368,7 @@ io_open(struct io *io, const char *name)
 static bool
 kill_io(struct io *io)
 {
-	return kill(io->pid, SIGKILL) != -1;
+	return io->pid == 0 || kill(io->pid, SIGKILL) != -1;
 }
 
 static bool
