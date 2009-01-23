@@ -4184,6 +4184,8 @@ blame_request(struct view *view, enum request request, struct line *line)
 		}
 
 		open_view(view, REQ_VIEW_DIFF, flags);
+		if (VIEW(REQ_VIEW_DIFF)->pipe && !strcmp(blame->commit->id, NULL_ID))
+			string_copy_rev(VIEW(REQ_VIEW_DIFF)->ref, NULL_ID);
 		break;
 
 	default:
