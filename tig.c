@@ -3895,6 +3895,7 @@ struct blame_commit {
 	char author[75];		/* Author of the commit. */
 	struct tm time;			/* Date from the author ident. */
 	char filename[128];		/* Name of file. */
+	bool has_previous;		/* Was a "previous" line detected. */
 };
 
 struct blame {
@@ -4084,6 +4085,9 @@ blame_read(struct view *view, char *line)
 	} else if (match_blame_header("summary ", &line)) {
 		string_ncopy(commit->title, line, strlen(line));
 
+	} else if (match_blame_header("previous ", &line)) {
+		commit->has_previous = TRUE;
+
 	} else if (match_blame_header("filename ", &line)) {
 		string_ncopy(commit->filename, line, strlen(line));
 		commit = NULL;
@@ -4161,10 +4165,15 @@ blame_request(struct view *view, enum request request, struct line *line)
 		if (!strcmp(blame->commit->id, NULL_ID)) {
 			struct view *diff = VIEW(REQ_VIEW_DIFF);
 			const char *diff_index_argv[] = {
-				"git", "diff-index", "--root", "--cached",
-					"--patch-with-stat", "-C", "-M",
-					"HEAD", "--", view->vid, NULL
+				"git", "diff-index", "--patch-with-stat", "-C",
+					"-M", "HEAD", "--", view->vid, NULL
 			};
+
+			if (!blame->commit->has_previous) {
+				diff_index_argv[1] = "diff";
+				diff_index_argv[5] = "--";
+				diff_index_argv[6] = "/dev/null";
+			}
 
 			if (!prepare_update(diff, diff_index_argv, NULL, FORMAT_DASH)) {
 				report("Failed to allocate diff command");
