@@ -4165,12 +4165,13 @@ blame_request(struct view *view, enum request request, struct line *line)
 		if (!strcmp(blame->commit->id, NULL_ID)) {
 			struct view *diff = VIEW(REQ_VIEW_DIFF);
 			const char *diff_index_argv[] = {
-				"git", "diff-index", "--patch-with-stat", "-C",
-					"-M", "HEAD", "--", view->vid, NULL
+				"git", "diff-index", "--root", "--patch-with-stat",
+					"-C", "-M", "HEAD", "--", view->vid, NULL
 			};
 
 			if (!blame->commit->has_previous) {
 				diff_index_argv[1] = "diff";
+				diff_index_argv[2] = "--no-color";
 				diff_index_argv[5] = "--";
 				diff_index_argv[6] = "/dev/null";
 			}
