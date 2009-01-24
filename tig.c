@@ -4172,8 +4172,8 @@ blame_request(struct view *view, enum request request, struct line *line)
 			if (!blame->commit->has_previous) {
 				diff_index_argv[1] = "diff";
 				diff_index_argv[2] = "--no-color";
-				diff_index_argv[5] = "--";
-				diff_index_argv[6] = "/dev/null";
+				diff_index_argv[6] = "--";
+				diff_index_argv[7] = "/dev/null";
 			}
 
 			if (!prepare_update(diff, diff_index_argv, NULL, FORMAT_DASH)) {
