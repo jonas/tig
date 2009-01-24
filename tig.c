@@ -4062,7 +4062,7 @@ blame_read(struct view *view, char *line)
 	if (!commit) {
 		commit = parse_blame_commit(view, line, &blamed);
 		string_format(view->ref, "%s %2d%%", view->vid,
-			      blamed * 100 / view->lines);
+			      view->lines ? blamed * 100 / view->lines : 0);
 
 	} else if (match_blame_header("author ", &line)) {
 		string_ncopy(commit->author, line, strlen(line));
