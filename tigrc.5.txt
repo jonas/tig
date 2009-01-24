@@ -232,6 +232,17 @@ ifdef::backend-xhtml11[]
 [frame="none"]
 `-----------------------`-----------------------------------------------------
 endif::backend-xhtml11[]
+View specific actions:
+------------------------------------------------------------------------------
+status-update		Update file status
+status-merge		Resolve unmerged file
+stage-next		Find next chunk to stage
+------------------------------------------------------------------------------
+
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
 Cursor navigation:
 ------------------------------------------------------------------------------
 move-up			Move cursor one line up
@@ -272,7 +283,6 @@ ifdef::backend-xhtml11[]
 endif::backend-xhtml11[]
 Misc:
 ------------------------------------------------------------------------------
-none			Do nothing
 prompt			Bring up the prompt
 screen-redraw		Redraw the screen
 screen-resize		Resize the screen
@@ -283,10 +293,8 @@ toggle-date		Toggle date display
 toggle-author		Toggle author display
 toggle-rev-graph	Toggle revision graph visualization
 toggle-refs		Toggle reference display
-status-update		Update file status
-status-merge		Resolve unmerged file
-stage-next		Find next chunk to stage
 edit			Open in editor
+none			Do nothing
 ------------------------------------------------------------------------------
 
 

@@ -349,6 +349,26 @@ Down	Similar to 'Up' but will move down.
 	commit. For merges the parent is queried.
 -----------------------------------------------------------------------------
 
+[[view-manipulation]]
+View Specific Actions
+~~~~~~~~~~~~~~~~~~~~~
+
+`-------`--------------------------------------------------------------------
+Key	Action
+-----------------------------------------------------------------------------
+u	Update status of file. In the status view, this allows you to add an \
+	untracked file or stage changes to a file for next commit (similar to \
+	running git-add <filename>). In the stage view, when pressing this on \
+	a diff chunk line stages only that chunk for next commit, when not on \
+	a diff chunk line all changes in the displayed diff is staged.
+M	Resolve unmerged file by launching git-mergetool(1). Note, to work \
+	correctly this might require some initial configuration of your \
+	preferred merge tool. See the manpage of git-mergetool(1).
+!	Checkout file with unstaged changes. This will reset the file to \
+	contain the content it had at last commit.
+@	Move to next chunk in the stage view.
+-----------------------------------------------------------------------------
+
 [[cursor-nav]]
 Cursor Navigation
 ~~~~~~~~~~~~~~~~~
@@ -411,17 +431,6 @@ g	Toggle revision graph visualization on/off.
 F	Toggle reference display on/off (tag and branch names).
 ':'	Open prompt. This allows you to specify what git command \
 	to run. Example `:log -p`
-u	Update status of file. In the status view, this allows you to add an \
-	untracked file or stage changes to a file for next commit (similar to \
-	running git-add <filename>). In the stage view, when pressing this on \
-	a diff chunk line stages only that chunk for next commit, when not on \
-	a diff chunk line all changes in the displayed diff is staged.
-M	Resolve unmerged file by launching git-mergetool(1). Note, to work \
-	correctly this might require some initial configuration of your \
-	preferred merge tool. See the manpage of git-mergetool(1).
-!	Checkout file with unstaged changes. This will reset the file to \
-	contain the content it had at last commit.
-@	Move to next chunk in the stage view.
 e	Open file in editor.
 -----------------------------------------------------------------------------
 
