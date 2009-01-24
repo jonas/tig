@@ -2925,6 +2925,8 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		resize_display();
 
 	if (view->ops->open) {
+		if (view->pipe)
+			end_update(view, TRUE);
 		if (!view->ops->open(view)) {
 			report("Failed to load %s view", view->name);
 			return;
