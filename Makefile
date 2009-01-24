@@ -34,7 +34,7 @@ RPM_RELEASE = $(word 2,$(RPM_VERLIST))$(if $(WTDIRTY),.dirty)
 
 LDLIBS ?= -lcurses
 CFLAGS ?= -Wall -O2
-DFLAGS	= -g -DDEBUG -Werror
+DFLAGS	= -g -DDEBUG -Werror -O0
 PROGS	= tig
 MANDOC	= tig.1 tigrc.5
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html NEWS.html
