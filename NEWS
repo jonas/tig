@@ -8,6 +8,8 @@ Incompatibilities:
 
  - The screen-resize action has been deprecated. It had no real use for
    users and was never meant to be exposed.
+ - The "tree-parent" action was renamed to "parent". Warnings will be
+   emitted for transition.
 
 Improvements:
 

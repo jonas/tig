@@ -344,6 +344,8 @@ Up	This key is "context sensitive" and will move the cursor one \
 	the previous commit in the main view and update the diff view \
 	to display it.
 Down	Similar to 'Up' but will move down.
+','	Move to parent. In the tree view, this means switch to the parent \
+	directory.
 -----------------------------------------------------------------------------
 
 [[cursor-nav]]
@@ -419,7 +421,6 @@ M	Resolve unmerged file by launching git-mergetool(1). Note, to work \
 !	Checkout file with unstaged changes. This will reset the file to \
 	contain the content it had at last commit.
 @	Move to next chunk in the stage view.
-','	Move tree view to the parent tree.
 e	Open file in editor.
 -----------------------------------------------------------------------------
 

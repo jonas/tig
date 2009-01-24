@@ -666,6 +666,7 @@ static int read_properties(struct io *io, const char *separators, int (*read)(ch
 	REQ_(ENTER,		"Enter current line and scroll"), \
 	REQ_(NEXT,		"Move to next"), \
 	REQ_(PREVIOUS,		"Move to previous"), \
+	REQ_(PARENT,		"Move to parent"), \
 	REQ_(VIEW_NEXT,		"Move focus to next view"), \
 	REQ_(REFRESH,		"Reload and refresh"), \
 	REQ_(MAXIMIZE,		"Maximize the current view"), \
@@ -677,7 +678,6 @@ static int read_properties(struct io *io, const char *separators, int (*read)(ch
 	REQ_(STATUS_REVERT,	"Revert file changes"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
 	REQ_(STAGE_NEXT,	"Find next chunk to stage"), \
-	REQ_(TREE_PARENT,	"Switch to parent directory in tree view"), \
 	\
 	REQ_GROUP("Cursor navigation") \
 	REQ_(MOVE_UP,		"Move cursor one line up"), \
@@ -1116,7 +1116,7 @@ static struct keybinding default_keybindings[] = {
 	{ '!',		REQ_STATUS_REVERT },
 	{ 'M',		REQ_STATUS_MERGE },
 	{ '@',		REQ_STAGE_NEXT },
-	{ ',',		REQ_TREE_PARENT },
+	{ ',',		REQ_PARENT },
 	{ 'e',		REQ_EDIT },
 };
 
@@ -1551,16 +1551,25 @@ option_bind_command(int argc, const char *argv[])
 
 	request = get_request(argv[2]);
 	if (request == REQ_NONE) {
-		const char *obsolete[] = { "cherry-pick", "screen-resize" };
+		struct {
+			const char *name;
+			enum request request;
+		} obsolete[] = {
+			{ "cherry-pick",	REQ_NONE },
+			{ "screen-resize",	REQ_NONE },
+			{ "tree-parent",	REQ_PARENT },
+		};
 		size_t namelen = strlen(argv[2]);
 		int i;
 
 		for (i = 0; i < ARRAY_SIZE(obsolete); i++) {
-			if (namelen == strlen(obsolete[i]) &&
-			    !string_enum_compare(obsolete[i], argv[2], namelen)) {
-				config_msg = "Obsolete request name";
-				return ERR;
-			}
+			if (namelen != strlen(obsolete[i].name) ||
+			    string_enum_compare(obsolete[i].name, argv[2], namelen))
+				continue;
+			if (obsolete[i].request != REQ_NONE)
+				add_keybinding(keymap, obsolete[i].request, key);
+			config_msg = "Obsolete request name";
+			return ERR;
 		}
 	}
 	if (request == REQ_NONE && *argv[2]++ == '!')
@@ -3939,7 +3948,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 		}
 		return REQ_NONE;
 
-	case REQ_TREE_PARENT:
+	case REQ_PARENT:
 		if (!*opt_path) {
 			/* quit view if at top of tree */
 			return REQ_VIEW_CLOSE;
