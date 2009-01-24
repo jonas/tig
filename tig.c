@@ -4358,6 +4358,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 				unmerged = NULL;
 				if (collapse) {
 					free(file);
+					file = NULL;
 					view->lines--;
 					continue;
 				}
