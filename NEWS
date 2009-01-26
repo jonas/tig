@@ -12,6 +12,7 @@ Incompatibilities:
 Improvements:
 
  - Tree view: avoid flickering when updating.
+ - Tree view: annotate entries with commit information.
  - Tree & blob view: open any blob in an editor.
  - Stage & main view: restore view position when reloading.
 

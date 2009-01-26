@@ -797,6 +797,7 @@ static char opt_codeset[20]		= "UTF-8";
 static iconv_t opt_iconv		= ICONV_NONE;
 static char opt_search[SIZEOF_STR]	= "";
 static char opt_cdup[SIZEOF_STR]	= "";
+static char opt_prefix[SIZEOF_STR]	= "";
 static char opt_git_dir[SIZEOF_STR]	= "";
 static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
@@ -939,7 +940,9 @@ LINE(MAIN_TRACKED, "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_HEAD,    "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REVGRAPH,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(TREE_DIR,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
+LINE(TREE_PARENT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_BOLD), \
+LINE(TREE_MODE,    "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
+LINE(TREE_DIR,     "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(STAT_HEAD,    "",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(STAT_SECTION, "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
@@ -3673,15 +3676,28 @@ push_tree_stack_entry(const char *name, unsigned long lineno)
 #define SIZEOF_TREE_ATTR \
 	STRING_SIZE("100644 blob ed09fe897f3c7c9af90bcf80cae92558ea88ae38\t")
 
+#define SIZEOF_TREE_PERM \
+	STRING_SIZE("100644 ")
+
+#define TREE_ID_OFFSET \
+	STRING_SIZE("100644 blob ")
+
 #define TREE_UP_FORMAT "040000 tree %s\t.."
+
+struct tree_entry {
+	char id[SIZEOF_REV];
+	mode_t mode;
+	struct tm time;			/* Date from the author ident. */
+	char author[75];		/* Author of the commit. */
+	char name[1];
+};
 
 static const char *
 tree_path(struct line *line)
 {
-	const char *path = line->data;
-
-	return path + SIZEOF_TREE_ATTR;
+	return ((struct tree_entry *) line->data)->name;
 }
+
 
 static int
 tree_compare_entry(struct line *line1, struct line *line2)
@@ -3691,30 +3707,120 @@ tree_compare_entry(struct line *line1, struct line *line2)
 	return strcmp(tree_path(line1), tree_path(line2));
 }
 
+static struct line *
+tree_entry(struct view *view, enum line_type type, const char *path,
+	   const char *mode, const char *id)
+{
+	struct tree_entry *entry = calloc(1, sizeof(*entry) + strlen(path));
+	struct line *line = entry ? add_line_data(view, entry, type) : NULL;
+
+	if (!entry || !line) {
+		free(entry);
+		return NULL;
+	}
+
+	strncpy(entry->name, path, strlen(path));
+	if (mode)
+		entry->mode = strtoul(mode, NULL, 8);
+	if (id)
+		string_copy_rev(entry->id, id);
+
+	return line;
+}
+
+static bool
+tree_read_date(struct view *view, char *text, bool *read_date)
+{
+	static char author_name[SIZEOF_STR];
+	static struct tm author_time;
+
+	if (!text && *read_date) {
+		*read_date = FALSE;
+		return TRUE;
+
+	} else if (!text) {
+		char *path = *opt_path ? opt_path : ".";
+		/* Find next entry to process */
+		const char *log_file[] = {
+			"git", "log", "--no-color", "--pretty=raw",
+				"--cc", "--raw", view->id, "--", path, NULL
+		};
+		struct io io = {};
+
+		if (!run_io_rd(&io, log_file, FORMAT_NONE)) {
+			report("Failed to load tree data");
+			return TRUE;
+		}
+
+		done_io(view->pipe);
+		view->io = io;
+		*read_date = TRUE;
+		return FALSE;
+
+	} else if (*text == 'a' && get_line_type(text) == LINE_AUTHOR) {
+		parse_author_line(text + STRING_SIZE("author "),
+				  author_name, sizeof(author_name), &author_time);
+
+	} else if (*text == ':') {
+		char *pos;
+		size_t annotated = 1;
+		size_t i;
+
+		pos = strchr(text, '\t');
+		if (!pos)
+			return TRUE;
+		text = pos + 1;
+		if (*opt_prefix && !strncmp(text, opt_prefix, strlen(opt_prefix)))
+			text += strlen(opt_prefix);
+		if (*opt_path && !strncmp(text, opt_path, strlen(opt_path)))
+			text += strlen(opt_path);
+		pos = strchr(text, '/');
+		if (pos)
+			*pos = 0;
+
+		for (i = 1; i < view->lines; i++) {
+			struct line *line = &view->line[i];
+			struct tree_entry *entry = line->data;
+
+			annotated += !!*entry->author;
+			if (*entry->author || strcmp(entry->name, text))
+				continue;
+
+			string_copy(entry->author, author_name);
+			memcpy(&entry->time, &author_time, sizeof(entry->time));
+			line->dirty = 1;
+			break;
+		}
+
+		if (annotated == view->lines)
+			kill_io(view->pipe);
+	}
+	return TRUE;
+}
+
 static bool
 tree_read(struct view *view, char *text)
 {
-	size_t textlen = text ? strlen(text) : 0;
+	static bool read_date = FALSE;
+	struct tree_entry *data;
 	struct line *entry, *line;
 	enum line_type type;
+	size_t textlen = text ? strlen(text) : 0;
+	char *path = text + SIZEOF_TREE_ATTR;
 
-	if (!text)
-		return TRUE;
+	if (read_date || !text)
+		return tree_read_date(view, text, &read_date);
+
 	if (textlen <= SIZEOF_TREE_ATTR)
 		return FALSE;
-
-	type = text[STRING_SIZE("100644 ")] == 't'
-	     ? LINE_TREE_DIR : LINE_TREE_FILE;
-
 	if (view->lines == 0 &&
-	    !add_line_format(view, LINE_DEFAULT, "Directory path /%s", opt_path))
+	    !tree_entry(view, LINE_TREE_PARENT, opt_path, NULL, NULL))
 		return FALSE;
 
 	/* Strip the path part ... */
 	if (*opt_path) {
 		size_t pathlen = textlen - SIZEOF_TREE_ATTR;
-		size_t striplen = strlen(opt_path);
-		char *path = text + SIZEOF_TREE_ATTR;
+                size_t striplen = strlen(opt_path);
 
 		if (pathlen > striplen)
 			memmove(path, path + striplen,
@@ -3722,14 +3828,17 @@ tree_read(struct view *view, char *text)
 
 		/* Insert "link" to parent directory. */
 		if (view->lines == 1 &&
-		    !add_line_format(view, LINE_TREE_DIR, TREE_UP_FORMAT, view->ref))
+		    !tree_entry(view, LINE_TREE_DIR, "..", "040000", view->ref))
 			return FALSE;
 	}
 
-	entry = add_line_text(view, text, type);
+	type = text[STRING_SIZE("100644 ")] == 't'
+	     ? LINE_TREE_DIR : LINE_TREE_FILE;
+
+	entry = tree_entry(view, type, path, text, text + TREE_ID_OFFSET);
 	if (!entry)
 		return FALSE;
-	text = entry->data;
+	data = entry->data;
 
 	/* Skip "Directory ..." and ".." line. */
 	for (line = &view->line[1 + !!*opt_path]; line < entry; line++) {
@@ -3738,7 +3847,7 @@ tree_read(struct view *view, char *text)
 
 		memmove(line + 1, line, (entry - line) * sizeof(*entry));
 
-		line->data = text;
+		line->data = data;
 		line->type = type;
 		for (; line <= entry; line++)
 			line->dirty = line->cleareol = 1;
@@ -3750,6 +3859,46 @@ tree_read(struct view *view, char *text)
 		tree_lineno = 0;
 	}
 
+	return TRUE;
+}
+
+static bool
+tree_draw(struct view *view, struct line *line, unsigned int lineno)
+{
+	struct tree_entry *entry = line->data;
+
+	if (line->type == LINE_TREE_PARENT) {
+		if (draw_text(view, line->type, "Directory path /", TRUE))
+			return TRUE;
+	} else {
+		char mode[11] = "-r--r--r--";
+
+		if (S_ISDIR(entry->mode)) {
+			mode[3] = mode[6] = mode[9] = 'x';
+			mode[0] = 'd';
+		}
+		if (S_ISLNK(entry->mode))
+			mode[0] = 'l';
+		if (entry->mode & S_IWUSR)
+			mode[2] = 'w';
+		if (entry->mode & S_IXUSR)
+			mode[3] = 'x';
+		if (entry->mode & S_IXGRP)
+			mode[6] = 'x';
+		if (entry->mode & S_IXOTH)
+			mode[9] = 'x';
+		if (draw_field(view, LINE_TREE_MODE, mode, 11, TRUE))
+			return TRUE;
+
+		if (opt_author &&
+		    draw_field(view, LINE_MAIN_AUTHOR, entry->author, opt_author_cols, TRUE))
+			return TRUE;
+
+		if (opt_date && draw_date(view, *entry->author ? &entry->time : NULL))
+			return TRUE;
+	}
+	if (draw_text(view, line->type, entry->name, TRUE))
+		return TRUE;
 	return TRUE;
 }
 
@@ -3853,17 +4002,17 @@ tree_request(struct view *view, enum request request, struct line *line)
 static void
 tree_select(struct view *view, struct line *line)
 {
-	char *text = (char *)line->data + STRING_SIZE("100644 blob ");
+	struct tree_entry *entry = line->data;
 
 	if (line->type == LINE_TREE_FILE) {
-		string_copy_rev(ref_blob, text);
+		string_copy_rev(ref_blob, entry->id);
 		string_format(opt_file, "%s%s", opt_path, tree_path(line));
 
 	} else if (line->type != LINE_TREE_DIR) {
 		return;
 	}
 
-	string_copy_rev(view->ref, text);
+	string_copy_rev(view->ref, entry->id);
 }
 
 static const char *tree_argv[SIZEOF_ARG] = {
@@ -3875,7 +4024,7 @@ static struct view_ops tree_ops = {
 	tree_argv,
 	NULL,
 	tree_read,
-	pager_draw,
+	tree_draw,
 	tree_request,
 	pager_grep,
 	tree_select,
@@ -6384,8 +6533,12 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 		 * the option else either "true" or "false" is printed.
 		 * Default to true for the unknown case. */
 		opt_is_inside_work_tree = strcmp(name, "false") ? TRUE : FALSE;
-	} else {
+
+	} else if (*name == '.') {
 		string_ncopy(opt_cdup, name, namelen);
+
+	} else {
+		string_ncopy(opt_prefix, name, namelen);
 	}
 
 	return OK;
@@ -6399,7 +6552,7 @@ load_repo_info(void)
 	};
 	const char *rev_parse_argv[] = {
 		"git", "rev-parse", "--git-dir", "--is-inside-work-tree",
-			"--show-cdup", NULL
+			"--show-cdup", "--show-prefix", NULL
 	};
 
 	if (run_io_buf(head_argv, opt_head, sizeof(opt_head))) {
