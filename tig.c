@@ -2783,8 +2783,11 @@ update_view(struct view *view)
 				line = out_buffer;
 		}
 
-		if (!view->ops->read(view, line))
-			goto alloc_error;
+		if (!view->ops->read(view, line)) {
+			report("Allocation failure");
+			end_update(view, TRUE);
+			return FALSE;
+		}
 	}
 
 	{
@@ -2826,11 +2829,6 @@ update_view(struct view *view)
 	 * commit reference in view->ref it'll be available here. */
 	update_view_title(view);
 	return TRUE;
-
-alloc_error:
-	report("Allocation failure");
-	end_update(view, TRUE);
-	return FALSE;
 }
 
 static struct line *
