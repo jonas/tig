@@ -3676,13 +3676,11 @@ push_tree_stack_entry(const char *name, unsigned long lineno)
 #define SIZEOF_TREE_ATTR \
 	STRING_SIZE("100644 blob ed09fe897f3c7c9af90bcf80cae92558ea88ae38\t")
 
-#define SIZEOF_TREE_PERM \
+#define SIZEOF_TREE_MODE \
 	STRING_SIZE("100644 ")
 
 #define TREE_ID_OFFSET \
 	STRING_SIZE("100644 blob ")
-
-#define TREE_UP_FORMAT "040000 tree %s\t.."
 
 struct tree_entry {
 	char id[SIZEOF_REV];
@@ -3820,7 +3818,7 @@ tree_read(struct view *view, char *text)
 	/* Strip the path part ... */
 	if (*opt_path) {
 		size_t pathlen = textlen - SIZEOF_TREE_ATTR;
-                size_t striplen = strlen(opt_path);
+		size_t striplen = strlen(opt_path);
 
 		if (pathlen > striplen)
 			memmove(path, path + striplen,
@@ -3832,9 +3830,7 @@ tree_read(struct view *view, char *text)
 			return FALSE;
 	}
 
-	type = text[STRING_SIZE("100644 ")] == 't'
-	     ? LINE_TREE_DIR : LINE_TREE_FILE;
-
+	type = text[SIZEOF_TREE_MODE] == 't' ? LINE_TREE_DIR : LINE_TREE_FILE;
 	entry = tree_entry(view, type, path, text, text + TREE_ID_OFFSET);
 	if (!entry)
 		return FALSE;
@@ -3988,13 +3984,12 @@ tree_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	default:
-		return TRUE;
+		return REQ_NONE;
 	}
 
 	open_view(view, request, flags);
-	if (request == REQ_VIEW_TREE) {
+	if (request == REQ_VIEW_TREE)
 		view->lineno = tree_lineno;
-	}
 
 	return REQ_NONE;
 }
