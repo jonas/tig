@@ -3266,6 +3266,56 @@ view_driver(struct view *view, enum request request)
 
 
 /*
+ * View backend utilities
+ */
+
+/* Parse author lines where the name may be empty:
+ *	author  <email@address.tld> 1138474660 +0100
+ */
+static void
+parse_author_line(char *ident, char *author, size_t authorsize, struct tm *tm)
+{
+	char *nameend = strchr(ident, '<');
+	char *emailend = strchr(ident, '>');
+
+	if (nameend && emailend)
+		*nameend = *emailend = 0;
+	ident = chomp_string(ident);
+	if (!*ident) {
+		if (nameend)
+			ident = chomp_string(nameend + 1);
+		if (!*ident)
+			ident = "Unknown";
+	}
+
+	string_ncopy_do(author, authorsize, ident, strlen(ident));
+
+	/* Parse epoch and timezone */
+	if (emailend && emailend[1] == ' ') {
+		char *secs = emailend + 2;
+		char *zone = strchr(secs, ' ');
+		time_t time = (time_t) atol(secs);
+
+		if (zone && strlen(zone) == STRING_SIZE(" +0700")) {
+			long tz;
+
+			zone++;
+			tz  = ('0' - zone[1]) * 60 * 60 * 10;
+			tz += ('0' - zone[2]) * 60 * 60;
+			tz += ('0' - zone[3]) * 60;
+			tz += ('0' - zone[4]) * 60;
+
+			if (zone[0] == '-')
+				tz = -tz;
+
+			time -= tz;
+		}
+
+		gmtime_r(&time, tm);
+	}
+}
+
+/*
  * Pager backend
  */
 
@@ -5554,56 +5604,13 @@ main_read(struct view *view, char *line)
 		break;
 
 	case LINE_AUTHOR:
-	{
-		/* Parse author lines where the name may be empty:
-		 *	author  <email@address.tld> 1138474660 +0100
-		 */
-		char *ident = line + STRING_SIZE("author ");
-		char *nameend = strchr(ident, '<');
-		char *emailend = strchr(ident, '>');
-
-		if (!nameend || !emailend)
-			break;
-
+		parse_author_line(line + STRING_SIZE("author "),
+				  commit->author, sizeof(commit->author),
+				  &commit->time);
 		update_rev_graph(view, graph);
 		graph = graph->next;
-
-		*nameend = *emailend = 0;
-		ident = chomp_string(ident);
-		if (!*ident) {
-			ident = chomp_string(nameend + 1);
-			if (!*ident)
-				ident = "Unknown";
-		}
-
-		string_ncopy(commit->author, ident, strlen(ident));
-		view->line[view->lines - 1].dirty = 1;
-
-		/* Parse epoch and timezone */
-		if (emailend[1] == ' ') {
-			char *secs = emailend + 2;
-			char *zone = strchr(secs, ' ');
-			time_t time = (time_t) atol(secs);
-
-			if (zone && strlen(zone) == STRING_SIZE(" +0700")) {
-				long tz;
-
-				zone++;
-				tz  = ('0' - zone[1]) * 60 * 60 * 10;
-				tz += ('0' - zone[2]) * 60 * 60;
-				tz += ('0' - zone[3]) * 60;
-				tz += ('0' - zone[4]) * 60;
-
-				if (zone[0] == '-')
-					tz = -tz;
-
-				time -= tz;
-			}
-
-			gmtime_r(&time, &commit->time);
-		}
 		break;
-	}
+
 	default:
 		/* Fill in the commit title if it has not already been set. */
 		if (commit->title[0])
