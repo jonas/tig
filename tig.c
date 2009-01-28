@@ -3609,6 +3609,8 @@ static struct view_ops diff_ops = {
 static bool
 help_open(struct view *view)
 {
+	char buf[SIZEOF_STR];
+	size_t bufpos;
 	int i;
 
 	if (view->lines > 0)
@@ -3632,8 +3634,14 @@ help_open(struct view *view)
 		if (!*key)
 			key = "(no key defined)";
 
-		add_line_format(view, LINE_DEFAULT, "    %-25s %s",
-				key, req_info[i].help);
+		for (bufpos = 0; bufpos <= req_info[i].namelen; bufpos++) {
+			buf[bufpos] = tolower(req_info[i].name[bufpos]);
+			if (buf[bufpos] == '_')
+				buf[bufpos] = '-';
+		}
+
+		add_line_format(view, LINE_DEFAULT, "    %-25s %-20s %s",
+				key, buf, req_info[i].help);
 	}
 
 	if (run_requests) {
@@ -3644,8 +3652,6 @@ help_open(struct view *view)
 	for (i = 0; i < run_requests; i++) {
 		struct run_request *req = get_run_request(REQ_NONE + i + 1);
 		const char *key;
-		char cmd[SIZEOF_STR];
-		size_t bufpos;
 		int argc;
 
 		if (!req)
@@ -3656,12 +3662,12 @@ help_open(struct view *view)
 			key = "(no key defined)";
 
 		for (bufpos = 0, argc = 0; req->argv[argc]; argc++)
-			if (!string_format_from(cmd, &bufpos, "%s%s",
+			if (!string_format_from(buf, &bufpos, "%s%s",
 					        argc ? " " : "", req->argv[argc]))
 				return REQ_NONE;
 
 		add_line_format(view, LINE_DEFAULT, "    %-10s %-14s `%s`",
-				keymap_table[req->keymap].name, key, cmd);
+				keymap_table[req->keymap].name, key, buf);
 	}
 
 	return TRUE;
