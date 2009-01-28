@@ -28,3 +28,7 @@ Features that should be explored.
 
  - Blame view: Allow names in the author column to be abbreviated to
    initials. Will optimize screen usage for the blame view.
+
+ - Commit cache: Many views use commit information and load it into
+   their own custom data structure. Having the information shared would
+   make it easier to do various interesting stuff across the views.
