@@ -2061,7 +2061,6 @@ redraw_view_dirty(struct view *view)
 
 	if (!dirty)
 		return;
-	redrawwin(view->win);
 	if (input_mode)
 		wnoutrefresh(view->win);
 	else
@@ -2078,7 +2077,6 @@ redraw_view_from(struct view *view, int lineno)
 			break;
 	}
 
-	redrawwin(view->win);
 	if (input_mode)
 		wnoutrefresh(view->win);
 	else
@@ -2285,7 +2283,6 @@ do_scroll_view(struct view *view, int lines)
 			draw_view_line(view, view->lineno - view->offset);
 	}
 
-	redrawwin(view->win);
 	wrefresh(view->win);
 	report("");
 }
@@ -2419,7 +2416,6 @@ move_view(struct view *view, enum request request)
 	/* Draw the current line */
 	draw_view_line(view, view->lineno - view->offset);
 
-	redrawwin(view->win);
 	wrefresh(view->win);
 	report("");
 }
@@ -2447,7 +2443,6 @@ select_view_line(struct view *view, unsigned long lineno)
 		if (view_is_displayed(view)) {
 			draw_view_line(view, old_lineno);
 			draw_view_line(view, view->lineno - view->offset);
-			redrawwin(view->win);
 			wrefresh(view->win);
 		} else {
 			view->ops->select(view, &view->line[view->lineno]);
