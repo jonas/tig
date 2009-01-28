@@ -349,7 +349,7 @@ Down	Similar to 'Up' but will move down.
 	commit. For merges the parent is queried.
 -----------------------------------------------------------------------------
 
-[[view-manipulation]]
+[[view-actions]]
 View Specific Actions
 ~~~~~~~~~~~~~~~~~~~~~
 
