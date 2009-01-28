@@ -3609,21 +3609,10 @@ static struct view_ops diff_ops = {
 static bool
 help_open(struct view *view)
 {
-	int lines = ARRAY_SIZE(req_info) + 2;
 	int i;
 
 	if (view->lines > 0)
 		return TRUE;
-
-	for (i = 0; i < ARRAY_SIZE(req_info); i++)
-		if (!req_info[i].request)
-			lines++;
-
-	lines += run_requests + 1;
-
-	view->line = calloc(lines, sizeof(*view->line));
-	if (!view->line)
-		return FALSE;
 
 	add_line_text(view, "Quick reference for tig keybindings:", LINE_DEFAULT);
 
