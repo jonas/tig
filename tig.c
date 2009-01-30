@@ -2274,16 +2274,19 @@ do_scroll_view(struct view *view, int lines)
 		wscrl(view->win, lines);
 		scrollok(view->win, FALSE);
 
-		for (; line < end; line++) {
-			if (!draw_view_line(view, line))
-				break;
-		}
+		while (line < end && draw_view_line(view, line))
+			line++;
 
 		if (redraw_current_line)
 			draw_view_line(view, view->lineno - view->offset);
+		/* FIXME: Stupid hack to workaround bug where the message from
+		 * scrolling up one line when impossible followed by scrolling
+		 * down one line is not removed by the next action. */
+		if (lines > 0)
+			report("");
+		wrefresh(view->win);
 	}
 
-	wrefresh(view->win);
 	report("");
 }
 
