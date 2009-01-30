@@ -2087,6 +2087,19 @@ redraw_view(struct view *view)
 
 
 static void
+update_display_cursor(struct view *view)
+{
+	/* Move the cursor to the right-most column of the cursor line.
+	 *
+	 * XXX: This could turn out to be a bit expensive, but it ensures that
+	 * the cursor does not jump around. */
+	if (view->lines) {
+		wmove(view->win, view->lineno - view->offset, view->width - 1);
+		wrefresh(view->win);
+	}
+}
+
+static void
 update_view_title(struct view *view)
 {
 	char buf[SIZEOF_STR];
@@ -2209,19 +2222,9 @@ redraw_display(bool clear)
 		redraw_view(view);
 		update_view_title(view);
 	}
-}
 
-static void
-update_display_cursor(struct view *view)
-{
-	/* Move the cursor to the right-most column of the cursor line.
-	 *
-	 * XXX: This could turn out to be a bit expensive, but it ensures that
-	 * the cursor does not jump around. */
-	if (view->lines) {
-		wmove(view->win, view->lineno - view->offset, view->width - 1);
-		wrefresh(view->win);
-	}
+	if (display[current_view])
+		update_display_cursor(display[current_view]);
 }
 
 static void
@@ -2842,6 +2845,7 @@ update_view(struct view *view)
 	/* Update the title _after_ the redraw so that if the redraw picks up a
 	 * commit reference in view->ref it'll be available here. */
 	update_view_title(view);
+	update_display_cursor(view);
 	return TRUE;
 }
 
@@ -6237,13 +6241,13 @@ get_input(bool prompting)
 
 			getmaxyx(stdscr, height, width);
 
-			/* Resize the status view and let the view driver take
-			 * care of resizing the displayed views. */
-			resize_display();
-			redraw_display(TRUE);
+			/* Resize the status view first so the cursor is
+			 * placed properly. */
 			wresize(status_win, 1, width);
 			mvwin(status_win, height - 1, 0);
 			wrefresh(status_win);
+			resize_display();
+			redraw_display(TRUE);
 
 		} else {
 			input_mode = FALSE;
