@@ -6112,7 +6112,7 @@ static bool cursed = FALSE;
 /* The status window is used for polling keystrokes. */
 static WINDOW *status_win;
 
-static bool status_empty = TRUE;
+static bool status_empty = FALSE;
 
 /* Update status and title window. */
 static void
