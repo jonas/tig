@@ -2008,6 +2008,12 @@ draw_date(struct view *view, struct tm *time)
 }
 
 static bool
+draw_author(struct view *view, const char *author)
+{
+	return draw_field(view, LINE_MAIN_AUTHOR, author, opt_author_cols, TRUE);
+}
+
+static bool
 draw_view_line(struct view *view, unsigned int lineno)
 {
 	struct line *line;
@@ -3953,8 +3959,7 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 		if (draw_field(view, LINE_TREE_MODE, mode, 11, TRUE))
 			return TRUE;
 
-		if (opt_author &&
-		    draw_field(view, LINE_MAIN_AUTHOR, entry->author, opt_author_cols, TRUE))
+		if (opt_author && draw_author(view, entry->author))
 			return TRUE;
 
 		if (opt_date && draw_date(view, *entry->author ? &entry->time : NULL))
@@ -4373,8 +4378,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (opt_date && draw_date(view, time))
 		return TRUE;
 
-	if (opt_author &&
-	    draw_field(view, LINE_MAIN_AUTHOR, author, opt_author_cols, TRUE))
+	if (opt_author && draw_author(view, author))
 		return TRUE;
 
 	if (draw_field(view, LINE_BLAME_ID, id, ID_COLS, FALSE))
@@ -5714,8 +5718,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (opt_date && draw_date(view, &commit->time))
 		return TRUE;
 
-	if (opt_author &&
-	    draw_field(view, LINE_MAIN_AUTHOR, commit->author, opt_author_cols, TRUE))
+	if (opt_author && draw_author(view, commit->author))
 		return TRUE;
 
 	if (opt_rev_graph && commit->graph_size &&
