@@ -2010,7 +2010,27 @@ draw_date(struct view *view, struct tm *time)
 static bool
 draw_author(struct view *view, const char *author)
 {
-	return draw_field(view, LINE_MAIN_AUTHOR, author, opt_author_cols, TRUE);
+	bool trim = opt_author_cols == 0 || opt_author_cols > 5 || !author;
+
+	if (!trim) {
+		static char initials[10];
+		size_t pos;
+
+#define is_initial_sep(c) (isspace(c) || ispunct(c) || (c) == '@')
+
+		memset(initials, 0, sizeof(initials));
+		for (pos = 0; *author && pos < opt_author_cols - 1; author++, pos++) {
+			while (is_initial_sep(*author))
+				author++;
+			strncpy(&initials[pos], author, sizeof(initials) - 1 - pos);
+			while (*author && !is_initial_sep(author[1]))
+				author++;
+		}
+
+		author = initials;
+	}
+
+	return draw_field(view, LINE_MAIN_AUTHOR, author, opt_author_cols, trim);
 }
 
 static bool

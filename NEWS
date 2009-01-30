@@ -19,6 +19,8 @@ Improvements:
  - Stage & main view: restore view position when reloading.
  - Blame view: load blame for parent commit. For merge commits the parent
    is queried. Bound to ',' by default via the existing "parent" action.
+ - Abbreviate author names to initials when the width of the author column
+   is below 6 characters.
 
 Bug fixes:
 
