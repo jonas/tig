@@ -2012,7 +2012,6 @@ draw_view_line(struct view *view, unsigned int lineno)
 {
 	struct line *line;
 	bool selected = (view->offset + lineno == view->lineno);
-	bool draw_ok;
 
 	assert(view_is_displayed(view));
 
@@ -2036,11 +2035,7 @@ draw_view_line(struct view *view, unsigned int lineno)
 		view->ops->select(view, line);
 	}
 
-	scrollok(view->win, FALSE);
-	draw_ok = view->ops->draw(view, line, lineno);
-	scrollok(view->win, TRUE);
-
-	return draw_ok;
+	return view->ops->draw(view, line, lineno);
 }
 
 static void
@@ -2186,7 +2181,7 @@ resize_display(void)
 			if (!view->win)
 				die("Failed to create %s view", view->name);
 
-			scrollok(view->win, TRUE);
+			scrollok(view->win, FALSE);
 
 			view->title = newwin(1, 0, offset + view->height, 0);
 			if (!view->title)
@@ -2272,7 +2267,9 @@ do_scroll_view(struct view *view, int lines)
 		int line = lines > 0 ? view->height - lines : 0;
 		int end = line + ABS(lines);
 
+		scrollok(view->win, TRUE);
 		wscrl(view->win, lines);
+		scrollok(view->win, FALSE);
 
 		for (; line < end; line++) {
 			if (!draw_view_line(view, line))
