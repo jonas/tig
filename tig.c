@@ -884,9 +884,7 @@ parse_options(int argc, const char *argv[], const char ***run_argv)
 		return REQ_VIEW_MAIN;
 
 	subcommand = argv[1];
-	if (!strcmp(subcommand, "status") || !strcmp(subcommand, "-S")) {
-		if (!strcmp(subcommand, "-S"))
-			warn("`-S' has been deprecated; use `tig status' instead");
+	if (!strcmp(subcommand, "status")) {
 		if (argc > 2)
 			warn("ignoring arguments after `%s'", subcommand);
 		return REQ_VIEW_STATUS;
@@ -906,10 +904,6 @@ parse_options(int argc, const char *argv[], const char ***run_argv)
 
 	} else if (!strcmp(subcommand, "show")) {
 		request = REQ_VIEW_DIFF;
-
-	} else if (!strcmp(subcommand, "log") || !strcmp(subcommand, "diff")) {
-		request = subcommand[0] == 'l' ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
-		warn("`tig %s' has been deprecated", subcommand);
 
 	} else {
 		subcommand = NULL;

@@ -10,6 +10,7 @@ Incompatibilities:
    users and was never meant to be exposed.
  - The "tree-parent" action was renamed to "parent". Warnings will be
    emitted for transition.
+ - Remove parsing of deprecated option -S and subcommands log and diff.
 
 Improvements:
 
