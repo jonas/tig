@@ -2769,7 +2769,7 @@ update_view(struct view *view)
 		if (view->lines == 0) {
 			time_t secs = time(NULL) - view->start_time;
 
-			if (secs > view->update_secs) {
+			if (secs > 1 && secs > view->update_secs) {
 				if (view->update_secs == 0)
 					redraw_view(view);
 				update_view_title(view);
