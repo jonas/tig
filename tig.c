@@ -2104,19 +2104,6 @@ redraw_view(struct view *view)
 
 
 static void
-update_display_cursor(struct view *view)
-{
-	/* Move the cursor to the right-most column of the cursor line.
-	 *
-	 * XXX: This could turn out to be a bit expensive, but it ensures that
-	 * the cursor does not jump around. */
-	if (view->lines) {
-		wmove(view->win, view->lineno - view->offset, view->width - 1);
-		wnoutrefresh(view->win);
-	}
-}
-
-static void
 update_view_title(struct view *view)
 {
 	char buf[SIZEOF_STR];
@@ -2168,7 +2155,6 @@ update_view_title(struct view *view)
 
 	mvwaddnstr(view->title, 0, 0, buf, bufpos);
 	wclrtoeol(view->title);
-	wmove(view->title, 0, view->width - 1);
 	wnoutrefresh(view->title);
 }
 
@@ -2235,9 +2221,6 @@ redraw_display(bool clear)
 		redraw_view(view);
 		update_view_title(view);
 	}
-
-	if (display[current_view])
-		update_display_cursor(display[current_view]);
 }
 
 static void
@@ -2856,7 +2839,6 @@ update_view(struct view *view)
 	/* Update the title _after_ the redraw so that if the redraw picks up a
 	 * commit reference in view->ref it'll be available here. */
 	update_view_title(view);
-	update_display_cursor(view);
 	return TRUE;
 }
 
@@ -6169,7 +6151,6 @@ report(const char *msg, ...)
 	}
 
 	update_view_title(view);
-	update_display_cursor(view);
 }
 
 /* Controls when nodelay should be in effect when polling user input. */
@@ -6206,7 +6187,7 @@ init_display(void)
 	nonl();         /* Tell curses not to do NL->CR/NL on output */
 	cbreak();       /* Take input chars one at a time, no wait for \n */
 	noecho();       /* Don't echo input */
-	leaveok(stdscr, TRUE);
+	leaveok(stdscr, FALSE);
 
 	if (has_colors())
 		init_colors();
@@ -6227,17 +6208,29 @@ init_display(void)
 }
 
 static int
-get_input(bool prompting)
+get_input(int prompt_position)
 {
 	struct view *view;
-	int i, key;
+	int i, key, cursor_y, cursor_x;
 
-	if (prompting)
+	if (prompt_position)
 		input_mode = TRUE;
 
-	while (true) {
+	while (TRUE) {
 		foreach_view (view, i)
 			update_view(view);
+
+		/* Update the cursor position. */
+		if (prompt_position) {
+			getbegyx(status_win, cursor_y, cursor_x);
+			cursor_x = prompt_position;
+		} else {
+			view = display[current_view];
+			getbegyx(view->win, cursor_y, cursor_x);
+			cursor_x = view->width - 1;
+			cursor_y += view->lineno - view->offset;
+		}
+		setsyx(cursor_y, cursor_x);
 
 		/* Refresh, accept single keystroke of input */
 		doupdate();
@@ -6252,8 +6245,6 @@ get_input(bool prompting)
 
 			getmaxyx(stdscr, height, width);
 
-			/* Resize the status view first so the cursor is
-			 * placed properly. */
 			wresize(status_win, 1, width);
 			mvwin(status_win, height - 1, 0);
 			wnoutrefresh(status_win);
@@ -6282,7 +6273,7 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 		mvwprintw(status_win, 0, 0, "%s%.*s", prompt, pos, buf);
 		wclrtoeol(status_win);
 
-		key = get_input(TRUE);
+		key = get_input(pos + 1);
 		switch (key) {
 		case KEY_RETURN:
 		case KEY_ENTER:
@@ -6779,7 +6770,7 @@ main(int argc, const char *argv[])
 	}
 
 	while (view_driver(display[current_view], request)) {
-		int key = get_input(FALSE);
+		int key = get_input(0);
 
 		view = display[current_view];
 		request = get_keybinding(view->keymap, key);
