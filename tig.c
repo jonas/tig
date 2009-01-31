@@ -1714,9 +1714,6 @@ struct view_ops;
 static struct view *display[2];
 static unsigned int current_view;
 
-/* Reading from the prompt? */
-static bool input_mode = FALSE;
-
 #define foreach_displayed_view(view, i) \
 	for (i = 0; i < ARRAY_SIZE(display) && (view = display[i]); i++)
 
@@ -2082,10 +2079,7 @@ redraw_view_dirty(struct view *view)
 
 	if (!dirty)
 		return;
-	if (input_mode)
-		wnoutrefresh(view->win);
-	else
-		wrefresh(view->win);
+	wnoutrefresh(view->win);
 }
 
 static void
@@ -2098,10 +2092,7 @@ redraw_view_from(struct view *view, int lineno)
 			break;
 	}
 
-	if (input_mode)
-		wnoutrefresh(view->win);
-	else
-		wrefresh(view->win);
+	wnoutrefresh(view->win);
 }
 
 static void
@@ -2121,7 +2112,7 @@ update_display_cursor(struct view *view)
 	 * the cursor does not jump around. */
 	if (view->lines) {
 		wmove(view->win, view->lineno - view->offset, view->width - 1);
-		wrefresh(view->win);
+		wnoutrefresh(view->win);
 	}
 }
 
@@ -2178,11 +2169,7 @@ update_view_title(struct view *view)
 	mvwaddnstr(view->title, 0, 0, buf, bufpos);
 	wclrtoeol(view->title);
 	wmove(view->title, 0, view->width - 1);
-
-	if (input_mode)
-		wnoutrefresh(view->title);
-	else
-		wrefresh(view->title);
+	wnoutrefresh(view->title);
 }
 
 static void
@@ -2305,12 +2292,7 @@ do_scroll_view(struct view *view, int lines)
 
 		if (redraw_current_line)
 			draw_view_line(view, view->lineno - view->offset);
-		/* FIXME: Stupid hack to workaround bug where the message from
-		 * scrolling up one line when impossible followed by scrolling
-		 * down one line is not removed by the next action. */
-		if (lines > 0)
-			report("");
-		wrefresh(view->win);
+		wnoutrefresh(view->win);
 	}
 
 	report("");
@@ -2445,7 +2427,7 @@ move_view(struct view *view, enum request request)
 	/* Draw the current line */
 	draw_view_line(view, view->lineno - view->offset);
 
-	wrefresh(view->win);
+	wnoutrefresh(view->win);
 	report("");
 }
 
@@ -2472,7 +2454,7 @@ select_view_line(struct view *view, unsigned long lineno)
 		if (view_is_displayed(view)) {
 			draw_view_line(view, old_lineno);
 			draw_view_line(view, view->lineno - view->offset);
-			wrefresh(view->win);
+			wnoutrefresh(view->win);
 		} else {
 			view->ops->select(view, &view->line[view->lineno]);
 		}
@@ -6139,6 +6121,9 @@ static bool cursed = FALSE;
 /* The status window is used for polling keystrokes. */
 static WINDOW *status_win;
 
+/* Reading from the prompt? */
+static bool input_mode = FALSE;
+
 static bool status_empty = FALSE;
 
 /* Update status and title window. */
@@ -6178,7 +6163,7 @@ report(const char *msg, ...)
 			status_empty = TRUE;
 		}
 		wclrtoeol(status_win);
-		wrefresh(status_win);
+		wnoutrefresh(status_win);
 
 		va_end(args);
 	}
@@ -6255,12 +6240,12 @@ get_input(bool prompting)
 			update_view(view);
 
 		/* Refresh, accept single keystroke of input */
+		doupdate();
 		key = wgetch(status_win);
 
 		/* wgetch() with nodelay() enabled returns ERR when
 		 * there's no input. */
 		if (key == ERR) {
-			doupdate();
 
 		} else if (key == KEY_RESIZE) {
 			int height, width;
@@ -6271,7 +6256,7 @@ get_input(bool prompting)
 			 * placed properly. */
 			wresize(status_win, 1, width);
 			mvwin(status_win, height - 1, 0);
-			wrefresh(status_win);
+			wnoutrefresh(status_win);
 			resize_display();
 			redraw_display(TRUE);
 
