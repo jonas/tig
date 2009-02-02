@@ -292,7 +292,7 @@ argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
 
 		cmd[valuelen] = 0;
 		argv[(*argc)++] = chomp_string(cmd);
-		cmd += valuelen + advance;
+		cmd = chomp_string(cmd + valuelen + advance);
 	}
 
 	if (*argc < SIZEOF_ARG)

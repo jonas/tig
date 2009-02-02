@@ -24,6 +24,7 @@ Bug fixes:
 
  - Tree view: fix memory corruption bug when updating.
  - Fix regression for non-UTF-8 locales corrupting the view data.
+ - Fix regression parsing multiple spaces in ~/.tigrc.
 
 tig-0.13
 --------
