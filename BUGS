@@ -9,3 +9,6 @@ Known bugs and problems:
  - In the gnome-terminal-emulator, the message from scrolling up one line
    when impossible followed by scrolling down one line causes corruption of
    the status line.
+
+ - When scrolling in xterm (and uxterm) the last line in the scrolling
+   direction will update slowly.
