@@ -396,6 +396,8 @@ Insert	Scroll view one line up.
 Delete	Scroll view one line down.
 w	Scroll view one page up.
 s	Scroll view one page down.
+Left	Scroll view one column left.
+Right	Scroll view one column right.
 -----------------------------------------------------------------------------
 
 [[searching]]

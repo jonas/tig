@@ -3,5 +3,3 @@ BUGS
 Known bugs and problems:
 
  - Proper locale support: in it's current state tig is pretty much UTF-8 only.
-
- - Horizontal scrolling.

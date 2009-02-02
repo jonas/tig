@@ -68,8 +68,8 @@ static void __NORETURN die(const char *err, ...);
 static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
 static void set_nonblocking_input(bool loading);
-static size_t utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool reserve);
 static int load_refs(void);
+static size_t utf8_length(const char **string, size_t col, int *width, size_t max_width, int *trimmed, bool reserve);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -109,6 +109,7 @@ static int load_refs(void);
 
 /* The default interval between line numbers. */
 #define NUMBER_INTERVAL	5
+#define SCROLL_INTERVAL	1
 
 #define TAB_SIZE	8
 
@@ -780,6 +781,8 @@ run_io_load(const char **argv, const char *separators,
 	REQ_(MOVE_LAST_LINE,	"Move cursor to last line"), \
 	\
 	REQ_GROUP("Scrolling") \
+	REQ_(SCROLL_LEFT,	"Scroll two columns left"), \
+	REQ_(SCROLL_RIGHT,	"Scroll two columns right"), \
 	REQ_(SCROLL_LINE_UP,	"Scroll one line up"), \
 	REQ_(SCROLL_LINE_DOWN,	"Scroll one line down"), \
 	REQ_(SCROLL_PAGE_UP,	"Scroll one page up"), \
@@ -1099,6 +1102,8 @@ static struct keybinding default_keybindings[] = {
 	{ '-',		REQ_MOVE_PAGE_UP },
 
 	/* Scrolling */
+	{ KEY_LEFT,	REQ_SCROLL_LEFT },
+	{ KEY_RIGHT,	REQ_SCROLL_RIGHT },
 	{ KEY_IC,	REQ_SCROLL_LINE_UP },
 	{ KEY_DC,	REQ_SCROLL_LINE_DOWN },
 	{ 'w',		REQ_SCROLL_PAGE_UP },
@@ -1742,8 +1747,10 @@ struct view {
 
 	/* Navigation */
 	unsigned long offset;	/* Offset of the window top */
+	unsigned long yoffset;	/* Offset from the window side. */
 	unsigned long lineno;	/* Current line number */
 	unsigned long p_offset;	/* Previous offset of the window top */
+	unsigned long p_yoffset;/* Previous offset from the window side */
 	unsigned long p_lineno;	/* Previous current line number */
 	bool p_restore;		/* Should the previous position be restored. */
 
@@ -1766,6 +1773,7 @@ struct view {
 	enum line_type curtype;	/* Attribute currently used for drawing. */
 	unsigned long col;	/* Column when drawing. */
 	bool has_scrolled;	/* View was scrolled. */
+	bool can_hscroll;	/* View can be scrolled horizontally. */
 
 	/* Loading */
 	struct io io;
@@ -1859,12 +1867,13 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 	int len = 0;
 	int col = 0;
 	int trimmed = FALSE;
+	size_t skip = view->yoffset > view->col ? view->yoffset - view->col : 0;
 
 	if (max_len <= 0)
 		return 0;
 
 	if (opt_utf8) {
-		len = utf8_length(string, &col, max_len, &trimmed, use_tilde);
+		len = utf8_length(&string, skip, &col, max_len, &trimmed, use_tilde);
 	} else {
 		col = len = strlen(string);
 		if (len > max_len) {
@@ -1877,12 +1886,16 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 	}
 
 	set_view_attr(view, type);
-	waddnstr(view->win, string, len);
+	if (len > 0)
+		waddnstr(view->win, string, len);
 	if (trimmed && use_tilde) {
 		set_view_attr(view, LINE_DELIMITER);
 		waddch(view->win, '~');
 		col++;
 	}
+
+	if (view->col + col >= view->width + view->yoffset)
+		view->can_hscroll = TRUE;
 
 	return col;
 }
@@ -1908,6 +1921,7 @@ draw_space(struct view *view, enum line_type type, int max, int spaces)
 static bool
 draw_lineno(struct view *view, unsigned int lineno)
 {
+	size_t skip = view->yoffset > view->col ? view->yoffset - view->col : 0;
 	char number[10];
 	int digits3 = view->digits < 3 ? 3 : view->digits;
 	int max_number = MIN(digits3, STRING_SIZE(number));
@@ -1931,29 +1945,31 @@ draw_lineno(struct view *view, unsigned int lineno)
 		col = draw_space(view, LINE_LINE_NUMBER, max_number, max_number);
 	}
 
-	if (col < max) {
+	if (col < max && skip <= col) {
 		set_view_attr(view, LINE_DEFAULT);
 		waddch(view->win, line_graphics[LINE_GRAPHIC_VLINE]);
-		col++;
 	}
+	col++;
 
-	if (col < max)
-		col += draw_space(view, LINE_DEFAULT, max - col, 1);
 	view->col += col;
+	if (col < max && skip <= col)
+		col = draw_space(view, LINE_DEFAULT, max - col, 1);
+	view->col++;
 
-	return view->width - view->col <= 0;
+	return view->width + view->yoffset <= view->col;
 }
 
 static bool
 draw_text(struct view *view, enum line_type type, const char *string, bool trim)
 {
-	view->col += draw_chars(view, type, string, view->width - view->col, trim);
+	view->col += draw_chars(view, type, string, view->width + view->yoffset - view->col, trim);
 	return view->width - view->col <= 0;
 }
 
 static bool
 draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t size)
 {
+	size_t skip = view->yoffset > view->col ? view->yoffset - view->col : 0;
 	int max = view->width - view->col;
 	int i;
 
@@ -1963,14 +1979,13 @@ draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t si
 	set_view_attr(view, type);
 	/* Using waddch() instead of waddnstr() ensures that
 	 * they'll be rendered correctly for the cursor line. */
-	for (i = 0; i < size; i++)
+	for (i = skip; i < size; i++)
 		waddch(view->win, graphic[i]);
 
 	view->col += size;
-	if (size < max) {
+	if (size < max && skip <= size)
 		waddch(view->win, ' ');
-		view->col++;
-	}
+	view->col++;
 
 	return view->width - view->col <= 0;
 }
@@ -1986,8 +2001,9 @@ draw_field(struct view *view, enum line_type type, const char *text, int len, bo
 	else
 		col = draw_space(view, type, max - 1, max - 1);
 
-	view->col += col + draw_space(view, LINE_DEFAULT, max - col, max - col);
-	return view->width - view->col <= 0;
+	view->col += col;
+	view->col += draw_space(view, LINE_DEFAULT, max - col, max - col);
+	return view->width + view->yoffset <= view->col;
 }
 
 static bool
@@ -2086,6 +2102,9 @@ static void
 redraw_view_from(struct view *view, int lineno)
 {
 	assert(0 <= lineno && lineno < view->height);
+
+	if (lineno == 0)
+		view->can_hscroll = FALSE;
 
 	for (; lineno < view->height; lineno++) {
 		if (!draw_view_line(view, lineno))
@@ -2291,6 +2310,27 @@ scroll_view(struct view *view, enum request request)
 	assert(view_is_displayed(view));
 
 	switch (request) {
+	case REQ_SCROLL_LEFT:
+		if (view->yoffset == 0) {
+			report("Cannot scroll beyond the first column");
+			return;
+		}
+		if (view->yoffset <= SCROLL_INTERVAL)
+			view->yoffset = 0;
+		else
+			view->yoffset -= SCROLL_INTERVAL;
+		redraw_view_from(view, 0);
+		report("");
+		return;
+	case REQ_SCROLL_RIGHT:
+		if (!view->can_hscroll) {
+			report("Cannot scroll beyond the last column");
+			return;
+		}
+		view->yoffset += SCROLL_INTERVAL;
+		redraw_view(view);
+		report("");
+		return;
 	case REQ_SCROLL_PAGE_DOWN:
 		lines = view->height;
 	case REQ_SCROLL_LINE_DOWN:
@@ -2532,10 +2572,12 @@ reset_view(struct view *view)
 	free(view->line);
 
 	view->p_offset = view->offset;
+	view->p_yoffset = view->yoffset;
 	view->p_lineno = view->lineno;
 
 	view->line = NULL;
 	view->offset = 0;
+	view->yoffset = 0;
 	view->lines  = 0;
 	view->lineno = 0;
 	view->line_alloc = 0;
@@ -2646,6 +2688,7 @@ restore_view_position(struct view *view)
 		werase(view->win);
 
 	view->offset = view->p_offset;
+	view->yoffset = view->p_yoffset;
 	view->lineno = view->p_lineno;
 	view->p_restore = FALSE;
 
@@ -3082,6 +3125,8 @@ view_driver(struct view *view, enum request request)
 		move_view(view, request);
 		break;
 
+	case REQ_SCROLL_LEFT:
+	case REQ_SCROLL_RIGHT:
 	case REQ_SCROLL_LINE_DOWN:
 	case REQ_SCROLL_LINE_UP:
 	case REQ_SCROLL_PAGE_DOWN:
@@ -4766,7 +4811,7 @@ status_draw(struct view *view, struct line *line, unsigned int lineno)
 
 		case LINE_STAT_NONE:
 			type = LINE_DEFAULT;
-			text = "    (no files)";
+			text = "  (no files)";
 			break;
 
 		case LINE_STAT_HEAD:
@@ -6049,9 +6094,9 @@ utf8_to_unicode(const char *string, size_t length)
  *
  * Returns the number of bytes to output from string to satisfy max_width. */
 static size_t
-utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool reserve)
+utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve)
 {
-	const char *start = string;
+	const char *string = *start;
 	const char *end = strchr(string, '\0');
 	unsigned char last_bytes = 0;
 	size_t last_ucwidth = 0;
@@ -6077,6 +6122,10 @@ utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool
 			break;
 
 		ucwidth = unicode_width(unicode);
+		if (skip > 0) {
+			skip -= ucwidth <= skip ? ucwidth : skip;
+			*start += bytes;
+		}
 		*width  += ucwidth;
 		if (*width > max_width) {
 			*trimmed = 1;
@@ -6089,11 +6138,11 @@ utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool
 		}
 
 		string  += bytes;
-		last_bytes = bytes;
+		last_bytes = ucwidth ? bytes : 0;
 		last_ucwidth = ucwidth;
 	}
 
-	return string - start;
+	return string - *start;
 }
 
 

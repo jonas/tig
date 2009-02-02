@@ -264,6 +264,8 @@ scroll-line-up		Scroll one line up
 scroll-line-down	Scroll one line down
 scroll-page-eup		Scroll one page up
 scroll-page-down	Scroll one page down
+scroll-left		Scroll one column left
+scroll-right		Scroll one column right
 ------------------------------------------------------------------------------
 
 ifdef::backend-xhtml11[]
