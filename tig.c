@@ -1766,6 +1766,7 @@ struct view {
 	struct line *curline;	/* Line currently being drawn. */
 	enum line_type curtype;	/* Attribute currently used for drawing. */
 	unsigned long col;	/* Column when drawing. */
+	bool has_scrolled;	/* View was scrolled. */
 
 	/* Loading */
 	struct io io;
@@ -2278,6 +2279,7 @@ do_scroll_view(struct view *view, int lines)
 		wnoutrefresh(view->win);
 	}
 
+	view->has_scrolled = TRUE;
 	report("");
 }
 
@@ -6100,6 +6102,10 @@ utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool
 /* Whether or not the curses interface has been initialized. */
 static bool cursed = FALSE;
 
+/* Terminal hacks and workarounds. */
+static bool use_scroll_redrawwin;
+static bool use_scroll_status_wclear;
+
 /* The status window is used for polling keystrokes. */
 static WINDOW *status_win;
 
@@ -6138,6 +6144,8 @@ report(const char *msg, ...)
 		va_start(args, msg);
 
 		wmove(status_win, 0, 0);
+		if (view->has_scrolled && use_scroll_status_wclear)
+			wclear(status_win);
 		if (*msg) {
 			vwprintw(status_win, msg, args);
 			status_empty = FALSE;
@@ -6167,6 +6175,7 @@ set_nonblocking_input(bool loading)
 static void
 init_display(void)
 {
+	const char *term;
 	int x, y;
 
 	/* Initialize the curses library */
@@ -6205,6 +6214,27 @@ init_display(void)
 	if (opt_line_graphics) {
 		line_graphics[LINE_GRAPHIC_VLINE] = ACS_VLINE;
 	}
+
+	term = getenv("XTERM_VERSION") ? NULL : getenv("COLORTERM");
+	if (term && !strcmp(term, "gnome-terminal")) {
+		/* In the gnome-terminal-emulator, the message from
+		 * scrolling up one line when impossible followed by
+		 * scrolling down one line causes corruption of the
+		 * status line. This is fixed by calling wclear. */
+		use_scroll_status_wclear = TRUE;
+		use_scroll_redrawwin = FALSE;
+
+	} else if (term && !strcmp(term, "xrvt-xpm")) {
+		/* No problems with full optimizations in xrvt-(unicode)
+		 * and aterm. */
+		use_scroll_status_wclear = use_scroll_redrawwin = FALSE;
+
+	} else {
+		/* When scrolling in (u)xterm the last line in the
+		 * scrolling direction will update slowly. */
+		use_scroll_redrawwin = TRUE;
+		use_scroll_status_wclear = FALSE;
+	}
 }
 
 static int
@@ -6217,8 +6247,13 @@ get_input(int prompt_position)
 		input_mode = TRUE;
 
 	while (TRUE) {
-		foreach_view (view, i)
+		foreach_view (view, i) {
 			update_view(view);
+			if (view_is_displayed(view) && view->has_scrolled &&
+			    use_scroll_redrawwin)
+				redrawwin(view->win);
+			view->has_scrolled = FALSE;
+		}
 
 		/* Update the cursor position. */
 		if (prompt_position) {

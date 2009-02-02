@@ -5,10 +5,3 @@ Known bugs and problems:
  - Proper locale support: in it's current state tig is pretty much UTF-8 only.
 
  - Horizontal scrolling.
-
- - In the gnome-terminal-emulator, the message from scrolling up one line
-   when impossible followed by scrolling down one line causes corruption of
-   the status line.
-
- - When scrolling in xterm (and uxterm) the last line in the scrolling
-   direction will update slowly.
