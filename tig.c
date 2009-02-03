@@ -6831,6 +6831,10 @@ main(int argc, const char *argv[])
 
 			if (search)
 				string_ncopy(opt_search, search, strlen(search));
+			else if (*opt_search)
+				request = request == REQ_SEARCH ?
+					REQ_FIND_NEXT :
+					REQ_FIND_PREV;
 			else
 				request = REQ_NONE;
 			break;
