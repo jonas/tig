@@ -652,7 +652,54 @@ run_io_buf(const char **argv, char buf[], size_t bufsize)
 	return done_io(&io) || error;
 }
 
-static int read_properties(struct io *io, const char *separators, int (*read)(char *, size_t, char *, size_t));
+static int
+io_load(struct io *io, const char *separators,
+	int (*read_property)(char *, size_t, char *, size_t))
+{
+	char *name;
+	int state = OK;
+
+	if (!start_io(io))
+		return ERR;
+
+	while (state == OK && (name = io_get(io, '\n', TRUE))) {
+		char *value;
+		size_t namelen;
+		size_t valuelen;
+
+		name = chomp_string(name);
+		namelen = strcspn(name, separators);
+
+		if (name[namelen]) {
+			name[namelen] = 0;
+			value = chomp_string(name + namelen + 1);
+			valuelen = strlen(value);
+
+		} else {
+			value = "";
+			valuelen = 0;
+		}
+
+		state = read_property(name, namelen, value, valuelen);
+	}
+
+	if (state != ERR && io_error(io))
+		state = ERR;
+	done_io(io);
+
+	return state;
+}
+
+static int
+run_io_load(const char **argv, const char *separators,
+	    int (*read_property)(char *, size_t, char *, size_t))
+{
+	struct io io = {};
+
+	return init_io_rd(&io, argv, NULL, FORMAT_NONE)
+		? io_load(&io, separators, read_property) : ERR;
+}
+
 
 /*
  * User requests
@@ -1670,7 +1717,7 @@ load_option_file(const char *path)
 	config_lineno = 0;
 	config_errors = FALSE;
 
-	if (read_properties(&io, " \t", read_option) == ERR ||
+	if (io_load(&io, " \t", read_option) == ERR ||
 	    config_errors == TRUE)
 		warn("Errors while loading %s.", path);
 }
@@ -6388,17 +6435,6 @@ read_prompt(const char *prompt)
  * Repository properties
  */
 
-static int
-git_properties(const char **argv, const char *separators,
-	       int (*read_property)(char *, size_t, char *, size_t))
-{
-	struct io io = {};
-
-	if (init_io_rd(&io, argv, NULL, FORMAT_NONE))
-		return read_properties(&io, separators, read_property);
-	return ERR;
-}
-
 static struct ref *refs = NULL;
 static size_t refs_alloc = 0;
 static size_t refs_size = 0;
@@ -6573,7 +6609,7 @@ load_refs(void)
 	while (id_refs_size > 0)
 		free(id_refs[--id_refs_size]);
 
-	return git_properties(ls_remote_argv, "\t", read_ref);
+	return run_io_load(ls_remote_argv, "\t", read_ref);
 }
 
 static int
@@ -6615,7 +6651,7 @@ load_git_config(void)
 {
 	const char *config_list_argv[] = { "git", GIT_CONFIG, "--list", NULL };
 
-	return git_properties(config_list_argv, "=", read_repo_config_option);
+	return run_io_load(config_list_argv, "=", read_repo_config_option);
 }
 
 static int
@@ -6662,45 +6698,7 @@ load_repo_info(void)
 		}
 	}
 
-	return git_properties(rev_parse_argv, "=", read_repo_info);
-}
-
-static int
-read_properties(struct io *io, const char *separators,
-		int (*read_property)(char *, size_t, char *, size_t))
-{
-	char *name;
-	int state = OK;
-
-	if (!start_io(io))
-		return ERR;
-
-	while (state == OK && (name = io_get(io, '\n', TRUE))) {
-		char *value;
-		size_t namelen;
-		size_t valuelen;
-
-		name = chomp_string(name);
-		namelen = strcspn(name, separators);
-
-		if (name[namelen]) {
-			name[namelen] = 0;
-			value = chomp_string(name + namelen + 1);
-			valuelen = strlen(value);
-
-		} else {
-			value = "";
-			valuelen = 0;
-		}
-
-		state = read_property(name, namelen, value, valuelen);
-	}
-
-	if (state != ERR && io_error(io))
-		state = ERR;
-	done_io(io);
-
-	return state;
+	return run_io_load(rev_parse_argv, "=", read_repo_info);
 }
 
 
