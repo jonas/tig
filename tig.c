@@ -210,6 +210,41 @@ string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen)
 #define string_add(dst, from, src) \
 	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
 
+static size_t
+string_expand_length(const char *line, int tabsize)
+{
+	size_t size, pos;
+
+	for (pos = 0; line[pos]; pos++) {
+		if (line[pos] == '\t' && tabsize > 0)
+			size += tabsize - (size % tabsize);
+		else
+			size++;
+	}
+	return size;
+}
+
+static void
+string_expand(char *dst, size_t dstlen, const char *src, int tabsize)
+{
+	size_t size, pos;
+
+	for (size = pos = 0; size < dstlen - 1 && src[pos]; pos++) {
+		if (src[pos] == '\t') {
+			size_t expanded = tabsize - (size % tabsize);
+
+			if (expanded + size >= dstlen - 1)
+				expanded = dstlen - size - 1;
+			memcpy(dst + size, "        ", expanded);
+			size += expanded;
+		} else {
+			dst[size++] = src[pos];
+		}
+	}
+
+	dst[size] = 0;
+}
+
 static char *
 chomp_string(char *name)
 {
@@ -3353,11 +3388,12 @@ select_commit_parent(const char *id, char rev[SIZEOF_REV])
 static bool
 pager_draw(struct view *view, struct line *line, unsigned int lineno)
 {
-	char *text = line->data;
+	char text[SIZEOF_STR];
 
 	if (opt_line_number && draw_lineno(view, lineno))
 		return TRUE;
 
+	string_expand(text, sizeof(text), line->data, opt_tab_size);
 	draw_text(view, line->type, text, TRUE);
 	return TRUE;
 }
@@ -4227,12 +4263,14 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 		return FALSE;
 
 	} else {
-		size_t linelen = strlen(line);
+		size_t linelen = string_expand_length(line, opt_tab_size);
 		struct blame *blame = malloc(sizeof(*blame) + linelen);
 
+		if (!blame)
+			return FALSE;
+
 		blame->commit = NULL;
-		strncpy(blame->text, line, linelen);
-		blame->text[linelen] = 0;
+		string_expand(blame->text, linelen + 1, line, opt_tab_size);
 		return add_line_data(view, blame, LINE_BLAME_ID) != NULL;
 	}
 }
@@ -5800,7 +5838,7 @@ main_read(struct view *view, char *line)
 		/* FIXME: More graceful handling of titles; append "..." to
 		 * shortened titles, etc. */
 
-		string_ncopy(commit->title, line, strlen(line));
+		string_expand(commit->title, sizeof(commit->title), line, 1);
 		view->line[view->lines - 1].dirty = 1;
 	}
 
