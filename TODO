@@ -2,21 +2,41 @@ TODO
 ----
 Features that should be explored.
 
+Before tig-1.0
+~~~~~~~~~~~~~~
+
  - Better text-input support.
 
- - When the user wants to "view" a commit, you could show from which
-   branch heads and from which tags the commit is reachable, and perhaps
-   which tag is the latest among the ones reachable from that commit, as
-   part of the commit detail information you display on the lower pane
-   (log/diff view).
-
- - Split sources of tig.c into multiple files.
+    - Add an edit keymap so the "editor" can be customized.
+    - Allow the cursor to navigate in the input area.
 
  - Rewrite revgraph handling.
 
- - Color the revgraph to make it easier to follow branches. Idea by
-   Dominik Vogt.
+   The commit structure should be expanded to have a parent member,
+   which points to the parent commits.
 
- - Commit cache: Many views use commit information and load it into
-   their own custom data structure. Having the information shared would
-   make it easier to do various interesting stuff across the views.
+    - Make main view support navigating the revision graph using the
+      parent action.
+
+    - Color the revgraph to make it easier to follow branches.
+
+   Other revgraph improvements:
+
+    - Show from which branch heads and tags a commit is reachable, and
+      perhaps which tag is the latests among the ones reachable from
+      that commit, as part of the diff view. How should rewritten parent
+      information be handled? Depends on new enhanced commit structure.
+
+ - Show the "active" (instead of the default) keybindings in the help
+   view. Also, display the keymap.
+
+Long term goals
+~~~~~~~~~~~~~~~
+
+ - Add a commit cache.
+
+   Many views use commit information and load it into their own custom
+   data structure. Having the information shared would make it easier to
+   do various interesting stuff across the views.
+
+ - Split sources of tig.c into multiple files.
