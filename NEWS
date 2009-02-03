@@ -27,6 +27,7 @@ Improvements:
 Bug fixes:
 
  - Tree view: fix memory corruption bug when updating.
+ - Tree view: improve handling of empty trees.
  - Status view: fix reverting of unmerged files.
  - Fix regression for non-UTF-8 locales corrupting the view data.
  - Fix regression parsing multiple spaces in ~/.tigrc.

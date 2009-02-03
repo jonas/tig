@@ -3849,6 +3849,12 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 		};
 		struct io io = {};
 
+		if (!view->lines) {
+			tree_entry(view, LINE_TREE_PARENT, opt_path, NULL, NULL);
+			report("Tree is empty");
+			return TRUE;
+		}
+
 		if (!run_io_rd(&io, log_file, FORMAT_NONE)) {
 			report("Failed to load tree data");
 			return TRUE;
