@@ -4620,7 +4620,6 @@ status_get_diff(struct status *file, const char *buf, size_t bufsize)
 static bool
 status_run(struct view *view, const char *argv[], char status, enum line_type type)
 {
-	struct status *file = NULL;
 	struct status *unmerged = NULL;
 	char *buf;
 	struct io io = {};
@@ -4631,6 +4630,8 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	add_line_data(view, NULL, type);
 
 	while ((buf = io_get(&io, 0, TRUE))) {
+		struct status *file = unmerged;
+
 		if (!file) {
 			file = calloc(1, sizeof(*file));
 			if (!file || !add_line_data(view, file, type))
@@ -4643,7 +4644,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 			if (status == 'A')
 				string_copy(file->old.rev, NULL_ID);
 
-		} else if (!file->status) {
+		} else if (!file->status || file == unmerged) {
 			if (!status_get_diff(file, buf, strlen(buf)))
 				goto error_out;
 
@@ -4653,19 +4654,11 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 
 			/* Collapse all 'M'odified entries that follow a
 			 * associated 'U'nmerged entry. */
-			if (file->status == 'U') {
-				unmerged = file;
-
-			} else if (unmerged) {
-				int collapse = !strcmp(buf, unmerged->new.name);
-
+			if (unmerged == file) {
+				unmerged->status = 'U';
 				unmerged = NULL;
-				if (collapse) {
-					free(file);
-					file = NULL;
-					view->lines--;
-					continue;
-				}
+			} else if (file->status == 'U') {
+				unmerged = file;
 			}
 		}
 
@@ -5104,13 +5097,20 @@ status_revert(struct status *status, enum line_type type, bool has_none)
 		return FALSE;
 
 	} else {
+		char mode[10] = "100644";
+		const char *reset_argv[] = {
+			"git", "update-index", "--cacheinfo", mode,
+				status->old.rev, status->old.name, NULL
+		};
 		const char *checkout_argv[] = {
 			"git", "checkout", "--", status->old.name, NULL
 		};
 
 		if (!prompt_yesno("Are you sure you want to overwrite any changes?"))
 			return FALSE;
-		return run_io_fg(checkout_argv, opt_cdup);
+		string_format(mode, "%o", status->old.mode);
+		return (status->status != 'U' || run_io_fg(reset_argv, opt_cdup)) &&
+			run_io_fg(checkout_argv, opt_cdup);
 	}
 }
 
