@@ -1649,8 +1649,8 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen)
 	}
 
 	if (status == ERR) {
-		fprintf(stderr, "Error on line %d, near '%.*s': %s\n",
-			config_lineno, (int) optlen, opt, config_msg);
+		warn("Error on line %d, near '%.*s': %s",
+		     config_lineno, (int) optlen, opt, config_msg);
 		config_errors = TRUE;
 	}
 
@@ -1672,7 +1672,7 @@ load_option_file(const char *path)
 
 	if (read_properties(&io, " \t", read_option) == ERR ||
 	    config_errors == TRUE)
-		fprintf(stderr, "Errors while loading %s.\n", path);
+		warn("Errors while loading %s.", path);
 }
 
 static int
