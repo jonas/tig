@@ -11,6 +11,8 @@ Incompatibilities:
  - The "tree-parent" action was renamed to "parent". Warnings will be
    emitted for transition.
  - Remove parsing of deprecated option -S and subcommands log and diff.
+ - The "author" color replaces "main-author". Setting the latter will
+   now set the "author" color.
 
 Improvements:
 

@@ -370,6 +370,7 @@ title-blur		The title window of any backgrounded view.
 delimiter		Delimiter shown for truncated lines.
 line-number		Line numbers.
 date			The commit date.
+author			The commit author.
 ------------------------------------------------------------------------------
 
 ifdef::backend-xhtml11[]
@@ -378,7 +379,6 @@ ifdef::backend-xhtml11[]
 endif::backend-xhtml11[]
 Main view colors:
 ------------------------------------------------------------------------------
-main-author		The commit author.
 main-revgraph		The revision graph.
 main-commit		The commit comment.
 main-head		Label of the current branch.
