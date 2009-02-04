@@ -1543,23 +1543,16 @@ option_bind_command(int argc, const char *argv[])
 
 	request = get_request(argv[2]);
 	if (request == REQ_NONE) {
-		struct {
-			const char *name;
-			enum request request;
-		} obsolete[] = {
-			{ "cherry-pick",	REQ_NONE },
-			{ "screen-resize",	REQ_NONE },
-			{ "tree-parent",	REQ_PARENT },
+		static struct enum_map obsolete[] = {
+			ENUM_MAP("cherry-pick",		REQ_NONE),
+			ENUM_MAP("screen-resize",	REQ_NONE),
+			ENUM_MAP("tree-parent",		REQ_PARENT),
 		};
-		size_t namelen = strlen(argv[2]);
-		int i;
+		int alias;
 
-		for (i = 0; i < ARRAY_SIZE(obsolete); i++) {
-			if (namelen != strlen(obsolete[i].name) ||
-			    string_enum_compare(obsolete[i].name, argv[2], namelen))
-				continue;
-			if (obsolete[i].request != REQ_NONE)
-				add_keybinding(keymap, obsolete[i].request, key);
+		if (map_enum(&alias, obsolete, argv[2])) {
+			if (alias != REQ_NONE)
+				add_keybinding(keymap, alias, key);
 			config_msg = "Obsolete request name";
 			return ERR;
 		}
