@@ -95,7 +95,7 @@ ENVIRONMENT VARIABLES
 
 In addition to environment variables used by git (e.g. GIT_DIR), tig defines
 the ones below. The command related environment variables have access to the
-internal state of tig via replacement variabls, such as `%(commit)` and
+internal state of tig via replacement variables, such as `%(commit)` and
 `%(blob)`. See manpage:tigrc[5] for a full list.
 
 TIGRC_USER::
@@ -160,8 +160,7 @@ the Free Software Foundation; either version 2 of the License, or
 SEE ALSO
 --------
 
-manpage:tigrc[5], git(7), cogito(7), as well as other git repository browsers:
-gitk(1), qgit(1), gitview(1).
+manpage:tigrc[5], git(7), gitk(1)
 
 Online resources:
 

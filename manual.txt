@@ -407,10 +407,10 @@ Searching
 `-------`--------------------------------------------------------------------
 Key	Action
 -----------------------------------------------------------------------------
-/	Search the view. Opens a prompt for entering search regex to use.
-?	Search backwards in the view. Also prompts for regex.
-n	Find next match for the current search regex.
-N	Find previous match for the current search regex.
+/	Search the view. Opens a prompt for entering search regexp to use.
+?	Search backwards in the view. Also prompts for regexp.
+n	Find next match for the current search regexp.
+N	Find previous match for the current search regexp.
 -----------------------------------------------------------------------------
 
 [[misc-keys]]
@@ -443,7 +443,7 @@ External Commands
 For more custom needs, external commands provide a way to easily execute
 a script or program. They are bound to keys and use information from the
 current browsing state, such as the current commit ID. Tig comes with
-the following builtin external commands:
+the following built-in external commands:
 
 `-------`--------------------------------------------------------------------
 Key	Action
@@ -600,4 +600,3 @@ Other git repository browsers:
 
  - gitk(1)
  - qgit(1)
- - gitview(1)

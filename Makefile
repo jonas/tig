@@ -36,6 +36,7 @@ LDLIBS ?= -lcurses
 CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
 PROGS	= tig
+TXTDOC	= tig.1.txt tigrc.5.txt manual.txt NEWS README INSTALL BUGS TODO
 MANDOC	= tig.1 tigrc.5
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html NEWS.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) manual.html-chunked manual.pdf
@@ -104,7 +105,10 @@ distclean: clean
 	$(RM) config.h config.log config.make config.status config.h.in
 
 spell-check:
-	aspell --lang=en --check tig.1.txt tigrc.5.txt manual.txt
+	for file in $(TXTDOC) tig.c; do \
+		aspell --lang=en --dont-backup \
+		       --personal=./contrib/aspell.dict check $$file; \
+	done
 
 strip: $(PROGS)
 	strip $(PROGS)

@@ -121,7 +121,7 @@ static size_t utf8_length(const char **string, size_t col, int *width, size_t ma
 #define GIT_CONFIG "config"
 #endif
 
-/* Some ascii-shorthands fitted into the ncurses namespace. */
+/* Some ASCII-shorthands fitted into the ncurses namespace. */
 #define KEY_TAB		'\t'
 #define KEY_RETURN	'\r'
 #define KEY_ESC		27
@@ -1391,7 +1391,7 @@ static int   config_lineno;
 static bool  config_errors;
 static const char *config_msg;
 
-/* Wants: object fgcolor bgcolor [attr] */
+/* Wants: object fgcolor bgcolor [attribute] */
 static int
 option_color_command(int argc, const char *argv[])
 {
@@ -1511,7 +1511,7 @@ option_set_command(int argc, const char *argv[])
 		int arglen = strlen(arg);
 
 		switch (arg[0]) {
-		case '"':
+		case '\"':
 		case '\'':
 			if (arglen == 1 || arg[arglen - 1] != arg[0]) {
 				config_msg = "Unmatched quotation";
@@ -1656,7 +1656,7 @@ load_option_file(const char *path)
 {
 	struct io io = {};
 
-	/* It's ok that the file doesn't exist. */
+	/* It's OK that the file doesn't exist. */
 	if (!io_open(&io, path))
 		return;
 
@@ -1745,7 +1745,7 @@ struct view {
 
 	/* Searching */
 	char grep[SIZEOF_STR];	/* Search string */
-	regex_t *regex;		/* Pre-compiled regex */
+	regex_t *regex;		/* Pre-compiled regexp */
 
 	/* If non-NULL, points to the view that opened this view. If this view
 	 * is closed tig will switch back to the parent view. */
@@ -1784,7 +1784,7 @@ struct view_ops {
 	bool (*draw)(struct view *view, struct line *line, unsigned int lineno);
 	/* Depending on view handle a special requests. */
 	enum request (*request)(struct view *view, enum request request, struct line *line);
-	/* Search for regex in a line. */
+	/* Search for regexp in a line. */
 	bool (*grep)(struct view *view, struct line *line);
 	/* Select line */
 	void (*select)(struct view *view, struct line *line);
@@ -3781,14 +3781,11 @@ push_tree_stack_entry(const char *name, unsigned long lineno)
 
 /* Parse output from git-ls-tree(1):
  *
- * 100644 blob fb0e31ea6cc679b7379631188190e975f5789c26	Makefile
- * 100644 blob 5304ca4260aaddaee6498f9630e7d471b8591ea6	README
  * 100644 blob f931e1d229c3e185caad4449bf5b66ed72462657	tig.c
- * 100644 blob ed09fe897f3c7c9af90bcf80cae92558ea88ae38	web.conf
  */
 
 #define SIZEOF_TREE_ATTR \
-	STRING_SIZE("100644 blob ed09fe897f3c7c9af90bcf80cae92558ea88ae38\t")
+	STRING_SIZE("100644 blob f931e1d229c3e185caad4449bf5b66ed72462657\t")
 
 #define SIZEOF_TREE_MODE \
 	STRING_SIZE("100644 ")
@@ -4064,7 +4061,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 
 	switch (line->type) {
 	case LINE_TREE_DIR:
-		/* Depending on whether it is a subdir or parent (updir?) link
+		/* Depending on whether it is a subdirectory or parent link
 		 * mangle the path buffer. */
 		if (line == &view->line[1] && *opt_path) {
 			pop_tree_stack_entry();
@@ -4652,8 +4649,8 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 			if (!buf)
 				break;
 
-			/* Collapse all 'M'odified entries that follow a
-			 * associated 'U'nmerged entry. */
+			/* Collapse all modified entries that follow an
+			 * associated unmerged entry. */
 			if (unmerged == file) {
 				unmerged->status = 'U';
 				unmerged = NULL;
@@ -5992,14 +5989,10 @@ static struct view_ops main_ops = {
 /*
  * Unicode / UTF-8 handling
  *
- * NOTE: Much of the following code for dealing with unicode is derived from
+ * NOTE: Much of the following code for dealing with Unicode is derived from
  * ELinks' UTF-8 code developed by Scrool <scroolik@gmail.com>. Origin file is
- * src/intl/charset.c from the utf8 branch commit elinks-0.11.0-g31f2c28.
+ * src/intl/charset.c from the UTF-8 branch commit elinks-0.11.0-g31f2c28.
  */
-
-/* I've (over)annotated a lot of code snippets because I am not entirely
- * confident that the approach taken by this small UTF-8 interface is correct.
- * --jonas */
 
 static inline int
 unicode_width(unsigned long c)
@@ -6038,7 +6031,7 @@ static const unsigned char utf8_bytes[256] = {
 	3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 4,4,4,4,4,4,4,4, 5,5,5,5,6,6,1,1,
 };
 
-/* Decode UTF-8 multi-byte representation into a unicode character. */
+/* Decode UTF-8 multi-byte representation into a Unicode character. */
 static inline unsigned long
 utf8_to_unicode(const char *string, size_t length)
 {
@@ -6079,7 +6072,7 @@ utf8_to_unicode(const char *string, size_t length)
 		unicode +=  (string[5] & 0x3f);
 		break;
 	default:
-		die("Invalid unicode length");
+		die("Invalid Unicode length");
 	}
 
 	/* Invalid characters could return the special 0xfffd value but NUL
@@ -6117,7 +6110,7 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
 		 * it is a single- or double-width character. */
 
 		unicode = utf8_to_unicode(string, bytes);
-		/* FIXME: Graceful handling of invalid unicode character. */
+		/* FIXME: Graceful handling of invalid Unicode character. */
 		if (!unicode)
 			break;
 
@@ -6244,7 +6237,7 @@ init_display(void)
 	if (!cursed)
 		die("Failed to initialize curses");
 
-	nonl();         /* Tell curses not to do NL->CR/NL on output */
+	nonl();		/* Disable conversion and detect newlines from input. */
 	cbreak();       /* Take input chars one at a time, no wait for \n */
 	noecho();       /* Don't echo input */
 	leaveok(stdscr, FALSE);
@@ -6562,7 +6555,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 	}
 
 	if (check_replace && !strcmp(name, refs[refs_size - 1].name)) {
-		/* it's an annotated tag, replace the previous sha1 with the
+		/* it's an annotated tag, replace the previous SHA1 with the
 		 * resolved commit id; relies on the fact git-ls-remote lists
 		 * the commit id of an annotated tag right before the commit id
 		 * it points to. */

@@ -99,7 +99,7 @@ Improvements:
  - Stage view: add stage-next action to jump to next diff chunk that can
    be staged. By default bound to '@'.
  - Configure: check for the ncurses header files.
- - Add author-width option to costumize the width of the author column.
+ - Add author-width option to customize the width of the author column.
    For example, put the following in ~/.tigrc: set author-width = 10
 
 Bug fixes:
@@ -153,7 +153,7 @@ Improvements:
 
 Bug fixes:
 
- - Fix UTF8 handling for tag names and commit messages.
+ - Fix UTF-8 handling for tag names and commit messages.
  - Fix the check for git-config(1) in configure to handle the case when
    git has been installed using a libexecdir which is not in the path.
  - Fix replacing of SYSCONFDIR when installing from released tarballs.
