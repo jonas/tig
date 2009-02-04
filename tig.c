@@ -857,19 +857,6 @@ get_request(const char *name)
  * Options
  */
 
-static const char usage[] =
-"tig " TIG_VERSION " (" __DATE__ ")\n"
-"\n"
-"Usage: tig        [options] [revs] [--] [paths]\n"
-"   or: tig show   [options] [revs] [--] [paths]\n"
-"   or: tig blame  [rev] path\n"
-"   or: tig status\n"
-"   or: tig <      [git command output]\n"
-"\n"
-"Options:\n"
-"  -v, --version   Show version and exit\n"
-"  -h, --help      Show help message and exit";
-
 /* Option and state variables. */
 static bool opt_date			= TRUE;
 static bool opt_author			= TRUE;
@@ -6715,6 +6702,19 @@ load_repo_info(void)
 /*
  * Main
  */
+
+static const char usage[] =
+"tig " TIG_VERSION " (" __DATE__ ")\n"
+"\n"
+"Usage: tig        [options] [revs] [--] [paths]\n"
+"   or: tig show   [options] [revs] [--] [paths]\n"
+"   or: tig blame  [rev] path\n"
+"   or: tig status\n"
+"   or: tig <      [git command output]\n"
+"\n"
+"Options:\n"
+"  -v, --version   Show version and exit\n"
+"  -h, --help      Show help message and exit";
 
 static void __NORETURN
 quit(int sig)
