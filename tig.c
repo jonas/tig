@@ -148,29 +148,6 @@ enum format_flags {
 
 static bool format_argv(const char *dst[], const char *src[], enum format_flags flags);
 
-struct int_map {
-	const char *name;
-	int namelen;
-	int value;
-};
-
-static int
-set_from_int_map(struct int_map *map, size_t map_size,
-		 int *value, const char *name, int namelen)
-{
-
-	int i;
-
-	for (i = 0; i < map_size; i++)
-		if (namelen == map[i].namelen &&
-		    !strncasecmp(name, map[i].name, namelen)) {
-			*value = map[i].value;
-			return OK;
-		}
-
-	return ERR;
-}
-
 enum input_status {
 	INPUT_OK,
 	INPUT_SKIP,
@@ -304,6 +281,33 @@ string_enum_compare(const char *str1, const char *str2, int len)
 
 	return 0;
 }
+
+struct enum_map {
+	const char *name;
+	int namelen;
+	int value;
+};
+
+#define ENUM_MAP(name, value) { name, STRING_SIZE(name), value }
+
+static bool
+map_enum_do(struct enum_map *map, size_t map_size, int *value, const char *name)
+{
+	size_t namelen = strlen(name);
+	int i;
+
+	for (i = 0; i < map_size; i++)
+		if (namelen == map[i].namelen &&
+		    !string_enum_compare(name, map[i].name, namelen)) {
+			*value = map[i].value;
+			return TRUE;
+		}
+
+	return FALSE;
+}
+
+#define map_enum(attr, map, name) \
+	map_enum_do(map, ARRAY_SIZE(map), attr, name)
 
 #define prefixcmp(str1, str2) \
 	strncmp(str1, str2, STRING_SIZE(str2))
@@ -1139,14 +1143,13 @@ enum keymap {
 #undef	KEYMAP_
 };
 
-static struct int_map keymap_table[] = {
-#define KEYMAP_(name) { #name, STRING_SIZE(#name), KEYMAP_##name }
+static struct enum_map keymap_table[] = {
+#define KEYMAP_(name) ENUM_MAP(#name, KEYMAP_##name)
 	KEYMAP_INFO
 #undef	KEYMAP_
 };
 
-#define set_keymap(map, name) \
-	set_from_int_map(keymap_table, ARRAY_SIZE(keymap_table), map, name, strlen(name))
+#define set_keymap(map, name) map_enum(map, keymap_table, name)
 
 struct keybinding_table {
 	struct keybinding *data;
@@ -1357,8 +1360,8 @@ add_builtin_run_requests(void)
  * User config file handling.
  */
 
-static struct int_map color_map[] = {
-#define COLOR_MAP(name) { #name, STRING_SIZE(#name), COLOR_##name }
+static struct enum_map color_map[] = {
+#define COLOR_MAP(name) ENUM_MAP(#name, COLOR_##name)
 	COLOR_MAP(DEFAULT),
 	COLOR_MAP(BLACK),
 	COLOR_MAP(BLUE),
@@ -1370,11 +1373,8 @@ static struct int_map color_map[] = {
 	COLOR_MAP(YELLOW),
 };
 
-#define set_color(color, name) \
-	set_from_int_map(color_map, ARRAY_SIZE(color_map), color, name, strlen(name))
-
-static struct int_map attr_map[] = {
-#define ATTR_MAP(name) { #name, STRING_SIZE(#name), A_##name }
+static struct enum_map attr_map[] = {
+#define ATTR_MAP(name) ENUM_MAP(#name, A_##name)
 	ATTR_MAP(NORMAL),
 	ATTR_MAP(BLINK),
 	ATTR_MAP(BOLD),
@@ -1384,8 +1384,8 @@ static struct int_map attr_map[] = {
 	ATTR_MAP(UNDERLINE),
 };
 
-#define set_attribute(attr, name) \
-	set_from_int_map(attr_map, ARRAY_SIZE(attr_map), attr, name, strlen(name))
+#define set_color(color, name)		map_enum(color, color_map, name)
+#define set_attribute(attr, name)	map_enum(attr, attr_map, name)
 
 static int   config_lineno;
 static bool  config_errors;
@@ -1419,13 +1419,13 @@ option_color_command(int argc, const char *argv[])
 		}
 	}
 
-	if (set_color(&info->fg, argv[1]) == ERR ||
-	    set_color(&info->bg, argv[2]) == ERR) {
+	if (!set_color(&info->fg, argv[1]) ||
+	    !set_color(&info->bg, argv[2])) {
 		config_msg = "Unknown color";
 		return ERR;
 	}
 
-	if (argc == 4 && set_attribute(&info->attr, argv[3]) == ERR) {
+	if (argc == 4 && !set_attribute(&info->attr, argv[3])) {
 		config_msg = "Unknown attribute";
 		return ERR;
 	}
