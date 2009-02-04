@@ -1404,19 +1404,18 @@ option_color_command(int argc, const char *argv[])
 
 	info = get_line_info(argv[0]);
 	if (!info) {
-		if (!string_enum_compare(argv[0], "main-delim", strlen("main-delim"))) {
-			info = get_line_info("delimiter");
+		static struct enum_map obsolete[] = {
+			ENUM_MAP("main-delim",	LINE_DELIMITER),
+			ENUM_MAP("main-date",	LINE_DATE),
+			ENUM_MAP("main-author",	LINE_AUTHOR),
+		};
+		int index;
 
-		} else if (!string_enum_compare(argv[0], "main-date", strlen("main-date"))) {
-			info = get_line_info("date");
-
-		} else if (!string_enum_compare(argv[0], "main-author", strlen("main-author"))) {
-			info = get_line_info("author");
-
-		} else {
+		if (!map_enum(&index, obsolete, argv[0])) {
 			config_msg = "Unknown color name";
 			return ERR;
 		}
+		info = &line_info[index];
 	}
 
 	if (!set_color(&info->fg, argv[1]) ||
