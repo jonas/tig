@@ -2924,7 +2924,6 @@ enum open_flags {
 	OPEN_DEFAULT = 0,	/* Use default view switching. */
 	OPEN_SPLIT = 1,		/* Split current view. */
 	OPEN_RELOAD = 4,	/* Reload view even if it is the current. */
-	OPEN_NOMAXIMIZE = 8,	/* Do not maximize the current view. */
 	OPEN_REFRESH = 16,	/* Refresh view using previous command. */
 	OPEN_PREPARED = 32,	/* Open already prepared command. */
 };
@@ -2934,7 +2933,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 {
 	bool split = !!(flags & OPEN_SPLIT);
 	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED));
-	bool nomaximize = !!(flags & (OPEN_NOMAXIMIZE | OPEN_REFRESH));
+	bool nomaximize = !!(flags & OPEN_REFRESH);
 	struct view *view = VIEW(request);
 	int nviews = displayed_views();
 	struct view *base_view = display[0];
@@ -5444,7 +5443,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 	}
 
 	VIEW(REQ_VIEW_STATUS)->p_restore = TRUE;
-	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD | OPEN_NOMAXIMIZE);
+	open_view(view, REQ_VIEW_STATUS, OPEN_REFRESH);
 
 	/* Check whether the staged entry still exists, and close the
 	 * stage view if it doesn't. */
