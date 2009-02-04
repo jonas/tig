@@ -1433,18 +1433,40 @@ option_color_command(int argc, const char *argv[])
 	return OK;
 }
 
-static bool parse_bool(const char *s)
+static int parse_bool(bool *opt, const char *arg)
 {
-	return (!strcmp(s, "1") || !strcmp(s, "true") ||
-		!strcmp(s, "yes")) ? TRUE : FALSE;
+	*opt = (!strcmp(arg, "1") || !strcmp(arg, "true") || !strcmp(arg, "yes"))
+		? TRUE : FALSE;
+	return OK;
 }
 
 static int
-parse_int(const char *s, int default_value, int min, int max)
+parse_int(int *opt, const char *arg, int min, int max)
 {
-	int value = atoi(s);
+	int value = atoi(arg);
 
-	return (value < min || value > max) ? default_value : value;
+	if (min <= value && value <= max)
+		*opt = value;
+	return OK;
+}
+
+static int
+parse_string(char *opt, const char *arg, size_t optsize)
+{
+	int arglen = strlen(arg);
+
+	switch (arg[0]) {
+	case '\"':
+	case '\'':
+		if (arglen == 1 || arg[arglen - 1] != arg[0]) {
+			config_msg = "Unmatched quotation";
+			return ERR;
+		}
+		arg += 1; arglen -= 2;
+	default:
+		string_ncopy_do(opt, optsize, arg, strlen(arg));
+		return OK;
+	}
 }
 
 /* Wants: name = value */
@@ -1461,68 +1483,35 @@ option_set_command(int argc, const char *argv[])
 		return ERR;
 	}
 
-	if (!strcmp(argv[0], "show-author")) {
-		opt_author = parse_bool(argv[2]);
-		return OK;
-	}
+	if (!strcmp(argv[0], "show-author"))
+		return parse_bool(&opt_author, argv[2]);
 
-	if (!strcmp(argv[0], "show-date")) {
-		opt_date = parse_bool(argv[2]);
-		return OK;
-	}
+	if (!strcmp(argv[0], "show-date"))
+		return parse_bool(&opt_date, argv[2]);
 
-	if (!strcmp(argv[0], "show-rev-graph")) {
-		opt_rev_graph = parse_bool(argv[2]);
-		return OK;
-	}
+	if (!strcmp(argv[0], "show-rev-graph"))
+		return parse_bool(&opt_rev_graph, argv[2]);
 
-	if (!strcmp(argv[0], "show-refs")) {
-		opt_show_refs = parse_bool(argv[2]);
-		return OK;
-	}
+	if (!strcmp(argv[0], "show-refs"))
+		return parse_bool(&opt_show_refs, argv[2]);
 
-	if (!strcmp(argv[0], "show-line-numbers")) {
-		opt_line_number = parse_bool(argv[2]);
-		return OK;
-	}
+	if (!strcmp(argv[0], "show-line-numbers"))
+		return parse_bool(&opt_line_number, argv[2]);
 
-	if (!strcmp(argv[0], "line-graphics")) {
-		opt_line_graphics = parse_bool(argv[2]);
-		return OK;
-	}
+	if (!strcmp(argv[0], "line-graphics"))
+		return parse_bool(&opt_line_graphics, argv[2]);
 
-	if (!strcmp(argv[0], "line-number-interval")) {
-		opt_num_interval = parse_int(argv[2], opt_num_interval, 1, 1024);
-		return OK;
-	}
+	if (!strcmp(argv[0], "line-number-interval"))
+		return parse_int(&opt_num_interval, argv[2], 1, 1024);
 
-	if (!strcmp(argv[0], "author-width")) {
-		opt_author_cols = parse_int(argv[2], opt_author_cols, 0, 1024);
-		return OK;
-	}
+	if (!strcmp(argv[0], "author-width"))
+		return parse_int(&opt_author_cols, argv[2], 0, 1024);
 
-	if (!strcmp(argv[0], "tab-size")) {
-		opt_tab_size = parse_int(argv[2], opt_tab_size, 1, 1024);
-		return OK;
-	}
+	if (!strcmp(argv[0], "tab-size"))
+		return parse_int(&opt_tab_size, argv[2], 1, 1024);
 
-	if (!strcmp(argv[0], "commit-encoding")) {
-		const char *arg = argv[2];
-		int arglen = strlen(arg);
-
-		switch (arg[0]) {
-		case '\"':
-		case '\'':
-			if (arglen == 1 || arg[arglen - 1] != arg[0]) {
-				config_msg = "Unmatched quotation";
-				return ERR;
-			}
-			arg += 1; arglen -= 2;
-		default:
-			string_ncopy(opt_encoding, arg, strlen(arg));
-			return OK;
-		}
-	}
+	if (!strcmp(argv[0], "commit-encoding"))
+		return parse_string(opt_encoding, argv[2], sizeof(opt_encoding));
 
 	config_msg = "Unknown variable name";
 	return ERR;
