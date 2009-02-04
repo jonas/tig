@@ -2923,7 +2923,6 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 enum open_flags {
 	OPEN_DEFAULT = 0,	/* Use default view switching. */
 	OPEN_SPLIT = 1,		/* Split current view. */
-	OPEN_BACKGROUNDED = 2,	/* Backgrounded. */
 	OPEN_RELOAD = 4,	/* Reload view even if it is the current. */
 	OPEN_NOMAXIMIZE = 8,	/* Do not maximize the current view. */
 	OPEN_REFRESH = 16,	/* Refresh view using previous command. */
@@ -2933,7 +2932,6 @@ enum open_flags {
 static void
 open_view(struct view *prev, enum request request, enum open_flags flags)
 {
-	bool backgrounded = !!(flags & OPEN_BACKGROUNDED);
 	bool split = !!(flags & OPEN_SPLIT);
 	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED));
 	bool nomaximize = !!(flags & (OPEN_NOMAXIMIZE | OPEN_REFRESH));
@@ -2953,8 +2951,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 
 	if (split) {
 		display[1] = view;
-		if (!backgrounded)
-			current_view = 1;
+		current_view = 1;
 	} else if (!nomaximize) {
 		/* Maximize the current view. */
 		memset(display, 0, sizeof(display));
@@ -2993,7 +2990,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	}
 
 	if (prev && view != prev) {
-		if (split && !backgrounded) {
+		if (split) {
 			/* "Blur" the previous view. */
 			update_view_title(prev);
 		}
@@ -3011,11 +3008,6 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		redraw_view(view);
 		report("");
 	}
-
-	/* If the view is backgrounded the above calls to report()
-	 * won't redraw the view title. */
-	if (backgrounded)
-		update_view_title(view);
 }
 
 static void
