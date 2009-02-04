@@ -939,7 +939,7 @@ LINE(MAIN_TRACKED, "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_HEAD,    "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REVGRAPH,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(TREE_PARENT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_BOLD), \
+LINE(TREE_HEAD,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_BOLD), \
 LINE(TREE_DIR,     "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(STAT_HEAD,    "",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
@@ -3860,7 +3860,7 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 		struct io io = {};
 
 		if (!view->lines) {
-			tree_entry(view, LINE_TREE_PARENT, opt_path, NULL, NULL);
+			tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL);
 			report("Tree is empty");
 			return TRUE;
 		}
@@ -3932,7 +3932,7 @@ tree_read(struct view *view, char *text)
 	if (textlen <= SIZEOF_TREE_ATTR)
 		return FALSE;
 	if (view->lines == 0 &&
-	    !tree_entry(view, LINE_TREE_PARENT, opt_path, NULL, NULL))
+	    !tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL))
 		return FALSE;
 
 	/* Strip the path part ... */
@@ -3983,7 +3983,7 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct tree_entry *entry = line->data;
 
-	if (line->type == LINE_TREE_PARENT) {
+	if (line->type == LINE_TREE_HEAD) {
 		if (draw_text(view, line->type, "Directory path /", TRUE))
 			return TRUE;
 	} else {
