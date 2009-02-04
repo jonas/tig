@@ -927,6 +927,7 @@ LINE(CURSOR,	   "",			COLOR_WHITE,	COLOR_GREEN,	A_BOLD), \
 LINE(STATUS,	   "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(DELIMITER,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(DATE,         "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
+LINE(MODE,         "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(LINE_NUMBER,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(TITLE_BLUR,   "",			COLOR_WHITE,	COLOR_BLUE,	0), \
 LINE(TITLE_FOCUS,  "",			COLOR_WHITE,	COLOR_BLUE,	A_BOLD), \
@@ -939,7 +940,6 @@ LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_HEAD,    "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REVGRAPH,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(TREE_PARENT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_BOLD), \
-LINE(TREE_MODE,    "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(TREE_DIR,     "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(STAT_HEAD,    "",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
@@ -2033,6 +2033,27 @@ draw_author(struct view *view, const char *author)
 	}
 
 	return draw_field(view, LINE_AUTHOR, author, opt_author_cols, trim);
+}
+
+static bool
+draw_mode(struct view *view, mode_t mode)
+{
+	static const char dir_mode[]	= "drwxr-xr-x";
+	static const char link_mode[]	= "lrwxrwxrwx";
+	static const char exe_mode[]	= "-rwxr-xr-x";
+	static const char file_mode[]	= "-rw-r--r--";
+	const char *str;
+
+	if (S_ISDIR(mode))
+		str = dir_mode;
+	else if (S_ISLNK(mode))
+		str = link_mode;
+	else if (mode & S_IXUSR)
+		str = exe_mode;
+	else
+		str = file_mode;
+
+	return draw_field(view, LINE_MODE, str, sizeof(file_mode), FALSE);
 }
 
 static bool
@@ -3966,23 +3987,7 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 		if (draw_text(view, line->type, "Directory path /", TRUE))
 			return TRUE;
 	} else {
-		char mode[11] = "-r--r--r--";
-
-		if (S_ISDIR(entry->mode)) {
-			mode[3] = mode[6] = mode[9] = 'x';
-			mode[0] = 'd';
-		}
-		if (S_ISLNK(entry->mode))
-			mode[0] = 'l';
-		if (entry->mode & S_IWUSR)
-			mode[2] = 'w';
-		if (entry->mode & S_IXUSR)
-			mode[3] = 'x';
-		if (entry->mode & S_IXGRP)
-			mode[6] = 'x';
-		if (entry->mode & S_IXOTH)
-			mode[9] = 'x';
-		if (draw_field(view, LINE_TREE_MODE, mode, 11, TRUE))
+		if (draw_mode(view, entry->mode))
 			return TRUE;
 
 		if (opt_author && draw_author(view, entry->author))

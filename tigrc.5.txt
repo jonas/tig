@@ -371,6 +371,7 @@ delimiter		Delimiter shown for truncated lines.
 line-number		Line numbers.
 date			The commit date.
 author			The commit author.
+mode			The file mode holding the permissions and type.
 ------------------------------------------------------------------------------
 
 ifdef::backend-xhtml11[]
@@ -409,6 +410,17 @@ endif::backend-xhtml11[]
 Blame view:
 ------------------------------------------------------------------------------
 blame-id		The commit ID.
+------------------------------------------------------------------------------
+
+ifdef::backend-xhtml11[]
+[frame="none"]
+`-----------------------`-----------------------------------------------------
+endif::backend-xhtml11[]
+Tree view:
+------------------------------------------------------------------------------
+tree-head		The "Directory /"-line
+tree-dir		The directory name.
+tree-file		The file name.
 ------------------------------------------------------------------------------
 
 Highlighting
