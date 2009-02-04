@@ -3308,6 +3308,22 @@ view_driver(struct view *view, enum request request)
  * View backend utilities
  */
 
+static void
+parse_timezone(time_t *time, const char *zone)
+{
+	long tz;
+
+	tz  = ('0' - zone[1]) * 60 * 60 * 10;
+	tz += ('0' - zone[2]) * 60 * 60;
+	tz += ('0' - zone[3]) * 60;
+	tz += ('0' - zone[4]);
+
+	if (zone[0] == '-')
+		tz = -tz;
+
+	*time -= tz;
+}
+
 /* Parse author lines where the name may be empty:
  *	author  <email@address.tld> 1138474660 +0100
  */
@@ -3335,20 +3351,8 @@ parse_author_line(char *ident, char *author, size_t authorsize, struct tm *tm)
 		char *zone = strchr(secs, ' ');
 		time_t time = (time_t) atol(secs);
 
-		if (zone && strlen(zone) == STRING_SIZE(" +0700")) {
-			long tz;
-
-			zone++;
-			tz  = ('0' - zone[1]) * 60 * 60 * 10;
-			tz += ('0' - zone[2]) * 60 * 60;
-			tz += ('0' - zone[3]) * 60;
-			tz += ('0' - zone[4]) * 60;
-
-			if (zone[0] == '-')
-				tz = -tz;
-
-			time -= tz;
-		}
+		if (zone && strlen(zone) == STRING_SIZE(" +0700"))
+			parse_timezone(&time, zone + 1);
 
 		gmtime_r(&time, tm);
 	}
@@ -4337,17 +4341,7 @@ blame_read(struct view *view, char *line)
 		author_time = (time_t) atol(line);
 
 	} else if (match_blame_header("author-tz ", &line)) {
-		long tz;
-
-		tz  = ('0' - line[1]) * 60 * 60 * 10;
-		tz += ('0' - line[2]) * 60 * 60;
-		tz += ('0' - line[3]) * 60;
-		tz += ('0' - line[4]) * 60;
-
-		if (line[0] == '-')
-			tz = -tz;
-
-		author_time -= tz;
+		parse_timezone(&author_time, line);
 		gmtime_r(&author_time, &commit->time);
 
 	} else if (match_blame_header("summary ", &line)) {
