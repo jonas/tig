@@ -130,20 +130,6 @@ rpm: dist
 configure: configure.ac acinclude.m4
 	$(AUTORECONF) -v
 
-# Maintainer stuff
-release-doc:
-	git checkout release && \
-	git merge master && \
-	$(MAKE) distclean doc-man doc-html sysconfdir=++SYSCONFDIR++ && \
-	git add -f $(MANDOC) $(HTMLDOC) && \
-	git commit -m "Sync docs" && \
-	git checkout master
-
-release-dist: release-doc
-	git checkout release && \
-	$(MAKE) dist && \
-	git checkout master
-
 .PHONY: all all-debug doc doc-man doc-html install install-doc \
 	install-doc-man install-doc-html clean spell-check dist rpm
 
