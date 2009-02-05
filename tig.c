@@ -1659,11 +1659,8 @@ load_options(void)
 
 	add_builtin_run_requests();
 
-	if (!tigrc_system) {
-		if (!string_format(buf, "%s/tigrc", SYSCONFDIR))
-			return ERR;
-		tigrc_system = buf;
-	}
+	if (!tigrc_system)
+		tigrc_system = SYSCONFDIR "/tigrc";
 	load_option_file(tigrc_system);
 
 	if (!tigrc_user) {
