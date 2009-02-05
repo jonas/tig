@@ -1,6 +1,6 @@
-personal_ws-1.1 en 145 
-docbook
+personal_ws-1.1 en 146 
 DocBook
+docbook
 xpm
 oldmode
 libiconv
@@ -121,6 +121,7 @@ distclean
 commitencoding
 PgDown
 NUL
+gitconfig
 qgit
 struct
 aterm
