@@ -6609,6 +6609,22 @@ load_refs(void)
 	return run_io_load(ls_remote_argv, "\t", read_ref);
 }
 
+static void
+set_repo_config_option(char *name, char *value, int (*cmd)(int, const char **))
+{
+	const char *argv[SIZEOF_ARG] = { name, "=" };
+	int argc = 1 + (cmd == option_set_command);
+	int error = ERR;
+
+	if (!argv_from_string(argv, &argc, value))
+		config_msg = "Too many option arguments";
+	else
+		error = cmd(argc, argv);
+
+	if (error == ERR)
+		warn("Option 'tig.%s': %s", name, config_msg);
+}
+
 static int
 read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen)
 {
@@ -6617,6 +6633,15 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 
 	if (!strcmp(name, "core.editor"))
 		string_ncopy(opt_editor, value, valuelen);
+
+	if (!prefixcmp(name, "tig.color."))
+		set_repo_config_option(name + 10, value, option_color_command);
+
+	else if (!prefixcmp(name, "tig.bind."))
+		set_repo_config_option(name + 9, value, option_bind_command);
+
+	else if (!prefixcmp(name, "tig."))
+		set_repo_config_option(name + 4, value, option_set_command);
 
 	/* branch.<head>.remote */
 	if (*opt_head &&

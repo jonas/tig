@@ -142,7 +142,9 @@ FILES
 	System wide configuration file.
 
 '$GIT_DIR/config'::
-	Repository config file. Read on start-up with the help of
+'~/.gitconfig::
+'{sysconfdir}/etc/gitconfig::
+	Git configuration files. Read on start-up with the help of
 	git-config(1).
 
 include::BUGS[]

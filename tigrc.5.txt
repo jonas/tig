@@ -3,7 +3,7 @@ tigrc(5)
 
 NAME
 ----
-tigrc - tig user configuration file
+tigrc - tig configuration file
 
 
 SYNOPSIS
@@ -27,6 +27,9 @@ The hash mark ('#') is used as a 'comment' character. All text after the
 comment character to the end of the line is ignored. You can use comments to
 annotate your initialization file.
 
+Alternatively, options can be set by putting them in one of the git
+configuration files, which are read by tig on startup. See 'git-config(1)' for
+which files to use.
 
 Set command
 -----------
@@ -47,11 +50,17 @@ set show-date = yes		# Show commit date?
 set show-rev-graph = yes	# Show revision graph?
 set show-refs = yes		# Show references?
 set show-line-numbers = no	# Show line numbers?
-set author-width = 10		# Set width of the author column
-set line-graphics = no		# Disable graphics characters
 set line-number-interval = 5	# Interval between line numbers
-set tab-size = 8		# Number of spaces per tab
-set encoding = "UTF-8"		# Commit encoding
+--------------------------------------------------------------------------
+
+Or in the git configuration files:
+
+--------------------------------------------------------------------------
+[tig]
+	author-width = 10	# Set width of the author column
+	line-graphics = no	# Disable graphics characters
+	tab-size = 8		# Number of spaces per tab
+	encoding = "UTF-8"	# Commit encoding
 --------------------------------------------------------------------------
 
 The type of variables are either bool, int, and string.
@@ -129,12 +138,18 @@ bind main space enter
 bind diff a previous
 bind diff d next
 bind diff b move-first-line
-# 'unbind' the default quit key binding
-bind main Q none
 # An external command to update from upstream
 bind generic F !git fetch
-# Cherry-pick current commit onto current branch
-bind generic C !git cherry-pick %(commit)
+--------------------------------------------------------------------------
+
+Or in the git configuration files:
+
+--------------------------------------------------------------------------
+[tig "bind"]
+	# 'unbind' the default quit key binding
+	main = Q none
+	# Cherry-pick current commit onto current branch
+	generic = C !git cherry-pick %(commit)
 --------------------------------------------------------------------------
 
 Keys are mapped by first searching the keybindings for the current view, then
@@ -323,11 +338,17 @@ color default		white	black
 color diff-header	yellow	default
 color diff-index	blue	default
 color diff-chunk	magenta	default
-# A strange looking cursor line
-color cursor		red	default underline
-# UI colors
-color title-blur	white	blue
-color title-focus	white	blue	bold
+--------------------------------------------------------------------------
+
+Or in the git configuration files:
+
+--------------------------------------------------------------------------
+[tig "color"]
+	# A strange looking cursor line
+	cursor		red	default underline
+	# UI colors
+	title-blur	white	blue
+	title-focus	white	blue	bold
 ------------------------------------------------------------------------------
 
 Area names::
@@ -481,4 +502,5 @@ Licensed under the terms of the GNU General Public License.
 
 SEE ALSO
 --------
-manpage:tig[1] and the http://jonas.nitro.dk/tig/manual.html[tig manual].
+manpage:tig[1], git-config(1),
+and the http://jonas.nitro.dk/tig/manual.html[tig manual].

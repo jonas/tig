@@ -17,6 +17,12 @@ Incompatibilities:
 Improvements:
 
  - Horizontal scrolling. Bound to Left/Right by default.
+ - Read tigrc(5) options from git configuration files using the syntax:
+
+	[tig] show-rev-graph = true
+	[tig "color"] cursor = yellow red bold 
+	[tig "bind"] generic = P parent
+
  - Tree view: avoid flickering when updating.
  - Tree view: annotate entries with commit information.
  - Tree & blob view: open any blob in an editor.
