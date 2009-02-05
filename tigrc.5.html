@@ -333,7 +333,7 @@ tigrc(5) Manual Page
 <h2>NAME</h2>
 <div class="sectionbody">
 <p>tigrc -
-   tig user configuration file
+   tig configuration file
 </p>
 </div>
 </div>
@@ -352,6 +352,9 @@ only one command.</p></div>
 <div class="para"><p>The hash mark (<em>#</em>) is used as a <em>comment</em> character. All text after the
 comment character to the end of the line is ignored. You can use comments to
 annotate your initialization file.</p></div>
+<div class="para"><p>Alternatively, options can be set by putting them in one of the git
+configuration files, which are read by tig on startup. See <em>git-config(1)</em> for
+which files to use.</p></div>
 </div>
 <h2 id="_set_command">Set command</h2>
 <div class="sectionbody">
@@ -367,11 +370,16 @@ set show-date = yes             # Show commit date?
 set show-rev-graph = yes        # Show revision graph?
 set show-refs = yes             # Show references?
 set show-line-numbers = no      # Show line numbers?
-set author-width = 10           # Set width of the author column
-set line-graphics = no          # Disable graphics characters
-set line-number-interval = 5    # Interval between line numbers
-set tab-size = 8                # Number of spaces per tab
-set encoding = "UTF-8"          # Commit encoding</tt></pre>
+set line-number-interval = 5    # Interval between line numbers</tt></pre>
+</div></div>
+<div class="para"><p>Or in the git configuration files:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>[tig]
+        author-width = 10       # Set width of the author column
+        line-graphics = no      # Disable graphics characters
+        tab-size = 8            # Number of spaces per tab
+        encoding = "UTF-8"      # Commit encoding</tt></pre>
 </div></div>
 <div class="para"><p>The type of variables are either bool, int, and string.</p></div>
 <div class="vlist"><dl>
@@ -428,7 +436,8 @@ Valid string values
 </dt>
 <dd>
 <p>
-        Width of the author column.
+        Width of the author column. When set to 5 or below, the author name
+        will be abbreviated to the author's initials.
 </p>
 </dd>
 <dt>
@@ -484,12 +493,17 @@ bind main space enter
 bind diff a previous
 bind diff d next
 bind diff b move-first-line
-# 'unbind' the default quit key binding
-bind main Q none
 # An external command to update from upstream
-bind generic F !git fetch
-# Cherry-pick current commit onto current branch
-bind generic C !git cherry-pick %(commit)</tt></pre>
+bind generic F !git fetch</tt></pre>
+</div></div>
+<div class="para"><p>Or in the git configuration files:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>[tig "bind"]
+        # 'unbind' the default quit key binding
+        main = Q none
+        # Cherry-pick current commit onto current branch
+        generic = C !git cherry-pick %(commit)</tt></pre>
 </div></div>
 <div class="para"><p>Keys are mapped by first searching the keybindings for the current view, then
 the keybindings for the <strong>generic</strong> keymap, and last the default keybindings.
@@ -745,6 +759,14 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
+    parent
+    </td>
+    <td align="left">
+    Move to parent
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
     view-next
     </td>
     <td align="left">
@@ -781,6 +803,49 @@ cellspacing="0" cellpadding="4">
     </td>
     <td align="left">
     Close all views and quit
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+frame="void"
+cellspacing="0" cellpadding="4">
+<col width="274" />
+<col width="617" />
+<thead>
+  <tr>
+    <th align="left">
+    View specific actions:
+    </th>
+    <th align="left">
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    status-update
+    </td>
+    <td align="left">
+    Update file status
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    status-merge
+    </td>
+    <td align="left">
+    Resolve unmerged file
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    stage-next
+    </td>
+    <td align="left">
+    Find next chunk to stage
     </td>
   </tr>
 </tbody>
@@ -887,7 +952,7 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
-    scroll-page-eup
+    scroll-page-up
     </td>
     <td align="left">
     Scroll one page up
@@ -899,6 +964,22 @@ cellspacing="0" cellpadding="4">
     </td>
     <td align="left">
     Scroll one page down
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    scroll-left
+    </td>
+    <td align="left">
+    Scroll one column left
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    scroll-right
+    </td>
+    <td align="left">
+    Scroll one column right
     </td>
   </tr>
 </tbody>
@@ -971,14 +1052,6 @@ cellspacing="0" cellpadding="4">
   </tr>
 </thead>
 <tbody valign="top">
-  <tr>
-    <td align="left">
-    none
-    </td>
-    <td align="left">
-    Do nothing
-    </td>
-  </tr>
   <tr>
     <td align="left">
     prompt
@@ -1061,42 +1134,18 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
-    status-update
-    </td>
-    <td align="left">
-    Update file status
-    </td>
-  </tr>
-  <tr>
-    <td align="left">
-    status-merge
-    </td>
-    <td align="left">
-    Resolve unmerged file
-    </td>
-  </tr>
-  <tr>
-    <td align="left">
-    stage-next
-    </td>
-    <td align="left">
-    Find next chunk to stage
-    </td>
-  </tr>
-  <tr>
-    <td align="left">
-    tree-parent
-    </td>
-    <td align="left">
-    Switch to parent directory in tree view
-    </td>
-  </tr>
-  <tr>
-    <td align="left">
     edit
     </td>
     <td align="left">
     Open in editor
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    none
+    </td>
+    <td align="left">
+    Do nothing
     </td>
   </tr>
 </tbody>
@@ -1119,12 +1168,17 @@ color default           white   black
 # Diff colors
 color diff-header       yellow  default
 color diff-index        blue    default
-color diff-chunk        magenta default
-# A strange looking cursor line
-color cursor            red     default underline
-# UI colors
-color title-blur        white   blue
-color title-focus       white   blue    bold</tt></pre>
+color diff-chunk        magenta default</tt></pre>
+</div></div>
+<div class="para"><p>Or in the git configuration files:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>[tig "color"]
+        # A strange looking cursor line
+        cursor          red     default underline
+        # UI colors
+        title-blur      white   blue
+        title-focus     white   blue    bold</tt></pre>
 </div></div>
 <div class="vlist"><dl>
 <dt>
@@ -1243,6 +1297,22 @@ cellspacing="0" cellpadding="4">
     The commit date.
     </td>
   </tr>
+  <tr>
+    <td align="left">
+    author
+    </td>
+    <td align="left">
+    The commit author.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    mode
+    </td>
+    <td align="left">
+    The file mode holding the permissions and type.
+    </td>
+  </tr>
 </tbody>
 </table>
 </div>
@@ -1262,14 +1332,6 @@ cellspacing="0" cellpadding="4">
   </tr>
 </thead>
 <tbody valign="top">
-  <tr>
-    <td align="left">
-    main-author
-    </td>
-    <td align="left">
-    The commit author.
-    </td>
-  </tr>
   <tr>
     <td align="left">
     main-revgraph
@@ -1423,6 +1485,49 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
+<div class="tableblock">
+<table rules="none"
+frame="void"
+cellspacing="0" cellpadding="4">
+<col width="274" />
+<col width="617" />
+<thead>
+  <tr>
+    <th align="left">
+    Tree view:
+    </th>
+    <th align="left">
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    tree-head
+    </td>
+    <td align="left">
+    The "Directory /"-line
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    tree-dir
+    </td>
+    <td align="left">
+    The directory name.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    tree-file
+    </td>
+    <td align="left">
+    The file name.
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
 <h3 id="_highlighting">Highlighting</h3><div style="clear:left"></div>
 <div class="vlist"><dl>
 <dt>
@@ -1495,11 +1600,12 @@ Colors for information of the tree view.
 </div>
 <h2 id="_see_also">SEE ALSO</h2>
 <div class="sectionbody">
-<div class="para"><p><a href="tig.1.html">tig(1)</a> and the <a href="http://jonas.nitro.dk/tig/manual.html">tig manual</a>.</p></div>
+<div class="para"><p><a href="tig.1.html">tig(1)</a>, git-config(1),
+and the <a href="http://jonas.nitro.dk/tig/manual.html">tig manual</a>.</p></div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2009-01-13 23:10:08 CEST
+Last updated 2009-02-05 21:20:46 CEST
 </div>
 </div>
 </body>

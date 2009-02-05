@@ -328,6 +328,114 @@ div.olist2 div.olist ol {
 <div id="header">
 <h1>Release notes</h1>
 </div>
+<h2 id="_tig_0_14">tig-0.14</h2>
+<div class="sectionbody">
+<div class="para"><p>Incompatibilities:</p></div>
+<div class="ilist"><ul>
+<li>
+<p>
+The screen-resize action has been deprecated. It had no real use for
+   users and was never meant to be exposed.
+</p>
+</li>
+<li>
+<p>
+The "tree-parent" action was renamed to "parent". Warnings will be
+   emitted for transition.
+</p>
+</li>
+<li>
+<p>
+Remove parsing of deprecated option -S and subcommands log and diff.
+</p>
+</li>
+<li>
+<p>
+The "author" color replaces "main-author". Setting the latter will
+   now set the "author" color.
+</p>
+</li>
+</ul></div>
+<div class="para"><p>Improvements:</p></div>
+<div class="ilist"><ul>
+<li>
+<p>
+Horizontal scrolling. Bound to Left/Right by default.
+</p>
+</li>
+<li>
+<p>
+Read tigrc(5) options from git configuration files using the syntax:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>[tig] show-rev-graph = true
+[tig "color"] cursor = yellow red bold
+[tig "bind"] generic = P parent</tt></pre>
+</div></div>
+</li>
+<li>
+<p>
+Tree view: avoid flickering when updating.
+</p>
+</li>
+<li>
+<p>
+Tree view: annotate entries with commit information.
+</p>
+</li>
+<li>
+<p>
+Tree &amp; blob view: open any blob in an editor.
+</p>
+</li>
+<li>
+<p>
+Stage &amp; main view: restore view position when reloading.
+</p>
+</li>
+<li>
+<p>
+Blame view: load blame for parent commit. For merge commits the parent
+   is queried. Bound to <em>,</em> by default via the existing "parent" action.
+</p>
+</li>
+<li>
+<p>
+Abbreviate author names to initials when the width of the author column
+   is below 6 characters.
+</p>
+</li>
+</ul></div>
+<div class="para"><p>Bug fixes:</p></div>
+<div class="ilist"><ul>
+<li>
+<p>
+Tree view: fix memory corruption bug when updating.
+</p>
+</li>
+<li>
+<p>
+Tree view: improve handling of empty trees.
+</p>
+</li>
+<li>
+<p>
+Status view: fix reverting of unmerged files.
+</p>
+</li>
+<li>
+<p>
+Fix regression for non-UTF-8 locales corrupting the view data.
+</p>
+</li>
+<li>
+<p>
+Fix regression parsing multiple spaces in ~/.tigrc.
+</p>
+</li>
+</ul></div>
+</div>
 <h2 id="_tig_0_13">tig-0.13</h2>
 <div class="sectionbody">
 <div class="para"><p>Incompatibilities:</p></div>
@@ -506,7 +614,7 @@ Configure: check for the ncurses header files.
 </li>
 <li>
 <p>
-Add author-width option to costumize the width of the author column.
+Add author-width option to customize the width of the author column.
    For example, put the following in ~/.tigrc: set author-width = 10
 </p>
 </li>
@@ -640,7 +748,7 @@ Configure: check for the ncursesw library.
 <div class="ilist"><ul>
 <li>
 <p>
-Fix UTF8 handling for tag names and commit messages.
+Fix UTF-8 handling for tag names and commit messages.
 </p>
 </li>
 <li>
@@ -867,7 +975,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2009-01-13 23:10:11 CEST
+Last updated 2009-02-05 21:20:49 CEST
 </div>
 </div>
 </body>

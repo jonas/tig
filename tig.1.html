@@ -450,7 +450,7 @@ status
 <div class="sectionbody">
 <div class="para"><p>In addition to environment variables used by git (e.g. GIT_DIR), tig defines
 the ones below. The command related environment variables have access to the
-internal state of tig via replacement variabls, such as <tt>%(commit)</tt> and
+internal state of tig via replacement variables, such as <tt>%(commit)</tt> and
 <tt>%(blob)</tt>. See <a href="tigrc.5.html">tigrc(5)</a> for a full list.</p></div>
 <div class="vlist"><dl>
 <dt>
@@ -517,8 +517,7 @@ TIG_TREE_CMD
 <dd>
 <p>
     The command used for the tree view. By default, git-ls-tree(1) is
-    used. The commands should expect first the commit ID and second
-    a path.
+    used.
 </p>
 </dd>
 <dt>
@@ -527,7 +526,7 @@ TIG_BLOB_CMD
 <dd>
 <p>
     The command used for the blob view. By default, git-cat-file(1) is
-    used. The command gets the blob ID.
+    used.
 </p>
 </dd>
 </dl></div>
@@ -554,9 +553,15 @@ TIG_BLOB_CMD
 <dt>
 <em>$GIT_DIR/config</em>
 </dt>
+<dt>
+'~/.gitconfig
+</dt>
+<dt>
+'++SYSCONFDIR++/etc/gitconfig
+</dt>
 <dd>
 <p>
-        Repository config file. Read on start-up with the help of
+        Git configuration files. Read on start-up with the help of
         git-config(1).
 </p>
 </dd>
@@ -571,11 +576,6 @@ TIG_BLOB_CMD
 Proper locale support: in it's current state tig is pretty much UTF-8 only.
 </p>
 </li>
-<li>
-<p>
-Horizontal scrolling.
-</p>
-</li>
 </ul></div>
 </div>
 <h2 id="_copyright">COPYRIGHT</h2>
@@ -588,8 +588,7 @@ the Free Software Foundation; either version 2 of the License, or
 </div>
 <h2 id="_see_also">SEE ALSO</h2>
 <div class="sectionbody">
-<div class="para"><p><a href="tigrc.5.html">tigrc(5)</a>, git(7), cogito(7), as well as other git repository browsers:
-gitk(1), qgit(1), gitview(1).</p></div>
+<div class="para"><p><a href="tigrc.5.html">tigrc(5)</a>, git(7), gitk(1)</p></div>
 <div class="para"><p>Online resources:</p></div>
 <div class="ilist"><ul>
 <li>
@@ -622,7 +621,7 @@ Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2009-01-13 23:10:07 CEST
+Last updated 2009-02-05 21:20:45 CEST
 </div>
 </div>
 </body>

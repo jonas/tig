@@ -1,11 +1,11 @@
 .\"     Title: tig
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.73.2 <http://docbook.sf.net/>
-.\"      Date: 01/13/2009
+.\"      Date: 02/05/2009
 .\"    Manual: Tig Manual
-.\"    Source: Tig 0.13
+.\"    Source: Tig 0.14
 .\"
-.TH "TIG" "1" "01/13/2009" "Tig 0\&.13" "Tig Manual"
+.TH "TIG" "1" "02/05/2009" "Tig 0\&.14" "Tig Manual"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -123,7 +123,7 @@ $ tig \-\-after="2004\-01\-01" \-\-before="2006\-05\-16" \-\- README
 .RE
 .sp
 .SH "ENVIRONMENT VARIABLES"
-In addition to environment variables used by git (e\&.g\&. GIT_DIR), tig defines the ones below\&. The command related environment variables have access to the internal state of tig via replacement variabls, such as %(commit) and %(blob)\&. See \fBtigrc\fR(5) for a full list\&.
+In addition to environment variables used by git (e\&.g\&. GIT_DIR), tig defines the ones below\&. The command related environment variables have access to the internal state of tig via replacement variables, such as %(commit) and %(blob)\&. See \fBtigrc\fR(5) for a full list\&.
 .PP
 TIGRC_USER
 .RS 4
@@ -164,12 +164,12 @@ since the main view parser expects to read that format\&.
 .PP
 TIG_TREE_CMD
 .RS 4
-The command used for the tree view\&. By default, git\-ls\-tree(1) is used\&. The commands should expect first the commit ID and second a path\&.
+The command used for the tree view\&. By default, git\-ls\-tree(1) is used\&.
 .RE
 .PP
 TIG_BLOB_CMD
 .RS 4
-The command used for the blob view\&. By default, git\-cat\-file(1) is used\&. The command gets the blob ID\&.
+The command used for the blob view\&. By default, git\-cat\-file(1) is used\&.
 .RE
 .SH "FILES"
 .PP
@@ -185,9 +185,9 @@ for examples\&.
 System wide configuration file\&.
 .RE
 .PP
-\fI$GIT_DIR/config\fR
+\fI$GIT_DIR/config\fR, \'~/\&.gitconfig, \'++SYSCONFDIR++/etc/gitconfig
 .RS 4
-Repository config file\&. Read on start\-up with the help of git\-config(1)\&.
+Git configuration files\&. Read on start\-up with the help of git\-config(1)\&.
 .RE
 .SH "BUGS"
 Known bugs and problems:
@@ -196,17 +196,13 @@ Known bugs and problems:
 .RS 4
 \h'-04'\(bu\h'+03'Proper locale support: in it\'s current state tig is pretty much UTF\-8 only\&.
 .RE
-.sp
-.RS 4
-\h'-04'\(bu\h'+03'Horizontal scrolling\&.
-.RE
 .SH "COPYRIGHT"
 Copyright (c) 2006\-2009 Jonas Fonseca <fonseca@diku\&.dk>
 .sp
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version\&.
 .sp
 .SH "SEE ALSO"
-\fBtigrc\fR(5), git(7), cogito(7), as well as other git repository browsers: gitk(1), qgit(1), gitview(1)\&.
+\fBtigrc\fR(5), git(7), gitk(1)
 .sp
 Online resources:
 .sp

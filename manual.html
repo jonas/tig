@@ -424,6 +424,11 @@ commit with the log message, diffstat, and the diff.</p></div>
 </li>
 <li>
 <p>
+<a href="#view-actions">View Specific Actions</a>
+</p>
+</li>
+<li>
+<p>
 <a href="#cursor-nav">Cursor Navigation</a>
 </p>
 </li>
@@ -1050,10 +1055,71 @@ cellspacing="0" cellpadding="4">
     Similar to <em>Up</em> but will move down.
     </td>
   </tr>
+  <tr>
+    <td align="left">
+    <em>,</em>
+    </td>
+    <td align="left">
+    Move to parent. In the tree view, this means switch to the parent         directory. In the blame view it will load blame for the parent         commit. For merges the parent is queried.
+    </td>
+  </tr>
 </tbody>
 </table>
 </div>
-<h3 id="cursor-nav">4.3. Cursor Navigation</h3><div style="clear:left"></div>
+<h3 id="view-actions">4.3. View Specific Actions</h3><div style="clear:left"></div>
+<div class="tableblock">
+<table rules="none"
+frame="hsides"
+cellspacing="0" cellpadding="4">
+<col width="91" />
+<col width="788" />
+<thead>
+  <tr>
+    <th align="left">
+    Key
+    </th>
+    <th align="left">
+    Action
+    </th>
+  </tr>
+</thead>
+<tbody valign="top">
+  <tr>
+    <td align="left">
+    u
+    </td>
+    <td align="left">
+    Update status of file. In the status view, this allows you to add an         untracked file or stage changes to a file for next commit (similar to         running git-add &lt;filename&gt;). In the stage view, when pressing this on         a diff chunk line stages only that chunk for next commit, when not on         a diff chunk line all changes in the displayed diff is staged.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    M
+    </td>
+    <td align="left">
+    Resolve unmerged file by launching git-mergetool(1). Note, to work         correctly this might require some initial configuration of your         preferred merge tool. See the manpage of git-mergetool(1).
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    !
+    </td>
+    <td align="left">
+    Checkout file with unstaged changes. This will reset the file to         contain the content it had at last commit.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    @
+    </td>
+    <td align="left">
+    Move to next chunk in the stage view.
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<h3 id="cursor-nav">4.4. Cursor Navigation</h3><div style="clear:left"></div>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -1122,7 +1188,7 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<h3 id="view-scrolling">4.4. Scrolling</h3><div style="clear:left"></div>
+<h3 id="view-scrolling">4.5. Scrolling</h3><div style="clear:left"></div>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -1172,10 +1238,26 @@ cellspacing="0" cellpadding="4">
     Scroll view one page down.
     </td>
   </tr>
+  <tr>
+    <td align="left">
+    Left
+    </td>
+    <td align="left">
+    Scroll view one column left.
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+    Right
+    </td>
+    <td align="left">
+    Scroll view one column right.
+    </td>
+  </tr>
 </tbody>
 </table>
 </div>
-<h3 id="searching">4.5. Searching</h3><div style="clear:left"></div>
+<h3 id="searching">4.6. Searching</h3><div style="clear:left"></div>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -1198,7 +1280,7 @@ cellspacing="0" cellpadding="4">
     /
     </td>
     <td align="left">
-    Search the view. Opens a prompt for entering search regex to use.
+    Search the view. Opens a prompt for entering search regexp to use.
     </td>
   </tr>
   <tr>
@@ -1206,7 +1288,7 @@ cellspacing="0" cellpadding="4">
     ?
     </td>
     <td align="left">
-    Search backwards in the view. Also prompts for regex.
+    Search backwards in the view. Also prompts for regexp.
     </td>
   </tr>
   <tr>
@@ -1214,7 +1296,7 @@ cellspacing="0" cellpadding="4">
     n
     </td>
     <td align="left">
-    Find next match for the current search regex.
+    Find next match for the current search regexp.
     </td>
   </tr>
   <tr>
@@ -1222,13 +1304,13 @@ cellspacing="0" cellpadding="4">
     N
     </td>
     <td align="left">
-    Find previous match for the current search regex.
+    Find previous match for the current search regexp.
     </td>
   </tr>
 </tbody>
 </table>
 </div>
-<h3 id="misc-keys">4.6. Misc</h3><div style="clear:left"></div>
+<h3 id="misc-keys">4.7. Misc</h3><div style="clear:left"></div>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -1328,46 +1410,6 @@ cellspacing="0" cellpadding="4">
   </tr>
   <tr>
     <td align="left">
-    u
-    </td>
-    <td align="left">
-    Update status of file. In the status view, this allows you to add an         untracked file or stage changes to a file for next commit (similar to         running git-add &lt;filename&gt;). In the stage view, when pressing this on         a diff chunk line stages only that chunk for next commit, when not on         a diff chunk line all changes in the displayed diff is staged.
-    </td>
-  </tr>
-  <tr>
-    <td align="left">
-    M
-    </td>
-    <td align="left">
-    Resolve unmerged file by launching git-mergetool(1). Note, to work         correctly this might require some initial configuration of your         preferred merge tool. See the manpage of git-mergetool(1).
-    </td>
-  </tr>
-  <tr>
-    <td align="left">
-    !
-    </td>
-    <td align="left">
-    Checkout file with unstaged changes. This will reset the file to         contain the content it had at last commit.
-    </td>
-  </tr>
-  <tr>
-    <td align="left">
-    @
-    </td>
-    <td align="left">
-    Move to next chunk in the stage view.
-    </td>
-  </tr>
-  <tr>
-    <td align="left">
-    <em>,</em>
-    </td>
-    <td align="left">
-    Move tree view to the parent tree.
-    </td>
-  </tr>
-  <tr>
-    <td align="left">
     e
     </td>
     <td align="left">
@@ -1377,11 +1419,11 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<h3 id="external-commands">4.7. External Commands</h3><div style="clear:left"></div>
+<h3 id="external-commands">4.8. External Commands</h3><div style="clear:left"></div>
 <div class="para"><p>For more custom needs, external commands provide a way to easily execute
 a script or program. They are bound to keys and use information from the
 current browsing state, such as the current commit ID. Tig comes with
-the following builtin external commands:</p></div>
+the following built-in external commands:</p></div>
 <div class="tableblock">
 <table rules="none"
 frame="hsides"
@@ -1519,11 +1561,6 @@ accomplished using:</p></div>
 Proper locale support: in it's current state tig is pretty much UTF-8 only.
 </p>
 </li>
-<li>
-<p>
-Horizontal scrolling.
-</p>
-</li>
 </ul></div>
 </div>
 <h2 id="copy-right">7. Copyright</h2>
@@ -1590,16 +1627,11 @@ gitk(1)
 qgit(1)
 </p>
 </li>
-<li>
-<p>
-gitview(1)
-</p>
-</li>
 </ul></div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2009-01-13 23:10:09 CEST
+Last updated 2009-02-05 21:20:47 CEST
 </div>
 </div>
 </body>
