@@ -2,35 +2,41 @@ TODO
 ----
 Features that should be explored.
 
- - Better text-input support. From setsyx(3):
+Before tig-1.0
+~~~~~~~~~~~~~~
 
-	The setsyx routine sets the virtual screen cursor to y, x. If y
-	and x are both -1, then leaveok is set. The two routines getsyx
-	and setsyx are designed to be used by a library routine, which
-	manipulates curses windows but does not want to change the
-	current position of the program cursor. The library routine
-	would call getsyx at the beginning, do its manipulation of its
-	own windows, do a wnoutrefresh on its windows, call setsyx, and
-	then call doupdate.
+ - Better text-input support.
 
- - When the user wants to "view" a commit, you could show from which
-   branch heads and from which tags the commit is reachable, and perhaps
-   which tag is the latest among the ones reachable from that commit, as
-   part of the commit detail information you display on the lower pane
-   (log/diff view).
-
- - Use non-blocking I/O + select() for incremental loading of view
-   input. (debian bug #427093)
-
- - Split sources of tig.c into multiple files.
+    - Add an edit keymap so the "editor" can be customized.
+    - Allow the cursor to navigate in the input area.
 
  - Rewrite revgraph handling.
 
- - Color the revgraph to make it easier to follow branches. Idea by
-   Dominik Vogt.
+   The commit structure should be expanded to have a parent member,
+   which points to the parent commits.
 
- - Blame view: Allow names in the author column to be abbreviated to
-   initials. Will optimize screen usage for the blame view.
+    - Make main view support navigating the revision graph using the
+      parent action.
 
- - Blame view: make it possible to jump/load blame for parents. Idea by
-   Jeff King.
+    - Color the revgraph to make it easier to follow branches.
+
+   Other revgraph improvements:
+
+    - Show from which branch heads and tags a commit is reachable, and
+      perhaps which tag is the latest among the ones reachable from
+      that commit, as part of the diff view. How should rewritten parent
+      information be handled? Depends on new enhanced commit structure.
+
+ - Show the "active" (instead of the default) keybindings in the help
+   view. Also, display the keymap.
+
+Long term goals
+~~~~~~~~~~~~~~~
+
+ - Add a commit cache.
+
+   Many views use commit information and load it into their own custom
+   data structure. Having the information shared would make it easier to
+   do various interesting stuff across the views.
+
+ - Split sources of tig.c into multiple files.

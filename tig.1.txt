@@ -95,7 +95,7 @@ ENVIRONMENT VARIABLES
 
 In addition to environment variables used by git (e.g. GIT_DIR), tig defines
 the ones below. The command related environment variables have access to the
-internal state of tig via replacement variabls, such as `%(commit)` and
+internal state of tig via replacement variables, such as `%(commit)` and
 `%(blob)`. See manpage:tigrc[5] for a full list.
 
 TIGRC_USER::
@@ -127,12 +127,11 @@ Tree commands
 ~~~~~~~~~~~~~
 TIG_TREE_CMD::
     The command used for the tree view. By default, git-ls-tree(1) is
-    used. The commands should expect first the commit ID and second
-    a path.
+    used.
 
 TIG_BLOB_CMD::
     The command used for the blob view. By default, git-cat-file(1) is
-    used. The command gets the blob ID.
+    used.
 
 FILES
 -----
@@ -143,7 +142,9 @@ FILES
 	System wide configuration file.
 
 '$GIT_DIR/config'::
-	Repository config file. Read on start-up with the help of
+'~/.gitconfig::
+'{sysconfdir}/etc/gitconfig::
+	Git configuration files. Read on start-up with the help of
 	git-config(1).
 
 include::BUGS[]
@@ -160,8 +161,7 @@ the Free Software Foundation; either version 2 of the License, or
 SEE ALSO
 --------
 
-manpage:tigrc[5], git(7), cogito(7), as well as other git repository browsers:
-gitk(1), qgit(1), gitview(1).
+manpage:tigrc[5], git(7), gitk(1)
 
 Online resources:
 

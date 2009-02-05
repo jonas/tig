@@ -34,8 +34,9 @@ RPM_RELEASE = $(word 2,$(RPM_VERLIST))$(if $(WTDIRTY),.dirty)
 
 LDLIBS ?= -lcurses
 CFLAGS ?= -Wall -O2
-DFLAGS	= -g -DDEBUG -Werror
+DFLAGS	= -g -DDEBUG -Werror -O0
 PROGS	= tig
+TXTDOC	= tig.1.txt tigrc.5.txt manual.txt NEWS README INSTALL BUGS TODO
 MANDOC	= tig.1 tigrc.5
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html NEWS.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) manual.html-chunked manual.pdf
@@ -104,7 +105,10 @@ distclean: clean
 	$(RM) config.h config.log config.make config.status config.h.in
 
 spell-check:
-	aspell --lang=en --check tig.1.txt tigrc.5.txt manual.txt
+	for file in $(TXTDOC) tig.c; do \
+		aspell --lang=en --dont-backup \
+		       --personal=./contrib/aspell.dict check $$file; \
+	done
 
 strip: $(PROGS)
 	strip $(PROGS)
@@ -125,20 +129,6 @@ rpm: dist
 
 configure: configure.ac acinclude.m4
 	$(AUTORECONF) -v
-
-# Maintainer stuff
-release-doc:
-	git checkout release && \
-	git merge master && \
-	$(MAKE) distclean doc-man doc-html sysconfdir=++SYSCONFDIR++ && \
-	git add -f $(MANDOC) $(HTMLDOC) && \
-	git commit -m "Sync docs" && \
-	git checkout master
-
-release-dist: release-doc
-	git checkout release && \
-	$(MAKE) dist && \
-	git checkout master
 
 .PHONY: all all-debug doc doc-man doc-html install install-doc \
 	install-doc-man install-doc-html clean spell-check dist rpm

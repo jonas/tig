@@ -68,9 +68,8 @@ static void __NORETURN die(const char *err, ...);
 static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
 static void set_nonblocking_input(bool loading);
-static size_t utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool reserve);
-static bool prompt_yesno(const char *prompt);
 static int load_refs(void);
+static size_t utf8_length(const char **string, size_t col, int *width, size_t max_width, int *trimmed, bool reserve);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -110,6 +109,7 @@ static int load_refs(void);
 
 /* The default interval between line numbers. */
 #define NUMBER_INTERVAL	5
+#define SCROLL_INTERVAL	1
 
 #define TAB_SIZE	8
 
@@ -121,7 +121,7 @@ static int load_refs(void);
 #define GIT_CONFIG "config"
 #endif
 
-/* Some ascii-shorthands fitted into the ncurses namespace. */
+/* Some ASCII-shorthands fitted into the ncurses namespace. */
 #define KEY_TAB		'\t'
 #define KEY_RETURN	'\r'
 #define KEY_ESC		27
@@ -171,6 +171,17 @@ set_from_int_map(struct int_map *map, size_t map_size,
 	return ERR;
 }
 
+enum input_status {
+	INPUT_OK,
+	INPUT_SKIP,
+	INPUT_STOP,
+	INPUT_CANCEL
+};
+
+typedef enum input_status (*input_handler)(void *data, char *buf, int c);
+
+static char *prompt_input(const char *prompt, input_handler handler, void *data);
+static bool prompt_yesno(const char *prompt);
 
 /*
  * String helpers
@@ -199,6 +210,41 @@ string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen)
 
 #define string_add(dst, from, src) \
 	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
+
+static size_t
+string_expand_length(const char *line, int tabsize)
+{
+	size_t size, pos;
+
+	for (pos = 0; line[pos]; pos++) {
+		if (line[pos] == '\t' && tabsize > 0)
+			size += tabsize - (size % tabsize);
+		else
+			size++;
+	}
+	return size;
+}
+
+static void
+string_expand(char *dst, size_t dstlen, const char *src, int tabsize)
+{
+	size_t size, pos;
+
+	for (size = pos = 0; size < dstlen - 1 && src[pos]; pos++) {
+		if (src[pos] == '\t') {
+			size_t expanded = tabsize - (size % tabsize);
+
+			if (expanded + size >= dstlen - 1)
+				expanded = dstlen - size - 1;
+			memcpy(dst + size, "        ", expanded);
+			size += expanded;
+		} else {
+			dst[size++] = src[pos];
+		}
+	}
+
+	dst[size] = 0;
+}
 
 static char *
 chomp_string(char *name)
@@ -282,7 +328,7 @@ argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
 
 		cmd[valuelen] = 0;
 		argv[(*argc)++] = chomp_string(cmd);
-		cmd += valuelen + advance;
+		cmd = chomp_string(cmd + valuelen + advance);
 	}
 
 	if (*argc < SIZEOF_ARG)
@@ -313,6 +359,7 @@ enum io_type {
 	IO_FG,			/* Execute command with same std{in,out,err}. */
 	IO_RD,			/* Read only fork+exec IO. */
 	IO_WR,			/* Write only fork+exec IO. */
+	IO_AP,			/* Append fork+exec output to file. */
 };
 
 struct io {
@@ -367,7 +414,7 @@ io_open(struct io *io, const char *name)
 static bool
 kill_io(struct io *io)
 {
-	return kill(io->pid, SIGKILL) != -1;
+	return io->pid == 0 || kill(io->pid, SIGKILL) != -1;
 }
 
 static bool
@@ -411,6 +458,8 @@ start_io(struct io *io)
 	if ((io->type == IO_RD || io->type == IO_WR) &&
 	    pipe(pipefds) < 0)
 		return FALSE;
+	else if (io->type == IO_AP)
+		pipefds[1] = io->pipe;
 
 	if ((io->pid = fork())) {
 		if (pipefds[!(io->type == IO_WR)] != -1)
@@ -424,7 +473,8 @@ start_io(struct io *io)
 		if (io->type != IO_FG) {
 			int devnull = open("/dev/null", O_RDWR);
 			int readfd  = io->type == IO_WR ? pipefds[0] : devnull;
-			int writefd = io->type == IO_RD ? pipefds[1] : devnull;
+			int writefd = (io->type == IO_RD || io->type == IO_AP)
+							? pipefds[1] : devnull;
 
 			dup2(readfd,  STDIN_FILENO);
 			dup2(writefd, STDOUT_FILENO);
@@ -484,6 +534,19 @@ run_io_fg(const char **argv, const char *dir)
 	if (!format_argv(io.argv, argv, FORMAT_NONE))
 		return FALSE;
 	return run_io_do(&io);
+}
+
+static bool
+run_io_append(const char **argv, enum format_flags flags, int fd)
+{
+	struct io io = {};
+
+	init_io(&io, NULL, IO_AP);
+	io.pipe = fd;
+	if (format_argv(io.argv, argv, flags))
+		return run_io_do(&io);
+	close(fd);
+	return FALSE;
 }
 
 static bool
@@ -625,7 +688,54 @@ run_io_buf(const char **argv, char buf[], size_t bufsize)
 	return done_io(&io) || error;
 }
 
-static int read_properties(struct io *io, const char *separators, int (*read)(char *, size_t, char *, size_t));
+static int
+io_load(struct io *io, const char *separators,
+	int (*read_property)(char *, size_t, char *, size_t))
+{
+	char *name;
+	int state = OK;
+
+	if (!start_io(io))
+		return ERR;
+
+	while (state == OK && (name = io_get(io, '\n', TRUE))) {
+		char *value;
+		size_t namelen;
+		size_t valuelen;
+
+		name = chomp_string(name);
+		namelen = strcspn(name, separators);
+
+		if (name[namelen]) {
+			name[namelen] = 0;
+			value = chomp_string(name + namelen + 1);
+			valuelen = strlen(value);
+
+		} else {
+			value = "";
+			valuelen = 0;
+		}
+
+		state = read_property(name, namelen, value, valuelen);
+	}
+
+	if (state != ERR && io_error(io))
+		state = ERR;
+	done_io(io);
+
+	return state;
+}
+
+static int
+run_io_load(const char **argv, const char *separators,
+	    int (*read_property)(char *, size_t, char *, size_t))
+{
+	struct io io = {};
+
+	return init_io_rd(&io, argv, NULL, FORMAT_NONE)
+		? io_load(&io, separators, read_property) : ERR;
+}
+
 
 /*
  * User requests
@@ -649,6 +759,7 @@ static int read_properties(struct io *io, const char *separators, int (*read)(ch
 	REQ_(ENTER,		"Enter current line and scroll"), \
 	REQ_(NEXT,		"Move to next"), \
 	REQ_(PREVIOUS,		"Move to previous"), \
+	REQ_(PARENT,		"Move to parent"), \
 	REQ_(VIEW_NEXT,		"Move focus to next view"), \
 	REQ_(REFRESH,		"Reload and refresh"), \
 	REQ_(MAXIMIZE,		"Maximize the current view"), \
@@ -660,7 +771,6 @@ static int read_properties(struct io *io, const char *separators, int (*read)(ch
 	REQ_(STATUS_REVERT,	"Revert file changes"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
 	REQ_(STAGE_NEXT,	"Find next chunk to stage"), \
-	REQ_(TREE_PARENT,	"Switch to parent directory in tree view"), \
 	\
 	REQ_GROUP("Cursor navigation") \
 	REQ_(MOVE_UP,		"Move cursor one line up"), \
@@ -671,6 +781,8 @@ static int read_properties(struct io *io, const char *separators, int (*read)(ch
 	REQ_(MOVE_LAST_LINE,	"Move cursor to last line"), \
 	\
 	REQ_GROUP("Scrolling") \
+	REQ_(SCROLL_LEFT,	"Scroll two columns left"), \
+	REQ_(SCROLL_RIGHT,	"Scroll two columns right"), \
 	REQ_(SCROLL_LINE_UP,	"Scroll one line up"), \
 	REQ_(SCROLL_LINE_DOWN,	"Scroll one line down"), \
 	REQ_(SCROLL_PAGE_UP,	"Scroll one page up"), \
@@ -692,7 +804,6 @@ static int read_properties(struct io *io, const char *separators, int (*read)(ch
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
 	REQ_(SCREEN_REDRAW,	"Redraw the screen"), \
-	REQ_(SCREEN_RESIZE,	"Resize the screen"), \
 	REQ_(SHOW_VERSION,	"Show version information"), \
 	REQ_(STOP_LOADING,	"Stop all loading views"), \
 	REQ_(EDIT,		"Open in editor"), \
@@ -746,19 +857,6 @@ get_request(const char *name)
  * Options
  */
 
-static const char usage[] =
-"tig " TIG_VERSION " (" __DATE__ ")\n"
-"\n"
-"Usage: tig        [options] [revs] [--] [paths]\n"
-"   or: tig show   [options] [revs] [--] [paths]\n"
-"   or: tig blame  [rev] path\n"
-"   or: tig status\n"
-"   or: tig <      [git command output]\n"
-"\n"
-"Options:\n"
-"  -v, --version   Show version and exit\n"
-"  -h, --help      Show help message and exit";
-
 /* Option and state variables. */
 static bool opt_date			= TRUE;
 static bool opt_author			= TRUE;
@@ -781,6 +879,7 @@ static char opt_codeset[20]		= "UTF-8";
 static iconv_t opt_iconv		= ICONV_NONE;
 static char opt_search[SIZEOF_STR]	= "";
 static char opt_cdup[SIZEOF_STR]	= "";
+static char opt_prefix[SIZEOF_STR]	= "";
 static char opt_git_dir[SIZEOF_STR]	= "";
 static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
@@ -788,89 +887,6 @@ static FILE *opt_tty			= NULL;
 
 #define is_initial_commit()	(!*opt_head_rev)
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || !strcmp(opt_head_rev, (rev)))
-
-static enum request
-parse_options(int argc, const char *argv[], const char ***run_argv)
-{
-	enum request request = REQ_VIEW_MAIN;
-	const char *subcommand;
-	bool seen_dashdash = FALSE;
-	/* XXX: This is vulnerable to the user overriding options
-	 * required for the main view parser. */
-	const char *custom_argv[SIZEOF_ARG] = {
-		"git", "log", "--no-color", "--pretty=raw", "--parents",
-			"--topo-order", NULL
-	};
-	int i, j = 6;
-
-	if (!isatty(STDIN_FILENO))
-		return REQ_VIEW_PAGER;
-
-	if (argc <= 1)
-		return REQ_VIEW_MAIN;
-
-	subcommand = argv[1];
-	if (!strcmp(subcommand, "status") || !strcmp(subcommand, "-S")) {
-		if (!strcmp(subcommand, "-S"))
-			warn("`-S' has been deprecated; use `tig status' instead");
-		if (argc > 2)
-			warn("ignoring arguments after `%s'", subcommand);
-		return REQ_VIEW_STATUS;
-
-	} else if (!strcmp(subcommand, "blame")) {
-		if (argc <= 2 || argc > 4)
-			die("invalid number of options to blame\n\n%s", usage);
-
-		i = 2;
-		if (argc == 4) {
-			string_ncopy(opt_ref, argv[i], strlen(argv[i]));
-			i++;
-		}
-
-		string_ncopy(opt_file, argv[i], strlen(argv[i]));
-		return REQ_VIEW_BLAME;
-
-	} else if (!strcmp(subcommand, "show")) {
-		request = REQ_VIEW_DIFF;
-
-	} else if (!strcmp(subcommand, "log") || !strcmp(subcommand, "diff")) {
-		request = subcommand[0] == 'l' ? REQ_VIEW_LOG : REQ_VIEW_DIFF;
-		warn("`tig %s' has been deprecated", subcommand);
-
-	} else {
-		subcommand = NULL;
-	}
-
-	if (subcommand) {
-		custom_argv[1] = subcommand;
-		j = 2;
-	}
-
-	for (i = 1 + !!subcommand; i < argc; i++) {
-		const char *opt = argv[i];
-
-		if (seen_dashdash || !strcmp(opt, "--")) {
-			seen_dashdash = TRUE;
-
-		} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
-			printf("tig version %s\n", TIG_VERSION);
-			return REQ_NONE;
-
-		} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
-			printf("%s\n", usage);
-			return REQ_NONE;
-		}
-
-		custom_argv[j++] = opt;
-		if (j >= ARRAY_SIZE(custom_argv))
-			die("command too long");
-	}
-
-	custom_argv[j] = NULL;
-	*run_argv = custom_argv;
-
-	return request;
-}
 
 
 /*
@@ -902,7 +918,7 @@ LINE(PP_REFS,	   "Refs: ",		COLOR_RED,	COLOR_DEFAULT,	0), \
 LINE(COMMIT,	   "commit ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(PARENT,	   "parent ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(TREE,	   "tree ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
-LINE(AUTHOR,	   "author ",		COLOR_CYAN,	COLOR_DEFAULT,	0), \
+LINE(AUTHOR,	   "author ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(COMMITTER,	   "committer ",	COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(SIGNOFF,	   "    Signed-off-by", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(ACKED,	   "    Acked-by",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
@@ -911,10 +927,10 @@ LINE(CURSOR,	   "",			COLOR_WHITE,	COLOR_GREEN,	A_BOLD), \
 LINE(STATUS,	   "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(DELIMITER,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(DATE,         "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
+LINE(MODE,         "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(LINE_NUMBER,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(TITLE_BLUR,   "",			COLOR_WHITE,	COLOR_BLUE,	0), \
 LINE(TITLE_FOCUS,  "",			COLOR_WHITE,	COLOR_BLUE,	A_BOLD), \
-LINE(MAIN_AUTHOR,  "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_COMMIT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_LOCAL_TAG,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
@@ -923,7 +939,8 @@ LINE(MAIN_TRACKED, "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_HEAD,    "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REVGRAPH,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(TREE_DIR,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
+LINE(TREE_HEAD,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_BOLD), \
+LINE(TREE_DIR,     "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(STAT_HEAD,    "",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(STAT_SECTION, "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
@@ -1021,6 +1038,7 @@ struct line {
 	/* State flags */
 	unsigned int selected:1;
 	unsigned int dirty:1;
+	unsigned int cleareol:1;
 
 	void *data;		/* User data */
 };
@@ -1070,6 +1088,8 @@ static struct keybinding default_keybindings[] = {
 	{ '-',		REQ_MOVE_PAGE_UP },
 
 	/* Scrolling */
+	{ KEY_LEFT,	REQ_SCROLL_LEFT },
+	{ KEY_RIGHT,	REQ_SCROLL_RIGHT },
 	{ KEY_IC,	REQ_SCROLL_LINE_UP },
 	{ KEY_DC,	REQ_SCROLL_LINE_DOWN },
 	{ 'w',		REQ_SCROLL_PAGE_UP },
@@ -1096,11 +1116,8 @@ static struct keybinding default_keybindings[] = {
 	{ '!',		REQ_STATUS_REVERT },
 	{ 'M',		REQ_STATUS_MERGE },
 	{ '@',		REQ_STAGE_NEXT },
-	{ ',',		REQ_TREE_PARENT },
+	{ ',',		REQ_PARENT },
 	{ 'e',		REQ_EDIT },
-
-	/* Using the ncurses SIGWINCH handler. */
-	{ KEY_RESIZE,	REQ_SCREEN_RESIZE },
 };
 
 #define KEYMAP_INFO \
@@ -1374,7 +1391,7 @@ static int   config_lineno;
 static bool  config_errors;
 static const char *config_msg;
 
-/* Wants: object fgcolor bgcolor [attr] */
+/* Wants: object fgcolor bgcolor [attribute] */
 static int
 option_color_command(int argc, const char *argv[])
 {
@@ -1392,6 +1409,9 @@ option_color_command(int argc, const char *argv[])
 
 		} else if (!string_enum_compare(argv[0], "main-date", strlen("main-date"))) {
 			info = get_line_info("date");
+
+		} else if (!string_enum_compare(argv[0], "main-author", strlen("main-author"))) {
+			info = get_line_info("author");
 
 		} else {
 			config_msg = "Unknown color name";
@@ -1491,7 +1511,7 @@ option_set_command(int argc, const char *argv[])
 		int arglen = strlen(arg);
 
 		switch (arg[0]) {
-		case '"':
+		case '\"':
 		case '\'':
 			if (arglen == 1 || arg[arglen - 1] != arg[0]) {
 				config_msg = "Unmatched quotation";
@@ -1534,16 +1554,25 @@ option_bind_command(int argc, const char *argv[])
 
 	request = get_request(argv[2]);
 	if (request == REQ_NONE) {
-		const char *obsolete[] = { "cherry-pick" };
+		struct {
+			const char *name;
+			enum request request;
+		} obsolete[] = {
+			{ "cherry-pick",	REQ_NONE },
+			{ "screen-resize",	REQ_NONE },
+			{ "tree-parent",	REQ_PARENT },
+		};
 		size_t namelen = strlen(argv[2]);
 		int i;
 
 		for (i = 0; i < ARRAY_SIZE(obsolete); i++) {
-			if (namelen == strlen(obsolete[i]) &&
-			    !string_enum_compare(obsolete[i], argv[2], namelen)) {
-				config_msg = "Obsolete request name";
-				return ERR;
-			}
+			if (namelen != strlen(obsolete[i].name) ||
+			    string_enum_compare(obsolete[i].name, argv[2], namelen))
+				continue;
+			if (obsolete[i].request != REQ_NONE)
+				add_keybinding(keymap, obsolete[i].request, key);
+			config_msg = "Obsolete request name";
+			return ERR;
 		}
 	}
 	if (request == REQ_NONE && *argv[2]++ == '!')
@@ -1613,8 +1642,8 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen)
 	}
 
 	if (status == ERR) {
-		fprintf(stderr, "Error on line %d, near '%.*s': %s\n",
-			config_lineno, (int) optlen, opt, config_msg);
+		warn("Error on line %d, near '%.*s': %s",
+		     config_lineno, (int) optlen, opt, config_msg);
 		config_errors = TRUE;
 	}
 
@@ -1627,16 +1656,16 @@ load_option_file(const char *path)
 {
 	struct io io = {};
 
-	/* It's ok that the file doesn't exist. */
+	/* It's OK that the file doesn't exist. */
 	if (!io_open(&io, path))
 		return;
 
 	config_lineno = 0;
 	config_errors = FALSE;
 
-	if (read_properties(&io, " \t", read_option) == ERR ||
+	if (io_load(&io, " \t", read_option) == ERR ||
 	    config_errors == TRUE)
-		fprintf(stderr, "Errors while loading %s.\n", path);
+		warn("Errors while loading %s.", path);
 }
 
 static int
@@ -1678,9 +1707,6 @@ struct view_ops;
 static struct view *display[2];
 static unsigned int current_view;
 
-/* Reading from the prompt? */
-static bool input_mode = FALSE;
-
 #define foreach_displayed_view(view, i) \
 	for (i = 0; i < ARRAY_SIZE(display) && (view = display[i]); i++)
 
@@ -1710,11 +1736,16 @@ struct view {
 
 	/* Navigation */
 	unsigned long offset;	/* Offset of the window top */
+	unsigned long yoffset;	/* Offset from the window side. */
 	unsigned long lineno;	/* Current line number */
+	unsigned long p_offset;	/* Previous offset of the window top */
+	unsigned long p_yoffset;/* Previous offset from the window side */
+	unsigned long p_lineno;	/* Previous current line number */
+	bool p_restore;		/* Should the previous position be restored. */
 
 	/* Searching */
 	char grep[SIZEOF_STR];	/* Search string */
-	regex_t *regex;		/* Pre-compiled regex */
+	regex_t *regex;		/* Pre-compiled regexp */
 
 	/* If non-NULL, points to the view that opened this view. If this view
 	 * is closed tig will switch back to the parent view. */
@@ -1724,13 +1755,14 @@ struct view {
 	size_t lines;		/* Total number of lines */
 	struct line *line;	/* Line index */
 	size_t line_alloc;	/* Total number of allocated lines */
-	size_t line_size;	/* Total number of used lines */
 	unsigned int digits;	/* Number of digits in the lines member. */
 
 	/* Drawing */
 	struct line *curline;	/* Line currently being drawn. */
 	enum line_type curtype;	/* Attribute currently used for drawing. */
 	unsigned long col;	/* Column when drawing. */
+	bool has_scrolled;	/* View was scrolled. */
+	bool can_hscroll;	/* View can be scrolled horizontally. */
 
 	/* Loading */
 	struct io io;
@@ -1752,7 +1784,7 @@ struct view_ops {
 	bool (*draw)(struct view *view, struct line *line, unsigned int lineno);
 	/* Depending on view handle a special requests. */
 	enum request (*request)(struct view *view, enum request request, struct line *line);
-	/* Search for regex in a line. */
+	/* Search for regexp in a line. */
 	bool (*grep)(struct view *view, struct line *line);
 	/* Select line */
 	void (*select)(struct view *view, struct line *line);
@@ -1824,12 +1856,13 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 	int len = 0;
 	int col = 0;
 	int trimmed = FALSE;
+	size_t skip = view->yoffset > view->col ? view->yoffset - view->col : 0;
 
 	if (max_len <= 0)
 		return 0;
 
 	if (opt_utf8) {
-		len = utf8_length(string, &col, max_len, &trimmed, use_tilde);
+		len = utf8_length(&string, skip, &col, max_len, &trimmed, use_tilde);
 	} else {
 		col = len = strlen(string);
 		if (len > max_len) {
@@ -1842,12 +1875,16 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 	}
 
 	set_view_attr(view, type);
-	waddnstr(view->win, string, len);
+	if (len > 0)
+		waddnstr(view->win, string, len);
 	if (trimmed && use_tilde) {
 		set_view_attr(view, LINE_DELIMITER);
 		waddch(view->win, '~');
 		col++;
 	}
+
+	if (view->col + col >= view->width + view->yoffset)
+		view->can_hscroll = TRUE;
 
 	return col;
 }
@@ -1873,6 +1910,7 @@ draw_space(struct view *view, enum line_type type, int max, int spaces)
 static bool
 draw_lineno(struct view *view, unsigned int lineno)
 {
+	size_t skip = view->yoffset > view->col ? view->yoffset - view->col : 0;
 	char number[10];
 	int digits3 = view->digits < 3 ? 3 : view->digits;
 	int max_number = MIN(digits3, STRING_SIZE(number));
@@ -1896,29 +1934,31 @@ draw_lineno(struct view *view, unsigned int lineno)
 		col = draw_space(view, LINE_LINE_NUMBER, max_number, max_number);
 	}
 
-	if (col < max) {
+	if (col < max && skip <= col) {
 		set_view_attr(view, LINE_DEFAULT);
 		waddch(view->win, line_graphics[LINE_GRAPHIC_VLINE]);
-		col++;
 	}
+	col++;
 
-	if (col < max)
-		col += draw_space(view, LINE_DEFAULT, max - col, 1);
 	view->col += col;
+	if (col < max && skip <= col)
+		col = draw_space(view, LINE_DEFAULT, max - col, 1);
+	view->col++;
 
-	return view->width - view->col <= 0;
+	return view->width + view->yoffset <= view->col;
 }
 
 static bool
 draw_text(struct view *view, enum line_type type, const char *string, bool trim)
 {
-	view->col += draw_chars(view, type, string, view->width - view->col, trim);
+	view->col += draw_chars(view, type, string, view->width + view->yoffset - view->col, trim);
 	return view->width - view->col <= 0;
 }
 
 static bool
 draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t size)
 {
+	size_t skip = view->yoffset > view->col ? view->yoffset - view->col : 0;
 	int max = view->width - view->col;
 	int i;
 
@@ -1928,14 +1968,13 @@ draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t si
 	set_view_attr(view, type);
 	/* Using waddch() instead of waddnstr() ensures that
 	 * they'll be rendered correctly for the cursor line. */
-	for (i = 0; i < size; i++)
+	for (i = skip; i < size; i++)
 		waddch(view->win, graphic[i]);
 
 	view->col += size;
-	if (size < max) {
+	if (size < max && skip <= size)
 		waddch(view->win, ' ');
-		view->col++;
-	}
+	view->col++;
 
 	return view->width - view->col <= 0;
 }
@@ -1951,8 +1990,9 @@ draw_field(struct view *view, enum line_type type, const char *text, int len, bo
 	else
 		col = draw_space(view, type, max - 1, max - 1);
 
-	view->col += col + draw_space(view, LINE_DEFAULT, max - col, max - col);
-	return view->width - view->col <= 0;
+	view->col += col;
+	view->col += draw_space(view, LINE_DEFAULT, max - col, max - col);
+	return view->width + view->yoffset <= view->col;
 }
 
 static bool
@@ -1970,11 +2010,57 @@ draw_date(struct view *view, struct tm *time)
 }
 
 static bool
+draw_author(struct view *view, const char *author)
+{
+	bool trim = opt_author_cols == 0 || opt_author_cols > 5 || !author;
+
+	if (!trim) {
+		static char initials[10];
+		size_t pos;
+
+#define is_initial_sep(c) (isspace(c) || ispunct(c) || (c) == '@')
+
+		memset(initials, 0, sizeof(initials));
+		for (pos = 0; *author && pos < opt_author_cols - 1; author++, pos++) {
+			while (is_initial_sep(*author))
+				author++;
+			strncpy(&initials[pos], author, sizeof(initials) - 1 - pos);
+			while (*author && !is_initial_sep(author[1]))
+				author++;
+		}
+
+		author = initials;
+	}
+
+	return draw_field(view, LINE_AUTHOR, author, opt_author_cols, trim);
+}
+
+static bool
+draw_mode(struct view *view, mode_t mode)
+{
+	static const char dir_mode[]	= "drwxr-xr-x";
+	static const char link_mode[]	= "lrwxrwxrwx";
+	static const char exe_mode[]	= "-rwxr-xr-x";
+	static const char file_mode[]	= "-rw-r--r--";
+	const char *str;
+
+	if (S_ISDIR(mode))
+		str = dir_mode;
+	else if (S_ISLNK(mode))
+		str = link_mode;
+	else if (mode & S_IXUSR)
+		str = exe_mode;
+	else
+		str = file_mode;
+
+	return draw_field(view, LINE_MODE, str, sizeof(file_mode), FALSE);
+}
+
+static bool
 draw_view_line(struct view *view, unsigned int lineno)
 {
 	struct line *line;
 	bool selected = (view->offset + lineno == view->lineno);
-	bool draw_ok;
 
 	assert(view_is_displayed(view));
 
@@ -1984,24 +2070,21 @@ draw_view_line(struct view *view, unsigned int lineno)
 	line = &view->line[view->offset + lineno];
 
 	wmove(view->win, lineno, 0);
+	if (line->cleareol)
+		wclrtoeol(view->win);
 	view->col = 0;
 	view->curline = line;
 	view->curtype = LINE_NONE;
 	line->selected = FALSE;
+	line->dirty = line->cleareol = 0;
 
 	if (selected) {
 		set_view_attr(view, LINE_CURSOR);
 		line->selected = TRUE;
 		view->ops->select(view, line);
-	} else if (line->selected) {
-		wclrtoeol(view->win);
 	}
 
-	scrollok(view->win, FALSE);
-	draw_ok = view->ops->draw(view, line, lineno);
-	scrollok(view->win, TRUE);
-
-	return draw_ok;
+	return view->ops->draw(view, line, lineno);
 }
 
 static void
@@ -2011,11 +2094,10 @@ redraw_view_dirty(struct view *view)
 	int lineno;
 
 	for (lineno = 0; lineno < view->height; lineno++) {
-		struct line *line = &view->line[view->offset + lineno];
-
-		if (!line->dirty)
+		if (view->offset + lineno >= view->lines)
+			break;
+		if (!view->line[view->offset + lineno].dirty)
 			continue;
-		line->dirty = 0;
 		dirty = TRUE;
 		if (!draw_view_line(view, lineno))
 			break;
@@ -2023,11 +2105,7 @@ redraw_view_dirty(struct view *view)
 
 	if (!dirty)
 		return;
-	redrawwin(view->win);
-	if (input_mode)
-		wnoutrefresh(view->win);
-	else
-		wrefresh(view->win);
+	wnoutrefresh(view->win);
 }
 
 static void
@@ -2035,22 +2113,21 @@ redraw_view_from(struct view *view, int lineno)
 {
 	assert(0 <= lineno && lineno < view->height);
 
+	if (lineno == 0)
+		view->can_hscroll = FALSE;
+
 	for (; lineno < view->height; lineno++) {
 		if (!draw_view_line(view, lineno))
 			break;
 	}
 
-	redrawwin(view->win);
-	if (input_mode)
-		wnoutrefresh(view->win);
-	else
-		wrefresh(view->win);
+	wnoutrefresh(view->win);
 }
 
 static void
 redraw_view(struct view *view)
 {
-	wclear(view->win);
+	werase(view->win);
 	redraw_view_from(view, 0);
 }
 
@@ -2107,12 +2184,7 @@ update_view_title(struct view *view)
 
 	mvwaddnstr(view->title, 0, 0, buf, bufpos);
 	wclrtoeol(view->title);
-	wmove(view->title, 0, view->width - 1);
-
-	if (input_mode)
-		wnoutrefresh(view->title);
-	else
-		wrefresh(view->title);
+	wnoutrefresh(view->title);
 }
 
 static void
@@ -2150,7 +2222,7 @@ resize_display(void)
 			if (!view->win)
 				die("Failed to create %s view", view->name);
 
-			scrollok(view->win, TRUE);
+			scrollok(view->win, FALSE);
 
 			view->title = newwin(1, 0, offset + view->height, 0);
 			if (!view->title)
@@ -2167,28 +2239,25 @@ resize_display(void)
 }
 
 static void
-redraw_display(void)
+redraw_display(bool clear)
 {
 	struct view *view;
 	int i;
 
 	foreach_displayed_view (view, i) {
+		if (clear)
+			wclear(view->win);
 		redraw_view(view);
 		update_view_title(view);
 	}
 }
 
 static void
-update_display_cursor(struct view *view)
+toggle_view_option(bool *option, const char *help)
 {
-	/* Move the cursor to the right-most column of the cursor line.
-	 *
-	 * XXX: This could turn out to be a bit expensive, but it ensures that
-	 * the cursor does not jump around. */
-	if (view->lines) {
-		wmove(view->win, view->lineno - view->offset, view->width - 1);
-		wrefresh(view->win);
-	}
+	*option = !*option;
+	redraw_display(FALSE);
+	report("%sabling %s", *option ? "En" : "Dis", help);
 }
 
 /*
@@ -2226,19 +2295,19 @@ do_scroll_view(struct view *view, int lines)
 		int line = lines > 0 ? view->height - lines : 0;
 		int end = line + ABS(lines);
 
+		scrollok(view->win, TRUE);
 		wscrl(view->win, lines);
+		scrollok(view->win, FALSE);
 
-		for (; line < end; line++) {
-			if (!draw_view_line(view, line))
-				break;
-		}
+		while (line < end && draw_view_line(view, line))
+			line++;
 
 		if (redraw_current_line)
 			draw_view_line(view, view->lineno - view->offset);
+		wnoutrefresh(view->win);
 	}
 
-	redrawwin(view->win);
-	wrefresh(view->win);
+	view->has_scrolled = TRUE;
 	report("");
 }
 
@@ -2251,6 +2320,27 @@ scroll_view(struct view *view, enum request request)
 	assert(view_is_displayed(view));
 
 	switch (request) {
+	case REQ_SCROLL_LEFT:
+		if (view->yoffset == 0) {
+			report("Cannot scroll beyond the first column");
+			return;
+		}
+		if (view->yoffset <= SCROLL_INTERVAL)
+			view->yoffset = 0;
+		else
+			view->yoffset -= SCROLL_INTERVAL;
+		redraw_view_from(view, 0);
+		report("");
+		return;
+	case REQ_SCROLL_RIGHT:
+		if (!view->can_hscroll) {
+			report("Cannot scroll beyond the last column");
+			return;
+		}
+		view->yoffset += SCROLL_INTERVAL;
+		redraw_view(view);
+		report("");
+		return;
 	case REQ_SCROLL_PAGE_DOWN:
 		lines = view->height;
 	case REQ_SCROLL_LINE_DOWN:
@@ -2371,8 +2461,7 @@ move_view(struct view *view, enum request request)
 	/* Draw the current line */
 	draw_view_line(view, view->lineno - view->offset);
 
-	redrawwin(view->win);
-	wrefresh(view->win);
+	wnoutrefresh(view->win);
 	report("");
 }
 
@@ -2383,32 +2472,27 @@ move_view(struct view *view, enum request request)
 
 static void search_view(struct view *view, enum request request);
 
-static bool
-find_next_line(struct view *view, unsigned long lineno, struct line *line)
+static void
+select_view_line(struct view *view, unsigned long lineno)
 {
-	assert(view_is_displayed(view));
-
-	if (!view->ops->grep(view, line))
-		return FALSE;
-
 	if (lineno - view->offset >= view->height) {
 		view->offset = lineno;
 		view->lineno = lineno;
-		redraw_view(view);
+		if (view_is_displayed(view))
+			redraw_view(view);
 
 	} else {
 		unsigned long old_lineno = view->lineno - view->offset;
 
 		view->lineno = lineno;
-		draw_view_line(view, old_lineno);
-
-		draw_view_line(view, view->lineno - view->offset);
-		redrawwin(view->win);
-		wrefresh(view->win);
+		if (view_is_displayed(view)) {
+			draw_view_line(view, old_lineno);
+			draw_view_line(view, view->lineno - view->offset);
+			wnoutrefresh(view->win);
+		} else {
+			view->ops->select(view, &view->line[view->lineno]);
+		}
 	}
-
-	report("Line %ld matches '%s'", lineno + 1, view->grep);
-	return TRUE;
 }
 
 static void
@@ -2446,10 +2530,11 @@ find_next(struct view *view, enum request request)
 	/* Note, lineno is unsigned long so will wrap around in which case it
 	 * will become bigger than view->lines. */
 	for (; lineno < view->lines; lineno += direction) {
-		struct line *line = &view->line[lineno];
-
-		if (find_next_line(view, lineno, line))
+		if (view->ops->grep(view, &view->line[lineno])) {
+			select_view_line(view, lineno);
+			report("Line %ld matches '%s'", lineno + 1, view->grep);
 			return;
+		}
 	}
 
 	report("No match found for '%s'", view->grep);
@@ -2496,11 +2581,15 @@ reset_view(struct view *view)
 		free(view->line[i].data);
 	free(view->line);
 
+	view->p_offset = view->offset;
+	view->p_yoffset = view->yoffset;
+	view->p_lineno = view->lineno;
+
 	view->line = NULL;
 	view->offset = 0;
+	view->yoffset = 0;
 	view->lines  = 0;
 	view->lineno = 0;
-	view->line_size = 0;
 	view->line_alloc = 0;
 	view->vid[0] = 0;
 	view->update_secs = 0;
@@ -2578,6 +2667,44 @@ format_argv(const char *dst_argv[], const char *src_argv[], enum format_flags fl
 	return src_argv[argc] == NULL;
 }
 
+static bool
+restore_view_position(struct view *view)
+{
+	if (!view->p_restore || (view->pipe && view->lines <= view->p_lineno))
+		return FALSE;
+
+	/* Changing the view position cancels the restoring. */
+	/* FIXME: Changing back to the first line is not detected. */
+	if (view->offset != 0 || view->lineno != 0) {
+		view->p_restore = FALSE;
+		return FALSE;
+	}
+
+	if (view->p_lineno >= view->lines) {
+		view->p_lineno = view->lines > 0 ? view->lines - 1 : 0;
+		if (view->p_offset >= view->p_lineno) {
+			unsigned long half = view->height / 2;
+
+			if (view->p_lineno > half)
+				view->p_offset = view->p_lineno - half;
+			else
+				view->p_offset = 0;
+		}
+	}
+
+	if (view_is_displayed(view) &&
+	    view->offset != view->p_offset &&
+	    view->lineno != view->p_lineno)
+		werase(view->win);
+
+	view->offset = view->p_offset;
+	view->yoffset = view->p_yoffset;
+	view->lineno = view->p_lineno;
+	view->p_restore = FALSE;
+
+	return TRUE;
+}
+
 static void
 end_update(struct view *view, bool force)
 {
@@ -2623,6 +2750,9 @@ prepare_update_file(struct view *view, const char *name)
 static bool
 begin_update(struct view *view, bool refresh)
 {
+	if (view->pipe)
+		end_update(view, TRUE);
+
 	if (refresh) {
 		if (!start_io(&view->io))
 			return FALSE;
@@ -2673,7 +2803,6 @@ realloc_lines(struct view *view, size_t line_size)
 
 	view->line = tmp;
 	view->line_alloc = alloc;
-	view->line_size = line_size;
 	return view->line;
 }
 
@@ -2682,7 +2811,9 @@ update_view(struct view *view)
 {
 	char out_buffer[BUFSIZ * 2];
 	char *line;
-	int redraw_from = -1;
+	/* Clear the view and redraw everything since the tree sorting
+	 * might have rearranged things. */
+	bool redraw = view->lines == 0;
 	bool can_read = TRUE;
 
 	if (!view->pipe)
@@ -2692,7 +2823,7 @@ update_view(struct view *view)
 		if (view->lines == 0) {
 			time_t secs = time(NULL) - view->start_time;
 
-			if (secs > view->update_secs) {
+			if (secs > 1 && secs > view->update_secs) {
 				if (view->update_secs == 0)
 					redraw_view(view);
 				update_view_title(view);
@@ -2702,16 +2833,10 @@ update_view(struct view *view)
 		return TRUE;
 	}
 
-	/* Only redraw if lines are visible. */
-	if (view->offset + view->height >= view->lines)
-		redraw_from = view->lines - view->offset;
-
 	for (; (line = io_get(view->pipe, '\n', can_read)); can_read = FALSE) {
-		size_t linelen = strlen(line);
-
 		if (opt_iconv != ICONV_NONE) {
 			ICONV_CONST char *inbuf = line;
-			size_t inlen = linelen;
+			size_t inlen = strlen(line) + 1;
 
 			char *outbuf = out_buffer;
 			size_t outlen = sizeof(out_buffer);
@@ -2719,15 +2844,15 @@ update_view(struct view *view)
 			size_t ret;
 
 			ret = iconv(opt_iconv, &inbuf, &inlen, &outbuf, &outlen);
-			if (ret != (size_t) -1) {
+			if (ret != (size_t) -1)
 				line = out_buffer;
-				linelen = strlen(out_buffer);
-			}
 		}
 
-		if (!realloc_lines(view, view->lines + 1) ||
-		    !view->ops->read(view, line))
-			goto alloc_error;
+		if (!view->ops->read(view, line)) {
+			report("Allocation failure");
+			end_update(view, TRUE);
+			return FALSE;
+		}
 	}
 
 	{
@@ -2740,7 +2865,8 @@ update_view(struct view *view)
 		/* Keep the displayed view in sync with line number scaling. */
 		if (digits != view->digits) {
 			view->digits = digits;
-			redraw_from = 0;
+			if (opt_line_number || view == VIEW(REQ_VIEW_BLAME))
+				redraw = TRUE;
 		}
 	}
 
@@ -2753,53 +2879,36 @@ update_view(struct view *view)
 		end_update(view, FALSE);
 	}
 
+	if (restore_view_position(view))
+		redraw = TRUE;
+
 	if (!view_is_displayed(view))
 		return TRUE;
 
-	if (view == VIEW(REQ_VIEW_TREE)) {
-		/* Clear the view and redraw everything since the tree sorting
-		 * might have rearranged things. */
-		redraw_view(view);
-
-	} else if (redraw_from >= 0) {
-		/* If this is an incremental update, redraw the previous line
-		 * since for commits some members could have changed when
-		 * loading the main view. */
-		if (redraw_from > 0)
-			redraw_from--;
-
-		/* Since revision graph visualization requires knowledge
-		 * about the parent commit, it causes a further one-off
-		 * needed to be redrawn for incremental updates. */
-		if (redraw_from > 0 && opt_rev_graph)
-			redraw_from--;
-
-		/* Incrementally draw avoids flickering. */
-		redraw_view_from(view, redraw_from);
-	}
-
-	if (view == VIEW(REQ_VIEW_BLAME))
+	if (redraw)
+		redraw_view_from(view, 0);
+	else
 		redraw_view_dirty(view);
 
 	/* Update the title _after_ the redraw so that if the redraw picks up a
 	 * commit reference in view->ref it'll be available here. */
 	update_view_title(view);
 	return TRUE;
-
-alloc_error:
-	report("Allocation failure");
-	end_update(view, TRUE);
-	return FALSE;
 }
 
 static struct line *
 add_line_data(struct view *view, void *data, enum line_type type)
 {
-	struct line *line = &view->line[view->lines++];
+	struct line *line;
 
+	if (!realloc_lines(view, view->lines + 1))
+		return NULL;
+
+	line = &view->line[view->lines++];
 	memset(line, 0, sizeof(*line));
 	line->type = type;
 	line->data = data;
+	line->dirty = 1;
 
 	return line;
 }
@@ -2812,6 +2921,19 @@ add_line_text(struct view *view, const char *text, enum line_type type)
 	return data ? add_line_data(view, data, type) : NULL;
 }
 
+static struct line *
+add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
+{
+	char buf[SIZEOF_STR];
+	va_list args;
+
+	va_start(args, fmt);
+	if (vsnprintf(buf, sizeof(buf), fmt, args) >= sizeof(buf))
+		buf[0] = 0;
+	va_end(args);
+
+	return buf[0] ? add_line_text(view, buf, type) : NULL;
+}
 
 /*
  * View opening
@@ -2865,14 +2987,14 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	    (nviews == 1 && base_view != display[0]))
 		resize_display();
 
-	if (view->pipe)
-		end_update(view, TRUE);
-
 	if (view->ops->open) {
+		if (view->pipe)
+			end_update(view, TRUE);
 		if (!view->ops->open(view)) {
 			report("Failed to load %s view", view->name);
 			return;
 		}
+		restore_view_position(view);
 
 	} else if ((reload || strcmp(view->vid, view->id)) &&
 		   !begin_update(view, flags & (OPEN_REFRESH | OPEN_PREPARED))) {
@@ -2902,6 +3024,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		/* Clear the old view and let the incremental updating refill
 		 * the screen. */
 		werase(view->win);
+		view->p_restore = flags & (OPEN_RELOAD | OPEN_REFRESH);
 		report("");
 	} else if (view_is_displayed(view)) {
 		redraw_view(view);
@@ -2923,7 +3046,7 @@ open_external_viewer(const char *argv[], const char *dir)
 	fprintf(stderr, "Press Enter to continue");
 	getc(opt_tty);
 	reset_prog_mode();
-	redraw_display();
+	redraw_display(TRUE);
 }
 
 static void
@@ -3012,6 +3135,8 @@ view_driver(struct view *view, enum request request)
 		move_view(view, request);
 		break;
 
+	case REQ_SCROLL_LEFT:
+	case REQ_SCROLL_RIGHT:
 	case REQ_SCROLL_LINE_DOWN:
 	case REQ_SCROLL_LINE_UP:
 	case REQ_SCROLL_PAGE_DOWN:
@@ -3125,28 +3250,23 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_TOGGLE_LINENO:
-		opt_line_number = !opt_line_number;
-		redraw_display();
+		toggle_view_option(&opt_line_number, "line numbers");
 		break;
 
 	case REQ_TOGGLE_DATE:
-		opt_date = !opt_date;
-		redraw_display();
+		toggle_view_option(&opt_date, "date display");
 		break;
 
 	case REQ_TOGGLE_AUTHOR:
-		opt_author = !opt_author;
-		redraw_display();
+		toggle_view_option(&opt_author, "author display");
 		break;
 
 	case REQ_TOGGLE_REV_GRAPH:
-		opt_rev_graph = !opt_rev_graph;
-		redraw_display();
+		toggle_view_option(&opt_rev_graph, "revision graph display");
 		break;
 
 	case REQ_TOGGLE_REFS:
-		opt_show_refs = !opt_show_refs;
-		redraw_display();
+		toggle_view_option(&opt_show_refs, "reference display");
 		break;
 
 	case REQ_SEARCH:
@@ -3172,11 +3292,8 @@ view_driver(struct view *view, enum request request)
 		report("tig-%s (built %s)", TIG_VERSION, __DATE__);
 		return TRUE;
 
-	case REQ_SCREEN_RESIZE:
-		resize_display();
-		/* Fall-through */
 	case REQ_SCREEN_REDRAW:
-		redraw_display();
+		redraw_display(TRUE);
 		break;
 
 	case REQ_EDIT:
@@ -3198,7 +3315,7 @@ view_driver(struct view *view, enum request request)
 			display[current_view] = view->parent;
 			view->parent = view;
 			resize_display();
-			redraw_display();
+			redraw_display(FALSE);
 			report("");
 			break;
 		}
@@ -3216,17 +3333,122 @@ view_driver(struct view *view, enum request request)
 
 
 /*
+ * View backend utilities
+ */
+
+/* Parse author lines where the name may be empty:
+ *	author  <email@address.tld> 1138474660 +0100
+ */
+static void
+parse_author_line(char *ident, char *author, size_t authorsize, struct tm *tm)
+{
+	char *nameend = strchr(ident, '<');
+	char *emailend = strchr(ident, '>');
+
+	if (nameend && emailend)
+		*nameend = *emailend = 0;
+	ident = chomp_string(ident);
+	if (!*ident) {
+		if (nameend)
+			ident = chomp_string(nameend + 1);
+		if (!*ident)
+			ident = "Unknown";
+	}
+
+	string_ncopy_do(author, authorsize, ident, strlen(ident));
+
+	/* Parse epoch and timezone */
+	if (emailend && emailend[1] == ' ') {
+		char *secs = emailend + 2;
+		char *zone = strchr(secs, ' ');
+		time_t time = (time_t) atol(secs);
+
+		if (zone && strlen(zone) == STRING_SIZE(" +0700")) {
+			long tz;
+
+			zone++;
+			tz  = ('0' - zone[1]) * 60 * 60 * 10;
+			tz += ('0' - zone[2]) * 60 * 60;
+			tz += ('0' - zone[3]) * 60;
+			tz += ('0' - zone[4]) * 60;
+
+			if (zone[0] == '-')
+				tz = -tz;
+
+			time -= tz;
+		}
+
+		gmtime_r(&time, tm);
+	}
+}
+
+static enum input_status
+select_commit_parent_handler(void *data, char *buf, int c)
+{
+	size_t parents = *(size_t *) data;
+	int parent = 0;
+
+	if (!isdigit(c))
+		return INPUT_SKIP;
+
+	if (*buf)
+		parent = atoi(buf) * 10;
+	parent += c - '0';
+
+	if (parent > parents)
+		return INPUT_SKIP;
+	return INPUT_OK;
+}
+
+static bool
+select_commit_parent(const char *id, char rev[SIZEOF_REV])
+{
+	char buf[SIZEOF_STR * 4];
+	const char *revlist_argv[] = {
+		"git", "rev-list", "-1", "--parents", id, NULL
+	};
+	int parents;
+
+	if (!run_io_buf(revlist_argv, buf, sizeof(buf)) ||
+	    !*chomp_string(buf) ||
+	    (parents = (strlen(buf) / 40) - 1) < 0) {
+		report("Failed to get parent information");
+		return FALSE;
+
+	} else if (parents == 0) {
+		report("The selected commit has no parents");
+		return FALSE;
+	}
+
+	if (parents > 1) {
+		char prompt[SIZEOF_STR];
+		char *result;
+
+		if (!string_format(prompt, "Which parent? [1..%d] ", parents))
+			return FALSE;
+		result = prompt_input(prompt, select_commit_parent_handler, &parents);
+		if (!result)
+			return FALSE;
+		parents = atoi(result);
+	}
+
+	string_copy_rev(rev, &buf[41 * parents]);
+	return TRUE;
+}
+
+/*
  * Pager backend
  */
 
 static bool
 pager_draw(struct view *view, struct line *line, unsigned int lineno)
 {
-	char *text = line->data;
+	char text[SIZEOF_STR];
 
 	if (opt_line_number && draw_lineno(view, lineno))
 		return TRUE;
 
+	string_expand(text, sizeof(text), line->data, opt_tab_size);
 	draw_text(view, line->type, text, TRUE);
 	return TRUE;
 }
@@ -3290,9 +3512,6 @@ try_add_describe_ref:
 	}
 
 	if (bufpos == 0)
-		return;
-
-	if (!realloc_lines(view, view->line_size + 1))
 		return;
 
 	add_line_text(view, buf, LINE_PP_REFS);
@@ -3436,22 +3655,12 @@ static struct view_ops diff_ops = {
 static bool
 help_open(struct view *view)
 {
-	char buf[BUFSIZ];
-	int lines = ARRAY_SIZE(req_info) + 2;
+	char buf[SIZEOF_STR];
+	size_t bufpos;
 	int i;
 
 	if (view->lines > 0)
 		return TRUE;
-
-	for (i = 0; i < ARRAY_SIZE(req_info); i++)
-		if (!req_info[i].request)
-			lines++;
-
-	lines += run_requests + 1;
-
-	view->line = calloc(lines, sizeof(*view->line));
-	if (!view->line)
-		return FALSE;
 
 	add_line_text(view, "Quick reference for tig keybindings:", LINE_DEFAULT);
 
@@ -3471,10 +3680,14 @@ help_open(struct view *view)
 		if (!*key)
 			key = "(no key defined)";
 
-		if (!string_format(buf, "    %-25s %s", key, req_info[i].help))
-			continue;
+		for (bufpos = 0; bufpos <= req_info[i].namelen; bufpos++) {
+			buf[bufpos] = tolower(req_info[i].name[bufpos]);
+			if (buf[bufpos] == '_')
+				buf[bufpos] = '-';
+		}
 
-		add_line_text(view, buf, LINE_DEFAULT);
+		add_line_format(view, LINE_DEFAULT, "    %-25s %-20s %s",
+				key, buf, req_info[i].help);
 	}
 
 	if (run_requests) {
@@ -3485,8 +3698,6 @@ help_open(struct view *view)
 	for (i = 0; i < run_requests; i++) {
 		struct run_request *req = get_run_request(REQ_NONE + i + 1);
 		const char *key;
-		char cmd[SIZEOF_STR];
-		size_t bufpos;
 		int argc;
 
 		if (!req)
@@ -3497,15 +3708,12 @@ help_open(struct view *view)
 			key = "(no key defined)";
 
 		for (bufpos = 0, argc = 0; req->argv[argc]; argc++)
-			if (!string_format_from(cmd, &bufpos, "%s%s",
+			if (!string_format_from(buf, &bufpos, "%s%s",
 					        argc ? " " : "", req->argv[argc]))
 				return REQ_NONE;
 
-		if (!string_format(buf, "    %-10s %-14s `%s`",
-				   keymap_table[req->keymap].name, key, cmd))
-			continue;
-
-		add_line_text(view, buf, LINE_DEFAULT);
+		add_line_format(view, LINE_DEFAULT, "    %-10s %-14s `%s`",
+				keymap_table[req->keymap].name, key, buf);
 	}
 
 	return TRUE;
@@ -3573,109 +3781,191 @@ push_tree_stack_entry(const char *name, unsigned long lineno)
 
 /* Parse output from git-ls-tree(1):
  *
- * 100644 blob fb0e31ea6cc679b7379631188190e975f5789c26	Makefile
- * 100644 blob 5304ca4260aaddaee6498f9630e7d471b8591ea6	README
  * 100644 blob f931e1d229c3e185caad4449bf5b66ed72462657	tig.c
- * 100644 blob ed09fe897f3c7c9af90bcf80cae92558ea88ae38	web.conf
  */
 
 #define SIZEOF_TREE_ATTR \
-	STRING_SIZE("100644 blob ed09fe897f3c7c9af90bcf80cae92558ea88ae38\t")
+	STRING_SIZE("100644 blob f931e1d229c3e185caad4449bf5b66ed72462657\t")
 
-#define TREE_UP_FORMAT "040000 tree %s\t.."
+#define SIZEOF_TREE_MODE \
+	STRING_SIZE("100644 ")
 
-static int
-tree_compare_entry(enum line_type type1, const char *name1,
-		   enum line_type type2, const char *name2)
-{
-	if (type1 != type2) {
-		if (type1 == LINE_TREE_DIR)
-			return -1;
-		return 1;
-	}
+#define TREE_ID_OFFSET \
+	STRING_SIZE("100644 blob ")
 
-	return strcmp(name1, name2);
-}
+struct tree_entry {
+	char id[SIZEOF_REV];
+	mode_t mode;
+	struct tm time;			/* Date from the author ident. */
+	char author[75];		/* Author of the commit. */
+	char name[1];
+};
 
 static const char *
 tree_path(struct line *line)
 {
-	const char *path = line->data;
+	return ((struct tree_entry *) line->data)->name;
+}
 
-	return path + SIZEOF_TREE_ATTR;
+
+static int
+tree_compare_entry(struct line *line1, struct line *line2)
+{
+	if (line1->type != line2->type)
+		return line1->type == LINE_TREE_DIR ? -1 : 1;
+	return strcmp(tree_path(line1), tree_path(line2));
+}
+
+static struct line *
+tree_entry(struct view *view, enum line_type type, const char *path,
+	   const char *mode, const char *id)
+{
+	struct tree_entry *entry = calloc(1, sizeof(*entry) + strlen(path));
+	struct line *line = entry ? add_line_data(view, entry, type) : NULL;
+
+	if (!entry || !line) {
+		free(entry);
+		return NULL;
+	}
+
+	strncpy(entry->name, path, strlen(path));
+	if (mode)
+		entry->mode = strtoul(mode, NULL, 8);
+	if (id)
+		string_copy_rev(entry->id, id);
+
+	return line;
+}
+
+static bool
+tree_read_date(struct view *view, char *text, bool *read_date)
+{
+	static char author_name[SIZEOF_STR];
+	static struct tm author_time;
+
+	if (!text && *read_date) {
+		*read_date = FALSE;
+		return TRUE;
+
+	} else if (!text) {
+		char *path = *opt_path ? opt_path : ".";
+		/* Find next entry to process */
+		const char *log_file[] = {
+			"git", "log", "--no-color", "--pretty=raw",
+				"--cc", "--raw", view->id, "--", path, NULL
+		};
+		struct io io = {};
+
+		if (!view->lines) {
+			tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL);
+			report("Tree is empty");
+			return TRUE;
+		}
+
+		if (!run_io_rd(&io, log_file, FORMAT_NONE)) {
+			report("Failed to load tree data");
+			return TRUE;
+		}
+
+		done_io(view->pipe);
+		view->io = io;
+		*read_date = TRUE;
+		return FALSE;
+
+	} else if (*text == 'a' && get_line_type(text) == LINE_AUTHOR) {
+		parse_author_line(text + STRING_SIZE("author "),
+				  author_name, sizeof(author_name), &author_time);
+
+	} else if (*text == ':') {
+		char *pos;
+		size_t annotated = 1;
+		size_t i;
+
+		pos = strchr(text, '\t');
+		if (!pos)
+			return TRUE;
+		text = pos + 1;
+		if (*opt_prefix && !strncmp(text, opt_prefix, strlen(opt_prefix)))
+			text += strlen(opt_prefix);
+		if (*opt_path && !strncmp(text, opt_path, strlen(opt_path)))
+			text += strlen(opt_path);
+		pos = strchr(text, '/');
+		if (pos)
+			*pos = 0;
+
+		for (i = 1; i < view->lines; i++) {
+			struct line *line = &view->line[i];
+			struct tree_entry *entry = line->data;
+
+			annotated += !!*entry->author;
+			if (*entry->author || strcmp(entry->name, text))
+				continue;
+
+			string_copy(entry->author, author_name);
+			memcpy(&entry->time, &author_time, sizeof(entry->time));
+			line->dirty = 1;
+			break;
+		}
+
+		if (annotated == view->lines)
+			kill_io(view->pipe);
+	}
+	return TRUE;
 }
 
 static bool
 tree_read(struct view *view, char *text)
 {
-	size_t textlen = text ? strlen(text) : 0;
-	char buf[SIZEOF_STR];
-	unsigned long pos;
+	static bool read_date = FALSE;
+	struct tree_entry *data;
+	struct line *entry, *line;
 	enum line_type type;
-	bool first_read = view->lines == 0;
+	size_t textlen = text ? strlen(text) : 0;
+	char *path = text + SIZEOF_TREE_ATTR;
 
-	if (!text)
-		return TRUE;
+	if (read_date || !text)
+		return tree_read_date(view, text, &read_date);
+
 	if (textlen <= SIZEOF_TREE_ATTR)
 		return FALSE;
-
-	type = text[STRING_SIZE("100644 ")] == 't'
-	     ? LINE_TREE_DIR : LINE_TREE_FILE;
-
-	if (first_read) {
-		/* Add path info line */
-		if (!string_format(buf, "Directory path /%s", opt_path) ||
-		    !realloc_lines(view, view->line_size + 1) ||
-		    !add_line_text(view, buf, LINE_DEFAULT))
-			return FALSE;
-
-		/* Insert "link" to parent directory. */
-		if (*opt_path) {
-			if (!string_format(buf, TREE_UP_FORMAT, view->ref) ||
-			    !realloc_lines(view, view->line_size + 1) ||
-			    !add_line_text(view, buf, LINE_TREE_DIR))
-				return FALSE;
-		}
-	}
+	if (view->lines == 0 &&
+	    !tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL))
+		return FALSE;
 
 	/* Strip the path part ... */
 	if (*opt_path) {
 		size_t pathlen = textlen - SIZEOF_TREE_ATTR;
 		size_t striplen = strlen(opt_path);
-		char *path = text + SIZEOF_TREE_ATTR;
 
 		if (pathlen > striplen)
 			memmove(path, path + striplen,
 				pathlen - striplen + 1);
+
+		/* Insert "link" to parent directory. */
+		if (view->lines == 1 &&
+		    !tree_entry(view, LINE_TREE_DIR, "..", "040000", view->ref))
+			return FALSE;
 	}
+
+	type = text[SIZEOF_TREE_MODE] == 't' ? LINE_TREE_DIR : LINE_TREE_FILE;
+	entry = tree_entry(view, type, path, text, text + TREE_ID_OFFSET);
+	if (!entry)
+		return FALSE;
+	data = entry->data;
 
 	/* Skip "Directory ..." and ".." line. */
-	for (pos = 1 + !!*opt_path; pos < view->lines; pos++) {
-		struct line *line = &view->line[pos];
-		const char *path1 = tree_path(line);
-		char *path2 = text + SIZEOF_TREE_ATTR;
-		int cmp = tree_compare_entry(line->type, path1, type, path2);
-
-		if (cmp <= 0)
+	for (line = &view->line[1 + !!*opt_path]; line < entry; line++) {
+		if (tree_compare_entry(line, entry) <= 0)
 			continue;
 
-		text = strdup(text);
-		if (!text)
-			return FALSE;
+		memmove(line + 1, line, (entry - line) * sizeof(*entry));
 
-		if (view->lines > pos)
-			memmove(&view->line[pos + 1], &view->line[pos],
-				(view->lines - pos) * sizeof(*line));
-
-		line = &view->line[pos];
-		line->data = text;
+		line->data = data;
 		line->type = type;
-		view->lines++;
+		for (; line <= entry; line++)
+			line->dirty = line->cleareol = 1;
 		return TRUE;
 	}
-
-	if (!add_line_text(view, text, type))
-		return FALSE;
 
 	if (tree_lineno > view->lineno) {
 		view->lineno = tree_lineno;
@@ -3683,6 +3973,45 @@ tree_read(struct view *view, char *text)
 	}
 
 	return TRUE;
+}
+
+static bool
+tree_draw(struct view *view, struct line *line, unsigned int lineno)
+{
+	struct tree_entry *entry = line->data;
+
+	if (line->type == LINE_TREE_HEAD) {
+		if (draw_text(view, line->type, "Directory path /", TRUE))
+			return TRUE;
+	} else {
+		if (draw_mode(view, entry->mode))
+			return TRUE;
+
+		if (opt_author && draw_author(view, entry->author))
+			return TRUE;
+
+		if (opt_date && draw_date(view, *entry->author ? &entry->time : NULL))
+			return TRUE;
+	}
+	if (draw_text(view, line->type, entry->name, TRUE))
+		return TRUE;
+	return TRUE;
+}
+
+static void
+open_blob_editor()
+{
+	char file[SIZEOF_STR] = "/tmp/tigblob.XXXXXX";
+	int fd = mkstemp(file);
+
+	if (fd == -1)
+		report("Failed to create temporary file");
+	else if (!run_io_append(blob_ops.argv, FORMAT_ALL, fd))
+		report("Failed to save blob data to file");
+	else
+		open_editor(FALSE, file);
+	if (fd != -1)
+		unlink(file);
 }
 
 static enum request
@@ -3704,13 +4033,13 @@ tree_request(struct view *view, enum request request, struct line *line)
 		if (line->type != LINE_TREE_FILE) {
 			report("Edit only supported for files");
 		} else if (!is_head_commit(view->vid)) {
-			report("Edit only supported for files in the current work tree");
+			open_blob_editor();
 		} else {
 			open_editor(TRUE, opt_file);
 		}
 		return REQ_NONE;
 
-	case REQ_TREE_PARENT:
+	case REQ_PARENT:
 		if (!*opt_path) {
 			/* quit view if at top of tree */
 			return REQ_VIEW_CLOSE;
@@ -3732,7 +4061,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 
 	switch (line->type) {
 	case LINE_TREE_DIR:
-		/* Depending on whether it is a subdir or parent (updir?) link
+		/* Depending on whether it is a subdirectory or parent link
 		 * mangle the path buffer. */
 		if (line == &view->line[1] && *opt_path) {
 			pop_tree_stack_entry();
@@ -3755,13 +4084,12 @@ tree_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	default:
-		return TRUE;
+		return REQ_NONE;
 	}
 
 	open_view(view, request, flags);
-	if (request == REQ_VIEW_TREE) {
+	if (request == REQ_VIEW_TREE)
 		view->lineno = tree_lineno;
-	}
 
 	return REQ_NONE;
 }
@@ -3769,17 +4097,17 @@ tree_request(struct view *view, enum request request, struct line *line)
 static void
 tree_select(struct view *view, struct line *line)
 {
-	char *text = (char *)line->data + STRING_SIZE("100644 blob ");
+	struct tree_entry *entry = line->data;
 
 	if (line->type == LINE_TREE_FILE) {
-		string_copy_rev(ref_blob, text);
+		string_copy_rev(ref_blob, entry->id);
 		string_format(opt_file, "%s%s", opt_path, tree_path(line));
 
 	} else if (line->type != LINE_TREE_DIR) {
 		return;
 	}
 
-	string_copy_rev(view->ref, text);
+	string_copy_rev(view->ref, entry->id);
 }
 
 static const char *tree_argv[SIZEOF_ARG] = {
@@ -3791,7 +4119,7 @@ static struct view_ops tree_ops = {
 	tree_argv,
 	NULL,
 	tree_read,
-	pager_draw,
+	tree_draw,
 	tree_request,
 	pager_grep,
 	tree_select,
@@ -3805,6 +4133,18 @@ blob_read(struct view *view, char *line)
 	return add_line_text(view, line, LINE_DEFAULT) != NULL;
 }
 
+static enum request
+blob_request(struct view *view, enum request request, struct line *line)
+{
+	switch (request) {
+	case REQ_EDIT:
+		open_blob_editor();
+		return REQ_NONE;
+	default:
+		return pager_request(view, request, line);
+	}
+}
+
 static const char *blob_argv[SIZEOF_ARG] = {
 	"git", "cat-file", "blob", "%(blob)", NULL
 };
@@ -3815,7 +4155,7 @@ static struct view_ops blob_ops = {
 	NULL,
 	blob_read,
 	pager_draw,
-	pager_request,
+	blob_request,
 	pager_grep,
 	pager_select,
 };
@@ -3849,6 +4189,7 @@ struct blame_commit {
 	char author[75];		/* Author of the commit. */
 	struct tm time;			/* Date from the author ident. */
 	char filename[128];		/* Name of file. */
+	bool has_previous;		/* Was a "previous" line detected. */
 };
 
 struct blame {
@@ -3964,12 +4305,14 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 		return FALSE;
 
 	} else {
-		size_t linelen = strlen(line);
+		size_t linelen = string_expand_length(line, opt_tab_size);
 		struct blame *blame = malloc(sizeof(*blame) + linelen);
 
+		if (!blame)
+			return FALSE;
+
 		blame->commit = NULL;
-		strncpy(blame->text, line, linelen);
-		blame->text[linelen] = 0;
+		string_expand(blame->text, linelen + 1, line, opt_tab_size);
 		return add_line_data(view, blame, LINE_BLAME_ID) != NULL;
 	}
 }
@@ -4013,7 +4356,7 @@ blame_read(struct view *view, char *line)
 	if (!commit) {
 		commit = parse_blame_commit(view, line, &blamed);
 		string_format(view->ref, "%s %2d%%", view->vid,
-			      blamed * 100 / view->lines);
+			      view->lines ? blamed * 100 / view->lines : 0);
 
 	} else if (match_blame_header("author ", &line)) {
 		string_ncopy(commit->author, line, strlen(line));
@@ -4037,6 +4380,9 @@ blame_read(struct view *view, char *line)
 
 	} else if (match_blame_header("summary ", &line)) {
 		string_ncopy(commit->title, line, strlen(line));
+
+	} else if (match_blame_header("previous ", &line)) {
+		commit->has_previous = TRUE;
 
 	} else if (match_blame_header("filename ", &line)) {
 		string_ncopy(commit->filename, line, strlen(line));
@@ -4062,8 +4408,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (opt_date && draw_date(view, time))
 		return TRUE;
 
-	if (opt_author &&
-	    draw_field(view, LINE_MAIN_AUTHOR, author, opt_author_cols, TRUE))
+	if (opt_author && draw_author(view, author))
 		return TRUE;
 
 	if (draw_field(view, LINE_BLAME_ID, id, ID_COLS, FALSE))
@@ -4076,6 +4421,18 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	return TRUE;
 }
 
+static bool
+check_blame_commit(struct blame *blame)
+{
+	if (!blame->commit)
+		report("Commit data not loaded yet");
+	else if (!strcmp(blame->commit->id, NULL_ID))
+		report("No commit exist for the selected line");
+	else
+		return TRUE;
+	return FALSE;
+}
+
 static enum request
 blame_request(struct view *view, enum request request, struct line *line)
 {
@@ -4084,13 +4441,17 @@ blame_request(struct view *view, enum request request, struct line *line)
 
 	switch (request) {
 	case REQ_VIEW_BLAME:
-		if (!blame->commit || !strcmp(blame->commit->id, NULL_ID)) {
-			report("Commit ID unknown");
-			break;
+		if (check_blame_commit(blame)) {
+			string_copy(opt_ref, blame->commit->id);
+			open_view(view, REQ_VIEW_BLAME, OPEN_REFRESH);
 		}
-		string_copy(opt_ref, blame->commit->id);
-		open_view(view, REQ_VIEW_BLAME, OPEN_REFRESH);
-		return request;
+		break;
+
+	case REQ_PARENT:
+		if (check_blame_commit(blame) &&
+		    select_commit_parent(blame->commit->id, opt_ref))
+			open_view(view, REQ_VIEW_BLAME, OPEN_REFRESH);
+		break;
 
 	case REQ_ENTER:
 		if (!blame->commit) {
@@ -4105,10 +4466,16 @@ blame_request(struct view *view, enum request request, struct line *line)
 		if (!strcmp(blame->commit->id, NULL_ID)) {
 			struct view *diff = VIEW(REQ_VIEW_DIFF);
 			const char *diff_index_argv[] = {
-				"git", "diff-index", "--root", "--cached",
-					"--patch-with-stat", "-C", "-M",
-					"HEAD", "--", view->vid, NULL
+				"git", "diff-index", "--root", "--patch-with-stat",
+					"-C", "-M", "HEAD", "--", view->vid, NULL
 			};
+
+			if (!blame->commit->has_previous) {
+				diff_index_argv[1] = "diff";
+				diff_index_argv[2] = "--no-color";
+				diff_index_argv[6] = "--";
+				diff_index_argv[7] = "/dev/null";
+			}
 
 			if (!prepare_update(diff, diff_index_argv, NULL, FORMAT_DASH)) {
 				report("Failed to allocate diff command");
@@ -4118,6 +4485,8 @@ blame_request(struct view *view, enum request request, struct line *line)
 		}
 
 		open_view(view, REQ_VIEW_DIFF, flags);
+		if (VIEW(REQ_VIEW_DIFF)->pipe && !strcmp(blame->commit->id, NULL_ID))
+			string_copy_rev(VIEW(REQ_VIEW_DIFF)->ref, NULL_ID);
 		break;
 
 	default:
@@ -4248,7 +4617,6 @@ status_get_diff(struct status *file, const char *buf, size_t bufsize)
 static bool
 status_run(struct view *view, const char *argv[], char status, enum line_type type)
 {
-	struct status *file = NULL;
 	struct status *unmerged = NULL;
 	char *buf;
 	struct io io = {};
@@ -4259,15 +4627,12 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	add_line_data(view, NULL, type);
 
 	while ((buf = io_get(&io, 0, TRUE))) {
+		struct status *file = unmerged;
+
 		if (!file) {
-			if (!realloc_lines(view, view->line_size + 1))
-				goto error_out;
-
 			file = calloc(1, sizeof(*file));
-			if (!file)
+			if (!file || !add_line_data(view, file, type))
 				goto error_out;
-
-			add_line_data(view, file, type);
 		}
 
 		/* Parse diff info part. */
@@ -4276,7 +4641,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 			if (status == 'A')
 				string_copy(file->old.rev, NULL_ID);
 
-		} else if (!file->status) {
+		} else if (!file->status || file == unmerged) {
 			if (!status_get_diff(file, buf, strlen(buf)))
 				goto error_out;
 
@@ -4284,20 +4649,13 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 			if (!buf)
 				break;
 
-			/* Collapse all 'M'odified entries that follow a
-			 * associated 'U'nmerged entry. */
-			if (file->status == 'U') {
-				unmerged = file;
-
-			} else if (unmerged) {
-				int collapse = !strcmp(buf, unmerged->new.name);
-
+			/* Collapse all modified entries that follow an
+			 * associated unmerged entry. */
+			if (unmerged == file) {
+				unmerged->status = 'U';
 				unmerged = NULL;
-				if (collapse) {
-					free(file);
-					view->lines--;
-					continue;
-				}
+			} else if (file->status == 'U') {
+				unmerged = file;
 			}
 		}
 
@@ -4355,18 +4713,39 @@ static const char *update_index_argv[] = {
 	"git", "update-index", "-q", "--unmerged", "--refresh", NULL
 };
 
+/* Restore the previous line number to stay in the context or select a
+ * line with something that can be updated. */
+static void
+status_restore(struct view *view)
+{
+	if (view->p_lineno >= view->lines)
+		view->p_lineno = view->lines - 1;
+	while (view->p_lineno < view->lines && !view->line[view->p_lineno].data)
+		view->p_lineno++;
+	while (view->p_lineno > 0 && !view->line[view->p_lineno].data)
+		view->p_lineno--;
+
+	/* If the above fails, always skip the "On branch" line. */
+	if (view->p_lineno < view->lines)
+		view->lineno = view->p_lineno;
+	else
+		view->lineno = 1;
+
+	if (view->lineno < view->offset)
+		view->offset = view->lineno;
+	else if (view->offset + view->height <= view->lineno)
+		view->offset = view->lineno - view->height + 1;
+
+	view->p_restore = FALSE;
+}
+
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
  * git-ls-files(1). */
 static bool
 status_open(struct view *view)
 {
-	unsigned long prev_lineno = view->lineno;
-
 	reset_view(view);
-
-	if (!realloc_lines(view, view->line_size + 7))
-		return FALSE;
 
 	add_line_data(view, NULL, LINE_STAT_HEAD);
 	if (is_initial_commit())
@@ -4389,27 +4768,10 @@ status_open(struct view *view)
 	    !status_run(view, status_list_other_argv, '?', LINE_STAT_UNTRACKED))
 		return FALSE;
 
-	/* If all went well restore the previous line number to stay in
-	 * the context or select a line with something that can be
-	 * updated. */
-	if (prev_lineno >= view->lines)
-		prev_lineno = view->lines - 1;
-	while (prev_lineno < view->lines && !view->line[prev_lineno].data)
-		prev_lineno++;
-	while (prev_lineno > 0 && !view->line[prev_lineno].data)
-		prev_lineno--;
-
-	/* If the above fails, always skip the "On branch" line. */
-	if (prev_lineno < view->lines)
-		view->lineno = prev_lineno;
-	else
-		view->lineno = 1;
-
-	if (view->lineno < view->offset)
-		view->offset = view->lineno;
-	else if (view->offset + view->height <= view->lineno)
-		view->offset = view->lineno - view->height + 1;
-
+	/* Restore the exact position or use the specialized restore
+	 * mode? */
+	if (!view->p_restore)
+		status_restore(view);
 	return TRUE;
 }
 
@@ -4439,7 +4801,7 @@ status_draw(struct view *view, struct line *line, unsigned int lineno)
 
 		case LINE_STAT_NONE:
 			type = LINE_DEFAULT;
-			text = "    (no files)";
+			text = "  (no files)";
 			break;
 
 		case LINE_STAT_HEAD:
@@ -4548,7 +4910,7 @@ status_enter(struct view *view, struct line *line)
 	}
 
 	split = view_is_displayed(view) ? OPEN_SPLIT : 0;
-	open_view(view, REQ_VIEW_STAGE, OPEN_REFRESH | split);
+	open_view(view, REQ_VIEW_STAGE, OPEN_PREPARED | split);
 	if (view_is_displayed(VIEW(REQ_VIEW_STAGE))) {
 		if (status) {
 			stage_status = *status;
@@ -4568,14 +4930,22 @@ static bool
 status_exists(struct status *status, enum line_type type)
 {
 	struct view *view = VIEW(REQ_VIEW_STATUS);
-	struct line *line;
+	unsigned long lineno;
 
-	for (line = view->line; line < view->line + view->lines; line++) {
+	for (lineno = 0; lineno < view->lines; lineno++) {
+		struct line *line = &view->line[lineno];
 		struct status *pos = line->data;
 
-		if (line->type == type && pos &&
-		    !strcmp(status->new.name, pos->new.name))
+		if (line->type != type)
+			continue;
+		if (!pos && (!status || !status->status) && line[1].data) {
+			select_view_line(view, lineno);
 			return TRUE;
+		}
+		if (pos && !strcmp(status->new.name, pos->new.name)) {
+			select_view_line(view, lineno);
+			return TRUE;
+		}
 	}
 
 	return FALSE;
@@ -4724,13 +5094,20 @@ status_revert(struct status *status, enum line_type type, bool has_none)
 		return FALSE;
 
 	} else {
+		char mode[10] = "100644";
+		const char *reset_argv[] = {
+			"git", "update-index", "--cacheinfo", mode,
+				status->old.rev, status->old.name, NULL
+		};
 		const char *checkout_argv[] = {
 			"git", "checkout", "--", status->old.name, NULL
 		};
 
 		if (!prompt_yesno("Are you sure you want to overwrite any changes?"))
 			return FALSE;
-		return run_io_fg(checkout_argv, opt_cdup);
+		string_format(mode, "%o", status->old.mode);
+		return (status->status != 'U' || run_io_fg(reset_argv, opt_cdup)) &&
+			run_io_fg(checkout_argv, opt_cdup);
 	}
 }
 
@@ -5093,12 +5470,15 @@ stage_request(struct view *view, enum request request, struct line *line)
 		return request;
 	}
 
+	VIEW(REQ_VIEW_STATUS)->p_restore = TRUE;
 	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD | OPEN_NOMAXIMIZE);
 
 	/* Check whether the staged entry still exists, and close the
 	 * stage view if it doesn't. */
-	if (!status_exists(&stage_status, stage_line_type))
+	if (!status_exists(&stage_status, stage_line_type)) {
+		status_restore(VIEW(REQ_VIEW_STATUS));
 		return REQ_VIEW_CLOSE;
+	}
 
 	if (stage_line_type == LINE_STAT_UNTRACKED) {
 	    	if (!suffixcmp(stage_status.new.name, -1, "/")) {
@@ -5328,7 +5708,7 @@ prepare_rev_graph(struct rev_graph *graph)
 }
 
 static void
-update_rev_graph(struct rev_graph *graph)
+update_rev_graph(struct view *view, struct rev_graph *graph)
 {
 	/* If this is the finalizing update ... */
 	if (graph->commit)
@@ -5339,6 +5719,10 @@ update_rev_graph(struct rev_graph *graph)
 	if (!graph->prev->commit)
 		return;
 
+	if (view->lines > 2)
+		view->line[view->lines - 3].dirty = 1;
+	if (view->lines > 1)
+		view->line[view->lines - 2].dirty = 1;
 	draw_rev_graph(graph->prev);
 	done_rev_graph(graph->prev->prev);
 }
@@ -5364,8 +5748,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (opt_date && draw_date(view, &commit->time))
 		return TRUE;
 
-	if (opt_author &&
-	    draw_field(view, LINE_MAIN_AUTHOR, commit->author, opt_author_cols, TRUE))
+	if (opt_author && draw_author(view, commit->author))
 		return TRUE;
 
 	if (opt_rev_graph && commit->graph_size &&
@@ -5420,13 +5803,14 @@ main_read(struct view *view, char *line)
 			die("No revisions match the given arguments.");
 		if (view->lines > 0) {
 			commit = view->line[view->lines - 1].data;
+			view->line[view->lines - 1].dirty = 1;
 			if (!*commit->author) {
 				view->lines--;
 				free(commit);
 				graph->commit = NULL;
 			}
 		}
-		update_rev_graph(graph);
+		update_rev_graph(view, graph);
 
 		for (i = 0; i < ARRAY_SIZE(graph_stacks); i++)
 			clear_rev_graph(&graph_stacks[i]);
@@ -5470,55 +5854,13 @@ main_read(struct view *view, char *line)
 		break;
 
 	case LINE_AUTHOR:
-	{
-		/* Parse author lines where the name may be empty:
-		 *	author  <email@address.tld> 1138474660 +0100
-		 */
-		char *ident = line + STRING_SIZE("author ");
-		char *nameend = strchr(ident, '<');
-		char *emailend = strchr(ident, '>');
-
-		if (!nameend || !emailend)
-			break;
-
-		update_rev_graph(graph);
+		parse_author_line(line + STRING_SIZE("author "),
+				  commit->author, sizeof(commit->author),
+				  &commit->time);
+		update_rev_graph(view, graph);
 		graph = graph->next;
-
-		*nameend = *emailend = 0;
-		ident = chomp_string(ident);
-		if (!*ident) {
-			ident = chomp_string(nameend + 1);
-			if (!*ident)
-				ident = "Unknown";
-		}
-
-		string_ncopy(commit->author, ident, strlen(ident));
-
-		/* Parse epoch and timezone */
-		if (emailend[1] == ' ') {
-			char *secs = emailend + 2;
-			char *zone = strchr(secs, ' ');
-			time_t time = (time_t) atol(secs);
-
-			if (zone && strlen(zone) == STRING_SIZE(" +0700")) {
-				long tz;
-
-				zone++;
-				tz  = ('0' - zone[1]) * 60 * 60 * 10;
-				tz += ('0' - zone[2]) * 60 * 60;
-				tz += ('0' - zone[3]) * 60;
-				tz += ('0' - zone[4]) * 60;
-
-				if (zone[0] == '-')
-					tz = -tz;
-
-				time -= tz;
-			}
-
-			gmtime_r(&time, &commit->time);
-		}
 		break;
-	}
+
 	default:
 		/* Fill in the commit title if it has not already been set. */
 		if (commit->title[0])
@@ -5538,7 +5880,8 @@ main_read(struct view *view, char *line)
 		/* FIXME: More graceful handling of titles; append "..." to
 		 * shortened titles, etc. */
 
-		string_ncopy(commit->title, line, strlen(line));
+		string_expand(commit->title, sizeof(commit->title), line, 1);
+		view->line[view->lines - 1].dirty = 1;
 	}
 
 	return TRUE;
@@ -5646,14 +5989,10 @@ static struct view_ops main_ops = {
 /*
  * Unicode / UTF-8 handling
  *
- * NOTE: Much of the following code for dealing with unicode is derived from
+ * NOTE: Much of the following code for dealing with Unicode is derived from
  * ELinks' UTF-8 code developed by Scrool <scroolik@gmail.com>. Origin file is
- * src/intl/charset.c from the utf8 branch commit elinks-0.11.0-g31f2c28.
+ * src/intl/charset.c from the UTF-8 branch commit elinks-0.11.0-g31f2c28.
  */
-
-/* I've (over)annotated a lot of code snippets because I am not entirely
- * confident that the approach taken by this small UTF-8 interface is correct.
- * --jonas */
 
 static inline int
 unicode_width(unsigned long c)
@@ -5692,7 +6031,7 @@ static const unsigned char utf8_bytes[256] = {
 	3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 4,4,4,4,4,4,4,4, 5,5,5,5,6,6,1,1,
 };
 
-/* Decode UTF-8 multi-byte representation into a unicode character. */
+/* Decode UTF-8 multi-byte representation into a Unicode character. */
 static inline unsigned long
 utf8_to_unicode(const char *string, size_t length)
 {
@@ -5733,7 +6072,7 @@ utf8_to_unicode(const char *string, size_t length)
 		unicode +=  (string[5] & 0x3f);
 		break;
 	default:
-		die("Invalid unicode length");
+		die("Invalid Unicode length");
 	}
 
 	/* Invalid characters could return the special 0xfffd value but NUL
@@ -5748,9 +6087,9 @@ utf8_to_unicode(const char *string, size_t length)
  *
  * Returns the number of bytes to output from string to satisfy max_width. */
 static size_t
-utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool reserve)
+utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve)
 {
-	const char *start = string;
+	const char *string = *start;
 	const char *end = strchr(string, '\0');
 	unsigned char last_bytes = 0;
 	size_t last_ucwidth = 0;
@@ -5771,11 +6110,15 @@ utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool
 		 * it is a single- or double-width character. */
 
 		unicode = utf8_to_unicode(string, bytes);
-		/* FIXME: Graceful handling of invalid unicode character. */
+		/* FIXME: Graceful handling of invalid Unicode character. */
 		if (!unicode)
 			break;
 
 		ucwidth = unicode_width(unicode);
+		if (skip > 0) {
+			skip -= ucwidth <= skip ? ucwidth : skip;
+			*start += bytes;
+		}
 		*width  += ucwidth;
 		if (*width > max_width) {
 			*trimmed = 1;
@@ -5788,11 +6131,11 @@ utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool
 		}
 
 		string  += bytes;
-		last_bytes = bytes;
+		last_bytes = ucwidth ? bytes : 0;
 		last_ucwidth = ucwidth;
 	}
 
-	return string - start;
+	return string - *start;
 }
 
 
@@ -5803,10 +6146,17 @@ utf8_length(const char *string, int *width, size_t max_width, int *trimmed, bool
 /* Whether or not the curses interface has been initialized. */
 static bool cursed = FALSE;
 
+/* Terminal hacks and workarounds. */
+static bool use_scroll_redrawwin;
+static bool use_scroll_status_wclear;
+
 /* The status window is used for polling keystrokes. */
 static WINDOW *status_win;
 
-static bool status_empty = TRUE;
+/* Reading from the prompt? */
+static bool input_mode = FALSE;
+
+static bool status_empty = FALSE;
 
 /* Update status and title window. */
 static void
@@ -5838,6 +6188,8 @@ report(const char *msg, ...)
 		va_start(args, msg);
 
 		wmove(status_win, 0, 0);
+		if (view->has_scrolled && use_scroll_status_wclear)
+			wclear(status_win);
 		if (*msg) {
 			vwprintw(status_win, msg, args);
 			status_empty = FALSE;
@@ -5845,13 +6197,12 @@ report(const char *msg, ...)
 			status_empty = TRUE;
 		}
 		wclrtoeol(status_win);
-		wrefresh(status_win);
+		wnoutrefresh(status_win);
 
 		va_end(args);
 	}
 
 	update_view_title(view);
-	update_display_cursor(view);
 }
 
 /* Controls when nodelay should be in effect when polling user input. */
@@ -5868,6 +6219,7 @@ set_nonblocking_input(bool loading)
 static void
 init_display(void)
 {
+	const char *term;
 	int x, y;
 
 	/* Initialize the curses library */
@@ -5885,10 +6237,10 @@ init_display(void)
 	if (!cursed)
 		die("Failed to initialize curses");
 
-	nonl();         /* Tell curses not to do NL->CR/NL on output */
+	nonl();		/* Disable conversion and detect newlines from input. */
 	cbreak();       /* Take input chars one at a time, no wait for \n */
 	noecho();       /* Don't echo input */
-	leaveok(stdscr, TRUE);
+	leaveok(stdscr, FALSE);
 
 	if (has_colors())
 		init_colors();
@@ -5906,102 +6258,117 @@ init_display(void)
 	if (opt_line_graphics) {
 		line_graphics[LINE_GRAPHIC_VLINE] = ACS_VLINE;
 	}
+
+	term = getenv("XTERM_VERSION") ? NULL : getenv("COLORTERM");
+	if (term && !strcmp(term, "gnome-terminal")) {
+		/* In the gnome-terminal-emulator, the message from
+		 * scrolling up one line when impossible followed by
+		 * scrolling down one line causes corruption of the
+		 * status line. This is fixed by calling wclear. */
+		use_scroll_status_wclear = TRUE;
+		use_scroll_redrawwin = FALSE;
+
+	} else if (term && !strcmp(term, "xrvt-xpm")) {
+		/* No problems with full optimizations in xrvt-(unicode)
+		 * and aterm. */
+		use_scroll_status_wclear = use_scroll_redrawwin = FALSE;
+
+	} else {
+		/* When scrolling in (u)xterm the last line in the
+		 * scrolling direction will update slowly. */
+		use_scroll_redrawwin = TRUE;
+		use_scroll_status_wclear = FALSE;
+	}
 }
 
-static bool
-prompt_yesno(const char *prompt)
+static int
+get_input(int prompt_position)
 {
-	enum { WAIT, STOP, CANCEL  } status = WAIT;
-	bool answer = FALSE;
+	struct view *view;
+	int i, key, cursor_y, cursor_x;
 
-	while (status == WAIT) {
-		struct view *view;
-		int i, key;
-
+	if (prompt_position)
 		input_mode = TRUE;
 
-		foreach_view (view, i)
+	while (TRUE) {
+		foreach_view (view, i) {
 			update_view(view);
+			if (view_is_displayed(view) && view->has_scrolled &&
+			    use_scroll_redrawwin)
+				redrawwin(view->win);
+			view->has_scrolled = FALSE;
+		}
 
-		input_mode = FALSE;
-
-		mvwprintw(status_win, 0, 0, "%s [Yy]/[Nn]", prompt);
-		wclrtoeol(status_win);
+		/* Update the cursor position. */
+		if (prompt_position) {
+			getbegyx(status_win, cursor_y, cursor_x);
+			cursor_x = prompt_position;
+		} else {
+			view = display[current_view];
+			getbegyx(view->win, cursor_y, cursor_x);
+			cursor_x = view->width - 1;
+			cursor_y += view->lineno - view->offset;
+		}
+		setsyx(cursor_y, cursor_x);
 
 		/* Refresh, accept single keystroke of input */
+		doupdate();
 		key = wgetch(status_win);
-		switch (key) {
-		case ERR:
-			break;
 
-		case 'y':
-		case 'Y':
-			answer = TRUE;
-			status = STOP;
-			break;
+		/* wgetch() with nodelay() enabled returns ERR when
+		 * there's no input. */
+		if (key == ERR) {
 
-		case KEY_ESC:
-		case KEY_RETURN:
-		case KEY_ENTER:
-		case KEY_BACKSPACE:
-		case 'n':
-		case 'N':
-		case '\n':
-		default:
-			answer = FALSE;
-			status = CANCEL;
+		} else if (key == KEY_RESIZE) {
+			int height, width;
+
+			getmaxyx(stdscr, height, width);
+
+			wresize(status_win, 1, width);
+			mvwin(status_win, height - 1, 0);
+			wnoutrefresh(status_win);
+			resize_display();
+			redraw_display(TRUE);
+
+		} else {
+			input_mode = FALSE;
+			return key;
 		}
 	}
-
-	/* Clear the status window */
-	status_empty = FALSE;
-	report("");
-
-	return answer;
 }
 
 static char *
-read_prompt(const char *prompt)
+prompt_input(const char *prompt, input_handler handler, void *data)
 {
-	enum { READING, STOP, CANCEL } status = READING;
+	enum input_status status = INPUT_OK;
 	static char buf[SIZEOF_STR];
-	int pos = 0;
+	size_t pos = 0;
 
-	while (status == READING) {
-		struct view *view;
-		int i, key;
+	buf[pos] = 0;
 
-		input_mode = TRUE;
-
-		foreach_view (view, i)
-			update_view(view);
-
-		input_mode = FALSE;
+	while (status == INPUT_OK || status == INPUT_SKIP) {
+		int key;
 
 		mvwprintw(status_win, 0, 0, "%s%.*s", prompt, pos, buf);
 		wclrtoeol(status_win);
 
-		/* Refresh, accept single keystroke of input */
-		key = wgetch(status_win);
+		key = get_input(pos + 1);
 		switch (key) {
 		case KEY_RETURN:
 		case KEY_ENTER:
 		case '\n':
-			status = pos ? STOP : CANCEL;
+			status = pos ? INPUT_STOP : INPUT_CANCEL;
 			break;
 
 		case KEY_BACKSPACE:
 			if (pos > 0)
-				pos--;
+				buf[--pos] = 0;
 			else
-				status = CANCEL;
+				status = INPUT_CANCEL;
 			break;
 
 		case KEY_ESC:
-			status = CANCEL;
-			break;
-
-		case ERR:
+			status = INPUT_CANCEL;
 			break;
 
 		default:
@@ -6010,7 +6377,8 @@ read_prompt(const char *prompt)
 				return NULL;
 			}
 
-			if (isprint(key))
+			status = handler(data, buf, key);
+			if (status == INPUT_OK)
 				buf[pos++] = (char) key;
 		}
 	}
@@ -6019,7 +6387,7 @@ read_prompt(const char *prompt)
 	status_empty = FALSE;
 	report("");
 
-	if (status == CANCEL)
+	if (status == INPUT_CANCEL)
 		return NULL;
 
 	buf[pos++] = 0;
@@ -6027,20 +6395,42 @@ read_prompt(const char *prompt)
 	return buf;
 }
 
+static enum input_status
+prompt_yesno_handler(void *data, char *buf, int c)
+{
+	if (c == 'y' || c == 'Y')
+		return INPUT_STOP;
+	if (c == 'n' || c == 'N')
+		return INPUT_CANCEL;
+	return INPUT_SKIP;
+}
+
+static bool
+prompt_yesno(const char *prompt)
+{
+	char prompt2[SIZEOF_STR];
+
+	if (!string_format(prompt2, "%s [Yy/Nn]", prompt))
+		return FALSE;
+
+	return !!prompt_input(prompt2, prompt_yesno_handler, NULL);
+}
+
+static enum input_status
+read_prompt_handler(void *data, char *buf, int c)
+{
+	return isprint(c) ? INPUT_OK : INPUT_SKIP;
+}
+
+static char *
+read_prompt(const char *prompt)
+{
+	return prompt_input(prompt, read_prompt_handler, NULL);
+}
+
 /*
  * Repository properties
  */
-
-static int
-git_properties(const char **argv, const char *separators,
-	       int (*read_property)(char *, size_t, char *, size_t))
-{
-	struct io io = {};
-
-	if (init_io_rd(&io, argv, NULL, FORMAT_NONE))
-		return read_properties(&io, separators, read_property);
-	return ERR;
-}
 
 static struct ref *refs = NULL;
 static size_t refs_alloc = 0;
@@ -6165,7 +6555,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 	}
 
 	if (check_replace && !strcmp(name, refs[refs_size - 1].name)) {
-		/* it's an annotated tag, replace the previous sha1 with the
+		/* it's an annotated tag, replace the previous SHA1 with the
 		 * resolved commit id; relies on the fact git-ls-remote lists
 		 * the commit id of an annotated tag right before the commit id
 		 * it points to. */
@@ -6216,7 +6606,23 @@ load_refs(void)
 	while (id_refs_size > 0)
 		free(id_refs[--id_refs_size]);
 
-	return git_properties(ls_remote_argv, "\t", read_ref);
+	return run_io_load(ls_remote_argv, "\t", read_ref);
+}
+
+static void
+set_repo_config_option(char *name, char *value, int (*cmd)(int, const char **))
+{
+	const char *argv[SIZEOF_ARG] = { name, "=" };
+	int argc = 1 + (cmd == option_set_command);
+	int error = ERR;
+
+	if (!argv_from_string(argv, &argc, value))
+		config_msg = "Too many option arguments";
+	else
+		error = cmd(argc, argv);
+
+	if (error == ERR)
+		warn("Option 'tig.%s': %s", name, config_msg);
 }
 
 static int
@@ -6227,6 +6633,15 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 
 	if (!strcmp(name, "core.editor"))
 		string_ncopy(opt_editor, value, valuelen);
+
+	if (!prefixcmp(name, "tig.color."))
+		set_repo_config_option(name + 10, value, option_color_command);
+
+	else if (!prefixcmp(name, "tig.bind."))
+		set_repo_config_option(name + 9, value, option_bind_command);
+
+	else if (!prefixcmp(name, "tig."))
+		set_repo_config_option(name + 4, value, option_set_command);
 
 	/* branch.<head>.remote */
 	if (*opt_head &&
@@ -6258,7 +6673,7 @@ load_git_config(void)
 {
 	const char *config_list_argv[] = { "git", GIT_CONFIG, "--list", NULL };
 
-	return git_properties(config_list_argv, "=", read_repo_config_option);
+	return run_io_load(config_list_argv, "=", read_repo_config_option);
 }
 
 static int
@@ -6274,8 +6689,12 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 		 * the option else either "true" or "false" is printed.
 		 * Default to true for the unknown case. */
 		opt_is_inside_work_tree = strcmp(name, "false") ? TRUE : FALSE;
-	} else {
+
+	} else if (*name == '.') {
 		string_ncopy(opt_cdup, name, namelen);
+
+	} else {
+		string_ncopy(opt_prefix, name, namelen);
 	}
 
 	return OK;
@@ -6289,7 +6708,7 @@ load_repo_info(void)
 	};
 	const char *rev_parse_argv[] = {
 		"git", "rev-parse", "--git-dir", "--is-inside-work-tree",
-			"--show-cdup", NULL
+			"--show-cdup", "--show-prefix", NULL
 	};
 
 	if (run_io_buf(head_argv, opt_head, sizeof(opt_head))) {
@@ -6301,51 +6720,26 @@ load_repo_info(void)
 		}
 	}
 
-	return git_properties(rev_parse_argv, "=", read_repo_info);
-}
-
-static int
-read_properties(struct io *io, const char *separators,
-		int (*read_property)(char *, size_t, char *, size_t))
-{
-	char *name;
-	int state = OK;
-
-	if (!start_io(io))
-		return ERR;
-
-	while (state == OK && (name = io_get(io, '\n', TRUE))) {
-		char *value;
-		size_t namelen;
-		size_t valuelen;
-
-		name = chomp_string(name);
-		namelen = strcspn(name, separators);
-
-		if (name[namelen]) {
-			name[namelen] = 0;
-			value = chomp_string(name + namelen + 1);
-			valuelen = strlen(value);
-
-		} else {
-			value = "";
-			valuelen = 0;
-		}
-
-		state = read_property(name, namelen, value, valuelen);
-	}
-
-	if (state != ERR && io_error(io))
-		state = ERR;
-	done_io(io);
-
-	return state;
+	return run_io_load(rev_parse_argv, "=", read_repo_info);
 }
 
 
 /*
  * Main
  */
+
+static const char usage[] =
+"tig " TIG_VERSION " (" __DATE__ ")\n"
+"\n"
+"Usage: tig        [options] [revs] [--] [paths]\n"
+"   or: tig show   [options] [revs] [--] [paths]\n"
+"   or: tig blame  [rev] path\n"
+"   or: tig status\n"
+"   or: tig <      [git command output]\n"
+"\n"
+"Options:\n"
+"  -v, --version   Show version and exit\n"
+"  -h, --help      Show help message and exit";
 
 static void __NORETURN
 quit(int sig)
@@ -6384,12 +6778,90 @@ warn(const char *msg, ...)
 	va_end(args);
 }
 
+static enum request
+parse_options(int argc, const char *argv[])
+{
+	enum request request = REQ_VIEW_MAIN;
+	const char *subcommand;
+	bool seen_dashdash = FALSE;
+	/* XXX: This is vulnerable to the user overriding options
+	 * required for the main view parser. */
+	const char *custom_argv[SIZEOF_ARG] = {
+		"git", "log", "--no-color", "--pretty=raw", "--parents",
+			"--topo-order", NULL
+	};
+	int i, j = 6;
+
+	if (!isatty(STDIN_FILENO)) {
+		io_open(&VIEW(REQ_VIEW_PAGER)->io, "");
+		return REQ_VIEW_PAGER;
+	}
+
+	if (argc <= 1)
+		return REQ_NONE;
+
+	subcommand = argv[1];
+	if (!strcmp(subcommand, "status")) {
+		if (argc > 2)
+			warn("ignoring arguments after `%s'", subcommand);
+		return REQ_VIEW_STATUS;
+
+	} else if (!strcmp(subcommand, "blame")) {
+		if (argc <= 2 || argc > 4)
+			die("invalid number of options to blame\n\n%s", usage);
+
+		i = 2;
+		if (argc == 4) {
+			string_ncopy(opt_ref, argv[i], strlen(argv[i]));
+			i++;
+		}
+
+		string_ncopy(opt_file, argv[i], strlen(argv[i]));
+		return REQ_VIEW_BLAME;
+
+	} else if (!strcmp(subcommand, "show")) {
+		request = REQ_VIEW_DIFF;
+
+	} else {
+		subcommand = NULL;
+	}
+
+	if (subcommand) {
+		custom_argv[1] = subcommand;
+		j = 2;
+	}
+
+	for (i = 1 + !!subcommand; i < argc; i++) {
+		const char *opt = argv[i];
+
+		if (seen_dashdash || !strcmp(opt, "--")) {
+			seen_dashdash = TRUE;
+
+		} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
+			printf("tig version %s\n", TIG_VERSION);
+			quit(0);
+
+		} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
+			printf("%s\n", usage);
+			quit(0);
+		}
+
+		custom_argv[j++] = opt;
+		if (j >= ARRAY_SIZE(custom_argv))
+			die("command too long");
+	}
+
+	if (!prepare_update(VIEW(request), custom_argv, NULL, FORMAT_NONE))                                                                        
+		die("Failed to format arguments"); 
+
+	return request;
+}
+
 int
 main(int argc, const char *argv[])
 {
-	const char **run_argv = NULL;
+	enum request request = parse_options(argc, argv);
 	struct view *view;
-	enum request request;
 	size_t i;
 
 	signal(SIGINT, quit);
@@ -6408,10 +6880,6 @@ main(int argc, const char *argv[])
 
 	if (load_git_config() == ERR)
 		die("Failed to load repo config.");
-
-	request = parse_options(argc, argv, &run_argv);
-	if (request == REQ_NONE)
-		return 0;
 
 	/* Require a git repository unless when running in pager mode. */
 	if (!opt_git_dir[0] && request != REQ_VIEW_PAGER)
@@ -6434,33 +6902,14 @@ main(int argc, const char *argv[])
 
 	init_display();
 
-	if (request == REQ_VIEW_PAGER || run_argv) {
-		if (request == REQ_VIEW_PAGER)
-			io_open(&VIEW(request)->io, "");
-		else if (!prepare_update(VIEW(request), run_argv, NULL, FORMAT_NONE))
-			die("Failed to format arguments");
+	if (request != REQ_NONE)
 		open_view(NULL, request, OPEN_PREPARED);
-		request = REQ_NONE;
-	}
+	request = request == REQ_NONE ? REQ_VIEW_MAIN : REQ_NONE;
 
 	while (view_driver(display[current_view], request)) {
-		int key;
-		int i;
+		int key = get_input(0);
 
-		foreach_view (view, i)
-			update_view(view);
 		view = display[current_view];
-
-		/* Refresh, accept single keystroke of input */
-		key = wgetch(status_win);
-
-		/* wgetch() with nodelay() enabled returns ERR when there's no
-		 * input. */
-		if (key == ERR) {
-			request = REQ_NONE;
-			continue;
-		}
-
 		request = get_keybinding(view->keymap, key);
 
 		/* Some low-level request handling. This keeps access to
@@ -6500,21 +6949,12 @@ main(int argc, const char *argv[])
 
 			if (search)
 				string_ncopy(opt_search, search, strlen(search));
+			else if (*opt_search)
+				request = request == REQ_SEARCH ?
+					REQ_FIND_NEXT :
+					REQ_FIND_PREV;
 			else
 				request = REQ_NONE;
-			break;
-		}
-		case REQ_SCREEN_RESIZE:
-		{
-			int height, width;
-
-			getmaxyx(stdscr, height, width);
-
-			/* Resize the status view and let the view driver take
-			 * care of resizing the displayed views. */
-			wresize(status_win, 1, width);
-			mvwin(status_win, height - 1, 0);
-			wrefresh(status_win);
 			break;
 		}
 		default:

@@ -1,6 +1,45 @@
 Release notes
 =============
 
+tig-0.14
+--------
+
+Incompatibilities:
+
+ - The screen-resize action has been deprecated. It had no real use for
+   users and was never meant to be exposed.
+ - The "tree-parent" action was renamed to "parent". Warnings will be
+   emitted for transition.
+ - Remove parsing of deprecated option -S and subcommands log and diff.
+ - The "author" color replaces "main-author". Setting the latter will
+   now set the "author" color.
+
+Improvements:
+
+ - Horizontal scrolling. Bound to Left/Right by default.
+ - Read tigrc(5) options from git configuration files using the syntax:
+
+	[tig] show-rev-graph = true
+	[tig "color"] cursor = yellow red bold 
+	[tig "bind"] generic = P parent
+
+ - Tree view: avoid flickering when updating.
+ - Tree view: annotate entries with commit information.
+ - Tree & blob view: open any blob in an editor.
+ - Stage & main view: restore view position when reloading.
+ - Blame view: load blame for parent commit. For merge commits the parent
+   is queried. Bound to ',' by default via the existing "parent" action.
+ - Abbreviate author names to initials when the width of the author column
+   is below 6 characters.
+
+Bug fixes:
+
+ - Tree view: fix memory corruption bug when updating.
+ - Tree view: improve handling of empty trees.
+ - Status view: fix reverting of unmerged files.
+ - Fix regression for non-UTF-8 locales corrupting the view data.
+ - Fix regression parsing multiple spaces in ~/.tigrc.
+
 tig-0.13
 --------
 
@@ -66,7 +105,7 @@ Improvements:
  - Stage view: add stage-next action to jump to next diff chunk that can
    be staged. By default bound to '@'.
  - Configure: check for the ncurses header files.
- - Add author-width option to costumize the width of the author column.
+ - Add author-width option to customize the width of the author column.
    For example, put the following in ~/.tigrc: set author-width = 10
 
 Bug fixes:
@@ -120,7 +159,7 @@ Improvements:
 
 Bug fixes:
 
- - Fix UTF8 handling for tag names and commit messages.
+ - Fix UTF-8 handling for tag names and commit messages.
  - Fix the check for git-config(1) in configure to handle the case when
    git has been installed using a libexecdir which is not in the path.
  - Fix replacing of SYSCONFDIR when installing from released tarballs.

@@ -344,6 +344,29 @@ Up	This key is "context sensitive" and will move the cursor one \
 	the previous commit in the main view and update the diff view \
 	to display it.
 Down	Similar to 'Up' but will move down.
+','	Move to parent. In the tree view, this means switch to the parent \
+	directory. In the blame view it will load blame for the parent \
+	commit. For merges the parent is queried.
+-----------------------------------------------------------------------------
+
+[[view-actions]]
+View Specific Actions
+~~~~~~~~~~~~~~~~~~~~~
+
+`-------`--------------------------------------------------------------------
+Key	Action
+-----------------------------------------------------------------------------
+u	Update status of file. In the status view, this allows you to add an \
+	untracked file or stage changes to a file for next commit (similar to \
+	running git-add <filename>). In the stage view, when pressing this on \
+	a diff chunk line stages only that chunk for next commit, when not on \
+	a diff chunk line all changes in the displayed diff is staged.
+M	Resolve unmerged file by launching git-mergetool(1). Note, to work \
+	correctly this might require some initial configuration of your \
+	preferred merge tool. See the manpage of git-mergetool(1).
+!	Checkout file with unstaged changes. This will reset the file to \
+	contain the content it had at last commit.
+@	Move to next chunk in the stage view.
 -----------------------------------------------------------------------------
 
 [[cursor-nav]]
@@ -373,6 +396,8 @@ Insert	Scroll view one line up.
 Delete	Scroll view one line down.
 w	Scroll view one page up.
 s	Scroll view one page down.
+Left	Scroll view one column left.
+Right	Scroll view one column right.
 -----------------------------------------------------------------------------
 
 [[searching]]
@@ -382,10 +407,10 @@ Searching
 `-------`--------------------------------------------------------------------
 Key	Action
 -----------------------------------------------------------------------------
-/	Search the view. Opens a prompt for entering search regex to use.
-?	Search backwards in the view. Also prompts for regex.
-n	Find next match for the current search regex.
-N	Find previous match for the current search regex.
+/	Search the view. Opens a prompt for entering search regexp to use.
+?	Search backwards in the view. Also prompts for regexp.
+n	Find next match for the current search regexp.
+N	Find previous match for the current search regexp.
 -----------------------------------------------------------------------------
 
 [[misc-keys]]
@@ -408,18 +433,6 @@ g	Toggle revision graph visualization on/off.
 F	Toggle reference display on/off (tag and branch names).
 ':'	Open prompt. This allows you to specify what git command \
 	to run. Example `:log -p`
-u	Update status of file. In the status view, this allows you to add an \
-	untracked file or stage changes to a file for next commit (similar to \
-	running git-add <filename>). In the stage view, when pressing this on \
-	a diff chunk line stages only that chunk for next commit, when not on \
-	a diff chunk line all changes in the displayed diff is staged.
-M	Resolve unmerged file by launching git-mergetool(1). Note, to work \
-	correctly this might require some initial configuration of your \
-	preferred merge tool. See the manpage of git-mergetool(1).
-!	Checkout file with unstaged changes. This will reset the file to \
-	contain the content it had at last commit.
-@	Move to next chunk in the stage view.
-','	Move tree view to the parent tree.
 e	Open file in editor.
 -----------------------------------------------------------------------------
 
@@ -430,7 +443,7 @@ External Commands
 For more custom needs, external commands provide a way to easily execute
 a script or program. They are bound to keys and use information from the
 current browsing state, such as the current commit ID. Tig comes with
-the following builtin external commands:
+the following built-in external commands:
 
 `-------`--------------------------------------------------------------------
 Key	Action
@@ -587,4 +600,3 @@ Other git repository browsers:
 
  - gitk(1)
  - qgit(1)
- - gitview(1)
