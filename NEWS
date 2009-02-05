@@ -1,6 +1,14 @@
 Release notes
 =============
 
+tig master
+----------
+
+Improvements:
+
+ - Status view: improve "on branch" information inspired by the prompt
+   code in git's bash completion script.
+
 tig-0.14
 --------
 

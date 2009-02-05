@@ -676,20 +676,24 @@ io_write(struct io *io, const void *buf, size_t bufsize)
 }
 
 static bool
+io_read_buf(struct io *io, char buf[], size_t bufsize)
+{
+	bool error;
+
+	io->buf = io->bufpos = buf;
+	io->bufalloc = bufsize;
+	error = !io_get(io, '\n', TRUE) && io_error(io);
+	io->buf = NULL;
+
+	return done_io(io) || error;
+}
+
+static bool
 run_io_buf(const char **argv, char buf[], size_t bufsize)
 {
 	struct io io = {};
-	bool error;
 
-	if (!run_io_rd(&io, argv, FORMAT_NONE))
-		return FALSE;
-
-	io.buf = io.bufpos = buf;
-	io.bufalloc = bufsize;
-	error = !io_get(&io, '\n', TRUE) && io_error(&io);
-	io.buf = NULL;
-
-	return done_io(&io) || error;
+	return run_io_rd(&io, argv, FORMAT_NONE) && io_read_buf(&io, buf, bufsize);
 }
 
 static int
@@ -4702,6 +4706,55 @@ status_restore(struct view *view)
 	view->p_restore = FALSE;
 }
 
+static void
+status_update_onbranch(void)
+{
+	static const char *paths[][2] = {
+		{ "rebase-apply/rebasing",	"Rebasing" },
+		{ "rebase-apply/applying",	"Applying mailbox" },
+		{ "rebase-apply/",		"Rebasing mailbox" },
+		{ "rebase-merge/interactive",	"Interactive rebase" },
+		{ "rebase-merge/",		"Rebase merge" },
+		{ "MERGE_HEAD",			"Merging" },
+		{ "BISECT_LOG",			"Bisecting" },
+		{ "HEAD",			"On branch" },
+	};
+	char buf[SIZEOF_STR];
+	struct stat stat;
+	int i;
+
+	if (is_initial_commit()) {
+		string_copy(status_onbranch, "Initial commit");
+		return;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(paths); i++) {
+		char *head = opt_head;
+
+		if (!string_format(buf, "%s/%s", opt_git_dir, paths[i][0]) ||
+		    lstat(buf, &stat) < 0)
+			continue;
+
+		if (!*opt_head) {
+			struct io io = {};
+
+			if (string_format(buf, "%s/rebase-merge/head-name", opt_git_dir) &&
+			    io_open(&io, buf) &&
+			    io_read_buf(&io, buf, sizeof(buf))) {
+				head = chomp_string(buf);
+				if (!prefixcmp(head, "refs/heads/"))
+					head += STRING_SIZE("refs/heads/");
+			}
+		}
+
+		if (!string_format(status_onbranch, "%s %s", paths[i][1], head))
+			string_copy(status_onbranch, opt_head);
+		return;
+	}
+
+	string_copy(status_onbranch, "Not currently on any branch");
+}
+
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
  * git-ls-files(1). */
@@ -4711,12 +4764,7 @@ status_open(struct view *view)
 	reset_view(view);
 
 	add_line_data(view, NULL, LINE_STAT_HEAD);
-	if (is_initial_commit())
-		string_copy(status_onbranch, "Initial commit");
-	else if (!*opt_head)
-		string_copy(status_onbranch, "Not currently on any branch");
-	else if (!string_format(status_onbranch, "On branch %s", opt_head))
-		return FALSE;
+	status_update_onbranch();
 
 	run_io_bg(update_index_argv);
 
