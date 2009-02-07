@@ -4177,6 +4177,7 @@ struct blame_commit {
 
 struct blame {
 	struct blame_commit *commit;
+	unsigned long lineno;
 	char text[1];
 };
 
@@ -4240,14 +4241,16 @@ parse_blame_commit(struct view *view, const char *text, int *blamed)
 {
 	struct blame_commit *commit;
 	struct blame *blame;
-	const char *pos = text + SIZEOF_REV - 1;
+	const char *pos = text + SIZEOF_REV - 2;
+	size_t orig_lineno = 0;
 	size_t lineno;
 	size_t group;
 
-	if (strlen(text) <= SIZEOF_REV || *pos != ' ')
+	if (strlen(text) <= SIZEOF_REV || pos[1] != ' ')
 		return NULL;
 
-	if (!parse_number(&pos, &lineno, 1, view->lines) ||
+	if (!parse_number(&pos, &orig_lineno, 1, 9999999) ||
+	    !parse_number(&pos, &lineno, 1, view->lines) ||
 	    !parse_number(&pos, &group, 1, view->lines - lineno + 1))
 		return NULL;
 
@@ -4261,6 +4264,7 @@ parse_blame_commit(struct view *view, const char *text, int *blamed)
 
 		blame = line->data;
 		blame->commit = commit;
+		blame->lineno = orig_lineno + group - 1;
 		line->dirty = 1;
 	}
 
@@ -4419,6 +4423,9 @@ blame_request(struct view *view, enum request request, struct line *line)
 	case REQ_VIEW_BLAME:
 		if (check_blame_commit(blame)) {
 			string_copy(opt_ref, blame->commit->id);
+			string_copy(opt_file, blame->commit->filename);
+			if (blame->lineno)
+				view->lineno = blame->lineno;
 			open_view(view, REQ_VIEW_BLAME, OPEN_REFRESH);
 		}
 		break;
