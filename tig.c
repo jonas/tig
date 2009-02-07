@@ -2259,6 +2259,30 @@ toggle_view_option(bool *option, const char *help)
  * Navigation
  */
 
+static bool
+goto_view_line(struct view *view, unsigned long offset, unsigned long lineno)
+{
+	if (lineno >= view->lines)
+		lineno = view->lines > 0 ? view->lines - 1 : 0;
+
+	if (offset > lineno || offset + view->height <= lineno) {
+		unsigned long half = view->height / 2;
+
+		if (lineno > half)
+			offset = lineno - half;
+		else
+			offset = 0;
+	}
+
+	if (offset != view->offset || lineno != view->lineno) {
+		view->offset = offset;
+		view->lineno = lineno;
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 /* Scrolling backend */
 static void
 do_scroll_view(struct view *view, int lines)
@@ -2470,20 +2494,18 @@ static void search_view(struct view *view, enum request request);
 static void
 select_view_line(struct view *view, unsigned long lineno)
 {
-	if (lineno - view->offset >= view->height) {
-		view->offset = lineno;
-		view->lineno = lineno;
-		if (view_is_displayed(view))
-			redraw_view(view);
+	unsigned long old_lineno = view->lineno;
+	unsigned long old_offset = view->offset;
 
-	} else {
-		unsigned long old_lineno = view->lineno - view->offset;
-
-		view->lineno = lineno;
+	if (goto_view_line(view, view->offset, lineno)) {
 		if (view_is_displayed(view)) {
-			draw_view_line(view, old_lineno);
-			draw_view_line(view, view->lineno - view->offset);
-			wnoutrefresh(view->win);
+			if (old_offset != view->offset) {
+				redraw_view(view);
+			} else {
+				draw_view_line(view, old_lineno - view->offset);
+				draw_view_line(view, view->lineno - view->offset);
+				wnoutrefresh(view->win);
+			}
 		} else {
 			view->ops->select(view, &view->line[view->lineno]);
 		}
@@ -2675,27 +2697,11 @@ restore_view_position(struct view *view)
 		return FALSE;
 	}
 
-	if (view->p_lineno >= view->lines)
-		view->p_lineno = view->lines > 0 ? view->lines - 1 : 0;
-
-	if (view->p_offset > view->p_lineno ||
-	    view->p_offset + view->height <= view->p_lineno) {
-		unsigned long half = view->height / 2;
-
-		if (view->p_lineno > half)
-			view->p_offset = view->p_lineno - half;
-		else
-			view->p_offset = 0;
-	}
-
-	if (view_is_displayed(view) &&
-	    view->offset != view->p_offset &&
-	    view->lineno != view->p_lineno)
+	if (goto_view_line(view, view->p_offset, view->p_lineno) &&
+	    view_is_displayed(view))
 		werase(view->win);
 
-	view->offset = view->p_offset;
 	view->yoffset = view->p_yoffset;
-	view->lineno = view->p_lineno;
 	view->p_restore = FALSE;
 
 	return TRUE;
