@@ -2675,16 +2675,17 @@ restore_view_position(struct view *view)
 		return FALSE;
 	}
 
-	if (view->p_lineno >= view->lines) {
+	if (view->p_lineno >= view->lines)
 		view->p_lineno = view->lines > 0 ? view->lines - 1 : 0;
-		if (view->p_offset >= view->p_lineno) {
-			unsigned long half = view->height / 2;
 
-			if (view->p_lineno > half)
-				view->p_offset = view->p_lineno - half;
-			else
-				view->p_offset = 0;
-		}
+	if (view->p_offset > view->p_lineno ||
+	    view->p_offset + view->height <= view->p_lineno) {
+		unsigned long half = view->height / 2;
+
+		if (view->p_lineno > half)
+			view->p_offset = view->p_lineno - half;
+		else
+			view->p_offset = 0;
 	}
 
 	if (view_is_displayed(view) &&
