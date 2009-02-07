@@ -4413,6 +4413,42 @@ check_blame_commit(struct blame *blame)
 	return FALSE;
 }
 
+static void
+setup_blame_parent_line(struct view *view, struct blame *blame)
+{
+	const char *diff_tree_argv[] = {
+		"git", "diff-tree", "-U0", blame->commit->id,
+			"--", blame->commit->filename, NULL
+	};
+	struct io io = {};
+	int parent_lineno = -1;
+	int blamed_lineno = -1;
+	char *line;
+
+	if (!run_io(&io, diff_tree_argv, NULL, IO_RD))
+		return;
+
+	while ((line = io_get(&io, '\n', TRUE))) {
+		if (*line == '@') {
+			char *pos = strchr(line, '+');
+
+			parent_lineno = atoi(line + 4);
+			if (pos)
+				blamed_lineno = atoi(pos + 1);
+
+		} else if (*line == '+' && parent_lineno != -1) {
+			if (blame->lineno == blamed_lineno - 1 &&
+			    !strcmp(blame->text, line + 1)) {
+				view->lineno = parent_lineno ? parent_lineno - 1 : 0;
+				break;
+			}
+			blamed_lineno++;
+		}
+	}
+
+	done_io(&io);
+}
+
 static enum request
 blame_request(struct view *view, enum request request, struct line *line)
 {
@@ -4432,8 +4468,11 @@ blame_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_PARENT:
 		if (check_blame_commit(blame) &&
-		    select_commit_parent(blame->commit->id, opt_ref))
+		    select_commit_parent(blame->commit->id, opt_ref)) {
+			string_copy(opt_file, blame->commit->filename);
+			setup_blame_parent_line(view, blame);
 			open_view(view, REQ_VIEW_BLAME, OPEN_REFRESH);
+		}
 		break;
 
 	case REQ_ENTER:
