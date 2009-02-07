@@ -188,20 +188,6 @@ string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen)
 #define string_add(dst, from, src) \
 	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
 
-static size_t
-string_expand_length(const char *line, int tabsize)
-{
-	size_t size, pos;
-
-	for (size = pos = 0; line[pos]; pos++) {
-		if (line[pos] == '\t' && tabsize > 0)
-			size += tabsize - (size % tabsize);
-		else
-			size++;
-	}
-	return size;
-}
-
 static void
 string_expand(char *dst, size_t dstlen, const char *src, int tabsize)
 {
@@ -4302,14 +4288,15 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 		return FALSE;
 
 	} else {
-		size_t linelen = string_expand_length(line, opt_tab_size);
+		size_t linelen = strlen(line);
 		struct blame *blame = malloc(sizeof(*blame) + linelen);
 
 		if (!blame)
 			return FALSE;
 
 		blame->commit = NULL;
-		string_expand(blame->text, linelen + 1, line, opt_tab_size);
+		strncpy(blame->text, line, linelen);
+		blame->text[linelen] = 0;
 		return add_line_data(view, blame, LINE_BLAME_ID) != NULL;
 	}
 }
@@ -4385,6 +4372,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct blame *blame = line->data;
 	struct tm *time = NULL;
 	const char *id = NULL, *author = NULL;
+	char text[SIZEOF_STR];
 
 	if (blame->commit && *blame->commit->filename) {
 		id = blame->commit->id;
@@ -4404,7 +4392,8 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_lineno(view, lineno))
 		return TRUE;
 
-	draw_text(view, LINE_DEFAULT, blame->text, TRUE);
+	string_expand(text, sizeof(text), blame->text, opt_tab_size);
+	draw_text(view, LINE_DEFAULT, text, TRUE);
 	return TRUE;
 }
 
