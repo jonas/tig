@@ -6943,7 +6943,17 @@ main(int argc, const char *argv[])
 		{
 			char *cmd = read_prompt(":");
 
-			if (cmd) {
+			if (cmd && isdigit(*cmd)) {
+				int lineno = view->lineno + 1;
+
+				if (parse_int(&lineno, cmd, 1, view->lines + 1) == OK) {
+					select_view_line(view, lineno - 1);
+					report("");
+				} else {
+					report("Unable to parse '%s' as a line number", cmd);
+				}
+
+			} else if (cmd) {
 				struct view *next = VIEW(REQ_VIEW_PAGER);
 				const char *argv[SIZEOF_ARG] = { "git" };
 				int argc = 1;
