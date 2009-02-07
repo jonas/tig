@@ -361,8 +361,13 @@ Color names::
 
 	Valid colors include: *white*, *black*, *green*, *magenta*, *blue*,
 	*cyan*, *yellow*, *red*, *default*. Use *default* to refer to the
-	default terminal colors. This is recommended for background colors
-	if you are using a terminal with a transparent background.
+	default terminal colors. This is recommended for background colors if
+	you are using a terminal with a transparent background.
++
+Colors can also be specified using the keywords color0, color1, ..., colorN-1
+(N being the number of colors supported by your terminal). This is useful when
+you remap the colors for your display or want to enable colors supported by
+256-color terminals.
 
 Attribute names::
 

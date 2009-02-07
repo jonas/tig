@@ -1388,8 +1388,27 @@ static struct enum_map attr_map[] = {
 	ATTR_MAP(UNDERLINE),
 };
 
-#define set_color(color, name)		map_enum(color, color_map, name)
 #define set_attribute(attr, name)	map_enum(attr, attr_map, name)
+
+static int
+parse_int(int *opt, const char *arg, int min, int max)
+{
+	int value = atoi(arg);
+
+	if (min <= value && value <= max)
+		*opt = value;
+	return OK;
+}
+
+static bool
+set_color(int *color, const char *name)
+{
+	if (map_enum(color, color_map, name))
+		return TRUE;
+	if (!prefixcmp(name, "color"))
+		return parse_int(color, name + 5, 0, 255) == OK;
+	return FALSE;
+}
 
 static int   config_lineno;
 static bool  config_errors;
@@ -1440,16 +1459,6 @@ static int parse_bool(bool *opt, const char *arg)
 {
 	*opt = (!strcmp(arg, "1") || !strcmp(arg, "true") || !strcmp(arg, "yes"))
 		? TRUE : FALSE;
-	return OK;
-}
-
-static int
-parse_int(int *opt, const char *arg, int min, int max)
-{
-	int value = atoi(arg);
-
-	if (min <= value && value <= max)
-		*opt = value;
 	return OK;
 }
 
