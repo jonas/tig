@@ -1364,6 +1364,10 @@ add_builtin_run_requests(void)
  * User config file handling.
  */
 
+static int   config_lineno;
+static bool  config_errors;
+static const char *config_msg;
+
 static struct enum_map color_map[] = {
 #define COLOR_MAP(name) ENUM_MAP(#name, COLOR_##name)
 	COLOR_MAP(DEFAULT),
@@ -1395,9 +1399,13 @@ parse_int(int *opt, const char *arg, int min, int max)
 {
 	int value = atoi(arg);
 
-	if (min <= value && value <= max)
+	if (min <= value && value <= max) {
 		*opt = value;
-	return OK;
+		return OK;
+	}
+
+	config_msg = "Integer value out of bound";
+	return ERR;
 }
 
 static bool
@@ -1409,10 +1417,6 @@ set_color(int *color, const char *name)
 		return parse_int(color, name + 5, 0, 255) == OK;
 	return FALSE;
 }
-
-static int   config_lineno;
-static bool  config_errors;
-static const char *config_msg;
 
 /* Wants: object fgcolor bgcolor [attribute] */
 static int
