@@ -277,7 +277,7 @@ struct enum_map {
 #define ENUM_MAP(name, value) { name, STRING_SIZE(name), value }
 
 static bool
-map_enum_do(struct enum_map *map, size_t map_size, int *value, const char *name)
+map_enum_do(const struct enum_map *map, size_t map_size, int *value, const char *name)
 {
 	size_t namelen = strlen(name);
 	int i;
@@ -824,7 +824,7 @@ struct request_info {
 	const char *help;
 };
 
-static struct request_info req_info[] = {
+static const struct request_info req_info[] = {
 #define REQ_GROUP(help)	{ 0, NULL, 0, (help) },
 #define REQ_(req, help)	{ REQ_##req, (#req), STRING_SIZE(#req), (help) }
 	REQ_INFO
@@ -1047,7 +1047,7 @@ struct keybinding {
 	enum request request;
 };
 
-static struct keybinding default_keybindings[] = {
+static const struct keybinding default_keybindings[] = {
 	/* View switching */
 	{ 'm',		REQ_VIEW_MAIN },
 	{ 'd',		REQ_VIEW_DIFF },
@@ -1133,7 +1133,7 @@ enum keymap {
 #undef	KEYMAP_
 };
 
-static struct enum_map keymap_table[] = {
+static const struct enum_map keymap_table[] = {
 #define KEYMAP_(name) ENUM_MAP(#name, KEYMAP_##name)
 	KEYMAP_INFO
 #undef	KEYMAP_
@@ -1188,7 +1188,7 @@ struct key {
 	int value;
 };
 
-static struct key key_table[] = {
+static const struct key key_table[] = {
 	{ "Enter",	KEY_RETURN },
 	{ "Space",	' ' },
 	{ "Backspace",	KEY_BACKSPACE },
@@ -1266,7 +1266,7 @@ get_key(enum request request)
 	buf[pos] = 0;
 
 	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++) {
-		struct keybinding *keybinding = &default_keybindings[i];
+		const struct keybinding *keybinding = &default_keybindings[i];
 
 		if (keybinding->request != request)
 			continue;
@@ -1354,7 +1354,7 @@ static int   config_lineno;
 static bool  config_errors;
 static const char *config_msg;
 
-static struct enum_map color_map[] = {
+static const struct enum_map color_map[] = {
 #define COLOR_MAP(name) ENUM_MAP(#name, COLOR_##name)
 	COLOR_MAP(DEFAULT),
 	COLOR_MAP(BLACK),
@@ -1367,7 +1367,7 @@ static struct enum_map color_map[] = {
 	COLOR_MAP(YELLOW),
 };
 
-static struct enum_map attr_map[] = {
+static const struct enum_map attr_map[] = {
 #define ATTR_MAP(name) ENUM_MAP(#name, A_##name)
 	ATTR_MAP(NORMAL),
 	ATTR_MAP(BLINK),
@@ -1417,7 +1417,7 @@ option_color_command(int argc, const char *argv[])
 
 	info = get_line_info(argv[0]);
 	if (!info) {
-		static struct enum_map obsolete[] = {
+		static const struct enum_map obsolete[] = {
 			ENUM_MAP("main-delim",	LINE_DELIMITER),
 			ENUM_MAP("main-date",	LINE_DATE),
 			ENUM_MAP("main-author",	LINE_AUTHOR),
@@ -1545,7 +1545,7 @@ option_bind_command(int argc, const char *argv[])
 
 	request = get_request(argv[2]);
 	if (request == REQ_NONE) {
-		static struct enum_map obsolete[] = {
+		static const struct enum_map obsolete[] = {
 			ENUM_MAP("cherry-pick",		REQ_NONE),
 			ENUM_MAP("screen-resize",	REQ_NONE),
 			ENUM_MAP("tree-parent",		REQ_PARENT),
