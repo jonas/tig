@@ -4405,11 +4405,11 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 }
 
 static bool
-check_blame_commit(struct blame *blame)
+check_blame_commit(struct blame *blame, bool check_null_id)
 {
 	if (!blame->commit)
 		report("Commit data not loaded yet");
-	else if (!strcmp(blame->commit->id, NULL_ID))
+	else if (check_null_id && !strcmp(blame->commit->id, NULL_ID))
 		report("No commit exist for the selected line");
 	else
 		return TRUE;
@@ -4460,7 +4460,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 
 	switch (request) {
 	case REQ_VIEW_BLAME:
-		if (check_blame_commit(blame)) {
+		if (check_blame_commit(blame, TRUE)) {
 			string_copy(opt_ref, blame->commit->id);
 			string_copy(opt_file, blame->commit->filename);
 			if (blame->lineno)
@@ -4470,7 +4470,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_PARENT:
-		if (check_blame_commit(blame) &&
+		if (check_blame_commit(blame, TRUE) &&
 		    select_commit_parent(blame->commit->id, opt_ref,
 					 blame->commit->filename)) {
 			string_copy(opt_file, blame->commit->filename);
@@ -4480,10 +4480,8 @@ blame_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_ENTER:
-		if (!blame->commit) {
-			report("No commit loaded yet");
+		if (!check_blame_commit(blame, FALSE))
 			break;
-		}
 
 		if (view_is_displayed(VIEW(REQ_VIEW_DIFF)) &&
 		    !strcmp(blame->commit->id, VIEW(REQ_VIEW_DIFF)->ref))
