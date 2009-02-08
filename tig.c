@@ -3384,11 +3384,11 @@ select_commit_parent_handler(void *data, char *buf, int c)
 }
 
 static bool
-select_commit_parent(const char *id, char rev[SIZEOF_REV])
+select_commit_parent(const char *id, char rev[SIZEOF_REV], const char *path)
 {
 	char buf[SIZEOF_STR * 4];
 	const char *revlist_argv[] = {
-		"git", "rev-list", "-1", "--parents", id, NULL
+		"git", "rev-list", "-1", "--parents", id, "--", path, NULL
 	};
 	int parents;
 
@@ -3399,7 +3399,10 @@ select_commit_parent(const char *id, char rev[SIZEOF_REV])
 		return FALSE;
 
 	} else if (parents == 0) {
-		report("The selected commit has no parents");
+		if (path)
+			report("Path '%s' does not exist in the parent", path);
+		else
+			report("The selected commit has no parents");
 		return FALSE;
 	}
 
@@ -4468,7 +4471,8 @@ blame_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_PARENT:
 		if (check_blame_commit(blame) &&
-		    select_commit_parent(blame->commit->id, opt_ref)) {
+		    select_commit_parent(blame->commit->id, opt_ref,
+					 blame->commit->filename)) {
 			string_copy(opt_file, blame->commit->filename);
 			setup_blame_parent_line(view, blame);
 			open_view(view, REQ_VIEW_BLAME, OPEN_REFRESH);
