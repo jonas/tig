@@ -13,6 +13,7 @@ Improvements:
 
 Bug fixes:
 
+ - Blame view: fix problem with uninitialized variable.
  - Blame view: use line number information when loading blame for
    specific commit.
 
