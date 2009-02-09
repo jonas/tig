@@ -398,6 +398,8 @@ io_open(struct io *io, const char *name)
 {
 	init_io(io, NULL, IO_FD);
 	io->pipe = *name ? open(name, O_RDONLY) : STDIN_FILENO;
+	if (io->pipe == -1)
+		io->error = errno;
 	return io->pipe != -1;
 }
 
@@ -4902,6 +4904,15 @@ status_draw(struct view *view, struct line *line, unsigned int lineno)
 }
 
 static enum request
+status_load_error(struct view *view, struct view *stage, const char *path)
+{
+	if (displayed_views() == 2 || display[current_view] != view)
+		maximize_view(view);
+	report("Failed to load '%s': %s", path, io_strerror(&stage->io));
+	return REQ_NONE;
+}
+
+static enum request
 status_enter(struct view *view, struct line *line)
 {
 	struct status *status = line->data;
@@ -4928,7 +4939,7 @@ status_enter(struct view *view, struct line *line)
 			};
 
 			if (!prepare_update(stage, no_head_diff_argv, opt_cdup, FORMAT_DASH))
-				return REQ_QUIT;
+				return status_load_error(view, stage, newpath);
 		} else {
 			const char *index_show_argv[] = {
 				"git", "diff-index", "--root", "--patch-with-stat",
@@ -4937,7 +4948,7 @@ status_enter(struct view *view, struct line *line)
 			};
 
 			if (!prepare_update(stage, index_show_argv, opt_cdup, FORMAT_DASH))
-				return REQ_QUIT;
+				return status_load_error(view, stage, newpath);
 		}
 
 		if (status)
@@ -4954,7 +4965,7 @@ status_enter(struct view *view, struct line *line)
 		};
 
 		if (!prepare_update(stage, files_show_argv, opt_cdup, FORMAT_DASH))
-			return REQ_QUIT;
+			return status_load_error(view, stage, newpath);
 		if (status)
 			info = "Unstaged changes to %s";
 		else
@@ -4973,7 +4984,7 @@ status_enter(struct view *view, struct line *line)
 		}
 
 		if (!prepare_update_file(stage, newpath))
-			return REQ_QUIT;
+			return status_load_error(view, stage, newpath);
 		info = "Untracked file %s";
 		break;
 
@@ -5232,8 +5243,7 @@ status_request(struct view *view, enum request request, struct line *line)
 		/* After returning the status view has been split to
 		 * show the stage view. No further reloading is
 		 * necessary. */
-		status_enter(view, line);
-		return REQ_NONE;
+		return status_enter(view, line);
 
 	case REQ_REFRESH:
 		/* Simply reload the view. */
