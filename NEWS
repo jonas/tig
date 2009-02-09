@@ -10,6 +10,7 @@ Improvements:
    code in git's bash completion script.
  - Colors for 256-capable terminals can be specified as colorN.
  - Entering a number in the prompt will jump to that line number.
+ - Handle core.worktree by setting GIT_DIR and GIT_WORK_TREE.
 
 Bug fixes:
 

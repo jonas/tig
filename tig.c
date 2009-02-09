@@ -6657,7 +6657,7 @@ static int
 load_refs(void)
 {
 	static const char *ls_remote_argv[SIZEOF_ARG] = {
-		"git", "ls-remote", ".", NULL
+		"git", "ls-remote", opt_git_dir, NULL
 	};
 	static bool init = FALSE;
 
@@ -6710,6 +6710,30 @@ set_repo_config_option(char *name, char *value, int (*cmd)(int, const char **))
 		warn("Option 'tig.%s': %s", name, config_msg);
 }
 
+static void
+set_work_tree(const char *value)
+{
+	char cwd[SIZEOF_STR];
+
+	if (!getcwd(cwd, sizeof(cwd)))
+		die("Failed to get cwd path: %s", strerror(errno));
+	if (chdir(opt_git_dir) < 0)
+		die("Failed to chdir(%s): %s", strerror(errno));
+	if (!getcwd(opt_git_dir, sizeof(opt_git_dir)))
+		die("Failed to get git path: %s", strerror(errno));
+	if (chdir(cwd) < 0)
+		die("Failed to chdir(%s): %s", cwd, strerror(errno));
+	if (chdir(value) < 0)
+		die("Failed to chdir(%s): %s", value, strerror(errno));
+	if (!getcwd(cwd, sizeof(cwd)))
+		die("Failed to get cwd path: %s", strerror(errno));
+	if (setenv("GIT_WORK_TREE", cwd, TRUE) < 0)
+		die("Failed to set GIT_WORK_TREE to '%s'", cwd);
+	if (setenv("GIT_DIR", opt_git_dir, TRUE) < 0)
+		die("Failed to set GIT_DIR to '%s'", opt_git_dir);
+	opt_is_inside_work_tree = TRUE;
+}
+
 static int
 read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen)
 {
@@ -6718,6 +6742,9 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 
 	else if (!strcmp(name, "core.editor"))
 		string_ncopy(opt_editor, value, valuelen);
+
+	else if (!strcmp(name, "core.worktree"))
+		set_work_tree(value);
 
 	else if (!prefixcmp(name, "tig.color."))
 		set_repo_config_option(name + 10, value, option_color_command);
