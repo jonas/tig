@@ -557,7 +557,7 @@ io_error(struct io *io)
 	return io->error;
 }
 
-static bool
+static char *
 io_strerror(struct io *io)
 {
 	return strerror(io->error);
