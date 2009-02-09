@@ -6678,6 +6678,23 @@ load_refs(void)
 }
 
 static void
+set_remote_branch(const char *name, const char *value, size_t valuelen)
+{
+	if (!strcmp(name, ".remote")) {
+		string_ncopy(opt_remote, value, valuelen);
+
+	} else if (*opt_remote && !strcmp(name, ".merge")) {
+		size_t from = strlen(opt_remote);
+
+		if (!prefixcmp(value, "refs/heads/"))
+			value += STRING_SIZE("refs/heads/");
+
+		if (!string_format_from(opt_remote, &from, "/%s", value))
+			opt_remote[0] = 0;
+	}
+}
+
+static void
 set_repo_config_option(char *name, char *value, int (*cmd)(int, const char **))
 {
 	const char *argv[SIZEOF_ARG] = { name, "=" };
@@ -6711,27 +6728,9 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	else if (!prefixcmp(name, "tig."))
 		set_repo_config_option(name + 4, value, option_set_command);
 
-	/* branch.<head>.remote */
-	if (*opt_head &&
-	    !strncmp(name, "branch.", 7) &&
-	    !strncmp(name + 7, opt_head, strlen(opt_head)) &&
-	    !strcmp(name + 7 + strlen(opt_head), ".remote"))
-		string_ncopy(opt_remote, value, valuelen);
-
-	if (*opt_head && *opt_remote &&
-	    !strncmp(name, "branch.", 7) &&
-	    !strncmp(name + 7, opt_head, strlen(opt_head)) &&
-	    !strcmp(name + 7 + strlen(opt_head), ".merge")) {
-		size_t from = strlen(opt_remote);
-
-		if (!prefixcmp(value, "refs/heads/")) {
-			value += STRING_SIZE("refs/heads/");
-			valuelen -= STRING_SIZE("refs/heads/");
-		}
-
-		if (!string_format_from(opt_remote, &from, "/%s", value))
-			opt_remote[0] = 0;
-	}
+	else if (*opt_head && !prefixcmp(name, "branch.") &&
+		 !strncmp(name + 7, opt_head, strlen(opt_head)))
+		set_remote_branch(name + 7 + strlen(opt_head), value, valuelen);
 
 	return OK;
 }
