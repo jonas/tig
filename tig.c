@@ -6716,10 +6716,10 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	if (!strcmp(name, "i18n.commitencoding"))
 		string_ncopy(opt_encoding, value, valuelen);
 
-	if (!strcmp(name, "core.editor"))
+	else if (!strcmp(name, "core.editor"))
 		string_ncopy(opt_editor, value, valuelen);
 
-	if (!prefixcmp(name, "tig.color."))
+	else if (!prefixcmp(name, "tig.color."))
 		set_repo_config_option(name + 10, value, option_color_command);
 
 	else if (!prefixcmp(name, "tig.bind."))
