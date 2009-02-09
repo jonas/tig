@@ -2241,6 +2241,18 @@ toggle_view_option(bool *option, const char *help)
 	report("%sabling %s", *option ? "En" : "Dis", help);
 }
 
+static void
+maximize_view(struct view *view)
+{
+	memset(display, 0, sizeof(display));
+	current_view = 0;
+	display[current_view] = view;
+	resize_display();
+	redraw_display(FALSE);
+	report("");
+}
+
+
 /*
  * Navigation
  */
@@ -3225,7 +3237,7 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_MAXIMIZE:
 		if (displayed_views() == 2)
-			open_view(view, VIEW_REQ(view), OPEN_DEFAULT);
+			maximize_view(view);
 		break;
 
 	case REQ_TOGGLE_LINENO:
@@ -3289,13 +3301,8 @@ view_driver(struct view *view, enum request request)
 		 * followed. */
 		if (view->parent &&
 		    view->parent->parent != view->parent) {
-			memset(display, 0, sizeof(display));
-			current_view = 0;
-			display[current_view] = view->parent;
+			maximize_view(view->parent);
 			view->parent = view;
-			resize_display();
-			redraw_display(FALSE);
-			report("");
 			break;
 		}
 		/* Fall-through */
