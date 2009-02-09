@@ -27,9 +27,6 @@ Before tig-1.0
       that commit, as part of the diff view. How should rewritten parent
       information be handled? Depends on new enhanced commit structure.
 
- - Show the "active" (instead of the default) keybindings in the help
-   view. Also, display the keymap.
-
 Long term goals
 ~~~~~~~~~~~~~~~
 

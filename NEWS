@@ -11,6 +11,9 @@ Incompatibilities:
 
 Improvements:
 
+ - Show the active (instead of the default) keybindings in the help
+   view. Furthermore, honor the keymap when suggesting actions in the
+   help messages.
  - Add branch view for choosing which branch to display in the main
    view. Bound to 'H' by default.
  - Tree view: sort entries by name, date or author. Toggling is bound to

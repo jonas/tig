@@ -992,6 +992,8 @@ LINE(STAT_NONE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(STAT_STAGED,  "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(STAT_UNSTAGED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(STAT_UNTRACKED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+LINE(HELP_KEYMAP,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
+LINE(HELP_GROUP,   "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(BLAME_ID,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0)
 
 enum line_type {
@@ -1083,6 +1085,7 @@ struct line {
 	unsigned int selected:1;
 	unsigned int dirty:1;
 	unsigned int cleareol:1;
+	unsigned int other:16;
 
 	void *data;		/* User data */
 };
@@ -1310,26 +1313,68 @@ get_key_name(int key_value)
 	return seq ? seq : "(no key)";
 }
 
+static bool
+append_key(char *buf, size_t *pos, const struct keybinding *keybinding)
+{
+	const char *sep = *pos > 0 ? ", " : "";
+	const char *keyname = get_key_name(keybinding->alias);
+
+	return string_nformat(buf, BUFSIZ, pos, "%s%s", sep, keyname);
+}
+
+static bool
+append_keymap_request_keys(char *buf, size_t *pos, enum request request,
+			   enum keymap keymap, bool all)
+{
+	int i;
+
+	for (i = 0; i < keybindings[keymap].size; i++) {
+		if (keybindings[keymap].data[i].request == request) {
+			if (!append_key(buf, pos, &keybindings[keymap].data[i]))
+				return FALSE;
+			if (!all)
+				break;
+		}
+	}
+
+	return TRUE;
+}
+
+#define get_key(keymap, request) get_keys(keymap, request, FALSE)
+
 static const char *
-get_key(enum request request)
+get_keys(enum keymap keymap, enum request request, bool all)
 {
 	static char buf[BUFSIZ];
 	size_t pos = 0;
-	char *sep = "";
 	int i;
 
 	buf[pos] = 0;
 
-	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++) {
-		const struct keybinding *keybinding = &default_keybindings[i];
+	if (!append_keymap_request_keys(buf, &pos, request, keymap, all))
+		return "Too many keybindings!";
+	if (pos > 0 && !all)
+		return buf;
 
-		if (keybinding->request != request)
-			continue;
+	if (keymap != KEYMAP_GENERIC) {
+		/* Only the generic keymap includes the default keybindings when
+		 * listing all keys. */
+		if (all)
+			return buf;
 
-		if (!string_format_from(buf, &pos, "%s%s", sep,
-					get_key_name(keybinding->alias)))
+		if (!append_keymap_request_keys(buf, &pos, request, KEYMAP_GENERIC, all))
 			return "Too many keybindings!";
-		sep = ", ";
+		if (pos)
+			return buf;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++) {
+		if (default_keybindings[i].request == request) {
+			if (!append_key(buf, &pos, &default_keybindings[i]))
+				return "Too many keybindings!";
+			if (!all)
+				return buf;
+		}
 	}
 
 	return buf;
@@ -3205,7 +3250,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_BLAME:
 		if (!opt_file[0]) {
 			report("No file chosen, press %s to open tree view",
-			       get_key(REQ_VIEW_TREE));
+			       get_key(view->keymap, REQ_VIEW_TREE));
 			break;
 		}
 		open_view(view, request, OPEN_DEFAULT);
@@ -3214,7 +3259,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_BLOB:
 		if (!ref_blob[0]) {
 			report("No file chosen, press %s to open tree view",
-			       get_key(REQ_VIEW_TREE));
+			       get_key(view->keymap, REQ_VIEW_TREE));
 			break;
 		}
 		open_view(view, request, OPEN_DEFAULT);
@@ -3223,7 +3268,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_PAGER:
 		if (!VIEW(REQ_VIEW_PAGER)->pipe && !VIEW(REQ_VIEW_PAGER)->lines) {
 			report("No pager content, press %s to run command from prompt",
-			       get_key(REQ_PROMPT));
+			       get_key(view->keymap, REQ_PROMPT));
 			break;
 		}
 		open_view(view, request, OPEN_DEFAULT);
@@ -3232,7 +3277,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_STAGE:
 		if (!VIEW(REQ_VIEW_STAGE)->lines) {
 			report("No stage content, press %s to open the status view and choose file",
-			       get_key(REQ_VIEW_STATUS));
+			       get_key(view->keymap, REQ_VIEW_STATUS));
 			break;
 		}
 		open_view(view, request, OPEN_DEFAULT);
@@ -3389,7 +3434,8 @@ view_driver(struct view *view, enum request request)
 		return FALSE;
 
 	default:
-		report("Unknown key, press 'h' for help");
+		report("Unknown key, press %s for help",
+		       get_key(view->keymap, REQ_VIEW_HELP));
 		return TRUE;
 	}
 
@@ -3794,71 +3840,140 @@ static struct view_ops diff_ops = {
  * Help backend
  */
 
+static bool help_keymap_hidden[ARRAY_SIZE(keymap_table)];
+
+static char *
+help_name(char buf[SIZEOF_STR], const char *name, size_t namelen)
+{
+	int bufpos;
+
+	for (bufpos = 0; bufpos <= namelen; bufpos++) {
+		buf[bufpos] = tolower(name[bufpos]);
+		if (buf[bufpos] == '_')
+			buf[bufpos] = '-';
+	}
+
+	buf[bufpos] = 0;
+	return buf;
+}
+
+#define help_keymap_name(buf, keymap) \
+	help_name(buf, keymap_table[keymap].name, keymap_table[keymap].namelen)
+
 static bool
-help_open(struct view *view)
+help_open_keymap_title(struct view *view, enum keymap keymap)
 {
 	char buf[SIZEOF_STR];
+	struct line *line;
+
+	line = add_line_format(view, LINE_HELP_KEYMAP, "[%c] %s bindings",
+			       help_keymap_hidden[keymap] ? '+' : '-',
+			       help_keymap_name(buf, keymap));
+	if (line)
+		line->other = keymap;
+
+	return help_keymap_hidden[keymap];
+}
+
+static void
+help_open_keymap(struct view *view, enum keymap keymap)
+{
+	const char *group = NULL;
+	char buf[SIZEOF_STR];
 	size_t bufpos;
+	bool add_title = TRUE;
 	int i;
 
-	if (view->lines > 0)
-		return TRUE;
-
-	add_line_text(view, "Quick reference for tig keybindings:", LINE_DEFAULT);
-
 	for (i = 0; i < ARRAY_SIZE(req_info); i++) {
-		const char *key;
+		const char *key = NULL;
 
 		if (req_info[i].request == REQ_NONE)
 			continue;
 
 		if (!req_info[i].request) {
-			add_line_text(view, "", LINE_DEFAULT);
-			add_line_text(view, req_info[i].help, LINE_DEFAULT);
+			group = req_info[i].help;
 			continue;
 		}
 
-		key = get_key(req_info[i].request);
-		if (!*key)
-			key = "(no key defined)";
+		key = get_keys(keymap, req_info[i].request, TRUE);
+		if (!key || !*key)
+			continue;
 
-		for (bufpos = 0; bufpos <= req_info[i].namelen; bufpos++) {
-			buf[bufpos] = tolower(req_info[i].name[bufpos]);
-			if (buf[bufpos] == '_')
-				buf[bufpos] = '-';
+		if (add_title && help_open_keymap_title(view, keymap))
+			return;
+		add_title = false;
+
+		if (group) {
+			add_line_text(view, group, LINE_HELP_GROUP);
+			group = NULL;
 		}
 
-		add_line_format(view, LINE_DEFAULT, "    %-25s %-20s %s",
-				key, buf, req_info[i].help);
+		add_line_format(view, LINE_DEFAULT, "    %-25s %-20s %s", key,
+				help_name(buf, req_info[i].name, req_info[i].namelen),
+				req_info[i].help);
 	}
 
-	if (run_requests) {
-		add_line_text(view, "", LINE_DEFAULT);
-		add_line_text(view, "External commands:", LINE_DEFAULT);
-	}
+	group = "External commands:";
 
 	for (i = 0; i < run_requests; i++) {
 		struct run_request *req = get_run_request(REQ_NONE + i + 1);
 		const char *key;
 		int argc;
 
-		if (!req)
+		if (!req || req->keymap != keymap)
 			continue;
 
 		key = get_key_name(req->key);
 		if (!*key)
 			key = "(no key defined)";
 
+		if (add_title && help_open_keymap_title(view, keymap))
+			return;
+		if (group) {
+			add_line_text(view, group, LINE_HELP_GROUP);
+			group = NULL;
+		}
+
 		for (bufpos = 0, argc = 0; req->argv[argc]; argc++)
 			if (!string_format_from(buf, &bufpos, "%s%s",
 					        argc ? " " : "", req->argv[argc]))
-				return REQ_NONE;
+				return;
 
-		add_line_format(view, LINE_DEFAULT, "    %-10s %-14s `%s`",
-				keymap_table[req->keymap].name, key, buf);
+		add_line_format(view, LINE_DEFAULT, "    %-25s `%s`", key, buf);
 	}
+}
+
+static bool
+help_open(struct view *view)
+{
+	enum keymap keymap;
+
+	reset_view(view);
+	add_line_text(view, "Quick reference for tig keybindings:", LINE_DEFAULT);
+	add_line_text(view, "", LINE_DEFAULT);
+
+	for (keymap = 0; keymap < ARRAY_SIZE(keymap_table); keymap++)
+		help_open_keymap(view, keymap);
 
 	return TRUE;
+}
+
+static enum request
+help_request(struct view *view, enum request request, struct line *line)
+{
+	switch (request) {
+	case REQ_ENTER:
+		if (line->type == LINE_HELP_KEYMAP) {
+			help_keymap_hidden[line->other] =
+				!help_keymap_hidden[line->other];
+			view->p_restore = TRUE;
+			open_view(view, REQ_VIEW_HELP, OPEN_REFRESH);
+		}
+
+		return REQ_NONE;
+	default:
+		return pager_request(view, request, line);
+	}
 }
 
 static struct view_ops help_ops = {
@@ -3867,7 +3982,7 @@ static struct view_ops help_ops = {
 	help_open,
 	NULL,
 	pager_draw,
-	pager_request,
+	help_request,
 	pager_grep,
 	pager_select,
 };
@@ -5672,10 +5787,10 @@ status_select(struct view *view, struct line *line)
 
 	if (status && status->status == 'U') {
 		text = "Press %s to resolve conflict in %s";
-		key = get_key(REQ_STATUS_MERGE);
+		key = get_key(KEYMAP_STATUS, REQ_STATUS_MERGE);
 
 	} else {
-		key = get_key(REQ_STATUS_UPDATE);
+		key = get_key(KEYMAP_STATUS, REQ_STATUS_UPDATE);
 	}
 
 	string_format(view->ref, text, key, file);
@@ -5873,7 +5988,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 	case REQ_STAGE_NEXT:
 		if (stage_line_type == LINE_STAT_UNTRACKED) {
 			report("File is untracked; press %s to add",
-			       get_key(REQ_STATUS_UPDATE));
+			       get_key(KEYMAP_STAGE, REQ_STATUS_UPDATE));
 			return REQ_NONE;
 		}
 		stage_next(view, line);
