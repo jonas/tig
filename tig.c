@@ -117,6 +117,8 @@ static size_t utf8_length(const char **string, size_t col, int *width, size_t ma
 
 #define NULL_ID		"0000000000000000000000000000000000000000"
 
+#define S_ISGITLINK(mode) (((mode) & S_IFMT) == 0160000)
+
 #ifndef GIT_CONFIG
 #define GIT_CONFIG "config"
 #endif
@@ -2021,22 +2023,22 @@ draw_author(struct view *view, const char *author)
 static bool
 draw_mode(struct view *view, mode_t mode)
 {
-	static const char dir_mode[]	= "drwxr-xr-x";
-	static const char link_mode[]	= "lrwxrwxrwx";
-	static const char exe_mode[]	= "-rwxr-xr-x";
-	static const char file_mode[]	= "-rw-r--r--";
 	const char *str;
 
 	if (S_ISDIR(mode))
-		str = dir_mode;
+		str = "drwxr-xr-x";
 	else if (S_ISLNK(mode))
-		str = link_mode;
-	else if (mode & S_IXUSR)
-		str = exe_mode;
+		str = "lrwxrwxrwx";
+	else if (S_ISGITLINK(mode))
+		str = "m---------";
+	else if (S_ISREG(mode) && mode & S_IXUSR)
+		str = "-rwxr-xr-x";
+	else if (S_ISREG(mode))
+		str = "-rw-r--r--";
 	else
-		str = file_mode;
+		str = "----------";
 
-	return draw_field(view, LINE_MODE, str, sizeof(file_mode), FALSE);
+	return draw_field(view, LINE_MODE, str, STRING_SIZE("-rw-r--r-- "), FALSE);
 }
 
 static bool
