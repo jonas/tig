@@ -6990,6 +6990,7 @@ main(int argc, const char *argv[])
 	size_t i;
 
 	signal(SIGINT, quit);
+	signal(SIGPIPE, SIG_IGN);
 
 	if (setlocale(LC_ALL, "")) {
 		char *codeset = nl_langinfo(CODESET);
