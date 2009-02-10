@@ -5102,13 +5102,13 @@ status_update_file(struct status *status, enum line_type type)
 		return FALSE;
 
 	result = status_update_write(&io, status, type);
-	done_io(&io);
-	return result;
+	return done_io(&io) && result;
 }
 
 static bool
 status_update_files(struct view *view, struct line *line)
 {
+	char buf[sizeof(view->ref)];
 	struct io io = {};
 	bool result = TRUE;
 	struct line *pos = view->line + view->lines;
@@ -5121,7 +5121,8 @@ status_update_files(struct view *view, struct line *line)
 	for (pos = line; pos < view->line + view->lines && pos->data; pos++)
 		files++;
 
-	for (file = 0, done = 0; result && file < files; line++, file++) {
+	string_copy(buf, view->ref);
+	for (file = 0, done = 5; result && file < files; line++, file++) {
 		int almost_done = file * 100 / files;
 
 		if (almost_done > done) {
@@ -5129,12 +5130,13 @@ status_update_files(struct view *view, struct line *line)
 			string_format(view->ref, "updating file %u of %u (%d%% done)",
 				      file, files, done);
 			update_view_title(view);
+			doupdate();
 		}
 		result = status_update_write(&io, line->data, line->type);
 	}
+	string_copy(view->ref, buf);
 
-	done_io(&io);
-	return result;
+	return done_io(&io) && result;
 }
 
 static bool
