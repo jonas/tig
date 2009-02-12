@@ -46,21 +46,21 @@ Examples:
 
 --------------------------------------------------------------------------
 set show-author = yes		# Show author?
-set show-date = yes		# Show commit date?
 set show-rev-graph = yes	# Show revision graph?
 set show-refs = yes		# Show references?
 set show-line-numbers = no	# Show line numbers?
 set line-number-interval = 5	# Interval between line numbers
+set commit-encoding = "UTF-8"	# Commit encoding
 --------------------------------------------------------------------------
 
 Or in the git configuration files:
 
 --------------------------------------------------------------------------
 [tig]
+	show-date = yes		# Show commit date?
 	author-width = 10	# Set width of the author column
 	line-graphics = no	# Disable graphics characters
 	tab-size = 8		# Number of spaces per tab
-	encoding = "UTF-8"	# Commit encoding
 --------------------------------------------------------------------------
 
 The type of variables are either bool, int, and string.
