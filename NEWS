@@ -19,6 +19,7 @@ Bug fixes:
  - Blame view: fix problem with uninitialized variable.
  - Blame view: use line number information when loading blame for
    specific commit.
+ - Fix handling of quoted strings in the config file.
 
 tig-0.14
 --------

@@ -1470,7 +1470,7 @@ parse_string(char *opt, const char *arg, size_t optsize)
 		}
 		arg += 1; arglen -= 2;
 	default:
-		string_ncopy_do(opt, optsize, arg, strlen(arg));
+		string_ncopy_do(opt, optsize, arg, arglen);
 		return OK;
 	}
 }
