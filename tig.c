@@ -109,7 +109,6 @@ static size_t utf8_length(const char **string, size_t col, int *width, size_t ma
 
 /* The default interval between line numbers. */
 #define NUMBER_INTERVAL	5
-#define SCROLL_INTERVAL	1
 
 #define TAB_SIZE	8
 
@@ -863,6 +862,7 @@ static bool opt_line_graphics		= TRUE;
 static bool opt_rev_graph		= FALSE;
 static bool opt_show_refs		= TRUE;
 static int opt_num_interval		= NUMBER_INTERVAL;
+static double opt_hscroll		= 0.50;
 static int opt_tab_size			= TAB_SIZE;
 static int opt_author_cols		= AUTHOR_COLS-1;
 static char opt_path[SIZEOF_STR]	= "";
@@ -1384,6 +1384,27 @@ static const struct enum_map attr_map[] = {
 
 #define set_attribute(attr, name)	map_enum(attr, attr_map, name)
 
+static int parse_step(double *opt, const char *arg)
+{
+	*opt = atoi(arg);
+	if (!strchr(arg, '%'))
+		return OK;
+
+	/* "Shift down" so 100% and 1 does not conflict. */
+	*opt = (*opt - 1) / 100;
+	if (*opt >= 1.0) {
+		*opt = 0.99;
+		config_msg = "Step value larger than 100%";
+		return ERR;
+	}
+	if (*opt < 0.0) {
+		*opt = 1;
+		config_msg = "Invalid step value";
+		return ERR;
+	}
+	return OK;
+}
+
 static int
 parse_int(int *opt, const char *arg, int min, int max)
 {
@@ -1512,6 +1533,9 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "author-width"))
 		return parse_int(&opt_author_cols, argv[2], 0, 1024);
+
+	if (!strcmp(argv[0], "horizontal-scroll"))
+		return parse_step(&opt_hscroll, argv[2]);
 
 	if (!strcmp(argv[0], "tab-size"))
 		return parse_int(&opt_tab_size, argv[2], 1, 1024);
@@ -2285,6 +2309,15 @@ goto_view_line(struct view *view, unsigned long offset, unsigned long lineno)
 	return FALSE;
 }
 
+static int
+apply_step(double step, int value)
+{
+	if (step >= 1)
+		return (int) step;
+	value *= step + 0.01;
+	return value ? value : 1;
+}
+
 /* Scrolling backend */
 static void
 do_scroll_view(struct view *view, int lines)
@@ -2346,10 +2379,10 @@ scroll_view(struct view *view, enum request request)
 			report("Cannot scroll beyond the first column");
 			return;
 		}
-		if (view->yoffset <= SCROLL_INTERVAL)
+		if (view->yoffset <= apply_step(opt_hscroll, view->width))
 			view->yoffset = 0;
 		else
-			view->yoffset -= SCROLL_INTERVAL;
+			view->yoffset -= apply_step(opt_hscroll, view->width);
 		redraw_view_from(view, 0);
 		report("");
 		return;
@@ -2358,7 +2391,9 @@ scroll_view(struct view *view, enum request request)
 			report("Cannot scroll beyond the last column");
 			return;
 		}
-		view->yoffset += SCROLL_INTERVAL;
+		view->yoffset += apply_step(opt_hscroll, view->width);
+		if (view->yoffset > view->width)
+			view->yoffset = view->width;
 		redraw_view(view);
 		report("");
 		return;

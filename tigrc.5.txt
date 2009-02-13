@@ -51,6 +51,7 @@ set show-refs = yes		# Show references?
 set show-line-numbers = no	# Show line numbers?
 set line-number-interval = 5	# Interval between line numbers
 set commit-encoding = "UTF-8"	# Commit encoding
+set horizontal-scroll = 33%	# Scroll 33% of the view width
 --------------------------------------------------------------------------
 
 Or in the git configuration files:
@@ -63,7 +64,7 @@ Or in the git configuration files:
 	tab-size = 8		# Number of spaces per tab
 --------------------------------------------------------------------------
 
-The type of variables are either bool, int, and string.
+The type of variables are either bool, int, string, or mixed.
 
 Valid bool values::
 
@@ -77,6 +78,11 @@ Valid int values::
 Valid string values::
 
 	A string of characters. Optionally, use either ' or " as delimiters.
+
+Valid mixed values::
+
+	These values are composites of the above types. The valid values are
+	specified in the description.
 
 Variables
 ~~~~~~~~~
@@ -110,6 +116,14 @@ The following variables can be set:
 'tab-size' (int)::
 
 	Number of spaces per tab. The default is 8 spaces.
+
+'horizontal-scroll' (mixed)::
+
+	Interval to scroll horizontally in each step. Can be specified either
+	as the number of columns, e.g. '5', or as a percentage of the view
+	width, e.g. '33%', where the maximum is 100%. For percentages it is
+	always ensured that at least one column is scrolled. The default is to
+	scroll '50%' of the view width.
 
 'commit-encoding' (string)::
 

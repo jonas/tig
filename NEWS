@@ -11,6 +11,9 @@ Improvements:
  - Colors for 256-capable terminals can be specified as colorN.
  - Entering a number in the prompt will jump to that line number.
  - Handle core.worktree by setting GIT_DIR and GIT_WORK_TREE.
+ - Make behavior of horizontal scrolling configurable by setting the
+   'horizontal-scroll' variable to a number or a percentage. Defaults to
+   scrolling 50% of the view width.
 
 Bug fixes:
 
