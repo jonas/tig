@@ -2859,7 +2859,7 @@ update_view(struct view *view)
 		return TRUE;
 
 	if (!io_can_read(view->pipe)) {
-		if (view->lines == 0) {
+		if (view->lines == 0 && view_is_displayed(view)) {
 			time_t secs = time(NULL) - view->start_time;
 
 			if (secs > 1 && secs > view->update_secs) {
