@@ -221,7 +221,20 @@ Browsing state variables
 ------------------------------------------------------------------------------
 
 As an example, the following external command will save the current commit as
-a patch file: "!git format-patch -1 %(commit)".
+a patch file: "!git format-patch -1 %(commit)". If your external command
+require use of dynamic features, such as subshells, expansion of environment
+variables and process control, this can be achieved by using a combination of
+git aliases and tig external commands. The following example entries can be
+put in either the .gitconfig or .git/config file:
+
+--------------------------------------------------------------------------
+[alias]
+	gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &"
+	publish = !"for i in origin public; do git push $i; done"
+[tig "bind"]
+	generic = V !git gitk-bg
+	generic = > !git publish
+--------------------------------------------------------------------------
 
 ifdef::backend-xhtml11[]
 [frame="none"]
