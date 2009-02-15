@@ -5120,6 +5120,7 @@ status_update_files(struct view *view, struct line *line)
 	struct line *pos = view->line + view->lines;
 	int files = 0;
 	int file, done;
+	int cursor_y, cursor_x;
 
 	if (!status_update_prepare(&io, line->type))
 		return FALSE;
@@ -5128,6 +5129,7 @@ status_update_files(struct view *view, struct line *line)
 		files++;
 
 	string_copy(buf, view->ref);
+	getsyx(cursor_y, cursor_x);
 	for (file = 0, done = 5; result && file < files; line++, file++) {
 		int almost_done = file * 100 / files;
 
@@ -5136,6 +5138,7 @@ status_update_files(struct view *view, struct line *line)
 			string_format(view->ref, "updating file %u of %u (%d%% done)",
 				      file, files, done);
 			update_view_title(view);
+			setsyx(cursor_y, cursor_x);
 			doupdate();
 		}
 		result = status_update_write(&io, line->data, line->type);
