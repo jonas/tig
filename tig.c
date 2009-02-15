@@ -1771,7 +1771,6 @@ struct view {
 	enum line_type curtype;	/* Attribute currently used for drawing. */
 	unsigned long col;	/* Column when drawing. */
 	bool has_scrolled;	/* View was scrolled. */
-	bool can_hscroll;	/* View can be scrolled horizontally. */
 
 	/* Loading */
 	struct io io;
@@ -1891,9 +1890,6 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 		waddch(view->win, '~');
 		col++;
 	}
-
-	if (view->col + col >= view->width + view->yoffset)
-		view->can_hscroll = TRUE;
 
 	return col;
 }
@@ -2121,9 +2117,6 @@ static void
 redraw_view_from(struct view *view, int lineno)
 {
 	assert(0 <= lineno && lineno < view->height);
-
-	if (lineno == 0)
-		view->can_hscroll = FALSE;
 
 	for (; lineno < view->height; lineno++) {
 		if (!draw_view_line(view, lineno))
@@ -2387,10 +2380,6 @@ scroll_view(struct view *view, enum request request)
 		report("");
 		return;
 	case REQ_SCROLL_RIGHT:
-		if (!view->can_hscroll) {
-			report("Cannot scroll beyond the last column");
-			return;
-		}
 		view->yoffset += apply_step(opt_hscroll, view->width);
 		if (view->yoffset > view->width)
 			view->yoffset = view->width;
