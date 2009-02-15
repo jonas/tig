@@ -2032,9 +2032,7 @@ draw_lineno(struct view *view, unsigned int lineno)
 	if (lineno == 1 || (lineno % opt_num_interval) == 0) {
 		static char fmt[] = "%1ld";
 
-		if (view->digits <= 9)
-			fmt[1] = '0' + digits3;
-
+		fmt[1] = '0' + (view->digits <= 9 ? digits3 : 1);
 		if (string_format(number, fmt, lineno))
 			text = number;
 	}
