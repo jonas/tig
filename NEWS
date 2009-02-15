@@ -1,7 +1,7 @@
 Release notes
 =============
 
-tig master
+tig-0.14.1
 ----------
 
 Improvements:
@@ -23,7 +23,7 @@ Bug fixes:
  - Blame view: use line number information when loading blame for
    specific commit.
  - Fix handling of quoted strings in the config file.
- - Fix horizontal scrolling.
+ - Fix horizontal scrolling glitches.
 
 tig-0.14
 --------

@@ -1,7 +1,8 @@
-personal_ws-1.1 en 146 
-DocBook
+personal_ws-1.1 en 154 
 docbook
+DocBook
 xpm
+utils
 oldmode
 libiconv
 whitespace
@@ -22,6 +23,7 @@ nodelay
 COLORTERM
 AuthorDate
 CJK
+worktree
 subdirectory
 Fullwidth
 xrvt
@@ -40,6 +42,7 @@ revgraph
 DSSL
 FIXME
 frontend
+chdir
 acked
 untracked
 subdirectories
@@ -51,6 +54,7 @@ unstanged
 subcommand
 tig
 bool
+colorN
 Scrool
 multi
 ld
@@ -67,11 +71,13 @@ Nn
 Online
 ACDMRTXB
 keymaps
+cwd
 filename
 cdate
 gitlink
 fgcolor
 tigrc
+rebase
 unmerged
 stdout
 lineno
@@ -85,6 +91,7 @@ unstage
 wclear
 CommitDate
 manpages
+rebasing
 waitpid
 libexecdir
 UI
@@ -132,6 +139,7 @@ backend
 subtrees
 keybinding
 Fonseca
+charset
 wgetch
 rwxr
 Baudis
