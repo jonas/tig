@@ -46,24 +46,25 @@ Examples:
 
 --------------------------------------------------------------------------
 set show-author = yes		# Show author?
-set show-date = yes		# Show commit date?
 set show-rev-graph = yes	# Show revision graph?
 set show-refs = yes		# Show references?
 set show-line-numbers = no	# Show line numbers?
 set line-number-interval = 5	# Interval between line numbers
+set commit-encoding = "UTF-8"	# Commit encoding
+set horizontal-scroll = 33%	# Scroll 33% of the view width
 --------------------------------------------------------------------------
 
 Or in the git configuration files:
 
 --------------------------------------------------------------------------
 [tig]
+	show-date = yes		# Show commit date?
 	author-width = 10	# Set width of the author column
 	line-graphics = no	# Disable graphics characters
 	tab-size = 8		# Number of spaces per tab
-	encoding = "UTF-8"	# Commit encoding
 --------------------------------------------------------------------------
 
-The type of variables are either bool, int, and string.
+The type of variables are either bool, int, string, or mixed.
 
 Valid bool values::
 
@@ -77,6 +78,11 @@ Valid int values::
 Valid string values::
 
 	A string of characters. Optionally, use either ' or " as delimiters.
+
+Valid mixed values::
+
+	These values are composites of the above types. The valid values are
+	specified in the description.
 
 Variables
 ~~~~~~~~~
@@ -110,6 +116,14 @@ The following variables can be set:
 'tab-size' (int)::
 
 	Number of spaces per tab. The default is 8 spaces.
+
+'horizontal-scroll' (mixed)::
+
+	Interval to scroll horizontally in each step. Can be specified either
+	as the number of columns, e.g. '5', or as a percentage of the view
+	width, e.g. '33%', where the maximum is 100%. For percentages it is
+	always ensured that at least one column is scrolled. The default is to
+	scroll '50%' of the view width.
 
 'commit-encoding' (string)::
 
@@ -207,7 +221,20 @@ Browsing state variables
 ------------------------------------------------------------------------------
 
 As an example, the following external command will save the current commit as
-a patch file: "!git format-patch -1 %(commit)".
+a patch file: "!git format-patch -1 %(commit)". If your external command
+require use of dynamic features, such as subshells, expansion of environment
+variables and process control, this can be achieved by using a combination of
+git aliases and tig external commands. The following example entries can be
+put in either the .gitconfig or .git/config file:
+
+--------------------------------------------------------------------------
+[alias]
+	gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &"
+	publish = !"for i in origin public; do git push $i; done"
+[tig "bind"]
+	generic = V !git gitk-bg
+	generic = > !git publish
+--------------------------------------------------------------------------
 
 ifdef::backend-xhtml11[]
 [frame="none"]
@@ -361,8 +388,13 @@ Color names::
 
 	Valid colors include: *white*, *black*, *green*, *magenta*, *blue*,
 	*cyan*, *yellow*, *red*, *default*. Use *default* to refer to the
-	default terminal colors. This is recommended for background colors
-	if you are using a terminal with a transparent background.
+	default terminal colors. This is recommended for background colors if
+	you are using a terminal with a transparent background.
++
+Colors can also be specified using the keywords color0, color1, ..., colorN-1
+(N being the number of colors supported by your terminal). This is useful when
+you remap the colors for your display or want to enable colors supported by
+256-color terminals.
 
 Attribute names::
 

@@ -376,8 +376,8 @@ Cursor Navigation
 `-------`--------------------------------------------------------------------
 Key	Action
 -----------------------------------------------------------------------------
-j	Move cursor one line up.
-k	Move cursor one line down.
+k	Move cursor one line up.
+j	Move cursor one line down.
 PgUp,\
 -,a	Move cursor one page up.
 PgDown	Space	Move cursor one page down.

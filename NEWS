@@ -1,6 +1,30 @@
 Release notes
 =============
 
+tig-0.14.1
+----------
+
+Improvements:
+
+ - Status view: improve "on branch" information inspired by the prompt
+   code in git's bash completion script.
+ - Colors for 256-capable terminals can be specified as colorN.
+ - Entering a number in the prompt will jump to that line number.
+ - Handle core.worktree by setting GIT_DIR and GIT_WORK_TREE.
+ - Make behavior of horizontal scrolling configurable by setting the
+   'horizontal-scroll' variable to a number or a percentage. Defaults to
+   scrolling 50% of the view width.
+
+Bug fixes:
+
+ - Status view: show error when failing to open a file.
+ - Status view: report failures to update a file.
+ - Blame view: fix problem with uninitialized variable.
+ - Blame view: use line number information when loading blame for
+   specific commit.
+ - Fix handling of quoted strings in the config file.
+ - Fix horizontal scrolling glitches.
+
 tig-0.14
 --------
 
@@ -48,7 +72,7 @@ Incompatibilities:
  - Commands from the environment (e.g. TIG_MAIN_CMD) will no longer have
    access to shell features, such as subshells and variable expansion.
    The easiest way to upgrade your configuration is to put such commands
-   in a script file.
+   in a script file or as a git alias.
 
 Improvements:
 
