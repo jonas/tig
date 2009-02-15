@@ -1957,14 +1957,14 @@ static bool
 draw_text(struct view *view, enum line_type type, const char *string, bool trim)
 {
 	view->col += draw_chars(view, type, string, view->width + view->yoffset - view->col, trim);
-	return view->width - view->col <= 0;
+	return view->width + view->yoffset <= view->col;
 }
 
 static bool
 draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t size)
 {
 	size_t skip = view->yoffset > view->col ? view->yoffset - view->col : 0;
-	int max = view->width - view->col;
+	int max = view->width + view->yoffset - view->col;
 	int i;
 
 	if (max < size)
@@ -1981,13 +1981,13 @@ draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t si
 		waddch(view->win, ' ');
 	view->col++;
 
-	return view->width - view->col <= 0;
+	return view->width + view->yoffset <= view->col;
 }
 
 static bool
 draw_field(struct view *view, enum line_type type, const char *text, int len, bool trim)
 {
-	int max = MIN(view->width - view->col, len);
+	int max = MIN(view->width + view->yoffset - view->col, len);
 	int col;
 
 	if (text)
@@ -2381,8 +2381,6 @@ scroll_view(struct view *view, enum request request)
 		return;
 	case REQ_SCROLL_RIGHT:
 		view->yoffset += apply_step(opt_hscroll, view->width);
-		if (view->yoffset > view->width)
-			view->yoffset = view->width;
 		redraw_view(view);
 		report("");
 		return;
