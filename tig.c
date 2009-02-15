@@ -1843,7 +1843,7 @@ enum line_graphic {
 	LINE_GRAPHIC_VLINE
 };
 
-static int line_graphics[] = {
+static chtype line_graphics[] = {
 	/* LINE_GRAPHIC_VLINE: */ '|'
 };
 
@@ -1910,47 +1910,6 @@ draw_space(struct view *view, enum line_type type, int max, int spaces)
 	}
 
 	return col;
-}
-
-static bool
-draw_lineno(struct view *view, unsigned int lineno)
-{
-	size_t skip = view->yoffset > view->col ? view->yoffset - view->col : 0;
-	char number[10];
-	int digits3 = view->digits < 3 ? 3 : view->digits;
-	int max_number = MIN(digits3, STRING_SIZE(number));
-	int max = view->width - view->col;
-	int col;
-
-	if (max < max_number)
-		max_number = max;
-
-	lineno += view->offset + 1;
-	if (lineno == 1 || (lineno % opt_num_interval) == 0) {
-		static char fmt[] = "%1ld";
-
-		if (view->digits <= 9)
-			fmt[1] = '0' + digits3;
-
-		if (!string_format(number, fmt, lineno))
-			number[0] = 0;
-		col = draw_chars(view, LINE_LINE_NUMBER, number, max_number, TRUE);
-	} else {
-		col = draw_space(view, LINE_LINE_NUMBER, max_number, max_number);
-	}
-
-	if (col < max && skip <= col) {
-		set_view_attr(view, LINE_DEFAULT);
-		waddch(view->win, line_graphics[LINE_GRAPHIC_VLINE]);
-	}
-	col++;
-
-	view->col += col;
-	if (col < max && skip <= col)
-		col = draw_space(view, LINE_DEFAULT, max - col, 1);
-	view->col++;
-
-	return view->width + view->yoffset <= view->col;
 }
 
 static bool
@@ -2059,6 +2018,31 @@ draw_mode(struct view *view, mode_t mode)
 		str = "----------";
 
 	return draw_field(view, LINE_MODE, str, STRING_SIZE("-rw-r--r-- "), FALSE);
+}
+
+static bool
+draw_lineno(struct view *view, unsigned int lineno)
+{
+	char number[10];
+	int digits3 = view->digits < 3 ? 3 : view->digits;
+	int max = MIN(view->width + view->yoffset - view->col, digits3);
+	char *text = NULL;
+
+	lineno += view->offset + 1;
+	if (lineno == 1 || (lineno % opt_num_interval) == 0) {
+		static char fmt[] = "%1ld";
+
+		if (view->digits <= 9)
+			fmt[1] = '0' + digits3;
+
+		if (string_format(number, fmt, lineno))
+			text = number;
+	}
+	if (text)
+		view->col += draw_chars(view, LINE_LINE_NUMBER, text, max, TRUE);
+	else
+		view->col += draw_space(view, LINE_LINE_NUMBER, max, digits3);
+	return draw_graphic(view, LINE_DEFAULT, &line_graphics[LINE_GRAPHIC_VLINE], 1);
 }
 
 static bool
