@@ -328,6 +328,74 @@ div.olist2 div.olist ol {
 <div id="header">
 <h1>Release notes</h1>
 </div>
+<h2 id="_tig_0_14_1">tig-0.14.1</h2>
+<div class="sectionbody">
+<div class="para"><p>Improvements:</p></div>
+<div class="ilist"><ul>
+<li>
+<p>
+Status view: improve "on branch" information inspired by the prompt
+   code in git's bash completion script.
+</p>
+</li>
+<li>
+<p>
+Colors for 256-capable terminals can be specified as colorN.
+</p>
+</li>
+<li>
+<p>
+Entering a number in the prompt will jump to that line number.
+</p>
+</li>
+<li>
+<p>
+Handle core.worktree by setting GIT_DIR and GIT_WORK_TREE.
+</p>
+</li>
+<li>
+<p>
+Make behavior of horizontal scrolling configurable by setting the
+   <em>horizontal-scroll</em> variable to a number or a percentage. Defaults to
+   scrolling 50% of the view width.
+</p>
+</li>
+</ul></div>
+<div class="para"><p>Bug fixes:</p></div>
+<div class="ilist"><ul>
+<li>
+<p>
+Status view: show error when failing to open a file.
+</p>
+</li>
+<li>
+<p>
+Status view: report failures to update a file.
+</p>
+</li>
+<li>
+<p>
+Blame view: fix problem with uninitialized variable.
+</p>
+</li>
+<li>
+<p>
+Blame view: use line number information when loading blame for
+   specific commit.
+</p>
+</li>
+<li>
+<p>
+Fix handling of quoted strings in the config file.
+</p>
+</li>
+<li>
+<p>
+Fix horizontal scrolling glitches.
+</p>
+</li>
+</ul></div>
+</div>
 <h2 id="_tig_0_14">tig-0.14</h2>
 <div class="sectionbody">
 <div class="para"><p>Incompatibilities:</p></div>
@@ -445,7 +513,7 @@ Fix regression parsing multiple spaces in ~/.tigrc.
 Commands from the environment (e.g. TIG_MAIN_CMD) will no longer have
    access to shell features, such as subshells and variable expansion.
    The easiest way to upgrade your configuration is to put such commands
-   in a script file.
+   in a script file or as a git alias.
 </p>
 </li>
 </ul></div>
@@ -975,7 +1043,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2009-02-05 21:20:49 CEST
+Last updated 2009-02-16 00:02:20 CEST
 </div>
 </div>
 </body>

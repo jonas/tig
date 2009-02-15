@@ -366,22 +366,23 @@ is:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>set show-author = yes           # Show author?
-set show-date = yes             # Show commit date?
 set show-rev-graph = yes        # Show revision graph?
 set show-refs = yes             # Show references?
 set show-line-numbers = no      # Show line numbers?
-set line-number-interval = 5    # Interval between line numbers</tt></pre>
+set line-number-interval = 5    # Interval between line numbers
+set commit-encoding = "UTF-8"   # Commit encoding
+set horizontal-scroll = 33%     # Scroll 33% of the view width</tt></pre>
 </div></div>
 <div class="para"><p>Or in the git configuration files:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>[tig]
+        show-date = yes         # Show commit date?
         author-width = 10       # Set width of the author column
         line-graphics = no      # Disable graphics characters
-        tab-size = 8            # Number of spaces per tab
-        encoding = "UTF-8"      # Commit encoding</tt></pre>
+        tab-size = 8            # Number of spaces per tab</tt></pre>
 </div></div>
-<div class="para"><p>The type of variables are either bool, int, and string.</p></div>
+<div class="para"><p>The type of variables are either bool, int, string, or mixed.</p></div>
 <div class="vlist"><dl>
 <dt>
 Valid bool values
@@ -406,6 +407,15 @@ Valid string values
 <dd>
 <p>
         A string of characters. Optionally, use either ' or " as delimiters.
+</p>
+</dd>
+<dt>
+Valid mixed values
+</dt>
+<dd>
+<p>
+        These values are composites of the above types. The valid values are
+        specified in the description.
 </p>
 </dd>
 </dl></div>
@@ -464,6 +474,18 @@ Valid string values
 <dd>
 <p>
         Number of spaces per tab. The default is 8 spaces.
+</p>
+</dd>
+<dt>
+<em>horizontal-scroll</em> (mixed)
+</dt>
+<dd>
+<p>
+        Interval to scroll horizontally in each step. Can be specified either
+        as the number of columns, e.g. <em>5</em>, or as a percentage of the view
+        width, e.g. <em>33%</em>, where the maximum is 100%. For percentages it is
+        always ensured that at least one column is scrolled. The default is to
+        scroll <em>50%</em> of the view width.
 </p>
 </dd>
 <dt>
@@ -617,7 +639,20 @@ cellspacing="0" cellpadding="4">
 </table>
 </div>
 <div class="para"><p>As an example, the following external command will save the current commit as
-a patch file: "!git format-patch -1 %(commit)".</p></div>
+a patch file: "!git format-patch -1 %(commit)". If your external command
+require use of dynamic features, such as subshells, expansion of environment
+variables and process control, this can be achieved by using a combination of
+git aliases and tig external commands. The following example entries can be
+put in either the .gitconfig or .git/config file:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>[alias]
+        gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &amp;"
+        publish = !"for i in origin public; do git push $i; done"
+[tig "bind"]
+        generic = V !git gitk-bg
+        generic = &gt; !git publish</tt></pre>
+</div></div>
 <div class="tableblock">
 <table rules="none"
 frame="void"
@@ -1198,9 +1233,13 @@ Color names
 <p>
         Valid colors include: <strong>white</strong>, <strong>black</strong>, <strong>green</strong>, <strong>magenta</strong>, <strong>blue</strong>,
         <strong>cyan</strong>, <strong>yellow</strong>, <strong>red</strong>, <strong>default</strong>. Use <strong>default</strong> to refer to the
-        default terminal colors. This is recommended for background colors
-        if you are using a terminal with a transparent background.
+        default terminal colors. This is recommended for background colors if
+        you are using a terminal with a transparent background.
 </p>
+<div class="para"><p>Colors can also be specified using the keywords color0, color1, &#8230;, colorN-1
+(N being the number of colors supported by your terminal). This is useful when
+you remap the colors for your display or want to enable colors supported by
+256-color terminals.</p></div>
 </dd>
 <dt>
 Attribute names
@@ -1605,7 +1644,7 @@ and the <a href="http://jonas.nitro.dk/tig/manual.html">tig manual</a>.</p></div
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2009-02-05 21:20:46 CEST
+Last updated 2009-02-16 00:02:16 CEST
 </div>
 </div>
 </body>
