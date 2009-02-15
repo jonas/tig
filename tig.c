@@ -3101,10 +3101,8 @@ view_driver(struct view *view, enum request request)
 {
 	int i;
 
-	if (request == REQ_NONE) {
-		doupdate();
+	if (request == REQ_NONE)
 		return TRUE;
-	}
 
 	if (request > REQ_NONE) {
 		open_run_request(request);
