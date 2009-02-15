@@ -1905,7 +1905,7 @@ draw_space(struct view *view, enum line_type type, int max, int spaces)
 	while (spaces > 0) {
 		int len = MIN(spaces, sizeof(space) - 1);
 
-		col += draw_chars(view, type, space, spaces, FALSE);
+		col += draw_chars(view, type, space, len, FALSE);
 		spaces -= len;
 	}
 
