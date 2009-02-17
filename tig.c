@@ -36,6 +36,7 @@
 #include <sys/stat.h>
 #include <sys/select.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include <time.h>
 #include <fcntl.h>
 
@@ -340,11 +341,74 @@ suffixcmp(const char *str, int slen, const char *suffix)
 }
 
 
-static const char *
-mkdate(const time_t *time)
+/*
+ * What value of "tz" was in effect back then at "time" in the
+ * local timezone?
+ */
+static int local_tzoffset(time_t time)
+{
+	time_t t, t_local;
+	struct tm tm;
+	int offset, eastwest; 
+
+	t = time;
+	localtime_r(&t, &tm);
+	t_local = mktime(&tm);
+
+	if (t_local < t) {
+		eastwest = -1;
+		offset = t - t_local;
+	} else {
+		eastwest = 1;
+		offset = t_local - t;
+	}
+	offset /= 60; /* in minutes */
+	offset = (offset % 60) + ((offset / 60) * 100);
+	return offset * eastwest;
+}
+
+enum date {
+	DATE_NONE = 0,
+	DATE_DEFAULT,
+	DATE_RELATIVE,
+	DATE_SHORT
+};
+
+static char *
+string_date(const time_t *time, enum date date)
 {
 	static char buf[DATE_COLS + 1];
+	static const struct enum_map reldate[] = {
+		{ "second", 1,			60 * 2 },
+		{ "minute", 60,			60 * 60 * 2 },
+		{ "hour",   60 * 60,		60 * 60 * 24 * 2 },
+		{ "day",    60 * 60 * 24,	60 * 60 * 24 * 7 * 2 },
+		{ "week",   60 * 60 * 24 * 7,	60 * 60 * 24 * 7 * 5 },
+		{ "month",  60 * 60 * 24 * 30,	60 * 60 * 24 * 30 * 12 },
+	};
 	struct tm tm;
+
+	if (date == DATE_RELATIVE) {
+		struct timeval now;
+		time_t date = *time + local_tzoffset(*time);
+		time_t seconds;
+		int i;
+
+		gettimeofday(&now, NULL);
+		seconds = now.tv_sec < date ? date - now.tv_sec : now.tv_sec - date;
+		for (i = 0; i < ARRAY_SIZE(reldate); i++) {
+			if (seconds >= reldate[i].value)
+				continue;
+
+			seconds /= reldate[i].namelen;
+			if (!string_format(buf, "%ld %s%s %s",
+					   seconds, reldate[i].name,
+					   seconds > 1 ? "s" : "",
+					   now.tv_sec >= date ? "ago" : "ahead"))
+				break;
+			return buf;
+		}
+	}
 
 	gmtime_r(time, &tm);
 	return strftime(buf, sizeof(buf), DATE_FORMAT, &tm) ? buf : NULL;
@@ -902,8 +966,7 @@ get_request(const char *name)
  */
 
 /* Option and state variables. */
-static bool opt_date			= TRUE;
-static bool opt_date_short		= FALSE;
+static enum date opt_date		= DATE_DEFAULT;
 static bool opt_author			= TRUE;
 static bool opt_line_number		= FALSE;
 static bool opt_line_graphics		= TRUE;
@@ -934,6 +997,7 @@ static FILE *opt_tty			= NULL;
 
 #define is_initial_commit()	(!*opt_head_rev)
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || !strcmp(opt_head_rev, (rev)))
+#define mkdate(time)		string_date(time, opt_date)
 
 
 /*
@@ -1160,7 +1224,6 @@ static const struct keybinding default_keybindings[] = {
 	{ 'o',		REQ_OPTIONS },
 	{ '.',		REQ_TOGGLE_LINENO },
 	{ 'D',		REQ_TOGGLE_DATE },
-	{ 'T',		REQ_TOGGLE_DATE_SHORT },
 	{ 'A',		REQ_TOGGLE_AUTHOR },
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
 	{ 'F',		REQ_TOGGLE_REFS },
@@ -1621,11 +1684,20 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "show-author"))
 		return parse_bool(&opt_author, argv[2]);
 
-	if (!strcmp(argv[0], "show-date"))
-		return parse_bool(&opt_date, argv[2]);
+	if (!strcmp(argv[0], "show-date")) {
+		bool show_date;
 
-	if (!strcmp(argv[0], "date-short"))
-		return parse_bool(&opt_date_short, argv[2]);
+		if (!strcmp(argv[2], "relative")) {
+			opt_date = DATE_RELATIVE;
+			return OK;
+		} else if (!strcmp(argv[2], "short")) {
+			opt_date = DATE_SHORT;
+			return OK;
+		} else if (parse_bool(&show_date, argv[2])) {
+			opt_date = show_date ? DATE_DEFAULT : DATE_NONE;
+		}
+		return ERR;
+	}
 
 	if (!strcmp(argv[0], "show-rev-graph"))
 		return parse_bool(&opt_rev_graph, argv[2]);
@@ -2078,7 +2150,7 @@ static bool
 draw_date(struct view *view, time_t *time)
 {
 	const char *date = mkdate(time);
-	int cols = opt_date_short ? DATE_SHORT_COLS : DATE_COLS;
+	int cols = opt_date == DATE_SHORT ? DATE_SHORT_COLS : DATE_COLS;
 
 	return draw_field(view, LINE_DATE, date, cols, FALSE);
 }
@@ -2358,6 +2430,21 @@ redraw_display(bool clear)
 }
 
 static void
+toggle_date_option(enum date *date)
+{
+	static const char *help[] = {
+		"no",
+		"default",
+		"relative",
+		"short"
+	};
+
+	opt_date = (opt_date + 1) % ARRAY_SIZE(help);
+	redraw_display(FALSE);
+	report("Displaying %s dates", help[opt_date]);
+}
+
+static void
 toggle_view_option(bool *option, const char *help)
 {
 	*option = !*option;
@@ -2378,8 +2465,12 @@ open_option_menu(void)
 	};
 	int selected = 0;
 
-	if (prompt_menu("Toggle option", menu, &selected))
-		toggle_view_option(menu[selected].data, menu[selected].text);
+	if (prompt_menu("Toggle option", menu, &selected)) {
+		if (menu[selected].data == &opt_date)
+			toggle_date_option(menu[selected].data);
+		else
+			toggle_view_option(menu[selected].data, menu[selected].text);
+	}
 }
 
 static void
@@ -3372,11 +3463,7 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_TOGGLE_DATE:
-		toggle_view_option(&opt_date, "date display");
-		break;
-
-	case REQ_TOGGLE_DATE_SHORT:
-		toggle_view_option(&opt_date_short, "date shortening");
+		toggle_date_option(&opt_date);
 		break;
 
 	case REQ_TOGGLE_AUTHOR:

@@ -42,6 +42,7 @@ Examples:
 
 --------------------------------------------------------------------------
 set show-author = yes		# Show author?
+set show-date = relative	# Show relative commit date.
 set show-rev-graph = yes	# Show revision graph?
 set show-refs = yes		# Show references?
 set show-line-numbers = no	# Show line numbers?
@@ -86,18 +87,18 @@ Variables
 The following variables can be set:
 
 'show-author' (bool)::
-'show-date' (bool)::
 'show-rev-graph' (bool)::
 'show-refs' (bool)::
 
-	Whether to show author, date, revision graph, and references
+	Whether to show author, revision graph, and references
 	(branches, tags, and remotes) in the main view on start-up. Can all be
 	toggled.
 
-'date-short' (bool)::
+'show-date' (bool or "relative" or "short")::
 
-        Whether to shorten the date column in the main view to just the date
-        on startup. Can be toggled.
+	Whether and how to show date. If set to "relative" a relative date will be
+	used, e.g. "2 minutes ago". If set to "short" no time information is
+	shown. Can be toggled.
 
 'author-width' (int)::
 
@@ -138,7 +139,6 @@ The following variables can be set:
 
 	The encoding used for commits. The default is UTF-8. Not this option
 	is shadowed by the "i18n.commitencoding" option in `.git/config`.
-
 
 Bind command
 ------------
@@ -345,7 +345,6 @@ stop-loading		Stop all loading views
 options			Open options menu
 toggle-lineno		Toggle line numbers
 toggle-date		Toggle date display
-toggle-date-short       Toggle short (date-only) dates
 toggle-author		Toggle author display
 toggle-rev-graph	Toggle revision graph visualization
 toggle-refs		Toggle reference display
