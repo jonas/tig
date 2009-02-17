@@ -309,6 +309,17 @@ suffixcmp(const char *str, int slen, const char *suffix)
 }
 
 
+static const char *
+mkdate(const time_t *time)
+{
+	static char buf[DATE_COLS + 1];
+	struct tm tm;
+
+	gmtime_r(time, &tm);
+	return strftime(buf, sizeof(buf), DATE_FORMAT, &tm) ? buf : NULL;
+}
+
+
 static bool
 argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
 {
@@ -1960,15 +1971,9 @@ draw_field(struct view *view, enum line_type type, const char *text, int len, bo
 }
 
 static bool
-draw_date(struct view *view, struct tm *time)
+draw_date(struct view *view, time_t *time)
 {
-	char buf[DATE_COLS];
-	char *date;
-	int timelen = 0;
-
-	if (time)
-		timelen = strftime(buf, sizeof(buf), DATE_FORMAT, time);
-	date = timelen ? buf : NULL;
+	const char *date = mkdate(time);
 
 	return draw_field(view, LINE_DATE, date, DATE_COLS, FALSE);
 }
@@ -3388,7 +3393,7 @@ parse_timezone(time_t *time, const char *zone)
  *	author  <email@address.tld> 1138474660 +0100
  */
 static void
-parse_author_line(char *ident, const char **author, struct tm *tm)
+parse_author_line(char *ident, const char **author, time_t *time)
 {
 	char *nameend = strchr(ident, '<');
 	char *emailend = strchr(ident, '>');
@@ -3409,12 +3414,11 @@ parse_author_line(char *ident, const char **author, struct tm *tm)
 	if (emailend && emailend[1] == ' ') {
 		char *secs = emailend + 2;
 		char *zone = strchr(secs, ' ');
-		time_t time = (time_t) atol(secs);
+
+		*time = (time_t) atol(secs);
 
 		if (zone && strlen(zone) == STRING_SIZE(" +0700"))
-			parse_timezone(&time, zone + 1);
-
-		gmtime_r(&time, tm);
+			parse_timezone(time, zone + 1);
 	}
 }
 
@@ -3835,7 +3839,7 @@ push_tree_stack_entry(const char *name, unsigned long lineno)
 struct tree_entry {
 	char id[SIZEOF_REV];
 	mode_t mode;
-	struct tm time;			/* Date from the author ident. */
+	time_t time;			/* Date from the author ident. */
 	const char *author;		/* Author of the commit. */
 	char name[1];
 };
@@ -3880,7 +3884,7 @@ static bool
 tree_read_date(struct view *view, char *text, bool *read_date)
 {
 	static const char *author_name;
-	static struct tm author_time;
+	static time_t author_time;
 
 	if (!text && *read_date) {
 		*read_date = FALSE;
@@ -3941,7 +3945,7 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 				continue;
 
 			entry->author = author_name;
-			memcpy(&entry->time, &author_time, sizeof(entry->time));
+			entry->time = author_time;
 			line->dirty = 1;
 			break;
 		}
@@ -4226,7 +4230,7 @@ struct blame_commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
 	const char *author;		/* Author of the commit. */
-	struct tm time;			/* Date from the author ident. */
+	time_t time;			/* Date from the author ident. */
 	char filename[128];		/* Name of file. */
 	bool has_previous;		/* Was a "previous" line detected. */
 };
@@ -4378,7 +4382,6 @@ blame_read(struct view *view, char *line)
 {
 	static struct blame_commit *commit = NULL;
 	static int blamed = 0;
-	static time_t author_time;
 	static bool read_file = TRUE;
 
 	if (read_file)
@@ -4406,11 +4409,10 @@ blame_read(struct view *view, char *line)
 		commit->author = get_author(line);
 
 	} else if (match_blame_header("author-time ", &line)) {
-		author_time = (time_t) atol(line);
+		commit->time = (time_t) atol(line);
 
 	} else if (match_blame_header("author-tz ", &line)) {
-		parse_timezone(&author_time, line);
-		gmtime_r(&author_time, &commit->time);
+		parse_timezone(&commit->time, line);
 
 	} else if (match_blame_header("summary ", &line)) {
 		string_ncopy(commit->title, line, strlen(line));
@@ -4430,7 +4432,7 @@ static bool
 blame_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct blame *blame = line->data;
-	struct tm *time = NULL;
+	time_t *time = NULL;
 	const char *id = NULL, *author = NULL;
 	char text[SIZEOF_STR];
 
@@ -4584,15 +4586,12 @@ blame_grep(struct view *view, struct line *line)
 	(on && *text && regexec(view->regex, text, 1, &pmatch, 0) != REG_NOMATCH)
 
 	if (commit) {
-		char buf[DATE_COLS + 1];
-
 		if (MATCH(commit->title, 1) ||
 		    MATCH(commit->author, opt_author) ||
 		    MATCH(commit->id, opt_date))
 			return TRUE;
 
-		if (strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time) &&
-		    MATCH(buf, 1))
+		if (MATCH(mkdate(&commit->time), 1))
 			return TRUE;
 	}
 
@@ -5650,7 +5649,7 @@ struct commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
 	const char *author;		/* Author of the commit. */
-	struct tm time;			/* Date from the author ident. */
+	time_t time;			/* Date from the author ident. */
 	struct ref **refs;		/* Repository references. */
 	chtype graph[SIZEOF_REVGRAPH];	/* Ancestry chain graphics. */
 	size_t graph_size;		/* The width of the graph array. */
@@ -6061,7 +6060,6 @@ main_grep(struct view *view, struct line *line)
 {
 	struct commit *commit = line->data;
 	enum { S_TITLE, S_AUTHOR, S_DATE, S_REFS, S_END } state;
-	char buf[DATE_COLS + 1];
 	regmatch_t pmatch;
 
 	for (state = S_TITLE; state < S_END; state++) {
@@ -6077,9 +6075,9 @@ main_grep(struct view *view, struct line *line)
 		case S_DATE:
 			if (!opt_date)
 				continue;
-			if (!strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time))
+			text = mkdate(&commit->time);
+			if (!text)
 				continue;
-			text = buf;
 			break;
 		case S_REFS:
 			if (!opt_show_refs)
