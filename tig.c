@@ -2502,6 +2502,19 @@ move_view(struct view *view, enum request request)
 
 static void search_view(struct view *view, enum request request);
 
+static bool
+grep_text(struct view *view, const char *text[])
+{
+	regmatch_t pmatch;
+	size_t i;
+
+	for (i = 0; text[i]; i++)
+		if (*text[i] &&
+		    regexec(view->regex, text[i], 1, &pmatch, 0) != REG_NOMATCH)
+			return TRUE;
+	return FALSE;
+}
+
 static void
 select_view_line(struct view *view, unsigned long lineno)
 {
@@ -3612,16 +3625,9 @@ pager_request(struct view *view, enum request request, struct line *line)
 static bool
 pager_grep(struct view *view, struct line *line)
 {
-	regmatch_t pmatch;
-	char *text = line->data;
+	const char *text[] = { line->data, NULL };
 
-	if (!*text)
-		return FALSE;
-
-	if (regexec(view->regex, text, 1, &pmatch, 0) == REG_NOMATCH)
-		return FALSE;
-
-	return TRUE;
+	return grep_text(view, text);
 }
 
 static void
@@ -4580,24 +4586,15 @@ blame_grep(struct view *view, struct line *line)
 {
 	struct blame *blame = line->data;
 	struct blame_commit *commit = blame->commit;
-	regmatch_t pmatch;
+	const char *text[] = {
+		blame->text,
+		commit ? commit->title : "",
+		commit ? commit->id : "",
+		commit && opt_author ? commit->author : "",
+		commit && opt_date ? mkdate(&commit->time) : "",
+	};
 
-#define MATCH(text, on)							\
-	(on && *text && regexec(view->regex, text, 1, &pmatch, 0) != REG_NOMATCH)
-
-	if (commit) {
-		if (MATCH(commit->title, 1) ||
-		    MATCH(commit->author, opt_author) ||
-		    MATCH(commit->id, opt_date))
-			return TRUE;
-
-		if (MATCH(mkdate(&commit->time), 1))
-			return TRUE;
-	}
-
-	return MATCH(blame->text, 1);
-
-#undef MATCH
+	return grep_text(view, text);
 }
 
 static void
@@ -5357,29 +5354,12 @@ static bool
 status_grep(struct view *view, struct line *line)
 {
 	struct status *status = line->data;
-	enum { S_STATUS, S_NAME, S_END } state;
-	char buf[2] = "?";
-	regmatch_t pmatch;
 
-	if (!status)
-		return FALSE;
+	if (status) {
+		const char buf[2] = { status->status, 0 };
+		const char *text[] = { status->new.name, buf, NULL };
 
-	for (state = S_STATUS; state < S_END; state++) {
-		const char *text;
-
-		switch (state) {
-		case S_NAME:	text = status->new.name;	break;
-		case S_STATUS:
-			buf[0] = status->status;
-			text = buf;
-			break;
-
-		default:
-			return FALSE;
-		}
-
-		if (regexec(view->regex, text, 1, &pmatch, 0) != REG_NOMATCH)
-			return TRUE;
+		return grep_text(view, text);
 	}
 
 	return FALSE;
@@ -6045,7 +6025,7 @@ grep_refs(struct ref **refs, regex_t *regex)
 	regmatch_t pmatch;
 	size_t i = 0;
 
-	if (!refs)
+	if (!opt_show_refs || !refs)
 		return FALSE;
 	do {
 		if (regexec(regex, refs[i]->name, 1, &pmatch, 0) != REG_NOMATCH)
@@ -6059,41 +6039,14 @@ static bool
 main_grep(struct view *view, struct line *line)
 {
 	struct commit *commit = line->data;
-	enum { S_TITLE, S_AUTHOR, S_DATE, S_REFS, S_END } state;
-	regmatch_t pmatch;
+	const char *text[] = {
+		commit->title,
+		opt_author ? commit->author : "",
+		opt_date ? mkdate(&commit->time) : "",
+		NULL
+	};
 
-	for (state = S_TITLE; state < S_END; state++) {
-		const char *text;
-
-		switch (state) {
-		case S_TITLE:	text = commit->title;	break;
-		case S_AUTHOR:
-			if (!opt_author)
-				continue;
-			text = commit->author;
-			break;
-		case S_DATE:
-			if (!opt_date)
-				continue;
-			text = mkdate(&commit->time);
-			if (!text)
-				continue;
-			break;
-		case S_REFS:
-			if (!opt_show_refs)
-				continue;
-			if (grep_refs(commit->refs, view->regex) == TRUE)
-				return TRUE;
-			continue;
-		default:
-			return FALSE;
-		}
-
-		if (regexec(view->regex, text, 1, &pmatch, 0) != REG_NOMATCH)
-			return TRUE;
-	}
-
-	return FALSE;
+	return grep_text(view, text) || grep_refs(commit->refs, view->regex);
 }
 
 static void
