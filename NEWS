@@ -1,6 +1,13 @@
 Release notes
 =============
 
+tig master
+---------
+
+Bug fixes:
+
+ - Tree view: fix searching.
+
 tig-0.14.1
 ----------
 

@@ -4143,6 +4143,20 @@ tree_request(struct view *view, enum request request, struct line *line)
 	return REQ_NONE;
 }
 
+static bool
+tree_grep(struct view *view, struct line *line)
+{
+	struct tree_entry *entry = line->data;
+	const char *text[] = {
+		entry->name,
+		opt_author ? entry->author : "",
+		opt_date ? mkdate(&entry->time) : "",
+		NULL
+	};
+
+	return grep_text(view, text);
+}
+
 static void
 tree_select(struct view *view, struct line *line)
 {
@@ -4170,7 +4184,7 @@ static struct view_ops tree_ops = {
 	tree_read,
 	tree_draw,
 	tree_request,
-	pager_grep,
+	tree_grep,
 	tree_select,
 };
 
