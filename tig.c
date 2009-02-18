@@ -167,17 +167,16 @@ static bool prompt_yesno(const char *prompt);
 
 #define DEFINE_ALLOCATOR(name, type, chunk_size)				\
 static type *									\
-name(type **mem, size_t *alloc, size_t new_size)				\
+name(type **mem, size_t size, size_t increase)					\
 {										\
-	size_t num_chunks = *alloc / chunk_size;				\
-	size_t num_chunks_new = (new_size + chunk_size - 1) / chunk_size;	\
+	size_t num_chunks = (size + chunk_size - 1) / chunk_size;		\
+	size_t num_chunks_new = (size + increase + chunk_size - 1) / chunk_size;\
 	type *tmp = *mem;							\
 										\
 	if (mem == NULL || num_chunks != num_chunks_new) {			\
-		size_t memsize = num_chunks_new * chunk_size;			\
-		tmp = realloc(tmp, memsize * sizeof(type));			\
+		tmp = realloc(tmp, num_chunks_new * chunk_size * sizeof(type));	\
 		if (tmp)							\
-			*mem = tmp, *alloc = memsize;				\
+			*mem = tmp;						\
 	}									\
 										\
 	return tmp;								\
@@ -1796,7 +1795,6 @@ struct view {
 	/* Buffering */
 	size_t lines;		/* Total number of lines */
 	struct line *line;	/* Line index */
-	size_t line_alloc;	/* Total number of allocated lines */
 	unsigned int digits;	/* Number of digits in the lines member. */
 
 	/* Drawing */
@@ -2653,7 +2651,6 @@ reset_view(struct view *view)
 	view->yoffset = 0;
 	view->lines  = 0;
 	view->lineno = 0;
-	view->line_alloc = 0;
 	view->vid[0] = 0;
 	view->update_secs = 0;
 }
@@ -2921,7 +2918,7 @@ add_line_data(struct view *view, void *data, enum line_type type)
 {
 	struct line *line;
 
-	if (!realloc_lines(&view->line, &view->line_alloc, view->lines + 1))
+	if (!realloc_lines(&view->line, view->lines, 1))
 		return NULL;
 
 	line = &view->line[view->lines++];
@@ -3349,7 +3346,6 @@ static const char *
 get_author(const char *name)
 {
 	static const char **authors;
-	static size_t authors_alloc;
 	static size_t authors_size;
 	int from = 0, to = authors_size - 1;
 
@@ -3366,7 +3362,7 @@ get_author(const char *name)
 			from = pos + 1;
 	}
 
-	if (!realloc_authors(&authors, &authors_alloc, authors_size + 1))
+	if (!realloc_authors(&authors, authors_size, 1))
 		return NULL;
 	name = strdup(name);
 	if (!name)
@@ -5510,13 +5506,11 @@ stage_next(struct view *view, struct line *line)
 	int i;
 
 	if (!stage_chunks) {
-		static size_t alloc = 0;
-
 		for (line = view->line; line < view->line + view->lines; line++) {
 			if (line->type != LINE_DIFF_CHUNK)
 				continue;
 
-			if (!realloc_ints(&stage_chunk, &alloc, stage_chunks + 1)) {
+			if (!realloc_ints(&stage_chunk, stage_chunks, 1)) {
 				report("Allocation failure");
 				return;
 			}
@@ -6522,12 +6516,10 @@ read_prompt(const char *prompt)
  */
 
 static struct ref *refs = NULL;
-static size_t refs_alloc = 0;
 static size_t refs_size = 0;
 
 /* Id <-> ref store */
 static struct ref ***id_refs = NULL;
-static size_t id_refs_alloc = 0;
 static size_t id_refs_size = 0;
 
 DEFINE_ALLOCATOR(realloc_refs, struct ref, 256)
@@ -6557,7 +6549,6 @@ static struct ref **
 get_refs(const char *id)
 {
 	struct ref **ref_list = NULL;
-	size_t ref_list_alloc = 0;
 	size_t ref_list_size = 0;
 	size_t i;
 
@@ -6565,14 +6556,14 @@ get_refs(const char *id)
 		if (!strcmp(id, id_refs[i][0]->id))
 			return id_refs[i];
 
-	if (!realloc_refs_lists(&id_refs, &id_refs_alloc, id_refs_size + 1))
+	if (!realloc_refs_lists(&id_refs, id_refs_size, 1))
 		return NULL;
 
 	for (i = 0; i < refs_size; i++) {
 		if (strcmp(id, refs[i].id))
 			continue;
 
-		if (!realloc_refs_list(&ref_list, &ref_list_alloc, ref_list_size + 1))
+		if (!realloc_refs_list(&ref_list, ref_list_size, 1))
 			return ref_list;
 
 		ref_list[ref_list_size] = &refs[i];
@@ -6644,7 +6635,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 		return OK;
 	}
 
-	if (!realloc_refs(&refs, &refs_alloc, refs_size + 1))
+	if (!realloc_refs(&refs, refs_size, 1))
 		return ERR;
 
 	ref = &refs[refs_size++];
