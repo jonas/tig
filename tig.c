@@ -994,9 +994,9 @@ static char opt_head[SIZEOF_REF]	= "";
 static char opt_head_rev[SIZEOF_REV]	= "";
 static char opt_remote[SIZEOF_REF]	= "";
 static char opt_encoding[20]		= "UTF-8";
-static bool opt_utf8			= TRUE;
 static char opt_codeset[20]		= "UTF-8";
-static iconv_t opt_iconv		= ICONV_NONE;
+static iconv_t opt_iconv_in		= ICONV_NONE;
+static iconv_t opt_iconv_out		= ICONV_NONE;
 static char opt_search[SIZEOF_STR]	= "";
 static char opt_cdup[SIZEOF_STR]	= "";
 static char opt_prefix[SIZEOF_STR]	= "";
@@ -2060,6 +2060,7 @@ static int
 draw_chars(struct view *view, enum line_type type, const char *string,
 	   int max_len, bool use_tilde)
 {
+	static char out_buffer[BUFSIZ * 2];
 	int len = 0;
 	int col = 0;
 	int trimmed = FALSE;
@@ -2068,22 +2069,28 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 	if (max_len <= 0)
 		return 0;
 
-	if (opt_utf8) {
-		len = utf8_length(&string, skip, &col, max_len, &trimmed, use_tilde);
-	} else {
-		col = len = strlen(string);
-		if (len > max_len) {
-			if (use_tilde) {
-				max_len -= 1;
-			}
-			col = len = max_len;
-			trimmed = TRUE;
-		}
-	}
+	len = utf8_length(&string, skip, &col, max_len, &trimmed, use_tilde);
 
 	set_view_attr(view, type);
-	if (len > 0)
+	if (len > 0) {
+		if (opt_iconv_out != ICONV_NONE) {
+			ICONV_CONST char *inbuf = (ICONV_CONST char *) string;
+			size_t inlen = len + 1;
+
+			char *outbuf = out_buffer;
+			size_t outlen = sizeof(out_buffer);
+
+			size_t ret;
+
+			ret = iconv(opt_iconv_out, &inbuf, &inlen, &outbuf, &outlen);
+			if (ret != (size_t) -1) {
+				string = out_buffer;
+				len = sizeof(out_buffer) - outlen;
+			}
+		}
+
 		waddnstr(view->win, string, len);
+	}
 	if (trimmed && use_tilde) {
 		set_view_attr(view, LINE_DELIMITER);
 		waddch(view->win, '~');
@@ -3056,7 +3063,7 @@ update_view(struct view *view)
 	}
 
 	for (; (line = io_get(view->pipe, '\n', can_read)); can_read = FALSE) {
-		if (opt_iconv != ICONV_NONE) {
+		if (opt_iconv_in != ICONV_NONE) {
 			ICONV_CONST char *inbuf = line;
 			size_t inlen = strlen(line) + 1;
 
@@ -3065,7 +3072,7 @@ update_view(struct view *view)
 
 			size_t ret;
 
-			ret = iconv(opt_iconv, &inbuf, &inlen, &outbuf, &outlen);
+			ret = iconv(opt_iconv_in, &inbuf, &inlen, &outbuf, &outlen);
 			if (ret != (size_t) -1)
 				line = out_buffer;
 		}
@@ -7698,12 +7705,15 @@ main(int argc, const char *argv[])
 	if (!opt_git_dir[0] && request != REQ_VIEW_PAGER)
 		die("Not a git repository");
 
-	if (*opt_encoding && strcasecmp(opt_encoding, "UTF-8"))
-		opt_utf8 = FALSE;
+	if (*opt_encoding && strcmp(opt_codeset, "UTF-8")) {
+		opt_iconv_in = iconv_open("UTF-8", opt_encoding);
+		if (opt_iconv_in == ICONV_NONE)
+			die("Failed to initialize character set conversion");
+	}
 
-	if (*opt_codeset && strcmp(opt_codeset, opt_encoding)) {
-		opt_iconv = iconv_open(opt_codeset, opt_encoding);
-		if (opt_iconv == ICONV_NONE)
+	if (*opt_codeset && strcmp(opt_codeset, "UTF-8")) {
+		opt_iconv_out = iconv_open(opt_codeset, "UTF-8");
+		if (opt_iconv_out == ICONV_NONE)
 			die("Failed to initialize character set conversion");
 	}
 

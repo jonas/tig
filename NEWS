@@ -4,6 +4,13 @@ Release notes
 master
 ------
 
+Incompatibilities:
+
+ - Encode everything internally as UTF-8. This can affect performance,
+   but should in general improve handling of character lengths etc.
+   Also, to properly handle UTF-8 environments use ncurses with wide
+   character support.
+
 Improvements:
 
  - Status view: update the file variable when a line is selected so

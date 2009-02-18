@@ -28,6 +28,11 @@ need to first make the configure script:
 
 	$ make configure
 
+Build settings are read from the file "config.make". To manually configure tig
+to use the ncurses library with wide character support, add the line:
+
+	LDLIBS = -lncursesw
+
 Release notes documenting notable changes are available in the NEWS file. When
 upgrading, you are advised to also read them after you have completed the
 installation.
@@ -38,9 +43,12 @@ The following tools and packages are needed:
 |=============================================================================
 |Tool				|Description
 |git-core			|Tig is just a frontend for git.
-|ncurses			|Be sure to also have development files
+|ncurses or ncursesw		|Be sure to have the development files
 				 installed. Usually they are available in a
 				 separate package ending with `-dev`.
+				 Note also that ncurses with wide character
+				 support (ncursesw) is required to properly
+				 handle UTF-8 encoded strings.
 |iconv				|If iconv is not provided by the c library
 				 you need to change the Makefile to link it
 				 into the binary.
