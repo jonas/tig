@@ -162,6 +162,28 @@ static char *prompt_input(const char *prompt, input_handler handler, void *data)
 static bool prompt_yesno(const char *prompt);
 
 /*
+ * Allocation helpers ... Entering macro hell to never be seen again.
+ */
+
+#define DEFINE_ALLOCATOR(name, type, chunk_size)				\
+static type *									\
+name(type **mem, size_t *alloc, size_t new_size)				\
+{										\
+	size_t num_chunks = *alloc / chunk_size;				\
+	size_t num_chunks_new = (new_size + chunk_size - 1) / chunk_size;	\
+	type *tmp = *mem;							\
+										\
+	if (mem == NULL || num_chunks != num_chunks_new) {			\
+		size_t memsize = num_chunks_new * chunk_size;			\
+		tmp = realloc(tmp, memsize * sizeof(type));			\
+		if (tmp)							\
+			*mem = tmp, *alloc = memsize;				\
+	}									\
+										\
+	return tmp;								\
+}
+
+/*
  * String helpers
  */
 
@@ -2802,36 +2824,6 @@ begin_update(struct view *view, bool refresh)
 	return TRUE;
 }
 
-#define ITEM_CHUNK_SIZE 256
-static void *
-realloc_items(void *mem, size_t *size, size_t new_size, size_t item_size)
-{
-	size_t num_chunks = *size / ITEM_CHUNK_SIZE;
-	size_t num_chunks_new = (new_size + ITEM_CHUNK_SIZE - 1) / ITEM_CHUNK_SIZE;
-
-	if (mem == NULL || num_chunks != num_chunks_new) {
-		*size = num_chunks_new * ITEM_CHUNK_SIZE;
-		mem = realloc(mem, *size * item_size);
-	}
-
-	return mem;
-}
-
-static struct line *
-realloc_lines(struct view *view, size_t line_size)
-{
-	size_t alloc = view->line_alloc;
-	struct line *tmp = realloc_items(view->line, &alloc, line_size,
-					 sizeof(*view->line));
-
-	if (!tmp)
-		return NULL;
-
-	view->line = tmp;
-	view->line_alloc = alloc;
-	return view->line;
-}
-
 static bool
 update_view(struct view *view)
 {
@@ -2922,12 +2914,14 @@ update_view(struct view *view)
 	return TRUE;
 }
 
+DEFINE_ALLOCATOR(realloc_lines, struct line, 256)
+
 static struct line *
 add_line_data(struct view *view, void *data, enum line_type type)
 {
 	struct line *line;
 
-	if (!realloc_lines(view, view->lines + 1))
+	if (!realloc_lines(&view->line, &view->line_alloc, view->lines + 1))
 		return NULL;
 
 	line = &view->line[view->lines++];
@@ -3346,6 +3340,8 @@ view_driver(struct view *view, enum request request)
  * View backend utilities
  */
 
+DEFINE_ALLOCATOR(realloc_authors, const char *, 256)
+
 /* Small author cache to reduce memory consumption. It uses binary
  * search to lookup or find place to position new entries. No entries
  * are ever freed. */
@@ -3355,7 +3351,6 @@ get_author(const char *name)
 	static const char **authors;
 	static size_t authors_alloc;
 	static size_t authors_size;
-	const char **tmp;
 	int from = 0, to = authors_size - 1;
 
 	while (from <= to) {
@@ -3371,14 +3366,12 @@ get_author(const char *name)
 			from = pos + 1;
 	}
 
-	tmp = realloc_items(authors, &authors_alloc, authors_size + 1, sizeof(*authors));
-	if (!tmp)
+	if (!realloc_authors(&authors, &authors_alloc, authors_size + 1))
 		return NULL;
 	name = strdup(name);
 	if (!name)
 		return NULL;
 
-	authors = tmp;
 	memmove(authors + from + 1, authors + from, (authors_size - from) * sizeof(*authors));
 	authors[from] = name;
 	authors_size++;
@@ -4661,6 +4654,8 @@ static enum line_type stage_line_type;
 static size_t stage_chunks;
 static int *stage_chunk;
 
+DEFINE_ALLOCATOR(realloc_ints, int, 32)
+
 /* This should work even for the "On branch" line. */
 static inline bool
 status_has_none(struct view *view, struct line *line)
@@ -5516,20 +5511,16 @@ stage_next(struct view *view, struct line *line)
 
 	if (!stage_chunks) {
 		static size_t alloc = 0;
-		int *tmp;
 
 		for (line = view->line; line < view->line + view->lines; line++) {
 			if (line->type != LINE_DIFF_CHUNK)
 				continue;
 
-			tmp = realloc_items(stage_chunk, &alloc,
-					    stage_chunks, sizeof(*tmp));
-			if (!tmp) {
+			if (!realloc_ints(&stage_chunk, &alloc, stage_chunks + 1)) {
 				report("Allocation failure");
 				return;
 			}
 
-			stage_chunk = tmp;
 			stage_chunk[stage_chunks++] = line - view->line;
 		}
 	}
@@ -6539,6 +6530,10 @@ static struct ref ***id_refs = NULL;
 static size_t id_refs_alloc = 0;
 static size_t id_refs_size = 0;
 
+DEFINE_ALLOCATOR(realloc_refs, struct ref, 256)
+DEFINE_ALLOCATOR(realloc_refs_list, struct ref *, 8)
+DEFINE_ALLOCATOR(realloc_refs_lists, struct ref **, 8)
+
 static int
 compare_refs(const void *ref1_, const void *ref2_)
 {
@@ -6561,7 +6556,6 @@ compare_refs(const void *ref1_, const void *ref2_)
 static struct ref **
 get_refs(const char *id)
 {
-	struct ref ***tmp_id_refs;
 	struct ref **ref_list = NULL;
 	size_t ref_list_alloc = 0;
 	size_t ref_list_size = 0;
@@ -6571,34 +6565,21 @@ get_refs(const char *id)
 		if (!strcmp(id, id_refs[i][0]->id))
 			return id_refs[i];
 
-	tmp_id_refs = realloc_items(id_refs, &id_refs_alloc, id_refs_size + 1,
-				    sizeof(*id_refs));
-	if (!tmp_id_refs)
+	if (!realloc_refs_lists(&id_refs, &id_refs_alloc, id_refs_size + 1))
 		return NULL;
 
-	id_refs = tmp_id_refs;
-
 	for (i = 0; i < refs_size; i++) {
-		struct ref **tmp;
-
 		if (strcmp(id, refs[i].id))
 			continue;
 
-		tmp = realloc_items(ref_list, &ref_list_alloc,
-				    ref_list_size + 1, sizeof(*ref_list));
-		if (!tmp) {
-			if (ref_list)
-				free(ref_list);
-			return NULL;
-		}
+		if (!realloc_refs_list(&ref_list, &ref_list_alloc, ref_list_size + 1))
+			return ref_list;
 
-		ref_list = tmp;
 		ref_list[ref_list_size] = &refs[i];
 		/* XXX: The properties of the commit chains ensures that we can
 		 * safely modify the shared ref. The repo references will
 		 * always be similar for the same id. */
 		ref_list[ref_list_size]->next = 1;
-
 		ref_list_size++;
 	}
 
@@ -6662,8 +6643,8 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 
 		return OK;
 	}
-	refs = realloc_items(refs, &refs_alloc, refs_size + 1, sizeof(*refs));
-	if (!refs)
+
+	if (!realloc_refs(&refs, &refs_alloc, refs_size + 1))
 		return ERR;
 
 	ref = &refs[refs_size++];
