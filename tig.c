@@ -1325,6 +1325,8 @@ struct run_request {
 static struct run_request *run_request;
 static size_t run_requests;
 
+DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
+
 static enum request
 add_run_request(enum keymap keymap, int key, int argc, const char **argv)
 {
@@ -1333,11 +1335,9 @@ add_run_request(enum keymap keymap, int key, int argc, const char **argv)
 	if (argc >= ARRAY_SIZE(req->argv) - 1)
 		return REQ_NONE;
 
-	req = realloc(run_request, (run_requests + 1) * sizeof(*run_request));
-	if (!req)
+	if (!realloc_run_requests(&run_request, run_requests, 1))
 		return REQ_NONE;
 
-	run_request = req;
 	req = &run_request[run_requests];
 	req->keymap = keymap;
 	req->key = key;
