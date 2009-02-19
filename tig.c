@@ -6658,6 +6658,9 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 static int
 load_refs(void)
 {
+	const char *head_argv[] = {
+		"git", "symbolic-ref", "HEAD", NULL
+	};
 	static const char *ls_remote_argv[SIZEOF_ARG] = {
 		"git", "ls-remote", opt_git_dir, NULL
 	};
@@ -6670,6 +6673,15 @@ load_refs(void)
 
 	if (!*opt_git_dir)
 		return OK;
+
+	if (run_io_buf(head_argv, opt_head, sizeof(opt_head))) {
+		chomp_string(opt_head);
+		if (!prefixcmp(opt_head, "refs/heads/")) {
+			char *offset = opt_head + STRING_SIZE("refs/heads/");
+
+			memmove(opt_head, offset, strlen(offset) + 1);
+		}
+	}
 
 	while (refs_size > 0)
 		free(refs[--refs_size].name);
@@ -6813,22 +6825,10 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 static int
 load_repo_info(void)
 {
-	const char *head_argv[] = {
-		"git", "symbolic-ref", "HEAD", NULL
-	};
 	const char *rev_parse_argv[] = {
 		"git", "rev-parse", "--git-dir", "--is-inside-work-tree",
 			"--show-cdup", "--show-prefix", NULL
 	};
-
-	if (run_io_buf(head_argv, opt_head, sizeof(opt_head))) {
-		chomp_string(opt_head);
-		if (!prefixcmp(opt_head, "refs/heads/")) {
-			char *offset = opt_head + STRING_SIZE("refs/heads/");
-
-			memmove(opt_head, offset, strlen(offset) + 1);
-		}
-	}
 
 	return run_io_load(rev_parse_argv, "=", read_repo_info);
 }
