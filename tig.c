@@ -626,19 +626,13 @@ io_read(struct io *io, void *buf, size_t bufsize)
 	} while (1);
 }
 
+DEFINE_ALLOCATOR(realloc_io_buf, char, BUFSIZ)
+
 static char *
 io_get(struct io *io, int c, bool can_read)
 {
 	char *eol;
 	ssize_t readsize;
-
-	if (!io->buf) {
-		io->buf = io->bufpos = malloc(BUFSIZ);
-		if (!io->buf)
-			return NULL;
-		io->bufalloc = BUFSIZ;
-		io->bufsize = 0;
-	}
 
 	while (TRUE) {
 		if (io->bufsize > 0) {
@@ -667,6 +661,12 @@ io_get(struct io *io, int c, bool can_read)
 
 		if (io->bufsize > 0 && io->bufpos > io->buf)
 			memmove(io->buf, io->bufpos, io->bufsize);
+
+		if (io->bufalloc == io->bufsize) {
+			if (!realloc_io_buf(&io->buf, io->bufalloc, BUFSIZ))
+				return NULL;
+			io->bufalloc += BUFSIZ;
+		}
 
 		io->bufpos = io->buf;
 		readsize = io_read(io, io->buf + io->bufsize, io->bufalloc - io->bufsize);
@@ -699,14 +699,14 @@ io_write(struct io *io, const void *buf, size_t bufsize)
 static bool
 io_read_buf(struct io *io, char buf[], size_t bufsize)
 {
-	bool error;
+	char *result = io_get(io, '\n', TRUE);
 
-	io->buf = io->bufpos = buf;
-	io->bufalloc = bufsize;
-	error = !io_get(io, '\n', TRUE) && io_error(io);
-	io->buf = NULL;
+	if (result) {
+		result = chomp_string(result);
+		string_ncopy_do(buf, bufsize, result, strlen(result));
+	}
 
-	return done_io(io) || error;
+	return done_io(io) && result;
 }
 
 static bool
@@ -3452,7 +3452,6 @@ select_commit_parent(const char *id, char rev[SIZEOF_REV], const char *path)
 	int parents;
 
 	if (!run_io_buf(revlist_argv, buf, sizeof(buf)) ||
-	    !*chomp_string(buf) ||
 	    (parents = (strlen(buf) / 40) - 1) < 0) {
 		report("Failed to get parent information");
 		return FALSE;
@@ -3502,13 +3501,9 @@ static bool
 add_describe_ref(char *buf, size_t *bufpos, const char *commit_id, const char *sep)
 {
 	const char *describe_argv[] = { "git", "describe", commit_id, NULL };
-	char refbuf[SIZEOF_STR];
-	char *ref = NULL;
+	char ref[SIZEOF_STR];
 
-	if (run_io_buf(describe_argv, refbuf, sizeof(refbuf)))
-		ref = chomp_string(refbuf);
-
-	if (!ref || !*ref)
+	if (!run_io_buf(describe_argv, ref, sizeof(ref)) || !*ref)
 		return TRUE;
 
 	/* This is the only fatal call, since it can "corrupt" the buffer. */
@@ -4852,7 +4847,7 @@ status_update_onbranch(void)
 			if (string_format(buf, "%s/rebase-merge/head-name", opt_git_dir) &&
 			    io_open(&io, buf) &&
 			    io_read_buf(&io, buf, sizeof(buf))) {
-				head = chomp_string(buf);
+				head = buf;
 				if (!prefixcmp(head, "refs/heads/"))
 					head += STRING_SIZE("refs/heads/");
 			}
@@ -6674,13 +6669,11 @@ load_refs(void)
 	if (!*opt_git_dir)
 		return OK;
 
-	if (run_io_buf(head_argv, opt_head, sizeof(opt_head))) {
-		chomp_string(opt_head);
-		if (!prefixcmp(opt_head, "refs/heads/")) {
-			char *offset = opt_head + STRING_SIZE("refs/heads/");
+	if (run_io_buf(head_argv, opt_head, sizeof(opt_head)) &&
+	    !prefixcmp(opt_head, "refs/heads/")) {
+		char *offset = opt_head + STRING_SIZE("refs/heads/");
 
-			memmove(opt_head, offset, strlen(offset) + 1);
-		}
+		memmove(opt_head, offset, strlen(offset) + 1);
 	}
 
 	while (refs_size > 0)
