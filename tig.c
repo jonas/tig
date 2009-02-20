@@ -6725,7 +6725,7 @@ get_refs(const char *id)
 			continue;
 
 		if (!realloc_refs_list(&ref_list, ref_list_size, 1))
-			return ref_list;
+			break;
 
 		ref_list[ref_list_size] = &refs[i];
 		/* XXX: The properties of the commit chains ensures that we can
