@@ -6022,23 +6022,24 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 		size_t i = 0;
 
 		do {
+			struct ref *ref = commit->refs[i];
 			enum line_type type;
 
-			if (commit->refs[i]->head)
+			if (ref->head)
 				type = LINE_MAIN_HEAD;
-			else if (commit->refs[i]->ltag)
+			else if (ref->ltag)
 				type = LINE_MAIN_LOCAL_TAG;
-			else if (commit->refs[i]->tag)
+			else if (ref->tag)
 				type = LINE_MAIN_TAG;
-			else if (commit->refs[i]->tracked)
+			else if (ref->tracked)
 				type = LINE_MAIN_TRACKED;
-			else if (commit->refs[i]->remote)
+			else if (ref->remote)
 				type = LINE_MAIN_REMOTE;
 			else
 				type = LINE_MAIN_REF;
 
 			if (draw_text(view, type, "[", TRUE) ||
-			    draw_text(view, type, commit->refs[i]->name, TRUE) ||
+			    draw_text(view, type, ref->name, TRUE) ||
 			    draw_text(view, type, "]", TRUE))
 				return TRUE;
 
