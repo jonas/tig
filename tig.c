@@ -4590,6 +4590,7 @@ blame_grep(struct view *view, struct line *line)
 		commit ? commit->id : "",
 		commit && opt_author ? commit->author : "",
 		commit && opt_date ? mkdate(&commit->time) : "",
+		NULL
 	};
 
 	return grep_text(view, text);
