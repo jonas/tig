@@ -4,6 +4,11 @@ Release notes
 tig master
 ---------
 
+Improvements:
+
+ - Add branch view for choosing which branch to display in the main
+   view. Bound to 'H' by default.
+
 Bug fixes:
 
  - Tree view: fix searching.

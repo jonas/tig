@@ -176,7 +176,8 @@ built-in keybindings.
 Keymaps::
 
 Valid keymaps are: *main*, *diff*, *log*, *help*, *pager*, *status*, *stage*,
-and *generic*.  Use *generic* to set key mapping in all keymaps.
+*tree*, *blob*, *blame*, *branch*, and *generic*.  Use *generic* to set key
+mapping in all keymaps.
 
 Key values::
 
@@ -248,6 +249,7 @@ view-log		Show log view
 view-tree		Show tree view
 view-blob		Show blob view
 view-blame		Show blame view
+view-branch		Show branch view
 view-status		Show status view
 view-stage		Show stage view
 view-pager		Show pager view

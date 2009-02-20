@@ -140,6 +140,7 @@ struct ref {
 };
 
 static struct ref **get_refs(const char *id);
+static void foreach_ref(bool (*visitor)(void *data, struct ref *ref), void *data);
 
 enum format_flags {
 	FORMAT_ALL,		/* Perform replacement in all arguments. */
@@ -779,6 +780,7 @@ run_io_load(const char **argv, const char *separators,
 	REQ_(VIEW_TREE,		"Show tree view"), \
 	REQ_(VIEW_BLOB,		"Show blob view"), \
 	REQ_(VIEW_BLAME,	"Show blame view"), \
+	REQ_(VIEW_BRANCH,	"Show branch view"), \
 	REQ_(VIEW_HELP,		"Show help page"), \
 	REQ_(VIEW_PAGER,	"Show pager view"), \
 	REQ_(VIEW_STATUS,	"Show status view"), \
@@ -1091,6 +1093,7 @@ static const struct keybinding default_keybindings[] = {
 	{ 't',		REQ_VIEW_TREE },
 	{ 'f',		REQ_VIEW_BLOB },
 	{ 'B',		REQ_VIEW_BLAME },
+	{ 'H',		REQ_VIEW_BRANCH },
 	{ 'p',		REQ_VIEW_PAGER },
 	{ 'h',		REQ_VIEW_HELP },
 	{ 'S',		REQ_VIEW_STATUS },
@@ -1158,6 +1161,7 @@ static const struct keybinding default_keybindings[] = {
 	KEYMAP_(TREE), \
 	KEYMAP_(BLOB), \
 	KEYMAP_(BLAME), \
+	KEYMAP_(BRANCH), \
 	KEYMAP_(PAGER), \
 	KEYMAP_(HELP), \
 	KEYMAP_(STATUS), \
@@ -1839,6 +1843,7 @@ static struct view_ops pager_ops;
 static struct view_ops stage_ops;
 static struct view_ops status_ops;
 static struct view_ops tree_ops;
+static struct view_ops branch_ops;
 
 #define VIEW_STR(name, env, ref, ops, map, git) \
 	{ name, #env, ref, ops, map, git }
@@ -1854,6 +1859,7 @@ static struct view views[] = {
 	VIEW_(TREE,   "tree",   &tree_ops,   TRUE,  ref_commit),
 	VIEW_(BLOB,   "blob",   &blob_ops,   TRUE,  ref_blob),
 	VIEW_(BLAME,  "blame",  &blame_ops,  TRUE,  ref_commit),
+	VIEW_(BRANCH, "branch",	&branch_ops, TRUE,  ref_head),
 	VIEW_(HELP,   "help",   &help_ops,   FALSE, ""),
 	VIEW_(PAGER,  "pager",  &pager_ops,  FALSE, "stdin"),
 	VIEW_(STATUS, "status", &status_ops, TRUE,  ""),
@@ -3119,6 +3125,7 @@ view_driver(struct view *view, enum request request)
 		if (view == VIEW(REQ_VIEW_STATUS) ||
 		    view == VIEW(REQ_VIEW_MAIN) ||
 		    view == VIEW(REQ_VIEW_LOG) ||
+		    view == VIEW(REQ_VIEW_BRANCH) ||
 		    view == VIEW(REQ_VIEW_STAGE))
 			request = REQ_REFRESH;
 		else
@@ -3199,6 +3206,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_LOG:
 	case REQ_VIEW_TREE:
 	case REQ_VIEW_HELP:
+	case REQ_VIEW_BRANCH:
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
@@ -4620,6 +4628,153 @@ static struct view_ops blame_ops = {
 	blame_request,
 	blame_grep,
 	blame_select,
+};
+
+/*
+ * Branch backend
+ */
+
+struct branch {
+	const char *author;		/* Author of the last commit. */
+	time_t time;			/* Date of the last activity. */
+	struct ref *ref;		/* Name and commit ID information. */
+};
+
+static bool
+branch_draw(struct view *view, struct line *line, unsigned int lineno)
+{
+	struct branch *branch = line->data;
+	enum line_type type = branch->ref->head ? LINE_MAIN_HEAD : LINE_DEFAULT;
+
+	if (opt_date && draw_date(view, &branch->time))
+		return TRUE;
+
+	if (opt_author && draw_author(view, branch->author))
+		return TRUE;
+
+	draw_text(view, type, branch->ref->name, TRUE);
+	return TRUE;
+}
+
+static enum request
+branch_request(struct view *view, enum request request, struct line *line)
+{
+	switch (request) {
+	case REQ_REFRESH:
+		load_refs();
+		open_view(view, REQ_VIEW_BRANCH, OPEN_REFRESH);
+		return REQ_NONE;
+
+	case REQ_ENTER:
+		open_view(view, REQ_VIEW_MAIN, OPEN_SPLIT);
+		return REQ_NONE;
+
+	default:
+		return request;
+	}
+}
+
+static bool
+branch_read(struct view *view, char *line)
+{
+	static char id[SIZEOF_REV];
+	size_t i;
+
+	if (!line)
+		return TRUE;
+
+	switch (get_line_type(line)) {
+	case LINE_COMMIT:
+		string_copy_rev(id, line + STRING_SIZE("commit "));
+		return TRUE;
+
+	case LINE_AUTHOR:
+		for (i = 0; i < view->lines; i++) {
+			struct branch *branch = view->line[i].data;
+
+			if (strcmp(branch->ref->id, id))
+				continue;
+
+			parse_author_line(line + STRING_SIZE("author "),
+					  &branch->author, &branch->time);
+			view->line[i].dirty = TRUE;
+		}
+		return TRUE;
+
+	default:
+		return TRUE;
+	}
+
+}
+
+static bool
+branch_open_visitor(void *data, struct ref *ref)
+{
+	struct view *view = data;
+	struct branch *branch;
+
+	if (ref->tag || ref->ltag || ref->remote)
+		return TRUE;
+
+	branch = calloc(1, sizeof(*branch));
+	if (!branch)
+		return FALSE;
+
+	branch->ref = ref;
+	return !!add_line_data(view, branch, LINE_DEFAULT);
+}
+
+static bool
+branch_open(struct view *view)
+{
+	const char *branch_log[] = {
+		"git", "log", "--no-color", "--pretty=raw",
+			"--simplify-by-decoration", "--all", NULL
+	};
+
+	if (!run_io_rd(&view->io, branch_log, FORMAT_NONE)) {
+		report("Failed to load branch data");
+		return TRUE;
+	}
+
+	setup_update(view, view->id);
+	foreach_ref(branch_open_visitor, view);
+
+	return TRUE;
+}
+
+static bool
+branch_grep(struct view *view, struct line *line)
+{
+	struct branch *branch = line->data;
+	const char *text[] = {
+		branch->ref->name,
+		branch->author,
+		NULL
+	};
+
+	return grep_text(view, text);
+}
+
+static void
+branch_select(struct view *view, struct line *line)
+{
+	struct branch *branch = line->data;
+
+	string_copy_rev(view->ref, branch->ref->id);
+	string_copy_rev(ref_commit, branch->ref->id);
+	string_copy_rev(ref_head, branch->ref->id);
+}
+
+static struct view_ops branch_ops = {
+	"branch",
+	NULL,
+	branch_open,
+	branch_read,
+	branch_draw,
+	branch_request,
+	branch_grep,
+	branch_select,
 };
 
 /*
@@ -6539,6 +6694,16 @@ compare_refs(const void *ref1_, const void *ref2_)
 	if (ref1->remote != ref2->remote)
 		return ref2->remote - ref1->remote;
 	return strcmp(ref1->name, ref2->name);
+}
+
+static void
+foreach_ref(bool (*visitor)(void *data, struct ref *ref), void *data)
+{
+	size_t i;
+
+	for (i = 0; i < refs_size; i++)
+		if (!visitor(data, &refs[i]))
+			break;
 }
 
 static struct ref **
