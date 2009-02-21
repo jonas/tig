@@ -114,10 +114,6 @@ static size_t utf8_length(const char **string, size_t col, int *width, size_t ma
 
 #define S_ISGITLINK(mode) (((mode) & S_IFMT) == 0160000)
 
-#ifndef GIT_CONFIG
-#define GIT_CONFIG "config"
-#endif
-
 /* Some ASCII-shorthands fitted into the ncurses namespace. */
 #define KEY_TAB		'\t'
 #define KEY_RETURN	'\r'
@@ -7467,7 +7463,7 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 static int
 load_git_config(void)
 {
-	const char *config_list_argv[] = { "git", GIT_CONFIG, "--list", NULL };
+	const char *config_list_argv[] = { "git", "config", "--list", NULL };
 
 	return run_io_load(config_list_argv, "=", read_repo_config_option);
 }

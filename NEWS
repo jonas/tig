@@ -8,6 +8,9 @@ Incompatibilities:
 
  - Setting the cursor color no longer automatically sets the text to
    bold. The old 'lazy' behavior was a bug.
+ - Remove check for git-repo-config, which was officially deprecated in
+   git version 1.5.4. The configure script no longer depends on git
+   being installed.
 
 Improvements:
 
