@@ -449,11 +449,12 @@ a script or program. They are bound to keys and use information from the
 current browsing state, such as the current commit ID. Tig comes with
 the following built-in external commands:
 
-`-------`--------------------------------------------------------------------
-Key	Action
+`-------`-------`------------------------------------------------------------
+Keymap	Key	Action
 -----------------------------------------------------------------------------
-C	git cherry-pick %(commit)
-G	git gc
+main	C	git cherry-pick %(commit)
+status	C	git commit
+generic	G	git gc
 -----------------------------------------------------------------------------
 
 [[refspec]]
