@@ -4866,6 +4866,7 @@ branch_open(struct view *view)
 
 	setup_update(view, view->id);
 	foreach_ref(branch_open_visitor, view);
+	view->p_restore = TRUE;
 
 	return TRUE;
 }
