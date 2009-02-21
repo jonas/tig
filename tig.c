@@ -68,7 +68,6 @@ static void __NORETURN die(const char *err, ...);
 static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
 static void set_nonblocking_input(bool loading);
-static int load_refs(void);
 static size_t utf8_length(const char **string, size_t col, int *width, size_t max_width, int *trimmed, bool reserve);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
@@ -129,18 +128,24 @@ static size_t utf8_length(const char **string, size_t col, int *width, size_t ma
 
 
 struct ref {
-	char *name;		/* Ref name; tag or head names are shortened. */
 	char id[SIZEOF_REV];	/* Commit SHA1 ID */
 	unsigned int head:1;	/* Is it the current HEAD? */
 	unsigned int tag:1;	/* Is it a tag? */
 	unsigned int ltag:1;	/* If so, is the tag local? */
 	unsigned int remote:1;	/* Is it a remote ref? */
 	unsigned int tracked:1;	/* Is it the remote for the current HEAD? */
-	unsigned int next:1;	/* For ref lists: are there more refs? */
+	char name[1];		/* Ref name; tag or head names are shortened. */
 };
 
-static struct ref **get_refs(const char *id);
+struct ref_list {
+	char id[SIZEOF_REV];	/* Commit SHA1 ID */
+	size_t size;		/* Number of refs. */
+	struct ref **refs;	/* References for this ID. */
+};
+
+static struct ref_list *get_ref_list(const char *id);
 static void foreach_ref(bool (*visitor)(void *data, struct ref *ref), void *data);
+static int load_refs(void);
 
 enum format_flags {
 	FORMAT_ALL,		/* Perform replacement in all arguments. */
@@ -3575,22 +3580,22 @@ add_pager_refs(struct view *view, struct line *line)
 {
 	char buf[SIZEOF_STR];
 	char *commit_id = (char *)line->data + STRING_SIZE("commit ");
-	struct ref **refs;
-	size_t bufpos = 0, refpos = 0;
+	struct ref_list *list;
+	size_t bufpos = 0, i;
 	const char *sep = "Refs: ";
 	bool is_tag = FALSE;
 
 	assert(line->type == LINE_COMMIT);
 
-	refs = get_refs(commit_id);
-	if (!refs) {
+	list = get_ref_list(commit_id);
+	if (!list) {
 		if (view == VIEW(REQ_VIEW_DIFF))
 			goto try_add_describe_ref;
 		return;
 	}
 
-	do {
-		struct ref *ref = refs[refpos];
+	for (i = 0; i < list->size; i++) {
+		struct ref *ref = list->refs[i];
 		const char *fmt = ref->tag    ? "%s[%s]" :
 		                  ref->remote ? "%s<%s>" : "%s%s";
 
@@ -3599,7 +3604,7 @@ add_pager_refs(struct view *view, struct line *line)
 		sep = ", ";
 		if (ref->tag)
 			is_tag = TRUE;
-	} while (refs[refpos++]->next);
+	}
 
 	if (!is_tag && view == VIEW(REQ_VIEW_DIFF)) {
 try_add_describe_ref:
@@ -5902,7 +5907,7 @@ struct commit {
 	char title[128];		/* First line of the commit message. */
 	const char *author;		/* Author of the commit. */
 	time_t time;			/* Date from the author ident. */
-	struct ref **refs;		/* Repository references. */
+	struct ref_list *refs;		/* Repository references. */
 	chtype graph[SIZEOF_REVGRAPH];	/* Ancestry chain graphics. */
 	size_t graph_size;		/* The width of the graph array. */
 	bool has_parents;		/* Rewritten --parents seen. */
@@ -6141,10 +6146,10 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 		return TRUE;
 
 	if (opt_show_refs && commit->refs) {
-		size_t i = 0;
+		size_t i;
 
-		do {
-			struct ref *ref = commit->refs[i];
+		for (i = 0; i < commit->refs->size; i++) {
+			struct ref *ref = commit->refs->refs[i];
 			enum line_type type;
 
 			if (ref->head)
@@ -6167,7 +6172,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 
 			if (draw_text(view, LINE_DEFAULT, " ", TRUE))
 				return TRUE;
-		} while (commit->refs[i++]->next);
+		}
 	}
 
 	draw_text(view, LINE_DEFAULT, commit->title, TRUE);
@@ -6216,7 +6221,7 @@ main_read(struct view *view, char *line)
 		}
 
 		string_copy_rev(commit->id, line);
-		commit->refs = get_refs(commit->id);
+		commit->refs = get_ref_list(commit->id);
 		graph->commit = commit;
 		add_line_data(view, commit, LINE_MAIN_COMMIT);
 
@@ -6293,17 +6298,18 @@ main_request(struct view *view, enum request request, struct line *line)
 }
 
 static bool
-grep_refs(struct ref **refs, regex_t *regex)
+grep_refs(struct ref_list *list, regex_t *regex)
 {
 	regmatch_t pmatch;
-	size_t i = 0;
+	size_t i;
 
-	if (!opt_show_refs || !refs)
+	if (!opt_show_refs || !list)
 		return FALSE;
-	do {
-		if (regexec(regex, refs[i]->name, 1, &pmatch, 0) != REG_NOMATCH)
+
+	for (i = 0; i < list->size; i++) {
+		if (regexec(regex, list->refs[i]->name, 1, &pmatch, 0) != REG_NOMATCH)
 			return TRUE;
-	} while (refs[i++]->next);
+	}
 
 	return FALSE;
 }
@@ -6789,16 +6795,15 @@ read_prompt(const char *prompt)
  * Repository properties
  */
 
-static struct ref *refs = NULL;
+static struct ref **refs = NULL;
 static size_t refs_size = 0;
 
-/* Id <-> ref store */
-static struct ref ***id_refs = NULL;
-static size_t id_refs_size = 0;
+static struct ref_list **ref_lists = NULL;
+static size_t ref_lists_size = 0;
 
-DEFINE_ALLOCATOR(realloc_refs, struct ref, 256)
+DEFINE_ALLOCATOR(realloc_refs, struct ref *, 256)
 DEFINE_ALLOCATOR(realloc_refs_list, struct ref *, 8)
-DEFINE_ALLOCATOR(realloc_refs_lists, struct ref **, 8)
+DEFINE_ALLOCATOR(realloc_ref_lists, struct ref_list *, 8)
 
 static int
 compare_refs(const void *ref1_, const void *ref2_)
@@ -6825,65 +6830,57 @@ foreach_ref(bool (*visitor)(void *data, struct ref *ref), void *data)
 	size_t i;
 
 	for (i = 0; i < refs_size; i++)
-		if (!visitor(data, &refs[i]))
+		if (!visitor(data, refs[i]))
 			break;
 }
 
-static struct ref **
-get_refs(const char *id)
+static struct ref_list *
+get_ref_list(const char *id)
 {
-	struct ref **ref_list = NULL;
-	size_t ref_list_size = 0;
+	struct ref_list *list;
 	size_t i;
 
-	for (i = 0; i < id_refs_size; i++)
-		if (!strcmp(id, id_refs[i][0]->id))
-			return id_refs[i];
+	for (i = 0; i < ref_lists_size; i++)
+		if (!strcmp(id, ref_lists[i]->id))
+			return ref_lists[i];
 
-	if (!realloc_refs_lists(&id_refs, id_refs_size, 1))
+	if (!realloc_ref_lists(&ref_lists, ref_lists_size, 1))
+		return NULL;
+	list = calloc(1, sizeof(*list));
+	if (!list)
 		return NULL;
 
 	for (i = 0; i < refs_size; i++) {
-		if (strcmp(id, refs[i].id))
-			continue;
-
-		if (!realloc_refs_list(&ref_list, ref_list_size, 1))
-			break;
-
-		ref_list[ref_list_size] = &refs[i];
-		/* XXX: The properties of the commit chains ensures that we can
-		 * safely modify the shared ref. The repo references will
-		 * always be similar for the same id. */
-		ref_list[ref_list_size]->next = 1;
-		ref_list_size++;
+		if (!strcmp(id, refs[i]->id) &&
+		    realloc_refs_list(&list->refs, list->size, 1))
+			list->refs[list->size++] = refs[i];
 	}
 
-	if (ref_list) {
-		qsort(ref_list, ref_list_size, sizeof(*ref_list), compare_refs);
-		ref_list[ref_list_size - 1]->next = 0;
-		id_refs[id_refs_size++] = ref_list;
+	if (!list->refs) {
+		free(list);
+		return NULL;
 	}
 
-	return ref_list;
+	qsort(list->refs, list->size, sizeof(*list->refs), compare_refs);
+	ref_lists[ref_lists_size++] = list;
+	return list;
 }
 
 static int
 read_ref(char *id, size_t idlen, char *name, size_t namelen)
 {
-	struct ref *ref;
+	struct ref *ref = NULL;
 	bool tag = FALSE;
 	bool ltag = FALSE;
 	bool remote = FALSE;
 	bool tracked = FALSE;
-	bool check_replace = FALSE;
 	bool head = FALSE;
+	int from = 0, to = refs_size - 1;
 
 	if (!prefixcmp(name, "refs/tags/")) {
 		if (!suffixcmp(name, namelen, "^{}")) {
 			namelen -= 3;
 			name[namelen] = 0;
-			if (refs_size > 0 && refs[refs_size - 1].ltag == TRUE)
-				check_replace = TRUE;
 		} else {
 			ltag = TRUE;
 		}
@@ -6908,27 +6905,38 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 		return OK;
 	}
 
-	if (check_replace && !strcmp(name, refs[refs_size - 1].name)) {
-		/* it's an annotated tag, replace the previous SHA1 with the
-		 * resolved commit id; relies on the fact git-ls-remote lists
-		 * the commit id of an annotated tag right before the commit id
-		 * it points to. */
-		refs[refs_size - 1].ltag = ltag;
-		string_copy_rev(refs[refs_size - 1].id, id);
+	/* If we are reloading or it's an annotated tag, replace the
+	 * previous SHA1 with the resolved commit id; relies on the fact
+	 * git-ls-remote lists the commit id of an annotated tag right
+	 * before the commit id it points to. */
+	while (from <= to) {
+		size_t pos = (to + from) / 2;
+		int cmp = strcmp(name, refs[pos]->name);
 
-		return OK;
+		if (!cmp) {
+			ref = refs[pos];
+			break;
+		}
+
+		if (cmp < 0)
+			to = pos - 1;
+		else
+			from = pos + 1;
 	}
 
-	if (!realloc_refs(&refs, refs_size, 1))
-		return ERR;
+	if (!ref) {
+		if (!realloc_refs(&refs, refs_size, 1))
+			return ERR;
+		ref = calloc(1, sizeof(*ref) + namelen);
+		if (!ref)
+			return ERR;
+		memmove(refs + from + 1, refs + from,
+			(refs_size - from) * sizeof(*refs));
+		refs[from] = ref;
+		strncpy(ref->name, name, namelen);
+		refs_size++;
+	}
 
-	ref = &refs[refs_size++];
-	ref->name = malloc(namelen + 1);
-	if (!ref->name)
-		return ERR;
-
-	strncpy(ref->name, name, namelen);
-	ref->name[namelen] = 0;
 	ref->head = head;
 	ref->tag = tag;
 	ref->ltag = ltag;
@@ -6949,6 +6957,7 @@ load_refs(void)
 		"git", "ls-remote", opt_git_dir, NULL
 	};
 	static bool init = FALSE;
+	size_t i;
 
 	if (!init) {
 		argv_from_env(ls_remote_argv, "TIG_LS_REMOTE");
@@ -6965,12 +6974,24 @@ load_refs(void)
 		memmove(opt_head, offset, strlen(offset) + 1);
 	}
 
-	while (refs_size > 0)
-		free(refs[--refs_size].name);
-	while (id_refs_size > 0)
-		free(id_refs[--id_refs_size]);
+	for (i = 0; i < refs_size; i++)
+		refs[i]->id[0] = 0;
 
-	return run_io_load(ls_remote_argv, "\t", read_ref);
+	if (run_io_load(ls_remote_argv, "\t", read_ref) == ERR)
+		return ERR;
+
+	/* Update the ref lists to reflect changes. */
+	for (i = 0; i < ref_lists_size; i++) {
+		struct ref_list *list = ref_lists[i];
+		size_t old, new;
+
+		for (old = new = 0; old < list->size; old++)
+			if (!strcmp(list->id, list->refs[old]->id))
+				list->refs[new++] = list->refs[old];
+		list->size = new;
+	}
+
+	return OK;
 }
 
 static void
