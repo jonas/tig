@@ -3225,7 +3225,9 @@ view_driver(struct view *view, enum request request)
 		   (view == VIEW(REQ_VIEW_STAGE) &&
 		     view->parent == VIEW(REQ_VIEW_STATUS)) ||
 		   (view == VIEW(REQ_VIEW_BLOB) &&
-		     view->parent == VIEW(REQ_VIEW_TREE))) {
+		     view->parent == VIEW(REQ_VIEW_TREE)) ||
+		   (view == VIEW(REQ_VIEW_MAIN) &&
+		     view->parent == VIEW(REQ_VIEW_BRANCH))) {
 			int line;
 
 			view = view->parent;
