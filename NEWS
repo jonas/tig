@@ -8,6 +8,9 @@ Improvements:
 
  - Add branch view for choosing which branch to display in the main
    view. Bound to 'H' by default.
+ - Tree view: sort entries by name, date or author. Toggling is bound to
+   'i' by default, with 'I' controlling whether or not to sort in
+   ascending order.
 
 Bug fixes:
 

@@ -831,6 +831,8 @@ run_io_load(const char **argv, const char *separators,
 	REQ_(TOGGLE_AUTHOR,	"Toggle author display"), \
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
 	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
+	REQ_(TOGGLE_SORT_ORDER,	"Toggle ascending/descending sort order"), \
+	REQ_(TOGGLE_SORT_FIELD,	"Toggle field to sort by"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
@@ -1144,6 +1146,8 @@ static const struct keybinding default_keybindings[] = {
 	{ 'A',		REQ_TOGGLE_AUTHOR },
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
 	{ 'F',		REQ_TOGGLE_REFS },
+	{ 'I',		REQ_TOGGLE_SORT_ORDER },
+	{ 'i',		REQ_TOGGLE_SORT_FIELD },
 	{ ':',		REQ_PROMPT },
 	{ 'u',		REQ_STATUS_UPDATE },
 	{ '!',		REQ_STATUS_REVERT },
@@ -3283,6 +3287,11 @@ view_driver(struct view *view, enum request request)
 		toggle_view_option(&opt_show_refs, "reference display");
 		break;
 
+	case REQ_TOGGLE_SORT_FIELD:
+	case REQ_TOGGLE_SORT_ORDER:
+		report("Sorting is not yet supported for the %s view", view->name);
+		break;
+
 	case REQ_SEARCH:
 	case REQ_SEARCH_BACK:
 		search_view(view, request);
@@ -3344,6 +3353,42 @@ view_driver(struct view *view, enum request request)
 /*
  * View backend utilities
  */
+
+enum sort_field {
+	ORDERBY_NAME,
+	ORDERBY_DATE,
+	ORDERBY_AUTHOR,
+};
+
+struct sort_state {
+	const enum sort_field *fields;
+	size_t size, current;
+	bool reverse;
+};
+
+#define SORT_STATE(fields) { fields, ARRAY_SIZE(fields), 0 }
+#define get_sort_field(state) ((state).fields[(state).current])
+#define sort_order(state, result) ((state).reverse ? -(result) : (result))
+
+static void
+sort_view(struct view *view, enum request request, struct sort_state *state,
+	  int (*compare)(const void *, const void *))
+{
+	switch (request) {
+	case REQ_TOGGLE_SORT_FIELD:
+		state->current = (state->current + 1) % state->size;
+		break;
+
+	case REQ_TOGGLE_SORT_ORDER:
+		state->reverse = !state->reverse;
+		break;
+	default:
+		die("Not a sort request");
+	}
+
+	qsort(view->line, view->lines, sizeof(*view->line), compare);
+	redraw_view(view);
+}
 
 DEFINE_ALLOCATOR(realloc_authors, const char *, 256)
 
@@ -3843,19 +3888,50 @@ struct tree_entry {
 };
 
 static const char *
-tree_path(struct line *line)
+tree_path(const struct line *line)
 {
 	return ((struct tree_entry *) line->data)->name;
 }
 
-
 static int
-tree_compare_entry(struct line *line1, struct line *line2)
+tree_compare_entry(const struct line *line1, const struct line *line2)
 {
 	if (line1->type != line2->type)
 		return line1->type == LINE_TREE_DIR ? -1 : 1;
 	return strcmp(tree_path(line1), tree_path(line2));
 }
+
+static const enum sort_field tree_sort_fields[] = {
+	ORDERBY_NAME, ORDERBY_DATE, ORDERBY_AUTHOR
+};
+static struct sort_state tree_sort_state = SORT_STATE(tree_sort_fields);
+
+static int
+tree_compare(const void *l1, const void *l2)
+{
+	const struct line *line1 = (const struct line *) l1;
+	const struct line *line2 = (const struct line *) l2;
+	const struct tree_entry *entry1 = ((const struct line *) l1)->data;
+	const struct tree_entry *entry2 = ((const struct line *) l2)->data;
+
+	if (line1->type == LINE_TREE_HEAD)
+		return -1;
+	if (line2->type == LINE_TREE_HEAD)
+		return 1;
+
+	switch (get_sort_field(tree_sort_state)) {
+	case ORDERBY_DATE:
+		return sort_order(tree_sort_state, entry1->time - entry2->time);
+
+	case ORDERBY_AUTHOR:
+		return sort_order(tree_sort_state, strcmp(entry1->author, entry2->author));
+
+	case ORDERBY_NAME:
+	default:
+		return sort_order(tree_sort_state, tree_compare_entry(line1, line2));
+	}
+}
+
 
 static struct line *
 tree_entry(struct view *view, enum line_type type, const char *path,
@@ -4078,6 +4154,11 @@ tree_request(struct view *view, enum request request, struct line *line)
 		} else {
 			open_editor(TRUE, opt_file);
 		}
+		return REQ_NONE;
+
+	case REQ_TOGGLE_SORT_FIELD:
+	case REQ_TOGGLE_SORT_ORDER:
+		sort_view(view, request, &tree_sort_state, tree_compare);
 		return REQ_NONE;
 
 	case REQ_PARENT:
