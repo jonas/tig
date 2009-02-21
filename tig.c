@@ -4721,6 +4721,30 @@ struct branch {
 	struct ref *ref;		/* Name and commit ID information. */
 };
 
+static const enum sort_field branch_sort_fields[] = {
+	ORDERBY_NAME, ORDERBY_DATE, ORDERBY_AUTHOR
+};
+static struct sort_state branch_sort_state = SORT_STATE(branch_sort_fields);
+
+static int
+branch_compare(const void *l1, const void *l2)
+{
+	const struct branch *branch1 = ((const struct line *) l1)->data;
+	const struct branch *branch2 = ((const struct line *) l2)->data;
+
+	switch (get_sort_field(branch_sort_state)) {
+	case ORDERBY_DATE:
+		return sort_order(branch_sort_state, branch1->time - branch2->time);
+
+	case ORDERBY_AUTHOR:
+		return sort_order(branch_sort_state, strcmp(branch1->author, branch2->author));
+
+	case ORDERBY_NAME:
+	default:
+		return sort_order(branch_sort_state, strcmp(branch1->ref->name, branch2->ref->name));
+	}
+}
+
 static bool
 branch_draw(struct view *view, struct line *line, unsigned int lineno)
 {
@@ -4744,6 +4768,11 @@ branch_request(struct view *view, enum request request, struct line *line)
 	case REQ_REFRESH:
 		load_refs();
 		open_view(view, REQ_VIEW_BRANCH, OPEN_REFRESH);
+		return REQ_NONE;
+
+	case REQ_TOGGLE_SORT_FIELD:
+	case REQ_TOGGLE_SORT_ORDER:
+		sort_view(view, request, &branch_sort_state, branch_compare);
 		return REQ_NONE;
 
 	case REQ_ENTER:
