@@ -4646,7 +4646,7 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct branch *branch = line->data;
 	enum line_type type = branch->ref->head ? LINE_MAIN_HEAD : LINE_DEFAULT;
 
-	if (opt_date && draw_date(view, &branch->time))
+	if (opt_date && draw_date(view, branch->author ? &branch->time : NULL))
 		return TRUE;
 
 	if (opt_author && draw_author(view, branch->author))
@@ -4678,6 +4678,7 @@ static bool
 branch_read(struct view *view, char *line)
 {
 	static char id[SIZEOF_REV];
+	struct branch *reference;
 	size_t i;
 
 	if (!line)
@@ -4689,15 +4690,22 @@ branch_read(struct view *view, char *line)
 		return TRUE;
 
 	case LINE_AUTHOR:
-		for (i = 0; i < view->lines; i++) {
+		for (i = 0, reference = NULL; i < view->lines; i++) {
 			struct branch *branch = view->line[i].data;
 
 			if (strcmp(branch->ref->id, id))
 				continue;
 
+			view->line[i].dirty = TRUE;
+			if (reference) {
+				branch->author = reference->author;
+				branch->time = reference->time;
+				continue;
+			}
+
 			parse_author_line(line + STRING_SIZE("author "),
 					  &branch->author, &branch->time);
-			view->line[i].dirty = TRUE;
+			reference = branch;
 		}
 		return TRUE;
 
