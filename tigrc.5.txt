@@ -335,6 +335,7 @@ screen-redraw		Redraw the screen
 screen-resize		Resize the screen
 show-version		Show version information
 stop-loading		Stop all loading views
+options			Open options menu
 toggle-lineno		Toggle line numbers
 toggle-date		Toggle date display
 toggle-author		Toggle author display

@@ -167,6 +167,14 @@ typedef enum input_status (*input_handler)(void *data, char *buf, int c);
 static char *prompt_input(const char *prompt, input_handler handler, void *data);
 static bool prompt_yesno(const char *prompt);
 
+struct menu_item {
+	int hotkey;
+	const char *text;
+	void *data;
+};
+
+static bool prompt_menu(const char *prompt, const struct menu_item *items, int *selected);
+
 /*
  * Allocation helpers ... Entering macro hell to never be seen again.
  */
@@ -831,6 +839,7 @@ run_io_load(const char **argv, const char *separators,
 	REQ_(FIND_PREV,		"Find previous search match"), \
 	\
 	REQ_GROUP("Option manipulation") \
+	REQ_(OPTIONS,		"Open option menu"), \
 	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
 	REQ_(TOGGLE_DATE,	"Toggle date display"), \
 	REQ_(TOGGLE_AUTHOR,	"Toggle author display"), \
@@ -1146,6 +1155,7 @@ static const struct keybinding default_keybindings[] = {
 	{ 'z',		REQ_STOP_LOADING },
 	{ 'v',		REQ_SHOW_VERSION },
 	{ 'r',		REQ_SCREEN_REDRAW },
+	{ 'o',		REQ_OPTIONS },
 	{ '.',		REQ_TOGGLE_LINENO },
 	{ 'D',		REQ_TOGGLE_DATE },
 	{ 'A',		REQ_TOGGLE_AUTHOR },
@@ -2287,6 +2297,23 @@ toggle_view_option(bool *option, const char *help)
 }
 
 static void
+open_option_menu(void)
+{
+	const struct menu_item menu[] = {
+		{ '.', "line numbers", &opt_line_number },
+		{ 'D', "date display", &opt_date },
+		{ 'A', "author display", &opt_author },
+		{ 'g', "revision graph display", &opt_rev_graph },
+		{ 'F', "reference display", &opt_show_refs },
+		{ 0 }
+	};
+	int selected = 0;
+
+	if (prompt_menu("Toggle option", menu, &selected))
+		toggle_view_option(menu[selected].data, menu[selected].text);
+}
+
+static void
 maximize_view(struct view *view)
 {
 	memset(display, 0, sizeof(display));
@@ -3274,6 +3301,10 @@ view_driver(struct view *view, enum request request)
 	case REQ_MAXIMIZE:
 		if (displayed_views() == 2)
 			maximize_view(view);
+		break;
+
+	case REQ_OPTIONS:
+		open_option_menu();
 		break;
 
 	case REQ_TOGGLE_LINENO:
@@ -6790,6 +6821,67 @@ static char *
 read_prompt(const char *prompt)
 {
 	return prompt_input(prompt, read_prompt_handler, NULL);
+}
+
+static bool prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
+{
+	enum input_status status = INPUT_OK;
+	int size = 0;
+
+	while (items[size].text)
+		size++;
+
+	while (status == INPUT_OK) {
+		const struct menu_item *item = &items[*selected];
+		int key;
+		int i;
+
+		mvwprintw(status_win, 0, 0, "%s (%d of %d) ",
+			  prompt, *selected + 1, size);
+		if (item->hotkey)
+			wprintw(status_win, "[%c] ", (char) item->hotkey);
+		wprintw(status_win, "%s", item->text);
+		wclrtoeol(status_win);
+
+		key = get_input(COLS - 1);
+		switch (key) {
+		case KEY_RETURN:
+		case KEY_ENTER:
+		case '\n':
+			status = INPUT_STOP;
+			break;
+
+		case KEY_LEFT:
+		case KEY_UP:
+			*selected = *selected - 1;
+			if (*selected < 0)
+				*selected = size - 1;
+			break;
+
+		case KEY_RIGHT:
+		case KEY_DOWN:
+			*selected = (*selected + 1) % size;
+			break;
+
+		case KEY_ESC:
+			status = INPUT_CANCEL;
+			break;
+
+		default:
+			for (i = 0; items[i].text; i++)
+				if (items[i].hotkey == key) {
+					*selected = i;
+					status = INPUT_STOP;
+					break;
+				}
+		}
+	}
+
+	/* Clear the status window */
+	status_empty = FALSE;
+	report("");
+
+	return status != INPUT_CANCEL;
 }
 
 /*
