@@ -3517,22 +3517,39 @@ parse_author_line(char *ident, const char **author, time_t *time)
 	}
 }
 
-static enum input_status
-select_commit_parent_handler(void *data, char *buf, int c)
+static bool
+open_commit_parent_menu(char buf[SIZEOF_STR], int *parents)
 {
-	size_t parents = *(size_t *) data;
-	int parent = 0;
+	char rev[SIZEOF_REV];
+	const char *revlist_argv[] = {
+		"git", "log", "--no-color", "-1", "--pretty=format:%s", rev, NULL
+	};
+	struct menu_item *items;
+	char text[SIZEOF_STR];
+	bool ok = TRUE;
+	int i;
 
-	if (!isdigit(c))
-		return INPUT_SKIP;
+	items = calloc(*parents + 1, sizeof(*items));
+	if (items)
+		return FALSE;
 
-	if (*buf)
-		parent = atoi(buf) * 10;
-	parent += c - '0';
+	for (i = 0; i < *parents; i++) {
+		string_copy_rev(rev, &buf[SIZEOF_REV * i]);
+		if (!run_io_buf(revlist_argv, text, sizeof(text)) ||
+		    !(items[i].text = strdup(text))) {
+			ok = FALSE;
+			break;
+		}
+	}
 
-	if (parent > parents)
-		return INPUT_SKIP;
-	return INPUT_OK;
+	if (ok) {
+		*parents = 0;
+		ok = prompt_menu("Select parent", items, parents);
+	}
+	for (i = 0; items[i].text; i++)
+		free((char *) items[i].text);
+	free(items);
+	return ok;
 }
 
 static bool
@@ -3540,12 +3557,13 @@ select_commit_parent(const char *id, char rev[SIZEOF_REV], const char *path)
 {
 	char buf[SIZEOF_STR * 4];
 	const char *revlist_argv[] = {
-		"git", "rev-list", "-1", "--parents", id, "--", path, NULL
+		"git", "log", "--no-color", "-1",
+			"--pretty=format:%P", id, "--", path, NULL
 	};
 	int parents;
 
 	if (!run_io_buf(revlist_argv, buf, sizeof(buf)) ||
-	    (parents = (strlen(buf) / 40) - 1) < 0) {
+	    (parents = strlen(buf) / 40) < 0) {
 		report("Failed to get parent information");
 		return FALSE;
 
@@ -3557,17 +3575,8 @@ select_commit_parent(const char *id, char rev[SIZEOF_REV], const char *path)
 		return FALSE;
 	}
 
-	if (parents > 1) {
-		char prompt[SIZEOF_STR];
-		char *result;
-
-		if (!string_format(prompt, "Which parent? [1..%d] ", parents))
-			return FALSE;
-		result = prompt_input(prompt, select_commit_parent_handler, &parents);
-		if (!result)
-			return FALSE;
-		parents = atoi(result);
-	}
+	if (parents > 1 && !open_commit_parent_menu(buf, &parents))
+		return FALSE;
 
 	string_copy_rev(rev, &buf[41 * parents]);
 	return TRUE;
