@@ -3530,7 +3530,7 @@ open_commit_parent_menu(char buf[SIZEOF_STR], int *parents)
 	int i;
 
 	items = calloc(*parents + 1, sizeof(*items));
-	if (items)
+	if (!items)
 		return FALSE;
 
 	for (i = 0; i < *parents; i++) {
