@@ -125,6 +125,14 @@ The following variables can be set:
 	always ensured that at least one column is scrolled. The default is to
 	scroll '50%' of the view width.
 
+'split-view-height' (mixed)::
+
+	Height of the lower view in a split view. Can be specified either as
+	the number of rows, e.g. '5', or as a percentage of the view height,
+	e.g. '80%', where the maximum is 100%. It is always ensured that the
+	smaller of the views is at least four rows high. The default is a view
+	height of '66%'.
+
 'commit-encoding' (string)::
 
 	The encoding used for commits. The default is UTF-8. Not this option

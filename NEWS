@@ -11,6 +11,9 @@ Improvements:
  - Tree view: sort entries by name, date or author. Toggling is bound to
    'i' by default, with 'I' controlling whether or not to sort in
    ascending order.
+ - Make height of the lower view in a split view configurable by setting
+   the 'split-view-height' variable to a number or a percentage.
+   Defaults to 2/3 of the total view height.
 
 Bug fixes:
 

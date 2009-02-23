@@ -72,6 +72,7 @@ static size_t utf8_length(const char **string, size_t col, int *width, size_t ma
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
+#define MAX(x, y)	((x) > (y) ? (x) :  (y))
 
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(x[0]))
 #define STRING_SIZE(x)	(sizeof(x) - 1)
@@ -111,7 +112,8 @@ static size_t utf8_length(const char **string, size_t col, int *width, size_t ma
 
 #define TAB_SIZE	8
 
-#define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
+#define	SCALE_SPLIT_VIEW (2.0 / 3.0)
+#define MIN_VIEW_HEIGHT 4
 
 #define NULL_ID		"0000000000000000000000000000000000000000"
 
@@ -913,6 +915,7 @@ static bool opt_rev_graph		= FALSE;
 static bool opt_show_refs		= TRUE;
 static int opt_num_interval		= NUMBER_INTERVAL;
 static double opt_hscroll		= 0.50;
+static double opt_scale_split_view	= SCALE_SPLIT_VIEW;
 static int opt_tab_size			= TAB_SIZE;
 static int opt_author_cols		= AUTHOR_COLS-1;
 static char opt_path[SIZEOF_STR]	= "";
@@ -1594,6 +1597,9 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "horizontal-scroll"))
 		return parse_step(&opt_hscroll, argv[2]);
 
+	if (!strcmp(argv[0], "split-view-height"))
+		return parse_step(&opt_scale_split_view, argv[2]);
+
 	if (!strcmp(argv[0], "tab-size"))
 		return parse_int(&opt_tab_size, argv[2], 1, 1024);
 
@@ -2223,6 +2229,15 @@ update_view_title(struct view *view)
 	wnoutrefresh(view->title);
 }
 
+static int
+apply_step(double step, int value)
+{
+	if (step >= 1)
+		return (int) step;
+	value *= step + 0.01;
+	return value ? value : 1;
+}
+
 static void
 resize_display(void)
 {
@@ -2240,7 +2255,9 @@ resize_display(void)
 	if (view != base) {
 		/* Horizontal split. */
 		view->width   = base->width;
-		view->height  = SCALE_SPLIT_VIEW(base->height);
+		view->height  = apply_step(opt_scale_split_view, base->height);
+		view->height  = MAX(view->height, MIN_VIEW_HEIGHT);
+		view->height  = MIN(view->height, base->height - MIN_VIEW_HEIGHT);
 		base->height -= view->height;
 
 		/* Make room for the title bar. */
@@ -2351,15 +2368,6 @@ goto_view_line(struct view *view, unsigned long offset, unsigned long lineno)
 	}
 
 	return FALSE;
-}
-
-static int
-apply_step(double step, int value)
-{
-	if (step >= 1)
-		return (int) step;
-	value *= step + 0.01;
-	return value ? value : 1;
 }
 
 /* Scrolling backend */
