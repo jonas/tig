@@ -437,7 +437,8 @@ A	Toggle author display on/off.
 g	Toggle revision graph visualization on/off.
 F	Toggle reference display on/off (tag and branch names).
 ':'	Open prompt. This allows you to specify what git command \
-	to run. Example `:log -p`
+	to run. Example `:log -p`. You can also use this to jump \
+	to a specific line by typing `:<linenumber>`, e.g. `:80`.
 e	Open file in editor.
 -----------------------------------------------------------------------------
 
