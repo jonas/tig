@@ -104,15 +104,8 @@ static size_t utf8_length(const char **string, size_t col, int *width, size_t ma
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
 #define DATE_COLS	STRING_SIZE("2006-04-29 14:21 ")
 
-#define AUTHOR_COLS	20
 #define ID_COLS		8
 
-/* The default interval between line numbers. */
-#define NUMBER_INTERVAL	5
-
-#define TAB_SIZE	8
-
-#define	SCALE_SPLIT_VIEW (2.0 / 3.0)
 #define MIN_VIEW_HEIGHT 4
 
 #define NULL_ID		"0000000000000000000000000000000000000000"
@@ -913,11 +906,11 @@ static bool opt_line_number		= FALSE;
 static bool opt_line_graphics		= TRUE;
 static bool opt_rev_graph		= FALSE;
 static bool opt_show_refs		= TRUE;
-static int opt_num_interval		= NUMBER_INTERVAL;
+static int opt_num_interval		= 5;
 static double opt_hscroll		= 0.50;
-static double opt_scale_split_view	= SCALE_SPLIT_VIEW;
-static int opt_tab_size			= TAB_SIZE;
-static int opt_author_cols		= AUTHOR_COLS-1;
+static double opt_scale_split_view	= 2.0 / 3.0;
+static int opt_tab_size			= 8;
+static int opt_author_cols		= 19;
 static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
