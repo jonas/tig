@@ -1614,7 +1614,7 @@ static int
 option_bind_command(int argc, const char *argv[])
 {
 	enum request request;
-	int keymap;
+	int keymap = -1;
 	int key;
 
 	if (argc < 3) {
@@ -5485,7 +5485,7 @@ status_update_files(struct view *view, struct line *line)
 	struct line *pos = view->line + view->lines;
 	int files = 0;
 	int file, done;
-	int cursor_y, cursor_x;
+	int cursor_y = -1, cursor_x = -1;
 
 	if (!status_update_prepare(&io, line->type))
 		return FALSE;
