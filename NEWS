@@ -4,6 +4,11 @@ Release notes
 tig master
 ---------
 
+Incompatibilities:
+
+ - Setting the cursor color no longer automatically sets the text to
+   bold. The old 'lazy' behavior was a bug.
+
 Improvements:
 
  - Add branch view for choosing which branch to display in the main
@@ -14,6 +19,9 @@ Improvements:
  - Make height of the lower view in a split view configurable by setting
    the 'split-view-height' variable to a number or a percentage.
    Defaults to 2/3 of the total view height.
+ - Allow multiple text attributes for color commands:
+
+	color cursor white blue underline bold
 
 Bug fixes:
 

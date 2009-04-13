@@ -1488,7 +1488,7 @@ option_color_command(int argc, const char *argv[])
 {
 	struct line_info *info;
 
-	if (argc != 3 && argc != 4) {
+	if (argc < 3) {
 		config_msg = "Wrong number of arguments given to color command";
 		return ERR;
 	}
@@ -1515,9 +1515,15 @@ option_color_command(int argc, const char *argv[])
 		return ERR;
 	}
 
-	if (argc == 4 && !set_attribute(&info->attr, argv[3])) {
-		config_msg = "Unknown attribute";
-		return ERR;
+	info->attr = 0;
+	while (argc-- > 3) {
+		int attr;
+
+		if (!set_attribute(&attr, argv[argc])) {
+			config_msg = "Unknown attribute";
+			return ERR;
+		}
+		info->attr |= attr;
 	}
 
 	return OK;
