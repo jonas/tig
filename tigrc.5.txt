@@ -9,11 +9,9 @@ tigrc - tig configuration file
 SYNOPSIS
 --------
 [verse]
-.............................................................................
 *set*   'variable' *=* 'value'
 *bind*  'keymap' 'key' 'action'
 *color* 'area' 'fgcolor' 'bgcolor' '[attributes]'
-.............................................................................
 
 
 DESCRIPTION
@@ -38,9 +36,7 @@ A few selective variables can be configured via the set command. The syntax
 is:
 
 [verse]
-..............................................................................
 *set* variables *=* value
-..............................................................................
 
 Examples:
 
@@ -146,9 +142,7 @@ Using bind commands keys can be mapped to an action when pressed in a given
 key map. The syntax is:
 
 [verse]
-..............................................................................
 *bind* 'keymap' 'key' 'action'
-..............................................................................
 
 Examples:
 
@@ -363,9 +357,7 @@ background combinations to certain areas. Optionally, an attribute can be
 given as the last parameter. The syntax is:
 
 [verse]
-..............................................................................
 *color* 'area' 'fgcolor' 'bgcolor' '[attributes]'
-..............................................................................
 
 Examples:
 
