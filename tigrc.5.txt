@@ -94,6 +94,11 @@ The following variables can be set:
 	(branches, tags, and remotes) in the main view on start-up. Can all be
 	toggled.
 
+'date-short' (bool)::
+
+        Whether to shorten the date column in the main view to just the date
+        on startup. Can be toggled.
+
 'author-width' (int)::
 
 	Width of the author column. When set to 5 or below, the author name
@@ -340,6 +345,7 @@ stop-loading		Stop all loading views
 options			Open options menu
 toggle-lineno		Toggle line numbers
 toggle-date		Toggle date display
+toggle-date-short       Toggle short (date-only) dates
 toggle-author		Toggle author display
 toggle-rev-graph	Toggle revision graph visualization
 toggle-refs		Toggle reference display
