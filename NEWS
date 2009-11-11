@@ -11,6 +11,8 @@ Incompatibilities:
 
 Improvements:
 
+ - Add ability to shorten the date column to just show the date and not
+   the date and time. Bound to 'T' by default.
  - Show the active (instead of the default) keybindings in the help
    view. Furthermore, honor the keymap when suggesting actions in the
    help messages.
