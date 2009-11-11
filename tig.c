@@ -103,6 +103,7 @@ static size_t utf8_length(const char **string, size_t col, int *width, size_t ma
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
 #define DATE_COLS	STRING_SIZE("2006-04-29 14:21 ")
+#define DATE_SHORT_COLS	STRING_SIZE("2006-04-29 ")
 
 #define ID_COLS		8
 
@@ -837,6 +838,7 @@ run_io_load(const char **argv, const char *separators,
 	REQ_(OPTIONS,		"Open option menu"), \
 	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
 	REQ_(TOGGLE_DATE,	"Toggle date display"), \
+	REQ_(TOGGLE_DATE_SHORT, "Toggle short (date-only) dates"), \
 	REQ_(TOGGLE_AUTHOR,	"Toggle author display"), \
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
 	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
@@ -901,6 +903,7 @@ get_request(const char *name)
 
 /* Option and state variables. */
 static bool opt_date			= TRUE;
+static bool opt_date_short		= FALSE;
 static bool opt_author			= TRUE;
 static bool opt_line_number		= FALSE;
 static bool opt_line_graphics		= TRUE;
@@ -1157,6 +1160,7 @@ static const struct keybinding default_keybindings[] = {
 	{ 'o',		REQ_OPTIONS },
 	{ '.',		REQ_TOGGLE_LINENO },
 	{ 'D',		REQ_TOGGLE_DATE },
+	{ 'T',		REQ_TOGGLE_DATE_SHORT },
 	{ 'A',		REQ_TOGGLE_AUTHOR },
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
 	{ 'F',		REQ_TOGGLE_REFS },
@@ -1620,6 +1624,9 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "show-date"))
 		return parse_bool(&opt_date, argv[2]);
 
+	if (!strcmp(argv[0], "date-short"))
+		return parse_bool(&opt_date_short, argv[2]);
+
 	if (!strcmp(argv[0], "show-rev-graph"))
 		return parse_bool(&opt_rev_graph, argv[2]);
 
@@ -2071,8 +2078,9 @@ static bool
 draw_date(struct view *view, time_t *time)
 {
 	const char *date = mkdate(time);
+	int cols = opt_date_short ? DATE_SHORT_COLS : DATE_COLS;
 
-	return draw_field(view, LINE_DATE, date, DATE_COLS, FALSE);
+	return draw_field(view, LINE_DATE, date, cols, FALSE);
 }
 
 static bool
@@ -3365,6 +3373,10 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_TOGGLE_DATE:
 		toggle_view_option(&opt_date, "date display");
+		break;
+
+	case REQ_TOGGLE_DATE_SHORT:
+		toggle_view_option(&opt_date_short, "date shortening");
 		break;
 
 	case REQ_TOGGLE_AUTHOR:
