@@ -7587,8 +7587,8 @@ parse_options(int argc, const char *argv[])
 			die("command too long");
 	}
 
-	if (!prepare_update(VIEW(request), custom_argv, NULL, FORMAT_NONE))                                                                        
-		die("Failed to format arguments"); 
+	if (!prepare_update(VIEW(request), custom_argv, NULL, FORMAT_NONE))
+		die("Failed to format arguments");
 
 	return request;
 }
