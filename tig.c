@@ -2149,7 +2149,7 @@ draw_field(struct view *view, enum line_type type, const char *text, int len, bo
 static bool
 draw_date(struct view *view, time_t *time)
 {
-	const char *date = mkdate(time);
+	const char *date = time ? mkdate(time) : "";
 	int cols = opt_date == DATE_SHORT ? DATE_SHORT_COLS : DATE_COLS;
 
 	return draw_field(view, LINE_DATE, date, cols, FALSE);
