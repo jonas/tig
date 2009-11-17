@@ -18,6 +18,8 @@ Improvements:
    help messages.
  - Add branch view for choosing which branch to display in the main
    view. Bound to 'H' by default.
+ - Tree view: show entry to parent directory ('..') when running from
+   subdirectory.
  - Tree view: sort entries by name, date or author. Toggling is bound to
    'i' by default, with 'I' controlling whether or not to sort in
    ascending order.
@@ -30,6 +32,8 @@ Improvements:
 
 Bug fixes:
 
+ - Blame view: fix loading of blame data when cwd is not the repo root.
+   (Debian bug 540766)
  - Tree view: fix searching.
 
 tig-0.14.1

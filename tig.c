@@ -655,6 +655,12 @@ run_io_rd(struct io *io, const char **argv, enum format_flags flags)
 }
 
 static bool
+run_io_rd_dir(struct io *io, const char **argv, const char *dir, enum format_flags flags)
+{
+	return init_io_rd(io, argv, dir, flags) && start_io(io);
+}
+
+static bool
 io_eof(struct io *io)
 {
 	return io->eof;
@@ -1981,6 +1987,8 @@ struct view_ops {
 	bool (*grep)(struct view *view, struct line *line);
 	/* Select line */
 	void (*select)(struct view *view, struct line *line);
+	/* Prepare view for loading */
+	bool (*prepare)(struct view *view);
 };
 
 static struct view_ops blame_ops;
@@ -2998,11 +3006,12 @@ begin_update(struct view *view, bool refresh)
 			return FALSE;
 
 	} else {
-		if (view == VIEW(REQ_VIEW_TREE) && strcmp(view->vid, view->id))
-			opt_path[0] = 0;
-
-		if (!run_io_rd(&view->io, view->ops->argv, FORMAT_ALL))
+		if (view->ops->prepare) {
+			if (!view->ops->prepare(view))
+				return FALSE;
+		} else if (!run_io_rd(&view->io, view->ops->argv, FORMAT_ALL)) {
 			return FALSE;
+		}
 
 		/* Put the current ref_* value to the view title ref
 		 * member. This is needed by the blob view. Most other
@@ -3189,6 +3198,11 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		display[current_view] = view;
 	}
 
+	/* No parent signals that this is the first loaded view. */
+	if (prev && view != prev) {
+		view->parent = prev;
+	}
+
 	/* Resize the view when switching between split- and full-screen,
 	 * or when switching between two different full-screen views. */
 	if (nviews != displayed_views() ||
@@ -3224,8 +3238,6 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 			/* "Blur" the previous view. */
 			update_view_title(prev);
 		}
-
-		view->parent = prev;
 	}
 
 	if (view->pipe && view->lines == 0) {
@@ -4249,7 +4261,7 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 			return TRUE;
 		}
 
-		if (!run_io_rd(&io, log_file, FORMAT_NONE)) {
+		if (!run_io_rd_dir(&io, log_file, opt_cdup, FORMAT_NONE)) {
 			report("Failed to load tree data");
 			return TRUE;
 		}
@@ -4272,8 +4284,6 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 		if (!pos)
 			return TRUE;
 		text = pos + 1;
-		if (*opt_prefix && !strncmp(text, opt_prefix, strlen(opt_prefix)))
-			text += strlen(opt_prefix);
 		if (*opt_path && !strncmp(text, opt_path, strlen(opt_path)))
 			text += strlen(opt_path);
 		pos = strchr(text, '/');
@@ -4516,6 +4526,32 @@ tree_select(struct view *view, struct line *line)
 	string_copy_rev(view->ref, entry->id);
 }
 
+static bool
+tree_prepare(struct view *view)
+{
+	if (view->lines == 0 && opt_prefix[0]) {
+		char *pos = opt_prefix;
+
+		while (pos && *pos) {
+			char *end = strchr(pos, '/');
+
+			if (end)
+				*end = 0;
+			push_tree_stack_entry(pos, 0);
+			pos = end;
+			if (end) {
+				*end = '/';
+				pos++;
+			}
+		}
+
+	} else if (strcmp(view->vid, view->id)) {
+		opt_path[0] = 0;
+	}
+
+	return run_io_rd_dir(&view->io, view->ops->argv, opt_cdup, FORMAT_ALL);
+}
+
 static const char *tree_argv[SIZEOF_ARG] = {
 	"git", "ls-tree", "%(commit)", "%(directory)", NULL
 };
@@ -4529,6 +4565,7 @@ static struct view_ops tree_ops = {
 	tree_request,
 	tree_grep,
 	tree_select,
+	tree_prepare,
 };
 
 static bool
@@ -4607,8 +4644,19 @@ struct blame {
 static bool
 blame_open(struct view *view)
 {
-	if (*opt_ref || !io_open(&view->io, opt_file)) {
-		if (!run_io_rd(&view->io, blame_cat_file_argv, FORMAT_ALL))
+	char path[SIZEOF_STR];
+
+	if (!view->parent && *opt_prefix) {
+		string_copy(path, opt_file);
+		if (!string_format(opt_file, "%s%s", opt_prefix, path))
+			return FALSE;
+	}
+
+	if (!string_format(path, "%s%s", opt_cdup, opt_file))
+		return FALSE;
+
+	if (*opt_ref || !io_open(&view->io, path)) {
+		if (!run_io_rd_dir(&view->io, blame_cat_file_argv, opt_cdup, FORMAT_ALL))
 			return FALSE;
 	}
 
@@ -4704,7 +4752,7 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 		if (view->lines == 0 && !view->parent)
 			die("No blame exist for %s", view->vid);
 
-		if (view->lines == 0 || !run_io_rd(&io, argv, FORMAT_ALL)) {
+		if (view->lines == 0 || !run_io_rd_dir(&io, argv, opt_cdup, FORMAT_ALL)) {
 			report("Failed to load blame data");
 			return TRUE;
 		}
