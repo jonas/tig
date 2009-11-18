@@ -645,9 +645,9 @@ run_io_append(const char **argv, enum format_flags flags, int fd)
 }
 
 static bool
-run_io_rd(struct io *io, const char **argv, enum format_flags flags)
+run_io_rd(struct io *io, const char **argv, const char *dir, enum format_flags flags)
 {
-	return init_io_rd(io, argv, NULL, flags) && start_io(io);
+	return init_io_rd(io, argv, dir, flags) && start_io(io);
 }
 
 static bool
@@ -790,7 +790,8 @@ run_io_buf(const char **argv, char buf[], size_t bufsize)
 {
 	struct io io = {};
 
-	return run_io_rd(&io, argv, FORMAT_NONE) && io_read_buf(&io, buf, bufsize);
+	return run_io_rd(&io, argv, NULL, FORMAT_NONE)
+	    && io_read_buf(&io, buf, bufsize);
 }
 
 static int
@@ -5163,7 +5164,7 @@ branch_open(struct view *view)
 			"--simplify-by-decoration", "--all", NULL
 	};
 
-	if (!run_io_rd(&view->io, branch_log, FORMAT_NONE)) {
+	if (!run_io_rd(&view->io, branch_log, NULL, FORMAT_NONE)) {
 		report("Failed to load branch data");
 		return TRUE;
 	}
