@@ -497,9 +497,22 @@ init_io_rd(struct io *io, const char *argv[], const char *dir,
 }
 
 static bool
-io_open(struct io *io, const char *name)
+io_open(struct io *io, const char *fmt, ...)
 {
+	char name[SIZEOF_STR] = "";
+	bool fits;
+	va_list args;
+
 	init_io(io, NULL, IO_FD);
+
+	va_start(args, fmt);
+	fits = vsnprintf(name, sizeof(name), fmt, args) < sizeof(name);
+	va_end(args);
+
+	if (!fits) {
+		io->error = ENAMETOOLONG;
+		return FALSE;
+	}
 	io->pipe = *name ? open(name, O_RDONLY) : STDIN_FILENO;
 	if (io->pipe == -1)
 		io->error = errno;
@@ -1852,7 +1865,7 @@ load_option_file(const char *path)
 	struct io io = {};
 
 	/* It's OK that the file doesn't exist. */
-	if (!io_open(&io, path))
+	if (!io_open(&io, "%s", path))
 		return;
 
 	config_lineno = 0;
@@ -2983,7 +2996,7 @@ prepare_update_file(struct view *view, const char *name)
 {
 	if (view->pipe)
 		end_update(view, TRUE);
-	return io_open(&view->io, name);
+	return io_open(&view->io, "%s", name);
 }
 
 static bool
@@ -4642,10 +4655,7 @@ blame_open(struct view *view)
 			return FALSE;
 	}
 
-	if (!string_format(path, "%s%s", opt_cdup, opt_file))
-		return FALSE;
-
-	if (*opt_ref || !io_open(&view->io, path)) {
+	if (*opt_ref || !io_open(&view->io, "%s%s", opt_cdup, opt_file)) {
 		if (!run_io_rd(&view->io, blame_cat_file_argv, opt_cdup, FORMAT_ALL))
 			return FALSE;
 	}
@@ -5427,8 +5437,7 @@ status_update_onbranch(void)
 		if (!*opt_head) {
 			struct io io = {};
 
-			if (string_format(buf, "%s/rebase-merge/head-name", opt_git_dir) &&
-			    io_open(&io, buf) &&
+			if (io_open(&io, "%s/rebase-merge/head-name", opt_git_dir) &&
 			    io_read_buf(&io, buf, sizeof(buf))) {
 				head = buf;
 				if (!prefixcmp(head, "refs/heads/"))
