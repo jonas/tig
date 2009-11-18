@@ -651,12 +651,6 @@ run_io_rd(struct io *io, const char **argv, const char *dir, enum format_flags f
 }
 
 static bool
-run_io_rd_dir(struct io *io, const char **argv, const char *dir, enum format_flags flags)
-{
-	return init_io_rd(io, argv, dir, flags) && start_io(io);
-}
-
-static bool
 io_eof(struct io *io)
 {
 	return io->eof;
@@ -4257,7 +4251,7 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 			return TRUE;
 		}
 
-		if (!run_io_rd_dir(&io, log_file, opt_cdup, FORMAT_NONE)) {
+		if (!run_io_rd(&io, log_file, opt_cdup, FORMAT_NONE)) {
 			report("Failed to load tree data");
 			return TRUE;
 		}
@@ -4652,7 +4646,7 @@ blame_open(struct view *view)
 		return FALSE;
 
 	if (*opt_ref || !io_open(&view->io, path)) {
-		if (!run_io_rd_dir(&view->io, blame_cat_file_argv, opt_cdup, FORMAT_ALL))
+		if (!run_io_rd(&view->io, blame_cat_file_argv, opt_cdup, FORMAT_ALL))
 			return FALSE;
 	}
 
@@ -4748,7 +4742,7 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 		if (view->lines == 0 && !view->parent)
 			die("No blame exist for %s", view->vid);
 
-		if (view->lines == 0 || !run_io_rd_dir(&io, argv, opt_cdup, FORMAT_ALL)) {
+		if (view->lines == 0 || !run_io_rd(&io, argv, opt_cdup, FORMAT_ALL)) {
 			report("Failed to load blame data");
 			return TRUE;
 		}
