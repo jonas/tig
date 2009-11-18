@@ -1,6 +1,8 @@
+ifndef::doctype-manpage[]
 The tig Manual
 ==============
 Jonas Fonseca <fonseca@diku.dk>
+endif::doctype-manpage[]
 
 This is the manual for tig, the ncurses-based text-mode interface for git.
 Tig allows you to browse changes in a git repository and can additionally act

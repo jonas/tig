@@ -15,6 +15,7 @@ tig-*.tar.gz.md5
 tig.1
 tig.spec
 tigrc.5
+tigmanual.7
 *.html
 *.o
 *.xml

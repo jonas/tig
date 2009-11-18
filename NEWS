@@ -11,6 +11,7 @@ Incompatibilities:
 
 Improvements:
 
+ - Provide the manual as a man page named tigmanual(7).
  - Add ability to toggle between showing shorter dates (without time
    info) and relative dates. Use 'D' to toggle between date formats.
  - Show the active (instead of the default) keybindings in the help

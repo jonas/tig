@@ -37,7 +37,7 @@ CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
 PROGS	= tig
 TXTDOC	= tig.1.txt tigrc.5.txt manual.txt NEWS README INSTALL BUGS TODO
-MANDOC	= tig.1 tigrc.5
+MANDOC	= tig.1 tigrc.5 manual.7
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html NEWS.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) manual.html-chunked manual.pdf
 
@@ -73,12 +73,14 @@ install: all
 
 install-doc-man: doc-man
 	mkdir -p $(DESTDIR)$(mandir)/man1 \
-		 $(DESTDIR)$(mandir)/man5
+		 $(DESTDIR)$(mandir)/man5 \
+		 $(DESTDIR)$(mandir)/man7
 	for doc in $(MANDOC); do \
 		sed 's#++SYSCONFDIR++#$(sysconfdir)#' < "$$doc" > "$$doc+"; \
 		case "$$doc" in \
 		*.1) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man1/$$doc" ;; \
 		*.5) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man5/$$doc" ;; \
+		*.7) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man7/$$doc" ;; \
 		esac; \
 		$(RM) "$$doc+"; \
 	done
@@ -156,6 +158,8 @@ README.html: README SITES INSTALL asciidoc.conf
 NEWS.html: NEWS asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<
 
+tigmanual.7: manual.txt
+
 %.1.html : %.1.txt asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
 
@@ -166,6 +170,9 @@ NEWS.html: NEWS asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
 
 %.5.xml : %.5.txt asciidoc.conf
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
+
+%.7.xml : %.7.txt asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
 %.html : %.txt asciidoc.conf

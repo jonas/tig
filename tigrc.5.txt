@@ -503,5 +503,5 @@ Licensed under the terms of the GNU General Public License.
 
 SEE ALSO
 --------
-manpage:tig[1], git-config(1),
+manpage:tig[1], manpage:tigmanual[7], git-config(1),
 and the http://jonas.nitro.dk/tig/manual.html[tig manual].
