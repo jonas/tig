@@ -2997,15 +2997,11 @@ begin_update(struct view *view, bool refresh)
 	if (view->pipe)
 		end_update(view, TRUE);
 
-	if (refresh) {
-		if (!start_io(&view->io))
-			return FALSE;
-
-	} else {
+	if (!refresh) {
 		if (view->ops->prepare) {
 			if (!view->ops->prepare(view))
 				return FALSE;
-		} else if (!run_io_rd(&view->io, view->ops->argv, FORMAT_ALL)) {
+		} else if (!init_io_rd(&view->io, view->ops->argv, NULL, FORMAT_ALL)) {
 			return FALSE;
 		}
 
@@ -3015,6 +3011,9 @@ begin_update(struct view *view, bool refresh)
 		 * first line is a commit line. */
 		string_copy_rev(view->ref, view->id);
 	}
+
+	if (!start_io(&view->io))
+		return FALSE;
 
 	setup_update(view, view->id);
 
@@ -4545,7 +4544,7 @@ tree_prepare(struct view *view)
 		opt_path[0] = 0;
 	}
 
-	return run_io_rd_dir(&view->io, view->ops->argv, opt_cdup, FORMAT_ALL);
+	return init_io_rd(&view->io, view->ops->argv, opt_cdup, FORMAT_ALL);
 }
 
 static const char *tree_argv[SIZEOF_ARG] = {
