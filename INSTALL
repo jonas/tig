@@ -29,27 +29,29 @@ installation.
 
 The following tools and packages are needed:
 
-`-------------------------------`----------------------------------------------
-Tool				Description
--------------------------------------------------------------------------------
-git-core			Tig is just a frontend for git.
-ncurses				Be sure to also have development files \
-				installed. Usually they are available in a \
-				separate package ending with `-dev`.
-iconv				If iconv is not provided by the c library \
-				you need to change the Makefile to link it \
-				into the binary.
--------------------------------------------------------------------------------
+[cols="2<,8<",options="header"]
+|=============================================================================
+|Tool				|Description
+|git-core			|Tig is just a frontend for git.
+|ncurses			|Be sure to also have development files
+				 installed. Usually they are available in a
+				 separate package ending with `-dev`.
+|iconv				|If iconv is not provided by the c library
+				 you need to change the Makefile to link it
+				 into the binary.
+|=============================================================================
 
 The following optional tools and packages are needed for creating the
 configure script and building documentation:
 
-`-------------------------------`----------------------------------------------
-autoconf			Contains autoreconf for generating configure \
-				from configure.ac.
-asciidoc (>= 8.0)		Generates HTML and (DocBook) XML from text.
-xmlto				Generates manpages and chunked HTML from XML.
-DocBook XSL (>= 1.72.0)		Used by xmlto for building manpages.
-DocBook (DSSL/Jade) tools	Generates PDF from XML. \
+[cols="2<,8<",options="header"]
+|=============================================================================
+|Tool				|Description
+|autoconf			|Contains autoreconf for generating configure
+				 from configure.ac.
+|asciidoc (>= 8.0)		|Generates HTML and (DocBook) XML from text.
+|xmlto				|Generates manpages and chunked HTML from XML.
+|DocBook XSL (>= 1.72.0)	|Used by xmlto for building manpages.
+|DocBook (DSSL/Jade) tools	|Generates PDF from XML.
 				Also known as docbook-utils.
--------------------------------------------------------------------------------
+|=============================================================================

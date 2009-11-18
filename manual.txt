@@ -44,7 +44,7 @@ given command and all will be shell quoted before they are passed to the
 shell.
 
 NOTE: If you specify options for the main view, you should not use the
-`\--pretty` option as this option will be set automatically to the format
+`--pretty` option as this option will be set automatically to the format
 expected by the main view.
 
 Example on how to view a commit and show both author and committer
@@ -145,17 +145,17 @@ some of the <<env-variables, environment variables>> as well as the
 arguments that refer to the current browsing state by using one of the
 following variables.
 
-`-----------------------`-----------------------------------------------------
-Browsing state variables
-------------------------------------------------------------------------------
-%(head)			The currently viewed 'head' ID. Defaults to HEAD
-%(commit)		The currently selected commit ID.
-%(blob)			The currently selected blob ID.
-%(directory)		The current directory path in the tree view; \
-			empty for the root directory.
-%(file)			The currently selected file.
-%(ref)			The reference given to blame or HEAD if undefined.
-------------------------------------------------------------------------------
+.Browsing state variables
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|%(head)		|The currently viewed 'head' ID. Defaults to HEAD
+|%(commit)		|The currently selected commit ID.
+|%(blob)		|The currently selected blob ID.
+|%(directory)		|The current directory path in the tree view;
+			 empty for the root directory.
+|%(file)		|The currently selected file.
+|%(ref)			|The reference given to blame or HEAD if undefined.
+|=============================================================================
 
 [[title-window]]
 Title Windows
@@ -262,7 +262,7 @@ TIG_LOG_CMD::
 
 	The command used for the log view. If you prefer to have both
 	author and committer shown in the log view be sure to pass
-	`\--pretty=fuller` to git log. Defaults to:
+	`--pretty=fuller` to git log. Defaults to:
 -----------------------------------------------------------------------------
 git log --no-color --cc --stat -n100 %(head)
 -----------------------------------------------------------------------------
@@ -270,7 +270,7 @@ git log --no-color --cc --stat -n100 %(head)
 TIG_MAIN_CMD::
 
 	The command used for the main view. Note, you must always specify
-	the option: `\--pretty=raw` since the main view parser expects to
+	the option: `--pretty=raw` since the main view parser expects to
 	read that format.
 -----------------------------------------------------------------------------
 git log --no-color --pretty=raw --parents --topo-order %(head)
@@ -309,138 +309,137 @@ Below the default key bindings are shown.
 View Switching
 ~~~~~~~~~~~~~~
 
-`-------`--------------------------------------------------------------------
-Key	Action
------------------------------------------------------------------------------
-m	Switch to main view.
-d	Switch to diff view.
-l	Switch to log view.
-p	Switch to pager view.
-t	Switch to (directory) tree view.
-f	Switch to (file) blob view.
-B	Switch to blame view.
-H	Switch to branch view.
-h	Switch to help view
-S	Switch to status view
-c	Switch to stage view
------------------------------------------------------------------------------
+[frame="none",grid="none",cols="2<,8<",options="header"]
+|=============================================================================
+|Key	|Action
+|m	|Switch to main view.
+|d	|Switch to diff view.
+|l	|Switch to log view.
+|p	|Switch to pager view.
+|t	|Switch to (directory) tree view.
+|f	|Switch to (file) blob view.
+|B	|Switch to blame view.
+|H	|Switch to branch view.
+|h	|Switch to help view
+|S	|Switch to status view
+|c	|Switch to stage view
+|=============================================================================
 
 [[view-manipulation]]
 View Manipulation
 ~~~~~~~~~~~~~~~~~
 
-`-------`--------------------------------------------------------------------
-Key	Action
------------------------------------------------------------------------------
-q	Close view, if multiple views are open it will jump back to the \
-	previous view in the view stack. If it is the last open view it \
+[frame="none",grid="none",cols="2<,8<",options="header"]
+|=============================================================================
+|Key	|Action
+|q	|Close view, if multiple views are open it will jump back to the
+	previous view in the view stack. If it is the last open view it
 	will quit. Use 'Q' to quit all views at once.
-Enter	This key is "context sensitive" depending on what view you are \
-	currently in. When in log view on a commit line or in the main \
-	view, split the view and show the commit diff. In the diff view \
+|Enter	|This key is "context sensitive" depending on what view you are
+	currently in. When in log view on a commit line or in the main
+	view, split the view and show the commit diff. In the diff view
 	pressing Enter will simply scroll the view one line down.
-Tab	Switch to next view.
-R	Reload and refresh the current view.
-M	Maximize the current view to fill the whole display.
-Up	This key is "context sensitive" and will move the cursor one \
-	line up. However, if you opened a diff view from the main view \
-	(split- or full-screen) it will change the cursor to point to \
-	the previous commit in the main view and update the diff view \
+|Tab	|Switch to next view.
+|R	|Reload and refresh the current view.
+|M	|Maximize the current view to fill the whole display.
+|Up	|This key is "context sensitive" and will move the cursor one
+	line up. However, if you opened a diff view from the main view
+	(split- or full-screen) it will change the cursor to point to
+	the previous commit in the main view and update the diff view
 	to display it.
-Down	Similar to 'Up' but will move down.
-','	Move to parent. In the tree view, this means switch to the parent \
-	directory. In the blame view it will load blame for the parent \
+|Down	|Similar to 'Up' but will move down.
+|,	|Move to parent. In the tree view, this means switch to the parent
+	directory. In the blame view it will load blame for the parent
 	commit. For merges the parent is queried.
------------------------------------------------------------------------------
+|=============================================================================
 
 [[view-actions]]
 View Specific Actions
 ~~~~~~~~~~~~~~~~~~~~~
 
-`-------`--------------------------------------------------------------------
-Key	Action
------------------------------------------------------------------------------
-u	Update status of file. In the status view, this allows you to add an \
-	untracked file or stage changes to a file for next commit (similar to \
-	running git-add <filename>). In the stage view, when pressing this on \
-	a diff chunk line stages only that chunk for next commit, when not on \
-	a diff chunk line all changes in the displayed diff is staged.
-M	Resolve unmerged file by launching git-mergetool(1). Note, to work \
-	correctly this might require some initial configuration of your \
-	preferred merge tool. See the manpage of git-mergetool(1).
-!	Checkout file with unstaged changes. This will reset the file to \
-	contain the content it had at last commit.
-@	Move to next chunk in the stage view.
------------------------------------------------------------------------------
+[frame="none",grid="none",cols="2<,8<",options="header"]
+|=============================================================================
+|Key	|Action
+|u	|Update status of file. In the status view, this allows you to add an
+	 untracked file or stage changes to a file for next commit (similar to
+	 running git-add <filename>). In the stage view, when pressing this on
+	 a diff chunk line stages only that chunk for next commit, when not on
+	 a diff chunk line all changes in the displayed diff is staged.
+|M	|Resolve unmerged file by launching git-mergetool(1). Note, to work
+	 correctly this might require some initial configuration of your
+	 preferred merge tool. See the manpage of git-mergetool(1).
+|!	|Checkout file with unstaged changes. This will reset the file to
+	 contain the content it had at last commit.
+|@	|Move to next chunk in the stage view.
+|=============================================================================
 
 [[cursor-nav]]
 Cursor Navigation
 ~~~~~~~~~~~~~~~~~
 
-`-------`--------------------------------------------------------------------
-Key	Action
------------------------------------------------------------------------------
-k	Move cursor one line up.
-j	Move cursor one line down.
-PgUp,\
--,a	Move cursor one page up.
-PgDown	Space	Move cursor one page down.
-Home	Jump to first line.
-End	Jump to last line.
------------------------------------------------------------------------------
+[frame="none",grid="none",cols="2<,8<",options="header"]
+|=============================================================================
+|Key		|Action
+|k		|Move cursor one line up.
+|j		|Move cursor one line down.
+|PgUp,-,a	|Move cursor one page up.
+|PgDown, Space	|Move cursor one page down.
+|End		|Jump to last line.
+|Home		|Jump to first line.
+|=============================================================================
 
 [[view-scrolling]]
 Scrolling
 ~~~~~~~~~
 
-`-------`--------------------------------------------------------------------
-Key	Action
------------------------------------------------------------------------------
-Insert	Scroll view one line up.
-Delete	Scroll view one line down.
-w	Scroll view one page up.
-s	Scroll view one page down.
-Left	Scroll view one column left.
-Right	Scroll view one column right.
------------------------------------------------------------------------------
+[frame="none",grid="none",cols="2<,8<",options="header"]
+|=============================================================================
+|Key	|Action
+|Insert	|Scroll view one line up.
+|Delete	|Scroll view one line down.
+|w	|Scroll view one page up.
+|s	|Scroll view one page down.
+|Left	|Scroll view one column left.
+|Right	|Scroll view one column right.
+|=============================================================================
 
 [[searching]]
 Searching
 ~~~~~~~~~
 
-`-------`--------------------------------------------------------------------
-Key	Action
------------------------------------------------------------------------------
-/	Search the view. Opens a prompt for entering search regexp to use.
-?	Search backwards in the view. Also prompts for regexp.
-n	Find next match for the current search regexp.
-N	Find previous match for the current search regexp.
------------------------------------------------------------------------------
+[frame="none",grid="none",cols="2<,8<",options="header"]
+|=============================================================================
+|Key	|Action
+|/	|Search the view. Opens a prompt for entering search regexp to use.
+|?	|Search backwards in the view. Also prompts for regexp.
+|n	|Find next match for the current search regexp.
+|N	|Find previous match for the current search regexp.
+|=============================================================================
 
 [[misc-keys]]
 Misc
 ~~~~
 
-`-------`--------------------------------------------------------------------
-Key	Action
------------------------------------------------------------------------------
-Q	Quit.
-r	Redraw screen.
-z	Stop all background loading. This can be useful if you use \
-	tig in a repository with a long history without limiting \
-	the revision log.
-v	Show version.
-o	Open option menu
-'.'	Toggle line numbers on/off.
-D	Toggle date display on/off.
-A	Toggle author display on/off.
-g	Toggle revision graph visualization on/off.
-F	Toggle reference display on/off (tag and branch names).
-':'	Open prompt. This allows you to specify what git command \
-	to run. Example `:log -p`. You can also use this to jump \
-	to a specific line by typing `:<linenumber>`, e.g. `:80`.
-e	Open file in editor.
------------------------------------------------------------------------------
+[frame="none",grid="none",cols="2<,8<",options="header"]
+|=============================================================================
+|Key	|Action
+|Q	|Quit.
+|r	|Redraw screen.
+|z	|Stop all background loading. This can be useful if you use
+	 tig in a repository with a long history without limiting
+	 the revision log.
+|v	|Show version.
+|o	|Open option menu
+|.	|Toggle line numbers on/off.
+|D	|Toggle date display on/off.
+|A	|Toggle author display on/off.
+|g	|Toggle revision graph visualization on/off.
+|F	|Toggle reference display on/off (tag and branch names).
+|:	|Open prompt. This allows you to specify what git command
+	 to run. Example `:log -p`. You can also use this to jump
+	 to a specific line by typing `:<linenumber>`, e.g. `:80`.
+|e	|Open file in editor.
+|=============================================================================
 
 [[external-commands]]
 External Commands
@@ -451,13 +450,13 @@ a script or program. They are bound to keys and use information from the
 current browsing state, such as the current commit ID. Tig comes with
 the following built-in external commands:
 
-`-------`-------`------------------------------------------------------------
-Keymap	Key	Action
------------------------------------------------------------------------------
-main	C	git cherry-pick %(commit)
-status	C	git commit
-generic	G	git gc
------------------------------------------------------------------------------
+[frame="none",grid="none",cols="1<,1<,8<",options="header"]
+|=============================================================================
+|Keymap	|Key	|Action
+|main	|C	|git cherry-pick %(commit)
+|status	|C	|git commit
+|generic|G	|git gc
+|=============================================================================
 
 [[refspec]]
 Revision Specification
@@ -485,7 +484,7 @@ $ tig Makefile README
 -----------------------------------------------------------------------------
 
 To avoid ambiguity with tig's subcommands or repository references such as tag
-name, be sure to separate file names from other git options using "\--". So if
+name, be sure to separate file names from other git options using "`--`". So if
 you have a file named 'status' it will clash with the 'status' subcommand, and
 thus you will have to use:
 
@@ -499,7 +498,7 @@ Limit by Date or Number
 
 To speed up interaction with git, you can limit the amount of commits to show
 both for the log and main view. Either limit by date using e.g.
-`\--since=1.month` or limit by the number of commits using `-n400`.
+`--since=1.month` or limit by the number of commits using `-n400`.
 
 If you are only interested in changed that happened between two dates you can
 use:
@@ -509,7 +508,7 @@ $ tig --after="May 5th" --before="2006-05-16 15:44"
 -----------------------------------------------------------------------------
 
 NOTE: If you want to avoid having to quote dates containing spaces you can use
-"." instead, e.g. `\--after=May.5th`.
+"." instead, e.g. `--after=May.5th`.
 
 [[commit-range-limiting]]
 Limiting by Commit Ranges
@@ -602,8 +601,3 @@ Manpages:
 Online resources:
 
 include::SITES[]
-
-Other git repository browsers:
-
- - gitk(1)
- - qgit(1)

@@ -150,7 +150,7 @@ manual.toc: manual.txt
 		*)	   ref="$$ref, $$line" ;; \
 		esac; done | sed 's/\[\[\(.*\)\]\]/\1/' > $@
 
-README.html: README asciidoc.conf
+README.html: README SITES INSTALL asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -a readme $<
 
 NEWS.html: NEWS asciidoc.conf

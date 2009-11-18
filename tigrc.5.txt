@@ -213,20 +213,17 @@ be available as an external command. External commands can contain variable
 names that will be substituted before the command is run. Valid variable names
 are:
 
-ifdef::backend-xhtml11[]
-[frame="none"]
-`-----------------------`-----------------------------------------------------
-endif::backend-xhtml11[]
-Browsing state variables
-------------------------------------------------------------------------------
-%(head)			The currently viewed 'head' ID. Defaults to HEAD
-%(commit)		The currently selected commit ID.
-%(blob)			The currently selected blob ID.
-%(directory)		The current directory path in the tree view; \
-			empty for the root directory.
-%(file)			The currently selected file.
-%(ref)			The reference given to blame or HEAD if undefined.
-------------------------------------------------------------------------------
+.Browsing state variables
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|%(head)		|The currently viewed 'head' ID. Defaults to HEAD
+|%(commit)		|The currently selected commit ID.
+|%(blob)		|The currently selected blob ID.
+|%(directory)		|The current directory path in the tree view;
+			 empty for the root directory.
+|%(file)		|The currently selected file.
+|%(ref)			|The reference given to blame or HEAD if undefined.
+|=============================================================================
 
 As an example, the following external command will save the current commit as
 a patch file: "!git format-patch -1 %(commit)". If your external command
@@ -244,113 +241,92 @@ put in either the .gitconfig or .git/config file:
 	generic = > !git publish
 --------------------------------------------------------------------------
 
-ifdef::backend-xhtml11[]
-[frame="none"]
-`-----------------------`-----------------------------------------------------
-endif::backend-xhtml11[]
-View switching:
-------------------------------------------------------------------------------
-view-main		Show main view
-view-diff		Show diff view
-view-log		Show log view
-view-tree		Show tree view
-view-blob		Show blob view
-view-blame		Show blame view
-view-branch		Show branch view
-view-status		Show status view
-view-stage		Show stage view
-view-pager		Show pager view
-view-help		Show help page
-------------------------------------------------------------------------------
+.View switching
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|view-main		|Show main view
+|view-diff		|Show diff view
+|view-log		|Show log view
+|view-tree		|Show tree view
+|view-blob		|Show blob view
+|view-blame		|Show blame view
+|view-branch		|Show branch view
+|view-status		|Show status view
+|view-stage		|Show stage view
+|view-pager		|Show pager view
+|view-help		|Show help page
+|=============================================================================
 
-ifdef::backend-xhtml11[]
-[frame="none"]
-`-----------------------`-----------------------------------------------------
-endif::backend-xhtml11[]
-View manipulation:
-------------------------------------------------------------------------------
-enter			Enter current line and scroll
-next			Move to next
-previous		Move to previous
-parent			Move to parent
-view-next		Move focus to next view
-refresh			Reload and refresh view
-maximize		Maximize the current view
-view-close		Close the current view
-quit			Close all views and quit
-------------------------------------------------------------------------------
+.View manipulation
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|enter			|Enter current line and scroll
+|next			|Move to next
+|previous		|Move to previous
+|parent			|Move to parent
+|view-next		|Move focus to next view
+|refresh		|Reload and refresh view
+|maximize		|Maximize the current view
+|view-close		|Close the current view
+|quit			|Close all views and quit
+|=============================================================================
 
-ifdef::backend-xhtml11[]
-[frame="none"]
-`-----------------------`-----------------------------------------------------
-endif::backend-xhtml11[]
-View specific actions:
-------------------------------------------------------------------------------
-status-update		Update file status
-status-merge		Resolve unmerged file
-stage-next		Find next chunk to stage
-------------------------------------------------------------------------------
+.View specific actions
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|status-update		|Update file status
+|status-merge		|Resolve unmerged file
+|stage-next		|Find next chunk to stage
+|=============================================================================
 
-ifdef::backend-xhtml11[]
-[frame="none"]
-`-----------------------`-----------------------------------------------------
-endif::backend-xhtml11[]
-Cursor navigation:
-------------------------------------------------------------------------------
-move-up			Move cursor one line up
-move-down		Move cursor one line down
-move-page-down		Move cursor one page down
-move-page-up		Move cursor one page up
-move-first-line		Move cursor to first line
-move-last-line		Move cursor to last line
-------------------------------------------------------------------------------
+.Cursor navigation
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|move-up		|Move cursor one line up
+|move-down		|Move cursor one line down
+|move-page-down		|Move cursor one page down
+|move-page-up		|Move cursor one page up
+|move-first-line	|Move cursor to first line
+|move-last-line		|Move cursor to last line
+|=============================================================================
 
-ifdef::backend-xhtml11[]
-[frame="none"]
-`-----------------------`-----------------------------------------------------
-endif::backend-xhtml11[]
-Scrolling:
-------------------------------------------------------------------------------
-scroll-line-up		Scroll one line up
-scroll-line-down	Scroll one line down
-scroll-page-up		Scroll one page up
-scroll-page-down	Scroll one page down
-scroll-left		Scroll one column left
-scroll-right		Scroll one column right
-------------------------------------------------------------------------------
+.Scrolling
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|scroll-line-up		|Scroll one line up
+|scroll-line-down	|Scroll one line down
+|scroll-page-up		|Scroll one page up
+|scroll-page-down	|Scroll one page down
+|scroll-left		|Scroll one column left
+|scroll-right		|Scroll one column right
+|=============================================================================
 
-ifdef::backend-xhtml11[]
-[frame="none"]
-`-----------------------`-----------------------------------------------------
-endif::backend-xhtml11[]
-Searching:
-------------------------------------------------------------------------------
-search			Search the view
-search-back		Search backwards in the view
-find-next		Find next search match
-find-prev		Find previous search match
-------------------------------------------------------------------------------
+.Searching
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|search			|Search the view
+|search-back		|Search backwards in the view
+|find-next		|Find next search match
+|find-prev		|Find previous search match
+|=============================================================================
 
-ifdef::backend-xhtml11[]
-[frame="none"]
-`-----------------------`-----------------------------------------------------
-endif::backend-xhtml11[]
-Misc:
-------------------------------------------------------------------------------
-prompt			Bring up the prompt
-screen-redraw		Redraw the screen
-screen-resize		Resize the screen
-show-version		Show version information
-stop-loading		Stop all loading views
-options			Open options menu
-toggle-lineno		Toggle line numbers
-toggle-date		Toggle date display
-toggle-author		Toggle author display
-toggle-rev-graph	Toggle revision graph visualization
-toggle-refs		Toggle reference display
-edit			Open in editor
-none			Do nothing
-------------------------------------------------------------------------------
+.Misc
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|prompt			|Bring up the prompt
+|screen-redraw		|Redraw the screen
+|screen-resize		|Resize the screen
+|show-version		|Show version information
+|stop-loading		|Stop all loading views
+|options		|Open options menu
+|toggle-lineno		|Toggle line numbers
+|toggle-date		|Toggle date display
+|toggle-author		|Toggle author display
+|toggle-rev-graph	|Toggle revision graph visualization
+|toggle-refs		|Toggle reference display
+|edit			|Open in editor
+|none			|Do nothing
+|=============================================================================
 
 
 Color command
@@ -417,72 +393,57 @@ The colors and attributes to be used for the text that is not highlighted or
 that specify the use of the default terminal colors can be controlled by
 setting the *default* color option.
 
-ifdef::backend-xhtml11[]
-[frame="none"]
-`-----------------------`-----------------------------------------------------
-endif::backend-xhtml11[]
-General:
-------------------------------------------------------------------------------
-default			Overwrite default terminal colors (see above).
-cursor			The cursor line.
-status			The status window showing info messages.
-title-focus		The title window for the current view.
-title-blur		The title window of any backgrounded view.
-delimiter		Delimiter shown for truncated lines.
-line-number		Line numbers.
-date			The commit date.
-author			The commit author.
-mode			The file mode holding the permissions and type.
-------------------------------------------------------------------------------
+.General
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|default		|Overwrite default terminal colors (see above).
+|cursor			|The cursor line.
+|status			|The status window showing info messages.
+|title-focus		|The title window for the current view.
+|title-blur		|The title window of any backgrounded view.
+|delimiter		|Delimiter shown for truncated lines.
+|line-number		|Line numbers.
+|date			|The commit date.
+|author			|The commit author.
+|mode			|The file mode holding the permissions and type.
+|=============================================================================
 
-ifdef::backend-xhtml11[]
-[frame="none"]
-`-----------------------`-----------------------------------------------------
-endif::backend-xhtml11[]
-Main view colors:
-------------------------------------------------------------------------------
-main-revgraph		The revision graph.
-main-commit		The commit comment.
-main-head		Label of the current branch.
-main-remote		Label of a remote.
-main-tracked		Label of the remote tracked by the current branch.
-main-tag		Label of a signed tag.
-main-local-tag		Label of a local tag.
-main-ref		Label of any other reference.
-------------------------------------------------------------------------------
+.Main view colors
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|main-revgraph		|The revision graph.
+|main-commit		|The commit comment.
+|main-head		|Label of the current branch.
+|main-remote		|Label of a remote.
+|main-tracked		|Label of the remote tracked by the current branch.
+|main-tag		|Label of a signed tag.
+|main-local-tag		|Label of a local tag.
+|main-ref		|Label of any other reference.
+|=============================================================================
 
-ifdef::backend-xhtml11[]
-[frame="none"]
-`-----------------------`-----------------------------------------------------
-endif::backend-xhtml11[]
-Status view:
-------------------------------------------------------------------------------
-stat-head		The "On branch"-line.
-stat-section		Status section titles,
-stat-staged		Status flag of staged files.
-stat-unstaged		Status flag of unstaged files.
-stat-untracked		Status flag of untracked files.
-------------------------------------------------------------------------------
+.Status view
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|stat-head		|The "On branch"-line.
+|stat-section		|Status section titles,
+|stat-staged		|Status flag of staged files.
+|stat-unstaged		|Status flag of unstaged files.
+|stat-untracked		|Status flag of untracked files.
+|=============================================================================
 
-ifdef::backend-xhtml11[]
-[frame="none"]
-`-----------------------`-----------------------------------------------------
-endif::backend-xhtml11[]
-Blame view:
-------------------------------------------------------------------------------
-blame-id		The commit ID.
-------------------------------------------------------------------------------
+.Blame view
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|blame-id		|The commit ID.
+|=============================================================================
 
-ifdef::backend-xhtml11[]
-[frame="none"]
-`-----------------------`-----------------------------------------------------
-endif::backend-xhtml11[]
-Tree view:
-------------------------------------------------------------------------------
-tree-head		The "Directory /"-line
-tree-dir		The directory name.
-tree-file		The file name.
-------------------------------------------------------------------------------
+.Tree view
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|tree-head		|The "Directory /"-line
+|tree-dir		|The directory name.
+|tree-file		|The file name.
+|=============================================================================
 
 Highlighting
 ~~~~~~~~~~~~
