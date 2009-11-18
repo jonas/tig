@@ -32,8 +32,8 @@ Improvements:
 
 Bug fixes:
 
- - Blame view: fix loading of blame data when cwd is not the repo root.
-   (Debian bug 540766)
+ - Blame view: fix loading of blame data when opened from the tree view
+   and CWD is not the repo root. (Debian bug 540766)
  - Tree view: fix searching.
 
 tig-0.14.1
