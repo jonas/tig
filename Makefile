@@ -37,7 +37,7 @@ CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
 PROGS	= tig
 TXTDOC	= tig.1.txt tigrc.5.txt manual.txt NEWS README INSTALL BUGS TODO
-MANDOC	= tig.1 tigrc.5 manual.7
+MANDOC	= tig.1 tigrc.5 tigmanual.7
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html NEWS.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) manual.html-chunked manual.pdf
 
