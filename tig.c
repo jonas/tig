@@ -5814,9 +5814,8 @@ status_revert(struct status *status, enum line_type type, bool has_none)
 		} else {
 			report("Cannot revert changes to multiple files");
 		}
-		return FALSE;
 
-	} else {
+	} else if (prompt_yesno("Are you sure you want to revert changes?")) {
 		char mode[10] = "100644";
 		const char *reset_argv[] = {
 			"git", "update-index", "--cacheinfo", mode,
@@ -5826,12 +5825,25 @@ status_revert(struct status *status, enum line_type type, bool has_none)
 			"git", "checkout", "--", status->old.name, NULL
 		};
 
-		if (!prompt_yesno("Are you sure you want to overwrite any changes?"))
-			return FALSE;
-		string_format(mode, "%o", status->old.mode);
-		return (status->status != 'U' || run_io_fg(reset_argv, opt_cdup)) &&
-			run_io_fg(checkout_argv, opt_cdup);
+		if (status->status == 'U') {
+			string_format(mode, "%5o", status->old.mode);
+
+			if (status->old.mode == 0 && status->new.mode == 0) {
+				reset_argv[2] = "--force-remove";
+				reset_argv[3] = status->old.name;
+				reset_argv[4] = NULL;
+			}
+
+			if (!run_io_fg(reset_argv, opt_cdup))
+				return FALSE;
+			if (status->old.mode == 0 && status->new.mode == 0)
+				return TRUE;
+		}
+
+		return run_io_fg(checkout_argv, opt_cdup);
 	}
+
+	return FALSE;
 }
 
 static enum request
