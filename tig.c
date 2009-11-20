@@ -36,6 +36,7 @@
 #include <sys/stat.h>
 #include <sys/select.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include <time.h>
 #include <fcntl.h>
 
@@ -68,11 +69,11 @@ static void __NORETURN die(const char *err, ...);
 static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
 static void set_nonblocking_input(bool loading);
-static int load_refs(void);
 static size_t utf8_length(const char **string, size_t col, int *width, size_t max_width, int *trimmed, bool reserve);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
+#define MAX(x, y)	((x) > (y) ? (x) :  (y))
 
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(x[0]))
 #define STRING_SIZE(x)	(sizeof(x) - 1)
@@ -103,24 +104,15 @@ static size_t utf8_length(const char **string, size_t col, int *width, size_t ma
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
 #define DATE_COLS	STRING_SIZE("2006-04-29 14:21 ")
+#define DATE_SHORT_COLS	STRING_SIZE("2006-04-29 ")
 
-#define AUTHOR_COLS	20
 #define ID_COLS		8
 
-/* The default interval between line numbers. */
-#define NUMBER_INTERVAL	5
-
-#define TAB_SIZE	8
-
-#define	SCALE_SPLIT_VIEW(height)	((height) * 2 / 3)
+#define MIN_VIEW_HEIGHT 4
 
 #define NULL_ID		"0000000000000000000000000000000000000000"
 
 #define S_ISGITLINK(mode) (((mode) & S_IFMT) == 0160000)
-
-#ifndef GIT_CONFIG
-#define GIT_CONFIG "config"
-#endif
 
 /* Some ASCII-shorthands fitted into the ncurses namespace. */
 #define KEY_TAB		'\t'
@@ -129,17 +121,24 @@ static size_t utf8_length(const char **string, size_t col, int *width, size_t ma
 
 
 struct ref {
-	char *name;		/* Ref name; tag or head names are shortened. */
 	char id[SIZEOF_REV];	/* Commit SHA1 ID */
 	unsigned int head:1;	/* Is it the current HEAD? */
 	unsigned int tag:1;	/* Is it a tag? */
 	unsigned int ltag:1;	/* If so, is the tag local? */
 	unsigned int remote:1;	/* Is it a remote ref? */
 	unsigned int tracked:1;	/* Is it the remote for the current HEAD? */
-	unsigned int next:1;	/* For ref lists: are there more refs? */
+	char name[1];		/* Ref name; tag or head names are shortened. */
 };
 
-static struct ref **get_refs(const char *id);
+struct ref_list {
+	char id[SIZEOF_REV];	/* Commit SHA1 ID */
+	size_t size;		/* Number of refs. */
+	struct ref **refs;	/* References for this ID. */
+};
+
+static struct ref_list *get_ref_list(const char *id);
+static void foreach_ref(bool (*visitor)(void *data, struct ref *ref), void *data);
+static int load_refs(void);
 
 enum format_flags {
 	FORMAT_ALL,		/* Perform replacement in all arguments. */
@@ -160,6 +159,35 @@ typedef enum input_status (*input_handler)(void *data, char *buf, int c);
 
 static char *prompt_input(const char *prompt, input_handler handler, void *data);
 static bool prompt_yesno(const char *prompt);
+
+struct menu_item {
+	int hotkey;
+	const char *text;
+	void *data;
+};
+
+static bool prompt_menu(const char *prompt, const struct menu_item *items, int *selected);
+
+/*
+ * Allocation helpers ... Entering macro hell to never be seen again.
+ */
+
+#define DEFINE_ALLOCATOR(name, type, chunk_size)				\
+static type *									\
+name(type **mem, size_t size, size_t increase)					\
+{										\
+	size_t num_chunks = (size + chunk_size - 1) / chunk_size;		\
+	size_t num_chunks_new = (size + increase + chunk_size - 1) / chunk_size;\
+	type *tmp = *mem;							\
+										\
+	if (mem == NULL || num_chunks != num_chunks_new) {			\
+		tmp = realloc(tmp, num_chunks_new * chunk_size * sizeof(type));	\
+		if (tmp)							\
+			*mem = tmp;						\
+	}									\
+										\
+	return tmp;								\
+}
 
 /*
  * String helpers
@@ -309,6 +337,80 @@ suffixcmp(const char *str, int slen, const char *suffix)
 }
 
 
+/*
+ * What value of "tz" was in effect back then at "time" in the
+ * local timezone?
+ */
+static int local_tzoffset(time_t time)
+{
+	time_t t, t_local;
+	struct tm tm;
+	int offset, eastwest; 
+
+	t = time;
+	localtime_r(&t, &tm);
+	t_local = mktime(&tm);
+
+	if (t_local < t) {
+		eastwest = -1;
+		offset = t - t_local;
+	} else {
+		eastwest = 1;
+		offset = t_local - t;
+	}
+	offset /= 60; /* in minutes */
+	offset = (offset % 60) + ((offset / 60) * 100);
+	return offset * eastwest;
+}
+
+enum date {
+	DATE_NONE = 0,
+	DATE_DEFAULT,
+	DATE_RELATIVE,
+	DATE_SHORT
+};
+
+static char *
+string_date(const time_t *time, enum date date)
+{
+	static char buf[DATE_COLS + 1];
+	static const struct enum_map reldate[] = {
+		{ "second", 1,			60 * 2 },
+		{ "minute", 60,			60 * 60 * 2 },
+		{ "hour",   60 * 60,		60 * 60 * 24 * 2 },
+		{ "day",    60 * 60 * 24,	60 * 60 * 24 * 7 * 2 },
+		{ "week",   60 * 60 * 24 * 7,	60 * 60 * 24 * 7 * 5 },
+		{ "month",  60 * 60 * 24 * 30,	60 * 60 * 24 * 30 * 12 },
+	};
+	struct tm tm;
+
+	if (date == DATE_RELATIVE) {
+		struct timeval now;
+		time_t date = *time + local_tzoffset(*time);
+		time_t seconds;
+		int i;
+
+		gettimeofday(&now, NULL);
+		seconds = now.tv_sec < date ? date - now.tv_sec : now.tv_sec - date;
+		for (i = 0; i < ARRAY_SIZE(reldate); i++) {
+			if (seconds >= reldate[i].value)
+				continue;
+
+			seconds /= reldate[i].namelen;
+			if (!string_format(buf, "%ld %s%s %s",
+					   seconds, reldate[i].name,
+					   seconds > 1 ? "s" : "",
+					   now.tv_sec >= date ? "ago" : "ahead"))
+				break;
+			return buf;
+		}
+	}
+
+	gmtime_r(time, &tm);
+	return strftime(buf, sizeof(buf), DATE_FORMAT, &tm) ? buf : NULL;
+}
+
+
 static bool
 argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
 {
@@ -395,9 +497,22 @@ init_io_rd(struct io *io, const char *argv[], const char *dir,
 }
 
 static bool
-io_open(struct io *io, const char *name)
+io_open(struct io *io, const char *fmt, ...)
 {
+	char name[SIZEOF_STR] = "";
+	bool fits;
+	va_list args;
+
 	init_io(io, NULL, IO_FD);
+
+	va_start(args, fmt);
+	fits = vsnprintf(name, sizeof(name), fmt, args) < sizeof(name);
+	va_end(args);
+
+	if (!fits) {
+		io->error = ENAMETOOLONG;
+		return FALSE;
+	}
 	io->pipe = *name ? open(name, O_RDONLY) : STDIN_FILENO;
 	if (io->pipe == -1)
 		io->error = errno;
@@ -543,9 +658,9 @@ run_io_append(const char **argv, enum format_flags flags, int fd)
 }
 
 static bool
-run_io_rd(struct io *io, const char **argv, enum format_flags flags)
+run_io_rd(struct io *io, const char **argv, const char *dir, enum format_flags flags)
 {
-	return init_io_rd(io, argv, NULL, flags) && start_io(io);
+	return init_io_rd(io, argv, dir, flags) && start_io(io);
 }
 
 static bool
@@ -594,19 +709,13 @@ io_read(struct io *io, void *buf, size_t bufsize)
 	} while (1);
 }
 
+DEFINE_ALLOCATOR(realloc_io_buf, char, BUFSIZ)
+
 static char *
 io_get(struct io *io, int c, bool can_read)
 {
 	char *eol;
 	ssize_t readsize;
-
-	if (!io->buf) {
-		io->buf = io->bufpos = malloc(BUFSIZ);
-		if (!io->buf)
-			return NULL;
-		io->bufalloc = BUFSIZ;
-		io->bufsize = 0;
-	}
 
 	while (TRUE) {
 		if (io->bufsize > 0) {
@@ -635,6 +744,12 @@ io_get(struct io *io, int c, bool can_read)
 
 		if (io->bufsize > 0 && io->bufpos > io->buf)
 			memmove(io->buf, io->bufpos, io->bufsize);
+
+		if (io->bufalloc == io->bufsize) {
+			if (!realloc_io_buf(&io->buf, io->bufalloc, BUFSIZ))
+				return NULL;
+			io->bufalloc += BUFSIZ;
+		}
 
 		io->bufpos = io->buf;
 		readsize = io_read(io, io->buf + io->bufsize, io->bufalloc - io->bufsize);
@@ -667,14 +782,14 @@ io_write(struct io *io, const void *buf, size_t bufsize)
 static bool
 io_read_buf(struct io *io, char buf[], size_t bufsize)
 {
-	bool error;
+	char *result = io_get(io, '\n', TRUE);
 
-	io->buf = io->bufpos = buf;
-	io->bufalloc = bufsize;
-	error = !io_get(io, '\n', TRUE) && io_error(io);
-	io->buf = NULL;
+	if (result) {
+		result = chomp_string(result);
+		string_ncopy_do(buf, bufsize, result, strlen(result));
+	}
 
-	return done_io(io) || error;
+	return done_io(io) && result;
 }
 
 static bool
@@ -682,7 +797,8 @@ run_io_buf(const char **argv, char buf[], size_t bufsize)
 {
 	struct io io = {};
 
-	return run_io_rd(&io, argv, FORMAT_NONE) && io_read_buf(&io, buf, bufsize);
+	return run_io_rd(&io, argv, NULL, FORMAT_NONE)
+	    && io_read_buf(&io, buf, bufsize);
 }
 
 static int
@@ -747,6 +863,7 @@ run_io_load(const char **argv, const char *separators,
 	REQ_(VIEW_TREE,		"Show tree view"), \
 	REQ_(VIEW_BLOB,		"Show blob view"), \
 	REQ_(VIEW_BLAME,	"Show blame view"), \
+	REQ_(VIEW_BRANCH,	"Show branch view"), \
 	REQ_(VIEW_HELP,		"Show help page"), \
 	REQ_(VIEW_PAGER,	"Show pager view"), \
 	REQ_(VIEW_STATUS,	"Show status view"), \
@@ -792,11 +909,15 @@ run_io_load(const char **argv, const char *separators,
 	REQ_(FIND_PREV,		"Find previous search match"), \
 	\
 	REQ_GROUP("Option manipulation") \
+	REQ_(OPTIONS,		"Open option menu"), \
 	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
 	REQ_(TOGGLE_DATE,	"Toggle date display"), \
+	REQ_(TOGGLE_DATE_SHORT, "Toggle short (date-only) dates"), \
 	REQ_(TOGGLE_AUTHOR,	"Toggle author display"), \
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
 	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
+	REQ_(TOGGLE_SORT_ORDER,	"Toggle ascending/descending sort order"), \
+	REQ_(TOGGLE_SORT_FIELD,	"Toggle field to sort by"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
@@ -855,16 +976,17 @@ get_request(const char *name)
  */
 
 /* Option and state variables. */
-static bool opt_date			= TRUE;
+static enum date opt_date		= DATE_DEFAULT;
 static bool opt_author			= TRUE;
 static bool opt_line_number		= FALSE;
 static bool opt_line_graphics		= TRUE;
 static bool opt_rev_graph		= FALSE;
 static bool opt_show_refs		= TRUE;
-static int opt_num_interval		= NUMBER_INTERVAL;
+static int opt_num_interval		= 5;
 static double opt_hscroll		= 0.50;
-static int opt_tab_size			= TAB_SIZE;
-static int opt_author_cols		= AUTHOR_COLS-1;
+static double opt_scale_split_view	= 2.0 / 3.0;
+static int opt_tab_size			= 8;
+static int opt_author_cols		= 19;
 static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
@@ -885,6 +1007,7 @@ static FILE *opt_tty			= NULL;
 
 #define is_initial_commit()	(!*opt_head_rev)
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || !strcmp(opt_head_rev, (rev)))
+#define mkdate(time)		string_date(time, opt_date)
 
 
 /*
@@ -946,6 +1069,8 @@ LINE(STAT_NONE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(STAT_STAGED,  "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(STAT_UNSTAGED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(STAT_UNTRACKED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+LINE(HELP_KEYMAP,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
+LINE(HELP_GROUP,   "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(BLAME_ID,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0)
 
 enum line_type {
@@ -1037,6 +1162,7 @@ struct line {
 	unsigned int selected:1;
 	unsigned int dirty:1;
 	unsigned int cleareol:1;
+	unsigned int other:16;
 
 	void *data;		/* User data */
 };
@@ -1059,6 +1185,7 @@ static const struct keybinding default_keybindings[] = {
 	{ 't',		REQ_VIEW_TREE },
 	{ 'f',		REQ_VIEW_BLOB },
 	{ 'B',		REQ_VIEW_BLAME },
+	{ 'H',		REQ_VIEW_BRANCH },
 	{ 'p',		REQ_VIEW_PAGER },
 	{ 'h',		REQ_VIEW_HELP },
 	{ 'S',		REQ_VIEW_STATUS },
@@ -1104,11 +1231,14 @@ static const struct keybinding default_keybindings[] = {
 	{ 'z',		REQ_STOP_LOADING },
 	{ 'v',		REQ_SHOW_VERSION },
 	{ 'r',		REQ_SCREEN_REDRAW },
+	{ 'o',		REQ_OPTIONS },
 	{ '.',		REQ_TOGGLE_LINENO },
 	{ 'D',		REQ_TOGGLE_DATE },
 	{ 'A',		REQ_TOGGLE_AUTHOR },
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
 	{ 'F',		REQ_TOGGLE_REFS },
+	{ 'I',		REQ_TOGGLE_SORT_ORDER },
+	{ 'i',		REQ_TOGGLE_SORT_FIELD },
 	{ ':',		REQ_PROMPT },
 	{ 'u',		REQ_STATUS_UPDATE },
 	{ '!',		REQ_STATUS_REVERT },
@@ -1126,6 +1256,7 @@ static const struct keybinding default_keybindings[] = {
 	KEYMAP_(TREE), \
 	KEYMAP_(BLOB), \
 	KEYMAP_(BLAME), \
+	KEYMAP_(BRANCH), \
 	KEYMAP_(PAGER), \
 	KEYMAP_(HELP), \
 	KEYMAP_(STATUS), \
@@ -1259,26 +1390,68 @@ get_key_name(int key_value)
 	return seq ? seq : "(no key)";
 }
 
+static bool
+append_key(char *buf, size_t *pos, const struct keybinding *keybinding)
+{
+	const char *sep = *pos > 0 ? ", " : "";
+	const char *keyname = get_key_name(keybinding->alias);
+
+	return string_nformat(buf, BUFSIZ, pos, "%s%s", sep, keyname);
+}
+
+static bool
+append_keymap_request_keys(char *buf, size_t *pos, enum request request,
+			   enum keymap keymap, bool all)
+{
+	int i;
+
+	for (i = 0; i < keybindings[keymap].size; i++) {
+		if (keybindings[keymap].data[i].request == request) {
+			if (!append_key(buf, pos, &keybindings[keymap].data[i]))
+				return FALSE;
+			if (!all)
+				break;
+		}
+	}
+
+	return TRUE;
+}
+
+#define get_key(keymap, request) get_keys(keymap, request, FALSE)
+
 static const char *
-get_key(enum request request)
+get_keys(enum keymap keymap, enum request request, bool all)
 {
 	static char buf[BUFSIZ];
 	size_t pos = 0;
-	char *sep = "";
 	int i;
 
 	buf[pos] = 0;
 
-	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++) {
-		const struct keybinding *keybinding = &default_keybindings[i];
+	if (!append_keymap_request_keys(buf, &pos, request, keymap, all))
+		return "Too many keybindings!";
+	if (pos > 0 && !all)
+		return buf;
 
-		if (keybinding->request != request)
-			continue;
+	if (keymap != KEYMAP_GENERIC) {
+		/* Only the generic keymap includes the default keybindings when
+		 * listing all keys. */
+		if (all)
+			return buf;
 
-		if (!string_format_from(buf, &pos, "%s%s", sep,
-					get_key_name(keybinding->alias)))
+		if (!append_keymap_request_keys(buf, &pos, request, KEYMAP_GENERIC, all))
 			return "Too many keybindings!";
-		sep = ", ";
+		if (pos)
+			return buf;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++) {
+		if (default_keybindings[i].request == request) {
+			if (!append_key(buf, &pos, &default_keybindings[i]))
+				return "Too many keybindings!";
+			if (!all)
+				return buf;
+		}
 	}
 
 	return buf;
@@ -1293,6 +1466,8 @@ struct run_request {
 static struct run_request *run_request;
 static size_t run_requests;
 
+DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
+
 static enum request
 add_run_request(enum keymap keymap, int key, int argc, const char **argv)
 {
@@ -1301,11 +1476,9 @@ add_run_request(enum keymap keymap, int key, int argc, const char **argv)
 	if (argc >= ARRAY_SIZE(req->argv) - 1)
 		return REQ_NONE;
 
-	req = realloc(run_request, (run_requests + 1) * sizeof(*run_request));
-	if (!req)
+	if (!realloc_run_requests(&run_request, run_requests, 1))
 		return REQ_NONE;
 
-	run_request = req;
 	req = &run_request[run_requests];
 	req->keymap = keymap;
 	req->key = key;
@@ -1329,6 +1502,7 @@ static void
 add_builtin_run_requests(void)
 {
 	const char *cherry_pick[] = { "git", "cherry-pick", "%(commit)", NULL };
+	const char *commit[] = { "git", "commit", NULL };
 	const char *gc[] = { "git", "gc", NULL };
 	struct {
 		enum keymap keymap;
@@ -1337,6 +1511,7 @@ add_builtin_run_requests(void)
 		const char **argv;
 	} reqs[] = {
 		{ KEYMAP_MAIN,	  'C', ARRAY_SIZE(cherry_pick) - 1, cherry_pick },
+		{ KEYMAP_STATUS,  'C', ARRAY_SIZE(commit) - 1, commit },
 		{ KEYMAP_GENERIC, 'G', ARRAY_SIZE(gc) - 1, gc },
 	};
 	int i;
@@ -1435,7 +1610,7 @@ option_color_command(int argc, const char *argv[])
 {
 	struct line_info *info;
 
-	if (argc != 3 && argc != 4) {
+	if (argc < 3) {
 		config_msg = "Wrong number of arguments given to color command";
 		return ERR;
 	}
@@ -1462,9 +1637,15 @@ option_color_command(int argc, const char *argv[])
 		return ERR;
 	}
 
-	if (argc == 4 && !set_attribute(&info->attr, argv[3])) {
-		config_msg = "Unknown attribute";
-		return ERR;
+	info->attr = 0;
+	while (argc-- > 3) {
+		int attr;
+
+		if (!set_attribute(&attr, argv[argc])) {
+			config_msg = "Unknown attribute";
+			return ERR;
+		}
+		info->attr |= attr;
 	}
 
 	return OK;
@@ -1513,8 +1694,20 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "show-author"))
 		return parse_bool(&opt_author, argv[2]);
 
-	if (!strcmp(argv[0], "show-date"))
-		return parse_bool(&opt_date, argv[2]);
+	if (!strcmp(argv[0], "show-date")) {
+		bool show_date;
+
+		if (!strcmp(argv[2], "relative")) {
+			opt_date = DATE_RELATIVE;
+			return OK;
+		} else if (!strcmp(argv[2], "short")) {
+			opt_date = DATE_SHORT;
+			return OK;
+		} else if (parse_bool(&show_date, argv[2])) {
+			opt_date = show_date ? DATE_DEFAULT : DATE_NONE;
+		}
+		return ERR;
+	}
 
 	if (!strcmp(argv[0], "show-rev-graph"))
 		return parse_bool(&opt_rev_graph, argv[2]);
@@ -1537,6 +1730,9 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "horizontal-scroll"))
 		return parse_step(&opt_hscroll, argv[2]);
 
+	if (!strcmp(argv[0], "split-view-height"))
+		return parse_step(&opt_scale_split_view, argv[2]);
+
 	if (!strcmp(argv[0], "tab-size"))
 		return parse_int(&opt_tab_size, argv[2], 1, 1024);
 
@@ -1552,7 +1748,7 @@ static int
 option_bind_command(int argc, const char *argv[])
 {
 	enum request request;
-	int keymap;
+	int keymap = -1;
 	int key;
 
 	if (argc < 3) {
@@ -1669,7 +1865,7 @@ load_option_file(const char *path)
 	struct io io = {};
 
 	/* It's OK that the file doesn't exist. */
-	if (!io_open(&io, path))
+	if (!io_open(&io, "%s", path))
 		return;
 
 	config_lineno = 0;
@@ -1763,7 +1959,6 @@ struct view {
 	/* Buffering */
 	size_t lines;		/* Total number of lines */
 	struct line *line;	/* Line index */
-	size_t line_alloc;	/* Total number of allocated lines */
 	unsigned int digits;	/* Number of digits in the lines member. */
 
 	/* Drawing */
@@ -1796,6 +1991,8 @@ struct view_ops {
 	bool (*grep)(struct view *view, struct line *line);
 	/* Select line */
 	void (*select)(struct view *view, struct line *line);
+	/* Prepare view for loading */
+	bool (*prepare)(struct view *view);
 };
 
 static struct view_ops blame_ops;
@@ -1808,6 +2005,7 @@ static struct view_ops pager_ops;
 static struct view_ops stage_ops;
 static struct view_ops status_ops;
 static struct view_ops tree_ops;
+static struct view_ops branch_ops;
 
 #define VIEW_STR(name, env, ref, ops, map, git) \
 	{ name, #env, ref, ops, map, git }
@@ -1823,6 +2021,7 @@ static struct view views[] = {
 	VIEW_(TREE,   "tree",   &tree_ops,   TRUE,  ref_commit),
 	VIEW_(BLOB,   "blob",   &blob_ops,   TRUE,  ref_blob),
 	VIEW_(BLAME,  "blame",  &blame_ops,  TRUE,  ref_commit),
+	VIEW_(BRANCH, "branch",	&branch_ops, TRUE,  ref_head),
 	VIEW_(HELP,   "help",   &help_ops,   FALSE, ""),
 	VIEW_(PAGER,  "pager",  &pager_ops,  FALSE, "stdin"),
 	VIEW_(STATUS, "status", &status_ops, TRUE,  ""),
@@ -1960,17 +2159,12 @@ draw_field(struct view *view, enum line_type type, const char *text, int len, bo
 }
 
 static bool
-draw_date(struct view *view, struct tm *time)
+draw_date(struct view *view, time_t *time)
 {
-	char buf[DATE_COLS];
-	char *date;
-	int timelen = 0;
+	const char *date = time ? mkdate(time) : "";
+	int cols = opt_date == DATE_SHORT ? DATE_SHORT_COLS : DATE_COLS;
 
-	if (time)
-		timelen = strftime(buf, sizeof(buf), DATE_FORMAT, time);
-	date = timelen ? buf : NULL;
-
-	return draw_field(view, LINE_DATE, date, DATE_COLS, FALSE);
+	return draw_field(view, LINE_DATE, date, cols, FALSE);
 }
 
 static bool
@@ -2171,6 +2365,15 @@ update_view_title(struct view *view)
 	wnoutrefresh(view->title);
 }
 
+static int
+apply_step(double step, int value)
+{
+	if (step >= 1)
+		return (int) step;
+	value *= step + 0.01;
+	return value ? value : 1;
+}
+
 static void
 resize_display(void)
 {
@@ -2188,7 +2391,9 @@ resize_display(void)
 	if (view != base) {
 		/* Horizontal split. */
 		view->width   = base->width;
-		view->height  = SCALE_SPLIT_VIEW(base->height);
+		view->height  = apply_step(opt_scale_split_view, base->height);
+		view->height  = MAX(view->height, MIN_VIEW_HEIGHT);
+		view->height  = MIN(view->height, base->height - MIN_VIEW_HEIGHT);
 		base->height -= view->height;
 
 		/* Make room for the title bar. */
@@ -2237,11 +2442,47 @@ redraw_display(bool clear)
 }
 
 static void
+toggle_date_option(enum date *date)
+{
+	static const char *help[] = {
+		"no",
+		"default",
+		"relative",
+		"short"
+	};
+
+	opt_date = (opt_date + 1) % ARRAY_SIZE(help);
+	redraw_display(FALSE);
+	report("Displaying %s dates", help[opt_date]);
+}
+
+static void
 toggle_view_option(bool *option, const char *help)
 {
 	*option = !*option;
 	redraw_display(FALSE);
 	report("%sabling %s", *option ? "En" : "Dis", help);
+}
+
+static void
+open_option_menu(void)
+{
+	const struct menu_item menu[] = {
+		{ '.', "line numbers", &opt_line_number },
+		{ 'D', "date display", &opt_date },
+		{ 'A', "author display", &opt_author },
+		{ 'g', "revision graph display", &opt_rev_graph },
+		{ 'F', "reference display", &opt_show_refs },
+		{ 0 }
+	};
+	int selected = 0;
+
+	if (prompt_menu("Toggle option", menu, &selected)) {
+		if (menu[selected].data == &opt_date)
+			toggle_date_option(menu[selected].data);
+		else
+			toggle_view_option(menu[selected].data, menu[selected].text);
+	}
 }
 
 static void
@@ -2282,15 +2523,6 @@ goto_view_line(struct view *view, unsigned long offset, unsigned long lineno)
 	}
 
 	return FALSE;
-}
-
-static int
-apply_step(double step, int value)
-{
-	if (step >= 1)
-		return (int) step;
-	value *= step + 0.01;
-	return value ? value : 1;
 }
 
 /* Scrolling backend */
@@ -2497,6 +2729,19 @@ move_view(struct view *view, enum request request)
 
 static void search_view(struct view *view, enum request request);
 
+static bool
+grep_text(struct view *view, const char *text[])
+{
+	regmatch_t pmatch;
+	size_t i;
+
+	for (i = 0; text[i]; i++)
+		if (*text[i] &&
+		    regexec(view->regex, text[i], 1, &pmatch, 0) != REG_NOMATCH)
+			return TRUE;
+	return FALSE;
+}
+
 static void
 select_view_line(struct view *view, unsigned long lineno)
 {
@@ -2613,7 +2858,6 @@ reset_view(struct view *view)
 	view->yoffset = 0;
 	view->lines  = 0;
 	view->lineno = 0;
-	view->line_alloc = 0;
 	view->vid[0] = 0;
 	view->update_secs = 0;
 }
@@ -2752,7 +2996,7 @@ prepare_update_file(struct view *view, const char *name)
 {
 	if (view->pipe)
 		end_update(view, TRUE);
-	return io_open(&view->io, name);
+	return io_open(&view->io, "%s", name);
 }
 
 static bool
@@ -2761,16 +3005,13 @@ begin_update(struct view *view, bool refresh)
 	if (view->pipe)
 		end_update(view, TRUE);
 
-	if (refresh) {
-		if (!start_io(&view->io))
+	if (!refresh) {
+		if (view->ops->prepare) {
+			if (!view->ops->prepare(view))
+				return FALSE;
+		} else if (!init_io_rd(&view->io, view->ops->argv, NULL, FORMAT_ALL)) {
 			return FALSE;
-
-	} else {
-		if (view == VIEW(REQ_VIEW_TREE) && strcmp(view->vid, view->id))
-			opt_path[0] = 0;
-
-		if (!run_io_rd(&view->io, view->ops->argv, FORMAT_ALL))
-			return FALSE;
+		}
 
 		/* Put the current ref_* value to the view title ref
 		 * member. This is needed by the blob view. Most other
@@ -2779,39 +3020,12 @@ begin_update(struct view *view, bool refresh)
 		string_copy_rev(view->ref, view->id);
 	}
 
+	if (!start_io(&view->io))
+		return FALSE;
+
 	setup_update(view, view->id);
 
 	return TRUE;
-}
-
-#define ITEM_CHUNK_SIZE 256
-static void *
-realloc_items(void *mem, size_t *size, size_t new_size, size_t item_size)
-{
-	size_t num_chunks = *size / ITEM_CHUNK_SIZE;
-	size_t num_chunks_new = (new_size + ITEM_CHUNK_SIZE - 1) / ITEM_CHUNK_SIZE;
-
-	if (mem == NULL || num_chunks != num_chunks_new) {
-		*size = num_chunks_new * ITEM_CHUNK_SIZE;
-		mem = realloc(mem, *size * item_size);
-	}
-
-	return mem;
-}
-
-static struct line *
-realloc_lines(struct view *view, size_t line_size)
-{
-	size_t alloc = view->line_alloc;
-	struct line *tmp = realloc_items(view->line, &alloc, line_size,
-					 sizeof(*view->line));
-
-	if (!tmp)
-		return NULL;
-
-	view->line = tmp;
-	view->line_alloc = alloc;
-	return view->line;
 }
 
 static bool
@@ -2904,12 +3118,14 @@ update_view(struct view *view)
 	return TRUE;
 }
 
+DEFINE_ALLOCATOR(realloc_lines, struct line, 256)
+
 static struct line *
 add_line_data(struct view *view, void *data, enum line_type type)
 {
 	struct line *line;
 
-	if (!realloc_lines(view, view->lines + 1))
+	if (!realloc_lines(&view->line, view->lines, 1))
 		return NULL;
 
 	line = &view->line[view->lines++];
@@ -2985,6 +3201,11 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		display[current_view] = view;
 	}
 
+	/* No parent signals that this is the first loaded view. */
+	if (prev && view != prev) {
+		view->parent = prev;
+	}
+
 	/* Resize the view when switching between split- and full-screen,
 	 * or when switching between two different full-screen views. */
 	if (nviews != displayed_views() ||
@@ -3020,8 +3241,6 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 			/* "Blur" the previous view. */
 			update_view_title(prev);
 		}
-
-		view->parent = prev;
 	}
 
 	if (view->pipe && view->lines == 0) {
@@ -3110,6 +3329,7 @@ view_driver(struct view *view, enum request request)
 		if (view == VIEW(REQ_VIEW_STATUS) ||
 		    view == VIEW(REQ_VIEW_MAIN) ||
 		    view == VIEW(REQ_VIEW_LOG) ||
+		    view == VIEW(REQ_VIEW_BRANCH) ||
 		    view == VIEW(REQ_VIEW_STAGE))
 			request = REQ_REFRESH;
 		else
@@ -3144,7 +3364,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_BLAME:
 		if (!opt_file[0]) {
 			report("No file chosen, press %s to open tree view",
-			       get_key(REQ_VIEW_TREE));
+			       get_key(view->keymap, REQ_VIEW_TREE));
 			break;
 		}
 		open_view(view, request, OPEN_DEFAULT);
@@ -3153,7 +3373,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_BLOB:
 		if (!ref_blob[0]) {
 			report("No file chosen, press %s to open tree view",
-			       get_key(REQ_VIEW_TREE));
+			       get_key(view->keymap, REQ_VIEW_TREE));
 			break;
 		}
 		open_view(view, request, OPEN_DEFAULT);
@@ -3162,7 +3382,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_PAGER:
 		if (!VIEW(REQ_VIEW_PAGER)->pipe && !VIEW(REQ_VIEW_PAGER)->lines) {
 			report("No pager content, press %s to run command from prompt",
-			       get_key(REQ_PROMPT));
+			       get_key(view->keymap, REQ_PROMPT));
 			break;
 		}
 		open_view(view, request, OPEN_DEFAULT);
@@ -3171,7 +3391,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_STAGE:
 		if (!VIEW(REQ_VIEW_STAGE)->lines) {
 			report("No stage content, press %s to open the status view and choose file",
-			       get_key(REQ_VIEW_STATUS));
+			       get_key(view->keymap, REQ_VIEW_STATUS));
 			break;
 		}
 		open_view(view, request, OPEN_DEFAULT);
@@ -3190,6 +3410,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_LOG:
 	case REQ_VIEW_TREE:
 	case REQ_VIEW_HELP:
+	case REQ_VIEW_BRANCH:
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
@@ -3204,7 +3425,9 @@ view_driver(struct view *view, enum request request)
 		   (view == VIEW(REQ_VIEW_STAGE) &&
 		     view->parent == VIEW(REQ_VIEW_STATUS)) ||
 		   (view == VIEW(REQ_VIEW_BLOB) &&
-		     view->parent == VIEW(REQ_VIEW_TREE))) {
+		     view->parent == VIEW(REQ_VIEW_TREE)) ||
+		   (view == VIEW(REQ_VIEW_MAIN) &&
+		     view->parent == VIEW(REQ_VIEW_BRANCH))) {
 			int line;
 
 			view = view->parent;
@@ -3246,12 +3469,16 @@ view_driver(struct view *view, enum request request)
 			maximize_view(view);
 		break;
 
+	case REQ_OPTIONS:
+		open_option_menu();
+		break;
+
 	case REQ_TOGGLE_LINENO:
 		toggle_view_option(&opt_line_number, "line numbers");
 		break;
 
 	case REQ_TOGGLE_DATE:
-		toggle_view_option(&opt_date, "date display");
+		toggle_date_option(&opt_date);
 		break;
 
 	case REQ_TOGGLE_AUTHOR:
@@ -3264,6 +3491,11 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_TOGGLE_REFS:
 		toggle_view_option(&opt_show_refs, "reference display");
+		break;
+
+	case REQ_TOGGLE_SORT_FIELD:
+	case REQ_TOGGLE_SORT_ORDER:
+		report("Sorting is not yet supported for the %s view", view->name);
 		break;
 
 	case REQ_SEARCH:
@@ -3316,7 +3548,8 @@ view_driver(struct view *view, enum request request)
 		return FALSE;
 
 	default:
-		report("Unknown key, press 'h' for help");
+		report("Unknown key, press %s for help",
+		       get_key(view->keymap, REQ_VIEW_HELP));
 		return TRUE;
 	}
 
@@ -3327,6 +3560,80 @@ view_driver(struct view *view, enum request request)
 /*
  * View backend utilities
  */
+
+enum sort_field {
+	ORDERBY_NAME,
+	ORDERBY_DATE,
+	ORDERBY_AUTHOR,
+};
+
+struct sort_state {
+	const enum sort_field *fields;
+	size_t size, current;
+	bool reverse;
+};
+
+#define SORT_STATE(fields) { fields, ARRAY_SIZE(fields), 0 }
+#define get_sort_field(state) ((state).fields[(state).current])
+#define sort_order(state, result) ((state).reverse ? -(result) : (result))
+
+static void
+sort_view(struct view *view, enum request request, struct sort_state *state,
+	  int (*compare)(const void *, const void *))
+{
+	switch (request) {
+	case REQ_TOGGLE_SORT_FIELD:
+		state->current = (state->current + 1) % state->size;
+		break;
+
+	case REQ_TOGGLE_SORT_ORDER:
+		state->reverse = !state->reverse;
+		break;
+	default:
+		die("Not a sort request");
+	}
+
+	qsort(view->line, view->lines, sizeof(*view->line), compare);
+	redraw_view(view);
+}
+
+DEFINE_ALLOCATOR(realloc_authors, const char *, 256)
+
+/* Small author cache to reduce memory consumption. It uses binary
+ * search to lookup or find place to position new entries. No entries
+ * are ever freed. */
+static const char *
+get_author(const char *name)
+{
+	static const char **authors;
+	static size_t authors_size;
+	int from = 0, to = authors_size - 1;
+
+	while (from <= to) {
+		size_t pos = (to + from) / 2;
+		int cmp = strcmp(name, authors[pos]);
+
+		if (!cmp)
+			return authors[pos];
+
+		if (cmp < 0)
+			to = pos - 1;
+		else
+			from = pos + 1;
+	}
+
+	if (!realloc_authors(&authors, authors_size, 1))
+		return NULL;
+	name = strdup(name);
+	if (!name)
+		return NULL;
+
+	memmove(authors + from + 1, authors + from, (authors_size - from) * sizeof(*authors));
+	authors[from] = name;
+	authors_size++;
+
+	return name;
+}
 
 static void
 parse_timezone(time_t *time, const char *zone)
@@ -3348,7 +3655,7 @@ parse_timezone(time_t *time, const char *zone)
  *	author  <email@address.tld> 1138474660 +0100
  */
 static void
-parse_author_line(char *ident, char *author, size_t authorsize, struct tm *tm)
+parse_author_line(char *ident, const char **author, time_t *time)
 {
 	char *nameend = strchr(ident, '<');
 	char *emailend = strchr(ident, '>');
@@ -3363,37 +3670,53 @@ parse_author_line(char *ident, char *author, size_t authorsize, struct tm *tm)
 			ident = "Unknown";
 	}
 
-	string_ncopy_do(author, authorsize, ident, strlen(ident));
+	*author = get_author(ident);
 
 	/* Parse epoch and timezone */
 	if (emailend && emailend[1] == ' ') {
 		char *secs = emailend + 2;
 		char *zone = strchr(secs, ' ');
-		time_t time = (time_t) atol(secs);
+
+		*time = (time_t) atol(secs);
 
 		if (zone && strlen(zone) == STRING_SIZE(" +0700"))
-			parse_timezone(&time, zone + 1);
-
-		gmtime_r(&time, tm);
+			parse_timezone(time, zone + 1);
 	}
 }
 
-static enum input_status
-select_commit_parent_handler(void *data, char *buf, int c)
+static bool
+open_commit_parent_menu(char buf[SIZEOF_STR], int *parents)
 {
-	size_t parents = *(size_t *) data;
-	int parent = 0;
+	char rev[SIZEOF_REV];
+	const char *revlist_argv[] = {
+		"git", "log", "--no-color", "-1", "--pretty=format:%s", rev, NULL
+	};
+	struct menu_item *items;
+	char text[SIZEOF_STR];
+	bool ok = TRUE;
+	int i;
 
-	if (!isdigit(c))
-		return INPUT_SKIP;
+	items = calloc(*parents + 1, sizeof(*items));
+	if (!items)
+		return FALSE;
 
-	if (*buf)
-		parent = atoi(buf) * 10;
-	parent += c - '0';
+	for (i = 0; i < *parents; i++) {
+		string_copy_rev(rev, &buf[SIZEOF_REV * i]);
+		if (!run_io_buf(revlist_argv, text, sizeof(text)) ||
+		    !(items[i].text = strdup(text))) {
+			ok = FALSE;
+			break;
+		}
+	}
 
-	if (parent > parents)
-		return INPUT_SKIP;
-	return INPUT_OK;
+	if (ok) {
+		*parents = 0;
+		ok = prompt_menu("Select parent", items, parents);
+	}
+	for (i = 0; items[i].text; i++)
+		free((char *) items[i].text);
+	free(items);
+	return ok;
 }
 
 static bool
@@ -3401,13 +3724,13 @@ select_commit_parent(const char *id, char rev[SIZEOF_REV], const char *path)
 {
 	char buf[SIZEOF_STR * 4];
 	const char *revlist_argv[] = {
-		"git", "rev-list", "-1", "--parents", id, "--", path, NULL
+		"git", "log", "--no-color", "-1",
+			"--pretty=format:%P", id, "--", path, NULL
 	};
 	int parents;
 
 	if (!run_io_buf(revlist_argv, buf, sizeof(buf)) ||
-	    !*chomp_string(buf) ||
-	    (parents = (strlen(buf) / 40) - 1) < 0) {
+	    (parents = strlen(buf) / 40) < 0) {
 		report("Failed to get parent information");
 		return FALSE;
 
@@ -3419,17 +3742,8 @@ select_commit_parent(const char *id, char rev[SIZEOF_REV], const char *path)
 		return FALSE;
 	}
 
-	if (parents > 1) {
-		char prompt[SIZEOF_STR];
-		char *result;
-
-		if (!string_format(prompt, "Which parent? [1..%d] ", parents))
-			return FALSE;
-		result = prompt_input(prompt, select_commit_parent_handler, &parents);
-		if (!result)
-			return FALSE;
-		parents = atoi(result);
-	}
+	if (parents > 1 && !open_commit_parent_menu(buf, &parents))
+		return FALSE;
 
 	string_copy_rev(rev, &buf[41 * parents]);
 	return TRUE;
@@ -3456,13 +3770,9 @@ static bool
 add_describe_ref(char *buf, size_t *bufpos, const char *commit_id, const char *sep)
 {
 	const char *describe_argv[] = { "git", "describe", commit_id, NULL };
-	char refbuf[SIZEOF_STR];
-	char *ref = NULL;
+	char ref[SIZEOF_STR];
 
-	if (run_io_buf(describe_argv, refbuf, sizeof(refbuf)))
-		ref = chomp_string(refbuf);
-
-	if (!ref || !*ref)
+	if (!run_io_buf(describe_argv, ref, sizeof(ref)) || !*ref)
 		return TRUE;
 
 	/* This is the only fatal call, since it can "corrupt" the buffer. */
@@ -3477,22 +3787,22 @@ add_pager_refs(struct view *view, struct line *line)
 {
 	char buf[SIZEOF_STR];
 	char *commit_id = (char *)line->data + STRING_SIZE("commit ");
-	struct ref **refs;
-	size_t bufpos = 0, refpos = 0;
+	struct ref_list *list;
+	size_t bufpos = 0, i;
 	const char *sep = "Refs: ";
 	bool is_tag = FALSE;
 
 	assert(line->type == LINE_COMMIT);
 
-	refs = get_refs(commit_id);
-	if (!refs) {
+	list = get_ref_list(commit_id);
+	if (!list) {
 		if (view == VIEW(REQ_VIEW_DIFF))
 			goto try_add_describe_ref;
 		return;
 	}
 
-	do {
-		struct ref *ref = refs[refpos];
+	for (i = 0; i < list->size; i++) {
+		struct ref *ref = list->refs[i];
 		const char *fmt = ref->tag    ? "%s[%s]" :
 		                  ref->remote ? "%s<%s>" : "%s%s";
 
@@ -3501,7 +3811,7 @@ add_pager_refs(struct view *view, struct line *line)
 		sep = ", ";
 		if (ref->tag)
 			is_tag = TRUE;
-	} while (refs[refpos++]->next);
+	}
 
 	if (!is_tag && view == VIEW(REQ_VIEW_DIFF)) {
 try_add_describe_ref:
@@ -3568,16 +3878,9 @@ pager_request(struct view *view, enum request request, struct line *line)
 static bool
 pager_grep(struct view *view, struct line *line)
 {
-	regmatch_t pmatch;
-	char *text = line->data;
+	const char *text[] = { line->data, NULL };
 
-	if (!*text)
-		return FALSE;
-
-	if (regexec(view->regex, text, 1, &pmatch, 0) == REG_NOMATCH)
-		return FALSE;
-
-	return TRUE;
+	return grep_text(view, text);
 }
 
 static void
@@ -3651,71 +3954,140 @@ static struct view_ops diff_ops = {
  * Help backend
  */
 
+static bool help_keymap_hidden[ARRAY_SIZE(keymap_table)];
+
+static char *
+help_name(char buf[SIZEOF_STR], const char *name, size_t namelen)
+{
+	int bufpos;
+
+	for (bufpos = 0; bufpos <= namelen; bufpos++) {
+		buf[bufpos] = tolower(name[bufpos]);
+		if (buf[bufpos] == '_')
+			buf[bufpos] = '-';
+	}
+
+	buf[bufpos] = 0;
+	return buf;
+}
+
+#define help_keymap_name(buf, keymap) \
+	help_name(buf, keymap_table[keymap].name, keymap_table[keymap].namelen)
+
 static bool
-help_open(struct view *view)
+help_open_keymap_title(struct view *view, enum keymap keymap)
 {
 	char buf[SIZEOF_STR];
+	struct line *line;
+
+	line = add_line_format(view, LINE_HELP_KEYMAP, "[%c] %s bindings",
+			       help_keymap_hidden[keymap] ? '+' : '-',
+			       help_keymap_name(buf, keymap));
+	if (line)
+		line->other = keymap;
+
+	return help_keymap_hidden[keymap];
+}
+
+static void
+help_open_keymap(struct view *view, enum keymap keymap)
+{
+	const char *group = NULL;
+	char buf[SIZEOF_STR];
 	size_t bufpos;
+	bool add_title = TRUE;
 	int i;
 
-	if (view->lines > 0)
-		return TRUE;
-
-	add_line_text(view, "Quick reference for tig keybindings:", LINE_DEFAULT);
-
 	for (i = 0; i < ARRAY_SIZE(req_info); i++) {
-		const char *key;
+		const char *key = NULL;
 
 		if (req_info[i].request == REQ_NONE)
 			continue;
 
 		if (!req_info[i].request) {
-			add_line_text(view, "", LINE_DEFAULT);
-			add_line_text(view, req_info[i].help, LINE_DEFAULT);
+			group = req_info[i].help;
 			continue;
 		}
 
-		key = get_key(req_info[i].request);
-		if (!*key)
-			key = "(no key defined)";
+		key = get_keys(keymap, req_info[i].request, TRUE);
+		if (!key || !*key)
+			continue;
 
-		for (bufpos = 0; bufpos <= req_info[i].namelen; bufpos++) {
-			buf[bufpos] = tolower(req_info[i].name[bufpos]);
-			if (buf[bufpos] == '_')
-				buf[bufpos] = '-';
+		if (add_title && help_open_keymap_title(view, keymap))
+			return;
+		add_title = false;
+
+		if (group) {
+			add_line_text(view, group, LINE_HELP_GROUP);
+			group = NULL;
 		}
 
-		add_line_format(view, LINE_DEFAULT, "    %-25s %-20s %s",
-				key, buf, req_info[i].help);
+		add_line_format(view, LINE_DEFAULT, "    %-25s %-20s %s", key,
+				help_name(buf, req_info[i].name, req_info[i].namelen),
+				req_info[i].help);
 	}
 
-	if (run_requests) {
-		add_line_text(view, "", LINE_DEFAULT);
-		add_line_text(view, "External commands:", LINE_DEFAULT);
-	}
+	group = "External commands:";
 
 	for (i = 0; i < run_requests; i++) {
 		struct run_request *req = get_run_request(REQ_NONE + i + 1);
 		const char *key;
 		int argc;
 
-		if (!req)
+		if (!req || req->keymap != keymap)
 			continue;
 
 		key = get_key_name(req->key);
 		if (!*key)
 			key = "(no key defined)";
 
+		if (add_title && help_open_keymap_title(view, keymap))
+			return;
+		if (group) {
+			add_line_text(view, group, LINE_HELP_GROUP);
+			group = NULL;
+		}
+
 		for (bufpos = 0, argc = 0; req->argv[argc]; argc++)
 			if (!string_format_from(buf, &bufpos, "%s%s",
 					        argc ? " " : "", req->argv[argc]))
-				return REQ_NONE;
+				return;
 
-		add_line_format(view, LINE_DEFAULT, "    %-10s %-14s `%s`",
-				keymap_table[req->keymap].name, key, buf);
+		add_line_format(view, LINE_DEFAULT, "    %-25s `%s`", key, buf);
 	}
+}
+
+static bool
+help_open(struct view *view)
+{
+	enum keymap keymap;
+
+	reset_view(view);
+	add_line_text(view, "Quick reference for tig keybindings:", LINE_DEFAULT);
+	add_line_text(view, "", LINE_DEFAULT);
+
+	for (keymap = 0; keymap < ARRAY_SIZE(keymap_table); keymap++)
+		help_open_keymap(view, keymap);
 
 	return TRUE;
+}
+
+static enum request
+help_request(struct view *view, enum request request, struct line *line)
+{
+	switch (request) {
+	case REQ_ENTER:
+		if (line->type == LINE_HELP_KEYMAP) {
+			help_keymap_hidden[line->other] =
+				!help_keymap_hidden[line->other];
+			view->p_restore = TRUE;
+			open_view(view, REQ_VIEW_HELP, OPEN_REFRESH);
+		}
+
+		return REQ_NONE;
+	default:
+		return pager_request(view, request, line);
+	}
 }
 
 static struct view_ops help_ops = {
@@ -3724,7 +4096,7 @@ static struct view_ops help_ops = {
 	help_open,
 	NULL,
 	pager_draw,
-	pager_request,
+	help_request,
 	pager_grep,
 	pager_select,
 };
@@ -3795,25 +4167,56 @@ push_tree_stack_entry(const char *name, unsigned long lineno)
 struct tree_entry {
 	char id[SIZEOF_REV];
 	mode_t mode;
-	struct tm time;			/* Date from the author ident. */
-	char author[75];		/* Author of the commit. */
+	time_t time;			/* Date from the author ident. */
+	const char *author;		/* Author of the commit. */
 	char name[1];
 };
 
 static const char *
-tree_path(struct line *line)
+tree_path(const struct line *line)
 {
 	return ((struct tree_entry *) line->data)->name;
 }
 
-
 static int
-tree_compare_entry(struct line *line1, struct line *line2)
+tree_compare_entry(const struct line *line1, const struct line *line2)
 {
 	if (line1->type != line2->type)
 		return line1->type == LINE_TREE_DIR ? -1 : 1;
 	return strcmp(tree_path(line1), tree_path(line2));
 }
+
+static const enum sort_field tree_sort_fields[] = {
+	ORDERBY_NAME, ORDERBY_DATE, ORDERBY_AUTHOR
+};
+static struct sort_state tree_sort_state = SORT_STATE(tree_sort_fields);
+
+static int
+tree_compare(const void *l1, const void *l2)
+{
+	const struct line *line1 = (const struct line *) l1;
+	const struct line *line2 = (const struct line *) l2;
+	const struct tree_entry *entry1 = ((const struct line *) l1)->data;
+	const struct tree_entry *entry2 = ((const struct line *) l2)->data;
+
+	if (line1->type == LINE_TREE_HEAD)
+		return -1;
+	if (line2->type == LINE_TREE_HEAD)
+		return 1;
+
+	switch (get_sort_field(tree_sort_state)) {
+	case ORDERBY_DATE:
+		return sort_order(tree_sort_state, entry1->time - entry2->time);
+
+	case ORDERBY_AUTHOR:
+		return sort_order(tree_sort_state, strcmp(entry1->author, entry2->author));
+
+	case ORDERBY_NAME:
+	default:
+		return sort_order(tree_sort_state, tree_compare_entry(line1, line2));
+	}
+}
+
 
 static struct line *
 tree_entry(struct view *view, enum line_type type, const char *path,
@@ -3839,8 +4242,8 @@ tree_entry(struct view *view, enum line_type type, const char *path,
 static bool
 tree_read_date(struct view *view, char *text, bool *read_date)
 {
-	static char author_name[SIZEOF_STR];
-	static struct tm author_time;
+	static const char *author_name;
+	static time_t author_time;
 
 	if (!text && *read_date) {
 		*read_date = FALSE;
@@ -3861,7 +4264,7 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 			return TRUE;
 		}
 
-		if (!run_io_rd(&io, log_file, FORMAT_NONE)) {
+		if (!run_io_rd(&io, log_file, opt_cdup, FORMAT_NONE)) {
 			report("Failed to load tree data");
 			return TRUE;
 		}
@@ -3873,7 +4276,7 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 
 	} else if (*text == 'a' && get_line_type(text) == LINE_AUTHOR) {
 		parse_author_line(text + STRING_SIZE("author "),
-				  author_name, sizeof(author_name), &author_time);
+				  &author_name, &author_time);
 
 	} else if (*text == ':') {
 		char *pos;
@@ -3884,8 +4287,6 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 		if (!pos)
 			return TRUE;
 		text = pos + 1;
-		if (*opt_prefix && !strncmp(text, opt_prefix, strlen(opt_prefix)))
-			text += strlen(opt_prefix);
 		if (*opt_path && !strncmp(text, opt_path, strlen(opt_path)))
 			text += strlen(opt_path);
 		pos = strchr(text, '/');
@@ -3896,12 +4297,12 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 			struct line *line = &view->line[i];
 			struct tree_entry *entry = line->data;
 
-			annotated += !!*entry->author;
-			if (*entry->author || strcmp(entry->name, text))
+			annotated += !!entry->author;
+			if (entry->author || strcmp(entry->name, text))
 				continue;
 
-			string_copy(entry->author, author_name);
-			memcpy(&entry->time, &author_time, sizeof(entry->time));
+			entry->author = author_name;
+			entry->time = author_time;
 			line->dirty = 1;
 			break;
 		}
@@ -3989,7 +4390,7 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 		if (opt_author && draw_author(view, entry->author))
 			return TRUE;
 
-		if (opt_date && draw_date(view, *entry->author ? &entry->time : NULL))
+		if (opt_date && draw_date(view, entry->author ? &entry->time : NULL))
 			return TRUE;
 	}
 	if (draw_text(view, line->type, entry->name, TRUE))
@@ -4036,6 +4437,11 @@ tree_request(struct view *view, enum request request, struct line *line)
 		} else {
 			open_editor(TRUE, opt_file);
 		}
+		return REQ_NONE;
+
+	case REQ_TOGGLE_SORT_FIELD:
+	case REQ_TOGGLE_SORT_ORDER:
+		sort_view(view, request, &tree_sort_state, tree_compare);
 		return REQ_NONE;
 
 	case REQ_PARENT:
@@ -4093,6 +4499,20 @@ tree_request(struct view *view, enum request request, struct line *line)
 	return REQ_NONE;
 }
 
+static bool
+tree_grep(struct view *view, struct line *line)
+{
+	struct tree_entry *entry = line->data;
+	const char *text[] = {
+		entry->name,
+		opt_author ? entry->author : "",
+		opt_date ? mkdate(&entry->time) : "",
+		NULL
+	};
+
+	return grep_text(view, text);
+}
+
 static void
 tree_select(struct view *view, struct line *line)
 {
@@ -4109,6 +4529,32 @@ tree_select(struct view *view, struct line *line)
 	string_copy_rev(view->ref, entry->id);
 }
 
+static bool
+tree_prepare(struct view *view)
+{
+	if (view->lines == 0 && opt_prefix[0]) {
+		char *pos = opt_prefix;
+
+		while (pos && *pos) {
+			char *end = strchr(pos, '/');
+
+			if (end)
+				*end = 0;
+			push_tree_stack_entry(pos, 0);
+			pos = end;
+			if (end) {
+				*end = '/';
+				pos++;
+			}
+		}
+
+	} else if (strcmp(view->vid, view->id)) {
+		opt_path[0] = 0;
+	}
+
+	return init_io_rd(&view->io, view->ops->argv, opt_cdup, FORMAT_ALL);
+}
+
 static const char *tree_argv[SIZEOF_ARG] = {
 	"git", "ls-tree", "%(commit)", "%(directory)", NULL
 };
@@ -4120,8 +4566,9 @@ static struct view_ops tree_ops = {
 	tree_read,
 	tree_draw,
 	tree_request,
-	pager_grep,
+	tree_grep,
 	tree_select,
+	tree_prepare,
 };
 
 static bool
@@ -4185,8 +4632,8 @@ static const char *blame_cat_file_argv[] = {
 struct blame_commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
-	char author[75];		/* Author of the commit. */
-	struct tm time;			/* Date from the author ident. */
+	const char *author;		/* Author of the commit. */
+	time_t time;			/* Date from the author ident. */
 	char filename[128];		/* Name of file. */
 	bool has_previous;		/* Was a "previous" line detected. */
 };
@@ -4200,8 +4647,16 @@ struct blame {
 static bool
 blame_open(struct view *view)
 {
-	if (*opt_ref || !io_open(&view->io, opt_file)) {
-		if (!run_io_rd(&view->io, blame_cat_file_argv, FORMAT_ALL))
+	char path[SIZEOF_STR];
+
+	if (!view->parent && *opt_prefix) {
+		string_copy(path, opt_file);
+		if (!string_format(opt_file, "%s%s", opt_prefix, path))
+			return FALSE;
+	}
+
+	if (*opt_ref || !io_open(&view->io, "%s%s", opt_cdup, opt_file)) {
+		if (!run_io_rd(&view->io, blame_cat_file_argv, opt_cdup, FORMAT_ALL))
 			return FALSE;
 	}
 
@@ -4297,7 +4752,7 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 		if (view->lines == 0 && !view->parent)
 			die("No blame exist for %s", view->vid);
 
-		if (view->lines == 0 || !run_io_rd(&io, argv, FORMAT_ALL)) {
+		if (view->lines == 0 || !run_io_rd(&io, argv, opt_cdup, FORMAT_ALL)) {
 			report("Failed to load blame data");
 			return TRUE;
 		}
@@ -4338,7 +4793,6 @@ blame_read(struct view *view, char *line)
 {
 	static struct blame_commit *commit = NULL;
 	static int blamed = 0;
-	static time_t author_time;
 	static bool read_file = TRUE;
 
 	if (read_file)
@@ -4363,14 +4817,13 @@ blame_read(struct view *view, char *line)
 			      view->lines ? blamed * 100 / view->lines : 0);
 
 	} else if (match_blame_header("author ", &line)) {
-		string_ncopy(commit->author, line, strlen(line));
+		commit->author = get_author(line);
 
 	} else if (match_blame_header("author-time ", &line)) {
-		author_time = (time_t) atol(line);
+		commit->time = (time_t) atol(line);
 
 	} else if (match_blame_header("author-tz ", &line)) {
-		parse_timezone(&author_time, line);
-		gmtime_r(&author_time, &commit->time);
+		parse_timezone(&commit->time, line);
 
 	} else if (match_blame_header("summary ", &line)) {
 		string_ncopy(commit->title, line, strlen(line));
@@ -4390,7 +4843,7 @@ static bool
 blame_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct blame *blame = line->data;
-	struct tm *time = NULL;
+	time_t *time = NULL;
 	const char *id = NULL, *author = NULL;
 	char text[SIZEOF_STR];
 
@@ -4538,27 +4991,16 @@ blame_grep(struct view *view, struct line *line)
 {
 	struct blame *blame = line->data;
 	struct blame_commit *commit = blame->commit;
-	regmatch_t pmatch;
+	const char *text[] = {
+		blame->text,
+		commit ? commit->title : "",
+		commit ? commit->id : "",
+		commit && opt_author ? commit->author : "",
+		commit && opt_date ? mkdate(&commit->time) : "",
+		NULL
+	};
 
-#define MATCH(text, on)							\
-	(on && *text && regexec(view->regex, text, 1, &pmatch, 0) != REG_NOMATCH)
-
-	if (commit) {
-		char buf[DATE_COLS + 1];
-
-		if (MATCH(commit->title, 1) ||
-		    MATCH(commit->author, opt_author) ||
-		    MATCH(commit->id, opt_date))
-			return TRUE;
-
-		if (strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time) &&
-		    MATCH(buf, 1))
-			return TRUE;
-	}
-
-	return MATCH(blame->text, 1);
-
-#undef MATCH
+	return grep_text(view, text);
 }
 
 static void
@@ -4588,6 +5030,191 @@ static struct view_ops blame_ops = {
 };
 
 /*
+ * Branch backend
+ */
+
+struct branch {
+	const char *author;		/* Author of the last commit. */
+	time_t time;			/* Date of the last activity. */
+	struct ref *ref;		/* Name and commit ID information. */
+};
+
+static const enum sort_field branch_sort_fields[] = {
+	ORDERBY_NAME, ORDERBY_DATE, ORDERBY_AUTHOR
+};
+static struct sort_state branch_sort_state = SORT_STATE(branch_sort_fields);
+
+static int
+branch_compare(const void *l1, const void *l2)
+{
+	const struct branch *branch1 = ((const struct line *) l1)->data;
+	const struct branch *branch2 = ((const struct line *) l2)->data;
+
+	switch (get_sort_field(branch_sort_state)) {
+	case ORDERBY_DATE:
+		return sort_order(branch_sort_state, branch1->time - branch2->time);
+
+	case ORDERBY_AUTHOR:
+		return sort_order(branch_sort_state, strcmp(branch1->author, branch2->author));
+
+	case ORDERBY_NAME:
+	default:
+		return sort_order(branch_sort_state, strcmp(branch1->ref->name, branch2->ref->name));
+	}
+}
+
+static bool
+branch_draw(struct view *view, struct line *line, unsigned int lineno)
+{
+	struct branch *branch = line->data;
+	enum line_type type = branch->ref->head ? LINE_MAIN_HEAD : LINE_DEFAULT;
+
+	if (opt_date && draw_date(view, branch->author ? &branch->time : NULL))
+		return TRUE;
+
+	if (opt_author && draw_author(view, branch->author))
+		return TRUE;
+
+	draw_text(view, type, branch->ref->name, TRUE);
+	return TRUE;
+}
+
+static enum request
+branch_request(struct view *view, enum request request, struct line *line)
+{
+	switch (request) {
+	case REQ_REFRESH:
+		load_refs();
+		open_view(view, REQ_VIEW_BRANCH, OPEN_REFRESH);
+		return REQ_NONE;
+
+	case REQ_TOGGLE_SORT_FIELD:
+	case REQ_TOGGLE_SORT_ORDER:
+		sort_view(view, request, &branch_sort_state, branch_compare);
+		return REQ_NONE;
+
+	case REQ_ENTER:
+		open_view(view, REQ_VIEW_MAIN, OPEN_SPLIT);
+		return REQ_NONE;
+
+	default:
+		return request;
+	}
+}
+
+static bool
+branch_read(struct view *view, char *line)
+{
+	static char id[SIZEOF_REV];
+	struct branch *reference;
+	size_t i;
+
+	if (!line)
+		return TRUE;
+
+	switch (get_line_type(line)) {
+	case LINE_COMMIT:
+		string_copy_rev(id, line + STRING_SIZE("commit "));
+		return TRUE;
+
+	case LINE_AUTHOR:
+		for (i = 0, reference = NULL; i < view->lines; i++) {
+			struct branch *branch = view->line[i].data;
+
+			if (strcmp(branch->ref->id, id))
+				continue;
+
+			view->line[i].dirty = TRUE;
+			if (reference) {
+				branch->author = reference->author;
+				branch->time = reference->time;
+				continue;
+			}
+
+			parse_author_line(line + STRING_SIZE("author "),
+					  &branch->author, &branch->time);
+			reference = branch;
+		}
+		return TRUE;
+
+	default:
+		return TRUE;
+	}
+
+}
+
+static bool
+branch_open_visitor(void *data, struct ref *ref)
+{
+	struct view *view = data;
+	struct branch *branch;
+
+	if (ref->tag || ref->ltag || ref->remote)
+		return TRUE;
+
+	branch = calloc(1, sizeof(*branch));
+	if (!branch)
+		return FALSE;
+
+	branch->ref = ref;
+	return !!add_line_data(view, branch, LINE_DEFAULT);
+}
+
+static bool
+branch_open(struct view *view)
+{
+	const char *branch_log[] = {
+		"git", "log", "--no-color", "--pretty=raw",
+			"--simplify-by-decoration", "--all", NULL
+	};
+
+	if (!run_io_rd(&view->io, branch_log, NULL, FORMAT_NONE)) {
+		report("Failed to load branch data");
+		return TRUE;
+	}
+
+	setup_update(view, view->id);
+	foreach_ref(branch_open_visitor, view);
+	view->p_restore = TRUE;
+
+	return TRUE;
+}
+
+static bool
+branch_grep(struct view *view, struct line *line)
+{
+	struct branch *branch = line->data;
+	const char *text[] = {
+		branch->ref->name,
+		branch->author,
+		NULL
+	};
+
+	return grep_text(view, text);
+}
+
+static void
+branch_select(struct view *view, struct line *line)
+{
+	struct branch *branch = line->data;
+
+	string_copy_rev(view->ref, branch->ref->id);
+	string_copy_rev(ref_commit, branch->ref->id);
+	string_copy_rev(ref_head, branch->ref->id);
+}
+
+static struct view_ops branch_ops = {
+	"branch",
+	NULL,
+	branch_open,
+	branch_read,
+	branch_draw,
+	branch_request,
+	branch_grep,
+	branch_select,
+};
+
+/*
  * Status backend
  */
 
@@ -4610,6 +5237,8 @@ static struct status stage_status;
 static enum line_type stage_line_type;
 static size_t stage_chunks;
 static int *stage_chunk;
+
+DEFINE_ALLOCATOR(realloc_ints, int, 32)
 
 /* This should work even for the "On branch" line. */
 static inline bool
@@ -4808,10 +5437,9 @@ status_update_onbranch(void)
 		if (!*opt_head) {
 			struct io io = {};
 
-			if (string_format(buf, "%s/rebase-merge/head-name", opt_git_dir) &&
-			    io_open(&io, buf) &&
+			if (io_open(&io, "%s/rebase-merge/head-name", opt_git_dir) &&
 			    io_read_buf(&io, buf, sizeof(buf))) {
-				head = chomp_string(buf);
+				head = buf;
 				if (!prefixcmp(head, "refs/heads/"))
 					head += STRING_SIZE("refs/heads/");
 			}
@@ -5118,7 +5746,7 @@ status_update_files(struct view *view, struct line *line)
 	struct line *pos = view->line + view->lines;
 	int files = 0;
 	int file, done;
-	int cursor_y, cursor_x;
+	int cursor_y = -1, cursor_x = -1;
 
 	if (!status_update_prepare(&io, line->type))
 		return FALSE;
@@ -5186,9 +5814,8 @@ status_revert(struct status *status, enum line_type type, bool has_none)
 		} else {
 			report("Cannot revert changes to multiple files");
 		}
-		return FALSE;
 
-	} else {
+	} else if (prompt_yesno("Are you sure you want to revert changes?")) {
 		char mode[10] = "100644";
 		const char *reset_argv[] = {
 			"git", "update-index", "--cacheinfo", mode,
@@ -5198,12 +5825,25 @@ status_revert(struct status *status, enum line_type type, bool has_none)
 			"git", "checkout", "--", status->old.name, NULL
 		};
 
-		if (!prompt_yesno("Are you sure you want to overwrite any changes?"))
-			return FALSE;
-		string_format(mode, "%o", status->old.mode);
-		return (status->status != 'U' || run_io_fg(reset_argv, opt_cdup)) &&
-			run_io_fg(checkout_argv, opt_cdup);
+		if (status->status == 'U') {
+			string_format(mode, "%5o", status->old.mode);
+
+			if (status->old.mode == 0 && status->new.mode == 0) {
+				reset_argv[2] = "--force-remove";
+				reset_argv[3] = status->old.name;
+				reset_argv[4] = NULL;
+			}
+
+			if (!run_io_fg(reset_argv, opt_cdup))
+				return FALSE;
+			if (status->old.mode == 0 && status->new.mode == 0)
+				return TRUE;
+		}
+
+		return run_io_fg(checkout_argv, opt_cdup);
 	}
+
+	return FALSE;
 }
 
 static enum request
@@ -5305,10 +5945,10 @@ status_select(struct view *view, struct line *line)
 
 	if (status && status->status == 'U') {
 		text = "Press %s to resolve conflict in %s";
-		key = get_key(REQ_STATUS_MERGE);
+		key = get_key(KEYMAP_STATUS, REQ_STATUS_MERGE);
 
 	} else {
-		key = get_key(REQ_STATUS_UPDATE);
+		key = get_key(KEYMAP_STATUS, REQ_STATUS_UPDATE);
 	}
 
 	string_format(view->ref, text, key, file);
@@ -5318,29 +5958,12 @@ static bool
 status_grep(struct view *view, struct line *line)
 {
 	struct status *status = line->data;
-	enum { S_STATUS, S_NAME, S_END } state;
-	char buf[2] = "?";
-	regmatch_t pmatch;
 
-	if (!status)
-		return FALSE;
+	if (status) {
+		const char buf[2] = { status->status, 0 };
+		const char *text[] = { status->new.name, buf, NULL };
 
-	for (state = S_STATUS; state < S_END; state++) {
-		const char *text;
-
-		switch (state) {
-		case S_NAME:	text = status->new.name;	break;
-		case S_STATUS:
-			buf[0] = status->status;
-			text = buf;
-			break;
-
-		default:
-			return FALSE;
-		}
-
-		if (regexec(view->regex, text, 1, &pmatch, 0) != REG_NOMATCH)
-			return TRUE;
+		return grep_text(view, text);
 	}
 
 	return FALSE;
@@ -5482,21 +6105,15 @@ stage_next(struct view *view, struct line *line)
 	int i;
 
 	if (!stage_chunks) {
-		static size_t alloc = 0;
-		int *tmp;
-
 		for (line = view->line; line < view->line + view->lines; line++) {
 			if (line->type != LINE_DIFF_CHUNK)
 				continue;
 
-			tmp = realloc_items(stage_chunk, &alloc,
-					    stage_chunks, sizeof(*tmp));
-			if (!tmp) {
+			if (!realloc_ints(&stage_chunk, stage_chunks, 1)) {
 				report("Allocation failure");
 				return;
 			}
 
-			stage_chunk = tmp;
 			stage_chunk[stage_chunks++] = line - view->line;
 		}
 	}
@@ -5529,7 +6146,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 	case REQ_STAGE_NEXT:
 		if (stage_line_type == LINE_STAT_UNTRACKED) {
 			report("File is untracked; press %s to add",
-			       get_key(REQ_STATUS_UPDATE));
+			       get_key(KEYMAP_STAGE, REQ_STATUS_UPDATE));
 			return REQ_NONE;
 		}
 		stage_next(view, line);
@@ -5609,9 +6226,9 @@ static struct view_ops stage_ops = {
 struct commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
-	char author[75];		/* Author of the commit. */
-	struct tm time;			/* Date from the author ident. */
-	struct ref **refs;		/* Repository references. */
+	const char *author;		/* Author of the commit. */
+	time_t time;			/* Date from the author ident. */
+	struct ref_list *refs;		/* Repository references. */
 	chtype graph[SIZEOF_REVGRAPH];	/* Ancestry chain graphics. */
 	size_t graph_size;		/* The width of the graph array. */
 	bool has_parents;		/* Rewritten --parents seen. */
@@ -5836,7 +6453,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct commit *commit = line->data;
 
-	if (!*commit->author)
+	if (!commit->author)
 		return FALSE;
 
 	if (opt_date && draw_date(view, &commit->time))
@@ -5850,32 +6467,33 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 		return TRUE;
 
 	if (opt_show_refs && commit->refs) {
-		size_t i = 0;
+		size_t i;
 
-		do {
+		for (i = 0; i < commit->refs->size; i++) {
+			struct ref *ref = commit->refs->refs[i];
 			enum line_type type;
 
-			if (commit->refs[i]->head)
+			if (ref->head)
 				type = LINE_MAIN_HEAD;
-			else if (commit->refs[i]->ltag)
+			else if (ref->ltag)
 				type = LINE_MAIN_LOCAL_TAG;
-			else if (commit->refs[i]->tag)
+			else if (ref->tag)
 				type = LINE_MAIN_TAG;
-			else if (commit->refs[i]->tracked)
+			else if (ref->tracked)
 				type = LINE_MAIN_TRACKED;
-			else if (commit->refs[i]->remote)
+			else if (ref->remote)
 				type = LINE_MAIN_REMOTE;
 			else
 				type = LINE_MAIN_REF;
 
 			if (draw_text(view, type, "[", TRUE) ||
-			    draw_text(view, type, commit->refs[i]->name, TRUE) ||
+			    draw_text(view, type, ref->name, TRUE) ||
 			    draw_text(view, type, "]", TRUE))
 				return TRUE;
 
 			if (draw_text(view, LINE_DEFAULT, " ", TRUE))
 				return TRUE;
-		} while (commit->refs[i++]->next);
+		}
 	}
 
 	draw_text(view, LINE_DEFAULT, commit->title, TRUE);
@@ -5898,7 +6516,7 @@ main_read(struct view *view, char *line)
 		if (view->lines > 0) {
 			commit = view->line[view->lines - 1].data;
 			view->line[view->lines - 1].dirty = 1;
-			if (!*commit->author) {
+			if (!commit->author) {
 				view->lines--;
 				free(commit);
 				graph->commit = NULL;
@@ -5924,7 +6542,7 @@ main_read(struct view *view, char *line)
 		}
 
 		string_copy_rev(commit->id, line);
-		commit->refs = get_refs(commit->id);
+		commit->refs = get_ref_list(commit->id);
 		graph->commit = commit;
 		add_line_data(view, commit, LINE_MAIN_COMMIT);
 
@@ -5949,8 +6567,7 @@ main_read(struct view *view, char *line)
 
 	case LINE_AUTHOR:
 		parse_author_line(line + STRING_SIZE("author "),
-				  commit->author, sizeof(commit->author),
-				  &commit->time);
+				  &commit->author, &commit->time);
 		update_rev_graph(view, graph);
 		graph = graph->next;
 		break;
@@ -6002,17 +6619,18 @@ main_request(struct view *view, enum request request, struct line *line)
 }
 
 static bool
-grep_refs(struct ref **refs, regex_t *regex)
+grep_refs(struct ref_list *list, regex_t *regex)
 {
 	regmatch_t pmatch;
-	size_t i = 0;
+	size_t i;
 
-	if (!refs)
+	if (!opt_show_refs || !list)
 		return FALSE;
-	do {
-		if (regexec(regex, refs[i]->name, 1, &pmatch, 0) != REG_NOMATCH)
+
+	for (i = 0; i < list->size; i++) {
+		if (regexec(regex, list->refs[i]->name, 1, &pmatch, 0) != REG_NOMATCH)
 			return TRUE;
-	} while (refs[i++]->next);
+	}
 
 	return FALSE;
 }
@@ -6021,42 +6639,14 @@ static bool
 main_grep(struct view *view, struct line *line)
 {
 	struct commit *commit = line->data;
-	enum { S_TITLE, S_AUTHOR, S_DATE, S_REFS, S_END } state;
-	char buf[DATE_COLS + 1];
-	regmatch_t pmatch;
+	const char *text[] = {
+		commit->title,
+		opt_author ? commit->author : "",
+		opt_date ? mkdate(&commit->time) : "",
+		NULL
+	};
 
-	for (state = S_TITLE; state < S_END; state++) {
-		char *text;
-
-		switch (state) {
-		case S_TITLE:	text = commit->title;	break;
-		case S_AUTHOR:
-			if (!opt_author)
-				continue;
-			text = commit->author;
-			break;
-		case S_DATE:
-			if (!opt_date)
-				continue;
-			if (!strftime(buf, sizeof(buf), DATE_FORMAT, &commit->time))
-				continue;
-			text = buf;
-			break;
-		case S_REFS:
-			if (!opt_show_refs)
-				continue;
-			if (grep_refs(commit->refs, view->regex) == TRUE)
-				return TRUE;
-			continue;
-		default:
-			return FALSE;
-		}
-
-		if (regexec(view->regex, text, 1, &pmatch, 0) != REG_NOMATCH)
-			return TRUE;
-	}
-
-	return FALSE;
+	return grep_text(view, text) || grep_refs(commit->refs, view->regex);
 }
 
 static void
@@ -6522,18 +7112,80 @@ read_prompt(const char *prompt)
 	return prompt_input(prompt, read_prompt_handler, NULL);
 }
 
+static bool prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
+{
+	enum input_status status = INPUT_OK;
+	int size = 0;
+
+	while (items[size].text)
+		size++;
+
+	while (status == INPUT_OK) {
+		const struct menu_item *item = &items[*selected];
+		int key;
+		int i;
+
+		mvwprintw(status_win, 0, 0, "%s (%d of %d) ",
+			  prompt, *selected + 1, size);
+		if (item->hotkey)
+			wprintw(status_win, "[%c] ", (char) item->hotkey);
+		wprintw(status_win, "%s", item->text);
+		wclrtoeol(status_win);
+
+		key = get_input(COLS - 1);
+		switch (key) {
+		case KEY_RETURN:
+		case KEY_ENTER:
+		case '\n':
+			status = INPUT_STOP;
+			break;
+
+		case KEY_LEFT:
+		case KEY_UP:
+			*selected = *selected - 1;
+			if (*selected < 0)
+				*selected = size - 1;
+			break;
+
+		case KEY_RIGHT:
+		case KEY_DOWN:
+			*selected = (*selected + 1) % size;
+			break;
+
+		case KEY_ESC:
+			status = INPUT_CANCEL;
+			break;
+
+		default:
+			for (i = 0; items[i].text; i++)
+				if (items[i].hotkey == key) {
+					*selected = i;
+					status = INPUT_STOP;
+					break;
+				}
+		}
+	}
+
+	/* Clear the status window */
+	status_empty = FALSE;
+	report("");
+
+	return status != INPUT_CANCEL;
+}
+
 /*
  * Repository properties
  */
 
-static struct ref *refs = NULL;
-static size_t refs_alloc = 0;
+static struct ref **refs = NULL;
 static size_t refs_size = 0;
 
-/* Id <-> ref store */
-static struct ref ***id_refs = NULL;
-static size_t id_refs_alloc = 0;
-static size_t id_refs_size = 0;
+static struct ref_list **ref_lists = NULL;
+static size_t ref_lists_size = 0;
+
+DEFINE_ALLOCATOR(realloc_refs, struct ref *, 256)
+DEFINE_ALLOCATOR(realloc_refs_list, struct ref *, 8)
+DEFINE_ALLOCATOR(realloc_ref_lists, struct ref_list *, 8)
 
 static int
 compare_refs(const void *ref1_, const void *ref2_)
@@ -6554,76 +7206,63 @@ compare_refs(const void *ref1_, const void *ref2_)
 	return strcmp(ref1->name, ref2->name);
 }
 
-static struct ref **
-get_refs(const char *id)
+static void
+foreach_ref(bool (*visitor)(void *data, struct ref *ref), void *data)
 {
-	struct ref ***tmp_id_refs;
-	struct ref **ref_list = NULL;
-	size_t ref_list_alloc = 0;
-	size_t ref_list_size = 0;
 	size_t i;
 
-	for (i = 0; i < id_refs_size; i++)
-		if (!strcmp(id, id_refs[i][0]->id))
-			return id_refs[i];
+	for (i = 0; i < refs_size; i++)
+		if (!visitor(data, refs[i]))
+			break;
+}
 
-	tmp_id_refs = realloc_items(id_refs, &id_refs_alloc, id_refs_size + 1,
-				    sizeof(*id_refs));
-	if (!tmp_id_refs)
+static struct ref_list *
+get_ref_list(const char *id)
+{
+	struct ref_list *list;
+	size_t i;
+
+	for (i = 0; i < ref_lists_size; i++)
+		if (!strcmp(id, ref_lists[i]->id))
+			return ref_lists[i];
+
+	if (!realloc_ref_lists(&ref_lists, ref_lists_size, 1))
+		return NULL;
+	list = calloc(1, sizeof(*list));
+	if (!list)
 		return NULL;
 
-	id_refs = tmp_id_refs;
-
 	for (i = 0; i < refs_size; i++) {
-		struct ref **tmp;
-
-		if (strcmp(id, refs[i].id))
-			continue;
-
-		tmp = realloc_items(ref_list, &ref_list_alloc,
-				    ref_list_size + 1, sizeof(*ref_list));
-		if (!tmp) {
-			if (ref_list)
-				free(ref_list);
-			return NULL;
-		}
-
-		ref_list = tmp;
-		ref_list[ref_list_size] = &refs[i];
-		/* XXX: The properties of the commit chains ensures that we can
-		 * safely modify the shared ref. The repo references will
-		 * always be similar for the same id. */
-		ref_list[ref_list_size]->next = 1;
-
-		ref_list_size++;
+		if (!strcmp(id, refs[i]->id) &&
+		    realloc_refs_list(&list->refs, list->size, 1))
+			list->refs[list->size++] = refs[i];
 	}
 
-	if (ref_list) {
-		qsort(ref_list, ref_list_size, sizeof(*ref_list), compare_refs);
-		ref_list[ref_list_size - 1]->next = 0;
-		id_refs[id_refs_size++] = ref_list;
+	if (!list->refs) {
+		free(list);
+		return NULL;
 	}
 
-	return ref_list;
+	qsort(list->refs, list->size, sizeof(*list->refs), compare_refs);
+	ref_lists[ref_lists_size++] = list;
+	return list;
 }
 
 static int
 read_ref(char *id, size_t idlen, char *name, size_t namelen)
 {
-	struct ref *ref;
+	struct ref *ref = NULL;
 	bool tag = FALSE;
 	bool ltag = FALSE;
 	bool remote = FALSE;
 	bool tracked = FALSE;
-	bool check_replace = FALSE;
 	bool head = FALSE;
+	int from = 0, to = refs_size - 1;
 
 	if (!prefixcmp(name, "refs/tags/")) {
 		if (!suffixcmp(name, namelen, "^{}")) {
 			namelen -= 3;
 			name[namelen] = 0;
-			if (refs_size > 0 && refs[refs_size - 1].ltag == TRUE)
-				check_replace = TRUE;
 		} else {
 			ltag = TRUE;
 		}
@@ -6648,27 +7287,38 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 		return OK;
 	}
 
-	if (check_replace && !strcmp(name, refs[refs_size - 1].name)) {
-		/* it's an annotated tag, replace the previous SHA1 with the
-		 * resolved commit id; relies on the fact git-ls-remote lists
-		 * the commit id of an annotated tag right before the commit id
-		 * it points to. */
-		refs[refs_size - 1].ltag = ltag;
-		string_copy_rev(refs[refs_size - 1].id, id);
+	/* If we are reloading or it's an annotated tag, replace the
+	 * previous SHA1 with the resolved commit id; relies on the fact
+	 * git-ls-remote lists the commit id of an annotated tag right
+	 * before the commit id it points to. */
+	while (from <= to) {
+		size_t pos = (to + from) / 2;
+		int cmp = strcmp(name, refs[pos]->name);
 
-		return OK;
+		if (!cmp) {
+			ref = refs[pos];
+			break;
+		}
+
+		if (cmp < 0)
+			to = pos - 1;
+		else
+			from = pos + 1;
 	}
-	refs = realloc_items(refs, &refs_alloc, refs_size + 1, sizeof(*refs));
-	if (!refs)
-		return ERR;
 
-	ref = &refs[refs_size++];
-	ref->name = malloc(namelen + 1);
-	if (!ref->name)
-		return ERR;
+	if (!ref) {
+		if (!realloc_refs(&refs, refs_size, 1))
+			return ERR;
+		ref = calloc(1, sizeof(*ref) + namelen);
+		if (!ref)
+			return ERR;
+		memmove(refs + from + 1, refs + from,
+			(refs_size - from) * sizeof(*refs));
+		refs[from] = ref;
+		strncpy(ref->name, name, namelen);
+		refs_size++;
+	}
 
-	strncpy(ref->name, name, namelen);
-	ref->name[namelen] = 0;
 	ref->head = head;
 	ref->tag = tag;
 	ref->ltag = ltag;
@@ -6682,10 +7332,14 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 static int
 load_refs(void)
 {
+	const char *head_argv[] = {
+		"git", "symbolic-ref", "HEAD", NULL
+	};
 	static const char *ls_remote_argv[SIZEOF_ARG] = {
 		"git", "ls-remote", opt_git_dir, NULL
 	};
 	static bool init = FALSE;
+	size_t i;
 
 	if (!init) {
 		argv_from_env(ls_remote_argv, "TIG_LS_REMOTE");
@@ -6695,12 +7349,31 @@ load_refs(void)
 	if (!*opt_git_dir)
 		return OK;
 
-	while (refs_size > 0)
-		free(refs[--refs_size].name);
-	while (id_refs_size > 0)
-		free(id_refs[--id_refs_size]);
+	if (run_io_buf(head_argv, opt_head, sizeof(opt_head)) &&
+	    !prefixcmp(opt_head, "refs/heads/")) {
+		char *offset = opt_head + STRING_SIZE("refs/heads/");
 
-	return run_io_load(ls_remote_argv, "\t", read_ref);
+		memmove(opt_head, offset, strlen(offset) + 1);
+	}
+
+	for (i = 0; i < refs_size; i++)
+		refs[i]->id[0] = 0;
+
+	if (run_io_load(ls_remote_argv, "\t", read_ref) == ERR)
+		return ERR;
+
+	/* Update the ref lists to reflect changes. */
+	for (i = 0; i < ref_lists_size; i++) {
+		struct ref_list *list = ref_lists[i];
+		size_t old, new;
+
+		for (old = new = 0; old < list->size; old++)
+			if (!strcmp(list->id, list->refs[old]->id))
+				list->refs[new++] = list->refs[old];
+		list->size = new;
+	}
+
+	return OK;
 }
 
 static void
@@ -6805,7 +7478,7 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 static int
 load_git_config(void)
 {
-	const char *config_list_argv[] = { "git", GIT_CONFIG, "--list", NULL };
+	const char *config_list_argv[] = { "git", "config", "--list", NULL };
 
 	return run_io_load(config_list_argv, "=", read_repo_config_option);
 }
@@ -6837,22 +7510,10 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
 static int
 load_repo_info(void)
 {
-	const char *head_argv[] = {
-		"git", "symbolic-ref", "HEAD", NULL
-	};
 	const char *rev_parse_argv[] = {
 		"git", "rev-parse", "--git-dir", "--is-inside-work-tree",
 			"--show-cdup", "--show-prefix", NULL
 	};
-
-	if (run_io_buf(head_argv, opt_head, sizeof(opt_head))) {
-		chomp_string(opt_head);
-		if (!prefixcmp(opt_head, "refs/heads/")) {
-			char *offset = opt_head + STRING_SIZE("refs/heads/");
-
-			memmove(opt_head, offset, strlen(offset) + 1);
-		}
-	}
 
 	return run_io_load(rev_parse_argv, "=", read_repo_info);
 }
@@ -6985,8 +7646,8 @@ parse_options(int argc, const char *argv[])
 			die("command too long");
 	}
 
-	if (!prepare_update(VIEW(request), custom_argv, NULL, FORMAT_NONE))                                                                        
-		die("Failed to format arguments"); 
+	if (!prepare_update(VIEW(request), custom_argv, NULL, FORMAT_NONE))
+		die("Failed to format arguments");
 
 	return request;
 }

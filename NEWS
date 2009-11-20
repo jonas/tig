@@ -1,6 +1,45 @@
 Release notes
 =============
 
+tig-0.15
+--------
+
+Incompatibilities:
+
+ - Setting the cursor color no longer automatically sets the text to
+   bold. The old 'lazy' behavior was a bug.
+ - Remove check for git-repo-config, which was officially deprecated in
+   git version 1.5.4. The configure script no longer depends on git
+   being installed.
+
+Improvements:
+
+ - Provide the manual as a man page named tigmanual(7).
+ - Add ability to toggle between showing shorter dates (without time
+   info) and relative dates. Use 'D' to toggle between date formats.
+ - Show the active (instead of the default) keybindings in the help
+   view. Furthermore, honor the keymap when suggesting actions in the
+   help messages.
+ - Add branch view for choosing which branch to display in the main
+   view. Bound to 'H' by default.
+ - Tree view: show entry to parent directory ('..') when running from
+   subdirectory.
+ - Tree view: sort entries by name, date or author. Toggling is bound to
+   'i' by default, with 'I' controlling whether or not to sort in
+   ascending order.
+ - Make height of the lower view in a split view configurable by setting
+   the 'split-view-height' variable to a number or a percentage.
+   Defaults to 2/3 of the total view height.
+ - Allow multiple text attributes for color commands:
+
+	color cursor white blue underline bold
+
+Bug fixes:
+
+ - Blame view: fix loading of blame data when opened from the tree view
+   and CWD is not the repo root. (Debian bug 540766)
+ - Tree view: fix searching.
+
 tig-0.14.1
 ----------
 

@@ -1,6 +1,6 @@
-personal_ws-1.1 en 154 
-docbook
+personal_ws-1.1 en 158 
 DocBook
+docbook
 xpm
 utils
 oldmode
@@ -46,6 +46,7 @@ chdir
 acked
 untracked
 subdirectories
+tigmanual
 jsh
 ncurses
 newmode
@@ -87,7 +88,9 @@ PgUp
 endif
 contrib
 delim
+lookup
 unstage
+env
 wclear
 CommitDate
 manpages
@@ -145,6 +148,7 @@ rwxr
 Baudis
 chunked
 Makefile
+doctype
 wrt
 subcommands
 adate
