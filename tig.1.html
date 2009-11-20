@@ -3,7 +3,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.2.6" />
+<meta name="generator" content="AsciiDoc 8.4.4" />
+<title>tig(1)</title>
 <style type="text/css">
 /* Debug borders */
 p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
@@ -110,11 +111,13 @@ div#footer-badges {
   padding-bottom: 0.5em;
 }
 
-div#preamble,
+div#preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
 div.tableblock, div.imageblock, div.exampleblock, div.verseblock,
 div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
 div.admonitionblock {
-  margin-right: 10%;
   margin-top: 1.5em;
   margin-bottom: 1.5em;
 }
@@ -156,22 +159,33 @@ div.sidebarblock > div.content {
   padding: 0.5em;
 }
 
-div.listingblock {
-  margin-right: 0%;
-}
 div.listingblock > div.content {
   border: 1px solid silver;
   background: #f4f4f4;
   padding: 0.5em;
 }
 
-div.quoteblock > div.content {
+div.quoteblock {
   padding-left: 2.0em;
+  margin-right: 10%;
 }
-
-div.attribution {
+div.quoteblock > div.attribution {
+  padding-top: 0.5em;
   text-align: right;
 }
+
+div.verseblock {
+  padding-left: 2.0em;
+  margin-right: 10%;
+}
+div.verseblock > div.content {
+  white-space: pre;
+}
+div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
 div.verseblock + div.attribution {
   text-align: left;
 }
@@ -194,10 +208,6 @@ div.exampleblock > div.content {
   padding: 0.5em;
 }
 
-div.verseblock div.content {
-  white-space: pre;
-}
-
 div.imageblock div.content { padding-left: 0; }
 div.imageblock img { border: 1px solid silver; }
 span.image img { border-style: none; }
@@ -210,6 +220,7 @@ dt {
   margin-top: 0.5em;
   margin-bottom: 0;
   font-style: normal;
+  color: navy;
 }
 dd > *:first-child {
   margin-top: 0.1em;
@@ -218,11 +229,27 @@ dd > *:first-child {
 ul, ol {
     list-style-position: outside;
 }
-div.olist > ol {
+ol.arabic {
   list-style-type: decimal;
 }
-div.olist2 > ol {
+ol.loweralpha {
   list-style-type: lower-alpha;
+}
+ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+ol.lowerroman {
+  list-style-type: lower-roman;
+}
+ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+div.compact ul, div.compact ol,
+div.compact p, div.compact p,
+div.compact div, div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
 }
 
 div.tableblock > table {
@@ -235,21 +262,52 @@ thead {
 tfoot {
   font-weight: bold;
 }
+td > div.verse {
+  white-space: pre;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overriden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
 
-div.hlist {
+
+div.hdlist {
   margin-top: 0.8em;
   margin-bottom: 0.8em;
 }
-div.hlist td {
+div.hdlist tr {
   padding-bottom: 15px;
 }
-td.hlist1 {
+dt.hdlist1.strong, td.hdlist1.strong {
+  font-weight: bold;
+}
+td.hdlist1 {
   vertical-align: top;
   font-style: normal;
   padding-right: 0.8em;
+  color: navy;
 }
-td.hlist2 {
+td.hdlist2 {
   vertical-align: top;
+}
+div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.comment {
+  background: yellow;
 }
 
 @media print {
@@ -281,7 +339,24 @@ div.toclevel4 {
   margin-left: 6em;
   font-size: 0.9em;
 }
-include1::./stylesheets/xhtml11-manpage.css[]
+/* Overrides for manpage documents */
+h1 {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-top: 2px solid silver;
+  border-bottom: 2px solid silver;
+}
+h2 {
+  border-style: none;
+}
+div.sectionbody {
+  margin-left: 5%;
+}
+
+@media print {
+  div#toc { display: none; }
+}
+
 /* Workarounds for IE6's broken and incomplete CSS2. */
 
 div.sidebar-content {
@@ -303,8 +378,17 @@ div.listingblock div.content {
   padding: 0.5em;
 }
 
-div.quoteblock-content {
-  padding-left: 2.0em;
+div.quoteblock-attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock-content {
+  white-space: pre;
+}
+div.verseblock-attribution {
+  padding-top: 0.75em;
+  text-align: left;
 }
 
 div.exampleblock-content {
@@ -314,16 +398,7 @@ div.exampleblock-content {
 
 /* IE6 sets dynamically generated links as visited. */
 div#toc a:visited { color: blue; }
-
-/* Because IE6 child selector is broken. */
-div.olist2 ol {
-  list-style-type: lower-alpha;
-}
-div.olist2 div.olist ol {
-  list-style-type: decimal;
-}
 </style>
-<title>tig(1)</title>
 </head>
 <body>
 <div id="header">
@@ -340,32 +415,34 @@ tig(1) Manual Page
 <h2>SYNOPSIS</h2>
 <div class="sectionbody">
 <div class="verseblock">
-<div class="content">tig        [options] [revisions] [--] [paths]
+<div class="verseblock-content">tig        [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
 tig blame  [rev] path
 tig status
-tig &lt;      [git command output]</div></div>
+tig &lt;      [git command output]</div>
+<div class="verseblock-attribution">
+</div></div>
 </div>
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
-<div class="para"><p>Browse changes in a git repository. Additionally, tig(1) can also act
+<div class="paragraph"><p>Browse changes in a git repository. Additionally, tig(1) can also act
 as a pager for output of various git commands.</p></div>
-<div class="para"><p>When browsing repositories, tig(1) uses the underlying git commands
+<div class="paragraph"><p>When browsing repositories, tig(1) uses the underlying git commands
 to present the user with various views, such as summarized commit log
 and showing the commit with the log message, diffstat, and the diff.</p></div>
-<div class="para"><p>Using tig(1) as a pager, it will display input from stdin and try
+<div class="paragraph"><p>Using tig(1) as a pager, it will display input from stdin and try
 to colorize it.</p></div>
 </div>
 <h2 id="_options">OPTIONS</h2>
 <div class="sectionbody">
-<div class="para"><p>Command line options recognized by tig include all valid git-log(1) and
+<div class="paragraph"><p>Command line options recognized by tig include all valid git-log(1) and
 git-diff(1) options, as well as the following subcommands and tig specific
 options. The first command line parameter not starting with "-" is interpreted
 as being either a revision specification or a path and will end the option
 parsing. All following options will be passed untouched to the underlying git
 command.</p></div>
-<div class="vlist"><dl>
-<dt>
+<div class="dlist"><dl>
+<dt class="hdlist1">
 show
 </dt>
 <dd>
@@ -373,7 +450,7 @@ show
         Open diff view using the given git show options.
 </p>
 </dd>
-<dt>
+<dt class="hdlist1">
 blame
 </dt>
 <dd>
@@ -382,7 +459,7 @@ blame
         Optionally limited from given revision.
 </p>
 </dd>
-<dt>
+<dt class="hdlist1">
 status
 </dt>
 <dd>
@@ -390,7 +467,7 @@ status
         Start up in status view.
 </p>
 </dd>
-<dt>
+<dt class="hdlist1">
 -v, --version
 </dt>
 <dd>
@@ -398,7 +475,7 @@ status
         Show version and exit.
 </p>
 </dd>
-<dt>
+<dt class="hdlist1">
 -h, --help
 </dt>
 <dd>
@@ -410,37 +487,37 @@ status
 </div>
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
-<div class="para"><p>Display the current branch:</p></div>
+<div class="paragraph"><p>Display the current branch:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig</tt></pre>
 </div></div>
-<div class="para"><p>Display one or more specific branches:</p></div>
+<div class="paragraph"><p>Display one or more specific branches:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig test master</tt></pre>
 </div></div>
-<div class="para"><p>Display all branches:</p></div>
+<div class="paragraph"><p>Display all branches:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig --all</tt></pre>
 </div></div>
-<div class="para"><p>Display differences between two branches:</p></div>
+<div class="paragraph"><p>Display differences between two branches:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig test..master</tt></pre>
 </div></div>
-<div class="para"><p>Display changes for a single file:</p></div>
+<div class="paragraph"><p>Display changes for a single file:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig -- README</tt></pre>
 </div></div>
-<div class="para"><p>Display contents of the README file in a specific revision:</p></div>
+<div class="paragraph"><p>Display contents of the README file in a specific revision:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig show tig-0.8:README</tt></pre>
 </div></div>
-<div class="para"><p>Display revisions between two dates for a specific file:</p></div>
+<div class="paragraph"><p>Display revisions between two dates for a specific file:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig --after="2004-01-01" --before="2006-05-16" -- README</tt></pre>
@@ -448,12 +525,12 @@ status
 </div>
 <h2 id="_environment_variables">ENVIRONMENT VARIABLES</h2>
 <div class="sectionbody">
-<div class="para"><p>In addition to environment variables used by git (e.g. GIT_DIR), tig defines
+<div class="paragraph"><p>In addition to environment variables used by git (e.g. GIT_DIR), tig defines
 the ones below. The command related environment variables have access to the
 internal state of tig via replacement variables, such as <tt>%(commit)</tt> and
-<tt>%(blob)</tt>. See <a href="tigrc.5.html">tigrc(5)</a> for a full list.</p></div>
-<div class="vlist"><dl>
-<dt>
+<tt>%(blob)</tt>. See manpage:tigrc[5] for a full list.</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
 TIGRC_USER
 </dt>
 <dd>
@@ -461,16 +538,16 @@ TIGRC_USER
         Path of the user configuration file (defaults to <tt>~/.tigrc</tt>).
 </p>
 </dd>
-<dt>
+<dt class="hdlist1">
 TIGRC_SYSTEM
 </dt>
 <dd>
 <p>
         Path of the system wide configuration file (defaults to
-        <tt>++SYSCONFDIR++/tigrc</tt>).
+        <tt>{sysconfdir}/tigrc</tt>).
 </p>
 </dd>
-<dt>
+<dt class="hdlist1">
 TIG_LS_REMOTE
 </dt>
 <dd>
@@ -479,7 +556,7 @@ TIG_LS_REMOTE
         should output data in the same format as git-ls-remote(1).
 </p>
 </dd>
-<dt>
+<dt class="hdlist1">
 TIG_DIFF_CMD
 </dt>
 <dd>
@@ -488,7 +565,7 @@ TIG_DIFF_CMD
         as a backend.
 </p>
 </dd>
-<dt>
+<dt class="hdlist1">
 TIG_LOG_CMD
 </dt>
 <dd>
@@ -498,7 +575,7 @@ TIG_LOG_CMD
         <tt>--pretty=fuller</tt> to git log.
 </p>
 </dd>
-<dt>
+<dt class="hdlist1">
 TIG_MAIN_CMD
 </dt>
 <dd>
@@ -510,8 +587,8 @@ TIG_MAIN_CMD
 </dd>
 </dl></div>
 <h3 id="_tree_commands">Tree commands</h3><div style="clear:left"></div>
-<div class="vlist"><dl>
-<dt>
+<div class="dlist"><dl>
+<dt class="hdlist1">
 TIG_TREE_CMD
 </dt>
 <dd>
@@ -520,7 +597,7 @@ TIG_TREE_CMD
     used.
 </p>
 </dd>
-<dt>
+<dt class="hdlist1">
 TIG_BLOB_CMD
 </dt>
 <dd>
@@ -533,16 +610,16 @@ TIG_BLOB_CMD
 </div>
 <h2 id="_files">FILES</h2>
 <div class="sectionbody">
-<div class="vlist"><dl>
-<dt>
+<div class="dlist"><dl>
+<dt class="hdlist1">
 <em>~/.tigrc</em>
 </dt>
 <dd>
 <p>
-        User configuration file. See <a href="tigrc.5.html">tigrc(5)</a> for examples.
+        User configuration file. See manpage:tigrc[5] for examples.
 </p>
 </dd>
-<dt>
+<dt class="hdlist1">
 <em>++SYSCONFDIR++/tigrc</em>
 </dt>
 <dd>
@@ -550,13 +627,13 @@ TIG_BLOB_CMD
         System wide configuration file.
 </p>
 </dd>
-<dt>
+<dt class="hdlist1">
 <em>$GIT_DIR/config</em>
 </dt>
-<dt>
+<dt class="hdlist1">
 '~/.gitconfig
 </dt>
-<dt>
+<dt class="hdlist1">
 '++SYSCONFDIR++/etc/gitconfig
 </dt>
 <dd>
@@ -569,28 +646,28 @@ TIG_BLOB_CMD
 </div>
 <h2 id="_bugs">BUGS</h2>
 <div class="sectionbody">
-<div class="para"><p>Known bugs and problems:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Known bugs and problems:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
-Proper locale support: in it's current state tig is pretty much UTF-8 only.
+Proper locale support: in it&#8217;s current state tig is pretty much UTF-8 only.
 </p>
 </li>
 </ul></div>
 </div>
 <h2 id="_copyright">COPYRIGHT</h2>
 <div class="sectionbody">
-<div class="para"><p>Copyright (c) 2006-2009 Jonas Fonseca &lt;fonseca@diku.dk&gt;</p></div>
-<div class="para"><p>This program is free software; you can redistribute it and/or modify
+<div class="paragraph"><p>Copyright (c) 2006-2009 Jonas Fonseca &lt;<a href="mailto:fonseca@diku.dk">fonseca@diku.dk</a>&gt;</p></div>
+<div class="paragraph"><p>This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.</p></div>
 </div>
 <h2 id="_see_also">SEE ALSO</h2>
 <div class="sectionbody">
-<div class="para"><p><a href="tigrc.5.html">tigrc(5)</a>, git(7), gitk(1)</p></div>
-<div class="para"><p>Online resources:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>manpage:tigrc[5], manpage:tigmanual[7], git(7), gitk(1)</p></div>
+<div class="paragraph"><p>Online resources:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Homepage:    <a href="http://jonas.nitro.dk/tig/">http://jonas.nitro.dk/tig/</a>
@@ -621,7 +698,7 @@ Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2009-02-16 00:02:16 CEST
+Last updated 2009-11-20 08:05:06 EDT
 </div>
 </div>
 </body>

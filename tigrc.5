@@ -1,50 +1,63 @@
+'\" t
 .\"     Title: tigrc
-.\"    Author: 
-.\" Generator: DocBook XSL Stylesheets v1.73.2 <http://docbook.sf.net/>
-.\"      Date: 02/16/2009
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.75.1 <http://docbook.sf.net/>
+.\"      Date: 11/20/2009
 .\"    Manual: Tig Manual
-.\"    Source: Tig 0.14.1
+.\"    Source: Tig 0.15
+.\"  Language: English
 .\"
-.TH "TIGRC" "5" "02/16/2009" "Tig 0\&.14\&.1" "Tig Manual"
+.TH "TIGRC" "5" "11/20/2009" "Tig 0\&.15" "Tig Manual"
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
 .ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
 .SH "NAME"
 tigrc \- tig configuration file
 .SH "SYNOPSIS"
 .sp
-.RS 4
 .nf
 \fBset\fR   \fIvariable\fR \fB=\fR \fIvalue\fR
 \fBbind\fR  \fIkeymap\fR \fIkey\fR \fIaction\fR
 \fBcolor\fR \fIarea\fR \fIfgcolor\fR \fIbgcolor\fR \fI[attributes]\fR
 .fi
-.RE
 .sp
 .SH "DESCRIPTION"
+.sp
 You can permanently set an option by putting it in the ~/\&.tigrc file\&. The file consists of a series of \fIcommands\fR\&. Each line of the file may contain only one command\&.
 .sp
 The hash mark (\fI#\fR) is used as a \fIcomment\fR character\&. All text after the comment character to the end of the line is ignored\&. You can use comments to annotate your initialization file\&.
 .sp
 Alternatively, options can be set by putting them in one of the git configuration files, which are read by tig on startup\&. See \fIgit\-config(1)\fR for which files to use\&.
-.sp
 .SH "SET COMMAND"
+.sp
 A few selective variables can be configured via the set command\&. The syntax is:
 .sp
-.sp
+.if n \{\
 .RS 4
+.\}
 .nf
 \fBset\fR variables \fB=\fR value
 .fi
+.if n \{\
 .RE
+.\}
+.sp
 .sp
 Examples:
 .sp
-.sp
+.if n \{\
 .RS 4
+.\}
 .nf
 set show\-author = yes           # Show author?
+set show\-date = relative        # Show relative commit date\&.
 set show\-rev\-graph = yes        # Show revision graph?
 set show\-refs = yes             # Show references?
 set show\-line\-numbers = no      # Show line numbers?
@@ -52,12 +65,16 @@ set line\-number\-interval = 5    # Interval between line numbers
 set commit\-encoding = "UTF\-8"   # Commit encoding
 set horizontal\-scroll = 33%     # Scroll 33% of the view width
 .fi
+.if n \{\
 .RE
+.\}
+.sp
 .sp
 Or in the git configuration files:
 .sp
-.sp
+.if n \{\
 .RS 4
+.\}
 .nf
 [tig]
         show\-date = yes         # Show commit date?
@@ -65,7 +82,10 @@ Or in the git configuration files:
         line\-graphics = no      # Disable graphics characters
         tab\-size = 8            # Number of spaces per tab
 .fi
+.if n \{\
 .RE
+.\}
+.sp
 .sp
 The type of variables are either bool, int, string, or mixed\&.
 .PP
@@ -89,16 +109,22 @@ Valid mixed values
 These values are composites of the above types\&. The valid values are specified in the description\&.
 .RE
 .SS "Variables"
+.sp
 The following variables can be set:
 .PP
-\fIshow\-author\fR (bool), \fIshow\-date\fR (bool), \fIshow\-rev\-graph\fR (bool), \fIshow\-refs\fR (bool)
+\fIshow\-author\fR (bool), \fIshow\-rev\-graph\fR (bool), \fIshow\-refs\fR (bool)
 .RS 4
-Whether to show author, date, revision graph, and references (branches, tags, and remotes) in the main view on start\-up\&. Can all be toggled\&.
+Whether to show author, revision graph, and references (branches, tags, and remotes) in the main view on start\-up\&. Can all be toggled\&.
+.RE
+.PP
+\fIshow\-date\fR (bool or "relative" or "short")
+.RS 4
+Whether and how to show date\&. If set to "relative" a relative date will be used, e\&.g\&. "2 minutes ago"\&. If set to "short" no time information is shown\&. Can be toggled\&.
 .RE
 .PP
 \fIauthor\-width\fR (int)
 .RS 4
-Width of the author column\&. When set to 5 or below, the author name will be abbreviated to the author\'s initials\&.
+Width of the author column\&. When set to 5 or below, the author name will be abbreviated to the author\(cqs initials\&.
 .RE
 .PP
 \fIline\-graphics\fR (bool)
@@ -129,25 +155,39 @@ Interval to scroll horizontally in each step\&. Can be specified either as the n
 of the view width\&.
 .RE
 .PP
+\fIsplit\-view\-height\fR (mixed)
+.RS 4
+Height of the lower view in a split view\&. Can be specified either as the number of rows, e\&.g\&.
+\fI5\fR, or as a percentage of the view height, e\&.g\&.
+\fI80%\fR, where the maximum is 100%\&. It is always ensured that the smaller of the views is at least four rows high\&. The default is a view height of
+\fI66%\fR\&.
+.RE
+.PP
 \fIcommit\-encoding\fR (string)
 .RS 4
 The encoding used for commits\&. The default is UTF\-8\&. Not this option is shadowed by the "i18n\&.commitencoding" option in
 \&.git/config\&.
 .RE
 .SH "BIND COMMAND"
+.sp
 Using bind commands keys can be mapped to an action when pressed in a given key map\&. The syntax is:
 .sp
-.sp
+.if n \{\
 .RS 4
+.\}
 .nf
 \fBbind\fR \fIkeymap\fR \fIkey\fR \fIaction\fR
 .fi
+.if n \{\
 .RE
+.\}
+.sp
 .sp
 Examples:
 .sp
-.sp
+.if n \{\
 .RS 4
+.\}
 .nf
 # A few keybindings
 bind main w scroll\-line\-up
@@ -159,12 +199,16 @@ bind diff b move\-first\-line
 # An external command to update from upstream
 bind generic F !git fetch
 .fi
+.if n \{\
 .RE
+.\}
+.sp
 .sp
 Or in the git configuration files:
 .sp
-.sp
+.if n \{\
 .RS 4
+.\}
 .nf
 [tig "bind"]
         # \'unbind\' the default quit key binding
@@ -172,7 +216,10 @@ Or in the git configuration files:
         # Cherry\-pick current commit onto current branch
         generic = C !git cherry\-pick %(commit)
 .fi
+.if n \{\
 .RE
+.\}
+.sp
 .sp
 Keys are mapped by first searching the keybindings for the current view, then the keybindings for the \fBgeneric\fR keymap, and last the default keybindings\&. Thus, the view keybindings shadow the generic keybindings which Shadow the built\-in keybindings\&.
 .PP
@@ -185,7 +232,11 @@ Valid keymaps are:
 \fBhelp\fR,
 \fBpager\fR,
 \fBstatus\fR,
-\fBstage\fR, and
+\fBstage\fR,
+\fBtree\fR,
+\fBblob\fR,
+\fBblame\fR,
+\fBbranch\fR, and
 \fBgeneric\fR\&. Use
 \fBgeneric\fR
 to set key mapping in all keymaps\&.
@@ -198,36 +249,9 @@ Key values should never be quoted\&. Use either the ASCII value or one of the fo
 to bind to the
 #
 key, since the hash mark is used as a comment character\&.
-.sp
-\fBEnter\fR,
-\fBSpace\fR,
-\fBBackspace\fR,
-\fBTab\fR,
-\fBEscape\fR,
-\fBLeft\fR,
-\fBRight\fR,
-\fBUp\fR,
-\fBDown\fR,
-\fBInsert\fR,
-\fBDelete\fR,
-\fBHash\fR,
-\fBHome\fR,
-\fBEnd\fR,
-\fBPageUp\fR,
-\fBPageDown\fR,
-\fBF1\fR,
-\fBF2\fR,
-\fBF3\fR,
-\fBF4\fR,
-\fBF5\fR,
-\fBF6\fR,
-\fBF7\fR,
-\fBF8\fR,
-\fBF9\fR,
-\fBF10\fR,
-\fBF11\fR,
-\fBF12\fR\&.
 .RE
+.sp
+\fBEnter\fR, \fBSpace\fR, \fBBackspace\fR, \fBTab\fR, \fBEscape\fR, \fBLeft\fR, \fBRight\fR, \fBUp\fR, \fBDown\fR, \fBInsert\fR, \fBDelete\fR, \fBHash\fR, \fBHome\fR, \fBEnd\fR, \fBPageUp\fR, \fBPageDown\fR, \fBF1\fR, \fBF2\fR, \fBF3\fR, \fBF4\fR, \fBF5\fR, \fBF6\fR, \fBF7\fR, \fBF8\fR, \fBF9\fR, \fBF10\fR, \fBF11\fR, \fBF12\fR\&.
 .PP
 Action names
 .RS 4
@@ -238,27 +262,72 @@ Valid action names are described below\&. Note, all names are case\-insensitive,
 interchangeably, e\&.g\&. "view\-main", "View\&.Main", and "VIEW_MAIN" are the same\&.
 .RE
 .SS "Actions"
+.sp
 Apart from the action names listed below, all actions starting with a \fI!\fR will be available as an external command\&. External commands can contain variable names that will be substituted before the command is run\&. Valid variable names are:
 .sp
-Browsing state variables
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table\ \&1.\ \&Browsing state variables
+.TS
+tab(:);
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
 .sp
+%(head)
+T}:T{
 .sp
-.RS 4
-.nf
-%(head)                 The currently viewed \'head\' ID\&. Defaults to HEAD
-%(commit)               The currently selected commit ID\&.
-%(blob)                 The currently selected blob ID\&.
-%(directory)            The current directory path in the tree view; \e
-                        empty for the root directory\&.
-%(file)                 The currently selected file\&.
-%(ref)                  The reference given to blame or HEAD if undefined\&.
-.fi
-.RE
+The currently viewed \fIhead\fR ID\&. Defaults to HEAD
+T}
+T{
+.sp
+%(commit)
+T}:T{
+.sp
+The currently selected commit ID\&.
+T}
+T{
+.sp
+%(blob)
+T}:T{
+.sp
+The currently selected blob ID\&.
+T}
+T{
+.sp
+%(directory)
+T}:T{
+.sp
+The current directory path in the tree view; empty for the root directory\&.
+T}
+T{
+.sp
+%(file)
+T}:T{
+.sp
+The currently selected file\&.
+T}
+T{
+.sp
+%(ref)
+T}:T{
+.sp
+The reference given to blame or HEAD if undefined\&.
+T}
+.TE
+.sp 1
 .sp
 As an example, the following external command will save the current commit as a patch file: "!git format\-patch \-1 %(commit)"\&. If your external command require use of dynamic features, such as subshells, expansion of environment variables and process control, this can be achieved by using a combination of git aliases and tig external commands\&. The following example entries can be put in either the \&.gitconfig or \&.git/config file:
 .sp
-.sp
+.if n \{\
 .RS 4
+.\}
 .nf
 [alias]
         gitk\-bg = !"gitk HEAD \-\-not $(git rev\-parse \-\-remotes) &"
@@ -267,128 +336,516 @@ As an example, the following external command will save the current commit as a 
         generic = V !git gitk\-bg
         generic = > !git publish
 .fi
+.if n \{\
 .RE
-.sp
-View switching:
-.sp
-.sp
-.RS 4
-.nf
-view\-main               Show main view
-view\-diff               Show diff view
-view\-log                Show log view
-view\-tree               Show tree view
-view\-blob               Show blob view
-view\-blame              Show blame view
-view\-status             Show status view
-view\-stage              Show stage view
-view\-pager              Show pager view
-view\-help               Show help page
-.fi
-.RE
-.sp
-View manipulation:
+.\}
 .sp
 .sp
-.RS 4
-.nf
-enter                   Enter current line and scroll
-next                    Move to next
-previous                Move to previous
-parent                  Move to parent
-view\-next               Move focus to next view
-refresh                 Reload and refresh view
-maximize                Maximize the current view
-view\-close              Close the current view
-quit                    Close all views and quit
-.fi
-.RE
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table\ \&2.\ \&View switching
+.TS
+tab(:);
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
 .sp
-View specific actions:
+view\-main
+T}:T{
 .sp
+Show main view
+T}
+T{
 .sp
-.RS 4
-.nf
-status\-update           Update file status
-status\-merge            Resolve unmerged file
-stage\-next              Find next chunk to stage
-.fi
-.RE
+view\-diff
+T}:T{
 .sp
-Cursor navigation:
+Show diff view
+T}
+T{
 .sp
+view\-log
+T}:T{
 .sp
-.RS 4
-.nf
-move\-up                 Move cursor one line up
-move\-down               Move cursor one line down
-move\-page\-down          Move cursor one page down
-move\-page\-up            Move cursor one page up
-move\-first\-line         Move cursor to first line
-move\-last\-line          Move cursor to last line
-.fi
-.RE
+Show log view
+T}
+T{
 .sp
-Scrolling:
+view\-tree
+T}:T{
 .sp
+Show tree view
+T}
+T{
 .sp
-.RS 4
-.nf
-scroll\-line\-up          Scroll one line up
-scroll\-line\-down        Scroll one line down
-scroll\-page\-up          Scroll one page up
-scroll\-page\-down        Scroll one page down
-scroll\-left             Scroll one column left
-scroll\-right            Scroll one column right
-.fi
-.RE
+view\-blob
+T}:T{
 .sp
-Searching:
+Show blob view
+T}
+T{
 .sp
+view\-blame
+T}:T{
 .sp
-.RS 4
-.nf
-search                  Search the view
-search\-back             Search backwards in the view
-find\-next               Find next search match
-find\-prev               Find previous search match
-.fi
-.RE
+Show blame view
+T}
+T{
 .sp
-Misc:
+view\-branch
+T}:T{
 .sp
+Show branch view
+T}
+T{
 .sp
-.RS 4
-.nf
-prompt                  Bring up the prompt
-screen\-redraw           Redraw the screen
-screen\-resize           Resize the screen
-show\-version            Show version information
-stop\-loading            Stop all loading views
-toggle\-lineno           Toggle line numbers
-toggle\-date             Toggle date display
-toggle\-author           Toggle author display
-toggle\-rev\-graph        Toggle revision graph visualization
-toggle\-refs             Toggle reference display
-edit                    Open in editor
-none                    Do nothing
-.fi
-.RE
+view\-status
+T}:T{
 .sp
+Show status view
+T}
+T{
+.sp
+view\-stage
+T}:T{
+.sp
+Show stage view
+T}
+T{
+.sp
+view\-pager
+T}:T{
+.sp
+Show pager view
+T}
+T{
+.sp
+view\-help
+T}:T{
+.sp
+Show help page
+T}
+.TE
+.sp 1
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table\ \&3.\ \&View manipulation
+.TS
+tab(:);
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+enter
+T}:T{
+.sp
+Enter current line and scroll
+T}
+T{
+.sp
+next
+T}:T{
+.sp
+Move to next
+T}
+T{
+.sp
+previous
+T}:T{
+.sp
+Move to previous
+T}
+T{
+.sp
+parent
+T}:T{
+.sp
+Move to parent
+T}
+T{
+.sp
+view\-next
+T}:T{
+.sp
+Move focus to next view
+T}
+T{
+.sp
+refresh
+T}:T{
+.sp
+Reload and refresh view
+T}
+T{
+.sp
+maximize
+T}:T{
+.sp
+Maximize the current view
+T}
+T{
+.sp
+view\-close
+T}:T{
+.sp
+Close the current view
+T}
+T{
+.sp
+quit
+T}:T{
+.sp
+Close all views and quit
+T}
+.TE
+.sp 1
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table\ \&4.\ \&View specific actions
+.TS
+tab(:);
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+status\-update
+T}:T{
+.sp
+Update file status
+T}
+T{
+.sp
+status\-merge
+T}:T{
+.sp
+Resolve unmerged file
+T}
+T{
+.sp
+stage\-next
+T}:T{
+.sp
+Find next chunk to stage
+T}
+.TE
+.sp 1
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table\ \&5.\ \&Cursor navigation
+.TS
+tab(:);
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+move\-up
+T}:T{
+.sp
+Move cursor one line up
+T}
+T{
+.sp
+move\-down
+T}:T{
+.sp
+Move cursor one line down
+T}
+T{
+.sp
+move\-page\-down
+T}:T{
+.sp
+Move cursor one page down
+T}
+T{
+.sp
+move\-page\-up
+T}:T{
+.sp
+Move cursor one page up
+T}
+T{
+.sp
+move\-first\-line
+T}:T{
+.sp
+Move cursor to first line
+T}
+T{
+.sp
+move\-last\-line
+T}:T{
+.sp
+Move cursor to last line
+T}
+.TE
+.sp 1
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table\ \&6.\ \&Scrolling
+.TS
+tab(:);
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+scroll\-line\-up
+T}:T{
+.sp
+Scroll one line up
+T}
+T{
+.sp
+scroll\-line\-down
+T}:T{
+.sp
+Scroll one line down
+T}
+T{
+.sp
+scroll\-page\-up
+T}:T{
+.sp
+Scroll one page up
+T}
+T{
+.sp
+scroll\-page\-down
+T}:T{
+.sp
+Scroll one page down
+T}
+T{
+.sp
+scroll\-left
+T}:T{
+.sp
+Scroll one column left
+T}
+T{
+.sp
+scroll\-right
+T}:T{
+.sp
+Scroll one column right
+T}
+.TE
+.sp 1
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table\ \&7.\ \&Searching
+.TS
+tab(:);
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+search
+T}:T{
+.sp
+Search the view
+T}
+T{
+.sp
+search\-back
+T}:T{
+.sp
+Search backwards in the view
+T}
+T{
+.sp
+find\-next
+T}:T{
+.sp
+Find next search match
+T}
+T{
+.sp
+find\-prev
+T}:T{
+.sp
+Find previous search match
+T}
+.TE
+.sp 1
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table\ \&8.\ \&Misc
+.TS
+tab(:);
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+prompt
+T}:T{
+.sp
+Bring up the prompt
+T}
+T{
+.sp
+screen\-redraw
+T}:T{
+.sp
+Redraw the screen
+T}
+T{
+.sp
+screen\-resize
+T}:T{
+.sp
+Resize the screen
+T}
+T{
+.sp
+show\-version
+T}:T{
+.sp
+Show version information
+T}
+T{
+.sp
+stop\-loading
+T}:T{
+.sp
+Stop all loading views
+T}
+T{
+.sp
+options
+T}:T{
+.sp
+Open options menu
+T}
+T{
+.sp
+toggle\-lineno
+T}:T{
+.sp
+Toggle line numbers
+T}
+T{
+.sp
+toggle\-date
+T}:T{
+.sp
+Toggle date display
+T}
+T{
+.sp
+toggle\-author
+T}:T{
+.sp
+Toggle author display
+T}
+T{
+.sp
+toggle\-rev\-graph
+T}:T{
+.sp
+Toggle revision graph visualization
+T}
+T{
+.sp
+toggle\-refs
+T}:T{
+.sp
+Toggle reference display
+T}
+T{
+.sp
+edit
+T}:T{
+.sp
+Open in editor
+T}
+T{
+.sp
+none
+T}:T{
+.sp
+Do nothing
+T}
+.TE
+.sp 1
 .SH "COLOR COMMAND"
+.sp
 Color commands control highlighting and the user interface styles\&. If your terminal supports color, these commands can be used to assign foreground and background combinations to certain areas\&. Optionally, an attribute can be given as the last parameter\&. The syntax is:
 .sp
-.sp
+.if n \{\
 .RS 4
+.\}
 .nf
 \fBcolor\fR \fIarea\fR \fIfgcolor\fR \fIbgcolor\fR \fI[attributes]\fR
 .fi
+.if n \{\
 .RE
+.\}
+.sp
 .sp
 Examples:
 .sp
-.sp
+.if n \{\
 .RS 4
+.\}
 .nf
 # Overwrite the default terminal colors to white on black\&.
 color default           white   black
@@ -397,12 +854,16 @@ color diff\-header       yellow  default
 color diff\-index        blue    default
 color diff\-chunk        magenta default
 .fi
+.if n \{\
 .RE
+.\}
+.sp
 .sp
 Or in the git configuration files:
 .sp
-.sp
+.if n \{\
 .RS 4
+.\}
 .nf
 [tig "color"]
         # A strange looking cursor line
@@ -411,7 +872,10 @@ Or in the git configuration files:
         title\-blur      white   blue
         title\-focus     white   blue    bold
 .fi
+.if n \{\
 .RE
+.\}
+.sp
 .PP
 Area names
 .RS 4
@@ -452,117 +916,298 @@ Valid attributes include:
 \fBunderline\fR\&. Note, not all attributes may be supported by the terminal\&.
 .RE
 .SS "UI colors"
+.sp
 The colors and attributes to be used for the text that is not highlighted or that specify the use of the default terminal colors can be controlled by setting the \fBdefault\fR color option\&.
 .sp
-General:
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table\ \&9.\ \&General
+.TS
+tab(:);
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
 .sp
+default
+T}:T{
 .sp
-.RS 4
-.nf
-default                 Overwrite default terminal colors (see above)\&.
-cursor                  The cursor line\&.
-status                  The status window showing info messages\&.
-title\-focus             The title window for the current view\&.
-title\-blur              The title window of any backgrounded view\&.
-delimiter               Delimiter shown for truncated lines\&.
-line\-number             Line numbers\&.
-date                    The commit date\&.
-author                  The commit author\&.
-mode                    The file mode holding the permissions and type\&.
-.fi
-.RE
+Overwrite default terminal colors (see above)\&.
+T}
+T{
 .sp
-Main view colors:
+cursor
+T}:T{
 .sp
+The cursor line\&.
+T}
+T{
 .sp
-.RS 4
-.nf
-main\-revgraph           The revision graph\&.
-main\-commit             The commit comment\&.
-main\-head               Label of the current branch\&.
-main\-remote             Label of a remote\&.
-main\-tracked            Label of the remote tracked by the current branch\&.
-main\-tag                Label of a signed tag\&.
-main\-local\-tag          Label of a local tag\&.
-main\-ref                Label of any other reference\&.
-.fi
-.RE
+status
+T}:T{
 .sp
-Status view:
+The status window showing info messages\&.
+T}
+T{
 .sp
+title\-focus
+T}:T{
 .sp
-.RS 4
-.nf
-stat\-head               The "On branch"\-line\&.
-stat\-section            Status section titles,
-stat\-staged             Status flag of staged files\&.
-stat\-unstaged           Status flag of unstaged files\&.
-stat\-untracked          Status flag of untracked files\&.
-.fi
-.RE
+The title window for the current view\&.
+T}
+T{
 .sp
-Blame view:
+title\-blur
+T}:T{
 .sp
+The title window of any backgrounded view\&.
+T}
+T{
 .sp
-.RS 4
-.nf
-blame\-id                The commit ID\&.
-.fi
-.RE
+delimiter
+T}:T{
 .sp
-Tree view:
+Delimiter shown for truncated lines\&.
+T}
+T{
 .sp
+line\-number
+T}:T{
 .sp
-.RS 4
-.nf
-tree\-head               The "Directory /"\-line
-tree\-dir                The directory name\&.
-tree\-file               The file name\&.
-.fi
-.RE
+Line numbers\&.
+T}
+T{
 .sp
+date
+T}:T{
+.sp
+The commit date\&.
+T}
+T{
+.sp
+author
+T}:T{
+.sp
+The commit author\&.
+T}
+T{
+.sp
+mode
+T}:T{
+.sp
+The file mode holding the permissions and type\&.
+T}
+.TE
+.sp 1
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table\ \&10.\ \&Main view colors
+.TS
+tab(:);
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+main\-revgraph
+T}:T{
+.sp
+The revision graph\&.
+T}
+T{
+.sp
+main\-commit
+T}:T{
+.sp
+The commit comment\&.
+T}
+T{
+.sp
+main\-head
+T}:T{
+.sp
+Label of the current branch\&.
+T}
+T{
+.sp
+main\-remote
+T}:T{
+.sp
+Label of a remote\&.
+T}
+T{
+.sp
+main\-tracked
+T}:T{
+.sp
+Label of the remote tracked by the current branch\&.
+T}
+T{
+.sp
+main\-tag
+T}:T{
+.sp
+Label of a signed tag\&.
+T}
+T{
+.sp
+main\-local\-tag
+T}:T{
+.sp
+Label of a local tag\&.
+T}
+T{
+.sp
+main\-ref
+T}:T{
+.sp
+Label of any other reference\&.
+T}
+.TE
+.sp 1
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table\ \&11.\ \&Status view
+.TS
+tab(:);
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+stat\-head
+T}:T{
+.sp
+The "On branch"\-line\&.
+T}
+T{
+.sp
+stat\-section
+T}:T{
+.sp
+Status section titles,
+T}
+T{
+.sp
+stat\-staged
+T}:T{
+.sp
+Status flag of staged files\&.
+T}
+T{
+.sp
+stat\-unstaged
+T}:T{
+.sp
+Status flag of unstaged files\&.
+T}
+T{
+.sp
+stat\-untracked
+T}:T{
+.sp
+Status flag of untracked files\&.
+T}
+.TE
+.sp 1
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table\ \&12.\ \&Blame view
+.TS
+tab(:);
+lt lt.
+T{
+.sp
+blame\-id
+T}:T{
+.sp
+The commit ID\&.
+T}
+.TE
+.sp 1
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table\ \&13.\ \&Tree view
+.TS
+tab(:);
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+tree\-head
+T}:T{
+.sp
+The "Directory /"\-line
+T}
+T{
+.sp
+tree\-dir
+T}:T{
+.sp
+The directory name\&.
+T}
+T{
+.sp
+tree\-file
+T}:T{
+.sp
+The file name\&.
+T}
+.TE
+.sp 1
 .SS "Highlighting"
 .PP
 Diff markup
 .RS 4
 Options concerning diff start, chunks and lines added and deleted\&.
-.sp
-\fBdiff\-header\fR,
-\fBdiff\-chunk\fR,
-\fBdiff\-add\fR,
-\fBdiff\-del\fR
 .RE
+.sp
+\fBdiff\-header\fR, \fBdiff\-chunk\fR, \fBdiff\-add\fR, \fBdiff\-del\fR
 .PP
 Enhanced git diff markup
 .RS 4
 Extra diff information emitted by the git diff machinery, such as mode changes, rename detection, and similarity\&.
-.sp
-\fBdiff\-oldmode\fR,
-\fBdiff\-newmode\fR,
-\fBdiff\-copy\-from\fR,
-\fBdiff\-copy\-to\fR,
-\fBdiff\-rename\-from\fR,
-\fBdiff\-rename\-to\fR,
-\fBdiff\-similarity\fR,
-\fBdiff\-dissimilarity\fR
-\fBdiff\-tree\fR,
-\fBdiff\-index\fR
 .RE
+.sp
+\fBdiff\-oldmode\fR, \fBdiff\-newmode\fR, \fBdiff\-copy\-from\fR, \fBdiff\-copy\-to\fR, \fBdiff\-rename\-from\fR, \fBdiff\-rename\-to\fR, \fBdiff\-similarity\fR, \fBdiff\-dissimilarity\fR \fBdiff\-tree\fR, \fBdiff\-index\fR
 .PP
 Pretty print commit headers
 .RS 4
 Commit diffs and the revision logs are usually formatted using pretty printed headers , unless
 \-\-pretty=raw
 was given\&. This includes lines, such as merge info, commit ID, and author and committer date\&.
-.sp
-\fBpp\-author\fR,
-\fBpp\-commit\fR,
-\fBpp\-merge\fR,
-\fBpp\-date\fR,
-\fBpp\-adate\fR,
-\fBpp\-cdate\fR,
-\fBpp\-refs\fR
 .RE
+.sp
+\fBpp\-author\fR, \fBpp\-commit\fR, \fBpp\-merge\fR, \fBpp\-date\fR, \fBpp\-adate\fR, \fBpp\-cdate\fR, \fBpp\-refs\fR
 .PP
 Raw commit header
 .RS 4
@@ -571,13 +1216,9 @@ Usually shown when
 is given, however
 \fIcommit\fR
 is pretty much omnipresent\&.
-.sp
-\fBcommit\fR,
-\fBparent\fR,
-\fBtree\fR,
-\fBauthor\fR,
-\fBcommitter\fR
 .RE
+.sp
+\fBcommit\fR, \fBparent\fR, \fBtree\fR, \fBauthor\fR, \fBcommitter\fR
 .PP
 Commit message
 .RS 4
@@ -586,28 +1227,31 @@ Signed\-off\-by
 and
 Acked\-by
 lines are colorized\&.
-.sp
-\fBsignoff\fR,
-\fBacked\fR
 .RE
+.sp
+\fBsignoff\fR, \fBacked\fR
 .PP
 Tree markup
 .RS 4
 Colors for information of the tree view\&.
-.sp
-\fBtree\-dir\fR,
-\fBtree\-file\fR
 .RE
+.sp
+\fBtree\-dir\fR, \fBtree\-file\fR
 .SH "COPYRIGHT"
-Copyright (c) 2006\-2009 Jonas Fonseca <fonseca@diku\&.dk>
+.sp
+Copyright (c) 2006\-2009 Jonas Fonseca <\m[blue]\fBfonseca@diku\&.dk\fR\m[]\&\s-2\u[1]\d\s+2>
 .sp
 Licensed under the terms of the GNU General Public License\&.
-.sp
 .SH "SEE ALSO"
-\fBtig\fR(1), git\-config(1), and the \fItig manual\fR\&[1]\&.
 .sp
+manpage:tig[1], manpage:tigmanual[7], git\-config(1), and the \m[blue]\fBtig manual\fR\m[]\&\s-2\u[2]\d\s+2\&.
 .SH "NOTES"
 .IP " 1." 4
+fonseca@diku.dk
+.RS 4
+\%mailto:fonseca@diku.dk
+.RE
+.IP " 2." 4
 tig manual
 .RS 4
 \%http://jonas.nitro.dk/tig/manual.html

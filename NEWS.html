@@ -3,7 +3,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.2.6" />
+<meta name="generator" content="AsciiDoc 8.4.4" />
+<title>Release notes</title>
 <style type="text/css">
 /* Debug borders */
 p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
@@ -110,11 +111,13 @@ div#footer-badges {
   padding-bottom: 0.5em;
 }
 
-div#preamble,
+div#preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
 div.tableblock, div.imageblock, div.exampleblock, div.verseblock,
 div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
 div.admonitionblock {
-  margin-right: 10%;
   margin-top: 1.5em;
   margin-bottom: 1.5em;
 }
@@ -156,22 +159,33 @@ div.sidebarblock > div.content {
   padding: 0.5em;
 }
 
-div.listingblock {
-  margin-right: 0%;
-}
 div.listingblock > div.content {
   border: 1px solid silver;
   background: #f4f4f4;
   padding: 0.5em;
 }
 
-div.quoteblock > div.content {
+div.quoteblock {
   padding-left: 2.0em;
+  margin-right: 10%;
 }
-
-div.attribution {
+div.quoteblock > div.attribution {
+  padding-top: 0.5em;
   text-align: right;
 }
+
+div.verseblock {
+  padding-left: 2.0em;
+  margin-right: 10%;
+}
+div.verseblock > div.content {
+  white-space: pre;
+}
+div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
 div.verseblock + div.attribution {
   text-align: left;
 }
@@ -194,10 +208,6 @@ div.exampleblock > div.content {
   padding: 0.5em;
 }
 
-div.verseblock div.content {
-  white-space: pre;
-}
-
 div.imageblock div.content { padding-left: 0; }
 div.imageblock img { border: 1px solid silver; }
 span.image img { border-style: none; }
@@ -210,6 +220,7 @@ dt {
   margin-top: 0.5em;
   margin-bottom: 0;
   font-style: normal;
+  color: navy;
 }
 dd > *:first-child {
   margin-top: 0.1em;
@@ -218,11 +229,27 @@ dd > *:first-child {
 ul, ol {
     list-style-position: outside;
 }
-div.olist > ol {
+ol.arabic {
   list-style-type: decimal;
 }
-div.olist2 > ol {
+ol.loweralpha {
   list-style-type: lower-alpha;
+}
+ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+ol.lowerroman {
+  list-style-type: lower-roman;
+}
+ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+div.compact ul, div.compact ol,
+div.compact p, div.compact p,
+div.compact div, div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
 }
 
 div.tableblock > table {
@@ -235,21 +262,52 @@ thead {
 tfoot {
   font-weight: bold;
 }
+td > div.verse {
+  white-space: pre;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overriden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
 
-div.hlist {
+
+div.hdlist {
   margin-top: 0.8em;
   margin-bottom: 0.8em;
 }
-div.hlist td {
+div.hdlist tr {
   padding-bottom: 15px;
 }
-td.hlist1 {
+dt.hdlist1.strong, td.hdlist1.strong {
+  font-weight: bold;
+}
+td.hdlist1 {
   vertical-align: top;
   font-style: normal;
   padding-right: 0.8em;
+  color: navy;
 }
-td.hlist2 {
+td.hdlist2 {
   vertical-align: top;
+}
+div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.comment {
+  background: yellow;
 }
 
 @media print {
@@ -302,8 +360,17 @@ div.listingblock div.content {
   padding: 0.5em;
 }
 
-div.quoteblock-content {
-  padding-left: 2.0em;
+div.quoteblock-attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock-content {
+  white-space: pre;
+}
+div.verseblock-attribution {
+  padding-top: 0.75em;
+  text-align: left;
 }
 
 div.exampleblock-content {
@@ -313,29 +380,109 @@ div.exampleblock-content {
 
 /* IE6 sets dynamically generated links as visited. */
 div#toc a:visited { color: blue; }
-
-/* Because IE6 child selector is broken. */
-div.olist2 ol {
-  list-style-type: lower-alpha;
-}
-div.olist2 div.olist ol {
-  list-style-type: decimal;
-}
 </style>
-<title>Release notes</title>
 </head>
 <body>
 <div id="header">
 <h1>Release notes</h1>
 </div>
+<h2 id="_tig_0_15">tig-0.15</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Incompatibilities:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Setting the cursor color no longer automatically sets the text to
+   bold. The old <em>lazy</em> behavior was a bug.
+</p>
+</li>
+<li>
+<p>
+Remove check for git-repo-config, which was officially deprecated in
+   git version 1.5.4. The configure script no longer depends on git
+   being installed.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Provide the manual as a man page named tigmanual(7).
+</p>
+</li>
+<li>
+<p>
+Add ability to toggle between showing shorter dates (without time
+   info) and relative dates. Use <em>D</em> to toggle between date formats.
+</p>
+</li>
+<li>
+<p>
+Show the active (instead of the default) keybindings in the help
+   view. Furthermore, honor the keymap when suggesting actions in the
+   help messages.
+</p>
+</li>
+<li>
+<p>
+Add branch view for choosing which branch to display in the main
+   view. Bound to <em>H</em> by default.
+</p>
+</li>
+<li>
+<p>
+Tree view: show entry to parent directory (<em>..</em>) when running from
+   subdirectory.
+</p>
+</li>
+<li>
+<p>
+Tree view: sort entries by name, date or author. Toggling is bound to
+   <em>i</em> by default, with <em>I</em> controlling whether or not to sort in
+   ascending order.
+</p>
+</li>
+<li>
+<p>
+Make height of the lower view in a split view configurable by setting
+   the <em>split-view-height</em> variable to a number or a percentage.
+   Defaults to 2/3 of the total view height.
+</p>
+</li>
+<li>
+<p>
+Allow multiple text attributes for color commands:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>color cursor white blue underline bold</tt></pre>
+</div></div>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Blame view: fix loading of blame data when opened from the tree view
+   and CWD is not the repo root. (Debian bug 540766)
+</p>
+</li>
+<li>
+<p>
+Tree view: fix searching.
+</p>
+</li>
+</ul></div>
+</div>
 <h2 id="_tig_0_14_1">tig-0.14.1</h2>
 <div class="sectionbody">
-<div class="para"><p>Improvements:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Status view: improve "on branch" information inspired by the prompt
-   code in git's bash completion script.
+   code in git&#8217;s bash completion script.
 </p>
 </li>
 <li>
@@ -361,8 +508,8 @@ Make behavior of horizontal scrolling configurable by setting the
 </p>
 </li>
 </ul></div>
-<div class="para"><p>Bug fixes:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Status view: show error when failing to open a file.
@@ -398,8 +545,8 @@ Fix horizontal scrolling glitches.
 </div>
 <h2 id="_tig_0_14">tig-0.14</h2>
 <div class="sectionbody">
-<div class="para"><p>Incompatibilities:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Incompatibilities:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 The screen-resize action has been deprecated. It had no real use for
@@ -424,8 +571,8 @@ The "author" color replaces "main-author". Setting the latter will
 </p>
 </li>
 </ul></div>
-<div class="para"><p>Improvements:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Horizontal scrolling. Bound to Left/Right by default.
@@ -475,8 +622,8 @@ Abbreviate author names to initials when the width of the author column
 </p>
 </li>
 </ul></div>
-<div class="para"><p>Bug fixes:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Tree view: fix memory corruption bug when updating.
@@ -506,8 +653,8 @@ Fix regression parsing multiple spaces in ~/.tigrc.
 </div>
 <h2 id="_tig_0_13">tig-0.13</h2>
 <div class="sectionbody">
-<div class="para"><p>Incompatibilities:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Incompatibilities:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Commands from the environment (e.g. TIG_MAIN_CMD) will no longer have
@@ -517,8 +664,8 @@ Commands from the environment (e.g. TIG_MAIN_CMD) will no longer have
 </p>
 </li>
 </ul></div>
-<div class="para"><p>Improvements:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Display repository references in the sorted order: tags, heads,
@@ -546,11 +693,11 @@ Improve responsiveness and view loading speed by using select(2).
 </p>
 </li>
 </ul></div>
-<div class="para"><p>Bug fixes:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
-Separate blame revision and file argument by "&#8212;" to avoid problems.
+Separate blame revision and file argument by "--" to avoid problems.
 </p>
 </li>
 <li>
@@ -587,8 +734,8 @@ Fix launching of mergetool from a subdirectory.
 </div>
 <h2 id="_tig_0_12_1">tig-0.12.1</h2>
 <div class="sectionbody">
-<div class="para"><p>Improvements:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Status view: revert uncommitted diff chunks and unstaged files with
@@ -597,7 +744,7 @@ Status view: revert uncommitted diff chunks and unstaged files with
 </li>
 <li>
 <p>
-Main view: use &#8212;topo-order also when rev-list arguments are given on
+Main view: use --topo-order also when rev-list arguments are given on
    the command line.
 </p>
 </li>
@@ -607,11 +754,11 @@ Log view: support for refreshing.
 </p>
 </li>
 </ul></div>
-<div class="para"><p>Bug fixes:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
-Status view: use ls-files' &#8212;exclude-standard so user specific ignore
+Status view: use ls-files' --exclude-standard so user specific ignore
    rules are effective. The option was added in git version 1.5.4.
 </p>
 </li>
@@ -641,8 +788,8 @@ Do not maximize views when refreshing.
 </div>
 <h2 id="_tig_0_12">tig-0.12</h2>
 <div class="sectionbody">
-<div class="para"><p>Improvements:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 F5 also refreshes the current view.
@@ -665,7 +812,7 @@ Main view: support for refreshing.
 </li>
 <li>
 <p>
-Main view: disable boundary commits by default. Use &#8212;boundary when
+Main view: disable boundary commits by default. Use --boundary when
    they should be shown. (Debian bug 498628)
 </p>
 </li>
@@ -687,8 +834,8 @@ Add author-width option to customize the width of the author column.
 </p>
 </li>
 </ul></div>
-<div class="para"><p>Bug fixes:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Fix regression when staging all diff chunks in a section.
@@ -708,7 +855,7 @@ Fix problem with $(cmd) usage in shell code. Some shells (jsh)
 </li>
 <li>
 <p>
-Do not show incomplete boundary commits when &#8212;no-walk is used.
+Do not show incomplete boundary commits when --no-walk is used.
 </p>
 </li>
 <li>
@@ -726,8 +873,8 @@ Ignore pipe reads with errno "Success" reported after a signals,
 </div>
 <h2 id="_tig_0_11">tig-0.11</h2>
 <div class="sectionbody">
-<div class="para"><p>Incompatibilities:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Incompatibilities:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Remove parsing of deprecated options: -g, -l, -d.
@@ -735,13 +882,13 @@ Remove parsing of deprecated options: -g, -l, -d.
 </li>
 <li>
 <p>
-The first seen <em>&#8212;</em> will stop option parsing and is passed to git
-   instead of breaking out of tig's option parsing.
+The first seen <em>--</em> will stop option parsing and is passed to git
+   instead of breaking out of tig&#8217;s option parsing.
 </p>
 </li>
 </ul></div>
-<div class="para"><p>New features:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>New features:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Blame view; bound to <em>B</em> by default, reachable from the command line
@@ -760,8 +907,8 @@ Add action to maximize the current view.
 </p>
 </li>
 </ul></div>
-<div class="para"><p>Improvements:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Show the current branch in the status view.
@@ -773,8 +920,8 @@ Show local/light-weight tags.
 </p>
 </li>
 </ul></div>
-<div class="para"><p>Bug fixes:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Fix regressions for the pager mode.
@@ -789,8 +936,8 @@ Fix refreshing of the index with working directory info.
 </div>
 <h2 id="_tig_0_10_1">tig-0.10.1</h2>
 <div class="sectionbody">
-<div class="para"><p>Improvements:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Status view: detect renamed files and show them with <em>R</em>.
@@ -812,8 +959,8 @@ Configure: check for the ncursesw library.
 </p>
 </li>
 </ul></div>
-<div class="para"><p>Bug fixes:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Fix UTF-8 handling for tag names and commit messages.
@@ -834,8 +981,8 @@ Fix replacing of SYSCONFDIR when installing from released tarballs.
 </div>
 <h2 id="_tig_0_10">tig-0.10</h2>
 <div class="sectionbody">
-<div class="para"><p>Incompatibilities:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Incompatibilities:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Deprecate most tig specific command line options to make tig more
@@ -862,8 +1009,8 @@ Implement the cherry pick action (bound to <em>C</em>) using new support for
 </p>
 </li>
 </ul></div>
-<div class="para"><p>New features:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>New features:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Add support for binding keys to external commands. To bind <em>.</em> to
@@ -885,8 +1032,8 @@ Add the environment variables TIGRC_USER and TIGRC_SYSTEM to change
 </p>
 </li>
 </ul></div>
-<div class="para"><p>Improvements:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Main view: color the revision graph.
@@ -917,8 +1064,8 @@ Misc. documentation improvements.
 </p>
 </li>
 </ul></div>
-<div class="para"><p>Bug fixes:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Use git-diff-index(1) and git-diff-files(1) instead of git-diff(1) to
@@ -927,7 +1074,7 @@ Use git-diff-index(1) and git-diff-files(1) instead of git-diff(1) to
 </li>
 <li>
 <p>
-Use &#8212;no-color when calling git-log(1).
+Use --no-color when calling git-log(1).
 </p>
 </li>
 <li>
@@ -939,8 +1086,8 @@ Fix crash when opening mergetool for lines that are not unmerged.
 </div>
 <h2 id="_tig_0_9_1">tig-0.9.1</h2>
 <div class="sectionbody">
-<div class="para"><p>Incompatibilities:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Incompatibilities:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Make the clean rule to never remove generated documentation files.
@@ -948,8 +1095,8 @@ Make the clean rule to never remove generated documentation files.
 </p>
 </li>
 </ul></div>
-<div class="para"><p>New features:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>New features:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Add support for cherry-picking commits in the main view to the
@@ -957,8 +1104,8 @@ Add support for cherry-picking commits in the main view to the
 </p>
 </li>
 </ul></div>
-<div class="para"><p>Improvements:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Add support for launching git-mergetool(1) from the status view.
@@ -976,8 +1123,8 @@ Detect working trees and disable the status view when it is missing.
 </p>
 </li>
 </ul></div>
-<div class="para"><p>Bug fixes:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Fix iconv() checking in configure.
@@ -1002,8 +1149,8 @@ Include autoconf files in the tarball generated by <tt>make dist</tt>.
 </div>
 <h2 id="_tig_0_9">tig-0.9</h2>
 <div class="sectionbody">
-<div class="para"><p>New features:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>New features:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Add bash completion script for tig (contrib/tig-completion.bash).
@@ -1021,8 +1168,8 @@ Add stage view for showing changes in the working tree and add
 </p>
 </li>
 </ul></div>
-<div class="para"><p>Improvements:</p></div>
-<div class="ilist"><ul>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
 <li>
 <p>
 Status view: allow all files in a section to be staged for commit.
@@ -1043,7 +1190,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2009-02-16 00:02:20 CEST
+Last updated 2009-11-20 08:05:06 EDT
 </div>
 </div>
 </body>
