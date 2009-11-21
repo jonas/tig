@@ -85,6 +85,12 @@ install-doc-man: doc-man
 		$(RM) "$$doc+"; \
 	done
 
+install-release-doc-man:
+	GIT_INDEX_FILE=.tmp-doc-index git read-tree release
+	GIT_INDEX_FILE=.tmp-doc-index git checkout-index -f --prefix=./ $(MANDOC)
+	rm -f .tmp-doc-index
+	$(MAKE) install-doc-man
+
 install-doc-html: doc-html
 	mkdir -p $(DESTDIR)$(docdir)/tig
 	for doc in $(HTMLDOC); do \
@@ -95,7 +101,14 @@ install-doc-html: doc-html
 		$(RM) "$$doc+"; \
 	done
 
+install-release-doc-html:
+	GIT_INDEX_FILE=.tmp-doc-index git read-tree release
+	GIT_INDEX_FILE=.tmp-doc-index git checkout-index -f --prefix=./ $(HTMLDOC)
+	rm -f .tmp-doc-index
+	$(MAKE) install-doc-html
+
 install-doc: install-doc-man install-doc-html
+install-release-doc: install-release-doc-man install-release-doc-html
 
 clean:
 	$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5

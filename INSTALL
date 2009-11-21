@@ -10,7 +10,12 @@ The quick and simple way to install tig with documentation is to run:
 	$ make
 	$ make install install-doc
 
-Optionally, you can use the `configure` script to detect library location:
+From tig's git repository it is also possible to install documentation directly
+from the release branch to avoid installing the documentation tool chain:
+
+	$ make install-release-doc
+
+Optionally, you can use the `configure` script to detect dependencies:
 
 	$ ./configure
 	$ make
@@ -49,7 +54,7 @@ configure script and building documentation:
 |Tool				|Description
 |autoconf			|Contains autoreconf for generating configure
 				 from configure.ac.
-|asciidoc (>= 8.0)		|Generates HTML and (DocBook) XML from text.
+|asciidoc (>= 8.4)		|Generates HTML and (DocBook) XML from text.
 |xmlto				|Generates manpages and chunked HTML from XML.
 |DocBook XSL (>= 1.72.0)	|Used by xmlto for building manpages.
 |DocBook (DSSL/Jade) tools	|Generates PDF from XML.
