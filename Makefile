@@ -86,7 +86,7 @@ install-doc-man: doc-man
 	done
 
 install-release-doc-man:
-	GIT_INDEX_FILE=.tmp-doc-index git read-tree release
+	GIT_INDEX_FILE=.tmp-doc-index git read-tree origin/release
 	GIT_INDEX_FILE=.tmp-doc-index git checkout-index -f --prefix=./ $(MANDOC)
 	rm -f .tmp-doc-index
 	$(MAKE) install-doc-man
@@ -102,7 +102,7 @@ install-doc-html: doc-html
 	done
 
 install-release-doc-html:
-	GIT_INDEX_FILE=.tmp-doc-index git read-tree release
+	GIT_INDEX_FILE=.tmp-doc-index git read-tree origin/release
 	GIT_INDEX_FILE=.tmp-doc-index git checkout-index -f --prefix=./ $(HTMLDOC)
 	rm -f .tmp-doc-index
 	$(MAKE) install-doc-html
