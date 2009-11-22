@@ -10,6 +10,8 @@ Before tig-1.0
     - Add an edit keymap so the "editor" can be customized.
     - Allow the cursor to navigate in the input area.
 
+ - Wrap long lines to reduce horizontal scrolling.
+
  - Rewrite revgraph handling.
 
    The commit structure should be expanded to have a parent member,
