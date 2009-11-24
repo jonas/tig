@@ -137,7 +137,7 @@ struct ref_list {
 };
 
 static struct ref_list *get_ref_list(const char *id);
-static void foreach_ref(bool (*visitor)(void *data, struct ref *ref), void *data);
+static void foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data);
 static int load_refs(void);
 
 enum format_flags {
@@ -5036,7 +5036,7 @@ static struct view_ops blame_ops = {
 struct branch {
 	const char *author;		/* Author of the last commit. */
 	time_t time;			/* Date of the last activity. */
-	struct ref *ref;		/* Name and commit ID information. */
+	const struct ref *ref;		/* Name and commit ID information. */
 };
 
 static const enum sort_field branch_sort_fields[] = {
@@ -5144,7 +5144,7 @@ branch_read(struct view *view, char *line)
 }
 
 static bool
-branch_open_visitor(void *data, struct ref *ref)
+branch_open_visitor(void *data, const struct ref *ref)
 {
 	struct view *view = data;
 	struct branch *branch;
@@ -7207,7 +7207,7 @@ compare_refs(const void *ref1_, const void *ref2_)
 }
 
 static void
-foreach_ref(bool (*visitor)(void *data, struct ref *ref), void *data)
+foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data)
 {
 	size_t i;
 
