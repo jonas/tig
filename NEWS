@@ -1,6 +1,14 @@
 Release notes
 =============
 
+master
+------
+
+Improvements:
+
+ - Status view: update the file variable when a line is selected so %(file) works as
+   expected.
+
 tig-0.15
 --------
 

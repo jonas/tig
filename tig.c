@@ -5882,10 +5882,8 @@ status_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_VIEW_BLAME:
-		if (status) {
-			string_copy(opt_file, status->new.name);
+		if (status)
 			opt_ref[0] = 0;
-		}
 		return request;
 
 	case REQ_ENTER:
@@ -5952,6 +5950,8 @@ status_select(struct view *view, struct line *line)
 	}
 
 	string_format(view->ref, text, key, file);
+	if (status)
+		string_copy(opt_file, status->new.name);
 }
 
 static bool
