@@ -3236,11 +3236,9 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		do_scroll_view(prev, lines);
 	}
 
-	if (prev && view != prev) {
-		if (split) {
-			/* "Blur" the previous view. */
-			update_view_title(prev);
-		}
+	if (prev && view != prev && split && view_is_displayed(prev)) {
+		/* "Blur" the previous view. */
+		update_view_title(prev);
 	}
 
 	if (view->pipe && view->lines == 0) {
