@@ -5037,6 +5037,8 @@ struct branch {
 	const struct ref *ref;		/* Name and commit ID information. */
 };
 
+static const struct ref branch_all;
+
 static const enum sort_field branch_sort_fields[] = {
 	ORDERBY_NAME, ORDERBY_DATE, ORDERBY_AUTHOR
 };
@@ -5073,13 +5075,15 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (opt_author && draw_author(view, branch->author))
 		return TRUE;
 
-	draw_text(view, type, branch->ref->name, TRUE);
+	draw_text(view, type, branch->ref == &branch_all ? "All branches" : branch->ref->name, TRUE);
 	return TRUE;
 }
 
 static enum request
 branch_request(struct view *view, enum request request, struct line *line)
 {
+	struct branch *branch = line->data;
+
 	switch (request) {
 	case REQ_REFRESH:
 		load_refs();
@@ -5092,7 +5096,21 @@ branch_request(struct view *view, enum request request, struct line *line)
 		return REQ_NONE;
 
 	case REQ_ENTER:
-		open_view(view, REQ_VIEW_MAIN, OPEN_SPLIT);
+		if (branch->ref == &branch_all) {
+			const char *all_branches_argv[] = {
+				"git", "log", "--no-color", "--pretty=raw", "--parents",
+				      "--topo-order", "--all", NULL
+			};
+			struct view *main_view = VIEW(REQ_VIEW_MAIN);
+
+			if (!prepare_update(main_view, all_branches_argv, NULL, FORMAT_NONE)) {
+				report("Failed to load view of all branches");
+				return REQ_NONE;
+			}
+			open_view(view, REQ_VIEW_MAIN, OPEN_PREPARED | OPEN_SPLIT);
+		} else {
+			open_view(view, REQ_VIEW_MAIN, OPEN_SPLIT);
+		}
 		return REQ_NONE;
 
 	default:
@@ -5172,6 +5190,7 @@ branch_open(struct view *view)
 	}
 
 	setup_update(view, view->id);
+	branch_open_visitor(view, &branch_all);
 	foreach_ref(branch_open_visitor, view);
 	view->p_restore = TRUE;
 

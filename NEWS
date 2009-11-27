@@ -6,8 +6,10 @@ master
 
 Improvements:
 
- - Status view: update the file variable when a line is selected so %(file) works as
-   expected.
+ - Status view: update the file variable when a line is selected so
+   %(file) works as expected.
+ - Branch view: add entry to browse all branches (uses git-log's --all
+   flag).
 
 tig-0.15
 --------
