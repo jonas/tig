@@ -381,19 +381,21 @@ static int local_tzoffset(time_t time)
 	return offset * eastwest;
 }
 
+#define DATE_INFO \
+	DATE_(NO), \
+	DATE_(DEFAULT), \
+	DATE_(RELATIVE), \
+	DATE_(SHORT)
+
 enum date {
-	DATE_NO = 0,
-	DATE_DEFAULT,
-	DATE_RELATIVE,
-	DATE_SHORT
+#define DATE_(name) DATE_##name
+	DATE_INFO
+#undef	DATE_
 };
 
 static const struct enum_map date_map[] = {
 #define DATE_(name) ENUM_MAP(#name, DATE_##name)
-	DATE_(NO),
-	DATE_(DEFAULT),
-	DATE_(RELATIVE),
-	DATE_(SHORT)
+	DATE_INFO
 #undef	DATE_
 };
 
