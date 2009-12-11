@@ -1703,8 +1703,9 @@ option_set_command(int argc, const char *argv[])
 		} else if (!strcmp(argv[2], "short")) {
 			opt_date = DATE_SHORT;
 			return OK;
-		} else if (parse_bool(&show_date, argv[2])) {
+		} else if (parse_bool(&show_date, argv[2]) == OK) {
 			opt_date = show_date ? DATE_DEFAULT : DATE_NONE;
+			return OK;
 		}
 		return ERR;
 	}

@@ -22,6 +22,7 @@ Bug fixes:
 
  - Status view: fix usage from sub directories, which was broken by the
    changes made to support blame view from sub directories.
+ - Fix parsing of boolean show-date values.
 
 tig-0.15
 --------
