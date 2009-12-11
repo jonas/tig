@@ -305,6 +305,24 @@ struct enum_map {
 
 #define ENUM_MAP(name, value) { name, STRING_SIZE(name), value }
 
+static char *
+enum_map_name(const char *name, size_t namelen)
+{
+	static char buf[SIZEOF_STR];
+	int bufpos;
+
+	for (bufpos = 0; bufpos <= namelen; bufpos++) {
+		buf[bufpos] = tolower(name[bufpos]);
+		if (buf[bufpos] == '_')
+			buf[bufpos] = '-';
+	}
+
+	buf[bufpos] = 0;
+	return buf;
+}
+
+#define enum_name(entry) enum_map_name((entry).name, (entry).namelen)
+
 static bool
 map_enum_do(const struct enum_map *map, size_t map_size, int *value, const char *name)
 {
@@ -3962,33 +3980,14 @@ static struct view_ops diff_ops = {
 
 static bool help_keymap_hidden[ARRAY_SIZE(keymap_table)];
 
-static char *
-help_name(char buf[SIZEOF_STR], const char *name, size_t namelen)
-{
-	int bufpos;
-
-	for (bufpos = 0; bufpos <= namelen; bufpos++) {
-		buf[bufpos] = tolower(name[bufpos]);
-		if (buf[bufpos] == '_')
-			buf[bufpos] = '-';
-	}
-
-	buf[bufpos] = 0;
-	return buf;
-}
-
-#define help_keymap_name(buf, keymap) \
-	help_name(buf, keymap_table[keymap].name, keymap_table[keymap].namelen)
-
 static bool
 help_open_keymap_title(struct view *view, enum keymap keymap)
 {
-	char buf[SIZEOF_STR];
 	struct line *line;
 
 	line = add_line_format(view, LINE_HELP_KEYMAP, "[%c] %s bindings",
 			       help_keymap_hidden[keymap] ? '+' : '-',
-			       help_keymap_name(buf, keymap));
+			       enum_name(keymap_table[keymap]));
 	if (line)
 		line->other = keymap;
 
@@ -4029,8 +4028,7 @@ help_open_keymap(struct view *view, enum keymap keymap)
 		}
 
 		add_line_format(view, LINE_DEFAULT, "    %-25s %-20s %s", key,
-				help_name(buf, req_info[i].name, req_info[i].namelen),
-				req_info[i].help);
+				enum_name(req_info[i]), req_info[i].help);
 	}
 
 	group = "External commands:";
