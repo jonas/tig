@@ -18,6 +18,11 @@ Improvements:
  - Branch view: add entry to browse all branches (uses git-log's --all
    flag).
 
+Bug fixes:
+
+ - Status view: fix usage from sub directories, which was broken by the
+   changes made to support blame view from sub directories.
+
 tig-0.15
 --------
 
