@@ -2458,9 +2458,9 @@ toggle_date_option(enum date *date)
 		"short"
 	};
 
-	opt_date = (opt_date + 1) % ARRAY_SIZE(help);
+	*date = (*date + 1) % ARRAY_SIZE(help);
 	redraw_display(FALSE);
-	report("Displaying %s dates", help[opt_date]);
+	report("Displaying %s dates", help[*date]);
 }
 
 static void
