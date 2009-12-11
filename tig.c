@@ -382,10 +382,19 @@ static int local_tzoffset(time_t time)
 }
 
 enum date {
-	DATE_NONE = 0,
+	DATE_NO = 0,
 	DATE_DEFAULT,
 	DATE_RELATIVE,
 	DATE_SHORT
+};
+
+static const struct enum_map date_map[] = {
+#define DATE_(name) ENUM_MAP(#name, DATE_##name)
+	DATE_(NO),
+	DATE_(DEFAULT),
+	DATE_(RELATIVE),
+	DATE_(SHORT)
+#undef	DATE_
 };
 
 static char *
@@ -1676,6 +1685,26 @@ static int parse_bool(bool *opt, const char *arg)
 	return OK;
 }
 
+static int parse_enum_do(unsigned int *opt, const char *arg,
+			 const struct enum_map *map, size_t map_size)
+{
+	bool is_true;
+
+	assert(map_size > 1);
+
+	if (map_enum_do(map, map_size, (int *) opt, arg))
+		return OK;
+
+	if (parse_bool(&is_true, arg) != OK)
+		return ERR;
+
+	*opt = is_true ? map[1].value : map[0].value;
+	return OK;
+}
+
+#define parse_enum(opt, arg, map) \
+	parse_enum_do(opt, arg, map, ARRAY_SIZE(map))
+
 static int
 parse_string(char *opt, const char *arg, size_t optsize)
 {
@@ -1712,21 +1741,8 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "show-author"))
 		return parse_bool(&opt_author, argv[2]);
 
-	if (!strcmp(argv[0], "show-date")) {
-		bool show_date;
-
-		if (!strcmp(argv[2], "relative")) {
-			opt_date = DATE_RELATIVE;
-			return OK;
-		} else if (!strcmp(argv[2], "short")) {
-			opt_date = DATE_SHORT;
-			return OK;
-		} else if (parse_bool(&show_date, argv[2]) == OK) {
-			opt_date = show_date ? DATE_DEFAULT : DATE_NONE;
-			return OK;
-		}
-		return ERR;
-	}
+	if (!strcmp(argv[0], "show-date"))
+		return parse_enum(&opt_date, argv[2], date_map);
 
 	if (!strcmp(argv[0], "show-rev-graph"))
 		return parse_bool(&opt_rev_graph, argv[2]);
