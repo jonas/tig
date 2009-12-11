@@ -2484,19 +2484,18 @@ redraw_display(bool clear)
 }
 
 static void
-toggle_date_option(enum date *date)
+toggle_enum_option_do(unsigned int *opt, const char *help,
+		      const struct enum_map *map, size_t size)
 {
-	static const char *help[] = {
-		"no",
-		"default",
-		"relative",
-		"short"
-	};
-
-	*date = (*date + 1) % ARRAY_SIZE(help);
+	*opt = (*opt + 1) % size;
 	redraw_display(FALSE);
-	report("Displaying %s dates", help[*date]);
+	report("Displaying %s %s", enum_name(map[*opt]), help);
 }
+
+#define toggle_enum_option(opt, help, map) \
+	toggle_enum_option_do(opt, help, map, ARRAY_SIZE(map))
+
+#define toggle_date() toggle_enum_option(&opt_date, "dates", date_map)
 
 static void
 toggle_view_option(bool *option, const char *help)
@@ -2521,7 +2520,7 @@ open_option_menu(void)
 
 	if (prompt_menu("Toggle option", menu, &selected)) {
 		if (menu[selected].data == &opt_date)
-			toggle_date_option(menu[selected].data);
+			toggle_date();
 		else
 			toggle_view_option(menu[selected].data, menu[selected].text);
 	}
@@ -3518,7 +3517,7 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_TOGGLE_DATE:
-		toggle_date_option(&opt_date);
+		toggle_date();
 		break;
 
 	case REQ_TOGGLE_AUTHOR:
