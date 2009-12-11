@@ -62,7 +62,7 @@ bool io_run_append(const char **argv, int fd);
 bool io_eof(struct io *io);
 int io_error(struct io *io);
 char * io_strerror(struct io *io);
-bool io_can_read(struct io *io);
+bool io_can_read(struct io *io, bool can_block);
 ssize_t io_read(struct io *io, void *buf, size_t bufsize);
 char * io_get(struct io *io, int c, bool can_read);
 bool io_write(struct io *io, const void *buf, size_t bufsize);

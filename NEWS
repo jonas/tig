@@ -4,6 +4,12 @@ Release notes
 tig master
 ----------
 
+Improvements:
+
+ - Start rewrite of the revision graph renderer. Three modes are
+   supported UTF-8, ncurses line graphics, and ASCII. Also, enable
+   revision graph rendering by default.
+
 Bug fixes:
 
  - Fix opening of diffs when browsing branches.

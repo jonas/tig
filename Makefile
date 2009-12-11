@@ -35,8 +35,8 @@ RPM_RELEASE = $(word 2,$(RPM_VERLIST))$(if $(WTDIRTY),.dirty)
 LDLIBS ?= -lcurses
 CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
-PROGS	= tig
-SOURCE	= tig.c tig.h io.c io.h
+PROGS	= tig test-graph
+SOURCE	= tig.c tig.h io.c io.h graph.c graph.h
 TXTDOC	= tig.1.txt tigrc.5.txt manual.txt NEWS README INSTALL BUGS TODO
 MANDOC	= tig.1 tigrc.5 tigmanual.7
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html NEWS.html
@@ -150,8 +150,11 @@ configure: configure.ac acinclude.m4
 	install-doc-man install-doc-html clean spell-check dist rpm
 
 io.o: io.c io.h tig.h
+graph.o: tig.h
 tig.o: tig.c tig.h io.h
-tig: tig.o io.o
+tig: tig.o io.o graph.o
+test-graph.o: test-graph.c io.h tig.h graph.h
+test-graph: io.o graph.o
 
 tig.spec: contrib/tig.spec.in
 	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' \

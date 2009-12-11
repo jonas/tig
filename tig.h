@@ -76,16 +76,6 @@
 #define SIZEOF_REV	41	/* Holds a SHA-1 and an ending NUL. */
 #define SIZEOF_ARG	32	/* Default argument array size. */
 
-/* Revision graph */
-
-#define REVGRAPH_INIT	'I'
-#define REVGRAPH_MERGE	'M'
-#define REVGRAPH_BRANCH	'+'
-#define REVGRAPH_COMMIT	'*'
-#define REVGRAPH_BOUND	'^'
-
-#define SIZEOF_REVGRAPH	19	/* Size of revision ancestry graphics. */
-
 /* This color name can be used to refer to the default term colors. */
 #define COLOR_DEFAULT	(-1)
 

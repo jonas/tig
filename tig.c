@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2010 Jonas Fonseca <fonseca@diku.dk>
+/* Copyrsght (c) 2006-2010 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -13,6 +13,7 @@
 
 #include "tig.h"
 #include "io.h"
+#include "graph.h"
 
 static void __NORETURN die(const char *err, ...);
 static void warn(const char *msg, ...);
@@ -59,6 +60,20 @@ struct menu_item {
 };
 
 static bool prompt_menu(const char *prompt, const struct menu_item *items, int *selected);
+
+enum graphic {
+	GRAPHIC_ASCII = 0,
+	GRAPHIC_DEFAULT,
+	GRAPHIC_UTF8
+};
+
+static const struct enum_map graphic_map[] = {
+#define GRAPHIC_(name) ENUM_MAP(#name, GRAPHIC_##name)
+	GRAPHIC_(ASCII),
+	GRAPHIC_(DEFAULT),
+	GRAPHIC_(UTF8)
+#undef	GRAPHIC_
+};
 
 #define DATE_INFO \
 	DATE_(NO), \
@@ -258,6 +273,7 @@ get_author_initials(const char *author)
 	REQ_(TOGGLE_DATE,	"Toggle date display"), \
 	REQ_(TOGGLE_AUTHOR,	"Toggle author display"), \
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
+	REQ_(TOGGLE_GRAPHIC,	"Toggle (line) graphics mode"), \
 	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
 	REQ_(TOGGLE_SORT_ORDER,	"Toggle ascending/descending sort order"), \
 	REQ_(TOGGLE_SORT_FIELD,	"Toggle field to sort by"), \
@@ -319,11 +335,11 @@ get_request(const char *name)
  */
 
 /* Option and state variables. */
+static enum graphic opt_line_graphics	= GRAPHIC_DEFAULT;
 static enum date opt_date		= DATE_DEFAULT;
 static enum author opt_author		= AUTHOR_DEFAULT;
+static bool opt_rev_graph		= TRUE;
 static bool opt_line_number		= FALSE;
-static bool opt_line_graphics		= TRUE;
-static bool opt_rev_graph		= FALSE;
 static bool opt_show_refs		= TRUE;
 static bool opt_untracked_dirs_content	= TRUE;
 static int opt_num_interval		= 5;
@@ -417,7 +433,15 @@ LINE(STAT_UNSTAGED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(STAT_UNTRACKED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(HELP_KEYMAP,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(HELP_GROUP,   "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
-LINE(BLAME_ID,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0)
+LINE(BLAME_ID,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_LINE_0, "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_LINE_1, "",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_LINE_2, "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_LINE_3, "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_LINE_4, "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_LINE_5, "",			COLOR_WHITE,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_LINE_6, "",			COLOR_RED,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_COMMIT, "",			COLOR_BLUE,	COLOR_DEFAULT,	0)
 
 enum line_type {
 #define LINE(type, line, fg, bg, attr) \
@@ -589,6 +613,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'D',		REQ_TOGGLE_DATE },
 	{ 'A',		REQ_TOGGLE_AUTHOR },
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
+	{ '~',		REQ_TOGGLE_GRAPHIC },
 	{ 'F',		REQ_TOGGLE_REFS },
 	{ 'I',		REQ_TOGGLE_SORT_ORDER },
 	{ 'i',		REQ_TOGGLE_SORT_FIELD },
@@ -1111,7 +1136,7 @@ option_set_command(int argc, const char *argv[])
 		return parse_bool(&opt_line_number, argv[2]);
 
 	if (!strcmp(argv[0], "line-graphics"))
-		return parse_bool(&opt_line_graphics, argv[2]);
+		return parse_enum(&opt_line_graphics, argv[2], graphic_map);
 
 	if (!strcmp(argv[0], "line-number-interval"))
 		return parse_int(&opt_num_interval, argv[2], 1, 1024);
@@ -1552,7 +1577,7 @@ draw_text(struct view *view, enum line_type type, const char *string)
 }
 
 static bool
-draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t size)
+draw_graphic(struct view *view, enum line_type type, const chtype graphic[], size_t size, bool separator)
 {
 	size_t skip = view->yoffset > view->col ? view->yoffset - view->col : 0;
 	int max = view->width + view->yoffset - view->col;
@@ -1568,9 +1593,11 @@ draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t si
 		waddch(view->win, graphic[i]);
 
 	view->col += size;
-	if (size < max && skip <= size)
-		waddch(view->win, ' ');
-	view->col++;
+	if (separator) {
+		if (size < max && skip <= size)
+			waddch(view->win, ' ');
+		view->col++;
+	}
 
 	return view->width + view->yoffset <= view->col;
 }
@@ -1654,7 +1681,7 @@ draw_lineno(struct view *view, unsigned int lineno)
 		view->col += draw_chars(view, LINE_LINE_NUMBER, text, max, TRUE);
 	else
 		view->col += draw_space(view, LINE_LINE_NUMBER, max, digits3);
-	return draw_graphic(view, LINE_DEFAULT, &separator, 1);
+	return draw_graphic(view, LINE_DEFAULT, &separator, 1, TRUE);
 }
 
 static bool
@@ -1873,6 +1900,7 @@ redraw_display(bool clear)
 	TOGGLE_(LINENO,    '.', "line numbers",      &opt_line_number, NULL) \
 	TOGGLE_(DATE,      'D', "dates",             &opt_date,	  date_map) \
 	TOGGLE_(AUTHOR,    'A', "author names",      &opt_author, author_map) \
+	TOGGLE_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map) \
 	TOGGLE_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL) \
 	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL)
 
@@ -2514,7 +2542,7 @@ update_view(struct view *view)
 	if (!view->pipe)
 		return TRUE;
 
-	if (!io_can_read(view->pipe)) {
+	if (!io_can_read(view->pipe, FALSE)) {
 		if (view->lines == 0 && view_is_displayed(view)) {
 			time_t secs = time(NULL) - view->start_time;
 
@@ -2936,6 +2964,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_LINENO:
 	case REQ_TOGGLE_DATE:
 	case REQ_TOGGLE_AUTHOR:
+	case REQ_TOGGLE_GRAPHIC:
 	case REQ_TOGGLE_REV_GRAPH:
 	case REQ_TOGGLE_REFS:
 		toggle_option(request);
@@ -5656,223 +5685,83 @@ static struct view_ops stage_ops = {
  * Revision graph
  */
 
+static const enum line_type graph_colors[] = {
+	LINE_GRAPH_LINE_0,
+	LINE_GRAPH_LINE_1,
+	LINE_GRAPH_LINE_2,
+	LINE_GRAPH_LINE_3,
+	LINE_GRAPH_LINE_4,
+	LINE_GRAPH_LINE_5,
+	LINE_GRAPH_LINE_6,
+};
+
+static enum line_type get_graph_color(struct graph_symbol *symbol)
+{
+	if (symbol->commit)
+		return LINE_GRAPH_COMMIT;
+	assert(symbol->color < ARRAY_SIZE(graph_colors));
+	return graph_colors[symbol->color];
+}
+
+static bool
+draw_graph_utf8(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
+{
+	const char *chars = graph_symbol_to_utf8(symbol);
+
+	return draw_text(view, color, chars + !!first); 
+}
+
+static bool
+draw_graph_ascii(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
+{
+	const char *chars = graph_symbol_to_ascii(symbol);
+
+	return draw_text(view, color, chars + !!first); 
+}
+
+static bool
+draw_graph_chtype(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
+{
+	const chtype *chars = graph_symbol_to_chtype(symbol);
+
+	return draw_graphic(view, color, chars + !!first, 2 - !!first, FALSE); 
+}
+
+typedef bool (*draw_graph_fn)(struct view *, struct graph_symbol *, enum line_type, bool);
+
+static bool draw_graph(struct view *view, struct graph_canvas *canvas)
+{
+	static const draw_graph_fn fns[] = {
+		draw_graph_ascii,
+		draw_graph_chtype,
+		draw_graph_utf8
+	};
+	draw_graph_fn fn = fns[opt_line_graphics];
+	int i;
+
+	for (i = 0; i < canvas->size; i++) {
+		struct graph_symbol *symbol = &canvas->symbols[i];
+		enum line_type color = get_graph_color(symbol);
+
+		if (fn(view, symbol, color, i == 0))
+			return TRUE;
+	}
+
+	return draw_text(view, LINE_MAIN_REVGRAPH, " ");
+}
+
+/*
+ * Main view backend
+ */
+
 struct commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
 	const char *author;		/* Author of the commit. */
 	struct time time;		/* Date from the author ident. */
 	struct ref_list *refs;		/* Repository references. */
-	chtype graph[SIZEOF_REVGRAPH];	/* Ancestry chain graphics. */
-	size_t graph_size;		/* The width of the graph array. */
-	bool has_parents;		/* Rewritten --parents seen. */
+	struct graph_canvas graph;	/* Ancestry chain graphics. */
 };
-
-/* Size of rev graph with no  "padding" columns */
-#define SIZEOF_REVITEMS	(SIZEOF_REVGRAPH - (SIZEOF_REVGRAPH / 2))
-
-struct rev_graph {
-	struct rev_graph *prev, *next, *parents;
-	char rev[SIZEOF_REVITEMS][SIZEOF_REV];
-	size_t size;
-	struct commit *commit;
-	size_t pos;
-	unsigned int boundary:1;
-};
-
-/* Parents of the commit being visualized. */
-static struct rev_graph graph_parents[4];
-
-/* The current stack of revisions on the graph. */
-static struct rev_graph graph_stacks[4] = {
-	{ &graph_stacks[3], &graph_stacks[1], &graph_parents[0] },
-	{ &graph_stacks[0], &graph_stacks[2], &graph_parents[1] },
-	{ &graph_stacks[1], &graph_stacks[3], &graph_parents[2] },
-	{ &graph_stacks[2], &graph_stacks[0], &graph_parents[3] },
-};
-
-static inline bool
-graph_parent_is_merge(struct rev_graph *graph)
-{
-	return graph->parents->size > 1;
-}
-
-static inline void
-append_to_rev_graph(struct rev_graph *graph, chtype symbol)
-{
-	struct commit *commit = graph->commit;
-
-	if (commit->graph_size < ARRAY_SIZE(commit->graph) - 1)
-		commit->graph[commit->graph_size++] = symbol;
-}
-
-static void
-clear_rev_graph(struct rev_graph *graph)
-{
-	graph->boundary = 0;
-	graph->size = graph->pos = 0;
-	graph->commit = NULL;
-	memset(graph->parents, 0, sizeof(*graph->parents));
-}
-
-static void
-done_rev_graph(struct rev_graph *graph)
-{
-	if (graph_parent_is_merge(graph) &&
-	    graph->pos < graph->size - 1 &&
-	    graph->next->size == graph->size + graph->parents->size - 1) {
-		size_t i = graph->pos + graph->parents->size - 1;
-
-		graph->commit->graph_size = i * 2;
-		while (i < graph->next->size - 1) {
-			append_to_rev_graph(graph, ' ');
-			append_to_rev_graph(graph, '\\');
-			i++;
-		}
-	}
-
-	clear_rev_graph(graph);
-}
-
-static void
-push_rev_graph(struct rev_graph *graph, const char *parent)
-{
-	int i;
-
-	/* "Collapse" duplicate parents lines.
-	 *
-	 * FIXME: This needs to also update update the drawn graph but
-	 * for now it just serves as a method for pruning graph lines. */
-	for (i = 0; i < graph->size; i++)
-		if (!strncmp(graph->rev[i], parent, SIZEOF_REV))
-			return;
-
-	if (graph->size < SIZEOF_REVITEMS) {
-		string_copy_rev(graph->rev[graph->size++], parent);
-	}
-}
-
-static chtype
-get_rev_graph_symbol(struct rev_graph *graph)
-{
-	chtype symbol;
-
-	if (graph->boundary)
-		symbol = REVGRAPH_BOUND;
-	else if (graph->parents->size == 0)
-		symbol = REVGRAPH_INIT;
-	else if (graph_parent_is_merge(graph))
-		symbol = REVGRAPH_MERGE;
-	else if (graph->pos >= graph->size)
-		symbol = REVGRAPH_BRANCH;
-	else
-		symbol = REVGRAPH_COMMIT;
-
-	return symbol;
-}
-
-static void
-draw_rev_graph(struct rev_graph *graph)
-{
-	struct rev_filler {
-		chtype separator, line;
-	};
-	enum { DEFAULT, RSHARP, RDIAG, LDIAG };
-	static struct rev_filler fillers[] = {
-		{ ' ',	'|' },
-		{ '`',	'.' },
-		{ '\'',	' ' },
-		{ '/',	' ' },
-	};
-	chtype symbol = get_rev_graph_symbol(graph);
-	struct rev_filler *filler;
-	size_t i;
-
-	fillers[DEFAULT].line = opt_line_graphics ? ACS_VLINE : '|';
-	filler = &fillers[DEFAULT];
-
-	for (i = 0; i < graph->pos; i++) {
-		append_to_rev_graph(graph, filler->line);
-		if (graph_parent_is_merge(graph->prev) &&
-		    graph->prev->pos == i)
-			filler = &fillers[RSHARP];
-
-		append_to_rev_graph(graph, filler->separator);
-	}
-
-	/* Place the symbol for this revision. */
-	append_to_rev_graph(graph, symbol);
-
-	if (graph->prev->size > graph->size)
-		filler = &fillers[RDIAG];
-	else
-		filler = &fillers[DEFAULT];
-
-	i++;
-
-	for (; i < graph->size; i++) {
-		append_to_rev_graph(graph, filler->separator);
-		append_to_rev_graph(graph, filler->line);
-		if (graph_parent_is_merge(graph->prev) &&
-		    i < graph->prev->pos + graph->parents->size)
-			filler = &fillers[RSHARP];
-		if (graph->prev->size > graph->size)
-			filler = &fillers[LDIAG];
-	}
-
-	if (graph->prev->size > graph->size) {
-		append_to_rev_graph(graph, filler->separator);
-		if (filler->line != ' ')
-			append_to_rev_graph(graph, filler->line);
-	}
-}
-
-/* Prepare the next rev graph */
-static void
-prepare_rev_graph(struct rev_graph *graph)
-{
-	size_t i;
-
-	/* First, traverse all lines of revisions up to the active one. */
-	for (graph->pos = 0; graph->pos < graph->size; graph->pos++) {
-		if (!strcmp(graph->rev[graph->pos], graph->commit->id))
-			break;
-
-		push_rev_graph(graph->next, graph->rev[graph->pos]);
-	}
-
-	/* Interleave the new revision parent(s). */
-	for (i = 0; !graph->boundary && i < graph->parents->size; i++)
-		push_rev_graph(graph->next, graph->parents->rev[i]);
-
-	/* Lastly, put any remaining revisions. */
-	for (i = graph->pos + 1; i < graph->size; i++)
-		push_rev_graph(graph->next, graph->rev[i]);
-}
-
-static void
-update_rev_graph(struct view *view, struct rev_graph *graph)
-{
-	/* If this is the finalizing update ... */
-	if (graph->commit)
-		prepare_rev_graph(graph);
-
-	/* Graph visualization needs a one rev look-ahead,
-	 * so the first update doesn't visualize anything. */
-	if (!graph->prev->commit)
-		return;
-
-	if (view->lines > 2)
-		view->line[view->lines - 3].dirty = 1;
-	if (view->lines > 1)
-		view->line[view->lines - 2].dirty = 1;
-	draw_rev_graph(graph->prev);
-	done_rev_graph(graph->prev->prev);
-}
-
-
-/*
- * Main view backend
- */
 
 static const char *main_argv[SIZEOF_ARG] = {
 	"git", "log", "--no-color", "--pretty=raw", "--parents",
@@ -5894,8 +5783,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (opt_author && draw_author(view, commit->author))
 		return TRUE;
 
-	if (opt_rev_graph && commit->graph_size &&
-	    draw_graphic(view, LINE_MAIN_REVGRAPH, commit->graph, commit->graph_size))
+	if (opt_rev_graph && draw_graph(view, &commit->graph))
 		return TRUE;
 
 	if (opt_show_refs && commit->refs) {
@@ -5936,13 +5824,11 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 static bool
 main_read(struct view *view, char *line)
 {
-	static struct rev_graph *graph = graph_stacks;
+	static struct graph graph;
 	enum line_type type;
 	struct commit *commit;
 
 	if (!line) {
-		int i;
-
 		if (!view->lines && !view->prev)
 			die("No revisions match the given arguments.");
 		if (view->lines > 0) {
@@ -5951,38 +5837,30 @@ main_read(struct view *view, char *line)
 			if (!commit->author) {
 				view->lines--;
 				free(commit);
-				graph->commit = NULL;
 			}
 		}
-		update_rev_graph(view, graph);
 
-		for (i = 0; i < ARRAY_SIZE(graph_stacks); i++)
-			clear_rev_graph(&graph_stacks[i]);
+		done_graph(&graph);
 		return TRUE;
 	}
 
 	type = get_line_type(line);
 	if (type == LINE_COMMIT) {
+		bool is_boundary;
+
 		commit = calloc(1, sizeof(struct commit));
 		if (!commit)
 			return FALSE;
 
 		line += STRING_SIZE("commit ");
-		if (*line == '-') {
-			graph->boundary = 1;
+		is_boundary = *line == '-';
+		if (is_boundary)
 			line++;
-		}
 
 		string_copy_rev(commit->id, line);
 		commit->refs = get_ref_list(commit->id);
-		graph->commit = commit;
 		add_line_data(view, commit, LINE_MAIN_COMMIT);
-
-		while ((line = strchr(line, ' '))) {
-			line++;
-			push_rev_graph(graph->parents, line);
-			commit->has_parents = TRUE;
-		}
+		graph_add_commit(&graph, &commit->graph, commit->id, line, is_boundary);
 		return TRUE;
 	}
 
@@ -5992,16 +5870,14 @@ main_read(struct view *view, char *line)
 
 	switch (type) {
 	case LINE_PARENT:
-		if (commit->has_parents)
-			break;
-		push_rev_graph(graph->parents, line + STRING_SIZE("parent "));
+		if (!graph.has_parents)
+			graph_add_parent(&graph, line + STRING_SIZE("parent "));
 		break;
 
 	case LINE_AUTHOR:
 		parse_author_line(line + STRING_SIZE("author "),
 				  &commit->author, &commit->time);
-		update_rev_graph(view, graph);
-		graph = graph->next;
+		graph_render_parents(&graph);
 		break;
 
 	default:

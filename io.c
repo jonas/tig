@@ -276,7 +276,7 @@ io_strerror(struct io *io)
 }
 
 bool
-io_can_read(struct io *io)
+io_can_read(struct io *io, bool can_block)
 {
 	struct timeval tv = { 0, 500 };
 	fd_set fds;
@@ -284,7 +284,7 @@ io_can_read(struct io *io)
 	FD_ZERO(&fds);
 	FD_SET(io->pipe, &fds);
 
-	return select(io->pipe + 1, &fds, NULL, NULL, &tv) > 0;
+	return select(io->pipe + 1, &fds, NULL, NULL, can_block ? NULL : &tv) > 0;
 }
 
 ssize_t
