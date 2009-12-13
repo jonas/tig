@@ -297,6 +297,9 @@ string_enum_compare(const char *str1, const char *str2, int len)
 	return 0;
 }
 
+#define enum_equals(entry, str, len) \
+	((entry).namelen == (len) && string_enum_compare((entry).name, str, len))
+
 struct enum_map {
 	const char *name;
 	int namelen;
@@ -330,8 +333,7 @@ map_enum_do(const struct enum_map *map, size_t map_size, int *value, const char 
 	int i;
 
 	for (i = 0; i < map_size; i++)
-		if (namelen == map[i].namelen &&
-		    !string_enum_compare(name, map[i].name, namelen)) {
+		if (enum_equals(map[i], name, namelen)) {
 			*value = map[i].value;
 			return TRUE;
 		}
@@ -992,8 +994,7 @@ get_request(const char *name)
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(req_info); i++)
-		if (req_info[i].namelen == namelen &&
-		    !string_enum_compare(req_info[i].name, name, namelen))
+		if (enum_equals(req_info[i], name, namelen))
 			return req_info[i].request;
 
 	return REQ_NONE;
@@ -1154,8 +1155,7 @@ get_line_info(const char *name)
 	enum line_type type;
 
 	for (type = 0; type < ARRAY_SIZE(line_info); type++)
-		if (namelen == line_info[type].namelen &&
-		    !string_enum_compare(line_info[type].name, name, namelen))
+		if (enum_equals(line_info[type], name, namelen))
 			return &line_info[type];
 
 	return NULL;
