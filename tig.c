@@ -401,7 +401,7 @@ static const struct enum_map date_map[] = {
 #undef	DATE_
 };
 
-static char *
+static const char *
 string_date(const time_t *time, enum date date)
 {
 	static char buf[DATE_COLS + 1];
