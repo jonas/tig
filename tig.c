@@ -2914,6 +2914,32 @@ free_argv(const char *argv[])
 		free((void *) argv[argc]);
 }
 
+static const char *
+format_arg(const char *name)
+{
+	static struct {
+		const char *name;
+		size_t namelen;
+		const char *value;
+		const char *value_if_empty;
+	} vars[] = {
+#define FORMAT_VAR(name, value, value_if_empty) \
+	{ name, STRING_SIZE(name), value, value_if_empty }
+		FORMAT_VAR("%(directory)",	opt_path,	""),
+		FORMAT_VAR("%(file)",		opt_file,	""),
+		FORMAT_VAR("%(ref)",		opt_ref,	"HEAD"),
+		FORMAT_VAR("%(head)",		ref_head,	""),
+		FORMAT_VAR("%(commit)",		ref_commit,	""),
+		FORMAT_VAR("%(blob)",		ref_blob,	""),
+	};
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(vars); i++)
+		if (!strncmp(name, vars[i].name, vars[i].namelen))
+			return *vars[i].value ? vars[i].value : vars[i].value_if_empty;
+
+	return NULL;
+}
 static bool
 format_argv(const char *dst_argv[], const char *src_argv[], enum format_flags flags)
 {
@@ -2938,27 +2964,13 @@ format_argv(const char *dst_argv[], const char *src_argv[], enum format_flags fl
 				len = strlen(arg);
 				value = "";
 
-			} else if (!prefixcmp(next, "%(directory)")) {
-				value = opt_path;
-
-			} else if (!prefixcmp(next, "%(file)")) {
-				value = opt_file;
-
-			} else if (!prefixcmp(next, "%(ref)")) {
-				value = *opt_ref ? opt_ref : "HEAD";
-
-			} else if (!prefixcmp(next, "%(head)")) {
-				value = ref_head;
-
-			} else if (!prefixcmp(next, "%(commit)")) {
-				value = ref_commit;
-
-			} else if (!prefixcmp(next, "%(blob)")) {
-				value = ref_blob;
-
 			} else {
-				report("Unknown replacement: `%s`", next);
-				return FALSE;
+				value = format_arg(next);
+
+				if (!value) {
+					report("Unknown replacement: `%s`", next);
+					return FALSE;
+				}
 			}
 
 			if (!string_format_from(buf, &bufpos, "%.*s%s", len, arg, value))
