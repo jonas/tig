@@ -298,7 +298,7 @@ string_enum_compare(const char *str1, const char *str2, int len)
 }
 
 #define enum_equals(entry, str, len) \
-	((entry).namelen == (len) && string_enum_compare((entry).name, str, len))
+	((entry).namelen == (len) && !string_enum_compare((entry).name, str, len))
 
 struct enum_map {
 	const char *name;
