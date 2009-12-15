@@ -442,6 +442,45 @@ string_date(const time_t *time, enum date date)
 }
 
 
+#define AUTHOR_VALUES \
+	AUTHOR_(NO), \
+	AUTHOR_(FULL), \
+	AUTHOR_(ABBREVIATED)
+
+enum author {
+#define AUTHOR_(name) AUTHOR_##name
+	AUTHOR_VALUES,
+#undef	AUTHOR_
+	AUTHOR_DEFAULT = AUTHOR_FULL
+};
+
+static const struct enum_map author_map[] = {
+#define AUTHOR_(name) ENUM_MAP(#name, AUTHOR_##name)
+	AUTHOR_VALUES
+#undef	AUTHOR_
+};
+
+static const char *
+get_author_initials(const char *author, size_t max_columns)
+{
+	static char initials[10];
+	size_t pos;
+
+#define is_initial_sep(c) (isspace(c) || ispunct(c) || (c) == '@')
+
+	memset(initials, 0, sizeof(initials));
+	for (pos = 0; *author && pos < max_columns - 1; author++, pos++) {
+		while (is_initial_sep(*author))
+			author++;
+		strncpy(&initials[pos], author, sizeof(initials) - 1 - pos);
+		while (*author && !is_initial_sep(author[1]))
+			author++;
+	}
+
+	return initials;
+}
+
+
 static bool
 argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
 {
@@ -1007,7 +1046,7 @@ get_request(const char *name)
 
 /* Option and state variables. */
 static enum date opt_date		= DATE_DEFAULT;
-static bool opt_author			= TRUE;
+static enum author opt_author		= AUTHOR_DEFAULT;
 static bool opt_line_number		= FALSE;
 static bool opt_line_graphics		= TRUE;
 static bool opt_rev_graph		= FALSE;
@@ -1741,7 +1780,7 @@ option_set_command(int argc, const char *argv[])
 	}
 
 	if (!strcmp(argv[0], "show-author"))
-		return parse_bool(&opt_author, argv[2]);
+		return parse_enum(&opt_author, argv[2], author_map);
 
 	if (!strcmp(argv[0], "show-date"))
 		return parse_enum(&opt_date, argv[2], date_map);
@@ -2214,25 +2253,11 @@ draw_date(struct view *view, time_t *time)
 static bool
 draw_author(struct view *view, const char *author)
 {
-	bool trim = opt_author_cols == 0 || opt_author_cols > 5 || !author;
+	bool trim = opt_author_cols == 0 || opt_author_cols > 5;
+	bool abbreviate = opt_author == AUTHOR_ABBREVIATED || !trim;
 
-	if (!trim) {
-		static char initials[10];
-		size_t pos;
-
-#define is_initial_sep(c) (isspace(c) || ispunct(c) || (c) == '@')
-
-		memset(initials, 0, sizeof(initials));
-		for (pos = 0; *author && pos < opt_author_cols - 1; author++, pos++) {
-			while (is_initial_sep(*author))
-				author++;
-			strncpy(&initials[pos], author, sizeof(initials) - 1 - pos);
-			while (*author && !is_initial_sep(author[1]))
-				author++;
-		}
-
-		author = initials;
-	}
+	if (abbreviate && author)
+		author = get_author_initials(author, opt_author_cols);
 
 	return draw_field(view, LINE_AUTHOR, author, opt_author_cols, trim);
 }
@@ -2498,6 +2523,7 @@ toggle_enum_option_do(unsigned int *opt, const char *help,
 	toggle_enum_option_do(opt, help, map, ARRAY_SIZE(map))
 
 #define toggle_date() toggle_enum_option(&opt_date, "dates", date_map)
+#define toggle_author() toggle_enum_option(&opt_author, "author names", author_map)
 
 static void
 toggle_view_option(bool *option, const char *help)
@@ -2523,6 +2549,8 @@ open_option_menu(void)
 	if (prompt_menu("Toggle option", menu, &selected)) {
 		if (menu[selected].data == &opt_date)
 			toggle_date();
+		else if (menu[selected].data == &opt_author)
+			toggle_author();
 		else
 			toggle_view_option(menu[selected].data, menu[selected].text);
 	}
@@ -3535,7 +3563,7 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_TOGGLE_AUTHOR:
-		toggle_view_option(&opt_author, "author display");
+		toggle_author();
 		break;
 
 	case REQ_TOGGLE_REV_GRAPH:

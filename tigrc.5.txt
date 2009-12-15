@@ -41,7 +41,7 @@ is:
 Examples:
 
 --------------------------------------------------------------------------
-set show-author = yes		# Show author?
+set show-author = abbreviated	# Show abbreviated author names.
 set show-date = relative	# Show relative commit date.
 set show-rev-graph = yes	# Show revision graph?
 set show-refs = yes		# Show references?
@@ -86,15 +86,18 @@ Variables
 
 The following variables can be set:
 
-'show-author' (bool)::
 'show-rev-graph' (bool)::
 'show-refs' (bool)::
 
-	Whether to show author, revision graph, and references
-	(branches, tags, and remotes) in the main view on start-up. Can all be
-	toggled.
+	Whether to show revision graph, and references (branches, tags, and
+	remotes) in the main view on start-up. Can all be toggled.
 
-'show-date' (bool or "relative" or "short")::
+'show-author' (mixed) ["abbreviated" | "default" | bool]::
+
+	How to display author names. If set to "abbreviated" author initials
+	will be shown. Can be toggled.
+
+'show-date' (mixed) ["relative" | "short" | "default" | bool]::
 
 	Whether and how to show date. If set to "relative" a relative date will be
 	used, e.g. "2 minutes ago". If set to "short" no time information is
