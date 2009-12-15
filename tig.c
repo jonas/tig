@@ -107,6 +107,7 @@ static size_t utf8_length(const char **string, size_t col, int *width, size_t ma
 #define DATE_SHORT_COLS	STRING_SIZE("2006-04-29 ")
 
 #define ID_COLS		8
+#define AUTHOR_COLS	19
 
 #define MIN_VIEW_HEIGHT 4
 
@@ -460,20 +461,21 @@ static const struct enum_map author_map[] = {
 #undef	AUTHOR_
 };
 
+/* FIXME: Handle multi-byte and multi-column characters. */
 static const char *
 get_author_initials(const char *author, size_t max_columns)
 {
-	static char initials[10];
+	static char initials[AUTHOR_COLS];
 	size_t pos;
 
-#define is_initial_sep(c) (isspace(c) || ispunct(c) || (c) == '@')
+#define is_initial_sep(c) (isspace(c) || ispunct(c) || (c) == '@' || (c) == '-')
 
 	memset(initials, 0, sizeof(initials));
-	for (pos = 0; *author && pos < max_columns - 1; author++, pos++) {
+	for (pos = 0; *author && pos < sizeof(initials) - 1; author++, pos++) {
 		while (is_initial_sep(*author))
 			author++;
 		strncpy(&initials[pos], author, sizeof(initials) - 1 - pos);
-		while (*author && !is_initial_sep(author[1]))
+		while (*author && author[1] && !is_initial_sep(author[1]))
 			author++;
 	}
 
@@ -1055,7 +1057,7 @@ static int opt_num_interval		= 5;
 static double opt_hscroll		= 0.50;
 static double opt_scale_split_view	= 2.0 / 3.0;
 static int opt_tab_size			= 8;
-static int opt_author_cols		= 19;
+static int opt_author_cols		= AUTHOR_COLS;
 static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
