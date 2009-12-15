@@ -5450,7 +5450,7 @@ static const char *status_diff_files_argv[] = {
 };
 
 static const char *status_list_other_argv[] = {
-	"git", "ls-files", "-z", "--others", "--exclude-standard", NULL
+	"git", "ls-files", "-z", "--others", "--exclude-standard", opt_prefix, NULL
 };
 
 static const char *status_list_no_head_argv[] = {
