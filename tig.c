@@ -3359,7 +3359,7 @@ open_mergetool(const char *file)
 }
 
 static void
-open_editor(bool from_root, const char *file)
+open_editor(const char *file)
 {
 	const char *editor_argv[] = { "vi", file, NULL };
 	const char *editor;
@@ -3375,7 +3375,7 @@ open_editor(bool from_root, const char *file)
 		editor = "vi";
 
 	editor_argv[0] = editor;
-	open_external_viewer(editor_argv, from_root ? opt_cdup : NULL);
+	open_external_viewer(editor_argv, opt_cdup);
 }
 
 static void
@@ -4472,7 +4472,7 @@ open_blob_editor()
 	else if (!run_io_append(blob_ops.argv, FORMAT_ALL, fd))
 		report("Failed to save blob data to file");
 	else
-		open_editor(FALSE, file);
+		open_editor(file);
 	if (fd != -1)
 		unlink(file);
 }
@@ -4498,7 +4498,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 		} else if (!is_head_commit(view->vid)) {
 			open_blob_editor();
 		} else {
-			open_editor(TRUE, opt_file);
+			open_editor(opt_file);
 		}
 		return REQ_NONE;
 
@@ -5958,7 +5958,7 @@ status_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		}
 
-		open_editor(status->status != '?', status->new.name);
+		open_editor(status->new.name);
 		break;
 
 	case REQ_VIEW_BLAME:
@@ -6240,7 +6240,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		}
 
-		open_editor(stage_status.status != '?', stage_status.new.name);
+		open_editor(stage_status.new.name);
 		break;
 
 	case REQ_REFRESH:
