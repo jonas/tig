@@ -4079,7 +4079,7 @@ help_open_keymap(struct view *view, enum keymap keymap)
 
 		if (add_title && help_open_keymap_title(view, keymap))
 			return;
-		add_title = false;
+		add_title = FALSE;
 
 		if (group) {
 			add_line_text(view, group, LINE_HELP_GROUP);
