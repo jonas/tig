@@ -70,6 +70,7 @@ static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
 static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char **string, size_t col, int *width, size_t max_width, int *trimmed, bool reserve);
+static inline unsigned char utf8_char_length(const char *string, const char *end);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -461,22 +462,36 @@ static const struct enum_map author_map[] = {
 #undef	AUTHOR_
 };
 
-/* FIXME: Handle multi-byte and multi-column characters. */
 static const char *
-get_author_initials(const char *author, size_t max_columns)
+get_author_initials(const char *author)
 {
-	static char initials[AUTHOR_COLS];
-	size_t pos;
+	static char initials[AUTHOR_COLS * 6 + 1];
+	size_t pos = 0;
+	const char *end = strchr(author, '\0');
 
 #define is_initial_sep(c) (isspace(c) || ispunct(c) || (c) == '@' || (c) == '-')
 
 	memset(initials, 0, sizeof(initials));
-	for (pos = 0; *author && pos < sizeof(initials) - 1; author++, pos++) {
+	while (author < end) {
+		unsigned char bytes;
+		size_t i;
+
 		while (is_initial_sep(*author))
 			author++;
-		strncpy(&initials[pos], author, sizeof(initials) - 1 - pos);
-		while (*author && author[1] && !is_initial_sep(author[1]))
-			author++;
+
+		bytes = utf8_char_length(author, end);
+		if (bytes < sizeof(initials) - 1 - pos) {
+			while (bytes--) {
+				initials[pos++] = *author++;
+			}
+		}
+
+		for (i = pos; author < end && !is_initial_sep(*author); author++) {
+			if (i < sizeof(initials) - 1)
+				initials[i++] = *author;
+		}
+
+		initials[i++] = 0;
 	}
 
 	return initials;
@@ -2259,7 +2274,7 @@ draw_author(struct view *view, const char *author)
 	bool abbreviate = opt_author == AUTHOR_ABBREVIATED || !trim;
 
 	if (abbreviate && author)
-		author = get_author_initials(author, opt_author_cols);
+		author = get_author_initials(author);
 
 	return draw_field(view, LINE_AUTHOR, author, opt_author_cols, trim);
 }
@@ -6795,6 +6810,14 @@ static const unsigned char utf8_bytes[256] = {
 	3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 4,4,4,4,4,4,4,4, 5,5,5,5,6,6,1,1,
 };
 
+static inline unsigned char
+utf8_char_length(const char *string, const char *end)
+{
+	int c = *(unsigned char *) string;
+
+	return utf8_bytes[c];
+}
+
 /* Decode UTF-8 multi-byte representation into a Unicode character. */
 static inline unsigned long
 utf8_to_unicode(const char *string, size_t length)
@@ -6862,8 +6885,7 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
 	*trimmed = 0;
 
 	while (string < end) {
-		int c = *(unsigned char *) string;
-		unsigned char bytes = utf8_bytes[c];
+		unsigned char bytes = utf8_char_length(string, end);
 		size_t ucwidth;
 		unsigned long unicode;
 
