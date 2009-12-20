@@ -359,32 +359,6 @@ suffixcmp(const char *str, int slen, const char *suffix)
 }
 
 
-/*
- * What value of "tz" was in effect back then at "time" in the
- * local timezone?
- */
-static int local_tzoffset(time_t time)
-{
-	time_t t, t_local;
-	struct tm tm;
-	int offset, eastwest; 
-
-	t = time;
-	localtime_r(&t, &tm);
-	t_local = mktime(&tm);
-
-	if (t_local < t) {
-		eastwest = -1;
-		offset = t - t_local;
-	} else {
-		eastwest = 1;
-		offset = t_local - t;
-	}
-	offset /= 60; /* in minutes */
-	offset = (offset % 60) + ((offset / 60) * 100);
-	return offset * eastwest;
-}
-
 #define DATE_INFO \
 	DATE_(NO), \
 	DATE_(DEFAULT), \
@@ -403,8 +377,18 @@ static const struct enum_map date_map[] = {
 #undef	DATE_
 };
 
+struct time {
+	time_t sec;
+	int tz;
+};
+
+static inline int timecmp(const struct time *t1, const struct time *t2)
+{
+	return t1->sec - t2->sec;
+}
+
 static const char *
-string_date(const time_t *time, enum date date)
+string_date(const struct time *time, enum date date)
 {
 	static char buf[DATE_COLS + 1];
 	static const struct enum_map reldate[] = {
@@ -419,7 +403,7 @@ string_date(const time_t *time, enum date date)
 
 	if (date == DATE_RELATIVE) {
 		struct timeval now;
-		time_t date = *time + local_tzoffset(*time);
+		time_t date = time->sec + time->tz;
 		time_t seconds;
 		int i;
 
@@ -439,7 +423,7 @@ string_date(const time_t *time, enum date date)
 		}
 	}
 
-	gmtime_r(time, &tm);
+	gmtime_r(&time->sec, &tm);
 	return strftime(buf, sizeof(buf), DATE_FORMAT, &tm) ? buf : NULL;
 }
 
@@ -2259,7 +2243,7 @@ draw_field(struct view *view, enum line_type type, const char *text, int len, bo
 }
 
 static bool
-draw_date(struct view *view, time_t *time)
+draw_date(struct view *view, struct time *time)
 {
 	const char *date = time ? mkdate(time) : "";
 	int cols = opt_date == DATE_SHORT ? DATE_SHORT_COLS : DATE_COLS;
@@ -3734,7 +3718,13 @@ get_author(const char *name)
 }
 
 static void
-parse_timezone(time_t *time, const char *zone)
+parse_timesec(struct time *time, const char *sec)
+{
+	time->sec = (time_t) atol(sec);
+}
+
+static void
+parse_timezone(struct time *time, const char *zone)
 {
 	long tz;
 
@@ -3746,14 +3736,15 @@ parse_timezone(time_t *time, const char *zone)
 	if (zone[0] == '-')
 		tz = -tz;
 
-	*time -= tz;
+	time->tz = tz;
+	time->sec -= tz;
 }
 
 /* Parse author lines where the name may be empty:
  *	author  <email@address.tld> 1138474660 +0100
  */
 static void
-parse_author_line(char *ident, const char **author, time_t *time)
+parse_author_line(char *ident, const char **author, struct time *time)
 {
 	char *nameend = strchr(ident, '<');
 	char *emailend = strchr(ident, '>');
@@ -3775,7 +3766,7 @@ parse_author_line(char *ident, const char **author, time_t *time)
 		char *secs = emailend + 2;
 		char *zone = strchr(secs, ' ');
 
-		*time = (time_t) atol(secs);
+		parse_timesec(time, secs);
 
 		if (zone && strlen(zone) == STRING_SIZE(" +0700"))
 			parse_timezone(time, zone + 1);
@@ -4245,7 +4236,7 @@ push_tree_stack_entry(const char *name, unsigned long lineno)
 struct tree_entry {
 	char id[SIZEOF_REV];
 	mode_t mode;
-	time_t time;			/* Date from the author ident. */
+	struct time time;		/* Date from the author ident. */
 	const char *author;		/* Author of the commit. */
 	char name[1];
 };
@@ -4284,7 +4275,7 @@ tree_compare(const void *l1, const void *l2)
 
 	switch (get_sort_field(tree_sort_state)) {
 	case ORDERBY_DATE:
-		return sort_order(tree_sort_state, entry1->time - entry2->time);
+		return sort_order(tree_sort_state, timecmp(&entry1->time, &entry2->time));
 
 	case ORDERBY_AUTHOR:
 		return sort_order(tree_sort_state, strcmp(entry1->author, entry2->author));
@@ -4321,7 +4312,7 @@ static bool
 tree_read_date(struct view *view, char *text, bool *read_date)
 {
 	static const char *author_name;
-	static time_t author_time;
+	static struct time author_time;
 
 	if (!text && *read_date) {
 		*read_date = FALSE;
@@ -4711,7 +4702,7 @@ struct blame_commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
 	const char *author;		/* Author of the commit. */
-	time_t time;			/* Date from the author ident. */
+	struct time time;		/* Date from the author ident. */
 	char filename[128];		/* Name of file. */
 	bool has_previous;		/* Was a "previous" line detected. */
 };
@@ -4898,7 +4889,7 @@ blame_read(struct view *view, char *line)
 		commit->author = get_author(line);
 
 	} else if (match_blame_header("author-time ", &line)) {
-		commit->time = (time_t) atol(line);
+		parse_timesec(&commit->time, line);
 
 	} else if (match_blame_header("author-tz ", &line)) {
 		parse_timezone(&commit->time, line);
@@ -4921,7 +4912,7 @@ static bool
 blame_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct blame *blame = line->data;
-	time_t *time = NULL;
+	struct time *time = NULL;
 	const char *id = NULL, *author = NULL;
 	char text[SIZEOF_STR];
 
@@ -5113,7 +5104,7 @@ static struct view_ops blame_ops = {
 
 struct branch {
 	const char *author;		/* Author of the last commit. */
-	time_t time;			/* Date of the last activity. */
+	struct time time;		/* Date of the last activity. */
 	const struct ref *ref;		/* Name and commit ID information. */
 };
 
@@ -5132,7 +5123,7 @@ branch_compare(const void *l1, const void *l2)
 
 	switch (get_sort_field(branch_sort_state)) {
 	case ORDERBY_DATE:
-		return sort_order(branch_sort_state, branch1->time - branch2->time);
+		return sort_order(branch_sort_state, timecmp(&branch1->time, &branch2->time));
 
 	case ORDERBY_AUTHOR:
 		return sort_order(branch_sort_state, strcmp(branch1->author, branch2->author));
@@ -6322,7 +6313,7 @@ struct commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
 	const char *author;		/* Author of the commit. */
-	time_t time;			/* Date from the author ident. */
+	struct time time;		/* Date from the author ident. */
 	struct ref_list *refs;		/* Repository references. */
 	chtype graph[SIZEOF_REVGRAPH];	/* Ancestry chain graphics. */
 	size_t graph_size;		/* The width of the graph array. */
