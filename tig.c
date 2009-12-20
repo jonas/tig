@@ -2245,7 +2245,7 @@ draw_field(struct view *view, enum line_type type, const char *text, int len, bo
 static bool
 draw_date(struct view *view, struct time *time)
 {
-	const char *date = time ? mkdate(time) : "";
+	const char *date = time && time->sec ? mkdate(time) : "";
 	int cols = opt_date == DATE_SHORT ? DATE_SHORT_COLS : DATE_COLS;
 
 	return draw_field(view, LINE_DATE, date, cols, FALSE);
@@ -4459,7 +4459,7 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 		if (opt_author && draw_author(view, entry->author))
 			return TRUE;
 
-		if (opt_date && draw_date(view, entry->author ? &entry->time : NULL))
+		if (opt_date && draw_date(view, &entry->time))
 			return TRUE;
 	}
 	if (draw_text(view, line->type, entry->name, TRUE))
@@ -5140,7 +5140,7 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct branch *branch = line->data;
 	enum line_type type = branch->ref->head ? LINE_MAIN_HEAD : LINE_DEFAULT;
 
-	if (opt_date && draw_date(view, branch->author ? &branch->time : NULL))
+	if (opt_date && draw_date(view, &branch->time))
 		return TRUE;
 
 	if (opt_author && draw_author(view, branch->author))
