@@ -532,7 +532,7 @@ enum io_type {
 struct io {
 	enum io_type type;	/* The requested type of pipe. */
 	const char *dir;	/* Directory from which to execute. */
-	pid_t pid;		/* Pipe for reading or writing. */
+	pid_t pid;		/* PID of spawned process. */
 	int pipe;		/* Pipe end for reading or writing. */
 	int error;		/* Error status. */
 	const char *argv[SIZEOF_ARG];	/* Shell command arguments. */
