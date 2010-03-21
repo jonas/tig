@@ -544,7 +544,7 @@ struct io {
 };
 
 static void
-reset_io(struct io *io)
+io_reset(struct io *io)
 {
 	io->pipe = -1;
 	io->pid = 0;
@@ -555,18 +555,18 @@ reset_io(struct io *io)
 }
 
 static void
-init_io(struct io *io, const char *dir, enum io_type type)
+io_init(struct io *io, const char *dir, enum io_type type)
 {
-	reset_io(io);
+	io_reset(io);
 	io->type = type;
 	io->dir = dir;
 }
 
 static bool
-init_io_rd(struct io *io, const char *argv[], const char *dir,
+io_init_rd(struct io *io, const char *argv[], const char *dir,
 		enum format_flags flags)
 {
-	init_io(io, dir, IO_RD);
+	io_init(io, dir, IO_RD);
 	return format_argv(io->argv, argv, flags);
 }
 
@@ -577,7 +577,7 @@ io_open(struct io *io, const char *fmt, ...)
 	bool fits;
 	va_list args;
 
-	init_io(io, NULL, IO_FD);
+	io_init(io, NULL, IO_FD);
 
 	va_start(args, fmt);
 	fits = vsnprintf(name, sizeof(name), fmt, args) < sizeof(name);
@@ -594,20 +594,20 @@ io_open(struct io *io, const char *fmt, ...)
 }
 
 static bool
-kill_io(struct io *io)
+io_kill(struct io *io)
 {
 	return io->pid == 0 || kill(io->pid, SIGKILL) != -1;
 }
 
 static bool
-done_io(struct io *io)
+io_done(struct io *io)
 {
 	pid_t pid = io->pid;
 
 	if (io->pipe != -1)
 		close(io->pipe);
 	free(io->buf);
-	reset_io(io);
+	io_reset(io);
 
 	while (pid > 0) {
 		int status;
@@ -630,7 +630,7 @@ done_io(struct io *io)
 }
 
 static bool
-start_io(struct io *io)
+io_start(struct io *io)
 {
 	int pipefds[2] = { -1, -1 };
 
@@ -682,59 +682,59 @@ start_io(struct io *io)
 }
 
 static bool
-run_io(struct io *io, const char **argv, const char *dir, enum io_type type)
+io_run(struct io *io, const char **argv, const char *dir, enum io_type type)
 {
-	init_io(io, dir, type);
+	io_init(io, dir, type);
 	if (!format_argv(io->argv, argv, FORMAT_NONE))
 		return FALSE;
-	return start_io(io);
+	return io_start(io);
 }
 
 static int
-run_io_do(struct io *io)
+io_complete(struct io *io)
 {
-	return start_io(io) && done_io(io);
+	return io_start(io) && io_done(io);
 }
 
 static int
-run_io_bg(const char **argv)
+io_run_bg(const char **argv)
 {
 	struct io io = {};
 
-	init_io(&io, NULL, IO_BG);
+	io_init(&io, NULL, IO_BG);
 	if (!format_argv(io.argv, argv, FORMAT_NONE))
 		return FALSE;
-	return run_io_do(&io);
+	return io_complete(&io);
 }
 
 static bool
-run_io_fg(const char **argv, const char *dir)
+io_run_fg(const char **argv, const char *dir)
 {
 	struct io io = {};
 
-	init_io(&io, dir, IO_FG);
+	io_init(&io, dir, IO_FG);
 	if (!format_argv(io.argv, argv, FORMAT_NONE))
 		return FALSE;
-	return run_io_do(&io);
+	return io_complete(&io);
 }
 
 static bool
-run_io_append(const char **argv, enum format_flags flags, int fd)
+io_run_append(const char **argv, enum format_flags flags, int fd)
 {
 	struct io io = {};
 
-	init_io(&io, NULL, IO_AP);
+	io_init(&io, NULL, IO_AP);
 	io.pipe = fd;
 	if (format_argv(io.argv, argv, flags))
-		return run_io_do(&io);
+		return io_complete(&io);
 	close(fd);
 	return FALSE;
 }
 
 static bool
-run_io_rd(struct io *io, const char **argv, const char *dir, enum format_flags flags)
+io_run_rd(struct io *io, const char **argv, const char *dir, enum format_flags flags)
 {
-	return init_io_rd(io, argv, dir, flags) && start_io(io);
+	return io_init_rd(io, argv, dir, flags) && io_start(io);
 }
 
 static bool
@@ -783,7 +783,7 @@ io_read(struct io *io, void *buf, size_t bufsize)
 	} while (1);
 }
 
-DEFINE_ALLOCATOR(realloc_io_buf, char, BUFSIZ)
+DEFINE_ALLOCATOR(io_realloc_buf, char, BUFSIZ)
 
 static char *
 io_get(struct io *io, int c, bool can_read)
@@ -820,7 +820,7 @@ io_get(struct io *io, int c, bool can_read)
 			memmove(io->buf, io->bufpos, io->bufsize);
 
 		if (io->bufalloc == io->bufsize) {
-			if (!realloc_io_buf(&io->buf, io->bufalloc, BUFSIZ))
+			if (!io_realloc_buf(&io->buf, io->bufalloc, BUFSIZ))
 				return NULL;
 			io->bufalloc += BUFSIZ;
 		}
@@ -863,15 +863,15 @@ io_read_buf(struct io *io, char buf[], size_t bufsize)
 		string_ncopy_do(buf, bufsize, result, strlen(result));
 	}
 
-	return done_io(io) && result;
+	return io_done(io) && result;
 }
 
 static bool
-run_io_buf(const char **argv, char buf[], size_t bufsize)
+io_run_buf(const char **argv, char buf[], size_t bufsize)
 {
 	struct io io = {};
 
-	return run_io_rd(&io, argv, NULL, FORMAT_NONE)
+	return io_run_rd(&io, argv, NULL, FORMAT_NONE)
 	    && io_read_buf(&io, buf, bufsize);
 }
 
@@ -882,7 +882,7 @@ io_load(struct io *io, const char *separators,
 	char *name;
 	int state = OK;
 
-	if (!start_io(io))
+	if (!io_start(io))
 		return ERR;
 
 	while (state == OK && (name = io_get(io, '\n', TRUE))) {
@@ -908,18 +908,18 @@ io_load(struct io *io, const char *separators,
 
 	if (state != ERR && io_error(io))
 		state = ERR;
-	done_io(io);
+	io_done(io);
 
 	return state;
 }
 
 static int
-run_io_load(const char **argv, const char *separators,
+io_run_load(const char **argv, const char *separators,
 	    int (*read_property)(char *, size_t, char *, size_t))
 {
 	struct io io = {};
 
-	return init_io_rd(&io, argv, NULL, FORMAT_NONE)
+	return io_init_rd(&io, argv, NULL, FORMAT_NONE)
 		? io_load(&io, separators, read_property) : ERR;
 }
 
@@ -3043,8 +3043,8 @@ end_update(struct view *view, bool force)
 		if (!force)
 			return;
 	if (force)
-		kill_io(view->pipe);
-	done_io(view->pipe);
+		io_kill(view->pipe);
+	io_done(view->pipe);
 	view->pipe = NULL;
 }
 
@@ -3063,7 +3063,7 @@ prepare_update(struct view *view, const char *argv[], const char *dir,
 {
 	if (view->pipe)
 		end_update(view, TRUE);
-	return init_io_rd(&view->io, argv, dir, flags);
+	return io_init_rd(&view->io, argv, dir, flags);
 }
 
 static bool
@@ -3084,7 +3084,7 @@ begin_update(struct view *view, bool refresh)
 		if (view->ops->prepare) {
 			if (!view->ops->prepare(view))
 				return FALSE;
-		} else if (!init_io_rd(&view->io, view->ops->argv, NULL, FORMAT_ALL)) {
+		} else if (!io_init_rd(&view->io, view->ops->argv, NULL, FORMAT_ALL)) {
 			return FALSE;
 		}
 
@@ -3095,7 +3095,7 @@ begin_update(struct view *view, bool refresh)
 		string_copy_rev(view->ref, view->id);
 	}
 
-	if (!start_io(&view->io))
+	if (!io_start(&view->io))
 		return FALSE;
 
 	setup_update(view, view->id);
@@ -3333,7 +3333,7 @@ open_external_viewer(const char *argv[], const char *dir)
 {
 	def_prog_mode();           /* save current tty modes */
 	endwin();                  /* restore original tty modes */
-	run_io_fg(argv, dir);
+	io_run_fg(argv, dir);
 	fprintf(stderr, "Press Enter to continue");
 	getc(opt_tty);
 	reset_prog_mode();
@@ -3782,7 +3782,7 @@ open_commit_parent_menu(char buf[SIZEOF_STR], int *parents)
 
 	for (i = 0; i < *parents; i++) {
 		string_copy_rev(rev, &buf[SIZEOF_REV * i]);
-		if (!run_io_buf(revlist_argv, text, sizeof(text)) ||
+		if (!io_run_buf(revlist_argv, text, sizeof(text)) ||
 		    !(items[i].text = strdup(text))) {
 			ok = FALSE;
 			break;
@@ -3809,7 +3809,7 @@ select_commit_parent(const char *id, char rev[SIZEOF_REV], const char *path)
 	};
 	int parents;
 
-	if (!run_io_buf(revlist_argv, buf, sizeof(buf)) ||
+	if (!io_run_buf(revlist_argv, buf, sizeof(buf)) ||
 	    (parents = strlen(buf) / 40) < 0) {
 		report("Failed to get parent information");
 		return FALSE;
@@ -3852,7 +3852,7 @@ add_describe_ref(char *buf, size_t *bufpos, const char *commit_id, const char *s
 	const char *describe_argv[] = { "git", "describe", commit_id, NULL };
 	char ref[SIZEOF_STR];
 
-	if (!run_io_buf(describe_argv, ref, sizeof(ref)) || !*ref)
+	if (!io_run_buf(describe_argv, ref, sizeof(ref)) || !*ref)
 		return TRUE;
 
 	/* This is the only fatal call, since it can "corrupt" the buffer. */
@@ -4324,12 +4324,12 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 			return TRUE;
 		}
 
-		if (!run_io_rd(&io, log_file, opt_cdup, FORMAT_NONE)) {
+		if (!io_run_rd(&io, log_file, opt_cdup, FORMAT_NONE)) {
 			report("Failed to load tree data");
 			return TRUE;
 		}
 
-		done_io(view->pipe);
+		io_done(view->pipe);
 		view->io = io;
 		*read_date = TRUE;
 		return FALSE;
@@ -4368,7 +4368,7 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 		}
 
 		if (annotated == view->lines)
-			kill_io(view->pipe);
+			io_kill(view->pipe);
 	}
 	return TRUE;
 }
@@ -4466,7 +4466,7 @@ open_blob_editor()
 
 	if (fd == -1)
 		report("Failed to create temporary file");
-	else if (!run_io_append(blob_ops.argv, FORMAT_ALL, fd))
+	else if (!io_run_append(blob_ops.argv, FORMAT_ALL, fd))
 		report("Failed to save blob data to file");
 	else
 		open_editor(file);
@@ -4612,7 +4612,7 @@ tree_prepare(struct view *view)
 		opt_path[0] = 0;
 	}
 
-	return init_io_rd(&view->io, view->ops->argv, opt_cdup, FORMAT_ALL);
+	return io_init_rd(&view->io, view->ops->argv, opt_cdup, FORMAT_ALL);
 }
 
 static const char *tree_argv[SIZEOF_ARG] = {
@@ -4716,7 +4716,7 @@ blame_open(struct view *view)
 	}
 
 	if (*opt_ref || !io_open(&view->io, "%s%s", opt_cdup, opt_file)) {
-		if (!run_io_rd(&view->io, blame_cat_file_argv, opt_cdup, FORMAT_ALL))
+		if (!io_run_rd(&view->io, blame_cat_file_argv, opt_cdup, FORMAT_ALL))
 			return FALSE;
 	}
 
@@ -4812,12 +4812,12 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 		if (view->lines == 0 && !view->parent)
 			die("No blame exist for %s", view->vid);
 
-		if (view->lines == 0 || !run_io_rd(&io, argv, opt_cdup, FORMAT_ALL)) {
+		if (view->lines == 0 || !io_run_rd(&io, argv, opt_cdup, FORMAT_ALL)) {
 			report("Failed to load blame data");
 			return TRUE;
 		}
 
-		done_io(view->pipe);
+		io_done(view->pipe);
 		view->io = io;
 		*read_file = FALSE;
 		return FALSE;
@@ -4954,7 +4954,7 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 	int blamed_lineno = -1;
 	char *line;
 
-	if (!run_io(&io, diff_tree_argv, NULL, IO_RD))
+	if (!io_run(&io, diff_tree_argv, NULL, IO_RD))
 		return;
 
 	while ((line = io_get(&io, '\n', TRUE))) {
@@ -4975,7 +4975,7 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 		}
 	}
 
-	done_io(&io);
+	io_done(&io);
 }
 
 static enum request
@@ -5246,7 +5246,7 @@ branch_open(struct view *view)
 			"--simplify-by-decoration", "--all", NULL
 	};
 
-	if (!run_io_rd(&view->io, branch_log, NULL, FORMAT_NONE)) {
+	if (!io_run_rd(&view->io, branch_log, NULL, FORMAT_NONE)) {
 		report("Failed to load branch data");
 		return TRUE;
 	}
@@ -5366,7 +5366,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	char *buf;
 	struct io io = {};
 
-	if (!run_io(&io, argv, opt_cdup, IO_RD))
+	if (!io_run(&io, argv, opt_cdup, IO_RD))
 		return FALSE;
 
 	add_line_data(view, NULL, type);
@@ -5425,14 +5425,14 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 
 	if (io_error(&io)) {
 error_out:
-		done_io(&io);
+		io_done(&io);
 		return FALSE;
 	}
 
 	if (!view->line[view->lines - 1].data)
 		add_line_data(view, NULL, LINE_STAT_NONE);
 
-	done_io(&io);
+	io_done(&io);
 	return TRUE;
 }
 
@@ -5543,7 +5543,7 @@ status_open(struct view *view)
 	add_line_data(view, NULL, LINE_STAT_HEAD);
 	status_update_onbranch();
 
-	run_io_bg(update_index_argv);
+	io_run_bg(update_index_argv);
 
 	if (is_initial_commit()) {
 		if (!status_run(view, status_list_no_head_argv, 'A', LINE_STAT_STAGED))
@@ -5761,11 +5761,11 @@ status_update_prepare(struct io *io, enum line_type type)
 
 	switch (type) {
 	case LINE_STAT_STAGED:
-		return run_io(io, staged_argv, opt_cdup, IO_WR);
+		return io_run(io, staged_argv, opt_cdup, IO_WR);
 
 	case LINE_STAT_UNSTAGED:
 	case LINE_STAT_UNTRACKED:
-		return run_io(io, others_argv, opt_cdup, IO_WR);
+		return io_run(io, others_argv, opt_cdup, IO_WR);
 
 	default:
 		die("line type %d not handled in switch", type);
@@ -5811,7 +5811,7 @@ status_update_file(struct status *status, enum line_type type)
 		return FALSE;
 
 	result = status_update_write(&io, status, type);
-	return done_io(&io) && result;
+	return io_done(&io) && result;
 }
 
 static bool
@@ -5848,7 +5848,7 @@ status_update_files(struct view *view, struct line *line)
 	}
 	string_copy(view->ref, buf);
 
-	return done_io(&io) && result;
+	return io_done(&io) && result;
 }
 
 static bool
@@ -5911,13 +5911,13 @@ status_revert(struct status *status, enum line_type type, bool has_none)
 				reset_argv[4] = NULL;
 			}
 
-			if (!run_io_fg(reset_argv, opt_cdup))
+			if (!io_run_fg(reset_argv, opt_cdup))
 				return FALSE;
 			if (status->old.mode == 0 && status->new.mode == 0)
 				return TRUE;
 		}
 
-		return run_io_fg(checkout_argv, opt_cdup);
+		return io_run_fg(checkout_argv, opt_cdup);
 	}
 
 	return FALSE;
@@ -6104,15 +6104,15 @@ stage_apply_chunk(struct view *view, struct line *chunk, bool revert)
 		apply_argv[argc++] = "-R";
 	apply_argv[argc++] = "-";
 	apply_argv[argc++] = NULL;
-	if (!run_io(&io, apply_argv, opt_cdup, IO_WR))
+	if (!io_run(&io, apply_argv, opt_cdup, IO_WR))
 		return FALSE;
 
 	if (!stage_diff_write(&io, diff_hdr, chunk) ||
 	    !stage_diff_write(&io, chunk, view->line + view->lines))
 		chunk = NULL;
 
-	done_io(&io);
-	run_io_bg(update_index_argv);
+	io_done(&io);
+	io_run_bg(update_index_argv);
 
 	return chunk ? TRUE : FALSE;
 }
@@ -7434,7 +7434,7 @@ load_refs(void)
 	if (!*opt_git_dir)
 		return OK;
 
-	if (run_io_buf(head_argv, opt_head, sizeof(opt_head)) &&
+	if (io_run_buf(head_argv, opt_head, sizeof(opt_head)) &&
 	    !prefixcmp(opt_head, "refs/heads/")) {
 		char *offset = opt_head + STRING_SIZE("refs/heads/");
 
@@ -7445,7 +7445,7 @@ load_refs(void)
 	for (i = 0; i < refs_size; i++)
 		refs[i]->id[0] = 0;
 
-	if (run_io_load(ls_remote_argv, "\t", read_ref) == ERR)
+	if (io_run_load(ls_remote_argv, "\t", read_ref) == ERR)
 		return ERR;
 
 	/* Update the ref lists to reflect changes. */
@@ -7566,7 +7566,7 @@ load_git_config(void)
 {
 	const char *config_list_argv[] = { "git", "config", "--list", NULL };
 
-	return run_io_load(config_list_argv, "=", read_repo_config_option);
+	return io_run_load(config_list_argv, "=", read_repo_config_option);
 }
 
 static int
@@ -7601,7 +7601,7 @@ load_repo_info(void)
 			"--show-cdup", "--show-prefix", NULL
 	};
 
-	return run_io_load(rev_parse_argv, "=", read_repo_info);
+	return io_run_load(rev_parse_argv, "=", read_repo_info);
 }
 
 
