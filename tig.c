@@ -563,10 +563,10 @@ io_init(struct io *io, const char *dir, enum io_type type)
 }
 
 static bool
-io_init_rd(struct io *io, const char *argv[], const char *dir,
-		enum format_flags flags)
+io_format(struct io *io, const char *dir, enum io_type type,
+	  const char *argv[], enum format_flags flags)
 {
-	io_init(io, dir, IO_RD);
+	io_init(io, dir, type);
 	return format_argv(io->argv, argv, flags);
 }
 
@@ -704,8 +704,7 @@ io_run_bg(const char **argv)
 {
 	struct io io = {};
 
-	io_init(&io, NULL, IO_BG);
-	if (!format_argv(io.argv, argv, FORMAT_NONE))
+	if (!io_format(&io, NULL, IO_BG, argv, FORMAT_NONE))
 		return FALSE;
 	return io_complete(&io);
 }
@@ -715,8 +714,7 @@ io_run_fg(const char **argv, const char *dir)
 {
 	struct io io = {};
 
-	io_init(&io, dir, IO_FG);
-	if (!format_argv(io.argv, argv, FORMAT_NONE))
+	if (!io_format(&io, dir, IO_FG, argv, FORMAT_NONE))
 		return FALSE;
 	return io_complete(&io);
 }
@@ -726,18 +724,19 @@ io_run_append(const char **argv, enum format_flags flags, int fd)
 {
 	struct io io = {};
 
-	io_init(&io, NULL, IO_AP);
+	if (!io_format(&io, NULL, IO_AP, argv, flags)) {
+		close(fd);
+		return FALSE;
+	}
+
 	io.pipe = fd;
-	if (format_argv(io.argv, argv, flags))
-		return io_complete(&io);
-	close(fd);
-	return FALSE;
+	return io_complete(&io);
 }
 
 static bool
 io_run_rd(struct io *io, const char **argv, const char *dir, enum format_flags flags)
 {
-	return io_init_rd(io, argv, dir, flags) && io_start(io);
+	return io_format(io, dir, IO_RD, argv, flags) && io_start(io);
 }
 
 static bool
@@ -922,7 +921,7 @@ io_run_load(const char **argv, const char *separators,
 {
 	struct io io = {};
 
-	return io_init_rd(&io, argv, NULL, FORMAT_NONE)
+	return io_format(&io, NULL, IO_RD, argv, FORMAT_NONE)
 		? io_load(&io, separators, read_property) : ERR;
 }
 
@@ -2965,6 +2964,7 @@ format_arg(const char *name)
 
 	return NULL;
 }
+
 static bool
 format_argv(const char *dst_argv[], const char *src_argv[], enum format_flags flags)
 {
@@ -3066,7 +3066,7 @@ prepare_update(struct view *view, const char *argv[], const char *dir,
 {
 	if (view->pipe)
 		end_update(view, TRUE);
-	return io_init_rd(&view->io, argv, dir, flags);
+	return io_format(&view->io, dir, IO_RD, argv, flags);
 }
 
 static bool
@@ -3087,7 +3087,7 @@ begin_update(struct view *view, bool refresh)
 		if (view->ops->prepare) {
 			if (!view->ops->prepare(view))
 				return FALSE;
-		} else if (!io_init_rd(&view->io, view->ops->argv, NULL, FORMAT_ALL)) {
+		} else if (!io_format(&view->io, NULL, IO_RD, view->ops->argv, FORMAT_ALL)) {
 			return FALSE;
 		}
 
@@ -4615,7 +4615,7 @@ tree_prepare(struct view *view)
 		opt_path[0] = 0;
 	}
 
-	return io_init_rd(&view->io, view->ops->argv, opt_cdup, FORMAT_ALL);
+	return io_format(&view->io, opt_cdup, IO_RD, view->ops->argv, FORMAT_ALL);
 }
 
 static const char *tree_argv[SIZEOF_ARG] = {
