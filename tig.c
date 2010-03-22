@@ -3119,6 +3119,7 @@ format_arg(const char *name)
 		if (!strncmp(name, vars[i].name, vars[i].namelen))
 			return *vars[i].value ? vars[i].value : vars[i].value_if_empty;
 
+	report("Unknown replacement: `%s`", name);
 	return NULL;
 }
 
@@ -3150,7 +3151,6 @@ format_argv(const char *dst_argv[], const char *src_argv[], enum format_flags fl
 				value = format_arg(next);
 
 				if (!value) {
-					report("Unknown replacement: `%s`", next);
 					return FALSE;
 				}
 			}
