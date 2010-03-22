@@ -36,7 +36,7 @@ LDLIBS ?= -lcurses
 CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
 PROGS	= tig
-SOURCE	= tig.c tig.h
+SOURCE	= tig.c tig.h io.c io.h
 TXTDOC	= tig.1.txt tigrc.5.txt manual.txt NEWS README INSTALL BUGS TODO
 MANDOC	= tig.1 tigrc.5 tigmanual.7
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html NEWS.html
@@ -149,8 +149,9 @@ configure: configure.ac acinclude.m4
 .PHONY: all all-debug doc doc-man doc-html install install-doc \
 	install-doc-man install-doc-html clean spell-check dist rpm
 
-tig.o: tig.c tig.h
-tig: tig.o
+io.o: io.c io.h tig.h
+tig.o: tig.c tig.h io.h
+tig: tig.o io.o
 
 tig.spec: contrib/tig.spec.in
 	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' \
