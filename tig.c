@@ -661,7 +661,7 @@ argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
 	return *argc < SIZEOF_ARG;
 }
 
-static void
+static bool
 argv_from_env(const char **argv, const char *name)
 {
 	char *env = argv ? getenv(name) : NULL;
@@ -669,8 +669,7 @@ argv_from_env(const char **argv, const char *name)
 
 	if (env && *env)
 		env = strdup(env);
-	if (env && !argv_from_string(argv, &argc, env))
-		die("Too many arguments in the `%s` environment variable", name);
+	return !env || argv_from_string(argv, &argc, env);
 }
 
 
@@ -7428,7 +7427,8 @@ load_refs(void)
 	size_t i;
 
 	if (!init) {
-		argv_from_env(ls_remote_argv, "TIG_LS_REMOTE");
+		if (!argv_from_env(ls_remote_argv, "TIG_LS_REMOTE"))
+			die("TIG_LS_REMOTE contains too many arguments");
 		init = TRUE;
 	}
 
@@ -7783,7 +7783,9 @@ main(int argc, const char *argv[])
 		die("Failed to load refs.");
 
 	foreach_view (view, i)
-		argv_from_env(view->ops->argv, view->cmd_env);
+		if (!argv_from_env(view->ops->argv, view->cmd_env))
+			die("Too many arguments in the `%s` environment variable",
+			    view->cmd_env);
 
 	init_display();
 
