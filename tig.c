@@ -2115,14 +2115,6 @@ static struct view views[] = {
 	(view == display[0] || view == display[1])
 
 
-enum line_graphic {
-	LINE_GRAPHIC_VLINE
-};
-
-static chtype line_graphics[] = {
-	/* LINE_GRAPHIC_VLINE: */ '|'
-};
-
 static inline void
 set_view_attr(struct view *view, enum line_type type)
 {
@@ -2291,6 +2283,7 @@ draw_lineno(struct view *view, unsigned int lineno)
 	int digits3 = view->digits < 3 ? 3 : view->digits;
 	int max = MIN(view->width + view->yoffset - view->col, digits3);
 	char *text = NULL;
+	chtype separator = opt_line_graphics ? ACS_VLINE : '|';
 
 	lineno += view->offset + 1;
 	if (lineno == 1 || (lineno % opt_num_interval) == 0) {
@@ -2304,7 +2297,7 @@ draw_lineno(struct view *view, unsigned int lineno)
 		view->col += draw_chars(view, LINE_LINE_NUMBER, text, max, TRUE);
 	else
 		view->col += draw_space(view, LINE_LINE_NUMBER, max, digits3);
-	return draw_graphic(view, LINE_DEFAULT, &line_graphics[LINE_GRAPHIC_VLINE], 1);
+	return draw_graphic(view, LINE_DEFAULT, &separator, 1);
 }
 
 static bool
@@ -6440,9 +6433,7 @@ draw_rev_graph(struct rev_graph *graph)
 	struct rev_filler *filler;
 	size_t i;
 
-	if (opt_line_graphics)
-		fillers[DEFAULT].line = line_graphics[LINE_GRAPHIC_VLINE];
-
+	fillers[DEFAULT].line = opt_line_graphics ? ACS_VLINE : '|';
 	filler = &fillers[DEFAULT];
 
 	for (i = 0; i < graph->pos; i++) {
@@ -7032,9 +7023,6 @@ init_display(void)
 	wbkgdset(status_win, get_line_attr(LINE_STATUS));
 
 	TABSIZE = opt_tab_size;
-	if (opt_line_graphics) {
-		line_graphics[LINE_GRAPHIC_VLINE] = ACS_VLINE;
-	}
 
 	term = getenv("XTERM_VERSION") ? NULL : getenv("COLORTERM");
 	if (term && !strcmp(term, "gnome-terminal")) {
