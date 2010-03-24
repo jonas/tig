@@ -69,7 +69,7 @@ static void __NORETURN die(const char *err, ...);
 static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
 static void set_nonblocking_input(bool loading);
-static size_t utf8_length(const char **string, size_t col, int *width, size_t max_width, int *trimmed, bool reserve);
+static size_t utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve, int tab_size);
 static inline unsigned char utf8_char_length(const char *string, const char *end);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
@@ -2138,7 +2138,7 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 	if (max_len <= 0)
 		return 0;
 
-	len = utf8_length(&string, skip, &col, max_len, &trimmed, use_tilde);
+	len = utf8_length(&string, skip, &col, max_len, &trimmed, use_tilde, opt_tab_size);
 
 	set_view_attr(view, type);
 	if (len > 0) {
@@ -6756,7 +6756,7 @@ static struct view_ops main_ops = {
  */
 
 static inline int
-unicode_width(unsigned long c)
+unicode_width(unsigned long c, int tab_size)
 {
 	if (c >= 0x1100 &&
 	   (c <= 0x115f				/* Hangul Jamo */
@@ -6774,7 +6774,7 @@ unicode_width(unsigned long c)
 		return 2;
 
 	if (c == '\t')
-		return opt_tab_size;
+		return tab_size;
 
 	return 1;
 }
@@ -6856,7 +6856,7 @@ utf8_to_unicode(const char *string, size_t length)
  *
  * Returns the number of bytes to output from string to satisfy max_width. */
 static size_t
-utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve)
+utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve, int tab_size)
 {
 	const char *string = *start;
 	const char *end = strchr(string, '\0');
@@ -6882,7 +6882,7 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
 		if (!unicode)
 			break;
 
-		ucwidth = unicode_width(unicode);
+		ucwidth = unicode_width(unicode, tab_size);
 		if (skip > 0) {
 			skip -= ucwidth <= skip ? ucwidth : skip;
 			*start += bytes;
