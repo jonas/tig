@@ -1064,7 +1064,6 @@ static char opt_head[SIZEOF_REF]	= "";
 static char opt_head_rev[SIZEOF_REV]	= "";
 static char opt_remote[SIZEOF_REF]	= "";
 static char opt_encoding[20]		= "UTF-8";
-static char opt_codeset[20]		= "UTF-8";
 static iconv_t opt_iconv_in		= ICONV_NONE;
 static iconv_t opt_iconv_out		= ICONV_NONE;
 static char opt_search[SIZEOF_STR]	= "";
@@ -7736,6 +7735,7 @@ parse_options(int argc, const char *argv[])
 int
 main(int argc, const char *argv[])
 {
+	const char *codeset = "UTF-8";
 	enum request request = parse_options(argc, argv);
 	struct view *view;
 	size_t i;
@@ -7744,9 +7744,7 @@ main(int argc, const char *argv[])
 	signal(SIGPIPE, SIG_IGN);
 
 	if (setlocale(LC_ALL, "")) {
-		char *codeset = nl_langinfo(CODESET);
-
-		string_ncopy(opt_codeset, codeset, strlen(codeset));
+		codeset = nl_langinfo(CODESET);
 	}
 
 	if (load_repo_info() == ERR)
@@ -7762,14 +7760,14 @@ main(int argc, const char *argv[])
 	if (!opt_git_dir[0] && request != REQ_VIEW_PAGER)
 		die("Not a git repository");
 
-	if (*opt_encoding && strcmp(opt_codeset, "UTF-8")) {
+	if (*opt_encoding && strcmp(codeset, "UTF-8")) {
 		opt_iconv_in = iconv_open("UTF-8", opt_encoding);
 		if (opt_iconv_in == ICONV_NONE)
 			die("Failed to initialize character set conversion");
 	}
 
-	if (*opt_codeset && strcmp(opt_codeset, "UTF-8")) {
-		opt_iconv_out = iconv_open(opt_codeset, "UTF-8");
+	if (codeset && strcmp(codeset, "UTF-8")) {
+		opt_iconv_out = iconv_open(codeset, "UTF-8");
 		if (opt_iconv_out == ICONV_NONE)
 			die("Failed to initialize character set conversion");
 	}
