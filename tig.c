@@ -68,7 +68,6 @@
 static void __NORETURN die(const char *err, ...);
 static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
-static void set_nonblocking_input(bool loading);
 static size_t utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve, int tab_size);
 static inline unsigned char utf8_char_length(const char *string, const char *end);
 
@@ -3041,7 +3040,6 @@ end_update(struct view *view, bool force)
 	while (!view->ops->read(view, NULL))
 		if (!force)
 			return;
-	set_nonblocking_input(FALSE);
 	if (force)
 		kill_io(view->pipe);
 	done_io(view->pipe);
@@ -3051,7 +3049,6 @@ end_update(struct view *view, bool force)
 static void
 setup_update(struct view *view, const char *vid)
 {
-	set_nonblocking_input(TRUE);
 	reset_view(view);
 	string_copy_rev(view->vid, vid);
 	view->pipe = &view->io;
@@ -6972,17 +6969,6 @@ report(const char *msg, ...)
 	update_view_title(view);
 }
 
-/* Controls when nodelay should be in effect when polling user input. */
-static void
-set_nonblocking_input(bool loading)
-{
-	static unsigned int loading_views;
-
-	if ((loading == FALSE && loading_views-- == 1) ||
-	    (loading == TRUE  && loading_views++ == 0))
-		nodelay(status_win, loading);
-}
-
 static void
 init_display(void)
 {
@@ -7050,6 +7036,7 @@ get_input(int prompt_position)
 {
 	struct view *view;
 	int i, key, cursor_y, cursor_x;
+	bool loading = FALSE;
 
 	if (prompt_position)
 		input_mode = TRUE;
@@ -7061,6 +7048,8 @@ get_input(int prompt_position)
 			    use_scroll_redrawwin)
 				redrawwin(view->win);
 			view->has_scrolled = FALSE;
+			if (view->pipe)
+				loading = TRUE;
 		}
 
 		/* Update the cursor position. */
@@ -7077,6 +7066,7 @@ get_input(int prompt_position)
 
 		/* Refresh, accept single keystroke of input */
 		doupdate();
+		nodelay(status_win, loading);
 		key = wgetch(status_win);
 
 		/* wgetch() with nodelay() enabled returns ERR when
