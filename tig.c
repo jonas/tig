@@ -616,7 +616,7 @@ io_done(struct io *io)
 		if (waiting < 0) {
 			if (errno == EINTR)
 				continue;
-			report("waitpid failed (%s)", strerror(errno));
+			io->error = errno;
 			return FALSE;
 		}
 
@@ -637,13 +637,16 @@ io_start(struct io *io)
 	if (io->type == IO_FD)
 		return TRUE;
 
-	if ((io->type == IO_RD || io->type == IO_WR) &&
-	    pipe(pipefds) < 0)
+	if ((io->type == IO_RD || io->type == IO_WR) && pipe(pipefds) < 0) {
+		io->error = errno;
 		return FALSE;
-	else if (io->type == IO_AP)
+	} else if (io->type == IO_AP) {
 		pipefds[1] = io->pipe;
+	}
 
 	if ((io->pid = fork())) {
+		if (io->pid == -1)
+			io->error = errno;
 		if (pipefds[!(io->type == IO_WR)] != -1)
 			close(pipefds[!(io->type == IO_WR)]);
 		if (io->pid != -1) {
@@ -670,10 +673,10 @@ io_start(struct io *io)
 		}
 
 		if (io->dir && *io->dir && chdir(io->dir) == -1)
-			die("Failed to change directory: %s", strerror(errno));
+			exit(errno);
 
 		execvp(io->argv[0], (char *const*) io->argv);
-		die("Failed to execute program: %s", strerror(errno));
+		exit(errno);
 	}
 
 	if (pipefds[!!(io->type == IO_WR)] != -1)
