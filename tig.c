@@ -138,6 +138,7 @@ struct ref_list {
 	struct ref **refs;	/* References for this ID. */
 };
 
+static struct ref *get_ref_head();
 static struct ref_list *get_ref_list(const char *id);
 static void foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data);
 static int load_refs(void);
@@ -1061,7 +1062,6 @@ static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
 static char opt_head[SIZEOF_REF]	= "";
-static char opt_head_rev[SIZEOF_REV]	= "";
 static char opt_remote[SIZEOF_REF]	= "";
 static char opt_encoding[20]		= "UTF-8";
 static iconv_t opt_iconv_in		= ICONV_NONE;
@@ -1074,8 +1074,8 @@ static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
 static FILE *opt_tty			= NULL;
 
-#define is_initial_commit()	(!*opt_head_rev)
-#define is_head_commit(rev)	(!strcmp((rev), "HEAD") || !strcmp(opt_head_rev, (rev)))
+#define is_initial_commit()	(!get_ref_head())
+#define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strcmp(rev, get_ref_head()->id)))
 #define mkdate(time)		string_date(time, opt_date)
 
 
@@ -7259,6 +7259,7 @@ static bool prompt_menu(const char *prompt, const struct menu_item *items, int *
 
 static struct ref **refs = NULL;
 static size_t refs_size = 0;
+static struct ref *refs_head = NULL;
 
 static struct ref_list **ref_lists = NULL;
 static size_t ref_lists_size = 0;
@@ -7294,6 +7295,12 @@ foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data)
 	for (i = 0; i < refs_size; i++)
 		if (!visitor(data, refs[i]))
 			break;
+}
+
+static struct ref *
+get_ref_head()
+{
+	return refs_head;
 }
 
 static struct ref_list *
@@ -7360,11 +7367,15 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 	} else if (!prefixcmp(name, "refs/heads/")) {
 		namelen -= STRING_SIZE("refs/heads/");
 		name	+= STRING_SIZE("refs/heads/");
-		head	 = !strncmp(opt_head, name, namelen);
+		if (!strncmp(opt_head, name, namelen))
+			return OK;
 
 	} else if (!strcmp(name, "HEAD")) {
-		string_ncopy(opt_head_rev, id, idlen);
-		return OK;
+		head     = TRUE;
+		if (*opt_head) {
+			namelen  = strlen(opt_head);
+			name	 = opt_head;
+		}
 	}
 
 	/* If we are reloading or it's an annotated tag, replace the
@@ -7406,6 +7417,8 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen)
 	ref->tracked = tracked;
 	string_copy_rev(ref->id, id);
 
+	if (head)
+		refs_head = ref;
 	return OK;
 }
 
@@ -7436,6 +7449,7 @@ load_refs(void)
 		memmove(opt_head, offset, strlen(offset) + 1);
 	}
 
+	refs_head = NULL;
 	for (i = 0; i < refs_size; i++)
 		refs[i]->id[0] = 0;
 

@@ -18,6 +18,7 @@ Improvements:
  - Branch view: add entry to browse all branches (uses git-log's --all
    flag).
  - Abbreviation of author names can now be configured and toggled.
+ - Mark detached heads with [HEAD].
 
 Bug fixes:
 
