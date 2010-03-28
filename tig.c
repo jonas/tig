@@ -388,7 +388,7 @@ static inline int timecmp(const struct time *t1, const struct time *t2)
 }
 
 static const char *
-string_date(const struct time *time, enum date date)
+mkdate(const struct time *time, enum date date)
 {
 	static char buf[DATE_COLS + 1];
 	static const struct enum_map reldate[] = {
@@ -400,6 +400,9 @@ string_date(const struct time *time, enum date date)
 		{ "month",  60 * 60 * 24 * 30,	60 * 60 * 24 * 30 * 12 },
 	};
 	struct tm tm;
+
+	if (!date || !time || !time->sec)
+		return "";
 
 	if (date == DATE_RELATIVE) {
 		struct timeval now;
@@ -1075,7 +1078,6 @@ static FILE *opt_tty			= NULL;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strcmp(rev, get_ref_head()->id)))
-#define mkdate(time)		string_date(time, opt_date)
 
 
 /*
@@ -2235,7 +2237,7 @@ draw_field(struct view *view, enum line_type type, const char *text, int len, bo
 static bool
 draw_date(struct view *view, struct time *time)
 {
-	const char *date = time && time->sec ? mkdate(time) : "";
+	const char *date = mkdate(time, opt_date);
 	int cols = opt_date == DATE_SHORT ? DATE_SHORT_COLS : DATE_COLS;
 
 	return draw_field(view, LINE_DATE, date, cols, FALSE);
@@ -4564,7 +4566,7 @@ tree_grep(struct view *view, struct line *line)
 	const char *text[] = {
 		entry->name,
 		opt_author ? entry->author : "",
-		opt_date ? mkdate(&entry->time) : "",
+		mkdate(&entry->time, opt_date),
 		NULL
 	};
 
@@ -5054,7 +5056,7 @@ blame_grep(struct view *view, struct line *line)
 		commit ? commit->title : "",
 		commit ? commit->id : "",
 		commit && opt_author ? commit->author : "",
-		commit && opt_date ? mkdate(&commit->time) : "",
+		commit ? mkdate(&commit->time, opt_date) : "",
 		NULL
 	};
 
@@ -6715,7 +6717,7 @@ main_grep(struct view *view, struct line *line)
 	const char *text[] = {
 		commit->title,
 		opt_author ? commit->author : "",
-		opt_date ? mkdate(&commit->time) : "",
+		mkdate(&commit->time, opt_date),
 		NULL
 	};
 
