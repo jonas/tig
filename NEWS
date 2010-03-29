@@ -15,6 +15,8 @@ Improvements:
 
  - Status view: update the file variable when a line is selected so
    %(file) works as expected.
+ - Branch view: add %(branch) symbol providing access to the selected
+   branch.
  - Branch view: add entry to browse all branches (uses git-log's --all
    flag).
  - Abbreviation of author names can now be configured and toggled.

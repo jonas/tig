@@ -1730,6 +1730,7 @@ static void
 add_builtin_run_requests(void)
 {
 	const char *cherry_pick[] = { "git", "cherry-pick", "%(commit)", NULL };
+	const char *checkout[] = { "git", "checkout", "%(branch)", NULL };
 	const char *commit[] = { "git", "commit", NULL };
 	const char *gc[] = { "git", "gc", NULL };
 	struct {
@@ -1740,6 +1741,7 @@ add_builtin_run_requests(void)
 	} reqs[] = {
 		{ KEYMAP_MAIN,	  'C', ARRAY_SIZE(cherry_pick) - 1, cherry_pick },
 		{ KEYMAP_STATUS,  'C', ARRAY_SIZE(commit) - 1, commit },
+		{ KEYMAP_BRANCH,  'C', ARRAY_SIZE(checkout) - 1, checkout },
 		{ KEYMAP_GENERIC, 'G', ARRAY_SIZE(gc) - 1, gc },
 	};
 	int i;
@@ -2157,6 +2159,7 @@ static unsigned int current_view;
 static char ref_blob[SIZEOF_REF]	= "";
 static char ref_commit[SIZEOF_REF]	= "HEAD";
 static char ref_head[SIZEOF_REF]	= "HEAD";
+static char ref_branch[SIZEOF_REF]	= "";
 
 struct view {
 	const char *name;	/* View name */
@@ -3112,6 +3115,7 @@ format_arg(const char *name)
 		FORMAT_VAR("%(head)",		ref_head,	""),
 		FORMAT_VAR("%(commit)",		ref_commit,	""),
 		FORMAT_VAR("%(blob)",		ref_blob,	""),
+		FORMAT_VAR("%(branch)",		ref_branch,	""),
 	};
 	int i;
 
@@ -5440,6 +5444,7 @@ branch_select(struct view *view, struct line *line)
 	string_copy_rev(view->ref, branch->ref->id);
 	string_copy_rev(ref_commit, branch->ref->id);
 	string_copy_rev(ref_head, branch->ref->id);
+	string_copy_rev(ref_branch, branch->ref->name);
 }
 
 static struct view_ops branch_ops = {

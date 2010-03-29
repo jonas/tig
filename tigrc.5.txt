@@ -222,6 +222,7 @@ are:
 |%(head)		|The currently viewed 'head' ID. Defaults to HEAD
 |%(commit)		|The currently selected commit ID.
 |%(blob)		|The currently selected blob ID.
+|%(branch)		|The currently selected branch name.
 |%(directory)		|The current directory path in the tree view;
 			 empty for the root directory.
 |%(file)		|The currently selected file.
