@@ -68,8 +68,6 @@
 static void __NORETURN die(const char *err, ...);
 static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
-static size_t utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve, int tab_size);
-static inline unsigned char utf8_char_length(const char *string, const char *end);
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
 #define MIN(x, y)	((x) < (y) ? (x) :  (y))
@@ -356,6 +354,166 @@ suffixcmp(const char *str, int slen, const char *suffix)
 	size_t suffixlen = strlen(suffix);
 
 	return suffixlen < len ? strcmp(str + len - suffixlen, suffix) : -1;
+}
+
+
+/*
+ * Unicode / UTF-8 handling
+ *
+ * NOTE: Much of the following code for dealing with Unicode is derived from
+ * ELinks' UTF-8 code developed by Scrool <scroolik@gmail.com>. Origin file is
+ * src/intl/charset.c from the UTF-8 branch commit elinks-0.11.0-g31f2c28.
+ */
+
+static inline int
+unicode_width(unsigned long c, int tab_size)
+{
+	if (c >= 0x1100 &&
+	   (c <= 0x115f				/* Hangul Jamo */
+	    || c == 0x2329
+	    || c == 0x232a
+	    || (c >= 0x2e80  && c <= 0xa4cf && c != 0x303f)
+						/* CJK ... Yi */
+	    || (c >= 0xac00  && c <= 0xd7a3)	/* Hangul Syllables */
+	    || (c >= 0xf900  && c <= 0xfaff)	/* CJK Compatibility Ideographs */
+	    || (c >= 0xfe30  && c <= 0xfe6f)	/* CJK Compatibility Forms */
+	    || (c >= 0xff00  && c <= 0xff60)	/* Fullwidth Forms */
+	    || (c >= 0xffe0  && c <= 0xffe6)
+	    || (c >= 0x20000 && c <= 0x2fffd)
+	    || (c >= 0x30000 && c <= 0x3fffd)))
+		return 2;
+
+	if (c == '\t')
+		return tab_size;
+
+	return 1;
+}
+
+/* Number of bytes used for encoding a UTF-8 character indexed by first byte.
+ * Illegal bytes are set one. */
+static const unsigned char utf8_bytes[256] = {
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+	2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2,
+	3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 4,4,4,4,4,4,4,4, 5,5,5,5,6,6,1,1,
+};
+
+static inline unsigned char
+utf8_char_length(const char *string, const char *end)
+{
+	int c = *(unsigned char *) string;
+
+	return utf8_bytes[c];
+}
+
+/* Decode UTF-8 multi-byte representation into a Unicode character. */
+static inline unsigned long
+utf8_to_unicode(const char *string, size_t length)
+{
+	unsigned long unicode;
+
+	switch (length) {
+	case 1:
+		unicode  =   string[0];
+		break;
+	case 2:
+		unicode  =  (string[0] & 0x1f) << 6;
+		unicode +=  (string[1] & 0x3f);
+		break;
+	case 3:
+		unicode  =  (string[0] & 0x0f) << 12;
+		unicode += ((string[1] & 0x3f) << 6);
+		unicode +=  (string[2] & 0x3f);
+		break;
+	case 4:
+		unicode  =  (string[0] & 0x0f) << 18;
+		unicode += ((string[1] & 0x3f) << 12);
+		unicode += ((string[2] & 0x3f) << 6);
+		unicode +=  (string[3] & 0x3f);
+		break;
+	case 5:
+		unicode  =  (string[0] & 0x0f) << 24;
+		unicode += ((string[1] & 0x3f) << 18);
+		unicode += ((string[2] & 0x3f) << 12);
+		unicode += ((string[3] & 0x3f) << 6);
+		unicode +=  (string[4] & 0x3f);
+		break;
+	case 6:
+		unicode  =  (string[0] & 0x01) << 30;
+		unicode += ((string[1] & 0x3f) << 24);
+		unicode += ((string[2] & 0x3f) << 18);
+		unicode += ((string[3] & 0x3f) << 12);
+		unicode += ((string[4] & 0x3f) << 6);
+		unicode +=  (string[5] & 0x3f);
+		break;
+	default:
+		return 0;
+	}
+
+	/* Invalid characters could return the special 0xfffd value but NUL
+	 * should be just as good. */
+	return unicode > 0xffff ? 0 : unicode;
+}
+
+/* Calculates how much of string can be shown within the given maximum width
+ * and sets trimmed parameter to non-zero value if all of string could not be
+ * shown. If the reserve flag is TRUE, it will reserve at least one
+ * trailing character, which can be useful when drawing a delimiter.
+ *
+ * Returns the number of bytes to output from string to satisfy max_width. */
+static size_t
+utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve, int tab_size)
+{
+	const char *string = *start;
+	const char *end = strchr(string, '\0');
+	unsigned char last_bytes = 0;
+	size_t last_ucwidth = 0;
+
+	*width = 0;
+	*trimmed = 0;
+
+	while (string < end) {
+		unsigned char bytes = utf8_char_length(string, end);
+		size_t ucwidth;
+		unsigned long unicode;
+
+		if (string + bytes > end)
+			break;
+
+		/* Change representation to figure out whether
+		 * it is a single- or double-width character. */
+
+		unicode = utf8_to_unicode(string, bytes);
+		/* FIXME: Graceful handling of invalid Unicode character. */
+		if (!unicode)
+			break;
+
+		ucwidth = unicode_width(unicode, tab_size);
+		if (skip > 0) {
+			skip -= ucwidth <= skip ? ucwidth : skip;
+			*start += bytes;
+		}
+		*width  += ucwidth;
+		if (*width > max_width) {
+			*trimmed = 1;
+			*width -= ucwidth;
+			if (reserve && *width == max_width) {
+				string -= last_bytes;
+				*width -= last_ucwidth;
+			}
+			break;
+		}
+
+		string  += bytes;
+		last_bytes = ucwidth ? bytes : 0;
+		last_ucwidth = ucwidth;
+	}
+
+	return string - *start;
 }
 
 
@@ -6746,166 +6904,6 @@ static struct view_ops main_ops = {
 	main_grep,
 	main_select,
 };
-
-
-/*
- * Unicode / UTF-8 handling
- *
- * NOTE: Much of the following code for dealing with Unicode is derived from
- * ELinks' UTF-8 code developed by Scrool <scroolik@gmail.com>. Origin file is
- * src/intl/charset.c from the UTF-8 branch commit elinks-0.11.0-g31f2c28.
- */
-
-static inline int
-unicode_width(unsigned long c, int tab_size)
-{
-	if (c >= 0x1100 &&
-	   (c <= 0x115f				/* Hangul Jamo */
-	    || c == 0x2329
-	    || c == 0x232a
-	    || (c >= 0x2e80  && c <= 0xa4cf && c != 0x303f)
-						/* CJK ... Yi */
-	    || (c >= 0xac00  && c <= 0xd7a3)	/* Hangul Syllables */
-	    || (c >= 0xf900  && c <= 0xfaff)	/* CJK Compatibility Ideographs */
-	    || (c >= 0xfe30  && c <= 0xfe6f)	/* CJK Compatibility Forms */
-	    || (c >= 0xff00  && c <= 0xff60)	/* Fullwidth Forms */
-	    || (c >= 0xffe0  && c <= 0xffe6)
-	    || (c >= 0x20000 && c <= 0x2fffd)
-	    || (c >= 0x30000 && c <= 0x3fffd)))
-		return 2;
-
-	if (c == '\t')
-		return tab_size;
-
-	return 1;
-}
-
-/* Number of bytes used for encoding a UTF-8 character indexed by first byte.
- * Illegal bytes are set one. */
-static const unsigned char utf8_bytes[256] = {
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2,
-	3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 4,4,4,4,4,4,4,4, 5,5,5,5,6,6,1,1,
-};
-
-static inline unsigned char
-utf8_char_length(const char *string, const char *end)
-{
-	int c = *(unsigned char *) string;
-
-	return utf8_bytes[c];
-}
-
-/* Decode UTF-8 multi-byte representation into a Unicode character. */
-static inline unsigned long
-utf8_to_unicode(const char *string, size_t length)
-{
-	unsigned long unicode;
-
-	switch (length) {
-	case 1:
-		unicode  =   string[0];
-		break;
-	case 2:
-		unicode  =  (string[0] & 0x1f) << 6;
-		unicode +=  (string[1] & 0x3f);
-		break;
-	case 3:
-		unicode  =  (string[0] & 0x0f) << 12;
-		unicode += ((string[1] & 0x3f) << 6);
-		unicode +=  (string[2] & 0x3f);
-		break;
-	case 4:
-		unicode  =  (string[0] & 0x0f) << 18;
-		unicode += ((string[1] & 0x3f) << 12);
-		unicode += ((string[2] & 0x3f) << 6);
-		unicode +=  (string[3] & 0x3f);
-		break;
-	case 5:
-		unicode  =  (string[0] & 0x0f) << 24;
-		unicode += ((string[1] & 0x3f) << 18);
-		unicode += ((string[2] & 0x3f) << 12);
-		unicode += ((string[3] & 0x3f) << 6);
-		unicode +=  (string[4] & 0x3f);
-		break;
-	case 6:
-		unicode  =  (string[0] & 0x01) << 30;
-		unicode += ((string[1] & 0x3f) << 24);
-		unicode += ((string[2] & 0x3f) << 18);
-		unicode += ((string[3] & 0x3f) << 12);
-		unicode += ((string[4] & 0x3f) << 6);
-		unicode +=  (string[5] & 0x3f);
-		break;
-	default:
-		return 0;
-	}
-
-	/* Invalid characters could return the special 0xfffd value but NUL
-	 * should be just as good. */
-	return unicode > 0xffff ? 0 : unicode;
-}
-
-/* Calculates how much of string can be shown within the given maximum width
- * and sets trimmed parameter to non-zero value if all of string could not be
- * shown. If the reserve flag is TRUE, it will reserve at least one
- * trailing character, which can be useful when drawing a delimiter.
- *
- * Returns the number of bytes to output from string to satisfy max_width. */
-static size_t
-utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve, int tab_size)
-{
-	const char *string = *start;
-	const char *end = strchr(string, '\0');
-	unsigned char last_bytes = 0;
-	size_t last_ucwidth = 0;
-
-	*width = 0;
-	*trimmed = 0;
-
-	while (string < end) {
-		unsigned char bytes = utf8_char_length(string, end);
-		size_t ucwidth;
-		unsigned long unicode;
-
-		if (string + bytes > end)
-			break;
-
-		/* Change representation to figure out whether
-		 * it is a single- or double-width character. */
-
-		unicode = utf8_to_unicode(string, bytes);
-		/* FIXME: Graceful handling of invalid Unicode character. */
-		if (!unicode)
-			break;
-
-		ucwidth = unicode_width(unicode, tab_size);
-		if (skip > 0) {
-			skip -= ucwidth <= skip ? ucwidth : skip;
-			*start += bytes;
-		}
-		*width  += ucwidth;
-		if (*width > max_width) {
-			*trimmed = 1;
-			*width -= ucwidth;
-			if (reserve && *width == max_width) {
-				string -= last_bytes;
-				*width -= last_ucwidth;
-			}
-			break;
-		}
-
-		string  += bytes;
-		last_bytes = ucwidth ? bytes : 0;
-		last_ucwidth = ucwidth;
-	}
-
-	return string - *start;
-}
 
 
 /*
