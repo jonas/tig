@@ -6842,7 +6842,7 @@ utf8_to_unicode(const char *string, size_t length)
 		unicode +=  (string[5] & 0x3f);
 		break;
 	default:
-		die("Invalid Unicode length");
+		return 0;
 	}
 
 	/* Invalid characters could return the special 0xfffd value but NUL
