@@ -3222,12 +3222,11 @@ setup_update(struct view *view, const char *vid)
 }
 
 static bool
-prepare_update(struct view *view, const char *argv[], const char *dir,
-	       enum format_flags flags)
+prepare_update(struct view *view, const char *argv[], const char *dir)
 {
 	if (view->pipe)
 		end_update(view, TRUE);
-	return io_format(&view->io, dir, IO_RD, argv, flags);
+	return io_format(&view->io, dir, IO_RD, argv, FORMAT_NONE);
 }
 
 static bool
@@ -5191,7 +5190,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 				diff_index_argv[7] = "/dev/null";
 			}
 
-			if (!prepare_update(diff, diff_index_argv, NULL, FORMAT_DASH)) {
+			if (!prepare_update(diff, diff_index_argv, NULL)) {
 				report("Failed to allocate diff command");
 				break;
 			}
@@ -5329,7 +5328,7 @@ branch_request(struct view *view, enum request request, struct line *line)
 			};
 			struct view *main_view = VIEW(REQ_VIEW_MAIN);
 
-			if (!prepare_update(main_view, all_branches_argv, NULL, FORMAT_NONE)) {
+			if (!prepare_update(main_view, all_branches_argv, NULL)) {
 				report("Failed to load view of all branches");
 				return REQ_NONE;
 			}
@@ -5814,7 +5813,7 @@ status_enter(struct view *view, struct line *line)
 					"--", "/dev/null", newpath, NULL
 			};
 
-			if (!prepare_update(stage, no_head_diff_argv, opt_cdup, FORMAT_DASH))
+			if (!prepare_update(stage, no_head_diff_argv, opt_cdup))
 				return status_load_error(view, stage, newpath);
 		} else {
 			const char *index_show_argv[] = {
@@ -5823,7 +5822,7 @@ status_enter(struct view *view, struct line *line)
 					oldpath, newpath, NULL
 			};
 
-			if (!prepare_update(stage, index_show_argv, opt_cdup, FORMAT_DASH))
+			if (!prepare_update(stage, index_show_argv, opt_cdup))
 				return status_load_error(view, stage, newpath);
 		}
 
@@ -5840,7 +5839,7 @@ status_enter(struct view *view, struct line *line)
 				"-C", "-M", "--", oldpath, newpath, NULL
 		};
 
-		if (!prepare_update(stage, files_show_argv, opt_cdup, FORMAT_DASH))
+		if (!prepare_update(stage, files_show_argv, opt_cdup))
 			return status_load_error(view, stage, newpath);
 		if (status)
 			info = "Unstaged changes to %s";
@@ -7738,7 +7737,7 @@ parse_options(int argc, const char *argv[])
 			die("command too long");
 	}
 
-	if (!prepare_update(VIEW(request), custom_argv, NULL, FORMAT_NONE))
+	if (!prepare_update(VIEW(request), custom_argv, NULL))
 		die("Failed to format arguments");
 
 	return request;
@@ -7833,7 +7832,7 @@ main(int argc, const char *argv[])
 
 				if (!argv_from_string(argv, &argc, cmd)) {
 					report("Too many arguments");
-				} else if (!prepare_update(next, argv, NULL, FORMAT_DASH)) {
+				} else if (!prepare_update(next, argv, NULL)) {
 					report("Failed to format command");
 				} else {
 					open_view(view, REQ_VIEW_PAGER, OPEN_PREPARED);
