@@ -142,7 +142,6 @@ static int load_refs(void);
 
 enum format_flags {
 	FORMAT_ALL,		/* Perform replacement in all arguments. */
-	FORMAT_DASH,		/* Perform replacement up until "--". */
 	FORMAT_NONE		/* No replacement should be performed. */
 };
 
@@ -3146,8 +3145,6 @@ format_argv(const char *dst_argv[], const char *src_argv[], enum format_flags fl
 			const char *value;
 
 			if (!next || noreplace) {
-				if (flags == FORMAT_DASH && !strcmp(arg, "--"))
-					noreplace = TRUE;
 				len = strlen(arg);
 				value = "";
 
