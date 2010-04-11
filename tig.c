@@ -1166,7 +1166,8 @@ enum request {
 #define REQ_(req, help) REQ_##req
 
 	/* Offset all requests to avoid conflicts with ncurses getch values. */
-	REQ_OFFSET = KEY_MAX + 1,
+	REQ_UNKNOWN = KEY_MAX + 1,
+	REQ_OFFSET,
 	REQ_INFO
 
 #undef	REQ_GROUP
@@ -1198,7 +1199,7 @@ get_request(const char *name)
 		if (enum_equals(req_info[i], name, namelen))
 			return req_info[i].request;
 
-	return REQ_NONE;
+	return REQ_UNKNOWN;
 }
 
 
@@ -1404,7 +1405,7 @@ struct keybinding {
 	enum request request;
 };
 
-static const struct keybinding default_keybindings[] = {
+static struct keybinding default_keybindings[] = {
 	/* View switching */
 	{ 'm',		REQ_VIEW_MAIN },
 	{ 'd',		REQ_VIEW_DIFF },
@@ -1520,6 +1521,14 @@ add_keybinding(enum keymap keymap, enum request request, int key)
 		die("Failed to allocate keybinding");
 	table->data[table->size].alias = key;
 	table->data[table->size++].request = request;
+
+	if (request == REQ_NONE && keymap == KEYMAP_GENERIC) {
+		int i;
+
+		for (i = 0; i < ARRAY_SIZE(default_keybindings); i++)
+			if (default_keybindings[i].alias == key)
+				default_keybindings[i].request = REQ_NONE;
+	}
 }
 
 /* Looks for a key binding first in the given map, then in the generic map, and
@@ -2005,7 +2014,7 @@ option_bind_command(int argc, const char *argv[])
 	}
 
 	request = get_request(argv[2]);
-	if (request == REQ_NONE) {
+	if (request == REQ_UNKNOWN) {
 		static const struct enum_map obsolete[] = {
 			ENUM_MAP("cherry-pick",		REQ_NONE),
 			ENUM_MAP("screen-resize",	REQ_NONE),
@@ -2020,9 +2029,9 @@ option_bind_command(int argc, const char *argv[])
 			return ERR;
 		}
 	}
-	if (request == REQ_NONE && *argv[2]++ == '!')
+	if (request == REQ_UNKNOWN && *argv[2]++ == '!')
 		request = add_run_request(keymap, key, argc - 2, argv + 2);
-	if (request == REQ_NONE) {
+	if (request == REQ_UNKNOWN) {
 		config_msg = "Unknown request name";
 		return ERR;
 	}
@@ -7809,6 +7818,10 @@ main(int argc, const char *argv[])
 		/* Some low-level request handling. This keeps access to
 		 * status_win restricted. */
 		switch (request) {
+		case REQ_NONE:
+			report("Unknown key, press %s for help",
+			       get_key(view->keymap, REQ_VIEW_HELP));
+			break;
 		case REQ_PROMPT:
 		{
 			char *cmd = read_prompt(":");

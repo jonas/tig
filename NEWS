@@ -28,6 +28,7 @@ Bug fixes:
    changes made to support blame view from sub directories.
  - Fix parsing of boolean show-date values.
  - Fix relative date.
+ - Fix unbind to behave as if the keybinding was never defined.
 
 tig-0.15
 --------
