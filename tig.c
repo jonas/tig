@@ -2267,7 +2267,6 @@ static struct view views[] = {
 };
 
 #define VIEW(req) 	(&views[(req) - REQ_OFFSET - 1])
-#define VIEW_REQ(view)	((view) - views + REQ_OFFSET + 1)
 
 #define foreach_view(view, i) \
 	for (i = 0; i < ARRAY_SIZE(views) && (view = &views[i]); i++)
