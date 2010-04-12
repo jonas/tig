@@ -2169,6 +2169,7 @@ struct view {
 
 	enum keymap keymap;	/* What keymap does this view have */
 	bool git_dir;		/* Whether the view requires a git directory. */
+	bool refresh;		/* Whether the view supports refreshing. */
 
 	char ref[SIZEOF_REF];	/* Hovered commit reference */
 	char vid[SIZEOF_REF];	/* View ID. Set to id member when updating. */
@@ -2245,25 +2246,24 @@ static struct view_ops status_ops;
 static struct view_ops tree_ops;
 static struct view_ops branch_ops;
 
-#define VIEW_STR(name, env, ref, ops, map, git) \
-	{ name, #env, ref, ops, map, git }
+#define VIEW_STR(name, env, ref, ops, map, git, refresh) \
+	{ name, #env, ref, ops, map, git, refresh }
 
-#define VIEW_(id, name, ops, git, ref) \
-	VIEW_STR(name, TIG_##id##_CMD, ref, ops, KEYMAP_##id, git)
-
+#define VIEW_(id, name, ops, git, refresh, ref) \
+	VIEW_STR(name, TIG_##id##_CMD, ref, ops, KEYMAP_##id, git, refresh)
 
 static struct view views[] = {
-	VIEW_(MAIN,   "main",   &main_ops,   TRUE,  ref_head),
-	VIEW_(DIFF,   "diff",   &diff_ops,   TRUE,  ref_commit),
-	VIEW_(LOG,    "log",    &log_ops,    TRUE,  ref_head),
-	VIEW_(TREE,   "tree",   &tree_ops,   TRUE,  ref_commit),
-	VIEW_(BLOB,   "blob",   &blob_ops,   TRUE,  ref_blob),
-	VIEW_(BLAME,  "blame",  &blame_ops,  TRUE,  ref_commit),
-	VIEW_(BRANCH, "branch",	&branch_ops, TRUE,  ref_head),
-	VIEW_(HELP,   "help",   &help_ops,   FALSE, ""),
-	VIEW_(PAGER,  "pager",  &pager_ops,  FALSE, "stdin"),
-	VIEW_(STATUS, "status", &status_ops, TRUE,  ""),
-	VIEW_(STAGE,  "stage",	&stage_ops,  TRUE,  ""),
+	VIEW_(MAIN,   "main",   &main_ops,   TRUE,  TRUE,  ref_head),
+	VIEW_(DIFF,   "diff",   &diff_ops,   TRUE,  FALSE, ref_commit),
+	VIEW_(LOG,    "log",    &log_ops,    TRUE,  TRUE,  ref_head),
+	VIEW_(TREE,   "tree",   &tree_ops,   TRUE,  FALSE, ref_commit),
+	VIEW_(BLOB,   "blob",   &blob_ops,   TRUE,  FALSE, ref_blob),
+	VIEW_(BLAME,  "blame",  &blame_ops,  TRUE,  FALSE, ref_commit),
+	VIEW_(BRANCH, "branch",	&branch_ops, TRUE,  TRUE,  ref_head),
+	VIEW_(HELP,   "help",   &help_ops,   FALSE, FALSE, ""),
+	VIEW_(PAGER,  "pager",  &pager_ops,  FALSE, FALSE, "stdin"),
+	VIEW_(STATUS, "status", &status_ops, TRUE,  TRUE,  ""),
+	VIEW_(STAGE,  "stage",	&stage_ops,  TRUE,  TRUE,  ""),
 };
 
 #define VIEW(req) 	(&views[(req) - REQ_OFFSET - 1])
@@ -3559,11 +3559,7 @@ view_driver(struct view *view, enum request request)
 	if (request > REQ_NONE) {
 		open_run_request(request);
 		/* FIXME: When all views can refresh always do this. */
-		if (view == VIEW(REQ_VIEW_STATUS) ||
-		    view == VIEW(REQ_VIEW_MAIN) ||
-		    view == VIEW(REQ_VIEW_LOG) ||
-		    view == VIEW(REQ_VIEW_BRANCH) ||
-		    view == VIEW(REQ_VIEW_STAGE))
+		if (view->refresh)
 			request = REQ_REFRESH;
 		else
 			return TRUE;
