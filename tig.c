@@ -2160,7 +2160,22 @@ static char ref_commit[SIZEOF_REF]	= "HEAD";
 static char ref_head[SIZEOF_REF]	= "HEAD";
 static char ref_branch[SIZEOF_REF]	= "";
 
+enum view_type {
+	VIEW_MAIN,
+	VIEW_DIFF,
+	VIEW_LOG,
+	VIEW_TREE,
+	VIEW_BLOB,
+	VIEW_BLAME,
+	VIEW_BRANCH,
+	VIEW_HELP,
+	VIEW_PAGER,
+	VIEW_STATUS,
+	VIEW_STAGE,
+};
+
 struct view {
+	enum view_type type;	/* View type */
 	const char *name;	/* View name */
 	const char *cmd_env;	/* Command line set via environment */
 	const char *id;		/* Points to either of ref_{head,commit,blob} */
@@ -2246,11 +2261,11 @@ static struct view_ops status_ops;
 static struct view_ops tree_ops;
 static struct view_ops branch_ops;
 
-#define VIEW_STR(name, env, ref, ops, map, git, refresh) \
-	{ name, #env, ref, ops, map, git, refresh }
+#define VIEW_STR(type, name, env, ref, ops, map, git, refresh) \
+	{ type, name, #env, ref, ops, map, git, refresh }
 
 #define VIEW_(id, name, ops, git, refresh, ref) \
-	VIEW_STR(name, TIG_##id##_CMD, ref, ops, KEYMAP_##id, git, refresh)
+	VIEW_STR(VIEW_##id, name, TIG_##id##_CMD, ref, ops, KEYMAP_##id, git, refresh)
 
 static struct view views[] = {
 	VIEW_(MAIN,   "main",   &main_ops,   TRUE,  TRUE,  ref_head),
@@ -2274,6 +2289,8 @@ static struct view views[] = {
 #define view_is_displayed(view) \
 	(view == display[0] || view == display[1])
 
+#define view_has_parent(view, child_type, parent_type) \
+	(view->type == child_type && view->parent && view->parent->type == parent_type)
 
 static inline void
 set_view_attr(struct view *view, enum line_type type)
@@ -2542,7 +2559,7 @@ update_view_title(struct view *view)
 
 	assert(view_is_displayed(view));
 
-	if (view != VIEW(REQ_VIEW_STATUS) && view->lines) {
+	if (view->type != VIEW_STATUS && view->lines) {
 		unsigned int view_lines = view->offset + view->height;
 		unsigned int lines = view->lines
 				   ? MIN(view_lines, view->lines) * 100 / view->lines
@@ -3321,7 +3338,7 @@ update_view(struct view *view)
 		/* Keep the displayed view in sync with line number scaling. */
 		if (digits != view->digits) {
 			view->digits = digits;
-			if (opt_line_number || view == VIEW(REQ_VIEW_BLAME))
+			if (opt_line_number || view->type == VIEW_BLAME)
 				redraw = TRUE;
 		}
 	}
@@ -3646,16 +3663,11 @@ view_driver(struct view *view, enum request request)
 	case REQ_PREVIOUS:
 		request = request == REQ_NEXT ? REQ_MOVE_DOWN : REQ_MOVE_UP;
 
-		if ((view == VIEW(REQ_VIEW_DIFF) &&
-		     view->parent == VIEW(REQ_VIEW_MAIN)) ||
-		   (view == VIEW(REQ_VIEW_DIFF) &&
-		     view->parent == VIEW(REQ_VIEW_BLAME)) ||
-		   (view == VIEW(REQ_VIEW_STAGE) &&
-		     view->parent == VIEW(REQ_VIEW_STATUS)) ||
-		   (view == VIEW(REQ_VIEW_BLOB) &&
-		     view->parent == VIEW(REQ_VIEW_TREE)) ||
-		   (view == VIEW(REQ_VIEW_MAIN) &&
-		     view->parent == VIEW(REQ_VIEW_BRANCH))) {
+		if (view_has_parent(view, VIEW_DIFF, VIEW_MAIN) ||
+		    view_has_parent(view, VIEW_DIFF, VIEW_BLAME) ||
+		    view_has_parent(view, VIEW_STAGE, VIEW_STATUS) ||
+		    view_has_parent(view, VIEW_BLOB, VIEW_TREE) ||
+		    view_has_parent(view, VIEW_MAIN, VIEW_BRANCH)) {
 			int line;
 
 			view = view->parent;
@@ -4030,7 +4042,7 @@ add_pager_refs(struct view *view, struct line *line)
 
 	list = get_ref_list(commit_id);
 	if (!list) {
-		if (view == VIEW(REQ_VIEW_DIFF))
+		if (view->type == VIEW_DIFF)
 			goto try_add_describe_ref;
 		return;
 	}
@@ -4047,7 +4059,7 @@ add_pager_refs(struct view *view, struct line *line)
 			is_tag = TRUE;
 	}
 
-	if (!is_tag && view == VIEW(REQ_VIEW_DIFF)) {
+	if (!is_tag && view->type == VIEW_DIFF) {
 try_add_describe_ref:
 		/* Add <tag>-g<commit_id> "fake" reference. */
 		if (!add_describe_ref(buf, &bufpos, commit_id, sep))
@@ -4073,8 +4085,8 @@ pager_read(struct view *view, char *data)
 		return FALSE;
 
 	if (line->type == LINE_COMMIT &&
-	    (view == VIEW(REQ_VIEW_DIFF) ||
-	     view == VIEW(REQ_VIEW_LOG)))
+	    (view->type == VIEW_DIFF ||
+	     view->type == VIEW_LOG))
 		add_pager_refs(view, line);
 
 	return TRUE;
@@ -4089,8 +4101,8 @@ pager_request(struct view *view, enum request request, struct line *line)
 		return request;
 
 	if (line->type == LINE_COMMIT &&
-	   (view == VIEW(REQ_VIEW_LOG) ||
-	    view == VIEW(REQ_VIEW_PAGER))) {
+	   (view->type == VIEW_LOG ||
+	    view->type == VIEW_PAGER)) {
 		open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT);
 		split = 1;
 	}
@@ -4123,7 +4135,7 @@ pager_select(struct view *view, struct line *line)
 	if (line->type == LINE_COMMIT) {
 		char *text = (char *)line->data + STRING_SIZE("commit ");
 
-		if (view != VIEW(REQ_VIEW_PAGER))
+		if (view->type != VIEW_PAGER)
 			string_copy_rev(view->ref, text);
 		string_copy_rev(ref_commit, text);
 	}
