@@ -3896,8 +3896,8 @@ parse_timezone(struct time *time, const char *zone)
 
 	tz  = ('0' - zone[1]) * 60 * 60 * 10;
 	tz += ('0' - zone[2]) * 60 * 60;
-	tz += ('0' - zone[3]) * 60;
-	tz += ('0' - zone[4]);
+	tz += ('0' - zone[3]) * 60 * 10;
+	tz += ('0' - zone[4]) * 60;
 
 	if (zone[0] == '-')
 		tz = -tz;
