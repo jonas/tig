@@ -519,6 +519,7 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
 #define DATE_INFO \
 	DATE_(NO), \
 	DATE_(DEFAULT), \
+	DATE_(LOCAL), \
 	DATE_(RELATIVE), \
 	DATE_(SHORT)
 
@@ -583,7 +584,13 @@ mkdate(const struct time *time, enum date date)
 		}
 	}
 
-	gmtime_r(&time->sec, &tm);
+	if (date == DATE_LOCAL) {
+		time_t date = time->sec + time->tz;
+		localtime_r(&date, &tm);
+	}
+	else {
+		gmtime_r(&time->sec, &tm);
+	}
 	return strftime(buf, sizeof(buf), DATE_FORMAT, &tm) ? buf : NULL;
 }
 

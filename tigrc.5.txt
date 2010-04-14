@@ -97,11 +97,11 @@ The following variables can be set:
 	How to display author names. If set to "abbreviated" author initials
 	will be shown. Can be toggled.
 
-'show-date' (mixed) ["relative" | "short" | "default" | bool]::
+'show-date' (mixed) ["relative" | "short" | "default" | "local" | bool]::
 
 	Whether and how to show date. If set to "relative" a relative date will be
 	used, e.g. "2 minutes ago". If set to "short" no time information is
-	shown. Can be toggled.
+	shown. If set to "local", localtime(3) is used. Can be toggled.
 
 'author-width' (int)::
 

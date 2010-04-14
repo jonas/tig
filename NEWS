@@ -21,6 +21,7 @@ Improvements:
    flag).
  - Abbreviation of author names can now be configured and toggled.
  - Mark detached heads with [HEAD].
+ - Add support for displaying dates in local time.
 
 Bug fixes:
 
