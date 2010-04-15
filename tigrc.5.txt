@@ -140,7 +140,7 @@ The following variables can be set:
 
 'commit-encoding' (string)::
 
-	The encoding used for commits. The default is UTF-8. Not this option
+	The encoding used for commits. The default is UTF-8. Note this option
 	is shadowed by the "i18n.commitencoding" option in `.git/config`.
 
 Bind command
