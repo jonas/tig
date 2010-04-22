@@ -1762,8 +1762,10 @@ add_builtin_run_requests(void)
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(reqs); i++) {
-		enum request req;
+		enum request req = get_keybinding(reqs[i].keymap, reqs[i].key);
 
+		if (req != reqs[i].key)
+			continue;
 		req = add_run_request(reqs[i].keymap, reqs[i].key, reqs[i].argc, reqs[i].argv);
 		if (req != REQ_NONE)
 			add_keybinding(reqs[i].keymap, req, reqs[i].key);
@@ -2137,8 +2139,6 @@ load_options(void)
 	const char *tigrc_system = getenv("TIGRC_SYSTEM");
 	char buf[SIZEOF_STR];
 
-	add_builtin_run_requests();
-
 	if (!tigrc_system)
 		tigrc_system = SYSCONFDIR "/tigrc";
 	load_option_file(tigrc_system);
@@ -2149,6 +2149,10 @@ load_options(void)
 		tigrc_user = buf;
 	}
 	load_option_file(tigrc_user);
+
+	/* Add _after_ loading config files to avoid adding run requests
+	 * that conflict with keybindings. */
+	add_builtin_run_requests();
 
 	return OK;
 }
