@@ -30,6 +30,7 @@ Bug fixes:
  - Fix parsing of boolean show-date values.
  - Fix relative date.
  - Fix unbind to behave as if the keybinding was never defined.
+ - Fix parsing of unknown keymap names.
 
 tig-0.15
 --------

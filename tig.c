@@ -2009,7 +2009,7 @@ option_bind_command(int argc, const char *argv[])
 		return ERR;
 	}
 
-	if (set_keymap(&keymap, argv[0]) == ERR) {
+	if (!set_keymap(&keymap, argv[0])) {
 		config_msg = "Unknown key map";
 		return ERR;
 	}
