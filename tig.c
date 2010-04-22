@@ -1522,6 +1522,14 @@ static void
 add_keybinding(enum keymap keymap, enum request request, int key)
 {
 	struct keybinding_table *table = &keybindings[keymap];
+	size_t i;
+
+	for (i = 0; i < keybindings[keymap].size; i++) {
+		if (keybindings[keymap].data[i].alias == key) {
+			keybindings[keymap].data[i].request = request;
+			return;
+		}
+	}
 
 	table->data = realloc(table->data, (table->size + 1) * sizeof(*table->data));
 	if (!table->data)
