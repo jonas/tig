@@ -487,9 +487,9 @@ omnipresent.
 
 Commit message::
 
-For now only `Signed-off-by` and `Acked-by` lines are colorized.
+`Signed-off-by`, `Acked-by`, `Reviewed-by` and `Tested-by` lines are colorized.
 
-*signoff*, *acked*
+*signoff*, *acked*, *reviewed*, *tested*
 
 Tree markup::
 
