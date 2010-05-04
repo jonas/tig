@@ -2239,6 +2239,7 @@ struct view {
 	/* If non-NULL, points to the view that opened this view. If this view
 	 * is closed tig will switch back to the parent view. */
 	struct view *parent;
+	struct view *prev;
 
 	/* Buffering */
 	size_t lines;		/* Total number of lines */
@@ -3475,6 +3476,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	if (split) {
 		display[1] = view;
 		current_view = 1;
+		view->parent = prev;
 	} else if (!nomaximize) {
 		/* Maximize the current view. */
 		memset(display, 0, sizeof(display));
@@ -3482,9 +3484,9 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		display[current_view] = view;
 	}
 
-	/* No parent signals that this is the first loaded view. */
+	/* No prev signals that this is the first loaded view. */
 	if (prev && view != prev) {
-		view->parent = prev;
+		view->prev = prev;
 	}
 
 	/* Resize the view when switching between split- and full-screen,
@@ -3803,13 +3805,12 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_VIEW_CLOSE:
-		/* XXX: Mark closed views by letting view->parent point to the
+		/* XXX: Mark closed views by letting view->prev point to the
 		 * view itself. Parents to closed view should never be
 		 * followed. */
-		if (view->parent &&
-		    view->parent->parent != view->parent) {
-			maximize_view(view->parent);
-			view->parent = view;
+		if (view->prev && view->prev != view) {
+			maximize_view(view->prev);
+			view->prev = view;
 			break;
 		}
 		/* Fall-through */
@@ -4905,7 +4906,7 @@ blame_open(struct view *view)
 {
 	char path[SIZEOF_STR];
 
-	if (!view->parent && *opt_prefix) {
+	if (!view->prev && *opt_prefix) {
 		string_copy(path, opt_file);
 		if (!string_format(opt_file, "%s%s", opt_prefix, path))
 			return FALSE;
@@ -5005,7 +5006,7 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 		const char **argv = *opt_ref ? blame_ref_argv : blame_head_argv;
 		struct io io = {};
 
-		if (view->lines == 0 && !view->parent)
+		if (view->lines == 0 && !view->prev)
 			die("No blame exist for %s", view->vid);
 
 		if (view->lines == 0 || !io_run_rd(&io, argv, opt_cdup, FORMAT_ALL)) {
@@ -6783,7 +6784,7 @@ main_read(struct view *view, char *line)
 	if (!line) {
 		int i;
 
-		if (!view->lines && !view->parent)
+		if (!view->lines && !view->prev)
 			die("No revisions match the given arguments.");
 		if (view->lines > 0) {
 			commit = view->line[view->lines - 1].data;
