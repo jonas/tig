@@ -2320,9 +2320,6 @@ static struct view views[] = {
 #define view_is_displayed(view) \
 	(view == display[0] || view == display[1])
 
-#define view_has_parent(view, child_type, parent_type) \
-	(view->type == child_type && view->parent && view->parent->type == parent_type)
-
 static inline void
 set_view_attr(struct view *view, enum line_type type)
 {
@@ -3695,11 +3692,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_PREVIOUS:
 		request = request == REQ_NEXT ? REQ_MOVE_DOWN : REQ_MOVE_UP;
 
-		if (view_has_parent(view, VIEW_DIFF, VIEW_MAIN) ||
-		    view_has_parent(view, VIEW_DIFF, VIEW_BLAME) ||
-		    view_has_parent(view, VIEW_STAGE, VIEW_STATUS) ||
-		    view_has_parent(view, VIEW_BLOB, VIEW_TREE) ||
-		    view_has_parent(view, VIEW_MAIN, VIEW_BRANCH)) {
+		if (view->parent) {
 			int line;
 
 			view = view->parent;
