@@ -3376,7 +3376,8 @@ update_view(struct view *view)
 		end_update(view, TRUE);
 
 	} else if (io_eof(view->pipe)) {
-		report("");
+		if (view_is_displayed(view))
+			report("");
 		end_update(view, FALSE);
 	}
 
