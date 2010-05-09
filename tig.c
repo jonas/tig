@@ -2320,6 +2320,11 @@ static struct view views[] = {
 #define view_is_displayed(view) \
 	(view == display[0] || view == display[1])
 
+
+/*
+ * View drawing.
+ */
+
 static inline void
 set_view_attr(struct view *view, enum line_type type)
 {
@@ -2708,6 +2713,11 @@ redraw_display(bool clear)
 		update_view_title(view);
 	}
 }
+
+
+/*
+ * Option management
+ */
 
 static void
 toggle_enum_option_do(unsigned int *opt, const char *help,
