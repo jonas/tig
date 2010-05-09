@@ -2329,6 +2329,14 @@ static struct view views[] = {
 #define view_is_displayed(view) \
 	(view == display[0] || view == display[1])
 
+static enum request
+view_request(struct view *view, enum request request)
+{
+	if (!view || !view->lines)
+		return request;
+	return view->ops->request(view, request, &view->line[view->lineno]);
+}
+
 
 /*
  * View drawing.
@@ -3621,11 +3629,9 @@ view_driver(struct view *view, enum request request)
 			return TRUE;
 	}
 
-	if (view && view->lines) {
-		request = view->ops->request(view, request, &view->line[view->lineno]);
-		if (request == REQ_NONE)
-			return TRUE;
-	}
+	request = view_request(view, request);
+	if (request == REQ_NONE)
+		return TRUE;
 
 	switch (request) {
 	case REQ_MOVE_UP:
@@ -3712,9 +3718,7 @@ view_driver(struct view *view, enum request request)
 			if (view_is_displayed(view))
 				update_view_title(view);
 			if (line != view->lineno)
-				view->ops->request(view, REQ_ENTER,
-						   &view->line[view->lineno]);
-
+				view_request(view, REQ_ENTER);
 		} else {
 			move_view(view, request);
 		}
