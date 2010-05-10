@@ -4012,7 +4012,9 @@ select_commit_parent(const char *id, char rev[SIZEOF_REV], const char *path)
 		return FALSE;
 	}
 
-	if (parents > 1 && !open_commit_parent_menu(buf, &parents))
+	if (parents == 1)
+		parents = 0;
+	else if (!open_commit_parent_menu(buf, &parents))
 		return FALSE;
 
 	string_copy_rev(rev, &buf[41 * parents]);
