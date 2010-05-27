@@ -4747,7 +4747,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case LINE_TREE_FILE:
-		flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
+		flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 		request = REQ_VIEW_BLOB;
 		break;
 
@@ -5184,7 +5184,7 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 static enum request
 blame_request(struct view *view, enum request request, struct line *line)
 {
-	enum open_flags flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
+	enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 	struct blame *blame = line->data;
 
 	switch (request) {
@@ -5910,7 +5910,7 @@ status_enter(struct view *view, struct line *line)
 		die("line type %d not handled in switch", line->type);
 	}
 
-	split = view_is_displayed(view) ? OPEN_SPLIT : 0;
+	split = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 	open_view(view, REQ_VIEW_STAGE, OPEN_PREPARED | split);
 	if (view_is_displayed(VIEW(REQ_VIEW_STAGE))) {
 		if (status) {
@@ -6880,7 +6880,7 @@ main_read(struct view *view, char *line)
 static enum request
 main_request(struct view *view, enum request request, struct line *line)
 {
-	enum open_flags flags = display[0] == view ? OPEN_SPLIT : OPEN_DEFAULT;
+	enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 
 	switch (request) {
 	case REQ_ENTER:
