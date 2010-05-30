@@ -678,6 +678,15 @@ argv_from_env(const char **argv, const char *name)
 	return !env || argv_from_string(argv, &argc, env);
 }
 
+static void
+argv_free(const char *argv[])
+{
+	int argc;
+
+	for (argc = 0; argv[argc]; argc++)
+		free((void *) argv[argc]);
+}
+
 
 /*
  * Executing external commands.
@@ -3142,15 +3151,6 @@ reset_view(struct view *view)
 	view->update_secs = 0;
 }
 
-static void
-free_argv(const char *argv[])
-{
-	int argc;
-
-	for (argc = 0; argv[argc]; argc++)
-		free((void *) argv[argc]);
-}
-
 static const char *
 format_arg(const char *name)
 {
@@ -3187,7 +3187,7 @@ format_argv(const char *dst_argv[], const char *src_argv[], enum format_flags fl
 	int argc;
 	bool noreplace = flags == FORMAT_NONE;
 
-	free_argv(dst_argv);
+	argv_free(dst_argv);
 
 	for (argc = 0; src_argv[argc]; argc++) {
 		const char *arg = src_argv[argc];
@@ -3597,7 +3597,7 @@ open_run_request(enum request request)
 
 	if (format_argv(argv, req->argv, FORMAT_ALL))
 		open_external_viewer(argv, NULL);
-	free_argv(argv);
+	argv_free(argv);
 }
 
 /*
