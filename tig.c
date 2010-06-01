@@ -892,11 +892,11 @@ io_run_fg(const char **argv, const char *dir)
 }
 
 static bool
-io_run_append(const char **argv, enum format_flags flags, int fd)
+io_run_append(const char **argv, int fd)
 {
 	struct io io = {};
 
-	if (!io_format(&io, NULL, IO_AP, argv, flags)) {
+	if (!io_format(&io, NULL, IO_AP, argv, FORMAT_NONE)) {
 		close(fd);
 		return FALSE;
 	}
@@ -906,9 +906,9 @@ io_run_append(const char **argv, enum format_flags flags, int fd)
 }
 
 static bool
-io_run_rd(struct io *io, const char **argv, const char *dir, enum format_flags flags)
+io_run_rd(struct io *io, const char **argv, const char *dir)
 {
-	return io_format(io, dir, IO_RD, argv, flags) && io_start(io);
+	return io_format(io, dir, IO_RD, argv, FORMAT_NONE) && io_start(io);
 }
 
 static bool
@@ -1045,8 +1045,7 @@ io_run_buf(const char **argv, char buf[], size_t bufsize)
 {
 	struct io io = {};
 
-	return io_run_rd(&io, argv, NULL, FORMAT_NONE)
-	    && io_read_buf(&io, buf, bufsize);
+	return io_run_rd(&io, argv, NULL) && io_read_buf(&io, buf, bufsize);
 }
 
 static int
@@ -4527,7 +4526,7 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 			return TRUE;
 		}
 
-		if (!io_run_rd(&io, log_file, opt_cdup, FORMAT_NONE)) {
+		if (!io_run_rd(&io, log_file, opt_cdup)) {
 			report("Failed to load tree data");
 			return TRUE;
 		}
@@ -4670,7 +4669,7 @@ open_blob_editor(const char *id)
 
 	if (fd == -1)
 		report("Failed to create temporary file");
-	else if (!io_run_append(blob_argv, FORMAT_NONE, fd))
+	else if (!io_run_append(blob_argv, fd))
 		report("Failed to save blob data to file");
 	else
 		open_editor(file);
@@ -4914,7 +4913,7 @@ blame_open(struct view *view)
 		};
 
 		if (!string_format(path, "%s:%s", opt_ref, opt_file) ||
-		    !io_run_rd(&view->io, blame_cat_file_argv, opt_cdup, FORMAT_NONE))
+		    !io_run_rd(&view->io, blame_cat_file_argv, opt_cdup))
 			return FALSE;
 	}
 
@@ -5013,7 +5012,7 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 		if (view->lines == 0 && !view->prev)
 			die("No blame exist for %s", view->vid);
 
-		if (view->lines == 0 || !io_run_rd(&io, blame_argv, opt_cdup, FORMAT_NONE)) {
+		if (view->lines == 0 || !io_run_rd(&io, blame_argv, opt_cdup)) {
 			report("Failed to load blame data");
 			return TRUE;
 		}
@@ -5447,7 +5446,7 @@ branch_open(struct view *view)
 			"--simplify-by-decoration", "--all", NULL
 	};
 
-	if (!io_run_rd(&view->io, branch_log, NULL, FORMAT_NONE)) {
+	if (!io_run_rd(&view->io, branch_log, NULL)) {
 		report("Failed to load branch data");
 		return TRUE;
 	}
