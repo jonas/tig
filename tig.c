@@ -687,6 +687,15 @@ argv_free(const char *argv[])
 		free((void *) argv[argc]);
 }
 
+static void
+argv_copy(const char *dst[], const char *src[])
+{
+	int argc;
+
+	for (argc = 0; src[argc]; argc++)
+		dst[argc] = src[argc];
+}
+
 
 /*
  * Executing external commands.
@@ -732,6 +741,13 @@ io_init(struct io *io, const char *dir, enum io_type type)
 	io_reset(io);
 	io->type = type;
 	io->dir = dir;
+}
+
+static void
+io_prepare(struct io *io, const char *dir, enum io_type type, const char *argv[])
+{
+	io_init(io, dir, type);
+	argv_copy(io->argv, argv);
 }
 
 static bool
@@ -859,9 +875,7 @@ io_start(struct io *io)
 static bool
 io_run(struct io *io, const char **argv, const char *dir, enum io_type type)
 {
-	io_init(io, dir, type);
-	if (!format_argv(io->argv, argv, FORMAT_NONE))
-		return FALSE;
+	io_prepare(io, dir, type, argv);
 	return io_start(io);
 }
 
@@ -876,8 +890,7 @@ io_run_bg(const char **argv)
 {
 	struct io io = {};
 
-	if (!io_format(&io, NULL, IO_BG, argv, FORMAT_NONE))
-		return FALSE;
+	io_prepare(&io, NULL, IO_BG, argv);
 	return io_complete(&io);
 }
 
@@ -886,8 +899,7 @@ io_run_fg(const char **argv, const char *dir)
 {
 	struct io io = {};
 
-	if (!io_format(&io, dir, IO_FG, argv, FORMAT_NONE))
-		return FALSE;
+	io_prepare(&io, dir, IO_FG, argv);
 	return io_complete(&io);
 }
 
@@ -896,11 +908,7 @@ io_run_append(const char **argv, int fd)
 {
 	struct io io = {};
 
-	if (!io_format(&io, NULL, IO_AP, argv, FORMAT_NONE)) {
-		close(fd);
-		return FALSE;
-	}
-
+	io_prepare(&io, NULL, IO_AP, argv);
 	io.pipe = fd;
 	return io_complete(&io);
 }
@@ -1045,7 +1053,8 @@ io_run_buf(const char **argv, char buf[], size_t bufsize)
 {
 	struct io io = {};
 
-	return io_run_rd(&io, argv, NULL) && io_read_buf(&io, buf, bufsize);
+	io_prepare(&io, NULL, IO_RD, argv);
+	return io_start(&io) && io_read_buf(&io, buf, bufsize);
 }
 
 static int
@@ -1092,8 +1101,8 @@ io_run_load(const char **argv, const char *separators,
 {
 	struct io io = {};
 
-	return io_format(&io, NULL, IO_RD, argv, FORMAT_NONE)
-		? io_load(&io, separators, read_property) : ERR;
+	io_prepare(&io, NULL, IO_RD, argv);
+	return io_load(&io, separators, read_property);
 }
 
 
