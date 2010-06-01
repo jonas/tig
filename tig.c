@@ -879,38 +879,32 @@ io_run(struct io *io, const char **argv, const char *dir, enum io_type type)
 	return io_start(io);
 }
 
-static int
-io_complete(struct io *io)
-{
-	return io_start(io) && io_done(io);
-}
-
-static int
-io_run_bg(const char **argv)
+static bool
+io_complete(enum io_type type, const char **argv, const char *dir, int fd)
 {
 	struct io io = {};
 
-	io_prepare(&io, NULL, IO_BG, argv);
-	return io_complete(&io);
+	io_prepare(&io, dir, type, argv);
+	io.pipe = fd;
+	return io_start(&io) && io_done(&io);
+}
+
+static bool
+io_run_bg(const char **argv)
+{
+	return io_complete(IO_BG, argv, NULL, -1);
 }
 
 static bool
 io_run_fg(const char **argv, const char *dir)
 {
-	struct io io = {};
-
-	io_prepare(&io, dir, IO_FG, argv);
-	return io_complete(&io);
+	return io_complete(IO_FG, argv, dir, -1);
 }
 
 static bool
 io_run_append(const char **argv, int fd)
 {
-	struct io io = {};
-
-	io_prepare(&io, NULL, IO_AP, argv);
-	io.pipe = fd;
-	return io_complete(&io);
+	return io_complete(IO_AP, argv, NULL, -1);
 }
 
 static bool
