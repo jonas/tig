@@ -4882,18 +4882,6 @@ static struct view_ops blob_ops = {
  *     reading output from git-blame.
  */
 
-static const char *blame_head_argv[] = {
-	"git", "blame", "--incremental", "--", "%(file)", NULL
-};
-
-static const char *blame_ref_argv[] = {
-	"git", "blame", "--incremental", "%(ref)", "--", "%(file)", NULL
-};
-
-static const char *blame_cat_file_argv[] = {
-	"git", "cat-file", "blob", "%(ref):%(file)", NULL
-};
-
 struct blame_commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
@@ -4921,7 +4909,12 @@ blame_open(struct view *view)
 	}
 
 	if (*opt_ref || !io_open(&view->io, "%s%s", opt_cdup, opt_file)) {
-		if (!io_run_rd(&view->io, blame_cat_file_argv, opt_cdup, FORMAT_ALL))
+		const char *blame_cat_file_argv[] = {
+			"git", "cat-file", "blob", path, NULL
+		};
+
+		if (!string_format(path, "%s:%s", opt_ref, opt_file) ||
+		    !io_run_rd(&view->io, blame_cat_file_argv, opt_cdup, FORMAT_NONE))
 			return FALSE;
 	}
 
@@ -5011,13 +5004,16 @@ static bool
 blame_read_file(struct view *view, const char *line, bool *read_file)
 {
 	if (!line) {
-		const char **argv = *opt_ref ? blame_ref_argv : blame_head_argv;
+		const char *blame_argv[] = {
+			"git", "blame", "--incremental",
+				*opt_ref ? opt_ref : "--incremental", "--", opt_file, NULL
+		};
 		struct io io = {};
 
 		if (view->lines == 0 && !view->prev)
 			die("No blame exist for %s", view->vid);
 
-		if (view->lines == 0 || !io_run_rd(&io, argv, opt_cdup, FORMAT_ALL)) {
+		if (view->lines == 0 || !io_run_rd(&io, blame_argv, opt_cdup, FORMAT_NONE)) {
 			report("Failed to load blame data");
 			return TRUE;
 		}
