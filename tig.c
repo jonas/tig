@@ -707,12 +707,9 @@ enum io_type {
 };
 
 struct io {
-	enum io_type type;	/* The requested type of pipe. */
-	const char *dir;	/* Directory from which to execute. */
 	pid_t pid;		/* PID of spawned process. */
 	int pipe;		/* Pipe end for reading or writing. */
 	int error;		/* Error status. */
-	const char *argv[SIZEOF_ARG];	/* Shell command arguments. */
 	char *buf;		/* Read buffer. */
 	size_t bufalloc;	/* Allocated buffer size. */
 	size_t bufsize;		/* Buffer content size. */
@@ -732,18 +729,9 @@ io_reset(struct io *io)
 }
 
 static void
-io_init(struct io *io, const char *dir, enum io_type type)
+io_init(struct io *io)
 {
 	io_reset(io);
-	io->type = type;
-	io->dir = dir;
-}
-
-static void
-io_prepare(struct io *io, const char *dir, enum io_type type, const char *argv[])
-{
-	io_init(io, dir, type);
-	argv_copy(io->argv, argv, FALSE);
 }
 
 static bool
@@ -753,7 +741,7 @@ io_open(struct io *io, const char *fmt, ...)
 	bool fits;
 	va_list args;
 
-	io_init(io, NULL, IO_FD);
+	io_init(io);
 
 	va_start(args, fmt);
 	fits = vsnprintf(name, sizeof(name), fmt, args) < sizeof(name);
@@ -806,35 +794,32 @@ io_done(struct io *io)
 }
 
 static bool
-io_start(struct io *io)
+io_start(struct io *io, enum io_type type, const char *dir, const char *argv[])
 {
 	int pipefds[2] = { -1, -1 };
 
-	if (io->type == IO_FD)
-		return TRUE;
-
-	if ((io->type == IO_RD || io->type == IO_WR) && pipe(pipefds) < 0) {
+	if ((type == IO_RD || type == IO_WR) && pipe(pipefds) < 0) {
 		io->error = errno;
 		return FALSE;
-	} else if (io->type == IO_AP) {
+	} else if (type == IO_AP) {
 		pipefds[1] = io->pipe;
 	}
 
 	if ((io->pid = fork())) {
 		if (io->pid == -1)
 			io->error = errno;
-		if (pipefds[!(io->type == IO_WR)] != -1)
-			close(pipefds[!(io->type == IO_WR)]);
+		if (pipefds[!(type == IO_WR)] != -1)
+			close(pipefds[!(type == IO_WR)]);
 		if (io->pid != -1) {
-			io->pipe = pipefds[!!(io->type == IO_WR)];
+			io->pipe = pipefds[!!(type == IO_WR)];
 			return TRUE;
 		}
 
 	} else {
-		if (io->type != IO_FG) {
+		if (type != IO_FG) {
 			int devnull = open("/dev/null", O_RDWR);
-			int readfd  = io->type == IO_WR ? pipefds[0] : devnull;
-			int writefd = (io->type == IO_RD || io->type == IO_AP)
+			int readfd  = type == IO_WR ? pipefds[0] : devnull;
+			int writefd = (type == IO_RD || type == IO_AP)
 							? pipefds[1] : devnull;
 
 			dup2(readfd,  STDIN_FILENO);
@@ -848,23 +833,23 @@ io_start(struct io *io)
 				close(pipefds[1]);
 		}
 
-		if (io->dir && *io->dir && chdir(io->dir) == -1)
+		if (dir && *dir && chdir(dir) == -1)
 			exit(errno);
 
-		execvp(io->argv[0], (char *const*) io->argv);
+		execvp(argv[0], (char *const*) argv);
 		exit(errno);
 	}
 
-	if (pipefds[!!(io->type == IO_WR)] != -1)
-		close(pipefds[!!(io->type == IO_WR)]);
+	if (pipefds[!!(type == IO_WR)] != -1)
+		close(pipefds[!!(type == IO_WR)]);
 	return FALSE;
 }
 
 static bool
 io_run(struct io *io, const char **argv, const char *dir, enum io_type type)
 {
-	io_prepare(io, dir, type, argv);
-	return io_start(io);
+	io_init(io);
+	return io_start(io, type, dir, argv);
 }
 
 static bool
@@ -872,9 +857,9 @@ io_complete(enum io_type type, const char **argv, const char *dir, int fd)
 {
 	struct io io = {};
 
-	io_prepare(&io, dir, type, argv);
+	io_init(&io);
 	io.pipe = fd;
-	return io_start(&io) && io_done(&io);
+	return io_start(&io, type, dir, argv) && io_done(&io);
 }
 
 static bool
@@ -1029,8 +1014,8 @@ io_run_buf(const char **argv, char buf[], size_t bufsize)
 {
 	struct io io = {};
 
-	io_prepare(&io, NULL, IO_RD, argv);
-	return io_start(&io) && io_read_buf(&io, buf, bufsize);
+	io_init(&io);
+	return io_start(&io, IO_RD, NULL, argv) && io_read_buf(&io, buf, bufsize);
 }
 
 static int
@@ -1039,9 +1024,6 @@ io_load(struct io *io, const char *separators,
 {
 	char *name;
 	int state = OK;
-
-	if (!io_start(io))
-		return ERR;
 
 	while (state == OK && (name = io_get(io, '\n', TRUE))) {
 		char *value;
@@ -1077,7 +1059,9 @@ io_run_load(const char **argv, const char *separators,
 {
 	struct io io = {};
 
-	io_prepare(&io, NULL, IO_RD, argv);
+	io_init(&io);
+	if (!io_start(&io, IO_RD, NULL, argv))
+		return ERR;
 	return io_load(&io, separators, read_property);
 }
 
@@ -2245,6 +2229,8 @@ struct view {
 	bool has_scrolled;	/* View was scrolled. */
 
 	/* Loading */
+	const char *argv[SIZEOF_ARG];	/* Shell command arguments. */
+	const char *dir;	/* Directory from which to execute. */
 	struct io io;
 	struct io *pipe;
 	time_t start_time;
@@ -3265,8 +3251,9 @@ setup_update(struct view *view, const char *vid)
 static bool
 prepare_io(struct view *view, const char *dir, const char *argv[], bool replace)
 {
-	io_init(&view->io, dir, IO_RD);
-	return format_argv(view->io.argv, argv, replace);
+	io_init(&view->io);
+	view->dir = dir;
+	return format_argv(view->argv, argv, replace);
 }
 
 static bool
@@ -3283,7 +3270,7 @@ start_update(struct view *view, const char **argv, const char *dir)
 	if (view->pipe)
 		io_done(view->pipe);
 	return prepare_io(view, dir, argv, FALSE) &&
-	       io_start(&view->io);
+	       io_start(&view->io, IO_RD, dir, view->argv);
 }
 
 static bool
@@ -3291,6 +3278,7 @@ prepare_update_file(struct view *view, const char *name)
 {
 	if (view->pipe)
 		end_update(view, TRUE);
+	argv_free(view->argv);
 	return io_open(&view->io, "%s/%s", opt_cdup[0] ? opt_cdup : ".", name);
 }
 
@@ -3315,7 +3303,7 @@ begin_update(struct view *view, bool refresh)
 		string_copy_rev(view->ref, view->id);
 	}
 
-	if (!io_start(&view->io))
+	if (view->argv[0] && !io_start(&view->io, IO_RD, view->dir, view->argv))
 		return FALSE;
 
 	setup_update(view, view->id);
