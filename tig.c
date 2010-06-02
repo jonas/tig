@@ -688,13 +688,15 @@ argv_free(const char *argv[])
 	argv[0] = NULL;
 }
 
-static void
-argv_copy(const char *dst[], const char *src[])
+static bool
+argv_copy(const char *dst[], const char *src[], bool allocate)
 {
 	int argc;
 
 	for (argc = 0; src[argc]; argc++)
-		dst[argc] = src[argc];
+		if (!(dst[argc] = allocate ? strdup(src[argc]) : src[argc]))
+			return FALSE;
+	return TRUE;
 }
 
 
@@ -748,7 +750,7 @@ static void
 io_prepare(struct io *io, const char *dir, enum io_type type, const char *argv[])
 {
 	io_init(io, dir, type);
-	argv_copy(io->argv, argv);
+	argv_copy(io->argv, argv, FALSE);
 }
 
 static bool
@@ -1743,7 +1745,7 @@ add_run_request(enum keymap keymap, int key, int argc, const char **argv)
 	req->key = key;
 	req->argv[0] = NULL;
 
-	if (!format_argv(req->argv, argv, FORMAT_NONE))
+	if (!argv_copy(req->argv, argv, TRUE))
 		return REQ_NONE;
 
 	return REQ_NONE + ++run_requests;
