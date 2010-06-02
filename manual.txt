@@ -158,6 +158,9 @@ following variables.
 			 empty for the root directory.
 |%(file)		|The currently selected file.
 |%(ref)			|The reference given to blame or HEAD if undefined.
+|%(rev-args)		|The revision arguments passed on the command line.
+|%(file-args)		|The file arguments passed on the command line.
+|%(diff-args)		|The diff options passed on the command line.
 |=============================================================================
 
 [[title-window]]

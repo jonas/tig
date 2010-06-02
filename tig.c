@@ -702,6 +702,17 @@ argv_append(const char ***argv, const char *arg)
 }
 
 static bool
+argv_append_array(const char ***dst_argv, const char *src_argv[])
+{
+	int i;
+
+	for (i = 0; src_argv && src_argv[i]; i++)
+		if (!argv_append(dst_argv, src_argv[i]))
+			return FALSE;
+	return TRUE;
+}
+
+static bool
 argv_copy(const char ***dst, const char *src[])
 {
 	int argc;
@@ -1222,6 +1233,9 @@ static char opt_git_dir[SIZEOF_STR]	= "";
 static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
 static FILE *opt_tty			= NULL;
+static const char **opt_diff_args	= NULL;
+static const char **opt_rev_args	= NULL;
+static const char **opt_file_args	= NULL;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strcmp(rev, get_ref_head()->id)))
@@ -3165,6 +3179,22 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool replace)
 		const char *arg = src_argv[argc];
 		size_t bufpos = 0;
 
+		if (!strcmp(arg, "%(file-args)")) {
+			if (!argv_append_array(dst_argv, opt_file_args))
+				break;
+			continue;
+
+		} else if (!strcmp(arg, "%(diff-args)")) {
+			if (!argv_append_array(dst_argv, opt_diff_args))
+				break;
+			continue;
+
+		} else if (!strcmp(arg, "%(rev-args)")) {
+			if (!argv_append_array(dst_argv, opt_rev_args))
+				break;
+			continue;
+		}
+
 		while (arg) {
 			char *next = strstr(arg, "%(");
 			int len = next - arg;
@@ -4201,7 +4231,8 @@ static struct view_ops log_ops = {
 
 static const char *diff_argv[SIZEOF_ARG] = {
 	"git", "show", "--pretty=fuller", "--no-color", "--root",
-		"--patch-with-stat", "--find-copies-harder", "-C", "%(commit)", NULL
+		"--patch-with-stat", "--find-copies-harder", "-C",
+		"%(diff-args)", "%(commit)", "--", "%(file-args)", NULL
 };
 
 static struct view_ops diff_ops = {
@@ -6696,7 +6727,8 @@ update_rev_graph(struct view *view, struct rev_graph *graph)
 
 static const char *main_argv[SIZEOF_ARG] = {
 	"git", "log", "--no-color", "--pretty=raw", "--parents",
-		      "--topo-order", "%(head)", NULL
+		"--topo-order", "%(diff-args)", "%(rev-args)",
+		"--", "%(file-args)", NULL
 };
 
 static bool
@@ -7676,19 +7708,45 @@ warn(const char *msg, ...)
 	va_end(args);
 }
 
+static const char ***filter_args;
+
+static int
+read_filter_args(char *name, size_t namelen, char *value, size_t valuelen)
+{
+	return argv_append(filter_args, name) ? OK : ERR;
+}
+
+static void
+filter_rev_parse(const char ***args, const char *arg1, const char *arg2, const char *argv[])
+{
+	const char *rev_parse_argv[SIZEOF_ARG] = { "git", "rev-parse", arg1, arg2 };
+	const char **all_argv = NULL;
+
+	filter_args = args;
+	if (!argv_append_array(&all_argv, rev_parse_argv) ||
+	    !argv_append_array(&all_argv, argv) ||
+	    !io_run_load(all_argv, "\n", read_filter_args) == ERR)
+		die("Failed to split arguments");
+	argv_free(all_argv);
+	free(all_argv);
+}
+
+static void
+filter_options(const char *argv[])
+{
+	filter_rev_parse(&opt_file_args, "--no-revs", "--no-flags", argv);
+	filter_rev_parse(&opt_diff_args, "--no-revs", "--flags", argv);
+	filter_rev_parse(&opt_rev_args, "--symbolic", "--revs-only", argv);
+}
+
 static enum request
 parse_options(int argc, const char *argv[])
 {
 	enum request request = REQ_VIEW_MAIN;
 	const char *subcommand;
 	bool seen_dashdash = FALSE;
-	/* XXX: This is vulnerable to the user overriding options
-	 * required for the main view parser. */
-	const char *custom_argv[SIZEOF_ARG] = {
-		"git", "log", "--no-color", "--pretty=raw", "--parents",
-			"--topo-order", NULL
-	};
-	int i, j = 6;
+	const char **filter_argv = NULL;
+	int i;
 
 	if (!isatty(STDIN_FILENO)) {
 		io_open(&VIEW(REQ_VIEW_PAGER)->io, "");
@@ -7696,7 +7754,7 @@ parse_options(int argc, const char *argv[])
 	}
 
 	if (argc <= 1)
-		return REQ_NONE;
+		return REQ_VIEW_MAIN;
 
 	subcommand = argv[1];
 	if (!strcmp(subcommand, "status")) {
@@ -7724,16 +7782,16 @@ parse_options(int argc, const char *argv[])
 		subcommand = NULL;
 	}
 
-	if (subcommand) {
-		custom_argv[1] = subcommand;
-		j = 2;
-	}
-
 	for (i = 1 + !!subcommand; i < argc; i++) {
 		const char *opt = argv[i];
 
-		if (seen_dashdash || !strcmp(opt, "--")) {
+		if (seen_dashdash) {
+			argv_append(&opt_file_args, opt);
+			continue;
+
+		} else if (!strcmp(opt, "--")) {
 			seen_dashdash = TRUE;
+			continue;
 
 		} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
 			printf("tig version %s\n", TIG_VERSION);
@@ -7742,15 +7800,18 @@ parse_options(int argc, const char *argv[])
 		} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
 			printf("%s\n", usage);
 			quit(0);
+
+		} else if (!strcmp(opt, "--all")) {
+			argv_append(&opt_rev_args, opt);
+			continue;
 		}
 
-		custom_argv[j++] = opt;
-		if (j >= ARRAY_SIZE(custom_argv))
+		if (!argv_append(&filter_argv, opt))
 			die("command too long");
 	}
 
-	if (!prepare_update(VIEW(request), custom_argv, NULL))
-		die("Failed to format arguments");
+	if (filter_argv)
+		filter_options(filter_argv);
 
 	return request;
 }
@@ -7804,10 +7865,6 @@ main(int argc, const char *argv[])
 			    view->cmd_env);
 
 	init_display();
-
-	if (request != REQ_NONE)
-		open_view(NULL, request, OPEN_PREPARED);
-	request = request == REQ_NONE ? REQ_VIEW_MAIN : REQ_NONE;
 
 	while (view_driver(display[current_view], request)) {
 		int key = get_input(0);
