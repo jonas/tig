@@ -754,14 +754,6 @@ io_prepare(struct io *io, const char *dir, enum io_type type, const char *argv[]
 }
 
 static bool
-io_format(struct io *io, const char *dir, enum io_type type,
-	  const char *argv[], enum format_flags flags)
-{
-	io_init(io, dir, type);
-	return format_argv(io->argv, argv, flags);
-}
-
-static bool
 io_open(struct io *io, const char *fmt, ...)
 {
 	char name[SIZEOF_STR] = "";
@@ -3279,11 +3271,18 @@ setup_update(struct view *view, const char *vid)
 }
 
 static bool
+prepare_io(struct view *view, const char *dir, const char *argv[], bool replace)
+{
+	io_init(&view->io, dir, IO_RD);
+	return format_argv(view->io.argv, argv, replace ? FORMAT_ALL : FORMAT_NONE);
+}
+
+static bool
 prepare_update(struct view *view, const char *argv[], const char *dir)
 {
 	if (view->pipe)
 		end_update(view, TRUE);
-	return io_format(&view->io, dir, IO_RD, argv, FORMAT_NONE);
+	return prepare_io(view, dir, argv, FALSE);
 }
 
 static bool
@@ -3291,7 +3290,7 @@ start_update(struct view *view, const char **argv, const char *dir)
 {
 	if (view->pipe)
 		io_done(view->pipe);
-	return io_format(&view->io, dir, IO_RD, argv, FORMAT_NONE) &&
+	return prepare_io(view, dir, argv, FALSE) &&
 	       io_start(&view->io);
 }
 
@@ -3313,7 +3312,7 @@ begin_update(struct view *view, bool refresh)
 		if (view->ops->prepare) {
 			if (!view->ops->prepare(view))
 				return FALSE;
-		} else if (!io_format(&view->io, NULL, IO_RD, view->ops->argv, FORMAT_ALL)) {
+		} else if (!prepare_io(view, NULL, view->ops->argv, TRUE)) {
 			return FALSE;
 		}
 
@@ -4822,7 +4821,7 @@ tree_prepare(struct view *view)
 		opt_path[0] = 0;
 	}
 
-	return io_format(&view->io, opt_cdup, IO_RD, view->ops->argv, FORMAT_ALL);
+	return prepare_io(view, opt_cdup, view->ops->argv, TRUE);
 }
 
 static const char *tree_argv[SIZEOF_ARG] = {
