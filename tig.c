@@ -909,12 +909,6 @@ io_run_append(const char **argv, int fd)
 }
 
 static bool
-io_run_rd(struct io *io, const char **argv, const char *dir)
-{
-	return io_format(io, dir, IO_RD, argv, FORMAT_NONE) && io_start(io);
-}
-
-static bool
 io_eof(struct io *io)
 {
 	return io->eof;
@@ -3291,6 +3285,15 @@ prepare_update(struct view *view, const char *argv[], const char *dir)
 }
 
 static bool
+start_update(struct view *view, const char **argv, const char *dir)
+{
+	if (view->pipe)
+		io_done(view->pipe);
+	return io_format(&view->io, dir, IO_RD, argv, FORMAT_NONE) &&
+	       io_start(&view->io);
+}
+
+static bool
 prepare_update_file(struct view *view, const char *name)
 {
 	if (view->pipe)
@@ -4522,7 +4525,6 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 			"git", "log", "--no-color", "--pretty=raw",
 				"--cc", "--raw", view->id, "--", path, NULL
 		};
-		struct io io = {};
 
 		if (!view->lines) {
 			tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL);
@@ -4530,13 +4532,11 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 			return TRUE;
 		}
 
-		if (!io_run_rd(&io, log_file, opt_cdup)) {
+		if (!start_update(view, log_file, opt_cdup)) {
 			report("Failed to load tree data");
 			return TRUE;
 		}
 
-		io_done(view->pipe);
-		view->io = io;
 		*read_date = TRUE;
 		return FALSE;
 
@@ -4917,7 +4917,7 @@ blame_open(struct view *view)
 		};
 
 		if (!string_format(path, "%s:%s", opt_ref, opt_file) ||
-		    !io_run_rd(&view->io, blame_cat_file_argv, opt_cdup))
+		    !start_update(view, blame_cat_file_argv, opt_cdup))
 			return FALSE;
 	}
 
@@ -5011,18 +5011,15 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 			"git", "blame", "--incremental",
 				*opt_ref ? opt_ref : "--incremental", "--", opt_file, NULL
 		};
-		struct io io = {};
 
 		if (view->lines == 0 && !view->prev)
 			die("No blame exist for %s", view->vid);
 
-		if (view->lines == 0 || !io_run_rd(&io, blame_argv, opt_cdup)) {
+		if (view->lines == 0 || !start_update(view, blame_argv, opt_cdup)) {
 			report("Failed to load blame data");
 			return TRUE;
 		}
 
-		io_done(view->pipe);
-		view->io = io;
 		*read_file = FALSE;
 		return FALSE;
 
@@ -5450,7 +5447,7 @@ branch_open(struct view *view)
 			"--simplify-by-decoration", "--all", NULL
 	};
 
-	if (!io_run_rd(&view->io, branch_log, NULL)) {
+	if (!start_update(view, branch_log, NULL)) {
 		report("Failed to load branch data");
 		return TRUE;
 	}
