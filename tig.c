@@ -682,12 +682,12 @@ argv_free(const char *argv[])
 }
 
 static bool
-argv_copy(const char *dst[], const char *src[], bool allocate)
+argv_copy(const char *dst[], const char *src[])
 {
 	int argc;
 
 	for (argc = 0; src[argc]; argc++)
-		if (!(dst[argc] = allocate ? strdup(src[argc]) : src[argc]))
+		if (!(dst[argc] = strdup(src[argc])))
 			return FALSE;
 	return TRUE;
 }
@@ -1714,7 +1714,7 @@ add_run_request(enum keymap keymap, int key, int argc, const char **argv)
 	req->key = key;
 	req->argv[0] = NULL;
 
-	if (!argv_copy(req->argv, argv, TRUE))
+	if (!argv_copy(req->argv, argv))
 		return REQ_NONE;
 
 	return REQ_NONE + ++run_requests;
