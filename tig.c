@@ -685,6 +685,7 @@ argv_free(const char *argv[])
 
 	for (argc = 0; argv[argc]; argc++)
 		free((void *) argv[argc]);
+	argv[0] = NULL;
 }
 
 static void
