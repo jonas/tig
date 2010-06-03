@@ -140,13 +140,6 @@ static struct ref_list *get_ref_list(const char *id);
 static void foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data);
 static int load_refs(void);
 
-enum format_flags {
-	FORMAT_ALL,		/* Perform replacement in all arguments. */
-	FORMAT_NONE		/* No replacement should be performed. */
-};
-
-static bool format_argv(const char *dst[], const char *src[], enum format_flags flags);
-
 enum input_status {
 	INPUT_OK,
 	INPUT_SKIP,
@@ -3179,11 +3172,10 @@ format_arg(const char *name)
 }
 
 static bool
-format_argv(const char *dst_argv[], const char *src_argv[], enum format_flags flags)
+format_argv(const char *dst_argv[], const char *src_argv[], bool replace)
 {
 	char buf[SIZEOF_STR];
 	int argc;
-	bool noreplace = flags == FORMAT_NONE;
 
 	argv_free(dst_argv);
 
@@ -3196,7 +3188,7 @@ format_argv(const char *dst_argv[], const char *src_argv[], enum format_flags fl
 			int len = next - arg;
 			const char *value;
 
-			if (!next || noreplace) {
+			if (!next || !replace) {
 				len = strlen(arg);
 				value = "";
 
@@ -3211,7 +3203,7 @@ format_argv(const char *dst_argv[], const char *src_argv[], enum format_flags fl
 			if (!string_format_from(buf, &bufpos, "%.*s%s", len, arg, value))
 				return FALSE;
 
-			arg = next && !noreplace ? strchr(next, ')') + 1 : NULL;
+			arg = next && replace ? strchr(next, ')') + 1 : NULL;
 		}
 
 		dst_argv[argc] = strdup(buf);
@@ -3274,7 +3266,7 @@ static bool
 prepare_io(struct view *view, const char *dir, const char *argv[], bool replace)
 {
 	io_init(&view->io, dir, IO_RD);
-	return format_argv(view->io.argv, argv, replace ? FORMAT_ALL : FORMAT_NONE);
+	return format_argv(view->io.argv, argv, replace);
 }
 
 static bool
@@ -3609,7 +3601,7 @@ open_run_request(enum request request)
 		return;
 	}
 
-	if (format_argv(argv, req->argv, FORMAT_ALL))
+	if (format_argv(argv, req->argv, TRUE))
 		open_external_viewer(argv, NULL);
 	argv_free(argv);
 }
