@@ -707,8 +707,8 @@ enum io_type {
 };
 
 struct io {
-	pid_t pid;		/* PID of spawned process. */
 	int pipe;		/* Pipe end for reading or writing. */
+	pid_t pid;		/* PID of spawned process. */
 	int error;		/* Error status. */
 	char *buf;		/* Read buffer. */
 	size_t bufalloc;	/* Allocated buffer size. */
@@ -717,21 +717,13 @@ struct io {
 	unsigned int eof:1;	/* Has end of file been reached. */
 };
 
-static void
-io_reset(struct io *io)
-{
-	io->pipe = -1;
-	io->pid = 0;
-	io->buf = io->bufpos = NULL;
-	io->bufalloc = io->bufsize = 0;
-	io->error = 0;
-	io->eof = 0;
-}
+#define IO_INIT(fd) { fd }
 
 static void
 io_init(struct io *io)
 {
-	io_reset(io);
+	memset(io, 0, sizeof(*io));
+	io->pipe = -1;
 }
 
 static bool
@@ -771,7 +763,7 @@ io_done(struct io *io)
 	if (io->pipe != -1)
 		close(io->pipe);
 	free(io->buf);
-	io_reset(io);
+	io_init(io);
 
 	while (pid > 0) {
 		int status;
@@ -855,10 +847,8 @@ io_run(struct io *io, const char **argv, const char *dir, enum io_type type)
 static bool
 io_complete(enum io_type type, const char **argv, const char *dir, int fd)
 {
-	struct io io = {};
+	struct io io = IO_INIT(fd);
 
-	io_init(&io);
-	io.pipe = fd;
 	return io_start(&io, type, dir, argv) && io_done(&io);
 }
 
@@ -1012,9 +1002,8 @@ io_read_buf(struct io *io, char buf[], size_t bufsize)
 static bool
 io_run_buf(const char **argv, char buf[], size_t bufsize)
 {
-	struct io io = {};
+	struct io io = IO_INIT(-1);
 
-	io_init(&io);
 	return io_start(&io, IO_RD, NULL, argv) && io_read_buf(&io, buf, bufsize);
 }
 
@@ -1057,9 +1046,8 @@ static int
 io_run_load(const char **argv, const char *separators,
 	    int (*read_property)(char *, size_t, char *, size_t))
 {
-	struct io io = {};
+	struct io io = IO_INIT(-1);
 
-	io_init(&io);
 	if (!io_start(&io, IO_RD, NULL, argv))
 		return ERR;
 	return io_load(&io, separators, read_property);
