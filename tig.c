@@ -717,8 +717,6 @@ struct io {
 	unsigned int eof:1;	/* Has end of file been reached. */
 };
 
-#define IO_INIT(fd) { fd }
-
 static void
 io_init(struct io *io)
 {
@@ -786,15 +784,20 @@ io_done(struct io *io)
 }
 
 static bool
-io_start(struct io *io, enum io_type type, const char *dir, const char *argv[])
+io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ...)
 {
 	int pipefds[2] = { -1, -1 };
+	va_list args;
+
+	io_init(io);
 
 	if ((type == IO_RD || type == IO_WR) && pipe(pipefds) < 0) {
 		io->error = errno;
 		return FALSE;
 	} else if (type == IO_AP) {
-		pipefds[1] = io->pipe;
+		va_start(args, argv);
+		pipefds[1] = va_arg(args, int);
+		va_end(args);
 	}
 
 	if ((io->pid = fork())) {
@@ -838,18 +841,11 @@ io_start(struct io *io, enum io_type type, const char *dir, const char *argv[])
 }
 
 static bool
-io_run(struct io *io, const char **argv, const char *dir, enum io_type type)
-{
-	io_init(io);
-	return io_start(io, type, dir, argv);
-}
-
-static bool
 io_complete(enum io_type type, const char **argv, const char *dir, int fd)
 {
-	struct io io = IO_INIT(fd);
+	struct io io;
 
-	return io_start(&io, type, dir, argv) && io_done(&io);
+	return io_run(&io, type, dir, argv, fd) && io_done(&io);
 }
 
 static bool
@@ -867,7 +863,7 @@ io_run_fg(const char **argv, const char *dir)
 static bool
 io_run_append(const char **argv, int fd)
 {
-	return io_complete(IO_AP, argv, NULL, -1);
+	return io_complete(IO_AP, argv, NULL, fd);
 }
 
 static bool
@@ -1002,9 +998,9 @@ io_read_buf(struct io *io, char buf[], size_t bufsize)
 static bool
 io_run_buf(const char **argv, char buf[], size_t bufsize)
 {
-	struct io io = IO_INIT(-1);
+	struct io io;
 
-	return io_start(&io, IO_RD, NULL, argv) && io_read_buf(&io, buf, bufsize);
+	return io_run(&io, IO_RD, NULL, argv) && io_read_buf(&io, buf, bufsize);
 }
 
 static int
@@ -1046,9 +1042,9 @@ static int
 io_run_load(const char **argv, const char *separators,
 	    int (*read_property)(char *, size_t, char *, size_t))
 {
-	struct io io = IO_INIT(-1);
+	struct io io;
 
-	if (!io_start(&io, IO_RD, NULL, argv))
+	if (!io_run(&io, IO_RD, NULL, argv))
 		return ERR;
 	return io_load(&io, separators, read_property);
 }
@@ -2092,7 +2088,7 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen)
 static void
 load_option_file(const char *path)
 {
-	struct io io = {};
+	struct io io;
 
 	/* It's OK that the file doesn't exist. */
 	if (!io_open(&io, "%s", path))
@@ -3239,7 +3235,6 @@ setup_update(struct view *view, const char *vid)
 static bool
 prepare_io(struct view *view, const char *dir, const char *argv[], bool replace)
 {
-	io_init(&view->io);
 	view->dir = dir;
 	return format_argv(view->argv, argv, replace);
 }
@@ -3258,7 +3253,7 @@ start_update(struct view *view, const char **argv, const char *dir)
 	if (view->pipe)
 		io_done(view->pipe);
 	return prepare_io(view, dir, argv, FALSE) &&
-	       io_start(&view->io, IO_RD, dir, view->argv);
+	       io_run(&view->io, IO_RD, dir, view->argv);
 }
 
 static bool
@@ -3291,7 +3286,7 @@ begin_update(struct view *view, bool refresh)
 		string_copy_rev(view->ref, view->id);
 	}
 
-	if (view->argv[0] && !io_start(&view->io, IO_RD, view->dir, view->argv))
+	if (view->argv[0] && !io_run(&view->io, IO_RD, view->dir, view->argv))
 		return FALSE;
 
 	setup_update(view, view->id);
@@ -5119,12 +5114,12 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 		"git", "diff-tree", "-U0", blame->commit->id,
 			"--", blame->commit->filename, NULL
 	};
-	struct io io = {};
+	struct io io;
 	int parent_lineno = -1;
 	int blamed_lineno = -1;
 	char *line;
 
-	if (!io_run(&io, diff_tree_argv, NULL, IO_RD))
+	if (!io_run(&io, IO_RD, NULL, diff_tree_argv))
 		return;
 
 	while ((line = io_get(&io, '\n', TRUE))) {
@@ -5535,9 +5530,9 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 {
 	struct status *unmerged = NULL;
 	char *buf;
-	struct io io = {};
+	struct io io;
 
-	if (!io_run(&io, argv, opt_cdup, IO_RD))
+	if (!io_run(&io, IO_RD, opt_cdup, argv))
 		return FALSE;
 
 	add_line_data(view, NULL, type);
@@ -5685,7 +5680,7 @@ status_update_onbranch(void)
 			continue;
 
 		if (!*opt_head) {
-			struct io io = {};
+			struct io io;
 
 			if (io_open(&io, "%s/rebase-merge/head-name", opt_git_dir) &&
 			    io_read_buf(&io, buf, sizeof(buf))) {
@@ -5932,11 +5927,11 @@ status_update_prepare(struct io *io, enum line_type type)
 
 	switch (type) {
 	case LINE_STAT_STAGED:
-		return io_run(io, staged_argv, opt_cdup, IO_WR);
+		return io_run(io, IO_WR, opt_cdup, staged_argv);
 
 	case LINE_STAT_UNSTAGED:
 	case LINE_STAT_UNTRACKED:
-		return io_run(io, others_argv, opt_cdup, IO_WR);
+		return io_run(io, IO_WR, opt_cdup, others_argv);
 
 	default:
 		die("line type %d not handled in switch", type);
@@ -5975,7 +5970,7 @@ status_update_write(struct io *io, struct status *status, enum line_type type)
 static bool
 status_update_file(struct status *status, enum line_type type)
 {
-	struct io io = {};
+	struct io io;
 	bool result;
 
 	if (!status_update_prepare(&io, type))
@@ -5989,7 +5984,7 @@ static bool
 status_update_files(struct view *view, struct line *line)
 {
 	char buf[sizeof(view->ref)];
-	struct io io = {};
+	struct io io;
 	bool result = TRUE;
 	struct line *pos = view->line + view->lines;
 	int files = 0;
@@ -6262,7 +6257,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, bool revert)
 		"git", "apply", "--whitespace=nowarn", NULL
 	};
 	struct line *diff_hdr;
-	struct io io = {};
+	struct io io;
 	int argc = 3;
 
 	diff_hdr = stage_diff_find(view, chunk, LINE_DIFF_HEADER);
@@ -6275,7 +6270,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, bool revert)
 		apply_argv[argc++] = "-R";
 	apply_argv[argc++] = "-";
 	apply_argv[argc++] = NULL;
-	if (!io_run(&io, apply_argv, opt_cdup, IO_WR))
+	if (!io_run(&io, IO_WR, opt_cdup, apply_argv))
 		return FALSE;
 
 	if (!stage_diff_write(&io, diff_hdr, chunk) ||
