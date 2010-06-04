@@ -1703,7 +1703,7 @@ static size_t run_requests;
 DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 
 static enum request
-add_run_request(enum keymap keymap, int key, int argc, const char **argv)
+add_run_request(enum keymap keymap, int key, const char **argv)
 {
 	struct run_request *req;
 
@@ -1736,16 +1736,11 @@ add_builtin_run_requests(void)
 	const char *checkout[] = { "git", "checkout", "%(branch)", NULL };
 	const char *commit[] = { "git", "commit", NULL };
 	const char *gc[] = { "git", "gc", NULL };
-	struct {
-		enum keymap keymap;
-		int key;
-		int argc;
-		const char **argv;
-	} reqs[] = {
-		{ KEYMAP_MAIN,	  'C', ARRAY_SIZE(cherry_pick) - 1, cherry_pick },
-		{ KEYMAP_STATUS,  'C', ARRAY_SIZE(commit) - 1, commit },
-		{ KEYMAP_BRANCH,  'C', ARRAY_SIZE(checkout) - 1, checkout },
-		{ KEYMAP_GENERIC, 'G', ARRAY_SIZE(gc) - 1, gc },
+	struct run_request reqs[] = {
+		{ KEYMAP_MAIN,	  'C', cherry_pick },
+		{ KEYMAP_STATUS,  'C', commit },
+		{ KEYMAP_BRANCH,  'C', checkout },
+		{ KEYMAP_GENERIC, 'G', gc },
 	};
 	int i;
 
@@ -1754,7 +1749,7 @@ add_builtin_run_requests(void)
 
 		if (req != reqs[i].key)
 			continue;
-		req = add_run_request(reqs[i].keymap, reqs[i].key, reqs[i].argc, reqs[i].argv);
+		req = add_run_request(reqs[i].keymap, reqs[i].key, reqs[i].argv);
 		if (req != REQ_NONE)
 			add_keybinding(reqs[i].keymap, req, reqs[i].key);
 	}
@@ -2027,7 +2022,7 @@ option_bind_command(int argc, const char *argv[])
 		}
 	}
 	if (request == REQ_UNKNOWN && *argv[2]++ == '!')
-		request = add_run_request(keymap, key, argc - 2, argv + 2);
+		request = add_run_request(keymap, key, argv + 2);
 	if (request == REQ_UNKNOWN) {
 		config_msg = "Unknown request name";
 		return ERR;
