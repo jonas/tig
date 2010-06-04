@@ -5335,23 +5335,21 @@ branch_request(struct view *view, enum request request, struct line *line)
 		return REQ_NONE;
 
 	case REQ_ENTER:
-		if (branch->ref == &branch_all) {
-			const char *all_branches_argv[] = {
-				"git", "log", "--no-color", "--pretty=raw", "--parents",
-				      "--topo-order", "--all", NULL
-			};
-			struct view *main_view = VIEW(REQ_VIEW_MAIN);
+	{
+		const struct ref *ref = branch->ref;
+		const char *all_branches_argv[] = {
+			"git", "log", "--no-color", "--pretty=raw", "--parents",
+			      "--topo-order",
+			      ref == &branch_all ? "--all" : ref->name, NULL
+		};
+		struct view *main_view = VIEW(REQ_VIEW_MAIN);
 
-			if (!prepare_update(main_view, all_branches_argv, NULL)) {
-				report("Failed to load view of all branches");
-				return REQ_NONE;
-			}
+		if (!prepare_update(main_view, all_branches_argv, NULL))
+			report("Failed to load view of all branches");
+		else
 			open_view(view, REQ_VIEW_MAIN, OPEN_PREPARED | OPEN_SPLIT);
-		} else {
-			open_view(view, REQ_VIEW_MAIN, OPEN_SPLIT);
-		}
 		return REQ_NONE;
-
+	}
 	default:
 		return request;
 	}
