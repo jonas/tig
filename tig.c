@@ -676,18 +676,38 @@ argv_free(const char *argv[])
 {
 	int argc;
 
+	if (!argv)
+		return;
 	for (argc = 0; argv[argc]; argc++)
 		free((void *) argv[argc]);
 	argv[0] = NULL;
 }
 
+DEFINE_ALLOCATOR(argv_realloc, const char *, SIZEOF_ARG)
+
 static bool
-argv_copy(const char *dst[], const char *src[])
+argv_append(const char ***argv, const char *arg)
+{
+	int argc = 0;
+
+	while (*argv && (*argv)[argc])
+		argc++;
+
+	if (!argv_realloc(argv, argc, 2))
+		return FALSE;
+
+	(*argv)[argc++] = strdup(arg);
+	(*argv)[argc] = NULL;
+	return TRUE;
+}
+
+static bool
+argv_copy(const char ***dst, const char *src[])
 {
 	int argc;
 
 	for (argc = 0; src[argc]; argc++)
-		if (!(dst[argc] = strdup(src[argc])))
+		if (!argv_append(dst, src[argc]))
 			return FALSE;
 	return TRUE;
 }
@@ -1674,7 +1694,7 @@ get_keys(enum keymap keymap, enum request request, bool all)
 struct run_request {
 	enum keymap keymap;
 	int key;
-	const char *argv[SIZEOF_ARG];
+	const char **argv;
 };
 
 static struct run_request *run_request;
@@ -1687,18 +1707,15 @@ add_run_request(enum keymap keymap, int key, int argc, const char **argv)
 {
 	struct run_request *req;
 
-	if (argc >= ARRAY_SIZE(req->argv) - 1)
-		return REQ_NONE;
-
 	if (!realloc_run_requests(&run_request, run_requests, 1))
 		return REQ_NONE;
 
 	req = &run_request[run_requests];
 	req->keymap = keymap;
 	req->key = key;
-	req->argv[0] = NULL;
+	req->argv = NULL;
 
-	if (!argv_copy(req->argv, argv))
+	if (!argv_copy(&req->argv, argv))
 		return REQ_NONE;
 
 	return REQ_NONE + ++run_requests;
@@ -2213,7 +2230,7 @@ struct view {
 	bool has_scrolled;	/* View was scrolled. */
 
 	/* Loading */
-	const char *argv[SIZEOF_ARG];	/* Shell command arguments. */
+	const char **argv;	/* Shell command arguments. */
 	const char *dir;	/* Directory from which to execute. */
 	struct io io;
 	struct io *pipe;
@@ -3142,12 +3159,12 @@ format_arg(const char *name)
 }
 
 static bool
-format_argv(const char *dst_argv[], const char *src_argv[], bool replace)
+format_argv(const char ***dst_argv, const char *src_argv[], bool replace)
 {
 	char buf[SIZEOF_STR];
 	int argc;
 
-	argv_free(dst_argv);
+	argv_free(*dst_argv);
 
 	for (argc = 0; src_argv[argc]; argc++) {
 		const char *arg = src_argv[argc];
@@ -3176,12 +3193,9 @@ format_argv(const char *dst_argv[], const char *src_argv[], bool replace)
 			arg = next && replace ? strchr(next, ')') + 1 : NULL;
 		}
 
-		dst_argv[argc] = strdup(buf);
-		if (!dst_argv[argc])
+		if (!argv_append(dst_argv, buf))
 			break;
 	}
-
-	dst_argv[argc] = NULL;
 
 	return src_argv[argc] == NULL;
 }
@@ -3236,7 +3250,7 @@ static bool
 prepare_io(struct view *view, const char *dir, const char *argv[], bool replace)
 {
 	view->dir = dir;
-	return format_argv(view->argv, argv, replace);
+	return format_argv(&view->argv, argv, replace);
 }
 
 static bool
@@ -3286,7 +3300,8 @@ begin_update(struct view *view, bool refresh)
 		string_copy_rev(view->ref, view->id);
 	}
 
-	if (view->argv[0] && !io_run(&view->io, IO_RD, view->dir, view->argv))
+	if (view->argv && view->argv[0] &&
+	    !io_run(&view->io, IO_RD, view->dir, view->argv))
 		return FALSE;
 
 	setup_update(view, view->id);
@@ -3565,16 +3580,18 @@ static void
 open_run_request(enum request request)
 {
 	struct run_request *req = get_run_request(request);
-	const char *argv[ARRAY_SIZE(req->argv)] = { NULL };
+	const char **argv = NULL;
 
 	if (!req) {
 		report("Unknown run request");
 		return;
 	}
 
-	if (format_argv(argv, req->argv, TRUE))
+	if (format_argv(&argv, req->argv, TRUE))
 		open_external_viewer(argv, NULL);
-	argv_free(argv);
+	if (argv)
+		argv_free(argv);
+	free(argv);
 }
 
 /*
