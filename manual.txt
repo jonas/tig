@@ -238,73 +238,18 @@ git ls-remote .
 
 --
 
-[[history-commands]]
-History Commands
-~~~~~~~~~~~~~~~~
+[[diff-options]]
+Diff options
+~~~~~~~~~~~~
 
-It is possible to alter which commands are used for the different views.  If
-for example you prefer commits in the main view to be sorted by date and only
-show 500 commits, use:
+It is possible to alter how diffs are shown by the diff view. If for example
+you prefer to have commit and author dates shown as relative dates, use:
 
 -----------------------------------------------------------------------------
-$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %(head)" tig
+$ TIG_DIFF_OPTS="--relative-date" tig
 -----------------------------------------------------------------------------
 
 Or set the variable permanently in your environment.
-
-Notice, how `%(head)` is used to specify the commit reference.
-
---
-
-TIG_DIFF_CMD::
-
-	The command used for the diff view. Defaults to:
------------------------------------------------------------------------------
-git show --pretty=fuller --no-color --root 
-	 --patch-with-stat --find-copies-harder -C %(commit)
------------------------------------------------------------------------------
-
-TIG_LOG_CMD::
-
-	The command used for the log view. If you prefer to have both
-	author and committer shown in the log view be sure to pass
-	`--pretty=fuller` to git log. Defaults to:
------------------------------------------------------------------------------
-git log --no-color --cc --stat -n100 %(head)
------------------------------------------------------------------------------
-
-TIG_MAIN_CMD::
-
-	The command used for the main view. Note, you must always specify
-	the option: `--pretty=raw` since the main view parser expects to
-	read that format.
------------------------------------------------------------------------------
-git log --no-color --pretty=raw --parents --topo-order %(head)
------------------------------------------------------------------------------
-
---
-
-[[tree-commands]]
-Tree Commands
-~~~~~~~~~~~~~
-
---
-
-TIG_TREE_CMD::
-
-	The command used for the tree view. Defaults to:
------------------------------------------------------------------------------
-git ls-tree %(commit) %(directory)
------------------------------------------------------------------------------
-
-TIG_BLOB_CMD::
-
-	The command used for the blob view. Defaults to:
------------------------------------------------------------------------------
-git cat-file blob %(blob)
------------------------------------------------------------------------------
-
---
 
 [[keys]]
 Default Keybindings

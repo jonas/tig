@@ -109,29 +109,10 @@ TIG_LS_REMOTE::
 	Set command for retrieving all repository references. The command
 	should output data in the same format as git-ls-remote(1).
 
-TIG_DIFF_CMD::
-	The command used for the diff view. By default, git show is used
-	as a backend.
-
-TIG_LOG_CMD::
-	The command used for the log view. If you prefer to have both
-	author and committer shown in the log view be sure to pass
-	`--pretty=fuller` to git log.
-
-TIG_MAIN_CMD::
-	The command used for the main view. Note, you must always specify
-	the option: `--pretty=raw` since the main view parser expects to
-	read that format.
-
-Tree commands
-~~~~~~~~~~~~~
-TIG_TREE_CMD::
-    The command used for the tree view. By default, git-ls-tree(1) is
-    used.
-
-TIG_BLOB_CMD::
-    The command used for the blob view. By default, git-cat-file(1) is
-    used.
+TIG_DIFF_OPTS::
+	The diff options to use in the diff view. The diff view uses
+	git-show(1) for formatting and always passes --patch-with-stat,
+	--find-copies-harder, and -C.
 
 FILES
 -----

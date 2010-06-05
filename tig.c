@@ -7859,10 +7859,15 @@ main(int argc, const char *argv[])
 	if (load_refs() == ERR)
 		die("Failed to load refs.");
 
-	foreach_view (view, i)
+	foreach_view (view, i) {
+		if (getenv(view->cmd_env))
+			warn("Use of the %s environment variable is deprecated,"
+			     " use options or TIG_DIFF_ARGS instead",
+			     view->cmd_env);
 		if (!argv_from_env(view->ops->argv, view->cmd_env))
 			die("Too many arguments in the `%s` environment variable",
 			    view->cmd_env);
+	}
 
 	init_display();
 

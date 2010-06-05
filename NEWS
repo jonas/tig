@@ -10,6 +10,9 @@ Incompatibilities:
    but should in general improve handling of character lengths etc.
    Also, to properly handle UTF-8 environments use ncurses with wide
    character support.
+ - The use of TIG_{MAIN,DIFF,LOG,TREE,BLOB}_CMD environment variables
+   has been deprecated. To allow configuration of the diff view,
+   TIG_DIFF_OPTS can be used.
 
 Improvements:
 
