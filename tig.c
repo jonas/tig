@@ -3977,73 +3977,6 @@ parse_author_line(char *ident, const char **author, struct time *time)
 	}
 }
 
-static bool
-open_commit_parent_menu(char buf[SIZEOF_STR], int *parents)
-{
-	char rev[SIZEOF_REV];
-	const char *revlist_argv[] = {
-		"git", "log", "--no-color", "-1", "--pretty=format:%s", rev, NULL
-	};
-	struct menu_item *items;
-	char text[SIZEOF_STR];
-	bool ok = TRUE;
-	int i;
-
-	items = calloc(*parents + 1, sizeof(*items));
-	if (!items)
-		return FALSE;
-
-	for (i = 0; i < *parents; i++) {
-		string_copy_rev(rev, &buf[SIZEOF_REV * i]);
-		if (!io_run_buf(revlist_argv, text, sizeof(text)) ||
-		    !(items[i].text = strdup(text))) {
-			ok = FALSE;
-			break;
-		}
-	}
-
-	if (ok) {
-		*parents = 0;
-		ok = prompt_menu("Select parent", items, parents);
-	}
-	for (i = 0; items[i].text; i++)
-		free((char *) items[i].text);
-	free(items);
-	return ok;
-}
-
-static bool
-select_commit_parent(const char *id, char rev[SIZEOF_REV], const char *path)
-{
-	char buf[SIZEOF_STR * 4];
-	const char *revlist_argv[] = {
-		"git", "log", "--no-color", "-1",
-			"--pretty=format:%P", id, "--", path, NULL
-	};
-	int parents;
-
-	if (!io_run_buf(revlist_argv, buf, sizeof(buf)) ||
-	    (parents = strlen(buf) / 40) < 0) {
-		report("Failed to get parent information");
-		return FALSE;
-
-	} else if (parents == 0) {
-		if (path)
-			report("Path '%s' does not exist in the parent", path);
-		else
-			report("The selected commit has no parents");
-		return FALSE;
-	}
-
-	if (parents == 1)
-		parents = 0;
-	else if (!open_commit_parent_menu(buf, &parents))
-		return FALSE;
-
-	string_copy_rev(rev, &buf[41 * parents]);
-	return TRUE;
-}
-
 /*
  * Pager backend
  */
@@ -4898,7 +4831,8 @@ struct blame_commit {
 	const char *author;		/* Author of the commit. */
 	struct time time;		/* Date from the author ident. */
 	char filename[128];		/* Name of file. */
-	bool has_previous;		/* Was a "previous" line detected. */
+	char parent_id[SIZEOF_REV];	/* Parent/previous SHA1 ID. */
+	char parent_filename[128];	/* Parent/previous name of file. */
 };
 
 struct blame {
@@ -5116,7 +5050,11 @@ blame_read(struct view *view, char *line)
 		string_ncopy(commit->title, line, strlen(line));
 
 	} else if (match_blame_header("previous ", &line)) {
-		commit->has_previous = TRUE;
+		if (strlen(line) <= SIZEOF_REV)
+			return FALSE;
+		string_copy_rev(commit->parent_id, line);
+		line += SIZEOF_REV;
+		string_ncopy(commit->parent_filename, line, strlen(line));
 
 	} else if (match_blame_header("filename ", &line)) {
 		string_ncopy(commit->filename, line, strlen(line));
@@ -5223,10 +5161,13 @@ blame_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_PARENT:
-		if (check_blame_commit(blame, TRUE) &&
-		    select_commit_parent(blame->commit->id, opt_ref,
-					 blame->commit->filename)) {
-			string_copy(opt_file, blame->commit->filename);
+		if (!check_blame_commit(blame, TRUE))
+			break;
+		if (!*blame->commit->parent_id) {
+			report("The selected commit has no parents");
+		} else {
+			string_copy_rev(opt_ref, blame->commit->parent_id);
+			string_copy(opt_file, blame->commit->parent_filename);
 			setup_blame_parent_line(view, blame);
 			open_view(view, REQ_VIEW_BLAME, OPEN_REFRESH);
 		}
@@ -5247,7 +5188,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 					"-C", "-M", "HEAD", "--", view->vid, NULL
 			};
 
-			if (!blame->commit->has_previous) {
+			if (!*blame->commit->parent_id) {
 				diff_index_argv[1] = "diff";
 				diff_index_argv[2] = "--no-color";
 				diff_index_argv[6] = "--";

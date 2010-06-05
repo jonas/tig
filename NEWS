@@ -39,6 +39,8 @@ Bug fixes:
  - Fix unbind to behave as if the keybinding was never defined.
  - Fix unbind to also cover built-in run requests.
  - Fix parsing of unknown keymap names.
+ - Blame view: fix parent blame to detect renames. It uses "previous"
+   line info from the blame porcelain output added in git version 1.6.3.
 
 tig-0.15
 --------
