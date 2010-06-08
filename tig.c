@@ -7086,12 +7086,13 @@ get_input(int prompt_position)
 {
 	struct view *view;
 	int i, key, cursor_y, cursor_x;
-	bool loading = FALSE;
 
 	if (prompt_position)
 		input_mode = TRUE;
 
 	while (TRUE) {
+		bool loading = FALSE;
+
 		foreach_view (view, i) {
 			update_view(view);
 			if (view_is_displayed(view) && view->has_scrolled &&
