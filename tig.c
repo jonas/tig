@@ -4911,6 +4911,7 @@ static bool
 blame_open(struct view *view)
 {
 	char path[SIZEOF_STR];
+	size_t i;
 
 	if (!view->prev && *opt_prefix) {
 		string_copy(path, opt_file);
@@ -4926,6 +4927,24 @@ blame_open(struct view *view)
 		if (!string_format(path, "%s:%s", opt_ref, opt_file) ||
 		    !start_update(view, blame_cat_file_argv, opt_cdup))
 			return FALSE;
+	}
+
+	/* First pass: remove multiple references to the same commit. */
+	for (i = 0; i < view->lines; i++) {
+		struct blame *blame = view->line[i].data;
+
+		if (blame->commit && blame->commit->id[0])
+			blame->commit->id[0] = 0;
+		else
+			blame->commit = NULL;
+	}
+
+	/* Second pass: free existing references. */
+	for (i = 0; i < view->lines; i++) {
+		struct blame *blame = view->line[i].data;
+
+		if (blame->commit)
+			free(blame->commit);
 	}
 
 	setup_update(view, opt_file);
