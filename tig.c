@@ -209,7 +209,7 @@ string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen)
 #define string_add(dst, from, src) \
 	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
 
-static void
+static size_t
 string_expand(char *dst, size_t dstlen, const char *src, int tabsize)
 {
 	size_t size, pos;
@@ -228,6 +228,7 @@ string_expand(char *dst, size_t dstlen, const char *src, int tabsize)
 	}
 
 	dst[size] = 0;
+	return pos;
 }
 
 static char *
@@ -2396,7 +2397,15 @@ draw_space(struct view *view, enum line_type type, int max, int spaces)
 static bool
 draw_text(struct view *view, enum line_type type, const char *string, bool trim)
 {
-	view->col += draw_chars(view, type, string, view->width + view->yoffset - view->col, trim);
+	char text[SIZEOF_STR];
+
+	do {
+		size_t pos = string_expand(text, sizeof(text), string, opt_tab_size);
+
+		view->col += draw_chars(view, type, text, view->width + view->yoffset - view->col, trim);
+		string += pos;
+	} while (*string && view->width + view->yoffset > view->col);
+
 	return view->width + view->yoffset <= view->col;
 }
 
@@ -3984,13 +3993,10 @@ parse_author_line(char *ident, const char **author, struct time *time)
 static bool
 pager_draw(struct view *view, struct line *line, unsigned int lineno)
 {
-	char text[SIZEOF_STR];
-
 	if (opt_line_number && draw_lineno(view, lineno))
 		return TRUE;
 
-	string_expand(text, sizeof(text), line->data, opt_tab_size);
-	draw_text(view, line->type, text, TRUE);
+	draw_text(view, line->type, line->data, TRUE);
 	return TRUE;
 }
 
@@ -5070,7 +5076,6 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct blame *blame = line->data;
 	struct time *time = NULL;
 	const char *id = NULL, *author = NULL;
-	char text[SIZEOF_STR];
 
 	if (blame->commit && *blame->commit->filename) {
 		id = blame->commit->id;
@@ -5090,8 +5095,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_lineno(view, lineno))
 		return TRUE;
 
-	string_expand(text, sizeof(text), blame->text, opt_tab_size);
-	draw_text(view, LINE_DEFAULT, text, TRUE);
+	draw_text(view, LINE_DEFAULT, blame->text, TRUE);
 	return TRUE;
 }
 
