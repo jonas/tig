@@ -5110,16 +5110,20 @@ check_blame_commit(struct blame *blame, bool check_null_id)
 static void
 setup_blame_parent_line(struct view *view, struct blame *blame)
 {
+	char from[SIZEOF_REF + SIZEOF_STR];
+	char to[SIZEOF_REF + SIZEOF_STR];
 	const char *diff_tree_argv[] = {
-		"git", "diff-tree", "-U0", blame->commit->id,
-			"--", blame->commit->filename, NULL
+		"git", "diff", "--no-textconv", "--no-extdiff", "--no-color",
+			"-U0", from, to, "--", NULL
 	};
 	struct io io;
 	int parent_lineno = -1;
 	int blamed_lineno = -1;
 	char *line;
 
-	if (!io_run(&io, IO_RD, NULL, diff_tree_argv))
+	if (!string_format(from, "%s:%s", opt_ref, opt_file) ||
+	    !string_format(to, "%s:%s", blame->commit->id, blame->commit->filename) ||
+	    !io_run(&io, IO_RD, NULL, diff_tree_argv))
 		return;
 
 	while ((line = io_get(&io, '\n', TRUE))) {
