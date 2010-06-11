@@ -2135,6 +2135,7 @@ load_options(void)
 	const char *home = getenv("HOME");
 	const char *tigrc_user = getenv("TIGRC_USER");
 	const char *tigrc_system = getenv("TIGRC_SYSTEM");
+	const char *tig_diff_opts = getenv("TIG_DIFF_OPTS");
 	char buf[SIZEOF_STR];
 
 	if (!tigrc_system)
@@ -2151,6 +2152,17 @@ load_options(void)
 	/* Add _after_ loading config files to avoid adding run requests
 	 * that conflict with keybindings. */
 	add_builtin_run_requests();
+
+	if (!opt_diff_args && tig_diff_opts && *tig_diff_opts) {
+		static const char *diff_opts[SIZEOF_ARG] = { NULL };
+		int argc = 0;
+
+		if (!string_format(buf, "%s", tig_diff_opts) ||
+		    !argv_from_string(diff_opts, &argc, buf))
+			die("TIG_DIFF_OPTS contains too many arguments");
+		else if (!argv_copy(&opt_diff_args, diff_opts))
+			die("Failed to format TIG_DIFF_OPTS arguments");
+	}
 
 	return OK;
 }
