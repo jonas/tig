@@ -1644,6 +1644,9 @@ draw_date(struct view *view, struct time *time)
 	const char *date = mkdate(time, opt_date);
 	int cols = opt_date == DATE_SHORT ? DATE_SHORT_COLS : DATE_COLS;
 
+	if (opt_date == DATE_NO)
+		return FALSE;
+
 	return draw_field(view, LINE_DATE, date, cols, FALSE);
 }
 
@@ -1652,6 +1655,9 @@ draw_author(struct view *view, const char *author)
 {
 	bool trim = opt_author_cols == 0 || opt_author_cols > 5;
 	bool abbreviate = opt_author == AUTHOR_ABBREVIATED || !trim;
+
+	if (opt_author == AUTHOR_NO)
+		return FALSE;
 
 	if (abbreviate && author)
 		author = get_author_initials(author);
@@ -3834,10 +3840,10 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 		if (draw_mode(view, entry->mode))
 			return TRUE;
 
-		if (opt_author && draw_author(view, entry->author))
+		if (draw_author(view, entry->author))
 			return TRUE;
 
-		if (opt_date && draw_date(view, &entry->time))
+		if (draw_date(view, &entry->time))
 			return TRUE;
 	}
 
@@ -4321,10 +4327,10 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 		time = &blame->commit->time;
 	}
 
-	if (opt_date && draw_date(view, time))
+	if (draw_date(view, time))
 		return TRUE;
 
-	if (opt_author && draw_author(view, author))
+	if (draw_author(view, author))
 		return TRUE;
 
 	if (draw_field(view, LINE_BLAME_ID, id, ID_COLS, FALSE))
@@ -4544,10 +4550,10 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct branch *branch = line->data;
 	enum line_type type = branch->ref->head ? LINE_MAIN_HEAD : LINE_DEFAULT;
 
-	if (opt_date && draw_date(view, &branch->time))
+	if (draw_date(view, &branch->time))
 		return TRUE;
 
-	if (opt_author && draw_author(view, branch->author))
+	if (draw_author(view, branch->author))
 		return TRUE;
 
 	draw_text(view, type, branch->ref == &branch_all ? "All branches" : branch->ref->name);
@@ -5810,10 +5816,10 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (!commit->author)
 		return FALSE;
 
-	if (opt_date && draw_date(view, &commit->time))
+	if (draw_date(view, &commit->time))
 		return TRUE;
 
-	if (opt_author && draw_author(view, commit->author))
+	if (draw_author(view, commit->author))
 		return TRUE;
 
 	if (opt_rev_graph && draw_graph(view, &commit->graph))
