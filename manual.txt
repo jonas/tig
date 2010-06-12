@@ -420,8 +420,8 @@ information. Relevant man pages besides git-log(1) are git-diff(1) and
 git-rev-list(1).
 
 You can tune the interaction with git by making use of the options explained
-in this section. For example, by configuring the environment variables
-described in the section on <<history-commands, history commands>>.
+in this section. For example, by configuring the environment variable
+described in the section on <<diff-options, diff options>>.
 
 [[path-limiting]]
 Limit by Path Name
