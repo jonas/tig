@@ -227,9 +227,9 @@ are:
 			 empty for the root directory.
 |%(file)		|The currently selected file.
 |%(ref)			|The reference given to blame or HEAD if undefined.
-|%(rev-args)		|The revision arguments passed on the command line.
-|%(file-args)		|The file arguments passed on the command line.
-|%(diff-args)		|The diff options passed on the command line.
+|%(revargs)		|The revision arguments passed on the command line.
+|%(fileargs)		|The file arguments passed on the command line.
+|%(diffargs)		|The diff options passed on the command line.
 |=============================================================================
 
 As an example, the following external command will save the current commit as

@@ -3200,17 +3200,17 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool replace)
 		const char *arg = src_argv[argc];
 		size_t bufpos = 0;
 
-		if (!strcmp(arg, "%(file-args)")) {
+		if (!strcmp(arg, "%(fileargs)")) {
 			if (!argv_append_array(dst_argv, opt_file_args))
 				break;
 			continue;
 
-		} else if (!strcmp(arg, "%(diff-args)")) {
+		} else if (!strcmp(arg, "%(diffargs)")) {
 			if (!argv_append_array(dst_argv, opt_diff_args))
 				break;
 			continue;
 
-		} else if (!strcmp(arg, "%(rev-args)")) {
+		} else if (!strcmp(arg, "%(revargs)")) {
 			if (!argv_append_array(dst_argv, opt_rev_args))
 				break;
 			continue;
@@ -4183,7 +4183,7 @@ static struct view_ops log_ops = {
 static const char *diff_argv[SIZEOF_ARG] = {
 	"git", "show", "--pretty=fuller", "--no-color", "--root",
 		"--patch-with-stat", "--find-copies-harder", "-C",
-		"%(diff-args)", "%(commit)", "--", "%(file-args)", NULL
+		"%(diffargs)", "%(commit)", "--", "%(fileargs)", NULL
 };
 
 static struct view_ops diff_ops = {
@@ -6707,8 +6707,8 @@ update_rev_graph(struct view *view, struct rev_graph *graph)
 
 static const char *main_argv[SIZEOF_ARG] = {
 	"git", "log", "--no-color", "--pretty=raw", "--parents",
-		"--topo-order", "%(diff-args)", "%(rev-args)",
-		"--", "%(file-args)", NULL
+		"--topo-order", "%(diffargs)", "%(revargs)",
+		"--", "%(fileargs)", NULL
 };
 
 static bool

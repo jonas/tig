@@ -18,8 +18,8 @@ Improvements:
 
  - Plug several memory leaks.
  - Command line arguments are split into diff, revision, and file
-   arguments and made available as %(diff-args), %(rev-args), and
-   %(file-args). Diff view will limit diffs using %(file-args).
+   arguments and made available as %(diffargs), %(revargs), and
+   %(fileargs). Diff view will limit diffs using %(fileargs).
  - Status view: update the file variable when a line is selected so
    %(file) works as expected.
  - Branch view: add %(branch) symbol providing access to the selected
