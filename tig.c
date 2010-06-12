@@ -1513,6 +1513,8 @@ set_view_attr(struct view *view, enum line_type type)
 	}
 }
 
+#define VIEW_MAX_LEN(view) ((view)->width + (view)->yoffset - (view)->col)
+
 static int
 draw_chars(struct view *view, enum line_type type, const char *string,
 	   int max_len, bool use_tilde)
@@ -1584,18 +1586,18 @@ draw_text(struct view *view, enum line_type type, const char *string)
 	do {
 		size_t pos = string_expand(text, sizeof(text), string, opt_tab_size);
 
-		view->col += draw_chars(view, type, text, view->width + view->yoffset - view->col, TRUE);
+		view->col += draw_chars(view, type, text, VIEW_MAX_LEN(view), TRUE);
 		string += pos;
-	} while (*string && view->width + view->yoffset > view->col);
+	} while (*string && VIEW_MAX_LEN(view) > 0);
 
-	return view->width + view->yoffset <= view->col;
+	return VIEW_MAX_LEN(view) <= 0;
 }
 
 static bool
 draw_graphic(struct view *view, enum line_type type, const chtype graphic[], size_t size, bool separator)
 {
 	size_t skip = view->yoffset > view->col ? view->yoffset - view->col : 0;
-	int max = view->width + view->yoffset - view->col;
+	int max = VIEW_MAX_LEN(view);
 	int i;
 
 	if (max < size)
@@ -1614,13 +1616,13 @@ draw_graphic(struct view *view, enum line_type type, const chtype graphic[], siz
 		view->col++;
 	}
 
-	return view->width + view->yoffset <= view->col;
+	return VIEW_MAX_LEN(view) <= 0;
 }
 
 static bool
 draw_field(struct view *view, enum line_type type, const char *text, int len, bool trim)
 {
-	int max = MIN(view->width + view->yoffset - view->col, len);
+	int max = MIN(VIEW_MAX_LEN(view), len);
 	int col;
 
 	if (text)
@@ -1630,7 +1632,7 @@ draw_field(struct view *view, enum line_type type, const char *text, int len, bo
 
 	view->col += col;
 	view->col += draw_space(view, LINE_DEFAULT, max - col, max - col);
-	return view->width + view->yoffset <= view->col;
+	return VIEW_MAX_LEN(view) <= 0;
 }
 
 static bool
@@ -1680,7 +1682,7 @@ draw_lineno(struct view *view, unsigned int lineno)
 {
 	char number[10];
 	int digits3 = view->digits < 3 ? 3 : view->digits;
-	int max = MIN(view->width + view->yoffset - view->col, digits3);
+	int max = MIN(VIEW_MAX_LEN(view), digits3);
 	char *text = NULL;
 	chtype separator = opt_line_graphics ? ACS_VLINE : '|';
 
