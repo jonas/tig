@@ -1378,7 +1378,6 @@ enum view_type {
 struct view {
 	enum view_type type;	/* View type */
 	const char *name;	/* View name */
-	const char *cmd_env;	/* Command line set via environment */
 	const char *id;		/* Points to either of ref_{head,commit,blob} */
 
 	struct view_ops *ops;	/* View operations */
@@ -1463,11 +1462,11 @@ static struct view_ops status_ops;
 static struct view_ops tree_ops;
 static struct view_ops branch_ops;
 
-#define VIEW_STR(type, name, env, ref, ops, map, git) \
-	{ type, name, #env, ref, ops, map, git }
+#define VIEW_STR(type, name, ref, ops, map, git) \
+	{ type, name, ref, ops, map, git }
 
 #define VIEW_(id, name, ops, git, ref) \
-	VIEW_STR(VIEW_##id, name, TIG_##id##_CMD, ref, ops, KEYMAP_##id, git)
+	VIEW_STR(VIEW_##id, name, ref, ops, KEYMAP_##id, git)
 
 static struct view views[] = {
 	VIEW_(MAIN,   "main",   &main_ops,   TRUE,  ref_head),
@@ -6874,7 +6873,6 @@ main(int argc, const char *argv[])
 	const char *codeset = "UTF-8";
 	enum request request = parse_options(argc, argv);
 	struct view *view;
-	size_t i;
 
 	signal(SIGINT, quit);
 	signal(SIGPIPE, SIG_IGN);
@@ -6910,16 +6908,6 @@ main(int argc, const char *argv[])
 
 	if (load_refs() == ERR)
 		die("Failed to load refs.");
-
-	foreach_view (view, i) {
-		if (getenv(view->cmd_env))
-			warn("Use of the %s environment variable is deprecated,"
-			     " use options or TIG_DIFF_ARGS instead",
-			     view->cmd_env);
-		if (!argv_from_env(view->ops->argv, view->cmd_env))
-			die("Too many arguments in the `%s` environment variable",
-			    view->cmd_env);
-	}
 
 	init_display();
 

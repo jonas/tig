@@ -4,6 +4,11 @@ Release notes
 master
 ------
 
+Incompatibilities:
+
+ - Remove support for the deprecated TIG_{MAIN,DIFF,LOG,TREE,BLOB}_CMD
+   environment variables.
+
 Improvements:
 
  - (GH-6) Make blame configurable via extra options passed from the command
