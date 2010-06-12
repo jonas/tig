@@ -1,6 +1,48 @@
 Release notes
 =============
 
+tig-0.16
+--------
+
+Incompatibilities:
+
+ - Encode everything internally as UTF-8. This can affect performance,
+   but should in general improve handling of character lengths etc.
+   Also, to properly handle UTF-8 environments use ncurses with wide
+   character support.
+ - The use of TIG_{MAIN,DIFF,LOG,TREE,BLOB}_CMD environment variables
+   has been deprecated. To allow configuration of the diff view,
+   TIG_DIFF_OPTS can be used.
+
+Improvements:
+
+ - Plug several memory leaks.
+ - Command line arguments are split into diff, revision, and file
+   arguments and made available as %(diffargs), %(revargs), and
+   %(fileargs). Diff view will limit diffs using %(fileargs).
+ - Status view: update the file variable when a line is selected so
+   %(file) works as expected.
+ - Branch view: add %(branch) symbol providing access to the selected
+   branch.
+ - Branch view: add entry to browse all branches (uses git-log's --all
+   flag).
+ - Abbreviation of author names can now be configured and toggled.
+ - Mark detached heads with [HEAD].
+ - Add support for displaying dates in local time.
+
+Bug fixes:
+
+ - Status view: fix usage from sub directories, which was broken by the
+   changes made to support blame view from sub directories.
+ - Fix text expansion to not truncate long lines
+ - Fix parsing of boolean show-date values.
+ - Fix relative date.
+ - Fix unbind to behave as if the keybinding was never defined.
+ - Fix unbind to also cover built-in run requests.
+ - Fix parsing of unknown keymap names.
+ - Blame view: fix parent blame to detect renames. It uses "previous"
+   line info from the blame porcelain output added in git version 1.6.3.
+
 tig-0.15
 --------
 

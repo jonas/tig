@@ -41,7 +41,7 @@ is:
 Examples:
 
 --------------------------------------------------------------------------
-set show-author = yes		# Show author?
+set show-author = abbreviated	# Show abbreviated author names.
 set show-date = relative	# Show relative commit date.
 set show-rev-graph = yes	# Show revision graph?
 set show-refs = yes		# Show references?
@@ -86,19 +86,22 @@ Variables
 
 The following variables can be set:
 
-'show-author' (bool)::
 'show-rev-graph' (bool)::
 'show-refs' (bool)::
 
-	Whether to show author, revision graph, and references
-	(branches, tags, and remotes) in the main view on start-up. Can all be
-	toggled.
+	Whether to show revision graph, and references (branches, tags, and
+	remotes) in the main view on start-up. Can all be toggled.
 
-'show-date' (bool or "relative" or "short")::
+'show-author' (mixed) ["abbreviated" | "default" | bool]::
+
+	How to display author names. If set to "abbreviated" author initials
+	will be shown. Can be toggled.
+
+'show-date' (mixed) ["relative" | "short" | "default" | "local" | bool]::
 
 	Whether and how to show date. If set to "relative" a relative date will be
 	used, e.g. "2 minutes ago". If set to "short" no time information is
-	shown. Can be toggled.
+	shown. If set to "local", localtime(3) is used. Can be toggled.
 
 'author-width' (int)::
 
@@ -137,7 +140,7 @@ The following variables can be set:
 
 'commit-encoding' (string)::
 
-	The encoding used for commits. The default is UTF-8. Not this option
+	The encoding used for commits. The default is UTF-8. Note this option
 	is shadowed by the "i18n.commitencoding" option in `.git/config`.
 
 Bind command
@@ -219,10 +222,14 @@ are:
 |%(head)		|The currently viewed 'head' ID. Defaults to HEAD
 |%(commit)		|The currently selected commit ID.
 |%(blob)		|The currently selected blob ID.
+|%(branch)		|The currently selected branch name.
 |%(directory)		|The current directory path in the tree view;
 			 empty for the root directory.
 |%(file)		|The currently selected file.
 |%(ref)			|The reference given to blame or HEAD if undefined.
+|%(revargs)		|The revision arguments passed on the command line.
+|%(fileargs)		|The file arguments passed on the command line.
+|%(diffargs)		|The diff options passed on the command line.
 |=============================================================================
 
 As an example, the following external command will save the current commit as
@@ -483,9 +490,9 @@ omnipresent.
 
 Commit message::
 
-For now only `Signed-off-by` and `Acked-by` lines are colorized.
+`Signed-off-by`, `Acked-by`, `Reviewed-by` and `Tested-by` lines are colorized.
 
-*signoff*, *acked*
+*signoff*, *acked*, *reviewed*, *tested*
 
 Tree markup::
 
@@ -497,7 +504,7 @@ Colors for information of the tree view.
 
 COPYRIGHT
 ---------
-Copyright (c) 2006-2009 Jonas Fonseca <fonseca@diku.dk>
+Copyright (c) 2006-2010 Jonas Fonseca <fonseca@diku.dk>
 
 Licensed under the terms of the GNU General Public License.
 

@@ -153,10 +153,14 @@ following variables.
 |%(head)		|The currently viewed 'head' ID. Defaults to HEAD
 |%(commit)		|The currently selected commit ID.
 |%(blob)		|The currently selected blob ID.
+|%(branch)		|The currently selected branch name.
 |%(directory)		|The current directory path in the tree view;
 			 empty for the root directory.
 |%(file)		|The currently selected file.
 |%(ref)			|The reference given to blame or HEAD if undefined.
+|%(revargs)		|The revision arguments passed on the command line.
+|%(fileargs)		|The file arguments passed on the command line.
+|%(diffargs)		|The diff options passed on the command line.
 |=============================================================================
 
 [[title-window]]
@@ -234,73 +238,18 @@ git ls-remote .
 
 --
 
-[[history-commands]]
-History Commands
-~~~~~~~~~~~~~~~~
+[[diff-options]]
+Diff options
+~~~~~~~~~~~~
 
-It is possible to alter which commands are used for the different views.  If
-for example you prefer commits in the main view to be sorted by date and only
-show 500 commits, use:
+It is possible to alter how diffs are shown by the diff view. If for example
+you prefer to have commit and author dates shown as relative dates, use:
 
 -----------------------------------------------------------------------------
-$ TIG_MAIN_CMD="git log --date-order -n500 --pretty=raw %(head)" tig
+$ TIG_DIFF_OPTS="--relative-date" tig
 -----------------------------------------------------------------------------
 
 Or set the variable permanently in your environment.
-
-Notice, how `%(head)` is used to specify the commit reference.
-
---
-
-TIG_DIFF_CMD::
-
-	The command used for the diff view. Defaults to:
------------------------------------------------------------------------------
-git show --pretty=fuller --no-color --root 
-	 --patch-with-stat --find-copies-harder -C %(commit)
------------------------------------------------------------------------------
-
-TIG_LOG_CMD::
-
-	The command used for the log view. If you prefer to have both
-	author and committer shown in the log view be sure to pass
-	`--pretty=fuller` to git log. Defaults to:
------------------------------------------------------------------------------
-git log --no-color --cc --stat -n100 %(head)
------------------------------------------------------------------------------
-
-TIG_MAIN_CMD::
-
-	The command used for the main view. Note, you must always specify
-	the option: `--pretty=raw` since the main view parser expects to
-	read that format.
------------------------------------------------------------------------------
-git log --no-color --pretty=raw --parents --topo-order %(head)
------------------------------------------------------------------------------
-
---
-
-[[tree-commands]]
-Tree Commands
-~~~~~~~~~~~~~
-
---
-
-TIG_TREE_CMD::
-
-	The command used for the tree view. Defaults to:
------------------------------------------------------------------------------
-git ls-tree %(commit) %(directory)
------------------------------------------------------------------------------
-
-TIG_BLOB_CMD::
-
-	The command used for the blob view. Defaults to:
------------------------------------------------------------------------------
-git cat-file blob %(blob)
------------------------------------------------------------------------------
-
---
 
 [[keys]]
 Default Keybindings
@@ -433,8 +382,8 @@ Misc
 |v	|Show version.
 |o	|Open option menu
 |.	|Toggle line numbers on/off.
-|D	|Toggle date display on/off.
-|A	|Toggle author display on/off.
+|D	|Toggle date display on/off/short/relative/local.
+|A	|Toggle author display on/off/abbreviated.
 |g	|Toggle revision graph visualization on/off.
 |F	|Toggle reference display on/off (tag and branch names).
 |:	|Open prompt. This allows you to specify what git command
@@ -471,8 +420,8 @@ information. Relevant man pages besides git-log(1) are git-diff(1) and
 git-rev-list(1).
 
 You can tune the interaction with git by making use of the options explained
-in this section. For example, by configuring the environment variables
-described in the section on <<history-commands, history commands>>.
+in this section. For example, by configuring the environment variable
+described in the section on <<diff-options, diff options>>.
 
 [[path-limiting]]
 Limit by Path Name
@@ -584,7 +533,7 @@ include::BUGS[]
 Copyright
 ---------
 
-Copyright (c) 2006-2009 Jonas Fonseca <fonseca@diku.dk>
+Copyright (c) 2006-2010 Jonas Fonseca <fonseca@diku.dk>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

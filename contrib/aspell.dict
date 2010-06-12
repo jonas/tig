@@ -1,6 +1,6 @@
-personal_ws-1.1 en 158 
-DocBook
+personal_ws-1.1 en 167 
 docbook
+DocBook
 xpm
 utils
 oldmode
@@ -25,6 +25,7 @@ AuthorDate
 CJK
 worktree
 subdirectory
+fileargs
 Fullwidth
 xrvt
 config
@@ -51,6 +52,7 @@ jsh
 ncurses
 newmode
 reachability
+dir
 unstanged
 subcommand
 tig
@@ -65,9 +67,11 @@ ident
 namespace
 xhtml
 PageDown
+localtime
 repo
 Debian
 diffstat
+toc
 Nn
 Online
 ACDMRTXB
@@ -102,10 +106,12 @@ manpage
 XXXXXX
 autoconf
 Jamo
+revargs
 PDF
 bgcolor
 tz
 sysconfdir
+diffargs
 tty
 subdir
 TODO
@@ -120,6 +126,7 @@ signoff
 nowarn
 tigblob
 ELinks
+PID
 waddch
 Yy
 xmlto
@@ -127,6 +134,7 @@ backgrounded
 stdin
 ifndef
 drwxr
+boolean
 distclean
 commitencoding
 PgDown
@@ -144,6 +152,7 @@ keybinding
 Fonseca
 charset
 wgetch
+lncursesw
 rwxr
 Baudis
 chunked

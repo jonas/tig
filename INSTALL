@@ -10,7 +10,12 @@ The quick and simple way to install tig with documentation is to run:
 	$ make
 	$ make install install-doc
 
-Optionally, you can use the `configure` script to detect library location:
+From tig's git repository it is also possible to install documentation directly
+from the release branch to avoid installing the documentation tool chain:
+
+	$ make install-release-doc
+
+Optionally, you can use the `configure` script to detect dependencies:
 
 	$ ./configure
 	$ make
@@ -23,6 +28,11 @@ need to first make the configure script:
 
 	$ make configure
 
+Build settings are read from the file "config.make". To manually configure tig
+to use the ncurses library with wide character support, add the line:
+
+	LDLIBS = -lncursesw
+
 Release notes documenting notable changes are available in the NEWS file. When
 upgrading, you are advised to also read them after you have completed the
 installation.
@@ -33,9 +43,12 @@ The following tools and packages are needed:
 |=============================================================================
 |Tool				|Description
 |git-core			|Tig is just a frontend for git.
-|ncurses			|Be sure to also have development files
+|ncurses or ncursesw		|Be sure to have the development files
 				 installed. Usually they are available in a
 				 separate package ending with `-dev`.
+				 Note also that ncurses with wide character
+				 support (ncursesw) is required to properly
+				 handle UTF-8 encoded strings.
 |iconv				|If iconv is not provided by the c library
 				 you need to change the Makefile to link it
 				 into the binary.
@@ -49,7 +62,7 @@ configure script and building documentation:
 |Tool				|Description
 |autoconf			|Contains autoreconf for generating configure
 				 from configure.ac.
-|asciidoc (>= 8.0)		|Generates HTML and (DocBook) XML from text.
+|asciidoc (>= 8.4)		|Generates HTML and (DocBook) XML from text.
 |xmlto				|Generates manpages and chunked HTML from XML.
 |DocBook XSL (>= 1.72.0)	|Used by xmlto for building manpages.
 |DocBook (DSSL/Jade) tools	|Generates PDF from XML.
