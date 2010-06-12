@@ -52,7 +52,13 @@ available in the tarballs and in the <em>release</em> branch of the tig reposito
 <pre><tt>$ make
 $ make install install-doc</tt></pre>
 </div></div>
-<div class="paragraph"><p>Optionally, you can use the <tt>configure</tt> script to detect library location:</p></div>
+<div class="paragraph"><p>From tig&#8217;s git repository it is also possible to install documentation directly
+from the release branch to avoid installing the documentation tool chain:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>$ make install-release-doc</tt></pre>
+</div></div>
+<div class="paragraph"><p>Optionally, you can use the <tt>configure</tt> script to detect dependencies:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><tt>$ ./configure
@@ -66,6 +72,12 @@ need to first make the configure script:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><tt>$ make configure</tt></pre>
+</div></div>
+<div class="paragraph"><p>Build settings are read from the file "config.make". To manually configure tig
+to use the ncurses library with wide character support, add the line:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>LDLIBS = -lncursesw</tt></pre>
 </div></div>
 <div class="paragraph"><p>Release notes documenting notable changes are available in the NEWS file. When
 upgrading, you are advised to also read them after you have completed the
@@ -90,10 +102,13 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Tig is just a frontend for git.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">ncurses</p></td>
-<td align="left" valign="top"><p class="table">Be sure to also have development files
+<td align="left" valign="top"><p class="table">ncurses or ncursesw</p></td>
+<td align="left" valign="top"><p class="table">Be sure to have the development files
                                  installed. Usually they are available in a
-                                 separate package ending with <tt>-dev</tt>.</p></td>
+                                 separate package ending with <tt>-dev</tt>.
+                                 Note also that ncurses with wide character
+                                 support (ncursesw) is required to properly
+                                 handle UTF-8 encoded strings.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">iconv</p></td>
@@ -126,7 +141,7 @@ cellspacing="0" cellpadding="4">
                                  from configure.ac.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">asciidoc (&gt;= 8.0)</p></td>
+<td align="left" valign="top"><p class="table">asciidoc (&gt;= 8.4)</p></td>
 <td align="left" valign="top"><p class="table">Generates HTML and (DocBook) XML from text.</p></td>
 </tr>
 <tr>

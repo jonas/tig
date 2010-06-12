@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.4.4" />
+<meta name="generator" content="AsciiDoc 8.5.2" />
 <title>tigrc(5)</title>
 <style type="text/css">
 /* Debug borders */
@@ -91,7 +91,7 @@ span#author {
 }
 span#email {
 }
-span#revision {
+span#revnumber, span#revdate, span#revremark {
   font-family: sans-serif;
 }
 
@@ -118,12 +118,14 @@ div#preamble {
 div.tableblock, div.imageblock, div.exampleblock, div.verseblock,
 div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
 div.admonitionblock {
-  margin-top: 1.5em;
+  margin-top: 1.0em;
   margin-bottom: 1.5em;
 }
 div.admonitionblock {
-  margin-top: 2.5em;
-  margin-bottom: 2.5em;
+  margin-top: 2.0em;
+  margin-bottom: 2.0em;
+  margin-right: 10%;
+  color: #606060;
 }
 
 div.content { /* Block element content. */
@@ -165,19 +167,19 @@ div.listingblock > div.content {
   padding: 0.5em;
 }
 
-div.quoteblock {
-  padding-left: 2.0em;
+div.quoteblock, div.verseblock {
+  padding-left: 1.0em;
+  margin-left: 1.0em;
   margin-right: 10%;
+  border-left: 5px solid #dddddd;
+  color: #777777;
 }
+
 div.quoteblock > div.attribution {
   padding-top: 0.5em;
   text-align: right;
 }
 
-div.verseblock {
-  padding-left: 2.0em;
-  margin-right: 10%;
-}
 div.verseblock > div.content {
   white-space: pre;
 }
@@ -200,17 +202,17 @@ div.admonitionblock .icon {
 }
 div.admonitionblock td.content {
   padding-left: 0.5em;
-  border-left: 2px solid silver;
+  border-left: 3px solid #dddddd;
 }
 
 div.exampleblock > div.content {
-  border-left: 2px solid silver;
-  padding: 0.5em;
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
 }
 
 div.imageblock div.content { padding-left: 0; }
-div.imageblock img { border: 1px solid silver; }
 span.image img { border-style: none; }
+a.image:visited { color: white; }
 
 dl {
   margin-top: 0.8em;
@@ -255,7 +257,7 @@ div.compact div, div.compact div {
 div.tableblock > table {
   border: 3px solid #527bbd;
 }
-thead {
+thead, p.table.header {
   font-family: sans-serif;
   font-weight: bold;
 }
@@ -310,8 +312,40 @@ div.hdlist.compact tr {
   background: yellow;
 }
 
+.footnote, .footnoteref {
+  font-size: 0.8em;
+}
+
+span.footnote, span.footnoteref {
+  vertical-align: super;
+}
+
+#footnotes {
+  margin: 20px 0 20px 0;
+  padding: 7px 0 0 0;
+}
+
+#footnotes div.footnote {
+  margin: 0 0 5px 0;
+}
+
+#footnotes hr {
+  border: none;
+  border-top: 1px solid silver;
+  height: 1px;
+  text-align: left;
+  margin-left: 0;
+  width: 20%;
+  min-width: 100px;
+}
+
+
 @media print {
   div#footer-badges { display: none; }
+}
+
+div#toc {
+  margin-bottom: 2.5em;
 }
 
 div#toctitle {
@@ -392,13 +426,146 @@ div.verseblock-attribution {
 }
 
 div.exampleblock-content {
-  border-left: 2px solid silver;
+  border-left: 3px solid #dddddd;
   padding-left: 0.5em;
 }
 
 /* IE6 sets dynamically generated links as visited. */
 div#toc a:visited { color: blue; }
 </style>
+<script type="text/javascript">
+/*<![CDATA[*/
+window.onload = function(){asciidoc.footnotes();}
+var asciidoc = {  // Namespace.
+
+/////////////////////////////////////////////////////////////////////
+// Table Of Contents generator
+/////////////////////////////////////////////////////////////////////
+
+/* Author: Mihai Bazon, September 2002
+ * http://students.infoiasi.ro/~mishoo
+ *
+ * Table Of Content generator
+ * Version: 0.4
+ *
+ * Feel free to use this script under the terms of the GNU General Public
+ * License, as long as you do not remove or alter this notice.
+ */
+
+ /* modified by Troy D. Hanson, September 2006. License: GPL */
+ /* modified by Stuart Rackham, 2006, 2009. License: GPL */
+
+// toclevels = 1..4.
+toc: function (toclevels) {
+
+  function getText(el) {
+    var text = "";
+    for (var i = el.firstChild; i != null; i = i.nextSibling) {
+      if (i.nodeType == 3 /* Node.TEXT_NODE */) // IE doesn't speak constants.
+        text += i.data;
+      else if (i.firstChild != null)
+        text += getText(i);
+    }
+    return text;
+  }
+
+  function TocEntry(el, text, toclevel) {
+    this.element = el;
+    this.text = text;
+    this.toclevel = toclevel;
+  }
+
+  function tocEntries(el, toclevels) {
+    var result = new Array;
+    var re = new RegExp('[hH]([2-'+(toclevels+1)+'])');
+    // Function that scans the DOM tree for header elements (the DOM2
+    // nodeIterator API would be a better technique but not supported by all
+    // browsers).
+    var iterate = function (el) {
+      for (var i = el.firstChild; i != null; i = i.nextSibling) {
+        if (i.nodeType == 1 /* Node.ELEMENT_NODE */) {
+          var mo = re.exec(i.tagName);
+          if (mo && (i.getAttribute("class") || i.getAttribute("className")) != "float") {
+            result[result.length] = new TocEntry(i, getText(i), mo[1]-1);
+          }
+          iterate(i);
+        }
+      }
+    }
+    iterate(el);
+    return result;
+  }
+
+  var toc = document.getElementById("toc");
+  var entries = tocEntries(document.getElementById("content"), toclevels);
+  for (var i = 0; i < entries.length; ++i) {
+    var entry = entries[i];
+    if (entry.element.id == "")
+      entry.element.id = "_toc_" + i;
+    var a = document.createElement("a");
+    a.href = "#" + entry.element.id;
+    a.appendChild(document.createTextNode(entry.text));
+    var div = document.createElement("div");
+    div.appendChild(a);
+    div.className = "toclevel" + entry.toclevel;
+    toc.appendChild(div);
+  }
+  if (entries.length == 0)
+    toc.parentNode.removeChild(toc);
+},
+
+
+/////////////////////////////////////////////////////////////////////
+// Footnotes generator
+/////////////////////////////////////////////////////////////////////
+
+/* Based on footnote generation code from:
+ * http://www.brandspankingnew.net/archive/2005/07/format_footnote.html
+ */
+
+footnotes: function () {
+  var cont = document.getElementById("content");
+  var noteholder = document.getElementById("footnotes");
+  var spans = cont.getElementsByTagName("span");
+  var refs = {};
+  var n = 0;
+  for (i=0; i<spans.length; i++) {
+    if (spans[i].className == "footnote") {
+      n++;
+      // Use [\s\S] in place of . so multi-line matches work.
+      // Because JavaScript has no s (dotall) regex flag.
+      note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+      noteholder.innerHTML +=
+        "<div class='footnote' id='_footnote_" + n + "'>" +
+        "<a href='#_footnoteref_" + n + "' title='Return to text'>" +
+        n + "</a>. " + note + "</div>";
+      spans[i].innerHTML =
+        "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
+        "' title='View footnote' class='footnote'>" + n + "</a>]";
+      var id =spans[i].getAttribute("id");
+      if (id != null) refs["#"+id] = n;
+    }
+  }
+  if (n == 0)
+    noteholder.parentNode.removeChild(noteholder);
+  else {
+    // Process footnoterefs.
+    for (i=0; i<spans.length; i++) {
+      if (spans[i].className == "footnoteref") {
+        var href = spans[i].getElementsByTagName("a")[0].getAttribute("href");
+        href = href.match(/#.*/)[0];  // Because IE return full URL.
+        n = refs[href];
+        spans[i].innerHTML =
+          "[<a href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+      }
+    }
+  }
+}
+
+}
+/*]]>*/
+</script>
 </head>
 <body>
 <div id="header">
@@ -412,7 +579,8 @@ tigrc(5) Manual Page
 </p>
 </div>
 </div>
-<h2>SYNOPSIS</h2>
+<div id="content">
+<h2 id="_synopsis">SYNOPSIS</h2>
 <div class="sectionbody">
 <div class="verseblock">
 <div class="verseblock-content"><strong>set</strong>   <em>variable</em> <strong>=</strong> <em>value</em>
@@ -444,7 +612,7 @@ is:</p></div>
 <div class="paragraph"><p>Examples:</p></div>
 <div class="listingblock">
 <div class="content">
-<pre><tt>set show-author = yes           # Show author?
+<pre><tt>set show-author = abbreviated   # Show abbreviated author names.
 set show-date = relative        # Show relative commit date.
 set show-rev-graph = yes        # Show revision graph?
 set show-refs = yes             # Show references?
@@ -503,9 +671,6 @@ Valid mixed values
 <div class="paragraph"><p>The following variables can be set:</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
-<em>show-author</em> (bool)
-</dt>
-<dt class="hdlist1">
 <em>show-rev-graph</em> (bool)
 </dt>
 <dt class="hdlist1">
@@ -513,19 +678,27 @@ Valid mixed values
 </dt>
 <dd>
 <p>
-        Whether to show author, revision graph, and references
-        (branches, tags, and remotes) in the main view on start-up. Can all be
-        toggled.
+        Whether to show revision graph, and references (branches, tags, and
+        remotes) in the main view on start-up. Can all be toggled.
 </p>
 </dd>
 <dt class="hdlist1">
-<em>show-date</em> (bool or "relative" or "short")
+<em>show-author</em> (mixed) ["abbreviated" | "default" | bool]
+</dt>
+<dd>
+<p>
+        How to display author names. If set to "abbreviated" author initials
+        will be shown. Can be toggled.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>show-date</em> (mixed) ["relative" | "short" | "default" | "local" | bool]
 </dt>
 <dd>
 <p>
         Whether and how to show date. If set to "relative" a relative date will be
         used, e.g. "2 minutes ago". If set to "short" no time information is
-        shown. Can be toggled.
+        shown. If set to "local", localtime(3) is used. Can be toggled.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -592,7 +765,7 @@ Valid mixed values
 </dt>
 <dd>
 <p>
-        The encoding used for commits. The default is UTF-8. Not this option
+        The encoding used for commits. The default is UTF-8. Note this option
         is shadowed by the "i18n.commitencoding" option in <tt>.git/config</tt>.
 </p>
 </dd>
@@ -680,7 +853,7 @@ are:</p></div>
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Browsing state variables</caption>
+<caption class="title">Table 1. Browsing state variables</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -697,6 +870,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">The currently selected blob ID.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><tt>%(branch)</tt></p></td>
+<td align="left" valign="top"><p class="table">The currently selected branch name.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><tt>%(directory)</tt></p></td>
 <td align="left" valign="top"><p class="table">The current directory path in the tree view;
                          empty for the root directory.</p></td>
@@ -708,6 +885,18 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><tt>%(ref)</tt></p></td>
 <td align="left" valign="top"><p class="table">The reference given to blame or HEAD if undefined.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(revargs)</tt></p></td>
+<td align="left" valign="top"><p class="table">The revision arguments passed on the command line.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(fileargs)</tt></p></td>
+<td align="left" valign="top"><p class="table">The file arguments passed on the command line.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(diffargs)</tt></p></td>
+<td align="left" valign="top"><p class="table">The diff options passed on the command line.</p></td>
 </tr>
 </tbody>
 </table>
@@ -732,7 +921,7 @@ put in either the .gitconfig or .git/config file:</p></div>
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">View switching</caption>
+<caption class="title">Table 2. View switching</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -788,7 +977,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">View manipulation</caption>
+<caption class="title">Table 3. View manipulation</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -836,7 +1025,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">View specific actions</caption>
+<caption class="title">Table 4. View specific actions</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -860,7 +1049,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Cursor navigation</caption>
+<caption class="title">Table 5. Cursor navigation</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -896,7 +1085,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Scrolling</caption>
+<caption class="title">Table 6. Scrolling</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -932,7 +1121,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Searching</caption>
+<caption class="title">Table 7. Searching</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -960,7 +1149,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Misc</caption>
+<caption class="title">Table 8. Misc</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -1096,7 +1285,7 @@ setting the <strong>default</strong> color option.</p></div>
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">General</caption>
+<caption class="title">Table 9. General</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -1148,7 +1337,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Main view colors</caption>
+<caption class="title">Table 10. Main view colors</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -1192,7 +1381,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Status view</caption>
+<caption class="title">Table 11. Status view</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -1224,7 +1413,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Blame view</caption>
+<caption class="title">Table 12. Blame view</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -1240,7 +1429,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Tree view</caption>
+<caption class="title">Table 13. Tree view</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -1317,11 +1506,11 @@ Commit message
 </dt>
 <dd>
 <p>
-For now only <tt>Signed-off-by</tt> and <tt>Acked-by</tt> lines are colorized.
+<tt>Signed-off-by</tt>, <tt>Acked-by</tt>, <tt>Reviewed-by</tt> and <tt>Tested-by</tt> lines are colorized.
 </p>
 </dd>
 </dl></div>
-<div class="paragraph"><p><strong>signoff</strong>, <strong>acked</strong></p></div>
+<div class="paragraph"><p><strong>signoff</strong>, <strong>acked</strong>, <strong>reviewed</strong>, <strong>tested</strong></p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
 Tree markup
@@ -1336,7 +1525,7 @@ Colors for information of the tree view.
 </div>
 <h2 id="_copyright">COPYRIGHT</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Copyright (c) 2006-2009 Jonas Fonseca &lt;<a href="mailto:fonseca@diku.dk">fonseca@diku.dk</a>&gt;</p></div>
+<div class="paragraph"><p>Copyright (c) 2006-2010 Jonas Fonseca &lt;<a href="mailto:fonseca@diku.dk">fonseca@diku.dk</a>&gt;</p></div>
 <div class="paragraph"><p>Licensed under the terms of the GNU General Public License.</p></div>
 </div>
 <h2 id="_see_also">SEE ALSO</h2>
@@ -1344,9 +1533,11 @@ Colors for information of the tree view.
 <div class="paragraph"><p>manpage:tig[1], manpage:tigmanual[7], git-config(1),
 and the <a href="http://jonas.nitro.dk/tig/manual.html">tig manual</a>.</p></div>
 </div>
+</div>
+<div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2009-11-20 08:05:06 EDT
+Last updated 2010-06-12 11:38:33 EDT
 </div>
 </div>
 </body>
