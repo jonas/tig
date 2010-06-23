@@ -4194,11 +4194,38 @@ static const char *diff_argv[SIZEOF_ARG] = {
 		"%(diffargs)", "%(commit)", "--", "%(fileargs)", NULL
 };
 
+static bool
+diff_read(struct view *view, char *data)
+{
+	if (!data) {
+		/* Fall back to retry if no diff will be shown. */
+		if (view->lines == 0 && opt_file_args) {
+			int pos = argv_size(view->argv)
+				- argv_size(opt_file_args) - 1;
+
+			if (pos > 0 && !strcmp(view->argv[pos], "--")) {
+				for (; view->argv[pos]; pos++) {
+					free((void *) view->argv[pos]);
+					view->argv[pos] = NULL;
+				}
+
+				if (view->pipe)
+					io_done(view->pipe);
+				if (io_run(&view->io, IO_RD, view->dir, view->argv))
+					return FALSE;
+			}
+		}
+		return TRUE;
+	}
+
+	return pager_read(view, data);
+}
+
 static struct view_ops diff_ops = {
 	"line",
 	diff_argv,
 	NULL,
-	pager_read,
+	diff_read,
 	pager_draw,
 	pager_request,
 	pager_grep,

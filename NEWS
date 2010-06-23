@@ -1,6 +1,14 @@
 Release notes
 =============
 
+tig master
+----------
+
+Bug fixes:
+
+ - Fix problem with empty diff views when file specs were passed on the
+   command line.
+
 tig-0.16
 --------
 
