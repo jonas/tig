@@ -684,15 +684,23 @@ argv_free(const char *argv[])
 	argv[0] = NULL;
 }
 
+static size_t
+argv_size(const char **argv)
+{
+	int argc = 0;
+
+	while (argv && argv[argc])
+		argc++;
+
+	return argc;
+}
+
 DEFINE_ALLOCATOR(argv_realloc, const char *, SIZEOF_ARG)
 
 static bool
 argv_append(const char ***argv, const char *arg)
 {
-	int argc = 0;
-
-	while (*argv && (*argv)[argc])
-		argc++;
+	size_t argc = argv_size(*argv);
 
 	if (!argv_realloc(argv, argc, 2))
 		return FALSE;
