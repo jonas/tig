@@ -1620,16 +1620,17 @@ get_key_value(const char *name)
 		if (!strcasecmp(key_table[i].name, name))
 			return key_table[i].value;
 
+	if (strlen(name) == 2 && name[0] == '^' && isprint(*name))
+		return (int)name[1] & 0x1f;
 	if (strlen(name) == 1 && isprint(*name))
 		return (int) *name;
-
 	return ERR;
 }
 
 static const char *
 get_key_name(int key_value)
 {
-	static char key_char[] = "'X'";
+	static char key_char[] = "'X'\0";
 	const char *seq = NULL;
 	int key;
 
@@ -1637,10 +1638,17 @@ get_key_name(int key_value)
 		if (key_table[key].value == key_value)
 			seq = key_table[key].name;
 
-	if (seq == NULL &&
-	    key_value < 127 &&
-	    isprint(key_value)) {
-		key_char[1] = (char) key_value;
+	if (seq == NULL && key_value < 0x7f) {
+		char *s = key_char + 1;
+
+		if (key_value >= 0x20) {
+			*s++ = key_value;
+		} else {
+			*s++ = '^';
+			*s++ = 0x40 | (key_value & 0x1f);
+		}
+		*s++ = '\'';
+		*s++ = '\0';
 		seq = key_char;
 	}
 
