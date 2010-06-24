@@ -114,6 +114,7 @@ static void report(const char *msg, ...);
 #define S_ISGITLINK(mode) (((mode) & S_IFMT) == 0160000)
 
 /* Some ASCII-shorthands fitted into the ncurses namespace. */
+#define KEY_CTL(x)	((x) & 0x1f) /* KEY_CTL(A) == ^A == \1 */
 #define KEY_TAB		'\t'
 #define KEY_RETURN	'\r'
 #define KEY_ESC		27
@@ -1437,7 +1438,9 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_TAB,	REQ_VIEW_NEXT },
 	{ KEY_RETURN,	REQ_ENTER },
 	{ KEY_UP,	REQ_PREVIOUS },
+	{ KEY_CTL('P'),	REQ_PREVIOUS },
 	{ KEY_DOWN,	REQ_NEXT },
+	{ KEY_CTL('N'),	REQ_NEXT },
 	{ 'R',		REQ_REFRESH },
 	{ KEY_F(5),	REQ_REFRESH },
 	{ 'O',		REQ_MAXIMIZE },
@@ -1450,6 +1453,7 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_NPAGE,	REQ_MOVE_PAGE_DOWN },
 	{ ' ',		REQ_MOVE_PAGE_DOWN },
 	{ KEY_PPAGE,	REQ_MOVE_PAGE_UP },
+	{ KEY_CTL('U'),	REQ_MOVE_PAGE_UP },
 	{ 'b',		REQ_MOVE_PAGE_UP },
 	{ '-',		REQ_MOVE_PAGE_UP },
 
@@ -1457,7 +1461,9 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_LEFT,	REQ_SCROLL_LEFT },
 	{ KEY_RIGHT,	REQ_SCROLL_RIGHT },
 	{ KEY_IC,	REQ_SCROLL_LINE_UP },
+	{ KEY_CTL('Y'),	REQ_SCROLL_LINE_UP },
 	{ KEY_DC,	REQ_SCROLL_LINE_DOWN },
+	{ KEY_CTL('E'),	REQ_SCROLL_LINE_DOWN },
 	{ 'w',		REQ_SCROLL_PAGE_UP },
 	{ 's',		REQ_SCROLL_PAGE_DOWN },
 
@@ -1472,6 +1478,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'z',		REQ_STOP_LOADING },
 	{ 'v',		REQ_SHOW_VERSION },
 	{ 'r',		REQ_SCREEN_REDRAW },
+	{ KEY_CTL('L'),	REQ_SCREEN_REDRAW },
 	{ 'o',		REQ_OPTIONS },
 	{ '.',		REQ_TOGGLE_LINENO },
 	{ 'D',		REQ_TOGGLE_DATE },
