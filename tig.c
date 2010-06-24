@@ -1136,6 +1136,7 @@ io_run_load(const char **argv, const char *separators,
 	REQ_(MOVE_LAST_LINE,	"Move cursor to last line"), \
 	\
 	REQ_GROUP("Scrolling") \
+	REQ_(SCROLL_FIRST_COL,	"Scroll to the first line columns"), \
 	REQ_(SCROLL_LEFT,	"Scroll two columns left"), \
 	REQ_(SCROLL_RIGHT,	"Scroll two columns right"), \
 	REQ_(SCROLL_LINE_UP,	"Scroll one line up"), \
@@ -1458,6 +1459,7 @@ static struct keybinding default_keybindings[] = {
 	{ '-',		REQ_MOVE_PAGE_UP },
 
 	/* Scrolling */
+	{ '|',		REQ_SCROLL_FIRST_COL },
 	{ KEY_LEFT,	REQ_SCROLL_LEFT },
 	{ KEY_RIGHT,	REQ_SCROLL_RIGHT },
 	{ KEY_IC,	REQ_SCROLL_LINE_UP },
@@ -2901,6 +2903,11 @@ scroll_view(struct view *view, enum request request)
 	assert(view_is_displayed(view));
 
 	switch (request) {
+	case REQ_SCROLL_FIRST_COL:
+		view->yoffset = 0;
+		redraw_view_from(view, 0);
+		report("");
+		return;
 	case REQ_SCROLL_LEFT:
 		if (view->yoffset == 0) {
 			report("Cannot scroll beyond the first column");
@@ -3695,6 +3702,7 @@ view_driver(struct view *view, enum request request)
 		move_view(view, request);
 		break;
 
+	case REQ_SCROLL_FIRST_COL:
 	case REQ_SCROLL_LEFT:
 	case REQ_SCROLL_RIGHT:
 	case REQ_SCROLL_LINE_DOWN:

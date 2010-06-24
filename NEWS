@@ -4,6 +4,11 @@ Release notes
 tig master
 ----------
 
+Improvements:
+
+ - Add scroll-first-col action to jump to the first column. Bound to '|'
+   by default.
+
 Bug fixes:
 
  - Fix problem with empty diff views when file specs were passed on the

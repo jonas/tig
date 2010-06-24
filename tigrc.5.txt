@@ -304,6 +304,7 @@ put in either the .gitconfig or .git/config file:
 |scroll-line-down	|Scroll one line down
 |scroll-page-up		|Scroll one page up
 |scroll-page-down	|Scroll one page down
+|scroll-first-col       |Scroll to the first column
 |scroll-left		|Scroll one column left
 |scroll-right		|Scroll one column right
 |=============================================================================
