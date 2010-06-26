@@ -2316,7 +2316,7 @@ static struct view views[] = {
 	VIEW_(BLAME,  "blame",  &blame_ops,  TRUE,  ref_commit),
 	VIEW_(BRANCH, "branch",	&branch_ops, TRUE,  ref_head),
 	VIEW_(HELP,   "help",   &help_ops,   FALSE, ""),
-	VIEW_(PAGER,  "pager",  &pager_ops,  FALSE, "stdin"),
+	VIEW_(PAGER,  "pager",  &pager_ops,  FALSE, ""),
 	VIEW_(STATUS, "status", &status_ops, TRUE,  ""),
 	VIEW_(STAGE,  "stage",	&stage_ops,  TRUE,  ""),
 };
@@ -3708,6 +3708,13 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_VIEW_PAGER:
+		if (view == NULL) {
+			if (!io_open(&VIEW(REQ_VIEW_PAGER)->io, ""))
+				die("Failed to open stdin");
+			open_view(view, request, OPEN_PREPARED);
+			break;
+		}
+
 		if (!VIEW(REQ_VIEW_PAGER)->pipe && !VIEW(REQ_VIEW_PAGER)->lines) {
 			report("No pager content, press %s to run command from prompt",
 			       get_key(view->keymap, REQ_PROMPT));
@@ -7764,10 +7771,8 @@ parse_options(int argc, const char *argv[])
 	const char **filter_argv = NULL;
 	int i;
 
-	if (!isatty(STDIN_FILENO)) {
-		io_open(&VIEW(REQ_VIEW_PAGER)->io, "");
+	if (!isatty(STDIN_FILENO))
 		return REQ_VIEW_PAGER;
-	}
 
 	if (argc <= 1)
 		return REQ_VIEW_MAIN;
