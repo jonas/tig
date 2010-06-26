@@ -1154,7 +1154,6 @@ io_run_load(const char **argv, const char *separators,
 	REQ_(OPTIONS,		"Open option menu"), \
 	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
 	REQ_(TOGGLE_DATE,	"Toggle date display"), \
-	REQ_(TOGGLE_DATE_SHORT, "Toggle short (date-only) dates"), \
 	REQ_(TOGGLE_AUTHOR,	"Toggle author display"), \
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
 	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
