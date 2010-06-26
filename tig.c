@@ -1452,6 +1452,7 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_HOME,	REQ_MOVE_FIRST_LINE },
 	{ KEY_END,	REQ_MOVE_LAST_LINE },
 	{ KEY_NPAGE,	REQ_MOVE_PAGE_DOWN },
+	{ KEY_CTL('D'),	REQ_MOVE_PAGE_DOWN },
 	{ ' ',		REQ_MOVE_PAGE_DOWN },
 	{ KEY_PPAGE,	REQ_MOVE_PAGE_UP },
 	{ KEY_CTL('U'),	REQ_MOVE_PAGE_UP },
