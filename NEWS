@@ -8,6 +8,8 @@ Improvements:
 
  - Add scroll-first-col action to jump to the first column. Bound to '|'
    by default.
+ - Add 'status-untracked-dirs' option to ignore unknown directories
+   contents in the status view. On by default.
 
 Bug fixes:
 

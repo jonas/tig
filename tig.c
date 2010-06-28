@@ -1223,6 +1223,7 @@ static bool opt_line_number		= FALSE;
 static bool opt_line_graphics		= TRUE;
 static bool opt_rev_graph		= FALSE;
 static bool opt_show_refs		= TRUE;
+static bool opt_untracked_dirs_content	= TRUE;
 static int opt_num_interval		= 5;
 static double opt_hscroll		= 0.50;
 static double opt_scale_split_view	= 2.0 / 3.0;
@@ -2016,6 +2017,9 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "commit-encoding"))
 		return parse_string(opt_encoding, argv[2], sizeof(opt_encoding));
+
+	if (!strcmp(argv[0], "status-untracked-dirs"))
+		return parse_bool(&opt_untracked_dirs_content, argv[2]);
 
 	config_msg = "Unknown variable name";
 	return ERR;
@@ -5699,7 +5703,7 @@ static const char *status_diff_files_argv[] = {
 };
 
 static const char *status_list_other_argv[] = {
-	"git", "ls-files", "-z", "--others", "--exclude-standard", opt_prefix, NULL
+	"git", "ls-files", "-z", "--others", "--exclude-standard", opt_prefix, NULL, NULL,
 };
 
 static const char *status_list_no_head_argv[] = {
@@ -5803,6 +5807,9 @@ status_open(struct view *view)
 	} else if (!status_run(view, status_diff_index_argv, 0, LINE_STAT_STAGED)) {
 		return FALSE;
 	}
+
+	if (!opt_untracked_dirs_content)
+		status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 2] = "--directory";
 
 	if (!status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED) ||
 	    !status_run(view, status_list_other_argv, '?', LINE_STAT_UNTRACKED))

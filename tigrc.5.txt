@@ -143,6 +143,12 @@ The following variables can be set:
 	The encoding used for commits. The default is UTF-8. Note this option
 	is shadowed by the "i18n.commitencoding" option in `.git/config`.
 
+'status-untracked-dirs' (bool)::
+
+	Show untracked directories contents in the status view (analog to
+	`git ls-files --directory` option. On by default.
+
+
 Bind command
 ------------
 
