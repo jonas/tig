@@ -7110,7 +7110,7 @@ init_display(void)
 	keypad(status_win, TRUE);
 	wbkgdset(status_win, get_line_attr(LINE_STATUS));
 
-	TABSIZE = opt_tab_size;
+	set_tabsize(opt_tab_size);
 
 	term = getenv("XTERM_VERSION") ? NULL : getenv("COLORTERM");
 	if (term && !strcmp(term, "gnome-terminal")) {
