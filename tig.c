@@ -2407,11 +2407,12 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 		}
 
 		waddnstr(view->win, string, len);
-	}
-	if (trimmed && use_tilde) {
-		set_view_attr(view, LINE_DELIMITER);
-		waddch(view->win, '~');
-		col++;
+
+		if (trimmed && use_tilde) {
+			set_view_attr(view, LINE_DELIMITER);
+			waddch(view->win, '~');
+			col++;
+		}
 	}
 
 	return col;
