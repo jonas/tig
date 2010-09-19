@@ -554,6 +554,43 @@ footnotes: function () {
 <h1>Release notes</h1>
 </div>
 <div id="content">
+<h2 id="_tig_0_16_1">tig-0.16.1</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Add scroll-first-col action to jump to the first column. Bound to <em>|</em>
+   by default.
+</p>
+</li>
+<li>
+<p>
+Add <em>status-untracked-dirs</em> option to ignore unknown directories
+   contents in the status view. On by default.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix <em>tig show &lt;commit&gt;</em> to show the provided commit.
+</p>
+</li>
+<li>
+<p>
+Fix problem with empty diff views when file specs were passed on the
+   command line.
+</p>
+</li>
+<li>
+<p>
+Fix segfault when starting tig in pager mode.
+</p>
+</li>
+</ul></div>
+</div>
 <h2 id="_tig_0_16">tig-0.16</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Incompatibilities:</p></div>
@@ -1474,7 +1511,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2010-06-12 11:38:33 EDT
+Last updated 2010-09-19 14:22:31 EDT
 </div>
 </div>
 </body>
