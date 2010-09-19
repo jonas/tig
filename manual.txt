@@ -352,6 +352,7 @@ Scrolling
 |s	|Scroll view one page down.
 |Left	|Scroll view one column left.
 |Right	|Scroll view one column right.
+|\|	|Scroll view to the first column.
 |=============================================================================
 
 [[searching]]

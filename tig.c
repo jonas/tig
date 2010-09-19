@@ -114,6 +114,7 @@ static void report(const char *msg, ...);
 #define S_ISGITLINK(mode) (((mode) & S_IFMT) == 0160000)
 
 /* Some ASCII-shorthands fitted into the ncurses namespace. */
+#define KEY_CTL(x)	((x) & 0x1f) /* KEY_CTL(A) == ^A == \1 */
 #define KEY_TAB		'\t'
 #define KEY_RETURN	'\r'
 #define KEY_ESC		27
@@ -684,15 +685,23 @@ argv_free(const char *argv[])
 	argv[0] = NULL;
 }
 
+static size_t
+argv_size(const char **argv)
+{
+	int argc = 0;
+
+	while (argv && argv[argc])
+		argc++;
+
+	return argc;
+}
+
 DEFINE_ALLOCATOR(argv_realloc, const char *, SIZEOF_ARG)
 
 static bool
 argv_append(const char ***argv, const char *arg)
 {
-	int argc = 0;
-
-	while (*argv && (*argv)[argc])
-		argc++;
+	size_t argc = argv_size(*argv);
 
 	if (!argv_realloc(argv, argc, 2))
 		return FALSE;
@@ -1127,6 +1136,7 @@ io_run_load(const char **argv, const char *separators,
 	REQ_(MOVE_LAST_LINE,	"Move cursor to last line"), \
 	\
 	REQ_GROUP("Scrolling") \
+	REQ_(SCROLL_FIRST_COL,	"Scroll to the first line columns"), \
 	REQ_(SCROLL_LEFT,	"Scroll two columns left"), \
 	REQ_(SCROLL_RIGHT,	"Scroll two columns right"), \
 	REQ_(SCROLL_LINE_UP,	"Scroll one line up"), \
@@ -1144,7 +1154,6 @@ io_run_load(const char **argv, const char *separators,
 	REQ_(OPTIONS,		"Open option menu"), \
 	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
 	REQ_(TOGGLE_DATE,	"Toggle date display"), \
-	REQ_(TOGGLE_DATE_SHORT, "Toggle short (date-only) dates"), \
 	REQ_(TOGGLE_AUTHOR,	"Toggle author display"), \
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
 	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
@@ -1214,6 +1223,7 @@ static bool opt_line_number		= FALSE;
 static bool opt_line_graphics		= TRUE;
 static bool opt_rev_graph		= FALSE;
 static bool opt_show_refs		= TRUE;
+static bool opt_untracked_dirs_content	= TRUE;
 static int opt_num_interval		= 5;
 static double opt_hscroll		= 0.50;
 static double opt_scale_split_view	= 2.0 / 3.0;
@@ -1429,7 +1439,9 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_TAB,	REQ_VIEW_NEXT },
 	{ KEY_RETURN,	REQ_ENTER },
 	{ KEY_UP,	REQ_PREVIOUS },
+	{ KEY_CTL('P'),	REQ_PREVIOUS },
 	{ KEY_DOWN,	REQ_NEXT },
+	{ KEY_CTL('N'),	REQ_NEXT },
 	{ 'R',		REQ_REFRESH },
 	{ KEY_F(5),	REQ_REFRESH },
 	{ 'O',		REQ_MAXIMIZE },
@@ -1440,16 +1452,21 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_HOME,	REQ_MOVE_FIRST_LINE },
 	{ KEY_END,	REQ_MOVE_LAST_LINE },
 	{ KEY_NPAGE,	REQ_MOVE_PAGE_DOWN },
+	{ KEY_CTL('D'),	REQ_MOVE_PAGE_DOWN },
 	{ ' ',		REQ_MOVE_PAGE_DOWN },
 	{ KEY_PPAGE,	REQ_MOVE_PAGE_UP },
+	{ KEY_CTL('U'),	REQ_MOVE_PAGE_UP },
 	{ 'b',		REQ_MOVE_PAGE_UP },
 	{ '-',		REQ_MOVE_PAGE_UP },
 
 	/* Scrolling */
+	{ '|',		REQ_SCROLL_FIRST_COL },
 	{ KEY_LEFT,	REQ_SCROLL_LEFT },
 	{ KEY_RIGHT,	REQ_SCROLL_RIGHT },
 	{ KEY_IC,	REQ_SCROLL_LINE_UP },
+	{ KEY_CTL('Y'),	REQ_SCROLL_LINE_UP },
 	{ KEY_DC,	REQ_SCROLL_LINE_DOWN },
+	{ KEY_CTL('E'),	REQ_SCROLL_LINE_DOWN },
 	{ 'w',		REQ_SCROLL_PAGE_UP },
 	{ 's',		REQ_SCROLL_PAGE_DOWN },
 
@@ -1464,6 +1481,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'z',		REQ_STOP_LOADING },
 	{ 'v',		REQ_SHOW_VERSION },
 	{ 'r',		REQ_SCREEN_REDRAW },
+	{ KEY_CTL('L'),	REQ_SCREEN_REDRAW },
 	{ 'o',		REQ_OPTIONS },
 	{ '.',		REQ_TOGGLE_LINENO },
 	{ 'D',		REQ_TOGGLE_DATE },
@@ -1612,16 +1630,17 @@ get_key_value(const char *name)
 		if (!strcasecmp(key_table[i].name, name))
 			return key_table[i].value;
 
+	if (strlen(name) == 2 && name[0] == '^' && isprint(*name))
+		return (int)name[1] & 0x1f;
 	if (strlen(name) == 1 && isprint(*name))
 		return (int) *name;
-
 	return ERR;
 }
 
 static const char *
 get_key_name(int key_value)
 {
-	static char key_char[] = "'X'";
+	static char key_char[] = "'X'\0";
 	const char *seq = NULL;
 	int key;
 
@@ -1629,10 +1648,17 @@ get_key_name(int key_value)
 		if (key_table[key].value == key_value)
 			seq = key_table[key].name;
 
-	if (seq == NULL &&
-	    key_value < 127 &&
-	    isprint(key_value)) {
-		key_char[1] = (char) key_value;
+	if (seq == NULL && key_value < 0x7f) {
+		char *s = key_char + 1;
+
+		if (key_value >= 0x20) {
+			*s++ = key_value;
+		} else {
+			*s++ = '^';
+			*s++ = 0x40 | (key_value & 0x1f);
+		}
+		*s++ = '\'';
+		*s++ = '\0';
 		seq = key_char;
 	}
 
@@ -1992,6 +2018,9 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "commit-encoding"))
 		return parse_string(opt_encoding, argv[2], sizeof(opt_encoding));
 
+	if (!strcmp(argv[0], "status-untracked-dirs"))
+		return parse_bool(&opt_untracked_dirs_content, argv[2]);
+
 	config_msg = "Unknown variable name";
 	return ERR;
 }
@@ -2308,7 +2337,7 @@ static struct view views[] = {
 	VIEW_(BLAME,  "blame",  &blame_ops,  TRUE,  ref_commit),
 	VIEW_(BRANCH, "branch",	&branch_ops, TRUE,  ref_head),
 	VIEW_(HELP,   "help",   &help_ops,   FALSE, ""),
-	VIEW_(PAGER,  "pager",  &pager_ops,  FALSE, "stdin"),
+	VIEW_(PAGER,  "pager",  &pager_ops,  FALSE, ""),
 	VIEW_(STATUS, "status", &status_ops, TRUE,  ""),
 	VIEW_(STAGE,  "stage",	&stage_ops,  TRUE,  ""),
 };
@@ -2378,11 +2407,12 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 		}
 
 		waddnstr(view->win, string, len);
-	}
-	if (trimmed && use_tilde) {
-		set_view_attr(view, LINE_DELIMITER);
-		waddch(view->win, '~');
-		col++;
+
+		if (trimmed && use_tilde) {
+			set_view_attr(view, LINE_DELIMITER);
+			waddch(view->win, '~');
+			col++;
+		}
 	}
 
 	return col;
@@ -2878,6 +2908,11 @@ scroll_view(struct view *view, enum request request)
 	assert(view_is_displayed(view));
 
 	switch (request) {
+	case REQ_SCROLL_FIRST_COL:
+		view->yoffset = 0;
+		redraw_view_from(view, 0);
+		report("");
+		return;
 	case REQ_SCROLL_LEFT:
 		if (view->yoffset == 0) {
 			report("Cannot scroll beyond the first column");
@@ -3189,7 +3224,7 @@ format_arg(const char *name)
 }
 
 static bool
-format_argv(const char ***dst_argv, const char *src_argv[], bool replace)
+format_argv(const char ***dst_argv, const char *src_argv[], bool replace, bool first)
 {
 	char buf[SIZEOF_STR];
 	int argc;
@@ -3210,7 +3245,8 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool replace)
 				break;
 			continue;
 
-		} else if (!strcmp(arg, "%(revargs)")) {
+		} else if (!strcmp(arg, "%(revargs)") ||
+			   (first && !strcmp(arg, "%(commit)"))) {
 			if (!argv_append_array(dst_argv, opt_rev_args))
 				break;
 			continue;
@@ -3296,7 +3332,7 @@ static bool
 prepare_io(struct view *view, const char *dir, const char *argv[], bool replace)
 {
 	view->dir = dir;
-	return format_argv(&view->argv, argv, replace);
+	return format_argv(&view->argv, argv, replace, !view->parent);
 }
 
 static bool
@@ -3633,7 +3669,7 @@ open_run_request(enum request request)
 		return;
 	}
 
-	if (format_argv(&argv, req->argv, TRUE))
+	if (format_argv(&argv, req->argv, TRUE, FALSE))
 		open_external_viewer(argv, NULL);
 	if (argv)
 		argv_free(argv);
@@ -3672,6 +3708,7 @@ view_driver(struct view *view, enum request request)
 		move_view(view, request);
 		break;
 
+	case REQ_SCROLL_FIRST_COL:
 	case REQ_SCROLL_LEFT:
 	case REQ_SCROLL_RIGHT:
 	case REQ_SCROLL_LINE_DOWN:
@@ -3700,6 +3737,13 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_VIEW_PAGER:
+		if (view == NULL) {
+			if (!io_open(&VIEW(REQ_VIEW_PAGER)->io, ""))
+				die("Failed to open stdin");
+			open_view(view, request, OPEN_PREPARED);
+			break;
+		}
+
 		if (!VIEW(REQ_VIEW_PAGER)->pipe && !VIEW(REQ_VIEW_PAGER)->lines) {
 			report("No pager content, press %s to run command from prompt",
 			       get_key(view->keymap, REQ_PROMPT));
@@ -4186,11 +4230,38 @@ static const char *diff_argv[SIZEOF_ARG] = {
 		"%(diffargs)", "%(commit)", "--", "%(fileargs)", NULL
 };
 
+static bool
+diff_read(struct view *view, char *data)
+{
+	if (!data) {
+		/* Fall back to retry if no diff will be shown. */
+		if (view->lines == 0 && opt_file_args) {
+			int pos = argv_size(view->argv)
+				- argv_size(opt_file_args) - 1;
+
+			if (pos > 0 && !strcmp(view->argv[pos], "--")) {
+				for (; view->argv[pos]; pos++) {
+					free((void *) view->argv[pos]);
+					view->argv[pos] = NULL;
+				}
+
+				if (view->pipe)
+					io_done(view->pipe);
+				if (io_run(&view->io, IO_RD, view->dir, view->argv))
+					return FALSE;
+			}
+		}
+		return TRUE;
+	}
+
+	return pager_read(view, data);
+}
+
 static struct view_ops diff_ops = {
 	"line",
 	diff_argv,
 	NULL,
-	pager_read,
+	diff_read,
 	pager_draw,
 	pager_request,
 	pager_grep,
@@ -5634,7 +5705,7 @@ static const char *status_diff_files_argv[] = {
 };
 
 static const char *status_list_other_argv[] = {
-	"git", "ls-files", "-z", "--others", "--exclude-standard", opt_prefix, NULL
+	"git", "ls-files", "-z", "--others", "--exclude-standard", opt_prefix, NULL, NULL,
 };
 
 static const char *status_list_no_head_argv[] = {
@@ -5738,6 +5809,9 @@ status_open(struct view *view)
 	} else if (!status_run(view, status_diff_index_argv, 0, LINE_STAT_STAGED)) {
 		return FALSE;
 	}
+
+	if (!opt_untracked_dirs_content)
+		status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 2] = "--directory";
 
 	if (!status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED) ||
 	    !status_run(view, status_list_other_argv, '?', LINE_STAT_UNTRACKED))
@@ -7037,7 +7111,7 @@ init_display(void)
 	keypad(status_win, TRUE);
 	wbkgdset(status_win, get_line_attr(LINE_STATUS));
 
-	TABSIZE = opt_tab_size;
+	set_tabsize(opt_tab_size);
 
 	term = getenv("XTERM_VERSION") ? NULL : getenv("COLORTERM");
 	if (term && !strcmp(term, "gnome-terminal")) {
@@ -7729,10 +7803,8 @@ parse_options(int argc, const char *argv[])
 	const char **filter_argv = NULL;
 	int i;
 
-	if (!isatty(STDIN_FILENO)) {
-		io_open(&VIEW(REQ_VIEW_PAGER)->io, "");
+	if (!isatty(STDIN_FILENO))
 		return REQ_VIEW_PAGER;
-	}
 
 	if (argc <= 1)
 		return REQ_VIEW_MAIN;

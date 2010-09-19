@@ -1,6 +1,23 @@
 Release notes
 =============
 
+tig-0.16.1
+----------
+
+Improvements:
+
+ - Add scroll-first-col action to jump to the first column. Bound to '|'
+   by default.
+ - Add 'status-untracked-dirs' option to ignore unknown directories
+   contents in the status view. On by default.
+
+Bug fixes:
+
+ - Fix 'tig show <commit>' to show the provided commit.
+ - Fix problem with empty diff views when file specs were passed on the
+   command line.
+ - Fix segfault when starting tig in pager mode.
+
 tig-0.16
 --------
 
