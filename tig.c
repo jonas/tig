@@ -3224,7 +3224,7 @@ format_arg(const char *name)
 }
 
 static bool
-format_argv(const char ***dst_argv, const char *src_argv[], bool replace)
+format_argv(const char ***dst_argv, const char *src_argv[], bool replace, bool first)
 {
 	char buf[SIZEOF_STR];
 	int argc;
@@ -3245,7 +3245,8 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool replace)
 				break;
 			continue;
 
-		} else if (!strcmp(arg, "%(revargs)")) {
+		} else if (!strcmp(arg, "%(revargs)") ||
+			   (first && !strcmp(arg, "%(commit)"))) {
 			if (!argv_append_array(dst_argv, opt_rev_args))
 				break;
 			continue;
@@ -3331,7 +3332,7 @@ static bool
 prepare_io(struct view *view, const char *dir, const char *argv[], bool replace)
 {
 	view->dir = dir;
-	return format_argv(&view->argv, argv, replace);
+	return format_argv(&view->argv, argv, replace, !view->parent);
 }
 
 static bool
@@ -3668,7 +3669,7 @@ open_run_request(enum request request)
 		return;
 	}
 
-	if (format_argv(&argv, req->argv, TRUE))
+	if (format_argv(&argv, req->argv, TRUE, FALSE))
 		open_external_viewer(argv, NULL);
 	if (argv)
 		argv_free(argv);

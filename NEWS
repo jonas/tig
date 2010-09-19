@@ -13,6 +13,7 @@ Improvements:
 
 Bug fixes:
 
+ - Fix 'tig show <commit>' to show the provided commit.
  - Fix problem with empty diff views when file specs were passed on the
    command line.
  - Fix segfault when starting tig in pager mode.
