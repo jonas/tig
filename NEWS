@@ -1,6 +1,13 @@
 Release notes
 =============
 
+tig master
+----------
+
+Bug fixes:
+
+ - Fix set_tabsize() compile error for older versions of ncurses.
+
 tig-0.16.1
 ----------
 
