@@ -3332,7 +3332,7 @@ static bool
 prepare_io(struct view *view, const char *dir, const char *argv[], bool replace)
 {
 	view->dir = dir;
-	return format_argv(&view->argv, argv, replace, !view->parent);
+	return format_argv(&view->argv, argv, replace, !view->prev);
 }
 
 static bool
