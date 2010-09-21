@@ -3332,7 +3332,7 @@ static bool
 prepare_io(struct view *view, const char *dir, const char *argv[], bool replace)
 {
 	view->dir = dir;
-	return format_argv(&view->argv, argv, replace, !view->parent);
+	return format_argv(&view->argv, argv, replace, !view->prev);
 }
 
 static bool
@@ -7111,7 +7111,11 @@ init_display(void)
 	keypad(status_win, TRUE);
 	wbkgdset(status_win, get_line_attr(LINE_STATUS));
 
+#if defined(NCURSES_VERSION_PATCH) && (NCURSES_VERSION_PATCH >= 20080119)
 	set_tabsize(opt_tab_size);
+#else
+	TABSIZE = opt_tab_size;
+#endif
 
 	term = getenv("XTERM_VERSION") ? NULL : getenv("COLORTERM");
 	if (term && !strcmp(term, "gnome-terminal")) {
