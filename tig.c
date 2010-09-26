@@ -6942,6 +6942,8 @@ main_request(struct view *view, enum request request, struct line *line)
 
 	switch (request) {
 	case REQ_ENTER:
+		if (view_is_displayed(view) && display[0] != view)
+			maximize_view(view);
 		open_view(view, REQ_VIEW_DIFF, flags);
 		break;
 	case REQ_REFRESH:
