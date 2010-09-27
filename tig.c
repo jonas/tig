@@ -1244,9 +1244,9 @@ static char opt_git_dir[SIZEOF_STR]	= "";
 static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
 static FILE *opt_tty			= NULL;
-static const char **opt_diff_args	= NULL;
-static const char **opt_rev_args	= NULL;
-static const char **opt_file_args	= NULL;
+static const char **opt_diff_argv	= NULL;
+static const char **opt_rev_argv	= NULL;
+static const char **opt_file_argv	= NULL;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strcmp(rev, get_ref_head()->id)))
@@ -2182,14 +2182,14 @@ load_options(void)
 	 * that conflict with keybindings. */
 	add_builtin_run_requests();
 
-	if (!opt_diff_args && tig_diff_opts && *tig_diff_opts) {
+	if (!opt_diff_argv && tig_diff_opts && *tig_diff_opts) {
 		static const char *diff_opts[SIZEOF_ARG] = { NULL };
 		int argc = 0;
 
 		if (!string_format(buf, "%s", tig_diff_opts) ||
 		    !argv_from_string(diff_opts, &argc, buf))
 			die("TIG_DIFF_OPTS contains too many arguments");
-		else if (!argv_copy(&opt_diff_args, diff_opts))
+		else if (!argv_copy(&opt_diff_argv, diff_opts))
 			die("Failed to format TIG_DIFF_OPTS arguments");
 	}
 
@@ -3236,18 +3236,18 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool replace, bool f
 		size_t bufpos = 0;
 
 		if (!strcmp(arg, "%(fileargs)")) {
-			if (!argv_append_array(dst_argv, opt_file_args))
+			if (!argv_append_array(dst_argv, opt_file_argv))
 				break;
 			continue;
 
 		} else if (!strcmp(arg, "%(diffargs)")) {
-			if (!argv_append_array(dst_argv, opt_diff_args))
+			if (!argv_append_array(dst_argv, opt_diff_argv))
 				break;
 			continue;
 
 		} else if (!strcmp(arg, "%(revargs)") ||
 			   (first && !strcmp(arg, "%(commit)"))) {
-			if (!argv_append_array(dst_argv, opt_rev_args))
+			if (!argv_append_array(dst_argv, opt_rev_argv))
 				break;
 			continue;
 		}
@@ -4235,9 +4235,9 @@ diff_read(struct view *view, char *data)
 {
 	if (!data) {
 		/* Fall back to retry if no diff will be shown. */
-		if (view->lines == 0 && opt_file_args) {
+		if (view->lines == 0 && opt_file_argv) {
 			int pos = argv_size(view->argv)
-				- argv_size(opt_file_args) - 1;
+				- argv_size(opt_file_argv) - 1;
 
 			if (pos > 0 && !strcmp(view->argv[pos], "--")) {
 				for (; view->argv[pos]; pos++) {
@@ -7795,9 +7795,9 @@ filter_rev_parse(const char ***args, const char *arg1, const char *arg2, const c
 static void
 filter_options(const char *argv[])
 {
-	filter_rev_parse(&opt_file_args, "--no-revs", "--no-flags", argv);
-	filter_rev_parse(&opt_diff_args, "--no-revs", "--flags", argv);
-	filter_rev_parse(&opt_rev_args, "--symbolic", "--revs-only", argv);
+	filter_rev_parse(&opt_file_argv, "--no-revs", "--no-flags", argv);
+	filter_rev_parse(&opt_diff_argv, "--no-revs", "--flags", argv);
+	filter_rev_parse(&opt_rev_argv, "--symbolic", "--revs-only", argv);
 }
 
 static enum request
@@ -7845,7 +7845,7 @@ parse_options(int argc, const char *argv[])
 		const char *opt = argv[i];
 
 		if (seen_dashdash) {
-			argv_append(&opt_file_args, opt);
+			argv_append(&opt_file_argv, opt);
 			continue;
 
 		} else if (!strcmp(opt, "--")) {
@@ -7861,7 +7861,7 @@ parse_options(int argc, const char *argv[])
 			quit(0);
 
 		} else if (!strcmp(opt, "--all")) {
-			argv_append(&opt_rev_args, opt);
+			argv_append(&opt_rev_argv, opt);
 			continue;
 		}
 
