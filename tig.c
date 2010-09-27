@@ -1802,9 +1802,36 @@ add_builtin_run_requests(void)
  * User config file handling.
  */
 
-static int   config_lineno;
-static bool  config_errors;
-static const char *config_msg;
+#define OPT_ERR_INFO \
+	OPT_ERR_(INTEGER_VALUE_OUT_OF_BOUND, "Integer value out of bound"), \
+	OPT_ERR_(INVALID_STEP_VALUE, "Invalid step value"), \
+	OPT_ERR_(NO_OPTION_VALUE, "No option value"), \
+	OPT_ERR_(NO_VALUE_ASSIGNED, "No value assigned"), \
+	OPT_ERR_(OBSOLETE_REQUEST_NAME, "Obsolete request name"), \
+	OPT_ERR_(TOO_MANY_OPTION_ARGUMENTS, "Too many option arguments"), \
+	OPT_ERR_(UNKNOWN_ATTRIBUTE, "Unknown attribute"), \
+	OPT_ERR_(UNKNOWN_COLOR, "Unknown color"), \
+	OPT_ERR_(UNKNOWN_COLOR_NAME, "Unknown color name"), \
+	OPT_ERR_(UNKNOWN_KEY, "Unknown key"), \
+	OPT_ERR_(UNKNOWN_KEY_MAP, "Unknown key map"), \
+	OPT_ERR_(UNKNOWN_OPTION_COMMAND, "Unknown option command"), \
+	OPT_ERR_(UNKNOWN_REQUEST_NAME, "Unknown request name"), \
+	OPT_ERR_(UNKNOWN_VARIABLE_NAME, "Unknown variable name"), \
+	OPT_ERR_(UNMATCHED_QUOTATION, "Unmatched quotation"), \
+	OPT_ERR_(WRONG_NUMBER_OF_ARGUMENTS, "Wrong number of arguments"),
+
+enum option_code {
+#define OPT_ERR_(name, msg) OPT_ERR_ ## name
+	OPT_ERR_INFO
+#undef	OPT_ERR_
+	OPT_OK
+};
+
+static const char *option_errors[] = {
+#define OPT_ERR_(name, msg) msg
+	OPT_ERR_INFO
+#undef	OPT_ERR_
+};
 
 static const struct enum_map color_map[] = {
 #define COLOR_MAP(name) ENUM_MAP(#name, COLOR_##name)
@@ -1832,39 +1859,37 @@ static const struct enum_map attr_map[] = {
 
 #define set_attribute(attr, name)	map_enum(attr, attr_map, name)
 
-static int parse_step(double *opt, const char *arg)
+static enum option_code
+parse_step(double *opt, const char *arg)
 {
 	*opt = atoi(arg);
 	if (!strchr(arg, '%'))
-		return OK;
+		return OPT_OK;
 
 	/* "Shift down" so 100% and 1 does not conflict. */
 	*opt = (*opt - 1) / 100;
 	if (*opt >= 1.0) {
 		*opt = 0.99;
-		config_msg = "Step value larger than 100%";
-		return ERR;
+		return OPT_ERR_INVALID_STEP_VALUE;
 	}
 	if (*opt < 0.0) {
 		*opt = 1;
-		config_msg = "Invalid step value";
-		return ERR;
+		return OPT_ERR_INVALID_STEP_VALUE;
 	}
-	return OK;
+	return OPT_OK;
 }
 
-static int
+static enum option_code
 parse_int(int *opt, const char *arg, int min, int max)
 {
 	int value = atoi(arg);
 
 	if (min <= value && value <= max) {
 		*opt = value;
-		return OK;
+		return OPT_OK;
 	}
 
-	config_msg = "Integer value out of bound";
-	return ERR;
+	return OPT_ERR_INTEGER_VALUE_OUT_OF_BOUND;
 }
 
 static bool
@@ -1878,15 +1903,13 @@ set_color(int *color, const char *name)
 }
 
 /* Wants: object fgcolor bgcolor [attribute] */
-static int
+static enum option_code
 option_color_command(int argc, const char *argv[])
 {
 	struct line_info *info;
 
-	if (argc < 3) {
-		config_msg = "Wrong number of arguments given to color command";
-		return ERR;
-	}
+	if (argc < 3)
+		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
 
 	info = get_line_info(argv[0]);
 	if (!info) {
@@ -1898,16 +1921,14 @@ option_color_command(int argc, const char *argv[])
 		int index;
 
 		if (!map_enum(&index, obsolete, argv[0])) {
-			config_msg = "Unknown color name";
-			return ERR;
+			return OPT_ERR_UNKNOWN_COLOR_NAME;
 		}
 		info = &line_info[index];
 	}
 
 	if (!set_color(&info->fg, argv[1]) ||
 	    !set_color(&info->bg, argv[2])) {
-		config_msg = "Unknown color";
-		return ERR;
+		return OPT_ERR_UNKNOWN_COLOR;
 	}
 
 	info->attr = 0;
@@ -1915,43 +1936,42 @@ option_color_command(int argc, const char *argv[])
 		int attr;
 
 		if (!set_attribute(&attr, argv[argc])) {
-			config_msg = "Unknown attribute";
-			return ERR;
+			return OPT_ERR_UNKNOWN_ATTRIBUTE;
 		}
 		info->attr |= attr;
 	}
 
-	return OK;
+	return OPT_OK;
 }
 
-static int parse_bool(bool *opt, const char *arg)
+static enum option_code
+parse_bool(bool *opt, const char *arg)
 {
 	*opt = (!strcmp(arg, "1") || !strcmp(arg, "true") || !strcmp(arg, "yes"))
 		? TRUE : FALSE;
-	return OK;
+	return OPT_OK;
 }
 
-static int parse_enum_do(unsigned int *opt, const char *arg,
-			 const struct enum_map *map, size_t map_size)
+static enum option_code
+parse_enum_do(unsigned int *opt, const char *arg,
+	      const struct enum_map *map, size_t map_size)
 {
 	bool is_true;
 
 	assert(map_size > 1);
 
 	if (map_enum_do(map, map_size, (int *) opt, arg))
-		return OK;
+		return OPT_OK;
 
-	if (parse_bool(&is_true, arg) != OK)
-		return ERR;
-
+	parse_bool(&is_true, arg);
 	*opt = is_true ? map[1].value : map[0].value;
-	return OK;
+	return OPT_OK;
 }
 
 #define parse_enum(opt, arg, map) \
 	parse_enum_do(opt, arg, map, ARRAY_SIZE(map))
 
-static int
+static enum option_code
 parse_string(char *opt, const char *arg, size_t optsize)
 {
 	int arglen = strlen(arg);
@@ -1959,30 +1979,24 @@ parse_string(char *opt, const char *arg, size_t optsize)
 	switch (arg[0]) {
 	case '\"':
 	case '\'':
-		if (arglen == 1 || arg[arglen - 1] != arg[0]) {
-			config_msg = "Unmatched quotation";
-			return ERR;
-		}
+		if (arglen == 1 || arg[arglen - 1] != arg[0])
+			return OPT_ERR_UNMATCHED_QUOTATION;
 		arg += 1; arglen -= 2;
 	default:
 		string_ncopy_do(opt, optsize, arg, arglen);
-		return OK;
+		return OPT_OK;
 	}
 }
 
 /* Wants: name = value */
-static int
+static enum option_code
 option_set_command(int argc, const char *argv[])
 {
-	if (argc != 3) {
-		config_msg = "Wrong number of arguments given to set command";
-		return ERR;
-	}
+	if (argc != 3)
+		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
 
-	if (strcmp(argv[1], "=")) {
-		config_msg = "No value assigned";
-		return ERR;
-	}
+	if (strcmp(argv[1], "="))
+		return OPT_ERR_NO_VALUE_ASSIGNED;
 
 	if (!strcmp(argv[0], "show-author"))
 		return parse_enum(&opt_author, argv[2], author_map);
@@ -2023,33 +2037,26 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "status-untracked-dirs"))
 		return parse_bool(&opt_untracked_dirs_content, argv[2]);
 
-	config_msg = "Unknown variable name";
-	return ERR;
+	return OPT_ERR_UNKNOWN_VARIABLE_NAME;
 }
 
 /* Wants: mode request key */
-static int
+static enum option_code
 option_bind_command(int argc, const char *argv[])
 {
 	enum request request;
 	int keymap = -1;
 	int key;
 
-	if (argc < 3) {
-		config_msg = "Wrong number of arguments given to bind command";
-		return ERR;
-	}
+	if (argc < 3)
+		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
 
-	if (!set_keymap(&keymap, argv[0])) {
-		config_msg = "Unknown key map";
-		return ERR;
-	}
+	if (!set_keymap(&keymap, argv[0]))
+		return OPT_ERR_UNKNOWN_KEY_MAP;
 
 	key = get_key_value(argv[1]);
-	if (key == ERR) {
-		config_msg = "Unknown key";
-		return ERR;
-	}
+	if (key == ERR)
+		return OPT_ERR_UNKNOWN_KEY;
 
 	request = get_request(argv[2]);
 	if (request == REQ_UNKNOWN) {
@@ -2063,32 +2070,27 @@ option_bind_command(int argc, const char *argv[])
 		if (map_enum(&alias, obsolete, argv[2])) {
 			if (alias != REQ_NONE)
 				add_keybinding(keymap, alias, key);
-			config_msg = "Obsolete request name";
-			return ERR;
+			return OPT_ERR_OBSOLETE_REQUEST_NAME;
 		}
 	}
 	if (request == REQ_UNKNOWN && *argv[2]++ == '!')
 		request = add_run_request(keymap, key, argv + 2);
-	if (request == REQ_UNKNOWN) {
-		config_msg = "Unknown request name";
-		return ERR;
-	}
+	if (request == REQ_UNKNOWN)
+		return OPT_ERR_UNKNOWN_REQUEST_NAME;
 
 	add_keybinding(keymap, request, key);
 
-	return OK;
+	return OPT_OK;
 }
 
-static int
+static enum option_code
 set_option(const char *opt, char *value)
 {
 	const char *argv[SIZEOF_ARG];
 	int argc = 0;
 
-	if (!argv_from_string(argv, &argc, value)) {
-		config_msg = "Too many option arguments";
-		return ERR;
-	}
+	if (!argv_from_string(argv, &argc, value))
+		return OPT_ERR_TOO_MANY_OPTION_ARGUMENTS;
 
 	if (!strcmp(opt, "color"))
 		return option_color_command(argc, argv);
@@ -2099,17 +2101,21 @@ set_option(const char *opt, char *value)
 	if (!strcmp(opt, "bind"))
 		return option_bind_command(argc, argv);
 
-	config_msg = "Unknown option command";
-	return ERR;
+	return OPT_ERR_UNKNOWN_OPTION_COMMAND;
 }
+
+struct config_state {
+	int lineno;
+	bool errors;
+};
 
 static int
 read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 {
-	int status = OK;
+	struct config_state *config = data;
+	enum option_code status = OPT_ERR_NO_OPTION_VALUE;
 
-	config_lineno++;
-	config_msg = "Internal error";
+	config->lineno++;
 
 	/* Check for comment markers, since read_properties() will
 	 * only ensure opt and value are split at first " \t". */
@@ -2117,11 +2123,7 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 	if (optlen == 0)
 		return OK;
 
-	if (opt[optlen] != 0) {
-		config_msg = "No option value";
-		status = ERR;
-
-	}  else {
+	if (opt[optlen] == 0) {
 		/* Look for comment endings in the value. */
 		size_t len = strcspn(value, "#");
 
@@ -2133,10 +2135,10 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 		status = set_option(opt, value);
 	}
 
-	if (status == ERR) {
+	if (status != OPT_OK) {
 		warn("Error on line %d, near '%.*s': %s",
-		     config_lineno, (int) optlen, opt, config_msg);
-		config_errors = TRUE;
+		     config->lineno, (int) optlen, opt, option_errors[status]);
+		config->errors = TRUE;
 	}
 
 	/* Always keep going if errors are encountered. */
@@ -2146,17 +2148,15 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 static void
 load_option_file(const char *path)
 {
+	struct config_state config = { 0, FALSE };
 	struct io io;
 
 	/* It's OK that the file doesn't exist. */
 	if (!io_open(&io, "%s", path))
 		return;
 
-	config_lineno = 0;
-	config_errors = FALSE;
-
-	if (io_load(&io, " \t", read_option, NULL) == ERR ||
-	    config_errors == TRUE)
+	if (io_load(&io, " \t", read_option, &config) == ERR ||
+	    config.errors == TRUE)
 		warn("Errors while loading %s.", path);
 }
 
@@ -7592,19 +7592,19 @@ set_remote_branch(const char *name, const char *value, size_t valuelen)
 }
 
 static void
-set_repo_config_option(char *name, char *value, int (*cmd)(int, const char **))
+set_repo_config_option(char *name, char *value, enum option_code (*cmd)(int, const char **))
 {
 	const char *argv[SIZEOF_ARG] = { name, "=" };
 	int argc = 1 + (cmd == option_set_command);
-	int error = ERR;
+	enum option_code error;
 
 	if (!argv_from_string(argv, &argc, value))
-		config_msg = "Too many option arguments";
+		error = OPT_ERR_TOO_MANY_OPTION_ARGUMENTS;
 	else
 		error = cmd(argc, argv);
 
-	if (error == ERR)
-		warn("Option 'tig.%s': %s", name, config_msg);
+	if (error != OPT_OK)
+		warn("Option 'tig.%s': %s", name, option_errors[error]);
 }
 
 static bool
