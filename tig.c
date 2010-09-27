@@ -1044,9 +1044,11 @@ io_run_buf(const char **argv, char buf[], size_t bufsize)
 	return io_run(&io, IO_RD, NULL, argv) && io_read_buf(&io, buf, bufsize);
 }
 
+typedef int (*io_read_fn)(char *, size_t, char *, size_t, void *data);
+
 static int
 io_load(struct io *io, const char *separators,
-	int (*read_property)(char *, size_t, char *, size_t))
+	io_read_fn read_property, void *data)
 {
 	char *name;
 	int state = OK;
@@ -1069,7 +1071,7 @@ io_load(struct io *io, const char *separators,
 			valuelen = 0;
 		}
 
-		state = read_property(name, namelen, value, valuelen);
+		state = read_property(name, namelen, value, valuelen, data);
 	}
 
 	if (state != ERR && io_error(io))
@@ -1081,13 +1083,13 @@ io_load(struct io *io, const char *separators,
 
 static int
 io_run_load(const char **argv, const char *separators,
-	    int (*read_property)(char *, size_t, char *, size_t))
+	    io_read_fn read_property, void *data)
 {
 	struct io io;
 
 	if (!io_run(&io, IO_RD, NULL, argv))
 		return ERR;
-	return io_load(&io, separators, read_property);
+	return io_load(&io, separators, read_property, data);
 }
 
 
@@ -2102,7 +2104,7 @@ set_option(const char *opt, char *value)
 }
 
 static int
-read_option(char *opt, size_t optlen, char *value, size_t valuelen)
+read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 {
 	int status = OK;
 
@@ -2153,7 +2155,7 @@ load_option_file(const char *path)
 	config_lineno = 0;
 	config_errors = FALSE;
 
-	if (io_load(&io, " \t", read_option) == ERR ||
+	if (io_load(&io, " \t", read_option, NULL) == ERR ||
 	    config_errors == TRUE)
 		warn("Errors while loading %s.", path);
 }
@@ -7437,7 +7439,7 @@ get_ref_list(const char *id)
 }
 
 static int
-read_ref(char *id, size_t idlen, char *name, size_t namelen)
+read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 {
 	struct ref *ref = NULL;
 	bool tag = FALSE;
@@ -7555,7 +7557,7 @@ load_refs(void)
 	for (i = 0; i < refs_size; i++)
 		refs[i]->id[0] = 0;
 
-	if (io_run_load(ls_remote_argv, "\t", read_ref) == ERR)
+	if (io_run_load(ls_remote_argv, "\t", read_ref, NULL) == ERR)
 		return ERR;
 
 	/* Update the ref lists to reflect changes. */
@@ -7644,7 +7646,7 @@ set_work_tree(const char *value)
 }
 
 static int
-read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen)
+read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
 	if (!strcmp(name, "i18n.commitencoding"))
 		string_ncopy(opt_encoding, value, valuelen);
@@ -7676,11 +7678,11 @@ load_git_config(void)
 {
 	const char *config_list_argv[] = { "git", "config", "--list", NULL };
 
-	return io_run_load(config_list_argv, "=", read_repo_config_option);
+	return io_run_load(config_list_argv, "=", read_repo_config_option, NULL);
 }
 
 static int
-read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
+read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
 	if (!opt_git_dir[0]) {
 		string_ncopy(opt_git_dir, name, namelen);
@@ -7711,7 +7713,7 @@ load_repo_info(void)
 			"--show-cdup", "--show-prefix", NULL
 	};
 
-	return io_run_load(rev_parse_argv, "=", read_repo_info);
+	return io_run_load(rev_parse_argv, "=", read_repo_info, NULL);
 }
 
 
@@ -7769,11 +7771,11 @@ warn(const char *msg, ...)
 	va_end(args);
 }
 
-static const char ***filter_args;
-
 static int
-read_filter_args(char *name, size_t namelen, char *value, size_t valuelen)
+read_filter_args(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
+	const char ***filter_args = data;
+
 	return argv_append(filter_args, name) ? OK : ERR;
 }
 
@@ -7783,10 +7785,9 @@ filter_rev_parse(const char ***args, const char *arg1, const char *arg2, const c
 	const char *rev_parse_argv[SIZEOF_ARG] = { "git", "rev-parse", arg1, arg2 };
 	const char **all_argv = NULL;
 
-	filter_args = args;
 	if (!argv_append_array(&all_argv, rev_parse_argv) ||
 	    !argv_append_array(&all_argv, argv) ||
-	    !io_run_load(all_argv, "\n", read_filter_args) == ERR)
+	    !io_run_load(all_argv, "\n", read_filter_args, args) == ERR)
 		die("Failed to split arguments");
 	argv_free(all_argv);
 	free(all_argv);
