@@ -2768,49 +2768,56 @@ redraw_display(bool clear)
  * Option management
  */
 
-static void
-toggle_enum_option_do(unsigned int *opt, const char *help,
-		      const struct enum_map *map, size_t size)
-{
-	*opt = (*opt + 1) % size;
-	redraw_display(FALSE);
-	report("Displaying %s %s", enum_name(map[*opt]), help);
-}
-
-#define toggle_enum_option(opt, help, map) \
-	toggle_enum_option_do(opt, help, map, ARRAY_SIZE(map))
-
-#define toggle_date() toggle_enum_option(&opt_date, "dates", date_map)
-#define toggle_author() toggle_enum_option(&opt_author, "author names", author_map)
+#define TOGGLE_MENU \
+	TOGGLE_(LINENO,    '.', "line numbers",      &opt_line_number, NULL) \
+	TOGGLE_(DATE,      'D', "dates",             &opt_date,	  date_map) \
+	TOGGLE_(AUTHOR,    'A', "author names",      &opt_author, author_map) \
+	TOGGLE_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL) \
+	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL)
 
 static void
-toggle_view_option(bool *option, const char *help)
+toggle_option(enum request request)
 {
-	*option = !*option;
-	redraw_display(FALSE);
-	report("%sabling %s", *option ? "En" : "Dis", help);
-}
-
-static void
-open_option_menu(void)
-{
+	const struct {
+		enum request request;
+		const struct enum_map *map;
+		size_t map_size;
+	} data[] = {		
+#define TOGGLE_(id, key, help, value, map) { REQ_TOGGLE_ ## id, map, ARRAY_SIZE(map) },
+		TOGGLE_MENU
+#undef	TOGGLE_
+	};
 	const struct menu_item menu[] = {
-		{ '.', "line numbers", &opt_line_number },
-		{ 'D', "date display", &opt_date },
-		{ 'A', "author display", &opt_author },
-		{ 'g', "revision graph display", &opt_rev_graph },
-		{ 'F', "reference display", &opt_show_refs },
+#define TOGGLE_(id, key, help, value, map) { key, help, value },
+		TOGGLE_MENU
+#undef	TOGGLE_
 		{ 0 }
 	};
-	int selected = 0;
+	int i = 0;
 
-	if (prompt_menu("Toggle option", menu, &selected)) {
-		if (menu[selected].data == &opt_date)
-			toggle_date();
-		else if (menu[selected].data == &opt_author)
-			toggle_author();
-		else
-			toggle_view_option(menu[selected].data, menu[selected].text);
+	if (request == REQ_OPTIONS) {
+		if (!prompt_menu("Toggle option", menu, &i))
+			return;
+	} else {
+		while (i < ARRAY_SIZE(data) && data[i].request != request)
+			i++;
+		if (i >= ARRAY_SIZE(data))
+			die("Invalid request (%d)", request);
+	}
+
+	if (data[i].map != NULL) {
+		unsigned int *opt = menu[i].data;
+
+		*opt = (*opt + 1) % data[i].map_size;
+		redraw_display(FALSE);
+		report("Displaying %s %s", enum_name(data[i].map[*opt]), menu[i].text);
+
+	} else {
+		bool *option = menu[i].data;
+
+		*option = !*option;
+		redraw_display(FALSE);
+		report("%sabling %s", *option ? "En" : "Dis", menu[i].text);
 	}
 }
 
@@ -3825,27 +3832,12 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_OPTIONS:
-		open_option_menu();
-		break;
-
 	case REQ_TOGGLE_LINENO:
-		toggle_view_option(&opt_line_number, "line numbers");
-		break;
-
 	case REQ_TOGGLE_DATE:
-		toggle_date();
-		break;
-
 	case REQ_TOGGLE_AUTHOR:
-		toggle_author();
-		break;
-
 	case REQ_TOGGLE_REV_GRAPH:
-		toggle_view_option(&opt_rev_graph, "revision graph display");
-		break;
-
 	case REQ_TOGGLE_REFS:
-		toggle_view_option(&opt_show_refs, "reference display");
+		toggle_option(request);
 		break;
 
 	case REQ_TOGGLE_SORT_FIELD:
