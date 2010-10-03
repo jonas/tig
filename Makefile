@@ -143,7 +143,7 @@ rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
 
 configure: configure.ac acinclude.m4
-	$(AUTORECONF) -v
+	$(AUTORECONF) -v -I contrib
 
 .PHONY: all all-debug doc doc-man doc-html install install-doc \
 	install-doc-man install-doc-html clean spell-check dist rpm

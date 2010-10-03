@@ -49,14 +49,10 @@
 /* ncurses(3): Must be defined to have extended wide-character functions. */
 #define _XOPEN_SOURCE_EXTENDED
 
-#ifdef HAVE_NCURSESW_NCURSES_H
+#ifdef HAVE_NCURSESW_H
 #include <ncursesw/ncurses.h>
 #else
-#ifdef HAVE_NCURSES_NCURSES_H
-#include <ncurses/ncurses.h>
-#else
 #include <ncurses.h>
-#endif
 #endif
 
 #if __GNUC__ >= 3
