@@ -1916,24 +1916,21 @@ option_color_command(int argc, const char *argv[])
 		};
 		int index;
 
-		if (!map_enum(&index, obsolete, argv[0])) {
+		if (!map_enum(&index, obsolete, argv[0]))
 			return OPT_ERR_UNKNOWN_COLOR_NAME;
-		}
 		info = &line_info[index];
 	}
 
 	if (!set_color(&info->fg, argv[1]) ||
-	    !set_color(&info->bg, argv[2])) {
+	    !set_color(&info->bg, argv[2]))
 		return OPT_ERR_UNKNOWN_COLOR;
-	}
 
 	info->attr = 0;
 	while (argc-- > 3) {
 		int attr;
 
-		if (!set_attribute(&attr, argv[argc])) {
+		if (!set_attribute(&attr, argv[argc]))
 			return OPT_ERR_UNKNOWN_ATTRIBUTE;
-		}
 		info->attr |= attr;
 	}
 
