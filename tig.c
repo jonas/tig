@@ -2204,6 +2204,8 @@ struct view_ops;
 
 /* The display array of active views and the index of the current view. */
 static struct view *display[2];
+static WINDOW *display_win[2];
+static WINDOW *display_title[2];
 static unsigned int current_view;
 
 #define foreach_displayed_view(view, i) \
@@ -2247,7 +2249,6 @@ struct view {
 
 	int height, width;	/* The width and height of the main window */
 	WINDOW *win;		/* The main window */
-	WINDOW *title;		/* The title window living below the main window */
 
 	/* Navigation */
 	unsigned long offset;	/* Offset of the window top */
@@ -2634,6 +2635,7 @@ update_view_title(struct view *view)
 	char buf[SIZEOF_STR];
 	char state[SIZEOF_STR];
 	size_t bufpos = 0, statelen = 0;
+	WINDOW *window = display[0] == view ? display_title[0] : display_title[1];
 
 	assert(view_is_displayed(view));
 
@@ -2674,13 +2676,13 @@ update_view_title(struct view *view)
 	}
 
 	if (view == display[current_view])
-		wbkgdset(view->title, get_line_attr(LINE_TITLE_FOCUS));
+		wbkgdset(window, get_line_attr(LINE_TITLE_FOCUS));
 	else
-		wbkgdset(view->title, get_line_attr(LINE_TITLE_BLUR));
+		wbkgdset(window, get_line_attr(LINE_TITLE_BLUR));
 
-	mvwaddnstr(view->title, 0, 0, buf, bufpos);
-	wclrtoeol(view->title);
-	wnoutrefresh(view->title);
+	mvwaddnstr(window, 0, 0, buf, bufpos);
+	wclrtoeol(window);
+	wnoutrefresh(window);
 }
 
 static int
@@ -2724,22 +2726,24 @@ resize_display(void)
 	offset = 0;
 
 	foreach_displayed_view (view, i) {
-		if (!view->win) {
-			view->win = newwin(view->height, 0, offset, 0);
-			if (!view->win)
+		if (!display_win[i]) {
+			display_win[i] = newwin(view->height, 0, offset, 0);
+			if (!display_win[i])
 				die("Failed to create %s view", view->name);
 
-			scrollok(view->win, FALSE);
+			scrollok(display_win[i], FALSE);
 
-			view->title = newwin(1, 0, offset + view->height, 0);
-			if (!view->title)
+			display_title[i] = newwin(1, 0, offset + view->height, 0);
+			if (!display_title[i])
 				die("Failed to create title window");
 
 		} else {
-			wresize(view->win, view->height, view->width);
-			mvwin(view->win,   offset, 0);
-			mvwin(view->title, offset + view->height, 0);
+			wresize(display_win[i], view->height, view->width);
+			mvwin(display_win[i],   offset, 0);
+			mvwin(display_title[i], offset + view->height, 0);
 		}
+
+		view->win = display_win[i];
 
 		offset += view->height + 1;
 	}
