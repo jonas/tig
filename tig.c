@@ -2433,14 +2433,14 @@ draw_space(struct view *view, enum line_type type, int max, int spaces)
 }
 
 static bool
-draw_text(struct view *view, enum line_type type, const char *string, bool trim)
+draw_text(struct view *view, enum line_type type, const char *string)
 {
 	char text[SIZEOF_STR];
 
 	do {
 		size_t pos = string_expand(text, sizeof(text), string, opt_tab_size);
 
-		view->col += draw_chars(view, type, text, view->width + view->yoffset - view->col, trim);
+		view->col += draw_chars(view, type, text, view->width + view->yoffset - view->col, TRUE);
 		string += pos;
 	} while (*string && view->width + view->yoffset > view->col);
 
@@ -4043,7 +4043,7 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (opt_line_number && draw_lineno(view, lineno))
 		return TRUE;
 
-	draw_text(view, line->type, line->data, TRUE);
+	draw_text(view, line->type, line->data);
 	return TRUE;
 }
 
@@ -4667,7 +4667,7 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct tree_entry *entry = line->data;
 
 	if (line->type == LINE_TREE_HEAD) {
-		if (draw_text(view, line->type, "Directory path /", TRUE))
+		if (draw_text(view, line->type, "Directory path /"))
 			return TRUE;
 	} else {
 		if (draw_mode(view, entry->mode))
@@ -4679,8 +4679,8 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 		if (opt_date && draw_date(view, &entry->time))
 			return TRUE;
 	}
-	if (draw_text(view, line->type, entry->name, TRUE))
-		return TRUE;
+
+	draw_text(view, line->type, entry->name);
 	return TRUE;
 }
 
@@ -5169,7 +5169,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_lineno(view, lineno))
 		return TRUE;
 
-	draw_text(view, LINE_DEFAULT, blame->text, TRUE);
+	draw_text(view, LINE_DEFAULT, blame->text);
 	return TRUE;
 }
 
@@ -5387,7 +5387,7 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (opt_author && draw_author(view, branch->author))
 		return TRUE;
 
-	draw_text(view, type, branch->ref == &branch_all ? "All branches" : branch->ref->name, TRUE);
+	draw_text(view, type, branch->ref == &branch_all ? "All branches" : branch->ref->name);
 	return TRUE;
 }
 
@@ -5856,13 +5856,13 @@ status_draw(struct view *view, struct line *line, unsigned int lineno)
 		static char buf[] = { '?', ' ', ' ', ' ', 0 };
 
 		buf[0] = status->status;
-		if (draw_text(view, line->type, buf, TRUE))
+		if (draw_text(view, line->type, buf))
 			return TRUE;
 		type = LINE_DEFAULT;
 		text = status->new.name;
 	}
 
-	draw_text(view, type, text, TRUE);
+	draw_text(view, type, text);
 	return TRUE;
 }
 
@@ -6814,17 +6814,17 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 			else
 				type = LINE_MAIN_REF;
 
-			if (draw_text(view, type, "[", TRUE) ||
-			    draw_text(view, type, ref->name, TRUE) ||
-			    draw_text(view, type, "]", TRUE))
+			if (draw_text(view, type, "[") ||
+			    draw_text(view, type, ref->name) ||
+			    draw_text(view, type, "]"))
 				return TRUE;
 
-			if (draw_text(view, LINE_DEFAULT, " ", TRUE))
+			if (draw_text(view, LINE_DEFAULT, " "))
 				return TRUE;
 		}
 	}
 
-	draw_text(view, LINE_DEFAULT, commit->title, TRUE);
+	draw_text(view, LINE_DEFAULT, commit->title);
 	return TRUE;
 }
 
