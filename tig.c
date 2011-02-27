@@ -2724,13 +2724,13 @@ resize_display(void)
 
 	foreach_displayed_view (view, i) {
 		if (!display_win[i]) {
-			display_win[i] = newwin(view->height, 0, offset, 0);
+			display_win[i] = newwin(view->height, view->width, offset, 0);
 			if (!display_win[i])
 				die("Failed to create %s view", view->name);
 
 			scrollok(display_win[i], FALSE);
 
-			display_title[i] = newwin(1, 0, offset + view->height, 0);
+			display_title[i] = newwin(1, view->width, offset + view->height, 0);
 			if (!display_title[i])
 				die("Failed to create title window");
 
@@ -7096,7 +7096,7 @@ init_display(void)
 		init_colors();
 
 	getmaxyx(stdscr, y, x);
-	status_win = newwin(1, 0, y - 1, 0);
+	status_win = newwin(1, x, y - 1, 0);
 	if (!status_win)
 		die("Failed to create status window");
 
