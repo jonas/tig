@@ -1,8 +1,8 @@
 Release notes
 =============
 
-tig master
-----------
+tig-0.17
+--------
 
 Improvements:
 
@@ -12,6 +12,7 @@ Improvements:
 
 Bug fixes:
 
+ - Fix ncurses 2.8 issue by passing non-zero column size to newwin(1).
  - Fix opening of diffs when browsing branches.
 
 tig-0.16.2
