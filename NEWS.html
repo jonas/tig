@@ -554,6 +554,32 @@ footnotes: function () {
 <h1>Release notes</h1>
 </div>
 <div id="content">
+<h2 id="_tig_0_17">tig-0.17</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Start rewrite of the revision graph renderer. Three modes are
+   supported UTF-8, ncurses line graphics, and ASCII. Also, enable
+   revision graph rendering by default.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix ncurses 2.8 issue by passing non-zero column size to newwin(1).
+</p>
+</li>
+<li>
+<p>
+Fix opening of diffs when browsing branches.
+</p>
+</li>
+</ul></div>
+</div>
 <h2 id="_tig_0_16_2">tig-0.16.2</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Bug fixes:</p></div>
@@ -1527,7 +1553,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2010-09-21 08:43:40 EDT
+Last updated 2011-03-06 20:49:48 EDT
 </div>
 </div>
 </body>

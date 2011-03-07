@@ -673,13 +673,19 @@ Valid mixed values
 <dt class="hdlist1">
 <em>show-rev-graph</em> (bool)
 </dt>
+<dd>
+<p>
+        Whether to show revision graph in the main view on start-up.
+        Can be toggled. See also line-graphics options.
+</p>
+</dd>
 <dt class="hdlist1">
 <em>show-refs</em> (bool)
 </dt>
 <dd>
 <p>
-        Whether to show revision graph, and references (branches, tags, and
-        remotes) in the main view on start-up. Can all be toggled.
+        Whether to show references (branches, tags, and remotes) in the main
+        view on start-up. Can be toggled.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -711,11 +717,11 @@ Valid mixed values
 </p>
 </dd>
 <dt class="hdlist1">
-<em>line-graphics</em> (bool)
+<em>line-graphics</em> (mixed) [ "ascii" | "default" | "utf-8" | bool]
 </dt>
 <dd>
 <p>
-        Whether to use graphic characters for line drawing.
+        What type of character graphics for line drawing.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1207,6 +1213,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Toggle revision graph visualization</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><tt>toggle-graphic</tt></p></td>
+<td align="left" valign="top"><p class="table">Toggle (line) graphics mode</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><tt>toggle-refs</tt></p></td>
 <td align="left" valign="top"><p class="table">Toggle reference display</p></td>
 </tr>
@@ -1550,7 +1560,7 @@ and the <a href="http://jonas.nitro.dk/tig/manual.html">tig manual</a>.</p></div
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2010-09-19 14:22:31 EDT
+Last updated 2011-03-06 20:49:48 EDT
 </div>
 </div>
 </body>
