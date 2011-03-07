@@ -1,6 +1,20 @@
 Release notes
 =============
 
+tig-0.17
+--------
+
+Improvements:
+
+ - Start rewrite of the revision graph renderer. Three modes are
+   supported UTF-8, ncurses line graphics, and ASCII. Also, enable
+   revision graph rendering by default.
+
+Bug fixes:
+
+ - Fix ncurses 2.8 issue by passing non-zero column size to newwin(1).
+ - Fix opening of diffs when browsing branches.
+
 tig-0.16.2
 ----------
 

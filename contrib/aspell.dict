@@ -1,6 +1,7 @@
-personal_ws-1.1 en 167 
-docbook
+personal_ws-1.1 en 177 
+extdiff
 DocBook
+docbook
 xpm
 utils
 oldmode
@@ -17,6 +18,7 @@ XSL
 cd
 stderr
 getch
+linenumber
 SHA
 errno
 nodelay
@@ -44,6 +46,7 @@ DSSL
 FIXME
 frontend
 chdir
+LDLIBS
 acked
 untracked
 subdirectories
@@ -67,6 +70,7 @@ ident
 namespace
 xhtml
 PageDown
+textconv
 localtime
 repo
 Debian
@@ -77,6 +81,7 @@ Online
 ACDMRTXB
 keymaps
 cwd
+tmp
 filename
 cdate
 gitlink
@@ -89,6 +94,7 @@ lineno
 AsciiDoc
 asciidoc
 PgUp
+renderer
 endif
 contrib
 delim
@@ -120,6 +126,7 @@ cacheinfo
 cdup
 UTF
 combi
+ascii
 resize
 filesystem
 signoff
@@ -143,6 +150,7 @@ gitconfig
 qgit
 struct
 aterm
+ARGS
 ncursesw
 gitk
 unicode
@@ -152,6 +160,8 @@ keybinding
 Fonseca
 charset
 wgetch
+tabsize
+dirs
 lncursesw
 rwxr
 Baudis

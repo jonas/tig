@@ -11,113 +11,13 @@
  * GNU General Public License for more details.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#ifndef TIG_VERSION
-#define TIG_VERSION "unknown-version"
-#endif
-
-#ifndef DEBUG
-#define NDEBUG
-#endif
-
-#include <assert.h>
-#include <errno.h>
-#include <ctype.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <sys/select.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <time.h>
-#include <fcntl.h>
-
-#include <regex.h>
-
-#include <locale.h>
-#include <langinfo.h>
-#include <iconv.h>
-
-/* ncurses(3): Must be defined to have extended wide-character functions. */
-#define _XOPEN_SOURCE_EXTENDED
-
-#ifdef HAVE_NCURSESW_NCURSES_H
-#include <ncursesw/ncurses.h>
-#else
-#ifdef HAVE_NCURSES_NCURSES_H
-#include <ncurses/ncurses.h>
-#else
-#include <ncurses.h>
-#endif
-#endif
-
-#if __GNUC__ >= 3
-#define __NORETURN __attribute__((__noreturn__))
-#else
-#define __NORETURN
-#endif
+#include "tig.h"
+#include "io.h"
+#include "graph.h"
 
 static void __NORETURN die(const char *err, ...);
 static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
-
-#define ABS(x)		((x) >= 0  ? (x) : -(x))
-#define MIN(x, y)	((x) < (y) ? (x) :  (y))
-#define MAX(x, y)	((x) > (y) ? (x) :  (y))
-
-#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(x[0]))
-#define STRING_SIZE(x)	(sizeof(x) - 1)
-
-#define SIZEOF_STR	1024	/* Default string size. */
-#define SIZEOF_REF	256	/* Size of symbolic or SHA1 ID. */
-#define SIZEOF_REV	41	/* Holds a SHA-1 and an ending NUL. */
-#define SIZEOF_ARG	32	/* Default argument array size. */
-
-/* Revision graph */
-
-#define REVGRAPH_INIT	'I'
-#define REVGRAPH_MERGE	'M'
-#define REVGRAPH_BRANCH	'+'
-#define REVGRAPH_COMMIT	'*'
-#define REVGRAPH_BOUND	'^'
-
-#define SIZEOF_REVGRAPH	19	/* Size of revision ancestry graphics. */
-
-/* This color name can be used to refer to the default term colors. */
-#define COLOR_DEFAULT	(-1)
-
-#define ICONV_NONE	((iconv_t) -1)
-#ifndef ICONV_CONST
-#define ICONV_CONST	/* nothing */
-#endif
-
-/* The format and size of the date column in the main view. */
-#define DATE_FORMAT	"%Y-%m-%d %H:%M"
-#define DATE_COLS	STRING_SIZE("2006-04-29 14:21 ")
-#define DATE_SHORT_COLS	STRING_SIZE("2006-04-29 ")
-
-#define ID_COLS		8
-#define AUTHOR_COLS	19
-
-#define MIN_VIEW_HEIGHT 4
-
-#define NULL_ID		"0000000000000000000000000000000000000000"
-
-#define S_ISGITLINK(mode) (((mode) & S_IFMT) == 0160000)
-
-/* Some ASCII-shorthands fitted into the ncurses namespace. */
-#define KEY_CTL(x)	((x) & 0x1f) /* KEY_CTL(A) == ^A == \1 */
-#define KEY_TAB		'\t'
-#define KEY_RETURN	'\r'
-#define KEY_ESC		27
 
 
 struct ref {
@@ -161,355 +61,19 @@ struct menu_item {
 
 static bool prompt_menu(const char *prompt, const struct menu_item *items, int *selected);
 
-/*
- * Allocation helpers ... Entering macro hell to never be seen again.
- */
-
-#define DEFINE_ALLOCATOR(name, type, chunk_size)				\
-static type *									\
-name(type **mem, size_t size, size_t increase)					\
-{										\
-	size_t num_chunks = (size + chunk_size - 1) / chunk_size;		\
-	size_t num_chunks_new = (size + increase + chunk_size - 1) / chunk_size;\
-	type *tmp = *mem;							\
-										\
-	if (mem == NULL || num_chunks != num_chunks_new) {			\
-		tmp = realloc(tmp, num_chunks_new * chunk_size * sizeof(type));	\
-		if (tmp)							\
-			*mem = tmp;						\
-	}									\
-										\
-	return tmp;								\
-}
-
-/*
- * String helpers
- */
-
-static inline void
-string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen)
-{
-	if (srclen > dstlen - 1)
-		srclen = dstlen - 1;
-
-	strncpy(dst, src, srclen);
-	dst[srclen] = 0;
-}
-
-/* Shorthands for safely copying into a fixed buffer. */
-
-#define string_copy(dst, src) \
-	string_ncopy_do(dst, sizeof(dst), src, sizeof(src))
-
-#define string_ncopy(dst, src, srclen) \
-	string_ncopy_do(dst, sizeof(dst), src, srclen)
-
-#define string_copy_rev(dst, src) \
-	string_ncopy_do(dst, SIZEOF_REV, src, SIZEOF_REV - 1)
-
-#define string_add(dst, from, src) \
-	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
-
-static size_t
-string_expand(char *dst, size_t dstlen, const char *src, int tabsize)
-{
-	size_t size, pos;
-
-	for (size = pos = 0; size < dstlen - 1 && src[pos]; pos++) {
-		if (src[pos] == '\t') {
-			size_t expanded = tabsize - (size % tabsize);
-
-			if (expanded + size >= dstlen - 1)
-				expanded = dstlen - size - 1;
-			memcpy(dst + size, "        ", expanded);
-			size += expanded;
-		} else {
-			dst[size++] = src[pos];
-		}
-	}
-
-	dst[size] = 0;
-	return pos;
-}
-
-static char *
-chomp_string(char *name)
-{
-	int namelen;
-
-	while (isspace(*name))
-		name++;
-
-	namelen = strlen(name) - 1;
-	while (namelen > 0 && isspace(name[namelen]))
-		name[namelen--] = 0;
-
-	return name;
-}
-
-static bool
-string_nformat(char *buf, size_t bufsize, size_t *bufpos, const char *fmt, ...)
-{
-	va_list args;
-	size_t pos = bufpos ? *bufpos : 0;
-
-	va_start(args, fmt);
-	pos += vsnprintf(buf + pos, bufsize - pos, fmt, args);
-	va_end(args);
-
-	if (bufpos)
-		*bufpos = pos;
-
-	return pos >= bufsize ? FALSE : TRUE;
-}
-
-#define string_format(buf, fmt, args...) \
-	string_nformat(buf, sizeof(buf), NULL, fmt, args)
-
-#define string_format_from(buf, from, fmt, args...) \
-	string_nformat(buf, sizeof(buf), from, fmt, args)
-
-static int
-string_enum_compare(const char *str1, const char *str2, int len)
-{
-	size_t i;
-
-#define string_enum_sep(x) ((x) == '-' || (x) == '_' || (x) == '.')
-
-	/* Diff-Header == DIFF_HEADER */
-	for (i = 0; i < len; i++) {
-		if (toupper(str1[i]) == toupper(str2[i]))
-			continue;
-
-		if (string_enum_sep(str1[i]) &&
-		    string_enum_sep(str2[i]))
-			continue;
-
-		return str1[i] - str2[i];
-	}
-
-	return 0;
-}
-
-#define enum_equals(entry, str, len) \
-	((entry).namelen == (len) && !string_enum_compare((entry).name, str, len))
-
-struct enum_map {
-	const char *name;
-	int namelen;
-	int value;
+enum graphic {
+	GRAPHIC_ASCII = 0,
+	GRAPHIC_DEFAULT,
+	GRAPHIC_UTF8
 };
 
-#define ENUM_MAP(name, value) { name, STRING_SIZE(name), value }
-
-static char *
-enum_map_name(const char *name, size_t namelen)
-{
-	static char buf[SIZEOF_STR];
-	int bufpos;
-
-	for (bufpos = 0; bufpos <= namelen; bufpos++) {
-		buf[bufpos] = tolower(name[bufpos]);
-		if (buf[bufpos] == '_')
-			buf[bufpos] = '-';
-	}
-
-	buf[bufpos] = 0;
-	return buf;
-}
-
-#define enum_name(entry) enum_map_name((entry).name, (entry).namelen)
-
-static bool
-map_enum_do(const struct enum_map *map, size_t map_size, int *value, const char *name)
-{
-	size_t namelen = strlen(name);
-	int i;
-
-	for (i = 0; i < map_size; i++)
-		if (enum_equals(map[i], name, namelen)) {
-			*value = map[i].value;
-			return TRUE;
-		}
-
-	return FALSE;
-}
-
-#define map_enum(attr, map, name) \
-	map_enum_do(map, ARRAY_SIZE(map), attr, name)
-
-#define prefixcmp(str1, str2) \
-	strncmp(str1, str2, STRING_SIZE(str2))
-
-static inline int
-suffixcmp(const char *str, int slen, const char *suffix)
-{
-	size_t len = slen >= 0 ? slen : strlen(str);
-	size_t suffixlen = strlen(suffix);
-
-	return suffixlen < len ? strcmp(str + len - suffixlen, suffix) : -1;
-}
-
-
-/*
- * Unicode / UTF-8 handling
- *
- * NOTE: Much of the following code for dealing with Unicode is derived from
- * ELinks' UTF-8 code developed by Scrool <scroolik@gmail.com>. Origin file is
- * src/intl/charset.c from the UTF-8 branch commit elinks-0.11.0-g31f2c28.
- */
-
-static inline int
-unicode_width(unsigned long c, int tab_size)
-{
-	if (c >= 0x1100 &&
-	   (c <= 0x115f				/* Hangul Jamo */
-	    || c == 0x2329
-	    || c == 0x232a
-	    || (c >= 0x2e80  && c <= 0xa4cf && c != 0x303f)
-						/* CJK ... Yi */
-	    || (c >= 0xac00  && c <= 0xd7a3)	/* Hangul Syllables */
-	    || (c >= 0xf900  && c <= 0xfaff)	/* CJK Compatibility Ideographs */
-	    || (c >= 0xfe30  && c <= 0xfe6f)	/* CJK Compatibility Forms */
-	    || (c >= 0xff00  && c <= 0xff60)	/* Fullwidth Forms */
-	    || (c >= 0xffe0  && c <= 0xffe6)
-	    || (c >= 0x20000 && c <= 0x2fffd)
-	    || (c >= 0x30000 && c <= 0x3fffd)))
-		return 2;
-
-	if (c == '\t')
-		return tab_size;
-
-	return 1;
-}
-
-/* Number of bytes used for encoding a UTF-8 character indexed by first byte.
- * Illegal bytes are set one. */
-static const unsigned char utf8_bytes[256] = {
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2,
-	3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 4,4,4,4,4,4,4,4, 5,5,5,5,6,6,1,1,
+static const struct enum_map graphic_map[] = {
+#define GRAPHIC_(name) ENUM_MAP(#name, GRAPHIC_##name)
+	GRAPHIC_(ASCII),
+	GRAPHIC_(DEFAULT),
+	GRAPHIC_(UTF8)
+#undef	GRAPHIC_
 };
-
-static inline unsigned char
-utf8_char_length(const char *string, const char *end)
-{
-	int c = *(unsigned char *) string;
-
-	return utf8_bytes[c];
-}
-
-/* Decode UTF-8 multi-byte representation into a Unicode character. */
-static inline unsigned long
-utf8_to_unicode(const char *string, size_t length)
-{
-	unsigned long unicode;
-
-	switch (length) {
-	case 1:
-		unicode  =   string[0];
-		break;
-	case 2:
-		unicode  =  (string[0] & 0x1f) << 6;
-		unicode +=  (string[1] & 0x3f);
-		break;
-	case 3:
-		unicode  =  (string[0] & 0x0f) << 12;
-		unicode += ((string[1] & 0x3f) << 6);
-		unicode +=  (string[2] & 0x3f);
-		break;
-	case 4:
-		unicode  =  (string[0] & 0x0f) << 18;
-		unicode += ((string[1] & 0x3f) << 12);
-		unicode += ((string[2] & 0x3f) << 6);
-		unicode +=  (string[3] & 0x3f);
-		break;
-	case 5:
-		unicode  =  (string[0] & 0x0f) << 24;
-		unicode += ((string[1] & 0x3f) << 18);
-		unicode += ((string[2] & 0x3f) << 12);
-		unicode += ((string[3] & 0x3f) << 6);
-		unicode +=  (string[4] & 0x3f);
-		break;
-	case 6:
-		unicode  =  (string[0] & 0x01) << 30;
-		unicode += ((string[1] & 0x3f) << 24);
-		unicode += ((string[2] & 0x3f) << 18);
-		unicode += ((string[3] & 0x3f) << 12);
-		unicode += ((string[4] & 0x3f) << 6);
-		unicode +=  (string[5] & 0x3f);
-		break;
-	default:
-		return 0;
-	}
-
-	/* Invalid characters could return the special 0xfffd value but NUL
-	 * should be just as good. */
-	return unicode > 0xffff ? 0 : unicode;
-}
-
-/* Calculates how much of string can be shown within the given maximum width
- * and sets trimmed parameter to non-zero value if all of string could not be
- * shown. If the reserve flag is TRUE, it will reserve at least one
- * trailing character, which can be useful when drawing a delimiter.
- *
- * Returns the number of bytes to output from string to satisfy max_width. */
-static size_t
-utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve, int tab_size)
-{
-	const char *string = *start;
-	const char *end = strchr(string, '\0');
-	unsigned char last_bytes = 0;
-	size_t last_ucwidth = 0;
-
-	*width = 0;
-	*trimmed = 0;
-
-	while (string < end) {
-		unsigned char bytes = utf8_char_length(string, end);
-		size_t ucwidth;
-		unsigned long unicode;
-
-		if (string + bytes > end)
-			break;
-
-		/* Change representation to figure out whether
-		 * it is a single- or double-width character. */
-
-		unicode = utf8_to_unicode(string, bytes);
-		/* FIXME: Graceful handling of invalid Unicode character. */
-		if (!unicode)
-			break;
-
-		ucwidth = unicode_width(unicode, tab_size);
-		if (skip > 0) {
-			skip -= ucwidth <= skip ? ucwidth : skip;
-			*start += bytes;
-		}
-		*width  += ucwidth;
-		if (*width > max_width) {
-			*trimmed = 1;
-			*width -= ucwidth;
-			if (reserve && *width == max_width) {
-				string -= last_bytes;
-				*width -= last_ucwidth;
-			}
-			break;
-		}
-
-		string  += bytes;
-		last_bytes = ucwidth ? bytes : 0;
-		last_ucwidth = ucwidth;
-	}
-
-	return string - *start;
-}
-
 
 #define DATE_INFO \
 	DATE_(NO), \
@@ -644,453 +208,6 @@ get_author_initials(const char *author)
 }
 
 
-static bool
-argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
-{
-	int valuelen;
-
-	while (*cmd && *argc < SIZEOF_ARG && (valuelen = strcspn(cmd, " \t"))) {
-		bool advance = cmd[valuelen] != 0;
-
-		cmd[valuelen] = 0;
-		argv[(*argc)++] = chomp_string(cmd);
-		cmd = chomp_string(cmd + valuelen + advance);
-	}
-
-	if (*argc < SIZEOF_ARG)
-		argv[*argc] = NULL;
-	return *argc < SIZEOF_ARG;
-}
-
-static bool
-argv_from_env(const char **argv, const char *name)
-{
-	char *env = argv ? getenv(name) : NULL;
-	int argc = 0;
-
-	if (env && *env)
-		env = strdup(env);
-	return !env || argv_from_string(argv, &argc, env);
-}
-
-static void
-argv_free(const char *argv[])
-{
-	int argc;
-
-	if (!argv)
-		return;
-	for (argc = 0; argv[argc]; argc++)
-		free((void *) argv[argc]);
-	argv[0] = NULL;
-}
-
-static size_t
-argv_size(const char **argv)
-{
-	int argc = 0;
-
-	while (argv && argv[argc])
-		argc++;
-
-	return argc;
-}
-
-DEFINE_ALLOCATOR(argv_realloc, const char *, SIZEOF_ARG)
-
-static bool
-argv_append(const char ***argv, const char *arg)
-{
-	size_t argc = argv_size(*argv);
-
-	if (!argv_realloc(argv, argc, 2))
-		return FALSE;
-
-	(*argv)[argc++] = strdup(arg);
-	(*argv)[argc] = NULL;
-	return TRUE;
-}
-
-static bool
-argv_append_array(const char ***dst_argv, const char *src_argv[])
-{
-	int i;
-
-	for (i = 0; src_argv && src_argv[i]; i++)
-		if (!argv_append(dst_argv, src_argv[i]))
-			return FALSE;
-	return TRUE;
-}
-
-static bool
-argv_copy(const char ***dst, const char *src[])
-{
-	int argc;
-
-	for (argc = 0; src[argc]; argc++)
-		if (!argv_append(dst, src[argc]))
-			return FALSE;
-	return TRUE;
-}
-
-
-/*
- * Executing external commands.
- */
-
-enum io_type {
-	IO_FD,			/* File descriptor based IO. */
-	IO_BG,			/* Execute command in the background. */
-	IO_FG,			/* Execute command with same std{in,out,err}. */
-	IO_RD,			/* Read only fork+exec IO. */
-	IO_WR,			/* Write only fork+exec IO. */
-	IO_AP,			/* Append fork+exec output to file. */
-};
-
-struct io {
-	int pipe;		/* Pipe end for reading or writing. */
-	pid_t pid;		/* PID of spawned process. */
-	int error;		/* Error status. */
-	char *buf;		/* Read buffer. */
-	size_t bufalloc;	/* Allocated buffer size. */
-	size_t bufsize;		/* Buffer content size. */
-	char *bufpos;		/* Current buffer position. */
-	unsigned int eof:1;	/* Has end of file been reached. */
-};
-
-static void
-io_init(struct io *io)
-{
-	memset(io, 0, sizeof(*io));
-	io->pipe = -1;
-}
-
-static bool
-io_open(struct io *io, const char *fmt, ...)
-{
-	char name[SIZEOF_STR] = "";
-	bool fits;
-	va_list args;
-
-	io_init(io);
-
-	va_start(args, fmt);
-	fits = vsnprintf(name, sizeof(name), fmt, args) < sizeof(name);
-	va_end(args);
-
-	if (!fits) {
-		io->error = ENAMETOOLONG;
-		return FALSE;
-	}
-	io->pipe = *name ? open(name, O_RDONLY) : STDIN_FILENO;
-	if (io->pipe == -1)
-		io->error = errno;
-	return io->pipe != -1;
-}
-
-static bool
-io_kill(struct io *io)
-{
-	return io->pid == 0 || kill(io->pid, SIGKILL) != -1;
-}
-
-static bool
-io_done(struct io *io)
-{
-	pid_t pid = io->pid;
-
-	if (io->pipe != -1)
-		close(io->pipe);
-	free(io->buf);
-	io_init(io);
-
-	while (pid > 0) {
-		int status;
-		pid_t waiting = waitpid(pid, &status, 0);
-
-		if (waiting < 0) {
-			if (errno == EINTR)
-				continue;
-			io->error = errno;
-			return FALSE;
-		}
-
-		return waiting == pid &&
-		       !WIFSIGNALED(status) &&
-		       WIFEXITED(status) &&
-		       !WEXITSTATUS(status);
-	}
-
-	return TRUE;
-}
-
-static bool
-io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ...)
-{
-	int pipefds[2] = { -1, -1 };
-	va_list args;
-
-	io_init(io);
-
-	if ((type == IO_RD || type == IO_WR) && pipe(pipefds) < 0) {
-		io->error = errno;
-		return FALSE;
-	} else if (type == IO_AP) {
-		va_start(args, argv);
-		pipefds[1] = va_arg(args, int);
-		va_end(args);
-	}
-
-	if ((io->pid = fork())) {
-		if (io->pid == -1)
-			io->error = errno;
-		if (pipefds[!(type == IO_WR)] != -1)
-			close(pipefds[!(type == IO_WR)]);
-		if (io->pid != -1) {
-			io->pipe = pipefds[!!(type == IO_WR)];
-			return TRUE;
-		}
-
-	} else {
-		if (type != IO_FG) {
-			int devnull = open("/dev/null", O_RDWR);
-			int readfd  = type == IO_WR ? pipefds[0] : devnull;
-			int writefd = (type == IO_RD || type == IO_AP)
-							? pipefds[1] : devnull;
-
-			dup2(readfd,  STDIN_FILENO);
-			dup2(writefd, STDOUT_FILENO);
-			dup2(devnull, STDERR_FILENO);
-
-			close(devnull);
-			if (pipefds[0] != -1)
-				close(pipefds[0]);
-			if (pipefds[1] != -1)
-				close(pipefds[1]);
-		}
-
-		if (dir && *dir && chdir(dir) == -1)
-			exit(errno);
-
-		execvp(argv[0], (char *const*) argv);
-		exit(errno);
-	}
-
-	if (pipefds[!!(type == IO_WR)] != -1)
-		close(pipefds[!!(type == IO_WR)]);
-	return FALSE;
-}
-
-static bool
-io_complete(enum io_type type, const char **argv, const char *dir, int fd)
-{
-	struct io io;
-
-	return io_run(&io, type, dir, argv, fd) && io_done(&io);
-}
-
-static bool
-io_run_bg(const char **argv)
-{
-	return io_complete(IO_BG, argv, NULL, -1);
-}
-
-static bool
-io_run_fg(const char **argv, const char *dir)
-{
-	return io_complete(IO_FG, argv, dir, -1);
-}
-
-static bool
-io_run_append(const char **argv, int fd)
-{
-	return io_complete(IO_AP, argv, NULL, fd);
-}
-
-static bool
-io_eof(struct io *io)
-{
-	return io->eof;
-}
-
-static int
-io_error(struct io *io)
-{
-	return io->error;
-}
-
-static char *
-io_strerror(struct io *io)
-{
-	return strerror(io->error);
-}
-
-static bool
-io_can_read(struct io *io)
-{
-	struct timeval tv = { 0, 500 };
-	fd_set fds;
-
-	FD_ZERO(&fds);
-	FD_SET(io->pipe, &fds);
-
-	return select(io->pipe + 1, &fds, NULL, NULL, &tv) > 0;
-}
-
-static ssize_t
-io_read(struct io *io, void *buf, size_t bufsize)
-{
-	do {
-		ssize_t readsize = read(io->pipe, buf, bufsize);
-
-		if (readsize < 0 && (errno == EAGAIN || errno == EINTR))
-			continue;
-		else if (readsize == -1)
-			io->error = errno;
-		else if (readsize == 0)
-			io->eof = 1;
-		return readsize;
-	} while (1);
-}
-
-DEFINE_ALLOCATOR(io_realloc_buf, char, BUFSIZ)
-
-static char *
-io_get(struct io *io, int c, bool can_read)
-{
-	char *eol;
-	ssize_t readsize;
-
-	while (TRUE) {
-		if (io->bufsize > 0) {
-			eol = memchr(io->bufpos, c, io->bufsize);
-			if (eol) {
-				char *line = io->bufpos;
-
-				*eol = 0;
-				io->bufpos = eol + 1;
-				io->bufsize -= io->bufpos - line;
-				return line;
-			}
-		}
-
-		if (io_eof(io)) {
-			if (io->bufsize) {
-				io->bufpos[io->bufsize] = 0;
-				io->bufsize = 0;
-				return io->bufpos;
-			}
-			return NULL;
-		}
-
-		if (!can_read)
-			return NULL;
-
-		if (io->bufsize > 0 && io->bufpos > io->buf)
-			memmove(io->buf, io->bufpos, io->bufsize);
-
-		if (io->bufalloc == io->bufsize) {
-			if (!io_realloc_buf(&io->buf, io->bufalloc, BUFSIZ))
-				return NULL;
-			io->bufalloc += BUFSIZ;
-		}
-
-		io->bufpos = io->buf;
-		readsize = io_read(io, io->buf + io->bufsize, io->bufalloc - io->bufsize);
-		if (io_error(io))
-			return NULL;
-		io->bufsize += readsize;
-	}
-}
-
-static bool
-io_write(struct io *io, const void *buf, size_t bufsize)
-{
-	size_t written = 0;
-
-	while (!io_error(io) && written < bufsize) {
-		ssize_t size;
-
-		size = write(io->pipe, buf + written, bufsize - written);
-		if (size < 0 && (errno == EAGAIN || errno == EINTR))
-			continue;
-		else if (size == -1)
-			io->error = errno;
-		else
-			written += size;
-	}
-
-	return written == bufsize;
-}
-
-static bool
-io_read_buf(struct io *io, char buf[], size_t bufsize)
-{
-	char *result = io_get(io, '\n', TRUE);
-
-	if (result) {
-		result = chomp_string(result);
-		string_ncopy_do(buf, bufsize, result, strlen(result));
-	}
-
-	return io_done(io) && result;
-}
-
-static bool
-io_run_buf(const char **argv, char buf[], size_t bufsize)
-{
-	struct io io;
-
-	return io_run(&io, IO_RD, NULL, argv) && io_read_buf(&io, buf, bufsize);
-}
-
-static int
-io_load(struct io *io, const char *separators,
-	int (*read_property)(char *, size_t, char *, size_t))
-{
-	char *name;
-	int state = OK;
-
-	while (state == OK && (name = io_get(io, '\n', TRUE))) {
-		char *value;
-		size_t namelen;
-		size_t valuelen;
-
-		name = chomp_string(name);
-		namelen = strcspn(name, separators);
-
-		if (name[namelen]) {
-			name[namelen] = 0;
-			value = chomp_string(name + namelen + 1);
-			valuelen = strlen(value);
-
-		} else {
-			value = "";
-			valuelen = 0;
-		}
-
-		state = read_property(name, namelen, value, valuelen);
-	}
-
-	if (state != ERR && io_error(io))
-		state = ERR;
-	io_done(io);
-
-	return state;
-}
-
-static int
-io_run_load(const char **argv, const char *separators,
-	    int (*read_property)(char *, size_t, char *, size_t))
-{
-	struct io io;
-
-	if (!io_run(&io, IO_RD, NULL, argv))
-		return ERR;
-	return io_load(&io, separators, read_property);
-}
-
-
 /*
  * User requests
  */
@@ -1156,6 +273,7 @@ io_run_load(const char **argv, const char *separators,
 	REQ_(TOGGLE_DATE,	"Toggle date display"), \
 	REQ_(TOGGLE_AUTHOR,	"Toggle author display"), \
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
+	REQ_(TOGGLE_GRAPHIC,	"Toggle (line) graphics mode"), \
 	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
 	REQ_(TOGGLE_SORT_ORDER,	"Toggle ascending/descending sort order"), \
 	REQ_(TOGGLE_SORT_FIELD,	"Toggle field to sort by"), \
@@ -1217,11 +335,11 @@ get_request(const char *name)
  */
 
 /* Option and state variables. */
+static enum graphic opt_line_graphics	= GRAPHIC_DEFAULT;
 static enum date opt_date		= DATE_DEFAULT;
 static enum author opt_author		= AUTHOR_DEFAULT;
+static bool opt_rev_graph		= TRUE;
 static bool opt_line_number		= FALSE;
-static bool opt_line_graphics		= TRUE;
-static bool opt_rev_graph		= FALSE;
 static bool opt_show_refs		= TRUE;
 static bool opt_untracked_dirs_content	= TRUE;
 static int opt_num_interval		= 5;
@@ -1244,9 +362,9 @@ static char opt_git_dir[SIZEOF_STR]	= "";
 static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
 static FILE *opt_tty			= NULL;
-static const char **opt_diff_args	= NULL;
-static const char **opt_rev_args	= NULL;
-static const char **opt_file_args	= NULL;
+static const char **opt_diff_argv	= NULL;
+static const char **opt_rev_argv	= NULL;
+static const char **opt_file_argv	= NULL;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strcmp(rev, get_ref_head()->id)))
@@ -1315,7 +433,15 @@ LINE(STAT_UNSTAGED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(STAT_UNTRACKED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(HELP_KEYMAP,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(HELP_GROUP,   "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
-LINE(BLAME_ID,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0)
+LINE(BLAME_ID,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_LINE_0, "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_LINE_1, "",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_LINE_2, "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_LINE_3, "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_LINE_4, "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_LINE_5, "",			COLOR_WHITE,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_LINE_6, "",			COLOR_RED,	COLOR_DEFAULT,	0), \
+LINE(GRAPH_COMMIT, "",			COLOR_BLUE,	COLOR_DEFAULT,	0)
 
 enum line_type {
 #define LINE(type, line, fg, bg, attr) \
@@ -1487,6 +613,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'D',		REQ_TOGGLE_DATE },
 	{ 'A',		REQ_TOGGLE_AUTHOR },
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
+	{ '~',		REQ_TOGGLE_GRAPHIC },
 	{ 'F',		REQ_TOGGLE_REFS },
 	{ 'I',		REQ_TOGGLE_SORT_ORDER },
 	{ 'i',		REQ_TOGGLE_SORT_FIELD },
@@ -1800,9 +927,36 @@ add_builtin_run_requests(void)
  * User config file handling.
  */
 
-static int   config_lineno;
-static bool  config_errors;
-static const char *config_msg;
+#define OPT_ERR_INFO \
+	OPT_ERR_(INTEGER_VALUE_OUT_OF_BOUND, "Integer value out of bound"), \
+	OPT_ERR_(INVALID_STEP_VALUE, "Invalid step value"), \
+	OPT_ERR_(NO_OPTION_VALUE, "No option value"), \
+	OPT_ERR_(NO_VALUE_ASSIGNED, "No value assigned"), \
+	OPT_ERR_(OBSOLETE_REQUEST_NAME, "Obsolete request name"), \
+	OPT_ERR_(TOO_MANY_OPTION_ARGUMENTS, "Too many option arguments"), \
+	OPT_ERR_(UNKNOWN_ATTRIBUTE, "Unknown attribute"), \
+	OPT_ERR_(UNKNOWN_COLOR, "Unknown color"), \
+	OPT_ERR_(UNKNOWN_COLOR_NAME, "Unknown color name"), \
+	OPT_ERR_(UNKNOWN_KEY, "Unknown key"), \
+	OPT_ERR_(UNKNOWN_KEY_MAP, "Unknown key map"), \
+	OPT_ERR_(UNKNOWN_OPTION_COMMAND, "Unknown option command"), \
+	OPT_ERR_(UNKNOWN_REQUEST_NAME, "Unknown request name"), \
+	OPT_ERR_(UNKNOWN_VARIABLE_NAME, "Unknown variable name"), \
+	OPT_ERR_(UNMATCHED_QUOTATION, "Unmatched quotation"), \
+	OPT_ERR_(WRONG_NUMBER_OF_ARGUMENTS, "Wrong number of arguments"),
+
+enum option_code {
+#define OPT_ERR_(name, msg) OPT_ERR_ ## name
+	OPT_ERR_INFO
+#undef	OPT_ERR_
+	OPT_OK
+};
+
+static const char *option_errors[] = {
+#define OPT_ERR_(name, msg) msg
+	OPT_ERR_INFO
+#undef	OPT_ERR_
+};
 
 static const struct enum_map color_map[] = {
 #define COLOR_MAP(name) ENUM_MAP(#name, COLOR_##name)
@@ -1830,39 +984,37 @@ static const struct enum_map attr_map[] = {
 
 #define set_attribute(attr, name)	map_enum(attr, attr_map, name)
 
-static int parse_step(double *opt, const char *arg)
+static enum option_code
+parse_step(double *opt, const char *arg)
 {
 	*opt = atoi(arg);
 	if (!strchr(arg, '%'))
-		return OK;
+		return OPT_OK;
 
 	/* "Shift down" so 100% and 1 does not conflict. */
 	*opt = (*opt - 1) / 100;
 	if (*opt >= 1.0) {
 		*opt = 0.99;
-		config_msg = "Step value larger than 100%";
-		return ERR;
+		return OPT_ERR_INVALID_STEP_VALUE;
 	}
 	if (*opt < 0.0) {
 		*opt = 1;
-		config_msg = "Invalid step value";
-		return ERR;
+		return OPT_ERR_INVALID_STEP_VALUE;
 	}
-	return OK;
+	return OPT_OK;
 }
 
-static int
+static enum option_code
 parse_int(int *opt, const char *arg, int min, int max)
 {
 	int value = atoi(arg);
 
 	if (min <= value && value <= max) {
 		*opt = value;
-		return OK;
+		return OPT_OK;
 	}
 
-	config_msg = "Integer value out of bound";
-	return ERR;
+	return OPT_ERR_INTEGER_VALUE_OUT_OF_BOUND;
 }
 
 static bool
@@ -1876,15 +1028,13 @@ set_color(int *color, const char *name)
 }
 
 /* Wants: object fgcolor bgcolor [attribute] */
-static int
+static enum option_code
 option_color_command(int argc, const char *argv[])
 {
 	struct line_info *info;
 
-	if (argc < 3) {
-		config_msg = "Wrong number of arguments given to color command";
-		return ERR;
-	}
+	if (argc < 3)
+		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
 
 	info = get_line_info(argv[0]);
 	if (!info) {
@@ -1895,61 +1045,55 @@ option_color_command(int argc, const char *argv[])
 		};
 		int index;
 
-		if (!map_enum(&index, obsolete, argv[0])) {
-			config_msg = "Unknown color name";
-			return ERR;
-		}
+		if (!map_enum(&index, obsolete, argv[0]))
+			return OPT_ERR_UNKNOWN_COLOR_NAME;
 		info = &line_info[index];
 	}
 
 	if (!set_color(&info->fg, argv[1]) ||
-	    !set_color(&info->bg, argv[2])) {
-		config_msg = "Unknown color";
-		return ERR;
-	}
+	    !set_color(&info->bg, argv[2]))
+		return OPT_ERR_UNKNOWN_COLOR;
 
 	info->attr = 0;
 	while (argc-- > 3) {
 		int attr;
 
-		if (!set_attribute(&attr, argv[argc])) {
-			config_msg = "Unknown attribute";
-			return ERR;
-		}
+		if (!set_attribute(&attr, argv[argc]))
+			return OPT_ERR_UNKNOWN_ATTRIBUTE;
 		info->attr |= attr;
 	}
 
-	return OK;
+	return OPT_OK;
 }
 
-static int parse_bool(bool *opt, const char *arg)
+static enum option_code
+parse_bool(bool *opt, const char *arg)
 {
 	*opt = (!strcmp(arg, "1") || !strcmp(arg, "true") || !strcmp(arg, "yes"))
 		? TRUE : FALSE;
-	return OK;
+	return OPT_OK;
 }
 
-static int parse_enum_do(unsigned int *opt, const char *arg,
-			 const struct enum_map *map, size_t map_size)
+static enum option_code
+parse_enum_do(unsigned int *opt, const char *arg,
+	      const struct enum_map *map, size_t map_size)
 {
 	bool is_true;
 
 	assert(map_size > 1);
 
 	if (map_enum_do(map, map_size, (int *) opt, arg))
-		return OK;
+		return OPT_OK;
 
-	if (parse_bool(&is_true, arg) != OK)
-		return ERR;
-
+	parse_bool(&is_true, arg);
 	*opt = is_true ? map[1].value : map[0].value;
-	return OK;
+	return OPT_OK;
 }
 
 #define parse_enum(opt, arg, map) \
 	parse_enum_do(opt, arg, map, ARRAY_SIZE(map))
 
-static int
+static enum option_code
 parse_string(char *opt, const char *arg, size_t optsize)
 {
 	int arglen = strlen(arg);
@@ -1957,30 +1101,24 @@ parse_string(char *opt, const char *arg, size_t optsize)
 	switch (arg[0]) {
 	case '\"':
 	case '\'':
-		if (arglen == 1 || arg[arglen - 1] != arg[0]) {
-			config_msg = "Unmatched quotation";
-			return ERR;
-		}
+		if (arglen == 1 || arg[arglen - 1] != arg[0])
+			return OPT_ERR_UNMATCHED_QUOTATION;
 		arg += 1; arglen -= 2;
 	default:
 		string_ncopy_do(opt, optsize, arg, arglen);
-		return OK;
+		return OPT_OK;
 	}
 }
 
 /* Wants: name = value */
-static int
+static enum option_code
 option_set_command(int argc, const char *argv[])
 {
-	if (argc != 3) {
-		config_msg = "Wrong number of arguments given to set command";
-		return ERR;
-	}
+	if (argc != 3)
+		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
 
-	if (strcmp(argv[1], "=")) {
-		config_msg = "No value assigned";
-		return ERR;
-	}
+	if (strcmp(argv[1], "="))
+		return OPT_ERR_NO_VALUE_ASSIGNED;
 
 	if (!strcmp(argv[0], "show-author"))
 		return parse_enum(&opt_author, argv[2], author_map);
@@ -1998,7 +1136,7 @@ option_set_command(int argc, const char *argv[])
 		return parse_bool(&opt_line_number, argv[2]);
 
 	if (!strcmp(argv[0], "line-graphics"))
-		return parse_bool(&opt_line_graphics, argv[2]);
+		return parse_enum(&opt_line_graphics, argv[2], graphic_map);
 
 	if (!strcmp(argv[0], "line-number-interval"))
 		return parse_int(&opt_num_interval, argv[2], 1, 1024);
@@ -2021,33 +1159,26 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "status-untracked-dirs"))
 		return parse_bool(&opt_untracked_dirs_content, argv[2]);
 
-	config_msg = "Unknown variable name";
-	return ERR;
+	return OPT_ERR_UNKNOWN_VARIABLE_NAME;
 }
 
 /* Wants: mode request key */
-static int
+static enum option_code
 option_bind_command(int argc, const char *argv[])
 {
 	enum request request;
 	int keymap = -1;
 	int key;
 
-	if (argc < 3) {
-		config_msg = "Wrong number of arguments given to bind command";
-		return ERR;
-	}
+	if (argc < 3)
+		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
 
-	if (!set_keymap(&keymap, argv[0])) {
-		config_msg = "Unknown key map";
-		return ERR;
-	}
+	if (!set_keymap(&keymap, argv[0]))
+		return OPT_ERR_UNKNOWN_KEY_MAP;
 
 	key = get_key_value(argv[1]);
-	if (key == ERR) {
-		config_msg = "Unknown key";
-		return ERR;
-	}
+	if (key == ERR)
+		return OPT_ERR_UNKNOWN_KEY;
 
 	request = get_request(argv[2]);
 	if (request == REQ_UNKNOWN) {
@@ -2061,32 +1192,27 @@ option_bind_command(int argc, const char *argv[])
 		if (map_enum(&alias, obsolete, argv[2])) {
 			if (alias != REQ_NONE)
 				add_keybinding(keymap, alias, key);
-			config_msg = "Obsolete request name";
-			return ERR;
+			return OPT_ERR_OBSOLETE_REQUEST_NAME;
 		}
 	}
 	if (request == REQ_UNKNOWN && *argv[2]++ == '!')
 		request = add_run_request(keymap, key, argv + 2);
-	if (request == REQ_UNKNOWN) {
-		config_msg = "Unknown request name";
-		return ERR;
-	}
+	if (request == REQ_UNKNOWN)
+		return OPT_ERR_UNKNOWN_REQUEST_NAME;
 
 	add_keybinding(keymap, request, key);
 
-	return OK;
+	return OPT_OK;
 }
 
-static int
+static enum option_code
 set_option(const char *opt, char *value)
 {
 	const char *argv[SIZEOF_ARG];
 	int argc = 0;
 
-	if (!argv_from_string(argv, &argc, value)) {
-		config_msg = "Too many option arguments";
-		return ERR;
-	}
+	if (!argv_from_string(argv, &argc, value))
+		return OPT_ERR_TOO_MANY_OPTION_ARGUMENTS;
 
 	if (!strcmp(opt, "color"))
 		return option_color_command(argc, argv);
@@ -2097,17 +1223,21 @@ set_option(const char *opt, char *value)
 	if (!strcmp(opt, "bind"))
 		return option_bind_command(argc, argv);
 
-	config_msg = "Unknown option command";
-	return ERR;
+	return OPT_ERR_UNKNOWN_OPTION_COMMAND;
 }
 
-static int
-read_option(char *opt, size_t optlen, char *value, size_t valuelen)
-{
-	int status = OK;
+struct config_state {
+	int lineno;
+	bool errors;
+};
 
-	config_lineno++;
-	config_msg = "Internal error";
+static int
+read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
+{
+	struct config_state *config = data;
+	enum option_code status = OPT_ERR_NO_OPTION_VALUE;
+
+	config->lineno++;
 
 	/* Check for comment markers, since read_properties() will
 	 * only ensure opt and value are split at first " \t". */
@@ -2115,11 +1245,7 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen)
 	if (optlen == 0)
 		return OK;
 
-	if (opt[optlen] != 0) {
-		config_msg = "No option value";
-		status = ERR;
-
-	}  else {
+	if (opt[optlen] == 0) {
 		/* Look for comment endings in the value. */
 		size_t len = strcspn(value, "#");
 
@@ -2131,10 +1257,10 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen)
 		status = set_option(opt, value);
 	}
 
-	if (status == ERR) {
+	if (status != OPT_OK) {
 		warn("Error on line %d, near '%.*s': %s",
-		     config_lineno, (int) optlen, opt, config_msg);
-		config_errors = TRUE;
+		     config->lineno, (int) optlen, opt, option_errors[status]);
+		config->errors = TRUE;
 	}
 
 	/* Always keep going if errors are encountered. */
@@ -2144,17 +1270,15 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen)
 static void
 load_option_file(const char *path)
 {
+	struct config_state config = { 0, FALSE };
 	struct io io;
 
 	/* It's OK that the file doesn't exist. */
 	if (!io_open(&io, "%s", path))
 		return;
 
-	config_lineno = 0;
-	config_errors = FALSE;
-
-	if (io_load(&io, " \t", read_option) == ERR ||
-	    config_errors == TRUE)
+	if (io_load(&io, " \t", read_option, &config) == ERR ||
+	    config.errors == TRUE)
 		warn("Errors while loading %s.", path);
 }
 
@@ -2182,14 +1306,14 @@ load_options(void)
 	 * that conflict with keybindings. */
 	add_builtin_run_requests();
 
-	if (!opt_diff_args && tig_diff_opts && *tig_diff_opts) {
+	if (!opt_diff_argv && tig_diff_opts && *tig_diff_opts) {
 		static const char *diff_opts[SIZEOF_ARG] = { NULL };
 		int argc = 0;
 
 		if (!string_format(buf, "%s", tig_diff_opts) ||
 		    !argv_from_string(diff_opts, &argc, buf))
 			die("TIG_DIFF_OPTS contains too many arguments");
-		else if (!argv_copy(&opt_diff_args, diff_opts))
+		else if (!argv_copy(&opt_diff_argv, diff_opts))
 			die("Failed to format TIG_DIFF_OPTS arguments");
 	}
 
@@ -2206,6 +1330,8 @@ struct view_ops;
 
 /* The display array of active views and the index of the current view. */
 static struct view *display[2];
+static WINDOW *display_win[2];
+static WINDOW *display_title[2];
 static unsigned int current_view;
 
 #define foreach_displayed_view(view, i) \
@@ -2249,7 +1375,6 @@ struct view {
 
 	int height, width;	/* The width and height of the main window */
 	WINDOW *win;		/* The main window */
-	WINDOW *title;		/* The title window living below the main window */
 
 	/* Navigation */
 	unsigned long offset;	/* Offset of the window top */
@@ -2437,14 +1562,14 @@ draw_space(struct view *view, enum line_type type, int max, int spaces)
 }
 
 static bool
-draw_text(struct view *view, enum line_type type, const char *string, bool trim)
+draw_text(struct view *view, enum line_type type, const char *string)
 {
 	char text[SIZEOF_STR];
 
 	do {
 		size_t pos = string_expand(text, sizeof(text), string, opt_tab_size);
 
-		view->col += draw_chars(view, type, text, view->width + view->yoffset - view->col, trim);
+		view->col += draw_chars(view, type, text, view->width + view->yoffset - view->col, TRUE);
 		string += pos;
 	} while (*string && view->width + view->yoffset > view->col);
 
@@ -2452,7 +1577,7 @@ draw_text(struct view *view, enum line_type type, const char *string, bool trim)
 }
 
 static bool
-draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t size)
+draw_graphic(struct view *view, enum line_type type, const chtype graphic[], size_t size, bool separator)
 {
 	size_t skip = view->yoffset > view->col ? view->yoffset - view->col : 0;
 	int max = view->width + view->yoffset - view->col;
@@ -2468,9 +1593,11 @@ draw_graphic(struct view *view, enum line_type type, chtype graphic[], size_t si
 		waddch(view->win, graphic[i]);
 
 	view->col += size;
-	if (size < max && skip <= size)
-		waddch(view->win, ' ');
-	view->col++;
+	if (separator) {
+		if (size < max && skip <= size)
+			waddch(view->win, ' ');
+		view->col++;
+	}
 
 	return view->width + view->yoffset <= view->col;
 }
@@ -2554,7 +1681,7 @@ draw_lineno(struct view *view, unsigned int lineno)
 		view->col += draw_chars(view, LINE_LINE_NUMBER, text, max, TRUE);
 	else
 		view->col += draw_space(view, LINE_LINE_NUMBER, max, digits3);
-	return draw_graphic(view, LINE_DEFAULT, &separator, 1);
+	return draw_graphic(view, LINE_DEFAULT, &separator, 1, TRUE);
 }
 
 static bool
@@ -2636,6 +1763,7 @@ update_view_title(struct view *view)
 	char buf[SIZEOF_STR];
 	char state[SIZEOF_STR];
 	size_t bufpos = 0, statelen = 0;
+	WINDOW *window = display[0] == view ? display_title[0] : display_title[1];
 
 	assert(view_is_displayed(view));
 
@@ -2676,13 +1804,13 @@ update_view_title(struct view *view)
 	}
 
 	if (view == display[current_view])
-		wbkgdset(view->title, get_line_attr(LINE_TITLE_FOCUS));
+		wbkgdset(window, get_line_attr(LINE_TITLE_FOCUS));
 	else
-		wbkgdset(view->title, get_line_attr(LINE_TITLE_BLUR));
+		wbkgdset(window, get_line_attr(LINE_TITLE_BLUR));
 
-	mvwaddnstr(view->title, 0, 0, buf, bufpos);
-	wclrtoeol(view->title);
-	wnoutrefresh(view->title);
+	mvwaddnstr(window, 0, 0, buf, bufpos);
+	wclrtoeol(window);
+	wnoutrefresh(window);
 }
 
 static int
@@ -2726,22 +1854,24 @@ resize_display(void)
 	offset = 0;
 
 	foreach_displayed_view (view, i) {
-		if (!view->win) {
-			view->win = newwin(view->height, 0, offset, 0);
-			if (!view->win)
+		if (!display_win[i]) {
+			display_win[i] = newwin(view->height, view->width, offset, 0);
+			if (!display_win[i])
 				die("Failed to create %s view", view->name);
 
-			scrollok(view->win, FALSE);
+			scrollok(display_win[i], FALSE);
 
-			view->title = newwin(1, 0, offset + view->height, 0);
-			if (!view->title)
+			display_title[i] = newwin(1, view->width, offset + view->height, 0);
+			if (!display_title[i])
 				die("Failed to create title window");
 
 		} else {
-			wresize(view->win, view->height, view->width);
-			mvwin(view->win,   offset, 0);
-			mvwin(view->title, offset + view->height, 0);
+			wresize(display_win[i], view->height, view->width);
+			mvwin(display_win[i],   offset, 0);
+			mvwin(display_title[i], offset + view->height, 0);
 		}
+
+		view->win = display_win[i];
 
 		offset += view->height + 1;
 	}
@@ -2766,49 +1896,57 @@ redraw_display(bool clear)
  * Option management
  */
 
-static void
-toggle_enum_option_do(unsigned int *opt, const char *help,
-		      const struct enum_map *map, size_t size)
-{
-	*opt = (*opt + 1) % size;
-	redraw_display(FALSE);
-	report("Displaying %s %s", enum_name(map[*opt]), help);
-}
-
-#define toggle_enum_option(opt, help, map) \
-	toggle_enum_option_do(opt, help, map, ARRAY_SIZE(map))
-
-#define toggle_date() toggle_enum_option(&opt_date, "dates", date_map)
-#define toggle_author() toggle_enum_option(&opt_author, "author names", author_map)
+#define TOGGLE_MENU \
+	TOGGLE_(LINENO,    '.', "line numbers",      &opt_line_number, NULL) \
+	TOGGLE_(DATE,      'D', "dates",             &opt_date,	  date_map) \
+	TOGGLE_(AUTHOR,    'A', "author names",      &opt_author, author_map) \
+	TOGGLE_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map) \
+	TOGGLE_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL) \
+	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL)
 
 static void
-toggle_view_option(bool *option, const char *help)
+toggle_option(enum request request)
 {
-	*option = !*option;
-	redraw_display(FALSE);
-	report("%sabling %s", *option ? "En" : "Dis", help);
-}
-
-static void
-open_option_menu(void)
-{
+	const struct {
+		enum request request;
+		const struct enum_map *map;
+		size_t map_size;
+	} data[] = {		
+#define TOGGLE_(id, key, help, value, map) { REQ_TOGGLE_ ## id, map, ARRAY_SIZE(map) },
+		TOGGLE_MENU
+#undef	TOGGLE_
+	};
 	const struct menu_item menu[] = {
-		{ '.', "line numbers", &opt_line_number },
-		{ 'D', "date display", &opt_date },
-		{ 'A', "author display", &opt_author },
-		{ 'g', "revision graph display", &opt_rev_graph },
-		{ 'F', "reference display", &opt_show_refs },
+#define TOGGLE_(id, key, help, value, map) { key, help, value },
+		TOGGLE_MENU
+#undef	TOGGLE_
 		{ 0 }
 	};
-	int selected = 0;
+	int i = 0;
 
-	if (prompt_menu("Toggle option", menu, &selected)) {
-		if (menu[selected].data == &opt_date)
-			toggle_date();
-		else if (menu[selected].data == &opt_author)
-			toggle_author();
-		else
-			toggle_view_option(menu[selected].data, menu[selected].text);
+	if (request == REQ_OPTIONS) {
+		if (!prompt_menu("Toggle option", menu, &i))
+			return;
+	} else {
+		while (i < ARRAY_SIZE(data) && data[i].request != request)
+			i++;
+		if (i >= ARRAY_SIZE(data))
+			die("Invalid request (%d)", request);
+	}
+
+	if (data[i].map != NULL) {
+		unsigned int *opt = menu[i].data;
+
+		*opt = (*opt + 1) % data[i].map_size;
+		redraw_display(FALSE);
+		report("Displaying %s %s", enum_name(data[i].map[*opt]), menu[i].text);
+
+	} else {
+		bool *option = menu[i].data;
+
+		*option = !*option;
+		redraw_display(FALSE);
+		report("%sabling %s", *option ? "En" : "Dis", menu[i].text);
 	}
 }
 
@@ -3236,18 +2374,18 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool replace, bool f
 		size_t bufpos = 0;
 
 		if (!strcmp(arg, "%(fileargs)")) {
-			if (!argv_append_array(dst_argv, opt_file_args))
+			if (!argv_append_array(dst_argv, opt_file_argv))
 				break;
 			continue;
 
 		} else if (!strcmp(arg, "%(diffargs)")) {
-			if (!argv_append_array(dst_argv, opt_diff_args))
+			if (!argv_append_array(dst_argv, opt_diff_argv))
 				break;
 			continue;
 
 		} else if (!strcmp(arg, "%(revargs)") ||
 			   (first && !strcmp(arg, "%(commit)"))) {
-			if (!argv_append_array(dst_argv, opt_rev_args))
+			if (!argv_append_array(dst_argv, opt_rev_argv))
 				break;
 			continue;
 		}
@@ -3404,7 +2542,7 @@ update_view(struct view *view)
 	if (!view->pipe)
 		return TRUE;
 
-	if (!io_can_read(view->pipe)) {
+	if (!io_can_read(view->pipe, FALSE)) {
 		if (view->lines == 0 && view_is_displayed(view)) {
 			time_t secs = time(NULL) - view->start_time;
 
@@ -3823,27 +2961,13 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_OPTIONS:
-		open_option_menu();
-		break;
-
 	case REQ_TOGGLE_LINENO:
-		toggle_view_option(&opt_line_number, "line numbers");
-		break;
-
 	case REQ_TOGGLE_DATE:
-		toggle_date();
-		break;
-
 	case REQ_TOGGLE_AUTHOR:
-		toggle_author();
-		break;
-
+	case REQ_TOGGLE_GRAPHIC:
 	case REQ_TOGGLE_REV_GRAPH:
-		toggle_view_option(&opt_rev_graph, "revision graph display");
-		break;
-
 	case REQ_TOGGLE_REFS:
-		toggle_view_option(&opt_show_refs, "reference display");
+		toggle_option(request);
 		break;
 
 	case REQ_TOGGLE_SORT_FIELD:
@@ -4052,7 +3176,7 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (opt_line_number && draw_lineno(view, lineno))
 		return TRUE;
 
-	draw_text(view, line->type, line->data, TRUE);
+	draw_text(view, line->type, line->data);
 	return TRUE;
 }
 
@@ -4235,9 +3359,9 @@ diff_read(struct view *view, char *data)
 {
 	if (!data) {
 		/* Fall back to retry if no diff will be shown. */
-		if (view->lines == 0 && opt_file_args) {
+		if (view->lines == 0 && opt_file_argv) {
 			int pos = argv_size(view->argv)
-				- argv_size(opt_file_args) - 1;
+				- argv_size(opt_file_argv) - 1;
 
 			if (pos > 0 && !strcmp(view->argv[pos], "--")) {
 				for (; view->argv[pos]; pos++) {
@@ -4676,7 +3800,7 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct tree_entry *entry = line->data;
 
 	if (line->type == LINE_TREE_HEAD) {
-		if (draw_text(view, line->type, "Directory path /", TRUE))
+		if (draw_text(view, line->type, "Directory path /"))
 			return TRUE;
 	} else {
 		if (draw_mode(view, entry->mode))
@@ -4688,8 +3812,8 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 		if (opt_date && draw_date(view, &entry->time))
 			return TRUE;
 	}
-	if (draw_text(view, line->type, entry->name, TRUE))
-		return TRUE;
+
+	draw_text(view, line->type, entry->name);
 	return TRUE;
 }
 
@@ -5178,7 +4302,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_lineno(view, lineno))
 		return TRUE;
 
-	draw_text(view, LINE_DEFAULT, blame->text, TRUE);
+	draw_text(view, LINE_DEFAULT, blame->text);
 	return TRUE;
 }
 
@@ -5396,7 +4520,7 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (opt_author && draw_author(view, branch->author))
 		return TRUE;
 
-	draw_text(view, type, branch->ref == &branch_all ? "All branches" : branch->ref->name, TRUE);
+	draw_text(view, type, branch->ref == &branch_all ? "All branches" : branch->ref->name);
 	return TRUE;
 }
 
@@ -5865,13 +4989,13 @@ status_draw(struct view *view, struct line *line, unsigned int lineno)
 		static char buf[] = { '?', ' ', ' ', ' ', 0 };
 
 		buf[0] = status->status;
-		if (draw_text(view, line->type, buf, TRUE))
+		if (draw_text(view, line->type, buf))
 			return TRUE;
 		type = LINE_DEFAULT;
 		text = status->new.name;
 	}
 
-	draw_text(view, type, text, TRUE);
+	draw_text(view, type, text);
 	return TRUE;
 }
 
@@ -6561,223 +5685,83 @@ static struct view_ops stage_ops = {
  * Revision graph
  */
 
+static const enum line_type graph_colors[] = {
+	LINE_GRAPH_LINE_0,
+	LINE_GRAPH_LINE_1,
+	LINE_GRAPH_LINE_2,
+	LINE_GRAPH_LINE_3,
+	LINE_GRAPH_LINE_4,
+	LINE_GRAPH_LINE_5,
+	LINE_GRAPH_LINE_6,
+};
+
+static enum line_type get_graph_color(struct graph_symbol *symbol)
+{
+	if (symbol->commit)
+		return LINE_GRAPH_COMMIT;
+	assert(symbol->color < ARRAY_SIZE(graph_colors));
+	return graph_colors[symbol->color];
+}
+
+static bool
+draw_graph_utf8(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
+{
+	const char *chars = graph_symbol_to_utf8(symbol);
+
+	return draw_text(view, color, chars + !!first); 
+}
+
+static bool
+draw_graph_ascii(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
+{
+	const char *chars = graph_symbol_to_ascii(symbol);
+
+	return draw_text(view, color, chars + !!first); 
+}
+
+static bool
+draw_graph_chtype(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
+{
+	const chtype *chars = graph_symbol_to_chtype(symbol);
+
+	return draw_graphic(view, color, chars + !!first, 2 - !!first, FALSE); 
+}
+
+typedef bool (*draw_graph_fn)(struct view *, struct graph_symbol *, enum line_type, bool);
+
+static bool draw_graph(struct view *view, struct graph_canvas *canvas)
+{
+	static const draw_graph_fn fns[] = {
+		draw_graph_ascii,
+		draw_graph_chtype,
+		draw_graph_utf8
+	};
+	draw_graph_fn fn = fns[opt_line_graphics];
+	int i;
+
+	for (i = 0; i < canvas->size; i++) {
+		struct graph_symbol *symbol = &canvas->symbols[i];
+		enum line_type color = get_graph_color(symbol);
+
+		if (fn(view, symbol, color, i == 0))
+			return TRUE;
+	}
+
+	return draw_text(view, LINE_MAIN_REVGRAPH, " ");
+}
+
+/*
+ * Main view backend
+ */
+
 struct commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
 	const char *author;		/* Author of the commit. */
 	struct time time;		/* Date from the author ident. */
 	struct ref_list *refs;		/* Repository references. */
-	chtype graph[SIZEOF_REVGRAPH];	/* Ancestry chain graphics. */
-	size_t graph_size;		/* The width of the graph array. */
-	bool has_parents;		/* Rewritten --parents seen. */
+	struct graph_canvas graph;	/* Ancestry chain graphics. */
 };
-
-/* Size of rev graph with no  "padding" columns */
-#define SIZEOF_REVITEMS	(SIZEOF_REVGRAPH - (SIZEOF_REVGRAPH / 2))
-
-struct rev_graph {
-	struct rev_graph *prev, *next, *parents;
-	char rev[SIZEOF_REVITEMS][SIZEOF_REV];
-	size_t size;
-	struct commit *commit;
-	size_t pos;
-	unsigned int boundary:1;
-};
-
-/* Parents of the commit being visualized. */
-static struct rev_graph graph_parents[4];
-
-/* The current stack of revisions on the graph. */
-static struct rev_graph graph_stacks[4] = {
-	{ &graph_stacks[3], &graph_stacks[1], &graph_parents[0] },
-	{ &graph_stacks[0], &graph_stacks[2], &graph_parents[1] },
-	{ &graph_stacks[1], &graph_stacks[3], &graph_parents[2] },
-	{ &graph_stacks[2], &graph_stacks[0], &graph_parents[3] },
-};
-
-static inline bool
-graph_parent_is_merge(struct rev_graph *graph)
-{
-	return graph->parents->size > 1;
-}
-
-static inline void
-append_to_rev_graph(struct rev_graph *graph, chtype symbol)
-{
-	struct commit *commit = graph->commit;
-
-	if (commit->graph_size < ARRAY_SIZE(commit->graph) - 1)
-		commit->graph[commit->graph_size++] = symbol;
-}
-
-static void
-clear_rev_graph(struct rev_graph *graph)
-{
-	graph->boundary = 0;
-	graph->size = graph->pos = 0;
-	graph->commit = NULL;
-	memset(graph->parents, 0, sizeof(*graph->parents));
-}
-
-static void
-done_rev_graph(struct rev_graph *graph)
-{
-	if (graph_parent_is_merge(graph) &&
-	    graph->pos < graph->size - 1 &&
-	    graph->next->size == graph->size + graph->parents->size - 1) {
-		size_t i = graph->pos + graph->parents->size - 1;
-
-		graph->commit->graph_size = i * 2;
-		while (i < graph->next->size - 1) {
-			append_to_rev_graph(graph, ' ');
-			append_to_rev_graph(graph, '\\');
-			i++;
-		}
-	}
-
-	clear_rev_graph(graph);
-}
-
-static void
-push_rev_graph(struct rev_graph *graph, const char *parent)
-{
-	int i;
-
-	/* "Collapse" duplicate parents lines.
-	 *
-	 * FIXME: This needs to also update update the drawn graph but
-	 * for now it just serves as a method for pruning graph lines. */
-	for (i = 0; i < graph->size; i++)
-		if (!strncmp(graph->rev[i], parent, SIZEOF_REV))
-			return;
-
-	if (graph->size < SIZEOF_REVITEMS) {
-		string_copy_rev(graph->rev[graph->size++], parent);
-	}
-}
-
-static chtype
-get_rev_graph_symbol(struct rev_graph *graph)
-{
-	chtype symbol;
-
-	if (graph->boundary)
-		symbol = REVGRAPH_BOUND;
-	else if (graph->parents->size == 0)
-		symbol = REVGRAPH_INIT;
-	else if (graph_parent_is_merge(graph))
-		symbol = REVGRAPH_MERGE;
-	else if (graph->pos >= graph->size)
-		symbol = REVGRAPH_BRANCH;
-	else
-		symbol = REVGRAPH_COMMIT;
-
-	return symbol;
-}
-
-static void
-draw_rev_graph(struct rev_graph *graph)
-{
-	struct rev_filler {
-		chtype separator, line;
-	};
-	enum { DEFAULT, RSHARP, RDIAG, LDIAG };
-	static struct rev_filler fillers[] = {
-		{ ' ',	'|' },
-		{ '`',	'.' },
-		{ '\'',	' ' },
-		{ '/',	' ' },
-	};
-	chtype symbol = get_rev_graph_symbol(graph);
-	struct rev_filler *filler;
-	size_t i;
-
-	fillers[DEFAULT].line = opt_line_graphics ? ACS_VLINE : '|';
-	filler = &fillers[DEFAULT];
-
-	for (i = 0; i < graph->pos; i++) {
-		append_to_rev_graph(graph, filler->line);
-		if (graph_parent_is_merge(graph->prev) &&
-		    graph->prev->pos == i)
-			filler = &fillers[RSHARP];
-
-		append_to_rev_graph(graph, filler->separator);
-	}
-
-	/* Place the symbol for this revision. */
-	append_to_rev_graph(graph, symbol);
-
-	if (graph->prev->size > graph->size)
-		filler = &fillers[RDIAG];
-	else
-		filler = &fillers[DEFAULT];
-
-	i++;
-
-	for (; i < graph->size; i++) {
-		append_to_rev_graph(graph, filler->separator);
-		append_to_rev_graph(graph, filler->line);
-		if (graph_parent_is_merge(graph->prev) &&
-		    i < graph->prev->pos + graph->parents->size)
-			filler = &fillers[RSHARP];
-		if (graph->prev->size > graph->size)
-			filler = &fillers[LDIAG];
-	}
-
-	if (graph->prev->size > graph->size) {
-		append_to_rev_graph(graph, filler->separator);
-		if (filler->line != ' ')
-			append_to_rev_graph(graph, filler->line);
-	}
-}
-
-/* Prepare the next rev graph */
-static void
-prepare_rev_graph(struct rev_graph *graph)
-{
-	size_t i;
-
-	/* First, traverse all lines of revisions up to the active one. */
-	for (graph->pos = 0; graph->pos < graph->size; graph->pos++) {
-		if (!strcmp(graph->rev[graph->pos], graph->commit->id))
-			break;
-
-		push_rev_graph(graph->next, graph->rev[graph->pos]);
-	}
-
-	/* Interleave the new revision parent(s). */
-	for (i = 0; !graph->boundary && i < graph->parents->size; i++)
-		push_rev_graph(graph->next, graph->parents->rev[i]);
-
-	/* Lastly, put any remaining revisions. */
-	for (i = graph->pos + 1; i < graph->size; i++)
-		push_rev_graph(graph->next, graph->rev[i]);
-}
-
-static void
-update_rev_graph(struct view *view, struct rev_graph *graph)
-{
-	/* If this is the finalizing update ... */
-	if (graph->commit)
-		prepare_rev_graph(graph);
-
-	/* Graph visualization needs a one rev look-ahead,
-	 * so the first update doesn't visualize anything. */
-	if (!graph->prev->commit)
-		return;
-
-	if (view->lines > 2)
-		view->line[view->lines - 3].dirty = 1;
-	if (view->lines > 1)
-		view->line[view->lines - 2].dirty = 1;
-	draw_rev_graph(graph->prev);
-	done_rev_graph(graph->prev->prev);
-}
-
-
-/*
- * Main view backend
- */
 
 static const char *main_argv[SIZEOF_ARG] = {
 	"git", "log", "--no-color", "--pretty=raw", "--parents",
@@ -6799,8 +5783,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (opt_author && draw_author(view, commit->author))
 		return TRUE;
 
-	if (opt_rev_graph && commit->graph_size &&
-	    draw_graphic(view, LINE_MAIN_REVGRAPH, commit->graph, commit->graph_size))
+	if (opt_rev_graph && draw_graph(view, &commit->graph))
 		return TRUE;
 
 	if (opt_show_refs && commit->refs) {
@@ -6823,17 +5806,17 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 			else
 				type = LINE_MAIN_REF;
 
-			if (draw_text(view, type, "[", TRUE) ||
-			    draw_text(view, type, ref->name, TRUE) ||
-			    draw_text(view, type, "]", TRUE))
+			if (draw_text(view, type, "[") ||
+			    draw_text(view, type, ref->name) ||
+			    draw_text(view, type, "]"))
 				return TRUE;
 
-			if (draw_text(view, LINE_DEFAULT, " ", TRUE))
+			if (draw_text(view, LINE_DEFAULT, " "))
 				return TRUE;
 		}
 	}
 
-	draw_text(view, LINE_DEFAULT, commit->title, TRUE);
+	draw_text(view, LINE_DEFAULT, commit->title);
 	return TRUE;
 }
 
@@ -6841,13 +5824,11 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 static bool
 main_read(struct view *view, char *line)
 {
-	static struct rev_graph *graph = graph_stacks;
+	static struct graph graph;
 	enum line_type type;
 	struct commit *commit;
 
 	if (!line) {
-		int i;
-
 		if (!view->lines && !view->prev)
 			die("No revisions match the given arguments.");
 		if (view->lines > 0) {
@@ -6856,38 +5837,30 @@ main_read(struct view *view, char *line)
 			if (!commit->author) {
 				view->lines--;
 				free(commit);
-				graph->commit = NULL;
 			}
 		}
-		update_rev_graph(view, graph);
 
-		for (i = 0; i < ARRAY_SIZE(graph_stacks); i++)
-			clear_rev_graph(&graph_stacks[i]);
+		done_graph(&graph);
 		return TRUE;
 	}
 
 	type = get_line_type(line);
 	if (type == LINE_COMMIT) {
+		bool is_boundary;
+
 		commit = calloc(1, sizeof(struct commit));
 		if (!commit)
 			return FALSE;
 
 		line += STRING_SIZE("commit ");
-		if (*line == '-') {
-			graph->boundary = 1;
+		is_boundary = *line == '-';
+		if (is_boundary)
 			line++;
-		}
 
 		string_copy_rev(commit->id, line);
 		commit->refs = get_ref_list(commit->id);
-		graph->commit = commit;
 		add_line_data(view, commit, LINE_MAIN_COMMIT);
-
-		while ((line = strchr(line, ' '))) {
-			line++;
-			push_rev_graph(graph->parents, line);
-			commit->has_parents = TRUE;
-		}
+		graph_add_commit(&graph, &commit->graph, commit->id, line, is_boundary);
 		return TRUE;
 	}
 
@@ -6897,16 +5870,14 @@ main_read(struct view *view, char *line)
 
 	switch (type) {
 	case LINE_PARENT:
-		if (commit->has_parents)
-			break;
-		push_rev_graph(graph->parents, line + STRING_SIZE("parent "));
+		if (!graph.has_parents)
+			graph_add_parent(&graph, line + STRING_SIZE("parent "));
 		break;
 
 	case LINE_AUTHOR:
 		parse_author_line(line + STRING_SIZE("author "),
 				  &commit->author, &commit->time);
-		update_rev_graph(view, graph);
-		graph = graph->next;
+		graph_render_parents(&graph);
 		break;
 
 	default:
@@ -6942,6 +5913,8 @@ main_request(struct view *view, enum request request, struct line *line)
 
 	switch (request) {
 	case REQ_ENTER:
+		if (view_is_displayed(view) && display[0] != view)
+			maximize_view(view);
 		open_view(view, REQ_VIEW_DIFF, flags);
 		break;
 	case REQ_REFRESH:
@@ -7103,7 +6076,7 @@ init_display(void)
 		init_colors();
 
 	getmaxyx(stdscr, y, x);
-	status_win = newwin(1, 0, y - 1, 0);
+	status_win = newwin(1, x, y - 1, 0);
 	if (!status_win)
 		die("Failed to create status window");
 
@@ -7435,7 +6408,7 @@ get_ref_list(const char *id)
 }
 
 static int
-read_ref(char *id, size_t idlen, char *name, size_t namelen)
+read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 {
 	struct ref *ref = NULL;
 	bool tag = FALSE;
@@ -7553,7 +6526,7 @@ load_refs(void)
 	for (i = 0; i < refs_size; i++)
 		refs[i]->id[0] = 0;
 
-	if (io_run_load(ls_remote_argv, "\t", read_ref) == ERR)
+	if (io_run_load(ls_remote_argv, "\t", read_ref, NULL) == ERR)
 		return ERR;
 
 	/* Update the ref lists to reflect changes. */
@@ -7588,19 +6561,19 @@ set_remote_branch(const char *name, const char *value, size_t valuelen)
 }
 
 static void
-set_repo_config_option(char *name, char *value, int (*cmd)(int, const char **))
+set_repo_config_option(char *name, char *value, enum option_code (*cmd)(int, const char **))
 {
 	const char *argv[SIZEOF_ARG] = { name, "=" };
 	int argc = 1 + (cmd == option_set_command);
-	int error = ERR;
+	enum option_code error;
 
 	if (!argv_from_string(argv, &argc, value))
-		config_msg = "Too many option arguments";
+		error = OPT_ERR_TOO_MANY_OPTION_ARGUMENTS;
 	else
 		error = cmd(argc, argv);
 
-	if (error == ERR)
-		warn("Option 'tig.%s': %s", name, config_msg);
+	if (error != OPT_OK)
+		warn("Option 'tig.%s': %s", name, option_errors[error]);
 }
 
 static bool
@@ -7642,7 +6615,7 @@ set_work_tree(const char *value)
 }
 
 static int
-read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen)
+read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
 	if (!strcmp(name, "i18n.commitencoding"))
 		string_ncopy(opt_encoding, value, valuelen);
@@ -7674,11 +6647,11 @@ load_git_config(void)
 {
 	const char *config_list_argv[] = { "git", "config", "--list", NULL };
 
-	return io_run_load(config_list_argv, "=", read_repo_config_option);
+	return io_run_load(config_list_argv, "=", read_repo_config_option, NULL);
 }
 
 static int
-read_repo_info(char *name, size_t namelen, char *value, size_t valuelen)
+read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
 	if (!opt_git_dir[0]) {
 		string_ncopy(opt_git_dir, name, namelen);
@@ -7709,7 +6682,7 @@ load_repo_info(void)
 			"--show-cdup", "--show-prefix", NULL
 	};
 
-	return io_run_load(rev_parse_argv, "=", read_repo_info);
+	return io_run_load(rev_parse_argv, "=", read_repo_info, NULL);
 }
 
 
@@ -7767,11 +6740,11 @@ warn(const char *msg, ...)
 	va_end(args);
 }
 
-static const char ***filter_args;
-
 static int
-read_filter_args(char *name, size_t namelen, char *value, size_t valuelen)
+read_filter_args(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
+	const char ***filter_args = data;
+
 	return argv_append(filter_args, name) ? OK : ERR;
 }
 
@@ -7781,10 +6754,9 @@ filter_rev_parse(const char ***args, const char *arg1, const char *arg2, const c
 	const char *rev_parse_argv[SIZEOF_ARG] = { "git", "rev-parse", arg1, arg2 };
 	const char **all_argv = NULL;
 
-	filter_args = args;
 	if (!argv_append_array(&all_argv, rev_parse_argv) ||
 	    !argv_append_array(&all_argv, argv) ||
-	    !io_run_load(all_argv, "\n", read_filter_args) == ERR)
+	    !io_run_load(all_argv, "\n", read_filter_args, args) == ERR)
 		die("Failed to split arguments");
 	argv_free(all_argv);
 	free(all_argv);
@@ -7793,9 +6765,9 @@ filter_rev_parse(const char ***args, const char *arg1, const char *arg2, const c
 static void
 filter_options(const char *argv[])
 {
-	filter_rev_parse(&opt_file_args, "--no-revs", "--no-flags", argv);
-	filter_rev_parse(&opt_diff_args, "--no-revs", "--flags", argv);
-	filter_rev_parse(&opt_rev_args, "--symbolic", "--revs-only", argv);
+	filter_rev_parse(&opt_file_argv, "--no-revs", "--no-flags", argv);
+	filter_rev_parse(&opt_diff_argv, "--no-revs", "--flags", argv);
+	filter_rev_parse(&opt_rev_argv, "--symbolic", "--revs-only", argv);
 }
 
 static enum request
@@ -7843,7 +6815,7 @@ parse_options(int argc, const char *argv[])
 		const char *opt = argv[i];
 
 		if (seen_dashdash) {
-			argv_append(&opt_file_args, opt);
+			argv_append(&opt_file_argv, opt);
 			continue;
 
 		} else if (!strcmp(opt, "--")) {
@@ -7859,7 +6831,7 @@ parse_options(int argc, const char *argv[])
 			quit(0);
 
 		} else if (!strcmp(opt, "--all")) {
-			argv_append(&opt_rev_args, opt);
+			argv_append(&opt_rev_argv, opt);
 			continue;
 		}
 

@@ -16,6 +16,7 @@ tig.1
 tig.spec
 tigrc.5
 tigmanual.7
+test-graph
 *.html
 *.o
 *.xml
