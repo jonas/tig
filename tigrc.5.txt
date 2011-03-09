@@ -86,15 +86,33 @@ Variables
 
 The following variables can be set:
 
-'show-rev-graph' (bool)::
+'author-width' (int)::
 
-	Whether to show revision graph in the main view on start-up.
-	Can be toggled. See also line-graphics options.
+	Width of the author column. When set to 5 or below, the author name
+	will be abbreviated to the author's initials.
 
-'show-refs' (bool)::
+'commit-encoding' (string)::
 
-	Whether to show references (branches, tags, and remotes) in the main
-	view on start-up. Can be toggled.
+	The encoding used for commits. The default is UTF-8. Note this option
+	is shadowed by the "i18n.commitencoding" option in `.git/config`.
+
+'line-graphics' (mixed) [ "ascii" | "default" | "utf-8" | bool]::
+
+	What type of character graphics for line drawing.
+
+'line-number-interval' (int)::
+
+	Interval between line numbers. Note, you have to toggle on line
+	numbering with 'n' or the `-n` command line option.  The default is to
+	number every line.
+
+'horizontal-scroll' (mixed)::
+
+	Interval to scroll horizontally in each step. Can be specified either
+	as the number of columns, e.g. '5', or as a percentage of the view
+	width, e.g. '33%', where the maximum is 100%. For percentages it is
+	always ensured that at least one column is scrolled. The default is to
+	scroll '50%' of the view width.
 
 'show-author' (mixed) ["abbreviated" | "default" | bool]::
 
@@ -107,32 +125,15 @@ The following variables can be set:
 	used, e.g. "2 minutes ago". If set to "short" no time information is
 	shown. If set to "local", localtime(3) is used. Can be toggled.
 
-'author-width' (int)::
+'show-refs' (bool)::
 
-	Width of the author column. When set to 5 or below, the author name
-	will be abbreviated to the author's initials.
+	Whether to show references (branches, tags, and remotes) in the main
+	view on start-up. Can be toggled.
 
-'line-graphics' (mixed) [ "ascii" | "default" | "utf-8" | bool]::
+'show-rev-graph' (bool)::
 
-	What type of character graphics for line drawing.
-
-'line-number-interval' (int)::
-
-	Interval between line numbers. Note, you have to toggle on line
-	numbering with 'n' or the `-n` command line option.  The default is to
-	number every line.
-
-'tab-size' (int)::
-
-	Number of spaces per tab. The default is 8 spaces.
-
-'horizontal-scroll' (mixed)::
-
-	Interval to scroll horizontally in each step. Can be specified either
-	as the number of columns, e.g. '5', or as a percentage of the view
-	width, e.g. '33%', where the maximum is 100%. For percentages it is
-	always ensured that at least one column is scrolled. The default is to
-	scroll '50%' of the view width.
+	Whether to show revision graph in the main view on start-up.
+	Can be toggled. See also line-graphics options.
 
 'split-view-height' (mixed)::
 
@@ -142,16 +143,14 @@ The following variables can be set:
 	smaller of the views is at least four rows high. The default is a view
 	height of '66%'.
 
-'commit-encoding' (string)::
-
-	The encoding used for commits. The default is UTF-8. Note this option
-	is shadowed by the "i18n.commitencoding" option in `.git/config`.
-
 'status-untracked-dirs' (bool)::
 
 	Show untracked directories contents in the status view (analog to
 	`git ls-files --directory` option. On by default.
 
+'tab-size' (int)::
+
+	Number of spaces per tab. The default is 8 spaces.
 
 Bind command
 ------------
