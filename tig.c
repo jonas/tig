@@ -365,6 +365,7 @@ static FILE *opt_tty			= NULL;
 static const char **opt_diff_argv	= NULL;
 static const char **opt_rev_argv	= NULL;
 static const char **opt_file_argv	= NULL;
+static const char **opt_blame_argv	= NULL;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strcmp(rev, get_ref_head()->id)))
@@ -933,6 +934,7 @@ add_builtin_run_requests(void)
 	OPT_ERR_(NO_OPTION_VALUE, "No option value"), \
 	OPT_ERR_(NO_VALUE_ASSIGNED, "No value assigned"), \
 	OPT_ERR_(OBSOLETE_REQUEST_NAME, "Obsolete request name"), \
+	OPT_ERR_(OUT_OF_MEMORY, "Out of memory"), \
 	OPT_ERR_(TOO_MANY_OPTION_ARGUMENTS, "Too many option arguments"), \
 	OPT_ERR_(UNKNOWN_ATTRIBUTE, "Unknown attribute"), \
 	OPT_ERR_(UNKNOWN_COLOR, "Unknown color"), \
@@ -1110,10 +1112,24 @@ parse_string(char *opt, const char *arg, size_t optsize)
 	}
 }
 
+static enum option_code
+parse_args(const char ***args, const char *argv[])
+{
+	if (!argv_copy(args, argv))
+		return OPT_ERR_OUT_OF_MEMORY;
+	return OPT_OK;
+}
+
 /* Wants: name = value */
 static enum option_code
 option_set_command(int argc, const char *argv[])
 {
+	if (argc < 3)
+		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
+
+	if (!opt_blame_argv && !strcmp(argv[0], "blame-options"))
+		return parse_args(&opt_blame_argv, argv + 2);
+
 	if (argc != 3)
 		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
 
@@ -2380,6 +2396,11 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool replace, bool f
 
 		} else if (!strcmp(arg, "%(diffargs)")) {
 			if (!argv_append_array(dst_argv, opt_diff_argv))
+				break;
+			continue;
+
+		} else if (!strcmp(arg, "%(blameargs)")) {
+			if (!argv_append_array(dst_argv, opt_blame_argv))
 				break;
 			continue;
 
@@ -4181,7 +4202,7 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 {
 	if (!line) {
 		const char *blame_argv[] = {
-			"git", "blame", "--incremental",
+			"git", "blame", "%(blameargs)", "--incremental",
 				*opt_ref ? opt_ref : "--incremental", "--", opt_file, NULL
 		};
 
@@ -6695,7 +6716,7 @@ static const char usage[] =
 "\n"
 "Usage: tig        [options] [revs] [--] [paths]\n"
 "   or: tig show   [options] [revs] [--] [paths]\n"
-"   or: tig blame  [rev] path\n"
+"   or: tig blame  [options] [rev] [--] path\n"
 "   or: tig status\n"
 "   or: tig <      [git command output]\n"
 "\n"
@@ -6792,16 +6813,18 @@ parse_options(int argc, const char *argv[])
 		return REQ_VIEW_STATUS;
 
 	} else if (!strcmp(subcommand, "blame")) {
-		if (argc <= 2 || argc > 4)
+		filter_rev_parse(&opt_file_argv, "--no-revs", "--no-flags", argv + 2);
+		filter_rev_parse(&opt_blame_argv, "--no-revs", "--flags", argv + 2);
+		filter_rev_parse(&opt_rev_argv, "--symbolic", "--revs-only", argv + 2);
+
+		if (!opt_file_argv || opt_file_argv[1] || (opt_rev_argv && opt_rev_argv[1]))
 			die("invalid number of options to blame\n\n%s", usage);
 
-		i = 2;
-		if (argc == 4) {
-			string_ncopy(opt_ref, argv[i], strlen(argv[i]));
-			i++;
+		if (opt_rev_argv) {
+			string_ncopy(opt_ref, opt_rev_argv[0], strlen(opt_rev_argv[0]));
 		}
 
-		string_ncopy(opt_file, argv[i], strlen(argv[i]));
+		string_ncopy(opt_file, opt_file_argv[0], strlen(opt_file_argv[0]));
 		return REQ_VIEW_BLAME;
 
 	} else if (!strcmp(subcommand, "show")) {

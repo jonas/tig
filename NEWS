@@ -4,6 +4,13 @@ Release notes
 master
 ------
 
+Improvements:
+
+ - (GH-6) Make blame configurable via extra options passed from the command
+   line and blame-options setting from ~/.tigrc. For example:
+   
+   	set blame-options = -C -C -C
+
 Bug fixes:
 
  - Expand %(directory) to . for the root directory. (GH-3)

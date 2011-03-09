@@ -49,6 +49,7 @@ set show-line-numbers = no	# Show line numbers?
 set line-number-interval = 5	# Interval between line numbers
 set commit-encoding = "UTF-8"	# Commit encoding
 set horizontal-scroll = 33%	# Scroll 33% of the view width
+set blame-options = -C -C -C	# Blame lines from other files
 --------------------------------------------------------------------------
 
 Or in the git configuration files:
@@ -90,6 +91,13 @@ The following variables can be set:
 
 	Width of the author column. When set to 5 or below, the author name
 	will be abbreviated to the author's initials.
+
+'blame-options' (string)::
+
+	A space separated string of extra blame options. Can be used for
+	telling git-blame(1) how to detect the origin of lines. The value
+	is ignored when tig is started in blame mode and given blame options
+	on the command line.
 
 'commit-encoding' (string)::
 
