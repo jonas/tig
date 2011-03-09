@@ -2343,7 +2343,7 @@ format_arg(const char *name)
 	} vars[] = {
 #define FORMAT_VAR(name, value, value_if_empty) \
 	{ name, STRING_SIZE(name), value, value_if_empty }
-		FORMAT_VAR("%(directory)",	opt_path,	""),
+		FORMAT_VAR("%(directory)",	opt_path,	"."),
 		FORMAT_VAR("%(file)",		opt_file,	""),
 		FORMAT_VAR("%(ref)",		opt_ref,	"HEAD"),
 		FORMAT_VAR("%(head)",		ref_head,	""),
