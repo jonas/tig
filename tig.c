@@ -1115,7 +1115,7 @@ parse_string(char *opt, const char *arg, size_t optsize)
 static enum option_code
 parse_args(const char ***args, const char *argv[])
 {
-	if (!argv_copy(args, argv))
+	if (*args == NULL && !argv_copy(args, argv))
 		return OPT_ERR_OUT_OF_MEMORY;
 	return OPT_OK;
 }
@@ -1127,14 +1127,14 @@ option_set_command(int argc, const char *argv[])
 	if (argc < 3)
 		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
 
-	if (!opt_blame_argv && !strcmp(argv[0], "blame-options"))
+	if (strcmp(argv[1], "="))
+		return OPT_ERR_NO_VALUE_ASSIGNED;
+
+	if (!strcmp(argv[0], "blame-options"))
 		return parse_args(&opt_blame_argv, argv + 2);
 
 	if (argc != 3)
 		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
-
-	if (strcmp(argv[1], "="))
-		return OPT_ERR_NO_VALUE_ASSIGNED;
 
 	if (!strcmp(argv[0], "show-author"))
 		return parse_enum(&opt_author, argv[2], author_map);
