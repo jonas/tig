@@ -2524,10 +2524,11 @@ start_update(struct view *view, const char **argv, const char *dir)
 static bool
 prepare_update_file(struct view *view, const char *name)
 {
+	const char *file_argv[] = { opt_cdup, name , NULL };
+
 	if (view->pipe)
 		end_update(view, TRUE);
-	argv_free(view->argv);
-	return io_open(&view->io, "%s/%s", opt_cdup[0] ? opt_cdup : ".", name);
+	return argv_copy(&view->argv, file_argv);
 }
 
 static bool
@@ -2555,6 +2556,9 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 
 	if (view->argv && view->argv[0] &&
 	    !io_run(&view->io, IO_RD, view->dir, view->argv))
+		return FALSE;
+	else if (view->argv && !strcmp(view->argv[0], opt_cdup) &&
+		 !io_open(&view->io, "%s%s", opt_cdup, view->argv[1]))
 		return FALSE;
 
 	setup_update(view, view->id);
@@ -5687,17 +5691,6 @@ stage_request(struct view *view, enum request request, struct line *line)
 		return REQ_VIEW_CLOSE;
 	}
 
-	if (stage_line_type == LINE_STAT_UNTRACKED) {
-	    	if (!suffixcmp(stage_status.new.name, -1, "/")) {
-			report("Cannot display a directory");
-			return REQ_NONE;
-		}
-
-		if (!prepare_update_file(view, stage_status.new.name)) {
-			report("Failed to open file: %s", strerror(errno));
-			return REQ_NONE;
-		}
-	}
 	open_view(view, REQ_VIEW_STAGE, OPEN_REFRESH);
 
 	return REQ_NONE;
