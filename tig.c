@@ -2722,7 +2722,6 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	bool reload = !!(flags & (OPEN_RELOAD | OPEN_PREPARED));
 	struct view *view = VIEW(request);
 	int nviews = displayed_views();
-	struct view *base_view = display[0];
 
 	assert(flags ^ OPEN_REFRESH);
 
@@ -2740,36 +2739,32 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		display[1] = view;
 		current_view = 1;
 		view->parent = prev;
+		resize_display();
+
+		if (prev->lineno - prev->offset >= prev->height) {
+			/* Take the title line into account. */
+			int lines = prev->lineno - prev->offset - prev->height + 1;
+
+			/* Scroll the view that was split if the current line is
+			 * outside the new limited view. */
+			do_scroll_view(prev, lines);
+		}
+
+		if (view != prev && view_is_displayed(prev)) {
+			/* "Blur" the previous view. */
+			update_view_title(prev);
+		}
 	} else {
 		/* Maximize the current view. */
 		memset(display, 0, sizeof(display));
 		current_view = 0;
 		display[current_view] = view;
+		resize_display();
 	}
 
 	/* No prev signals that this is the first loaded view. */
 	if (prev && view != prev) {
 		view->prev = prev;
-	}
-
-	/* Resize the view when switching between split- and full-screen,
-	 * or when switching between two different full-screen views. */
-	if (nviews != displayed_views() ||
-	    (nviews == 1 && base_view != display[0]))
-		resize_display();
-
-	if (split && prev->lineno - prev->offset >= prev->height) {
-		/* Take the title line into account. */
-		int lines = prev->lineno - prev->offset - prev->height + 1;
-
-		/* Scroll the view that was split if the current line is
-		 * outside the new limited view. */
-		do_scroll_view(prev, lines);
-	}
-
-	if (prev && view != prev && split && view_is_displayed(prev)) {
-		/* "Blur" the previous view. */
-		update_view_title(prev);
 	}
 
 	load_view(view, flags);
