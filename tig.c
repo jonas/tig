@@ -2505,30 +2505,12 @@ prepare_io(struct view *view, const char *dir, const char *argv[], bool replace)
 }
 
 static bool
-prepare_update(struct view *view, const char *argv[], const char *dir)
-{
-	if (view->pipe)
-		end_update(view, TRUE);
-	return prepare_io(view, dir, argv, FALSE);
-}
-
-static bool
 start_update(struct view *view, const char **argv, const char *dir)
 {
 	if (view->pipe)
 		io_done(view->pipe);
 	return prepare_io(view, dir, argv, FALSE) &&
 	       io_run(&view->io, IO_RD, dir, view->argv);
-}
-
-static bool
-prepare_update_file(struct view *view, const char *name)
-{
-	const char *file_argv[] = { opt_cdup, name , NULL };
-
-	if (view->pipe)
-		end_update(view, TRUE);
-	return argv_copy(&view->argv, file_argv);
 }
 
 static bool
@@ -2783,6 +2765,35 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	} else if (view_is_displayed(view)) {
 		redraw_view(view);
 		report("");
+	}
+}
+
+static void
+open_argv(struct view *prev, struct view *view, const char *argv[], const char *dir, enum open_flags flags)
+{
+	enum request request = view - views + REQ_OFFSET + 1;
+
+	if (view->pipe)
+		end_update(view, TRUE);
+	if (!prepare_io(view, dir, argv, FALSE)) {
+		report("Failed to open %s view: %s", view->name, io_strerror(&view->io));
+	} else {
+		open_view(prev, request, flags | OPEN_PREPARED);
+	}
+}
+
+static void
+open_file(struct view *prev, struct view *view, const char *file, enum open_flags flags)
+{
+	enum request request = view - views + REQ_OFFSET + 1;
+	const char *file_argv[] = { opt_cdup, file , NULL };
+
+	if (view->pipe)
+		end_update(view, TRUE);
+	if (!argv_copy(&view->argv, file_argv)) {
+		report("Failed to load %s: out of memory", file);
+	} else {
+		open_view(prev, request, flags | OPEN_PREPARED);
 	}
 }
 
@@ -4451,14 +4462,10 @@ blame_request(struct view *view, enum request request, struct line *line)
 				diff_index_argv[7] = "/dev/null";
 			}
 
-			if (!prepare_update(diff, diff_index_argv, NULL)) {
-				report("Failed to allocate diff command");
-				break;
-			}
-			flags |= OPEN_PREPARED;
+			open_argv(view, diff, diff_index_argv, NULL, flags);
+		} else {
+			open_view(view, REQ_VIEW_DIFF, flags);
 		}
-
-		open_view(view, REQ_VIEW_DIFF, flags);
 		if (VIEW(REQ_VIEW_DIFF)->pipe && !strcmp(blame->commit->id, NULL_ID))
 			string_copy_rev(VIEW(REQ_VIEW_DIFF)->ref, NULL_ID);
 		break;
@@ -4590,10 +4597,7 @@ branch_request(struct view *view, enum request request, struct line *line)
 		};
 		struct view *main_view = VIEW(REQ_VIEW_MAIN);
 
-		if (!prepare_update(main_view, all_branches_argv, NULL))
-			report("Failed to load view of all branches");
-		else
-			open_view(view, REQ_VIEW_MAIN, OPEN_PREPARED | OPEN_SPLIT);
+		open_argv(view, main_view, all_branches_argv, NULL, OPEN_SPLIT);
 		return REQ_NONE;
 	}
 	default:
@@ -5039,15 +5043,6 @@ status_draw(struct view *view, struct line *line, unsigned int lineno)
 }
 
 static enum request
-status_load_error(struct view *view, struct view *stage, const char *path)
-{
-	if (displayed_views() == 2 || display[current_view] != view)
-		maximize_view(view);
-	report("Failed to load '%s': %s", path, io_strerror(&stage->io));
-	return REQ_NONE;
-}
-
-static enum request
 status_enter(struct view *view, struct line *line)
 {
 	struct status *status = line->data;
@@ -5056,7 +5051,7 @@ status_enter(struct view *view, struct line *line)
 	 * path, so leave it empty. */
 	const char *newpath = status && status->status != 'U' ? status->new.name : NULL;
 	const char *info;
-	enum open_flags split;
+	enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 	struct view *stage = VIEW(REQ_VIEW_STAGE);
 
 	if (line->type == LINE_STAT_NONE ||
@@ -5073,8 +5068,7 @@ status_enter(struct view *view, struct line *line)
 					"--", "/dev/null", newpath, NULL
 			};
 
-			if (!prepare_update(stage, no_head_diff_argv, opt_cdup))
-				return status_load_error(view, stage, newpath);
+			open_argv(view, stage, no_head_diff_argv, opt_cdup, flags); 
 		} else {
 			const char *index_show_argv[] = {
 				"git", "diff-index", "--root", "--patch-with-stat",
@@ -5082,8 +5076,7 @@ status_enter(struct view *view, struct line *line)
 					oldpath, newpath, NULL
 			};
 
-			if (!prepare_update(stage, index_show_argv, opt_cdup))
-				return status_load_error(view, stage, newpath);
+			open_argv(view, stage, index_show_argv, opt_cdup, flags);
 		}
 
 		if (status)
@@ -5099,8 +5092,7 @@ status_enter(struct view *view, struct line *line)
 				"-C", "-M", "--", oldpath, newpath, NULL
 		};
 
-		if (!prepare_update(stage, files_show_argv, opt_cdup))
-			return status_load_error(view, stage, newpath);
+		open_argv(view, stage, files_show_argv, opt_cdup, flags);
 		if (status)
 			info = "Unstaged changes to %s";
 		else
@@ -5118,8 +5110,7 @@ status_enter(struct view *view, struct line *line)
 			return REQ_NONE;
 		}
 
-		if (!prepare_update_file(stage, newpath))
-			return status_load_error(view, stage, newpath);
+		open_file(view, stage, newpath, flags);
 		info = "Untracked file %s";
 		break;
 
@@ -5130,8 +5121,6 @@ status_enter(struct view *view, struct line *line)
 		die("line type %d not handled in switch", line->type);
 	}
 
-	split = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
-	open_view(view, REQ_VIEW_STAGE, OPEN_PREPARED | split);
 	if (view_is_displayed(VIEW(REQ_VIEW_STAGE))) {
 		if (status) {
 			stage_status = *status;
@@ -6961,10 +6950,8 @@ main(int argc, const char *argv[])
 
 				if (!argv_from_string(argv, &argc, cmd)) {
 					report("Too many arguments");
-				} else if (!prepare_update(next, argv, NULL)) {
-					report("Failed to format command");
 				} else {
-					open_view(view, REQ_VIEW_PAGER, OPEN_PREPARED);
+					open_argv(view, next, argv, NULL, OPEN_DEFAULT);
 				}
 			}
 
