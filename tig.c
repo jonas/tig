@@ -1977,14 +1977,16 @@ toggle_option(enum request request)
 }
 
 static void
-maximize_view(struct view *view)
+maximize_view(struct view *view, bool redraw)
 {
 	memset(display, 0, sizeof(display));
 	current_view = 0;
 	display[current_view] = view;
 	resize_display();
-	redraw_display(FALSE);
-	report("");
+	if (redraw) {
+		redraw_display(FALSE);
+		report("");
+	}
 }
 
 
@@ -2755,11 +2757,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 			update_view_title(prev);
 		}
 	} else {
-		/* Maximize the current view. */
-		memset(display, 0, sizeof(display));
-		current_view = 0;
-		display[current_view] = view;
-		resize_display();
+		maximize_view(view, FALSE);
 	}
 
 	/* No prev signals that this is the first loaded view. */
@@ -3000,7 +2998,7 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_MAXIMIZE:
 		if (displayed_views() == 2)
-			maximize_view(view);
+			maximize_view(view, TRUE);
 		break;
 
 	case REQ_OPTIONS:
@@ -3057,7 +3055,7 @@ view_driver(struct view *view, enum request request)
 		 * view itself. Parents to closed view should never be
 		 * followed. */
 		if (view->prev && view->prev != view) {
-			maximize_view(view->prev);
+			maximize_view(view->prev, TRUE);
 			view->prev = view;
 			break;
 		}
@@ -5935,7 +5933,7 @@ main_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_ENTER:
 		if (view_is_displayed(view) && display[0] != view)
-			maximize_view(view);
+			maximize_view(view, TRUE);
 		open_view(view, REQ_VIEW_DIFF, flags);
 		break;
 	case REQ_REFRESH:
