@@ -2718,6 +2718,29 @@ load_view(struct view *view, enum open_flags flags)
 #define refresh_view(view) load_view(view, OPEN_REFRESH)
 
 static void
+split_view(struct view *prev, struct view *view)
+{
+	display[1] = view;
+	current_view = 1;
+	view->parent = prev;
+	resize_display();
+
+	if (prev->lineno - prev->offset >= prev->height) {
+		/* Take the title line into account. */
+		int lines = prev->lineno - prev->offset - prev->height + 1;
+
+		/* Scroll the view that was split if the current line is
+		 * outside the new limited view. */
+		do_scroll_view(prev, lines);
+	}
+
+	if (view != prev && view_is_displayed(prev)) {
+		/* "Blur" the previous view. */
+		update_view_title(prev);
+	}
+}
+
+static void
 open_view(struct view *prev, enum request request, enum open_flags flags)
 {
 	bool split = !!(flags & OPEN_SPLIT);
@@ -2738,24 +2761,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	}
 
 	if (split) {
-		display[1] = view;
-		current_view = 1;
-		view->parent = prev;
-		resize_display();
-
-		if (prev->lineno - prev->offset >= prev->height) {
-			/* Take the title line into account. */
-			int lines = prev->lineno - prev->offset - prev->height + 1;
-
-			/* Scroll the view that was split if the current line is
-			 * outside the new limited view. */
-			do_scroll_view(prev, lines);
-		}
-
-		if (view != prev && view_is_displayed(prev)) {
-			/* "Blur" the previous view. */
-			update_view_title(prev);
-		}
+		split_view(prev, view);
 	} else {
 		maximize_view(view, FALSE);
 	}
