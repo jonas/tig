@@ -1519,7 +1519,7 @@ set_view_attr(struct view *view, enum line_type type)
 
 #define VIEW_MAX_LEN(view) ((view)->width + (view)->yoffset - (view)->col)
 
-static int
+static bool
 draw_chars(struct view *view, enum line_type type, const char *string,
 	   int max_len, bool use_tilde)
 {
@@ -1530,7 +1530,7 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 	size_t skip = view->yoffset > view->col ? view->yoffset - view->col : 0;
 
 	if (max_len <= 0)
-		return 0;
+		return VIEW_MAX_LEN(view) <= 0;
 
 	len = utf8_length(&string, skip, &col, max_len, &trimmed, use_tilde, opt_tab_size);
 
@@ -1561,25 +1561,26 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 		}
 	}
 
-	return col;
+	view->col += col;
+	return VIEW_MAX_LEN(view) <= 0;
 }
 
-static int
+static bool
 draw_space(struct view *view, enum line_type type, int max, int spaces)
 {
 	static char space[] = "                    ";
-	int col = 0;
 
 	spaces = MIN(max, spaces);
 
 	while (spaces > 0) {
 		int len = MIN(spaces, sizeof(space) - 1);
 
-		col += draw_chars(view, type, space, len, FALSE);
+		if (draw_chars(view, type, space, len, FALSE))
+			return TRUE;
 		spaces -= len;
 	}
 
-	return col;
+	return VIEW_MAX_LEN(view) <= 0;
 }
 
 static bool
@@ -1590,9 +1591,10 @@ draw_text(struct view *view, enum line_type type, const char *string)
 	do {
 		size_t pos = string_expand(text, sizeof(text), string, opt_tab_size);
 
-		view->col += draw_chars(view, type, text, VIEW_MAX_LEN(view), TRUE);
+		if (draw_chars(view, type, text, VIEW_MAX_LEN(view), TRUE))
+			return TRUE;
 		string += pos;
-	} while (*string && VIEW_MAX_LEN(view) > 0);
+	} while (*string);
 
 	return VIEW_MAX_LEN(view) <= 0;
 }
@@ -1627,16 +1629,13 @@ static bool
 draw_field(struct view *view, enum line_type type, const char *text, int len, bool trim)
 {
 	int max = MIN(VIEW_MAX_LEN(view), len);
-	int col;
+	int col = view->col;
 
-	if (text)
-		col = draw_chars(view, type, text, max - 1, trim);
-	else
-		col = draw_space(view, type, max - 1, max - 1);
+	if (!text) 
+		return draw_space(view, type, max, max);
 
-	view->col += col;
-	view->col += draw_space(view, LINE_DEFAULT, max - col, max - col);
-	return VIEW_MAX_LEN(view) <= 0;
+	return draw_chars(view, type, text, max - 1, trim)
+	    || draw_space(view, LINE_DEFAULT, max - (view->col - col), max);
 }
 
 static bool
@@ -1699,9 +1698,9 @@ draw_lineno(struct view *view, unsigned int lineno)
 			text = number;
 	}
 	if (text)
-		view->col += draw_chars(view, LINE_LINE_NUMBER, text, max, TRUE);
+		draw_chars(view, LINE_LINE_NUMBER, text, max, TRUE);
 	else
-		view->col += draw_space(view, LINE_LINE_NUMBER, max, digits3);
+		draw_space(view, LINE_LINE_NUMBER, max, digits3);
 	return draw_graphic(view, LINE_DEFAULT, &separator, 1, TRUE);
 }
 
