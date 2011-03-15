@@ -2530,8 +2530,14 @@ prepare_update_file(struct view *view, const char *name)
 }
 
 static bool
-begin_update(struct view *view, bool refresh)
+view_open(struct view *view, enum open_flags flags)
 {
+	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED));
+	bool refresh = flags & (OPEN_REFRESH | OPEN_PREPARED);
+
+	if (!reload && !strcmp(view->vid, view->id))
+		return TRUE;
+
 	if (view->pipe)
 		end_update(view, TRUE);
 
@@ -2745,11 +2751,6 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 			return;
 		}
 		restore_view_position(view);
-
-	} else if ((reload || strcmp(view->vid, view->id)) &&
-		   !begin_update(view, flags & (OPEN_REFRESH | OPEN_PREPARED))) {
-		report("Failed to load %s view", view->name);
-		return;
 	}
 
 	if (split && prev->lineno - prev->offset >= prev->height) {
@@ -3334,7 +3335,7 @@ pager_select(struct view *view, struct line *line)
 static struct view_ops pager_ops = {
 	"line",
 	NULL,
-	NULL,
+	view_open,
 	pager_read,
 	pager_draw,
 	pager_request,
@@ -3362,7 +3363,7 @@ log_request(struct view *view, enum request request, struct line *line)
 static struct view_ops log_ops = {
 	"line",
 	log_argv,
-	NULL,
+	view_open,
 	pager_read,
 	pager_draw,
 	log_request,
@@ -3406,7 +3407,7 @@ diff_read(struct view *view, char *data)
 static struct view_ops diff_ops = {
 	"line",
 	diff_argv,
-	NULL,
+	view_open,
 	diff_read,
 	pager_draw,
 	pager_request,
@@ -4005,7 +4006,7 @@ static const char *tree_argv[SIZEOF_ARG] = {
 static struct view_ops tree_ops = {
 	"file",
 	tree_argv,
-	NULL,
+	view_open,
 	tree_read,
 	tree_draw,
 	tree_request,
@@ -4041,7 +4042,7 @@ static const char *blob_argv[SIZEOF_ARG] = {
 static struct view_ops blob_ops = {
 	"line",
 	blob_argv,
-	NULL,
+	view_open,
 	blob_read,
 	pager_draw,
 	blob_request,
@@ -5694,7 +5695,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 static struct view_ops stage_ops = {
 	"line",
 	NULL,
-	NULL,
+	view_open,
 	pager_read,
 	pager_draw,
 	stage_request,
@@ -5993,7 +5994,7 @@ main_select(struct view *view, struct line *line)
 static struct view_ops main_ops = {
 	"commit",
 	main_argv,
-	NULL,
+	view_open,
 	main_read,
 	main_draw,
 	main_request,
