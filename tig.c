@@ -1429,13 +1429,21 @@ struct view {
 	time_t update_secs;
 };
 
+enum open_flags {
+	OPEN_DEFAULT = 0,	/* Use default view switching. */
+	OPEN_SPLIT = 1,		/* Split current view. */
+	OPEN_RELOAD = 4,	/* Reload view even if it is the current. */
+	OPEN_REFRESH = 16,	/* Refresh view using previous command. */
+	OPEN_PREPARED = 32,	/* Open already prepared command. */
+};
+
 struct view_ops {
 	/* What type of content being displayed. Used in the title bar. */
 	const char *type;
 	/* Default command arguments. */
 	const char **argv;
 	/* Open and reads in all view content. */
-	bool (*open)(struct view *view);
+	bool (*open)(struct view *view, enum open_flags flags);
 	/* Read one line; updates view->line. */
 	bool (*read)(struct view *view, char *data);
 	/* Draw one line; @lineno must be < view->height. */
@@ -2687,14 +2695,6 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
  * View opening
  */
 
-enum open_flags {
-	OPEN_DEFAULT = 0,	/* Use default view switching. */
-	OPEN_SPLIT = 1,		/* Split current view. */
-	OPEN_RELOAD = 4,	/* Reload view even if it is the current. */
-	OPEN_REFRESH = 16,	/* Refresh view using previous command. */
-	OPEN_PREPARED = 32,	/* Open already prepared command. */
-};
-
 static void
 open_view(struct view *prev, enum request request, enum open_flags flags)
 {
@@ -2740,7 +2740,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	if (view->ops->open) {
 		if (view->pipe)
 			end_update(view, TRUE);
-		if (!view->ops->open(view)) {
+		if (!view->ops->open(view, flags)) {
 			report("Failed to load %s view", view->name);
 			return;
 		}
@@ -3502,7 +3502,7 @@ help_open_keymap(struct view *view, enum keymap keymap)
 }
 
 static bool
-help_open(struct view *view)
+help_open(struct view *view, enum open_flags flags)
 {
 	enum keymap keymap;
 
@@ -4077,7 +4077,7 @@ struct blame {
 };
 
 static bool
-blame_open(struct view *view)
+blame_open(struct view *view, enum open_flags flags)
 {
 	char path[SIZEOF_STR];
 	size_t i;
@@ -4642,7 +4642,7 @@ branch_open_visitor(void *data, const struct ref *ref)
 }
 
 static bool
-branch_open(struct view *view)
+branch_open(struct view *view, enum open_flags flags)
 {
 	const char *branch_log[] = {
 		"git", "log", "--no-color", "--pretty=raw",
@@ -4940,7 +4940,7 @@ status_update_onbranch(void)
  * info using git-diff-files(1), and finally untracked files using
  * git-ls-files(1). */
 static bool
-status_open(struct view *view)
+status_open(struct view *view, enum open_flags flags)
 {
 	reset_view(view);
 
