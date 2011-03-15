@@ -1454,8 +1454,6 @@ struct view_ops {
 	bool (*grep)(struct view *view, struct line *line);
 	/* Select line */
 	void (*select)(struct view *view, struct line *line);
-	/* Prepare view for loading */
-	bool (*prepare)(struct view *view);
 };
 
 static struct view_ops blame_ops;
@@ -2530,7 +2528,7 @@ prepare_update_file(struct view *view, const char *name)
 }
 
 static bool
-view_open(struct view *view, enum open_flags flags)
+begin_update(struct view *view, const char *dir, enum open_flags flags)
 {
 	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED));
 	bool refresh = flags & (OPEN_REFRESH | OPEN_PREPARED);
@@ -2542,12 +2540,8 @@ view_open(struct view *view, enum open_flags flags)
 		end_update(view, TRUE);
 
 	if (!refresh) {
-		if (view->ops->prepare) {
-			if (!view->ops->prepare(view))
-				return FALSE;
-		} else if (!prepare_io(view, NULL, view->ops->argv, TRUE)) {
+		if (!prepare_io(view, dir, view->ops->argv, TRUE))
 			return FALSE;
-		}
 
 		/* Put the current ref_* value to the view title ref
 		 * member. This is needed by the blob view. Most other
@@ -2563,6 +2557,12 @@ view_open(struct view *view, enum open_flags flags)
 	setup_update(view, view->id);
 
 	return TRUE;
+}
+
+static bool
+view_open(struct view *view, enum open_flags flags)
+{
+	return begin_update(view, NULL, flags);
 }
 
 static bool
@@ -3974,7 +3974,7 @@ tree_select(struct view *view, struct line *line)
 }
 
 static bool
-tree_prepare(struct view *view)
+tree_open(struct view *view, enum open_flags flags)
 {
 	if (view->lines == 0 && opt_prefix[0]) {
 		char *pos = opt_prefix;
@@ -3996,7 +3996,7 @@ tree_prepare(struct view *view)
 		opt_path[0] = 0;
 	}
 
-	return prepare_io(view, opt_cdup, view->ops->argv, TRUE);
+	return begin_update(view, opt_cdup, flags);
 }
 
 static const char *tree_argv[SIZEOF_ARG] = {
@@ -4006,13 +4006,12 @@ static const char *tree_argv[SIZEOF_ARG] = {
 static struct view_ops tree_ops = {
 	"file",
 	tree_argv,
-	view_open,
+	tree_open,
 	tree_read,
 	tree_draw,
 	tree_request,
 	tree_grep,
 	tree_select,
-	tree_prepare,
 };
 
 static bool
