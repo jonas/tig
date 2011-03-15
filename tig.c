@@ -1440,8 +1440,6 @@ enum open_flags {
 struct view_ops {
 	/* What type of content being displayed. Used in the title bar. */
 	const char *type;
-	/* Default command arguments. */
-	const char **argv;
 	/* Open and reads in all view content. */
 	bool (*open)(struct view *view, enum open_flags flags);
 	/* Read one line; updates view->line. */
@@ -2528,7 +2526,7 @@ prepare_update_file(struct view *view, const char *name)
 }
 
 static bool
-begin_update(struct view *view, const char *dir, enum open_flags flags)
+begin_update(struct view *view, const char *dir, const char **argv, enum open_flags flags)
 {
 	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED));
 	bool refresh = flags & (OPEN_REFRESH | OPEN_PREPARED);
@@ -2540,7 +2538,7 @@ begin_update(struct view *view, const char *dir, enum open_flags flags)
 		end_update(view, TRUE);
 
 	if (!refresh) {
-		if (!prepare_io(view, dir, view->ops->argv, TRUE))
+		if (!prepare_io(view, dir, argv, TRUE))
 			return FALSE;
 
 		/* Put the current ref_* value to the view title ref
@@ -2562,7 +2560,7 @@ begin_update(struct view *view, const char *dir, enum open_flags flags)
 static bool
 view_open(struct view *view, enum open_flags flags)
 {
-	return begin_update(view, NULL, flags);
+	return begin_update(view, NULL, NULL, flags);
 }
 
 static bool
@@ -3334,7 +3332,6 @@ pager_select(struct view *view, struct line *line)
 
 static struct view_ops pager_ops = {
 	"line",
-	NULL,
 	view_open,
 	pager_read,
 	pager_draw,
@@ -3343,9 +3340,15 @@ static struct view_ops pager_ops = {
 	pager_select,
 };
 
-static const char *log_argv[SIZEOF_ARG] = {
-	"git", "log", "--no-color", "--cc", "--stat", "-n100", "%(head)", NULL
-};
+static bool
+log_open(struct view *view, enum open_flags flags)
+{
+	static const char *log_argv[] = {
+		"git", "log", "--no-color", "--cc", "--stat", "-n100", "%(head)", NULL
+	};
+
+	return begin_update(view, NULL, log_argv, flags);
+}
 
 static enum request
 log_request(struct view *view, enum request request, struct line *line)
@@ -3362,8 +3365,7 @@ log_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops log_ops = {
 	"line",
-	log_argv,
-	view_open,
+	log_open,
 	pager_read,
 	pager_draw,
 	log_request,
@@ -3371,11 +3373,17 @@ static struct view_ops log_ops = {
 	pager_select,
 };
 
-static const char *diff_argv[SIZEOF_ARG] = {
-	"git", "show", "--pretty=fuller", "--no-color", "--root",
-		"--patch-with-stat", "--find-copies-harder", "-C",
-		"%(diffargs)", "%(commit)", "--", "%(fileargs)", NULL
-};
+static bool
+diff_open(struct view *view, enum open_flags flags)
+{
+	static const char *diff_argv[] = {
+		"git", "show", "--pretty=fuller", "--no-color", "--root",
+			"--patch-with-stat", "--find-copies-harder", "-C",
+			"%(diffargs)", "%(commit)", "--", "%(fileargs)", NULL
+	};
+
+	return begin_update(view, NULL, diff_argv, flags);
+}
 
 static bool
 diff_read(struct view *view, char *data)
@@ -3406,8 +3414,7 @@ diff_read(struct view *view, char *data)
 
 static struct view_ops diff_ops = {
 	"line",
-	diff_argv,
-	view_open,
+	diff_open,
 	diff_read,
 	pager_draw,
 	pager_request,
@@ -3537,7 +3544,6 @@ help_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops help_ops = {
 	"line",
-	NULL,
 	help_open,
 	NULL,
 	pager_draw,
@@ -3976,6 +3982,10 @@ tree_select(struct view *view, struct line *line)
 static bool
 tree_open(struct view *view, enum open_flags flags)
 {
+	static const char *tree_argv[] = {
+		"git", "ls-tree", "%(commit)", "%(directory)", NULL
+	};
+
 	if (view->lines == 0 && opt_prefix[0]) {
 		char *pos = opt_prefix;
 
@@ -3996,16 +4006,11 @@ tree_open(struct view *view, enum open_flags flags)
 		opt_path[0] = 0;
 	}
 
-	return begin_update(view, opt_cdup, flags);
+	return begin_update(view, opt_cdup, tree_argv, flags);
 }
-
-static const char *tree_argv[SIZEOF_ARG] = {
-	"git", "ls-tree", "%(commit)", "%(directory)", NULL
-};
 
 static struct view_ops tree_ops = {
 	"file",
-	tree_argv,
 	tree_open,
 	tree_read,
 	tree_draw,
@@ -4013,6 +4018,16 @@ static struct view_ops tree_ops = {
 	tree_grep,
 	tree_select,
 };
+
+static bool
+blob_open(struct view *view, enum open_flags flags)
+{
+	static const char *blob_argv[] = {
+		"git", "cat-file", "blob", "%(blob)", NULL
+	};
+
+	return begin_update(view, NULL, blob_argv, flags);
+}
 
 static bool
 blob_read(struct view *view, char *line)
@@ -4034,14 +4049,9 @@ blob_request(struct view *view, enum request request, struct line *line)
 	}
 }
 
-static const char *blob_argv[SIZEOF_ARG] = {
-	"git", "cat-file", "blob", "%(blob)", NULL
-};
-
 static struct view_ops blob_ops = {
 	"line",
-	blob_argv,
-	view_open,
+	blob_open,
 	blob_read,
 	pager_draw,
 	blob_request,
@@ -4485,7 +4495,6 @@ blame_select(struct view *view, struct line *line)
 
 static struct view_ops blame_ops = {
 	"line",
-	NULL,
 	blame_open,
 	blame_read,
 	blame_draw,
@@ -4688,7 +4697,6 @@ branch_select(struct view *view, struct line *line)
 
 static struct view_ops branch_ops = {
 	"branch",
-	NULL,
 	branch_open,
 	branch_read,
 	branch_draw,
@@ -5455,7 +5463,6 @@ status_grep(struct view *view, struct line *line)
 
 static struct view_ops status_ops = {
 	"file",
-	NULL,
 	status_open,
 	NULL,
 	status_draw,
@@ -5693,7 +5700,6 @@ stage_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops stage_ops = {
 	"line",
-	NULL,
 	view_open,
 	pager_read,
 	pager_draw,
@@ -5785,11 +5791,17 @@ struct commit {
 	struct graph_canvas graph;	/* Ancestry chain graphics. */
 };
 
-static const char *main_argv[SIZEOF_ARG] = {
-	"git", "log", "--no-color", "--pretty=raw", "--parents",
-		"--topo-order", "%(diffargs)", "%(revargs)",
-		"--", "%(fileargs)", NULL
-};
+static bool
+main_open(struct view *view, enum open_flags flags)
+{
+	static const char *main_argv[] = {
+		"git", "log", "--no-color", "--pretty=raw", "--parents",
+			"--topo-order", "%(diffargs)", "%(revargs)",
+			"--", "%(fileargs)", NULL
+	};
+
+	return begin_update(view, NULL, main_argv, flags);
+}
 
 static bool
 main_draw(struct view *view, struct line *line, unsigned int lineno)
@@ -5992,8 +6004,7 @@ main_select(struct view *view, struct line *line)
 
 static struct view_ops main_ops = {
 	"commit",
-	main_argv,
-	view_open,
+	main_open,
 	main_read,
 	main_draw,
 	main_request,
