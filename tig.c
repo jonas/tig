@@ -2691,6 +2691,29 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
  */
 
 static void
+load_view(struct view *view, enum open_flags flags)
+{
+	if (view->pipe)
+		end_update(view, TRUE);
+	if (!view->ops->open(view, flags)) {
+		report("Failed to load %s view", view->name);
+		return;
+	}
+	restore_view_position(view);
+
+	if (view->pipe && view->lines == 0) {
+		/* Clear the old view and let the incremental updating refill
+		 * the screen. */
+		werase(view->win);
+		view->p_restore = flags & (OPEN_RELOAD | OPEN_REFRESH);
+		report("");
+	} else if (view_is_displayed(view)) {
+		redraw_view(view);
+		report("");
+	}
+}
+
+static void
 open_view(struct view *prev, enum request request, enum open_flags flags)
 {
 	bool split = !!(flags & OPEN_SPLIT);
@@ -2732,16 +2755,6 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	    (nviews == 1 && base_view != display[0]))
 		resize_display();
 
-	if (view->ops->open) {
-		if (view->pipe)
-			end_update(view, TRUE);
-		if (!view->ops->open(view, flags)) {
-			report("Failed to load %s view", view->name);
-			return;
-		}
-		restore_view_position(view);
-	}
-
 	if (split && prev->lineno - prev->offset >= prev->height) {
 		/* Take the title line into account. */
 		int lines = prev->lineno - prev->offset - prev->height + 1;
@@ -2756,16 +2769,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		update_view_title(prev);
 	}
 
-	if (view->pipe && view->lines == 0) {
-		/* Clear the old view and let the incremental updating refill
-		 * the screen. */
-		werase(view->win);
-		view->p_restore = flags & (OPEN_RELOAD | OPEN_REFRESH);
-		report("");
-	} else if (view_is_displayed(view)) {
-		redraw_view(view);
-		report("");
-	}
+	load_view(view, flags);
 }
 
 static void
