@@ -2713,15 +2713,18 @@ load_view(struct view *view, enum open_flags flags)
 	}
 }
 
+#define refresh_view(view) load_view(view, OPEN_REFRESH)
+
 static void
 open_view(struct view *prev, enum request request, enum open_flags flags)
 {
 	bool split = !!(flags & OPEN_SPLIT);
-	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED));
-	bool nomaximize = !!(flags & OPEN_REFRESH);
+	bool reload = !!(flags & (OPEN_RELOAD | OPEN_PREPARED));
 	struct view *view = VIEW(request);
 	int nviews = displayed_views();
 	struct view *base_view = display[0];
+
+	assert(flags ^ OPEN_REFRESH);
 
 	if (view == prev && nviews == 1 && !reload) {
 		report("Already in %s view", view->name);
@@ -2737,7 +2740,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		display[1] = view;
 		current_view = 1;
 		view->parent = prev;
-	} else if (!nomaximize) {
+	} else {
 		/* Maximize the current view. */
 		memset(display, 0, sizeof(display));
 		current_view = 0;
@@ -3380,7 +3383,7 @@ log_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_REFRESH:
 		load_refs();
-		open_view(view, REQ_VIEW_LOG, OPEN_REFRESH);
+		refresh_view(view);
 		return REQ_NONE;
 	default:
 		return pager_request(view, request, line);
@@ -3556,8 +3559,7 @@ help_request(struct view *view, enum request request, struct line *line)
 		if (line->type == LINE_HELP_KEYMAP) {
 			help_keymap_hidden[line->other] =
 				!help_keymap_hidden[line->other];
-			view->p_restore = TRUE;
-			open_view(view, REQ_VIEW_HELP, OPEN_REFRESH);
+			refresh_view(view);
 		}
 
 		return REQ_NONE;
@@ -4427,7 +4429,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 			string_copy(opt_file, blame->commit->filename);
 			if (blame->lineno)
 				view->lineno = blame->lineno;
-			open_view(view, REQ_VIEW_BLAME, OPEN_REFRESH);
+			refresh_view(view);
 		}
 		break;
 
@@ -4440,7 +4442,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 			string_copy_rev(opt_ref, blame->commit->parent_id);
 			string_copy(opt_file, blame->commit->parent_filename);
 			setup_blame_parent_line(view, blame);
-			open_view(view, REQ_VIEW_BLAME, OPEN_REFRESH);
+			refresh_view(view);
 		}
 		break;
 
@@ -4583,7 +4585,7 @@ branch_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_REFRESH:
 		load_refs();
-		open_view(view, REQ_VIEW_BRANCH, OPEN_REFRESH);
+		refresh_view(view);
 		return REQ_NONE;
 
 	case REQ_TOGGLE_SORT_FIELD:
@@ -5394,7 +5396,7 @@ status_request(struct view *view, enum request request, struct line *line)
 		return request;
 	}
 
-	open_view(view, REQ_VIEW_STATUS, OPEN_RELOAD);
+	refresh_view(view);
 
 	return REQ_NONE;
 }
@@ -5674,8 +5676,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 		return request;
 	}
 
-	VIEW(REQ_VIEW_STATUS)->p_restore = TRUE;
-	open_view(view, REQ_VIEW_STATUS, OPEN_REFRESH);
+	refresh_view(view->parent);
 
 	/* Check whether the staged entry still exists, and close the
 	 * stage view if it doesn't. */
@@ -5684,7 +5685,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 		return REQ_VIEW_CLOSE;
 	}
 
-	open_view(view, REQ_VIEW_STAGE, OPEN_REFRESH);
+	refresh_view(view);
 
 	return REQ_NONE;
 }
@@ -5944,7 +5945,7 @@ main_request(struct view *view, enum request request, struct line *line)
 		break;
 	case REQ_REFRESH:
 		load_refs();
-		open_view(view, REQ_VIEW_MAIN, OPEN_REFRESH);
+		refresh_view(view);
 		break;
 	default:
 		return request;
