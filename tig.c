@@ -2500,18 +2500,18 @@ setup_update(struct view *view, const char *vid)
 }
 
 static bool
-prepare_io(struct view *view, const char *dir, const char *argv[], bool replace)
+prepare_update(struct view *view, const char *dir, const char *argv[])
 {
+	if (view->pipe)
+		io_done(view->pipe);
 	view->dir = dir;
-	return format_argv(&view->argv, argv, replace, !view->prev);
+	return argv_copy(&view->argv, argv);
 }
 
 static bool
 start_update(struct view *view, const char **argv, const char *dir)
 {
-	if (view->pipe)
-		io_done(view->pipe);
-	return prepare_io(view, dir, argv, FALSE) &&
+	return prepare_update(view, dir, argv) &&
 	       io_run(&view->io, IO_RD, dir, view->argv);
 }
 
@@ -2528,7 +2528,8 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 		end_update(view, TRUE);
 
 	if (!refresh) {
-		if (!prepare_io(view, dir, argv, TRUE))
+		view->dir = dir;
+		if (!format_argv(&view->argv, argv, TRUE, !view->prev))
 			return FALSE;
 
 		/* Put the current ref_* value to the view title ref
@@ -2779,9 +2780,7 @@ open_argv(struct view *prev, struct view *view, const char *argv[], const char *
 {
 	enum request request = view - views + REQ_OFFSET + 1;
 
-	if (view->pipe)
-		end_update(view, TRUE);
-	if (!prepare_io(view, dir, argv, FALSE)) {
+	if (!prepare_update(view, dir, argv)) {
 		report("Failed to open %s view: %s", view->name, io_strerror(&view->io));
 	} else {
 		open_view(prev, request, flags | OPEN_PREPARED);
