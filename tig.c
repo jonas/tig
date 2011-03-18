@@ -2390,7 +2390,7 @@ format_arg(const char *name)
 }
 
 static bool
-format_argv(const char ***dst_argv, const char *src_argv[], bool replace, bool first)
+format_argv(const char ***dst_argv, const char *src_argv[], bool first)
 {
 	char buf[SIZEOF_STR];
 	int argc;
@@ -2428,7 +2428,7 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool replace, bool f
 			int len = next - arg;
 			const char *value;
 
-			if (!next || !replace) {
+			if (!next) {
 				len = strlen(arg);
 				value = "";
 
@@ -2443,7 +2443,7 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool replace, bool f
 			if (!string_format_from(buf, &bufpos, "%.*s%s", len, arg, value))
 				return FALSE;
 
-			arg = next && replace ? strchr(next, ')') + 1 : NULL;
+			arg = next ? strchr(next, ')') + 1 : NULL;
 		}
 
 		if (!argv_append(dst_argv, buf))
@@ -2529,7 +2529,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 
 	if (!refresh) {
 		view->dir = dir;
-		if (!format_argv(&view->argv, argv, TRUE, !view->prev))
+		if (!format_argv(&view->argv, argv, !view->prev))
 			return FALSE;
 
 		/* Put the current ref_* value to the view title ref
@@ -2853,7 +2853,7 @@ open_run_request(enum request request)
 		return;
 	}
 
-	if (format_argv(&argv, req->argv, TRUE, FALSE))
+	if (format_argv(&argv, req->argv, FALSE))
 		open_external_viewer(argv, NULL);
 	if (argv)
 		argv_free(argv);
