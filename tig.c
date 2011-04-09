@@ -1435,6 +1435,7 @@ enum open_flags {
 	OPEN_RELOAD = 4,	/* Reload view even if it is the current. */
 	OPEN_REFRESH = 16,	/* Refresh view using previous command. */
 	OPEN_PREPARED = 32,	/* Open already prepared command. */
+	OPEN_EXTRA = 64,	/* Open extra data from command. */
 };
 
 struct view_ops {
@@ -2518,14 +2519,19 @@ start_update(struct view *view, const char **argv, const char *dir)
 static bool
 begin_update(struct view *view, const char *dir, const char **argv, enum open_flags flags)
 {
-	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED));
+	bool extra = !!(flags & (OPEN_EXTRA));
+	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED | OPEN_EXTRA));
 	bool refresh = flags & (OPEN_REFRESH | OPEN_PREPARED);
 
 	if (!reload && !strcmp(view->vid, view->id))
 		return TRUE;
 
-	if (view->pipe)
-		end_update(view, TRUE);
+	if (view->pipe) {
+		if (extra)
+			io_done(view->pipe);
+		else
+			end_update(view, TRUE);
+	}
 
 	if (!refresh) {
 		view->dir = dir;
@@ -2543,7 +2549,8 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	    !io_run(&view->io, IO_RD, view->dir, view->argv))
 		return FALSE;
 
-	setup_update(view, view->id);
+	if (!extra)
+		setup_update(view, view->id);
 
 	return TRUE;
 }
@@ -4111,6 +4118,7 @@ struct blame {
 static bool
 blame_open(struct view *view, enum open_flags flags)
 {
+	const char *file_argv[] = { opt_cdup, opt_file , NULL };
 	char path[SIZEOF_STR];
 	size_t i;
 
@@ -4120,13 +4128,13 @@ blame_open(struct view *view, enum open_flags flags)
 			return FALSE;
 	}
 
-	if (*opt_ref || !io_open(&view->io, "%s%s", opt_cdup, opt_file)) {
+	if (*opt_ref || !begin_update(view, opt_cdup, file_argv, flags)) {
 		const char *blame_cat_file_argv[] = {
 			"git", "cat-file", "blob", path, NULL
 		};
 
 		if (!string_format(path, "%s:%s", opt_ref, opt_file) ||
-		    !start_update(view, blame_cat_file_argv, opt_cdup))
+		    !begin_update(view, opt_cdup, blame_cat_file_argv, flags))
 			return FALSE;
 	}
 
@@ -4148,7 +4156,7 @@ blame_open(struct view *view, enum open_flags flags)
 			free(blame->commit);
 	}
 
-	setup_update(view, opt_file);
+	string_format(view->vid, "%s:%s", opt_ref, opt_file);
 	string_format(view->ref, "%s ...", opt_file);
 
 	return TRUE;
@@ -4242,7 +4250,7 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 		if (view->lines == 0 && !view->prev)
 			die("No blame exist for %s", view->vid);
 
-		if (view->lines == 0 || !start_update(view, blame_argv, opt_cdup)) {
+		if (view->lines == 0 || !begin_update(view, opt_cdup, blame_argv, OPEN_EXTRA)) {
 			report("Failed to load blame data");
 			return TRUE;
 		}
