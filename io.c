@@ -183,6 +183,9 @@ io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ..
 
 	io_init(io);
 
+	if (dir && !strcmp(dir, argv[0]))
+		return io_open(io, "%s%s", dir, argv[1]);
+
 	if ((type == IO_RD || type == IO_WR) && pipe(pipefds) < 0) {
 		io->error = errno;
 		return FALSE;

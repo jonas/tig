@@ -2542,9 +2542,6 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	if (view->argv && view->argv[0] &&
 	    !io_run(&view->io, IO_RD, view->dir, view->argv))
 		return FALSE;
-	else if (view->argv && !strcmp(view->argv[0], opt_cdup) &&
-		 !io_open(&view->io, "%s%s", opt_cdup, view->argv[1]))
-		return FALSE;
 
 	setup_update(view, view->id);
 
@@ -2795,6 +2792,7 @@ open_file(struct view *prev, struct view *view, const char *file, enum open_flag
 
 	if (view->pipe)
 		end_update(view, TRUE);
+	view->dir = opt_cdup;
 	if (!argv_copy(&view->argv, file_argv)) {
 		report("Failed to load %s: out of memory", file);
 	} else {
