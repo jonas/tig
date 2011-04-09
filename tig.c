@@ -2510,13 +2510,6 @@ prepare_update(struct view *view, const char *dir, const char *argv[])
 }
 
 static bool
-start_update(struct view *view, const char **argv, const char *dir)
-{
-	return prepare_update(view, dir, argv) &&
-	       io_run(&view->io, IO_RD, dir, view->argv);
-}
-
-static bool
 begin_update(struct view *view, const char *dir, const char **argv, enum open_flags flags)
 {
 	bool extra = !!(flags & (OPEN_EXTRA));
@@ -3730,11 +3723,10 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 		return TRUE;
 
 	} else if (!text) {
-		char *path = *opt_path ? opt_path : ".";
 		/* Find next entry to process */
 		const char *log_file[] = {
 			"git", "log", "--no-color", "--pretty=raw",
-				"--cc", "--raw", view->id, "--", path, NULL
+				"--cc", "--raw", view->id, "--", "%(directory)", NULL
 		};
 
 		if (!view->lines) {
@@ -3743,7 +3735,7 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 			return TRUE;
 		}
 
-		if (!start_update(view, log_file, opt_cdup)) {
+		if (!begin_update(view, opt_cdup, log_file, OPEN_EXTRA)) {
 			report("Failed to load tree data");
 			return TRUE;
 		}
@@ -4681,12 +4673,11 @@ branch_open(struct view *view, enum open_flags flags)
 			"--simplify-by-decoration", "--all", NULL
 	};
 
-	if (!start_update(view, branch_log, NULL)) {
+	if (!begin_update(view, NULL, branch_log, flags)) {
 		report("Failed to load branch data");
 		return TRUE;
 	}
 
-	setup_update(view, view->id);
 	branch_open_visitor(view, &branch_all);
 	foreach_ref(branch_open_visitor, view);
 	view->p_restore = TRUE;
