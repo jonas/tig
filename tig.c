@@ -2501,15 +2501,6 @@ setup_update(struct view *view, const char *vid)
 }
 
 static bool
-prepare_update(struct view *view, const char *dir, const char *argv[])
-{
-	if (view->pipe)
-		io_done(view->pipe);
-	view->dir = dir;
-	return argv_copy(&view->argv, argv);
-}
-
-static bool
 begin_update(struct view *view, const char *dir, const char **argv, enum open_flags flags)
 {
 	bool extra = !!(flags & (OPEN_EXTRA));
@@ -2777,7 +2768,11 @@ open_argv(struct view *prev, struct view *view, const char *argv[], const char *
 {
 	enum request request = view - views + REQ_OFFSET + 1;
 
-	if (!prepare_update(view, dir, argv)) {
+	if (view->pipe)
+		end_update(view, TRUE);
+	view->dir = dir;
+	
+	if (!argv_copy(&view->argv, argv)) {
 		report("Failed to open %s view: %s", view->name, io_strerror(&view->io));
 	} else {
 		open_view(prev, request, flags | OPEN_PREPARED);
@@ -2787,17 +2782,9 @@ open_argv(struct view *prev, struct view *view, const char *argv[], const char *
 static void
 open_file(struct view *prev, struct view *view, const char *file, enum open_flags flags)
 {
-	enum request request = view - views + REQ_OFFSET + 1;
 	const char *file_argv[] = { opt_cdup, file , NULL };
 
-	if (view->pipe)
-		end_update(view, TRUE);
-	view->dir = opt_cdup;
-	if (!argv_copy(&view->argv, file_argv)) {
-		report("Failed to load %s: out of memory", file);
-	} else {
-		open_view(prev, request, flags | OPEN_PREPARED);
-	}
+	open_argv(prev, view, file_argv, opt_cdup, flags); 
 }
 
 static void
