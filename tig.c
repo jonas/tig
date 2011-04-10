@@ -61,38 +61,21 @@ struct menu_item {
 
 static bool prompt_menu(const char *prompt, const struct menu_item *items, int *selected);
 
-enum graphic {
-	GRAPHIC_ASCII = 0,
-	GRAPHIC_DEFAULT,
-	GRAPHIC_UTF_8
-};
+#define GRAPHIC_ENUM(_) \
+	_(GRAPHIC, ASCII), \
+	_(GRAPHIC, DEFAULT), \
+	_(GRAPHIC, UTF_8)
 
-static const struct enum_map graphic_map[] = {
-#define GRAPHIC_(name) ENUM_MAP(#name, GRAPHIC_##name)
-	GRAPHIC_(ASCII),
-	GRAPHIC_(DEFAULT),
-	GRAPHIC_(UTF_8)
-#undef	GRAPHIC_
-};
+DEFINE_ENUM(graphic, GRAPHIC_ENUM);
 
-#define DATE_INFO \
-	DATE_(NO), \
-	DATE_(DEFAULT), \
-	DATE_(LOCAL), \
-	DATE_(RELATIVE), \
-	DATE_(SHORT)
+#define DATE_ENUM(_) \
+	_(DATE, NO), \
+	_(DATE, DEFAULT), \
+	_(DATE, LOCAL), \
+	_(DATE, RELATIVE), \
+	_(DATE, SHORT)
 
-enum date {
-#define DATE_(name) DATE_##name
-	DATE_INFO
-#undef	DATE_
-};
-
-static const struct enum_map date_map[] = {
-#define DATE_(name) ENUM_MAP(#name, DATE_##name)
-	DATE_INFO
-#undef	DATE_
-};
+DEFINE_ENUM(date, DATE_ENUM);
 
 struct time {
 	time_t sec;
@@ -154,23 +137,12 @@ mkdate(const struct time *time, enum date date)
 }
 
 
-#define AUTHOR_VALUES \
-	AUTHOR_(NO), \
-	AUTHOR_(FULL), \
-	AUTHOR_(ABBREVIATED)
+#define AUTHOR_ENUM(_) \
+	_(AUTHOR, NO), \
+	_(AUTHOR, FULL), \
+	_(AUTHOR, ABBREVIATED)
 
-enum author {
-#define AUTHOR_(name) AUTHOR_##name
-	AUTHOR_VALUES,
-#undef	AUTHOR_
-	AUTHOR_DEFAULT = AUTHOR_FULL
-};
-
-static const struct enum_map author_map[] = {
-#define AUTHOR_(name) ENUM_MAP(#name, AUTHOR_##name)
-	AUTHOR_VALUES
-#undef	AUTHOR_
-};
+DEFINE_ENUM(author, AUTHOR_ENUM);
 
 static const char *
 get_author_initials(const char *author)
@@ -369,7 +341,7 @@ get_request(const char *name)
 /* Option and state variables. */
 static enum graphic opt_line_graphics	= GRAPHIC_DEFAULT;
 static enum date opt_date		= DATE_DEFAULT;
-static enum author opt_author		= AUTHOR_DEFAULT;
+static enum author opt_author		= AUTHOR_FULL;
 static bool opt_rev_graph		= TRUE;
 static bool opt_line_number		= FALSE;
 static bool opt_show_refs		= TRUE;
@@ -659,40 +631,30 @@ static struct keybinding default_keybindings[] = {
 	{ 'e',		REQ_EDIT },
 };
 
-#define KEYMAP_INFO \
-	KEYMAP_(GENERIC), \
-	KEYMAP_(MAIN), \
-	KEYMAP_(DIFF), \
-	KEYMAP_(LOG), \
-	KEYMAP_(TREE), \
-	KEYMAP_(BLOB), \
-	KEYMAP_(BLAME), \
-	KEYMAP_(BRANCH), \
-	KEYMAP_(PAGER), \
-	KEYMAP_(HELP), \
-	KEYMAP_(STATUS), \
-	KEYMAP_(STAGE)
+#define KEYMAP_ENUM(_) \
+	_(KEYMAP, GENERIC), \
+	_(KEYMAP, MAIN), \
+	_(KEYMAP, DIFF), \
+	_(KEYMAP, LOG), \
+	_(KEYMAP, TREE), \
+	_(KEYMAP, BLOB), \
+	_(KEYMAP, BLAME), \
+	_(KEYMAP, BRANCH), \
+	_(KEYMAP, PAGER), \
+	_(KEYMAP, HELP), \
+	_(KEYMAP, STATUS), \
+	_(KEYMAP, STAGE)
 
-enum keymap {
-#define KEYMAP_(name) KEYMAP_##name
-	KEYMAP_INFO
-#undef	KEYMAP_
-};
+DEFINE_ENUM(keymap, KEYMAP_ENUM);
 
-static const struct enum_map keymap_table[] = {
-#define KEYMAP_(name) ENUM_MAP(#name, KEYMAP_##name)
-	KEYMAP_INFO
-#undef	KEYMAP_
-};
-
-#define set_keymap(map, name) map_enum(map, keymap_table, name)
+#define set_keymap(map, name) map_enum(map, keymap_map, name)
 
 struct keybinding_table {
 	struct keybinding *data;
 	size_t size;
 };
 
-static struct keybinding_table keybindings[ARRAY_SIZE(keymap_table)];
+static struct keybinding_table keybindings[ARRAY_SIZE(keymap_map)];
 
 static void
 add_keybinding(enum keymap keymap, enum request request, int key)
@@ -3486,7 +3448,7 @@ static struct view_ops diff_ops = {
  * Help backend
  */
 
-static bool help_keymap_hidden[ARRAY_SIZE(keymap_table)];
+static bool help_keymap_hidden[ARRAY_SIZE(keymap_map)];
 
 static bool
 help_open_keymap_title(struct view *view, enum keymap keymap)
@@ -3495,7 +3457,7 @@ help_open_keymap_title(struct view *view, enum keymap keymap)
 
 	line = add_line_format(view, LINE_HELP_KEYMAP, "[%c] %s bindings",
 			       help_keymap_hidden[keymap] ? '+' : '-',
-			       enum_name(keymap_table[keymap]));
+			       enum_name(keymap_map[keymap]));
 	if (line)
 		line->other = keymap;
 
@@ -3578,7 +3540,7 @@ help_open(struct view *view, enum open_flags flags)
 	add_line_text(view, "Quick reference for tig keybindings:", LINE_DEFAULT);
 	add_line_text(view, "", LINE_DEFAULT);
 
-	for (keymap = 0; keymap < ARRAY_SIZE(keymap_table); keymap++)
+	for (keymap = 0; keymap < ARRAY_SIZE(keymap_map); keymap++)
 		help_open_keymap(view, keymap);
 
 	return TRUE;

@@ -236,6 +236,13 @@ struct enum_map {
 
 #define ENUM_MAP(name, value) { name, STRING_SIZE(name), value }
 
+#define ENUM_SYM_MACRO(prefix, name)	prefix##_##name
+#define ENUM_MAP_MACRO(prefix, name)	ENUM_MAP(#name, ENUM_SYM_MACRO(prefix, name))
+
+#define DEFINE_ENUM(name, info) \
+	enum name { info(ENUM_SYM_MACRO) }; \
+	static const struct enum_map name##_map[] = { info(ENUM_MAP_MACRO) }
+
 static inline int
 string_enum_compare(const char *str1, const char *str2, int len)
 {
