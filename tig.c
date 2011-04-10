@@ -222,6 +222,24 @@ mkauthor(const char *text, int cols, enum author author)
 	return text;
 }
 
+static const char *
+mkmode(mode_t mode)
+{
+	if (S_ISDIR(mode))
+		return "drwxr-xr-x";
+	else if (S_ISLNK(mode))
+		return "lrwxrwxrwx";
+	else if (S_ISGITLINK(mode))
+		return "m---------";
+	else if (S_ISREG(mode) && mode & S_IXUSR)
+		return "-rwxr-xr-x";
+	else if (S_ISREG(mode))
+		return "-rw-r--r--";
+	else
+		return "----------";
+}
+
+
 /*
  * User requests
  */
@@ -1677,20 +1695,7 @@ draw_author(struct view *view, const char *author)
 static bool
 draw_mode(struct view *view, mode_t mode)
 {
-	const char *str;
-
-	if (S_ISDIR(mode))
-		str = "drwxr-xr-x";
-	else if (S_ISLNK(mode))
-		str = "lrwxrwxrwx";
-	else if (S_ISGITLINK(mode))
-		str = "m---------";
-	else if (S_ISREG(mode) && mode & S_IXUSR)
-		str = "-rwxr-xr-x";
-	else if (S_ISREG(mode))
-		str = "-rw-r--r--";
-	else
-		str = "----------";
+	const char *str = mkmode(mode);
 
 	return draw_field(view, LINE_MODE, str, STRING_SIZE("-rw-r--r-- "), FALSE);
 }
