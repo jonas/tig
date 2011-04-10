@@ -1712,6 +1712,43 @@ draw_lineno(struct view *view, unsigned int lineno)
 }
 
 static bool
+draw_refs(struct view *view, struct ref_list *refs)
+{
+	size_t i;
+
+	if (!opt_show_refs || !refs)
+		return FALSE;
+
+	for (i = 0; i < refs->size; i++) {
+		struct ref *ref = refs->refs[i];
+		enum line_type type;
+
+		if (ref->head)
+			type = LINE_MAIN_HEAD;
+		else if (ref->ltag)
+			type = LINE_MAIN_LOCAL_TAG;
+		else if (ref->tag)
+			type = LINE_MAIN_TAG;
+		else if (ref->tracked)
+			type = LINE_MAIN_TRACKED;
+		else if (ref->remote)
+			type = LINE_MAIN_REMOTE;
+		else
+			type = LINE_MAIN_REF;
+
+		if (draw_text(view, type, "[") ||
+		    draw_text(view, type, ref->name) ||
+		    draw_text(view, type, "]"))
+			return TRUE;
+
+		if (draw_text(view, LINE_DEFAULT, " "))
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+static bool
 draw_view_line(struct view *view, unsigned int lineno)
 {
 	struct line *line;
@@ -5794,35 +5831,8 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (opt_rev_graph && draw_graph(view, &commit->graph))
 		return TRUE;
 
-	if (opt_show_refs && commit->refs) {
-		size_t i;
-
-		for (i = 0; i < commit->refs->size; i++) {
-			struct ref *ref = commit->refs->refs[i];
-			enum line_type type;
-
-			if (ref->head)
-				type = LINE_MAIN_HEAD;
-			else if (ref->ltag)
-				type = LINE_MAIN_LOCAL_TAG;
-			else if (ref->tag)
-				type = LINE_MAIN_TAG;
-			else if (ref->tracked)
-				type = LINE_MAIN_TRACKED;
-			else if (ref->remote)
-				type = LINE_MAIN_REMOTE;
-			else
-				type = LINE_MAIN_REF;
-
-			if (draw_text(view, type, "[") ||
-			    draw_text(view, type, ref->name) ||
-			    draw_text(view, type, "]"))
-				return TRUE;
-
-			if (draw_text(view, LINE_DEFAULT, " "))
-				return TRUE;
-		}
-	}
+	if (draw_refs(view, commit->refs))
+		return TRUE;
 
 	draw_text(view, LINE_DEFAULT, commit->title);
 	return TRUE;
