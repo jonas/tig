@@ -207,6 +207,20 @@ get_author_initials(const char *author)
 	return initials;
 }
 
+#define author_trim(cols) (cols == 0 || cols > 5)
+
+static const char *
+mkauthor(const char *text, int cols, enum author author)
+{
+	bool trim = author_trim(cols);
+	bool abbreviate = author == AUTHOR_ABBREVIATED || !trim;
+
+	if (!author)
+		return "";
+	if (abbreviate && text)
+		return get_author_initials(text);
+	return text;
+}
 
 /*
  * User requests
@@ -1654,16 +1668,10 @@ draw_date(struct view *view, struct time *time)
 static bool
 draw_author(struct view *view, const char *author)
 {
-	bool trim = opt_author_cols == 0 || opt_author_cols > 5;
-	bool abbreviate = opt_author == AUTHOR_ABBREVIATED || !trim;
+	bool trim = author_trim(opt_author_cols);
+	const char *text = mkauthor(author, opt_author_cols, opt_author);
 
-	if (opt_author == AUTHOR_NO)
-		return FALSE;
-
-	if (abbreviate && author)
-		author = get_author_initials(author);
-
-	return draw_field(view, LINE_AUTHOR, author, opt_author_cols, trim);
+	return draw_field(view, LINE_AUTHOR, text, opt_author_cols, trim);
 }
 
 static bool
