@@ -1515,7 +1515,7 @@ static struct view views[] = {
 	VIEW_(BRANCH, "branch",	&branch_ops, TRUE,  ref_head),
 	VIEW_(HELP,   "help",   &help_ops,   FALSE, ""),
 	VIEW_(PAGER,  "pager",  &pager_ops,  FALSE, ""),
-	VIEW_(STATUS, "status", &status_ops, TRUE,  ""),
+	VIEW_(STATUS, "status", &status_ops, TRUE,  "status"),
 	VIEW_(STAGE,  "stage",	&stage_ops,  TRUE,  ""),
 };
 
