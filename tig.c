@@ -64,14 +64,14 @@ static bool prompt_menu(const char *prompt, const struct menu_item *items, int *
 enum graphic {
 	GRAPHIC_ASCII = 0,
 	GRAPHIC_DEFAULT,
-	GRAPHIC_UTF8
+	GRAPHIC_UTF_8
 };
 
 static const struct enum_map graphic_map[] = {
 #define GRAPHIC_(name) ENUM_MAP(#name, GRAPHIC_##name)
 	GRAPHIC_(ASCII),
 	GRAPHIC_(DEFAULT),
-	GRAPHIC_(UTF8)
+	GRAPHIC_(UTF_8)
 #undef	GRAPHIC_
 };
 

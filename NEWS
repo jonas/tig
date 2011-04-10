@@ -19,6 +19,7 @@ Improvements:
 Bug fixes:
 
  - Expand %(directory) to . for the root directory. (GH-3)
+ - Accept 'utf-8' for the line-graphics option as indicated in the docs.
 
 tig-0.17
 --------
