@@ -2720,6 +2720,7 @@ load_view(struct view *view, enum open_flags flags)
 }
 
 #define refresh_view(view) load_view(view, OPEN_REFRESH)
+#define reload_view(view) load_view(view, OPEN_RELOAD)
 
 static void
 split_view(struct view *prev, struct view *view)
@@ -4427,7 +4428,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 			string_copy(opt_file, blame->commit->filename);
 			if (blame->lineno)
 				view->lineno = blame->lineno;
-			refresh_view(view);
+			reload_view(view);
 		}
 		break;
 
@@ -4440,7 +4441,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 			string_copy_rev(opt_ref, blame->commit->parent_id);
 			string_copy(opt_file, blame->commit->parent_filename);
 			setup_blame_parent_line(view, blame);
-			refresh_view(view);
+			reload_view(view);
 		}
 		break;
 
