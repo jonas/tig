@@ -3978,7 +3978,7 @@ tree_grep(struct view *view, struct line *line)
 	struct tree_entry *entry = line->data;
 	const char *text[] = {
 		entry->name,
-		opt_author ? entry->author : "",
+		mkauthor(entry->author, opt_author_cols, opt_author),
 		mkdate(&entry->time, opt_date),
 		NULL
 	};
@@ -4693,7 +4693,7 @@ branch_grep(struct view *view, struct line *line)
 	struct branch *branch = line->data;
 	const char *text[] = {
 		branch->ref->name,
-		branch->author,
+		mkauthor(branch->author, opt_author_cols, opt_author),
 		NULL
 	};
 
@@ -5947,7 +5947,7 @@ main_grep(struct view *view, struct line *line)
 	struct commit *commit = line->data;
 	const char *text[] = {
 		commit->title,
-		opt_author ? commit->author : "",
+		mkauthor(commit->author, opt_author_cols, opt_author),
 		mkdate(&commit->time, opt_date),
 		NULL
 	};
