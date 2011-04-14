@@ -4125,11 +4125,10 @@ blame_open(struct view *view, enum open_flags flags)
 
 	if (*opt_ref || !begin_update(view, opt_cdup, file_argv, flags)) {
 		const char *blame_cat_file_argv[] = {
-			"git", "cat-file", "blob", path, NULL
+			"git", "cat-file", "blob", "%(ref):%(file)", NULL
 		};
 
-		if (!string_format(path, "%s:%s", opt_ref, opt_file) ||
-		    !begin_update(view, opt_cdup, blame_cat_file_argv, flags))
+		if (!begin_update(view, opt_cdup, blame_cat_file_argv, flags))
 			return FALSE;
 	}
 
