@@ -187,7 +187,7 @@ mkauthor(const char *text, int cols, enum author author)
 	bool trim = author_trim(cols);
 	bool abbreviate = author == AUTHOR_ABBREVIATED || !trim;
 
-	if (!author)
+	if (author == AUTHOR_NO)
 		return "";
 	if (abbreviate && text)
 		return get_author_initials(text);
@@ -1650,6 +1650,9 @@ draw_author(struct view *view, const char *author)
 {
 	bool trim = author_trim(opt_author_cols);
 	const char *text = mkauthor(author, opt_author_cols, opt_author);
+
+	if (opt_author == AUTHOR_NO)
+		return FALSE;
 
 	return draw_field(view, LINE_AUTHOR, text, opt_author_cols, trim);
 }
