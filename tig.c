@@ -4150,7 +4150,7 @@ blame_open(struct view *view, enum open_flags flags)
 			free(blame->commit);
 	}
 
-	string_format(view->vid, "%s:%s", opt_ref, opt_file);
+	string_format(view->vid, "%s", opt_file);
 	string_format(view->ref, "%s ...", opt_file);
 
 	return TRUE;
