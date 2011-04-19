@@ -133,6 +133,22 @@ name(type **mem, size_t size, size_t increase)					\
 	strncmp(str1, str2, STRING_SIZE(str2))
 
 static inline int
+ascii_toupper(int c)
+{
+	if (c >= 'a' && c <= 'z')
+		c &= ~0x20;
+	return c;
+}
+
+static inline int
+ascii_tolower(int c)
+{
+	if (c >= 'A' && c <= 'Z')
+		c |= 0x20;
+	return c;
+}
+
+static inline int
 suffixcmp(const char *str, int slen, const char *suffix)
 {
 	size_t len = slen >= 0 ? slen : strlen(str);
@@ -252,7 +268,7 @@ string_enum_compare(const char *str1, const char *str2, int len)
 
 	/* Diff-Header == DIFF_HEADER */
 	for (i = 0; i < len; i++) {
-		if (toupper(str1[i]) == toupper(str2[i]))
+		if (ascii_toupper(str1[i]) == ascii_toupper(str2[i]))
 			continue;
 
 		if (string_enum_sep(str1[i]) &&
@@ -275,7 +291,7 @@ enum_map_name(const char *name, size_t namelen)
 	int bufpos;
 
 	for (bufpos = 0; bufpos <= namelen; bufpos++) {
-		buf[bufpos] = tolower(name[bufpos]);
+		buf[bufpos] = ascii_tolower(name[bufpos]);
 		if (buf[bufpos] == '_')
 			buf[bufpos] = '-';
 	}
