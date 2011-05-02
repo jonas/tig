@@ -158,19 +158,27 @@ get_author_initials(const char *author)
 		unsigned char bytes;
 		size_t i;
 
-		while (is_initial_sep(*author))
+		while (author < end && is_initial_sep(*author))
 			author++;
 
 		bytes = utf8_char_length(author, end);
-		if (bytes < sizeof(initials) - 1 - pos) {
-			while (bytes--) {
-				initials[pos++] = *author++;
-			}
+		if (bytes >= sizeof(initials) - 1 - pos)
+			break;
+		while (bytes--) {
+			initials[pos++] = *author++;
 		}
 
-		for (i = pos; author < end && !is_initial_sep(*author); author++) {
-			if (i < sizeof(initials) - 1)
-				initials[i++] = *author;
+		i = pos;
+		while (author < end && !is_initial_sep(*author)) {
+			bytes = utf8_char_length(author, end);
+			if (bytes >= sizeof(initials) - 1 - i) {
+				while (author < end && !is_initial_sep(*author))
+					author++;
+				break;
+			}
+			while (bytes--) {
+				initials[i++] = *author++;
+			}
 		}
 
 		initials[i++] = 0;
