@@ -391,7 +391,9 @@ static const char **opt_blame_argv	= NULL;
 LINE(DIFF_HEADER,  "diff --git ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_CHUNK,   "@@",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(DIFF_ADD,	   "+",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
+LINE(DIFF_ADD2,	   " +",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(DIFF_DEL,	   "-",			COLOR_RED,	COLOR_DEFAULT,	0), \
+LINE(DIFF_DEL2,	   " -",		COLOR_RED,	COLOR_DEFAULT,	0), \
 LINE(DIFF_INDEX,	"index ",	  COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(DIFF_OLDMODE,	"old file mode ", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_NEWMODE,	"new file mode ", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
@@ -1027,7 +1029,7 @@ set_color(int *color, const char *name)
 	if (map_enum(color, color_map, name))
 		return TRUE;
 	if (!prefixcmp(name, "color"))
-		return parse_int(color, name + 5, 0, 255) == OK;
+		return parse_int(color, name + 5, 0, 255) == OPT_OK;
 	return FALSE;
 }
 
@@ -6914,7 +6916,7 @@ main(int argc, const char *argv[])
 			if (cmd && isdigit(*cmd)) {
 				int lineno = view->lineno + 1;
 
-				if (parse_int(&lineno, cmd, 1, view->lines + 1) == OK) {
+				if (parse_int(&lineno, cmd, 1, view->lines + 1) == OPT_OK) {
 					select_view_line(view, lineno - 1);
 					report("");
 				} else {
