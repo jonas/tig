@@ -1029,7 +1029,7 @@ set_color(int *color, const char *name)
 	if (map_enum(color, color_map, name))
 		return TRUE;
 	if (!prefixcmp(name, "color"))
-		return parse_int(color, name + 5, 0, 255) == OK;
+		return parse_int(color, name + 5, 0, 255) == OPT_OK;
 	return FALSE;
 }
 
@@ -6916,7 +6916,7 @@ main(int argc, const char *argv[])
 			if (cmd && isdigit(*cmd)) {
 				int lineno = view->lineno + 1;
 
-				if (parse_int(&lineno, cmd, 1, view->lines + 1) == OK) {
+				if (parse_int(&lineno, cmd, 1, view->lines + 1) == OPT_OK) {
 					select_view_line(view, lineno - 1);
 					report("");
 				} else {
