@@ -4582,7 +4582,7 @@ static bool
 branch_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct branch *branch = line->data;
-	enum line_type type = branch->ref->head ? LINE_MAIN_HEAD : LINE_DEFAULT;
+	enum line_type type = branch->ref == &branch_all ? LINE_DEFAULT : get_line_type_from_ref(branch->ref);
 
 	if (draw_date(view, &branch->time))
 		return TRUE;
@@ -4675,7 +4675,7 @@ branch_open_visitor(void *data, const struct ref *ref)
 	struct view *view = data;
 	struct branch *branch;
 
-	if (ref->tag || ref->ltag || ref->remote)
+	if (ref->tag || ref->ltag)
 		return TRUE;
 
 	branch = calloc(1, sizeof(*branch));
