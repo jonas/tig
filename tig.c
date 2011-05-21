@@ -496,6 +496,23 @@ get_line_type(const char *line)
 	return LINE_DEFAULT;
 }
 
+static enum line_type
+get_line_type_from_ref(const struct ref *ref)
+{
+	if (ref->head)
+		return LINE_MAIN_HEAD;
+	else if (ref->ltag)
+		return LINE_MAIN_LOCAL_TAG;
+	else if (ref->tag)
+		return LINE_MAIN_TAG;
+	else if (ref->tracked)
+		return LINE_MAIN_TRACKED;
+	else if (ref->remote)
+		return LINE_MAIN_REMOTE;
+
+	return LINE_MAIN_REF;
+}
+
 static inline int
 get_line_attr(enum line_type type)
 {
@@ -1709,20 +1726,7 @@ draw_refs(struct view *view, struct ref_list *refs)
 
 	for (i = 0; i < refs->size; i++) {
 		struct ref *ref = refs->refs[i];
-		enum line_type type;
-
-		if (ref->head)
-			type = LINE_MAIN_HEAD;
-		else if (ref->ltag)
-			type = LINE_MAIN_LOCAL_TAG;
-		else if (ref->tag)
-			type = LINE_MAIN_TAG;
-		else if (ref->tracked)
-			type = LINE_MAIN_TRACKED;
-		else if (ref->remote)
-			type = LINE_MAIN_REMOTE;
-		else
-			type = LINE_MAIN_REF;
+		enum line_type type = get_line_type_from_ref(ref);
 
 		if (draw_text(view, type, "[") ||
 		    draw_text(view, type, ref->name) ||
