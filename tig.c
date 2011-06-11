@@ -255,6 +255,8 @@ mkmode(mode_t mode)
 	REQ_(STATUS_REVERT,	"Revert file changes"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
 	REQ_(STAGE_NEXT,	"Find next chunk to stage"), \
+	REQ_(DIFF_CONTEXT_DOWN,	"Decrease the diff context"), \
+	REQ_(DIFF_CONTEXT_UP,	"Increase the diff context"), \
 	\
 	REQ_GROUP("Cursor navigation") \
 	REQ_(MOVE_UP,		"Move cursor one line up"), \
@@ -354,6 +356,8 @@ static bool opt_rev_graph		= TRUE;
 static bool opt_line_number		= FALSE;
 static bool opt_show_refs		= TRUE;
 static bool opt_untracked_dirs_content	= TRUE;
+static int opt_diff_context		= 3;
+static char opt_diff_context_arg[9]	= "";
 static int opt_num_interval		= 5;
 static double opt_hscroll		= 0.50;
 static double opt_scale_split_view	= 2.0 / 3.0;
@@ -382,6 +386,12 @@ static const char **opt_blame_argv	= NULL;
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strcmp(rev, get_ref_head()->id)))
 
+static inline void
+update_diff_context_arg(int diff_context)
+{
+	if (!string_format(opt_diff_context_arg, "-U%u", diff_context))
+		string_ncopy(opt_diff_context_arg, "-U3", 3); 
+}
 
 /*
  * Line-oriented content detection.
@@ -610,6 +620,8 @@ static struct keybinding default_keybindings[] = {
 	{ '!',		REQ_STATUS_REVERT },
 	{ 'M',		REQ_STATUS_MERGE },
 	{ '@',		REQ_STAGE_NEXT },
+	{ '[',		REQ_DIFF_CONTEXT_DOWN },
+	{ ']',		REQ_DIFF_CONTEXT_UP },
 
 	/* Cursor navigation */
 	{ 'k',		REQ_MOVE_UP },
@@ -1191,6 +1203,14 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "tab-size"))
 		return parse_int(&opt_tab_size, argv[2], 1, 1024);
+
+	if (!strcmp(argv[0], "diff-context")) {
+		enum option_code code = parse_int(&opt_diff_context, argv[2], 1, 999999);
+
+		if (code == OPT_OK)
+			update_diff_context_arg(opt_diff_context);
+		return code;
+	}
 
 	if (!strcmp(argv[0], "commit-encoding"))
 		return parse_string(opt_encoding, argv[2], sizeof(opt_encoding));
@@ -3030,6 +3050,11 @@ view_driver(struct view *view, enum request request)
 		report("Sorting is not yet supported for the %s view", view->name);
 		break;
 
+	case REQ_DIFF_CONTEXT_UP:
+	case REQ_DIFF_CONTEXT_DOWN:
+		report("Changing the diff context is not yet supported for the %s view", view->name);
+		break;
+
 	case REQ_SEARCH:
 	case REQ_SEARCH_BACK:
 		search_view(view, request);
@@ -3125,6 +3150,33 @@ sort_view(struct view *view, enum request request, struct sort_state *state,
 
 	qsort(view->line, view->lines, sizeof(*view->line), compare);
 	redraw_view(view);
+}
+
+static bool
+update_diff_context(enum request request)
+{
+	int diff_context = opt_diff_context;
+
+	switch (request) {
+	case REQ_DIFF_CONTEXT_UP:
+		opt_diff_context += 1;
+		update_diff_context_arg(opt_diff_context);
+		break;
+
+	case REQ_DIFF_CONTEXT_DOWN:
+		if (opt_diff_context == 0) {
+			report("Diff context cannot be less than zero");
+			break;
+		}
+		opt_diff_context -= 1;
+		update_diff_context_arg(opt_diff_context);
+		break;
+
+	default:
+		die("Not a diff context request");
+	}
+
+	return diff_context != opt_diff_context;
 }
 
 DEFINE_ALLOCATOR(realloc_authors, const char *, 256)
@@ -3413,7 +3465,8 @@ diff_open(struct view *view, enum open_flags flags)
 	static const char *diff_argv[] = {
 		"git", "show", "--pretty=fuller", "--no-color", "--root",
 			"--patch-with-stat", "--find-copies-harder", "-C",
-			"%(diffargs)", "%(commit)", "--", "%(fileargs)", NULL
+			opt_diff_context_arg, "%(diffargs)", "%(commit)", "--",
+			"%(fileargs)", NULL
 	};
 
 	return begin_update(view, NULL, diff_argv, flags);
@@ -4464,14 +4517,15 @@ blame_request(struct view *view, enum request request, struct line *line)
 			struct view *diff = VIEW(REQ_VIEW_DIFF);
 			const char *diff_index_argv[] = {
 				"git", "diff-index", "--root", "--patch-with-stat",
-					"-C", "-M", "HEAD", "--", view->vid, NULL
+					"-C", "-M", opt_diff_context_arg,
+					"HEAD", "--", view->vid, NULL
 			};
 
 			if (!*blame->commit->parent_id) {
 				diff_index_argv[1] = "diff";
 				diff_index_argv[2] = "--no-color";
-				diff_index_argv[6] = "--";
-				diff_index_argv[7] = "/dev/null";
+				diff_index_argv[7] = "--";
+				diff_index_argv[8] = "/dev/null";
 			}
 
 			open_argv(view, diff, diff_index_argv, NULL, flags);
@@ -4880,7 +4934,7 @@ error_out:
 /* Don't show unmerged entries in the staged section. */
 static const char *status_diff_index_argv[] = {
 	"git", "diff-index", "-z", "--diff-filter=ACDMRTXB",
-			     "--cached", "-M", "HEAD", NULL
+		"--cached", "-M", "HEAD", NULL
 };
 
 static const char *status_diff_files_argv[] = {
@@ -5637,6 +5691,12 @@ stage_request(struct view *view, enum request request, struct line *line)
 	case REQ_ENTER:
 		return pager_request(view, request, line);
 
+	case REQ_DIFF_CONTEXT_UP:
+	case REQ_DIFF_CONTEXT_DOWN:
+		if (!update_diff_context(request))
+			return REQ_NONE;
+		break;
+
 	default:
 		return request;
 	}
@@ -5660,23 +5720,24 @@ stage_open(struct view *view, enum open_flags flags)
 {
 	static const char *no_head_diff_argv[] = {
 		"git", "diff", "--no-color", "--patch-with-stat",
+			opt_diff_context_arg,
 			"--", "/dev/null", stage_status.new.name, NULL
 	};
 	static const char *index_show_argv[] = {
 		"git", "diff-index", "--root", "--patch-with-stat", "-C", "-M",
-			"--cached", "HEAD", "--",
+			"--cached", opt_diff_context_arg, "HEAD", "--",
 			stage_status.old.name, stage_status.new.name, NULL
 	};
 	static const char *files_show_argv[] = {
 		"git", "diff-files", "--root", "--patch-with-stat",
-			"-C", "-M", "--",
+			"-C", "-M", opt_diff_context_arg, "--",
 			stage_status.old.name, stage_status.new.name, NULL
 	};
 	/* Diffs for unmerged entries are empty when passing the new
 	 * path, so leave out the new path. */
 	static const char *files_unmerged_argv[] = {
 		"git", "diff-files", "--root", "--patch-with-stat",
-			"-C", "-M", "--",
+			"-C", "-M", opt_diff_context_arg, "--",
 			stage_status.old.name, NULL
 	};
 	static const char *file_argv[] = { opt_cdup, stage_status.new.name, NULL };
