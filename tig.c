@@ -1507,7 +1507,7 @@ static struct view views[] = {
 	VIEW_(HELP,   "help",   &help_ops,   FALSE, ""),
 	VIEW_(PAGER,  "pager",  &pager_ops,  FALSE, ""),
 	VIEW_(STATUS, "status", &status_ops, TRUE,  "status"),
-	VIEW_(STAGE,  "stage",	&stage_ops,  TRUE,  ""),
+	VIEW_(STAGE,  "stage",	&stage_ops,  TRUE,  "stage"),
 };
 
 #define VIEW(req) 	(&views[(req) - REQ_OFFSET - 1])
@@ -2548,7 +2548,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 			end_update(view, TRUE);
 	}
 
-	if (!refresh) {
+	if (!refresh && argv) {
 		view->dir = dir;
 		if (!format_argv(&view->argv, argv, !view->prev))
 			return FALSE;
@@ -2809,14 +2809,6 @@ open_argv(struct view *prev, struct view *view, const char *argv[], const char *
 	} else {
 		open_view(prev, request, flags | OPEN_PREPARED);
 	}
-}
-
-static void
-open_file(struct view *prev, struct view *view, const char *file, enum open_flags flags)
-{
-	const char *file_argv[] = { opt_cdup, file , NULL };
-
-	open_argv(prev, view, file_argv, opt_cdup, flags); 
 }
 
 static void
@@ -5070,13 +5062,7 @@ static enum request
 status_enter(struct view *view, struct line *line)
 {
 	struct status *status = line->data;
-	const char *oldpath = status ? status->old.name : NULL;
-	/* Diffs for unmerged entries are empty when passing the new
-	 * path, so leave it empty. */
-	const char *newpath = status && status->status != 'U' ? status->new.name : NULL;
-	const char *info;
 	enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
-	struct view *stage = VIEW(REQ_VIEW_STAGE);
 
 	if (line->type == LINE_STAT_NONE ||
 	    (!status && line[1].type == LINE_STAT_NONE)) {
@@ -5086,45 +5072,11 @@ status_enter(struct view *view, struct line *line)
 
 	switch (line->type) {
 	case LINE_STAT_STAGED:
-		if (is_initial_commit()) {
-			const char *no_head_diff_argv[] = {
-				"git", "diff", "--no-color", "--patch-with-stat",
-					"--", "/dev/null", newpath, NULL
-			};
-
-			open_argv(view, stage, no_head_diff_argv, opt_cdup, flags); 
-		} else {
-			const char *index_show_argv[] = {
-				"git", "diff-index", "--root", "--patch-with-stat",
-					"-C", "-M", "--cached", "HEAD", "--",
-					oldpath, newpath, NULL
-			};
-
-			open_argv(view, stage, index_show_argv, opt_cdup, flags);
-		}
-
-		if (status)
-			info = "Staged changes to %s";
-		else
-			info = "Staged changes";
-		break;
-
 	case LINE_STAT_UNSTAGED:
-	{
-		const char *files_show_argv[] = {
-			"git", "diff-files", "--root", "--patch-with-stat",
-				"-C", "-M", "--", oldpath, newpath, NULL
-		};
-
-		open_argv(view, stage, files_show_argv, opt_cdup, flags);
-		if (status)
-			info = "Unstaged changes to %s";
-		else
-			info = "Unstaged changes";
 		break;
-	}
+
 	case LINE_STAT_UNTRACKED:
-		if (!newpath) {
+		if (!status) {
 			report("No file to show");
 			return REQ_NONE;
 		}
@@ -5133,9 +5085,6 @@ status_enter(struct view *view, struct line *line)
 			report("Cannot display a directory");
 			return REQ_NONE;
 		}
-
-		open_file(view, stage, newpath, flags);
-		info = "Untracked file %s";
 		break;
 
 	case LINE_STAT_HEAD:
@@ -5145,18 +5094,16 @@ status_enter(struct view *view, struct line *line)
 		die("line type %d not handled in switch", line->type);
 	}
 
-	if (view_is_displayed(VIEW(REQ_VIEW_STAGE))) {
-		if (status) {
-			stage_status = *status;
-		} else {
-			memset(&stage_status, 0, sizeof(stage_status));
-		}
-
-		stage_line_type = line->type;
-		stage_chunks = 0;
-		string_format(VIEW(REQ_VIEW_STAGE)->ref, info, stage_status.new.name);
+	if (status) {
+		stage_status = *status;
+	} else {
+		memset(&stage_status, 0, sizeof(stage_status));
 	}
 
+	stage_line_type = line->type;
+	stage_chunks = 0;
+
+	open_view(view, REQ_VIEW_STAGE, flags); 
 	return REQ_NONE;
 }
 
@@ -5708,9 +5655,78 @@ stage_request(struct view *view, enum request request, struct line *line)
 	return REQ_NONE;
 }
 
+static bool
+stage_open(struct view *view, enum open_flags flags)
+{
+	static const char *no_head_diff_argv[] = {
+		"git", "diff", "--no-color", "--patch-with-stat",
+			"--", "/dev/null", stage_status.new.name, NULL
+	};
+	static const char *index_show_argv[] = {
+		"git", "diff-index", "--root", "--patch-with-stat", "-C", "-M",
+			"--cached", "HEAD", "--",
+			stage_status.old.name, stage_status.new.name, NULL
+	};
+	static const char *files_show_argv[] = {
+		"git", "diff-files", "--root", "--patch-with-stat",
+			"-C", "-M", "--",
+			stage_status.old.name, stage_status.new.name, NULL
+	};
+	/* Diffs for unmerged entries are empty when passing the new
+	 * path, so leave out the new path. */
+	static const char *files_unmerged_argv[] = {
+		"git", "diff-files", "--root", "--patch-with-stat",
+			"-C", "-M", "--",
+			stage_status.old.name, NULL
+	};
+	static const char *file_argv[] = { opt_cdup, stage_status.new.name, NULL };
+	const char **argv = NULL;
+	const char *info;
+
+	switch (stage_line_type) {
+	case LINE_STAT_STAGED:
+		if (is_initial_commit()) {
+			argv = no_head_diff_argv;
+		} else {
+			argv = index_show_argv;
+		}
+		if (stage_status.status)
+			info = "Staged changes to %s";
+		else
+			info = "Staged changes";
+		break;
+
+	case LINE_STAT_UNSTAGED:
+		if (stage_status.status != 'U')
+			argv = files_show_argv;
+		else
+			argv = files_unmerged_argv;
+		if (stage_status.status)
+			info = "Unstaged changes to %s";
+		else
+			info = "Unstaged changes";
+		break;
+
+	case LINE_STAT_UNTRACKED:
+		info = "Untracked file %s";
+		argv = file_argv;
+		break;
+
+	case LINE_STAT_HEAD:
+	default:
+		die("line type %d not handled in switch", stage_line_type);
+	}
+
+	string_format(view->ref, info, stage_status.new.name);
+	view->vid[0] = 0;
+	view->dir = opt_cdup;
+	return argv_copy(&view->argv, argv)
+	    && begin_update(view, NULL, NULL, flags);
+}
+
 static struct view_ops stage_ops = {
 	"line",
-	view_open,
+	stage_open,
 	pager_read,
 	pager_draw,
 	stage_request,

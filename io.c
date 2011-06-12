@@ -73,6 +73,9 @@ argv_append(const char ***argv, const char *arg)
 {
 	size_t argc = argv_size(*argv);
 
+	if (!*arg && argc > 0)
+		return TRUE;
+
 	if (!argv_realloc(argv, argc, 2))
 		return FALSE;
 
