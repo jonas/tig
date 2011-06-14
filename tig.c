@@ -603,6 +603,13 @@ static struct keybinding default_keybindings[] = {
 	{ 'R',		REQ_REFRESH },
 	{ KEY_F(5),	REQ_REFRESH },
 	{ 'O',		REQ_MAXIMIZE },
+	{ ',',		REQ_PARENT },
+
+	/* View specific */
+	{ 'u',		REQ_STATUS_UPDATE },
+	{ '!',		REQ_STATUS_REVERT },
+	{ 'M',		REQ_STATUS_MERGE },
+	{ '@',		REQ_STAGE_NEXT },
 
 	/* Cursor navigation */
 	{ 'k',		REQ_MOVE_UP },
@@ -650,11 +657,6 @@ static struct keybinding default_keybindings[] = {
 	{ 'I',		REQ_TOGGLE_SORT_ORDER },
 	{ 'i',		REQ_TOGGLE_SORT_FIELD },
 	{ ':',		REQ_PROMPT },
-	{ 'u',		REQ_STATUS_UPDATE },
-	{ '!',		REQ_STATUS_REVERT },
-	{ 'M',		REQ_STATUS_MERGE },
-	{ '@',		REQ_STAGE_NEXT },
-	{ ',',		REQ_PARENT },
 	{ 'e',		REQ_EDIT },
 };
 
