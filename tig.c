@@ -3273,6 +3273,16 @@ parse_author_line(char *ident, const char **author, struct time *time)
 	}
 }
 
+static struct line *
+find_prev_line_by_type(struct view *view, struct line *line, enum line_type type)
+{
+	for (; view->line < line; line--)
+		if (line->type == type)
+			return line;
+
+	return NULL;
+}
+
 /*
  * Pager backend
  */
@@ -5511,16 +5521,6 @@ stage_diff_write(struct io *io, struct line *line, struct line *end)
 	return TRUE;
 }
 
-static struct line *
-stage_diff_find(struct view *view, struct line *line, enum line_type type)
-{
-	for (; view->line < line; line--)
-		if (line->type == type)
-			return line;
-
-	return NULL;
-}
-
 static bool
 stage_apply_chunk(struct view *view, struct line *chunk, bool revert)
 {
@@ -5531,7 +5531,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, bool revert)
 	struct io io;
 	int argc = 3;
 
-	diff_hdr = stage_diff_find(view, chunk, LINE_DIFF_HEADER);
+	diff_hdr = find_prev_line_by_type(view, chunk, LINE_DIFF_HEADER);
 	if (!diff_hdr)
 		return FALSE;
 
@@ -5560,7 +5560,7 @@ stage_update(struct view *view, struct line *line)
 	struct line *chunk = NULL;
 
 	if (!is_initial_commit() && stage_line_type != LINE_STAT_UNTRACKED)
-		chunk = stage_diff_find(view, line, LINE_DIFF_CHUNK);
+		chunk = find_prev_line_by_type(view, line, LINE_DIFF_CHUNK);
 
 	if (chunk) {
 		if (!stage_apply_chunk(view, chunk, FALSE)) {
@@ -5594,7 +5594,7 @@ stage_revert(struct view *view, struct line *line)
 	struct line *chunk = NULL;
 
 	if (!is_initial_commit() && stage_line_type == LINE_STAT_UNSTAGED)
-		chunk = stage_diff_find(view, line, LINE_DIFF_CHUNK);
+		chunk = find_prev_line_by_type(view, line, LINE_DIFF_CHUNK);
 
 	if (chunk) {
 		if (!prompt_yesno("Are you sure you want to revert changes?"))
