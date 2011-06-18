@@ -4181,6 +4181,13 @@ struct blame {
 	char text[1];
 };
 
+struct blame_header {
+	char id[SIZEOF_REV];		/* SHA1 ID. */
+	size_t orig_lineno;
+	size_t lineno;
+	size_t group;
+};
+
 static bool
 blame_open(struct view *view, enum open_flags flags)
 {
@@ -4268,35 +4275,43 @@ parse_number(const char **posref, size_t *number, size_t min, size_t max)
 	return TRUE;
 }
 
-static struct blame_commit *
-parse_blame_commit(struct view *view, const char *text, int *blamed)
+static bool
+parse_blame_header(struct blame_header *header, const char *text, size_t max_lineno)
 {
-	struct blame_commit *commit;
-	struct blame *blame;
 	const char *pos = text + SIZEOF_REV - 2;
-	size_t orig_lineno = 0;
-	size_t lineno;
-	size_t group;
 
 	if (strlen(text) <= SIZEOF_REV || pos[1] != ' ')
-		return NULL;
+		return FALSE;
 
-	if (!parse_number(&pos, &orig_lineno, 1, 9999999) ||
-	    !parse_number(&pos, &lineno, 1, view->lines) ||
-	    !parse_number(&pos, &group, 1, view->lines - lineno + 1))
+	if (!parse_number(&pos, &header->orig_lineno, 1, 9999999) ||
+	    !parse_number(&pos, &header->lineno, 1, max_lineno) ||
+	    !parse_number(&pos, &header->group, 1, max_lineno - header->lineno + 1))
+		return FALSE;
+
+	return TRUE;
+}
+
+static struct blame_commit *
+read_blame_commit(struct view *view, const char *text, int *blamed)
+{
+	struct blame_header header;
+	struct blame_commit *commit;
+	struct blame *blame;
+
+	if (!parse_blame_header(&header, text, view->lines))
 		return NULL;
 
 	commit = get_blame_commit(view, text);
 	if (!commit)
 		return NULL;
 
-	*blamed += group;
-	while (group--) {
-		struct line *line = &view->line[lineno + group - 1];
+	*blamed += header.group;
+	while (header.group--) {
+		struct line *line = &view->line[header.lineno + header.group - 1];
 
 		blame = line->data;
 		blame->commit = commit;
-		blame->lineno = orig_lineno + group - 1;
+		blame->lineno = header.orig_lineno + header.group - 1;
 		line->dirty = 1;
 	}
 
@@ -4350,6 +4365,36 @@ match_blame_header(const char *name, char **line)
 }
 
 static bool
+parse_blame_info(struct blame_commit *commit, char *line)
+{
+	if (match_blame_header("author ", &line)) {
+		commit->author = get_author(line);
+
+	} else if (match_blame_header("author-time ", &line)) {
+		parse_timesec(&commit->time, line);
+
+	} else if (match_blame_header("author-tz ", &line)) {
+		parse_timezone(&commit->time, line);
+
+	} else if (match_blame_header("summary ", &line)) {
+		string_ncopy(commit->title, line, strlen(line));
+
+	} else if (match_blame_header("previous ", &line)) {
+		if (strlen(line) <= SIZEOF_REV)
+			return FALSE;
+		string_copy_rev(commit->parent_id, line);
+		line += SIZEOF_REV;
+		string_ncopy(commit->parent_filename, line, strlen(line));
+
+	} else if (match_blame_header("filename ", &line)) {
+		string_ncopy(commit->filename, line, strlen(line));
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+static bool
 blame_read(struct view *view, char *line)
 {
 	static struct blame_commit *commit = NULL;
@@ -4373,31 +4418,11 @@ blame_read(struct view *view, char *line)
 	}
 
 	if (!commit) {
-		commit = parse_blame_commit(view, line, &blamed);
+		commit = read_blame_commit(view, line, &blamed);
 		string_format(view->ref, "%s %2d%%", view->vid,
 			      view->lines ? blamed * 100 / view->lines : 0);
 
-	} else if (match_blame_header("author ", &line)) {
-		commit->author = get_author(line);
-
-	} else if (match_blame_header("author-time ", &line)) {
-		parse_timesec(&commit->time, line);
-
-	} else if (match_blame_header("author-tz ", &line)) {
-		parse_timezone(&commit->time, line);
-
-	} else if (match_blame_header("summary ", &line)) {
-		string_ncopy(commit->title, line, strlen(line));
-
-	} else if (match_blame_header("previous ", &line)) {
-		if (strlen(line) <= SIZEOF_REV)
-			return FALSE;
-		string_copy_rev(commit->parent_id, line);
-		line += SIZEOF_REV;
-		string_ncopy(commit->parent_filename, line, strlen(line));
-
-	} else if (match_blame_header("filename ", &line)) {
-		string_ncopy(commit->filename, line, strlen(line));
+	} else if (parse_blame_info(commit, line)) {
 		commit = NULL;
 	}
 
