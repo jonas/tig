@@ -366,6 +366,7 @@ static int opt_author_cols		= AUTHOR_COLS;
 static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
+static unsigned long opt_goto_line	= 0;
 static char opt_head[SIZEOF_REF]	= "";
 static char opt_remote[SIZEOF_REF]	= "";
 static char opt_encoding[20]		= "UTF-8";
@@ -3607,12 +3608,134 @@ diff_read(struct view *view, char *data)
 	return pager_read(view, data);
 }
 
+static bool
+diff_blame_line(const char *ref, const char *file, unsigned long lineno,
+		struct blame_header *header, struct blame_commit *commit)
+{
+	char line_arg[SIZEOF_STR];
+	const char *blame_argv[] = {
+		"git", "blame", "-p", line_arg, ref, "--", file, NULL
+	};
+	struct io io;
+	bool ok = FALSE;
+	char *buf;
+
+	if (!string_format(line_arg, "-L%d,+1", lineno))
+		return FALSE;
+
+	if (!io_run(&io, IO_RD, opt_cdup, blame_argv))
+		return FALSE;
+
+	while ((buf = io_get(&io, '\n', TRUE))) {
+		if (header) {
+			if (!parse_blame_header(header, buf, 9999999))
+				break;
+			header = NULL;
+
+		} else if (parse_blame_info(commit, buf)) {
+			ok = TRUE;
+			break;
+		}
+	}
+
+	if (io_error(&io))
+		ok = FALSE;
+
+	io_done(&io);
+	return ok;
+}
+
+static enum request
+diff_trace_origin(struct view *view, struct line *line)
+{
+	struct line *diff = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
+	struct line *chunk = find_prev_line_by_type(view, line, LINE_DIFF_CHUNK);
+	const char *chunk_data;
+	int chunk_marker = line->type == LINE_DIFF_DEL ? '-' : '+';
+	int lineno = 0;
+	const char *file = NULL;
+	char ref[SIZEOF_REF];
+	struct blame_header header;
+	struct blame_commit commit;
+
+	if (!diff || !chunk || chunk == line) {
+		report("The line to trace must be inside a diff chunk");
+		return REQ_NONE;
+	}
+
+	for (; diff < line && !file; diff++) {
+		const char *data = diff->data;
+
+		if (!prefixcmp(data, "--- a/")) {
+			file = data + STRING_SIZE("--- a/");
+			break;
+		}
+	}
+
+	if (diff == line || !file) {
+		report("Failed to read the file name");
+		return REQ_NONE;
+	}
+
+	chunk_data = chunk->data;
+
+	if (prefixcmp(chunk_data, "@@ -") ||
+	    !(chunk_data = strchr(chunk_data, chunk_marker)) ||
+	    parse_int(&lineno, chunk_data + 1, 0, 9999999) != OPT_OK) {
+		report("Failed to read the line number");
+		return REQ_NONE;
+	}
+
+	if (lineno == 0) {
+		report("This is the origin of the line");
+		return REQ_NONE;
+	}
+
+	for (chunk += 1; chunk < line; chunk++) {
+		if (chunk->type == LINE_DIFF_ADD) {
+			lineno += chunk_marker == '+';
+		} else if (chunk->type == LINE_DIFF_DEL) {
+			lineno += chunk_marker == '-';
+		} else {
+			lineno++;
+		}
+	}
+
+	if (chunk_marker == '+')
+		string_copy(ref, view->vid);
+	else
+		string_format(ref, "%s^", view->vid);
+
+	if (!diff_blame_line(ref, file, lineno, &header, &commit)) {
+		report("Failed to read blame data");
+		return REQ_NONE;
+	}
+
+	string_ncopy(opt_file, commit.filename, strlen(commit.filename));
+	string_copy(opt_ref, header.id);
+	opt_goto_line = header.orig_lineno - 1;
+
+	return REQ_VIEW_BLAME;
+}
+
+static enum request
+diff_request(struct view *view, enum request request, struct line *line)
+{
+	switch (request) {
+	case REQ_VIEW_BLAME:
+		return diff_trace_origin(view, line);
+
+	default:
+		return pager_request(view, request, line);
+	}
+}
+
 static struct view_ops diff_ops = {
 	"line",
 	diff_open,
 	diff_read,
 	pager_draw,
-	pager_request,
+	diff_request,
 	pager_grep,
 	pager_select,
 };
@@ -4383,6 +4506,12 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 			return TRUE;
 		}
 
+		if (opt_goto_line > 0) {
+			goto_view_line(view, 0, opt_goto_line);
+			opt_goto_line = 0;
+			redraw_view(view);
+		}
+
 		*read_file = FALSE;
 		return FALSE;
 
@@ -4542,6 +4671,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 			string_copy_rev(opt_ref, blame->commit->parent_id);
 			string_copy(opt_file, blame->commit->parent_filename);
 			setup_blame_parent_line(view, blame);
+			opt_goto_line = blame->lineno;
 			reload_view(view);
 		}
 		break;
