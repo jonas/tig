@@ -3284,6 +3284,104 @@ find_prev_line_by_type(struct view *view, struct line *line, enum line_type type
 }
 
 /*
+ * Blame
+ */
+
+struct blame_commit {
+	char id[SIZEOF_REV];		/* SHA1 ID. */
+	char title[128];		/* First line of the commit message. */
+	const char *author;		/* Author of the commit. */
+	struct time time;		/* Date from the author ident. */
+	char filename[128];		/* Name of file. */
+	char parent_id[SIZEOF_REV];	/* Parent/previous SHA1 ID. */
+	char parent_filename[128];	/* Parent/previous name of file. */
+};
+
+struct blame_header {
+	char id[SIZEOF_REV];		/* SHA1 ID. */
+	size_t orig_lineno;
+	size_t lineno;
+	size_t group;
+};
+
+static bool
+parse_number(const char **posref, size_t *number, size_t min, size_t max)
+{
+	const char *pos = *posref;
+
+	*posref = NULL;
+	pos = strchr(pos + 1, ' ');
+	if (!pos || !isdigit(pos[1]))
+		return FALSE;
+	*number = atoi(pos + 1);
+	if (*number < min || *number > max)
+		return FALSE;
+
+	*posref = pos;
+	return TRUE;
+}
+
+static bool
+parse_blame_header(struct blame_header *header, const char *text, size_t max_lineno)
+{
+	const char *pos = text + SIZEOF_REV - 2;
+
+	if (strlen(text) <= SIZEOF_REV || pos[1] != ' ')
+		return FALSE;
+
+	string_ncopy(header->id, text, SIZEOF_REV);
+
+	if (!parse_number(&pos, &header->orig_lineno, 1, 9999999) ||
+	    !parse_number(&pos, &header->lineno, 1, max_lineno) ||
+	    !parse_number(&pos, &header->group, 1, max_lineno - header->lineno + 1))
+		return FALSE;
+
+	return TRUE;
+}
+
+static bool
+match_blame_header(const char *name, char **line)
+{
+	size_t namelen = strlen(name);
+	bool matched = !strncmp(name, *line, namelen);
+
+	if (matched)
+		*line += namelen;
+
+	return matched;
+}
+
+static bool
+parse_blame_info(struct blame_commit *commit, char *line)
+{
+	if (match_blame_header("author ", &line)) {
+		commit->author = get_author(line);
+
+	} else if (match_blame_header("author-time ", &line)) {
+		parse_timesec(&commit->time, line);
+
+	} else if (match_blame_header("author-tz ", &line)) {
+		parse_timezone(&commit->time, line);
+
+	} else if (match_blame_header("summary ", &line)) {
+		string_ncopy(commit->title, line, strlen(line));
+
+	} else if (match_blame_header("previous ", &line)) {
+		if (strlen(line) <= SIZEOF_REV)
+			return FALSE;
+		string_copy_rev(commit->parent_id, line);
+		line += SIZEOF_REV;
+		string_ncopy(commit->parent_filename, line, strlen(line));
+
+	} else if (match_blame_header("filename ", &line)) {
+		string_ncopy(commit->filename, line, strlen(line));
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+/*
  * Pager backend
  */
 
@@ -4165,27 +4263,10 @@ static struct view_ops blob_ops = {
  *     reading output from git-blame.
  */
 
-struct blame_commit {
-	char id[SIZEOF_REV];		/* SHA1 ID. */
-	char title[128];		/* First line of the commit message. */
-	const char *author;		/* Author of the commit. */
-	struct time time;		/* Date from the author ident. */
-	char filename[128];		/* Name of file. */
-	char parent_id[SIZEOF_REV];	/* Parent/previous SHA1 ID. */
-	char parent_filename[128];	/* Parent/previous name of file. */
-};
-
 struct blame {
 	struct blame_commit *commit;
 	unsigned long lineno;
 	char text[1];
-};
-
-struct blame_header {
-	char id[SIZEOF_REV];		/* SHA1 ID. */
-	size_t orig_lineno;
-	size_t lineno;
-	size_t group;
 };
 
 static bool
@@ -4258,39 +4339,6 @@ get_blame_commit(struct view *view, const char *id)
 	}
 }
 
-static bool
-parse_number(const char **posref, size_t *number, size_t min, size_t max)
-{
-	const char *pos = *posref;
-
-	*posref = NULL;
-	pos = strchr(pos + 1, ' ');
-	if (!pos || !isdigit(pos[1]))
-		return FALSE;
-	*number = atoi(pos + 1);
-	if (*number < min || *number > max)
-		return FALSE;
-
-	*posref = pos;
-	return TRUE;
-}
-
-static bool
-parse_blame_header(struct blame_header *header, const char *text, size_t max_lineno)
-{
-	const char *pos = text + SIZEOF_REV - 2;
-
-	if (strlen(text) <= SIZEOF_REV || pos[1] != ' ')
-		return FALSE;
-
-	if (!parse_number(&pos, &header->orig_lineno, 1, 9999999) ||
-	    !parse_number(&pos, &header->lineno, 1, max_lineno) ||
-	    !parse_number(&pos, &header->group, 1, max_lineno - header->lineno + 1))
-		return FALSE;
-
-	return TRUE;
-}
-
 static struct blame_commit *
 read_blame_commit(struct view *view, const char *text, int *blamed)
 {
@@ -4350,48 +4398,6 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 		blame->text[linelen] = 0;
 		return add_line_data(view, blame, LINE_BLAME_ID) != NULL;
 	}
-}
-
-static bool
-match_blame_header(const char *name, char **line)
-{
-	size_t namelen = strlen(name);
-	bool matched = !strncmp(name, *line, namelen);
-
-	if (matched)
-		*line += namelen;
-
-	return matched;
-}
-
-static bool
-parse_blame_info(struct blame_commit *commit, char *line)
-{
-	if (match_blame_header("author ", &line)) {
-		commit->author = get_author(line);
-
-	} else if (match_blame_header("author-time ", &line)) {
-		parse_timesec(&commit->time, line);
-
-	} else if (match_blame_header("author-tz ", &line)) {
-		parse_timezone(&commit->time, line);
-
-	} else if (match_blame_header("summary ", &line)) {
-		string_ncopy(commit->title, line, strlen(line));
-
-	} else if (match_blame_header("previous ", &line)) {
-		if (strlen(line) <= SIZEOF_REV)
-			return FALSE;
-		string_copy_rev(commit->parent_id, line);
-		line += SIZEOF_REV;
-		string_ncopy(commit->parent_filename, line, strlen(line));
-
-	} else if (match_blame_header("filename ", &line)) {
-		string_ncopy(commit->filename, line, strlen(line));
-		return TRUE;
-	}
-
-	return FALSE;
 }
 
 static bool
