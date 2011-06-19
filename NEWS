@@ -13,7 +13,7 @@ Improvements:
 
  - Add support for blaming diff lines.
  - Add diff-context option and bindings to increase the diff context in
-   the stage view.
+   the diff and stage view.
  - (GH-6) Make blame configurable via extra options passed from the command
    line and blame-options setting from ~/.tigrc. For example:
    

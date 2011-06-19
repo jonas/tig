@@ -3725,6 +3725,13 @@ diff_request(struct view *view, enum request request, struct line *line)
 	case REQ_VIEW_BLAME:
 		return diff_trace_origin(view, line);
 
+	case REQ_DIFF_CONTEXT_UP:
+	case REQ_DIFF_CONTEXT_DOWN:
+		if (!update_diff_context(request))
+			return REQ_NONE;
+		reload_view(view);
+		return REQ_NONE;
+
 	default:
 		return pager_request(view, request, line);
 	}
