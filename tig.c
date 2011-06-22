@@ -4514,9 +4514,8 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 		}
 
 		if (opt_goto_line > 0) {
-			goto_view_line(view, 0, opt_goto_line);
+			select_view_line(view, opt_goto_line);
 			opt_goto_line = 0;
-			redraw_view(view);
 		}
 
 		*read_file = FALSE;
