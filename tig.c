@@ -6615,8 +6615,9 @@ compare_refs(const void *ref1_, const void *ref2_)
 		return ref2->head - ref1->head;
 	if (ref1->tracked != ref2->tracked)
 		return ref2->tracked - ref1->tracked;
+	/* Order remotes last. */
 	if (ref1->remote != ref2->remote)
-		return ref2->remote - ref1->remote;
+		return ref1->remote - ref2->remote;
 	return strcmp(ref1->name, ref2->name);
 }
 
@@ -6800,6 +6801,8 @@ load_refs(void)
 				list->refs[new++] = list->refs[old];
 		list->size = new;
 	}
+
+	qsort(refs, refs_size, sizeof(*refs), compare_refs);
 
 	return OK;
 }
