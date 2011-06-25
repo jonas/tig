@@ -11,6 +11,7 @@ Incompatibilities:
 
 Improvements:
 
+ - Naïvely color blame IDs to distinguish lines.
  - Add support for blaming diff lines.
  - Add diff-context option and bindings to increase the diff context in
    the diff and stage view.

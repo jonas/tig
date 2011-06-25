@@ -4577,11 +4577,25 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct blame *blame = line->data;
 	struct time *time = NULL;
 	const char *id = NULL, *author = NULL;
+	enum line_type id_type = LINE_BLAME_ID;
+	static const enum line_type blame_colors[] = {
+		LINE_GRAPH_LINE_0,
+		LINE_GRAPH_LINE_1,
+		LINE_GRAPH_LINE_2,
+		LINE_GRAPH_LINE_3,
+		LINE_GRAPH_LINE_4,
+		LINE_GRAPH_LINE_5,
+		LINE_GRAPH_LINE_6,
+	};
+
+#define BLAME_COLOR(i) \
+	(blame_colors[(i) % ARRAY_SIZE(blame_colors)])
 
 	if (blame->commit && *blame->commit->filename) {
 		id = blame->commit->id;
 		author = blame->commit->author;
 		time = &blame->commit->time;
+		id_type = BLAME_COLOR((long) blame->commit);
 	}
 
 	if (draw_date(view, time))
@@ -4590,7 +4604,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_author(view, author))
 		return TRUE;
 
-	if (draw_field(view, LINE_BLAME_ID, id, ID_COLS, FALSE))
+	if (draw_field(view, id_type, id, ID_COLS, FALSE))
 		return TRUE;
 
 	if (draw_lineno(view, lineno))
