@@ -5354,9 +5354,8 @@ status_enter(struct view *view, struct line *line)
 }
 
 static bool
-status_exists(struct status *status, enum line_type type)
+status_exists(struct view *view, struct status *status, enum line_type type)
 {
-	struct view *view = VIEW(REQ_VIEW_STATUS);
 	unsigned long lineno;
 
 	for (lineno = 0; lineno < view->lines; lineno++) {
@@ -5751,7 +5750,7 @@ stage_update(struct view *view, struct line *line)
 		}
 
 	} else if (!stage_status.status) {
-		view = VIEW(REQ_VIEW_STATUS);
+		view = view->parent;
 
 		for (line = view->line; line < view->line + view->lines; line++)
 			if (line->type == stage_line_type)
@@ -5887,8 +5886,8 @@ stage_request(struct view *view, enum request request, struct line *line)
 
 	/* Check whether the staged entry still exists, and close the
 	 * stage view if it doesn't. */
-	if (!status_exists(&stage_status, stage_line_type)) {
-		status_restore(VIEW(REQ_VIEW_STATUS));
+	if (!status_exists(view->parent, &stage_status, stage_line_type)) {
+		status_restore(view->parent);
 		return REQ_VIEW_CLOSE;
 	}
 
