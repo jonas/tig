@@ -6429,6 +6429,8 @@ get_input(int prompt_position)
 
 		} else {
 			input_mode = FALSE;
+			if(key == erasechar())
+				key = KEY_BACKSPACE;
 			return key;
 		}
 	}
@@ -6458,7 +6460,6 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 			break;
 
 		case KEY_BACKSPACE:
-		case 127:
 			if (pos > 0)
 				buf[--pos] = 0;
 			else
