@@ -25,6 +25,7 @@ Bug fixes:
  - Fix segfault when sorting the branch view by author.
  - Expand %(directory) to . for the root directory. (GH-3)
  - Accept 'utf-8' for the line-graphics option as indicated in the docs.
+ - Use erasechar() to check for the correct backspace character.
 
 tig-0.17
 --------
