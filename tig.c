@@ -7578,7 +7578,12 @@ main(int argc, const char *argv[])
 	}
 
 	if (codeset && strcmp(codeset, ENCODING_UTF8)) {
-		opt_iconv_out = iconv_open(codeset, ENCODING_UTF8);
+		char translit[SIZEOF_STR];
+
+		if (string_format(translit, "%s%s", codeset, ICONV_TRANSLIT))
+			opt_iconv_out = iconv_open(translit, ENCODING_UTF8);
+		else
+			opt_iconv_out = iconv_open(codeset, ENCODING_UTF8);
 		if (opt_iconv_out == ICONV_NONE)
 			die("Failed to initialize character set conversion");
 	}
