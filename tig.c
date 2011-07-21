@@ -460,6 +460,7 @@ LINE(STAT_UNTRACKED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(HELP_KEYMAP,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(HELP_GROUP,   "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(BLAME_ID,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+LINE(DIFF_STAT,		"",	  	COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(GRAPH_LINE_0, "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(GRAPH_LINE_1, "",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(GRAPH_LINE_2, "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
@@ -3582,8 +3583,94 @@ diff_open(struct view *view, enum open_flags flags)
 }
 
 static bool
+diff_common_read(struct view *view, char *data, bool *reading_diff_stat)
+{
+	if (reading_diff_stat) {
+		size_t len = strlen(data);
+		bool has_pipe = strchr(data, '|') != NULL;
+		bool has_histogram = data[len - 1] == '-' || data[len - 1] == '+';
+
+		if (has_pipe && has_histogram) {
+			return add_line_text(view, data, LINE_DIFF_STAT) != NULL;
+		} else {
+			*reading_diff_stat = FALSE;
+		}	
+
+	} else if (!strcmp(data, "---")) {
+		*reading_diff_stat = TRUE;
+	}
+
+	return pager_read(view, data);
+}
+
+static enum request
+diff_common_enter(struct view *view, enum request request, struct line *line)
+{
+	if (line->type == LINE_DIFF_STAT) {
+		int file_number = 0;
+
+		do {
+			file_number++;
+			line--;
+		} while (line >= view->line && line->type == LINE_DIFF_STAT);
+
+		while (line < view->line + view->lines) {
+			if (line->type == LINE_DIFF_HEADER) {
+				if (file_number == 1) {
+					break;
+				}
+				file_number--;
+			}
+			line++;
+		}
+
+
+		select_view_line(view, line - view->line);
+		return REQ_NONE;
+
+	} else {
+		return pager_request(view, request, line);
+	}
+}
+
+static void 
+diff_common_draw_part(struct view *view, enum line_type *type, char **text, char c, enum line_type next_type)
+{
+	char *sep = strchr(*text, c);
+
+	if (sep != NULL) {
+		*sep = 0;
+		draw_text(view, *type, *text);
+		*sep = c;
+		*text = sep;
+		*type = next_type;
+	}
+}
+
+static bool
+diff_common_draw(struct view *view, struct line *line, unsigned int lineno)
+{
+	char *text = line->data;
+	enum line_type type = line->type;
+
+	if (opt_line_number && draw_lineno(view, lineno))
+		return TRUE;
+
+	if (type == LINE_DIFF_STAT) {
+		diff_common_draw_part(view, &type, &text, '|', LINE_DEFAULT);
+		diff_common_draw_part(view, &type, &text, '+', LINE_DIFF_ADD);
+		diff_common_draw_part(view, &type, &text, '-', LINE_DIFF_DEL);
+	}
+
+	draw_text(view, type, text);
+	return TRUE;
+}
+
+static bool
 diff_read(struct view *view, char *data)
 {
+	static bool reading_diff_stat = FALSE;
+
 	if (!data) {
 		/* Fall back to retry if no diff will be shown. */
 		if (view->lines == 0 && opt_file_argv) {
@@ -3605,7 +3692,7 @@ diff_read(struct view *view, char *data)
 		return TRUE;
 	}
 
-	return pager_read(view, data);
+	return diff_common_read(view, data, &reading_diff_stat);
 }
 
 static bool
@@ -3732,8 +3819,24 @@ diff_request(struct view *view, enum request request, struct line *line)
 		reload_view(view);
 		return REQ_NONE;
 
+	case REQ_ENTER:
+		return diff_common_enter(view, request, line);
+
 	default:
 		return pager_request(view, request, line);
+	}
+}
+
+static void
+diff_select(struct view *view, struct line *line)
+{
+	if (line->type == LINE_DIFF_STAT) {
+		const char *key = get_key(KEYMAP_DIFF, REQ_ENTER);
+
+		string_format(view->ref, "Press '%s' to jump to file diff", key);
+	} else {
+		string_ncopy(view->ref, view->id, strlen(view->id));
+		return pager_select(view, line);
 	}
 }
 
@@ -3741,10 +3844,10 @@ static struct view_ops diff_ops = {
 	"line",
 	diff_open,
 	diff_read,
-	pager_draw,
+	diff_common_draw,
 	diff_request,
 	pager_grep,
-	pager_select,
+	diff_select,
 };
 
 /*
@@ -5870,7 +5973,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 		return request;
 
 	case REQ_ENTER:
-		return pager_request(view, request, line);
+		return diff_common_enter(view, request, line);
 
 	case REQ_DIFF_CONTEXT_UP:
 	case REQ_DIFF_CONTEXT_DOWN:
@@ -5966,11 +6069,22 @@ stage_open(struct view *view, enum open_flags flags)
 	    && begin_update(view, NULL, NULL, flags);
 }
 
+static bool
+stage_read(struct view *view, char *data)
+{
+	static bool reading_diff_stat = FALSE;
+
+	if (data && diff_common_read(view, data, &reading_diff_stat))
+		return TRUE;
+
+	return pager_read(view, data);
+}
+
 static struct view_ops stage_ops = {
 	"line",
 	stage_open,
-	pager_read,
-	pager_draw,
+	stage_read,
+	diff_common_draw,
 	stage_request,
 	pager_grep,
 	pager_select,
