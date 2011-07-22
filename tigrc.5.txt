@@ -443,7 +443,14 @@ setting the *default* color option.
 .Main view colors
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|main-revgraph		|The revision graph.
+|graph-commit		|The commit dot in the revisino graph.
+|graph-line-0		|First graph line color.
+|graph-line-1		|2nd graph line color.
+|graph-line-2		|3rd graph line color.
+|graph-line-3		|4th graph line color.
+|graph-line-4		|5th graph line color.
+|graph-line-5		|6th graph line color.
+|graph-line-6		|7th graph line color.
 |main-commit		|The commit comment.
 |main-head		|Label of the current branch.
 |main-remote		|Label of a remote.
