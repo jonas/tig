@@ -443,7 +443,10 @@ setting the *default* color option.
 .Main view colors
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|main-revgraph		|The revision graph.
+|graph-commit		|The commit dot in the revisino graph.
+|palette-[0-6]		|7 different colors,
+used for distinguishing branches or commits.
+example: palette-0 = red
 |main-commit		|The commit comment.
 |main-head		|Label of the current branch.
 |main-remote		|Label of a remote.
