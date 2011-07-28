@@ -7323,8 +7323,11 @@ main(int argc, const char *argv[])
 
 				if (!argv_from_string(argv, &argc, cmd)) {
 					report("Too many arguments");
+				} else if (!format_argv(&next->argv, argv, FALSE)) {
+					report("Argument formatting failed");
 				} else {
-					open_argv(view, next, argv, NULL, OPEN_DEFAULT);
+					next->dir = NULL;
+					open_view(view, REQ_VIEW_PAGER, OPEN_PREPARED);
 				}
 			}
 

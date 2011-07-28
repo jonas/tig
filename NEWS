@@ -23,6 +23,7 @@ Improvements:
 
 Bug fixes:
 
+ - Expand browsing state variables for prompt. (LP #694780, Debian #635546)
  - Fix segfault when sorting the branch view by author.
  - Expand %(directory) to . for the root directory. (GH-3)
  - Accept 'utf-8' for the line-graphics option as indicated in the docs.
