@@ -2593,12 +2593,6 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 }
 
 static bool
-view_open(struct view *view, enum open_flags flags)
-{
-	return begin_update(view, NULL, NULL, flags);
-}
-
-static bool
 update_view(struct view *view)
 {
 	char out_buffer[BUFSIZ * 2];
@@ -3526,9 +3520,15 @@ pager_select(struct view *view, struct line *line)
 	}
 }
 
+static bool
+pager_open(struct view *view, enum open_flags flags)
+{
+	return begin_update(view, NULL, NULL, flags);
+}
+
 static struct view_ops pager_ops = {
 	"line",
-	view_open,
+	pager_open,
 	pager_read,
 	pager_draw,
 	pager_request,
