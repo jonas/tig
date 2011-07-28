@@ -3626,6 +3626,7 @@ diff_common_enter(struct view *view, enum request request, struct line *line)
 
 
 		select_view_line(view, line - view->line);
+		report("");
 		return REQ_NONE;
 
 	} else {
