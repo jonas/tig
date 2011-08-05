@@ -6194,6 +6194,9 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (!commit->author)
 		return FALSE;
 
+	if (opt_line_number && draw_lineno(view, lineno))
+		return TRUE;
+
 	if (draw_date(view, &commit->time))
 		return TRUE;
 
