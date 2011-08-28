@@ -443,7 +443,7 @@ setting the *default* color option.
 .Main view colors
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|graph-commit		|The commit dot in the revisino graph.
+|graph-commit		|The commit dot in the revising graph.
 |palette-[0-6]		|7 different colors,
 used for distinguishing branches or commits.
 example: palette-0 = red

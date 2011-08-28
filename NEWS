@@ -1,8 +1,8 @@
 Release notes
 =============
 
-master
-------
+tig-0.18
+--------
 
 Incompatibilities:
 
@@ -13,6 +13,7 @@ Improvements:
 
  - Pressing enter on diff stat file lines will jump to file's diff.
  - Naïvely color blame IDs to distinguish lines.
+ - Document palette color options used for revision graph and blame IDs.
  - Add support for blaming diff lines.
  - Add diff-context option and bindings to increase the diff context in
    the diff and stage view.
