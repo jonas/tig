@@ -2,12 +2,12 @@
 .\"     Title: tig
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 03/06/2011
+.\"      Date: 08/28/2011
 .\"    Manual: Tig Manual
-.\"    Source: Tig 0.17
+.\"    Source: Tig 0.18
 .\"  Language: English
 .\"
-.TH "TIG" "1" "03/06/2011" "Tig 0\&.17" "Tig Manual"
+.TH "TIG" "1" "08/28/2011" "Tig 0\&.18" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -34,7 +34,7 @@ tig \- text\-mode interface for git
 .nf
 tig        [options] [revisions] [\-\-] [paths]
 tig show   [options] [revisions] [\-\-] [paths]
-tig blame  [rev] path
+tig blame  [options] [rev] path
 tig status
 tig <      [git command output]
 .fi
@@ -52,12 +52,12 @@ Command line options recognized by tig include all valid git\-log(1) and git\-di
 .PP
 show
 .RS 4
-Open diff view using the given git show options\&.
+Open diff view using the given git\-show(1) options\&.
 .RE
 .PP
 blame
 .RS 4
-Show given file annotated or blamed by commits\&. Optionally limited from given revision\&.
+Show given file annotated by commits\&. Takes zero or more git\-blame(1) options\&. Optionally limited from given revision\&.
 .RE
 .PP
 status

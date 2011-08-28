@@ -2,12 +2,12 @@
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 03/06/2011
+.\"      Date: 08/28/2011
 .\"    Manual: Tig Manual
-.\"    Source: Tig 0.17
+.\"    Source: Tig 0.18
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "03/06/2011" "Tig 0\&.17" "Tig Manual"
+.TH "TIGRC" "5" "08/28/2011" "Tig 0\&.18" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -73,6 +73,7 @@ set show\-line\-numbers = no      # Show line numbers?
 set line\-number\-interval = 5    # Interval between line numbers
 set commit\-encoding = "UTF\-8"   # Commit encoding
 set horizontal\-scroll = 33%     # Scroll 33% of the view width
+set blame\-options = \-C \-C \-C    # Blame lines from other files
 .fi
 .if n \{\
 .RE
@@ -121,29 +122,20 @@ These values are composites of the above types\&. The valid values are specified
 .sp
 The following variables can be set:
 .PP
-\fIshow\-rev\-graph\fR (bool)
-.RS 4
-Whether to show revision graph in the main view on start\-up\&. Can be toggled\&. See also line\-graphics options\&.
-.RE
-.PP
-\fIshow\-refs\fR (bool)
-.RS 4
-Whether to show references (branches, tags, and remotes) in the main view on start\-up\&. Can be toggled\&.
-.RE
-.PP
-\fIshow\-author\fR (mixed) ["abbreviated" | "default" | bool]
-.RS 4
-How to display author names\&. If set to "abbreviated" author initials will be shown\&. Can be toggled\&.
-.RE
-.PP
-\fIshow\-date\fR (mixed) ["relative" | "short" | "default" | "local" | bool]
-.RS 4
-Whether and how to show date\&. If set to "relative" a relative date will be used, e\&.g\&. "2 minutes ago"\&. If set to "short" no time information is shown\&. If set to "local", localtime(3) is used\&. Can be toggled\&.
-.RE
-.PP
 \fIauthor\-width\fR (int)
 .RS 4
 Width of the author column\&. When set to 5 or below, the author name will be abbreviated to the author\(cqs initials\&.
+.RE
+.PP
+\fIblame\-options\fR (string)
+.RS 4
+A space separated string of extra blame options\&. Can be used for telling git\-blame(1) how to detect the origin of lines\&. The value is ignored when tig is started in blame mode and given blame options on the command line\&.
+.RE
+.PP
+\fIcommit\-encoding\fR (string)
+.RS 4
+The encoding used for commits\&. The default is UTF\-8\&. Note this option is shadowed by the "i18n\&.commitencoding" option in
+\&.git/config\&.
 .RE
 .PP
 \fIline\-graphics\fR (mixed) [ "ascii" | "default" | "utf\-8" | bool]
@@ -160,11 +152,6 @@ or the
 command line option\&. The default is to number every line\&.
 .RE
 .PP
-\fItab\-size\fR (int)
-.RS 4
-Number of spaces per tab\&. The default is 8 spaces\&.
-.RE
-.PP
 \fIhorizontal\-scroll\fR (mixed)
 .RS 4
 Interval to scroll horizontally in each step\&. Can be specified either as the number of columns, e\&.g\&.
@@ -172,6 +159,26 @@ Interval to scroll horizontally in each step\&. Can be specified either as the n
 \fI33%\fR, where the maximum is 100%\&. For percentages it is always ensured that at least one column is scrolled\&. The default is to scroll
 \fI50%\fR
 of the view width\&.
+.RE
+.PP
+\fIshow\-author\fR (mixed) ["abbreviated" | "default" | bool]
+.RS 4
+How to display author names\&. If set to "abbreviated" author initials will be shown\&. Can be toggled\&.
+.RE
+.PP
+\fIshow\-date\fR (mixed) ["relative" | "short" | "default" | "local" | bool]
+.RS 4
+Whether and how to show date\&. If set to "relative" a relative date will be used, e\&.g\&. "2 minutes ago"\&. If set to "short" no time information is shown\&. If set to "local", localtime(3) is used\&. Can be toggled\&.
+.RE
+.PP
+\fIshow\-refs\fR (bool)
+.RS 4
+Whether to show references (branches, tags, and remotes) in the main view on start\-up\&. Can be toggled\&.
+.RE
+.PP
+\fIshow\-rev\-graph\fR (bool)
+.RS 4
+Whether to show revision graph in the main view on start\-up\&. Can be toggled\&. See also line\-graphics options\&.
 .RE
 .PP
 \fIsplit\-view\-height\fR (mixed)
@@ -182,17 +189,21 @@ Height of the lower view in a split view\&. Can be specified either as the numbe
 \fI66%\fR\&.
 .RE
 .PP
-\fIcommit\-encoding\fR (string)
-.RS 4
-The encoding used for commits\&. The default is UTF\-8\&. Note this option is shadowed by the "i18n\&.commitencoding" option in
-\&.git/config\&.
-.RE
-.PP
 \fIstatus\-untracked\-dirs\fR (bool)
 .RS 4
 Show untracked directories contents in the status view (analog to
 git ls\-files \-\-directory
 option\&. On by default\&.
+.RE
+.PP
+\fItab\-size\fR (int)
+.RS 4
+Number of spaces per tab\&. The default is 8 spaces\&.
+.RE
+.PP
+\fIdiff\-context\fR (int)
+.RS 4
+Number of context lines to show for diffs\&.
 .RE
 .SH "BIND COMMAND"
 .sp
@@ -588,6 +599,8 @@ T}
 tab(:);
 lt lt
 lt lt
+lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -609,6 +622,20 @@ stage\-next
 T}:T{
 .sp
 Find next chunk to stage
+T}
+T{
+.sp
+diff\-context\-up
+T}:T{
+.sp
+Increase the diff context
+T}
+T{
+.sp
+diff\-context\-down
+T}:T{
+.sp
+Decrease the diff context
 T}
 .TE
 .sp 1
@@ -1097,13 +1124,21 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
-main\-revgraph
+graph\-commit
 T}:T{
 .sp
-The revision graph\&.
+The commit dot in the revising graph\&.
+T}
+T{
+.sp
+palette\-[0\-6]
+T}:T{
+.sp
+7 different colors, used for distinguishing branches or commits\&. example: palette\-0 = red
 T}
 T{
 .sp
