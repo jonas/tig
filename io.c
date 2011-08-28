@@ -73,6 +73,9 @@ argv_append(const char ***argv, const char *arg)
 {
 	size_t argc = argv_size(*argv);
 
+	if (!*arg && argc > 0)
+		return TRUE;
+
 	if (!argv_realloc(argv, argc, 2))
 		return FALSE;
 
@@ -97,6 +100,7 @@ argv_copy(const char ***dst, const char *src[])
 {
 	int argc;
 
+	argv_free(*dst);
 	for (argc = 0; src[argc]; argc++)
 		if (!argv_append(dst, src[argc]))
 			return FALSE;
@@ -181,6 +185,9 @@ io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ..
 	va_list args;
 
 	io_init(io);
+
+	if (dir && !strcmp(dir, argv[0]))
+		return io_open(io, "%s%s", dir, argv[1]);
 
 	if ((type == IO_RD || type == IO_WR) && pipe(pipefds) < 0) {
 		io->error = errno;

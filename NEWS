@@ -1,6 +1,35 @@
 Release notes
 =============
 
+tig-0.18
+--------
+
+Incompatibilities:
+
+ - Remove support for the deprecated TIG_{MAIN,DIFF,LOG,TREE,BLOB}_CMD
+   environment variables.
+
+Improvements:
+
+ - Pressing enter on diff stat file lines will jump to file's diff.
+ - Naïvely color blame IDs to distinguish lines.
+ - Document palette color options used for revision graph and blame IDs.
+ - Add support for blaming diff lines.
+ - Add diff-context option and bindings to increase the diff context in
+   the diff and stage view.
+ - (GH-6) Make blame configurable via extra options passed from the command
+   line and blame-options setting from ~/.tigrc. For example:
+   
+   	set blame-options = -C -C -C
+
+Bug fixes:
+
+ - Expand browsing state variables for prompt. (LP #694780, Debian #635546)
+ - Fix segfault when sorting the branch view by author.
+ - Expand %(directory) to . for the root directory. (GH-3)
+ - Accept 'utf-8' for the line-graphics option as indicated in the docs.
+ - Use erasechar() to check for the correct backspace character.
+
 tig-0.17
 --------
 
@@ -12,7 +41,7 @@ Improvements:
 
 Bug fixes:
 
- - Fix ncurses 2.8 issue by passing non-zero column size to newwin(1).
+ - Fix ncurses 5.8 issue by passing non-zero column size to newwin().
  - Fix opening of diffs when browsing branches.
 
 tig-0.16.2

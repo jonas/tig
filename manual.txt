@@ -322,6 +322,8 @@ View Specific Actions
 |!	|Checkout file with unstaged changes. This will reset the file to
 	 contain the content it had at last commit.
 |@	|Move to next chunk in the stage view.
+|]	|Increase the diff context.
+|[	|Decrease the diff context.
 |=============================================================================
 
 [[cursor-nav]]

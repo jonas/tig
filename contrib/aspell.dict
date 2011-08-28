@@ -1,7 +1,7 @@
-personal_ws-1.1 en 177 
+personal_ws-1.1 en 178 
 extdiff
-DocBook
 docbook
+DocBook
 xpm
 utils
 oldmode
@@ -69,8 +69,8 @@ Cogito
 ident
 namespace
 xhtml
-PageDown
 textconv
+PageDown
 localtime
 repo
 Debian
@@ -124,7 +124,7 @@ TODO
 Yi
 cacheinfo
 cdup
-UTF
+utf
 combi
 ascii
 resize
@@ -176,3 +176,4 @@ topo
 Pre
 PageUp
 tig's
+Naïvely

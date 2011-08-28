@@ -35,7 +35,8 @@ RPM_RELEASE = $(word 2,$(RPM_VERLIST))$(if $(WTDIRTY),.dirty)
 LDLIBS ?= -lcurses
 CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
-PROGS	= tig test-graph
+PROGS	= tig
+TESTS	= test-graph
 SOURCE	= tig.c tig.h io.c io.h graph.c graph.h
 TXTDOC	= tig.1.txt tigrc.5.txt manual.txt NEWS README INSTALL BUGS TODO
 MANDOC	= tig.1 tigrc.5 tigmanual.7
@@ -59,8 +60,8 @@ ASCIIDOC_FLAGS = -aversion=$(VERSION) -asysconfdir=$(sysconfdir)
 XMLTO ?= xmlto
 DOCBOOK2PDF ?= docbook2pdf
 
-all: $(PROGS)
-all-debug: $(PROGS)
+all: $(PROGS) $(TESTS)
+all-debug: $(PROGS) $(TESTS)
 all-debug: CFLAGS += $(DFLAGS)
 doc: $(ALLDOC)
 doc-man: $(MANDOC)
