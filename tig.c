@@ -26,6 +26,7 @@ struct ref {
 	unsigned int tag:1;	/* Is it a tag? */
 	unsigned int ltag:1;	/* If so, is the tag local? */
 	unsigned int remote:1;	/* Is it a remote ref? */
+	unsigned int replace:1;	/* Is it a replace ref? */
 	unsigned int tracked:1;	/* Is it the remote for the current HEAD? */
 	char name[1];		/* Ref name; tag or head names are shortened. */
 };
@@ -444,6 +445,7 @@ LINE(MAIN_COMMIT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_LOCAL_TAG,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(MAIN_REMOTE,  "",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(MAIN_REPLACE, "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_TRACKED, "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_HEAD,    "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
@@ -521,6 +523,8 @@ get_line_type_from_ref(const struct ref *ref)
 		return LINE_MAIN_TRACKED;
 	else if (ref->remote)
 		return LINE_MAIN_REMOTE;
+	else if (ref->replace)
+		return LINE_MAIN_REPLACE;
 
 	return LINE_MAIN_REF;
 }
@@ -6748,6 +6752,8 @@ compare_refs(const void *ref1_, const void *ref2_)
 		return ref2->head - ref1->head;
 	if (ref1->tracked != ref2->tracked)
 		return ref2->tracked - ref1->tracked;
+	if (ref1->replace != ref2->replace)
+		return ref2->replace - ref1->replace;
 	/* Order remotes last. */
 	if (ref1->remote != ref2->remote)
 		return ref1->remote - ref2->remote;
@@ -6809,6 +6815,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 	bool tag = FALSE;
 	bool ltag = FALSE;
 	bool remote = FALSE;
+	bool replace = FALSE;
 	bool tracked = FALSE;
 	bool head = FALSE;
 	int from = 0, to = refs_size - 1;
@@ -6831,6 +6838,13 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 		name	+= STRING_SIZE("refs/remotes/");
 		tracked  = !strcmp(opt_remote, name);
 
+	} else if (!prefixcmp(name, "refs/replace/")) {
+		replace = TRUE;
+		id	= name + strlen("refs/replace/");
+		idlen	= namelen - strlen("refs/replace/");
+		name	= "replaced";
+		namelen	= strlen(name);
+
 	} else if (!prefixcmp(name, "refs/heads/")) {
 		namelen -= STRING_SIZE("refs/heads/");
 		name	+= STRING_SIZE("refs/heads/");
@@ -6849,7 +6863,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 	 * previous SHA1 with the resolved commit id; relies on the fact
 	 * git-ls-remote lists the commit id of an annotated tag right
 	 * before the commit id it points to. */
-	while (from <= to) {
+	while ((from <= to) && !replace) {
 		size_t pos = (to + from) / 2;
 		int cmp = strcmp(name, refs[pos]->name);
 
@@ -6881,6 +6895,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 	ref->tag = tag;
 	ref->ltag = ltag;
 	ref->remote = remote;
+	ref->replace = replace;
 	ref->tracked = tracked;
 	string_copy_rev(ref->id, id);
 
