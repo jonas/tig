@@ -362,6 +362,7 @@ static bool opt_show_refs		= TRUE;
 static bool opt_untracked_dirs_content	= TRUE;
 static int opt_diff_context		= 3;
 static char opt_diff_context_arg[9]	= "";
+static char opt_notes_arg[SIZEOF_STR]	= "--no-notes";
 static int opt_num_interval		= 5;
 static double opt_hscroll		= 0.50;
 static double opt_scale_split_view	= 2.0 / 3.0;
@@ -1191,6 +1192,17 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "show-refs"))
 		return parse_bool(&opt_show_refs, argv[2]);
+
+	if (!strcmp(argv[0], "show-notes")) {
+		int res;
+
+		strcpy(opt_notes_arg, "--notes=");
+		res = parse_string(opt_notes_arg + 8, argv[2],
+				   sizeof(opt_notes_arg) - 8);
+		if (res == OPT_OK && opt_notes_arg[8] == '\0')
+			opt_notes_arg[7] = '\0';
+		return res;
+	}
 
 	if (!strcmp(argv[0], "show-line-numbers"))
 		return parse_bool(&opt_line_number, argv[2]);
@@ -3582,8 +3594,8 @@ diff_open(struct view *view, enum open_flags flags)
 	static const char *diff_argv[] = {
 		"git", "show", "--pretty=fuller", "--no-color", "--root",
 			"--patch-with-stat", "--find-copies-harder", "-C",
-			opt_diff_context_arg, "%(diffargs)", "%(commit)", "--",
-			"%(fileargs)", NULL
+			opt_notes_arg, opt_diff_context_arg, "%(diffargs)",
+			"%(commit)", "--", "%(fileargs)", NULL
 	};
 
 	return begin_update(view, NULL, diff_argv, flags);

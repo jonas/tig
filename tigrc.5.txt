@@ -133,6 +133,10 @@ The following variables can be set:
 	used, e.g. "2 minutes ago". If set to "short" no time information is
 	shown. If set to "local", localtime(3) is used. Can be toggled.
 
+'show-notes' (string)::
+
+	Argument passed to `git show --notes=`. The empty string means `--notes`.
+
 'show-refs' (bool)::
 
 	Whether to show references (branches, tags, and remotes) in the main
