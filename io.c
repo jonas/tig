@@ -136,7 +136,7 @@ io_open(struct io *io, const char *fmt, ...)
 		io->error = ENAMETOOLONG;
 		return FALSE;
 	}
-	io->pipe = *name ? open(name, O_RDONLY) : STDIN_FILENO;
+	io->pipe = *name ? open(name, O_RDONLY) : dup(STDIN_FILENO);
 	if (io->pipe == -1)
 		io->error = errno;
 	return io->pipe != -1;
