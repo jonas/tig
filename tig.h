@@ -132,6 +132,32 @@ name(type **mem, size_t size, size_t increase)					\
 #define prefixcmp(str1, str2) \
 	strncmp(str1, str2, STRING_SIZE(str2))
 
+static inline bool
+isnumber(char *str)
+{
+	int pos;
+
+	for (pos = 0; str[pos]; pos++) {
+		if (!isdigit(str[pos]))
+			return FALSE;
+	}
+
+	return pos > 0;
+}
+
+static inline bool
+iscommit(char *str)
+{
+	int pos;
+
+	for (pos = 0; str[pos]; pos++) {
+		if (!isxdigit(str[pos]))
+			return FALSE;
+	}
+
+	return 7 <= pos && pos < SIZEOF_REV;
+}
+
 static inline int
 ascii_toupper(int c)
 {

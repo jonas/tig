@@ -7320,7 +7320,7 @@ main(int argc, const char *argv[])
 		{
 			char *cmd = read_prompt(":");
 
-			if (cmd && isdigit(*cmd)) {
+			if (cmd && isnumber(cmd)) {
 				int lineno = view->lineno + 1;
 
 				if (parse_int(&lineno, cmd, 1, view->lines + 1) == OPT_OK) {
@@ -7329,7 +7329,26 @@ main(int argc, const char *argv[])
 				} else {
 					report("Unable to parse '%s' as a line number", cmd);
 				}
+			} else if (cmd && iscommit(cmd)) {
+				if (view->type == VIEW_MAIN) {
+					bool jumped = FALSE;
+					int lineno;
 
+					for (lineno = 0; lineno < view->lines; lineno++) {
+						struct commit *commit = view->line[lineno].data;
+
+						if (!strncasecmp(commit->id, cmd, strlen(cmd))) {
+							select_view_line(view, lineno);
+							report("");
+							jumped = TRUE;
+							break;
+						}
+					}
+					if (!jumped)
+						report("Unable to find commit '%s'", cmd);
+				} else {
+					report("Jumping to commits only works in the main view");
+				}
 			} else if (cmd) {
 				struct view *next = VIEW(REQ_VIEW_PAGER);
 				const char *argv[SIZEOF_ARG] = { "git" };

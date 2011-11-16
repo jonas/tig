@@ -392,7 +392,9 @@ Misc
 |F	|Toggle reference display on/off (tag and branch names).
 |:	|Open prompt. This allows you to specify what git command
 	 to run. Example `:log -p`. You can also use this to jump
-	 to a specific line by typing `:<linenumber>`, e.g. `:80`.
+	 to a specific line by typing `:<linenumber>`, e.g. `:80`,
+	 or jump to a specific commit by typing `:<sha>`, e.g.
+	 `:2f12bcc`.
 |e	|Open file in editor.
 |=============================================================================
 
