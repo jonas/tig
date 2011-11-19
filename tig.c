@@ -4974,6 +4974,20 @@ branch_request(struct view *view, enum request request, struct line *line)
 		open_argv(view, main_view, all_branches_argv, NULL, OPEN_SPLIT);
 		return REQ_NONE;
 	}
+	case REQ_JUMP_COMMIT:
+	{
+		int lineno;
+
+		for (lineno = 0; lineno < view->lines; lineno++) {
+			struct branch *branch = view->line[lineno].data;
+
+			if (!strncasecmp(branch->ref->id, opt_search, strlen(opt_search))) {
+				select_view_line(view, lineno);
+				report("");
+				return REQ_NONE;
+			}
+		}
+	}
 	default:
 		return request;
 	}
