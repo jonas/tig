@@ -310,7 +310,10 @@ enum request {
 	/* Offset all requests to avoid conflicts with ncurses getch values. */
 	REQ_UNKNOWN = KEY_MAX + 1,
 	REQ_OFFSET,
-	REQ_INFO
+	REQ_INFO,
+
+	/* Internal requests. */
+	REQ_JUMP_COMMIT,
 
 #undef	REQ_GROUP
 #undef	REQ_
@@ -6318,6 +6321,24 @@ main_request(struct view *view, enum request request, struct line *line)
 		load_refs();
 		refresh_view(view);
 		break;
+
+	case REQ_JUMP_COMMIT:
+	{
+		int lineno;
+
+		for (lineno = 0; lineno < view->lines; lineno++) {
+			struct commit *commit = view->line[lineno].data;
+
+			if (!strncasecmp(commit->id, opt_search, strlen(opt_search))) {
+				select_view_line(view, lineno);
+				report("");
+				return REQ_NONE;
+			}
+		}
+
+		report("Unable to find commit '%s'", opt_search);
+		break;
+	}
 	default:
 		return request;
 	}
@@ -7330,25 +7351,13 @@ main(int argc, const char *argv[])
 					report("Unable to parse '%s' as a line number", cmd);
 				}
 			} else if (cmd && iscommit(cmd)) {
-				if (view->type == VIEW_MAIN) {
-					bool jumped = FALSE;
-					int lineno;
+				string_ncopy(opt_search, cmd, strlen(cmd));
 
-					for (lineno = 0; lineno < view->lines; lineno++) {
-						struct commit *commit = view->line[lineno].data;
-
-						if (!strncasecmp(commit->id, cmd, strlen(cmd))) {
-							select_view_line(view, lineno);
-							report("");
-							jumped = TRUE;
-							break;
-						}
-					}
-					if (!jumped)
-						report("Unable to find commit '%s'", cmd);
-				} else {
-					report("Jumping to commits only works in the main view");
+				request = view_request(view, REQ_JUMP_COMMIT);
+				if (request == REQ_JUMP_COMMIT) {
+					report("Jumping to commits is not supported by the '%s' view", view->name);
 				}
+
 			} else if (cmd) {
 				struct view *next = VIEW(REQ_VIEW_PAGER);
 				const char *argv[SIZEOF_ARG] = { "git" };
