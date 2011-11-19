@@ -4093,7 +4093,7 @@ tree_compare(const void *l1, const void *l2)
 		return sort_order(tree_sort_state, timecmp(&entry1->time, &entry2->time));
 
 	case ORDERBY_AUTHOR:
-		return sort_order(tree_sort_state, strcmp(entry1->author, entry2->author));
+		return sort_order(tree_sort_state, strcmp_null(entry1->author, entry2->author));
 
 	case ORDERBY_NAME:
 	default:

@@ -240,6 +240,16 @@ string_nformat(char *buf, size_t bufsize, size_t *bufpos, const char *fmt, ...)
 #define string_format_from(buf, from, fmt, args...) \
 	string_nformat(buf, sizeof(buf), from, fmt, args)
 
+static inline int
+strcmp_null(const char *s1, const char *s2)
+{
+	if (!s1 || !s2) {
+		return (!!s1) - (!!s2);
+	}
+
+	return strcmp(s1, s2);
+}
+
 /*
  * Enumerations
  */
