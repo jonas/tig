@@ -4,8 +4,16 @@ Release notes
 master
 ------
 
+Improvements:
+
+ - Add show-notes ~/.tigrc option.
+ - Support jumping to specific SHAs in the main view.
+ - Decorate replaced commits.
+ - Display line numbers in main view.
+
 Bug fixes:
 
+ - Fix segfault when sorting the tree view by author name.
  - Stage view: fix off-by-one error when jumping to a file in a diff
    with only one file.
   
