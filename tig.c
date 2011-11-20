@@ -3626,12 +3626,12 @@ static enum request
 diff_common_enter(struct view *view, enum request request, struct line *line)
 {
 	if (line->type == LINE_DIFF_STAT) {
-		int file_number = 0;
+		int file_number = 1;
 
-		do {
+		while (line > view->line && line->type == LINE_DIFF_STAT) {
 			file_number++;
 			line--;
-		} while (line >= view->line && line->type == LINE_DIFF_STAT);
+		}
 
 		while (line < view->line + view->lines) {
 			if (line->type == LINE_DIFF_HEADER) {

@@ -1,6 +1,14 @@
 Release notes
 =============
 
+master
+------
+
+Bug fixes:
+
+ - Stage view: fix off-by-one error when jumping to a file in a diff
+   with only one file.
+  
 tig-0.18
 --------
 
