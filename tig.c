@@ -6895,7 +6895,8 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 	} else if (!prefixcmp(name, "refs/heads/")) {
 		namelen -= STRING_SIZE("refs/heads/");
 		name	+= STRING_SIZE("refs/heads/");
-		if (!strncmp(opt_head, name, namelen))
+		if (strlen(opt_head) == namelen
+		    && !strncmp(opt_head, name, namelen))
 			return OK;
 
 	} else if (!strcmp(name, "HEAD")) {

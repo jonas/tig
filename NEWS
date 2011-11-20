@@ -14,6 +14,7 @@ Improvements:
 Bug fixes:
 
  - Fix segfault when sorting the tree view by author name.
+ - Show branches/refs which names are a substring of the current branch.
  - Stage view: fix off-by-one error when jumping to a file in a diff
    with only one file.
   
