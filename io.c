@@ -14,12 +14,24 @@
 #include "tig.h"
 #include "io.h"
 
+static inline int
+get_arg_valuelen(const char *arg)
+{
+	if (*arg == '"' || *arg == '\'') {
+		const char *end = *arg == '"' ? "\"" : "'";
+		int valuelen = strcspn(arg + 1, end);
+
+		return valuelen > 0 ? valuelen + 2 : strlen(arg);
+	} else {
+		return strcspn(arg, " \t");
+	}
+}
+
 bool
 argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
 {
-	int valuelen;
-
-	while (*cmd && *argc < SIZEOF_ARG && (valuelen = strcspn(cmd, " \t"))) {
+	while (*cmd && *argc < SIZEOF_ARG) {
+		int valuelen = get_arg_valuelen(cmd);
 		bool advance = cmd[valuelen] != 0;
 
 		cmd[valuelen] = 0;

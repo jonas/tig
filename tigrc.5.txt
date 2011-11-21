@@ -385,6 +385,7 @@ color default		white	black
 color diff-header	yellow	default
 color diff-index	blue	default
 color diff-chunk	magenta	default
+color "Reported-by:"	green	default
 --------------------------------------------------------------------------
 
 Or in the git configuration files:
@@ -400,7 +401,10 @@ Or in the git configuration files:
 
 Area names::
 
-	Valid area names are described below. Note, all names are
+	Can be either a built-in area name or a custom quoted string. The
+	latter allows custom color rules to be added for lines matching a
+	quoted string.
+	Valid built-in area names are described below. Note, all names are
 	case-insensitive, and you may use '-', '_', and '.' interchangeably,
 	e.g. "Diff-Header", "DIFF_HEADER", and "diff.header" are the same.
 

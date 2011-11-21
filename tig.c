@@ -499,11 +499,25 @@ static struct line_info line_info[] = {
 #undef	LINE
 };
 
+static struct line_info *custom_color;
+static size_t custom_colors;
+
+DEFINE_ALLOCATOR(realloc_custom_color, struct line_info, 8)
+
+#define TO_CUSTOM_COLOR_TYPE(type)	(LINE_NONE + 1 + (type))
+#define TO_CUSTOM_COLOR_OFFSET(type)	((type) - LINE_NONE - 1)
+
 static enum line_type
 get_line_type(const char *line)
 {
 	int linelen = strlen(line);
 	enum line_type type;
+
+	for (type = 0; type < custom_colors; type++)
+		/* Case insensitive search matches Signed-off-by lines better. */
+		if (linelen >= custom_color[type].linelen &&
+		    !strncasecmp(custom_color[type].line, line, custom_color[type].linelen))
+			return TO_CUSTOM_COLOR_TYPE(type);
 
 	for (type = 0; type < ARRAY_SIZE(line_info); type++)
 		/* Case insensitive search matches Signed-off-by lines better. */
@@ -536,6 +550,10 @@ get_line_type_from_ref(const struct ref *ref)
 static inline int
 get_line_attr(enum line_type type)
 {
+	if (type > LINE_NONE) {
+		assert(TO_CUSTOM_COLOR_OFFSET(type) < custom_colors);
+		return COLOR_PAIR(type) | custom_color[TO_CUSTOM_COLOR_OFFSET(type)].attr;
+	}
 	assert(type < ARRAY_SIZE(line_info));
 	return COLOR_PAIR(type) | line_info[type].attr;
 }
@@ -551,6 +569,41 @@ get_line_info(const char *name)
 			return &line_info[type];
 
 	return NULL;
+}
+
+static struct line_info *
+add_custom_color(const char *quoted_line)
+{
+	struct line_info *info;
+	char *line;
+	size_t linelen;
+
+	if (!realloc_custom_color(&custom_color, custom_colors, 1))
+		die("Failed to alloc custom line info");
+
+	linelen = strlen(quoted_line) - 1;
+	line = malloc(linelen);
+	if (!line)
+		return NULL;
+
+	strncpy(line, quoted_line + 1, linelen);
+	line[linelen - 1] = 0;
+
+	info = &custom_color[custom_colors++];
+	info->name = info->line = line;
+	info->namelen = info->linelen = strlen(line);
+
+	return info;
+}
+
+static void
+init_line_info_color_pair(struct line_info *info, enum line_type type,
+	int default_bg, int default_fg)
+{
+	int bg = info->bg == COLOR_DEFAULT ? default_bg : info->bg;
+	int fg = info->fg == COLOR_DEFAULT ? default_fg : info->fg;
+
+	init_pair(type, fg, bg);
 }
 
 static void
@@ -569,10 +622,15 @@ init_colors(void)
 
 	for (type = 0; type < ARRAY_SIZE(line_info); type++) {
 		struct line_info *info = &line_info[type];
-		int bg = info->bg == COLOR_DEFAULT ? default_bg : info->bg;
-		int fg = info->fg == COLOR_DEFAULT ? default_fg : info->fg;
 
-		init_pair(type, fg, bg);
+		init_line_info_color_pair(info, type, default_bg, default_fg);
+	}
+
+	for (type = 0; type < custom_colors; type++) {
+		struct line_info *info = &custom_color[type];
+
+		init_line_info_color_pair(info, TO_CUSTOM_COLOR_TYPE(type),
+					  default_bg, default_fg);
 	}
 }
 
@@ -1083,7 +1141,11 @@ option_color_command(int argc, const char *argv[])
 	if (argc < 3)
 		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
 
-	info = get_line_info(argv[0]);
+	if (*argv[0] == '"' || *argv[0] == '\'') {
+		info = add_custom_color(argv[0]);
+	} else {
+		info = get_line_info(argv[0]);
+	}
 	if (!info) {
 		static const struct enum_map obsolete[] = {
 			ENUM_MAP("main-delim",	LINE_DELIMITER),
