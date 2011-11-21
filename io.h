@@ -18,6 +18,7 @@
  * Argument array helpers.
  */
 
+bool argv_from_string_no_quotes(const char *argv[SIZEOF_ARG], int *argc, char *cmd);
 bool argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd);
 bool argv_from_env(const char **argv, const char *name);
 void argv_free(const char *argv[]);

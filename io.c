@@ -15,33 +15,49 @@
 #include "io.h"
 
 static inline int
-get_arg_valuelen(const char *arg)
+get_arg_valuelen(const char *arg, bool *quoted)
 {
 	if (*arg == '"' || *arg == '\'') {
 		const char *end = *arg == '"' ? "\"" : "'";
 		int valuelen = strcspn(arg + 1, end);
 
+		if (quoted)
+			*quoted = TRUE;
 		return valuelen > 0 ? valuelen + 2 : strlen(arg);
 	} else {
 		return strcspn(arg, " \t");
 	}
 }
 
-bool
-argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
+static bool
+split_argv_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd, bool remove_quotes)
 {
 	while (*cmd && *argc < SIZEOF_ARG) {
-		int valuelen = get_arg_valuelen(cmd);
+		bool quoted = FALSE;
+		int valuelen = get_arg_valuelen(cmd, &quoted);
 		bool advance = cmd[valuelen] != 0;
+		int quote_offset = !!(quoted && remove_quotes);
 
-		cmd[valuelen] = 0;
-		argv[(*argc)++] = chomp_string(cmd);
+		cmd[valuelen - quote_offset] = 0;
+		argv[(*argc)++] = chomp_string(cmd + quote_offset);
 		cmd = chomp_string(cmd + valuelen + advance);
 	}
 
 	if (*argc < SIZEOF_ARG)
 		argv[*argc] = NULL;
 	return *argc < SIZEOF_ARG;
+}
+
+bool
+argv_from_string_no_quotes(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
+{
+	return split_argv_string(argv, argc, cmd, TRUE);
+}
+
+bool
+argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
+{
+	return split_argv_string(argv, argc, cmd, FALSE);
 }
 
 bool

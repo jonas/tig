@@ -13,6 +13,7 @@ Improvements:
  - Colorize binary diff stats. (GH #17)
  - Custom colorization of lines matching a string prefix (GH #16).
    Example configuration: color "Reported-by:" green default
+ - Handle editor options with multiple arguments. (GH #12)
 
 Bug fixes:
 

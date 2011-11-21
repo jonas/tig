@@ -2931,8 +2931,10 @@ open_mergetool(const char *file)
 static void
 open_editor(const char *file)
 {
-	const char *editor_argv[] = { "vi", file, NULL };
+	const char *editor_argv[SIZEOF_ARG + 1] = { "vi", file, NULL };
+	char editor_cmd[SIZEOF_STR];
 	const char *editor;
+	int argc = 0;
 
 	editor = getenv("GIT_EDITOR");
 	if (!editor && *opt_editor)
@@ -2944,7 +2946,13 @@ open_editor(const char *file)
 	if (!editor)
 		editor = "vi";
 
-	editor_argv[0] = editor;
+	string_ncopy(editor_cmd, editor, strlen(editor));
+	if (!argv_from_string_no_quotes(editor_argv, &argc, editor_cmd)) {
+		report("Failed to read editor command");
+		return;
+	}
+
+	editor_argv[argc] = file;
 	open_external_viewer(editor_argv, opt_cdup);
 }
 
