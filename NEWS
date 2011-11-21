@@ -10,6 +10,7 @@ Improvements:
  - Support jumping to specific SHAs in the main view.
  - Decorate replaced commits.
  - Display line numbers in main view.
+ - Colorize binary diff stats. (GH #17)
 
 Bug fixes:
 

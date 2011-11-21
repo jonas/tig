@@ -3606,10 +3606,11 @@ diff_common_read(struct view *view, char *data, bool *reading_diff_stat)
 {
 	if (reading_diff_stat) {
 		size_t len = strlen(data);
-		bool has_pipe = strchr(data, '|') != NULL;
+		char *pipe = strchr(data, '|');
 		bool has_histogram = data[len - 1] == '-' || data[len - 1] == '+';
+		bool has_bin_diff = pipe && strstr(pipe, "Bin") && strstr(pipe, "->");
 
-		if (has_pipe && has_histogram) {
+		if (pipe && (has_histogram || has_bin_diff)) {
 			return add_line_text(view, data, LINE_DIFF_STAT) != NULL;
 		} else {
 			*reading_diff_stat = FALSE;
@@ -3653,7 +3654,7 @@ diff_common_enter(struct view *view, enum request request, struct line *line)
 	}
 }
 
-static void 
+static bool
 diff_common_draw_part(struct view *view, enum line_type *type, char **text, char c, enum line_type next_type)
 {
 	char *sep = strchr(*text, c);
@@ -3665,6 +3666,8 @@ diff_common_draw_part(struct view *view, enum line_type *type, char **text, char
 		*text = sep;
 		*type = next_type;
 	}
+
+	return sep != NULL;
 }
 
 static bool
@@ -3678,8 +3681,17 @@ diff_common_draw(struct view *view, struct line *line, unsigned int lineno)
 
 	if (type == LINE_DIFF_STAT) {
 		diff_common_draw_part(view, &type, &text, '|', LINE_DEFAULT);
-		diff_common_draw_part(view, &type, &text, '+', LINE_DIFF_ADD);
-		diff_common_draw_part(view, &type, &text, '-', LINE_DIFF_DEL);
+		if (diff_common_draw_part(view, &type, &text, 'B', LINE_DEFAULT)) {
+			/* Handle binary diffstat: Bin <deleted> -> <added> bytes */
+			diff_common_draw_part(view, &type, &text, ' ', LINE_DIFF_DEL);
+			diff_common_draw_part(view, &type, &text, '-', LINE_DEFAULT);
+			diff_common_draw_part(view, &type, &text, ' ', LINE_DIFF_ADD);
+			diff_common_draw_part(view, &type, &text, 'b', LINE_DEFAULT);
+
+		} else {
+			diff_common_draw_part(view, &type, &text, '+', LINE_DIFF_ADD);
+			diff_common_draw_part(view, &type, &text, '-', LINE_DIFF_DEL);
+		}
 	}
 
 	draw_text(view, type, text);
