@@ -507,6 +507,9 @@ DEFINE_ALLOCATOR(realloc_custom_color, struct line_info, 8)
 #define TO_CUSTOM_COLOR_TYPE(type)	(LINE_NONE + 1 + (type))
 #define TO_CUSTOM_COLOR_OFFSET(type)	((type) - LINE_NONE - 1)
 
+/* Color IDs must be 1 or higher. [GH #15] */
+#define COLOR_ID(line_type)		((line_type) + 1)
+
 static enum line_type
 get_line_type(const char *line)
 {
@@ -552,10 +555,10 @@ get_line_attr(enum line_type type)
 {
 	if (type > LINE_NONE) {
 		assert(TO_CUSTOM_COLOR_OFFSET(type) < custom_colors);
-		return COLOR_PAIR(type) | custom_color[TO_CUSTOM_COLOR_OFFSET(type)].attr;
+		return COLOR_PAIR(COLOR_ID(type)) | custom_color[TO_CUSTOM_COLOR_OFFSET(type)].attr;
 	}
 	assert(type < ARRAY_SIZE(line_info));
-	return COLOR_PAIR(type) | line_info[type].attr;
+	return COLOR_PAIR(COLOR_ID(type)) | line_info[type].attr;
 }
 
 static struct line_info *
@@ -603,7 +606,7 @@ init_line_info_color_pair(struct line_info *info, enum line_type type,
 	int bg = info->bg == COLOR_DEFAULT ? default_bg : info->bg;
 	int fg = info->fg == COLOR_DEFAULT ? default_fg : info->fg;
 
-	init_pair(type, fg, bg);
+	init_pair(COLOR_ID(type), fg, bg);
 }
 
 static void
@@ -1639,7 +1642,7 @@ set_view_attr(struct view *view, enum line_type type)
 {
 	if (!view->curline->selected && view->curtype != type) {
 		(void) wattrset(view->win, get_line_attr(type));
-		wchgat(view->win, -1, 0, type, NULL);
+		wchgat(view->win, -1, 0, COLOR_ID(type), NULL);
 		view->curtype = type;
 	}
 }

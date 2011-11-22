@@ -21,6 +21,7 @@ Bug fixes:
  - Show branches/refs which names are a substring of the current branch.
  - Stage view: fix off-by-one error when jumping to a file in a diff
    with only one file.
+ - Fix diff-header colorization. (GH #15)
   
 tig-0.18
 --------
