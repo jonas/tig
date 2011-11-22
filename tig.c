@@ -1556,6 +1556,9 @@ struct view {
 	struct io *pipe;
 	time_t start_time;
 	time_t update_secs;
+
+	/* Private data */
+	void *private;
 };
 
 enum open_flags {
@@ -1570,6 +1573,8 @@ enum open_flags {
 struct view_ops {
 	/* What type of content being displayed. Used in the title bar. */
 	const char *type;
+	/* Size of private data. */
+	size_t private_size;
 	/* Open and reads in all view content. */
 	bool (*open)(struct view *view, enum open_flags flags);
 	/* Read one line; updates view->line. */
@@ -2817,6 +2822,12 @@ load_view(struct view *view, enum open_flags flags)
 {
 	if (view->pipe)
 		end_update(view, TRUE);
+	if (view->ops->private_size) {
+		if (!view->private)
+			view->private = calloc(1, view->ops->private_size);
+		else
+			memset(view->private, 0, view->ops->private_size);
+	}
 	if (!view->ops->open(view, flags)) {
 		report("Failed to load %s view", view->name);
 		return;
@@ -3620,6 +3631,7 @@ pager_open(struct view *view, enum open_flags flags)
 
 static struct view_ops pager_ops = {
 	"line",
+	0,
 	pager_open,
 	pager_read,
 	pager_draw,
@@ -3653,12 +3665,17 @@ log_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops log_ops = {
 	"line",
+	0,
 	log_open,
 	pager_read,
 	pager_draw,
 	log_request,
 	pager_grep,
 	pager_select,
+};
+
+struct diff_state {
+	bool reading_diff_stat;
 };
 
 static bool
@@ -3675,9 +3692,9 @@ diff_open(struct view *view, enum open_flags flags)
 }
 
 static bool
-diff_common_read(struct view *view, char *data, bool *reading_diff_stat)
+diff_common_read(struct view *view, char *data, struct diff_state *state)
 {
-	if (reading_diff_stat) {
+	if (state->reading_diff_stat) {
 		size_t len = strlen(data);
 		char *pipe = strchr(data, '|');
 		bool has_histogram = data[len - 1] == '-' || data[len - 1] == '+';
@@ -3686,11 +3703,11 @@ diff_common_read(struct view *view, char *data, bool *reading_diff_stat)
 		if (pipe && (has_histogram || has_bin_diff)) {
 			return add_line_text(view, data, LINE_DIFF_STAT) != NULL;
 		} else {
-			*reading_diff_stat = FALSE;
+			state->reading_diff_stat = FALSE;
 		}	
 
 	} else if (!strcmp(data, "---")) {
-		*reading_diff_stat = TRUE;
+		state->reading_diff_stat = TRUE;
 	}
 
 	return pager_read(view, data);
@@ -3774,7 +3791,7 @@ diff_common_draw(struct view *view, struct line *line, unsigned int lineno)
 static bool
 diff_read(struct view *view, char *data)
 {
-	static bool reading_diff_stat = FALSE;
+	struct diff_state *state = view->private;
 
 	if (!data) {
 		/* Fall back to retry if no diff will be shown. */
@@ -3797,7 +3814,7 @@ diff_read(struct view *view, char *data)
 		return TRUE;
 	}
 
-	return diff_common_read(view, data, &reading_diff_stat);
+	return diff_common_read(view, data, state);
 }
 
 static bool
@@ -3947,6 +3964,7 @@ diff_select(struct view *view, struct line *line)
 
 static struct view_ops diff_ops = {
 	"line",
+	sizeof(struct diff_state),
 	diff_open,
 	diff_read,
 	diff_common_draw,
@@ -4077,6 +4095,7 @@ help_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops help_ops = {
 	"line",
+	0,
 	help_open,
 	NULL,
 	pager_draw,
@@ -4156,6 +4175,12 @@ struct tree_entry {
 	char name[1];
 };
 
+struct tree_state {
+	const char *author_name;
+	struct time author_time;
+	bool read_date;
+};
+
 static const char *
 tree_path(const struct line *line)
 {
@@ -4224,13 +4249,10 @@ tree_entry(struct view *view, enum line_type type, const char *path,
 }
 
 static bool
-tree_read_date(struct view *view, char *text, bool *read_date)
+tree_read_date(struct view *view, char *text, struct tree_state *state)
 {
-	static const char *author_name;
-	static struct time author_time;
-
-	if (!text && *read_date) {
-		*read_date = FALSE;
+	if (!text && state->read_date) {
+		state->read_date = FALSE;
 		return TRUE;
 
 	} else if (!text) {
@@ -4251,12 +4273,12 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 			return TRUE;
 		}
 
-		*read_date = TRUE;
+		state->read_date = TRUE;
 		return FALSE;
 
 	} else if (*text == 'a' && get_line_type(text) == LINE_AUTHOR) {
 		parse_author_line(text + STRING_SIZE("author "),
-				  &author_name, &author_time);
+				  &state->author_name, &state->author_time);
 
 	} else if (*text == ':') {
 		char *pos;
@@ -4281,8 +4303,8 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 			if (entry->author || strcmp(entry->name, text))
 				continue;
 
-			entry->author = author_name;
-			entry->time = author_time;
+			entry->author = state->author_name;
+			entry->time = state->author_time;
 			line->dirty = 1;
 			break;
 		}
@@ -4296,15 +4318,15 @@ tree_read_date(struct view *view, char *text, bool *read_date)
 static bool
 tree_read(struct view *view, char *text)
 {
-	static bool read_date = FALSE;
+	struct tree_state *state = view->private;
 	struct tree_entry *data;
 	struct line *entry, *line;
 	enum line_type type;
 	size_t textlen = text ? strlen(text) : 0;
 	char *path = text + SIZEOF_TREE_ATTR;
 
-	if (read_date || !text)
-		return tree_read_date(view, text, &read_date);
+	if (state->read_date || !text)
+		return tree_read_date(view, text, state);
 
 	if (textlen <= SIZEOF_TREE_ATTR)
 		return FALSE;
@@ -4543,6 +4565,7 @@ tree_open(struct view *view, enum open_flags flags)
 
 static struct view_ops tree_ops = {
 	"file",
+	sizeof(struct tree_state),
 	tree_open,
 	tree_read,
 	tree_draw,
@@ -4583,6 +4606,7 @@ blob_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops blob_ops = {
 	"line",
+	0,
 	blob_open,
 	blob_read,
 	pager_draw,
@@ -4606,6 +4630,12 @@ struct blame {
 	struct blame_commit *commit;
 	unsigned long lineno;
 	char text[1];
+};
+
+struct blame_state {
+	struct blame_commit *commit;
+	int blamed;
+	bool done_reading;
 };
 
 static bool
@@ -4679,7 +4709,7 @@ get_blame_commit(struct view *view, const char *id)
 }
 
 static struct blame_commit *
-read_blame_commit(struct view *view, const char *text, int *blamed)
+read_blame_commit(struct view *view, const char *text, struct blame_state *state)
 {
 	struct blame_header header;
 	struct blame_commit *commit;
@@ -4692,7 +4722,7 @@ read_blame_commit(struct view *view, const char *text, int *blamed)
 	if (!commit)
 		return NULL;
 
-	*blamed += header.group;
+	state->blamed += header.group;
 	while (header.group--) {
 		struct line *line = &view->line[header.lineno + header.group - 1];
 
@@ -4706,7 +4736,7 @@ read_blame_commit(struct view *view, const char *text, int *blamed)
 }
 
 static bool
-blame_read_file(struct view *view, const char *line, bool *read_file)
+blame_read_file(struct view *view, const char *line, struct blame_state *state)
 {
 	if (!line) {
 		const char *blame_argv[] = {
@@ -4727,7 +4757,7 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 			opt_goto_line = 0;
 		}
 
-		*read_file = FALSE;
+		state->done_reading = TRUE;
 		return FALSE;
 
 	} else {
@@ -4747,18 +4777,12 @@ blame_read_file(struct view *view, const char *line, bool *read_file)
 static bool
 blame_read(struct view *view, char *line)
 {
-	static struct blame_commit *commit = NULL;
-	static int blamed = 0;
-	static bool read_file = TRUE;
+	struct blame_state *state = view->private;
 
-	if (read_file)
-		return blame_read_file(view, line, &read_file);
+	if (!state->done_reading)
+		return blame_read_file(view, line, state);
 
 	if (!line) {
-		/* Reset all! */
-		commit = NULL;
-		blamed = 0;
-		read_file = TRUE;
 		string_format(view->ref, "%s", view->vid);
 		if (view_is_displayed(view)) {
 			update_view_title(view);
@@ -4767,13 +4791,13 @@ blame_read(struct view *view, char *line)
 		return TRUE;
 	}
 
-	if (!commit) {
-		commit = read_blame_commit(view, line, &blamed);
+	if (!state->commit) {
+		state->commit = read_blame_commit(view, line, state);
 		string_format(view->ref, "%s %2d%%", view->vid,
-			      view->lines ? blamed * 100 / view->lines : 0);
+			      view->lines ? state->blamed * 100 / view->lines : 0);
 
-	} else if (parse_blame_info(commit, line)) {
-		commit = NULL;
+	} else if (parse_blame_info(state->commit, line)) {
+		state->commit = NULL;
 	}
 
 	return TRUE;
@@ -4977,6 +5001,7 @@ blame_select(struct view *view, struct line *line)
 
 static struct view_ops blame_ops = {
 	"line",
+	sizeof(struct blame_state),
 	blame_open,
 	blame_read,
 	blame_draw,
@@ -5001,6 +5026,10 @@ static const enum sort_field branch_sort_fields[] = {
 	ORDERBY_NAME, ORDERBY_DATE, ORDERBY_AUTHOR
 };
 static struct sort_state branch_sort_state = SORT_STATE(branch_sort_fields);
+
+struct branch_state {
+	char id[SIZEOF_REV];
+};
 
 static int
 branch_compare(const void *l1, const void *l2)
@@ -5093,7 +5122,7 @@ branch_request(struct view *view, enum request request, struct line *line)
 static bool
 branch_read(struct view *view, char *line)
 {
-	static char id[SIZEOF_REV];
+	struct branch_state *state = view->private;
 	struct branch *reference;
 	size_t i;
 
@@ -5102,14 +5131,14 @@ branch_read(struct view *view, char *line)
 
 	switch (get_line_type(line)) {
 	case LINE_COMMIT:
-		string_copy_rev(id, line + STRING_SIZE("commit "));
+		string_copy_rev(state->id, line + STRING_SIZE("commit "));
 		return TRUE;
 
 	case LINE_AUTHOR:
 		for (i = 0, reference = NULL; i < view->lines; i++) {
 			struct branch *branch = view->line[i].data;
 
-			if (strcmp(branch->ref->id, id))
+			if (strcmp(branch->ref->id, state->id))
 				continue;
 
 			view->line[i].dirty = TRUE;
@@ -5194,6 +5223,7 @@ branch_select(struct view *view, struct line *line)
 
 static struct view_ops branch_ops = {
 	"branch",
+	sizeof(struct branch_state),
 	branch_open,
 	branch_read,
 	branch_draw,
@@ -5899,6 +5929,7 @@ status_grep(struct view *view, struct line *line)
 
 static struct view_ops status_ops = {
 	"file",
+	0,
 	status_open,
 	NULL,
 	status_draw,
@@ -6191,9 +6222,9 @@ stage_open(struct view *view, enum open_flags flags)
 static bool
 stage_read(struct view *view, char *data)
 {
-	static bool reading_diff_stat = FALSE;
+	struct diff_state *state = view->private;
 
-	if (data && diff_common_read(view, data, &reading_diff_stat))
+	if (data && diff_common_read(view, data, state))
 		return TRUE;
 
 	return pager_read(view, data);
@@ -6201,6 +6232,7 @@ stage_read(struct view *view, char *data)
 
 static struct view_ops stage_ops = {
 	"line",
+	sizeof(struct diff_state),
 	stage_open,
 	stage_read,
 	diff_common_draw,
@@ -6335,7 +6367,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 static bool
 main_read(struct view *view, char *line)
 {
-	static struct graph graph;
+	struct graph *graph = view->private;
 	enum line_type type;
 	struct commit *commit;
 
@@ -6351,7 +6383,7 @@ main_read(struct view *view, char *line)
 			}
 		}
 
-		done_graph(&graph);
+		done_graph(graph);
 		return TRUE;
 	}
 
@@ -6371,7 +6403,7 @@ main_read(struct view *view, char *line)
 		string_copy_rev(commit->id, line);
 		commit->refs = get_ref_list(commit->id);
 		add_line_data(view, commit, LINE_MAIN_COMMIT);
-		graph_add_commit(&graph, &commit->graph, commit->id, line, is_boundary);
+		graph_add_commit(graph, &commit->graph, commit->id, line, is_boundary);
 		return TRUE;
 	}
 
@@ -6381,14 +6413,14 @@ main_read(struct view *view, char *line)
 
 	switch (type) {
 	case LINE_PARENT:
-		if (!graph.has_parents)
-			graph_add_parent(&graph, line + STRING_SIZE("parent "));
+		if (!graph->has_parents)
+			graph_add_parent(graph, line + STRING_SIZE("parent "));
 		break;
 
 	case LINE_AUTHOR:
 		parse_author_line(line + STRING_SIZE("author "),
 				  &commit->author, &commit->time);
-		graph_render_parents(&graph);
+		graph_render_parents(graph);
 		break;
 
 	default:
@@ -6499,6 +6531,7 @@ main_select(struct view *view, struct line *line)
 
 static struct view_ops main_ops = {
 	"commit",
+	sizeof(struct graph),
 	main_open,
 	main_read,
 	main_draw,
