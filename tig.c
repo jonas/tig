@@ -5253,8 +5253,6 @@ struct status {
 static char status_onbranch[SIZEOF_STR];
 static struct status stage_status;
 static enum line_type stage_line_type;
-static size_t stage_chunks;
-static int *stage_chunk;
 
 DEFINE_ALLOCATOR(realloc_ints, int, 32)
 
@@ -5599,7 +5597,6 @@ status_enter(struct view *view, struct line *line)
 	}
 
 	stage_line_type = line->type;
-	stage_chunks = 0;
 
 	open_view(view, REQ_VIEW_STAGE, flags); 
 	return REQ_NONE;
@@ -5939,6 +5936,12 @@ static struct view_ops status_ops = {
 };
 
 
+struct stage_state {
+	struct diff_state diff;
+	size_t chunks;
+	int *chunk;
+};
+
 static bool
 stage_diff_write(struct io *io, struct line *line, struct line *end)
 {
@@ -6050,26 +6053,27 @@ stage_revert(struct view *view, struct line *line)
 static void
 stage_next(struct view *view, struct line *line)
 {
+	struct stage_state *state = view->private;
 	int i;
 
-	if (!stage_chunks) {
+	if (!state->chunks) {
 		for (line = view->line; line < view->line + view->lines; line++) {
 			if (line->type != LINE_DIFF_CHUNK)
 				continue;
 
-			if (!realloc_ints(&stage_chunk, stage_chunks, 1)) {
+			if (!realloc_ints(&state->chunk, state->chunks, 1)) {
 				report("Allocation failure");
 				return;
 			}
 
-			stage_chunk[stage_chunks++] = line - view->line;
+			state->chunk[state->chunks++] = line - view->line;
 		}
 	}
 
-	for (i = 0; i < stage_chunks; i++) {
-		if (stage_chunk[i] > view->lineno) {
-			do_scroll_view(view, stage_chunk[i] - view->lineno);
-			report("Chunk %d of %d", i + 1, stage_chunks);
+	for (i = 0; i < state->chunks; i++) {
+		if (state->chunk[i] > view->lineno) {
+			do_scroll_view(view, state->chunk[i] - view->lineno);
+			report("Chunk %d of %d", i + 1, state->chunks);
 			return;
 		}
 	}
@@ -6222,9 +6226,9 @@ stage_open(struct view *view, enum open_flags flags)
 static bool
 stage_read(struct view *view, char *data)
 {
-	struct diff_state *state = view->private;
+	struct stage_state *state = view->private;
 
-	if (data && diff_common_read(view, data, state))
+	if (data && diff_common_read(view, data, &state->diff))
 		return TRUE;
 
 	return pager_read(view, data);
@@ -6232,7 +6236,7 @@ stage_read(struct view *view, char *data)
 
 static struct view_ops stage_ops = {
 	"line",
-	sizeof(struct diff_state),
+	sizeof(struct stage_state),
 	stage_open,
 	stage_read,
 	diff_common_draw,
