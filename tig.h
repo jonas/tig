@@ -91,6 +91,7 @@
 
 #define ID_COLS		8
 #define AUTHOR_COLS	19
+#define FILENAME_COLS	19
 
 #define MIN_VIEW_HEIGHT 4
 

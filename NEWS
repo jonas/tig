@@ -14,6 +14,7 @@ Improvements:
  - Custom colorization of lines matching a string prefix (GH #16).
    Example configuration: color "Reported-by:" green default
  - Handle editor options with multiple arguments. (GH #12)
+ - Show filename when running tig blame with copy detection. (GH #19)
 
 Bug fixes:
 

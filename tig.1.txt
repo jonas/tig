@@ -91,6 +91,11 @@ Display revisions between two dates for a specific file:
 $ tig --after="2004-01-01" --before="2006-05-16" -- README
 -----------------------------------------------------------------------------
 
+Blame file with copy detection enabled:
+-----------------------------------------------------------------------------
+$ tig blame -C README
+-----------------------------------------------------------------------------
+
 ENVIRONMENT VARIABLES
 ---------------------
 

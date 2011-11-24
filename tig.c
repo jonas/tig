@@ -220,6 +220,13 @@ mkmode(mode_t mode)
 		return "----------";
 }
 
+#define FILENAME_ENUM(_) \
+	_(FILENAME, NO), \
+	_(FILENAME, ALWAYS), \
+	_(FILENAME, AUTO)
+
+DEFINE_ENUM(filename, FILENAME_ENUM);
+
 
 /*
  * User requests
@@ -289,6 +296,7 @@ mkmode(mode_t mode)
 	REQ_(TOGGLE_AUTHOR,	"Toggle author display"), \
 	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
 	REQ_(TOGGLE_GRAPHIC,	"Toggle (line) graphics mode"), \
+	REQ_(TOGGLE_FILENAME,	"Toggle file name display"), \
 	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
 	REQ_(TOGGLE_SORT_ORDER,	"Toggle ascending/descending sort order"), \
 	REQ_(TOGGLE_SORT_FIELD,	"Toggle field to sort by"), \
@@ -356,6 +364,7 @@ get_request(const char *name)
 static enum graphic opt_line_graphics	= GRAPHIC_DEFAULT;
 static enum date opt_date		= DATE_DEFAULT;
 static enum author opt_author		= AUTHOR_FULL;
+static enum filename opt_filename	= FILENAME_AUTO;
 static bool opt_rev_graph		= TRUE;
 static bool opt_line_number		= FALSE;
 static bool opt_show_refs		= TRUE;
@@ -368,6 +377,7 @@ static double opt_hscroll		= 0.50;
 static double opt_scale_split_view	= 2.0 / 3.0;
 static int opt_tab_size			= 8;
 static int opt_author_cols		= AUTHOR_COLS;
+static int opt_filename_cols		= FILENAME_COLS;
 static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
@@ -442,6 +452,7 @@ LINE(STATUS,	   "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(DELIMITER,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(DATE,         "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(MODE,         "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
+LINE(FILENAME,   "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(LINE_NUMBER,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(TITLE_BLUR,   "",			COLOR_WHITE,	COLOR_BLUE,	0), \
 LINE(TITLE_FOCUS,  "",			COLOR_WHITE,	COLOR_BLUE,	A_BOLD), \
@@ -736,6 +747,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'A',		REQ_TOGGLE_AUTHOR },
 	{ 'g',		REQ_TOGGLE_REV_GRAPH },
 	{ '~',		REQ_TOGGLE_GRAPHIC },
+	{ '#',		REQ_TOGGLE_FILENAME },
 	{ 'F',		REQ_TOGGLE_REFS },
 	{ 'I',		REQ_TOGGLE_SORT_ORDER },
 	{ 'i',		REQ_TOGGLE_SORT_FIELD },
@@ -1281,6 +1293,12 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "author-width"))
 		return parse_int(&opt_author_cols, argv[2], 0, 1024);
 
+	if (!strcmp(argv[0], "filename-width"))
+		return parse_int(&opt_filename_cols, argv[2], 0, 1024);
+
+	if (!strcmp(argv[0], "show-filename"))
+		return parse_enum(&opt_filename, argv[2], filename_map);
+
 	if (!strcmp(argv[0], "horizontal-scroll"))
 		return parse_step(&opt_hscroll, argv[2]);
 
@@ -1798,6 +1816,20 @@ draw_author(struct view *view, const char *author)
 }
 
 static bool
+draw_filename(struct view *view, const char *filename, bool auto_enabled)
+{
+	bool trim = filename && strlen(filename) >= opt_filename_cols;
+
+	if (opt_filename == FILENAME_NO)
+		return FALSE;
+
+	if (opt_filename == FILENAME_AUTO && !auto_enabled)
+		return FALSE;
+
+	return draw_field(view, LINE_FILENAME, filename, opt_filename_cols, trim);
+}
+
+static bool
 draw_mode(struct view *view, mode_t mode)
 {
 	const char *str = mkmode(mode);
@@ -2071,6 +2103,7 @@ redraw_display(bool clear)
 	TOGGLE_(AUTHOR,    'A', "author names",      &opt_author, author_map) \
 	TOGGLE_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map) \
 	TOGGLE_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL) \
+	TOGGLE_(FILENAME,  '#', "file names",        &opt_filename, filename_map) \
 	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL)
 
 static void
@@ -3138,6 +3171,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_LINENO:
 	case REQ_TOGGLE_DATE:
 	case REQ_TOGGLE_AUTHOR:
+	case REQ_TOGGLE_FILENAME:
 	case REQ_TOGGLE_GRAPHIC:
 	case REQ_TOGGLE_REV_GRAPH:
 	case REQ_TOGGLE_REFS:
@@ -4636,7 +4670,38 @@ struct blame_state {
 	struct blame_commit *commit;
 	int blamed;
 	bool done_reading;
+	bool auto_filename_display;
 };
+
+static bool
+blame_detect_filename_display(struct view *view)
+{
+	bool show_filenames = FALSE;
+	const char *filename = NULL;
+	int i;
+
+	if (opt_blame_argv) {
+		for (i = 0; opt_blame_argv[i]; i++) {
+			if (prefixcmp(opt_blame_argv[i], "-C"))
+				continue;
+
+			show_filenames = TRUE;
+		}
+	}
+
+	for (i = 0; i < view->lines; i++) {
+		struct blame *blame = view->line[i].data;
+
+		if (blame->commit && blame->commit->id[0]) {
+			if (!filename)
+				filename = blame->commit->filename;
+			else if (strcmp(filename, blame->commit->filename))
+				show_filenames = TRUE;
+		}
+	}
+
+	return show_filenames;
+}
 
 static bool
 blame_open(struct view *view, enum open_flags flags)
@@ -4783,6 +4848,7 @@ blame_read(struct view *view, char *line)
 		return blame_read_file(view, line, state);
 
 	if (!line) {
+		state->auto_filename_display = blame_detect_filename_display(view);
 		string_format(view->ref, "%s", view->vid);
 		if (view_is_displayed(view)) {
 			update_view_title(view);
@@ -4806,9 +4872,10 @@ blame_read(struct view *view, char *line)
 static bool
 blame_draw(struct view *view, struct line *line, unsigned int lineno)
 {
+	struct blame_state *state = view->private;
 	struct blame *blame = line->data;
 	struct time *time = NULL;
-	const char *id = NULL, *author = NULL;
+	const char *id = NULL, *author = NULL, *filename = NULL;
 	enum line_type id_type = LINE_BLAME_ID;
 	static const enum line_type blame_colors[] = {
 		LINE_PALETTE_0,
@@ -4826,6 +4893,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (blame->commit && *blame->commit->filename) {
 		id = blame->commit->id;
 		author = blame->commit->author;
+		filename = blame->commit->filename;
 		time = &blame->commit->time;
 		id_type = BLAME_COLOR((long) blame->commit);
 	}
@@ -4834,6 +4902,9 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 		return TRUE;
 
 	if (draw_author(view, author))
+		return TRUE;
+
+	if (draw_filename(view, filename, state->auto_filename_display))
 		return TRUE;
 
 	if (draw_field(view, id_type, id, ID_COLS, FALSE))

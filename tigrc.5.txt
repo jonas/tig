@@ -92,6 +92,11 @@ The following variables can be set:
 	Width of the author column. When set to 5 or below, the author name
 	will be abbreviated to the author's initials.
 
+
+'filename-width' (int)::
+
+	Width of the filename column.
+
 'blame-options' (string)::
 
 	A space separated string of extra blame options. Can be used for
@@ -122,10 +127,15 @@ The following variables can be set:
 	always ensured that at least one column is scrolled. The default is to
 	scroll '50%' of the view width.
 
-'show-author' (mixed) ["abbreviated" | "default" | bool]::
+'show-author' (mixed) ["abbreviated" | "full" | bool]::
 
 	How to display author names. If set to "abbreviated" author initials
 	will be shown. Can be toggled.
+
+'show-filename' (mixed) ["auto" | "always" | bool]::
+
+	When to display file names. If set to "auto" file names are shown
+	only when needed, e.g. when running: tig blame -C <file>.
 
 'show-date' (mixed) ["relative" | "short" | "default" | "local" | bool]::
 
@@ -357,6 +367,7 @@ put in either the .gitconfig or .git/config file:
 |toggle-lineno		|Toggle line numbers
 |toggle-date		|Toggle date display
 |toggle-author		|Toggle author display
+|toggle-filename	|Toggle file name display
 |toggle-rev-graph	|Toggle revision graph visualization
 |toggle-graphic		|Toggle (line) graphics mode
 |toggle-refs		|Toggle reference display
