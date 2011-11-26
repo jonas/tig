@@ -245,20 +245,11 @@ DEFINE_ENUM(filename, FILENAME_ENUM);
  * User requests
  */
 
+#define VIEW_REQ(id, name, ref) REQ_(VIEW_##id, "Show " #name " view")
+
 #define REQ_INFO \
-	/* XXX: Keep the view request first and in sync with views[]. */ \
 	REQ_GROUP("View switching") \
-	REQ_(VIEW_MAIN,		"Show main view"), \
-	REQ_(VIEW_DIFF,		"Show diff view"), \
-	REQ_(VIEW_LOG,		"Show log view"), \
-	REQ_(VIEW_TREE,		"Show tree view"), \
-	REQ_(VIEW_BLOB,		"Show blob view"), \
-	REQ_(VIEW_BLAME,	"Show blame view"), \
-	REQ_(VIEW_BRANCH,	"Show branch view"), \
-	REQ_(VIEW_HELP,		"Show help page"), \
-	REQ_(VIEW_PAGER,	"Show pager view"), \
-	REQ_(VIEW_STATUS,	"Show status view"), \
-	REQ_(VIEW_STAGE,	"Show stage view"), \
+	VIEW_INFO(VIEW_REQ), \
 	\
 	REQ_GROUP("View manipulation") \
 	REQ_(ENTER,		"Enter current line and scroll"), \
