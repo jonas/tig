@@ -1644,17 +1644,8 @@ struct view_ops {
 	void (*select)(struct view *view, struct line *line);
 };
 
-static struct view_ops blame_ops;
-static struct view_ops blob_ops;
-static struct view_ops diff_ops;
-static struct view_ops help_ops;
-static struct view_ops log_ops;
-static struct view_ops main_ops;
-static struct view_ops pager_ops;
-static struct view_ops stage_ops;
-static struct view_ops status_ops;
-static struct view_ops tree_ops;
-static struct view_ops branch_ops;
+#define VIEW_OPS(id, name, ref) name##_ops
+static struct view_ops VIEW_INFO(VIEW_OPS);
 
 static struct view views[] = {
 #define VIEW_DATA(id, name, ref) \
