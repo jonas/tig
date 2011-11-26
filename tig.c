@@ -1533,22 +1533,19 @@ static char ref_commit[SIZEOF_REF]	= "HEAD";
 static char ref_head[SIZEOF_REF]	= "HEAD";
 static char ref_branch[SIZEOF_REF]	= "";
 
-enum view_type {
-	VIEW_MAIN,
-	VIEW_DIFF,
-	VIEW_LOG,
-	VIEW_TREE,
-	VIEW_BLOB,
-	VIEW_BLAME,
-	VIEW_BRANCH,
-	VIEW_HELP,
-	VIEW_PAGER,
-	VIEW_STATUS,
-	VIEW_STAGE,
+enum view_flag {
+	VIEW_NO_FLAGS = 0,
+	VIEW_ALWAYS_LINENO	= 1 << 0,
+	VIEW_CUSTOM_STATUS	= 1 << 1,
+	VIEW_ADD_DESCRIBE_REF	= 1 << 2,
+	VIEW_ADD_PAGER_REFS	= 1 << 3,
+	VIEW_OPEN_DIFF		= 1 << 4,
+	VIEW_NO_REF		= 1 << 5,
 };
 
+#define view_has_flags(view, flag)	((view)->ops->flags & (flag))
+
 struct view {
-	enum view_type type;	/* View type */
 	const char *name;	/* View name */
 	const char *id;		/* Points to either of ref_{head,commit,blob} */
 
@@ -1616,6 +1613,8 @@ enum open_flags {
 struct view_ops {
 	/* What type of content being displayed. Used in the title bar. */
 	const char *type;
+	/* Flags to control the view behavior. */
+	enum view_flag flags;
 	/* Size of private data. */
 	size_t private_size;
 	/* Open and reads in all view content. */
@@ -1645,7 +1644,7 @@ static struct view_ops tree_ops;
 static struct view_ops branch_ops;
 
 #define VIEW_STR(type, name, ref, ops, map, git) \
-	{ type, name, ref, ops, map, git }
+	{ name, ref, ops, map, git }
 
 #define VIEW_(id, name, ops, git, ref) \
 	VIEW_STR(VIEW_##id, name, ref, ops, KEYMAP_##id, git)
@@ -1999,7 +1998,7 @@ update_view_title(struct view *view)
 
 	assert(view_is_displayed(view));
 
-	if (view->type != VIEW_STATUS && view->lines) {
+	if (!view_has_flags(view, VIEW_CUSTOM_STATUS) && view->lines) {
 		unsigned int view_lines = view->offset + view->height;
 		unsigned int lines = view->lines
 				   ? MIN(view_lines, view->lines) * 100 / view->lines
@@ -2810,7 +2809,7 @@ update_view(struct view *view)
 		/* Keep the displayed view in sync with line number scaling. */
 		if (digits != view->digits) {
 			view->digits = digits;
-			if (opt_line_number || view->type == VIEW_BLAME)
+			if (opt_line_number || view_has_flags(view, VIEW_ALWAYS_LINENO))
 				redraw = TRUE;
 		}
 	}
@@ -3591,7 +3590,7 @@ add_pager_refs(struct view *view, struct line *line)
 
 	list = get_ref_list(commit_id);
 	if (!list) {
-		if (view->type == VIEW_DIFF)
+		if (view_has_flags(view, VIEW_ADD_DESCRIBE_REF))
 			goto try_add_describe_ref;
 		return;
 	}
@@ -3608,7 +3607,7 @@ add_pager_refs(struct view *view, struct line *line)
 			is_tag = TRUE;
 	}
 
-	if (!is_tag && view->type == VIEW_DIFF) {
+	if (!is_tag && view_has_flags(view, VIEW_ADD_DESCRIBE_REF)) {
 try_add_describe_ref:
 		/* Add <tag>-g<commit_id> "fake" reference. */
 		if (!add_describe_ref(buf, &bufpos, commit_id, sep))
@@ -3633,9 +3632,7 @@ pager_read(struct view *view, char *data)
 	if (!line)
 		return FALSE;
 
-	if (line->type == LINE_COMMIT &&
-	    (view->type == VIEW_DIFF ||
-	     view->type == VIEW_LOG))
+	if (line->type == LINE_COMMIT && view_has_flags(view, VIEW_ADD_PAGER_REFS))
 		add_pager_refs(view, line);
 
 	return TRUE;
@@ -3649,9 +3646,7 @@ pager_request(struct view *view, enum request request, struct line *line)
 	if (request != REQ_ENTER)
 		return request;
 
-	if (line->type == LINE_COMMIT &&
-	   (view->type == VIEW_LOG ||
-	    view->type == VIEW_PAGER)) {
+	if (line->type == LINE_COMMIT && view_has_flags(view, VIEW_OPEN_DIFF)) {
 		open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT);
 		split = 1;
 	}
@@ -3684,7 +3679,7 @@ pager_select(struct view *view, struct line *line)
 	if (line->type == LINE_COMMIT) {
 		char *text = (char *)line->data + STRING_SIZE("commit ");
 
-		if (view->type != VIEW_PAGER)
+		if (!view_has_flags(view, VIEW_NO_REF))
 			string_copy_rev(view->ref, text);
 		string_copy_rev(ref_commit, text);
 	}
@@ -3698,6 +3693,7 @@ pager_open(struct view *view, enum open_flags flags)
 
 static struct view_ops pager_ops = {
 	"line",
+	VIEW_OPEN_DIFF | VIEW_NO_REF,
 	0,
 	pager_open,
 	pager_read,
@@ -3732,6 +3728,7 @@ log_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops log_ops = {
 	"line",
+	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF,
 	0,
 	log_open,
 	pager_read,
@@ -4037,6 +4034,7 @@ diff_select(struct view *view, struct line *line)
 
 static struct view_ops diff_ops = {
 	"line",
+	VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS,
 	sizeof(struct diff_state),
 	diff_open,
 	diff_read,
@@ -4168,6 +4166,7 @@ help_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops help_ops = {
 	"line",
+	VIEW_NO_FLAGS,
 	0,
 	help_open,
 	NULL,
@@ -4638,6 +4637,7 @@ tree_open(struct view *view, enum open_flags flags)
 
 static struct view_ops tree_ops = {
 	"file",
+	VIEW_NO_FLAGS,
 	sizeof(struct tree_state),
 	tree_open,
 	tree_read,
@@ -4679,6 +4679,7 @@ blob_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops blob_ops = {
 	"line",
+	VIEW_NO_FLAGS,
 	0,
 	blob_open,
 	blob_read,
@@ -5111,6 +5112,7 @@ blame_select(struct view *view, struct line *line)
 
 static struct view_ops blame_ops = {
 	"line",
+	VIEW_ALWAYS_LINENO,
 	sizeof(struct blame_state),
 	blame_open,
 	blame_read,
@@ -5333,6 +5335,7 @@ branch_select(struct view *view, struct line *line)
 
 static struct view_ops branch_ops = {
 	"branch",
+	VIEW_NO_FLAGS,
 	sizeof(struct branch_state),
 	branch_open,
 	branch_read,
@@ -6026,6 +6029,7 @@ status_grep(struct view *view, struct line *line)
 
 static struct view_ops status_ops = {
 	"file",
+	VIEW_CUSTOM_STATUS,
 	0,
 	status_open,
 	NULL,
@@ -6379,6 +6383,7 @@ stage_read(struct view *view, char *data)
 
 static struct view_ops stage_ops = {
 	"line",
+	VIEW_NO_FLAGS,
 	sizeof(struct stage_state),
 	stage_open,
 	stage_read,
@@ -6678,6 +6683,7 @@ main_select(struct view *view, struct line *line)
 
 static struct view_ops main_ops = {
 	"commit",
+	VIEW_NO_FLAGS,
 	sizeof(struct graph),
 	main_open,
 	main_read,
