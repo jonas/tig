@@ -228,6 +228,19 @@ mkmode(mode_t mode)
 DEFINE_ENUM(filename, FILENAME_ENUM);
 
 
+#define VIEW_INFO(_) \
+	_(MAIN,   main,   ref_head), \
+	_(DIFF,   diff,   ref_commit), \
+	_(LOG,    log,    ref_head), \
+	_(TREE,   tree,   ref_commit), \
+	_(BLOB,   blob,   ref_blob), \
+	_(BLAME,  blame,  ref_commit), \
+	_(BRANCH, branch, ref_head), \
+	_(HELP,   help,   ""), \
+	_(PAGER,  pager,  ""), \
+	_(STATUS, status, "status"), \
+	_(STAGE,  stage,  "stage")
+
 /*
  * User requests
  */
@@ -1643,24 +1656,10 @@ static struct view_ops status_ops;
 static struct view_ops tree_ops;
 static struct view_ops branch_ops;
 
-#define VIEW_STR(type, name, ref, ops, map) \
-	{ name, ref, ops, map }
-
-#define VIEW_(id, name, ops, ref) \
-	VIEW_STR(VIEW_##id, name, ref, ops, KEYMAP_##id)
-
 static struct view views[] = {
-	VIEW_(MAIN,   "main",   &main_ops,   ref_head),
-	VIEW_(DIFF,   "diff",   &diff_ops,   ref_commit),
-	VIEW_(LOG,    "log",    &log_ops,    ref_head),
-	VIEW_(TREE,   "tree",   &tree_ops,   ref_commit),
-	VIEW_(BLOB,   "blob",   &blob_ops,   ref_blob),
-	VIEW_(BLAME,  "blame",  &blame_ops,  ref_commit),
-	VIEW_(BRANCH, "branch",	&branch_ops, ref_head),
-	VIEW_(HELP,   "help",   &help_ops,   ""),
-	VIEW_(PAGER,  "pager",  &pager_ops,  ""),
-	VIEW_(STATUS, "status", &status_ops, "status"),
-	VIEW_(STAGE,  "stage",	&stage_ops,  "stage"),
+#define VIEW_DATA(id, name, ref) \
+	{ #name, ref, &name##_ops, KEYMAP_##id }
+	VIEW_INFO(VIEW_DATA)
 };
 
 #define VIEW(req) 	(&views[(req) - REQ_OFFSET - 1])
