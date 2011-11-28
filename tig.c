@@ -7416,10 +7416,15 @@ filter_rev_parse(const char ***args, const char *arg1, const char *arg2, const c
 }
 
 static void
-filter_options(const char *argv[])
+filter_options(const char *argv[], bool blame)
 {
 	filter_rev_parse(&opt_file_argv, "--no-revs", "--no-flags", argv);
-	filter_rev_parse(&opt_diff_argv, "--no-revs", "--flags", argv);
+
+	if (blame)
+		filter_rev_parse(&opt_blame_argv, "--no-revs", "--flags", argv);
+	else
+		filter_rev_parse(&opt_diff_argv, "--no-revs", "--flags", argv);
+
 	filter_rev_parse(&opt_rev_argv, "--symbolic", "--revs-only", argv);
 }
 
@@ -7445,19 +7450,7 @@ parse_options(int argc, const char *argv[])
 		return REQ_VIEW_STATUS;
 
 	} else if (!strcmp(subcommand, "blame")) {
-		filter_rev_parse(&opt_file_argv, "--no-revs", "--no-flags", argv + 2);
-		filter_rev_parse(&opt_blame_argv, "--no-revs", "--flags", argv + 2);
-		filter_rev_parse(&opt_rev_argv, "--symbolic", "--revs-only", argv + 2);
-
-		if (!opt_file_argv || opt_file_argv[1] || (opt_rev_argv && opt_rev_argv[1]))
-			die("invalid number of options to blame\n\n%s", usage);
-
-		if (opt_rev_argv) {
-			string_ncopy(opt_ref, opt_rev_argv[0], strlen(opt_rev_argv[0]));
-		}
-
-		string_ncopy(opt_file, opt_file_argv[0], strlen(opt_file_argv[0]));
-		return REQ_VIEW_BLAME;
+		request = REQ_VIEW_BLAME;
 
 	} else if (!strcmp(subcommand, "show")) {
 		request = REQ_VIEW_DIFF;
@@ -7491,7 +7484,19 @@ parse_options(int argc, const char *argv[])
 	}
 
 	if (filter_argv)
-		filter_options(filter_argv);
+		filter_options(filter_argv, request == REQ_VIEW_BLAME);
+
+	/* Finish validating and setting up blame options */
+	if (request == REQ_VIEW_BLAME) {
+		if (!opt_file_argv || opt_file_argv[1] || (opt_rev_argv && opt_rev_argv[1]))
+			die("invalid number of options to blame\n\n%s", usage);
+
+		if (opt_rev_argv) {
+			string_ncopy(opt_ref, opt_rev_argv[0], strlen(opt_rev_argv[0]));
+		}
+
+		string_ncopy(opt_file, opt_file_argv[0], strlen(opt_file_argv[0]));
+	}
 
 	return request;
 }
