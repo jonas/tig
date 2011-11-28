@@ -398,6 +398,7 @@ static const char **opt_diff_argv	= NULL;
 static const char **opt_rev_argv	= NULL;
 static const char **opt_file_argv	= NULL;
 static const char **opt_blame_argv	= NULL;
+static int opt_lineno			= 0;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strcmp(rev, get_ref_head()->id)))
@@ -2632,6 +2633,12 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool first)
 static bool
 restore_view_position(struct view *view)
 {
+	/* A view without a previous view is the first view */
+	if (!view->prev && opt_lineno && opt_lineno <= view->lines) {
+		select_view_line(view, opt_lineno - 1);
+		opt_lineno = 0;
+	}
+
 	if (!view->p_restore || (view->pipe && view->lines <= view->p_lineno))
 		return FALSE;
 
@@ -7353,6 +7360,7 @@ static const char usage[] =
 "   or: tig <      [git command output]\n"
 "\n"
 "Options:\n"
+"  +<number>       Select line <number> in the first view\n"
 "  -v, --version   Show version and exit\n"
 "  -h, --help      Show help message and exit";
 
@@ -7416,10 +7424,15 @@ filter_rev_parse(const char ***args, const char *arg1, const char *arg2, const c
 }
 
 static void
-filter_options(const char *argv[])
+filter_options(const char *argv[], bool blame)
 {
 	filter_rev_parse(&opt_file_argv, "--no-revs", "--no-flags", argv);
-	filter_rev_parse(&opt_diff_argv, "--no-revs", "--flags", argv);
+
+	if (blame)
+		filter_rev_parse(&opt_blame_argv, "--no-revs", "--flags", argv);
+	else
+		filter_rev_parse(&opt_diff_argv, "--no-revs", "--flags", argv);
+
 	filter_rev_parse(&opt_rev_argv, "--symbolic", "--revs-only", argv);
 }
 
@@ -7445,19 +7458,7 @@ parse_options(int argc, const char *argv[])
 		return REQ_VIEW_STATUS;
 
 	} else if (!strcmp(subcommand, "blame")) {
-		filter_rev_parse(&opt_file_argv, "--no-revs", "--no-flags", argv + 2);
-		filter_rev_parse(&opt_blame_argv, "--no-revs", "--flags", argv + 2);
-		filter_rev_parse(&opt_rev_argv, "--symbolic", "--revs-only", argv + 2);
-
-		if (!opt_file_argv || opt_file_argv[1] || (opt_rev_argv && opt_rev_argv[1]))
-			die("invalid number of options to blame\n\n%s", usage);
-
-		if (opt_rev_argv) {
-			string_ncopy(opt_ref, opt_rev_argv[0], strlen(opt_rev_argv[0]));
-		}
-
-		string_ncopy(opt_file, opt_file_argv[0], strlen(opt_file_argv[0]));
-		return REQ_VIEW_BLAME;
+		request = REQ_VIEW_BLAME;
 
 	} else if (!strcmp(subcommand, "show")) {
 		request = REQ_VIEW_DIFF;
@@ -7469,25 +7470,25 @@ parse_options(int argc, const char *argv[])
 	for (i = 1 + !!subcommand; i < argc; i++) {
 		const char *opt = argv[i];
 
-		if (seen_dashdash) {
-			argv_append(&opt_file_argv, opt);
-			continue;
+		// stop parsing our options after -- and let rev-parse handle the rest
+		if (!seen_dashdash) {
+			if (!strcmp(opt, "--")) {
+				seen_dashdash = TRUE;
+				continue;
 
-		} else if (!strcmp(opt, "--")) {
-			seen_dashdash = TRUE;
-			continue;
+			} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
+				printf("tig version %s\n", TIG_VERSION);
+				quit(0);
 
-		} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
-			printf("tig version %s\n", TIG_VERSION);
-			quit(0);
+			} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
+				printf("%s\n", usage);
+				quit(0);
 
-		} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
-			printf("%s\n", usage);
-			quit(0);
+			} else if (strlen(opt) >= 2 && *opt == '+' && isnumber(opt + 1)) {
+				opt_lineno = atoi(opt + 1);
+				continue;
 
-		} else if (!strcmp(opt, "--all")) {
-			argv_append(&opt_rev_argv, opt);
-			continue;
+			}
 		}
 
 		if (!argv_append(&filter_argv, opt))
@@ -7495,7 +7496,19 @@ parse_options(int argc, const char *argv[])
 	}
 
 	if (filter_argv)
-		filter_options(filter_argv);
+		filter_options(filter_argv, request == REQ_VIEW_BLAME);
+
+	/* Finish validating and setting up blame options */
+	if (request == REQ_VIEW_BLAME) {
+		if (!opt_file_argv || opt_file_argv[1] || (opt_rev_argv && opt_rev_argv[1]))
+			die("invalid number of options to blame\n\n%s", usage);
+
+		if (opt_rev_argv) {
+			string_ncopy(opt_ref, opt_rev_argv[0], strlen(opt_rev_argv[0]));
+		}
+
+		string_ncopy(opt_file, opt_file_argv[0], strlen(opt_file_argv[0]));
+	}
 
 	return request;
 }

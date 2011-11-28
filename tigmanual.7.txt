@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 tig        [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
-tig blame  [rev] path
+tig blame  [options] [rev] [--] path
 tig status
 tig <      [git command output]
 

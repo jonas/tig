@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 tig        [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
-tig blame  [options] [rev] path
+tig blame  [options] [rev] [--] path
 tig status
 tig <      [git command output]
 
@@ -46,6 +46,9 @@ blame::
 
 status::
 	Start up in status view.
+
++<number>::
+    Show the first view with line <number> visible and selected.
 
 -v, --version::
 	Show version and exit.

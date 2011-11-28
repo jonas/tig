@@ -134,7 +134,7 @@ name(type **mem, size_t size, size_t increase)					\
 	strncmp(str1, str2, STRING_SIZE(str2))
 
 static inline bool
-isnumber(char *str)
+isnumber(const char *str)
 {
 	int pos;
 
