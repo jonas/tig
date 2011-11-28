@@ -7469,25 +7469,21 @@ parse_options(int argc, const char *argv[])
 	for (i = 1 + !!subcommand; i < argc; i++) {
 		const char *opt = argv[i];
 
-		if (seen_dashdash) {
-			argv_append(&opt_file_argv, opt);
-			continue;
+		// stop parsing our options after -- and let rev-parse handle the rest
+		if (!seen_dashdash) {
+			if (!strcmp(opt, "--")) {
+				seen_dashdash = TRUE;
+				continue;
 
-		} else if (!strcmp(opt, "--")) {
-			seen_dashdash = TRUE;
-			continue;
+			} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
+				printf("tig version %s\n", TIG_VERSION);
+				quit(0);
 
-		} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
-			printf("tig version %s\n", TIG_VERSION);
-			quit(0);
+			} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
+				printf("%s\n", usage);
+				quit(0);
 
-		} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
-			printf("%s\n", usage);
-			quit(0);
-
-		} else if (!strcmp(opt, "--all")) {
-			argv_append(&opt_rev_argv, opt);
-			continue;
+			}
 		}
 
 		if (!argv_append(&filter_argv, opt))
