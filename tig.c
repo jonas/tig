@@ -398,6 +398,7 @@ static const char **opt_diff_argv	= NULL;
 static const char **opt_rev_argv	= NULL;
 static const char **opt_file_argv	= NULL;
 static const char **opt_blame_argv	= NULL;
+static int opt_lineno			= 0;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strcmp(rev, get_ref_head()->id)))
@@ -2632,6 +2633,12 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool first)
 static bool
 restore_view_position(struct view *view)
 {
+	/* A view without a previous view is the first view */
+	if (!view->prev && opt_lineno && opt_lineno <= view->lines) {
+		select_view_line(view, opt_lineno - 1);
+		opt_lineno = 0;
+	}
+
 	if (!view->p_restore || (view->pipe && view->lines <= view->p_lineno))
 		return FALSE;
 
@@ -7353,6 +7360,7 @@ static const char usage[] =
 "   or: tig <      [git command output]\n"
 "\n"
 "Options:\n"
+"  +<number>       Select line <number> in the first view\n"
 "  -v, --version   Show version and exit\n"
 "  -h, --help      Show help message and exit";
 
@@ -7475,6 +7483,10 @@ parse_options(int argc, const char *argv[])
 			} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
 				printf("%s\n", usage);
 				quit(0);
+
+			} else if (strlen(opt) >= 2 && *opt == '+' && isnumber(opt + 1)) {
+				opt_lineno = atoi(opt + 1);
+				continue;
 
 			}
 		}

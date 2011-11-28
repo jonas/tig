@@ -47,6 +47,9 @@ blame::
 status::
 	Start up in status view.
 
++<number>::
+    Show the first view with line <number> visible and selected.
+
 -v, --version::
 	Show version and exit.
 
