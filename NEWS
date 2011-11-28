@@ -9,6 +9,7 @@ master repository (http://jonas.nitro.dk/tig/tig.git) will be retired.
 
 Improvements:
 
+ - Use +<lineno> to open the initial view at an arbitrary line. (GH #20)
  - Add show-notes ~/.tigrc option.
  - Support jumping to specific SHAs in the main view.
  - Decorate replaced commits.
