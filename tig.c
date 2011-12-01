@@ -793,9 +793,9 @@ add_keybinding(enum keymap keymap, enum request request, int key)
 	struct keybinding_table *table = &keybindings[keymap];
 	size_t i;
 
-	for (i = 0; i < keybindings[keymap].size; i++) {
-		if (keybindings[keymap].data[i].alias == key) {
-			keybindings[keymap].data[i].request = request;
+	for (i = 0; i < table->size; i++) {
+		if (table->data[i].alias == key) {
+			table->data[i].request = request;
 			return;
 		}
 	}
