@@ -945,7 +945,7 @@ append_keymap_request_keys(char *buf, size_t *pos, enum request request,
 	return TRUE;
 }
 
-#define get_key(keymap, request) get_keys(keymap, request, FALSE)
+#define get_view_key(view, request) get_keys((view)->keymap, request, FALSE)
 
 static const char *
 get_keys(enum keymap keymap, enum request request, bool all)
@@ -3087,7 +3087,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_BLAME:
 		if (!opt_file[0]) {
 			report("No file chosen, press %s to open tree view",
-			       get_key(view->keymap, REQ_VIEW_TREE));
+			       get_view_key(view, REQ_VIEW_TREE));
 			break;
 		}
 		open_view(view, request, OPEN_DEFAULT);
@@ -3096,7 +3096,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_BLOB:
 		if (!ref_blob[0]) {
 			report("No file chosen, press %s to open tree view",
-			       get_key(view->keymap, REQ_VIEW_TREE));
+			       get_view_key(view, REQ_VIEW_TREE));
 			break;
 		}
 		open_view(view, request, OPEN_DEFAULT);
@@ -3112,7 +3112,7 @@ view_driver(struct view *view, enum request request)
 
 		if (!VIEW(REQ_VIEW_PAGER)->pipe && !VIEW(REQ_VIEW_PAGER)->lines) {
 			report("No pager content, press %s to run command from prompt",
-			       get_key(view->keymap, REQ_PROMPT));
+			       get_view_key(view, REQ_PROMPT));
 			break;
 		}
 		open_view(view, request, OPEN_DEFAULT);
@@ -3121,7 +3121,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_STAGE:
 		if (!VIEW(REQ_VIEW_STAGE)->lines) {
 			report("No stage content, press %s to open the status view and choose file",
-			       get_key(view->keymap, REQ_VIEW_STATUS));
+			       get_view_key(view, REQ_VIEW_STATUS));
 			break;
 		}
 		open_view(view, request, OPEN_DEFAULT);
@@ -3258,7 +3258,7 @@ view_driver(struct view *view, enum request request)
 
 	default:
 		report("Unknown key, press %s for help",
-		       get_key(view->keymap, REQ_VIEW_HELP));
+		       get_view_key(view, REQ_VIEW_HELP));
 		return TRUE;
 	}
 
@@ -4012,7 +4012,7 @@ static void
 diff_select(struct view *view, struct line *line)
 {
 	if (line->type == LINE_DIFF_STAT) {
-		const char *key = get_key(KEYMAP_DIFF, REQ_ENTER);
+		const char *key = get_view_key(view, REQ_ENTER);
 
 		string_format(view->ref, "Press '%s' to jump to file diff", key);
 	} else {
@@ -5990,10 +5990,10 @@ status_select(struct view *view, struct line *line)
 
 	if (status && status->status == 'U') {
 		text = "Press %s to resolve conflict in %s";
-		key = get_key(KEYMAP_STATUS, REQ_STATUS_MERGE);
+		key = get_view_key(view, REQ_STATUS_MERGE);
 
 	} else {
-		key = get_key(KEYMAP_STATUS, REQ_STATUS_UPDATE);
+		key = get_view_key(view, REQ_STATUS_UPDATE);
 	}
 
 	string_format(view->ref, text, key, file);
@@ -6234,7 +6234,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 	case REQ_STAGE_NEXT:
 		if (stage_line_type == LINE_STAT_UNTRACKED) {
 			report("File is untracked; press %s to add",
-			       get_key(KEYMAP_STAGE, REQ_STATUS_UPDATE));
+			       get_view_key(view, REQ_STATUS_UPDATE));
 			return REQ_NONE;
 		}
 		stage_next(view, line);
@@ -7626,7 +7626,7 @@ main(int argc, const char *argv[])
 		switch (request) {
 		case REQ_NONE:
 			report("Unknown key, press %s for help",
-			       get_key(view->keymap, REQ_VIEW_HELP));
+			       get_view_key(view, REQ_VIEW_HELP));
 			break;
 		case REQ_PROMPT:
 		{
