@@ -1122,30 +1122,33 @@ static size_t run_requests;
 
 DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 
-static enum request
-add_run_request(enum keymap keymap, int key, const char **argv, bool silent)
+static bool
+add_run_request(enum keymap keymap, int key, const char **argv, bool silent, bool force)
 {
 	struct run_request *req;
 
-	if (!realloc_run_requests(&run_request, run_requests, 1))
-		return REQ_NONE;
+	if (!force && get_keybinding(keymap, key) != key)
+		return TRUE;
 
-	req = &run_request[run_requests];
+	if (!realloc_run_requests(&run_request, run_requests, 1))
+		return FALSE;
+
+	if (!argv_copy(&run_request[run_requests].argv, argv))
+		return FALSE;
+
+	req = &run_request[run_requests++];
 	req->silent = silent;
 	req->keymap = keymap;
 	req->key = key;
-	req->argv = NULL;
 
-	if (!argv_copy(&req->argv, argv))
-		return REQ_NONE;
-
-	return REQ_NONE + ++run_requests;
+	add_keybinding(keymap, REQ_NONE + run_requests, key);
+	return TRUE;
 }
 
 static struct run_request *
 get_run_request(enum request request)
 {
-	if (request <= REQ_NONE)
+	if (request <= REQ_NONE || request > REQ_NONE + run_requests)
 		return NULL;
 	return &run_request[request - REQ_NONE - 1];
 }
@@ -1157,23 +1160,11 @@ add_builtin_run_requests(void)
 	const char *checkout[] = { "git", "checkout", "%(branch)", NULL };
 	const char *commit[] = { "git", "commit", NULL };
 	const char *gc[] = { "git", "gc", NULL };
-	struct run_request reqs[] = {
-		{ KEYMAP_MAIN,	  'C', cherry_pick },
-		{ KEYMAP_STATUS,  'C', commit },
-		{ KEYMAP_BRANCH,  'C', checkout },
-		{ KEYMAP_GENERIC, 'G', gc },
-	};
-	int i;
 
-	for (i = 0; i < ARRAY_SIZE(reqs); i++) {
-		enum request req = get_keybinding(reqs[i].keymap, reqs[i].key);
-
-		if (req != reqs[i].key)
-			continue;
-		req = add_run_request(reqs[i].keymap, reqs[i].key, reqs[i].argv, FALSE);
-		if (req != REQ_NONE)
-			add_keybinding(reqs[i].keymap, req, reqs[i].key);
-	}
+	add_run_request(KEYMAP_MAIN, 'C', cherry_pick, FALSE, FALSE);
+	add_run_request(KEYMAP_STATUS, 'C', commit, FALSE, FALSE);
+	add_run_request(KEYMAP_BRANCH, 'C', checkout, FALSE, FALSE);
+	add_run_request(KEYMAP_GENERIC, 'G', gc, FALSE, FALSE);
 }
 
 /*
@@ -1548,7 +1539,8 @@ option_bind_command(int argc, const char *argv[])
 
 		if (silent)
 			argv[2]++;
-		request = add_run_request(keymap, key, argv + 2, silent);
+		return add_run_request(keymap, key, argv + 2, silent, TRUE)
+			? OPT_OK : OPT_ERR_OUT_OF_MEMORY;
 	}
 	if (request == REQ_UNKNOWN)
 		return OPT_ERR_UNKNOWN_REQUEST_NAME;
