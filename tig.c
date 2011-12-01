@@ -1783,6 +1783,16 @@ draw_text(struct view *view, enum line_type type, const char *string)
 }
 
 static bool
+draw_formatted(struct view *view, enum line_type type, const char *format, ...)
+{
+	char text[SIZEOF_STR];
+	int retval;
+
+	FORMAT_BUFFER(text, sizeof(text), format, retval, TRUE);
+	return retval >= 0 ? draw_text(view, type, text) : VIEW_MAX_LEN(view) <= 0;
+}
+
+static bool
 draw_graphic(struct view *view, enum line_type type, const chtype graphic[], size_t size, bool separator)
 {
 	size_t skip = view->yoffset > view->col ? view->yoffset - view->col : 0;
@@ -1903,9 +1913,7 @@ draw_refs(struct view *view, struct ref_list *refs)
 		struct ref *ref = refs->refs[i];
 		enum line_type type = get_line_type_from_ref(ref);
 
-		if (draw_text(view, type, "[") ||
-		    draw_text(view, type, ref->name) ||
-		    draw_text(view, type, "]"))
+		if (draw_formatted(view, type, "[%s]", ref->name))
 			return TRUE;
 
 		if (draw_text(view, LINE_DEFAULT, " "))
