@@ -785,6 +785,7 @@ struct line {
 	unsigned int selected:1;
 	unsigned int dirty:1;
 	unsigned int cleareol:1;
+	unsigned int dont_free:1;
 	unsigned int other:16;
 
 	void *data;		/* User data */
@@ -908,6 +909,7 @@ DEFINE_ENUM(keymap, KEYMAP_ENUM);
 struct keybinding_table {
 	struct keybinding *data;
 	size_t size;
+	bool hidden;
 };
 
 static struct keybinding_table keybindings[ARRAY_SIZE(keymap_map)];
@@ -2748,7 +2750,8 @@ reset_view(struct view *view)
 	int i;
 
 	for (i = 0; i < view->lines; i++)
-		free(view->line[i].data);
+		if (!view->line[i].dont_free)
+			free(view->line[i].data);
 	free(view->line);
 
 	view->prev_pos = view->pos;
@@ -3045,6 +3048,16 @@ add_line_data(struct view *view, void *data, enum line_type type)
 	line->data = data;
 	line->dirty = 1;
 
+	return line;
+}
+
+static struct line *
+add_line_static_data(struct view *view, void *data, enum line_type type)
+{
+	struct line *line = add_line_data(view, data, type);
+
+	if (line)
+		line->dont_free = TRUE;
 	return line;
 }
 
@@ -4269,20 +4282,27 @@ static struct view_ops diff_ops = {
  * Help backend
  */
 
-static bool help_keymap_hidden[ARRAY_SIZE(keymap_map)];
+static bool
+help_draw(struct view *view, struct line *line, unsigned int lineno)
+{
+	if (line->type == LINE_HELP_KEYMAP) {
+		struct keybinding_table *table = line->data;
+		enum keymap keymap = table - keybindings;
+
+		draw_formatted(view, line->type, "[%c] %s bindings",
+			       table->hidden ? '+' : '-',
+			       enum_name(keymap_map[keymap]));
+		return TRUE;
+	} else {
+		return pager_draw(view, line, lineno);
+	}
+}
 
 static bool
-help_open_keymap_title(struct view *view, enum keymap keymap)
+help_open_keymap_title(struct view *view, struct keybinding_table *keymap)
 {
-	struct line *line;
-
-	line = add_line_format(view, LINE_HELP_KEYMAP, "[%c] %s bindings",
-			       help_keymap_hidden[keymap] ? '+' : '-',
-			       enum_name(keymap_map[keymap]));
-	if (line)
-		line->other = keymap;
-
-	return help_keymap_hidden[keymap];
+	add_line_static_data(view, keymap, LINE_HELP_KEYMAP);
+	return keymap->hidden;
 }
 
 static void
@@ -4309,7 +4329,7 @@ help_open_keymap(struct view *view, enum keymap keymap)
 		if (!key || !*key)
 			continue;
 
-		if (add_title && help_open_keymap_title(view, keymap))
+		if (add_title && help_open_keymap_title(view, &keybindings[keymap]))
 			return;
 		add_title = FALSE;
 
@@ -4336,7 +4356,7 @@ help_open_keymap(struct view *view, enum keymap keymap)
 		if (!*key)
 			key = "(no key defined)";
 
-		if (add_title && help_open_keymap_title(view, keymap))
+		if (add_title && help_open_keymap_title(view, &keybindings[keymap]))
 			return;
 		add_title = FALSE;
 
@@ -4375,8 +4395,9 @@ help_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_ENTER:
 		if (line->type == LINE_HELP_KEYMAP) {
-			help_keymap_hidden[line->other] =
-				!help_keymap_hidden[line->other];
+			struct keybinding_table *keymap = line->data;
+
+			keymap->hidden = !keymap->hidden;
 			refresh_view(view);
 		}
 
@@ -4392,7 +4413,7 @@ static struct view_ops help_ops = {
 	0,
 	help_open,
 	NULL,
-	pager_draw,
+	help_draw,
 	help_request,
 	pager_grep,
 	pager_select,
