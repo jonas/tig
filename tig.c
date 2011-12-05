@@ -1057,6 +1057,7 @@ add_builtin_run_requests(void)
 	OPT_ERR_(OBSOLETE_REQUEST_NAME, "Obsolete request name"), \
 	OPT_ERR_(OUT_OF_MEMORY, "Out of memory"), \
 	OPT_ERR_(TOO_MANY_OPTION_ARGUMENTS, "Too many option arguments"), \
+	OPT_ERR_(FILE_DOES_NOT_EXIST, "File does not exist"), \
 	OPT_ERR_(UNKNOWN_ATTRIBUTE, "Unknown attribute"), \
 	OPT_ERR_(UNKNOWN_COLOR, "Unknown color"), \
 	OPT_ERR_(UNKNOWN_COLOR_NAME, "Unknown color name"), \
@@ -1371,6 +1372,18 @@ option_bind_command(int argc, const char *argv[])
 	return OPT_OK;
 }
 
+
+static enum option_code load_option_file(const char *path);
+
+static enum option_code
+option_source_command(int argc, const char *argv[])
+{
+	if (argc < 1)
+		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
+
+	return load_option_file(argv[0]);
+}
+
 static enum option_code
 set_option(const char *opt, char *value)
 {
@@ -1389,10 +1402,14 @@ set_option(const char *opt, char *value)
 	if (!strcmp(opt, "bind"))
 		return option_bind_command(argc, argv);
 
+	if (!strcmp(opt, "source"))
+		return option_source_command(argc, argv);
+
 	return OPT_ERR_UNKNOWN_OPTION_COMMAND;
 }
 
 struct config_state {
+	const char *path;
 	int lineno;
 	bool errors;
 };
@@ -1424,8 +1441,8 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 	}
 
 	if (status != OPT_OK) {
-		warn("Error on line %d, near '%.*s': %s",
-		     config->lineno, (int) optlen, opt, option_errors[status]);
+		warn("%s line %d: %s near '%.*s'", config->path, config->lineno,
+		     option_errors[status], (int) optlen, opt);
 		config->errors = TRUE;
 	}
 
@@ -1433,23 +1450,24 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 	return OK;
 }
 
-static void
+static enum option_code
 load_option_file(const char *path)
 {
-	struct config_state config = { 0, FALSE };
+	struct config_state config = { path, 0, FALSE };
 	struct io io;
 
 	/* Do not read configuration from stdin if set to "" */
 	if (!path || !strlen(path))
-		return;
+		return OPT_OK;
 
 	/* It's OK that the file doesn't exist. */
 	if (!io_open(&io, "%s", path))
-		return;
+		return OPT_ERR_FILE_DOES_NOT_EXIST;
 
 	if (io_load(&io, " \t", read_option, &config) == ERR ||
 	    config.errors == TRUE)
 		warn("Errors while loading %s.", path);
+	return OPT_OK;
 }
 
 static int

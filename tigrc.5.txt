@@ -12,6 +12,7 @@ SYNOPSIS
 *set*   'variable' *=* 'value'
 *bind*  'keymap' 'key' 'action'
 *color* 'area' 'fgcolor' 'bgcolor' '[attributes]'
+*source* 'path'
 
 
 DESCRIPTION
@@ -548,6 +549,24 @@ Colors for information of the tree view.
 *tree-dir*, *tree-file*
 
 --
+
+Source command
+-------------
+
+Sources commands makes it possible to read additional configuration files.
+Sourced file are treated in-place, meaning when a 'source' command is
+encountered it will be immediately read. Any commands, later in the current
+configuration file will take precedence. The syntax is:
+
+[verse]
+*source* 'path'
+
+Examples:
+
+------------------------------------------------------------------------------
+source ~/.tig/colorscheme.tigrc
+source ~/.tig/keybindings.tigrc
+--------------------------------------------------------------------------
 
 COPYRIGHT
 ---------

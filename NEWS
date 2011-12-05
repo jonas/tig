@@ -20,6 +20,7 @@ Improvements:
    Example configuration: color "Reported-by:" green default
  - Handle editor options with multiple arguments. (GH #12)
  - Show filename when running tig blame with copy detection. (GH #19)
+ - Use 'source <path>' command to load additional files from ~/.tigrc
 
 Bug fixes:
 
