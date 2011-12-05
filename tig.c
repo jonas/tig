@@ -7484,7 +7484,7 @@ parse_options(int argc, const char *argv[])
 				printf("%s\n", usage);
 				quit(0);
 
-			} else if (strlen(opt) >= 2 && *opt == '+' && isnumber(opt + 1)) {
+			} else if (strlen(opt) >= 2 && *opt == '+' && string_isnumber(opt + 1)) {
 				opt_lineno = atoi(opt + 1);
 				continue;
 
@@ -7574,7 +7574,7 @@ main(int argc, const char *argv[])
 		{
 			char *cmd = read_prompt(":");
 
-			if (cmd && isnumber(cmd)) {
+			if (cmd && string_isnumber(cmd)) {
 				int lineno = view->lineno + 1;
 
 				if (parse_int(&lineno, cmd, 1, view->lines + 1) == OPT_OK) {
