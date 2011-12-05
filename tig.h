@@ -26,6 +26,13 @@
 #define NDEBUG
 #endif
 
+/* necessary on Snow Leopard to use WINDOW struct */
+#ifdef NCURSES_OPAQUE
+#undef NCURSES_OPAQUE
+#endif
+#define NCURSES_OPAQUE 0
+
+
 #include <assert.h>
 #include <errno.h>
 #include <ctype.h>
