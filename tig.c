@@ -1733,6 +1733,12 @@ enum view_flag {
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))
 
+struct position {
+	unsigned long offset;	/* Offset of the window top */
+	unsigned long col;	/* Offset from the window side. */
+	unsigned long lineno;	/* Current line number */
+};
+
 struct view {
 	const char *name;	/* View name */
 	const char *id;		/* Points to either of ref_{head,commit,blob} */
@@ -1748,12 +1754,8 @@ struct view {
 	WINDOW *win;		/* The main window */
 
 	/* Navigation */
-	unsigned long offset;	/* Offset of the window top */
-	unsigned long yoffset;	/* Offset from the window side. */
-	unsigned long lineno;	/* Current line number */
-	unsigned long p_offset;	/* Previous offset of the window top */
-	unsigned long p_yoffset;/* Previous offset from the window side */
-	unsigned long p_lineno;	/* Previous current line number */
+	struct position pos;	/* Current position. */
+	struct position prev_pos; /* Previous position. */
 	bool p_restore;		/* Should the previous position be restored. */
 
 	/* Searching */
@@ -1841,7 +1843,7 @@ view_request(struct view *view, enum request request)
 {
 	if (!view || !view->lines)
 		return request;
-	return view->ops->request(view, request, &view->line[view->lineno]);
+	return view->ops->request(view, request, &view->line[view->pos.lineno]);
 }
 
 
@@ -1859,7 +1861,7 @@ set_view_attr(struct view *view, enum line_type type)
 	}
 }
 
-#define VIEW_MAX_LEN(view) ((view)->width + (view)->yoffset - (view)->col)
+#define VIEW_MAX_LEN(view) ((view)->width + (view)->pos.col - (view)->col)
 
 static bool
 draw_chars(struct view *view, enum line_type type, const char *string,
@@ -1869,7 +1871,7 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 	int len = 0;
 	int col = 0;
 	int trimmed = FALSE;
-	size_t skip = view->yoffset > view->col ? view->yoffset - view->col : 0;
+	size_t skip = view->pos.col > view->col ? view->pos.col - view->col : 0;
 
 	if (max_len <= 0)
 		return VIEW_MAX_LEN(view) <= 0;
@@ -1960,7 +1962,7 @@ draw_formatted(struct view *view, enum line_type type, const char *format, ...)
 static bool
 draw_graphic(struct view *view, enum line_type type, const chtype graphic[], size_t size, bool separator)
 {
-	size_t skip = view->yoffset > view->col ? view->yoffset - view->col : 0;
+	size_t skip = view->pos.col > view->col ? view->pos.col - view->col : 0;
 	int max = VIEW_MAX_LEN(view);
 	int i;
 
@@ -2054,7 +2056,7 @@ draw_lineno(struct view *view, unsigned int lineno)
 	if (!opt_line_number)
 		return FALSE;
 
-	lineno += view->offset + 1;
+	lineno += view->pos.offset + 1;
 	if (lineno == 1 || (lineno % opt_num_interval) == 0) {
 		static char fmt[] = "%1ld";
 
@@ -2095,14 +2097,14 @@ static bool
 draw_view_line(struct view *view, unsigned int lineno)
 {
 	struct line *line;
-	bool selected = (view->offset + lineno == view->lineno);
+	bool selected = (view->pos.offset + lineno == view->pos.lineno);
 
 	assert(view_is_displayed(view));
 
-	if (view->offset + lineno >= view->lines)
+	if (view->pos.offset + lineno >= view->lines)
 		return FALSE;
 
-	line = &view->line[view->offset + lineno];
+	line = &view->line[view->pos.offset + lineno];
 
 	wmove(view->win, lineno, 0);
 	if (line->cleareol)
@@ -2129,9 +2131,9 @@ redraw_view_dirty(struct view *view)
 	int lineno;
 
 	for (lineno = 0; lineno < view->height; lineno++) {
-		if (view->offset + lineno >= view->lines)
+		if (view->pos.offset + lineno >= view->lines)
 			break;
-		if (!view->line[view->offset + lineno].dirty)
+		if (!view->line[view->pos.offset + lineno].dirty)
 			continue;
 		dirty = TRUE;
 		if (!draw_view_line(view, lineno))
@@ -2175,14 +2177,14 @@ update_view_title(struct view *view)
 	assert(view_is_displayed(view));
 
 	if (!view_has_flags(view, VIEW_CUSTOM_STATUS) && view->lines) {
-		unsigned int view_lines = view->offset + view->height;
+		unsigned int view_lines = view->pos.offset + view->height;
 		unsigned int lines = view->lines
 				   ? MIN(view_lines, view->lines) * 100 / view->lines
 				   : 0;
 
 		string_format_from(state, &statelen, " - %s %d of %d (%d%%)",
 				   view->ops->type,
-				   view->lineno + 1,
+				   view->pos.lineno + 1,
 				   view->lines,
 				   lines);
 
@@ -2407,9 +2409,9 @@ goto_view_line(struct view *view, unsigned long offset, unsigned long lineno)
 			offset = 0;
 	}
 
-	if (offset != view->offset || lineno != view->lineno) {
-		view->offset = offset;
-		view->lineno = lineno;
+	if (offset != view->pos.offset || lineno != view->pos.lineno) {
+		view->pos.offset = offset;
+		view->pos.lineno = lineno;
 		return TRUE;
 	}
 
@@ -2423,21 +2425,21 @@ do_scroll_view(struct view *view, int lines)
 	bool redraw_current_line = FALSE;
 
 	/* The rendering expects the new offset. */
-	view->offset += lines;
+	view->pos.offset += lines;
 
-	assert(0 <= view->offset && view->offset < view->lines);
+	assert(0 <= view->pos.offset && view->pos.offset < view->lines);
 	assert(lines);
 
 	/* Move current line into the view. */
-	if (view->lineno < view->offset) {
-		view->lineno = view->offset;
+	if (view->pos.lineno < view->pos.offset) {
+		view->pos.lineno = view->pos.offset;
 		redraw_current_line = TRUE;
-	} else if (view->lineno >= view->offset + view->height) {
-		view->lineno = view->offset + view->height - 1;
+	} else if (view->pos.lineno >= view->pos.offset + view->height) {
+		view->pos.lineno = view->pos.offset + view->height - 1;
 		redraw_current_line = TRUE;
 	}
 
-	assert(view->offset <= view->lineno && view->lineno < view->lines);
+	assert(view->pos.offset <= view->pos.lineno && view->pos.lineno < view->lines);
 
 	/* Redraw the whole screen if scrolling is pointless. */
 	if (view->height < ABS(lines)) {
@@ -2455,7 +2457,7 @@ do_scroll_view(struct view *view, int lines)
 			line++;
 
 		if (redraw_current_line)
-			draw_view_line(view, view->lineno - view->offset);
+			draw_view_line(view, view->pos.lineno - view->pos.offset);
 		wnoutrefresh(view->win);
 	}
 
@@ -2473,34 +2475,34 @@ scroll_view(struct view *view, enum request request)
 
 	switch (request) {
 	case REQ_SCROLL_FIRST_COL:
-		view->yoffset = 0;
+		view->pos.col = 0;
 		redraw_view_from(view, 0);
 		report("");
 		return;
 	case REQ_SCROLL_LEFT:
-		if (view->yoffset == 0) {
+		if (view->pos.col == 0) {
 			report("Cannot scroll beyond the first column");
 			return;
 		}
-		if (view->yoffset <= apply_step(opt_hscroll, view->width))
-			view->yoffset = 0;
+		if (view->pos.col <= apply_step(opt_hscroll, view->width))
+			view->pos.col = 0;
 		else
-			view->yoffset -= apply_step(opt_hscroll, view->width);
+			view->pos.col -= apply_step(opt_hscroll, view->width);
 		redraw_view_from(view, 0);
 		report("");
 		return;
 	case REQ_SCROLL_RIGHT:
-		view->yoffset += apply_step(opt_hscroll, view->width);
+		view->pos.col += apply_step(opt_hscroll, view->width);
 		redraw_view(view);
 		report("");
 		return;
 	case REQ_SCROLL_PAGE_DOWN:
 		lines = view->height;
 	case REQ_SCROLL_LINE_DOWN:
-		if (view->offset + lines > view->lines)
-			lines = view->lines - view->offset;
+		if (view->pos.offset + lines > view->lines)
+			lines = view->lines - view->pos.offset;
 
-		if (lines == 0 || view->offset + view->height >= view->lines) {
+		if (lines == 0 || view->pos.offset + view->height >= view->lines) {
 			report("Cannot scroll beyond the last line");
 			return;
 		}
@@ -2509,8 +2511,8 @@ scroll_view(struct view *view, enum request request)
 	case REQ_SCROLL_PAGE_UP:
 		lines = view->height;
 	case REQ_SCROLL_LINE_UP:
-		if (lines > view->offset)
-			lines = view->offset;
+		if (lines > view->pos.offset)
+			lines = view->pos.offset;
 
 		if (lines == 0) {
 			report("Cannot scroll beyond the first line");
@@ -2536,21 +2538,21 @@ move_view(struct view *view, enum request request)
 
 	switch (request) {
 	case REQ_MOVE_FIRST_LINE:
-		steps = -view->lineno;
+		steps = -view->pos.lineno;
 		break;
 
 	case REQ_MOVE_LAST_LINE:
-		steps = view->lines - view->lineno - 1;
+		steps = view->lines - view->pos.lineno - 1;
 		break;
 
 	case REQ_MOVE_PAGE_UP:
-		steps = view->height > view->lineno
-		      ? -view->lineno : -view->height;
+		steps = view->height > view->pos.lineno
+		      ? -view->pos.lineno : -view->height;
 		break;
 
 	case REQ_MOVE_PAGE_DOWN:
-		steps = view->lineno + view->height >= view->lines
-		      ? view->lines - view->lineno - 1 : view->height;
+		steps = view->pos.lineno + view->height >= view->lines
+		      ? view->lines - view->pos.lineno - 1 : view->height;
 		break;
 
 	case REQ_MOVE_UP:
@@ -2567,30 +2569,30 @@ move_view(struct view *view, enum request request)
 		die("request %d not handled in switch", request);
 	}
 
-	if (steps <= 0 && view->lineno == 0) {
+	if (steps <= 0 && view->pos.lineno == 0) {
 		report("Cannot move beyond the first line");
 		return;
 
-	} else if (steps >= 0 && view->lineno + 1 >= view->lines) {
+	} else if (steps >= 0 && view->pos.lineno + 1 >= view->lines) {
 		report("Cannot move beyond the last line");
 		return;
 	}
 
 	/* Move the current line */
-	view->lineno += steps;
-	assert(0 <= view->lineno && view->lineno < view->lines);
+	view->pos.lineno += steps;
+	assert(0 <= view->pos.lineno && view->pos.lineno < view->lines);
 
 	/* Check whether the view needs to be scrolled */
-	if (view->lineno < view->offset ||
-	    view->lineno >= view->offset + view->height) {
+	if (view->pos.lineno < view->pos.offset ||
+	    view->pos.lineno >= view->pos.offset + view->height) {
 		scroll_steps = steps;
-		if (steps < 0 && -steps > view->offset) {
-			scroll_steps = -view->offset;
+		if (steps < 0 && -steps > view->pos.offset) {
+			scroll_steps = -view->pos.offset;
 
 		} else if (steps > 0) {
-			if (view->lineno == view->lines - 1 &&
+			if (view->pos.lineno == view->lines - 1 &&
 			    view->lines > view->height) {
-				scroll_steps = view->lines - view->offset - 1;
+				scroll_steps = view->lines - view->pos.offset - 1;
 				if (scroll_steps >= view->height)
 					scroll_steps -= view->height - 1;
 			}
@@ -2598,15 +2600,15 @@ move_view(struct view *view, enum request request)
 	}
 
 	if (!view_is_displayed(view)) {
-		view->offset += scroll_steps;
-		assert(0 <= view->offset && view->offset < view->lines);
-		view->ops->select(view, &view->line[view->lineno]);
+		view->pos.offset += scroll_steps;
+		assert(0 <= view->pos.offset && view->pos.offset < view->lines);
+		view->ops->select(view, &view->line[view->pos.lineno]);
 		return;
 	}
 
 	/* Repaint the old "current" line if we be scrolling */
 	if (ABS(steps) < view->height)
-		draw_view_line(view, view->lineno - steps - view->offset);
+		draw_view_line(view, view->pos.lineno - steps - view->pos.offset);
 
 	if (scroll_steps) {
 		do_scroll_view(view, scroll_steps);
@@ -2614,7 +2616,7 @@ move_view(struct view *view, enum request request)
 	}
 
 	/* Draw the current line */
-	draw_view_line(view, view->lineno - view->offset);
+	draw_view_line(view, view->pos.lineno - view->pos.offset);
 
 	wnoutrefresh(view->win);
 	report("");
@@ -2643,20 +2645,19 @@ grep_text(struct view *view, const char *text[])
 static void
 select_view_line(struct view *view, unsigned long lineno)
 {
-	unsigned long old_lineno = view->lineno;
-	unsigned long old_offset = view->offset;
+	struct position old = view->pos;
 
-	if (goto_view_line(view, view->offset, lineno)) {
+	if (goto_view_line(view, view->pos.offset, lineno)) {
 		if (view_is_displayed(view)) {
-			if (old_offset != view->offset) {
+			if (old.offset != view->pos.offset) {
 				redraw_view(view);
 			} else {
-				draw_view_line(view, old_lineno - view->offset);
-				draw_view_line(view, view->lineno - view->offset);
+				draw_view_line(view, old.lineno - view->pos.offset);
+				draw_view_line(view, view->pos.lineno - view->pos.offset);
 				wnoutrefresh(view->win);
 			}
 		} else {
-			view->ops->select(view, &view->line[view->lineno]);
+			view->ops->select(view, &view->line[view->pos.lineno]);
 		}
 	}
 }
@@ -2664,7 +2665,7 @@ select_view_line(struct view *view, unsigned long lineno)
 static void
 find_next(struct view *view, enum request request)
 {
-	unsigned long lineno = view->lineno;
+	unsigned long lineno = view->pos.lineno;
 	int direction;
 
 	if (!*view->grep) {
@@ -2747,15 +2748,13 @@ reset_view(struct view *view)
 		free(view->line[i].data);
 	free(view->line);
 
-	view->p_offset = view->offset;
-	view->p_yoffset = view->yoffset;
-	view->p_lineno = view->lineno;
+	view->prev_pos = view->pos;
 
 	view->line = NULL;
-	view->offset = 0;
-	view->yoffset = 0;
+	view->pos.offset = 0;
+	view->pos.col = 0;
 	view->lines  = 0;
-	view->lineno = 0;
+	view->pos.lineno = 0;
 	view->vid[0] = 0;
 	view->update_secs = 0;
 }
@@ -2865,21 +2864,21 @@ restore_view_position(struct view *view)
 		opt_lineno = 0;
 	}
 
-	if (!view->p_restore || (view->pipe && view->lines <= view->p_lineno))
+	if (!view->p_restore || (view->pipe && view->lines <= view->prev_pos.lineno))
 		return FALSE;
 
 	/* Changing the view position cancels the restoring. */
 	/* FIXME: Changing back to the first line is not detected. */
-	if (view->offset != 0 || view->lineno != 0) {
+	if (view->pos.offset != 0 || view->pos.lineno != 0) {
 		view->p_restore = FALSE;
 		return FALSE;
 	}
 
-	if (goto_view_line(view, view->p_offset, view->p_lineno) &&
+	if (goto_view_line(view, view->prev_pos.offset, view->prev_pos.lineno) &&
 	    view_is_displayed(view))
 		werase(view->win);
 
-	view->yoffset = view->p_yoffset;
+	view->pos.col = view->prev_pos.col;
 	view->p_restore = FALSE;
 
 	return TRUE;
@@ -3108,9 +3107,9 @@ split_view(struct view *prev, struct view *view)
 	view->parent = prev;
 	resize_display();
 
-	if (prev->lineno - prev->offset >= prev->height) {
+	if (prev->pos.lineno - prev->pos.offset >= prev->height) {
 		/* Take the title line into account. */
-		int lines = prev->lineno - prev->offset - prev->height + 1;
+		int lines = prev->pos.lineno - prev->pos.offset - prev->height + 1;
 
 		/* Scroll the view that was split if the current line is
 		 * outside the new limited view. */
@@ -3351,11 +3350,11 @@ view_driver(struct view *view, enum request request)
 			int line;
 
 			view = view->parent;
-			line = view->lineno;
+			line = view->pos.lineno;
 			move_view(view, request);
 			if (view_is_displayed(view))
 				update_view_title(view);
-			if (line != view->lineno)
+			if (line != view->pos.lineno)
 				view_request(view, REQ_ENTER);
 		} else {
 			move_view(view, request);
@@ -4661,8 +4660,8 @@ tree_read(struct view *view, char *text)
 		return TRUE;
 	}
 
-	if (tree_lineno > view->lineno) {
-		view->lineno = tree_lineno;
+	if (tree_lineno > view->pos.lineno) {
+		view->pos.lineno = tree_lineno;
 		tree_lineno = 0;
 	}
 
@@ -4770,7 +4769,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 		} else {
 			const char *basename = tree_path(line);
 
-			push_tree_stack_entry(basename, view->lineno);
+			push_tree_stack_entry(basename, view->pos.lineno);
 		}
 
 		/* Trees and subtrees share the same ID, so they are not not
@@ -4790,7 +4789,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 
 	open_view(view, request, flags);
 	if (request == REQ_VIEW_TREE)
-		view->lineno = tree_lineno;
+		view->pos.lineno = tree_lineno;
 
 	return REQ_NONE;
 }
@@ -5221,7 +5220,7 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 		} else if (*line == '+' && parent_lineno != -1) {
 			if (blame->lineno == blamed_lineno - 1 &&
 			    !strcmp(blame->text, line + 1)) {
-				view->lineno = parent_lineno ? parent_lineno - 1 : 0;
+				view->pos.lineno = parent_lineno ? parent_lineno - 1 : 0;
 				break;
 			}
 			blamed_lineno++;
@@ -5243,7 +5242,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 			string_copy(opt_ref, blame->commit->id);
 			string_copy(opt_file, blame->commit->filename);
 			if (blame->lineno)
-				view->lineno = blame->lineno;
+				view->pos.lineno = blame->lineno;
 			reload_view(view);
 		}
 		break;
@@ -5726,23 +5725,23 @@ static const char *update_index_argv[] = {
 static void
 status_restore(struct view *view)
 {
-	if (view->p_lineno >= view->lines)
-		view->p_lineno = view->lines - 1;
-	while (view->p_lineno < view->lines && !view->line[view->p_lineno].data)
-		view->p_lineno++;
-	while (view->p_lineno > 0 && !view->line[view->p_lineno].data)
-		view->p_lineno--;
+	if (view->prev_pos.lineno >= view->lines)
+		view->prev_pos.lineno = view->lines - 1;
+	while (view->prev_pos.lineno < view->lines && !view->line[view->prev_pos.lineno].data)
+		view->prev_pos.lineno++;
+	while (view->prev_pos.lineno > 0 && !view->line[view->prev_pos.lineno].data)
+		view->prev_pos.lineno--;
 
 	/* If the above fails, always skip the "On branch" line. */
-	if (view->p_lineno < view->lines)
-		view->lineno = view->p_lineno;
+	if (view->prev_pos.lineno < view->lines)
+		view->pos.lineno = view->prev_pos.lineno;
 	else
-		view->lineno = 1;
+		view->pos.lineno = 1;
 
-	if (view->lineno < view->offset)
-		view->offset = view->lineno;
-	else if (view->offset + view->height <= view->lineno)
-		view->offset = view->lineno - view->height + 1;
+	if (view->pos.lineno < view->pos.offset)
+		view->pos.offset = view->pos.lineno;
+	else if (view->pos.offset + view->height <= view->pos.lineno)
+		view->pos.offset = view->pos.lineno - view->height + 1;
 
 	view->p_restore = FALSE;
 }
@@ -6048,7 +6047,7 @@ status_update_files(struct view *view, struct line *line)
 static bool
 status_update(struct view *view)
 {
-	struct line *line = &view->line[view->lineno];
+	struct line *line = &view->line[view->pos.lineno];
 
 	assert(view->lines);
 
@@ -6417,8 +6416,8 @@ stage_next(struct view *view, struct line *line)
 	}
 
 	for (i = 0; i < state->chunks; i++) {
-		if (state->chunk[i] > view->lineno) {
-			do_scroll_view(view, state->chunk[i] - view->lineno);
+		if (state->chunk[i] > view->pos.lineno) {
+			do_scroll_view(view, state->chunk[i] - view->pos.lineno);
 			report("Chunk %d of %d", i + 1, state->chunks);
 			return;
 		}
@@ -7172,7 +7171,7 @@ get_input(int prompt_position)
 			view = display[current_view];
 			getbegyx(view->win, cursor_y, cursor_x);
 			cursor_x = view->width - 1;
-			cursor_y += view->lineno - view->offset;
+			cursor_y += view->pos.lineno - view->pos.offset;
 		}
 		setsyx(cursor_y, cursor_x);
 
@@ -8021,7 +8020,7 @@ main(int argc, const char *argv[])
 			char *cmd = read_prompt(":");
 
 			if (cmd && string_isnumber(cmd)) {
-				int lineno = view->lineno + 1;
+				int lineno = view->pos.lineno + 1;
 
 				if (parse_int(&lineno, cmd, 1, view->lines + 1) == OPT_OK) {
 					select_view_line(view, lineno - 1);
