@@ -1756,7 +1756,6 @@ struct view {
 	/* Navigation */
 	struct position pos;	/* Current position. */
 	struct position prev_pos; /* Previous position. */
-	bool p_restore;		/* Should the previous position be restored. */
 
 	/* Searching */
 	char grep[SIZEOF_STR];	/* Search string */
@@ -2739,6 +2738,18 @@ search_view(struct view *view, enum request request)
  * Incremental updating
  */
 
+static inline bool
+check_position(struct position *pos)
+{
+	return pos->lineno || pos->col || pos->offset;
+}
+
+static inline void
+clear_position(struct position *pos)
+{
+	memset(pos, 0, sizeof(*pos));
+}
+
 static void
 reset_view(struct view *view)
 {
@@ -2749,12 +2760,10 @@ reset_view(struct view *view)
 	free(view->line);
 
 	view->prev_pos = view->pos;
+	clear_position(&view->pos);
 
 	view->line = NULL;
-	view->pos.offset = 0;
-	view->pos.col = 0;
 	view->lines  = 0;
-	view->pos.lineno = 0;
 	view->vid[0] = 0;
 	view->update_secs = 0;
 }
@@ -2864,13 +2873,14 @@ restore_view_position(struct view *view)
 		opt_lineno = 0;
 	}
 
-	if (!view->p_restore || (view->pipe && view->lines <= view->prev_pos.lineno))
+	if (!check_position(&view->prev_pos) ||
+	    (view->pipe && view->lines <= view->prev_pos.lineno))
 		return FALSE;
 
 	/* Changing the view position cancels the restoring. */
 	/* FIXME: Changing back to the first line is not detected. */
-	if (view->pos.offset != 0 || view->pos.lineno != 0) {
-		view->p_restore = FALSE;
+	if (check_position(&view->pos)) {
+		clear_position(&view->prev_pos);
 		return FALSE;
 	}
 
@@ -2879,7 +2889,7 @@ restore_view_position(struct view *view)
 		werase(view->win);
 
 	view->pos.col = view->prev_pos.col;
-	view->p_restore = FALSE;
+	clear_position(&view->prev_pos);
 
 	return TRUE;
 }
@@ -3088,7 +3098,8 @@ load_view(struct view *view, enum open_flags flags)
 		/* Clear the old view and let the incremental updating refill
 		 * the screen. */
 		werase(view->win);
-		view->p_restore = flags & (OPEN_RELOAD | OPEN_REFRESH);
+		if (!(flags & (OPEN_RELOAD | OPEN_REFRESH)))
+			clear_position(&view->prev_pos);
 		report("");
 	} else if (view_is_displayed(view)) {
 		redraw_view(view);
@@ -4356,7 +4367,6 @@ help_open(struct view *view, enum open_flags flags)
 	enum keymap keymap;
 
 	reset_view(view);
-	view->p_restore = TRUE;
 	add_line_text(view, "Quick reference for tig keybindings:", LINE_DEFAULT);
 	add_line_text(view, "", LINE_DEFAULT);
 
@@ -5523,7 +5533,6 @@ branch_open(struct view *view, enum open_flags flags)
 
 	branch_open_visitor(view, &branch_all);
 	foreach_ref(branch_open_visitor, view);
-	view->p_restore = TRUE;
 
 	return TRUE;
 }
@@ -5743,7 +5752,7 @@ status_restore(struct view *view)
 	else if (view->pos.offset + view->height <= view->pos.lineno)
 		view->pos.offset = view->pos.lineno - view->height + 1;
 
-	view->p_restore = FALSE;
+	clear_position(&view->prev_pos);
 }
 
 static void
@@ -5823,8 +5832,7 @@ status_open(struct view *view, enum open_flags flags)
 
 	/* Restore the exact position or use the specialized restore
 	 * mode? */
-	if (!view->p_restore)
-		status_restore(view);
+	status_restore(view);
 	return TRUE;
 }
 
