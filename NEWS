@@ -4,6 +4,9 @@ Release notes
 master
 ------
 
+The master repository is git://github.com/jonas/tig.git, and the old
+master repository (http://jonas.nitro.dk/tig/tig.git) will be retired.
+
 Improvements:
 
  - Add show-notes ~/.tigrc option.
