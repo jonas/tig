@@ -6994,7 +6994,7 @@ compare_refs(const void *ref1_, const void *ref2_)
 	if (ref1->tag != ref2->tag)
 		return ref2->tag - ref1->tag;
 	if (ref1->ltag != ref2->ltag)
-		return ref2->ltag - ref2->ltag;
+		return ref2->ltag - ref1->ltag;
 	if (ref1->head != ref2->head)
 		return ref2->head - ref1->head;
 	if (ref1->tracked != ref2->tracked)
