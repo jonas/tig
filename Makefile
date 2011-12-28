@@ -114,7 +114,7 @@ install-release-doc: install-release-doc-man install-release-doc-html
 
 clean:
 	$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5
-	$(RM) $(PROGS) core *.o *.xml
+	$(RM) $(PROGS) $(TESTS) core *.o *.xml
 
 distclean: clean
 	$(RM) -r manual.html-chunked autom4te.cache
