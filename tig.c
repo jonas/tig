@@ -1541,6 +1541,7 @@ enum view_flag {
 	VIEW_ADD_PAGER_REFS	= 1 << 3,
 	VIEW_OPEN_DIFF		= 1 << 4,
 	VIEW_NO_REF		= 1 << 5,
+	VIEW_NO_GIT_DIR		= 1 << 6,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))
@@ -1552,7 +1553,6 @@ struct view {
 	struct view_ops *ops;	/* View operations */
 
 	enum keymap keymap;	/* What keymap does this view have */
-	bool git_dir;		/* Whether the view requires a git directory. */
 
 	char ref[SIZEOF_REF];	/* Hovered commit reference */
 	char vid[SIZEOF_REF];	/* View ID. Set to id member when updating. */
@@ -1643,24 +1643,24 @@ static struct view_ops status_ops;
 static struct view_ops tree_ops;
 static struct view_ops branch_ops;
 
-#define VIEW_STR(type, name, ref, ops, map, git) \
-	{ name, ref, ops, map, git }
+#define VIEW_STR(type, name, ref, ops, map) \
+	{ name, ref, ops, map }
 
-#define VIEW_(id, name, ops, git, ref) \
-	VIEW_STR(VIEW_##id, name, ref, ops, KEYMAP_##id, git)
+#define VIEW_(id, name, ops, ref) \
+	VIEW_STR(VIEW_##id, name, ref, ops, KEYMAP_##id)
 
 static struct view views[] = {
-	VIEW_(MAIN,   "main",   &main_ops,   TRUE,  ref_head),
-	VIEW_(DIFF,   "diff",   &diff_ops,   TRUE,  ref_commit),
-	VIEW_(LOG,    "log",    &log_ops,    TRUE,  ref_head),
-	VIEW_(TREE,   "tree",   &tree_ops,   TRUE,  ref_commit),
-	VIEW_(BLOB,   "blob",   &blob_ops,   TRUE,  ref_blob),
-	VIEW_(BLAME,  "blame",  &blame_ops,  TRUE,  ref_commit),
-	VIEW_(BRANCH, "branch",	&branch_ops, TRUE,  ref_head),
-	VIEW_(HELP,   "help",   &help_ops,   FALSE, ""),
-	VIEW_(PAGER,  "pager",  &pager_ops,  FALSE, ""),
-	VIEW_(STATUS, "status", &status_ops, TRUE,  "status"),
-	VIEW_(STAGE,  "stage",	&stage_ops,  TRUE,  "stage"),
+	VIEW_(MAIN,   "main",   &main_ops,   ref_head),
+	VIEW_(DIFF,   "diff",   &diff_ops,   ref_commit),
+	VIEW_(LOG,    "log",    &log_ops,    ref_head),
+	VIEW_(TREE,   "tree",   &tree_ops,   ref_commit),
+	VIEW_(BLOB,   "blob",   &blob_ops,   ref_blob),
+	VIEW_(BLAME,  "blame",  &blame_ops,  ref_commit),
+	VIEW_(BRANCH, "branch",	&branch_ops, ref_head),
+	VIEW_(HELP,   "help",   &help_ops,   ""),
+	VIEW_(PAGER,  "pager",  &pager_ops,  ""),
+	VIEW_(STATUS, "status", &status_ops, "status"),
+	VIEW_(STAGE,  "stage",	&stage_ops,  "stage"),
 };
 
 #define VIEW(req) 	(&views[(req) - REQ_OFFSET - 1])
@@ -2952,7 +2952,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		return;
 	}
 
-	if (view->git_dir && !opt_git_dir[0]) {
+	if (!view_has_flags(view, VIEW_NO_GIT_DIR) && !opt_git_dir[0]) {
 		report("The %s view is disabled in pager view", view->name);
 		return;
 	}
@@ -3693,7 +3693,7 @@ pager_open(struct view *view, enum open_flags flags)
 
 static struct view_ops pager_ops = {
 	"line",
-	VIEW_OPEN_DIFF | VIEW_NO_REF,
+	VIEW_OPEN_DIFF | VIEW_NO_REF | VIEW_NO_GIT_DIR,
 	0,
 	pager_open,
 	pager_read,
@@ -4166,7 +4166,7 @@ help_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops help_ops = {
 	"line",
-	VIEW_NO_FLAGS,
+	VIEW_NO_GIT_DIR,
 	0,
 	help_open,
 	NULL,
