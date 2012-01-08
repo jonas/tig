@@ -1439,6 +1439,10 @@ load_option_file(const char *path)
 	struct config_state config = { 0, FALSE };
 	struct io io;
 
+	/* Do not read configuration from stdin if set to "" */
+	if (!path || !strlen(path))
+		return;
+
 	/* It's OK that the file doesn't exist. */
 	if (!io_open(&io, "%s", path))
 		return;
