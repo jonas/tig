@@ -262,6 +262,7 @@ DEFINE_ENUM(filename, FILENAME_ENUM);
 	REQ_(STATUS_UPDATE,	"Update file status"), \
 	REQ_(STATUS_REVERT,	"Revert file changes"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
+	REQ_(STAGE_UPDATE_LINE,	"Update single line"), \
 	REQ_(STAGE_NEXT,	"Find next chunk to stage"), \
 	REQ_(DIFF_CONTEXT_DOWN,	"Decrease the diff context"), \
 	REQ_(DIFF_CONTEXT_UP,	"Increase the diff context"), \
@@ -702,6 +703,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'u',		REQ_STATUS_UPDATE },
 	{ '!',		REQ_STATUS_REVERT },
 	{ 'M',		REQ_STATUS_MERGE },
+	{ KEY_CTL('u'),	REQ_STAGE_UPDATE_LINE },
 	{ '@',		REQ_STAGE_NEXT },
 	{ '[',		REQ_DIFF_CONTEXT_DOWN },
 	{ ']',		REQ_DIFF_CONTEXT_UP },
@@ -6013,12 +6015,14 @@ struct stage_state {
 };
 
 static bool
-stage_diff_write(struct io *io, struct line *line, struct line *end)
+stage_diff_write(struct io *io, struct line *line, struct line *end, bool filter)
 {
 	while (line < end) {
-		if (!io_write(io, line->data, strlen(line->data)) ||
-		    !io_write(io, "\n", 1))
-			return FALSE;
+		if (!filter || (line->type != LINE_DIFF_DEL && line->type != LINE_DIFF_ADD)) {
+			if (!io_write(io, line->data, strlen(line->data)) ||
+			    !io_write(io, "\n", 1))
+				return FALSE;
+		}
 		line++;
 		if (line->type == LINE_DIFF_CHUNK ||
 		    line->type == LINE_DIFF_HEADER)
@@ -6029,7 +6033,7 @@ stage_diff_write(struct io *io, struct line *line, struct line *end)
 }
 
 static bool
-stage_apply_chunk(struct view *view, struct line *chunk, bool revert)
+stage_apply_chunk(struct view *view, struct line *chunk, struct line *line, bool revert)
 {
 	const char *apply_argv[SIZEOF_ARG] = {
 		"git", "apply", "--whitespace=nowarn", NULL
@@ -6051,9 +6055,41 @@ stage_apply_chunk(struct view *view, struct line *chunk, bool revert)
 	if (!io_run(&io, IO_WR, opt_cdup, apply_argv))
 		return FALSE;
 
-	if (!stage_diff_write(&io, diff_hdr, chunk) ||
-	    !stage_diff_write(&io, chunk, view->line + view->lines))
-		chunk = NULL;
+	if (line != NULL) {
+		char buf[SIZEOF_STR];
+		int lineno = 0;
+		int context_lines = 0;
+		struct line *context = chunk + 1;
+		int markers[] = {
+			line->type == LINE_DIFF_DEL ? '+' : '-',
+			line->type == LINE_DIFF_DEL ? '-' : '+',
+		};
+
+		parse_chunk_lineno(&lineno, chunk->data, markers[0]);
+
+		while (context < view->line + view->lines) {
+			if (context->type == LINE_DIFF_CHUNK || context->type == LINE_DIFF_HEADER) {
+				break;
+			} else if (context->type != LINE_DIFF_DEL && context->type != LINE_DIFF_ADD) {
+				context_lines++;
+			}
+			context++;
+		}
+
+		if (!stage_diff_write(&io, diff_hdr, chunk, FALSE) ||
+		    !io_printf(&io, "@@ %c%d,%d %c%d,%d @@\n",
+			       markers[0], lineno, context_lines + (markers[0] == '+'),
+			       markers[1], lineno, context_lines + (markers[1] == '+')) ||
+		    !stage_diff_write(&io, chunk + 1, line, TRUE) ||
+		    !stage_diff_write(&io, line, line + 1, FALSE) ||
+		    !stage_diff_write(&io, line + 1, view->line + view->lines, TRUE)) {
+			chunk = NULL;
+		}
+	} else {
+		if (!stage_diff_write(&io, diff_hdr, chunk, FALSE) ||
+		    !stage_diff_write(&io, chunk, view->line + view->lines, FALSE))
+			chunk = NULL;
+	}
 
 	io_done(&io);
 	io_run_bg(update_index_argv);
@@ -6062,7 +6098,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, bool revert)
 }
 
 static bool
-stage_update(struct view *view, struct line *line)
+stage_update(struct view *view, struct line *line, bool single)
 {
 	struct line *chunk = NULL;
 
@@ -6070,7 +6106,7 @@ stage_update(struct view *view, struct line *line)
 		chunk = find_prev_line_by_type(view, line, LINE_DIFF_CHUNK);
 
 	if (chunk) {
-		if (!stage_apply_chunk(view, chunk, FALSE)) {
+		if (!stage_apply_chunk(view, chunk, single ? line : NULL, FALSE)) {
 			report("Failed to apply chunk");
 			return FALSE;
 		}
@@ -6107,7 +6143,7 @@ stage_revert(struct view *view, struct line *line)
 		if (!prompt_yesno("Are you sure you want to revert changes?"))
 			return FALSE;
 
-		if (!stage_apply_chunk(view, chunk, TRUE)) {
+		if (!stage_apply_chunk(view, chunk, NULL, TRUE)) {
 			report("Failed to revert chunk");
 			return FALSE;
 		}
@@ -6156,12 +6192,25 @@ stage_request(struct view *view, enum request request, struct line *line)
 {
 	switch (request) {
 	case REQ_STATUS_UPDATE:
-		if (!stage_update(view, line))
+		if (!stage_update(view, line, FALSE))
 			return REQ_NONE;
 		break;
 
 	case REQ_STATUS_REVERT:
 		if (!stage_revert(view, line))
+			return REQ_NONE;
+		break;
+
+	case REQ_STAGE_UPDATE_LINE:
+		if (stage_line_type != LINE_STAT_UNSTAGED) {
+			report("Unstaging single lines is not supported");
+			return REQ_NONE;
+		}
+		if (line->type != LINE_DIFF_DEL && line->type != LINE_DIFF_ADD) {
+			report("Please select a change to stage");
+			return REQ_NONE;
+		}
+		if (!stage_update(view, line, TRUE))
 			return REQ_NONE;
 		break;
 

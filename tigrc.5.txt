@@ -318,6 +318,7 @@ put in either the .gitconfig or .git/config file:
 |=============================================================================
 |status-update		|Update file status
 |status-merge		|Resolve unmerged file
+|stage-update-line	|Stage single line
 |stage-next		|Find next chunk to stage
 |diff-context-up	|Increase the diff context
 |diff-context-down	|Decrease the diff context
