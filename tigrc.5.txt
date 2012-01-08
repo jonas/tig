@@ -116,8 +116,7 @@ The following variables can be set:
 'line-number-interval' (int)::
 
 	Interval between line numbers. Note, you have to toggle on line
-	numbering with 'n' or the `-n` command line option.  The default is to
-	number every line.
+	numbering with ".".  The default is to number every fifth line.
 
 'horizontal-scroll' (mixed)::
 
@@ -168,7 +167,7 @@ The following variables can be set:
 'status-untracked-dirs' (bool)::
 
 	Show untracked directories contents in the status view (analog to
-	`git ls-files --directory` option. On by default.
+	`git ls-files --directory` option). On by default.
 
 'tab-size' (int)::
 
