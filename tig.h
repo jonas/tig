@@ -203,6 +203,17 @@ string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen)
 
 /* Shorthands for safely copying into a fixed buffer. */
 
+#define FORMAT_BUFFER(buf, bufsize, fmt, retval) \
+	do { \
+		va_list args; \
+		va_start(args, fmt); \
+		retval = vsnprintf(buf, bufsize, fmt, args); \
+		va_end(args); \
+		if (0 < retval && retval >= bufsize) { \
+			retval = -1; \
+		} \
+	} while (0)
+
 #define string_copy(dst, src) \
 	string_ncopy_do(dst, sizeof(dst), src, sizeof(src))
 
@@ -255,15 +266,12 @@ chomp_string(char *name)
 static inline bool
 string_nformat(char *buf, size_t bufsize, size_t *bufpos, const char *fmt, ...)
 {
-	va_list args;
 	size_t pos = bufpos ? *bufpos : 0;
+	int retval;
 
-	va_start(args, fmt);
-	pos += vsnprintf(buf + pos, bufsize - pos, fmt, args);
-	va_end(args);
-
-	if (bufpos)
-		*bufpos = pos;
+	FORMAT_BUFFER(buf + pos, bufsize - pos, fmt, retval);
+	if (bufpos && retval > 0)
+		*bufpos = pos + retval;
 
 	return pos >= bufsize ? FALSE : TRUE;
 }

@@ -151,19 +151,16 @@ bool
 io_open(struct io *io, const char *fmt, ...)
 {
 	char name[SIZEOF_STR] = "";
-	bool fits;
-	va_list args;
+	int retval;
 
 	io_init(io);
 
-	va_start(args, fmt);
-	fits = vsnprintf(name, sizeof(name), fmt, args) < sizeof(name);
-	va_end(args);
-
-	if (!fits) {
+	FORMAT_BUFFER(name, sizeof(name), fmt, retval);
+	if (retval < 0) {
 		io->error = ENAMETOOLONG;
 		return FALSE;
 	}
+
 	io->pipe = *name ? open(name, O_RDONLY) : dup(STDIN_FILENO);
 	if (io->pipe == -1)
 		io->error = errno;

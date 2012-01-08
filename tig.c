@@ -2843,14 +2843,10 @@ static struct line *
 add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 {
 	char buf[SIZEOF_STR];
-	va_list args;
+	int retval;
 
-	va_start(args, fmt);
-	if (vsnprintf(buf, sizeof(buf), fmt, args) >= sizeof(buf))
-		buf[0] = 0;
-	va_end(args);
-
-	return buf[0] ? add_line_text(view, buf, type) : NULL;
+	FORMAT_BUFFER(buf, sizeof(buf), fmt, retval);
+	return retval >= 0 ? add_line_text(view, buf, type) : NULL;
 }
 
 /*
@@ -6653,16 +6649,15 @@ report(const char *msg, ...)
 
 	if (!view) {
 		char buf[SIZEOF_STR];
-		va_list args;
+		int retval;
 
-		va_start(args, msg);
-		if (vsnprintf(buf, sizeof(buf), msg, args) >= sizeof(buf)) {
+		FORMAT_BUFFER(buf, sizeof(buf), msg, retval);
+		if (retval >= sizeof(buf)) {
 			buf[sizeof(buf) - 1] = 0;
 			buf[sizeof(buf) - 2] = '.';
 			buf[sizeof(buf) - 3] = '.';
 			buf[sizeof(buf) - 4] = '.';
 		}
-		va_end(args);
 		die("%s", buf);
 	}
 
