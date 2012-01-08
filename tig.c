@@ -3891,6 +3891,14 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	return ok;
 }
 
+static bool
+parse_chunk_lineno(int *lineno, const char *chunk, int marker)
+{
+	return prefixcmp(chunk, "@@ -") ||
+	       !(chunk = strchr(chunk, marker)) ||
+	       parse_int(lineno, chunk + 1, 0, 9999999) != OPT_OK;
+}
+
 static enum request
 diff_trace_origin(struct view *view, struct line *line)
 {
@@ -3925,9 +3933,7 @@ diff_trace_origin(struct view *view, struct line *line)
 
 	chunk_data = chunk->data;
 
-	if (prefixcmp(chunk_data, "@@ -") ||
-	    !(chunk_data = strchr(chunk_data, chunk_marker)) ||
-	    parse_int(&lineno, chunk_data + 1, 0, 9999999) != OPT_OK) {
+	if (parse_chunk_lineno(&lineno, chunk_data, chunk_marker)) {
 		report("Failed to read the line number");
 		return REQ_NONE;
 	}
