@@ -67,6 +67,7 @@ bool io_can_read(struct io *io, bool can_block);
 ssize_t io_read(struct io *io, void *buf, size_t bufsize);
 char * io_get(struct io *io, int c, bool can_read);
 bool io_write(struct io *io, const void *buf, size_t bufsize);
+bool io_printf(struct io *io, const char *fmt, ...);
 bool io_read_buf(struct io *io, char buf[], size_t bufsize);
 bool io_run_buf(const char **argv, char buf[], size_t bufsize);
 int io_load(struct io *io, const char *separators,

@@ -5728,29 +5728,19 @@ status_update_prepare(struct io *io, enum line_type type)
 static bool
 status_update_write(struct io *io, struct status *status, enum line_type type)
 {
-	char buf[SIZEOF_STR];
-	size_t bufsize = 0;
-
 	switch (type) {
 	case LINE_STAT_STAGED:
-		if (!string_format_from(buf, &bufsize, "%06o %s\t%s%c",
-					status->old.mode,
-					status->old.rev,
-					status->old.name, 0))
-			return FALSE;
-		break;
+		return io_printf(io, "%06o %s\t%s%c", status->old.mode,
+				 status->old.rev, status->old.name, 0);
 
 	case LINE_STAT_UNSTAGED:
 	case LINE_STAT_UNTRACKED:
-		if (!string_format_from(buf, &bufsize, "%s%c", status->new.name, 0))
-			return FALSE;
-		break;
+		return io_printf(io, "%s%c", status->new.name, 0);
 
 	default:
 		die("line type %d not handled in switch", type);
+		return FALSE;
 	}
-
-	return io_write(io, buf, bufsize);
 }
 
 static bool

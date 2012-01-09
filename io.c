@@ -406,6 +406,21 @@ io_write(struct io *io, const void *buf, size_t bufsize)
 }
 
 bool
+io_printf(struct io *io, const char *fmt, ...)
+{
+	char buf[SIZEOF_STR] = "";
+	int retval;
+
+	FORMAT_BUFFER(buf, sizeof(buf), fmt, retval);
+	if (retval < 0) {
+		io->error = ENAMETOOLONG;
+		return FALSE;
+	}
+
+	return io_write(io, buf, retval);
+}
+
+bool
 io_read_buf(struct io *io, char buf[], size_t bufsize)
 {
 	char *result = io_get(io, '\n', TRUE);
