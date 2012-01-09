@@ -6015,14 +6015,12 @@ struct stage_state {
 };
 
 static bool
-stage_diff_write(struct io *io, struct line *line, struct line *end, bool filter)
+stage_diff_write(struct io *io, struct line *line, struct line *end)
 {
 	while (line < end) {
-		if (!filter || (line->type != LINE_DIFF_DEL && line->type != LINE_DIFF_ADD)) {
-			if (!io_write(io, line->data, strlen(line->data)) ||
-			    !io_write(io, "\n", 1))
-				return FALSE;
-		}
+		if (!io_write(io, line->data, strlen(line->data)) ||
+		    !io_write(io, "\n", 1))
+			return FALSE;
 		line++;
 		if (line->type == LINE_DIFF_CHUNK ||
 		    line->type == LINE_DIFF_HEADER)
@@ -6048,6 +6046,8 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *line, bool
 
 	if (!revert)
 		apply_argv[argc++] = "--cached";
+	if (line != NULL)
+		apply_argv[argc++] = "--unidiff-zero";
 	if (revert || stage_line_type == LINE_STAT_STAGED)
 		apply_argv[argc++] = "-R";
 	apply_argv[argc++] = "-";
@@ -6056,38 +6056,33 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *line, bool
 		return FALSE;
 
 	if (line != NULL) {
-		char buf[SIZEOF_STR];
 		int lineno = 0;
-		int context_lines = 0;
 		struct line *context = chunk + 1;
-		int markers[] = {
-			line->type == LINE_DIFF_DEL ? '+' : '-',
-			line->type == LINE_DIFF_DEL ? '-' : '+',
+		const char *markers[] = {
+			line->type == LINE_DIFF_DEL ? ""   : ",0",
+			line->type == LINE_DIFF_DEL ? ",0" : "",
 		};
 
-		parse_chunk_lineno(&lineno, chunk->data, markers[0]);
+		parse_chunk_lineno(&lineno, chunk->data, line->type == LINE_DIFF_DEL ? '+' : '-');
 
-		while (context < view->line + view->lines) {
+		while (context < line) {
 			if (context->type == LINE_DIFF_CHUNK || context->type == LINE_DIFF_HEADER) {
 				break;
 			} else if (context->type != LINE_DIFF_DEL && context->type != LINE_DIFF_ADD) {
-				context_lines++;
+				lineno++;
 			}
 			context++;
 		}
 
-		if (!stage_diff_write(&io, diff_hdr, chunk, FALSE) ||
-		    !io_printf(&io, "@@ %c%d,%d %c%d,%d @@\n",
-			       markers[0], lineno, context_lines + (markers[0] == '+'),
-			       markers[1], lineno, context_lines + (markers[1] == '+')) ||
-		    !stage_diff_write(&io, chunk + 1, line, TRUE) ||
-		    !stage_diff_write(&io, line, line + 1, FALSE) ||
-		    !stage_diff_write(&io, line + 1, view->line + view->lines, TRUE)) {
+		if (!stage_diff_write(&io, diff_hdr, chunk) ||
+		    !io_printf(&io, "@@ -%d%s +%d%s @@\n",
+			       lineno, markers[0], lineno, markers[1]) ||
+		    !stage_diff_write(&io, line, line + 1)) {
 			chunk = NULL;
 		}
 	} else {
-		if (!stage_diff_write(&io, diff_hdr, chunk, FALSE) ||
-		    !stage_diff_write(&io, chunk, view->line + view->lines, FALSE))
+		if (!stage_diff_write(&io, diff_hdr, chunk) ||
+		    !stage_diff_write(&io, chunk, view->line + view->lines))
 			chunk = NULL;
 	}
 
@@ -6202,10 +6197,6 @@ stage_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_STAGE_UPDATE_LINE:
-		if (stage_line_type != LINE_STAT_UNSTAGED) {
-			report("Unstaging single lines is not supported");
-			return REQ_NONE;
-		}
 		if (line->type != LINE_DIFF_DEL && line->type != LINE_DIFF_ADD) {
 			report("Please select a change to stage");
 			return REQ_NONE;
