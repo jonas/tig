@@ -6207,6 +6207,11 @@ stage_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_STAGE_UPDATE_LINE:
+		if (stage_line_type == LINE_STAT_UNTRACKED ||
+		    stage_status.status == 'A') {
+			report("Staging single lines is not supported for new files");
+			return REQ_NONE;
+		}
 		if (line->type != LINE_DIFF_DEL && line->type != LINE_DIFF_ADD) {
 			report("Please select a change to stage");
 			return REQ_NONE;
