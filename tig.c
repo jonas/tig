@@ -7581,7 +7581,7 @@ main(int argc, const char *argv[])
 	if (!opt_git_dir[0] && request != REQ_VIEW_PAGER)
 		die("Not a git repository");
 
-	if (*opt_encoding && strcmp(codeset, ENCODING_UTF8)) {
+	if (*opt_encoding && strcmp(opt_encoding, ENCODING_UTF8)) {
 		opt_iconv_in = iconv_open(ENCODING_UTF8, opt_encoding);
 		if (opt_iconv_in == ICONV_NONE)
 			die("Failed to initialize character set conversion");
