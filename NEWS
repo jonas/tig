@@ -9,7 +9,7 @@ master repository (http://jonas.nitro.dk/tig/tig.git) will be retired.
 
 Improvements:
 
- - Support staging of single lines. Bound to Ctrl-u by default. (GH #21)
+ - Support staging of single lines. Bound to '1' default. (GH #21)
  - Use +<lineno> to open the initial view at an arbitrary line. (GH #20)
  - Add show-notes ~/.tigrc option.
  - Support jumping to specific SHAs in the main view.

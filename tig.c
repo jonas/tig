@@ -703,7 +703,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'u',		REQ_STATUS_UPDATE },
 	{ '!',		REQ_STATUS_REVERT },
 	{ 'M',		REQ_STATUS_MERGE },
-	{ KEY_CTL('u'),	REQ_STAGE_UPDATE_LINE },
+	{ '1',		REQ_STAGE_UPDATE_LINE },
 	{ '@',		REQ_STAGE_NEXT },
 	{ '[',		REQ_DIFF_CONTEXT_DOWN },
 	{ ']',		REQ_DIFF_CONTEXT_UP },
