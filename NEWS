@@ -25,6 +25,8 @@ Improvements:
    Bound to 'W' by default.
  - Use per-file encoding specified in gitattributes(5) for blobs and
    unstaged files.
+ - Obsolete commit-encoding option and pass --encoding=UTF-8 to revision
+   commands.
 
 Bug fixes:
 

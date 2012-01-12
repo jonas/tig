@@ -48,7 +48,6 @@ set show-rev-graph = yes	# Show revision graph?
 set show-refs = yes		# Show references?
 set show-line-numbers = no	# Show line numbers?
 set line-number-interval = 5	# Interval between line numbers
-set commit-encoding = "UTF-8"	# Commit encoding
 set horizontal-scroll = 33%	# Scroll 33% of the view width
 set blame-options = -C -C -C	# Blame lines from other files
 --------------------------------------------------------------------------
@@ -104,11 +103,6 @@ The following variables can be set:
 	telling git-blame(1) how to detect the origin of lines. The value
 	is ignored when tig is started in blame mode and given blame options
 	on the command line.
-
-'commit-encoding' (string)::
-
-	The encoding used for commits. The default is UTF-8. Note this option
-	is shadowed by the "i18n.commitencoding" option in `.git/config`.
 
 'line-graphics' (mixed) [ "ascii" | "default" | "utf-8" | bool]::
 

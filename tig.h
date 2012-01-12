@@ -88,6 +88,7 @@
 
 #define ENCODING_UTF8	"UTF-8"
 #define ENCODING_SEP	": encoding: "
+#define ENCODING_ARG	"--encoding=" ENCODING_UTF8
 
 #define ICONV_NONE	((iconv_t) -1)
 #ifndef ICONV_CONST
