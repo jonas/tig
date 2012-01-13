@@ -2857,7 +2857,7 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 	char buf[SIZEOF_STR];
 	int retval;
 
-	FORMAT_BUFFER(buf, sizeof(buf), fmt, retval);
+	FORMAT_BUFFER(buf, sizeof(buf), fmt, retval, FALSE);
 	return retval >= 0 ? add_line_text(view, buf, type) : NULL;
 }
 
@@ -6702,13 +6702,7 @@ report(const char *msg, ...)
 		char buf[SIZEOF_STR];
 		int retval;
 
-		FORMAT_BUFFER(buf, sizeof(buf), msg, retval);
-		if (retval >= sizeof(buf)) {
-			buf[sizeof(buf) - 1] = 0;
-			buf[sizeof(buf) - 2] = '.';
-			buf[sizeof(buf) - 3] = '.';
-			buf[sizeof(buf) - 4] = '.';
-		}
+		FORMAT_BUFFER(buf, sizeof(buf), msg, retval, TRUE);
 		die("%s", buf);
 	}
 

@@ -206,13 +206,19 @@ string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen)
 
 /* Shorthands for safely copying into a fixed buffer. */
 
-#define FORMAT_BUFFER(buf, bufsize, fmt, retval) \
+#define FORMAT_BUFFER(buf, bufsize, fmt, retval, allow_truncate) \
 	do { \
 		va_list args; \
 		va_start(args, fmt); \
 		retval = vsnprintf(buf, bufsize, fmt, args); \
 		va_end(args); \
-		if (0 < retval && retval >= bufsize) { \
+		if (retval >= (bufsize) && allow_truncate) { \
+			(buf)[(bufsize) - 1] = 0; \
+			(buf)[(bufsize) - 2] = '.'; \
+			(buf)[(bufsize) - 3] = '.'; \
+			(buf)[(bufsize) - 4] = '.'; \
+			retval = (bufsize) - 1; \
+		} else if (retval < 0 || retval >= (bufsize)) { \
 			retval = -1; \
 		} \
 	} while (0)
@@ -272,7 +278,7 @@ string_nformat(char *buf, size_t bufsize, size_t *bufpos, const char *fmt, ...)
 	size_t pos = bufpos ? *bufpos : 0;
 	int retval;
 
-	FORMAT_BUFFER(buf + pos, bufsize - pos, fmt, retval);
+	FORMAT_BUFFER(buf + pos, bufsize - pos, fmt, retval, FALSE);
 	if (bufpos && retval > 0)
 		*bufpos = pos + retval;
 

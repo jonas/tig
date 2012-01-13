@@ -155,7 +155,7 @@ io_open(struct io *io, const char *fmt, ...)
 
 	io_init(io);
 
-	FORMAT_BUFFER(name, sizeof(name), fmt, retval);
+	FORMAT_BUFFER(name, sizeof(name), fmt, retval, FALSE);
 	if (retval < 0) {
 		io->error = ENAMETOOLONG;
 		return FALSE;
@@ -411,7 +411,7 @@ io_printf(struct io *io, const char *fmt, ...)
 	char buf[SIZEOF_STR] = "";
 	int retval;
 
-	FORMAT_BUFFER(buf, sizeof(buf), fmt, retval);
+	FORMAT_BUFFER(buf, sizeof(buf), fmt, retval, FALSE);
 	if (retval < 0) {
 		io->error = ENAMETOOLONG;
 		return FALSE;
