@@ -305,6 +305,7 @@ DEFINE_ENUM(filename, FILENAME_ENUM);
 	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
 	REQ_(TOGGLE_SORT_ORDER,	"Toggle ascending/descending sort order"), \
 	REQ_(TOGGLE_SORT_FIELD,	"Toggle field to sort by"), \
+	REQ_(TOGGLE_IGNORE_SPACE,	"Toggle ignoring whitespace in diffs"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
@@ -376,6 +377,8 @@ static bool opt_show_refs		= TRUE;
 static bool opt_untracked_dirs_content	= TRUE;
 static int opt_diff_context		= 3;
 static char opt_diff_context_arg[9]	= "";
+static bool opt_ignore_space		= FALSE;
+static char opt_ignore_space_arg[22]	= "";
 static char opt_notes_arg[SIZEOF_STR]	= "--no-notes";
 static int opt_num_interval		= 5;
 static double opt_hscroll		= 0.50;
@@ -413,6 +416,22 @@ update_diff_context_arg(int diff_context)
 {
 	if (!string_format(opt_diff_context_arg, "-U%u", diff_context))
 		string_ncopy(opt_diff_context_arg, "-U3", 3); 
+}
+
+static inline void
+update_ignore_space_arg()
+{
+	if (opt_ignore_space)
+		string_copy(opt_ignore_space_arg, "--ignore-all-space");
+	else
+		string_copy(opt_ignore_space_arg, "");
+}
+
+static inline void
+toggle_ignore_space()
+{
+	opt_ignore_space = !opt_ignore_space;
+	update_ignore_space_arg();
 }
 
 /*
@@ -758,6 +777,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'F',		REQ_TOGGLE_REFS },
 	{ 'I',		REQ_TOGGLE_SORT_ORDER },
 	{ 'i',		REQ_TOGGLE_SORT_FIELD },
+	{ 'W',		REQ_TOGGLE_IGNORE_SPACE },
 	{ ':',		REQ_PROMPT },
 	{ 'e',		REQ_EDIT },
 };
@@ -1321,6 +1341,14 @@ option_set_command(int argc, const char *argv[])
 
 		if (code == OPT_OK)
 			update_diff_context_arg(opt_diff_context);
+		return code;
+	}
+
+	if (!strcmp(argv[0], "ignore-space")) {
+		enum option_code code = parse_bool(&opt_ignore_space, argv[2]);
+
+		if (code == OPT_OK)
+			update_ignore_space_arg();
 		return code;
 	}
 
@@ -3204,6 +3232,10 @@ view_driver(struct view *view, enum request request)
 		report("Sorting is not yet supported for the %s view", view->name);
 		break;
 
+	case REQ_TOGGLE_IGNORE_SPACE:
+		report("Toggling ignored whitespace is not yet supported for the %s view", view->name);
+		break;
+
 	case REQ_DIFF_CONTEXT_UP:
 	case REQ_DIFF_CONTEXT_DOWN:
 		report("Changing the diff context is not yet supported for the %s view", view->name);
@@ -3737,8 +3769,8 @@ diff_open(struct view *view, enum open_flags flags)
 	static const char *diff_argv[] = {
 		"git", "show", "--pretty=fuller", "--no-color", "--root",
 			"--patch-with-stat", "--find-copies-harder", "-C",
-			opt_notes_arg, opt_diff_context_arg, "%(diffargs)",
-			"%(commit)", "--", "%(fileargs)", NULL
+			opt_notes_arg, opt_diff_context_arg, opt_ignore_space_arg,
+			"%(diffargs)", "%(commit)", "--", "%(fileargs)", NULL
 	};
 
 	return begin_update(view, NULL, diff_argv, flags);
@@ -3997,6 +4029,11 @@ diff_request(struct view *view, enum request request, struct line *line)
 	case REQ_DIFF_CONTEXT_DOWN:
 		if (!update_diff_context(request))
 			return REQ_NONE;
+		reload_view(view);
+		return REQ_NONE;
+
+	case REQ_TOGGLE_IGNORE_SPACE:
+		toggle_ignore_space();
 		reload_view(view);
 		return REQ_NONE;
 
