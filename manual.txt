@@ -391,6 +391,7 @@ Misc
 |g	|Toggle revision graph visualization on/off.
 |~	|Toggle (line) graphics mode
 |F	|Toggle reference display on/off (tag and branch names).
+|W	|Toggle ignoring whitespace on/off for diffs
 |:	|Open prompt. This allows you to specify what git command
 	 to run. Example `:log -p`. You can also use this to jump
 	 to a specific line by typing `:<linenumber>`, e.g. `:80`,
