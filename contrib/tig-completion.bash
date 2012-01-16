@@ -66,7 +66,9 @@ __tig_refs ()
 {
 	local cmd i is_hash=y dir="$(__tigdir "$1")"
 	if [ -d "$dir" ]; then
-		if [ -e "$dir/HEAD" ]; then echo HEAD; fi
+		for i in HEAD FETCH_HEAD ORIG_HEAD MERGE_HEAD; do
+			if [ -e "$dir/$i" ]; then echo $i; fi
+		done
 		for i in $(git --git-dir="$dir" \
 			for-each-ref --format='%(refname)' \
 			refs/tags refs/heads refs/remotes); do
