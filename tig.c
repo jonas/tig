@@ -427,13 +427,6 @@ update_ignore_space_arg()
 		string_copy(opt_ignore_space_arg, "");
 }
 
-static inline void
-toggle_ignore_space()
-{
-	opt_ignore_space = !opt_ignore_space;
-	update_ignore_space_arg();
-}
-
 /*
  * Line-oriented content detection.
  */
@@ -1574,6 +1567,7 @@ enum view_flag {
 	VIEW_OPEN_DIFF		= 1 << 4,
 	VIEW_NO_REF		= 1 << 5,
 	VIEW_NO_GIT_DIR		= 1 << 6,
+	VIEW_DIFF_LIKE		= 1 << 7,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))
@@ -2151,6 +2145,7 @@ redraw_display(bool clear)
 	TOGGLE_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map) \
 	TOGGLE_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL) \
 	TOGGLE_(FILENAME,  '#', "file names",        &opt_filename, filename_map) \
+	TOGGLE_(IGNORE_SPACE,  'W', "ignore space",  &opt_ignore_space, NULL) \
 	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL)
 
 static void
@@ -2194,7 +2189,10 @@ toggle_option(enum request request)
 		bool *option = menu[i].data;
 
 		*option = !*option;
-		redraw_display(FALSE);
+		if (option == &opt_ignore_space)
+			update_ignore_space_arg();
+		else
+			redraw_display(FALSE);
 		report("%sabling %s", *option ? "En" : "Dis", menu[i].text);
 	}
 }
@@ -3224,16 +3222,15 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_GRAPHIC:
 	case REQ_TOGGLE_REV_GRAPH:
 	case REQ_TOGGLE_REFS:
+	case REQ_TOGGLE_IGNORE_SPACE:
 		toggle_option(request);
+		if (view_has_flags(view, VIEW_DIFF_LIKE))
+			reload_view(view);
 		break;
 
 	case REQ_TOGGLE_SORT_FIELD:
 	case REQ_TOGGLE_SORT_ORDER:
 		report("Sorting is not yet supported for the %s view", view->name);
-		break;
-
-	case REQ_TOGGLE_IGNORE_SPACE:
-		report("Toggling ignored whitespace is not yet supported for the %s view", view->name);
 		break;
 
 	case REQ_DIFF_CONTEXT_UP:
@@ -4032,10 +4029,6 @@ diff_request(struct view *view, enum request request, struct line *line)
 		reload_view(view);
 		return REQ_NONE;
 
-	case REQ_TOGGLE_IGNORE_SPACE:
-		toggle_ignore_space();
-		reload_view(view);
-		return REQ_NONE;
 
 	case REQ_ENTER:
 		return diff_common_enter(view, request, line);
@@ -4060,7 +4053,7 @@ diff_select(struct view *view, struct line *line)
 
 static struct view_ops diff_ops = {
 	"line",
-	VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS,
+	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS,
 	sizeof(struct diff_state),
 	diff_open,
 	diff_read,
