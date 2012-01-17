@@ -5072,14 +5072,15 @@ blame_request(struct view *view, enum request request, struct line *line)
 			const char *diff_index_argv[] = {
 				"git", "diff-index", "--root", "--patch-with-stat",
 					"-C", "-M", opt_diff_context_arg,
+					opt_ignore_space_arg,
 					"HEAD", "--", view->vid, NULL
 			};
 
 			if (!*blame->commit->parent_id) {
 				diff_index_argv[1] = "diff";
 				diff_index_argv[2] = "--no-color";
-				diff_index_argv[7] = "--";
-				diff_index_argv[8] = "/dev/null";
+				diff_index_argv[8] = "--";
+				diff_index_argv[9] = "/dev/null";
 			}
 
 			open_argv(view, diff, diff_index_argv, NULL, flags);
@@ -6324,24 +6325,25 @@ stage_open(struct view *view, enum open_flags flags)
 {
 	static const char *no_head_diff_argv[] = {
 		"git", "diff", "--no-color", "--patch-with-stat",
-			opt_diff_context_arg,
+			opt_diff_context_arg, opt_ignore_space_arg,
 			"--", "/dev/null", stage_status.new.name, NULL
 	};
 	static const char *index_show_argv[] = {
 		"git", "diff-index", "--root", "--patch-with-stat", "-C", "-M",
-			"--cached", opt_diff_context_arg, "HEAD", "--",
+			"--cached", opt_diff_context_arg, opt_ignore_space_arg,
+			"HEAD", "--",
 			stage_status.old.name, stage_status.new.name, NULL
 	};
 	static const char *files_show_argv[] = {
-		"git", "diff-files", "--root", "--patch-with-stat",
-			"-C", "-M", opt_diff_context_arg, "--",
+		"git", "diff-files", "--root", "--patch-with-stat", "-C", "-M",
+			opt_diff_context_arg, opt_ignore_space_arg, "--",
 			stage_status.old.name, stage_status.new.name, NULL
 	};
 	/* Diffs for unmerged entries are empty when passing the new
 	 * path, so leave out the new path. */
 	static const char *files_unmerged_argv[] = {
-		"git", "diff-files", "--root", "--patch-with-stat",
-			"-C", "-M", opt_diff_context_arg, "--",
+		"git", "diff-files", "--root", "--patch-with-stat", "-C", "-M",
+			opt_diff_context_arg, opt_ignore_space_arg, "--",
 			stage_status.old.name, NULL
 	};
 	static const char *file_argv[] = { opt_cdup, stage_status.new.name, NULL };
@@ -6402,7 +6404,7 @@ stage_read(struct view *view, char *data)
 
 static struct view_ops stage_ops = {
 	"line",
-	VIEW_NO_FLAGS,
+	VIEW_DIFF_LIKE,
 	sizeof(struct stage_state),
 	stage_open,
 	stage_read,
