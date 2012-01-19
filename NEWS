@@ -23,6 +23,8 @@ Improvements:
  - Use 'source <path>' command to load additional files from ~/.tigrc
  - Make display of space changes togglable in the diff and stage view.
    Bound to 'W' by default.
+ - Use per-file encoding specified in gitattributes(5) for blobs and
+   unstaged files.
 
 Bug fixes:
 

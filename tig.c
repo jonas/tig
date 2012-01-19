@@ -248,6 +248,30 @@ DEFINE_ENUM(ignore_space, IGNORE_SPACE_ENUM);
 	_(STATUS, status, "status"), \
 	_(STAGE,  stage,  "stage")
 
+static struct encoding *
+get_path_encoding(const char *path, struct encoding *default_encoding)
+{
+	const char *check_attr_argv[] = {
+		"git", "check-attr", "encoding", "--", path, NULL
+	};
+	char buf[SIZEOF_STR];
+	char *encoding;
+
+	/* <path>: encoding: <encoding> */
+
+	if (!*path || !io_run_buf(check_attr_argv, buf, sizeof(buf))
+	    || !(encoding = strstr(buf, ENCODING_SEP)))
+		return default_encoding;
+
+	encoding += STRING_SIZE(ENCODING_SEP);
+	if (!strcmp(encoding, ENCODING_UTF8)
+	    || !strcmp(encoding, "unspecified")
+	    || !strcmp(encoding, "set"))
+		return default_encoding;
+
+	return encoding_open(encoding);
+}
+
 /*
  * User requests
  */
@@ -1651,6 +1675,7 @@ struct view {
 	struct io *pipe;
 	time_t start_time;
 	time_t update_secs;
+	struct encoding *encoding;
 
 	/* Private data */
 	void *private;
@@ -2807,6 +2832,7 @@ update_view(struct view *view)
 	 * might have rearranged things. */
 	bool redraw = view->lines == 0;
 	bool can_read = TRUE;
+	struct encoding *encoding = view->encoding ? view->encoding : opt_encoding;
 
 	if (!view->pipe)
 		return TRUE;
@@ -2826,8 +2852,8 @@ update_view(struct view *view)
 	}
 
 	for (; (line = io_get(view->pipe, '\n', can_read)); can_read = FALSE) {
-		if (opt_encoding) {
-			line = encoding_convert(opt_encoding, line);
+		if (encoding) {
+			line = encoding_convert(encoding, line);
 		}
 
 		if (!view->ops->read(view, line)) {
@@ -4695,6 +4721,8 @@ blob_open(struct view *view, enum open_flags flags)
 		"git", "cat-file", "blob", "%(blob)", NULL
 	};
 
+	view->encoding = get_path_encoding(opt_file, opt_encoding);
+
 	return begin_update(view, NULL, blob_argv, flags);
 }
 
@@ -6372,6 +6400,8 @@ stage_open(struct view *view, enum open_flags flags)
 	const char **argv = NULL;
 	const char *info;
 
+	view->encoding = NULL;
+
 	switch (stage_line_type) {
 	case LINE_STAT_STAGED:
 		if (is_initial_commit()) {
@@ -6399,6 +6429,7 @@ stage_open(struct view *view, enum open_flags flags)
 	case LINE_STAT_UNTRACKED:
 		info = "Untracked file %s";
 		argv = file_argv;
+		view->encoding = get_path_encoding(stage_status.old.name, opt_encoding);
 		break;
 
 	case LINE_STAT_HEAD:
@@ -7386,6 +7417,9 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 {
 	if (!strcmp(name, "i18n.commitencoding"))
 		parse_encoding(&opt_encoding, value, FALSE);
+
+	else if (!strcmp(name, "gui.encoding"))
+		parse_encoding(&opt_encoding, value, TRUE);
 
 	else if (!strcmp(name, "core.editor"))
 		string_ncopy(opt_editor, value, valuelen);

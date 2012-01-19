@@ -87,6 +87,7 @@
 #define COLOR_DEFAULT	(-1)
 
 #define ENCODING_UTF8	"UTF-8"
+#define ENCODING_SEP	": encoding: "
 
 #define ICONV_NONE	((iconv_t) -1)
 #ifndef ICONV_CONST
