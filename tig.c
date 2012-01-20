@@ -227,6 +227,13 @@ mkmode(mode_t mode)
 
 DEFINE_ENUM(filename, FILENAME_ENUM);
 
+#define IGNORE_SPACE_ENUM(_) \
+	_(IGNORE_SPACE, NO), \
+	_(IGNORE_SPACE, ALL), \
+	_(IGNORE_SPACE, SOME), \
+	_(IGNORE_SPACE, AT_EOL)
+
+DEFINE_ENUM(ignore_space, IGNORE_SPACE_ENUM);
 
 #define VIEW_INFO(_) \
 	_(MAIN,   main,   ref_head), \
@@ -377,7 +384,7 @@ static bool opt_show_refs		= TRUE;
 static bool opt_untracked_dirs_content	= TRUE;
 static int opt_diff_context		= 3;
 static char opt_diff_context_arg[9]	= "";
-static bool opt_ignore_space		= FALSE;
+static enum ignore_space opt_ignore_space	= IGNORE_SPACE_NO;
 static char opt_ignore_space_arg[22]	= "";
 static char opt_notes_arg[SIZEOF_STR]	= "--no-notes";
 static int opt_num_interval		= 5;
@@ -421,10 +428,15 @@ update_diff_context_arg(int diff_context)
 static inline void
 update_ignore_space_arg()
 {
-	if (opt_ignore_space)
+	if (opt_ignore_space == IGNORE_SPACE_ALL) {
 		string_copy(opt_ignore_space_arg, "--ignore-all-space");
-	else
+	} else if (opt_ignore_space == IGNORE_SPACE_SOME) {
+		string_copy(opt_ignore_space_arg, "--ignore-space-change");
+	} else if (opt_ignore_space == IGNORE_SPACE_AT_EOL) {
+		string_copy(opt_ignore_space_arg, "--ignore-space-at-eol");
+	} else {
 		string_copy(opt_ignore_space_arg, "");
+	}
 }
 
 /*
@@ -1338,7 +1350,7 @@ option_set_command(int argc, const char *argv[])
 	}
 
 	if (!strcmp(argv[0], "ignore-space")) {
-		enum option_code code = parse_bool(&opt_ignore_space, argv[2]);
+		enum option_code code = parse_enum(&opt_ignore_space, argv[2], ignore_space_map);
 
 		if (code == OPT_OK)
 			update_ignore_space_arg();
@@ -1567,7 +1579,6 @@ enum view_flag {
 	VIEW_OPEN_DIFF		= 1 << 4,
 	VIEW_NO_REF		= 1 << 5,
 	VIEW_NO_GIT_DIR		= 1 << 6,
-	VIEW_DIFF_LIKE		= 1 << 7,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))
@@ -2145,10 +2156,10 @@ redraw_display(bool clear)
 	TOGGLE_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map) \
 	TOGGLE_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL) \
 	TOGGLE_(FILENAME,  '#', "file names",        &opt_filename, filename_map) \
-	TOGGLE_(IGNORE_SPACE,  'W', "ignore space",  &opt_ignore_space, NULL) \
+	TOGGLE_(IGNORE_SPACE, 'W', "space changes",  &opt_ignore_space, ignore_space_map) \
 	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL)
 
-static void
+static bool
 toggle_option(enum request request)
 {
 	const struct {
@@ -2170,7 +2181,7 @@ toggle_option(enum request request)
 
 	if (request == REQ_OPTIONS) {
 		if (!prompt_menu("Toggle option", menu, &i))
-			return;
+			return FALSE;
 	} else {
 		while (i < ARRAY_SIZE(data) && data[i].request != request)
 			i++;
@@ -2182,6 +2193,12 @@ toggle_option(enum request request)
 		unsigned int *opt = menu[i].data;
 
 		*opt = (*opt + 1) % data[i].map_size;
+		if (data[i].map == ignore_space_map) {
+			update_ignore_space_arg();
+			report("Ignoring %s %s", enum_name(data[i].map[*opt]), menu[i].text);
+			return TRUE;
+		}
+
 		redraw_display(FALSE);
 		report("Displaying %s %s", enum_name(data[i].map[*opt]), menu[i].text);
 
@@ -2189,12 +2206,11 @@ toggle_option(enum request request)
 		bool *option = menu[i].data;
 
 		*option = !*option;
-		if (option == &opt_ignore_space)
-			update_ignore_space_arg();
-		else
-			redraw_display(FALSE);
+		redraw_display(FALSE);
 		report("%sabling %s", *option ? "En" : "Dis", menu[i].text);
 	}
+
+	return FALSE;
 }
 
 static void
@@ -3223,8 +3239,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_REV_GRAPH:
 	case REQ_TOGGLE_REFS:
 	case REQ_TOGGLE_IGNORE_SPACE:
-		toggle_option(request);
-		if (view_has_flags(view, VIEW_DIFF_LIKE))
+		if (toggle_option(request))
 			reload_view(view);
 		break;
 
@@ -4053,7 +4068,7 @@ diff_select(struct view *view, struct line *line)
 
 static struct view_ops diff_ops = {
 	"line",
-	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS,
+	VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS,
 	sizeof(struct diff_state),
 	diff_open,
 	diff_read,
@@ -6404,7 +6419,7 @@ stage_read(struct view *view, char *data)
 
 static struct view_ops stage_ops = {
 	"line",
-	VIEW_DIFF_LIKE,
+	VIEW_NO_FLAGS,
 	sizeof(struct stage_state),
 	stage_open,
 	stage_read,

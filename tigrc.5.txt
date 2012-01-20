@@ -178,10 +178,12 @@ The following variables can be set:
 
 	Number of context lines to show for diffs.
 
-'ignore-space' (bool)::
+'ignore-space' (mixed) ["no" | "all" | "some" | "at-oel" | bool]::
 
-    Ignore all whitespace changes in diff view. Off by default. Turning this on
-    is equivalent to passing "--ignore-all-space" to `git diff` or `git show`.
+    Ignore space changes in diff view. By default no space changes are ignore.
+    Changing this to "all", "some" or "at-eol" is equivalent to passing
+    "--ignore-all-space", "--ignore-space" or "--ignore-space-at-eol"
+    respectively to `git diff` or `git show`.
 
 Bind command
 ------------
