@@ -174,7 +174,7 @@ The following variables can be set:
 
 'ignore-space' (mixed) ["no" | "all" | "some" | "at-oel" | bool]::
 
-    Ignore space changes in diff view. By default no space changes are ignore.
+    Ignore space changes in diff view. By default no space changes are ignored.
     Changing this to "all", "some" or "at-eol" is equivalent to passing
     "--ignore-all-space", "--ignore-space" or "--ignore-space-at-eol"
     respectively to `git diff` or `git show`.
