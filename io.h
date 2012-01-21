@@ -32,8 +32,12 @@ bool argv_copy(const char ***dst, const char *src[]);
  */
 
 struct encoding {
+	struct encoding *next;
 	iconv_t cd;
+	char fromcode[1];
 };
+
+struct encoding *encoding_open(const char *fromcode);
 
 /*
  * Executing external commands.

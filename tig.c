@@ -1273,16 +1273,11 @@ parse_encoding(struct encoding **encoding_ref, const char *arg, bool priority)
 	enum option_code code = parse_string(buf, arg, sizeof(buf));
 
 	if (code == OPT_OK) {
-		static struct encoding encoding_data;
 		struct encoding *encoding = *encoding_ref;
 
 		if (encoding && !priority)
 			return code;
-		encoding_data.cd = iconv_open(ENCODING_UTF8, buf);
-		if (encoding_data.cd == ICONV_NONE)
-			die("Failed to initialize character set conversion");
-		else
-			encoding = &encoding_data;
+		encoding = encoding_open(buf);
 		if (encoding)
 			*encoding_ref = encoding;
 	}

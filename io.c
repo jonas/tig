@@ -135,6 +135,39 @@ argv_copy(const char ***dst, const char *src[])
 	return TRUE;
 }
 
+/*
+ * Encoding conversion.
+ */
+
+static struct encoding *encodings;
+
+struct encoding *
+encoding_open(const char *fromcode)
+{
+	struct encoding *encoding;
+	size_t len = strlen(fromcode);
+
+	if (!*fromcode)
+		return NULL;
+
+	for (encoding = encodings; encoding; encoding = encoding->next) {
+		if (!strcasecmp(encoding->fromcode, fromcode))
+			return encoding;
+	}
+
+	encoding = calloc(1, sizeof(*encoding) + len);
+	strncpy(encoding->fromcode, fromcode, len);
+	encoding->cd = iconv_open(ENCODING_UTF8, fromcode);
+	if (encoding->cd == ICONV_NONE) {
+		free(encoding);
+		return NULL;
+	}
+
+	encoding->next = encodings;
+	encodings = encoding;
+
+	return encoding;
+}
 
 /*
  * Executing external commands.
