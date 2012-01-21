@@ -1941,6 +1941,9 @@ draw_lineno(struct view *view, unsigned int lineno)
 	char *text = NULL;
 	chtype separator = opt_line_graphics ? ACS_VLINE : '|';
 
+	if (!opt_line_number)
+		return FALSE;
+
 	lineno += view->offset + 1;
 	if (lineno == 1 || (lineno % opt_num_interval) == 0) {
 		static char fmt[] = "%1ld";
@@ -3616,7 +3619,7 @@ parse_blame_info(struct blame_commit *commit, char *line)
 static bool
 pager_draw(struct view *view, struct line *line, unsigned int lineno)
 {
-	if (opt_line_number && draw_lineno(view, lineno))
+	if (draw_lineno(view, lineno))
 		return TRUE;
 
 	draw_text(view, line->type, line->data);
@@ -3893,7 +3896,7 @@ diff_common_draw(struct view *view, struct line *line, unsigned int lineno)
 	char *text = line->data;
 	enum line_type type = line->type;
 
-	if (opt_line_number && draw_lineno(view, lineno))
+	if (draw_lineno(view, lineno))
 		return TRUE;
 
 	if (type == LINE_DIFF_STAT) {
@@ -6568,7 +6571,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (!commit->author)
 		return FALSE;
 
-	if (opt_line_number && draw_lineno(view, lineno))
+	if (draw_lineno(view, lineno))
 		return TRUE;
 
 	if (draw_date(view, &commit->time))
