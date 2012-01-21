@@ -31,13 +31,10 @@ bool argv_copy(const char ***dst, const char *src[]);
  * Encoding conversion.
  */
 
-struct encoding {
-	struct encoding *next;
-	iconv_t cd;
-	char fromcode[1];
-};
+struct encoding;
 
 struct encoding *encoding_open(const char *fromcode);
+char *encoding_convert(struct encoding *encoding, char *line);
 
 /*
  * Executing external commands.

@@ -139,6 +139,12 @@ argv_copy(const char ***dst, const char *src[])
  * Encoding conversion.
  */
 
+struct encoding {
+	struct encoding *next;
+	iconv_t cd;
+	char fromcode[1];
+};
+
 static struct encoding *encodings;
 
 struct encoding *
@@ -167,6 +173,21 @@ encoding_open(const char *fromcode)
 	encodings = encoding;
 
 	return encoding;
+}
+
+char *
+encoding_convert(struct encoding *encoding, char *line)
+{
+	static char out_buffer[BUFSIZ * 2];
+	ICONV_CONST char *inbuf = line;
+	size_t inlen = strlen(line) + 1;
+
+	char *outbuf = out_buffer;
+	size_t outlen = sizeof(out_buffer);
+
+	size_t ret = iconv(encoding->cd, &inbuf, &inlen, &outbuf, &outlen);
+
+	return (ret != (size_t) -1) ? out_buffer : line;
 }
 
 /*

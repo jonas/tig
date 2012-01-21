@@ -2802,7 +2802,6 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 static bool
 update_view(struct view *view)
 {
-	char out_buffer[BUFSIZ * 2];
 	char *line;
 	/* Clear the view and redraw everything since the tree sorting
 	 * might have rearranged things. */
@@ -2828,17 +2827,7 @@ update_view(struct view *view)
 
 	for (; (line = io_get(view->pipe, '\n', can_read)); can_read = FALSE) {
 		if (opt_encoding) {
-			ICONV_CONST char *inbuf = line;
-			size_t inlen = strlen(line) + 1;
-
-			char *outbuf = out_buffer;
-			size_t outlen = sizeof(out_buffer);
-
-			size_t ret;
-
-			ret = iconv(opt_encoding->cd, &inbuf, &inlen, &outbuf, &outlen);
-			if (ret != (size_t) -1)
-				line = out_buffer;
+			line = encoding_convert(opt_encoding, line);
 		}
 
 		if (!view->ops->read(view, line)) {
