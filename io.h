@@ -28,6 +28,14 @@ bool argv_append_array(const char ***dst_argv, const char *src_argv[]);
 bool argv_copy(const char ***dst, const char *src[]);
 
 /*
+ * Encoding conversion.
+ */
+
+struct encoding {
+	iconv_t cd;
+};
+
+/*
  * Executing external commands.
  */
 

@@ -399,8 +399,7 @@ static char opt_ref[SIZEOF_REF]		= "";
 static unsigned long opt_goto_line	= 0;
 static char opt_head[SIZEOF_REF]	= "";
 static char opt_remote[SIZEOF_REF]	= "";
-static char opt_encoding[20]		= ENCODING_UTF8;
-static iconv_t opt_iconv_in		= ICONV_NONE;
+static struct encoding *opt_encoding	= NULL;
 static iconv_t opt_iconv_out		= ICONV_NONE;
 static char opt_search[SIZEOF_STR]	= "";
 static char opt_cdup[SIZEOF_STR]	= "";
@@ -1268,6 +1267,30 @@ parse_string(char *opt, const char *arg, size_t optsize)
 }
 
 static enum option_code
+parse_encoding(struct encoding **encoding_ref, const char *arg, bool priority)
+{
+	char buf[SIZEOF_STR];
+	enum option_code code = parse_string(buf, arg, sizeof(buf));
+
+	if (code == OPT_OK) {
+		static struct encoding encoding_data;
+		struct encoding *encoding = *encoding_ref;
+
+		if (encoding && !priority)
+			return code;
+		encoding_data.cd = iconv_open(ENCODING_UTF8, buf);
+		if (encoding_data.cd == ICONV_NONE)
+			die("Failed to initialize character set conversion");
+		else
+			encoding = &encoding_data;
+		if (encoding)
+			*encoding_ref = encoding;
+	}
+
+	return code;
+}
+
+static enum option_code
 parse_args(const char ***args, const char *argv[])
 {
 	if (*args == NULL && !argv_copy(args, argv))
@@ -1358,7 +1381,7 @@ option_set_command(int argc, const char *argv[])
 	}
 
 	if (!strcmp(argv[0], "commit-encoding"))
-		return parse_string(opt_encoding, argv[2], sizeof(opt_encoding));
+		return parse_encoding(&opt_encoding, argv[2], FALSE);
 
 	if (!strcmp(argv[0], "status-untracked-dirs"))
 		return parse_bool(&opt_untracked_dirs_content, argv[2]);
@@ -2809,7 +2832,7 @@ update_view(struct view *view)
 	}
 
 	for (; (line = io_get(view->pipe, '\n', can_read)); can_read = FALSE) {
-		if (opt_iconv_in != ICONV_NONE) {
+		if (opt_encoding) {
 			ICONV_CONST char *inbuf = line;
 			size_t inlen = strlen(line) + 1;
 
@@ -2818,7 +2841,7 @@ update_view(struct view *view)
 
 			size_t ret;
 
-			ret = iconv(opt_iconv_in, &inbuf, &inlen, &outbuf, &outlen);
+			ret = iconv(opt_encoding->cd, &inbuf, &inlen, &outbuf, &outlen);
 			if (ret != (size_t) -1)
 				line = out_buffer;
 		}
@@ -7378,7 +7401,7 @@ static int
 read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
 	if (!strcmp(name, "i18n.commitencoding"))
-		string_ncopy(opt_encoding, value, valuelen);
+		parse_encoding(&opt_encoding, value, FALSE);
 
 	else if (!strcmp(name, "core.editor"))
 		string_ncopy(opt_editor, value, valuelen);
@@ -7639,12 +7662,6 @@ main(int argc, const char *argv[])
 	/* Require a git repository unless when running in pager mode. */
 	if (!opt_git_dir[0] && request != REQ_VIEW_PAGER)
 		die("Not a git repository");
-
-	if (*opt_encoding && strcmp(opt_encoding, ENCODING_UTF8)) {
-		opt_iconv_in = iconv_open(ENCODING_UTF8, opt_encoding);
-		if (opt_iconv_in == ICONV_NONE)
-			die("Failed to initialize character set conversion");
-	}
 
 	if (codeset && strcmp(codeset, ENCODING_UTF8)) {
 		char translit[SIZEOF_STR];
