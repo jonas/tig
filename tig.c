@@ -1619,6 +1619,7 @@ enum view_flag {
 	VIEW_OPEN_DIFF		= 1 << 4,
 	VIEW_NO_REF		= 1 << 5,
 	VIEW_NO_GIT_DIR		= 1 << 6,
+	VIEW_DIFF_LIKE		= 1 << 7,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))
@@ -3272,8 +3273,8 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_REV_GRAPH:
 	case REQ_TOGGLE_REFS:
 	case REQ_TOGGLE_IGNORE_SPACE:
-		if (toggle_option(request))
-			reload_view(view);
+		if (toggle_option(request) && view_has_flags(view, VIEW_DIFF_LIKE))
+			refresh_view(view);
 		break;
 
 	case REQ_TOGGLE_SORT_FIELD:
@@ -4101,7 +4102,7 @@ diff_select(struct view *view, struct line *line)
 
 static struct view_ops diff_ops = {
 	"line",
-	VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS,
+	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS,
 	sizeof(struct diff_state),
 	diff_open,
 	diff_read,
@@ -6458,7 +6459,7 @@ stage_read(struct view *view, char *data)
 
 static struct view_ops stage_ops = {
 	"line",
-	VIEW_NO_FLAGS,
+	VIEW_DIFF_LIKE,
 	sizeof(struct stage_state),
 	stage_open,
 	stage_read,
