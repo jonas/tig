@@ -745,7 +745,6 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_CTL('P'),	REQ_PREVIOUS },
 	{ KEY_DOWN,	REQ_NEXT },
 	{ KEY_CTL('N'),	REQ_NEXT },
-	{ 'R',		REQ_REFRESH },
 	{ KEY_F(5),	REQ_REFRESH },
 	{ 'O',		REQ_MAXIMIZE },
 	{ ',',		REQ_PARENT },
@@ -1078,11 +1077,13 @@ add_builtin_run_requests(void)
 	const char *checkout[] = { "git", "checkout", "%(branch)", NULL };
 	const char *commit[] = { "git", "commit", NULL };
 	const char *gc[] = { "git", "gc", NULL };
+	const char *reset[] = { "git", "reset", "--hard", "%(commit)", NULL };
 	struct run_request reqs[] = {
 		{ KEYMAP_MAIN,	  'C', cherry_pick },
 		{ KEYMAP_STATUS,  'C', commit },
 		{ KEYMAP_BRANCH,  'C', checkout },
 		{ KEYMAP_GENERIC, 'G', gc },
+		{ KEYMAP_MAIN,	  'R', reset },
 	};
 	int i;
 
