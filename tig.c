@@ -467,7 +467,7 @@ update_ignore_space_arg()
  */
 
 #define LINE_INFO \
-LINE(DIFF_HEADER,  "diff --git ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(DIFF_HEADER,  "diff --",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_CHUNK,   "@@",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(DIFF_ADD,	   "+",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(DIFF_ADD2,	   " +",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
@@ -3688,14 +3688,14 @@ try_add_describe_ref:
 }
 
 static bool
-pager_read(struct view *view, char *data)
+pager_common_read(struct view *view, char *data, enum line_type type)
 {
 	struct line *line;
 
 	if (!data)
 		return TRUE;
 
-	line = add_line_text(view, data, get_line_type(data));
+	line = add_line_text(view, data, type);
 	if (!line)
 		return FALSE;
 
@@ -3703,6 +3703,15 @@ pager_read(struct view *view, char *data)
 		add_pager_refs(view, line);
 
 	return TRUE;
+}
+
+static bool
+pager_read(struct view *view, char *data)
+{
+	if (!data)
+		return TRUE;
+
+	return pager_common_read(view, data, get_line_type(data));
 }
 
 static enum request
@@ -3807,6 +3816,7 @@ static struct view_ops log_ops = {
 
 struct diff_state {
 	bool reading_diff_stat;
+	bool combined_diff;
 };
 
 static bool
@@ -3825,6 +3835,8 @@ diff_open(struct view *view, enum open_flags flags)
 static bool
 diff_common_read(struct view *view, char *data, struct diff_state *state)
 {
+	enum line_type type;
+
 	if (state->reading_diff_stat) {
 		size_t len = strlen(data);
 		char *pipe = strchr(data, '|');
@@ -3841,7 +3853,21 @@ diff_common_read(struct view *view, char *data, struct diff_state *state)
 		state->reading_diff_stat = TRUE;
 	}
 
-	return pager_read(view, data);
+	type = get_line_type(data);
+
+	if (type == LINE_DIFF_HEADER) {
+		const int len = line_info[LINE_DIFF_HEADER].linelen;
+
+		if (!strncmp(data + len, "combined ", strlen("combined ")) ||
+		    !strncmp(data + len, "cc ", strlen("cc ")))
+			state->combined_diff = TRUE;
+	}
+
+	/* ADD2 and DEL2 are only valid in combined diff hunks */
+	if (!state->combined_diff && (type == LINE_DIFF_ADD2 || type == LINE_DIFF_DEL2))
+		type = LINE_DEFAULT;
+
+	return pager_common_read(view, data, type);
 }
 
 static enum request
