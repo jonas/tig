@@ -172,7 +172,7 @@ The following variables can be set:
 
 	Number of context lines to show for diffs.
 
-'ignore-space' (mixed) ["no" | "all" | "some" | "at-oel" | bool]::
+'ignore-space' (mixed) ["no" | "all" | "some" | "at-eol" | bool]::
 
     Ignore space changes in diff view. By default no space changes are ignored.
     Changing this to "all", "some" or "at-eol" is equivalent to passing
