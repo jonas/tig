@@ -3274,7 +3274,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_REFS:
 	case REQ_TOGGLE_IGNORE_SPACE:
 		if (toggle_option(request) && view_has_flags(view, VIEW_DIFF_LIKE))
-			refresh_view(view);
+			reload_view(view);
 		break;
 
 	case REQ_TOGGLE_SORT_FIELD:
