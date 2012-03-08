@@ -231,8 +231,17 @@ string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen)
 #define string_ncopy(dst, src, srclen) \
 	string_ncopy_do(dst, sizeof(dst), src, srclen)
 
-#define string_copy_rev(dst, src) \
-	string_ncopy_do(dst, SIZEOF_REV, src, SIZEOF_REV - 1)
+static inline void
+string_copy_rev(char *dst, const char *src)
+{
+	size_t srclen;
+
+	for (srclen = 0; srclen < SIZEOF_REV; srclen++)
+		if (isspace(src[srclen]))
+			break;
+
+	string_ncopy_do(dst, SIZEOF_REV, src, srclen);
+}
 
 #define string_add(dst, from, src) \
 	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
