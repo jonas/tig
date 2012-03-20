@@ -1037,6 +1037,7 @@ struct run_request {
 	enum keymap keymap;
 	int key;
 	const char **argv;
+	bool external;
 };
 
 static struct run_request *run_request;
@@ -1045,7 +1046,7 @@ static size_t run_requests;
 DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 
 static enum request
-add_run_request(enum keymap keymap, int key, const char **argv)
+add_run_request(enum keymap keymap, int key, const char **argv, bool external)
 {
 	struct run_request *req;
 
@@ -1056,6 +1057,7 @@ add_run_request(enum keymap keymap, int key, const char **argv)
 	req->keymap = keymap;
 	req->key = key;
 	req->argv = NULL;
+	req->external = external;
 
 	if (!argv_copy(&req->argv, argv))
 		return REQ_NONE;
@@ -1091,7 +1093,7 @@ add_builtin_run_requests(void)
 
 		if (req != reqs[i].key)
 			continue;
-		req = add_run_request(reqs[i].keymap, reqs[i].key, reqs[i].argv);
+		req = add_run_request(reqs[i].keymap, reqs[i].key, reqs[i].argv, TRUE);
 		if (req != REQ_NONE)
 			add_keybinding(reqs[i].keymap, req, reqs[i].key);
 	}
@@ -1440,7 +1442,7 @@ option_bind_command(int argc, const char *argv[])
 		}
 	}
 	if (request == REQ_UNKNOWN && *argv[2]++ == '!')
-		request = add_run_request(keymap, key, argv + 2);
+		request = add_run_request(keymap, key, argv + 2, TRUE);
 	if (request == REQ_UNKNOWN)
 		return OPT_ERR_UNKNOWN_REQUEST_NAME;
 
@@ -2642,6 +2644,19 @@ reset_view(struct view *view)
 	view->update_secs = 0;
 }
 
+void
+print_argv(const char *argv[])
+{
+	int argc;
+
+	for (argc = 0; argv[argc] != NULL; ) {
+		write(STDOUT_FILENO, argv[argc], strlen(argv[argc]));
+		if (argv[++argc] != NULL)
+			write(STDOUT_FILENO, " ", 1);
+	}
+	write(STDOUT_FILENO, "\n", 1);
+}
+
 static const char *
 format_arg(const char *name)
 {
@@ -2671,6 +2686,130 @@ format_arg(const char *name)
 	return NULL;
 }
 
+const char*
+trimed_field_buffer(FIELD *field)
+{
+	const char* untrimed = field_buffer(field, 0);
+	if (untrimed == NULL)
+		return NULL;
+
+	char* trimed = NULL;
+	const char garbage_char = field_pad(field);
+
+	while (*untrimed != '\0' && *untrimed == garbage_char)
+		++untrimed;
+
+	int len = 0;
+	int i;
+	for (i = 0; untrimed[i] != '\0'; ++i)
+		if (untrimed[i] != garbage_char)
+	  		len = i;
+	++len;
+
+	trimed = malloc((len + 1) * sizeof(char));
+	strncpy(trimed, untrimed, len);
+	trimed[len] = '\0';
+
+	return trimed;
+}
+
+const char*
+ask_user_for_custom_argument(const char *dst_argv[], const char *src_argv[], const int position)
+{
+	FIELD *field[2];
+	WINDOW *form_win;
+	WINDOW *form_sub_win;
+	FORM *form;
+	int ch, rows, cols;
+	const char *buffer = NULL;
+	int argc = argv_size(src_argv);
+
+	/* Initialize few color pairs */
+	init_pair(1, COLOR_CYAN, COLOR_BLACK);
+
+	/* Initialize the fields */
+	field[0] = new_field(1, 42, 0, 1, 0, 0);
+	field[1] = NULL;
+
+	/* Set field options */
+	set_field_back(field[0], A_BOLD);
+	set_field_fore(field[0], A_BOLD);
+	field_opts_off(field[0], O_AUTOSKIP | O_STATIC | O_WRAP);
+
+	/* Create the form and post it */
+	form = new_form(field);
+
+	/* Calculate the area required for the form */
+	scale_form(form, &rows, &cols);
+
+	struct view *view = display[current_view];
+	/* Create the window to be associated with the form */
+	form_win = subwin(view->win, argc + 2, cols + 4, (view->win->_maxy - argc - 2) / 2, (view->win->_maxx - cols - 4) / 2);
+	form_sub_win = derwin(form_win, rows, cols, position + 1, 1);
+	keypad(view->win, FALSE);
+	keypad(form_win, TRUE);
+
+	/* Set main window and sub window */
+	set_form_win(form, form_win);
+	set_form_sub(form, form_sub_win);
+
+	/* Print a border around the main window and print a title */
+	box(form_win, 0, 0);
+	wattron(form_win, COLOR_PAIR(1));
+	for (argc = 0; src_argv[argc] != NULL; ++argc) {
+		if (argc != position)
+			mvwprintw(form_win, argc + 1, 2, "%s", argc < position ? dst_argv[argc] : src_argv[argc]);
+	}
+	wattroff(form_win, COLOR_PAIR(1));
+
+	post_form(form);
+	wrefresh(form_win);
+	wrefresh(view->win);
+
+	/* Loop through to get user requests */
+	bool done_flag = FALSE;
+	while(!done_flag && (ch = wgetch(form_win)))
+	{
+		switch(ch) {
+			case KEY_LEFT:
+				form_driver(form, REQ_LEFT_CHAR);
+				break;
+			case KEY_RIGHT:
+				form_driver(form, REQ_RIGHT_CHAR);
+				break;
+			case KEY_BACKSPACE:
+			case 0x7f:
+				if (form_driver(form, REQ_LEFT_CHAR) == E_OK)
+				form_driver(form, REQ_DEL_CHAR);
+				break;
+			case KEY_DC:
+				form_driver(form, REQ_DEL_CHAR);
+				break;
+			case KEY_ENTER:
+			case '\0':
+			case '\r':
+			case '\n':
+				form_driver(form, REQ_END_LINE);
+				done_flag = TRUE;
+				break;
+			default:
+				form_driver(form, ch);
+				break;
+		}
+	}
+    buffer = trimed_field_buffer(field[0]);
+
+	/* Un post form and free the memory */
+	unpost_form(form);
+	free_form(form);
+	free_field(field[0]);
+
+	delwin(form_sub_win);
+	delwin(form_win);
+	keypad(view->win, TRUE);
+	return buffer;
+}
+
 static bool
 format_argv(const char ***dst_argv, const char *src_argv[], bool first)
 {
@@ -2682,6 +2821,16 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool first)
 	for (argc = 0; src_argv[argc]; argc++) {
 		const char *arg = src_argv[argc];
 		size_t bufpos = 0;
+
+		if (!strcmp(arg, "%(askme)")) {
+			const char *arg = ask_user_for_custom_argument(*dst_argv, src_argv, argc);
+			if (!argv_append(dst_argv, arg)) {
+				free((void *)arg);
+				break;
+			}
+			free((void *)arg);
+			continue;
+		}
 
 		if (!strcmp(arg, "%(fileargs)")) {
 			if (!argv_append_array(dst_argv, opt_file_argv))
@@ -3053,10 +3202,12 @@ open_argv(struct view *prev, struct view *view, const char *argv[], const char *
 }
 
 static void
-open_external_viewer(const char *argv[], const char *dir)
+run_external_program(const char *argv[], const char *dir)
 {
-	def_prog_mode();           /* save current tty modes */
-	endwin();                  /* restore original tty modes */
+  if (!isendwin()) {
+    def_prog_mode();           /* save current tty modes */
+    endwin();                  /* restore original tty modes */
+  }
 	io_run_fg(argv, dir);
 	fprintf(stderr, "Press Enter to continue");
 	getc(opt_tty);
@@ -3069,7 +3220,7 @@ open_mergetool(const char *file)
 {
 	const char *mergetool_argv[] = { "git", "mergetool", file, NULL };
 
-	open_external_viewer(mergetool_argv, opt_cdup);
+	run_external_program(mergetool_argv, opt_cdup);
 }
 
 static void
@@ -3097,7 +3248,7 @@ open_editor(const char *file)
 	}
 
 	editor_argv[argc] = file;
-	open_external_viewer(editor_argv, opt_cdup);
+	run_external_program(editor_argv, opt_cdup);
 }
 
 static void
@@ -3111,8 +3262,15 @@ open_run_request(enum request request)
 		return;
 	}
 
-	if (format_argv(&argv, req->argv, FALSE))
-		open_external_viewer(argv, NULL);
+	if (format_argv(&argv, req->argv, FALSE)) {
+		if (req->external) {
+			def_prog_mode();           /* save current tty modes */
+			endwin();                  /* restore original tty modes */
+	        write(STDOUT_FILENO, "## Running: ", 12);
+	        print_argv(argv);
+	    }
+		run_external_program(argv, NULL);
+	}
 	if (argv)
 		argv_free(argv);
 	free(argv);

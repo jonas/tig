@@ -55,6 +55,7 @@
 #include <locale.h>
 #include <langinfo.h>
 #include <iconv.h>
+#include <form.h>
 
 /* ncurses(3): Must be defined to have extended wide-character functions. */
 #define _XOPEN_SOURCE_EXTENDED

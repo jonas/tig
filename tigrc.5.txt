@@ -266,10 +266,13 @@ are:
 |%(revargs)		|The revision arguments passed on the command line.
 |%(fileargs)		|The file arguments passed on the command line.
 |%(diffargs)		|The diff options passed on the command line.
+|%(askme)		|Will prompt you for a custom argumnet.
 |=============================================================================
 
 As an example, the following external command will save the current commit as
-a patch file: "!git format-patch -1 %(commit)". If your external command
+a patch file: "!git format-patch -1 %(commit)".
+"!grep %(askme) %(file)" will ask you what 'to grep' in %(file).
+If your external command
 require use of dynamic features, such as subshells, expansion of environment
 variables and process control, this can be achieved by using a combination of
 git aliases and tig external commands. The following example entries can be
