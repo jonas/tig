@@ -104,7 +104,7 @@ The following variables can be set:
 	is ignored when tig is started in blame mode and given blame options
 	on the command line.
 
-'line-graphics' (mixed) [ "ascii" | "default" | "utf-8" | bool]::
+'line-graphics' (mixed) [ "ascii" | "default" | "utf8" | bool]::
 
 	What type of character graphics for line drawing.
 
