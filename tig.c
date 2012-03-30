@@ -1037,6 +1037,7 @@ struct run_request {
 	enum keymap keymap;
 	int key;
 	const char **argv;
+	bool silent;
 };
 
 static struct run_request *run_request;
@@ -1045,7 +1046,7 @@ static size_t run_requests;
 DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 
 static enum request
-add_run_request(enum keymap keymap, int key, const char **argv)
+add_run_request(enum keymap keymap, int key, const char **argv, bool silent)
 {
 	struct run_request *req;
 
@@ -1053,6 +1054,7 @@ add_run_request(enum keymap keymap, int key, const char **argv)
 		return REQ_NONE;
 
 	req = &run_request[run_requests];
+	req->silent = silent;
 	req->keymap = keymap;
 	req->key = key;
 	req->argv = NULL;
@@ -1091,7 +1093,7 @@ add_builtin_run_requests(void)
 
 		if (req != reqs[i].key)
 			continue;
-		req = add_run_request(reqs[i].keymap, reqs[i].key, reqs[i].argv);
+		req = add_run_request(reqs[i].keymap, reqs[i].key, reqs[i].argv, FALSE);
 		if (req != REQ_NONE)
 			add_keybinding(reqs[i].keymap, req, reqs[i].key);
 	}
@@ -1439,8 +1441,13 @@ option_bind_command(int argc, const char *argv[])
 			return OPT_ERR_OBSOLETE_REQUEST_NAME;
 		}
 	}
-	if (request == REQ_UNKNOWN && *argv[2]++ == '!')
-		request = add_run_request(keymap, key, argv + 2);
+	if (request == REQ_UNKNOWN && *argv[2]++ == '!') {
+		bool silent = *argv[2] == '@';
+
+		if (silent)
+			argv[2]++;
+		request = add_run_request(keymap, key, argv + 2, silent);
+	}
 	if (request == REQ_UNKNOWN)
 		return OPT_ERR_UNKNOWN_REQUEST_NAME;
 
@@ -3111,8 +3118,12 @@ open_run_request(enum request request)
 		return;
 	}
 
-	if (format_argv(&argv, req->argv, FALSE))
-		open_external_viewer(argv, NULL);
+	if (format_argv(&argv, req->argv, FALSE)) {
+		if (req->silent)
+			io_run_bg(argv);
+		else
+			open_external_viewer(argv, NULL);
+	}
 	if (argv)
 		argv_free(argv);
 	free(argv);

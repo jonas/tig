@@ -21,6 +21,11 @@ Improvements:
  - Handle editor options with multiple arguments. (GH #12)
  - Show filename when running tig blame with copy detection. (GH #19)
  - Use 'source <path>' command to load additional files from ~/.tigrc
+ - User-defined commands prefixed with '@' are run with no console
+   output, e.g.
+
+   	bind generic 3 !@rm sys$command
+
  - Make display of space changes togglable in the diff and stage view.
    Bound to 'W' by default.
  - Use per-file encoding specified in gitattributes(5) for blobs and
