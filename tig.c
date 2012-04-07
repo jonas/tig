@@ -888,36 +888,44 @@ static struct keybinding default_keybindings[] = {
 	{ 'e',		REQ_EDIT },
 };
 
-#define KEYMAP_ENUM(_) \
-	_(KEYMAP, GENERIC), \
-	_(KEYMAP, MAIN), \
-	_(KEYMAP, DIFF), \
-	_(KEYMAP, LOG), \
-	_(KEYMAP, TREE), \
-	_(KEYMAP, BLOB), \
-	_(KEYMAP, BLAME), \
-	_(KEYMAP, BRANCH), \
-	_(KEYMAP, PAGER), \
-	_(KEYMAP, HELP), \
-	_(KEYMAP, STATUS), \
-	_(KEYMAP, STAGE)
-
-DEFINE_ENUM(keymap, KEYMAP_ENUM);
-
-#define set_keymap(map, name) map_enum(map, keymap_map, name)
-
-struct keybinding_table {
+struct keymap {
+	const char *name;
+	struct keymap *next;
 	struct keybinding *data;
 	size_t size;
 	bool hidden;
 };
 
-static struct keybinding_table keybindings[ARRAY_SIZE(keymap_map)];
+static struct keymap generic_keymap = { "generic" };
+#define is_generic_keymap(keymap) ((keymap) == &generic_keymap)
+
+static struct keymap *keymaps = &generic_keymap;
 
 static void
-add_keybinding(enum keymap keymap, enum request request, int key)
+add_keymap(struct keymap *keymap)
 {
-	struct keybinding_table *table = &keybindings[keymap];
+	keymap->next = keymaps;
+	keymaps = keymap;
+}
+
+static struct keymap *
+get_keymap(const char *name)
+{
+	struct keymap *keymap = keymaps;
+
+	while (keymap) {
+		if (!strcasecmp(keymap->name, name))
+			return keymap;
+		keymap = keymap->next;
+	}
+
+	return NULL;
+}
+
+
+static void
+add_keybinding(struct keymap *table, enum request request, int key)
+{
 	size_t i;
 
 	for (i = 0; i < table->size; i++) {
@@ -933,7 +941,7 @@ add_keybinding(enum keymap keymap, enum request request, int key)
 	table->data[table->size].alias = key;
 	table->data[table->size++].request = request;
 
-	if (request == REQ_NONE && keymap == KEYMAP_GENERIC) {
+	if (request == REQ_NONE && is_generic_keymap(table)) {
 		int i;
 
 		for (i = 0; i < ARRAY_SIZE(default_keybindings); i++)
@@ -945,17 +953,17 @@ add_keybinding(enum keymap keymap, enum request request, int key)
 /* Looks for a key binding first in the given map, then in the generic map, and
  * lastly in the default keybindings. */
 static enum request
-get_keybinding(enum keymap keymap, int key)
+get_keybinding(struct keymap *keymap, int key)
 {
 	size_t i;
 
-	for (i = 0; i < keybindings[keymap].size; i++)
-		if (keybindings[keymap].data[i].alias == key)
-			return keybindings[keymap].data[i].request;
+	for (i = 0; i < keymap->size; i++)
+		if (keymap->data[i].alias == key)
+			return keymap->data[i].request;
 
-	for (i = 0; i < keybindings[KEYMAP_GENERIC].size; i++)
-		if (keybindings[KEYMAP_GENERIC].data[i].alias == key)
-			return keybindings[KEYMAP_GENERIC].data[i].request;
+	for (i = 0; i < generic_keymap.size; i++)
+		if (generic_keymap.data[i].alias == key)
+			return generic_keymap.data[i].request;
 
 	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++)
 		if (default_keybindings[i].alias == key)
@@ -1056,13 +1064,13 @@ append_key(char *buf, size_t *pos, const struct keybinding *keybinding)
 
 static bool
 append_keymap_request_keys(char *buf, size_t *pos, enum request request,
-			   enum keymap keymap, bool all)
+			   struct keymap *keymap, bool all)
 {
 	int i;
 
-	for (i = 0; i < keybindings[keymap].size; i++) {
-		if (keybindings[keymap].data[i].request == request) {
-			if (!append_key(buf, pos, &keybindings[keymap].data[i]))
+	for (i = 0; i < keymap->size; i++) {
+		if (keymap->data[i].request == request) {
+			if (!append_key(buf, pos, &keymap->data[i]))
 				return FALSE;
 			if (!all)
 				break;
@@ -1072,10 +1080,10 @@ append_keymap_request_keys(char *buf, size_t *pos, enum request request,
 	return TRUE;
 }
 
-#define get_view_key(view, request) get_keys((view)->keymap, request, FALSE)
+#define get_view_key(view, request) get_keys(&(view)->ops->keymap, request, FALSE)
 
 static const char *
-get_keys(enum keymap keymap, enum request request, bool all)
+get_keys(struct keymap *keymap, enum request request, bool all)
 {
 	static char buf[BUFSIZ];
 	size_t pos = 0;
@@ -1088,13 +1096,13 @@ get_keys(enum keymap keymap, enum request request, bool all)
 	if (pos > 0 && !all)
 		return buf;
 
-	if (keymap != KEYMAP_GENERIC) {
+	if (!is_generic_keymap(keymap)) {
 		/* Only the generic keymap includes the default keybindings when
 		 * listing all keys. */
 		if (all)
 			return buf;
 
-		if (!append_keymap_request_keys(buf, &pos, request, KEYMAP_GENERIC, all))
+		if (!append_keymap_request_keys(buf, &pos, request, &generic_keymap, all))
 			return "Too many keybindings!";
 		if (pos)
 			return buf;
@@ -1113,7 +1121,7 @@ get_keys(enum keymap keymap, enum request request, bool all)
 }
 
 struct run_request {
-	enum keymap keymap;
+	struct keymap *keymap;
 	int key;
 	const char **argv;
 	bool silent;
@@ -1125,7 +1133,7 @@ static size_t run_requests;
 DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 
 static bool
-add_run_request(enum keymap keymap, int key, const char **argv, bool silent, bool force)
+add_run_request(struct keymap *keymap, int key, const char **argv, bool silent, bool force)
 {
 	struct run_request *req;
 
@@ -1163,10 +1171,10 @@ add_builtin_run_requests(void)
 	const char *commit[] = { "git", "commit", NULL };
 	const char *gc[] = { "git", "gc", NULL };
 
-	add_run_request(KEYMAP_MAIN, 'C', cherry_pick, FALSE, FALSE);
-	add_run_request(KEYMAP_STATUS, 'C', commit, FALSE, FALSE);
-	add_run_request(KEYMAP_BRANCH, 'C', checkout, FALSE, FALSE);
-	add_run_request(KEYMAP_GENERIC, 'G', gc, FALSE, FALSE);
+	add_run_request(get_keymap("main"), 'C', cherry_pick, FALSE, FALSE);
+	add_run_request(get_keymap("status"), 'C', commit, FALSE, FALSE);
+	add_run_request(get_keymap("branch"), 'C', checkout, FALSE, FALSE);
+	add_run_request(get_keymap("generic"), 'G', gc, FALSE, FALSE);
 }
 
 /*
@@ -1508,13 +1516,13 @@ static enum option_code
 option_bind_command(int argc, const char *argv[])
 {
 	enum request request;
-	int keymap = -1;
+	struct keymap *keymap;
 	int key;
 
 	if (argc < 3)
 		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
 
-	if (!set_keymap(&keymap, argv[0]))
+	if (!(keymap = get_keymap(argv[0])))
 		return OPT_ERR_UNKNOWN_KEY_MAP;
 
 	key = get_key_value(argv[1]);
@@ -1739,8 +1747,6 @@ struct view {
 
 	struct view_ops *ops;	/* View operations */
 
-	enum keymap keymap;	/* What keymap does this view have */
-
 	char ref[SIZEOF_REF];	/* Hovered commit reference */
 	char vid[SIZEOF_REF];	/* View ID. Set to id member when updating. */
 
@@ -1796,6 +1802,8 @@ enum open_flags {
 struct view_ops {
 	/* What type of content being displayed. Used in the title bar. */
 	const char *type;
+	/* What keymap does this view have */
+	struct keymap keymap;
 	/* Flags to control the view behavior. */
 	enum view_flag flags;
 	/* Size of private data. */
@@ -1819,7 +1827,7 @@ static struct view_ops VIEW_INFO(VIEW_OPS);
 
 static struct view views[] = {
 #define VIEW_DATA(id, name, ref) \
-	{ #name, ref, &name##_ops, KEYMAP_##id }
+	{ #name, ref, &name##_ops }
 	VIEW_INFO(VIEW_DATA)
 };
 
@@ -1838,7 +1846,6 @@ view_request(struct view *view, enum request request)
 		return request;
 	return view->ops->request(view, request, &view->line[view->pos.lineno]);
 }
-
 
 /*
  * View drawing.
@@ -1929,7 +1936,7 @@ draw_space(struct view *view, enum line_type type, int max, int spaces)
 static bool
 draw_text(struct view *view, enum line_type type, const char *string)
 {
-	char text[SIZEOF_STR];
+	static char text[SIZEOF_STR];
 
 	do {
 		size_t pos = string_expand(text, sizeof(text), string, opt_tab_size);
@@ -3909,6 +3916,7 @@ pager_open(struct view *view, enum open_flags flags)
 
 static struct view_ops pager_ops = {
 	"line",
+	{ "pager" },
 	VIEW_OPEN_DIFF | VIEW_NO_REF | VIEW_NO_GIT_DIR,
 	0,
 	pager_open,
@@ -3944,6 +3952,7 @@ log_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops log_ops = {
 	"line",
+	{ "log" },
 	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF,
 	0,
 	log_open,
@@ -4268,6 +4277,7 @@ diff_select(struct view *view, struct line *line)
 
 static struct view_ops diff_ops = {
 	"line",
+	{ "diff" },
 	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS,
 	sizeof(struct diff_state),
 	diff_open,
@@ -4286,12 +4296,10 @@ static bool
 help_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	if (line->type == LINE_HELP_KEYMAP) {
-		struct keybinding_table *table = line->data;
-		enum keymap keymap = table - keybindings;
+		struct keymap *keymap = line->data;
 
 		draw_formatted(view, line->type, "[%c] %s bindings",
-			       table->hidden ? '+' : '-',
-			       enum_name(keymap_map[keymap]));
+			       keymap->hidden ? '+' : '-', keymap->name);
 		return TRUE;
 	} else {
 		return pager_draw(view, line, lineno);
@@ -4299,14 +4307,14 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 }
 
 static bool
-help_open_keymap_title(struct view *view, struct keybinding_table *keymap)
+help_open_keymap_title(struct view *view, struct keymap *keymap)
 {
 	add_line_static_data(view, keymap, LINE_HELP_KEYMAP);
 	return keymap->hidden;
 }
 
 static void
-help_open_keymap(struct view *view, enum keymap keymap)
+help_open_keymap(struct view *view, struct keymap *keymap)
 {
 	const char *group = NULL;
 	char buf[SIZEOF_STR];
@@ -4329,7 +4337,7 @@ help_open_keymap(struct view *view, enum keymap keymap)
 		if (!key || !*key)
 			continue;
 
-		if (add_title && help_open_keymap_title(view, &keybindings[keymap]))
+		if (add_title && help_open_keymap_title(view, keymap))
 			return;
 		add_title = FALSE;
 
@@ -4356,7 +4364,7 @@ help_open_keymap(struct view *view, enum keymap keymap)
 		if (!*key)
 			key = "(no key defined)";
 
-		if (add_title && help_open_keymap_title(view, &keybindings[keymap]))
+		if (add_title && help_open_keymap_title(view, keymap))
 			return;
 		add_title = FALSE;
 
@@ -4377,13 +4385,13 @@ help_open_keymap(struct view *view, enum keymap keymap)
 static bool
 help_open(struct view *view, enum open_flags flags)
 {
-	enum keymap keymap;
+	struct keymap *keymap;
 
 	reset_view(view);
 	add_line_text(view, "Quick reference for tig keybindings:", LINE_DEFAULT);
 	add_line_text(view, "", LINE_DEFAULT);
 
-	for (keymap = 0; keymap < ARRAY_SIZE(keymap_map); keymap++)
+	for (keymap = keymaps; keymap; keymap = keymap->next)
 		help_open_keymap(view, keymap);
 
 	return TRUE;
@@ -4395,7 +4403,7 @@ help_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_ENTER:
 		if (line->type == LINE_HELP_KEYMAP) {
-			struct keybinding_table *keymap = line->data;
+			struct keymap *keymap = line->data;
 
 			keymap->hidden = !keymap->hidden;
 			refresh_view(view);
@@ -4409,6 +4417,7 @@ help_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops help_ops = {
 	"line",
+	{ "help" },
 	VIEW_NO_GIT_DIR,
 	0,
 	help_open,
@@ -4880,6 +4889,7 @@ tree_open(struct view *view, enum open_flags flags)
 
 static struct view_ops tree_ops = {
 	"file",
+	{ "tree" },
 	VIEW_NO_FLAGS,
 	sizeof(struct tree_state),
 	tree_open,
@@ -4924,6 +4934,7 @@ blob_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops blob_ops = {
 	"line",
+	{ "blob" },
 	VIEW_NO_FLAGS,
 	0,
 	blob_open,
@@ -5355,6 +5366,7 @@ blame_select(struct view *view, struct line *line)
 
 static struct view_ops blame_ops = {
 	"line",
+	{ "blame" },
 	VIEW_ALWAYS_LINENO,
 	sizeof(struct blame_state),
 	blame_open,
@@ -5577,6 +5589,7 @@ branch_select(struct view *view, struct line *line)
 
 static struct view_ops branch_ops = {
 	"branch",
+	{ "branch" },
 	VIEW_NO_FLAGS,
 	sizeof(struct branch_state),
 	branch_open,
@@ -6263,6 +6276,7 @@ status_grep(struct view *view, struct line *line)
 
 static struct view_ops status_ops = {
 	"file",
+	{ "status" },
 	VIEW_CUSTOM_STATUS,
 	0,
 	status_open,
@@ -6617,6 +6631,7 @@ stage_read(struct view *view, char *data)
 
 static struct view_ops stage_ops = {
 	"line",
+	{ "stage" },
 	VIEW_DIFF_LIKE,
 	sizeof(struct stage_state),
 	stage_open,
@@ -7027,6 +7042,7 @@ main_select(struct view *view, struct line *line)
 
 static struct view_ops main_ops = {
 	"commit",
+	{ "main" },
 	VIEW_NO_FLAGS,
 	sizeof(struct graph),
 	main_open,
@@ -7987,12 +8003,17 @@ main(int argc, const char *argv[])
 	const char *codeset = ENCODING_UTF8;
 	enum request request = parse_options(argc, argv);
 	struct view *view;
+	int i;
 
 	signal(SIGINT, quit);
 	signal(SIGPIPE, SIG_IGN);
 
 	if (setlocale(LC_ALL, "")) {
 		codeset = nl_langinfo(CODESET);
+	}
+
+	foreach_view(view, i) {
+		add_keymap(&view->ops->keymap);
 	}
 
 	if (load_repo_info() == ERR)
@@ -8028,7 +8049,7 @@ main(int argc, const char *argv[])
 		int key = get_input(0);
 
 		view = display[current_view];
-		request = get_keybinding(view->keymap, key);
+		request = get_keybinding(&view->ops->keymap, key);
 
 		/* Some low-level request handling. This keeps access to
 		 * status_win restricted. */
