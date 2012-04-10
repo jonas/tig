@@ -6577,6 +6577,23 @@ struct commit {
 	struct graph_canvas graph;	/* Ancestry chain graphics. */
 };
 
+static struct commit *
+main_add_commit(struct view *view, enum line_type type, const char *ids, bool is_boundary)
+{
+	struct graph *graph = view->private;
+	struct commit *commit;
+
+	commit = calloc(1, sizeof(struct commit));
+	if (!commit)
+		return NULL;
+
+	string_copy_rev(commit->id, ids);
+	commit->refs = get_ref_list(commit->id);
+	add_line_data(view, commit, type);
+	graph_add_commit(graph, &commit->graph, commit->id, ids, is_boundary);
+	return commit;
+}
+
 static bool
 main_open(struct view *view, enum open_flags flags)
 {
@@ -6644,20 +6661,12 @@ main_read(struct view *view, char *line)
 	if (type == LINE_COMMIT) {
 		bool is_boundary;
 
-		commit = calloc(1, sizeof(struct commit));
-		if (!commit)
-			return FALSE;
-
 		line += STRING_SIZE("commit ");
 		is_boundary = *line == '-';
 		if (is_boundary)
 			line++;
 
-		string_copy_rev(commit->id, line);
-		commit->refs = get_ref_list(commit->id);
-		add_line_data(view, commit, LINE_MAIN_COMMIT);
-		graph_add_commit(graph, &commit->graph, commit->id, line, is_boundary);
-		return TRUE;
+		return main_add_commit(view, LINE_MAIN_COMMIT, line, is_boundary) != NULL;
 	}
 
 	if (!view->lines)
