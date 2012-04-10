@@ -46,6 +46,7 @@ set show-author = abbreviated	# Show abbreviated author names.
 set show-date = relative	# Show relative commit date.
 set show-rev-graph = yes	# Show revision graph?
 set show-refs = yes		# Show references?
+set read-git-colors = no	# Do not read git's color settings.
 set show-line-numbers = no	# Show line numbers?
 set line-number-interval = 5	# Interval between line numbers
 set horizontal-scroll = 33%	# Scroll 33% of the view width
@@ -120,6 +121,10 @@ The following variables can be set:
 	width, e.g. '33%', where the maximum is 100%. For percentages it is
 	always ensured that at least one column is scrolled. The default is to
 	scroll '50%' of the view width.
+
+'read-git-colors' (bool)::
+
+	Whether to read git's color settings.
 
 'show-author' (mixed) ["abbreviated" | "full" | bool]::
 

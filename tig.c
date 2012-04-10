@@ -409,6 +409,7 @@ static bool opt_line_number		= FALSE;
 static bool opt_show_refs		= TRUE;
 static bool opt_show_changes		= TRUE;
 static bool opt_untracked_dirs_content	= TRUE;
+static bool opt_read_git_colors		= TRUE;
 static int opt_diff_context		= 3;
 static char opt_diff_context_arg[9]	= "";
 static enum ignore_space opt_ignore_space	= IGNORE_SPACE_NO;
@@ -1410,6 +1411,9 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "status-untracked-dirs"))
 		return parse_bool(&opt_untracked_dirs_content, argv[2]);
+
+	if (!strcmp(argv[0], "use-git-colors"))
+		return parse_bool(&opt_read_git_colors, argv[2]);
 
 	return OPT_ERR_UNKNOWN_VARIABLE_NAME;
 }
@@ -7537,6 +7541,72 @@ set_work_tree(const char *value)
 	opt_is_inside_work_tree = TRUE;
 }
 
+static void
+parse_git_color_option(enum line_type type, char *value)
+{
+	struct line_info *info = &line_info[type];
+	const char *argv[SIZEOF_ARG];
+	int argc = 0;
+	bool first_color = TRUE;
+	int i;
+
+	if (!argv_from_string(argv, &argc, value))
+		return;
+
+	info->fg = COLOR_DEFAULT;
+	info->bg = COLOR_DEFAULT;
+	info->attr = 0;
+
+	for (i = 0; i < argc; i++) {
+		int attr = 0;
+
+		if (set_attribute(&attr, argv[i])) {
+			info->attr |= attr;
+
+		} else if (set_color(&attr, argv[i])) {
+			if (first_color)
+				info->fg = attr;
+			else
+				info->bg = attr;
+			first_color = FALSE;
+		}
+	}
+}
+
+static void
+set_git_color_option(const char *name, char *value)
+{
+	static const struct enum_map color_option_map[] = {
+		ENUM_MAP("branch.current", LINE_MAIN_HEAD),
+		ENUM_MAP("branch.local", LINE_MAIN_REF),
+		ENUM_MAP("branch.plain", LINE_MAIN_REF),
+		ENUM_MAP("branch.remote", LINE_MAIN_REMOTE),
+
+		ENUM_MAP("diff.meta", LINE_DIFF_HEADER),
+		ENUM_MAP("diff.meta", LINE_DIFF_INDEX),
+		ENUM_MAP("diff.meta", LINE_DIFF_OLDMODE),
+		ENUM_MAP("diff.meta", LINE_DIFF_NEWMODE),
+		ENUM_MAP("diff.frag", LINE_DIFF_CHUNK),
+		ENUM_MAP("diff.old", LINE_DIFF_DEL),
+		ENUM_MAP("diff.new", LINE_DIFF_ADD),
+
+		//ENUM_MAP("diff.commit", LINE_DIFF_ADD),
+
+		ENUM_MAP("status.branch", LINE_STAT_HEAD),
+		//ENUM_MAP("status.nobranch", LINE_STAT_HEAD),
+		ENUM_MAP("status.added", LINE_STAT_STAGED),
+		ENUM_MAP("status.updated", LINE_STAT_STAGED),
+		ENUM_MAP("status.changed", LINE_STAT_UNSTAGED),
+		ENUM_MAP("status.untracked", LINE_STAT_UNTRACKED),
+
+	};
+	int type = LINE_NONE;
+
+	if (opt_read_git_colors && map_enum(&type, color_option_map, name)) {
+		parse_git_color_option(type, value);
+	}
+}
+
 static int
 read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
@@ -7557,6 +7627,9 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 
 	else if (!prefixcmp(name, "tig."))
 		set_repo_config_option(name + 4, value, option_set_command);
+
+	else if (!prefixcmp(name, "color."))
+		set_git_color_option(name + STRING_SIZE("color."), value);
 
 	else if (*opt_head && !prefixcmp(name, "branch.") &&
 		 !strncmp(name + 7, opt_head, strlen(opt_head)))

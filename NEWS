@@ -18,6 +18,8 @@ Improvements:
  - Colorize binary diff stats. (GH #17)
  - Custom colorization of lines matching a string prefix (GH #16).
    Example configuration: color "Reported-by:" green default
+ - Use git's color settings for the main, status and diff views.
+   Put `set read-git-colors = no` in ~/.tigrc to disable.
  - Handle editor options with multiple arguments. (GH #12)
  - Show filename when running tig blame with copy detection. (GH #19)
  - Use 'source <path>' command to load additional files from ~/.tigrc
