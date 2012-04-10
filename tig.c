@@ -6417,7 +6417,7 @@ stage_open(struct view *view, enum open_flags flags)
 	static const char *no_head_diff_argv[] = {
 		"git", "diff", ENCODING_ARG, "--no-color", "--patch-with-stat",
 			opt_diff_context_arg, opt_ignore_space_arg,
-			"--", "/dev/null", stage_status.new.name, NULL
+			"--cached", "--", stage_status.new.name, NULL
 	};
 	static const char *index_show_argv[] = {
 		"git", "diff-index", ENCODING_ARG, "--root", "--patch-with-stat", "-C", "-M",
