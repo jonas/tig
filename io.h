@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2010 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2012 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -58,6 +58,7 @@ struct io {
 	size_t bufsize;		/* Buffer content size. */
 	char *bufpos;		/* Current buffer position. */
 	unsigned int eof:1;	/* Has end of file been reached. */
+	int status:8;		/* Status exit code. */
 };
 
 typedef int (*io_read_fn)(char *, size_t, char *, size_t, void *data);
