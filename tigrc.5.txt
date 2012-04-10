@@ -151,6 +151,11 @@ The following variables can be set:
 	Whether to show revision graph in the main view on start-up.
 	Can be toggled. See also line-graphics options.
 
+'show-changes' (bool)::
+
+	Whether to show staged and unstaged changes in the main view.
+	Can be toggled.
+
 'split-view-height' (mixed)::
 
 	Height of the lower view in a split view. Can be specified either as

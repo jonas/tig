@@ -335,6 +335,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 	REQ_(TOGGLE_GRAPHIC,	"Toggle (line) graphics mode"), \
 	REQ_(TOGGLE_FILENAME,	"Toggle file name display"), \
 	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
+	REQ_(TOGGLE_CHANGES,	"Toggle local changes display in the main view"), \
 	REQ_(TOGGLE_SORT_ORDER,	"Toggle ascending/descending sort order"), \
 	REQ_(TOGGLE_SORT_FIELD,	"Toggle field to sort by"), \
 	REQ_(TOGGLE_IGNORE_SPACE,	"Toggle ignoring whitespace in diffs"), \
@@ -406,6 +407,7 @@ static enum filename opt_filename	= FILENAME_AUTO;
 static bool opt_rev_graph		= TRUE;
 static bool opt_line_number		= FALSE;
 static bool opt_show_refs		= TRUE;
+static bool opt_show_changes		= TRUE;
 static bool opt_untracked_dirs_content	= TRUE;
 static int opt_diff_context		= 3;
 static char opt_diff_context_arg[9]	= "";
@@ -1349,6 +1351,9 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "show-refs"))
 		return parse_bool(&opt_show_refs, argv[2]);
 
+	if (!strcmp(argv[0], "show-changes"))
+		return parse_bool(&opt_show_changes, argv[2]);
+
 	if (!strcmp(argv[0], "show-notes")) {
 		int res;
 
@@ -2210,7 +2215,8 @@ redraw_display(bool clear)
 	TOGGLE_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL) \
 	TOGGLE_(FILENAME,  '#', "file names",        &opt_filename, filename_map) \
 	TOGGLE_(IGNORE_SPACE, 'W', "space changes",  &opt_ignore_space, ignore_space_map) \
-	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL)
+	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL) \
+	TOGGLE_(CHANGES,   'C', "local change display", &opt_show_changes, NULL)
 
 static bool
 toggle_option(enum request request)
@@ -3284,6 +3290,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_GRAPHIC:
 	case REQ_TOGGLE_REV_GRAPH:
 	case REQ_TOGGLE_REFS:
+	case REQ_TOGGLE_CHANGES:
 	case REQ_TOGGLE_IGNORE_SPACE:
 		if (toggle_option(request) && view_has_flags(view, VIEW_DIFF_LIKE))
 			reload_view(view);
@@ -6594,6 +6601,66 @@ main_add_commit(struct view *view, enum line_type type, const char *ids, bool is
 	return commit;
 }
 
+bool
+main_has_changes(const char *argv[])
+{
+	struct io io;
+
+	if (!io_run(&io, IO_BG, NULL, argv, -1))
+		return FALSE;
+	io_done(&io);
+	return io.status == 1;
+}
+
+static void
+main_add_changes_commit(struct view *view, enum line_type type, const char *parent, const char *title)
+{
+	char ids[SIZEOF_STR] = NULL_ID " ";
+	struct graph *graph = view->private;
+	struct commit *commit;
+	struct timeval now;
+	struct timezone tz;
+
+	if (!parent)
+		return;
+
+	string_copy_rev(ids + STRING_SIZE(NULL_ID " "), parent);
+
+	commit = main_add_commit(view, type, ids, FALSE);
+	if (!commit)
+		return;
+
+	if (!gettimeofday(&now, &tz)) {
+		commit->time.tz = tz.tz_minuteswest * 60;
+		commit->time.sec = now.tv_sec - commit->time.tz;
+	}
+
+	commit->author = "";
+	string_ncopy(commit->title, title, strlen(title));
+	graph_render_parents(graph);
+}
+
+static void
+main_add_changes_commits(struct view *view, const char *parent)
+{
+	const char *staged_argv[] = { GIT_DIFF_STAGED_FILES("--quiet") };
+	const char *unstaged_argv[] = { GIT_DIFF_UNSTAGED_FILES("--quiet") };
+	const char *staged_parent = NULL_ID;
+	const char *unstaged_parent = parent;
+
+	if (!main_has_changes(unstaged_argv)) {
+		unstaged_parent = NULL;
+		staged_parent = parent;
+	}
+
+	if (!main_has_changes(staged_argv)) {
+		staged_parent = NULL;
+	}
+
+	main_add_changes_commit(view, LINE_STAT_STAGED, staged_parent, "Staged changes");
+	main_add_changes_commit(view, LINE_STAT_UNSTAGED, unstaged_parent, "Unstaged changes");
+}
+
 static bool
 main_open(struct view *view, enum open_flags flags)
 {
@@ -6666,6 +6733,9 @@ main_read(struct view *view, char *line)
 		if (is_boundary)
 			line++;
 
+		if (opt_show_changes && opt_is_inside_work_tree && !view->lines)
+			main_add_changes_commits(view, line);
+
 		return main_add_commit(view, LINE_MAIN_COMMIT, line, is_boundary) != NULL;
 	}
 
@@ -6720,6 +6790,25 @@ main_request(struct view *view, enum request request, struct line *line)
 	case REQ_ENTER:
 		if (view_is_displayed(view) && display[0] != view)
 			maximize_view(view, TRUE);
+
+		if (line->type == LINE_STAT_UNSTAGED
+		    || line->type == LINE_STAT_STAGED) {
+			struct view *diff = VIEW(REQ_VIEW_DIFF);
+			const char *diff_staged_argv[] = {
+				GIT_DIFF_STAGED(opt_diff_context_arg,
+					opt_ignore_space_arg, NULL, NULL)
+			};
+			const char *diff_unstaged_argv[] = {
+				GIT_DIFF_UNSTAGED(opt_diff_context_arg,
+					opt_ignore_space_arg, NULL, NULL)
+			};
+			const char **diff_argv = line->type == LINE_STAT_STAGED
+				? diff_staged_argv : diff_unstaged_argv;
+
+			open_argv(view, diff, diff_argv, NULL, flags);
+			break;
+		}
+
 		open_view(view, REQ_VIEW_DIFF, flags);
 		break;
 	case REQ_REFRESH:
