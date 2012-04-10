@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2010 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2012 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -14,6 +14,7 @@
 #include "tig.h"
 #include "io.h"
 #include "graph.h"
+#include "git.h"
 
 static void __NORETURN die(const char *err, ...);
 static void warn(const char *msg, ...);
@@ -6415,20 +6416,16 @@ static bool
 stage_open(struct view *view, enum open_flags flags)
 {
 	static const char *no_head_diff_argv[] = {
-		"git", "diff", ENCODING_ARG, "--no-color", "--patch-with-stat",
-			opt_diff_context_arg, opt_ignore_space_arg,
-			"--cached", "--", stage_status.new.name, NULL
+		GIT_DIFF_STAGED_INITIAL(opt_diff_context_arg, opt_ignore_space_arg,
+			stage_status.new.name)
 	};
 	static const char *index_show_argv[] = {
-		"git", "diff-index", ENCODING_ARG, "--root", "--patch-with-stat", "-C", "-M",
-			"--cached", opt_diff_context_arg, opt_ignore_space_arg,
-			"HEAD", "--",
-			stage_status.old.name, stage_status.new.name, NULL
+		GIT_DIFF_STAGED(opt_diff_context_arg, opt_ignore_space_arg,
+			stage_status.old.name, stage_status.new.name)
 	};
 	static const char *files_show_argv[] = {
-		"git", "diff-files", ENCODING_ARG, "--root", "--patch-with-stat", "-C", "-M",
-			opt_diff_context_arg, opt_ignore_space_arg, "--",
-			stage_status.old.name, stage_status.new.name, NULL
+		GIT_DIFF_UNSTAGED(opt_diff_context_arg, opt_ignore_space_arg,
+			stage_status.old.name, stage_status.new.name)
 	};
 	/* Diffs for unmerged entries are empty when passing the new
 	 * path, so leave out the new path. */
