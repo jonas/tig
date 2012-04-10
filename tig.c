@@ -5160,20 +5160,16 @@ blame_request(struct view *view, enum request request, struct line *line)
 
 		if (!strcmp(blame->commit->id, NULL_ID)) {
 			struct view *diff = VIEW(REQ_VIEW_DIFF);
-			const char *diff_index_argv[] = {
-				"git", "diff-index", ENCODING_ARG, "--root",
-					"--patch-with-stat",
-					"-C", "-M", opt_diff_context_arg,
-					opt_ignore_space_arg,
-					"HEAD", "--", view->vid, NULL
+			const char *diff_parent_argv[] = {
+				GIT_DIFF_BLAME(opt_diff_context_arg,
+					opt_ignore_space_arg, view->vid)
 			};
-
-			if (!*blame->commit->parent_id) {
-				diff_index_argv[1] = "diff";
-				diff_index_argv[2] = "--no-color";
-				diff_index_argv[8] = "--";
-				diff_index_argv[9] = "/dev/null";
-			}
+			const char *diff_no_parent_argv[] = {
+				GIT_DIFF_BLAME_NO_PARENT(opt_diff_context_arg,
+					opt_ignore_space_arg, view->vid)
+			};
+			const char **diff_index_argv = *blame->commit->parent_id
+				? diff_parent_argv : diff_no_parent_argv;
 
 			open_argv(view, diff, diff_index_argv, NULL, flags);
 			if (diff->pipe)

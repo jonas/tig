@@ -18,9 +18,12 @@
  * Argv-style git command macros.
  */
 
-#define GIT_DIFF_STAGED_INITIAL(context_arg, space_arg, new_name) \
+#define GIT_DIFF_INITIAL(cached_arg, context_arg, space_arg, old_name, new_name) \
 	"git", "diff", ENCODING_ARG, "--no-color", "--patch-with-stat", \
-		(context_arg), (space_arg), "--cached", "--", (new_name), NULL
+		(cached_arg), (context_arg), (space_arg), "--", (old_name), (new_name), NULL
+
+#define GIT_DIFF_STAGED_INITIAL(context_arg, space_arg, new_name) \
+	GIT_DIFF_INITIAL("--cached", context_arg, space_arg, "", new_name)
 
 #define GIT_DIFF_STAGED(context_arg, space_arg, old_name, new_name) \
 	"git", "diff-index", ENCODING_ARG, "--root", "--patch-with-stat", "-C", "-M", \
@@ -29,5 +32,11 @@
 #define GIT_DIFF_UNSTAGED(context_arg, space_arg, old_name, new_name) \
 	"git", "diff-files", ENCODING_ARG, "--root", "--patch-with-stat", "-C", "-M", \
 		(context_arg), (space_arg), "--", (old_name), (new_name), NULL
+
+#define GIT_DIFF_BLAME(context_arg, space_arg, new_name) \
+	GIT_DIFF_UNSTAGED(context_arg, space_arg, "", new_name)
+
+#define GIT_DIFF_BLAME_NO_PARENT(context_arg, space_arg, new_name) \
+	GIT_DIFF_INITIAL("", context_arg, space_arg, "/dev/null", new_name)
 
 #endif
