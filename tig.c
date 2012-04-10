@@ -5594,15 +5594,8 @@ error_out:
 	return TRUE;
 }
 
-/* Don't show unmerged entries in the staged section. */
-static const char *status_diff_index_argv[] = {
-	"git", "diff-index", "-z", "--diff-filter=ACDMRTXB",
-		"--cached", "-M", "HEAD", NULL
-};
-
-static const char *status_diff_files_argv[] = {
-	"git", "diff-files", "-z", NULL
-};
+static const char *status_diff_index_argv[] = { GIT_DIFF_STAGED_FILES("-z") };
+static const char *status_diff_files_argv[] = { GIT_DIFF_UNSTAGED_FILES("-z") };
 
 static const char *status_list_other_argv[] = {
 	"git", "ls-files", "-z", "--others", "--exclude-standard", opt_prefix, NULL, NULL,
