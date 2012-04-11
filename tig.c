@@ -6711,6 +6711,7 @@ main_read(struct view *view, char *line)
 	struct graph *graph = view->private;
 	enum line_type type;
 	struct commit *commit;
+	static bool in_header;
 
 	if (!line) {
 		if (!view->lines && !view->prev)
@@ -6732,6 +6733,7 @@ main_read(struct view *view, char *line)
 	if (type == LINE_COMMIT) {
 		bool is_boundary;
 
+		in_header = TRUE;
 		line += STRING_SIZE("commit ");
 		is_boundary = *line == '-';
 		if (is_boundary)
@@ -6746,6 +6748,10 @@ main_read(struct view *view, char *line)
 	if (!view->lines)
 		return TRUE;
 	commit = view->line[view->lines - 1].data;
+
+	/* Empty line separates the commit header from the log itself. */
+	if (*line == '\0')
+		in_header = FALSE;
 
 	switch (type) {
 	case LINE_PARENT:
@@ -6762,6 +6768,10 @@ main_read(struct view *view, char *line)
 	default:
 		/* Fill in the commit title if it has not already been set. */
 		if (commit->title[0])
+			break;
+
+		/* Skip lines in the commit header. */
+		if (in_header)
 			break;
 
 		/* Require titles to start with a non-space character at the
