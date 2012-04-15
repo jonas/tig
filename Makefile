@@ -151,8 +151,8 @@ configure: configure.ac acinclude.m4
 	install-doc-man install-doc-html clean spell-check dist rpm
 
 io.o: io.c io.h tig.h
-graph.o: tig.h
-tig.o: tig.c tig.h io.h git.h
+graph.o: graph.c graph.h tig.h
+tig.o: tig.c tig.h graph.h io.h git.h
 tig: tig.o io.o graph.o
 test-graph.o: test-graph.c io.h tig.h graph.h
 test-graph: io.o graph.o
