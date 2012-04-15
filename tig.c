@@ -13,6 +13,7 @@
 
 #include "tig.h"
 #include "io.h"
+#include "refs.h"
 #include "graph.h"
 #include "git.h"
 
@@ -20,28 +21,6 @@ static void __NORETURN die(const char *err, ...);
 static void warn(const char *msg, ...);
 static void report(const char *msg, ...);
 
-
-struct ref {
-	char id[SIZEOF_REV];	/* Commit SHA1 ID */
-	unsigned int head:1;	/* Is it the current HEAD? */
-	unsigned int tag:1;	/* Is it a tag? */
-	unsigned int ltag:1;	/* If so, is the tag local? */
-	unsigned int remote:1;	/* Is it a remote ref? */
-	unsigned int replace:1;	/* Is it a replace ref? */
-	unsigned int tracked:1;	/* Is it the remote for the current HEAD? */
-	char name[1];		/* Ref name; tag or head names are shortened. */
-};
-
-struct ref_list {
-	char id[SIZEOF_REV];	/* Commit SHA1 ID */
-	size_t size;		/* Number of refs. */
-	struct ref **refs;	/* References for this ID. */
-};
-
-static struct ref *get_ref_head();
-static struct ref_list *get_ref_list(const char *id);
-static void foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data);
-static int load_refs(void);
 
 enum input_status {
 	INPUT_OK,
@@ -457,6 +436,7 @@ static int opt_lineno			= 0;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strcmp(rev, get_ref_head()->id)))
+#define load_refs()		reload_refs(opt_git_dir, opt_remote, opt_head, sizeof(opt_head))
 
 static inline void
 update_diff_context_arg(int diff_context)
@@ -7398,225 +7378,6 @@ static bool prompt_menu(const char *prompt, const struct menu_item *items, int *
  * Repository properties
  */
 
-static struct ref **refs = NULL;
-static size_t refs_size = 0;
-static struct ref *refs_head = NULL;
-
-static struct ref_list **ref_lists = NULL;
-static size_t ref_lists_size = 0;
-
-DEFINE_ALLOCATOR(realloc_refs, struct ref *, 256)
-DEFINE_ALLOCATOR(realloc_refs_list, struct ref *, 8)
-DEFINE_ALLOCATOR(realloc_ref_lists, struct ref_list *, 8)
-
-static int
-compare_refs(const void *ref1_, const void *ref2_)
-{
-	const struct ref *ref1 = *(const struct ref **)ref1_;
-	const struct ref *ref2 = *(const struct ref **)ref2_;
-
-	if (ref1->tag != ref2->tag)
-		return ref2->tag - ref1->tag;
-	if (ref1->ltag != ref2->ltag)
-		return ref2->ltag - ref1->ltag;
-	if (ref1->head != ref2->head)
-		return ref2->head - ref1->head;
-	if (ref1->tracked != ref2->tracked)
-		return ref2->tracked - ref1->tracked;
-	if (ref1->replace != ref2->replace)
-		return ref2->replace - ref1->replace;
-	/* Order remotes last. */
-	if (ref1->remote != ref2->remote)
-		return ref1->remote - ref2->remote;
-	return strcmp(ref1->name, ref2->name);
-}
-
-static void
-foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data)
-{
-	size_t i;
-
-	for (i = 0; i < refs_size; i++)
-		if (!visitor(data, refs[i]))
-			break;
-}
-
-static struct ref *
-get_ref_head()
-{
-	return refs_head;
-}
-
-static struct ref_list *
-get_ref_list(const char *id)
-{
-	struct ref_list *list;
-	size_t i;
-
-	for (i = 0; i < ref_lists_size; i++)
-		if (!strcmp(id, ref_lists[i]->id))
-			return ref_lists[i];
-
-	if (!realloc_ref_lists(&ref_lists, ref_lists_size, 1))
-		return NULL;
-	list = calloc(1, sizeof(*list));
-	if (!list)
-		return NULL;
-
-	for (i = 0; i < refs_size; i++) {
-		if (!strcmp(id, refs[i]->id) &&
-		    realloc_refs_list(&list->refs, list->size, 1))
-			list->refs[list->size++] = refs[i];
-	}
-
-	if (!list->refs) {
-		free(list);
-		return NULL;
-	}
-
-	qsort(list->refs, list->size, sizeof(*list->refs), compare_refs);
-	ref_lists[ref_lists_size++] = list;
-	return list;
-}
-
-static int
-read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
-{
-	struct ref *ref = NULL;
-	bool tag = FALSE;
-	bool ltag = FALSE;
-	bool remote = FALSE;
-	bool replace = FALSE;
-	bool tracked = FALSE;
-	bool head = FALSE;
-	int pos;
-
-	if (!prefixcmp(name, "refs/tags/")) {
-		if (!suffixcmp(name, namelen, "^{}")) {
-			namelen -= 3;
-			name[namelen] = 0;
-		} else {
-			ltag = TRUE;
-		}
-
-		tag = TRUE;
-		namelen -= STRING_SIZE("refs/tags/");
-		name	+= STRING_SIZE("refs/tags/");
-
-	} else if (!prefixcmp(name, "refs/remotes/")) {
-		remote = TRUE;
-		namelen -= STRING_SIZE("refs/remotes/");
-		name	+= STRING_SIZE("refs/remotes/");
-		tracked  = !strcmp(opt_remote, name);
-
-	} else if (!prefixcmp(name, "refs/replace/")) {
-		replace = TRUE;
-		id	= name + strlen("refs/replace/");
-		idlen	= namelen - strlen("refs/replace/");
-		name	= "replaced";
-		namelen	= strlen(name);
-
-	} else if (!prefixcmp(name, "refs/heads/")) {
-		namelen -= STRING_SIZE("refs/heads/");
-		name	+= STRING_SIZE("refs/heads/");
-		if (strlen(opt_head) == namelen
-		    && !strncmp(opt_head, name, namelen))
-			return OK;
-
-	} else if (!strcmp(name, "HEAD")) {
-		head     = TRUE;
-		if (*opt_head) {
-			namelen  = strlen(opt_head);
-			name	 = opt_head;
-		}
-	}
-
-	/* If we are reloading or it's an annotated tag, replace the
-	 * previous SHA1 with the resolved commit id; relies on the fact
-	 * git-ls-remote lists the commit id of an annotated tag right
-	 * before the commit id it points to. */
-	for (pos = 0; pos < refs_size; pos++) {
-		int cmp = replace ? strcmp(id, refs[pos]->id) : strcmp(name, refs[pos]->name);
-
-		if (!cmp) {
-			ref = refs[pos];
-			break;
-		}
-	}
-
-	if (!ref) {
-		if (!realloc_refs(&refs, refs_size, 1))
-			return ERR;
-		ref = calloc(1, sizeof(*ref) + namelen);
-		if (!ref)
-			return ERR;
-		refs[refs_size++] = ref;
-		strncpy(ref->name, name, namelen);
-	}
-
-	ref->head = head;
-	ref->tag = tag;
-	ref->ltag = ltag;
-	ref->remote = remote;
-	ref->replace = replace;
-	ref->tracked = tracked;
-	string_copy_rev(ref->id, id);
-
-	if (head)
-		refs_head = ref;
-	return OK;
-}
-
-static int
-load_refs(void)
-{
-	const char *head_argv[] = {
-		"git", "symbolic-ref", "HEAD", NULL
-	};
-	static const char *ls_remote_argv[SIZEOF_ARG] = {
-		"git", "ls-remote", opt_git_dir, NULL
-	};
-	static bool init = FALSE;
-	size_t i;
-
-	if (!init) {
-		if (!argv_from_env(ls_remote_argv, "TIG_LS_REMOTE"))
-			die("TIG_LS_REMOTE contains too many arguments");
-		init = TRUE;
-	}
-
-	if (!*opt_git_dir)
-		return OK;
-
-	if (io_run_buf(head_argv, opt_head, sizeof(opt_head)) &&
-	    !prefixcmp(opt_head, "refs/heads/")) {
-		char *offset = opt_head + STRING_SIZE("refs/heads/");
-
-		memmove(opt_head, offset, strlen(offset) + 1);
-	}
-
-	refs_head = NULL;
-	for (i = 0; i < refs_size; i++)
-		refs[i]->id[0] = 0;
-
-	if (io_run_load(ls_remote_argv, "\t", read_ref, NULL) == ERR)
-		return ERR;
-
-	/* Update the ref lists to reflect changes. */
-	for (i = 0; i < ref_lists_size; i++) {
-		struct ref_list *list = ref_lists[i];
-		size_t old, new;
-
-		for (old = new = 0; old < list->size; old++)
-			if (!strcmp(list->id, list->refs[old]->id))
-				list->refs[new++] = list->refs[old];
-		list->size = new;
-	}
-
-	qsort(refs, refs_size, sizeof(*refs), compare_refs);
-
-	return OK;
-}
 
 static void
 set_remote_branch(const char *name, const char *value, size_t valuelen)
