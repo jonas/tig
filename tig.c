@@ -558,6 +558,7 @@ struct line_info {
 	const char *line;	/* The start of line to match. */
 	int linelen;		/* Size of string to match. */
 	int fg, bg, attr;	/* Color and text attributes for the lines. */
+	int color_pair;
 };
 
 static struct line_info line_info[] = {
@@ -567,10 +568,14 @@ static struct line_info line_info[] = {
 #undef	LINE
 };
 
+static struct line_info **color_pair;
+static size_t color_pairs;
+
 static struct line_info *custom_color;
 static size_t custom_colors;
 
 DEFINE_ALLOCATOR(realloc_custom_color, struct line_info, 8)
+DEFINE_ALLOCATOR(realloc_color_pair, struct line_info *, 8)
 
 #define TO_CUSTOM_COLOR_TYPE(type)	(LINE_NONE + 1 + (type))
 #define TO_CUSTOM_COLOR_OFFSET(type)	((type) - LINE_NONE - 1)
@@ -618,15 +623,32 @@ get_line_type_from_ref(const struct ref *ref)
 	return LINE_MAIN_REF;
 }
 
+static inline struct line_info *
+get_line(enum line_type type)
+{
+	struct line_info *info;
+
+	if (type > LINE_NONE) {
+		assert(TO_CUSTOM_COLOR_OFFSET(type) < custom_colors);
+		return &custom_color[TO_CUSTOM_COLOR_OFFSET(type)];
+	} else {
+		assert(type < ARRAY_SIZE(line_info));
+		return &line_info[type];
+	}
+}
+
+static inline int
+get_line_color(enum line_type type)
+{
+	return COLOR_ID(get_line(type)->color_pair);
+}
+
 static inline int
 get_line_attr(enum line_type type)
 {
-	if (type > LINE_NONE) {
-		assert(TO_CUSTOM_COLOR_OFFSET(type) < custom_colors);
-		return COLOR_PAIR(COLOR_ID(type)) | custom_color[TO_CUSTOM_COLOR_OFFSET(type)].attr;
-	}
-	assert(type < ARRAY_SIZE(line_info));
-	return COLOR_PAIR(COLOR_ID(type)) | line_info[type].attr;
+	struct line_info *info = get_line(type);
+
+	return COLOR_PAIR(COLOR_ID(info->color_pair)) | info->attr;
 }
 
 static struct line_info *
@@ -673,8 +695,21 @@ init_line_info_color_pair(struct line_info *info, enum line_type type,
 {
 	int bg = info->bg == COLOR_DEFAULT ? default_bg : info->bg;
 	int fg = info->fg == COLOR_DEFAULT ? default_fg : info->fg;
+	int i;
 
-	init_pair(COLOR_ID(type), fg, bg);
+	for (i = 0; i < color_pairs; i++) {
+		if (color_pair[i]->fg == info->fg && color_pair[i]->bg == info->bg) {
+			info->color_pair = i;
+			return;
+		}
+	}
+
+	if (!realloc_color_pair(&color_pair, color_pairs, 1))
+		die("Failed to alloc color pair");
+
+	color_pair[color_pairs] = info;
+	info->color_pair = color_pairs++;
+	init_pair(COLOR_ID(info->color_pair), fg, bg);
 }
 
 static void
@@ -1762,7 +1797,7 @@ set_view_attr(struct view *view, enum line_type type)
 {
 	if (!view->curline->selected && view->curtype != type) {
 		(void) wattrset(view->win, get_line_attr(type));
-		wchgat(view->win, -1, 0, COLOR_ID(type), NULL);
+		wchgat(view->win, -1, 0, get_line_color(type), NULL);
 		view->curtype = type;
 	}
 }
