@@ -161,6 +161,7 @@ following variables.
 |%(revargs)		|The revision arguments passed on the command line.
 |%(fileargs)		|The file arguments passed on the command line.
 |%(diffargs)		|The diff options passed on the command line.
+|%(prompt)		|Prompt for the argument value.
 |=============================================================================
 
 [[title-window]]

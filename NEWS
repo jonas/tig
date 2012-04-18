@@ -36,6 +36,8 @@ Improvements:
    commands.
  - Main view: show uncommitted changes as staged/unstaged commits.
    Can be disabled by putting `set show-changes = no` in ~/.tigrc.
+ - Add %(prompt) external command variable, which will prompt for the
+   argument value.
 
 Bug fixes:
 

@@ -54,6 +54,7 @@ typedef enum input_status (*input_handler)(void *data, char *buf, int c);
 
 static char *prompt_input(const char *prompt, input_handler handler, void *data);
 static bool prompt_yesno(const char *prompt);
+static char *read_prompt(const char *prompt);
 
 struct menu_item {
 	int hotkey;
@@ -2740,6 +2741,9 @@ format_arg(const char *name)
 		FORMAT_VAR("%(branch)",		ref_branch,	""),
 	};
 	int i;
+
+	if (!prefixcmp(name, "%(prompt"))
+		return read_prompt("Command argument: ");
 
 	for (i = 0; i < ARRAY_SIZE(vars); i++)
 		if (!strncmp(name, vars[i].name, vars[i].namelen))
