@@ -11,7 +11,7 @@ Improvements:
 
  - Support staging of single lines. Bound to '1' default. (GH #21)
  - Use +<lineno> to open the initial view at an arbitrary line. (GH #20)
- - Add show-notes ~/.tigrc option.
+ - Add show-notes ~/.tigrc option. Notes are displayed by default.
  - Support jumping to specific SHAs in the main view.
  - Decorate replaced commits.
  - Display line numbers in main view.

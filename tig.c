@@ -414,7 +414,8 @@ static int opt_diff_context		= 3;
 static char opt_diff_context_arg[9]	= "";
 static enum ignore_space opt_ignore_space	= IGNORE_SPACE_NO;
 static char opt_ignore_space_arg[22]	= "";
-static char opt_notes_arg[SIZEOF_STR]	= "--no-notes";
+static bool opt_notes			= TRUE;
+static char opt_notes_arg[SIZEOF_STR]	= "--show-notes";
 static int opt_num_interval		= 5;
 static double opt_hscroll		= 0.50;
 static double opt_scale_split_view	= 2.0 / 3.0;
@@ -463,6 +464,17 @@ update_ignore_space_arg()
 		string_copy(opt_ignore_space_arg, "--ignore-space-at-eol");
 	} else {
 		string_copy(opt_ignore_space_arg, "");
+	}
+}
+
+static inline void
+update_notes_arg()
+{
+	if (opt_notes) {
+		string_copy(opt_notes_arg, "--show-notes");
+	} else {
+		/* Notes are disabled by default when passing --pretty args. */
+		string_copy(opt_notes_arg, "");
 	}
 }
 
@@ -1289,12 +1301,16 @@ option_color_command(int argc, const char *argv[])
 }
 
 static enum option_code
-parse_bool(bool *opt, const char *arg)
+parse_bool_matched(bool *opt, const char *arg, bool *matched)
 {
 	*opt = (!strcmp(arg, "1") || !strcmp(arg, "true") || !strcmp(arg, "yes"))
 		? TRUE : FALSE;
+	if (matched)
+		*matched = *opt || (!strcmp(arg, "0") || !strcmp(arg, "false") || !strcmp(arg, "no"));
 	return OPT_OK;
 }
+
+#define parse_bool(opt, arg) parse_bool_matched(opt, arg, NULL)
 
 static enum option_code
 parse_enum_do(unsigned int *opt, const char *arg,
@@ -1391,9 +1407,16 @@ option_set_command(int argc, const char *argv[])
 		return parse_bool(&opt_show_changes, argv[2]);
 
 	if (!strcmp(argv[0], "show-notes")) {
-		int res;
+		bool matched = FALSE;
+		enum option_code res = parse_bool_matched(&opt_notes, argv[2], &matched);
 
-		strcpy(opt_notes_arg, "--notes=");
+		if (res == OPT_OK && matched) {
+			update_notes_arg();
+			return res;
+		}
+
+		opt_notes = TRUE;
+		strcpy(opt_notes_arg, "--show-notes=");
 		res = parse_string(opt_notes_arg + 8, argv[2],
 				   sizeof(opt_notes_arg) - 8);
 		if (res == OPT_OK && opt_notes_arg[8] == '\0')
