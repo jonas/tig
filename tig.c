@@ -2491,10 +2491,12 @@ move_view(struct view *view, enum request request)
 		break;
 
 	case REQ_MOVE_UP:
+	case REQ_PREVIOUS:
 		steps = -1;
 		break;
 
 	case REQ_MOVE_DOWN:
+	case REQ_NEXT:
 		steps = 1;
 		break;
 
@@ -3279,8 +3281,6 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_NEXT:
 	case REQ_PREVIOUS:
-		request = request == REQ_NEXT ? REQ_MOVE_DOWN : REQ_MOVE_UP;
-
 		if (view->parent) {
 			int line;
 
@@ -6836,6 +6836,15 @@ main_request(struct view *view, enum request request, struct line *line)
 	enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 
 	switch (request) {
+	case REQ_NEXT:
+	case REQ_PREVIOUS:
+		if (view_is_displayed(view) && display[0] != view)
+			return request;
+		/* Do not pass navigation requests to the branch view
+		 * when the main view is maximized. (GH #38) */
+		move_view(view, request);
+		break;
+
 	case REQ_ENTER:
 		if (view_is_displayed(view) && display[0] != view)
 			maximize_view(view, TRUE);
