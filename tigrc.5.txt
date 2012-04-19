@@ -46,6 +46,7 @@ set show-author = abbreviated	# Show abbreviated author names.
 set show-date = relative	# Show relative commit date.
 set show-rev-graph = yes	# Show revision graph?
 set show-refs = yes		# Show references?
+set commit-order = topo		# Order commits topologically
 set read-git-colors = no	# Do not read git's color settings.
 set show-line-numbers = no	# Show line numbers?
 set line-number-interval = 5	# Interval between line numbers
@@ -190,6 +191,12 @@ The following variables can be set:
     Changing this to "all", "some" or "at-eol" is equivalent to passing
     "--ignore-all-space", "--ignore-space" or "--ignore-space-at-eol"
     respectively to `git diff` or `git show`.
+
+'commit-order' (mixed) ["default" | "topo" | "date" | "reverse" | bool]::
+
+	Commit ordering using the default (chronological reverse) order,
+	topological order, date order or reverse order. The default order is
+	used when the option is set to false, and topo order when set to true.
 
 Bind command
 ------------

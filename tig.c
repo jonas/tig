@@ -237,6 +237,14 @@ DEFINE_ENUM(filename, FILENAME_ENUM);
 
 DEFINE_ENUM(ignore_space, IGNORE_SPACE_ENUM);
 
+#define COMMIT_ORDER_ENUM(_) \
+	_(COMMIT_ORDER, DEFAULT), \
+	_(COMMIT_ORDER, TOPO), \
+	_(COMMIT_ORDER, DATE), \
+	_(COMMIT_ORDER, REVERSE)
+
+DEFINE_ENUM(commit_order, COMMIT_ORDER_ENUM);
+
 #define VIEW_INFO(_) \
 	_(MAIN,   main,   ref_head), \
 	_(DIFF,   diff,   ref_commit), \
@@ -340,6 +348,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 	REQ_(TOGGLE_SORT_ORDER,	"Toggle ascending/descending sort order"), \
 	REQ_(TOGGLE_SORT_FIELD,	"Toggle field to sort by"), \
 	REQ_(TOGGLE_IGNORE_SPACE,	"Toggle ignoring whitespace in diffs"), \
+	REQ_(TOGGLE_COMMIT_ORDER,	"Toggle commit ordering"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
@@ -415,6 +424,8 @@ static int opt_diff_context		= 3;
 static char opt_diff_context_arg[9]	= "";
 static enum ignore_space opt_ignore_space	= IGNORE_SPACE_NO;
 static char opt_ignore_space_arg[22]	= "";
+static enum commit_order opt_commit_order	= COMMIT_ORDER_DEFAULT;
+static char opt_commit_order_arg[22]	= "--topo-order";
 static bool opt_notes			= TRUE;
 static char opt_notes_arg[SIZEOF_STR]	= "--show-notes";
 static int opt_num_interval		= 5;
@@ -465,6 +476,20 @@ update_ignore_space_arg()
 		string_copy(opt_ignore_space_arg, "--ignore-space-at-eol");
 	} else {
 		string_copy(opt_ignore_space_arg, "");
+	}
+}
+
+static inline void
+update_commit_order_arg()
+{
+	if (opt_commit_order == COMMIT_ORDER_TOPO) {
+		string_copy(opt_commit_order_arg, "--topo-order");
+	} else if (opt_commit_order == COMMIT_ORDER_DATE) {
+		string_copy(opt_commit_order_arg, "--date-order");
+	} else if (opt_commit_order == COMMIT_ORDER_REVERSE) {
+		string_copy(opt_commit_order_arg, "--reverse");
+	} else {
+		string_copy(opt_commit_order_arg, "");
 	}
 }
 
@@ -1468,6 +1493,14 @@ option_set_command(int argc, const char *argv[])
 		return code;
 	}
 
+	if (!strcmp(argv[0], "commit-order")) {
+		enum option_code code = parse_enum(&opt_commit_order, argv[2], commit_order_map);
+
+		if (code == OPT_OK)
+			update_commit_order_arg();
+		return code;
+	}
+
 	if (!strcmp(argv[0], "status-untracked-dirs"))
 		return parse_bool(&opt_untracked_dirs_content, argv[2]);
 
@@ -2278,6 +2311,7 @@ redraw_display(bool clear)
 	TOGGLE_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL) \
 	TOGGLE_(FILENAME,  '#', "file names",        &opt_filename, filename_map) \
 	TOGGLE_(IGNORE_SPACE, 'W', "space changes",  &opt_ignore_space, ignore_space_map) \
+	TOGGLE_(COMMIT_ORDER, 'l', "commit order",   &opt_commit_order, commit_order_map) \
 	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL) \
 	TOGGLE_(CHANGES,   'C', "local change display", &opt_show_changes, NULL)
 
@@ -2318,6 +2352,11 @@ toggle_option(enum request request)
 		if (data[i].map == ignore_space_map) {
 			update_ignore_space_arg();
 			report("Ignoring %s %s", enum_name(data[i].map[*opt]), menu[i].text);
+			return TRUE;
+
+		} else if (data[i].map == commit_order_map) {
+			update_commit_order_arg();
+			report("Using %s %s", enum_name(data[i].map[*opt]), menu[i].text);
 			return TRUE;
 		}
 
@@ -5385,7 +5424,7 @@ branch_request(struct view *view, enum request request, struct line *line)
 		const struct ref *ref = branch->ref;
 		const char *all_branches_argv[] = {
 			"git", "log", ENCODING_ARG, "--no-color",
-			      "--pretty=raw", "--parents", "--topo-order",
+			      "--pretty=raw", "--parents", opt_commit_order_arg,
 			      ref == &branch_all ? "--all" : ref->name, NULL
 		};
 		struct view *main_view = VIEW(REQ_VIEW_MAIN);
@@ -6732,7 +6771,7 @@ main_open(struct view *view, enum open_flags flags)
 {
 	static const char *main_argv[] = {
 		"git", "log", ENCODING_ARG, "--no-color", "--pretty=raw", "--parents",
-			"--topo-order", "%(diffargs)", "%(revargs)",
+			opt_commit_order_arg, "%(diffargs)", "%(revargs)",
 			"--", "%(fileargs)", NULL
 	};
 
