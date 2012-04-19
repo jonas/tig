@@ -5517,7 +5517,7 @@ branch_open(struct view *view, enum open_flags flags)
 			"--simplify-by-decoration", "--all", NULL
 	};
 
-	if (!begin_update(view, NULL, branch_log, flags)) {
+	if (!begin_update(view, NULL, branch_log, OPEN_RELOAD)) {
 		report("Failed to load branch data");
 		return TRUE;
 	}
