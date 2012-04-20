@@ -260,6 +260,33 @@ io_done(struct io *io)
 	return TRUE;
 }
 
+static int
+open_trace(int devnull, const char *argv[])
+{
+	static const char *trace_file;
+
+	if (!trace_file) {
+		trace_file = getenv("TIG_TRACE");
+		if (!trace_file)
+			trace_file = "";
+	}
+
+	if (*trace_file) {
+		int fd = open(trace_file, O_RDWR | O_CREAT | O_APPEND, 0666);
+		int i;
+
+		for (i = 0; argv[i]; i++) {
+			write(fd, argv[i], strlen(argv[i]));
+			write(fd, " ", 1);
+		}
+		write(fd, "\n", 1);
+
+		return fd;
+	}
+
+	return devnull;
+}
+
 bool
 io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ...)
 {
@@ -296,11 +323,14 @@ io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ..
 			int readfd  = type == IO_WR ? pipefds[0] : devnull;
 			int writefd = (type == IO_RD || type == IO_AP)
 							? pipefds[1] : devnull;
+			int errorfd = open_trace(devnull, argv);
 
 			dup2(readfd,  STDIN_FILENO);
 			dup2(writefd, STDOUT_FILENO);
-			dup2(devnull, STDERR_FILENO);
+			dup2(errorfd, STDERR_FILENO);
 
+			if (devnull != errorfd)
+				close(errorfd);
 			close(devnull);
 			if (pipefds[0] != -1)
 				close(pipefds[0]);

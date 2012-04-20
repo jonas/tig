@@ -123,6 +123,9 @@ TIG_DIFF_OPTS::
 	git-show(1) for formatting and always passes --patch-with-stat,
 	--find-copies-harder, and -C.
 
+TIG_TRACE::
+	Path for trace file where information about git commands are logged.
+
 FILES
 -----
 '~/.tigrc'::

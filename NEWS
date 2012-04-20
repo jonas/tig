@@ -40,6 +40,8 @@ Improvements:
    Can be disabled by putting `set show-changes = no` in ~/.tigrc.
  - Add %(prompt) external command variable, which will prompt for the
    argument value.
+ - Log information about git commands when the TIG_TRACE environment
+   variable is set. Example: `TIG_TRACE=/tmp/tig.log tig`
 
 Bug fixes:
 
