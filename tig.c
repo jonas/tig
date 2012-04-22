@@ -2906,8 +2906,10 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 
 	if (!refresh && argv) {
 		view->dir = dir;
-		if (!format_argv(&view->argv, argv, !view->prev))
+		if (!format_argv(&view->argv, argv, !view->prev)) {
+			report("Failed to format %s arguments", view->name);
 			return FALSE;
+		}
 
 		/* Put the current ref_* value to the view title ref
 		 * member. This is needed by the blob view. Most other
@@ -2917,8 +2919,10 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	}
 
 	if (view->argv && view->argv[0] &&
-	    !io_run(&view->io, IO_RD, view->dir, view->argv))
+	    !io_run(&view->io, IO_RD, view->dir, view->argv)) {
+		report("Failed to open %s view", view->name);
 		return FALSE;
+	}
 
 	if (!extra)
 		setup_update(view, view->id);
@@ -3104,10 +3108,10 @@ load_view(struct view *view, enum open_flags flags)
 		else
 			memset(view->private, 0, view->ops->private_size);
 	}
-	if (!view->ops->open(view, flags)) {
-		report("Failed to load %s view", view->name);
+
+	if (!view->ops->open(view, flags))
 		return;
-	}
+
 	restore_view_position(view);
 
 	if (view->pipe && view->lines == 0) {
@@ -4988,8 +4992,10 @@ blame_open(struct view *view, enum open_flags flags)
 
 	if (!view->prev && *opt_prefix) {
 		string_copy(path, opt_file);
-		if (!string_format(opt_file, "%s%s", opt_prefix, path))
+		if (!string_format(opt_file, "%s%s", opt_prefix, path)) {
+			report("Failed to setup the blame view");
 			return FALSE;
+		}
 	}
 
 	if (*opt_ref || !begin_update(view, opt_cdup, file_argv, flags)) {
@@ -5534,7 +5540,7 @@ branch_open(struct view *view, enum open_flags flags)
 
 	if (!begin_update(view, NULL, branch_log, OPEN_RELOAD)) {
 		report("Failed to load branch data");
-		return TRUE;
+		return FALSE;
 	}
 
 	branch_open_visitor(view, &branch_all);
@@ -5832,8 +5838,10 @@ status_open(struct view *view, enum open_flags flags)
 
 	if (!status_run(view, staged_argv, staged_status, LINE_STAT_STAGED) ||
 	    !status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED) ||
-	    !status_run(view, status_list_other_argv, '?', LINE_STAT_UNTRACKED))
+	    !status_run(view, status_list_other_argv, '?', LINE_STAT_UNTRACKED)) {
+		report("Failed to load status data");
 		return FALSE;
+	}
 
 	/* Restore the exact position or use the specialized restore
 	 * mode? */
@@ -6589,11 +6597,15 @@ stage_open(struct view *view, enum open_flags flags)
 		die("line type %d not handled in switch", stage_line_type);
 	}
 
-	string_format(view->ref, info, stage_status.new.name);
+	if (!string_format(view->ref, info, stage_status.new.name)
+		|| !argv_copy(&view->argv, argv)) {
+		report("Failed to open staged view");
+		return FALSE;
+	}
+
 	view->vid[0] = 0;
 	view->dir = opt_cdup;
-	return argv_copy(&view->argv, argv)
-	    && begin_update(view, NULL, NULL, flags);
+	return begin_update(view, NULL, NULL, flags);
 }
 
 static bool
