@@ -5816,6 +5816,10 @@ status_update_onbranch(void)
 static bool
 status_open(struct view *view, enum open_flags flags)
 {
+	const char **staged_argv = is_initial_commit() ?
+		status_list_no_head_argv : status_diff_index_argv;
+	char staged_status = staged_argv == status_list_no_head_argv ? 'A' : 0;
+
 	reset_view(view);
 
 	add_line_data(view, NULL, LINE_STAT_HEAD);
@@ -5823,17 +5827,11 @@ status_open(struct view *view, enum open_flags flags)
 
 	io_run_bg(update_index_argv);
 
-	if (is_initial_commit()) {
-		if (!status_run(view, status_list_no_head_argv, 'A', LINE_STAT_STAGED))
-			return FALSE;
-	} else if (!status_run(view, status_diff_index_argv, 0, LINE_STAT_STAGED)) {
-		return FALSE;
-	}
-
 	if (!opt_untracked_dirs_content)
 		status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 2] = "--directory";
 
-	if (!status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED) ||
+	if (!status_run(view, staged_argv, staged_status, LINE_STAT_STAGED) ||
+	    !status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED) ||
 	    !status_run(view, status_list_other_argv, '?', LINE_STAT_UNTRACKED))
 		return FALSE;
 
