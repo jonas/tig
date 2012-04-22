@@ -2356,19 +2356,6 @@ toggle_option(enum request request)
 	return FALSE;
 }
 
-static void
-maximize_view(struct view *view, bool redraw)
-{
-	memset(display, 0, sizeof(display));
-	current_view = 0;
-	display[current_view] = view;
-	resize_display();
-	if (redraw) {
-		redraw_display(FALSE);
-		report("");
-	}
-}
-
 
 /*
  * Navigation
@@ -3071,6 +3058,42 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
  */
 
 static void
+split_view(struct view *prev, struct view *view)
+{
+	display[1] = view;
+	current_view = 1;
+	view->parent = prev;
+	resize_display();
+
+	if (prev->pos.lineno - prev->pos.offset >= prev->height) {
+		/* Take the title line into account. */
+		int lines = prev->pos.lineno - prev->pos.offset - prev->height + 1;
+
+		/* Scroll the view that was split if the current line is
+		 * outside the new limited view. */
+		do_scroll_view(prev, lines);
+	}
+
+	if (view != prev && view_is_displayed(prev)) {
+		/* "Blur" the previous view. */
+		update_view_title(prev);
+	}
+}
+
+static void
+maximize_view(struct view *view, bool redraw)
+{
+	memset(display, 0, sizeof(display));
+	current_view = 0;
+	display[current_view] = view;
+	resize_display();
+	if (redraw) {
+		redraw_display(FALSE);
+		report("");
+	}
+}
+
+static void
 load_view(struct view *view, enum open_flags flags)
 {
 	if (view->pipe)
@@ -3102,29 +3125,6 @@ load_view(struct view *view, enum open_flags flags)
 
 #define refresh_view(view) load_view(view, OPEN_REFRESH)
 #define reload_view(view) load_view(view, OPEN_RELOAD)
-
-static void
-split_view(struct view *prev, struct view *view)
-{
-	display[1] = view;
-	current_view = 1;
-	view->parent = prev;
-	resize_display();
-
-	if (prev->pos.lineno - prev->pos.offset >= prev->height) {
-		/* Take the title line into account. */
-		int lines = prev->pos.lineno - prev->pos.offset - prev->height + 1;
-
-		/* Scroll the view that was split if the current line is
-		 * outside the new limited view. */
-		do_scroll_view(prev, lines);
-	}
-
-	if (view != prev && view_is_displayed(prev)) {
-		/* "Blur" the previous view. */
-		update_view_title(prev);
-	}
-}
 
 static void
 open_view(struct view *prev, enum request request, enum open_flags flags)
