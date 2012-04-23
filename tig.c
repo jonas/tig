@@ -2873,9 +2873,10 @@ restore_view_position(struct view *view)
 		opt_lineno = 0;
 	}
 
+	/* Ensure that the view position is in a valid state. */
 	if (!check_position(&view->prev_pos) ||
 	    (view->pipe && view->lines <= view->prev_pos.lineno))
-		return FALSE;
+		return goto_view_line(view, view->pos.offset, view->pos.lineno);
 
 	/* Changing the view position cancels the restoring. */
 	/* FIXME: Changing back to the first line is not detected. */
@@ -5747,10 +5748,10 @@ status_restore(struct view *view)
 	else
 		view->pos.lineno = 1;
 
-	if (view->pos.lineno < view->pos.offset)
+	if (view->prev_pos.offset > view->pos.lineno)
 		view->pos.offset = view->pos.lineno;
-	else if (view->pos.offset + view->height <= view->pos.lineno)
-		view->pos.offset = view->pos.lineno - view->height + 1;
+	else if (view->prev_pos.offset < view->lines)
+		view->pos.offset = view->prev_pos.offset;
 
 	clear_position(&view->prev_pos);
 }
