@@ -3098,7 +3098,7 @@ maximize_view(struct view *view, bool redraw)
 }
 
 static void
-load_view(struct view *view, enum open_flags flags)
+load_view(struct view *view, struct view *prev, enum open_flags flags)
 {
 	if (view->pipe)
 		end_update(view, TRUE);
@@ -3109,8 +3109,23 @@ load_view(struct view *view, enum open_flags flags)
 			memset(view->private, 0, view->ops->private_size);
 	}
 
+	/* When prev == view it means this is the first loaded view. */
+	if (prev && view != prev) {
+		view->prev = prev;
+	}
+
 	if (!view->ops->open(view, flags))
 		return;
+
+	if (prev) {
+		bool split = !!(flags & OPEN_SPLIT);
+
+		if (split) {
+			split_view(prev, view);
+		} else {
+			maximize_view(view, FALSE);
+		}
+	}
 
 	restore_view_position(view);
 
@@ -3127,13 +3142,12 @@ load_view(struct view *view, enum open_flags flags)
 	}
 }
 
-#define refresh_view(view) load_view(view, OPEN_REFRESH)
-#define reload_view(view) load_view(view, OPEN_RELOAD)
+#define refresh_view(view) load_view(view, NULL, OPEN_REFRESH)
+#define reload_view(view) load_view(view, NULL, OPEN_RELOAD)
 
 static void
 open_view(struct view *prev, enum request request, enum open_flags flags)
 {
-	bool split = !!(flags & OPEN_SPLIT);
 	bool reload = !!(flags & (OPEN_RELOAD | OPEN_PREPARED));
 	struct view *view = VIEW(request);
 	int nviews = displayed_views();
@@ -3150,18 +3164,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		return;
 	}
 
-	if (split) {
-		split_view(prev, view);
-	} else {
-		maximize_view(view, FALSE);
-	}
-
-	/* No prev signals that this is the first loaded view. */
-	if (prev && view != prev) {
-		view->prev = prev;
-	}
-
-	load_view(view, flags);
+	load_view(view, prev ? prev : view, flags);
 }
 
 static void
