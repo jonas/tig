@@ -3295,63 +3295,17 @@ view_driver(struct view *view, enum request request)
 		scroll_view(view, request);
 		break;
 
-	case REQ_VIEW_BLAME:
-		if (!opt_file[0]) {
-			report("No file chosen, press %s to open tree view",
-			       get_view_key(view, REQ_VIEW_TREE));
-			break;
-		}
-		open_view(view, request, OPEN_DEFAULT);
-		break;
-
-	case REQ_VIEW_BLOB:
-		if (!ref_blob[0]) {
-			report("No file chosen, press %s to open tree view",
-			       get_view_key(view, REQ_VIEW_TREE));
-			break;
-		}
-		open_view(view, request, OPEN_DEFAULT);
-		break;
-
-	case REQ_VIEW_PAGER:
-		if (view == NULL) {
-			if (!io_open(&VIEW(REQ_VIEW_PAGER)->io, ""))
-				die("Failed to open stdin");
-			open_view(view, request, OPEN_PREPARED);
-			break;
-		}
-
-		if (!VIEW(REQ_VIEW_PAGER)->pipe && !VIEW(REQ_VIEW_PAGER)->lines) {
-			report("No pager content, press %s to run command from prompt",
-			       get_view_key(view, REQ_PROMPT));
-			break;
-		}
-		open_view(view, request, OPEN_DEFAULT);
-		break;
-
-	case REQ_VIEW_STAGE:
-		if (!VIEW(REQ_VIEW_STAGE)->lines) {
-			report("No stage content, press %s to open the status view and choose file",
-			       get_view_key(view, REQ_VIEW_STATUS));
-			break;
-		}
-		open_view(view, request, OPEN_DEFAULT);
-		break;
-
-	case REQ_VIEW_STATUS:
-		if (opt_is_inside_work_tree == FALSE) {
-			report("The status view requires a working tree");
-			break;
-		}
-		open_view(view, request, OPEN_DEFAULT);
-		break;
-
 	case REQ_VIEW_MAIN:
 	case REQ_VIEW_DIFF:
 	case REQ_VIEW_LOG:
 	case REQ_VIEW_TREE:
 	case REQ_VIEW_HELP:
 	case REQ_VIEW_BRANCH:
+	case REQ_VIEW_BLAME:
+	case REQ_VIEW_BLOB:
+	case REQ_VIEW_STATUS:
+	case REQ_VIEW_STAGE:
+	case REQ_VIEW_PAGER:
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
@@ -3898,6 +3852,17 @@ pager_select(struct view *view, struct line *line)
 static bool
 pager_open(struct view *view, enum open_flags flags)
 {
+	if (display[0] == NULL) {
+		if (!io_open(&view->io, ""))
+			die("Failed to open stdin");
+		flags = OPEN_PREPARED;
+
+	} else if (!view->pipe && !view->lines) {
+		report("No pager content, press %s to run command from prompt",
+			get_view_key(view, REQ_PROMPT));
+		return FALSE;
+	}
+
 	return begin_update(view, NULL, NULL, flags);
 }
 
@@ -4894,6 +4859,12 @@ blob_open(struct view *view, enum open_flags flags)
 		"git", "cat-file", "blob", "%(blob)", NULL
 	};
 
+	if (!ref_blob[0]) {
+		report("No file chosen, press %s to open tree view",
+			get_view_key(view, REQ_VIEW_TREE));
+		return FALSE;
+	}
+
 	view->encoding = get_path_encoding(opt_file, opt_encoding);
 
 	return begin_update(view, NULL, blob_argv, flags);
@@ -4992,6 +4963,12 @@ blame_open(struct view *view, enum open_flags flags)
 	const char *file_argv[] = { opt_cdup, opt_file , NULL };
 	char path[SIZEOF_STR];
 	size_t i;
+
+	if (!opt_file[0]) {
+		report("No file chosen, press %s to open tree view",
+			get_view_key(view, REQ_VIEW_TREE));
+		return FALSE;
+	}
 
 	if (!view->prev && *opt_prefix) {
 		string_copy(path, opt_file);
@@ -5829,6 +5806,11 @@ status_open(struct view *view, enum open_flags flags)
 		status_list_no_head_argv : status_diff_index_argv;
 	char staged_status = staged_argv == status_list_no_head_argv ? 'A' : 0;
 
+	if (opt_is_inside_work_tree == FALSE) {
+		report("The status view requires a working tree");
+		return FALSE;
+	}
+
 	reset_view(view);
 
 	add_line_data(view, NULL, LINE_STAT_HEAD);
@@ -6562,6 +6544,12 @@ stage_open(struct view *view, enum open_flags flags)
 	static const char *file_argv[] = { opt_cdup, stage_status.new.name, NULL };
 	const char **argv = NULL;
 	const char *info;
+
+	if (!stage_line_type) {
+		report("No stage content, press %s to open the status view and choose file",
+			get_view_key(view, REQ_VIEW_STATUS));
+		return FALSE;
+	}
 
 	view->encoding = NULL;
 
