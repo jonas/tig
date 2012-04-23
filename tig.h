@@ -131,8 +131,12 @@ name(type **mem, size_t size, size_t increase)					\
 										\
 	if (mem == NULL || num_chunks != num_chunks_new) {			\
 		tmp = realloc(tmp, num_chunks_new * chunk_size * sizeof(type));	\
-		if (tmp)							\
+		if (tmp) {							\
 			*mem = tmp;						\
+			if (num_chunks_new > num_chunks)			\
+				memset(tmp + num_chunks*chunk_size, 0,		\
+			(num_chunks_new - num_chunks)*chunk_size*sizeof(type));	\
+		}								\
 	}									\
 										\
 	return tmp;								\
