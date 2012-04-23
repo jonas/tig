@@ -7452,7 +7452,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 	bool replace = FALSE;
 	bool tracked = FALSE;
 	bool head = FALSE;
-	int from = 0, to = refs_size - 1;
+	int pos;
 
 	if (!prefixcmp(name, "refs/tags/")) {
 		if (!suffixcmp(name, namelen, "^{}")) {
@@ -7498,19 +7498,13 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 	 * previous SHA1 with the resolved commit id; relies on the fact
 	 * git-ls-remote lists the commit id of an annotated tag right
 	 * before the commit id it points to. */
-	while ((from <= to) && !replace) {
-		size_t pos = (to + from) / 2;
-		int cmp = strcmp(name, refs[pos]->name);
+	for (pos = 0; pos < refs_size; pos++) {
+		int cmp = replace ? strcmp(id, refs[pos]->id) : strcmp(name, refs[pos]->name);
 
 		if (!cmp) {
 			ref = refs[pos];
 			break;
 		}
-
-		if (cmp < 0)
-			to = pos - 1;
-		else
-			from = pos + 1;
 	}
 
 	if (!ref) {
@@ -7519,11 +7513,8 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 		ref = calloc(1, sizeof(*ref) + namelen);
 		if (!ref)
 			return ERR;
-		memmove(refs + from + 1, refs + from,
-			(refs_size - from) * sizeof(*refs));
-		refs[from] = ref;
+		refs[refs_size++] = ref;
 		strncpy(ref->name, name, namelen);
-		refs_size++;
 	}
 
 	ref->head = head;
