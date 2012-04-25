@@ -7323,6 +7323,8 @@ static bool prompt_menu(const char *prompt, const struct menu_item *items, int *
 	while (items[size].text)
 		size++;
 
+	assert(size > 0);
+
 	while (status == INPUT_OK) {
 		const struct menu_item *item = &items[*selected];
 		int key;
