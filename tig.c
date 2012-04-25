@@ -644,8 +644,6 @@ get_line_type_from_ref(const struct ref *ref)
 static inline struct line_info *
 get_line(enum line_type type)
 {
-	struct line_info *info;
-
 	if (type > LINE_NONE) {
 		assert(TO_CUSTOM_COLOR_OFFSET(type) < custom_colors);
 		return &custom_color[TO_CUSTOM_COLOR_OFFSET(type)];

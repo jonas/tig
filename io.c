@@ -276,10 +276,14 @@ open_trace(int devnull, const char *argv[])
 		int i;
 
 		for (i = 0; argv[i]; i++) {
-			write(fd, argv[i], strlen(argv[i]));
-			write(fd, " ", 1);
+			if (write(fd, argv[i], strlen(argv[i])) == -1
+			    || write(fd, " ", 1) == -1)
+				break;
 		}
-		write(fd, "\n", 1);
+		if (argv[i] || write(fd, "\n", 1) == -1) {
+			close(fd);
+			return devnull;
+		}
 
 		return fd;
 	}
