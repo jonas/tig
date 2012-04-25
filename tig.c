@@ -6020,7 +6020,7 @@ status_update_files(struct view *view, struct line *line)
 	char buf[sizeof(view->ref)];
 	struct io io;
 	bool result = TRUE;
-	struct line *pos = view->line + view->lines;
+	struct line *pos;
 	int files = 0;
 	int file, done;
 	int cursor_y = -1, cursor_x = -1;
@@ -7322,6 +7322,8 @@ static bool prompt_menu(const char *prompt, const struct menu_item *items, int *
 
 	while (items[size].text)
 		size++;
+
+	assert(size > 0);
 
 	while (status == INPUT_OK) {
 		const struct menu_item *item = &items[*selected];
