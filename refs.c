@@ -178,7 +178,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 	ref->remote = remote;
 	ref->replace = replace;
 	ref->tracked = tracked;
-	string_copy_rev(ref->id, id);
+	string_ncopy_do(ref->id, SIZEOF_REV, id, idlen);
 
 	if (head)
 		refs_head = ref;
