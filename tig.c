@@ -6020,7 +6020,7 @@ status_update_files(struct view *view, struct line *line)
 	char buf[sizeof(view->ref)];
 	struct io io;
 	bool result = TRUE;
-	struct line *pos = view->line + view->lines;
+	struct line *pos;
 	int files = 0;
 	int file, done;
 	int cursor_y = -1, cursor_x = -1;
