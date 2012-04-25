@@ -5727,6 +5727,9 @@ static const char *update_index_argv[] = {
 static void
 status_restore(struct view *view)
 {
+	if (!check_position(&view->prev_pos))
+		return;
+
 	if (view->prev_pos.lineno >= view->lines)
 		view->prev_pos.lineno = view->lines - 1;
 	while (view->prev_pos.lineno < view->lines && !view->line[view->prev_pos.lineno].data)
