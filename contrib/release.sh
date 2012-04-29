@@ -3,7 +3,7 @@
 # Script for preparing a release or updating the release branch.
 # Usage: $0 version
 #
-# Copyright (c) 2009-2010 Jonas Fonseca <fonseca@diku.dk>
+# Copyright (c) 2009-2012 Jonas Fonseca <fonseca@diku.dk>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -34,6 +34,7 @@ if test -n "$VERSION"; then
 
 	# Update files which should reference the version.
 	echo "$VERSION" > VERSION
+	sed -i "s/VERSION\s=\s[0-9]\+[.][0-9]\+/VERSION	= $VERSION/" Makefile	
 	perl -pi -e 's/^tig master.*/@@TITLE@@/ms' NEWS
 	perl -pi -e "s/^@@TITLE@@.*/$TITLE/" NEWS
 

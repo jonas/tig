@@ -1,5 +1,9 @@
 ## Makefile for tig
 
+# The last tagged version. Can be overridden either by the version from
+# git or from the value of the DIST_VERSION environment variable.
+VERSION	= 0.18
+
 all:
 
 # Include setting from the configure script
@@ -13,14 +17,10 @@ docdir ?= $(datarootdir)/doc
 mandir ?= $(datarootdir)/man
 # DESTDIR=
 
-# Get version either via git or from VERSION file. Allow either
-# to be overwritten by setting DIST_VERSION on the command line.
 ifneq (,$(wildcard .git))
 GITDESC	= $(subst tig-,,$(shell git describe))
 WTDIRTY	= $(if $(shell git diff-index HEAD 2>/dev/null),-dirty)
 VERSION	= $(GITDESC)$(WTDIRTY)
-else
-VERSION	= $(shell test -f VERSION && cat VERSION || echo "unknown-version")
 endif
 ifdef DIST_VERSION
 VERSION = $(DIST_VERSION)
