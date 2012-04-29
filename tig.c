@@ -3941,8 +3941,9 @@ diff_common_read(struct view *view, char *data, struct diff_state *state)
 		char *pipe = strchr(data, '|');
 		bool has_histogram = data[len - 1] == '-' || data[len - 1] == '+';
 		bool has_bin_diff = pipe && strstr(pipe, "Bin") && strstr(pipe, "->");
+		bool has_rename = data[len - 1] == '0' && (strstr(data, "=>") || strstr(data, ".../"));
 
-		if (pipe && (has_histogram || has_bin_diff)) {
+		if (pipe && (has_histogram || has_bin_diff || has_rename)) {
 			return add_line_text(view, data, LINE_DIFF_STAT) != NULL;
 		} else {
 			state->reading_diff_stat = FALSE;
