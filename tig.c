@@ -3595,14 +3595,20 @@ parse_author_line(char *ident, const char **author, struct time *time)
 }
 
 static struct line *
-find_prev_line_by_type(struct view *view, struct line *line, enum line_type type)
+find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction)
 {
-	for (; view_has_line(view, line); line--)
+	for (; view_has_line(view, line); line += direction)
 		if (line->type == type)
 			return line;
 
 	return NULL;
 }
+
+#define find_prev_line_by_type(view, line, type) \
+	find_line_by_type(view, line, type, -1)
+
+#define find_next_line_by_type(view, line, type) \
+	find_line_by_type(view, line, type, 1)
 
 /*
  * Blame
@@ -3973,6 +3979,15 @@ diff_common_read(struct view *view, char *data, struct diff_state *state)
 	return pager_common_read(view, data, type);
 }
 
+static bool
+diff_find_stat_entry(struct view *view, struct line *line, enum line_type type)
+{
+	struct line *marker = find_next_line_by_type(view, line, type);
+
+	return marker &&
+		line == find_prev_line_by_type(view, marker, LINE_DIFF_HEADER);
+}
+
 static enum request
 diff_common_enter(struct view *view, enum request request, struct line *line)
 {
@@ -3985,15 +4000,25 @@ diff_common_enter(struct view *view, enum request request, struct line *line)
 		}
 
 		while (view_has_line(view, line)) {
-			if (line->type == LINE_DIFF_HEADER) {
+			line = find_next_line_by_type(view, line, LINE_DIFF_HEADER);
+			if (!line)
+				break;
+
+			if (diff_find_stat_entry(view, line, LINE_DIFF_INDEX)
+			    || diff_find_stat_entry(view, line, LINE_DIFF_SIMILARITY)) {
 				if (file_number == 1) {
 					break;
 				}
 				file_number--;
 			}
+
 			line++;
 		}
 
+		if (!line) {
+			report("Failed to find file diff");
+			return REQ_NONE;
+		}
 
 		select_view_line(view, line - view->line);
 		report("");
