@@ -3943,7 +3943,10 @@ diff_open(struct view *view, enum open_flags flags)
 static bool
 diff_common_read(struct view *view, char *data, struct diff_state *state)
 {
-	enum line_type type;
+	enum line_type type = get_line_type(data);
+
+	if (!view->lines && type != LINE_COMMIT)
+		state->reading_diff_stat = TRUE;
 
 	if (state->reading_diff_stat) {
 		size_t len = strlen(data);
@@ -3961,8 +3964,6 @@ diff_common_read(struct view *view, char *data, struct diff_state *state)
 	} else if (!strcmp(data, "---")) {
 		state->reading_diff_stat = TRUE;
 	}
-
-	type = get_line_type(data);
 
 	if (type == LINE_DIFF_HEADER) {
 		const int len = line_info[LINE_DIFF_HEADER].linelen;
@@ -3999,7 +4000,7 @@ diff_common_enter(struct view *view, enum request request, struct line *line)
 			line--;
 		}
 
-		while (view_has_line(view, line)) {
+		for (line = view->line; view_has_line(view, line); line++) {
 			line = find_next_line_by_type(view, line, LINE_DIFF_HEADER);
 			if (!line)
 				break;
@@ -4011,8 +4012,6 @@ diff_common_enter(struct view *view, enum request request, struct line *line)
 				}
 				file_number--;
 			}
-
-			line++;
 		}
 
 		if (!line) {
