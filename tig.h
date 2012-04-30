@@ -252,6 +252,8 @@ string_copy_rev(char *dst, const char *src)
 	string_ncopy_do(dst, SIZEOF_REV, src, srclen);
 }
 
+#define string_rev_is_null(rev) !strncmp(rev, NULL_ID, STRING_SIZE(NULL_ID))
+
 #define string_add(dst, from, src) \
 	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
 

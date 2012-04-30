@@ -4815,6 +4815,11 @@ tree_open(struct view *view, enum open_flags flags)
 		"git", "ls-tree", "%(commit)", "%(directory)", NULL
 	};
 
+	if (string_rev_is_null(ref_commit)) {
+		report("No tree exists for this commit");
+		return FALSE;
+	}
+
 	if (view->lines == 0 && opt_prefix[0]) {
 		char *pos = opt_prefix;
 
@@ -5183,7 +5188,7 @@ check_blame_commit(struct blame *blame, bool check_null_id)
 {
 	if (!blame->commit)
 		report("Commit data not loaded yet");
-	else if (check_null_id && !strcmp(blame->commit->id, NULL_ID))
+	else if (check_null_id && string_rev_is_null(blame->commit->id))
 		report("No commit exist for the selected line");
 	else
 		return TRUE;
@@ -5269,7 +5274,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 		    !strcmp(blame->commit->id, VIEW(REQ_VIEW_DIFF)->ref))
 			break;
 
-		if (!strcmp(blame->commit->id, NULL_ID)) {
+		if (string_rev_is_null(blame->commit->id)) {
 			struct view *diff = VIEW(REQ_VIEW_DIFF);
 			const char *diff_parent_argv[] = {
 				GIT_DIFF_BLAME(opt_diff_context_arg,
@@ -5323,7 +5328,7 @@ blame_select(struct view *view, struct line *line)
 	if (!commit)
 		return;
 
-	if (!strcmp(commit->id, NULL_ID))
+	if (string_rev_is_null(commit->id))
 		string_ncopy(ref_commit, "HEAD", 4);
 	else
 		string_copy_rev(ref_commit, commit->id);
