@@ -1817,6 +1817,9 @@ static struct view views[] = {
 #define view_is_displayed(view) \
 	(view == display[0] || view == display[1])
 
+#define view_has_line(view, line_) \
+	((view)->line <= (line_) && (line_) < (view)->line + (view)->lines)
+
 static enum request
 view_request(struct view *view, enum request request)
 {
@@ -3594,7 +3597,7 @@ parse_author_line(char *ident, const char **author, struct time *time)
 static struct line *
 find_prev_line_by_type(struct view *view, struct line *line, enum line_type type)
 {
-	for (; view->line < line; line--)
+	for (; view_has_line(view, line); line--)
 		if (line->type == type)
 			return line;
 
@@ -3976,12 +3979,12 @@ diff_common_enter(struct view *view, enum request request, struct line *line)
 	if (line->type == LINE_DIFF_STAT) {
 		int file_number = 0;
 
-		while (line >= view->line && line->type == LINE_DIFF_STAT) {
+		while (view_has_line(view, line) && line->type == LINE_DIFF_STAT) {
 			file_number++;
 			line--;
 		}
 
-		while (line < view->line + view->lines) {
+		while (view_has_line(view, line)) {
 			if (line->type == LINE_DIFF_HEADER) {
 				if (file_number == 1) {
 					break;
@@ -5598,7 +5601,7 @@ DEFINE_ALLOCATOR(realloc_ints, int, 32)
 static inline bool
 status_has_none(struct view *view, struct line *line)
 {
-	return line < view->line + view->lines && !line[1].data;
+	return view_has_line(view, line) && !line[1].data;
 }
 
 /* Get fields from the diff line:
@@ -6034,7 +6037,7 @@ status_update_files(struct view *view, struct line *line)
 	if (!status_update_prepare(&io, line->type))
 		return FALSE;
 
-	for (pos = line; pos < view->line + view->lines && pos->data; pos++)
+	for (pos = line; view_has_line(view, pos) && pos->data; pos++)
 		files++;
 
 	string_copy(buf, view->ref);
@@ -6065,8 +6068,7 @@ status_update(struct view *view)
 	assert(view->lines);
 
 	if (!line->data) {
-		/* This should work even for the "On branch" line. */
-		if (line < view->line + view->lines && !line[1].data) {
+		if (status_has_none(view, line)) {
 			report("Nothing to update");
 			return FALSE;
 		}
@@ -6367,7 +6369,7 @@ stage_update(struct view *view, struct line *line, bool single)
 	} else if (!stage_status.status) {
 		view = view->parent;
 
-		for (line = view->line; line < view->line + view->lines; line++)
+		for (line = view->line; view_has_line(view, line); line++)
 			if (line->type == stage_line_type)
 				break;
 
@@ -6416,7 +6418,7 @@ stage_next(struct view *view, struct line *line)
 	int i;
 
 	if (!state->chunks) {
-		for (line = view->line; line < view->line + view->lines; line++) {
+		for (line = view->line; view_has_line(view, line); line++) {
 			if (line->type != LINE_DIFF_CHUNK)
 				continue;
 
