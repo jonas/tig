@@ -146,7 +146,11 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 			   && !strncmp(opt->head, name, namelen);
 
 	} else if (!strcmp(name, "HEAD")) {
-		return OK;
+		/* Handle the case of HEAD not being a symbolic ref,
+		 * i.e. during a rebase. */
+		if (*opt->head)
+			return OK;
+		head = TRUE;
 	}
 
 	/* If we are reloading or it's an annotated tag, replace the
