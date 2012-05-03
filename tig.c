@@ -5483,9 +5483,7 @@ branch_request(struct view *view, enum request request, struct line *line)
 	{
 		const struct ref *ref = branch->ref;
 		const char *all_branches_argv[] = {
-			"git", "log", ENCODING_ARG, "--no-color",
-			      "--pretty=raw", "--parents", opt_commit_order_arg,
-			      ref == &branch_all ? "--all" : ref->name, NULL
+			GIT_MAIN_LOG("", ref == &branch_all ? "--all" : ref->name, "")
 		};
 		struct view *main_view = VIEW(REQ_VIEW_MAIN);
 
@@ -6858,9 +6856,7 @@ static bool
 main_open(struct view *view, enum open_flags flags)
 {
 	static const char *main_argv[] = {
-		"git", "log", ENCODING_ARG, "--no-color", "--pretty=raw", "--parents",
-			opt_commit_order_arg, "%(diffargs)", "%(revargs)",
-			"--", "%(fileargs)", NULL
+		GIT_MAIN_LOG("%(diffargs)", "%(revargs)", "%(fileargs)")
 	};
 
 	return begin_update(view, NULL, main_argv, flags);
@@ -6900,7 +6896,6 @@ main_read(struct view *view, char *line)
 	struct graph *graph = view->private;
 	enum line_type type;
 	struct commit *commit;
-	static bool in_header;
 
 	if (!line) {
 		if (!view->lines && !view->prev)
@@ -6922,10 +6917,9 @@ main_read(struct view *view, char *line)
 	if (type == LINE_COMMIT) {
 		bool is_boundary;
 
-		in_header = TRUE;
 		line += STRING_SIZE("commit ");
 		is_boundary = *line == '-';
-		if (is_boundary)
+		if (is_boundary || !isalnum(*line))
 			line++;
 
 		if (opt_show_changes && opt_is_inside_work_tree && !view->lines)
@@ -6937,10 +6931,6 @@ main_read(struct view *view, char *line)
 	if (!view->lines)
 		return TRUE;
 	commit = view->line[view->lines - 1].data;
-
-	/* Empty line separates the commit header from the log itself. */
-	if (*line == '\0')
-		in_header = FALSE;
 
 	switch (type) {
 	case LINE_PARENT:
@@ -6959,15 +6949,7 @@ main_read(struct view *view, char *line)
 		if (commit->title[0])
 			break;
 
-		/* Skip lines in the commit header. */
-		if (in_header)
-			break;
-
-		/* Require titles to start with a non-space character at the
-		 * offset used by git log. */
-		if (strncmp(line, "    ", 4))
-			break;
-		line += 4;
+		line += STRING_SIZE("title ");
 		/* Well, if the title starts with a whitespace character,
 		 * try to be forgiving.  Otherwise we end up with no title. */
 		while (isspace(*line))
