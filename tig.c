@@ -498,10 +498,10 @@ LINE(DIFF_DEL2,	   " -",		COLOR_RED,	COLOR_DEFAULT,	0), \
 LINE(DIFF_INDEX,	"index ",	  COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(DIFF_OLDMODE,	"old file mode ", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_NEWMODE,	"new file mode ", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DIFF_COPY_FROM,	"copy from",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DIFF_COPY_TO,	"copy to",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DIFF_RENAME_FROM,	"rename from",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DIFF_RENAME_TO,	"rename to",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(DIFF_COPY_FROM,	"copy from ",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(DIFF_COPY_TO,	"copy to ",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(DIFF_RENAME_FROM,	"rename from ",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(DIFF_RENAME_TO,	"rename to ",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_SIMILARITY,   "similarity ",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_DISSIMILARITY,"dissimilarity ", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_TREE,		"diff-tree ",	  COLOR_BLUE,	COLOR_DEFAULT,	0), \
@@ -4248,6 +4248,27 @@ diff_select(struct view *view, struct line *line)
 
 		string_format(view->ref, "Press '%s' to jump to file diff", key);
 	} else {
+		struct line *header = line->type == LINE_DIFF_HEADER ? line :
+			find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
+
+		if (header != NULL) {
+			const char *file_name = NULL;
+
+			for (header += 1; view_has_line(view, header); header++) {
+				if (header->type == LINE_DIFF_RENAME_TO)
+					file_name = header->data + STRING_SIZE("rename to ");
+				if (header->type == LINE_DIFF_ADD && !strncmp(header->data, "+++ b/", 6))
+					file_name = header->data + STRING_SIZE("+++ b/");
+
+				/* The diff chunk marks the end of the diff header. */
+				if (file_name || header->type == LINE_DIFF_CHUNK)
+					break;
+			}
+
+			string_format(view->ref, "Diff of '%s'", file_name);
+			return;
+		}
+
 		string_ncopy(view->ref, view->id, strlen(view->id));
 		return pager_select(view, line);
 	}
