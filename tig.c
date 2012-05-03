@@ -5381,6 +5381,7 @@ static struct view_ops blame_ops = {
 struct branch {
 	const char *author;		/* Author of the last commit. */
 	struct time time;		/* Date of the last activity. */
+	char title[128];		/* First line of the commit message. */
 	const struct ref *ref;		/* Name and commit ID information. */
 };
 
@@ -5393,6 +5394,7 @@ static struct sort_state branch_sort_state = SORT_STATE(branch_sort_fields);
 
 struct branch_state {
 	char id[SIZEOF_REV];
+	size_t max_ref_length;
 };
 
 static int
@@ -5422,8 +5424,10 @@ branch_compare(const void *l1, const void *l2)
 static bool
 branch_draw(struct view *view, struct line *line, unsigned int lineno)
 {
+	struct branch_state *state = view->private;
 	struct branch *branch = line->data;
 	enum line_type type = branch->ref == &branch_all ? LINE_DEFAULT : get_line_type_from_ref(branch->ref);
+	const char *branch_name = branch->ref == &branch_all ? "All branches" : branch->ref->name;
 
 	if (draw_date(view, &branch->time))
 		return TRUE;
@@ -5431,7 +5435,10 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_author(view, branch->author))
 		return TRUE;
 
-	draw_text(view, type, branch->ref == &branch_all ? "All branches" : branch->ref->name);
+	if (draw_field(view, type, branch_name, state->max_ref_length + 1, FALSE))
+		return TRUE;
+
+	draw_text(view, LINE_DEFAULT, branch->title);
 	return TRUE;
 }
 
@@ -5487,7 +5494,9 @@ static bool
 branch_read(struct view *view, char *line)
 {
 	struct branch_state *state = view->private;
-	struct branch *reference;
+	const char *title = NULL;
+	const char *author = NULL;
+	struct time time = {};	
 	size_t i;
 
 	if (!line)
@@ -5499,36 +5508,39 @@ branch_read(struct view *view, char *line)
 		return TRUE;
 
 	case LINE_AUTHOR:
-		for (i = 0, reference = NULL; i < view->lines; i++) {
-			struct branch *branch = view->line[i].data;
-
-			if (strcmp(branch->ref->id, state->id))
-				continue;
-
-			view->line[i].dirty = TRUE;
-			if (reference) {
-				branch->author = reference->author;
-				branch->time = reference->time;
-				continue;
-			}
-
-			parse_author_line(line + STRING_SIZE("author "),
-					  &branch->author, &branch->time);
-			reference = branch;
-		}
-		return TRUE;
+		parse_author_line(line + STRING_SIZE("author "), &author, &time);
 
 	default:
-		return TRUE;
+		title = line + STRING_SIZE("title ");
 	}
 
+	for (i = 0; i < view->lines; i++) {
+		struct branch *branch = view->line[i].data;
+
+		if (strcmp(branch->ref->id, state->id))
+			continue;
+
+		if (author) {
+			branch->author = author;
+			branch->time = time;
+		}
+
+		if (title)
+			string_expand(branch->title, sizeof(branch->title), title, 1);
+
+		view->line[i].dirty = TRUE;
+	}
+
+	return TRUE;
 }
 
 static bool
 branch_open_visitor(void *data, const struct ref *ref)
 {
 	struct view *view = data;
+	struct branch_state *state = view->private;
 	struct branch *branch;
+	size_t ref_length;
 
 	if (ref->tag || ref->ltag)
 		return TRUE;
@@ -5536,6 +5548,10 @@ branch_open_visitor(void *data, const struct ref *ref)
 	branch = calloc(1, sizeof(*branch));
 	if (!branch)
 		return FALSE;
+
+	ref_length = strlen(ref->name);
+	if (ref_length > state->max_ref_length)
+		state->max_ref_length = ref_length;
 
 	branch->ref = ref;
 	return !!add_line_data(view, branch, LINE_DEFAULT);
@@ -5545,8 +5561,9 @@ static bool
 branch_open(struct view *view, enum open_flags flags)
 {
 	const char *branch_log[] = {
-		"git", "log", ENCODING_ARG, "--no-color", "--pretty=raw",
-			"--simplify-by-decoration", "--all", NULL
+		"git", "log", ENCODING_ARG, "--no-color", "--date=raw",
+			"--pretty=format:commit %H%nauthor %an <%ae> %ad%ntitle %s",
+			"--all", "--simplify-by-decoration", NULL
 	};
 
 	if (!begin_update(view, NULL, branch_log, OPEN_RELOAD)) {

@@ -42,6 +42,7 @@ Improvements:
    argument value.
  - Log information about git commands when the TIG_TRACE environment
    variable is set. Example: `TIG_TRACE=/tmp/tig.log tig`
+ - Branch view: Show the title of the last commit.
 
 Bug fixes:
 
