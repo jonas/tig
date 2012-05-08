@@ -1748,6 +1748,7 @@ struct view {
 	size_t lines;		/* Total number of lines */
 	struct line *line;	/* Line index */
 	unsigned int digits;	/* Number of digits in the lines member. */
+	unsigned int lineoffset;/* Offset from where to count line objects. */
 
 	/* Drawing */
 	struct line *curline;	/* Line currently being drawn. */
@@ -2157,7 +2158,8 @@ update_view_title(struct view *view)
 
 	assert(view_is_displayed(view));
 
-	if (!view_has_flags(view, VIEW_CUSTOM_STATUS) && view->lines) {
+	if (!view_has_flags(view, VIEW_CUSTOM_STATUS) && view->lines &&
+	    view->pos.lineno >= view->lineoffset) {
 		unsigned int view_lines = view->pos.offset + view->height;
 		unsigned int lines = view->lines
 				   ? MIN(view_lines, view->lines) * 100 / view->lines
@@ -2165,8 +2167,8 @@ update_view_title(struct view *view)
 
 		string_format_from(state, &statelen, " - %s %d of %d (%d%%)",
 				   view->ops->type,
-				   view->pos.lineno + 1,
-				   view->lines,
+				   view->pos.lineno + 1 - view->lineoffset,
+				   view->lines - view->lineoffset,
 				   lines);
 
 	}
@@ -2735,6 +2737,7 @@ reset_view(struct view *view)
 	view->line = NULL;
 	view->lines  = 0;
 	view->vid[0] = 0;
+	view->lineoffset = 0;
 	view->update_secs = 0;
 }
 
@@ -6821,6 +6824,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 	if (!commit)
 		return;
 
+	view->lineoffset++;
 	if (!gettimeofday(&now, &tz)) {
 		commit->time.tz = tz.tz_minuteswest * 60;
 		commit->time.sec = now.tv_sec - commit->time.tz;
@@ -7070,8 +7074,11 @@ main_select(struct view *view, struct line *line)
 {
 	struct commit *commit = line->data;
 
-	string_copy_rev(view->ref, commit->id);
-	string_copy_rev(ref_commit, view->ref);
+	if (line->type == LINE_STAT_STAGED || line->type == LINE_STAT_UNSTAGED)
+		string_copy(view->ref, commit->title);
+	else
+		string_copy_rev(view->ref, commit->id);
+	string_copy_rev(ref_commit, commit->id);
 }
 
 static struct view_ops main_ops = {
