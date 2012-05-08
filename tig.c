@@ -5410,6 +5410,7 @@ struct branch {
 };
 
 static const struct ref branch_all;
+#define branch_is_all(branch) ((branch)->ref == &branch_all)
 
 static const enum sort_field branch_sort_fields[] = {
 	ORDERBY_NAME, ORDERBY_DATE, ORDERBY_AUTHOR
@@ -5427,9 +5428,9 @@ branch_compare(const void *l1, const void *l2)
 	const struct branch *branch1 = ((const struct line *) l1)->data;
 	const struct branch *branch2 = ((const struct line *) l2)->data;
 
-	if (branch1->ref == &branch_all)
+	if (branch_is_all(branch1))
 		return -1;
-	else if (branch2->ref == &branch_all)
+	else if (branch_is_all(branch2))
 		return 1;
 
 	switch (get_sort_field(branch_sort_state)) {
@@ -5450,8 +5451,8 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct branch_state *state = view->private;
 	struct branch *branch = line->data;
-	enum line_type type = branch->ref == &branch_all ? LINE_DEFAULT : get_line_type_from_ref(branch->ref);
-	const char *branch_name = branch->ref == &branch_all ? "All branches" : branch->ref->name;
+	enum line_type type = branch_is_all(branch) ? LINE_DEFAULT : get_line_type_from_ref(branch->ref);
+	const char *branch_name = branch_is_all(branch) ? "All branches" : branch->ref->name;
 
 	if (draw_date(view, &branch->time))
 		return TRUE;
@@ -5486,7 +5487,7 @@ branch_request(struct view *view, enum request request, struct line *line)
 	{
 		const struct ref *ref = branch->ref;
 		const char *all_branches_argv[] = {
-			GIT_MAIN_LOG("", ref == &branch_all ? "--all" : ref->name, "")
+			GIT_MAIN_LOG("", branch_is_all(branch) ? "--all" : ref->name, "")
 		};
 		struct view *main_view = VIEW(REQ_VIEW_MAIN);
 
@@ -5593,7 +5594,8 @@ branch_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	}
 
-	branch_open_visitor(view, &branch_all);
+	if (branch_open_visitor(view, &branch_all))
+		view->lineoffset++;
 	foreach_ref(branch_open_visitor, view);
 
 	return TRUE;
@@ -5617,6 +5619,10 @@ branch_select(struct view *view, struct line *line)
 {
 	struct branch *branch = line->data;
 
+	if (branch_is_all(branch)) {
+		string_copy(view->ref, "All branches");
+		return;
+	}
 	string_copy_rev(view->ref, branch->ref->id);
 	string_copy_rev(ref_commit, branch->ref->id);
 	string_copy_rev(ref_head, branch->ref->id);
