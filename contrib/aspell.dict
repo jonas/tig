@@ -1,10 +1,11 @@
-personal_ws-1.1 en 178 
+personal_ws-1.1 en 191 
 extdiff
 docbook
 DocBook
 xpm
 utils
 oldmode
+substring
 libiconv
 whitespace
 VLINE
@@ -13,19 +14,22 @@ keybindings
 lrwxrwxrwx
 waddnstr
 startup
+SHAs
 refspec
+bg
 XSL
 cd
 stderr
 getch
 linenumber
-SHA
+sha
 errno
 nodelay
 COLORTERM
 AuthorDate
 CJK
 worktree
+del
 subdirectory
 fileargs
 Fullwidth
@@ -43,6 +47,7 @@ unstaged
 ifdef
 revgraph
 DSSL
+GH
 FIXME
 frontend
 chdir
@@ -69,6 +74,7 @@ Cogito
 ident
 namespace
 xhtml
+nav
 textconv
 PageDown
 localtime
@@ -95,8 +101,10 @@ AsciiDoc
 asciidoc
 PgUp
 renderer
+erasechar
 endif
 contrib
+eol
 delim
 lookup
 unstage
@@ -115,10 +123,12 @@ Jamo
 revargs
 PDF
 bgcolor
+sys
 tz
 sysconfdir
 diffargs
 tty
+Ctrl
 subdir
 TODO
 Yi
@@ -147,6 +157,7 @@ commitencoding
 PgDown
 NUL
 gitconfig
+togglable
 qgit
 struct
 aterm
@@ -162,12 +173,14 @@ charset
 wgetch
 tabsize
 dirs
+newwin
 lncursesw
 rwxr
 Baudis
 chunked
 Makefile
 doctype
+gitattributes
 wrt
 subcommands
 adate
