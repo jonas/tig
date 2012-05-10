@@ -1,8 +1,8 @@
 Release notes
 =============
 
-master
-------
+tig-1.0
+-------
 
 The master repository is git://github.com/jonas/tig.git, and the old
 master repository (http://jonas.nitro.dk/tig/tig.git) will be retired.
@@ -43,6 +43,9 @@ Improvements:
  - Log information about git commands when the TIG_TRACE environment
    variable is set. Example: `TIG_TRACE=/tmp/tig.log tig`
  - Branch view: Show the title of the last commit.
+ - Increase the author auto-abbreviation threshold to 10. (GH #49)
+ - For old commits show number of years in relative dates. (GH #50)
+
 
 Bug fixes:
 
