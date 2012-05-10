@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.3" />
+<meta name="generator" content="AsciiDoc 8.6.4" />
 <title>tig(1)</title>
 <style type="text/css">
 /* Sans-serif font. */
@@ -394,6 +394,42 @@ div.toclevel4 {
   font-size: 0.9em;
 }
 
+span.aqua { color: aqua; }
+span.black { color: black; }
+span.blue { color: blue; }
+span.fuchsia { color: fuchsia; }
+span.gray { color: gray; }
+span.green { color: green; }
+span.lime { color: lime; }
+span.maroon { color: maroon; }
+span.navy { color: navy; }
+span.olive { color: olive; }
+span.purple { color: purple; }
+span.red { color: red; }
+span.silver { color: silver; }
+span.teal { color: teal; }
+span.white { color: white; }
+span.yellow { color: yellow; }
+
+span.aqua-background { background: aqua; }
+span.black-background { background: black; }
+span.blue-background { background: blue; }
+span.fuchsia-background { background: fuchsia; }
+span.gray-background { background: gray; }
+span.green-background { background: green; }
+span.lime-background { background: lime; }
+span.maroon-background { background: maroon; }
+span.navy-background { background: navy; }
+span.olive-background { background: olive; }
+span.purple-background { background: purple; }
+span.red-background { background: red; }
+span.silver-background { background: silver; }
+span.teal-background { background: teal; }
+span.white-background { background: white; }
+span.yellow-background { background: yellow; }
+
+span.big { font-size: 2em; }
+span.small { font-size: 0.6em; }
 /* Overrides for manpage documents */
 h1 {
   padding-top: 0.5em;
@@ -566,7 +602,7 @@ tig(1) Manual Page
 <div class="verseblock">
 <pre class="content">tig        [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
-tig blame  [options] [rev] path
+tig blame  [options] [rev] [--] path
 tig status
 tig &lt;      [git command output]</pre>
 <div class="attribution">
@@ -619,6 +655,14 @@ status
 <dd>
 <p>
         Start up in status view.
+</p>
+</dd>
+<dt class="hdlist1">
++&lt;number&gt;
+</dt>
+<dd>
+<p>
+    Show the first view with line &lt;number&gt; visible and selected.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -678,6 +722,11 @@ status
 <div class="content">
 <pre><tt>$ tig --after="2004-01-01" --before="2006-05-16" -- README</tt></pre>
 </div></div>
+<div class="paragraph"><p>Blame file with copy detection enabled:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ tig blame -C README</tt></pre>
+</div></div>
 </div>
 </div>
 <div class="sect1">
@@ -686,7 +735,7 @@ status
 <div class="paragraph"><p>In addition to environment variables used by git (e.g. GIT_DIR), tig defines
 the ones below. The command related environment variables have access to the
 internal state of tig via replacement variables, such as <tt>%(commit)</tt> and
-<tt>%(blob)</tt>. See manpage:tigrc[5] for a full list.</p></div>
+<tt>%(blob)</tt>. See <a href="tigrc.5.html">tigrc(5)</a> for a full list.</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
 TIGRC_USER
@@ -724,6 +773,14 @@ TIG_DIFF_OPTS
         --find-copies-harder, and -C.
 </p>
 </dd>
+<dt class="hdlist1">
+TIG_TRACE
+</dt>
+<dd>
+<p>
+        Path for trace file where information about git commands are logged.
+</p>
+</dd>
 </dl></div>
 </div>
 </div>
@@ -736,7 +793,7 @@ TIG_DIFF_OPTS
 </dt>
 <dd>
 <p>
-        User configuration file. See manpage:tigrc[5] for examples.
+        User configuration file. See <a href="tigrc.5.html">tigrc(5)</a> for examples.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -768,20 +825,16 @@ TIG_DIFF_OPTS
 <div class="sect1">
 <h2 id="_bugs">BUGS</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Known bugs and problems:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-Proper locale support: in it&#8217;s current state tig is pretty much UTF-8 only.
-</p>
-</li>
-</ul></div>
+<div class="paragraph"><p>Bugs and feature requests can be reported using the issue tracker at
+<a href="https://github.com/jonas/tig/issues">https://github.com/jonas/tig/issues</a> or by mail to either the git mailing
+list or directly to the maintainer. Ensure that the word "tig" is in the
+subject.</p></div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_copyright">COPYRIGHT</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Copyright (c) 2006-2010 Jonas Fonseca &lt;<a href="mailto:fonseca@diku.dk">fonseca@diku.dk</a>&gt;</p></div>
+<div class="paragraph"><p>Copyright (c) 2006-2012 Jonas Fonseca &lt;<a href="mailto:fonseca@diku.dk">fonseca@diku.dk</a>&gt;</p></div>
 <div class="paragraph"><p>This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -791,7 +844,7 @@ the Free Software Foundation; either version 2 of the License, or
 <div class="sect1">
 <h2 id="_see_also">SEE ALSO</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>manpage:tigrc[5], manpage:tigmanual[7], git(7), gitk(1)</p></div>
+<div class="paragraph"><p><a href="tigrc.5.html">tigrc(5)</a>, <a href="tigmanual.7.html">tigmanual(7)</a>, git(7), gitk(1)</p></div>
 <div class="paragraph"><p>Online resources:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -811,8 +864,8 @@ Tarballs:    <a href="http://jonas.nitro.dk/tig/releases/">http://jonas.nitro.dk
 </li>
 <li>
 <p>
-Git URL:     git://repo.or.cz/tig.git (mirror) or
-                <a href="http://jonas.nitro.dk/tig/tig.git">http://jonas.nitro.dk/tig/tig.git</a> (master)
+Git URL:     git://github.com/jonas/tig.git (master) or
+                git://repo.or.cz/tig.git (mirror)
 </p>
 </li>
 <li>
@@ -827,7 +880,7 @@ Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2011-08-28 18:42:18 EDT
+Last updated 2012-05-10 08:56:12 EDT
 </div>
 </div>
 </body>

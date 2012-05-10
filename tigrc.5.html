@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.3" />
+<meta name="generator" content="AsciiDoc 8.6.4" />
 <title>tigrc(5)</title>
 <style type="text/css">
 /* Sans-serif font. */
@@ -394,6 +394,42 @@ div.toclevel4 {
   font-size: 0.9em;
 }
 
+span.aqua { color: aqua; }
+span.black { color: black; }
+span.blue { color: blue; }
+span.fuchsia { color: fuchsia; }
+span.gray { color: gray; }
+span.green { color: green; }
+span.lime { color: lime; }
+span.maroon { color: maroon; }
+span.navy { color: navy; }
+span.olive { color: olive; }
+span.purple { color: purple; }
+span.red { color: red; }
+span.silver { color: silver; }
+span.teal { color: teal; }
+span.white { color: white; }
+span.yellow { color: yellow; }
+
+span.aqua-background { background: aqua; }
+span.black-background { background: black; }
+span.blue-background { background: blue; }
+span.fuchsia-background { background: fuchsia; }
+span.gray-background { background: gray; }
+span.green-background { background: green; }
+span.lime-background { background: lime; }
+span.maroon-background { background: maroon; }
+span.navy-background { background: navy; }
+span.olive-background { background: olive; }
+span.purple-background { background: purple; }
+span.red-background { background: red; }
+span.silver-background { background: silver; }
+span.teal-background { background: teal; }
+span.white-background { background: white; }
+span.yellow-background { background: yellow; }
+
+span.big { font-size: 2em; }
+span.small { font-size: 0.6em; }
 /* Overrides for manpage documents */
 h1 {
   padding-top: 0.5em;
@@ -566,7 +602,8 @@ tigrc(5) Manual Page
 <div class="verseblock">
 <pre class="content"><strong>set</strong>   <em>variable</em> <strong>=</strong> <em>value</em>
 <strong>bind</strong>  <em>keymap</em> <em>key</em> <em>action</em>
-<strong>color</strong> <em>area</em> <em>fgcolor</em> <em>bgcolor</em> <em>[attributes]</em></pre>
+<strong>color</strong> <em>area</em> <em>fgcolor</em> <em>bgcolor</em> <em>[attributes]</em>
+<strong>source</strong> <em>path</em></pre>
 <div class="attribution">
 </div></div>
 </div>
@@ -601,9 +638,10 @@ is:</p></div>
 set show-date = relative        # Show relative commit date.
 set show-rev-graph = yes        # Show revision graph?
 set show-refs = yes             # Show references?
+set commit-order = topo         # Order commits topologically
+set read-git-colors = no        # Do not read git's color settings.
 set show-line-numbers = no      # Show line numbers?
 set line-number-interval = 5    # Interval between line numbers
-set commit-encoding = "UTF-8"   # Commit encoding
 set horizontal-scroll = 33%     # Scroll 33% of the view width
 set blame-options = -C -C -C    # Blame lines from other files</tt></pre>
 </div></div>
@@ -667,6 +705,14 @@ Valid mixed values
 </p>
 </dd>
 <dt class="hdlist1">
+<em>filename-width</em> (int)
+</dt>
+<dd>
+<p>
+        Width of the filename column.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>blame-options</em> (string)
 </dt>
 <dd>
@@ -678,16 +724,7 @@ Valid mixed values
 </p>
 </dd>
 <dt class="hdlist1">
-<em>commit-encoding</em> (string)
-</dt>
-<dd>
-<p>
-        The encoding used for commits. The default is UTF-8. Note this option
-        is shadowed by the "i18n.commitencoding" option in <tt>.git/config</tt>.
-</p>
-</dd>
-<dt class="hdlist1">
-<em>line-graphics</em> (mixed) [ "ascii" | "default" | "utf-8" | bool]
+<em>line-graphics</em> (mixed) [ "ascii" | "default" | "utf8" | bool]
 </dt>
 <dd>
 <p>
@@ -700,8 +737,7 @@ Valid mixed values
 <dd>
 <p>
         Interval between line numbers. Note, you have to toggle on line
-        numbering with <em>n</em> or the <tt>-n</tt> command line option.  The default is to
-        number every line.
+        numbering with ".".  The default is to number every fifth line.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -717,12 +753,29 @@ Valid mixed values
 </p>
 </dd>
 <dt class="hdlist1">
-<em>show-author</em> (mixed) ["abbreviated" | "default" | bool]
+<em>read-git-colors</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to read git&#8217;s color settings.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>show-author</em> (mixed) ["abbreviated" | "full" | bool]
 </dt>
 <dd>
 <p>
         How to display author names. If set to "abbreviated" author initials
         will be shown. Can be toggled.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>show-filename</em> (mixed) ["auto" | "always" | bool]
+</dt>
+<dd>
+<p>
+        When to display file names. If set to "auto" file names are shown
+        only when needed, e.g. when running: tig blame -C &lt;file&gt;.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -733,6 +786,16 @@ Valid mixed values
         Whether and how to show date. If set to "relative" a relative date will be
         used, e.g. "2 minutes ago". If set to "short" no time information is
         shown. If set to "local", localtime(3) is used. Can be toggled.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>show-notes</em> (mixed) [note reference | bool]
+</dt>
+<dd>
+<p>
+        Whether to show notes for a commit. When set to a note reference the
+        reference is passed to <tt>git show --notes=</tt>. Notes are enabled by
+        default.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -754,6 +817,15 @@ Valid mixed values
 </p>
 </dd>
 <dt class="hdlist1">
+<em>show-changes</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to show staged and unstaged changes in the main view.
+        Can be toggled.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>split-view-height</em> (mixed)
 </dt>
 <dd>
@@ -771,7 +843,7 @@ Valid mixed values
 <dd>
 <p>
         Show untracked directories contents in the status view (analog to
-        <tt>git ls-files --directory</tt> option. On by default.
+        <tt>git ls-files --directory</tt> option). On by default.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -788,6 +860,27 @@ Valid mixed values
 <dd>
 <p>
         Number of context lines to show for diffs.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>ignore-space</em> (mixed) ["no" | "all" | "some" | "at-eol" | bool]
+</dt>
+<dd>
+<p>
+    Ignore space changes in diff view. By default no space changes are ignored.
+    Changing this to "all", "some" or "at-eol" is equivalent to passing
+    "--ignore-all-space", "--ignore-space" or "--ignore-space-at-eol"
+    respectively to <tt>git diff</tt> or <tt>git show</tt>.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>commit-order</em> (mixed) ["default" | "topo" | "date" | "reverse" | bool]
+</dt>
+<dd>
+<p>
+        Commit ordering using the default (chronological reverse) order,
+        topological order, date order or reverse order. The default order is
+        used when the option is set to false, and topo order when set to true.
 </p>
 </dd>
 </dl></div>
@@ -874,8 +967,10 @@ e.g. "view-main", "View.Main", and "VIEW_MAIN" are the same.
 <h3 id="_actions">Actions</h3>
 <div class="paragraph"><p>Apart from the action names listed below, all actions starting with a <em>!</em> will
 be available as an external command. External commands can contain variable
-names that will be substituted before the command is run. Valid variable names
-are:</p></div>
+names that will be substituted before the command is run. By default, commands
+are run in the foreground with their console output shown, if they should be
+run in the background wit no output prefix the command with <em>@</em>. Valid
+variable names are:</p></div>
 <div class="tableblock">
 <table rules="none"
 width="100%"
@@ -926,6 +1021,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table"><tt>%(diffargs)</tt></p></td>
 <td align="left" valign="top"><p class="table">The diff options passed on the command line.</p></td>
 </tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(prompt)</tt></p></td>
+<td align="left" valign="top"><p class="table">Prompt for the argument value.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -941,7 +1040,8 @@ put in either the .gitconfig or .git/config file:</p></div>
         gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &amp;"
         publish = !"for i in origin public; do git push $i; done"
 [tig "bind"]
-        generic = V !git gitk-bg
+        # @-prefix means that the console output will not be shown.
+        generic = V !@git gitk-bg
         generic = &gt; !git publish</tt></pre>
 </div></div>
 <div class="tableblock">
@@ -1064,6 +1164,10 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><tt>status-merge</tt></p></td>
 <td align="left" valign="top"><p class="table">Resolve unmerged file</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>stage-update-line</tt></p></td>
+<td align="left" valign="top"><p class="table">Stage single line</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><tt>stage-next</tt></p></td>
@@ -1230,6 +1334,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Toggle author display</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><tt>toggle-filename</tt></p></td>
+<td align="left" valign="top"><p class="table">Toggle file name display</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><tt>toggle-rev-graph</tt></p></td>
 <td align="left" valign="top"><p class="table">Toggle revision graph visualization</p></td>
 </tr>
@@ -1274,7 +1382,8 @@ color default           white   black
 # Diff colors
 color diff-header       yellow  default
 color diff-index        blue    default
-color diff-chunk        magenta default</tt></pre>
+color diff-chunk        magenta default
+color "Reported-by:"    green   default</tt></pre>
 </div></div>
 <div class="paragraph"><p>Or in the git configuration files:</p></div>
 <div class="listingblock">
@@ -1292,7 +1401,10 @@ Area names
 </dt>
 <dd>
 <p>
-        Valid area names are described below. Note, all names are
+        Can be either a built-in area name or a custom quoted string. The
+        latter allows custom color rules to be added for lines matching a
+        quoted string.
+        Valid built-in area names are described below. Note, all names are
         case-insensitive, and you may use <em>-</em>, <em>_</em>, and <em>.</em> interchangeably,
         e.g. "Diff-Header", "DIFF_HEADER", and "diff.header" are the same.
 </p>
@@ -1585,16 +1697,38 @@ Colors for information of the tree view.
 </div>
 </div>
 <div class="sect1">
+<h2 id="_source_command">Source command</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Sources commands makes it possible to read additional configuration files.
+Sourced file are treated in-place, meaning when a <em>source</em> command is
+encountered it will be immediately read. Any commands, later in the current
+configuration file will take precedence. The syntax is:</p></div>
+<div class="verseblock">
+<pre class="content"><strong>source</strong> <em>path</em></pre>
+<div class="attribution">
+</div></div>
+<div class="paragraph"><p>Examples:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>source ~/.tig/colorscheme.tigrc
+source ~/.tig/keybindings.tigrc</tt></pre>
+</div></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_copyright">COPYRIGHT</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Copyright (c) 2006-2010 Jonas Fonseca &lt;<a href="mailto:fonseca@diku.dk">fonseca@diku.dk</a>&gt;</p></div>
-<div class="paragraph"><p>Licensed under the terms of the GNU General Public License.</p></div>
+<div class="paragraph"><p>Copyright (c) 2006-2012 Jonas Fonseca &lt;<a href="mailto:fonseca@diku.dk">fonseca@diku.dk</a>&gt;</p></div>
+<div class="paragraph"><p>This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.</p></div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_see_also">SEE ALSO</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>manpage:tig[1], manpage:tigmanual[7], git-config(1),
+<div class="paragraph"><p><a href="tig.1.html">tig(1)</a>, <a href="tigmanual.7.html">tigmanual(7)</a>, git-config(1),
 and the <a href="http://jonas.nitro.dk/tig/manual.html">tig manual</a>.</p></div>
 </div>
 </div>
@@ -1602,7 +1736,7 @@ and the <a href="http://jonas.nitro.dk/tig/manual.html">tig manual</a>.</p></div
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2011-08-28 18:42:18 EDT
+Last updated 2012-05-10 08:56:12 EDT
 </div>
 </div>
 </body>

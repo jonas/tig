@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.3" />
+<meta name="generator" content="AsciiDoc 8.6.4" />
 <title>The tig Manual</title>
 <style type="text/css">
 /* Sans-serif font. */
@@ -394,6 +394,42 @@ div.toclevel4 {
   font-size: 0.9em;
 }
 
+span.aqua { color: aqua; }
+span.black { color: black; }
+span.blue { color: blue; }
+span.fuchsia { color: fuchsia; }
+span.gray { color: gray; }
+span.green { color: green; }
+span.lime { color: lime; }
+span.maroon { color: maroon; }
+span.navy { color: navy; }
+span.olive { color: olive; }
+span.purple { color: purple; }
+span.red { color: red; }
+span.silver { color: silver; }
+span.teal { color: teal; }
+span.white { color: white; }
+span.yellow { color: yellow; }
+
+span.aqua-background { background: aqua; }
+span.black-background { background: black; }
+span.blue-background { background: blue; }
+span.fuchsia-background { background: fuchsia; }
+span.gray-background { background: gray; }
+span.green-background { background: green; }
+span.lime-background { background: lime; }
+span.maroon-background { background: maroon; }
+span.navy-background { background: navy; }
+span.olive-background { background: olive; }
+span.purple-background { background: purple; }
+span.red-background { background: red; }
+span.silver-background { background: silver; }
+span.teal-background { background: teal; }
+span.white-background { background: white; }
+span.yellow-background { background: yellow; }
+
+span.big { font-size: 2em; }
+span.small { font-size: 0.6em; }
 </style>
 <script type="text/javascript">
 /*<![CDATA[*/
@@ -645,6 +681,11 @@ commit with the log message, diffstat, and the diff.</p></div>
 </li>
 <li>
 <p>
+<a href="#misc-keys">Misc</a>
+</p>
+</li>
+<li>
+<p>
 <a href="#external-commands">External Commands</a>
 </p>
 </li>
@@ -694,7 +735,7 @@ commit with the log message, diffstat, and the diff.</p></div>
 </li>
 <li>
 <p>
-<a href="#references">References and Related Tools</a>
+<a href="#references">See Also</a>
 </p>
 </li>
 </ol></div>
@@ -924,6 +965,10 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><tt>%(diffargs)</tt></p></td>
 <td align="left" valign="top"><p class="table">The diff options passed on the command line.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(prompt)</tt></p></td>
+<td align="left" valign="top"><p class="table">Prompt for the argument value.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1192,6 +1237,10 @@ cellspacing="0" cellpadding="4">
          contain the content it had at last commit.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table">Ctrl-u</p></td>
+<td align="left" valign="top"><p class="table">Stage single diff line.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table">@</p></td>
 <td align="left" valign="top"><p class="table">Move to next chunk in the stage view.</p></td>
 </tr>
@@ -1398,10 +1447,16 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Toggle reference display on/off (tag and branch names).</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table">W</p></td>
+<td align="left" valign="top"><p class="table">Toggle ignoring whitespace on/off for diffs</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table">:</p></td>
 <td align="left" valign="top"><p class="table">Open prompt. This allows you to specify what git command
          to run. Example <tt>:log -p</tt>. You can also use this to jump
-         to a specific line by typing <tt>:&lt;linenumber&gt;</tt>, e.g. <tt>:80</tt>.</p></td>
+         to a specific line by typing <tt>:&lt;linenumber&gt;</tt>, e.g. <tt>:80</tt>,
+         or jump to a specific commit by typing <tt>:&lt;sha&gt;</tt>, e.g.
+         <tt>:2f12bcc</tt>.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">e</p></td>
@@ -1562,20 +1617,16 @@ accomplished using:</p></div>
 <div class="sect1">
 <h2 id="_bugs">6. BUGS</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Known bugs and problems:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-Proper locale support: in it&#8217;s current state tig is pretty much UTF-8 only.
-</p>
-</li>
-</ul></div>
+<div class="paragraph"><p>Bugs and feature requests can be reported using the issue tracker at
+<a href="https://github.com/jonas/tig/issues">https://github.com/jonas/tig/issues</a> or by mail to either the git mailing
+list or directly to the maintainer. Ensure that the word "tig" is in the
+subject.</p></div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="copy-right">7. Copyright</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Copyright (c) 2006-2010 Jonas Fonseca &lt;<a href="mailto:fonseca@diku.dk">fonseca@diku.dk</a>&gt;</p></div>
+<div class="paragraph"><p>Copyright (c) 2006-2012 Jonas Fonseca &lt;<a href="mailto:fonseca@diku.dk">fonseca@diku.dk</a>&gt;</p></div>
 <div class="paragraph"><p>This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -1583,18 +1634,18 @@ the Free Software Foundation; either version 2 of the License, or
 </div>
 </div>
 <div class="sect1">
-<h2 id="references">8. References and Related Tools</h2>
+<h2 id="references">8. See Also</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Manpages:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-manpage:tig[1]
+<a href="tig.1.html">tig(1)</a>
 </p>
 </li>
 <li>
 <p>
-manpage:tigrc[5]
+<a href="tigrc.5.html">tigrc(5)</a>
 </p>
 </li>
 </ul></div>
@@ -1617,8 +1668,8 @@ Tarballs:    <a href="http://jonas.nitro.dk/tig/releases/">http://jonas.nitro.dk
 </li>
 <li>
 <p>
-Git URL:     git://repo.or.cz/tig.git (mirror) or
-                <a href="http://jonas.nitro.dk/tig/tig.git">http://jonas.nitro.dk/tig/tig.git</a> (master)
+Git URL:     git://github.com/jonas/tig.git (master) or
+                git://repo.or.cz/tig.git (mirror)
 </p>
 </li>
 <li>
@@ -1633,7 +1684,7 @@ Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2011-08-28 18:42:18 EDT
+Last updated 2012-05-10 08:56:12 EDT
 </div>
 </div>
 </body>

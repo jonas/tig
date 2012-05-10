@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.3" />
+<meta name="generator" content="AsciiDoc 8.6.4" />
 <title>Release notes</title>
 <style type="text/css">
 /* Sans-serif font. */
@@ -394,6 +394,42 @@ div.toclevel4 {
   font-size: 0.9em;
 }
 
+span.aqua { color: aqua; }
+span.black { color: black; }
+span.blue { color: blue; }
+span.fuchsia { color: fuchsia; }
+span.gray { color: gray; }
+span.green { color: green; }
+span.lime { color: lime; }
+span.maroon { color: maroon; }
+span.navy { color: navy; }
+span.olive { color: olive; }
+span.purple { color: purple; }
+span.red { color: red; }
+span.silver { color: silver; }
+span.teal { color: teal; }
+span.white { color: white; }
+span.yellow { color: yellow; }
+
+span.aqua-background { background: aqua; }
+span.black-background { background: black; }
+span.blue-background { background: blue; }
+span.fuchsia-background { background: fuchsia; }
+span.gray-background { background: gray; }
+span.green-background { background: green; }
+span.lime-background { background: lime; }
+span.maroon-background { background: maroon; }
+span.navy-background { background: navy; }
+span.olive-background { background: olive; }
+span.purple-background { background: purple; }
+span.red-background { background: red; }
+span.silver-background { background: silver; }
+span.teal-background { background: teal; }
+span.white-background { background: white; }
+span.yellow-background { background: yellow; }
+
+span.big { font-size: 2em; }
+span.small { font-size: 0.6em; }
 </style>
 <script type="text/javascript">
 /*<![CDATA[*/
@@ -534,6 +570,169 @@ footnotes: function () {
 <h1>Release notes</h1>
 </div>
 <div id="content">
+<div class="sect1">
+<h2 id="_master">master</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>The master repository is git://github.com/jonas/tig.git, and the old
+master repository (<a href="http://jonas.nitro.dk/tig/tig.git">http://jonas.nitro.dk/tig/tig.git</a>) will be retired.</p></div>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Use git-log(1)s default commit ordering. The old behavior can be
+   restored by adding <tt>set commit-order = topo</tt> to ~/.tigrc.
+</p>
+</li>
+<li>
+<p>
+Support staging of single lines. Bound to <em>1</em> default. (GH #21)
+</p>
+</li>
+<li>
+<p>
+Use +&lt;lineno&gt; to open the initial view at an arbitrary line. (GH #20)
+</p>
+</li>
+<li>
+<p>
+Add show-notes ~/.tigrc option. Notes are displayed by default.
+</p>
+</li>
+<li>
+<p>
+Support jumping to specific SHAs in the main view.
+</p>
+</li>
+<li>
+<p>
+Decorate replaced commits.
+</p>
+</li>
+<li>
+<p>
+Display line numbers in main view.
+</p>
+</li>
+<li>
+<p>
+Colorize binary diff stats. (GH #17)
+</p>
+</li>
+<li>
+<p>
+Custom colorization of lines matching a string prefix (GH #16).
+   Example configuration: color "Reported-by:" green default
+</p>
+</li>
+<li>
+<p>
+Use git&#8217;s color settings for the main, status and diff views.
+   Put <tt>set read-git-colors = no</tt> in ~/.tigrc to disable.
+</p>
+</li>
+<li>
+<p>
+Handle editor options with multiple arguments. (GH #12)
+</p>
+</li>
+<li>
+<p>
+Show filename when running tig blame with copy detection. (GH #19)
+</p>
+</li>
+<li>
+<p>
+Use <em>source &lt;path&gt;</em> command to load additional files from ~/.tigrc
+</p>
+</li>
+<li>
+<p>
+User-defined commands prefixed with <em>@</em> are run with no console
+   output, e.g.
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>bind generic 3 !@rm sys$command</tt></pre>
+</div></div>
+</li>
+<li>
+<p>
+Make display of space changes togglable in the diff and stage view.
+   Bound to <em>W</em> by default.
+</p>
+</li>
+<li>
+<p>
+Use per-file encoding specified in gitattributes(5) for blobs and
+   unstaged files.
+</p>
+</li>
+<li>
+<p>
+Obsolete commit-encoding option and pass --encoding=UTF-8 to revision
+   commands.
+</p>
+</li>
+<li>
+<p>
+Main view: show uncommitted changes as staged/unstaged commits.
+   Can be disabled by putting <tt>set show-changes = no</tt> in ~/.tigrc.
+</p>
+</li>
+<li>
+<p>
+Add %(prompt) external command variable, which will prompt for the
+   argument value.
+</p>
+</li>
+<li>
+<p>
+Log information about git commands when the TIG_TRACE environment
+   variable is set. Example: <tt>TIG_TRACE=/tmp/tig.log tig</tt>
+</p>
+</li>
+<li>
+<p>
+Branch view: Show the title of the last commit.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix navigation behavior when going from branch to main view. (GH #38)
+</p>
+</li>
+<li>
+<p>
+Fix segfault when sorting the tree view by author name.
+</p>
+</li>
+<li>
+<p>
+Fix diff stat navigation for unmodified files with stat changes.
+</p>
+</li>
+<li>
+<p>
+Show branches/refs which names are a substring of the current branch.
+</p>
+</li>
+<li>
+<p>
+Stage view: fix off-by-one error when jumping to a file in a diff
+   with only one file.
+</p>
+</li>
+<li>
+<p>
+Fix diff-header colorization. (GH #15)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
 <div class="sect1">
 <h2 id="_tig_0_18">tig-0.18</h2>
 <div class="sectionbody">
@@ -1644,7 +1843,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2011-08-28 18:42:18 EDT
+Last updated 2012-05-10 08:56:12 EDT
 </div>
 </div>
 </body>
