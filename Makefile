@@ -132,10 +132,10 @@ strip: $(PROGS)
 
 dist: configure tig.spec
 	@mkdir -p $(TARNAME) && \
-	cp tig.spec configure config.h.in aclocal.m4 $(TARNAME) && \
-	echo $(VERSION) > $(TARNAME)/VERSION
+	cp Makefile tig.spec configure config.h.in aclocal.m4 $(TARNAME) && \
+	sed -i "s/VERSION\s=\s[0-9]\+[.][0-9]\+/VERSION	= $(VERSION)/" $(TARNAME)/Makefile
 	git archive --format=tar --prefix=$(TARNAME)/ HEAD | \
-	tar --delete $(TARNAME)/VERSION > $(TARNAME).tar && \
+	tar --delete $(TARNAME)/Makefile > $(TARNAME).tar && \
 	tar rf $(TARNAME).tar `find $(TARNAME)/*` && \
 	gzip -f -9 $(TARNAME).tar && \
 	md5sum $(TARNAME).tar.gz > $(TARNAME).tar.gz.md5

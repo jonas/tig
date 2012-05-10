@@ -33,7 +33,6 @@ if test -n "$VERSION"; then
 		git checkout master
 
 	# Update files which should reference the version.
-	echo "$VERSION" > VERSION
 	sed -i "s/VERSION\s=\s[0-9]\+[.][0-9]\+/VERSION	= $VERSION/" Makefile	
 	perl -pi -e 's/^tig master.*/@@TITLE@@/ms' NEWS
 	perl -pi -e "s/^@@TITLE@@.*/$TITLE/" NEWS
