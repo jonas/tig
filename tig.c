@@ -6863,6 +6863,8 @@ main_add_changes_commits(struct view *view, const char *parent)
 	const char *staged_parent = NULL_ID;
 	const char *unstaged_parent = parent;
 
+	io_run_bg(update_index_argv);
+
 	if (!main_has_changes(unstaged_argv)) {
 		unstaged_parent = NULL;
 		staged_parent = parent;
@@ -6946,7 +6948,7 @@ main_read(struct view *view, char *line)
 		if (is_boundary || !isalnum(*line))
 			line++;
 
-		if (opt_show_changes && opt_is_inside_work_tree && !view->lines)
+		if (!view->lines && opt_show_changes && opt_is_inside_work_tree)
 			main_add_changes_commits(view, line);
 
 		return main_add_commit(view, LINE_MAIN_COMMIT, line, is_boundary) != NULL;
