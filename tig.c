@@ -170,7 +170,7 @@ get_author_initials(const char *author)
 	return initials;
 }
 
-#define author_trim(cols) (cols == 0 || cols > 5)
+#define author_trim(cols) (cols == 0 || cols > 10)
 
 static const char *
 mkauthor(const char *text, int cols, enum author author)
