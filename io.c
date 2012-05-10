@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2010 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2012 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -14,22 +14,50 @@
 #include "tig.h"
 #include "io.h"
 
-bool
-argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
+static inline int
+get_arg_valuelen(const char *arg, bool *quoted)
 {
-	int valuelen;
+	if (*arg == '"' || *arg == '\'') {
+		const char *end = *arg == '"' ? "\"" : "'";
+		int valuelen = strcspn(arg + 1, end);
 
-	while (*cmd && *argc < SIZEOF_ARG && (valuelen = strcspn(cmd, " \t"))) {
+		if (quoted)
+			*quoted = TRUE;
+		return valuelen > 0 ? valuelen + 2 : strlen(arg);
+	} else {
+		return strcspn(arg, " \t");
+	}
+}
+
+static bool
+split_argv_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd, bool remove_quotes)
+{
+	while (*cmd && *argc < SIZEOF_ARG) {
+		bool quoted = FALSE;
+		int valuelen = get_arg_valuelen(cmd, &quoted);
 		bool advance = cmd[valuelen] != 0;
+		int quote_offset = !!(quoted && remove_quotes);
 
-		cmd[valuelen] = 0;
-		argv[(*argc)++] = chomp_string(cmd);
+		cmd[valuelen - quote_offset] = 0;
+		argv[(*argc)++] = chomp_string(cmd + quote_offset);
 		cmd = chomp_string(cmd + valuelen + advance);
 	}
 
 	if (*argc < SIZEOF_ARG)
 		argv[*argc] = NULL;
 	return *argc < SIZEOF_ARG;
+}
+
+bool
+argv_from_string_no_quotes(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
+{
+	return split_argv_string(argv, argc, cmd, TRUE);
+}
+
+bool
+argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
+{
+	return split_argv_string(argv, argc, cmd, FALSE);
 }
 
 bool
@@ -107,6 +135,60 @@ argv_copy(const char ***dst, const char *src[])
 	return TRUE;
 }
 
+/*
+ * Encoding conversion.
+ */
+
+struct encoding {
+	struct encoding *next;
+	iconv_t cd;
+	char fromcode[1];
+};
+
+static struct encoding *encodings;
+
+struct encoding *
+encoding_open(const char *fromcode)
+{
+	struct encoding *encoding;
+	size_t len = strlen(fromcode);
+
+	if (!*fromcode)
+		return NULL;
+
+	for (encoding = encodings; encoding; encoding = encoding->next) {
+		if (!strcasecmp(encoding->fromcode, fromcode))
+			return encoding;
+	}
+
+	encoding = calloc(1, sizeof(*encoding) + len);
+	strncpy(encoding->fromcode, fromcode, len);
+	encoding->cd = iconv_open(ENCODING_UTF8, fromcode);
+	if (encoding->cd == ICONV_NONE) {
+		free(encoding);
+		return NULL;
+	}
+
+	encoding->next = encodings;
+	encodings = encoding;
+
+	return encoding;
+}
+
+char *
+encoding_convert(struct encoding *encoding, char *line)
+{
+	static char out_buffer[BUFSIZ * 2];
+	ICONV_CONST char *inbuf = line;
+	size_t inlen = strlen(line) + 1;
+
+	char *outbuf = out_buffer;
+	size_t outlen = sizeof(out_buffer);
+
+	size_t ret = iconv(encoding->cd, &inbuf, &inlen, &outbuf, &outlen);
+
+	return (ret != (size_t) -1) ? out_buffer : line;
+}
 
 /*
  * Executing external commands.
@@ -123,20 +205,17 @@ bool
 io_open(struct io *io, const char *fmt, ...)
 {
 	char name[SIZEOF_STR] = "";
-	bool fits;
-	va_list args;
+	int retval;
 
 	io_init(io);
 
-	va_start(args, fmt);
-	fits = vsnprintf(name, sizeof(name), fmt, args) < sizeof(name);
-	va_end(args);
-
-	if (!fits) {
+	FORMAT_BUFFER(name, sizeof(name), fmt, retval, FALSE);
+	if (retval < 0) {
 		io->error = ENAMETOOLONG;
 		return FALSE;
 	}
-	io->pipe = *name ? open(name, O_RDONLY) : STDIN_FILENO;
+
+	io->pipe = *name ? open(name, O_RDONLY) : dup(STDIN_FILENO);
 	if (io->pipe == -1)
 		io->error = errno;
 	return io->pipe != -1;
@@ -169,13 +248,47 @@ io_done(struct io *io)
 			return FALSE;
 		}
 
+		if (WEXITSTATUS(status)) {
+			io->status = WEXITSTATUS(status);
+		}
+
 		return waiting == pid &&
 		       !WIFSIGNALED(status) &&
-		       WIFEXITED(status) &&
-		       !WEXITSTATUS(status);
+		       !io->status;
 	}
 
 	return TRUE;
+}
+
+static int
+open_trace(int devnull, const char *argv[])
+{
+	static const char *trace_file;
+
+	if (!trace_file) {
+		trace_file = getenv("TIG_TRACE");
+		if (!trace_file)
+			trace_file = "";
+	}
+
+	if (*trace_file) {
+		int fd = open(trace_file, O_RDWR | O_CREAT | O_APPEND, 0666);
+		int i;
+
+		for (i = 0; argv[i]; i++) {
+			if (write(fd, argv[i], strlen(argv[i])) == -1
+			    || write(fd, " ", 1) == -1)
+				break;
+		}
+		if (argv[i] || write(fd, "\n", 1) == -1) {
+			close(fd);
+			return devnull;
+		}
+
+		return fd;
+	}
+
+	return devnull;
 }
 
 bool
@@ -214,11 +327,14 @@ io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ..
 			int readfd  = type == IO_WR ? pipefds[0] : devnull;
 			int writefd = (type == IO_RD || type == IO_AP)
 							? pipefds[1] : devnull;
+			int errorfd = open_trace(devnull, argv);
 
 			dup2(readfd,  STDIN_FILENO);
 			dup2(writefd, STDOUT_FILENO);
-			dup2(devnull, STDERR_FILENO);
+			dup2(errorfd, STDERR_FILENO);
 
+			if (devnull != errorfd)
+				close(errorfd);
 			close(devnull);
 			if (pipefds[0] != -1)
 				close(pipefds[0]);
@@ -378,6 +494,21 @@ io_write(struct io *io, const void *buf, size_t bufsize)
 	}
 
 	return written == bufsize;
+}
+
+bool
+io_printf(struct io *io, const char *fmt, ...)
+{
+	char buf[SIZEOF_STR] = "";
+	int retval;
+
+	FORMAT_BUFFER(buf, sizeof(buf), fmt, retval, FALSE);
+	if (retval < 0) {
+		io->error = ENAMETOOLONG;
+		return FALSE;
+	}
+
+	return io_write(io, buf, retval);
 }
 
 bool

@@ -1,5 +1,9 @@
 ## Makefile for tig
 
+# The last tagged version. Can be overridden either by the version from
+# git or from the value of the DIST_VERSION environment variable.
+VERSION	= 0.18
+
 all:
 
 # Include setting from the configure script
@@ -13,14 +17,10 @@ docdir ?= $(datarootdir)/doc
 mandir ?= $(datarootdir)/man
 # DESTDIR=
 
-# Get version either via git or from VERSION file. Allow either
-# to be overwritten by setting DIST_VERSION on the command line.
 ifneq (,$(wildcard .git))
 GITDESC	= $(subst tig-,,$(shell git describe))
 WTDIRTY	= $(if $(shell git diff-index HEAD 2>/dev/null),-dirty)
 VERSION	= $(GITDESC)$(WTDIRTY)
-else
-VERSION	= $(shell test -f VERSION && cat VERSION || echo "unknown-version")
 endif
 ifdef DIST_VERSION
 VERSION = $(DIST_VERSION)
@@ -38,7 +38,7 @@ DFLAGS	= -g -DDEBUG -Werror -O0
 PROGS	= tig
 TESTS	= test-graph
 SOURCE	= tig.c tig.h io.c io.h graph.c graph.h
-TXTDOC	= tig.1.txt tigrc.5.txt manual.txt NEWS README INSTALL BUGS TODO
+TXTDOC	= tig.1.txt tigrc.5.txt manual.txt NEWS README INSTALL BUGS
 MANDOC	= tig.1 tigrc.5 tigmanual.7
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html NEWS.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) manual.html-chunked manual.pdf
@@ -114,7 +114,7 @@ install-release-doc: install-release-doc-man install-release-doc-html
 
 clean:
 	$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5
-	$(RM) $(PROGS) core *.o *.xml
+	$(RM) $(PROGS) $(TESTS) core *.o *.xml
 
 distclean: clean
 	$(RM) -r manual.html-chunked autom4te.cache
@@ -132,10 +132,10 @@ strip: $(PROGS)
 
 dist: configure tig.spec
 	@mkdir -p $(TARNAME) && \
-	cp tig.spec configure config.h.in aclocal.m4 $(TARNAME) && \
-	echo $(VERSION) > $(TARNAME)/VERSION
+	cp Makefile tig.spec configure config.h.in aclocal.m4 $(TARNAME) && \
+	sed -i "s/VERSION\s=\s[0-9]\+[.][0-9]\+/VERSION	= $(VERSION)/" $(TARNAME)/Makefile
 	git archive --format=tar --prefix=$(TARNAME)/ HEAD | \
-	tar --delete $(TARNAME)/VERSION > $(TARNAME).tar && \
+	tar --delete $(TARNAME)/Makefile > $(TARNAME).tar && \
 	tar rf $(TARNAME).tar `find $(TARNAME)/*` && \
 	gzip -f -9 $(TARNAME).tar && \
 	md5sum $(TARNAME).tar.gz > $(TARNAME).tar.gz.md5
@@ -151,9 +151,10 @@ configure: configure.ac acinclude.m4
 	install-doc-man install-doc-html clean spell-check dist rpm
 
 io.o: io.c io.h tig.h
-graph.o: tig.h
-tig.o: tig.c tig.h io.h
-tig: tig.o io.o graph.o
+graph.o: graph.c graph.h tig.h
+refs.o: refs.c refs.h tig.h
+tig.o: tig.c tig.h graph.h io.h refs.h git.h
+tig: tig.o io.o graph.o refs.o
 test-graph.o: test-graph.c io.h tig.h graph.h
 test-graph: io.o graph.o
 
@@ -165,8 +166,8 @@ manual.html: manual.toc
 manual.toc: manual.txt
 	sed -n '/^\[\[/,/\(---\|~~~\)/p' < $< | while read line; do \
 		case "$$line" in \
-		"-----"*)  echo ". <<$$ref>>"; ref= ;; \
-		"~~~~~"*)  echo "- <<$$ref>>"; ref= ;; \
+		"----"*)  echo ". <<$$ref>>"; ref= ;; \
+		"~~~~"*)  echo "- <<$$ref>>"; ref= ;; \
 		"[["*"]]") ref="$$line" ;; \
 		*)	   ref="$$ref, $$line" ;; \
 		esac; done | sed 's/\[\[\(.*\)\]\]/\1/' > $@

@@ -2,8 +2,9 @@ Installation instructions
 -------------------------
 
 Download a tarball from http://jonas.nitro.dk/tig/releases[] or clone the tig
-repository http://jonas.nitro.dk/tig/tig.git[]. Documentation files are
-available in the tarballs and in the 'release' branch of the tig repository.
+repository http://github.com/jonas/tig[git://github.com/jonas/tig.git].
+Documentation files are available in the tarballs and in the 'release' branch
+of the tig repository.
 
 The quick and simple way to install tig with documentation is to run:
 

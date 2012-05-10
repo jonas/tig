@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2010 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2012 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -25,6 +25,13 @@
 #ifndef DEBUG
 #define NDEBUG
 #endif
+
+/* necessary on Snow Leopard to use WINDOW struct */
+#ifdef NCURSES_OPAQUE
+#undef NCURSES_OPAQUE
+#endif
+#define NCURSES_OPAQUE 0
+
 
 #include <assert.h>
 #include <errno.h>
@@ -79,10 +86,15 @@
 /* This color name can be used to refer to the default term colors. */
 #define COLOR_DEFAULT	(-1)
 
+#define ENCODING_UTF8	"UTF-8"
+#define ENCODING_SEP	": encoding: "
+#define ENCODING_ARG	"--encoding=" ENCODING_UTF8
+
 #define ICONV_NONE	((iconv_t) -1)
 #ifndef ICONV_CONST
 #define ICONV_CONST	/* nothing */
 #endif
+#define ICONV_TRANSLIT	"//TRANSLIT"
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
@@ -91,6 +103,7 @@
 
 #define ID_COLS		8
 #define AUTHOR_COLS	19
+#define FILENAME_COLS	19
 
 #define MIN_VIEW_HEIGHT 4
 
@@ -117,9 +130,18 @@ name(type **mem, size_t size, size_t increase)					\
 	type *tmp = *mem;							\
 										\
 	if (mem == NULL || num_chunks != num_chunks_new) {			\
-		tmp = realloc(tmp, num_chunks_new * chunk_size * sizeof(type));	\
-		if (tmp)							\
+		size_t newsize = num_chunks_new * chunk_size * sizeof(type);	\
+										\
+		tmp = realloc(tmp, newsize);					\
+		if (tmp) {							\
 			*mem = tmp;						\
+			if (num_chunks_new > num_chunks) {			\
+				size_t offset = num_chunks * chunk_size;	\
+				size_t oldsize = offset * sizeof(type);		\
+										\
+				memset(tmp + offset, 0,	newsize - oldsize);	\
+			}							\
+		}								\
 	}									\
 										\
 	return tmp;								\
@@ -131,6 +153,32 @@ name(type **mem, size_t size, size_t increase)					\
 
 #define prefixcmp(str1, str2) \
 	strncmp(str1, str2, STRING_SIZE(str2))
+
+static inline bool
+string_isnumber(const char *str)
+{
+	int pos;
+
+	for (pos = 0; str[pos]; pos++) {
+		if (!isdigit(str[pos]))
+			return FALSE;
+	}
+
+	return pos > 0;
+}
+
+static inline bool
+iscommit(char *str)
+{
+	int pos;
+
+	for (pos = 0; str[pos]; pos++) {
+		if (!isxdigit(str[pos]))
+			return FALSE;
+	}
+
+	return 7 <= pos && pos < SIZEOF_REV;
+}
 
 static inline int
 ascii_toupper(int c)
@@ -169,14 +217,42 @@ string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen)
 
 /* Shorthands for safely copying into a fixed buffer. */
 
+#define FORMAT_BUFFER(buf, bufsize, fmt, retval, allow_truncate) \
+	do { \
+		va_list args; \
+		va_start(args, fmt); \
+		retval = vsnprintf(buf, bufsize, fmt, args); \
+		va_end(args); \
+		if (retval >= (bufsize) && allow_truncate) { \
+			(buf)[(bufsize) - 1] = 0; \
+			(buf)[(bufsize) - 2] = '.'; \
+			(buf)[(bufsize) - 3] = '.'; \
+			(buf)[(bufsize) - 4] = '.'; \
+			retval = (bufsize) - 1; \
+		} else if (retval < 0 || retval >= (bufsize)) { \
+			retval = -1; \
+		} \
+	} while (0)
+
 #define string_copy(dst, src) \
 	string_ncopy_do(dst, sizeof(dst), src, sizeof(src))
 
 #define string_ncopy(dst, src, srclen) \
 	string_ncopy_do(dst, sizeof(dst), src, srclen)
 
-#define string_copy_rev(dst, src) \
-	string_ncopy_do(dst, SIZEOF_REV, src, SIZEOF_REV - 1)
+static inline void
+string_copy_rev(char *dst, const char *src)
+{
+	size_t srclen;
+
+	for (srclen = 0; srclen < SIZEOF_REV; srclen++)
+		if (isspace(src[srclen]))
+			break;
+
+	string_ncopy_do(dst, SIZEOF_REV, src, srclen);
+}
+
+#define string_rev_is_null(rev) !strncmp(rev, NULL_ID, STRING_SIZE(NULL_ID))
 
 #define string_add(dst, from, src) \
 	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
@@ -221,15 +297,12 @@ chomp_string(char *name)
 static inline bool
 string_nformat(char *buf, size_t bufsize, size_t *bufpos, const char *fmt, ...)
 {
-	va_list args;
 	size_t pos = bufpos ? *bufpos : 0;
+	int retval;
 
-	va_start(args, fmt);
-	pos += vsnprintf(buf + pos, bufsize - pos, fmt, args);
-	va_end(args);
-
-	if (bufpos)
-		*bufpos = pos;
+	FORMAT_BUFFER(buf + pos, bufsize - pos, fmt, retval, FALSE);
+	if (bufpos && retval > 0)
+		*bufpos = pos + retval;
 
 	return pos >= bufsize ? FALSE : TRUE;
 }
@@ -239,6 +312,16 @@ string_nformat(char *buf, size_t bufsize, size_t *bufpos, const char *fmt, ...)
 
 #define string_format_from(buf, from, fmt, args...) \
 	string_nformat(buf, sizeof(buf), from, fmt, args)
+
+static inline int
+strcmp_null(const char *s1, const char *s2)
+{
+	if (!s1 || !s2) {
+		return (!!s1) - (!!s2);
+	}
+
+	return strcmp(s1, s2);
+}
 
 /*
  * Enumerations

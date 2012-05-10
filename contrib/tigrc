@@ -6,7 +6,6 @@
 set show-rev-graph = yes	# Show revision graph?
 set line-number-interval = 5	# Interval between line numbers
 set tab-size = 8		# Number of spaces pr tab 
-set commit-encoding = UTF-8	# Commit encoding
 
 #
 # Key configuration

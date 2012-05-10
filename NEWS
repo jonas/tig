@@ -1,6 +1,59 @@
 Release notes
 =============
 
+master
+------
+
+The master repository is git://github.com/jonas/tig.git, and the old
+master repository (http://jonas.nitro.dk/tig/tig.git) will be retired.
+
+Improvements:
+
+ - Use git-log(1)s default commit ordering. The old behavior can be
+   restored by adding `set commit-order = topo` to ~/.tigrc.
+ - Support staging of single lines. Bound to '1' default. (GH #21)
+ - Use +<lineno> to open the initial view at an arbitrary line. (GH #20)
+ - Add show-notes ~/.tigrc option. Notes are displayed by default.
+ - Support jumping to specific SHAs in the main view.
+ - Decorate replaced commits.
+ - Display line numbers in main view.
+ - Colorize binary diff stats. (GH #17)
+ - Custom colorization of lines matching a string prefix (GH #16).
+   Example configuration: color "Reported-by:" green default
+ - Use git's color settings for the main, status and diff views.
+   Put `set read-git-colors = no` in ~/.tigrc to disable.
+ - Handle editor options with multiple arguments. (GH #12)
+ - Show filename when running tig blame with copy detection. (GH #19)
+ - Use 'source <path>' command to load additional files from ~/.tigrc
+ - User-defined commands prefixed with '@' are run with no console
+   output, e.g.
+
+   	bind generic 3 !@rm sys$command
+
+ - Make display of space changes togglable in the diff and stage view.
+   Bound to 'W' by default.
+ - Use per-file encoding specified in gitattributes(5) for blobs and
+   unstaged files.
+ - Obsolete commit-encoding option and pass --encoding=UTF-8 to revision
+   commands.
+ - Main view: show uncommitted changes as staged/unstaged commits.
+   Can be disabled by putting `set show-changes = no` in ~/.tigrc.
+ - Add %(prompt) external command variable, which will prompt for the
+   argument value.
+ - Log information about git commands when the TIG_TRACE environment
+   variable is set. Example: `TIG_TRACE=/tmp/tig.log tig`
+ - Branch view: Show the title of the last commit.
+
+Bug fixes:
+
+ - Fix navigation behavior when going from branch to main view. (GH #38)
+ - Fix segfault when sorting the tree view by author name.
+ - Fix diff stat navigation for unmodified files with stat changes.
+ - Show branches/refs which names are a substring of the current branch.
+ - Stage view: fix off-by-one error when jumping to a file in a diff
+   with only one file.
+ - Fix diff-header colorization. (GH #15)
+  
 tig-0.18
 --------
 
