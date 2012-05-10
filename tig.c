@@ -79,7 +79,8 @@ mkdate(const struct time *time, enum date date)
 		{ "hour",   60 * 60,		60 * 60 * 24 * 2 },
 		{ "day",    60 * 60 * 24,	60 * 60 * 24 * 7 * 2 },
 		{ "week",   60 * 60 * 24 * 7,	60 * 60 * 24 * 7 * 5 },
-		{ "month",  60 * 60 * 24 * 30,	60 * 60 * 24 * 30 * 12 },
+		{ "month",  60 * 60 * 24 * 30,	60 * 60 * 24 * 365 },
+		{ "year",   60 * 60 * 24 * 365, 0 },
 	};
 	struct tm tm;
 
@@ -95,7 +96,7 @@ mkdate(const struct time *time, enum date date)
 		gettimeofday(&now, NULL);
 		seconds = now.tv_sec < date ? date - now.tv_sec : now.tv_sec - date;
 		for (i = 0; i < ARRAY_SIZE(reldate); i++) {
-			if (seconds >= reldate[i].value)
+			if (seconds >= reldate[i].value && reldate[i].value)
 				continue;
 
 			seconds /= reldate[i].namelen;
