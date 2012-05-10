@@ -4493,6 +4493,8 @@ push_tree_stack_entry(const char *name, unsigned long lineno)
 #define TREE_ID_OFFSET \
 	STRING_SIZE("100644 blob ")
 
+#define tree_entry_is_parent(entry)	(!strcmp("..", (entry)->name))
+
 struct tree_entry {
 	char id[SIZEOF_REV];
 	mode_t mode;
@@ -4570,6 +4572,8 @@ tree_entry(struct view *view, enum line_type type, const char *path,
 		entry->mode = strtoul(mode, NULL, 8);
 	if (id)
 		string_copy_rev(entry->id, id);
+	if (type == LINE_TREE_HEAD || tree_entry_is_parent(entry))
+		view->lineoffset++;
 
 	return line;
 }
@@ -4694,6 +4698,9 @@ tree_read(struct view *view, char *text)
 			line->dirty = line->cleareol = 1;
 		return TRUE;
 	}
+
+	if (tree_lineno <= view->pos.lineno)
+		tree_lineno = view->lineoffset;
 
 	if (tree_lineno > view->pos.lineno) {
 		view->pos.lineno = tree_lineno;
@@ -4848,12 +4855,19 @@ tree_select(struct view *view, struct line *line)
 {
 	struct tree_entry *entry = line->data;
 
+	if (line->type == LINE_TREE_HEAD) {
+		string_format(view->ref, "Files in /%s", opt_path);
+		return;
+	}
+
+	if (line->type == LINE_TREE_DIR && tree_entry_is_parent(entry)) {
+		string_copy(view->ref, "Open parent directory");
+		return;
+	}
+
 	if (line->type == LINE_TREE_FILE) {
 		string_copy_rev(ref_blob, entry->id);
 		string_format(opt_file, "%s%s", opt_path, tree_path(line));
-
-	} else if (line->type != LINE_TREE_DIR) {
-		return;
 	}
 
 	string_copy_rev(view->ref, entry->id);
