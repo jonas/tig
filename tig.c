@@ -3787,7 +3787,7 @@ try_add_describe_ref:
 }
 
 static bool
-pager_common_read(struct view *view, char *data, enum line_type type)
+pager_common_read(struct view *view, const char *data, enum line_type type)
 {
 	struct line *line;
 
@@ -3945,7 +3945,7 @@ diff_open(struct view *view, enum open_flags flags)
 }
 
 static bool
-diff_common_read(struct view *view, char *data, struct diff_state *state)
+diff_common_read(struct view *view, const char *data, struct diff_state *state)
 {
 	enum line_type type = get_line_type(data);
 
