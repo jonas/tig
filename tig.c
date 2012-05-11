@@ -4318,7 +4318,6 @@ help_open_keymap(struct view *view, struct keymap *keymap)
 {
 	const char *group = NULL;
 	char buf[SIZEOF_STR];
-	size_t bufpos;
 	bool add_title = TRUE;
 	int i;
 
@@ -4355,7 +4354,6 @@ help_open_keymap(struct view *view, struct keymap *keymap)
 	for (i = 0; i < run_requests; i++) {
 		struct run_request *req = get_run_request(REQ_NONE + i + 1);
 		const char *key;
-		int argc;
 
 		if (!req || req->keymap != keymap)
 			continue;
@@ -4373,10 +4371,8 @@ help_open_keymap(struct view *view, struct keymap *keymap)
 			group = NULL;
 		}
 
-		for (bufpos = 0, argc = 0; req->argv[argc]; argc++)
-			if (!string_format_from(buf, &bufpos, "%s%s",
-					        argc ? " " : "", req->argv[argc]))
-				return;
+		if (!argv_to_string(req->argv, buf, sizeof(buf), " "))
+			return;
 
 		add_line_format(view, LINE_DEFAULT, "    %-25s `%s`", key, buf);
 	}

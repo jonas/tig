@@ -14,6 +14,19 @@
 #include "tig.h"
 #include "io.h"
 
+bool
+argv_to_string(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep)
+{
+	size_t bufpos, argc;
+
+	for (bufpos = 0, argc = 0; argv[argc]; argc++)
+		if (!string_nformat(buf, buflen, &bufpos, "%s%s",
+				argc ? sep : "", argv[argc]))
+			return FALSE;
+
+	return TRUE;
+}
+
 static inline int
 get_arg_valuelen(const char *arg, bool *quoted)
 {
