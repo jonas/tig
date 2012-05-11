@@ -3898,7 +3898,7 @@ pager_open(struct view *view, enum open_flags flags)
 			die("Failed to open stdin");
 		flags = OPEN_PREPARED;
 
-	} else if (!view->pipe && !view->lines) {
+	} else if (!view->pipe && !view->lines && !(flags & OPEN_PREPARED)) {
 		report("No pager content, press %s to run command from prompt",
 			get_view_key(view, REQ_PROMPT));
 		return FALSE;
