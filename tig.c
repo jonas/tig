@@ -1104,6 +1104,7 @@ struct run_request {
 	int key;
 	const char **argv;
 	bool silent;
+	bool confirm;
 };
 
 static struct run_request *run_request;
@@ -1112,7 +1113,8 @@ static size_t run_requests;
 DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 
 static bool
-add_run_request(struct keymap *keymap, int key, const char **argv, bool silent, bool force)
+add_run_request(struct keymap *keymap, int key, const char **argv,
+		bool silent, bool force, bool confirm)
 {
 	struct run_request *req;
 
@@ -1127,6 +1129,7 @@ add_run_request(struct keymap *keymap, int key, const char **argv, bool silent, 
 
 	req = &run_request[run_requests++];
 	req->silent = silent;
+	req->confirm = confirm;
 	req->keymap = keymap;
 	req->key = key;
 
@@ -1150,10 +1153,10 @@ add_builtin_run_requests(void)
 	const char *commit[] = { "git", "commit", NULL };
 	const char *gc[] = { "git", "gc", NULL };
 
-	add_run_request(get_keymap("main"), 'C', cherry_pick, FALSE, FALSE);
-	add_run_request(get_keymap("status"), 'C', commit, FALSE, FALSE);
-	add_run_request(get_keymap("branch"), 'C', checkout, FALSE, FALSE);
-	add_run_request(get_keymap("generic"), 'G', gc, FALSE, FALSE);
+	add_run_request(get_keymap("main"), 'C', cherry_pick, FALSE, FALSE, TRUE);
+	add_run_request(get_keymap("status"), 'C', commit, FALSE, FALSE, FALSE);
+	add_run_request(get_keymap("branch"), 'C', checkout, FALSE, FALSE, FALSE);
+	add_run_request(get_keymap("generic"), 'G', gc, FALSE, FALSE, TRUE);
 }
 
 /*
@@ -1524,12 +1527,22 @@ option_bind_command(int argc, const char *argv[])
 		}
 	}
 	if (request == REQ_UNKNOWN && *argv[2]++ == '!') {
-		bool silent = *argv[2] == '@';
+		bool silent = false;
+		bool confirm = false;
 
-		if (silent)
+		if (*argv[2] == '@') {
+			silent = true;
 			argv[2]++;
-		return add_run_request(keymap, key, argv + 2, silent, TRUE)
-			? OPT_OK : OPT_ERR_OUT_OF_MEMORY;
+		}
+
+		if (*argv[2] == '?') {
+			confirm = true;
+			argv[2]++;
+		}
+
+		if (add_run_request(keymap, key, argv + 2, silent, TRUE, confirm))
+			return OPT_OK;
+		return OPT_ERR_OUT_OF_MEMORY;
 	}
 	if (request == REQ_UNKNOWN)
 		return OPT_ERR_UNKNOWN_REQUEST_NAME;
@@ -3248,6 +3261,23 @@ open_run_request(enum request request)
 	}
 
 	if (format_argv(&argv, req->argv, FALSE)) {
+		if (req->confirm) {
+			char str[SIZEOF_STR];
+			int argc, wpos, spos = 0;
+
+			for (argc = 0; argv[argc]; argc++) {
+				for (wpos = 0; argv[argc][wpos] != '\0'; wpos++)
+					str[spos++] = argv[argc][wpos];
+				str[spos++] = ' ';
+			}
+			str[--spos] = '\0';
+			snprintf(str, sizeof(str), "Run `%s`?", strdup(str));
+			if (!prompt_yesno(str)) {
+				argv_free(argv);
+				free(argv);
+				return;
+			}
+		}
 		if (req->silent)
 			io_run_bg(argv);
 		else
