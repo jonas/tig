@@ -1,6 +1,14 @@
 Release notes
 =============
 
+master
+------
+
+Improvements:
+
+ - User-defined commands prefixed with a '?' means prompt before execution.
+   Example: `bind main B !?git rebase -i %(commit)`
+
 tig-1.0
 -------
 

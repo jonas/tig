@@ -1103,6 +1103,7 @@ enum run_request_flag {
 	RUN_REQUEST_DEFAULT	= 0,
 	RUN_REQUEST_FORCE	= 1,
 	RUN_REQUEST_SILENT	= 2,
+	RUN_REQUEST_CONFIRM	= 4,
 };
 
 struct run_request {
@@ -1110,6 +1111,7 @@ struct run_request {
 	int key;
 	const char **argv;
 	bool silent;
+	bool confirm;
 };
 
 static struct run_request *run_request;
@@ -1134,6 +1136,7 @@ add_run_request(struct keymap *keymap, int key, const char **argv, enum run_requ
 
 	req = &run_request[run_requests++];
 	req->silent = flags & RUN_REQUEST_SILENT;
+	req->confirm = flags & RUN_REQUEST_CONFIRM;
 	req->keymap = keymap;
 	req->key = key;
 
@@ -1157,10 +1160,10 @@ add_builtin_run_requests(void)
 	const char *commit[] = { "git", "commit", NULL };
 	const char *gc[] = { "git", "gc", NULL };
 
-	add_run_request(get_keymap("main"), 'C', cherry_pick, RUN_REQUEST_DEFAULT);
+	add_run_request(get_keymap("main"), 'C', cherry_pick, RUN_REQUEST_CONFIRM);
 	add_run_request(get_keymap("status"), 'C', commit, RUN_REQUEST_DEFAULT);
-	add_run_request(get_keymap("branch"), 'C', checkout, RUN_REQUEST_DEFAULT);
-	add_run_request(get_keymap("generic"), 'G', gc, RUN_REQUEST_DEFAULT);
+	add_run_request(get_keymap("branch"), 'C', checkout, RUN_REQUEST_CONFIRM);
+	add_run_request(get_keymap("generic"), 'G', gc, RUN_REQUEST_CONFIRM);
 }
 
 /*
@@ -1533,9 +1536,11 @@ option_bind_command(int argc, const char *argv[])
 	if (request == REQ_UNKNOWN && *argv[2]++ == '!') {
 		enum run_request_flag flags = RUN_REQUEST_FORCE;
 
-		while (TRUE) {
+		while (*argv[2]) {
 			if (*argv[2] == '@') {
 				flags |= RUN_REQUEST_SILENT;
+			} else if (*argv[2] == '?') {
+				flags |= RUN_REQUEST_CONFIRM;
 			} else {
 				break;
 			}
@@ -3262,7 +3267,21 @@ open_run_request(enum request request)
 	}
 
 	if (format_argv(&argv, req->argv, FALSE)) {
-		if (req->silent)
+		bool confirmed = !req->confirm;
+
+		if (req->confirm) {
+			char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
+
+			if (argv_to_string(req->argv, cmd, sizeof(cmd), " ") &&
+			    string_format(prompt, "Run `%s`?", cmd) &&
+			    prompt_yesno(prompt)) {
+				confirmed = TRUE;
+			}
+		}
+
+		if (!confirmed)
+			; /* Nothing */
+		else if (req->silent)
 			io_run_bg(argv);
 		else
 			open_external_viewer(argv, NULL);

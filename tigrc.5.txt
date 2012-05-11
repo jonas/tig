@@ -270,8 +270,9 @@ Apart from the action names listed below, all actions starting with a '!' will
 be available as an external command. External commands can contain variable
 names that will be substituted before the command is run. By default, commands
 are run in the foreground with their console output shown, if they should be
-run in the background wit no output prefix the command with '@'. Valid
-variable names are:
+run in the background with no output, prefix the command with '@'. If
+the command is also prefixed with a '?', the user will be prompted for
+confirmation. Valid variable names are:
 
 .Browsing state variables
 [frame="none",grid="none",cols="25<m,75<"]
