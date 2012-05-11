@@ -1099,6 +1099,12 @@ get_keys(struct keymap *keymap, enum request request, bool all)
 	return buf;
 }
 
+enum run_request_flag {
+	RUN_REQUEST_DEFAULT	= 0,
+	RUN_REQUEST_FORCE	= 1,
+	RUN_REQUEST_SILENT	= 2,
+};
+
 struct run_request {
 	struct keymap *keymap;
 	int key;
@@ -1112,8 +1118,9 @@ static size_t run_requests;
 DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 
 static bool
-add_run_request(struct keymap *keymap, int key, const char **argv, bool silent, bool force)
+add_run_request(struct keymap *keymap, int key, const char **argv, enum run_request_flag flags)
 {
+	bool force = flags & RUN_REQUEST_FORCE;
 	struct run_request *req;
 
 	if (!force && get_keybinding(keymap, key) != key)
@@ -1126,7 +1133,7 @@ add_run_request(struct keymap *keymap, int key, const char **argv, bool silent, 
 		return FALSE;
 
 	req = &run_request[run_requests++];
-	req->silent = silent;
+	req->silent = flags & RUN_REQUEST_SILENT;
 	req->keymap = keymap;
 	req->key = key;
 
@@ -1150,10 +1157,10 @@ add_builtin_run_requests(void)
 	const char *commit[] = { "git", "commit", NULL };
 	const char *gc[] = { "git", "gc", NULL };
 
-	add_run_request(get_keymap("main"), 'C', cherry_pick, FALSE, FALSE);
-	add_run_request(get_keymap("status"), 'C', commit, FALSE, FALSE);
-	add_run_request(get_keymap("branch"), 'C', checkout, FALSE, FALSE);
-	add_run_request(get_keymap("generic"), 'G', gc, FALSE, FALSE);
+	add_run_request(get_keymap("main"), 'C', cherry_pick, RUN_REQUEST_DEFAULT);
+	add_run_request(get_keymap("status"), 'C', commit, RUN_REQUEST_DEFAULT);
+	add_run_request(get_keymap("branch"), 'C', checkout, RUN_REQUEST_DEFAULT);
+	add_run_request(get_keymap("generic"), 'G', gc, RUN_REQUEST_DEFAULT);
 }
 
 /*
@@ -1524,11 +1531,18 @@ option_bind_command(int argc, const char *argv[])
 		}
 	}
 	if (request == REQ_UNKNOWN && *argv[2]++ == '!') {
-		bool silent = *argv[2] == '@';
+		enum run_request_flag flags = RUN_REQUEST_FORCE;
 
-		if (silent)
+		while (TRUE) {
+			if (*argv[2] == '@') {
+				flags |= RUN_REQUEST_SILENT;
+			} else {
+				break;
+			}
 			argv[2]++;
-		return add_run_request(keymap, key, argv + 2, silent, TRUE)
+		}
+
+		return add_run_request(keymap, key, argv + 2, flags)
 			? OPT_OK : OPT_ERR_OUT_OF_MEMORY;
 	}
 	if (request == REQ_UNKNOWN)
