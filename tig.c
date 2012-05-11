@@ -3272,7 +3272,7 @@ open_run_request(enum request request)
 		if (req->confirm) {
 			char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
 
-			if (argv_to_string(req->argv, cmd, sizeof(cmd), " ") &&
+			if (argv_to_string(argv, cmd, sizeof(cmd), " ") &&
 			    string_format(prompt, "Run `%s`?", cmd) &&
 			    prompt_yesno(prompt)) {
 				confirmed = TRUE;
