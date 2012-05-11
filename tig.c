@@ -3743,16 +3743,13 @@ add_describe_ref(char *buf, size_t *bufpos, const char *commit_id, const char *s
 }
 
 static void
-add_pager_refs(struct view *view, struct line *line)
+add_pager_refs(struct view *view, const char *commit_id)
 {
 	char buf[SIZEOF_STR];
-	char *commit_id = (char *)line->data + STRING_SIZE("commit ");
 	struct ref_list *list;
 	size_t bufpos = 0, i;
 	const char *sep = "Refs: ";
 	bool is_tag = FALSE;
-
-	assert(line->type == LINE_COMMIT);
 
 	list = get_ref_list(commit_id);
 	if (!list) {
@@ -3799,7 +3796,7 @@ pager_common_read(struct view *view, const char *data, enum line_type type)
 		return FALSE;
 
 	if (line->type == LINE_COMMIT && view_has_flags(view, VIEW_ADD_PAGER_REFS))
-		add_pager_refs(view, line);
+		add_pager_refs(view, data + STRING_SIZE("commit "));
 
 	return TRUE;
 }
