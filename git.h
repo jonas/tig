@@ -47,9 +47,8 @@
 	GIT_DIFF_INITIAL("", context_arg, space_arg, "/dev/null", new_name)
 
 #define GIT_MAIN_LOG(diffargs, revargs, fileargs) \
-	"git", "log", ENCODING_ARG, "--no-color", "--date=raw", \
+	"git", "log", ENCODING_ARG, "--no-color", "--pretty=raw", "--parents", \
 		opt_commit_order_arg, (diffargs), (revargs), \
-		"--pretty=format:commit %m%H %P%nauthor %an <%ae> %ad%ntitle %s", \
 		"--", (fileargs), NULL
 
 #endif

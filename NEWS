@@ -9,6 +9,10 @@ Improvements:
  - User-defined commands prefixed with a '?' means prompt before execution.
    Example: `bind main B !?git rebase -i %(commit)`
 
+Bug fixes:
+
+ - Fix commit graph regression when a path spec is specified. (GH #53)
+
 tig-1.0
 -------
 

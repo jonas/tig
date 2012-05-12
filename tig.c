@@ -6949,6 +6949,7 @@ main_read(struct view *view, char *line)
 	struct graph *graph = view->private;
 	enum line_type type;
 	struct commit *commit;
+	static bool in_header;
 
 	if (!line) {
 		if (!view->lines && !view->prev)
@@ -6970,6 +6971,7 @@ main_read(struct view *view, char *line)
 	if (type == LINE_COMMIT) {
 		bool is_boundary;
 
+		in_header = TRUE;
 		line += STRING_SIZE("commit ");
 		is_boundary = *line == '-';
 		if (is_boundary || !isalnum(*line))
@@ -6984,6 +6986,10 @@ main_read(struct view *view, char *line)
 	if (!view->lines)
 		return TRUE;
 	commit = view->line[view->lines - 1].data;
+
+	/* Empty line separates the commit header from the log itself. */
+	if (*line == '\0')
+		in_header = FALSE;
 
 	switch (type) {
 	case LINE_PARENT:
@@ -7002,7 +7008,15 @@ main_read(struct view *view, char *line)
 		if (commit->title[0])
 			break;
 
-		line += STRING_SIZE("title ");
+		/* Skip lines in the commit header. */
+		if (in_header)
+			break;
+
+		/* Require titles to start with a non-space character at the
+		 * offset used by git log. */
+		if (strncmp(line, "    ", 4))
+			break;
+		line += 4;
 		/* Well, if the title starts with a whitespace character,
 		 * try to be forgiving.  Otherwise we end up with no title. */
 		while (isspace(*line))
