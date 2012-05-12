@@ -6,6 +6,10 @@ VERSION	= 1.0
 
 all:
 
+# Include kernel specific configuration
+kernel_name := $(shell sh -c 'uname -s 2>/dev/null || echo unknown')
+-include contrib/config.make-$(kernel_name)
+
 # Include setting from the configure script
 -include config.make
 
