@@ -437,7 +437,7 @@ static const char **opt_blame_argv	= NULL;
 static int opt_lineno			= 0;
 
 #define is_initial_commit()	(!get_ref_head())
-#define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strcmp(rev, get_ref_head()->id)))
+#define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
 #define load_refs()		reload_refs(opt_git_dir, opt_remote, opt_head, sizeof(opt_head))
 
 static inline void
@@ -6865,6 +6865,7 @@ struct main_state {
 	struct graph graph;
 	struct commit *current;
 	bool in_header;
+	bool added_changes_commits;
 };
 
 static struct commit *
@@ -6923,12 +6924,17 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 }
 
 static void
-main_add_changes_commits(struct view *view, const char *parent)
+main_add_changes_commits(struct view *view, struct main_state *state, const char *parent)
 {
 	const char *staged_argv[] = { GIT_DIFF_STAGED_FILES("--quiet") };
 	const char *unstaged_argv[] = { GIT_DIFF_UNSTAGED_FILES("--quiet") };
 	const char *staged_parent = NULL_ID;
 	const char *unstaged_parent = parent;
+
+	if (!is_head_commit(parent))
+		return;
+
+	state->added_changes_commits = TRUE;
 
 	io_run_bg(update_index_argv);
 
@@ -7017,8 +7023,8 @@ main_read(struct view *view, char *line)
 		if (is_boundary || !isalnum(*line))
 			line++;
 
-		if (!view->lines && opt_show_changes && opt_is_inside_work_tree)
-			main_add_changes_commits(view, line);
+		if (!state->added_changes_commits && opt_show_changes && opt_is_inside_work_tree)
+			main_add_changes_commits(view, state, line);
 
 		state->current = main_add_commit(view, LINE_MAIN_COMMIT, line, is_boundary, FALSE);
 		return state->current != NULL;
