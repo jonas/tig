@@ -3042,26 +3042,56 @@ update_view(struct view *view)
 DEFINE_ALLOCATOR(realloc_lines, struct line, 256)
 
 static struct line *
-add_line_data(struct view *view, void *data, enum line_type type)
+add_line(struct view *view, const void *data, enum line_type type, size_t data_size)
 {
 	struct line *line;
 
 	if (!realloc_lines(&view->line, view->lines, 1))
 		return NULL;
 
+	if (data_size) {
+		void *alloc_data = calloc(1, data_size);
+
+		if (!alloc_data)
+			return NULL;
+
+		if (data)
+			memcpy(alloc_data, data, data_size);
+		data = alloc_data;
+	}
+
 	line = &view->line[view->lines++];
 	memset(line, 0, sizeof(*line));
 	line->type = type;
-	line->data = data;
+	line->data = (void *) data;
 	line->dirty = 1;
 
 	return line;
 }
 
 static struct line *
-add_line_static_data(struct view *view, void *data, enum line_type type)
+add_line_alloc_(struct view *view, void **ptr, enum line_type type, size_t data_size)
 {
-	struct line *line = add_line_data(view, data, type);
+	struct line *line = add_line(view, NULL, type, data_size);
+
+	if (line)
+		*ptr = line->data;
+	return line;
+}
+
+#define add_line_alloc(view, data_ptr, type, extra_size) \
+	add_line_alloc_(view, (void **) data_ptr, type, sizeof(**data_ptr) + extra_size)
+
+static struct line *
+add_line_nodata(struct view *view, enum line_type type)
+{
+	return add_line(view, NULL, type, 0);
+}
+
+static struct line *
+add_line_static_data(struct view *view, const void *data, enum line_type type)
+{
+	struct line *line = add_line(view, data, type, 0);
 
 	if (line)
 		line->dont_free = TRUE;
@@ -3071,9 +3101,7 @@ add_line_static_data(struct view *view, void *data, enum line_type type)
 static struct line *
 add_line_text(struct view *view, const char *text, enum line_type type)
 {
-	char *data = text ? strdup(text) : NULL;
-
-	return data ? add_line_data(view, data, type) : NULL;
+	return add_line(view, text, type, strlen(text) + 1);
 }
 
 static struct line *
@@ -4591,13 +4619,11 @@ static struct line *
 tree_entry(struct view *view, enum line_type type, const char *path,
 	   const char *mode, const char *id)
 {
-	struct tree_entry *entry = calloc(1, sizeof(*entry) + strlen(path));
-	struct line *line = entry ? add_line_data(view, entry, type) : NULL;
+	struct tree_entry *entry;
+	struct line *line = add_line_alloc(view, &entry, type, strlen(path));
 
-	if (!entry || !line) {
-		free(entry);
+	if (!line)
 		return NULL;
-	}
 
 	strncpy(entry->name, path, strlen(path));
 	if (mode)
@@ -5164,9 +5190,9 @@ read_blame_commit(struct view *view, const char *text, struct blame_state *state
 }
 
 static bool
-blame_read_file(struct view *view, const char *line, struct blame_state *state)
+blame_read_file(struct view *view, const char *text, struct blame_state *state)
 {
-	if (!line) {
+	if (!text) {
 		const char *blame_argv[] = {
 			"git", "blame", ENCODING_ARG, "%(blameargs)", "--incremental",
 				*opt_ref ? opt_ref : "--incremental", "--", opt_file, NULL
@@ -5189,16 +5215,16 @@ blame_read_file(struct view *view, const char *line, struct blame_state *state)
 		return FALSE;
 
 	} else {
-		size_t linelen = strlen(line);
-		struct blame *blame = malloc(sizeof(*blame) + linelen);
+		size_t textlen = strlen(text);
+		struct blame *blame;
 
-		if (!blame)
+		if (!add_line_alloc(view, &blame, LINE_BLAME_ID, textlen))
 			return FALSE;
 
 		blame->commit = NULL;
-		strncpy(blame->text, line, linelen);
-		blame->text[linelen] = 0;
-		return add_line_data(view, blame, LINE_BLAME_ID) != NULL;
+		strncpy(blame->text, text, textlen);
+		blame->text[textlen] = 0;
+		return TRUE;
 	}
 }
 
@@ -5614,8 +5640,7 @@ branch_open_visitor(void *data, const struct ref *ref)
 	if (ref->tag || ref->ltag)
 		return TRUE;
 
-	branch = calloc(1, sizeof(*branch));
-	if (!branch)
+	if (!add_line_alloc(view, &branch, LINE_DEFAULT, 0))
 		return FALSE;
 
 	ref_length = strlen(ref->name);
@@ -5623,7 +5648,7 @@ branch_open_visitor(void *data, const struct ref *ref)
 		state->max_ref_length = ref_length;
 
 	branch->ref = ref;
-	return !!add_line_data(view, branch, LINE_DEFAULT);
+	return TRUE;
 }
 
 static bool
@@ -5762,14 +5787,13 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	if (!io_run(&io, IO_RD, opt_cdup, argv))
 		return FALSE;
 
-	add_line_data(view, NULL, type);
+	add_line_nodata(view, type);
 
 	while ((buf = io_get(&io, 0, TRUE))) {
 		struct status *file = unmerged;
 
 		if (!file) {
-			file = calloc(1, sizeof(*file));
-			if (!file || !add_line_data(view, file, type))
+			if (!add_line_alloc(view, &file, type, 0))
 				goto error_out;
 		}
 
@@ -5823,7 +5847,7 @@ error_out:
 	}
 
 	if (!view->line[view->lines - 1].data)
-		add_line_data(view, NULL, LINE_STAT_NONE);
+		add_line_nodata(view, LINE_STAT_NONE);
 
 	io_done(&io);
 	return TRUE;
@@ -5938,7 +5962,7 @@ status_open(struct view *view, enum open_flags flags)
 
 	reset_view(view);
 
-	add_line_data(view, NULL, LINE_STAT_HEAD);
+	add_line_nodata(view, LINE_STAT_HEAD);
 	status_update_onbranch();
 
 	io_run_bg(update_index_argv);
@@ -6842,13 +6866,11 @@ main_add_commit(struct view *view, enum line_type type, const char *ids, bool is
 	struct main_state *state = view->private;
 	struct commit *commit;
 
-	commit = calloc(1, sizeof(struct commit));
-	if (!commit)
+	if (!add_line_alloc(view, &commit, type, 0))
 		return NULL;
 
 	string_copy_rev(commit->id, ids);
 	commit->refs = get_ref_list(commit->id);
-	add_line_data(view, commit, type);
 	graph_add_commit(&state->graph, &commit->graph, commit->id, ids, is_boundary);
 	return commit;
 }
