@@ -6830,10 +6830,16 @@ struct commit {
 	struct graph_canvas graph;	/* Ancestry chain graphics. */
 };
 
+struct main_state {
+	struct graph graph;
+	struct commit *current;
+	bool in_header;
+};
+
 static struct commit *
 main_add_commit(struct view *view, enum line_type type, const char *ids, bool is_boundary)
 {
-	struct graph *graph = view->private;
+	struct main_state *state = view->private;
 	struct commit *commit;
 
 	commit = calloc(1, sizeof(struct commit));
@@ -6843,7 +6849,7 @@ main_add_commit(struct view *view, enum line_type type, const char *ids, bool is
 	string_copy_rev(commit->id, ids);
 	commit->refs = get_ref_list(commit->id);
 	add_line_data(view, commit, type);
-	graph_add_commit(graph, &commit->graph, commit->id, ids, is_boundary);
+	graph_add_commit(&state->graph, &commit->graph, commit->id, ids, is_boundary);
 	return commit;
 }
 
@@ -6862,7 +6868,7 @@ static void
 main_add_changes_commit(struct view *view, enum line_type type, const char *parent, const char *title)
 {
 	char ids[SIZEOF_STR] = NULL_ID " ";
-	struct graph *graph = view->private;
+	struct main_state *state = view->private;
 	struct commit *commit;
 	struct timeval now;
 	struct timezone tz;
@@ -6884,7 +6890,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 
 	commit->author = "";
 	string_ncopy(commit->title, title, strlen(title));
-	graph_render_parents(graph);
+	graph_render_parents(&state->graph);
 }
 
 static void
@@ -6951,10 +6957,10 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 static bool
 main_read(struct view *view, char *line)
 {
-	struct graph *graph = view->private;
+	struct main_state *state = view->private;
+	struct graph *graph = &state->graph;
 	enum line_type type;
-	struct commit *commit;
-	static bool in_header;
+	struct commit *commit = state->current;
 
 	if (!line) {
 		if (!view->lines && !view->prev)
@@ -6976,7 +6982,7 @@ main_read(struct view *view, char *line)
 	if (type == LINE_COMMIT) {
 		bool is_boundary;
 
-		in_header = TRUE;
+		state->in_header = TRUE;
 		line += STRING_SIZE("commit ");
 		is_boundary = *line == '-';
 		if (is_boundary || !isalnum(*line))
@@ -6985,16 +6991,16 @@ main_read(struct view *view, char *line)
 		if (!view->lines && opt_show_changes && opt_is_inside_work_tree)
 			main_add_changes_commits(view, line);
 
-		return main_add_commit(view, LINE_MAIN_COMMIT, line, is_boundary) != NULL;
+		state->current = main_add_commit(view, LINE_MAIN_COMMIT, line, is_boundary);
+		return state->current != NULL;
 	}
 
-	if (!view->lines)
+	if (!view->lines || !commit)
 		return TRUE;
-	commit = view->line[view->lines - 1].data;
 
 	/* Empty line separates the commit header from the log itself. */
 	if (*line == '\0')
-		in_header = FALSE;
+		state->in_header = FALSE;
 
 	switch (type) {
 	case LINE_PARENT:
@@ -7014,7 +7020,7 @@ main_read(struct view *view, char *line)
 			break;
 
 		/* Skip lines in the commit header. */
-		if (in_header)
+		if (state->in_header)
 			break;
 
 		/* Require titles to start with a non-space character at the
@@ -7153,7 +7159,7 @@ static struct view_ops main_ops = {
 	"commit",
 	{ "main" },
 	VIEW_NO_FLAGS,
-	sizeof(struct graph),
+	sizeof(struct main_state),
 	main_open,
 	main_read,
 	main_draw,
