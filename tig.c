@@ -400,6 +400,7 @@ static bool opt_show_refs		= TRUE;
 static bool opt_show_changes		= TRUE;
 static bool opt_untracked_dirs_content	= TRUE;
 static bool opt_read_git_colors		= TRUE;
+static bool opt_wrap_lines		= FALSE;
 static bool opt_ignore_case		= FALSE;
 static int opt_diff_context		= 3;
 static char opt_diff_context_arg[9]	= "";
@@ -767,6 +768,7 @@ struct line {
 	unsigned int dirty:1;
 	unsigned int cleareol:1;
 	unsigned int dont_free:1;
+	unsigned int wrapped:1;
 
 	void *data;		/* User data */
 };
@@ -1500,6 +1502,9 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "ignore-case"))
 		return parse_bool(&opt_ignore_case, argv[2]);
+
+	if (!strcmp(argv[0], "wrap-lines"))
+		return parse_bool(&opt_wrap_lines, argv[2]);
 
 	return OPT_ERR_UNKNOWN_VARIABLE_NAME;
 }
@@ -3797,6 +3802,9 @@ pager_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_lineno(view, lineno))
 		return TRUE;
 
+	if (line->wrapped && draw_text(view, LINE_DELIMITER, "+"))
+		return TRUE;
+
 	draw_text(view, line->type, line->data);
 	return TRUE;
 }
@@ -3858,6 +3866,41 @@ try_add_describe_ref:
 	add_line_text(view, buf, LINE_PP_REFS);
 }
 
+static struct line *
+pager_wrap_line(struct view *view, const char *data, enum line_type type)
+{
+	struct line *first_line = NULL;
+	size_t datalen = strlen(data);
+	size_t lineno = 0;
+
+	while (datalen > 0 || !first_line) {
+		bool wrapped = first_line != NULL;
+		size_t linelen = string_expanded_length(data, datalen, opt_tab_size, view->width - !!wrapped);
+		struct line *line;
+		char *text;
+
+		line = add_line(view, NULL, type, linelen + 1, wrapped);
+		if (!line)
+			break;
+		if (!first_line)
+			first_line = line;
+		if (!wrapped)
+			lineno = line->lineno;
+
+		line->wrapped = wrapped;
+		line->lineno = lineno;
+		text = line->data;
+		if (linelen)
+			strncpy(text, data, linelen);
+		text[linelen] = 0;
+
+		datalen -= linelen;
+		data += linelen;
+	}
+
+	return first_line;
+}
+
 static bool
 pager_common_read(struct view *view, const char *data, enum line_type type)
 {
@@ -3866,7 +3909,12 @@ pager_common_read(struct view *view, const char *data, enum line_type type)
 	if (!data)
 		return TRUE;
 
-	line = add_line_text(view, data, type);
+	if (opt_wrap_lines) {
+		line = pager_wrap_line(view, data, type);
+	} else {
+		line = add_line_text(view, data, type);
+	}
+
 	if (!line)
 		return FALSE;
 
@@ -4127,6 +4175,9 @@ diff_common_draw(struct view *view, struct line *line, unsigned int lineno)
 	enum line_type type = line->type;
 
 	if (draw_lineno(view, lineno))
+		return TRUE;
+
+	if (line->wrapped && draw_text(view, LINE_DELIMITER, "+"))
 		return TRUE;
 
 	if (type == LINE_DIFF_STAT) {

@@ -6,12 +6,16 @@ master
 
 Improvements:
 
+ - Basic support for wrapping long line in pager, diff, and stage views.
+   Enable using: `set wrap-lines = yes`. (GH #2)
  - User-defined commands prefixed with a '?' means prompt before execution.
    Example: `bind main B !?git rebase -i %(commit)`
+ - Configure case-insensitive searches using: `set ignore-case = yes`.
 
 Bug fixes:
 
  - Fix commit graph regression when a path spec is specified. (GH #53)
+ - Main view: only show staged/unstaged changes for the current branch.
 
 tig-1.0
 -------
@@ -57,7 +61,6 @@ Improvements:
  - Branch view: Show the title of the last commit.
  - Increase the author auto-abbreviation threshold to 10. (GH #49)
  - For old commits show number of years in relative dates. (GH #50)
-
 
 Bug fixes:
 

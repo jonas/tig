@@ -202,6 +202,11 @@ The following variables can be set:
 
 	Ignore case in searches. By default, the search is case sensitive.
 
+'wrap-lines' (bool)::
+
+	Wrap long lines. By default, lines are not wrapped.
+	Not compatible with line numbers enabled.
+
 Bind command
 ------------
 

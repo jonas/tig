@@ -258,6 +258,24 @@ string_copy_rev(char *dst, const char *src)
 	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
 
 static inline size_t
+string_expanded_length(const char *src, size_t srclen, size_t tabsize, size_t max_size)
+{
+	size_t size, pos;
+
+	for (size = pos = 0; pos < srclen && size < max_size; pos++) {
+		if (src[pos] == '\t') {
+			size_t expanded = tabsize - (size % tabsize);
+
+			size += expanded;
+		} else {
+			size++;
+		}
+	}
+
+	return pos;
+}
+
+static inline size_t
 string_expand(char *dst, size_t dstlen, const char *src, int tabsize)
 {
 	size_t size, pos;
