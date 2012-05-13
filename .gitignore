@@ -6,9 +6,11 @@ config.log
 config.make
 config.status
 configure
+cscope.out
 manual.html-chunked
 manual.pdf
 manual.toc
+tags
 tig
 tig-*.tar.gz
 tig-*.tar.gz.md5
