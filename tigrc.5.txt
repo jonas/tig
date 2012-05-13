@@ -198,6 +198,10 @@ The following variables can be set:
 	topological order, date order or reverse order. The default order is
 	used when the option is set to false, and topo order when set to true.
 
+'ignore-case' (bool)::
+
+	Ignore case in searches. By default, the search is case sensitive.
+
 Bind command
 ------------
 

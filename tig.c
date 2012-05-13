@@ -400,6 +400,7 @@ static bool opt_show_refs		= TRUE;
 static bool opt_show_changes		= TRUE;
 static bool opt_untracked_dirs_content	= TRUE;
 static bool opt_read_git_colors		= TRUE;
+static bool opt_ignore_case		= FALSE;
 static int opt_diff_context		= 3;
 static char opt_diff_context_arg[9]	= "";
 static enum ignore_space opt_ignore_space	= IGNORE_SPACE_NO;
@@ -1496,6 +1497,9 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "use-git-colors"))
 		return parse_bool(&opt_read_git_colors, argv[2]);
+
+	if (!strcmp(argv[0], "ignore-case"))
+		return parse_bool(&opt_ignore_case, argv[2]);
 
 	return OPT_ERR_UNKNOWN_VARIABLE_NAME;
 }
@@ -2701,6 +2705,7 @@ static void
 search_view(struct view *view, enum request request)
 {
 	int regex_err;
+	int regex_flags = opt_ignore_case ? REG_ICASE : 0;
 
 	if (view->regex) {
 		regfree(view->regex);
@@ -2711,7 +2716,7 @@ search_view(struct view *view, enum request request)
 			return;
 	}
 
-	regex_err = regcomp(view->regex, opt_search, REG_EXTENDED);
+	regex_err = regcomp(view->regex, opt_search, REG_EXTENDED | regex_flags);
 	if (regex_err != 0) {
 		char buf[SIZEOF_STR] = "unknown error";
 
