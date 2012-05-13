@@ -760,13 +760,13 @@ init_colors(void)
 
 struct line {
 	enum line_type type;
+	unsigned int lineno:24;
 
 	/* State flags */
 	unsigned int selected:1;
 	unsigned int dirty:1;
 	unsigned int cleareol:1;
 	unsigned int dont_free:1;
-	unsigned int other:16;
 
 	void *data;		/* User data */
 };
@@ -1772,7 +1772,10 @@ struct view {
 	size_t lines;		/* Total number of lines */
 	struct line *line;	/* Line index */
 	unsigned int digits;	/* Number of digits in the lines member. */
-	unsigned int lineoffset;/* Offset from where to count line objects. */
+
+	/* Number of lines with custom status, not to be counted in the
+	 * view title. */
+	unsigned int custom_lines;
 
 	/* Drawing */
 	struct line *curline;	/* Line currently being drawn. */
@@ -2179,11 +2182,12 @@ update_view_title(struct view *view)
 	char state[SIZEOF_STR];
 	size_t bufpos = 0, statelen = 0;
 	WINDOW *window = display[0] == view ? display_title[0] : display_title[1];
+	struct line *line = &view->line[view->pos.lineno];
 
 	assert(view_is_displayed(view));
 
-	if (!view_has_flags(view, VIEW_CUSTOM_STATUS) && view->lines &&
-	    view->pos.lineno >= view->lineoffset) {
+	if (!view_has_flags(view, VIEW_CUSTOM_STATUS) && view_has_line(view, line) &&
+	    line->lineno) {
 		unsigned int view_lines = view->pos.offset + view->height;
 		unsigned int lines = view->lines
 				   ? MIN(view_lines, view->lines) * 100 / view->lines
@@ -2191,8 +2195,8 @@ update_view_title(struct view *view)
 
 		string_format_from(state, &statelen, " - %s %d of %d (%d%%)",
 				   view->ops->type,
-				   view->pos.lineno + 1 - view->lineoffset,
-				   view->lines - view->lineoffset,
+				   line->lineno,
+				   view->lines - view->custom_lines,
 				   lines);
 
 	}
@@ -2762,7 +2766,7 @@ reset_view(struct view *view)
 	view->line = NULL;
 	view->lines  = 0;
 	view->vid[0] = 0;
-	view->lineoffset = 0;
+	view->custom_lines = 0;
 	view->update_secs = 0;
 }
 
@@ -3042,7 +3046,7 @@ update_view(struct view *view)
 DEFINE_ALLOCATOR(realloc_lines, struct line, 256)
 
 static struct line *
-add_line(struct view *view, const void *data, enum line_type type, size_t data_size)
+add_line(struct view *view, const void *data, enum line_type type, size_t data_size, bool custom)
 {
 	struct line *line;
 
@@ -3066,32 +3070,37 @@ add_line(struct view *view, const void *data, enum line_type type, size_t data_s
 	line->data = (void *) data;
 	line->dirty = 1;
 
+	if (custom)
+		view->custom_lines++;
+	else
+		line->lineno = view->lines - view->custom_lines;
+
 	return line;
 }
 
 static struct line *
-add_line_alloc_(struct view *view, void **ptr, enum line_type type, size_t data_size)
+add_line_alloc_(struct view *view, void **ptr, enum line_type type, size_t data_size, bool custom)
 {
-	struct line *line = add_line(view, NULL, type, data_size);
+	struct line *line = add_line(view, NULL, type, data_size, custom);
 
 	if (line)
 		*ptr = line->data;
 	return line;
 }
 
-#define add_line_alloc(view, data_ptr, type, extra_size) \
-	add_line_alloc_(view, (void **) data_ptr, type, sizeof(**data_ptr) + extra_size)
+#define add_line_alloc(view, data_ptr, type, extra_size, custom) \
+	add_line_alloc_(view, (void **) data_ptr, type, sizeof(**data_ptr) + extra_size, custom)
 
 static struct line *
 add_line_nodata(struct view *view, enum line_type type)
 {
-	return add_line(view, NULL, type, 0);
+	return add_line(view, NULL, type, 0, FALSE);
 }
 
 static struct line *
 add_line_static_data(struct view *view, const void *data, enum line_type type)
 {
-	struct line *line = add_line(view, data, type, 0);
+	struct line *line = add_line(view, data, type, 0, FALSE);
 
 	if (line)
 		line->dont_free = TRUE;
@@ -3101,7 +3110,7 @@ add_line_static_data(struct view *view, const void *data, enum line_type type)
 static struct line *
 add_line_text(struct view *view, const char *text, enum line_type type)
 {
-	return add_line(view, text, type, strlen(text) + 1);
+	return add_line(view, text, type, strlen(text) + 1, FALSE);
 }
 
 static struct line *
@@ -4553,7 +4562,7 @@ push_tree_stack_entry(const char *name, unsigned long lineno)
 #define TREE_ID_OFFSET \
 	STRING_SIZE("100644 blob ")
 
-#define tree_entry_is_parent(entry)	(!strcmp("..", (entry)->name))
+#define tree_path_is_parent(path)	(!strcmp("..", (path)))
 
 struct tree_entry {
 	char id[SIZEOF_REV];
@@ -4619,8 +4628,9 @@ static struct line *
 tree_entry(struct view *view, enum line_type type, const char *path,
 	   const char *mode, const char *id)
 {
+	bool custom = type == LINE_TREE_HEAD || tree_path_is_parent(path);
 	struct tree_entry *entry;
-	struct line *line = add_line_alloc(view, &entry, type, strlen(path));
+	struct line *line = add_line_alloc(view, &entry, type, strlen(path), custom);
 
 	if (!line)
 		return NULL;
@@ -4630,8 +4640,6 @@ tree_entry(struct view *view, enum line_type type, const char *path,
 		entry->mode = strtoul(mode, NULL, 8);
 	if (id)
 		string_copy_rev(entry->id, id);
-	if (type == LINE_TREE_HEAD || tree_entry_is_parent(entry))
-		view->lineoffset++;
 
 	return line;
 }
@@ -4758,7 +4766,7 @@ tree_read(struct view *view, char *text)
 	}
 
 	if (tree_lineno <= view->pos.lineno)
-		tree_lineno = view->lineoffset;
+		tree_lineno = view->custom_lines;
 
 	if (tree_lineno > view->pos.lineno) {
 		view->pos.lineno = tree_lineno;
@@ -4918,7 +4926,7 @@ tree_select(struct view *view, struct line *line)
 		return;
 	}
 
-	if (line->type == LINE_TREE_DIR && tree_entry_is_parent(entry)) {
+	if (line->type == LINE_TREE_DIR && tree_path_is_parent(entry->name)) {
 		string_copy(view->ref, "Open parent directory");
 		return;
 	}
@@ -5218,7 +5226,7 @@ blame_read_file(struct view *view, const char *text, struct blame_state *state)
 		size_t textlen = strlen(text);
 		struct blame *blame;
 
-		if (!add_line_alloc(view, &blame, LINE_BLAME_ID, textlen))
+		if (!add_line_alloc(view, &blame, LINE_BLAME_ID, textlen, FALSE))
 			return FALSE;
 
 		blame->commit = NULL;
@@ -5640,7 +5648,7 @@ branch_open_visitor(void *data, const struct ref *ref)
 	if (ref->tag || ref->ltag)
 		return TRUE;
 
-	if (!add_line_alloc(view, &branch, LINE_DEFAULT, 0))
+	if (!add_line_alloc(view, &branch, LINE_DEFAULT, 0, ref == &branch_all))
 		return FALSE;
 
 	ref_length = strlen(ref->name);
@@ -5665,8 +5673,7 @@ branch_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	}
 
-	if (branch_open_visitor(view, &branch_all))
-		view->lineoffset++;
+	branch_open_visitor(view, &branch_all);
 	foreach_ref(branch_open_visitor, view);
 
 	return TRUE;
@@ -5793,7 +5800,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 		struct status *file = unmerged;
 
 		if (!file) {
-			if (!add_line_alloc(view, &file, type, 0))
+			if (!add_line_alloc(view, &file, type, 0, FALSE))
 				goto error_out;
 		}
 
@@ -6861,12 +6868,13 @@ struct main_state {
 };
 
 static struct commit *
-main_add_commit(struct view *view, enum line_type type, const char *ids, bool is_boundary)
+main_add_commit(struct view *view, enum line_type type, const char *ids,
+		bool is_boundary, bool custom)
 {
 	struct main_state *state = view->private;
 	struct commit *commit;
 
-	if (!add_line_alloc(view, &commit, type, 0))
+	if (!add_line_alloc(view, &commit, type, 0, custom))
 		return NULL;
 
 	string_copy_rev(commit->id, ids);
@@ -6900,11 +6908,10 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 
 	string_copy_rev(ids + STRING_SIZE(NULL_ID " "), parent);
 
-	commit = main_add_commit(view, type, ids, FALSE);
+	commit = main_add_commit(view, type, ids, FALSE, TRUE);
 	if (!commit)
 		return;
 
-	view->lineoffset++;
 	if (!gettimeofday(&now, &tz)) {
 		commit->time.tz = tz.tz_minuteswest * 60;
 		commit->time.sec = now.tv_sec - commit->time.tz;
@@ -7013,7 +7020,7 @@ main_read(struct view *view, char *line)
 		if (!view->lines && opt_show_changes && opt_is_inside_work_tree)
 			main_add_changes_commits(view, line);
 
-		state->current = main_add_commit(view, LINE_MAIN_COMMIT, line, is_boundary);
+		state->current = main_add_commit(view, LINE_MAIN_COMMIT, line, is_boundary, FALSE);
 		return state->current != NULL;
 	}
 
