@@ -8064,11 +8064,16 @@ main(int argc, const char *argv[])
 					report("Jumping to commits is not supported by the '%s' view", view->name);
 				}
 
-			} else if (cmd) {
-				struct view *next = VIEW(REQ_VIEW_PAGER);
-				const char *argv[SIZEOF_ARG] = { "git" };
-				int argc = 1;
+			} else if (cmd && strlen(cmd) == 1) {
+				request = get_keybinding(&view->ops->keymap, cmd[0]);
+				break;
 
+			} else if (cmd && cmd[0] == '!') {
+				struct view *next = VIEW(REQ_VIEW_PAGER);
+				const char *argv[SIZEOF_ARG];
+				int argc = 0;
+
+				cmd++;
 				/* When running random commands, initially show the
 				 * command in the title. However, it maybe later be
 				 * overwritten if a commit line is selected. */
@@ -8082,6 +8087,10 @@ main(int argc, const char *argv[])
 					next->dir = NULL;
 					open_view(view, REQ_VIEW_PAGER, OPEN_PREPARED);
 				}
+
+			} else if (cmd) {
+				request = get_request(cmd);
+				break;
 			}
 
 			request = REQ_NONE;
