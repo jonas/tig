@@ -6,6 +6,9 @@ master
 
 Improvements:
 
+ - Typing a text in the prompt will be interpreted as a tig command. Prefixing
+   the command with a '!' will execute this system command in an external
+   pager. Entering a single key will execute the corresponding key binding.
  - Basic support for wrapping long line in pager, diff, and stage views.
    Enable using: `set wrap-lines = yes`. (GH #2)
  - User-defined commands prefixed with a '?' means prompt before execution.

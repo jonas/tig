@@ -393,12 +393,22 @@ Misc
 |~	|Toggle (line) graphics mode
 |F	|Toggle reference display on/off (tag and branch names).
 |W	|Toggle ignoring whitespace on/off for diffs
-|:	|Open prompt. This allows you to specify what git command
-	 to run. Example `:log -p`. You can also use this to jump
-	 to a specific line by typing `:<linenumber>`, e.g. `:80`,
-	 or jump to a specific commit by typing `:<sha>`, e.g.
-	 `:2f12bcc`.
+|:	|Open prompt. This allows you to specify what command to run.
 |e	|Open file in editor.
+|=============================================================================
+
+[[prompt]]
+Prompt
+~~~~~~
+
+[frame="none",grid="none",cols="2<,8<",options="header"]
+|=============================================================================
+|Key		|Action
+|:<number>	|Jump to the specific line number, e.g. `:80`.
+|:<sha>		|Jump to a specific commit, e.g. `:2f12bcc`.
+|:<x>		|Execute the corresponding key binding, e.g. `:q`.
+|:!<command>	|Execute a system command in a pager, e.g. `:!git log -p`.
+|:<action>	|Execute a tig command, e.g. `:edit`.
 |=============================================================================
 
 [[external-commands]]
