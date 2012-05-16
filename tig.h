@@ -67,8 +67,10 @@
 
 #if __GNUC__ >= 3
 #define __NORETURN __attribute__((__noreturn__))
+#define PRINTF_LIKE(fmt, args) __attribute__((format (printf, fmt, args)))
 #else
 #define __NORETURN
+#define PRINTF_LIKE(fmt, args)
 #endif
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
@@ -312,7 +314,7 @@ chomp_string(char *name)
 	return name;
 }
 
-static inline bool
+static inline bool PRINTF_LIKE(4, 5)
 string_nformat(char *buf, size_t bufsize, size_t *bufpos, const char *fmt, ...)
 {
 	size_t pos = bufpos ? *bufpos : 0;

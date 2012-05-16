@@ -17,9 +17,10 @@
 #include "graph.h"
 #include "git.h"
 
-static void __NORETURN die(const char *err, ...);
-static void warn(const char *msg, ...);
-static void report(const char *msg, ...);
+static void __NORETURN die(const char *err, ...) PRINTF_LIKE(1, 2);
+static void warn(const char *msg, ...) PRINTF_LIKE(1, 2);
+static void report(const char *msg, ...) PRINTF_LIKE(1, 2);
+#define report_clear() report("%s", "")
 
 
 enum input_status {
@@ -1963,7 +1964,7 @@ draw_text(struct view *view, enum line_type type, const char *string)
 	return VIEW_MAX_LEN(view) <= 0;
 }
 
-static bool
+static bool PRINTF_LIKE(3, 4)
 draw_formatted(struct view *view, enum line_type type, const char *format, ...)
 {
 	char text[SIZEOF_STR];
@@ -2198,7 +2199,7 @@ update_view_title(struct view *view)
 				   ? MIN(view_lines, view->lines) * 100 / view->lines
 				   : 0;
 
-		string_format_from(state, &statelen, " - %s %d of %d (%d%%)",
+		string_format_from(state, &statelen, " - %s %d of %ld (%d%%)",
 				   view->ops->type,
 				   line->lineno,
 				   view->lines - view->custom_lines,
@@ -2465,7 +2466,7 @@ do_scroll_view(struct view *view, int lines)
 	}
 
 	view->has_scrolled = TRUE;
-	report("");
+	report_clear();
 }
 
 /* Scroll frontend */
@@ -2480,7 +2481,7 @@ scroll_view(struct view *view, enum request request)
 	case REQ_SCROLL_FIRST_COL:
 		view->pos.col = 0;
 		redraw_view_from(view, 0);
-		report("");
+		report_clear();
 		return;
 	case REQ_SCROLL_LEFT:
 		if (view->pos.col == 0) {
@@ -2492,12 +2493,12 @@ scroll_view(struct view *view, enum request request)
 		else
 			view->pos.col -= apply_step(opt_hscroll, view->width);
 		redraw_view_from(view, 0);
-		report("");
+		report_clear();
 		return;
 	case REQ_SCROLL_RIGHT:
 		view->pos.col += apply_step(opt_hscroll, view->width);
 		redraw_view(view);
-		report("");
+		report_clear();
 		return;
 	case REQ_SCROLL_PAGE_DOWN:
 		lines = view->height;
@@ -2622,7 +2623,7 @@ move_view(struct view *view, enum request request)
 	draw_view_line(view, view->pos.lineno - view->pos.offset);
 
 	wnoutrefresh(view->win);
-	report("");
+	report_clear();
 }
 
 
@@ -3027,7 +3028,7 @@ update_view(struct view *view)
 
 	} else if (io_eof(view->pipe)) {
 		if (view_is_displayed(view))
-			report("");
+			report_clear();
 		end_update(view, FALSE);
 	}
 
@@ -3118,7 +3119,7 @@ add_line_text(struct view *view, const char *text, enum line_type type)
 	return add_line(view, text, type, strlen(text) + 1, FALSE);
 }
 
-static struct line *
+static struct line * PRINTF_LIKE(3, 4)
 add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 {
 	char buf[SIZEOF_STR];
@@ -3164,7 +3165,7 @@ maximize_view(struct view *view, bool redraw)
 	resize_display();
 	if (redraw) {
 		redraw_display(FALSE);
-		report("");
+		report_clear();
 	}
 }
 
@@ -3206,10 +3207,10 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 		werase(view->win);
 		if (!(flags & (OPEN_RELOAD | OPEN_REFRESH)))
 			clear_position(&view->prev_pos);
-		report("");
+		report_clear();
 	} else if (view_is_displayed(view)) {
 		redraw_view(view);
-		report("");
+		report_clear();
 	}
 }
 
@@ -3424,7 +3425,7 @@ view_driver(struct view *view, enum request request)
 		current_view = next_view;
 		/* Blur out the title of the previous view. */
 		update_view_title(view);
-		report("");
+		report_clear();
 		break;
 	}
 	case REQ_REFRESH:
@@ -3951,7 +3952,7 @@ pager_request(struct view *view, enum request request, struct line *line)
 	 * split open each commit diff. */
 	scroll_view(view, REQ_SCROLL_LINE_DOWN);
 
-	/* FIXME: A minor workaround. Scrolling the view will call report("")
+	/* FIXME: A minor workaround. Scrolling the view will call report_clear()
 	 * but if we are scrolling a non-current view this won't properly
 	 * update the view title. */
 	if (split)
@@ -3984,7 +3985,7 @@ static bool
 pager_open(struct view *view, enum open_flags flags)
 {
 	if (display[0] == NULL) {
-		if (!io_open(&view->io, ""))
+		if (!io_open(&view->io, "%s", ""))
 			die("Failed to open stdin");
 		flags = OPEN_PREPARED;
 
@@ -4144,7 +4145,7 @@ diff_common_enter(struct view *view, enum request request, struct line *line)
 		}
 
 		select_view_line(view, line - view->line);
-		report("");
+		report_clear();
 		return REQ_NONE;
 
 	} else {
@@ -4240,7 +4241,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	bool ok = FALSE;
 	char *buf;
 
-	if (!string_format(line_arg, "-L%d,+1", lineno))
+	if (!string_format(line_arg, "-L%ld,+1", lineno))
 		return FALSE;
 
 	if (!io_run(&io, IO_RD, opt_cdup, blame_argv))
@@ -5307,7 +5308,7 @@ blame_read(struct view *view, char *line)
 
 	if (!state->commit) {
 		state->commit = read_blame_commit(view, line, state);
-		string_format(view->ref, "%s %2d%%", view->vid,
+		string_format(view->ref, "%s %2ld%%", view->vid,
 			      view->lines ? state->blamed * 100 / view->lines : 0);
 
 	} else if (parse_blame_info(state->commit, line)) {
@@ -5634,7 +5635,7 @@ branch_request(struct view *view, enum request request, struct line *line)
 
 			if (!strncasecmp(branch->ref->id, opt_search, strlen(opt_search))) {
 				select_view_line(view, lineno);
-				report("");
+				report_clear();
 				return REQ_NONE;
 			}
 		}
@@ -6631,7 +6632,7 @@ stage_next(struct view *view, struct line *line)
 	for (i = 0; i < state->chunks; i++) {
 		if (state->chunk[i] > view->pos.lineno) {
 			do_scroll_view(view, state->chunk[i] - view->pos.lineno);
-			report("Chunk %d of %d", i + 1, state->chunks);
+			report("Chunk %d of %ld", i + 1, state->chunks);
 			return;
 		}
 	}
@@ -7183,7 +7184,7 @@ main_request(struct view *view, enum request request, struct line *line)
 
 			if (!strncasecmp(commit->id, opt_search, strlen(opt_search))) {
 				select_view_line(view, lineno);
-				report("");
+				report_clear();
 				return REQ_NONE;
 			}
 		}
@@ -7491,7 +7492,7 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 
 	/* Clear the status window */
 	status_empty = FALSE;
-	report("");
+	report_clear();
 
 	if (status == INPUT_CANCEL)
 		return NULL;
@@ -7592,7 +7593,7 @@ static bool prompt_menu(const char *prompt, const struct menu_item *items, int *
 
 	/* Clear the status window */
 	status_empty = FALSE;
-	report("");
+	report_clear();
 
 	return status != INPUT_CANCEL;
 }
@@ -7657,7 +7658,7 @@ set_work_tree(const char *value)
 	if (!getcwd(cwd, sizeof(cwd)))
 		die("Failed to get cwd path: %s", strerror(errno));
 	if (chdir(opt_git_dir) < 0)
-		die("Failed to chdir(%s): %s", strerror(errno));
+		die("Failed to chdir(%s): %s", opt_git_dir, strerror(errno));
 	if (!getcwd(opt_git_dir, sizeof(opt_git_dir)))
 		die("Failed to get git path: %s", strerror(errno));
 	if (chdir(cwd) < 0)
@@ -8051,7 +8052,7 @@ main(int argc, const char *argv[])
 
 				if (parse_int(&lineno, cmd, 1, view->lines + 1) == OPT_OK) {
 					select_view_line(view, lineno - 1);
-					report("");
+					report_clear();
 				} else {
 					report("Unable to parse '%s' as a line number", cmd);
 				}

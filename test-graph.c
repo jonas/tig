@@ -58,7 +58,7 @@ main(int argc, const char *argv[])
 	if (argc > 1 && !strcmp(argv[1], "--ascii"))
 		graph_fn = graph_symbol_to_ascii;
 
-	if (!io_open(&io, ""))
+	if (!io_open(&io, "%s", ""))
 		die("IO");
 
 	while (!io_eof(&io)) {
