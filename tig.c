@@ -8089,7 +8089,17 @@ main(int argc, const char *argv[])
 				}
 
 			} else if (cmd) {
-				request = get_request(cmd);
+				char *args = strchr(cmd, ' ');
+
+				if (args) {
+					char *opt = strndup(cmd, args - cmd);
+
+					if (set_option(opt, ++args) == OPT_OK)
+						request = REQ_SCREEN_REDRAW;
+					free(opt);
+				}
+				if (request == REQ_PROMPT)
+					request = get_request(cmd);
 				break;
 			}
 
