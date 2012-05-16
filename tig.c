@@ -8094,8 +8094,11 @@ main(int argc, const char *argv[])
 				if (args) {
 					char *opt = strndup(cmd, args - cmd);
 
-					if (set_option(opt, ++args) == OPT_OK)
+					if (set_option(opt, ++args) == OPT_OK) {
 						request = REQ_SCREEN_REDRAW;
+						if (!strcmp(opt, "color"))
+							init_colors();
+					}
 					free(opt);
 				}
 				if (request == REQ_PROMPT)
