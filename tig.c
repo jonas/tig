@@ -446,7 +446,7 @@ static inline void
 update_diff_context_arg(int diff_context)
 {
 	if (!string_format(opt_diff_context_arg, "-U%u", diff_context))
-		string_ncopy(opt_diff_context_arg, "-U3", 3); 
+		string_ncopy(opt_diff_context_arg, "-U3", 3);
 }
 
 static inline void
@@ -2006,7 +2006,7 @@ draw_field(struct view *view, enum line_type type, const char *text, int len, bo
 	int max = MIN(VIEW_MAX_LEN(view), len);
 	int col = view->col;
 
-	if (!text) 
+	if (!text)
 		return draw_space(view, type, max, max);
 
 	return draw_chars(view, type, text, max - 1, trim)
@@ -2341,7 +2341,7 @@ toggle_option(enum request request)
 		enum request request;
 		const struct enum_map *map;
 		size_t map_size;
-	} data[] = {		
+	} data[] = {
 #define TOGGLE_(id, key, help, value, map) { REQ_TOGGLE_ ## id, map, ARRAY_SIZE(map) },
 		TOGGLE_MENU
 #undef	TOGGLE_
@@ -3247,7 +3247,7 @@ open_argv(struct view *prev, struct view *view, const char *argv[], const char *
 	if (view->pipe)
 		end_update(view, TRUE);
 	view->dir = dir;
-	
+
 	if (!argv_copy(&view->argv, argv)) {
 		report("Failed to open %s view: %s", view->name, io_strerror(&view->io));
 	} else {
@@ -4084,7 +4084,7 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 			return add_line_text(view, data, LINE_DIFF_STAT) != NULL;
 		} else {
 			state->reading_diff_stat = FALSE;
-		}	
+		}
 
 	} else if (!strcmp(data, "---")) {
 		state->reading_diff_stat = TRUE;
@@ -5651,7 +5651,7 @@ branch_read(struct view *view, char *line)
 	struct branch_state *state = view->private;
 	const char *title = NULL;
 	const char *author = NULL;
-	struct time time = {};	
+	struct time time = {};
 	size_t i;
 
 	if (!line)
@@ -6137,7 +6137,7 @@ status_enter(struct view *view, struct line *line)
 
 	stage_line_type = line->type;
 
-	open_view(view, REQ_VIEW_STAGE, flags); 
+	open_view(view, REQ_VIEW_STAGE, flags);
 	return REQ_NONE;
 }
 
@@ -6858,7 +6858,7 @@ draw_graph_utf8(struct view *view, struct graph_symbol *symbol, enum line_type c
 {
 	const char *chars = graph_symbol_to_utf8(symbol);
 
-	return draw_text(view, color, chars + !!first); 
+	return draw_text(view, color, chars + !!first);
 }
 
 static bool
@@ -6866,7 +6866,7 @@ draw_graph_ascii(struct view *view, struct graph_symbol *symbol, enum line_type 
 {
 	const char *chars = graph_symbol_to_ascii(symbol);
 
-	return draw_text(view, color, chars + !!first); 
+	return draw_text(view, color, chars + !!first);
 }
 
 static bool
@@ -6874,7 +6874,7 @@ draw_graph_chtype(struct view *view, struct graph_symbol *symbol, enum line_type
 {
 	const chtype *chars = graph_symbol_to_chtype(symbol);
 
-	return draw_graphic(view, color, chars + !!first, 2 - !!first, FALSE); 
+	return draw_graphic(view, color, chars + !!first, 2 - !!first, FALSE);
 }
 
 typedef bool (*draw_graph_fn)(struct view *, struct graph_symbol *, enum line_type, bool);
