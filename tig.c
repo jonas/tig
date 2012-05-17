@@ -8090,6 +8090,15 @@ main(int argc, const char *argv[])
 
 			} else if (cmd) {
 				request = get_request(cmd);
+				if (request != REQ_UNKNOWN)
+					break;
+
+				char *args = strchr(cmd, ' ');
+				if (args) {
+					*args++ = 0;
+					if (set_option(cmd, args) == OPT_OK)
+						request = REQ_SCREEN_REDRAW;
+				}
 				break;
 			}
 
