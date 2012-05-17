@@ -16,6 +16,7 @@ Bug fixes:
 
  - Fix commit graph regression when a path spec is specified. (GH #53)
  - Main view: only show staged/unstaged changes for the current branch.
+ - Support submodules created with current version of git. (GH #54)
 
 tig-1.0
 -------

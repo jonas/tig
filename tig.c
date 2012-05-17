@@ -7657,12 +7657,12 @@ set_work_tree(const char *value)
 
 	if (!getcwd(cwd, sizeof(cwd)))
 		die("Failed to get cwd path: %s", strerror(errno));
+	if (chdir(cwd) < 0)
+		die("Failed to chdir(%s): %s", cwd, strerror(errno));
 	if (chdir(opt_git_dir) < 0)
 		die("Failed to chdir(%s): %s", opt_git_dir, strerror(errno));
 	if (!getcwd(opt_git_dir, sizeof(opt_git_dir)))
 		die("Failed to get git path: %s", strerror(errno));
-	if (chdir(cwd) < 0)
-		die("Failed to chdir(%s): %s", cwd, strerror(errno));
 	if (chdir(value) < 0)
 		die("Failed to chdir(%s): %s", value, strerror(errno));
 	if (!getcwd(cwd, sizeof(cwd)))
