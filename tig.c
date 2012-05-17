@@ -8096,8 +8096,11 @@ main(int argc, const char *argv[])
 				char *args = strchr(cmd, ' ');
 				if (args) {
 					*args++ = 0;
-					if (set_option(cmd, args) == OPT_OK)
+					if (set_option(cmd, args) == OPT_OK) {
 						request = REQ_SCREEN_REDRAW;
+						if (!strcmp(cmd, "color"))
+							init_colors();
+					}
 				}
 				break;
 			}
