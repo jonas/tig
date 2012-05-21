@@ -2199,7 +2199,7 @@ update_view_title(struct view *view)
 				   ? MIN(view_lines, view->lines) * 100 / view->lines
 				   : 0;
 
-		string_format_from(state, &statelen, " - %s %d of %ld (%d%%)",
+		string_format_from(state, &statelen, " - %s %d of %zd (%d%%)",
 				   view->ops->type,
 				   line->lineno,
 				   view->lines - view->custom_lines,
@@ -5308,7 +5308,7 @@ blame_read(struct view *view, char *line)
 
 	if (!state->commit) {
 		state->commit = read_blame_commit(view, line, state);
-		string_format(view->ref, "%s %2ld%%", view->vid,
+		string_format(view->ref, "%s %2zd%%", view->vid,
 			      view->lines ? state->blamed * 100 / view->lines : 0);
 
 	} else if (parse_blame_info(state->commit, line)) {
@@ -6632,7 +6632,7 @@ stage_next(struct view *view, struct line *line)
 	for (i = 0; i < state->chunks; i++) {
 		if (state->chunk[i] > view->pos.lineno) {
 			do_scroll_view(view, state->chunk[i] - view->pos.lineno);
-			report("Chunk %d of %ld", i + 1, state->chunks);
+			report("Chunk %d of %zd", i + 1, state->chunks);
 			return;
 		}
 	}
