@@ -4,6 +4,13 @@ Release notes
 master
 ------
 
+Incompatibilities:
+
+ - Disable git-diff / git-show move/copy detection by default, boosting diff
+   performance on larger projects. Use git config diff.renames option
+   (git-wide) to set your preferred behavior.
+   Environment variable TIG_DIFF_OPTS can be used to restore the old behavior.
+
 Improvements:
 
  - Typing a text in the prompt will be interpreted as a tig command. Prefixing

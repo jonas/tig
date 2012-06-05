@@ -120,8 +120,7 @@ TIG_LS_REMOTE::
 
 TIG_DIFF_OPTS::
 	The diff options to use in the diff view. The diff view uses
-	git-show(1) for formatting and always passes --patch-with-stat,
-	--find-copies-harder, and -C.
+	git-show(1) for formatting and always passes --patch-with-stat.
 
 TIG_TRACE::
 	Path for trace file where information about git commands are logged.
