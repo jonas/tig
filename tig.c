@@ -4153,7 +4153,7 @@ diff_open(struct view *view, enum open_flags flags)
 {
 	static const char *diff_argv[] = {
 		"git", "show", ENCODING_ARG, "--pretty=fuller", "--no-color", "--root",
-			"--patch-with-stat", "--find-copies-harder", "-C",
+			"--patch-with-stat",
 			opt_notes_arg, opt_diff_context_arg, opt_ignore_space_arg,
 			"%(diffargs)", "%(commit)", "--", "%(fileargs)", NULL
 	};
@@ -6859,7 +6859,7 @@ stage_open(struct view *view, enum open_flags flags)
 	/* Diffs for unmerged entries are empty when passing the new
 	 * path, so leave out the new path. */
 	static const char *files_unmerged_argv[] = {
-		"git", "diff-files", ENCODING_ARG, "--root", "--patch-with-stat", "-C", "-M",
+		"git", "diff-files", ENCODING_ARG, "--root", "--patch-with-stat",
 			opt_diff_context_arg, opt_ignore_space_arg, "--",
 			stage_status.old.name, NULL
 	};
