@@ -4363,6 +4363,8 @@ diff_get_pathname(struct view *view, struct line *line)
 static enum request
 diff_request(struct view *view, enum request request, struct line *line)
 {
+	const char *file;
+
 	switch (request) {
 	case REQ_VIEW_BLAME:
 		return diff_trace_origin(view, line);
@@ -4374,6 +4376,12 @@ diff_request(struct view *view, enum request request, struct line *line)
 		reload_view(view);
 		return REQ_NONE;
 
+	case REQ_EDIT:
+		file = diff_get_pathname(view, line);
+		if (!file || access(file, R_OK))
+			return pager_request(view, request, line);
+		open_editor(file);
+		return REQ_NONE;
 
 	case REQ_ENTER:
 		return diff_common_enter(view, request, line);

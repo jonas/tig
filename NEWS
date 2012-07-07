@@ -14,12 +14,15 @@ Improvements:
  - User-defined commands prefixed with a '?' means prompt before execution.
    Example: `bind main B !?git rebase -i %(commit)`
  - Configure case-insensitive searches using: `set ignore-case = yes`.
+ - Add "deleted mode" line type for better diff coloring.
+ - Open editor when requesting edit action from within a file diff.
 
 Bug fixes:
 
  - Fix commit graph regression when a path spec is specified. (GH #53)
  - Main view: only show staged/unstaged changes for the current branch.
  - Support submodules created with current version of git. (GH #54)
+ - Fix diff status message for file diffs with no content changes.
 
 tig-1.0
 -------
