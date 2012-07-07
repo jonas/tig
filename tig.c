@@ -502,6 +502,7 @@ LINE(DIFF_DEL2,	   " -",		COLOR_RED,	COLOR_DEFAULT,	0), \
 LINE(DIFF_INDEX,	"index ",	  COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(DIFF_OLDMODE,	"old file mode ", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_NEWMODE,	"new file mode ", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(DIFF_DELETED,  "deleted file mode ", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_COPY_FROM,	"copy from ",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_COPY_TO,	"copy to ",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(DIFF_RENAME_FROM,	"rename from ",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
@@ -4345,6 +4346,20 @@ diff_trace_origin(struct view *view, struct line *line)
 	return REQ_VIEW_BLAME;
 }
 
+static const char *
+diff_get_pathname(struct view *view, struct line *line)
+{
+	const struct line *header;
+	const char *dst, *prefix = " b/";
+
+	header = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
+	if (!header)
+		return NULL;
+
+	dst = strstr(header->data, prefix);
+	return dst ? dst + strlen(prefix) : NULL;
+}
+
 static enum request
 diff_request(struct view *view, enum request request, struct line *line)
 {
@@ -4371,34 +4386,19 @@ diff_request(struct view *view, enum request request, struct line *line)
 static void
 diff_select(struct view *view, struct line *line)
 {
+	const char *s;
+
 	if (line->type == LINE_DIFF_STAT) {
-		const char *key = get_view_key(view, REQ_ENTER);
-
-		string_format(view->ref, "Press '%s' to jump to file diff", key);
+		s = get_view_key(view, REQ_ENTER);
+		string_format(view->ref, "Press '%s' to jump to file diff", s);
 	} else {
-		struct line *header = line->type == LINE_DIFF_HEADER ? line :
-			find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
-
-		if (header != NULL) {
-			const char *file_name = NULL;
-
-			for (header += 1; view_has_line(view, header); header++) {
-				if (header->type == LINE_DIFF_RENAME_TO)
-					file_name = header->data + STRING_SIZE("rename to ");
-				if (header->type == LINE_DIFF_ADD && !strncmp(header->data, "+++ b/", 6))
-					file_name = header->data + STRING_SIZE("+++ b/");
-
-				/* The diff chunk marks the end of the diff header. */
-				if (file_name || header->type == LINE_DIFF_CHUNK)
-					break;
-			}
-
-			string_format(view->ref, "Diff of '%s'", file_name);
-			return;
+		s = diff_get_pathname(view, line);
+		if (s) {
+			string_format(view->ref, "Changes to '%s'", s);
+		} else {
+			string_ncopy(view->ref, view->id, strlen(view->id));
+			pager_select(view, line);
 		}
-
-		string_ncopy(view->ref, view->id, strlen(view->id));
-		return pager_select(view, line);
 	}
 }
 
