@@ -5177,7 +5177,7 @@ blame_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	}
 
-	if (!view->prev && *opt_prefix) {
+	if (!view->prev && *opt_prefix && !(flags & (OPEN_RELOAD | OPEN_REFRESH))) {
 		string_copy(path, opt_file);
 		if (!string_format(opt_file, "%s%s", opt_prefix, path)) {
 			report("Failed to setup the blame view");
@@ -7906,7 +7906,7 @@ filter_rev_parse(const char ***args, const char *arg1, const char *arg2, const c
 
 	if (!argv_append_array(&all_argv, rev_parse_argv) ||
 	    !argv_append_array(&all_argv, argv) ||
-	    !io_run_load(all_argv, "\n", read_filter_args, args) == ERR)
+	    io_run_load(all_argv, "\n", read_filter_args, args) == ERR)
 		die("Failed to split arguments");
 	argv_free(all_argv);
 	free(all_argv);

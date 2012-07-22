@@ -27,6 +27,7 @@ Bug fixes:
  - Main view: only show staged/unstaged changes for the current branch.
  - Support submodules created with current version of git. (GH #54)
  - Fix diff status message for file diffs with no content changes.
+ - Fix parent blaming when tig is launched in subdirectory. (GH #70)
 
 tig-1.0
 -------
