@@ -64,7 +64,7 @@ Or in the git configuration files:
 	tab-size = 8		# Number of spaces per tab
 --------------------------------------------------------------------------
 
-The type of variables are either bool, int, string, or mixed.
+The type of variables is either bool, int, string, or mixed.
 
 Valid bool values::
 
@@ -302,7 +302,7 @@ confirmation. Valid variable names are:
 
 As an example, the following external command will save the current commit as
 a patch file: "!git format-patch -1 %(commit)". If your external command
-require use of dynamic features, such as subshells, expansion of environment
+requires use of dynamic features, such as subshells, expansion of environment
 variables and process control, this can be achieved by using a combination of
 git aliases and tig external commands. The following example entries can be
 put in either the .gitconfig or .git/config file:
@@ -425,7 +425,7 @@ given as the last parameter. The syntax is:
 Examples:
 
 ------------------------------------------------------------------------------
-# Overwrite the default terminal colors to white on black.
+# Override the default terminal colors to white on black.
 color default		white	black
 # Diff colors
 color diff-header	yellow	default
@@ -482,7 +482,7 @@ setting the *default* color option.
 .General
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|default		|Overwrite default terminal colors (see above).
+|default		|Override default terminal colors (see above).
 |cursor			|The cursor line.
 |status			|The status window showing info messages.
 |title-focus		|The title window for the current view.
@@ -497,7 +497,7 @@ setting the *default* color option.
 .Main view colors
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|graph-commit		|The commit dot in the revising graph.
+|graph-commit		|The commit dot in the revision graph.
 |palette-[0-6]		|7 different colors,
 used for distinguishing branches or commits.
 example: palette-0 = red
@@ -587,10 +587,10 @@ Colors for information of the tree view.
 Source command
 -------------
 
-Sources commands makes it possible to read additional configuration files.
-Sourced file are treated in-place, meaning when a 'source' command is
-encountered it will be immediately read. Any commands, later in the current
-configuration file will take precedence. The syntax is:
+Source commands make it possible to read additional configuration files.
+Sourced files are included in-place, meaning when a 'source' command is
+encountered the file will be immediately read. Any commands later in the
+current configuration file will take precedence. The syntax is:
 
 [verse]
 *source* 'path'

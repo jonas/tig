@@ -65,7 +65,7 @@ The Viewer
 ----------
 
 The display consists of a status window on the last line of the screen and one
-or more views. The default is to only show one view at the time but it is
+or more views. The default is to only show one view at a time but it is
 possible to split both the main and log view to also show the commit diff.
 
 If you are in the log view and press 'Enter' when the current line is a commit
@@ -83,7 +83,7 @@ by pressing 'Tab'. To maximize the log view again, simply press 'l'.
 Views
 ~~~~~
 
-Various 'views' of a repository is presented. Each view is based on output
+Various 'views' of a repository are presented. Each view is based on output
 from an external command, most often 'git log', 'git diff', or 'git show'.
 
 The main view::
@@ -121,7 +121,7 @@ The status view::
 	staged/unstaged as well as adding of untracked files.
 
 The stage view::
-	Displays diff changes for staged or unstanged files being tracked or
+	Displays diff changes for staged or unstaged files being tracked or
 	file content of untracked files.
 
 The pager view::
@@ -216,9 +216,9 @@ reference name surrounded by '[' and ']':
 2006-03-26 19:42 Petr Baudis         | [cogito-0.17.1] Cogito 0.17.1
 -----------------------------------------------------------------------------
 
-If you want to filter what branches gets shown, say limit to only show
-branches named `master` or which starts with the `jf/` prefix, you can
-do it by setting the following variable:
+If you want to limit what branches are shown, say only show branches named
+`master` or those which start with the `jf/` prefix, you can do it by setting
+the following variable:
 
 -----------------------------------------------------------------------------
 $ TIG_LS_REMOTE="git ls-remote . master jf/*" tig
@@ -316,7 +316,7 @@ View Specific Actions
 	 untracked file or stage changes to a file for next commit (similar to
 	 running git-add <filename>). In the stage view, when pressing this on
 	 a diff chunk line stages only that chunk for next commit, when not on
-	 a diff chunk line all changes in the displayed diff is staged.
+	 a diff chunk line all changes in the displayed diff are staged.
 |M	|Resolve unmerged file by launching git-mergetool(1). Note, to work
 	 correctly this might require some initial configuration of your
 	 preferred merge tool. See the manpage of git-mergetool(1).
@@ -454,9 +454,9 @@ $ tig Makefile README
 -----------------------------------------------------------------------------
 
 To avoid ambiguity with tig's subcommands or repository references such as tag
-name, be sure to separate file names from other git options using "`--`". So if
-you have a file named 'status' it will clash with the 'status' subcommand, and
-thus you will have to use:
+names, be sure to separate file names from other git options using "`--`". So
+if you have a file named 'status' it will clash with the 'status' subcommand,
+and thus you will have to use:
 
 -----------------------------------------------------------------------------
 $ tig -- status
@@ -470,7 +470,7 @@ To speed up interaction with git, you can limit the amount of commits to show
 both for the log and main view. Either limit by date using e.g.
 `--since=1.month` or limit by the number of commits using `-n400`.
 
-If you are only interested in changed that happened between two dates you can
+If you are only interested in changes that happened between two dates you can
 use:
 
 -----------------------------------------------------------------------------
@@ -525,7 +525,7 @@ is possible to further prune commits by specifying multiple branch cut offs.
 Combining Revisions Specification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Revisions options can to some degree be combined, which makes it possible to
+Revision options can to some degree be combined, which makes it possible to
 say "show at most 20 commits from within the last month that changed files
 under the Documentation/ directory."
 
