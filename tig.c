@@ -1495,6 +1495,9 @@ option_set_command(int argc, const char *argv[])
 		return code;
 	}
 
+	if (!strcmp(argv[0], "commit-encoding"))
+		return parse_encoding(&opt_encoding, argv[2], FALSE);
+
 	if (!strcmp(argv[0], "status-untracked-dirs"))
 		return parse_bool(&opt_untracked_dirs_content, argv[2]);
 
@@ -2977,6 +2980,7 @@ update_view(struct view *view)
 	 * might have rearranged things. */
 	bool redraw = view->lines == 0;
 	bool can_read = TRUE;
+	struct encoding *encoding = view->encoding ? view->encoding : opt_encoding;
 
 	if (!view->pipe)
 		return TRUE;
@@ -2996,8 +3000,8 @@ update_view(struct view *view)
 	}
 
 	for (; (line = io_get(view->pipe, '\n', can_read)); can_read = FALSE) {
-		if (view->encoding) {
-			line = encoding_convert(view->encoding, line);
+		if (encoding) {
+			line = encoding_convert(encoding, line);
 		}
 
 		if (!view->ops->read(view, line)) {
@@ -4015,7 +4019,7 @@ static bool
 log_open(struct view *view, enum open_flags flags)
 {
 	static const char *log_argv[] = {
-		"git", "log", ENCODING_ARG, "--no-color", "--cc", "--stat", "-n100", "%(head)", NULL
+		"git", "log", "--no-color", "--cc", "--stat", "-n100", "%(head)", NULL
 	};
 
 	return begin_update(view, NULL, log_argv, flags);
@@ -4056,7 +4060,7 @@ static bool
 diff_open(struct view *view, enum open_flags flags)
 {
 	static const char *diff_argv[] = {
-		"git", "show", ENCODING_ARG, "--pretty=fuller", "--no-color", "--root",
+		"git", "show", "--pretty=fuller", "--no-color", "--root",
 			"--patch-with-stat", "--find-copies-harder", "-C",
 			opt_notes_arg, opt_diff_context_arg, opt_ignore_space_arg,
 			"%(diffargs)", "%(commit)", "--", "%(fileargs)", NULL
@@ -4235,7 +4239,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 {
 	char line_arg[SIZEOF_STR];
 	const char *blame_argv[] = {
-		"git", "blame", ENCODING_ARG, "-p", line_arg, ref, "--", file, NULL
+		"git", "blame", "-p", line_arg, ref, "--", file, NULL
 	};
 	struct io io;
 	bool ok = FALSE;
@@ -4706,7 +4710,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 	} else if (!text) {
 		/* Find next entry to process */
 		const char *log_file[] = {
-			"git", "log", ENCODING_ARG, "--no-color", "--pretty=raw",
+			"git", "log", "--no-color", "--pretty=raw",
 				"--cc", "--raw", view->id, "--", "%(directory)", NULL
 		};
 
@@ -5254,7 +5258,7 @@ blame_read_file(struct view *view, const char *text, struct blame_state *state)
 {
 	if (!text) {
 		const char *blame_argv[] = {
-			"git", "blame", ENCODING_ARG, "%(blameargs)", "--incremental",
+			"git", "blame", "%(blameargs)", "--incremental",
 				*opt_ref ? opt_ref : "--incremental", "--", opt_file, NULL
 		};
 
@@ -5384,8 +5388,8 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 	char from[SIZEOF_REF + SIZEOF_STR];
 	char to[SIZEOF_REF + SIZEOF_STR];
 	const char *diff_tree_argv[] = {
-		"git", "diff", ENCODING_ARG, "--no-textconv", "--no-extdiff",
-			"--no-color", "-U0", from, to, "--", NULL
+		"git", "diff", "--no-textconv", "--no-extdiff", "--no-color",
+			"-U0", from, to, "--", NULL
 	};
 	struct io io;
 	int parent_lineno = -1;
@@ -5715,7 +5719,7 @@ static bool
 branch_open(struct view *view, enum open_flags flags)
 {
 	const char *branch_log[] = {
-		"git", "log", ENCODING_ARG, "--no-color", "--date=raw",
+		"git", "log", "--no-color", "--date=raw",
 			"--pretty=format:commit %H%nauthor %an <%ae> %ad%ntitle %s",
 			"--all", "--simplify-by-decoration", NULL
 	};
@@ -6744,7 +6748,7 @@ stage_open(struct view *view, enum open_flags flags)
 	/* Diffs for unmerged entries are empty when passing the new
 	 * path, so leave out the new path. */
 	static const char *files_unmerged_argv[] = {
-		"git", "diff-files", ENCODING_ARG, "--root", "--patch-with-stat", "-C", "-M",
+		"git", "diff-files", "--root", "--patch-with-stat", "-C", "-M",
 			opt_diff_context_arg, opt_ignore_space_arg, "--",
 			stage_status.old.name, NULL
 	};
@@ -7743,7 +7747,10 @@ set_git_color_option(const char *name, char *value)
 static int
 read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
-	if (!strcmp(name, "gui.encoding"))
+	if (!strcmp(name, "i18n.commitencoding"))
+		parse_encoding(&opt_encoding, value, FALSE);
+
+	else if (!strcmp(name, "gui.encoding"))
 		parse_encoding(&opt_encoding, value, TRUE);
 
 	else if (!strcmp(name, "core.editor"))
