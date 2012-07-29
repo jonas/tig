@@ -54,8 +54,6 @@ Improvements:
    Bound to 'W' by default.
  - Use per-file encoding specified in gitattributes(5) for blobs and
    unstaged files.
- - Obsolete commit-encoding option and pass --encoding=UTF-8 to revision
-   commands.
  - Main view: show uncommitted changes as staged/unstaged commits.
    Can be disabled by putting `set show-changes = no` in ~/.tigrc.
  - Add %(prompt) external command variable, which will prompt for the
