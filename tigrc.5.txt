@@ -106,7 +106,7 @@ The following variables can be set:
 	is ignored when tig is started in blame mode and given blame options
 	on the command line.
 
-'line-graphics' (mixed) [ "ascii" | "default" | "utf8" | bool]::
+'line-graphics' (mixed) [ "ascii" | "default" | "utf-8" | bool]::
 
 	What type of character graphics for line drawing.
 
@@ -551,8 +551,8 @@ Extra diff information emitted by the git diff machinery, such as mode
 changes, rename detection, and similarity.
 
 *diff-oldmode*, *diff-newmode*, *diff-copy-from*, *diff-copy-to*,
-*diff-rename-from*, *diff-rename-to*, *diff-similarity*, *diff-dissimilarity*
-*diff-tree*, *diff-index*
+*diff-rename-from*, *diff-rename-to*, *diff-deleted-file-mode*,
+*diff-similarity*, *diff-dissimilarity* *diff-tree*, *diff-index*, *diff-stat*
 
 Pretty print commit headers::
 
