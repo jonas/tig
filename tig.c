@@ -8245,9 +8245,13 @@ main(int argc, const char *argv[])
 	signal(SIGINT, quit);
 	signal(SIGPIPE, SIG_IGN);
 
+#if defined(HAVE_NCURSESW) || defined(NCURSES_WIDECHAR)
 	if (setlocale(LC_ALL, "")) {
 		codeset = nl_langinfo(CODESET);
 	}
+#else
+	codeset = "ascii";
+#endif
 
 	foreach_view(view, i) {
 		add_keymap(&view->ops->keymap);

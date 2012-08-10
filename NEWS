@@ -46,6 +46,8 @@ Improvements:
    and diff view, e.g. `tig --no-walk --stdin < cherry-picks.txt`.
  - Add option to disable focusing of the child view when it's opened.
    Disable using: `set focus-child = no`. (GH #83)
+ - Convert output to ASCII//TRANSLIT when ncurses has no wide-char
+   support. (GH #72)
 
 Bug fixes:
 
