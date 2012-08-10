@@ -1110,6 +1110,7 @@ enum run_request_flag {
 	RUN_REQUEST_FORCE	= 1,
 	RUN_REQUEST_SILENT	= 2,
 	RUN_REQUEST_CONFIRM	= 4,
+	RUN_REQUEST_EXIT	= 8,
 };
 
 struct run_request {
@@ -1118,6 +1119,7 @@ struct run_request {
 	const char **argv;
 	bool silent;
 	bool confirm;
+	bool exit;
 };
 
 static struct run_request *run_request;
@@ -1143,6 +1145,7 @@ add_run_request(struct keymap *keymap, int key, const char **argv, enum run_requ
 	req = &run_request[run_requests++];
 	req->silent = flags & RUN_REQUEST_SILENT;
 	req->confirm = flags & RUN_REQUEST_CONFIRM;
+	req->exit = flags & RUN_REQUEST_EXIT;
 	req->keymap = keymap;
 	req->key = key;
 
@@ -1553,6 +1556,8 @@ option_bind_command(int argc, const char *argv[])
 				flags |= RUN_REQUEST_SILENT;
 			} else if (*argv[2] == '?') {
 				flags |= RUN_REQUEST_CONFIRM;
+			} else if (*argv[2] == '<') {
+				flags |= RUN_REQUEST_EXIT;
 			} else {
 				break;
 			}
@@ -3258,13 +3263,15 @@ open_argv(struct view *prev, struct view *view, const char *argv[], const char *
 }
 
 static void
-open_external_viewer(const char *argv[], const char *dir)
+open_external_viewer(const char *argv[], const char *dir, bool confirm)
 {
 	def_prog_mode();           /* save current tty modes */
 	endwin();                  /* restore original tty modes */
 	io_run_fg(argv, dir);
-	fprintf(stderr, "Press Enter to continue");
-	getc(opt_tty);
+	if (confirm) {
+		fprintf(stderr, "Press Enter to continue");
+		getc(opt_tty);
+	}
 	reset_prog_mode();
 	redraw_display(TRUE);
 }
@@ -3274,7 +3281,7 @@ open_mergetool(const char *file)
 {
 	const char *mergetool_argv[] = { "git", "mergetool", file, NULL };
 
-	open_external_viewer(mergetool_argv, opt_cdup);
+	open_external_viewer(mergetool_argv, opt_cdup, TRUE);
 }
 
 static void
@@ -3302,10 +3309,10 @@ open_editor(const char *file)
 	}
 
 	editor_argv[argc] = file;
-	open_external_viewer(editor_argv, opt_cdup);
+	open_external_viewer(editor_argv, opt_cdup, TRUE);
 }
 
-static void
+static bool
 open_run_request(enum request request)
 {
 	struct run_request *req = get_run_request(request);
@@ -3313,7 +3320,7 @@ open_run_request(enum request request)
 
 	if (!req) {
 		report("Unknown run request");
-		return;
+		return FALSE;
 	}
 
 	if (format_argv(&argv, req->argv, FALSE)) {
@@ -3334,11 +3341,14 @@ open_run_request(enum request request)
 		else if (req->silent)
 			io_run_bg(argv);
 		else
-			open_external_viewer(argv, NULL);
+			open_external_viewer(argv, NULL, !req->exit);
 	}
+
 	if (argv)
 		argv_free(argv);
 	free(argv);
+
+	return req->exit;
 }
 
 /*
@@ -3354,7 +3364,8 @@ view_driver(struct view *view, enum request request)
 		return TRUE;
 
 	if (request > REQ_NONE) {
-		open_run_request(request);
+		if (open_run_request(request))
+			return FALSE;
 		view_request(view, REQ_REFRESH);
 		return TRUE;
 	}

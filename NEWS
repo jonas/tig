@@ -12,7 +12,9 @@ Improvements:
  - Basic support for wrapping long line in pager, diff, and stage views.
    Enable using: `set wrap-lines = yes`. (GH #2)
  - User-defined commands prefixed with a '?' means prompt before execution.
-   Example: `bind main B !?git rebase -i %(commit)`
+   Example: `bind main B !?git rebase -i %(commit)`.
+ - User-defined commands prefixed with a '<' means exit after execution.
+   Example: `bind main C !<git commit`. (GH #66)
  - Configure case-insensitive searches using: `set ignore-case = yes`.
  - Add "deleted mode" line type for better diff coloring.
  - Open editor when requesting edit action from within a file diff.

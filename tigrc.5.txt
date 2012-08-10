@@ -277,11 +277,8 @@ Actions
 
 Apart from the action names listed below, all actions starting with a '!' will
 be available as an external command. External commands can contain variable
-names that will be substituted before the command is run. By default, commands
-are run in the foreground with their console output shown, if they should be
-run in the background with no output, prefix the command with '@'. If
-the command is also prefixed with a '?', the user will be prompted for
-confirmation. Valid variable names are:
+names that will be substituted before the command is run. Valid variable names
+are:
 
 .Browsing state variables
 [frame="none",grid="none",cols="25<m,75<"]
@@ -316,6 +313,21 @@ put in either the .gitconfig or .git/config file:
 	generic = V !@git gitk-bg
 	generic = > !git publish
 --------------------------------------------------------------------------
+
+By default, commands are run in the foreground with their console output
+shown. For different behavior, commands can be prefixed with one or more of
+the following control flags to specify how it should be executed:
+
+.External command control flags
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|@			|Run the command in the background with no output.
+|?			|Prompt the user before executing the command.
+|<			|Exit tig after executing the command.
+|=============================================================================
+
+Control flags can be combined, e.g. "!?<git commit" will prompt whether to
+execute the command and will exit tig after completion.
 
 .View switching
 [frame="none",grid="none",cols="25<m,75<"]
