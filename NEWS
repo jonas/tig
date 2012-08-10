@@ -16,6 +16,7 @@ Improvements:
  - Configure case-insensitive searches using: `set ignore-case = yes`.
  - Add "deleted mode" line type for better diff coloring.
  - Open editor when requesting edit action from within a file diff.
+ - Update AX_WITH_CURSES to build under Cygwin.
 
 Bug fixes:
 

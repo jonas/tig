@@ -70,7 +70,11 @@
 #elif defined HAVE_CURSES_H
 #  include <curses.h>
 #else
-#  error "SysV or X/Open-compatible Curses header file required"
+#  warning SysV or X/Open-compatible Curses installation is required.
+#  warning Will assume Curses is found in default include and library path.
+#  warning To fix any build issues please use autotools to configure Curses.
+#  warning See INSTALL file for instructions.
+#  include <curses.h>
 #endif
 
 #if __GNUC__ >= 3

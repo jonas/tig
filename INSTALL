@@ -34,6 +34,11 @@ to use the ncurses library with wide character support, add the line:
 
 	LDLIBS = -lncursesw
 
+You might also need an additional line to include the proper header file
+(see tig.h for more information):
+
+	CPPFLAGS = -DHAVE_NCURSESW_CURSES_H
+
 Release notes documenting notable changes are available in the NEWS file. When
 upgrading, you are advised to also read them after you have completed the
 installation.
