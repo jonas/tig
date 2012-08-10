@@ -39,6 +39,9 @@ You might also need an additional line to include the proper header file
 
 	CPPFLAGS = -DHAVE_NCURSESW_CURSES_H
 
+Note for packagers: For tig's configure script to work as expected you
+should avoid configuring and building ncurses using "--with-shared".
+
 Release notes documenting notable changes are available in the NEWS file. When
 upgrading, you are advised to also read them after you have completed the
 installation.
