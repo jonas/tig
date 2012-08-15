@@ -21,6 +21,8 @@ Improvements:
  - Update AX_WITH_CURSES to build under Cygwin.
  - Improve tigrc(5) documentation. (Debian #682766)
  - Allow to build on Mac OS 10.7 without the configure script. (GH #25)
+ - Add option to split the view vertically instead of horizontally.
+   Example: set vertical-split = yes'. (GH #76)
 
 Bug fixes:
 

@@ -414,6 +414,8 @@ static char opt_notes_arg[SIZEOF_STR]	= "--show-notes";
 static int opt_num_interval		= 5;
 static double opt_hscroll		= 0.50;
 static double opt_scale_split_view	= 2.0 / 3.0;
+static double opt_scale_vsplit_view	= 0.5;
+static bool opt_vsplit			= FALSE;
 static int opt_tab_size			= 8;
 static int opt_author_cols		= AUTHOR_COLS;
 static int opt_filename_cols		= FILENAME_COLS;
@@ -1473,6 +1475,9 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "split-view-height"))
 		return parse_step(&opt_scale_split_view, argv[2]);
 
+	if (!strcmp(argv[0], "vertical-split"))
+		return parse_bool(&opt_vsplit, argv[2]);
+
 	if (!strcmp(argv[0], "tab-size"))
 		return parse_int(&opt_tab_size, argv[2], 1, 1024);
 
@@ -1723,6 +1728,8 @@ struct view_ops;
 static struct view *display[2];
 static WINDOW *display_win[2];
 static WINDOW *display_title[2];
+static WINDOW *display_sep;
+
 static unsigned int current_view;
 
 #define foreach_displayed_view(view, i) \
@@ -2266,9 +2273,32 @@ apply_horizontal_split(struct view *base, struct view *view)
 }
 
 static void
+apply_vertical_split(struct view *base, struct view *view)
+{
+	view->height = base->height;
+	view->width  = apply_step(opt_scale_vsplit_view, base->width);
+	view->width  = MAX(view->width, MIN_VIEW_WIDTH);
+	view->width  = MIN(view->width, base->width - MIN_VIEW_WIDTH);
+	base->width -= view->width;
+}
+
+static void
+redraw_display_separator(bool clear)
+{
+	if (displayed_views() > 1 && opt_vsplit) {
+		chtype separator = opt_line_graphics ? ACS_VLINE : '|';
+
+		if (clear)
+			wclear(display_sep);
+		wbkgd(display_sep, separator + get_line_attr(LINE_TITLE_BLUR));
+		wnoutrefresh(display_sep);
+	}
+}
+
+static void
 resize_display(void)
 {
-	int offset, i;
+	int x, y, i;
 	struct view *base = display[0];
 	struct view *view = display[1] ? display[1] : display[0];
 
@@ -2280,7 +2310,14 @@ resize_display(void)
 	base->height -= 1;
 
 	if (view != base) {
-		apply_horizontal_split(base, view);
+		if (opt_vsplit) {
+			apply_vertical_split(base, view);
+
+			/* Make room for the separator bar. */
+			view->width -= 1;
+		} else {
+			apply_horizontal_split(base, view);
+		}
 
 		/* Make room for the title bar. */
 		view->height -= 1;
@@ -2289,30 +2326,48 @@ resize_display(void)
 	/* Make room for the title bar. */
 	base->height -= 1;
 
-	offset = 0;
+	x = y = 0;
 
 	foreach_displayed_view (view, i) {
 		if (!display_win[i]) {
-			display_win[i] = newwin(view->height, view->width, offset, 0);
+			display_win[i] = newwin(view->height, view->width, y, x);
 			if (!display_win[i])
 				die("Failed to create %s view", view->name);
 
 			scrollok(display_win[i], FALSE);
 
-			display_title[i] = newwin(1, view->width, offset + view->height, 0);
+			display_title[i] = newwin(1, view->width, y + view->height, x);
 			if (!display_title[i])
 				die("Failed to create title window");
 
 		} else {
 			wresize(display_win[i], view->height, view->width);
-			mvwin(display_win[i],   offset, 0);
-			mvwin(display_title[i], offset + view->height, 0);
+			mvwin(display_win[i], y, x);
+			wresize(display_title[i], 1, view->width);
+			mvwin(display_title[i], y + view->height, x);
+		}
+
+		if (i > 0 && opt_vsplit) {
+			if (!display_sep) {
+				display_sep = newwin(view->height, 1, 0, x - 1);
+				if (!display_sep)
+					die("Failed to create separator window");
+
+			} else {
+				wresize(display_sep, view->height, 1);
+				mvwin(display_sep, 0, x - 1);
+			}
 		}
 
 		view->win = display_win[i];
 
-		offset += view->height + 1;
+		if (opt_vsplit)
+			x += view->width + 1;
+		else
+			y += view->height + 1;
 	}
+
+	redraw_display_separator(FALSE);
 }
 
 static void
@@ -2327,8 +2382,9 @@ redraw_display(bool clear)
 		redraw_view(view);
 		update_view_title(view);
 	}
-}
 
+	redraw_display_separator(clear);
+}
 
 /*
  * Option management

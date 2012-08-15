@@ -164,6 +164,10 @@ The following variables can be set:
 	Whether to show staged and unstaged changes in the main view.
 	Can be toggled.
 
+'vertical-split' (bool)::
+
+	Whether to split the view horizontally or vertically.
+
 'split-view-height' (mixed)::
 
 	Height of the lower view in a split view. Can be specified either as
