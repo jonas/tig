@@ -2256,6 +2256,16 @@ apply_step(double step, int value)
 }
 
 static void
+apply_horizontal_split(struct view *base, struct view *view)
+{
+	view->width   = base->width;
+	view->height  = apply_step(opt_scale_split_view, base->height);
+	view->height  = MAX(view->height, MIN_VIEW_HEIGHT);
+	view->height  = MIN(view->height, base->height - MIN_VIEW_HEIGHT);
+	base->height -= view->height;
+}
+
+static void
 resize_display(void)
 {
 	int offset, i;
@@ -2270,12 +2280,7 @@ resize_display(void)
 	base->height -= 1;
 
 	if (view != base) {
-		/* Horizontal split. */
-		view->width   = base->width;
-		view->height  = apply_step(opt_scale_split_view, base->height);
-		view->height  = MAX(view->height, MIN_VIEW_HEIGHT);
-		view->height  = MIN(view->height, base->height - MIN_VIEW_HEIGHT);
-		base->height -= view->height;
+		apply_horizontal_split(base, view);
 
 		/* Make room for the title bar. */
 		view->height -= 1;
