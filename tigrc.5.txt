@@ -154,6 +154,11 @@ The following variables can be set:
 	Whether to show references (branches, tags, and remotes) in the main
 	view on start-up. Can be toggled.
 
+'show-id' (bool)::
+
+	Whether to show commit IDs in the main view. Disabled by default. Can
+	be toggled. See also 'id-len' option.
+
 'show-rev-graph' (bool)::
 
 	Whether to show revision graph in the main view on start-up.
@@ -210,6 +215,10 @@ The following variables can be set:
 
 	Wrap long lines. By default, lines are not wrapped.
 	Not compatible with line numbers enabled.
+
+'id-len' (int)::
+
+	Length of the commit ID if displayed in the main view. Default: '7'.
 
 Bind command
 ------------
@@ -524,6 +533,7 @@ example: palette-0 = red
 |main-tag		|Label of a signed tag.
 |main-local-tag		|Label of a local tag.
 |main-ref		|Label of any other reference.
+|main-id		|The commit ID in the main view.
 |=============================================================================
 
 .Status view

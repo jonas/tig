@@ -393,6 +393,7 @@ Misc
 |~	|Toggle (line) graphics mode
 |F	|Toggle reference display on/off (tag and branch names).
 |W	|Toggle ignoring whitespace on/off for diffs
+|X	|Toggle commit ID display on/off
 |:	|Open prompt. This allows you to specify what command to run.
 |e	|Open file in editor.
 |=============================================================================
