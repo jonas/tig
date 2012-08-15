@@ -330,6 +330,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 	REQ_(TOGGLE_SORT_FIELD,	"Toggle field to sort by"), \
 	REQ_(TOGGLE_IGNORE_SPACE,	"Toggle ignoring whitespace in diffs"), \
 	REQ_(TOGGLE_COMMIT_ORDER,	"Toggle commit ordering"), \
+	REQ_(TOGGLE_ID,				"Toggle commit ID display"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
@@ -874,6 +875,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'I',		REQ_TOGGLE_SORT_ORDER },
 	{ 'i',		REQ_TOGGLE_SORT_FIELD },
 	{ 'W',		REQ_TOGGLE_IGNORE_SPACE },
+	{ 'X',		REQ_TOGGLE_ID },
 	{ ':',		REQ_PROMPT },
 	{ 'e',		REQ_EDIT },
 };
@@ -2416,7 +2418,8 @@ redraw_display(bool clear)
 	TOGGLE_(IGNORE_SPACE, 'W', "space changes",  &opt_ignore_space, ignore_space_map) \
 	TOGGLE_(COMMIT_ORDER, 'l', "commit order",   &opt_commit_order, commit_order_map) \
 	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL) \
-	TOGGLE_(CHANGES,   'C', "local change display", &opt_show_changes, NULL)
+	TOGGLE_(CHANGES,   'C', "local change display", &opt_show_changes, NULL) \
+	TOGGLE_(ID,        'X', "commit ID display", &opt_show_id, NULL)
 
 static bool
 toggle_option(enum request request)
@@ -3537,6 +3540,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_REFS:
 	case REQ_TOGGLE_CHANGES:
 	case REQ_TOGGLE_IGNORE_SPACE:
+	case REQ_TOGGLE_ID:
 		if (toggle_option(request) && view_has_flags(view, VIEW_DIFF_LIKE))
 			reload_view(view);
 		break;
