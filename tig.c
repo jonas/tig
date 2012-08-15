@@ -439,6 +439,8 @@ static const char **opt_rev_argv	= NULL;
 static const char **opt_file_argv	= NULL;
 static const char **opt_blame_argv	= NULL;
 static int opt_lineno			= 0;
+static bool opt_show_id = FALSE;
+static int opt_id_len = 7;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
@@ -548,6 +550,7 @@ LINE(MAIN_TRACKED, "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_HEAD,    "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REVGRAPH,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+LINE(MAIN_ID      ,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(TREE_HEAD,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_BOLD), \
 LINE(TREE_DIR,     "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
@@ -1517,6 +1520,12 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "wrap-lines"))
 		return parse_bool(&opt_wrap_lines, argv[2]);
 
+	if (!strcmp(argv[0], "show-id"))
+		return parse_bool(&opt_show_id, argv[2]);
+
+	if (!strcmp(argv[0], "id-len"))
+		return parse_int(&opt_id_len, argv[2], 1, 40);
+
 	return OPT_ERR_UNKNOWN_VARIABLE_NAME;
 }
 
@@ -2049,6 +2058,13 @@ draw_author(struct view *view, const char *author)
 		return FALSE;
 
 	return draw_field(view, LINE_AUTHOR, text, opt_author_cols, trim);
+}
+
+static bool
+draw_id(struct view *view, const char *id){
+	if (!opt_show_id)
+		return FALSE;
+	return draw_field(view, LINE_MAIN_ID, id, opt_id_len+1, FALSE);
 }
 
 static bool
@@ -7103,6 +7119,9 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 		return FALSE;
 
 	if (draw_lineno(view, lineno))
+		return TRUE;
+
+	if (draw_id(view, commit->id))
 		return TRUE;
 
 	if (draw_date(view, &commit->time))
