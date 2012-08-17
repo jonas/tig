@@ -1280,11 +1280,14 @@ parse_int(int *opt, const char *arg, int min, int max)
 }
 
 static enum option_code
-parse_id(int *opt, const char *arg)
+parse_id(int *opt, const char *arg, const bool increment)
 {
 	int value = atoi(arg);
 
-	if (4 <= value && value <= 40) {
+	if (increment)
+		value++;
+
+	if (5 <= value && value <= 41) {
 		*opt = value;
 		return OPT_OK;
 	}
@@ -1539,7 +1542,7 @@ option_set_command(int argc, const char *argv[])
 		return parse_bool(&opt_show_id, argv[2]);
 
 	if (!strcmp(argv[0], "id-width"))
-		return parse_id(&opt_id_cols, argv[2]);
+		return parse_id(&opt_id_cols, argv[2], FALSE);
 
 	return OPT_ERR_UNKNOWN_VARIABLE_NAME;
 }
@@ -7871,7 +7874,7 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 		set_work_tree(value);
 
 	else if (!strcmp(name, "core.abbrev"))
-		parse_id(&opt_id_cols, value);
+		parse_id(&opt_id_cols, value, TRUE);
 
 	else if (!prefixcmp(name, "tig.color."))
 		set_repo_config_option(name + 10, value, option_color_command);
