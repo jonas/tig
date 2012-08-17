@@ -330,6 +330,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 	REQ_(TOGGLE_SORT_FIELD,	"Toggle field to sort by"), \
 	REQ_(TOGGLE_IGNORE_SPACE,	"Toggle ignoring whitespace in diffs"), \
 	REQ_(TOGGLE_COMMIT_ORDER,	"Toggle commit ordering"), \
+	REQ_(TOGGLE_ID,				"Toggle commit ID display"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
@@ -439,6 +440,8 @@ static const char **opt_rev_argv	= NULL;
 static const char **opt_file_argv	= NULL;
 static const char **opt_blame_argv	= NULL;
 static int opt_lineno			= 0;
+static bool opt_show_id = FALSE;
+static int opt_id_cols = ID_COLS;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
@@ -548,6 +551,7 @@ LINE(MAIN_TRACKED, "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(MAIN_HEAD,    "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
 LINE(MAIN_REVGRAPH,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+LINE(MAIN_ID      ,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(TREE_HEAD,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_BOLD), \
 LINE(TREE_DIR,     "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_NORMAL), \
 LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
@@ -871,6 +875,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'I',		REQ_TOGGLE_SORT_ORDER },
 	{ 'i',		REQ_TOGGLE_SORT_FIELD },
 	{ 'W',		REQ_TOGGLE_IGNORE_SPACE },
+	{ 'X',		REQ_TOGGLE_ID },
 	{ ':',		REQ_PROMPT },
 	{ 'e',		REQ_EDIT },
 };
@@ -1274,6 +1279,22 @@ parse_int(int *opt, const char *arg, int min, int max)
 	return OPT_ERR_INTEGER_VALUE_OUT_OF_BOUND;
 }
 
+static enum option_code
+parse_id(int *opt, const char *arg, const bool increment)
+{
+	int value = atoi(arg);
+
+	if (increment)
+		value++;
+
+	if (5 <= value && value <= 41) {
+		*opt = value;
+		return OPT_OK;
+	}
+
+	return OPT_ERR_INTEGER_VALUE_OUT_OF_BOUND;
+}
+
 static bool
 set_color(int *color, const char *name)
 {
@@ -1516,6 +1537,12 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "wrap-lines"))
 		return parse_bool(&opt_wrap_lines, argv[2]);
+
+	if (!strcmp(argv[0], "show-id"))
+		return parse_bool(&opt_show_id, argv[2]);
+
+	if (!strcmp(argv[0], "id-width"))
+		return parse_id(&opt_id_cols, argv[2], FALSE);
 
 	return OPT_ERR_UNKNOWN_VARIABLE_NAME;
 }
@@ -2052,6 +2079,13 @@ draw_author(struct view *view, const char *author)
 }
 
 static bool
+draw_id(struct view *view, const char *id){
+	if (!opt_show_id)
+		return FALSE;
+	return draw_field(view, LINE_MAIN_ID, id, opt_id_cols, FALSE);
+}
+
+static bool
 draw_filename(struct view *view, const char *filename, bool auto_enabled)
 {
 	bool trim = filename && strlen(filename) >= opt_filename_cols;
@@ -2400,7 +2434,8 @@ redraw_display(bool clear)
 	TOGGLE_(IGNORE_SPACE, 'W', "space changes",  &opt_ignore_space, ignore_space_map) \
 	TOGGLE_(COMMIT_ORDER, 'l', "commit order",   &opt_commit_order, commit_order_map) \
 	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL) \
-	TOGGLE_(CHANGES,   'C', "local change display", &opt_show_changes, NULL)
+	TOGGLE_(CHANGES,   'C', "local change display", &opt_show_changes, NULL) \
+	TOGGLE_(ID,        'X', "commit ID display", &opt_show_id, NULL)
 
 static bool
 toggle_option(enum request request)
@@ -3521,6 +3556,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_REFS:
 	case REQ_TOGGLE_CHANGES:
 	case REQ_TOGGLE_IGNORE_SPACE:
+	case REQ_TOGGLE_ID:
 		if (toggle_option(request) && view_has_flags(view, VIEW_DIFF_LIKE))
 			reload_view(view);
 		break;
@@ -7105,6 +7141,9 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_lineno(view, lineno))
 		return TRUE;
 
+	if (draw_id(view, commit->id))
+		return TRUE;
+
 	if (draw_date(view, &commit->time))
 		return TRUE;
 
@@ -7302,6 +7341,7 @@ main_grep(struct view *view, struct line *line)
 {
 	struct commit *commit = line->data;
 	const char *text[] = {
+		commit->id,
 		commit->title,
 		mkauthor(commit->author, opt_author_cols, opt_author),
 		mkdate(&commit->time, opt_date),
@@ -7832,6 +7872,9 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 
 	else if (!strcmp(name, "core.worktree"))
 		set_work_tree(value);
+
+	else if (!strcmp(name, "core.abbrev"))
+		parse_id(&opt_id_cols, value, TRUE);
 
 	else if (!prefixcmp(name, "tig.color."))
 		set_repo_config_option(name + 10, value, option_color_command);
