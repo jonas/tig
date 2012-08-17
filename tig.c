@@ -2066,7 +2066,7 @@ static bool
 draw_id(struct view *view, const char *id){
 	if (!opt_show_id)
 		return FALSE;
-	return draw_field(view, LINE_MAIN_ID, id, opt_id_len+1, FALSE);
+	return draw_field(view, LINE_MAIN_ID, id, opt_id_len, FALSE);
 }
 
 static bool
