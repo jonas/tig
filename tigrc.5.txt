@@ -157,7 +157,7 @@ The following variables can be set:
 'show-id' (bool)::
 
 	Whether to show commit IDs in the main view. Disabled by default. Can
-	be toggled. See also 'id-len' option.
+	be toggled. See also 'id-width' option.
 
 'show-rev-graph' (bool)::
 
@@ -216,7 +216,7 @@ The following variables can be set:
 	Wrap long lines. By default, lines are not wrapped.
 	Not compatible with line numbers enabled.
 
-'id-len' (int)::
+'id-width' (int)::
 
 	Length of the commit ID if displayed in the main view. Default: '7'.
 

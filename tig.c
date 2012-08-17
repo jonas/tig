@@ -1525,7 +1525,7 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "show-id"))
 		return parse_bool(&opt_show_id, argv[2]);
 
-	if (!strcmp(argv[0], "id-len"))
+	if (!strcmp(argv[0], "id-width"))
 		return parse_int(&opt_id_cols, argv[2], 4, 40);
 
 	return OPT_ERR_UNKNOWN_VARIABLE_NAME;
