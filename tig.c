@@ -441,7 +441,7 @@ static const char **opt_file_argv	= NULL;
 static const char **opt_blame_argv	= NULL;
 static int opt_lineno			= 0;
 static bool opt_show_id = FALSE;
-static int opt_id_len = ID_COLS;
+static int opt_id_cols = ID_COLS;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
@@ -1526,7 +1526,7 @@ option_set_command(int argc, const char *argv[])
 		return parse_bool(&opt_show_id, argv[2]);
 
 	if (!strcmp(argv[0], "id-len"))
-		return parse_int(&opt_id_len, argv[2], 4, 40);
+		return parse_int(&opt_id_cols, argv[2], 4, 40);
 
 	return OPT_ERR_UNKNOWN_VARIABLE_NAME;
 }
@@ -2066,7 +2066,7 @@ static bool
 draw_id(struct view *view, const char *id){
 	if (!opt_show_id)
 		return FALSE;
-	return draw_field(view, LINE_MAIN_ID, id, opt_id_len, FALSE);
+	return draw_field(view, LINE_MAIN_ID, id, opt_id_cols, FALSE);
 }
 
 static bool
