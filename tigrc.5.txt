@@ -218,7 +218,9 @@ The following variables can be set:
 
 'id-width' (int)::
 
-	Length of the commit ID if displayed in the main view. Default: '7'.
+	Length of the commit ID if displayed in the main view. If 'core.abbrev' is
+	set, tig will use that value. This option can be used to override that
+	setting.
 
 Bind command
 ------------
