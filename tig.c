@@ -7325,6 +7325,7 @@ main_grep(struct view *view, struct line *line)
 {
 	struct commit *commit = line->data;
 	const char *text[] = {
+		commit->id,
 		commit->title,
 		mkauthor(commit->author, opt_author_cols, opt_author),
 		mkdate(&commit->time, opt_date),
