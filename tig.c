@@ -1526,7 +1526,7 @@ option_set_command(int argc, const char *argv[])
 		return parse_bool(&opt_show_id, argv[2]);
 
 	if (!strcmp(argv[0], "id-len"))
-		return parse_int(&opt_id_len, argv[2], 1, 40);
+		return parse_int(&opt_id_len, argv[2], 4, 40);
 
 	return OPT_ERR_UNKNOWN_VARIABLE_NAME;
 }
