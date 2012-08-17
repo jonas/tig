@@ -49,10 +49,14 @@ CFLAGS="$RPM_OPT_FLAGS -DVERSION=tig-%{version}-%{release}"
 %doc README COPYING INSTALL SITES BUGS contrib/tigrc contrib/tig-completion.bash
 %{!?_without_docs: %{_mandir}/man1/*.1*}
 %{!?_without_docs: %{_mandir}/man5/*.5*}
+%{!?_without_docs: %{_mandir}/man7/*.7*}
 %{!?_without_docs: %doc *.html}
 %{?_without_docs:  %doc *.txt}
 
 %changelog
+* Thu Aug 16 2012 Victor Foitzik <vifo@cpan.org>
+- Now also packaging man(7) pages
+
 * Sat Jun 23 2007 Jonas Fonseca <fonseca@diku.dk>
 - Include tig bash completion script
 
