@@ -1516,7 +1516,7 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "status-untracked-dirs"))
 		return parse_bool(&opt_untracked_dirs_content, argv[2]);
 
-	if (!strcmp(argv[0], "use-git-colors"))
+	if (!strcmp(argv[0], "read-git-colors"))
 		return parse_bool(&opt_read_git_colors, argv[2]);
 
 	if (!strcmp(argv[0], "ignore-case"))
