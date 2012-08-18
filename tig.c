@@ -1288,7 +1288,8 @@ set_color(int *color, const char *name)
 		return TRUE;
 	if (!prefixcmp(name, "color"))
 		return parse_int(color, name + 5, 0, 255) == OPT_OK;
-	return FALSE;
+	/* Used when reading git colors. Git expects a plain int w/o prefix.  */
+	return parse_int(color, name, 0, 255) == OPT_OK;
 }
 
 /* Wants: object fgcolor bgcolor [attribute] */
