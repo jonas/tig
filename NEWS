@@ -27,7 +27,9 @@ Improvements:
  - Improve tigrc(5) documentation. (Debian #682766)
  - Allow to build on Mac OS 10.7 without the configure script. (GH #25)
  - Add option to split the view vertically instead of horizontally.
-   Example: set vertical-split = yes'. (GH #76)
+   Example: `set vertical-split = yes'. (GH #76)
+ - Add 'show-id' and 'id-width' options to configure the display of
+   commit IDs in the main view and ID width in the blame view. (GH #77)
 
 Bug fixes:
 

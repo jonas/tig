@@ -99,6 +99,12 @@ The following variables can be set:
 
 	Width of the filename column.
 
+'id-width' (int)::
+
+	Width of the commit ID. When unset tig will use the value of
+	'core.abbrev' if found or default to 7.  See git-config(1) on how to
+	set 'core.abbrev'.
+
 'blame-options' (string)::
 
 	A space separated string of extra blame options. Can be used for
@@ -153,6 +159,11 @@ The following variables can be set:
 
 	Whether to show references (branches, tags, and remotes) in the main
 	view on start-up. Can be toggled.
+
+'show-id' (bool)::
+
+	Whether to show commit IDs in the main view. Disabled by default. Can
+	be toggled. See also 'id-width' option.
 
 'show-rev-graph' (bool)::
 
@@ -505,6 +516,7 @@ setting the *default* color option.
 |title-blur		|The title window of any backgrounded view.
 |delimiter		|Delimiter shown for truncated lines.
 |line-number		|Line numbers.
+|id			|The commit ID.
 |date			|The commit date.
 |author			|The commit author.
 |mode			|The file mode holding the permissions and type.
@@ -534,12 +546,6 @@ example: palette-0 = red
 |stat-staged		|Status flag of staged files.
 |stat-unstaged		|Status flag of unstaged files.
 |stat-untracked		|Status flag of untracked files.
-|=============================================================================
-
-.Blame view
-[frame="none",grid="none",cols="25<m,75<"]
-|=============================================================================
-|blame-id		|The commit ID.
 |=============================================================================
 
 .Tree view

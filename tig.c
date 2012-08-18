@@ -330,6 +330,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 	REQ_(TOGGLE_SORT_FIELD,	"Toggle field to sort by"), \
 	REQ_(TOGGLE_IGNORE_SPACE,	"Toggle ignoring whitespace in diffs"), \
 	REQ_(TOGGLE_COMMIT_ORDER,	"Toggle commit ordering"), \
+	REQ_(TOGGLE_ID,		"Toggle commit ID display"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
@@ -439,6 +440,8 @@ static const char **opt_rev_argv	= NULL;
 static const char **opt_file_argv	= NULL;
 static const char **opt_blame_argv	= NULL;
 static int opt_lineno			= 0;
+static bool opt_show_id			= FALSE;
+static int opt_id_cols			= ID_WIDTH;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
@@ -535,6 +538,7 @@ LINE(STATUS,	   "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(DELIMITER,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(DATE,         "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(MODE,         "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
+LINE(ID,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(FILENAME,   "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(LINE_NUMBER,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(TITLE_BLUR,   "",			COLOR_WHITE,	COLOR_BLUE,	0), \
@@ -559,7 +563,6 @@ LINE(STAT_UNSTAGED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(STAT_UNTRACKED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(HELP_KEYMAP,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(HELP_GROUP,   "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
-LINE(BLAME_ID,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(DIFF_STAT,		"",	  	COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(PALETTE_0, "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(PALETTE_1, "",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
@@ -871,6 +874,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'I',		REQ_TOGGLE_SORT_ORDER },
 	{ 'i',		REQ_TOGGLE_SORT_FIELD },
 	{ 'W',		REQ_TOGGLE_IGNORE_SPACE },
+	{ 'X',		REQ_TOGGLE_ID },
 	{ ':',		REQ_PROMPT },
 	{ 'e',		REQ_EDIT },
 };
@@ -1274,6 +1278,9 @@ parse_int(int *opt, const char *arg, int min, int max)
 	return OPT_ERR_INTEGER_VALUE_OUT_OF_BOUND;
 }
 
+#define parse_id(opt, arg) \
+	parse_int(opt, arg, 4, SIZEOF_REV - 1)
+
 static bool
 set_color(int *color, const char *name)
 {
@@ -1303,6 +1310,7 @@ option_color_command(int argc, const char *argv[])
 			ENUM_MAP("main-delim",	LINE_DELIMITER),
 			ENUM_MAP("main-date",	LINE_DATE),
 			ENUM_MAP("main-author",	LINE_AUTHOR),
+			ENUM_MAP("blame-id",	LINE_ID),
 		};
 		int index;
 
@@ -1516,6 +1524,12 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "wrap-lines"))
 		return parse_bool(&opt_wrap_lines, argv[2]);
+
+	if (!strcmp(argv[0], "show-id"))
+		return parse_bool(&opt_show_id, argv[2]);
+
+	if (!strcmp(argv[0], "id-width"))
+		return parse_id(&opt_id_cols, argv[2]);
 
 	return OPT_ERR_UNKNOWN_VARIABLE_NAME;
 }
@@ -2052,6 +2066,12 @@ draw_author(struct view *view, const char *author)
 }
 
 static bool
+draw_id(struct view *view, enum line_type type, const char *id)
+{
+	return draw_field(view, type, id, opt_id_cols, FALSE);
+}
+
+static bool
 draw_filename(struct view *view, const char *filename, bool auto_enabled)
 {
 	bool trim = filename && strlen(filename) >= opt_filename_width;
@@ -2400,7 +2420,8 @@ redraw_display(bool clear)
 	TOGGLE_(IGNORE_SPACE, 'W', "space changes",  &opt_ignore_space, ignore_space_map) \
 	TOGGLE_(COMMIT_ORDER, 'l', "commit order",   &opt_commit_order, commit_order_map) \
 	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL) \
-	TOGGLE_(CHANGES,   'C', "local change display", &opt_show_changes, NULL)
+	TOGGLE_(CHANGES,   'C', "local change display", &opt_show_changes, NULL) \
+	TOGGLE_(ID,        'X', "commit ID display", &opt_show_id, NULL)
 
 static bool
 toggle_option(enum request request)
@@ -3521,6 +3542,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_REFS:
 	case REQ_TOGGLE_CHANGES:
 	case REQ_TOGGLE_IGNORE_SPACE:
+	case REQ_TOGGLE_ID:
 		if (toggle_option(request) && view_has_flags(view, VIEW_DIFF_LIKE))
 			reload_view(view);
 		break;
@@ -5359,7 +5381,7 @@ blame_read_file(struct view *view, const char *text, struct blame_state *state)
 		size_t textlen = strlen(text);
 		struct blame *blame;
 
-		if (!add_line_alloc(view, &blame, LINE_BLAME_ID, textlen, FALSE))
+		if (!add_line_alloc(view, &blame, LINE_ID, textlen, FALSE))
 			return FALSE;
 
 		blame->commit = NULL;
@@ -5406,7 +5428,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct blame *blame = line->data;
 	struct time *time = NULL;
 	const char *id = NULL, *author = NULL, *filename = NULL;
-	enum line_type id_type = LINE_BLAME_ID;
+	enum line_type id_type = LINE_ID;
 	static const enum line_type blame_colors[] = {
 		LINE_PALETTE_0,
 		LINE_PALETTE_1,
@@ -5437,7 +5459,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_filename(view, filename, state->auto_filename_display))
 		return TRUE;
 
-	if (draw_field(view, id_type, id, ID_WIDTH, FALSE))
+	if (draw_id(view, id_type, id))
 		return TRUE;
 
 	if (draw_lineno(view, lineno))
@@ -7105,6 +7127,9 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_lineno(view, lineno))
 		return TRUE;
 
+	if (opt_show_id && draw_id(view, LINE_ID, commit->id))
+		return TRUE;
+
 	if (draw_date(view, &commit->time))
 		return TRUE;
 
@@ -7302,6 +7327,7 @@ main_grep(struct view *view, struct line *line)
 {
 	struct commit *commit = line->data;
 	const char *text[] = {
+		commit->id,
 		commit->title,
 		mkauthor(commit->author, opt_author_width, opt_author),
 		mkdate(&commit->time, opt_date),
@@ -7832,6 +7858,9 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 
 	else if (!strcmp(name, "core.worktree"))
 		set_work_tree(value);
+
+	else if (!strcmp(name, "core.abbrev"))
+		parse_id(&opt_id_cols, value);
 
 	else if (!prefixcmp(name, "tig.color."))
 		set_repo_config_option(name + 10, value, option_color_command);
