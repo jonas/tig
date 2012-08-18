@@ -73,7 +73,7 @@ static inline int timecmp(const struct time *t1, const struct time *t2)
 static const char *
 mkdate(const struct time *time, enum date date)
 {
-	static char buf[DATE_COLS + 1];
+	static char buf[DATE_WIDTH + 1];
 	static const struct enum_map reldate[] = {
 		{ "second", 1,			60 * 2 },
 		{ "minute", 60,			60 * 60 * 2 },
@@ -131,7 +131,7 @@ DEFINE_ENUM(author, AUTHOR_ENUM);
 static const char *
 get_author_initials(const char *author)
 {
-	static char initials[AUTHOR_COLS * 6 + 1];
+	static char initials[AUTHOR_WIDTH * 6 + 1];
 	size_t pos = 0;
 	const char *end = strchr(author, '\0');
 
@@ -417,8 +417,8 @@ static double opt_scale_split_view	= 2.0 / 3.0;
 static double opt_scale_vsplit_view	= 0.5;
 static bool opt_vsplit			= FALSE;
 static int opt_tab_size			= 8;
-static int opt_author_cols		= AUTHOR_COLS;
-static int opt_filename_cols		= FILENAME_COLS;
+static int opt_author_width		= AUTHOR_WIDTH;
+static int opt_filename_width		= FILENAME_WIDTH;
 static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
@@ -1461,10 +1461,10 @@ option_set_command(int argc, const char *argv[])
 		return parse_int(&opt_num_interval, argv[2], 1, 1024);
 
 	if (!strcmp(argv[0], "author-width"))
-		return parse_int(&opt_author_cols, argv[2], 0, 1024);
+		return parse_int(&opt_author_width, argv[2], 0, 1024);
 
 	if (!strcmp(argv[0], "filename-width"))
-		return parse_int(&opt_filename_cols, argv[2], 0, 1024);
+		return parse_int(&opt_filename_width, argv[2], 0, 1024);
 
 	if (!strcmp(argv[0], "show-filename"))
 		return parse_enum(&opt_filename, argv[2], filename_map);
@@ -2031,7 +2031,7 @@ static bool
 draw_date(struct view *view, struct time *time)
 {
 	const char *date = mkdate(time, opt_date);
-	int cols = opt_date == DATE_SHORT ? DATE_SHORT_COLS : DATE_COLS;
+	int cols = opt_date == DATE_SHORT ? DATE_SHORT_WIDTH : DATE_WIDTH;
 
 	if (opt_date == DATE_NO)
 		return FALSE;
@@ -2042,19 +2042,19 @@ draw_date(struct view *view, struct time *time)
 static bool
 draw_author(struct view *view, const char *author)
 {
-	bool trim = author_trim(opt_author_cols);
-	const char *text = mkauthor(author, opt_author_cols, opt_author);
+	bool trim = author_trim(opt_author_width);
+	const char *text = mkauthor(author, opt_author_width, opt_author);
 
 	if (opt_author == AUTHOR_NO)
 		return FALSE;
 
-	return draw_field(view, LINE_AUTHOR, text, opt_author_cols, trim);
+	return draw_field(view, LINE_AUTHOR, text, opt_author_width, trim);
 }
 
 static bool
 draw_filename(struct view *view, const char *filename, bool auto_enabled)
 {
-	bool trim = filename && strlen(filename) >= opt_filename_cols;
+	bool trim = filename && strlen(filename) >= opt_filename_width;
 
 	if (opt_filename == FILENAME_NO)
 		return FALSE;
@@ -2062,7 +2062,7 @@ draw_filename(struct view *view, const char *filename, bool auto_enabled)
 	if (opt_filename == FILENAME_AUTO && !auto_enabled)
 		return FALSE;
 
-	return draw_field(view, LINE_FILENAME, filename, opt_filename_cols, trim);
+	return draw_field(view, LINE_FILENAME, filename, opt_filename_width, trim);
 }
 
 static bool
@@ -5041,7 +5041,7 @@ tree_grep(struct view *view, struct line *line)
 	struct tree_entry *entry = line->data;
 	const char *text[] = {
 		entry->name,
-		mkauthor(entry->author, opt_author_cols, opt_author),
+		mkauthor(entry->author, opt_author_width, opt_author),
 		mkdate(&entry->time, opt_date),
 		NULL
 	};
@@ -5437,7 +5437,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_filename(view, filename, state->auto_filename_display))
 		return TRUE;
 
-	if (draw_field(view, id_type, id, ID_COLS, FALSE))
+	if (draw_field(view, id_type, id, ID_WIDTH, FALSE))
 		return TRUE;
 
 	if (draw_lineno(view, lineno))
@@ -5818,7 +5818,7 @@ branch_grep(struct view *view, struct line *line)
 	struct branch *branch = line->data;
 	const char *text[] = {
 		branch->ref->name,
-		mkauthor(branch->author, opt_author_cols, opt_author),
+		mkauthor(branch->author, opt_author_width, opt_author),
 		NULL
 	};
 
@@ -7303,7 +7303,7 @@ main_grep(struct view *view, struct line *line)
 	struct commit *commit = line->data;
 	const char *text[] = {
 		commit->title,
-		mkauthor(commit->author, opt_author_cols, opt_author),
+		mkauthor(commit->author, opt_author_width, opt_author),
 		mkdate(&commit->time, opt_date),
 		NULL
 	};
