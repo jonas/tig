@@ -4721,6 +4721,7 @@ push_tree_stack_entry(const char *name, unsigned long lineno)
 
 struct tree_entry {
 	char id[SIZEOF_REV];
+	char commit[SIZEOF_REV];
 	mode_t mode;
 	struct time time;		/* Date from the author ident. */
 	const char *author;		/* Author of the commit. */
@@ -4728,6 +4729,7 @@ struct tree_entry {
 };
 
 struct tree_state {
+	char commit[SIZEOF_REV];
 	const char *author_name;
 	struct time author_time;
 	bool read_date;
@@ -4827,6 +4829,9 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 		state->read_date = TRUE;
 		return FALSE;
 
+	} else if (*text == 'c' && get_line_type(text) == LINE_COMMIT) {
+		string_copy_rev(state->commit, text + STRING_SIZE("commit "));
+
 	} else if (*text == 'a' && get_line_type(text) == LINE_AUTHOR) {
 		parse_author_line(text + STRING_SIZE("author "),
 				  &state->author_name, &state->author_time);
@@ -4854,6 +4859,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 			if (entry->author || strcmp(entry->name, text))
 				continue;
 
+			string_copy_rev(entry->commit, state->commit);
 			entry->author = state->author_name;
 			entry->time = state->author_time;
 			line->dirty = 1;
@@ -4947,6 +4953,9 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 			return TRUE;
 
 		if (draw_date(view, &entry->time))
+			return TRUE;
+
+		if (opt_show_id && draw_id(view, LINE_ID, entry->commit))
 			return TRUE;
 	}
 
@@ -5696,6 +5705,9 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 		return TRUE;
 
 	if (draw_field(view, type, branch_name, state->max_ref_length, FALSE))
+		return TRUE;
+
+	if (opt_show_id && draw_id(view, LINE_ID, branch->ref->id))
 		return TRUE;
 
 	draw_text(view, LINE_DEFAULT, branch->title);
