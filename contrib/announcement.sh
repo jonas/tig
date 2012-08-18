@@ -49,5 +49,5 @@ The diffstat and log summary for changes made in this release.
 
 $(git diff-tree --stat=72 $from..$to)
 
-$(git shortlog $short $from..$to)
+$(git shortlog --no-merges $short $from..$to)
 EOF
