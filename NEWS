@@ -4,6 +4,11 @@ Release notes
 master
 ------
 
+Incompatibilities:
+
+ - Values set for author-width and filename-width will result in widths
+   one character bigger than previously.
+
 Improvements:
 
  - Typing a text in the prompt will be interpreted as a tig command. Prefixing

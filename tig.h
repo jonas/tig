@@ -112,12 +112,12 @@
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
-#define DATE_WIDTH	STRING_SIZE("2006-04-29 14:21 ")
-#define DATE_SHORT_WIDTH	STRING_SIZE("2006-04-29 ")
+#define DATE_WIDTH	STRING_SIZE("2006-04-29 14:21")
+#define DATE_SHORT_WIDTH	STRING_SIZE("2006-04-29")
 
-#define ID_WIDTH	8
-#define AUTHOR_WIDTH	19
-#define FILENAME_WIDTH	19
+#define ID_WIDTH	7
+#define AUTHOR_WIDTH	18
+#define FILENAME_WIDTH	18
 
 #define MIN_VIEW_HEIGHT 4
 #define MIN_VIEW_WIDTH  4

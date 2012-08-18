@@ -2015,9 +2015,9 @@ draw_graphic(struct view *view, enum line_type type, const chtype graphic[], siz
 }
 
 static bool
-draw_field(struct view *view, enum line_type type, const char *text, int len, bool trim)
+draw_field(struct view *view, enum line_type type, const char *text, int width, bool trim)
 {
-	int max = MIN(VIEW_MAX_LEN(view), len);
+	int max = MIN(VIEW_MAX_LEN(view), width + 1);
 	int col = view->col;
 
 	if (!text)
@@ -2070,7 +2070,7 @@ draw_mode(struct view *view, mode_t mode)
 {
 	const char *str = mkmode(mode);
 
-	return draw_field(view, LINE_MODE, str, STRING_SIZE("-rw-r--r-- "), FALSE);
+	return draw_field(view, LINE_MODE, str, STRING_SIZE("-rw-r--r--"), FALSE);
 }
 
 static bool
@@ -5673,7 +5673,7 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_author(view, branch->author))
 		return TRUE;
 
-	if (draw_field(view, type, branch_name, state->max_ref_length + 1, FALSE))
+	if (draw_field(view, type, branch_name, state->max_ref_length, FALSE))
 		return TRUE;
 
 	draw_text(view, LINE_DEFAULT, branch->title);
