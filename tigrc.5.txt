@@ -26,9 +26,43 @@ The hash mark ('#') is used as a 'comment' character. All text after the
 comment character to the end of the line is ignored. You can use comments to
 annotate your initialization file.
 
-Alternatively, options can be set by putting them in one of the git
-configuration files, which are read by tig on startup. See 'git-config(1)' for
-which files to use.
+Git configuration
+-----------------
+
+Alternatively to using `~/.tigrc`, tig options can be set by putting them in
+one of the git configuration files, which are read by tig on startup. See
+'git-config(1)' for which files to use. The following example show the basic
+syntax to use for settings, bindings and colors.
+
+--------------------------------------------------------------------------
+[tig] show-rev-graph = true
+[tig "color"] cursor = yellow red bold 
+[tig "bind"] generic = P parent
+--------------------------------------------------------------------------
+
+In addition to tig-specific options, the following git options are read from
+the git configuration:
+
+'color.*'::
+
+	Colors for the various UI types. Can be completely disabled by setting
+	'read-git-colors'.
+
+'core.abbrev'::
+
+	The width of the commit ID. See also 'id-width' option.
+
+'core.editor'::
+
+	The editor command. Can be overridden by setting GIT_EDITOR.
+
+'core.worktree'::
+
+	The path to the root of the working tree.
+
+'gui.encoding'::
+
+	The encoding to use for displaying of file content.
 
 Set command
 -----------
@@ -131,7 +165,7 @@ The following variables can be set:
 
 'read-git-colors' (bool)::
 
-	Whether to read git's color settings.
+	Whether to read git's color settings. True by default.
 
 'show-author' (mixed) ["abbreviated" | "full" | bool]::
 
