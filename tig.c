@@ -427,6 +427,7 @@ static unsigned long opt_goto_line	= 0;
 static char opt_head[SIZEOF_REF]	= "";
 static char opt_remote[SIZEOF_REF]	= "";
 static struct encoding *opt_encoding	= NULL;
+static char opt_encoding_arg[SIZEOF_STR]	= ENCODING_ARG;
 static iconv_t opt_iconv_out		= ICONV_NONE;
 static char opt_search[SIZEOF_STR]	= "";
 static char opt_cdup[SIZEOF_STR]	= "";
@@ -1201,7 +1202,6 @@ add_builtin_run_requests(void)
 	OPT_ERR_(UNKNOWN_KEY_MAP, "Unknown key map"), \
 	OPT_ERR_(UNKNOWN_OPTION_COMMAND, "Unknown option command"), \
 	OPT_ERR_(UNKNOWN_REQUEST_NAME, "Unknown request name"), \
-	OPT_ERR_(OBSOLETE_VARIABLE_NAME, "Obsolete variable name"), \
 	OPT_ERR_(UNKNOWN_VARIABLE_NAME, "Unknown variable name"), \
 	OPT_ERR_(UNMATCHED_QUOTATION, "Unmatched quotation"), \
 	OPT_ERR_(WRONG_NUMBER_OF_ARGUMENTS, "Wrong number of arguments"),
@@ -3067,6 +3067,7 @@ update_view(struct view *view)
 	 * might have rearranged things. */
 	bool redraw = view->lines == 0;
 	bool can_read = TRUE;
+	struct encoding *encoding = view->encoding ? view->encoding : opt_encoding;
 
 	if (!view->pipe)
 		return TRUE;
@@ -3086,8 +3087,8 @@ update_view(struct view *view)
 	}
 
 	for (; (line = io_get(view->pipe, '\n', can_read)); can_read = FALSE) {
-		if (view->encoding) {
-			line = encoding_convert(view->encoding, line);
+		if (encoding) {
+			line = encoding_convert(encoding, line);
 		}
 
 		if (!view->ops->read(view, line)) {
@@ -4112,7 +4113,7 @@ static bool
 log_open(struct view *view, enum open_flags flags)
 {
 	static const char *log_argv[] = {
-		"git", "log", ENCODING_ARG, "--no-color", "--cc", "--stat", "-n100", "%(head)", NULL
+		"git", "log", opt_encoding_arg, "--no-color", "--cc", "--stat", "-n100", "%(head)", NULL
 	};
 
 	return begin_update(view, NULL, log_argv, flags);
@@ -4153,7 +4154,7 @@ static bool
 diff_open(struct view *view, enum open_flags flags)
 {
 	static const char *diff_argv[] = {
-		"git", "show", ENCODING_ARG, "--pretty=fuller", "--no-color", "--root",
+		"git", "show", opt_encoding_arg, "--pretty=fuller", "--no-color", "--root",
 			"--patch-with-stat",
 			opt_notes_arg, opt_diff_context_arg, opt_ignore_space_arg,
 			"%(diffargs)", "%(commit)", "--", "%(fileargs)", NULL
@@ -4332,7 +4333,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 {
 	char line_arg[SIZEOF_STR];
 	const char *blame_argv[] = {
-		"git", "blame", ENCODING_ARG, "-p", line_arg, ref, "--", file, NULL
+		"git", "blame", opt_encoding_arg, "-p", line_arg, ref, "--", file, NULL
 	};
 	struct io io;
 	bool ok = FALSE;
@@ -4815,7 +4816,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 	} else if (!text) {
 		/* Find next entry to process */
 		const char *log_file[] = {
-			"git", "log", ENCODING_ARG, "--no-color", "--pretty=raw",
+			"git", "log", opt_encoding_arg, "--no-color", "--pretty=raw",
 				"--cc", "--raw", view->id, "--", "%(directory)", NULL
 		};
 
@@ -5370,7 +5371,7 @@ blame_read_file(struct view *view, const char *text, struct blame_state *state)
 {
 	if (!text) {
 		const char *blame_argv[] = {
-			"git", "blame", ENCODING_ARG, "%(blameargs)", "--incremental",
+			"git", "blame", opt_encoding_arg, "%(blameargs)", "--incremental",
 				*opt_ref ? opt_ref : "--incremental", "--", opt_file, NULL
 		};
 
@@ -5500,7 +5501,7 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 	char from[SIZEOF_REF + SIZEOF_STR];
 	char to[SIZEOF_REF + SIZEOF_STR];
 	const char *diff_tree_argv[] = {
-		"git", "diff", ENCODING_ARG, "--no-textconv", "--no-extdiff",
+		"git", "diff", opt_encoding_arg, "--no-textconv", "--no-extdiff",
 			"--no-color", "-U0", from, to, "--", NULL
 	};
 	struct io io;
@@ -5576,11 +5577,13 @@ blame_request(struct view *view, enum request request, struct line *line)
 		if (string_rev_is_null(blame->commit->id)) {
 			struct view *diff = VIEW(REQ_VIEW_DIFF);
 			const char *diff_parent_argv[] = {
-				GIT_DIFF_BLAME(opt_diff_context_arg,
+				GIT_DIFF_BLAME(opt_encoding_arg,
+					opt_diff_context_arg,
 					opt_ignore_space_arg, view->vid)
 			};
 			const char *diff_no_parent_argv[] = {
-				GIT_DIFF_BLAME_NO_PARENT(opt_diff_context_arg,
+				GIT_DIFF_BLAME_NO_PARENT(opt_encoding_arg,
+					opt_diff_context_arg,
 					opt_ignore_space_arg, view->vid)
 			};
 			const char **diff_index_argv = *blame->commit->parent_id
@@ -5738,7 +5741,7 @@ branch_request(struct view *view, enum request request, struct line *line)
 	{
 		const struct ref *ref = branch->ref;
 		const char *all_branches_argv[] = {
-			GIT_MAIN_LOG("", branch_is_all(branch) ? "--all" : ref->name, "")
+			GIT_MAIN_LOG(opt_encoding_arg, "", branch_is_all(branch) ? "--all" : ref->name, "")
 		};
 		struct view *main_view = VIEW(REQ_VIEW_MAIN);
 
@@ -5834,7 +5837,7 @@ static bool
 branch_open(struct view *view, enum open_flags flags)
 {
 	const char *branch_log[] = {
-		"git", "log", ENCODING_ARG, "--no-color", "--date=raw",
+		"git", "log", opt_encoding_arg, "--no-color", "--date=raw",
 			"--pretty=format:commit %H%nauthor %an <%ae> %ad%ntitle %s",
 			"--all", "--simplify-by-decoration", NULL
 	};
@@ -6849,21 +6852,21 @@ static bool
 stage_open(struct view *view, enum open_flags flags)
 {
 	static const char *no_head_diff_argv[] = {
-		GIT_DIFF_STAGED_INITIAL(opt_diff_context_arg, opt_ignore_space_arg,
+		GIT_DIFF_STAGED_INITIAL(opt_encoding_arg, opt_diff_context_arg, opt_ignore_space_arg,
 			stage_status.new.name)
 	};
 	static const char *index_show_argv[] = {
-		GIT_DIFF_STAGED(opt_diff_context_arg, opt_ignore_space_arg,
+		GIT_DIFF_STAGED(opt_encoding_arg, opt_diff_context_arg, opt_ignore_space_arg,
 			stage_status.old.name, stage_status.new.name)
 	};
 	static const char *files_show_argv[] = {
-		GIT_DIFF_UNSTAGED(opt_diff_context_arg, opt_ignore_space_arg,
+		GIT_DIFF_UNSTAGED(opt_encoding_arg, opt_diff_context_arg, opt_ignore_space_arg,
 			stage_status.old.name, stage_status.new.name)
 	};
 	/* Diffs for unmerged entries are empty when passing the new
 	 * path, so leave out the new path. */
 	static const char *files_unmerged_argv[] = {
-		"git", "diff-files", ENCODING_ARG, "--root", "--patch-with-stat",
+		"git", "diff-files", opt_encoding_arg, "--root", "--patch-with-stat",
 			opt_diff_context_arg, opt_ignore_space_arg, "--",
 			stage_status.old.name, NULL
 	};
@@ -7126,7 +7129,7 @@ static bool
 main_open(struct view *view, enum open_flags flags)
 {
 	static const char *main_argv[] = {
-		GIT_MAIN_LOG("%(diffargs)", "%(revargs)", "%(fileargs)")
+		GIT_MAIN_LOG(opt_encoding_arg, "%(diffargs)", "%(revargs)", "%(fileargs)")
 	};
 
 	return begin_update(view, NULL, main_argv, flags);
@@ -7276,11 +7279,13 @@ main_request(struct view *view, enum request request, struct line *line)
 		    || line->type == LINE_STAT_STAGED) {
 			struct view *diff = VIEW(REQ_VIEW_DIFF);
 			const char *diff_staged_argv[] = {
-				GIT_DIFF_STAGED(opt_diff_context_arg,
+				GIT_DIFF_STAGED(opt_encoding_arg,
+					opt_diff_context_arg,
 					opt_ignore_space_arg, NULL, NULL)
 			};
 			const char *diff_unstaged_argv[] = {
-				GIT_DIFF_UNSTAGED(opt_diff_context_arg,
+				GIT_DIFF_UNSTAGED(opt_encoding_arg,
+					opt_diff_context_arg,
 					opt_ignore_space_arg, NULL, NULL)
 			};
 			const char **diff_argv = line->type == LINE_STAT_STAGED
@@ -7863,11 +7868,21 @@ set_git_color_option(const char *name, char *value)
 	}
 }
 
+static void
+set_encoding(struct encoding **encoding_ref, const char *arg, bool priority)
+{
+	if (parse_encoding(encoding_ref, arg, priority) == OPT_OK)
+		opt_encoding_arg[0] = 0;
+}
+
 static int
 read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
-	if (!strcmp(name, "gui.encoding"))
-		parse_encoding(&opt_encoding, value, TRUE);
+	if (!strcmp(name, "i18n.commitencoding"))
+		set_encoding(&opt_encoding, value, FALSE);
+
+	else if (!strcmp(name, "gui.encoding"))
+		set_encoding(&opt_encoding, value, TRUE);
 
 	else if (!strcmp(name, "core.editor"))
 		string_ncopy(opt_editor, value, valuelen);

@@ -64,6 +64,10 @@ the git configuration:
 
 	The encoding to use for displaying of file content.
 
+'i18n.commitencoding'::
+
+	The encoding used for commits. The default is UTF-8.
+
 Set command
 -----------
 

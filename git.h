@@ -18,19 +18,19 @@
  * Argv-style git command macros.
  */
 
-#define GIT_DIFF_INITIAL(cached_arg, context_arg, space_arg, old_name, new_name) \
-	"git", "diff", ENCODING_ARG, "--no-color", "--patch-with-stat", \
+#define GIT_DIFF_INITIAL(encoding_arg, cached_arg, context_arg, space_arg, old_name, new_name) \
+	"git", "diff", (encoding_arg), "--no-color", "--patch-with-stat", \
 		(cached_arg), (context_arg), (space_arg), "--", (old_name), (new_name), NULL
 
-#define GIT_DIFF_STAGED_INITIAL(context_arg, space_arg, new_name) \
-	GIT_DIFF_INITIAL("--cached", context_arg, space_arg, "", new_name)
+#define GIT_DIFF_STAGED_INITIAL(encoding_arg, context_arg, space_arg, new_name) \
+	GIT_DIFF_INITIAL(encoding_arg, "--cached", context_arg, space_arg, "", new_name)
 
-#define GIT_DIFF_STAGED(context_arg, space_arg, old_name, new_name) \
-	"git", "diff-index", ENCODING_ARG, "--root", "--patch-with-stat", "-C", "-M", \
+#define GIT_DIFF_STAGED(encoding_arg, context_arg, space_arg, old_name, new_name) \
+	"git", "diff-index", (encoding_arg), "--root", "--patch-with-stat", "-C", "-M", \
 		"--cached", (context_arg), (space_arg), "HEAD", "--", (old_name), (new_name), NULL
 
-#define GIT_DIFF_UNSTAGED(context_arg, space_arg, old_name, new_name) \
-	"git", "diff-files", ENCODING_ARG, "--root", "--patch-with-stat", "-C", "-M", \
+#define GIT_DIFF_UNSTAGED(encoding_arg, context_arg, space_arg, old_name, new_name) \
+	"git", "diff-files", (encoding_arg), "--root", "--patch-with-stat", "-C", "-M", \
 		(context_arg), (space_arg), "--", (old_name), (new_name), NULL
 
 /* Don't show staged unmerged entries. */
@@ -40,14 +40,14 @@
 #define GIT_DIFF_UNSTAGED_FILES(output_arg) \
 	"git", "diff-files", (output_arg), NULL
 
-#define GIT_DIFF_BLAME(context_arg, space_arg, new_name) \
-	GIT_DIFF_UNSTAGED(context_arg, space_arg, "", new_name)
+#define GIT_DIFF_BLAME(encoding_arg, context_arg, space_arg, new_name) \
+	GIT_DIFF_UNSTAGED(encoding_arg, context_arg, space_arg, "", new_name)
 
-#define GIT_DIFF_BLAME_NO_PARENT(context_arg, space_arg, new_name) \
-	GIT_DIFF_INITIAL("", context_arg, space_arg, "/dev/null", new_name)
+#define GIT_DIFF_BLAME_NO_PARENT(encoding_arg, context_arg, space_arg, new_name) \
+	GIT_DIFF_INITIAL(encoding_arg, "", context_arg, space_arg, "/dev/null", new_name)
 
-#define GIT_MAIN_LOG(diffargs, revargs, fileargs) \
-	"git", "log", ENCODING_ARG, "--no-color", "--pretty=raw", "--parents", \
+#define GIT_MAIN_LOG(encoding_arg, diffargs, revargs, fileargs) \
+	"git", "log", (encoding_arg), "--no-color", "--pretty=raw", "--parents", \
 		opt_commit_order_arg, (diffargs), (revargs), \
 		"--", (fileargs), NULL
 

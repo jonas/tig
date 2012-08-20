@@ -15,13 +15,14 @@ Incompatibilities:
 
 Improvements:
 
- - Typing a text in the prompt will be interpreted as a tig command. Prefixing
-   the command with a '!' will execute this system command in an external
-   pager. Entering a single key will execute the corresponding key binding.
+ - Typing a text in the prompt will be interpreted as a tig command.
+   Prefixing the command with a '!' will execute this system command in
+   an external pager. Entering a single key will execute the
+   corresponding key binding.
  - Basic support for wrapping long line in pager, diff, and stage views.
    Enable using: `set wrap-lines = yes`. (GH #2)
- - User-defined commands prefixed with a '?' means prompt before execution.
-   Example: `bind main B !?git rebase -i %(commit)`.
+ - User-defined commands prefixed with a '?' means prompt before
+   execution. Example: `bind main B !?git rebase -i %(commit)`.
  - User-defined commands prefixed with a '<' means exit after execution.
    Example: `bind main C !<git commit`. (GH #66)
  - User-defined commands are executed unquoted to support shell commands.
@@ -37,6 +38,8 @@ Improvements:
    Example: `set vertical-split = yes'. (GH #76)
  - Add 'show-id' and 'id-width' options to configure the display of
    commit IDs in the main view and ID width in the blame view. (GH #77)
+ - Allow to override git-based encoding to UTF-8 by setting
+   'i18n.commitencoding' or 'gui.encoding'.
 
 Bug fixes:
 
