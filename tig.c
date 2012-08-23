@@ -4446,14 +4446,17 @@ static const char *
 diff_get_pathname(struct view *view, struct line *line)
 {
 	const struct line *header;
-	const char *dst, *prefix = " b/";
+	const char *dst, *prefixes[] = { " b/", "cc ", "combined " };
+	int i;
 
 	header = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
 	if (!header)
 		return NULL;
 
-	dst = strstr(header->data, prefix);
-	return dst ? dst + strlen(prefix) : NULL;
+	for (i = 0; i < ARRAY_SIZE(prefixes) && !dst; i++)
+		dst = strstr(header->data, prefixes[i]);
+
+	return dst ? dst + strlen(prefixes[--i]) : NULL;
 }
 
 static enum request
