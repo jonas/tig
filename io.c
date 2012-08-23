@@ -113,6 +113,7 @@ bool
 argv_append(const char ***argv, const char *arg)
 {
 	size_t argc = argv_size(*argv);
+	char *alloc;
 
 	if (!*arg && argc > 0)
 		return TRUE;
@@ -120,9 +121,12 @@ argv_append(const char ***argv, const char *arg)
 	if (!argv_realloc(argv, argc, 2))
 		return FALSE;
 
-	(*argv)[argc++] = strdup(arg);
+	alloc = strdup(arg);
+
+	(*argv)[argc++] = alloc;
 	(*argv)[argc] = NULL;
-	return TRUE;
+
+	return alloc != NULL;
 }
 
 bool
