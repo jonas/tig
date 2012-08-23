@@ -29,6 +29,7 @@ size_t argv_size(const char **argv);
 bool argv_append(const char ***argv, const char *arg);
 bool argv_append_array(const char ***dst_argv, const char *src_argv[]);
 bool argv_copy(const char ***dst, const char *src[]);
+bool argv_remove_quotes(const char *argv[]);
 
 /*
  * Encoding conversion.

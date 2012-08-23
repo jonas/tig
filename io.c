@@ -28,16 +28,18 @@ argv_to_string(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const cha
 }
 
 static inline int
-get_arg_valuelen(const char *arg, bool *quoted)
+get_arg_valuelen(const char *arg, char *quoted)
 {
 	if (*arg == '"' || *arg == '\'') {
 		const char *end = *arg == '"' ? "\"" : "'";
 		int valuelen = strcspn(arg + 1, end);
 
 		if (quoted)
-			*quoted = TRUE;
+			*quoted = *arg;
 		return valuelen > 0 ? valuelen + 2 : strlen(arg);
 	} else {
+		if (quoted)
+			*quoted = 0;
 		return strcspn(arg, " \t");
 	}
 }
@@ -46,7 +48,7 @@ static bool
 split_argv_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd, bool remove_quotes)
 {
 	while (*cmd && *argc < SIZEOF_ARG) {
-		bool quoted = FALSE;
+		char quoted = 0;
 		int valuelen = get_arg_valuelen(cmd, &quoted);
 		bool advance = cmd[valuelen] != 0;
 		int quote_offset = !!(quoted && remove_quotes);
@@ -137,6 +139,29 @@ argv_append_array(const char ***dst_argv, const char *src_argv[])
 	for (i = 0; src_argv && src_argv[i]; i++)
 		if (!argv_append(dst_argv, src_argv[i]))
 			return FALSE;
+	return TRUE;
+}
+
+bool
+argv_remove_quotes(const char *argv[])
+{
+	int argc;
+
+	for (argc = 0; argv[argc]; argc++) {
+		char quoted = 0;
+		const char *arg = argv[argc];
+		int arglen = get_arg_valuelen(arg, &quoted);
+
+		if (!quoted)
+			continue;
+
+		arg = strndup(arg + 1, arglen - 1 - (arg[arglen - 1] == quoted));
+		if (!arg)
+			return FALSE;
+		free((void *) argv[argc]);
+		argv[argc] = arg;
+	}
+
 	return TRUE;
 }
 

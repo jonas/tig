@@ -3419,12 +3419,12 @@ open_run_request(enum request request)
 			}
 		}
 
-		if (!confirmed)
-			; /* Nothing */
-		else if (req->silent)
-			io_run_bg(argv);
-		else
-			open_external_viewer(argv, NULL, !req->exit);
+		if (confirmed && argv_remove_quotes(argv)) {
+			if (req->silent)
+				io_run_bg(argv);
+			else
+				open_external_viewer(argv, NULL, !req->exit);
+		}
 	}
 
 	if (argv)

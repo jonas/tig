@@ -24,6 +24,9 @@ Improvements:
    Example: `bind main B !?git rebase -i %(commit)`.
  - User-defined commands prefixed with a '<' means exit after execution.
    Example: `bind main C !<git commit`. (GH #66)
+ - User-defined commands are executed unquoted to support shell commands.
+   Example: `bind generic I !@sh -c "echo -n %(commit) | xclip -selection c"`.
+   (GH #65)
  - Configure case-insensitive searches using: `set ignore-case = yes`.
  - Add "deleted mode" line type for better diff coloring.
  - Open editor when requesting edit action from within a file diff.

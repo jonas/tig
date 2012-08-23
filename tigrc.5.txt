@@ -349,10 +349,18 @@ are:
 As an example, the following external command will save the current commit as
 a patch file: "!git format-patch -1 %(commit)". If your external command
 requires use of dynamic features, such as subshells, expansion of environment
-variables and process control, this can be achieved by using a combination of
-git aliases and tig external commands. The following example entries can be
-put in either the .gitconfig or .git/config file:
+variables and process control, this can be achieved by using a shell command:
 
+.Configure a binding in ~/.tigrc to put a commit ID in the clipboard.
+--------------------------------------------------------------------------
+bind generic I !@sh -c "echo -n %(commit) | xclip -selection c"
+--------------------------------------------------------------------------
+
+Or by using a combination of git aliases and tig external commands. The
+following example entries can be put in either the .gitconfig or .git/config
+file:
+
+.Git configuration which binds tig keys to git command aliasas.
 --------------------------------------------------------------------------
 [alias]
 	gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &"
