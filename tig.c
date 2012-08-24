@@ -4447,7 +4447,8 @@ static const char *
 diff_get_pathname(struct view *view, struct line *line)
 {
 	const struct line *header;
-	const char *dst, *prefixes[] = { " b/", "cc ", "combined " };
+	const char *dst = NULL;
+	const char *prefixes[] = { " b/", "cc ", "combined " };
 	int i;
 
 	header = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
