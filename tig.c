@@ -1491,7 +1491,7 @@ option_set_command(int argc, const char *argv[])
 		return parse_int(&opt_tab_size, argv[2], 1, 1024);
 
 	if (!strcmp(argv[0], "diff-context")) {
-		enum option_code code = parse_int(&opt_diff_context, argv[2], 1, 999999);
+		enum option_code code = parse_int(&opt_diff_context, argv[2], 0, 999999);
 
 		if (code == OPT_OK)
 			update_diff_context_arg(opt_diff_context);
