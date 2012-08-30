@@ -405,6 +405,7 @@ static bool opt_read_git_colors		= TRUE;
 static bool opt_wrap_lines		= FALSE;
 static bool opt_ignore_case		= FALSE;
 static bool opt_stdin			= FALSE;
+static bool opt_focus_child		= TRUE;
 static int opt_diff_context		= 3;
 static char opt_diff_context_arg[9]	= "";
 static enum ignore_space opt_ignore_space	= IGNORE_SPACE_NO;
@@ -1524,6 +1525,9 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "ignore-case"))
 		return parse_bool(&opt_ignore_case, argv[2]);
 
+	if (!strcmp(argv[0], "focus-child"))
+		return parse_bool(&opt_focus_child, argv[2]);
+
 	if (!strcmp(argv[0], "wrap-lines"))
 		return parse_bool(&opt_wrap_lines, argv[2]);
 
@@ -1770,6 +1774,7 @@ enum view_flag {
 	VIEW_NO_GIT_DIR		= 1 << 6,
 	VIEW_DIFF_LIKE		= 1 << 7,
 	VIEW_STDIN		= 1 << 8,
+	VIEW_SEND_CHILD_ENTER	= 1 << 9,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))
@@ -1886,11 +1891,28 @@ static struct view views[] = {
 #define view_has_line(view, line_) \
 	((view)->line <= (line_) && (line_) < (view)->line + (view)->lines)
 
+static bool
+forward_request_to_child(struct view *child, enum request request)
+{
+	return displayed_views() == 2 && view_is_displayed(child) &&
+		!strcmp(child->vid, child->id);
+}
+
 static enum request
 view_request(struct view *view, enum request request)
 {
 	if (!view || !view->lines)
 		return request;
+
+	if (request == REQ_ENTER && !opt_focus_child &&
+	    view_has_flags(view, VIEW_SEND_CHILD_ENTER)) {
+		struct view *child = display[1];
+
+	    	if (forward_request_to_child(child, request)) {
+			view_request(child, request);
+			return REQ_NONE;
+		}
+	}
 
 	if (request == REQ_REFRESH && view->unrefreshable) {
 		report("This view can not be refreshed");
@@ -3244,7 +3266,7 @@ static void
 split_view(struct view *prev, struct view *view)
 {
 	display[1] = view;
-	current_view = 1;
+	current_view = opt_focus_child ? 1 : 0;
 	view->parent = prev;
 	resize_display();
 
@@ -4156,7 +4178,7 @@ log_request(struct view *view, enum request request, struct line *line)
 static struct view_ops log_ops = {
 	"line",
 	{ "log" },
-	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF,
+	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER,
 	0,
 	log_open,
 	pager_read,
@@ -5168,7 +5190,7 @@ tree_open(struct view *view, enum open_flags flags)
 static struct view_ops tree_ops = {
 	"file",
 	{ "tree" },
-	VIEW_NO_FLAGS,
+	VIEW_SEND_CHILD_ENTER,
 	sizeof(struct tree_state),
 	tree_open,
 	tree_read,
@@ -5661,7 +5683,7 @@ blame_select(struct view *view, struct line *line)
 static struct view_ops blame_ops = {
 	"line",
 	{ "blame" },
-	VIEW_ALWAYS_LINENO,
+	VIEW_ALWAYS_LINENO | VIEW_SEND_CHILD_ENTER,
 	sizeof(struct blame_state),
 	blame_open,
 	blame_read,
@@ -7395,7 +7417,7 @@ main_select(struct view *view, struct line *line)
 static struct view_ops main_ops = {
 	"commit",
 	{ "main" },
-	VIEW_STDIN,
+	VIEW_STDIN | VIEW_SEND_CHILD_ENTER,
 	sizeof(struct main_state),
 	main_open,
 	main_read,

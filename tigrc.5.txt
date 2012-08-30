@@ -260,6 +260,12 @@ The following variables can be set:
 	Wrap long lines. By default, lines are not wrapped.
 	Not compatible with line numbers enabled.
 
+'focus-child' (bool)::
+
+	Whether to focus the child view when it is opened. When disabled the
+	focus will remain in the parent view, avoiding reloads of the child
+	view when navigating the parent view. True by default.
+
 Bind command
 ------------
 
