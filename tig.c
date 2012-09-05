@@ -3968,12 +3968,12 @@ try_add_describe_ref:
 static struct line *
 pager_wrap_line(struct view *view, const char *data, enum line_type type)
 {
-	struct line *first_line = NULL;
+	size_t first_line = 0;
 	size_t datalen = strlen(data);
 	size_t lineno = 0;
 
 	while (datalen > 0 || !first_line) {
-		bool wrapped = first_line != NULL;
+		bool wrapped = !!first_line;
 		size_t linelen = string_expanded_length(data, datalen, opt_tab_size, view->width - !!wrapped);
 		struct line *line;
 		char *text;
@@ -3982,7 +3982,7 @@ pager_wrap_line(struct view *view, const char *data, enum line_type type)
 		if (!line)
 			break;
 		if (!first_line)
-			first_line = line;
+			first_line = view->lines - 1;
 		if (!wrapped)
 			lineno = line->lineno;
 
@@ -3997,7 +3997,7 @@ pager_wrap_line(struct view *view, const char *data, enum line_type type)
 		data += linelen;
 	}
 
-	return first_line;
+	return first_line ? &view->line[first_line] : NULL;
 }
 
 static bool
