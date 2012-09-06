@@ -29,3 +29,7 @@ AC_CHECK_PROGS(DOCBOOK2PDF, [docbook2pdf], [false])
 
 AC_CONFIG_FILES([config.make])
 AC_OUTPUT
+
+dnl Local Variables:
+dnl eval: (font-lock-add-keywords nil '(("\\_<AX_\\sw+" . font-lock-keyword-face)))
+dnl End:
