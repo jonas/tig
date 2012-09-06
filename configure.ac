@@ -4,6 +4,11 @@ AC_LANG([C])
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_SRCDIR(tig.c)
 
+dnl  Document where we keep our .m4 file.
+AC_CONFIG_MACRO_DIR([contrib])
+dnl  Make sure aclocal actually found it!
+m4_pattern_forbid([^AX_])
+
 AX_WITH_CURSES
 case "$ax_cv_ncurses" in "no")
 	AC_MSG_ERROR([ncurses not found])
