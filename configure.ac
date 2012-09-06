@@ -1,4 +1,4 @@
-AC_INIT([tig], [0], [Jonas Fonseca <fonseca@diku.dk>], [tig])
+AC_INIT([tig],[0],[Jonas Fonseca <fonseca@diku.dk>],[tig])
 
 AC_LANG([C])
 AC_CONFIG_HEADER(config.h)
@@ -6,7 +6,7 @@ AC_CONFIG_SRCDIR(tig.c)
 
 AX_WITH_CURSES
 case "$ax_cv_ncurses" in "no")
-	AC_ERROR([ncurses not found])
+	AC_MSG_ERROR([ncurses not found])
 esac
 case "$ax_cv_ncursesw" in "no")
 	AC_MSG_WARN([The found ncurses library does not support wide-char.])
