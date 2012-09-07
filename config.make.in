@@ -19,3 +19,11 @@ XMLTO = @XMLTO@
 DOCBOOK2PDF = @DOCBOOK2PDF@
 
 %.o: config.h
+
+config.status: configure
+	./config.status --recheck
+
+config.h config.make: config.status
+	./config.status $@
+
+config.make: config.make.in
