@@ -404,6 +404,7 @@ static bool opt_untracked_dirs_content	= TRUE;
 static bool opt_read_git_colors		= TRUE;
 static bool opt_wrap_lines		= FALSE;
 static bool opt_ignore_case		= FALSE;
+static bool opt_stdin			= FALSE;
 static int opt_diff_context		= 3;
 static char opt_diff_context_arg[9]	= "";
 static enum ignore_space opt_ignore_space	= IGNORE_SPACE_NO;
@@ -1768,6 +1769,7 @@ enum view_flag {
 	VIEW_NO_REF		= 1 << 5,
 	VIEW_NO_GIT_DIR		= 1 << 6,
 	VIEW_DIFF_LIKE		= 1 << 7,
+	VIEW_STDIN		= 1 << 8,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))
@@ -1826,6 +1828,7 @@ struct view {
 	time_t start_time;
 	time_t update_secs;
 	struct encoding *encoding;
+	bool unrefreshable;
 
 	/* Private data */
 	void *private;
@@ -1888,6 +1891,12 @@ view_request(struct view *view, enum request request)
 {
 	if (!view || !view->lines)
 		return request;
+
+	if (request == REQ_REFRESH && view->unrefreshable) {
+		report("This view can not be refreshed");
+		return REQ_NONE;
+	}
+
 	return view->ops->request(view, request, &view->line[view->pos.lineno]);
 }
 
@@ -3019,11 +3028,16 @@ setup_update(struct view *view, const char *vid)
 static bool
 begin_update(struct view *view, const char *dir, const char **argv, enum open_flags flags)
 {
+	bool use_stdin = view_has_flags(view, VIEW_STDIN) && opt_stdin;
 	bool extra = !!(flags & (OPEN_EXTRA));
 	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED | OPEN_EXTRA));
 	bool refresh = flags & (OPEN_REFRESH | OPEN_PREPARED);
+	enum io_type io_type = use_stdin ? IO_RD_STDIN : IO_RD;
 
-	if (!reload && !strcmp(view->vid, view->id))
+	opt_stdin = FALSE;
+
+	if ((!reload && !strcmp(view->vid, view->id)) ||
+	    ((flags & OPEN_REFRESH) && view->unrefreshable))
 		return TRUE;
 
 	if (view->pipe) {
@@ -3032,6 +3046,8 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 		else
 			end_update(view, TRUE);
 	}
+
+	view->unrefreshable = use_stdin;
 
 	if (!refresh && argv) {
 		view->dir = dir;
@@ -3048,7 +3064,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	}
 
 	if (view->argv && view->argv[0] &&
-	    !io_run(&view->io, IO_RD, view->dir, view->argv)) {
+	    !io_run(&view->io, io_type, view->dir, view->argv)) {
 		report("Failed to open %s view", view->name);
 		return FALSE;
 	}
@@ -3450,7 +3466,8 @@ view_driver(struct view *view, enum request request)
 	if (request > REQ_NONE) {
 		if (open_run_request(request))
 			return FALSE;
-		view_request(view, REQ_REFRESH);
+		if (!view->unrefreshable)
+			view_request(view, REQ_REFRESH);
 		return TRUE;
 	}
 
@@ -4518,7 +4535,7 @@ diff_select(struct view *view, struct line *line)
 static struct view_ops diff_ops = {
 	"line",
 	{ "diff" },
-	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS,
+	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_STDIN,
 	sizeof(struct diff_state),
 	diff_open,
 	diff_read,
@@ -7378,7 +7395,7 @@ main_select(struct view *view, struct line *line)
 static struct view_ops main_ops = {
 	"commit",
 	{ "main" },
-	VIEW_NO_FLAGS,
+	VIEW_STDIN,
 	sizeof(struct main_state),
 	main_open,
 	main_read,
@@ -8038,15 +8055,46 @@ filter_rev_parse(const char ***args, const char *arg1, const char *arg2, const c
 	free(all_argv);
 }
 
+static bool
+is_rev_flag(const char *flag)
+{
+	static const char *rev_flags[] = { GIT_REV_FLAGS };
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(rev_flags); i++)
+		if (!strcmp(flag, rev_flags[i]))
+			return TRUE;
+
+	return FALSE;
+}
+
 static void
 filter_options(const char *argv[], bool blame)
 {
-	filter_rev_parse(&opt_file_argv, "--no-revs", "--no-flags", argv);
+	const char **flags = NULL;
 
-	if (blame)
-		filter_rev_parse(&opt_blame_argv, "--no-revs", "--flags", argv);
-	else
-		filter_rev_parse(&opt_diff_argv, "--no-revs", "--flags", argv);
+	filter_rev_parse(&opt_file_argv, "--no-revs", "--no-flags", argv);
+	filter_rev_parse(&flags, "--flags", "--no-revs", argv);
+
+	if (flags) {
+		int next, flags_pos;
+
+		for (next = flags_pos = 0; flags && flags[next]; next++) {
+			const char *flag = flags[next];
+
+			if (is_rev_flag(flag))
+				argv_append(&opt_rev_argv, flag);
+			else
+				flags[flags_pos++] = flag;
+		}
+
+		flags[flags_pos] = NULL;
+
+		if (blame)
+			opt_blame_argv = flags;
+		else
+			opt_diff_argv = flags;
+	}
 
 	filter_rev_parse(&opt_rev_argv, "--symbolic", "--revs-only", argv);
 }
@@ -8054,23 +8102,21 @@ filter_options(const char *argv[], bool blame)
 static enum request
 parse_options(int argc, const char *argv[])
 {
-	enum request request = REQ_VIEW_MAIN;
+	enum request request;
 	const char *subcommand;
 	bool seen_dashdash = FALSE;
 	const char **filter_argv = NULL;
 	int i;
 
-	if (!isatty(STDIN_FILENO))
-		return REQ_VIEW_PAGER;
+	opt_stdin = !isatty(STDIN_FILENO);
+	request = opt_stdin ? REQ_VIEW_PAGER : REQ_VIEW_MAIN;
 
 	if (argc <= 1)
-		return REQ_VIEW_MAIN;
+		return request;
 
 	subcommand = argv[1];
 	if (!strcmp(subcommand, "status")) {
-		if (argc > 2)
-			warn("ignoring arguments after `%s'", subcommand);
-		return REQ_VIEW_STATUS;
+		request = REQ_VIEW_STATUS;
 
 	} else if (!strcmp(subcommand, "blame")) {
 		request = REQ_VIEW_BLAME;
@@ -8123,6 +8169,14 @@ parse_options(int argc, const char *argv[])
 		}
 
 		string_ncopy(opt_file, opt_file_argv[0], strlen(opt_file_argv[0]));
+
+	} else if (request == REQ_VIEW_PAGER) {
+		for (i = 0; opt_rev_argv && opt_rev_argv[i]; i++) {
+			if (!strcmp("--stdin", opt_rev_argv[i])) {
+				request = REQ_VIEW_MAIN;
+				break;
+			}
+		}
 	}
 
 	return request;

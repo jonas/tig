@@ -342,8 +342,12 @@ io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ..
 {
 	int pipefds[2] = { -1, -1 };
 	va_list args;
+	bool read_from_stdin = type == IO_RD_STDIN;
 
 	io_init(io);
+
+	if (read_from_stdin)
+		type = IO_RD;
 
 	if (dir && !strcmp(dir, argv[0]))
 		return io_open(io, "%s%s", dir, argv[1]);
@@ -374,6 +378,10 @@ io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ..
 			int writefd = (type == IO_RD || type == IO_AP)
 							? pipefds[1] : devnull;
 			int errorfd = open_trace(devnull, argv);
+
+			/* Inject stdin given on the command line. */
+			if (read_from_stdin)
+				readfd = dup(STDIN_FILENO);
 
 			dup2(readfd,  STDIN_FILENO);
 			dup2(writefd, STDOUT_FILENO);

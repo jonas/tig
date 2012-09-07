@@ -42,6 +42,8 @@ Improvements:
    'i18n.commitencoding' or 'gui.encoding'.
  - Improve autobuild support to track generated files and work with
    autoreconf 2.61.
+ - Commit IDs are read from stdin when --stdin is given; works for main
+   and diff view, e.g. `tig --no-walk --stdin < cherry-picks.txt`.
 
 Bug fixes:
 

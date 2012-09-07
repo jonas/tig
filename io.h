@@ -49,6 +49,7 @@ enum io_type {
 	IO_BG,			/* Execute command in the background. */
 	IO_FG,			/* Execute command with same std{in,out,err}. */
 	IO_RD,			/* Read only fork+exec IO. */
+	IO_RD_STDIN,		/* Read only fork+exec IO with stdin. */
 	IO_WR,			/* Write only fork+exec IO. */
 	IO_AP,			/* Append fork+exec output to file. */
 };
