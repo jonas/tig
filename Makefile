@@ -147,7 +147,9 @@ dist: configure tig.spec
 rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
 
-configure: configure.ac acinclude.m4
+# Other autoconf-related rules are hidden in config.make.in so that
+# they don't confuse Make when we aren't actually using ./configure
+configure: configure.ac acinclude.m4 contrib/*.m4
 	./autogen.sh
 
 .PHONY: all all-debug doc doc-man doc-html install install-doc \

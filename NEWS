@@ -40,6 +40,8 @@ Improvements:
    commit IDs in the main view and ID width in the blame view. (GH #77)
  - Allow to override git-based encoding to UTF-8 by setting
    'i18n.commitencoding' or 'gui.encoding'.
+ - Improve autobuild support to track generated files and work with
+   autoreconf 2.61.
 
 Bug fixes:
 
