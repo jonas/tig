@@ -54,7 +54,7 @@ foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data)
 	size_t i;
 
 	for (i = 0; i < refs_size; i++)
-		if (!visitor(data, refs[i]))
+		if (refs[i]->id[0] && !visitor(data, refs[i]))
 			break;
 }
 
