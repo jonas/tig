@@ -6554,6 +6554,41 @@ status_request(struct view *view, enum request request, struct line *line)
 	return REQ_NONE;
 }
 
+static bool
+status_stage_info_(char *buf, size_t bufsize,
+		   enum line_type type, struct status *status)
+{
+	const char *info;
+
+	switch (type) {
+	case LINE_STAT_STAGED:
+		if (status->status)
+			info = "Staged changes to %s";
+		else
+			info = "Staged changes";
+		break;
+
+	case LINE_STAT_UNSTAGED:
+		if (status->status)
+			info = "Unstaged changes to %s";
+		else
+			info = "Unstaged changes";
+		break;
+
+	case LINE_STAT_UNTRACKED:
+		info = "Untracked file %s";
+		break;
+
+	case LINE_STAT_HEAD:
+	default:
+		die("line type %d not handled in switch", stage_line_type);
+	}
+
+	return string_nformat(buf, bufsize, NULL, info, status->new.name);
+}
+#define status_stage_info(buf, type, status) \
+	status_stage_info_(buf, sizeof(buf), type, status)
+
 static void
 status_select(struct view *view, struct line *line)
 {
@@ -6916,7 +6951,6 @@ stage_open(struct view *view, enum open_flags flags)
 	};
 	static const char *file_argv[] = { opt_cdup, stage_status.new.name, NULL };
 	const char **argv = NULL;
-	const char *info;
 
 	if (!stage_line_type) {
 		report("No stage content, press %s to open the status view and choose file",
@@ -6933,10 +6967,6 @@ stage_open(struct view *view, enum open_flags flags)
 		} else {
 			argv = index_show_argv;
 		}
-		if (stage_status.status)
-			info = "Staged changes to %s";
-		else
-			info = "Staged changes";
 		break;
 
 	case LINE_STAT_UNSTAGED:
@@ -6944,14 +6974,9 @@ stage_open(struct view *view, enum open_flags flags)
 			argv = files_show_argv;
 		else
 			argv = files_unmerged_argv;
-		if (stage_status.status)
-			info = "Unstaged changes to %s";
-		else
-			info = "Unstaged changes";
 		break;
 
 	case LINE_STAT_UNTRACKED:
-		info = "Untracked file %s";
 		argv = file_argv;
 		view->encoding = get_path_encoding(stage_status.old.name, opt_encoding);
 		break;
@@ -6961,7 +6986,7 @@ stage_open(struct view *view, enum open_flags flags)
 		die("line type %d not handled in switch", stage_line_type);
 	}
 
-	if (!string_format(view->ref, info, stage_status.new.name)
+	if (!status_stage_info(view->ref, stage_line_type, &stage_status)
 		|| !argv_copy(&view->argv, argv)) {
 		report("Failed to open staged view");
 		return FALSE;
