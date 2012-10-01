@@ -237,7 +237,7 @@ DEFINE_ENUM(commit_order, COMMIT_ORDER_ENUM);
 	_(HELP,   help,   ""), \
 	_(PAGER,  pager,  ""), \
 	_(STATUS, status, "status"), \
-	_(STAGE,  stage,  "stage")
+	_(STAGE,  stage,  ref_status)
 
 static struct encoding *
 get_path_encoding(const char *path, struct encoding *default_encoding)
@@ -1762,6 +1762,7 @@ static char ref_blob[SIZEOF_REF]	= "";
 static char ref_commit[SIZEOF_REF]	= "HEAD";
 static char ref_head[SIZEOF_REF]	= "HEAD";
 static char ref_branch[SIZEOF_REF]	= "";
+static char ref_status[SIZEOF_STR]	= "";
 
 enum view_flag {
 	VIEW_NO_FLAGS = 0,
@@ -3042,7 +3043,8 @@ static void
 setup_update(struct view *view, const char *vid)
 {
 	reset_view(view);
-	string_copy_rev(view->vid, vid);
+	/* XXX: Do not use string_copy_rev(), it copies until first space. */
+	string_ncopy(view->vid, vid, strlen(vid));
 	view->pipe = &view->io;
 	view->start_time = time(NULL);
 }
@@ -6634,8 +6636,10 @@ status_select(struct view *view, struct line *line)
 	}
 
 	string_format(view->ref, text, key, file);
-	if (status)
+	if (status) {
 		string_copy(opt_file, status->new.name);
+		status_stage_info(ref_status, line->type, status);
+	}
 }
 
 static bool
@@ -6656,7 +6660,7 @@ status_grep(struct view *view, struct line *line)
 static struct view_ops status_ops = {
 	"file",
 	{ "status" },
-	VIEW_CUSTOM_STATUS,
+	VIEW_CUSTOM_STATUS | VIEW_SEND_CHILD_ENTER,
 	0,
 	status_open,
 	NULL,
