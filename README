@@ -13,6 +13,6 @@ Using it as a pager, it will display input from stdin and colorize it.
 Resources
 ---------
 
-include::SITES[]
+include::doc/SITES[]
 
 include::INSTALL[]

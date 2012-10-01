@@ -9,10 +9,12 @@ tigrc - tig configuration file
 SYNOPSIS
 --------
 [verse]
+_______________________________________________________________________
 *set*   'variable' *=* 'value'
 *bind*  'keymap' 'key' 'action'
 *color* 'area' 'fgcolor' 'bgcolor' '[attributes]'
 *source* 'path'
+_______________________________________________________________________
 
 
 DESCRIPTION
@@ -716,7 +718,7 @@ current configuration file will take precedence. The syntax is:
 
 Examples:
 
-------------------------------------------------------------------------------
+--------------------------------------------------------------------------
 source ~/.tig/colorscheme.tigrc
 source ~/.tig/keybindings.tigrc
 --------------------------------------------------------------------------
@@ -732,5 +734,18 @@ the Free Software Foundation; either version 2 of the License, or
 
 SEE ALSO
 --------
-manpage:tig[1], manpage:tigmanual[7], git-config(1),
-and the http://jonas.nitro.dk/tig/manual.html[tig manual].
+ifndef::version[]
+link:tig.1.asciidoc[tig(1)],
+link:manual.asciidoc[the tig manual],
+endif::version[]
+ifdef::version[]
+ifdef::backend-docbook[]
+manpage:tig[1],
+manpage:tigmanual[7],
+endif::backend-docbook[]
+ifdef::backend-xhtml11[]
+link:tig.1.html[tig(1)],
+link:manual.html[the tig manual],
+endif::backend-xhtml11[]
+endif::version[]
+git(7), git-config(1)

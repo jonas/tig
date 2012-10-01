@@ -5,7 +5,7 @@
 # Copyright (c) 2009-2012 Jonas Fonseca <fonseca@diku.dk>
 
 LATEST="$(git describe | sed 's/-[0-9]*-g[0-9a-f]*//')"
-DOCDIR="release-docs/"
+DOCDIR="doc/release-docs/"
 
 TRACKER="
 <script type=\"text/javascript\">
@@ -21,7 +21,7 @@ pageTracker._trackPageview();
 
 mkdir -p "$DOCDIR/releases"
 
-for file in tig.1.html tigrc.5.html manual.html README.html NEWS.html; do
+for file in doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html NEWS.html; do
 	{
 		git cat-file blob release:$file > tmp
 		grep -v '</body>' < tmp | grep -v '</html>'
@@ -29,7 +29,7 @@ for file in tig.1.html tigrc.5.html manual.html README.html NEWS.html; do
 		if grep -q '</body>' tmp; then
 			echo "</body></html>"
 		fi
-	} > "$DOCDIR/$file"
+	} > "$DOCDIR/$(basename "$file")"
 done
 
 mv "$DOCDIR/README.html" tmp

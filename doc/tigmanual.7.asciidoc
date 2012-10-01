@@ -17,4 +17,4 @@ tig <      [git command output]
 DESCRIPTION
 -----------
 
-include::manual.txt[]
+include::manual.asciidoc[]

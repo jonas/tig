@@ -17,7 +17,7 @@
 
 root="$(git rev-parse --show-cdup)"
 NEWS="${root}NEWS"
-SITES="${root}SITES"
+SITES="${root}doc/SITES"
 from="$(sed -n '7,/^tig-/p' < "$NEWS" | tail -n 1 | cut -d' ' -f 1)"
 to="${1-HEAD}"
 short=

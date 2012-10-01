@@ -8,6 +8,7 @@ tig - text-mode interface for git
 SYNOPSIS
 --------
 [verse]
+_______________________________________________________________________
 tig        [options] [revisions] [--] [paths]
 tig log    [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
@@ -15,6 +16,7 @@ tig blame  [options] [rev] [--] path
 tig stash
 tig status
 tig <      [git command output]
+_______________________________________________________________________
 
 DESCRIPTION
 -----------
@@ -120,7 +122,13 @@ ENVIRONMENT VARIABLES
 In addition to environment variables used by git (e.g. GIT_DIR), tig defines
 the ones below. The command related environment variables have access to the
 internal state of tig via replacement variables, such as `%(commit)` and
-`%(blob)`. See manpage:tigrc[5] for a full list.
+`%(blob)`.
+ifdef::version[]
+See manpage:tigrc[5] for a full list.
+endif::version[]
+ifndef::version[]
+See link:tigrc.5.asciidoc[tigrc(5)] for a full list.
+endif::version[]
 
 TIGRC_USER::
 	Path of the user configuration file (defaults to `~/.tigrc`).
@@ -155,7 +163,9 @@ FILES
 	Git configuration files. Read on start-up with the help of
 	git-config(1).
 
-include::BUGS[]
+ifndef::version[]
+include::../BUGS[]
+endif::version[]
 
 COPYRIGHT
 ---------
@@ -168,9 +178,24 @@ the Free Software Foundation; either version 2 of the License, or
 
 SEE ALSO
 --------
+ifndef::version[]
+link:tigrc.5.asciidoc[tigrc(5)],
+link:manual.asciidoc[the tig manual],
+endif::version[]
+ifdef::version[]
+ifdef::backend-docbook[]
+manpage:tigrc[5],
+manpage:tigmanual[7],
+endif::backend-docbook[]
+ifdef::backend-xhtml11[]
+link:tigrc.5.html[tigrc(5)],
+link:manual.html[the tig manual],
+endif::backend-xhtml11[]
+endif::version[]
+git(7)
 
-manpage:tigrc[5], manpage:tigmanual[7], git(7), gitk(1)
-
+ifdef::version[]
 Online resources:
 
 include::SITES[]
+endif::version[]

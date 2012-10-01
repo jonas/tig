@@ -47,12 +47,12 @@ CFLAGS="$RPM_OPT_FLAGS -DVERSION=tig-%{version}-%{release}"
 %files
 %defattr(-,root,root)
 %{_bindir}/*
-%doc README COPYING INSTALL SITES BUGS contrib/tigrc contrib/tig-completion.bash
+%doc README COPYING INSTALL BUGS doc/SITES contrib/tigrc contrib/tig-completion.bash
 %{!?_without_docs: %{_mandir}/man1/*.1*}
 %{!?_without_docs: %{_mandir}/man5/*.5*}
 %{!?_without_docs: %{_mandir}/man7/*.7*}
-%{!?_without_docs: %doc *.html}
-%{?_without_docs:  %doc *.txt}
+%{!?_without_docs: %doc doc/*.html}
+%{?_without_docs:  %doc doc/*.txt}
 
 %changelog
 * Tue Jan  8 2013 Joakim Sernbrant <serbaut@gmail.com>

@@ -13,11 +13,11 @@ When browsing repositories, tig uses the underlying git commands to present
 the user with various views, such as summarized commit log and showing the
 commit with the log message, diffstat, and the diff.
 
-ifndef::backend-docbook[]
+ifdef::include-manual-toc[]
 *Table of Contents*
 
 include::manual.toc[]
-endif::backend-docbook[]
+endif::include-manual-toc[]
 
 [[calling-conventions]]
 Calling Conventions
@@ -577,7 +577,7 @@ accomplished using:
 $ tig --all --since=1.week -- Makefile
 -----------------------------------------------------------------------------
 
-include::BUGS[]
+include::../BUGS[]
 
 [[copy-right]]
 Copyright
@@ -596,9 +596,15 @@ See Also
 
 Manpages:
 
+ifdef::version[]
  - manpage:tig[1]
  - manpage:tigrc[5]
+endif::version[]
+ifndef::version[]
+ - link:tig.1.asciidoc[tig(1)]
+ - link:tigrc.5.asciidoc[tigrc(5)]
+endif::version[]
 
 Online resources:
 
-include::SITES[]
+include::SITES.asciidoc[]

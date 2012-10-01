@@ -1,6 +1,14 @@
 Release notes
 =============
 
+master
+------
+
+Incompatibilities:
+
+ - Move manual and man pages to doc/ directory and rename AsciiDoc files
+   to have .asciidoc as the extension to make them render on GitHub.
+
 tig-1.2
 -------
 
