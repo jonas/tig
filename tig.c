@@ -5143,6 +5143,7 @@ tree_select(struct view *view, struct line *line)
 
 	if (line->type == LINE_TREE_DIR && tree_path_is_parent(entry->name)) {
 		string_copy(view->ref, "Open parent directory");
+		ref_blob[0] = 0;
 		return;
 	}
 
