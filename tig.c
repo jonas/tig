@@ -6561,18 +6561,19 @@ static bool
 status_stage_info_(char *buf, size_t bufsize,
 		   enum line_type type, struct status *status)
 {
+	const char *file = status ? status->new.name : "";
 	const char *info;
 
 	switch (type) {
 	case LINE_STAT_STAGED:
-		if (status->status)
+		if (status && status->status)
 			info = "Staged changes to %s";
 		else
 			info = "Staged changes";
 		break;
 
 	case LINE_STAT_UNSTAGED:
-		if (status->status)
+		if (status && status->status)
 			info = "Unstaged changes to %s";
 		else
 			info = "Unstaged changes";
@@ -6584,10 +6585,10 @@ status_stage_info_(char *buf, size_t bufsize,
 
 	case LINE_STAT_HEAD:
 	default:
-		die("line type %d not handled in switch", stage_line_type);
+		info = "";
 	}
 
-	return string_nformat(buf, bufsize, NULL, info, status->new.name);
+	return string_nformat(buf, bufsize, NULL, info, file);
 }
 #define status_stage_info(buf, type, status) \
 	status_stage_info_(buf, sizeof(buf), type, status)
@@ -6637,10 +6638,9 @@ status_select(struct view *view, struct line *line)
 	}
 
 	string_format(view->ref, text, key, file);
-	if (status) {
+	status_stage_info(ref_status, line->type, status);
+	if (status)
 		string_copy(opt_file, status->new.name);
-		status_stage_info(ref_status, line->type, status);
-	}
 }
 
 static bool
