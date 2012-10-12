@@ -46,6 +46,7 @@ Improvements:
    and diff view, e.g. `tig --no-walk --stdin < cherry-picks.txt`.
  - Add option to disable focusing of the child view when it's opened.
    Disable using: `set focus-child = no`. (GH #83)
+ - Allow to open blob related with added content in a diff. (GH #91)
 
 Bug fixes:
 

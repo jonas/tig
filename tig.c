@@ -4540,15 +4540,16 @@ diff_request(struct view *view, enum request request, struct line *line)
 static void
 diff_select(struct view *view, struct line *line)
 {
-	const char *s;
-
 	if (line->type == LINE_DIFF_STAT) {
-		s = get_view_key(view, REQ_ENTER);
-		string_format(view->ref, "Press '%s' to jump to file diff", s);
+		string_format(view->ref, "Press '%s' to jump to file diff",
+			      get_view_key(view, REQ_ENTER));
 	} else {
-		s = diff_get_pathname(view, line);
-		if (s) {
-			string_format(view->ref, "Changes to '%s'", s);
+		const char *file = diff_get_pathname(view, line);
+
+		if (file) {
+			string_format(view->ref, "Changes to '%s'", file);
+			string_format(opt_file, "%s", file);
+			ref_blob[0] = 0;
 		} else {
 			string_ncopy(view->ref, view->id, strlen(view->id));
 			pager_select(view, line);
@@ -5209,6 +5210,20 @@ blob_open(struct view *view, enum open_flags flags)
 	static const char *blob_argv[] = {
 		"git", "cat-file", "blob", "%(blob)", NULL
 	};
+
+	if (!ref_blob[0] && opt_file[0]) {
+		const char *commit = ref_commit[0] ? ref_commit : "HEAD";
+		char blob_spec[SIZEOF_STR];
+		const char *rev_parse_argv[] = {
+			"git", "rev-parse", blob_spec, NULL
+		};
+
+		if (!string_format(blob_spec, "%s:%s", commit, opt_file) ||
+		    !io_run_buf(rev_parse_argv, ref_blob, sizeof(ref_blob))) {
+			report("Failed to resolve blob from file name");
+			return FALSE;
+		}
+	}
 
 	if (!ref_blob[0]) {
 		report("No file chosen, press %s to open tree view",
