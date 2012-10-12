@@ -571,6 +571,168 @@ footnotes: function () {
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_1_1">tig-1.1</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Incompatibilities:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Disable diff move/copy detection by default, boosting diff
+   performance on larger projects. Use git config <em>diff.renames</em> option
+   (git-wide) to set your preferred behavior. Environment variable
+   TIG_DIFF_OPTS can be used to restore the old behavior.
+</p>
+</li>
+<li>
+<p>
+Values set for author-width and filename-width will result in widths
+   one character bigger than previously.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Typing a text in the prompt will be interpreted as a tig command.
+   Prefixing the command with a <em>!</em> will execute this system command in
+   an external pager. Entering a single key will execute the
+   corresponding key binding.
+</p>
+</li>
+<li>
+<p>
+Basic support for wrapping long line in pager, diff, and stage views.
+   Enable using: <tt>set wrap-lines = yes</tt>. (GH #2)
+</p>
+</li>
+<li>
+<p>
+User-defined commands prefixed with a <em>?</em> means prompt before
+   execution. Example: <tt>bind main B !?git rebase -i %(commit)</tt>.
+</p>
+</li>
+<li>
+<p>
+User-defined commands prefixed with a <em>&lt;</em> means exit after execution.
+   Example: <tt>bind main C !&lt;git commit</tt>. (GH #66)
+</p>
+</li>
+<li>
+<p>
+User-defined commands are executed unquoted to support shell commands.
+   Example: <tt>bind generic I !@sh -c "echo -n %(commit) | xclip -selection c"</tt>.
+   (GH #65)
+</p>
+</li>
+<li>
+<p>
+Configure case-insensitive searches using: <tt>set ignore-case = yes</tt>.
+</p>
+</li>
+<li>
+<p>
+Add "deleted mode" line type for better diff coloring.
+</p>
+</li>
+<li>
+<p>
+Open editor when requesting edit action from within a file diff.
+</p>
+</li>
+<li>
+<p>
+Update AX_WITH_CURSES to build under Cygwin.
+</p>
+</li>
+<li>
+<p>
+Improve tigrc(5) documentation. (Debian #682766)
+</p>
+</li>
+<li>
+<p>
+Allow to build on Mac OS 10.7 without the configure script. (GH #25)
+</p>
+</li>
+<li>
+<p>
+Add option to split the view vertically instead of horizontally.
+   Example: &#8216;set vertical-split = yes&#8217;. (GH #76)
+</p>
+</li>
+<li>
+<p>
+Add <em>show-id</em> and <em>id-width</em> options to configure the display of
+   commit IDs in the main view and ID width in the blame view. (GH #77)
+</p>
+</li>
+<li>
+<p>
+Allow to override git-based encoding to UTF-8 by setting
+   <em>i18n.commitencoding</em> or <em>gui.encoding</em>.
+</p>
+</li>
+<li>
+<p>
+Improve autobuild support to track generated files and work with
+   autoreconf 2.61.
+</p>
+</li>
+<li>
+<p>
+Commit IDs are read from stdin when --stdin is given; works for main
+   and diff view, e.g. <tt>tig --no-walk --stdin &lt; cherry-picks.txt</tt>.
+</p>
+</li>
+<li>
+<p>
+Add option to disable focusing of the child view when it&#8217;s opened.
+   Disable using: <tt>set focus-child = no</tt>. (GH #83)
+</p>
+</li>
+<li>
+<p>
+Allow to open blob related with added content in a diff. (GH #91)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix commit graph regression when a path spec is specified. (GH #53)
+</p>
+</li>
+<li>
+<p>
+Main view: only show staged/unstaged changes for the current branch.
+</p>
+</li>
+<li>
+<p>
+Support submodules created with current version of git. (GH #54)
+</p>
+</li>
+<li>
+<p>
+Fix diff status message for file diffs with no content changes.
+</p>
+</li>
+<li>
+<p>
+Fix parent blaming when tig is launched in subdirectory. (GH #70)
+</p>
+</li>
+<li>
+<p>
+Do not show deleted branch when reloading the branch view.
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_1_0">tig-1.0</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>The master repository is git://github.com/jonas/tig.git, and the old
@@ -1853,7 +2015,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2012-05-10 09:05:23 EDT
+Last updated 2012-10-12 08:51:18 EDT
 </div>
 </div>
 </body>

@@ -83,6 +83,14 @@ to use the ncurses library with wide character support, add the line:</p></div>
 <div class="content">
 <pre><tt>LDLIBS = -lncursesw</tt></pre>
 </div></div>
+<div class="paragraph"><p>You might also need an additional line to include the proper header file
+(see tig.h for more information):</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>CPPFLAGS = -DHAVE_NCURSESW_CURSES_H</tt></pre>
+</div></div>
+<div class="paragraph"><p>Note for packagers: For tig&#8217;s configure script to work as expected you
+should avoid configuring and building ncurses using "--with-shared".</p></div>
 <div class="paragraph"><p>Release notes documenting notable changes are available in the NEWS file. When
 upgrading, you are advised to also read them after you have completed the
 installation.</p></div>

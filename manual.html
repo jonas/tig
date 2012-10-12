@@ -686,6 +686,11 @@ commit with the log message, diffstat, and the diff.</p></div>
 </li>
 <li>
 <p>
+<a href="#prompt">Prompt</a>
+</p>
+</li>
+<li>
+<p>
 <a href="#external-commands">External Commands</a>
 </p>
 </li>
@@ -786,7 +791,7 @@ command options, refer to the man page of the command in question.</p></div>
 <h2 id="viewer">2. The Viewer</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>The display consists of a status window on the last line of the screen and one
-or more views. The default is to only show one view at the time but it is
+or more views. The default is to only show one view at a time but it is
 possible to split both the main and log view to also show the commit diff.</p></div>
 <div class="paragraph"><p>If you are in the log view and press <em>Enter</em> when the current line is a commit
 line, such as:</p></div>
@@ -799,7 +804,7 @@ and the diff view in the bottom window. You can switch between the two views
 by pressing <em>Tab</em>. To maximize the log view again, simply press <em>l</em>.</p></div>
 <div class="sect2">
 <h3 id="views">2.1. Views</h3>
-<div class="paragraph"><p>Various <em>views</em> of a repository is presented. Each view is based on output
+<div class="paragraph"><p>Various <em>views</em> of a repository are presented. Each view is based on output
 from an external command, most often <em>git log</em>, <em>git diff</em>, or <em>git show</em>.</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
@@ -881,7 +886,7 @@ The stage view
 </dt>
 <dd>
 <p>
-        Displays diff changes for staged or unstanged files being tracked or
+        Displays diff changes for staged or unstaged files being tracked or
         file content of untracked files.
 </p>
 </dd>
@@ -1030,9 +1035,9 @@ reference name surrounded by <em>[</em> and <em>]</em>:</p></div>
 <div class="content">
 <pre><tt>2006-03-26 19:42 Petr Baudis         | [cogito-0.17.1] Cogito 0.17.1</tt></pre>
 </div></div>
-<div class="paragraph"><p>If you want to filter what branches gets shown, say limit to only show
-branches named <tt>master</tt> or which starts with the <tt>jf/</tt> prefix, you can
-do it by setting the following variable:</p></div>
+<div class="paragraph"><p>If you want to limit what branches are shown, say only show branches named
+<tt>master</tt> or those which start with the <tt>jf/</tt> prefix, you can do it by setting
+the following variable:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ TIG_LS_REMOTE="git ls-remote . master jf/*" tig</tt></pre>
@@ -1176,7 +1181,7 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Reload and refresh the current view.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">M</p></td>
+<td align="left" valign="top"><p class="table">O</p></td>
 <td align="left" valign="top"><p class="table">Maximize the current view to fill the whole display.</p></td>
 </tr>
 <tr>
@@ -1223,7 +1228,7 @@ cellspacing="0" cellpadding="4">
          untracked file or stage changes to a file for next commit (similar to
          running git-add &lt;filename&gt;). In the stage view, when pressing this on
          a diff chunk line stages only that chunk for next commit, when not on
-         a diff chunk line all changes in the displayed diff is staged.</p></td>
+         a diff chunk line all changes in the displayed diff are staged.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">M</p></td>
@@ -1451,12 +1456,12 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Toggle ignoring whitespace on/off for diffs</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table">X</p></td>
+<td align="left" valign="top"><p class="table">Toggle commit ID display on/off</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table">:</p></td>
-<td align="left" valign="top"><p class="table">Open prompt. This allows you to specify what git command
-         to run. Example <tt>:log -p</tt>. You can also use this to jump
-         to a specific line by typing <tt>:&lt;linenumber&gt;</tt>, e.g. <tt>:80</tt>,
-         or jump to a specific commit by typing <tt>:&lt;sha&gt;</tt>, e.g.
-         <tt>:2f12bcc</tt>.</p></td>
+<td align="left" valign="top"><p class="table">Open prompt. This allows you to specify what command to run.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">e</p></td>
@@ -1467,7 +1472,47 @@ cellspacing="0" cellpadding="4">
 </div>
 </div>
 <div class="sect2">
-<h3 id="external-commands">4.8. External Commands</h3>
+<h3 id="prompt">4.8. Prompt</h3>
+<div class="tableblock">
+<table rules="none"
+width="100%"
+frame="void"
+cellspacing="0" cellpadding="4">
+<col width="20%" />
+<col width="80%" />
+<thead>
+<tr>
+<th align="left" valign="top">Key            </th>
+<th align="left" valign="top">Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table">:&lt;number&gt;</p></td>
+<td align="left" valign="top"><p class="table">Jump to the specific line number, e.g. <tt>:80</tt>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">:&lt;sha&gt;</p></td>
+<td align="left" valign="top"><p class="table">Jump to a specific commit, e.g. <tt>:2f12bcc</tt>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">:&lt;x&gt;</p></td>
+<td align="left" valign="top"><p class="table">Execute the corresponding key binding, e.g. <tt>:q</tt>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">:!&lt;command&gt;</p></td>
+<td align="left" valign="top"><p class="table">Execute a system command in a pager, e.g. <tt>:!git log -p</tt>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">:&lt;action&gt;</p></td>
+<td align="left" valign="top"><p class="table">Execute a tig command, e.g. <tt>:edit</tt>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="external-commands">4.9. External Commands</h3>
 <div class="paragraph"><p>For more custom needs, external commands provide a way to easily execute
 a script or program. They are bound to keys and use information from the
 current browsing state, such as the current commit ID. Tig comes with
@@ -1529,9 +1574,9 @@ file (or even several files) list the files like this:</p></div>
 <pre><tt>$ tig Makefile README</tt></pre>
 </div></div>
 <div class="paragraph"><p>To avoid ambiguity with tig&#8217;s subcommands or repository references such as tag
-name, be sure to separate file names from other git options using "<tt>--</tt>". So if
-you have a file named <em>status</em> it will clash with the <em>status</em> subcommand, and
-thus you will have to use:</p></div>
+names, be sure to separate file names from other git options using "<tt>--</tt>". So
+if you have a file named <em>status</em> it will clash with the <em>status</em> subcommand,
+and thus you will have to use:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig -- status</tt></pre>
@@ -1542,7 +1587,7 @@ thus you will have to use:</p></div>
 <div class="paragraph"><p>To speed up interaction with git, you can limit the amount of commits to show
 both for the log and main view. Either limit by date using e.g.
 <tt>--since=1.month</tt> or limit by the number of commits using <tt>-n400</tt>.</p></div>
-<div class="paragraph"><p>If you are only interested in changed that happened between two dates you can
+<div class="paragraph"><p>If you are only interested in changes that happened between two dates you can
 use:</p></div>
 <div class="listingblock">
 <div class="content">
@@ -1593,7 +1638,7 @@ is possible to further prune commits by specifying multiple branch cut offs.</p>
 </div>
 <div class="sect2">
 <h3 id="refspec-combi">5.5. Combining Revisions Specification</h3>
-<div class="paragraph"><p>Revisions options can to some degree be combined, which makes it possible to
+<div class="paragraph"><p>Revision options can to some degree be combined, which makes it possible to
 say "show at most 20 commits from within the last month that changed files
 under the Documentation/ directory."</p></div>
 <div class="listingblock">
@@ -1684,7 +1729,7 @@ Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2012-05-10 08:56:12 EDT
+Last updated 2012-10-12 08:51:18 EDT
 </div>
 </div>
 </body>

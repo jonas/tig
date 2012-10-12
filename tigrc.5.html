@@ -617,9 +617,74 @@ only one command.</p></div>
 <div class="paragraph"><p>The hash mark (<em>#</em>) is used as a <em>comment</em> character. All text after the
 comment character to the end of the line is ignored. You can use comments to
 annotate your initialization file.</p></div>
-<div class="paragraph"><p>Alternatively, options can be set by putting them in one of the git
-configuration files, which are read by tig on startup. See <em>git-config(1)</em> for
-which files to use.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_git_configuration">Git configuration</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Alternatively to using <tt>~/.tigrc</tt>, tig options can be set by putting them in
+one of the git configuration files, which are read by tig on startup. See
+<em>git-config(1)</em> for which files to use. The following example show the basic
+syntax to use for settings, bindings and colors.</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>[tig] show-rev-graph = true
+[tig "color"] cursor = yellow red bold
+[tig "bind"] generic = P parent</tt></pre>
+</div></div>
+<div class="paragraph"><p>In addition to tig-specific options, the following git options are read from
+the git configuration:</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<em>color.*</em>
+</dt>
+<dd>
+<p>
+        Colors for the various UI types. Can be completely disabled by setting
+        <em>read-git-colors</em>.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>core.abbrev</em>
+</dt>
+<dd>
+<p>
+        The width of the commit ID. See also <em>id-width</em> option.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>core.editor</em>
+</dt>
+<dd>
+<p>
+        The editor command. Can be overridden by setting GIT_EDITOR.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>core.worktree</em>
+</dt>
+<dd>
+<p>
+        The path to the root of the working tree.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>gui.encoding</em>
+</dt>
+<dd>
+<p>
+        The encoding to use for displaying of file content.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>i18n.commitencoding</em>
+</dt>
+<dd>
+<p>
+        The encoding used for commits. The default is UTF-8.
+</p>
+</dd>
+</dl></div>
 </div>
 </div>
 <div class="sect1">
@@ -654,7 +719,7 @@ set blame-options = -C -C -C    # Blame lines from other files</tt></pre>
         line-graphics = no      # Disable graphics characters
         tab-size = 8            # Number of spaces per tab</tt></pre>
 </div></div>
-<div class="paragraph"><p>The type of variables are either bool, int, string, or mixed.</p></div>
+<div class="paragraph"><p>The type of variables is either bool, int, string, or mixed.</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
 Valid bool values
@@ -713,6 +778,16 @@ Valid mixed values
 </p>
 </dd>
 <dt class="hdlist1">
+<em>id-width</em> (int)
+</dt>
+<dd>
+<p>
+        Width of the commit ID. When unset tig will use the value of
+        <em>core.abbrev</em> if found or default to 7.  See git-config(1) on how to
+        set <em>core.abbrev</em>.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>blame-options</em> (string)
 </dt>
 <dd>
@@ -724,7 +799,7 @@ Valid mixed values
 </p>
 </dd>
 <dt class="hdlist1">
-<em>line-graphics</em> (mixed) [ "ascii" | "default" | "utf8" | bool]
+<em>line-graphics</em> (mixed) [ "ascii" | "default" | "utf-8" | bool]
 </dt>
 <dd>
 <p>
@@ -757,7 +832,7 @@ Valid mixed values
 </dt>
 <dd>
 <p>
-        Whether to read git&#8217;s color settings.
+        Whether to read git&#8217;s color settings. True by default.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -808,6 +883,15 @@ Valid mixed values
 </p>
 </dd>
 <dt class="hdlist1">
+<em>show-id</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to show commit IDs in the main view. Disabled by default. Can
+        be toggled. See also <em>id-width</em> option.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>show-rev-graph</em> (bool)
 </dt>
 <dd>
@@ -823,6 +907,14 @@ Valid mixed values
 <p>
         Whether to show staged and unstaged changes in the main view.
         Can be toggled.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>vertical-split</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to split the view horizontally or vertically.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -881,6 +973,33 @@ Valid mixed values
         Commit ordering using the default (chronological reverse) order,
         topological order, date order or reverse order. The default order is
         used when the option is set to false, and topo order when set to true.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>ignore-case</em> (bool)
+</dt>
+<dd>
+<p>
+        Ignore case in searches. By default, the search is case sensitive.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>wrap-lines</em> (bool)
+</dt>
+<dd>
+<p>
+        Wrap long lines. By default, lines are not wrapped.
+        Not compatible with line numbers enabled.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>focus-child</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to focus the child view when it is opened. When disabled the
+        focus will remain in the parent view, avoiding reloads of the child
+        view when navigating the parent view. True by default.
 </p>
 </dd>
 </dl></div>
@@ -967,10 +1086,8 @@ e.g. "view-main", "View.Main", and "VIEW_MAIN" are the same.
 <h3 id="_actions">Actions</h3>
 <div class="paragraph"><p>Apart from the action names listed below, all actions starting with a <em>!</em> will
 be available as an external command. External commands can contain variable
-names that will be substituted before the command is run. By default, commands
-are run in the foreground with their console output shown, if they should be
-run in the background wit no output prefix the command with <em>@</em>. Valid
-variable names are:</p></div>
+names that will be substituted before the command is run. Valid variable names
+are:</p></div>
 <div class="tableblock">
 <table rules="none"
 width="100%"
@@ -1030,11 +1147,18 @@ cellspacing="0" cellpadding="4">
 </div>
 <div class="paragraph"><p>As an example, the following external command will save the current commit as
 a patch file: "!git format-patch -1 %(commit)". If your external command
-require use of dynamic features, such as subshells, expansion of environment
-variables and process control, this can be achieved by using a combination of
-git aliases and tig external commands. The following example entries can be
-put in either the .gitconfig or .git/config file:</p></div>
+requires use of dynamic features, such as subshells, expansion of environment
+variables and process control, this can be achieved by using a shell command:</p></div>
 <div class="listingblock">
+<div class="title">Configure a binding in ~/.tigrc to put a commit ID in the clipboard.</div>
+<div class="content">
+<pre><tt>bind generic I !@sh -c "echo -n %(commit) | xclip -selection c"</tt></pre>
+</div></div>
+<div class="paragraph"><p>Or by using a combination of git aliases and tig external commands. The
+following example entries can be put in either the .gitconfig or .git/config
+file:</p></div>
+<div class="listingblock">
+<div class="title">Git configuration which binds tig keys to git command aliases.</div>
 <div class="content">
 <pre><tt>[alias]
         gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &amp;"
@@ -1044,12 +1168,41 @@ put in either the .gitconfig or .git/config file:</p></div>
         generic = V !@git gitk-bg
         generic = &gt; !git publish</tt></pre>
 </div></div>
+<div class="paragraph"><p>By default, commands are run in the foreground with their console output
+shown. For different behavior, commands can be prefixed with one or more of
+the following control flags to specify how it should be executed:</p></div>
 <div class="tableblock">
 <table rules="none"
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Table 2. View switching</caption>
+<caption class="title">Table 2. External command control flags</caption>
+<col width="25%" />
+<col width="75%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>@</tt></p></td>
+<td align="left" valign="top"><p class="table">Run the command in the background with no output.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>?</tt></p></td>
+<td align="left" valign="top"><p class="table">Prompt the user before executing the command.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>&lt;</tt></p></td>
+<td align="left" valign="top"><p class="table">Exit tig after executing the command.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="paragraph"><p>Control flags can be combined, e.g. "!?&lt;git commit" will prompt whether to
+execute the command and will exit tig after completion.</p></div>
+<div class="tableblock">
+<table rules="none"
+width="100%"
+frame="void"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 3. View switching</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -1105,7 +1258,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Table 3. View manipulation</caption>
+<caption class="title">Table 4. View manipulation</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -1153,7 +1306,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Table 4. View specific actions</caption>
+<caption class="title">Table 5. View specific actions</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -1189,7 +1342,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Table 5. Cursor navigation</caption>
+<caption class="title">Table 6. Cursor navigation</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -1225,7 +1378,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Table 6. Scrolling</caption>
+<caption class="title">Table 7. Scrolling</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -1265,7 +1418,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Table 7. Searching</caption>
+<caption class="title">Table 8. Searching</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -1293,7 +1446,7 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Table 8. Misc</caption>
+<caption class="title">Table 9. Misc</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -1377,7 +1530,7 @@ given as the last parameter. The syntax is:</p></div>
 <div class="paragraph"><p>Examples:</p></div>
 <div class="listingblock">
 <div class="content">
-<pre><tt># Overwrite the default terminal colors to white on black.
+<pre><tt># Override the default terminal colors to white on black.
 color default           white   black
 # Diff colors
 color diff-header       yellow  default
@@ -1445,13 +1598,13 @@ setting the <strong>default</strong> color option.</p></div>
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Table 9. General</caption>
+<caption class="title">Table 10. General</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
 <tr>
 <td align="left" valign="top"><p class="table"><tt>default</tt></p></td>
-<td align="left" valign="top"><p class="table">Overwrite default terminal colors (see above).</p></td>
+<td align="left" valign="top"><p class="table">Override default terminal colors (see above).</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><tt>cursor</tt></p></td>
@@ -1478,6 +1631,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Line numbers.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><tt>id</tt></p></td>
+<td align="left" valign="top"><p class="table">The commit ID.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><tt>date</tt></p></td>
 <td align="left" valign="top"><p class="table">The commit date.</p></td>
 </tr>
@@ -1497,13 +1654,13 @@ cellspacing="0" cellpadding="4">
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Table 10. Main view colors</caption>
+<caption class="title">Table 11. Main view colors</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
 <tr>
 <td align="left" valign="top"><p class="table"><tt>graph-commit</tt></p></td>
-<td align="left" valign="top"><p class="table">The commit dot in the revising graph.</p></td>
+<td align="left" valign="top"><p class="table">The commit dot in the revision graph.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><tt>palette-[0-6]</tt></p></td>
@@ -1547,7 +1704,7 @@ example: palette-0 = red</p></td>
 width="100%"
 frame="void"
 cellspacing="0" cellpadding="4">
-<caption class="title">Table 11. Status view</caption>
+<caption class="title">Table 12. Status view</caption>
 <col width="25%" />
 <col width="75%" />
 <tbody>
@@ -1570,22 +1727,6 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><tt>stat-untracked</tt></p></td>
 <td align="left" valign="top"><p class="table">Status flag of untracked files.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="tableblock">
-<table rules="none"
-width="100%"
-frame="void"
-cellspacing="0" cellpadding="4">
-<caption class="title">Table 12. Blame view</caption>
-<col width="25%" />
-<col width="75%" />
-<tbody>
-<tr>
-<td align="left" valign="top"><p class="table"><tt>blame-id</tt></p></td>
-<td align="left" valign="top"><p class="table">The commit ID.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1642,8 +1783,8 @@ changes, rename detection, and similarity.
 </dd>
 </dl></div>
 <div class="paragraph"><p><strong>diff-oldmode</strong>, <strong>diff-newmode</strong>, <strong>diff-copy-from</strong>, <strong>diff-copy-to</strong>,
-<strong>diff-rename-from</strong>, <strong>diff-rename-to</strong>, <strong>diff-similarity</strong>, <strong>diff-dissimilarity</strong>
-<strong>diff-tree</strong>, <strong>diff-index</strong></p></div>
+<strong>diff-rename-from</strong>, <strong>diff-rename-to</strong>, <strong>diff-deleted-file-mode</strong>,
+<strong>diff-similarity</strong>, <strong>diff-dissimilarity</strong> <strong>diff-tree</strong>, <strong>diff-index</strong>, <strong>diff-stat</strong></p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
 Pretty print commit headers
@@ -1699,10 +1840,10 @@ Colors for information of the tree view.
 <div class="sect1">
 <h2 id="_source_command">Source command</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Sources commands makes it possible to read additional configuration files.
-Sourced file are treated in-place, meaning when a <em>source</em> command is
-encountered it will be immediately read. Any commands, later in the current
-configuration file will take precedence. The syntax is:</p></div>
+<div class="paragraph"><p>Source commands make it possible to read additional configuration files.
+Sourced files are included in-place, meaning when a <em>source</em> command is
+encountered the file will be immediately read. Any commands later in the
+current configuration file will take precedence. The syntax is:</p></div>
 <div class="verseblock">
 <pre class="content"><strong>source</strong> <em>path</em></pre>
 <div class="attribution">
@@ -1736,7 +1877,7 @@ and the <a href="http://jonas.nitro.dk/tig/manual.html">tig manual</a>.</p></div
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2012-05-10 08:56:12 EDT
+Last updated 2012-10-12 08:51:18 EDT
 </div>
 </div>
 </body>

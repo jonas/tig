@@ -2,12 +2,12 @@
 .\"     Title: tigmanual
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 05/10/2012
+.\"      Date: 10/12/2012
 .\"    Manual: Tig Manual
-.\"    Source: Tig 1.0
+.\"    Source: Tig 1.1
 .\"  Language: English
 .\"
-.TH "TIGMANUAL" "7" "05/10/2012" "Tig 1\&.0" "Tig Manual"
+.TH "TIGMANUAL" "7" "10/12/2012" "Tig 1\&.1" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -97,7 +97,7 @@ $ tig show \-\-pretty=fuller
 See the section on specifying revisions for an introduction to revision options supported by the git commands\&. For details on specific git command options, refer to the man page of the command in question\&.
 .SH "THE VIEWER"
 .sp
-The display consists of a status window on the last line of the screen and one or more views\&. The default is to only show one view at the time but it is possible to split both the main and log view to also show the commit diff\&.
+The display consists of a status window on the last line of the screen and one or more views\&. The default is to only show one view at a time but it is possible to split both the main and log view to also show the commit diff\&.
 .sp
 If you are in the log view and press \fIEnter\fR when the current line is a commit line, such as:
 .sp
@@ -115,7 +115,7 @@ commit 4d55caff4cc89335192f3e566004b4ceef572521
 You will split the view so that the log view is displayed in the top window and the diff view in the bottom window\&. You can switch between the two views by pressing \fITab\fR\&. To maximize the log view again, simply press \fIl\fR\&.
 .SS "Views"
 .sp
-Various \fIviews\fR of a repository is presented\&. Each view is based on output from an external command, most often \fIgit log\fR, \fIgit diff\fR, or \fIgit show\fR\&.
+Various \fIviews\fR of a repository are presented\&. Each view is based on output from an external command, most often \fIgit log\fR, \fIgit diff\fR, or \fIgit show\fR\&.
 .PP
 The main view
 .RS 4
@@ -159,7 +159,7 @@ Displays status of files in the working tree and allows changes to be staged/uns
 .PP
 The stage view
 .RS 4
-Displays diff changes for staged or unstanged files being tracked or file content of untracked files\&.
+Displays diff changes for staged or unstaged files being tracked or file content of untracked files\&.
 .RE
 .PP
 The pager view
@@ -332,7 +332,7 @@ Commits that are referenced by tags and branch heads will be marked by the refer
 .\}
 .sp
 .sp
-If you want to filter what branches gets shown, say limit to only show branches named master or which starts with the jf/ prefix, you can do it by setting the following variable:
+If you want to limit what branches are shown, say only show branches named master or those which start with the jf/ prefix, you can do it by setting the following variable:
 .sp
 .if n \{\
 .RS 4
@@ -529,7 +529,7 @@ Reload and refresh the current view\&.
 T}
 T{
 .sp
-M
+O
 T}:T{
 .sp
 Maximize the current view to fill the whole display\&.
@@ -579,7 +579,7 @@ T{
 u
 T}:T{
 .sp
-Update status of file\&. In the status view, this allows you to add an untracked file or stage changes to a file for next commit (similar to running git\-add <filename>)\&. In the stage view, when pressing this on a diff chunk line stages only that chunk for next commit, when not on a diff chunk line all changes in the displayed diff is staged\&.
+Update status of file\&. In the status view, this allows you to add an untracked file or stage changes to a file for next commit (similar to running git\-add <filename>)\&. In the stage view, when pressing this on a diff chunk line stages only that chunk for next commit, when not on a diff chunk line all changes in the displayed diff are staged\&.
 T}
 T{
 .sp
@@ -820,6 +820,7 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -907,10 +908,17 @@ Toggle ignoring whitespace on/off for diffs
 T}
 T{
 .sp
+X
+T}:T{
+.sp
+Toggle commit ID display on/off
+T}
+T{
+.sp
 :
 T}:T{
 .sp
-Open prompt\&. This allows you to specify what git command to run\&. Example :log \-p\&. You can also use this to jump to a specific line by typing :<linenumber>, e\&.g\&. :80, or jump to a specific commit by typing :<sha>, e\&.g\&. :2f12bcc\&.
+Open prompt\&. This allows you to specify what command to run\&.
 T}
 T{
 .sp
@@ -918,6 +926,58 @@ e
 T}:T{
 .sp
 Open file in editor\&.
+T}
+.TE
+.sp 1
+.SS "Prompt"
+.TS
+tab(:);
+ltB ltB.
+T{
+Key
+T}:T{
+Action
+T}
+.T&
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+:<number>
+T}:T{
+.sp
+Jump to the specific line number, e\&.g\&. :80\&.
+T}
+T{
+.sp
+:<sha>
+T}:T{
+.sp
+Jump to a specific commit, e\&.g\&. :2f12bcc\&.
+T}
+T{
+.sp
+:<x>
+T}:T{
+.sp
+Execute the corresponding key binding, e\&.g\&. :q\&.
+T}
+T{
+.sp
+:!<command>
+T}:T{
+.sp
+Execute a system command in a pager, e\&.g\&. :!git log \-p\&.
+T}
+T{
+.sp
+:<action>
+T}:T{
+.sp
+Execute a tig command, e\&.g\&. :edit\&.
 T}
 .TE
 .sp 1
@@ -990,7 +1050,7 @@ $ tig Makefile README
 .\}
 .sp
 .sp
-To avoid ambiguity with tig\(cqs subcommands or repository references such as tag name, be sure to separate file names from other git options using "\-\-"\&. So if you have a file named \fIstatus\fR it will clash with the \fIstatus\fR subcommand, and thus you will have to use:
+To avoid ambiguity with tig\(cqs subcommands or repository references such as tag names, be sure to separate file names from other git options using "\-\-"\&. So if you have a file named \fIstatus\fR it will clash with the \fIstatus\fR subcommand, and thus you will have to use:
 .sp
 .if n \{\
 .RS 4
@@ -1006,7 +1066,7 @@ $ tig \-\- status
 .sp
 To speed up interaction with git, you can limit the amount of commits to show both for the log and main view\&. Either limit by date using e\&.g\&. \-\-since=1\&.month or limit by the number of commits using \-n400\&.
 .sp
-If you are only interested in changed that happened between two dates you can use:
+If you are only interested in changes that happened between two dates you can use:
 .sp
 .if n \{\
 .RS 4
@@ -1083,7 +1143,7 @@ $ tig tag\-2\&.0 ^tag\-1\&.0
 You can think of \fI^\fR as a negation operator\&. Using this alternate syntax, it is possible to further prune commits by specifying multiple branch cut offs\&.
 .SS "Combining Revisions Specification"
 .sp
-Revisions options can to some degree be combined, which makes it possible to say "show at most 20 commits from within the last month that changed files under the Documentation/ directory\&."
+Revision options can to some degree be combined, which makes it possible to say "show at most 20 commits from within the last month that changed files under the Documentation/ directory\&."
 .sp
 .if n \{\
 .RS 4

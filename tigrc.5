@@ -2,12 +2,12 @@
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 05/10/2012
+.\"      Date: 10/12/2012
 .\"    Manual: Tig Manual
-.\"    Source: Tig 1.0
+.\"    Source: Tig 1.1
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "05/10/2012" "Tig 1\&.0" "Tig Manual"
+.TH "TIGRC" "5" "10/12/2012" "Tig 1\&.1" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -43,8 +43,57 @@ tigrc \- tig configuration file
 You can permanently set an option by putting it in the ~/\&.tigrc file\&. The file consists of a series of \fIcommands\fR\&. Each line of the file may contain only one command\&.
 .sp
 The hash mark (\fI#\fR) is used as a \fIcomment\fR character\&. All text after the comment character to the end of the line is ignored\&. You can use comments to annotate your initialization file\&.
+.SH "GIT CONFIGURATION"
 .sp
-Alternatively, options can be set by putting them in one of the git configuration files, which are read by tig on startup\&. See \fIgit\-config(1)\fR for which files to use\&.
+Alternatively to using ~/\&.tigrc, tig options can be set by putting them in one of the git configuration files, which are read by tig on startup\&. See \fIgit\-config(1)\fR for which files to use\&. The following example show the basic syntax to use for settings, bindings and colors\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+[tig] show\-rev\-graph = true
+[tig "color"] cursor = yellow red bold
+[tig "bind"] generic = P parent
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+In addition to tig\-specific options, the following git options are read from the git configuration:
+.PP
+\fIcolor\&.*\fR
+.RS 4
+Colors for the various UI types\&. Can be completely disabled by setting
+\fIread\-git\-colors\fR\&.
+.RE
+.PP
+\fIcore\&.abbrev\fR
+.RS 4
+The width of the commit ID\&. See also
+\fIid\-width\fR
+option\&.
+.RE
+.PP
+\fIcore\&.editor\fR
+.RS 4
+The editor command\&. Can be overridden by setting GIT_EDITOR\&.
+.RE
+.PP
+\fIcore\&.worktree\fR
+.RS 4
+The path to the root of the working tree\&.
+.RE
+.PP
+\fIgui\&.encoding\fR
+.RS 4
+The encoding to use for displaying of file content\&.
+.RE
+.PP
+\fIi18n\&.commitencoding\fR
+.RS 4
+The encoding used for commits\&. The default is UTF\-8\&.
+.RE
 .SH "SET COMMAND"
 .sp
 A few selective variables can be configured via the set command\&. The syntax is:
@@ -99,7 +148,7 @@ Or in the git configuration files:
 .\}
 .sp
 .sp
-The type of variables are either bool, int, string, or mixed\&.
+The type of variables is either bool, int, string, or mixed\&.
 .PP
 Valid bool values
 .RS 4
@@ -134,12 +183,20 @@ Width of the author column\&. When set to 5 or below, the author name will be ab
 Width of the filename column\&.
 .RE
 .PP
+\fIid\-width\fR (int)
+.RS 4
+Width of the commit ID\&. When unset tig will use the value of
+\fIcore\&.abbrev\fR
+if found or default to 7\&. See git\-config(1) on how to set
+\fIcore\&.abbrev\fR\&.
+.RE
+.PP
 \fIblame\-options\fR (string)
 .RS 4
 A space separated string of extra blame options\&. Can be used for telling git\-blame(1) how to detect the origin of lines\&. The value is ignored when tig is started in blame mode and given blame options on the command line\&.
 .RE
 .PP
-\fIline\-graphics\fR (mixed) [ "ascii" | "default" | "utf8" | bool]
+\fIline\-graphics\fR (mixed) [ "ascii" | "default" | "utf\-8" | bool]
 .RS 4
 What type of character graphics for line drawing\&.
 .RE
@@ -160,7 +217,7 @@ of the view width\&.
 .PP
 \fIread\-git\-colors\fR (bool)
 .RS 4
-Whether to read git\(cqs color settings\&.
+Whether to read git\(cqs color settings\&. True by default\&.
 .RE
 .PP
 \fIshow\-author\fR (mixed) ["abbreviated" | "full" | bool]
@@ -189,6 +246,13 @@ git show \-\-notes=\&. Notes are enabled by default\&.
 Whether to show references (branches, tags, and remotes) in the main view on start\-up\&. Can be toggled\&.
 .RE
 .PP
+\fIshow\-id\fR (bool)
+.RS 4
+Whether to show commit IDs in the main view\&. Disabled by default\&. Can be toggled\&. See also
+\fIid\-width\fR
+option\&.
+.RE
+.PP
 \fIshow\-rev\-graph\fR (bool)
 .RS 4
 Whether to show revision graph in the main view on start\-up\&. Can be toggled\&. See also line\-graphics options\&.
@@ -197,6 +261,11 @@ Whether to show revision graph in the main view on start\-up\&. Can be toggled\&
 \fIshow\-changes\fR (bool)
 .RS 4
 Whether to show staged and unstaged changes in the main view\&. Can be toggled\&.
+.RE
+.PP
+\fIvertical\-split\fR (bool)
+.RS 4
+Whether to split the view horizontally or vertically\&.
 .RE
 .PP
 \fIsplit\-view\-height\fR (mixed)
@@ -235,6 +304,21 @@ git show\&.
 \fIcommit\-order\fR (mixed) ["default" | "topo" | "date" | "reverse" | bool]
 .RS 4
 Commit ordering using the default (chronological reverse) order, topological order, date order or reverse order\&. The default order is used when the option is set to false, and topo order when set to true\&.
+.RE
+.PP
+\fIignore\-case\fR (bool)
+.RS 4
+Ignore case in searches\&. By default, the search is case sensitive\&.
+.RE
+.PP
+\fIwrap\-lines\fR (bool)
+.RS 4
+Wrap long lines\&. By default, lines are not wrapped\&. Not compatible with line numbers enabled\&.
+.RE
+.PP
+\fIfocus\-child\fR (bool)
+.RS 4
+Whether to focus the child view when it is opened\&. When disabled the focus will remain in the parent view, avoiding reloads of the child view when navigating the parent view\&. True by default\&.
 .RE
 .SH "BIND COMMAND"
 .sp
@@ -331,7 +415,7 @@ interchangeably, e\&.g\&. "view\-main", "View\&.Main", and "VIEW_MAIN" are the s
 .RE
 .SS "Actions"
 .sp
-Apart from the action names listed below, all actions starting with a \fI!\fR will be available as an external command\&. External commands can contain variable names that will be substituted before the command is run\&. By default, commands are run in the foreground with their console output shown, if they should be run in the background wit no output prefix the command with \fI@\fR\&. Valid variable names are:
+Apart from the action names listed below, all actions starting with a \fI!\fR will be available as an external command\&. External commands can contain variable names that will be substituted before the command is run\&. Valid variable names are:
 .sp
 .it 1 an-trap
 .nr an-no-space-flag 1
@@ -431,7 +515,25 @@ T}
 .TE
 .sp 1
 .sp
-As an example, the following external command will save the current commit as a patch file: "!git format\-patch \-1 %(commit)"\&. If your external command require use of dynamic features, such as subshells, expansion of environment variables and process control, this can be achieved by using a combination of git aliases and tig external commands\&. The following example entries can be put in either the \&.gitconfig or \&.git/config file:
+As an example, the following external command will save the current commit as a patch file: "!git format\-patch \-1 %(commit)"\&. If your external command requires use of dynamic features, such as subshells, expansion of environment variables and process control, this can be achieved by using a shell command:
+.PP
+\fBExample\ \&1.\ \&Configure a binding in ~/.tigrc to put a commit ID in the clipboard.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+bind generic I !@sh \-c "echo \-n %(commit) | xclip \-selection c"
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+
+.sp
+Or by using a combination of git aliases and tig external commands\&. The following example entries can be put in either the \&.gitconfig or \&.git/config file:
+.PP
+\fBExample\ \&2.\ \&Git configuration which binds tig keys to git command aliases.\fR
 .sp
 .if n \{\
 .RS 4
@@ -449,12 +551,51 @@ As an example, the following external command will save the current commit as a 
 .RE
 .\}
 .sp
+
+.sp
+By default, commands are run in the foreground with their console output shown\&. For different behavior, commands can be prefixed with one or more of the following control flags to specify how it should be executed:
 .sp
 .it 1 an-trap
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&2.\ \&View switching
+.B Table\ \&2.\ \&External command control flags
+.TS
+tab(:);
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+@
+T}:T{
+.sp
+Run the command in the background with no output\&.
+T}
+T{
+.sp
+?
+T}:T{
+.sp
+Prompt the user before executing the command\&.
+T}
+T{
+.sp
+<
+T}:T{
+.sp
+Exit tig after executing the command\&.
+T}
+.TE
+.sp 1
+.sp
+Control flags can be combined, e\&.g\&. "!?<git commit" will prompt whether to execute the command and will exit tig after completion\&.
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table\ \&3.\ \&View switching
 .TS
 tab(:);
 lt lt
@@ -552,7 +693,7 @@ T}
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&3.\ \&View manipulation
+.B Table\ \&4.\ \&View manipulation
 .TS
 tab(:);
 lt lt
@@ -634,7 +775,7 @@ T}
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&4.\ \&View specific actions
+.B Table\ \&5.\ \&View specific actions
 .TS
 tab(:);
 lt lt
@@ -692,7 +833,7 @@ T}
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&5.\ \&Cursor navigation
+.B Table\ \&6.\ \&Cursor navigation
 .TS
 tab(:);
 lt lt
@@ -750,7 +891,7 @@ T}
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&6.\ \&Scrolling
+.B Table\ \&7.\ \&Scrolling
 .TS
 tab(:);
 lt lt
@@ -816,7 +957,7 @@ T}
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&7.\ \&Searching
+.B Table\ \&8.\ \&Searching
 .TS
 tab(:);
 lt lt
@@ -858,7 +999,7 @@ T}
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&8.\ \&Misc
+.B Table\ \&9.\ \&Misc
 .TS
 tab(:);
 lt lt
@@ -1004,7 +1145,7 @@ Examples:
 .RS 4
 .\}
 .nf
-# Overwrite the default terminal colors to white on black\&.
+# Override the default terminal colors to white on black\&.
 color default           white   black
 # Diff colors
 color diff\-header       yellow  default
@@ -1081,9 +1222,10 @@ The colors and attributes to be used for the text that is not highlighted or tha
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&9.\ \&General
+.B Table\ \&10.\ \&General
 .TS
 tab(:);
+lt lt
 lt lt
 lt lt
 lt lt
@@ -1099,7 +1241,7 @@ T{
 default
 T}:T{
 .sp
-Overwrite default terminal colors (see above)\&.
+Override default terminal colors (see above)\&.
 T}
 T{
 .sp
@@ -1145,6 +1287,13 @@ Line numbers\&.
 T}
 T{
 .sp
+id
+T}:T{
+.sp
+The commit ID\&.
+T}
+T{
+.sp
 date
 T}:T{
 .sp
@@ -1171,7 +1320,7 @@ T}
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&10.\ \&Main view colors
+.B Table\ \&11.\ \&Main view colors
 .TS
 tab(:);
 lt lt
@@ -1188,7 +1337,7 @@ T{
 graph\-commit
 T}:T{
 .sp
-The commit dot in the revising graph\&.
+The commit dot in the revision graph\&.
 T}
 T{
 .sp
@@ -1253,7 +1402,7 @@ T}
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&11.\ \&Status view
+.B Table\ \&12.\ \&Status view
 .TS
 tab(:);
 lt lt
@@ -1295,24 +1444,6 @@ stat\-untracked
 T}:T{
 .sp
 Status flag of untracked files\&.
-T}
-.TE
-.sp 1
-.sp
-.it 1 an-trap
-.nr an-no-space-flag 1
-.nr an-break-flag 1
-.br
-.B Table\ \&12.\ \&Blame view
-.TS
-tab(:);
-lt lt.
-T{
-.sp
-blame\-id
-T}:T{
-.sp
-The commit ID\&.
 T}
 .TE
 .sp 1
@@ -1364,7 +1495,7 @@ Enhanced git diff markup
 Extra diff information emitted by the git diff machinery, such as mode changes, rename detection, and similarity\&.
 .RE
 .sp
-\fBdiff\-oldmode\fR, \fBdiff\-newmode\fR, \fBdiff\-copy\-from\fR, \fBdiff\-copy\-to\fR, \fBdiff\-rename\-from\fR, \fBdiff\-rename\-to\fR, \fBdiff\-similarity\fR, \fBdiff\-dissimilarity\fR \fBdiff\-tree\fR, \fBdiff\-index\fR
+\fBdiff\-oldmode\fR, \fBdiff\-newmode\fR, \fBdiff\-copy\-from\fR, \fBdiff\-copy\-to\fR, \fBdiff\-rename\-from\fR, \fBdiff\-rename\-to\fR, \fBdiff\-deleted\-file\-mode\fR, \fBdiff\-similarity\fR, \fBdiff\-dissimilarity\fR \fBdiff\-tree\fR, \fBdiff\-index\fR, \fBdiff\-stat\fR
 .PP
 Pretty print commit headers
 .RS 4
@@ -1407,7 +1538,7 @@ Colors for information of the tree view\&.
 \fBtree\-dir\fR, \fBtree\-file\fR
 .SH "SOURCE COMMAND"
 .sp
-Sources commands makes it possible to read additional configuration files\&. Sourced file are treated in\-place, meaning when a \fIsource\fR command is encountered it will be immediately read\&. Any commands, later in the current configuration file will take precedence\&. The syntax is:
+Source commands make it possible to read additional configuration files\&. Sourced files are included in\-place, meaning when a \fIsource\fR command is encountered the file will be immediately read\&. Any commands later in the current configuration file will take precedence\&. The syntax is:
 .sp
 .if n \{\
 .RS 4
