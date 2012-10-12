@@ -370,7 +370,7 @@ Or by using a combination of git aliases and tig external commands. The
 following example entries can be put in either the .gitconfig or .git/config
 file:
 
-.Git configuration which binds tig keys to git command aliasas.
+.Git configuration which binds tig keys to git command aliases.
 --------------------------------------------------------------------------
 [alias]
 	gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &"
