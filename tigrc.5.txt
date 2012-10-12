@@ -26,9 +26,47 @@ The hash mark ('#') is used as a 'comment' character. All text after the
 comment character to the end of the line is ignored. You can use comments to
 annotate your initialization file.
 
-Alternatively, options can be set by putting them in one of the git
-configuration files, which are read by tig on startup. See 'git-config(1)' for
-which files to use.
+Git configuration
+-----------------
+
+Alternatively to using `~/.tigrc`, tig options can be set by putting them in
+one of the git configuration files, which are read by tig on startup. See
+'git-config(1)' for which files to use. The following example show the basic
+syntax to use for settings, bindings and colors.
+
+--------------------------------------------------------------------------
+[tig] show-rev-graph = true
+[tig "color"] cursor = yellow red bold 
+[tig "bind"] generic = P parent
+--------------------------------------------------------------------------
+
+In addition to tig-specific options, the following git options are read from
+the git configuration:
+
+'color.*'::
+
+	Colors for the various UI types. Can be completely disabled by setting
+	'read-git-colors'.
+
+'core.abbrev'::
+
+	The width of the commit ID. See also 'id-width' option.
+
+'core.editor'::
+
+	The editor command. Can be overridden by setting GIT_EDITOR.
+
+'core.worktree'::
+
+	The path to the root of the working tree.
+
+'gui.encoding'::
+
+	The encoding to use for displaying of file content.
+
+'i18n.commitencoding'::
+
+	The encoding used for commits. The default is UTF-8.
 
 Set command
 -----------
@@ -64,7 +102,7 @@ Or in the git configuration files:
 	tab-size = 8		# Number of spaces per tab
 --------------------------------------------------------------------------
 
-The type of variables are either bool, int, string, or mixed.
+The type of variables is either bool, int, string, or mixed.
 
 Valid bool values::
 
@@ -99,6 +137,12 @@ The following variables can be set:
 
 	Width of the filename column.
 
+'id-width' (int)::
+
+	Width of the commit ID. When unset tig will use the value of
+	'core.abbrev' if found or default to 7.  See git-config(1) on how to
+	set 'core.abbrev'.
+
 'blame-options' (string)::
 
 	A space separated string of extra blame options. Can be used for
@@ -106,7 +150,7 @@ The following variables can be set:
 	is ignored when tig is started in blame mode and given blame options
 	on the command line.
 
-'line-graphics' (mixed) [ "ascii" | "default" | "utf8" | bool]::
+'line-graphics' (mixed) [ "ascii" | "default" | "utf-8" | bool]::
 
 	What type of character graphics for line drawing.
 
@@ -125,7 +169,7 @@ The following variables can be set:
 
 'read-git-colors' (bool)::
 
-	Whether to read git's color settings.
+	Whether to read git's color settings. True by default.
 
 'show-author' (mixed) ["abbreviated" | "full" | bool]::
 
@@ -154,6 +198,11 @@ The following variables can be set:
 	Whether to show references (branches, tags, and remotes) in the main
 	view on start-up. Can be toggled.
 
+'show-id' (bool)::
+
+	Whether to show commit IDs in the main view. Disabled by default. Can
+	be toggled. See also 'id-width' option.
+
 'show-rev-graph' (bool)::
 
 	Whether to show revision graph in the main view on start-up.
@@ -163,6 +212,10 @@ The following variables can be set:
 
 	Whether to show staged and unstaged changes in the main view.
 	Can be toggled.
+
+'vertical-split' (bool)::
+
+	Whether to split the view horizontally or vertically.
 
 'split-view-height' (mixed)::
 
@@ -197,6 +250,21 @@ The following variables can be set:
 	Commit ordering using the default (chronological reverse) order,
 	topological order, date order or reverse order. The default order is
 	used when the option is set to false, and topo order when set to true.
+
+'ignore-case' (bool)::
+
+	Ignore case in searches. By default, the search is case sensitive.
+
+'wrap-lines' (bool)::
+
+	Wrap long lines. By default, lines are not wrapped.
+	Not compatible with line numbers enabled.
+
+'focus-child' (bool)::
+
+	Whether to focus the child view when it is opened. When disabled the
+	focus will remain in the parent view, avoiding reloads of the child
+	view when navigating the parent view. True by default.
 
 Bind command
 ------------
@@ -268,10 +336,8 @@ Actions
 
 Apart from the action names listed below, all actions starting with a '!' will
 be available as an external command. External commands can contain variable
-names that will be substituted before the command is run. By default, commands
-are run in the foreground with their console output shown, if they should be
-run in the background wit no output prefix the command with '@'. Valid
-variable names are:
+names that will be substituted before the command is run. Valid variable names
+are:
 
 .Browsing state variables
 [frame="none",grid="none",cols="25<m,75<"]
@@ -292,11 +358,19 @@ variable names are:
 
 As an example, the following external command will save the current commit as
 a patch file: "!git format-patch -1 %(commit)". If your external command
-require use of dynamic features, such as subshells, expansion of environment
-variables and process control, this can be achieved by using a combination of
-git aliases and tig external commands. The following example entries can be
-put in either the .gitconfig or .git/config file:
+requires use of dynamic features, such as subshells, expansion of environment
+variables and process control, this can be achieved by using a shell command:
 
+.Configure a binding in ~/.tigrc to put a commit ID in the clipboard.
+--------------------------------------------------------------------------
+bind generic I !@sh -c "echo -n %(commit) | xclip -selection c"
+--------------------------------------------------------------------------
+
+Or by using a combination of git aliases and tig external commands. The
+following example entries can be put in either the .gitconfig or .git/config
+file:
+
+.Git configuration which binds tig keys to git command aliases.
 --------------------------------------------------------------------------
 [alias]
 	gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &"
@@ -306,6 +380,21 @@ put in either the .gitconfig or .git/config file:
 	generic = V !@git gitk-bg
 	generic = > !git publish
 --------------------------------------------------------------------------
+
+By default, commands are run in the foreground with their console output
+shown. For different behavior, commands can be prefixed with one or more of
+the following control flags to specify how it should be executed:
+
+.External command control flags
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|@			|Run the command in the background with no output.
+|?			|Prompt the user before executing the command.
+|<			|Exit tig after executing the command.
+|=============================================================================
+
+Control flags can be combined, e.g. "!?<git commit" will prompt whether to
+execute the command and will exit tig after completion.
 
 .View switching
 [frame="none",grid="none",cols="25<m,75<"]
@@ -415,7 +504,7 @@ given as the last parameter. The syntax is:
 Examples:
 
 ------------------------------------------------------------------------------
-# Overwrite the default terminal colors to white on black.
+# Override the default terminal colors to white on black.
 color default		white	black
 # Diff colors
 color diff-header	yellow	default
@@ -472,13 +561,14 @@ setting the *default* color option.
 .General
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|default		|Overwrite default terminal colors (see above).
+|default		|Override default terminal colors (see above).
 |cursor			|The cursor line.
 |status			|The status window showing info messages.
 |title-focus		|The title window for the current view.
 |title-blur		|The title window of any backgrounded view.
 |delimiter		|Delimiter shown for truncated lines.
 |line-number		|Line numbers.
+|id			|The commit ID.
 |date			|The commit date.
 |author			|The commit author.
 |mode			|The file mode holding the permissions and type.
@@ -487,7 +577,7 @@ setting the *default* color option.
 .Main view colors
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|graph-commit		|The commit dot in the revising graph.
+|graph-commit		|The commit dot in the revision graph.
 |palette-[0-6]		|7 different colors,
 used for distinguishing branches or commits.
 example: palette-0 = red
@@ -508,12 +598,6 @@ example: palette-0 = red
 |stat-staged		|Status flag of staged files.
 |stat-unstaged		|Status flag of unstaged files.
 |stat-untracked		|Status flag of untracked files.
-|=============================================================================
-
-.Blame view
-[frame="none",grid="none",cols="25<m,75<"]
-|=============================================================================
-|blame-id		|The commit ID.
 |=============================================================================
 
 .Tree view
@@ -541,8 +625,8 @@ Extra diff information emitted by the git diff machinery, such as mode
 changes, rename detection, and similarity.
 
 *diff-oldmode*, *diff-newmode*, *diff-copy-from*, *diff-copy-to*,
-*diff-rename-from*, *diff-rename-to*, *diff-similarity*, *diff-dissimilarity*
-*diff-tree*, *diff-index*
+*diff-rename-from*, *diff-rename-to*, *diff-deleted-file-mode*,
+*diff-similarity*, *diff-dissimilarity* *diff-tree*, *diff-index*, *diff-stat*
 
 Pretty print commit headers::
 
@@ -577,10 +661,10 @@ Colors for information of the tree view.
 Source command
 -------------
 
-Sources commands makes it possible to read additional configuration files.
-Sourced file are treated in-place, meaning when a 'source' command is
-encountered it will be immediately read. Any commands, later in the current
-configuration file will take precedence. The syntax is:
+Source commands make it possible to read additional configuration files.
+Sourced files are included in-place, meaning when a 'source' command is
+encountered the file will be immediately read. Any commands later in the
+current configuration file will take precedence. The syntax is:
 
 [verse]
 *source* 'path'

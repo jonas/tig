@@ -14,17 +14,32 @@
 #include "tig.h"
 #include "io.h"
 
+bool
+argv_to_string(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep)
+{
+	size_t bufpos, argc;
+
+	for (bufpos = 0, argc = 0; argv[argc]; argc++)
+		if (!string_nformat(buf, buflen, &bufpos, "%s%s",
+				argc ? sep : "", argv[argc]))
+			return FALSE;
+
+	return TRUE;
+}
+
 static inline int
-get_arg_valuelen(const char *arg, bool *quoted)
+get_arg_valuelen(const char *arg, char *quoted)
 {
 	if (*arg == '"' || *arg == '\'') {
 		const char *end = *arg == '"' ? "\"" : "'";
 		int valuelen = strcspn(arg + 1, end);
 
 		if (quoted)
-			*quoted = TRUE;
+			*quoted = *arg;
 		return valuelen > 0 ? valuelen + 2 : strlen(arg);
 	} else {
+		if (quoted)
+			*quoted = 0;
 		return strcspn(arg, " \t");
 	}
 }
@@ -33,7 +48,7 @@ static bool
 split_argv_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd, bool remove_quotes)
 {
 	while (*cmd && *argc < SIZEOF_ARG) {
-		bool quoted = FALSE;
+		char quoted = 0;
 		int valuelen = get_arg_valuelen(cmd, &quoted);
 		bool advance = cmd[valuelen] != 0;
 		int quote_offset = !!(quoted && remove_quotes);
@@ -100,6 +115,7 @@ bool
 argv_append(const char ***argv, const char *arg)
 {
 	size_t argc = argv_size(*argv);
+	char *alloc;
 
 	if (!*arg && argc > 0)
 		return TRUE;
@@ -107,9 +123,12 @@ argv_append(const char ***argv, const char *arg)
 	if (!argv_realloc(argv, argc, 2))
 		return FALSE;
 
-	(*argv)[argc++] = strdup(arg);
+	alloc = strdup(arg);
+
+	(*argv)[argc++] = alloc;
 	(*argv)[argc] = NULL;
-	return TRUE;
+
+	return alloc != NULL;
 }
 
 bool
@@ -120,6 +139,33 @@ argv_append_array(const char ***dst_argv, const char *src_argv[])
 	for (i = 0; src_argv && src_argv[i]; i++)
 		if (!argv_append(dst_argv, src_argv[i]))
 			return FALSE;
+	return TRUE;
+}
+
+bool
+argv_remove_quotes(const char *argv[])
+{
+	int argc;
+
+	for (argc = 0; argv[argc]; argc++) {
+		char quoted = 0;
+		const char *arg = argv[argc];
+		int arglen = get_arg_valuelen(arg, &quoted);
+		int unquotedlen = arglen - 1 - (arg[arglen - 1] == quoted);
+		char *unquoted;
+
+		if (!quoted)
+			continue;
+
+		unquoted = malloc(unquotedlen + 1);
+		if (!unquoted)
+			return FALSE;
+		strncpy(unquoted, arg + 1, unquotedlen);
+		unquoted[unquotedlen] = 0;
+		free((void *) arg);
+		argv[argc] = unquoted;
+	}
+
 	return TRUE;
 }
 
@@ -296,8 +342,12 @@ io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ..
 {
 	int pipefds[2] = { -1, -1 };
 	va_list args;
+	bool read_from_stdin = type == IO_RD_STDIN;
 
 	io_init(io);
+
+	if (read_from_stdin)
+		type = IO_RD;
 
 	if (dir && !strcmp(dir, argv[0]))
 		return io_open(io, "%s%s", dir, argv[1]);
@@ -328,6 +378,10 @@ io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ..
 			int writefd = (type == IO_RD || type == IO_AP)
 							? pipefds[1] : devnull;
 			int errorfd = open_trace(devnull, argv);
+
+			/* Inject stdin given on the command line. */
+			if (read_from_stdin)
+				readfd = dup(STDIN_FILENO);
 
 			dup2(readfd,  STDIN_FILENO);
 			dup2(writefd, STDOUT_FILENO);

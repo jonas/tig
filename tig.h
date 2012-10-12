@@ -59,16 +59,30 @@
 /* ncurses(3): Must be defined to have extended wide-character functions. */
 #define _XOPEN_SOURCE_EXTENDED
 
-#ifdef HAVE_NCURSESW_H
-#include <ncursesw/ncurses.h>
+#if defined HAVE_NCURSESW_CURSES_H
+#  include <ncursesw/curses.h>
+#elif defined HAVE_NCURSESW_H
+#  include <ncursesw.h>
+#elif defined HAVE_NCURSES_CURSES_H
+#  include <ncurses/curses.h>
+#elif defined HAVE_NCURSES_H
+#  include <ncurses.h>
+#elif defined HAVE_CURSES_H
+#  include <curses.h>
 #else
-#include <ncurses.h>
+#  warning SysV or X/Open-compatible Curses installation is required.
+#  warning Will assume Curses is found in default include and library path.
+#  warning To fix any build issues please use autotools to configure Curses.
+#  warning See INSTALL file for instructions.
+#  include <curses.h>
 #endif
 
 #if __GNUC__ >= 3
 #define __NORETURN __attribute__((__noreturn__))
+#define PRINTF_LIKE(fmt, args) __attribute__((format (printf, fmt, args)))
 #else
 #define __NORETURN
+#define PRINTF_LIKE(fmt, args)
 #endif
 
 #define ABS(x)		((x) >= 0  ? (x) : -(x))
@@ -98,14 +112,15 @@
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
-#define DATE_COLS	STRING_SIZE("2006-04-29 14:21 ")
-#define DATE_SHORT_COLS	STRING_SIZE("2006-04-29 ")
+#define DATE_WIDTH	STRING_SIZE("2006-04-29 14:21")
+#define DATE_SHORT_WIDTH	STRING_SIZE("2006-04-29")
 
-#define ID_COLS		8
-#define AUTHOR_COLS	19
-#define FILENAME_COLS	19
+#define ID_WIDTH	7
+#define AUTHOR_WIDTH	18
+#define FILENAME_WIDTH	18
 
 #define MIN_VIEW_HEIGHT 4
+#define MIN_VIEW_WIDTH  4
 
 #define NULL_ID		"0000000000000000000000000000000000000000"
 
@@ -258,6 +273,24 @@ string_copy_rev(char *dst, const char *src)
 	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
 
 static inline size_t
+string_expanded_length(const char *src, size_t srclen, size_t tabsize, size_t max_size)
+{
+	size_t size, pos;
+
+	for (size = pos = 0; pos < srclen && size < max_size; pos++) {
+		if (src[pos] == '\t') {
+			size_t expanded = tabsize - (size % tabsize);
+
+			size += expanded;
+		} else {
+			size++;
+		}
+	}
+
+	return pos;
+}
+
+static inline size_t
 string_expand(char *dst, size_t dstlen, const char *src, int tabsize)
 {
 	size_t size, pos;
@@ -294,7 +327,7 @@ chomp_string(char *name)
 	return name;
 }
 
-static inline bool
+static inline bool PRINTF_LIKE(4, 5)
 string_nformat(char *buf, size_t bufsize, size_t *bufpos, const char *fmt, ...)
 {
 	size_t pos = bufpos ? *bufpos : 0;

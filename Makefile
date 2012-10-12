@@ -2,9 +2,13 @@
 
 # The last tagged version. Can be overridden either by the version from
 # git or from the value of the DIST_VERSION environment variable.
-VERSION	= 1.0
+VERSION	= 1.1
 
 all:
+
+# Include kernel specific configuration
+kernel_name := $(shell sh -c 'uname -s 2>/dev/null || echo unknown')
+-include contrib/config.make-$(kernel_name)
 
 # Include setting from the configure script
 -include config.make
@@ -54,7 +58,6 @@ endif
 override CPPFLAGS += '-DTIG_VERSION="$(VERSION)"'
 override CPPFLAGS += '-DSYSCONFDIR="$(sysconfdir)"'
 
-AUTORECONF ?= autoreconf
 ASCIIDOC ?= asciidoc
 ASCIIDOC_FLAGS = -aversion=$(VERSION) -asysconfdir=$(sysconfdir)
 XMLTO ?= xmlto
@@ -144,19 +147,33 @@ dist: configure tig.spec
 rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
 
-configure: configure.ac acinclude.m4
-	$(AUTORECONF) -v -I contrib
+# Other autoconf-related rules are hidden in config.make.in so that
+# they don't confuse Make when we aren't actually using ./configure
+configure: configure.ac acinclude.m4 contrib/*.m4
+	./autogen.sh
 
 .PHONY: all all-debug doc doc-man doc-html install install-doc \
 	install-doc-man install-doc-html clean spell-check dist rpm
 
-io.o: io.c io.h tig.h
-graph.o: graph.c graph.h tig.h
-refs.o: refs.c refs.h tig.h
-tig.o: tig.c tig.h graph.h io.h refs.h git.h
+graph.o: graph.c tig.h graph.h
+io.o: io.c tig.h io.h
+refs.o: refs.c tig.h io.h refs.h
+test-graph.o: test-graph.c tig.h io.h graph.h
+tig.o: tig.c tig.h io.h refs.h graph.h git.h
+
 tig: tig.o io.o graph.o refs.o
-test-graph.o: test-graph.c io.h tig.h graph.h
 test-graph: io.o graph.o
+
+# To check the above.
+#
+# NOTE: Assumes GCC, and that no local headers are conditionally
+# included (with the exception of config.h, which we take care of in
+# config.make).
+show-deps:
+	@echo "== without config.h =="
+	$(CC) -MM *.c
+	@echo "== with config.h =="
+	$(CC) -DHAVE_CONFIG_H -MM *.c
 
 tig.spec: contrib/tig.spec.in
 	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' \

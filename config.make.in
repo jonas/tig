@@ -1,3 +1,5 @@
+# -*- makefile-gmake -*-
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
@@ -16,4 +18,12 @@ ASCIIDOC = @ASCIIDOC@
 XMLTO = @XMLTO@
 DOCBOOK2PDF = @DOCBOOK2PDF@
 
-tig.o: config.h
+%.o: config.h
+
+config.status: configure
+	./config.status --recheck
+
+config.h config.make: config.status
+	./config.status $@
+
+config.make: config.make.in
