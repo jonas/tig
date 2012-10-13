@@ -6766,7 +6766,6 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *line, bool
 	}
 
 	io_done(&io);
-	io_run_bg(update_index_argv);
 
 	return chunk ? TRUE : FALSE;
 }
