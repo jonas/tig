@@ -1,6 +1,13 @@
 Release notes
 =============
 
+master
+------
+
+Bug fixes:
+
+ - Fix diff broken display when using --follow <filename>.
+
 tig-1.1
 -------
 
