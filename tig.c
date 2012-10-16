@@ -6560,7 +6560,8 @@ status_request(struct view *view, enum request request, struct line *line)
 		return status_enter(view, line);
 
 	case REQ_REFRESH:
-		/* Simply reload the view. */
+		/* Load the current branch information and then the view. */
+		load_refs();
 		break;
 
 	default:

@@ -7,6 +7,7 @@ master
 Bug fixes:
 
  - Fix diff broken display when using --follow <filename>.
+ - Reload current branch name when reloading the status view. (GH #93)
 
 tig-1.1
 -------
