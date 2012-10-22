@@ -2912,8 +2912,7 @@ grep_text(struct view *view, const char *text[])
 	size_t i;
 
 	for (i = 0; text[i]; i++)
-		if (*text[i] &&
-		    regexec(view->regex, text[i], 1, &pmatch, 0) != REG_NOMATCH)
+		if (*text[i] && !regexec(view->regex, text[i], 1, &pmatch, 0))
 			return TRUE;
 	return FALSE;
 }
@@ -7744,7 +7743,7 @@ grep_refs(struct ref_list *list, regex_t *regex)
 		return FALSE;
 
 	for (i = 0; i < list->size; i++) {
-		if (regexec(regex, list->refs[i]->name, 1, &pmatch, 0) != REG_NOMATCH)
+		if (!regexec(regex, list->refs[i]->name, 1, &pmatch, 0))
 			return TRUE;
 	}
 
