@@ -7425,7 +7425,7 @@ grep_refs(struct ref_list *list, regex_t *regex)
 		return FALSE;
 
 	for (i = 0; i < list->size; i++) {
-		if (regexec(regex, list->refs[i]->name, 1, &pmatch, 0) != REG_NOMATCH)
+		if (!regexec(regex, list->refs[i]->name, 1, &pmatch, 0))
 			return TRUE;
 	}
 
