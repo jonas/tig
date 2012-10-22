@@ -20,7 +20,7 @@
 #include "io.h"
 #include "graph.h"
 
-static void __NORETURN
+static void TIG_NORETURN
 die(const char *err, ...)
 {
 	va_list args;

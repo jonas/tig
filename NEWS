@@ -8,6 +8,7 @@ Bug fixes:
 
  - Fix diff broken display when using --follow <filename>.
  - Reload current branch name when reloading the status view. (GH #93)
+ - Fix compile errors on old Solaris. (GH #97)
 
 tig-1.1
 -------

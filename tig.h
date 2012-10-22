@@ -78,10 +78,10 @@
 #endif
 
 #if __GNUC__ >= 3
-#define __NORETURN __attribute__((__noreturn__))
+#define TIG_NORETURN __attribute__((__noreturn__))
 #define PRINTF_LIKE(fmt, args) __attribute__((format (printf, fmt, args)))
 #else
-#define __NORETURN
+#define TIG_NORETURN
 #define PRINTF_LIKE(fmt, args)
 #endif
 

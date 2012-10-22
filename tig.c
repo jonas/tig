@@ -17,7 +17,7 @@
 #include "graph.h"
 #include "git.h"
 
-static void __NORETURN die(const char *err, ...) PRINTF_LIKE(1, 2);
+static void TIG_NORETURN die(const char *err, ...) PRINTF_LIKE(1, 2);
 static void warn(const char *msg, ...) PRINTF_LIKE(1, 2);
 static void report(const char *msg, ...) PRINTF_LIKE(1, 2);
 #define report_clear() report("%s", "")
@@ -2445,7 +2445,7 @@ redraw_display(bool clear)
 
 #define TOGGLE_MENU \
 	TOGGLE_(LINENO,    '.', "line numbers",      &opt_line_number, NULL) \
-	TOGGLE_(DATE,      'D', "dates",             &opt_date,	  date_map) \
+	TOGGLE_(DATE,      'D', "dates",             &opt_date,	date_map) \
 	TOGGLE_(AUTHOR,    'A', "author names",      &opt_author, author_map) \
 	TOGGLE_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map) \
 	TOGGLE_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL) \
@@ -2464,7 +2464,7 @@ toggle_option(enum request request)
 		const struct enum_map *map;
 		size_t map_size;
 	} data[] = {
-#define TOGGLE_(id, key, help, value, map) { REQ_TOGGLE_ ## id, map, ARRAY_SIZE(map) },
+#define TOGGLE_(id, key, help, value, map) { REQ_TOGGLE_ ## id, map, (map != NULL ? ARRAY_SIZE(map) : 0) },
 		TOGGLE_MENU
 #undef	TOGGLE_
 	};
@@ -8063,7 +8063,7 @@ static const char usage[] =
 "  -v, --version   Show version and exit\n"
 "  -h, --help      Show help message and exit";
 
-static void __NORETURN
+static void TIG_NORETURN
 quit(int sig)
 {
 	/* XXX: Restore tty modes and let the OS cleanup the rest! */
@@ -8072,7 +8072,7 @@ quit(int sig)
 	exit(0);
 }
 
-static void __NORETURN
+static void TIG_NORETURN
 die(const char *err, ...)
 {
 	va_list args;
