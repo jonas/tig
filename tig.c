@@ -2763,7 +2763,7 @@ grep_text(struct view *view, const char *text[])
 
 	for (i = 0; text[i]; i++)
 		if (*text[i] &&
-		    regexec(view->regex, text[i], 1, &pmatch, 0) != REG_NOMATCH)
+		    (!regexec(view->regex, text[i], 1, &pmatch, 0)))
 			return TRUE;
 	return FALSE;
 }
