@@ -260,6 +260,9 @@ string_copy_rev(char *dst, const char *src)
 {
 	size_t srclen;
 
+	if (!*src)
+		return;
+
 	for (srclen = 0; srclen < SIZEOF_REV; srclen++)
 		if (isspace(src[srclen]))
 			break;
