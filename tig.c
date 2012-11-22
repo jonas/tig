@@ -6910,7 +6910,8 @@ stage_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_REFRESH:
-		/* Reload everything ... */
+		/* Reload everything(including current branch information) ... */
+		load_refs();
 		break;
 
 	case REQ_VIEW_BLAME:
