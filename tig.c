@@ -7667,19 +7667,14 @@ handle_utf8(char buf[], int key, int pos)
 	if (key >= 128 && key < 192)
 		return pos;
 	if (key < 224){
-		buf[pos] = (char)key;
-		pos++;
-		buf[pos] = get_input(pos);
-		pos++;
+		buf[pos++] = (char)key;
+		buf[pos++] = get_input(pos);
 		//two byte character
 	}else if (key < 240){
 		//three byte character
-		buf[pos] = (char)key;
-		pos++;
-		buf[pos] = get_input(pos);
-		pos++;	
-		buf[pos] = get_input(pos);
-		pos++;	
+		buf[pos++] = (char)key;
+		buf[pos++] = get_input(pos);
+		buf[pos++] = get_input(pos);
 	}
 	return pos;	
 }
@@ -7720,6 +7715,10 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 
 		default:
 			if (key >= 128){
+				if (pos + 3 >= sizeof(buf)) {
+					report("Input string too long");
+					return NULL;
+				}
 				pos = handle_utf8(buf, key, pos);
 			}
 			else{
