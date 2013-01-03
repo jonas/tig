@@ -2457,7 +2457,7 @@ redraw_display(bool clear)
 	TOGGLE_(ID,        'X', "commit ID display", &opt_show_id, NULL)
 
 static bool
-toggle_option(enum request request)
+toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
 {
 	const struct {
 		enum request request;
@@ -2492,24 +2492,26 @@ toggle_option(enum request request)
 		*opt = (*opt + 1) % data[i].map_size;
 		if (data[i].map == ignore_space_map) {
 			update_ignore_space_arg();
-			report("Ignoring %s %s", enum_name(data[i].map[*opt]), menu[i].text);
+			string_format_size(msg, SIZEOF_STR,
+				"Ignoring %s %s", enum_name(data[i].map[*opt]), menu[i].text);
 			return TRUE;
 
 		} else if (data[i].map == commit_order_map) {
 			update_commit_order_arg();
-			report("Using %s %s", enum_name(data[i].map[*opt]), menu[i].text);
+			string_format_size(msg, SIZEOF_STR,
+				"Using %s %s", enum_name(data[i].map[*opt]), menu[i].text);
 			return TRUE;
 		}
 
-		redraw_display(FALSE);
-		report("Displaying %s %s", enum_name(data[i].map[*opt]), menu[i].text);
+		string_format_size(msg, SIZEOF_STR,
+			"Displaying %s %s", enum_name(data[i].map[*opt]), menu[i].text);
 
 	} else {
 		bool *option = menu[i].data;
 
 		*option = !*option;
-		redraw_display(FALSE);
-		report("%sabling %s", *option ? "En" : "Dis", menu[i].text);
+		string_format_size(msg, SIZEOF_STR,
+			"%sabling %s", *option ? "En" : "Dis", menu[i].text);
 	}
 
 	return FALSE;
@@ -3584,8 +3586,18 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_CHANGES:
 	case REQ_TOGGLE_IGNORE_SPACE:
 	case REQ_TOGGLE_ID:
-		if (toggle_option(request) && view_has_flags(view, VIEW_DIFF_LIKE))
-			reload_view(view);
+		{
+			char action[SIZEOF_STR] = "";
+			bool reload = toggle_option(view, request, action);
+
+			if (reload && view_has_flags(view, VIEW_DIFF_LIKE))
+				reload_view(view);
+			else
+				redraw_display(FALSE);
+
+			if (*action)
+				report("%s", action);
+		}
 		break;
 
 	case REQ_TOGGLE_SORT_FIELD:
