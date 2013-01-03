@@ -2439,6 +2439,12 @@ redraw_display(bool clear)
 	redraw_display_separator(clear);
 }
 
+static void
+load_view(struct view *view, struct view *prev, enum open_flags flags);
+
+#define refresh_view(view) load_view(view, NULL, OPEN_REFRESH)
+#define reload_view(view) load_view(view, NULL, OPEN_RELOAD)
+
 /*
  * Option management
  */
@@ -2456,8 +2462,8 @@ redraw_display(bool clear)
 	TOGGLE_(CHANGES,   'C', "local change display", &opt_show_changes, NULL) \
 	TOGGLE_(ID,        'X', "commit ID display", &opt_show_id, NULL)
 
-static bool
-toggle_option(enum request request)
+static void
+toggle_option(struct view *view, enum request request)
 {
 	const struct {
 		enum request request;
@@ -2475,10 +2481,12 @@ toggle_option(enum request request)
 		{ 0 }
 	};
 	int i = 0;
+	bool reload = FALSE;
+	char action[SIZEOF_STR];
 
 	if (request == REQ_OPTIONS) {
 		if (!prompt_menu("Toggle option", menu, &i))
-			return FALSE;
+			return;
 	} else {
 		while (i < ARRAY_SIZE(data) && data[i].request != request)
 			i++;
@@ -2492,27 +2500,29 @@ toggle_option(enum request request)
 		*opt = (*opt + 1) % data[i].map_size;
 		if (data[i].map == ignore_space_map) {
 			update_ignore_space_arg();
-			report("Ignoring %s %s", enum_name(data[i].map[*opt]), menu[i].text);
-			return TRUE;
-
+			reload = TRUE;
+			string_copy(action, "Ignoring ");
 		} else if (data[i].map == commit_order_map) {
 			update_commit_order_arg();
-			report("Using %s %s", enum_name(data[i].map[*opt]), menu[i].text);
-			return TRUE;
+			string_copy(action, "Using ");
+		} else {
+			string_copy(action, "Displaying ");
 		}
 
-		redraw_display(FALSE);
-		report("Displaying %s %s", enum_name(data[i].map[*opt]), menu[i].text);
-
+		string_add(action, strlen(action), enum_name(data[i].map[*opt]));
 	} else {
 		bool *option = menu[i].data;
 
 		*option = !*option;
-		redraw_display(FALSE);
-		report("%sabling %s", *option ? "En" : "Dis", menu[i].text);
+		string_copy(action, *option ? "Enabling" : "Disabling");
 	}
 
-	return FALSE;
+	if (reload && view_has_flags(view, VIEW_DIFF_LIKE))
+		reload_view(view);
+	else
+		redraw_display(FALSE);
+
+	report("%s %s", action, menu[i].text);
 }
 
 
@@ -3158,8 +3168,6 @@ update_view(struct view *view)
 		end_update(view, TRUE);
 
 	} else if (io_eof(view->pipe)) {
-		if (view_is_displayed(view))
-			report_clear();
 		end_update(view, FALSE);
 	}
 
@@ -3344,9 +3352,6 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 		report_clear();
 	}
 }
-
-#define refresh_view(view) load_view(view, NULL, OPEN_REFRESH)
-#define reload_view(view) load_view(view, NULL, OPEN_RELOAD)
 
 static void
 open_view(struct view *prev, enum request request, enum open_flags flags)
@@ -3586,8 +3591,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_CHANGES:
 	case REQ_TOGGLE_IGNORE_SPACE:
 	case REQ_TOGGLE_ID:
-		if (toggle_option(request) && view_has_flags(view, VIEW_DIFF_LIKE))
-			reload_view(view);
+		toggle_option(view, request);
 		break;
 
 	case REQ_TOGGLE_SORT_FIELD:
