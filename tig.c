@@ -7359,7 +7359,8 @@ main_read(struct view *view, char *line)
 static enum request
 main_request(struct view *view, enum request request, struct line *line)
 {
-	enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
+	enum open_flags flags = (view_is_displayed(view) && request != REQ_VIEW_DIFF)
+				? OPEN_SPLIT : OPEN_DEFAULT;
 
 	switch (request) {
 	case REQ_NEXT:
@@ -7371,6 +7372,7 @@ main_request(struct view *view, enum request request, struct line *line)
 		move_view(view, request);
 		break;
 
+	case REQ_VIEW_DIFF:
 	case REQ_ENTER:
 		if (view_is_displayed(view) && display[0] != view)
 			maximize_view(view, TRUE);
@@ -7397,6 +7399,7 @@ main_request(struct view *view, enum request request, struct line *line)
 
 		open_view(view, REQ_VIEW_DIFF, flags);
 		break;
+
 	case REQ_REFRESH:
 		load_refs();
 		refresh_view(view);
