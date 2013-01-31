@@ -171,10 +171,11 @@ The following variables can be set:
 
 	Whether to read git's color settings. True by default.
 
-'show-author' (mixed) ["email" | "abbreviated" | "full" | bool]::
+'show-author' (mixed) ["email" | "abbreviated" | "full" | "user" | bool]::
 
 	How to display author names. If set to "abbreviated" author initials
-	will be shown. If set to "email", shows author email. Can be toggled.
+	will be shown. If set to "email", shows author email. If set to
+	"user", the author email username will be shown. Can be toggled.
 
 'show-filename' (mixed) ["auto" | "always" | bool]::
 

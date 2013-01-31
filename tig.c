@@ -125,7 +125,8 @@ mkdate(const struct time *time, enum date date)
 	_(AUTHOR, NO), \
 	_(AUTHOR, FULL), \
 	_(AUTHOR, ABBREVIATED), \
-	_(AUTHOR, EMAIL)
+	_(AUTHOR, EMAIL), \
+	_(AUTHOR, USER)
 
 DEFINE_ENUM(author, AUTHOR_ENUM);
 
@@ -183,6 +184,23 @@ get_author_initials(const char *author)
 	return initials;
 }
 
+static const char *
+get_email_username(const char *email)
+{
+	static char *user = NULL;
+	char *at;
+
+	/* TODO: this could use an author-conv-file */
+
+	user = realloc(user, strlen(email) + 1);
+	strcpy(user, email);
+	at = strchr(user, '@');
+	if (at)
+		*at = 0;
+
+	return user;
+}
+
 #define author_trim(cols) (cols == 0 || cols > 10)
 
 static const char *
@@ -195,6 +213,8 @@ mkauthor(struct author_info *info, int cols, enum author author)
 		return "";
 	if (author == AUTHOR_EMAIL)
 		return info->email;
+	if (author == AUTHOR_USER)
+		return get_email_username(info->email);
 	if (abbreviate && info->name)
 		return get_author_initials(info->name);
 	return info->name;
