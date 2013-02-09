@@ -143,6 +143,14 @@ The following variables can be set:
 	'core.abbrev' if found or default to 7.  See git-config(1) on how to
 	set 'core.abbrev'.
 
+'diff-options' (string)::
+
+	A space separate string of diff options to use in the diff view.
+	git-show(1) is used for formatting and always passes --patch-with-stat.
+	This option overrides any options specified in the TIG_DIFF_OPTS
+	environment variable (described in manpage:tig[1]), but is itself
+	overridden by diff flags given on the command line invocation.
+
 'blame-options' (string)::
 
 	A space separated string of extra blame options. Can be used for

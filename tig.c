@@ -1426,6 +1426,9 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "blame-options"))
 		return parse_args(&opt_blame_argv, argv + 2);
 
+	if (!strcmp(argv[0], "diff-options"))
+		return parse_args(&opt_diff_argv, argv + 2);
+
 	if (argc != 3)
 		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
 
@@ -1705,6 +1708,7 @@ load_options(void)
 	const char *tigrc_user = getenv("TIGRC_USER");
 	const char *tigrc_system = getenv("TIGRC_SYSTEM");
 	const char *tig_diff_opts = getenv("TIG_DIFF_OPTS");
+	const bool diff_opts_from_args = !!opt_diff_argv;
 	char buf[SIZEOF_STR];
 
 	if (!tigrc_system)
@@ -1722,7 +1726,7 @@ load_options(void)
 	 * that conflict with keybindings. */
 	add_builtin_run_requests();
 
-	if (!opt_diff_argv && tig_diff_opts && *tig_diff_opts) {
+	if (!diff_opts_from_args && tig_diff_opts && *tig_diff_opts) {
 		static const char *diff_opts[SIZEOF_ARG] = { NULL };
 		int argc = 0;
 
