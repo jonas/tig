@@ -1408,7 +1408,7 @@ parse_encoding(struct encoding **encoding_ref, const char *arg, bool priority)
 static enum option_code
 parse_args(const char ***args, const char *argv[])
 {
-	if (*args == NULL && !argv_copy(args, argv))
+	if (!argv_copy(args, argv))
 		return OPT_ERR_OUT_OF_MEMORY;
 	return OPT_OK;
 }
