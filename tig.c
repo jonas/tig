@@ -4546,6 +4546,10 @@ diff_request(struct view *view, enum request request, struct line *line)
 	case REQ_ENTER:
 		return diff_common_enter(view, request, line);
 
+	case REQ_REFRESH:
+		reload_view(view);
+		return REQ_NONE;
+
 	default:
 		return pager_request(view, request, line);
 	}
