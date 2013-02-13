@@ -8325,7 +8325,7 @@ run_prompt_command(struct view *view, char *cmd) {
 		if (args) {
 			*args++ = 0;
 			if (set_option(cmd, args) == OPT_OK) {
-				request = REQ_SCREEN_REDRAW;
+				request = !view->unrefreshable ? REQ_REFRESH : REQ_SCREEN_REDRAW;
 				if (!strcmp(cmd, "color"))
 					init_colors();
 			}
