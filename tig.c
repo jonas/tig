@@ -8267,6 +8267,70 @@ parse_options(int argc, const char *argv[])
 	return request;
 }
 
+static enum request
+run_prompt_command(struct view *view, char *cmd) {
+	enum request request;
+
+	if (cmd && string_isnumber(cmd)) {
+		int lineno = view->pos.lineno + 1;
+
+		if (parse_int(&lineno, cmd, 1, view->lines + 1) == OPT_OK) {
+			select_view_line(view, lineno - 1);
+			report_clear();
+		} else {
+			report("Unable to parse '%s' as a line number", cmd);
+		}
+	} else if (cmd && iscommit(cmd)) {
+		string_ncopy(opt_search, cmd, strlen(cmd));
+
+		request = view_request(view, REQ_JUMP_COMMIT);
+		if (request == REQ_JUMP_COMMIT) {
+			report("Jumping to commits is not supported by the '%s' view", view->name);
+		}
+
+	} else if (cmd && strlen(cmd) == 1) {
+		request = get_keybinding(&view->ops->keymap, cmd[0]);
+		return request;
+
+	} else if (cmd && cmd[0] == '!') {
+		struct view *next = VIEW(REQ_VIEW_PAGER);
+		const char *argv[SIZEOF_ARG];
+		int argc = 0;
+
+		cmd++;
+		/* When running random commands, initially show the
+		 * command in the title. However, it maybe later be
+		 * overwritten if a commit line is selected. */
+		string_ncopy(next->ref, cmd, strlen(cmd));
+
+		if (!argv_from_string(argv, &argc, cmd)) {
+			report("Too many arguments");
+		} else if (!format_argv(&next->argv, argv, FALSE)) {
+			report("Argument formatting failed");
+		} else {
+			next->dir = NULL;
+			open_view(view, REQ_VIEW_PAGER, OPEN_PREPARED);
+		}
+
+	} else if (cmd) {
+		request = get_request(cmd);
+		if (request != REQ_UNKNOWN)
+			return request;
+
+		char *args = strchr(cmd, ' ');
+		if (args) {
+			*args++ = 0;
+			if (set_option(cmd, args) == OPT_OK) {
+				request = REQ_SCREEN_REDRAW;
+				if (!strcmp(cmd, "color"))
+					init_colors();
+			}
+		}
+		return request;
+	}
+	return REQ_NONE;
+}
+
 int
 main(int argc, const char *argv[])
 {
@@ -8331,66 +8395,7 @@ main(int argc, const char *argv[])
 		case REQ_PROMPT:
 		{
 			char *cmd = read_prompt(":");
-
-			if (cmd && string_isnumber(cmd)) {
-				int lineno = view->pos.lineno + 1;
-
-				if (parse_int(&lineno, cmd, 1, view->lines + 1) == OPT_OK) {
-					select_view_line(view, lineno - 1);
-					report_clear();
-				} else {
-					report("Unable to parse '%s' as a line number", cmd);
-				}
-			} else if (cmd && iscommit(cmd)) {
-				string_ncopy(opt_search, cmd, strlen(cmd));
-
-				request = view_request(view, REQ_JUMP_COMMIT);
-				if (request == REQ_JUMP_COMMIT) {
-					report("Jumping to commits is not supported by the '%s' view", view->name);
-				}
-
-			} else if (cmd && strlen(cmd) == 1) {
-				request = get_keybinding(&view->ops->keymap, cmd[0]);
-				break;
-
-			} else if (cmd && cmd[0] == '!') {
-				struct view *next = VIEW(REQ_VIEW_PAGER);
-				const char *argv[SIZEOF_ARG];
-				int argc = 0;
-
-				cmd++;
-				/* When running random commands, initially show the
-				 * command in the title. However, it maybe later be
-				 * overwritten if a commit line is selected. */
-				string_ncopy(next->ref, cmd, strlen(cmd));
-
-				if (!argv_from_string(argv, &argc, cmd)) {
-					report("Too many arguments");
-				} else if (!format_argv(&next->argv, argv, FALSE)) {
-					report("Argument formatting failed");
-				} else {
-					next->dir = NULL;
-					open_view(view, REQ_VIEW_PAGER, OPEN_PREPARED);
-				}
-
-			} else if (cmd) {
-				request = get_request(cmd);
-				if (request != REQ_UNKNOWN)
-					break;
-
-				char *args = strchr(cmd, ' ');
-				if (args) {
-					*args++ = 0;
-					if (set_option(cmd, args) == OPT_OK) {
-						request = REQ_SCREEN_REDRAW;
-						if (!strcmp(cmd, "color"))
-							init_colors();
-					}
-				}
-				break;
-			}
-
-			request = REQ_NONE;
+			request = run_prompt_command(view, cmd);
 			break;
 		}
 		case REQ_SEARCH:
