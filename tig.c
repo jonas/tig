@@ -3440,15 +3440,17 @@ open_editor(const char *file)
 	open_external_viewer(editor_argv, opt_cdup, TRUE);
 }
 
-static bool
-open_run_request(enum request request)
+static enum request
+open_run_request(struct view *view, enum request request)
 {
 	struct run_request *req = get_run_request(request);
 	const char **argv = NULL;
 
+	request = REQ_NONE;
+
 	if (!req) {
 		report("Unknown run request");
-		return FALSE;
+		return request;
 	}
 
 	if (format_argv(&argv, req->argv, FALSE)) {
@@ -3476,7 +3478,14 @@ open_run_request(enum request request)
 		argv_free(argv);
 	free(argv);
 
-	return req->exit;
+	if (request == REQ_NONE) {
+		if (req->exit)
+			request = REQ_QUIT;
+
+		else if (!view->unrefreshable)
+			request = REQ_REFRESH;
+	}
+	return request;
 }
 
 /*
@@ -3492,11 +3501,11 @@ view_driver(struct view *view, enum request request)
 		return TRUE;
 
 	if (request > REQ_NONE) {
-		if (open_run_request(request))
+		request = open_run_request(view, request);
+
+		// exit quickly rather than going through view_request and back
+		if (request == REQ_QUIT)
 			return FALSE;
-		if (!view->unrefreshable)
-			view_request(view, REQ_REFRESH);
-		return TRUE;
 	}
 
 	request = view_request(view, request);
