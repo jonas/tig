@@ -342,10 +342,17 @@ e.g. "view-main", "View.Main", and "VIEW_MAIN" are the same.
 Actions
 ~~~~~~~
 
-Apart from the action names listed below, all actions starting with a '!' will
-be available as an external command. External commands can contain variable
-names that will be substituted before the command is run. Valid variable names
-are:
+Apart from the action names listed below, all actions starting with a '!' or
+':' are treated specially.
+
+Actions beginning with a ':' will run an internal tig command.  These internal
+commands are those which you put in a configuration file or type at the tig
+prompt.  As an example, "bind generic S :source .tigrc" will source a .tigrc
+file in the current directory when 'S' is pressed.
+
+Actions beginning with a '!' will be available as an external command. External
+commands can contain variable names that will be substituted before the command
+is run. Valid variable names are:
 
 .Browsing state variables
 [frame="none",grid="none",cols="25<m,75<"]
