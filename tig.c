@@ -1120,6 +1120,7 @@ enum run_request_flag {
 	RUN_REQUEST_SILENT	= 2,
 	RUN_REQUEST_CONFIRM	= 4,
 	RUN_REQUEST_EXIT	= 8,
+	RUN_REQUEST_INTERNAL	= 16,
 };
 
 struct run_request {
@@ -1129,6 +1130,7 @@ struct run_request {
 	bool silent;
 	bool confirm;
 	bool exit;
+	bool internal;
 };
 
 static struct run_request *run_request;
@@ -1155,6 +1157,7 @@ add_run_request(struct keymap *keymap, int key, const char **argv, enum run_requ
 	req->silent = flags & RUN_REQUEST_SILENT;
 	req->confirm = flags & RUN_REQUEST_CONFIRM;
 	req->exit = flags & RUN_REQUEST_EXIT;
+	req->internal = flags & RUN_REQUEST_INTERNAL;
 	req->keymap = keymap;
 	req->key = key;
 
@@ -1576,27 +1579,35 @@ option_bind_command(int argc, const char *argv[])
 			return OPT_ERR_OBSOLETE_REQUEST_NAME;
 		}
 	}
-	if (request == REQ_UNKNOWN && *argv[2]++ == '!') {
-		enum run_request_flag flags = RUN_REQUEST_FORCE;
 
-		while (*argv[2]) {
-			if (*argv[2] == '@') {
-				flags |= RUN_REQUEST_SILENT;
-			} else if (*argv[2] == '?') {
-				flags |= RUN_REQUEST_CONFIRM;
-			} else if (*argv[2] == '<') {
-				flags |= RUN_REQUEST_EXIT;
-			} else {
-				break;
+	if (request == REQ_UNKNOWN) {
+		char first = *argv[2]++;
+
+		if (first == '!') {
+			enum run_request_flag flags = RUN_REQUEST_FORCE;
+
+			while (*argv[2]) {
+				if (*argv[2] == '@') {
+					flags |= RUN_REQUEST_SILENT;
+				} else if (*argv[2] == '?') {
+					flags |= RUN_REQUEST_CONFIRM;
+				} else if (*argv[2] == '<') {
+					flags |= RUN_REQUEST_EXIT;
+				} else {
+					break;
+				}
+				argv[2]++;
 			}
-			argv[2]++;
-		}
 
-		return add_run_request(keymap, key, argv + 2, flags)
-			? OPT_OK : OPT_ERR_OUT_OF_MEMORY;
+			return add_run_request(keymap, key, argv + 2, flags)
+				? OPT_OK : OPT_ERR_OUT_OF_MEMORY;
+		} else if (first == ':') {
+			return add_run_request(keymap, key, argv + 2, RUN_REQUEST_FORCE | RUN_REQUEST_INTERNAL)
+				? OPT_OK : OPT_ERR_OUT_OF_MEMORY;
+		} else {
+			return OPT_ERR_UNKNOWN_REQUEST_NAME;
+		}
 	}
-	if (request == REQ_UNKNOWN)
-		return OPT_ERR_UNKNOWN_REQUEST_NAME;
 
 	add_keybinding(keymap, request, key);
 
@@ -3440,6 +3451,8 @@ open_editor(const char *file)
 	open_external_viewer(editor_argv, opt_cdup, TRUE);
 }
 
+static enum request run_prompt_command(struct view *view, char *cmd);
+
 static enum request
 open_run_request(struct view *view, enum request request)
 {
@@ -3454,23 +3467,32 @@ open_run_request(struct view *view, enum request request)
 	}
 
 	if (format_argv(&argv, req->argv, FALSE)) {
-		bool confirmed = !req->confirm;
+		if (req->internal) {
+			char cmd[SIZEOF_STR];
 
-		if (req->confirm) {
-			char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
-
-			if (argv_to_string(argv, cmd, sizeof(cmd), " ") &&
-			    string_format(prompt, "Run `%s`?", cmd) &&
-			    prompt_yesno(prompt)) {
-				confirmed = TRUE;
+			if (argv_to_string(argv, cmd, sizeof(cmd), " ")) {
+				request = run_prompt_command(view, cmd);
 			}
 		}
+		else {
+			bool confirmed = !req->confirm;
 
-		if (confirmed && argv_remove_quotes(argv)) {
-			if (req->silent)
-				io_run_bg(argv);
-			else
-				open_external_viewer(argv, NULL, !req->exit);
+			if (req->confirm) {
+				char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
+
+				if (argv_to_string(argv, cmd, sizeof(cmd), " ") &&
+				    string_format(prompt, "Run `%s`?", cmd) &&
+				    prompt_yesno(prompt)) {
+					confirmed = TRUE;
+				}
+			}
+
+			if (confirmed && argv_remove_quotes(argv)) {
+				if (req->silent)
+					io_run_bg(argv);
+				else
+					open_external_viewer(argv, NULL, !req->exit);
+			}
 		}
 	}
 
