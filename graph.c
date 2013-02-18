@@ -71,7 +71,8 @@ graph_insert_column(struct graph *graph, struct graph_row *row, size_t pos, cons
 
 	row->size++;
 	memset(column, 0, sizeof(*column));
-	string_copy_rev(column->id, id);
+	if (*id != '\0')
+		string_copy_rev(column->id, id);
 	column->symbol.boundary = !!graph->is_boundary;
 
 	return column;
