@@ -7393,11 +7393,19 @@ main_request(struct view *view, enum request request, struct line *line)
 			const char **diff_argv = line->type == LINE_STAT_STAGED
 				? diff_staged_argv : diff_unstaged_argv;
 
-			open_argv(view, diff, diff_argv, NULL, flags);
+			if (request == REQ_VIEW_DIFF){
+				open_argv(view, diff, diff_argv, NULL, OPEN_DEFAULT);
+			} else {
+				open_argv(view, diff, diff_argv, NULL, flags);
+			}
 			break;
 		}
 
-		open_view(view, REQ_VIEW_DIFF, flags);
+		if (request == REQ_VIEW_DIFF){
+			open_view(view, REQ_VIEW_DIFF, OPEN_DEFAULT);
+		} else {
+			open_view(view, REQ_VIEW_DIFF, flags);
+		}
 		break;
 
 	case REQ_REFRESH:
