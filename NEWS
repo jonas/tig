@@ -4,12 +4,22 @@ Release notes
 master
 ------
 
+Improvements:
+
+ - Make tig prompt commands bindable to keys. For example:
+   `bind diff F :set diff-options = --full-diff`. (GH #69, #116)
+ - Add a diff-options setting for specifying default diff options.
+   Example: `set diff-options = --patience` (GH #116)
+
 Bug fixes:
 
  - Fix diff broken display when using --follow <filename>.
  - Reload current branch name when reloading the status view. (GH #93)
  - Fix compile errors on old Solaris. (GH #97)
- - Reload current branch name when reloading the stage view.
+ - Reload HEAD info when reloading the stage view. (GH #104, #93)
+ - Fix diff view display for staged/unstaged changes when using 'd'.
+ - Fix display of status messages when toggling view options. (GH #111)
+ - Fix illegal memory access. (GH #98)
 
 tig-1.1
 -------
