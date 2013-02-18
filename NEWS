@@ -30,6 +30,7 @@ Incompatibilities:
    performance on larger projects. Use git config 'diff.renames' option
    (git-wide) to set your preferred behavior. Environment variable
    TIG_DIFF_OPTS can be used to restore the old behavior.
+ - Fix manual keybinging for stage-single-line. (GH #108)
  - Values set for author-width and filename-width will result in widths
    one character bigger than previously.
 
