@@ -179,7 +179,7 @@ The following variables can be set:
 
 	Whether to read git's color settings. True by default.
 
-'show-author' (mixed) ["abbreviated" | "full" | bool]::
+'show-author' (mixed) ["full", "abbreviated" | "email" | "email-user" | bool]::
 
 	How to display author names. If set to "abbreviated" author initials
 	will be shown. Can be toggled.

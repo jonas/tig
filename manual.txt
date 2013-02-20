@@ -388,7 +388,7 @@ Misc
 |o	|Open option menu
 |.	|Toggle line numbers on/off.
 |D	|Toggle date display on/off/short/relative/local.
-|A	|Toggle author display on/off/abbreviated.
+|A	|Toggle author display on/off/abbreviated/email/email username.
 |g	|Toggle revision graph visualization on/off.
 |~	|Toggle (line) graphics mode
 |F	|Toggle reference display on/off (tag and branch names).

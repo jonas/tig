@@ -124,9 +124,28 @@ mkdate(const struct time *time, enum date date)
 #define AUTHOR_ENUM(_) \
 	_(AUTHOR, NO), \
 	_(AUTHOR, FULL), \
-	_(AUTHOR, ABBREVIATED)
+	_(AUTHOR, ABBREVIATED), \
+	_(AUTHOR, EMAIL), \
+	_(AUTHOR, EMAIL_USER)
 
 DEFINE_ENUM(author, AUTHOR_ENUM);
+
+struct ident {
+	const char *name;
+	const char *email;
+};
+
+static const struct ident unknown_ident = { "Unknown", "unknown@localhost" };
+
+static inline int
+ident_compare(const struct ident *i1, const struct ident *i2)
+{
+	if (!i1 || !i2)
+		return (!!i1) - (!!i2);
+	if (!i1->name || !i2->name)
+		return (!!i1->name) - (!!i2->name);
+	return strcmp(i1->name, i2->name);
+}
 
 static const char *
 get_author_initials(const char *author)
@@ -171,19 +190,34 @@ get_author_initials(const char *author)
 	return initials;
 }
 
+static const char *
+get_email_user(const char *email)
+{
+	static char user[AUTHOR_WIDTH * 6 + 1];
+	const char *end = strchr(email, '@');
+	int length = end ? end - email : strlen(email);
+
+	string_format(user, "%.*s%c", length, email, 0);
+	return user;
+}
+
 #define author_trim(cols) (cols == 0 || cols > 10)
 
 static const char *
-mkauthor(const char *text, int cols, enum author author)
+mkauthor(const struct ident *ident, int cols, enum author author)
 {
 	bool trim = author_trim(cols);
 	bool abbreviate = author == AUTHOR_ABBREVIATED || !trim;
 
-	if (author == AUTHOR_NO)
+	if (author == AUTHOR_NO || !ident)
 		return "";
-	if (abbreviate && text)
-		return get_author_initials(text);
-	return text;
+	if (author == AUTHOR_EMAIL && ident->email)
+		return ident->email;
+	if (author == AUTHOR_EMAIL_USER && ident->email)
+		return get_email_user(ident->email);
+	if (abbreviate && ident->name)
+		return get_author_initials(ident->name);
+	return ident->name;
 }
 
 static const char *
@@ -2102,7 +2136,7 @@ draw_date(struct view *view, struct time *time)
 }
 
 static bool
-draw_author(struct view *view, const char *author)
+draw_author(struct view *view, const struct ident *author)
 {
 	bool trim = author_trim(opt_author_width);
 	const char *text = mkauthor(author, opt_author_width, opt_author);
@@ -2461,7 +2495,7 @@ redraw_display(bool clear)
 #define TOGGLE_MENU \
 	TOGGLE_(LINENO,    '.', "line numbers",      &opt_line_number, NULL) \
 	TOGGLE_(DATE,      'D', "dates",             &opt_date,	date_map) \
-	TOGGLE_(AUTHOR,    'A', "author names",      &opt_author, author_map) \
+	TOGGLE_(AUTHOR,    'A', "author",            &opt_author, author_map) \
 	TOGGLE_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map) \
 	TOGGLE_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL) \
 	TOGGLE_(FILENAME,  '#', "file names",        &opt_filename, filename_map) \
@@ -3769,21 +3803,22 @@ update_diff_context(enum request request)
 	return diff_context != opt_diff_context;
 }
 
-DEFINE_ALLOCATOR(realloc_authors, const char *, 256)
+DEFINE_ALLOCATOR(realloc_authors, struct ident *, 256)
 
 /* Small author cache to reduce memory consumption. It uses binary
  * search to lookup or find place to position new entries. No entries
  * are ever freed. */
-static const char *
-get_author(const char *name)
+static struct ident *
+get_author(const char *name, const char *email)
 {
-	static const char **authors;
+	static struct ident **authors;
 	static size_t authors_size;
 	int from = 0, to = authors_size - 1;
+	struct ident *ident;
 
 	while (from <= to) {
 		size_t pos = (to + from) / 2;
-		int cmp = strcmp(name, authors[pos]);
+		int cmp = strcmp(name, authors[pos]->name);
 
 		if (!cmp)
 			return authors[pos];
@@ -3796,15 +3831,22 @@ get_author(const char *name)
 
 	if (!realloc_authors(&authors, authors_size, 1))
 		return NULL;
-	name = strdup(name);
-	if (!name)
+	ident = calloc(1, sizeof(*ident));
+	if (!ident)
 		return NULL;
+	ident->name = strdup(name);
+	ident->email = strdup(email);
+	if (!ident->name || !ident->email) {
+		free((void *) ident->name);
+		free(ident);
+		return NULL;
+	}
 
 	memmove(authors + from + 1, authors + from, (authors_size - from) * sizeof(*authors));
-	authors[from] = name;
+	authors[from] = ident;
 	authors_size++;
 
-	return name;
+	return ident;
 }
 
 static void
@@ -3834,25 +3876,26 @@ parse_timezone(struct time *time, const char *zone)
  *	author  <email@address.tld> 1138474660 +0100
  */
 static void
-parse_author_line(char *ident, const char **author, struct time *time)
+parse_author_line(char *ident, const struct ident **author, struct time *time)
 {
 	char *nameend = strchr(ident, '<');
 	char *emailend = strchr(ident, '>');
+	const char *name, *email = "";
 
 	if (nameend && emailend)
 		*nameend = *emailend = 0;
-	ident = chomp_string(ident);
-	if (!*ident) {
-		if (nameend)
-			ident = chomp_string(nameend + 1);
-		if (!*ident)
-			ident = "Unknown";
-	}
+	name = chomp_string(ident);
+	if (nameend)
+		email = chomp_string(nameend + 1);
+	if (!*name)
+		name = *email ? email : unknown_ident.name;
+	if (!*email)
+		email = *name ? name : unknown_ident.email;
 
-	*author = get_author(ident);
+	*author = get_author(name, email);
 
 	/* Parse epoch and timezone */
-	if (emailend && emailend[1] == ' ') {
+	if (time && emailend && emailend[1] == ' ') {
 		char *secs = emailend + 2;
 		char *zone = strchr(secs, ' ');
 
@@ -3886,7 +3929,7 @@ find_line_by_type(struct view *view, struct line *line, enum line_type type, int
 struct blame_commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
-	const char *author;		/* Author of the commit. */
+	const struct ident *author;	/* Author of the commit. */
 	struct time time;		/* Date from the author ident. */
 	char filename[128];		/* Name of file. */
 	char parent_id[SIZEOF_REV];	/* Parent/previous SHA1 ID. */
@@ -3951,7 +3994,7 @@ static bool
 parse_blame_info(struct blame_commit *commit, char *line)
 {
 	if (match_blame_header("author ", &line)) {
-		commit->author = get_author(line);
+		parse_author_line(line, &commit->author, NULL);
 
 	} else if (match_blame_header("author-time ", &line)) {
 		parse_timesec(&commit->time, line);
@@ -4825,13 +4868,13 @@ struct tree_entry {
 	char commit[SIZEOF_REV];
 	mode_t mode;
 	struct time time;		/* Date from the author ident. */
-	const char *author;		/* Author of the commit. */
+	const struct ident *author;	/* Author of the commit. */
 	char name[1];
 };
 
 struct tree_state {
 	char commit[SIZEOF_REV];
-	const char *author_name;
+	const struct ident *author;
 	struct time author_time;
 	bool read_date;
 };
@@ -4873,7 +4916,7 @@ tree_compare(const void *l1, const void *l2)
 		return sort_order(tree_sort_state, timecmp(&entry1->time, &entry2->time));
 
 	case ORDERBY_AUTHOR:
-		return sort_order(tree_sort_state, strcmp_null(entry1->author, entry2->author));
+		return sort_order(tree_sort_state, ident_compare(entry1->author, entry2->author));
 
 	case ORDERBY_NAME:
 	default:
@@ -4935,7 +4978,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 
 	} else if (*text == 'a' && get_line_type(text) == LINE_AUTHOR) {
 		parse_author_line(text + STRING_SIZE("author "),
-				  &state->author_name, &state->author_time);
+				  &state->author, &state->author_time);
 
 	} else if (*text == ':') {
 		char *pos;
@@ -4961,7 +5004,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 				continue;
 
 			string_copy_rev(entry->commit, state->commit);
-			entry->author = state->author_name;
+			entry->author = state->author;
 			entry->time = state->author_time;
 			line->dirty = 1;
 			break;
@@ -5552,7 +5595,8 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct blame_state *state = view->private;
 	struct blame *blame = line->data;
 	struct time *time = NULL;
-	const char *id = NULL, *author = NULL, *filename = NULL;
+	const char *id = NULL, *filename = NULL;
+	const struct ident *author = NULL;
 	enum line_type id_type = LINE_ID;
 	static const enum line_type blame_colors[] = {
 		LINE_PALETTE_0,
@@ -5724,7 +5768,7 @@ blame_grep(struct view *view, struct line *line)
 		blame->text,
 		commit ? commit->title : "",
 		commit ? commit->id : "",
-		commit && opt_author ? commit->author : "",
+		commit ? mkauthor(commit->author, opt_author_width, opt_author) : "",
 		commit ? mkdate(&commit->time, opt_date) : "",
 		NULL
 	};
@@ -5765,7 +5809,7 @@ static struct view_ops blame_ops = {
  */
 
 struct branch {
-	const char *author;		/* Author of the last commit. */
+	const struct ident *author;	/* Author of the last commit. */
 	struct time time;		/* Date of the last activity. */
 	char title[128];		/* First line of the commit message. */
 	const struct ref *ref;		/* Name and commit ID information. */
@@ -5800,7 +5844,7 @@ branch_compare(const void *l1, const void *l2)
 		return sort_order(branch_sort_state, timecmp(&branch1->time, &branch2->time));
 
 	case ORDERBY_AUTHOR:
-		return sort_order(branch_sort_state, strcmp(branch1->author, branch2->author));
+		return sort_order(branch_sort_state, ident_compare(branch1->author, branch2->author));
 
 	case ORDERBY_NAME:
 	default:
@@ -5883,7 +5927,7 @@ branch_read(struct view *view, char *line)
 {
 	struct branch_state *state = view->private;
 	const char *title = NULL;
-	const char *author = NULL;
+	const struct ident *author = NULL;
 	struct time time = {};
 	size_t i;
 
@@ -7168,7 +7212,7 @@ static bool draw_graph(struct view *view, struct graph_canvas *canvas)
 struct commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
-	const char *author;		/* Author of the commit. */
+	const struct ident *author;	/* Author of the commit. */
 	struct time time;		/* Date from the author ident. */
 	struct ref_list *refs;		/* Repository references. */
 	struct graph_canvas graph;	/* Ancestry chain graphics. */
@@ -7231,7 +7275,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 		commit->time.sec = now.tv_sec - commit->time.tz;
 	}
 
-	commit->author = "";
+	commit->author = &unknown_ident;
 	string_ncopy(commit->title, title, strlen(title));
 	graph_render_parents(&state->graph);
 }

@@ -9,7 +9,8 @@ Improvements:
  - Make tig prompt commands bindable to keys. For example:
    `bind diff F :set diff-options = --full-diff`. (GH #69, #116)
  - Add a diff-options setting for specifying default diff options.
-   Example: `set diff-options = --patience` (GH #116)
+   Example: `set diff-options = --patience`. (GH #116)
+ - Add toggles for showing author email or email user names. (GH #115)
 
 Bug fixes:
 
