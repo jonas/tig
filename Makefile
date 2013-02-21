@@ -133,6 +133,17 @@ spell-check:
 strip: $(PROGS)
 	strip $(PROGS)
 
+update-headers:
+	@for file in *.[ch]; do \
+		grep -q '/* Copyright' "$$file" && \
+			sed '0,/.*\*\//d' < "$$file" | \
+			grep -v '/* vim: set' > "$$file.tmp"; \
+		{ cat contrib/header.h "$$file.tmp"; \
+		  echo "/* vim: set ts=8 sw=8 noexpandtab: */"; } > "$$file"; \
+		rm "$$file.tmp"; \
+		echo "Updated $$file"; \
+	done
+
 dist: configure tig.spec
 	@mkdir -p $(TARNAME) && \
 	cp Makefile tig.spec configure config.h.in aclocal.m4 $(TARNAME) && \

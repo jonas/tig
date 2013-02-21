@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2012 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2013 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -602,3 +602,5 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
 }
 
 #endif
+
+/* vim: set ts=8 sw=8 noexpandtab: */

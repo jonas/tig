@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2010 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2013 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -408,3 +408,5 @@ graph_symbol_to_ascii(struct graph_symbol *symbol)
 
 	return "  ";
 }
+
+/* vim: set ts=8 sw=8 noexpandtab: */

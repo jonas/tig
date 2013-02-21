@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2012 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2013 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -240,3 +240,5 @@ reload_refs(const char *git_dir, const char *remote_name, char *head, size_t hea
 
 	return OK;
 }
+
+/* vim: set ts=8 sw=8 noexpandtab: */
