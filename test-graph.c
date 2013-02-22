@@ -9,16 +9,18 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * Example usage:
- *
- *	# git log --pretty=raw --parents | ./test-graph
- *	# git log --pretty=raw --parents | ./test-graph --ascii
  */
 
 #include "tig.h"
 #include "io.h"
 #include "graph.h"
+
+#define USAGE \
+"test-graph [--ascii]\n" \
+"\n" \
+"Example usage:\n" \
+"	# git log --pretty=raw --parents | ./test-graph\n" \
+"	# git log --pretty=raw --parents | ./test-graph --ascii"
 
 static void TIG_NORETURN
 die(const char *err, ...)
@@ -28,7 +30,7 @@ die(const char *err, ...)
 	endwin();
 
 	va_start(args, err);
-	fputs("tig: ", stderr);
+	fputs("test-graph: ", stderr);
 	vfprintf(stderr, err, args);
 	fputs("\n", stderr);
 	va_end(args);
@@ -57,6 +59,10 @@ main(int argc, const char *argv[])
 
 	if (argc > 1 && !strcmp(argv[1], "--ascii"))
 		graph_fn = graph_symbol_to_ascii;
+
+	if (isatty(STDIN_FILENO)) {
+		die(USAGE);
+	}
 
 	if (!io_open(&io, "%s", ""))
 		die("IO");
