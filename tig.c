@@ -3458,10 +3458,11 @@ open_mergetool(const char *file)
 }
 
 static void
-open_editor(const char *file)
+open_editor(const char *file, unsigned int lineno)
 {
-	const char *editor_argv[SIZEOF_ARG + 1] = { "vi", file, NULL };
+	const char *editor_argv[SIZEOF_ARG + 3] = { "vi", file, NULL };
 	char editor_cmd[SIZEOF_STR];
+	char lineno_cmd[SIZEOF_STR];
 	const char *editor;
 	int argc = 0;
 
@@ -3481,6 +3482,8 @@ open_editor(const char *file)
 		return;
 	}
 
+	if (string_format(lineno_cmd, "+%u", lineno))
+		editor_argv[argc++] = lineno_cmd;
 	editor_argv[argc] = file;
 	open_external_viewer(editor_argv, opt_cdup, TRUE);
 }
@@ -4497,6 +4500,37 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	return ok;
 }
 
+static unsigned int
+diff_get_lineno(struct view *view, struct line *line)
+{
+	const struct line *header, *chunk;
+	const char *data;
+	unsigned int lineno;
+
+	/* Verify that we are after a diff header and one of its chunks */
+	header = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
+	chunk = find_prev_line_by_type(view, line, LINE_DIFF_CHUNK);
+	if (!header || !chunk || chunk < header)
+		return 0;
+
+	/*
+	 * In a chunk header, the number after the '+' sign is the number of its
+	 * following line, in the new version of the file. We increment this
+	 * number for each non-deletion line, until the given line position.
+	 */
+	data = strchr(chunk->data, '+');
+	if (!data)
+		return 0;
+
+	lineno = atoi(data);
+	chunk++;
+	while (chunk++ < line)
+		if (chunk->type != LINE_DIFF_DEL)
+			lineno++;
+
+	return lineno;
+}
+
 static bool
 parse_chunk_lineno(int *lineno, const char *chunk, int marker)
 {
@@ -4614,7 +4648,7 @@ diff_request(struct view *view, enum request request, struct line *line)
 		file = diff_get_pathname(view, line);
 		if (!file || access(file, R_OK))
 			return pager_request(view, request, line);
-		open_editor(file);
+		open_editor(file, diff_get_lineno(view, line));
 		return REQ_NONE;
 
 	case REQ_ENTER:
@@ -5119,7 +5153,7 @@ open_blob_editor(const char *id)
 	else if (!io_run_append(blob_argv, fd))
 		report("Failed to save blob data to file");
 	else
-		open_editor(file);
+		open_editor(file, 0);
 	if (fd != -1)
 		unlink(file);
 }
@@ -5146,7 +5180,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 		} else if (!is_head_commit(view->vid)) {
 			open_blob_editor(entry->id);
 		} else {
-			open_editor(opt_file);
+			open_editor(opt_file, 0);
 		}
 		return REQ_NONE;
 
@@ -6638,7 +6672,7 @@ status_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		}
 
-		open_editor(status->new.name);
+		open_editor(status->new.name, 0);
 		break;
 
 	case REQ_VIEW_BLAME:
@@ -6999,7 +7033,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		}
 
-		open_editor(stage_status.new.name);
+		open_editor(stage_status.new.name, diff_get_lineno(view, line));
 		break;
 
 	case REQ_REFRESH:
