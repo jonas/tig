@@ -7033,7 +7033,11 @@ stage_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		}
 
-		open_editor(stage_status.new.name, diff_get_lineno(view, line));
+		if (stage_line_type == LINE_STAT_UNTRACKED) {
+			open_editor(stage_status.new.name, (line - view->line) + 1);
+		} else {
+			open_editor(stage_status.new.name, diff_get_lineno(view, line));
+		}
 		break;
 
 	case REQ_REFRESH:
