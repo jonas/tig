@@ -221,6 +221,10 @@ The following variables can be set:
 	Whether to show staged and unstaged changes in the main view.
 	Can be toggled.
 
+'show-line-numbers' (bool)::
+
+	Whether to show line numbers. Can be toggled.
+
 'vertical-split' (bool)::
 
 	Whether to split the view horizontally or vertically.
