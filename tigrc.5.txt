@@ -274,6 +274,12 @@ The following variables can be set:
 	focus will remain in the parent view, avoiding reloads of the child
 	view when navigating the parent view. True by default.
 
+'editor-line-number' (bool)::
+
+	Whether to pass the selected line number to the editor command. The
+	line number is passed as `+<line-number>` in front of the file name.
+	Example: `vim +10 tig.c`
+
 Bind command
 ------------
 

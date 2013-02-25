@@ -11,6 +11,9 @@ Improvements:
  - Add a diff-options setting for specifying default diff options.
    Example: `set diff-options = --patience`. (GH #116)
  - Add toggles for showing author email or email user names. (GH #115)
+ - Open the editor at the selected line by prefixing the file argument with
+   `+<lineno>`. Tested in vi, vim, emacs, nano, gedit, geany. Can be disabled
+   by adding `set editor-line-number = no` to ~/.tigrc. (GH #118, #119)
 
 Bug fixes:
 

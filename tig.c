@@ -471,6 +471,7 @@ static char opt_prefix[SIZEOF_STR]	= "";
 static char opt_git_dir[SIZEOF_STR]	= "";
 static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
+static bool opt_editor_lineno		= TRUE;
 static FILE *opt_tty			= NULL;
 static const char **opt_diff_argv	= NULL;
 static const char **opt_rev_argv	= NULL;
@@ -1576,6 +1577,9 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "id-width"))
 		return parse_id(&opt_id_cols, argv[2]);
+
+	if (!strcmp(argv[0], "editor-line-number"))
+		return parse_bool(&opt_editor_lineno, argv[2]);
 
 	return OPT_ERR_UNKNOWN_VARIABLE_NAME;
 }
@@ -3435,18 +3439,23 @@ open_argv(struct view *prev, struct view *view, const char *argv[], const char *
 	}
 }
 
-static void
-open_external_viewer(const char *argv[], const char *dir, bool confirm)
+static bool
+open_external_viewer(const char *argv[], const char *dir, bool confirm, const char *notice)
 {
+	bool ok;
+
 	def_prog_mode();           /* save current tty modes */
 	endwin();                  /* restore original tty modes */
-	io_run_fg(argv, dir);
+	ok = io_run_fg(argv, dir);
 	if (confirm) {
+		if (!ok && *notice)
+			fprintf(stderr, "%s", notice);
 		fprintf(stderr, "Press Enter to continue");
 		getc(opt_tty);
 	}
 	reset_prog_mode();
 	redraw_display(TRUE);
+	return ok;
 }
 
 static void
@@ -3454,8 +3463,16 @@ open_mergetool(const char *file)
 {
 	const char *mergetool_argv[] = { "git", "mergetool", file, NULL };
 
-	open_external_viewer(mergetool_argv, opt_cdup, TRUE);
+	open_external_viewer(mergetool_argv, opt_cdup, TRUE, "");
 }
+
+#define EDITOR_LINENO_MSG \
+	"*** Your editor reported an error while opening the file.\n" \
+	"*** This is probably because it doesn't support the line\n" \
+	"*** number argument added automatically. The line number\n" \
+	"*** has been disabled for now. You can permanently disable\n" \
+	"*** it by adding the following line to ~/.tigrc\n" \
+	"***	set editor-line-number = no\n"
 
 static void
 open_editor(const char *file, unsigned int lineno)
@@ -3482,10 +3499,11 @@ open_editor(const char *file, unsigned int lineno)
 		return;
 	}
 
-	if (string_format(lineno_cmd, "+%u", lineno))
+	if (lineno && opt_editor_lineno && string_format(lineno_cmd, "+%u", lineno))
 		editor_argv[argc++] = lineno_cmd;
 	editor_argv[argc] = file;
-	open_external_viewer(editor_argv, opt_cdup, TRUE);
+	if (!open_external_viewer(editor_argv, opt_cdup, TRUE, EDITOR_LINENO_MSG))
+		opt_editor_lineno = FALSE;
 }
 
 static enum request run_prompt_command(struct view *view, char *cmd);
@@ -3528,7 +3546,7 @@ open_run_request(struct view *view, enum request request)
 				if (req->silent)
 					io_run_bg(argv);
 				else
-					open_external_viewer(argv, NULL, !req->exit);
+					open_external_viewer(argv, NULL, !req->exit, "");
 			}
 		}
 	}
