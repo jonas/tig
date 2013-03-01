@@ -28,6 +28,7 @@ Improvements:
    `set title-overflow = 50` (GH #125)
  - Add +ESC key bindings. Example: `bind generic ^[v move-page-up` (GH #120)
  - Create temporary files in TMPDIR, TEMP, or TMP before defaulting to /tmp.
+ - Reenable `tig log` as a subcommand. (GH #146)
 
 Bug fixes:
 
