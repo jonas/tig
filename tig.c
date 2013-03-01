@@ -1055,6 +1055,8 @@ get_key_value(const char *name)
 		if (!strcasecmp(key_table[i].name, name))
 			return key_table[i].value;
 
+	if (strlen(name) == 3 && name[0] == '^' && name[1] == '[' && isprint(*name))
+		return (int)name[2] + 0x80;
 	if (strlen(name) == 2 && name[0] == '^' && isprint(*name))
 		return (int)name[1] & 0x1f;
 	if (strlen(name) == 1 && isprint(*name))
@@ -8601,6 +8603,9 @@ main(int argc, const char *argv[])
 
 	while (view_driver(display[current_view], request)) {
 		int key = get_input(0);
+
+		if (key == KEY_ESC)
+			key  = get_input(0) + 0x80;
 
 		view = display[current_view];
 		request = get_keybinding(&view->ops->keymap, key);
