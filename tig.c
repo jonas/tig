@@ -8383,6 +8383,7 @@ static const char usage[] =
 "   or: tig show   [options] [revs] [--] [paths]\n"
 "   or: tig blame  [options] [rev] [--] path\n"
 "   or: tig status\n"
+"   or: tig log\n"
 "   or: tig <      [git command output]\n"
 "\n"
 "Options:\n"
@@ -8520,6 +8521,9 @@ parse_options(int argc, const char *argv[])
 
 	} else if (!strcmp(subcommand, "show")) {
 		request = REQ_VIEW_DIFF;
+
+	} else if (!strcmp(subcommand, "log")) {
+		request = REQ_VIEW_LOG;
 
 	} else {
 		subcommand = NULL;
