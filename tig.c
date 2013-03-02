@@ -1215,8 +1215,10 @@ add_builtin_run_requests(void)
 	const char *checkout[] = { "git", "checkout", "%(branch)", NULL };
 	const char *commit[] = { "git", "commit", NULL };
 	const char *gc[] = { "git", "gc", NULL };
+	const char *notes[] = {"git", "notes", "edit", "%(commit)", NULL };
 
 	add_run_request(get_keymap("main"), 'C', cherry_pick, RUN_REQUEST_CONFIRM);
+	add_run_request(get_keymap("generic"), 'T', notes, RUN_REQUEST_CONFIRM);
 	add_run_request(get_keymap("status"), 'C', commit, RUN_REQUEST_DEFAULT);
 	add_run_request(get_keymap("branch"), 'C', checkout, RUN_REQUEST_CONFIRM);
 	add_run_request(get_keymap("generic"), 'G', gc, RUN_REQUEST_CONFIRM);
