@@ -3521,6 +3521,8 @@ open_run_request(struct view *view, enum request request)
 		return request;
 	}
 
+	bool confirmed = !req->confirm;
+
 	if (format_argv(&argv, req->argv, FALSE)) {
 		if (req->internal) {
 			char cmd[SIZEOF_STR];
@@ -3530,7 +3532,6 @@ open_run_request(struct view *view, enum request request)
 			}
 		}
 		else {
-			bool confirmed = !req->confirm;
 
 			if (req->confirm) {
 				char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
@@ -3556,7 +3557,10 @@ open_run_request(struct view *view, enum request request)
 	free(argv);
 
 	if (request == REQ_NONE) {
-		if (req->exit)
+		if (req->confirm && !confirmed)
+			request = REQ_NONE;
+
+		else if (req->exit)
 			request = REQ_QUIT;
 
 		else if (!view->unrefreshable)
