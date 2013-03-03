@@ -164,6 +164,28 @@ following variables.
 |%(prompt)		|Prompt for the argument value.
 |=============================================================================
 
+Example user-defined commands:
+
+ - Allow to amend the last commit:
+
+	bind generic + !git commit --amend
+
+ - Copy commit ID to clipboard:
+
+	bind generic 9 !@sh -c "echo -n %(commit) | xclip -selection c"
+
+ - Add/edit notes for the current commit used during a review:
+
+	bind generic T !git notes edit %(commit)
+
+ - Enter git's interactive add for fine-grained staging of file content:
+
+	bind generic I !git add -i %(file)
+
+ - Rebase current branch on top of the selected branch:
+
+	bind branch 3 !git rebase -i %(branch)
+
 [[title-window]]
 Title Windows
 ~~~~~~~~~~~~~
