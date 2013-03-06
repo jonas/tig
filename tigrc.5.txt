@@ -143,6 +143,11 @@ The following variables can be set:
 	'core.abbrev' if found or default to 7.  See git-config(1) on how to
 	set 'core.abbrev'.
 
+'short-title-width' (int)::
+
+	Maximum width for a commit title to be considered short. This value
+	defaults to 50, as discussed in the git-commit(1) man page.
+
 'diff-options' (string)::
 
 	A space separate string of diff options to use in the diff view.
@@ -210,6 +215,11 @@ The following variables can be set:
 
 	Whether to show commit IDs in the main view. Disabled by default. Can
 	be toggled. See also 'id-width' option.
+
+'show-short-title' (bool)::
+
+	Whether to highlight text in commit titles exceeding a given width. Can be
+	toggled. See also 'short-title-width' option for details about title width.
 
 'show-rev-graph' (bool)::
 
