@@ -211,6 +211,11 @@ The following variables can be set:
 	Whether to show commit IDs in the main view. Disabled by default. Can
 	be toggled. See also 'id-width' option.
 
+'show-long-title' (bool)::
+
+	Whether to highlight long commit titles (exceeding 50 characters) in the
+	main view on start-up. Can be toggled.
+
 'show-rev-graph' (bool)::
 
 	Whether to show revision graph in the main view on start-up.
