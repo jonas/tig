@@ -14,12 +14,14 @@ Improvements:
  - Add a diff-options setting for specifying default diff options.
    Example: `set diff-options = --patience`. (GH #116)
  - Add toggles for showing author email or email user names. (GH #115)
- - Open the editor at the selected line by prefixing the file argument with
-   `+<lineno>`. Tested in vi, vim, emacs, nano, gedit, geany. Can be disabled
+ - Open editor at the selected line by prefixing the file argument with
+   `+<lineno>`. Tested in vi, vim, emacs, nano, gedit, geany. Disable
    by adding `set editor-line-number = no` to ~/.tigrc. (GH #118, #119)
  - Add toggle-files to control whether to show full commit diff or only
-   the diff concerning the currently selected file, for example, when using
-   blame.
+   the diff concerning the currently selected file, e.g. for blame.
+ - Optionally highlight exceeding characters in long commit titles.
+   The default title max width is 50 characters. Customize using:
+   `set title-overflow = 50` (GH #125)
 
 Bug fixes:
 

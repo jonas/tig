@@ -211,6 +211,13 @@ The following variables can be set:
 	Whether to show commit IDs in the main view. Disabled by default. Can
 	be toggled. See also 'id-width' option.
 
+'title-overflow' (mixed) [bool | int]::
+
+	Whether to highlight text in commit titles exceeding a given width.
+	When set to a boolean, it enables/disables the highlighting using the
+	default width of 50 character. When set to an int, the assigned value
+	is used as the maximum character width.
+
 'show-rev-graph' (bool)::
 
 	Whether to show revision graph in the main view on start-up.

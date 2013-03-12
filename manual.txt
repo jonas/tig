@@ -418,6 +418,7 @@ Misc
 |X	|Toggle commit ID display on/off
 |%	|Toggle file filtering in order to see the full diff instead of only
 	 the diff concerning the currently selected file.
+|$	|Toggle highlighting of commit title overflow.
 |:	|Open prompt. This allows you to specify what command to run.
 |e	|Open file in editor.
 |=============================================================================
