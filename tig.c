@@ -366,6 +366,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 	REQ_(TOGGLE_COMMIT_ORDER,	"Toggle commit ordering"), \
 	REQ_(TOGGLE_ID,		"Toggle commit ID display"), \
 	REQ_(TOGGLE_FILES,	"Toggle file filtering"), \
+	REQ_(TOGGLE_TITLE_OVERFLOW,	"Toggle highlighting of commit title overflow"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
@@ -482,6 +483,8 @@ static int opt_lineno			= 0;
 static bool opt_show_id			= FALSE;
 static int opt_id_cols			= ID_WIDTH;
 static bool opt_file_filter		= TRUE;
+static bool opt_show_title_overflow	= FALSE;
+static int opt_title_overflow		= 50;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
@@ -579,6 +582,7 @@ LINE(DELIMITER,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(DATE,         "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(MODE,         "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(ID,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
+LINE(TITLE_OVERFLOW, "",		COLOR_RED,	COLOR_DEFAULT,	0), \
 LINE(FILENAME,   "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(LINE_NUMBER,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(TITLE_BLUR,   "",			COLOR_WHITE,	COLOR_BLUE,	0), \
@@ -916,6 +920,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'W',		REQ_TOGGLE_IGNORE_SPACE },
 	{ 'X',		REQ_TOGGLE_ID },
 	{ '%',		REQ_TOGGLE_FILES },
+	{ '$',		REQ_TOGGLE_TITLE_OVERFLOW },
 	{ ':',		REQ_PROMPT },
 	{ 'e',		REQ_EDIT },
 };
@@ -1581,6 +1586,28 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "id-width"))
 		return parse_id(&opt_id_cols, argv[2]);
 
+	if (!strcmp(argv[0], "title-overflow")) {
+		bool matched;
+		enum option_code code;
+
+		/*
+		 * "title-overflow" is considered a boolint.
+		 * We try to parse it as a boolean (and set the value to 50 if true),
+		 * otherwise we parse it as an integer and use the given value.
+		 */
+		code = parse_bool_matched(&opt_show_title_overflow, argv[2], &matched);
+		if (code == OPT_OK && matched) {
+			if (opt_show_title_overflow)
+				opt_title_overflow = 50;
+		} else {
+			code = parse_int(&opt_title_overflow, argv[2], 2, 1024);
+			if (code == OPT_OK)
+				opt_show_title_overflow = TRUE;
+		}
+
+		return code;
+	}
+
 	if (!strcmp(argv[0], "editor-line-number"))
 		return parse_bool(&opt_editor_lineno, argv[2]);
 
@@ -2082,6 +2109,25 @@ draw_text(struct view *view, enum line_type type, const char *string)
 	return VIEW_MAX_LEN(view) <= 0;
 }
 
+static bool
+draw_commit_title(struct view *view, const char *title)
+{
+	enum line_type type = LINE_DEFAULT;
+
+	if (opt_show_title_overflow) {
+		if (draw_chars(view, type, title, opt_title_overflow, FALSE))
+			return TRUE;
+
+		title += opt_title_overflow;
+		type = LINE_TITLE_OVERFLOW;
+	}
+
+	if (*title && draw_chars(view, type, title, VIEW_MAX_LEN(view), TRUE))
+		return TRUE;
+
+	return VIEW_MAX_LEN(view) <= 0;
+}
+
 static bool PRINTF_LIKE(3, 4)
 draw_formatted(struct view *view, enum line_type type, const char *format, ...)
 {
@@ -2512,7 +2558,8 @@ redraw_display(bool clear)
 	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL) \
 	TOGGLE_(CHANGES,   'C', "local change display", &opt_show_changes, NULL) \
 	TOGGLE_(ID,        'X', "commit ID display", &opt_show_id, NULL) \
-	TOGGLE_(FILES,     '%', "file filtering",    &opt_file_filter, NULL)
+	TOGGLE_(FILES,     '%', "file filtering",    &opt_file_filter, NULL) \
+	TOGGLE_(TITLE_OVERFLOW, '$', "commit title overflow display", &opt_show_title_overflow, NULL) \
 
 static bool
 toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
@@ -3690,6 +3737,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_IGNORE_SPACE:
 	case REQ_TOGGLE_ID:
 	case REQ_TOGGLE_FILES:
+	case REQ_TOGGLE_TITLE_OVERFLOW:
 		{
 			char action[SIZEOF_STR] = "";
 			bool reload = toggle_option(view, request, action);
@@ -7415,7 +7463,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_refs(view, commit->refs))
 		return TRUE;
 
-	draw_text(view, LINE_DEFAULT, commit->title);
+	draw_commit_title(view, commit->title);
 	return TRUE;
 }
 
