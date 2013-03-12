@@ -14,6 +14,9 @@ Improvements:
  - Open the editor at the selected line by prefixing the file argument with
    `+<lineno>`. Tested in vi, vim, emacs, nano, gedit, geany. Can be disabled
    by adding `set editor-line-number = no` to ~/.tigrc. (GH #118, #119)
+ - Add toggle-files to control whether to show full commit diff or only
+   the diff concerning the currently selected file, for example, when using
+   blame.
 
 Bug fixes:
 

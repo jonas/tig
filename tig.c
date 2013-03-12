@@ -365,6 +365,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 	REQ_(TOGGLE_IGNORE_SPACE,	"Toggle ignoring whitespace in diffs"), \
 	REQ_(TOGGLE_COMMIT_ORDER,	"Toggle commit ordering"), \
 	REQ_(TOGGLE_ID,		"Toggle commit ID display"), \
+	REQ_(TOGGLE_FILES,	"Toggle file filtering"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
@@ -480,6 +481,7 @@ static const char **opt_blame_argv	= NULL;
 static int opt_lineno			= 0;
 static bool opt_show_id			= FALSE;
 static int opt_id_cols			= ID_WIDTH;
+static bool opt_file_filter		= TRUE;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
@@ -913,6 +915,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'i',		REQ_TOGGLE_SORT_FIELD },
 	{ 'W',		REQ_TOGGLE_IGNORE_SPACE },
 	{ 'X',		REQ_TOGGLE_ID },
+	{ '%',		REQ_TOGGLE_FILES },
 	{ ':',		REQ_PROMPT },
 	{ 'e',		REQ_EDIT },
 };
@@ -1829,6 +1832,7 @@ enum view_flag {
 	VIEW_DIFF_LIKE		= 1 << 7,
 	VIEW_STDIN		= 1 << 8,
 	VIEW_SEND_CHILD_ENTER	= 1 << 9,
+	VIEW_FILE_FILTER	= 1 << 10,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))
@@ -2507,7 +2511,8 @@ redraw_display(bool clear)
 	TOGGLE_(COMMIT_ORDER, 'l', "commit order",   &opt_commit_order, commit_order_map) \
 	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL) \
 	TOGGLE_(CHANGES,   'C', "local change display", &opt_show_changes, NULL) \
-	TOGGLE_(ID,        'X', "commit ID display", &opt_show_id, NULL)
+	TOGGLE_(ID,        'X', "commit ID display", &opt_show_id, NULL) \
+	TOGGLE_(FILES,     '%', "file filtering",    &opt_file_filter, NULL)
 
 static bool
 toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
@@ -2565,6 +2570,9 @@ toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
 		*option = !*option;
 		string_format_size(msg, SIZEOF_STR,
 			"%sabling %s", *option ? "En" : "Dis", menu[i].text);
+
+		if (option == &opt_file_filter)
+			return TRUE;
 	}
 
 	return FALSE;
@@ -2954,7 +2962,7 @@ reset_view(struct view *view)
 }
 
 static const char *
-format_arg(const char *name)
+format_arg(const char *name, bool file_filter)
 {
 	static struct {
 		const char *name;
@@ -2978,15 +2986,18 @@ format_arg(const char *name)
 		return read_prompt("Command argument: ");
 
 	for (i = 0; i < ARRAY_SIZE(vars); i++)
-		if (!strncmp(name, vars[i].name, vars[i].namelen))
+		if (!strncmp(name, vars[i].name, vars[i].namelen)) {
+			if (vars[i].value == opt_file && !file_filter)
+				return "";
 			return *vars[i].value ? vars[i].value : vars[i].value_if_empty;
+		}
 
 	report("Unknown replacement: `%s`", name);
 	return NULL;
 }
 
 static bool
-format_argv(const char ***dst_argv, const char *src_argv[], bool first)
+format_argv(const char ***dst_argv, const char *src_argv[], bool first, bool file_filter)
 {
 	char buf[SIZEOF_STR];
 	int argc;
@@ -2998,7 +3009,7 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool first)
 		size_t bufpos = 0;
 
 		if (!strcmp(arg, "%(fileargs)")) {
-			if (!argv_append_array(dst_argv, opt_file_argv))
+			if (file_filter && !argv_append_array(dst_argv, opt_file_argv))
 				break;
 			continue;
 
@@ -3029,7 +3040,7 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool first)
 				value = "";
 
 			} else {
-				value = format_arg(next);
+				value = format_arg(next, file_filter);
 
 				if (!value) {
 					return FALSE;
@@ -3129,8 +3140,10 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	view->unrefreshable = use_stdin;
 
 	if (!refresh && argv) {
+		bool file_filter = !view_has_flags(view, VIEW_FILE_FILTER) || opt_file_filter;
+
 		view->dir = dir;
-		if (!format_argv(&view->argv, argv, !view->prev)) {
+		if (!format_argv(&view->argv, argv, !view->prev, file_filter)) {
 			report("Failed to format %s arguments", view->name);
 			return FALSE;
 		}
@@ -3521,7 +3534,7 @@ open_run_request(struct view *view, enum request request)
 		return request;
 	}
 
-	if (format_argv(&argv, req->argv, FALSE)) {
+	if (format_argv(&argv, req->argv, FALSE, TRUE)) {
 		if (req->internal) {
 			char cmd[SIZEOF_STR];
 
@@ -3676,6 +3689,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_CHANGES:
 	case REQ_TOGGLE_IGNORE_SPACE:
 	case REQ_TOGGLE_ID:
+	case REQ_TOGGLE_FILES:
 		{
 			char action[SIZEOF_STR] = "";
 			bool reload = toggle_option(view, request, action);
@@ -4662,6 +4676,7 @@ diff_request(struct view *view, enum request request, struct line *line)
 		reload_view(view);
 		return REQ_NONE;
 
+
 	case REQ_EDIT:
 		file = diff_get_pathname(view, line);
 		if (!file || access(file, R_OK))
@@ -4704,7 +4719,7 @@ diff_select(struct view *view, struct line *line)
 static struct view_ops diff_ops = {
 	"line",
 	{ "diff" },
-	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_STDIN,
+	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_STDIN | VIEW_FILE_FILTER,
 	sizeof(struct diff_state),
 	diff_open,
 	diff_read,
@@ -7615,7 +7630,7 @@ main_select(struct view *view, struct line *line)
 static struct view_ops main_ops = {
 	"commit",
 	{ "main" },
-	VIEW_STDIN | VIEW_SEND_CHILD_ENTER,
+	VIEW_STDIN | VIEW_SEND_CHILD_ENTER | VIEW_FILE_FILTER,
 	sizeof(struct main_state),
 	main_open,
 	main_read,
@@ -8440,7 +8455,7 @@ run_prompt_command(struct view *view, char *cmd) {
 
 		if (!argv_from_string(argv, &argc, cmd)) {
 			report("Too many arguments");
-		} else if (!format_argv(&next->argv, argv, FALSE)) {
+		} else if (!format_argv(&next->argv, argv, FALSE, TRUE)) {
 			report("Argument formatting failed");
 		} else {
 			next->dir = NULL;

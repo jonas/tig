@@ -510,6 +510,7 @@ execute the command and will exit tig after completion.
 |toggle-rev-graph	|Toggle revision graph visualization
 |toggle-graphic		|Toggle (line) graphics mode
 |toggle-refs		|Toggle reference display
+|toggle-files		|Toggle file filtering for the diff and main views
 |edit			|Open in editor
 |none			|Do nothing
 |=============================================================================
