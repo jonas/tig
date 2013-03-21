@@ -8493,6 +8493,7 @@ main(int argc, const char *argv[])
 	int i;
 
 	signal(SIGINT, quit);
+	signal(SIGQUIT, quit);
 	signal(SIGPIPE, SIG_IGN);
 
 	if (setlocale(LC_ALL, "")) {
