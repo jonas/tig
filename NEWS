@@ -4,6 +4,9 @@ Release notes
 master
 ------
 
+ - Tig now has its own tag on Stack Overflow, where users are invited to
+   ask questions: http://stackoverflow.com/questions/tagged/tig
+
 Improvements:
 
  - Make tig prompt commands bindable to keys. For example:

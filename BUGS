@@ -4,4 +4,5 @@ BUGS
 Bugs and feature requests can be reported using the issue tracker at
 https://github.com/jonas/tig/issues or by mail to either the git mailing
 list or directly to the maintainer. Ensure that the word "tig" is in the
-subject.
+subject. For other tig related questions please use Stack Overflow:
+http://stackoverflow.com/questions/tagged/tig.
