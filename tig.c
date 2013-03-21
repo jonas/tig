@@ -8234,6 +8234,9 @@ static const char usage[] =
 static void TIG_NORETURN
 quit(int sig)
 {
+	if (sig)
+		signal(sig, SIG_DFL);
+
 	/* XXX: Restore tty modes and let the OS cleanup the rest! */
 	if (cursed)
 		endwin();
