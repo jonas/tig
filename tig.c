@@ -4371,6 +4371,7 @@ static struct view_ops log_ops = {
 };
 
 struct diff_state {
+	bool after_commit_title;
 	bool reading_diff_stat;
 	bool combined_diff;
 };
@@ -4411,6 +4412,11 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 
 	} else if (!strcmp(data, "---")) {
 		state->reading_diff_stat = TRUE;
+	}
+
+	if (!state->after_commit_title && !prefixcmp(data, "    ")) {
+		type = LINE_COMMIT;
+		state->after_commit_title = TRUE;
 	}
 
 	if (type == LINE_DIFF_HEADER) {
@@ -4519,7 +4525,10 @@ diff_common_draw(struct view *view, struct line *line, unsigned int lineno)
 		}
 	}
 
-	draw_text(view, type, text);
+	if (type == LINE_COMMIT)
+		draw_commit_title(view, text, 4);
+	else
+		draw_text(view, type, text);
 	return TRUE;
 }
 
