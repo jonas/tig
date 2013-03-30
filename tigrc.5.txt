@@ -680,8 +680,9 @@ omnipresent.
 Commit message::
 
 `Signed-off-by`, `Acked-by`, `Reviewed-by` and `Tested-by` lines are colorized.
+Characters in the commit title exceeding a predefined width can be highlighted.
 
-*signoff*, *acked*, *reviewed*, *tested*
+*signoff*, *acked*, *reviewed*, *tested*, *overflow*
 
 Tree markup::
 
