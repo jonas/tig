@@ -26,7 +26,6 @@ Improvements:
 
 Bug fixes:
 
- - Fix diff broken display when using --follow <filename>.
  - Reload current branch name when reloading the status view. (GH #93)
  - Fix compile errors on old Solaris. (GH #97)
  - Reload HEAD info when reloading the stage view. (GH #104, #93)
