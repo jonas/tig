@@ -2094,14 +2094,14 @@ draw_space(struct view *view, enum line_type type, int max, int spaces)
 }
 
 static bool
-draw_text(struct view *view, enum line_type type, const char *string)
+draw_text_expanded(struct view *view, enum line_type type, const char *string, int max_len, bool use_tilde)
 {
 	static char text[SIZEOF_STR];
 
 	do {
 		size_t pos = string_expand(text, sizeof(text), string, opt_tab_size);
 
-		if (draw_chars(view, type, text, VIEW_MAX_LEN(view), TRUE))
+		if (draw_chars(view, type, text, max_len, use_tilde))
 			return TRUE;
 		string += pos;
 	} while (*string);
@@ -2110,23 +2110,32 @@ draw_text(struct view *view, enum line_type type, const char *string)
 }
 
 static bool
-draw_commit_title(struct view *view, const char *title)
+draw_text(struct view *view, enum line_type type, const char *string)
 {
-	enum line_type type = LINE_DEFAULT;
+	return draw_text_expanded(view, type, string, VIEW_MAX_LEN(view), TRUE);
+}
 
-	if (opt_show_title_overflow) {
-		if (draw_chars(view, type, title, opt_title_overflow, FALSE))
+static bool
+draw_text_overflow(struct view *view, const char *text, bool on, int overflow, enum line_type type)
+{
+	if (on) {
+		int len = strlen(text);
+
+		if (draw_text_expanded(view, type, text, overflow, FALSE))
 			return TRUE;
 
-		title += opt_title_overflow;
-		type = LINE_TITLE_OVERFLOW;
+		text = len > overflow ? text + overflow : "";
+		type = LINE_OVERFLOW;
 	}
 
-	if (*title && draw_chars(view, type, title, VIEW_MAX_LEN(view), TRUE))
+	if (*text && draw_chars(view, type, text, VIEW_MAX_LEN(view), TRUE))
 		return TRUE;
 
 	return VIEW_MAX_LEN(view) <= 0;
 }
+
+#define draw_commit_title(view, text, offset) \
+	draw_text_overflow(view, text, opt_show_title_overflow, opt_title_overflow + offset, LINE_DEFAULT)
 
 static bool PRINTF_LIKE(3, 4)
 draw_formatted(struct view *view, enum line_type type, const char *format, ...)
@@ -7463,7 +7472,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_refs(view, commit->refs))
 		return TRUE;
 
-	draw_commit_title(view, commit->title);
+	draw_commit_title(view, commit->title, 0);
 	return TRUE;
 }
 
