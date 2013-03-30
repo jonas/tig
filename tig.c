@@ -822,6 +822,7 @@ struct line {
 	unsigned int dont_free:1;
 	unsigned int wrapped:1;
 
+	unsigned int user_flags:6;
 	void *data;		/* User data */
 };
 
@@ -4378,6 +4379,8 @@ struct diff_state {
 	bool combined_diff;
 };
 
+#define DIFF_LINE_COMMIT_TITLE 1
+
 static bool
 diff_open(struct view *view, enum open_flags flags)
 {
@@ -4417,8 +4420,12 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	}
 
 	if (!state->after_commit_title && !prefixcmp(data, "    ")) {
-		type = LINE_COMMIT;
+		struct line *line = add_line_text(view, data, LINE_DIFF_STAT);
+
+		if (line)
+			line->user_flags |= DIFF_LINE_COMMIT_TITLE;
 		state->after_commit_title = TRUE;
+		return line != NULL;
 	}
 
 	if (type == LINE_DIFF_HEADER) {
@@ -4527,7 +4534,7 @@ diff_common_draw(struct view *view, struct line *line, unsigned int lineno)
 		}
 	}
 
-	if (type == LINE_COMMIT)
+	if (line->user_flags & DIFF_LINE_COMMIT_TITLE)
 		draw_commit_title(view, text, 4);
 	else
 		draw_text(view, type, text);
