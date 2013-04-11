@@ -5103,6 +5103,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 
 		if (!view->lines) {
 			tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL);
+			tree_entry(view, LINE_TREE_DIR, "..", "040000", view->ref);
 			report("Tree is empty");
 			return TRUE;
 		}
