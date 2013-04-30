@@ -3020,8 +3020,8 @@ reset_view(struct view *view)
 	view->update_secs = 0;
 }
 
-static const char *
-format_expand_arg(const char *name, bool file_filter)
+static bool
+format_expand_arg(char buf[], size_t *bufpos, const char *name, bool file_filter)
 {
 	static struct {
 		const char *name;
@@ -3041,15 +3041,27 @@ format_expand_arg(const char *name, bool file_filter)
 	};
 	int i;
 
-	if (!prefixcmp(name, "%(prompt"))
-		return read_prompt("Command argument: ");
+	if (!prefixcmp(name, "%(prompt")) {
+		const char *value = read_prompt("Command argument: ");
 
-	for (i = 0; i < ARRAY_SIZE(vars); i++)
-		if (!strncmp(name, vars[i].name, vars[i].namelen)) {
-			if (vars[i].value == opt_file && !file_filter)
-				return "";
-			return *vars[i].value ? vars[i].value : vars[i].value_if_empty;
-		}
+		return string_nformat(buf, SIZEOF_STR, bufpos, "%s", value);
+	}
+
+	for (i = 0; i < ARRAY_SIZE(vars); i++) {
+		const char *value;
+
+		if (strncmp(name, vars[i].name, vars[i].namelen))
+			continue;
+
+		if (vars[i].value == opt_file && !file_filter)
+			return TRUE;
+
+		value = *vars[i].value ? vars[i].value : vars[i].value_if_empty;
+		if (!*value)
+			return TRUE;
+
+		return string_nformat(buf, SIZEOF_STR, bufpos, "%s", value);
+	}
 
 	report("Unknown replacement: `%s`", name);
 	return NULL;
@@ -3063,22 +3075,12 @@ format_append_arg(const char ***dst_argv, const char *arg, bool file_filter)
 
 	while (arg) {
 		char *next = strstr(arg, "%(");
-		int len = next - arg;
-		const char *value;
+		int len = next ? next - arg : strlen(arg);
 
-		if (!next) {
-			len = strlen(arg);
-			value = "";
+		if (len && !string_format_from(buf, &bufpos, "%.*s", len, arg))
+			return FALSE;
 
-		} else {
-			value = format_expand_arg(next, file_filter);
-
-			if (!value) {
-				return FALSE;
-			}
-		}
-
-		if (!string_format_from(buf, &bufpos, "%.*s%s", len, arg, value))
+		if (next && !format_expand_arg(buf, &bufpos, next, file_filter))
 			return FALSE;
 
 		arg = next ? strchr(next, ')') + 1 : NULL;
