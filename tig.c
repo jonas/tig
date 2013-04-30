@@ -3138,7 +3138,7 @@ format_argv(struct view *view, const char ***dst_argv, const char *src_argv[], b
 
 		} else if (!strcmp(arg, "%(revargs)") ||
 			   (first && !strcmp(arg, "%(commit)"))) {
-			if (!argv_append_array(dst_argv, opt_file_argv))
+			if (!argv_append_array(dst_argv, opt_rev_argv))
 				break;
 
 		} else if (!format_append_arg(&format, dst_argv, arg)) {
