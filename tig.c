@@ -3021,7 +3021,7 @@ reset_view(struct view *view)
 }
 
 static const char *
-format_arg(const char *name, bool file_filter)
+format_expand_arg(const char *name, bool file_filter)
 {
 	static struct {
 		const char *name;
@@ -3071,7 +3071,7 @@ format_append_arg(const char ***dst_argv, const char *arg, bool file_filter)
 			value = "";
 
 		} else {
-			value = format_arg(next, file_filter);
+			value = format_expand_arg(next, file_filter);
 
 			if (!value) {
 				return FALSE;
