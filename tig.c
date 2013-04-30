@@ -3088,6 +3088,21 @@ format_append_arg(const char ***dst_argv, const char *arg, bool file_filter)
 }
 
 static bool
+format_append_argv(const char ***dst_argv, const char *src_argv[], bool file_filter)
+{
+	int argc;
+
+	if (!src_argv)
+		return TRUE;
+
+	for (argc = 0; src_argv[argc]; argc++)
+		if (!format_append_arg(dst_argv, src_argv[argc], file_filter))
+			return FALSE;
+
+	return src_argv[argc] == NULL;
+}
+
+static bool
 format_argv(const char ***dst_argv, const char *src_argv[], bool first, bool file_filter)
 {
 	int argc;
@@ -3102,16 +3117,16 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool first, bool fil
 				break;
 
 		} else if (!strcmp(arg, "%(diffargs)")) {
-			if (!argv_append_array(dst_argv, opt_diff_argv))
+			if (!format_append_argv(dst_argv, opt_diff_argv, file_filter))
 				break;
 
 		} else if (!strcmp(arg, "%(blameargs)")) {
-			if (!argv_append_array(dst_argv, opt_blame_argv))
+			if (!format_append_argv(dst_argv, opt_blame_argv, file_filter))
 				break;
 
 		} else if (!strcmp(arg, "%(revargs)") ||
 			   (first && !strcmp(arg, "%(commit)"))) {
-			if (!argv_append_array(dst_argv, opt_rev_argv))
+			if (!argv_append_array(dst_argv, opt_file_argv))
 				break;
 
 		} else if (!format_append_arg(dst_argv, arg, file_filter)) {
