@@ -3056,64 +3056,67 @@ format_arg(const char *name, bool file_filter)
 }
 
 static bool
-format_argv(const char ***dst_argv, const char *src_argv[], bool first, bool file_filter)
+format_append_arg(const char ***dst_argv, const char *arg, bool file_filter)
 {
 	char buf[SIZEOF_STR];
+	size_t bufpos = 0;
+
+	while (arg) {
+		char *next = strstr(arg, "%(");
+		int len = next - arg;
+		const char *value;
+
+		if (!next) {
+			len = strlen(arg);
+			value = "";
+
+		} else {
+			value = format_arg(next, file_filter);
+
+			if (!value) {
+				return FALSE;
+			}
+		}
+
+		if (!string_format_from(buf, &bufpos, "%.*s%s", len, arg, value))
+			return FALSE;
+
+		arg = next ? strchr(next, ')') + 1 : NULL;
+	}
+
+	return argv_append(dst_argv, buf);
+}
+
+static bool
+format_argv(const char ***dst_argv, const char *src_argv[], bool first, bool file_filter)
+{
 	int argc;
 
 	argv_free(*dst_argv);
 
 	for (argc = 0; src_argv[argc]; argc++) {
 		const char *arg = src_argv[argc];
-		size_t bufpos = 0;
 
 		if (!strcmp(arg, "%(fileargs)")) {
 			if (file_filter && !argv_append_array(dst_argv, opt_file_argv))
 				break;
-			continue;
 
 		} else if (!strcmp(arg, "%(diffargs)")) {
 			if (!argv_append_array(dst_argv, opt_diff_argv))
 				break;
-			continue;
 
 		} else if (!strcmp(arg, "%(blameargs)")) {
 			if (!argv_append_array(dst_argv, opt_blame_argv))
 				break;
-			continue;
 
 		} else if (!strcmp(arg, "%(revargs)") ||
 			   (first && !strcmp(arg, "%(commit)"))) {
 			if (!argv_append_array(dst_argv, opt_rev_argv))
 				break;
-			continue;
-		}
 
-		while (arg) {
-			char *next = strstr(arg, "%(");
-			int len = next - arg;
-			const char *value;
-
-			if (!next) {
-				len = strlen(arg);
-				value = "";
-
-			} else {
-				value = format_arg(next, file_filter);
-
-				if (!value) {
-					return FALSE;
-				}
-			}
-
-			if (!string_format_from(buf, &bufpos, "%.*s%s", len, arg, value))
-				return FALSE;
-
-			arg = next ? strchr(next, ')') + 1 : NULL;
-		}
-
-		if (!argv_append(dst_argv, buf))
+		} else if (!format_append_arg(dst_argv, arg, file_filter)) {
 			break;
+		}
 	}
 
 	return src_argv[argc] == NULL;
