@@ -4450,7 +4450,7 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	}
 
 	if (!state->after_commit_title && !prefixcmp(data, "    ")) {
-		struct line *line = add_line_text(view, data, LINE_DIFF_STAT);
+		struct line *line = add_line_text(view, data, LINE_COMMIT);
 
 		if (line)
 			line->user_flags |= DIFF_LINE_COMMIT_TITLE;
