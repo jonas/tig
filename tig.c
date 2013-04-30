@@ -3020,8 +3020,14 @@ reset_view(struct view *view)
 	view->update_secs = 0;
 }
 
+struct format_context {
+	char buf[SIZEOF_STR];
+	size_t bufpos;
+	bool file_filter;
+};
+
 static bool
-format_expand_arg(char buf[], size_t *bufpos, const char *name, bool file_filter)
+format_expand_arg(struct format_context *format, const char *name)
 {
 	static struct {
 		const char *name;
@@ -3044,7 +3050,7 @@ format_expand_arg(char buf[], size_t *bufpos, const char *name, bool file_filter
 	if (!prefixcmp(name, "%(prompt")) {
 		const char *value = read_prompt("Command argument: ");
 
-		return string_nformat(buf, SIZEOF_STR, bufpos, "%s", value);
+		return string_format_from(format->buf, &format->bufpos, "%s", value);
 	}
 
 	for (i = 0; i < ARRAY_SIZE(vars); i++) {
@@ -3053,14 +3059,14 @@ format_expand_arg(char buf[], size_t *bufpos, const char *name, bool file_filter
 		if (strncmp(name, vars[i].name, vars[i].namelen))
 			continue;
 
-		if (vars[i].value == opt_file && !file_filter)
+		if (vars[i].value == opt_file && !format->file_filter)
 			return TRUE;
 
 		value = *vars[i].value ? vars[i].value : vars[i].value_if_empty;
 		if (!*value)
 			return TRUE;
 
-		return string_nformat(buf, SIZEOF_STR, bufpos, "%s", value);
+		return string_format_from(format->buf, &format->bufpos, "%s", value);
 	}
 
 	report("Unknown replacement: `%s`", name);
@@ -3068,29 +3074,28 @@ format_expand_arg(char buf[], size_t *bufpos, const char *name, bool file_filter
 }
 
 static bool
-format_append_arg(const char ***dst_argv, const char *arg, bool file_filter)
+format_append_arg(struct format_context *format, const char ***dst_argv, const char *arg)
 {
-	char buf[SIZEOF_STR];
-	size_t bufpos = 0;
+	format->bufpos = 0;
 
 	while (arg) {
 		char *next = strstr(arg, "%(");
 		int len = next ? next - arg : strlen(arg);
 
-		if (len && !string_format_from(buf, &bufpos, "%.*s", len, arg))
+		if (len && !string_format_from(format->buf, &format->bufpos, "%.*s", len, arg))
 			return FALSE;
 
-		if (next && !format_expand_arg(buf, &bufpos, next, file_filter))
+		if (next && !format_expand_arg(format, next))
 			return FALSE;
 
 		arg = next ? strchr(next, ')') + 1 : NULL;
 	}
 
-	return argv_append(dst_argv, buf);
+	return argv_append(dst_argv, format->buf);
 }
 
 static bool
-format_append_argv(const char ***dst_argv, const char *src_argv[], bool file_filter)
+format_append_argv(struct format_context *format, const char ***dst_argv, const char *src_argv[])
 {
 	int argc;
 
@@ -3098,7 +3103,7 @@ format_append_argv(const char ***dst_argv, const char *src_argv[], bool file_fil
 		return TRUE;
 
 	for (argc = 0; src_argv[argc]; argc++)
-		if (!format_append_arg(dst_argv, src_argv[argc], file_filter))
+		if (!format_append_arg(format, dst_argv, src_argv[argc]))
 			return FALSE;
 
 	return src_argv[argc] == NULL;
@@ -3107,6 +3112,7 @@ format_append_argv(const char ***dst_argv, const char *src_argv[], bool file_fil
 static bool
 format_argv(const char ***dst_argv, const char *src_argv[], bool first, bool file_filter)
 {
+	struct format_context format = { "", 0, file_filter };
 	int argc;
 
 	argv_free(*dst_argv);
@@ -3119,11 +3125,11 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool first, bool fil
 				break;
 
 		} else if (!strcmp(arg, "%(diffargs)")) {
-			if (!format_append_argv(dst_argv, opt_diff_argv, file_filter))
+			if (!format_append_argv(&format, dst_argv, opt_diff_argv))
 				break;
 
 		} else if (!strcmp(arg, "%(blameargs)")) {
-			if (!format_append_argv(dst_argv, opt_blame_argv, file_filter))
+			if (!format_append_argv(&format, dst_argv, opt_blame_argv))
 				break;
 
 		} else if (!strcmp(arg, "%(revargs)") ||
@@ -3131,7 +3137,7 @@ format_argv(const char ***dst_argv, const char *src_argv[], bool first, bool fil
 			if (!argv_append_array(dst_argv, opt_file_argv))
 				break;
 
-		} else if (!format_append_arg(dst_argv, arg, file_filter)) {
+		} else if (!format_append_arg(&format, dst_argv, arg)) {
 			break;
 		}
 	}
