@@ -3633,7 +3633,7 @@ open_run_request(struct view *view, enum request request)
 			}
 		}
 		else {
-			confirmed = !req->confirmed;
+			confirmed = !req->confirm;
 
 			if (req->confirm) {
 				char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
