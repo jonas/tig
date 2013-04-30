@@ -3021,6 +3021,7 @@ reset_view(struct view *view)
 }
 
 struct format_context {
+	struct view *view;
 	char buf[SIZEOF_STR];
 	size_t bufpos;
 	bool file_filter;
@@ -3052,6 +3053,9 @@ format_expand_arg(struct format_context *format, const char *name)
 
 		return string_format_from(format->buf, &format->bufpos, "%s", value);
 	}
+
+	if (!prefixcmp(name, "%(width)"))
+		return string_format_from(format->buf, &format->bufpos, "%d", format->view->width);
 
 	for (i = 0; i < ARRAY_SIZE(vars); i++) {
 		const char *value;
@@ -3110,9 +3114,9 @@ format_append_argv(struct format_context *format, const char ***dst_argv, const 
 }
 
 static bool
-format_argv(const char ***dst_argv, const char *src_argv[], bool first, bool file_filter)
+format_argv(struct view *view, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter)
 {
-	struct format_context format = { "", 0, file_filter };
+	struct format_context format = { view, "", 0, file_filter };
 	int argc;
 
 	argv_free(*dst_argv);
@@ -3228,7 +3232,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 		bool file_filter = !view_has_flags(view, VIEW_FILE_FILTER) || opt_file_filter;
 
 		view->dir = dir;
-		if (!format_argv(&view->argv, argv, !view->prev, file_filter)) {
+		if (!format_argv(view, &view->argv, argv, !view->prev, file_filter)) {
 			report("Failed to format %s arguments", view->name);
 			return FALSE;
 		}
@@ -3619,7 +3623,7 @@ open_run_request(struct view *view, enum request request)
 		return request;
 	}
 
-	if (format_argv(&argv, req->argv, FALSE, TRUE)) {
+	if (format_argv(view, &argv, req->argv, FALSE, TRUE)) {
 		if (req->internal) {
 			char cmd[SIZEOF_STR];
 
@@ -4412,7 +4416,7 @@ diff_open(struct view *view, enum open_flags flags)
 {
 	static const char *diff_argv[] = {
 		"git", "show", opt_encoding_arg, "--pretty=fuller", "--no-color", "--root",
-			"--patch-with-stat",
+			"--patch", "--stat=%(width)",
 			opt_notes_arg, opt_diff_context_arg, opt_ignore_space_arg,
 			"%(diffargs)", "%(commit)", "--", "%(fileargs)", NULL
 	};
@@ -8560,7 +8564,7 @@ run_prompt_command(struct view *view, char *cmd) {
 
 		if (!argv_from_string(argv, &argc, cmd)) {
 			report("Too many arguments");
-		} else if (!format_argv(&next->argv, argv, FALSE, TRUE)) {
+		} else if (!format_argv(view, &next->argv, argv, FALSE, TRUE)) {
 			report("Argument formatting failed");
 		} else {
 			next->dir = NULL;

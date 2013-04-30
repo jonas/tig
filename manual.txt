@@ -162,6 +162,7 @@ following variables.
 |%(fileargs)		|The file arguments passed on the command line.
 |%(diffargs)		|The diff options passed on the command line.
 |%(prompt)		|Prompt for the argument value.
+|%(width)		|The view width.
 |=============================================================================
 
 Example user-defined commands:
