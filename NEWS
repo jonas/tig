@@ -16,6 +16,7 @@ Improvements:
  - Options in diff-options and blame-options matching tig browsing state
    variables are replaced.
  - Show diff stats as wide as the terminal. (GH #109)
+ - Show line numbers in the branch view. (GH #135)
  - Add toggles for showing author email or email user names. (GH #115)
  - Open editor at the selected line by prefixing the file argument with
    `+<lineno>`. Tested in vi, vim, emacs, nano, gedit, geany. Disable

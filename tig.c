@@ -6037,6 +6037,9 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 	enum line_type type = branch_is_all(branch) ? LINE_DEFAULT : get_line_type_from_ref(branch->ref);
 	const char *branch_name = branch_is_all(branch) ? "All branches" : branch->ref->name;
 
+	if (draw_lineno(view, lineno))
+		return TRUE;
+
 	if (draw_date(view, &branch->time))
 		return TRUE;
 
