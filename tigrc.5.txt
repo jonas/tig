@@ -348,6 +348,12 @@ character.
 *Insert*, *Delete*, *Hash*, *Home*, *End*, *PageUp*, *PageDown*, *F1*, *F2*, *F3*,
 *F4*, *F5*, *F6*, *F7*, *F8*, *F9*, *F10*, *F11*, *F12*.
 
+To add a key mapping that uses the Ctrl key, use a `^` prefix in your mapping.
+For example, Ctrl-f could be mapped to *scroll-page-down* with the following line:
+
+bind main ^f scroll-page-down
+
+
 Action names::
 
 Valid action names are described below. Note, all names are
