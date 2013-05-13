@@ -89,7 +89,6 @@ graph_needs_expansion(struct graph *graph)
 	if (graph->position + graph->parents.size > graph->row.size)
 		return TRUE;
 	return graph->parents.size > 1
-	    && graph->position < 0
 	    && graph->expanded < graph->parents.size;
 }
 
