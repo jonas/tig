@@ -237,6 +237,29 @@ mkmode(mode_t mode)
 		return "----------";
 }
 
+static char *
+get_temp_dir(void)
+{
+	static char *tmp;
+
+	if (tmp)
+		return tmp;
+
+	if (!tmp)
+		tmp = getenv("TMPDIR");
+	if (!tmp)
+		tmp = getenv("TEMP");
+	if (!tmp)
+		tmp = getenv("TMP");
+
+	if (tmp)
+		tmp = strdup(tmp);
+	if (!tmp)
+		tmp = "/tmp";
+
+	return tmp;
+}
+
 #define FILENAME_ENUM(_) \
 	_(FILENAME, NO), \
 	_(FILENAME, ALWAYS), \
@@ -5294,7 +5317,7 @@ open_blob_editor(const char *id, const char *name, unsigned int lineno)
 	if (!name)
 		name = "unknown";
 
-	if (!string_format(file, "/tmp/tigblob.XXXXXX.%s", name)) {
+	if (!string_format(file, "%s/tigblob.XXXXXX.%s", get_temp_dir(), name)) {
 		report("Temporary file name is too long");
 		return;
 	}

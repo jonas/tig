@@ -27,6 +27,7 @@ Improvements:
    The default title max width is 50 characters. Customize using:
    `set title-overflow = 50` (GH #125)
  - Add +ESC key bindings. Example: `bind generic ^[v move-page-up` (GH #120)
+ - Create temporary files in TMPDIR, TEMP, or TMP before defaulting to /tmp.
 
 Bug fixes:
 
