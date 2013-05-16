@@ -237,6 +237,28 @@ mkmode(mode_t mode)
 		return "----------";
 }
 
+static char *get_temp_dir(void)
+{
+	static char *tmp;
+
+	if (tmp)
+		return tmp;
+
+	if (!tmp)
+		tmp = getenv("TMPDIR");
+	if (!tmp)
+		tmp = getenv("TEMP");
+	if (!tmp)
+		tmp = getenv("TMP");
+
+	if (tmp)
+		tmp = strdup(tmp);
+	else
+		tmp = "/tmp";
+
+	return tmp;
+}
+
 #define FILENAME_ENUM(_) \
 	_(FILENAME, NO), \
 	_(FILENAME, ALWAYS), \
@@ -5294,7 +5316,7 @@ open_blob_editor(const char *id, const char *name, unsigned int lineno)
 	if (!name)
 		name = "unknown";
 
-	string_format(file, "/tmp/tigblob.XXXXXX.%s", name);
+	string_format(file, "%s/tigblob.XXXXXX.%s", get_temp_dir(), name);
 	fd = mkstemps(file, strlen(name) + 1);
 
 	if (fd == -1)
