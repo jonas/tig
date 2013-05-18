@@ -36,6 +36,7 @@ Bug fixes:
  - Fix diff view display for staged/unstaged changes when using 'd'.
  - Fix display of status messages when toggling view options. (GH #111)
  - Fix illegal memory access. (GH #98)
+ - Fix display of all branches label in repos with short branch names.
 
 tig-1.1
 -------

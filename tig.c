@@ -5993,6 +5993,7 @@ struct branch {
 };
 
 static const struct ref branch_all;
+#define BRANCH_ALL_NAME	"All branches"
 #define branch_is_all(branch) ((branch)->ref == &branch_all)
 
 static const enum sort_field branch_sort_fields[] = {
@@ -6035,7 +6036,7 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct branch_state *state = view->private;
 	struct branch *branch = line->data;
 	enum line_type type = branch_is_all(branch) ? LINE_DEFAULT : get_line_type_from_ref(branch->ref);
-	const char *branch_name = branch_is_all(branch) ? "All branches" : branch->ref->name;
+	const char *branch_name = branch_is_all(branch) ? BRANCH_ALL_NAME : branch->ref->name;
 
 	if (draw_lineno(view, lineno))
 		return TRUE;
@@ -6152,15 +6153,16 @@ branch_open_visitor(void *data, const struct ref *ref)
 	struct view *view = data;
 	struct branch_state *state = view->private;
 	struct branch *branch;
+	bool is_all = ref == &branch_all;
 	size_t ref_length;
 
 	if (ref->tag || ref->ltag)
 		return TRUE;
 
-	if (!add_line_alloc(view, &branch, LINE_DEFAULT, 0, ref == &branch_all))
+	if (!add_line_alloc(view, &branch, LINE_DEFAULT, 0, is_all))
 		return FALSE;
 
-	ref_length = strlen(ref->name);
+	ref_length = is_all ? STRING_SIZE(BRANCH_ALL_NAME) : strlen(ref->name);
 	if (ref_length > state->max_ref_length)
 		state->max_ref_length = ref_length;
 
@@ -6207,7 +6209,7 @@ branch_select(struct view *view, struct line *line)
 	struct branch *branch = line->data;
 
 	if (branch_is_all(branch)) {
-		string_copy(view->ref, "All branches");
+		string_copy(view->ref, BRANCH_ALL_NAME);
 		return;
 	}
 	string_copy_rev(view->ref, branch->ref->id);
