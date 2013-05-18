@@ -37,6 +37,7 @@ Bug fixes:
  - Fix display of status messages when toggling view options. (GH #111)
  - Fix illegal memory access. (GH #98)
  - Fix display of all branches label in repos with short branch names.
+ - Fix rendering glitch for branch names.
 
 tig-1.1
 -------

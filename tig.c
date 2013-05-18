@@ -6122,6 +6122,7 @@ branch_read(struct view *view, char *line)
 
 	case LINE_AUTHOR:
 		parse_author_line(line + STRING_SIZE("author "), &author, &time);
+		break;
 
 	default:
 		title = line + STRING_SIZE("title ");
