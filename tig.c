@@ -22,6 +22,9 @@ static void warn(const char *msg, ...) PRINTF_LIKE(1, 2);
 static void report(const char *msg, ...) PRINTF_LIKE(1, 2);
 #define report_clear() report("%s", "")
 
+static bool set_environment_variable(const char *name, const char *value);
+static bool set_int_environment_variable(const char *name, int value);
+
 
 enum input_status {
 	INPUT_OK,
@@ -2496,6 +2499,8 @@ resize_display(void)
 	/* Setup window dimensions */
 
 	getmaxyx(stdscr, base->height, base->width);
+	set_int_environment_variable("COLUMNS", base->width);
+	set_int_environment_variable("LINES", base->height);
 
 	/* Make room for the status window. */
 	base->height -= 1;
@@ -3076,9 +3081,6 @@ format_expand_arg(struct format_context *format, const char *name)
 
 		return string_format_from(format->buf, &format->bufpos, "%s", value);
 	}
-
-	if (!prefixcmp(name, "%(width)"))
-		return string_format_from(format->buf, &format->bufpos, "%d", format->view->width);
 
 	for (i = 0; i < ARRAY_SIZE(vars); i++) {
 		const char *value;
@@ -4443,7 +4445,7 @@ diff_open(struct view *view, enum open_flags flags)
 {
 	static const char *diff_argv[] = {
 		"git", "show", opt_encoding_arg, "--pretty=fuller", "--no-color", "--root",
-			"--patch", "--stat=%(width)",
+			"--patch-with-stat",
 			opt_notes_arg, opt_diff_context_arg, opt_ignore_space_arg,
 			"%(diffargs)", "%(commit)", "--", "%(fileargs)", NULL
 	};
@@ -8182,6 +8184,15 @@ set_environment_variable(const char *name, const char *value)
 		return TRUE;
 	free(env);
 	return FALSE;
+}
+
+static bool
+set_int_environment_variable(const char *name, int value)
+{
+	char buf[SIZEOF_STR];
+
+	return string_format(buf, "%d", value)
+	    && set_environment_variable(name, buf);
 }
 
 static void

@@ -392,7 +392,6 @@ is run. Valid variable names are:
 |%(fileargs)		|The file arguments passed on the command line.
 |%(diffargs)		|The diff options passed on the command line.
 |%(prompt)		|Prompt for the argument value.
-|%(width)		|The view width.
 |=============================================================================
 
 As an example, the following external command will save the current commit as
