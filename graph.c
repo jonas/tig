@@ -86,10 +86,11 @@ graph_add_parent(struct graph *graph, const char *parent)
 static bool
 graph_needs_expansion(struct graph *graph)
 {
-	if (graph->position + graph->parents.size > graph->row.size)
-		return TRUE;
+	return graph->position + graph->parents.size > graph->row.size;
+#if 0
 	return graph->parents.size > 1
 	    && graph->expanded < graph->parents.size;
+#endif
 }
 
 static bool
