@@ -24,6 +24,7 @@ struct ref {
 	unsigned int remote:1;	/* Is it a remote ref? */
 	unsigned int replace:1;	/* Is it a replace ref? */
 	unsigned int tracked:1;	/* Is it the remote for the current HEAD? */
+	unsigned int valid:1;	/* Is the ref still valid? */
 	char name[1];		/* Ref name; tag or head names are shortened. */
 };
 

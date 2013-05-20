@@ -177,6 +177,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 		strncpy(ref->name, name, namelen);
 	}
 
+	ref->valid = TRUE;
 	ref->head = head;
 	ref->tag = tag;
 	ref->ltag = ltag;
@@ -221,10 +222,14 @@ reload_refs(const char *git_dir, const char *remote_name, char *head, size_t hea
 
 	refs_head = NULL;
 	for (i = 0; i < refs_size; i++)
-		refs[i]->id[0] = 0;
+		refs[i]->valid = 0;
 
 	if (io_run_load(ls_remote_argv, "\t", read_ref, &opt) == ERR)
 		return ERR;
+
+	for (i = 0; i < refs_size; i++)
+		if (!refs[i]->valid)
+			refs[i]->id[0] = 0;
 
 	/* Update the ref lists to reflect changes. */
 	for (i = 0; i < ref_lists_size; i++) {
