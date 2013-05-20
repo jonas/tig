@@ -237,6 +237,28 @@ mkmode(mode_t mode)
 		return "----------";
 }
 
+static char *get_temp_dir(void)
+{
+	static char *tmp;
+
+	if (tmp)
+		return tmp;
+
+	if (!tmp)
+		tmp = getenv("TMPDIR");
+	if (!tmp)
+		tmp = getenv("TEMP");
+	if (!tmp)
+		tmp = getenv("TMP");
+
+	if (tmp)
+		tmp = strdup(tmp);
+	else
+		tmp = "/tmp";
+
+	return tmp;
+}
+
 #define FILENAME_ENUM(_) \
 	_(FILENAME, NO), \
 	_(FILENAME, ALWAYS), \
@@ -5285,11 +5307,17 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 }
 
 static void
-open_blob_editor(const char *id, unsigned int lineno)
+open_blob_editor(const char *id, const char *name, unsigned int lineno)
 {
 	const char *blob_argv[] = { "git", "cat-file", "blob", id, NULL };
-	char file[SIZEOF_STR] = "/tmp/tigblob.XXXXXX";
-	int fd = mkstemp(file);
+	char file[SIZEOF_STR];
+	int fd;
+
+	if (!name)
+		name = "unknown";
+
+	string_format(file, "%s/tigblob.XXXXXX.%s", get_temp_dir(), name);
+	fd = mkstemps(file, strlen(name) + 1);
 
 	if (fd == -1)
 		report("Failed to create temporary file");
@@ -5321,7 +5349,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 		if (line->type != LINE_TREE_FILE) {
 			report("Edit only supported for files");
 		} else if (!is_head_commit(view->vid)) {
-			open_blob_editor(entry->id, 0);
+			open_blob_editor(entry->id, entry->name, 0);
 		} else {
 			open_editor(opt_file, 0);
 		}
@@ -5518,7 +5546,7 @@ blob_request(struct view *view, enum request request, struct line *line)
 {
 	switch (request) {
 	case REQ_EDIT:
-		open_blob_editor(view->vid, (line - view->line) + 1);
+		open_blob_editor(view->vid, NULL, (line - view->line) + 1);
 		return REQ_NONE;
 	default:
 		return pager_request(view, request, line);
