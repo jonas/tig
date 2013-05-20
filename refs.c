@@ -79,6 +79,7 @@ get_ref_list(const char *id)
 	list = calloc(1, sizeof(*list));
 	if (!list)
 		return NULL;
+	string_copy_rev(list->id, id);
 
 	for (i = 0; i < refs_size; i++) {
 		if (!strcmp(id, refs[i]->id) &&
