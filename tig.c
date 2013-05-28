@@ -7337,6 +7337,9 @@ stage_read(struct view *view, char *data)
 {
 	struct stage_state *state = view->private;
 
+	if (stage_line_type == LINE_STAT_UNTRACKED)
+		return pager_common_read(view, data, LINE_DEFAULT);
+
 	if (data && diff_common_read(view, data, &state->diff))
 		return TRUE;
 
