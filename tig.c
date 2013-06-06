@@ -8178,14 +8178,10 @@ static bool
 set_environment_variable(const char *name, const char *value)
 {
 	size_t len = strlen(name) + 1 + strlen(value) + 1;
-	char *env = malloc(len);
+	char env[len];
 
-	if (env &&
-	    string_nformat(env, len, NULL, "%s=%s", name, value) &&
-	    putenv(env) == 0)
-		return TRUE;
-	free(env);
-	return FALSE;
+	return (string_nformat(env, len, NULL, "%s=%s", name, value) &&
+		putenv(env) == 0);
 }
 
 static bool
