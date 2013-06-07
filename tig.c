@@ -68,6 +68,18 @@ struct time {
 	int tz;
 };
 
+struct env_tracker {
+	char *env;
+	struct env_tracker *next;
+};
+
+static struct env_tracker *envs = NULL;
+static struct env_tracker *last_env = NULL;
+
+static void track_env(char *env);
+static void append_env(char *env);
+static void cleanup_envs(struct env_tracker *head);
+
 static inline int timecmp(const struct time *t1, const struct time *t2)
 {
 	return t1->sec - t2->sec;
@@ -8180,10 +8192,13 @@ set_environment_variable(const char *name, const char *value)
 	size_t len = strlen(name) + 1 + strlen(value) + 1;
 	char *env = malloc(len);
 
-	if (env &&
-	    string_nformat(env, len, NULL, "%s=%s", name, value) &&
-	    putenv(env) == 0)
+	if (env && string_nformat(env, len, NULL, "%s=%s", name, value) &&
+			putenv(env) == 0) {
+
+		track_env(env);
 		return TRUE;
+	}
+
 	free(env);
 	return FALSE;
 }
@@ -8650,6 +8665,43 @@ run_prompt_command(struct view *view, char *cmd) {
 	return REQ_NONE;
 }
 
+static void
+track_env(char *env) {
+	if (envs != NULL) {
+		append_env(env);
+	}
+	else {
+		envs = malloc(sizeof(struct env_tracker));
+		envs->env = env;
+		envs->next = NULL;
+		last_env = envs;
+	}
+}
+
+static void
+append_env(char *env) {
+	struct env_tracker *new_tracker = malloc(sizeof(struct env_tracker));
+
+	if (new_tracker) {
+		new_tracker->env = env;
+		new_tracker->next = NULL;
+
+		last_env->next = new_tracker;
+		last_env = new_tracker;
+	}
+}
+
+static void
+cleanup_envs(struct env_tracker *head) {
+	if (head->next != NULL) {
+		cleanup_envs(head->next);
+		head->next = NULL;
+	}
+
+	free(head->env);
+	free(head);
+}
+
 int
 main(int argc, const char *argv[])
 {
@@ -8741,6 +8793,8 @@ main(int argc, const char *argv[])
 			break;
 		}
 	}
+
+	cleanup_envs(envs);
 
 	quit(0);
 
