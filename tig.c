@@ -5471,6 +5471,10 @@ tree_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	}
 
+	if (!view->prev) {
+		argv_append(&opt_rev_argv, "HEAD");
+	}
+
 	if (view->lines == 0 && opt_prefix[0]) {
 		char *pos = opt_prefix;
 
@@ -8386,6 +8390,7 @@ static const char usage[] =
 "   or: tig log    [options] [revs] [--] [paths]\n"
 "   or: tig show   [options] [revs] [--] [paths]\n"
 "   or: tig blame  [options] [rev] [--] path\n"
+"   or: tig tree   [options] [rev]\n"
 "   or: tig status\n"
 "   or: tig <      [git command output]\n"
 "\n"
@@ -8527,6 +8532,9 @@ parse_options(int argc, const char *argv[])
 
 	} else if (!strcmp(subcommand, "log")) {
 		request = REQ_VIEW_LOG;
+
+	} else if (!strcmp(subcommand, "tree")) {
+		request = REQ_VIEW_TREE;
 
 	} else {
 		subcommand = NULL;
