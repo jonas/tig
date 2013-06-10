@@ -5471,6 +5471,10 @@ tree_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	}
 
+	if (!view->prev) {
+		argv_append(&opt_rev_argv, "HEAD");
+	}
+
 	if (view->lines == 0 && opt_prefix[0]) {
 		char *pos = opt_prefix;
 
