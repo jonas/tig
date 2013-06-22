@@ -7614,35 +7614,54 @@ static bool draw_graph(struct view *view, struct graph_canvas *canvas)
 
 struct commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
-	char title[128];		/* First line of the commit message. */
 	const struct ident *author;	/* Author of the commit. */
 	struct time time;		/* Date from the author ident. */
 	struct ref_list *refs;		/* Repository references. */
 	struct graph_canvas graph;	/* Ancestry chain graphics. */
+	char title[1];			/* First line of the commit message. */
 };
 
 struct main_state {
 	struct graph graph;
-	struct commit *current;
+	struct commit current;
 	int id_width;
 	bool in_header;
 	bool added_changes_commits;
 	bool hide_graph;
 };
 
-static struct commit *
-main_add_commit(struct view *view, enum line_type type, const char *ids,
-		bool is_boundary, bool custom)
+static void
+main_register_commit(struct view *view, struct commit *commit, const char *ids, bool is_boundary)
 {
 	struct main_state *state = view->private;
-	struct commit *commit;
-
-	if (!add_line_alloc(view, &commit, type, 0, custom))
-		return NULL;
 
 	string_copy_rev(commit->id, ids);
-	commit->refs = get_ref_list(commit->id);
 	graph_add_commit(&state->graph, &commit->graph, commit->id, ids, is_boundary);
+}
+
+static struct commit *
+main_add_commit(struct view *view, enum line_type type, struct commit *template,
+		const char *title, bool custom)
+{
+	struct main_state *state = view->private;
+	size_t titlelen = strlen(title);
+	struct commit *commit;
+	char buf[SIZEOF_STR / 2];
+
+	/* FIXME: More graceful handling of titles; append "..." to
+	 * shortened titles, etc. */
+	string_expand(buf, sizeof(buf), title, 1);
+	title = buf;
+	titlelen = strlen(title);
+
+	if (!add_line_alloc(view, &commit, type, titlelen, custom))
+		return NULL;
+
+	*commit = *template;
+	strncpy(commit->title, title, titlelen);
+	commit->refs = get_ref_list(commit->id);
+	state->graph.canvas = &commit->graph;
+	memset(template, 0, sizeof(*template));
 	return commit;
 }
 
@@ -7662,7 +7681,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 {
 	char ids[SIZEOF_STR] = NULL_ID " ";
 	struct main_state *state = view->private;
-	struct commit *commit;
+	struct commit commit = {};
 	struct timeval now;
 	struct timezone tz;
 
@@ -7671,18 +7690,15 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 
 	string_copy_rev(ids + STRING_SIZE(NULL_ID " "), parent);
 
-	commit = main_add_commit(view, type, ids, FALSE, TRUE);
-	if (!commit)
-		return;
-
 	if (!gettimeofday(&now, &tz)) {
-		commit->time.tz = tz.tz_minuteswest * 60;
-		commit->time.sec = now.tv_sec - commit->time.tz;
+		commit.time.tz = tz.tz_minuteswest * 60;
+		commit.time.sec = now.tv_sec - commit.time.tz;
 	}
 
-	commit->author = &unknown_ident;
-	string_ncopy(commit->title, title, strlen(title));
-	graph_render_parents(&state->graph);
+	commit.author = &unknown_ident;
+	main_register_commit(view, &commit, ids, FALSE);
+	if (main_add_commit(view, type, &commit, title, TRUE))
+		graph_render_parents(&state->graph);
 }
 
 static void
@@ -7751,7 +7767,8 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_refs(view, commit->refs))
 		return TRUE;
 
-	draw_commit_title(view, commit->title, 0);
+	if (commit->title)
+		draw_commit_title(view, commit->title, 0);
 	return TRUE;
 }
 
@@ -7762,17 +7779,18 @@ main_read(struct view *view, char *line)
 	struct main_state *state = view->private;
 	struct graph *graph = &state->graph;
 	enum line_type type;
-	struct commit *commit = state->current;
+	struct commit *commit = &state->current;
 
 	if (!line) {
 		if (!view->lines && !view->prev)
 			die("No revisions match the given arguments.");
 		if (view->lines > 0) {
-			commit = view->line[view->lines - 1].data;
+			struct commit *last = view->line[view->lines - 1].data;
+
 			view->line[view->lines - 1].dirty = 1;
-			if (!commit->author) {
+			if (!last->author) {
 				view->lines--;
-				free(commit);
+				free(last);
 			}
 		}
 
@@ -7793,11 +7811,11 @@ main_read(struct view *view, char *line)
 		if (!state->added_changes_commits && opt_show_changes && opt_is_inside_work_tree)
 			main_add_changes_commits(view, state, line);
 
-		state->current = main_add_commit(view, LINE_MAIN_COMMIT, line, is_boundary, FALSE);
-		return state->current != NULL;
+		main_register_commit(view, &state->current, line, is_boundary);
+		return TRUE;
 	}
 
-	if (!view->lines || !commit)
+	if (!*commit->id)
 		return TRUE;
 
 	/* Empty line separates the commit header from the log itself. */
@@ -7818,7 +7836,7 @@ main_read(struct view *view, char *line)
 
 	default:
 		/* Fill in the commit title if it has not already been set. */
-		if (commit->title[0])
+		if (*commit->title)
 			break;
 
 		/* Skip lines in the commit header. */
@@ -7836,11 +7854,7 @@ main_read(struct view *view, char *line)
 			line++;
 		if (*line == '\0')
 			break;
-		/* FIXME: More graceful handling of titles; append "..." to
-		 * shortened titles, etc. */
-
-		string_expand(commit->title, sizeof(commit->title), line, 1);
-		view->line[view->lines - 1].dirty = 1;
+		main_add_commit(view, LINE_MAIN_COMMIT, commit, line, FALSE);
 	}
 
 	return TRUE;
@@ -7956,7 +7970,7 @@ main_select(struct view *view, struct line *line)
 	struct commit *commit = line->data;
 
 	if (line->type == LINE_STAT_STAGED || line->type == LINE_STAT_UNSTAGED)
-		string_copy(view->ref, commit->title);
+		string_ncopy(view->ref, commit->title, strlen(commit->title));
 	else
 		string_copy_rev(view->ref, commit->id);
 	string_copy_rev(ref_commit, commit->id);
@@ -7988,7 +8002,7 @@ static bool
 stash_read(struct view *view, char *line)
 {
 	struct main_state *state = view->private;
-	struct commit *commit = state->current;
+	struct commit *commit = &state->current;
 
 	if (!state->added_changes_commits) {
 		state->added_changes_commits = TRUE;
