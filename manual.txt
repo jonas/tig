@@ -124,6 +124,9 @@ The stage view::
 	Displays diff changes for staged or unstaged files being tracked or
 	file content of untracked files.
 
+The stash view::
+	Displays the list of stashes in the repository.
+
 The pager view::
 	Is used for displaying both input from stdin and output from git
 	commands entered in the internal prompt.
@@ -154,6 +157,7 @@ following variables.
 |%(commit)		|The currently selected commit ID.
 |%(blob)		|The currently selected blob ID.
 |%(branch)		|The currently selected branch name.
+|%(stash)		|The currently selected stash name.
 |%(directory)		|The current directory path in the tree view;
 			 empty for the root directory.
 |%(file)		|The currently selected file.
@@ -294,6 +298,7 @@ View Switching
 |f	|Switch to (file) blob view.
 |B	|Switch to blame view.
 |H	|Switch to branch view.
+|y	|Switch to stash view.
 |h	|Switch to help view
 |S	|Switch to status view
 |c	|Switch to stage view

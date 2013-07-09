@@ -30,6 +30,7 @@ Improvements:
  - Create temporary files in TMPDIR, TEMP, or TMP before defaulting to /tmp.
  - Reenable `tig log` as a subcommand. (GH #146)
  - Enable tilde expansion in ~/.tigrc "source" commands. (GH #168)
+ - Introduce the stash view, bound to the 'y' keybinding. (GH #169, #174)
 
 Bug fixes:
 
