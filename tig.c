@@ -297,7 +297,8 @@ DEFINE_ENUM(commit_order, COMMIT_ORDER_ENUM);
 	_(HELP,   help,   ""), \
 	_(PAGER,  pager,  ""), \
 	_(STATUS, status, "status"), \
-	_(STAGE,  stage,  ref_status)
+	_(STAGE,  stage,  ref_status), \
+	_(STASH,  stash,  ref_stash)
 
 static struct encoding *
 get_path_encoding(const char *path, struct encoding *default_encoding)
@@ -592,6 +593,7 @@ LINE(PP_DATE,	   "Date:   ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(PP_ADATE,	   "AuthorDate: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(PP_CDATE,	   "CommitDate: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(PP_REFS,	   "Refs: ",		COLOR_RED,	COLOR_DEFAULT,	0), \
+LINE(STASH,	   "stash@{",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(COMMIT,	   "commit ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(PARENT,	   "parent ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(TREE,	   "tree ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
@@ -875,6 +877,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'h',		REQ_VIEW_HELP },
 	{ 'S',		REQ_VIEW_STATUS },
 	{ 'c',		REQ_VIEW_STAGE },
+	{ 'y',		REQ_VIEW_STASH },
 
 	/* View manipulation */
 	{ 'q',		REQ_VIEW_CLOSE },
@@ -1252,11 +1255,13 @@ add_builtin_run_requests(void)
 	const char *checkout[] = { "git", "checkout", "%(branch)", NULL };
 	const char *commit[] = { "git", "commit", NULL };
 	const char *gc[] = { "git", "gc", NULL };
+	const char *stash_pop[] = { "git", "stash", "pop", "%(stash)", NULL };
 
 	add_run_request(get_keymap("main"), 'C', cherry_pick, RUN_REQUEST_CONFIRM);
 	add_run_request(get_keymap("status"), 'C', commit, RUN_REQUEST_DEFAULT);
 	add_run_request(get_keymap("branch"), 'C', checkout, RUN_REQUEST_CONFIRM);
 	add_run_request(get_keymap("generic"), 'G', gc, RUN_REQUEST_CONFIRM);
+	add_run_request(get_keymap("stash"), 'P', stash_pop, RUN_REQUEST_CONFIRM);
 }
 
 /*
@@ -1881,6 +1886,7 @@ static char ref_commit[SIZEOF_REF]	= "HEAD";
 static char ref_head[SIZEOF_REF]	= "HEAD";
 static char ref_branch[SIZEOF_REF]	= "";
 static char ref_status[SIZEOF_STR]	= "";
+static char ref_stash[SIZEOF_REF]	= "";
 
 enum view_flag {
 	VIEW_NO_FLAGS = 0,
@@ -3078,6 +3084,7 @@ format_expand_arg(struct format_context *format, const char *name)
 		FORMAT_VAR("%(commit)",		ref_commit,	""),
 		FORMAT_VAR("%(blob)",		ref_blob,	""),
 		FORMAT_VAR("%(branch)",		ref_branch,	""),
+		FORMAT_VAR("%(stash)",		ref_stash,	""),
 	};
 	int i;
 
@@ -3760,6 +3767,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_STATUS:
 	case REQ_VIEW_STAGE:
 	case REQ_VIEW_PAGER:
+	case REQ_VIEW_STASH:
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
@@ -7812,6 +7820,63 @@ static struct view_ops main_ops = {
 	main_select,
 };
 
+static bool
+stash_open(struct view *view, enum open_flags flags)
+{
+	static const char *stash_argv[] = { "git", "stash", "list",
+		opt_encoding_arg, "--no-color", NULL };
+
+	return begin_update(view, NULL, stash_argv, flags | OPEN_RELOAD);
+}
+
+static void
+stash_select(struct view *view, struct line *line)
+{
+	if (line->type == LINE_STASH) {
+		/* A stash line currently begins with "stash@{x}: ..." */
+		const char *colon = strchr(line->data, ':');
+		unsigned int len;
+
+		if (!colon)
+			return;
+
+		len = colon - (char *) line->data;
+
+		string_ncopy(ref_stash, line->data, len);
+		string_copy(ref_commit, ref_stash); /* For the diff view */
+		string_copy(view->ref, ref_stash);
+	}
+}
+
+static enum request
+stash_request(struct view *view, enum request request, struct line *line)
+{
+	switch (request) {
+	case REQ_ENTER:
+		open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT);
+		break;
+	case REQ_REFRESH:
+		refresh_view(view);
+		break;
+	default:
+		return pager_request(view, request, line);
+	}
+
+	return REQ_NONE;
+}
+
+static struct view_ops stash_ops = {
+	"stash",
+	{ "stash" },
+	VIEW_SEND_CHILD_ENTER,
+	0,
+	stash_open,
+	pager_read,
+	pager_draw,
+	stash_request,
+	pager_grep,
+	stash_select,
+};
 
 /*
  * Status management
@@ -8418,6 +8483,7 @@ static const char usage[] =
 "   or: tig log    [options] [revs] [--] [paths]\n"
 "   or: tig show   [options] [revs] [--] [paths]\n"
 "   or: tig blame  [options] [rev] [--] path\n"
+"   or: tig stash\n"
 "   or: tig status\n"
 "   or: tig <      [git command output]\n"
 "\n"
@@ -8559,6 +8625,9 @@ parse_options(int argc, const char *argv[])
 
 	} else if (!strcmp(subcommand, "log")) {
 		request = REQ_VIEW_LOG;
+
+	} else if (!strcmp(subcommand, "stash")) {
+		request = REQ_VIEW_STASH;
 
 	} else {
 		subcommand = NULL;
