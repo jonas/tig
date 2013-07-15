@@ -467,6 +467,12 @@ unicode_width(unsigned long c, int tab_size)
 	    || (c >= 0x20000 && c <= 0x2fffd)
 	    || (c >= 0x30000 && c <= 0x3fffd)))
 		return 2;
+	
+	if ((c >= 0x0300 && c <= 0x036f)	/* combining diacretical marks */
+	    || (c >= 0x1dc0 && c <= 0x1dff)	/* combining diacretical marks supplement */
+	    || (c >= 0x20d0 && c <= 0x20ff)	/* combining diacretical marks for symbols */
+	    || (c >= 0xfe20 && c <= 0xfe2f))	/* combining half marks */
+		return 0;
 
 	if (c == '\t')
 		return tab_size;

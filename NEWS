@@ -44,6 +44,7 @@ Bug fixes:
  - Fix display of all branches label in repos with short branch names.
  - Fix rendering glitch for branch names.
  - Do not apply diff styling to untracked files in the stage view. (GH #153)
+ - Fix tree indentation for entries containing combining characters. (GH #170)
 
 tig-1.1
 -------
