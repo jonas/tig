@@ -8353,7 +8353,7 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 		 * Default to true for the unknown case. */
 		opt_is_inside_work_tree = strcmp(name, "false") ? TRUE : FALSE;
 
-	} else if (*name == '.') {
+	} else if (*name == '.' && !strlen(opt_cdup)) {
 		string_ncopy(opt_cdup, name, namelen);
 
 	} else {
