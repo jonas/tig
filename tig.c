@@ -3110,6 +3110,10 @@ format_expand_arg(struct format_context *format, const char *name)
 static bool
 format_append_arg(struct format_context *format, const char ***dst_argv, const char *arg)
 {
+	int i;
+
+	for (i = 0; i < sizeof(format->buf); i++)
+		format->buf[i] = 0;
 	format->bufpos = 0;
 
 	while (arg) {
