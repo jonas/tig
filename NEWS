@@ -32,6 +32,7 @@ Improvements:
 
 Bug fixes:
 
+ - Fix blame and status to work in directories starting with a dot. (GH #172)
  - Reload current branch name when reloading the status view. (GH #93)
  - Fix compile errors on old Solaris. (GH #97)
  - Reload HEAD info when reloading the stage view. (GH #104, #93)

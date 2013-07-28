@@ -8339,13 +8339,25 @@ load_git_config(void)
 	return io_run_load(config_list_argv, "=", read_repo_config_option, NULL);
 }
 
+#define REPO_INFO_GIT_DIR	"--git-dir"
+#define REPO_INFO_WORK_TREE	"--is-inside-work-tree"
+#define REPO_INFO_SHOW_CDUP	"--show-cdup"
+#define REPO_INFO_SHOW_PREFIX	"--show-prefix"
+
+struct repo_info_state {
+	const char **argv;
+};
+
 static int
 read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
-	if (!opt_git_dir[0]) {
+	struct repo_info_state *state = data;
+	const char *arg = *state->argv ? *state->argv++ : "";
+
+	if (!strcmp(arg, REPO_INFO_GIT_DIR)) {
 		string_ncopy(opt_git_dir, name, namelen);
 
-	} else if (opt_is_inside_work_tree == -1) {
+	} else if (!strcmp(arg, REPO_INFO_WORK_TREE)) {
 		/* This can be 3 different values depending on the
 		 * version of git being used. If git-rev-parse does not
 		 * understand --is-inside-work-tree it will simply echo
@@ -8353,10 +8365,10 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 		 * Default to true for the unknown case. */
 		opt_is_inside_work_tree = strcmp(name, "false") ? TRUE : FALSE;
 
-	} else if (*name == '.') {
+	} else if (!strcmp(arg, REPO_INFO_SHOW_CDUP)) {
 		string_ncopy(opt_cdup, name, namelen);
 
-	} else {
+	} else if (!strcmp(arg, REPO_INFO_SHOW_PREFIX)) {
 		string_ncopy(opt_prefix, name, namelen);
 	}
 
@@ -8367,11 +8379,12 @@ static int
 load_repo_info(void)
 {
 	const char *rev_parse_argv[] = {
-		"git", "rev-parse", "--git-dir", "--is-inside-work-tree",
-			"--show-cdup", "--show-prefix", NULL
+		"git", "rev-parse", REPO_INFO_GIT_DIR, REPO_INFO_WORK_TREE,
+			REPO_INFO_SHOW_CDUP, REPO_INFO_SHOW_PREFIX, NULL
 	};
+	struct repo_info_state state = { rev_parse_argv + 2};
 
-	return io_run_load(rev_parse_argv, "=", read_repo_info, NULL);
+	return io_run_load(rev_parse_argv, "=", read_repo_info, &state);
 }
 
 
