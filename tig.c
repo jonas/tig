@@ -1281,7 +1281,8 @@ add_builtin_run_requests(void)
 	OPT_ERR_(UNKNOWN_REQUEST_NAME, "Unknown request name"), \
 	OPT_ERR_(UNKNOWN_VARIABLE_NAME, "Unknown variable name"), \
 	OPT_ERR_(UNMATCHED_QUOTATION, "Unmatched quotation"), \
-	OPT_ERR_(WRONG_NUMBER_OF_ARGUMENTS, "Wrong number of arguments"),
+	OPT_ERR_(WRONG_NUMBER_OF_ARGUMENTS, "Wrong number of arguments"), \
+	OPT_ERR_(HOME_UNRESOLVABLE, "HOME environment variable could not be resolved"),
 
 enum option_code {
 #define OPT_ERR_(name, msg) OPT_ERR_ ## name
@@ -1794,10 +1795,19 @@ load_option_file(const char *path)
 {
 	struct config_state config = { path, 0, FALSE };
 	struct io io;
+	char buf[SIZEOF_STR];
 
 	/* Do not read configuration from stdin if set to "" */
 	if (!path || !strlen(path))
 		return OPT_OK;
+
+	if (!prefixcmp(path, "~/")) {
+		const char *home = getenv("HOME");
+
+		if (!home || !string_format(buf, "%s/%s", home, path + 2))
+			return OPT_ERR_HOME_UNRESOLVABLE;
+		path = buf;
+	}
 
 	/* It's OK that the file doesn't exist. */
 	if (!io_open(&io, "%s", path))
@@ -1812,22 +1822,17 @@ load_option_file(const char *path)
 static int
 load_options(void)
 {
-	const char *home = getenv("HOME");
 	const char *tigrc_user = getenv("TIGRC_USER");
 	const char *tigrc_system = getenv("TIGRC_SYSTEM");
 	const char *tig_diff_opts = getenv("TIG_DIFF_OPTS");
 	const bool diff_opts_from_args = !!opt_diff_argv;
-	char buf[SIZEOF_STR];
 
 	if (!tigrc_system)
 		tigrc_system = SYSCONFDIR "/tigrc";
 	load_option_file(tigrc_system);
 
-	if (!tigrc_user) {
-		if (!home || !string_format(buf, "%s/.tigrc", home))
-			return ERR;
-		tigrc_user = buf;
-	}
+	if (!tigrc_user)
+		tigrc_user = "~/.tigrc";
 	load_option_file(tigrc_user);
 
 	/* Add _after_ loading config files to avoid adding run requests
@@ -1836,6 +1841,7 @@ load_options(void)
 
 	if (!diff_opts_from_args && tig_diff_opts && *tig_diff_opts) {
 		static const char *diff_opts[SIZEOF_ARG] = { NULL };
+		char buf[SIZEOF_STR];
 		int argc = 0;
 
 		if (!string_format(buf, "%s", tig_diff_opts) ||
