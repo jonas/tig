@@ -4804,10 +4804,22 @@ diff_get_pathname(struct view *view, struct line *line)
 }
 
 static enum request
+diff_common_edit(struct view *view, enum request request, struct line *line)
+{
+	const char *file = diff_get_pathname(view, line);
+
+	if (!file || access(file, R_OK)) {
+		report("Failed to open file: %s", file);
+		return REQ_NONE;
+	}
+
+	open_editor(file, diff_get_lineno(view, line));
+	return REQ_NONE;
+}
+
+static enum request
 diff_request(struct view *view, enum request request, struct line *line)
 {
-	const char *file;
-
 	switch (request) {
 	case REQ_VIEW_BLAME:
 		return diff_trace_origin(view, line);
@@ -4821,11 +4833,7 @@ diff_request(struct view *view, enum request request, struct line *line)
 
 
 	case REQ_EDIT:
-		file = diff_get_pathname(view, line);
-		if (!file || access(file, R_OK))
-			return pager_request(view, request, line);
-		open_editor(file, diff_get_lineno(view, line));
-		return REQ_NONE;
+		return diff_common_edit(view, request, line);
 
 	case REQ_ENTER:
 		return diff_common_enter(view, request, line);
@@ -7220,7 +7228,8 @@ stage_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_EDIT:
 		if (!stage_status.new.name[0])
-			return request;
+			return diff_common_edit(view, request, line);
+
 		if (stage_status.status == 'D') {
 			report("File has been deleted.");
 			return REQ_NONE;
