@@ -49,6 +49,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <fcntl.h>
+#include <wordexp.h>
 
 #include <regex.h>
 

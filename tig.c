@@ -1281,7 +1281,8 @@ add_builtin_run_requests(void)
 	OPT_ERR_(UNKNOWN_REQUEST_NAME, "Unknown request name"), \
 	OPT_ERR_(UNKNOWN_VARIABLE_NAME, "Unknown variable name"), \
 	OPT_ERR_(UNMATCHED_QUOTATION, "Unmatched quotation"), \
-	OPT_ERR_(WRONG_NUMBER_OF_ARGUMENTS, "Wrong number of arguments"),
+	OPT_ERR_(WRONG_NUMBER_OF_ARGUMENTS, "Wrong number of arguments"), \
+	OPT_ERR_(WORD_EXPANSION_FAILURE, "Word expansion failure"),
 
 enum option_code {
 #define OPT_ERR_(name, msg) OPT_ERR_ ## name
@@ -1720,7 +1721,19 @@ option_source_command(int argc, const char *argv[])
 	if (argc < 1)
 		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
 
-	return load_option_file(argv[0]);
+	wordexp_t exp_result;
+	switch (wordexp(argv[0], &exp_result, WRDE_NOCMD|WRDE_UNDEF)) {
+	case 0:
+		break;
+	case WRDE_NOSPACE:
+		wordfree(&exp_result);
+	default:
+		return OPT_ERR_WORD_EXPANSION_FAILURE;
+	}
+
+	int ret = load_option_file(exp_result.we_wordv[0]);
+	wordfree(&exp_result);
+	return ret;
 }
 
 static enum option_code
