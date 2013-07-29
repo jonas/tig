@@ -12,6 +12,7 @@ tig        [options] [revisions] [--] [paths]
 tig log    [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
 tig blame  [options] [rev] [--] path
+tig stash
 tig status
 tig <      [git command output]
 
@@ -101,6 +102,11 @@ $ tig --after="2004-01-01" --before="2006-05-16" -- README
 Blame file with copy detection enabled:
 -----------------------------------------------------------------------------
 $ tig blame -C README
+-----------------------------------------------------------------------------
+
+Display the list of stashes:
+-----------------------------------------------------------------------------
+$ tig stash
 -----------------------------------------------------------------------------
 
 ENVIRONMENT VARIABLES
