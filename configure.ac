@@ -21,6 +21,10 @@ AC_SUBST(CURSES_LIB)
 
 AM_ICONV
 
+dnl  Not all platforms have mkstemps
+AC_CHECK_FUNC([mkstemps], [AC_DEFINE([HAVE_MKSTEMPS], [1],
+	      [Define if mkstemps is available.])])
+
 AC_PROG_CC
 
 AC_CHECK_PROGS(ASCIIDOC, [asciidoc], [false])

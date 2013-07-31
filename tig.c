@@ -13,6 +13,7 @@
 
 #include "tig.h"
 #include "io.h"
+#include "compat.h"
 #include "refs.h"
 #include "graph.h"
 #include "git.h"
