@@ -1901,6 +1901,7 @@ enum view_flag {
 	VIEW_STDIN		= 1 << 8,
 	VIEW_SEND_CHILD_ENTER	= 1 << 9,
 	VIEW_FILE_FILTER	= 1 << 10,
+	VIEW_NO_PARENT_NAV	= 1 << 11,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))
@@ -3773,7 +3774,7 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_NEXT:
 	case REQ_PREVIOUS:
-		if (view->parent) {
+		if (view->parent && !view_has_flags(view->parent, VIEW_NO_PARENT_NAV)) {
 			int line;
 
 			view = view->parent;
@@ -4439,7 +4440,7 @@ log_request(struct view *view, enum request request, struct line *line)
 static struct view_ops log_ops = {
 	"line",
 	{ "log" },
-	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER,
+	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER | VIEW_NO_PARENT_NAV,
 	0,
 	log_open,
 	pager_read,
