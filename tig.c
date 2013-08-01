@@ -4815,8 +4815,10 @@ static enum request
 diff_common_edit(struct view *view, enum request request, struct line *line)
 {
 	const char *file = diff_get_pathname(view, line);
+	char path[SIZEOF_STR];
+	bool has_path = file && string_format(path, "%s%s", opt_cdup, file);
 
-	if (!file || access(file, R_OK)) {
+	if (has_path && access(path, R_OK)) {
 		report("Failed to open file: %s", file);
 		return REQ_NONE;
 	}
