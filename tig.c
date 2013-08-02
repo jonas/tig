@@ -4381,6 +4381,32 @@ pager_select(struct view *view, struct line *line)
 	}
 }
 
+struct log_state {
+	/* We need to recalculate the previous commit, when the user
+	 * scrolls up or uses the page up/down in the log
+	 * view. recalculate_commit_context is used as a flag to
+	 * indicate this. */
+	bool recalculate_commit_context;
+};
+
+static void
+log_select(struct view *view, struct line *line)
+{
+	struct log_state *state = view->private;
+
+	if (state->recalculate_commit_context && line->lineno > 1) {
+		const struct line *commit_line = find_prev_line_by_type(view, line, LINE_COMMIT);
+
+		if (commit_line)
+			string_copy_rev_from_commit_line(view->ref, commit_line->data);
+	}
+	if (line->type == LINE_COMMIT && !view_has_flags(view, VIEW_NO_REF)) {
+			string_copy_rev_from_commit_line(view->ref, (char *)line->data);
+	}
+	string_copy_rev(ref_commit, view->ref);
+	state->recalculate_commit_context = FALSE;
+}
+
 static bool
 pager_open(struct view *view, enum open_flags flags)
 {
@@ -4424,11 +4450,26 @@ log_open(struct view *view, enum open_flags flags)
 static enum request
 log_request(struct view *view, enum request request, struct line *line)
 {
+	struct log_state *state = (struct log_state *) view->private;
+
 	switch (request) {
 	case REQ_REFRESH:
 		load_refs();
 		refresh_view(view);
-		return REQ_NONE;
+		return request;
+
+	case REQ_MOVE_UP:
+	case REQ_PREVIOUS:
+		if (line->type == LINE_COMMIT && line->lineno > 1) {
+			state->recalculate_commit_context = TRUE;
+		}
+		return request;
+
+	case REQ_MOVE_PAGE_UP:
+	case REQ_MOVE_PAGE_DOWN:
+		state->recalculate_commit_context = TRUE;
+		return request;
+
 	default:
 		return pager_request(view, request, line);
 	}
@@ -4438,13 +4479,13 @@ static struct view_ops log_ops = {
 	"line",
 	{ "log" },
 	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER | VIEW_NO_PARENT_NAV,
-	0,
+	sizeof(struct log_state),
 	log_open,
 	pager_read,
 	pager_draw,
 	log_request,
 	pager_grep,
-	pager_select,
+	log_select,
 };
 
 struct diff_state {
