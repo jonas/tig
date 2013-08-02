@@ -49,6 +49,7 @@ Bug fixes:
  - Ignore unrepresentable characters when transliterating text for rendering.
  - Transliterate text to output encoding before trimming it to avoid
    misalignment. (GH #86)
+ - Introduce a more natural context-sensitive log display. (GH #155)
 
 tig-1.1
 -------
