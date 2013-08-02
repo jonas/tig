@@ -4470,8 +4470,14 @@ log_request(struct view *view, enum request request, struct line *line)
 		state->recalculate_commit_context = TRUE;
 		return request;
 
+	case REQ_ENTER:
+		state->recalculate_commit_context = TRUE;
+		if (!display[1] || strcmp(display[1]->vid, view->ref))
+			open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT);
+		return request;
+
 	default:
-		return pager_request(view, request, line);
+		return request;
 	}
 }
 
