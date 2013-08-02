@@ -41,7 +41,7 @@ CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
 PROGS	= tig
 TESTS	= test-graph
-SOURCE	= tig.c tig.h io.c io.h graph.c graph.h
+SOURCE	= tig.c tig.h io.c io.h graph.c graph.h compat.c compat.h
 TXTDOC	= tig.1.txt tigrc.5.txt manual.txt NEWS README INSTALL BUGS
 MANDOC	= tig.1 tigrc.5 tigmanual.7
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html NEWS.html
@@ -168,11 +168,12 @@ configure: configure.ac acinclude.m4 contrib/*.m4
 
 graph.o: graph.c tig.h graph.h
 io.o: io.c tig.h io.h
+compat.o: compat.c compat.h tig.h
 refs.o: refs.c tig.h io.h refs.h
 test-graph.o: test-graph.c tig.h io.h graph.h
-tig.o: tig.c tig.h io.h refs.h graph.h git.h
+tig.o: tig.c tig.h compat.h io.h refs.h graph.h git.h
 
-tig: tig.o io.o graph.o refs.o
+tig: tig.o io.o graph.o refs.o compat.o
 test-graph: io.o graph.o
 
 # To check the above.
