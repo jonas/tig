@@ -595,6 +595,8 @@ LINE(PP_DATE,	   "Date:   ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(PP_ADATE,	   "AuthorDate: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(PP_CDATE,	   "CommitDate: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(PP_REFS,	   "Refs: ",		COLOR_RED,	COLOR_DEFAULT,	0), \
+LINE(PP_REFLOG,	   "Reflog: ",		COLOR_RED,	COLOR_DEFAULT,	0), \
+LINE(PP_REFLOGMSG, "Reflog message: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(STASH,	   "stash@{",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(COMMIT,	   "commit ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(PARENT,	   "parent ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
@@ -7463,6 +7465,7 @@ struct main_state {
 	struct commit *current;
 	bool in_header;
 	bool added_changes_commits;
+	bool hide_graph;
 };
 
 static struct commit *
@@ -7561,6 +7564,7 @@ main_open(struct view *view, enum open_flags flags)
 static bool
 main_draw(struct view *view, struct line *line, unsigned int lineno)
 {
+	struct main_state *state = view->private;
 	struct commit *commit = line->data;
 
 	if (!commit->author)
@@ -7578,7 +7582,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_author(view, commit->author))
 		return TRUE;
 
-	if (opt_rev_graph && draw_graph(view, &commit->graph))
+	if (!state->hide_graph && opt_rev_graph && draw_graph(view, &commit->graph))
 		return TRUE;
 
 	if (draw_refs(view, commit->refs))
@@ -7813,57 +7817,51 @@ static bool
 stash_open(struct view *view, enum open_flags flags)
 {
 	static const char *stash_argv[] = { "git", "stash", "list",
-		opt_encoding_arg, "--no-color", NULL };
+		opt_encoding_arg, "--no-color", "--pretty=raw", NULL };
 
 	return begin_update(view, NULL, stash_argv, flags | OPEN_RELOAD);
+}
+
+static bool
+stash_read(struct view *view, char *line)
+{
+	struct main_state *state = view->private;
+	struct commit *commit = state->current;
+
+	if (!state->added_changes_commits) {
+		state->added_changes_commits = TRUE;
+		state->hide_graph = TRUE;
+	}
+
+	if (commit && line && get_line_type(line) == LINE_PP_REFLOG) {
+		const char *reflog = line + STRING_SIZE("Reflog: refs/");
+
+		string_copy_rev(commit->id, reflog);
+	}
+
+	return main_read(view, line);
 }
 
 static void
 stash_select(struct view *view, struct line *line)
 {
-	if (line->type == LINE_STASH) {
-		/* A stash line currently begins with "stash@{x}: ..." */
-		const char *colon = strchr(line->data, ':');
-		unsigned int len;
+	struct commit *commit = line->data;
 
-		if (!colon)
-			return;
-
-		len = colon - (char *) line->data;
-
-		string_ncopy(ref_stash, line->data, len);
-		string_copy(ref_commit, ref_stash); /* For the diff view */
-		string_copy(view->ref, ref_stash);
-	}
-}
-
-static enum request
-stash_request(struct view *view, enum request request, struct line *line)
-{
-	switch (request) {
-	case REQ_ENTER:
-		open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT);
-		break;
-	case REQ_REFRESH:
-		refresh_view(view);
-		break;
-	default:
-		return pager_request(view, request, line);
-	}
-
-	return REQ_NONE;
+	main_select(view, line);
+	string_copy(ref_stash, commit->id);
+	string_copy(view->ref, commit->id);
 }
 
 static struct view_ops stash_ops = {
 	"stash",
 	{ "stash" },
 	VIEW_SEND_CHILD_ENTER,
-	0,
+	sizeof(struct main_state),
 	stash_open,
-	pager_read,
-	pager_draw,
-	stash_request,
-	pager_grep,
+	stash_read,
+	main_draw,
+	main_request,
+	main_grep,
 	stash_select,
 };
 
