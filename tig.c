@@ -2161,16 +2161,17 @@ static bool
 draw_text_overflow(struct view *view, const char *text, bool on, int overflow, enum line_type type)
 {
 	if (on) {
+		int max = MIN(VIEW_MAX_LEN(view), overflow);
 		int len = strlen(text);
 
-		if (draw_text_expanded(view, type, text, overflow, FALSE))
+		if (draw_text_expanded(view, type, text, max, max < overflow))
 			return TRUE;
 
 		text = len > overflow ? text + overflow : "";
 		type = LINE_OVERFLOW;
 	}
 
-	if (*text && draw_chars(view, type, text, VIEW_MAX_LEN(view), TRUE))
+	if (*text && draw_text(view, type, text))
 		return TRUE;
 
 	return VIEW_MAX_LEN(view) <= 0;
