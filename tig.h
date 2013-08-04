@@ -18,6 +18,8 @@
 #include "config.h"
 #endif
 
+#include "compat/compat.h"
+
 #ifndef TIG_VERSION
 #define TIG_VERSION "unknown-version"
 #endif
