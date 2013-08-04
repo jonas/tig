@@ -23,7 +23,6 @@ static void report(const char *msg, ...) PRINTF_LIKE(1, 2);
 #define report_clear() report("%s", "")
 
 static bool set_environment_variable(const char *name, const char *value);
-static bool set_int_environment_variable(const char *name, int value);
 
 
 enum input_status {
@@ -512,6 +511,9 @@ static int opt_id_cols			= ID_WIDTH;
 static bool opt_file_filter		= TRUE;
 static bool opt_show_title_overflow	= FALSE;
 static int opt_title_overflow		= 50;
+static char opt_env_lines[64]		= "";
+static char opt_env_columns[64]		= "";
+static char *opt_env[]			= { opt_env_lines, opt_env_columns, NULL };
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
@@ -2513,8 +2515,8 @@ resize_display(void)
 	/* Setup window dimensions */
 
 	getmaxyx(stdscr, base->height, base->width);
-	set_int_environment_variable("COLUMNS", base->width);
-	set_int_environment_variable("LINES", base->height);
+	string_format(opt_env_columns, "COLUMNS=%d", base->width);
+	string_format(opt_env_lines, "LINES=%d", base->height);
 
 	/* Make room for the status window. */
 	base->height -= 1;
@@ -3288,7 +3290,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	}
 
 	if (view->argv && view->argv[0] &&
-	    !io_run(&view->io, io_type, view->dir, view->argv)) {
+	    !io_run(&view->io, io_type, view->dir, opt_env, view->argv)) {
 		report("Failed to open %s view", view->name);
 		return FALSE;
 	}
@@ -4638,7 +4640,7 @@ diff_read(struct view *view, char *data)
 
 				if (view->pipe)
 					io_done(view->pipe);
-				if (io_run(&view->io, IO_RD, view->dir, view->argv))
+				if (io_run(&view->io, IO_RD, view->dir, opt_env, view->argv))
 					return FALSE;
 			}
 		}
@@ -4663,7 +4665,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	if (!string_format(line_arg, "-L%ld,+1", lineno))
 		return FALSE;
 
-	if (!io_run(&io, IO_RD, opt_cdup, blame_argv))
+	if (!io_run(&io, IO_RD, opt_cdup, opt_env, blame_argv))
 		return FALSE;
 
 	while ((buf = io_get(&io, '\n', TRUE))) {
@@ -5907,7 +5909,7 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 
 	if (!string_format(from, "%s:%s", opt_ref, opt_file) ||
 	    !string_format(to, "%s:%s", blame->commit->id, blame->commit->filename) ||
-	    !io_run(&io, IO_RD, NULL, diff_tree_argv))
+	    !io_run(&io, IO_RD, NULL, opt_env, diff_tree_argv))
 		return;
 
 	while ((line = io_get(&io, '\n', TRUE))) {
@@ -6367,7 +6369,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	char *buf;
 	struct io io;
 
-	if (!io_run(&io, IO_RD, opt_cdup, argv))
+	if (!io_run(&io, IO_RD, opt_cdup, opt_env, argv))
 		return FALSE;
 
 	add_line_nodata(view, type);
@@ -6702,11 +6704,11 @@ status_update_prepare(struct io *io, enum line_type type)
 
 	switch (type) {
 	case LINE_STAT_STAGED:
-		return io_run(io, IO_WR, opt_cdup, staged_argv);
+		return io_run(io, IO_WR, opt_cdup, opt_env, staged_argv);
 
 	case LINE_STAT_UNSTAGED:
 	case LINE_STAT_UNTRACKED:
-		return io_run(io, IO_WR, opt_cdup, others_argv);
+		return io_run(io, IO_WR, opt_cdup, opt_env, others_argv);
 
 	default:
 		die("line type %d not handled in switch", type);
@@ -7072,7 +7074,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *line, bool
 		apply_argv[argc++] = "-R";
 	apply_argv[argc++] = "-";
 	apply_argv[argc++] = NULL;
-	if (!io_run(&io, IO_WR, opt_cdup, apply_argv))
+	if (!io_run(&io, IO_WR, opt_cdup, opt_env, apply_argv))
 		return FALSE;
 
 	if (line != NULL) {
@@ -7501,7 +7503,7 @@ main_has_changes(const char *argv[])
 {
 	struct io io;
 
-	if (!io_run(&io, IO_BG, NULL, argv, -1))
+	if (!io_run(&io, IO_BG, NULL, opt_env, argv, -1))
 		return FALSE;
 	io_done(&io);
 	return io.status == 1;
@@ -8274,15 +8276,6 @@ set_environment_variable(const char *name, const char *value)
 		return TRUE;
 	free(env);
 	return FALSE;
-}
-
-static bool
-set_int_environment_variable(const char *name, int value)
-{
-	char buf[SIZEOF_STR];
-
-	return string_format(buf, "%d", value)
-	    && set_environment_variable(name, buf);
 }
 
 static void

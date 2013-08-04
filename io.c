@@ -338,7 +338,7 @@ open_trace(int devnull, const char *argv[])
 }
 
 bool
-io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ...)
+io_run(struct io *io, enum io_type type, const char *dir, char * const env[], const char *argv[], ...)
 {
 	int pipefds[2] = { -1, -1 };
 	va_list args;
@@ -399,6 +399,14 @@ io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ..
 		if (dir && *dir && chdir(dir) == -1)
 			exit(errno);
 
+		if (env) {
+			int i;
+
+			for (i = 0; env[i]; i++)
+				if (*env[i])
+					putenv(env[i]);
+		}
+
 		execvp(argv[0], (char *const*) argv);
 		exit(errno);
 	}
@@ -413,7 +421,7 @@ io_complete(enum io_type type, const char **argv, const char *dir, int fd)
 {
 	struct io io;
 
-	return io_run(&io, type, dir, argv, fd) && io_done(&io);
+	return io_run(&io, type, dir, NULL, argv, fd) && io_done(&io);
 }
 
 bool
@@ -583,7 +591,7 @@ io_run_buf(const char **argv, char buf[], size_t bufsize)
 {
 	struct io io;
 
-	return io_run(&io, IO_RD, NULL, argv) && io_read_buf(&io, buf, bufsize);
+	return io_run(&io, IO_RD, NULL, NULL, argv) && io_read_buf(&io, buf, bufsize);
 }
 
 int
@@ -627,7 +635,7 @@ io_run_load(const char **argv, const char *separators,
 {
 	struct io io;
 
-	if (!io_run(&io, IO_RD, NULL, argv))
+	if (!io_run(&io, IO_RD, NULL, NULL, argv))
 		return ERR;
 	return io_load(&io, separators, read_property, data);
 }

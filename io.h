@@ -71,7 +71,7 @@ typedef int (*io_read_fn)(char *, size_t, char *, size_t, void *data);
 bool io_open(struct io *io, const char *fmt, ...) PRINTF_LIKE(2, 3);
 bool io_kill(struct io *io);
 bool io_done(struct io *io);
-bool io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ...);
+bool io_run(struct io *io, enum io_type type, const char *dir, char * const env[], const char *argv[], ...);
 bool io_run_bg(const char **argv);
 bool io_run_fg(const char **argv, const char *dir);
 bool io_run_append(const char **argv, int fd);
