@@ -77,6 +77,8 @@
 #  include <curses.h>
 #endif
 
+#include "compat.h"
+
 #if __GNUC__ >= 3
 #define TIG_NORETURN __attribute__((__noreturn__))
 #define PRINTF_LIKE(fmt, args) __attribute__((format (printf, fmt, args)))
