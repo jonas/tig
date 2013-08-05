@@ -236,6 +236,35 @@ encoding_convert(struct encoding *encoding, char *line)
 	return (ret != (size_t) -1) ? out_buffer : line;
 }
 
+const char *
+encoding_iconv(iconv_t iconv_cd, const char *string, int *len_ref)
+{
+	static char out_buffer[BUFSIZ * 2];
+	int len = *len_ref;
+	size_t inlen = len + 1;
+	char *instr = calloc(1, inlen);
+	ICONV_CONST char *inbuf = (ICONV_CONST char *) instr;
+	if (!instr)
+		return NULL;
+
+	strncpy(instr, string, len);
+
+	char *outbuf = out_buffer;
+	size_t outlen = sizeof(out_buffer);
+
+	size_t ret;
+
+	ret = iconv(iconv_cd, &inbuf, &inlen, &outbuf, &outlen);
+	if (ret != (size_t) -1) {
+		string = out_buffer;
+		len = sizeof(out_buffer) - outlen;
+	}
+	free(instr);
+
+	*len_ref = len;
+	return string;
+}
+
 /*
  * Executing external commands.
  */

@@ -2071,7 +2071,6 @@ static bool
 draw_chars(struct view *view, enum line_type type, const char *string,
 	   int max_len, bool use_tilde)
 {
-	static char out_buffer[BUFSIZ * 2];
 	int len = 0;
 	int col = 0;
 	int trimmed = FALSE;
@@ -2085,25 +2084,9 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 	set_view_attr(view, type);
 	if (len > 0) {
 		if (opt_iconv_out != ICONV_NONE) {
-			size_t inlen = len + 1;
-			char *instr = calloc(1, inlen);
-			ICONV_CONST char *inbuf = (ICONV_CONST char *) instr;
-			if (!instr)
-			    return VIEW_MAX_LEN(view) <= 0;
-
-			strncpy(instr, string, len);
-
-			char *outbuf = out_buffer;
-			size_t outlen = sizeof(out_buffer);
-
-			size_t ret;
-
-			ret = iconv(opt_iconv_out, &inbuf, &inlen, &outbuf, &outlen);
-			if (ret != (size_t) -1) {
-				string = out_buffer;
-				len = sizeof(out_buffer) - outlen;
-			}
-			free(instr);
+			string = encoding_iconv(opt_iconv_out, string, &len);
+			if (!string)
+				return VIEW_MAX_LEN(view) <= 0;
 		}
 
 		waddnstr(view->win, string, len);

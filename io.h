@@ -39,6 +39,7 @@ struct encoding;
 
 struct encoding *encoding_open(const char *fromcode);
 char *encoding_convert(struct encoding *encoding, char *line);
+const char *encoding_iconv(iconv_t iconv_out, const char *string, int *len_ref);
 
 /*
  * Executing external commands.
