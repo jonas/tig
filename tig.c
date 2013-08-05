@@ -2241,9 +2241,18 @@ draw_author(struct view *view, const struct ident *author)
 }
 
 static bool
-draw_id(struct view *view, enum line_type type, const char *id)
+draw_id_custom(struct view *view, enum line_type type, const char *id, int width)
 {
-	return draw_field(view, type, id, opt_id_cols, FALSE);
+	return draw_field(view, type, id, width, FALSE);
+}
+
+static bool
+draw_id(struct view *view, const char *id)
+{
+	if (!opt_show_id)
+		return FALSE;
+
+	return draw_id_custom(view, LINE_ID, id, opt_id_cols);
 }
 
 static bool
@@ -5317,7 +5326,7 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 		if (draw_date(view, &entry->time))
 			return TRUE;
 
-		if (opt_show_id && draw_id(view, LINE_ID, entry->commit))
+		if (draw_id(view, entry->commit))
 			return TRUE;
 	}
 
@@ -5856,7 +5865,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_filename(view, filename, state->auto_filename_display))
 		return TRUE;
 
-	if (draw_id(view, id_type, id))
+	if (draw_id_custom(view, id_type, id, opt_id_cols))
 		return TRUE;
 
 	if (draw_lineno(view, lineno))
@@ -6101,7 +6110,7 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_field(view, type, branch_name, state->max_ref_length, FALSE))
 		return TRUE;
 
-	if (opt_show_id && draw_id(view, LINE_ID, branch->ref->id))
+	if (draw_id(view, branch->ref->id))
 		return TRUE;
 
 	draw_text(view, LINE_DEFAULT, branch->title);
@@ -7573,7 +7582,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_lineno(view, lineno))
 		return TRUE;
 
-	if (opt_show_id && draw_id(view, LINE_ID, commit->id))
+	if (draw_id(view, commit->id))
 		return TRUE;
 
 	if (draw_date(view, &commit->time))
