@@ -47,6 +47,8 @@ Bug fixes:
  - Do not apply diff styling to untracked files in the stage view. (GH #153)
  - Fix tree indentation for entries containing combining characters. (GH #170)
  - Ignore unrepresentable characters when transliterating text for rendering.
+ - Transliterate text to output encoding before trimming it to avoid
+   misalignment. (GH #86)
 
 tig-1.1
 -------
