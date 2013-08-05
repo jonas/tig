@@ -221,8 +221,8 @@ encoding_open(const char *fromcode)
 	return encoding;
 }
 
-char *
-encoding_convert(struct encoding *encoding, char *line)
+static char *
+encoding_convert_string(iconv_t iconv_cd, char *line)
 {
 	static char out_buffer[BUFSIZ * 2];
 	ICONV_CONST char *inbuf = line;
@@ -231,34 +231,25 @@ encoding_convert(struct encoding *encoding, char *line)
 	char *outbuf = out_buffer;
 	size_t outlen = sizeof(out_buffer);
 
-	size_t ret = iconv(encoding->cd, &inbuf, &inlen, &outbuf, &outlen);
+	size_t ret = iconv(iconv_cd, &inbuf, &inlen, &outbuf, &outlen);
 
 	return (ret != (size_t) -1) ? out_buffer : line;
+}
+
+char *
+encoding_convert(struct encoding *encoding, char *line)
+{
+	return encoding_convert_string(encoding->cd, line);
 }
 
 const char *
 encoding_iconv(iconv_t iconv_cd, const char *string)
 {
-	static char out_buffer[BUFSIZ * 2];
-	size_t inlen = strlen(string) + 1;
-	char *instr = calloc(1, inlen);
-	ICONV_CONST char *inbuf = (ICONV_CONST char *) instr;
-	if (!instr)
-		return NULL;
+	char *instr = strdup(string);
+	const char *ret = encoding_convert_string(iconv_cd, instr);
 
-	strncpy(instr, string, inlen - 1);
-
-	char *outbuf = out_buffer;
-	size_t outlen = sizeof(out_buffer);
-
-	size_t ret;
-
-	ret = iconv(iconv_cd, &inbuf, &inlen, &outbuf, &outlen);
-	if (ret != (size_t) -1)
-		string = out_buffer;
 	free(instr);
-
-	return string;
+	return ret == instr ? string : ret;
 }
 
 /*
