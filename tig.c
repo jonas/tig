@@ -2080,8 +2080,7 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 		return VIEW_MAX_LEN(view) <= 0;
 
 	if (opt_iconv_out != ICONV_NONE) {
-		len = strlen(string);
-		string = encoding_iconv(opt_iconv_out, string, &len);
+		string = encoding_iconv(opt_iconv_out, string);
 		if (!string)
 			return VIEW_MAX_LEN(view) <= 0;
 	}
