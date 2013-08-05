@@ -108,7 +108,7 @@
 #ifndef ICONV_CONST
 #define ICONV_CONST	/* nothing */
 #endif
-#define ICONV_TRANSLIT	"//TRANSLIT"
+#define ICONV_TRANSLIT	"//TRANSLIT//IGNORE"
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"

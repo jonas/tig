@@ -46,6 +46,7 @@ Bug fixes:
  - Fix rendering glitch for branch names.
  - Do not apply diff styling to untracked files in the stage view. (GH #153)
  - Fix tree indentation for entries containing combining characters. (GH #170)
+ - Ignore unrepresentable characters when transliterating text for rendering.
 
 tig-1.1
 -------
