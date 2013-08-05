@@ -1955,6 +1955,7 @@ struct view {
 	enum line_type curtype;	/* Attribute currently used for drawing. */
 	unsigned long col;	/* Column when drawing. */
 	bool has_scrolled;	/* View was scrolled. */
+	bool force_redraw;	/* Whether to force a redraw after reading. */
 
 	/* Loading */
 	const char **argv;	/* Shell command arguments. */
@@ -3363,10 +3364,11 @@ update_view(struct view *view)
 	if (!view_is_displayed(view))
 		return TRUE;
 
-	if (redraw)
+	if (redraw || view->force_redraw)
 		redraw_view_from(view, 0);
 	else
 		redraw_view_dirty(view);
+	view->force_redraw = FALSE;
 
 	/* Update the title _after_ the redraw so that if the redraw picks up a
 	 * commit reference in view->ref it'll be available here. */
@@ -7472,6 +7474,7 @@ struct commit {
 struct main_state {
 	struct graph graph;
 	struct commit *current;
+	int id_width;
 	bool in_header;
 	bool added_changes_commits;
 	bool hide_graph;
@@ -7575,6 +7578,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct main_state *state = view->private;
 	struct commit *commit = line->data;
+	int id_width = state->id_width ? state->id_width : opt_id_cols;
 
 	if (!commit->author)
 		return FALSE;
@@ -7582,7 +7586,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_lineno(view, lineno))
 		return TRUE;
 
-	if (draw_id(view, commit->id))
+	if (opt_show_id && draw_id_custom(view, LINE_ID, commit->id, id_width))
 		return TRUE;
 
 	if (draw_date(view, &commit->time))
@@ -7846,6 +7850,10 @@ stash_read(struct view *view, char *line)
 		const char *reflog = line + STRING_SIZE("Reflog: refs/");
 
 		string_copy_rev(commit->id, reflog);
+		if (state->id_width < strlen(commit->id)) {
+			state->id_width = strlen(commit->id);
+			view->force_redraw = TRUE;
+		}
 	}
 
 	return main_read(view, line);
