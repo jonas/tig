@@ -4451,6 +4451,7 @@ static struct view_ops log_ops = {
 
 struct diff_state {
 	bool after_commit_title;
+	bool after_diff;
 	bool reading_diff_stat;
 	bool combined_diff;
 };
@@ -4476,6 +4477,9 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	enum line_type type = get_line_type(data);
 
 	if (!view->lines && type != LINE_COMMIT)
+		state->reading_diff_stat = TRUE;
+
+	if (state->combined_diff && !state->after_diff && data[0] == ' ' && data[1] != ' ')
 		state->reading_diff_stat = TRUE;
 
 	if (state->reading_diff_stat) {
@@ -4507,9 +4511,13 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	if (type == LINE_DIFF_HEADER) {
 		const int len = line_info[LINE_DIFF_HEADER].linelen;
 
+		state->after_diff = TRUE;
 		if (!strncmp(data + len, "combined ", strlen("combined ")) ||
 		    !strncmp(data + len, "cc ", strlen("cc ")))
 			state->combined_diff = TRUE;
+
+	} else if (type == LINE_PP_MERGE) {
+		state->combined_diff = TRUE;
 	}
 
 	/* ADD2 and DEL2 are only valid in combined diff hunks */
