@@ -4375,11 +4375,9 @@ static void
 pager_select(struct view *view, struct line *line)
 {
 	if (line->type == LINE_COMMIT) {
-		char *text = (char *)line->data + STRING_SIZE("commit ");
-
+		string_copy_rev_from_commit_line(ref_commit, line->data);
 		if (!view_has_flags(view, VIEW_NO_REF))
-			string_copy_rev(view->ref, text);
-		string_copy_rev(ref_commit, text);
+			string_copy_rev(view->ref, ref_commit);
 	}
 }
 
@@ -5211,7 +5209,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 		return FALSE;
 
 	} else if (*text == 'c' && get_line_type(text) == LINE_COMMIT) {
-		string_copy_rev(state->commit, text + STRING_SIZE("commit "));
+		string_copy_rev_from_commit_line(state->commit, text);
 
 	} else if (*text == 'a' && get_line_type(text) == LINE_AUTHOR) {
 		parse_author_line(text + STRING_SIZE("author "),
@@ -6187,7 +6185,7 @@ branch_read(struct view *view, char *line)
 
 	switch (get_line_type(line)) {
 	case LINE_COMMIT:
-		string_copy_rev(state->id, line + STRING_SIZE("commit "));
+		string_copy_rev_from_commit_line(state->id, line);
 		return TRUE;
 
 	case LINE_AUTHOR:

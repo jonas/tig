@@ -270,6 +270,12 @@ string_copy_rev(char *dst, const char *src)
 	string_ncopy_do(dst, SIZEOF_REV, src, srclen);
 }
 
+static inline void
+string_copy_rev_from_commit_line(char *dst, const char *src)
+{
+	string_copy_rev(dst, src + STRING_SIZE("commit "));
+}
+
 #define string_rev_is_null(rev) !strncmp(rev, NULL_ID, STRING_SIZE(NULL_ID))
 
 #define string_add(dst, from, src) \
