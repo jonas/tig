@@ -19,6 +19,7 @@ AC_CHECK_DECLS([errno], [], [], [#include <errno.h>])
 dnl Checks for compatibility flags
 AC_CHECK_FUNCS([mkstemps], [AC_SUBST([NO_MKSTEMPS], ["#"])])
 AC_CHECK_FUNCS([setenv], [AC_SUBST([NO_SETENV], ["#"])])
+AC_CHECK_FUNCS([strndup], [AC_SUBST([NO_STRNDUP], ["#"])])
 
 AX_WITH_CURSES
 case "$ax_cv_ncurses" in "no")
