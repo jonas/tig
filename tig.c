@@ -22,8 +22,7 @@ static void warn(const char *msg, ...) PRINTF_LIKE(1, 2);
 static void report(const char *msg, ...) PRINTF_LIKE(1, 2);
 #define report_clear() report("%s", "")
 
-static bool set_environment_variable(const char *name, const char *value);
-static bool set_int_environment_variable(const char *name, int value);
+static bool setenv_int(const char *name, int value);
 
 
 enum input_status {
@@ -2512,8 +2511,8 @@ resize_display(void)
 	/* Setup window dimensions */
 
 	getmaxyx(stdscr, base->height, base->width);
-	set_int_environment_variable("COLUMNS", base->width);
-	set_int_environment_variable("LINES", base->height);
+	setenv_int("COLUMNS", base->width);
+	setenv_int("LINES", base->height);
 
 	/* Make room for the status window. */
 	base->height -= 1;
@@ -8262,26 +8261,11 @@ set_repo_config_option(char *name, char *value, enum option_code (*cmd)(int, con
 }
 
 static bool
-set_environment_variable(const char *name, const char *value)
-{
-	size_t len = strlen(name) + 1 + strlen(value) + 1;
-	char *env = malloc(len);
-
-	if (env &&
-	    string_nformat(env, len, NULL, "%s=%s", name, value) &&
-	    putenv(env) == 0)
-		return TRUE;
-	free(env);
-	return FALSE;
-}
-
-static bool
-set_int_environment_variable(const char *name, int value)
+setenv_int(const char *name, int value)
 {
 	char buf[SIZEOF_STR];
 
-	return string_format(buf, "%d", value)
-	    && set_environment_variable(name, buf);
+	return string_format(buf, "%d", value) && setenv(name, buf, TRUE);
 }
 
 static void
@@ -8301,9 +8285,9 @@ set_work_tree(const char *value)
 		die("Failed to chdir(%s): %s", value, strerror(errno));
 	if (!getcwd(cwd, sizeof(cwd)))
 		die("Failed to get cwd path: %s", strerror(errno));
-	if (!set_environment_variable("GIT_WORK_TREE", cwd))
+	if (!setenv("GIT_WORK_TREE", cwd, TRUE))
 		die("Failed to set GIT_WORK_TREE to '%s'", cwd);
-	if (!set_environment_variable("GIT_DIR", opt_git_dir))
+	if (!setenv("GIT_DIR", opt_git_dir, TRUE))
 		die("Failed to set GIT_DIR to '%s'", opt_git_dir);
 	opt_is_inside_work_tree = TRUE;
 }

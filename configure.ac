@@ -17,6 +17,8 @@ AC_CHECK_FUNCS([gettimeofday])
 dnl Checks for compatibility flags
 AC_CHECK_FUNCS([mkstemps], [AC_SUBST([NO_MKSTEMPS], ["#"])])
 
+AC_CHECK_FUNCS([setenv], [AC_SUBST([NO_SETENV], ["#"])])
+
 AX_WITH_CURSES
 case "$ax_cv_ncurses" in "no")
 	AC_MSG_ERROR([ncurses not found])

@@ -171,6 +171,11 @@ COMPAT_CPPFLAGS += -DNO_MKSTEMPS
 COMPAT_OBJS += compat/mkstemps.o
 endif
 
+ifdef NO_SETENV
+COMPAT_CPPFLAGS += -DNO_SETENV
+COMPAT_OBJS += compat/setenv.o
+endif
+
 override CPPFLAGS += $(COMPAT_CPPFLAGS)
 
 graph.o: graph.c tig.h graph.h
