@@ -34,6 +34,11 @@
 int compat_mkstemps(char *pattern, int suffix_len);
 #endif
 
+#ifdef NO_SETENV
+#define setenv compat_setenv
+int compat_setenv(const char *name, const char *value, int replace);
+#endif
+
 #endif
 
 /* vim: set ts=8 sw=8 noexpandtab: */
