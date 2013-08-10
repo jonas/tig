@@ -8723,6 +8723,11 @@ run_prompt_command(struct view *view, char *cmd) {
 		int lineno = view->pos.lineno + 1;
 
 		if (parse_int(&lineno, cmd, 1, view->lines + 1) == OPT_OK) {
+			if (!strcmp(view->name, "log") && displayed_views() == 1) {
+				struct log_state *state = view->private;
+
+				state->recalculate_commit_context = TRUE;
+			}
 			select_view_line(view, lineno - 1);
 			report_clear();
 		} else {
