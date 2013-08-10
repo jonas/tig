@@ -41,7 +41,6 @@ CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
 PROGS	= tig
 TESTS	= test-graph
-SOURCE	= tig.c tig.h io.c io.h graph.c graph.h
 TXTDOC	= tig.1.txt tigrc.5.txt manual.txt NEWS README INSTALL BUGS
 MANDOC	= tig.1 tigrc.5 tigmanual.7
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html NEWS.html
@@ -120,7 +119,7 @@ clean:
 	$(RM) $(PROGS) $(TESTS) core *.o compat/*.o *.xml
 
 distclean: clean
-	$(RM) -r manual.html-chunked autom4te.cache
+	$(RM) -r manual.html-chunked autom4te.cache release-docs
 	$(RM) *.toc $(ALLDOC) aclocal.m4 configure
 	$(RM) config.h config.log config.make config.status config.h.in
 
