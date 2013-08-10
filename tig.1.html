@@ -601,8 +601,10 @@ tig(1) Manual Page
 <div class="sectionbody">
 <div class="verseblock">
 <pre class="content">tig        [options] [revisions] [--] [paths]
+tig log    [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
 tig blame  [options] [rev] [--] path
+tig stash
 tig status
 tig &lt;      [git command output]</pre>
 <div class="attribution">
@@ -658,6 +660,14 @@ status
 </p>
 </dd>
 <dt class="hdlist1">
+log
+</dt>
+<dd>
+<p>
+        Start up in log view, displaying git-log(1) output.
+</p>
+</dd>
+<dt class="hdlist1">
 +&lt;number&gt;
 </dt>
 <dd>
@@ -707,6 +717,11 @@ status
 <div class="content">
 <pre><tt>$ tig test..master</tt></pre>
 </div></div>
+<div class="paragraph"><p>Display changes for sub-module versions:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ tig --submodule</tt></pre>
+</div></div>
 <div class="paragraph"><p>Display changes for a single file:</p></div>
 <div class="listingblock">
 <div class="content">
@@ -726,6 +741,11 @@ status
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig blame -C README</tt></pre>
+</div></div>
+<div class="paragraph"><p>Display the list of stashes:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ tig stash</tt></pre>
 </div></div>
 </div>
 </div>
@@ -769,7 +789,8 @@ TIG_DIFF_OPTS
 <dd>
 <p>
         The diff options to use in the diff view. The diff view uses
-        git-show(1) for formatting and always passes --patch-with-stat.
+        git-show(1) for formatting and always passes --patch-with-stat.  You
+        may also set the diff-options setting in your <a href="tigrc.5.html">tigrc(5)</a>.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -827,7 +848,8 @@ TIG_TRACE
 <div class="paragraph"><p>Bugs and feature requests can be reported using the issue tracker at
 <a href="https://github.com/jonas/tig/issues">https://github.com/jonas/tig/issues</a> or by mail to either the git mailing
 list or directly to the maintainer. Ensure that the word "tig" is in the
-subject.</p></div>
+subject. For other tig related questions please use Stack Overflow:
+<a href="http://stackoverflow.com/questions/tagged/tig">http://stackoverflow.com/questions/tagged/tig</a>.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -872,6 +894,11 @@ Git URL:     git://github.com/jonas/tig.git (master) or
 Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</a>
 </p>
 </li>
+<li>
+<p>
+Q&amp;A:         <a href="http://stackoverflow.com/questions/tagged/tig">http://stackoverflow.com/questions/tagged/tig</a>
+</p>
+</li>
 </ul></div>
 </div>
 </div>
@@ -879,7 +906,7 @@ Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2012-10-12 08:51:18 EDT
+Last updated 2013-08-10 10:26:47 EDT
 </div>
 </div>
 </body>

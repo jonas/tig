@@ -571,6 +571,179 @@ footnotes: function () {
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_1_2">tig-1.2</h2>
+<div class="sectionbody">
+<div class="ulist"><ul>
+<li>
+<p>
+Tig now has its own tag on Stack Overflow, where users are invited to
+   ask questions: <a href="http://stackoverflow.com/questions/tagged/tig">http://stackoverflow.com/questions/tagged/tig</a>
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Make tig prompt commands bindable to keys. For example:
+   <tt>bind diff F :set diff-options = --full-diff</tt>. (GH #69, #116)
+</p>
+</li>
+<li>
+<p>
+Add a diff-options setting for specifying default diff options.
+   Example: <tt>set diff-options = --patience</tt>. (GH #116)
+</p>
+</li>
+<li>
+<p>
+Options in diff-options and blame-options matching tig browsing state
+   variables are replaced.
+</p>
+</li>
+<li>
+<p>
+Show diff stats as wide as the terminal. (GH #109)
+</p>
+</li>
+<li>
+<p>
+Show line numbers in the branch view. (GH #135)
+</p>
+</li>
+<li>
+<p>
+Add toggles for showing author email or email user names. (GH #115)
+</p>
+</li>
+<li>
+<p>
+Open editor at the selected line by prefixing the file argument with
+   <tt>+&lt;lineno&gt;</tt>. Tested in vi, vim, emacs, nano, gedit, geany. Disable
+   by adding <tt>set editor-line-number = no</tt> to ~/.tigrc. (GH #118, #119)
+</p>
+</li>
+<li>
+<p>
+Add toggle-files to control whether to show full commit diff or only
+   the diff concerning the currently selected file, e.g. for blame.
+</p>
+</li>
+<li>
+<p>
+Optionally highlight exceeding characters in long commit titles.
+   The default title max width is 50 characters. Customize using:
+   <tt>set title-overflow = 50</tt> (GH #125)
+</p>
+</li>
+<li>
+<p>
+Add +ESC key bindings. Example: <tt>bind generic ^[v move-page-up</tt> (GH #120)
+</p>
+</li>
+<li>
+<p>
+Create temporary files in TMPDIR, TEMP, or TMP before defaulting to /tmp.
+</p>
+</li>
+<li>
+<p>
+Reenable <tt>tig log</tt> as a subcommand. (GH #146)
+</p>
+</li>
+<li>
+<p>
+Enable tilde expansion in ~/.tigrc "source" commands. (GH #168)
+</p>
+</li>
+<li>
+<p>
+Introduce the stash view, bound to the <em>y</em> keybinding. (GH #169, #174)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix blame and status to work in directories starting with a dot. (GH #172)
+</p>
+</li>
+<li>
+<p>
+Reload current branch name when reloading the status view. (GH #93)
+</p>
+</li>
+<li>
+<p>
+Fix compile errors on old Solaris. (GH #97)
+</p>
+</li>
+<li>
+<p>
+Reload HEAD info when reloading the stage view. (GH #104, #93)
+</p>
+</li>
+<li>
+<p>
+Fix disappearing branch labels after external commands. (GH #148)
+</p>
+</li>
+<li>
+<p>
+Fix diff view display for staged/unstaged changes when using <em>d</em>.
+</p>
+</li>
+<li>
+<p>
+Fix display of status messages when toggling view options. (GH #111)
+</p>
+</li>
+<li>
+<p>
+Fix illegal memory access. (GH #98)
+</p>
+</li>
+<li>
+<p>
+Fix display of all branches label in repos with short branch names.
+</p>
+</li>
+<li>
+<p>
+Fix rendering glitch for branch names.
+</p>
+</li>
+<li>
+<p>
+Do not apply diff styling to untracked files in the stage view. (GH #153)
+</p>
+</li>
+<li>
+<p>
+Fix tree indentation for entries containing combining characters. (GH #170)
+</p>
+</li>
+<li>
+<p>
+Ignore unrepresentable characters when transliterating text for rendering.
+</p>
+</li>
+<li>
+<p>
+Transliterate text to output encoding before trimming it to avoid
+   misalignment. (GH #86)
+</p>
+</li>
+<li>
+<p>
+Introduce a more natural context-sensitive log display. (GH #155)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_1_1">tig-1.1</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Incompatibilities:</p></div>
@@ -581,6 +754,11 @@ Disable diff move/copy detection by default, boosting diff
    performance on larger projects. Use git config <em>diff.renames</em> option
    (git-wide) to set your preferred behavior. Environment variable
    TIG_DIFF_OPTS can be used to restore the old behavior.
+</p>
+</li>
+<li>
+<p>
+Fix manual keybinding for stage-single-line. (GH #108)
 </p>
 </li>
 <li>
@@ -2015,7 +2193,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2012-10-12 08:51:18 EDT
+Last updated 2013-08-10 10:26:47 EDT
 </div>
 </div>
 </body>

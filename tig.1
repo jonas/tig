@@ -2,12 +2,12 @@
 .\"     Title: tig
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 10/12/2012
+.\"      Date: 08/10/2013
 .\"    Manual: Tig Manual
-.\"    Source: Tig 1.1
+.\"    Source: Tig 1.2
 .\"  Language: English
 .\"
-.TH "TIG" "1" "10/12/2012" "Tig 1\&.1" "Tig Manual"
+.TH "TIG" "1" "08/10/2013" "Tig 1\&.2" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -33,8 +33,10 @@ tig \- text\-mode interface for git
 .sp
 .nf
 tig        [options] [revisions] [\-\-] [paths]
+tig log    [options] [revisions] [\-\-] [paths]
 tig show   [options] [revisions] [\-\-] [paths]
 tig blame  [options] [rev] [\-\-] path
+tig stash
 tig status
 tig <      [git command output]
 .fi
@@ -63,6 +65,11 @@ Show given file annotated by commits\&. Takes zero or more git\-blame(1) options
 status
 .RS 4
 Start up in status view\&.
+.RE
+.PP
+log
+.RS 4
+Start up in log view, displaying git\-log(1) output\&.
 .RE
 .PP
 +<number>
@@ -133,6 +140,19 @@ $ tig test\&.\&.master
 .\}
 .sp
 .sp
+Display changes for sub\-module versions:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ tig \-\-submodule
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
 Display changes for a single file:
 .sp
 .if n \{\
@@ -184,6 +204,19 @@ $ tig blame \-C README
 .RE
 .\}
 .sp
+.sp
+Display the list of stashes:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ tig stash
+.fi
+.if n \{\
+.RE
+.\}
+.sp
 .SH "ENVIRONMENT VARIABLES"
 .sp
 In addition to environment variables used by git (e\&.g\&. GIT_DIR), tig defines the ones below\&. The command related environment variables have access to the internal state of tig via replacement variables, such as %(commit) and %(blob)\&. See \fBtigrc\fR(5) for a full list\&.
@@ -207,7 +240,8 @@ Set command for retrieving all repository references\&. The command should outpu
 .PP
 TIG_DIFF_OPTS
 .RS 4
-The diff options to use in the diff view\&. The diff view uses git\-show(1) for formatting and always passes \-\-patch\-with\-stat\&.
+The diff options to use in the diff view\&. The diff view uses git\-show(1) for formatting and always passes \-\-patch\-with\-stat\&. You may also set the diff\-options setting in your
+\fBtigrc\fR(5)\&.
 .RE
 .PP
 TIG_TRACE
@@ -234,7 +268,7 @@ Git configuration files\&. Read on start\-up with the help of git\-config(1)\&.
 .RE
 .SH "BUGS"
 .sp
-Bugs and feature requests can be reported using the issue tracker at \m[blue]\fBhttps://github\&.com/jonas/tig/issues\fR\m[] or by mail to either the git mailing list or directly to the maintainer\&. Ensure that the word "tig" is in the subject\&.
+Bugs and feature requests can be reported using the issue tracker at \m[blue]\fBhttps://github\&.com/jonas/tig/issues\fR\m[] or by mail to either the git mailing list or directly to the maintainer\&. Ensure that the word "tig" is in the subject\&. For other tig related questions please use Stack Overflow: \m[blue]\fBhttp://stackoverflow\&.com/questions/tagged/tig\fR\m[]\&.
 .SH "COPYRIGHT"
 .sp
 Copyright (c) 2006\-2012 Jonas Fonseca <\m[blue]\fBfonseca@diku\&.dk\fR\m[]\&\s-2\u[1]\d\s+2>
@@ -303,6 +337,18 @@ Git URL: git://github\&.com/jonas/tig\&.git (master) or git://repo\&.or\&.cz/tig
 .\}
 Gitweb:
 \m[blue]\fBhttp://repo\&.or\&.cz/w/tig\&.git\fR\m[]
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Q&A:
+\m[blue]\fBhttp://stackoverflow\&.com/questions/tagged/tig\fR\m[]
 .RE
 .SH "NOTES"
 .IP " 1." 4

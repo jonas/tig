@@ -788,6 +788,18 @@ Valid mixed values
 </p>
 </dd>
 <dt class="hdlist1">
+<em>diff-options</em> (string)
+</dt>
+<dd>
+<p>
+        A space separate string of diff options to use in the diff view.
+        git-show(1) is used for formatting and always passes --patch-with-stat.
+        This option overrides any options specified in the TIG_DIFF_OPTS
+        environment variable (described in <a href="tig.1.html">tig(1)</a>), but is itself
+        overridden by diff flags given on the command line invocation.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>blame-options</em> (string)
 </dt>
 <dd>
@@ -836,7 +848,7 @@ Valid mixed values
 </p>
 </dd>
 <dt class="hdlist1">
-<em>show-author</em> (mixed) ["abbreviated" | "full" | bool]
+<em>show-author</em> (mixed) ["full", "abbreviated" | "email" | "email-user" | bool]
 </dt>
 <dd>
 <p>
@@ -892,6 +904,17 @@ Valid mixed values
 </p>
 </dd>
 <dt class="hdlist1">
+<em>title-overflow</em> (mixed) [bool | int]
+</dt>
+<dd>
+<p>
+        Whether to highlight text in commit titles exceeding a given width.
+        When set to a boolean, it enables/disables the highlighting using the
+        default width of 50 character. When set to an int, the assigned value
+        is used as the maximum character width.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>show-rev-graph</em> (bool)
 </dt>
 <dd>
@@ -907,6 +930,14 @@ Valid mixed values
 <p>
         Whether to show staged and unstaged changes in the main view.
         Can be toggled.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>show-line-numbers</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to show line numbers. Can be toggled.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1002,6 +1033,16 @@ Valid mixed values
         view when navigating the parent view. True by default.
 </p>
 </dd>
+<dt class="hdlist1">
+<em>editor-line-number</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to pass the selected line number to the editor command. The
+        line number is passed as <tt>+&lt;line-number&gt;</tt> in front of the file name.
+        Example: <tt>vim +10 tig.c</tt>
+</p>
+</dd>
 </dl></div>
 </div>
 </div>
@@ -1069,6 +1110,9 @@ character.
 <div class="paragraph"><p><strong>Enter</strong>, <strong>Space</strong>, <strong>Backspace</strong>, <strong>Tab</strong>, <strong>Escape</strong>, <strong>Left</strong>, <strong>Right</strong>, <strong>Up</strong>, <strong>Down</strong>,
 <strong>Insert</strong>, <strong>Delete</strong>, <strong>Hash</strong>, <strong>Home</strong>, <strong>End</strong>, <strong>PageUp</strong>, <strong>PageDown</strong>, <strong>F1</strong>, <strong>F2</strong>, <strong>F3</strong>,
 <strong>F4</strong>, <strong>F5</strong>, <strong>F6</strong>, <strong>F7</strong>, <strong>F8</strong>, <strong>F9</strong>, <strong>F10</strong>, <strong>F11</strong>, <strong>F12</strong>.</p></div>
+<div class="paragraph"><p>To add a key mapping that uses the Ctrl key, use a <tt>^</tt> prefix in your mapping.
+For example, Ctrl-f could be mapped to <strong>scroll-page-down</strong> with the following line:</p></div>
+<div class="paragraph"><p>bind main ^f scroll-page-down</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
 Action names
@@ -1084,10 +1128,15 @@ e.g. "view-main", "View.Main", and "VIEW_MAIN" are the same.
 </div></div>
 <div class="sect2">
 <h3 id="_actions">Actions</h3>
-<div class="paragraph"><p>Apart from the action names listed below, all actions starting with a <em>!</em> will
-be available as an external command. External commands can contain variable
-names that will be substituted before the command is run. Valid variable names
-are:</p></div>
+<div class="paragraph"><p>Apart from the action names listed below, all actions starting with a <em>!</em> or
+<em>:</em> are treated specially.</p></div>
+<div class="paragraph"><p>Actions beginning with a <em>:</em> will run an internal tig command.  These internal
+commands are those which you put in a configuration file or type at the tig
+prompt.  As an example, "bind generic S :source .tigrc" will source a .tigrc
+file in the current directory when <em>S</em> is pressed.</p></div>
+<div class="paragraph"><p>Actions beginning with a <em>!</em> will be available as an external command. External
+commands can contain variable names that will be substituted before the command
+is run. Valid variable names are:</p></div>
 <div class="tableblock">
 <table rules="none"
 width="100%"
@@ -1112,6 +1161,10 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><tt>%(branch)</tt></p></td>
 <td align="left" valign="top"><p class="table">The currently selected branch name.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(stash)</tt></p></td>
+<td align="left" valign="top"><p class="table">The currently selected stash name.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><tt>%(directory)</tt></p></td>
@@ -1503,6 +1556,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Toggle reference display</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><tt>toggle-files</tt></p></td>
+<td align="left" valign="top"><p class="table">Toggle file filtering for the diff and main views</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><tt>edit</tt></p></td>
 <td align="left" valign="top"><p class="table">Open in editor</p></td>
 </tr>
@@ -1569,13 +1626,17 @@ Color names
 <p>
         Valid colors include: <strong>white</strong>, <strong>black</strong>, <strong>green</strong>, <strong>magenta</strong>, <strong>blue</strong>,
         <strong>cyan</strong>, <strong>yellow</strong>, <strong>red</strong>, <strong>default</strong>. Use <strong>default</strong> to refer to the
-        default terminal colors. This is recommended for background colors if
-        you are using a terminal with a transparent background.
+        default terminal colors, for example, to keep the background
+        transparent when you are using a terminal with a transparent
+        background.
 </p>
-<div class="paragraph"><p>Colors can also be specified using the keywords color0, color1, &#8230;, colorN-1
-(N being the number of colors supported by your terminal). This is useful when
-you remap the colors for your display or want to enable colors supported by
-256-color terminals.</p></div>
+<div class="paragraph"><p>Colors can also be specified using the keywords <strong>color0</strong>, <strong>color1</strong>, &#8230;,
+<strong>colorN-1</strong> (where <strong>N</strong> is the number of colors supported by your terminal).
+This is useful when you remap the colors for your display or want to enable
+colors supported by 88-color and 256-color terminals. Note that the <em>color</em>
+prefix is optional. If you prefer, you can specify colors directly by their
+numbers <strong>0</strong>, <strong>1</strong>, &#8230;, <strong>N-1</strong> instead, just like in the configuration file of
+Git.</p></div>
 </dd>
 <dt class="hdlist1">
 Attribute names
@@ -1818,10 +1879,11 @@ Commit message
 <dd>
 <p>
 <tt>Signed-off-by</tt>, <tt>Acked-by</tt>, <tt>Reviewed-by</tt> and <tt>Tested-by</tt> lines are colorized.
+Characters in the commit title exceeding a predefined width can be highlighted.
 </p>
 </dd>
 </dl></div>
-<div class="paragraph"><p><strong>signoff</strong>, <strong>acked</strong>, <strong>reviewed</strong>, <strong>tested</strong></p></div>
+<div class="paragraph"><p><strong>signoff</strong>, <strong>acked</strong>, <strong>reviewed</strong>, <strong>tested</strong>, <strong>overflow</strong></p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
 Tree markup
@@ -1877,7 +1939,7 @@ and the <a href="http://jonas.nitro.dk/tig/manual.html">tig manual</a>.</p></div
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2012-10-12 08:51:18 EDT
+Last updated 2013-08-10 10:26:47 EDT
 </div>
 </div>
 </body>

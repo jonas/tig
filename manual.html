@@ -891,6 +891,14 @@ The stage view
 </p>
 </dd>
 <dt class="hdlist1">
+The stash view
+</dt>
+<dd>
+<p>
+        Displays the list of stashes in the repository.
+</p>
+</dd>
+<dt class="hdlist1">
 The pager view
 </dt>
 <dd>
@@ -947,6 +955,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">The currently selected branch name.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><tt>%(stash)</tt></p></td>
+<td align="left" valign="top"><p class="table">The currently selected stash name.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><tt>%(directory)</tt></p></td>
 <td align="left" valign="top"><p class="table">The current directory path in the tree view;
                          empty for the root directory.</p></td>
@@ -978,6 +990,54 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
+<div class="paragraph"><p>Example user-defined commands:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Allow to amend the last commit:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>bind generic + !git commit --amend</tt></pre>
+</div></div>
+</li>
+<li>
+<p>
+Copy commit ID to clipboard:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>bind generic 9 !@sh -c "echo -n %(commit) | xclip -selection c"</tt></pre>
+</div></div>
+</li>
+<li>
+<p>
+Add/edit notes for the current commit used during a review:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>bind generic T !git notes edit %(commit)</tt></pre>
+</div></div>
+</li>
+<li>
+<p>
+Enter git&#8217;s interactive add for fine-grained staging of file content:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>bind generic I !git add -i %(file)</tt></pre>
+</div></div>
+</li>
+<li>
+<p>
+Rebase current branch on top of the selected branch:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>bind branch 3 !git rebase -i %(branch)</tt></pre>
+</div></div>
+</li>
+</ul></div>
 </div>
 <div class="sect2">
 <h3 id="title-window">2.3. Title Windows</h3>
@@ -1128,6 +1188,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Switch to branch view.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table">y</p></td>
+<td align="left" valign="top"><p class="table">Switch to stash view.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table">h</p></td>
 <td align="left" valign="top"><p class="table">Switch to help view</p></td>
 </tr>
@@ -1242,7 +1306,7 @@ cellspacing="0" cellpadding="4">
          contain the content it had at last commit.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">Ctrl-u</p></td>
+<td align="left" valign="top"><p class="table">1</p></td>
 <td align="left" valign="top"><p class="table">Stage single diff line.</p></td>
 </tr>
 <tr>
@@ -1437,7 +1501,7 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">A</p></td>
-<td align="left" valign="top"><p class="table">Toggle author display on/off/abbreviated.</p></td>
+<td align="left" valign="top"><p class="table">Toggle author display on/off/abbreviated/email/email user name.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">g</p></td>
@@ -1458,6 +1522,15 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table">X</p></td>
 <td align="left" valign="top"><p class="table">Toggle commit ID display on/off</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">%</p></td>
+<td align="left" valign="top"><p class="table">Toggle file filtering in order to see the full diff instead of only
+         the diff concerning the currently selected file.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">$</p></td>
+<td align="left" valign="top"><p class="table">Toggle highlighting of commit title overflow.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">:</p></td>
@@ -1665,7 +1738,8 @@ accomplished using:</p></div>
 <div class="paragraph"><p>Bugs and feature requests can be reported using the issue tracker at
 <a href="https://github.com/jonas/tig/issues">https://github.com/jonas/tig/issues</a> or by mail to either the git mailing
 list or directly to the maintainer. Ensure that the word "tig" is in the
-subject.</p></div>
+subject. For other tig related questions please use Stack Overflow:
+<a href="http://stackoverflow.com/questions/tagged/tig">http://stackoverflow.com/questions/tagged/tig</a>.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -1722,6 +1796,11 @@ Git URL:     git://github.com/jonas/tig.git (master) or
 Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</a>
 </p>
 </li>
+<li>
+<p>
+Q&amp;A:         <a href="http://stackoverflow.com/questions/tagged/tig">http://stackoverflow.com/questions/tagged/tig</a>
+</p>
+</li>
 </ul></div>
 </div>
 </div>
@@ -1729,7 +1808,7 @@ Gitweb:      <a href="http://repo.or.cz/w/tig.git">http://repo.or.cz/w/tig.git</
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2012-10-12 08:51:18 EDT
+Last updated 2013-08-10 10:26:47 EDT
 </div>
 </div>
 </body>

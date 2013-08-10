@@ -2,12 +2,12 @@
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 10/12/2012
+.\"      Date: 08/10/2013
 .\"    Manual: Tig Manual
-.\"    Source: Tig 1.1
+.\"    Source: Tig 1.2
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "10/12/2012" "Tig 1\&.1" "Tig Manual"
+.TH "TIGRC" "5" "08/10/2013" "Tig 1\&.2" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -191,6 +191,12 @@ if found or default to 7\&. See git\-config(1) on how to set
 \fIcore\&.abbrev\fR\&.
 .RE
 .PP
+\fIdiff\-options\fR (string)
+.RS 4
+A space separate string of diff options to use in the diff view\&. git\-show(1) is used for formatting and always passes \-\-patch\-with\-stat\&. This option overrides any options specified in the TIG_DIFF_OPTS environment variable (described in
+\fBtig\fR(1)), but is itself overridden by diff flags given on the command line invocation\&.
+.RE
+.PP
 \fIblame\-options\fR (string)
 .RS 4
 A space separated string of extra blame options\&. Can be used for telling git\-blame(1) how to detect the origin of lines\&. The value is ignored when tig is started in blame mode and given blame options on the command line\&.
@@ -220,7 +226,7 @@ of the view width\&.
 Whether to read git\(cqs color settings\&. True by default\&.
 .RE
 .PP
-\fIshow\-author\fR (mixed) ["abbreviated" | "full" | bool]
+\fIshow\-author\fR (mixed) ["full", "abbreviated" | "email" | "email\-user" | bool]
 .RS 4
 How to display author names\&. If set to "abbreviated" author initials will be shown\&. Can be toggled\&.
 .RE
@@ -253,6 +259,11 @@ Whether to show commit IDs in the main view\&. Disabled by default\&. Can be tog
 option\&.
 .RE
 .PP
+\fItitle\-overflow\fR (mixed) [bool | int]
+.RS 4
+Whether to highlight text in commit titles exceeding a given width\&. When set to a boolean, it enables/disables the highlighting using the default width of 50 character\&. When set to an int, the assigned value is used as the maximum character width\&.
+.RE
+.PP
 \fIshow\-rev\-graph\fR (bool)
 .RS 4
 Whether to show revision graph in the main view on start\-up\&. Can be toggled\&. See also line\-graphics options\&.
@@ -261,6 +272,11 @@ Whether to show revision graph in the main view on start\-up\&. Can be toggled\&
 \fIshow\-changes\fR (bool)
 .RS 4
 Whether to show staged and unstaged changes in the main view\&. Can be toggled\&.
+.RE
+.PP
+\fIshow\-line\-numbers\fR (bool)
+.RS 4
+Whether to show line numbers\&. Can be toggled\&.
 .RE
 .PP
 \fIvertical\-split\fR (bool)
@@ -319,6 +335,14 @@ Wrap long lines\&. By default, lines are not wrapped\&. Not compatible with line
 \fIfocus\-child\fR (bool)
 .RS 4
 Whether to focus the child view when it is opened\&. When disabled the focus will remain in the parent view, avoiding reloads of the child view when navigating the parent view\&. True by default\&.
+.RE
+.PP
+\fIeditor\-line\-number\fR (bool)
+.RS 4
+Whether to pass the selected line number to the editor command\&. The line number is passed as
++<line\-number>
+in front of the file name\&. Example:
+vim +10 tig\&.c
 .RE
 .SH "BIND COMMAND"
 .sp
@@ -404,6 +428,10 @@ key, since the hash mark is used as a comment character\&.
 .RE
 .sp
 \fBEnter\fR, \fBSpace\fR, \fBBackspace\fR, \fBTab\fR, \fBEscape\fR, \fBLeft\fR, \fBRight\fR, \fBUp\fR, \fBDown\fR, \fBInsert\fR, \fBDelete\fR, \fBHash\fR, \fBHome\fR, \fBEnd\fR, \fBPageUp\fR, \fBPageDown\fR, \fBF1\fR, \fBF2\fR, \fBF3\fR, \fBF4\fR, \fBF5\fR, \fBF6\fR, \fBF7\fR, \fBF8\fR, \fBF9\fR, \fBF10\fR, \fBF11\fR, \fBF12\fR\&.
+.sp
+To add a key mapping that uses the Ctrl key, use a ^ prefix in your mapping\&. For example, Ctrl\-f could be mapped to \fBscroll\-page\-down\fR with the following line:
+.sp
+bind main ^f scroll\-page\-down
 .PP
 Action names
 .RS 4
@@ -415,7 +443,11 @@ interchangeably, e\&.g\&. "view\-main", "View\&.Main", and "VIEW_MAIN" are the s
 .RE
 .SS "Actions"
 .sp
-Apart from the action names listed below, all actions starting with a \fI!\fR will be available as an external command\&. External commands can contain variable names that will be substituted before the command is run\&. Valid variable names are:
+Apart from the action names listed below, all actions starting with a \fI!\fR or \fI:\fR are treated specially\&.
+.sp
+Actions beginning with a \fI:\fR will run an internal tig command\&. These internal commands are those which you put in a configuration file or type at the tig prompt\&. As an example, "bind generic S :source \&.tigrc" will source a \&.tigrc file in the current directory when \fIS\fR is pressed\&.
+.sp
+Actions beginning with a \fI!\fR will be available as an external command\&. External commands can contain variable names that will be substituted before the command is run\&. Valid variable names are:
 .sp
 .it 1 an-trap
 .nr an-no-space-flag 1
@@ -424,6 +456,7 @@ Apart from the action names listed below, all actions starting with a \fI!\fR wi
 .B Table\ \&1.\ \&Browsing state variables
 .TS
 tab(:);
+lt lt
 lt lt
 lt lt
 lt lt
@@ -462,6 +495,13 @@ T{
 T}:T{
 .sp
 The currently selected branch name\&.
+T}
+T{
+.sp
+%(stash)
+T}:T{
+.sp
+The currently selected stash name\&.
 T}
 T{
 .sp
@@ -1016,6 +1056,7 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1110,6 +1151,13 @@ Toggle reference display
 T}
 T{
 .sp
+toggle\-files
+T}:T{
+.sp
+Toggle file filtering for the diff and main views
+T}
+T{
+.sp
 edit
 T}:T{
 .sp
@@ -1198,9 +1246,21 @@ Valid colors include:
 \fBred\fR,
 \fBdefault\fR\&. Use
 \fBdefault\fR
-to refer to the default terminal colors\&. This is recommended for background colors if you are using a terminal with a transparent background\&.
+to refer to the default terminal colors, for example, to keep the background transparent when you are using a terminal with a transparent background\&.
 .sp
-Colors can also be specified using the keywords color0, color1, \&..., colorN\-1 (N being the number of colors supported by your terminal)\&. This is useful when you remap the colors for your display or want to enable colors supported by 256\-color terminals\&.
+Colors can also be specified using the keywords
+\fBcolor0\fR,
+\fBcolor1\fR, \&...,
+\fBcolorN\-1\fR
+(where
+\fBN\fR
+is the number of colors supported by your terminal)\&. This is useful when you remap the colors for your display or want to enable colors supported by 88\-color and 256\-color terminals\&. Note that the
+\fIcolor\fR
+prefix is optional\&. If you prefer, you can specify colors directly by their numbers
+\fB0\fR,
+\fB1\fR, \&...,
+\fBN\-1\fR
+instead, just like in the configuration file of Git\&.
 .RE
 .PP
 Attribute names
@@ -1525,10 +1585,10 @@ Acked\-by,
 Reviewed\-by
 and
 Tested\-by
-lines are colorized\&.
+lines are colorized\&. Characters in the commit title exceeding a predefined width can be highlighted\&.
 .RE
 .sp
-\fBsignoff\fR, \fBacked\fR, \fBreviewed\fR, \fBtested\fR
+\fBsignoff\fR, \fBacked\fR, \fBreviewed\fR, \fBtested\fR, \fBoverflow\fR
 .PP
 Tree markup
 .RS 4
