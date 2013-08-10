@@ -237,10 +237,10 @@ mkmode(mode_t mode)
 		return "----------";
 }
 
-static char *
+static const char *
 get_temp_dir(void)
 {
-	static char *tmp;
+	static const char *tmp;
 
 	if (tmp)
 		return tmp;
@@ -251,9 +251,6 @@ get_temp_dir(void)
 		tmp = getenv("TEMP");
 	if (!tmp)
 		tmp = getenv("TMP");
-
-	if (tmp)
-		tmp = strdup(tmp);
 	if (!tmp)
 		tmp = "/tmp";
 
