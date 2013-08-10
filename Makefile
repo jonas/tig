@@ -81,10 +81,11 @@ install-doc-man: doc-man
 		 $(DESTDIR)$(mandir)/man7
 	for doc in $(MANDOC); do \
 		sed 's#++SYSCONFDIR++#$(sysconfdir)#' < "$$doc" > "$$doc+"; \
+		bdoc=$$(basename $$doc); \
 		case "$$doc" in \
-		*.1) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man1/$$doc" ;; \
-		*.5) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man5/$$doc" ;; \
-		*.7) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man7/$$doc" ;; \
+		*.1) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man1/$$bdoc" ;; \
+		*.5) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man5/$$bdoc" ;; \
+		*.7) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man7/$$bdoc" ;; \
 		esac; \
 		$(RM) "$$doc+"; \
 	done
