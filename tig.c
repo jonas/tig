@@ -4380,28 +4380,33 @@ pager_select(struct view *view, struct line *line)
 }
 
 struct log_state {
-	/* Indicates that we need to recalculate the previous commit,
-	 * for example when the user scrolls up or uses the page up/down
-	 * in the log view. */
-	bool recalculate_commit_context;
+	/* Used for tracking when we need to recalculate the previous
+	 * commit, for example when the user scrolls up or uses the page
+	 * up/down in the log view. */
+	int last_lineno;
+	enum line_type last_type;
 };
 
 static void
 log_select(struct view *view, struct line *line)
 {
 	struct log_state *state = view->private;
+	int last_lineno = state->last_lineno;
 
-	if (state->recalculate_commit_context && line->lineno > 1) {
+	if (!last_lineno || abs(last_lineno - line->lineno) > 1
+	    || (state->last_type == LINE_COMMIT && last_lineno > line->lineno)) {
 		const struct line *commit_line = find_prev_line_by_type(view, line, LINE_COMMIT);
 
 		if (commit_line)
 			string_copy_rev_from_commit_line(view->ref, commit_line->data);
 	}
+
 	if (line->type == LINE_COMMIT && !view_has_flags(view, VIEW_NO_REF)) {
-			string_copy_rev_from_commit_line(view->ref, (char *)line->data);
+		string_copy_rev_from_commit_line(view->ref, (char *)line->data);
 	}
 	string_copy_rev(ref_commit, view->ref);
-	state->recalculate_commit_context = FALSE;
+	state->last_lineno = line->lineno;
+	state->last_type = line->type;
 }
 
 static bool
@@ -4447,24 +4452,11 @@ log_open(struct view *view, enum open_flags flags)
 static enum request
 log_request(struct view *view, enum request request, struct line *line)
 {
-	struct log_state *state = view->private;
-
 	switch (request) {
 	case REQ_REFRESH:
 		load_refs();
 		refresh_view(view);
 		return REQ_NONE;
-
-	case REQ_MOVE_UP:
-	case REQ_PREVIOUS:
-		if (line->type == LINE_COMMIT && line->lineno > 1)
-			state->recalculate_commit_context = TRUE;
-		return request;
-
-	case REQ_MOVE_PAGE_UP:
-	case REQ_MOVE_PAGE_DOWN:
-		state->recalculate_commit_context = TRUE;
-		return request;
 
 	case REQ_ENTER:
 		if (!display[1] || strcmp(display[1]->vid, view->ref))
