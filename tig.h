@@ -72,10 +72,12 @@
 #elif defined HAVE_CURSES_H
 #  include <curses.h>
 #else
+#ifdef WARN_MISSING_CURSES_CONFIGURATION
 #  warning SysV or X/Open-compatible Curses installation is required.
 #  warning Will assume Curses is found in default include and library path.
 #  warning To fix any build issues please use autotools to configure Curses.
 #  warning See INSTALL file for instructions.
+#endif
 #  include <curses.h>
 #endif
 

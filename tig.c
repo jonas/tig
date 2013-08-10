@@ -11,6 +11,8 @@
  * GNU General Public License for more details.
  */
 
+#define WARN_MISSING_CURSES_CONFIGURATION
+
 #include "tig.h"
 #include "io.h"
 #include "refs.h"
