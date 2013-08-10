@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2010 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2013 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -86,11 +86,11 @@ graph_add_parent(struct graph *graph, const char *parent)
 static bool
 graph_needs_expansion(struct graph *graph)
 {
-	if (graph->position + graph->parents.size > graph->row.size)
-		return TRUE;
+	return graph->position + graph->parents.size > graph->row.size;
+#if 0
 	return graph->parents.size > 1
-	    && graph->position < 0
 	    && graph->expanded < graph->parents.size;
+#endif
 }
 
 static bool
@@ -408,3 +408,5 @@ graph_symbol_to_ascii(struct graph_symbol *symbol)
 
 	return "  ";
 }
+
+/* vim: set ts=8 sw=8 noexpandtab: */

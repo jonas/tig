@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export WARNINGS=all
+export WARNINGS="all"
 set -e
 
 # Ideally, we could just do this:

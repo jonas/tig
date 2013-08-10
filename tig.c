@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2012 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2013 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -11,13 +11,15 @@
  * GNU General Public License for more details.
  */
 
+#define WARN_MISSING_CURSES_CONFIGURATION
+
 #include "tig.h"
 #include "io.h"
 #include "refs.h"
 #include "graph.h"
 #include "git.h"
 
-static void __NORETURN die(const char *err, ...) PRINTF_LIKE(1, 2);
+static void TIG_NORETURN die(const char *err, ...) PRINTF_LIKE(1, 2);
 static void warn(const char *msg, ...) PRINTF_LIKE(1, 2);
 static void report(const char *msg, ...) PRINTF_LIKE(1, 2);
 #define report_clear() report("%s", "")
@@ -124,9 +126,28 @@ mkdate(const struct time *time, enum date date)
 #define AUTHOR_ENUM(_) \
 	_(AUTHOR, NO), \
 	_(AUTHOR, FULL), \
-	_(AUTHOR, ABBREVIATED)
+	_(AUTHOR, ABBREVIATED), \
+	_(AUTHOR, EMAIL), \
+	_(AUTHOR, EMAIL_USER)
 
 DEFINE_ENUM(author, AUTHOR_ENUM);
+
+struct ident {
+	const char *name;
+	const char *email;
+};
+
+static const struct ident unknown_ident = { "Unknown", "unknown@localhost" };
+
+static inline int
+ident_compare(const struct ident *i1, const struct ident *i2)
+{
+	if (!i1 || !i2)
+		return (!!i1) - (!!i2);
+	if (!i1->name || !i2->name)
+		return (!!i1->name) - (!!i2->name);
+	return strcmp(i1->name, i2->name);
+}
 
 static const char *
 get_author_initials(const char *author)
@@ -171,19 +192,34 @@ get_author_initials(const char *author)
 	return initials;
 }
 
+static const char *
+get_email_user(const char *email)
+{
+	static char user[AUTHOR_WIDTH * 6 + 1];
+	const char *end = strchr(email, '@');
+	int length = end ? end - email : strlen(email);
+
+	string_format(user, "%.*s%c", length, email, 0);
+	return user;
+}
+
 #define author_trim(cols) (cols == 0 || cols > 10)
 
 static const char *
-mkauthor(const char *text, int cols, enum author author)
+mkauthor(const struct ident *ident, int cols, enum author author)
 {
 	bool trim = author_trim(cols);
 	bool abbreviate = author == AUTHOR_ABBREVIATED || !trim;
 
-	if (author == AUTHOR_NO)
+	if (author == AUTHOR_NO || !ident)
 		return "";
-	if (abbreviate && text)
-		return get_author_initials(text);
-	return text;
+	if (author == AUTHOR_EMAIL && ident->email)
+		return ident->email;
+	if (author == AUTHOR_EMAIL_USER && ident->email)
+		return get_email_user(ident->email);
+	if (abbreviate && ident->name)
+		return get_author_initials(ident->name);
+	return ident->name;
 }
 
 static const char *
@@ -201,6 +237,26 @@ mkmode(mode_t mode)
 		return "-rw-r--r--";
 	else
 		return "----------";
+}
+
+static const char *
+get_temp_dir(void)
+{
+	static const char *tmp;
+
+	if (tmp)
+		return tmp;
+
+	if (!tmp)
+		tmp = getenv("TMPDIR");
+	if (!tmp)
+		tmp = getenv("TEMP");
+	if (!tmp)
+		tmp = getenv("TMP");
+	if (!tmp)
+		tmp = "/tmp";
+
+	return tmp;
 }
 
 #define FILENAME_ENUM(_) \
@@ -237,7 +293,8 @@ DEFINE_ENUM(commit_order, COMMIT_ORDER_ENUM);
 	_(HELP,   help,   ""), \
 	_(PAGER,  pager,  ""), \
 	_(STATUS, status, "status"), \
-	_(STAGE,  stage,  ref_status)
+	_(STAGE,  stage,  ref_status), \
+	_(STASH,  stash,  ref_stash)
 
 static struct encoding *
 get_path_encoding(const char *path, struct encoding *default_encoding)
@@ -331,6 +388,8 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 	REQ_(TOGGLE_IGNORE_SPACE,	"Toggle ignoring whitespace in diffs"), \
 	REQ_(TOGGLE_COMMIT_ORDER,	"Toggle commit ordering"), \
 	REQ_(TOGGLE_ID,		"Toggle commit ID display"), \
+	REQ_(TOGGLE_FILES,	"Toggle file filtering"), \
+	REQ_(TOGGLE_TITLE_OVERFLOW,	"Toggle highlighting of commit title overflow"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
@@ -437,6 +496,7 @@ static char opt_prefix[SIZEOF_STR]	= "";
 static char opt_git_dir[SIZEOF_STR]	= "";
 static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
+static bool opt_editor_lineno		= TRUE;
 static FILE *opt_tty			= NULL;
 static const char **opt_diff_argv	= NULL;
 static const char **opt_rev_argv	= NULL;
@@ -445,6 +505,12 @@ static const char **opt_blame_argv	= NULL;
 static int opt_lineno			= 0;
 static bool opt_show_id			= FALSE;
 static int opt_id_cols			= ID_WIDTH;
+static bool opt_file_filter		= TRUE;
+static bool opt_show_title_overflow	= FALSE;
+static int opt_title_overflow		= 50;
+static char opt_env_lines[64]		= "";
+static char opt_env_columns[64]		= "";
+static char *opt_env[]			= { opt_env_lines, opt_env_columns, NULL };
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
@@ -526,6 +592,9 @@ LINE(PP_DATE,	   "Date:   ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(PP_ADATE,	   "AuthorDate: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(PP_CDATE,	   "CommitDate: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
 LINE(PP_REFS,	   "Refs: ",		COLOR_RED,	COLOR_DEFAULT,	0), \
+LINE(PP_REFLOG,	   "Reflog: ",		COLOR_RED,	COLOR_DEFAULT,	0), \
+LINE(PP_REFLOGMSG, "Reflog message: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
+LINE(STASH,	   "stash@{",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(COMMIT,	   "commit ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
 LINE(PARENT,	   "parent ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(TREE,	   "tree ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
@@ -542,7 +611,8 @@ LINE(DELIMITER,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(DATE,         "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
 LINE(MODE,         "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(ID,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(FILENAME,   "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
+LINE(OVERFLOW,	   "",			COLOR_RED,	COLOR_DEFAULT,	0), \
+LINE(FILENAME,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(LINE_NUMBER,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(TITLE_BLUR,   "",			COLOR_WHITE,	COLOR_BLUE,	0), \
 LINE(TITLE_FOCUS,  "",			COLOR_WHITE,	COLOR_BLUE,	A_BOLD), \
@@ -781,6 +851,7 @@ struct line {
 	unsigned int dont_free:1;
 	unsigned int wrapped:1;
 
+	unsigned int user_flags:6;
 	void *data;		/* User data */
 };
 
@@ -807,6 +878,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'h',		REQ_VIEW_HELP },
 	{ 'S',		REQ_VIEW_STATUS },
 	{ 'c',		REQ_VIEW_STAGE },
+	{ 'y',		REQ_VIEW_STASH },
 
 	/* View manipulation */
 	{ 'q',		REQ_VIEW_CLOSE },
@@ -878,6 +950,8 @@ static struct keybinding default_keybindings[] = {
 	{ 'i',		REQ_TOGGLE_SORT_FIELD },
 	{ 'W',		REQ_TOGGLE_IGNORE_SPACE },
 	{ 'X',		REQ_TOGGLE_ID },
+	{ '%',		REQ_TOGGLE_FILES },
+	{ '$',		REQ_TOGGLE_TITLE_OVERFLOW },
 	{ ':',		REQ_PROMPT },
 	{ 'e',		REQ_EDIT },
 };
@@ -1012,6 +1086,8 @@ get_key_value(const char *name)
 		if (!strcasecmp(key_table[i].name, name))
 			return key_table[i].value;
 
+	if (strlen(name) == 3 && name[0] == '^' && name[1] == '[' && isprint(*name))
+		return (int)name[2] + 0x80;
 	if (strlen(name) == 2 && name[0] == '^' && isprint(*name))
 		return (int)name[1] & 0x1f;
 	if (strlen(name) == 1 && isprint(*name))
@@ -1120,6 +1196,7 @@ enum run_request_flag {
 	RUN_REQUEST_SILENT	= 2,
 	RUN_REQUEST_CONFIRM	= 4,
 	RUN_REQUEST_EXIT	= 8,
+	RUN_REQUEST_INTERNAL	= 16,
 };
 
 struct run_request {
@@ -1129,6 +1206,7 @@ struct run_request {
 	bool silent;
 	bool confirm;
 	bool exit;
+	bool internal;
 };
 
 static struct run_request *run_request;
@@ -1155,6 +1233,7 @@ add_run_request(struct keymap *keymap, int key, const char **argv, enum run_requ
 	req->silent = flags & RUN_REQUEST_SILENT;
 	req->confirm = flags & RUN_REQUEST_CONFIRM;
 	req->exit = flags & RUN_REQUEST_EXIT;
+	req->internal = flags & RUN_REQUEST_INTERNAL;
 	req->keymap = keymap;
 	req->key = key;
 
@@ -1177,11 +1256,13 @@ add_builtin_run_requests(void)
 	const char *checkout[] = { "git", "checkout", "%(branch)", NULL };
 	const char *commit[] = { "git", "commit", NULL };
 	const char *gc[] = { "git", "gc", NULL };
+	const char *stash_pop[] = { "git", "stash", "pop", "%(stash)", NULL };
 
 	add_run_request(get_keymap("main"), 'C', cherry_pick, RUN_REQUEST_CONFIRM);
 	add_run_request(get_keymap("status"), 'C', commit, RUN_REQUEST_DEFAULT);
 	add_run_request(get_keymap("branch"), 'C', checkout, RUN_REQUEST_CONFIRM);
 	add_run_request(get_keymap("generic"), 'G', gc, RUN_REQUEST_CONFIRM);
+	add_run_request(get_keymap("stash"), 'P', stash_pop, RUN_REQUEST_CONFIRM);
 }
 
 /*
@@ -1206,7 +1287,8 @@ add_builtin_run_requests(void)
 	OPT_ERR_(UNKNOWN_REQUEST_NAME, "Unknown request name"), \
 	OPT_ERR_(UNKNOWN_VARIABLE_NAME, "Unknown variable name"), \
 	OPT_ERR_(UNMATCHED_QUOTATION, "Unmatched quotation"), \
-	OPT_ERR_(WRONG_NUMBER_OF_ARGUMENTS, "Wrong number of arguments"),
+	OPT_ERR_(WRONG_NUMBER_OF_ARGUMENTS, "Wrong number of arguments"), \
+	OPT_ERR_(HOME_UNRESOLVABLE, "HOME environment variable could not be resolved"),
 
 enum option_code {
 #define OPT_ERR_(name, msg) OPT_ERR_ ## name
@@ -1408,7 +1490,7 @@ parse_encoding(struct encoding **encoding_ref, const char *arg, bool priority)
 static enum option_code
 parse_args(const char ***args, const char *argv[])
 {
-	if (*args == NULL && !argv_copy(args, argv))
+	if (!argv_copy(args, argv))
 		return OPT_ERR_OUT_OF_MEMORY;
 	return OPT_OK;
 }
@@ -1425,6 +1507,9 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "blame-options"))
 		return parse_args(&opt_blame_argv, argv + 2);
+
+	if (!strcmp(argv[0], "diff-options"))
+		return parse_args(&opt_diff_argv, argv + 2);
 
 	if (argc != 3)
 		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
@@ -1537,6 +1622,31 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "id-width"))
 		return parse_id(&opt_id_cols, argv[2]);
 
+	if (!strcmp(argv[0], "title-overflow")) {
+		bool matched;
+		enum option_code code;
+
+		/*
+		 * "title-overflow" is considered a boolint.
+		 * We try to parse it as a boolean (and set the value to 50 if true),
+		 * otherwise we parse it as an integer and use the given value.
+		 */
+		code = parse_bool_matched(&opt_show_title_overflow, argv[2], &matched);
+		if (code == OPT_OK && matched) {
+			if (opt_show_title_overflow)
+				opt_title_overflow = 50;
+		} else {
+			code = parse_int(&opt_title_overflow, argv[2], 2, 1024);
+			if (code == OPT_OK)
+				opt_show_title_overflow = TRUE;
+		}
+
+		return code;
+	}
+
+	if (!strcmp(argv[0], "editor-line-number"))
+		return parse_bool(&opt_editor_lineno, argv[2]);
+
 	return OPT_ERR_UNKNOWN_VARIABLE_NAME;
 }
 
@@ -1573,27 +1683,35 @@ option_bind_command(int argc, const char *argv[])
 			return OPT_ERR_OBSOLETE_REQUEST_NAME;
 		}
 	}
-	if (request == REQ_UNKNOWN && *argv[2]++ == '!') {
-		enum run_request_flag flags = RUN_REQUEST_FORCE;
 
-		while (*argv[2]) {
-			if (*argv[2] == '@') {
-				flags |= RUN_REQUEST_SILENT;
-			} else if (*argv[2] == '?') {
-				flags |= RUN_REQUEST_CONFIRM;
-			} else if (*argv[2] == '<') {
-				flags |= RUN_REQUEST_EXIT;
-			} else {
-				break;
+	if (request == REQ_UNKNOWN) {
+		char first = *argv[2]++;
+
+		if (first == '!') {
+			enum run_request_flag flags = RUN_REQUEST_FORCE;
+
+			while (*argv[2]) {
+				if (*argv[2] == '@') {
+					flags |= RUN_REQUEST_SILENT;
+				} else if (*argv[2] == '?') {
+					flags |= RUN_REQUEST_CONFIRM;
+				} else if (*argv[2] == '<') {
+					flags |= RUN_REQUEST_EXIT;
+				} else {
+					break;
+				}
+				argv[2]++;
 			}
-			argv[2]++;
-		}
 
-		return add_run_request(keymap, key, argv + 2, flags)
-			? OPT_OK : OPT_ERR_OUT_OF_MEMORY;
+			return add_run_request(keymap, key, argv + 2, flags)
+				? OPT_OK : OPT_ERR_OUT_OF_MEMORY;
+		} else if (first == ':') {
+			return add_run_request(keymap, key, argv + 2, RUN_REQUEST_FORCE | RUN_REQUEST_INTERNAL)
+				? OPT_OK : OPT_ERR_OUT_OF_MEMORY;
+		} else {
+			return OPT_ERR_UNKNOWN_REQUEST_NAME;
+		}
 	}
-	if (request == REQ_UNKNOWN)
-		return OPT_ERR_UNKNOWN_REQUEST_NAME;
 
 	add_keybinding(keymap, request, key);
 
@@ -1683,10 +1801,19 @@ load_option_file(const char *path)
 {
 	struct config_state config = { path, 0, FALSE };
 	struct io io;
+	char buf[SIZEOF_STR];
 
 	/* Do not read configuration from stdin if set to "" */
 	if (!path || !strlen(path))
 		return OPT_OK;
+
+	if (!prefixcmp(path, "~/")) {
+		const char *home = getenv("HOME");
+
+		if (!home || !string_format(buf, "%s/%s", home, path + 2))
+			return OPT_ERR_HOME_UNRESOLVABLE;
+		path = buf;
+	}
 
 	/* It's OK that the file doesn't exist. */
 	if (!io_open(&io, "%s", path))
@@ -1701,29 +1828,26 @@ load_option_file(const char *path)
 static int
 load_options(void)
 {
-	const char *home = getenv("HOME");
 	const char *tigrc_user = getenv("TIGRC_USER");
 	const char *tigrc_system = getenv("TIGRC_SYSTEM");
 	const char *tig_diff_opts = getenv("TIG_DIFF_OPTS");
-	char buf[SIZEOF_STR];
+	const bool diff_opts_from_args = !!opt_diff_argv;
 
 	if (!tigrc_system)
 		tigrc_system = SYSCONFDIR "/tigrc";
 	load_option_file(tigrc_system);
 
-	if (!tigrc_user) {
-		if (!home || !string_format(buf, "%s/.tigrc", home))
-			return ERR;
-		tigrc_user = buf;
-	}
+	if (!tigrc_user)
+		tigrc_user = "~/.tigrc";
 	load_option_file(tigrc_user);
 
 	/* Add _after_ loading config files to avoid adding run requests
 	 * that conflict with keybindings. */
 	add_builtin_run_requests();
 
-	if (!opt_diff_argv && tig_diff_opts && *tig_diff_opts) {
+	if (!diff_opts_from_args && tig_diff_opts && *tig_diff_opts) {
 		static const char *diff_opts[SIZEOF_ARG] = { NULL };
+		char buf[SIZEOF_STR];
 		int argc = 0;
 
 		if (!string_format(buf, "%s", tig_diff_opts) ||
@@ -1763,6 +1887,7 @@ static char ref_commit[SIZEOF_REF]	= "HEAD";
 static char ref_head[SIZEOF_REF]	= "HEAD";
 static char ref_branch[SIZEOF_REF]	= "";
 static char ref_status[SIZEOF_STR]	= "";
+static char ref_stash[SIZEOF_REF]	= "";
 
 enum view_flag {
 	VIEW_NO_FLAGS = 0,
@@ -1776,6 +1901,7 @@ enum view_flag {
 	VIEW_DIFF_LIKE		= 1 << 7,
 	VIEW_STDIN		= 1 << 8,
 	VIEW_SEND_CHILD_ENTER	= 1 << 9,
+	VIEW_FILE_FILTER	= 1 << 10,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))
@@ -1825,6 +1951,7 @@ struct view {
 	enum line_type curtype;	/* Attribute currently used for drawing. */
 	unsigned long col;	/* Column when drawing. */
 	bool has_scrolled;	/* View was scrolled. */
+	bool force_redraw;	/* Whether to force a redraw after reading. */
 
 	/* Loading */
 	const char **argv;	/* Shell command arguments. */
@@ -1943,7 +2070,6 @@ static bool
 draw_chars(struct view *view, enum line_type type, const char *string,
 	   int max_len, bool use_tilde)
 {
-	static char out_buffer[BUFSIZ * 2];
 	int len = 0;
 	int col = 0;
 	int trimmed = FALSE;
@@ -1952,32 +2078,16 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 	if (max_len <= 0)
 		return VIEW_MAX_LEN(view) <= 0;
 
+	if (opt_iconv_out != ICONV_NONE) {
+		string = encoding_iconv(opt_iconv_out, string);
+		if (!string)
+			return VIEW_MAX_LEN(view) <= 0;
+	}
+
 	len = utf8_length(&string, skip, &col, max_len, &trimmed, use_tilde, opt_tab_size);
 
 	set_view_attr(view, type);
 	if (len > 0) {
-		if (opt_iconv_out != ICONV_NONE) {
-			size_t inlen = len + 1;
-			char *instr = calloc(1, inlen);
-			ICONV_CONST char *inbuf = (ICONV_CONST char *) instr;
-			if (!instr)
-			    return VIEW_MAX_LEN(view) <= 0;
-
-			strncpy(instr, string, len);
-
-			char *outbuf = out_buffer;
-			size_t outlen = sizeof(out_buffer);
-
-			size_t ret;
-
-			ret = iconv(opt_iconv_out, &inbuf, &inlen, &outbuf, &outlen);
-			if (ret != (size_t) -1) {
-				string = out_buffer;
-				len = sizeof(out_buffer) - outlen;
-			}
-			free(instr);
-		}
-
 		waddnstr(view->win, string, len);
 
 		if (trimmed && use_tilde) {
@@ -2010,20 +2120,49 @@ draw_space(struct view *view, enum line_type type, int max, int spaces)
 }
 
 static bool
-draw_text(struct view *view, enum line_type type, const char *string)
+draw_text_expanded(struct view *view, enum line_type type, const char *string, int max_len, bool use_tilde)
 {
 	static char text[SIZEOF_STR];
 
 	do {
 		size_t pos = string_expand(text, sizeof(text), string, opt_tab_size);
 
-		if (draw_chars(view, type, text, VIEW_MAX_LEN(view), TRUE))
+		if (draw_chars(view, type, text, max_len, use_tilde))
 			return TRUE;
 		string += pos;
 	} while (*string);
 
 	return VIEW_MAX_LEN(view) <= 0;
 }
+
+static bool
+draw_text(struct view *view, enum line_type type, const char *string)
+{
+	return draw_text_expanded(view, type, string, VIEW_MAX_LEN(view), TRUE);
+}
+
+static bool
+draw_text_overflow(struct view *view, const char *text, bool on, int overflow, enum line_type type)
+{
+	if (on) {
+		int max = MIN(VIEW_MAX_LEN(view), overflow);
+		int len = strlen(text);
+
+		if (draw_text_expanded(view, type, text, max, max < overflow))
+			return TRUE;
+
+		text = len > overflow ? text + overflow : "";
+		type = LINE_OVERFLOW;
+	}
+
+	if (*text && draw_text(view, type, text))
+		return TRUE;
+
+	return VIEW_MAX_LEN(view) <= 0;
+}
+
+#define draw_commit_title(view, text, offset) \
+	draw_text_overflow(view, text, opt_show_title_overflow, opt_title_overflow + offset, LINE_DEFAULT)
 
 static bool PRINTF_LIKE(3, 4)
 draw_formatted(struct view *view, enum line_type type, const char *format, ...)
@@ -2087,7 +2226,7 @@ draw_date(struct view *view, struct time *time)
 }
 
 static bool
-draw_author(struct view *view, const char *author)
+draw_author(struct view *view, const struct ident *author)
 {
 	bool trim = author_trim(opt_author_width);
 	const char *text = mkauthor(author, opt_author_width, opt_author);
@@ -2099,9 +2238,18 @@ draw_author(struct view *view, const char *author)
 }
 
 static bool
-draw_id(struct view *view, enum line_type type, const char *id)
+draw_id_custom(struct view *view, enum line_type type, const char *id, int width)
 {
-	return draw_field(view, type, id, opt_id_cols, FALSE);
+	return draw_field(view, type, id, width, FALSE);
+}
+
+static bool
+draw_id(struct view *view, const char *id)
+{
+	if (!opt_show_id)
+		return FALSE;
+
+	return draw_id_custom(view, LINE_ID, id, opt_id_cols);
 }
 
 static bool
@@ -2358,6 +2506,8 @@ resize_display(void)
 	/* Setup window dimensions */
 
 	getmaxyx(stdscr, base->height, base->width);
+	string_format(opt_env_columns, "COLUMNS=%d", base->width);
+	string_format(opt_env_lines, "LINES=%d", base->height);
 
 	/* Make room for the status window. */
 	base->height -= 1;
@@ -2445,8 +2595,8 @@ redraw_display(bool clear)
 
 #define TOGGLE_MENU \
 	TOGGLE_(LINENO,    '.', "line numbers",      &opt_line_number, NULL) \
-	TOGGLE_(DATE,      'D', "dates",             &opt_date,	  date_map) \
-	TOGGLE_(AUTHOR,    'A', "author names",      &opt_author, author_map) \
+	TOGGLE_(DATE,      'D', "dates",             &opt_date,	date_map) \
+	TOGGLE_(AUTHOR,    'A', "author",            &opt_author, author_map) \
 	TOGGLE_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map) \
 	TOGGLE_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL) \
 	TOGGLE_(FILENAME,  '#', "file names",        &opt_filename, filename_map) \
@@ -2454,17 +2604,19 @@ redraw_display(bool clear)
 	TOGGLE_(COMMIT_ORDER, 'l', "commit order",   &opt_commit_order, commit_order_map) \
 	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL) \
 	TOGGLE_(CHANGES,   'C', "local change display", &opt_show_changes, NULL) \
-	TOGGLE_(ID,        'X', "commit ID display", &opt_show_id, NULL)
+	TOGGLE_(ID,        'X', "commit ID display", &opt_show_id, NULL) \
+	TOGGLE_(FILES,     '%', "file filtering",    &opt_file_filter, NULL) \
+	TOGGLE_(TITLE_OVERFLOW, '$', "commit title overflow display", &opt_show_title_overflow, NULL) \
 
 static bool
-toggle_option(enum request request)
+toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
 {
 	const struct {
 		enum request request;
 		const struct enum_map *map;
 		size_t map_size;
 	} data[] = {
-#define TOGGLE_(id, key, help, value, map) { REQ_TOGGLE_ ## id, map, ARRAY_SIZE(map) },
+#define TOGGLE_(id, key, help, value, map) { REQ_TOGGLE_ ## id, map, (map != NULL ? ARRAY_SIZE(map) : 0) },
 		TOGGLE_MENU
 #undef	TOGGLE_
 	};
@@ -2492,24 +2644,29 @@ toggle_option(enum request request)
 		*opt = (*opt + 1) % data[i].map_size;
 		if (data[i].map == ignore_space_map) {
 			update_ignore_space_arg();
-			report("Ignoring %s %s", enum_name(data[i].map[*opt]), menu[i].text);
+			string_format_size(msg, SIZEOF_STR,
+				"Ignoring %s %s", enum_name(data[i].map[*opt]), menu[i].text);
 			return TRUE;
 
 		} else if (data[i].map == commit_order_map) {
 			update_commit_order_arg();
-			report("Using %s %s", enum_name(data[i].map[*opt]), menu[i].text);
+			string_format_size(msg, SIZEOF_STR,
+				"Using %s %s", enum_name(data[i].map[*opt]), menu[i].text);
 			return TRUE;
 		}
 
-		redraw_display(FALSE);
-		report("Displaying %s %s", enum_name(data[i].map[*opt]), menu[i].text);
+		string_format_size(msg, SIZEOF_STR,
+			"Displaying %s %s", enum_name(data[i].map[*opt]), menu[i].text);
 
 	} else {
 		bool *option = menu[i].data;
 
 		*option = !*option;
-		redraw_display(FALSE);
-		report("%sabling %s", *option ? "En" : "Dis", menu[i].text);
+		string_format_size(msg, SIZEOF_STR,
+			"%sabling %s", *option ? "En" : "Dis", menu[i].text);
+
+		if (option == &opt_file_filter)
+			return TRUE;
 	}
 
 	return FALSE;
@@ -2762,8 +2919,7 @@ grep_text(struct view *view, const char *text[])
 	size_t i;
 
 	for (i = 0; text[i]; i++)
-		if (*text[i] &&
-		    regexec(view->regex, text[i], 1, &pmatch, 0) != REG_NOMATCH)
+		if (*text[i] && !regexec(view->regex, text[i], 1, &pmatch, 0))
 			return TRUE;
 	return FALSE;
 }
@@ -2898,8 +3054,15 @@ reset_view(struct view *view)
 	view->update_secs = 0;
 }
 
-static const char *
-format_arg(const char *name)
+struct format_context {
+	struct view *view;
+	char buf[SIZEOF_STR];
+	size_t bufpos;
+	bool file_filter;
+};
+
+static bool
+format_expand_arg(struct format_context *format, const char *name)
 {
 	static struct {
 		const char *name;
@@ -2916,79 +3079,107 @@ format_arg(const char *name)
 		FORMAT_VAR("%(commit)",		ref_commit,	""),
 		FORMAT_VAR("%(blob)",		ref_blob,	""),
 		FORMAT_VAR("%(branch)",		ref_branch,	""),
+		FORMAT_VAR("%(stash)",		ref_stash,	""),
 	};
 	int i;
 
-	if (!prefixcmp(name, "%(prompt"))
-		return read_prompt("Command argument: ");
+	if (!prefixcmp(name, "%(prompt)")) {
+		const char *value = read_prompt("Command argument: ");
 
-	for (i = 0; i < ARRAY_SIZE(vars); i++)
-		if (!strncmp(name, vars[i].name, vars[i].namelen))
-			return *vars[i].value ? vars[i].value : vars[i].value_if_empty;
+		return string_format_from(format->buf, &format->bufpos, "%s", value);
+	}
+
+	for (i = 0; i < ARRAY_SIZE(vars); i++) {
+		const char *value;
+
+		if (strncmp(name, vars[i].name, vars[i].namelen))
+			continue;
+
+		if (vars[i].value == opt_file && !format->file_filter)
+			return TRUE;
+
+		value = *vars[i].value ? vars[i].value : vars[i].value_if_empty;
+		if (!*value)
+			return TRUE;
+
+		return string_format_from(format->buf, &format->bufpos, "%s", value);
+	}
 
 	report("Unknown replacement: `%s`", name);
 	return NULL;
 }
 
 static bool
-format_argv(const char ***dst_argv, const char *src_argv[], bool first)
+format_append_arg(struct format_context *format, const char ***dst_argv, const char *arg)
 {
-	char buf[SIZEOF_STR];
+	int i;
+
+	for (i = 0; i < sizeof(format->buf); i++)
+		format->buf[i] = 0;
+	format->bufpos = 0;
+
+	while (arg) {
+		char *next = strstr(arg, "%(");
+		int len = next ? next - arg : strlen(arg);
+
+		if (len && !string_format_from(format->buf, &format->bufpos, "%.*s", len, arg))
+			return FALSE;
+
+		if (next && !format_expand_arg(format, next))
+			return FALSE;
+
+		arg = next ? strchr(next, ')') + 1 : NULL;
+	}
+
+	return argv_append(dst_argv, format->buf);
+}
+
+static bool
+format_append_argv(struct format_context *format, const char ***dst_argv, const char *src_argv[])
+{
+	int argc;
+
+	if (!src_argv)
+		return TRUE;
+
+	for (argc = 0; src_argv[argc]; argc++)
+		if (!format_append_arg(format, dst_argv, src_argv[argc]))
+			return FALSE;
+
+	return src_argv[argc] == NULL;
+}
+
+static bool
+format_argv(struct view *view, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter)
+{
+	struct format_context format = { view, "", 0, file_filter };
 	int argc;
 
 	argv_free(*dst_argv);
 
 	for (argc = 0; src_argv[argc]; argc++) {
 		const char *arg = src_argv[argc];
-		size_t bufpos = 0;
 
 		if (!strcmp(arg, "%(fileargs)")) {
-			if (!argv_append_array(dst_argv, opt_file_argv))
+			if (file_filter && !argv_append_array(dst_argv, opt_file_argv))
 				break;
-			continue;
 
 		} else if (!strcmp(arg, "%(diffargs)")) {
-			if (!argv_append_array(dst_argv, opt_diff_argv))
+			if (!format_append_argv(&format, dst_argv, opt_diff_argv))
 				break;
-			continue;
 
 		} else if (!strcmp(arg, "%(blameargs)")) {
-			if (!argv_append_array(dst_argv, opt_blame_argv))
+			if (!format_append_argv(&format, dst_argv, opt_blame_argv))
 				break;
-			continue;
 
 		} else if (!strcmp(arg, "%(revargs)") ||
 			   (first && !strcmp(arg, "%(commit)"))) {
 			if (!argv_append_array(dst_argv, opt_rev_argv))
 				break;
-			continue;
-		}
 
-		while (arg) {
-			char *next = strstr(arg, "%(");
-			int len = next - arg;
-			const char *value;
-
-			if (!next) {
-				len = strlen(arg);
-				value = "";
-
-			} else {
-				value = format_arg(next);
-
-				if (!value) {
-					return FALSE;
-				}
-			}
-
-			if (!string_format_from(buf, &bufpos, "%.*s%s", len, arg, value))
-				return FALSE;
-
-			arg = next ? strchr(next, ')') + 1 : NULL;
-		}
-
-		if (!argv_append(dst_argv, buf))
+		} else if (!format_append_arg(&format, dst_argv, arg)) {
 			break;
+		}
 	}
 
 	return src_argv[argc] == NULL;
@@ -3074,8 +3265,10 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	view->unrefreshable = use_stdin;
 
 	if (!refresh && argv) {
+		bool file_filter = !view_has_flags(view, VIEW_FILE_FILTER) || opt_file_filter;
+
 		view->dir = dir;
-		if (!format_argv(&view->argv, argv, !view->prev)) {
+		if (!format_argv(view, &view->argv, argv, !view->prev, file_filter)) {
 			report("Failed to format %s arguments", view->name);
 			return FALSE;
 		}
@@ -3088,7 +3281,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	}
 
 	if (view->argv && view->argv[0] &&
-	    !io_run(&view->io, io_type, view->dir, view->argv)) {
+	    !io_run(&view->io, io_type, view->dir, opt_env, view->argv)) {
 		report("Failed to open %s view", view->name);
 		return FALSE;
 	}
@@ -3158,8 +3351,6 @@ update_view(struct view *view)
 		end_update(view, TRUE);
 
 	} else if (io_eof(view->pipe)) {
-		if (view_is_displayed(view))
-			report_clear();
 		end_update(view, FALSE);
 	}
 
@@ -3169,10 +3360,11 @@ update_view(struct view *view)
 	if (!view_is_displayed(view))
 		return TRUE;
 
-	if (redraw)
+	if (redraw || view->force_redraw)
 		redraw_view_from(view, 0);
 	else
 		redraw_view_dirty(view);
+	view->force_redraw = FALSE;
 
 	/* Update the title _after_ the redraw so that if the redraw picks up a
 	 * commit reference in view->ref it'll be available here. */
@@ -3386,18 +3578,23 @@ open_argv(struct view *prev, struct view *view, const char *argv[], const char *
 	}
 }
 
-static void
-open_external_viewer(const char *argv[], const char *dir, bool confirm)
+static bool
+open_external_viewer(const char *argv[], const char *dir, bool confirm, const char *notice)
 {
+	bool ok;
+
 	def_prog_mode();           /* save current tty modes */
 	endwin();                  /* restore original tty modes */
-	io_run_fg(argv, dir);
+	ok = io_run_fg(argv, dir);
 	if (confirm) {
+		if (!ok && *notice)
+			fprintf(stderr, "%s", notice);
 		fprintf(stderr, "Press Enter to continue");
 		getc(opt_tty);
 	}
 	reset_prog_mode();
 	redraw_display(TRUE);
+	return ok;
 }
 
 static void
@@ -3405,14 +3602,23 @@ open_mergetool(const char *file)
 {
 	const char *mergetool_argv[] = { "git", "mergetool", file, NULL };
 
-	open_external_viewer(mergetool_argv, opt_cdup, TRUE);
+	open_external_viewer(mergetool_argv, opt_cdup, TRUE, "");
 }
 
+#define EDITOR_LINENO_MSG \
+	"*** Your editor reported an error while opening the file.\n" \
+	"*** This is probably because it doesn't support the line\n" \
+	"*** number argument added automatically. The line number\n" \
+	"*** has been disabled for now. You can permanently disable\n" \
+	"*** it by adding the following line to ~/.tigrc\n" \
+	"***	set editor-line-number = no\n"
+
 static void
-open_editor(const char *file)
+open_editor(const char *file, unsigned int lineno)
 {
-	const char *editor_argv[SIZEOF_ARG + 1] = { "vi", file, NULL };
+	const char *editor_argv[SIZEOF_ARG + 3] = { "vi", file, NULL };
 	char editor_cmd[SIZEOF_STR];
+	char lineno_cmd[SIZEOF_STR];
 	const char *editor;
 	int argc = 0;
 
@@ -3432,39 +3638,56 @@ open_editor(const char *file)
 		return;
 	}
 
+	if (lineno && opt_editor_lineno && string_format(lineno_cmd, "+%u", lineno))
+		editor_argv[argc++] = lineno_cmd;
 	editor_argv[argc] = file;
-	open_external_viewer(editor_argv, opt_cdup, TRUE);
+	if (!open_external_viewer(editor_argv, opt_cdup, TRUE, EDITOR_LINENO_MSG))
+		opt_editor_lineno = FALSE;
 }
 
-static bool
-open_run_request(enum request request)
+static enum request run_prompt_command(struct view *view, char *cmd);
+
+static enum request
+open_run_request(struct view *view, enum request request)
 {
 	struct run_request *req = get_run_request(request);
 	const char **argv = NULL;
+	bool confirmed = FALSE;
+
+	request = REQ_NONE;
 
 	if (!req) {
 		report("Unknown run request");
-		return FALSE;
+		return request;
 	}
 
-	if (format_argv(&argv, req->argv, FALSE)) {
-		bool confirmed = !req->confirm;
+	if (format_argv(view, &argv, req->argv, FALSE, TRUE)) {
+		if (req->internal) {
+			char cmd[SIZEOF_STR];
 
-		if (req->confirm) {
-			char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
-
-			if (argv_to_string(argv, cmd, sizeof(cmd), " ") &&
-			    string_format(prompt, "Run `%s`?", cmd) &&
-			    prompt_yesno(prompt)) {
-				confirmed = TRUE;
+			if (argv_to_string(argv, cmd, sizeof(cmd), " ")) {
+				request = run_prompt_command(view, cmd);
 			}
 		}
+		else {
+			confirmed = !req->confirm;
 
-		if (confirmed && argv_remove_quotes(argv)) {
-			if (req->silent)
-				io_run_bg(argv);
-			else
-				open_external_viewer(argv, NULL, !req->exit);
+			if (req->confirm) {
+				char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
+
+				if (argv_to_string(argv, cmd, sizeof(cmd), " ") &&
+				    string_format(prompt, "Run `%s`?", cmd) &&
+				    prompt_yesno(prompt)) {
+					confirmed = TRUE;
+				}
+			}
+
+			if (confirmed && argv_remove_quotes(argv)) {
+				if (req->silent)
+					io_run_bg(argv);
+				else
+					open_external_viewer(argv, NULL, !req->exit, "");
+			}
 		}
 	}
 
@@ -3472,7 +3695,17 @@ open_run_request(enum request request)
 		argv_free(argv);
 	free(argv);
 
-	return req->exit;
+	if (request == REQ_NONE) {
+		if (req->confirm && !confirmed)
+			request = REQ_NONE;
+
+		else if (req->exit)
+			request = REQ_QUIT;
+
+		else if (!view->unrefreshable)
+			request = REQ_REFRESH;
+	}
+	return request;
 }
 
 /*
@@ -3488,11 +3721,11 @@ view_driver(struct view *view, enum request request)
 		return TRUE;
 
 	if (request > REQ_NONE) {
-		if (open_run_request(request))
+		request = open_run_request(view, request);
+
+		// exit quickly rather than going through view_request and back
+		if (request == REQ_QUIT)
 			return FALSE;
-		if (!view->unrefreshable)
-			view_request(view, REQ_REFRESH);
-		return TRUE;
 	}
 
 	request = view_request(view, request);
@@ -3530,6 +3763,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_STATUS:
 	case REQ_VIEW_STAGE:
 	case REQ_VIEW_PAGER:
+	case REQ_VIEW_STASH:
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
@@ -3540,6 +3774,7 @@ view_driver(struct view *view, enum request request)
 
 			view = view->parent;
 			line = view->pos.lineno;
+			view_request(view, request);
 			move_view(view, request);
 			if (view_is_displayed(view))
 				update_view_title(view);
@@ -3586,8 +3821,20 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_CHANGES:
 	case REQ_TOGGLE_IGNORE_SPACE:
 	case REQ_TOGGLE_ID:
-		if (toggle_option(request) && view_has_flags(view, VIEW_DIFF_LIKE))
-			reload_view(view);
+	case REQ_TOGGLE_FILES:
+	case REQ_TOGGLE_TITLE_OVERFLOW:
+		{
+			char action[SIZEOF_STR] = "";
+			bool reload = toggle_option(view, request, action);
+
+			if (reload && view_has_flags(view, VIEW_DIFF_LIKE))
+				reload_view(view);
+			else
+				redraw_display(FALSE);
+
+			if (*action)
+				report("%s", action);
+		}
 		break;
 
 	case REQ_TOGGLE_SORT_FIELD:
@@ -3724,21 +3971,22 @@ update_diff_context(enum request request)
 	return diff_context != opt_diff_context;
 }
 
-DEFINE_ALLOCATOR(realloc_authors, const char *, 256)
+DEFINE_ALLOCATOR(realloc_authors, struct ident *, 256)
 
 /* Small author cache to reduce memory consumption. It uses binary
  * search to lookup or find place to position new entries. No entries
  * are ever freed. */
-static const char *
-get_author(const char *name)
+static struct ident *
+get_author(const char *name, const char *email)
 {
-	static const char **authors;
+	static struct ident **authors;
 	static size_t authors_size;
 	int from = 0, to = authors_size - 1;
+	struct ident *ident;
 
 	while (from <= to) {
 		size_t pos = (to + from) / 2;
-		int cmp = strcmp(name, authors[pos]);
+		int cmp = strcmp(name, authors[pos]->name);
 
 		if (!cmp)
 			return authors[pos];
@@ -3751,15 +3999,22 @@ get_author(const char *name)
 
 	if (!realloc_authors(&authors, authors_size, 1))
 		return NULL;
-	name = strdup(name);
-	if (!name)
+	ident = calloc(1, sizeof(*ident));
+	if (!ident)
 		return NULL;
+	ident->name = strdup(name);
+	ident->email = strdup(email);
+	if (!ident->name || !ident->email) {
+		free((void *) ident->name);
+		free(ident);
+		return NULL;
+	}
 
 	memmove(authors + from + 1, authors + from, (authors_size - from) * sizeof(*authors));
-	authors[from] = name;
+	authors[from] = ident;
 	authors_size++;
 
-	return name;
+	return ident;
 }
 
 static void
@@ -3789,25 +4044,26 @@ parse_timezone(struct time *time, const char *zone)
  *	author  <email@address.tld> 1138474660 +0100
  */
 static void
-parse_author_line(char *ident, const char **author, struct time *time)
+parse_author_line(char *ident, const struct ident **author, struct time *time)
 {
 	char *nameend = strchr(ident, '<');
 	char *emailend = strchr(ident, '>');
+	const char *name, *email = "";
 
 	if (nameend && emailend)
 		*nameend = *emailend = 0;
-	ident = chomp_string(ident);
-	if (!*ident) {
-		if (nameend)
-			ident = chomp_string(nameend + 1);
-		if (!*ident)
-			ident = "Unknown";
-	}
+	name = chomp_string(ident);
+	if (nameend)
+		email = chomp_string(nameend + 1);
+	if (!*name)
+		name = *email ? email : unknown_ident.name;
+	if (!*email)
+		email = *name ? name : unknown_ident.email;
 
-	*author = get_author(ident);
+	*author = get_author(name, email);
 
 	/* Parse epoch and timezone */
-	if (emailend && emailend[1] == ' ') {
+	if (time && emailend && emailend[1] == ' ') {
 		char *secs = emailend + 2;
 		char *zone = strchr(secs, ' ');
 
@@ -3841,7 +4097,7 @@ find_line_by_type(struct view *view, struct line *line, enum line_type type, int
 struct blame_commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
-	const char *author;		/* Author of the commit. */
+	const struct ident *author;	/* Author of the commit. */
 	struct time time;		/* Date from the author ident. */
 	char filename[128];		/* Name of file. */
 	char parent_id[SIZEOF_REV];	/* Parent/previous SHA1 ID. */
@@ -3906,7 +4162,7 @@ static bool
 parse_blame_info(struct blame_commit *commit, char *line)
 {
 	if (match_blame_header("author ", &line)) {
-		commit->author = get_author(line);
+		parse_author_line(line, &commit->author, NULL);
 
 	} else if (match_blame_header("author-time ", &line)) {
 		parse_timesec(&commit->time, line);
@@ -4116,12 +4372,40 @@ static void
 pager_select(struct view *view, struct line *line)
 {
 	if (line->type == LINE_COMMIT) {
-		char *text = (char *)line->data + STRING_SIZE("commit ");
-
+		string_copy_rev_from_commit_line(ref_commit, line->data);
 		if (!view_has_flags(view, VIEW_NO_REF))
-			string_copy_rev(view->ref, text);
-		string_copy_rev(ref_commit, text);
+			string_copy_rev(view->ref, ref_commit);
 	}
+}
+
+struct log_state {
+	/* Used for tracking when we need to recalculate the previous
+	 * commit, for example when the user scrolls up or uses the page
+	 * up/down in the log view. */
+	int last_lineno;
+	enum line_type last_type;
+};
+
+static void
+log_select(struct view *view, struct line *line)
+{
+	struct log_state *state = view->private;
+	int last_lineno = state->last_lineno;
+
+	if (!last_lineno || abs(last_lineno - line->lineno) > 1
+	    || (state->last_type == LINE_COMMIT && last_lineno > line->lineno)) {
+		const struct line *commit_line = find_prev_line_by_type(view, line, LINE_COMMIT);
+
+		if (commit_line)
+			string_copy_rev_from_commit_line(view->ref, commit_line->data);
+	}
+
+	if (line->type == LINE_COMMIT && !view_has_flags(view, VIEW_NO_REF)) {
+		string_copy_rev_from_commit_line(view->ref, (char *)line->data);
+	}
+	string_copy_rev(ref_commit, view->ref);
+	state->last_lineno = line->lineno;
+	state->last_type = line->type;
 }
 
 static bool
@@ -4172,8 +4456,14 @@ log_request(struct view *view, enum request request, struct line *line)
 		load_refs();
 		refresh_view(view);
 		return REQ_NONE;
+
+	case REQ_ENTER:
+		if (!display[1] || strcmp(display[1]->vid, view->ref))
+			open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT);
+		return REQ_NONE;
+
 	default:
-		return pager_request(view, request, line);
+		return request;
 	}
 }
 
@@ -4181,19 +4471,23 @@ static struct view_ops log_ops = {
 	"line",
 	{ "log" },
 	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER,
-	0,
+	sizeof(struct log_state),
 	log_open,
 	pager_read,
 	pager_draw,
 	log_request,
 	pager_grep,
-	pager_select,
+	log_select,
 };
 
 struct diff_state {
+	bool after_commit_title;
+	bool after_diff;
 	bool reading_diff_stat;
 	bool combined_diff;
 };
+
+#define DIFF_LINE_COMMIT_TITLE 1
 
 static bool
 diff_open(struct view *view, enum open_flags flags)
@@ -4216,6 +4510,9 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	if (!view->lines && type != LINE_COMMIT)
 		state->reading_diff_stat = TRUE;
 
+	if (state->combined_diff && !state->after_diff && data[0] == ' ' && data[1] != ' ')
+		state->reading_diff_stat = TRUE;
+
 	if (state->reading_diff_stat) {
 		size_t len = strlen(data);
 		char *pipe = strchr(data, '|');
@@ -4233,12 +4530,25 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		state->reading_diff_stat = TRUE;
 	}
 
+	if (!state->after_commit_title && !prefixcmp(data, "    ")) {
+		struct line *line = add_line_text(view, data, LINE_DEFAULT);
+
+		if (line)
+			line->user_flags |= DIFF_LINE_COMMIT_TITLE;
+		state->after_commit_title = TRUE;
+		return line != NULL;
+	}
+
 	if (type == LINE_DIFF_HEADER) {
 		const int len = line_info[LINE_DIFF_HEADER].linelen;
 
+		state->after_diff = TRUE;
 		if (!strncmp(data + len, "combined ", strlen("combined ")) ||
 		    !strncmp(data + len, "cc ", strlen("cc ")))
 			state->combined_diff = TRUE;
+
+	} else if (type == LINE_PP_MERGE) {
+		state->combined_diff = TRUE;
 	}
 
 	/* ADD2 and DEL2 are only valid in combined diff hunks */
@@ -4339,7 +4649,10 @@ diff_common_draw(struct view *view, struct line *line, unsigned int lineno)
 		}
 	}
 
-	draw_text(view, type, text);
+	if (line->user_flags & DIFF_LINE_COMMIT_TITLE)
+		draw_commit_title(view, text, 4);
+	else
+		draw_text(view, type, text);
 	return TRUE;
 }
 
@@ -4362,7 +4675,7 @@ diff_read(struct view *view, char *data)
 
 				if (view->pipe)
 					io_done(view->pipe);
-				if (io_run(&view->io, IO_RD, view->dir, view->argv))
+				if (io_run(&view->io, IO_RD, view->dir, opt_env, view->argv))
 					return FALSE;
 			}
 		}
@@ -4387,7 +4700,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	if (!string_format(line_arg, "-L%ld,+1", lineno))
 		return FALSE;
 
-	if (!io_run(&io, IO_RD, opt_cdup, blame_argv))
+	if (!io_run(&io, IO_RD, opt_cdup, opt_env, blame_argv))
 		return FALSE;
 
 	while ((buf = io_get(&io, '\n', TRUE))) {
@@ -4407,6 +4720,37 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 
 	io_done(&io);
 	return ok;
+}
+
+static unsigned int
+diff_get_lineno(struct view *view, struct line *line)
+{
+	const struct line *header, *chunk;
+	const char *data;
+	unsigned int lineno;
+
+	/* Verify that we are after a diff header and one of its chunks */
+	header = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
+	chunk = find_prev_line_by_type(view, line, LINE_DIFF_CHUNK);
+	if (!header || !chunk || chunk < header)
+		return 0;
+
+	/*
+	 * In a chunk header, the number after the '+' sign is the number of its
+	 * following line, in the new version of the file. We increment this
+	 * number for each non-deletion line, until the given line position.
+	 */
+	data = strchr(chunk->data, '+');
+	if (!data)
+		return 0;
+
+	lineno = atoi(data);
+	chunk++;
+	while (chunk++ < line)
+		if (chunk->type != LINE_DIFF_DEL)
+			lineno++;
+
+	return lineno;
 }
 
 static bool
@@ -4507,10 +4851,24 @@ diff_get_pathname(struct view *view, struct line *line)
 }
 
 static enum request
+diff_common_edit(struct view *view, enum request request, struct line *line)
+{
+	const char *file = diff_get_pathname(view, line);
+	char path[SIZEOF_STR];
+	bool has_path = file && string_format(path, "%s%s", opt_cdup, file);
+
+	if (has_path && access(path, R_OK)) {
+		report("Failed to open file: %s", file);
+		return REQ_NONE;
+	}
+
+	open_editor(file, diff_get_lineno(view, line));
+	return REQ_NONE;
+}
+
+static enum request
 diff_request(struct view *view, enum request request, struct line *line)
 {
-	const char *file;
-
 	switch (request) {
 	case REQ_VIEW_BLAME:
 		return diff_trace_origin(view, line);
@@ -4522,15 +4880,16 @@ diff_request(struct view *view, enum request request, struct line *line)
 		reload_view(view);
 		return REQ_NONE;
 
+
 	case REQ_EDIT:
-		file = diff_get_pathname(view, line);
-		if (!file || access(file, R_OK))
-			return pager_request(view, request, line);
-		open_editor(file);
-		return REQ_NONE;
+		return diff_common_edit(view, request, line);
 
 	case REQ_ENTER:
 		return diff_common_enter(view, request, line);
+
+	case REQ_REFRESH:
+		reload_view(view);
+		return REQ_NONE;
 
 	default:
 		return pager_request(view, request, line);
@@ -4560,7 +4919,7 @@ diff_select(struct view *view, struct line *line)
 static struct view_ops diff_ops = {
 	"line",
 	{ "diff" },
-	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_STDIN,
+	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_STDIN | VIEW_FILE_FILTER,
 	sizeof(struct diff_state),
 	diff_open,
 	diff_read,
@@ -4776,13 +5135,13 @@ struct tree_entry {
 	char commit[SIZEOF_REV];
 	mode_t mode;
 	struct time time;		/* Date from the author ident. */
-	const char *author;		/* Author of the commit. */
+	const struct ident *author;	/* Author of the commit. */
 	char name[1];
 };
 
 struct tree_state {
 	char commit[SIZEOF_REV];
-	const char *author_name;
+	const struct ident *author;
 	struct time author_time;
 	bool read_date;
 };
@@ -4824,7 +5183,7 @@ tree_compare(const void *l1, const void *l2)
 		return sort_order(tree_sort_state, timecmp(&entry1->time, &entry2->time));
 
 	case ORDERBY_AUTHOR:
-		return sort_order(tree_sort_state, strcmp_null(entry1->author, entry2->author));
+		return sort_order(tree_sort_state, ident_compare(entry1->author, entry2->author));
 
 	case ORDERBY_NAME:
 	default:
@@ -4869,6 +5228,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 
 		if (!view->lines) {
 			tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL);
+			tree_entry(view, LINE_TREE_DIR, "..", "040000", view->ref);
 			report("Tree is empty");
 			return TRUE;
 		}
@@ -4882,11 +5242,11 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 		return FALSE;
 
 	} else if (*text == 'c' && get_line_type(text) == LINE_COMMIT) {
-		string_copy_rev(state->commit, text + STRING_SIZE("commit "));
+		string_copy_rev_from_commit_line(state->commit, text);
 
 	} else if (*text == 'a' && get_line_type(text) == LINE_AUTHOR) {
 		parse_author_line(text + STRING_SIZE("author "),
-				  &state->author_name, &state->author_time);
+				  &state->author, &state->author_time);
 
 	} else if (*text == ':') {
 		char *pos;
@@ -4912,7 +5272,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 				continue;
 
 			string_copy_rev(entry->commit, state->commit);
-			entry->author = state->author_name;
+			entry->author = state->author;
 			entry->time = state->author_time;
 			line->dirty = 1;
 			break;
@@ -5007,7 +5367,7 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 		if (draw_date(view, &entry->time))
 			return TRUE;
 
-		if (opt_show_id && draw_id(view, LINE_ID, entry->commit))
+		if (draw_id(view, entry->commit))
 			return TRUE;
 	}
 
@@ -5016,18 +5376,28 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 }
 
 static void
-open_blob_editor(const char *id)
+open_blob_editor(const char *id, const char *name, unsigned int lineno)
 {
 	const char *blob_argv[] = { "git", "cat-file", "blob", id, NULL };
-	char file[SIZEOF_STR] = "/tmp/tigblob.XXXXXX";
-	int fd = mkstemp(file);
+	char file[SIZEOF_STR];
+	int fd;
+
+	if (!name)
+		name = "unknown";
+
+	if (!string_format(file, "%s/tigblob.XXXXXX.%s", get_temp_dir(), name)) {
+		report("Temporary file name is too long");
+		return;
+	}
+
+	fd = mkstemps(file, strlen(name) + 1);
 
 	if (fd == -1)
 		report("Failed to create temporary file");
 	else if (!io_run_append(blob_argv, fd))
 		report("Failed to save blob data to file");
 	else
-		open_editor(file);
+		open_editor(file, lineno);
 	if (fd != -1)
 		unlink(file);
 }
@@ -5052,9 +5422,9 @@ tree_request(struct view *view, enum request request, struct line *line)
 		if (line->type != LINE_TREE_FILE) {
 			report("Edit only supported for files");
 		} else if (!is_head_commit(view->vid)) {
-			open_blob_editor(entry->id);
+			open_blob_editor(entry->id, entry->name, 0);
 		} else {
-			open_editor(opt_file);
+			open_editor(opt_file, 0);
 		}
 		return REQ_NONE;
 
@@ -5249,7 +5619,7 @@ blob_request(struct view *view, enum request request, struct line *line)
 {
 	switch (request) {
 	case REQ_EDIT:
-		open_blob_editor(view->vid);
+		open_blob_editor(view->vid, NULL, (line - view->line) + 1);
 		return REQ_NONE;
 	default:
 		return pager_request(view, request, line);
@@ -5503,7 +5873,8 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct blame_state *state = view->private;
 	struct blame *blame = line->data;
 	struct time *time = NULL;
-	const char *id = NULL, *author = NULL, *filename = NULL;
+	const char *id = NULL, *filename = NULL;
+	const struct ident *author = NULL;
 	enum line_type id_type = LINE_ID;
 	static const enum line_type blame_colors[] = {
 		LINE_PALETTE_0,
@@ -5535,7 +5906,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_filename(view, filename, state->auto_filename_display))
 		return TRUE;
 
-	if (draw_id(view, id_type, id))
+	if (draw_id_custom(view, id_type, id, opt_id_cols))
 		return TRUE;
 
 	if (draw_lineno(view, lineno))
@@ -5573,7 +5944,7 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 
 	if (!string_format(from, "%s:%s", opt_ref, opt_file) ||
 	    !string_format(to, "%s:%s", blame->commit->id, blame->commit->filename) ||
-	    !io_run(&io, IO_RD, NULL, diff_tree_argv))
+	    !io_run(&io, IO_RD, NULL, opt_env, diff_tree_argv))
 		return;
 
 	while ((line = io_get(&io, '\n', TRUE))) {
@@ -5675,7 +6046,7 @@ blame_grep(struct view *view, struct line *line)
 		blame->text,
 		commit ? commit->title : "",
 		commit ? commit->id : "",
-		commit && opt_author ? commit->author : "",
+		commit ? mkauthor(commit->author, opt_author_width, opt_author) : "",
 		commit ? mkdate(&commit->time, opt_date) : "",
 		NULL
 	};
@@ -5716,13 +6087,14 @@ static struct view_ops blame_ops = {
  */
 
 struct branch {
-	const char *author;		/* Author of the last commit. */
+	const struct ident *author;	/* Author of the last commit. */
 	struct time time;		/* Date of the last activity. */
 	char title[128];		/* First line of the commit message. */
 	const struct ref *ref;		/* Name and commit ID information. */
 };
 
 static const struct ref branch_all;
+#define BRANCH_ALL_NAME	"All branches"
 #define branch_is_all(branch) ((branch)->ref == &branch_all)
 
 static const enum sort_field branch_sort_fields[] = {
@@ -5751,7 +6123,7 @@ branch_compare(const void *l1, const void *l2)
 		return sort_order(branch_sort_state, timecmp(&branch1->time, &branch2->time));
 
 	case ORDERBY_AUTHOR:
-		return sort_order(branch_sort_state, strcmp(branch1->author, branch2->author));
+		return sort_order(branch_sort_state, ident_compare(branch1->author, branch2->author));
 
 	case ORDERBY_NAME:
 	default:
@@ -5765,7 +6137,10 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct branch_state *state = view->private;
 	struct branch *branch = line->data;
 	enum line_type type = branch_is_all(branch) ? LINE_DEFAULT : get_line_type_from_ref(branch->ref);
-	const char *branch_name = branch_is_all(branch) ? "All branches" : branch->ref->name;
+	const char *branch_name = branch_is_all(branch) ? BRANCH_ALL_NAME : branch->ref->name;
+
+	if (draw_lineno(view, lineno))
+		return TRUE;
 
 	if (draw_date(view, &branch->time))
 		return TRUE;
@@ -5776,7 +6151,7 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_field(view, type, branch_name, state->max_ref_length, FALSE))
 		return TRUE;
 
-	if (opt_show_id && draw_id(view, LINE_ID, branch->ref->id))
+	if (draw_id(view, branch->ref->id))
 		return TRUE;
 
 	draw_text(view, LINE_DEFAULT, branch->title);
@@ -5834,7 +6209,7 @@ branch_read(struct view *view, char *line)
 {
 	struct branch_state *state = view->private;
 	const char *title = NULL;
-	const char *author = NULL;
+	const struct ident *author = NULL;
 	struct time time = {};
 	size_t i;
 
@@ -5843,11 +6218,12 @@ branch_read(struct view *view, char *line)
 
 	switch (get_line_type(line)) {
 	case LINE_COMMIT:
-		string_copy_rev(state->id, line + STRING_SIZE("commit "));
+		string_copy_rev_from_commit_line(state->id, line);
 		return TRUE;
 
 	case LINE_AUTHOR:
 		parse_author_line(line + STRING_SIZE("author "), &author, &time);
+		break;
 
 	default:
 		title = line + STRING_SIZE("title ");
@@ -5879,15 +6255,16 @@ branch_open_visitor(void *data, const struct ref *ref)
 	struct view *view = data;
 	struct branch_state *state = view->private;
 	struct branch *branch;
+	bool is_all = ref == &branch_all;
 	size_t ref_length;
 
 	if (ref->tag || ref->ltag)
 		return TRUE;
 
-	if (!add_line_alloc(view, &branch, LINE_DEFAULT, 0, ref == &branch_all))
+	if (!add_line_alloc(view, &branch, LINE_DEFAULT, 0, is_all))
 		return FALSE;
 
-	ref_length = strlen(ref->name);
+	ref_length = is_all ? STRING_SIZE(BRANCH_ALL_NAME) : strlen(ref->name);
 	if (ref_length > state->max_ref_length)
 		state->max_ref_length = ref_length;
 
@@ -5934,7 +6311,7 @@ branch_select(struct view *view, struct line *line)
 	struct branch *branch = line->data;
 
 	if (branch_is_all(branch)) {
-		string_copy(view->ref, "All branches");
+		string_copy(view->ref, BRANCH_ALL_NAME);
 		return;
 	}
 	string_copy_rev(view->ref, branch->ref->id);
@@ -6027,7 +6404,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	char *buf;
 	struct io io;
 
-	if (!io_run(&io, IO_RD, opt_cdup, argv))
+	if (!io_run(&io, IO_RD, opt_cdup, opt_env, argv))
 		return FALSE;
 
 	add_line_nodata(view, type);
@@ -6362,11 +6739,11 @@ status_update_prepare(struct io *io, enum line_type type)
 
 	switch (type) {
 	case LINE_STAT_STAGED:
-		return io_run(io, IO_WR, opt_cdup, staged_argv);
+		return io_run(io, IO_WR, opt_cdup, opt_env, staged_argv);
 
 	case LINE_STAT_UNSTAGED:
 	case LINE_STAT_UNTRACKED:
-		return io_run(io, IO_WR, opt_cdup, others_argv);
+		return io_run(io, IO_WR, opt_cdup, opt_env, others_argv);
 
 	default:
 		die("line type %d not handled in switch", type);
@@ -6545,7 +6922,7 @@ status_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		}
 
-		open_editor(status->new.name);
+		open_editor(status->new.name, 0);
 		break;
 
 	case REQ_VIEW_BLAME:
@@ -6560,7 +6937,8 @@ status_request(struct view *view, enum request request, struct line *line)
 		return status_enter(view, line);
 
 	case REQ_REFRESH:
-		/* Simply reload the view. */
+		/* Load the current branch information and then the view. */
+		load_refs();
 		break;
 
 	default:
@@ -6731,7 +7109,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *line, bool
 		apply_argv[argc++] = "-R";
 	apply_argv[argc++] = "-";
 	apply_argv[argc++] = NULL;
-	if (!io_run(&io, IO_WR, opt_cdup, apply_argv))
+	if (!io_run(&io, IO_WR, opt_cdup, opt_env, apply_argv))
 		return FALSE;
 
 	if (line != NULL) {
@@ -6766,7 +7144,6 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *line, bool
 	}
 
 	io_done(&io);
-	io_run_bg(update_index_argv);
 
 	return chunk ? TRUE : FALSE;
 }
@@ -6900,17 +7277,23 @@ stage_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_EDIT:
 		if (!stage_status.new.name[0])
-			return request;
+			return diff_common_edit(view, request, line);
+
 		if (stage_status.status == 'D') {
 			report("File has been deleted.");
 			return REQ_NONE;
 		}
 
-		open_editor(stage_status.new.name);
+		if (stage_line_type == LINE_STAT_UNTRACKED) {
+			open_editor(stage_status.new.name, (line - view->line) + 1);
+		} else {
+			open_editor(stage_status.new.name, diff_get_lineno(view, line));
+		}
 		break;
 
 	case REQ_REFRESH:
-		/* Reload everything ... */
+		/* Reload everything(including current branch information) ... */
+		load_refs();
 		break;
 
 	case REQ_VIEW_BLAME:
@@ -7022,6 +7405,9 @@ stage_read(struct view *view, char *data)
 {
 	struct stage_state *state = view->private;
 
+	if (stage_line_type == LINE_STAT_UNTRACKED)
+		return pager_common_read(view, data, LINE_DEFAULT);
+
 	if (data && diff_common_read(view, data, &state->diff))
 		return TRUE;
 
@@ -7118,7 +7504,7 @@ static bool draw_graph(struct view *view, struct graph_canvas *canvas)
 struct commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
-	const char *author;		/* Author of the commit. */
+	const struct ident *author;	/* Author of the commit. */
 	struct time time;		/* Date from the author ident. */
 	struct ref_list *refs;		/* Repository references. */
 	struct graph_canvas graph;	/* Ancestry chain graphics. */
@@ -7127,8 +7513,10 @@ struct commit {
 struct main_state {
 	struct graph graph;
 	struct commit *current;
+	int id_width;
 	bool in_header;
 	bool added_changes_commits;
+	bool hide_graph;
 };
 
 static struct commit *
@@ -7152,7 +7540,7 @@ main_has_changes(const char *argv[])
 {
 	struct io io;
 
-	if (!io_run(&io, IO_BG, NULL, argv, -1))
+	if (!io_run(&io, IO_BG, NULL, opt_env, argv, -1))
 		return FALSE;
 	io_done(&io);
 	return io.status == 1;
@@ -7181,7 +7569,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 		commit->time.sec = now.tv_sec - commit->time.tz;
 	}
 
-	commit->author = "";
+	commit->author = &unknown_ident;
 	string_ncopy(commit->title, title, strlen(title));
 	graph_render_parents(&state->graph);
 }
@@ -7227,7 +7615,9 @@ main_open(struct view *view, enum open_flags flags)
 static bool
 main_draw(struct view *view, struct line *line, unsigned int lineno)
 {
+	struct main_state *state = view->private;
 	struct commit *commit = line->data;
+	int id_width = state->id_width ? state->id_width : opt_id_cols;
 
 	if (!commit->author)
 		return FALSE;
@@ -7235,7 +7625,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_lineno(view, lineno))
 		return TRUE;
 
-	if (opt_show_id && draw_id(view, LINE_ID, commit->id))
+	if (opt_show_id && draw_id_custom(view, LINE_ID, commit->id, id_width))
 		return TRUE;
 
 	if (draw_date(view, &commit->time))
@@ -7244,13 +7634,13 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_author(view, commit->author))
 		return TRUE;
 
-	if (opt_rev_graph && draw_graph(view, &commit->graph))
+	if (!state->hide_graph && opt_rev_graph && draw_graph(view, &commit->graph))
 		return TRUE;
 
 	if (draw_refs(view, commit->refs))
 		return TRUE;
 
-	draw_text(view, LINE_DEFAULT, commit->title);
+	draw_commit_title(view, commit->title, 0);
 	return TRUE;
 }
 
@@ -7348,7 +7738,8 @@ main_read(struct view *view, char *line)
 static enum request
 main_request(struct view *view, enum request request, struct line *line)
 {
-	enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
+	enum open_flags flags = (view_is_displayed(view) && request != REQ_VIEW_DIFF)
+				? OPEN_SPLIT : OPEN_DEFAULT;
 
 	switch (request) {
 	case REQ_NEXT:
@@ -7357,9 +7748,9 @@ main_request(struct view *view, enum request request, struct line *line)
 			return request;
 		/* Do not pass navigation requests to the branch view
 		 * when the main view is maximized. (GH #38) */
-		move_view(view, request);
-		break;
+		return request == REQ_NEXT ? REQ_MOVE_DOWN : REQ_MOVE_UP;
 
+	case REQ_VIEW_DIFF:
 	case REQ_ENTER:
 		if (view_is_displayed(view) && display[0] != view)
 			maximize_view(view, TRUE);
@@ -7386,6 +7777,7 @@ main_request(struct view *view, enum request request, struct line *line)
 
 		open_view(view, REQ_VIEW_DIFF, flags);
 		break;
+
 	case REQ_REFRESH:
 		load_refs();
 		refresh_view(view);
@@ -7425,7 +7817,7 @@ grep_refs(struct ref_list *list, regex_t *regex)
 		return FALSE;
 
 	for (i = 0; i < list->size; i++) {
-		if (regexec(regex, list->refs[i]->name, 1, &pmatch, 0) != REG_NOMATCH)
+		if (!regexec(regex, list->refs[i]->name, 1, &pmatch, 0))
 			return TRUE;
 	}
 
@@ -7462,7 +7854,7 @@ main_select(struct view *view, struct line *line)
 static struct view_ops main_ops = {
 	"commit",
 	{ "main" },
-	VIEW_STDIN | VIEW_SEND_CHILD_ENTER,
+	VIEW_STDIN | VIEW_SEND_CHILD_ENTER | VIEW_FILE_FILTER,
 	sizeof(struct main_state),
 	main_open,
 	main_read,
@@ -7472,6 +7864,61 @@ static struct view_ops main_ops = {
 	main_select,
 };
 
+static bool
+stash_open(struct view *view, enum open_flags flags)
+{
+	static const char *stash_argv[] = { "git", "stash", "list",
+		opt_encoding_arg, "--no-color", "--pretty=raw", NULL };
+
+	return begin_update(view, NULL, stash_argv, flags | OPEN_RELOAD);
+}
+
+static bool
+stash_read(struct view *view, char *line)
+{
+	struct main_state *state = view->private;
+	struct commit *commit = state->current;
+
+	if (!state->added_changes_commits) {
+		state->added_changes_commits = TRUE;
+		state->hide_graph = TRUE;
+	}
+
+	if (commit && line && get_line_type(line) == LINE_PP_REFLOG) {
+		const char *reflog = line + STRING_SIZE("Reflog: refs/");
+
+		string_copy_rev(commit->id, reflog);
+		if (state->id_width < strlen(commit->id)) {
+			state->id_width = strlen(commit->id);
+			view->force_redraw = TRUE;
+		}
+	}
+
+	return main_read(view, line);
+}
+
+static void
+stash_select(struct view *view, struct line *line)
+{
+	struct commit *commit = line->data;
+
+	main_select(view, line);
+	string_copy(ref_stash, commit->id);
+	string_copy(view->ref, commit->id);
+}
+
+static struct view_ops stash_ops = {
+	"stash",
+	{ "stash" },
+	VIEW_SEND_CHILD_ENTER,
+	sizeof(struct main_state),
+	stash_open,
+	stash_read,
+	main_draw,
+	main_request,
+	main_grep,
+	stash_select,
+};
 
 /*
  * Status management
@@ -7853,20 +8300,6 @@ set_repo_config_option(char *name, char *value, enum option_code (*cmd)(int, con
 		warn("Option 'tig.%s': %s", name, option_errors[error]);
 }
 
-static bool
-set_environment_variable(const char *name, const char *value)
-{
-	size_t len = strlen(name) + 1 + strlen(value) + 1;
-	char *env = malloc(len);
-
-	if (env &&
-	    string_nformat(env, len, NULL, "%s=%s", name, value) &&
-	    putenv(env) == 0)
-		return TRUE;
-	free(env);
-	return FALSE;
-}
-
 static void
 set_work_tree(const char *value)
 {
@@ -7884,9 +8317,9 @@ set_work_tree(const char *value)
 		die("Failed to chdir(%s): %s", value, strerror(errno));
 	if (!getcwd(cwd, sizeof(cwd)))
 		die("Failed to get cwd path: %s", strerror(errno));
-	if (!set_environment_variable("GIT_WORK_TREE", cwd))
+	if (!setenv("GIT_WORK_TREE", cwd, TRUE))
 		die("Failed to set GIT_WORK_TREE to '%s'", cwd);
-	if (!set_environment_variable("GIT_DIR", opt_git_dir))
+	if (!setenv("GIT_DIR", opt_git_dir, TRUE))
 		die("Failed to set GIT_DIR to '%s'", opt_git_dir);
 	opt_is_inside_work_tree = TRUE;
 }
@@ -8009,13 +8442,25 @@ load_git_config(void)
 	return io_run_load(config_list_argv, "=", read_repo_config_option, NULL);
 }
 
+#define REPO_INFO_GIT_DIR	"--git-dir"
+#define REPO_INFO_WORK_TREE	"--is-inside-work-tree"
+#define REPO_INFO_SHOW_CDUP	"--show-cdup"
+#define REPO_INFO_SHOW_PREFIX	"--show-prefix"
+
+struct repo_info_state {
+	const char **argv;
+};
+
 static int
 read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
-	if (!opt_git_dir[0]) {
+	struct repo_info_state *state = data;
+	const char *arg = *state->argv ? *state->argv++ : "";
+
+	if (!strcmp(arg, REPO_INFO_GIT_DIR)) {
 		string_ncopy(opt_git_dir, name, namelen);
 
-	} else if (opt_is_inside_work_tree == -1) {
+	} else if (!strcmp(arg, REPO_INFO_WORK_TREE)) {
 		/* This can be 3 different values depending on the
 		 * version of git being used. If git-rev-parse does not
 		 * understand --is-inside-work-tree it will simply echo
@@ -8023,10 +8468,10 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 		 * Default to true for the unknown case. */
 		opt_is_inside_work_tree = strcmp(name, "false") ? TRUE : FALSE;
 
-	} else if (*name == '.') {
+	} else if (!strcmp(arg, REPO_INFO_SHOW_CDUP)) {
 		string_ncopy(opt_cdup, name, namelen);
 
-	} else {
+	} else if (!strcmp(arg, REPO_INFO_SHOW_PREFIX)) {
 		string_ncopy(opt_prefix, name, namelen);
 	}
 
@@ -8037,11 +8482,12 @@ static int
 load_repo_info(void)
 {
 	const char *rev_parse_argv[] = {
-		"git", "rev-parse", "--git-dir", "--is-inside-work-tree",
-			"--show-cdup", "--show-prefix", NULL
+		"git", "rev-parse", REPO_INFO_GIT_DIR, REPO_INFO_WORK_TREE,
+			REPO_INFO_SHOW_CDUP, REPO_INFO_SHOW_PREFIX, NULL
 	};
+	struct repo_info_state state = { rev_parse_argv + 2};
 
-	return io_run_load(rev_parse_argv, "=", read_repo_info, NULL);
+	return io_run_load(rev_parse_argv, "=", read_repo_info, &state);
 }
 
 
@@ -8053,8 +8499,10 @@ static const char usage[] =
 "tig " TIG_VERSION " (" __DATE__ ")\n"
 "\n"
 "Usage: tig        [options] [revs] [--] [paths]\n"
+"   or: tig log    [options] [revs] [--] [paths]\n"
 "   or: tig show   [options] [revs] [--] [paths]\n"
 "   or: tig blame  [options] [rev] [--] path\n"
+"   or: tig stash\n"
 "   or: tig status\n"
 "   or: tig <      [git command output]\n"
 "\n"
@@ -8063,16 +8511,19 @@ static const char usage[] =
 "  -v, --version   Show version and exit\n"
 "  -h, --help      Show help message and exit";
 
-static void __NORETURN
+static void TIG_NORETURN
 quit(int sig)
 {
+	if (sig)
+		signal(sig, SIG_DFL);
+
 	/* XXX: Restore tty modes and let the OS cleanup the rest! */
 	if (cursed)
 		endwin();
 	exit(0);
 }
 
-static void __NORETURN
+static void TIG_NORETURN
 die(const char *err, ...)
 {
 	va_list args;
@@ -8191,6 +8642,12 @@ parse_options(int argc, const char *argv[])
 	} else if (!strcmp(subcommand, "show")) {
 		request = REQ_VIEW_DIFF;
 
+	} else if (!strcmp(subcommand, "log")) {
+		request = REQ_VIEW_LOG;
+
+	} else if (!strcmp(subcommand, "stash")) {
+		request = REQ_VIEW_STASH;
+
 	} else {
 		subcommand = NULL;
 	}
@@ -8249,6 +8706,70 @@ parse_options(int argc, const char *argv[])
 	return request;
 }
 
+static enum request
+run_prompt_command(struct view *view, char *cmd) {
+	enum request request;
+
+	if (cmd && string_isnumber(cmd)) {
+		int lineno = view->pos.lineno + 1;
+
+		if (parse_int(&lineno, cmd, 1, view->lines + 1) == OPT_OK) {
+			select_view_line(view, lineno - 1);
+			report_clear();
+		} else {
+			report("Unable to parse '%s' as a line number", cmd);
+		}
+	} else if (cmd && iscommit(cmd)) {
+		string_ncopy(opt_search, cmd, strlen(cmd));
+
+		request = view_request(view, REQ_JUMP_COMMIT);
+		if (request == REQ_JUMP_COMMIT) {
+			report("Jumping to commits is not supported by the '%s' view", view->name);
+		}
+
+	} else if (cmd && strlen(cmd) == 1) {
+		request = get_keybinding(&view->ops->keymap, cmd[0]);
+		return request;
+
+	} else if (cmd && cmd[0] == '!') {
+		struct view *next = VIEW(REQ_VIEW_PAGER);
+		const char *argv[SIZEOF_ARG];
+		int argc = 0;
+
+		cmd++;
+		/* When running random commands, initially show the
+		 * command in the title. However, it maybe later be
+		 * overwritten if a commit line is selected. */
+		string_ncopy(next->ref, cmd, strlen(cmd));
+
+		if (!argv_from_string(argv, &argc, cmd)) {
+			report("Too many arguments");
+		} else if (!format_argv(view, &next->argv, argv, FALSE, TRUE)) {
+			report("Argument formatting failed");
+		} else {
+			next->dir = NULL;
+			open_view(view, REQ_VIEW_PAGER, OPEN_PREPARED);
+		}
+
+	} else if (cmd) {
+		request = get_request(cmd);
+		if (request != REQ_UNKNOWN)
+			return request;
+
+		char *args = strchr(cmd, ' ');
+		if (args) {
+			*args++ = 0;
+			if (set_option(cmd, args) == OPT_OK) {
+				request = !view->unrefreshable ? REQ_REFRESH : REQ_SCREEN_REDRAW;
+				if (!strcmp(cmd, "color"))
+					init_colors();
+			}
+		}
+		return request;
+	}
+	return REQ_NONE;
+}
+
 int
 main(int argc, const char *argv[])
 {
@@ -8258,6 +8779,7 @@ main(int argc, const char *argv[])
 	int i;
 
 	signal(SIGINT, quit);
+	signal(SIGQUIT, quit);
 	signal(SIGPIPE, SIG_IGN);
 
 	if (setlocale(LC_ALL, "")) {
@@ -8300,6 +8822,9 @@ main(int argc, const char *argv[])
 	while (view_driver(display[current_view], request)) {
 		int key = get_input(0);
 
+		if (key == KEY_ESC)
+			key  = get_input(0) + 0x80;
+
 		view = display[current_view];
 		request = get_keybinding(&view->ops->keymap, key);
 
@@ -8313,66 +8838,7 @@ main(int argc, const char *argv[])
 		case REQ_PROMPT:
 		{
 			char *cmd = read_prompt(":");
-
-			if (cmd && string_isnumber(cmd)) {
-				int lineno = view->pos.lineno + 1;
-
-				if (parse_int(&lineno, cmd, 1, view->lines + 1) == OPT_OK) {
-					select_view_line(view, lineno - 1);
-					report_clear();
-				} else {
-					report("Unable to parse '%s' as a line number", cmd);
-				}
-			} else if (cmd && iscommit(cmd)) {
-				string_ncopy(opt_search, cmd, strlen(cmd));
-
-				request = view_request(view, REQ_JUMP_COMMIT);
-				if (request == REQ_JUMP_COMMIT) {
-					report("Jumping to commits is not supported by the '%s' view", view->name);
-				}
-
-			} else if (cmd && strlen(cmd) == 1) {
-				request = get_keybinding(&view->ops->keymap, cmd[0]);
-				break;
-
-			} else if (cmd && cmd[0] == '!') {
-				struct view *next = VIEW(REQ_VIEW_PAGER);
-				const char *argv[SIZEOF_ARG];
-				int argc = 0;
-
-				cmd++;
-				/* When running random commands, initially show the
-				 * command in the title. However, it maybe later be
-				 * overwritten if a commit line is selected. */
-				string_ncopy(next->ref, cmd, strlen(cmd));
-
-				if (!argv_from_string(argv, &argc, cmd)) {
-					report("Too many arguments");
-				} else if (!format_argv(&next->argv, argv, FALSE)) {
-					report("Argument formatting failed");
-				} else {
-					next->dir = NULL;
-					open_view(view, REQ_VIEW_PAGER, OPEN_PREPARED);
-				}
-
-			} else if (cmd) {
-				request = get_request(cmd);
-				if (request != REQ_UNKNOWN)
-					break;
-
-				char *args = strchr(cmd, ' ');
-				if (args) {
-					*args++ = 0;
-					if (set_option(cmd, args) == OPT_OK) {
-						request = REQ_SCREEN_REDRAW;
-						if (!strcmp(cmd, "color"))
-							init_colors();
-					}
-				}
-				break;
-			}
-
-			request = REQ_NONE;
+			request = run_prompt_command(view, cmd);
 			break;
 		}
 		case REQ_SEARCH:
@@ -8400,3 +8866,5 @@ main(int argc, const char *argv[])
 
 	return 0;
 }
+
+/* vim: set ts=8 sw=8 noexpandtab: */

@@ -18,6 +18,10 @@ ASCIIDOC = @ASCIIDOC@
 XMLTO = @XMLTO@
 DOCBOOK2PDF = @DOCBOOK2PDF@
 
+# Special compatibility features
+@NO_MKSTEMPS@ NO_MKSTEMPS = y
+@NO_SETENV@ NO_SETENV = y
+
 %.o: config.h
 
 config.status: configure

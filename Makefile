@@ -2,7 +2,7 @@
 
 # The last tagged version. Can be overridden either by the version from
 # git or from the value of the DIST_VERSION environment variable.
-VERSION	= 1.1
+VERSION	= 1.2
 
 all:
 
@@ -41,7 +41,6 @@ CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
 PROGS	= tig
 TESTS	= test-graph
-SOURCE	= tig.c tig.h io.c io.h graph.c graph.h
 TXTDOC	= tig.1.txt tigrc.5.txt manual.txt NEWS README INSTALL BUGS
 MANDOC	= tig.1 tigrc.5 tigmanual.7
 HTMLDOC = tig.1.html tigrc.5.html manual.html README.html NEWS.html
@@ -117,10 +116,10 @@ install-release-doc: install-release-doc-man install-release-doc-html
 
 clean:
 	$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5
-	$(RM) $(PROGS) $(TESTS) core *.o *.xml
+	$(RM) $(PROGS) $(TESTS) core *.o compat/*.o *.xml
 
 distclean: clean
-	$(RM) -r manual.html-chunked autom4te.cache
+	$(RM) -r manual.html-chunked autom4te.cache release-docs
 	$(RM) *.toc $(ALLDOC) aclocal.m4 configure
 	$(RM) config.h config.log config.make config.status config.h.in
 
@@ -132,6 +131,17 @@ spell-check:
 
 strip: $(PROGS)
 	strip $(PROGS)
+
+update-headers:
+	@for file in *.[ch]; do \
+		grep -q '/* Copyright' "$$file" && \
+			sed '0,/.*\*\//d' < "$$file" | \
+			grep -v '/* vim: set' > "$$file.tmp"; \
+		{ cat contrib/header.h "$$file.tmp"; \
+		  echo "/* vim: set ts=8 sw=8 noexpandtab: */"; } > "$$file"; \
+		rm "$$file.tmp"; \
+		echo "Updated $$file"; \
+	done
 
 dist: configure tig.spec
 	@mkdir -p $(TARNAME) && \
@@ -155,13 +165,25 @@ configure: configure.ac acinclude.m4 contrib/*.m4
 .PHONY: all all-debug doc doc-man doc-html install install-doc \
 	install-doc-man install-doc-html clean spell-check dist rpm
 
+ifdef NO_MKSTEMPS
+COMPAT_CPPFLAGS += -DNO_MKSTEMPS
+COMPAT_OBJS += compat/mkstemps.o
+endif
+
+ifdef NO_SETENV
+COMPAT_CPPFLAGS += -DNO_SETENV
+COMPAT_OBJS += compat/setenv.o
+endif
+
+override CPPFLAGS += $(COMPAT_CPPFLAGS)
+
 graph.o: graph.c tig.h graph.h
 io.o: io.c tig.h io.h
 refs.o: refs.c tig.h io.h refs.h
 test-graph.o: test-graph.c tig.h io.h graph.h
 tig.o: tig.c tig.h io.h refs.h graph.h git.h
 
-tig: tig.o io.o graph.o refs.o
+tig: tig.o io.o graph.o refs.o $(COMPAT_OBJS)
 test-graph: io.o graph.o
 
 # To check the above.

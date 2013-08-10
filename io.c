@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2012 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2013 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -221,8 +221,8 @@ encoding_open(const char *fromcode)
 	return encoding;
 }
 
-char *
-encoding_convert(struct encoding *encoding, char *line)
+static char *
+encoding_convert_string(iconv_t iconv_cd, char *line)
 {
 	static char out_buffer[BUFSIZ * 2];
 	ICONV_CONST char *inbuf = line;
@@ -231,9 +231,25 @@ encoding_convert(struct encoding *encoding, char *line)
 	char *outbuf = out_buffer;
 	size_t outlen = sizeof(out_buffer);
 
-	size_t ret = iconv(encoding->cd, &inbuf, &inlen, &outbuf, &outlen);
+	size_t ret = iconv(iconv_cd, &inbuf, &inlen, &outbuf, &outlen);
 
 	return (ret != (size_t) -1) ? out_buffer : line;
+}
+
+char *
+encoding_convert(struct encoding *encoding, char *line)
+{
+	return encoding_convert_string(encoding->cd, line);
+}
+
+const char *
+encoding_iconv(iconv_t iconv_cd, const char *string)
+{
+	char *instr = strdup(string);
+	const char *ret = encoding_convert_string(iconv_cd, instr);
+
+	free(instr);
+	return ret == instr ? string : ret;
 }
 
 /*
@@ -338,7 +354,7 @@ open_trace(int devnull, const char *argv[])
 }
 
 bool
-io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ...)
+io_run(struct io *io, enum io_type type, const char *dir, char * const env[], const char *argv[], ...)
 {
 	int pipefds[2] = { -1, -1 };
 	va_list args;
@@ -399,6 +415,14 @@ io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ..
 		if (dir && *dir && chdir(dir) == -1)
 			exit(errno);
 
+		if (env) {
+			int i;
+
+			for (i = 0; env[i]; i++)
+				if (*env[i])
+					putenv(env[i]);
+		}
+
 		execvp(argv[0], (char *const*) argv);
 		exit(errno);
 	}
@@ -413,7 +437,7 @@ io_complete(enum io_type type, const char **argv, const char *dir, int fd)
 {
 	struct io io;
 
-	return io_run(&io, type, dir, argv, fd) && io_done(&io);
+	return io_run(&io, type, dir, NULL, argv, fd) && io_done(&io);
 }
 
 bool
@@ -583,7 +607,7 @@ io_run_buf(const char **argv, char buf[], size_t bufsize)
 {
 	struct io io;
 
-	return io_run(&io, IO_RD, NULL, argv) && io_read_buf(&io, buf, bufsize);
+	return io_run(&io, IO_RD, NULL, NULL, argv) && io_read_buf(&io, buf, bufsize);
 }
 
 int
@@ -627,7 +651,9 @@ io_run_load(const char **argv, const char *separators,
 {
 	struct io io;
 
-	if (!io_run(&io, IO_RD, NULL, argv))
+	if (!io_run(&io, IO_RD, NULL, NULL, argv))
 		return ERR;
 	return io_load(&io, separators, read_property, data);
 }
+
+/* vim: set ts=8 sw=8 noexpandtab: */

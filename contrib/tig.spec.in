@@ -28,6 +28,7 @@ Using it as a pager, it will display input from stdin and colorize it.
 %setup -q
 
 %build
+%configure
 CFLAGS="$RPM_OPT_FLAGS -DVERSION=tig-%{version}-%{release}"
 %{__make} %{_smp_mflags} \
 	prefix=%{_prefix} \
@@ -54,6 +55,9 @@ CFLAGS="$RPM_OPT_FLAGS -DVERSION=tig-%{version}-%{release}"
 %{?_without_docs:  %doc *.txt}
 
 %changelog
+* Tue Jan  8 2013 Joakim Sernbrant <serbaut@gmail.com>
+- Added configure
+
 * Thu Aug 16 2012 Victor Foitzik <vifo@cpan.org>
 - Now also packaging man(7) pages
 

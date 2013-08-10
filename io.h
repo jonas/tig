@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2012 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2013 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -39,6 +39,7 @@ struct encoding;
 
 struct encoding *encoding_open(const char *fromcode);
 char *encoding_convert(struct encoding *encoding, char *line);
+const char *encoding_iconv(iconv_t iconv_out, const char *string);
 
 /*
  * Executing external commands.
@@ -71,7 +72,7 @@ typedef int (*io_read_fn)(char *, size_t, char *, size_t, void *data);
 bool io_open(struct io *io, const char *fmt, ...) PRINTF_LIKE(2, 3);
 bool io_kill(struct io *io);
 bool io_done(struct io *io);
-bool io_run(struct io *io, enum io_type type, const char *dir, const char *argv[], ...);
+bool io_run(struct io *io, enum io_type type, const char *dir, char * const env[], const char *argv[], ...);
 bool io_run_bg(const char **argv);
 bool io_run_fg(const char **argv, const char *dir);
 bool io_run_append(const char **argv, int fd);
@@ -91,3 +92,5 @@ int io_run_load(const char **argv, const char *separators,
 		io_read_fn read_property, void *data);
 
 #endif
+
+/* vim: set ts=8 sw=8 noexpandtab: */

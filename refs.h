@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2012 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2013 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -24,6 +24,7 @@ struct ref {
 	unsigned int remote:1;	/* Is it a remote ref? */
 	unsigned int replace:1;	/* Is it a replace ref? */
 	unsigned int tracked:1;	/* Is it the remote for the current HEAD? */
+	unsigned int valid:1;	/* Is the ref still valid? */
 	char name[1];		/* Ref name; tag or head names are shortened. */
 };
 
@@ -39,3 +40,5 @@ void foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data)
 int reload_refs(const char *git_dir, const char *remote_name, char *head, size_t headlen);
 
 #endif
+
+/* vim: set ts=8 sw=8 noexpandtab: */

@@ -143,6 +143,14 @@ The following variables can be set:
 	'core.abbrev' if found or default to 7.  See git-config(1) on how to
 	set 'core.abbrev'.
 
+'diff-options' (string)::
+
+	A space separate string of diff options to use in the diff view.
+	git-show(1) is used for formatting and always passes --patch-with-stat.
+	This option overrides any options specified in the TIG_DIFF_OPTS
+	environment variable (described in manpage:tig[1]), but is itself
+	overridden by diff flags given on the command line invocation.
+
 'blame-options' (string)::
 
 	A space separated string of extra blame options. Can be used for
@@ -171,7 +179,7 @@ The following variables can be set:
 
 	Whether to read git's color settings. True by default.
 
-'show-author' (mixed) ["abbreviated" | "full" | bool]::
+'show-author' (mixed) ["full", "abbreviated" | "email" | "email-user" | bool]::
 
 	How to display author names. If set to "abbreviated" author initials
 	will be shown. Can be toggled.
@@ -203,6 +211,13 @@ The following variables can be set:
 	Whether to show commit IDs in the main view. Disabled by default. Can
 	be toggled. See also 'id-width' option.
 
+'title-overflow' (mixed) [bool | int]::
+
+	Whether to highlight text in commit titles exceeding a given width.
+	When set to a boolean, it enables/disables the highlighting using the
+	default width of 50 character. When set to an int, the assigned value
+	is used as the maximum character width.
+
 'show-rev-graph' (bool)::
 
 	Whether to show revision graph in the main view on start-up.
@@ -212,6 +227,10 @@ The following variables can be set:
 
 	Whether to show staged and unstaged changes in the main view.
 	Can be toggled.
+
+'show-line-numbers' (bool)::
+
+	Whether to show line numbers. Can be toggled.
 
 'vertical-split' (bool)::
 
@@ -265,6 +284,12 @@ The following variables can be set:
 	Whether to focus the child view when it is opened. When disabled the
 	focus will remain in the parent view, avoiding reloads of the child
 	view when navigating the parent view. True by default.
+
+'editor-line-number' (bool)::
+
+	Whether to pass the selected line number to the editor command. The
+	line number is passed as `+<line-number>` in front of the file name.
+	Example: `vim +10 tig.c`
 
 Bind command
 ------------
@@ -323,6 +348,12 @@ character.
 *Insert*, *Delete*, *Hash*, *Home*, *End*, *PageUp*, *PageDown*, *F1*, *F2*, *F3*,
 *F4*, *F5*, *F6*, *F7*, *F8*, *F9*, *F10*, *F11*, *F12*.
 
+To add a key mapping that uses the Ctrl key, use a `^` prefix in your mapping.
+For example, Ctrl-f could be mapped to *scroll-page-down* with the following line:
+
+bind main ^f scroll-page-down
+
+
 Action names::
 
 Valid action names are described below. Note, all names are
@@ -334,10 +365,17 @@ e.g. "view-main", "View.Main", and "VIEW_MAIN" are the same.
 Actions
 ~~~~~~~
 
-Apart from the action names listed below, all actions starting with a '!' will
-be available as an external command. External commands can contain variable
-names that will be substituted before the command is run. Valid variable names
-are:
+Apart from the action names listed below, all actions starting with a '!' or
+':' are treated specially.
+
+Actions beginning with a ':' will run an internal tig command.  These internal
+commands are those which you put in a configuration file or type at the tig
+prompt.  As an example, "bind generic S :source .tigrc" will source a .tigrc
+file in the current directory when 'S' is pressed.
+
+Actions beginning with a '!' will be available as an external command. External
+commands can contain variable names that will be substituted before the command
+is run. Valid variable names are:
 
 .Browsing state variables
 [frame="none",grid="none",cols="25<m,75<"]
@@ -346,6 +384,7 @@ are:
 |%(commit)		|The currently selected commit ID.
 |%(blob)		|The currently selected blob ID.
 |%(branch)		|The currently selected branch name.
+|%(stash)		|The currently selected stash name.
 |%(directory)		|The current directory path in the tree view;
 			 empty for the root directory.
 |%(file)		|The currently selected file.
@@ -485,6 +524,7 @@ execute the command and will exit tig after completion.
 |toggle-rev-graph	|Toggle revision graph visualization
 |toggle-graphic		|Toggle (line) graphics mode
 |toggle-refs		|Toggle reference display
+|toggle-files		|Toggle file filtering for the diff and main views
 |edit			|Open in editor
 |none			|Do nothing
 |=============================================================================
@@ -537,13 +577,17 @@ Color names::
 
 	Valid colors include: *white*, *black*, *green*, *magenta*, *blue*,
 	*cyan*, *yellow*, *red*, *default*. Use *default* to refer to the
-	default terminal colors. This is recommended for background colors if
-	you are using a terminal with a transparent background.
+	default terminal colors, for example, to keep the background
+	transparent when you are using a terminal with a transparent
+	background.
 +
-Colors can also be specified using the keywords color0, color1, ..., colorN-1
-(N being the number of colors supported by your terminal). This is useful when
-you remap the colors for your display or want to enable colors supported by
-256-color terminals.
+Colors can also be specified using the keywords *color0*, *color1*, ...,
+*colorN-1* (where *N* is the number of colors supported by your terminal).
+This is useful when you remap the colors for your display or want to enable
+colors supported by 88-color and 256-color terminals. Note that the 'color'
+prefix is optional. If you prefer, you can specify colors directly by their
+numbers *0*, *1*, ..., *N-1* instead, just like in the configuration file of
+Git.
 
 Attribute names::
 
@@ -647,8 +691,9 @@ omnipresent.
 Commit message::
 
 `Signed-off-by`, `Acked-by`, `Reviewed-by` and `Tested-by` lines are colorized.
+Characters in the commit title exceeding a predefined width can be highlighted.
 
-*signoff*, *acked*, *reviewed*, *tested*
+*signoff*, *acked*, *reviewed*, *tested*, *overflow*
 
 Tree markup::
 

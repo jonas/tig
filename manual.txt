@@ -124,6 +124,9 @@ The stage view::
 	Displays diff changes for staged or unstaged files being tracked or
 	file content of untracked files.
 
+The stash view::
+	Displays the list of stashes in the repository.
+
 The pager view::
 	Is used for displaying both input from stdin and output from git
 	commands entered in the internal prompt.
@@ -154,6 +157,7 @@ following variables.
 |%(commit)		|The currently selected commit ID.
 |%(blob)		|The currently selected blob ID.
 |%(branch)		|The currently selected branch name.
+|%(stash)		|The currently selected stash name.
 |%(directory)		|The current directory path in the tree view;
 			 empty for the root directory.
 |%(file)		|The currently selected file.
@@ -163,6 +167,28 @@ following variables.
 |%(diffargs)		|The diff options passed on the command line.
 |%(prompt)		|Prompt for the argument value.
 |=============================================================================
+
+Example user-defined commands:
+
+ - Allow to amend the last commit:
+
+	bind generic + !git commit --amend
+
+ - Copy commit ID to clipboard:
+
+	bind generic 9 !@sh -c "echo -n %(commit) | xclip -selection c"
+
+ - Add/edit notes for the current commit used during a review:
+
+	bind generic T !git notes edit %(commit)
+
+ - Enter git's interactive add for fine-grained staging of file content:
+
+	bind generic I !git add -i %(file)
+
+ - Rebase current branch on top of the selected branch:
+
+	bind branch 3 !git rebase -i %(branch)
 
 [[title-window]]
 Title Windows
@@ -272,6 +298,7 @@ View Switching
 |f	|Switch to (file) blob view.
 |B	|Switch to blame view.
 |H	|Switch to branch view.
+|y	|Switch to stash view.
 |h	|Switch to help view
 |S	|Switch to status view
 |c	|Switch to stage view
@@ -322,7 +349,7 @@ View Specific Actions
 	 preferred merge tool. See the manpage of git-mergetool(1).
 |!	|Checkout file with unstaged changes. This will reset the file to
 	 contain the content it had at last commit.
-|Ctrl-u	|Stage single diff line.
+|1	|Stage single diff line.
 |@	|Move to next chunk in the stage view.
 |]	|Increase the diff context.
 |[	|Decrease the diff context.
@@ -388,12 +415,15 @@ Misc
 |o	|Open option menu
 |.	|Toggle line numbers on/off.
 |D	|Toggle date display on/off/short/relative/local.
-|A	|Toggle author display on/off/abbreviated.
+|A	|Toggle author display on/off/abbreviated/email/email user name.
 |g	|Toggle revision graph visualization on/off.
 |~	|Toggle (line) graphics mode
 |F	|Toggle reference display on/off (tag and branch names).
 |W	|Toggle ignoring whitespace on/off for diffs
 |X	|Toggle commit ID display on/off
+|%	|Toggle file filtering in order to see the full diff instead of only
+	 the diff concerning the currently selected file.
+|$	|Toggle highlighting of commit title overflow.
 |:	|Open prompt. This allows you to specify what command to run.
 |e	|Open file in editor.
 |=============================================================================

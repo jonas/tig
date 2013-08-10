@@ -1,5 +1,4 @@
-
-/* Copyright (c) 2006-2010 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2013 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -71,3 +70,5 @@ const char *graph_symbol_to_utf8(struct graph_symbol *symbol);
 const chtype *graph_symbol_to_chtype(struct graph_symbol *symbol);
 
 #endif
+
+/* vim: set ts=8 sw=8 noexpandtab: */

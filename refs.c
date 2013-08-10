@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2012 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2013 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -79,6 +79,7 @@ get_ref_list(const char *id)
 	list = calloc(1, sizeof(*list));
 	if (!list)
 		return NULL;
+	string_copy_rev(list->id, id);
 
 	for (i = 0; i < refs_size; i++) {
 		if (!strcmp(id, refs[i]->id) &&
@@ -176,6 +177,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 		strncpy(ref->name, name, namelen);
 	}
 
+	ref->valid = TRUE;
 	ref->head = head;
 	ref->tag = tag;
 	ref->ltag = ltag;
@@ -220,10 +222,14 @@ reload_refs(const char *git_dir, const char *remote_name, char *head, size_t hea
 
 	refs_head = NULL;
 	for (i = 0; i < refs_size; i++)
-		refs[i]->id[0] = 0;
+		refs[i]->valid = 0;
 
 	if (io_run_load(ls_remote_argv, "\t", read_ref, &opt) == ERR)
 		return ERR;
+
+	for (i = 0; i < refs_size; i++)
+		if (!refs[i]->valid)
+			refs[i]->id[0] = 0;
 
 	/* Update the ref lists to reflect changes. */
 	for (i = 0; i < ref_lists_size; i++) {
@@ -240,3 +246,5 @@ reload_refs(const char *git_dir, const char *remote_name, char *head, size_t hea
 
 	return OK;
 }
+
+/* vim: set ts=8 sw=8 noexpandtab: */

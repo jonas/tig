@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2012 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2013 Jonas Fonseca <fonseca@diku.dk>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -17,6 +17,8 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "compat/compat.h"
 
 #ifndef TIG_VERSION
 #define TIG_VERSION "unknown-version"
@@ -70,18 +72,20 @@
 #elif defined HAVE_CURSES_H
 #  include <curses.h>
 #else
+#ifdef WARN_MISSING_CURSES_CONFIGURATION
 #  warning SysV or X/Open-compatible Curses installation is required.
 #  warning Will assume Curses is found in default include and library path.
 #  warning To fix any build issues please use autotools to configure Curses.
 #  warning See INSTALL file for instructions.
+#endif
 #  include <curses.h>
 #endif
 
 #if __GNUC__ >= 3
-#define __NORETURN __attribute__((__noreturn__))
+#define TIG_NORETURN __attribute__((__noreturn__))
 #define PRINTF_LIKE(fmt, args) __attribute__((format (printf, fmt, args)))
 #else
-#define __NORETURN
+#define TIG_NORETURN
 #define PRINTF_LIKE(fmt, args)
 #endif
 
@@ -108,7 +112,7 @@
 #ifndef ICONV_CONST
 #define ICONV_CONST	/* nothing */
 #endif
-#define ICONV_TRANSLIT	"//TRANSLIT"
+#define ICONV_TRANSLIT	"//TRANSLIT//IGNORE"
 
 /* The format and size of the date column in the main view. */
 #define DATE_FORMAT	"%Y-%m-%d %H:%M"
@@ -260,11 +264,20 @@ string_copy_rev(char *dst, const char *src)
 {
 	size_t srclen;
 
+	if (!*src)
+		return;
+
 	for (srclen = 0; srclen < SIZEOF_REV; srclen++)
 		if (isspace(src[srclen]))
 			break;
 
 	string_ncopy_do(dst, SIZEOF_REV, src, srclen);
+}
+
+static inline void
+string_copy_rev_from_commit_line(char *dst, const char *src)
+{
+	string_copy_rev(dst, src + STRING_SIZE("commit "));
 }
 
 #define string_rev_is_null(rev) !strncmp(rev, NULL_ID, STRING_SIZE(NULL_ID))
@@ -342,6 +355,9 @@ string_nformat(char *buf, size_t bufsize, size_t *bufpos, const char *fmt, ...)
 
 #define string_format(buf, fmt, args...) \
 	string_nformat(buf, sizeof(buf), NULL, fmt, args)
+
+#define string_format_size(buf, size, fmt, args...) \
+	string_nformat(buf, size, NULL, fmt, args)
 
 #define string_format_from(buf, from, fmt, args...) \
 	string_nformat(buf, sizeof(buf), from, fmt, args)
@@ -461,6 +477,12 @@ unicode_width(unsigned long c, int tab_size)
 	    || (c >= 0x20000 && c <= 0x2fffd)
 	    || (c >= 0x30000 && c <= 0x3fffd)))
 		return 2;
+	
+	if ((c >= 0x0300 && c <= 0x036f)	/* combining diacretical marks */
+	    || (c >= 0x1dc0 && c <= 0x1dff)	/* combining diacretical marks supplement */
+	    || (c >= 0x20d0 && c <= 0x20ff)	/* combining diacretical marks for symbols */
+	    || (c >= 0xfe20 && c <= 0xfe2f))	/* combining half marks */
+		return 0;
 
 	if (c == '\t')
 		return tab_size;
@@ -596,3 +618,5 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
 }
 
 #endif
+
+/* vim: set ts=8 sw=8 noexpandtab: */

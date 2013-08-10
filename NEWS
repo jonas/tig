@@ -1,6 +1,56 @@
 Release notes
 =============
 
+tig-1.2
+-------
+
+ - Tig now has its own tag on Stack Overflow, where users are invited to
+   ask questions: http://stackoverflow.com/questions/tagged/tig
+
+Improvements:
+
+ - Make tig prompt commands bindable to keys. For example:
+   `bind diff F :set diff-options = --full-diff`. (GH #69, #116)
+ - Add a diff-options setting for specifying default diff options.
+   Example: `set diff-options = --patience`. (GH #116)
+ - Options in diff-options and blame-options matching tig browsing state
+   variables are replaced.
+ - Show diff stats as wide as the terminal. (GH #109)
+ - Show line numbers in the branch view. (GH #135)
+ - Add toggles for showing author email or email user names. (GH #115)
+ - Open editor at the selected line by prefixing the file argument with
+   `+<lineno>`. Tested in vi, vim, emacs, nano, gedit, geany. Disable
+   by adding `set editor-line-number = no` to ~/.tigrc. (GH #118, #119)
+ - Add toggle-files to control whether to show full commit diff or only
+   the diff concerning the currently selected file, e.g. for blame.
+ - Optionally highlight exceeding characters in long commit titles.
+   The default title max width is 50 characters. Customize using:
+   `set title-overflow = 50` (GH #125)
+ - Add +ESC key bindings. Example: `bind generic ^[v move-page-up` (GH #120)
+ - Create temporary files in TMPDIR, TEMP, or TMP before defaulting to /tmp.
+ - Reenable `tig log` as a subcommand. (GH #146)
+ - Enable tilde expansion in ~/.tigrc "source" commands. (GH #168)
+ - Introduce the stash view, bound to the 'y' keybinding. (GH #169, #174)
+
+Bug fixes:
+
+ - Fix blame and status to work in directories starting with a dot. (GH #172)
+ - Reload current branch name when reloading the status view. (GH #93)
+ - Fix compile errors on old Solaris. (GH #97)
+ - Reload HEAD info when reloading the stage view. (GH #104, #93)
+ - Fix disappearing branch labels after external commands. (GH #148)
+ - Fix diff view display for staged/unstaged changes when using 'd'.
+ - Fix display of status messages when toggling view options. (GH #111)
+ - Fix illegal memory access. (GH #98)
+ - Fix display of all branches label in repos with short branch names.
+ - Fix rendering glitch for branch names.
+ - Do not apply diff styling to untracked files in the stage view. (GH #153)
+ - Fix tree indentation for entries containing combining characters. (GH #170)
+ - Ignore unrepresentable characters when transliterating text for rendering.
+ - Transliterate text to output encoding before trimming it to avoid
+   misalignment. (GH #86)
+ - Introduce a more natural context-sensitive log display. (GH #155)
+
 tig-1.1
 -------
 
@@ -10,6 +60,7 @@ Incompatibilities:
    performance on larger projects. Use git config 'diff.renames' option
    (git-wide) to set your preferred behavior. Environment variable
    TIG_DIFF_OPTS can be used to restore the old behavior.
+ - Fix manual keybinding for stage-single-line. (GH #108)
  - Values set for author-width and filename-width will result in widths
    one character bigger than previously.
 

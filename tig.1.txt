@@ -9,8 +9,10 @@ SYNOPSIS
 --------
 [verse]
 tig        [options] [revisions] [--] [paths]
+tig log    [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
 tig blame  [options] [rev] [--] path
+tig stash
 tig status
 tig <      [git command output]
 
@@ -47,6 +49,9 @@ blame::
 status::
 	Start up in status view.
 
+log::
+	Start up in log view, displaying git-log(1) output.
+
 +<number>::
     Show the first view with line <number> visible and selected.
 
@@ -79,6 +84,11 @@ Display differences between two branches:
 $ tig test..master
 -----------------------------------------------------------------------------
 
+Display changes for sub-module versions:
+-----------------------------------------------------------------------------
+$ tig --submodule
+-----------------------------------------------------------------------------
+
 Display changes for a single file:
 -----------------------------------------------------------------------------
 $ tig -- README
@@ -97,6 +107,11 @@ $ tig --after="2004-01-01" --before="2006-05-16" -- README
 Blame file with copy detection enabled:
 -----------------------------------------------------------------------------
 $ tig blame -C README
+-----------------------------------------------------------------------------
+
+Display the list of stashes:
+-----------------------------------------------------------------------------
+$ tig stash
 -----------------------------------------------------------------------------
 
 ENVIRONMENT VARIABLES
@@ -120,7 +135,8 @@ TIG_LS_REMOTE::
 
 TIG_DIFF_OPTS::
 	The diff options to use in the diff view. The diff view uses
-	git-show(1) for formatting and always passes --patch-with-stat.
+	git-show(1) for formatting and always passes --patch-with-stat.  You
+	may also set the diff-options setting in your manpage:tigrc[5].
 
 TIG_TRACE::
 	Path for trace file where information about git commands are logged.

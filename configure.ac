@@ -9,6 +9,17 @@ AC_CONFIG_MACRO_DIR([contrib])
 dnl  Make sure aclocal actually found it!
 m4_pattern_forbid([^AX_])
 
+AC_PROG_CC
+
+AC_CHECK_HEADERS([stdlib.h string.h sys/time.h unistd.h])
+AC_CHECK_FUNCS([gettimeofday])
+AC_CHECK_DECLS([environ])
+AC_CHECK_DECLS([errno], [], [], [#include <errno.h>])
+
+dnl Checks for compatibility flags
+AC_CHECK_FUNCS([mkstemps], [AC_SUBST([NO_MKSTEMPS], ["#"])])
+AC_CHECK_FUNCS([setenv], [AC_SUBST([NO_SETENV], ["#"])])
+
 AX_WITH_CURSES
 case "$ax_cv_ncurses" in "no")
 	AC_MSG_ERROR([ncurses not found])
@@ -20,8 +31,6 @@ esac
 AC_SUBST(CURSES_LIB)
 
 AM_ICONV
-
-AC_PROG_CC
 
 AC_CHECK_PROGS(ASCIIDOC, [asciidoc], [false])
 AC_CHECK_PROGS(XMLTO, [xmlto], [false])
