@@ -21,7 +21,7 @@ pageTracker._trackPageview();
 
 mkdir -p "$DOCDIR/releases"
 
-for file in doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html NEWS.html; do
+for file in doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html NEWS.html INSTALL.html; do
 	{
 		git cat-file blob release:$file > tmp
 		grep -v '</body>' < tmp | grep -v '</html>'

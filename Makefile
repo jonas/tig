@@ -43,7 +43,7 @@ PROGS	= tig
 TESTS	= test-graph
 TXTDOC	= doc/tig.1.asciidoc doc/tigrc.5.asciidoc doc/manual.asciidoc NEWS README INSTALL BUGS
 MANDOC	= doc/tig.1 doc/tigrc.5 doc/tigmanual.7
-HTMLDOC = doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html NEWS.html
+HTMLDOC = doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html INSTALL.html NEWS.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) doc/manual.html-chunked doc/manual.pdf
 
 # Never include the release number in the tarname for tagged
@@ -213,8 +213,11 @@ doc/manual.html: ASCIIDOC_FLAGS += -ainclude-manual-toc
 		*)	   ref="$$ref, $$line" ;; \
 		esac; done | sed 's/\[\[\(.*\)\]\]/\1/' > $@
 
-README.html: README doc/SITES INSTALL doc/asciidoc.conf
+README.html: README doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -a readme $<
+
+INSTALL.html: INSTALL doc/asciidoc.conf
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<
 
 NEWS.html: NEWS doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<

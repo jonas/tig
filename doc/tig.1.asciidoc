@@ -193,9 +193,3 @@ link:manual.html[the tig manual],
 endif::backend-xhtml11[]
 endif::version[]
 git(7)
-
-ifdef::version[]
-Online resources:
-
-include::SITES[]
-endif::version[]

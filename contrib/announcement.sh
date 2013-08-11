@@ -17,7 +17,7 @@
 
 root="$(git rev-parse --show-cdup)"
 NEWS="${root}NEWS"
-SITES="${root}doc/SITES"
+README="${root}README"
 from="$(sed -n '7,/^tig-/p' < "$NEWS" | tail -n 1 | cut -d' ' -f 1)"
 to="${1-HEAD}"
 short=
@@ -30,14 +30,9 @@ $(echo "$to" | sed 's/[0-9a-zA-Z.-]/=/g')
 
 *** text for the announcement ***
 
-What is tig?
-------------
-Tig is an ncurses-based text-mode interface for git. It functions mainly
-as a git repository browser, but can also assist in staging changes for
-commit at chunk level and act as a pager for output from various git
-commands.
+$(sed -n '/What is tig?/,/^$/p' < "$README")
 
-$(sed -n '/-/p' < "$SITES" | sed 's/[[(].*//')
+$(sed -n 's/\( -.*\)[[(].*/\1/p' < "$README")
 
 Release notes
 -------------

@@ -604,7 +604,3 @@ ifndef::version[]
  - link:tig.1.asciidoc[tig(1)]
  - link:tigrc.5.asciidoc[tigrc(5)]
 endif::version[]
-
-Online resources:
-
-include::SITES.asciidoc[]

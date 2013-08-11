@@ -1,18 +1,24 @@
 Tig: text-mode interface for git
 ================================
 
-Tig is a git repository browser that additionally can act as a pager for output
-from various git commands.
-
-When browsing repositories, it uses the underlying git commands to present the
-user with various views, such as summarized revision log and showing the commit
-with the log message, diffstat, and the diff.
-
-Using it as a pager, it will display input from stdin and colorize it.
+What is tig?
+------------
+Tig is an ncurses-based text-mode interface for git. It functions mainly
+as a git repository browser, but can also assist in staging changes for
+commit at chunk level and act as a pager for output from various git
+commands.
 
 Resources
 ---------
 
-include::doc/SITES[]
+ - Homepage:	http://jonas.nitro.dk/tig/[]
+ - Manual:	http://jonas.nitro.dk/tig/manual.html[]
+ - Tarballs:	http://jonas.nitro.dk/tig/releases/[]
+ - Git URL:	git://github.com/jonas/tig.git (master) or
+		git://repo.or.cz/tig.git (mirror)
+ - Gitweb:	http://repo.or.cz/w/tig.git[]
+ - Q&A:		http://stackoverflow.com/questions/tagged/tig[]
 
-include::INSTALL[]
+Installation
+------------
+For installation instructions see the link:INSTALL.html[INSTALL] file.
