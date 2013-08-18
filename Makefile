@@ -100,8 +100,9 @@ install-doc-html: doc-html
 	mkdir -p $(DESTDIR)$(docdir)/tig
 	for doc in $(HTMLDOC); do \
 		sed 's#++SYSCONFDIR++#$(sysconfdir)#' < "$$doc" > "$$doc+"; \
+		bdoc=$$(basename $$doc); \
 		case "$$doc" in \
-		*.html) install -p -m 0644 "$$doc+" "$(DESTDIR)$(docdir)/tig/$$doc" ;; \
+		*.html) install -p -m 0644 "$$doc+" "$(DESTDIR)$(docdir)/tig/$$bdoc" ;; \
 		esac; \
 		$(RM) "$$doc+"; \
 	done
