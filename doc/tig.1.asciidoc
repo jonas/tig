@@ -159,7 +159,7 @@ FILES
 
 '$GIT_DIR/config'::
 '~/.gitconfig::
-'{sysconfdir}/etc/gitconfig::
+'{sysconfdir}/gitconfig::
 	Git configuration files. Read on start-up with the help of
 	git-config(1).
 
