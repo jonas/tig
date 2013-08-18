@@ -3,7 +3,7 @@ autom4te.cache
 config.h
 config.h.in
 config.log
-config.make
+/config.make
 config.status
 configure
 cscope.out
@@ -22,5 +22,6 @@ tig
 tig-*.tar.gz
 tig-*.tar.gz.md5
 tig.spec
+*.swp
 *.o
 *~
