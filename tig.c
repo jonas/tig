@@ -8317,9 +8317,9 @@ set_work_tree(const char *value)
 		die("Failed to chdir(%s): %s", value, strerror(errno));
 	if (!getcwd(cwd, sizeof(cwd)))
 		die("Failed to get cwd path: %s", strerror(errno));
-	if (!setenv("GIT_WORK_TREE", cwd, TRUE))
+	if (setenv("GIT_WORK_TREE", cwd, TRUE))
 		die("Failed to set GIT_WORK_TREE to '%s'", cwd);
-	if (!setenv("GIT_DIR", opt_git_dir, TRUE))
+	if (setenv("GIT_DIR", opt_git_dir, TRUE))
 		die("Failed to set GIT_DIR to '%s'", opt_git_dir);
 	opt_is_inside_work_tree = TRUE;
 }
