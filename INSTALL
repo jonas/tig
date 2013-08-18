@@ -3,18 +3,35 @@ Installation instructions
 
 Download a tarball from http://jonas.nitro.dk/tig/releases[] or clone the tig
 repository http://github.com/jonas/tig[git://github.com/jonas/tig.git].
-Documentation files are available in the tarballs and in the 'release' branch
-of the tig repository.
 
-The quick and simple way to install tig with documentation is to run:
+The quick and simple way to install tig is:
 
 	$ make
-	$ make install install-doc
+	$ make install
 
-From tig's git repository it is also possible to install documentation directly
-from the release branch to avoid installing the documentation tool chain:
+By default, tig is installed in `$HOME/bin`. To install tig elsewhere set
+`prefix` to the desired path:
+
+	$ make prefix=/usr/local
+	$ sudo make install prefix=/usr/local
+
+Documentation files, such as manpages, are distributed in the release tarballs,
+and can be installed using:
+
+	$ make install-doc
+
+When installing directly from the tig repository, `make install-doc` will assume
+that the documentation tool chain is available and build the documentation
+locally. In case you do not wish to install the required tools, documentation
+can be installed from the 'release' branch using:
 
 	$ make install-release-doc
+
+Release notes documenting notable changes are available in the NEWS file. When
+upgrading, you are advised to read them before you install.
+
+Installation using `configure`
+------------------------------
 
 Optionally, you can use the `configure` script to detect dependencies:
 
@@ -22,42 +39,65 @@ Optionally, you can use the `configure` script to detect dependencies:
 	$ make
 	$ make install
 
-If your iconv library is not in the default library and include path, you'll
-probably want to pass the "--with-libiconv" option to the "configure" script to
-tell it where to look. Note, if you are building from the tig repository, you
-need to first make the configure script:
+If your `iconv` library is not in the default library and include path, you need
+to pass the `--with-libiconv` option to `configure` to tell it where to look.
+
+Note, if you are building from the tig repository, you need to generate
+`configure` yourself. First, ensure that `autoconf` is installed on your system,
+and then run the following command:
 
 	$ make configure
 
-Build settings are read from the file "config.make". To manually configure tig
-to use the ncurses library with wide character support, add the line:
+Build configuration
+-------------------
 
-	LDLIBS = -lncursesw
+Build settings are read from the file `config.make` and for certain systems also
+from `contrib/config.make-$kernel`. An example of the latter is Mac OS X, where
+`contrib/config.make-Darwin` provides out-of-the-box configuration for using the
+system ncurses library and linking with the iconv library. This makes it easy to
+configure the build without having to use the `configure` script. As a side
+note, `configure` itself generates a `config.make` file.
 
-You might also need an additional line to include the proper header file
+Apart from the different standard `make` build variables (`CC`, `CFLAGS`, etc.)
+and standard `configure` variables (`prefix`, `bindir`, etc.), build settings
+can be one of the following compatibility flags:
+
+ - `NO_SETENV`: Define this variable to enable work-around for missing
+   `setenv()`.
+ - `NO_MKSTEMPS`: Define this variable to enable work-around for missing
+   `mkstemps()`.
+
+The following example `config.make` manually configures tig to use the ncurses
+library with wide character support and include the proper ncurses header file
 (see tig.h for more information):
 
+	LDLIBS = -lncursesw
 	CPPFLAGS = -DHAVE_NCURSESW_CURSES_H
 
-Note for packagers: For tig's configure script to work as expected you
-should avoid configuring and building ncurses using "--with-shared".
+For more examples of build settings, see `contrib/config.make` and
+`config.make.in`.
 
-Release notes documenting notable changes are available in the NEWS file. When
-upgrading, you are advised to also read them after you have completed the
-installation.
+Tools and packages
+------------------
 
 The following tools and packages are needed:
 
 [cols="2<,8<",options="header"]
 |=============================================================================
 |Tool				|Description
-|git-core			|Tig is just a frontend for git.
+|git-core			|Tig is just a frontend for Git.
 |ncurses or ncursesw		|Be sure to have the development files
 				 installed. Usually they are available in a
 				 separate package ending with `-dev`.
-				 Note also that ncurses with wide character
-				 support (ncursesw) is required to properly
-				 handle UTF-8 encoded strings.
+
+				 Ncurses with wide character support (ncursesw)
+				 is required to properly handle UTF-8 encoded
+				 strings.
+
+				 Note for packagers: For tig's `configure`
+				 script to work as expected you should avoid
+				 configuring and building ncurses using
+				 `--with-shared`.
 |iconv				|If iconv is not provided by the c library
 				 you need to change the Makefile to link it
 				 into the binary.
@@ -75,5 +115,5 @@ configure script and building documentation:
 |xmlto				|Generates manpages and chunked HTML from XML.
 |DocBook XSL (>= 1.72.0)	|Used by xmlto for building manpages.
 |DocBook (DSSL/Jade) tools	|Generates PDF from XML.
-				Also known as docbook-utils.
+				 Also known as docbook-utils.
 |=============================================================================
