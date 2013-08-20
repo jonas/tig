@@ -122,6 +122,46 @@ mkdate(const struct time *time, enum date date)
 	return strftime(buf, sizeof(buf), DATE_FORMAT, &tm) ? buf : NULL;
 }
 
+#define FILE_SIZE_ENUM(_) \
+	_(FILE_SIZE, NO), \
+	_(FILE_SIZE, DEFAULT), \
+	_(FILE_SIZE, UNITS)
+
+DEFINE_ENUM(file_size, FILE_SIZE_ENUM);
+
+static const char *
+mkfilesize(unsigned long size, enum file_size format)
+{
+	static char buf[64 + 1];
+	static const char relsize[] = {
+		'B', 'K', 'M', 'G', 'T', 'P'
+	};
+
+	if (!format)
+		return "";
+
+	if (format == FILE_SIZE_UNITS) {
+		const char *fmt = "%.0f%c";
+		double rsize = size;
+		int i;
+
+		for (i = 0; i < ARRAY_SIZE(relsize); i++) {
+			if (rsize > 1024.0 && i + 1 < ARRAY_SIZE(relsize)) {
+				rsize /= 1024;
+				continue;
+			}
+
+			size = rsize * 10;
+			if (size % 10 > 0)
+				fmt = "%.1f%c";
+
+			return string_format(buf, fmt, rsize, relsize[i])
+				? buf : NULL;
+		}
+	}
+
+	return string_format(buf, "%ld", size) ? buf : NULL;
+}
 
 #define AUTHOR_ENUM(_) \
 	_(AUTHOR, NO), \
@@ -390,6 +430,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 	REQ_(TOGGLE_ID,		"Toggle commit ID display"), \
 	REQ_(TOGGLE_FILES,	"Toggle file filtering"), \
 	REQ_(TOGGLE_TITLE_OVERFLOW,	"Toggle highlighting of commit title overflow"), \
+	REQ_(TOGGLE_FILE_SIZE,	"Toggle file size format"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
@@ -455,6 +496,7 @@ static enum graphic opt_line_graphics	= GRAPHIC_DEFAULT;
 static enum date opt_date		= DATE_DEFAULT;
 static enum author opt_author		= AUTHOR_FULL;
 static enum filename opt_filename	= FILENAME_AUTO;
+static enum file_size opt_file_size	= FILE_SIZE_DEFAULT;
 static bool opt_rev_graph		= TRUE;
 static bool opt_line_number		= FALSE;
 static bool opt_show_refs		= TRUE;
@@ -613,6 +655,7 @@ LINE(MODE,         "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(ID,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(OVERFLOW,	   "",			COLOR_RED,	COLOR_DEFAULT,	0), \
 LINE(FILENAME,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
+LINE(FILE_SIZE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(LINE_NUMBER,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(TITLE_BLUR,   "",			COLOR_WHITE,	COLOR_BLUE,	0), \
 LINE(TITLE_FOCUS,  "",			COLOR_WHITE,	COLOR_BLUE,	A_BOLD), \
@@ -1565,6 +1608,9 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "show-filename"))
 		return parse_enum(&opt_filename, argv[2], filename_map);
 
+	if (!strcmp(argv[0], "show-file-size"))
+		return parse_enum(&opt_file_size, argv[2], file_size_map);
+
 	if (!strcmp(argv[0], "horizontal-scroll"))
 		return parse_step(&opt_hscroll, argv[2]);
 
@@ -2200,14 +2246,31 @@ draw_graphic(struct view *view, enum line_type type, const chtype graphic[], siz
 	return VIEW_MAX_LEN(view) <= 0;
 }
 
+enum align {
+	ALIGN_LEFT,
+	ALIGN_RIGHT
+};
+
 static bool
-draw_field(struct view *view, enum line_type type, const char *text, int width, bool trim)
+draw_field(struct view *view, enum line_type type, const char *text, int width, enum align align, bool trim)
 {
 	int max = MIN(VIEW_MAX_LEN(view), width + 1);
 	int col = view->col;
 
 	if (!text)
 		return draw_space(view, type, max, max);
+
+	if (align == ALIGN_RIGHT) {
+		int textlen = strlen(text);
+		int leftpad = max - textlen - 1;
+
+		if (leftpad > 0) {
+	    		if (draw_space(view, type, leftpad, leftpad))
+				return TRUE;
+			max -= leftpad;
+			col += leftpad;;
+		}
+	}
 
 	return draw_chars(view, type, text, max - 1, trim)
 	    || draw_space(view, LINE_DEFAULT, max - (view->col - col), max);
@@ -2222,7 +2285,7 @@ draw_date(struct view *view, struct time *time)
 	if (opt_date == DATE_NO)
 		return FALSE;
 
-	return draw_field(view, LINE_DATE, date, cols, FALSE);
+	return draw_field(view, LINE_DATE, date, cols, ALIGN_LEFT, FALSE);
 }
 
 static bool
@@ -2234,13 +2297,13 @@ draw_author(struct view *view, const struct ident *author)
 	if (opt_author == AUTHOR_NO)
 		return FALSE;
 
-	return draw_field(view, LINE_AUTHOR, text, opt_author_width, trim);
+	return draw_field(view, LINE_AUTHOR, text, opt_author_width, ALIGN_LEFT, trim);
 }
 
 static bool
 draw_id_custom(struct view *view, enum line_type type, const char *id, int width)
 {
-	return draw_field(view, type, id, width, FALSE);
+	return draw_field(view, type, id, width, ALIGN_LEFT, FALSE);
 }
 
 static bool
@@ -2263,7 +2326,18 @@ draw_filename(struct view *view, const char *filename, bool auto_enabled)
 	if (opt_filename == FILENAME_AUTO && !auto_enabled)
 		return FALSE;
 
-	return draw_field(view, LINE_FILENAME, filename, opt_filename_width, trim);
+	return draw_field(view, LINE_FILENAME, filename, opt_filename_width, ALIGN_LEFT, trim);
+}
+
+static bool
+draw_file_size(struct view *view, unsigned long size, int width, bool pad)
+{
+	const char *str = pad ? NULL : mkfilesize(size, opt_file_size);
+
+	if (!width || opt_file_size == FILE_SIZE_NO)
+		return FALSE;
+
+	return draw_field(view, LINE_FILE_SIZE, str, width, ALIGN_RIGHT, FALSE);
 }
 
 static bool
@@ -2271,7 +2345,7 @@ draw_mode(struct view *view, mode_t mode)
 {
 	const char *str = mkmode(mode);
 
-	return draw_field(view, LINE_MODE, str, STRING_SIZE("-rw-r--r--"), FALSE);
+	return draw_field(view, LINE_MODE, str, STRING_SIZE("-rw-r--r--"), ALIGN_LEFT, FALSE);
 }
 
 static bool
@@ -2600,6 +2674,7 @@ redraw_display(bool clear)
 	TOGGLE_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map) \
 	TOGGLE_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL) \
 	TOGGLE_(FILENAME,  '#', "file names",        &opt_filename, filename_map) \
+	TOGGLE_(FILE_SIZE, '*', "file sizes",        &opt_file_size, file_size_map) \
 	TOGGLE_(IGNORE_SPACE, 'W', "space changes",  &opt_ignore_space, ignore_space_map) \
 	TOGGLE_(COMMIT_ORDER, 'l', "commit order",   &opt_commit_order, commit_order_map) \
 	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL) \
@@ -5116,7 +5191,7 @@ push_tree_stack_entry(const char *name, unsigned long lineno)
 
 /* Parse output from git-ls-tree(1):
  *
- * 100644 blob f931e1d229c3e185caad4449bf5b66ed72462657	tig.c
+ * 100644 blob 95925677ca47beb0b8cce7c0e0011bcc3f61470f  213045	tig.c
  */
 
 #define SIZEOF_TREE_ATTR \
@@ -5136,6 +5211,7 @@ struct tree_entry {
 	mode_t mode;
 	struct time time;		/* Date from the author ident. */
 	const struct ident *author;	/* Author of the commit. */
+	unsigned long size;
 	char name[1];
 };
 
@@ -5143,6 +5219,7 @@ struct tree_state {
 	char commit[SIZEOF_REV];
 	const struct ident *author;
 	struct time author_time;
+	int size_width;
 	bool read_date;
 };
 
@@ -5194,7 +5271,7 @@ tree_compare(const void *l1, const void *l2)
 
 static struct line *
 tree_entry(struct view *view, enum line_type type, const char *path,
-	   const char *mode, const char *id)
+	   const char *mode, const char *id, unsigned long size)
 {
 	bool custom = type == LINE_TREE_HEAD || tree_path_is_parent(path);
 	struct tree_entry *entry;
@@ -5208,6 +5285,7 @@ tree_entry(struct view *view, enum line_type type, const char *path,
 		entry->mode = strtoul(mode, NULL, 8);
 	if (id)
 		string_copy_rev(entry->id, id);
+	entry->size = size;
 
 	return line;
 }
@@ -5227,8 +5305,8 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 		};
 
 		if (!view->lines) {
-			tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL);
-			tree_entry(view, LINE_TREE_DIR, "..", "040000", view->ref);
+			tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL, 0);
+			tree_entry(view, LINE_TREE_DIR, "..", "040000", view->ref, 0);
 			report("Tree is empty");
 			return TRUE;
 		}
@@ -5284,6 +5362,26 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 	return TRUE;
 }
 
+static inline size_t
+parse_size(const char *text, int *max_digits)
+{
+	size_t size = 0;
+	int digits = 0;
+
+	while (*text == ' ')
+		text++;
+
+	while (isdigit(*text)) {
+		size = (size * 10) + (*text++ - '0');
+		digits++;
+	}
+
+	if (digits > *max_digits)
+		*max_digits = digits;
+
+	return size;
+}
+
 static bool
 tree_read(struct view *view, char *text)
 {
@@ -5292,7 +5390,9 @@ tree_read(struct view *view, char *text)
 	struct line *entry, *line;
 	enum line_type type;
 	size_t textlen = text ? strlen(text) : 0;
-	char *path = text + SIZEOF_TREE_ATTR;
+	const char *attr_offset = text + SIZEOF_TREE_ATTR;
+	char *path;
+	size_t size;
 
 	if (state->read_date || !text)
 		return tree_read_date(view, text, state);
@@ -5300,8 +5400,14 @@ tree_read(struct view *view, char *text)
 	if (textlen <= SIZEOF_TREE_ATTR)
 		return FALSE;
 	if (view->lines == 0 &&
-	    !tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL))
+	    !tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL, 0))
 		return FALSE;
+
+	size = parse_size(attr_offset, &state->size_width);
+	path = strchr(attr_offset, '\t');
+	if (!path)
+		return FALSE;
+	path++;
 
 	/* Strip the path part ... */
 	if (*opt_path) {
@@ -5314,12 +5420,12 @@ tree_read(struct view *view, char *text)
 
 		/* Insert "link" to parent directory. */
 		if (view->lines == 1 &&
-		    !tree_entry(view, LINE_TREE_DIR, "..", "040000", view->ref))
+		    !tree_entry(view, LINE_TREE_DIR, "..", "040000", view->ref, 0))
 			return FALSE;
 	}
 
 	type = text[SIZEOF_TREE_MODE] == 't' ? LINE_TREE_DIR : LINE_TREE_FILE;
-	entry = tree_entry(view, type, path, text, text + TREE_ID_OFFSET);
+	entry = tree_entry(view, type, path, text, text + TREE_ID_OFFSET, size);
 	if (!entry)
 		return FALSE;
 	data = entry->data;
@@ -5352,6 +5458,7 @@ tree_read(struct view *view, char *text)
 static bool
 tree_draw(struct view *view, struct line *line, unsigned int lineno)
 {
+	struct tree_state *state = view->private;
 	struct tree_entry *entry = line->data;
 
 	if (line->type == LINE_TREE_HEAD) {
@@ -5362,6 +5469,10 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 			return TRUE;
 
 		if (draw_author(view, entry->author))
+			return TRUE;
+
+		if (draw_file_size(view, entry->size, state->size_width,
+				   line->type != LINE_TREE_FILE))
 			return TRUE;
 
 		if (draw_date(view, &entry->time))
@@ -5530,7 +5641,7 @@ static bool
 tree_open(struct view *view, enum open_flags flags)
 {
 	static const char *tree_argv[] = {
-		"git", "ls-tree", "%(commit)", "%(directory)", NULL
+		"git", "ls-tree", "-l", "%(commit)", "%(directory)", NULL
 	};
 
 	if (string_rev_is_null(ref_commit)) {
@@ -6148,7 +6259,7 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_author(view, branch->author))
 		return TRUE;
 
-	if (draw_field(view, type, branch_name, state->max_ref_length, FALSE))
+	if (draw_field(view, type, branch_name, state->max_ref_length, ALIGN_LEFT, FALSE))
 		return TRUE;
 
 	if (draw_id(view, branch->ref->id))

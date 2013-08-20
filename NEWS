@@ -9,6 +9,11 @@ Incompatibilities:
  - Move manual and man pages to doc/ directory and rename AsciiDoc files
    to have .asciidoc as the extension to make them render on GitHub.
 
+Improvements:
+
+ - Show blob sizes in the tree view either as bytes or using binary unit
+   prefixes. Example: `set show-file-size = units`. (GH #163)
+
 Bug fixes:
 
  - Fix submodule-related setup to check for non-zero return value from

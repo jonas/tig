@@ -191,6 +191,11 @@ The following variables can be set:
 	When to display file names. If set to "auto" file names are shown
 	only when needed, e.g. when running: tig blame -C <file>.
 
+'show-file-size' (mixed) ["default" | "units" | bool]::
+
+	How to display file sizes. When set to "units", sizes are shown using
+	binary prefixes, e.g. 12524 bytes is shown as "12.2K". Can be toggled.
+
 'show-date' (mixed) ["relative" | "short" | "default" | "local" | bool]::
 
 	Whether and how to show date. If set to "relative" a relative date will be
@@ -523,6 +528,7 @@ execute the command and will exit tig after completion.
 |toggle-date		|Toggle date display
 |toggle-author		|Toggle author display
 |toggle-filename	|Toggle file name display
+|toggle-file-size	|Toggle file size display
 |toggle-rev-graph	|Toggle revision graph visualization
 |toggle-graphic		|Toggle (line) graphics mode
 |toggle-refs		|Toggle reference display
