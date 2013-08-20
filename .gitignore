@@ -14,14 +14,14 @@ doc/release-docs/
 doc/manual.html-chunked
 doc/manual.pdf
 doc/manual.toc
-doc/*.html
-doc/*.xml
 tags
 test-graph
 tig
 tig-*.tar.gz
 tig-*.tar.gz.md5
 tig.spec
-*.swp
+*.html
 *.o
+*.swp
+*.xml
 *~
