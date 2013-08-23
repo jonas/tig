@@ -3,7 +3,7 @@ tigmanual(7)
 
 NAME
 ----
-tigmanual - text-mode interface for git
+tigmanual - text-mode interface for Git
 
 SYNOPSIS
 --------
@@ -12,7 +12,7 @@ tig        [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
 tig blame  [options] [rev] [--] path
 tig status
-tig <      [git command output]
+tig <      [Git command output]
 
 DESCRIPTION
 -----------

@@ -27,11 +27,11 @@ tig-1.2
 
 Improvements:
 
- - Make tig prompt commands bindable to keys. For example:
+ - Prompt commands can be bound to keys. For example:
    `bind diff F :set diff-options = --full-diff`. (GH #69, #116)
  - Add a diff-options setting for specifying default diff options.
    Example: `set diff-options = --patience`. (GH #116)
- - Options in diff-options and blame-options matching tig browsing state
+ - Options in diff-options and blame-options matching Tig browsing state
    variables are replaced.
  - Show diff stats as wide as the terminal. (GH #109)
  - Show line numbers in the branch view. (GH #135)
@@ -76,7 +76,7 @@ Incompatibilities:
 
  - Disable diff move/copy detection by default, boosting diff
    performance on larger projects. Use git config 'diff.renames' option
-   (git-wide) to set your preferred behavior. Environment variable
+   (Git-wide) to set your preferred behavior. Environment variable
    TIG_DIFF_OPTS can be used to restore the old behavior.
  - Fix manual keybinding for stage-single-line. (GH #108)
  - Values set for author-width and filename-width will result in widths
@@ -84,7 +84,7 @@ Incompatibilities:
 
 Improvements:
 
- - Typing a text in the prompt will be interpreted as a tig command.
+ - Typing a text in the prompt will be interpreted as a Tig command.
    Prefixing the command with a '!' will execute this system command in
    an external pager. Entering a single key will execute the
    corresponding key binding.
@@ -107,7 +107,7 @@ Improvements:
    Example: `set vertical-split = yes'. (GH #76)
  - Add 'show-id' and 'id-width' options to configure the display of
    commit IDs in the main view and ID width in the blame view. (GH #77)
- - Allow to override git-based encoding to UTF-8 by setting
+ - Allow to override Git based encoding to UTF-8 by setting
    'i18n.commitencoding' or 'gui.encoding'.
  - Improve autobuild support to track generated files and work with
    autoreconf 2.61.
@@ -123,7 +123,7 @@ Bug fixes:
  - Main view: only show staged/unstaged changes for the current branch.
  - Support submodules created with current version of git. (GH #54)
  - Fix diff status message for file diffs with no content changes.
- - Fix parent blaming when tig is launched in subdirectory. (GH #70)
+ - Fix parent blaming when Tig is launched in subdirectory. (GH #70)
  - Do not show deleted branch when reloading the branch view.
 
 tig-1.0
@@ -145,7 +145,7 @@ Improvements:
  - Colorize binary diff stats. (GH #17)
  - Custom colorization of lines matching a string prefix (GH #16).
    Example configuration: color "Reported-by:" green default
- - Use git's color settings for the main, status and diff views.
+ - Use Git's color settings for the main, status and diff views.
    Put `set read-git-colors = no` in ~/.tigrc to disable.
  - Handle editor options with multiple arguments. (GH #12)
  - Show filename when running tig blame with copy detection. (GH #19)
@@ -165,7 +165,7 @@ Improvements:
    Can be disabled by putting `set show-changes = no` in ~/.tigrc.
  - Add %(prompt) external command variable, which will prompt for the
    argument value.
- - Log information about git commands when the TIG_TRACE environment
+ - Log information about Git commands when the TIG_TRACE environment
    variable is set. Example: `TIG_TRACE=/tmp/tig.log tig`
  - Branch view: Show the title of the last commit.
  - Increase the author auto-abbreviation threshold to 10. (GH #49)
@@ -247,7 +247,7 @@ Bug fixes:
  - Fix 'tig show <commit>' to show the provided commit.
  - Fix problem with empty diff views when file specs were passed on the
    command line.
- - Fix segfault when starting tig in pager mode.
+ - Fix segfault when starting Tig in pager mode.
 
 tig-0.16
 --------
@@ -289,7 +289,7 @@ Bug fixes:
  - Fix unbind to also cover built-in run requests.
  - Fix parsing of unknown keymap names.
  - Blame view: fix parent blame to detect renames. It uses "previous"
-   line info from the blame porcelain output added in git version 1.6.3.
+   line info from the blame porcelain output added in Git version 1.6.3.
 
 tig-0.15
 --------
@@ -299,7 +299,7 @@ Incompatibilities:
  - Setting the cursor color no longer automatically sets the text to
    bold. The old 'lazy' behavior was a bug.
  - Remove check for git-repo-config, which was officially deprecated in
-   git version 1.5.4. The configure script no longer depends on git
+   Git version 1.5.4. The configure script no longer depends on Git
    being installed.
 
 Improvements:
@@ -336,7 +336,7 @@ tig-0.14.1
 Improvements:
 
  - Status view: improve "on branch" information inspired by the prompt
-   code in git's bash completion script.
+   code in Git's bash completion script.
  - Colors for 256-capable terminals can be specified as colorN.
  - Entering a number in the prompt will jump to that line number.
  - Handle core.worktree by setting GIT_DIR and GIT_WORK_TREE.
@@ -370,7 +370,7 @@ Incompatibilities:
 Improvements:
 
  - Horizontal scrolling. Bound to Left/Right by default.
- - Read tigrc(5) options from git configuration files using the syntax:
+ - Read tigrc(5) options from Git configuration files using the syntax:
 
 	[tig] show-rev-graph = true
 	[tig "color"] cursor = yellow red bold 
@@ -401,7 +401,7 @@ Incompatibilities:
  - Commands from the environment (e.g. TIG_MAIN_CMD) will no longer have
    access to shell features, such as subshells and variable expansion.
    The easiest way to upgrade your configuration is to put such commands
-   in a script file or as a git alias.
+   in a script file or as a Git alias.
 
 Improvements:
 
@@ -436,7 +436,7 @@ Improvements:
 Bug fixes:
 
  - Status view: use ls-files' --exclude-standard so user specific ignore
-   rules are effective. The option was added in git version 1.5.4.
+   rules are effective. The option was added in Git version 1.5.4.
  - Stage view: fix assertion failure triggered when updating while
    status view is not displayed.
  - Help view: avoid confusion by showing "(no key)" instead of "'?'" for
@@ -479,8 +479,8 @@ tig-0.11
 Incompatibilities:
 
  - Remove parsing of deprecated options: -g, -l, -d.
- - The first seen '--' will stop option parsing and is passed to git
-   instead of breaking out of tig's option parsing.
+ - The first seen '--' will stop option parsing and is passed to Git
+   instead of breaking out of Tig's option parsing.
 
 New features:
 
@@ -514,7 +514,7 @@ Bug fixes:
 
  - Fix UTF-8 handling for tag names and commit messages.
  - Fix the check for git-config(1) in configure to handle the case when
-   git has been installed using a libexecdir which is not in the path.
+   Git has been installed using a libexecdir which is not in the path.
  - Fix replacing of SYSCONFDIR when installing from released tarballs.
 
 tig-0.10
@@ -522,7 +522,7 @@ tig-0.10
 
 Incompatibilities:
 
- - Deprecate most tig specific command line options to make tig more
+ - Deprecate most Tig specific command line options to make Tig more
    compatible with gitk. The deprecated options are: -g, -l, -d, and -S.
    Use of any of them will result in a warning being printed to stderr.
    Instead of '-S', use the new 'status' subcommand.
@@ -594,7 +594,7 @@ tig-0.9
 
 New features:
 
- - Add bash completion script for tig (contrib/tig-completion.bash).
+ - Add bash completion script for Tig (contrib/tig-completion.bash).
  - Add optional autoconf-based build infrastructure.
  - Add stage view for showing changes in the working tree and add
    support for staging individual diff chunks for commit.

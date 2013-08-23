@@ -1,4 +1,4 @@
-personal_ws-1.1 en 198 
+personal_ws-1.1 en 201 
 CJK
 del
 Ctrl
@@ -20,7 +20,6 @@ args
 asciidoc
 AsciiDoc
 unstanged
-gitattributes
 revgraph
 revargs
 topo
@@ -69,6 +68,7 @@ distclean
 README
 submodules
 xhtml
+gitattributes
 aterm
 iconv
 sysconfdir
@@ -76,16 +76,15 @@ Scrool
 ELinks
 subdir
 Debian
-subdirectories
 gui
 tigmanual
-reachability
 PgUp
 wrt
 libiconv
 unicode
 multi
 Naïvely
+reachability
 autoconf
 xpm
 filesystem
@@ -98,7 +97,6 @@ charset
 tigblob
 autobuild
 diffargs
-commitencoding
 erasechar
 lds
 bg
@@ -122,17 +120,20 @@ tabsize
 CPPFLAGS
 gitk
 resize
+Gitweb
 nav
 Fullwidth
 rebasing
+Git's
 tig's
 dirs
 ld
-subdirectory
 newmode
 keymaps
 endif
 namespace
+commitencoding
+subdirectory
 utils
 delim
 unstaged
@@ -143,6 +144,7 @@ VLINE
 extdiff
 keybindings
 ifndef
+subdirectories
 COLORTERM
 ncursesw
 PDF
@@ -169,16 +171,17 @@ repo
 NUL
 worktree
 unmerged
+GitHub
 Yy
 fgcolor
 localtime
 filename
-backgrounded
 lncursesw
 waitpid
 wgetch
 Pre
 waddch
+backgrounded
 subcommand
 errno
 XXXXXX

@@ -3,7 +3,7 @@ tig(1)
 
 NAME
 ----
-tig - text-mode interface for git
+tig - text-mode interface for Git
 
 SYNOPSIS
 --------
@@ -15,15 +15,15 @@ tig show   [options] [revisions] [--] [paths]
 tig blame  [options] [rev] [--] path
 tig stash
 tig status
-tig <      [git command output]
+tig <      [Git command output]
 _______________________________________________________________________
 
 DESCRIPTION
 -----------
-Browse changes in a git repository. Additionally, tig(1) can also act
-as a pager for output of various git commands.
+Browse changes in a Git repository. Additionally, tig(1) can also act
+as a pager for output of various Git commands.
 
-When browsing repositories, tig(1) uses the underlying git commands
+When browsing repositories, tig(1) uses the underlying Git commands
 to present the user with various views, such as summarized commit log
 and showing the commit with the log message, diffstat, and the diff.
 
@@ -33,11 +33,11 @@ to colorize it.
 OPTIONS
 -------
 
-Command line options recognized by tig include all valid git-log(1) and
-git-diff(1) options, as well as the following subcommands and tig specific
+Command line options recognized by Tig include all valid git-log(1) and
+git-diff(1) options, as well as the following subcommands and Tig specific
 options. The first command line parameter not starting with "-" is interpreted
 as being either a revision specification or a path and will end the option
-parsing. All following options will be passed untouched to the underlying git
+parsing. All following options will be passed untouched to the underlying Git
 command.
 
 show::
@@ -119,9 +119,9 @@ $ tig stash
 ENVIRONMENT VARIABLES
 ---------------------
 
-In addition to environment variables used by git (e.g. GIT_DIR), tig defines
+In addition to environment variables used by Git (e.g. GIT_DIR), Tig defines
 the ones below. The command related environment variables have access to the
-internal state of tig via replacement variables, such as `%(commit)` and
+internal state of Tig via replacement variables, such as `%(commit)` and
 `%(blob)`.
 ifdef::version[]
 See manpage:tigrc[5] for a full list.
@@ -147,7 +147,7 @@ TIG_DIFF_OPTS::
 	may also set the diff-options setting in your manpage:tigrc[5].
 
 TIG_TRACE::
-	Path for trace file where information about git commands are logged.
+	Path for trace file where information about Git commands are logged.
 
 FILES
 -----
@@ -180,7 +180,7 @@ SEE ALSO
 --------
 ifndef::version[]
 link:tigrc.5.asciidoc[tigrc(5)],
-link:manual.asciidoc[the tig manual],
+link:manual.asciidoc[the Tig manual],
 endif::version[]
 ifdef::version[]
 ifdef::backend-docbook[]
@@ -189,7 +189,7 @@ manpage:tigmanual[7],
 endif::backend-docbook[]
 ifdef::backend-xhtml11[]
 link:tigrc.5.html[tigrc(5)],
-link:manual.html[the tig manual],
+link:manual.html[the Tig manual],
 endif::backend-xhtml11[]
 endif::version[]
 git(7)

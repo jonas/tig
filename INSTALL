@@ -1,15 +1,15 @@
 Installation instructions
 =========================
 
-Download a tarball from http://jonas.nitro.dk/tig/releases[] or clone the tig
+Download a tarball from http://jonas.nitro.dk/tig/releases[] or clone the Tig
 repository http://github.com/jonas/tig[git://github.com/jonas/tig.git].
 
-The quick and simple way to install tig is:
+The quick and simple way to install Tig is:
 
 	$ make
 	$ make install
 
-By default, tig is installed in `$HOME/bin`. To install tig elsewhere set
+By default, `tig` is installed in `$HOME/bin`. To install `tig elsewhere set
 `prefix` to the desired path:
 
 	$ make prefix=/usr/local
@@ -20,7 +20,7 @@ and can be installed using:
 
 	$ make install-doc
 
-When installing directly from the tig repository, `make install-doc` will assume
+When installing directly from the Tig repository, `make install-doc` will assume
 that the documentation tool chain is available and build the documentation
 locally. In case you do not wish to install the required tools, documentation
 can be installed from the 'release' branch using:
@@ -42,7 +42,7 @@ Optionally, you can use the `configure` script to detect dependencies:
 If your `iconv` library is not in the default library and include path, you need
 to pass the `--with-libiconv` option to `configure` to tell it where to look.
 
-Note, if you are building from the tig repository, you need to generate
+Note, if you are building from the Tig repository, you need to generate
 `configure` yourself. First, ensure that `autoconf` is installed on your system,
 and then run the following command:
 
@@ -67,7 +67,7 @@ can be one of the following compatibility flags:
  - `NO_MKSTEMPS`: Define this variable to enable work-around for missing
    `mkstemps()`.
 
-The following example `config.make` manually configures tig to use the ncurses
+The following example `config.make` manually configures Tig to use the ncurses
 library with wide character support and include the proper ncurses header file
 (see tig.h for more information):
 
@@ -94,7 +94,7 @@ The following tools and packages are needed:
 				 is required to properly handle UTF-8 encoded
 				 strings.
 
-				 Note for packagers: For tig's `configure`
+				 Note for packagers: For Tig's `configure`
 				 script to work as expected you should avoid
 				 configuring and building ncurses using
 				 `--with-shared`.

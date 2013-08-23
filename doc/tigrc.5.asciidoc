@@ -3,7 +3,7 @@ tigrc(5)
 
 NAME
 ----
-tigrc - tig configuration file
+tigrc - Tig configuration file
 
 
 SYNOPSIS
@@ -31,8 +31,8 @@ annotate your initialization file.
 Git configuration
 -----------------
 
-Alternatively to using `~/.tigrc`, tig options can be set by putting them in
-one of the git configuration files, which are read by tig on startup. See
+Alternatively to using `~/.tigrc`, Tig options can be set by putting them in
+one of the Git configuration files, which are read by Tig on startup. See
 'git-config(1)' for which files to use. The following example show the basic
 syntax to use for settings, bindings and colors.
 
@@ -42,8 +42,8 @@ syntax to use for settings, bindings and colors.
 [tig "bind"] generic = P parent
 --------------------------------------------------------------------------
 
-In addition to tig-specific options, the following git options are read from
-the git configuration:
+In addition to tig-specific options, the following Git options are read from
+the Git configuration:
 
 'color.*'::
 
@@ -87,14 +87,14 @@ set show-date = relative	# Show relative commit date.
 set show-rev-graph = yes	# Show revision graph?
 set show-refs = yes		# Show references?
 set commit-order = topo		# Order commits topologically
-set read-git-colors = no	# Do not read git's color settings.
+set read-git-colors = no	# Do not read Git's color settings.
 set show-line-numbers = no	# Show line numbers?
 set line-number-interval = 5	# Interval between line numbers
 set horizontal-scroll = 33%	# Scroll 33% of the view width
 set blame-options = -C -C -C	# Blame lines from other files
 --------------------------------------------------------------------------
 
-Or in the git configuration files:
+Or in the Git configuration files:
 
 --------------------------------------------------------------------------
 [tig]
@@ -141,7 +141,7 @@ The following variables can be set:
 
 'id-width' (int)::
 
-	Width of the commit ID. When unset tig will use the value of
+	Width of the commit ID. When unset Tig will use the value of
 	'core.abbrev' if found or default to 7.  See git-config(1) on how to
 	set 'core.abbrev'.
 
@@ -157,7 +157,7 @@ The following variables can be set:
 
 	A space separated string of extra blame options. Can be used for
 	telling git-blame(1) how to detect the origin of lines. The value
-	is ignored when tig is started in blame mode and given blame options
+	is ignored when Tig is started in blame mode and given blame options
 	on the command line.
 
 'line-graphics' (mixed) [ "ascii" | "default" | "utf-8" | bool]::
@@ -179,7 +179,7 @@ The following variables can be set:
 
 'read-git-colors' (bool)::
 
-	Whether to read git's color settings. True by default.
+	Whether to read Git's color settings. True by default.
 
 'show-author' (mixed) ["full", "abbreviated" | "email" | "email-user" | bool]::
 
@@ -321,7 +321,7 @@ bind diff b move-first-line
 bind generic F !git fetch
 --------------------------------------------------------------------------
 
-Or in the git configuration files:
+Or in the Git configuration files:
 
 --------------------------------------------------------------------------
 [tig "bind"]
@@ -375,8 +375,8 @@ Actions
 Apart from the action names listed below, all actions starting with a '!' or
 ':' are treated specially.
 
-Actions beginning with a ':' will run an internal tig command.  These internal
-commands are those which you put in a configuration file or type at the tig
+Actions beginning with a ':' will run an internal Tig command.  These internal
+commands are those which you put in a configuration file or type at the Tig
 prompt.  As an example, "bind generic S :source .tigrc" will source a .tigrc
 file in the current directory when 'S' is pressed.
 
@@ -412,11 +412,11 @@ variables and process control, this can be achieved by using a shell command:
 bind generic I !@sh -c "echo -n %(commit) | xclip -selection c"
 --------------------------------------------------------------------------
 
-Or by using a combination of git aliases and tig external commands. The
+Or by using a combination of Git aliases and Tig external commands. The
 following example entries can be put in either the .gitconfig or .git/config
 file:
 
-.Git configuration which binds tig keys to git command aliases.
+.Git configuration which binds Tig keys to Git command aliases.
 --------------------------------------------------------------------------
 [alias]
 	gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &"
@@ -436,11 +436,11 @@ the following control flags to specify how it should be executed:
 |=============================================================================
 |@			|Run the command in the background with no output.
 |?			|Prompt the user before executing the command.
-|<			|Exit tig after executing the command.
+|<			|Exit Tig after executing the command.
 |=============================================================================
 
 Control flags can be combined, e.g. "!?<git commit" will prompt whether to
-execute the command and will exit tig after completion.
+execute the command and will exit Tig after completion.
 
 .View switching
 [frame="none",grid="none",cols="25<m,75<"]
@@ -561,7 +561,7 @@ color diff-chunk	magenta	default
 color "Reported-by:"	green	default
 --------------------------------------------------------------------------
 
-Or in the git configuration files:
+Or in the Git configuration files:
 
 --------------------------------------------------------------------------
 [tig "color"]
@@ -671,9 +671,9 @@ Options concerning diff start, chunks and lines added and deleted.
 
 *diff-header*, *diff-chunk*, *diff-add*, *diff-del*
 
-Enhanced git diff markup::
+Enhanced Git diff markup::
 
-Extra diff information emitted by the git diff machinery, such as mode
+Extra diff information emitted by the Git diff machinery, such as mode
 changes, rename detection, and similarity.
 
 *diff-oldmode*, *diff-newmode*, *diff-copy-from*, *diff-copy-to*,
@@ -742,7 +742,7 @@ SEE ALSO
 --------
 ifndef::version[]
 link:tig.1.asciidoc[tig(1)],
-link:manual.asciidoc[the tig manual],
+link:manual.asciidoc[the Tig manual],
 endif::version[]
 ifdef::version[]
 ifdef::backend-docbook[]
@@ -751,7 +751,7 @@ manpage:tigmanual[7],
 endif::backend-docbook[]
 ifdef::backend-xhtml11[]
 link:tig.1.html[tig(1)],
-link:manual.html[the tig manual],
+link:manual.html[the Tig manual],
 endif::backend-xhtml11[]
 endif::version[]
 git(7), git-config(1)

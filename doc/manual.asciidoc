@@ -1,15 +1,15 @@
 ifndef::doctype-manpage[]
-The tig Manual
+The Tig Manual
 ==============
 Jonas Fonseca <fonseca@diku.dk>
 endif::doctype-manpage[]
 
-This is the manual for tig, the ncurses-based text-mode interface for git.
-Tig allows you to browse changes in a git repository and can additionally act
-as a pager for output of various git commands. When used as a pager, it will
+This is the manual for Tig, the ncurses-based text-mode interface for git.
+Tig allows you to browse changes in a Git repository and can additionally act
+as a pager for output of various Git commands. When used as a pager, it will
 display input from stdin and colorize it.
 
-When browsing repositories, tig uses the underlying git commands to present
+When browsing repositories, Tig uses the underlying Git commands to present
 the user with various views, such as summarized commit log and showing the
 commit with the log message, diffstat, and the diff.
 
@@ -29,7 +29,7 @@ Pager Mode
 
 If stdin is a pipe, any log or diff options will be ignored and the pager view
 will be opened loading data from stdin. The pager mode can be used for
-colorizing output from various git commands.
+colorizing output from various Git commands.
 
 Example on how to colorize the output of git-show(1):
 
@@ -41,7 +41,7 @@ $ git show | tig
 Git Command Options
 ~~~~~~~~~~~~~~~~~~~
 
-All git command options specified on the command line will be passed to the
+All Git command options specified on the command line will be passed to the
 given command and all will be shell quoted before they are passed to the
 shell.
 
@@ -57,7 +57,7 @@ $ tig show --pretty=fuller
 -----------------------------------------------------------------------------
 
 See the section on <<refspec, specifying revisions>> for an introduction to
-revision options supported by the git commands. For details on specific git
+revision options supported by the Git commands. For details on specific Git
 command options, refer to the man page of the command in question.
 
 [[viewer]]
@@ -128,7 +128,7 @@ The stash view::
 	Displays the list of stashes in the repository.
 
 The pager view::
-	Is used for displaying both input from stdin and output from git
+	Is used for displaying both input from stdin and output from Git
 	commands entered in the internal prompt.
 
 The help view::
@@ -144,7 +144,7 @@ highlight a different commit. Whenever you reopen the diff view it will be
 reloaded, if the commit ID changed. The head ID is used when opening the main
 and log view to indicate from what revision to show history.
 
-Some of the commands used or provided by tig can be configured. This goes for
+Some of the commands used or provided by Tig can be configured. This goes for
 some of the <<env-variables, environment variables>> as well as the
 <<external-commands, external commands>>. These user-defined commands can use
 arguments that refer to the current browsing state by using one of the
@@ -182,7 +182,7 @@ Example user-defined commands:
 
 	bind generic T !git notes edit %(commit)
 
- - Enter git's interactive add for fine-grained staging of file content:
+ - Enter Git's interactive add for fine-grained staging of file content:
 
 	bind generic I !git add -i %(file)
 
@@ -213,14 +213,14 @@ be appended:
 Environment Variables
 ---------------------
 
-Several options related to the interface with git can be configured via
+Several options related to the interface with Git can be configured via
 environment options.
 
 [[configuration-files]]
 Configuration Files
 ~~~~~~~~~~~~~~~~~~~
 
-Upon startup, tig first reads the system wide configuration file
+Upon startup, Tig first reads the system wide configuration file
 (`{sysconfdir}/tigrc` by default) and then proceeds to read the user's
 configuration file (`~/.tigrc` by default). The paths to either of these files
 can be overridden through the following environment variables:
@@ -409,7 +409,7 @@ Misc
 |Q	|Quit.
 |r	|Redraw screen.
 |z	|Stop all background loading. This can be useful if you use
-	 tig in a repository with a long history without limiting
+	 Tig in a repository with a long history without limiting
 	 the revision log.
 |v	|Show version.
 |o	|Open option menu
@@ -439,7 +439,7 @@ Prompt
 |:<sha>		|Jump to a specific commit, e.g. `:2f12bcc`.
 |:<x>		|Execute the corresponding key binding, e.g. `:q`.
 |:!<command>	|Execute a system command in a pager, e.g. `:!git log -p`.
-|:<action>	|Execute a tig command, e.g. `:edit`.
+|:<action>	|Execute a Tig command, e.g. `:edit`.
 |=============================================================================
 
 [[external-commands]]
@@ -465,11 +465,11 @@ Revision Specification
 
 This section describes various ways to specify what revisions to display or
 otherwise limit the view to. Tig does not itself parse the described
-revision options so refer to the relevant git man pages for further
+revision options so refer to the relevant Git man pages for further
 information. Relevant man pages besides git-log(1) are git-diff(1) and
 git-rev-list(1).
 
-You can tune the interaction with git by making use of the options explained
+You can tune the interaction with Git by making use of the options explained
 in this section. For example, by configuring the environment variable
 described in the section on <<diff-options, diff options>>.
 
@@ -484,8 +484,8 @@ file (or even several files) list the files like this:
 $ tig Makefile README
 -----------------------------------------------------------------------------
 
-To avoid ambiguity with tig's subcommands or repository references such as tag
-names, be sure to separate file names from other git options using "`--`". So
+To avoid ambiguity with Tig's subcommands or repository references such as tag
+names, be sure to separate file names from other Git options using "`--`". So
 if you have a file named 'status' it will clash with the 'status' subcommand,
 and thus you will have to use:
 
@@ -497,7 +497,7 @@ $ tig -- status
 Limit by Date or Number
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-To speed up interaction with git, you can limit the amount of commits to show
+To speed up interaction with Git, you can limit the amount of commits to show
 both for the log and main view. Either limit by date using e.g.
 `--since=1.month` or limit by the number of commits using `-n400`.
 
