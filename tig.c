@@ -7668,7 +7668,14 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 	return commit;
 }
 
-bool
+static inline void
+main_flush_commit(struct view *view, struct commit *commit)
+{
+	if (*commit->id)
+		main_add_commit(view, LINE_MAIN_COMMIT, commit, "", FALSE);
+}
+
+static bool
 main_has_changes(const char *argv[])
 {
 	struct io io;
@@ -7815,6 +7822,8 @@ main_read(struct view *view, char *line)
 	struct commit *commit = &state->current;
 
 	if (!line) {
+		main_flush_commit(view, commit);
+
 		if (!view->lines && !view->prev)
 			die("No revisions match the given arguments.");
 		if (view->lines > 0) {
@@ -7844,6 +7853,8 @@ main_read(struct view *view, char *line)
 
 		if (!state->added_changes_commits && opt_show_changes && opt_is_inside_work_tree)
 			main_add_changes_commits(view, state, line);
+		else
+			main_flush_commit(view, commit);
 
 		main_register_commit(view, &state->current, line, is_boundary);
 		return TRUE;
