@@ -39,7 +39,7 @@ RPM_RELEASE = $(word 2,$(RPM_VERLIST))$(if $(WTDIRTY),.dirty)
 LDLIBS ?= -lcurses
 CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
-PROGS	= tig
+EXE	= tig
 TESTS	= test-graph
 TXTDOC	= doc/tig.1.asciidoc doc/tigrc.5.asciidoc doc/manual.asciidoc NEWS README INSTALL BUGS
 MANDOC	= doc/tig.1 doc/tigrc.5 doc/tigmanual.7
@@ -62,18 +62,16 @@ ASCIIDOC_FLAGS = -aversion=$(VERSION) -asysconfdir=$(sysconfdir) -f doc/asciidoc
 XMLTO ?= xmlto
 DOCBOOK2PDF ?= docbook2pdf
 
-all: $(PROGS) $(TESTS)
-all-debug: $(PROGS) $(TESTS)
+all: $(EXE) $(TESTS)
+all-debug: $(EXE) $(TESTS)
 all-debug: CFLAGS += $(DFLAGS)
 doc: $(ALLDOC)
 doc-man: $(MANDOC)
 doc-html: $(HTMLDOC)
 
 install: all
-	mkdir -p $(DESTDIR)$(bindir) && \
-	for prog in $(PROGS); do \
-		install -p -m 0755 "$$prog" "$(DESTDIR)$(bindir)"; \
-	done
+	@mkdir -p $(DESTDIR)$(bindir)
+	install -p -m 0755 $(EXE) "$(DESTDIR)$(bindir)"
 
 install-doc-man: doc-man
 	mkdir -p $(DESTDIR)$(mandir)/man1 \
@@ -118,7 +116,7 @@ install-release-doc: install-release-doc-man install-release-doc-html
 
 clean:
 	$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5
-	$(RM) $(PROGS) $(TESTS) core *.o compat/*.o *.xml
+	$(RM) $(EXE) $(TESTS) core *.o compat/*.o *.xml
 
 distclean: clean
 	$(RM) -r doc/manual.html-chunked autom4te.cache release-docs
@@ -131,8 +129,8 @@ spell-check:
 		       --personal=./contrib/aspell.dict check $$file; \
 	done
 
-strip: $(PROGS)
-	strip $(PROGS)
+strip: $(EXE)
+	strip $(EXE)
 
 update-headers:
 	@for file in *.[ch]; do \
