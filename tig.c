@@ -7616,7 +7616,6 @@ struct commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	const struct ident *author;	/* Author of the commit. */
 	struct time time;		/* Date from the author ident. */
-	struct ref_list *refs;		/* Repository references. */
 	struct graph_canvas graph;	/* Ancestry chain graphics. */
 	char title[1];			/* First line of the commit message. */
 };
@@ -7659,7 +7658,6 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 
 	*commit = *template;
 	strncpy(commit->title, title, titlelen);
-	commit->refs = get_ref_list(commit->id);
 	state->graph.canvas = &commit->graph;
 	memset(template, 0, sizeof(*template));
 	return commit;
@@ -7739,12 +7737,28 @@ main_open(struct view *view, enum open_flags flags)
 	return begin_update(view, NULL, main_argv, flags);
 }
 
+#define MAIN_NO_COMMIT_REFS 1
+#define main_check_commit_refs(line)	!((line)->user_flags & MAIN_NO_COMMIT_REFS)
+#define main_mark_no_commit_refs(line)	((line)->user_flags |= MAIN_NO_COMMIT_REFS)
+
+static inline struct ref_list *
+main_get_commit_refs(struct line *line, struct commit *commit)
+{
+	struct ref_list *refs = NULL;
+
+	if (main_check_commit_refs(line) && !(refs = get_ref_list(commit->id)))
+		main_mark_no_commit_refs(line);
+
+	return refs;
+}
+
 static bool
 main_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct main_state *state = view->private;
 	struct commit *commit = line->data;
 	int id_width = state->id_width ? state->id_width : opt_id_cols;
+	struct ref_list *refs = NULL;
 
 	if (!commit->author)
 		return FALSE;
@@ -7764,7 +7778,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (!state->hide_graph && opt_rev_graph && draw_graph(view, &commit->graph))
 		return TRUE;
 
-	if (draw_refs(view, commit->refs))
+	if ((refs = main_get_commit_refs(line, commit)) && draw_refs(view, refs))
 		return TRUE;
 
 	if (commit->title)
@@ -7933,12 +7947,13 @@ main_request(struct view *view, enum request request, struct line *line)
 }
 
 static bool
-grep_refs(struct ref_list *list, regex_t *regex)
+grep_refs(struct line *line, struct commit *commit, regex_t *regex)
 {
+	struct ref_list *list;
 	regmatch_t pmatch;
 	size_t i;
 
-	if (!opt_show_refs || !list)
+	if (!opt_show_refs || !(list = main_get_commit_refs(line, commit)))
 		return FALSE;
 
 	for (i = 0; i < list->size; i++) {
@@ -7961,7 +7976,7 @@ main_grep(struct view *view, struct line *line)
 		NULL
 	};
 
-	return grep_text(view, text) || grep_refs(commit->refs, view->regex);
+	return grep_text(view, text) || grep_refs(line, commit, view->regex);
 }
 
 static void
