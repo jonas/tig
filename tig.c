@@ -2043,6 +2043,8 @@ struct view_ops {
 	bool (*grep)(struct view *view, struct line *line);
 	/* Select line */
 	void (*select)(struct view *view, struct line *line);
+	/* Release resources when reloading the view */
+	void (*done)(struct view *view);
 };
 
 #define VIEW_OPS(id, name, ref) name##_ops
@@ -3113,6 +3115,9 @@ static void
 reset_view(struct view *view)
 {
 	int i;
+
+	if (view->ops->done)
+		view->ops->done(view);
 
 	for (i = 0; i < view->lines; i++)
 		if (!view->line[i].dont_free)
@@ -7740,6 +7745,18 @@ main_open(struct view *view, enum open_flags flags)
 	return begin_update(view, NULL, main_argv, flags);
 }
 
+static void
+main_done(struct view *view)
+{
+	int i;
+
+	for (i = 0; i < view->lines; i++) {
+		struct commit *commit = view->line[i].data;
+
+		free(commit->graph.symbols);
+	}
+}
+
 #define MAIN_NO_COMMIT_REFS 1
 #define main_check_commit_refs(line)	!((line)->user_flags & MAIN_NO_COMMIT_REFS)
 #define main_mark_no_commit_refs(line)	((line)->user_flags |= MAIN_NO_COMMIT_REFS)
@@ -8007,6 +8024,7 @@ static struct view_ops main_ops = {
 	main_request,
 	main_grep,
 	main_select,
+	main_done,
 };
 
 static bool
