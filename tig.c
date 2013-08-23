@@ -2740,7 +2740,7 @@ toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
 		string_format_size(msg, SIZEOF_STR,
 			"%sabling %s", *option ? "En" : "Dis", menu[i].text);
 
-		if (option == &opt_file_filter)
+		if (option == &opt_file_filter || option == &opt_rev_graph)
 			return TRUE;
 	}
 
@@ -3902,7 +3902,7 @@ view_driver(struct view *view, enum request request)
 			char action[SIZEOF_STR] = "";
 			bool reload = toggle_option(view, request, action);
 
-			if (reload && view_has_flags(view, VIEW_DIFF_LIKE))
+			if (reload && (view_has_flags(view, VIEW_DIFF_LIKE) || view->ops == &main_ops))
 				reload_view(view);
 			else
 				redraw_display(FALSE);
@@ -7626,7 +7626,7 @@ struct main_state {
 	int id_width;
 	bool in_header;
 	bool added_changes_commits;
-	bool hide_graph;
+	bool with_graph;
 };
 
 static void
@@ -7635,7 +7635,8 @@ main_register_commit(struct view *view, struct commit *commit, const char *ids, 
 	struct main_state *state = view->private;
 
 	string_copy_rev(commit->id, ids);
-	graph_add_commit(&state->graph, &commit->graph, commit->id, ids, is_boundary);
+	if (state->with_graph)
+		graph_add_commit(&state->graph, &commit->graph, commit->id, ids, is_boundary);
 }
 
 static struct commit *
@@ -7695,7 +7696,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 
 	commit.author = &unknown_ident;
 	main_register_commit(view, &commit, ids, FALSE);
-	if (main_add_commit(view, type, &commit, title, TRUE))
+	if (main_add_commit(view, type, &commit, title, TRUE) && state->with_graph)
 		graph_render_parents(&state->graph);
 }
 
@@ -7733,7 +7734,9 @@ main_open(struct view *view, enum open_flags flags)
 	static const char *main_argv[] = {
 		GIT_MAIN_LOG(opt_encoding_arg, "%(diffargs)", "%(revargs)", "%(fileargs)")
 	};
+	struct main_state *state = view->private;
 
+	state->with_graph = opt_rev_graph;
 	return begin_update(view, NULL, main_argv, flags);
 }
 
@@ -7775,7 +7778,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_author(view, commit->author))
 		return TRUE;
 
-	if (!state->hide_graph && opt_rev_graph && draw_graph(view, &commit->graph))
+	if (state->with_graph && draw_graph(view, &commit->graph))
 		return TRUE;
 
 	if ((refs = main_get_commit_refs(line, commit)) && draw_refs(view, refs))
@@ -7808,7 +7811,8 @@ main_read(struct view *view, char *line)
 			}
 		}
 
-		done_graph(graph);
+		if (state->with_graph)
+			done_graph(graph);
 		return TRUE;
 	}
 
@@ -7838,14 +7842,15 @@ main_read(struct view *view, char *line)
 
 	switch (type) {
 	case LINE_PARENT:
-		if (!graph->has_parents)
+		if (state->with_graph && !graph->has_parents)
 			graph_add_parent(graph, line + STRING_SIZE("parent "));
 		break;
 
 	case LINE_AUTHOR:
 		parse_author_line(line + STRING_SIZE("author "),
 				  &commit->author, &commit->time);
-		graph_render_parents(graph);
+		if (state->with_graph)
+			graph_render_parents(graph);
 		break;
 
 	default:
@@ -8021,7 +8026,7 @@ stash_read(struct view *view, char *line)
 
 	if (!state->added_changes_commits) {
 		state->added_changes_commits = TRUE;
-		state->hide_graph = TRUE;
+		state->with_graph = FALSE;
 	}
 
 	if (commit && line && get_line_type(line) == LINE_PP_REFLOG) {
