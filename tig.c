@@ -891,7 +891,6 @@ struct line {
 	unsigned int selected:1;
 	unsigned int dirty:1;
 	unsigned int cleareol:1;
-	unsigned int dont_free:1;
 	unsigned int wrapped:1;
 
 	unsigned int user_flags:6;
@@ -3120,8 +3119,7 @@ reset_view(struct view *view)
 		view->ops->done(view);
 
 	for (i = 0; i < view->lines; i++)
-		if (!view->line[i].dont_free)
-			free(view->line[i].data);
+		free(view->line[i].data);
 	free(view->line);
 
 	view->prev_pos = view->pos;
@@ -3504,16 +3502,6 @@ static struct line *
 add_line_nodata(struct view *view, enum line_type type)
 {
 	return add_line(view, NULL, type, 0, FALSE);
-}
-
-static struct line *
-add_line_static_data(struct view *view, const void *data, enum line_type type)
-{
-	struct line *line = add_line(view, data, type, 0, FALSE);
-
-	if (line)
-		line->dont_free = TRUE;
-	return line;
 }
 
 static struct line *
@@ -5030,7 +5018,7 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 static bool
 help_open_keymap_title(struct view *view, struct keymap *keymap)
 {
-	add_line_static_data(view, keymap, LINE_HELP_KEYMAP);
+	add_line(view, keymap, LINE_HELP_KEYMAP, 0, FALSE);
 	return keymap->hidden;
 }
 
@@ -5132,6 +5120,16 @@ help_request(struct view *view, enum request request, struct line *line)
 	}
 }
 
+static void
+help_done(struct view *view)
+{
+	int i;
+
+	for (i = 0; i < view->lines; i++)
+		if (view->line[i].type == LINE_HELP_KEYMAP)
+			view->line[i].data = NULL;
+}
+
 static struct view_ops help_ops = {
 	"line",
 	{ "help" },
@@ -5143,6 +5141,7 @@ static struct view_ops help_ops = {
 	help_request,
 	pager_grep,
 	pager_select,
+	help_done,
 };
 
 
