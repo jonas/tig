@@ -1,13 +1,16 @@
-personal_ws-1.1 en 198 
+personal_ws-1.1 en 214 
 CJK
 del
 Ctrl
 refspec
+Gedit
 cmd
 dev
 cdup
 ident
+sudo
 AuthorDate
+TMPDIR
 tig
 dir
 keybinding
@@ -42,6 +45,7 @@ bgcolor
 env
 lrwxrwxrwx
 backend
+ESC
 doctype
 gitlink
 colorN
@@ -53,6 +57,7 @@ signoff
 utf
 Cogito
 keymap
+Nano
 DSSL
 manpages
 LDLIBS
@@ -68,8 +73,10 @@ diffstat
 distclean
 README
 submodules
+Reenable
 xhtml
 aterm
+mkstemps
 iconv
 sysconfdir
 Scrool
@@ -78,6 +85,7 @@ subdir
 Debian
 subdirectories
 gui
+bindir
 tigmanual
 reachability
 PgUp
@@ -104,27 +112,33 @@ lds
 bg
 cd
 oldmode
+repos
 subshells
 gitconfig
 xmlto
 rebase
 chdir
+html
 jsh
 Online
 qgit
 PageDown
 gc
+Solaris
 GH
 mergetool
+setenv
 stderr
 togglable
 tabsize
 CPPFLAGS
 gitk
 resize
+Gitweb
 nav
 Fullwidth
 rebasing
+Git's
 tig's
 dirs
 ld
@@ -146,6 +160,7 @@ ifndef
 COLORTERM
 ncursesw
 PDF
+CFLAGS
 linenumber
 fileargs
 UI
@@ -169,6 +184,7 @@ repo
 NUL
 worktree
 unmerged
+GitHub
 Yy
 fgcolor
 localtime

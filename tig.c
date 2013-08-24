@@ -122,6 +122,46 @@ mkdate(const struct time *time, enum date date)
 	return strftime(buf, sizeof(buf), DATE_FORMAT, &tm) ? buf : NULL;
 }
 
+#define FILE_SIZE_ENUM(_) \
+	_(FILE_SIZE, NO), \
+	_(FILE_SIZE, DEFAULT), \
+	_(FILE_SIZE, UNITS)
+
+DEFINE_ENUM(file_size, FILE_SIZE_ENUM);
+
+static const char *
+mkfilesize(unsigned long size, enum file_size format)
+{
+	static char buf[64 + 1];
+	static const char relsize[] = {
+		'B', 'K', 'M', 'G', 'T', 'P'
+	};
+
+	if (!format)
+		return "";
+
+	if (format == FILE_SIZE_UNITS) {
+		const char *fmt = "%.0f%c";
+		double rsize = size;
+		int i;
+
+		for (i = 0; i < ARRAY_SIZE(relsize); i++) {
+			if (rsize > 1024.0 && i + 1 < ARRAY_SIZE(relsize)) {
+				rsize /= 1024;
+				continue;
+			}
+
+			size = rsize * 10;
+			if (size % 10 > 0)
+				fmt = "%.1f%c";
+
+			return string_format(buf, fmt, rsize, relsize[i])
+				? buf : NULL;
+		}
+	}
+
+	return string_format(buf, "%ld", size) ? buf : NULL;
+}
 
 #define AUTHOR_ENUM(_) \
 	_(AUTHOR, NO), \
@@ -390,6 +430,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 	REQ_(TOGGLE_ID,		"Toggle commit ID display"), \
 	REQ_(TOGGLE_FILES,	"Toggle file filtering"), \
 	REQ_(TOGGLE_TITLE_OVERFLOW,	"Toggle highlighting of commit title overflow"), \
+	REQ_(TOGGLE_FILE_SIZE,	"Toggle file size format"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
@@ -455,6 +496,7 @@ static enum graphic opt_line_graphics	= GRAPHIC_DEFAULT;
 static enum date opt_date		= DATE_DEFAULT;
 static enum author opt_author		= AUTHOR_FULL;
 static enum filename opt_filename	= FILENAME_AUTO;
+static enum file_size opt_file_size	= FILE_SIZE_DEFAULT;
 static bool opt_rev_graph		= TRUE;
 static bool opt_line_number		= FALSE;
 static bool opt_show_refs		= TRUE;
@@ -613,6 +655,7 @@ LINE(MODE,         "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(ID,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
 LINE(OVERFLOW,	   "",			COLOR_RED,	COLOR_DEFAULT,	0), \
 LINE(FILENAME,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
+LINE(FILE_SIZE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
 LINE(LINE_NUMBER,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
 LINE(TITLE_BLUR,   "",			COLOR_WHITE,	COLOR_BLUE,	0), \
 LINE(TITLE_FOCUS,  "",			COLOR_WHITE,	COLOR_BLUE,	A_BOLD), \
@@ -848,7 +891,6 @@ struct line {
 	unsigned int selected:1;
 	unsigned int dirty:1;
 	unsigned int cleareol:1;
-	unsigned int dont_free:1;
 	unsigned int wrapped:1;
 
 	unsigned int user_flags:6;
@@ -1565,6 +1607,9 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "show-filename"))
 		return parse_enum(&opt_filename, argv[2], filename_map);
 
+	if (!strcmp(argv[0], "show-file-size"))
+		return parse_enum(&opt_file_size, argv[2], file_size_map);
+
 	if (!strcmp(argv[0], "horizontal-scroll"))
 		return parse_step(&opt_hscroll, argv[2]);
 
@@ -1997,6 +2042,8 @@ struct view_ops {
 	bool (*grep)(struct view *view, struct line *line);
 	/* Select line */
 	void (*select)(struct view *view, struct line *line);
+	/* Release resources when reloading the view */
+	void (*done)(struct view *view);
 };
 
 #define VIEW_OPS(id, name, ref) name##_ops
@@ -2200,14 +2247,31 @@ draw_graphic(struct view *view, enum line_type type, const chtype graphic[], siz
 	return VIEW_MAX_LEN(view) <= 0;
 }
 
+enum align {
+	ALIGN_LEFT,
+	ALIGN_RIGHT
+};
+
 static bool
-draw_field(struct view *view, enum line_type type, const char *text, int width, bool trim)
+draw_field(struct view *view, enum line_type type, const char *text, int width, enum align align, bool trim)
 {
 	int max = MIN(VIEW_MAX_LEN(view), width + 1);
 	int col = view->col;
 
 	if (!text)
 		return draw_space(view, type, max, max);
+
+	if (align == ALIGN_RIGHT) {
+		int textlen = strlen(text);
+		int leftpad = max - textlen - 1;
+
+		if (leftpad > 0) {
+	    		if (draw_space(view, type, leftpad, leftpad))
+				return TRUE;
+			max -= leftpad;
+			col += leftpad;;
+		}
+	}
 
 	return draw_chars(view, type, text, max - 1, trim)
 	    || draw_space(view, LINE_DEFAULT, max - (view->col - col), max);
@@ -2222,7 +2286,7 @@ draw_date(struct view *view, struct time *time)
 	if (opt_date == DATE_NO)
 		return FALSE;
 
-	return draw_field(view, LINE_DATE, date, cols, FALSE);
+	return draw_field(view, LINE_DATE, date, cols, ALIGN_LEFT, FALSE);
 }
 
 static bool
@@ -2234,13 +2298,13 @@ draw_author(struct view *view, const struct ident *author)
 	if (opt_author == AUTHOR_NO)
 		return FALSE;
 
-	return draw_field(view, LINE_AUTHOR, text, opt_author_width, trim);
+	return draw_field(view, LINE_AUTHOR, text, opt_author_width, ALIGN_LEFT, trim);
 }
 
 static bool
 draw_id_custom(struct view *view, enum line_type type, const char *id, int width)
 {
-	return draw_field(view, type, id, width, FALSE);
+	return draw_field(view, type, id, width, ALIGN_LEFT, FALSE);
 }
 
 static bool
@@ -2263,7 +2327,18 @@ draw_filename(struct view *view, const char *filename, bool auto_enabled)
 	if (opt_filename == FILENAME_AUTO && !auto_enabled)
 		return FALSE;
 
-	return draw_field(view, LINE_FILENAME, filename, opt_filename_width, trim);
+	return draw_field(view, LINE_FILENAME, filename, opt_filename_width, ALIGN_LEFT, trim);
+}
+
+static bool
+draw_file_size(struct view *view, unsigned long size, int width, bool pad)
+{
+	const char *str = pad ? NULL : mkfilesize(size, opt_file_size);
+
+	if (!width || opt_file_size == FILE_SIZE_NO)
+		return FALSE;
+
+	return draw_field(view, LINE_FILE_SIZE, str, width, ALIGN_RIGHT, FALSE);
 }
 
 static bool
@@ -2271,7 +2346,7 @@ draw_mode(struct view *view, mode_t mode)
 {
 	const char *str = mkmode(mode);
 
-	return draw_field(view, LINE_MODE, str, STRING_SIZE("-rw-r--r--"), FALSE);
+	return draw_field(view, LINE_MODE, str, STRING_SIZE("-rw-r--r--"), ALIGN_LEFT, FALSE);
 }
 
 static bool
@@ -2600,6 +2675,7 @@ redraw_display(bool clear)
 	TOGGLE_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map) \
 	TOGGLE_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL) \
 	TOGGLE_(FILENAME,  '#', "file names",        &opt_filename, filename_map) \
+	TOGGLE_(FILE_SIZE, '*', "file sizes",        &opt_file_size, file_size_map) \
 	TOGGLE_(IGNORE_SPACE, 'W', "space changes",  &opt_ignore_space, ignore_space_map) \
 	TOGGLE_(COMMIT_ORDER, 'l', "commit order",   &opt_commit_order, commit_order_map) \
 	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL) \
@@ -2665,7 +2741,7 @@ toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
 		string_format_size(msg, SIZEOF_STR,
 			"%sabling %s", *option ? "En" : "Dis", menu[i].text);
 
-		if (option == &opt_file_filter)
+		if (option == &opt_file_filter || option == &opt_rev_graph)
 			return TRUE;
 	}
 
@@ -3039,9 +3115,11 @@ reset_view(struct view *view)
 {
 	int i;
 
+	if (view->ops->done)
+		view->ops->done(view);
+
 	for (i = 0; i < view->lines; i++)
-		if (!view->line[i].dont_free)
-			free(view->line[i].data);
+		free(view->line[i].data);
 	free(view->line);
 
 	view->prev_pos = view->pos;
@@ -3424,16 +3502,6 @@ static struct line *
 add_line_nodata(struct view *view, enum line_type type)
 {
 	return add_line(view, NULL, type, 0, FALSE);
-}
-
-static struct line *
-add_line_static_data(struct view *view, const void *data, enum line_type type)
-{
-	struct line *line = add_line(view, data, type, 0, FALSE);
-
-	if (line)
-		line->dont_free = TRUE;
-	return line;
 }
 
 static struct line *
@@ -3827,7 +3895,7 @@ view_driver(struct view *view, enum request request)
 			char action[SIZEOF_STR] = "";
 			bool reload = toggle_option(view, request, action);
 
-			if (reload && view_has_flags(view, VIEW_DIFF_LIKE))
+			if (reload && (view_has_flags(view, VIEW_DIFF_LIKE) || view->ops == &main_ops))
 				reload_view(view);
 			else
 				redraw_display(FALSE);
@@ -4950,7 +5018,7 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 static bool
 help_open_keymap_title(struct view *view, struct keymap *keymap)
 {
-	add_line_static_data(view, keymap, LINE_HELP_KEYMAP);
+	add_line(view, keymap, LINE_HELP_KEYMAP, 0, FALSE);
 	return keymap->hidden;
 }
 
@@ -5052,6 +5120,16 @@ help_request(struct view *view, enum request request, struct line *line)
 	}
 }
 
+static void
+help_done(struct view *view)
+{
+	int i;
+
+	for (i = 0; i < view->lines; i++)
+		if (view->line[i].type == LINE_HELP_KEYMAP)
+			view->line[i].data = NULL;
+}
+
 static struct view_ops help_ops = {
 	"line",
 	{ "help" },
@@ -5063,6 +5141,7 @@ static struct view_ops help_ops = {
 	help_request,
 	pager_grep,
 	pager_select,
+	help_done,
 };
 
 
@@ -5116,7 +5195,7 @@ push_tree_stack_entry(const char *name, unsigned long lineno)
 
 /* Parse output from git-ls-tree(1):
  *
- * 100644 blob f931e1d229c3e185caad4449bf5b66ed72462657	tig.c
+ * 100644 blob 95925677ca47beb0b8cce7c0e0011bcc3f61470f  213045	tig.c
  */
 
 #define SIZEOF_TREE_ATTR \
@@ -5136,6 +5215,7 @@ struct tree_entry {
 	mode_t mode;
 	struct time time;		/* Date from the author ident. */
 	const struct ident *author;	/* Author of the commit. */
+	unsigned long size;
 	char name[1];
 };
 
@@ -5143,6 +5223,7 @@ struct tree_state {
 	char commit[SIZEOF_REV];
 	const struct ident *author;
 	struct time author_time;
+	int size_width;
 	bool read_date;
 };
 
@@ -5194,7 +5275,7 @@ tree_compare(const void *l1, const void *l2)
 
 static struct line *
 tree_entry(struct view *view, enum line_type type, const char *path,
-	   const char *mode, const char *id)
+	   const char *mode, const char *id, unsigned long size)
 {
 	bool custom = type == LINE_TREE_HEAD || tree_path_is_parent(path);
 	struct tree_entry *entry;
@@ -5208,6 +5289,7 @@ tree_entry(struct view *view, enum line_type type, const char *path,
 		entry->mode = strtoul(mode, NULL, 8);
 	if (id)
 		string_copy_rev(entry->id, id);
+	entry->size = size;
 
 	return line;
 }
@@ -5227,8 +5309,8 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 		};
 
 		if (!view->lines) {
-			tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL);
-			tree_entry(view, LINE_TREE_DIR, "..", "040000", view->ref);
+			tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL, 0);
+			tree_entry(view, LINE_TREE_DIR, "..", "040000", view->ref, 0);
 			report("Tree is empty");
 			return TRUE;
 		}
@@ -5284,6 +5366,26 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 	return TRUE;
 }
 
+static inline size_t
+parse_size(const char *text, int *max_digits)
+{
+	size_t size = 0;
+	int digits = 0;
+
+	while (*text == ' ')
+		text++;
+
+	while (isdigit(*text)) {
+		size = (size * 10) + (*text++ - '0');
+		digits++;
+	}
+
+	if (digits > *max_digits)
+		*max_digits = digits;
+
+	return size;
+}
+
 static bool
 tree_read(struct view *view, char *text)
 {
@@ -5292,7 +5394,9 @@ tree_read(struct view *view, char *text)
 	struct line *entry, *line;
 	enum line_type type;
 	size_t textlen = text ? strlen(text) : 0;
-	char *path = text + SIZEOF_TREE_ATTR;
+	const char *attr_offset = text + SIZEOF_TREE_ATTR;
+	char *path;
+	size_t size;
 
 	if (state->read_date || !text)
 		return tree_read_date(view, text, state);
@@ -5300,8 +5404,14 @@ tree_read(struct view *view, char *text)
 	if (textlen <= SIZEOF_TREE_ATTR)
 		return FALSE;
 	if (view->lines == 0 &&
-	    !tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL))
+	    !tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL, 0))
 		return FALSE;
+
+	size = parse_size(attr_offset, &state->size_width);
+	path = strchr(attr_offset, '\t');
+	if (!path)
+		return FALSE;
+	path++;
 
 	/* Strip the path part ... */
 	if (*opt_path) {
@@ -5314,12 +5424,12 @@ tree_read(struct view *view, char *text)
 
 		/* Insert "link" to parent directory. */
 		if (view->lines == 1 &&
-		    !tree_entry(view, LINE_TREE_DIR, "..", "040000", view->ref))
+		    !tree_entry(view, LINE_TREE_DIR, "..", "040000", view->ref, 0))
 			return FALSE;
 	}
 
 	type = text[SIZEOF_TREE_MODE] == 't' ? LINE_TREE_DIR : LINE_TREE_FILE;
-	entry = tree_entry(view, type, path, text, text + TREE_ID_OFFSET);
+	entry = tree_entry(view, type, path, text, text + TREE_ID_OFFSET, size);
 	if (!entry)
 		return FALSE;
 	data = entry->data;
@@ -5352,6 +5462,7 @@ tree_read(struct view *view, char *text)
 static bool
 tree_draw(struct view *view, struct line *line, unsigned int lineno)
 {
+	struct tree_state *state = view->private;
 	struct tree_entry *entry = line->data;
 
 	if (line->type == LINE_TREE_HEAD) {
@@ -5362,6 +5473,10 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 			return TRUE;
 
 		if (draw_author(view, entry->author))
+			return TRUE;
+
+		if (draw_file_size(view, entry->size, state->size_width,
+				   line->type != LINE_TREE_FILE))
 			return TRUE;
 
 		if (draw_date(view, &entry->time))
@@ -5530,7 +5645,7 @@ static bool
 tree_open(struct view *view, enum open_flags flags)
 {
 	static const char *tree_argv[] = {
-		"git", "ls-tree", "%(commit)", "%(directory)", NULL
+		"git", "ls-tree", "-l", "%(commit)", "%(directory)", NULL
 	};
 
 	if (string_rev_is_null(ref_commit)) {
@@ -6148,7 +6263,7 @@ branch_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_author(view, branch->author))
 		return TRUE;
 
-	if (draw_field(view, type, branch_name, state->max_ref_length, FALSE))
+	if (draw_field(view, type, branch_name, state->max_ref_length, ALIGN_LEFT, FALSE))
 		return TRUE;
 
 	if (draw_id(view, branch->ref->id))
@@ -7503,39 +7618,64 @@ static bool draw_graph(struct view *view, struct graph_canvas *canvas)
 
 struct commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
-	char title[128];		/* First line of the commit message. */
 	const struct ident *author;	/* Author of the commit. */
 	struct time time;		/* Date from the author ident. */
-	struct ref_list *refs;		/* Repository references. */
 	struct graph_canvas graph;	/* Ancestry chain graphics. */
+	char title[1];			/* First line of the commit message. */
 };
 
 struct main_state {
 	struct graph graph;
-	struct commit *current;
+	struct commit current;
 	int id_width;
 	bool in_header;
 	bool added_changes_commits;
-	bool hide_graph;
+	bool with_graph;
 };
 
-static struct commit *
-main_add_commit(struct view *view, enum line_type type, const char *ids,
-		bool is_boundary, bool custom)
+static void
+main_register_commit(struct view *view, struct commit *commit, const char *ids, bool is_boundary)
 {
 	struct main_state *state = view->private;
-	struct commit *commit;
-
-	if (!add_line_alloc(view, &commit, type, 0, custom))
-		return NULL;
 
 	string_copy_rev(commit->id, ids);
-	commit->refs = get_ref_list(commit->id);
-	graph_add_commit(&state->graph, &commit->graph, commit->id, ids, is_boundary);
+	if (state->with_graph)
+		graph_add_commit(&state->graph, &commit->graph, commit->id, ids, is_boundary);
+}
+
+static struct commit *
+main_add_commit(struct view *view, enum line_type type, struct commit *template,
+		const char *title, bool custom)
+{
+	struct main_state *state = view->private;
+	size_t titlelen = strlen(title);
+	struct commit *commit;
+	char buf[SIZEOF_STR / 2];
+
+	/* FIXME: More graceful handling of titles; append "..." to
+	 * shortened titles, etc. */
+	string_expand(buf, sizeof(buf), title, 1);
+	title = buf;
+	titlelen = strlen(title);
+
+	if (!add_line_alloc(view, &commit, type, titlelen, custom))
+		return NULL;
+
+	*commit = *template;
+	strncpy(commit->title, title, titlelen);
+	state->graph.canvas = &commit->graph;
+	memset(template, 0, sizeof(*template));
 	return commit;
 }
 
-bool
+static inline void
+main_flush_commit(struct view *view, struct commit *commit)
+{
+	if (*commit->id)
+		main_add_commit(view, LINE_MAIN_COMMIT, commit, "", FALSE);
+}
+
+static bool
 main_has_changes(const char *argv[])
 {
 	struct io io;
@@ -7551,7 +7691,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 {
 	char ids[SIZEOF_STR] = NULL_ID " ";
 	struct main_state *state = view->private;
-	struct commit *commit;
+	struct commit commit = {};
 	struct timeval now;
 	struct timezone tz;
 
@@ -7560,18 +7700,15 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 
 	string_copy_rev(ids + STRING_SIZE(NULL_ID " "), parent);
 
-	commit = main_add_commit(view, type, ids, FALSE, TRUE);
-	if (!commit)
-		return;
-
 	if (!gettimeofday(&now, &tz)) {
-		commit->time.tz = tz.tz_minuteswest * 60;
-		commit->time.sec = now.tv_sec - commit->time.tz;
+		commit.time.tz = tz.tz_minuteswest * 60;
+		commit.time.sec = now.tv_sec - commit.time.tz;
 	}
 
-	commit->author = &unknown_ident;
-	string_ncopy(commit->title, title, strlen(title));
-	graph_render_parents(&state->graph);
+	commit.author = &unknown_ident;
+	main_register_commit(view, &commit, ids, FALSE);
+	if (main_add_commit(view, type, &commit, title, TRUE) && state->with_graph)
+		graph_render_parents(&state->graph);
 }
 
 static void
@@ -7608,8 +7745,37 @@ main_open(struct view *view, enum open_flags flags)
 	static const char *main_argv[] = {
 		GIT_MAIN_LOG(opt_encoding_arg, "%(diffargs)", "%(revargs)", "%(fileargs)")
 	};
+	struct main_state *state = view->private;
 
+	state->with_graph = opt_rev_graph;
 	return begin_update(view, NULL, main_argv, flags);
+}
+
+static void
+main_done(struct view *view)
+{
+	int i;
+
+	for (i = 0; i < view->lines; i++) {
+		struct commit *commit = view->line[i].data;
+
+		free(commit->graph.symbols);
+	}
+}
+
+#define MAIN_NO_COMMIT_REFS 1
+#define main_check_commit_refs(line)	!((line)->user_flags & MAIN_NO_COMMIT_REFS)
+#define main_mark_no_commit_refs(line)	((line)->user_flags |= MAIN_NO_COMMIT_REFS)
+
+static inline struct ref_list *
+main_get_commit_refs(struct line *line, struct commit *commit)
+{
+	struct ref_list *refs = NULL;
+
+	if (main_check_commit_refs(line) && !(refs = get_ref_list(commit->id)))
+		main_mark_no_commit_refs(line);
+
+	return refs;
 }
 
 static bool
@@ -7618,6 +7784,7 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct main_state *state = view->private;
 	struct commit *commit = line->data;
 	int id_width = state->id_width ? state->id_width : opt_id_cols;
+	struct ref_list *refs = NULL;
 
 	if (!commit->author)
 		return FALSE;
@@ -7634,13 +7801,14 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_author(view, commit->author))
 		return TRUE;
 
-	if (!state->hide_graph && opt_rev_graph && draw_graph(view, &commit->graph))
+	if (state->with_graph && draw_graph(view, &commit->graph))
 		return TRUE;
 
-	if (draw_refs(view, commit->refs))
+	if ((refs = main_get_commit_refs(line, commit)) && draw_refs(view, refs))
 		return TRUE;
 
-	draw_commit_title(view, commit->title, 0);
+	if (commit->title)
+		draw_commit_title(view, commit->title, 0);
 	return TRUE;
 }
 
@@ -7651,21 +7819,25 @@ main_read(struct view *view, char *line)
 	struct main_state *state = view->private;
 	struct graph *graph = &state->graph;
 	enum line_type type;
-	struct commit *commit = state->current;
+	struct commit *commit = &state->current;
 
 	if (!line) {
+		main_flush_commit(view, commit);
+
 		if (!view->lines && !view->prev)
 			die("No revisions match the given arguments.");
 		if (view->lines > 0) {
-			commit = view->line[view->lines - 1].data;
+			struct commit *last = view->line[view->lines - 1].data;
+
 			view->line[view->lines - 1].dirty = 1;
-			if (!commit->author) {
+			if (!last->author) {
 				view->lines--;
-				free(commit);
+				free(last);
 			}
 		}
 
-		done_graph(graph);
+		if (state->with_graph)
+			done_graph(graph);
 		return TRUE;
 	}
 
@@ -7681,12 +7853,14 @@ main_read(struct view *view, char *line)
 
 		if (!state->added_changes_commits && opt_show_changes && opt_is_inside_work_tree)
 			main_add_changes_commits(view, state, line);
+		else
+			main_flush_commit(view, commit);
 
-		state->current = main_add_commit(view, LINE_MAIN_COMMIT, line, is_boundary, FALSE);
-		return state->current != NULL;
+		main_register_commit(view, &state->current, line, is_boundary);
+		return TRUE;
 	}
 
-	if (!view->lines || !commit)
+	if (!*commit->id)
 		return TRUE;
 
 	/* Empty line separates the commit header from the log itself. */
@@ -7695,19 +7869,20 @@ main_read(struct view *view, char *line)
 
 	switch (type) {
 	case LINE_PARENT:
-		if (!graph->has_parents)
+		if (state->with_graph && !graph->has_parents)
 			graph_add_parent(graph, line + STRING_SIZE("parent "));
 		break;
 
 	case LINE_AUTHOR:
 		parse_author_line(line + STRING_SIZE("author "),
 				  &commit->author, &commit->time);
-		graph_render_parents(graph);
+		if (state->with_graph)
+			graph_render_parents(graph);
 		break;
 
 	default:
 		/* Fill in the commit title if it has not already been set. */
-		if (commit->title[0])
+		if (*commit->title)
 			break;
 
 		/* Skip lines in the commit header. */
@@ -7725,11 +7900,7 @@ main_read(struct view *view, char *line)
 			line++;
 		if (*line == '\0')
 			break;
-		/* FIXME: More graceful handling of titles; append "..." to
-		 * shortened titles, etc. */
-
-		string_expand(commit->title, sizeof(commit->title), line, 1);
-		view->line[view->lines - 1].dirty = 1;
+		main_add_commit(view, LINE_MAIN_COMMIT, commit, line, FALSE);
 	}
 
 	return TRUE;
@@ -7808,12 +7979,13 @@ main_request(struct view *view, enum request request, struct line *line)
 }
 
 static bool
-grep_refs(struct ref_list *list, regex_t *regex)
+grep_refs(struct line *line, struct commit *commit, regex_t *regex)
 {
+	struct ref_list *list;
 	regmatch_t pmatch;
 	size_t i;
 
-	if (!opt_show_refs || !list)
+	if (!opt_show_refs || !(list = main_get_commit_refs(line, commit)))
 		return FALSE;
 
 	for (i = 0; i < list->size; i++) {
@@ -7836,7 +8008,7 @@ main_grep(struct view *view, struct line *line)
 		NULL
 	};
 
-	return grep_text(view, text) || grep_refs(commit->refs, view->regex);
+	return grep_text(view, text) || grep_refs(line, commit, view->regex);
 }
 
 static void
@@ -7845,7 +8017,7 @@ main_select(struct view *view, struct line *line)
 	struct commit *commit = line->data;
 
 	if (line->type == LINE_STAT_STAGED || line->type == LINE_STAT_UNSTAGED)
-		string_copy(view->ref, commit->title);
+		string_ncopy(view->ref, commit->title, strlen(commit->title));
 	else
 		string_copy_rev(view->ref, commit->id);
 	string_copy_rev(ref_commit, commit->id);
@@ -7862,6 +8034,7 @@ static struct view_ops main_ops = {
 	main_request,
 	main_grep,
 	main_select,
+	main_done,
 };
 
 static bool
@@ -7877,11 +8050,11 @@ static bool
 stash_read(struct view *view, char *line)
 {
 	struct main_state *state = view->private;
-	struct commit *commit = state->current;
+	struct commit *commit = &state->current;
 
 	if (!state->added_changes_commits) {
 		state->added_changes_commits = TRUE;
-		state->hide_graph = TRUE;
+		state->with_graph = FALSE;
 	}
 
 	if (commit && line && get_line_type(line) == LINE_PP_REFLOG) {
@@ -8317,9 +8490,9 @@ set_work_tree(const char *value)
 		die("Failed to chdir(%s): %s", value, strerror(errno));
 	if (!getcwd(cwd, sizeof(cwd)))
 		die("Failed to get cwd path: %s", strerror(errno));
-	if (!setenv("GIT_WORK_TREE", cwd, TRUE))
+	if (setenv("GIT_WORK_TREE", cwd, TRUE))
 		die("Failed to set GIT_WORK_TREE to '%s'", cwd);
-	if (!setenv("GIT_DIR", opt_git_dir, TRUE))
+	if (setenv("GIT_DIR", opt_git_dir, TRUE))
 		die("Failed to set GIT_DIR to '%s'", opt_git_dir);
 	opt_is_inside_work_tree = TRUE;
 }

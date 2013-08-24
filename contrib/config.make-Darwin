@@ -1,4 +1,9 @@
 # Example configuration for Darwin / Mac OS X.
 
+# Work-around for Homebrew-based xmlto.
+export XML_CATALOG_FILES=/usr/local/etc/xml/catalog
+
 LDLIBS = -lcurses -liconv
 CPPFLAGS = -DHAVE_CURSES_H
+
+# vim: ft=make:

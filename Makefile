@@ -2,7 +2,7 @@
 
 # The last tagged version. Can be overridden either by the version from
 # git or from the value of the DIST_VERSION environment variable.
-VERSION	= 1.2
+VERSION	= 1.2.1
 
 all:
 
@@ -39,12 +39,12 @@ RPM_RELEASE = $(word 2,$(RPM_VERLIST))$(if $(WTDIRTY),.dirty)
 LDLIBS ?= -lcurses
 CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
-PROGS	= tig
+EXE	= tig
 TESTS	= test-graph
-TXTDOC	= tig.1.txt tigrc.5.txt manual.txt NEWS README INSTALL BUGS
-MANDOC	= tig.1 tigrc.5 tigmanual.7
-HTMLDOC = tig.1.html tigrc.5.html manual.html README.html NEWS.html
-ALLDOC	= $(MANDOC) $(HTMLDOC) manual.html-chunked manual.pdf
+TXTDOC	= doc/tig.1.asciidoc doc/tigrc.5.asciidoc doc/manual.asciidoc NEWS README INSTALL BUGS
+MANDOC	= doc/tig.1 doc/tigrc.5 doc/tigmanual.7
+HTMLDOC = doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html INSTALL.html NEWS.html
+ALLDOC	= $(MANDOC) $(HTMLDOC) doc/manual.html-chunked doc/manual.pdf
 
 # Never include the release number in the tarname for tagged
 # versions.
@@ -58,22 +58,20 @@ override CPPFLAGS += '-DTIG_VERSION="$(VERSION)"'
 override CPPFLAGS += '-DSYSCONFDIR="$(sysconfdir)"'
 
 ASCIIDOC ?= asciidoc
-ASCIIDOC_FLAGS = -aversion=$(VERSION) -asysconfdir=$(sysconfdir)
+ASCIIDOC_FLAGS = -aversion=$(VERSION) -asysconfdir=$(sysconfdir) -f doc/asciidoc.conf
 XMLTO ?= xmlto
 DOCBOOK2PDF ?= docbook2pdf
 
-all: $(PROGS) $(TESTS)
-all-debug: $(PROGS) $(TESTS)
+all: $(EXE) $(TESTS)
+all-debug: $(EXE) $(TESTS)
 all-debug: CFLAGS += $(DFLAGS)
 doc: $(ALLDOC)
 doc-man: $(MANDOC)
 doc-html: $(HTMLDOC)
 
 install: all
-	mkdir -p $(DESTDIR)$(bindir) && \
-	for prog in $(PROGS); do \
-		install -p -m 0755 "$$prog" "$(DESTDIR)$(bindir)"; \
-	done
+	@mkdir -p $(DESTDIR)$(bindir)
+	install -p -m 0755 $(EXE) "$(DESTDIR)$(bindir)"
 
 install-doc-man: doc-man
 	mkdir -p $(DESTDIR)$(mandir)/man1 \
@@ -81,10 +79,11 @@ install-doc-man: doc-man
 		 $(DESTDIR)$(mandir)/man7
 	for doc in $(MANDOC); do \
 		sed 's#++SYSCONFDIR++#$(sysconfdir)#' < "$$doc" > "$$doc+"; \
+		bdoc=$$(basename $$doc); \
 		case "$$doc" in \
-		*.1) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man1/$$doc" ;; \
-		*.5) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man5/$$doc" ;; \
-		*.7) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man7/$$doc" ;; \
+		*.1) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man1/$$bdoc" ;; \
+		*.5) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man5/$$bdoc" ;; \
+		*.7) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man7/$$bdoc" ;; \
 		esac; \
 		$(RM) "$$doc+"; \
 	done
@@ -99,8 +98,9 @@ install-doc-html: doc-html
 	mkdir -p $(DESTDIR)$(docdir)/tig
 	for doc in $(HTMLDOC); do \
 		sed 's#++SYSCONFDIR++#$(sysconfdir)#' < "$$doc" > "$$doc+"; \
+		bdoc=$$(basename $$doc); \
 		case "$$doc" in \
-		*.html) install -p -m 0644 "$$doc+" "$(DESTDIR)$(docdir)/tig/$$doc" ;; \
+		*.html) install -p -m 0644 "$$doc+" "$(DESTDIR)$(docdir)/tig/$$bdoc" ;; \
 		esac; \
 		$(RM) "$$doc+"; \
 	done
@@ -116,11 +116,11 @@ install-release-doc: install-release-doc-man install-release-doc-html
 
 clean:
 	$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5
-	$(RM) $(PROGS) $(TESTS) core *.o compat/*.o *.xml
+	$(RM) $(EXE) $(TESTS) core *.o compat/*.o *.xml
 
 distclean: clean
-	$(RM) -r manual.html-chunked autom4te.cache release-docs
-	$(RM) *.toc $(ALLDOC) aclocal.m4 configure
+	$(RM) -r doc/manual.html-chunked autom4te.cache release-docs
+	$(RM) doc/*.toc $(ALLDOC) aclocal.m4 configure
 	$(RM) config.h config.log config.make config.status config.h.in
 
 spell-check:
@@ -129,8 +129,8 @@ spell-check:
 		       --personal=./contrib/aspell.dict check $$file; \
 	done
 
-strip: $(PROGS)
-	strip $(PROGS)
+strip: $(EXE)
+	strip $(EXE)
 
 update-headers:
 	@for file in *.[ch]; do \
@@ -201,8 +201,9 @@ tig.spec: contrib/tig.spec.in
 	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' \
 	    -e 's/@@RELEASE@@/$(RPM_RELEASE)/g' < $< > $@
 
-manual.html: manual.toc
-manual.toc: manual.txt
+doc/manual.html: doc/manual.toc
+doc/manual.html: ASCIIDOC_FLAGS += -ainclude-manual-toc
+%.toc: %.asciidoc
 	sed -n '/^\[\[/,/\(---\|~~~\)/p' < $< | while read line; do \
 		case "$$line" in \
 		"----"*)  echo ". <<$$ref>>"; ref= ;; \
@@ -211,40 +212,43 @@ manual.toc: manual.txt
 		*)	   ref="$$ref, $$line" ;; \
 		esac; done | sed 's/\[\[\(.*\)\]\]/\1/' > $@
 
-README.html: README SITES INSTALL asciidoc.conf
+README.html: README doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -a readme $<
 
-NEWS.html: NEWS asciidoc.conf
+INSTALL.html: INSTALL doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<
 
-tigmanual.7: manual.txt
+NEWS.html: NEWS doc/asciidoc.conf
+	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<
 
-%.1.html : %.1.txt asciidoc.conf
+doc/tigmanual.7: doc/manual.asciidoc
+
+%.1.html : %.1.asciidoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
 
-%.1.xml : %.1.txt asciidoc.conf
+%.1.xml : %.1.asciidoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
-%.5.html : %.5.txt asciidoc.conf
+%.5.html : %.5.asciidoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
 
-%.5.xml : %.5.txt asciidoc.conf
+%.5.xml : %.5.asciidoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
-%.7.xml : %.7.txt asciidoc.conf
+%.7.xml : %.7.asciidoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
-%.html : %.txt asciidoc.conf
+%.html : %.asciidoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -n $<
 
-%.xml : %.txt asciidoc.conf
+%.xml : %.asciidoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d article $<
 
 % : %.xml
-	$(XMLTO) man $<
+	$(XMLTO) man -o doc $<
 
 %.html-chunked : %.xml
 	$(XMLTO) html -o $@ $<
 
 %.pdf : %.xml
-	$(DOCBOOK2PDF) $<
+	$(DOCBOOK2PDF) -o doc $<
