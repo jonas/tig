@@ -2,7 +2,7 @@
 
 # The last tagged version. Can be overridden either by the version from
 # git or from the value of the DIST_VERSION environment variable.
-VERSION	= 1.2
+VERSION	= 1.2.1
 
 all:
 

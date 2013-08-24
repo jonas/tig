@@ -243,11 +243,11 @@ reference name surrounded by '[' and ']':
 -----------------------------------------------------------------------------
 
 If you want to limit what branches are shown, say only show branches named
-`master` or those which start with the `jf/` prefix, you can do it by setting
+`master` or those which start with the `feature/` prefix, you can do it by setting
 the following variable:
 
 -----------------------------------------------------------------------------
-$ TIG_LS_REMOTE="git ls-remote . master jf/*" tig
+$ TIG_LS_REMOTE="git ls-remote . master feature/*" tig
 -----------------------------------------------------------------------------
 
 Or set the variable permanently in your environment.
