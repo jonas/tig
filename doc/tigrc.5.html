@@ -1,0 +1,1960 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<meta name="generator" content="AsciiDoc 8.6.4" />
+<title>tigrc(5)</title>
+<style type="text/css">
+/* Sans-serif font. */
+h1, h2, h3, h4, h5, h6,
+div.title, caption.title,
+thead, p.table.header,
+div#toctitle,
+span#author, span#revnumber, span#revdate, span#revremark,
+div#footer {
+  font-family: Arial,Helvetica,sans-serif;
+}
+
+/* Serif font. */
+div.sectionbody {
+  font-family: Georgia,"Times New Roman",Times,serif;
+}
+
+/* Monospace font. */
+tt {
+  font-size: inherit;
+}
+
+body {
+  margin: 1em 5% 1em 5%;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+a:visited {
+  color: fuchsia;
+}
+
+em {
+  font-style: italic;
+  color: navy;
+}
+
+strong {
+  font-weight: bold;
+  color: #083194;
+}
+
+tt {
+  font-size: inherit;
+  color: navy;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #527bbd;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+h1, h2, h3 {
+  border-bottom: 2px solid silver;
+}
+h2 {
+  padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
+}
+
+div.sectionbody {
+  margin-left: 0;
+}
+
+hr {
+  border: 1px solid silver;
+}
+
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
+}
+ul > li     { color: #aaa; }
+ul > li > * { color: black; }
+
+pre {
+  padding: 0;
+  margin: 0;
+}
+
+span#author {
+  color: #527bbd;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+span#email {
+}
+span#revnumber, span#revdate, span#revremark {
+}
+
+div#footer {
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+div#footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+div#footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
+
+div#preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.tableblock, div.imageblock, div.exampleblock, div.verseblock,
+div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
+div.admonitionblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.admonitionblock {
+  margin-top: 2.0em;
+  margin-bottom: 2.0em;
+  margin-right: 10%;
+  color: #606060;
+}
+
+div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+div.title, caption.title {
+  color: #527bbd;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 1.0em;
+  margin-bottom: 0.5em;
+}
+div.title + * {
+  margin-top: 0;
+}
+
+td div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content + div.title {
+  margin-top: 0.0em;
+}
+
+div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid #dddddd;
+  border-left: 4px solid #f0f0f0;
+  padding: 0.5em;
+}
+
+div.listingblock > div.content {
+  border: 1px solid #dddddd;
+  border-left: 5px solid #f0f0f0;
+  background: #f8f8f8;
+  padding: 0.5em;
+}
+
+div.quoteblock, div.verseblock {
+  padding-left: 1.0em;
+  margin-left: 1.0em;
+  margin-right: 10%;
+  border-left: 5px solid #f0f0f0;
+  color: #777777;
+}
+
+div.quoteblock > div.attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock > pre.content {
+  font-family: inherit;
+  font-size: inherit;
+}
+div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
+div.verseblock + div.attribution {
+  text-align: left;
+}
+
+div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 3px solid #dddddd;
+}
+
+div.exampleblock > div.content {
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
+}
+
+div.imageblock div.content { padding-left: 0; }
+span.image img { border-style: none; }
+a.image:visited { color: white; }
+
+dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: normal;
+  color: navy;
+}
+dd > *:first-child {
+  margin-top: 0.1em;
+}
+
+ul, ol {
+    list-style-position: outside;
+}
+ol.arabic {
+  list-style-type: decimal;
+}
+ol.loweralpha {
+  list-style-type: lower-alpha;
+}
+ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+ol.lowerroman {
+  list-style-type: lower-roman;
+}
+ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+div.compact ul, div.compact ol,
+div.compact p, div.compact p,
+div.compact div, div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead, p.table.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+tfoot {
+  font-weight: bold;
+}
+td > div.verse {
+  white-space: pre;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overriden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+div.hdlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+div.hdlist tr {
+  padding-bottom: 15px;
+}
+dt.hdlist1.strong, td.hdlist1.strong {
+  font-weight: bold;
+}
+td.hdlist1 {
+  vertical-align: top;
+  font-style: normal;
+  padding-right: 0.8em;
+  color: navy;
+}
+td.hdlist2 {
+  vertical-align: top;
+}
+div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.comment {
+  background: yellow;
+}
+
+.footnote, .footnoteref {
+  font-size: 0.8em;
+}
+
+span.footnote, span.footnoteref {
+  vertical-align: super;
+}
+
+#footnotes {
+  margin: 20px 0 20px 0;
+  padding: 7px 0 0 0;
+}
+
+#footnotes div.footnote {
+  margin: 0 0 5px 0;
+}
+
+#footnotes hr {
+  border: none;
+  border-top: 1px solid silver;
+  height: 1px;
+  text-align: left;
+  margin-left: 0;
+  width: 20%;
+  min-width: 100px;
+}
+
+div.colist td {
+  padding-right: 0.5em;
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+div.colist td img {
+  margin-top: 0.3em;
+}
+
+@media print {
+  div#footer-badges { display: none; }
+}
+
+div#toc {
+  margin-bottom: 2.5em;
+}
+
+div#toctitle {
+  color: #527bbd;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+
+span.aqua { color: aqua; }
+span.black { color: black; }
+span.blue { color: blue; }
+span.fuchsia { color: fuchsia; }
+span.gray { color: gray; }
+span.green { color: green; }
+span.lime { color: lime; }
+span.maroon { color: maroon; }
+span.navy { color: navy; }
+span.olive { color: olive; }
+span.purple { color: purple; }
+span.red { color: red; }
+span.silver { color: silver; }
+span.teal { color: teal; }
+span.white { color: white; }
+span.yellow { color: yellow; }
+
+span.aqua-background { background: aqua; }
+span.black-background { background: black; }
+span.blue-background { background: blue; }
+span.fuchsia-background { background: fuchsia; }
+span.gray-background { background: gray; }
+span.green-background { background: green; }
+span.lime-background { background: lime; }
+span.maroon-background { background: maroon; }
+span.navy-background { background: navy; }
+span.olive-background { background: olive; }
+span.purple-background { background: purple; }
+span.red-background { background: red; }
+span.silver-background { background: silver; }
+span.teal-background { background: teal; }
+span.white-background { background: white; }
+span.yellow-background { background: yellow; }
+
+span.big { font-size: 2em; }
+span.small { font-size: 0.6em; }
+/* Overrides for manpage documents */
+h1 {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-top: 2px solid silver;
+  border-bottom: 2px solid silver;
+}
+h2 {
+  border-style: none;
+}
+div.sectionbody {
+  margin-left: 5%;
+}
+
+@media print {
+  div#toc { display: none; }
+}
+
+</style>
+<script type="text/javascript">
+/*<![CDATA[*/
+window.onload = function(){asciidoc.footnotes();}
+var asciidoc = {  // Namespace.
+
+/////////////////////////////////////////////////////////////////////
+// Table Of Contents generator
+/////////////////////////////////////////////////////////////////////
+
+/* Author: Mihai Bazon, September 2002
+ * http://students.infoiasi.ro/~mishoo
+ *
+ * Table Of Content generator
+ * Version: 0.4
+ *
+ * Feel free to use this script under the terms of the GNU General Public
+ * License, as long as you do not remove or alter this notice.
+ */
+
+ /* modified by Troy D. Hanson, September 2006. License: GPL */
+ /* modified by Stuart Rackham, 2006, 2009. License: GPL */
+
+// toclevels = 1..4.
+toc: function (toclevels) {
+
+  function getText(el) {
+    var text = "";
+    for (var i = el.firstChild; i != null; i = i.nextSibling) {
+      if (i.nodeType == 3 /* Node.TEXT_NODE */) // IE doesn't speak constants.
+        text += i.data;
+      else if (i.firstChild != null)
+        text += getText(i);
+    }
+    return text;
+  }
+
+  function TocEntry(el, text, toclevel) {
+    this.element = el;
+    this.text = text;
+    this.toclevel = toclevel;
+  }
+
+  function tocEntries(el, toclevels) {
+    var result = new Array;
+    var re = new RegExp('[hH]([2-'+(toclevels+1)+'])');
+    // Function that scans the DOM tree for header elements (the DOM2
+    // nodeIterator API would be a better technique but not supported by all
+    // browsers).
+    var iterate = function (el) {
+      for (var i = el.firstChild; i != null; i = i.nextSibling) {
+        if (i.nodeType == 1 /* Node.ELEMENT_NODE */) {
+          var mo = re.exec(i.tagName);
+          if (mo && (i.getAttribute("class") || i.getAttribute("className")) != "float") {
+            result[result.length] = new TocEntry(i, getText(i), mo[1]-1);
+          }
+          iterate(i);
+        }
+      }
+    }
+    iterate(el);
+    return result;
+  }
+
+  var toc = document.getElementById("toc");
+  var entries = tocEntries(document.getElementById("content"), toclevels);
+  for (var i = 0; i < entries.length; ++i) {
+    var entry = entries[i];
+    if (entry.element.id == "")
+      entry.element.id = "_toc_" + i;
+    var a = document.createElement("a");
+    a.href = "#" + entry.element.id;
+    a.appendChild(document.createTextNode(entry.text));
+    var div = document.createElement("div");
+    div.appendChild(a);
+    div.className = "toclevel" + entry.toclevel;
+    toc.appendChild(div);
+  }
+  if (entries.length == 0)
+    toc.parentNode.removeChild(toc);
+},
+
+
+/////////////////////////////////////////////////////////////////////
+// Footnotes generator
+/////////////////////////////////////////////////////////////////////
+
+/* Based on footnote generation code from:
+ * http://www.brandspankingnew.net/archive/2005/07/format_footnote.html
+ */
+
+footnotes: function () {
+  var cont = document.getElementById("content");
+  var noteholder = document.getElementById("footnotes");
+  var spans = cont.getElementsByTagName("span");
+  var refs = {};
+  var n = 0;
+  for (i=0; i<spans.length; i++) {
+    if (spans[i].className == "footnote") {
+      n++;
+      // Use [\s\S] in place of . so multi-line matches work.
+      // Because JavaScript has no s (dotall) regex flag.
+      note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+      noteholder.innerHTML +=
+        "<div class='footnote' id='_footnote_" + n + "'>" +
+        "<a href='#_footnoteref_" + n + "' title='Return to text'>" +
+        n + "</a>. " + note + "</div>";
+      spans[i].innerHTML =
+        "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
+        "' title='View footnote' class='footnote'>" + n + "</a>]";
+      var id =spans[i].getAttribute("id");
+      if (id != null) refs["#"+id] = n;
+    }
+  }
+  if (n == 0)
+    noteholder.parentNode.removeChild(noteholder);
+  else {
+    // Process footnoterefs.
+    for (i=0; i<spans.length; i++) {
+      if (spans[i].className == "footnoteref") {
+        var href = spans[i].getElementsByTagName("a")[0].getAttribute("href");
+        href = href.match(/#.*/)[0];  // Because IE return full URL.
+        n = refs[href];
+        spans[i].innerHTML =
+          "[<a href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+      }
+    }
+  }
+}
+
+}
+/*]]>*/
+</script>
+</head>
+<body class="manpage">
+<div id="header">
+<h1>
+tigrc(5) Manual Page
+</h1>
+<h2>NAME</h2>
+<div class="sectionbody">
+<p>tigrc -
+   Tig configuration file
+</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis">SYNOPSIS</h2>
+<div class="sectionbody">
+<div class="verseblock">
+<pre class="content"><strong>set</strong>   <em>variable</em> <strong>=</strong> <em>value</em>
+<strong>bind</strong>  <em>keymap</em> <em>key</em> <em>action</em>
+<strong>color</strong> <em>area</em> <em>fgcolor</em> <em>bgcolor</em> <em>[attributes]</em>
+<strong>source</strong> <em>path</em></pre>
+<div class="attribution">
+</div></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description">DESCRIPTION</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>You can permanently set an option by putting it in the <tt>~/.tigrc</tt> file.  The
+file consists of a series of <em>commands</em>.  Each line of the file may contain
+only one command.</p></div>
+<div class="paragraph"><p>The hash mark (<em>#</em>) is used as a <em>comment</em> character. All text after the
+comment character to the end of the line is ignored. You can use comments to
+annotate your initialization file.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_git_configuration">Git configuration</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Alternatively to using <tt>~/.tigrc</tt>, Tig options can be set by putting them in
+one of the Git configuration files, which are read by Tig on startup. See
+<em>git-config(1)</em> for which files to use. The following example show the basic
+syntax to use for settings, bindings and colors.</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>[tig] show-rev-graph = true
+[tig "color"] cursor = yellow red bold
+[tig "bind"] generic = P parent</tt></pre>
+</div></div>
+<div class="paragraph"><p>In addition to tig-specific options, the following Git options are read from
+the Git configuration:</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<em>color.*</em>
+</dt>
+<dd>
+<p>
+        Colors for the various UI types. Can be completely disabled by setting
+        <em>read-git-colors</em>.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>core.abbrev</em>
+</dt>
+<dd>
+<p>
+        The width of the commit ID. See also <em>id-width</em> option.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>core.editor</em>
+</dt>
+<dd>
+<p>
+        The editor command. Can be overridden by setting GIT_EDITOR.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>core.worktree</em>
+</dt>
+<dd>
+<p>
+        The path to the root of the working tree.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>gui.encoding</em>
+</dt>
+<dd>
+<p>
+        The encoding to use for displaying of file content.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>i18n.commitencoding</em>
+</dt>
+<dd>
+<p>
+        The encoding used for commits. The default is UTF-8.
+</p>
+</dd>
+</dl></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_set_command">Set command</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>A few selective variables can be configured via the set command. The syntax
+is:</p></div>
+<div class="verseblock">
+<pre class="content"><strong>set</strong> variables <strong>=</strong> value</pre>
+<div class="attribution">
+</div></div>
+<div class="paragraph"><p>Examples:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>set show-author = abbreviated   # Show abbreviated author names.
+set show-date = relative        # Show relative commit date.
+set show-rev-graph = yes        # Show revision graph?
+set show-refs = yes             # Show references?
+set commit-order = topo         # Order commits topologically
+set read-git-colors = no        # Do not read Git's color settings.
+set show-line-numbers = no      # Show line numbers?
+set line-number-interval = 5    # Interval between line numbers
+set horizontal-scroll = 33%     # Scroll 33% of the view width
+set blame-options = -C -C -C    # Blame lines from other files</tt></pre>
+</div></div>
+<div class="paragraph"><p>Or in the Git configuration files:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>[tig]
+        show-date = yes         # Show commit date?
+        author-width = 10       # Set width of the author column
+        line-graphics = no      # Disable graphics characters
+        tab-size = 8            # Number of spaces per tab</tt></pre>
+</div></div>
+<div class="paragraph"><p>The type of variables is either bool, int, string, or mixed.</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Valid bool values
+</dt>
+<dd>
+<p>
+        To set a bool variable to true use either "1", "true", or "yes".
+        Any other value will set the variable to false.
+</p>
+</dd>
+<dt class="hdlist1">
+Valid int values
+</dt>
+<dd>
+<p>
+        A non-negative integer.
+</p>
+</dd>
+<dt class="hdlist1">
+Valid string values
+</dt>
+<dd>
+<p>
+        A string of characters. Optionally, use either ' or " as delimiters.
+</p>
+</dd>
+<dt class="hdlist1">
+Valid mixed values
+</dt>
+<dd>
+<p>
+        These values are composites of the above types. The valid values are
+        specified in the description.
+</p>
+</dd>
+</dl></div>
+<div class="sect2">
+<h3 id="_variables">Variables</h3>
+<div class="paragraph"><p>The following variables can be set:</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<em>author-width</em> (int)
+</dt>
+<dd>
+<p>
+        Width of the author column. When set to 5 or below, the author name
+        will be abbreviated to the author&#8217;s initials.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>filename-width</em> (int)
+</dt>
+<dd>
+<p>
+        Width of the filename column.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>id-width</em> (int)
+</dt>
+<dd>
+<p>
+        Width of the commit ID. When unset Tig will use the value of
+        <em>core.abbrev</em> if found or default to 7.  See git-config(1) on how to
+        set <em>core.abbrev</em>.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>diff-options</em> (string)
+</dt>
+<dd>
+<p>
+        A space separate string of diff options to use in the diff view.
+        git-show(1) is used for formatting and always passes --patch-with-stat.
+        This option overrides any options specified in the TIG_DIFF_OPTS
+        environment variable (described in <a href="tig.1.html">tig(1)</a>), but is itself
+        overridden by diff flags given on the command line invocation.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>blame-options</em> (string)
+</dt>
+<dd>
+<p>
+        A space separated string of extra blame options. Can be used for
+        telling git-blame(1) how to detect the origin of lines. The value
+        is ignored when Tig is started in blame mode and given blame options
+        on the command line.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>line-graphics</em> (mixed) [ "ascii" | "default" | "utf-8" | bool]
+</dt>
+<dd>
+<p>
+        What type of character graphics for line drawing.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>line-number-interval</em> (int)
+</dt>
+<dd>
+<p>
+        Interval between line numbers. Note, you have to toggle on line
+        numbering with ".".  The default is to number every fifth line.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>horizontal-scroll</em> (mixed)
+</dt>
+<dd>
+<p>
+        Interval to scroll horizontally in each step. Can be specified either
+        as the number of columns, e.g. <em>5</em>, or as a percentage of the view
+        width, e.g. <em>33%</em>, where the maximum is 100%. For percentages it is
+        always ensured that at least one column is scrolled. The default is to
+        scroll <em>50%</em> of the view width.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>read-git-colors</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to read Git&#8217;s color settings. True by default.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>show-author</em> (mixed) ["full", "abbreviated" | "email" | "email-user" | bool]
+</dt>
+<dd>
+<p>
+        How to display author names. If set to "abbreviated" author initials
+        will be shown. Can be toggled.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>show-filename</em> (mixed) ["auto" | "always" | bool]
+</dt>
+<dd>
+<p>
+        When to display file names. If set to "auto" file names are shown
+        only when needed, e.g. when running: tig blame -C &lt;file&gt;.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>show-file-size</em> (mixed) ["default" | "units" | bool]
+</dt>
+<dd>
+<p>
+        How to display file sizes. When set to "units", sizes are shown using
+        binary prefixes, e.g. 12524 bytes is shown as "12.2K". Can be toggled.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>show-date</em> (mixed) ["relative" | "short" | "default" | "local" | bool]
+</dt>
+<dd>
+<p>
+        Whether and how to show date. If set to "relative" a relative date will be
+        used, e.g. "2 minutes ago". If set to "short" no time information is
+        shown. If set to "local", localtime(3) is used. Can be toggled.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>show-notes</em> (mixed) [note reference | bool]
+</dt>
+<dd>
+<p>
+        Whether to show notes for a commit. When set to a note reference the
+        reference is passed to <tt>git show --notes=</tt>. Notes are enabled by
+        default.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>show-refs</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to show references (branches, tags, and remotes) in the main
+        view on start-up. Can be toggled.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>show-id</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to show commit IDs in the main view. Disabled by default. Can
+        be toggled. See also <em>id-width</em> option.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>title-overflow</em> (mixed) [bool | int]
+</dt>
+<dd>
+<p>
+        Whether to highlight text in commit titles exceeding a given width.
+        When set to a boolean, it enables/disables the highlighting using the
+        default width of 50 character. When set to an int, the assigned value
+        is used as the maximum character width.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>show-rev-graph</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to show revision graph in the main view on start-up.
+        Can be toggled. See also line-graphics options.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>show-changes</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to show staged and unstaged changes in the main view.
+        Can be toggled.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>show-line-numbers</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to show line numbers. Can be toggled.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>vertical-split</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to split the view horizontally or vertically.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>split-view-height</em> (mixed)
+</dt>
+<dd>
+<p>
+        Height of the lower view in a split view. Can be specified either as
+        the number of rows, e.g. <em>5</em>, or as a percentage of the view height,
+        e.g. <em>80%</em>, where the maximum is 100%. It is always ensured that the
+        smaller of the views is at least four rows high. The default is a view
+        height of <em>66%</em>.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>status-untracked-dirs</em> (bool)
+</dt>
+<dd>
+<p>
+        Show untracked directories contents in the status view (analog to
+        <tt>git ls-files --directory</tt> option). On by default.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>tab-size</em> (int)
+</dt>
+<dd>
+<p>
+        Number of spaces per tab. The default is 8 spaces.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>diff-context</em> (int)
+</dt>
+<dd>
+<p>
+        Number of context lines to show for diffs.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>ignore-space</em> (mixed) ["no" | "all" | "some" | "at-eol" | bool]
+</dt>
+<dd>
+<p>
+    Ignore space changes in diff view. By default no space changes are ignored.
+    Changing this to "all", "some" or "at-eol" is equivalent to passing
+    "--ignore-all-space", "--ignore-space" or "--ignore-space-at-eol"
+    respectively to <tt>git diff</tt> or <tt>git show</tt>.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>commit-order</em> (mixed) ["default" | "topo" | "date" | "reverse" | bool]
+</dt>
+<dd>
+<p>
+        Commit ordering using the default (chronological reverse) order,
+        topological order, date order or reverse order. The default order is
+        used when the option is set to false, and topo order when set to true.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>ignore-case</em> (bool)
+</dt>
+<dd>
+<p>
+        Ignore case in searches. By default, the search is case sensitive.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>wrap-lines</em> (bool)
+</dt>
+<dd>
+<p>
+        Wrap long lines. By default, lines are not wrapped.
+        Not compatible with line numbers enabled.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>focus-child</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to focus the child view when it is opened. When disabled the
+        focus will remain in the parent view, avoiding reloads of the child
+        view when navigating the parent view. True by default.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>editor-line-number</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to pass the selected line number to the editor command. The
+        line number is passed as <tt>+&lt;line-number&gt;</tt> in front of the file name.
+        Example: <tt>vim +10 tig.c</tt>
+</p>
+</dd>
+</dl></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_bind_command">Bind command</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Using bind commands keys can be mapped to an action when pressed in a given
+key map. The syntax is:</p></div>
+<div class="verseblock">
+<pre class="content"><strong>bind</strong> <em>keymap</em> <em>key</em> <em>action</em></pre>
+<div class="attribution">
+</div></div>
+<div class="paragraph"><p>Examples:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt># A few keybindings
+bind main w scroll-line-up
+bind main s scroll-line-down
+bind main space enter
+bind diff a previous
+bind diff d next
+bind diff b move-first-line
+# An external command to update from upstream
+bind generic F !git fetch</tt></pre>
+</div></div>
+<div class="paragraph"><p>Or in the Git configuration files:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>[tig "bind"]
+        # 'unbind' the default quit key binding
+        main = Q none
+        # Cherry-pick current commit onto current branch
+        generic = C !git cherry-pick %(commit)</tt></pre>
+</div></div>
+<div class="paragraph"><p>Keys are mapped by first searching the keybindings for the current view, then
+the keybindings for the <strong>generic</strong> keymap, and last the default keybindings.
+Thus, the view keybindings shadow the generic keybindings which Shadow the
+built-in keybindings.</p></div>
+<div class="openblock">
+<div class="content">
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Keymaps
+</dt>
+<dd>
+<p>
+Valid keymaps are: <strong>main</strong>, <strong>diff</strong>, <strong>log</strong>, <strong>help</strong>, <strong>pager</strong>, <strong>status</strong>, <strong>stage</strong>,
+<strong>tree</strong>, <strong>blob</strong>, <strong>blame</strong>, <strong>branch</strong>, and <strong>generic</strong>.  Use <strong>generic</strong> to set key
+mapping in all keymaps.
+</p>
+</dd>
+<dt class="hdlist1">
+Key values
+</dt>
+<dd>
+<p>
+Key values should never be quoted. Use either the ASCII value or one of the
+following symbolic key names. Symbolic key names are case insensitive, Use
+<strong>Hash</strong> to bind to the <tt>#</tt> key, since the hash mark is used as a comment
+character.
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p><strong>Enter</strong>, <strong>Space</strong>, <strong>Backspace</strong>, <strong>Tab</strong>, <strong>Escape</strong>, <strong>Left</strong>, <strong>Right</strong>, <strong>Up</strong>, <strong>Down</strong>,
+<strong>Insert</strong>, <strong>Delete</strong>, <strong>Hash</strong>, <strong>Home</strong>, <strong>End</strong>, <strong>PageUp</strong>, <strong>PageDown</strong>, <strong>F1</strong>, <strong>F2</strong>, <strong>F3</strong>,
+<strong>F4</strong>, <strong>F5</strong>, <strong>F6</strong>, <strong>F7</strong>, <strong>F8</strong>, <strong>F9</strong>, <strong>F10</strong>, <strong>F11</strong>, <strong>F12</strong>.</p></div>
+<div class="paragraph"><p>To add a key mapping that uses the Ctrl key, use a <tt>^</tt> prefix in your mapping.
+For example, Ctrl-f could be mapped to <strong>scroll-page-down</strong> with the following line:</p></div>
+<div class="paragraph"><p>bind main ^f scroll-page-down</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Action names
+</dt>
+<dd>
+<p>
+Valid action names are described below. Note, all names are
+case-insensitive, and you may use <em>-</em>, <em>_</em>, and <em>.</em> interchangeably,
+e.g. "view-main", "View.Main", and "VIEW_MAIN" are the same.
+</p>
+</dd>
+</dl></div>
+</div></div>
+<div class="sect2">
+<h3 id="_actions">Actions</h3>
+<div class="paragraph"><p>Apart from the action names listed below, all actions starting with a <em>!</em> or
+<em>:</em> are treated specially.</p></div>
+<div class="paragraph"><p>Actions beginning with a <em>:</em> will run an internal Tig command.  These internal
+commands are those which you put in a configuration file or type at the Tig
+prompt.  As an example, "bind generic S :source .tigrc" will source a .tigrc
+file in the current directory when <em>S</em> is pressed.</p></div>
+<div class="paragraph"><p>Actions beginning with a <em>!</em> will be available as an external command. External
+commands can contain variable names that will be substituted before the command
+is run. Valid variable names are:</p></div>
+<div class="tableblock">
+<table rules="none"
+width="100%"
+frame="void"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 1. Browsing state variables</caption>
+<col width="25%" />
+<col width="75%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(head)</tt></p></td>
+<td align="left" valign="top"><p class="table">The currently viewed <em>head</em> ID. Defaults to HEAD</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(commit)</tt></p></td>
+<td align="left" valign="top"><p class="table">The currently selected commit ID.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(blob)</tt></p></td>
+<td align="left" valign="top"><p class="table">The currently selected blob ID.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(branch)</tt></p></td>
+<td align="left" valign="top"><p class="table">The currently selected branch name.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(stash)</tt></p></td>
+<td align="left" valign="top"><p class="table">The currently selected stash name.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(directory)</tt></p></td>
+<td align="left" valign="top"><p class="table">The current directory path in the tree view;
+                         empty for the root directory.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(file)</tt></p></td>
+<td align="left" valign="top"><p class="table">The currently selected file.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(ref)</tt></p></td>
+<td align="left" valign="top"><p class="table">The reference given to blame or HEAD if undefined.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(revargs)</tt></p></td>
+<td align="left" valign="top"><p class="table">The revision arguments passed on the command line.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(fileargs)</tt></p></td>
+<td align="left" valign="top"><p class="table">The file arguments passed on the command line.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(diffargs)</tt></p></td>
+<td align="left" valign="top"><p class="table">The diff options passed on the command line.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>%(prompt)</tt></p></td>
+<td align="left" valign="top"><p class="table">Prompt for the argument value.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="paragraph"><p>As an example, the following external command will save the current commit as
+a patch file: "!git format-patch -1 %(commit)". If your external command
+requires use of dynamic features, such as subshells, expansion of environment
+variables and process control, this can be achieved by using a shell command:</p></div>
+<div class="listingblock">
+<div class="title">Configure a binding in ~/.tigrc to put a commit ID in the clipboard.</div>
+<div class="content">
+<pre><tt>bind generic I !@sh -c "echo -n %(commit) | xclip -selection c"</tt></pre>
+</div></div>
+<div class="paragraph"><p>Or by using a combination of Git aliases and Tig external commands. The
+following example entries can be put in either the .gitconfig or .git/config
+file:</p></div>
+<div class="listingblock">
+<div class="title">Git configuration which binds Tig keys to Git command aliases.</div>
+<div class="content">
+<pre><tt>[alias]
+        gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &amp;"
+        publish = !"for i in origin public; do git push $i; done"
+[tig "bind"]
+        # @-prefix means that the console output will not be shown.
+        generic = V !@git gitk-bg
+        generic = &gt; !git publish</tt></pre>
+</div></div>
+<div class="paragraph"><p>By default, commands are run in the foreground with their console output
+shown. For different behavior, commands can be prefixed with one or more of
+the following control flags to specify how it should be executed:</p></div>
+<div class="tableblock">
+<table rules="none"
+width="100%"
+frame="void"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 2. External command control flags</caption>
+<col width="25%" />
+<col width="75%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>@</tt></p></td>
+<td align="left" valign="top"><p class="table">Run the command in the background with no output.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>?</tt></p></td>
+<td align="left" valign="top"><p class="table">Prompt the user before executing the command.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>&lt;</tt></p></td>
+<td align="left" valign="top"><p class="table">Exit Tig after executing the command.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="paragraph"><p>Control flags can be combined, e.g. "!?&lt;git commit" will prompt whether to
+execute the command and will exit Tig after completion.</p></div>
+<div class="tableblock">
+<table rules="none"
+width="100%"
+frame="void"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 3. View switching</caption>
+<col width="25%" />
+<col width="75%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>view-main</tt></p></td>
+<td align="left" valign="top"><p class="table">Show main view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>view-diff</tt></p></td>
+<td align="left" valign="top"><p class="table">Show diff view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>view-log</tt></p></td>
+<td align="left" valign="top"><p class="table">Show log view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>view-tree</tt></p></td>
+<td align="left" valign="top"><p class="table">Show tree view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>view-blob</tt></p></td>
+<td align="left" valign="top"><p class="table">Show blob view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>view-blame</tt></p></td>
+<td align="left" valign="top"><p class="table">Show blame view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>view-branch</tt></p></td>
+<td align="left" valign="top"><p class="table">Show branch view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>view-status</tt></p></td>
+<td align="left" valign="top"><p class="table">Show status view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>view-stage</tt></p></td>
+<td align="left" valign="top"><p class="table">Show stage view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>view-pager</tt></p></td>
+<td align="left" valign="top"><p class="table">Show pager view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>view-help</tt></p></td>
+<td align="left" valign="top"><p class="table">Show help page</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+width="100%"
+frame="void"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 4. View manipulation</caption>
+<col width="25%" />
+<col width="75%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>enter</tt></p></td>
+<td align="left" valign="top"><p class="table">Enter current line and scroll</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>next</tt></p></td>
+<td align="left" valign="top"><p class="table">Move to next</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>previous</tt></p></td>
+<td align="left" valign="top"><p class="table">Move to previous</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>parent</tt></p></td>
+<td align="left" valign="top"><p class="table">Move to parent</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>view-next</tt></p></td>
+<td align="left" valign="top"><p class="table">Move focus to next view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>refresh</tt></p></td>
+<td align="left" valign="top"><p class="table">Reload and refresh view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>maximize</tt></p></td>
+<td align="left" valign="top"><p class="table">Maximize the current view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>view-close</tt></p></td>
+<td align="left" valign="top"><p class="table">Close the current view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>quit</tt></p></td>
+<td align="left" valign="top"><p class="table">Close all views and quit</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+width="100%"
+frame="void"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 5. View specific actions</caption>
+<col width="25%" />
+<col width="75%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>status-update</tt></p></td>
+<td align="left" valign="top"><p class="table">Update file status</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>status-merge</tt></p></td>
+<td align="left" valign="top"><p class="table">Resolve unmerged file</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>stage-update-line</tt></p></td>
+<td align="left" valign="top"><p class="table">Stage single line</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>stage-next</tt></p></td>
+<td align="left" valign="top"><p class="table">Find next chunk to stage</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>diff-context-up</tt></p></td>
+<td align="left" valign="top"><p class="table">Increase the diff context</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>diff-context-down</tt></p></td>
+<td align="left" valign="top"><p class="table">Decrease the diff context</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+width="100%"
+frame="void"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 6. Cursor navigation</caption>
+<col width="25%" />
+<col width="75%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>move-up</tt></p></td>
+<td align="left" valign="top"><p class="table">Move cursor one line up</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>move-down</tt></p></td>
+<td align="left" valign="top"><p class="table">Move cursor one line down</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>move-page-down</tt></p></td>
+<td align="left" valign="top"><p class="table">Move cursor one page down</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>move-page-up</tt></p></td>
+<td align="left" valign="top"><p class="table">Move cursor one page up</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>move-first-line</tt></p></td>
+<td align="left" valign="top"><p class="table">Move cursor to first line</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>move-last-line</tt></p></td>
+<td align="left" valign="top"><p class="table">Move cursor to last line</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+width="100%"
+frame="void"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 7. Scrolling</caption>
+<col width="25%" />
+<col width="75%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>scroll-line-up</tt></p></td>
+<td align="left" valign="top"><p class="table">Scroll one line up</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>scroll-line-down</tt></p></td>
+<td align="left" valign="top"><p class="table">Scroll one line down</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>scroll-page-up</tt></p></td>
+<td align="left" valign="top"><p class="table">Scroll one page up</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>scroll-page-down</tt></p></td>
+<td align="left" valign="top"><p class="table">Scroll one page down</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>scroll-first-col</tt></p></td>
+<td align="left" valign="top"><p class="table">Scroll to the first column</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>scroll-left</tt></p></td>
+<td align="left" valign="top"><p class="table">Scroll one column left</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>scroll-right</tt></p></td>
+<td align="left" valign="top"><p class="table">Scroll one column right</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+width="100%"
+frame="void"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 8. Searching</caption>
+<col width="25%" />
+<col width="75%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>search</tt></p></td>
+<td align="left" valign="top"><p class="table">Search the view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>search-back</tt></p></td>
+<td align="left" valign="top"><p class="table">Search backwards in the view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>find-next</tt></p></td>
+<td align="left" valign="top"><p class="table">Find next search match</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>find-prev</tt></p></td>
+<td align="left" valign="top"><p class="table">Find previous search match</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+width="100%"
+frame="void"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 9. Misc</caption>
+<col width="25%" />
+<col width="75%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>prompt</tt></p></td>
+<td align="left" valign="top"><p class="table">Bring up the prompt</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>screen-redraw</tt></p></td>
+<td align="left" valign="top"><p class="table">Redraw the screen</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>screen-resize</tt></p></td>
+<td align="left" valign="top"><p class="table">Resize the screen</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>show-version</tt></p></td>
+<td align="left" valign="top"><p class="table">Show version information</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>stop-loading</tt></p></td>
+<td align="left" valign="top"><p class="table">Stop all loading views</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>options</tt></p></td>
+<td align="left" valign="top"><p class="table">Open options menu</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>toggle-lineno</tt></p></td>
+<td align="left" valign="top"><p class="table">Toggle line numbers</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>toggle-date</tt></p></td>
+<td align="left" valign="top"><p class="table">Toggle date display</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>toggle-author</tt></p></td>
+<td align="left" valign="top"><p class="table">Toggle author display</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>toggle-filename</tt></p></td>
+<td align="left" valign="top"><p class="table">Toggle file name display</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>toggle-file-size</tt></p></td>
+<td align="left" valign="top"><p class="table">Toggle file size display</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>toggle-rev-graph</tt></p></td>
+<td align="left" valign="top"><p class="table">Toggle revision graph visualization</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>toggle-graphic</tt></p></td>
+<td align="left" valign="top"><p class="table">Toggle (line) graphics mode</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>toggle-refs</tt></p></td>
+<td align="left" valign="top"><p class="table">Toggle reference display</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>toggle-files</tt></p></td>
+<td align="left" valign="top"><p class="table">Toggle file filtering for the diff and main views</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>edit</tt></p></td>
+<td align="left" valign="top"><p class="table">Open in editor</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>none</tt></p></td>
+<td align="left" valign="top"><p class="table">Do nothing</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_color_command">Color command</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Color commands control highlighting and the user interface styles. If your
+terminal supports color, these commands can be used to assign foreground and
+background combinations to certain areas. Optionally, an attribute can be
+given as the last parameter. The syntax is:</p></div>
+<div class="verseblock">
+<pre class="content"><strong>color</strong> <em>area</em> <em>fgcolor</em> <em>bgcolor</em> <em>[attributes]</em></pre>
+<div class="attribution">
+</div></div>
+<div class="paragraph"><p>Examples:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt># Override the default terminal colors to white on black.
+color default           white   black
+# Diff colors
+color diff-header       yellow  default
+color diff-index        blue    default
+color diff-chunk        magenta default
+color "Reported-by:"    green   default</tt></pre>
+</div></div>
+<div class="paragraph"><p>Or in the Git configuration files:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>[tig "color"]
+        # A strange looking cursor line
+        cursor          red     default underline
+        # UI colors
+        title-blur      white   blue
+        title-focus     white   blue    bold</tt></pre>
+</div></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Area names
+</dt>
+<dd>
+<p>
+        Can be either a built-in area name or a custom quoted string. The
+        latter allows custom color rules to be added for lines matching a
+        quoted string.
+        Valid built-in area names are described below. Note, all names are
+        case-insensitive, and you may use <em>-</em>, <em>_</em>, and <em>.</em> interchangeably,
+        e.g. "Diff-Header", "DIFF_HEADER", and "diff.header" are the same.
+</p>
+</dd>
+<dt class="hdlist1">
+Color names
+</dt>
+<dd>
+<p>
+        Valid colors include: <strong>white</strong>, <strong>black</strong>, <strong>green</strong>, <strong>magenta</strong>, <strong>blue</strong>,
+        <strong>cyan</strong>, <strong>yellow</strong>, <strong>red</strong>, <strong>default</strong>. Use <strong>default</strong> to refer to the
+        default terminal colors, for example, to keep the background
+        transparent when you are using a terminal with a transparent
+        background.
+</p>
+<div class="paragraph"><p>Colors can also be specified using the keywords <strong>color0</strong>, <strong>color1</strong>, &#8230;,
+<strong>colorN-1</strong> (where <strong>N</strong> is the number of colors supported by your terminal).
+This is useful when you remap the colors for your display or want to enable
+colors supported by 88-color and 256-color terminals. Note that the <em>color</em>
+prefix is optional. If you prefer, you can specify colors directly by their
+numbers <strong>0</strong>, <strong>1</strong>, &#8230;, <strong>N-1</strong> instead, just like in the configuration file of
+Git.</p></div>
+</dd>
+<dt class="hdlist1">
+Attribute names
+</dt>
+<dd>
+<p>
+        Valid attributes include: <strong>normal</strong>, <strong>blink</strong>, <strong>bold</strong>, <strong>dim</strong>, <strong>reverse</strong>,
+        <strong>standout</strong>, and <strong>underline</strong>. Note, not all attributes may be supported
+        by the terminal.
+</p>
+</dd>
+</dl></div>
+<div class="sect2">
+<h3 id="_ui_colors">UI colors</h3>
+<div class="paragraph"><p>The colors and attributes to be used for the text that is not highlighted or
+that specify the use of the default terminal colors can be controlled by
+setting the <strong>default</strong> color option.</p></div>
+<div class="tableblock">
+<table rules="none"
+width="100%"
+frame="void"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 10. General</caption>
+<col width="25%" />
+<col width="75%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>default</tt></p></td>
+<td align="left" valign="top"><p class="table">Override default terminal colors (see above).</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>cursor</tt></p></td>
+<td align="left" valign="top"><p class="table">The cursor line.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>status</tt></p></td>
+<td align="left" valign="top"><p class="table">The status window showing info messages.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>title-focus</tt></p></td>
+<td align="left" valign="top"><p class="table">The title window for the current view.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>title-blur</tt></p></td>
+<td align="left" valign="top"><p class="table">The title window of any backgrounded view.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>delimiter</tt></p></td>
+<td align="left" valign="top"><p class="table">Delimiter shown for truncated lines.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>line-number</tt></p></td>
+<td align="left" valign="top"><p class="table">Line numbers.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>id</tt></p></td>
+<td align="left" valign="top"><p class="table">The commit ID.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>date</tt></p></td>
+<td align="left" valign="top"><p class="table">The commit date.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>author</tt></p></td>
+<td align="left" valign="top"><p class="table">The commit author.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>mode</tt></p></td>
+<td align="left" valign="top"><p class="table">The file mode holding the permissions and type.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+width="100%"
+frame="void"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 11. Main view colors</caption>
+<col width="25%" />
+<col width="75%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>graph-commit</tt></p></td>
+<td align="left" valign="top"><p class="table">The commit dot in the revision graph.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>palette-[0-6]</tt></p></td>
+<td align="left" valign="top"><p class="table">7 different colors,
+used for distinguishing branches or commits.
+example: palette-0 = red</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>main-commit</tt></p></td>
+<td align="left" valign="top"><p class="table">The commit comment.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>main-head</tt></p></td>
+<td align="left" valign="top"><p class="table">Label of the current branch.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>main-remote</tt></p></td>
+<td align="left" valign="top"><p class="table">Label of a remote.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>main-tracked</tt></p></td>
+<td align="left" valign="top"><p class="table">Label of the remote tracked by the current branch.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>main-tag</tt></p></td>
+<td align="left" valign="top"><p class="table">Label of a signed tag.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>main-local-tag</tt></p></td>
+<td align="left" valign="top"><p class="table">Label of a local tag.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>main-ref</tt></p></td>
+<td align="left" valign="top"><p class="table">Label of any other reference.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+width="100%"
+frame="void"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 12. Status view</caption>
+<col width="25%" />
+<col width="75%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>stat-head</tt></p></td>
+<td align="left" valign="top"><p class="table">The "On branch"-line.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>stat-section</tt></p></td>
+<td align="left" valign="top"><p class="table">Status section titles,</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>stat-staged</tt></p></td>
+<td align="left" valign="top"><p class="table">Status flag of staged files.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>stat-unstaged</tt></p></td>
+<td align="left" valign="top"><p class="table">Status flag of unstaged files.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>stat-untracked</tt></p></td>
+<td align="left" valign="top"><p class="table">Status flag of untracked files.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tableblock">
+<table rules="none"
+width="100%"
+frame="void"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 13. Tree view</caption>
+<col width="25%" />
+<col width="75%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>tree-head</tt></p></td>
+<td align="left" valign="top"><p class="table">The "Directory /"-line</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>tree-dir</tt></p></td>
+<td align="left" valign="top"><p class="table">The directory name.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><tt>tree-file</tt></p></td>
+<td align="left" valign="top"><p class="table">The file name.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_highlighting">Highlighting</h3>
+<div class="openblock">
+<div class="content">
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Diff markup
+</dt>
+<dd>
+<p>
+Options concerning diff start, chunks and lines added and deleted.
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p><strong>diff-header</strong>, <strong>diff-chunk</strong>, <strong>diff-add</strong>, <strong>diff-del</strong></p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Enhanced Git diff markup
+</dt>
+<dd>
+<p>
+Extra diff information emitted by the Git diff machinery, such as mode
+changes, rename detection, and similarity.
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p><strong>diff-oldmode</strong>, <strong>diff-newmode</strong>, <strong>diff-copy-from</strong>, <strong>diff-copy-to</strong>,
+<strong>diff-rename-from</strong>, <strong>diff-rename-to</strong>, <strong>diff-deleted-file-mode</strong>,
+<strong>diff-similarity</strong>, <strong>diff-dissimilarity</strong> <strong>diff-tree</strong>, <strong>diff-index</strong>, <strong>diff-stat</strong></p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Pretty print commit headers
+</dt>
+<dd>
+<p>
+Commit diffs and the revision logs are usually formatted using pretty printed
+headers , unless <tt>--pretty=raw</tt> was given. This includes lines, such as merge
+info, commit ID, and author and committer date.
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p><strong>pp-author</strong>, <strong>pp-commit</strong>, <strong>pp-merge</strong>, <strong>pp-date</strong>, <strong>pp-adate</strong>, <strong>pp-cdate</strong>,
+<strong>pp-refs</strong></p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Raw commit header
+</dt>
+<dd>
+<p>
+Usually shown when <tt>--pretty=raw</tt> is given, however <em>commit</em> is pretty much
+omnipresent.
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p><strong>commit</strong>, <strong>parent</strong>, <strong>tree</strong>, <strong>author</strong>, <strong>committer</strong></p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Commit message
+</dt>
+<dd>
+<p>
+<tt>Signed-off-by</tt>, <tt>Acked-by</tt>, <tt>Reviewed-by</tt> and <tt>Tested-by</tt> lines are colorized.
+Characters in the commit title exceeding a predefined width can be highlighted.
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p><strong>signoff</strong>, <strong>acked</strong>, <strong>reviewed</strong>, <strong>tested</strong>, <strong>overflow</strong></p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Tree markup
+</dt>
+<dd>
+<p>
+Colors for information of the tree view.
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p><strong>tree-dir</strong>, <strong>tree-file</strong></p></div>
+</div></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_source_command">Source command</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Source commands make it possible to read additional configuration files.
+Sourced files are included in-place, meaning when a <em>source</em> command is
+encountered the file will be immediately read. Any commands later in the
+current configuration file will take precedence. The syntax is:</p></div>
+<div class="verseblock">
+<pre class="content"><strong>source</strong> <em>path</em></pre>
+<div class="attribution">
+</div></div>
+<div class="paragraph"><p>Examples:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>source ~/.tig/colorscheme.tigrc
+source ~/.tig/keybindings.tigrc</tt></pre>
+</div></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_copyright">COPYRIGHT</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Copyright (c) 2006-2012 Jonas Fonseca &lt;<a href="mailto:fonseca@diku.dk">fonseca@diku.dk</a>&gt;</p></div>
+<div class="paragraph"><p>This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_see_also">SEE ALSO</h2>
+<div class="sectionbody">
+<div class="paragraph"><p><a href="tig.1.html">tig(1)</a>,
+<a href="manual.html">the Tig manual</a>,
+git(7), git-config(1)</p></div>
+</div>
+</div>
+</div>
+<div id="footnotes"><hr /></div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2013-08-24 10:42:22 EDT
+</div>
+</div>
+</body>
+</html>

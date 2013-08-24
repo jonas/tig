@@ -571,6 +571,44 @@ footnotes: function () {
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_1_2_1">tig-1.2.1</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Incompatibilities:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Move manual and man pages to doc/ directory and rename AsciiDoc files
+   to have .asciidoc as the extension to make them render on GitHub.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Show blob sizes in the tree view either as bytes or using binary unit
+   prefixes. Example: <tt>set show-file-size = units</tt>. (GH #163)
+</p>
+</li>
+<li>
+<p>
+Reduce main view memory usage and startup time, especially when revision
+   graph rendering is disabled. (GH #160)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix submodule-related setup to check for non-zero return value from
+   setenv(). (GH #188)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_1_2">tig-1.2</h2>
 <div class="sectionbody">
 <div class="ulist"><ul>
@@ -585,7 +623,7 @@ Tig now has its own tag on Stack Overflow, where users are invited to
 <div class="ulist"><ul>
 <li>
 <p>
-Make tig prompt commands bindable to keys. For example:
+Prompt commands can be bound to keys. For example:
    <tt>bind diff F :set diff-options = --full-diff</tt>. (GH #69, #116)
 </p>
 </li>
@@ -597,7 +635,7 @@ Add a diff-options setting for specifying default diff options.
 </li>
 <li>
 <p>
-Options in diff-options and blame-options matching tig browsing state
+Options in diff-options and blame-options matching Tig browsing state
    variables are replaced.
 </p>
 </li>
@@ -619,7 +657,7 @@ Add toggles for showing author email or email user names. (GH #115)
 <li>
 <p>
 Open editor at the selected line by prefixing the file argument with
-   <tt>+&lt;lineno&gt;</tt>. Tested in vi, vim, emacs, nano, gedit, geany. Disable
+   <tt>+&lt;lineno&gt;</tt>. Tested in vi, Vim, Emacs, Nano, Gedit, Geany. Disable
    by adding <tt>set editor-line-number = no</tt> to ~/.tigrc. (GH #118, #119)
 </p>
 </li>
@@ -752,7 +790,7 @@ Introduce a more natural context-sensitive log display. (GH #155)
 <p>
 Disable diff move/copy detection by default, boosting diff
    performance on larger projects. Use git config <em>diff.renames</em> option
-   (git-wide) to set your preferred behavior. Environment variable
+   (Git-wide) to set your preferred behavior. Environment variable
    TIG_DIFF_OPTS can be used to restore the old behavior.
 </p>
 </li>
@@ -772,7 +810,7 @@ Values set for author-width and filename-width will result in widths
 <div class="ulist"><ul>
 <li>
 <p>
-Typing a text in the prompt will be interpreted as a tig command.
+Typing a text in the prompt will be interpreted as a Tig command.
    Prefixing the command with a <em>!</em> will execute this system command in
    an external pager. Entering a single key will execute the
    corresponding key binding.
@@ -847,7 +885,7 @@ Add <em>show-id</em> and <em>id-width</em> options to configure the display of
 </li>
 <li>
 <p>
-Allow to override git-based encoding to UTF-8 by setting
+Allow to override Git based encoding to UTF-8 by setting
    <em>i18n.commitencoding</em> or <em>gui.encoding</em>.
 </p>
 </li>
@@ -899,7 +937,7 @@ Fix diff status message for file diffs with no content changes.
 </li>
 <li>
 <p>
-Fix parent blaming when tig is launched in subdirectory. (GH #70)
+Fix parent blaming when Tig is launched in subdirectory. (GH #70)
 </p>
 </li>
 <li>
@@ -966,7 +1004,7 @@ Custom colorization of lines matching a string prefix (GH #16).
 </li>
 <li>
 <p>
-Use git&#8217;s color settings for the main, status and diff views.
+Use Git&#8217;s color settings for the main, status and diff views.
    Put <tt>set read-git-colors = no</tt> in ~/.tigrc to disable.
 </p>
 </li>
@@ -1027,7 +1065,7 @@ Add %(prompt) external command variable, which will prompt for the
 </li>
 <li>
 <p>
-Log information about git commands when the TIG_TRACE environment
+Log information about Git commands when the TIG_TRACE environment
    variable is set. Example: <tt>TIG_TRACE=/tmp/tig.log tig</tt>
 </p>
 </li>
@@ -1243,7 +1281,7 @@ Fix problem with empty diff views when file specs were passed on the
 </li>
 <li>
 <p>
-Fix segfault when starting tig in pager mode.
+Fix segfault when starting Tig in pager mode.
 </p>
 </li>
 </ul></div>
@@ -1359,7 +1397,7 @@ Fix parsing of unknown keymap names.
 <li>
 <p>
 Blame view: fix parent blame to detect renames. It uses "previous"
-   line info from the blame porcelain output added in git version 1.6.3.
+   line info from the blame porcelain output added in Git version 1.6.3.
 </p>
 </li>
 </ul></div>
@@ -1379,7 +1417,7 @@ Setting the cursor color no longer automatically sets the text to
 <li>
 <p>
 Remove check for git-repo-config, which was officially deprecated in
-   git version 1.5.4. The configure script no longer depends on git
+   Git version 1.5.4. The configure script no longer depends on Git
    being installed.
 </p>
 </li>
@@ -1464,7 +1502,7 @@ Tree view: fix searching.
 <li>
 <p>
 Status view: improve "on branch" information inspired by the prompt
-   code in git&#8217;s bash completion script.
+   code in Git&#8217;s bash completion script.
 </p>
 </li>
 <li>
@@ -1564,7 +1602,7 @@ Horizontal scrolling. Bound to Left/Right by default.
 </li>
 <li>
 <p>
-Read tigrc(5) options from git configuration files using the syntax:
+Read tigrc(5) options from Git configuration files using the syntax:
 </p>
 <div class="literalblock">
 <div class="content">
@@ -1646,7 +1684,7 @@ Fix regression parsing multiple spaces in ~/.tigrc.
 Commands from the environment (e.g. TIG_MAIN_CMD) will no longer have
    access to shell features, such as subshells and variable expansion.
    The easiest way to upgrade your configuration is to put such commands
-   in a script file or as a git alias.
+   in a script file or as a Git alias.
 </p>
 </li>
 </ul></div>
@@ -1747,7 +1785,7 @@ Log view: support for refreshing.
 <li>
 <p>
 Status view: use ls-files' --exclude-standard so user specific ignore
-   rules are effective. The option was added in git version 1.5.4.
+   rules are effective. The option was added in Git version 1.5.4.
 </p>
 </li>
 <li>
@@ -1874,8 +1912,8 @@ Remove parsing of deprecated options: -g, -l, -d.
 </li>
 <li>
 <p>
-The first seen <em>--</em> will stop option parsing and is passed to git
-   instead of breaking out of tig&#8217;s option parsing.
+The first seen <em>--</em> will stop option parsing and is passed to Git
+   instead of breaking out of Tig&#8217;s option parsing.
 </p>
 </li>
 </ul></div>
@@ -1963,7 +2001,7 @@ Fix UTF-8 handling for tag names and commit messages.
 <li>
 <p>
 Fix the check for git-config(1) in configure to handle the case when
-   git has been installed using a libexecdir which is not in the path.
+   Git has been installed using a libexecdir which is not in the path.
 </p>
 </li>
 <li>
@@ -1981,7 +2019,7 @@ Fix replacing of SYSCONFDIR when installing from released tarballs.
 <div class="ulist"><ul>
 <li>
 <p>
-Deprecate most tig specific command line options to make tig more
+Deprecate most Tig specific command line options to make Tig more
    compatible with gitk. The deprecated options are: -g, -l, -d, and -S.
    Use of any of them will result in a warning being printed to stderr.
    Instead of <em>-S</em>, use the new <em>status</em> subcommand.
@@ -2153,7 +2191,7 @@ Include autoconf files in the tarball generated by <tt>make dist</tt>.
 <div class="ulist"><ul>
 <li>
 <p>
-Add bash completion script for tig (contrib/tig-completion.bash).
+Add bash completion script for Tig (contrib/tig-completion.bash).
 </p>
 </li>
 <li>
@@ -2193,7 +2231,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-08-10 10:26:47 EDT
+Last updated 2013-08-24 10:42:22 EDT
 </div>
 </div>
 </body>

@@ -1,0 +1,1356 @@
+'\" t
+.\"     Title: tigmanual
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: 08/24/2013
+.\"    Manual: Tig Manual
+.\"    Source: Tig 1.2.1
+.\"  Language: English
+.\"
+.TH "TIGMANUAL" "7" "08/24/2013" "Tig 1\&.2\&.1" "Tig Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+tigmanual \- text\-mode interface for Git
+.SH "SYNOPSIS"
+.sp
+.nf
+tig        [options] [revisions] [\-\-] [paths]
+tig show   [options] [revisions] [\-\-] [paths]
+tig blame  [options] [rev] [\-\-] path
+tig status
+tig <      [Git command output]
+.fi
+.sp
+.SH "DESCRIPTION"
+.sp
+This is the manual for Tig, the ncurses\-based text\-mode interface for git\&. Tig allows you to browse changes in a Git repository and can additionally act as a pager for output of various Git commands\&. When used as a pager, it will display input from stdin and colorize it\&.
+.sp
+When browsing repositories, Tig uses the underlying Git commands to present the user with various views, such as summarized commit log and showing the commit with the log message, diffstat, and the diff\&.
+.SH "CALLING CONVENTIONS"
+.SS "Pager Mode"
+.sp
+If stdin is a pipe, any log or diff options will be ignored and the pager view will be opened loading data from stdin\&. The pager mode can be used for colorizing output from various Git commands\&.
+.sp
+Example on how to colorize the output of git\-show(1):
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ git show | tig
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.SS "Git Command Options"
+.sp
+All Git command options specified on the command line will be passed to the given command and all will be shell quoted before they are passed to the shell\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.sp
+If you specify options for the main view, you should not use the \-\-pretty option as this option will be set automatically to the format expected by the main view\&.
+.sp .5v
+.RE
+.sp
+Example on how to view a commit and show both author and committer information:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ tig show \-\-pretty=fuller
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+See the section on specifying revisions for an introduction to revision options supported by the Git commands\&. For details on specific Git command options, refer to the man page of the command in question\&.
+.SH "THE VIEWER"
+.sp
+The display consists of a status window on the last line of the screen and one or more views\&. The default is to only show one view at a time but it is possible to split both the main and log view to also show the commit diff\&.
+.sp
+If you are in the log view and press \fIEnter\fR when the current line is a commit line, such as:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+commit 4d55caff4cc89335192f3e566004b4ceef572521
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+You will split the view so that the log view is displayed in the top window and the diff view in the bottom window\&. You can switch between the two views by pressing \fITab\fR\&. To maximize the log view again, simply press \fIl\fR\&.
+.SS "Views"
+.sp
+Various \fIviews\fR of a repository are presented\&. Each view is based on output from an external command, most often \fIgit log\fR, \fIgit diff\fR, or \fIgit show\fR\&.
+.PP
+The main view
+.RS 4
+Is the default view, and it shows a one line summary of each commit in the chosen list of revisions\&. The summary includes commit date, author, and the first line of the log message\&. Additionally, any repository references, such as tags, will be shown\&.
+.RE
+.PP
+The log view
+.RS 4
+Presents a more rich view of the revision log showing the whole log message and the diffstat\&.
+.RE
+.PP
+The diff view
+.RS 4
+Shows either the diff of the current working tree, that is, what has changed since the last commit, or the commit diff complete with log message, diffstat and diff\&.
+.RE
+.PP
+The tree view
+.RS 4
+Lists directory trees associated with the current revision allowing subdirectories to be descended or ascended and file blobs to be viewed\&.
+.RE
+.PP
+The blob view
+.RS 4
+Displays the file content or "blob" of data associated with a file name\&.
+.RE
+.PP
+The blame view
+.RS 4
+Displays the file content annotated or blamed by commits\&.
+.RE
+.PP
+The branch view
+.RS 4
+Displays the branches in the repository\&.
+.RE
+.PP
+The status view
+.RS 4
+Displays status of files in the working tree and allows changes to be staged/unstaged as well as adding of untracked files\&.
+.RE
+.PP
+The stage view
+.RS 4
+Displays diff changes for staged or unstaged files being tracked or file content of untracked files\&.
+.RE
+.PP
+The stash view
+.RS 4
+Displays the list of stashes in the repository\&.
+.RE
+.PP
+The pager view
+.RS 4
+Is used for displaying both input from stdin and output from Git commands entered in the internal prompt\&.
+.RE
+.PP
+The help view
+.RS 4
+Displays a quick reference of key bindings\&.
+.RE
+.SS "Browsing State and User\-defined Commands"
+.sp
+The viewer keeps track of both what head and commit ID you are currently viewing\&. The commit ID will follow the cursor line and change every time you highlight a different commit\&. Whenever you reopen the diff view it will be reloaded, if the commit ID changed\&. The head ID is used when opening the main and log view to indicate from what revision to show history\&.
+.sp
+Some of the commands used or provided by Tig can be configured\&. This goes for some of the environment variables as well as the external commands\&. These user\-defined commands can use arguments that refer to the current browsing state by using one of the following variables\&.
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table\ \&1.\ \&Browsing state variables
+.TS
+tab(:);
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+%(head)
+T}:T{
+.sp
+The currently viewed \fIhead\fR ID\&. Defaults to HEAD
+T}
+T{
+.sp
+%(commit)
+T}:T{
+.sp
+The currently selected commit ID\&.
+T}
+T{
+.sp
+%(blob)
+T}:T{
+.sp
+The currently selected blob ID\&.
+T}
+T{
+.sp
+%(branch)
+T}:T{
+.sp
+The currently selected branch name\&.
+T}
+T{
+.sp
+%(stash)
+T}:T{
+.sp
+The currently selected stash name\&.
+T}
+T{
+.sp
+%(directory)
+T}:T{
+.sp
+The current directory path in the tree view; empty for the root directory\&.
+T}
+T{
+.sp
+%(file)
+T}:T{
+.sp
+The currently selected file\&.
+T}
+T{
+.sp
+%(ref)
+T}:T{
+.sp
+The reference given to blame or HEAD if undefined\&.
+T}
+T{
+.sp
+%(revargs)
+T}:T{
+.sp
+The revision arguments passed on the command line\&.
+T}
+T{
+.sp
+%(fileargs)
+T}:T{
+.sp
+The file arguments passed on the command line\&.
+T}
+T{
+.sp
+%(diffargs)
+T}:T{
+.sp
+The diff options passed on the command line\&.
+T}
+T{
+.sp
+%(prompt)
+T}:T{
+.sp
+Prompt for the argument value\&.
+T}
+.TE
+.sp 1
+.sp
+Example user\-defined commands:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Allow to amend the last commit:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+bind generic + !git commit \-\-amend
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Copy commit ID to clipboard:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+bind generic 9 !@sh \-c "echo \-n %(commit) | xclip \-selection c"
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Add/edit notes for the current commit used during a review:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+bind generic T !git notes edit %(commit)
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Enter Git\(cqs interactive add for fine\-grained staging of file content:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+bind generic I !git add \-i %(file)
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Rebase current branch on top of the selected branch:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+bind branch 3 !git rebase \-i %(branch)
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SS "Title Windows"
+.sp
+Each view has a title window which shows the name of the view, current commit ID if available, and where the view is positioned:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+[main] c622eefaa485995320bc743431bae0d497b1d875 \- commit 1 of 61 (1%)
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+By default, the title of the current view is highlighted using bold font\&. For long loading views (taking over 3 seconds) the time since loading started will be appended:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+[main] 77d9e40fbcea3238015aea403e06f61542df9a31 \- commit 1 of 779 (0%) 5s
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.SH "ENVIRONMENT VARIABLES"
+.sp
+Several options related to the interface with Git can be configured via environment options\&.
+.SS "Configuration Files"
+.sp
+Upon startup, Tig first reads the system wide configuration file ({sysconfdir}/tigrc by default) and then proceeds to read the user\(cqs configuration file (~/\&.tigrc by default)\&. The paths to either of these files can be overridden through the following environment variables:
+.PP
+TIGRC_USER
+.RS 4
+Path of the user configuration file\&.
+.RE
+.PP
+TIGRC_SYSTEM
+.RS 4
+Path of the system wide configuration file\&.
+.RE
+.SS "Repository References"
+.sp
+Commits that are referenced by tags and branch heads will be marked by the reference name surrounded by \fI[\fR and \fI]\fR:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+2006\-03\-26 19:42 Petr Baudis         | [cogito\-0\&.17\&.1] Cogito 0\&.17\&.1
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+If you want to limit what branches are shown, say only show branches named master or those which start with the feature/ prefix, you can do it by setting the following variable:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ TIG_LS_REMOTE="git ls\-remote \&. master feature/*" tig
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+Or set the variable permanently in your environment\&.
+.PP
+TIG_LS_REMOTE
+.RS 4
+Set command for retrieving all repository references\&. The command should output data in the same format as git\-ls\-remote(1)\&. Defaults to:
+.RE
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+git ls\-remote \&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.SS "Diff options"
+.sp
+It is possible to alter how diffs are shown by the diff view\&. If for example you prefer to have commit and author dates shown as relative dates, use:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ TIG_DIFF_OPTS="\-\-relative\-date" tig
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+Or set the variable permanently in your environment\&.
+.SH "DEFAULT KEYBINDINGS"
+.sp
+Below the default key bindings are shown\&.
+.SS "View Switching"
+.TS
+tab(:);
+ltB ltB.
+T{
+Key
+T}:T{
+Action
+T}
+.T&
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+m
+T}:T{
+.sp
+Switch to main view\&.
+T}
+T{
+.sp
+d
+T}:T{
+.sp
+Switch to diff view\&.
+T}
+T{
+.sp
+l
+T}:T{
+.sp
+Switch to log view\&.
+T}
+T{
+.sp
+p
+T}:T{
+.sp
+Switch to pager view\&.
+T}
+T{
+.sp
+t
+T}:T{
+.sp
+Switch to (directory) tree view\&.
+T}
+T{
+.sp
+f
+T}:T{
+.sp
+Switch to (file) blob view\&.
+T}
+T{
+.sp
+B
+T}:T{
+.sp
+Switch to blame view\&.
+T}
+T{
+.sp
+H
+T}:T{
+.sp
+Switch to branch view\&.
+T}
+T{
+.sp
+y
+T}:T{
+.sp
+Switch to stash view\&.
+T}
+T{
+.sp
+h
+T}:T{
+.sp
+Switch to help view
+T}
+T{
+.sp
+S
+T}:T{
+.sp
+Switch to status view
+T}
+T{
+.sp
+c
+T}:T{
+.sp
+Switch to stage view
+T}
+.TE
+.sp 1
+.SS "View Manipulation"
+.TS
+tab(:);
+ltB ltB.
+T{
+Key
+T}:T{
+Action
+T}
+.T&
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+q
+T}:T{
+.sp
+Close view, if multiple views are open it will jump back to the previous view in the view stack\&. If it is the last open view it will quit\&. Use \fIQ\fR to quit all views at once\&.
+T}
+T{
+.sp
+Enter
+T}:T{
+.sp
+This key is "context sensitive" depending on what view you are currently in\&. When in log view on a commit line or in the main view, split the view and show the commit diff\&. In the diff view pressing Enter will simply scroll the view one line down\&.
+T}
+T{
+.sp
+Tab
+T}:T{
+.sp
+Switch to next view\&.
+T}
+T{
+.sp
+R
+T}:T{
+.sp
+Reload and refresh the current view\&.
+T}
+T{
+.sp
+O
+T}:T{
+.sp
+Maximize the current view to fill the whole display\&.
+T}
+T{
+.sp
+Up
+T}:T{
+.sp
+This key is "context sensitive" and will move the cursor one line up\&. However, if you opened a diff view from the main view (split\- or full\-screen) it will change the cursor to point to the previous commit in the main view and update the diff view to display it\&.
+T}
+T{
+.sp
+Down
+T}:T{
+.sp
+Similar to \fIUp\fR but will move down\&.
+T}
+T{
+.sp
+,
+T}:T{
+.sp
+Move to parent\&. In the tree view, this means switch to the parent directory\&. In the blame view it will load blame for the parent commit\&. For merges the parent is queried\&.
+T}
+.TE
+.sp 1
+.SS "View Specific Actions"
+.TS
+tab(:);
+ltB ltB.
+T{
+Key
+T}:T{
+Action
+T}
+.T&
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+u
+T}:T{
+.sp
+Update status of file\&. In the status view, this allows you to add an untracked file or stage changes to a file for next commit (similar to running git\-add <filename>)\&. In the stage view, when pressing this on a diff chunk line stages only that chunk for next commit, when not on a diff chunk line all changes in the displayed diff are staged\&.
+T}
+T{
+.sp
+M
+T}:T{
+.sp
+Resolve unmerged file by launching git\-mergetool(1)\&. Note, to work correctly this might require some initial configuration of your preferred merge tool\&. See the manpage of git\-mergetool(1)\&.
+T}
+T{
+.sp
+!
+T}:T{
+.sp
+Checkout file with unstaged changes\&. This will reset the file to contain the content it had at last commit\&.
+T}
+T{
+.sp
+1
+T}:T{
+.sp
+Stage single diff line\&.
+T}
+T{
+.sp
+@
+T}:T{
+.sp
+Move to next chunk in the stage view\&.
+T}
+T{
+.sp
+]
+T}:T{
+.sp
+Increase the diff context\&.
+T}
+T{
+.sp
+[
+T}:T{
+.sp
+Decrease the diff context\&.
+T}
+.TE
+.sp 1
+.SS "Cursor Navigation"
+.TS
+tab(:);
+ltB ltB.
+T{
+Key
+T}:T{
+Action
+T}
+.T&
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+k
+T}:T{
+.sp
+Move cursor one line up\&.
+T}
+T{
+.sp
+j
+T}:T{
+.sp
+Move cursor one line down\&.
+T}
+T{
+.sp
+PgUp,\-,a
+T}:T{
+.sp
+Move cursor one page up\&.
+T}
+T{
+.sp
+PgDown, Space
+T}:T{
+.sp
+Move cursor one page down\&.
+T}
+T{
+.sp
+End
+T}:T{
+.sp
+Jump to last line\&.
+T}
+T{
+.sp
+Home
+T}:T{
+.sp
+Jump to first line\&.
+T}
+.TE
+.sp 1
+.SS "Scrolling"
+.TS
+tab(:);
+ltB ltB.
+T{
+Key
+T}:T{
+Action
+T}
+.T&
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+Insert
+T}:T{
+.sp
+Scroll view one line up\&.
+T}
+T{
+.sp
+Delete
+T}:T{
+.sp
+Scroll view one line down\&.
+T}
+T{
+.sp
+w
+T}:T{
+.sp
+Scroll view one page up\&.
+T}
+T{
+.sp
+s
+T}:T{
+.sp
+Scroll view one page down\&.
+T}
+T{
+.sp
+Left
+T}:T{
+.sp
+Scroll view one column left\&.
+T}
+T{
+.sp
+Right
+T}:T{
+.sp
+Scroll view one column right\&.
+T}
+T{
+.sp
+|
+T}:T{
+.sp
+Scroll view to the first column\&.
+T}
+.TE
+.sp 1
+.SS "Searching"
+.TS
+tab(:);
+ltB ltB.
+T{
+Key
+T}:T{
+Action
+T}
+.T&
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+/
+T}:T{
+.sp
+Search the view\&. Opens a prompt for entering search regexp to use\&.
+T}
+T{
+.sp
+?
+T}:T{
+.sp
+Search backwards in the view\&. Also prompts for regexp\&.
+T}
+T{
+.sp
+n
+T}:T{
+.sp
+Find next match for the current search regexp\&.
+T}
+T{
+.sp
+N
+T}:T{
+.sp
+Find previous match for the current search regexp\&.
+T}
+.TE
+.sp 1
+.SS "Misc"
+.TS
+tab(:);
+ltB ltB.
+T{
+Key
+T}:T{
+Action
+T}
+.T&
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+Q
+T}:T{
+.sp
+Quit\&.
+T}
+T{
+.sp
+r
+T}:T{
+.sp
+Redraw screen\&.
+T}
+T{
+.sp
+z
+T}:T{
+.sp
+Stop all background loading\&. This can be useful if you use Tig in a repository with a long history without limiting the revision log\&.
+T}
+T{
+.sp
+v
+T}:T{
+.sp
+Show version\&.
+T}
+T{
+.sp
+o
+T}:T{
+.sp
+Open option menu
+T}
+T{
+.sp
+\&.
+T}:T{
+.sp
+Toggle line numbers on/off\&.
+T}
+T{
+.sp
+D
+T}:T{
+.sp
+Toggle date display on/off/short/relative/local\&.
+T}
+T{
+.sp
+A
+T}:T{
+.sp
+Toggle author display on/off/abbreviated/email/email user name\&.
+T}
+T{
+.sp
+g
+T}:T{
+.sp
+Toggle revision graph visualization on/off\&.
+T}
+T{
+.sp
+~
+T}:T{
+.sp
+Toggle (line) graphics mode
+T}
+T{
+.sp
+F
+T}:T{
+.sp
+Toggle reference display on/off (tag and branch names)\&.
+T}
+T{
+.sp
+W
+T}:T{
+.sp
+Toggle ignoring whitespace on/off for diffs
+T}
+T{
+.sp
+X
+T}:T{
+.sp
+Toggle commit ID display on/off
+T}
+T{
+.sp
+%
+T}:T{
+.sp
+Toggle file filtering in order to see the full diff instead of only the diff concerning the currently selected file\&.
+T}
+T{
+.sp
+$
+T}:T{
+.sp
+Toggle highlighting of commit title overflow\&.
+T}
+T{
+.sp
+:
+T}:T{
+.sp
+Open prompt\&. This allows you to specify what command to run\&.
+T}
+T{
+.sp
+e
+T}:T{
+.sp
+Open file in editor\&.
+T}
+.TE
+.sp 1
+.SS "Prompt"
+.TS
+tab(:);
+ltB ltB.
+T{
+Key
+T}:T{
+Action
+T}
+.T&
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+:<number>
+T}:T{
+.sp
+Jump to the specific line number, e\&.g\&. :80\&.
+T}
+T{
+.sp
+:<sha>
+T}:T{
+.sp
+Jump to a specific commit, e\&.g\&. :2f12bcc\&.
+T}
+T{
+.sp
+:<x>
+T}:T{
+.sp
+Execute the corresponding key binding, e\&.g\&. :q\&.
+T}
+T{
+.sp
+:!<command>
+T}:T{
+.sp
+Execute a system command in a pager, e\&.g\&. :!git log \-p\&.
+T}
+T{
+.sp
+:<action>
+T}:T{
+.sp
+Execute a Tig command, e\&.g\&. :edit\&.
+T}
+.TE
+.sp 1
+.SS "External Commands"
+.sp
+For more custom needs, external commands provide a way to easily execute a script or program\&. They are bound to keys and use information from the current browsing state, such as the current commit ID\&. Tig comes with the following built\-in external commands:
+.TS
+tab(:);
+ltB ltB ltB.
+T{
+Keymap
+T}:T{
+Key
+T}:T{
+Action
+T}
+.T&
+lt lt lt
+lt lt lt
+lt lt lt.
+T{
+.sp
+main
+T}:T{
+.sp
+C
+T}:T{
+.sp
+git cherry\-pick %(commit)
+T}
+T{
+.sp
+status
+T}:T{
+.sp
+C
+T}:T{
+.sp
+git commit
+T}
+T{
+.sp
+generic
+T}:T{
+.sp
+G
+T}:T{
+.sp
+git gc
+T}
+.TE
+.sp 1
+.SH "REVISION SPECIFICATION"
+.sp
+This section describes various ways to specify what revisions to display or otherwise limit the view to\&. Tig does not itself parse the described revision options so refer to the relevant Git man pages for further information\&. Relevant man pages besides git\-log(1) are git\-diff(1) and git\-rev\-list(1)\&.
+.sp
+You can tune the interaction with Git by making use of the options explained in this section\&. For example, by configuring the environment variable described in the section on diff options\&.
+.SS "Limit by Path Name"
+.sp
+If you are interested only in those revisions that made changes to a specific file (or even several files) list the files like this:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ tig Makefile README
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+To avoid ambiguity with Tig\(cqs subcommands or repository references such as tag names, be sure to separate file names from other Git options using "\-\-"\&. So if you have a file named \fIstatus\fR it will clash with the \fIstatus\fR subcommand, and thus you will have to use:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ tig \-\- status
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.SS "Limit by Date or Number"
+.sp
+To speed up interaction with Git, you can limit the amount of commits to show both for the log and main view\&. Either limit by date using e\&.g\&. \-\-since=1\&.month or limit by the number of commits using \-n400\&.
+.sp
+If you are only interested in changes that happened between two dates you can use:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ tig \-\-after="May 5th" \-\-before="2006\-05\-16 15:44"
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.sp
+If you want to avoid having to quote dates containing spaces you can use "\&." instead, e\&.g\&. \-\-after=May\&.5th\&.
+.sp .5v
+.RE
+.SS "Limiting by Commit Ranges"
+.sp
+Alternatively, commits can be limited to a specific range, such as "all commits between \fItag\-1\&.0\fR and \fItag\-2\&.0\fR"\&. For example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ tig tag\-1\&.0\&.\&.tag\-2\&.0
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+This way of commit limiting makes it trivial to only browse the commits which haven\(cqt been pushed to a remote branch\&. Assuming \fIorigin\fR is your upstream remote branch, using:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ tig origin\&.\&.HEAD
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+will list what will be pushed to the remote branch\&. Optionally, the ending \fIHEAD\fR can be left out since it is implied\&.
+.SS "Limiting by Reachability"
+.sp
+Git interprets the range specifier "tag\-1\&.0\&.\&.tag\-2\&.0" as "all commits reachable from \fItag\-2\&.0\fR but not from \fItag\-1\&.0\fR"\&. Where reachability refers to what commits are ancestors (or part of the history) of the branch or tagged revision in question\&.
+.sp
+If you prefer to specify which commit to preview in this way use the following:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ tig tag\-2\&.0 ^tag\-1\&.0
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+You can think of \fI^\fR as a negation operator\&. Using this alternate syntax, it is possible to further prune commits by specifying multiple branch cut offs\&.
+.SS "Combining Revisions Specification"
+.sp
+Revision options can to some degree be combined, which makes it possible to say "show at most 20 commits from within the last month that changed files under the Documentation/ directory\&."
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ tig \-\-since=1\&.month \-n20 \-\- Documentation/
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.SS "Examining All Repository References"
+.sp
+In some cases, it can be useful to query changes across all references in a repository\&. An example is to ask "did any line of development in this repository change a particular file within the last week"\&. This can be accomplished using:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ tig \-\-all \-\-since=1\&.week \-\- Makefile
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.SH "BUGS"
+.sp
+Bugs and feature requests can be reported using the issue tracker at \m[blue]\fBhttps://github\&.com/jonas/tig/issues\fR\m[] or by mail to either the Git mailing list or directly to the maintainer\&. Ensure that the word "tig" is in the subject\&. For other Tig related questions please use Stack Overflow: \m[blue]\fBhttp://stackoverflow\&.com/questions/tagged/tig\fR\m[]\&.
+.SH "COPYRIGHT"
+.sp
+Copyright (c) 2006\-2012 Jonas Fonseca <\m[blue]\fBfonseca@diku\&.dk\fR\m[]\&\s-2\u[1]\d\s+2>
+.sp
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version\&.
+.SH "SEE ALSO"
+.sp
+Manpages:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fBtig\fR(1)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fBtigrc\fR(5)
+.RE
+.SH "NOTES"
+.IP " 1." 4
+fonseca@diku.dk
+.RS 4
+\%mailto:fonseca@diku.dk
+.RE
