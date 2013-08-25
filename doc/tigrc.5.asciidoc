@@ -134,7 +134,6 @@ The following variables can be set:
 	Width of the author column. When set to 5 or below, the author name
 	will be abbreviated to the author's initials.
 
-
 'filename-width' (int)::
 
 	Width of the filename column.
@@ -301,7 +300,7 @@ The following variables can be set:
 Bind command
 ------------
 
-Using bind commands keys can be mapped to an action when pressed in a given
+Using bind commands, keys can be mapped to an action when pressed in a given
 key map. The syntax is:
 
 [verse]
@@ -310,15 +309,17 @@ key map. The syntax is:
 Examples:
 
 --------------------------------------------------------------------------
-# A few keybindings
-bind main w scroll-line-up
-bind main s scroll-line-down
-bind main space enter
-bind diff a previous
-bind diff d next
-bind diff b move-first-line
-# An external command to update from upstream
-bind generic F !git fetch
+# Add keybinding to quickly jump to the next diff chunk in the stage view
+bind stage Enter stage-next
+
+# Disable the default mapping for running git-gc
+bind generic G none
+
+# User-defined external command to amend the last commit
+bind status + !git commit --amend
+
+# User-defined internal command that reloads ~/.tigrc
+bind generic S :source ~/.tigrc
 --------------------------------------------------------------------------
 
 Or in the Git configuration files:
@@ -333,7 +334,7 @@ Or in the Git configuration files:
 
 Keys are mapped by first searching the keybindings for the current view, then
 the keybindings for the *generic* keymap, and last the default keybindings.
-Thus, the view keybindings shadow the generic keybindings which Shadow the
+Thus, the view keybindings override the generic keybindings which override the
 built-in keybindings.
 
 --
@@ -341,8 +342,8 @@ built-in keybindings.
 Keymaps::
 
 Valid keymaps are: *main*, *diff*, *log*, *help*, *pager*, *status*, *stage*,
-*tree*, *blob*, *blame*, *branch*, and *generic*.  Use *generic* to set key
-mapping in all keymaps.
+*tree*, *blob*, *blame*, *branch*, *stash* and *generic*.  Use *generic* to set
+key mapping in all keymaps.
 
 Key values::
 
@@ -358,33 +359,41 @@ character.
 To add a key mapping that uses the Ctrl key, use a `^` prefix in your mapping.
 For example, Ctrl-f could be mapped to *scroll-page-down* with the following line:
 
+--------------------------------------------------------------------------
 bind main ^f scroll-page-down
+--------------------------------------------------------------------------
 
+Actions::
 
-Action names::
-
-Valid action names are described below. Note, all names are
-case-insensitive, and you may use '-', '_', and '.' interchangeably,
-e.g. "view-main", "View.Main", and "VIEW_MAIN" are the same.
+Actions are either specified as user-defined commands (external or internal) or
+using action names as described in the following sections.
 
 --
 
-Actions
-~~~~~~~
+External user-defined command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Apart from the action names listed below, all actions starting with a '!' or
-':' are treated specially.
+These actions start with a '!' followed by zero or more option flags and finally
+the command that should be executed. By default, commands are run in the
+foreground with their console output shown. The following option flags allow
+to change this behavior:
 
-Actions beginning with a ':' will run an internal Tig command.  These internal
-commands are those which you put in a configuration file or type at the Tig
-prompt.  As an example, "bind generic S :source .tigrc" will source a .tigrc
-file in the current directory when 'S' is pressed.
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|@			|Run the command in the background with no output.
+|?			|Prompt the user before executing the command.
+|<			|Exit Tig after executing the command.
+|=============================================================================
 
-Actions beginning with a '!' will be available as an external command. External
-commands can contain variable names that will be substituted before the command
-is run. Valid variable names are:
+Option flags can be combined, e.g. "!?<git commit" will prompt the user whether
+to execute the command and will exit Tig after completion.
 
-.Browsing state variables
+Browsing state variables
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+User-defined commands can optionally refer to Tig's internal state using the
+following variable names, which are substituted before commands are run:
+
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |%(head)		|The currently viewed 'head' ID. Defaults to HEAD
@@ -402,12 +411,21 @@ is run. Valid variable names are:
 |%(prompt)		|Prompt for the argument value.
 |=============================================================================
 
-As an example, the following external command will save the current commit as
-a patch file: "!git format-patch -1 %(commit)". If your external command
-requires use of dynamic features, such as subshells, expansion of environment
-variables and process control, this can be achieved by using a shell command:
+For example, the following command will save the current commit as a patch file
+when the user selects a commit in the main view and presses 'S'.
 
-.Configure a binding in ~/.tigrc to put a commit ID in the clipboard.
+--------------------------------------------------------------------------
+bind main S !git format-patch -1 %(commit)
+--------------------------------------------------------------------------
+
+Advanced shell-like commands
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If your command requires use of dynamic features, such as subshells,
+expansion of environment variables and process control, this can be achieved by
+using a shell command:
+
+.Configure a binding to copy the current commit ID to the clipboard.
 --------------------------------------------------------------------------
 bind generic I !@sh -c "echo -n %(commit) | xclip -selection c"
 --------------------------------------------------------------------------
@@ -427,22 +445,38 @@ file:
 	generic = > !git publish
 --------------------------------------------------------------------------
 
-By default, commands are run in the foreground with their console output
-shown. For different behavior, commands can be prefixed with one or more of
-the following control flags to specify how it should be executed:
+Internal user-defined commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.External command control flags
-[frame="none",grid="none",cols="25<m,75<"]
-|=============================================================================
-|@			|Run the command in the background with no output.
-|?			|Prompt the user before executing the command.
-|<			|Exit Tig after executing the command.
-|=============================================================================
+Actions beginning with a ':' will be run and interpreted as internal commands
+and act similar to commands run via Tig's prompt. Valid internal commands are
+configuration file options (as described in this document) and pager view
+commands. Examples:
 
-Control flags can be combined, e.g. "!?<git commit" will prompt whether to
-execute the command and will exit Tig after completion.
+--------------------------------------------------------------------------
+# Reload ~/.tigrc when 'S' is pressed
+bind generic S :source .tigrc
 
-.View switching
+# Change diff view to show all commit changes regardless of file limitations
+bind diff F :set diff-options = --full-diff
+
+# Show the output of git-reflog(1) in the pager view
+bind generic W :!git reflog
+--------------------------------------------------------------------------
+
+Similar to external commands, pager view commands can contain variable names
+that will be substituted before the command is run.
+
+Action names
+~~~~~~~~~~~~
+
+Valid action names are described below. Note, all action names are
+case-insensitive, and you may use '-', '_', and '.' interchangeably, e.g.
+"view-main", "View.Main", and "VIEW_MAIN" are the same.
+
+View switching
+^^^^^^^^^^^^^^
+
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |view-main		|Show main view
@@ -454,11 +488,14 @@ execute the command and will exit Tig after completion.
 |view-branch		|Show branch view
 |view-status		|Show status view
 |view-stage		|Show stage view
+|view-stash		|Show stash view
 |view-pager		|Show pager view
 |view-help		|Show help page
 |=============================================================================
 
-.View manipulation
+View manipulation
+^^^^^^^^^^^^^^^^^
+
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |enter			|Enter current line and scroll
@@ -472,7 +509,9 @@ execute the command and will exit Tig after completion.
 |quit			|Close all views and quit
 |=============================================================================
 
-.View specific actions
+View specific actions
+^^^^^^^^^^^^^^^^^^^^^
+
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |status-update		|Update file status
@@ -483,7 +522,9 @@ execute the command and will exit Tig after completion.
 |diff-context-down	|Decrease the diff context
 |=============================================================================
 
-.Cursor navigation
+Cursor navigation
+^^^^^^^^^^^^^^^^^
+
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |move-up		|Move cursor one line up
@@ -494,7 +535,9 @@ execute the command and will exit Tig after completion.
 |move-last-line		|Move cursor to last line
 |=============================================================================
 
-.Scrolling
+Scrolling
+^^^^^^^^^
+
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |scroll-line-up		|Scroll one line up
@@ -506,7 +549,9 @@ execute the command and will exit Tig after completion.
 |scroll-right		|Scroll one column right
 |=============================================================================
 
-.Searching
+Searching
+^^^^^^^^^
+
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |search			|Search the view
@@ -515,7 +560,9 @@ execute the command and will exit Tig after completion.
 |find-prev		|Find previous search match
 |=============================================================================
 
-.Misc
+Misc
+^^^^
+
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |prompt			|Bring up the prompt
@@ -536,7 +583,6 @@ execute the command and will exit Tig after completion.
 |edit			|Open in editor
 |none			|Do nothing
 |=============================================================================
-
 
 Color command
 -------------
