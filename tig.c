@@ -3742,9 +3742,10 @@ open_run_request(struct view *view, enum request request)
 
 			if (req->confirm) {
 				char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
+				const char *and_exit = req->exit ? " and exit" : "";
 
 				if (argv_to_string(argv, cmd, sizeof(cmd), " ") &&
-				    string_format(prompt, "Run `%s`?", cmd) &&
+				    string_format(prompt, "Run `%s`%s?", cmd, and_exit) &&
 				    prompt_yesno(prompt)) {
 					confirmed = TRUE;
 				}
