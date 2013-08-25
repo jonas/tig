@@ -3410,11 +3410,7 @@ update_view(struct view *view)
 	}
 
 	{
-		unsigned long lines = view->lines;
-		int digits;
-
-		for (digits = 0; lines; digits++)
-			lines /= 10;
+		int digits = count_digits(view->lines);
 
 		/* Keep the displayed view in sync with line number scaling. */
 		if (digits != view->digits) {

@@ -166,6 +166,16 @@ name(type **mem, size_t size, size_t increase)					\
 	return tmp;								\
 }
 
+static inline int
+count_digits(unsigned long i)
+{
+	int digits;
+
+	for (digits = 0; i; digits++)
+		i /= 10;
+	return digits;
+}
+
 /*
  * Strings.
  */
