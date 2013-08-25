@@ -1,6 +1,13 @@
 Release notes
 =============
 
+master
+------
+
+Improvements:
+
+ - User-defined commands no longer needs to always be prefixed with '!'.
+
 tig-1.2.1
 ---------
 

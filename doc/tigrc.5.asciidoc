@@ -373,20 +373,21 @@ using action names as described in the following sections.
 External user-defined command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These actions start with a '!' followed by zero or more option flags and finally
-the command that should be executed. By default, commands are run in the
-foreground with their console output shown. The following option flags allow
-to change this behavior:
+These actions start with one or more of the following option flags followed by
+the command that should be executed.
 
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
+|!			|Run the command in the foreground with output shown.
 |@			|Run the command in the background with no output.
 |?			|Prompt the user before executing the command.
 |<			|Exit Tig after executing the command.
 |=============================================================================
 
-Option flags can be combined, e.g. "!?<git commit" will prompt the user whether
-to execute the command and will exit Tig after completion.
+Unless otherwise specified, commands are run in the foreground with their
+console output shown (as if '!' was specified). When multiple command options
+are specified their behavior are combined, e.g. "?<git commit" will prompt the
+user whether to execute the command and will exit Tig after completion.
 
 Browsing state variables
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -427,7 +428,7 @@ using a shell command:
 
 .Configure a binding to copy the current commit ID to the clipboard.
 --------------------------------------------------------------------------
-bind generic I !@sh -c "echo -n %(commit) | xclip -selection c"
+bind generic I @sh -c "echo -n %(commit) | xclip -selection c"
 --------------------------------------------------------------------------
 
 Or by using a combination of Git aliases and Tig external commands. The

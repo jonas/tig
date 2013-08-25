@@ -1730,11 +1730,9 @@ option_bind_command(int argc, const char *argv[])
 	}
 
 	if (request == REQ_UNKNOWN) {
-		char first = *argv[2]++;
+		enum run_request_flag flags = RUN_REQUEST_FORCE;
 
-		if (first == '!') {
-			enum run_request_flag flags = RUN_REQUEST_FORCE;
-
+		if (strchr("!?@<", *argv[2])) {
 			while (*argv[2]) {
 				if (*argv[2] == '@') {
 					flags |= RUN_REQUEST_SILENT;
@@ -1742,20 +1740,22 @@ option_bind_command(int argc, const char *argv[])
 					flags |= RUN_REQUEST_CONFIRM;
 				} else if (*argv[2] == '<') {
 					flags |= RUN_REQUEST_EXIT;
-				} else {
+				} else if (*argv[2] != '!') {
 					break;
 				}
 				argv[2]++;
 			}
 
-			return add_run_request(keymap, key, argv + 2, flags)
-				? OPT_OK : OPT_ERR_OUT_OF_MEMORY;
-		} else if (first == ':') {
-			return add_run_request(keymap, key, argv + 2, RUN_REQUEST_FORCE | RUN_REQUEST_INTERNAL)
-				? OPT_OK : OPT_ERR_OUT_OF_MEMORY;
+		} else if (*argv[2] == ':') {
+			argv[2]++;
+			flags |= RUN_REQUEST_INTERNAL;
+
 		} else {
 			return OPT_ERR_UNKNOWN_REQUEST_NAME;
 		}
+
+		return add_run_request(keymap, key, argv + 2, flags)
+			? OPT_OK : OPT_ERR_OUT_OF_MEMORY;
 	}
 
 	add_keybinding(keymap, request, key);
