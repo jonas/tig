@@ -8,6 +8,10 @@ Improvements:
 
  - User-defined commands no longer needs to always be prefixed with '!'.
 
+Bug fixes:
+
+ - Fix stash diff display when reloading the stash view after a deleting.
+
 tig-1.2.1
 ---------
 

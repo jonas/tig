@@ -2277,6 +2277,18 @@ draw_field(struct view *view, enum line_type type, const char *text, int width, 
 	    || draw_space(view, LINE_DEFAULT, max - (view->col - col), max);
 }
 
+static bool PRINTF_LIKE(4, 5)
+draw_formatted_field(struct view *view, enum line_type type, int width, const char *format, ...)
+{
+	char text[SIZEOF_STR];
+	int retval;
+
+	FORMAT_BUFFER(text, sizeof(text), format, retval, TRUE);
+	if (retval < 0)
+		return VIEW_MAX_LEN(view) <= 0;
+	return draw_field(view, type, text, width, ALIGN_LEFT, FALSE);
+}
+
 static bool
 draw_date(struct view *view, struct time *time)
 {
@@ -7780,7 +7792,6 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct main_state *state = view->private;
 	struct commit *commit = line->data;
-	int id_width = state->id_width ? state->id_width : opt_id_cols;
 	struct ref_list *refs = NULL;
 
 	if (!commit->author)
@@ -7789,8 +7800,15 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_lineno(view, lineno))
 		return TRUE;
 
-	if (opt_show_id && draw_id_custom(view, LINE_ID, commit->id, id_width))
-		return TRUE;
+	if (opt_show_id) {
+		if (state->id_width) {
+			if (draw_formatted_field(view, LINE_ID, state->id_width,
+					"stash@{%d}", line->lineno - 1))
+				return TRUE;
+		} else if (draw_id(view, commit->id)) {
+			return TRUE;
+		}
+	}
 
 	if (draw_date(view, &commit->time))
 		return TRUE;
@@ -8055,12 +8073,12 @@ stash_read(struct view *view, char *line)
 	}
 
 	if (commit && line && get_line_type(line) == LINE_PP_REFLOG) {
-		const char *reflog = line + STRING_SIZE("Reflog: refs/");
+		int id_width = STRING_SIZE("stash@{}") + count_digits(view->lines);
 
-		string_copy_rev(commit->id, reflog);
-		if (state->id_width < strlen(commit->id)) {
-			state->id_width = strlen(commit->id);
-			view->force_redraw = TRUE;
+		if (state->id_width < id_width) {
+			state->id_width = id_width;
+			if (opt_show_id)
+				view->force_redraw = TRUE;
 		}
 	}
 
@@ -8070,11 +8088,9 @@ stash_read(struct view *view, char *line)
 static void
 stash_select(struct view *view, struct line *line)
 {
-	struct commit *commit = line->data;
-
 	main_select(view, line);
-	string_copy(ref_stash, commit->id);
-	string_copy(view->ref, commit->id);
+	string_format(ref_stash, "stash@{%d}", line->lineno - 1);
+	string_copy(view->ref, ref_stash);
 }
 
 static struct view_ops stash_ops = {
