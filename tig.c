@@ -2680,21 +2680,21 @@ redraw_display(bool clear)
  * Option management
  */
 
-#define TOGGLE_MENU \
-	TOGGLE_(LINENO,    '.', "line numbers",      &opt_line_number, NULL) \
-	TOGGLE_(DATE,      'D', "dates",             &opt_date,	date_map) \
-	TOGGLE_(AUTHOR,    'A', "author",            &opt_author, author_map) \
-	TOGGLE_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map) \
-	TOGGLE_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL) \
-	TOGGLE_(FILENAME,  '#', "file names",        &opt_filename, filename_map) \
-	TOGGLE_(FILE_SIZE, '*', "file sizes",        &opt_file_size, file_size_map) \
-	TOGGLE_(IGNORE_SPACE, 'W', "space changes",  &opt_ignore_space, ignore_space_map) \
-	TOGGLE_(COMMIT_ORDER, 'l', "commit order",   &opt_commit_order, commit_order_map) \
-	TOGGLE_(REFS,      'F', "reference display", &opt_show_refs, NULL) \
-	TOGGLE_(CHANGES,   'C', "local change display", &opt_show_changes, NULL) \
-	TOGGLE_(ID,        'X', "commit ID display", &opt_show_id, NULL) \
-	TOGGLE_(FILES,     '%', "file filtering",    &opt_file_filter, NULL) \
-	TOGGLE_(TITLE_OVERFLOW, '$', "commit title overflow display", &opt_show_title_overflow, NULL) \
+#define TOGGLE_MENU_INFO(_) \
+	_(LINENO,    '.', "line numbers",      &opt_line_number, NULL, 0), \
+	_(DATE,      'D', "dates",             &opt_date, date_map, ARRAY_SIZE(date_map)), \
+	_(AUTHOR,    'A', "author",            &opt_author, author_map, ARRAY_SIZE(author_map)), \
+	_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map, ARRAY_SIZE(graphic_map)), \
+	_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL, 0), \
+	_(FILENAME,  '#', "file names",        &opt_filename, filename_map, ARRAY_SIZE(filename_map)), \
+	_(FILE_SIZE, '*', "file sizes",        &opt_file_size, file_size_map, ARRAY_SIZE(file_size_map)), \
+	_(IGNORE_SPACE, 'W', "space changes",  &opt_ignore_space, ignore_space_map, ARRAY_SIZE(ignore_space_map)), \
+	_(COMMIT_ORDER, 'l', "commit order",   &opt_commit_order, commit_order_map, ARRAY_SIZE(commit_order_map)), \
+	_(REFS,      'F', "reference display", &opt_show_refs, NULL, 0), \
+	_(CHANGES,   'C', "local change display", &opt_show_changes, NULL, 0), \
+	_(ID,        'X', "commit ID display", &opt_show_id, NULL, 0), \
+	_(FILES,     '%', "file filtering",    &opt_file_filter, NULL, 0), \
+	_(TITLE_OVERFLOW, '$', "commit title overflow display", &opt_show_title_overflow, NULL, 0), \
 
 static bool
 toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
@@ -2704,14 +2704,12 @@ toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
 		const struct enum_map *map;
 		size_t map_size;
 	} data[] = {
-#define TOGGLE_(id, key, help, value, map) { REQ_TOGGLE_ ## id, map, (map != NULL ? ARRAY_SIZE(map) : 0) },
-		TOGGLE_MENU
-#undef	TOGGLE_
+#define DEFINE_TOGGLE_DATA(id, key, help, value, map, map_size) { REQ_TOGGLE_ ## id, map, map_size }
+		TOGGLE_MENU_INFO(DEFINE_TOGGLE_DATA)
 	};
 	const struct menu_item menu[] = {
-#define TOGGLE_(id, key, help, value, map) { key, help, value },
-		TOGGLE_MENU
-#undef	TOGGLE_
+#define DEFINE_TOGGLE_MENU(id, key, help, value, map, map_size) { key, help, value }
+		TOGGLE_MENU_INFO(DEFINE_TOGGLE_MENU)
 		{ 0 }
 	};
 	int i = 0;
