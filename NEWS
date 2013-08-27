@@ -13,6 +13,8 @@ Bug fixes:
 
  - Fix stash diff display when reloading the stash view after a deleting.
  - Correctly identify and highlight the remote branch tracked by HEAD.
+ - Pass --no-color after user defined arguments to ensure that colors do not
+   break the output parsing. (GH #191)
 
 tig-1.2.1
 ---------

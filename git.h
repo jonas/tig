@@ -47,8 +47,9 @@
 	GIT_DIFF_INITIAL(encoding_arg, "", context_arg, space_arg, "/dev/null", new_name)
 
 #define GIT_MAIN_LOG(encoding_arg, diffargs, revargs, fileargs) \
-	"git", "log", (encoding_arg), "--no-color", "--pretty=raw", "--parents", \
+	"git", "log", (encoding_arg), \
 		opt_commit_order_arg, (diffargs), (revargs), \
+		"--no-color", "--pretty=raw", "--parents", \
 		"--", (fileargs), NULL
 
 /* FIXME(jfonseca): This is incomplete, but enough to support:

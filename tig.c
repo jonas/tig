@@ -4581,10 +4581,10 @@ static bool
 diff_open(struct view *view, enum open_flags flags)
 {
 	static const char *diff_argv[] = {
-		"git", "show", opt_encoding_arg, "--pretty=fuller", "--no-color", "--root",
+		"git", "show", opt_encoding_arg, "--pretty=fuller", "--root",
 			"--patch-with-stat",
 			opt_notes_arg, opt_diff_context_arg, opt_ignore_space_arg,
-			"%(diffargs)", "%(commit)", "--", "%(fileargs)", NULL
+			"%(diffargs)", "--no-color", "%(commit)", "--", "%(fileargs)", NULL
 	};
 
 	return begin_update(view, NULL, diff_argv, flags);
