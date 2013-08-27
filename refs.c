@@ -103,9 +103,8 @@ struct ref_opt {
 };
 
 static int
-read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
+add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref_opt *opt)
 {
-	struct ref_opt *opt = data;
 	struct ref *ref = NULL;
 	bool tag = FALSE;
 	bool ltag = FALSE;
@@ -191,6 +190,12 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 	return OK;
 }
 
+static int
+read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
+{
+	return add_to_refs(id, idlen, name, namelen, data);
+}
+
 int
 reload_refs(const char *git_dir, const char *remote_name, char *head, size_t headlen)
 {
@@ -245,6 +250,14 @@ reload_refs(const char *git_dir, const char *remote_name, char *head, size_t hea
 	qsort(refs, refs_size, sizeof(*refs), compare_refs);
 
 	return OK;
+}
+
+int
+add_ref(const char *id, char *name, const char *remote_name, const char *head)
+{
+	struct ref_opt opt = { remote_name, head };
+
+	return add_to_refs(id, strlen(id), name, strlen(name), &opt);
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

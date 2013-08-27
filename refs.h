@@ -38,6 +38,7 @@ struct ref *get_ref_head();
 struct ref_list *get_ref_list(const char *id);
 void foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data);
 int reload_refs(const char *git_dir, const char *remote_name, char *head, size_t headlen);
+int add_ref(const char *id, char *name, const char *remote_name, const char *head);
 
 #endif
 

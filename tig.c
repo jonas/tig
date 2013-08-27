@@ -8630,9 +8630,12 @@ load_git_config(void)
 #define REPO_INFO_WORK_TREE	"--is-inside-work-tree"
 #define REPO_INFO_SHOW_CDUP	"--show-cdup"
 #define REPO_INFO_SHOW_PREFIX	"--show-prefix"
+#define REPO_INFO_SYMBOLIC_HEAD	"--symbolic-full-name"
+#define REPO_INFO_RESOLVED_HEAD	"HEAD"
 
 struct repo_info_state {
 	const char **argv;
+	char head_id[SIZEOF_REV];
 };
 
 static int
@@ -8657,6 +8660,18 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 
 	} else if (!strcmp(arg, REPO_INFO_SHOW_PREFIX)) {
 		string_ncopy(opt_prefix, name, namelen);
+
+	} else if (!strcmp(arg, REPO_INFO_RESOLVED_HEAD)) {
+		string_ncopy(state->head_id, name, namelen);
+
+	} else if (!strcmp(arg, REPO_INFO_SYMBOLIC_HEAD)) {
+	    	if (!prefixcmp(name, "refs/heads/")) {
+			char *offset = name + STRING_SIZE("refs/heads/");
+
+			string_ncopy(opt_head, offset, strlen(offset) + 1);
+			add_ref(state->head_id, name, opt_remote, opt_head);
+		}
+		state->argv++;
 	}
 
 	return OK;
@@ -8666,10 +8681,11 @@ static int
 load_repo_info(void)
 {
 	const char *rev_parse_argv[] = {
-		"git", "rev-parse", REPO_INFO_GIT_DIR, REPO_INFO_WORK_TREE,
-			REPO_INFO_SHOW_CDUP, REPO_INFO_SHOW_PREFIX, NULL
+		"git", "rev-parse", REPO_INFO_RESOLVED_HEAD, REPO_INFO_SYMBOLIC_HEAD, "HEAD",
+			REPO_INFO_GIT_DIR, REPO_INFO_WORK_TREE, REPO_INFO_SHOW_CDUP,
+			REPO_INFO_SHOW_PREFIX, NULL
 	};
-	struct repo_info_state state = { rev_parse_argv + 2};
+	struct repo_info_state state = { rev_parse_argv + 2 };
 
 	return io_run_load(rev_parse_argv, "=", read_repo_info, &state);
 }
