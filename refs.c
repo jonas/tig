@@ -218,7 +218,7 @@ reload_refs(const char *git_dir, const char *remote_name, char *head, size_t hea
 	if (!*git_dir)
 		return OK;
 
-	if (io_run_buf(head_argv, head, headlen) &&
+	if (!*head && io_run_buf(head_argv, head, headlen) &&
 	    !prefixcmp(head, "refs/heads/")) {
 		char *offset = head + STRING_SIZE("refs/heads/");
 

@@ -556,7 +556,20 @@ static char *opt_env[]			= { opt_env_lines, opt_env_columns, NULL };
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
-#define load_refs()		reload_refs(opt_git_dir, opt_remote, opt_head, sizeof(opt_head))
+
+static inline int
+load_refs(bool force)
+{
+	static bool loaded = FALSE;
+
+	if (force)
+		opt_head[0] = 0;
+	else if (loaded)
+		return OK;
+
+	loaded = TRUE;
+	return reload_refs(opt_git_dir, opt_remote, opt_head, sizeof(opt_head));
+}
 
 static inline void
 update_diff_context_arg(int diff_context)
@@ -4528,7 +4541,7 @@ log_request(struct view *view, enum request request, struct line *line)
 {
 	switch (request) {
 	case REQ_REFRESH:
-		load_refs();
+		load_refs(TRUE);
 		refresh_view(view);
 		return REQ_NONE;
 
@@ -6287,7 +6300,7 @@ branch_request(struct view *view, enum request request, struct line *line)
 
 	switch (request) {
 	case REQ_REFRESH:
-		load_refs();
+		load_refs(TRUE);
 		refresh_view(view);
 		return REQ_NONE;
 
@@ -7060,7 +7073,7 @@ status_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_REFRESH:
 		/* Load the current branch information and then the view. */
-		load_refs();
+		load_refs(TRUE);
 		break;
 
 	default:
@@ -7415,7 +7428,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_REFRESH:
 		/* Reload everything(including current branch information) ... */
-		load_refs();
+		load_refs(TRUE);
 		break;
 
 	case REQ_VIEW_BLAME:
@@ -7963,7 +7976,7 @@ main_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_REFRESH:
-		load_refs();
+		load_refs(TRUE);
 		refresh_view(view);
 		break;
 
@@ -9014,7 +9027,7 @@ main(int argc, const char *argv[])
 			die("Failed to initialize character set conversion");
 	}
 
-	if (load_refs() == ERR)
+	if (load_refs(FALSE) == ERR)
 		die("Failed to load refs.");
 
 	init_display();
