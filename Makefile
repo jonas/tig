@@ -186,11 +186,13 @@ tools/test-graph: $(TEST_GRAPH_OBJS)
 OBJS = $(sort $(TIG_OBJS) $(TEST_GRAPH_OBJS))
 
 DEPS_CFLAGS ?= -MMD -MP -MF .deps/$*.d
-override CFLAGS += $(DEPS_CFLAGS)
+
+%: %.o
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 %.o: %.c
 	@mkdir -p .deps/$(*D)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(DEPS_CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 -include $(OBJS:%.o=.deps/%.d)
 
