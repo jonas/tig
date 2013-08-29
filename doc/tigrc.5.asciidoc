@@ -581,6 +581,7 @@ Misc
 |toggle-graphic		|Toggle (line) graphics mode
 |toggle-refs		|Toggle reference display
 |toggle-files		|Toggle file filtering for the diff and main views
+|toggle-untracked-dirs	|Toggle display of files in untracked directories
 |edit			|Open in editor
 |none			|Do nothing
 |=============================================================================

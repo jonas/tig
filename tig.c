@@ -431,6 +431,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 	REQ_(TOGGLE_FILES,	"Toggle file filtering"), \
 	REQ_(TOGGLE_TITLE_OVERFLOW,	"Toggle highlighting of commit title overflow"), \
 	REQ_(TOGGLE_FILE_SIZE,	"Toggle file size format"), \
+	REQ_(TOGGLE_UNTRACKED_DIRS,	"Toggle display of files in untracked directories"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
@@ -1961,6 +1962,7 @@ enum view_flag {
 	VIEW_SEND_CHILD_ENTER	= 1 << 9,
 	VIEW_FILE_FILTER	= 1 << 10,
 	VIEW_LOG_LIKE		= 1 << 11,
+	VIEW_STATUS_LIKE	= 1 << 12,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))
@@ -2709,6 +2711,7 @@ redraw_display(bool clear)
 	_(ID,        'X', "commit ID display", &opt_show_id, NULL, 0, VIEW_NO_FLAGS), \
 	_(FILES,     '%', "file filtering",    &opt_file_filter, NULL, 0, VIEW_DIFF_LIKE | VIEW_LOG_LIKE), \
 	_(TITLE_OVERFLOW, '$', "commit title overflow display", &opt_show_title_overflow, NULL, 0, VIEW_NO_FLAGS), \
+	_(UNTRACKED_DIRS, 'd', "untracked directory info", &opt_untracked_dirs_content, NULL, 0, VIEW_STATUS_LIKE), \
 
 static enum view_flag
 toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
@@ -7189,7 +7192,7 @@ status_grep(struct view *view, struct line *line)
 static struct view_ops status_ops = {
 	"file",
 	{ "status" },
-	VIEW_CUSTOM_STATUS | VIEW_SEND_CHILD_ENTER,
+	VIEW_CUSTOM_STATUS | VIEW_SEND_CHILD_ENTER | VIEW_STATUS_LIKE,
 	0,
 	status_open,
 	NULL,
