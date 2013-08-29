@@ -1960,6 +1960,7 @@ enum view_flag {
 	VIEW_STDIN		= 1 << 8,
 	VIEW_SEND_CHILD_ENTER	= 1 << 9,
 	VIEW_FILE_FILTER	= 1 << 10,
+	VIEW_LOG_LIKE		= 1 << 11,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))
@@ -2694,34 +2695,35 @@ redraw_display(bool clear)
  */
 
 #define TOGGLE_MENU_INFO(_) \
-	_(LINENO,    '.', "line numbers",      &opt_line_number, NULL, 0), \
-	_(DATE,      'D', "dates",             &opt_date, date_map, ARRAY_SIZE(date_map)), \
-	_(AUTHOR,    'A', "author",            &opt_author, author_map, ARRAY_SIZE(author_map)), \
-	_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map, ARRAY_SIZE(graphic_map)), \
-	_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL, 0), \
-	_(FILENAME,  '#', "file names",        &opt_filename, filename_map, ARRAY_SIZE(filename_map)), \
-	_(FILE_SIZE, '*', "file sizes",        &opt_file_size, file_size_map, ARRAY_SIZE(file_size_map)), \
-	_(IGNORE_SPACE, 'W', "space changes",  &opt_ignore_space, ignore_space_map, ARRAY_SIZE(ignore_space_map)), \
-	_(COMMIT_ORDER, 'l', "commit order",   &opt_commit_order, commit_order_map, ARRAY_SIZE(commit_order_map)), \
-	_(REFS,      'F', "reference display", &opt_show_refs, NULL, 0), \
-	_(CHANGES,   'C', "local change display", &opt_show_changes, NULL, 0), \
-	_(ID,        'X', "commit ID display", &opt_show_id, NULL, 0), \
-	_(FILES,     '%', "file filtering",    &opt_file_filter, NULL, 0), \
-	_(TITLE_OVERFLOW, '$', "commit title overflow display", &opt_show_title_overflow, NULL, 0), \
+	_(LINENO,    '.', "line numbers",      &opt_line_number, NULL, 0, VIEW_NO_FLAGS), \
+	_(DATE,      'D', "dates",             &opt_date, date_map, ARRAY_SIZE(date_map), VIEW_NO_FLAGS), \
+	_(AUTHOR,    'A', "author",            &opt_author, author_map, ARRAY_SIZE(author_map), VIEW_NO_FLAGS), \
+	_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map, ARRAY_SIZE(graphic_map), VIEW_NO_FLAGS), \
+	_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL, 0, VIEW_LOG_LIKE), \
+	_(FILENAME,  '#', "file names",        &opt_filename, filename_map, ARRAY_SIZE(filename_map), VIEW_NO_FLAGS), \
+	_(FILE_SIZE, '*', "file sizes",        &opt_file_size, file_size_map, ARRAY_SIZE(file_size_map), VIEW_NO_FLAGS), \
+	_(IGNORE_SPACE, 'W', "space changes",  &opt_ignore_space, ignore_space_map, ARRAY_SIZE(ignore_space_map), VIEW_DIFF_LIKE), \
+	_(COMMIT_ORDER, 'l', "commit order",   &opt_commit_order, commit_order_map, ARRAY_SIZE(commit_order_map), VIEW_LOG_LIKE), \
+	_(REFS,      'F', "reference display", &opt_show_refs, NULL, 0, VIEW_NO_FLAGS), \
+	_(CHANGES,   'C', "local change display", &opt_show_changes, NULL, 0, VIEW_NO_FLAGS), \
+	_(ID,        'X', "commit ID display", &opt_show_id, NULL, 0, VIEW_NO_FLAGS), \
+	_(FILES,     '%', "file filtering",    &opt_file_filter, NULL, 0, VIEW_DIFF_LIKE | VIEW_LOG_LIKE), \
+	_(TITLE_OVERFLOW, '$', "commit title overflow display", &opt_show_title_overflow, NULL, 0, VIEW_NO_FLAGS), \
 
-static bool
+static enum view_flag
 toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
 {
 	const struct {
 		enum request request;
 		const struct enum_map *map;
 		size_t map_size;
+		enum view_flag reload_flags;
 	} data[] = {
-#define DEFINE_TOGGLE_DATA(id, key, help, value, map, map_size) { REQ_TOGGLE_ ## id, map, map_size }
+#define DEFINE_TOGGLE_DATA(id, key, help, value, map, map_size, vflags) { REQ_TOGGLE_ ## id, map, map_size, vflags  }
 		TOGGLE_MENU_INFO(DEFINE_TOGGLE_DATA)
 	};
 	const struct menu_item menu[] = {
-#define DEFINE_TOGGLE_MENU(id, key, help, value, map, map_size) { key, help, value }
+#define DEFINE_TOGGLE_MENU(id, key, help, value, map, map_size, vflags) { key, help, value }
 		TOGGLE_MENU_INFO(DEFINE_TOGGLE_MENU)
 		{ 0 }
 	};
@@ -2729,7 +2731,7 @@ toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
 
 	if (request == REQ_OPTIONS) {
 		if (!prompt_menu("Toggle option", menu, &i))
-			return FALSE;
+			return VIEW_NO_FLAGS;
 	} else {
 		while (i < ARRAY_SIZE(data) && data[i].request != request)
 			i++;
@@ -2745,17 +2747,16 @@ toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
 			update_ignore_space_arg();
 			string_format_size(msg, SIZEOF_STR,
 				"Ignoring %s %s", enum_name(data[i].map[*opt]), menu[i].text);
-			return TRUE;
 
 		} else if (data[i].map == commit_order_map) {
 			update_commit_order_arg();
 			string_format_size(msg, SIZEOF_STR,
 				"Using %s %s", enum_name(data[i].map[*opt]), menu[i].text);
-			return TRUE;
-		}
 
-		string_format_size(msg, SIZEOF_STR,
-			"Displaying %s %s", enum_name(data[i].map[*opt]), menu[i].text);
+		} else {
+			string_format_size(msg, SIZEOF_STR,
+				"Displaying %s %s", enum_name(data[i].map[*opt]), menu[i].text);
+		}
 
 	} else {
 		bool *option = menu[i].data;
@@ -2763,12 +2764,9 @@ toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
 		*option = !*option;
 		string_format_size(msg, SIZEOF_STR,
 			"%sabling %s", *option ? "En" : "Dis", menu[i].text);
-
-		if (option == &opt_file_filter || option == &opt_rev_graph)
-			return TRUE;
 	}
 
-	return FALSE;
+	return data[i].reload_flags;
 }
 
 
@@ -3913,12 +3911,14 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_TITLE_OVERFLOW:
 		{
 			char action[SIZEOF_STR] = "";
-			bool reload = toggle_option(view, request, action);
-
-			if (reload && (view_has_flags(view, VIEW_DIFF_LIKE) || view->ops == &main_ops))
-				reload_view(view);
-			else
-				redraw_display(FALSE);
+			enum view_flag flags = toggle_option(view, request, action);
+	
+			foreach_displayed_view(view, i) {
+				if (view_has_flags(view, flags))
+					reload_view(view);
+				else
+					redraw_view(view);
+			}
 
 			if (*action)
 				report("%s", action);
@@ -4558,7 +4558,7 @@ log_request(struct view *view, enum request request, struct line *line)
 static struct view_ops log_ops = {
 	"line",
 	{ "log" },
-	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER,
+	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER | VIEW_LOG_LIKE,
 	sizeof(struct log_state),
 	log_open,
 	pager_read,
@@ -6722,8 +6722,8 @@ status_open(struct view *view, enum open_flags flags)
 
 	io_run_bg(update_index_argv);
 
-	if (!opt_untracked_dirs_content)
-		status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 2] = "--directory";
+	status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 2] =
+		opt_untracked_dirs_content ? NULL : "--directory";
 
 	if (!status_run(view, staged_argv, staged_status, LINE_STAT_STAGED) ||
 	    !status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED) ||
@@ -8052,7 +8052,7 @@ main_select(struct view *view, struct line *line)
 static struct view_ops main_ops = {
 	"commit",
 	{ "main" },
-	VIEW_STDIN | VIEW_SEND_CHILD_ENTER | VIEW_FILE_FILTER,
+	VIEW_STDIN | VIEW_SEND_CHILD_ENTER | VIEW_FILE_FILTER | VIEW_LOG_LIKE,
 	sizeof(struct main_state),
 	main_open,
 	main_read,
