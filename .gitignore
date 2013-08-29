@@ -20,6 +20,7 @@ tig
 tig-*.tar.gz
 tig-*.tar.gz.md5
 tig.spec
+.deps
 *.html
 *.o
 *.swp

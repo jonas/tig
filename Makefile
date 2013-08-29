@@ -115,8 +115,8 @@ install-doc: install-doc-man install-doc-html
 install-release-doc: install-release-doc-man install-release-doc-html
 
 clean:
-	$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5
-	$(RM) $(EXE) $(TESTS) core *.o compat/*.o *.xml
+	$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5 .deps
+	$(RM) $(EXE) $(TESTS) $(OBJS) core *.xml
 
 distclean: clean
 	$(RM) -r doc/manual.html-chunked autom4te.cache release-docs
@@ -177,25 +177,22 @@ endif
 
 override CPPFLAGS += $(COMPAT_CPPFLAGS)
 
-graph.o: graph.c tig.h graph.h
-io.o: io.c tig.h io.h
-refs.o: refs.c tig.h io.h refs.h
-test-graph.o: test-graph.c tig.h io.h graph.h
-tig.o: tig.c tig.h io.h refs.h graph.h git.h
+TIG_OBJS = tig.o io.o graph.o refs.o $(COMPAT_OBJS)
+tig: $(TIG_OBJS)
 
-tig: tig.o io.o graph.o refs.o $(COMPAT_OBJS)
-test-graph: io.o graph.o
+TEST_GRAPH_OBJS = test-graph.o io.o graph.o
+test-graph: $(TEST_GRAPH_OBJS)
 
-# To check the above.
-#
-# NOTE: Assumes GCC, and that no local headers are conditionally
-# included (with the exception of config.h, which we take care of in
-# config.make).
-show-deps:
-	@echo "== without config.h =="
-	$(CC) -MM *.c
-	@echo "== with config.h =="
-	$(CC) -DHAVE_CONFIG_H -MM *.c
+OBJS = $(sort $(TIG_OBJS) $(TEST_GRAPH_OBJS))
+
+DEPS_CFLAGS ?= -MMD -MP -MF .deps/$*.d
+override CFLAGS += $(DEPS_CFLAGS)
+
+%.o: %.c
+	@mkdir -p .deps/$(*D)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+
+-include $(OBJS:%.o=.deps/%.d)
 
 tig.spec: contrib/tig.spec.in
 	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' \
