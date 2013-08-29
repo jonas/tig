@@ -27,26 +27,26 @@
 	VIEW_INFO(VIEW_REQ), \
 	\
 	REQ_GROUP("View manipulation") \
-	REQ_(ENTER,		"Enter current line and scroll"), \
+	REQ_(ENTER,		"Enter and open selected line"), \
 	REQ_(BACK,		"Go back to the previous view state"), \
 	REQ_(NEXT,		"Move to next"), \
 	REQ_(PREVIOUS,		"Move to previous"), \
 	REQ_(PARENT,		"Move to parent"), \
-	REQ_(VIEW_NEXT,		"Move focus to next view"), \
-	REQ_(REFRESH,		"Reload and refresh"), \
+	REQ_(VIEW_NEXT,		"Move focus to the next view"), \
+	REQ_(REFRESH,		"Reload and refresh view"), \
 	REQ_(MAXIMIZE,		"Maximize the current view"), \
 	REQ_(VIEW_CLOSE,	"Close the current view"), \
 	REQ_(QUIT,		"Close all views and quit"), \
 	\
-	REQ_GROUP("View specific requests") \
-	REQ_(STATUS_UPDATE,	"Update file status"), \
-	REQ_(STATUS_REVERT,	"Revert file changes"), \
+	REQ_GROUP("View specific actions") \
+	REQ_(STATUS_UPDATE,	"Stage/unstage chunk or file changes"), \
+	REQ_(STATUS_REVERT,	"Revert chunk or file changes"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
-	REQ_(STAGE_UPDATE_LINE,	"Update single line"), \
-	REQ_(STAGE_NEXT,	"Find next chunk to stage"), \
-	REQ_(STAGE_SPLIT_CHUNK,	"Split the current chunk"), \
-	REQ_(DIFF_CONTEXT_DOWN,	"Decrease the diff context"), \
+	REQ_(STAGE_UPDATE_LINE,	"Stage/unstage single line"), \
+	REQ_(STAGE_NEXT,	"Jump to next diff chunk"), \
+	REQ_(STAGE_SPLIT_CHUNK,	"Split current diff chunk"), \
 	REQ_(DIFF_CONTEXT_UP,	"Increase the diff context"), \
+	REQ_(DIFF_CONTEXT_DOWN,	"Decrease the diff context"), \
 	\
 	REQ_GROUP("Cursor navigation") \
 	REQ_(MOVE_UP,		"Move cursor one line up"), \
@@ -57,13 +57,13 @@
 	REQ_(MOVE_LAST_LINE,	"Move cursor to last line"), \
 	\
 	REQ_GROUP("Scrolling") \
-	REQ_(SCROLL_FIRST_COL,	"Scroll to the first line columns"), \
-	REQ_(SCROLL_LEFT,	"Scroll two columns left"), \
-	REQ_(SCROLL_RIGHT,	"Scroll two columns right"), \
 	REQ_(SCROLL_LINE_UP,	"Scroll one line up"), \
 	REQ_(SCROLL_LINE_DOWN,	"Scroll one line down"), \
 	REQ_(SCROLL_PAGE_UP,	"Scroll one page up"), \
 	REQ_(SCROLL_PAGE_DOWN,	"Scroll one page down"), \
+	REQ_(SCROLL_FIRST_COL,	"Scroll to the first line columns"), \
+	REQ_(SCROLL_LEFT,	"Scroll two columns left"), \
+	REQ_(SCROLL_RIGHT,	"Scroll two columns right"), \
 	\
 	REQ_GROUP("Searching") \
 	REQ_(SEARCH,		"Search the view"), \
@@ -72,7 +72,7 @@
 	REQ_(FIND_PREV,		"Find previous search match"), \
 	\
 	REQ_GROUP("Option manipulation") \
-	REQ_(OPTIONS,		"Open option menu"), \
+	REQ_(OPTIONS,		"Open the options menu"), \
 	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
 	REQ_(TOGGLE_DATE,	"Toggle date display"), \
 	REQ_(TOGGLE_AUTHOR,	"Toggle author display"), \
@@ -94,10 +94,10 @@
 	\
 	REQ_GROUP("Misc") \
 	REQ_(EDIT,		"Open in editor"), \
-	REQ_(PROMPT,		"Bring up the prompt"), \
+	REQ_(PROMPT,		"Open the prompt"), \
 	REQ_(SCREEN_REDRAW,	"Redraw the screen"), \
-	REQ_(SHOW_VERSION,	"Show version information"), \
 	REQ_(STOP_LOADING,	"Stop all loading views"), \
+	REQ_(SHOW_VERSION,	"Show version information"), \
 	REQ_(NONE,		"Do nothing")
 
 

@@ -40,7 +40,7 @@ LDLIBS ?= -lcurses
 CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
 EXE	= src/tig
-TOOLS	= test/test-graph
+TOOLS	= test/test-graph tools/doc-gen
 TXTDOC	= doc/tig.1.adoc doc/tigrc.5.adoc doc/manual.adoc NEWS.adoc README.adoc INSTALL.adoc
 MANDOC	= doc/tig.1 doc/tigrc.5 doc/tigmanual.7
 HTMLDOC = doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html INSTALL.html NEWS.html
@@ -145,6 +145,13 @@ update-headers:
 		echo "Updated $$file"; \
 	done
 
+update-docs: tools/doc-gen
+	doc="doc/tigrc.5.adoc"; \
+	sed -n '0,/ifndef::DOC_GEN_ACTIONS/p' < "$$doc" > "$$doc.gen"; \
+	./tools/doc-gen actions >> "$$doc.gen"; \
+	sed -n '/endif::DOC_GEN_ACTIONS/,$$p' < "$$doc" >> "$$doc.gen" ; \
+	mv "$$doc.gen" "$$doc"
+
 dist: configure tig.spec
 	@mkdir -p $(TARNAME) && \
 	cp Makefile tig.spec configure config.h.in aclocal.m4 $(TARNAME) && \
@@ -203,7 +210,10 @@ src/tig: $(TIG_OBJS)
 TEST_GRAPH_OBJS = test/test-graph.o src/util.o src/io.o src/graph.o $(COMPAT_OBJS)
 test/test-graph: $(TEST_GRAPH_OBJS)
 
-OBJS = $(sort $(TIG_OBJS) $(TEST_GRAPH_OBJS))
+DOC_GEN_OBJS = tools/doc-gen.o src/types.o src/util.o src/request.o
+tools/doc-gen: $(DOC_GEN_OBJS)
+
+OBJS = $(sort $(TIG_OBJS) $(TEST_GRAPH_OBJS) $(DOC_GEN_OBJS))
 
 DEPS_CFLAGS ?= -MMD -MP -MF .deps/$*.d
 

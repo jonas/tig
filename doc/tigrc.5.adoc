@@ -496,23 +496,24 @@ Valid action names are described below. Note, all action names are
 case-insensitive, and you may use '-', '_', and '.' interchangeably, e.g.
 "view-main", "View.Main", and "VIEW_MAIN" are the same.
 
+ifndef::DOC_GEN_ACTIONS[]
 View switching
 ^^^^^^^^^^^^^^
 
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|view-main		|Show main view
-|view-diff		|Show diff view
-|view-log		|Show log view
-|view-tree		|Show tree view
-|view-blob		|Show blob view
-|view-blame		|Show blame view
-|view-branch		|Show branch view
-|view-status		|Show status view
-|view-stage		|Show stage view
-|view-stash		|Show stash view
-|view-pager		|Show pager view
-|view-help		|Show help page
+|view-main               |Show main view
+|view-diff               |Show diff view
+|view-log                |Show log view
+|view-tree               |Show tree view
+|view-blob               |Show blob view
+|view-blame              |Show blame view
+|view-branch             |Show branch view
+|view-status             |Show status view
+|view-stage              |Show stage view
+|view-stash              |Show stash view
+|view-pager              |Show pager view
+|view-help               |Show help view
 |=============================================================================
 
 View manipulation
@@ -520,15 +521,16 @@ View manipulation
 
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|enter			|Enter current line and scroll
-|next			|Move to next
-|previous		|Move to previous
-|parent			|Move to parent
-|view-next		|Move focus to next view
-|refresh		|Reload and refresh view
-|maximize		|Maximize the current view
-|view-close		|Close the current view
-|quit			|Close all views and quit
+|enter                   |Enter and open selected line
+|back                    |Go back to the previous view state
+|next                    |Move to next
+|previous                |Move to previous
+|parent                  |Move to parent
+|view-next               |Move focus to the next view
+|refresh                 |Reload and refresh view
+|maximize                |Maximize the current view
+|view-close              |Close the current view
+|quit                    |Close all views and quit
 |=============================================================================
 
 View specific actions
@@ -536,12 +538,14 @@ View specific actions
 
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|status-update		|Update file status
-|status-merge		|Resolve unmerged file
-|stage-update-line	|Stage single line
-|stage-next		|Find next chunk to stage
-|diff-context-up	|Increase the diff context
-|diff-context-down	|Decrease the diff context
+|status-update           |Stage/unstage chunk or file changes
+|status-revert           |Revert chunk or file changes
+|status-merge            |Merge file using external tool
+|stage-update-line       |Stage/unstage single line
+|stage-next              |Jump to next diff chunk
+|stage-split-chunk       |Split current diff chunk
+|diff-context-up         |Increase the diff context
+|diff-context-down       |Decrease the diff context
 |=============================================================================
 
 Cursor navigation
@@ -549,12 +553,12 @@ Cursor navigation
 
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|move-up		|Move cursor one line up
-|move-down		|Move cursor one line down
-|move-page-down		|Move cursor one page down
-|move-page-up		|Move cursor one page up
-|move-first-line	|Move cursor to first line
-|move-last-line		|Move cursor to last line
+|move-up                 |Move cursor one line up
+|move-down               |Move cursor one line down
+|move-page-down          |Move cursor one page down
+|move-page-up            |Move cursor one page up
+|move-first-line         |Move cursor to first line
+|move-last-line          |Move cursor to last line
 |=============================================================================
 
 Scrolling
@@ -562,13 +566,13 @@ Scrolling
 
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|scroll-line-up		|Scroll one line up
-|scroll-line-down	|Scroll one line down
-|scroll-page-up		|Scroll one page up
-|scroll-page-down	|Scroll one page down
-|scroll-first-col       |Scroll to the first column
-|scroll-left		|Scroll one column left
-|scroll-right		|Scroll one column right
+|scroll-line-up          |Scroll one line up
+|scroll-line-down        |Scroll one line down
+|scroll-page-up          |Scroll one page up
+|scroll-page-down        |Scroll one page down
+|scroll-first-col        |Scroll to the first line columns
+|scroll-left             |Scroll two columns left
+|scroll-right            |Scroll two columns right
 |=============================================================================
 
 Searching
@@ -576,10 +580,36 @@ Searching
 
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|search			|Search the view
-|search-back		|Search backwards in the view
-|find-next		|Find next search match
-|find-prev		|Find previous search match
+|search                  |Search the view
+|search-back             |Search backwards in the view
+|find-next               |Find next search match
+|find-prev               |Find previous search match
+|=============================================================================
+
+Option manipulation
+^^^^^^^^^^^^^^^^^^^
+
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|options                 |Open the options menu
+|toggle-lineno           |Toggle line numbers
+|toggle-date             |Toggle date display
+|toggle-author           |Toggle author display
+|toggle-rev-graph        |Toggle revision graph visualization
+|toggle-graphic          |Toggle (line) graphics mode
+|toggle-filename         |Toggle file name display
+|toggle-refs             |Toggle reference display (tags/branches)
+|toggle-changes          |Toggle local changes display in the main view
+|toggle-sort-order       |Toggle ascending/descending sort order
+|toggle-sort-field       |Toggle field to sort by
+|toggle-ignore-space     |Toggle ignoring whitespace in diffs
+|toggle-commit-order     |Toggle commit ordering
+|toggle-id               |Toggle commit ID display
+|toggle-files            |Toggle file filtering
+|toggle-title-overflow   |Toggle highlighting of commit title overflow
+|toggle-file-size        |Toggle file size format
+|toggle-untracked-dirs   |Toggle display of files in untracked directories
+|toggle-vertical-split   |Toggle vertical split
 |=============================================================================
 
 Misc
@@ -587,25 +617,14 @@ Misc
 
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|prompt			|Bring up the prompt
-|screen-redraw		|Redraw the screen
-|screen-resize		|Resize the screen
-|show-version		|Show version information
-|stop-loading		|Stop all loading views
-|options		|Open options menu
-|toggle-lineno		|Toggle line numbers
-|toggle-date		|Toggle date display
-|toggle-author		|Toggle author display
-|toggle-filename	|Toggle file name display
-|toggle-file-size	|Toggle file size display
-|toggle-rev-graph	|Toggle revision graph visualization
-|toggle-graphic		|Toggle (line) graphics mode
-|toggle-refs		|Toggle reference display
-|toggle-files		|Toggle file filtering for the diff and main views
-|toggle-untracked-dirs	|Toggle display of files in untracked directories
-|edit			|Open in editor
-|none			|Do nothing
+|edit                    |Open in editor
+|prompt                  |Open the prompt
+|screen-redraw           |Redraw the screen
+|stop-loading            |Stop all loading views
+|show-version            |Show version information
+|none                    |Do nothing
 |=============================================================================
+endif::DOC_GEN_ACTIONS[]
 
 Color command
 -------------

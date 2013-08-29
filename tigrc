@@ -112,7 +112,7 @@ bind generic	Up	previous		# Move to previous
 bind generic	^P	previous
 bind generic	,	parent			# Move to parent
 bind generic	Tab	view-next		# Move focus to the next view
-bind generic	R	refresh			# Reload and refresh
+bind generic	R	refresh			# Reload and refresh view
 bind generic	F5	refresh
 bind generic	O	maximize		# Maximize the current view
 bind generic	q	view-close		# Close the current view
@@ -163,7 +163,7 @@ bind generic	n	find-next
 bind generic	N	find-prev
 
 # Option manipulation
-bind generic	o	options			# Open the option menu
+bind generic	o	options			# Open the options menu
 bind generic	.	toggle-lineno
 bind generic	D	toggle-date
 bind generic	A	toggle-author
@@ -185,10 +185,10 @@ bind generic	$	toggle-title-overflow
 # Misc
 bind generic	e	edit			# Open in editor
 bind generic	:	prompt			# Open the prompt
-bind generic	z	stop-loading		# Stop all loading views
-bind generic	v	show-version		# Show Tig version
 bind generic	r	screen-redraw		# Redraw the screen
 bind generic	^L	screen-redraw
+bind generic	z	stop-loading		# Stop all loading views
+bind generic	v	show-version		# Show Tig version
 
 # Colors
 # ------

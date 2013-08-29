@@ -16,11 +16,12 @@ doc/manual.html-chunked
 doc/manual.pdf
 doc/manual.toc
 tags
+test/test-graph
 tig
 tig-*.tar.gz
 tig-*.tar.gz.md5
 tig.spec
-tools/test-graph
+tools/doc-gen
 .deps
 *.html
 *.o
