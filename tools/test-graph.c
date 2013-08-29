@@ -11,9 +11,9 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "io.h"
-#include "graph.h"
+#include "../tig.h"
+#include "../io.h"
+#include "../graph.h"
 
 #define USAGE \
 "test-graph [--ascii]\n" \

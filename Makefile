@@ -40,7 +40,7 @@ LDLIBS ?= -lcurses
 CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
 EXE	= tig
-TESTS	= test-graph
+TOOLS	= tools/test-graph
 TXTDOC	= doc/tig.1.asciidoc doc/tigrc.5.asciidoc doc/manual.asciidoc NEWS README INSTALL BUGS
 MANDOC	= doc/tig.1 doc/tigrc.5 doc/tigmanual.7
 HTMLDOC = doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html INSTALL.html NEWS.html
@@ -62,8 +62,8 @@ ASCIIDOC_FLAGS = -aversion=$(VERSION) -asysconfdir=$(sysconfdir) -f doc/asciidoc
 XMLTO ?= xmlto
 DOCBOOK2PDF ?= docbook2pdf
 
-all: $(EXE) $(TESTS)
-all-debug: $(EXE) $(TESTS)
+all: $(EXE) $(TOOLS)
+all-debug: $(EXE) $(TOOLS)
 all-debug: CFLAGS += $(DFLAGS)
 doc: $(ALLDOC)
 doc-man: $(MANDOC)
@@ -116,7 +116,7 @@ install-release-doc: install-release-doc-man install-release-doc-html
 
 clean:
 	$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5 .deps
-	$(RM) $(EXE) $(TESTS) $(OBJS) core *.xml
+	$(RM) $(EXE) $(TOOLS) $(OBJS) core *.xml
 
 distclean: clean
 	$(RM) -r doc/manual.html-chunked autom4te.cache release-docs
@@ -126,7 +126,7 @@ distclean: clean
 spell-check:
 	for file in $(TXTDOC) tig.c; do \
 		aspell --lang=en --dont-backup \
-		       --personal=./contrib/aspell.dict check $$file; \
+		       --personal=./tools/aspell.dict check $$file; \
 	done
 
 strip: $(EXE)
@@ -137,7 +137,7 @@ update-headers:
 		grep -q '/* Copyright' "$$file" && \
 			sed '0,/.*\*\//d' < "$$file" | \
 			grep -v '/* vim: set' > "$$file.tmp"; \
-		{ cat contrib/header.h "$$file.tmp"; \
+		{ cat tools/header.h "$$file.tmp"; \
 		  echo "/* vim: set ts=8 sw=8 noexpandtab: */"; } > "$$file"; \
 		rm "$$file.tmp"; \
 		echo "Updated $$file"; \
@@ -159,7 +159,7 @@ rpm: dist
 
 # Other autoconf-related rules are hidden in config.make.in so that
 # they don't confuse Make when we aren't actually using ./configure
-configure: configure.ac acinclude.m4 contrib/*.m4
+configure: configure.ac acinclude.m4 tools/*.m4
 	./autogen.sh
 
 .PHONY: all all-debug doc doc-man doc-html install install-doc \
@@ -180,8 +180,8 @@ override CPPFLAGS += $(COMPAT_CPPFLAGS)
 TIG_OBJS = tig.o io.o graph.o refs.o $(COMPAT_OBJS)
 tig: $(TIG_OBJS)
 
-TEST_GRAPH_OBJS = test-graph.o io.o graph.o
-test-graph: $(TEST_GRAPH_OBJS)
+TEST_GRAPH_OBJS = tools/test-graph.o io.o graph.o
+tools/test-graph: $(TEST_GRAPH_OBJS)
 
 OBJS = $(sort $(TIG_OBJS) $(TEST_GRAPH_OBJS))
 

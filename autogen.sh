@@ -5,7 +5,7 @@ set -e
 
 # Ideally, we could just do this:
 #
-#${AUTORECONF:-autoreconf} -v -I contrib
+#${AUTORECONF:-autoreconf} -v -I tools
 #
 # Unfortunately, Autoconf 2.61's autoreconf(1) (found in Mac OS X 10.5
 # Leapard) neglects to pass the -I on to aclocal(1), which is
@@ -17,6 +17,6 @@ run () {
     "$@"
 }
 
-run ${ACLOCAL:-aclocal} -I contrib
-run ${AUTOCONF:-autoconf} --include=contrib
-run ${AUTOHEADER:-autoheader} --include=contrib
+run ${ACLOCAL:-aclocal} -I tools
+run ${AUTOCONF:-autoconf} --include=tools
+run ${AUTOHEADER:-autoheader} --include=tools

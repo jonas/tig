@@ -5,7 +5,7 @@ AC_CONFIG_HEADER(config.h)
 AC_CONFIG_SRCDIR(tig.c)
 
 dnl  Document where we keep our .m4 file.
-AC_CONFIG_MACRO_DIR([contrib])
+AC_CONFIG_MACRO_DIR([tools])
 dnl  Make sure aclocal actually found it!
 m4_pattern_forbid([^AX_])
 

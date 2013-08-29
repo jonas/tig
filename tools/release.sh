@@ -48,7 +48,7 @@ if test -n "$VERSION"; then
 	git tag -s -m "tig version $VERSION" "$TAG"
 
 	# Prepare release announcement file.
-	./contrib/announcement.sh "$TAG" > "$TAG.txt"
+	./tools/announcement.sh "$TAG" > "$TAG.txt"
 
 	# Set version for the Makefile
 	export DIST_VERSION="$VERSION"
