@@ -104,10 +104,6 @@
 /* This color name can be used to refer to the default term colors. */
 #define COLOR_DEFAULT	(-1)
 
-#define ENCODING_UTF8	"UTF-8"
-#define ENCODING_SEP	": encoding: "
-#define ENCODING_ARG	"--encoding=" ENCODING_UTF8
-
 #define ICONV_NONE	((iconv_t) -1)
 #ifndef ICONV_CONST
 #define ICONV_CONST	/* nothing */
