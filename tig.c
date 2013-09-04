@@ -2293,18 +2293,6 @@ draw_field(struct view *view, enum line_type type, const char *text, int width, 
 	    || draw_space(view, LINE_DEFAULT, max - (view->col - col), max);
 }
 
-static bool PRINTF_LIKE(4, 5)
-draw_formatted_field(struct view *view, enum line_type type, int width, const char *format, ...)
-{
-	char text[SIZEOF_STR];
-	int retval;
-
-	FORMAT_BUFFER(text, sizeof(text), format, retval, TRUE);
-	if (retval < 0)
-		return VIEW_MAX_LEN(view) <= 0;
-	return draw_field(view, type, text, width, ALIGN_LEFT, FALSE);
-}
-
 static bool
 draw_date(struct view *view, struct time *time)
 {
@@ -7636,6 +7624,8 @@ static bool draw_graph(struct view *view, struct graph_canvas *canvas)
  * Main view backend
  */
 
+DEFINE_ALLOCATOR(realloc_reflogs, char *, 32)
+
 struct commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	const struct ident *author;	/* Author of the commit. */
@@ -7647,7 +7637,10 @@ struct commit {
 struct main_state {
 	struct graph graph;
 	struct commit current;
-	int id_width;
+	char **reflog;
+	size_t reflogs;
+	int reflog_width;
+	char reflogmsg[SIZEOF_STR / 2];
 	bool in_header;
 	bool added_changes_commits;
 	bool with_graph;
@@ -7685,6 +7678,7 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 	strncpy(commit->title, title, titlelen);
 	state->graph.canvas = &commit->graph;
 	memset(template, 0, sizeof(*template));
+	state->reflogmsg[0] = 0;
 	return commit;
 }
 
@@ -7774,6 +7768,7 @@ main_open(struct view *view, enum open_flags flags)
 static void
 main_done(struct view *view)
 {
+	struct main_state *state = view->private;
 	int i;
 
 	for (i = 0; i < view->lines; i++) {
@@ -7781,6 +7776,10 @@ main_done(struct view *view)
 
 		free(commit->graph.symbols);
 	}
+
+	for (i = 0; i < state->reflogs; i++)
+		free(state->reflog[i]);
+	free(state->reflog);
 }
 
 #define MAIN_NO_COMMIT_REFS 1
@@ -7812,9 +7811,10 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 		return TRUE;
 
 	if (opt_show_id) {
-		if (state->id_width) {
-			if (draw_formatted_field(view, LINE_ID, state->id_width,
-					"stash@{%d}", line->lineno - 1))
+		if (state->reflogs) {
+			const char *id = state->reflog[line->lineno - 1];
+
+			if (draw_id_custom(view, LINE_ID, id, state->reflog_width))
 				return TRUE;
 		} else if (draw_id(view, commit->id)) {
 			return TRUE;
@@ -7835,6 +7835,31 @@ main_draw(struct view *view, struct line *line, unsigned int lineno)
 
 	if (commit->title)
 		draw_commit_title(view, commit->title, 0);
+	return TRUE;
+}
+
+static bool
+main_add_reflog(struct view *view, struct main_state *state, char *reflog)
+{
+	char *end = strchr(reflog, ' ');
+	int id_width;
+
+	if (!end)
+		return FALSE;
+	*end = 0;
+
+	if (!realloc_reflogs(&state->reflog, state->reflogs, 1)
+	    || !(reflog = strdup(reflog)))
+		return FALSE;
+
+	state->reflog[state->reflogs++] = reflog;
+	id_width = strlen(reflog);
+	if (state->reflog_width < id_width) {
+		state->reflog_width = id_width;
+		if (opt_show_id)
+			view->force_redraw = TRUE;
+	}
+
 	return TRUE;
 }
 
@@ -7894,6 +7919,16 @@ main_read(struct view *view, char *line)
 		state->in_header = FALSE;
 
 	switch (type) {
+	case LINE_PP_REFLOG:
+		if (!main_add_reflog(view, state, line + STRING_SIZE("Reflog: ")))
+			return FALSE;
+		break;
+
+	case LINE_PP_REFLOGMSG:
+		line += STRING_SIZE("Reflog message: ");
+		string_ncopy(state->reflogmsg, line, strlen(line));
+		break;
+
 	case LINE_PARENT:
 		if (state->with_graph && !graph->has_parents)
 			graph_add_parent(graph, line + STRING_SIZE("parent "));
@@ -7926,6 +7961,8 @@ main_read(struct view *view, char *line)
 			line++;
 		if (*line == '\0')
 			break;
+		if (*state->reflogmsg)
+			line = state->reflogmsg;
 		main_add_commit(view, LINE_MAIN_COMMIT, commit, line, FALSE);
 	}
 
@@ -8068,32 +8105,11 @@ stash_open(struct view *view, enum open_flags flags)
 {
 	static const char *stash_argv[] = { "git", "stash", "list",
 		opt_encoding_arg, "--no-color", "--pretty=raw", NULL };
-
-	return begin_update(view, NULL, stash_argv, flags | OPEN_RELOAD);
-}
-
-static bool
-stash_read(struct view *view, char *line)
-{
 	struct main_state *state = view->private;
-	struct commit *commit = &state->current;
 
-	if (!state->added_changes_commits) {
-		state->added_changes_commits = TRUE;
-		state->with_graph = FALSE;
-	}
-
-	if (commit && line && get_line_type(line) == LINE_PP_REFLOG) {
-		int id_width = STRING_SIZE("stash@{}") + count_digits(view->lines);
-
-		if (state->id_width < id_width) {
-			state->id_width = id_width;
-			if (opt_show_id)
-				view->force_redraw = TRUE;
-		}
-	}
-
-	return main_read(view, line);
+	state->added_changes_commits = TRUE;
+	state->with_graph = FALSE;
+	return begin_update(view, NULL, stash_argv, flags | OPEN_RELOAD);
 }
 
 static void
@@ -8110,7 +8126,7 @@ static struct view_ops stash_ops = {
 	VIEW_SEND_CHILD_ENTER,
 	sizeof(struct main_state),
 	stash_open,
-	stash_read,
+	main_read,
 	main_draw,
 	main_request,
 	main_grep,
