@@ -20,15 +20,11 @@ _______________________________________________________________________
 
 DESCRIPTION
 -----------
-Browse changes in a Git repository. Additionally, tig(1) can also act
-as a pager for output of various Git commands.
 
-When browsing repositories, tig(1) uses the underlying Git commands
-to present the user with various views, such as summarized commit log
-and showing the commit with the log message, diffstat, and the diff.
-
-Using tig(1) as a pager, it will display input from stdin and try
-to colorize it.
+Tig is an ncurses-based text-mode interface for git(1). It functions
+mainly as a Git repository browser, but can also assist in staging
+changes for commit at chunk level and act as a pager for output from
+various Git commands.
 
 OPTIONS
 -------
@@ -37,8 +33,7 @@ Command line options recognized by Tig include all valid git-log(1) and
 git-diff(1) options, as well as the following subcommands and Tig specific
 options. The first command line parameter not starting with "-" is interpreted
 as being either a revision specification or a path and will end the option
-parsing. All following options will be passed untouched to the underlying Git
-command.
+parsing. All additional options will be passed to the underlying Git command.
 
 show::
 	Open diff view using the given git-show(1) options.
@@ -54,6 +49,9 @@ status::
 log::
 	Start up in log view, displaying git-log(1) output.
 
+stash::
+	Start up in stash view.
+
 +<number>::
     Show the first view with line <number> visible and selected.
 
@@ -63,15 +61,57 @@ log::
 -h, --help::
 	Show help message and exit.
 
+PAGER MODE
+----------
+
+Tig enters pager mode when input is provided via stdin and supports the
+following subcommands and options:
+
+--
+
+ - When the 'show' subcommand is specified and the '--stdin' option is given,
+   stdin is assumed to be a list of commit IDs and will be forwarded to the diff
+   view's underlying git-show(1) command. For example:
+
+-----------------------------------------------------------------------------
+$ git rev-list --author=vivien HEAD | tig show --stdin
+-----------------------------------------------------------------------------
+
+ - When '--stdin' is given, stdin is assumed to be a list of commit IDs
+   and will be forwarded to the main view's underlying git-log(1)
+   command. For example:
+
+-----------------------------------------------------------------------------
+$ tig --no-walk --stdin < cherry-picks.txt
+-----------------------------------------------------------------------------
+
+ - When '--pretty=raw' is given, stdin is assumed to be a "pretty=raw"
+   formatted output similar to that of git-log(1). For example:
+
+-----------------------------------------------------------------------------
+$ git reflog --pretty=raw | tig --pretty=raw
+-----------------------------------------------------------------------------
+
+--
+
+When no subcommands nor options are given, the pager view will be used for
+displaying the Git command input given on stdin. The pager view assumes the
+input is either from git-log(1) or git-diff(1) and will highlight it similar to
+the log and diff views. For example:
+
+-----------------------------------------------------------------------------
+$ git log -Schange -p --raw | tig
+-----------------------------------------------------------------------------
+
 EXAMPLES
 --------
 
-Display the current branch:
+Display the list of commits for the current branch:
 -----------------------------------------------------------------------------
 $ tig
 -----------------------------------------------------------------------------
 
-Display one or more specific branches:
+Display commits from one or more branches:
 -----------------------------------------------------------------------------
 $ tig test master
 -----------------------------------------------------------------------------
@@ -144,7 +184,7 @@ TIG_LS_REMOTE::
 TIG_DIFF_OPTS::
 	The diff options to use in the diff view. The diff view uses
 	git-show(1) for formatting and always passes --patch-with-stat.  You
-	may also set the diff-options setting in your manpage:tigrc[5].
+	may also set the `diff-options` setting in your manpage:tigrc[5].
 
 TIG_TRACE::
 	Path for trace file where information about Git commands are logged.
@@ -169,7 +209,7 @@ endif::version[]
 
 COPYRIGHT
 ---------
-Copyright (c) 2006-2012 Jonas Fonseca <fonseca@diku.dk>
+Copyright (c) 2006-2013 Jonas Fonseca <fonseca@diku.dk>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

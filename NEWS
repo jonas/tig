@@ -11,6 +11,7 @@ Improvements:
  - Add toggling for display files of untracked directories.
  - Add main view pager mode that reads git-log's '--pretty=raw' data
    from stdin, e.g. `git reflog --pretty=raw | tig --pretty=raw`.
+ - Document the Git commands supported by the pager mode.  (GH #1)
 
 Bug fixes:
 
