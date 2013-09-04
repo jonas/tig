@@ -16,6 +16,7 @@ Bug fixes:
  - Correctly identify and highlight the remote branch tracked by HEAD.
  - Pass --no-color after user defined arguments to ensure that colors do not
    break the output parsing. (GH #191)
+ - Close stdin when pager mode is not supported.
 
 tig-1.2.1
 ---------

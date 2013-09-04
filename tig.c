@@ -506,7 +506,6 @@ static bool opt_untracked_dirs_content	= TRUE;
 static bool opt_read_git_colors		= TRUE;
 static bool opt_wrap_lines		= FALSE;
 static bool opt_ignore_case		= FALSE;
-static bool opt_stdin			= FALSE;
 static bool opt_focus_child		= TRUE;
 static int opt_diff_context		= 3;
 static char opt_diff_context_arg[9]	= "";
@@ -1958,7 +1957,6 @@ enum view_flag {
 	VIEW_NO_REF		= 1 << 5,
 	VIEW_NO_GIT_DIR		= 1 << 6,
 	VIEW_DIFF_LIKE		= 1 << 7,
-	VIEW_STDIN		= 1 << 8,
 	VIEW_SEND_CHILD_ENTER	= 1 << 9,
 	VIEW_FILE_FILTER	= 1 << 10,
 	VIEW_LOG_LIKE		= 1 << 11,
@@ -2030,12 +2028,19 @@ struct view {
 
 enum open_flags {
 	OPEN_DEFAULT = 0,	/* Use default view switching. */
-	OPEN_SPLIT = 1,		/* Split current view. */
-	OPEN_RELOAD = 4,	/* Reload view even if it is the current. */
+	OPEN_STDIN = 1,		/* Open in pager mode. */
+	OPEN_FORWARD_STDIN = 2,	/* Forward stdin to I/O process. */
+	OPEN_SPLIT = 4,		/* Split current view. */
+	OPEN_RELOAD = 8,	/* Reload view even if it is the current. */
 	OPEN_REFRESH = 16,	/* Refresh view using previous command. */
 	OPEN_PREPARED = 32,	/* Open already prepared command. */
 	OPEN_EXTRA = 64,	/* Open extra data from command. */
+
+	OPEN_PAGER_MODE = OPEN_STDIN | OPEN_FORWARD_STDIN,
 };
+
+#define open_in_pager_mode(flags) ((flags) & OPEN_PAGER_MODE)
+#define open_from_stdin(flags) ((flags) & OPEN_STDIN)
 
 struct view_ops {
 	/* What type of content being displayed. Used in the title bar. */
@@ -3330,13 +3335,11 @@ setup_update(struct view *view, const char *vid)
 static bool
 begin_update(struct view *view, const char *dir, const char **argv, enum open_flags flags)
 {
-	bool use_stdin = view_has_flags(view, VIEW_STDIN) && opt_stdin;
 	bool extra = !!(flags & (OPEN_EXTRA));
-	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED | OPEN_EXTRA));
-	bool refresh = flags & (OPEN_REFRESH | OPEN_PREPARED);
-	enum io_type io_type = use_stdin ? IO_RD_STDIN : IO_RD;
-
-	opt_stdin = FALSE;
+	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED | OPEN_EXTRA | OPEN_PAGER_MODE));
+	bool refresh = flags & (OPEN_REFRESH | OPEN_PREPARED | OPEN_STDIN);
+	bool forward_stdin = flags & OPEN_FORWARD_STDIN;
+	enum io_type io_type = forward_stdin ? IO_RD_STDIN : IO_RD;
 
 	if ((!reload && !strcmp(view->vid, view->id)) ||
 	    ((flags & OPEN_REFRESH) && view->unrefreshable))
@@ -3349,7 +3352,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 			end_update(view, TRUE);
 	}
 
-	view->unrefreshable = use_stdin;
+	view->unrefreshable = open_in_pager_mode(flags);
 
 	if (!refresh && argv) {
 		bool file_filter = !view_has_flags(view, VIEW_FILE_FILTER) || opt_file_filter;
@@ -3371,6 +3374,11 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	    !io_run(&view->io, io_type, view->dir, opt_env, view->argv)) {
 		report("Failed to open %s view", view->name);
 		return FALSE;
+	}
+
+	if (open_from_stdin(flags)) {
+		if (!io_open(&view->io, "%s", ""))
+			die("Failed to open stdin");
 	}
 
 	if (!extra)
@@ -3902,7 +3910,7 @@ view_driver(struct view *view, enum request request)
 			enum view_flag flags = toggle_option(view, request, action);
 	
 			foreach_displayed_view(view, i) {
-				if (view_has_flags(view, flags))
+				if (view_has_flags(view, flags) && !view->unrefreshable)
 					reload_view(view);
 				else
 					redraw_view(view);
@@ -4487,12 +4495,7 @@ log_select(struct view *view, struct line *line)
 static bool
 pager_open(struct view *view, enum open_flags flags)
 {
-	if (display[0] == NULL) {
-		if (!io_open(&view->io, "%s", ""))
-			die("Failed to open stdin");
-		flags = OPEN_PREPARED;
-
-	} else if (!view->pipe && !view->lines && !(flags & OPEN_PREPARED)) {
+	if (!open_from_stdin(flags) && !view->lines) {
 		report("No pager content, press %s to run command from prompt",
 			get_view_key(view, REQ_PROMPT));
 		return FALSE;
@@ -4995,7 +4998,7 @@ diff_select(struct view *view, struct line *line)
 static struct view_ops diff_ops = {
 	"line",
 	{ "diff" },
-	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_STDIN | VIEW_FILE_FILTER,
+	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_FILE_FILTER,
 	sizeof(struct diff_state),
 	diff_open,
 	diff_read,
@@ -7762,6 +7765,7 @@ main_open(struct view *view, enum open_flags flags)
 	struct main_state *state = view->private;
 
 	state->with_graph = opt_rev_graph;
+
 	return begin_update(view, NULL, main_argv, flags);
 }
 
@@ -8089,7 +8093,7 @@ main_select(struct view *view, struct line *line)
 static struct view_ops main_ops = {
 	"commit",
 	{ "main" },
-	VIEW_STDIN | VIEW_SEND_CHILD_ENTER | VIEW_FILE_FILTER | VIEW_LOG_LIKE,
+	VIEW_SEND_CHILD_ENTER | VIEW_FILE_FILTER | VIEW_LOG_LIKE,
 	sizeof(struct main_state),
 	main_open,
 	main_read,
@@ -8847,7 +8851,7 @@ filter_options(const char *argv[], bool blame)
 }
 
 static enum request
-parse_options(int argc, const char *argv[])
+parse_options(int argc, const char *argv[], bool pager_mode)
 {
 	enum request request;
 	const char *subcommand;
@@ -8855,8 +8859,7 @@ parse_options(int argc, const char *argv[])
 	const char **filter_argv = NULL;
 	int i;
 
-	opt_stdin = !isatty(STDIN_FILENO);
-	request = opt_stdin ? REQ_VIEW_PAGER : REQ_VIEW_MAIN;
+	request = pager_mode ? REQ_VIEW_PAGER : REQ_VIEW_MAIN;
 
 	if (argc <= 1)
 		return request;
@@ -8922,14 +8925,40 @@ parse_options(int argc, const char *argv[])
 		}
 
 		string_ncopy(opt_file, opt_file_argv[0], strlen(opt_file_argv[0]));
-
-	} else if (request == REQ_VIEW_PAGER) {
-		if (argv_contains(opt_rev_argv, "--stdin")) {
-			request = REQ_VIEW_MAIN;
-		}
 	}
 
 	return request;
+}
+
+static enum request
+open_pager_mode(enum request request)
+{
+	enum open_flags flags = OPEN_DEFAULT;
+
+	if (request == REQ_VIEW_PAGER) {
+		/* Detect if the user requested the main view. */
+		if (argv_contains(opt_rev_argv, "--stdin")) {
+			request = REQ_VIEW_MAIN;
+			flags |= OPEN_FORWARD_STDIN;
+		} else {
+			flags |= OPEN_STDIN;
+		}
+
+	} else if (request == REQ_VIEW_DIFF) {
+		if (argv_contains(opt_rev_argv, "--stdin"))
+			flags |= OPEN_FORWARD_STDIN;
+	}
+
+	/* Open the requested view even if the pager mode is enabled so
+	 * the warning message below is displayed correctly. */
+	open_view(NULL, request, flags);
+
+	if (!open_in_pager_mode(flags)) {
+		close(STDIN_FILENO);
+		report("Ignoring stdin.");
+	}
+
+	return REQ_NONE;
 }
 
 static enum request
@@ -9000,7 +9029,8 @@ int
 main(int argc, const char *argv[])
 {
 	const char *codeset = ENCODING_UTF8;
-	enum request request = parse_options(argc, argv);
+	bool pager_mode = !isatty(STDIN_FILENO);
+	enum request request = parse_options(argc, argv, pager_mode);
 	struct view *view;
 	int i;
 
@@ -9044,6 +9074,9 @@ main(int argc, const char *argv[])
 		die("Failed to load refs.");
 
 	init_display();
+
+	if (pager_mode)
+		request = open_pager_mode(request);
 
 	while (view_driver(display[current_view], request)) {
 		int key = get_input(0);
