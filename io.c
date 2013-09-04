@@ -109,6 +109,17 @@ argv_size(const char **argv)
 	return argc;
 }
 
+bool
+argv_contains(const char **argv, const char *arg)
+{
+	int i;
+
+	for (i = 0; argv && argv[i]; i++)
+		if (!strcmp(argv[i], arg))
+			return TRUE;
+	return FALSE;
+}
+
 DEFINE_ALLOCATOR(argv_realloc, const char *, SIZEOF_ARG)
 
 bool

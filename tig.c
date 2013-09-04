@@ -8924,11 +8924,8 @@ parse_options(int argc, const char *argv[])
 		string_ncopy(opt_file, opt_file_argv[0], strlen(opt_file_argv[0]));
 
 	} else if (request == REQ_VIEW_PAGER) {
-		for (i = 0; opt_rev_argv && opt_rev_argv[i]; i++) {
-			if (!strcmp("--stdin", opt_rev_argv[i])) {
-				request = REQ_VIEW_MAIN;
-				break;
-			}
+		if (argv_contains(opt_rev_argv, "--stdin")) {
+			request = REQ_VIEW_MAIN;
 		}
 	}
 
