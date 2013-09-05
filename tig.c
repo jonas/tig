@@ -7766,6 +7766,11 @@ main_open(struct view *view, enum open_flags flags)
 
 	state->with_graph = opt_rev_graph;
 
+	if (flags & OPEN_PAGER_MODE) {
+		state->added_changes_commits = TRUE;
+		state->with_graph = FALSE;
+	}
+
 	return begin_update(view, NULL, main_argv, flags);
 }
 
@@ -8940,6 +8945,9 @@ open_pager_mode(enum request request)
 		if (argv_contains(opt_rev_argv, "--stdin")) {
 			request = REQ_VIEW_MAIN;
 			flags |= OPEN_FORWARD_STDIN;
+		} else if (argv_contains(opt_diff_argv, "--pretty=raw")) {
+			request = REQ_VIEW_MAIN;
+			flags |= OPEN_STDIN;
 		} else {
 			flags |= OPEN_STDIN;
 		}

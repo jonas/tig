@@ -9,6 +9,8 @@ Improvements:
  - User-defined commands no longer needs to always be prefixed with '!'.
  - Add auto-configuration for Cygwin (OS name: CYGWIN_NT-6.1). (GH #92)
  - Add toggling for display files of untracked directories.
+ - Add main view pager mode that reads git-log's '--pretty=raw' data
+   from stdin, e.g. `git reflog --pretty=raw | tig --pretty=raw`.
 
 Bug fixes:
 
