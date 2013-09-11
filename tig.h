@@ -616,8 +616,12 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
 		}
 
 		string  += bytes;
-		last_bytes = ucwidth ? bytes : 0;
-		last_ucwidth = ucwidth;
+		if (ucwidth) {
+			last_bytes = bytes;
+			last_ucwidth = ucwidth;
+		} else {
+			last_bytes += bytes;
+		}
 	}
 
 	return string - *start;
