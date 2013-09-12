@@ -12,6 +12,7 @@
  */
 
 #include "../tig.h"
+#include "../util.h"
 #include "../io.h"
 #include "../graph.h"
 
@@ -21,22 +22,6 @@
 "Example usage:\n" \
 "	# git log --pretty=raw --parents | ./test-graph\n" \
 "	# git log --pretty=raw --parents | ./test-graph --ascii"
-
-static void TIG_NORETURN
-die(const char *err, ...)
-{
-	va_list args;
-
-	endwin();
-
-	va_start(args, err);
-	fputs("test-graph: ", stderr);
-	vfprintf(stderr, err, args);
-	fputs("\n", stderr);
-	va_end(args);
-
-	exit(1);
-}
 
 struct commit {
 	char id[SIZEOF_REV];

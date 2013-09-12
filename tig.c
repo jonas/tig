@@ -20,8 +20,6 @@
 #include "graph.h"
 #include "git.h"
 
-static void TIG_NORETURN die(const char *err, ...) PRINTF_LIKE(1, 2);
-static void warn(const char *msg, ...) PRINTF_LIKE(1, 2);
 static void report(const char *msg, ...) PRINTF_LIKE(1, 2);
 #define report_clear() report("%s", "")
 
@@ -8123,10 +8121,18 @@ report(const char *msg, ...)
 }
 
 static void
+done_display(void)
+{
+	endwin();
+}
+
+static void
 init_display(void)
 {
 	const char *term;
 	int x, y;
+
+	die_callback = done_display;
 
 	/* Initialize the curses library */
 	if (isatty(STDIN_FILENO)) {
@@ -8681,34 +8687,6 @@ quit(int sig)
 	if (cursed)
 		endwin();
 	exit(0);
-}
-
-static void TIG_NORETURN
-die(const char *err, ...)
-{
-	va_list args;
-
-	endwin();
-
-	va_start(args, err);
-	fputs("tig: ", stderr);
-	vfprintf(stderr, err, args);
-	fputs("\n", stderr);
-	va_end(args);
-
-	exit(1);
-}
-
-static void
-warn(const char *msg, ...)
-{
-	va_list args;
-
-	va_start(args, msg);
-	fputs("tig warning: ", stderr);
-	vfprintf(stderr, msg, args);
-	fputs("\n", stderr);
-	va_end(args);
 }
 
 static int
