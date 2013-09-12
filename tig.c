@@ -14,6 +14,7 @@
 #define WARN_MISSING_CURSES_CONFIGURATION
 
 #include "tig.h"
+#include "util.h"
 #include "io.h"
 #include "refs.h"
 #include "graph.h"
@@ -1278,40 +1279,6 @@ add_builtin_run_requests(void)
  * User config file handling.
  */
 
-#define OPT_ERR_INFO \
-	OPT_ERR_(INTEGER_VALUE_OUT_OF_BOUND, "Integer value out of bound"), \
-	OPT_ERR_(INVALID_STEP_VALUE, "Invalid step value"), \
-	OPT_ERR_(NO_OPTION_VALUE, "No option value"), \
-	OPT_ERR_(NO_VALUE_ASSIGNED, "No value assigned"), \
-	OPT_ERR_(OBSOLETE_REQUEST_NAME, "Obsolete request name"), \
-	OPT_ERR_(OUT_OF_MEMORY, "Out of memory"), \
-	OPT_ERR_(TOO_MANY_OPTION_ARGUMENTS, "Too many option arguments"), \
-	OPT_ERR_(FILE_DOES_NOT_EXIST, "File does not exist"), \
-	OPT_ERR_(UNKNOWN_ATTRIBUTE, "Unknown attribute"), \
-	OPT_ERR_(UNKNOWN_COLOR, "Unknown color"), \
-	OPT_ERR_(UNKNOWN_COLOR_NAME, "Unknown color name"), \
-	OPT_ERR_(UNKNOWN_KEY, "Unknown key"), \
-	OPT_ERR_(UNKNOWN_KEY_MAP, "Unknown key map"), \
-	OPT_ERR_(UNKNOWN_OPTION_COMMAND, "Unknown option command"), \
-	OPT_ERR_(UNKNOWN_REQUEST_NAME, "Unknown request name"), \
-	OPT_ERR_(UNKNOWN_VARIABLE_NAME, "Unknown variable name"), \
-	OPT_ERR_(UNMATCHED_QUOTATION, "Unmatched quotation"), \
-	OPT_ERR_(WRONG_NUMBER_OF_ARGUMENTS, "Wrong number of arguments"), \
-	OPT_ERR_(HOME_UNRESOLVABLE, "HOME environment variable could not be resolved"),
-
-enum option_code {
-#define OPT_ERR_(name, msg) OPT_ERR_ ## name
-	OPT_ERR_INFO
-#undef	OPT_ERR_
-	OPT_OK
-};
-
-static const char *option_errors[] = {
-#define OPT_ERR_(name, msg) msg
-	OPT_ERR_INFO
-#undef	OPT_ERR_
-};
-
 static const struct enum_map color_map[] = {
 #define COLOR_MAP(name) ENUM_MAP(#name, COLOR_##name)
 	COLOR_MAP(DEFAULT),
@@ -1338,37 +1305,37 @@ static const struct enum_map attr_map[] = {
 
 #define set_attribute(attr, name)	map_enum(attr, attr_map, name)
 
-static enum option_code
+static enum status_code
 parse_step(double *opt, const char *arg)
 {
 	*opt = atoi(arg);
 	if (!strchr(arg, '%'))
-		return OPT_OK;
+		return SUCCESS;
 
 	/* "Shift down" so 100% and 1 does not conflict. */
 	*opt = (*opt - 1) / 100;
 	if (*opt >= 1.0) {
 		*opt = 0.99;
-		return OPT_ERR_INVALID_STEP_VALUE;
+		return ERROR_INVALID_STEP_VALUE;
 	}
 	if (*opt < 0.0) {
 		*opt = 1;
-		return OPT_ERR_INVALID_STEP_VALUE;
+		return ERROR_INVALID_STEP_VALUE;
 	}
-	return OPT_OK;
+	return SUCCESS;
 }
 
-static enum option_code
+static enum status_code
 parse_int(int *opt, const char *arg, int min, int max)
 {
 	int value = atoi(arg);
 
 	if (min <= value && value <= max) {
 		*opt = value;
-		return OPT_OK;
+		return SUCCESS;
 	}
 
-	return OPT_ERR_INTEGER_VALUE_OUT_OF_BOUND;
+	return ERROR_INTEGER_VALUE_OUT_OF_BOUND;
 }
 
 #define parse_id(opt, arg) \
@@ -1380,19 +1347,19 @@ set_color(int *color, const char *name)
 	if (map_enum(color, color_map, name))
 		return TRUE;
 	if (!prefixcmp(name, "color"))
-		return parse_int(color, name + 5, 0, 255) == OPT_OK;
+		return parse_int(color, name + 5, 0, 255) == SUCCESS;
 	/* Used when reading git colors. Git expects a plain int w/o prefix.  */
-	return parse_int(color, name, 0, 255) == OPT_OK;
+	return parse_int(color, name, 0, 255) == SUCCESS;
 }
 
 /* Wants: object fgcolor bgcolor [attribute] */
-static enum option_code
+static enum status_code
 option_color_command(int argc, const char *argv[])
 {
 	struct line_info *info;
 
 	if (argc < 3)
-		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
+		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;
 
 	if (*argv[0] == '"' || *argv[0] == '\'') {
 		info = add_custom_color(argv[0]);
@@ -1409,39 +1376,39 @@ option_color_command(int argc, const char *argv[])
 		int index;
 
 		if (!map_enum(&index, obsolete, argv[0]))
-			return OPT_ERR_UNKNOWN_COLOR_NAME;
+			return ERROR_UNKNOWN_COLOR_NAME;
 		info = &line_info[index];
 	}
 
 	if (!set_color(&info->fg, argv[1]) ||
 	    !set_color(&info->bg, argv[2]))
-		return OPT_ERR_UNKNOWN_COLOR;
+		return ERROR_UNKNOWN_COLOR;
 
 	info->attr = 0;
 	while (argc-- > 3) {
 		int attr;
 
 		if (!set_attribute(&attr, argv[argc]))
-			return OPT_ERR_UNKNOWN_ATTRIBUTE;
+			return ERROR_UNKNOWN_ATTRIBUTE;
 		info->attr |= attr;
 	}
 
-	return OPT_OK;
+	return SUCCESS;
 }
 
-static enum option_code
+static enum status_code
 parse_bool_matched(bool *opt, const char *arg, bool *matched)
 {
 	*opt = (!strcmp(arg, "1") || !strcmp(arg, "true") || !strcmp(arg, "yes"))
 		? TRUE : FALSE;
 	if (matched)
 		*matched = *opt || (!strcmp(arg, "0") || !strcmp(arg, "false") || !strcmp(arg, "no"));
-	return OPT_OK;
+	return SUCCESS;
 }
 
 #define parse_bool(opt, arg) parse_bool_matched(opt, arg, NULL)
 
-static enum option_code
+static enum status_code
 parse_enum_do(unsigned int *opt, const char *arg,
 	      const struct enum_map *map, size_t map_size)
 {
@@ -1450,17 +1417,17 @@ parse_enum_do(unsigned int *opt, const char *arg,
 	assert(map_size > 1);
 
 	if (map_enum_do(map, map_size, (int *) opt, arg))
-		return OPT_OK;
+		return SUCCESS;
 
 	parse_bool(&is_true, arg);
 	*opt = is_true ? map[1].value : map[0].value;
-	return OPT_OK;
+	return SUCCESS;
 }
 
 #define parse_enum(opt, arg, map) \
 	parse_enum_do(opt, arg, map, ARRAY_SIZE(map))
 
-static enum option_code
+static enum status_code
 parse_string(char *opt, const char *arg, size_t optsize)
 {
 	int arglen = strlen(arg);
@@ -1469,21 +1436,21 @@ parse_string(char *opt, const char *arg, size_t optsize)
 	case '\"':
 	case '\'':
 		if (arglen == 1 || arg[arglen - 1] != arg[0])
-			return OPT_ERR_UNMATCHED_QUOTATION;
+			return ERROR_UNMATCHED_QUOTATION;
 		arg += 1; arglen -= 2;
 	default:
 		string_ncopy_do(opt, optsize, arg, arglen);
-		return OPT_OK;
+		return SUCCESS;
 	}
 }
 
-static enum option_code
+static enum status_code
 parse_encoding(struct encoding **encoding_ref, const char *arg, bool priority)
 {
 	char buf[SIZEOF_STR];
-	enum option_code code = parse_string(buf, arg, sizeof(buf));
+	enum status_code code = parse_string(buf, arg, sizeof(buf));
 
-	if (code == OPT_OK) {
+	if (code == SUCCESS) {
 		struct encoding *encoding = *encoding_ref;
 
 		if (encoding && !priority)
@@ -1496,23 +1463,23 @@ parse_encoding(struct encoding **encoding_ref, const char *arg, bool priority)
 	return code;
 }
 
-static enum option_code
+static enum status_code
 parse_args(const char ***args, const char *argv[])
 {
 	if (!argv_copy(args, argv))
-		return OPT_ERR_OUT_OF_MEMORY;
-	return OPT_OK;
+		return ERROR_OUT_OF_MEMORY;
+	return SUCCESS;
 }
 
 /* Wants: name = value */
-static enum option_code
+static enum status_code
 option_set_command(int argc, const char *argv[])
 {
 	if (argc < 3)
-		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
+		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;
 
 	if (strcmp(argv[1], "="))
-		return OPT_ERR_NO_VALUE_ASSIGNED;
+		return ERROR_NO_VALUE_ASSIGNED;
 
 	if (!strcmp(argv[0], "blame-options"))
 		return parse_args(&opt_blame_argv, argv + 2);
@@ -1521,7 +1488,7 @@ option_set_command(int argc, const char *argv[])
 		return parse_args(&opt_diff_argv, argv + 2);
 
 	if (argc != 3)
-		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
+		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;
 
 	if (!strcmp(argv[0], "show-author"))
 		return parse_enum(&opt_author, argv[2], author_map);
@@ -1540,9 +1507,9 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "show-notes")) {
 		bool matched = FALSE;
-		enum option_code res = parse_bool_matched(&opt_notes, argv[2], &matched);
+		enum status_code res = parse_bool_matched(&opt_notes, argv[2], &matched);
 
-		if (res == OPT_OK && matched) {
+		if (res == SUCCESS && matched) {
 			update_notes_arg();
 			return res;
 		}
@@ -1551,7 +1518,7 @@ option_set_command(int argc, const char *argv[])
 		strcpy(opt_notes_arg, "--show-notes=");
 		res = parse_string(opt_notes_arg + 8, argv[2],
 				   sizeof(opt_notes_arg) - 8);
-		if (res == OPT_OK && opt_notes_arg[8] == '\0')
+		if (res == SUCCESS && opt_notes_arg[8] == '\0')
 			opt_notes_arg[7] = '\0';
 		return res;
 	}
@@ -1590,25 +1557,25 @@ option_set_command(int argc, const char *argv[])
 		return parse_int(&opt_tab_size, argv[2], 1, 1024);
 
 	if (!strcmp(argv[0], "diff-context")) {
-		enum option_code code = parse_int(&opt_diff_context, argv[2], 0, 999999);
+		enum status_code code = parse_int(&opt_diff_context, argv[2], 0, 999999);
 
-		if (code == OPT_OK)
+		if (code == SUCCESS)
 			update_diff_context_arg(opt_diff_context);
 		return code;
 	}
 
 	if (!strcmp(argv[0], "ignore-space")) {
-		enum option_code code = parse_enum(&opt_ignore_space, argv[2], ignore_space_map);
+		enum status_code code = parse_enum(&opt_ignore_space, argv[2], ignore_space_map);
 
-		if (code == OPT_OK)
+		if (code == SUCCESS)
 			update_ignore_space_arg();
 		return code;
 	}
 
 	if (!strcmp(argv[0], "commit-order")) {
-		enum option_code code = parse_enum(&opt_commit_order, argv[2], commit_order_map);
+		enum status_code code = parse_enum(&opt_commit_order, argv[2], commit_order_map);
 
-		if (code == OPT_OK)
+		if (code == SUCCESS)
 			update_commit_order_arg();
 		return code;
 	}
@@ -1636,7 +1603,7 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "title-overflow")) {
 		bool matched;
-		enum option_code code;
+		enum status_code code;
 
 		/*
 		 * "title-overflow" is considered a boolint.
@@ -1644,12 +1611,12 @@ option_set_command(int argc, const char *argv[])
 		 * otherwise we parse it as an integer and use the given value.
 		 */
 		code = parse_bool_matched(&opt_show_title_overflow, argv[2], &matched);
-		if (code == OPT_OK && matched) {
+		if (code == SUCCESS && matched) {
 			if (opt_show_title_overflow)
 				opt_title_overflow = 50;
 		} else {
 			code = parse_int(&opt_title_overflow, argv[2], 2, 1024);
-			if (code == OPT_OK)
+			if (code == SUCCESS)
 				opt_show_title_overflow = TRUE;
 		}
 
@@ -1659,11 +1626,11 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "editor-line-number"))
 		return parse_bool(&opt_editor_lineno, argv[2]);
 
-	return OPT_ERR_UNKNOWN_VARIABLE_NAME;
+	return ERROR_UNKNOWN_VARIABLE_NAME;
 }
 
 /* Wants: mode request key */
-static enum option_code
+static enum status_code
 option_bind_command(int argc, const char *argv[])
 {
 	enum request request;
@@ -1671,14 +1638,14 @@ option_bind_command(int argc, const char *argv[])
 	int key;
 
 	if (argc < 3)
-		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
+		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;
 
 	if (!(keymap = get_keymap(argv[0])))
-		return OPT_ERR_UNKNOWN_KEY_MAP;
+		return ERROR_UNKNOWN_KEY_MAP;
 
 	key = get_key_value(argv[1]);
 	if (key == ERR)
-		return OPT_ERR_UNKNOWN_KEY;
+		return ERROR_UNKNOWN_KEY;
 
 	request = get_request(argv[2]);
 	if (request == REQ_UNKNOWN) {
@@ -1692,7 +1659,7 @@ option_bind_command(int argc, const char *argv[])
 		if (map_enum(&alias, obsolete, argv[2])) {
 			if (alias != REQ_NONE)
 				add_keybinding(keymap, alias, key);
-			return OPT_ERR_OBSOLETE_REQUEST_NAME;
+			return ERROR_OBSOLETE_REQUEST_NAME;
 		}
 	}
 
@@ -1718,38 +1685,38 @@ option_bind_command(int argc, const char *argv[])
 			flags |= RUN_REQUEST_INTERNAL;
 
 		} else {
-			return OPT_ERR_UNKNOWN_REQUEST_NAME;
+			return ERROR_UNKNOWN_REQUEST_NAME;
 		}
 
 		return add_run_request(keymap, key, argv + 2, flags)
-			? OPT_OK : OPT_ERR_OUT_OF_MEMORY;
+			? SUCCESS : ERROR_OUT_OF_MEMORY;
 	}
 
 	add_keybinding(keymap, request, key);
 
-	return OPT_OK;
+	return SUCCESS;
 }
 
 
-static enum option_code load_option_file(const char *path);
+static enum status_code load_option_file(const char *path);
 
-static enum option_code
+static enum status_code
 option_source_command(int argc, const char *argv[])
 {
 	if (argc < 1)
-		return OPT_ERR_WRONG_NUMBER_OF_ARGUMENTS;
+		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;
 
 	return load_option_file(argv[0]);
 }
 
-static enum option_code
+static enum status_code
 set_option(const char *opt, char *value)
 {
 	const char *argv[SIZEOF_ARG];
 	int argc = 0;
 
 	if (!argv_from_string(argv, &argc, value))
-		return OPT_ERR_TOO_MANY_OPTION_ARGUMENTS;
+		return ERROR_TOO_MANY_OPTION_ARGUMENTS;
 
 	if (!strcmp(opt, "color"))
 		return option_color_command(argc, argv);
@@ -1763,7 +1730,7 @@ set_option(const char *opt, char *value)
 	if (!strcmp(opt, "source"))
 		return option_source_command(argc, argv);
 
-	return OPT_ERR_UNKNOWN_OPTION_COMMAND;
+	return ERROR_UNKNOWN_OPTION_COMMAND;
 }
 
 struct config_state {
@@ -1776,7 +1743,7 @@ static int
 read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 {
 	struct config_state *config = data;
-	enum option_code status = OPT_ERR_NO_OPTION_VALUE;
+	enum status_code status = ERROR_NO_OPTION_VALUE;
 
 	config->lineno++;
 
@@ -1798,9 +1765,9 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 		status = set_option(opt, value);
 	}
 
-	if (status != OPT_OK) {
+	if (status != SUCCESS) {
 		warn("%s line %d: %s near '%.*s'", config->path, config->lineno,
-		     option_errors[status], (int) optlen, opt);
+		     get_status_message(status), (int) optlen, opt);
 		config->errors = TRUE;
 	}
 
@@ -1808,7 +1775,7 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 	return OK;
 }
 
-static enum option_code
+static enum status_code
 load_option_file(const char *path)
 {
 	struct config_state config = { path, 0, FALSE };
@@ -1817,24 +1784,24 @@ load_option_file(const char *path)
 
 	/* Do not read configuration from stdin if set to "" */
 	if (!path || !strlen(path))
-		return OPT_OK;
+		return SUCCESS;
 
 	if (!prefixcmp(path, "~/")) {
 		const char *home = getenv("HOME");
 
 		if (!home || !string_format(buf, "%s/%s", home, path + 2))
-			return OPT_ERR_HOME_UNRESOLVABLE;
+			return ERROR_HOME_UNRESOLVABLE;
 		path = buf;
 	}
 
 	/* It's OK that the file doesn't exist. */
 	if (!io_open(&io, "%s", path))
-		return OPT_ERR_FILE_DOES_NOT_EXIST;
+		return ERROR_FILE_DOES_NOT_EXIST;
 
 	if (io_load(&io, " \t", read_option, &config) == ERR ||
 	    config.errors == TRUE)
 		warn("Errors while loading %s.", path);
-	return OPT_OK;
+	return SUCCESS;
 }
 
 static int
@@ -4791,7 +4758,7 @@ parse_chunk_lineno(int *lineno, const char *chunk, int marker)
 {
 	return prefixcmp(chunk, "@@ -") ||
 	       !(chunk = strchr(chunk, marker)) ||
-	       parse_int(lineno, chunk + 1, 0, 9999999) != OPT_OK;
+	       parse_int(lineno, chunk + 1, 0, 9999999) != SUCCESS;
 }
 
 static enum request
@@ -8461,19 +8428,19 @@ set_remote_branch(const char *name, const char *value, size_t valuelen)
 }
 
 static void
-set_repo_config_option(char *name, char *value, enum option_code (*cmd)(int, const char **))
+set_repo_config_option(char *name, char *value, enum status_code (*cmd)(int, const char **))
 {
 	const char *argv[SIZEOF_ARG] = { name, "=" };
 	int argc = 1 + (cmd == option_set_command);
-	enum option_code error;
+	enum status_code error;
 
 	if (!argv_from_string(argv, &argc, value))
-		error = OPT_ERR_TOO_MANY_OPTION_ARGUMENTS;
+		error = ERROR_TOO_MANY_OPTION_ARGUMENTS;
 	else
 		error = cmd(argc, argv);
 
-	if (error != OPT_OK)
-		warn("Option 'tig.%s': %s", name, option_errors[error]);
+	if (error != SUCCESS)
+		warn("Option 'tig.%s': %s", name, get_status_message(error));
 }
 
 static void
@@ -8569,7 +8536,7 @@ set_git_color_option(const char *name, char *value)
 static void
 set_encoding(struct encoding **encoding_ref, const char *arg, bool priority)
 {
-	if (parse_encoding(encoding_ref, arg, priority) == OPT_OK)
+	if (parse_encoding(encoding_ref, arg, priority) == SUCCESS)
 		encoding_arg[0] = 0;
 }
 
@@ -8931,7 +8898,7 @@ run_prompt_command(struct view *view, char *cmd) {
 	if (cmd && string_isnumber(cmd)) {
 		int lineno = view->pos.lineno + 1;
 
-		if (parse_int(&lineno, cmd, 1, view->lines + 1) == OPT_OK) {
+		if (parse_int(&lineno, cmd, 1, view->lines + 1) == SUCCESS) {
 			select_view_line(view, lineno - 1);
 			report_clear();
 		} else {
@@ -8977,7 +8944,7 @@ run_prompt_command(struct view *view, char *cmd) {
 		char *args = strchr(cmd, ' ');
 		if (args) {
 			*args++ = 0;
-			if (set_option(cmd, args) == OPT_OK) {
+			if (set_option(cmd, args) == SUCCESS) {
 				request = !view->unrefreshable ? REQ_REFRESH : REQ_SCREEN_REDRAW;
 				if (!strcmp(cmd, "color"))
 					init_colors();
