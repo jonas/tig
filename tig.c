@@ -279,26 +279,6 @@ mkmode(mode_t mode)
 		return "----------";
 }
 
-static const char *
-get_temp_dir(void)
-{
-	static const char *tmp;
-
-	if (tmp)
-		return tmp;
-
-	if (!tmp)
-		tmp = getenv("TMPDIR");
-	if (!tmp)
-		tmp = getenv("TEMP");
-	if (!tmp)
-		tmp = getenv("TMP");
-	if (!tmp)
-		tmp = "/tmp";
-
-	return tmp;
-}
-
 #define FILENAME_ENUM(_) \
 	_(FILENAME, NO), \
 	_(FILENAME, ALWAYS), \

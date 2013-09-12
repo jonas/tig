@@ -98,6 +98,7 @@ int io_load(struct io *io, const char *separators,
 int io_run_load(const char **argv, const char *separators,
 		io_read_fn read_property, void *data);
 
-#endif
+const char *get_temp_dir(void);
 
+#endif
 /* vim: set ts=8 sw=8 noexpandtab: */

@@ -696,4 +696,24 @@ io_run_load(const char **argv, const char *separators,
 	return io_load(&io, separators, read_property, data);
 }
 
+const char *
+get_temp_dir(void)
+{
+	static const char *tmp;
+
+	if (tmp)
+		return tmp;
+
+	if (!tmp)
+		tmp = getenv("TMPDIR");
+	if (!tmp)
+		tmp = getenv("TEMP");
+	if (!tmp)
+		tmp = getenv("TMP");
+	if (!tmp)
+		tmp = "/tmp";
+
+	return tmp;
+}
+
 /* vim: set ts=8 sw=8 noexpandtab: */
