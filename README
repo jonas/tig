@@ -11,14 +11,14 @@ commands.
 Resources
 ---------
 
- - Homepage:	http://jonas.nitro.dk/tig/[]
- - Manual:	http://jonas.nitro.dk/tig/manual.html[]
- - Tarballs:	http://jonas.nitro.dk/tig/releases/[]
- - Git URL:	git://github.com/jonas/tig.git (master) or
-		git://repo.or.cz/tig.git (mirror)
- - Gitweb:	http://repo.or.cz/w/tig.git[]
- - Q&A:		http://stackoverflow.com/questions/tagged/tig[]
+ - Homepage:	http://jonas.nitro.dk/tig/
+ - Manual:	http://jonas.nitro.dk/tig/manual.html
+ - Tarballs:	http://jonas.nitro.dk/tig/releases/
+ - Git URL:	[git://github.com/jonas/tig.git](git://github.com/jonas/tig.git) or
+		[git://repo.or.cz/tig.git](git://repo.or.cz/tig.git) (mirror)
+ - Gitweb:	http://repo.or.cz/w/tig.git
+ - Q&A:		http://stackoverflow.com/questions/tagged/tig
 
 Installation
 ------------
-For installation instructions see the link:INSTALL.html[INSTALL] file.
+For installation instructions see the [INSTALL](https://github.com/jonas/tig/blob/master/INSTALL) file or the [web-based instructions](http://jonas.nitro.dk/tig/INSTALL.html).
