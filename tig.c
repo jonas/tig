@@ -3984,6 +3984,45 @@ update_diff_context(enum request request)
 	return diff_context != opt_diff_context;
 }
 
+DEFINE_ALLOCATOR(realloc_paths, const char *, 256)
+
+/* Small cache to reduce memory consumption. It uses binary search to
+ * lookup or find place to position new entries. No entries are ever
+ * freed. */
+static const char *
+get_path(const char *path)
+{
+	static const char **paths;
+	static size_t paths_size;
+	int from = 0, to = paths_size - 1;
+	char *entry;
+
+	while (from <= to) {
+		size_t pos = (to + from) / 2;
+		int cmp = strcmp(path, paths[pos]);
+
+		if (!cmp)
+			return paths[pos];
+
+		if (cmp < 0)
+			to = pos - 1;
+		else
+			from = pos + 1;
+	}
+
+	if (!realloc_paths(&paths, paths_size, 1))
+		return NULL;
+	entry = strdup(path);
+	if (!entry)
+		return NULL;
+
+	memmove(paths + from + 1, paths + from, (paths_size - from) * sizeof(*paths));
+	paths[from] = entry;
+	paths_size++;
+
+	return entry;
+}
+
 DEFINE_ALLOCATOR(realloc_authors, struct ident *, 256)
 
 /* Small author cache to reduce memory consumption. It uses binary
@@ -4184,9 +4223,9 @@ struct blame_commit {
 	char title[128];		/* First line of the commit message. */
 	const struct ident *author;	/* Author of the commit. */
 	struct time time;		/* Date from the author ident. */
-	char filename[128];		/* Name of file. */
+	const char *filename;		/* Name of file. */
 	char parent_id[SIZEOF_REV];	/* Parent/previous SHA1 ID. */
-	char parent_filename[128];	/* Parent/previous name of file. */
+	const char *parent_filename;	/* Parent/previous name of file. */
 };
 
 struct blame_header {
@@ -4263,10 +4302,12 @@ parse_blame_info(struct blame_commit *commit, char *line)
 			return FALSE;
 		string_copy_rev(commit->parent_id, line);
 		line += SIZEOF_REV;
-		string_ncopy(commit->parent_filename, line, strlen(line));
+		commit->parent_filename = get_path(line);
+		if (!commit->parent_filename)
+			return TRUE;
 
 	} else if (match_blame_header("filename ", &line)) {
-		string_ncopy(commit->filename, line, strlen(line));
+		commit->filename = get_path(line);
 		return TRUE;
 	}
 
@@ -4790,7 +4831,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 			header = NULL;
 
 		} else if (parse_blame_info(commit, buf)) {
-			ok = TRUE;
+			ok = commit->filename != NULL;
 			break;
 		}
 	}
@@ -5760,7 +5801,7 @@ static struct view_ops blob_ops = {
 
 struct blame_history_state {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
-	char filename[128];		/* Name of file. */
+	const char *filename;		/* Name of file. */
 };
 
 static struct view_history blame_view_history = { sizeof(struct blame_history_state) };
@@ -5864,7 +5905,9 @@ blame_open(struct view *view, enum open_flags flags)
 	if (!(flags & OPEN_RELOAD))
 		reset_view_history(&blame_view_history);
 	string_copy_rev(state->history_state.id, opt_ref);
-	string_copy_rev(state->history_state.filename, opt_file);
+	state->history_state.filename = get_path(opt_file);
+	if (!state->history_state.filename)
+		return FALSE;
 	string_format(view->vid, "%s", opt_file);
 	string_format(view->ref, "%s ...", opt_file);
 
@@ -5985,6 +6028,8 @@ blame_read(struct view *view, char *line)
 			      view->lines ? state->blamed * 100 / view->lines : 0);
 
 	} else if (parse_blame_info(state->commit, line)) {
+		if (!state->commit->filename)
+			return FALSE;
 		state->commit = NULL;
 	}
 
