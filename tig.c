@@ -8719,9 +8719,10 @@ static int
 load_repo_info(void)
 {
 	const char *rev_parse_argv[] = {
-		"git", "rev-parse", REPO_INFO_RESOLVED_HEAD, REPO_INFO_SYMBOLIC_HEAD, "HEAD",
-			REPO_INFO_GIT_DIR, REPO_INFO_WORK_TREE, REPO_INFO_SHOW_CDUP,
-			REPO_INFO_SHOW_PREFIX, NULL
+		"git", "rev-parse", REPO_INFO_GIT_DIR, REPO_INFO_WORK_TREE,
+			REPO_INFO_SHOW_CDUP, REPO_INFO_SHOW_PREFIX, \
+			REPO_INFO_RESOLVED_HEAD, REPO_INFO_SYMBOLIC_HEAD, "HEAD",
+			NULL
 	};
 	struct repo_info_state state = { rev_parse_argv + 2 };
 
