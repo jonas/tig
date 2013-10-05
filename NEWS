@@ -6,6 +6,8 @@ master
 
 Improvements:
 
+ - Add 'back' action bound to '<' by default, which will return the blame view
+   to the previous revision and line after moving e.g. to the parent. (GH #124)
  - User-defined commands no longer needs to always be prefixed with '!'.
  - Add auto-configuration for Cygwin (OS name: CYGWIN_NT-6.1). (GH #92)
  - Add toggling for display files of untracked directories.

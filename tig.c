@@ -327,6 +327,7 @@ DEFINE_ENUM(commit_order, COMMIT_ORDER_ENUM);
 	\
 	REQ_GROUP("View manipulation") \
 	REQ_(ENTER,		"Enter current line and scroll"), \
+	REQ_(BACK,		"Go back to the previous view state"), \
 	REQ_(NEXT,		"Move to next"), \
 	REQ_(PREVIOUS,		"Move to previous"), \
 	REQ_(PARENT,		"Move to parent"), \
@@ -900,6 +901,7 @@ static struct keybinding default_keybindings[] = {
 	{ KEY_F(5),	REQ_REFRESH },
 	{ 'O',		REQ_MAXIMIZE },
 	{ ',',		REQ_PARENT },
+	{ '<',		REQ_BACK },
 
 	/* View specific */
 	{ 'u',		REQ_STATUS_UPDATE },
@@ -3803,7 +3805,15 @@ view_driver(struct view *view, enum request request)
 		break;
 	}
 	case REQ_REFRESH:
-		report("Refreshing is not yet supported for the %s view", view->name);
+		report("Refreshing is not supported by the %s view", view->name);
+		break;
+
+	case REQ_PARENT:
+		report("Moving to parent is not supported by the the %s view", view->name);
+		break;
+
+	case REQ_BACK:
+		report("Going back is not supported for by %s view", view->name);
 		break;
 
 	case REQ_MAXIMIZE:
@@ -5533,6 +5543,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 		return REQ_NONE;
 
 	case REQ_PARENT:
+	case REQ_BACK:
 		if (!*opt_path) {
 			/* quit view if at top of tree */
 			return REQ_VIEW_CLOSE;
@@ -5747,6 +5758,13 @@ static struct view_ops blob_ops = {
  *     reading output from git-blame.
  */
 
+struct blame_history_state {
+	char id[SIZEOF_REV];		/* SHA1 ID. */
+	char filename[128];		/* Name of file. */
+};
+
+static struct view_history blame_view_history = { sizeof(struct blame_history_state) };
+
 struct blame {
 	struct blame_commit *commit;
 	unsigned long lineno;
@@ -5758,6 +5776,10 @@ struct blame_state {
 	int blamed;
 	bool done_reading;
 	bool auto_filename_display;
+	/* The history state for the current view is cached in the view
+	 * state so it always matches what was used to load the current blame
+	 * view. */
+	struct blame_history_state history_state;
 };
 
 static bool
@@ -5793,6 +5815,7 @@ blame_detect_filename_display(struct view *view)
 static bool
 blame_open(struct view *view, enum open_flags flags)
 {
+	struct blame_state *state = view->private;
 	const char *file_argv[] = { opt_cdup, opt_file , NULL };
 	char path[SIZEOF_STR];
 	size_t i;
@@ -5838,6 +5861,10 @@ blame_open(struct view *view, enum open_flags flags)
 			free(blame->commit);
 	}
 
+	if (!(flags & OPEN_RELOAD))
+		reset_view_history(&blame_view_history);
+	string_copy_rev(state->history_state.id, opt_ref);
+	string_copy_rev(state->history_state.filename, opt_file);
 	string_format(view->vid, "%s", opt_file);
 	string_format(view->ref, "%s ...", opt_file);
 
@@ -6065,6 +6092,54 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 	io_done(&io);
 }
 
+static void
+blame_go_forward(struct view *view, struct blame *blame, bool parent)
+{
+	struct blame_state *state = view->private;
+	struct blame_history_state *history_state = &state->history_state;
+	struct blame_commit *commit = blame->commit;
+	const char *id = parent ? commit->parent_id : commit->id;
+	const char *filename = parent ? commit->parent_filename : commit->filename;
+
+	if (!*id && parent) {
+		report("The selected commit has no parents");
+		return;
+	}
+
+	if (!strcmp(history_state->id, id) && !strcmp(history_state->filename, filename)) {
+		report("The selected commit is already displayed");
+		return;
+	}
+
+	if (!push_view_history_state(&blame_view_history, &view->pos, history_state)) {
+		report("Failed to save current view state");
+		return;
+	}
+
+	string_ncopy(opt_ref, id, sizeof(commit->id));
+	string_ncopy(opt_file, filename, strlen(filename));
+	if (parent)
+		setup_blame_parent_line(view, blame);
+	opt_goto_line = blame->lineno;
+	reload_view(view);
+}
+
+static void
+blame_go_back(struct view *view)
+{
+	struct blame_history_state history_state;
+
+	if (!pop_view_history_state(&blame_view_history, &view->pos, &history_state)) {
+		report("Already at start of history");
+		return;
+	}
+
+	string_copy(opt_ref, history_state.id);
+	string_copy(opt_file, history_state.filename);
+	opt_goto_line = view->pos.lineno;
+	reload_view(view);
+}
+
 static enum request
 blame_request(struct view *view, enum request request, struct line *line)
 {
@@ -6073,27 +6148,14 @@ blame_request(struct view *view, enum request request, struct line *line)
 
 	switch (request) {
 	case REQ_VIEW_BLAME:
-		if (check_blame_commit(blame, TRUE)) {
-			string_copy(opt_ref, blame->commit->id);
-			string_copy(opt_file, blame->commit->filename);
-			if (blame->lineno)
-				view->pos.lineno = blame->lineno;
-			reload_view(view);
-		}
-		break;
-
 	case REQ_PARENT:
 		if (!check_blame_commit(blame, TRUE))
 			break;
-		if (!*blame->commit->parent_id) {
-			report("The selected commit has no parents");
-		} else {
-			string_copy_rev(opt_ref, blame->commit->parent_id);
-			string_copy(opt_file, blame->commit->parent_filename);
-			setup_blame_parent_line(view, blame);
-			opt_goto_line = blame->lineno;
-			reload_view(view);
-		}
+		blame_go_forward(view, blame, request == REQ_PARENT);
+		break;
+
+	case REQ_BACK:
+		blame_go_back(view);
 		break;
 
 	case REQ_ENTER:
