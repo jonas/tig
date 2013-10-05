@@ -4094,6 +4094,78 @@ find_line_by_type(struct view *view, struct line *line, enum line_type type, int
 	find_line_by_type(view, line, type, 1)
 
 /*
+ * View history
+ */
+
+struct view_state {
+	struct view_state *prev;	/* Entry below this in the stack */
+	struct position position;	/* View position to restore */
+	void *data;			/* View specific state */
+};
+
+struct view_history {
+	size_t state_alloc;
+	struct view_state *stack;
+	struct position position;
+};
+
+static bool
+view_history_is_empty(struct view_history *history)
+{
+	return !history->stack;
+}
+
+static struct view_state *
+push_view_history_state(struct view_history *history, struct position *position, void *data)
+{
+	struct view_state *state = history->stack;
+
+	if (state && data && history->state_alloc &&
+	    !memcmp(state->data, data, history->state_alloc))
+		return NULL;
+
+	state = calloc(1, sizeof(*state) + history->state_alloc);
+	if (!state)
+		return NULL;
+
+	state->prev = history->stack;
+	history->stack = state;
+	clear_position(&history->position);
+	state->position = *position;
+	state->data = &state[1];
+	if (data && history->state_alloc)
+		memcpy(state->data, data, history->state_alloc);
+	return state;
+}
+
+static bool
+pop_view_history_state(struct view_history *history, struct position *position, void *data)
+{
+	struct view_state *state = history->stack;
+
+	if (view_history_is_empty(history))
+		return FALSE;
+
+	history->position = state->position;
+	history->stack = state->prev;
+
+	if (data && history->state_alloc)
+		memcpy(data, state->data, history->state_alloc);
+	if (position)
+		*position = state->position;
+
+	free(state);
+	return TRUE;
+}
+
+static void
+reset_view_history(struct view_history *history)
+{
+	while (pop_view_history_state(history, NULL, NULL))
+		;
+}
+
+/*
  * Blame
  */
 
@@ -5079,48 +5151,34 @@ static struct view_ops help_ops = {
  * Tree backend
  */
 
-struct tree_stack_entry {
-	struct tree_stack_entry *prev;	/* Entry below this in the stack */
-	unsigned long lineno;		/* Line number to restore */
-	char *name;			/* Position of name in opt_path */
-};
-
 /* The top of the path stack. */
-static struct tree_stack_entry *tree_stack = NULL;
-unsigned long tree_lineno = 0;
+static struct view_history tree_view_history = { sizeof(char *) };
 
 static void
-pop_tree_stack_entry(void)
+pop_tree_stack_entry(struct position *position)
 {
-	struct tree_stack_entry *entry = tree_stack;
+	char *path_position = NULL;
 
-	tree_lineno = entry->lineno;
-	entry->name[0] = 0;
-	tree_stack = entry->prev;
-	free(entry);
+	pop_view_history_state(&tree_view_history, position, &path_position);
+	path_position[0] = 0;
 }
 
 static void
-push_tree_stack_entry(const char *name, unsigned long lineno)
+push_tree_stack_entry(const char *name, struct position *position)
 {
-	struct tree_stack_entry *entry = calloc(1, sizeof(*entry));
 	size_t pathlen = strlen(opt_path);
+	char *path_position = opt_path + pathlen;
+	struct view_state *state = push_view_history_state(&tree_view_history, position, &path_position);
 
-	if (!entry)
+	if (!state)
 		return;
 
-	entry->prev = tree_stack;
-	entry->name = opt_path + pathlen;
-	tree_stack = entry;
-
 	if (!string_format_from(opt_path, &pathlen, "%s/", name)) {
-		pop_tree_stack_entry();
+		pop_tree_stack_entry(NULL);
 		return;
 	}
 
-	/* Move the current line to the first tree entry. */
-	tree_lineno = 1;
-	entry->lineno = lineno;
+	clear_position(position);
 }
 
 /* Parse output from git-ls-tree(1):
@@ -5378,13 +5436,9 @@ tree_read(struct view *view, char *text)
 		return TRUE;
 	}
 
-	if (tree_lineno <= view->pos.lineno)
-		tree_lineno = view->custom_lines;
-
-	if (tree_lineno > view->pos.lineno) {
-		view->pos.lineno = tree_lineno;
-		tree_lineno = 0;
-	}
+	/* Move the current line to the first tree entry. */
+	if (!check_position(&view->prev_pos) && !check_position(&view->pos))
+		goto_view_line(view, 0, 1);
 
 	return TRUE;
 }
@@ -5495,20 +5549,20 @@ tree_request(struct view *view, enum request request, struct line *line)
 	}
 
 	/* Cleanup the stack if the tree view is at a different tree. */
-	while (!*opt_path && tree_stack)
-		pop_tree_stack_entry();
+	if (!*opt_path)
+		reset_view_history(&tree_view_history);
 
 	switch (line->type) {
 	case LINE_TREE_DIR:
 		/* Depending on whether it is a subdirectory or parent link
 		 * mangle the path buffer. */
 		if (line == &view->line[1] && *opt_path) {
-			pop_tree_stack_entry();
+			pop_tree_stack_entry(&view->pos);
 
 		} else {
 			const char *basename = tree_path(line);
 
-			push_tree_stack_entry(basename, view->pos.lineno);
+			push_tree_stack_entry(basename, &view->pos);
 		}
 
 		/* Trees and subtrees share the same ID, so they are not not
@@ -5527,8 +5581,6 @@ tree_request(struct view *view, enum request request, struct line *line)
 	}
 
 	open_view(view, request, flags);
-	if (request == REQ_VIEW_TREE)
-		view->pos.lineno = tree_lineno;
 
 	return REQ_NONE;
 }
@@ -5591,7 +5643,7 @@ tree_open(struct view *view, enum open_flags flags)
 
 			if (end)
 				*end = 0;
-			push_tree_stack_entry(pos, 0);
+			push_tree_stack_entry(pos, &view->pos);
 			pos = end;
 			if (end) {
 				*end = '/';
