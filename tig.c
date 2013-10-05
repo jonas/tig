@@ -6135,7 +6135,7 @@ blame_go_back(struct view *view)
 	}
 
 	string_copy(opt_ref, history_state.id);
-	string_copy(opt_file, history_state.filename);
+	string_ncopy(opt_file, history_state.filename, strlen(history_state.filename));
 	opt_goto_line = view->pos.lineno;
 	reload_view(view);
 }
