@@ -102,6 +102,23 @@ struct ref_opt {
 	const char *head;
 };
 
+static void
+done_ref_lists(void)
+{
+	int i;
+
+	for (i = 0; i < ref_lists_size; i++) {
+		struct ref_list *list = ref_lists[i];
+
+		free(list->refs);
+		free(list);
+	}
+
+	free(ref_lists);
+	ref_lists = NULL;
+	ref_lists_size = 0;
+}
+
 static int
 add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref_opt *opt)
 {
@@ -229,23 +246,14 @@ reload_refs(const char *git_dir, const char *remote_name, char *head, size_t hea
 	for (i = 0; i < refs_size; i++)
 		refs[i]->valid = 0;
 
+	done_ref_lists();
+
 	if (io_run_load(ls_remote_argv, "\t", read_ref, &opt) == ERR)
 		return ERR;
 
 	for (i = 0; i < refs_size; i++)
 		if (!refs[i]->valid)
 			refs[i]->id[0] = 0;
-
-	/* Update the ref lists to reflect changes. */
-	for (i = 0; i < ref_lists_size; i++) {
-		struct ref_list *list = ref_lists[i];
-		size_t old, new;
-
-		for (old = new = 0; old < list->size; old++)
-			if (!strcmp(list->id, list->refs[old]->id))
-				list->refs[new++] = list->refs[old];
-		list->size = new;
-	}
 
 	qsort(refs, refs_size, sizeof(*refs), compare_refs);
 

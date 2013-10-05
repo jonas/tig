@@ -20,6 +20,7 @@ Bug fixes:
  - Pass --no-color after user defined arguments to ensure that colors do not
    break the output parsing. (GH #191)
  - Close stdin when pager mode is not supported.
+ - Show newly created branches in the main view. (GH #196)
 
 tig-1.2.1
 ---------
