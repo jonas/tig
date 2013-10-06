@@ -3392,7 +3392,7 @@ static struct line *
 add_line_at(struct view *view, unsigned long pos, const void *data, enum line_type type, size_t data_size, bool custom)
 {
 	struct line *line;
-	unsigned long lineno = view->lines - view->custom_lines;
+	unsigned long lineno;
 
 	if (!realloc_lines(&view->line, view->lines, 1))
 		return NULL;
@@ -3421,6 +3421,7 @@ add_line_at(struct view *view, unsigned long pos, const void *data, enum line_ty
 		}
 	} else {
 		line = &view->line[view->lines++];
+		lineno = view->lines - view->custom_lines;
 	}
 
 	memset(line, 0, sizeof(*line));
