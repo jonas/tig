@@ -4899,6 +4899,8 @@ parse_ulong(const char **pos_ptr, unsigned long *value, const char *skip)
 static bool
 parse_chunk_header(struct chunk_header *header, const char *line)
 {
+	memset(header, 0, sizeof(*header));
+
 	if (prefixcmp(line, "@@ -"))
 		return FALSE;
 
@@ -4945,10 +4947,13 @@ parse_chunk_lineno(unsigned long *lineno, const char *chunk, int marker)
 {
 	struct chunk_header chunk_header;
 
-	if (!parse_chunk_header(&chunk_header, chunk))
-		return 0;
+	*lineno = 0;
 
-	return marker == '-' ? chunk_header.old.position : chunk_header.new.position;
+	if (!parse_chunk_header(&chunk_header, chunk))
+		return FALSE;
+
+	*lineno = marker == '-' ? chunk_header.old.position : chunk_header.new.position;
+	return TRUE;
 }
 
 static enum request
@@ -4985,7 +4990,7 @@ diff_trace_origin(struct view *view, struct line *line)
 
 	chunk_data = chunk->data;
 
-	if (parse_chunk_lineno(&lineno, chunk_data, chunk_marker)) {
+	if (!parse_chunk_lineno(&lineno, chunk_data, chunk_marker)) {
 		report("Failed to read the line number");
 		return REQ_NONE;
 	}
