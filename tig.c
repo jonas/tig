@@ -4843,12 +4843,56 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	return ok;
 }
 
+struct chunk_header_position {
+	unsigned long position;
+	unsigned long lines;
+};
+
+struct chunk_header {
+	struct chunk_header_position old;
+	struct chunk_header_position new;
+};
+
+static bool
+parse_ulong(const char **pos_ptr, unsigned long *value, const char *skip)
+{
+	const char *start = *pos_ptr;
+	char *end;
+
+	if (!isdigit(*start))
+		return 0;
+
+	*value = strtoul(start, &end, 10);
+	if (end == start)
+		return FALSE;
+
+	start = end;
+	while (skip && *start && strchr(skip, *start))
+		start++;
+	*pos_ptr = start;
+	return TRUE;
+}
+
+static bool
+parse_chunk_header(struct chunk_header *header, const char *line)
+{
+	if (prefixcmp(line, "@@ -"))
+		return FALSE;
+
+	line += STRING_SIZE("@@ -");
+
+	return  parse_ulong(&line, &header->old.position, ",") &&
+		parse_ulong(&line, &header->old.lines, " +") &&
+		parse_ulong(&line, &header->new.position, ",") &&
+		parse_ulong(&line, &header->new.lines, NULL);
+}
+
 static unsigned int
 diff_get_lineno(struct view *view, struct line *line)
 {
 	const struct line *header, *chunk;
-	const char *data;
 	unsigned int lineno;
+	struct chunk_header chunk_header;
 
 	/* Verify that we are after a diff header and one of its chunks */
 	header = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
@@ -4861,11 +4905,10 @@ diff_get_lineno(struct view *view, struct line *line)
 	 * following line, in the new version of the file. We increment this
 	 * number for each non-deletion line, until the given line position.
 	 */
-	data = strchr(chunk->data, '+');
-	if (!data)
+	if (!parse_chunk_header(&chunk_header, chunk->data))
 		return 0;
 
-	lineno = atoi(data);
+	lineno = chunk_header.old.position;
 	chunk++;
 	while (chunk++ < line)
 		if (chunk->type != LINE_DIFF_DEL)
@@ -4875,11 +4918,14 @@ diff_get_lineno(struct view *view, struct line *line)
 }
 
 static bool
-parse_chunk_lineno(int *lineno, const char *chunk, int marker)
+parse_chunk_lineno(unsigned long *lineno, const char *chunk, int marker)
 {
-	return prefixcmp(chunk, "@@ -") ||
-	       !(chunk = strchr(chunk, marker)) ||
-	       parse_int(lineno, chunk + 1, 0, 9999999) != SUCCESS;
+	struct chunk_header chunk_header;
+
+	if (!parse_chunk_header(&chunk_header, chunk))
+		return 0;
+
+	return marker == '-' ? chunk_header.old.position : chunk_header.new.position;
 }
 
 static enum request
@@ -4889,7 +4935,7 @@ diff_trace_origin(struct view *view, struct line *line)
 	struct line *chunk = find_prev_line_by_type(view, line, LINE_DIFF_CHUNK);
 	const char *chunk_data;
 	int chunk_marker = line->type == LINE_DIFF_DEL ? '-' : '+';
-	int lineno = 0;
+	unsigned long lineno = 0;
 	const char *file = NULL;
 	char ref[SIZEOF_REF];
 	struct blame_header header;
@@ -7317,7 +7363,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *line, bool
 		return FALSE;
 
 	if (line != NULL) {
-		int lineno = 0;
+		unsigned long lineno = 0;
 		struct line *context = chunk + 1;
 		const char *markers[] = {
 			line->type == LINE_DIFF_DEL ? ""   : ",0",
@@ -7336,7 +7382,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *line, bool
 		}
 
 		if (!stage_diff_write(&io, diff_hdr, chunk) ||
-		    !io_printf(&io, "@@ -%d%s +%d%s @@\n",
+		    !io_printf(&io, "@@ -%lu%s +%lu%s @@\n",
 			       lineno, markers[0], lineno, markers[1]) ||
 		    !stage_diff_write(&io, line, line + 1)) {
 			chunk = NULL;
