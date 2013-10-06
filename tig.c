@@ -4933,7 +4933,7 @@ diff_get_lineno(struct view *view, struct line *line)
 	if (!parse_chunk_header(&chunk_header, chunk->data))
 		return 0;
 
-	lineno = chunk_header.old.position;
+	lineno = chunk_header.new.position;
 	chunk++;
 	while (chunk++ < line)
 		if (chunk->type != LINE_DIFF_DEL)
