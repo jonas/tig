@@ -6127,7 +6127,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 #define BLAME_COLOR(i) \
 	(blame_colors[(i) % ARRAY_SIZE(blame_colors)])
 
-	if (blame->commit && *blame->commit->filename) {
+	if (blame->commit && blame->commit->filename) {
 		id = blame->commit->id;
 		author = blame->commit->author;
 		filename = blame->commit->filename;
