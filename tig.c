@@ -343,6 +343,7 @@ DEFINE_ENUM(commit_order, COMMIT_ORDER_ENUM);
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
 	REQ_(STAGE_UPDATE_LINE,	"Update single line"), \
 	REQ_(STAGE_NEXT,	"Find next chunk to stage"), \
+	REQ_(STAGE_SPLIT_CHUNK,	"Split the current chunk"), \
 	REQ_(DIFF_CONTEXT_DOWN,	"Decrease the diff context"), \
 	REQ_(DIFF_CONTEXT_UP,	"Increase the diff context"), \
 	\
@@ -909,6 +910,7 @@ static struct keybinding default_keybindings[] = {
 	{ 'M',		REQ_STATUS_MERGE },
 	{ '1',		REQ_STAGE_UPDATE_LINE },
 	{ '@',		REQ_STAGE_NEXT },
+	{ '\\',		REQ_STAGE_SPLIT_CHUNK },
 	{ '[',		REQ_DIFF_CONTEXT_DOWN },
 	{ ']',		REQ_DIFF_CONTEXT_UP },
 
@@ -3387,9 +3389,10 @@ update_view(struct view *view)
 DEFINE_ALLOCATOR(realloc_lines, struct line, 256)
 
 static struct line *
-add_line(struct view *view, const void *data, enum line_type type, size_t data_size, bool custom)
+add_line_at(struct view *view, unsigned long pos, const void *data, enum line_type type, size_t data_size, bool custom)
 {
 	struct line *line;
+	unsigned long lineno = view->lines - view->custom_lines;
 
 	if (!realloc_lines(&view->line, view->lines, 1))
 		return NULL;
@@ -3405,7 +3408,21 @@ add_line(struct view *view, const void *data, enum line_type type, size_t data_s
 		data = alloc_data;
 	}
 
-	line = &view->line[view->lines++];
+	if (pos < view->lines) {
+		view->lines++;
+		line = view->line + pos;
+		if (!custom)
+			lineno = line->lineno;
+
+		memmove(line + 1, line, (view->lines - pos) * sizeof(*view->line));
+		while (pos < view->lines) {
+			view->line[pos].lineno++;
+			view->line[pos++].dirty = 1;
+		}
+	} else {
+		line = &view->line[view->lines++];
+	}
+
 	memset(line, 0, sizeof(*line));
 	line->type = type;
 	line->data = (void *) data;
@@ -3414,9 +3431,15 @@ add_line(struct view *view, const void *data, enum line_type type, size_t data_s
 	if (custom)
 		view->custom_lines++;
 	else
-		line->lineno = view->lines - view->custom_lines;
+		line->lineno = lineno;
 
 	return line;
+}
+
+static struct line *
+add_line(struct view *view, const void *data, enum line_type type, size_t data_size, bool custom)
+{
+	return add_line_at(view, view->lines, data, type, data_size, custom);
 }
 
 static struct line *
@@ -7488,6 +7511,102 @@ stage_next(struct view *view, struct line *line)
 	report("No next chunk found");
 }
 
+static struct line *
+stage_insert_chunk(struct view *view, struct chunk_header *header,
+		   struct line *from, struct line *to, struct line *last_unchanged_line)
+{
+	char buf[SIZEOF_STR];
+	char *chunk_line;
+	unsigned long from_lineno = last_unchanged_line - view->line;
+	unsigned long to_lineno = to - view->line;
+	unsigned long after_lineno = to_lineno;
+
+	if (!string_format(buf, "@@ -%lu,%lu +%lu,%lu @@",
+			header->old.position, header->old.lines,
+			header->new.position, header->new.lines))
+		return NULL;
+
+	chunk_line = strdup(buf);
+	if (!chunk_line)
+		return NULL;
+
+	free(from->data);
+	from->data = chunk_line;
+
+	if (!to)
+		return from;
+
+	if (!add_line_at(view, after_lineno++, buf, LINE_DIFF_CHUNK, strlen(buf) + 1, FALSE))
+		return NULL;
+
+	while (from_lineno < to_lineno) {
+		struct line *line = &view->line[from_lineno++];
+
+		if (!add_line_at(view, after_lineno++, line->data, line->type, strlen(line->data) + 1, FALSE))
+			return FALSE;
+	}
+
+	return view->line + after_lineno;
+}
+
+static void
+stage_split_chunk(struct view *view, struct line *chunk_start)
+{
+	struct chunk_header header;
+	struct line *last_changed_line = NULL, *last_unchanged_line = NULL, *pos;
+	int chunks = 0;
+
+	if (!chunk_start || !parse_chunk_header(&header, chunk_start->data)) {
+		report("Failed to parse chunk header");
+		return;
+	}
+
+	header.old.lines = header.new.lines = 0;
+
+	for (pos = chunk_start + 1; view_has_line(view, pos) && pos->type != LINE_DIFF_CHUNK; pos++) {
+		const char *chunk_line = pos->data;
+
+		if (*chunk_line == ' ') {
+			header.old.lines++;
+			header.new.lines++;
+			if (last_unchanged_line < last_changed_line)
+				last_unchanged_line = pos;
+			continue;
+		}
+
+		if (last_changed_line && last_changed_line < last_unchanged_line) {
+			unsigned long chunk_start_lineno = pos - view->line;
+			unsigned long diff = pos - last_unchanged_line;
+
+			pos = stage_insert_chunk(view, &header, chunk_start, pos, last_unchanged_line);
+
+			header.old.position += header.old.lines - diff;
+			header.new.position += header.new.lines - diff;
+			header.old.lines = header.new.lines = diff;
+
+			chunk_start = view->line + chunk_start_lineno;
+			last_changed_line = last_unchanged_line = NULL;
+			chunks++;
+		}
+
+		if (*chunk_line == '-') {
+			header.old.lines++;
+			last_changed_line = pos;
+		} else if (*chunk_line == '+') {
+			header.new.lines++;
+			last_changed_line = pos;
+		}
+	}
+
+	if (chunks && last_changed_line && last_changed_line < last_unchanged_line) {
+		stage_insert_chunk(view, &header, chunk_start, NULL, NULL);
+		redraw_view(view);
+		report("Split the chunk in %d", chunks + 1);
+	} else {
+		report("The chunk cannot be split");
+	}
+}
+
 static enum request
 stage_request(struct view *view, enum request request, struct line *line)
 {
@@ -7523,6 +7642,15 @@ stage_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		}
 		stage_next(view, line);
+		return REQ_NONE;
+
+	case REQ_STAGE_SPLIT_CHUNK:
+		if (stage_line_type == LINE_STAT_UNTRACKED ||
+		    !(line = find_prev_line_by_type(view, line, LINE_DIFF_CHUNK))) {
+			report("No chunks to split in sight");
+			return REQ_NONE;
+		}
+		stage_split_chunk(view, line);
 		return REQ_NONE;
 
 	case REQ_EDIT:

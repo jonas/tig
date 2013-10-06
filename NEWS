@@ -6,6 +6,8 @@ master
 
 Improvements:
 
+ - Add 'stage-split-chunk' action for splitting chunks in the stage view.
+   Bound to '\' by default. (GH #107)
  - Add 'back' action bound to '<' by default, which will return the blame view
    to the previous revision and line after moving e.g. to the parent. (GH #124)
  - User-defined commands no longer needs to always be prefixed with '!'.
