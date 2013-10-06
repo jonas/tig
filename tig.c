@@ -7563,8 +7563,11 @@ stage_split_chunk(struct view *view, struct line *chunk_start)
 
 	header.old.lines = header.new.lines = 0;
 
-	for (pos = chunk_start + 1; view_has_line(view, pos) && pos->type != LINE_DIFF_CHUNK; pos++) {
+	for (pos = chunk_start + 1; view_has_line(view, pos); pos++) {
 		const char *chunk_line = pos->data;
+
+		if (*chunk_line == '@' || *chunk_line == '\\')
+			break;
 
 		if (*chunk_line == ' ') {
 			header.old.lines++;
@@ -7598,7 +7601,7 @@ stage_split_chunk(struct view *view, struct line *chunk_start)
 		}
 	}
 
-	if (chunks && last_changed_line && last_changed_line < last_unchanged_line) {
+	if (chunks) {
 		stage_insert_chunk(view, &header, chunk_start, NULL, NULL);
 		redraw_view(view);
 		report("Split the chunk in %d", chunks + 1);
