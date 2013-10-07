@@ -16,8 +16,8 @@
 # GNU General Public License for more details.
 
 root="$(git rev-parse --show-cdup)"
-NEWS="${root}NEWS"
-README="${root}README"
+NEWS="${root}NEWS.adoc"
+README="${root}README.adoc"
 from="$(sed -n '7,/^tig-/p' < "$NEWS" | tail -n 1 | cut -d' ' -f 1)"
 to="${1-HEAD}"
 short=

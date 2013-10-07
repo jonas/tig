@@ -41,7 +41,7 @@ CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
 EXE	= tig
 TOOLS	= tools/test-graph
-TXTDOC	= doc/tig.1.adoc doc/tigrc.5.adoc doc/manual.adoc NEWS README INSTALL
+TXTDOC	= doc/tig.1.adoc doc/tigrc.5.adoc doc/manual.adoc NEWS.adoc README.adoc INSTALL.adoc
 MANDOC	= doc/tig.1 doc/tigrc.5 doc/tigmanual.7
 HTMLDOC = doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html INSTALL.html NEWS.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) doc/manual.html-chunked doc/manual.pdf
@@ -211,13 +211,13 @@ doc/manual.html: ASCIIDOC_FLAGS += -ainclude-manual-toc
 		*)	   ref="$$ref, $$line" ;; \
 		esac; done | sed 's/\[\[\(.*\)\]\]/\1/' > $@
 
-README.html: README doc/asciidoc.conf
+README.html: README.adoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -a readme $<
 
-INSTALL.html: INSTALL doc/asciidoc.conf
+INSTALL.html: INSTALL.adoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<
 
-NEWS.html: NEWS doc/asciidoc.conf
+NEWS.html: NEWS.adoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<
 
 doc/tigmanual.7: doc/manual.adoc

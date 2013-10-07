@@ -27,6 +27,21 @@ list or directly to the maintainer. Ensure that the word "tig" is in the
 subject. For other Tig related questions please use Stack Overflow:
 http://stackoverflow.com/questions/tagged/tig[].
 
-Installation
-------------
-For installation instructions see the link:INSTALL.html[INSTALL] file.
+Installation and News
+---------------------
+
+Information on how to install Tig are found in
+ifdef::version[]
+link:INSTALL.html[the installation instructions].
+endif::version[]
+ifndef::version[]
+link:INSTALL.adoc[the installation instructions].
+endif::version[]
+
+News about releases and changes are found in
+ifdef::version[]
+link:NEWS.html[the release notes].
+endif::version[]
+ifndef::version[]
+link:NEWS.adoc[the release notes].
+endif::version[]

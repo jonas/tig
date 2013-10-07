@@ -6,8 +6,9 @@ master
 
 Note to packagers:
 
+ - Rename README, INSTALL, and NEWS to end in '.adoc'.
  - BUGS file has been merged into README.
- - Rename (again) AsciiDoc files to end in '.adoc'.
+ - Rename (again) doc/ AsciiDoc files to end in '.adoc'.
 
 Improvements:
 

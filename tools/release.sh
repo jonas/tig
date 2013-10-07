@@ -22,6 +22,7 @@ VERSION="$1"
 
 TAG="tig-$VERSION"
 TITLE="$TAG\n$(echo "$TAG" | sed 's/./-/g')"
+NEWS="NEWS.adoc"
 
 # Require a clean repository.
 git update-index --refresh
@@ -34,14 +35,14 @@ if test -n "$VERSION"; then
 
 	# Update files which should reference the version.
 	sed -i "s/VERSION\s=\s[0-9]\+[.][0-9]\+/VERSION	= $VERSION/" Makefile	
-	perl -pi -e 's/^tig master.*/@@TITLE@@/ms' NEWS
-	perl -pi -e "s/^@@TITLE@@.*/$TITLE/" NEWS
+	perl -pi -e 's/^tig master.*/@@TITLE@@/ms' "$NEWS"
+	perl -pi -e "s/^@@TITLE@@.*/$TITLE/" "$NEWS"
 
 	# Check for typos.
 	make spell-check
 
 	# Last review.
-	$EDITOR NEWS
+	$EDITOR "$NEWS"
 
 	# Create release commit and tag.
 	git commit -a -m "$TAG"

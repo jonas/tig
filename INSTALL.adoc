@@ -27,8 +27,13 @@ can be installed from the 'release' branch using:
 
 	$ make install-release-doc
 
-Release notes documenting notable changes are available in the NEWS file. When
-upgrading, you are advised to read them before you install.
+Before upgrading, you are advised to read
+ifdef::version[]
+link:INSTALL.html[the release notes].
+endif::version[]
+ifndef::version[]
+link:INSTALL.adoc[the release notes].
+endif::version[]
 
 Installation using `configure`
 ------------------------------

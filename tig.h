@@ -76,7 +76,7 @@
 #  warning SysV or X/Open-compatible Curses installation is required.
 #  warning Will assume Curses is found in default include and library path.
 #  warning To fix any build issues please use autotools to configure Curses.
-#  warning See INSTALL file for instructions.
+#  warning See INSTALL.adoc file for instructions.
 #endif
 #  include <curses.h>
 #endif
