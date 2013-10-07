@@ -19,6 +19,14 @@ Resources
  - Gitweb:	http://repo.or.cz/w/tig.git[]
  - Q&A:		http://stackoverflow.com/questions/tagged/tig[]
 
+Bugs and Feature Requests
+-------------------------
+Bugs and feature requests can be reported using the issue tracker at
+https://github.com/jonas/tig/issues[] or by mail to either the Git mailing
+list or directly to the maintainer. Ensure that the word "tig" is in the
+subject. For other Tig related questions please use Stack Overflow:
+http://stackoverflow.com/questions/tagged/tig[].
+
 Installation
 ------------
 For installation instructions see the link:INSTALL.html[INSTALL] file.

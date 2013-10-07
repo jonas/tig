@@ -4,6 +4,10 @@ Release notes
 master
 ------
 
+Note to packagers:
+
+ - BUGS file has been merged into README.
+
 Improvements:
 
  - Add 'stage-split-chunk' action for splitting chunks in the stage view.

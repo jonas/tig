@@ -203,9 +203,12 @@ FILES
 	Git configuration files. Read on start-up with the help of
 	git-config(1).
 
-ifndef::version[]
-include::../BUGS[]
-endif::version[]
+BUGS
+----
+
+Please visit Tig's http://jonas.nitro.dk/tig[home page] or
+https://github.com/jonas/tig[main Git repository] for information about
+new releases and how to report bugs or feature request.
 
 COPYRIGHT
 ---------

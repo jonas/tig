@@ -577,7 +577,12 @@ accomplished using:
 $ tig --all --since=1.week -- Makefile
 -----------------------------------------------------------------------------
 
-include::../BUGS[]
+More Information
+----------------
+
+Please visit Tig's http://jonas.nitro.dk/tig[home page] or
+https://github.com/jonas/tig[main Git repository] for information about
+new releases and how to report bugs and feature requests.
 
 [[copy-right]]
 Copyright
