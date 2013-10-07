@@ -7,6 +7,7 @@ master
 Note to packagers:
 
  - BUGS file has been merged into README.
+ - Rename (again) AsciiDoc files to end in '.adoc'.
 
 Improvements:
 

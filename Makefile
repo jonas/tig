@@ -41,7 +41,7 @@ CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
 EXE	= tig
 TOOLS	= tools/test-graph
-TXTDOC	= doc/tig.1.asciidoc doc/tigrc.5.asciidoc doc/manual.asciidoc NEWS README INSTALL
+TXTDOC	= doc/tig.1.adoc doc/tigrc.5.adoc doc/manual.adoc NEWS README INSTALL
 MANDOC	= doc/tig.1 doc/tigrc.5 doc/tigmanual.7
 HTMLDOC = doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html INSTALL.html NEWS.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) doc/manual.html-chunked doc/manual.pdf
@@ -202,7 +202,7 @@ tig.spec: contrib/tig.spec.in
 
 doc/manual.html: doc/manual.toc
 doc/manual.html: ASCIIDOC_FLAGS += -ainclude-manual-toc
-%.toc: %.asciidoc
+%.toc: %.adoc
 	sed -n '/^\[\[/,/\(---\|~~~\)/p' < $< | while read line; do \
 		case "$$line" in \
 		"----"*)  echo ". <<$$ref>>"; ref= ;; \
@@ -220,27 +220,27 @@ INSTALL.html: INSTALL doc/asciidoc.conf
 NEWS.html: NEWS doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<
 
-doc/tigmanual.7: doc/manual.asciidoc
+doc/tigmanual.7: doc/manual.adoc
 
-%.1.html : %.1.asciidoc doc/asciidoc.conf
+%.1.html : %.1.adoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
 
-%.1.xml : %.1.asciidoc doc/asciidoc.conf
+%.1.xml : %.1.adoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
-%.5.html : %.5.asciidoc doc/asciidoc.conf
+%.5.html : %.5.adoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
 
-%.5.xml : %.5.asciidoc doc/asciidoc.conf
+%.5.xml : %.5.adoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
-%.7.xml : %.7.asciidoc doc/asciidoc.conf
+%.7.xml : %.7.adoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
-%.html : %.asciidoc doc/asciidoc.conf
+%.html : %.adoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -n $<
 
-%.xml : %.asciidoc doc/asciidoc.conf
+%.xml : %.adoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d article $<
 
 % : %.xml

@@ -17,4 +17,4 @@ tig <      [Git command output]
 DESCRIPTION
 -----------
 
-include::manual.asciidoc[]
+include::manual.adoc[]
