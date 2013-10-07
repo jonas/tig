@@ -1,5 +1,6 @@
 Installation instructions
 =========================
+:docext: adoc
 
 Download a tarball from http://jonas.nitro.dk/tig/releases[] or clone the Tig
 repository http://github.com/jonas/tig[git://github.com/jonas/tig.git].
@@ -27,13 +28,7 @@ can be installed from the 'release' branch using:
 
 	$ make install-release-doc
 
-Before upgrading, you are advised to read
-ifdef::version[]
-link:INSTALL.html[the release notes].
-endif::version[]
-ifndef::version[]
-link:INSTALL.adoc[the release notes].
-endif::version[]
+Before upgrading, you are advised to read link:NEWS.{docext}[the release notes].
 
 Installation using `configure`
 ------------------------------

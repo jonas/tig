@@ -1,5 +1,7 @@
 tig(1)
 ======
+:docext: adoc
+:sysconfdir: /etc
 
 NAME
 ----
@@ -167,7 +169,7 @@ ifdef::version[]
 See manpage:tigrc[5] for a full list.
 endif::version[]
 ifndef::version[]
-See link:tigrc.5.asciidoc[tigrc(5)] for a full list.
+See link:tigrc.5.{docext}[tigrc(5)] for a full list.
 endif::version[]
 
 TIGRC_USER::
@@ -184,7 +186,7 @@ TIG_LS_REMOTE::
 TIG_DIFF_OPTS::
 	The diff options to use in the diff view. The diff view uses
 	git-show(1) for formatting and always passes --patch-with-stat.  You
-	may also set the `diff-options` setting in your manpage:tigrc[5].
+	may also set the `diff-options` setting in the configuration file.
 
 TIG_TRACE::
 	Path for trace file where information about Git commands are logged.
@@ -221,18 +223,12 @@ the Free Software Foundation; either version 2 of the License, or
 
 SEE ALSO
 --------
-ifndef::version[]
-link:tigrc.5.asciidoc[tigrc(5)],
-link:manual.asciidoc[the Tig manual],
-endif::version[]
-ifdef::version[]
+ifndef::backend-docbook[]
+link:tigrc.5.{docext}[tigrc(5)],
+link:manual.{docext}[the Tig manual],
+endif::backend-docbook[]
 ifdef::backend-docbook[]
 manpage:tigrc[5],
 manpage:tigmanual[7],
 endif::backend-docbook[]
-ifdef::backend-xhtml11[]
-link:tigrc.5.html[tigrc(5)],
-link:manual.html[the Tig manual],
-endif::backend-xhtml11[]
-endif::version[]
 git(7)

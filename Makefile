@@ -237,6 +237,7 @@ doc/tigmanual.7: doc/manual.adoc
 %.7.xml : %.7.adoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
+%.html: ASCIIDOC_FLAGS += -adocext=html
 %.html : %.adoc doc/asciidoc.conf
 	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -n $<
 

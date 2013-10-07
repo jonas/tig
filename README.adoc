@@ -1,5 +1,6 @@
 Tig: text-mode interface for Git
 ================================
+:docext: adoc
 
 What is Tig?
 ------------
@@ -30,18 +31,8 @@ http://stackoverflow.com/questions/tagged/tig[].
 Installation and News
 ---------------------
 
-Information on how to install Tig are found in
-ifdef::version[]
-link:INSTALL.html[the installation instructions].
-endif::version[]
-ifndef::version[]
-link:INSTALL.adoc[the installation instructions].
-endif::version[]
+Information on how to build and install Tig are found in
+link:INSTALL.{docext}[the installation instructions].
 
-News about releases and changes are found in
-ifdef::version[]
-link:NEWS.html[the release notes].
-endif::version[]
-ifndef::version[]
-link:NEWS.adoc[the release notes].
-endif::version[]
+News about releases and latest features and bug fixes are found in
+link:NEWS.{docext}[the release notes].

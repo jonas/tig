@@ -1,5 +1,6 @@
 tigrc(5)
 ========
+:docext: adoc
 
 NAME
 ----
@@ -788,18 +789,12 @@ the Free Software Foundation; either version 2 of the License, or
 
 SEE ALSO
 --------
-ifndef::version[]
-link:tig.1.asciidoc[tig(1)],
-link:manual.asciidoc[the Tig manual],
-endif::version[]
-ifdef::version[]
+ifndef::backend-docbook[]
+link:tig.1.{docext}[tig(1)],
+link:manual.{docext}[the Tig manual],
+endif::backend-docbook[]
 ifdef::backend-docbook[]
 manpage:tig[1],
 manpage:tigmanual[7],
 endif::backend-docbook[]
-ifdef::backend-xhtml11[]
-link:tig.1.html[tig(1)],
-link:manual.html[the Tig manual],
-endif::backend-xhtml11[]
-endif::version[]
 git(7), git-config(1)
