@@ -239,9 +239,11 @@ The following variables can be set:
 
 	Whether to show line numbers. Can be toggled.
 
-'vertical-split' (bool)::
+'vertical-split' (mixed) ["auto" | bool]::
 
 	Whether to split the view horizontally or vertically.
+	"auto" (which is the default) means that it will depend on the window
+	dimensions. A boolean value forces the split orientation.
 
 'split-view-height' (mixed)::
 
