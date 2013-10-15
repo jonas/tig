@@ -476,6 +476,7 @@ static int opt_num_interval		= 5;
 static double opt_hscroll		= 0.50;
 static double opt_scale_split_view	= 2.0 / 3.0;
 static double opt_scale_vsplit_view	= 0.5;
+static bool opt_auto_vsplit		= TRUE;
 static bool opt_vsplit			= FALSE;
 static int opt_tab_size			= 8;
 static int opt_author_width		= AUTHOR_WIDTH;
@@ -1548,8 +1549,10 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "split-view-height"))
 		return parse_step(&opt_scale_split_view, argv[2]);
 
-	if (!strcmp(argv[0], "vertical-split"))
-		return parse_bool(&opt_vsplit, argv[2]);
+	if (!strcmp(argv[0], "vertical-split")) {
+		opt_auto_vsplit = strcmp(argv[2], "auto") == 0;
+		return opt_auto_vsplit ? SUCCESS : parse_bool(&opt_vsplit, argv[2]);
+	}
 
 	if (!strcmp(argv[0], "tab-size"))
 		return parse_int(&opt_tab_size, argv[2], 1, 1024);
@@ -2526,6 +2529,9 @@ resize_display(void)
 
 	/* Make room for the status window. */
 	base->height -= 1;
+
+	if (opt_auto_vsplit)
+		opt_vsplit = base->width * opt_scale_vsplit_view > base->height * 2;
 
 	if (view != base) {
 		if (opt_vsplit) {
