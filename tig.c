@@ -5842,6 +5842,11 @@ static enum request
 blob_request(struct view *view, enum request request, struct line *line)
 {
 	switch (request) {
+	case REQ_VIEW_BLAME:
+		if (view->parent)
+			string_copy(opt_ref, view->parent->vid);
+		return request;
+
 	case REQ_EDIT:
 		open_blob_editor(view->vid, NULL, (line - view->line) + 1);
 		return REQ_NONE;
