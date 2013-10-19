@@ -3411,8 +3411,7 @@ add_line_at(struct view *view, unsigned long pos, const void *data, enum line_ty
 	if (pos < view->lines) {
 		view->lines++;
 		line = view->line + pos;
-		if (!custom)
-			lineno = line->lineno;
+		lineno = line->lineno;
 
 		memmove(line + 1, line, (view->lines - pos) * sizeof(*view->line));
 		while (pos < view->lines) {
