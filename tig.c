@@ -75,7 +75,7 @@ static const char *
 mkdate(const struct time *time, enum date date)
 {
 	static char buf[DATE_WIDTH + 1];
-	static const struct enum_map reldate[] = {
+	static const struct enum_map_entry reldate[] = {
 		{ "second", 1,			60 * 2 },
 		{ "minute", 60,			60 * 60 * 2 },
 		{ "hour",   60 * 60,		60 * 60 * 24 * 2 },
@@ -1281,8 +1281,8 @@ add_builtin_run_requests(void)
  * User config file handling.
  */
 
-static const struct enum_map color_map[] = {
-#define COLOR_MAP(name) ENUM_MAP(#name, COLOR_##name)
+static const struct enum_map_entry color_map[] = {
+#define COLOR_MAP(name) ENUM_MAP_ENTRY(#name, COLOR_##name)
 	COLOR_MAP(DEFAULT),
 	COLOR_MAP(BLACK),
 	COLOR_MAP(BLUE),
@@ -1294,8 +1294,8 @@ static const struct enum_map color_map[] = {
 	COLOR_MAP(YELLOW),
 };
 
-static const struct enum_map attr_map[] = {
-#define ATTR_MAP(name) ENUM_MAP(#name, A_##name)
+static const struct enum_map_entry attr_map[] = {
+#define ATTR_MAP(name) ENUM_MAP_ENTRY(#name, A_##name)
 	ATTR_MAP(NORMAL),
 	ATTR_MAP(BLINK),
 	ATTR_MAP(BOLD),
@@ -1369,11 +1369,11 @@ option_color_command(int argc, const char *argv[])
 		info = get_line_info(argv[0]);
 	}
 	if (!info) {
-		static const struct enum_map obsolete[] = {
-			ENUM_MAP("main-delim",	LINE_DELIMITER),
-			ENUM_MAP("main-date",	LINE_DATE),
-			ENUM_MAP("main-author",	LINE_AUTHOR),
-			ENUM_MAP("blame-id",	LINE_ID),
+		static const struct enum_map_entry obsolete[] = {
+			ENUM_MAP_ENTRY("main-delim",	LINE_DELIMITER),
+			ENUM_MAP_ENTRY("main-date",	LINE_DATE),
+			ENUM_MAP_ENTRY("main-author",	LINE_AUTHOR),
+			ENUM_MAP_ENTRY("blame-id",	LINE_ID),
 		};
 		int index;
 
@@ -1418,11 +1418,11 @@ parse_enum_do(unsigned int *opt, const char *arg,
 
 	assert(map_size > 1);
 
-	if (map_enum_do(map, map_size, (int *) opt, arg))
+	if (map_enum_do(map->entries, map->size, (int *) opt, arg))
 		return SUCCESS;
 
 	parse_bool(&is_true, arg);
-	*opt = is_true ? map[1].value : map[0].value;
+	*opt = is_true ? map->entries[1].value : map->entries[0].value;
 	return SUCCESS;
 }
 
@@ -1651,10 +1651,10 @@ option_bind_command(int argc, const char *argv[])
 
 	request = get_request(argv[2]);
 	if (request == REQ_UNKNOWN) {
-		static const struct enum_map obsolete[] = {
-			ENUM_MAP("cherry-pick",		REQ_NONE),
-			ENUM_MAP("screen-resize",	REQ_NONE),
-			ENUM_MAP("tree-parent",		REQ_PARENT),
+		static const struct enum_map_entry obsolete[] = {
+			ENUM_MAP_ENTRY("cherry-pick",		REQ_NONE),
+			ENUM_MAP_ENTRY("screen-resize",	REQ_NONE),
+			ENUM_MAP_ENTRY("tree-parent",		REQ_PARENT),
 		};
 		int alias;
 
@@ -2613,21 +2613,21 @@ redraw_display(bool clear)
  */
 
 #define TOGGLE_MENU_INFO(_) \
-	_(LINENO,    '.', "line numbers",      &opt_line_number, NULL, 0, VIEW_NO_FLAGS), \
-	_(DATE,      'D', "dates",             &opt_date, date_map, ARRAY_SIZE(date_map), VIEW_NO_FLAGS), \
-	_(AUTHOR,    'A', "author",            &opt_author, author_map, ARRAY_SIZE(author_map), VIEW_NO_FLAGS), \
-	_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map, ARRAY_SIZE(graphic_map), VIEW_NO_FLAGS), \
-	_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL, 0, VIEW_LOG_LIKE), \
-	_(FILENAME,  '#', "file names",        &opt_filename, filename_map, ARRAY_SIZE(filename_map), VIEW_NO_FLAGS), \
-	_(FILE_SIZE, '*', "file sizes",        &opt_file_size, file_size_map, ARRAY_SIZE(file_size_map), VIEW_NO_FLAGS), \
-	_(IGNORE_SPACE, 'W', "space changes",  &opt_ignore_space, ignore_space_map, ARRAY_SIZE(ignore_space_map), VIEW_DIFF_LIKE), \
-	_(COMMIT_ORDER, 'l', "commit order",   &opt_commit_order, commit_order_map, ARRAY_SIZE(commit_order_map), VIEW_LOG_LIKE), \
-	_(REFS,      'F', "reference display", &opt_show_refs, NULL, 0, VIEW_NO_FLAGS), \
-	_(CHANGES,   'C', "local change display", &opt_show_changes, NULL, 0, VIEW_NO_FLAGS), \
-	_(ID,        'X', "commit ID display", &opt_show_id, NULL, 0, VIEW_NO_FLAGS), \
-	_(FILES,     '%', "file filtering",    &opt_file_filter, NULL, 0, VIEW_DIFF_LIKE | VIEW_LOG_LIKE), \
-	_(TITLE_OVERFLOW, '$', "commit title overflow display", &opt_show_title_overflow, NULL, 0, VIEW_NO_FLAGS), \
-	_(UNTRACKED_DIRS, 'd', "untracked directory info", &opt_untracked_dirs_content, NULL, 0, VIEW_STATUS_LIKE), \
+	_(LINENO,    '.', "line numbers",      &opt_line_number, NULL, VIEW_NO_FLAGS), \
+	_(DATE,      'D', "dates",             &opt_date, date_map, VIEW_NO_FLAGS), \
+	_(AUTHOR,    'A', "author",            &opt_author, author_map, VIEW_NO_FLAGS), \
+	_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map, VIEW_NO_FLAGS), \
+	_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL, VIEW_LOG_LIKE), \
+	_(FILENAME,  '#', "file names",        &opt_filename, filename_map, VIEW_NO_FLAGS), \
+	_(FILE_SIZE, '*', "file sizes",        &opt_file_size, file_size_map, VIEW_NO_FLAGS), \
+	_(IGNORE_SPACE, 'W', "space changes",  &opt_ignore_space, ignore_space_map, VIEW_DIFF_LIKE), \
+	_(COMMIT_ORDER, 'l', "commit order",   &opt_commit_order, commit_order_map, VIEW_LOG_LIKE), \
+	_(REFS,      'F', "reference display", &opt_show_refs, NULL, VIEW_NO_FLAGS), \
+	_(CHANGES,   'C', "local change display", &opt_show_changes, NULL, VIEW_NO_FLAGS), \
+	_(ID,        'X', "commit ID display", &opt_show_id, NULL, VIEW_NO_FLAGS), \
+	_(FILES,     '%', "file filtering",    &opt_file_filter, NULL, VIEW_DIFF_LIKE | VIEW_LOG_LIKE), \
+	_(TITLE_OVERFLOW, '$', "commit title overflow display", &opt_show_title_overflow, NULL, VIEW_NO_FLAGS), \
+	_(UNTRACKED_DIRS, 'd', "untracked directory info", &opt_untracked_dirs_content, NULL, VIEW_STATUS_LIKE), \
 
 static enum view_flag
 toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
@@ -2635,14 +2635,13 @@ toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
 	const struct {
 		enum request request;
 		const struct enum_map *map;
-		size_t map_size;
 		enum view_flag reload_flags;
 	} data[] = {
-#define DEFINE_TOGGLE_DATA(id, key, help, value, map, map_size, vflags) { REQ_TOGGLE_ ## id, map, map_size, vflags  }
+#define DEFINE_TOGGLE_DATA(id, key, help, value, map, vflags) { REQ_TOGGLE_ ## id, map, vflags  }
 		TOGGLE_MENU_INFO(DEFINE_TOGGLE_DATA)
 	};
 	const struct menu_item menu[] = {
-#define DEFINE_TOGGLE_MENU(id, key, help, value, map, map_size, vflags) { key, help, value }
+#define DEFINE_TOGGLE_MENU(id, key, help, value, map, vflags) { key, help, value }
 		TOGGLE_MENU_INFO(DEFINE_TOGGLE_MENU)
 		{ 0 }
 	};
@@ -2661,20 +2660,20 @@ toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
 	if (data[i].map != NULL) {
 		unsigned int *opt = menu[i].data;
 
-		*opt = (*opt + 1) % data[i].map_size;
+		*opt = (*opt + 1) % data[i].map->size;
 		if (data[i].map == ignore_space_map) {
 			update_ignore_space_arg();
 			string_format_size(msg, SIZEOF_STR,
-				"Ignoring %s %s", enum_name(data[i].map[*opt]), menu[i].text);
+				"Ignoring %s %s", enum_name(data[i].map->entries[*opt]), menu[i].text);
 
 		} else if (data[i].map == commit_order_map) {
 			update_commit_order_arg();
 			string_format_size(msg, SIZEOF_STR,
-				"Using %s %s", enum_name(data[i].map[*opt]), menu[i].text);
+				"Using %s %s", enum_name(data[i].map->entries[*opt]), menu[i].text);
 
 		} else {
 			string_format_size(msg, SIZEOF_STR,
-				"Displaying %s %s", enum_name(data[i].map[*opt]), menu[i].text);
+				"Displaying %s %s", enum_name(data[i].map->entries[*opt]), menu[i].text);
 		}
 
 	} else {
@@ -8854,29 +8853,28 @@ parse_git_color_option(enum line_type type, char *value)
 static void
 set_git_color_option(const char *name, char *value)
 {
-	static const struct enum_map color_option_map[] = {
-		ENUM_MAP("branch.current", LINE_MAIN_HEAD),
-		ENUM_MAP("branch.local", LINE_MAIN_REF),
-		ENUM_MAP("branch.plain", LINE_MAIN_REF),
-		ENUM_MAP("branch.remote", LINE_MAIN_REMOTE),
+	static const struct enum_map_entry color_option_map[] = {
+		ENUM_MAP_ENTRY("branch.current", LINE_MAIN_HEAD),
+		ENUM_MAP_ENTRY("branch.local", LINE_MAIN_REF),
+		ENUM_MAP_ENTRY("branch.plain", LINE_MAIN_REF),
+		ENUM_MAP_ENTRY("branch.remote", LINE_MAIN_REMOTE),
 
-		ENUM_MAP("diff.meta", LINE_DIFF_HEADER),
-		ENUM_MAP("diff.meta", LINE_DIFF_INDEX),
-		ENUM_MAP("diff.meta", LINE_DIFF_OLDMODE),
-		ENUM_MAP("diff.meta", LINE_DIFF_NEWMODE),
-		ENUM_MAP("diff.frag", LINE_DIFF_CHUNK),
-		ENUM_MAP("diff.old", LINE_DIFF_DEL),
-		ENUM_MAP("diff.new", LINE_DIFF_ADD),
+		ENUM_MAP_ENTRY("diff.meta", LINE_DIFF_HEADER),
+		ENUM_MAP_ENTRY("diff.meta", LINE_DIFF_INDEX),
+		ENUM_MAP_ENTRY("diff.meta", LINE_DIFF_OLDMODE),
+		ENUM_MAP_ENTRY("diff.meta", LINE_DIFF_NEWMODE),
+		ENUM_MAP_ENTRY("diff.frag", LINE_DIFF_CHUNK),
+		ENUM_MAP_ENTRY("diff.old", LINE_DIFF_DEL),
+		ENUM_MAP_ENTRY("diff.new", LINE_DIFF_ADD),
 
-		//ENUM_MAP("diff.commit", LINE_DIFF_ADD),
+		//ENUM_MAP_ENTRY("diff.commit", LINE_DIFF_ADD),
 
-		ENUM_MAP("status.branch", LINE_STAT_HEAD),
-		//ENUM_MAP("status.nobranch", LINE_STAT_HEAD),
-		ENUM_MAP("status.added", LINE_STAT_STAGED),
-		ENUM_MAP("status.updated", LINE_STAT_STAGED),
-		ENUM_MAP("status.changed", LINE_STAT_UNSTAGED),
-		ENUM_MAP("status.untracked", LINE_STAT_UNTRACKED),
-
+		ENUM_MAP_ENTRY("status.branch", LINE_STAT_HEAD),
+		//ENUM_MAP_ENTRY("status.nobranch", LINE_STAT_HEAD),
+		ENUM_MAP_ENTRY("status.added", LINE_STAT_STAGED),
+		ENUM_MAP_ENTRY("status.updated", LINE_STAT_STAGED),
+		ENUM_MAP_ENTRY("status.changed", LINE_STAT_UNSTAGED),
+		ENUM_MAP_ENTRY("status.untracked", LINE_STAT_UNTRACKED),
 	};
 	int type = LINE_NONE;
 

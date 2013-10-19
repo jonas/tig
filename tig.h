@@ -382,20 +382,26 @@ strcmp_null(const char *s1, const char *s2)
  * Enumerations
  */
 
-struct enum_map {
+struct enum_map_entry {
 	const char *name;
 	int namelen;
 	int value;
 };
 
-#define ENUM_MAP(name, value) { name, STRING_SIZE(name), value }
+struct enum_map {
+	const struct enum_map_entry *entries;
+	const int size;
+};
+
+#define ENUM_MAP_ENTRY(name, value) { name, STRING_SIZE(name), value }
 
 #define ENUM_SYM_MACRO(prefix, name)	prefix##_##name
-#define ENUM_MAP_MACRO(prefix, name)	ENUM_MAP(#name, ENUM_SYM_MACRO(prefix, name))
+#define ENUM_MAP_MACRO(prefix, name)	ENUM_MAP_ENTRY(#name, ENUM_SYM_MACRO(prefix, name))
 
 #define DEFINE_ENUM(name, info) \
 	enum name { info(ENUM_SYM_MACRO) }; \
-	static const struct enum_map name##_map[] = { info(ENUM_MAP_MACRO) }
+	static const struct enum_map_entry name##_map_entries[] = { info(ENUM_MAP_MACRO) }; \
+	static const struct enum_map name##_map[] = { { name##_map_entries, ARRAY_SIZE(name##_map_entries) } }
 
 static inline int
 string_enum_compare(const char *str1, const char *str2, int len)
@@ -441,7 +447,7 @@ enum_map_name(const char *name, size_t namelen)
 #define enum_name(entry) enum_map_name((entry).name, (entry).namelen)
 
 static inline bool
-map_enum_do(const struct enum_map *map, size_t map_size, int *value, const char *name)
+map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, const char *name)
 {
 	size_t namelen = strlen(name);
 	int i;
