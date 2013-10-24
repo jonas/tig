@@ -5078,7 +5078,10 @@ diff_request(struct view *view, enum request request, struct line *line)
 		return diff_common_enter(view, request, line);
 
 	case REQ_REFRESH:
-		reload_view(view);
+		if (string_rev_is_null(view->vid))
+			refresh_view(view);
+		else
+			reload_view(view);
 		return REQ_NONE;
 
 	default:
