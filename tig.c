@@ -1411,12 +1411,11 @@ parse_bool_matched(bool *opt, const char *arg, bool *matched)
 #define parse_bool(opt, arg) parse_bool_matched(opt, arg, NULL)
 
 static enum status_code
-parse_enum_do(unsigned int *opt, const char *arg,
-	      const struct enum_map *map, size_t map_size)
+parse_enum(unsigned int *opt, const char *arg, const struct enum_map *map)
 {
 	bool is_true;
 
-	assert(map_size > 1);
+	assert(map->size > 1);
 
 	if (map_enum_do(map->entries, map->size, (int *) opt, arg))
 		return SUCCESS;
@@ -1425,9 +1424,6 @@ parse_enum_do(unsigned int *opt, const char *arg,
 	*opt = is_true ? map->entries[1].value : map->entries[0].value;
 	return SUCCESS;
 }
-
-#define parse_enum(opt, arg, map) \
-	parse_enum_do(opt, arg, map, ARRAY_SIZE(map))
 
 static enum status_code
 parse_string(char *opt, const char *arg, size_t optsize)
