@@ -1,0 +1,6 @@
+●─╮ Merge branch 'branch3'
+●─│─╮ Merge branch 'branch2'
+│ ● │ branch3
+│ │ ● branch2
+● │ │ branch1
+◎─┴─╯ init

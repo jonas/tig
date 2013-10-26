@@ -1,0 +1,20 @@
+●─╮ Commit P - Merge O into N
+│ ● Commit O after M
+●─│─╮ Commit N - Merge M into L
+│ ●─╯ Commit M after K
+●─│─╮ Commit L - Merge K into J
+│ ●─╯ Commit K - Merge J into E
+●─│─╯ Commit J - Merge F into I
+●─│─│─╮ Commit I - Merge H into C
+│ │ │ ● Commit H after G
+│ │ ● │ Commit F after C
+│ ● │ │ Commit E after D
+●─│─╯ │ Commit C - Merge B into A
+│ ● │ │ Commit D after Q
+│ │ ● │ Commit B after R
+│ │ ● │ Commit R after A
+│ ● │ │ Commit Q after X
+●─│─╯ │ Commit A - Merge T into S
+│ │ ● │ Commit T after U
+│ │ ● │ Commit U after V
+│ │ ● │ Commit V after W

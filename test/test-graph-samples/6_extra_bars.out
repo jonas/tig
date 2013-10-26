@@ -1,0 +1,57 @@
+●─╮ Commit A - merge B and C
+│ ● Commit C - after B
+│ │ ● Commit D - after B
+│ │ │ ● Commit E - after F
+│ │ │ ● Commit F - after G
+│ │ │ ● Commit G - after H
+│ │ │ ● Commit H - after I
+│ │ │ ● Commit I - after J
+│ │ │ ● Commit J - after K
+│ │ │ ● Commit K - after L
+│ │ │ ● Commit L - after M
+│ │ │ ● Commit M - after N
+│ │ │ ● Commit N - after O
+│ │ │ ● Commit O - after P
+●─┴─╯ │ Commit B - merge Q and R
+│ ● ╭─╯ Commit R - after Q
+●─╯ │ Commit Q - merge S and T
+│ ● │ Commit T - after S
+│ │ ● Commit P - after U
+│ │ ● Commit U - after V
+│ │ ● Commit V - after W
+●─╯ │ Commit S - merge X and Y
+│ │ │ ● Commit Z - after 1
+│ ● │ │ Commit Y - after X
+●─╯ │ │ Commit X - merge 2 and 3
+│ ● │ │ Commit 3 - after 2
+│ │ │ │ ● Commit 4 - after 5
+│ │ │ │ ● Commit 5 - after 6
+│ │ ● │ │ Commit W - after 7
+│ │ │ │ ● Commit 6 - after 8
+│ │ ● │ │ Commit 7 - after 9
+●─╯ │ │ │ Commit 2 - merge 0 and a
+│ ● │ │ │ Commit a - after b
+│ ● │ │ │ Commit b - after c
+│ ●─│─│─│─╮ Commit c - merge d and 0
+│ │ │ │ ● │ Commit 8 - after e
+│ │ │ │ ● │ Commit e - after f
+│ │ │ │ ● │ Commit f - after g
+●─│─│─│─│─╯ Commit 0 - merge h and i
+│ │ │ │ ● │ Commit g - after j
+│ │ │ │ ● │ Commit j - after k
+│ │ │ │ ● │ Commit k - after l
+│ │ │ │ ● │ Commit l - after m
+│ │ │ │ ● │ Commit m - after n
+│ │ │ │ ● │ Commit n - after o
+│ │ │ │ ● │ Commit o - after p
+│ │ │ │ ● │ Commit p - after 1
+│ │ ● │ │ │ Commit 9 - after q
+│ │ │ ●─╯ │ Commit 1 - after r
+│ │ │ │ ●─╯ Commit i - after h
+│ ● │ │ │ Commit d - after h
+│ │ │ ● │ Commit r - after s
+●─┴─│─│─╯ Commit h - merge t and u
+│ │ │ ● Commit s - after v
+│ ● │ │ Commit u - after t
+│ │ │ │ ● Commit w - after x
+│ │ │ │ ● Commit x - after y

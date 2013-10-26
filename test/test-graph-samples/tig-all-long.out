@@ -1,0 +1,1517 @@
+● Fix stupid bug I introduced
+│ ●─╮ On redo-next-row: segfault stuff
+│ │ ● index on redo-next-row: ff10e74 Change some memory management stuff
+│ ●─╯ Change some memory management stuff
+● │ One more fix
+● │ Another fix
+● │ Use pre-generated next row
+●─╯ Add function to pre-generate next row
+● A little more broken to make it better
+● Always insert extra columns at the end
+● Works for first test case
+● Better, but missing some lines still
+● A little better at the top, a little worse at the bottom
+● Fix reloading diffs of staged and unstaged changes
+● Fix map size assertion in parse_enum
+│ ● Move view draw methods to draw module
+│ ● Move option handling code to options.c
+│ ● Move option declarations to separate files
+│ ● Use symbols to track diff and log argument formatting
+│ ● Group environment-based options
+│ ● Move refs helpers to refs module
+│ ● Move repository information to repo.[ch]
+│ ● Add tool to generate doc from data structures
+│ ● Move view declarations to view.h
+│ ● Move keybinding and run requests to keys.[ch]
+│ ● Move line and color code to line.c
+│ ● Move line definitions to line.h
+│ ● Move request handling code to request.c
+│ ● Move request definitions to request.h
+│ ● Move view macro to tig.h
+│ ● Move enums and various utility methods to util module
+●─╯ Refactor defined enum maps to contain size information
+● Detect renames when generating the announcement
+● Fix warning about uninitialized lineno variable
+● Set the commit reference when opening the blame view from the blob view
+● Fix clean rule to remove DocBook XML files in doc/
+● Fix and improve inter-document linking
+● Rename README, INSTALL, and NEWS to end in .adoc
+● Use .adoc as the extension for AsciiDoc files in doc/
+● Merge the content of BUGS into the README file
+● Fix regression in add_line_at making line numbers start atf 0 instead of 1
+● Fix regression in diff_get_lineno
+● Fix regression making diff parsing fail when opening the blame view
+● Make blame_draw check if the filename is NULL instead of empty
+● Handle diffs with no newline at end of file
+● Add support for splitting chunks in the stage view
+● Add common utility for parsing chunk headers
+● Introduce a path cache and use it for the blame view
+● Fix blame_go_back to copy the whole file path
+● Fix handling of combining characters in utf8_length() when reserve==TRUE.
+● Implement navigating back to previous view state in the blame view
+● Create a commit view history API based on the tree view stack
+● Free all cached list of reference when reloading the references
+● Move warn and die to the util module
+● Move error messages to new util module
+● Move get_temp_dir to io module
+● Move encoding utilities to the io module
+● Fix regression making the status view inaccessible for new repositories
+● Fix `make dist` to support versions with more than 2 digit groups
+● tig(1): document the Git commands supported by the pager mode
+● Load main view from any --pretty=raw output given on stdin
+● Refactor the pager mode handling
+● Simplify checking of --stdin argument
+● Generalize and move parsing of reflog info into main_read
+● Use memset to clear the format buffer
+● Add toggling for display of files in untracked directories
+● Improve option toggling to update all displayed view
+● Pass CFLAGS to linker
+● Move release scripts, test programs and maintainer files to new tools directory
+● Switch to automatically generate dependencies
+● Disabled colors last when passing user supplied arguments to Git
+● Optionally load HEAD when loading references
+● Load HEAD ID and symbolic name as part of the repo info
+● Add auto-configuration for Cygwin
+● Rewrite the toggle menu setup macro code to fix compile error
+● Fix stash diff display after deleting a stash
+● Make digit counting reusable
+● Make the prompt for user-defined commands tell when Tig will exit
+● User-defined commands no longer need to be prefixed with '!'
+● tigrc(5): rework the keybinding section
+● tig-1.2.1
+● Use capitalized Git and Tig when talking about the systems in general
+● Simplify the install goal and rename $(PROGS) to $(EXE)
+● Fix regression that skipped commits with no messages
+● Remove the dont_free line struct flag in favor of custom help_done
+● Free graph symbols when reloading the main view
+● Bypass all graph calls and memory allocations when the graph is disabled
+● Postpone ref list lookup to the draw phase
+● Dynamically allocate commit titles to reduce memory usage
+● Ignore generated HTML files in the whole tree
+● Show blob sizes in the tree view
+● Improve the installation instructions
+● Add work-around for building manpages with Homebrew-based xmlto
+● Ignore *.swp files and restrict to only ignore top-level config.make
+● Fix HTML doc installation
+● Fix path to sysconfdir-based gitconfig in tig(1)
+● Fix submodule-related setup to properly check setenv return value
+● Rework README to include the list of online resources
+● Fix man page install
+● Move documentation to doc directory
+│ ● Update for version tig-1.2
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-1.2
+● │ Remove release-docs/ during distclean
+● │ Only warn about missing curses configuration once
+● │ remove useless call to strdup() in get_temp_dir()
+● │ Move all checks for the log view commit context to log_select
+● │ Fix %(prompt) variable formatting
+● │ Revert "Scroll diff with arrow keys in log view"
+● │ Display correct diff the context in split log view
+● │ Add log_select function to find commit from context in log view
+● │ Provide proper work-around for missing setenv()
+● │ Provide mkstemps() work-around for platforms lacking it
+● │ Add example showing how to show display submodule log in diffs
+● │ Fix %(commit) assignment in the diff view
+● │ Add utility method to help copy commit ID to revision buffer
+● │ stash: Highlight the diffstat of combined diffs
+● │ stash: Ensure that the whole stash@{_} text is shown
+● │ stash: Refactor ID drawing method
+● │ stash: Use main view infrastructure for the stash view
+● │ iconv: Consolidate convert methods into one single backend
+● │ iconv: Remove unnecessary length argument to encoding_iconv
+● │ iconv: Convert characters before trimming text before rendering
+● │ iconv: Move draw_chars encoding code to IO module
+● │ iconv: Ignore unrepresentable characters when transliterating
+● │ Only set LINES and COLUMNS environment variables for external commands
+● │ Crop text when title-overflow is enabled
+● │ Scroll diff with arrow keys in log view
+● │ Prepend the path to the repository root when editing a diff file
+● │ Introduce the stash view
+● │ Open editor at selected line also for multi-file diffs in the stage view
+● │ Fix regression when running tig with no arguments and custom encoding
+● │ Fix unicode_width for combining characters
+● │ Enable tilde expansion in ~/.tigrc "source" commands
+● │ Fix blame and status to work from within directories starting with a dot
+● │ Reenable the log view from the command line
+● │ Do not apply diff styling to untracked files in the stage view
+● │ Fix regexec() error checking in grep_text() and grep_refs()
+● │ Pass terminal dimensions to git by setting COLUMNS and LINES
+● │ Do not expand the graph for merges already aligned to the left
+● │ Use TMPDIR for temporary files
+● │ Create temporary file with name as suffix
+● │ Improve invalidation during reload of references
+● │ Set the reference list ID during creation
+● │ Fix rendering glitch for branch names
+● │ Fix display of all branches labels in repos with short branch names
+●─│─╮ Merge pull request #143 from bbolli/clang-warning
+│ │ ● Eliminate a constant expression
+● │ │ tigrc(5): document how to use Ctrl in key bindings
+●─│─╯ Show line numbers in the branch view
+● │ Fix formatting of revargs
+● │ Fix half cooked patch tweaks
+● │ Cancel quitting after answering no to a prompt
+● │ Fix regression causing incorect coloring of the commit title
+● │ Show diff stats as wide as the terminal
+● │ Introduce format_context struct to simplify argument passing
+● │ Append the argument in format_expand_arg
+● │ Rename format_arg => format_expand_arg
+● │ Format diff and blame arguments
+● │ Move argument formatting to separate function
+● │ Add a ".." entry if tig is used on an empty path in tree view.
+● │ Build with curses.h when using the default Mac OS X make configuration
+● │ Update documentation as regards color specification using bare numbers
+● │ Fix diff title overflow rendering to use view specific flag
+● │ [#102] Revert 40868f7 which breaks blame and pickaxe support for follow
+● │ Add +ESC key binding
+● │ Highlight commit title overflow in the diff view
+● │ Rename the title-overflow color to overflow
+● │ Refactor commit title drawing to expand text and make it reusable
+● │ main: add toggle for commit title overflow
+● │ Link to stackoverflow.com/questions/tagged/tig for Q and A
+● │ Catch SIGQUIT and gracefully exit tig
+● │ Restore default signal handlers
+● │ Add toggle-files to disable file filtering for the diff and main views
+● │ Add example user-defined commands to the manual
+● │ tigrc(5): document show-line-numbers
+● │ Detect errors and allow editor line number to be disabled
+● │ Stage view: open untracked file at selected line
+● │ Blob view: open editor at selected line
+● │ Add a line number argument to open_editor
+● │ [#116] Add vim mode lines and machinery for updating C file headers
+● │ test-graph: show usage string when no input is given on stdin
+● │ [#115] Add toggles for showing author email or email user names
+● │ Fix manual keybinging for stage-single-line
+● │ Update NEWS
+● │ Document the ability to bind internal commands
+● │ Key bindings which execute tig prompt commands
+● │ Return a request from open_run_request()
+● │ After setting an option, refresh the view if possible
+● │ Support refreshing the diff view by reloading the data
+● │ Refactor the prompt command handling into a separate function
+● │ Allow overwriting of a previously set "argv" option
+● │ Add a diff-options config, similar to blame-options
+● │ Main view: fix diff view display for staged/unstaged changes
+● │ Added configure
+● │ Report toggled option *after* refreshing/reloading the view
+● │ Don't clear the status/report line when finishing a piped update
+● │ Reload current branch name when reloading the stage view.
+● │ Don't call string_copy_rev() on empty string
+● │ autogen.sh: Set WARNINGS in a more portable fashion
+● │ [GH #93] Fix compile errors reported on old Solaris systems
+● │ [GH #93] Reload the current branch name when reloading the status view
+● │ Fix diff display when using --follow by marking it as a rev flag
+● │ Remove unneeded git update-index call
+│ ● Update for version tig-1.1
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-1.1
+● │ [GH #91] Allow to open blob related with added content in a diff
+│ │ ● [GH #72] Convert output to ASCII//TRANSLIT unless using ncursesw
+●─│─╯ Fix status view to show section-level changes in non-lazy navigation mode
+● │ Fix lazy navigation mode to allow opening the parent tree
+● │ Do not show deleted branch when reloading the branch view
+● │ Enable lazy navigation mode for the status view
+● │ Refactor stage view title formatting
+● │ [GH #83] WIP: main view lazy navigation mode prototype
+● │ Read commit IDs from stdin when opened with --stdin
+● │ Try to automatically re-run configure script when appropriate
+● │ Work around a bug in autoreconf 2.61
+● │ Use the right Emacs mode for config.make.in
+● │ Add "show-deps" make target; rearrange existing dependencies to match output
+● │ When using autoconf, *all* of our .o files depend on config.h
+● │ Tweak Emacs' syntax highlighting of configure.ac
+● │ Make sure that our .m4 file gets included
+● │ Run autoupdate(1) on to get rid of autoconf warnings
+● │ Replace strndup(3) usage with malloc + strncpy
+● │ Handle wrapping of the first line of a view
+● │ Fix invalid memory access bug in pager line wrapping
+● │ Properly initialize variable in diff_get_pathname
+● │ [GH #62] Make the use of encoding arguments optional
+● │ Change diff-context setting to have a minimum value of 0
+● │ diff: get pathname of combined diff headers
+● │ [GH #65] Support binding more advanced external commands
+● │ Correctly report allocation failure in argv_append
+● │ tigrc(5): improve documentation of git configuration usage
+● │ Do not include merges in the announcement's change log
+●─│─╮ Merge pull request #81 from esc/fix/reading_git_colors_256
+●─│─│─╮ Merge pull request #80 from esc/fix/option_name_mismatch
+● │ │ │ Reenable copy/rename detection in the status view
+│ │ │ ● fix: the manpage says 'read-git-colors'
+│ │ ● │ fix: reading git colors in rang 0 255
+●─│─┴─╯ Remove enforced diff move/copy detection
+● │ Optionally show commit IDs for branches and tree entries
+● │ [GH #77] Add options for displaying commit IDs in the main view
+● │ Sanitize the width argument to draw_field to not include padding
+● │ Rename all column variables to end with _width
+● │ [GH #78] tig.spec: add man7 directory to RPM package
+● │ [GH #76] Add option to split views vertically
+● │ Move horizontal split calculation to separate function
+● │ [GH #25] Allow to build on Mac OS 10.7 without the configure script
+● │ [GH #70] Fix parent blaming when tig is launched in subdirectory
+● │ [GH #66] Allow run requests to exit tig after execution
+● │ [GH #39] Add note for packagers to avoid building ncurses --with-shared
+● │ [DEB-682766] Improve tigrc(5) documentation
+● │ Documentation typo and grammar fixes
+● │ Allow people to still build without autotools
+● │ Update AX_WITH_CURSES to build under Cygwin
+● │ diff: support editing changed files
+● │ diff: fix and improve detection of filename
+● │ Fixing documentation for maximize keybinding
+● │ Get rid of printf format warnings with size_t arguments
+● │ Reload colors when typed in prompt
+● │ Support tig config options in prompt
+● │ Extend prompt functionalities
+● │ Remove trailing whitespace
+● │ [GH #54] Reorder chdir checks for submodules
+● │ Annotate printf-like methods and fix warnings reported by GCC
+● │ [GH #2] Add basic support for wrapping pager-based views
+● │ Only show changes commits for the current branch
+● │ Rework custom line tracking to allow custom lines at any place
+● │ Refactor line allocation to avoid memory leaks
+● │ Introduce struct to store state during reading of the main view
+● │ Allow case-insensitive searches - implement ignore-case option.
+● │ Add files generated by cscope and ctags to .gitignore
+● │ [GH #53] Revert 73bee5e which breaks the graph when path spec is specified
+● │ Fix opening the pager view from the command prompt
+● │ Show formatted run request argv when prompting
+● │ Add support to confirm the execution of a binding
+● │ Change run request to use flags for passing silent and force options
+● │ Introduce argv_to_string function in the IO library
+● │ Simplify add_pager_refs interface to expect the commit ID
+● │ Use const char pointers for common pager and diff read functions
+● │ Add script to prepare documentation for http://jonas.nitro.dk/tig
+│ ● Update for version tig-1.0
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-1.0
+│ ● Update for version tig-0.18-138-g4bfaaa2
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ Rework the VERSION mangling in the make dist rule
+● │ [GH #49] Increase the author auto-abbreviation threshold to 10
+● │ [GH #50] Make relative dates show number of years ago for old commits
+● │ Update the index before showing staged/unstaged changes in the main view
+● │ Do not count the first line and parent accessor lines in the tree view
+● │ Do not count the All branches line in the branch view
+● │ Do not count the unstaged/staged commit lines in the main view
+● │ Fix diff stat for files where the path separator is not shown
+● │ Use git log format to simplify commit title parsing
+● │ Show the file name of the current position in the diff status
+● │ Show the title of the last commit in the branch view
+● │ Fix regression to not handle non-symbolic-ref during rebase action
+● │ Enable diff stat navigation for the staged changes views
+● │ Fix jumping when the diff stat contains a file with no changes
+● │ Add macro to check if a view line is in range
+● │ Do not show empty trees for staged and unstaged commit entries
+● │ Update copyright notices to include 2012
+● │ Define manpage:[] AsciiDoc macro to fix manpage links
+● │ Move fall-back version string to Makefile
+● │ Move TODO items to the github issue tracker
+● │ Fix diff stat navigation for unmodified renamed files
+●─│─╮ Merge pull request #43 from Oblomov/master
+│ │ ● prompt_menu: protect against programming error
+│ │ ● Suppress clang warning
+│ │ ● read_ref: use string_ncopy_do directly
+●─│─╯ Fix compile warnings for an unused variable and return values
+● │ [GH #41] Clear newly allocated memory in allocators
+● │ Fix status view position restoration regression from recent refactorings
+● │ Move error logic to the respective view open handlers
+● │ Refactor view loading to allow open methods to abort
+● │ Move open view error reporting down into the view handlers
+● │ Simplify code in status_open
+● │ Move split_view and maximize_view to the open view section
+● │ Move refs code to separate file
+● │ Move keymap to view ops and change to use a struct
+● │ Rework the help view to not use line->other
+● │ Refactor setup of built-in run requests
+● │ Minor improvement of status view restoration
+● │ Store all restore information in view.prev_pos
+● │ Move navigation state to struct position
+● │ Fix refs reloading by not assuming that they are alphabetically sorted
+● │ Add small tracing utility for monitoring executed commands
+● │ Force load the branch view log data
+● │ Fix default commit order to be that of git-log(1)
+● │ Switch to use git-log(s) default commit ordering
+● │ [GH #23] Add %(prompt) variable
+● │ [GH #30] Enable notes by default
+● │ [GH #38] Do not pass navigation requests to the branch view when the main view is maximized
+● │ Fix build dependencies
+● │ Limit the number of allocated color pairs
+● │ Parse commit title correctly in presence of mergetag object
+● │ [GH #8] Read git's color settings
+● │ Show uncommitted changes in the main view as virtual staged and unstaged commits
+● │ Refactor main_add_commit from main_read
+● │ Add status staged and unstaged commands to git.h
+● │ Add blame diff commands to git.h
+● │ Move git diff command argv arrays to git.h
+● │ Allow the command status to be accessed after io_done
+● │ Fix diff command for staged files before initial commit
+● │ Only show the external group title once in the help view
+● │ User-defined commands prefixed with '@' are run with no console output
+● │ Fix mistake in tigrc: line-graphic expects utf8, not utf-8
+●─│─╮ Merge pull request #37 from v0n/abbrev_commit_hash
+│ │ ● string_copy_rev: chop rev on first space (if any)
+●─│─╯ Merge pull request #36 from tsibley/reload-diff-view-on-toggle
+│ │ ● Reload the view on a diff-like option change
+│ │ ● Doc typo
+●─│─╯ Merge pull request #34 from tsibley/combined-diff-coloring
+│ │ ● [GH #32] Only color +/- in the second column when in a combined diff
+●─│─╯ Only reload the view after changing diff options for diff-like views
+● │ Document how to submit bugs
+● │ Move checking for line number display to draw_lineno
+● │ tigrc.5.txt: fix a typo ("changes are ignore")
+● │ Offload commit encoding entirely to git
+● │ Add support for using path encoding from git attributes
+● │ Extract encoding conversion to encoding_convert
+● │ Add interface for managing encodings
+● │ Refactor parsing of encoding options
+● │ Enable toggling of all diff ignore space options
+● │ Allow space to be ignored in the stage view and blame diffs
+● │ Use toggle_option infrastructure to change the ignore space option
+● │ Toggle to ignore all whitespace changes in diffs; bound to W
+● │ Add completion for the different .git/*_HEAD files
+● │ [GH #29] Change references section title to 'see also'
+● │ Minor simplification in add_keybinding
+● │ Rename get_key to get_view_key
+● │ Simplify view request declaration
+● │ Simplify view_ops pre-declaration
+● │ Simplify view declaration
+● │ Add draw_formatted
+● │ Change git_dir boolean to become a view flag
+● │ Replace view type enum with a view flag enum
+● │ Add source command for loading separate config file from ~/.tigrc
+● │ [GH #21] Bind single line staging to '1' by default
+● │ Move truncation logic to FORMAT_BUFFER
+│ │ ◎ Created gh-pages branch via GitHub
+● │ manual: Fix the references section title
+● │ Do not allow single line staging for new files (untracked or added)
+● │ Fix setup of the iconv input filter
+● │ Do not read configuration from stdin
+● │ Correct typos in documentation
+● │ "make clean" should remove $(TESTS) targets
+● │ Ensure \0 terminated input for iconv()
+● │ Add "//TRANSLIT" for iconv encoding
+● │ Introduce define for the UTF-8 encoding string
+● │ [GH #21] Fix single line updating to support unstaging
+● │ [GH #21] Support staging of single lines
+● │ Refactor diff chunk header parsing
+● │ Introduce io_printf function
+● │ Introduce macro for wrapping calls to vsnprintf
+● │ [GH #22] Add +<lineno> improvement to NEWS
+● │ tig.c: compare_refs: fix comparing by ref->ltag
+● │ Make git://github.com/jonas/tig.git repo the master
+● │ fixed compile issue: NCURSES_OPAQUE on OSX 10.6.8
+● │ fixed isnumber error (OSX 10.6.8)
+●─│─╮ Merge pull request #22 from tsibley/open-at-line-number
+│ │ ● Support opening the initial view at an arbitrary line number
+│ │ ● Unify the parsing of blame options and other view options
+│ │ ● Simplify parse_options by offloading more to filter_options
+●─│─╯ [GH #19] Show filename column when blaming with copy detection enabled
+● │ Move stage chunk to private data
+● │ Introduce private view data and use it for all reading state
+● │ [GH #15] Fix diff-header colorization by ensuring color IDs are >= 1
+● │ Fix off-by-one error introduced in off-by-one error fix
+● │ [GH #12] Support multi-arg editor strings
+● │ [GH #16] Support custom colorization of lines matching a string prefix
+● │ [GH #17] Properly color binary diffstat lines
+● │ Show branches/refs which names are a substring of the current branch
+● │ Update NEWS
+● │ Fix off-by-one error in the diff stat jump feature
+● │ Create and use dup() of STDIN_FILENO instead of STDIN_FILENO itself
+● │ Add show-notes tigrc option
+● │ Support jumping to commit in the branch view
+● │ Add internal JUMP_COMMIT request and view specific logic to main_request
+● │ Find TOC sections based on 4 tildes or hyphens
+● │ Support jumping to specific SHAs in the main view
+● │ tree_compare: handle author == NULL gracefully when sorting
+● │ Decorate replaced commits
+● │ Display line numbers in main view
+│ ● Update for version tig-0.18
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.18
+● │ Update the view title status after jumping to file diff
+● │ [LP-694780][DEB-635546] Expand browsing state variables for prompt commands
+● │ Promote view_open to pager_open
+● │ rename graph-line to palette
+● │ Jump to a file's diff when enter is pressed on a diff stat file line
+● │ Use erasechar() to check for the correct backspace character
+● │ Minor cleanup in blame diff opening
+● │ Use view->parent to access status view from the stage view
+● │ Naïvely color blame IDs to distinguish lines
+● │ Sort references so that remotes comes last in the branch view
+● │ Restore the help view after collapsing/expanding a keybinding group
+● │ Improve the selection of the line blamed from a diff
+● │ Make it possible to change the diff context in the diff view
+● │ Add support for blaming diff lines
+● │ Move blame parsing code to backend utility area
+● │ Refactor blame output parsing
+● │ Rename stage_diff_find to find_prev_line_by_type_
+● │ Add option to control the diff context
+● │ Move stage open logic to stage_open
+● │ Regroup default keybindings
+● │ Show remotes in branch view
+● │ Split out function to get line type from ref
+● │ Sort "All branches" to the top and prevent segfault
+●─│─╮ Merge pull request #9 from tokkee/sh/next
+│ │ ● Use error codes when checking parse_int() return value
+│ │ ● Colorize merge commit diffs as well
+●─│─╯ get_author_initials: various fixes
+● │ Use locale-unaware methods for case conversion
+● │ Revert change to put %(ref):%(file) in the blame view title
+● │ Simplify blame argv formatting
+● │ Reload the blame view when changing the ref and file variables
+● │ Use mkauthor in grep functions
+● │ Fix problem with empty space when the author field is disabled
+● │ Unify enum map declarations through a common utility
+● │ Accept 'utf-8' for the line-graphics option as indicated in the docs
+● │ Fix regression where new content in the stage view does not reset the position
+● │ Refactor mkmode from draw_mode
+● │ Refactor mkauthor from draw_author
+● │ Refactor draw_refs out from main_draw
+● │ Merge prepare_update into open_argv; make open_file call open_argv
+● │ Use begin_update to load data in the tree and branch views
+● │ Fix blame view regression
+● │ io_run: make it possible to open file
+● │ Simplify format_argv to always replace
+● │ Rename prepare_io to prepare_update and make it more specialized
+● │ Move view splitting code to separate split_view
+● │ open_view: Use maximize_view to prepare non-split displays
+● │ open_view: gather split view code in the same branch
+● │ Introduce refresh_view based on load_view
+● │ Refactor view loading from open_view into load_view
+● │ Add open_argv and open_file to wrap update preparation and open_view call
+● │ Enhance prepare_update_file to add support for refreshable file IO
+● │ Simplify draw_author and draw_date logic
+● │ Make the low-level drawing functions update the view column
+● │ Add specialized open methods for each view
+● │ Convert tree_prepare to tree_open
+● │ Convert begin_update to act as a view_ops open function
+● │ Extend open() view ops to accept the open flags as an argument
+● │ Add VIEW_MAX_LEN macro to aid when drawing
+● │ Remove support for the deprecated TIG_{MAIN,DIFF,LOG,TREE,BLOB}_CMD env vars
+● │ Do not install test-graph
+● │ Improve parsing of the set command and variable arguments options
+● │ [GH-6] Make blame configurable via options from ~/.tigrc and the command line
+● │ tigrc(5): sort options alphabetically
+● │ Update and fix a few NEWS entries
+● │ [GH-3] Expand %(directory) to . for the root directory
+│ ● Update for version tig-0.17
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.17
+● │ Rewrite the revision graph renderer
+● │ Move IO API to src/io.[ch]
+● │ Move includes, macros and core utilities to tig.h
+● │ Initialise views and screens with nonzero size.
+● │ Remove draw_text()s trim parameter
+● │ Remove unnecessary braces
+● │ Reduce the number of windows to max two by sharing them between all views
+● │ Use AX_WITH_CURSES from GNU autoconf archive to detect ncurses
+● │ configure.ac: Set value-if-not-found, don't check for program 'false'
+● │ Unify option toggling
+● │ Refactor option parsing error handling to use error codes
+● │ Add possiblity to pass data to io_load property reader
+● │ Rename opt_*_args to opt_*_argv
+● │ Improve viewing of diffs when browsing branches
+│ ● Update for version tig-0.16.2
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.16.2
+● │ Fix 'tig show <commit>' fix which causes empty tree views
+● │ Check the ncurses version before using set_tabsize
+│ ● Update for version tig-0.16.1
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.16.1
+● │ Fix tig show by replacing %(commit) with %(revargs) on first display
+● │ Use function set_tabsize()
+● │ Don't show out-of-sight tildes
+● │ Add an option to ignore unknown directories contents in the status view
+● │ Remove remains from the obsoleted toggle-date-short action
+● │ Actually add the ^D binding to move-page-down
+● │ Add a scroll-first-col command
+● │ Add vi-like ^ bindings
+● │ Allow tig to parse control-modified chars in tigrc
+● │ Fix segfault when starting tig in pager mode
+● │ Fall back to retry if no diff will be shown
+● │ Refactor argv_size out from argv_append
+│ ● Update for version tig-0.16
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.16
+● │ Fix missing ID reference
+● │ Rename {diff,file,rev}-args to {diff,file,rev}args
+● │ Load diff arguments from TIG_DIFF_OPTS if defined and no diff args was passed
+● │ Move application of string_expand to draw_text
+● │ Improve parent blame to handle line-jumping for renames better
+● │ Improve parent blame to detect renames by using the previous information
+● │ Free blame view data when reloading view
+● │ Fix clearing of the loading flag in the input select loop
+● │ Deprecate use of TIG_{MAIN,DIFF,LOG,TREE,BLOB}_CMD environment variables
+● │ Add support for splitting command line arguments
+● │ Make the branch view always prepare how the main view is loaded
+● │ Cleanup initialization of built-in run requests
+● │ Make view and run request argv members flexible and allocated
+● │ Further cleanup IO startup and initialization; fix io_run_append
+● │ Cleanup IO struct initialization
+● │ Make argv_copy always allocate its members
+● │ Move struct io's argv and dir members to struct view
+● │ Remove format_flags enum and its companion format_argv forward declaration
+● │ Move and rewrite io_format to become prepare_io
+● │ Make argv_copy support allocating argv members
+● │ Plug another memory leak and cleanup update start code while at it
+● │ Mark the argument array as freed in argv_free
+● │ Refactor io_complete into a single backend for {back,fore}ground and append IO
+● │ Introduce io_prepare as a fix to plug memory leaks related to argv formatting
+● │ Internalize format flags in the IO layer
+● │ Make the blame view format its own command arguments
+● │ Use view_request to unconditionally refresh views after run requests
+● │ Add view_request to call the view request method
+● │ Move and rename free_argv to argv_free
+● │ Make open_blob_editor use its own argv show and take blob ID as an argument
+● │ Use view_is_displayed when figuring setting up the open flags
+● │ Restructure option management code to separate section
+● │ Only update status view at EOF for displayed views
+● │ fix off-by-one on parent selection
+● │ Simplify handling of REQ_NEXT/REQ_PREVIOUS by using view->parent
+● │ Add view->prev to track history leaving view->parent for split views
+● │ Color 'Reviewed-by' and 'Tested-by' lines
+● │ When adding a keybinding check if the key is already bound
+● │ Allow built-in run requests to be unbound
+● │ Fix set_keymap to error when resolving an unknown keymap
+● │ Added support for displaying dates in localtime.
+● │ Fixed parse_timezone to correctly calculate the offset in seconds.
+● │ tigrc(5): fix typo
+● │ Fix unbind behavoir
+● │ Introduce view->type member
+● │ Use foreach_view for the stop loading action
+● │ Remove unused VIEW_REQ() macro
+● │ Add view flag with information about whether the view supports refreshing
+● │ argv: remove now unused FORMAT_DASH
+● │ argv: make prepare_update use FORMAT_NONE
+● │ Branch view: add %(branch) variable tracking currently selected branch
+● │ argv: move report call to format_arg method
+● │ argv: refactor argv_from_env to return an error state
+● │ utf8: move unicode related functions below the string helpers
+● │ utf8: make utf8_to_unicode return 0 when encountering invalid symbols
+● │ io: consolidate formatting into io_format
+● │ io: set io->error when syscalls fail and remove calls to report and die
+● │ io: rename IO methods to have io_ prefix
+● │ io: fix comment in io struct
+● │ Rename string_date to mkdate and add incorporate common checks
+● │ Move nodelay logic to the get_input read loop
+● │ Mark detached heads with [HEAD]; replace opt_head_rev with a struct ref
+● │ opt_codeset is only use in main, so make it local
+● │ Make utf8_length take opt_tab_size as a parameter
+● │ Remove line_graphic enum
+● │ Silence warning about unused computed value
+● │ Update copyrights
+● │ Only draw dates with non-zero seconds
+● │ Fix the display of relative date by storing the time zone information
+● │ Fix author abbreviation to handle multi-byte and multi-column characters
+● │ Use FALSE marco instead of C++ false value
+● │ prepare_update_file: assume file is relative to root directory
+● │ Status view: limit untracked file by the prefix/subdirectory
+● │ open_editor: always open path relative to the repository root directory
+● │ get_author_initials: improve and fix to not read outside of name string
+● │ Abbreviation of author names is now configurable and toggleable
+● │ Refactor format variable lookup and expansion
+● │ Oops, fix enum_equals
+● │ Make return value of string_date const
+● │ Simplify enum name comparison with enum_equals macro
+● │ Define date values in DATE_INFO macro
+● │ Refactor toggle_date_option into a generic enum_map based toggler
+● │ Introduce parse_enum and use it to parse the show-date option
+● │ Refactor help_name into enum_name
+● │ Fix parsing of boolean show-date values
+● │ toggle_date_option: use passed date argument instead of opt_date
+● │ Fix usage of the status view from a sub directory
+● │ Encode everything internally as UTF-8
+● │ Branch view: support browsing --all branches
+● │ Cleanup bluring of the previous view's title bar
+● │ foreach_ref: make ref argument const
+● │ Status view: update the file variable when a line is selected
+● │ TODO: line wrapping
+● │ Fix install-release-doc make rules to use origin/release
+● │ Add make rules to install documentation from the release branch
+│ ● Update for version tig-0.15
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.15
+● │ Makefile: Fix typo in 157ebf54
+● │ Status view: special case revert of unmerged entries with no physical file
+● │ io_open: take path as a vararg format
+● │ run_io_rd_dir: obsolete by switching call sites to run_io_rd_dir
+● │ run_io_dir: take dir argument
+● │ begin_update: simplify control flow
+● │ Remove build dependency on git from the configure script
+● │ tigmanual(7): provide the manual as a man page
+● │ Update asciidoc table syntax to the one supported by version 8.4.4
+● │ NEWS: Improve bug fix description
+● │ Fix loading of blame data when opened from the tree view
+● │ Fix draw_date to not format anything when time arg is NULL
+● │ Fix whitespace
+● │ Add support for displaying relative dates
+● │ NEWS: Mention date-shorten feature
+●─│─╮ Merge remote branch 'samb/short-dates'
+● │ │ Show the active (instead of the default) keybindings in the help view
+│ │ ● Add an option (and toggle) for shortening the date column by skipping the time.
+●─│─╯ Build with asciidoc-8.4.5
+● │ Fixed some uninitialized variable warnings
+● │ Allow multiple text attributes for color commands
+● │ Remove macros which are only used for default option values
+● │ Make height of split view configurable
+● │ Manual: document that :<number> jumps to the line number
+● │ Fix memory allocation check in open_commit_parent_menu
+● │ Use menus with the commit subject to present selectable commit parents
+● │ Add simple support for showing menues and use it for showing option menu
+● │ Restore the branch view position after refreshing
+● │ Fix reloading of references to not cause access to freed memory
+● │ Predefined external command: git commit
+● │ Fix previous/next with branch+main view
+● │ Add support for sorting branch entries by name, date and author
+● │ Add support for sorting tree entries by name, date or author
+● │ Branch view: fix loading to handle when two branches have same commit
+● │ Use temporary variable in refs loop in main_draw
+● │ Minor fix to always sort even if allocation fails in get_refs
+● │ Add primitive branch view
+● │ Add missing NULL in blame_grep
+● │ Fix a potential problem with reading tokens larger then BUFSIZ
+● │ Update the current branch information when reloading all references
+● │ Define an allocator for run requests
+● │ Remove the need for alloc variables
+● │ Make the granular allocators more customizable using macros
+● │ Define a tree_grep and fixing searching
+● │ Simplify searching in view lines by defining grep_text utility
+● │ Reduce memory and startup time by storing author times as time_t
+● │ Add small cache for author names to reduce memory foot-print
+│ ● Update for version tig-0.14.1
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.14.1
+● │ Remove unneeded doupdate from view_driver
+● │ Keep the cursor fixed while initial stage progress is reported
+● │ Fix draw_lineno to always set the static format buffer
+● │ Fix bug in draw_space to not access memory outside the space buffer
+● │ Refactor draw_lineno to use draw_graphic
+● │ Fix horizontal scrolling
+● │ Remove limitation of horizontal scrolling
+● │ tigrc(5): suggest git aliases for external commands requiring shell ops
+● │ Fix the view clearing to only be effective for displayed views
+● │ Make behavior of horizontal scrolling configurable
+● │ Fix handling of quoted strings in the config file
+● │ tigrc(5): fix error in examples for the set command
+● │ Tree view: draw submodule entry modes as "m---------"
+● │ Status view: report failures to update a file
+● │ Ignore broken pipe signals
+● │ Use putenv instead of setenv
+● │ manual: Correct the keys to move the cursor one line up/down
+● │ Status view: upon failure to open a file show error message
+● │ Refactor and share view maximization code from view-close handling
+● │ Fix io_strerror return type
+● │ Add support for handling core.worktree
+● │ Optimize read_repo_config_option to reduce string comparisons
+● │ Move setting of remote branch from repo config to separate function
+● │ Mark enum_maps and other data tables as const
+● │ Use check_blame_commit when handling REQ_ENTER
+● │ NEWS: Mention Jeff's uninitialized variable bug fix
+● │ Handle blaming beyond the creation of file more gracefully
+● │ Blame view: add guesstimation of line number when blaming parent commit
+● │ Use file and line number information when loading blame for commit
+● │ Make the blame view expand tabs at drawing time
+● │ Introduce common view position update helper
+● │ Improve restoring of the view position to bound the offset
+● │ Jump to line when a number is entered in the prompt
+● │ Warn users about integers in ~/.tigrc being out of bound
+● │ Fix uninitialized variable in string_expand_length
+● │ Add support for 256 colors by allowing "colorN" names similar to Mutt
+● │ Improve on branch information in the status view
+● │ Simplify setting the default for the system configuration file
+● │ Refactor and unify timezone parsing
+● │ Remove the need for the OPEN_NOMAXIMIZE flag
+● │ Remove unused OPEN_BACKGROUNDED flag
+● │ Use enum_map for handling obsolete color names
+● │ Use enum_map for handling obsolete request names
+● │ Refactor the int_map interface into new enum_map interface
+● │ Cleanup and simplify option file parsing
+│ ● Update for version tig-0.14
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.14
+● │ Read tigrc(5) options from git configuration files
+● │ tig(1): correct info on tree view related environment variables
+● │ Add release script documenting the release procedure
+● │ Spell check all text files and add dictionary to speed it up
+● │ tigrc(5): document the tree view colors
+● │ Refactor file mode drawing; rename tree-mode color to mode
+● │ Replace usage of the main-author color with the author color
+● │ Move usage string near parse_options
+● │ Tree view: improve handling of empty trees
+● │ Fix reverting of unmerged status entries
+● │ Add support for horizontal scrolling
+● │ Expand tabs in displayed lines to not rely on ncurses to expand them
+● │ Treat empty '/' as "find next"
+● │ TODO: elaborate and regroup into 'before tig-1.0' and 'long term goals'
+● │ Move initial view setup into parse_options
+● │ Move parse_option so it has access to view definitions
+● │ Remove parsing of deprecated option -S and subcommands log and diff
+● │ Rename & move read_properties and git_properties
+● │ Use warn() for warnings emitted during config file loading
+● │ Fix scrolling bugs in gnome-terminal and (u)xterm
+● │ BUGS: document problem with scrolling in (u)xterm
+● │ Tune the view clearing to wait until 2 seconds has passed
+● │ Handle all cursor positioning in get_input
+● │ Optimize drawing by updating the screen in one go
+● │ Abbreviate author names to initials when author-width < 6
+● │ Refactor author drawing into draw_author
+● │ Fix tokenizing when parsing ~/.tigrc
+● │ Workaround bug exposed by the redrawwin removal in do_scroll_view
+● │ Make cursor updating when resizing the display and loading a view
+● │ Change scrollok strategy to leave it off unless when calling wscrl
+● │ Initialize status_empty flag to FALSE
+● │ Eliminate unneeded calls to redrawwin
+● │ TODO: a small commit cache should be employed at some point
+● │ Help view: show the action name similar as in Mutt's help view
+● │ Remove preallocation of view lines in help_open
+● │ corrected doubly used ID view-manipulation in manual.txt
+● │ tigrc(5) & manual: move view specific actions out of the misc group
+● │ Add support for loading blame for parent commits
+● │ Refactor prompting for user input
+● │ Rename tree-parent action to parent
+● │ Minor cleanup of the tree view code; fix enter on the first line
+● │ TODO: remove resolved item
+● │ Tree view: improve to look less like plumbing
+● │ Refactor main_read to create parse_author_line
+● │ update_view: remove an unneeded goto
+● │ Fix floating point bug in the blame reporting
+● │ Also call end_update for views with custom open function
+● │ Add -O0 to the debug flags
+● │ Rectify arg indexes changes in blame --no-color fix
+● │ Fix status loading of unmerged entries to avoid access to freed memory
+● │ Fix kill_io() to only call kill(2) when pid is non-zero
+● │ Blame view: fix reloading of the diff view for changes not yet committed
+● │ Oops, always specify --no-color when using git diff
+● │ Blame view: fix diffing of lines marked as not yet committed
+● │ Add support for restoring the view position in reloadable views
+● │ Fix status_exists to be consistent with data displayed in the stage view
+● │ Make it possible to call select_view_line for non-displayed views
+● │ Refactor find_next_line into select_view_line
+● │ Refactor user input handling into separate function
+● │ Add support for opening any blob in an editor
+● │ Prefer werase to wclear when possible to reduce flickering
+● │ Cleanup and improve option toggling actions to include help message
+● │ Fix stage reloading to not close when staging chunks from group diff
+● │ Do not terminate the update when switching back to a loading view
+● │ Fix regression of main view drawing
+● │ Cleanup update_view's read loop
+● │ Fix regression in handling of data for non-UTF-8 locales
+● │ Fix another regression from the dirty flag changes causing flickering
+● │ Fix serious bug where a stack allocated variable was returned
+● │ Improve messages when preparing to load blame commits
+● │ Fix regressions introduced in the last few dirty flag changes
+● │ Tree view: make drawing more smooth by using the dirty flag
+● │ Cleanup redrawing of views when updating by using the dirty flag
+● │ Cleanup the tree_read sorting loop
+● │ Fix memory corruption bug in tree_read when sorting the entries
+● │ Cleanup and simplify the code by introducing add_line_format
+● │ Cleanup the code by calling realloc_lines in add_line_data
+│ ● Sync docs
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.13
+● │ Launch mergetool from the project root directory
+● │ Clear the view after 1 second during updates where reading takes long
+● │ IO API: use select(2) to check if pipe is readable when updating a view
+● │ IO API: reindent status_run main loop after the rewrite
+● │ IO API: replace io_gets with helper for scanning buffers
+● │ IO API: use fork+exec
+● │ IO API: use argv internally
+● │ IO API: use file descriptor internally
+● │ IO API: replace init_io_fd with io_open which calls fopen(3)
+● │ IO API: use in the status view
+● │ IO API: use when loading repository properties
+● │ IO API: use in the stage view
+● │ IO API: obsolete opt_pipe
+● │ IO API: obsolete opt_cmd by using prepare_update in status_enter
+● │ IO API: use prepare_update when parsing command line arguments
+● │ IO API: use in add_describe_ref
+● │ IO API: use in the blame view
+● │ IO API: unify tree view and the default path in begin_update
+● │ IO API: use for the main, log, diff, tree and blob views
+● │ IO API: use when preparing to run commands from the prompt
+● │ IO API: convert status checkout/revert support
+● │ IO API: use when running external commands
+● │ IO API: refactor the run request command formatter
+● │ IO API: add small library for reading files and running programs
+● │ Blame: do to not reload the diff view for same commits
+● │ Blame: update blame to selected commit when pressing 'B'
+● │ Blame: remove unused member of struct blame
+● │ Add setup_update for initialize incremental view updates
+● │ Slightly reduce memory usage for keybindings
+● │ Move formatting of blame --incremental command to blame_read_file
+● │ Minor simplification of blame_open
+● │ Don't use view->cmd to share state in the blame view
+● │ Fix drawing loading views that are not displayed.
+● │ Add support for launching the editor from the tree view
+● │ Replace opt_no_head with opt_head_rev in order to save the HEAD rev
+● │ Use switch statement in tree_request
+● │ Refuse to open blame view for all non-file entries in the tree view
+● │ Refuse to open deleted files from the status and stage views
+● │ tigrc(5): minor fixes and improvements from wip/run-command
+● │ Refuse to open a directory in the status and stage view
+● │ Fix waiting for input after executing a run request in pager mode
+● │ update_view: Check the pipes and call end_update() before redrawing
+● │ Use "--" to separate file argument to git-checkout
+● │ Cleanup and fix the main loop to make view point to the current view
+│ ● Sync docs
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ Update and improve the manual
+● │ Remove documentation relicts from before the option parsing was changed
+● │ Introduce prefixcmp macro to reduce code verbosity
+● │ Separate blame revision and file argument by "--" to avoid problems
+● │ Add bash completion for the blame subcommand
+● │ Remove outdated comment
+● │ Make more strings const
+● │ Sort references in the order: tags, heads, tracked remotes, remotes
+│ ● Sync docs
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.12.1
+● │ Rename checkout to revert and support individual diff chunks reverts
+● │ Avoid triggering assertion failure when reloading the status view
+● │ Consolidate and share view resetting via new reset_view()
+● │ Help view: move requests from the Misc group into separate groups
+● │ Help view: use "(no key)" instead of "'?'" to not confuse unbound actions
+● │ Clear the status line when closing a view
+● │ Fix bug introduced in commit for using --exclude-standard flag
+● │ Add support for refreshing the log view
+● │ Make OPEN_REFRESH imply OPEN_NOMAXIMIZE
+● │ Simplify view refreshing by adding new OPEN_REFRESH flag for open_view
+● │ Show complete shortlog for small releases
+● │ Improve checkout error reporting
+● │ Cleanup and make option argument strings const
+● │ Improve handling of unmatched quotes in ~/.tigrc
+● │ Make GIT_CONFIG only contain the config subcommand
+● │ Reload repository references when refreshing the main view
+● │ Avoid refreshing views when checkout is canceled by user
+● │ Also allow files to be checked out from stage view
+● │ Cleanup exclude rule setup by using ls-files --exclude-standard flag
+● │ Main: use --topo-order when arguments are given on the command line
+● │ main: automatically refresh after run requests
+● │ status: add support for checking out files with unstaged changes
+● │ TODO: support for jumping to parents' blame in the blame view
+● │ Add script for preparing release announcements
+│ ● Sync docs
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.12
+● │ Do not show boundary commits by default
+● │ main: implement refreshing by just rerunning the original command
+● │ Continue updates when pipe read has errno "Success"
+│ ● Sync docs
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ Clean up incomplete commits from main view listed for --no-walk
+● │ Remove the global opt_request variable
+● │ TODO: Option for abbreviating author names using just the initials
+● │ Gracefully ignore negative values given to options in ~/.tigrc
+● │ Add option 'author-width' to consumize the width of the author column
+● │ INSTALL: Mention the release notes in the NEWS file
+● │ Update NEWS
+● │ Remove useless check in blame_read_file()
+● │ Rename the gitlink:[] AsciiDoc macro to manpage:[]
+● │ Fix reopening blame view when it is already loading
+● │ Fix the view notification of end of reading
+● │ Makefile: remove bashism from distclean rule
+● │ Add stage-next action to jump to next diff chunk that can be staged
+● │ Make configure check for ncurses header files
+● │ Drop use of $(...) for popen() and system() calls
+│ ● Sync docs
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ Add NEWS file
+● │ Fix warnings emitted with -pedantic
+● │ Refactor management of the current draw column and max draw width
+● │ Use draw_field() for the author field
+● │ Introduce draw_field() helper for drawing main and blame fields
+● │ Refactor revgraph drawing into draw_graphic()
+● │ blame: simplify handling of incomplete commit information
+● │ Simplify line attribute handling
+● │ Keep line graphics characters in a table initialized on startup
+● │ Add line-graphics option to disable graphics characters for line drawing
+● │ Search checks reference names too
+● │ Document the main-commit colour option
+● │ Let ncurses take care of expanding tabs by setting its TABSIZE variable
+● │ Refreshing the current view when F5 is pressed (like gitk)
+● │ Fix regression from "Improve staging of diff chunks"
+● │ Do not reload status and stage views on errors
+● │ Fix AsciiDoc replacing -- in --with-libiconv
+● │ Squelsh output of update-index when loading the status view (part II)
+● │ Rebind the maximize action to 'O' instead of 'M'
+│ ● Sync docs
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.11
+● │ Use sans-serif font for the README page
+● │ Update copyright notice for the manual
+● │ Remove unused blame line attributes
+● │ Use tables for listing the UI colors
+● │ Minor cleanup in blame_draw
+● │ Setup colors for the selected line in draw_view_line()
+● │ Make the main and blame view share date drawing and date colors
+● │ Squelsh output of update-index when loading the status view
+● │ Avoid splitting the view when navigating stage view in full screen
+● │ Use 3 as the minimum width of formatted line numbers
+● │ Revert "When toggling options redraw the view instead of the whole display"
+● │ Fix compatibility for git rev-parse without --symbolic-full-name
+● │ Error out when starting up in empty main or blame view
+● │ Improve staging of diff chunks
+● │ Reload the status and stage views after a run request has been handled
+● │ Add support for refreshing of the stage view
+● │ When toggling options redraw the view instead of the whole display
+● │ Use werase() instead of wclear() when reloading a view
+● │ Share the line number colors between blame view and others
+● │ Rename load_repo_config() to load_git_config()
+● │ Do not load repository references when acting as a pager
+●─│─╮ Merge branch 'master' of remote-server:src/tig
+│ │ ● status: use draw_text completely
+● │ │ Make local tags and normal branches use normal font-weight
+● │ │ Show the tracked remote branch with bold text
+│ │ ● Add draw_lineno() and use when drawing the blame and pager view
+│ │ ● Add action to maximize the current view; bound to M by default
+●─│─╯ Disable opening views that require a git directory when in pager mode
+● │ Fix pager mode by always doing the isatty()
+● │ stage: disable whitespace warnings from git apply when staging updates
+● │ Improve perfomance and usability when updating many files
+● │ Fix and improve status refreshing after updating
+● │ Fix uninitialized variable warning
+● │ Output extra \n on tig -h
+● │ Avoid reloading the status view when nothing was updated
+● │ Oops, fix delimiter documentation
+● │ Add support for preparing the initial commit in the status view
+● │ Rename "main-delim" color to the more generic "delimiter"
+● │ Show the current branch in the status view
+● │ Save current branch from rev-parse output and highlight it
+● │ blame: Fix opening from subdirectory and consecutive invokations
+● │ Remove deprecated options and cleanup option parsing
+● │ More blame view fixes
+● │ Various fixes and improvements of the new blame view
+● │ Add blame view
+● │ Add hack to allow view loading to have multiple phases
+● │ Simplify subcommand option parsing by moving it out of the loop
+● │ draw_text: remove unused col argument
+● │ Use rewritten parent info from --parents to simplify the revgraph
+● │ Move unrelated UTF-8 setup code out of parse_options
+● │ tigrc(5): Improve documentation of new show-* options
+● │ configure: test for git binary and improve config subcommand test
+● │ Call realloc() less often because it is potentially slow.
+● │ New config options show-author, show-date, show-refs, show-line-numbers.
+● │ Fixed displaying local tags.
+● │ New actions toggle-date, toggle-author, and toggle-refs.
+● │ Fix index refreshing into separate call so diff-files is always run
+● │ draw_text: reduce indentation level
+● │ draw_text: minor cleanup to use fewer local variables
+● │ utf8_length: add reserve flag for reserving a trailing character
+● │ TODO: --boundary flag is already used
+● │ 0.11.git
+│ ● Sync docs
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.10.1
+● │ More verbose diff headers (including dates and committer)
+● │ Fix drawing "outside" the screen in the status and pager views
+● │ Fixed handling of UTF8 tag names and commit messages.
+● │ Make configure search for the ncursesw library first
+● │ Fix compiler warnings: pointer of type ‘void *’ used in arithmetic
+● │ Fix signed char comparison where char is unsigned by default
+● │ Fixed spurious "/bin/sh: --list: command not found" error
+│ ● Sync docs
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ Refresh the index when opening the status view to avoid "empty diffs"
+● │ Add rename support to the status view
+● │ Make it more clear that use of configure (and autoreconf) is optional
+● │ Replace SYSCONFDIR value in distributed documentation distributed
+● │ tig-0.10.1.git
+│ ● Sync docs
+│ ●─╮ Merge branch 'master' into release
+│ │ ● Replace SYSCONFDIR value in distributed documentation distributed
+│ ● │ Sync docs
+│ ●─│─╮ Merge branch 'master' into release
+●─│─┴─╯ tig-0.10
+● │ Make command line parsing more compatible with gitk
+● │ Add system-wide configuration file and new config file environment vars
+● │ Make it possible to overwrite the default (terminal) colors
+● │ Add support for showing boundary commits in the main view
+● │ Drop -B from diff options
+● │ Simplify documentation building and fix asciidoc.conf dependency
+● │ Replace the manpage XSL workarounds with AsciiDoc conf workarounds
+● │ INSTALL: Document the optional documentation tools
+● │ Update manpages to not contain contain so many formatting workarounds
+● │ Added examples to tig(1) manpage
+● │ TODO: Mention tig.c splitting and revgraph rewrite
+● │ Install manpages in $(prefix)/share/man
+● │ Updated .gitignore
+● │ Removed trailing whitespace.
+● │ Added action tree-parent and bound it to backspace by default.
+● │ Added color option main-revgraph to color the revision graph.
+● │ Add documentation for undocumented color options.
+● │ Minor formatting and spelling fixes.
+● │ Ignore HTML files in general
+● │ manual: remove section on porcelains
+● │ Makefile: add ASCIIDOC_FLAGS
+● │ Avoid using git-diff since it might run external diff drivers
+● │ Use --no-color option when calling git-log and git-diff
+● │ Rearrange the order of option parsing
+● │ Fix crash when opening mergetool for lines that are not unmerged
+● │ Use get_key_name() in get_key()
+● │ Add missing = for comparison in obsolete actions check
+● │ Collect remaining string in last entry when parsing config file lines
+● │ Improve sanity check error messages
+● │ Obsolete the cherry-pick action and define as builtin external command
+● │ Add support binding keys to running external commands
+● │ Unify REQ_NONE and REQ_UNKNOWN by moving REQ_NONE to be the last request
+● │ tig-0.10.git
+│ ● Sync docs
+│ ● Sync docs
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.9.1
+● │ SITES: 'Tarballs' is a bit more telling than 'Releases'
+● │ Cleanup status_request to make it reload the status view by default
+● │ Add support for launching git-mergetool from the status view
+● │ Refactor code to open_external_viewer
+● │ Detect working trees and disable the status view when it is missing
+● │ Document the refresh request
+● │ Ignore REQ_NONE in the help view and improve unbound request handling
+● │ Never put the release number in the tarball name for tagged versions
+● │ Also ignore generated .md5 files for tarballs
+● │ Add support for refreshing/reloading the status view
+● │ Remove unused 'view' argument from open_editor
+● │ Include autoconf file for 'make dist'
+● │ Fix the clean rule to never remove generated doc files
+● │ Fix out-of-range lineno when reloading the status view
+● │ Fix open_editor to make the file path relative to the project root
+● │ Handle REQ_NONE upfront in view_driver
+● │ Support cherry-picking commits in main view to current branch
+● │ Oops, always ensure that ICONV_CONST is defined
+● │ Use the more advanced iconv.m4 script from ELinks
+● │ tig-0.9.1.git
+│ ● Sync docs
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.9
+● │ Change the default styles for the status view
+● │ Update documentation
+│ ● Sync docs
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ Force adding of doc files in the release-doc rule
+● │ Fix INSTALL
+● │ Build intermediate tig.o file to fix tig dependency on config.h
+● │ Ensure ICONV_INBUF_TYPE is always defined; fix GIT_CONFIG define
+● │ Guard config.h include with HAVE_CONFIG_H
+● │ Define TIG_VERSION as intended when autoconf was introduced
+● │ Change last commit to make tig depend on config.h
+● │ Make tig.c depend on config.h when using configure
+● │ Add CC to the list of expanded symbols by configure
+● │ Allow LDLIBS to be overriden by configure
+● │ Fix warning from blob_read returning pointer instead of bool
+● │ stage: add request handler supporting file edits and chunk staging
+● │ Add stage view, which is used for showing status changes
+● │ autoconf: check for the AsciiDoc and XmlTo document tools
+● │ autoconf: check whether to use git-config or git-repo-config
+● │ Add autoconf-based build infrastructure for tig
+● │ tree: use simple stack to remember the previous subtree line numbers
+● │ Only show the command being loaded from for the pager view
+● │ TODO: tig now has a status view
+● │ Make it possible to browse all status changes once the diff view is open
+● │ Fix handling of REQ_NEXT/REQ_PREVIOUS
+● │ Fix updating of the view title to show the current position in the view
+● │ Warn about nothing to enter if REQ_ENTER reaches the view_driver switch
+● │ status: implement support for opening files in editor
+● │ status: cleanup status_request by resurrection status_enter
+● │ status: "wire" REQ_STATUS_UPDATE handling through status_request
+● │ Add view request operation for handling view specific requests
+● │ status: fix switching to the main view when starting in status view
+● │ status: improve title and report messages
+● │ status: make it possible to batch updates by pressing on the section line
+● │ status: assert that there are always view lines in the status view
+● │ status: make it possible to see all changes for a status section
+● │ status window: mention 'u' instead of Enter
+● │ Add support for showing staged/unstaged changes and untracked files
+● │ Introduce status-update action bound to 'u' by default
+● │ Avoid flickering when moving past the main view's first and last line
+● │ Ignore generated HTML pages
+● │ Ignore generated manpages.
+● │ Include the tig bash completion script as documentation
+● │ Rename contrib/tig-completion.sh to contrib/tig-completion.bash
+● │ Fix a few typos in the bash completion
+● │ Simplify naming (versioning) of non-release tig tarball and rpm file
+● │ Move tig.spec.in to the contrib area
+● │ Move tigrc to the contrib area
+● │ Add tig bash completion script
+● │ Delete the old VERSION file before appending the new one in make dist
+● │ Use $(MAKE) instead of 'make' and 'git *' instead of 'git-*'
+● │ tig-0.8.git
+│ ● Sync docs
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.8
+● │ Fix pager mode regressions
+● │ Fix (another) integer type mismatch on 64-bit systems
+● │ Fix integer type mismatch on 64-bit systems
+● │ Add TODO about using non-blocking I/O for incremental view loading
+● │ Only emit one "Not a git repository" error message
+● │ Allow CFLAGS to be overridden while preserving VERSION
+● │ Grab path to the git directory; use it when listing untracked files
+● │ read_properties: use size_t instead of int for callback
+● │ Fix wrong uses of string_copy() with pointer instead of buffer
+● │ Fix use of the status view from subdirectories
+● │ Fix string_copy macro to use sizeof(src) for the source buffer
+●─│─╮ Merge branch 'jn/rpm-updates'
+│ │ ● Refresh VERSION file when building distribution tarball in "make dist"
+│ │ ● Include documentation sources for rpmbuild with '--without docs'
+│ │ ● Remove PDF version of manual from being build and installed
+● │ │ Make dist rule more robust using '&&'; create .tar.gz.md5 file
+●─│─╯ Fix typo the INSTALL file
+● │ Supply explicit permission bits to 'install'
+● │ tig-0.7.git
+│ ● Sync docs
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ tig-0.7
+● │ Rename sync-docs to release-doc; add release-dist rule
+● │ Various random Makefile cleanups
+│ ●─╮ Merge branch 'master' into release
+●─│─╯ Update sync-docs target to use git porcelain instead of cogito
+● │ Infrastructure for tig rpm builds
+● │ Move "static" version info to VERSION file
+● │ Add version information to man pages
+● │ Add manpage XSL from git and enhance with literallayout fixes
+● │ Add status view
+● │ main_read: cleanup and simplify
+● │ Refactor add_line_text parts into add_line_data; use it in main_read
+● │ Add open method to view_ops
+● │ Add notice about empty pager view
+● │ Add notice about empty pager view
+● │ Make keybinding reference more dynamic
+● │ Move space separator from get_key to formatting in open_help_view
+● │ Improve managment of view->ref and the title line
+● │ Be more paranoid about paths when updating the tree view
+● │ move_view: fix view->offset overflow bug
+● │ Introduce add_line_text to simplify pager based rendering
+● │ Fix revision graph visualization during incremental updating
+● │ Add TODO item about diff chunk staging/unstaging
+● │ Make it possible to install man pages and html files separately
+│ ● Fix synced docs ... stupid Mac OS X sed ;)
+│ ● Sync docs
+│ ●─╮ Merge with tig-0.6
+● │ │ tig-0.6.git
+●─│─╯ Bump the version number to 0.6
+● │ Oops, remove -liconv from LDFLAGS
+● │ Disable show-rev-graph by default
+●─│─╮ Merge with master
+│ │ ● Improve handling of remotes
+│ │ ● TODO: use autoconf to detect newer git and git-config availability
+│ │ ● Make tig handle GIT_DIR better
+│ │ ● Drop --stat usage from the main command assembled during option parsing
+│ │ ● Add note about using autoconf to detect iconv(3) presence in libc
+│ │ ● Fix parameter warning for iconv(3)
+│ │ ● Fix SITES URLs; promote git://repo.or.cz/tig.git mirror more
+│ │ ● Discard error messages from git-describe
+│ │ ● Fix commit author line parsing for when the name is empty
+●─│─│─╮ Merge with master
+│ │ ●─╯ Never split the tree view when opening another tree view
+│ │ ● Cast second arg to iconv to remove warning
+│ │ ● main_read: handle titles that start with whitespace
+│ │ ● Increase commit.title size from 75 to 128
+│ │ ● Hardwire ERR to mean REQ_NONE in the main loop
+│ │ ● add_keybinding: always allocate the new keybinding
+│ │ ● tig-0.5.git
+│ ● │ Sync docs
+│ ●─│─╮ Merge with master
+│ │ ●─╯ SITES: Point to pasky's git proxy repo.or.cz
+│ │ ● INSTALL: mention possible iconv problems and workarounds
+│ │ ● manual: document the tree/blob environment variables
+│ ● │ Sync docs
+│ ●─│─╮ Merge with master
+│ │ ●─╯ Always clear the status window after prompting
+│ │ ● Oops, check log, diff, and show before options
+│ │ ● Use wclrtoeol instead of werase
+│ │ ● Fix clearing of the status window after prompting
+│ │ ● parse_option: check for '-' first and break if it is not an option
+│ │ ● Improve the "input mode" so the cursor is correctly positioned
+│ │ ● add_keybinding: plug memory leak
+│ │ ● TODO: repository status view, better text-input support
+│ │ ● tigrc(5): mention tree/blob view actions; use dash in favour of underscore
+│ │ ● Run the documentation through aspell
+● │ │ push_rev_graph: iterate all graph revs when looking for duplicates
+│ │ ● BUGS: Merge locale support with utf8-only bug, add horizontal scrolling
+●─│─│─╮ Merge with master
+│ │ ●─╯ Abbreviate the view reference in the view title for small widths
+│ │ ● update_view_title: format load seconds as part of the state string
+│ │ ● update_view_title: use string_format_from instead of wprintw
+│ │ ● A simple fix of the bad wrapping bugs
+│ │ ● update_display_cursor: take view as arg
+● │ │ Make the rev graph visualization have a one rev look-ahead
+● │ │ update_rev_graph: move code to prepare_rev_graph
+● │ │ Allow view readers to 'finalize' by calling with NULL line before closing
+● │ │ append_to_rev_graph: use local variable
+● │ │ Always draw the space between end of rev graph and start of commit title
+● │ │ Refactor (separator, line) chtype management to use 'fillers'
+● │ │ More graph_parent_is_merge usage
+● │ │ draw_rev_graph: refactor stuff to get_rev_graph_symbol
+● │ │ Improve comments
+● │ │ Use 'graph' instead of 'stack' in the rev graph code
+● │ │ Move rev graph code to own section
+● │ │ Move stuff to reset_rev_graph and rename it to done_rev_graph
+● │ │ Simplify the update_rev_graph end-game
+● │ │ Add graph_parent_is_merge
+● │ │ Now it actually starts looking like something
+● │ │ Refactor graph drawing
+● │ │ Remove fprintf stuff
+● │ │ More cleanups
+● │ │ Refector stuff into draw_rev_graph
+● │ │ Some more refactoring and cleanups
+● │ │ Cracking
+● │ │ Minor cleanups
+● │ │ Version 1
+●─│─╯ SIZEOF_REV introduced: 41 bytes of pure madness!
+● │ Minor cleanups
+● │ Oops, always update the tree view ref
+● │ Fix updating of the blob ref and the blob view ref
+● │ Also color Acked-by lines
+● │ Fix redrawing of old current line
+● │ Only split the tree view when the tree view is visible
+● │ move_view: drop redraw arg and handle backgrounded moves
+● │ do_scroll_view: drop redraw arg
+● │ do_scroll_view: minor refactoring of the current line updating
+● │ search_view: use opt_search directly instead of through an argument
+● │ Remove some old cruft that was clearing hidden lines at the end
+● │ Introduce selected flag and use it for refacter wclrtoeol usage
+● │ Add selected arg to the view draw operation
+● │ Refactor current line activation to new select view operation
+● │ Fix tree viewing again; introduced by string safety patch
+● │ Make view->regex into a pointer
+● │ Fix git-describe reference adding when there are no tags and thus no output
+● │ Improve string buffer copy safety
+● │ Hrmpf, fix one more default keybinding clash, this time the blob view
+● │ Review all string_format users and use string_format instead of snprintf
+● │ Move the current line to the first entry in the tree view
+● │ Use ICONV_NONE instead of (iconv_t) -1
+● │ Remove redundant ending ';'
+● │ manual: mention the tree/blob views
+● │ Fix default keybinding clash for 'n' between find-next and toggle-lineno
+● │ Use size_t instead of int for string_* functions
+● │ Reintroduce foreach_view and use it to fix background loading
+● │ Rename foreach_view to foreach_displayed_view
+● │ Add support for tree and blob view
+● │ tig(1): Do not differentiate between git (show|log|diff) options
+● │ Reformat the state variable list (opt_*)
+● │ Add support for searching using regex
+● │ Replace screen-update action with noop action named "none"
+● │ read_prompt: return static allocated buffer; move out exec mode setup
+● │ read_prompt: take prompt 'name' as arg
+● │ SIZEOF_STR: introduced and use instead of 1024, also replaces SIZEOF_CMD
+● │ Add poor man's "show most recent tag" by using git-describe
+● │ add_pager_refs: rename local line data pointer to commit_id
+● │ Add .gitignore file
+│ ● Sync docs
+│ ●─╮ Merge with master
+●─│─╯ prompt: make ':show <id>' use the diff view
+● │ Add support for converting from git encoding to locale encoding
+● │ Pass --root to git-show so the diff command will show the initial commit
+● │ Silence stderr for all view commands
+● │ Improve handling of 'bogus' author lines
+● │ Create directories during make install
+● │ Check the value returned by fopen() during display initialization
+● │ No need to use --stat for the default TIG_MAIN_CMD
+● │ tig-0.4.git
+●─│─╮ Merge with ssh://brok.diku.dk/~/tig
+│ │ ● tigrc(5): Fix keybinding headers
+● │ │ Use docbook to build manual.pdf; clean *.xml files
+│ ● │ Sync docs
+│ ●─│─╮ Merge with master
+●─│─│─╯ Add sync-docs rule to update docs in the release branch
+● │ │ Manual: fix page up keys
+● │ │ Add manual link to SITES; improve/fix SEE ALSO sections
+│ ● │ Sync docs
+│ ●─│─╮ Merge with master
+●─│─┴─╯ CSS fix: s/monospaced/monospace/
+● │ Use tables for the listing of default keybindings
+│ ● Sync docs
+│ ●─╮ Merge with master
+●─│─╯ Documentation update
+● │ Add "Hash" key name mapped to "#"; Don't use ";" as a comment character
+● │ Allow strings to be enclosed in either ' or "
+● │ Make prompt use internal user input reader
+●─│─╮ Merge with ssh://diku/~/tig
+│ │ ● Config: improve error reporting and do a few cleanups and simplifications
+● │ │ Rename "encoding" option to "commit-encoding"
+● │ │ Install HTML files into $(prefix)/share/doc/tig
+● │ │ Add ToC to the tig manual
+● │ │ Misc doc improvements
+●─│─╯ Add support for keybindings
+● │ Rename keymap to keybinding, get_request to get_keybinding
+● │ Add default configuration file
+● │ Add special string comparer for gracefully parsing ~/.tigrc identifiers
+● │ Establish "Open view" section
+● │ Rename load_help_page to open_help_view and move it up
+● │ Move keybinding stuff up after line stuff
+● │ Support set command in ~/.tigrc; allows a few options to be configured
+● │ Simplify the option value tokenization by doing it one place
+● │ Factor out set_option_color from set_option
+● │ Make declaration of die() specify the __NORETURN attribute
+│ ● Sync docs
+│ ●─╮ Merge with master
+●─│─╯ Improve error reporting for unknown options
+● │ Add feature request for showing nearest branch heads or tags for a commit
+● │ Makefile: make customization of installation locations easier
+● │ Make the view title show percentage shown like less
+● │ Implement the basic controlling of revision graph visualization
+● │ Add strip rule
+● │ Don't begin any update for the built-in help page
+● │ More color and attribute maps closer to the users
+● │ Simplify detection of tag commits via ^{}
+● │ Minor tidyup
+● │ Generalize the option parsing
+● │ Move tig(1) material to tig.1.txt
+● │ Correct error checking
+● │ Remove prev arg to view->ops->read()
+● │ Wrap all snprintf usage to simplify error handling
+● │ Add support for showing tags and other repo refs in the diff and log view
+● │ Refactor view->line reallocation
+● │ Make 'h' and '?' show built-in key binding quick reference
+● │ Rename documentation build rules using s/docs/doc/; more like git
+● │ Add COPYING file
+● │ Fix segfault where current_view would become >= sizeof(display)
+│ ● Sync docs
+│ ●─╮ Merge with master
+●─│─╯ Remove SITES title so it is more adaptive to where it is included
+● │ Split out manual material to separate file
+● │ List SITES in tig(1)
+● │ Move stuff to SITES and INSTALL files
+● │ Move stuff to BUGS and TODO files; only show BUGS in tig(1)
+● │ Move ~/.tigrc documentation into it's own man page, tigrc(5)
+● │ Use ~/.tigrc for user configuration rather than ~/.tig
+● │ Add TODO about keybinding cheat sheet
+● │ Emit more informative error messages when loading ~/.tig
+● │ Only touch the option strings if necessary
+● │ Improve color documentation
+● │ Add support for setting color options in the ~/.tig user configuration file
+● │ Make read_properties take several separator characters; chomp name & value
+● │ Oops, fix short help wrt tab size short option
+● │ Rename repo config loaders using s/config/repo_config/
+● │ Make read_properties() take FILE *pipe instead of command line
+● │ Document the loading time displayed in the title window after 3 seconds
+● │ Make the stop all loading request stop all loading
+● │ Notify that the prompt is unusable while loading
+● │ Tab size short option changes from -t to -b
+● │ Minor usability fix: when closing never switch to an already closed view
+● │ "View commands" section becomes "History commands".
+● │ License revisited: it's GPLv2 or later
+● │ Fix off by one error; makes tags visible again
+● │ When updating the title window, move the cursor to the end of line
+● │ Factor out cursor moving
+● │ Make window switching smother; fix blurring of previous view when switching
+● │ Never close backgrounded loads; only clear window when starting to update
+● │ Only pass on properies with non-zero length names
+● │ Refactor reading of properties from pipes
+● │ Load config before parsing command line options so they can override
+● │ Make UTF-8 handling optional but still default
+● │ Add support for loading repo config
+● │ Cleanup see also section
+● │ Move env handling up below option handling
+● │ Put license also in the program header
+● │ Rearrange pager_enter logic
+● │ Update README; set a less ugly font-family
+● │ Introduce struct line and use it for view->line
+● │ Improve title updating and remove flickering
+● │ Make update reporting less verbose
+● │ Fix spurious resizing of the display (take 2)
+● │ Add macro for getting number of displayed views
+● │ Only resize the display when actually required
+● │ Fix updating of the main view title when the screen isn't split
+● │ End the current update before begining a new one; fixes CPU hogging
+│ ● Sync docs
+│ ●─╮ Merge with master
+●─│─╯ Bind 'j'/'k' to moving up/down; add next/previous requests bound to Down/Up
+● │ Move struct commit to appear just above the main view backend
+● │ Add -O2 to CFLAGS to get more warnings
+● │ Cache all queries for refs based on ID
+● │ Move git directory assertion to main; don't require .git repo in pager mode
+● │ In pager mode, fix entering commit lines from log and pager view
+● │ Remove old window cycling code from before enter request appeared
+● │ Add simple window stack, tracking view relation ship via parent member
+● │ Remove objsize member from struct commit
+● │ Make Enter in the pager view always scroll
+● │ Record builds with dirty working tree by appending -dirty to the version
+● │ Remove trailing space; make cursed global static
+● │ Make -h and --help options ouput a help message
+● │ Bind '-' to PageUp; raises Mutt compatibility
+● │ Streamline version displaying and show built date
+● │ Make Enter in the main view switch to the split diff view
+● │ Add preliminary support for UTF-8 handling in the main view
+● │ Add close view request; bound to 'q' by default
+● │ Bind quit to 'Q'
+● │ Add -Werror to the cc debug flags
+● │ Pressing Enter in the diff view will now scroll it one line down
+● │ Rearrange things in the start of the viewer
+● │ Bind 'b' to Page Up, and Space to Page Down
+● │ Make sense of the comment about view->win height
+● │ Group display functions at the bottom
+● │ Redraw the whole display after toggling line number
+● │ Minor documentation updates
+│ ● Sync docs
+│ ●─╮ Merge with master
+●─│─╯ Fix warnings
+● │ Fix linking with --as-needed ld(1) option.
+● │ Minor doc and coding style fixes
+● │ Mark quit() and die() __noreturn
+● │ Make some strings "const"
+│ ●─╮ Merge with master
+●─│─╯ tig version 0.3
+│ ● Sync docs
+│ ●─╮ Merge with master
+●─│─╯ Minor documentation fixes; nothing from git-ls-remote means no git repo
+│ ● Sync docs
+│ ●─╮ Merge with master
+●─│─╯ After seeing Linus' mail further improve revision specification section
+● │ Make the last variables static
+│ ● Fix File history section
+│ ●─╮ Merge with master
+●─│─╯ Fix File history section number
+│ ● Update generated docs
+│ ●─╮ Merge with master
+●─│─╯ Minor fixes
+│ ●─╮ Merge with master
+●─│─╯ Only tig(1) is required by the help view
+│ ●─╮ Merge with master
+●─│─╯ Only set VERSION to git-describe if .git is available
+│ ● Put documentation in a branch named release
+│ ●─╮ Merge with master
+●─│─╯ Put documentation in a branch named release
+│ ● Add README.html
+│ ●─╮ Merge with master
+●─│─╯ You gotta have a README file
+│ ● Create documentation branch
+●─╯ Document file history rev limiting
+● ... and yet more doc ups
+● Check spelling
+● Further improve documentation
+● Lots of documentation improvements
+● Improve documentation; optional tab size; move up/down + enter req; fix wrapping
+● Only save commit tag refs; move line type info to view->ops; switch silently
+● Fix file mode diff header handling; fix repo refs
+● Add support for repository references
+● Oops, no need to #include <readline/readline>
+● Try to improve report("")
+● Implement support for terminal resizing
+● Take commands from the environment
+● Use --topo-order; fclose(stdin); space cleanup
+● Fix title in split view; scroll/move reporting; ...
+● Fix scrolling when current line is outside of splitted view
+● Support for show
+● Improve documentation
+● Fix ref navigation bug; make internal command line work; cleanups
+● Add support for pager view
+● Add support for git log / git diff options
+● Lots of small improvements
+● Meep
+● Lots of cleanups and improvements; speed up attr access
+● Heavy renaming and code recomposition
+● Lots of minor UI improvements
+● Lot's of cleanups and fixes
+● TODO's and TODON'T's ...
+● Primitive option parsing; rendering generalizations
+● Cleanup line matching
+● Started on the main view
+● Sync. Home/End seems to finally work.
+● Possible simplification
+● The pager is begining to work. :)
+● Exploration
+● Misc cleanups
+● Misc cleanups and improvements
+● Show root; blast raw diff lines
+● No binaries
+● Half working prototype
+◎ Initial commit
