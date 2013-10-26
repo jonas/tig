@@ -19,6 +19,7 @@
 /*
  * Enable inclusion of header files checked by configure.
  */
+#define HAVE_STDINT_H
 #define HAVE_STDLIB_H
 #define HAVE_STRING_H
 #define HAVE_SYS_TIME_H

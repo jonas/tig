@@ -1,0 +1,115 @@
+commit A B C
+    Commit A - merge B and C
+commit C B
+    Commit C - after B
+commit D B
+    Commit D - after B
+commit E F
+    Commit E - after F
+commit F G
+    Commit F - after G
+commit G H
+    Commit G - after H
+commit H I
+    Commit H - after I
+commit I J
+    Commit I - after J
+commit J K
+    Commit J - after K
+commit K L
+    Commit K - after L
+commit L M
+    Commit L - after M
+commit M N
+    Commit M - after N
+commit N O
+    Commit N - after O
+commit O P
+    Commit O - after P
+commit B Q R
+    Commit B - merge Q and R
+commit R Q
+    Commit R - after Q
+commit Q S T
+    Commit Q - merge S and T
+commit T S
+    Commit T - after S
+commit P U
+    Commit P - after U
+commit U V
+    Commit U - after V
+commit V W
+    Commit V - after W
+commit S X Y
+    Commit S - merge X and Y
+commit Z 1
+    Commit Z - after 1
+commit Y X
+    Commit Y - after X
+commit X 2 3
+    Commit X - merge 2 and 3
+commit 3 2
+    Commit 3 - after 2
+commit 4 5
+    Commit 4 - after 5
+commit 5 6
+    Commit 5 - after 6
+commit W 7
+    Commit W - after 7
+commit 6 8
+    Commit 6 - after 8
+commit 7 9
+    Commit 7 - after 9
+commit 2 0 a
+    Commit 2 - merge 0 and a
+commit a b
+    Commit a - after b
+commit b c
+    Commit b - after c
+commit c d 0
+    Commit c - merge d and 0
+commit 8 e
+    Commit 8 - after e
+commit e f
+    Commit e - after f
+commit f g
+    Commit f - after g
+commit 0 h i
+    Commit 0 - merge h and i
+commit g j
+    Commit g - after j
+commit j k
+    Commit j - after k
+commit k l
+    Commit k - after l
+commit l m
+    Commit l - after m
+commit m n
+    Commit m - after n
+commit n o
+    Commit n - after o
+commit o p
+    Commit o - after p
+commit p 1
+    Commit p - after 1
+commit 9 q
+    Commit 9 - after q
+commit 1 r
+    Commit 1 - after r
+commit i h
+    Commit i - after h
+commit d h
+    Commit d - after h
+commit r s
+    Commit r - after s
+commit h t u
+    Commit h - merge t and u
+commit s v
+    Commit s - after v
+commit u t
+    Commit u - after t
+commit w x
+    Commit w - after x
+commit x y
+    Commit x - after y
+

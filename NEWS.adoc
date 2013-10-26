@@ -16,6 +16,7 @@ Improvements:
    (or click again) to "Enter" cursor line, e.g. open commit diff. Disabled by
    default, since it makes text selection less intuitive. If you enable this
    remember to hold down Shift (or Option on Mac) when selecting text.
+ - Rewrite and improve the rendering of the commit graph. (GH #144, GH #46)
  - Add a new "auto" value for the 'vertical-split' option to let Tig choose the
    split orientation (this is the new default behavior).
  - Add toggle-vertical-split option to change the vertical split value.

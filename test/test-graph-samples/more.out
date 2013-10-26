@@ -1,0 +1,36 @@
+●─┬─┬─╮ Commit A - merge B, C, D, and E
+│ │ ● │ Commit D - after B
+│ ● │ │ Commit C - after F
+│ │ │ ● Commit E - after H
+●─│─╯ │ Commit B - merge H and F
+│ ●─╯ │ Commit F - after G
+│ ● ╭─╯ Commit G - after H
+●─┴─╯ Commit H - after I
+●─┬─┬─┬─┬─╮ Commit I - merge J, K, L, M, P, and O
+│ ● │ │ │ │ Commit K - after J
+●─╯ │ │ │ │ Commit J - after N
+● ╭─╯ │ │ │ Commit N - after O
+●─│─╭─╯─│─╯ Commit O - after Q
+●─│─│─╭─╯─╮ Commit Q - merge R and S
+●─│─│─│─╭─╯─╮ Commit R - merge T and U
+●─│─│─│─│─╭─╯─╮ Commit T - merge V and W
+●─│─│─│─│─│─╭─╯─╮ Commit V - merge X and W
+●─│─│─│─│─│─│─╭─╯─╮ Commit X - merge Y and Z
+│ │ │ │ │ │ ◎─╯ ╭─╯ Commit W
+│ │ ●─│─│─│─╭───╯─┬─╮ Commit M - merge Y, 1, and 2
+│ │ │ ● │ │ │ ╭───╯ │ Commit P - after Y
+│ │ │ │ │ │ ● │ ╭───╯ Commit Z - after Y
+●─│─┴─┴─│─│─╯ │ │ Commit Y - after 1
+●─│─╭───╯─│───╯ │ Commit 1 - after 2
+●─│─│─╭───╯─────╯ Commit 2 - after S
+●─│─╯ │ Commit S - after U
+●─│───╯ Commit U - after 3
+●─│─┬─╮ Commit 3 - merge 4, 5, and 8
+●─│─│─│─╮ Commit 4 - merge 6 and 5
+│ │ ●─│─╯ Commit 5 - merge 7 and 9
+●─│─│─│─│─╮ Commit 6 - merge A and 9
+◎ │ │ │ │ │ Commit A
+◎─╯ │ │ │ │ Commit L
+◎───╯ │ │ │ Commit 7
+◎─────╯ │ │ Commit 8
+◎───────┴─╯ Commit 9

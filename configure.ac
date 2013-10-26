@@ -11,7 +11,7 @@ m4_pattern_forbid([^AX_])
 
 AC_PROG_CC
 
-AC_CHECK_HEADERS([stdlib.h string.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/time.h unistd.h])
 AC_CHECK_FUNCS([gettimeofday])
 AC_CHECK_DECLS([environ])
 AC_CHECK_DECLS([errno], [], [], [#include <errno.h>])

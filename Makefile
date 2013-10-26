@@ -157,13 +157,16 @@ dist: configure tig.spec
 rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
 
+test:
+	test/unit-test-graph.sh
+
 # Other autoconf-related rules are hidden in config.make.in so that
 # they don't confuse Make when we aren't actually using ./configure
 configure: configure.ac acinclude.m4 tools/*.m4
 	./autogen.sh
 
 .PHONY: all all-debug doc doc-man doc-html install install-doc \
-	install-doc-man install-doc-html clean spell-check dist rpm
+	install-doc-man install-doc-html clean spell-check dist rpm test
 
 ifdef NO_MKSTEMPS
 COMPAT_CPPFLAGS += -DNO_MKSTEMPS
@@ -175,12 +178,14 @@ COMPAT_CPPFLAGS += -DNO_SETENV
 COMPAT_OBJS += compat/setenv.o
 endif
 
+COMPAT_OBJS += compat/hashtab.o
+
 override CPPFLAGS += $(COMPAT_CPPFLAGS)
 
 TIG_OBJS = tig.o util.o io.o graph.o refs.o $(COMPAT_OBJS)
 tig: $(TIG_OBJS)
 
-TEST_GRAPH_OBJS = tools/test-graph.o util.o io.o graph.o
+TEST_GRAPH_OBJS = tools/test-graph.o util.o io.o graph.o $(COMPAT_OBJS)
 tools/test-graph: $(TEST_GRAPH_OBJS)
 
 OBJS = $(sort $(TIG_OBJS) $(TEST_GRAPH_OBJS))

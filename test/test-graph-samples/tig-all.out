@@ -1,0 +1,35 @@
+●─╮ On fix-graph: debug printout stuff
+│ ● index on fix-graph: 85e82d0 One more fix
+●─╯ One more fix
+● Another fix
+● Use pre-generated next row
+● Add function to pre-generate next row
+● A little more broken to make it better
+● Always insert extra columns at the end
+● Works for first test case
+● Better, but missing some lines still
+● A little better at the top, a little worse at the bottom
+● Fix reloading diffs of staged and unstaged changes
+● Fix map size assertion in parse_enum
+│ ● Move view draw methods to draw module
+│ ● Move option handling code to options.c
+│ ● Move option declarations to separate files
+│ ● Use symbols to track diff and log argument formatting
+│ ● Group environment-based options
+│ ● Move refs helpers to refs module
+│ ● Move repository information to repo.[ch]
+│ ● Add tool to generate doc from data structures
+│ ● Move view declarations to view.h
+│ ● Move keybinding and run requests to keys.[ch]
+│ ● Move line and color code to line.c
+│ ● Move line definitions to line.h
+│ ● Move request handling code to request.c
+│ ● Move request definitions to request.h
+│ ● Move view macro to tig.h
+│ ● Move enums and various utility methods to util module
+●─╯ Refactor defined enum maps to contain size information
+● Detect renames when generating the announcement
+● Fix warning about uninitialized lineno variable
+● Set the commit reference when opening the blame view from the blob view
+● Fix clean rule to remove DocBook XML files in doc/
+● Fix and improve inter-document linking
