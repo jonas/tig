@@ -195,11 +195,9 @@ graph_insert_parents(struct graph *graph)
 
 		if (pos == graph->position) {
 			symbol.commit = 1;
-			/*
-			if (new->symbol->boundary) {
+			if (new->symbol.boundary) {
 				symbol.boundary = 1;
-			} else*/
-			if (!graph_column_has_commit(new)) {
+			} else if (!graph_column_has_commit(new)) {
 				symbol.initial = 1;
 			}
 
