@@ -8171,7 +8171,7 @@ main_read(struct view *view, char *line)
 		state->in_header = TRUE;
 		line += STRING_SIZE("commit ");
 		is_boundary = *line == '-';
-		if (is_boundary || !isalnum(*line))
+		while (*line && !isalnum(*line))
 			line++;
 
 		if (!state->added_changes_commits && opt_show_changes && opt_is_inside_work_tree)
