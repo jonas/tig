@@ -191,7 +191,7 @@ DEPS_CFLAGS ?= -MMD -MP -MF .deps/$*.d
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 %.o: %.c
-	@mkdir -p .deps/$(*D)
+	@mkdir -p $(abspath .deps/$(*D))
 	$(CC) $(CFLAGS) $(DEPS_CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 -include $(OBJS:%.o=.deps/%.d)
