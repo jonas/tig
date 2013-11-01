@@ -2417,27 +2417,30 @@ redraw_view(struct view *view)
 static void
 update_view_title(struct view *view)
 {
-	char buf[SIZEOF_STR];
-	char state[SIZEOF_STR];
-	size_t bufpos = 0, statelen = 0;
 	WINDOW *window = display[0] == view ? display_title[0] : display_title[1];
 	struct line *line = &view->line[view->pos.lineno];
+	unsigned int view_lines, lines;
 
 	assert(view_is_displayed(view));
 
+	if (view == display[current_view])
+		wbkgdset(window, get_line_attr(LINE_TITLE_FOCUS));
+	else
+		wbkgdset(window, get_line_attr(LINE_TITLE_BLUR));
+
+	werase(window);
+	mvwprintw(window, 0, 0, "[%s]", view->name);
+
+	if (*view->ref) {
+		wprintw(window, " %s", view->ref);
+	}
+
 	if (!view_has_flags(view, VIEW_CUSTOM_STATUS) && view_has_line(view, line) &&
 	    line->lineno) {
-		unsigned int view_lines = view->pos.offset + view->height;
-		unsigned int lines = view->lines
-				   ? MIN(view_lines, view->lines) * 100 / view->lines
-				   : 0;
-
-		string_format_from(state, &statelen, " - %s %d of %zd (%d%%)",
-				   view->ops->type,
-				   line->lineno,
-				   view->lines - view->custom_lines,
-				   lines);
-
+		wprintw(window, " - %s %d of %zd",
+					   view->ops->type,
+					   line->lineno,
+					   view->lines - view->custom_lines);
 	}
 
 	if (view->pipe) {
@@ -2445,30 +2448,13 @@ update_view_title(struct view *view)
 
 		/* Three git seconds are a long time ... */
 		if (secs > 2)
-			string_format_from(state, &statelen, " loading %lds", secs);
+			wprintw(window, " loading %lds", secs);
 	}
 
-	string_format_from(buf, &bufpos, "[%s]", view->name);
-	if (*view->ref && bufpos < view->width) {
-		size_t refsize = strlen(view->ref);
-		size_t minsize = bufpos + 1 + /* abbrev= */ 7 + 1 + statelen;
+	view_lines = view->pos.offset + view->height;
+	lines = view->lines ? MIN(view_lines, view->lines) * 100 / view->lines : 0;
+	mvwprintw(window, 0, view->width - count_digits(lines) - 1, "%d%%", lines);
 
-		if (minsize < view->width)
-			refsize = view->width - minsize + 7;
-		string_format_from(buf, &bufpos, " %.*s", (int) refsize, view->ref);
-	}
-
-	if (statelen && bufpos < view->width) {
-		string_format_from(buf, &bufpos, "%s", state);
-	}
-
-	if (view == display[current_view])
-		wbkgdset(window, get_line_attr(LINE_TITLE_FOCUS));
-	else
-		wbkgdset(window, get_line_attr(LINE_TITLE_BLUR));
-
-	mvwaddnstr(window, 0, 0, buf, bufpos);
-	wclrtoeol(window);
 	wnoutrefresh(window);
 }
 
