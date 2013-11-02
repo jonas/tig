@@ -35,6 +35,7 @@ Bug fixes:
    break the output parsing. (GH #191)
  - Close stdin when pager mode is not supported.
  - Show newly created branches in the main view. (GH #196)
+ - File with 0 changes breaks diffstat highlighting (GH #215)
 
 tig-1.2.1
 ---------
