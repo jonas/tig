@@ -45,6 +45,13 @@ struct menu_item {
 
 static bool prompt_menu(const char *prompt, const struct menu_item *items, int *selected);
 
+#define VERTICAL_SPLIT_ENUM(_) \
+	_(VERTICAL_SPLIT, HORIZONTAL), \
+	_(VERTICAL_SPLIT, VERTICAL), \
+	_(VERTICAL_SPLIT, AUTO)
+
+DEFINE_ENUM(vertical_split, VERTICAL_SPLIT_ENUM);
+
 #define GRAPHIC_ENUM(_) \
 	_(GRAPHIC, ASCII), \
 	_(GRAPHIC, DEFAULT), \
@@ -389,6 +396,7 @@ DEFINE_ENUM(commit_order, COMMIT_ORDER_ENUM);
 	REQ_(TOGGLE_TITLE_OVERFLOW,	"Toggle highlighting of commit title overflow"), \
 	REQ_(TOGGLE_FILE_SIZE,	"Toggle file size format"), \
 	REQ_(TOGGLE_UNTRACKED_DIRS,	"Toggle display of files in untracked directories"), \
+	REQ_(TOGGLE_VERTICAL_SPLIT,	"Toggle vertical split"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
@@ -476,8 +484,7 @@ static int opt_num_interval		= 5;
 static double opt_hscroll		= 0.50;
 static double opt_scale_split_view	= 2.0 / 3.0;
 static double opt_scale_vsplit_view	= 0.5;
-static bool opt_auto_vsplit		= TRUE;
-static bool opt_vsplit			= FALSE;
+static enum vertical_split opt_vertical_split	= VERTICAL_SPLIT_AUTO;
 static int opt_tab_size			= 8;
 static int opt_author_width		= AUTHOR_WIDTH;
 static int opt_filename_width		= FILENAME_WIDTH;
@@ -512,6 +519,19 @@ static char *opt_env[]			= { opt_env_lines, opt_env_columns, NULL };
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
+
+static bool
+vertical_split_is_enabled(void)
+{
+	if (opt_vertical_split == VERTICAL_SPLIT_AUTO) {
+		int height, width;
+
+		getmaxyx(stdscr, height, width);
+		return width * opt_scale_vsplit_view > (height - 1) * 2;
+	}
+
+	return opt_vertical_split == VERTICAL_SPLIT_VERTICAL;
+}
 
 static inline int
 load_refs(bool force)
@@ -1549,10 +1569,8 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "split-view-height"))
 		return parse_step(&opt_scale_split_view, argv[2]);
 
-	if (!strcmp(argv[0], "vertical-split")) {
-		opt_auto_vsplit = strcmp(argv[2], "auto") == 0;
-		return opt_auto_vsplit ? SUCCESS : parse_bool(&opt_vsplit, argv[2]);
-	}
+	if (!strcmp(argv[0], "vertical-split"))
+		return parse_enum(&opt_vertical_split, argv[2], vertical_split_map);
 
 	if (!strcmp(argv[0], "tab-size"))
 		return parse_int(&opt_tab_size, argv[2], 1, 1024);
@@ -2490,7 +2508,7 @@ apply_vertical_split(struct view *base, struct view *view)
 static void
 redraw_display_separator(bool clear)
 {
-	if (displayed_views() > 1 && opt_vsplit) {
+	if (displayed_views() > 1 && vertical_split_is_enabled()) {
 		chtype separator = opt_line_graphics ? ACS_VLINE : '|';
 
 		if (clear)
@@ -2506,6 +2524,7 @@ resize_display(void)
 	int x, y, i;
 	struct view *base = display[0];
 	struct view *view = display[1] ? display[1] : display[0];
+	bool vsplit;
 
 	/* Setup window dimensions */
 
@@ -2516,11 +2535,10 @@ resize_display(void)
 	/* Make room for the status window. */
 	base->height -= 1;
 
-	if (opt_auto_vsplit)
-		opt_vsplit = base->width * opt_scale_vsplit_view > base->height * 2;
+	vsplit = vertical_split_is_enabled();
 
 	if (view != base) {
-		if (opt_vsplit) {
+		if (vsplit) {
 			apply_vertical_split(base, view);
 
 			/* Make room for the separator bar. */
@@ -2557,7 +2575,7 @@ resize_display(void)
 			mvwin(display_title[i], y + view->height, x);
 		}
 
-		if (i > 0 && opt_vsplit) {
+		if (i > 0 && vsplit) {
 			if (!display_sep) {
 				display_sep = newwin(view->height, 1, 0, x - 1);
 				if (!display_sep)
@@ -2571,7 +2589,7 @@ resize_display(void)
 
 		view->win = display_win[i];
 
-		if (opt_vsplit)
+		if (vsplit)
 			x += view->width + 1;
 		else
 			y += view->height + 1;
@@ -2600,6 +2618,8 @@ redraw_display(bool clear)
  * Option management
  */
 
+#define VIEW_FLAG_RESET_DISPLAY	((enum view_flag) -1)
+
 #define TOGGLE_MENU_INFO(_) \
 	_(LINENO,    '.', "line numbers",      &opt_line_number, NULL, VIEW_NO_FLAGS), \
 	_(DATE,      'D', "dates",             &opt_date, date_map, VIEW_NO_FLAGS), \
@@ -2616,6 +2636,7 @@ redraw_display(bool clear)
 	_(FILES,     '%', "file filtering",    &opt_file_filter, NULL, VIEW_DIFF_LIKE | VIEW_LOG_LIKE), \
 	_(TITLE_OVERFLOW, '$', "commit title overflow display", &opt_show_title_overflow, NULL, VIEW_NO_FLAGS), \
 	_(UNTRACKED_DIRS, 'd', "untracked directory info", &opt_untracked_dirs_content, NULL, VIEW_STATUS_LIKE), \
+	_(VERTICAL_SPLIT, '|', "view split",   &opt_vertical_split, vertical_split_map, VIEW_FLAG_RESET_DISPLAY), \
 
 static enum view_flag
 toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
@@ -3844,15 +3865,23 @@ view_driver(struct view *view, enum request request)
 	case REQ_TOGGLE_ID:
 	case REQ_TOGGLE_FILES:
 	case REQ_TOGGLE_TITLE_OVERFLOW:
+	case REQ_TOGGLE_FILE_SIZE:
+	case REQ_TOGGLE_UNTRACKED_DIRS:
+	case REQ_TOGGLE_VERTICAL_SPLIT:
 		{
 			char action[SIZEOF_STR] = "";
 			enum view_flag flags = toggle_option(view, request, action);
 	
-			foreach_displayed_view(view, i) {
-				if (view_has_flags(view, flags) && !view->unrefreshable)
-					reload_view(view);
-				else
-					redraw_view(view);
+			if (flags == VIEW_FLAG_RESET_DISPLAY) {
+				resize_display();
+				redraw_display(TRUE);
+			} else {
+				foreach_displayed_view(view, i) {
+					if (view_has_flags(view, flags) && !view->unrefreshable)
+						reload_view(view);
+					else
+						redraw_view(view);
+				}
 			}
 
 			if (*action)

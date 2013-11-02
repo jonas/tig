@@ -243,7 +243,8 @@ The following variables can be set:
 
 	Whether to split the view horizontally or vertically.
 	"auto" (which is the default) means that it will depend on the window
-	dimensions. A boolean value forces the split orientation.
+	dimensions. When true vertical orientation is used, and false sets the
+	orientation to horizontal.
 
 'split-view-height' (mixed)::
 

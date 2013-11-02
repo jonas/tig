@@ -14,6 +14,7 @@ Improvements:
 
  - Add a new "auto" value for the 'vertical-split' option to let Tig choose the
    split orientation (this is the new default behavior).
+ - Add toggle-vertical-split option to change the vertical split value.
  - Add 'stage-split-chunk' action for splitting chunks in the stage view.
    Bound to '\' by default. (GH #107)
  - Add 'back' action bound to '<' by default, which will return the blame view
