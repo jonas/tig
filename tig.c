@@ -419,6 +419,8 @@ enum request {
 
 	/* Internal requests. */
 	REQ_JUMP_COMMIT,
+	REQ_SCROLL_WHEEL_DOWN,
+	REQ_SCROLL_WHEEL_UP,
 
 	/* Start of the run request IDs */
 	REQ_RUN_REQUESTS
@@ -519,6 +521,8 @@ static int opt_title_overflow		= 50;
 static char opt_env_lines[64]		= "";
 static char opt_env_columns[64]		= "";
 static char *opt_env[]			= { opt_env_lines, opt_env_columns, NULL };
+static bool opt_mouse			= TRUE;
+static int opt_scroll_wheel_lines	= 3;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
@@ -1647,6 +1651,12 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "editor-line-number"))
 		return parse_bool(&opt_editor_lineno, argv[2]);
+
+	if (!strcmp(argv[0], "mouse"))
+		return parse_bool(&opt_mouse, argv[2]);
+
+	if (!strcmp(argv[0], "mouse-scroll"))
+		return parse_int(&opt_scroll_wheel_lines, argv[2], 0, 1024);
 
 	return ERROR_UNKNOWN_VARIABLE_NAME;
 }
@@ -2783,6 +2793,9 @@ scroll_view(struct view *view, enum request request)
 
 	assert(view_is_displayed(view));
 
+	if (request == REQ_SCROLL_WHEEL_DOWN || request == REQ_SCROLL_WHEEL_UP)
+		lines = opt_scroll_wheel_lines;
+
 	switch (request) {
 	case REQ_SCROLL_FIRST_COL:
 		view->pos.col = 0;
@@ -2808,6 +2821,7 @@ scroll_view(struct view *view, enum request request)
 		return;
 	case REQ_SCROLL_PAGE_DOWN:
 		lines = view->height;
+	case REQ_SCROLL_WHEEL_DOWN:
 	case REQ_SCROLL_LINE_DOWN:
 		if (view->pos.offset + lines > view->lines)
 			lines = view->lines - view->pos.offset;
@@ -2821,6 +2835,7 @@ scroll_view(struct view *view, enum request request)
 	case REQ_SCROLL_PAGE_UP:
 		lines = view->height;
 	case REQ_SCROLL_LINE_UP:
+	case REQ_SCROLL_WHEEL_UP:
 		if (lines > view->pos.offset)
 			lines = view->pos.offset;
 
@@ -3786,6 +3801,8 @@ view_driver(struct view *view, enum request request)
 	case REQ_SCROLL_LINE_UP:
 	case REQ_SCROLL_PAGE_DOWN:
 	case REQ_SCROLL_PAGE_UP:
+	case REQ_SCROLL_WHEEL_DOWN:
+	case REQ_SCROLL_WHEEL_UP:
 		scroll_view(view, request);
 		break;
 
@@ -8534,6 +8551,13 @@ init_display(void)
 	/* Enable keyboard mapping */
 	keypad(status_win, TRUE);
 	wbkgdset(status_win, get_line_attr(LINE_STATUS));
+#ifdef NCURSES_MOUSE_VERSION
+	/* Enable mouse */
+	if (opt_mouse){
+		mousemask(ALL_MOUSE_EVENTS, NULL);
+		mouseinterval(0);
+	}
+#endif
 
 #if defined(NCURSES_VERSION_PATCH) && (NCURSES_VERSION_PATCH >= 20080119)
 	set_tabsize(opt_tab_size);
@@ -9301,6 +9325,68 @@ run_prompt_command(struct view *view, char *cmd) {
 	return REQ_NONE;
 }
 
+#ifdef NCURSES_MOUSE_VERSION
+static struct view *
+find_clicked_view(MEVENT *event)
+{
+	struct view *view;
+	int i;
+
+	foreach_displayed_view (view, i) {
+		int beg_y = 0, beg_x = 0;
+
+		getbegyx(view->win, beg_y, beg_x);
+
+		if (beg_y <= event->y && event->y < beg_y + view->height
+		    && beg_x <= event->x && event->x < beg_x + view->width) {
+			if (i != current_view) {
+				current_view = i;
+			}
+			return view;
+		}
+	}
+
+	return NULL;
+}
+
+static enum request
+handle_mouse_event(void)
+{
+	MEVENT event;
+	struct view *view;
+
+	if (getmouse(&event) != OK)
+		return REQ_NONE;
+
+	view = find_clicked_view(&event);
+	if (!view)
+		return REQ_NONE;
+
+	if (event.bstate & BUTTON2_PRESSED)
+		return REQ_SCROLL_WHEEL_DOWN;
+
+	if (event.bstate & BUTTON4_PRESSED)
+		return REQ_SCROLL_WHEEL_UP;
+
+	if (event.bstate & BUTTON1_PRESSED) {
+		if (event.y == view->pos.lineno - view->pos.offset) {
+			/* Click is on the same line, perform an "ENTER" */
+			return REQ_ENTER;
+
+		} else {
+			int y = getbegy(view->win);
+			unsigned long lineno = (event.y - y) + view->pos.offset;
+
+			select_view_line(view, lineno);
+			update_view_title(view);
+			report_clear();
+		}
+	}
+
+	return REQ_NONE;
+}
+#endif
+
 int
 main(int argc, const char *argv[])
 {
@@ -9356,6 +9442,13 @@ main(int argc, const char *argv[])
 
 	while (view_driver(display[current_view], request)) {
 		int key = get_input(0);
+
+#ifdef NCURSES_MOUSE_VERSION
+		if (key == KEY_MOUSE) {
+			request = handle_mouse_event();
+			continue;
+		}
+#endif
 
 		if (key == KEY_ESC)
 			key  = get_input(0) + 0x80;

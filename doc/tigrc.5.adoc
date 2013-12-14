@@ -177,6 +177,10 @@ The following variables can be set:
 	always ensured that at least one column is scrolled. The default is to
 	scroll '50%' of the view width.
 
+'mouse-scroll' (int)::
+	Interval to scroll up or down using the mouse. The default is 3 lines.
+	Note that mouse support requires that ncurses itself has mouse support.
+
 'read-git-colors' (bool)::
 
 	Whether to read Git's color settings. True by default.
@@ -300,6 +304,10 @@ The following variables can be set:
 	Whether to pass the selected line number to the editor command. The
 	line number is passed as `+<line-number>` in front of the file name.
 	Example: `vim +10 tig.c`
+
+'mouse' (bool)::
+	Whether to enable mouse support. Note that mouse support requires that
+	ncurses itself has mouse support.
 
 Bind command
 ------------
