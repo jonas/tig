@@ -48,7 +48,7 @@
 
 #define GIT_MAIN_LOG(encoding_arg, diffargs, revargs, fileargs) \
 	"git", "log", (encoding_arg), \
-		opt_commit_order_arg, (diffargs), (revargs), \
+		opt_commit_order_arg, (revargs), \
 		"--no-color", "--pretty=raw", "--parents", \
 		"--", (fileargs), NULL
 
