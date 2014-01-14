@@ -398,6 +398,12 @@ DEFINE_ENUM(commit_order, COMMIT_ORDER_ENUM);
 	REQ_(TOGGLE_UNTRACKED_DIRS,	"Toggle display of files in untracked directories"), \
 	REQ_(TOGGLE_VERTICAL_SPLIT,	"Toggle vertical split"), \
 	\
+	REQ_GROUP("Mouse") \
+	REQ_(MOUSE_KEY,		"Generic mouse request"), \
+	REQ_(CLICK_ON_POS,	"Move cursor to specified position"), \
+	REQ_(SCROLL_WHEEL_DOWN,	"Scroll down via mouse wheel"), \
+	REQ_(SCROLL_WHEEL_UP,	"Scroll up via mouse wheel"), \
+	\
 	REQ_GROUP("Misc") \
 	REQ_(PROMPT,		"Bring up the prompt"), \
 	REQ_(SCREEN_REDRAW,	"Redraw the screen"), \
@@ -516,6 +522,11 @@ static int opt_title_overflow		= 50;
 static char opt_env_lines[64]		= "";
 static char opt_env_columns[64]		= "";
 static char *opt_env[]			= { opt_env_lines, opt_env_columns, NULL };
+static bool opt_mouse			= TRUE;
+static int opt_scroll_wheel_lines	= 3;
+#ifdef NCURSES_MOUSE_VERSION
+static MEVENT opt_mevent;
+#endif
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
@@ -987,6 +998,9 @@ static struct keybinding default_keybindings[] = {
 	{ '$',		REQ_TOGGLE_TITLE_OVERFLOW },
 	{ ':',		REQ_PROMPT },
 	{ 'e',		REQ_EDIT },
+#ifdef NCURSES_MOUSE_VERSION
+	{ KEY_MOUSE,	REQ_MOUSE_KEY },
+#endif
 };
 
 struct keymap {
@@ -1644,6 +1658,10 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "editor-line-number"))
 		return parse_bool(&opt_editor_lineno, argv[2]);
+	if (!strcmp(argv[0], "mouse"))
+		return parse_bool(&opt_mouse, argv[2]);
+	if (!strcmp(argv[0], "scroll-wheel-lines"))
+		return parse_int(&opt_scroll_wheel_lines, argv[2], 0, 1024);
 
 	return ERROR_UNKNOWN_VARIABLE_NAME;
 }
@@ -2803,9 +2821,13 @@ scroll_view(struct view *view, enum request request)
 		redraw_view(view);
 		report_clear();
 		return;
+	case REQ_SCROLL_WHEEL_DOWN:
+		lines = opt_scroll_wheel_lines;
+		goto checkdown;
 	case REQ_SCROLL_PAGE_DOWN:
 		lines = view->height;
 	case REQ_SCROLL_LINE_DOWN:
+		checkdown:
 		if (view->pos.offset + lines > view->lines)
 			lines = view->lines - view->pos.offset;
 
@@ -2815,9 +2837,13 @@ scroll_view(struct view *view, enum request request)
 		}
 		break;
 
+	case REQ_SCROLL_WHEEL_UP:
+		lines = opt_scroll_wheel_lines;
+		goto checkup;
 	case REQ_SCROLL_PAGE_UP:
 		lines = view->height;
 	case REQ_SCROLL_LINE_UP:
+		checkup:
 		if (lines > view->pos.offset)
 			lines = view->pos.offset;
 
@@ -2872,6 +2898,17 @@ move_view(struct view *view, enum request request)
 		steps = 1;
 		break;
 
+#ifdef NCURSES_MOUSE_VERSION
+	case REQ_CLICK_ON_POS:
+	{
+		int y = getbegy(view->win);
+		steps = opt_mevent.y - view->pos.lineno + view->pos.offset - y;
+		if (view->pos.lineno + steps >= view->lines){
+			steps = 0;
+		}
+		break;
+	}
+#endif
 	default:
 		die("request %d not handled in switch", request);
 	}
@@ -3783,6 +3820,8 @@ view_driver(struct view *view, enum request request)
 	case REQ_SCROLL_LINE_UP:
 	case REQ_SCROLL_PAGE_DOWN:
 	case REQ_SCROLL_PAGE_UP:
+	case REQ_SCROLL_WHEEL_DOWN:
+	case REQ_SCROLL_WHEEL_UP:
 		scroll_view(view, request);
 		break;
 
@@ -3835,6 +3874,28 @@ view_driver(struct view *view, enum request request)
 		report_clear();
 		break;
 	}
+#ifdef NCURSES_MOUSE_VERSION
+	case REQ_CLICK_ON_POS:
+	{
+		if(opt_mevent.y == view->pos.lineno - view->pos.offset){
+			/* Click is on the same line, perform an "ENTER" */
+			view_request(view, REQ_ENTER);
+			break;
+		}
+
+		int selected_view = current_view;
+		move_view(view, request);
+		if (selected_view == 0
+			&& display[1]
+			&& display[1]->prev != display[1]){
+			/* If we're showing the diff view, automatically show the diff
+			 * of the clicked commit. */
+			view_request(view, REQ_ENTER);
+		}
+
+		break;
+	}
+#endif
 	case REQ_REFRESH:
 		report("Refreshing is not supported by the %s view", view->name);
 		break;
@@ -8531,6 +8592,13 @@ init_display(void)
 	/* Enable keyboard mapping */
 	keypad(status_win, TRUE);
 	wbkgdset(status_win, get_line_attr(LINE_STATUS));
+#ifdef NCURSES_MOUSE_VERSION
+	/* Enable mouse */
+	if (opt_mouse){
+		mousemask(ALL_MOUSE_EVENTS, NULL);
+		mouseinterval(0);
+	}
+#endif
 
 #if defined(NCURSES_VERSION_PATCH) && (NCURSES_VERSION_PATCH >= 20080119)
 	set_tabsize(opt_tab_size);
@@ -9298,6 +9366,41 @@ run_prompt_command(struct view *view, char *cmd) {
 	return REQ_NONE;
 }
 
+bool findClickedView(){
+#ifdef NCURSES_MOUSE_VERSION
+	if (opt_mevent.y < display[0]->height
+			&& opt_mevent.x < display[0]->width){
+		current_view = 0;
+		if (display[1] && display[1]->prev != display[1]){
+			update_view_title(display[1]);
+		}
+		return true;
+	}
+
+	if (opt_mevent.y == display[0]->height
+			|| opt_mevent.x == display[0]->width){
+		return false;
+	}
+
+	if (!display[1] || display[1]->prev == display[1]){
+		return false;
+	}
+
+	int begY = 0;
+	int begX = 0;
+	getbegyx(display[1]->win, begY, begX);
+	int endY = display[1]->height + begY;
+	int endX = display[1]->width + begX;
+	if (opt_mevent.y < endY
+			&& opt_mevent.x < endX){
+		current_view = 1;
+		update_view_title(display[0]);
+		return true;
+	}
+#endif
+	return false;
+}
+
 int
 main(int argc, const char *argv[])
 {
@@ -9389,6 +9492,31 @@ main(int argc, const char *argv[])
 				request = REQ_NONE;
 			break;
 		}
+#ifdef NCURSES_MOUSE_VERSION
+		case REQ_MOUSE_KEY:
+		{
+			if (getmouse(&opt_mevent) == OK){
+				if (!findClickedView()){
+					request = REQ_NONE;
+					break;
+				}
+				if (opt_mevent.bstate & BUTTON2_PRESSED){
+					request = REQ_SCROLL_WHEEL_DOWN;
+					break;
+				}
+				if (opt_mevent.bstate & BUTTON4_PRESSED){
+					request = REQ_SCROLL_WHEEL_UP;
+					break;
+				}
+				if (opt_mevent.bstate & BUTTON1_PRESSED){
+					request = REQ_CLICK_ON_POS;
+					break;
+				}
+				request = REQ_NONE;
+			}
+			break;
+		}
+#endif
 		default:
 			break;
 		}
