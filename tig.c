@@ -1286,7 +1286,7 @@ get_run_request(enum request request)
 {
 	if (request <= REQ_RUN_REQUESTS || request > REQ_RUN_REQUESTS + run_requests)
 		return NULL;
-	return &run_request[request - REQ_NONE - 1];
+	return &run_request[request - REQ_RUN_REQUESTS - 1];
 }
 
 static void
