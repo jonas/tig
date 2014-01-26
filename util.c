@@ -15,6 +15,7 @@
 #include "util.h"
 
 static const char *status_messages[] = {
+	"Success",
 #define STATUS_CODE_MESSAGE(name, msg) msg
 	STATUS_CODE_INFO(STATUS_CODE_MESSAGE)
 };
