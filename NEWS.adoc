@@ -13,7 +13,8 @@ Note to packagers:
 Improvements:
 
  - Add mouse support: scroll view, click line to move cursor, double click line
-   (or click again) to "Enter" cursor line, e.g. open commit diff.
+   (or click again) to "Enter" cursor line, e.g. open commit diff. Disabled by
+   default, since it makes it difficult to copy text from the terminal.
  - Add a new "auto" value for the 'vertical-split' option to let Tig choose the
    split orientation (this is the new default behavior).
  - Add toggle-vertical-split option to change the vertical split value.
