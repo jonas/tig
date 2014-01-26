@@ -307,9 +307,10 @@ The following variables can be set:
 	Example: `vim +10 tig.c`
 
 'mouse' (bool)::
-	Whether to enable mouse support. Off by default since it breaks copying
-	text from the terminal. Mouse support requires that ncurses itself
-	support mouse events.
+	Whether to enable mouse support. Off by default since it makes selecting
+	text from the terminal less intuitive. When enabled hold down Shift (or
+	Option on Mac) to select text. Mouse support requires that ncurses
+	itself support mouse events.
 
 Bind command
 ------------

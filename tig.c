@@ -521,7 +521,7 @@ static int opt_title_overflow		= 50;
 static char opt_env_lines[64]		= "";
 static char opt_env_columns[64]		= "";
 static char *opt_env[]			= { opt_env_lines, opt_env_columns, NULL };
-static bool opt_mouse			= TRUE;
+static bool opt_mouse			= FALSE;
 static int opt_scroll_wheel_lines	= 3;
 
 #define is_initial_commit()	(!get_ref_head())
