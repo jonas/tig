@@ -420,6 +420,9 @@ enum request {
 	/* Internal requests. */
 	REQ_JUMP_COMMIT,
 
+	/* Start of the run request IDs */
+	REQ_RUN_REQUESTS
+
 #undef	REQ_GROUP
 #undef	REQ_
 };
@@ -1270,14 +1273,14 @@ add_run_request(struct keymap *keymap, int key, const char **argv, enum run_requ
 	req->keymap = keymap;
 	req->key = key;
 
-	add_keybinding(keymap, REQ_NONE + run_requests, key);
+	add_keybinding(keymap, REQ_RUN_REQUESTS + run_requests, key);
 	return TRUE;
 }
 
 static struct run_request *
 get_run_request(enum request request)
 {
-	if (request <= REQ_NONE || request > REQ_NONE + run_requests)
+	if (request <= REQ_RUN_REQUESTS || request > REQ_RUN_REQUESTS + run_requests)
 		return NULL;
 	return &run_request[request - REQ_NONE - 1];
 }
@@ -3754,7 +3757,7 @@ view_driver(struct view *view, enum request request)
 	if (request == REQ_NONE)
 		return TRUE;
 
-	if (request > REQ_NONE) {
+	if (request >= REQ_RUN_REQUESTS) {
 		request = open_run_request(view, request);
 
 		// exit quickly rather than going through view_request and back
