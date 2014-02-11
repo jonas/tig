@@ -41,6 +41,7 @@ Bug fixes:
  - Close stdin when pager mode is not supported.
  - Show newly created branches in the main view. (GH #196)
  - File with 0 changes breaks diffstat highlighting (GH #215)
+ - Disable graph drawing for reverse log order. (GH #127)
 
 tig-1.2.1
 ---------

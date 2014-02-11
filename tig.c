@@ -8069,7 +8069,8 @@ main_open(struct view *view, enum open_flags flags)
 	};
 	struct main_state *state = view->private;
 
-	state->with_graph = opt_rev_graph;
+	state->with_graph = opt_rev_graph &&
+			    opt_commit_order != COMMIT_ORDER_REVERSE;
 
 	if (flags & OPEN_PAGER_MODE) {
 		state->added_changes_commits = TRUE;
