@@ -1,0 +1,28 @@
+commit i h
+    Do not include merges in the announcement's change log
+commit h g d
+    Merge pull request #81 from esc/fix/reading_git_colors_256
+commit g f e
+    Merge pull request #80 from esc/fix/option_name_mismatch
+commit f c
+    Reenable copy/rename detection in the status view
+commit e c
+    fix: the manpage says 'read-git-colors'
+commit d c
+    fix: reading git colors in rang 0 255
+commit c b
+    Remove enforced diff move/copy detection
+commit b a
+    Optionally show commit IDs for branches and tree entries
+* [33md10dcd8[m[33m ([1;36mHEAD[m[33m)[m Do not include merges in the announcement's change log
+*   [33m7cdab00[m Merge pull request #81 from esc/fix/reading_git_colors_256
+[32m|[m[33m\[m  
+[32m|[m * [33m54e8c4d[m fix: reading git colors in rang 0 255
+* [33m|[m   [33m7368b5b[m Merge pull request #80 from esc/fix/option_name_mismatch
+[34m|[m[35m\[m [33m\[m  
+[34m|[m * [33m|[m [33m0431cd2[m fix: the manpage says 'read-git-colors'
+[34m|[m [33m|[m[33m/[m  
+* [33m|[m [33m82458a4[m Reenable copy/rename detection in the status view
+[33m|[m[33m/[m  
+* [33m6d276a6[m Remove enforced diff move/copy detection
+* [33mc5aaa84[m Optionally show commit IDs for branches and tree entries

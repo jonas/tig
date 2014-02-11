@@ -1,0 +1,8 @@
+● Do not include merges in the announcement's change log
+●─╮ Merge pull request #81 from esc/fix/reading_git_colors_256
+●─│─╮ Merge pull request #80 from esc/fix/option_name_mismatch
+● │ │ Reenable copy/rename detection in the status view
+│ │ ● fix: the manpage says 'read-git-colors'
+│ ● │ fix: reading git colors in rang 0 255
+●─┴─╯ Remove enforced diff move/copy detection
+● Optionally show commit IDs for branches and tree entries

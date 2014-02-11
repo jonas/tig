@@ -1,0 +1,20 @@
+commit A B C D E F
+    Commit A - merge B, C, D, E, and F
+commit D I
+    Commit D - after I
+commit E J
+    Commit E - after J
+commit F I
+    Commit F - after I
+commit B C
+    Commit B - after C
+commit C G
+    Commit C - after G
+commit G H
+    Commit G - after H
+commit H I
+    Commit H - after I
+commit I J
+    Commit I - after J
+commit J
+    Commit J

@@ -1,0 +1,22 @@
+commit f e d
+    Merge branch 'branch3'
+commit e b c
+    Merge branch 'branch2'
+commit d a
+    branch3
+commit c a
+    branch2
+commit b a
+    branch1
+commit a
+    init
+*   [33m5ce4f7f[m[33m ([1;36mHEAD[m[33m, [1;32mmaster[m[33m)[m Merge branch 'branch3'
+[31m|[m[32m\[m  
+[31m|[m * [33mb47bfd8[m[33m ([1;32mbranch3[m[33m)[m branch3
+* [32m|[m   [33mecc01c0[m Merge branch 'branch2'
+[33m|[m[34m\[m [32m\[m  
+[33m|[m * [32m|[m [33m814336c[m[33m ([1;32mbranch2[m[33m)[m branch2
+[33m|[m [32m|[m[32m/[m  
+* [32m|[m [33me51b810[m[33m ([1;32mbranch1[m[33m)[m branch1
+[32m|[m[32m/[m  
+* [33mde1bd54[m init

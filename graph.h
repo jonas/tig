@@ -14,21 +14,38 @@
 #ifndef TIG_GRAPH_H
 #define TIG_GRAPH_H
 
+#include "compat/hashtab.h"
+
 #define GRAPH_COLORS	7
 
 struct graph_symbol {
 	unsigned int color:8;
-	unsigned int bold:1;
 
 	unsigned int commit:1;
-	unsigned int branch:1;
-
 	unsigned int boundary:1;
 	unsigned int initial:1;
 	unsigned int merge:1;
 
-	unsigned int vbranch:1;
-	unsigned int branched:1;
+	unsigned int continued_down:1;
+	unsigned int continued_up:1;
+	unsigned int continued_right:1;
+	unsigned int continued_left:1;
+	unsigned int continued_up_left:1;
+
+	unsigned int parent_down:1;
+	unsigned int parent_right:1;
+
+	unsigned int below_commit:1;
+	unsigned int flanked:1;
+	unsigned int next_right:1;
+	unsigned int matches_commit:1;
+
+	unsigned int shift_left:1;
+	unsigned int continue_shift:1;
+	unsigned int below_shift:1;
+
+	unsigned int new_column:1;
+	unsigned int empty:1;
 };
 
 struct graph_canvas {
@@ -46,14 +63,22 @@ struct graph_row {
 	struct graph_column *columns;
 };
 
+struct colors {
+	htab_t id_map;
+	size_t count[GRAPH_COLORS];
+};
+
 struct graph {
 	struct graph_row row;
 	struct graph_row parents;
+	struct graph_row prev_row;
+	struct graph_row next_row;
 	size_t position;
+	size_t prev_position;
 	size_t expanded;
 	const char *id;
 	struct graph_canvas *canvas;
-	size_t colors[GRAPH_COLORS];
+	struct colors colors;
 	bool has_parents;
 	bool is_boundary;
 };

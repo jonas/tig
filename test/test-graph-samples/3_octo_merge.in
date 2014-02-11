@@ -1,0 +1,10 @@
+commit A B C D
+    Commit A - Merges B, C, and D
+commit C E
+    Commit C after E
+commit E D B
+    Commit E - Merges D and B
+commit B D
+    Commit B after D
+commit D
+    Commit D
