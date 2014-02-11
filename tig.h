@@ -445,6 +445,7 @@ enum_map_name(const char *name, size_t namelen)
 }
 
 #define enum_name(entry) enum_map_name((entry).name, (entry).namelen)
+#define enum_copy_name(buf, entry) string_ncopy(buf, (entry).name, (entry).namelen)
 
 static inline bool
 map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, const char *name)

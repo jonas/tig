@@ -561,32 +561,32 @@ update_diff_context_arg(int diff_context)
 		string_ncopy(opt_diff_context_arg, "-U3", 3);
 }
 
+#define ENUM_ARG(enum_name, arg_string) ENUM_MAP_ENTRY(arg_string, enum_name)
+
+static const struct enum_map_entry ignore_space_arg_map[] = {
+	ENUM_ARG(IGNORE_SPACE_NO,	""),
+	ENUM_ARG(IGNORE_SPACE_ALL,	"--ignore-all-space"),
+	ENUM_ARG(IGNORE_SPACE_SOME,	"--ignore-space-change"),
+	ENUM_ARG(IGNORE_SPACE_AT_EOL,	"--ignore-space-at-eol"),
+};
+
 static inline void
 update_ignore_space_arg()
 {
-	if (opt_ignore_space == IGNORE_SPACE_ALL) {
-		string_copy(opt_ignore_space_arg, "--ignore-all-space");
-	} else if (opt_ignore_space == IGNORE_SPACE_SOME) {
-		string_copy(opt_ignore_space_arg, "--ignore-space-change");
-	} else if (opt_ignore_space == IGNORE_SPACE_AT_EOL) {
-		string_copy(opt_ignore_space_arg, "--ignore-space-at-eol");
-	} else {
-		string_copy(opt_ignore_space_arg, "");
-	}
+	enum_copy_name(opt_ignore_space_arg, ignore_space_arg_map[opt_ignore_space]);
 }
+
+static const struct enum_map_entry commit_order_arg_map[] = {
+	ENUM_ARG(COMMIT_ORDER_DEFAULT,	""),
+	ENUM_ARG(COMMIT_ORDER_TOPO,	"--topo-order"),
+	ENUM_ARG(COMMIT_ORDER_DATE,	"--date-order"),
+	ENUM_ARG(COMMIT_ORDER_REVERSE,	"--reverse"),
+};
 
 static inline void
 update_commit_order_arg()
 {
-	if (opt_commit_order == COMMIT_ORDER_TOPO) {
-		string_copy(opt_commit_order_arg, "--topo-order");
-	} else if (opt_commit_order == COMMIT_ORDER_DATE) {
-		string_copy(opt_commit_order_arg, "--date-order");
-	} else if (opt_commit_order == COMMIT_ORDER_REVERSE) {
-		string_copy(opt_commit_order_arg, "--reverse");
-	} else {
-		string_copy(opt_commit_order_arg, "");
-	}
+	enum_copy_name(opt_commit_order_arg, commit_order_arg_map[opt_commit_order]);
 }
 
 static inline void
@@ -1590,7 +1590,7 @@ option_set_command(int argc, const char *argv[])
 		return code;
 	}
 
-	if (!strcmp(argv[0], "ignore-space")) {
+	if (!strcmp(argv[0], "ignore-space") && !*opt_ignore_space_arg) {
 		enum status_code code = parse_enum(&opt_ignore_space, argv[2], ignore_space_map);
 
 		if (code == SUCCESS)
@@ -1598,7 +1598,7 @@ option_set_command(int argc, const char *argv[])
 		return code;
 	}
 
-	if (!strcmp(argv[0], "commit-order")) {
+	if (!strcmp(argv[0], "commit-order") && !*opt_commit_order_arg) {
 		enum status_code code = parse_enum(&opt_commit_order, argv[2], commit_order_map);
 
 		if (code == SUCCESS)
@@ -9120,13 +9120,33 @@ static void
 filter_options(const char *argv[], bool blame)
 {
 	const char **flags = NULL;
+	int next, flags_pos;
+
+	for (next = flags_pos = 0; argv[next]; next++) {
+		const char *flag = argv[next];
+		int enum_value = -1;
+
+		if (map_enum(&enum_value, commit_order_arg_map, flag)) {
+			opt_commit_order = enum_value;
+			update_commit_order_arg();
+			continue;
+		}
+
+		if (map_enum(&enum_value, ignore_space_arg_map, flag)) {
+			opt_ignore_space = enum_value;
+			update_ignore_space_arg();
+			continue;
+		}
+
+		argv[flags_pos++] = flag;
+	}
+
+	argv[flags_pos] = NULL;
 
 	filter_rev_parse(&opt_file_argv, "--no-revs", "--no-flags", argv);
 	filter_rev_parse(&flags, "--flags", "--no-revs", argv);
 
 	if (flags) {
-		int next, flags_pos;
-
 		for (next = flags_pos = 0; flags && flags[next]; next++) {
 			const char *flag = flags[next];
 
