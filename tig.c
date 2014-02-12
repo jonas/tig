@@ -1582,7 +1582,7 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "tab-size"))
 		return parse_int(&opt_tab_size, argv[2], 1, 1024);
 
-	if (!strcmp(argv[0], "diff-context")) {
+	if (!strcmp(argv[0], "diff-context") && !*opt_diff_context_arg) {
 		enum status_code code = parse_int(&opt_diff_context, argv[2], 0, 999999);
 
 		if (code == SUCCESS)
@@ -9125,21 +9125,26 @@ filter_options(const char *argv[], bool blame)
 
 	for (next = flags_pos = 0; argv[next]; next++) {
 		const char *flag = argv[next];
-		int enum_value = -1;
+		int value = -1;
 
-		if (map_enum(&enum_value, commit_order_arg_map, flag)) {
-			opt_commit_order = enum_value;
+		if (map_enum(&value, commit_order_arg_map, flag)) {
+			opt_commit_order = value;
 			update_commit_order_arg();
 			continue;
 		}
 
-		if (map_enum(&enum_value, ignore_space_arg_map, flag)) {
-			opt_ignore_space = enum_value;
+		if (map_enum(&value, ignore_space_arg_map, flag)) {
+			opt_ignore_space = value;
 			update_ignore_space_arg();
 			continue;
 		}
 
-		argv[flags_pos++] = flag;
+		if (!prefixcmp(flag, "-U")
+		    && parse_int(&value, flag + 2, 0, 999999) == SUCCESS) {
+			opt_diff_context = value;
+			update_diff_context_arg(opt_diff_context);
+			continue;
+		}
 	}
 
 	argv[flags_pos] = NULL;
