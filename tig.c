@@ -9145,6 +9145,8 @@ filter_options(const char *argv[], bool blame)
 			update_diff_context_arg(opt_diff_context);
 			continue;
 		}
+
+		argv[flags_pos++] = flag;
 	}
 
 	argv[flags_pos] = NULL;
