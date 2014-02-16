@@ -10,6 +10,14 @@ Note to packagers:
  - BUGS file has been merged into README.
  - Rename (again) doc/ AsciiDoc files to end in '.adoc'.
 
+Incompatibilities:
+
+ - Fix 'diff-options' to considered only for diff view and introduce
+   '%(cmdlineargs)' to hold non-file and non-revision flags passed on
+   the command line. Affects all user-defined commands that expect
+   '%(diffargs)' to hold both 'diff-options' arguments and those passed
+   on the command line. (GH #228)
+
 Improvements:
 
  - Add mouse support: scroll view, click line to move cursor, double click line

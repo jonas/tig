@@ -508,6 +508,7 @@ static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
 static bool opt_editor_lineno		= TRUE;
 static FILE *opt_tty			= NULL;
+static const char **opt_cmdline_argv	= NULL;
 static const char **opt_diff_argv	= NULL;
 static const char **opt_rev_argv	= NULL;
 static const char **opt_file_argv	= NULL;
@@ -3213,6 +3214,10 @@ format_argv(struct view *view, const char ***dst_argv, const char *src_argv[], b
 			if (!format_append_argv(&format, dst_argv, opt_blame_argv))
 				break;
 
+		} else if (!strcmp(arg, "%(cmdlineargs)")) {
+			if (!format_append_argv(&format, dst_argv, opt_cmdline_argv))
+				break;
+
 		} else if (!strcmp(arg, "%(revargs)") ||
 			   (first && !strcmp(arg, "%(commit)"))) {
 			if (!argv_append_array(dst_argv, opt_rev_argv))
@@ -4676,7 +4681,8 @@ diff_open(struct view *view, enum open_flags flags)
 		"git", "show", encoding_arg, "--pretty=fuller", "--root",
 			"--patch-with-stat",
 			opt_notes_arg, opt_diff_context_arg, opt_ignore_space_arg,
-			"%(diffargs)", "--no-color", "%(commit)", "--", "%(fileargs)", NULL
+			"%(diffargs)", "%(cmdlineargs)", "--no-color", "%(commit)",
+			"--", "%(fileargs)", NULL
 	};
 
 	return begin_update(view, NULL, diff_argv, flags);
@@ -8065,7 +8071,7 @@ static bool
 main_open(struct view *view, enum open_flags flags)
 {
 	static const char *main_argv[] = {
-		GIT_MAIN_LOG(encoding_arg, "%(diffargs)", "%(revargs)", "%(fileargs)")
+		GIT_MAIN_LOG(encoding_arg, "%(cmdlineargs)", "%(revargs)", "%(fileargs)")
 	};
 	struct main_state *state = view->private;
 
@@ -9169,7 +9175,7 @@ filter_options(const char *argv[], bool blame)
 		if (blame)
 			opt_blame_argv = flags;
 		else
-			opt_diff_argv = flags;
+			opt_cmdline_argv = flags;
 	}
 
 	filter_rev_parse(&opt_rev_argv, "--symbolic", "--revs-only", argv);
@@ -9265,7 +9271,7 @@ open_pager_mode(enum request request)
 		if (argv_contains(opt_rev_argv, "--stdin")) {
 			request = REQ_VIEW_MAIN;
 			flags |= OPEN_FORWARD_STDIN;
-		} else if (argv_contains(opt_diff_argv, "--pretty=raw")) {
+		} else if (argv_contains(opt_cmdline_argv, "--pretty=raw")) {
 			request = REQ_VIEW_MAIN;
 			flags |= OPEN_STDIN;
 		} else {
