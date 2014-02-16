@@ -35,7 +35,7 @@
 
 /* Don't show staged unmerged entries. */
 #define GIT_DIFF_STAGED_FILES(output_arg) \
-	"git", "diff-index", (output_arg), "--diff-filter=ACDMRTXB", "-M", "--cached", "HEAD", NULL
+	"git", "diff-index", (output_arg), "--diff-filter=ACDMRTXB", "-M", "--cached", "HEAD", "--", NULL
 
 #define GIT_DIFF_UNSTAGED_FILES(output_arg) \
 	"git", "diff-files", (output_arg), NULL
