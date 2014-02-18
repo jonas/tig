@@ -7742,10 +7742,20 @@ stage_request(struct view *view, enum request request, struct line *line)
 			report("Nothing to blame here");
 			return REQ_NONE;
 		}
+
 		if (stage_status.new.name[0]) {
 			string_copy(opt_file, stage_status.new.name);
-			opt_ref[0] = 0;
+		} else {
+			const char *file = diff_get_pathname(view, line);
+
+			if (file)
+				string_copy(opt_file, file);
 		}
+
+		opt_ref[0] = 0;
+		opt_goto_line = diff_get_lineno(view, line);
+		if (opt_goto_line > 0)
+			opt_goto_line--;
 		return request;
 
 	case REQ_ENTER:
