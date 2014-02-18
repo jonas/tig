@@ -7255,6 +7255,10 @@ status_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_VIEW_BLAME:
+		if (line->type == LINE_STAT_UNTRACKED || !status) {
+			report("Nothing to blame here");
+			return REQ_NONE;
+		}
 		if (status)
 			opt_ref[0] = 0;
 		return request;
@@ -7734,6 +7738,10 @@ stage_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_VIEW_BLAME:
+		if (stage_line_type == LINE_STAT_UNTRACKED) {
+			report("Nothing to blame here");
+			return REQ_NONE;
+		}
 		if (stage_status.new.name[0]) {
 			string_copy(opt_file, stage_status.new.name);
 			opt_ref[0] = 0;
