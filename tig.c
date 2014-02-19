@@ -8413,15 +8413,44 @@ main_grep(struct view *view, struct line *line)
 	return grep_text(view, text) || grep_refs(line, commit, view->regex);
 }
 
+static struct ref *
+main_get_commit_branch(struct line *line, struct commit *commit)
+{
+	struct ref_list *list = main_get_commit_refs(line, commit);
+	struct ref *branch = NULL;
+	size_t i;
+
+	for (i = 0; list && i < list->size; i++) {
+		struct ref *ref = list->refs[i];
+
+		switch (get_line_type_from_ref(ref)) {
+		case LINE_MAIN_HEAD:
+		case LINE_MAIN_REF:
+			/* Always prefer local branches. */
+			return ref;
+
+		default:
+			branch = ref;
+		}
+	}
+
+	return branch;
+}
+
 static void
 main_select(struct view *view, struct line *line)
 {
 	struct commit *commit = line->data;
 
-	if (line->type == LINE_STAT_STAGED || line->type == LINE_STAT_UNSTAGED)
+	if (line->type == LINE_STAT_STAGED || line->type == LINE_STAT_UNSTAGED) {
 		string_ncopy(view->ref, commit->title, strlen(commit->title));
-	else
+	} else {
+		struct ref *branch = main_get_commit_branch(line, commit);
+
+		if (branch)
+			string_copy_rev(ref_branch, branch->name);
 		string_copy_rev(view->ref, commit->id);
+	}
 	string_copy_rev(ref_commit, commit->id);
 }
 
