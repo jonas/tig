@@ -4627,7 +4627,7 @@ static bool
 log_open(struct view *view, enum open_flags flags)
 {
 	static const char *log_argv[] = {
-		"git", "log", encoding_arg, "--no-color", "--cc", "--stat", "-n100", "%(head)", NULL
+		"git", "log", encoding_arg, "--no-color", "--cc", "--stat", "-n100", "%(head)", "--", NULL
 	};
 
 	return begin_update(view, NULL, log_argv, flags);
