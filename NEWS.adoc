@@ -9,14 +9,17 @@ Note to packagers:
  - Rename README, INSTALL, and NEWS to end in '.adoc'.
  - BUGS file has been merged into README.
  - Rename (again) doc/ AsciiDoc files to end in '.adoc'.
+ - Default keybindings have been moved to a system-level tigrc file, which is
+   installed to ${sysconfdir} by default.
 
 Incompatibilities:
 
- - Fix 'diff-options' to considered only for diff view and introduce
-   '%(cmdlineargs)' to hold non-file and non-revision flags passed on
-   the command line. Affects all user-defined commands that expect
-   '%(diffargs)' to hold both 'diff-options' arguments and those passed
-   on the command line. (GH #228)
+ - Only use 'diff-options' for the diff view and introduce '%(cmdlineargs)' to
+   hold non-file and non-revision flags passed on the command line. Affects all
+   user-defined commands that expect '%(diffargs)' to hold both 'diff-options'
+   arguments and those passed on the command line. (GH #228)
+ - Remove built-in keybinding for `git gc`. Add the following line to `~/.tigrc`
+   to restore it: `bind generic G ?git gc`.
 
 Improvements:
 
@@ -40,6 +43,8 @@ Improvements:
  - Document the Git commands supported by the pager mode.  (GH #1)
  - Optionally specify custom prompt for `%(prompt)` in shell commands, e.g.
    `bind main B ?git checkout -b "%(prompt Enter new branch name: )"`
+ - Allow Tig to be started with no default keybindings or built-in user-defined
+   commands by running: `TIGRC_SYSTEM=~/.tigrc.safe tig` (GH #235)
 
 Bug fixes:
 

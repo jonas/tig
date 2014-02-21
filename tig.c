@@ -399,11 +399,11 @@ DEFINE_ENUM(commit_order, COMMIT_ORDER_ENUM);
 	REQ_(TOGGLE_VERTICAL_SPLIT,	"Toggle vertical split"), \
 	\
 	REQ_GROUP("Misc") \
+	REQ_(EDIT,		"Open in editor"), \
 	REQ_(PROMPT,		"Bring up the prompt"), \
 	REQ_(SCREEN_REDRAW,	"Redraw the screen"), \
 	REQ_(SHOW_VERSION,	"Show version information"), \
 	REQ_(STOP_LOADING,	"Stop all loading views"), \
-	REQ_(EDIT,		"Open in editor"), \
 	REQ_(NONE,		"Do nothing")
 
 
@@ -904,99 +904,6 @@ struct keybinding {
 	enum request request;
 };
 
-static struct keybinding default_keybindings[] = {
-	/* View switching */
-	{ 'm',		REQ_VIEW_MAIN },
-	{ 'd',		REQ_VIEW_DIFF },
-	{ 'l',		REQ_VIEW_LOG },
-	{ 't',		REQ_VIEW_TREE },
-	{ 'f',		REQ_VIEW_BLOB },
-	{ 'B',		REQ_VIEW_BLAME },
-	{ 'H',		REQ_VIEW_BRANCH },
-	{ 'p',		REQ_VIEW_PAGER },
-	{ 'h',		REQ_VIEW_HELP },
-	{ 'S',		REQ_VIEW_STATUS },
-	{ 'c',		REQ_VIEW_STAGE },
-	{ 'y',		REQ_VIEW_STASH },
-
-	/* View manipulation */
-	{ 'q',		REQ_VIEW_CLOSE },
-	{ KEY_TAB,	REQ_VIEW_NEXT },
-	{ KEY_RETURN,	REQ_ENTER },
-	{ KEY_UP,	REQ_PREVIOUS },
-	{ KEY_CTL('P'),	REQ_PREVIOUS },
-	{ KEY_DOWN,	REQ_NEXT },
-	{ KEY_CTL('N'),	REQ_NEXT },
-	{ 'R',		REQ_REFRESH },
-	{ KEY_F(5),	REQ_REFRESH },
-	{ 'O',		REQ_MAXIMIZE },
-	{ ',',		REQ_PARENT },
-	{ '<',		REQ_BACK },
-
-	/* View specific */
-	{ 'u',		REQ_STATUS_UPDATE },
-	{ '!',		REQ_STATUS_REVERT },
-	{ 'M',		REQ_STATUS_MERGE },
-	{ '1',		REQ_STAGE_UPDATE_LINE },
-	{ '@',		REQ_STAGE_NEXT },
-	{ '\\',		REQ_STAGE_SPLIT_CHUNK },
-	{ '[',		REQ_DIFF_CONTEXT_DOWN },
-	{ ']',		REQ_DIFF_CONTEXT_UP },
-
-	/* Cursor navigation */
-	{ 'k',		REQ_MOVE_UP },
-	{ 'j',		REQ_MOVE_DOWN },
-	{ KEY_HOME,	REQ_MOVE_FIRST_LINE },
-	{ KEY_END,	REQ_MOVE_LAST_LINE },
-	{ KEY_NPAGE,	REQ_MOVE_PAGE_DOWN },
-	{ KEY_CTL('D'),	REQ_MOVE_PAGE_DOWN },
-	{ ' ',		REQ_MOVE_PAGE_DOWN },
-	{ KEY_PPAGE,	REQ_MOVE_PAGE_UP },
-	{ KEY_CTL('U'),	REQ_MOVE_PAGE_UP },
-	{ 'b',		REQ_MOVE_PAGE_UP },
-	{ '-',		REQ_MOVE_PAGE_UP },
-
-	/* Scrolling */
-	{ '|',		REQ_SCROLL_FIRST_COL },
-	{ KEY_LEFT,	REQ_SCROLL_LEFT },
-	{ KEY_RIGHT,	REQ_SCROLL_RIGHT },
-	{ KEY_IC,	REQ_SCROLL_LINE_UP },
-	{ KEY_CTL('Y'),	REQ_SCROLL_LINE_UP },
-	{ KEY_DC,	REQ_SCROLL_LINE_DOWN },
-	{ KEY_CTL('E'),	REQ_SCROLL_LINE_DOWN },
-	{ 'w',		REQ_SCROLL_PAGE_UP },
-	{ 's',		REQ_SCROLL_PAGE_DOWN },
-
-	/* Searching */
-	{ '/',		REQ_SEARCH },
-	{ '?',		REQ_SEARCH_BACK },
-	{ 'n',		REQ_FIND_NEXT },
-	{ 'N',		REQ_FIND_PREV },
-
-	/* Misc */
-	{ 'Q',		REQ_QUIT },
-	{ 'z',		REQ_STOP_LOADING },
-	{ 'v',		REQ_SHOW_VERSION },
-	{ 'r',		REQ_SCREEN_REDRAW },
-	{ KEY_CTL('L'),	REQ_SCREEN_REDRAW },
-	{ 'o',		REQ_OPTIONS },
-	{ '.',		REQ_TOGGLE_LINENO },
-	{ 'D',		REQ_TOGGLE_DATE },
-	{ 'A',		REQ_TOGGLE_AUTHOR },
-	{ 'g',		REQ_TOGGLE_REV_GRAPH },
-	{ '~',		REQ_TOGGLE_GRAPHIC },
-	{ '#',		REQ_TOGGLE_FILENAME },
-	{ 'F',		REQ_TOGGLE_REFS },
-	{ 'I',		REQ_TOGGLE_SORT_ORDER },
-	{ 'i',		REQ_TOGGLE_SORT_FIELD },
-	{ 'W',		REQ_TOGGLE_IGNORE_SPACE },
-	{ 'X',		REQ_TOGGLE_ID },
-	{ '%',		REQ_TOGGLE_FILES },
-	{ '$',		REQ_TOGGLE_TITLE_OVERFLOW },
-	{ ':',		REQ_PROMPT },
-	{ 'e',		REQ_EDIT },
-};
-
 struct keymap {
 	const char *name;
 	struct keymap *next;
@@ -1049,14 +956,6 @@ add_keybinding(struct keymap *table, enum request request, int key)
 		die("Failed to allocate keybinding");
 	table->data[table->size].alias = key;
 	table->data[table->size++].request = request;
-
-	if (request == REQ_NONE && is_generic_keymap(table)) {
-		int i;
-
-		for (i = 0; i < ARRAY_SIZE(default_keybindings); i++)
-			if (default_keybindings[i].alias == key)
-				default_keybindings[i].request = REQ_NONE;
-	}
 }
 
 /* Looks for a key binding first in the given map, then in the generic map, and
@@ -1073,10 +972,6 @@ get_keybinding(struct keymap *keymap, int key)
 	for (i = 0; i < generic_keymap.size; i++)
 		if (generic_keymap.data[i].alias == key)
 			return generic_keymap.data[i].request;
-
-	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++)
-		if (default_keybindings[i].alias == key)
-			return default_keybindings[i].request;
 
 	return (enum request) key;
 }
@@ -1103,7 +998,9 @@ static const struct key key_table[] = {
 	{ "Home",	KEY_HOME },
 	{ "End",	KEY_END },
 	{ "PageUp",	KEY_PPAGE },
+	{ "PgUp",	KEY_PPAGE },
 	{ "PageDown",	KEY_NPAGE },
+	{ "PgDown",	KEY_NPAGE },
 	{ "F1",		KEY_F(1) },
 	{ "F2",		KEY_F(2) },
 	{ "F3",		KEY_F(3) },
@@ -1198,7 +1095,6 @@ get_keys(struct keymap *keymap, enum request request, bool all)
 {
 	static char buf[BUFSIZ];
 	size_t pos = 0;
-	int i;
 
 	buf[pos] = 0;
 
@@ -1217,15 +1113,6 @@ get_keys(struct keymap *keymap, enum request request, bool all)
 			return "Too many keybindings!";
 		if (pos)
 			return buf;
-	}
-
-	for (i = 0; i < ARRAY_SIZE(default_keybindings); i++) {
-		if (default_keybindings[i].request == request) {
-			if (!append_key(buf, &pos, &default_keybindings[i]))
-				return "Too many keybindings!";
-			if (!all)
-				return buf;
-		}
 	}
 
 	return buf;
@@ -1288,22 +1175,6 @@ get_run_request(enum request request)
 	if (request <= REQ_RUN_REQUESTS || request > REQ_RUN_REQUESTS + run_requests)
 		return NULL;
 	return &run_request[request - REQ_RUN_REQUESTS - 1];
-}
-
-static void
-add_builtin_run_requests(void)
-{
-	const char *cherry_pick[] = { "git", "cherry-pick", "%(commit)", NULL };
-	const char *checkout[] = { "git", "checkout", "%(branch)", NULL };
-	const char *commit[] = { "git", "commit", NULL };
-	const char *gc[] = { "git", "gc", NULL };
-	const char *stash_pop[] = { "git", "stash", "pop", "%(stash)", NULL };
-
-	add_run_request(get_keymap("main"), 'C', cherry_pick, RUN_REQUEST_CONFIRM);
-	add_run_request(get_keymap("status"), 'C', commit, RUN_REQUEST_DEFAULT);
-	add_run_request(get_keymap("branch"), 'C', checkout, RUN_REQUEST_CONFIRM);
-	add_run_request(get_keymap("generic"), 'G', gc, RUN_REQUEST_CONFIRM);
-	add_run_request(get_keymap("stash"), 'P', stash_pop, RUN_REQUEST_CONFIRM);
 }
 
 /*
@@ -1852,10 +1723,6 @@ load_options(void)
 	if (!tigrc_user)
 		tigrc_user = "~/.tigrc";
 	load_option_file(tigrc_user);
-
-	/* Add _after_ loading config files to avoid adding run requests
-	 * that conflict with keybindings. */
-	add_builtin_run_requests();
 
 	if (!diff_opts_from_args && tig_diff_opts && *tig_diff_opts) {
 		static const char *diff_opts[SIZEOF_ARG] = { NULL };

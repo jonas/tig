@@ -72,6 +72,8 @@ doc-html: $(HTMLDOC)
 install: all
 	@mkdir -p $(DESTDIR)$(bindir)
 	install -p -m 0755 $(EXE) "$(DESTDIR)$(bindir)"
+	@mkdir -p $(DESTDIR)$(sysconfdir)
+	install -p -m 0444 tigrc "$(DESTDIR)$(sysconfdir)"
 
 install-doc-man: doc-man
 	mkdir -p $(DESTDIR)$(mandir)/man1 \
