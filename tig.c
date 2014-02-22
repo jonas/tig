@@ -3132,6 +3132,8 @@ format_expand_arg(struct format_context *format, const char *name)
 	if (!prefixcmp(name, "%(prompt)")) {
 		const char *value = read_prompt("Command argument: ");
 
+		if (value == NULL)
+			return FALSE;
 		return string_format_from(format->buf, &format->bufpos, "%s", value);
 	}
 
