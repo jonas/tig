@@ -9361,7 +9361,8 @@ open_pager_mode(enum request request)
 }
 
 static enum request
-run_prompt_command(struct view *view, char *cmd) {
+run_prompt_command(struct view *view, char *cmd)
+{
 	enum request request;
 
 	if (cmd && string_isnumber(cmd)) {
