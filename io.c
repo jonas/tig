@@ -650,6 +650,24 @@ io_run_buf(const char **argv, char buf[], size_t bufsize)
 	return io_run(&io, IO_RD, NULL, NULL, argv) && io_read_buf(&io, buf, bufsize);
 }
 
+bool
+io_from_string(struct io *io, const char *str)
+{
+	size_t len = strlen(str);
+
+	io_init(io);
+
+	if (!io_realloc_buf(&io->buf, io->bufalloc, len))
+		return FALSE;
+
+	io->bufsize = io->bufalloc = len;
+	io->bufpos = io->buf;
+	io->eof = TRUE;
+	strncpy(io->buf, str, len);
+
+	return TRUE;
+}
+
 int
 io_load(struct io *io, const char *separators,
 	io_read_fn read_property, void *data)

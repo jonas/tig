@@ -10,7 +10,9 @@ Note to packagers:
  - BUGS file has been merged into README.
  - Rename (again) doc/ AsciiDoc files to end in '.adoc'.
  - Default keybindings have been moved to a system-level tigrc file, which is
-   installed to ${sysconfdir} by default.
+   installed to ${sysconfdir} by default. A version of the tigrc file is
+   included inside the binary as a fall-back. Pass `NO_BUILTIN_TIGRC=y` to not
+   include the tigrc and reduce the size of the binary.
 
 Incompatibilities:
 

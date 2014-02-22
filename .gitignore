@@ -1,5 +1,6 @@
 aclocal.m4
 autom4te.cache
+builtin-config.c
 config.h
 config.h.in
 config.log

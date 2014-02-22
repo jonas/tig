@@ -1708,6 +1708,8 @@ load_option_file(const char *path)
 	return SUCCESS;
 }
 
+extern const char *builtin_config;
+
 static int
 load_options(void)
 {
@@ -1715,10 +1717,20 @@ load_options(void)
 	const char *tigrc_system = getenv("TIGRC_SYSTEM");
 	const char *tig_diff_opts = getenv("TIG_DIFF_OPTS");
 	const bool diff_opts_from_args = !!opt_diff_argv;
+	bool custom_tigrc_system = !!tigrc_system;
 
-	if (!tigrc_system)
+	if (!custom_tigrc_system)
 		tigrc_system = SYSCONFDIR "/tigrc";
-	load_option_file(tigrc_system);
+
+	if (load_option_file(tigrc_system) == ERROR_FILE_DOES_NOT_EXIST && !custom_tigrc_system) {
+		struct config_state config = { "<built-in>", 0, FALSE };
+		struct io io;
+
+		if (!io_from_string(&io, builtin_config) ||
+		    !io_load(&io, " \t", read_option, &config) == ERR ||
+		    config.errors == TRUE)
+			die("Error in built-in config");
+	}
 
 	if (!tigrc_user)
 		tigrc_user = "~/.tigrc";

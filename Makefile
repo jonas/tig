@@ -118,7 +118,7 @@ install-release-doc: install-release-doc-man install-release-doc-html
 
 clean:
 	$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5 .deps
-	$(RM) $(EXE) $(TOOLS) $(OBJS) core doc/*.xml
+	$(RM) $(EXE) $(TOOLS) $(OBJS) core doc/*.xml builtin-config.c
 
 distclean: clean
 	$(RM) -r doc/manual.html-chunked autom4te.cache release-docs
@@ -184,7 +184,7 @@ COMPAT_OBJS += compat/hashtab.o
 
 override CPPFLAGS += $(COMPAT_CPPFLAGS)
 
-TIG_OBJS = tig.o util.o io.o graph.o refs.o $(COMPAT_OBJS)
+TIG_OBJS = tig.o util.o io.o graph.o refs.o builtin-config.o $(COMPAT_OBJS)
 tig: $(TIG_OBJS)
 
 TEST_GRAPH_OBJS = test/test-graph.o util.o io.o graph.o $(COMPAT_OBJS)
@@ -202,6 +202,9 @@ DEPS_CFLAGS ?= -MMD -MP -MF .deps/$*.d
 	$(CC) $(CFLAGS) $(DEPS_CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 -include $(OBJS:%.o=.deps/%.d)
+
+builtin-config.c: tigrc tools/make-builtin-config.sh
+	tools/make-builtin-config.sh $< > $@
 
 tig.spec: contrib/tig.spec.in
 	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' \

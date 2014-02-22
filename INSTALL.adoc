@@ -60,12 +60,15 @@ note, `configure` itself generates a `config.make` file.
 
 Apart from the different standard `make` build variables (`CC`, `CFLAGS`, etc.)
 and standard `configure` variables (`prefix`, `bindir`, etc.), build settings
-can be one of the following compatibility flags:
+can be one of the following flags:
 
  - `NO_SETENV`: Define this variable to enable work-around for missing
    `setenv()`.
  - `NO_MKSTEMPS`: Define this variable to enable work-around for missing
    `mkstemps()`.
+ - `NO_BUILTIN_TIGRC`: Reduce the size of the binary by not including a
+   built-in tigrc. The built-in tigrc is used as a fallback when no
+   `tigrc` is found in the system configuration directory (e.g. `/etc`).
 
 The following example `config.make` manually configures Tig to use the ncurses
 library with wide character support and include the proper ncurses header file
