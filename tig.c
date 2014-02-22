@@ -3108,7 +3108,7 @@ struct format_context {
 };
 
 static bool
-format_expand_arg(struct format_context *format, const char *name)
+format_expand_arg(struct format_context *format, const char *name, const char *end)
 {
 	static struct {
 		const char *name;
@@ -3129,9 +3129,23 @@ format_expand_arg(struct format_context *format, const char *name)
 	};
 	int i;
 
-	if (!prefixcmp(name, "%(prompt)")) {
-		const char *value = read_prompt("Command argument: ");
+	if (!prefixcmp(name, "%(prompt")) {
+		const char *prompt = "Command argument: ";
+		char msgbuf[SIZEOF_STR];
+		const char *value;
+		const char *msgstart = name + STRING_SIZE("%(prompt");
+		int msglen = end - msgstart - 1;
 
+		if (end && msglen > 0 && string_format(msgbuf, "%.*s", msglen, msgstart)) {
+			const char *msg = msgbuf;
+
+			while (isspace(*msg))
+				msg++;
+			if (*msg)
+				prompt = msg;
+		}
+
+		value = read_prompt(prompt);
 		if (value == NULL)
 			return FALSE;
 		return string_format_from(format->buf, &format->bufpos, "%s", value);
@@ -3154,7 +3168,7 @@ format_expand_arg(struct format_context *format, const char *name)
 	}
 
 	report("Unknown replacement: `%s`", name);
-	return NULL;
+	return FALSE;
 }
 
 static bool
@@ -3164,16 +3178,17 @@ format_append_arg(struct format_context *format, const char ***dst_argv, const c
 	format->bufpos = 0;
 
 	while (arg) {
-		char *next = strstr(arg, "%(");
-		int len = next ? next - arg : strlen(arg);
+		char *var = strstr(arg, "%(");
+		int len = var ? var - arg : strlen(arg);
+		char *next = var ? strchr(var, ')') + 1 : NULL;
 
 		if (len && !string_format_from(format->buf, &format->bufpos, "%.*s", len, arg))
 			return FALSE;
 
-		if (next && !format_expand_arg(format, next))
+		if (var && !format_expand_arg(format, var, next))
 			return FALSE;
 
-		arg = next ? strchr(next, ')') + 1 : NULL;
+		arg = next;
 	}
 
 	return argv_append(dst_argv, format->buf);

@@ -38,6 +38,8 @@ Improvements:
  - Add main view pager mode that reads git-log's '--pretty=raw' data
    from stdin, e.g. `git reflog --pretty=raw | tig --pretty=raw`.
  - Document the Git commands supported by the pager mode.  (GH #1)
+ - Optionally specify custom prompt for `%(prompt)` in shell commands, e.g.
+   `bind main B ?git checkout -b "%(prompt Enter new branch name: )"`
 
 Bug fixes:
 

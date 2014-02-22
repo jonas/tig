@@ -425,14 +425,19 @@ following variable names, which are substituted before commands are run:
 |%(fileargs)		|The file arguments passed on the command line.
 |%(cmdlineargs)		|All other options passed on the command line.
 |%(diffargs)		|The diff options from 'diff-options' or 'TIG_DIFF_OPTS'
-|%(prompt)		|Prompt for the argument value.
+|%(prompt)		|Prompt for the argument value. Optionally specify a
+			 custom prompt using `"%(prompt Enter branch name: )"`
 |=============================================================================
 
-For example, the following command will save the current commit as a patch file
-when the user selects a commit in the main view and presses 'S'.
+Examples:
 
 --------------------------------------------------------------------------
+# Save save the current commit as a patch file when the user selects a
+# commit in the main view and presses 'S'.
 bind main S !git format-patch -1 %(commit)
+
+# Create and checkout a new branch; specify custom prompt
+bind main B ?git checkout -b "%(prompt Enter new branch name: )"
 --------------------------------------------------------------------------
 
 Advanced shell-like commands
