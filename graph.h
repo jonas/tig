@@ -76,7 +76,7 @@ struct graph {
 	size_t position;
 	size_t prev_position;
 	size_t expanded;
-	const char *id;
+	char id[SIZEOF_REV];
 	struct graph_canvas *canvas;
 	struct colors colors;
 	bool has_parents;

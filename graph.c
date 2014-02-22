@@ -635,7 +635,7 @@ graph_add_commit(struct graph *graph, struct graph_canvas *canvas,
 		 const char *id, const char *parents, bool is_boundary)
 {
 	graph->position = graph_find_column_by_id(&graph->row, id);
-	graph->id = id;
+	string_copy_rev(graph->id, id);
 	graph->canvas = canvas;
 	graph->is_boundary = is_boundary;
 
