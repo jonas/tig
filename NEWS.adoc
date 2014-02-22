@@ -51,6 +51,7 @@ Bug fixes:
  - File with 0 changes breaks diffstat highlighting (GH #215)
  - Update %(branch) variable in the main view. (GH #223)
  - Disable graph drawing for reverse log order. (GH #127)
+ - Only refresh views that support it.
 
 tig-1.2.1
 ---------

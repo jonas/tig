@@ -1915,6 +1915,7 @@ enum view_flag {
 	VIEW_FILE_FILTER	= 1 << 10,
 	VIEW_LOG_LIKE		= 1 << 11,
 	VIEW_STATUS_LIKE	= 1 << 12,
+	VIEW_REFRESH		= 1 << 13,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))
@@ -3759,7 +3760,7 @@ open_run_request(struct view *view, enum request request)
 		else if (req->exit)
 			request = REQ_QUIT;
 
-		else if (!view->unrefreshable)
+		else if (view_has_flags(view, VIEW_REFRESH) && !view->unrefreshable)
 			request = REQ_REFRESH;
 	}
 	return request;
@@ -4655,7 +4656,7 @@ log_request(struct view *view, enum request request, struct line *line)
 static struct view_ops log_ops = {
 	"line",
 	{ "log" },
-	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER | VIEW_LOG_LIKE,
+	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER | VIEW_LOG_LIKE | VIEW_REFRESH,
 	sizeof(struct log_state),
 	log_open,
 	pager_read,
@@ -5160,7 +5161,7 @@ diff_select(struct view *view, struct line *line)
 static struct view_ops diff_ops = {
 	"line",
 	{ "diff" },
-	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_FILE_FILTER,
+	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_FILE_FILTER | VIEW_REFRESH,
 	sizeof(struct diff_state),
 	diff_open,
 	diff_read,
@@ -6652,7 +6653,7 @@ branch_select(struct view *view, struct line *line)
 static struct view_ops branch_ops = {
 	"branch",
 	{ "branch" },
-	VIEW_NO_FLAGS,
+	VIEW_REFRESH,
 	sizeof(struct branch_state),
 	branch_open,
 	branch_read,
@@ -7387,7 +7388,7 @@ status_grep(struct view *view, struct line *line)
 static struct view_ops status_ops = {
 	"file",
 	{ "status" },
-	VIEW_CUSTOM_STATUS | VIEW_SEND_CHILD_ENTER | VIEW_STATUS_LIKE,
+	VIEW_CUSTOM_STATUS | VIEW_SEND_CHILD_ENTER | VIEW_STATUS_LIKE | VIEW_REFRESH,
 	0,
 	status_open,
 	NULL,
@@ -7872,7 +7873,7 @@ stage_read(struct view *view, char *data)
 static struct view_ops stage_ops = {
 	"line",
 	{ "stage" },
-	VIEW_DIFF_LIKE,
+	VIEW_DIFF_LIKE | VIEW_REFRESH,
 	sizeof(struct stage_state),
 	stage_open,
 	stage_read,
@@ -8457,7 +8458,7 @@ main_select(struct view *view, struct line *line)
 static struct view_ops main_ops = {
 	"commit",
 	{ "main" },
-	VIEW_SEND_CHILD_ENTER | VIEW_FILE_FILTER | VIEW_LOG_LIKE,
+	VIEW_SEND_CHILD_ENTER | VIEW_FILE_FILTER | VIEW_LOG_LIKE | VIEW_REFRESH,
 	sizeof(struct main_state),
 	main_open,
 	main_read,
@@ -8491,7 +8492,7 @@ stash_select(struct view *view, struct line *line)
 static struct view_ops stash_ops = {
 	"stash",
 	{ "stash" },
-	VIEW_SEND_CHILD_ENTER,
+	VIEW_SEND_CHILD_ENTER | VIEW_REFRESH,
 	sizeof(struct main_state),
 	stash_open,
 	main_read,
