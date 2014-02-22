@@ -40,7 +40,7 @@ LDLIBS ?= -lcurses
 CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
 EXE	= tig
-TOOLS	= tools/test-graph
+TOOLS	= test/test-graph
 TXTDOC	= doc/tig.1.adoc doc/tigrc.5.adoc doc/manual.adoc NEWS.adoc README.adoc INSTALL.adoc
 MANDOC	= doc/tig.1 doc/tigrc.5 doc/tigmanual.7
 HTMLDOC = doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html INSTALL.html NEWS.html
@@ -157,7 +157,7 @@ dist: configure tig.spec
 rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
 
-test:
+test: $(TOOLS)
 	test/unit-test-graph.sh
 
 # Other autoconf-related rules are hidden in config.make.in so that
@@ -185,8 +185,8 @@ override CPPFLAGS += $(COMPAT_CPPFLAGS)
 TIG_OBJS = tig.o util.o io.o graph.o refs.o $(COMPAT_OBJS)
 tig: $(TIG_OBJS)
 
-TEST_GRAPH_OBJS = tools/test-graph.o util.o io.o graph.o $(COMPAT_OBJS)
-tools/test-graph: $(TEST_GRAPH_OBJS)
+TEST_GRAPH_OBJS = test/test-graph.o util.o io.o graph.o $(COMPAT_OBJS)
+test/test-graph: $(TEST_GRAPH_OBJS)
 
 OBJS = $(sort $(TIG_OBJS) $(TEST_GRAPH_OBJS))
 
