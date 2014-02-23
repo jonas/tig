@@ -13,6 +13,7 @@ Note to packagers:
    installed to ${sysconfdir} by default. A version of the tigrc file is
    included inside the binary as a fall-back. Pass `NO_BUILTIN_TIGRC=y` to not
    include the tigrc and reduce the size of the binary.
+ - The example `contrib/tigrc` file (made obsolete by `tigrc`) has been removed.
 
 Incompatibilities:
 
