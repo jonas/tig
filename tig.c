@@ -198,7 +198,7 @@ ident_compare(const struct ident *i1, const struct ident *i2)
 static const char *
 get_author_initials(const char *author)
 {
-	static char initials[AUTHOR_WIDTH * 6 + 1];
+	static char initials[256];
 	size_t pos = 0;
 	const char *end = strchr(author, '\0');
 
@@ -241,7 +241,7 @@ get_author_initials(const char *author)
 static const char *
 get_email_user(const char *email)
 {
-	static char user[AUTHOR_WIDTH * 6 + 1];
+	static char user[SIZEOF_STR + 1];
 	const char *end = strchr(email, '@');
 	int length = end ? end - email : strlen(email);
 
@@ -462,41 +462,52 @@ get_request(const char *name)
  * Options
  */
 
-/* Option and state variables. */
-static enum graphic opt_line_graphics	= GRAPHIC_DEFAULT;
-static enum date opt_date		= DATE_DEFAULT;
-static enum author opt_author		= AUTHOR_FULL;
-static enum filename opt_filename	= FILENAME_AUTO;
-static enum file_size opt_file_size	= FILE_SIZE_DEFAULT;
-static bool opt_rev_graph		= TRUE;
-static bool opt_line_number		= FALSE;
-static bool opt_show_refs		= TRUE;
-static bool opt_show_changes		= TRUE;
-static bool opt_untracked_dirs_content	= TRUE;
-static bool opt_read_git_colors		= TRUE;
-static bool opt_wrap_lines		= FALSE;
-static bool opt_ignore_case		= FALSE;
-static bool opt_focus_child		= TRUE;
-static int opt_diff_context		= 3;
+/* Option variables. */
+static enum graphic opt_line_graphics;
+static enum date opt_date;
+static enum author opt_author;
+static enum filename opt_filename;
+static enum file_size opt_file_size;
+static bool opt_rev_graph;
+static bool opt_line_number;
+static bool opt_show_refs;
+static bool opt_show_changes;
+static bool opt_untracked_dirs_content;
+static bool opt_read_git_colors;
+static bool opt_wrap_lines;
+static bool opt_ignore_case;
+static bool opt_focus_child;
+static int opt_diff_context;
+static enum ignore_space opt_ignore_space;
+static enum commit_order opt_commit_order;
+static bool opt_notes;
+static int opt_num_interval;
+static double opt_hscroll;
+static double opt_scale_split_view;
+static double opt_scale_vsplit_view;
+static enum vertical_split opt_vertical_split;
+static int opt_tab_size;
+static int opt_author_width;
+static int opt_filename_width;
+static bool opt_editor_lineno;
+static bool opt_show_id;
+static int opt_id_cols;
+static bool opt_show_title_overflow;
+static int opt_title_overflow;
+static bool opt_mouse;
+static int opt_scroll_wheel_lines;
+
+/* State variables. */
 static char opt_diff_context_arg[9]	= "";
-static enum ignore_space opt_ignore_space	= IGNORE_SPACE_NO;
 static char opt_ignore_space_arg[22]	= "";
-static enum commit_order opt_commit_order	= COMMIT_ORDER_DEFAULT;
 static char opt_commit_order_arg[22]	= "";
-static bool opt_notes			= TRUE;
 static char opt_notes_arg[SIZEOF_STR]	= "--show-notes";
-static int opt_num_interval		= 5;
-static double opt_hscroll		= 0.50;
-static double opt_scale_split_view	= 2.0 / 3.0;
-static double opt_scale_vsplit_view	= 0.5;
-static enum vertical_split opt_vertical_split	= VERTICAL_SPLIT_AUTO;
-static int opt_tab_size			= 8;
-static int opt_author_width		= AUTHOR_WIDTH;
-static int opt_filename_width		= FILENAME_WIDTH;
 static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
 static unsigned long opt_goto_line	= 0;
+static int opt_lineno			= 0;
+static bool opt_file_filter;
 static char opt_head[SIZEOF_REF]	= "";
 static char opt_remote[SIZEOF_REF]	= "";
 static iconv_t opt_iconv_out		= ICONV_NONE;
@@ -506,24 +517,15 @@ static char opt_prefix[SIZEOF_STR]	= "";
 static char opt_git_dir[SIZEOF_STR]	= "";
 static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
-static bool opt_editor_lineno		= TRUE;
 static FILE *opt_tty			= NULL;
 static const char **opt_cmdline_argv	= NULL;
 static const char **opt_diff_argv	= NULL;
 static const char **opt_rev_argv	= NULL;
 static const char **opt_file_argv	= NULL;
 static const char **opt_blame_argv	= NULL;
-static int opt_lineno			= 0;
-static bool opt_show_id			= FALSE;
-static int opt_id_cols			= ID_WIDTH;
-static bool opt_file_filter		= TRUE;
-static bool opt_show_title_overflow	= FALSE;
-static int opt_title_overflow		= 50;
 static char opt_env_lines[64]		= "";
 static char opt_env_columns[64]		= "";
 static char *opt_env[]			= { opt_env_lines, opt_env_columns, NULL };
-static bool opt_mouse			= FALSE;
-static int opt_scroll_wheel_lines	= 3;
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))

@@ -2,6 +2,52 @@
 #
 # Please see 'man tigrc' for a complete reference.
 
+# Settings
+# --------
+# Most of these settings can be toggleable, either via the toggle-*
+# actions or via the option menu (bound to `o` by default).
+
+# UI display settings
+set show-date			= default	# Enum: no, default, local, relative, short
+set show-author			= full		# Enum: no, full, abbreviated, email, email-user
+set author-width		= 18		# The width of the author column
+set show-filename		= auto		# Enum: no, always, auto
+set filename-width		= 18		# The width of the file name column
+set show-file-size		= default	# Enum: no, default, units
+set show-rev-graph		= yes		# Show the commit revision graph?
+set show-line-numbers		= no		# Show line numbers?
+set line-number-interval	= 5		# Interval between line numbers.
+set show-refs			= yes		# Show branches, tags and remotes?
+set show-changes		= yes		# Show changes commits in the main view?
+set show-id			= no		# Show commit/tree ID?
+set id-width			= 7		# Number of characters to show from commit/tree ID
+set title-overflow		= no		# Boolean or int, overflows at 50 when enabled
+set wrap-lines			= no		# Wrap long lines in pager views?
+set tab-size			= 8		# Number of spaces to use when expanding tabs
+set line-graphics		= default	# Enum: ascii, default, utf-8
+
+# Settings controlling how content is read from Git
+set commit-order		= default	# Enum: default, topo, date, reverse (main)
+set status-untracked-dirs	= yes		# Show files in untracked directories? (status)
+set ignore-space		= no		# Enum: no, all, some, at-eol (diff)
+set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
+set diff-context		= 3		# Number of lines to show around diff changes (diff)
+#set diff-options		= -C		# User-defined options for `tig show` (diff)
+#set blame-options		= -C -C -C	# User-defined options for `tig blame` (blame)
+
+# Misc
+set read-git-colors		= yes		# Use Git colors?
+set ignore-case			= no		# Ignore case when searching?
+set focus-child			= yes		# Move focus to child view when opened?
+set horizontal-scroll		= 50%		# Number of columns to scroll as % of width
+set split-view-height		= 67%		# Number of lines for bottom view as % of height
+set vertical-split		= auto		# Enum: horizontal, vertical, auto; Use auto to
+						# switch to horizontal split when width allows it
+set editor-line-number		= yes		# Automatically pass line number to editor? Used
+						# for opening file at specific line e.g. from a diff
+set mouse			= no		# Enable mouse support?
+set mouse-scroll		= 3		# Number of lines to scroll via the mouse
+
 # User-defined commands
 # ---------------------
 # These commands allow to run shell commands directly from within Tig.
