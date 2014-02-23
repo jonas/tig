@@ -184,7 +184,7 @@ COMPAT_OBJS += compat/hashtab.o
 
 override CPPFLAGS += $(COMPAT_CPPFLAGS)
 
-TIG_OBJS = src/tig.o src/util.o src/io.o src/graph.o src/refs.o src/builtin-config.o $(COMPAT_OBJS)
+TIG_OBJS = src/tig.o src/types.o src/util.o src/io.o src/graph.o src/refs.o src/builtin-config.o $(COMPAT_OBJS)
 src/tig: $(TIG_OBJS)
 
 TEST_GRAPH_OBJS = test/test-graph.o src/util.o src/io.o src/graph.o $(COMPAT_OBJS)

@@ -14,6 +14,7 @@
 #define WARN_MISSING_CURSES_CONFIGURATION
 
 #include "tig.h"
+#include "types.h"
 #include "util.h"
 #include "io.h"
 #include "refs.h"
@@ -44,29 +45,6 @@ struct menu_item {
 };
 
 static bool prompt_menu(const char *prompt, const struct menu_item *items, int *selected);
-
-#define VERTICAL_SPLIT_ENUM(_) \
-	_(VERTICAL_SPLIT, HORIZONTAL), \
-	_(VERTICAL_SPLIT, VERTICAL), \
-	_(VERTICAL_SPLIT, AUTO)
-
-DEFINE_ENUM(vertical_split, VERTICAL_SPLIT_ENUM);
-
-#define GRAPHIC_ENUM(_) \
-	_(GRAPHIC, ASCII), \
-	_(GRAPHIC, DEFAULT), \
-	_(GRAPHIC, UTF_8)
-
-DEFINE_ENUM(graphic, GRAPHIC_ENUM);
-
-#define DATE_ENUM(_) \
-	_(DATE, NO), \
-	_(DATE, DEFAULT), \
-	_(DATE, LOCAL), \
-	_(DATE, RELATIVE), \
-	_(DATE, SHORT)
-
-DEFINE_ENUM(date, DATE_ENUM);
 
 struct time {
 	time_t sec;
@@ -128,13 +106,6 @@ mkdate(const struct time *time, enum date date)
 	return strftime(buf, sizeof(buf), DATE_FORMAT, &tm) ? buf : NULL;
 }
 
-#define FILE_SIZE_ENUM(_) \
-	_(FILE_SIZE, NO), \
-	_(FILE_SIZE, DEFAULT), \
-	_(FILE_SIZE, UNITS)
-
-DEFINE_ENUM(file_size, FILE_SIZE_ENUM);
-
 static const char *
 mkfilesize(unsigned long size, enum file_size format)
 {
@@ -168,15 +139,6 @@ mkfilesize(unsigned long size, enum file_size format)
 
 	return string_format(buf, "%ld", size) ? buf : NULL;
 }
-
-#define AUTHOR_ENUM(_) \
-	_(AUTHOR, NO), \
-	_(AUTHOR, FULL), \
-	_(AUTHOR, ABBREVIATED), \
-	_(AUTHOR, EMAIL), \
-	_(AUTHOR, EMAIL_USER)
-
-DEFINE_ENUM(author, AUTHOR_ENUM);
 
 struct ident {
 	const char *name;
@@ -284,29 +246,6 @@ mkmode(mode_t mode)
 	else
 		return "----------";
 }
-
-#define FILENAME_ENUM(_) \
-	_(FILENAME, NO), \
-	_(FILENAME, ALWAYS), \
-	_(FILENAME, AUTO)
-
-DEFINE_ENUM(filename, FILENAME_ENUM);
-
-#define IGNORE_SPACE_ENUM(_) \
-	_(IGNORE_SPACE, NO), \
-	_(IGNORE_SPACE, ALL), \
-	_(IGNORE_SPACE, SOME), \
-	_(IGNORE_SPACE, AT_EOL)
-
-DEFINE_ENUM(ignore_space, IGNORE_SPACE_ENUM);
-
-#define COMMIT_ORDER_ENUM(_) \
-	_(COMMIT_ORDER, DEFAULT), \
-	_(COMMIT_ORDER, TOPO), \
-	_(COMMIT_ORDER, DATE), \
-	_(COMMIT_ORDER, REVERSE)
-
-DEFINE_ENUM(commit_order, COMMIT_ORDER_ENUM);
 
 #define VIEW_INFO(_) \
 	_(MAIN,   main,   ref_head), \
