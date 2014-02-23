@@ -543,6 +543,24 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
 	return string - *start;
 }
 
+/*
+ * Global view definition.
+ */
+
+#define VIEW_INFO(_) \
+	_(MAIN,   main,   ref_head), \
+	_(DIFF,   diff,   ref_commit), \
+	_(LOG,    log,    ref_head), \
+	_(TREE,   tree,   ref_commit), \
+	_(BLOB,   blob,   ref_blob), \
+	_(BLAME,  blame,  ref_commit), \
+	_(BRANCH, branch, ref_head), \
+	_(HELP,   help,   ""), \
+	_(PAGER,  pager,  ""), \
+	_(STATUS, status, "status"), \
+	_(STAGE,  stage,  ref_status), \
+	_(STASH,  stash,  ref_stash)
+
 #endif
 
 /* vim: set ts=8 sw=8 noexpandtab: */

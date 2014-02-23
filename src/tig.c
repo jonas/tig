@@ -46,20 +46,6 @@ struct menu_item {
 
 static bool prompt_menu(const char *prompt, const struct menu_item *items, int *selected);
 
-#define VIEW_INFO(_) \
-	_(MAIN,   main,   ref_head), \
-	_(DIFF,   diff,   ref_commit), \
-	_(LOG,    log,    ref_head), \
-	_(TREE,   tree,   ref_commit), \
-	_(BLOB,   blob,   ref_blob), \
-	_(BLAME,  blame,  ref_commit), \
-	_(BRANCH, branch, ref_head), \
-	_(HELP,   help,   ""), \
-	_(PAGER,  pager,  ""), \
-	_(STATUS, status, "status"), \
-	_(STAGE,  stage,  ref_status), \
-	_(STASH,  stash,  ref_stash)
-
 /*
  * User requests
  */
