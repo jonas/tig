@@ -605,93 +605,73 @@ update_notes_arg()
  * Line-oriented content detection.
  */
 
-#define LINE_INFO \
-LINE(DIFF_HEADER,  "diff --",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DIFF_CHUNK,   "@@",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(DIFF_ADD,	   "+",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
-LINE(DIFF_ADD2,	   " +",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
-LINE(DIFF_DEL,	   "-",			COLOR_RED,	COLOR_DEFAULT,	0), \
-LINE(DIFF_DEL2,	   " -",		COLOR_RED,	COLOR_DEFAULT,	0), \
-LINE(DIFF_INDEX,	"index ",	  COLOR_BLUE,	COLOR_DEFAULT,	0), \
-LINE(DIFF_OLDMODE,	"old file mode ", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DIFF_NEWMODE,	"new file mode ", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DIFF_DELETED_FILE_MODE, \
-		    "deleted file mode ", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DIFF_COPY_FROM,	"copy from ",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DIFF_COPY_TO,	"copy to ",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DIFF_RENAME_FROM,	"rename from ",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DIFF_RENAME_TO,	"rename to ",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DIFF_SIMILARITY,   "similarity ",	  COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DIFF_DISSIMILARITY,"dissimilarity ", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DIFF_TREE,		"diff-tree ",	  COLOR_BLUE,	COLOR_DEFAULT,	0), \
-LINE(PP_AUTHOR,	   "Author: ",		COLOR_CYAN,	COLOR_DEFAULT,	0), \
-LINE(PP_COMMIT,	   "Commit: ",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(PP_MERGE,	   "Merge: ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
-LINE(PP_DATE,	   "Date:   ",		COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(PP_ADATE,	   "AuthorDate: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(PP_CDATE,	   "CommitDate: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(PP_REFS,	   "Refs: ",		COLOR_RED,	COLOR_DEFAULT,	0), \
-LINE(PP_REFLOG,	   "Reflog: ",		COLOR_RED,	COLOR_DEFAULT,	0), \
-LINE(PP_REFLOGMSG, "Reflog message: ",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(STASH,	   "stash@{",		COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(COMMIT,	   "commit ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
-LINE(PARENT,	   "parent ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
-LINE(TREE,	   "tree ",		COLOR_BLUE,	COLOR_DEFAULT,	0), \
-LINE(AUTHOR,	   "author ",		COLOR_GREEN,	COLOR_DEFAULT,	0), \
-LINE(COMMITTER,	   "committer ",	COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(SIGNOFF,	   "    Signed-off-by", COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(ACKED,	   "    Acked-by",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(TESTED,	   "    Tested-by",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(REVIEWED,	   "    Reviewed-by",	COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(DEFAULT,	   "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
-LINE(CURSOR,	   "",			COLOR_WHITE,	COLOR_GREEN,	A_BOLD), \
-LINE(STATUS,	   "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
-LINE(DELIMITER,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(DATE,         "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
-LINE(MODE,         "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
-LINE(ID,	   "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(OVERFLOW,	   "",			COLOR_RED,	COLOR_DEFAULT,	0), \
-LINE(FILENAME,     "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
-LINE(FILE_SIZE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
-LINE(LINE_NUMBER,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
-LINE(TITLE_BLUR,   "",			COLOR_WHITE,	COLOR_BLUE,	0), \
-LINE(TITLE_FOCUS,  "",			COLOR_WHITE,	COLOR_BLUE,	A_BOLD), \
-LINE(MAIN_COMMIT,  "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
-LINE(MAIN_TAG,     "",			COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD), \
-LINE(MAIN_LOCAL_TAG,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(MAIN_REMOTE,  "",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(MAIN_REPLACE, "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
-LINE(MAIN_TRACKED, "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD), \
-LINE(MAIN_REF,     "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
-LINE(MAIN_HEAD,    "",			COLOR_CYAN,	COLOR_DEFAULT,	A_BOLD), \
-LINE(MAIN_REVGRAPH,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(TREE_HEAD,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_BOLD), \
-LINE(TREE_DIR,     "",			COLOR_YELLOW,	COLOR_DEFAULT,	A_NORMAL), \
-LINE(TREE_FILE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL), \
-LINE(STAT_HEAD,    "",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(STAT_SECTION, "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
-LINE(STAT_NONE,    "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
-LINE(STAT_STAGED,  "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(STAT_UNSTAGED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(STAT_UNTRACKED,"",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(HELP_KEYMAP,  "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
-LINE(HELP_GROUP,   "",			COLOR_BLUE,	COLOR_DEFAULT,	0), \
-LINE(DIFF_STAT,		"",	  	COLOR_BLUE,	COLOR_DEFAULT,	0), \
-LINE(PALETTE_0, "",			COLOR_MAGENTA,	COLOR_DEFAULT,	0), \
-LINE(PALETTE_1, "",			COLOR_YELLOW,	COLOR_DEFAULT,	0), \
-LINE(PALETTE_2, "",			COLOR_CYAN,	COLOR_DEFAULT,	0), \
-LINE(PALETTE_3, "",			COLOR_GREEN,	COLOR_DEFAULT,	0), \
-LINE(PALETTE_4, "",			COLOR_DEFAULT,	COLOR_DEFAULT,	0), \
-LINE(PALETTE_5, "",			COLOR_WHITE,	COLOR_DEFAULT,	0), \
-LINE(PALETTE_6, "",			COLOR_RED,	COLOR_DEFAULT,	0), \
-LINE(GRAPH_COMMIT, "",			COLOR_BLUE,	COLOR_DEFAULT,	0)
+#define LINE_INFO(_) \
+	_(DIFF_HEADER,  	"diff --"), \
+	_(DIFF_CHUNK,   	"@@"), \
+	_(DIFF_ADD,		"+"), \
+	_(DIFF_ADD2,		" +"), \
+	_(DIFF_DEL,		"-"), \
+	_(DIFF_DEL2,		" -"), \
+	_(DIFF_INDEX,		"index "), \
+	_(DIFF_OLDMODE,		"old file mode "), \
+	_(DIFF_NEWMODE,		"new file mode "), \
+	_(DIFF_SIMILARITY,	"similarity "), \
+	_(PP_MERGE,		"Merge: "), \
+	_(PP_REFS,		"Refs: "), \
+	_(PP_REFLOG,		"Reflog: "), \
+	_(PP_REFLOGMSG,		"Reflog message: "), \
+	_(COMMIT,		"commit "), \
+	_(PARENT,		"parent "), \
+	_(TREE,			"tree "), \
+	_(AUTHOR,		"author "), \
+	_(COMMITTER,		"committer "), \
+	_(DEFAULT,		""), \
+	_(CURSOR,		""), \
+	_(STATUS,		""), \
+	_(DELIMITER,		""), \
+	_(DATE,      		""), \
+	_(MODE,      		""), \
+	_(ID,			""), \
+	_(OVERFLOW,		""), \
+	_(FILENAME,  		""), \
+	_(FILE_SIZE, 		""), \
+	_(LINE_NUMBER,		""), \
+	_(TITLE_BLUR,		""), \
+	_(TITLE_FOCUS,		""), \
+	_(MAIN_COMMIT,		""), \
+	_(MAIN_TAG,		""), \
+	_(MAIN_LOCAL_TAG,	""), \
+	_(MAIN_REMOTE,		""), \
+	_(MAIN_REPLACE,		""), \
+	_(MAIN_TRACKED,		""), \
+	_(MAIN_REF,		""), \
+	_(MAIN_HEAD,		""), \
+	_(MAIN_REVGRAPH,	""), \
+	_(TREE_HEAD,		""), \
+	_(TREE_DIR,		""), \
+	_(TREE_FILE,		""), \
+	_(STAT_HEAD,		""), \
+	_(STAT_SECTION,		""), \
+	_(STAT_NONE,		""), \
+	_(STAT_STAGED,		""), \
+	_(STAT_UNSTAGED,	""), \
+	_(STAT_UNTRACKED,	""), \
+	_(HELP_KEYMAP,		""), \
+	_(HELP_GROUP,		""), \
+	_(DIFF_STAT,		""), \
+	_(PALETTE_0,		""), \
+	_(PALETTE_1,		""), \
+	_(PALETTE_2,		""), \
+	_(PALETTE_3,		""), \
+	_(PALETTE_4,		""), \
+	_(PALETTE_5,		""), \
+	_(PALETTE_6,		""), \
+	_(GRAPH_COMMIT,		"")
 
 enum line_type {
-#define LINE(type, line, fg, bg, attr) \
-	LINE_##type
-	LINE_INFO,
+#define DEFINE_LINE_ENUM(type, line) LINE_##type
+	LINE_INFO(DEFINE_LINE_ENUM),
 	LINE_NONE
-#undef	LINE
 };
 
 struct line_info {
@@ -703,24 +683,14 @@ struct line_info {
 	int color_pair;
 };
 
-static struct line_info line_info[] = {
-#define LINE(type, line, fg, bg, attr) \
-	{ #type, STRING_SIZE(#type), (line), STRING_SIZE(line), (fg), (bg), (attr) }
-	LINE_INFO
-#undef	LINE
-};
+static struct line_info *line_info;
+static size_t line_infos;
 
 static struct line_info **color_pair;
 static size_t color_pairs;
 
-static struct line_info *custom_color;
-static size_t custom_colors;
-
-DEFINE_ALLOCATOR(realloc_custom_color, struct line_info, 8)
+DEFINE_ALLOCATOR(realloc_line_info, struct line_info, 8)
 DEFINE_ALLOCATOR(realloc_color_pair, struct line_info *, 8)
-
-#define TO_CUSTOM_COLOR_TYPE(type)	(LINE_NONE + 1 + (type))
-#define TO_CUSTOM_COLOR_OFFSET(type)	((type) - LINE_NONE - 1)
 
 /* Color IDs must be 1 or higher. [GH #15] */
 #define COLOR_ID(line_type)		((line_type) + 1)
@@ -731,15 +701,9 @@ get_line_type(const char *line)
 	int linelen = strlen(line);
 	enum line_type type;
 
-	for (type = 0; type < custom_colors; type++)
+	for (type = 0; type < line_infos; type++)
 		/* Case insensitive search matches Signed-off-by lines better. */
-		if (linelen >= custom_color[type].linelen &&
-		    !strncasecmp(custom_color[type].line, line, custom_color[type].linelen))
-			return TO_CUSTOM_COLOR_TYPE(type);
-
-	for (type = 0; type < ARRAY_SIZE(line_info); type++)
-		/* Case insensitive search matches Signed-off-by lines better. */
-		if (linelen >= line_info[type].linelen &&
+		if (line_info[type].linelen && linelen >= line_info[type].linelen &&
 		    !strncasecmp(line_info[type].line, line, line_info[type].linelen))
 			return type;
 
@@ -768,13 +732,8 @@ get_line_type_from_ref(const struct ref *ref)
 static inline struct line_info *
 get_line(enum line_type type)
 {
-	if (type > LINE_NONE) {
-		assert(TO_CUSTOM_COLOR_OFFSET(type) < custom_colors);
-		return &custom_color[TO_CUSTOM_COLOR_OFFSET(type)];
-	} else {
-		assert(type < ARRAY_SIZE(line_info));
-		return &line_info[type];
-	}
+	assert(type < line_infos);
+	return &line_info[type];
 }
 
 static inline int
@@ -792,14 +751,43 @@ get_line_attr(enum line_type type)
 }
 
 static struct line_info *
-get_line_info(const char *name)
+add_line_info(const char *name, size_t namelen, const char *line, size_t linelen)
 {
-	size_t namelen = strlen(name);
+	struct line_info *info = NULL;
+
+	if (!realloc_line_info(&line_info, line_infos, 1))
+		die("Failed to allocate line info");
+
+	info = &line_info[line_infos++];
+	info->name = name;
+	info->namelen = namelen;
+	info->line = line;
+	info->linelen = linelen;
+
+	return info;
+}
+
+#define ADD_LINE_INFO(type, line) \
+	add_line_info(#type, STRING_SIZE(#type), (line), STRING_SIZE(line))
+
+static struct line_info *
+get_line_info(const char *name, size_t namelen, bool line_only)
+{
 	enum line_type type;
 
-	for (type = 0; type < ARRAY_SIZE(line_info); type++)
-		if (enum_equals(line_info[type], name, namelen))
-			return &line_info[type];
+	if (!line_infos) {
+		LINE_INFO(ADD_LINE_INFO);
+	}
+
+	for (type = 0; type < line_infos; type++) {
+		struct line_info *info = &line_info[type];
+
+		if (!line_only && enum_equals(*info, name, namelen))
+			return info;
+		if (info->linelen && namelen >= info->linelen &&
+		    !strncasecmp(info->line, name, info->linelen))
+			return info;
+	}
 
 	return NULL;
 }
@@ -807,25 +795,20 @@ get_line_info(const char *name)
 static struct line_info *
 add_custom_color(const char *quoted_line)
 {
-	struct line_info *info;
+	size_t linelen = strlen(quoted_line) - 2;
+	struct line_info *info = get_line_info(quoted_line + 1, linelen, TRUE);
 	char *line;
-	size_t linelen;
 
-	if (!realloc_custom_color(&custom_color, custom_colors, 1))
-		die("Failed to alloc custom line info");
+	if (info)
+		return info;
 
-	linelen = strlen(quoted_line) - 1;
-	line = malloc(linelen);
+	line = strndup(quoted_line + 1, linelen);
 	if (!line)
 		return NULL;
 
-	strncpy(line, quoted_line + 1, linelen);
-	line[linelen - 1] = 0;
-
-	info = &custom_color[custom_colors++];
-	info->name = info->line = line;
-	info->namelen = info->linelen = strlen(line);
-
+	info = add_line_info(line, linelen, line, linelen);
+	if (!info)
+		free(line);
 	return info;
 }
 
@@ -866,17 +849,10 @@ init_colors(void)
 		default_fg = COLOR_WHITE;
 	}
 
-	for (type = 0; type < ARRAY_SIZE(line_info); type++) {
+	for (type = 0; type < line_infos; type++) {
 		struct line_info *info = &line_info[type];
 
 		init_line_info_color_pair(info, type, default_bg, default_fg);
-	}
-
-	for (type = 0; type < custom_colors; type++) {
-		struct line_info *info = &custom_color[type];
-
-		init_line_info_color_pair(info, TO_CUSTOM_COLOR_TYPE(type),
-					  default_bg, default_fg);
 	}
 }
 
@@ -1266,7 +1242,7 @@ option_color_command(int argc, const char *argv[])
 	if (*argv[0] == '"' || *argv[0] == '\'') {
 		info = add_custom_color(argv[0]);
 	} else {
-		info = get_line_info(argv[0]);
+		info = get_line_info(argv[0], strlen(argv[0]), FALSE);
 	}
 	if (!info) {
 		static const struct enum_map_entry obsolete[] = {

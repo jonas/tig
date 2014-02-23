@@ -143,3 +143,97 @@ bind generic	z	stop-loading		# Stop all loading views
 bind generic	v	show-version		# Show Tig version
 bind generic	r	screen-redraw		# Redraw the screen
 bind generic	^L	screen-redraw
+
+# Colors
+# ------
+
+# The colors in the UI can be customized. In addition to the colors used
+# for the UI you can also define new colors to use in the pager, blob,
+# diff, and stage views by placing the text to match for in quotes.
+#
+# As an example, this setting will to color Signed-off-by lines with a
+# yellow foreground color and use the default background color.
+#
+#	color "    Signed-off-by"	yellow	default
+#
+# Note the four leading spaces in the string to match. This is because
+# Git automatically indents commit messages by four spaces.
+
+color "diff --"			yellow	default
+color "@@"			magenta	default
+color "+"			green	default
+color " +"			green	default
+color "-"			red	default
+color " -"			red	default
+color "index "			blue	default
+color "old file mode "		yellow	default
+color "new file mode "		yellow	default
+color "deleted file mode "	yellow	default
+color "copy from "		yellow	default
+color "copy to "		yellow	default
+color "rename from "		yellow	default
+color "rename to "		yellow	default
+color "similarity "		yellow	default
+color "dissimilarity "		yellow	default
+color "diff-tree "		blue	default
+color "Author: "		cyan	default
+color "Commit: "		magenta	default
+color "Merge: "			blue	default
+color "Date: "			yellow	default
+color "AuthorDate: "		yellow	default
+color "CommitDate: "		yellow	default
+color "Refs: "			red	default
+color "Reflog: "		red	default
+color "Reflog message: "	yellow	default
+color "stash@{"			magenta	default
+color "commit "			green	default
+color "parent "			blue	default
+color "tree "			blue	default
+color "author "			green	default
+color "committer "		magenta	default
+color "    Signed-off-by"	yellow	default
+color "    Acked-by"		yellow	default
+color "    Tested-by"		yellow	default
+color "    Reviewed-by"		yellow	default
+color default			default	default	normal
+color cursor			white	green	bold
+color status			green	default
+color delimiter			magenta	default
+color date			blue	default
+color mode			cyan	default
+color id			magenta	default
+color overflow			red	default
+color filename			default	default
+color file-size			default	default
+color line-number		cyan	default
+color title-blur		white	blue
+color title-focus		white	blue	bold
+color main-commit		default	default
+color main-tag			magenta	default	bold
+color main-local-tag		magenta	default
+color main-remote		yellow	default
+color main-replace		cyan	default
+color main-tracked		yellow	default	bold
+color main-ref			cyan	default
+color main-head			cyan	default	bold
+color main-revgraph		magenta	default
+color tree-head			default	default	bold
+color tree-dir			yellow	default	normal
+color tree-file			default	default	normal
+color stat-head			yellow	default
+color stat-section		cyan	default
+color stat-none			default	default
+color stat-staged		magenta	default
+color stat-unstaged		magenta	default
+color stat-untracked		magenta	default
+color help-keymap		cyan	default
+color help-group		blue	default
+color diff-stat			blue	default
+color palette-0			magenta	default
+color palette-1			yellow	default
+color palette-2			cyan	default
+color palette-3			green	default
+color palette-4			default	default
+color palette-5			white	default
+color palette-6			red	default
+color graph-commit		blue	default

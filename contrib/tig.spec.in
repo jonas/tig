@@ -47,7 +47,8 @@ CFLAGS="$RPM_OPT_FLAGS -DVERSION=tig-%{version}-%{release}"
 %files
 %defattr(-,root,root)
 %{_bindir}/*
-%doc README.adoc COPYING INSTALL.adoc NEWS.adoc contrib/tigrc contrib/tig-completion.bash
+%{_sysconfdir}/*
+%doc README.adoc COPYING INSTALL.adoc NEWS.adoc contrib/tig-completion.bash
 %{!?_without_docs: %{_mandir}/man1/*.1*}
 %{!?_without_docs: %{_mandir}/man5/*.5*}
 %{!?_without_docs: %{_mandir}/man7/*.7*}
@@ -55,6 +56,9 @@ CFLAGS="$RPM_OPT_FLAGS -DVERSION=tig-%{version}-%{release}"
 %{?_without_docs:  %doc doc/*.txt}
 
 %changelog
+* Sun 23 Feb 2014 Jonas Fonseca <fonseca@diku.dk>
+- Add tigrc installed in /etc
+
 * Tue Jan  8 2013 Joakim Sernbrant <serbaut@gmail.com>
 - Added configure
 
