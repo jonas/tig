@@ -15,6 +15,11 @@
 #define TIG_UTIL_H
 
 #include "tig.h"
+#include "types.h"
+
+/*
+ * Error handling.
+ */
 
 #define STATUS_CODE_INFO(_) \
 	_(INTEGER_VALUE_OUT_OF_BOUND, "Integer value out of bound"), \
@@ -49,6 +54,32 @@ typedef void (*die_fn)(void);
 extern die_fn die_callback;
 void TIG_NORETURN die(const char *err, ...) PRINTF_LIKE(1, 2);
 void warn(const char *msg, ...) PRINTF_LIKE(1, 2);
+
+/*
+ * Git data formatters and parsers.
+ */
+
+struct time {
+	time_t sec;
+	int tz;
+};
+
+struct ident {
+	const char *name;
+	const char *email;
+};
+
+extern const struct ident unknown_ident;
+
+int timecmp(const struct time *t1, const struct time *t2);
+int ident_compare(const struct ident *i1, const struct ident *i2);
+
+const char *mkdate(const struct time *time, enum date date);
+const char *mkfilesize(unsigned long size, enum file_size format);
+const char *mkauthor(const struct ident *ident, int cols, enum author author);
+const char *mkmode(mode_t mode);
+
+#define author_trim(cols) (cols == 0 || cols > 10)
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */
