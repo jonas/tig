@@ -2,7 +2,7 @@ AC_INIT([tig],[0],[Jonas Fonseca <fonseca@diku.dk>],[tig])
 
 AC_LANG([C])
 AC_CONFIG_HEADER(config.h)
-AC_CONFIG_SRCDIR(tig.c)
+AC_CONFIG_SRCDIR(src)
 
 dnl  Document where we keep our .m4 file.
 AC_CONFIG_MACRO_DIR([tools])

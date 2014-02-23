@@ -14,6 +14,7 @@ Note to packagers:
    included inside the binary as a fall-back. Pass `NO_BUILTIN_TIGRC=y` to not
    include the tigrc and reduce the size of the binary.
  - The example `contrib/tigrc` file (made obsolete by `tigrc`) has been removed.
+ - Source files was moved to `src` and `include`.
 
 Incompatibilities:
 

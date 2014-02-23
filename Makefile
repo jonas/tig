@@ -39,7 +39,7 @@ RPM_RELEASE = $(word 2,$(RPM_VERLIST))$(if $(WTDIRTY),.dirty)
 LDLIBS ?= -lcurses
 CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
-EXE	= tig
+EXE	= src/tig
 TOOLS	= test/test-graph
 TXTDOC	= doc/tig.1.adoc doc/tigrc.5.adoc doc/manual.adoc NEWS.adoc README.adoc INSTALL.adoc
 MANDOC	= doc/tig.1 doc/tigrc.5 doc/tigmanual.7
@@ -118,7 +118,7 @@ install-release-doc: install-release-doc-man install-release-doc-html
 
 clean:
 	$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5 .deps
-	$(RM) $(EXE) $(TOOLS) $(OBJS) core doc/*.xml builtin-config.c
+	$(RM) $(EXE) $(TOOLS) $(OBJS) core doc/*.xml src/builtin-config.c
 
 distclean: clean
 	$(RM) -r doc/manual.html-chunked autom4te.cache release-docs
@@ -126,7 +126,7 @@ distclean: clean
 	$(RM) config.h config.log config.make config.status config.h.in
 
 spell-check:
-	for file in $(TXTDOC) tig.c; do \
+	for file in $(TXTDOC) src/tig.c; do \
 		aspell --lang=en --dont-backup \
 		       --personal=./tools/aspell.dict check $$file; \
 	done
@@ -184,10 +184,10 @@ COMPAT_OBJS += compat/hashtab.o
 
 override CPPFLAGS += $(COMPAT_CPPFLAGS)
 
-TIG_OBJS = tig.o util.o io.o graph.o refs.o builtin-config.o $(COMPAT_OBJS)
-tig: $(TIG_OBJS)
+TIG_OBJS = src/tig.o src/util.o src/io.o src/graph.o src/refs.o src/builtin-config.o $(COMPAT_OBJS)
+src/tig: $(TIG_OBJS)
 
-TEST_GRAPH_OBJS = test/test-graph.o util.o io.o graph.o $(COMPAT_OBJS)
+TEST_GRAPH_OBJS = test/test-graph.o src/util.o src/io.o src/graph.o $(COMPAT_OBJS)
 test/test-graph: $(TEST_GRAPH_OBJS)
 
 OBJS = $(sort $(TIG_OBJS) $(TEST_GRAPH_OBJS))
@@ -199,11 +199,11 @@ DEPS_CFLAGS ?= -MMD -MP -MF .deps/$*.d
 
 %.o: %.c
 	@mkdir -p $(abspath .deps/$(*D))
-	$(CC) $(CFLAGS) $(DEPS_CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CC) -I. -Iinclude $(CFLAGS) $(DEPS_CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 -include $(OBJS:%.o=.deps/%.d)
 
-builtin-config.c: tigrc tools/make-builtin-config.sh
+src/builtin-config.c: tigrc tools/make-builtin-config.sh
 	tools/make-builtin-config.sh $< > $@
 
 tig.spec: contrib/tig.spec.in

@@ -33,7 +33,7 @@ Boston, MA 02110-1301, USA.  */
    the old table to the new table. */
 
 #ifdef HAVE_CONFIG_H
-#include "../config.h"
+#include "config.h"
 #endif
 
 #include "compat.h"
