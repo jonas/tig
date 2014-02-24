@@ -114,9 +114,6 @@ static char opt_env_lines[64]		= "";
 static char opt_env_columns[64]		= "";
 static char *opt_env[]			= { opt_env_lines, opt_env_columns, NULL };
 
-#define is_initial_commit()	(!get_ref_head())
-#define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
-
 static bool
 vertical_split_is_enabled(void)
 {
@@ -128,20 +125,6 @@ vertical_split_is_enabled(void)
 	}
 
 	return opt_vertical_split == VERTICAL_SPLIT_VERTICAL;
-}
-
-static inline int
-load_refs(bool force)
-{
-	static bool loaded = FALSE;
-
-	if (force)
-		repo.head[0] = 0;
-	else if (loaded)
-		return OK;
-
-	loaded = TRUE;
-	return reload_refs(repo.git_dir, repo.remote, repo.head, sizeof(repo.head));
 }
 
 static inline void

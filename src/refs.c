@@ -13,6 +13,7 @@
 
 #include "tig.h"
 #include "io.h"
+#include "repo.h"
 #include "refs.h"
 
 static struct ref **refs = NULL;
@@ -213,7 +214,7 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 	return add_to_refs(id, idlen, name, namelen, data);
 }
 
-int
+static int
 reload_refs(const char *git_dir, const char *remote_name, char *head, size_t headlen)
 {
 	const char *head_argv[] = {
@@ -258,6 +259,20 @@ reload_refs(const char *git_dir, const char *remote_name, char *head, size_t hea
 	qsort(refs, refs_size, sizeof(*refs), compare_refs);
 
 	return OK;
+}
+
+int
+load_refs(bool force)
+{
+	static bool loaded = FALSE;
+
+	if (force)
+		repo.head[0] = 0;
+	else if (loaded)
+		return OK;
+
+	loaded = TRUE;
+	return reload_refs(repo.git_dir, repo.remote, repo.head, sizeof(repo.head));
 }
 
 int

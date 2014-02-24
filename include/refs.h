@@ -34,10 +34,13 @@ struct ref_list {
 	struct ref **refs;	/* References for this ID. */
 };
 
+#define is_initial_commit()	(!get_ref_head())
+#define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
+
 struct ref *get_ref_head();
 struct ref_list *get_ref_list(const char *id);
 void foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data);
-int reload_refs(const char *git_dir, const char *remote_name, char *head, size_t headlen);
+int load_refs(bool force);
 int add_ref(const char *id, char *name, const char *remote_name, const char *head);
 
 #endif
