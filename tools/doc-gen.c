@@ -77,6 +77,8 @@ main(int argc, const char *argv[])
 		if (!strcmp(argv[i], "actions"))
 			doc_actions_print();
 	}
+
+	return EXIT_SUCCESS;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */
