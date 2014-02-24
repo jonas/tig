@@ -21,6 +21,7 @@
 #include "graph.h"
 #include "git.h"
 #include "request.h"
+#include "line.h"
 
 static void report(const char *msg, ...) PRINTF_LIKE(1, 2);
 #define report_clear() report("%s", "")
@@ -189,261 +190,6 @@ update_notes_arg()
 	} else {
 		/* Notes are disabled by default when passing --pretty args. */
 		string_copy(opt_notes_arg, "");
-	}
-}
-
-/*
- * Line-oriented content detection.
- */
-
-#define LINE_INFO(_) \
-	_(DIFF_HEADER,  	"diff --"), \
-	_(DIFF_CHUNK,   	"@@"), \
-	_(DIFF_ADD,		"+"), \
-	_(DIFF_ADD2,		" +"), \
-	_(DIFF_DEL,		"-"), \
-	_(DIFF_DEL2,		" -"), \
-	_(DIFF_INDEX,		"index "), \
-	_(DIFF_OLDMODE,		"old file mode "), \
-	_(DIFF_NEWMODE,		"new file mode "), \
-	_(DIFF_SIMILARITY,	"similarity "), \
-	_(PP_MERGE,		"Merge: "), \
-	_(PP_REFS,		"Refs: "), \
-	_(PP_REFLOG,		"Reflog: "), \
-	_(PP_REFLOGMSG,		"Reflog message: "), \
-	_(COMMIT,		"commit "), \
-	_(PARENT,		"parent "), \
-	_(TREE,			"tree "), \
-	_(AUTHOR,		"author "), \
-	_(COMMITTER,		"committer "), \
-	_(DEFAULT,		""), \
-	_(CURSOR,		""), \
-	_(STATUS,		""), \
-	_(DELIMITER,		""), \
-	_(DATE,      		""), \
-	_(MODE,      		""), \
-	_(ID,			""), \
-	_(OVERFLOW,		""), \
-	_(FILENAME,  		""), \
-	_(FILE_SIZE, 		""), \
-	_(LINE_NUMBER,		""), \
-	_(TITLE_BLUR,		""), \
-	_(TITLE_FOCUS,		""), \
-	_(MAIN_COMMIT,		""), \
-	_(MAIN_TAG,		""), \
-	_(MAIN_LOCAL_TAG,	""), \
-	_(MAIN_REMOTE,		""), \
-	_(MAIN_REPLACE,		""), \
-	_(MAIN_TRACKED,		""), \
-	_(MAIN_REF,		""), \
-	_(MAIN_HEAD,		""), \
-	_(MAIN_REVGRAPH,	""), \
-	_(TREE_HEAD,		""), \
-	_(TREE_DIR,		""), \
-	_(TREE_FILE,		""), \
-	_(STAT_HEAD,		""), \
-	_(STAT_SECTION,		""), \
-	_(STAT_NONE,		""), \
-	_(STAT_STAGED,		""), \
-	_(STAT_UNSTAGED,	""), \
-	_(STAT_UNTRACKED,	""), \
-	_(HELP_KEYMAP,		""), \
-	_(HELP_GROUP,		""), \
-	_(DIFF_STAT,		""), \
-	_(PALETTE_0,		""), \
-	_(PALETTE_1,		""), \
-	_(PALETTE_2,		""), \
-	_(PALETTE_3,		""), \
-	_(PALETTE_4,		""), \
-	_(PALETTE_5,		""), \
-	_(PALETTE_6,		""), \
-	_(GRAPH_COMMIT,		"")
-
-enum line_type {
-#define DEFINE_LINE_ENUM(type, line) LINE_##type
-	LINE_INFO(DEFINE_LINE_ENUM),
-	LINE_NONE
-};
-
-struct line_info {
-	const char *name;	/* Option name. */
-	int namelen;		/* Size of option name. */
-	const char *line;	/* The start of line to match. */
-	int linelen;		/* Size of string to match. */
-	int fg, bg, attr;	/* Color and text attributes for the lines. */
-	int color_pair;
-};
-
-static struct line_info *line_info;
-static size_t line_infos;
-
-static struct line_info **color_pair;
-static size_t color_pairs;
-
-DEFINE_ALLOCATOR(realloc_line_info, struct line_info, 8)
-DEFINE_ALLOCATOR(realloc_color_pair, struct line_info *, 8)
-
-/* Color IDs must be 1 or higher. [GH #15] */
-#define COLOR_ID(line_type)		((line_type) + 1)
-
-static enum line_type
-get_line_type(const char *line)
-{
-	int linelen = strlen(line);
-	enum line_type type;
-
-	for (type = 0; type < line_infos; type++)
-		/* Case insensitive search matches Signed-off-by lines better. */
-		if (line_info[type].linelen && linelen >= line_info[type].linelen &&
-		    !strncasecmp(line_info[type].line, line, line_info[type].linelen))
-			return type;
-
-	return LINE_DEFAULT;
-}
-
-static enum line_type
-get_line_type_from_ref(const struct ref *ref)
-{
-	if (ref->head)
-		return LINE_MAIN_HEAD;
-	else if (ref->ltag)
-		return LINE_MAIN_LOCAL_TAG;
-	else if (ref->tag)
-		return LINE_MAIN_TAG;
-	else if (ref->tracked)
-		return LINE_MAIN_TRACKED;
-	else if (ref->remote)
-		return LINE_MAIN_REMOTE;
-	else if (ref->replace)
-		return LINE_MAIN_REPLACE;
-
-	return LINE_MAIN_REF;
-}
-
-static inline struct line_info *
-get_line(enum line_type type)
-{
-	assert(type < line_infos);
-	return &line_info[type];
-}
-
-static inline int
-get_line_color(enum line_type type)
-{
-	return COLOR_ID(get_line(type)->color_pair);
-}
-
-static inline int
-get_line_attr(enum line_type type)
-{
-	struct line_info *info = get_line(type);
-
-	return COLOR_PAIR(COLOR_ID(info->color_pair)) | info->attr;
-}
-
-static struct line_info *
-add_line_info(const char *name, size_t namelen, const char *line, size_t linelen)
-{
-	struct line_info *info = NULL;
-
-	if (!realloc_line_info(&line_info, line_infos, 1))
-		die("Failed to allocate line info");
-
-	info = &line_info[line_infos++];
-	info->name = name;
-	info->namelen = namelen;
-	info->line = line;
-	info->linelen = linelen;
-
-	return info;
-}
-
-#define ADD_LINE_INFO(type, line) \
-	add_line_info(#type, STRING_SIZE(#type), (line), STRING_SIZE(line))
-
-static struct line_info *
-get_line_info(const char *name, size_t namelen, bool line_only)
-{
-	enum line_type type;
-
-	if (!line_infos) {
-		LINE_INFO(ADD_LINE_INFO);
-	}
-
-	for (type = 0; type < line_infos; type++) {
-		struct line_info *info = &line_info[type];
-
-		if (!line_only && enum_equals(*info, name, namelen))
-			return info;
-		if (info->linelen && namelen >= info->linelen &&
-		    !strncasecmp(info->line, name, info->linelen))
-			return info;
-	}
-
-	return NULL;
-}
-
-static struct line_info *
-add_custom_color(const char *quoted_line)
-{
-	size_t linelen = strlen(quoted_line) - 2;
-	struct line_info *info = get_line_info(quoted_line + 1, linelen, TRUE);
-	char *line;
-
-	if (info)
-		return info;
-
-	line = strndup(quoted_line + 1, linelen);
-	if (!line)
-		return NULL;
-
-	info = add_line_info(line, linelen, line, linelen);
-	if (!info)
-		free(line);
-	return info;
-}
-
-static void
-init_line_info_color_pair(struct line_info *info, enum line_type type,
-	int default_bg, int default_fg)
-{
-	int bg = info->bg == COLOR_DEFAULT ? default_bg : info->bg;
-	int fg = info->fg == COLOR_DEFAULT ? default_fg : info->fg;
-	int i;
-
-	for (i = 0; i < color_pairs; i++) {
-		if (color_pair[i]->fg == info->fg && color_pair[i]->bg == info->bg) {
-			info->color_pair = i;
-			return;
-		}
-	}
-
-	if (!realloc_color_pair(&color_pair, color_pairs, 1))
-		die("Failed to alloc color pair");
-
-	color_pair[color_pairs] = info;
-	info->color_pair = color_pairs++;
-	init_pair(COLOR_ID(info->color_pair), fg, bg);
-}
-
-static void
-init_colors(void)
-{
-	int default_bg = line_info[LINE_DEFAULT].bg;
-	int default_fg = line_info[LINE_DEFAULT].fg;
-	enum line_type type;
-
-	start_color();
-
-	if (assume_default_colors(default_fg, default_bg) == ERR) {
-		default_bg = COLOR_BLACK;
-		default_fg = COLOR_WHITE;
-	}
-
-	for (type = 0; type < line_infos; type++) {
-		struct line_info *info = &line_info[type];
-
-		init_line_info_color_pair(info, type, default_bg, default_fg);
 	}
 }
 
@@ -833,7 +579,7 @@ option_color_command(int argc, const char *argv[])
 	if (*argv[0] == '"' || *argv[0] == '\'') {
 		info = add_custom_color(argv[0]);
 	} else {
-		info = get_line_info(argv[0], strlen(argv[0]), FALSE);
+		info = find_line_info(argv[0], strlen(argv[0]), FALSE);
 	}
 	if (!info) {
 		static const struct enum_map_entry obsolete[] = {
@@ -846,7 +592,7 @@ option_color_command(int argc, const char *argv[])
 
 		if (!map_enum(&index, obsolete, argv[0]))
 			return ERROR_UNKNOWN_COLOR_NAME;
-		info = &line_info[index];
+		info = get_line_info(index);
 	}
 
 	if (!set_color(&info->fg, argv[1]) ||
@@ -4191,7 +3937,7 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	}
 
 	if (type == LINE_DIFF_HEADER) {
-		const int len = line_info[LINE_DIFF_HEADER].linelen;
+		const int len = get_line_info(LINE_DIFF_HEADER)->linelen;
 
 		state->after_diff = TRUE;
 		if (!strncmp(data + len, "combined ", strlen("combined ")) ||
@@ -8394,7 +8140,7 @@ set_work_tree(const char *value)
 static void
 parse_git_color_option(enum line_type type, char *value)
 {
-	struct line_info *info = &line_info[type];
+	struct line_info *info = get_line_info(type);
 	const char *argv[SIZEOF_ARG];
 	int argc = 0;
 	bool first_color = TRUE;

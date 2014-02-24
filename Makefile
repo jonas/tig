@@ -193,6 +193,7 @@ TIG_OBJS = \
 	src/refs.o \
 	src/builtin-config.o \
 	src/request.o \
+	src/line.o \
 	$(COMPAT_OBJS)
 
 src/tig: $(TIG_OBJS)
