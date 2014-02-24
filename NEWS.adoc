@@ -46,9 +46,10 @@ Improvements:
    from stdin, e.g. `git reflog --pretty=raw | tig --pretty=raw`.
  - Document the Git commands supported by the pager mode.  (GH #1)
  - Optionally specify custom prompt for `%(prompt)` in shell commands, e.g.
-   `bind main B ?git checkout -b "%(prompt Enter new branch name: )"`
+   `bind main B ?git checkout -b "%(prompt Enter new branch name: )"`.
  - Allow Tig to be started with no default keybindings or built-in user-defined
-   commands by running: `TIGRC_SYSTEM=~/.tigrc.safe tig` (GH #235)
+   commands by running: `TIGRC_SYSTEM=~/.tigrc.safe tig`. (GH #235)
+ - Open editor at line number for combined diffs e.g. diffs of unmerged files.
 
 Bug fixes:
 

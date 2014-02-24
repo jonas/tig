@@ -3716,10 +3716,14 @@ parse_chunk_header(struct chunk_header *header, const char *line)
 {
 	memset(header, 0, sizeof(*header));
 
-	if (prefixcmp(line, "@@ -"))
+	if (!prefixcmp(line, "@@ -"))
+		line += STRING_SIZE("@@ -");
+	else if (!prefixcmp(line, "@@@ -") &&
+		 (line = strchr(line + STRING_SIZE("@@@ -"), '-')))
+		line += 1;
+	else
 		return FALSE;
 
-	line += STRING_SIZE("@@ -");
 
 	return  parse_ulong(&line, &header->old.position, ",") &&
 		parse_ulong(&line, &header->old.lines, " +") &&
@@ -3751,7 +3755,8 @@ diff_get_lineno(struct view *view, struct line *line)
 	lineno = chunk_header.new.position;
 	chunk++;
 	while (chunk++ < line)
-		if (chunk->type != LINE_DIFF_DEL)
+		if (chunk->type != LINE_DIFF_DEL &&
+		    chunk->type != LINE_DIFF_DEL2)
 			lineno++;
 
 	return lineno;
