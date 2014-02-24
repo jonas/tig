@@ -172,20 +172,6 @@ update_notes_arg()
 	}
 }
 
-struct line {
-	enum line_type type;
-	unsigned int lineno:24;
-
-	/* State flags */
-	unsigned int selected:1;
-	unsigned int dirty:1;
-	unsigned int cleareol:1;
-	unsigned int wrapped:1;
-
-	unsigned int user_flags:6;
-	void *data;		/* User data */
-};
-
 
 /*
  * User config file handling.

@@ -15,6 +15,24 @@
 #define TIG_VIEW_H
 
 #include "tig.h"
+#include "line.h"
+#include "io.h"
+
+struct view_ops;
+
+struct line {
+	enum line_type type;
+	unsigned int lineno:24;
+
+	/* State flags */
+	unsigned int selected:1;
+	unsigned int dirty:1;
+	unsigned int cleareol:1;
+	unsigned int wrapped:1;
+
+	unsigned int user_flags:6;
+	void *data;		/* User data */
+};
 
 enum view_flag {
 	VIEW_NO_FLAGS = 0,
