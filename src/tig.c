@@ -57,15 +57,15 @@ static bool prompt_menu(const char *prompt, const struct menu_item *items, int *
 
 /* Option variables. */
 static enum graphic opt_line_graphics;
-static enum date opt_date;
-static enum author opt_author;
-static enum filename opt_filename;
-static enum file_size opt_file_size;
-static bool opt_rev_graph;
-static bool opt_line_number;
+static enum date opt_show_date;
+static enum author opt_show_author;
+static enum filename opt_show_filename;
+static enum file_size opt_show_file_size;
+static bool opt_show_rev_graph;
+static bool opt_show_line_numbers;
 static bool opt_show_refs;
 static bool opt_show_changes;
-static bool opt_untracked_dirs_content;
+static bool opt_status_untracked_dirs;
 static bool opt_read_git_colors;
 static bool opt_wrap_lines;
 static bool opt_ignore_case;
@@ -73,20 +73,22 @@ static bool opt_focus_child;
 static int opt_diff_context;
 static enum ignore_space opt_ignore_space;
 static enum commit_order opt_commit_order;
-static bool opt_notes;
-static int opt_num_interval;
-static double opt_hscroll;
-static double opt_scale_split_view;
+static bool opt_show_notes;
+static int opt_line_number_interval;
+static double opt_horizontal_scroll;
+static double opt_split_view_height;
 static enum vertical_split opt_vertical_split;
 static int opt_tab_size;
 static int opt_author_width;
-static int opt_filename_width;
-static bool opt_editor_lineno;
+static int opt_show_filename_width;
+static bool opt_editor_line_number;
 static bool opt_show_id;
-static int opt_id_cols;
+static int opt_id_width;
 static int opt_title_overflow;
 static bool opt_mouse;
-static int opt_scroll_wheel_lines;
+static int opt_mouse_scroll;
+static const char **opt_diff_options;
+static const char **opt_blame_options;
 
 /* State variables. */
 static char opt_diff_context_arg[9]	= "";
@@ -104,10 +106,8 @@ static char opt_search[SIZEOF_STR]	= "";
 static char opt_editor[SIZEOF_STR]	= "";
 static FILE *opt_tty			= NULL;
 static const char **opt_cmdline_argv	= NULL;
-static const char **opt_diff_argv	= NULL;
 static const char **opt_rev_argv	= NULL;
 static const char **opt_file_argv	= NULL;
-static const char **opt_blame_argv	= NULL;
 static char opt_env_lines[64]		= "";
 static char opt_env_columns[64]		= "";
 static char *opt_env[]			= { opt_env_lines, opt_env_columns, NULL };
@@ -163,7 +163,7 @@ update_commit_order_arg()
 static inline void
 update_notes_arg()
 {
-	if (opt_notes) {
+	if (opt_show_notes) {
 		string_copy(opt_notes_arg, "--show-notes");
 	} else {
 		/* Notes are disabled by default when passing --pretty args. */
@@ -375,22 +375,22 @@ option_set_command(int argc, const char *argv[])
 		return ERROR_NO_VALUE_ASSIGNED;
 
 	if (!strcmp(argv[0], "blame-options"))
-		return parse_args(&opt_blame_argv, argv + 2);
+		return parse_args(&opt_blame_options, argv + 2);
 
 	if (!strcmp(argv[0], "diff-options"))
-		return parse_args(&opt_diff_argv, argv + 2);
+		return parse_args(&opt_diff_options, argv + 2);
 
 	if (argc != 3)
 		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;
 
 	if (!strcmp(argv[0], "show-author"))
-		return parse_enum(&opt_author, argv[2], author_map);
+		return parse_enum(&opt_show_author, argv[2], author_map);
 
 	if (!strcmp(argv[0], "show-date"))
-		return parse_enum(&opt_date, argv[2], date_map);
+		return parse_enum(&opt_show_date, argv[2], date_map);
 
 	if (!strcmp(argv[0], "show-rev-graph"))
-		return parse_bool(&opt_rev_graph, argv[2]);
+		return parse_bool(&opt_show_rev_graph, argv[2]);
 
 	if (!strcmp(argv[0], "show-refs"))
 		return parse_bool(&opt_show_refs, argv[2]);
@@ -400,14 +400,14 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "show-notes")) {
 		bool matched = FALSE;
-		enum status_code res = parse_bool_matched(&opt_notes, argv[2], &matched);
+		enum status_code res = parse_bool_matched(&opt_show_notes, argv[2], &matched);
 
 		if (res == SUCCESS && matched) {
 			update_notes_arg();
 			return res;
 		}
 
-		opt_notes = TRUE;
+		opt_show_notes = TRUE;
 		strcpy(opt_notes_arg, "--show-notes=");
 		res = parse_string(opt_notes_arg + 8, argv[2],
 				   sizeof(opt_notes_arg) - 8);
@@ -417,31 +417,31 @@ option_set_command(int argc, const char *argv[])
 	}
 
 	if (!strcmp(argv[0], "show-line-numbers"))
-		return parse_bool(&opt_line_number, argv[2]);
+		return parse_bool(&opt_show_line_numbers, argv[2]);
 
 	if (!strcmp(argv[0], "line-graphics"))
 		return parse_enum(&opt_line_graphics, argv[2], graphic_map);
 
 	if (!strcmp(argv[0], "line-number-interval"))
-		return parse_int(&opt_num_interval, argv[2], 1, 1024);
+		return parse_int(&opt_line_number_interval, argv[2], 1, 1024);
 
 	if (!strcmp(argv[0], "author-width"))
 		return parse_int(&opt_author_width, argv[2], 0, 1024);
 
 	if (!strcmp(argv[0], "filename-width"))
-		return parse_int(&opt_filename_width, argv[2], 0, 1024);
+		return parse_int(&opt_show_filename_width, argv[2], 0, 1024);
 
 	if (!strcmp(argv[0], "show-filename"))
-		return parse_enum(&opt_filename, argv[2], filename_map);
+		return parse_enum(&opt_show_filename, argv[2], filename_map);
 
 	if (!strcmp(argv[0], "show-file-size"))
-		return parse_enum(&opt_file_size, argv[2], file_size_map);
+		return parse_enum(&opt_show_file_size, argv[2], file_size_map);
 
 	if (!strcmp(argv[0], "horizontal-scroll"))
-		return parse_step(&opt_hscroll, argv[2]);
+		return parse_step(&opt_horizontal_scroll, argv[2]);
 
 	if (!strcmp(argv[0], "split-view-height"))
-		return parse_step(&opt_scale_split_view, argv[2]);
+		return parse_step(&opt_split_view_height, argv[2]);
 
 	if (!strcmp(argv[0], "vertical-split"))
 		return parse_enum(&opt_vertical_split, argv[2], vertical_split_map);
@@ -474,7 +474,7 @@ option_set_command(int argc, const char *argv[])
 	}
 
 	if (!strcmp(argv[0], "status-untracked-dirs"))
-		return parse_bool(&opt_untracked_dirs_content, argv[2]);
+		return parse_bool(&opt_status_untracked_dirs, argv[2]);
 
 	if (!strcmp(argv[0], "read-git-colors"))
 		return parse_bool(&opt_read_git_colors, argv[2]);
@@ -492,7 +492,7 @@ option_set_command(int argc, const char *argv[])
 		return parse_bool(&opt_show_id, argv[2]);
 
 	if (!strcmp(argv[0], "id-width"))
-		return parse_id(&opt_id_cols, argv[2]);
+		return parse_id(&opt_id_width, argv[2]);
 
 	if (!strcmp(argv[0], "title-overflow")) {
 		bool enabled = FALSE;
@@ -518,13 +518,13 @@ option_set_command(int argc, const char *argv[])
 	}
 
 	if (!strcmp(argv[0], "editor-line-number"))
-		return parse_bool(&opt_editor_lineno, argv[2]);
+		return parse_bool(&opt_editor_line_number, argv[2]);
 
 	if (!strcmp(argv[0], "mouse"))
 		return parse_bool(&opt_mouse, argv[2]);
 
 	if (!strcmp(argv[0], "mouse-scroll"))
-		return parse_int(&opt_scroll_wheel_lines, argv[2], 0, 1024);
+		return parse_int(&opt_mouse_scroll, argv[2], 0, 1024);
 
 	return ERROR_UNKNOWN_VARIABLE_NAME;
 }
@@ -712,7 +712,7 @@ load_options(void)
 	const char *tigrc_user = getenv("TIGRC_USER");
 	const char *tigrc_system = getenv("TIGRC_SYSTEM");
 	const char *tig_diff_opts = getenv("TIG_DIFF_OPTS");
-	const bool diff_opts_from_args = !!opt_diff_argv;
+	const bool diff_opts_from_args = !!opt_diff_options;
 	bool custom_tigrc_system = !!tigrc_system;
 
 	if (!custom_tigrc_system)
@@ -740,7 +740,7 @@ load_options(void)
 		if (!string_format(buf, "%s", tig_diff_opts) ||
 		    !argv_from_string(diff_opts, &argc, buf))
 			die("TIG_DIFF_OPTS contains too many arguments");
-		else if (!argv_copy(&opt_diff_argv, diff_opts))
+		else if (!argv_copy(&opt_diff_options, diff_opts))
 			die("Failed to format TIG_DIFF_OPTS arguments");
 	}
 
@@ -1010,10 +1010,10 @@ draw_field(struct view *view, enum line_type type, const char *text, int width, 
 static bool
 draw_date(struct view *view, struct time *time)
 {
-	const char *date = mkdate(time, opt_date);
-	int cols = opt_date == DATE_SHORT ? DATE_SHORT_WIDTH : DATE_WIDTH;
+	const char *date = mkdate(time, opt_show_date);
+	int cols = opt_show_date == DATE_SHORT ? DATE_SHORT_WIDTH : DATE_WIDTH;
 
-	if (opt_date == DATE_NO)
+	if (opt_show_date == DATE_NO)
 		return FALSE;
 
 	return draw_field(view, LINE_DATE, date, cols, ALIGN_LEFT, FALSE);
@@ -1023,9 +1023,9 @@ static bool
 draw_author(struct view *view, const struct ident *author)
 {
 	bool trim = author_trim(opt_author_width);
-	const char *text = mkauthor(author, opt_author_width, opt_author);
+	const char *text = mkauthor(author, opt_author_width, opt_show_author);
 
-	if (opt_author == AUTHOR_NO)
+	if (opt_show_author == AUTHOR_NO)
 		return FALSE;
 
 	return draw_field(view, LINE_AUTHOR, text, opt_author_width, ALIGN_LEFT, trim);
@@ -1043,29 +1043,29 @@ draw_id(struct view *view, const char *id)
 	if (!opt_show_id)
 		return FALSE;
 
-	return draw_id_custom(view, LINE_ID, id, opt_id_cols);
+	return draw_id_custom(view, LINE_ID, id, opt_id_width);
 }
 
 static bool
 draw_filename(struct view *view, const char *filename, bool auto_enabled)
 {
-	bool trim = filename && strlen(filename) >= opt_filename_width;
+	bool trim = filename && strlen(filename) >= opt_show_filename_width;
 
-	if (opt_filename == FILENAME_NO)
+	if (opt_show_filename == FILENAME_NO)
 		return FALSE;
 
-	if (opt_filename == FILENAME_AUTO && !auto_enabled)
+	if (opt_show_filename == FILENAME_AUTO && !auto_enabled)
 		return FALSE;
 
-	return draw_field(view, LINE_FILENAME, filename, opt_filename_width, ALIGN_LEFT, trim);
+	return draw_field(view, LINE_FILENAME, filename, opt_show_filename_width, ALIGN_LEFT, trim);
 }
 
 static bool
 draw_file_size(struct view *view, unsigned long size, int width, bool pad)
 {
-	const char *str = pad ? NULL : mkfilesize(size, opt_file_size);
+	const char *str = pad ? NULL : mkfilesize(size, opt_show_file_size);
 
-	if (!width || opt_file_size == FILE_SIZE_NO)
+	if (!width || opt_show_file_size == FILE_SIZE_NO)
 		return FALSE;
 
 	return draw_field(view, LINE_FILE_SIZE, str, width, ALIGN_RIGHT, FALSE);
@@ -1088,11 +1088,11 @@ draw_lineno(struct view *view, unsigned int lineno)
 	char *text = NULL;
 	chtype separator = opt_line_graphics ? ACS_VLINE : '|';
 
-	if (!opt_line_number)
+	if (!opt_show_line_numbers)
 		return FALSE;
 
 	lineno += view->pos.offset + 1;
-	if (lineno == 1 || (lineno % opt_num_interval) == 0) {
+	if (lineno == 1 || (lineno % opt_line_number_interval) == 0) {
 		static char fmt[] = "%1ld";
 
 		fmt[1] = '0' + (view->digits <= 9 ? digits3 : 1);
@@ -1258,7 +1258,7 @@ static void
 apply_horizontal_split(struct view *base, struct view *view)
 {
 	view->width   = base->width;
-	view->height  = apply_step(opt_scale_split_view, base->height);
+	view->height  = apply_step(opt_split_view_height, base->height);
 	view->height  = MAX(view->height, MIN_VIEW_HEIGHT);
 	view->height  = MIN(view->height, base->height - MIN_VIEW_HEIGHT);
 	base->height -= view->height;
@@ -1390,13 +1390,13 @@ redraw_display(bool clear)
 #define VIEW_FLAG_RESET_DISPLAY	((enum view_flag) -1)
 
 #define TOGGLE_MENU_INFO(_) \
-	_(LINENO,    '.', "line numbers",      &opt_line_number, NULL, VIEW_NO_FLAGS), \
-	_(DATE,      'D', "dates",             &opt_date, date_map, VIEW_NO_FLAGS), \
-	_(AUTHOR,    'A', "author",            &opt_author, author_map, VIEW_NO_FLAGS), \
+	_(LINENO,    '.', "line numbers",      &opt_show_line_numbers, NULL, VIEW_NO_FLAGS), \
+	_(DATE,      'D', "dates",             &opt_show_date, date_map, VIEW_NO_FLAGS), \
+	_(AUTHOR,    'A', "author",            &opt_show_author, author_map, VIEW_NO_FLAGS), \
 	_(GRAPHIC,   '~', "graphics",          &opt_line_graphics, graphic_map, VIEW_NO_FLAGS), \
-	_(REV_GRAPH, 'g', "revision graph",    &opt_rev_graph, NULL, VIEW_LOG_LIKE), \
-	_(FILENAME,  '#', "file names",        &opt_filename, filename_map, VIEW_NO_FLAGS), \
-	_(FILE_SIZE, '*', "file sizes",        &opt_file_size, file_size_map, VIEW_NO_FLAGS), \
+	_(REV_GRAPH, 'g', "revision graph",    &opt_show_rev_graph, NULL, VIEW_LOG_LIKE), \
+	_(FILENAME,  '#', "file names",        &opt_show_filename, filename_map, VIEW_NO_FLAGS), \
+	_(FILE_SIZE, '*', "file sizes",        &opt_show_file_size, file_size_map, VIEW_NO_FLAGS), \
 	_(IGNORE_SPACE, 'W', "space changes",  &opt_ignore_space, ignore_space_map, VIEW_DIFF_LIKE), \
 	_(COMMIT_ORDER, 'l', "commit order",   &opt_commit_order, commit_order_map, VIEW_LOG_LIKE), \
 	_(REFS,      'F', "reference display", &opt_show_refs, NULL, VIEW_NO_FLAGS), \
@@ -1404,7 +1404,7 @@ redraw_display(bool clear)
 	_(ID,        'X', "commit ID display", &opt_show_id, NULL, VIEW_NO_FLAGS), \
 	_(FILES,     '%', "file filtering",    &opt_file_filter, NULL, VIEW_DIFF_LIKE | VIEW_LOG_LIKE), \
 	_(TITLE_OVERFLOW, '$', "commit title overflow display", &opt_title_overflow, NULL, VIEW_NO_FLAGS), \
-	_(UNTRACKED_DIRS, 'd', "untracked directory info", &opt_untracked_dirs_content, NULL, VIEW_STATUS_LIKE), \
+	_(UNTRACKED_DIRS, 'd', "untracked directory info", &opt_status_untracked_dirs, NULL, VIEW_STATUS_LIKE), \
 	_(VERTICAL_SPLIT, '|', "view split",   &opt_vertical_split, vertical_split_map, VIEW_FLAG_RESET_DISPLAY), \
 
 static enum view_flag
@@ -1557,7 +1557,7 @@ scroll_view(struct view *view, enum request request)
 	assert(view_is_displayed(view));
 
 	if (request == REQ_SCROLL_WHEEL_DOWN || request == REQ_SCROLL_WHEEL_UP)
-		lines = opt_scroll_wheel_lines;
+		lines = opt_mouse_scroll;
 
 	switch (request) {
 	case REQ_SCROLL_FIRST_COL:
@@ -1570,15 +1570,15 @@ scroll_view(struct view *view, enum request request)
 			report("Cannot scroll beyond the first column");
 			return;
 		}
-		if (view->pos.col <= apply_step(opt_hscroll, view->width))
+		if (view->pos.col <= apply_step(opt_horizontal_scroll, view->width))
 			view->pos.col = 0;
 		else
-			view->pos.col -= apply_step(opt_hscroll, view->width);
+			view->pos.col -= apply_step(opt_horizontal_scroll, view->width);
 		redraw_view_from(view, 0);
 		report_clear();
 		return;
 	case REQ_SCROLL_RIGHT:
-		view->pos.col += apply_step(opt_hscroll, view->width);
+		view->pos.col += apply_step(opt_horizontal_scroll, view->width);
 		redraw_view(view);
 		report_clear();
 		return;
@@ -1986,11 +1986,11 @@ format_argv(struct view *view, const char ***dst_argv, const char *src_argv[], b
 				break;
 
 		} else if (!strcmp(arg, "%(diffargs)")) {
-			if (!format_append_argv(&format, dst_argv, opt_diff_argv))
+			if (!format_append_argv(&format, dst_argv, opt_diff_options))
 				break;
 
 		} else if (!strcmp(arg, "%(blameargs)")) {
-			if (!format_append_argv(&format, dst_argv, opt_blame_argv))
+			if (!format_append_argv(&format, dst_argv, opt_blame_options))
 				break;
 
 		} else if (!strcmp(arg, "%(cmdlineargs)")) {
@@ -2165,7 +2165,7 @@ update_view(struct view *view)
 		/* Keep the displayed view in sync with line number scaling. */
 		if (digits != view->digits) {
 			view->digits = digits;
-			if (opt_line_number || view_has_flags(view, VIEW_ALWAYS_LINENO))
+			if (opt_show_line_numbers || view_has_flags(view, VIEW_ALWAYS_LINENO))
 				redraw = TRUE;
 		}
 	}
@@ -2473,11 +2473,11 @@ open_editor(const char *file, unsigned int lineno)
 		return;
 	}
 
-	if (lineno && opt_editor_lineno && string_format(lineno_cmd, "+%u", lineno))
+	if (lineno && opt_editor_line_number && string_format(lineno_cmd, "+%u", lineno))
 		editor_argv[argc++] = lineno_cmd;
 	editor_argv[argc] = file;
 	if (!open_external_viewer(editor_argv, repo.cdup, TRUE, EDITOR_LINENO_MSG))
-		opt_editor_lineno = FALSE;
+		opt_editor_line_number = FALSE;
 }
 
 static enum request run_prompt_command(struct view *view, char *cmd);
@@ -4557,8 +4557,8 @@ tree_grep(struct view *view, struct line *line)
 	struct tree_entry *entry = line->data;
 	const char *text[] = {
 		entry->name,
-		mkauthor(entry->author, opt_author_width, opt_author),
-		mkdate(&entry->time, opt_date),
+		mkauthor(entry->author, opt_author_width, opt_show_author),
+		mkdate(&entry->time, opt_show_date),
 		NULL
 	};
 
@@ -4749,9 +4749,9 @@ blame_detect_filename_display(struct view *view)
 	const char *filename = NULL;
 	int i;
 
-	if (opt_blame_argv) {
-		for (i = 0; opt_blame_argv[i]; i++) {
-			if (prefixcmp(opt_blame_argv[i], "-C"))
+	if (opt_blame_options) {
+		for (i = 0; opt_blame_options[i]; i++) {
+			if (prefixcmp(opt_blame_options[i], "-C"))
 				continue;
 
 			show_filenames = TRUE;
@@ -4994,7 +4994,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_filename(view, filename, state->auto_filename_display))
 		return TRUE;
 
-	if (draw_id_custom(view, id_type, id, opt_id_cols))
+	if (draw_id_custom(view, id_type, id, opt_id_width))
 		return TRUE;
 
 	if (draw_lineno(view, lineno))
@@ -5169,8 +5169,8 @@ blame_grep(struct view *view, struct line *line)
 		blame->text,
 		commit ? commit->title : "",
 		commit ? commit->id : "",
-		commit ? mkauthor(commit->author, opt_author_width, opt_author) : "",
-		commit ? mkdate(&commit->time, opt_date) : "",
+		commit ? mkauthor(commit->author, opt_author_width, opt_show_author) : "",
+		commit ? mkdate(&commit->time, opt_show_date) : "",
 		NULL
 	};
 
@@ -5421,7 +5421,7 @@ branch_grep(struct view *view, struct line *line)
 	struct branch *branch = line->data;
 	const char *text[] = {
 		branch->ref->name,
-		mkauthor(branch->author, opt_author_width, opt_author),
+		mkauthor(branch->author, opt_author_width, opt_show_author),
 		NULL
 	};
 
@@ -5711,7 +5711,7 @@ status_open(struct view *view, enum open_flags flags)
 	io_run_bg(update_index_argv);
 
 	status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 2] =
-		opt_untracked_dirs_content ? NULL : "--directory";
+		opt_status_untracked_dirs ? NULL : "--directory";
 
 	if (!status_run(view, staged_argv, staged_status, LINE_STAT_STAGED) ||
 	    !status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED) ||
@@ -6887,7 +6887,7 @@ main_open(struct view *view, enum open_flags flags)
 	};
 	struct main_state *state = view->private;
 
-	state->with_graph = opt_rev_graph &&
+	state->with_graph = opt_show_rev_graph &&
 			    opt_commit_order != COMMIT_ORDER_REVERSE;
 
 	if (flags & OPEN_PAGER_MODE) {
@@ -7199,8 +7199,8 @@ main_grep(struct view *view, struct line *line)
 	const char *text[] = {
 		commit->id,
 		commit->title,
-		mkauthor(commit->author, opt_author_width, opt_author),
-		mkdate(&commit->time, opt_date),
+		mkauthor(commit->author, opt_author_width, opt_show_author),
+		mkdate(&commit->time, opt_show_date),
 		NULL
 	};
 
@@ -7802,7 +7802,7 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 		set_work_tree(value);
 
 	else if (!strcmp(name, "core.abbrev"))
-		parse_id(&opt_id_cols, value);
+		parse_id(&opt_id_width, value);
 
 	else if (!prefixcmp(name, "tig.color."))
 		set_repo_config_option(name + 10, value, option_color_command);
@@ -7949,7 +7949,7 @@ filter_options(const char *argv[], bool blame)
 		flags[flags_pos] = NULL;
 
 		if (blame)
-			opt_blame_argv = flags;
+			opt_blame_options = flags;
 		else
 			opt_cmdline_argv = flags;
 	}
