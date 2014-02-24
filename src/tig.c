@@ -24,6 +24,7 @@
 #include "line.h"
 #include "keys.h"
 #include "view.h"
+#include "repo.h"
 
 static void report(const char *msg, ...) PRINTF_LIKE(1, 2);
 #define report_clear() report("%s", "")
@@ -100,14 +101,8 @@ static char opt_ref[SIZEOF_REF]		= "";
 static unsigned long opt_goto_line	= 0;
 static int opt_lineno			= 0;
 static bool opt_file_filter;
-static char opt_head[SIZEOF_REF]	= "";
-static char opt_remote[SIZEOF_REF]	= "";
 static iconv_t opt_iconv_out		= ICONV_NONE;
 static char opt_search[SIZEOF_STR]	= "";
-static char opt_cdup[SIZEOF_STR]	= "";
-static char opt_prefix[SIZEOF_STR]	= "";
-static char opt_git_dir[SIZEOF_STR]	= "";
-static signed char opt_is_inside_work_tree	= -1; /* set to TRUE or FALSE */
 static char opt_editor[SIZEOF_STR]	= "";
 static FILE *opt_tty			= NULL;
 static const char **opt_cmdline_argv	= NULL;
@@ -141,12 +136,12 @@ load_refs(bool force)
 	static bool loaded = FALSE;
 
 	if (force)
-		opt_head[0] = 0;
+		repo.head[0] = 0;
 	else if (loaded)
 		return OK;
 
 	loaded = TRUE;
-	return reload_refs(opt_git_dir, opt_remote, opt_head, sizeof(opt_head));
+	return reload_refs(repo.git_dir, repo.remote, repo.head, sizeof(repo.head));
 }
 
 static inline void
@@ -2419,7 +2414,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 		return;
 	}
 
-	if (!view_has_flags(view, VIEW_NO_GIT_DIR) && !opt_git_dir[0]) {
+	if (!view_has_flags(view, VIEW_NO_GIT_DIR) && !repo.git_dir[0]) {
 		report("The %s view is disabled in pager view", view->name);
 		return;
 	}
@@ -2467,7 +2462,7 @@ open_mergetool(const char *file)
 {
 	const char *mergetool_argv[] = { "git", "mergetool", file, NULL };
 
-	open_external_viewer(mergetool_argv, opt_cdup, TRUE, "");
+	open_external_viewer(mergetool_argv, repo.cdup, TRUE, "");
 }
 
 #define EDITOR_LINENO_MSG \
@@ -2506,7 +2501,7 @@ open_editor(const char *file, unsigned int lineno)
 	if (lineno && opt_editor_lineno && string_format(lineno_cmd, "+%u", lineno))
 		editor_argv[argc++] = lineno_cmd;
 	editor_argv[argc] = file;
-	if (!open_external_viewer(editor_argv, opt_cdup, TRUE, EDITOR_LINENO_MSG))
+	if (!open_external_viewer(editor_argv, repo.cdup, TRUE, EDITOR_LINENO_MSG))
 		opt_editor_lineno = FALSE;
 }
 
@@ -3696,7 +3691,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	if (!string_format(line_arg, "-L%ld,+1", lineno))
 		return FALSE;
 
-	if (!io_run(&io, IO_RD, opt_cdup, opt_env, blame_argv))
+	if (!io_run(&io, IO_RD, repo.cdup, opt_env, blame_argv))
 		return FALSE;
 
 	while ((buf = io_get(&io, '\n', TRUE))) {
@@ -3902,7 +3897,7 @@ diff_common_edit(struct view *view, enum request request, struct line *line)
 {
 	const char *file = diff_get_pathname(view, line);
 	char path[SIZEOF_STR];
-	bool has_path = file && string_format(path, "%s%s", opt_cdup, file);
+	bool has_path = file && string_format(path, "%s%s", repo.cdup, file);
 
 	if (has_path && access(path, R_OK)) {
 		report("Failed to open file: %s", file);
@@ -4293,7 +4288,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 			return TRUE;
 		}
 
-		if (!begin_update(view, opt_cdup, log_file, OPEN_EXTRA)) {
+		if (!begin_update(view, repo.cdup, log_file, OPEN_EXTRA)) {
 			report("Failed to load tree data");
 			return TRUE;
 		}
@@ -4626,8 +4621,8 @@ tree_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	}
 
-	if (view->lines == 0 && opt_prefix[0]) {
-		char *pos = opt_prefix;
+	if (view->lines == 0 && repo.prefix[0]) {
+		char *pos = repo.prefix;
 
 		while (pos && *pos) {
 			char *end = strchr(pos, '/');
@@ -4646,7 +4641,7 @@ tree_open(struct view *view, enum open_flags flags)
 		opt_path[0] = 0;
 	}
 
-	return begin_update(view, opt_cdup, tree_argv, flags);
+	return begin_update(view, repo.cdup, tree_argv, flags);
 }
 
 static struct view_ops tree_ops = {
@@ -4801,7 +4796,7 @@ static bool
 blame_open(struct view *view, enum open_flags flags)
 {
 	struct blame_state *state = view->private;
-	const char *file_argv[] = { opt_cdup, opt_file , NULL };
+	const char *file_argv[] = { repo.cdup, opt_file , NULL };
 	char path[SIZEOF_STR];
 	size_t i;
 
@@ -4811,20 +4806,20 @@ blame_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	}
 
-	if (!view->prev && *opt_prefix && !(flags & (OPEN_RELOAD | OPEN_REFRESH))) {
+	if (!view->prev && *repo.prefix && !(flags & (OPEN_RELOAD | OPEN_REFRESH))) {
 		string_copy(path, opt_file);
-		if (!string_format(opt_file, "%s%s", opt_prefix, path)) {
+		if (!string_format(opt_file, "%s%s", repo.prefix, path)) {
 			report("Failed to setup the blame view");
 			return FALSE;
 		}
 	}
 
-	if (*opt_ref || !begin_update(view, opt_cdup, file_argv, flags)) {
+	if (*opt_ref || !begin_update(view, repo.cdup, file_argv, flags)) {
 		const char *blame_cat_file_argv[] = {
 			"git", "cat-file", "blob", "%(ref):%(file)", NULL
 		};
 
-		if (!begin_update(view, opt_cdup, blame_cat_file_argv, flags))
+		if (!begin_update(view, repo.cdup, blame_cat_file_argv, flags))
 			return FALSE;
 	}
 
@@ -4921,7 +4916,7 @@ blame_read_file(struct view *view, const char *text, struct blame_state *state)
 		if (view->lines == 0 && !view->prev)
 			die("No blame exist for %s", view->vid);
 
-		if (view->lines == 0 || !begin_update(view, opt_cdup, blame_argv, OPEN_EXTRA)) {
+		if (view->lines == 0 || !begin_update(view, repo.cdup, blame_argv, OPEN_EXTRA)) {
 			report("Failed to load blame data");
 			return TRUE;
 		}
@@ -5552,7 +5547,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	char *buf;
 	struct io io;
 
-	if (!io_run(&io, IO_RD, opt_cdup, opt_env, argv))
+	if (!io_run(&io, IO_RD, repo.cdup, opt_env, argv))
 		return FALSE;
 
 	add_line_nodata(view, type);
@@ -5625,7 +5620,7 @@ static const char *status_diff_index_argv[] = { GIT_DIFF_STAGED_FILES("-z") };
 static const char *status_diff_files_argv[] = { GIT_DIFF_UNSTAGED_FILES("-z") };
 
 static const char *status_list_other_argv[] = {
-	"git", "ls-files", "-z", "--others", "--exclude-standard", opt_prefix, NULL, NULL,
+	"git", "ls-files", "-z", "--others", "--exclude-standard", repo.prefix, NULL, NULL,
 };
 
 static const char *status_list_no_head_argv[] = {
@@ -5688,16 +5683,16 @@ status_update_onbranch(void)
 	}
 
 	for (i = 0; i < ARRAY_SIZE(paths); i++) {
-		char *head = opt_head;
+		char *head = repo.head;
 
-		if (!string_format(buf, "%s/%s", opt_git_dir, paths[i][0]) ||
+		if (!string_format(buf, "%s/%s", repo.git_dir, paths[i][0]) ||
 		    lstat(buf, &stat) < 0)
 			continue;
 
-		if (!*opt_head) {
+		if (!*repo.head) {
 			struct io io;
 
-			if (io_open(&io, "%s/rebase-merge/head-name", opt_git_dir) &&
+			if (io_open(&io, "%s/rebase-merge/head-name", repo.git_dir) &&
 			    io_read_buf(&io, buf, sizeof(buf))) {
 				head = buf;
 				if (!prefixcmp(head, "refs/heads/"))
@@ -5706,7 +5701,7 @@ status_update_onbranch(void)
 		}
 
 		if (!string_format(status_onbranch, "%s %s", paths[i][1], head))
-			string_copy(status_onbranch, opt_head);
+			string_copy(status_onbranch, repo.head);
 		return;
 	}
 
@@ -5723,7 +5718,7 @@ status_open(struct view *view, enum open_flags flags)
 		status_list_no_head_argv : status_diff_index_argv;
 	char staged_status = staged_argv == status_list_no_head_argv ? 'A' : 0;
 
-	if (opt_is_inside_work_tree == FALSE) {
+	if (repo.is_inside_work_tree == FALSE) {
 		report("The status view requires a working tree");
 		return FALSE;
 	}
@@ -5887,11 +5882,11 @@ status_update_prepare(struct io *io, enum line_type type)
 
 	switch (type) {
 	case LINE_STAT_STAGED:
-		return io_run(io, IO_WR, opt_cdup, opt_env, staged_argv);
+		return io_run(io, IO_WR, repo.cdup, opt_env, staged_argv);
 
 	case LINE_STAT_UNSTAGED:
 	case LINE_STAT_UNTRACKED:
-		return io_run(io, IO_WR, opt_cdup, opt_env, others_argv);
+		return io_run(io, IO_WR, repo.cdup, opt_env, others_argv);
 
 	default:
 		die("line type %d not handled in switch", type);
@@ -6026,13 +6021,13 @@ status_revert(struct status *status, enum line_type type, bool has_none)
 				reset_argv[4] = NULL;
 			}
 
-			if (!io_run_fg(reset_argv, opt_cdup))
+			if (!io_run_fg(reset_argv, repo.cdup))
 				return FALSE;
 			if (status->old.mode == 0 && status->new.mode == 0)
 				return TRUE;
 		}
 
-		return io_run_fg(checkout_argv, opt_cdup);
+		return io_run_fg(checkout_argv, repo.cdup);
 	}
 
 	return FALSE;
@@ -6261,7 +6256,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *line, bool
 		apply_argv[argc++] = "-R";
 	apply_argv[argc++] = "-";
 	apply_argv[argc++] = NULL;
-	if (!io_run(&io, IO_WR, opt_cdup, opt_env, apply_argv))
+	if (!io_run(&io, IO_WR, repo.cdup, opt_env, apply_argv))
 		return FALSE;
 
 	if (line != NULL) {
@@ -6626,7 +6621,7 @@ stage_open(struct view *view, enum open_flags flags)
 			opt_diff_context_arg, opt_ignore_space_arg, "--",
 			stage_status.old.name, NULL
 	};
-	static const char *file_argv[] = { opt_cdup, stage_status.new.name, NULL };
+	static const char *file_argv[] = { repo.cdup, stage_status.new.name, NULL };
 	const char **argv = NULL;
 
 	if (!stage_line_type) {
@@ -6670,7 +6665,7 @@ stage_open(struct view *view, enum open_flags flags)
 	}
 
 	view->vid[0] = 0;
-	view->dir = opt_cdup;
+	view->dir = repo.cdup;
 	return begin_update(view, NULL, NULL, flags);
 }
 
@@ -7060,7 +7055,7 @@ main_read(struct view *view, char *line)
 		while (*line && !isalnum(*line))
 			line++;
 
-		if (!state->added_changes_commits && opt_show_changes && opt_is_inside_work_tree)
+		if (!state->added_changes_commits && opt_show_changes && repo.is_inside_work_tree)
 			main_add_changes_commits(view, state, line);
 		else
 			main_flush_commit(view, commit);
@@ -7686,16 +7681,16 @@ static void
 set_remote_branch(const char *name, const char *value, size_t valuelen)
 {
 	if (!strcmp(name, ".remote")) {
-		string_ncopy(opt_remote, value, valuelen);
+		string_ncopy(repo.remote, value, valuelen);
 
-	} else if (*opt_remote && !strcmp(name, ".merge")) {
-		size_t from = strlen(opt_remote);
+	} else if (*repo.remote && !strcmp(name, ".merge")) {
+		size_t from = strlen(repo.remote);
 
 		if (!prefixcmp(value, "refs/heads/"))
 			value += STRING_SIZE("refs/heads/");
 
-		if (!string_format_from(opt_remote, &from, "/%s", value))
-			opt_remote[0] = 0;
+		if (!string_format_from(repo.remote, &from, "/%s", value))
+			repo.remote[0] = 0;
 	}
 }
 
@@ -7724,9 +7719,9 @@ set_work_tree(const char *value)
 		die("Failed to get cwd path: %s", strerror(errno));
 	if (chdir(cwd) < 0)
 		die("Failed to chdir(%s): %s", cwd, strerror(errno));
-	if (chdir(opt_git_dir) < 0)
-		die("Failed to chdir(%s): %s", opt_git_dir, strerror(errno));
-	if (!getcwd(opt_git_dir, sizeof(opt_git_dir)))
+	if (chdir(repo.git_dir) < 0)
+		die("Failed to chdir(%s): %s", repo.git_dir, strerror(errno));
+	if (!getcwd(repo.git_dir, sizeof(repo.git_dir)))
 		die("Failed to get git path: %s", strerror(errno));
 	if (chdir(value) < 0)
 		die("Failed to chdir(%s): %s", value, strerror(errno));
@@ -7734,9 +7729,9 @@ set_work_tree(const char *value)
 		die("Failed to get cwd path: %s", strerror(errno));
 	if (setenv("GIT_WORK_TREE", cwd, TRUE))
 		die("Failed to set GIT_WORK_TREE to '%s'", cwd);
-	if (setenv("GIT_DIR", opt_git_dir, TRUE))
-		die("Failed to set GIT_DIR to '%s'", opt_git_dir);
-	opt_is_inside_work_tree = TRUE;
+	if (setenv("GIT_DIR", repo.git_dir, TRUE))
+		die("Failed to set GIT_DIR to '%s'", repo.git_dir);
+	repo.is_inside_work_tree = TRUE;
 }
 
 static void
@@ -7841,9 +7836,9 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	else if (!prefixcmp(name, "color."))
 		set_git_color_option(name + STRING_SIZE("color."), value);
 
-	else if (*opt_head && !prefixcmp(name, "branch.") &&
-		 !strncmp(name + 7, opt_head, strlen(opt_head)))
-		set_remote_branch(name + 7 + strlen(opt_head), value, valuelen);
+	else if (*repo.head && !prefixcmp(name, "branch.") &&
+		 !strncmp(name + 7, repo.head, strlen(repo.head)))
+		set_remote_branch(name + 7 + strlen(repo.head), value, valuelen);
 
 	return OK;
 }
@@ -7854,71 +7849,6 @@ load_git_config(void)
 	const char *config_list_argv[] = { "git", "config", "--list", NULL };
 
 	return io_run_load(config_list_argv, "=", read_repo_config_option, NULL);
-}
-
-#define REPO_INFO_GIT_DIR	"--git-dir"
-#define REPO_INFO_WORK_TREE	"--is-inside-work-tree"
-#define REPO_INFO_SHOW_CDUP	"--show-cdup"
-#define REPO_INFO_SHOW_PREFIX	"--show-prefix"
-#define REPO_INFO_SYMBOLIC_HEAD	"--symbolic-full-name"
-#define REPO_INFO_RESOLVED_HEAD	"HEAD"
-
-struct repo_info_state {
-	const char **argv;
-	char head_id[SIZEOF_REV];
-};
-
-static int
-read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *data)
-{
-	struct repo_info_state *state = data;
-	const char *arg = *state->argv ? *state->argv++ : "";
-
-	if (!strcmp(arg, REPO_INFO_GIT_DIR)) {
-		string_ncopy(opt_git_dir, name, namelen);
-
-	} else if (!strcmp(arg, REPO_INFO_WORK_TREE)) {
-		/* This can be 3 different values depending on the
-		 * version of git being used. If git-rev-parse does not
-		 * understand --is-inside-work-tree it will simply echo
-		 * the option else either "true" or "false" is printed.
-		 * Default to true for the unknown case. */
-		opt_is_inside_work_tree = strcmp(name, "false") ? TRUE : FALSE;
-
-	} else if (!strcmp(arg, REPO_INFO_SHOW_CDUP)) {
-		string_ncopy(opt_cdup, name, namelen);
-
-	} else if (!strcmp(arg, REPO_INFO_SHOW_PREFIX)) {
-		string_ncopy(opt_prefix, name, namelen);
-
-	} else if (!strcmp(arg, REPO_INFO_RESOLVED_HEAD)) {
-		string_ncopy(state->head_id, name, namelen);
-
-	} else if (!strcmp(arg, REPO_INFO_SYMBOLIC_HEAD)) {
-	    	if (!prefixcmp(name, "refs/heads/")) {
-			char *offset = name + STRING_SIZE("refs/heads/");
-
-			string_ncopy(opt_head, offset, strlen(offset) + 1);
-			add_ref(state->head_id, name, opt_remote, opt_head);
-		}
-		state->argv++;
-	}
-
-	return OK;
-}
-
-static int
-load_repo_info(void)
-{
-	const char *rev_parse_argv[] = {
-		"git", "rev-parse", REPO_INFO_GIT_DIR, REPO_INFO_WORK_TREE,
-			REPO_INFO_SHOW_CDUP, REPO_INFO_SHOW_PREFIX, \
-			REPO_INFO_RESOLVED_HEAD, REPO_INFO_SYMBOLIC_HEAD, "HEAD",
-			NULL
-	};
-	struct repo_info_state state = { rev_parse_argv + 2 };
-
-	return io_run_load(rev_parse_argv, "=", read_repo_info, &state);
 }
 
 
@@ -8319,7 +8249,7 @@ main(int argc, const char *argv[])
 		die("Failed to load repo config.");
 
 	/* Require a git repository unless when running in pager mode. */
-	if (!opt_git_dir[0] && request != REQ_VIEW_PAGER)
+	if (!repo.git_dir[0] && request != REQ_VIEW_PAGER)
 		die("Not a git repository");
 
 	if (codeset && strcmp(codeset, ENCODING_UTF8)) {

@@ -195,6 +195,7 @@ TIG_OBJS = \
 	src/request.o \
 	src/line.o \
 	src/keys.o \
+	src/repo.o \
 	$(COMPAT_OBJS)
 
 src/tig: $(TIG_OBJS)
