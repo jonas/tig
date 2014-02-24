@@ -194,6 +194,7 @@ TIG_OBJS = \
 	src/builtin-config.o \
 	src/request.o \
 	src/line.o \
+	src/keys.o \
 	$(COMPAT_OBJS)
 
 src/tig: $(TIG_OBJS)
