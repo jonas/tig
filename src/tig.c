@@ -56,39 +56,44 @@ static bool prompt_menu(const char *prompt, const struct menu_item *items, int *
  */
 
 /* Option variables. */
-static enum graphic opt_line_graphics;
-static enum date opt_show_date;
-static enum author opt_show_author;
-static enum filename opt_show_filename;
-static enum file_size opt_show_file_size;
-static bool opt_show_rev_graph;
-static bool opt_show_line_numbers;
-static bool opt_show_refs;
-static bool opt_show_changes;
-static bool opt_status_untracked_dirs;
-static bool opt_read_git_colors;
-static bool opt_wrap_lines;
-static bool opt_ignore_case;
-static bool opt_focus_child;
-static int opt_diff_context;
-static enum ignore_space opt_ignore_space;
-static enum commit_order opt_commit_order;
-static bool opt_show_notes;
-static int opt_line_number_interval;
-static double opt_horizontal_scroll;
-static double opt_split_view_height;
-static enum vertical_split opt_vertical_split;
-static int opt_tab_size;
-static int opt_author_width;
-static int opt_show_filename_width;
-static bool opt_editor_line_number;
-static bool opt_show_id;
-static int opt_id_width;
-static int opt_title_overflow;
-static bool opt_mouse;
-static int opt_mouse_scroll;
-static const char **opt_diff_options;
-static const char **opt_blame_options;
+#define OPTION_INFO(_) \
+	_(author_width,			int) \
+	_(blame_options,		const char **) \
+	_(commit_order,			enum commit_order) \
+	_(diff_context,			int) \
+	_(diff_options,			const char **) \
+	_(editor_line_number,		bool) \
+	_(focus_child,			bool) \
+	_(horizontal_scroll,		double) \
+	_(id_width,			int) \
+	_(ignore_case,			bool) \
+	_(ignore_space,			enum ignore_space) \
+	_(line_graphics,		enum graphic) \
+	_(line_number_interval,		int) \
+	_(mouse,			bool) \
+	_(mouse_scroll,			int) \
+	_(read_git_colors,		bool) \
+	_(scale_vsplit_view,		double) \
+	_(show_author,			enum author) \
+	_(show_changes,			bool) \
+	_(show_date,			enum date) \
+	_(show_file_size,		enum file_size) \
+	_(show_filename,		enum filename) \
+	_(show_filename_width,		int) \
+	_(show_id,			bool) \
+	_(show_line_numbers,		bool) \
+	_(show_notes,			bool) \
+	_(show_refs,			bool) \
+	_(show_rev_graph,		bool) \
+	_(split_view_height,		double) \
+	_(status_untracked_dirs,	bool) \
+	_(tab_size,			int) \
+	_(title_overflow,		int) \
+	_(vertical_split,		enum vertical_split) \
+	_(wrap_lines,			bool) \
+
+#define DEFINE_OPTION_EXTERNS(name, type) type opt_##name;
+OPTION_INFO(DEFINE_OPTION_EXTERNS);
 
 /* State variables. */
 static char opt_diff_context_arg[9]	= "";
