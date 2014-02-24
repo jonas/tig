@@ -63,6 +63,7 @@ Bug fixes:
  - Update %(branch) variable in the main view. (GH #223)
  - Disable graph drawing for reverse log order. (GH #127)
  - Only refresh views that support it.
+ - Fix author and date annotation of renamed entries in the tree view.
 
 tig-1.2.1
 ---------

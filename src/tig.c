@@ -4291,7 +4291,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 		size_t annotated = 1;
 		size_t i;
 
-		pos = strchr(text, '\t');
+		pos = strrchr(text, '\t');
 		if (!pos)
 			return TRUE;
 		text = pos + 1;
