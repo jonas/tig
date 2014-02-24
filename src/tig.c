@@ -77,7 +77,6 @@ static bool opt_notes;
 static int opt_num_interval;
 static double opt_hscroll;
 static double opt_scale_split_view;
-static double opt_scale_vsplit_view;
 static enum vertical_split opt_vertical_split;
 static int opt_tab_size;
 static int opt_author_width;
@@ -121,7 +120,7 @@ vertical_split_is_enabled(void)
 		int height, width;
 
 		getmaxyx(stdscr, height, width);
-		return width * opt_scale_vsplit_view > (height - 1) * 2;
+		return width * VSPLIT_SCALE > (height - 1) * 2;
 	}
 
 	return opt_vertical_split == VERTICAL_SPLIT_VERTICAL;
@@ -1283,7 +1282,7 @@ static void
 apply_vertical_split(struct view *base, struct view *view)
 {
 	view->height = base->height;
-	view->width  = apply_step(opt_scale_vsplit_view, base->width);
+	view->width  = apply_step(VSPLIT_SCALE, base->width);
 	view->width  = MAX(view->width, MIN_VIEW_WIDTH);
 	view->width  = MIN(view->width, base->width - MIN_VIEW_WIDTH);
 	base->width -= view->width;
