@@ -2,7 +2,7 @@
 #
 # Prepare documentation for http://jonas.nitro.dk/tig/
 #
-# Copyright (c) 2009-2012 Jonas Fonseca <fonseca@diku.dk>
+# Copyright (c) 2009-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
 
 LATEST="$(git describe | sed 's/-[0-9]*-g[0-9a-f]*//')"
 DOCDIR="doc/release-docs/"

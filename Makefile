@@ -135,7 +135,7 @@ strip: $(EXE)
 	strip $(EXE)
 
 update-headers:
-	@for file in *.[ch]; do \
+	@for file in include/*.h src/*.c tools/*.c; do \
 		grep -q '/* Copyright' "$$file" && \
 			sed '0,/.*\*\//d' < "$$file" | \
 			grep -v '/* vim: set' > "$$file.tmp"; \

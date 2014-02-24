@@ -7,7 +7,7 @@ Version: 	@@VERSION@@
 Release: 	@@RELEASE@@%{?dist}
 License: 	GPL
 Group: 		Development/Tools
-Vendor: 	Jonas Fonseca <fonseca@diku.dk>
+Vendor: 	Jonas Fonseca <jonas.fonseca@gmail.com>
 URL: 		http://jonas.nitro.dk/tig/
 Source: 	http://jonas.nitro.dk/tig/releases/%{name}-%{version}.tar.gz
 BuildRequires: 	ncurses-devel%{!?_without_docs:, xmlto, asciidoc > 6.0.3}
@@ -56,7 +56,7 @@ CFLAGS="$RPM_OPT_FLAGS -DVERSION=tig-%{version}-%{release}"
 %{?_without_docs:  %doc doc/*.txt}
 
 %changelog
-* Sun 23 Feb 2014 Jonas Fonseca <fonseca@diku.dk>
+* Sun 23 Feb 2014 Jonas Fonseca <jonas.fonseca@gmail.com>
 - Add tigrc installed in /etc
 
 * Tue Jan  8 2013 Joakim Sernbrant <serbaut@gmail.com>
@@ -65,7 +65,7 @@ CFLAGS="$RPM_OPT_FLAGS -DVERSION=tig-%{version}-%{release}"
 * Thu Aug 16 2012 Victor Foitzik <vifo@cpan.org>
 - Now also packaging man(7) pages
 
-* Sat Jun 23 2007 Jonas Fonseca <fonseca@diku.dk>
+* Sat Jun 23 2007 Jonas Fonseca <jonas.fonseca@gmail.com>
 - Include tig bash completion script
 
 * Fri Jun  1 2007 Jakub Narebski <jnareb@gmail.com>

@@ -3,7 +3,7 @@
 # Script for preparing a release or updating the release branch.
 # Usage: $0 version
 #
-# Copyright (c) 2009-2012 Jonas Fonseca <fonseca@diku.dk>
+# Copyright (c) 2009-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
