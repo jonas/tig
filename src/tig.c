@@ -61,7 +61,6 @@ static char opt_path[SIZEOF_STR]	= "";
 static char opt_file[SIZEOF_STR]	= "";
 static char opt_ref[SIZEOF_REF]		= "";
 static unsigned long opt_goto_line	= 0;
-static int opt_lineno			= 0;
 static char opt_search[SIZEOF_STR]	= "";
 static FILE *opt_tty			= NULL;
 
@@ -972,9 +971,9 @@ static bool
 restore_view_position(struct view *view)
 {
 	/* A view without a previous view is the first view */
-	if (!view->prev && opt_lineno && opt_lineno <= view->lines) {
-		select_view_line(view, opt_lineno - 1);
-		opt_lineno = 0;
+	if (!view->prev && opt_goto_line && opt_goto_line <= view->lines) {
+		select_view_line(view, opt_goto_line);
+		opt_goto_line = 0;
 	}
 
 	/* Ensure that the view position is in a valid state. */
@@ -6762,7 +6761,9 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 				quit(0);
 
 			} else if (strlen(opt) >= 2 && *opt == '+' && string_isnumber(opt + 1)) {
-				opt_lineno = atoi(opt + 1);
+				int lineno = atoi(opt + 1);
+
+				opt_goto_line = lineno > 0 ? lineno - 1 : 0;
 				continue;
 
 			}
