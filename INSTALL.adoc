@@ -10,7 +10,7 @@ The quick and simple way to install Tig is:
 	$ make
 	$ make install
 
-By default, `tig` is installed in `$HOME/bin`. To install `tig elsewhere set
+By default, `tig` is installed in `$HOME/bin`. To install `tig` elsewhere set
 `prefix` to the desired path:
 
 	$ make prefix=/usr/local
