@@ -60,10 +60,26 @@ struct position {
 	unsigned long lineno;	/* Current line number */
 };
 
+struct view_env {
+	char commit[SIZEOF_REF];
+	char head[SIZEOF_REF];
+	char blob[SIZEOF_REF];
+	char branch[SIZEOF_REF];
+	char status[SIZEOF_STR];
+	char stash[SIZEOF_REF];
+	char directory[SIZEOF_STR];
+	char file[SIZEOF_STR];
+	char ref[SIZEOF_REF];
+	unsigned long lineno;
+	char search[SIZEOF_STR];
+	char none[1];
+};
+
 struct view {
 	const char *name;	/* View name */
 
 	struct view_ops *ops;	/* View operations */
+	struct view_env *env;	/* View variables. */
 
 	char ref[SIZEOF_REF];	/* Hovered commit reference */
 	char vid[SIZEOF_REF];	/* View ID. Set to id member when updating. */

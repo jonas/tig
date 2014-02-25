@@ -57,11 +57,6 @@ static bool prompt_menu(const char *prompt, const struct menu_item *items, int *
  * Options
  */
 
-static char opt_path[SIZEOF_STR]	= "";
-static char opt_file[SIZEOF_STR]	= "";
-static char opt_ref[SIZEOF_REF]		= "";
-static unsigned long opt_goto_line	= 0;
-static char opt_search[SIZEOF_STR]	= "";
 static FILE *opt_tty			= NULL;
 
 static bool
@@ -98,20 +93,14 @@ static unsigned int current_view;
 
 #define displayed_views()	(display[1] != NULL ? 2 : 1)
 
-/* Current head and commit ID */
-static char ref_blob[SIZEOF_REF]	= "";
-static char ref_commit[SIZEOF_REF]	= "HEAD";
-static char ref_head[SIZEOF_REF]	= "HEAD";
-static char ref_branch[SIZEOF_REF]	= "";
-static char ref_status[SIZEOF_STR]	= "";
-static char ref_stash[SIZEOF_REF]	= "";
+struct view_env view_env = { "HEAD", "HEAD" };
 
 #define VIEW_OPS(id, name) name##_ops
 static struct view_ops VIEW_INFO(VIEW_OPS);
 
 static struct view views[] = {
 #define VIEW_DATA(id, name) \
-	{ #name, &name##_ops }
+	{ #name, &name##_ops, &view_env }
 	VIEW_INFO(VIEW_DATA)
 };
 
@@ -713,7 +702,7 @@ find_next(struct view *view, enum request request)
 	int direction;
 
 	if (!*view->grep) {
-		if (!*opt_search)
+		if (!*view->env->search)
 			report("No previous search");
 		else
 			search_view(view, request);
@@ -766,7 +755,7 @@ search_view(struct view *view, enum request request)
 			return;
 	}
 
-	regex_err = regcomp(view->regex, opt_search, REG_EXTENDED | regex_flags);
+	regex_err = regcomp(view->regex, view->env->search, REG_EXTENDED | regex_flags);
 	if (regex_err != 0) {
 		char buf[SIZEOF_STR] = "unknown error";
 
@@ -775,7 +764,7 @@ search_view(struct view *view, enum request request)
 		return;
 	}
 
-	string_copy(view->grep, opt_search);
+	string_copy(view->grep, view->env->search);
 
 	find_next(view, request);
 }
@@ -836,14 +825,14 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 	} vars[] = {
 #define FORMAT_VAR(name, value, value_if_empty) \
 	{ name, STRING_SIZE(name), value, value_if_empty }
-		FORMAT_VAR("%(directory)",	opt_path,	"."),
-		FORMAT_VAR("%(file)",		opt_file,	""),
-		FORMAT_VAR("%(ref)",		opt_ref,	"HEAD"),
-		FORMAT_VAR("%(head)",		ref_head,	""),
-		FORMAT_VAR("%(commit)",		ref_commit,	""),
-		FORMAT_VAR("%(blob)",		ref_blob,	""),
-		FORMAT_VAR("%(branch)",		ref_branch,	""),
-		FORMAT_VAR("%(stash)",		ref_stash,	""),
+		FORMAT_VAR("%(directory)",	view_env.directory,	"."),
+		FORMAT_VAR("%(file)",		view_env.file,		""),
+		FORMAT_VAR("%(ref)",		view_env.ref,		"HEAD"),
+		FORMAT_VAR("%(head)",		view_env.head,		""),
+		FORMAT_VAR("%(commit)",		view_env.commit,	""),
+		FORMAT_VAR("%(blob)",		view_env.blob,		""),
+		FORMAT_VAR("%(branch)",		view_env.branch,	""),
+		FORMAT_VAR("%(stash)",		view_env.stash,		""),
 	};
 	int i;
 
@@ -875,7 +864,7 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 		if (strncmp(name, vars[i].name, vars[i].namelen))
 			continue;
 
-		if (vars[i].value == opt_file && !format->file_filter)
+		if (vars[i].value == view_env.file && !format->file_filter)
 			return TRUE;
 
 		value = *vars[i].value ? vars[i].value : vars[i].value_if_empty;
@@ -971,9 +960,9 @@ static bool
 restore_view_position(struct view *view)
 {
 	/* A view without a previous view is the first view */
-	if (!view->prev && opt_goto_line && opt_goto_line <= view->lines) {
-		select_view_line(view, opt_goto_line);
-		opt_goto_line = 0;
+	if (!view->prev && view->env->lineno && view->env->lineno <= view->lines) {
+		select_view_line(view, view->env->lineno);
+		view->env->lineno = 0;
 	}
 
 	/* Ensure that the view position is in a valid state. */
@@ -1053,7 +1042,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 			return FALSE;
 		}
 
-		/* Put the current ref_* value to the view title ref
+		/* Put the current view ref value to the view title ref
 		 * member. This is needed by the blob view. Most other
 		 * views sets it automatically after loading because the
 		 * first line is a commit line. */
@@ -2298,9 +2287,9 @@ static void
 pager_select(struct view *view, struct line *line)
 {
 	if (line->type == LINE_COMMIT) {
-		string_copy_rev_from_commit_line(ref_commit, line->data);
+		string_copy_rev_from_commit_line(view->env->commit, line->data);
 		if (!view_has_flags(view, VIEW_NO_REF))
-			string_copy_rev(view->ref, ref_commit);
+			string_copy_rev(view->ref, view->env->commit);
 	}
 }
 
@@ -2329,7 +2318,7 @@ log_select(struct view *view, struct line *line)
 	if (line->type == LINE_COMMIT && !view_has_flags(view, VIEW_NO_REF)) {
 		string_copy_rev_from_commit_line(view->ref, (char *)line->data);
 	}
-	string_copy_rev(ref_commit, view->ref);
+	string_copy_rev(view->env->commit, view->ref);
 	state->last_lineno = line->lineno;
 	state->last_type = line->type;
 }
@@ -2392,7 +2381,7 @@ log_request(struct view *view, enum request request, struct line *line)
 static struct view_ops log_ops = {
 	"line",
 	{ "log" },
-	ref_head,
+	view_env.head,
 	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER | VIEW_LOG_LIKE | VIEW_REFRESH,
 	sizeof(struct log_state),
 	log_open,
@@ -2806,9 +2795,9 @@ diff_trace_origin(struct view *view, struct line *line)
 		return REQ_NONE;
 	}
 
-	string_ncopy(opt_file, commit.filename, strlen(commit.filename));
-	string_copy(opt_ref, header.id);
-	opt_goto_line = header.orig_lineno - 1;
+	string_ncopy(view->env->file, commit.filename, strlen(commit.filename));
+	string_copy(view->env->ref, header.id);
+	view->env->lineno = header.orig_lineno - 1;
 
 	return REQ_VIEW_BLAME;
 }
@@ -2891,8 +2880,8 @@ diff_select(struct view *view, struct line *line)
 
 		if (file) {
 			string_format(view->ref, "Changes to '%s'", file);
-			string_format(opt_file, "%s", file);
-			ref_blob[0] = 0;
+			string_format(view->env->file, "%s", file);
+			view->env->blob[0] = 0;
 		} else {
 			string_ncopy(view->ref, view->ops->id, strlen(view->ops->id));
 			pager_select(view, line);
@@ -2903,7 +2892,7 @@ diff_select(struct view *view, struct line *line)
 static struct view_ops diff_ops = {
 	"line",
 	{ "diff" },
-	ref_commit,
+	view_env.commit,
 	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_FILE_FILTER | VIEW_REFRESH,
 	sizeof(struct diff_state),
 	diff_open,
@@ -3090,16 +3079,16 @@ pop_tree_stack_entry(struct position *position)
 }
 
 static void
-push_tree_stack_entry(const char *name, struct position *position)
+push_tree_stack_entry(struct view *view, const char *name, struct position *position)
 {
-	size_t pathlen = strlen(opt_path);
-	char *path_position = opt_path + pathlen;
+	size_t pathlen = strlen(view->env->directory);
+	char *path_position = view->env->directory + pathlen;
 	struct view_state *state = push_view_history_state(&tree_view_history, position, &path_position);
 
 	if (!state)
 		return;
 
-	if (!string_format_from(opt_path, &pathlen, "%s/", name)) {
+	if (!string_format_from(view->env->directory, &pathlen, "%s/", name)) {
 		pop_tree_stack_entry(NULL);
 		return;
 	}
@@ -3223,7 +3212,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 		};
 
 		if (!view->lines) {
-			tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL, 0);
+			tree_entry(view, LINE_TREE_HEAD, view->env->directory, NULL, NULL, 0);
 			tree_entry(view, LINE_TREE_DIR, "..", "040000", view->ref, 0);
 			report("Tree is empty");
 			return TRUE;
@@ -3253,8 +3242,8 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 		if (!pos)
 			return TRUE;
 		text = pos + 1;
-		if (*opt_path && !strncmp(text, opt_path, strlen(opt_path)))
-			text += strlen(opt_path);
+		if (*view->env->directory && !strncmp(text, view->env->directory, strlen(view->env->directory)))
+			text += strlen(view->env->directory);
 		pos = strchr(text, '/');
 		if (pos)
 			*pos = 0;
@@ -3318,7 +3307,7 @@ tree_read(struct view *view, char *text)
 	if (textlen <= SIZEOF_TREE_ATTR)
 		return FALSE;
 	if (view->lines == 0 &&
-	    !tree_entry(view, LINE_TREE_HEAD, opt_path, NULL, NULL, 0))
+	    !tree_entry(view, LINE_TREE_HEAD, view->env->directory, NULL, NULL, 0))
 		return FALSE;
 
 	size = parse_size(attr_offset, &state->size_width);
@@ -3328,9 +3317,9 @@ tree_read(struct view *view, char *text)
 	path++;
 
 	/* Strip the path part ... */
-	if (*opt_path) {
+	if (*view->env->directory) {
 		size_t pathlen = textlen - SIZEOF_TREE_ATTR;
-		size_t striplen = strlen(opt_path);
+		size_t striplen = strlen(view->env->directory);
 
 		if (pathlen > striplen)
 			memmove(path, path + striplen,
@@ -3349,7 +3338,7 @@ tree_read(struct view *view, char *text)
 	data = entry->data;
 
 	/* Skip "Directory ..." and ".." line. */
-	for (line = &view->line[1 + !!*opt_path]; line < entry; line++) {
+	for (line = &view->line[1 + !!*view->env->directory]; line < entry; line++) {
 		if (tree_compare_entry(line, entry) <= 0)
 			continue;
 
@@ -3440,7 +3429,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		}
 
-		string_copy(opt_ref, view->vid);
+		string_copy(view->env->ref, view->vid);
 		return request;
 
 	case REQ_EDIT:
@@ -3449,7 +3438,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 		} else if (!is_head_commit(view->vid)) {
 			open_blob_editor(entry->id, entry->name, 0);
 		} else {
-			open_editor(opt_file, 0);
+			open_editor(view->env->file, 0);
 		}
 		return REQ_NONE;
 
@@ -3460,7 +3449,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_PARENT:
 	case REQ_BACK:
-		if (!*opt_path) {
+		if (!*view->env->directory) {
 			/* quit view if at top of tree */
 			return REQ_VIEW_CLOSE;
 		}
@@ -3476,20 +3465,20 @@ tree_request(struct view *view, enum request request, struct line *line)
 	}
 
 	/* Cleanup the stack if the tree view is at a different tree. */
-	if (!*opt_path)
+	if (!*view->env->directory)
 		reset_view_history(&tree_view_history);
 
 	switch (line->type) {
 	case LINE_TREE_DIR:
 		/* Depending on whether it is a subdirectory or parent link
 		 * mangle the path buffer. */
-		if (line == &view->line[1] && *opt_path) {
+		if (line == &view->line[1] && *view->env->directory) {
 			pop_tree_stack_entry(&view->pos);
 
 		} else {
 			const char *basename = tree_path(line);
 
-			push_tree_stack_entry(basename, &view->pos);
+			push_tree_stack_entry(view, basename, &view->pos);
 		}
 
 		/* Trees and subtrees share the same ID, so they are not not
@@ -3532,19 +3521,19 @@ tree_select(struct view *view, struct line *line)
 	struct tree_entry *entry = line->data;
 
 	if (line->type == LINE_TREE_HEAD) {
-		string_format(view->ref, "Files in /%s", opt_path);
+		string_format(view->ref, "Files in /%s", view->env->directory);
 		return;
 	}
 
 	if (line->type == LINE_TREE_DIR && tree_path_is_parent(entry->name)) {
 		string_copy(view->ref, "Open parent directory");
-		ref_blob[0] = 0;
+		view->env->blob[0] = 0;
 		return;
 	}
 
 	if (line->type == LINE_TREE_FILE) {
-		string_copy_rev(ref_blob, entry->id);
-		string_format(opt_file, "%s%s", opt_path, tree_path(line));
+		string_copy_rev(view->env->blob, entry->id);
+		string_format(view->env->file, "%s%s", view->env->directory, tree_path(line));
 	}
 
 	string_copy_rev(view->ref, entry->id);
@@ -3557,7 +3546,7 @@ tree_open(struct view *view, enum open_flags flags)
 		"git", "ls-tree", "-l", "%(commit)", "%(directory)", NULL
 	};
 
-	if (string_rev_is_null(ref_commit)) {
+	if (string_rev_is_null(view->env->commit)) {
 		report("No tree exists for this commit");
 		return FALSE;
 	}
@@ -3570,7 +3559,7 @@ tree_open(struct view *view, enum open_flags flags)
 
 			if (end)
 				*end = 0;
-			push_tree_stack_entry(pos, &view->pos);
+			push_tree_stack_entry(view, pos, &view->pos);
 			pos = end;
 			if (end) {
 				*end = '/';
@@ -3579,7 +3568,7 @@ tree_open(struct view *view, enum open_flags flags)
 		}
 
 	} else if (strcmp(view->vid, view->ops->id)) {
-		opt_path[0] = 0;
+		view->env->directory[0] = 0;
 	}
 
 	return begin_update(view, repo.cdup, tree_argv, flags);
@@ -3588,7 +3577,7 @@ tree_open(struct view *view, enum open_flags flags)
 static struct view_ops tree_ops = {
 	"file",
 	{ "tree" },
-	ref_commit,
+	view_env.commit,
 	VIEW_SEND_CHILD_ENTER,
 	sizeof(struct tree_state),
 	tree_open,
@@ -3606,27 +3595,27 @@ blob_open(struct view *view, enum open_flags flags)
 		"git", "cat-file", "blob", "%(blob)", NULL
 	};
 
-	if (!ref_blob[0] && opt_file[0]) {
-		const char *commit = ref_commit[0] ? ref_commit : "HEAD";
+	if (!view->env->blob[0] && view->env->file[0]) {
+		const char *commit = view->env->commit[0] ? view->env->commit : "HEAD";
 		char blob_spec[SIZEOF_STR];
 		const char *rev_parse_argv[] = {
 			"git", "rev-parse", blob_spec, NULL
 		};
 
-		if (!string_format(blob_spec, "%s:%s", commit, opt_file) ||
-		    !io_run_buf(rev_parse_argv, ref_blob, sizeof(ref_blob))) {
+		if (!string_format(blob_spec, "%s:%s", commit, view->env->file) ||
+		    !io_run_buf(rev_parse_argv, view->env->blob, sizeof(view->env->blob))) {
 			report("Failed to resolve blob from file name");
 			return FALSE;
 		}
 	}
 
-	if (!ref_blob[0]) {
+	if (!view->env->blob[0]) {
 		report("No file chosen, press %s to open tree view",
 			get_view_key(view, REQ_VIEW_TREE));
 		return FALSE;
 	}
 
-	view->encoding = get_path_encoding(opt_file, default_encoding);
+	view->encoding = get_path_encoding(view->env->file, default_encoding);
 
 	return begin_update(view, NULL, blob_argv, flags);
 }
@@ -3645,7 +3634,7 @@ blob_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_VIEW_BLAME:
 		if (view->parent)
-			string_copy(opt_ref, view->parent->vid);
+			string_copy(view->env->ref, view->parent->vid);
 		return request;
 
 	case REQ_EDIT:
@@ -3659,7 +3648,7 @@ blob_request(struct view *view, enum request request, struct line *line)
 static struct view_ops blob_ops = {
 	"line",
 	{ "blob" },
-	ref_blob,
+	view_env.blob,
 	VIEW_NO_FLAGS,
 	0,
 	blob_open,
@@ -3675,7 +3664,7 @@ static struct view_ops blob_ops = {
  *
  * Loading the blame view is a two phase job:
  *
- *  1. File content is read either using opt_file from the
+ *  1. File content is read either using view_env.file from the
  *     filesystem or using git-cat-file.
  *  2. Then blame information is incrementally added by
  *     reading output from git-blame.
@@ -3739,25 +3728,25 @@ static bool
 blame_open(struct view *view, enum open_flags flags)
 {
 	struct blame_state *state = view->private;
-	const char *file_argv[] = { repo.cdup, opt_file , NULL };
+	const char *file_argv[] = { repo.cdup, view->env->file , NULL };
 	char path[SIZEOF_STR];
 	size_t i;
 
-	if (!opt_file[0]) {
+	if (!view->env->file[0]) {
 		report("No file chosen, press %s to open tree view",
 			get_view_key(view, REQ_VIEW_TREE));
 		return FALSE;
 	}
 
 	if (!view->prev && *repo.prefix && !(flags & (OPEN_RELOAD | OPEN_REFRESH))) {
-		string_copy(path, opt_file);
-		if (!string_format(opt_file, "%s%s", repo.prefix, path)) {
+		string_copy(path, view->env->file);
+		if (!string_format(view->env->file, "%s%s", repo.prefix, path)) {
 			report("Failed to setup the blame view");
 			return FALSE;
 		}
 	}
 
-	if (*opt_ref || !begin_update(view, repo.cdup, file_argv, flags)) {
+	if (*view->env->ref || !begin_update(view, repo.cdup, file_argv, flags)) {
 		const char *blame_cat_file_argv[] = {
 			"git", "cat-file", "blob", "%(ref):%(file)", NULL
 		};
@@ -3786,12 +3775,12 @@ blame_open(struct view *view, enum open_flags flags)
 
 	if (!(flags & OPEN_RELOAD))
 		reset_view_history(&blame_view_history);
-	string_copy_rev(state->history_state.id, opt_ref);
-	state->history_state.filename = get_path(opt_file);
+	string_copy_rev(state->history_state.id, view->env->ref);
+	state->history_state.filename = get_path(view->env->file);
 	if (!state->history_state.filename)
 		return FALSE;
-	string_format(view->vid, "%s", opt_file);
-	string_format(view->ref, "%s ...", opt_file);
+	string_format(view->vid, "%s", view->env->file);
+	string_format(view->ref, "%s ...", view->env->file);
 
 	return TRUE;
 }
@@ -3853,7 +3842,7 @@ blame_read_file(struct view *view, const char *text, struct blame_state *state)
 	if (!text) {
 		const char *blame_argv[] = {
 			"git", "blame", encoding_arg, "%(blameargs)", "--incremental",
-				*opt_ref ? opt_ref : "--incremental", "--", opt_file, NULL
+				*view->env->ref ? view->env->ref : "--incremental", "--", view->env->file, NULL
 		};
 
 		if (view->lines == 0 && !view->prev)
@@ -3864,9 +3853,9 @@ blame_read_file(struct view *view, const char *text, struct blame_state *state)
 			return TRUE;
 		}
 
-		if (opt_goto_line > 0) {
-			select_view_line(view, opt_goto_line);
-			opt_goto_line = 0;
+		if (view->env->lineno > 0) {
+			select_view_line(view, view->env->lineno);
+			view->env->lineno = 0;
 		}
 
 		state->done_reading = TRUE;
@@ -3993,7 +3982,7 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 	int blamed_lineno = -1;
 	char *line;
 
-	if (!string_format(from, "%s:%s", opt_ref, opt_file) ||
+	if (!string_format(from, "%s:%s", view->env->ref, view->env->file) ||
 	    !string_format(to, "%s:%s", blame->commit->id, blame->commit->filename) ||
 	    !io_run(&io, IO_RD, NULL, opt_env, diff_tree_argv))
 		return;
@@ -4043,11 +4032,11 @@ blame_go_forward(struct view *view, struct blame *blame, bool parent)
 		return;
 	}
 
-	string_ncopy(opt_ref, id, sizeof(commit->id));
-	string_ncopy(opt_file, filename, strlen(filename));
+	string_ncopy(view->env->ref, id, sizeof(commit->id));
+	string_ncopy(view->env->file, filename, strlen(filename));
 	if (parent)
 		setup_blame_parent_line(view, blame);
-	opt_goto_line = blame->lineno;
+	view->env->lineno = blame->lineno;
 	reload_view(view);
 }
 
@@ -4061,9 +4050,9 @@ blame_go_back(struct view *view)
 		return;
 	}
 
-	string_copy(opt_ref, history_state.id);
-	string_ncopy(opt_file, history_state.filename, strlen(history_state.filename));
-	opt_goto_line = view->pos.lineno;
+	string_copy(view->env->ref, history_state.id);
+	string_ncopy(view->env->file, history_state.filename, strlen(history_state.filename));
+	view->env->lineno = view->pos.lineno;
 	reload_view(view);
 }
 
@@ -4150,15 +4139,15 @@ blame_select(struct view *view, struct line *line)
 		return;
 
 	if (string_rev_is_null(commit->id))
-		string_ncopy(ref_commit, "HEAD", 4);
+		string_ncopy(view->env->commit, "HEAD", 4);
 	else
-		string_copy_rev(ref_commit, commit->id);
+		string_copy_rev(view->env->commit, commit->id);
 }
 
 static struct view_ops blame_ops = {
 	"line",
 	{ "blame" },
-	ref_commit,
+	view_env.commit,
 	VIEW_ALWAYS_LINENO | VIEW_SEND_CHILD_ENTER,
 	sizeof(struct blame_state),
 	blame_open,
@@ -4279,7 +4268,7 @@ branch_request(struct view *view, enum request request, struct line *line)
 		for (lineno = 0; lineno < view->lines; lineno++) {
 			struct branch *branch = view->line[lineno].data;
 
-			if (!strncasecmp(branch->ref->id, opt_search, strlen(opt_search))) {
+			if (!strncasecmp(branch->ref->id, view->env->search, strlen(view->env->search))) {
 				select_view_line(view, lineno);
 				report_clear();
 				return REQ_NONE;
@@ -4402,15 +4391,15 @@ branch_select(struct view *view, struct line *line)
 		return;
 	}
 	string_copy_rev(view->ref, branch->ref->id);
-	string_copy_rev(ref_commit, branch->ref->id);
-	string_copy_rev(ref_head, branch->ref->id);
-	string_copy_rev(ref_branch, branch->ref->name);
+	string_copy_rev(view->env->commit, branch->ref->id);
+	string_copy_rev(view->env->head, branch->ref->id);
+	string_copy_rev(view->env->branch, branch->ref->name);
 }
 
 static struct view_ops branch_ops = {
 	"branch",
 	{ "branch" },
-	ref_head,
+	view_env.head,
 	VIEW_REFRESH,
 	sizeof(struct branch_state),
 	branch_open,
@@ -5019,7 +5008,7 @@ status_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		}
 		if (status)
-			opt_ref[0] = 0;
+			view->env->ref[0] = 0;
 		return request;
 
 	case REQ_ENTER:
@@ -5123,9 +5112,9 @@ status_select(struct view *view, struct line *line)
 	}
 
 	string_format(view->ref, text, key, file);
-	status_stage_info(ref_status, line->type, status);
+	status_stage_info(view->env->status, line->type, status);
 	if (status)
-		string_copy(opt_file, status->new.name);
+		string_copy(view->env->file, status->new.name);
 }
 
 static bool
@@ -5504,18 +5493,18 @@ stage_request(struct view *view, enum request request, struct line *line)
 		}
 
 		if (stage_status.new.name[0]) {
-			string_copy(opt_file, stage_status.new.name);
+			string_copy(view->env->file, stage_status.new.name);
 		} else {
 			const char *file = diff_get_pathname(view, line);
 
 			if (file)
-				string_copy(opt_file, file);
+				string_copy(view->env->file, file);
 		}
 
-		opt_ref[0] = 0;
-		opt_goto_line = diff_get_lineno(view, line);
-		if (opt_goto_line > 0)
-			opt_goto_line--;
+		view->env->ref[0] = 0;
+		view->env->lineno = diff_get_lineno(view, line);
+		if (view->env->lineno > 0)
+			view->env->lineno--;
 		return request;
 
 	case REQ_ENTER:
@@ -5632,7 +5621,7 @@ stage_read(struct view *view, char *data)
 static struct view_ops stage_ops = {
 	"line",
 	{ "stage" },
-	ref_status,
+	view_env.status,
 	VIEW_DIFF_LIKE | VIEW_REFRESH,
 	sizeof(struct stage_state),
 	stage_open,
@@ -6124,14 +6113,14 @@ main_request(struct view *view, enum request request, struct line *line)
 		for (lineno = 0; lineno < view->lines; lineno++) {
 			struct commit *commit = view->line[lineno].data;
 
-			if (!strncasecmp(commit->id, opt_search, strlen(opt_search))) {
+			if (!strncasecmp(commit->id, view->env->search, strlen(view->env->search))) {
 				select_view_line(view, lineno);
 				report_clear();
 				return REQ_NONE;
 			}
 		}
 
-		report("Unable to find commit '%s'", opt_search);
+		report("Unable to find commit '%s'", view->env->search);
 		break;
 	}
 	default:
@@ -6209,16 +6198,16 @@ main_select(struct view *view, struct line *line)
 		struct ref *branch = main_get_commit_branch(line, commit);
 
 		if (branch)
-			string_copy_rev(ref_branch, branch->name);
+			string_copy_rev(view->env->branch, branch->name);
 		string_copy_rev(view->ref, commit->id);
 	}
-	string_copy_rev(ref_commit, commit->id);
+	string_copy_rev(view->env->commit, commit->id);
 }
 
 static struct view_ops main_ops = {
 	"commit",
 	{ "main" },
-	ref_head,
+	view_env.head,
 	VIEW_SEND_CHILD_ENTER | VIEW_FILE_FILTER | VIEW_LOG_LIKE | VIEW_REFRESH,
 	sizeof(struct main_state),
 	main_open,
@@ -6246,14 +6235,14 @@ static void
 stash_select(struct view *view, struct line *line)
 {
 	main_select(view, line);
-	string_format(ref_stash, "stash@{%d}", line->lineno - 1);
-	string_copy(view->ref, ref_stash);
+	string_format(view->env->stash, "stash@{%d}", line->lineno - 1);
+	string_copy(view->ref, view->env->stash);
 }
 
 static struct view_ops stash_ops = {
 	"stash",
 	{ "stash" },
-	ref_stash,
+	view_env.stash,
 	VIEW_SEND_CHILD_ENTER | VIEW_REFRESH,
 	sizeof(struct main_state),
 	stash_open,
@@ -6775,7 +6764,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 			} else if (strlen(opt) >= 2 && *opt == '+' && string_isnumber(opt + 1)) {
 				int lineno = atoi(opt + 1);
 
-				opt_goto_line = lineno > 0 ? lineno - 1 : 0;
+				view_env.lineno = lineno > 0 ? lineno - 1 : 0;
 				continue;
 
 			}
@@ -6794,10 +6783,10 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 			die("invalid number of options to blame\n\n%s", usage);
 
 		if (opt_rev_argv) {
-			string_ncopy(opt_ref, opt_rev_argv[0], strlen(opt_rev_argv[0]));
+			string_ncopy(view_env.ref, opt_rev_argv[0], strlen(opt_rev_argv[0]));
 		}
 
-		string_ncopy(opt_file, opt_file_argv[0], strlen(opt_file_argv[0]));
+		string_ncopy(view_env.file, opt_file_argv[0], strlen(opt_file_argv[0]));
 	}
 
 	return request;
@@ -6852,7 +6841,7 @@ run_prompt_command(struct view *view, char *cmd)
 			report("Unable to parse '%s' as a line number", cmd);
 		}
 	} else if (cmd && iscommit(cmd)) {
-		string_ncopy(opt_search, cmd, strlen(cmd));
+		string_ncopy(view->env->search, cmd, strlen(cmd));
 
 		request = view_request(view, REQ_JUMP_COMMIT);
 		if (request == REQ_JUMP_COMMIT) {
@@ -7053,8 +7042,8 @@ main(int argc, const char *argv[])
 			char *search = read_prompt(prompt);
 
 			if (search)
-				string_ncopy(opt_search, search, strlen(search));
-			else if (*opt_search)
+				string_ncopy(view_env.search, search, strlen(search));
+			else if (*view_env.search)
 				request = request == REQ_SEARCH ?
 					REQ_FIND_NEXT :
 					REQ_FIND_PREV;
