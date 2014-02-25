@@ -84,7 +84,6 @@ static int opt_filename_width;
 static bool opt_editor_lineno;
 static bool opt_show_id;
 static int opt_id_cols;
-static bool opt_show_title_overflow;
 static int opt_title_overflow;
 static bool opt_mouse;
 static int opt_scroll_wheel_lines;
@@ -496,6 +495,7 @@ option_set_command(int argc, const char *argv[])
 		return parse_id(&opt_id_cols, argv[2]);
 
 	if (!strcmp(argv[0], "title-overflow")) {
+		bool enabled = FALSE;
 		bool matched;
 		enum status_code code;
 
@@ -504,14 +504,14 @@ option_set_command(int argc, const char *argv[])
 		 * We try to parse it as a boolean (and set the value to 50 if true),
 		 * otherwise we parse it as an integer and use the given value.
 		 */
-		code = parse_bool_matched(&opt_show_title_overflow, argv[2], &matched);
+		code = parse_bool_matched(&enabled, argv[2], &matched);
 		if (code == SUCCESS && matched) {
-			if (opt_show_title_overflow)
+			if (enabled)
 				opt_title_overflow = 50;
 		} else {
 			code = parse_int(&opt_title_overflow, argv[2], 2, 1024);
-			if (code == SUCCESS)
-				opt_show_title_overflow = TRUE;
+			if (code != SUCCESS)
+				opt_title_overflow = 50;
 		}
 
 		return code;
@@ -939,7 +939,7 @@ draw_text_overflow(struct view *view, const char *text, bool on, int overflow, e
 }
 
 #define draw_commit_title(view, text, offset) \
-	draw_text_overflow(view, text, opt_show_title_overflow, opt_title_overflow + offset, LINE_DEFAULT)
+	draw_text_overflow(view, text, opt_title_overflow > 0, opt_title_overflow + offset, LINE_DEFAULT)
 
 static bool PRINTF_LIKE(3, 4)
 draw_formatted(struct view *view, enum line_type type, const char *format, ...)
@@ -1403,7 +1403,7 @@ redraw_display(bool clear)
 	_(CHANGES,   'C', "local change display", &opt_show_changes, NULL, VIEW_NO_FLAGS), \
 	_(ID,        'X', "commit ID display", &opt_show_id, NULL, VIEW_NO_FLAGS), \
 	_(FILES,     '%', "file filtering",    &opt_file_filter, NULL, VIEW_DIFF_LIKE | VIEW_LOG_LIKE), \
-	_(TITLE_OVERFLOW, '$', "commit title overflow display", &opt_show_title_overflow, NULL, VIEW_NO_FLAGS), \
+	_(TITLE_OVERFLOW, '$', "commit title overflow display", &opt_title_overflow, NULL, VIEW_NO_FLAGS), \
 	_(UNTRACKED_DIRS, 'd', "untracked directory info", &opt_untracked_dirs_content, NULL, VIEW_STATUS_LIKE), \
 	_(VERTICAL_SPLIT, '|', "view split",   &opt_vertical_split, vertical_split_map, VIEW_FLAG_RESET_DISPLAY), \
 
@@ -1453,6 +1453,13 @@ toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
 			string_format_size(msg, SIZEOF_STR,
 				"Displaying %s %s", enum_name(data[i].map->entries[*opt]), menu[i].text);
 		}
+
+	} else if (menu[i].data == &opt_title_overflow) {
+		int *option = menu[i].data;
+
+		*option = *option ? -*option : 50;
+		string_format_size(msg, SIZEOF_STR,
+			"%sabling %s", *option > 0 ? "En" : "Dis", menu[i].text);
 
 	} else {
 		bool *option = menu[i].data;
