@@ -106,12 +106,12 @@ static char ref_branch[SIZEOF_REF]	= "";
 static char ref_status[SIZEOF_STR]	= "";
 static char ref_stash[SIZEOF_REF]	= "";
 
-#define VIEW_OPS(id, name, ref) name##_ops
+#define VIEW_OPS(id, name) name##_ops
 static struct view_ops VIEW_INFO(VIEW_OPS);
 
 static struct view views[] = {
-#define VIEW_DATA(id, name, ref) \
-	{ #name, ref, &name##_ops }
+#define VIEW_DATA(id, name) \
+	{ #name, &name##_ops }
 	VIEW_INFO(VIEW_DATA)
 };
 
@@ -130,7 +130,7 @@ static bool
 forward_request_to_child(struct view *child, enum request request)
 {
 	return displayed_views() == 2 && view_is_displayed(child) &&
-		!strcmp(child->vid, child->id);
+		!strcmp(child->vid, child->ops->id);
 }
 
 static enum request
@@ -1031,7 +1031,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	bool forward_stdin = flags & OPEN_FORWARD_STDIN;
 	enum io_type io_type = forward_stdin ? IO_RD_STDIN : IO_RD;
 
-	if ((!reload && !strcmp(view->vid, view->id)) ||
+	if ((!reload && !strcmp(view->vid, view->ops->id)) ||
 	    ((flags & OPEN_REFRESH) && view->unrefreshable))
 		return TRUE;
 
@@ -1057,7 +1057,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 		 * member. This is needed by the blob view. Most other
 		 * views sets it automatically after loading because the
 		 * first line is a commit line. */
-		string_copy_rev(view->ref, view->id);
+		string_copy_rev(view->ref, view->ops->id);
 	}
 
 	if (view->argv && view->argv[0] &&
@@ -1072,7 +1072,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	}
 
 	if (!extra)
-		setup_update(view, view->id);
+		setup_update(view, view->ops->id);
 
 	return TRUE;
 }
@@ -2349,6 +2349,7 @@ pager_open(struct view *view, enum open_flags flags)
 static struct view_ops pager_ops = {
 	"line",
 	{ "pager" },
+	"",
 	VIEW_OPEN_DIFF | VIEW_NO_REF | VIEW_NO_GIT_DIR,
 	0,
 	pager_open,
@@ -2391,6 +2392,7 @@ log_request(struct view *view, enum request request, struct line *line)
 static struct view_ops log_ops = {
 	"line",
 	{ "log" },
+	ref_head,
 	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER | VIEW_LOG_LIKE | VIEW_REFRESH,
 	sizeof(struct log_state),
 	log_open,
@@ -2892,7 +2894,7 @@ diff_select(struct view *view, struct line *line)
 			string_format(opt_file, "%s", file);
 			ref_blob[0] = 0;
 		} else {
-			string_ncopy(view->ref, view->id, strlen(view->id));
+			string_ncopy(view->ref, view->ops->id, strlen(view->ops->id));
 			pager_select(view, line);
 		}
 	}
@@ -2901,6 +2903,7 @@ diff_select(struct view *view, struct line *line)
 static struct view_ops diff_ops = {
 	"line",
 	{ "diff" },
+	ref_commit,
 	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_FILE_FILTER | VIEW_REFRESH,
 	sizeof(struct diff_state),
 	diff_open,
@@ -3057,6 +3060,7 @@ help_done(struct view *view)
 static struct view_ops help_ops = {
 	"line",
 	{ "help" },
+	"",
 	VIEW_NO_GIT_DIR,
 	0,
 	help_open,
@@ -3215,7 +3219,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 		/* Find next entry to process */
 		const char *log_file[] = {
 			"git", "log", encoding_arg, "--no-color", "--pretty=raw",
-				"--cc", "--raw", view->id, "--", "%(directory)", NULL
+				"--cc", "--raw", view->ops->id, "--", "%(directory)", NULL
 		};
 
 		if (!view->lines) {
@@ -3574,7 +3578,7 @@ tree_open(struct view *view, enum open_flags flags)
 			}
 		}
 
-	} else if (strcmp(view->vid, view->id)) {
+	} else if (strcmp(view->vid, view->ops->id)) {
 		opt_path[0] = 0;
 	}
 
@@ -3584,6 +3588,7 @@ tree_open(struct view *view, enum open_flags flags)
 static struct view_ops tree_ops = {
 	"file",
 	{ "tree" },
+	ref_commit,
 	VIEW_SEND_CHILD_ENTER,
 	sizeof(struct tree_state),
 	tree_open,
@@ -3654,6 +3659,7 @@ blob_request(struct view *view, enum request request, struct line *line)
 static struct view_ops blob_ops = {
 	"line",
 	{ "blob" },
+	ref_blob,
 	VIEW_NO_FLAGS,
 	0,
 	blob_open,
@@ -4152,6 +4158,7 @@ blame_select(struct view *view, struct line *line)
 static struct view_ops blame_ops = {
 	"line",
 	{ "blame" },
+	ref_commit,
 	VIEW_ALWAYS_LINENO | VIEW_SEND_CHILD_ENTER,
 	sizeof(struct blame_state),
 	blame_open,
@@ -4403,6 +4410,7 @@ branch_select(struct view *view, struct line *line)
 static struct view_ops branch_ops = {
 	"branch",
 	{ "branch" },
+	ref_head,
 	VIEW_REFRESH,
 	sizeof(struct branch_state),
 	branch_open,
@@ -5138,6 +5146,7 @@ status_grep(struct view *view, struct line *line)
 static struct view_ops status_ops = {
 	"file",
 	{ "status" },
+	"status",
 	VIEW_CUSTOM_STATUS | VIEW_SEND_CHILD_ENTER | VIEW_STATUS_LIKE | VIEW_REFRESH,
 	0,
 	status_open,
@@ -5623,6 +5632,7 @@ stage_read(struct view *view, char *data)
 static struct view_ops stage_ops = {
 	"line",
 	{ "stage" },
+	ref_status,
 	VIEW_DIFF_LIKE | VIEW_REFRESH,
 	sizeof(struct stage_state),
 	stage_open,
@@ -6208,6 +6218,7 @@ main_select(struct view *view, struct line *line)
 static struct view_ops main_ops = {
 	"commit",
 	{ "main" },
+	ref_head,
 	VIEW_SEND_CHILD_ENTER | VIEW_FILE_FILTER | VIEW_LOG_LIKE | VIEW_REFRESH,
 	sizeof(struct main_state),
 	main_open,
@@ -6242,6 +6253,7 @@ stash_select(struct view *view, struct line *line)
 static struct view_ops stash_ops = {
 	"stash",
 	{ "stash" },
+	ref_stash,
 	VIEW_SEND_CHILD_ENTER | VIEW_REFRESH,
 	sizeof(struct main_state),
 	stash_open,

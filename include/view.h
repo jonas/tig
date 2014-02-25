@@ -62,7 +62,6 @@ struct position {
 
 struct view {
 	const char *name;	/* View name */
-	const char *id;		/* Points to either of ref_{head,commit,blob} */
 
 	struct view_ops *ops;	/* View operations */
 
@@ -136,6 +135,8 @@ struct view_ops {
 	const char *type;
 	/* What keymap does this view have */
 	struct keymap keymap;
+	/* Points to either of ref_{head,commit,blob} */
+	const char *id;
 	/* Flags to control the view behavior. */
 	enum view_flag flags;
 	/* Size of private data. */

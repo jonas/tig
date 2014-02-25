@@ -549,18 +549,18 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
  */
 
 #define VIEW_INFO(_) \
-	_(MAIN,   main,   ref_head), \
-	_(DIFF,   diff,   ref_commit), \
-	_(LOG,    log,    ref_head), \
-	_(TREE,   tree,   ref_commit), \
-	_(BLOB,   blob,   ref_blob), \
-	_(BLAME,  blame,  ref_commit), \
-	_(BRANCH, branch, ref_head), \
-	_(STATUS, status, "status"), \
-	_(STAGE,  stage,  ref_status), \
-	_(STASH,  stash,  ref_stash), \
-	_(PAGER,  pager,  ""), \
-	_(HELP,   help,   "")
+	_(MAIN,   main), \
+	_(DIFF,   diff), \
+	_(LOG,    log), \
+	_(TREE,   tree), \
+	_(BLOB,   blob), \
+	_(BLAME,  blame), \
+	_(BRANCH, branch), \
+	_(STATUS, status), \
+	_(STAGE,  stage), \
+	_(STASH,  stash), \
+	_(PAGER,  pager), \
+	_(HELP,   help)
 
 #endif
 

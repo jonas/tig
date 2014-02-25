@@ -20,7 +20,7 @@
  * User requests
  */
 
-#define VIEW_REQ(id, name, ref) REQ_(VIEW_##id, "Show " #name " view")
+#define VIEW_REQ(id, name) REQ_(VIEW_##id, "Show " #name " view")
 
 #define REQ_INFO \
 	REQ_GROUP("View switching") \
