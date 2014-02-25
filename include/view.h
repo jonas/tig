@@ -16,6 +16,7 @@
 
 #include "tig.h"
 #include "line.h"
+#include "keys.h"
 #include "io.h"
 
 struct view_ops;
