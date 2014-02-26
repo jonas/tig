@@ -434,50 +434,6 @@ view_driver(struct view *view, enum request request)
 	return TRUE;
 }
 
-
-/*
- * View backend utilities
- */
-
-#include "pager.h"
-#include "diff.h"
-#include "status.h"
-#include "main.h"
-
-static bool
-stash_open(struct view *view, enum open_flags flags)
-{
-	static const char *stash_argv[] = { "git", "stash", "list",
-		encoding_arg, "--no-color", "--pretty=raw", NULL };
-	struct main_state *state = view->private;
-
-	state->added_changes_commits = TRUE;
-	state->with_graph = FALSE;
-	return begin_update(view, NULL, stash_argv, flags | OPEN_RELOAD);
-}
-
-static void
-stash_select(struct view *view, struct line *line)
-{
-	main_select(view, line);
-	string_format(view->env->stash, "stash@{%d}", line->lineno - 1);
-	string_copy(view->ref, view->env->stash);
-}
-
-struct view_ops stash_ops = {
-	"stash",
-	{ "stash" },
-	view_env.stash,
-	VIEW_SEND_CHILD_ENTER | VIEW_REFRESH,
-	sizeof(struct main_state),
-	stash_open,
-	main_read,
-	main_draw,
-	main_request,
-	main_grep,
-	stash_select,
-};
-
 /*
  * Main
  */
