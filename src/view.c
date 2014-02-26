@@ -19,27 +19,6 @@
 #include "display.h"
 
 /*
- * Global view state.
- */
-
-struct view_env view_env = { "HEAD", "HEAD" };
-
-#define VIEW_OPS(id, name) name##_ops
-extern struct view_ops VIEW_INFO(VIEW_OPS);
-
-struct view views[] = {
-#define VIEW_DATA(id, name) \
-	{ #name, &name##_ops, &view_env }
-	VIEW_INFO(VIEW_DATA)
-};
-
-int
-views_size(void)
-{
-	return ARRAY_SIZE(views);
-}
-
-/*
  * Navigation
  */
 
@@ -1101,6 +1080,38 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 
 	FORMAT_BUFFER(buf, sizeof(buf), fmt, retval, FALSE);
 	return retval >= 0 ? add_line_text(view, buf, type) : NULL;
+}
+
+/*
+ * Global view state.
+ */
+
+/* Included last to not pollute the rest of the file. */
+#include "main.h"
+#include "diff.h"
+#include "log.h"
+#include "tree.h"
+#include "blob.h"
+#include "blame.h"
+#include "branch.h"
+#include "status.h"
+#include "stage.h"
+#include "stash.h"
+#include "pager.h"
+#include "help.h"
+
+struct view_env view_env = { "HEAD", "HEAD" };
+
+struct view views[] = {
+#define VIEW_DATA(id, name) \
+	{ #name, &name##_ops, &view_env }
+	VIEW_INFO(VIEW_DATA)
+};
+
+int
+views_size(void)
+{
+	return ARRAY_SIZE(views);
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */
