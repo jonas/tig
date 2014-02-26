@@ -218,6 +218,7 @@ TIG_OBJS = \
 	src/branch.o \
 	src/status.o \
 	src/stage.o \
+	src/main.o \
 	$(COMPAT_OBJS)
 
 src/tig: $(TIG_OBJS)
