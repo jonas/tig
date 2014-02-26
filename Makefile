@@ -209,6 +209,7 @@ TIG_OBJS = \
 	src/view.o \
 	src/parse.o \
 	src/pager.o \
+	src/log.o \
 	$(COMPAT_OBJS)
 
 src/tig: $(TIG_OBJS)
