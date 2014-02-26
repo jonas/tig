@@ -213,6 +213,7 @@ TIG_OBJS = \
 	src/diff.o \
 	src/help.o \
 	src/tree.o \
+	src/blob.o \
 	$(COMPAT_OBJS)
 
 src/tig: $(TIG_OBJS)
