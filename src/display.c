@@ -302,7 +302,9 @@ init_display(void)
 	const char *term;
 	int x, y;
 
-	die_callback = done_display;
+	/* XXX: Restore tty modes and let the OS cleanup the rest! */
+	if (atexit(done_display))
+		die("Failed to register done_display");
 
 	/* Initialize the curses library */
 	if (isatty(STDIN_FILENO)) {

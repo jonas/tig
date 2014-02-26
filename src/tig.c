@@ -455,15 +455,11 @@ static const char usage[] =
 "  -h, --help      Show help message and exit";
 
 static void TIG_NORETURN
-quit(int sig)
+signal_handler(int sig)
 {
 	if (sig)
 		signal(sig, SIG_DFL);
-
-	/* XXX: Restore tty modes and let the OS cleanup the rest! */
-	if (die_callback)
-		die_callback();
-	exit(0);
+	_exit(EXIT_FAILURE);
 }
 
 static int
@@ -578,11 +574,11 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 
 			} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
 				printf("tig version %s\n", TIG_VERSION);
-				quit(0);
+				exit(EXIT_SUCCESS);
 
 			} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
 				printf("%s\n", usage);
-				quit(0);
+				exit(EXIT_SUCCESS);
 
 			} else if (strlen(opt) >= 2 && *opt == '+' && string_isnumber(opt + 1)) {
 				int lineno = atoi(opt + 1);
@@ -785,8 +781,8 @@ main(int argc, const char *argv[])
 	struct view *view;
 	int i;
 
-	signal(SIGINT, quit);
-	signal(SIGQUIT, quit);
+	signal(SIGINT, signal_handler);
+	signal(SIGQUIT, signal_handler);
 	signal(SIGPIPE, SIG_IGN);
 
 	if (setlocale(LC_ALL, "")) {
@@ -879,7 +875,7 @@ main(int argc, const char *argv[])
 		}
 	}
 
-	quit(0);
+	exit(EXIT_SUCCESS);
 
 	return 0;
 }

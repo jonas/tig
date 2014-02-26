@@ -44,14 +44,10 @@ warn(const char *msg, ...)
 	va_end(args);
 }
 
-die_fn die_callback = NULL;
 void TIG_NORETURN
 die(const char *err, ...)
 {
 	va_list args;
-
-	if (die_callback)
-		die_callback();
 
 	va_start(args, err);
 	fputs("tig: ", stderr);

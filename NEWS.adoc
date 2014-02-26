@@ -65,6 +65,7 @@ Bug fixes:
  - Disable graph drawing for reverse log order. (GH #127)
  - Only refresh views that support it.
  - Fix author and date annotation of renamed entries in the tree view.
+ - Fix use of unsafe methods in the signal handler. (GH #245)
 
 tig-1.2.1
 ---------
