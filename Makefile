@@ -215,6 +215,7 @@ TIG_OBJS = \
 	src/tree.o \
 	src/blob.o \
 	src/blame.o \
+	src/branch.o \
 	$(COMPAT_OBJS)
 
 src/tig: $(TIG_OBJS)
