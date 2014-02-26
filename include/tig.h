@@ -169,6 +169,15 @@ count_digits(unsigned long i)
 	return digits;
 }
 
+static inline int
+apply_step(double step, int value)
+{
+	if (step >= 1)
+		return (int) step;
+	value *= step + 0.01;
+	return value ? value : 1;
+}
+
 /*
  * Strings.
  */

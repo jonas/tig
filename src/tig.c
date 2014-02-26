@@ -184,15 +184,6 @@ update_view_title(struct view *view)
 	wnoutrefresh(window);
 }
 
-static int
-apply_step(double step, int value)
-{
-	if (step >= 1)
-		return (int) step;
-	value *= step + 0.01;
-	return value ? value : 1;
-}
-
 static void
 apply_horizontal_split(struct view *base, struct view *view)
 {
