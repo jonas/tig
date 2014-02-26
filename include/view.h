@@ -174,14 +174,144 @@ struct view_ops {
 	void (*done)(struct view *view);
 };
 
+/*
+ * Global view state.
+ */
+
+extern struct view_env view_env;
 extern struct view views[];
 int views_size(void);
 
 #define foreach_view(view, i) \
 	for (i = 0; i < views_size() && (view = &views[i]); i++)
 
+#define VIEW(req) 	(&views[(req) - REQ_OFFSET - 1])
+
+#define view_has_line(view, line_) \
+	((view)->line <= (line_) && (line_) < (view)->line + (view)->lines)
+
+/*
+ * Navigation
+ */
+
+bool goto_view_line(struct view *view, unsigned long offset, unsigned long lineno);
+void select_view_line(struct view *view, unsigned long lineno);
+void do_scroll_view(struct view *view, int lines);
+void scroll_view(struct view *view, enum request request);
+void move_view(struct view *view, enum request request);
+
+/*
+ * Searching
+ */
+
+void search_view(struct view *view, enum request request);
+void find_next(struct view *view, enum request request);
+bool grep_text(struct view *view, const char *text[]);
+
+/*
+ * View history
+ */
+
+struct view_state {
+	struct view_state *prev;	/* Entry below this in the stack */
+	struct position position;	/* View position to restore */
+	void *data;			/* View specific state */
+};
+
+struct view_history {
+	size_t state_alloc;
+	struct view_state *stack;
+	struct position position;
+};
+
+struct view_state *push_view_history_state(struct view_history *history, struct position *position, void *data);
+bool pop_view_history_state(struct view_history *history, struct position *position, void *data);
+void reset_view_history(struct view_history *history);
+
+/*
+ * View opening
+ */
+
+void split_view(struct view *prev, struct view *view);
+void maximize_view(struct view *view, bool redraw);
+void load_view(struct view *view, struct view *prev, enum open_flags flags);
+
+#define refresh_view(view) load_view(view, NULL, OPEN_REFRESH)
+#define reload_view(view) load_view(view, NULL, OPEN_RELOAD)
+
+void open_view(struct view *prev, enum request request, enum open_flags flags);
+void open_argv(struct view *prev, struct view *view, const char *argv[], const char *dir, enum open_flags flags);
+
+/*
+ * Various utilities.
+ */
+
+enum sort_field {
+	ORDERBY_NAME,
+	ORDERBY_DATE,
+	ORDERBY_AUTHOR,
+};
+
+struct sort_state {
+	const enum sort_field *fields;
+	size_t size, current;
+	bool reverse;
+};
+
+#define SORT_STATE(fields) { fields, ARRAY_SIZE(fields), 0 }
+#define get_sort_field(state) ((state).fields[(state).current])
+#define sort_order(state, result) ((state).reverse ? -(result) : (result))
+
+void sort_view(struct view *view, enum request request, struct sort_state *state,
+	  int (*compare)(const void *, const void *));
+
+struct line *
+find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction);
+
+#define find_prev_line_by_type(view, line, type) \
+	find_line_by_type(view, line, type, -1)
+
+#define find_next_line_by_type(view, line, type) \
+	find_line_by_type(view, line, type, 1)
+
+bool format_argv(struct view *view, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter);
+
+/*
+ * Incremental updating
+ */
+
+static inline bool
+check_position(struct position *pos)
+{
+	return pos->lineno || pos->col || pos->offset;
+}
+
+static inline void
+clear_position(struct position *pos)
+{
+	memset(pos, 0, sizeof(*pos));
+}
+
+void reset_view(struct view *view);
+bool begin_update(struct view *view, const char *dir, const char **argv, enum open_flags flags);
+void end_update(struct view *view, bool force);
 bool update_view(struct view *view);
 void update_view_title(struct view *view);
+
+/*
+ * Line utilities.
+ */
+
+struct line *add_line_at(struct view *view, unsigned long pos, const void *data, enum line_type type, size_t data_size, bool custom);
+struct line *add_line(struct view *view, const void *data, enum line_type type, size_t data_size, bool custom);
+struct line *add_line_alloc_(struct view *view, void **ptr, enum line_type type, size_t data_size, bool custom);
+
+#define add_line_alloc(view, data_ptr, type, extra_size, custom) \
+	add_line_alloc_(view, (void **) data_ptr, type, sizeof(**data_ptr) + extra_size, custom)
+
+struct line *add_line_nodata(struct view *view, enum line_type type);
+struct line *add_line_text(struct view *view, const char *text, enum line_type type);
+struct line * PRINTF_LIKE(3, 4) add_line_format(struct view *view, enum line_type type, const char *fmt, ...);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */
