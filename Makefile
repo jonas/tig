@@ -207,6 +207,7 @@ TIG_OBJS = \
 	src/draw.o \
 	src/display.o \
 	src/view.o \
+	src/parse.o \
 	$(COMPAT_OBJS)
 
 src/tig: $(TIG_OBJS)
