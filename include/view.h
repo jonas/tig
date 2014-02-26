@@ -174,5 +174,14 @@ struct view_ops {
 	void (*done)(struct view *view);
 };
 
+extern struct view views[];
+int views_size(void);
+
+#define foreach_view(view, i) \
+	for (i = 0; i < views_size() && (view = &views[i]); i++)
+
+bool update_view(struct view *view);
+void update_view_title(struct view *view);
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */
