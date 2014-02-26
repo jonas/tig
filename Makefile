@@ -216,6 +216,7 @@ TIG_OBJS = \
 	src/blob.o \
 	src/blame.o \
 	src/branch.o \
+	src/status.o \
 	$(COMPAT_OBJS)
 
 src/tig: $(TIG_OBJS)
