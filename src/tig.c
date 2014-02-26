@@ -77,15 +77,8 @@ vertical_split_is_enabled(void)
  * The viewer
  */
 
-struct view;
-struct view_ops;
-
 /* The display array of active views and the index of the current view. */
 static struct view *display[2];
-static WINDOW *display_win[2];
-static WINDOW *display_title[2];
-static WINDOW *display_sep;
-
 static unsigned int current_view;
 
 #define foreach_displayed_view(view, i) \
@@ -150,7 +143,7 @@ view_request(struct view *view, enum request request)
 static void
 update_view_title(struct view *view)
 {
-	WINDOW *window = display[0] == view ? display_title[0] : display_title[1];
+	WINDOW *window = view->title;
 	struct line *line = &view->line[view->pos.lineno];
 	unsigned int view_lines, lines;
 
@@ -219,6 +212,10 @@ apply_vertical_split(struct view *base, struct view *view)
 	view->width  = MIN(view->width, base->width - MIN_VIEW_WIDTH);
 	base->width -= view->width;
 }
+
+static WINDOW *display_win[2];
+static WINDOW *display_title[2];
+static WINDOW *display_sep;
 
 static void
 redraw_display_separator(bool clear)
@@ -303,6 +300,7 @@ resize_display(void)
 		}
 
 		view->win = display_win[i];
+		view->title = display_title[i];
 
 		if (vsplit)
 			x += view->width + 1;

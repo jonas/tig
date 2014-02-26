@@ -86,6 +86,7 @@ struct view {
 
 	int height, width;	/* The width and height of the main window */
 	WINDOW *win;		/* The main window */
+	WINDOW *title;		/* The title window */
 
 	/* Navigation */
 	struct position pos;	/* Current position. */
