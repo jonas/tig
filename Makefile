@@ -211,6 +211,7 @@ TIG_OBJS = \
 	src/pager.o \
 	src/log.o \
 	src/diff.o \
+	src/help.o \
 	$(COMPAT_OBJS)
 
 src/tig: $(TIG_OBJS)
