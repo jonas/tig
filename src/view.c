@@ -933,7 +933,7 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 	}
 
 	if (!view_has_flags(view, VIEW_NO_GIT_DIR) && !repo.git_dir[0]) {
-		report("The %s view is disabled in pager view", view->name);
+		report("The %s view is disabled in pager mode", view->name);
 		return;
 	}
 
