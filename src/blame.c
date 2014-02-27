@@ -94,6 +94,21 @@ blame_open(struct view *view, enum open_flags flags)
 	char path[SIZEOF_STR];
 	size_t i;
 
+	if (is_initial_view(view)) {
+		/* Finish validating and setting up blame options */
+		if (!opt_file_argv || opt_file_argv[1] || (opt_rev_argv && opt_rev_argv[1]))
+			usage("Invalid number of options to blame");
+
+		if (opt_rev_argv) {
+			string_ncopy(view->env->ref, opt_rev_argv[0], strlen(opt_rev_argv[0]));
+		}
+
+		string_ncopy(view->env->file, opt_file_argv[0], strlen(opt_file_argv[0]));
+
+		opt_blame_options = opt_cmdline_argv;
+		opt_cmdline_argv = NULL;
+	}
+
 	if (!view->env->file[0]) {
 		report("No file chosen, press %s to open tree view",
 			get_view_key(view, REQ_VIEW_TREE));

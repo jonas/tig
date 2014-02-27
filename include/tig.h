@@ -129,6 +129,8 @@
 #define KEY_RETURN	'\r'
 #define KEY_ESC		27
 
+void TIG_NORETURN usage(const char *message);
+
 /*
  * Allocation helpers ... Entering macro hell to never be seen again.
  */

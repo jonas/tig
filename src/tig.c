@@ -438,7 +438,7 @@ view_driver(struct view *view, enum request request)
  * Main
  */
 
-static const char usage[] =
+static const char usage_string[] =
 "tig " TIG_VERSION " (" __DATE__ ")\n"
 "\n"
 "Usage: tig        [options] [revs] [--] [paths]\n"
@@ -453,6 +453,12 @@ static const char usage[] =
 "  +<number>       Select line <number> in the first view\n"
 "  -v, --version   Show version and exit\n"
 "  -h, --help      Show help message and exit";
+
+void
+usage(const char *message)
+{
+	die("%s\n\n%s", message, usage_string);
+}
 
 static int
 read_filter_args(char *name, size_t namelen, char *value, size_t valuelen, void *data)
@@ -490,7 +496,7 @@ is_rev_flag(const char *flag)
 }
 
 static void
-filter_options(const char *argv[], bool blame)
+filter_options(const char *argv[])
 {
 	const char **flags = NULL;
 	int next, flags_pos;
@@ -512,10 +518,7 @@ filter_options(const char *argv[], bool blame)
 
 		flags[flags_pos] = NULL;
 
-		if (blame)
-			opt_blame_options = flags;
-		else
-			opt_cmdline_argv = flags;
+		opt_cmdline_argv = flags;
 	}
 
 	filter_rev_parse(&opt_rev_argv, "--symbolic", "--revs-only", argv);
@@ -569,7 +572,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 				exit(EXIT_SUCCESS);
 
 			} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
-				printf("%s\n", usage);
+				printf("%s\n", usage_string);
 				exit(EXIT_SUCCESS);
 
 			} else if (strlen(opt) >= 2 && *opt == '+' && string_isnumber(opt + 1)) {
@@ -586,19 +589,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 	}
 
 	if (filter_argv)
-		filter_options(filter_argv, request == REQ_VIEW_BLAME);
-
-	/* Finish validating and setting up blame options */
-	if (request == REQ_VIEW_BLAME) {
-		if (!opt_file_argv || opt_file_argv[1] || (opt_rev_argv && opt_rev_argv[1]))
-			die("invalid number of options to blame\n\n%s", usage);
-
-		if (opt_rev_argv) {
-			string_ncopy(view_env.ref, opt_rev_argv[0], strlen(opt_rev_argv[0]));
-		}
-
-		string_ncopy(view_env.file, opt_file_argv[0], strlen(opt_file_argv[0]));
-	}
+		filter_options(filter_argv);
 
 	return request;
 }
