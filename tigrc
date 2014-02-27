@@ -197,6 +197,10 @@ bind generic	v	show-version		# Show Tig version
 # for the UI you can also define new colors to use in the pager, blob,
 # diff, and stage views by placing the text to match for in quotes.
 #
+# Prefix the name of a view to set a color only for that view, e.g.
+#
+#	color grep.filename blue default
+#
 # As an example, this setting will to color Signed-off-by lines with a
 # yellow foreground color and use the default background color.
 #
@@ -250,6 +254,7 @@ color mode			cyan	default
 color id			magenta	default
 color overflow			red	default
 color filename			default	default
+color grep.filename		blue	default
 color file-size			default	default
 color line-number		cyan	default
 color title-blur		white	blue

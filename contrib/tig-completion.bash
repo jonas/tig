@@ -240,7 +240,7 @@ _tig ()
 		case "${COMP_WORDS[COMP_CWORD]}" in
 		--*=*) COMPREPLY=() ;;
 		-*)   _tig_options ;;
-		*)    _tigcomp "blame status show log $(__tig_refs)" ;;
+		*)    _tigcomp "blame status show log stash grep $(__tig_refs)" ;;
 		esac
 		return
 	fi

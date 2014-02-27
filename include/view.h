@@ -51,6 +51,7 @@ enum view_flag {
 	VIEW_LOG_LIKE		= 1 << 11,
 	VIEW_STATUS_LIKE	= 1 << 12,
 	VIEW_REFRESH		= 1 << 13,
+	VIEW_CUSTOM_DIGITS	= 1 << 14,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))

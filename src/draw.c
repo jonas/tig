@@ -227,7 +227,7 @@ draw_id(struct view *view, const char *id)
 }
 
 bool
-draw_filename(struct view *view, const char *filename, bool auto_enabled)
+draw_filename_custom(struct view *view, const char *filename, bool auto_enabled, int width)
 {
 	bool trim = filename && strlen(filename) >= opt_show_filename_width;
 
@@ -237,7 +237,13 @@ draw_filename(struct view *view, const char *filename, bool auto_enabled)
 	if (opt_show_filename == FILENAME_AUTO && !auto_enabled)
 		return FALSE;
 
-	return draw_field(view, LINE_FILENAME, filename, opt_show_filename_width, ALIGN_LEFT, trim);
+	return draw_field(view, LINE_FILENAME, filename, width, ALIGN_LEFT, trim);
+}
+
+bool
+draw_filename(struct view *view, const char *filename, bool auto_enabled)
+{
+	return draw_filename_custom(view, filename, auto_enabled, opt_show_filename_width);
 }
 
 bool
@@ -260,7 +266,7 @@ draw_mode(struct view *view, mode_t mode)
 }
 
 bool
-draw_lineno(struct view *view, unsigned int lineno)
+draw_lineno_custom(struct view *view, unsigned int lineno, bool show, int interval)
 {
 	char number[10];
 	int digits3 = view->digits < 3 ? 3 : view->digits;
@@ -268,11 +274,10 @@ draw_lineno(struct view *view, unsigned int lineno)
 	char *text = NULL;
 	chtype separator = opt_line_graphics ? ACS_VLINE : '|';
 
-	if (!opt_show_line_numbers)
+	if (!show)
 		return FALSE;
 
-	lineno += view->pos.offset + 1;
-	if (lineno == 1 || (lineno % opt_line_number_interval) == 0) {
+	if (lineno == 1 || (lineno % interval) == 0) {
 		static char fmt[] = "%1ld";
 
 		fmt[1] = '0' + (view->digits <= 9 ? digits3 : 1);
@@ -284,6 +289,14 @@ draw_lineno(struct view *view, unsigned int lineno)
 	else
 		draw_space(view, LINE_LINE_NUMBER, max, digits3);
 	return draw_graphic(view, LINE_DEFAULT, &separator, 1, TRUE);
+}
+
+bool
+draw_lineno(struct view *view, unsigned int lineno)
+{
+	lineno += view->pos.offset + 1;
+	return draw_lineno_custom(view, lineno, opt_show_line_numbers,
+				  opt_line_number_interval);
 }
 
 bool

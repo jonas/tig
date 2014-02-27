@@ -127,6 +127,10 @@ The stage view::
 The stash view::
 	Displays the list of stashes in the repository.
 
+The grep view::
+	Displays a list of files and all the lines that matches a search
+	pattern.
+
 The pager view::
 	Is used for displaying both input from stdin and output from Git
 	commands entered in the internal prompt.

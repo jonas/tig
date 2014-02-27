@@ -12,19 +12,29 @@
  */
 
 #include "refs.h"
+#include "parse.h"
 #include "display.h"
 #include "log.h"
 #include "pager.h"
 #include "tree.h"
 
+struct blob_state {
+	const char *file;
+};
+
 static bool
 blob_open(struct view *view, enum open_flags flags)
 {
+	struct blob_state *state = view->private;
 	static const char *blob_argv[] = {
 		"git", "cat-file", "blob", "%(blob)", NULL
 	};
+	const char **argv = (flags & OPEN_PREPARED) ? view->argv : blob_argv;
 
-	if (!view->env->blob[0] && view->env->file[0]) {
+	if (argv != blob_argv)
+		state->file = get_path(view->env->file);
+
+	if (!state->file && !view->env->blob[0] && view->env->file[0]) {
 		const char *commit = view->env->commit[0] ? view->env->commit : "HEAD";
 		char blob_spec[SIZEOF_STR];
 		const char *rev_parse_argv[] = {
@@ -38,28 +48,37 @@ blob_open(struct view *view, enum open_flags flags)
 		}
 	}
 
-	if (!view->env->blob[0]) {
+	if (!state->file && !view->env->blob[0]) {
 		report("No file chosen, press %s to open tree view",
-			get_view_key(view, REQ_VIEW_TREE));
+				get_view_key(view, REQ_VIEW_TREE));
 		return FALSE;
 	}
 
 	view->encoding = get_path_encoding(view->env->file, default_encoding);
+	string_copy(view->ref, view->env->file);
 
-	return begin_update(view, NULL, blob_argv, flags);
+	return begin_update(view, NULL, argv, flags);
 }
 
 static bool
 blob_read(struct view *view, char *line)
 {
-	if (!line)
+	if (!line) {
+		if (view->env->lineno > 0) {
+			select_view_line(view, view->env->lineno);
+			view->env->lineno = 0;
+		}
 		return TRUE;
+	}
+
 	return add_line_text(view, line, LINE_DEFAULT) != NULL;
 }
 
 static enum request
 blob_request(struct view *view, enum request request, struct line *line)
 {
+	struct blob_state *state = view->private;
+
 	switch (request) {
 	case REQ_VIEW_BLAME:
 		if (view->parent)
@@ -67,8 +86,12 @@ blob_request(struct view *view, enum request request, struct line *line)
 		return request;
 
 	case REQ_EDIT:
-		open_blob_editor(view->vid, NULL, (line - view->line) + 1);
+		if (state->file)
+			open_editor(state->file, (line - view->line) + 1);
+		else
+			open_blob_editor(view->vid, NULL, (line - view->line) + 1);
 		return REQ_NONE;
+
 	default:
 		return pager_request(view, request, line);
 	}
@@ -79,7 +102,7 @@ struct view_ops blob_ops = {
 	{ "blob" },
 	argv_env.blob,
 	VIEW_NO_FLAGS,
-	0,
+	sizeof(struct blob_state),
 	blob_open,
 	blob_read,
 	pager_draw,

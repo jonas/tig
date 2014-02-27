@@ -357,8 +357,8 @@ built-in keybindings.
 Keymaps::
 
 Valid keymaps are: *main*, *diff*, *log*, *help*, *pager*, *status*, *stage*,
-*tree*, *blob*, *blame*, *branch*, *stash* and *generic*.  Use *generic* to set
-key mapping in all keymaps.
+*tree*, *blob*, *blame*, *branch*, *stash*, *grep* and *generic*. Use *generic*
+to set key mapping in all keymaps.
 
 Key values::
 
@@ -512,6 +512,7 @@ View switching
 |view-status             |Show status view
 |view-stage              |Show stage view
 |view-stash              |Show stash view
+|view-grep               |Show grep view
 |view-pager              |Show pager view
 |view-help               |Show help view
 |=============================================================================

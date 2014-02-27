@@ -15,6 +15,7 @@ tig        [options] [revisions] [--] [paths]
 tig log    [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
 tig blame  [options] [rev] [--] path
+tig grep   [options] [pattern]
 tig stash
 tig status
 tig <      [Git command output]
@@ -53,6 +54,9 @@ log::
 
 stash::
 	Start up in stash view.
+
+grep::
+	Open the grep view. Supports the same options as git-grep(1).
 
 +<number>::
     Show the first view with line <number> visible and selected.
@@ -156,6 +160,11 @@ $ tig blame -C README
 Display the list of stashes:
 -----------------------------------------------------------------------------
 $ tig stash
+-----------------------------------------------------------------------------
+
+Grep all files for lines containing `DEFINE_ENUM`:
+-----------------------------------------------------------------------------
+$ tig grep -p DEFINE_ENUM
 -----------------------------------------------------------------------------
 
 ENVIRONMENT VARIABLES

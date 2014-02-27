@@ -54,6 +54,7 @@ Improvements:
  - Open editor at line number for combined diffs e.g. diffs of unmerged files.
  - Copy `-S<search-string>` to search buffer so `find-next` works as expected.
  - Support view specific colors: `color stage.diff-add yellow default`.
+ - Add grep view as a front-end to git-grep(1): `tig grep -p strchr`.
 
 Bug fixes:
 

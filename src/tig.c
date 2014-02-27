@@ -278,6 +278,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_STAGE:
 	case REQ_VIEW_PAGER:
 	case REQ_VIEW_STASH:
+	case REQ_VIEW_GREP:
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
@@ -446,6 +447,7 @@ static const char usage_string[] =
 "   or: tig log    [options] [revs] [--] [paths]\n"
 "   or: tig show   [options] [revs] [--] [paths]\n"
 "   or: tig blame  [options] [rev] [--] path\n"
+"   or: tig grep   [options] [pattern]\n"
 "   or: tig stash\n"
 "   or: tig status\n"
 "   or: tig <      [git command output]\n"
@@ -497,12 +499,17 @@ is_rev_flag(const char *flag)
 }
 
 static void
-filter_options(const char *argv[])
+filter_options(const char *argv[], bool rev_parse)
 {
 	const char **flags = NULL;
 	int next, flags_pos;
 
 	update_options_from_argv(argv);
+
+	if (!rev_parse) {
+		opt_cmdline_argv = argv;
+		return;
+	}
 
 	filter_rev_parse(&opt_file_argv, "--no-revs", "--no-flags", argv);
 	filter_rev_parse(&flags, "--flags", "--no-revs", argv);
@@ -531,6 +538,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 	enum request request;
 	const char *subcommand;
 	bool seen_dashdash = FALSE;
+	bool rev_parse = TRUE;
 	const char **filter_argv = NULL;
 	int i;
 
@@ -545,6 +553,10 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 
 	} else if (!strcmp(subcommand, "blame")) {
 		request = REQ_VIEW_BLAME;
+
+	} else if (!strcmp(subcommand, "grep")) {
+		request = REQ_VIEW_GREP;
+		rev_parse = FALSE;
 
 	} else if (!strcmp(subcommand, "show")) {
 		request = REQ_VIEW_DIFF;
@@ -590,7 +602,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 	}
 
 	if (filter_argv)
-		filter_options(filter_argv);
+		filter_options(filter_argv, rev_parse);
 
 	return request;
 }

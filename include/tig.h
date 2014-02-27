@@ -569,6 +569,7 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
 	_(STATUS, status), \
 	_(STAGE,  stage), \
 	_(STASH,  stash), \
+	_(GREP,   grep), \
 	_(PAGER,  pager), \
 	_(HELP,   help)
 

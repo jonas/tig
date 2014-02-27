@@ -601,7 +601,7 @@ update_view(struct view *view)
 		}
 	}
 
-	{
+	if (!view_has_flags(view, VIEW_CUSTOM_DIGITS)) {
 		int digits = count_digits(view->lines);
 
 		/* Keep the displayed view in sync with line number scaling. */
@@ -949,6 +949,7 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 #include "status.h"
 #include "stage.h"
 #include "stash.h"
+#include "grep.h"
 #include "pager.h"
 #include "help.h"
 
