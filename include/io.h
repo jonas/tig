@@ -101,5 +101,7 @@ int io_run_load(const char **argv, const char *separators,
 
 const char *get_temp_dir(void);
 
+bool io_trace(const char *fmt, ...);
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

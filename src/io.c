@@ -394,6 +394,30 @@ open_trace(int devnull, const char *argv[])
 }
 
 bool
+io_trace(const char *fmt, ...)
+{
+	static FILE *trace_out; /* Intensionally leaked. */
+	va_list args;
+	int retval;
+
+	if (!trace_out) {
+		const char *trace_file = getenv("TIG_TRACE");
+
+		if (trace_file)
+			trace_out = fopen(trace_file, "a");
+		if (!trace_out)
+			return FALSE;
+	}
+
+	va_start(args, fmt);
+	retval = vfprintf(trace_out, fmt, args);
+	va_end(args);
+	fflush(trace_out);
+
+	return retval != -1;
+}
+
+bool
 io_run(struct io *io, enum io_type type, const char *dir, char * const env[], const char *argv[], ...)
 {
 	int pipefds[2] = { -1, -1 };
