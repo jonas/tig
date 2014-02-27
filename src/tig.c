@@ -454,14 +454,6 @@ static const char usage[] =
 "  -v, --version   Show version and exit\n"
 "  -h, --help      Show help message and exit";
 
-static void TIG_NORETURN
-signal_handler(int sig)
-{
-	if (sig)
-		signal(sig, SIG_DFL);
-	_exit(EXIT_FAILURE);
-}
-
 static int
 read_filter_args(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
@@ -781,8 +773,6 @@ main(int argc, const char *argv[])
 	struct view *view;
 	int i;
 
-	signal(SIGINT, signal_handler);
-	signal(SIGQUIT, signal_handler);
 	signal(SIGPIPE, SIG_IGN);
 
 	if (setlocale(LC_ALL, "")) {
