@@ -55,7 +55,7 @@
 /* FIXME(jfonseca): This is incomplete, but enough to support:
  * git rev-list --author=vivien HEAD | tig --stdin --no-walk */
 #define GIT_REV_FLAGS \
-	"--stdin", "--no-walk"
+	"--stdin", "--no-walk", "--boundary"
 
 #endif
 
