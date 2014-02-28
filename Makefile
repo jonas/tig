@@ -195,6 +195,7 @@ TIG_OBJS = \
 	src/tig.o \
 	src/types.o \
 	src/util.o \
+	src/argv.o \
 	src/io.o \
 	src/graph.o \
 	src/refs.o \

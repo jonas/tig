@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include "argv.h"
 #include "view.h"
 #include "draw.h"
 #include "pager.h"

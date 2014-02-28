@@ -12,6 +12,7 @@
  */
 
 #include "repo.h"
+#include "argv.h"
 #include "options.h"
 #include "parse.h"
 #include "display.h"

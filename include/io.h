@@ -17,22 +17,6 @@
 #include "tig.h"
 
 /*
- * Argument array helpers.
- */
-
-bool argv_to_string(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep);
-bool argv_from_string_no_quotes(const char *argv[SIZEOF_ARG], int *argc, char *cmd);
-bool argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd);
-bool argv_from_env(const char **argv, const char *name);
-void argv_free(const char *argv[]);
-size_t argv_size(const char **argv);
-bool argv_append(const char ***argv, const char *arg);
-bool argv_append_array(const char ***dst_argv, const char *src_argv[]);
-bool argv_copy(const char ***dst, const char *src[]);
-bool argv_remove_quotes(const char *argv[]);
-bool argv_contains(const char **argv, const char *arg);
-
-/*
  * Encoding conversion.
  */
 

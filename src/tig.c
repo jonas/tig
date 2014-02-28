@@ -18,6 +18,7 @@
 #include "util.h"
 #include "parse.h"
 #include "io.h"
+#include "argv.h"
 #include "refs.h"
 #include "graph.h"
 #include "git.h"

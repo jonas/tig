@@ -12,6 +12,7 @@
  */
 
 #include "tig.h"
+#include "argv.h"
 #include "repo.h"
 #include "options.h"
 #include "view.h"

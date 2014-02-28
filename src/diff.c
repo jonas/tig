@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include "argv.h"
 #include "refs.h"
 #include "repo.h"
 #include "options.h"

@@ -13,9 +13,10 @@
 
 #include "tig.h"
 #include "types.h"
+#include "argv.h"
+#include "io.h"
 #include "keys.h"
 #include "util.h"
-#include "io.h"
 
 struct keybinding {
 	int alias;

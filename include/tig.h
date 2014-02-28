@@ -99,7 +99,6 @@
 #define SIZEOF_STR	1024	/* Default string size. */
 #define SIZEOF_REF	256	/* Size of symbolic or SHA1 ID. */
 #define SIZEOF_REV	41	/* Holds a SHA-1 and an ending NUL. */
-#define SIZEOF_ARG	32	/* Default argument array size. */
 
 /* This color name can be used to refer to the default term colors. */
 #define COLOR_DEFAULT	(-1)
