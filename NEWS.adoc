@@ -50,6 +50,7 @@ Improvements:
  - Allow Tig to be started with no default keybindings or built-in user-defined
    commands by running: `TIGRC_SYSTEM=~/.tigrc.safe tig`. (GH #235)
  - Open editor at line number for combined diffs e.g. diffs of unmerged files.
+ - Copy `-S<search-string>` to search buffer so `find-next` works as expected.
 
 Bug fixes:
 
@@ -62,7 +63,7 @@ Bug fixes:
  - Show newly created branches in the main view. (GH #196)
  - File with 0 changes breaks diffstat highlighting (GH #215)
  - Update %(branch) variable in the main view. (GH #223)
- - Disable graph drawing for reverse log order. (GH #127)
+ - Disable graph drawing for reverse log order and `tig -Ssearch`. (GH #127)
  - Only refresh views that support it.
  - Fix author and date annotation of renamed entries in the tree view.
  - Fix use of unsafe methods in the signal handler. (GH #245)

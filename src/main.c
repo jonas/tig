@@ -215,6 +215,22 @@ main_open(struct view *view, enum open_flags flags)
 	state->with_graph = opt_show_rev_graph &&
 			    opt_commit_order != COMMIT_ORDER_REVERSE;
 
+	if (state->with_graph && opt_cmdline_argv) {
+		int i;
+
+		for (i = 0; opt_cmdline_argv[i]; i++) {
+			const char *arg = opt_cmdline_argv[i];
+
+			if (prefixcmp(arg, "-S"))
+				continue;
+
+			state->with_graph = FALSE;
+			if (!*view->env->search)
+				string_ncopy(view->env->search, arg + 2, strlen(arg + 2));
+			break;
+		}
+	}
+
 	if (flags & OPEN_PAGER_MODE) {
 		state->added_changes_commits = TRUE;
 		state->with_graph = FALSE;
