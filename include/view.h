@@ -277,6 +277,7 @@ find_line_by_type(struct view *view, struct line *line, enum line_type type, int
 bool format_argv(struct view *view, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter);
 
 #define is_initial_view(view) (!(view)->prev && !(view)->argv)
+#define failed_to_load_initial_view(view) (!(view)->prev && !(view)->lines)
 
 /*
  * Incremental updating

@@ -222,7 +222,7 @@ blame_read_file(struct view *view, const char *text, struct blame_state *state)
 				*view->env->ref ? view->env->ref : "--incremental", "--", view->env->file, NULL
 		};
 
-		if (view->lines == 0 && !view->prev)
+		if (failed_to_load_initial_view(view))
 			die("No blame exist for %s", view->vid);
 
 		if (view->lines == 0 || !begin_update(view, repo.cdup, blame_argv, OPEN_EXTRA)) {

@@ -333,7 +333,7 @@ main_read(struct view *view, char *line)
 	if (!line) {
 		main_flush_commit(view, commit);
 
-		if (!view->lines && !view->prev)
+		if (failed_to_load_initial_view(view))
 			die("No revisions match the given arguments.");
 		if (view->lines > 0) {
 			struct commit *last = view->line[view->lines - 1].data;
