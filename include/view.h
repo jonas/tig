@@ -15,9 +15,10 @@
 #define TIG_VIEW_H
 
 #include "tig.h"
+#include "argv.h"
+#include "io.h"
 #include "line.h"
 #include "keys.h"
-#include "io.h"
 
 struct view_ops;
 
@@ -58,21 +59,6 @@ struct position {
 	unsigned long offset;	/* Offset of the window top */
 	unsigned long col;	/* Offset from the window side. */
 	unsigned long lineno;	/* Current line number */
-};
-
-struct view_env {
-	char commit[SIZEOF_REF];
-	char head[SIZEOF_REF];
-	char blob[SIZEOF_REF];
-	char branch[SIZEOF_REF];
-	char status[SIZEOF_STR];
-	char stash[SIZEOF_REF];
-	char directory[SIZEOF_STR];
-	char file[SIZEOF_STR];
-	char ref[SIZEOF_REF];
-	unsigned long lineno;
-	char search[SIZEOF_STR];
-	char none[1];
 };
 
 struct view {
@@ -178,7 +164,6 @@ struct view_ops {
  * Global view state.
  */
 
-extern struct view_env view_env;
 extern struct view views[];
 int views_size(void);
 
@@ -273,8 +258,6 @@ find_line_by_type(struct view *view, struct line *line, enum line_type type, int
 
 #define find_next_line_by_type(view, line, type) \
 	find_line_by_type(view, line, type, 1)
-
-bool format_argv(struct view *view, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter);
 
 #define is_initial_view(view) (!(view)->prev && !(view)->argv)
 #define failed_to_load_initial_view(view) (!(view)->prev && !(view)->lines)

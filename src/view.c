@@ -452,155 +452,6 @@ reset_view(struct view *view)
 	view->update_secs = 0;
 }
 
-struct format_context {
-	struct view *view;
-	char buf[SIZEOF_STR];
-	size_t bufpos;
-	bool file_filter;
-};
-
-static bool
-format_expand_arg(struct format_context *format, const char *name, const char *end)
-{
-	static struct {
-		const char *name;
-		size_t namelen;
-		const char *value;
-		const char *value_if_empty;
-	} vars[] = {
-#define FORMAT_VAR(name, value, value_if_empty) \
-	{ name, STRING_SIZE(name), value, value_if_empty }
-		FORMAT_VAR("%(directory)",	view_env.directory,	"."),
-		FORMAT_VAR("%(file)",		view_env.file,		""),
-		FORMAT_VAR("%(ref)",		view_env.ref,		"HEAD"),
-		FORMAT_VAR("%(head)",		view_env.head,		""),
-		FORMAT_VAR("%(commit)",		view_env.commit,	""),
-		FORMAT_VAR("%(blob)",		view_env.blob,		""),
-		FORMAT_VAR("%(branch)",		view_env.branch,	""),
-		FORMAT_VAR("%(stash)",		view_env.stash,		""),
-	};
-	int i;
-
-	if (!prefixcmp(name, "%(prompt")) {
-		const char *prompt = "Command argument: ";
-		char msgbuf[SIZEOF_STR];
-		const char *value;
-		const char *msgstart = name + STRING_SIZE("%(prompt");
-		int msglen = end - msgstart - 1;
-
-		if (end && msglen > 0 && string_format(msgbuf, "%.*s", msglen, msgstart)) {
-			const char *msg = msgbuf;
-
-			while (isspace(*msg))
-				msg++;
-			if (*msg)
-				prompt = msg;
-		}
-
-		value = read_prompt(prompt);
-		if (value == NULL)
-			return FALSE;
-		return string_format_from(format->buf, &format->bufpos, "%s", value);
-	}
-
-	for (i = 0; i < ARRAY_SIZE(vars); i++) {
-		const char *value;
-
-		if (strncmp(name, vars[i].name, vars[i].namelen))
-			continue;
-
-		if (vars[i].value == view_env.file && !format->file_filter)
-			return TRUE;
-
-		value = *vars[i].value ? vars[i].value : vars[i].value_if_empty;
-		if (!*value)
-			return TRUE;
-
-		return string_format_from(format->buf, &format->bufpos, "%s", value);
-	}
-
-	report("Unknown replacement: `%s`", name);
-	return FALSE;
-}
-
-static bool
-format_append_arg(struct format_context *format, const char ***dst_argv, const char *arg)
-{
-	memset(format->buf, 0, sizeof(format->buf));
-	format->bufpos = 0;
-
-	while (arg) {
-		char *var = strstr(arg, "%(");
-		int len = var ? var - arg : strlen(arg);
-		char *next = var ? strchr(var, ')') + 1 : NULL;
-
-		if (len && !string_format_from(format->buf, &format->bufpos, "%.*s", len, arg))
-			return FALSE;
-
-		if (var && !format_expand_arg(format, var, next))
-			return FALSE;
-
-		arg = next;
-	}
-
-	return argv_append(dst_argv, format->buf);
-}
-
-static bool
-format_append_argv(struct format_context *format, const char ***dst_argv, const char *src_argv[])
-{
-	int argc;
-
-	if (!src_argv)
-		return TRUE;
-
-	for (argc = 0; src_argv[argc]; argc++)
-		if (!format_append_arg(format, dst_argv, src_argv[argc]))
-			return FALSE;
-
-	return src_argv[argc] == NULL;
-}
-
-bool
-format_argv(struct view *view, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter)
-{
-	struct format_context format = { view, "", 0, file_filter };
-	int argc;
-
-	argv_free(*dst_argv);
-
-	for (argc = 0; src_argv[argc]; argc++) {
-		const char *arg = src_argv[argc];
-
-		if (!strcmp(arg, "%(fileargs)")) {
-			if (file_filter && !argv_append_array(dst_argv, opt_file_argv))
-				break;
-
-		} else if (!strcmp(arg, "%(diffargs)")) {
-			if (!format_append_argv(&format, dst_argv, opt_diff_options))
-				break;
-
-		} else if (!strcmp(arg, "%(blameargs)")) {
-			if (!format_append_argv(&format, dst_argv, opt_blame_options))
-				break;
-
-		} else if (!strcmp(arg, "%(cmdlineargs)")) {
-			if (!format_append_argv(&format, dst_argv, opt_cmdline_argv))
-				break;
-
-		} else if (!strcmp(arg, "%(revargs)") ||
-			   (first && !strcmp(arg, "%(commit)"))) {
-			if (!argv_append_array(dst_argv, opt_rev_argv))
-				break;
-
-		} else if (!format_append_arg(&format, dst_argv, arg)) {
-			break;
-		}
-	}
-
-	return src_argv[argc] == NULL;
-}
-
 static bool
 restore_view_position(struct view *view)
 {
@@ -682,7 +533,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 		bool file_filter = !view_has_flags(view, VIEW_FILE_FILTER) || opt_file_filter;
 
 		view->dir = dir;
-		if (!format_argv(view, &view->argv, argv, !view->prev, file_filter)) {
+		if (!format_argv(view->env, &view->argv, argv, !view->prev, file_filter)) {
 			report("Failed to format %s arguments", view->name);
 			return FALSE;
 		}
@@ -1100,8 +951,6 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 #include "stash.h"
 #include "pager.h"
 #include "help.h"
-
-struct view_env view_env = { "HEAD", "HEAD" };
 
 struct view views[] = {
 #define VIEW_DATA(id, name) \

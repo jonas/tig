@@ -172,7 +172,7 @@ open_run_request(struct view *view, enum request request)
 		return request;
 	}
 
-	if (format_argv(view, &argv, req->argv, FALSE, TRUE)) {
+	if (format_argv(view->env, &argv, req->argv, FALSE, TRUE)) {
 		if (req->internal) {
 			char cmd[SIZEOF_STR];
 
@@ -668,7 +668,7 @@ run_prompt_command(struct view *view, char *cmd)
 
 		if (!argv_from_string(argv, &argc, cmd)) {
 			report("Too many arguments");
-		} else if (!format_argv(view, &next->argv, argv, FALSE, TRUE)) {
+		} else if (!format_argv(view->env, &next->argv, argv, FALSE, TRUE)) {
 			report("Argument formatting failed");
 		} else {
 			next->dir = NULL;

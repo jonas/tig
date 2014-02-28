@@ -34,5 +34,24 @@ bool argv_copy(const char ***dst, const char *src[]);
 bool argv_remove_quotes(const char *argv[]);
 bool argv_contains(const char **argv, const char *arg);
 
+struct view_env {
+	char commit[SIZEOF_REF];
+	char head[SIZEOF_REF];
+	char blob[SIZEOF_REF];
+	char branch[SIZEOF_REF];
+	char status[SIZEOF_STR];
+	char stash[SIZEOF_REF];
+	char directory[SIZEOF_STR];
+	char file[SIZEOF_STR];
+	char ref[SIZEOF_REF];
+	unsigned long lineno;
+	char search[SIZEOF_STR];
+	char none[1];
+};
+
+extern struct view_env view_env;
+
+bool format_argv(struct view_env *view_env, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter);
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */
