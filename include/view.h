@@ -65,7 +65,7 @@ struct view {
 	const char *name;	/* View name */
 
 	struct view_ops *ops;	/* View operations */
-	struct view_env *env;	/* View variables. */
+	struct argv_env *env;	/* View variables. */
 
 	char ref[SIZEOF_REF];	/* Hovered commit reference */
 	char vid[SIZEOF_REF];	/* View ID. Set to id member when updating. */

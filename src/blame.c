@@ -26,7 +26,7 @@
  *
  * Loading the blame view is a two phase job:
  *
- *  1. File content is read either using view_env.file from the
+ *  1. File content is read either using argv_env.file from the
  *     filesystem or using git-cat-file.
  *  2. Then blame information is incrementally added by
  *     reading output from git-blame.
@@ -524,7 +524,7 @@ blame_select(struct view *view, struct line *line)
 struct view_ops blame_ops = {
 	"line",
 	{ "blame" },
-	view_env.commit,
+	argv_env.commit,
 	VIEW_ALWAYS_LINENO | VIEW_SEND_CHILD_ENTER,
 	sizeof(struct blame_state),
 	blame_open,

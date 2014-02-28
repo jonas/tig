@@ -172,7 +172,7 @@ open_run_request(struct view *view, enum request request)
 		return request;
 	}
 
-	if (format_argv(view->env, &argv, req->argv, FALSE, TRUE)) {
+	if (argv_format(view->env, &argv, req->argv, FALSE, TRUE)) {
 		if (req->internal) {
 			char cmd[SIZEOF_STR];
 
@@ -579,7 +579,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 			} else if (strlen(opt) >= 2 && *opt == '+' && string_isnumber(opt + 1)) {
 				int lineno = atoi(opt + 1);
 
-				view_env.lineno = lineno > 0 ? lineno - 1 : 0;
+				argv_env.lineno = lineno > 0 ? lineno - 1 : 0;
 				continue;
 
 			}
@@ -668,7 +668,7 @@ run_prompt_command(struct view *view, char *cmd)
 
 		if (!argv_from_string(argv, &argc, cmd)) {
 			report("Too many arguments");
-		} else if (!format_argv(view->env, &next->argv, argv, FALSE, TRUE)) {
+		} else if (!argv_format(view->env, &next->argv, argv, FALSE, TRUE)) {
 			report("Argument formatting failed");
 		} else {
 			next->dir = NULL;
@@ -843,8 +843,8 @@ main(int argc, const char *argv[])
 			char *search = read_prompt(prompt);
 
 			if (search)
-				string_ncopy(view_env.search, search, strlen(search));
-			else if (*view_env.search)
+				string_ncopy(argv_env.search, search, strlen(search));
+			else if (*argv_env.search)
 				request = request == REQ_SEARCH ?
 					REQ_FIND_NEXT :
 					REQ_FIND_PREV;

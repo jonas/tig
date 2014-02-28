@@ -199,13 +199,13 @@ argv_copy(const char ***dst, const char *src[])
  */
 
 struct format_context {
-	struct view_env *view_env;
+	struct argv_env *argv_env;
 	char buf[SIZEOF_STR];
 	size_t bufpos;
 	bool file_filter;
 };
 
-struct view_env view_env = { "HEAD", "HEAD" };
+struct argv_env argv_env = { "HEAD", "HEAD" };
 
 static bool
 format_expand_arg(struct format_context *format, const char *name, const char *end)
@@ -218,14 +218,14 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 	} vars[] = {
 #define FORMAT_VAR(name, value, value_if_empty) \
 	{ name, STRING_SIZE(name), value, value_if_empty }
-		FORMAT_VAR("%(directory)",	view_env.directory,	"."),
-		FORMAT_VAR("%(file)",		view_env.file,		""),
-		FORMAT_VAR("%(ref)",		view_env.ref,		"HEAD"),
-		FORMAT_VAR("%(head)",		view_env.head,		""),
-		FORMAT_VAR("%(commit)",		view_env.commit,	""),
-		FORMAT_VAR("%(blob)",		view_env.blob,		""),
-		FORMAT_VAR("%(branch)",		view_env.branch,	""),
-		FORMAT_VAR("%(stash)",		view_env.stash,		""),
+		FORMAT_VAR("%(directory)",	argv_env.directory,	"."),
+		FORMAT_VAR("%(file)",		argv_env.file,		""),
+		FORMAT_VAR("%(ref)",		argv_env.ref,		"HEAD"),
+		FORMAT_VAR("%(head)",		argv_env.head,		""),
+		FORMAT_VAR("%(commit)",		argv_env.commit,	""),
+		FORMAT_VAR("%(blob)",		argv_env.blob,		""),
+		FORMAT_VAR("%(branch)",		argv_env.branch,	""),
+		FORMAT_VAR("%(stash)",		argv_env.stash,		""),
 	};
 	int i;
 
@@ -257,7 +257,7 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 		if (strncmp(name, vars[i].name, vars[i].namelen))
 			continue;
 
-		if (vars[i].value == view_env.file && !format->file_filter)
+		if (vars[i].value == argv_env.file && !format->file_filter)
 			return TRUE;
 
 		value = *vars[i].value ? vars[i].value : vars[i].value_if_empty;
@@ -310,9 +310,9 @@ format_append_argv(struct format_context *format, const char ***dst_argv, const 
 }
 
 bool
-format_argv(struct view_env *view_env, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter)
+argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter)
 {
-	struct format_context format = { view_env, "", 0, file_filter };
+	struct format_context format = { argv_env, "", 0, file_filter };
 	int argc;
 
 	argv_free(*dst_argv);

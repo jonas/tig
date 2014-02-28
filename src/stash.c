@@ -36,7 +36,7 @@ stash_select(struct view *view, struct line *line)
 struct view_ops stash_ops = {
 	"stash",
 	{ "stash" },
-	view_env.stash,
+	argv_env.stash,
 	VIEW_SEND_CHILD_ENTER | VIEW_REFRESH,
 	sizeof(struct main_state),
 	stash_open,

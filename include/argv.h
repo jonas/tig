@@ -34,7 +34,7 @@ bool argv_copy(const char ***dst, const char *src[]);
 bool argv_remove_quotes(const char *argv[]);
 bool argv_contains(const char **argv, const char *arg);
 
-struct view_env {
+struct argv_env {
 	char commit[SIZEOF_REF];
 	char head[SIZEOF_REF];
 	char blob[SIZEOF_REF];
@@ -49,9 +49,9 @@ struct view_env {
 	char none[1];
 };
 
-extern struct view_env view_env;
+extern struct argv_env argv_env;
 
-bool format_argv(struct view_env *view_env, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter);
+bool argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

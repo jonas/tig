@@ -533,7 +533,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 		bool file_filter = !view_has_flags(view, VIEW_FILE_FILTER) || opt_file_filter;
 
 		view->dir = dir;
-		if (!format_argv(view->env, &view->argv, argv, !view->prev, file_filter)) {
+		if (!argv_format(view->env, &view->argv, argv, !view->prev, file_filter)) {
 			report("Failed to format %s arguments", view->name);
 			return FALSE;
 		}
@@ -954,7 +954,7 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 
 struct view views[] = {
 #define VIEW_DATA(id, name) \
-	{ #name, &name##_ops, &view_env }
+	{ #name, &name##_ops, &argv_env }
 	VIEW_INFO(VIEW_DATA)
 };
 

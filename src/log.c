@@ -78,7 +78,7 @@ log_request(struct view *view, enum request request, struct line *line)
 struct view_ops log_ops = {
 	"line",
 	{ "log" },
-	view_env.head,
+	argv_env.head,
 	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER | VIEW_LOG_LIKE | VIEW_REFRESH,
 	sizeof(struct log_state),
 	log_open,

@@ -477,7 +477,7 @@ diff_select(struct view *view, struct line *line)
 struct view_ops diff_ops = {
 	"line",
 	{ "diff" },
-	view_env.commit,
+	argv_env.commit,
 	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_FILE_FILTER | VIEW_REFRESH,
 	sizeof(struct diff_state),
 	diff_open,

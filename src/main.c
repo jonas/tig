@@ -592,7 +592,7 @@ main_select(struct view *view, struct line *line)
 struct view_ops main_ops = {
 	"commit",
 	{ "main" },
-	view_env.head,
+	argv_env.head,
 	VIEW_SEND_CHILD_ENTER | VIEW_FILE_FILTER | VIEW_LOG_LIKE | VIEW_REFRESH,
 	sizeof(struct main_state),
 	main_open,

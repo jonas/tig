@@ -77,7 +77,7 @@ blob_request(struct view *view, enum request request, struct line *line)
 struct view_ops blob_ops = {
 	"line",
 	{ "blob" },
-	view_env.blob,
+	argv_env.blob,
 	VIEW_NO_FLAGS,
 	0,
 	blob_open,
