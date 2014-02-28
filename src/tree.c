@@ -252,7 +252,7 @@ tree_read(struct view *view, char *text)
 
 	/* Strip the path part ... */
 	if (*view->env->directory) {
-		size_t pathlen = textlen - SIZEOF_TREE_ATTR;
+		size_t pathlen = strlen(path);
 		size_t striplen = strlen(view->env->directory);
 
 		if (pathlen > striplen)
