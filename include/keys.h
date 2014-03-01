@@ -32,7 +32,7 @@ struct keymap {
 };
 
 void add_keymap(struct keymap *keymap);
-struct keymap *get_keymap(const char *name);
+struct keymap *get_keymap(const char *name, size_t namelen);
 struct keymap *get_keymaps(void);
 
 const char *get_key_name(int key_value);

@@ -91,35 +91,40 @@ enum line_type {
 };
 
 struct line_info {
+	struct line_info *next;	/* List of line info matching this line type. */
+	const char *prefix;	/* View (or keymap) name. */
+	int fg, bg, attr;	/* Color and text attributes for the lines. */
+	int color_pair;
+};
+
+struct line_rule {
 	const char *name;	/* Option name. */
 	int namelen;		/* Size of option name. */
 	const char *line;	/* The start of line to match. */
 	int linelen;		/* Size of string to match. */
-	int fg, bg, attr;	/* Color and text attributes for the lines. */
-	int color_pair;
+	struct line_info info;	/* List of line info matching this rule. */
 };
 
 enum line_type get_line_type(const char *line);
 enum line_type get_line_type_from_ref(const struct ref *ref);
 
-struct line_info *get_line_info(enum line_type type);
-struct line_info *find_line_info(const char *name, size_t namelen, bool line_only);
-struct line_info *add_custom_color(const char *quoted_line);
+struct line_info *get_line_info(const char *prefix, enum line_type type);
+struct line_info *add_line_rule(const char *prefix, struct line_rule *rule);
 void init_colors(void);
 
 /* Color IDs must be 1 or higher. [GH #15] */
 #define COLOR_ID(line_type)		((line_type) + 1)
 
 static inline int
-get_line_color(enum line_type type)
+get_line_color(const char *prefix, enum line_type type)
 {
-	return COLOR_ID(get_line_info(type)->color_pair);
+	return COLOR_ID(get_line_info(prefix, type)->color_pair);
 }
 
 static inline int
-get_line_attr(enum line_type type)
+get_line_attr(const char *prefix, enum line_type type)
 {
-	struct line_info *info = get_line_info(type);
+	struct line_info *info = get_line_info(prefix, type);
 
 	return COLOR_PAIR(COLOR_ID(info->color_pair)) | info->attr;
 }

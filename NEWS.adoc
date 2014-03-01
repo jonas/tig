@@ -24,6 +24,8 @@ Incompatibilities:
    arguments and those passed on the command line. (GH #228)
  - Remove built-in keybinding for `git gc`. Add the following line to `~/.tigrc`
    to restore it: `bind generic G ?git gc`.
+ - To support view specific colors, '.' can no longer be used interchangeably
+   with '-' and '_' in settings names and in particular color names.
 
 Improvements:
 
@@ -51,6 +53,7 @@ Improvements:
    commands by running: `TIGRC_SYSTEM=~/.tigrc.safe tig`. (GH #235)
  - Open editor at line number for combined diffs e.g. diffs of unmerged files.
  - Copy `-S<search-string>` to search buffer so `find-next` works as expected.
+ - Support view specific colors: `color stage.diff-add yellow default`.
 
 Bug fixes:
 

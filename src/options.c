@@ -207,20 +207,52 @@ set_color(int *color, const char *name)
 	return parse_int(color, name, 0, 255) == SUCCESS;
 }
 
+#define is_quoted(c)	((c) == '"' || (c) == '\'')
+
+static enum status_code
+parse_color_name(const char *color, struct line_rule *rule, const char **prefix_ptr)
+{
+	const char *prefixend = is_quoted(*color) ? NULL : strchr(color, '.');
+
+	if (prefixend) {
+		struct keymap *keymap = get_keymap(color, prefixend - color);
+
+		io_trace(" => %s\n", color);
+		io_trace(" => %.*s\n", prefixend - color, color);
+		if (!keymap)
+			return ERROR_UNKNOWN_KEY_MAP;
+		*prefix_ptr = keymap->name;
+		color = prefixend + 1;
+	}
+
+	if (is_quoted(*color)) {
+		rule->line = color + 1;
+		rule->linelen = strlen(color) - 2;
+	} else {
+		rule->name = color;
+		rule->namelen = strlen(color);
+	}
+
+	return SUCCESS;
+}
+
 /* Wants: object fgcolor bgcolor [attribute] */
 static enum status_code
 option_color_command(int argc, const char *argv[])
 {
+	struct line_rule rule = {};
+	const char *prefix = NULL;
 	struct line_info *info;
+	enum status_code code;
 
 	if (argc < 3)
 		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;
 
-	if (*argv[0] == '"' || *argv[0] == '\'') {
-		info = add_custom_color(argv[0]);
-	} else {
-		info = find_line_info(argv[0], strlen(argv[0]), FALSE);
-	}
+	code = parse_color_name(argv[0], &rule, &prefix);
+	if (code != SUCCESS)
+		return code;
+
+	info = add_line_rule(prefix, &rule);
 	if (!info) {
 		static const struct enum_map_entry obsolete[] = {
 			ENUM_MAP_ENTRY("main-delim",	LINE_DELIMITER),
@@ -232,7 +264,7 @@ option_color_command(int argc, const char *argv[])
 
 		if (!map_enum(&index, obsolete, argv[0]))
 			return ERROR_UNKNOWN_COLOR_NAME;
-		info = get_line_info(index);
+		info = get_line_info(NULL, index);
 	}
 
 	if (!set_color(&info->fg, argv[1]) ||
@@ -498,7 +530,7 @@ option_bind_command(int argc, const char *argv[])
 	if (argc < 3)
 		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;
 
-	if (!(keymap = get_keymap(argv[0])))
+	if (!(keymap = get_keymap(argv[0], strlen(argv[0]))))
 		return ERROR_UNKNOWN_KEY_MAP;
 
 	key = get_key_value(argv[1]);
@@ -769,7 +801,7 @@ set_work_tree(const char *value)
 static void
 parse_git_color_option(enum line_type type, char *value)
 {
-	struct line_info *info = get_line_info(type);
+	struct line_info *info = get_line_info(NULL, type);
 	const char *argv[SIZEOF_ARG];
 	int argc = 0;
 	bool first_color = TRUE;

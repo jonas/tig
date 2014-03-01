@@ -647,6 +647,8 @@ color diff-header	yellow	default
 color diff-index	blue	default
 color diff-chunk	magenta	default
 color "Reported-by:"	green	default
+# View specific color
+color tree.date		black	cyan	bold
 --------------------------------------------------------------------------
 
 Or in the Git configuration files:
@@ -654,10 +656,13 @@ Or in the Git configuration files:
 --------------------------------------------------------------------------
 [tig "color"]
 	# A strange looking cursor line
-	cursor		red	default underline
+	cursor		= red	default underline
 	# UI colors
-	title-blur	white	blue
-	title-focus	white	blue	bold
+	title-blur	= white	blue
+	title-focus	= white	blue	bold
+# View specific color
+[tig "color.tree"]
+	date		= cyan	default	bold
 ------------------------------------------------------------------------------
 
 Area names::
@@ -666,8 +671,10 @@ Area names::
 	latter allows custom color rules to be added for lines matching a
 	quoted string.
 	Valid built-in area names are described below. Note, all names are
-	case-insensitive, and you may use '-', '_', and '.' interchangeably,
-	e.g. "Diff-Header", "DIFF_HEADER", and "diff.header" are the same.
+	case-insensitive, and you may use '-', and '_' interchangeably,
+	e.g. "Diff-Header" and "DIFF_HEADER" are the same.
+	View specific colors can be defined by prefixing the view name to
+	the area name, e.g. "stage.diff-chunk" and "diff.diff-chunk".
 
 Color names::
 

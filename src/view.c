@@ -648,9 +648,9 @@ update_view_title(struct view *view)
 	assert(view_is_displayed(view));
 
 	if (view == display[current_view])
-		wbkgdset(window, get_line_attr(LINE_TITLE_FOCUS));
+		wbkgdset(window, get_view_attr(view, LINE_TITLE_FOCUS));
 	else
-		wbkgdset(window, get_line_attr(LINE_TITLE_BLUR));
+		wbkgdset(window, get_view_attr(view, LINE_TITLE_BLUR));
 
 	werase(window);
 	mvwprintw(window, 0, 0, "[%s]", view->name);

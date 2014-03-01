@@ -42,12 +42,12 @@ add_keymap(struct keymap *keymap)
 }
 
 struct keymap *
-get_keymap(const char *name)
+get_keymap(const char *name, size_t namelen)
 {
 	struct keymap *keymap = keymaps;
 
 	while (keymap) {
-		if (!strcasecmp(keymap->name, name))
+		if (!strncasecmp(keymap->name, name, namelen))
 			return keymap;
 		keymap = keymap->next;
 	}

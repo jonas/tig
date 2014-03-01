@@ -130,7 +130,7 @@ redraw_display_separator(bool clear)
 
 		if (clear)
 			wclear(display_sep);
-		wbkgd(display_sep, separator + get_line_attr(LINE_TITLE_BLUR));
+		wbkgd(display_sep, separator + get_line_attr(NULL, LINE_TITLE_BLUR));
 		wnoutrefresh(display_sep);
 	}
 }
@@ -338,7 +338,7 @@ init_display(void)
 
 	/* Enable keyboard mapping */
 	keypad(status_win, TRUE);
-	wbkgdset(status_win, get_line_attr(LINE_STATUS));
+	wbkgdset(status_win, get_line_attr(NULL, LINE_STATUS));
 #ifdef NCURSES_MOUSE_VERSION
 	/* Enable mouse */
 	if (opt_mouse){

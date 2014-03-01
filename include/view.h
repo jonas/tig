@@ -262,6 +262,9 @@ find_line_by_type(struct view *view, struct line *line, enum line_type type, int
 #define is_initial_view(view) (!(view)->prev && !(view)->argv)
 #define failed_to_load_initial_view(view) (!(view)->prev && !(view)->lines)
 
+#define get_view_color(view, type)	get_line_color((view)->ops->keymap.name, type)
+#define get_view_attr(view, type)	get_line_attr((view)->ops->keymap.name, type)
+
 /*
  * Incremental updating
  */

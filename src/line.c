@@ -17,13 +17,13 @@
 #include "line.h"
 #include "util.h"
 
-static struct line_info *line_info;
-static size_t line_infos;
+static struct line_rule *line_rule;
+static size_t line_rules;
 
 static struct line_info **color_pair;
 static size_t color_pairs;
 
-DEFINE_ALLOCATOR(realloc_line_info, struct line_info, 8)
+DEFINE_ALLOCATOR(realloc_line_rule, struct line_rule, 8)
 DEFINE_ALLOCATOR(realloc_color_pair, struct line_info *, 8)
 
 enum line_type
@@ -32,11 +32,14 @@ get_line_type(const char *line)
 	int linelen = strlen(line);
 	enum line_type type;
 
-	for (type = 0; type < line_infos; type++)
+	for (type = 0; type < line_rules; type++) {
+		struct line_rule *rule = &line_rule[type];
+
 		/* Case insensitive search matches Signed-off-by lines better. */
-		if (line_info[type].linelen && linelen >= line_info[type].linelen &&
-		    !strncasecmp(line_info[type].line, line, line_info[type].linelen))
+		if (rule->linelen && linelen >= rule->linelen &&
+		    !strncasecmp(rule->line, line, rule->linelen))
 			return type;
+	}
 
 	return LINE_DEFAULT;
 }
@@ -61,71 +64,95 @@ get_line_type_from_ref(const struct ref *ref)
 }
 
 struct line_info *
-get_line_info(enum line_type type)
+get_line_info(const char *prefix, enum line_type type)
 {
-	assert(type < line_infos);
-	return &line_info[type];
+	struct line_info *info;
+	struct line_rule *rule;
+
+	assert(type < line_rules);
+	rule = &line_rule[type];
+	for (info = &rule->info; info; info = info->next) {
+		if (prefix && info->prefix == prefix)
+			return info;
+		if (!prefix && !info->prefix)
+			return info;
+	}
+
+	return &rule->info;
 }
 
 static struct line_info *
-add_line_info(const char *name, size_t namelen, const char *line, size_t linelen)
+init_line_info(const char *prefix, const char *name, size_t namelen, const char *line, size_t linelen)
 {
-	struct line_info *info = NULL;
+	struct line_rule *rule;
 
-	if (!realloc_line_info(&line_info, line_infos, 1))
+	if (!realloc_line_rule(&line_rule, line_rules, 1))
 		die("Failed to allocate line info");
 
-	info = &line_info[line_infos++];
-	info->name = name;
-	info->namelen = namelen;
-	info->line = line;
-	info->linelen = linelen;
+	rule = &line_rule[line_rules++];
+	rule->name = name;
+	rule->namelen = namelen;
+	rule->line = line;
+	rule->linelen = linelen;
 
-	return info;
+	rule->info.prefix = prefix;
+	rule->info.fg = COLOR_DEFAULT;
+	rule->info.bg = COLOR_DEFAULT;
+
+	return &rule->info;
 }
 
-#define ADD_LINE_INFO(type, line) \
-	add_line_info(#type, STRING_SIZE(#type), (line), STRING_SIZE(line))
+#define INIT_BUILTIN_LINE_INFO(type, line) \
+	init_line_info(NULL, #type, STRING_SIZE(#type), (line), STRING_SIZE(line))
 
-struct line_info *
-find_line_info(const char *name, size_t namelen, bool line_only)
+static struct line_rule *
+find_line_rule(struct line_rule *query)
 {
 	enum line_type type;
 
-	if (!line_infos) {
-		LINE_INFO(ADD_LINE_INFO);
+	if (!line_rules) {
+		LINE_INFO(INIT_BUILTIN_LINE_INFO);
 	}
 
-	for (type = 0; type < line_infos; type++) {
-		struct line_info *info = &line_info[type];
+	for (type = 0; type < line_rules; type++) {
+		struct line_rule *rule = &line_rule[type];
 
-		if (!line_only && enum_equals(*info, name, namelen))
-			return info;
-		if (info->linelen && namelen >= info->linelen &&
-		    !strncasecmp(info->line, name, info->linelen))
-			return info;
+		if (query->namelen && enum_equals(*rule, query->name, query->namelen))
+			return rule;
+
+		if (query->linelen && query->linelen == rule->linelen &&
+		    !strncasecmp(rule->line, query->line, rule->linelen))
+			return rule;
 	}
 
 	return NULL;
 }
 
 struct line_info *
-add_custom_color(const char *quoted_line)
+add_line_rule(const char *prefix, struct line_rule *query)
 {
-	size_t linelen = strlen(quoted_line) - 2;
-	struct line_info *info = find_line_info(quoted_line + 1, linelen, TRUE);
-	char *line;
+	struct line_rule *rule = find_line_rule(query);
+	struct line_info *info, *last;
 
+	if (!rule) {
+		if (query->name)
+			return NULL;
+
+		/* Quoted line. */
+		query->line = strndup(query->line, query->linelen);
+		if (!query->line)
+			return NULL;
+		return init_line_info(prefix, "", 0, query->line, query->linelen);
+	}
+
+	for (info = &rule->info; info; last = info, info = info->next)
+		if (info->prefix == prefix)
+			return info;
+
+	info = calloc(1, sizeof(*info));
 	if (info)
-		return info;
-
-	line = strndup(quoted_line + 1, linelen);
-	if (!line)
-		return NULL;
-
-	info = add_line_info(line, linelen, line, linelen);
-	if (!info)
-		free(line);
+		info->prefix = prefix;
+	last->next = info;
 	return info;
 }
 
@@ -155,8 +182,8 @@ init_line_info_color_pair(struct line_info *info, enum line_type type,
 void
 init_colors(void)
 {
-	int default_bg = line_info[LINE_DEFAULT].bg;
-	int default_fg = line_info[LINE_DEFAULT].fg;
+	int default_bg = line_rule[LINE_DEFAULT].info.bg;
+	int default_fg = line_rule[LINE_DEFAULT].info.fg;
 	enum line_type type;
 
 	start_color();
@@ -166,10 +193,13 @@ init_colors(void)
 		default_fg = COLOR_WHITE;
 	}
 
-	for (type = 0; type < line_infos; type++) {
-		struct line_info *info = &line_info[type];
+	for (type = 0; type < line_rules; type++) {
+		struct line_rule *rule = &line_rule[type];
+		struct line_info *info = &rule->info;
 
-		init_line_info_color_pair(info, type, default_bg, default_fg);
+		for (info = &rule->info; info; info = info->next) {
+			init_line_info_color_pair(info, type, default_bg, default_fg);
+		}
 	}
 }
 

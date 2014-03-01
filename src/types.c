@@ -23,7 +23,7 @@ string_enum_compare(const char *str1, const char *str2, int len)
 {
 	size_t i;
 
-#define string_enum_sep(x) ((x) == '-' || (x) == '_' || (x) == '.')
+#define string_enum_sep(x) ((x) == '-' || (x) == '_')
 
 	/* Diff-Header == DIFF_HEADER */
 	for (i = 0; i < len; i++) {

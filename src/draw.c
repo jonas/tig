@@ -23,8 +23,8 @@ static inline void
 set_view_attr(struct view *view, enum line_type type)
 {
 	if (!view->curline->selected && view->curtype != type) {
-		(void) wattrset(view->win, get_line_attr(type));
-		wchgat(view->win, -1, 0, get_line_color(type), NULL);
+		(void) wattrset(view->win, get_view_attr(view, type));
+		wchgat(view->win, -1, 0, get_view_color(view, type), NULL);
 		view->curtype = type;
 	}
 }
