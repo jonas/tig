@@ -194,6 +194,7 @@ override CPPFLAGS += $(COMPAT_CPPFLAGS)
 TIG_OBJS = \
 	src/tig.o \
 	src/types.o \
+	src/string.o \
 	src/util.o \
 	src/argv.o \
 	src/io.o \
@@ -226,10 +227,10 @@ TIG_OBJS = \
 
 src/tig: $(TIG_OBJS)
 
-TEST_GRAPH_OBJS = test/test-graph.o src/util.o src/io.o src/graph.o $(COMPAT_OBJS)
+TEST_GRAPH_OBJS = test/test-graph.o src/string.o src/util.o src/io.o src/graph.o $(COMPAT_OBJS)
 test/test-graph: $(TEST_GRAPH_OBJS)
 
-DOC_GEN_OBJS = tools/doc-gen.o src/types.o src/util.o src/request.o
+DOC_GEN_OBJS = tools/doc-gen.o src/string.o src/types.o src/util.o src/request.o
 tools/doc-gen: $(DOC_GEN_OBJS)
 
 OBJS = $(sort $(TIG_OBJS) $(TEST_GRAPH_OBJS) $(DOC_GEN_OBJS))
