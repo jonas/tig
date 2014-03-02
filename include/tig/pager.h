@@ -11,12 +11,20 @@
  * GNU General Public License for more details.
  */
 
-#ifndef TIG_HELP_H
-#define TIG_HELP_H
+#ifndef TIG_PAGER_H
+#define TIG_PAGER_H
 
-#include "view.h"
+#include "tig/view.h"
 
-extern struct view_ops help_ops;
+bool pager_draw(struct view *view, struct line *line, unsigned int lineno);
+bool pager_read(struct view *view, char *data);
+bool pager_common_read(struct view *view, const char *data, enum line_type type);
+enum request pager_request(struct view *view, enum request request, struct line *line);
+bool pager_grep(struct view *view, struct line *line);
+void pager_select(struct view *view, struct line *line);
+bool pager_open(struct view *view, enum open_flags flags);
+
+extern struct view_ops pager_ops;
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

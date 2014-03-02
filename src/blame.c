@@ -11,15 +11,15 @@
  * GNU General Public License for more details.
  */
 
-#include "io.h"
-#include "refs.h"
-#include "repo.h"
-#include "options.h"
-#include "parse.h"
-#include "display.h"
-#include "view.h"
-#include "draw.h"
-#include "git.h"
+#include "tig/io.h"
+#include "tig/refs.h"
+#include "tig/repo.h"
+#include "tig/options.h"
+#include "tig/parse.h"
+#include "tig/display.h"
+#include "tig/view.h"
+#include "tig/draw.h"
+#include "tig/git.h"
 
 /*
  * Blame backend

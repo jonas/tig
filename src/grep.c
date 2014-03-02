@@ -11,13 +11,13 @@
  * GNU General Public License for more details.
  */
 
-#include "refs.h"
-#include "options.h"
-#include "parse.h"
-#include "repo.h"
-#include "display.h"
-#include "draw.h"
-#include "grep.h"
+#include "tig/refs.h"
+#include "tig/options.h"
+#include "tig/parse.h"
+#include "tig/repo.h"
+#include "tig/display.h"
+#include "tig/draw.h"
+#include "tig/grep.h"
 
 struct grep_line {
 	const char *file;

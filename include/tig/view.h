@@ -14,11 +14,11 @@
 #ifndef TIG_VIEW_H
 #define TIG_VIEW_H
 
-#include "tig.h"
-#include "argv.h"
-#include "io.h"
-#include "line.h"
-#include "keys.h"
+#include "tig/tig.h"
+#include "tig/argv.h"
+#include "tig/io.h"
+#include "tig/line.h"
+#include "tig/keys.h"
 
 struct view_ops;
 

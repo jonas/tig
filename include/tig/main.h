@@ -14,9 +14,9 @@
 #ifndef TIG_MAIN_H
 #define TIG_MAIN_H
 
-#include "view.h"
-#include "graph.h"
-#include "util.h"
+#include "tig/view.h"
+#include "tig/graph.h"
+#include "tig/util.h"
 
 struct commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */

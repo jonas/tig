@@ -11,14 +11,14 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "options.h"
-#include "request.h"
-#include "line.h"
-#include "keys.h"
-#include "display.h"
-#include "view.h"
-#include "draw.h"
+#include "tig/tig.h"
+#include "tig/options.h"
+#include "tig/request.h"
+#include "tig/line.h"
+#include "tig/keys.h"
+#include "tig/display.h"
+#include "tig/view.h"
+#include "tig/draw.h"
 
 /*
  * Pager backend

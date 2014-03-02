@@ -11,8 +11,8 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "graph.h"
+#include "tig/tig.h"
+#include "tig/graph.h"
 
 DEFINE_ALLOCATOR(realloc_graph_columns, struct graph_column, 32)
 DEFINE_ALLOCATOR(realloc_graph_symbols, struct graph_symbol, 1)

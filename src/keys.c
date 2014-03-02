@@ -11,12 +11,12 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "types.h"
-#include "argv.h"
-#include "io.h"
-#include "keys.h"
-#include "util.h"
+#include "tig/tig.h"
+#include "tig/types.h"
+#include "tig/argv.h"
+#include "tig/io.h"
+#include "tig/keys.h"
+#include "tig/util.h"
 
 struct keybinding {
 	int alias;

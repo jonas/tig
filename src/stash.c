@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#include "main.h"
+#include "tig/main.h"
 
 static bool
 stash_open(struct view *view, enum open_flags flags)

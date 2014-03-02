@@ -11,10 +11,10 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "repo.h"
-#include "io.h"
-#include "refs.h"
+#include "tig/tig.h"
+#include "tig/repo.h"
+#include "tig/io.h"
+#include "tig/refs.h"
 
 #define REPO_INFO_GIT_DIR	"--git-dir"
 #define REPO_INFO_WORK_TREE	"--is-inside-work-tree"

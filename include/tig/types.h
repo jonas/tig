@@ -14,7 +14,7 @@
 #ifndef TIG_TYPES_H
 #define TIG_TYPES_H
 
-#include "tig.h"
+#include "tig/tig.h"
 
 /*
  * Enumerations

@@ -11,13 +11,13 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "argv.h"
-#include "repo.h"
-#include "options.h"
-#include "view.h"
-#include "draw.h"
-#include "display.h"
+#include "tig/tig.h"
+#include "tig/argv.h"
+#include "tig/repo.h"
+#include "tig/options.h"
+#include "tig/view.h"
+#include "tig/draw.h"
+#include "tig/display.h"
 
 /*
  * Navigation
@@ -939,19 +939,19 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
  */
 
 /* Included last to not pollute the rest of the file. */
-#include "main.h"
-#include "diff.h"
-#include "log.h"
-#include "tree.h"
-#include "blob.h"
-#include "blame.h"
-#include "branch.h"
-#include "status.h"
-#include "stage.h"
-#include "stash.h"
-#include "grep.h"
-#include "pager.h"
-#include "help.h"
+#include "tig/main.h"
+#include "tig/diff.h"
+#include "tig/log.h"
+#include "tig/tree.h"
+#include "tig/blob.h"
+#include "tig/blame.h"
+#include "tig/branch.h"
+#include "tig/status.h"
+#include "tig/stage.h"
+#include "tig/stash.h"
+#include "tig/grep.h"
+#include "tig/pager.h"
+#include "tig/help.h"
 
 struct view views[] = {
 #define VIEW_DATA(id, name) \

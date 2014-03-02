@@ -14,8 +14,8 @@
 #ifndef TIG_PARSE_H
 #define TIG_PARSE_H
 
-#include "tig.h"
-#include "util.h"
+#include "tig/tig.h"
+#include "tig/util.h"
 
 struct chunk_header_position {
 	unsigned long position;

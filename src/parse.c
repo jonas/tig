@@ -11,9 +11,9 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "util.h"
-#include "parse.h"
+#include "tig/tig.h"
+#include "tig/util.h"
+#include "tig/parse.h"
 
 size_t
 parse_size(const char *text, int *max_digits)

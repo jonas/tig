@@ -14,7 +14,7 @@
 #ifndef TIG_REFS_H
 #define TIG_REFS_H
 
-#include "tig.h"
+#include "tig/tig.h"
 
 struct ref {
 	char id[SIZEOF_REV];	/* Commit SHA1 ID */

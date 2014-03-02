@@ -14,7 +14,7 @@
 #ifndef TIG_LINE_H
 #define TIG_LINE_H
 
-#include "tig.h"
+#include "tig/tig.h"
 struct ref;
 
 /*

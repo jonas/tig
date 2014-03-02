@@ -11,15 +11,15 @@
  * GNU General Public License for more details.
  */
 
-#include "argv.h"
-#include "refs.h"
-#include "repo.h"
-#include "options.h"
-#include "display.h"
-#include "parse.h"
-#include "pager.h"
-#include "diff.h"
-#include "draw.h"
+#include "tig/argv.h"
+#include "tig/refs.h"
+#include "tig/repo.h"
+#include "tig/options.h"
+#include "tig/display.h"
+#include "tig/parse.h"
+#include "tig/pager.h"
+#include "tig/diff.h"
+#include "tig/draw.h"
 
 bool
 update_diff_context(enum request request)

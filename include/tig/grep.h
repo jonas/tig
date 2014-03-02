@@ -14,7 +14,7 @@
 #ifndef TIG_GREP_H
 #define TIG_GREP_H
 
-#include "view.h"
+#include "tig/view.h"
 
 void open_grep_view(struct view *prev);
 extern struct view_ops grep_ops;

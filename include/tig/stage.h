@@ -11,12 +11,12 @@
  * GNU General Public License for more details.
  */
 
-#ifndef TIG_BLOB_H
-#define TIG_BLOB_H
+#ifndef TIG_STAGE_H
+#define TIG_STAGE_H
 
-#include "view.h"
+#include "tig/view.h"
 
-extern struct view_ops blob_ops;
+extern struct view_ops stage_ops;
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

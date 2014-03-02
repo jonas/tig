@@ -11,9 +11,9 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "request.h"
-#include "util.h"
+#include "tig/tig.h"
+#include "tig/request.h"
+#include "tig/util.h"
 
 struct doc_action_iterator {
 	bool end_group;

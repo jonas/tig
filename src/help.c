@@ -11,10 +11,10 @@
  * GNU General Public License for more details.
  */
 
-#include "argv.h"
-#include "view.h"
-#include "draw.h"
-#include "pager.h"
+#include "tig/argv.h"
+#include "tig/view.h"
+#include "tig/draw.h"
+#include "tig/pager.h"
 
 /*
  * Help backend

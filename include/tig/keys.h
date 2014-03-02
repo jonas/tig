@@ -14,8 +14,8 @@
 #ifndef TIG_KEYS_H
 #define TIG_KEYS_H
 
-#include "tig.h"
-#include "request.h"
+#include "tig/tig.h"
+#include "tig/request.h"
 
 /*
  * Keys

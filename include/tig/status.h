@@ -14,8 +14,8 @@
 #ifndef TIG_STATUS_H
 #define TIG_STATUS_H
 
-#include "view.h"
-#include "line.h"
+#include "tig/view.h"
+#include "tig/line.h"
 
 struct status {
 	char status;

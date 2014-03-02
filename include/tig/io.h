@@ -14,7 +14,7 @@
 #ifndef TIG_IO_H
 #define TIG_IO_H
 
-#include "tig.h"
+#include "tig/tig.h"
 
 /*
  * Encoding conversion.

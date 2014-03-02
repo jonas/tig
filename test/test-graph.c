@@ -11,10 +11,10 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "util.h"
-#include "io.h"
-#include "graph.h"
+#include "tig/tig.h"
+#include "tig/util.h"
+#include "tig/io.h"
+#include "tig/graph.h"
 
 #define USAGE \
 "test-graph [--ascii]\n" \

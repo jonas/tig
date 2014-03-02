@@ -11,8 +11,8 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "io.h"
+#include "tig/tig.h"
+#include "tig/io.h"
 
 /*
  * Encoding conversion.

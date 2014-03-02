@@ -11,12 +11,12 @@
  * GNU General Public License for more details.
  */
 
-#include "refs.h"
-#include "parse.h"
-#include "display.h"
-#include "log.h"
-#include "pager.h"
-#include "tree.h"
+#include "tig/refs.h"
+#include "tig/parse.h"
+#include "tig/display.h"
+#include "tig/log.h"
+#include "tig/pager.h"
+#include "tig/tree.h"
 
 struct blob_state {
 	char commit[SIZEOF_REF];

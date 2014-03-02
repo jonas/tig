@@ -11,15 +11,15 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "types.h"
-#include "argv.h"
-#include "io.h"
-#include "repo.h"
-#include "options.h"
-#include "request.h"
-#include "line.h"
-#include "keys.h"
+#include "tig/tig.h"
+#include "tig/types.h"
+#include "tig/argv.h"
+#include "tig/io.h"
+#include "tig/repo.h"
+#include "tig/options.h"
+#include "tig/request.h"
+#include "tig/line.h"
+#include "tig/keys.h"
 
 /*
  * Option variables.

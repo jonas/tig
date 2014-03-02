@@ -11,17 +11,17 @@
  * GNU General Public License for more details.
  */
 
-#include "repo.h"
-#include "argv.h"
-#include "options.h"
-#include "parse.h"
-#include "display.h"
-#include "view.h"
-#include "draw.h"
-#include "git.h"
-#include "pager.h"
-#include "diff.h"
-#include "status.h"
+#include "tig/repo.h"
+#include "tig/argv.h"
+#include "tig/options.h"
+#include "tig/parse.h"
+#include "tig/display.h"
+#include "tig/view.h"
+#include "tig/draw.h"
+#include "tig/git.h"
+#include "tig/pager.h"
+#include "tig/diff.h"
+#include "tig/status.h"
 
 DEFINE_ALLOCATOR(realloc_ints, int, 32)
 

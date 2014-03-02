@@ -14,8 +14,8 @@
 #ifndef TIG_UTIL_H
 #define TIG_UTIL_H
 
-#include "tig.h"
-#include "types.h"
+#include "tig/tig.h"
+#include "tig/types.h"
 
 /*
  * Error handling.

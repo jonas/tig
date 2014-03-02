@@ -11,12 +11,12 @@
  * GNU General Public License for more details.
  */
 
-#ifndef TIG_BRANCH_H
-#define TIG_BRANCH_H
+#ifndef TIG_STASH_H
+#define TIG_STASH_H
 
-#include "view.h"
+#include "tig/view.h"
 
-extern struct view_ops branch_ops;
+extern struct view_ops stash_ops;
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

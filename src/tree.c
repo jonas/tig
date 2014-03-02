@@ -11,14 +11,14 @@
  * GNU General Public License for more details.
  */
 
-#include "util.h"
-#include "repo.h"
-#include "io.h"
-#include "parse.h"
-#include "options.h"
-#include "display.h"
-#include "view.h"
-#include "draw.h"
+#include "tig/util.h"
+#include "tig/repo.h"
+#include "tig/io.h"
+#include "tig/parse.h"
+#include "tig/options.h"
+#include "tig/display.h"
+#include "tig/view.h"
+#include "tig/draw.h"
 
 /* The top of the path stack. */
 static struct view_history tree_view_history = { sizeof(char *) };

@@ -11,14 +11,14 @@
  * GNU General Public License for more details.
  */
 
-#ifndef DRAW_H
-#define DRAW_H
+#ifndef TIG_DRAW_H
+#define TIG_DRAW_H
 
-#include "tig.h"
-#include "line.h"
-#include "view.h"
-#include "refs.h"
-#include "util.h"
+#include "tig/tig.h"
+#include "tig/line.h"
+#include "tig/view.h"
+#include "tig/refs.h"
+#include "tig/util.h"
 
 enum align {
 	ALIGN_LEFT,

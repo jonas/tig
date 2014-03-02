@@ -14,7 +14,7 @@
 #ifndef TIG_ARGV_H
 #define TIG_ARGV_H
 
-#include "tig.h"
+#include "tig/tig.h"
 
 /*
  * Argument array helpers.

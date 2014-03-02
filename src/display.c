@@ -11,14 +11,14 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "argv.h"
-#include "io.h"
-#include "repo.h"
-#include "options.h"
-#include "view.h"
-#include "draw.h"
-#include "display.h"
+#include "tig/tig.h"
+#include "tig/argv.h"
+#include "tig/io.h"
+#include "tig/repo.h"
+#include "tig/options.h"
+#include "tig/view.h"
+#include "tig/draw.h"
+#include "tig/display.h"
 
 struct view *display[2];
 unsigned int current_view;

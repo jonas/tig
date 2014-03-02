@@ -11,9 +11,9 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "draw.h"
-#include "options.h"
+#include "tig/tig.h"
+#include "tig/draw.h"
+#include "tig/options.h"
 
 /*
  * View drawing.

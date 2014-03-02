@@ -11,11 +11,11 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "argv.h"
-#include "io.h"
-#include "repo.h"
-#include "refs.h"
+#include "tig/tig.h"
+#include "tig/argv.h"
+#include "tig/io.h"
+#include "tig/repo.h"
+#include "tig/refs.h"
 
 static struct ref **refs = NULL;
 static size_t refs_size = 0;

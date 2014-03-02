@@ -14,8 +14,8 @@
 #ifndef TIG_OPTIONS_H
 #define TIG_OPTIONS_H
 
-#include "tig.h"
-#include "util.h"
+#include "tig/tig.h"
+#include "tig/util.h"
 
 /*
  * Option variables.

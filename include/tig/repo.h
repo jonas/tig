@@ -11,12 +11,23 @@
  * GNU General Public License for more details.
  */
 
-#ifndef TIG_BLAME_H
-#define TIG_BLAME_H
+#ifndef TIG_REPO_H
+#define TIG_REPO_H
 
-#include "view.h"
+#include "tig/tig.h"
 
-extern struct view_ops blame_ops;
+struct repo_info {
+	char head[SIZEOF_REF];
+	char remote[SIZEOF_REF];
+	char cdup[SIZEOF_STR];
+	char prefix[SIZEOF_STR];
+	char git_dir[SIZEOF_STR];
+	bool is_inside_work_tree;
+};
+
+extern struct repo_info repo;
+
+int load_repo_info(void);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

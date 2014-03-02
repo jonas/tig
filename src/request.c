@@ -11,9 +11,9 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "types.h"
-#include "request.h"
+#include "tig/tig.h"
+#include "tig/types.h"
+#include "tig/request.h"
 
 static const struct request_info req_info[] = {
 #define REQ_GROUP(help)	{ 0, NULL, 0, (help) },

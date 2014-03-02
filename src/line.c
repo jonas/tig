@@ -11,11 +11,11 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "types.h"
-#include "refs.h"
-#include "line.h"
-#include "util.h"
+#include "tig/tig.h"
+#include "tig/types.h"
+#include "tig/refs.h"
+#include "tig/line.h"
+#include "tig/util.h"
 
 static struct line_rule *line_rule;
 static size_t line_rules;

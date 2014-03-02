@@ -14,7 +14,7 @@
 #ifndef TIG_REQUEST_H
 #define TIG_REQUEST_H
 
-#include "tig.h"
+#include "tig/tig.h"
 
 /*
  * User requests

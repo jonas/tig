@@ -11,8 +11,8 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "types.h"
+#include "tig/tig.h"
+#include "tig/types.h"
 
 /*
  * Enumerations

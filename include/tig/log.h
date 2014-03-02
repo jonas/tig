@@ -11,14 +11,12 @@
  * GNU General Public License for more details.
  */
 
-#ifndef TIG_TREE_H
-#define TIG_TREE_H
+#ifndef TIG_LOG_H
+#define TIG_LOG_H
 
-#include "view.h"
+#include "tig/view.h"
 
-void open_blob_editor(const char *id, const char *name, unsigned int lineno);
-
-extern struct view_ops tree_ops;
+extern struct view_ops log_ops;
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

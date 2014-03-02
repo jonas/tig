@@ -11,10 +11,10 @@
  * GNU General Public License for more details.
  */
 
-#include "tig.h"
-#include "argv.h"
-#include "options.h"
-#include "display.h"
+#include "tig/tig.h"
+#include "tig/argv.h"
+#include "tig/options.h"
+#include "tig/display.h"
 
 bool
 argv_to_string(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep)

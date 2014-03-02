@@ -14,7 +14,7 @@
 #ifndef TIG_DISPLAY_H
 #define TIG_DISPLAY_H
 
-#include "tig.h"
+#include "tig/tig.h"
 
 enum input_status {
 	INPUT_OK,

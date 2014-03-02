@@ -11,10 +11,10 @@
  * GNU General Public License for more details.
  */
 
-#include "refs.h"
-#include "display.h"
-#include "log.h"
-#include "pager.h"
+#include "tig/refs.h"
+#include "tig/display.h"
+#include "tig/log.h"
+#include "tig/pager.h"
 
 struct log_state {
 	/* Used for tracking when we need to recalculate the previous

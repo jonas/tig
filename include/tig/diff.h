@@ -14,7 +14,7 @@
 #ifndef TIG_DIFF_H
 #define TIG_DIFF_H
 
-#include "view.h"
+#include "tig/view.h"
 
 struct diff_state {
 	bool after_commit_title;
