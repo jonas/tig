@@ -102,6 +102,7 @@ bind generic	h	view-help
 bind generic	S	view-status
 bind generic	c	view-stage
 bind generic	y	view-stash
+bind generic	G	view-grep
 
 # View manipulation
 bind generic	Enter	enter			# Enter and open selected entry

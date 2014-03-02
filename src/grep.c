@@ -77,25 +77,57 @@ grep_select(struct view *view, struct line *line)
 	string_ncopy(view->ref, grep->file, strlen(grep->file));
 }
 
+static const char *grep_args[] = {
+	"git", "grep", "--no-color", "-n", "-z", NULL
+};
+
+static const char **grep_argv;
+
+static bool
+grep_prompt(void)
+{
+	const char *argv[SIZEOF_ARG];
+	int argc = 0;
+	char *grep = read_prompt("grep: ");
+
+	if (!grep || !argv_from_string_no_quotes(argv, &argc, grep))
+		return FALSE;
+	if (grep_argv)
+		argv_free(grep_argv);
+	return argv_append_array(&grep_argv, argv);
+}
+
+void
+open_grep_view(struct view *prev)
+{
+	struct view *view = VIEW(REQ_VIEW_GREP);
+	bool in_grep_view = prev == view;
+
+	if (is_initial_view(view) || (view->lines && !in_grep_view)) {
+		open_view(prev, REQ_VIEW_GREP, OPEN_DEFAULT);
+	} else {
+		if (grep_prompt())
+			open_view(prev, REQ_VIEW_GREP, OPEN_RELOAD);
+	}
+}
+
 static bool
 grep_open(struct view *view, enum open_flags flags)
 {
-	static const char *grep_args[] = {
-		"git", "grep", "--no-color", "-n", "-z", NULL
-	};
 	struct grep_state *state = view->private;
-	const char **grep_argv = NULL;
+	const char **argv = NULL;
 
-	if (!argv_append_array(&grep_argv, grep_args) ||
-	    !argv_append_array(&grep_argv, opt_cmdline_argv))
-		die("Failed to split arguments");
-
-	if (!view->prev) {
+	if (is_initial_view(view)) {
+		grep_argv = opt_cmdline_argv;
 		opt_cmdline_argv = NULL;
 	}
 
+	if (!argv_append_array(&argv, grep_args) ||
+	    !argv_append_array(&argv, grep_argv))
+		return FALSE;
+
 	state->filename_width = opt_show_filename_width;
-	return begin_update(view, NULL, grep_argv, flags);
+	return begin_update(view, NULL, argv, flags);
 }
 
 static enum request
@@ -221,7 +253,7 @@ grep_grep(struct view *view, struct line *line)
 struct view_ops grep_ops = {
 	"line",
 	{ "grep" },
-	argv_env.head,
+	"grep",
 	VIEW_ALWAYS_LINENO | VIEW_CUSTOM_DIGITS | VIEW_REFRESH,
 	sizeof(struct grep_state),
 	grep_open,

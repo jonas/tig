@@ -30,6 +30,7 @@
 #include "options.h"
 #include "draw.h"
 #include "display.h"
+#include "grep.h"
 
 static bool
 forward_request_to_child(struct view *child, enum request request)
@@ -266,6 +267,10 @@ view_driver(struct view *view, enum request request)
 		scroll_view(view, request);
 		break;
 
+	case REQ_VIEW_GREP:
+		open_grep_view(view);
+		break;
+
 	case REQ_VIEW_MAIN:
 	case REQ_VIEW_DIFF:
 	case REQ_VIEW_LOG:
@@ -278,7 +283,6 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_STAGE:
 	case REQ_VIEW_PAGER:
 	case REQ_VIEW_STASH:
-	case REQ_VIEW_GREP:
 		open_view(view, request, OPEN_DEFAULT);
 		break;
 
