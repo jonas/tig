@@ -217,8 +217,6 @@ parse_color_name(const char *color, struct line_rule *rule, const char **prefix_
 	if (prefixend) {
 		struct keymap *keymap = get_keymap(color, prefixend - color);
 
-		io_trace(" => %s\n", color);
-		io_trace(" => %.*s\n", prefixend - color, color);
 		if (!keymap)
 			return ERROR_UNKNOWN_KEY_MAP;
 		*prefix_ptr = keymap->name;
