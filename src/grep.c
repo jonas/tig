@@ -168,6 +168,11 @@ grep_request(struct view *view, enum request request, struct line *line)
 		open_editor(grep->file, grep->lineno);
 		return REQ_NONE;
 
+	case REQ_VIEW_BLAME:
+		view->env->ref[0] = 0;
+		view->env->lineno = grep_view_lineno(grep);
+		return request;
+
 	default:
 		return request;
 	}

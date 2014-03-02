@@ -19,6 +19,7 @@
 #include "tree.h"
 
 struct blob_state {
+	char commit[SIZEOF_REF];
 	const char *file;
 };
 
@@ -31,8 +32,10 @@ blob_open(struct view *view, enum open_flags flags)
 	};
 	const char **argv = (flags & OPEN_PREPARED) ? view->argv : blob_argv;
 
-	if (argv != blob_argv)
+	if (argv != blob_argv) {
 		state->file = get_path(view->env->file);
+		state->commit[0] = 0;
+	}
 
 	if (!state->file && !view->env->blob[0] && view->env->file[0]) {
 		const char *commit = view->env->commit[0] ? view->env->commit : "HEAD";
@@ -46,6 +49,8 @@ blob_open(struct view *view, enum open_flags flags)
 			report("Failed to resolve blob from file name");
 			return FALSE;
 		}
+
+		string_ncopy(state->commit, commit, strlen(commit));
 	}
 
 	if (!state->file && !view->env->blob[0]) {
@@ -81,8 +86,8 @@ blob_request(struct view *view, enum request request, struct line *line)
 
 	switch (request) {
 	case REQ_VIEW_BLAME:
-		if (view->parent)
-			string_copy(view->env->ref, view->parent->vid);
+		string_ncopy(view->env->ref, state->commit, strlen(state->commit));
+		view->env->lineno = line - view->line;
 		return request;
 
 	case REQ_EDIT:
