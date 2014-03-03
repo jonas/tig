@@ -55,8 +55,27 @@ extern die_fn die_callback;
 void TIG_NORETURN die(const char *err, ...) PRINTF_LIKE(1, 2);
 void warn(const char *msg, ...) PRINTF_LIKE(1, 2);
 
+static inline int
+count_digits(unsigned long i)
+{
+	int digits;
+
+	for (digits = 0; i; digits++)
+		i /= 10;
+	return digits;
+}
+
+static inline int
+apply_step(double step, int value)
+{
+	if (step >= 1)
+		return (int) step;
+	value *= step + 0.01;
+	return value ? value : 1;
+}
+
 /*
- * Git data formatters and parsers.
+ * Git data formatters.
  */
 
 struct time {
@@ -80,6 +99,36 @@ const char *mkauthor(const struct ident *ident, int cols, enum author author);
 const char *mkmode(mode_t mode);
 
 #define author_trim(cols) (cols == 0 || cols > 10)
+
+/*
+ * Allocation helper.
+ */
+
+#define DEFINE_ALLOCATOR(name, type, chunk_size)				\
+static type *									\
+name(type **mem, size_t size, size_t increase)					\
+{										\
+	size_t num_chunks = (size + chunk_size - 1) / chunk_size;		\
+	size_t num_chunks_new = (size + increase + chunk_size - 1) / chunk_size;\
+	type *tmp = *mem;							\
+										\
+	if (mem == NULL || num_chunks != num_chunks_new) {			\
+		size_t newsize = num_chunks_new * chunk_size * sizeof(type);	\
+										\
+		tmp = realloc(tmp, newsize);					\
+		if (tmp) {							\
+			*mem = tmp;						\
+			if (num_chunks_new > num_chunks) {			\
+				size_t offset = num_chunks * chunk_size;	\
+				size_t oldsize = offset * sizeof(type);		\
+										\
+				memset(tmp + offset, 0,	newsize - oldsize);	\
+			}							\
+		}								\
+	}									\
+										\
+	return tmp;								\
+}
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

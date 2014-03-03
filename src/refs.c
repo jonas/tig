@@ -13,6 +13,7 @@
 
 #include "tig/tig.h"
 #include "tig/argv.h"
+#include "tig/util.h"
 #include "tig/io.h"
 #include "tig/repo.h"
 #include "tig/refs.h"

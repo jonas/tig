@@ -12,6 +12,7 @@
  */
 
 #include "tig/tig.h"
+#include "tig/util.h"
 #include "tig/graph.h"
 
 DEFINE_ALLOCATOR(realloc_graph_columns, struct graph_column, 32)
