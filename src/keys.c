@@ -90,7 +90,7 @@ get_keybinding(struct keymap *keymap, struct key_input *input)
 		if (!memcmp(&generic_keymap.data[i].input, input, sizeof(*input)))
 			return generic_keymap.data[i].request;
 
-	return (enum request) input->key;
+	return REQ_NONE;
 }
 
 
@@ -141,7 +141,15 @@ get_key_value(const char *name, struct key_input *input)
 
 	for (i = 0; i < ARRAY_SIZE(key_table); i++)
 		if (!strcasecmp(key_table[i].name, name)) {
-			input->key = key_table[i].value;
+			if (key_table[i].value == ' ') {
+				name = " ";
+				break;
+			}
+			if (key_table[i].value == '#') {
+				name = "#";
+				break;
+			}
+			input->data.key = key_table[i].value;
 			return OK;
 		}
 
@@ -153,8 +161,10 @@ get_key_value(const char *name, struct key_input *input)
 		name += 1;
 	}
 
-	if (strlen(name) == 1 && isprint(*name)) {
-		input->key = *name;
+	i = utf8_char_length(name);
+	if (strlen(name) == i && utf8_to_unicode(name, i) != 0) {
+		strncpy(input->data.bytes, name, i);
+		input->modifiers.multibytes = 1;
 		return OK;
 	}
 
@@ -164,25 +174,23 @@ get_key_value(const char *name, struct key_input *input)
 const char *
 get_key_name(const struct key_input *input)
 {
+	static char buf[SIZEOF_STR];
+	const char *modifier = "";
 	int key;
 
-	for (key = 0; key < ARRAY_SIZE(key_table); key++)
-		if (key_table[key].value == input->key)
-			return key_table[key].name;
-
-	if (input->key >= 0x20 && input->key < 0x7f) {
-		static char buf[SIZEOF_STR];
-		const char *modifier = "";
-		char key_char = input->key;
-
-		if (input->modifiers.escape)
-			modifier = "^[";
-		else if (input->modifiers.control)
-			modifier = "^";
-
-		if (string_format(buf, "'%s%c'", modifier, key_char))
-			return buf;
+	if (!input->modifiers.multibytes) {
+		for (key = 0; key < ARRAY_SIZE(key_table); key++)
+			if (key_table[key].value == input->data.key)
+				return key_table[key].name;
 	}
+
+	if (input->modifiers.escape)
+		modifier = "^[";
+	else if (input->modifiers.control)
+		modifier = "^";
+
+	if (string_format(buf, "'%s%s'", modifier, input->data.bytes))
+		return buf;
 
 	return "(no key)";
 }

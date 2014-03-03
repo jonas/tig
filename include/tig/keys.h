@@ -32,12 +32,24 @@ struct keymap {
 };
 
 struct key_input {
-	int key;
+	union {
+		int key;
+		char bytes[7];
+	} data;
 	struct {
 		bool escape:1;
 		bool control:1;
+		bool multibytes:1;
 	} modifiers;
 };
+
+static inline unsigned long
+key_input_to_unicode(struct key_input *input)
+{
+	return input->modifiers.multibytes
+		? utf8_to_unicode(input->data.bytes, strlen(input->data.bytes))
+		: 0;
+}
 
 void add_keymap(struct keymap *keymap);
 struct keymap *get_keymap(const char *name, size_t namelen);

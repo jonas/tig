@@ -435,24 +435,57 @@ get_input(int prompt_position, struct key_input *input, bool modifiers)
 			redraw_display(TRUE);
 
 		} else {
+			int pos, key_length;
+
 			input_mode = FALSE;
 			if (key == erasechar())
 				key = KEY_BACKSPACE;
-			input->key = key;
-			return input->key;
+
+			/*
+			 * Ctrl-<key> values are represented using a 0x1F
+			 * bitmask on the key value. To 'unmap' we assume that:
+			 *
+			 * - Ctrl-Z is handled by Ncurses.
+			 * - Ctrl-m is the same as Return/Enter.
+			 * - Ctrl-i is the same as Tab.
+			 *
+			 * For all other key values in the range the Ctrl flag
+			 * is set and the key value is updated to the proper
+			 * ASCII value.
+			 */
+			if (KEY_CTL('a') <= key && key <= KEY_CTL('x') && key != KEY_RETURN && key != KEY_TAB) {
+				input->modifiers.control = 1;
+				key = key | 0x40;
+			}
+
+			if ((key >= KEY_MIN && key < KEY_MAX) || key < 0x1F) { // || key == ' ') {
+				input->data.key = key;
+				return input->data.key;
+			}
+
+			input->modifiers.multibytes = 1;
+			input->data.bytes[0] = key;
+
+			key_length = utf8_char_length(input->data.bytes);
+			for (pos = 1; pos < key_length && pos < sizeof(input->data.bytes) - 1; pos++) {
+				input->data.bytes[pos] = wgetch(status_win);
+			}
+
+			return OK;
 		}
 	}
 }
 
-typedef enum input_status (*input_handler)(void *data, char *buf, int c);
+typedef enum input_status (*input_handler)(void *data, char *buf, struct key_input *input);
 
 static char *
 prompt_input(const char *prompt, input_handler handler, void *data)
 {
 	enum input_status status = INPUT_OK;
 	static char buf[SIZEOF_STR];
+	unsigned char chars_length[SIZEOF_STR];
 	struct key_input input;
-	size_t pos = 0;
+	size_t pos = 0, chars = 0;
 
 	buf[pos] = 0;
 
@@ -468,10 +501,14 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 			break;
 
 		case KEY_BACKSPACE:
-			if (pos > 0)
-				buf[--pos] = 0;
-			else
+			if (pos > 0) {
+				int len = chars_length[--chars];
+
+				pos -= len;
+				buf[pos] = 0;
+			} else {
 				status = INPUT_CANCEL;
+			}
 			break;
 
 		case KEY_ESC:
@@ -484,9 +521,14 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 				return NULL;
 			}
 
-			status = handler(data, buf, input.key);
-			if (status == INPUT_OK)
-				buf[pos++] = (char) input.key;
+			status = handler(data, buf, &input);
+			if (status == INPUT_OK) {
+				int len = strlen(input.data.bytes);
+
+				string_ncopy_do(buf + pos, sizeof(buf) - pos, input.data.bytes, len);
+				pos += len;
+				chars_length[chars++] = len;
+			}
 		}
 	}
 
@@ -503,8 +545,10 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 }
 
 static enum input_status
-prompt_yesno_handler(void *data, char *buf, int c)
+prompt_yesno_handler(void *data, char *buf, struct key_input *input)
 {
+	unsigned long c = key_input_to_unicode(input);
+
 	if (c == 'y' || c == 'Y')
 		return INPUT_STOP;
 	if (c == 'n' || c == 'N')
@@ -524,9 +568,11 @@ prompt_yesno(const char *prompt)
 }
 
 static enum input_status
-read_prompt_handler(void *data, char *buf, int c)
+read_prompt_handler(void *data, char *buf, struct key_input *input)
 {
-	return isprint(c) ? INPUT_OK : INPUT_SKIP;
+	unsigned long c = key_input_to_unicode(input);
+
+	return unicode_width(c, 8) ? INPUT_OK : INPUT_SKIP;
 }
 
 char *
@@ -583,7 +629,7 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 
 		default:
 			for (i = 0; items[i].text; i++)
-				if (items[i].hotkey == input.key) {
+				if (items[i].hotkey == input.data.bytes[0]) {
 					*selected = i;
 					status = INPUT_STOP;
 					break;

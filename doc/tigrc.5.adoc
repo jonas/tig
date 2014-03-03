@@ -335,6 +335,9 @@ bind status + !git commit --amend
 
 # User-defined internal command that reloads ~/.tigrc
 bind generic S :source ~/.tigrc
+
+# UTF8-encoded characters can be used as key values.
+bind generic ø @sh -c "printf '%s' %(commit) | pbcopy"
 --------------------------------------------------------------------------
 
 Or in the Git configuration files:
@@ -362,10 +365,10 @@ to set key mapping in all keymaps.
 
 Key values::
 
-Key values should never be quoted. Use either the ASCII value or one of the
-following symbolic key names. Symbolic key names are case insensitive, Use
-*Hash* to bind to the `#` key, since the hash mark is used as a comment
-character.
+Key values should never be quoted. Use either an ASCII or UTF8-encoded character
+or one of the following symbolic key names. Symbolic key names are case
+insensitive. Use *Hash* to bind to the `#` key, since the hash mark is used as a
+comment character.
 
 *Enter*, *Space*, *Backspace*, *Tab*, *Escape*, *Left*, *Right*, *Up*, *Down*,
 *Insert*, *Delete*, *Hash*, *Home*, *End*, *PageUp*, *PageDown*, *F1*, *F2*, *F3*,
