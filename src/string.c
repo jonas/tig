@@ -18,9 +18,6 @@
  * Strings.
  */
 
-#define prefixcmp(str1, str2) \
-	strncmp(str1, str2, STRING_SIZE(str2))
-
 bool
 string_isnumber(const char *str)
 {
@@ -66,31 +63,6 @@ string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen)
 	dst[srclen] = 0;
 }
 
-/* Shorthands for safely copying into a fixed buffer. */
-
-#define FORMAT_BUFFER(buf, bufsize, fmt, retval, allow_truncate) \
-	do { \
-		va_list args; \
-		va_start(args, fmt); \
-		retval = vsnprintf(buf, bufsize, fmt, args); \
-		va_end(args); \
-		if (retval >= (bufsize) && allow_truncate) { \
-			(buf)[(bufsize) - 1] = 0; \
-			(buf)[(bufsize) - 2] = '.'; \
-			(buf)[(bufsize) - 3] = '.'; \
-			(buf)[(bufsize) - 4] = '.'; \
-			retval = (bufsize) - 1; \
-		} else if (retval < 0 || retval >= (bufsize)) { \
-			retval = -1; \
-		} \
-	} while (0)
-
-#define string_copy(dst, src) \
-	string_ncopy_do(dst, sizeof(dst), src, sizeof(src))
-
-#define string_ncopy(dst, src, srclen) \
-	string_ncopy_do(dst, sizeof(dst), src, srclen)
-
 void
 string_copy_rev(char *dst, const char *src)
 {
@@ -111,11 +83,6 @@ string_copy_rev_from_commit_line(char *dst, const char *src)
 {
 	string_copy_rev(dst, src + STRING_SIZE("commit "));
 }
-
-#define string_rev_is_null(rev) !strncmp(rev, NULL_ID, STRING_SIZE(NULL_ID))
-
-#define string_add(dst, from, src) \
-	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
 
 size_t
 string_expanded_length(const char *src, size_t srclen, size_t tabsize, size_t max_size)
@@ -184,15 +151,6 @@ string_nformat(char *buf, size_t bufsize, size_t *bufpos, const char *fmt, ...)
 
 	return pos >= bufsize ? FALSE : TRUE;
 }
-
-#define string_format(buf, fmt, args...) \
-	string_nformat(buf, sizeof(buf), NULL, fmt, args)
-
-#define string_format_size(buf, size, fmt, args...) \
-	string_nformat(buf, size, NULL, fmt, args)
-
-#define string_format_from(buf, from, fmt, args...) \
-	string_nformat(buf, sizeof(buf), from, fmt, args)
 
 int
 strcmp_null(const char *s1, const char *s2)
