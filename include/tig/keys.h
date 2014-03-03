@@ -31,17 +31,25 @@ struct keymap {
 	bool hidden;
 };
 
+struct key_input {
+	int key;
+	struct {
+		bool escape:1;
+		bool control:1;
+	} modifiers;
+};
+
 void add_keymap(struct keymap *keymap);
 struct keymap *get_keymap(const char *name, size_t namelen);
 struct keymap *get_keymaps(void);
 
-const char *get_key_name(int key_value);
-int get_key_value(const char *name);
+const char *get_key_name(const struct key_input *input);
+int get_key_value(const char *name, struct key_input *input);
 
 /* Looks for a key binding first in the given map, then in the generic map, and
  * lastly in the default keybindings. */
-enum request get_keybinding(struct keymap *keymap, int key);
-void add_keybinding(struct keymap *table, enum request request, int key);
+enum request get_keybinding(struct keymap *keymap, struct key_input *input);
+void add_keybinding(struct keymap *table, enum request request, struct key_input *input);
 
 const char *get_keys(struct keymap *keymap, enum request request, bool all);
 #define get_view_key(view, request) get_keys(&(view)->ops->keymap, request, FALSE)
@@ -56,7 +64,7 @@ enum run_request_flag {
 
 struct run_request {
 	struct keymap *keymap;
-	int key;
+	struct key_input input;
 	const char **argv;
 	bool silent;
 	bool confirm;
@@ -65,7 +73,7 @@ struct run_request {
 };
 
 struct run_request *get_run_request(enum request request);
-bool add_run_request(struct keymap *keymap, int key, const char **argv, enum run_request_flag flags);
+bool add_run_request(struct keymap *keymap, struct key_input *input, const char **argv, enum run_request_flag flags);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

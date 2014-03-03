@@ -666,8 +666,9 @@ run_prompt_command(struct view *view, char *cmd)
 		}
 
 	} else if (cmd && strlen(cmd) == 1) {
-		request = get_keybinding(&view->ops->keymap, cmd[0]);
-		return request;
+		struct key_input input = { cmd[0] };
+
+		return get_keybinding(&view->ops->keymap, &input);
 
 	} else if (cmd && cmd[0] == '!') {
 		struct view *next = VIEW(REQ_VIEW_PAGER);
@@ -822,7 +823,8 @@ main(int argc, const char *argv[])
 		request = open_pager_mode(request);
 
 	while (view_driver(display[current_view], request)) {
-		int key = get_input(0);
+		struct key_input input;
+		int key = get_input(0, &input, TRUE);
 
 #ifdef NCURSES_MOUSE_VERSION
 		if (key == KEY_MOUSE) {
@@ -831,11 +833,8 @@ main(int argc, const char *argv[])
 		}
 #endif
 
-		if (key == KEY_ESC)
-			key  = get_input(0) + 0x80;
-
 		view = display[current_view];
-		request = get_keybinding(&view->ops->keymap, key);
+		request = get_keybinding(&view->ops->keymap, &input);
 
 		/* Some low-level request handling. This keeps access to
 		 * status_win restricted. */

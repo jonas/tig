@@ -376,13 +376,15 @@ init_display(void)
 }
 
 int
-get_input(int prompt_position)
+get_input(int prompt_position, struct key_input *input, bool modifiers)
 {
 	struct view *view;
 	int i, key, cursor_y, cursor_x;
 
 	if (prompt_position)
 		input_mode = TRUE;
+
+	memset(input, 0, sizeof(*input));
 
 	while (TRUE) {
 		bool loading = FALSE;
@@ -418,6 +420,9 @@ get_input(int prompt_position)
 		 * there's no input. */
 		if (key == ERR) {
 
+		} else if (key == KEY_ESC && modifiers) {
+			input->modifiers.escape = 1;
+
 		} else if (key == KEY_RESIZE) {
 			int height, width;
 
@@ -433,7 +438,8 @@ get_input(int prompt_position)
 			input_mode = FALSE;
 			if (key == erasechar())
 				key = KEY_BACKSPACE;
-			return key;
+			input->key = key;
+			return input->key;
 		}
 	}
 }
@@ -445,18 +451,16 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 {
 	enum input_status status = INPUT_OK;
 	static char buf[SIZEOF_STR];
+	struct key_input input;
 	size_t pos = 0;
 
 	buf[pos] = 0;
 
 	while (status == INPUT_OK || status == INPUT_SKIP) {
-		int key;
-
 		mvwprintw(status_win, 0, 0, "%s%.*s", prompt, pos, buf);
 		wclrtoeol(status_win);
 
-		key = get_input(pos + 1);
-		switch (key) {
+		switch (get_input(pos + 1, &input, FALSE)) {
 		case KEY_RETURN:
 		case KEY_ENTER:
 		case '\n':
@@ -480,9 +484,9 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 				return NULL;
 			}
 
-			status = handler(data, buf, key);
+			status = handler(data, buf, input.key);
 			if (status == INPUT_OK)
-				buf[pos++] = (char) key;
+				buf[pos++] = (char) input.key;
 		}
 	}
 
@@ -535,6 +539,7 @@ bool
 prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 {
 	enum input_status status = INPUT_OK;
+	struct key_input input;
 	int size = 0;
 
 	while (items[size].text)
@@ -544,7 +549,6 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 
 	while (status == INPUT_OK) {
 		const struct menu_item *item = &items[*selected];
-		int key;
 		int i;
 
 		mvwprintw(status_win, 0, 0, "%s (%d of %d) ",
@@ -554,8 +558,7 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 		wprintw(status_win, "%s", item->text);
 		wclrtoeol(status_win);
 
-		key = get_input(COLS - 1);
-		switch (key) {
+		switch (get_input(COLS - 1, &input, FALSE)) {
 		case KEY_RETURN:
 		case KEY_ENTER:
 		case '\n':
@@ -580,7 +583,7 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 
 		default:
 			for (i = 0; items[i].text; i++)
-				if (items[i].hotkey == key) {
+				if (items[i].hotkey == input.key) {
 					*selected = i;
 					status = INPUT_STOP;
 					break;

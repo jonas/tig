@@ -512,9 +512,9 @@ option_set_command(int argc, const char *argv[])
 static enum status_code
 option_bind_command(int argc, const char *argv[])
 {
+	struct key_input input;
 	enum request request;
 	struct keymap *keymap;
-	int key;
 
 	if (argc < 3)
 		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;
@@ -522,8 +522,7 @@ option_bind_command(int argc, const char *argv[])
 	if (!(keymap = get_keymap(argv[0], strlen(argv[0]))))
 		return ERROR_UNKNOWN_KEY_MAP;
 
-	key = get_key_value(argv[1]);
-	if (key == ERR)
+	if (get_key_value(argv[1], &input) == ERR)
 		return ERROR_UNKNOWN_KEY;
 
 	request = get_request(argv[2]);
@@ -537,7 +536,7 @@ option_bind_command(int argc, const char *argv[])
 
 		if (map_enum(&alias, obsolete, argv[2])) {
 			if (alias != REQ_NONE)
-				add_keybinding(keymap, alias, key);
+				add_keybinding(keymap, alias, &input);
 			return ERROR_OBSOLETE_REQUEST_NAME;
 		}
 	}
@@ -567,11 +566,11 @@ option_bind_command(int argc, const char *argv[])
 			return ERROR_UNKNOWN_REQUEST_NAME;
 		}
 
-		return add_run_request(keymap, key, argv + 2, flags)
+		return add_run_request(keymap, &input, argv + 2, flags)
 			? SUCCESS : ERROR_OUT_OF_MEMORY;
 	}
 
-	add_keybinding(keymap, request, key);
+	add_keybinding(keymap, request, &input);
 
 	return SUCCESS;
 }

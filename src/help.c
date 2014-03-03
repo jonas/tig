@@ -92,7 +92,7 @@ help_open_keymap_run_requests(struct help_request_iterator *iterator)
 		if (req->keymap != keymap)
 			continue;
 
-		key = get_key_name(req->key);
+		key = get_key_name(&req->input);
 		if (!*key)
 			key = "(no key defined)";
 

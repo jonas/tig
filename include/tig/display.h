@@ -15,6 +15,7 @@
 #define TIG_DISPLAY_H
 
 #include "tig/tig.h"
+#include "tig/keys.h"
 
 enum input_status {
 	INPUT_OK,
@@ -32,7 +33,7 @@ struct menu_item {
 char *read_prompt(const char *prompt);
 bool prompt_yesno(const char *prompt);
 bool prompt_menu(const char *prompt, const struct menu_item *items, int *selected);
-int get_input(int prompt_position);
+int get_input(int prompt_position, struct key_input *input, bool modifiers);
 
 void report(const char *msg, ...) PRINTF_LIKE(1, 2);
 #define report_clear() report("%s", "")
