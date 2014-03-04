@@ -21,7 +21,7 @@ TIGRC="${1:-tigrc}"
 
 read_tigrc() {
 	if test -z "$NO_BUILTIN_TIGRC"; then
-		sed 's/#.*//' "$TIGRC" | sed 's,\\,\\\\\\\\,g' | sed 's,",\\\\",g' | sed 's/	\+/	/g'
+		sed 's/\s*#.*//' "$TIGRC" | sed 's,\\,\\\\\\\\,g' | sed 's,",\\\\",g' | sed 's/	\+/	/g'
 	else
 		echo '#'
 	fi
