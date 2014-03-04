@@ -371,12 +371,17 @@ character.
 *Insert*, *Delete*, *Hash*, *Home*, *End*, *PageUp*, *PageDown*, *F1*, *F2*, *F3*,
 *F4*, *F5*, *F6*, *F7*, *F8*, *F9*, *F10*, *F11*, *F12*.
 
-To add a key mapping that uses the Ctrl key, use a `^` prefix in your mapping.
-For example, Ctrl-f could be mapped to *scroll-page-down* with the following line:
+To add a key mapping that uses the `Ctrl` key, use a `^` prefix in your mapping.
+Similarly, use `^[` to map to keys prefixed by the `Escape` key. Examples:
 
 --------------------------------------------------------------------------
-bind main ^f scroll-page-down
+bind main ^f  scroll-page-down
+bind main ^[o options
 --------------------------------------------------------------------------
+
+Note that `Ctrl-z` and `Ctrl-m` cannot be used since they are used internally.
+Furthermore, ncurses does not allow to distinguish between `Ctrl-f` and
+`Ctrl-F`.
 
 Actions::
 
