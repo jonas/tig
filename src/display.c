@@ -116,7 +116,7 @@ vertical_split_is_enabled(void)
 		int height, width;
 
 		getmaxyx(stdscr, height, width);
-		return width * VSPLIT_SCALE > (height - 1) * 2;
+		return width > 160 || width * VSPLIT_SCALE > (height - 1) * 2;
 	}
 
 	return opt_vertical_split == VERTICAL_SPLIT_VERTICAL;
