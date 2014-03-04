@@ -32,9 +32,6 @@ OPTION_INFO(DEFINE_OPTION_VARIABLES);
  * State variables.
  */
 
-char opt_diff_context_arg[9]	= "";
-char opt_ignore_space_arg[22]	= "";
-char opt_commit_order_arg[22]	= "";
 char opt_notes_arg[SIZEOF_STR]	= "--show-notes";
 bool opt_file_filter		= TRUE;
 iconv_t opt_iconv_out		= ICONV_NONE;
@@ -50,12 +47,17 @@ char *opt_env[]			= { opt_env_lines, opt_env_columns, NULL };
  * Mapping between options and command argument mapping.
  */
 
-void
-update_diff_context_arg(int diff_context)
+const char *
+diff_context_arg()
 {
-	if (!string_format(opt_diff_context_arg, "-U%u", diff_context))
+	static char opt_diff_context_arg[9]	= "";
+
+	if (!string_format(opt_diff_context_arg, "-U%u", opt_diff_context))
 		string_ncopy(opt_diff_context_arg, "-U3", 3);
+
+	return opt_diff_context_arg;
 }
+
 
 #define ENUM_ARG(enum_name, arg_string) ENUM_MAP_ENTRY(arg_string, enum_name)
 
@@ -66,10 +68,10 @@ static const struct enum_map_entry ignore_space_arg_map[] = {
 	ENUM_ARG(IGNORE_SPACE_AT_EOL,	"--ignore-space-at-eol"),
 };
 
-void
-update_ignore_space_arg()
+const char *
+ignore_space_arg()
 {
-	enum_copy_name(opt_ignore_space_arg, ignore_space_arg_map[opt_ignore_space]);
+	return ignore_space_arg_map[opt_ignore_space].name;
 }
 
 static const struct enum_map_entry commit_order_arg_map[] = {
@@ -79,10 +81,10 @@ static const struct enum_map_entry commit_order_arg_map[] = {
 	ENUM_ARG(COMMIT_ORDER_REVERSE,	"--reverse"),
 };
 
-void
-update_commit_order_arg()
+const char *
+commit_order_arg()
 {
-	enum_copy_name(opt_commit_order_arg, commit_order_arg_map[opt_commit_order]);
+	return commit_order_arg_map[opt_commit_order].name;
 }
 
 static inline void
@@ -96,6 +98,10 @@ update_notes_arg()
 	}
 }
 
+static bool seen_commit_order_arg;
+static bool seen_ignore_space_arg;
+static bool seen_diff_context_arg;
+
 void
 update_options_from_argv(const char *argv[])
 {
@@ -107,20 +113,20 @@ update_options_from_argv(const char *argv[])
 
 		if (map_enum(&value, commit_order_arg_map, flag)) {
 			opt_commit_order = value;
-			update_commit_order_arg();
+			seen_commit_order_arg = TRUE;
 			continue;
 		}
 
 		if (map_enum(&value, ignore_space_arg_map, flag)) {
 			opt_ignore_space = value;
-			update_ignore_space_arg();
+			seen_ignore_space_arg = TRUE;
 			continue;
 		}
 
 		if (!prefixcmp(flag, "-U")
 		    && parse_int(&value, flag + 2, 0, 999999) == SUCCESS) {
 			opt_diff_context = value;
-			update_diff_context_arg(opt_diff_context);
+			seen_diff_context_arg = TRUE;
 			continue;
 		}
 
@@ -437,29 +443,14 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "tab-size"))
 		return parse_int(&opt_tab_size, argv[2], 1, 1024);
 
-	if (!strcmp(argv[0], "diff-context") && !*opt_diff_context_arg) {
-		enum status_code code = parse_int(&opt_diff_context, argv[2], 0, 999999);
+	if (!strcmp(argv[0], "diff-context") && !seen_diff_context_arg)
+		return parse_int(&opt_diff_context, argv[2], 0, 999999);
 
-		if (code == SUCCESS)
-			update_diff_context_arg(opt_diff_context);
-		return code;
-	}
+	if (!strcmp(argv[0], "ignore-space") && !seen_ignore_space_arg)
+		return parse_enum(&opt_ignore_space, argv[2], ignore_space_map);
 
-	if (!strcmp(argv[0], "ignore-space") && !*opt_ignore_space_arg) {
-		enum status_code code = parse_enum(&opt_ignore_space, argv[2], ignore_space_map);
-
-		if (code == SUCCESS)
-			update_ignore_space_arg();
-		return code;
-	}
-
-	if (!strcmp(argv[0], "commit-order") && !*opt_commit_order_arg) {
-		enum status_code code = parse_enum(&opt_commit_order, argv[2], commit_order_map);
-
-		if (code == SUCCESS)
-			update_commit_order_arg();
-		return code;
-	}
+	if (!strcmp(argv[0], "commit-order") && !seen_commit_order_arg)
+		return parse_enum(&opt_commit_order, argv[2], commit_order_map);
 
 	if (!strcmp(argv[0], "status-untracked-dirs"))
 		return parse_bool(&opt_status_untracked_dirs, argv[2]);

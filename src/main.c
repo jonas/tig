@@ -207,8 +207,8 @@ main_add_changes_commits(struct view *view, struct main_state *state, const char
 static bool
 main_open(struct view *view, enum open_flags flags)
 {
-	static const char *main_argv[] = {
-		GIT_MAIN_LOG(encoding_arg, "%(cmdlineargs)", "%(revargs)", "%(fileargs)")
+	const char *main_argv[] = {
+		GIT_MAIN_LOG(encoding_arg, commit_order_arg(), "%(cmdlineargs)", "%(revargs)", "%(fileargs)")
 	};
 	struct main_state *state = view->private;
 
@@ -468,13 +468,13 @@ main_request(struct view *view, enum request request, struct line *line)
 			struct view *diff = VIEW(REQ_VIEW_DIFF);
 			const char *diff_staged_argv[] = {
 				GIT_DIFF_STAGED(encoding_arg,
-					opt_diff_context_arg,
-					opt_ignore_space_arg, NULL, NULL)
+					diff_context_arg(),
+					ignore_space_arg(), NULL, NULL)
 			};
 			const char *diff_unstaged_argv[] = {
 				GIT_DIFF_UNSTAGED(encoding_arg,
-					opt_diff_context_arg,
-					opt_ignore_space_arg, NULL, NULL)
+					diff_context_arg(),
+					ignore_space_arg(), NULL, NULL)
 			};
 			const char **diff_argv = line->type == LINE_STAT_STAGED
 				? diff_staged_argv : diff_unstaged_argv;

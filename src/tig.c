@@ -120,12 +120,10 @@ toggle_option(struct view *view, enum request request, char msg[SIZEOF_STR])
 
 		*opt = (*opt + 1) % data[i].map->size;
 		if (data[i].map == ignore_space_map) {
-			update_ignore_space_arg();
 			string_format_size(msg, SIZEOF_STR,
 				"Ignoring %s %s", enum_name(data[i].map->entries[*opt]), menu[i].text);
 
 		} else if (data[i].map == commit_order_map) {
-			update_commit_order_arg();
 			string_format_size(msg, SIZEOF_STR,
 				"Using %s %s", enum_name(data[i].map->entries[*opt]), menu[i].text);
 

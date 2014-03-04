@@ -415,23 +415,23 @@ stage_request(struct view *view, enum request request, struct line *line)
 static bool
 stage_open(struct view *view, enum open_flags flags)
 {
-	static const char *no_head_diff_argv[] = {
-		GIT_DIFF_STAGED_INITIAL(encoding_arg, opt_diff_context_arg, opt_ignore_space_arg,
+	const char *no_head_diff_argv[] = {
+		GIT_DIFF_STAGED_INITIAL(encoding_arg, diff_context_arg(), ignore_space_arg(),
 			stage_status.new.name)
 	};
-	static const char *index_show_argv[] = {
-		GIT_DIFF_STAGED(encoding_arg, opt_diff_context_arg, opt_ignore_space_arg,
+	const char *index_show_argv[] = {
+		GIT_DIFF_STAGED(encoding_arg, diff_context_arg(), ignore_space_arg(),
 			stage_status.old.name, stage_status.new.name)
 	};
-	static const char *files_show_argv[] = {
-		GIT_DIFF_UNSTAGED(encoding_arg, opt_diff_context_arg, opt_ignore_space_arg,
+	const char *files_show_argv[] = {
+		GIT_DIFF_UNSTAGED(encoding_arg, diff_context_arg(), ignore_space_arg(),
 			stage_status.old.name, stage_status.new.name)
 	};
 	/* Diffs for unmerged entries are empty when passing the new
 	 * path, so leave out the new path. */
-	static const char *files_unmerged_argv[] = {
+	const char *files_unmerged_argv[] = {
 		"git", "diff-files", encoding_arg, "--root", "--patch-with-stat",
-			opt_diff_context_arg, opt_ignore_space_arg, "--",
+			diff_context_arg(), ignore_space_arg(), "--",
 			stage_status.old.name, NULL
 	};
 	static const char *file_argv[] = { repo.cdup, stage_status.new.name, NULL };

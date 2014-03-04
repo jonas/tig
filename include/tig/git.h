@@ -46,9 +46,9 @@
 #define GIT_DIFF_BLAME_NO_PARENT(encoding_arg, context_arg, space_arg, new_name) \
 	GIT_DIFF_INITIAL(encoding_arg, "", context_arg, space_arg, "/dev/null", new_name)
 
-#define GIT_MAIN_LOG(encoding_arg, diffargs, revargs, fileargs) \
+#define GIT_MAIN_LOG(encoding_arg, commit_order_arg, diffargs, revargs, fileargs) \
 	"git", "log", (encoding_arg), \
-		opt_commit_order_arg, (diffargs), (revargs), \
+		(commit_order_arg), (diffargs), (revargs), \
 		"--no-color", "--pretty=raw", "--parents", \
 		"--", (fileargs), NULL
 

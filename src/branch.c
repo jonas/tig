@@ -116,7 +116,7 @@ branch_request(struct view *view, enum request request, struct line *line)
 	{
 		const struct ref *ref = branch->ref;
 		const char *all_branches_argv[] = {
-			GIT_MAIN_LOG(encoding_arg, "", branch_is_all(branch) ? "--all" : ref->name, "")
+			GIT_MAIN_LOG(encoding_arg, commit_order_arg(), "", branch_is_all(branch) ? "--all" : ref->name, "")
 		};
 		struct view *main_view = VIEW(REQ_VIEW_MAIN);
 

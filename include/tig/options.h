@@ -64,9 +64,6 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS);
  * Global state variables.
  */
 
-extern char opt_diff_context_arg[9];
-extern char opt_ignore_space_arg[22];
-extern char opt_commit_order_arg[22];
 extern char opt_notes_arg[SIZEOF_STR];
 extern bool opt_file_filter;
 extern iconv_t opt_iconv_out;
@@ -83,9 +80,10 @@ extern char *opt_env[];
  */
 
 void update_options_from_argv(const char *argv[]);
-void update_diff_context_arg(int diff_context);
-void update_ignore_space_arg();
-void update_commit_order_arg();
+
+const char *ignore_space_arg();
+const char *commit_order_arg();
+const char *diff_context_arg();
 
 /*
  * Option loading and parsing.

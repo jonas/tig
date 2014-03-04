@@ -29,7 +29,6 @@ update_diff_context(enum request request)
 	switch (request) {
 	case REQ_DIFF_CONTEXT_UP:
 		opt_diff_context += 1;
-		update_diff_context_arg(opt_diff_context);
 		break;
 
 	case REQ_DIFF_CONTEXT_DOWN:
@@ -38,7 +37,6 @@ update_diff_context(enum request request)
 			break;
 		}
 		opt_diff_context -= 1;
-		update_diff_context_arg(opt_diff_context);
 		break;
 
 	default:
@@ -53,10 +51,10 @@ update_diff_context(enum request request)
 static bool
 diff_open(struct view *view, enum open_flags flags)
 {
-	static const char *diff_argv[] = {
+	const char *diff_argv[] = {
 		"git", "show", encoding_arg, "--pretty=fuller", "--root",
 			"--patch-with-stat",
-			opt_notes_arg, opt_diff_context_arg, opt_ignore_space_arg,
+			opt_notes_arg, diff_context_arg(), ignore_space_arg(),
 			"%(diffargs)", "%(cmdlineargs)", "--no-color", "%(commit)",
 			"--", "%(fileargs)", NULL
 	};
