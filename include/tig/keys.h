@@ -48,7 +48,6 @@ const char *get_keys(struct keymap *keymap, enum request request, bool all);
 
 enum run_request_flag {
 	RUN_REQUEST_DEFAULT	= 0,
-	RUN_REQUEST_FORCE	= 1,
 	RUN_REQUEST_SILENT	= 2,
 	RUN_REQUEST_CONFIRM	= 4,
 	RUN_REQUEST_EXIT	= 8,

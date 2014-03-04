@@ -552,7 +552,7 @@ option_bind_command(int argc, const char *argv[])
 	}
 
 	if (request == REQ_UNKNOWN) {
-		enum run_request_flag flags = RUN_REQUEST_FORCE;
+		enum run_request_flag flags = RUN_REQUEST_DEFAULT;
 
 		if (strchr("!?@<", *argv[2])) {
 			while (*argv[2]) {

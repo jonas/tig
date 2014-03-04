@@ -243,11 +243,7 @@ DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 bool
 add_run_request(struct keymap *keymap, int key, const char **argv, enum run_request_flag flags)
 {
-	bool force = flags & RUN_REQUEST_FORCE;
 	struct run_request *req;
-
-	if (!force && get_keybinding(keymap, key) != key)
-		return TRUE;
 
 	if (!realloc_run_requests(&run_request, run_requests, 1))
 		return FALSE;
