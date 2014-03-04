@@ -15,7 +15,7 @@
 #define TIG_H
 
 #ifdef HAVE_CONFIG_H
-#include "tig/config.h"
+#include "config.h"
 #endif
 
 #include "compat/compat.h"
