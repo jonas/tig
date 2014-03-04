@@ -379,9 +379,11 @@ bind main ^f  scroll-page-down
 bind main ^[o options
 --------------------------------------------------------------------------
 
-Note that `Ctrl-z` and `Ctrl-m` cannot be used since they are used internally.
+Note that due to the way ncurses encodes `Ctrl` key mappings, `Ctrl-m` and
+`Ctrl-i` cannot be bound as they conflict with 'Enter' and 'Tab' respectively.
 Furthermore, ncurses does not allow to distinguish between `Ctrl-f` and
-`Ctrl-F`.
+`Ctrl-F`. Finally, `Ctrl-z` is automatically used for process control and will
+suspend Tig and open a subshell (use `fg` to reenter Tig).
 
 Actions::
 
