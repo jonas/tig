@@ -104,7 +104,7 @@ int strcmp_null(const char *s1, const char *s2);
 
 int unicode_width(unsigned long c, int tab_size);
 
-unsigned char utf8_char_length(const char *string, const char *end);
+unsigned char utf8_char_length(const char *string);
 
 /* Decode UTF-8 multi-byte representation into a Unicode character. */
 unsigned long utf8_to_unicode(const char *string, size_t length);

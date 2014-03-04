@@ -185,7 +185,7 @@ get_author_initials(const char *author)
 		while (author < end && is_initial_sep(*author))
 			author++;
 
-		bytes = utf8_char_length(author, end);
+		bytes = utf8_char_length(author);
 		if (bytes >= sizeof(initials) - 1 - pos)
 			break;
 		while (bytes--) {
@@ -194,7 +194,7 @@ get_author_initials(const char *author)
 
 		i = pos;
 		while (author < end && !is_initial_sep(*author)) {
-			bytes = utf8_char_length(author, end);
+			bytes = utf8_char_length(author);
 			if (bytes >= sizeof(initials) - 1 - i) {
 				while (author < end && !is_initial_sep(*author))
 					author++;

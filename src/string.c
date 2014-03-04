@@ -214,7 +214,7 @@ static const unsigned char utf8_bytes[256] = {
 };
 
 unsigned char
-utf8_char_length(const char *string, const char *end)
+utf8_char_length(const char *string)
 {
 	int c = *(unsigned char *) string;
 
@@ -288,7 +288,7 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
 	*trimmed = 0;
 
 	while (string < end) {
-		unsigned char bytes = utf8_char_length(string, end);
+		unsigned char bytes = utf8_char_length(string);
 		size_t ucwidth;
 		unsigned long unicode;
 
