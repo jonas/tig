@@ -440,14 +440,17 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "tab-size"))
 		return parse_int(&opt_tab_size, argv[2], 1, 1024);
 
-	if (!strcmp(argv[0], "diff-context") && !seen_diff_context_arg)
-		return parse_int(&opt_diff_context, argv[2], 0, 999999);
+	if (!strcmp(argv[0], "diff-context"))
+		return seen_diff_context_arg ? SUCCESS
+			: parse_int(&opt_diff_context, argv[2], 0, 999999);
 
-	if (!strcmp(argv[0], "ignore-space") && !seen_ignore_space_arg)
-		return parse_enum(&opt_ignore_space, argv[2], ignore_space_map);
+	if (!strcmp(argv[0], "ignore-space"))
+		return seen_ignore_space_arg ? SUCCESS
+			: parse_enum(&opt_ignore_space, argv[2], ignore_space_map);
 
-	if (!strcmp(argv[0], "commit-order") && !seen_commit_order_arg)
-		return parse_enum(&opt_commit_order, argv[2], commit_order_map);
+	if (!strcmp(argv[0], "commit-order"))
+		return seen_commit_order_arg ? SUCCESS
+			: parse_enum(&opt_commit_order, argv[2], commit_order_map);
 
 	if (!strcmp(argv[0], "status-untracked-dirs"))
 		return parse_bool(&opt_status_untracked_dirs, argv[2]);
