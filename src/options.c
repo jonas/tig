@@ -32,7 +32,6 @@ OPTION_INFO(DEFINE_OPTION_VARIABLES);
  * State variables.
  */
 
-char opt_notes_arg[SIZEOF_STR]	= "--show-notes";
 bool opt_file_filter		= TRUE;
 iconv_t opt_iconv_out		= ICONV_NONE;
 char opt_editor[SIZEOF_STR]	= "";
@@ -87,15 +86,15 @@ commit_order_arg()
 	return commit_order_arg_map[opt_commit_order].name;
 }
 
-static inline void
-update_notes_arg()
+static char opt_notes_arg[SIZEOF_STR] = "--show-notes";
+
+const char *
+show_notes_arg()
 {
-	if (opt_show_notes) {
-		string_copy(opt_notes_arg, "--show-notes");
-	} else {
-		/* Notes are disabled by default when passing --pretty args. */
-		string_copy(opt_notes_arg, "");
-	}
+	if (opt_show_notes)
+		return opt_notes_arg;
+	/* Notes are disabled by default when passing --pretty args. */
+	return "";
 }
 
 static bool seen_commit_order_arg;
@@ -396,10 +395,8 @@ option_set_command(int argc, const char *argv[])
 		bool matched = FALSE;
 		enum status_code res = parse_bool_matched(&opt_show_notes, argv[2], &matched);
 
-		if (res == SUCCESS && matched) {
-			update_notes_arg();
+		if (res == SUCCESS && matched)
 			return res;
-		}
 
 		opt_show_notes = TRUE;
 		strcpy(opt_notes_arg, "--show-notes=");
