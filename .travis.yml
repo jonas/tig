@@ -1,0 +1,16 @@
+language: c
+
+env:
+  - TEST=autoconf
+  - TEST=make
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -qq --no-install-recommends asciidoc xmlto libncursesw5-dev
+
+install:
+  - if [[ "autoconf" == "$TEST" ]]; then ./autogen.sh && ./configure; fi
+  - make && make doc && sudo make install install-doc
+
+script:
+  - make test
