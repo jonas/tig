@@ -566,13 +566,10 @@ option_bind_command(int argc, const char *argv[])
 			return ERROR_UNKNOWN_REQUEST_NAME;
 		}
 
-		return add_run_request(keymap, &input, argv + 2, flags)
-			? SUCCESS : ERROR_OUT_OF_MEMORY;
+		return add_run_request(keymap, &input, argv + 2, flags);
 	}
 
-	add_keybinding(keymap, request, &input);
-
-	return SUCCESS;
+	return add_keybinding(keymap, request, &input);
 }
 
 

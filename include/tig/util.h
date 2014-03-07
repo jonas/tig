@@ -34,6 +34,7 @@
 	_(UNKNOWN_COLOR, "Unknown color"), \
 	_(UNKNOWN_COLOR_NAME, "Unknown color name"), \
 	_(UNKNOWN_KEY, "Unknown key"), \
+	_(CTRL_KEY_CONFLICT, "Found conflicting key mappings using Ctrl; these mappings are case insensitive"), \
 	_(UNKNOWN_KEY_MAP, "Unknown key map"), \
 	_(UNKNOWN_OPTION_COMMAND, "Unknown option command"), \
 	_(UNKNOWN_REQUEST_NAME, "Unknown request name"), \

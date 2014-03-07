@@ -55,16 +55,36 @@ get_keymap(const char *name, size_t namelen)
 	return NULL;
 }
 
+static bool
+keybinding_equals(struct key_input *input1, struct key_input *input2, bool *conflict)
+{
+	if (input1->modifiers.control &&
+	    input1->modifiers.multibytes &&
+	    !memcmp(&input1->modifiers, &input2->modifiers, sizeof(input1->modifiers)) &&
+	    strlen(input1->data.bytes) == 1 &&
+	    strlen(input2->data.bytes) == 1) {
+		int c1 = input1->data.bytes[0];
+		int c2 = input2->data.bytes[0];
+		bool equals = ascii_toupper(c1) == ascii_toupper(c2);
 
-void
+		if (equals && c1 != c2)
+			*conflict = TRUE;
+		return equals;
+	}
+
+	return !memcmp(input1, input2, sizeof(*input1));
+}
+
+enum status_code
 add_keybinding(struct keymap *table, enum request request, struct key_input *input)
 {
+	bool conflict = FALSE;
 	size_t i;
 
 	for (i = 0; i < table->size; i++) {
-		if (!memcmp(&table->data[i].input, input, sizeof(*input))) {
+		if (keybinding_equals(&table->data[i].input, input, &conflict)) {
 			table->data[i].request = request;
-			return;
+			return conflict ? ERROR_CTRL_KEY_CONFLICT : SUCCESS;
 		}
 	}
 
@@ -73,6 +93,7 @@ add_keybinding(struct keymap *table, enum request request, struct key_input *inp
 		die("Failed to allocate keybinding");
 	table->data[table->size].input = *input;
 	table->data[table->size++].request = request;
+	return SUCCESS;
 }
 
 /* Looks for a key binding first in the given map, then in the generic map, and
@@ -83,11 +104,11 @@ get_keybinding(struct keymap *keymap, struct key_input *input)
 	size_t i;
 
 	for (i = 0; i < keymap->size; i++)
-		if (!memcmp(&keymap->data[i].input, input, sizeof(*input)))
+		if (keybinding_equals(&keymap->data[i].input, input, NULL))
 			return keymap->data[i].request;
 
 	for (i = 0; i < generic_keymap.size; i++)
-		if (!memcmp(&generic_keymap.data[i].input, input, sizeof(*input)))
+		if (keybinding_equals(&generic_keymap.data[i].input, input, NULL))
 			return generic_keymap.data[i].request;
 
 	return REQ_NONE;
@@ -257,16 +278,16 @@ static size_t run_requests;
 
 DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 
-bool
+enum status_code
 add_run_request(struct keymap *keymap, struct key_input *input, const char **argv, enum run_request_flag flags)
 {
 	struct run_request *req;
 
 	if (!realloc_run_requests(&run_request, run_requests, 1))
-		return FALSE;
+		return ERROR_OUT_OF_MEMORY;
 
 	if (!argv_copy(&run_request[run_requests].argv, argv))
-		return FALSE;
+		return ERROR_OUT_OF_MEMORY;
 
 	req = &run_request[run_requests++];
 	req->silent = flags & RUN_REQUEST_SILENT;
@@ -276,8 +297,7 @@ add_run_request(struct keymap *keymap, struct key_input *input, const char **arg
 	req->keymap = keymap;
 	req->input = *input;
 
-	add_keybinding(keymap, REQ_RUN_REQUESTS + run_requests, input);
-	return TRUE;
+	return add_keybinding(keymap, REQ_RUN_REQUESTS + run_requests, input);
 }
 
 struct run_request *
