@@ -204,6 +204,45 @@ main_add_changes_commits(struct view *view, struct main_state *state, const char
 	main_add_changes_commit(view, LINE_STAT_UNSTAGED, unstaged_parent, "Unstaged changes");
 }
 
+static size_t
+main_find_argv(const char *arg, const char *argv[], size_t argc)
+{
+	int i;
+
+	for (i = argc - 1; i >= 0; i--) {
+		size_t prefixlen = strlen(argv[i]);
+
+		if (!strncmp(arg, argv[i], prefixlen))
+			return prefixlen;
+	}
+
+	return 0;
+}
+
+static void
+main_check_argv(struct view *view, const char *argv[])
+{
+	static const char *no_graph_search_args[] = {
+		"-S", "-G", "--grep="
+	};
+	struct main_state *state = view->private;
+	int i;
+
+	for (i = 0; argv[i]; i++) {
+		const char *arg = argv[i];
+		size_t len = main_find_argv(arg, no_graph_search_args,
+					    ARRAY_SIZE(no_graph_search_args));
+
+		if (len > 0) {
+			state->with_graph = FALSE;
+			if (!*view->env->search)
+				string_ncopy(view->env->search,
+					     arg + len, strlen(arg + len));
+			break;
+		}
+	}
+}
+
 static bool
 main_open(struct view *view, enum open_flags flags)
 {
@@ -216,19 +255,7 @@ main_open(struct view *view, enum open_flags flags)
 			    opt_commit_order != COMMIT_ORDER_REVERSE;
 
 	if (state->with_graph && opt_cmdline_argv) {
-		int i;
-
-		for (i = 0; opt_cmdline_argv[i]; i++) {
-			const char *arg = opt_cmdline_argv[i];
-
-			if (prefixcmp(arg, "-S"))
-				continue;
-
-			state->with_graph = FALSE;
-			if (!*view->env->search)
-				string_ncopy(view->env->search, arg + 2, strlen(arg + 2));
-			break;
-		}
+		main_check_argv(view, opt_cmdline_argv);
 	}
 
 	if (flags & OPEN_PAGER_MODE) {

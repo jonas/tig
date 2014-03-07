@@ -52,7 +52,8 @@ Improvements:
  - Allow Tig to be started with no default keybindings or built-in user-defined
    commands by running: `TIGRC_SYSTEM=~/.tigrc.safe tig`. (GH #235)
  - Open editor at line number for combined diffs e.g. diffs of unmerged files.
- - Copy `-S<search-string>` to search buffer so `find-next` works as expected.
+ - Copy `-S`, `-G` and `--grep=` pattern to search buffer so 'find-next' and
+   'find-prev' work as expected.
  - Support view specific colors: `color stage.diff-add yellow default`.
  - Add grep view as a front-end to git-grep(1): `tig grep -p strchr`. From
    within Tig, the key for switching or grepping is bound to 'G' by default.
@@ -68,7 +69,8 @@ Bug fixes:
  - Show newly created branches in the main view. (GH #196)
  - File with 0 changes breaks diffstat highlighting (GH #215)
  - Update %(branch) variable in the main view. (GH #223)
- - Disable graph drawing for reverse log order and `tig -Ssearch`. (GH #127)
+ - Disable graph rendering when either of `--reverse`, `-S`, `-G`, and `--grep`
+   are passed to the main view. (GH #127)
  - Only refresh views that support it.
  - Fix author and date annotation of renamed entries in the tree view.
  - Fix use of unsafe methods in the signal handler. (GH #245)
