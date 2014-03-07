@@ -69,26 +69,19 @@ doc: $(ALLDOC)
 doc-man: $(MANDOC)
 doc-html: $(HTMLDOC)
 
+export sysconfdir
+
 install: all
-	@mkdir -p $(DESTDIR)$(bindir)
-	install -p -m 0755 $(EXE) "$(DESTDIR)$(bindir)"
-	@mkdir -p $(DESTDIR)$(sysconfdir)
-	install -p -m 0444 tigrc "$(DESTDIR)$(sysconfdir)"
+	$(QUIET_INSTALL)tools/install.sh bin $(EXE) "$(DESTDIR)$(bindir)"
+	$(QUIET_INSTALL)tools/install.sh data tigrc "$(DESTDIR)$(sysconfdir)"
 
 install-doc-man: doc-man
-	mkdir -p $(DESTDIR)$(mandir)/man1 \
-		 $(DESTDIR)$(mandir)/man5 \
-		 $(DESTDIR)$(mandir)/man7
-	for doc in $(MANDOC); do \
-		sed 's#++SYSCONFDIR++#$(sysconfdir)#' < "$$doc" > "$$doc+"; \
-		bdoc=$$(basename $$doc); \
-		case "$$doc" in \
-		*.1) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man1/$$bdoc" ;; \
-		*.5) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man5/$$bdoc" ;; \
-		*.7) install -p -m 0644 "$$doc+" "$(DESTDIR)$(mandir)/man7/$$bdoc" ;; \
-		esac; \
-		$(RM) "$$doc+"; \
-	done
+	$(Q)$(foreach doc, $(filter %.1, $(MANDOC)), \
+		$(QUIET_INSTALL_EACH)tools/install.sh data $(doc) "$(DESTDIR)$(mandir)/man1";)
+	$(Q)$(foreach doc, $(filter %.5, $(MANDOC)), \
+		$(QUIET_INSTALL_EACH)tools/install.sh data $(doc) "$(DESTDIR)$(mandir)/man5";)
+	$(Q)$(foreach doc, $(filter %.7, $(MANDOC)), \
+		$(QUIET_INSTALL_EACH)tools/install.sh data $(doc) "$(DESTDIR)$(mandir)/man7";)
 
 install-release-doc-man:
 	GIT_INDEX_FILE=.tmp-doc-index git read-tree origin/release
@@ -97,15 +90,8 @@ install-release-doc-man:
 	$(MAKE) install-doc-man
 
 install-doc-html: doc-html
-	mkdir -p $(DESTDIR)$(docdir)/tig
-	for doc in $(HTMLDOC); do \
-		sed 's#++SYSCONFDIR++#$(sysconfdir)#' < "$$doc" > "$$doc+"; \
-		bdoc=$$(basename $$doc); \
-		case "$$doc" in \
-		*.html) install -p -m 0644 "$$doc+" "$(DESTDIR)$(docdir)/tig/$$bdoc" ;; \
-		esac; \
-		$(RM) "$$doc+"; \
-	done
+	$(Q)$(foreach doc, $(HTMLDOC), \
+		$(QUIET_INSTALL_EACH)tools/install.sh data $(doc) "$(DESTDIR)$(docdir)/tig";)
 
 install-release-doc-html:
 	GIT_INDEX_FILE=.tmp-doc-index git read-tree origin/release
@@ -153,7 +139,7 @@ update-docs: tools/doc-gen
 	mv "$$doc.gen" "$$doc"
 
 dist: configure tig.spec
-	@mkdir -p $(TARNAME) && \
+	$(Q)mkdir -p $(TARNAME) && \
 	cp Makefile tig.spec configure config.h.in aclocal.m4 $(TARNAME) && \
 	sed -i "s/VERSION\s\+=\s\+[0-9]\+\([.][0-9]\+\)\+/VERSION	= $(VERSION)/" $(TARNAME)/Makefile
 	git archive --format=tar --prefix=$(TARNAME)/ HEAD | \
@@ -161,7 +147,7 @@ dist: configure tig.spec
 	tar rf $(TARNAME).tar `find $(TARNAME)/*` && \
 	gzip -f -9 $(TARNAME).tar && \
 	md5sum $(TARNAME).tar.gz > $(TARNAME).tar.gz.md5
-	@$(RM) -r $(TARNAME)
+	$(Q)$(RM) -r $(TARNAME)
 
 rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
@@ -238,25 +224,25 @@ OBJS = $(sort $(TIG_OBJS) $(TEST_GRAPH_OBJS) $(DOC_GEN_OBJS))
 DEPS_CFLAGS ?= -MMD -MP -MF .deps/$*.d
 
 %: %.o
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
+	$(QUIET_LINK)$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 %.o: %.c
 	@mkdir -p $(abspath .deps/$(*D))
-	$(CC) -I. -Iinclude $(CFLAGS) $(DEPS_CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(QUIET_CC)$(CC) -I. -Iinclude $(CFLAGS) $(DEPS_CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 -include $(OBJS:%.o=.deps/%.d)
 
 src/builtin-config.c: tigrc tools/make-builtin-config.sh
-	tools/make-builtin-config.sh $< > $@
+	$(QUIET_GEN)tools/make-builtin-config.sh $< > $@
 
 tig.spec: contrib/tig.spec.in
-	sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' \
+	$(QUIET_GEN)sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' \
 	    -e 's/@@RELEASE@@/$(RPM_RELEASE)/g' < $< > $@
 
 doc/manual.html: doc/manual.toc
 doc/manual.html: ASCIIDOC_FLAGS += -ainclude-manual-toc
 %.toc: %.adoc
-	sed -n '/^\[\[/,/\(---\|~~~\)/p' < $< | while read line; do \
+	$(QUIET_GEN)sed -n '/^\[\[/,/\(---\|~~~\)/p' < $< | while read line; do \
 		case "$$line" in \
 		"----"*)  echo ". <<$$ref>>"; ref= ;; \
 		"~~~~"*)  echo "- <<$$ref>>"; ref= ;; \
@@ -265,43 +251,63 @@ doc/manual.html: ASCIIDOC_FLAGS += -ainclude-manual-toc
 		esac; done | sed 's/\[\[\(.*\)\]\]/\1/' > $@
 
 README.html: README.adoc doc/asciidoc.conf
-	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -a readme $<
+	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -a readme $<
 
 INSTALL.html: INSTALL.adoc doc/asciidoc.conf
-	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<
+	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<
 
 NEWS.html: NEWS.adoc doc/asciidoc.conf
-	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<
+	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<
 
 doc/tigmanual.7: doc/manual.adoc
 
 %.1.html : %.1.adoc doc/asciidoc.conf
-	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
+	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
 
 %.1.xml : %.1.adoc doc/asciidoc.conf
-	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
+	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
 %.5.html : %.5.adoc doc/asciidoc.conf
-	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
+	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<
 
 %.5.xml : %.5.adoc doc/asciidoc.conf
-	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
+	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
 %.7.xml : %.7.adoc doc/asciidoc.conf
-	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
+	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
 %.html: ASCIIDOC_FLAGS += -adocext=html
 %.html : %.adoc doc/asciidoc.conf
-	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -n $<
+	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -n $<
 
 %.xml : %.adoc doc/asciidoc.conf
-	$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d article $<
+	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d article $<
 
 % : %.xml
-	$(XMLTO) man -o doc $<
+	$(QUIET_XMLTO)$(XMLTO) man -o doc $<
 
 %.html-chunked : %.xml
-	$(XMLTO) html -o $@ $<
+	$(QUIET_XMLTO)$(XMLTO) html -o $@ $<
 
 %.pdf : %.xml
-	$(DOCBOOK2PDF) -o doc $<
+	$(QUIET_DB2PDF)$(DOCBOOK2PDF) -o doc $<
+
+#############################################################################
+# Quiet make
+#############################################################################
+
+ifneq ($(findstring $(MAKEFLAGS),s),s)
+V			= @
+Q			= $(V:1=)
+QUIET_CC		= $(Q:@=@echo    '        CC  '$@;)
+QUIET_LINK		= $(Q:@=@echo    '      LINK  '$@;)
+QUIET_GEN		= $(Q:@=@echo    '       GEN  '$@;)
+QUIET_ASCIIDOC		= $(Q:@=@echo    '  ASCIIDOC  '$@;)
+QUIET_XMLTO		= $(Q:@=@echo    '     XMLTO  '$@;)
+QUIET_DB2PDF		= $(Q:@=@echo    '    DB2PDF  '$@;)
+# tools/install.sh will print 'file -> $install_dir/file'
+QUIET_INSTALL		= $(Q:@=@printf  '   INSTALL  ';)
+QUIET_INSTALL_EACH	= $(Q:@=printf   '   INSTALL  ';)
+
+export V
+endif
