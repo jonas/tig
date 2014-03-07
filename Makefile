@@ -22,9 +22,10 @@ mandir ?= $(datarootdir)/man
 # DESTDIR=
 
 ifneq (,$(wildcard .git))
-GITDESC	= $(subst tig-,,$(shell git describe))
+GITDESC	= $(subst tig-,,$(shell git describe 2>/dev/null))
+COMMIT := $(if $(GITDESC),$(GITDESC),$(VERSION)-g$(shell git describe --always))
 WTDIRTY	= $(if $(shell git diff-index HEAD 2>/dev/null),-dirty)
-VERSION	= $(GITDESC)$(WTDIRTY)
+VERSION	= $(COMMIT)$(WTDIRTY)
 endif
 ifdef DIST_VERSION
 VERSION = $(DIST_VERSION)
