@@ -25,7 +25,7 @@
 	strncmp(str1, str2, STRING_SIZE(str2))
 
 bool string_isnumber(const char *str);
-bool iscommit(char *str);
+bool iscommit(const char *str);
 
 static inline int
 ascii_toupper(int c)

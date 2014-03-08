@@ -32,7 +32,7 @@ string_isnumber(const char *str)
 }
 
 bool
-iscommit(char *str)
+iscommit(const char *str)
 {
 	int pos;
 
