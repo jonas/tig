@@ -22,6 +22,8 @@
 #define ENCODING_SEP	": encoding: "
 #define ENCODING_ARG	"--encoding=" ENCODING_UTF8
 
+#define CHARSET_SEP	"; charset="
+
 struct encoding {
 	struct encoding *next;
 	iconv_t cd;
@@ -109,8 +111,17 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 	encoding += STRING_SIZE(ENCODING_SEP);
 	if (!strcmp(encoding, ENCODING_UTF8)
 	    || !strcmp(encoding, "unspecified")
-	    || !strcmp(encoding, "set"))
-		return default_encoding;
+	    || !strcmp(encoding, "set")) {
+		const char *file_argv[] = {
+			"file", "-I", "--", path, NULL
+		};
+
+		if (!*path || !io_run_buf(file_argv, buf, sizeof(buf))
+		    || !(encoding = strstr(buf, CHARSET_SEP)))
+			return default_encoding;
+
+		encoding += STRING_SIZE(CHARSET_SEP);
+	}
 
 	return encoding_open(encoding);
 }
