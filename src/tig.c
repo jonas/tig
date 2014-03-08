@@ -648,7 +648,10 @@ run_prompt_command(struct view *view, char *cmd)
 {
 	enum request request;
 
-	if (cmd && string_isnumber(cmd)) {
+	if (!cmd)
+		return REQ_NONE;
+
+	if (string_isnumber(cmd)) {
 		int lineno = view->pos.lineno + 1;
 
 		if (parse_int(&lineno, cmd, 1, view->lines + 1) == SUCCESS) {
@@ -657,7 +660,7 @@ run_prompt_command(struct view *view, char *cmd)
 		} else {
 			report("Unable to parse '%s' as a line number", cmd);
 		}
-	} else if (cmd && iscommit(cmd)) {
+	} else if (iscommit(cmd)) {
 		string_ncopy(view->env->search, cmd, strlen(cmd));
 
 		request = view_request(view, REQ_JUMP_COMMIT);
@@ -665,12 +668,12 @@ run_prompt_command(struct view *view, char *cmd)
 			report("Jumping to commits is not supported by the '%s' view", view->name);
 		}
 
-	} else if (cmd && strlen(cmd) == 1) {
+	} else if (strlen(cmd) == 1) {
 		struct key_input input = { { cmd[0] } };
 
 		return get_keybinding(&view->ops->keymap, &input);
 
-	} else if (cmd && cmd[0] == '!') {
+	} else if (cmd[0] == '!') {
 		struct view *next = VIEW(REQ_VIEW_PAGER);
 		const char *argv[SIZEOF_ARG];
 		int argc = 0;
@@ -690,7 +693,7 @@ run_prompt_command(struct view *view, char *cmd)
 			open_view(view, REQ_VIEW_PAGER, OPEN_PREPARED);
 		}
 
-	} else if (cmd) {
+	} else {
 		request = get_request(cmd);
 		if (request != REQ_UNKNOWN)
 			return request;
