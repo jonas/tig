@@ -59,6 +59,8 @@ Improvements:
  - Add grep view as a front-end to git-grep(1): `tig grep -p strchr`. From
    within Tig, the key for switching or grepping is bound to 'G' by default.
  - Warn about conflicting keybindings using Ctrl, e.g. `^f` and `^F`. (GH #218)
+ - Extend key bindings for prompt commands (ie. `bind <keymap> <key> :<prompt>`)
+   to support predefined searches, eg.: `bind stage 2 :?^@@`.
 
 Bug fixes:
 

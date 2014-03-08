@@ -673,6 +673,10 @@ run_prompt_command(struct view *view, char *cmd)
 
 		return get_keybinding(&view->ops->keymap, &input);
 
+	} else if (cmd[0] == '/' || cmd[0] == '?') {
+		string_ncopy(view->env->search, cmd + 1, strlen(cmd + 1));
+		return cmd[0] == '/' ? REQ_FIND_NEXT : REQ_FIND_PREV;
+
 	} else if (cmd[0] == '!') {
 		struct view *next = VIEW(REQ_VIEW_PAGER);
 		const char *argv[SIZEOF_ARG];
