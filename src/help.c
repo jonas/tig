@@ -83,7 +83,7 @@ help_open_keymap_run_requests(struct help_request_iterator *iterator)
 	int i;
 
 	for (i = 0; TRUE; i++) {
-		struct run_request *req = get_run_request(REQ_NONE + i + 1);
+		struct run_request *req = get_run_request(REQ_RUN_REQUESTS + i + 1);
 		const char *key;
 
 		if (!req)
