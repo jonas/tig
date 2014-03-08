@@ -4,13 +4,10 @@ env:
   - TEST=autoconf
   - TEST=make
 
-before_install:
-  - sudo apt-get update
-  - sudo apt-get install -qq --no-install-recommends asciidoc xmlto libncursesw5-dev docbook-utils
+before_install: sudo apt-get update -qq
 
-install:
-  - if [[ "autoconf" == "$TEST" ]]; then ./autogen.sh && ./configure; fi
-  - make && make doc && sudo make install install-doc
+install: sudo apt-get install -qq --no-install-recommends asciidoc xmlto docbook-utils
 
 script:
-  - make test
+  - if [ x"$TEST" = xautoconf ]; then ./autogen.sh && ./configure; fi
+  - make && make doc test && sudo make install install-doc
