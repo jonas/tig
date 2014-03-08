@@ -63,11 +63,11 @@ encoding_open(const char *fromcode)
 }
 
 static char *
-encoding_convert_string(iconv_t iconv_cd, char *line)
+encoding_convert_string(iconv_t iconv_cd, char *line, size_t linelen)
 {
 	static char out_buffer[BUFSIZ * 2];
 	ICONV_CONST char *inbuf = line;
-	size_t inlen = strlen(line) + 1;
+	size_t inlen = linelen + 1;
 
 	char *outbuf = out_buffer;
 	size_t outlen = sizeof(out_buffer);
@@ -80,14 +80,14 @@ encoding_convert_string(iconv_t iconv_cd, char *line)
 char *
 encoding_convert(struct encoding *encoding, char *line)
 {
-	return encoding_convert_string(encoding->cd, line);
+	return encoding_convert_string(encoding->cd, line, strlen(line));
 }
 
 const char *
-encoding_iconv(iconv_t iconv_cd, const char *string)
+encoding_iconv(iconv_t iconv_cd, const char *string, size_t length)
 {
-	char *instr = strdup(string);
-	const char *ret = encoding_convert_string(iconv_cd, instr);
+	char *instr = strndup(string, length);
+	const char *ret = instr ? encoding_convert_string(iconv_cd, instr, length) : string;
 
 	free(instr);
 	return ret == instr ? string : ret;

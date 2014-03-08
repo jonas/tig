@@ -26,7 +26,7 @@ struct encoding;
 
 struct encoding *encoding_open(const char *fromcode);
 char *encoding_convert(struct encoding *encoding, char *line);
-const char *encoding_iconv(iconv_t iconv_out, const char *string);
+const char *encoding_iconv(iconv_t iconv_out, const char *string, size_t length);
 struct encoding *get_path_encoding(const char *path, struct encoding *default_encoding);
 
 extern char encoding_arg[];
