@@ -78,7 +78,7 @@ grep_select(struct view *view, struct line *line)
 }
 
 static const char *grep_args[] = {
-	"git", "grep", "--no-color", "-n", "-z", NULL
+	"git", "grep", "--no-color", "-n", "-z", "--full-name", NULL
 };
 
 static const char **grep_argv;
