@@ -176,11 +176,7 @@ open_run_request(struct view *view, enum request request)
 	}
 
 	if (req->flags.internal) {
-		char cmd[SIZEOF_STR];
-
-		if (argv_to_string(argv, cmd, sizeof(cmd), " ")) {
-			request = run_prompt_command(view, cmd);
-		}
+		request = run_prompt_command(view, argv);
 
 	} else {
 		confirmed = !req->flags.confirm;

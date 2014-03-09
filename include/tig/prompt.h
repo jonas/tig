@@ -29,7 +29,7 @@ char *read_prompt(const char *prompt);
 bool prompt_yesno(const char *prompt);
 bool prompt_menu(const char *prompt, const struct menu_item *items, int *selected);
 
-enum request run_prompt_command(struct view *view, char *cmd);
+enum request run_prompt_command(struct view *view, const char *argv[]);
 enum request open_prompt(struct view *view);
 
 #endif

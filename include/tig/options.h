@@ -90,7 +90,7 @@ const char *show_notes_arg();
  */
 
 enum status_code parse_int(int *opt, const char *arg, int min, int max);
-enum status_code set_option(const char *opt, char *value);
+enum status_code set_option(const char *opt, int argc, const char *argv[]);
 int load_options(void);
 int load_git_config(void);
 

@@ -560,14 +560,8 @@ option_source_command(int argc, const char *argv[])
 }
 
 enum status_code
-set_option(const char *opt, char *value)
+set_option(const char *opt, int argc, const char *argv[])
 {
-	const char *argv[SIZEOF_ARG];
-	int argc = 0;
-
-	if (!argv_from_string(argv, &argc, value))
-		return ERROR_TOO_MANY_OPTION_ARGUMENTS;
-
 	if (!strcmp(opt, "color"))
 		return option_color_command(argc, argv);
 
@@ -606,13 +600,18 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 	if (opt[optlen] == 0) {
 		/* Look for comment endings in the value. */
 		size_t len = strcspn(value, "#");
+		const char *argv[SIZEOF_ARG];
+		int argc = 0;
 
 		if (len < valuelen) {
 			valuelen = len;
 			value[valuelen] = 0;
 		}
 
-		status = set_option(opt, value);
+		if (!argv_from_string(argv, &argc, value))
+			status = ERROR_TOO_MANY_OPTION_ARGUMENTS;
+		else
+			status = set_option(opt, argc, argv);
 	}
 
 	if (status != SUCCESS) {
