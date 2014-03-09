@@ -213,7 +213,7 @@ pager_select(struct view *view, struct line *line)
 bool
 pager_open(struct view *view, enum open_flags flags)
 {
-	if (!open_from_stdin(flags) && !view->lines) {
+	if (!open_from_stdin(flags) && !view->lines && !(flags & OPEN_PREPARED)) {
 		report("No pager content, press %s to run command from prompt",
 			get_view_key(view, REQ_PROMPT));
 		return FALSE;
