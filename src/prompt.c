@@ -205,12 +205,17 @@ run_prompt_command(struct view *view, const char *argv[])
 		return get_keybinding(&view->ops->keymap, &input);
 
 	} else if (cmd[0] == '/' || cmd[0] == '?') {
-		const char *search = cmd + 1;
+		char search[SIZEOF_STR];
 
-		if (!strcmp(search, view->env->search))
+		if (!argv_to_string(argv, search, sizeof(search), " ")) {
+			report("Failed to copy search string");
+			return REQ_NONE;
+		}
+
+		if (!strcmp(search + 1, view->env->search))
 			return cmd[0] == '/' ? REQ_FIND_NEXT : REQ_FIND_PREV;
 
-		string_ncopy(view->env->search, search, strlen(search));
+		string_ncopy(view->env->search, search + 1, strlen(search + 1));
 		return cmd[0] == '/' ? REQ_SEARCH : REQ_SEARCH_BACK;
 
 	} else if (cmd[0] == '!') {

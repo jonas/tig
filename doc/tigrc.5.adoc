@@ -495,8 +495,9 @@ bind diff F :set diff-options = --full-diff
 # Show the output of git-reflog(1) in the pager view
 bind generic W :!git reflog
 
-# Search for previous diff (c)hunk
+# Search for previous diff (c)hunk and next diff header
 bind stage 2 :?^@@
+bind stage D :/^diff --(git|cc)
 --------------------------------------------------------------------------
 
 Similar to external commands, pager view commands can contain variable names
