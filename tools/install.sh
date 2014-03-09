@@ -30,7 +30,7 @@ esac
 
 mkdir -p "$dest"
 
-if [ -n "$V" ]; then
+if [ "$V" = "@" ]; then
 	echo "$src -> $dest"
 fi
 
