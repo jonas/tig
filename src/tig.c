@@ -714,6 +714,8 @@ run_prompt_command(struct view *view, char *cmd)
 				request = !view->unrefreshable ? REQ_REFRESH : REQ_SCREEN_REDRAW;
 				if (!strcmp(cmd, "color"))
 					init_colors();
+				resize_display();
+				redraw_display(TRUE);
 			}
 		}
 		return request;
