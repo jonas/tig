@@ -278,7 +278,7 @@ draw_lineno_custom(struct view *view, unsigned int lineno, bool show, int interv
 		return FALSE;
 
 	if (lineno == 1 || (lineno % interval) == 0) {
-		static char fmt[] = "%1ld";
+		static char fmt[] = "%ld";
 
 		fmt[1] = '0' + (view->digits <= 9 ? digits3 : 1);
 		if (string_format(number, fmt, lineno))
