@@ -79,6 +79,8 @@ Bug fixes:
  - Fix author and date annotation of renamed entries in the tree view.
  - Fix use of unsafe methods in the signal handler. (GH #245)
  - Fix rendering in non-UTF8 terminals.
+ - Fix stage-update-line by rewriting the diff chunk containing the line instead
+   of using `--unidiff-zero` and a diff context of zero. (GH #130)
 
 tig-1.2.1
 ---------

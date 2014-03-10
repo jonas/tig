@@ -31,6 +31,14 @@ struct stage_state {
 	int *chunk;
 };
 
+static inline bool
+stage_diff_done(struct line *line, struct line *end)
+{
+	return line >= end ||
+	       line->type == LINE_DIFF_CHUNK ||
+	       line->type == LINE_DIFF_HEADER;
+}
+
 static bool
 stage_diff_write(struct io *io, struct line *line, struct line *end)
 {
@@ -39,8 +47,7 @@ stage_diff_write(struct io *io, struct line *line, struct line *end)
 		    !io_write(io, "\n", 1))
 			return FALSE;
 		line++;
-		if (line->type == LINE_DIFF_CHUNK ||
-		    line->type == LINE_DIFF_HEADER)
+		if (stage_diff_done(line, end))
 			break;
 	}
 
@@ -48,7 +55,62 @@ stage_diff_write(struct io *io, struct line *line, struct line *end)
 }
 
 static bool
-stage_apply_chunk(struct view *view, struct line *chunk, struct line *line, bool revert)
+stage_diff_single_write(struct io *io, bool staged,
+			struct line *line, struct line *single, struct line *end)
+{
+	enum line_type write_as_normal = staged ? LINE_DIFF_ADD : LINE_DIFF_DEL;
+	enum line_type ignore = staged ? LINE_DIFF_DEL : LINE_DIFF_ADD;
+
+	while (line < end) {
+		const char *prefix = "";
+		const char *data = line->data;
+
+		if (line == single) {
+			/* Write the complete line. */
+
+		} else if (line->type == write_as_normal) {
+			prefix = " ";
+			data = data + 1;
+
+		} else if (line->type == ignore) {
+			data = NULL;
+		}
+
+		if (data && !io_printf(io, "%s%s\n", prefix, data))
+			return FALSE;
+
+		line++;
+		if (stage_diff_done(line, end))
+			break;
+	}
+
+	return TRUE;
+}
+
+static bool
+stage_apply_line(struct io *io, struct line *diff_hdr, struct line *chunk, struct line *single, struct line *end)
+{
+	struct chunk_header header;
+	bool staged = stage_line_type == LINE_STAT_STAGED;
+	int diff = single->type == LINE_DIFF_DEL ? -1 : 1;
+
+	if (!parse_chunk_header(&header, chunk->data))
+		return FALSE;
+
+	if (staged)
+		header.old.lines = header.new.lines - diff;
+	else
+		header.new.lines = header.old.lines + diff;
+
+	return stage_diff_write(io, diff_hdr, chunk) &&
+	       io_printf(io, "@@ -%lu,%lu +%lu,%lu @@\n",
+		       header.old.position, header.old.lines,
+		       header.new.position, header.new.lines) &&
+	       stage_diff_single_write(io, staged, chunk + 1, single, end);
+}
+
+static bool
+stage_apply_chunk(struct view *view, struct line *chunk, struct line *single, bool revert)
 {
 	const char *apply_argv[SIZEOF_ARG] = {
 		"git", "apply", "--whitespace=nowarn", NULL
@@ -63,8 +125,6 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *line, bool
 
 	if (!revert)
 		apply_argv[argc++] = "--cached";
-	if (line != NULL)
-		apply_argv[argc++] = "--unidiff-zero";
 	if (revert || stage_line_type == LINE_STAT_STAGED)
 		apply_argv[argc++] = "-R";
 	apply_argv[argc++] = "-";
@@ -72,31 +132,10 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *line, bool
 	if (!io_run(&io, IO_WR, repo.cdup, opt_env, apply_argv))
 		return FALSE;
 
-	if (line != NULL) {
-		unsigned long lineno = 0;
-		struct line *context = chunk + 1;
-		const char *markers[] = {
-			line->type == LINE_DIFF_DEL ? ""   : ",0",
-			line->type == LINE_DIFF_DEL ? ",0" : "",
-		};
-
-		parse_chunk_lineno(&lineno, chunk->data, line->type == LINE_DIFF_DEL ? '+' : '-');
-
-		while (context < line) {
-			if (context->type == LINE_DIFF_CHUNK || context->type == LINE_DIFF_HEADER) {
-				break;
-			} else if (context->type != LINE_DIFF_DEL && context->type != LINE_DIFF_ADD) {
-				lineno++;
-			}
-			context++;
-		}
-
-		if (!stage_diff_write(&io, diff_hdr, chunk) ||
-		    !io_printf(&io, "@@ -%lu%s +%lu%s @@\n",
-			       lineno, markers[0], lineno, markers[1]) ||
-		    !stage_diff_write(&io, line, line + 1)) {
+	if (single != NULL) {
+		if (!stage_apply_line(&io, diff_hdr, chunk, single, view->line + view->lines))
 			chunk = NULL;
-		}
+
 	} else {
 		if (!stage_diff_write(&io, diff_hdr, chunk) ||
 		    !stage_diff_write(&io, chunk, view->line + view->lines))
