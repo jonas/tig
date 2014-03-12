@@ -279,9 +279,30 @@ static size_t run_requests;
 DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 
 enum status_code
-add_run_request(struct keymap *keymap, struct key_input *input, const char **argv, enum run_request_flag flags)
+add_run_request(struct keymap *keymap, struct key_input *input, const char **argv)
 {
 	struct run_request *req;
+	struct run_request_flags flags = {};
+
+	if (!strchr(":!?@<", *argv[0]))
+		return ERROR_UNKNOWN_REQUEST_NAME;
+
+	while (*argv[0]) {
+		if (*argv[0] == ':') {
+			flags.internal = 1;
+			argv[0]++;
+			break;
+		} else if (*argv[0] == '@') {
+			flags.silent = 1;
+		} else if (*argv[0] == '?') {
+			flags.confirm = 1;
+		} else if (*argv[0] == '<') {
+			flags.exit = 1;
+		} else if (*argv[0] != '!') {
+			break;
+		}
+		argv[0]++;
+	}
 
 	if (!realloc_run_requests(&run_request, run_requests, 1))
 		return ERROR_OUT_OF_MEMORY;
@@ -290,10 +311,7 @@ add_run_request(struct keymap *keymap, struct key_input *input, const char **arg
 		return ERROR_OUT_OF_MEMORY;
 
 	req = &run_request[run_requests++];
-	req->silent = flags & RUN_REQUEST_SILENT;
-	req->confirm = flags & RUN_REQUEST_CONFIRM;
-	req->exit = flags & RUN_REQUEST_EXIT;
-	req->internal = flags & RUN_REQUEST_INTERNAL;
+	req->flags = flags;
 	req->keymap = keymap;
 	req->input = *input;
 

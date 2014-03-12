@@ -541,33 +541,8 @@ option_bind_command(int argc, const char *argv[])
 		}
 	}
 
-	if (request == REQ_UNKNOWN) {
-		enum run_request_flag flags = RUN_REQUEST_DEFAULT;
-
-		if (strchr("!?@<", *argv[2])) {
-			while (*argv[2]) {
-				if (*argv[2] == '@') {
-					flags |= RUN_REQUEST_SILENT;
-				} else if (*argv[2] == '?') {
-					flags |= RUN_REQUEST_CONFIRM;
-				} else if (*argv[2] == '<') {
-					flags |= RUN_REQUEST_EXIT;
-				} else if (*argv[2] != '!') {
-					break;
-				}
-				argv[2]++;
-			}
-
-		} else if (*argv[2] == ':') {
-			argv[2]++;
-			flags |= RUN_REQUEST_INTERNAL;
-
-		} else {
-			return ERROR_UNKNOWN_REQUEST_NAME;
-		}
-
-		return add_run_request(keymap, &input, argv + 2, flags);
-	}
+	if (request == REQ_UNKNOWN)
+		return add_run_request(keymap, &input, argv + 2);
 
 	return add_keybinding(keymap, request, &input);
 }

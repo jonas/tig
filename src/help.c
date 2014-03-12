@@ -50,7 +50,7 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 	} else if (help->request > REQ_RUN_REQUESTS) {
 		struct run_request *req = get_run_request(help->request);
 		const char *key = get_key_name(&req->input);
-		const char *sep = req->internal ? ":" : "!";
+		const char *sep = req->flags.internal ? ":" : "!";
 		int i;
 
 		if (draw_field(view, LINE_DEFAULT, key, state->keys_width + 2, ALIGN_RIGHT, FALSE))

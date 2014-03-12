@@ -172,7 +172,7 @@ open_run_request(struct view *view, enum request request)
 	}
 
 	if (argv_format(view->env, &argv, req->argv, FALSE, TRUE)) {
-		if (req->internal) {
+		if (req->flags.internal) {
 			char cmd[SIZEOF_STR];
 
 			if (argv_to_string(argv, cmd, sizeof(cmd), " ")) {
@@ -180,11 +180,11 @@ open_run_request(struct view *view, enum request request)
 			}
 		}
 		else {
-			confirmed = !req->confirm;
+			confirmed = !req->flags.confirm;
 
-			if (req->confirm) {
+			if (req->flags.confirm) {
 				char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
-				const char *and_exit = req->exit ? " and exit" : "";
+				const char *and_exit = req->flags.exit ? " and exit" : "";
 
 				if (argv_to_string(argv, cmd, sizeof(cmd), " ") &&
 				    string_format(prompt, "Run `%s`%s?", cmd, and_exit) &&
@@ -194,10 +194,10 @@ open_run_request(struct view *view, enum request request)
 			}
 
 			if (confirmed && argv_remove_quotes(argv)) {
-				if (req->silent)
+				if (req->flags.silent)
 					io_run_bg(argv);
 				else
-					open_external_viewer(argv, NULL, !req->exit, "");
+					open_external_viewer(argv, NULL, !req->flags.exit, "");
 			}
 		}
 	}
@@ -207,10 +207,10 @@ open_run_request(struct view *view, enum request request)
 	free(argv);
 
 	if (request == REQ_NONE) {
-		if (req->confirm && !confirmed)
+		if (req->flags.confirm && !confirmed)
 			request = REQ_NONE;
 
-		else if (req->exit)
+		else if (req->flags.exit)
 			request = REQ_QUIT;
 
 		else if (view_has_flags(view, VIEW_REFRESH) && !view->unrefreshable)
