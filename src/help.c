@@ -49,7 +49,7 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 
 	} else if (help->request > REQ_RUN_REQUESTS) {
 		struct run_request *req = get_run_request(help->request);
-		const char *key = get_key_name(&req->input);
+		const char *key = get_keys(keymap, help->request, TRUE);
 		const char *sep = req->flags.internal ? ":" : "!";
 		int i;
 
@@ -96,7 +96,7 @@ help_grep(struct view *view, struct line *line)
 
 	} else if (help->request > REQ_RUN_REQUESTS) {
 		struct run_request *req = get_run_request(help->request);
-		const char *key = get_key_name(&req->input);
+		const char *key = get_keys(keymap, help->request, TRUE);
 		char buf[SIZEOF_STR] = "";
 		const char *text[] = { key, buf, NULL };
 
@@ -199,7 +199,7 @@ help_open_keymap_run_requests(struct help_request_iterator *iterator)
 			break;
 
 		if (req->keymap != keymap ||
-		    !*(key = get_key_name(&req->input)))
+		    !*(key = get_keys(keymap, request, TRUE)))
 			continue;
 
 		if (!add_help_headers(iterator, group) ||

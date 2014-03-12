@@ -75,7 +75,6 @@ struct run_request_flags {
 
 struct run_request {
 	struct keymap *keymap;
-	struct key_input input;
 	struct run_request_flags flags;
 	const char **argv;
 };

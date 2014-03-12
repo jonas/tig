@@ -243,8 +243,6 @@ append_keymap_request_keys(char *buf, size_t *pos, enum request request,
 	return TRUE;
 }
 
-#define get_view_key(view, request) get_keys(&(view)->ops->keymap, request, FALSE)
-
 const char *
 get_keys(struct keymap *keymap, enum request request, bool all)
 {
@@ -313,7 +311,6 @@ add_run_request(struct keymap *keymap, struct key_input *input, const char **arg
 	req = &run_request[run_requests++];
 	req->flags = flags;
 	req->keymap = keymap;
-	req->input = *input;
 
 	return add_keybinding(keymap, REQ_RUN_REQUESTS + run_requests, input);
 }
