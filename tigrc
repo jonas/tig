@@ -280,6 +280,7 @@ color stat-unstaged		magenta	default
 color stat-untracked		magenta	default
 color help-keymap		cyan	default
 color help-group		blue	default
+color help-action		yellow	default
 color diff-stat			blue	default
 color palette-0			magenta	default
 color palette-1			yellow	default

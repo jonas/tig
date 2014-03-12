@@ -74,6 +74,7 @@ struct ref;
 	_(STAT_UNTRACKED,	""), \
 	_(HELP_KEYMAP,		""), \
 	_(HELP_GROUP,		""), \
+	_(HELP_ACTION,		""), \
 	_(DIFF_STAT,		""), \
 	_(PALETTE_0,		""), \
 	_(PALETTE_1,		""), \

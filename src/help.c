@@ -14,31 +14,104 @@
 #include "tig/argv.h"
 #include "tig/view.h"
 #include "tig/draw.h"
-#include "tig/pager.h"
 
 /*
  * Help backend
  */
 
+struct help_state {
+	int keys_width;
+	int name_width;
+};
+
+struct help {
+	struct keymap *keymap;
+	enum request request;
+	union {
+		const char *text;
+		const struct request_info *req_info;
+	} data;
+};
+
 static bool
 help_draw(struct view *view, struct line *line, unsigned int lineno)
 {
-	if (line->type == LINE_HELP_KEYMAP) {
-		struct keymap *keymap = line->data;
+	struct help *help = line->data;
+	struct keymap *keymap = help->keymap;
+	struct help_state *state = view->private;
 
+	if (line->type == LINE_HELP_KEYMAP) {
 		draw_formatted(view, line->type, "[%c] %s bindings",
 			       keymap->hidden ? '+' : '-', keymap->name);
-		return TRUE;
+
+	} else if (line->type == LINE_HELP_GROUP || !keymap) {
+		draw_text(view, line->type, help->data.text);
+
+	} else if (help->request > REQ_RUN_REQUESTS) {
+		struct run_request *req = get_run_request(help->request);
+		const char *key = get_key_name(&req->input);
+		const char *sep = req->internal ? ":" : "!";
+		int i;
+
+		if (draw_field(view, LINE_DEFAULT, key, state->keys_width + 2, ALIGN_RIGHT, FALSE))
+			return TRUE;
+
+		for (i = 0; req->argv[i]; i++) {
+			if (draw_formatted(view, LINE_HELP_ACTION, "%s%s", sep, req->argv[i]))
+				return TRUE;
+			sep = " ";
+		}
+
 	} else {
-		return pager_draw(view, line, lineno);
+		const struct request_info *req_info = help->data.req_info;
+		const char *key = get_keys(keymap, req_info->request, TRUE);
+
+		if (draw_field(view, LINE_DEFAULT, key, state->keys_width + 2, ALIGN_RIGHT, FALSE))
+			return TRUE;
+
+		if (draw_field(view, LINE_HELP_ACTION, enum_name(*req_info), state->name_width, ALIGN_LEFT, FALSE))
+			return TRUE;
+
+		draw_text(view, LINE_DEFAULT, req_info->help);
 	}
+
+	return TRUE;
 }
 
-static bool
-help_open_keymap_title(struct view *view, struct keymap *keymap)
+bool
+help_grep(struct view *view, struct line *line)
 {
-	add_line(view, keymap, LINE_HELP_KEYMAP, 0, FALSE);
-	return keymap->hidden;
+	struct help *help = line->data;
+	struct keymap *keymap = help->keymap;
+
+	if (line->type == LINE_HELP_KEYMAP) {
+		const char *text[] = { keymap->name, NULL };
+
+		return grep_text(view, text);
+
+	} else if (line->type == LINE_HELP_GROUP || !keymap) {
+		const char *text[] = { help->data.text, NULL };
+
+		return grep_text(view, text);
+
+	} else if (help->request > REQ_RUN_REQUESTS) {
+		struct run_request *req = get_run_request(help->request);
+		const char *key = get_key_name(&req->input);
+		char buf[SIZEOF_STR] = "";
+		const char *text[] = { key, buf, NULL };
+
+		if (!argv_to_string(req->argv, buf, sizeof(buf), " "))
+			return FALSE;
+
+		return grep_text(view, text);
+
+	} else {
+		const struct request_info *req_info = help->data.req_info;
+		const char *key = get_keys(keymap, req_info->request, TRUE);
+		const char *text[] = { key, enum_name(*req_info), req_info->help, NULL };
+
+		return grep_text(view, text);
+	}
 }
 
 struct help_request_iterator {
@@ -49,27 +122,62 @@ struct help_request_iterator {
 };
 
 static bool
+add_help_line(struct view *view, struct help **help_ptr, struct keymap *keymap, enum line_type type)
+{
+	struct help *help;
+
+	if (!add_line_alloc(view, &help, type, 0, FALSE))
+		return FALSE;
+	help->keymap = keymap;
+	if (help_ptr)
+		*help_ptr = help;
+	return TRUE;
+}
+
+static bool
+add_help_headers(struct help_request_iterator *iterator, const char *group)
+{
+	struct help *help;
+
+	if (iterator->add_title) {
+		iterator->add_title = FALSE;
+		if (!add_help_line(iterator->view, &help, iterator->keymap, LINE_HELP_KEYMAP) ||
+		    iterator->keymap->hidden)
+			return FALSE;
+	}
+
+	if (iterator->group != group) {
+		iterator->group = group;
+		if (!add_help_line(iterator->view, &help, iterator->keymap, LINE_HELP_GROUP))
+			return FALSE;
+		help->data.text = group;
+	}
+
+	return TRUE;
+}
+
+static bool
 help_open_keymap(void *data, const struct request_info *req_info, const char *group)
 {
 	struct help_request_iterator *iterator = data;
-	struct view *view = iterator->view;
+	struct help_state *state = iterator->view->private;
 	struct keymap *keymap = iterator->keymap;
 	const char *key = get_keys(keymap, req_info->request, TRUE);
+	struct help *help;
 
 	if (req_info->request == REQ_NONE || !key || !*key)
 		return TRUE;
 
-	if (iterator->add_title && help_open_keymap_title(view, keymap))
+	if (!add_help_headers(iterator, group) ||
+	    !add_help_line(iterator->view, &help, iterator->keymap, LINE_DEFAULT))
 		return FALSE;
-	iterator->add_title = FALSE;
 
-	if (iterator->group != group) {
-		add_line_text(view, group, LINE_HELP_GROUP);
-		iterator->group = group;
-	}
+	state->keys_width = MAX(state->keys_width, strlen(key));
+	state->name_width = MAX(state->name_width, strlen(enum_name(*req_info)));
 
-	add_line_format(view, LINE_DEFAULT, "    %-25s %-20s %s", key,
-			enum_name(*req_info), req_info->help);
+	help->data.req_info = req_info;
+	help->request = req_info->request;
+
 	return TRUE;
 }
 
@@ -77,38 +185,30 @@ static void
 help_open_keymap_run_requests(struct help_request_iterator *iterator)
 {
 	struct view *view = iterator->view;
+	struct help_state *state = view->private;
 	struct keymap *keymap = iterator->keymap;
-	char buf[SIZEOF_STR];
 	const char *group = "External commands:";
-	int i;
+	enum request request = REQ_RUN_REQUESTS + 1;
+	struct help *help;
 
-	for (i = 0; TRUE; i++) {
-		struct run_request *req = get_run_request(REQ_RUN_REQUESTS + i + 1);
+	for (; TRUE; request++) {
+		struct run_request *req = get_run_request(request);
 		const char *key;
 
 		if (!req)
 			break;
 
-		if (req->keymap != keymap)
+		if (req->keymap != keymap ||
+		    !*(key = get_key_name(&req->input)))
 			continue;
 
-		key = get_key_name(&req->input);
-		if (!*key)
-			key = "(no key defined)";
-
-		if (iterator->add_title && help_open_keymap_title(view, keymap))
-			return;
-		iterator->add_title = FALSE;
-
-		if (group) {
-			add_line_text(view, group, LINE_HELP_GROUP);
-			group = NULL;
-		}
-
-		if (!argv_to_string(req->argv, buf, sizeof(buf), " "))
+		if (!add_help_headers(iterator, group) ||
+		    !add_help_line(view, &help, keymap, LINE_DEFAULT))
 			return;
 
-		add_line_format(view, LINE_DEFAULT, "    %-25s `%s`", key, buf);
+		state->keys_width = MAX(state->keys_width, strlen(key));
+
+		help->request = request;
 	}
 }
 
@@ -116,10 +216,17 @@ static bool
 help_open(struct view *view, enum open_flags flags)
 {
 	struct keymap *keymap;
+	struct help *help;
 
 	reset_view(view);
-	add_line_text(view, "Quick reference for tig keybindings:", LINE_DEFAULT);
-	add_line_text(view, "", LINE_DEFAULT);
+
+	if (!add_help_line(view, &help, NULL, LINE_DEFAULT))
+		return FALSE;
+	help->data.text = "Quick reference for tig keybindings:";
+
+	if (!add_help_line(view, &help, NULL, LINE_DEFAULT))
+		return FALSE;
+	help->data.text = "";
 
 	for (keymap = get_keymaps(); keymap; keymap = keymap->next) {
 		struct help_request_iterator iterator = { view, keymap, TRUE };
@@ -134,29 +241,26 @@ help_open(struct view *view, enum open_flags flags)
 static enum request
 help_request(struct view *view, enum request request, struct line *line)
 {
+	struct help *help = line->data;
+
 	switch (request) {
 	case REQ_ENTER:
 		if (line->type == LINE_HELP_KEYMAP) {
-			struct keymap *keymap = line->data;
+			struct keymap *keymap = help->keymap;
 
 			keymap->hidden = !keymap->hidden;
 			refresh_view(view);
 		}
-
 		return REQ_NONE;
+
 	default:
-		return pager_request(view, request, line);
+		return request;
 	}
 }
 
-static void
-help_done(struct view *view)
+void
+help_select(struct view *view, struct line *line)
 {
-	int i;
-
-	for (i = 0; i < view->lines; i++)
-		if (view->line[i].type == LINE_HELP_KEYMAP)
-			view->line[i].data = NULL;
 }
 
 struct view_ops help_ops = {
@@ -164,14 +268,14 @@ struct view_ops help_ops = {
 	{ "help" },
 	"",
 	VIEW_NO_GIT_DIR,
-	0,
+	sizeof(struct help_state),
 	help_open,
 	NULL,
 	help_draw,
 	help_request,
-	pager_grep,
-	pager_select,
-	help_done,
+	help_grep,
+	help_select,
+	NULL,
 };
 
 /* vim: set ts=8 sw=8 noexpandtab: */

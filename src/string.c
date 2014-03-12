@@ -331,4 +331,15 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
 	return string - *start;
 }
 
+int
+utf8_width(const char *text, int max, int tab_size)
+{
+	int text_width = 0;
+	const char *tmp = text;
+	int trimmed = FALSE;
+
+	utf8_length(&tmp, 0, &text_width, max, &trimmed, FALSE, tab_size);
+	return text_width;
+}
+
 /* vim: set ts=8 sw=8 noexpandtab: */

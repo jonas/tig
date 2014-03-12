@@ -172,7 +172,7 @@ draw_field(struct view *view, enum line_type type, const char *text, int width, 
 		return draw_space(view, type, max, max);
 
 	if (align == ALIGN_RIGHT) {
-		int textlen = strlen(text);
+		int textlen = utf8_width(text, max, 1);
 		int leftpad = max - textlen - 1;
 
 		if (leftpad > 0) {
