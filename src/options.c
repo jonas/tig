@@ -32,7 +32,6 @@ OPTION_INFO(DEFINE_OPTION_VARIABLES);
  * State variables.
  */
 
-bool opt_file_filter		= TRUE;
 iconv_t opt_iconv_out		= ICONV_NONE;
 char opt_editor[SIZEOF_STR]	= "";
 const char **opt_cmdline_argv	= NULL;
@@ -663,6 +662,8 @@ load_options(void)
 	const char *tig_diff_opts = getenv("TIG_DIFF_OPTS");
 	const bool diff_opts_from_args = !!opt_diff_options;
 	bool custom_tigrc_system = !!tigrc_system;
+
+	opt_file_filter = TRUE;
 
 	if (!custom_tigrc_system)
 		tigrc_system = SYSCONFDIR "/tigrc";

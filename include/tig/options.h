@@ -28,6 +28,7 @@
 	_(diff_context,			int) \
 	_(diff_options,			const char **) \
 	_(editor_line_number,		bool) \
+	_(file_filter,			bool) \
 	_(focus_child,			bool) \
 	_(horizontal_scroll,		double) \
 	_(id_width,			int) \
@@ -64,7 +65,6 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS);
  * Global state variables.
  */
 
-extern bool opt_file_filter;
 extern iconv_t opt_iconv_out;
 extern char opt_editor[SIZEOF_STR];
 extern const char **opt_cmdline_argv;
