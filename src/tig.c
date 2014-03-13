@@ -171,34 +171,37 @@ open_run_request(struct view *view, enum request request)
 		return request;
 	}
 
-	if (argv_format(view->env, &argv, req->argv, FALSE, TRUE)) {
-		if (req->flags.internal) {
-			char cmd[SIZEOF_STR];
+	if (!argv_format(view->env, &argv, req->argv, FALSE, TRUE)) {
+		report("Failed to format arguments");
+		return REQ_NONE;
+	}
 
-			if (argv_to_string(argv, cmd, sizeof(cmd), " ")) {
-				request = run_prompt_command(view, cmd);
+	if (req->flags.internal) {
+		char cmd[SIZEOF_STR];
+
+		if (argv_to_string(argv, cmd, sizeof(cmd), " ")) {
+			request = run_prompt_command(view, cmd);
+		}
+
+	} else {
+		confirmed = !req->flags.confirm;
+
+		if (req->flags.confirm) {
+			char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
+			const char *and_exit = req->flags.exit ? " and exit" : "";
+
+			if (argv_to_string(argv, cmd, sizeof(cmd), " ") &&
+			    string_format(prompt, "Run `%s`%s?", cmd, and_exit) &&
+			    prompt_yesno(prompt)) {
+				confirmed = TRUE;
 			}
 		}
-		else {
-			confirmed = !req->flags.confirm;
 
-			if (req->flags.confirm) {
-				char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
-				const char *and_exit = req->flags.exit ? " and exit" : "";
-
-				if (argv_to_string(argv, cmd, sizeof(cmd), " ") &&
-				    string_format(prompt, "Run `%s`%s?", cmd, and_exit) &&
-				    prompt_yesno(prompt)) {
-					confirmed = TRUE;
-				}
-			}
-
-			if (confirmed && argv_remove_quotes(argv)) {
-				if (req->flags.silent)
-					io_run_bg(argv);
-				else
-					open_external_viewer(argv, NULL, !req->flags.exit, "");
-			}
+		if (confirmed && argv_remove_quotes(argv)) {
+			if (req->flags.silent)
+				io_run_bg(argv);
+			else
+				open_external_viewer(argv, NULL, !req->flags.exit, "");
 		}
 	}
 

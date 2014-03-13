@@ -263,7 +263,6 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 		return string_format_from(format->buf, &format->bufpos, "%s", value);
 	}
 
-	report("Unknown replacement: `%s`", name);
 	return FALSE;
 }
 
