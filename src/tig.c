@@ -333,6 +333,10 @@ view_driver(struct view *view, enum request request)
 		report("Going back is not supported for by %s view", view->name);
 		break;
 
+	case REQ_JUMP_COMMIT:
+		report("Jumping to commits is not supported by the %s view", view->name);
+		break;
+
 	case REQ_MAXIMIZE:
 		if (displayed_views() == 2)
 			maximize_view(view, TRUE);
@@ -665,11 +669,7 @@ run_prompt_command(struct view *view, char *cmd)
 		}
 	} else if (iscommit(cmd)) {
 		string_ncopy(view->env->search, cmd, strlen(cmd));
-
-		request = view_request(view, REQ_JUMP_COMMIT);
-		if (request == REQ_JUMP_COMMIT) {
-			report("Jumping to commits is not supported by the '%s' view", view->name);
-		}
+		return REQ_JUMP_COMMIT;
 
 	} else if (strlen(cmd) == 1) {
 		struct key_input input = { { cmd[0] } };
