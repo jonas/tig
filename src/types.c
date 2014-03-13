@@ -71,13 +71,7 @@ map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, const
 	return FALSE;
 }
 
-DEFINE_ENUM_MAP(author, AUTHOR_ENUM);
-DEFINE_ENUM_MAP(commit_order, COMMIT_ORDER_ENUM);
-DEFINE_ENUM_MAP(date, DATE_ENUM);
-DEFINE_ENUM_MAP(file_size, FILE_SIZE_ENUM);
-DEFINE_ENUM_MAP(filename, FILENAME_ENUM);
-DEFINE_ENUM_MAP(graphic, GRAPHIC_ENUM);
-DEFINE_ENUM_MAP(ignore_space, IGNORE_SPACE_ENUM);
-DEFINE_ENUM_MAP(vertical_split, VERTICAL_SPLIT_ENUM);
+#define DEFINE_ENUM_MAPS(name, macro) DEFINE_ENUM_MAP(name, macro);
+ENUM_INFO(DEFINE_ENUM_MAPS);
 
 /* vim: set ts=8 sw=8 noexpandtab: */

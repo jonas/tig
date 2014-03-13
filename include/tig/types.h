@@ -64,14 +64,10 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(VERTICAL_SPLIT, VERTICAL), \
 	_(VERTICAL_SPLIT, AUTO)
 
-DEFINE_ENUM(vertical_split, VERTICAL_SPLIT_ENUM);
-
 #define GRAPHIC_ENUM(_) \
 	_(GRAPHIC, ASCII), \
 	_(GRAPHIC, DEFAULT), \
 	_(GRAPHIC, UTF_8)
-
-DEFINE_ENUM(graphic, GRAPHIC_ENUM);
 
 #define DATE_ENUM(_) \
 	_(DATE, NO), \
@@ -80,14 +76,10 @@ DEFINE_ENUM(graphic, GRAPHIC_ENUM);
 	_(DATE, RELATIVE), \
 	_(DATE, SHORT)
 
-DEFINE_ENUM(date, DATE_ENUM);
-
 #define FILE_SIZE_ENUM(_) \
 	_(FILE_SIZE, NO), \
 	_(FILE_SIZE, DEFAULT), \
 	_(FILE_SIZE, UNITS)
-
-DEFINE_ENUM(file_size, FILE_SIZE_ENUM);
 
 #define AUTHOR_ENUM(_) \
 	_(AUTHOR, NO), \
@@ -96,14 +88,10 @@ DEFINE_ENUM(file_size, FILE_SIZE_ENUM);
 	_(AUTHOR, EMAIL), \
 	_(AUTHOR, EMAIL_USER)
 
-DEFINE_ENUM(author, AUTHOR_ENUM);
-
 #define FILENAME_ENUM(_) \
 	_(FILENAME, NO), \
 	_(FILENAME, ALWAYS), \
 	_(FILENAME, AUTO)
-
-DEFINE_ENUM(filename, FILENAME_ENUM);
 
 #define IGNORE_SPACE_ENUM(_) \
 	_(IGNORE_SPACE, NO), \
@@ -111,15 +99,24 @@ DEFINE_ENUM(filename, FILENAME_ENUM);
 	_(IGNORE_SPACE, SOME), \
 	_(IGNORE_SPACE, AT_EOL)
 
-DEFINE_ENUM(ignore_space, IGNORE_SPACE_ENUM);
-
 #define COMMIT_ORDER_ENUM(_) \
 	_(COMMIT_ORDER, DEFAULT), \
 	_(COMMIT_ORDER, TOPO), \
 	_(COMMIT_ORDER, DATE), \
 	_(COMMIT_ORDER, REVERSE)
 
-DEFINE_ENUM(commit_order, COMMIT_ORDER_ENUM);
+#define ENUM_INFO(_) \
+	_(author, AUTHOR_ENUM) \
+	_(commit_order, COMMIT_ORDER_ENUM) \
+	_(date, DATE_ENUM) \
+	_(file_size, FILE_SIZE_ENUM) \
+	_(filename, FILENAME_ENUM) \
+	_(graphic, GRAPHIC_ENUM) \
+	_(ignore_space, IGNORE_SPACE_ENUM) \
+	_(vertical_split, VERTICAL_SPLIT_ENUM) \
+
+#define DEFINE_ENUMS(name, macro) DEFINE_ENUM(name, macro);
+ENUM_INFO(DEFINE_ENUMS);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */
