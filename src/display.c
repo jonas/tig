@@ -146,8 +146,6 @@ resize_display(void)
 	/* Setup window dimensions */
 
 	getmaxyx(stdscr, base->height, base->width);
-	string_format(opt_env_columns, "COLUMNS=%d", base->width);
-	string_format(opt_env_lines, "LINES=%d", base->height);
 
 	/* Make room for the status window. */
 	base->height -= 1;
@@ -167,6 +165,9 @@ resize_display(void)
 		/* Make room for the title bar. */
 		view->height -= 1;
 	}
+
+	string_format(opt_env_columns, "COLUMNS=%d", base->width);
+	string_format(opt_env_lines, "LINES=%d", base->height);
 
 	/* Make room for the title bar. */
 	base->height -= 1;
