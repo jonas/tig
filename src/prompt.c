@@ -358,6 +358,7 @@ run_prompt_command(struct view *view, const char *argv[])
 {
 	enum request request;
 	const char *cmd = argv[0];
+	size_t cmdlen = cmd ? strlen(cmd) : 0;
 
 	if (!cmd)
 		return REQ_NONE;
@@ -372,17 +373,10 @@ run_prompt_command(struct view *view, const char *argv[])
 			report("Unable to parse '%s' as a line number", cmd);
 		}
 	} else if (iscommit(cmd)) {
-		string_ncopy(view->env->search, cmd, strlen(cmd));
+		string_ncopy(view->env->search, cmd, cmdlen);
 		return REQ_JUMP_COMMIT;
 
-	} else if (strlen(cmd) == 1) {
-		struct key_input input = {};
-
-		input.modifiers.multibytes = 1;
-		input.data.bytes[0] = cmd[0];
-		return get_keybinding(&view->ops->keymap, &input);
-
-	} else if (cmd[0] == '/' || cmd[0] == '?') {
+	} else if (cmdlen > 1 && (cmd[0] == '/' || cmd[0] == '?')) {
 		char search[SIZEOF_STR];
 
 		if (!argv_to_string(argv, search, sizeof(search), " ")) {
@@ -396,7 +390,7 @@ run_prompt_command(struct view *view, const char *argv[])
 		string_ncopy(view->env->search, search + 1, strlen(search + 1));
 		return cmd[0] == '/' ? REQ_SEARCH : REQ_SEARCH_BACK;
 
-	} else if (cmd[0] == '!') {
+	} else if (cmdlen > 1 && cmd[0] == '!') {
 		struct view *next = VIEW(REQ_VIEW_PAGER);
 		bool copied;
 
@@ -438,6 +432,16 @@ run_prompt_command(struct view *view, const char *argv[])
 			report("%s", action);
 
 	} else {
+		struct key_input input = {};
+
+		/* Try :<key> */
+		input.modifiers.multibytes = 1;
+		string_ncopy(input.data.bytes, cmd, cmdlen);
+		request = get_keybinding(&view->ops->keymap, &input);
+		if (request != REQ_NONE)
+			return request;
+
+		/* Try :<command> */
 		request = get_request(cmd);
 		if (request != REQ_UNKNOWN)
 			return request;
