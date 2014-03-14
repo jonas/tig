@@ -40,21 +40,29 @@ string_enum_compare(const char *str1, const char *str2, int len)
 	return 0;
 }
 
-char *
-enum_map_name(const char *name, size_t namelen)
+bool
+enum_name_ncopy(char *buf, size_t bufsize, const char *name, size_t namelen)
 {
-	static char buf[SIZEOF_STR];
 	int bufpos;
 
-	for (bufpos = 0; bufpos <= namelen; bufpos++) {
+	for (bufpos = 0; bufpos <= namelen && bufpos < bufsize - 1; bufpos++) {
 		buf[bufpos] = ascii_tolower(name[bufpos]);
 		if (buf[bufpos] == '_')
 			buf[bufpos] = '-';
 	}
 
 	buf[bufpos] = 0;
-	return buf;
+	return bufpos == namelen + 1;
 }
+
+const char *
+enum_name_static(const char *name, size_t namelen)
+{
+	static char buf[SIZEOF_STR];
+
+	return enum_name_copy(buf, name, namelen) ? buf : name;
+}
+
 
 bool
 map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, const char *name)
