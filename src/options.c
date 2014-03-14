@@ -592,9 +592,6 @@ option_bind_command(int argc, const char *argv[])
 	if (request == REQ_UNKNOWN)
 		return add_run_request(keymap, &input, argv + 2);
 
-	if (request == REQ_UNKNOWN)
-		return add_run_request(keymap, &input, argv + 2);
-
 	return add_keybinding(keymap, request, &input);
 }
 
