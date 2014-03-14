@@ -14,7 +14,7 @@
 #include "tig/tig.h"
 #include "tig/argv.h"
 #include "tig/options.h"
-#include "tig/display.h"
+#include "tig/prompt.h"
 
 bool
 argv_to_string(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep)

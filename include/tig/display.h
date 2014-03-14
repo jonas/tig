@@ -24,15 +24,6 @@ enum input_status {
 	INPUT_CANCEL
 };
 
-struct menu_item {
-	int hotkey;
-	const char *text;
-	void *data;
-};
-
-char *read_prompt(const char *prompt);
-bool prompt_yesno(const char *prompt);
-bool prompt_menu(const char *prompt, const struct menu_item *items, int *selected);
 int get_input(int prompt_position, struct key_input *input, bool modifiers);
 
 void report(const char *msg, ...) PRINTF_LIKE(1, 2);

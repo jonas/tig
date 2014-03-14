@@ -194,6 +194,7 @@ TIG_OBJS = \
 	src/repo.o \
 	src/options.o \
 	src/draw.o \
+	src/prompt.o \
 	src/display.o \
 	src/view.o \
 	src/parse.o \

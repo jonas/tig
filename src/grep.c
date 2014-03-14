@@ -16,6 +16,7 @@
 #include "tig/parse.h"
 #include "tig/repo.h"
 #include "tig/display.h"
+#include "tig/prompt.h"
 #include "tig/draw.h"
 #include "tig/grep.h"
 

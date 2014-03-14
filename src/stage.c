@@ -16,6 +16,7 @@
 #include "tig/options.h"
 #include "tig/parse.h"
 #include "tig/display.h"
+#include "tig/prompt.h"
 #include "tig/view.h"
 #include "tig/draw.h"
 #include "tig/git.h"
