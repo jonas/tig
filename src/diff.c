@@ -349,16 +349,20 @@ diff_trace_origin(struct view *view, struct line *line)
 		string_format(ref, "%s^", view->vid);
 
 	if (string_rev_is_null(ref)) {
-		header.id[0] = 0;
-		header.orig_lineno = lineno;
-	} else if (!diff_blame_line(ref, file, lineno, &header, &commit)) {
-		report("Failed to read blame data");
-		return REQ_NONE;
-	}
+		string_ncopy(view->env->file, file, strlen(file));
+		string_copy(view->env->ref, "");
+		view->env->lineno = lineno - 1;
 
-	string_ncopy(view->env->file, commit.filename, strlen(commit.filename));
-	string_copy(view->env->ref, header.id);
-	view->env->lineno = header.orig_lineno - 1;
+	} else {
+		if (!diff_blame_line(ref, file, lineno, &header, &commit)) {
+			report("Failed to read blame data");
+			return REQ_NONE;
+		}
+
+		string_ncopy(view->env->file, commit.filename, strlen(commit.filename));
+		string_copy(view->env->ref, header.id);
+		view->env->lineno = header.orig_lineno - 1;
+	}
 
 	return REQ_VIEW_BLAME;
 }
