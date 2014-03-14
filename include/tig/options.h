@@ -50,11 +50,11 @@
 	_(show_notes,			bool,			VIEW_NO_FLAGS) \
 	_(show_refs,			bool,			VIEW_NO_FLAGS) \
 	_(show_rev_graph,		bool,			VIEW_LOG_LIKE) \
-	_(split_view_height,		double,			VIEW_FLAG_RESET_DISPLAY) \
+	_(split_view_height,		double,			VIEW_RESET_DISPLAY) \
 	_(status_untracked_dirs,	bool,			VIEW_STATUS_LIKE) \
 	_(tab_size,			int,			VIEW_NO_FLAGS) \
 	_(title_overflow,		int,			VIEW_NO_FLAGS) \
-	_(vertical_split,		enum vertical_split,	VIEW_FLAG_RESET_DISPLAY) \
+	_(vertical_split,		enum vertical_split,	VIEW_RESET_DISPLAY | VIEW_DIFF_LIKE) \
 	_(wrap_lines,			bool,			VIEW_NO_FLAGS) \
 
 #define DEFINE_OPTION_EXTERNS(name, type, flags) extern type opt_##name;

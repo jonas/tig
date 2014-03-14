@@ -323,8 +323,6 @@ prompt_toggle_option(struct view *view, const char *argv[],
 	return toggle->flags;
 }
 
-#define VIEW_FLAG_RESET_DISPLAY	((enum view_flag) -1)
-
 static enum view_flag
 prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 {
@@ -416,16 +414,16 @@ run_prompt_command(struct view *view, const char *argv[])
 		enum view_flag flags = prompt_toggle(view, argv, action);
 		int i;
 
-		if (flags == VIEW_FLAG_RESET_DISPLAY) {
+		if (flags & VIEW_RESET_DISPLAY) {
 			resize_display();
 			redraw_display(TRUE);
-		} else {
-			foreach_displayed_view(view, i) {
-				if (view_has_flags(view, flags) && !view->unrefreshable)
-					reload_view(view);
-				else
-					redraw_view(view);
-			}
+		}
+
+		foreach_displayed_view(view, i) {
+			if (view_has_flags(view, flags) && !view->unrefreshable)
+				reload_view(view);
+			else
+				redraw_view(view);
 		}
 
 		if (*action)
