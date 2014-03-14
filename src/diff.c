@@ -348,7 +348,10 @@ diff_trace_origin(struct view *view, struct line *line)
 	else
 		string_format(ref, "%s^", view->vid);
 
-	if (!diff_blame_line(ref, file, lineno, &header, &commit)) {
+	if (string_rev_is_null(ref)) {
+		header.id[0] = 0;
+		header.orig_lineno = lineno;
+	} else if (!diff_blame_line(ref, file, lineno, &header, &commit)) {
 		report("Failed to read blame data");
 		return REQ_NONE;
 	}
