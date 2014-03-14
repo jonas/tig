@@ -73,24 +73,8 @@
 	\
 	REQ_GROUP("Option manipulation") \
 	REQ_(OPTIONS,		"Open the options menu"), \
-	REQ_(TOGGLE_LINENO,	"Toggle line numbers"), \
-	REQ_(TOGGLE_DATE,	"Toggle date display"), \
-	REQ_(TOGGLE_AUTHOR,	"Toggle author display"), \
-	REQ_(TOGGLE_REV_GRAPH,	"Toggle revision graph visualization"), \
-	REQ_(TOGGLE_GRAPHIC,	"Toggle (line) graphics mode"), \
-	REQ_(TOGGLE_FILENAME,	"Toggle file name display"), \
-	REQ_(TOGGLE_REFS,	"Toggle reference display (tags/branches)"), \
-	REQ_(TOGGLE_CHANGES,	"Toggle local changes display in the main view"), \
 	REQ_(TOGGLE_SORT_ORDER,	"Toggle ascending/descending sort order"), \
 	REQ_(TOGGLE_SORT_FIELD,	"Toggle field to sort by"), \
-	REQ_(TOGGLE_IGNORE_SPACE,	"Toggle ignoring whitespace in diffs"), \
-	REQ_(TOGGLE_COMMIT_ORDER,	"Toggle commit ordering"), \
-	REQ_(TOGGLE_ID,		"Toggle commit ID display"), \
-	REQ_(TOGGLE_FILES,	"Toggle file filtering"), \
-	REQ_(TOGGLE_TITLE_OVERFLOW,	"Toggle highlighting of commit title overflow"), \
-	REQ_(TOGGLE_FILE_SIZE,	"Toggle file size format"), \
-	REQ_(TOGGLE_UNTRACKED_DIRS,	"Toggle display of files in untracked directories"), \
-	REQ_(TOGGLE_VERTICAL_SPLIT,	"Toggle vertical split"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(EDIT,		"Open in editor"), \

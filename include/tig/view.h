@@ -46,6 +46,7 @@ enum view_flag {
 	VIEW_NO_REF		= 1 << 5,
 	VIEW_NO_GIT_DIR		= 1 << 6,
 	VIEW_DIFF_LIKE		= 1 << 7,
+	VIEW_BLAME_LIKE		= 1 << 8,
 	VIEW_SEND_CHILD_ENTER	= 1 << 9,
 	VIEW_FILE_FILTER	= 1 << 10,
 	VIEW_LOG_LIKE		= 1 << 11,

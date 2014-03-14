@@ -61,6 +61,8 @@ Improvements:
  - Warn about conflicting keybindings using Ctrl, e.g. `^f` and `^F`. (GH #218)
  - Extend key bindings for prompt commands (ie. `bind <keymap> <key> :<prompt>`)
    to support predefined searches, eg.: `bind stage 2 :?^@@`.
+ - Add :toggle prompt command as a way to manipulate options using keybindings.
+   For example: `bind diff D diff-options --patience --notes`. (GH #69)
 
 Bug fixes:
 

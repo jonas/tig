@@ -525,7 +525,7 @@ struct view_ops blame_ops = {
 	"line",
 	{ "blame" },
 	argv_env.commit,
-	VIEW_ALWAYS_LINENO | VIEW_SEND_CHILD_ENTER,
+	VIEW_ALWAYS_LINENO | VIEW_SEND_CHILD_ENTER | VIEW_BLAME_LIKE,
 	sizeof(struct blame_state),
 	blame_open,
 	blame_read,

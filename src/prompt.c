@@ -13,6 +13,7 @@
 
 #include "tig/tig.h"
 #include "tig/view.h"
+#include "tig/draw.h"
 #include "tig/display.h"
 #include "tig/options.h"
 #include "tig/prompt.h"
@@ -177,6 +178,181 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 	return status != INPUT_CANCEL;
 }
 
+struct prompt_toggle {
+	const char *name;
+	const char *type;
+	enum view_flag flags;
+	void *opt;
+};
+
+static const struct enum_map *
+find_enum_map(const char *type)
+{
+	static struct {
+		const char *type;
+		const struct enum_map *map;
+	} mappings[] = {
+#define DEFINE_ENUM_MAPPING(name, macro) { #name, name##_map },
+		ENUM_INFO(DEFINE_ENUM_MAPPING)
+	};
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(mappings); i++)
+		if (!strcmp(type, mappings[i].type))
+			return mappings[i].map;
+
+	die("%s not found in ENUM_INFO", type);
+}
+
+static bool
+find_arg(const char *argv[], const char *arg)
+{
+	int i;
+
+	for (i = 0; argv[i]; i++)
+		if (!strcmp(argv[i], arg))
+			return TRUE;
+	return FALSE;
+}
+
+
+static enum view_flag
+prompt_toggle_option(struct view *view, const char *argv[],
+		     struct prompt_toggle *toggle, char msg[SIZEOF_STR])
+{
+	char name[SIZEOF_STR];
+
+	enum_name_copy(name, toggle->name, strlen(toggle->name));
+
+	if (!strcmp(toggle->type, "bool")) {
+		bool *opt = toggle->opt;
+
+		*opt = !*opt;
+		string_format_size(msg, SIZEOF_STR, "set %s = %s", name, *opt ? "yes" : "no");
+
+	} else if (!strncmp(toggle->type, "enum", 4)) {
+		const char *type = toggle->type + STRING_SIZE("enum ");
+		enum author *opt = toggle->opt;
+		const struct enum_map *map = find_enum_map(type);
+
+		*opt = (*opt + 1) % map->size;
+		string_format_size(msg, SIZEOF_STR, "set %s = %s", name,
+				   enum_name(map->entries[*opt]));
+
+	} else if (!strcmp(toggle->type, "int")) {
+		const char *arg = argv[2];
+		int diff = arg ? atoi(arg) : 1;
+		int *opt = toggle->opt;
+
+		if (!diff)
+			diff = *arg == '-' ? -1 : 1;
+
+		if (opt == &opt_diff_context && diff < 0) {
+			if (!*opt) {
+				report("Diff context cannot be less than zero");
+				return VIEW_NO_FLAGS;
+			}
+			if (*opt < -diff)
+				diff = -*opt;
+		}
+
+		if (opt == &opt_title_overflow) {
+			*opt = *opt ? -*opt : 50;
+			if (*opt < 0) {
+				string_format_size(msg, SIZEOF_STR, "set %s = no", name);
+				return toggle->flags;
+			}
+		}
+
+		*opt += diff;
+		string_format_size(msg, SIZEOF_STR, "set %s = %d", name, *opt);
+
+	} else if (!strcmp(toggle->type, "double")) {
+		const char *arg = argv[2];
+		double *opt = toggle->opt;
+		int sign = 1;
+		double diff;
+
+		if (*arg == '-') {
+			sign = -1;
+			arg++;
+		}
+
+		if (parse_step(&diff, arg) != SUCCESS)
+			diff = strtod(arg, NULL);
+
+		*opt += sign * diff;
+		string_format_size(msg, SIZEOF_STR, "set %s = %.2f", name, *opt);
+
+	} else if (!strcmp(toggle->type, "const char **")) {
+		const char ***opt = toggle->opt;
+		bool found = TRUE;
+		int i;
+
+		for (i = 2; argv[i]; i++) {
+			if (!find_arg(*opt, argv[i])) {
+				found = FALSE;
+				break;
+			}
+		}
+
+		if (found) {
+			int next, pos;
+
+			for (next = 0, pos = 0; (*opt)[pos]; pos++) {
+				const char *arg = (*opt)[pos];
+
+				if (find_arg(argv + 2, arg)) {
+					free((void *) arg);
+					continue;
+				}
+				(*opt)[next++] = arg;
+			}
+
+			(*opt)[next] = NULL;
+
+		} else if (!argv_copy(opt, argv + 2)) {
+			report("Failed to append arguments");
+			return VIEW_NO_FLAGS;
+		}
+
+	} else {
+		die("Unsupported `:toggle %s` (%s)", name, toggle->type);
+	}
+
+	return toggle->flags;
+}
+
+#define VIEW_FLAG_RESET_DISPLAY	((enum view_flag) -1)
+
+static enum view_flag
+prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
+{
+	struct prompt_toggle option_toggles[] = {
+#define TOGGLE_OPTIONS(name, type, flags) { #name, #type, flags, &opt_ ## name },
+		OPTION_INFO(TOGGLE_OPTIONS)
+	};
+	const char *name = argv[1];
+	size_t namelen = strlen(name);
+	int i;
+
+	if (!name) {
+		string_format_size(msg, SIZEOF_STR, "%s", "No option name given to :toggle");
+		return VIEW_NO_FLAGS;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(option_toggles); i++) {
+		struct prompt_toggle *toggle = &option_toggles[i];
+
+		if (namelen == strlen(toggle->name) &&
+		    !string_enum_compare(toggle->name, name, namelen))
+			return prompt_toggle_option(view, argv, toggle, msg);
+	}
+
+	string_format_size(msg, SIZEOF_STR, "`:toggle %s` not supported", name);
+	return VIEW_NO_FLAGS;
+}
+
 enum request
 run_prompt_command(struct view *view, const char *argv[])
 {
@@ -238,6 +414,26 @@ run_prompt_command(struct view *view, const char *argv[])
 			next->dir = NULL;
 			open_view(view, REQ_VIEW_PAGER, OPEN_PREPARED);
 		}
+
+	} else if (!strcmp(cmd, "toggle")) {
+		char action[SIZEOF_STR] = "";
+		enum view_flag flags = prompt_toggle(view, argv, action);
+		int i;
+
+		if (flags == VIEW_FLAG_RESET_DISPLAY) {
+			resize_display();
+			redraw_display(TRUE);
+		} else {
+			foreach_displayed_view(view, i) {
+				if (view_has_flags(view, flags) && !view->unrefreshable)
+					reload_view(view);
+				else
+					redraw_view(view);
+			}
+		}
+
+		if (*action)
+			report("%s", action);
 
 	} else {
 		request = get_request(cmd);

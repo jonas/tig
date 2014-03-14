@@ -25,7 +25,7 @@
  * Option variables.
  */
 
-#define DEFINE_OPTION_VARIABLES(name, type) type opt_##name;
+#define DEFINE_OPTION_VARIABLES(name, type, flags) type opt_##name;
 OPTION_INFO(DEFINE_OPTION_VARIABLES);
 
 /*
@@ -164,7 +164,7 @@ static const struct enum_map_entry attr_map[] = {
 
 #define set_attribute(attr, name)	map_enum(attr, attr_map, name)
 
-static enum status_code
+enum status_code
 parse_step(double *opt, const char *arg)
 {
 	*opt = atoi(arg);
@@ -507,6 +507,24 @@ option_set_command(int argc, const char *argv[])
 	return ERROR_UNKNOWN_VARIABLE_NAME;
 }
 
+static int
+find_remapped(const char *remapped[][2], size_t remapped_size, const char *arg)
+{
+	size_t arglen = strlen(arg);
+	int i;
+
+	for (i = 0; i < remapped_size; i++) {
+		const char *name = remapped[i][0];
+		size_t namelen = strlen(name);
+
+		if (arglen == namelen &&
+		    !string_enum_compare(arg, name, namelen))
+			return i;
+	}
+
+	return -1;
+}
+
 /* Wants: mode request key */
 static enum status_code
 option_bind_command(int argc, const char *argv[])
@@ -531,6 +549,24 @@ option_bind_command(int argc, const char *argv[])
 			ENUM_MAP_ENTRY("screen-resize",	REQ_NONE),
 			ENUM_MAP_ENTRY("tree-parent",		REQ_PARENT),
 		};
+		static const char *toggles[][2] = {
+			{ "toggle-author",		"show-author" },
+			{ "toggle-changes",		"show-changes" },
+			{ "toggle-commit-order",	"show-commit-order" },
+			{ "toggle-date",		"show-date" },
+			{ "toggle-file-filter",		"file-filter" },
+			{ "toggle-file-size",		"show-file-size" },
+			{ "toggle-filename",		"show-filename" },
+			{ "toggle-graphic",		"show-graphic" },
+			{ "toggle-id",			"show-id" },
+			{ "toggle-ignore-space",	"show-ignore-space" },
+			{ "toggle-lineno",		"show-line-numbers" },
+			{ "toggle-refs",		"show-refs" },
+			{ "toggle-rev-graph",		"show-rev-graph" },
+			{ "toggle-title-overflow",	"show-title-overflow" },
+			{ "toggle-untracked-dirs",	"status-untracked-dirs" },
+			{ "toggle-vertical-split",	"show-vertical-split" },
+		};
 		int alias;
 
 		if (map_enum(&alias, obsolete, argv[2])) {
@@ -538,7 +574,18 @@ option_bind_command(int argc, const char *argv[])
 				add_keybinding(keymap, alias, &input);
 			return ERROR_OBSOLETE_REQUEST_NAME;
 		}
+
+		alias = find_remapped(toggles, ARRAY_SIZE(toggles), argv[2]);
+		if (alias != -1) {
+			const char *toggle[] = { ":toggle", toggles[alias][1], NULL };
+			enum status_code code = add_run_request(keymap, &input, toggle);
+
+			return code == SUCCESS ? ERROR_OBSOLETE_REQUEST_NAME : code;
+		}
 	}
+
+	if (request == REQ_UNKNOWN)
+		return add_run_request(keymap, &input, argv + 2);
 
 	if (request == REQ_UNKNOWN)
 		return add_run_request(keymap, &input, argv + 2);

@@ -165,23 +165,27 @@ bind generic	N	find-prev
 
 # Option manipulation
 bind generic	o	options			# Open the options menu
-bind generic	.	toggle-lineno
-bind generic	D	toggle-date
-bind generic	A	toggle-author
-bind generic	g	toggle-rev-graph
-bind generic	~	toggle-graphic
-bind generic	Hash	toggle-filename
-bind generic	F	toggle-refs
-# bind generic	?	toogle-changes
 bind generic	I	toggle-sort-order
 bind generic	i	toggle-sort-field
-bind generic	W	toggle-ignore-space
-# bind generic	?	toggle-commit-order
-bind generic	X	toggle-id
-bind generic	%	toggle-files
-bind generic	$	toggle-title-overflow
-# bind generic	?	toggle-file-size
-# bind genric	?	toggle-untracked-dirs
+# Bindings for toggling settings
+bind generic	.	:toggle show-line-numbers
+						# Toggle line numbers
+bind generic	D	:toggle show-date	# Toggle date display
+bind generic	A	:toggle show-author	# Toggle author display
+bind generic	g	:toggle show-rev-graph	# Toggle revision graph visualization
+bind generic	~	:toggle line-graphics	# Toggle (line) graphics mode
+bind generic	Hash	:toggle showfilename	# Toggle file name display
+bind generic	F	:toggle show-refs	# Toggle reference display (tags/branches)
+# bind generic	???	:toogle show-changes	# Toggle local changes display in the main view
+bind generic	W	:toggle ignore-space	# Toggle ignoring whitespace in diffs
+# bind generic	?	:toggle commit-order	# Toggle commit ordering
+bind generic	X	:toggle show-id		# Toggle commit ID display
+bind generic	$	:toggle title-overflow	# Toggle highlighting of commit title overflow
+# bind generic	???	:toggle show-file-size	# Toggle file size format
+# bind generic	???	:toggle status-untracked-dirs
+						# Toggle display of file in untracked directories
+# bind generic	???	:toggle vertical-split	# Toggle vertical split
+bind generic	%	:toggle file-filter
 
 # Misc
 bind generic	e	edit			# Open in editor

@@ -498,6 +498,12 @@ bind generic W :!git reflog
 # Search for previous diff (c)hunk and next diff header
 bind stage 2 :?^@@
 bind stage D :/^diff --(git|cc)
+
+bind main I :toggle show-id			# Show/hide the ID column
+bind diff D :toggle diff-options --minimal	# Use minimal diff algorithm
+bind diff [ :toggle diff-context -3		# Decrese context (-U arg)
+bind diff ] :toggle diff-context +3		# Increase context
+bind generic V :toggle split-view-height -10%	# Decrease split height
 --------------------------------------------------------------------------
 
 Similar to external commands, pager view commands can contain variable names
@@ -604,27 +610,14 @@ Searching
 Option manipulation
 ^^^^^^^^^^^^^^^^^^^
 
+In addition to the actions below, options can also be toggled with the
+`:toggle` prompt command.
+
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |options                 |Open the options menu
-|toggle-lineno           |Toggle line numbers
-|toggle-date             |Toggle date display
-|toggle-author           |Toggle author display
-|toggle-rev-graph        |Toggle revision graph visualization
-|toggle-graphic          |Toggle (line) graphics mode
-|toggle-filename         |Toggle file name display
-|toggle-refs             |Toggle reference display (tags/branches)
-|toggle-changes          |Toggle local changes display in the main view
 |toggle-sort-order       |Toggle ascending/descending sort order
 |toggle-sort-field       |Toggle field to sort by
-|toggle-ignore-space     |Toggle ignoring whitespace in diffs
-|toggle-commit-order     |Toggle commit ordering
-|toggle-id               |Toggle commit ID display
-|toggle-files            |Toggle file filtering
-|toggle-title-overflow   |Toggle highlighting of commit title overflow
-|toggle-file-size        |Toggle file size format
-|toggle-untracked-dirs   |Toggle display of files in untracked directories
-|toggle-vertical-split   |Toggle vertical split
 |=============================================================================
 
 Misc
