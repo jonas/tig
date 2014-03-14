@@ -299,11 +299,6 @@ view_driver(struct view *view, enum request request)
 		report("Sorting is not yet supported for the %s view", view->name);
 		break;
 
-	case REQ_DIFF_CONTEXT_UP:
-	case REQ_DIFF_CONTEXT_DOWN:
-		report("Changing the diff context is not yet supported for the %s view", view->name);
-		break;
-
 	case REQ_SEARCH:
 	case REQ_SEARCH_BACK:
 		search_view(view, request);

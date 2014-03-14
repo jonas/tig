@@ -565,8 +565,6 @@ View specific actions
 |stage-update-line       |Stage/unstage single line
 |stage-next              |Jump to next diff chunk
 |stage-split-chunk       |Split current diff chunk
-|diff-context-up         |Increase the diff context
-|diff-context-down       |Decrease the diff context
 |=============================================================================
 
 Cursor navigation

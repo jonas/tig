@@ -23,7 +23,6 @@ struct diff_state {
 	bool combined_diff;
 };
 
-bool update_diff_context(enum request request);
 enum request diff_common_edit(struct view *view, enum request request, struct line *line);
 bool diff_common_read(struct view *view, const char *data, struct diff_state *state);
 bool diff_common_draw(struct view *view, struct line *line, unsigned int lineno);

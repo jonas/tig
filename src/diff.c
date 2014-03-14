@@ -21,31 +21,6 @@
 #include "tig/diff.h"
 #include "tig/draw.h"
 
-bool
-update_diff_context(enum request request)
-{
-	int diff_context = opt_diff_context;
-
-	switch (request) {
-	case REQ_DIFF_CONTEXT_UP:
-		opt_diff_context += 1;
-		break;
-
-	case REQ_DIFF_CONTEXT_DOWN:
-		if (opt_diff_context == 0) {
-			report("Diff context cannot be less than zero");
-			break;
-		}
-		opt_diff_context -= 1;
-		break;
-
-	default:
-		die("Not a diff context request");
-	}
-
-	return diff_context != opt_diff_context;
-}
-
 #define DIFF_LINE_COMMIT_TITLE 1
 
 static bool
@@ -425,14 +400,6 @@ diff_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_VIEW_BLAME:
 		return diff_trace_origin(view, line);
-
-	case REQ_DIFF_CONTEXT_UP:
-	case REQ_DIFF_CONTEXT_DOWN:
-		if (!update_diff_context(request))
-			return REQ_NONE;
-		reload_view(view);
-		return REQ_NONE;
-
 
 	case REQ_EDIT:
 		return diff_common_edit(view, request, line);

@@ -428,12 +428,6 @@ stage_request(struct view *view, enum request request, struct line *line)
 	case REQ_ENTER:
 		return diff_common_enter(view, request, line);
 
-	case REQ_DIFF_CONTEXT_UP:
-	case REQ_DIFF_CONTEXT_DOWN:
-		if (!update_diff_context(request))
-			return REQ_NONE;
-		break;
-
 	default:
 		return request;
 	}

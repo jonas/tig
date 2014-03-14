@@ -45,8 +45,6 @@
 	REQ_(STAGE_UPDATE_LINE,	"Stage/unstage single line"), \
 	REQ_(STAGE_NEXT,	"Jump to next diff chunk"), \
 	REQ_(STAGE_SPLIT_CHUNK,	"Split current diff chunk"), \
-	REQ_(DIFF_CONTEXT_UP,	"Increase the diff context"), \
-	REQ_(DIFF_CONTEXT_DOWN,	"Decrease the diff context"), \
 	\
 	REQ_GROUP("Cursor navigation") \
 	REQ_(MOVE_UP,		"Move cursor one line up"), \

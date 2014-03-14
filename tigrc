@@ -128,10 +128,10 @@ bind stage	1	stage-update-line	# Stage/unstage current line
 bind stage	!	status-revert		# Revert current diff (c)hunk
 bind stage	@	stage-next		# Jump to next (c)hunk
 bind stage	\	stage-split-chunk	# Split current diff (c)hunk
-bind stage	[	diff-context-down	# Decrease the diff context
-bind stage	]	diff-context-up		# Increase the diff context
-bind diff	[	diff-context-down
-bind diff	]	diff-context-up
+bind stage	[	:toggle diff-context -1 # Decrease the diff context
+bind stage	]	:toggle diff-context +1	# Increase the diff context
+bind diff	[	:toggle diff-context -1
+bind diff	]	:toggle diff-context +1
 
 # Cursor navigation
 bind generic	k	move-up
