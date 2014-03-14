@@ -566,6 +566,8 @@ option_bind_command(int argc, const char *argv[])
 			{ "toggle-title-overflow",	"show-title-overflow" },
 			{ "toggle-untracked-dirs",	"status-untracked-dirs" },
 			{ "toggle-vertical-split",	"show-vertical-split" },
+			{ "diff-context-up",		"diff-context" },
+			{ "diff-context-down",		"diff-context" },
 		};
 		int alias;
 
@@ -577,7 +579,10 @@ option_bind_command(int argc, const char *argv[])
 
 		alias = find_remapped(toggles, ARRAY_SIZE(toggles), argv[2]);
 		if (alias != -1) {
-			const char *toggle[] = { ":toggle", toggles[alias][1], NULL };
+			const char *action = toggles[alias][0];
+			const char *arg = prefixcmp(action, "diff-context-")
+					? NULL : (strstr(action, "-down") ? "-1" : "+1");
+			const char *toggle[] = { ":toggle", toggles[alias][1], arg, NULL};
 			enum status_code code = add_run_request(keymap, &input, toggle);
 
 			return code == SUCCESS ? ERROR_OBSOLETE_REQUEST_NAME : code;
