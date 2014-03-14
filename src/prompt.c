@@ -376,8 +376,10 @@ run_prompt_command(struct view *view, const char *argv[])
 		return REQ_JUMP_COMMIT;
 
 	} else if (strlen(cmd) == 1) {
-		struct key_input input = { { cmd[0] } };
+		struct key_input input = {};
 
+		input.modifiers.multibytes = 1;
+		input.data.bytes[0] = cmd[0];
 		return get_keybinding(&view->ops->keymap, &input);
 
 	} else if (cmd[0] == '/' || cmd[0] == '?') {
