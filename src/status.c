@@ -151,7 +151,7 @@ static const char *status_diff_index_argv[] = { GIT_DIFF_STAGED_FILES("-z") };
 static const char *status_diff_files_argv[] = { GIT_DIFF_UNSTAGED_FILES("-z") };
 
 static const char *status_list_other_argv[] = {
-	"git", "ls-files", "-z", "--others", "--exclude-standard", repo.prefix, NULL, NULL,
+	"git", "ls-files", "-z", "--others", "--exclude-standard", repo.prefix, NULL, NULL, NULL
 };
 
 static const char *status_list_no_head_argv[] = {
@@ -261,8 +261,10 @@ status_open(struct view *view, enum open_flags flags)
 
 	io_run_bg(update_index_argv);
 
-	status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 2] =
+	status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 3] =
 		opt_status_untracked_dirs ? NULL : "--directory";
+	status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 2] =
+		opt_status_untracked_dirs ? NULL : "--no-empty-directory";
 
 	if (!status_run(view, staged_argv, staged_status, LINE_STAT_STAGED) ||
 	    !status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED) ||
@@ -446,8 +448,15 @@ status_update_write(struct io *io, struct status *status, enum line_type type)
 bool
 status_update_file(struct status *status, enum line_type type)
 {
+	const char *name = status->new.name;
 	struct io io;
 	bool result;
+
+	if (type == LINE_STAT_UNTRACKED && !suffixcmp(name, strlen(name), "/")) {
+		const char *add_argv[] = { "git", "add", "--", name, NULL };
+
+		return io_run_bg(add_argv);
+	}
 
 	if (!status_update_prepare(&io, type))
 		return FALSE;
