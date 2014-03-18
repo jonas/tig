@@ -31,6 +31,7 @@ struct line {
 	unsigned int dirty:1;
 	unsigned int cleareol:1;
 	unsigned int wrapped:1;
+	unsigned int noaction:1;
 
 	unsigned int user_flags:6;
 	void *data;		/* User data */
@@ -295,14 +296,14 @@ void update_view_title(struct view *view);
  * Line utilities.
  */
 
-struct line *add_line_at(struct view *view, unsigned long pos, const void *data, enum line_type type, size_t data_size, bool custom);
+struct line *add_line_at(struct view *view, unsigned long pos, const void *data, enum line_type type, size_t data_size, bool custom, bool noaction);
 struct line *add_line(struct view *view, const void *data, enum line_type type, size_t data_size, bool custom);
 struct line *add_line_alloc_(struct view *view, void **ptr, enum line_type type, size_t data_size, bool custom);
 
 #define add_line_alloc(view, data_ptr, type, extra_size, custom) \
 	add_line_alloc_(view, (void **) data_ptr, type, sizeof(**data_ptr) + extra_size, custom)
 
-struct line *add_line_nodata(struct view *view, enum line_type type);
+struct line *add_line_nodata(struct view *view, enum line_type type, bool noaction);
 struct line *add_line_text(struct view *view, const char *text, enum line_type type);
 struct line * PRINTF_LIKE(3, 4) add_line_format(struct view *view, enum line_type type, const char *fmt, ...);
 

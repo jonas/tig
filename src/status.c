@@ -77,11 +77,11 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	struct status *unmerged = NULL;
 	char *buf;
 	struct io io;
+	struct line *section_line;
 
-	if (!io_run(&io, IO_RD, repo.cdup, opt_env, argv))
+	if (!io_run(&io, IO_RD, repo.cdup, opt_env, argv) ||
+	    !(section_line = add_line_nodata(view, type, FALSE)))
 		return FALSE;
-
-	add_line_nodata(view, type);
 
 	while ((buf = io_get(&io, 0, TRUE))) {
 		struct status *file = unmerged;
@@ -140,8 +140,10 @@ error_out:
 		return FALSE;
 	}
 
-	if (!view->line[view->lines - 1].data)
-		add_line_nodata(view, LINE_STAT_NONE);
+	if (!view->line[view->lines - 1].data) {
+		section_line->noaction = TRUE;
+		add_line_nodata(view, LINE_STAT_NONE, TRUE);
+	}
 
 	io_done(&io);
 	return TRUE;
@@ -255,8 +257,10 @@ status_open(struct view *view, enum open_flags flags)
 	}
 
 	reset_view(view);
+	if (!check_position(&view->prev_pos))
+		view->prev_pos.lineno = 1;
 
-	add_line_nodata(view, LINE_STAT_HEAD);
+	add_line_nodata(view, LINE_STAT_HEAD, TRUE);
 	status_update_onbranch();
 
 	io_run_bg(update_index_argv);

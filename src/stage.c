@@ -263,13 +263,13 @@ stage_insert_chunk(struct view *view, struct chunk_header *header,
 	if (!to)
 		return from;
 
-	if (!add_line_at(view, after_lineno++, buf, LINE_DIFF_CHUNK, strlen(buf) + 1, FALSE))
+	if (!add_line_at(view, after_lineno++, buf, LINE_DIFF_CHUNK, strlen(buf) + 1, FALSE, FALSE))
 		return NULL;
 
 	while (from_lineno < to_lineno) {
 		struct line *line = &view->line[from_lineno++];
 
-		if (!add_line_at(view, after_lineno++, line->data, line->type, strlen(line->data) + 1, FALSE))
+		if (!add_line_at(view, after_lineno++, line->data, line->type, strlen(line->data) + 1, FALSE, FALSE))
 			return FALSE;
 	}
 

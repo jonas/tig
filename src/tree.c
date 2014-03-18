@@ -147,6 +147,8 @@ tree_entry(struct view *view, enum line_type type, const char *path,
 	if (id)
 		string_copy_rev(entry->id, id);
 	entry->size = size;
+	if (type == LINE_TREE_HEAD)
+		line->noaction = TRUE;
 
 	return line;
 }

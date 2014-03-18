@@ -123,6 +123,9 @@ grep_open(struct view *view, enum open_flags flags)
 		opt_cmdline_argv = NULL;
 	}
 
+	if (!view->pos.lineno) //!check_position(&view->pos))
+		view->pos.lineno = 1;
+
 	if (!argv_append_array(&argv, grep_args) ||
 	    !argv_append_array(&argv, grep_argv))
 		return FALSE;
@@ -204,7 +207,7 @@ grep_read(struct view *view, char *line)
 	}
 
 	if (!strcmp(line, "--"))
-		return add_line_nodata(view, LINE_DELIMITER) != NULL;
+		return add_line_nodata(view, LINE_DELIMITER, TRUE) != NULL;
 
 	lineno = io_memchr(&view->io, line, 0);
 	text = io_memchr(&view->io, lineno + 1, 0);
@@ -217,9 +220,16 @@ grep_read(struct view *view, char *line)
 	textlen = strlen(text);
 
 	file = get_path(line);
-	if (!file ||
-	    (file != state->last_file && !add_line_text(view, file, LINE_FILENAME)))
+	if (!file)
 		return FALSE;
+
+	if (file != state->last_file) {
+		struct line *filename = add_line_text(view, file, LINE_FILENAME);
+
+		if (!filename)
+			return FALSE;
+		filename->noaction = TRUE;
+	}
 
 	if (!add_line_alloc(view, &grep, LINE_DEFAULT, textlen, FALSE))
 		return FALSE;

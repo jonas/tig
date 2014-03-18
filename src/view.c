@@ -32,7 +32,7 @@ goto_view_line(struct view *view, unsigned long offset, unsigned long lineno)
 	if (offset > lineno || offset + view->height <= lineno) {
 		unsigned long half = view->height / 2;
 
-		if (lineno > half)
+		if (lineno > half && view->lines <= view->height)
 			offset = lineno - half;
 		else
 			offset = 0;
@@ -167,6 +167,7 @@ scroll_view(struct view *view, enum request request)
 void
 move_view(struct view *view, enum request request)
 {
+	struct position pos = view->pos;
 	int scroll_steps = 0;
 	int steps;
 
@@ -203,18 +204,33 @@ move_view(struct view *view, enum request request)
 		die("request %d not handled in switch", request);
 	}
 
-	if (steps <= 0 && view->pos.lineno == 0) {
-		report("Cannot move beyond the first line");
-		return;
+	while (TRUE) {
+		if (steps <= 0 && pos.lineno == 0) {
+			if (pos.lineno != view->pos.lineno)
+				report("No selectable line above this line");
+			else
+				report("Cannot move beyond the first line");
+			return;
 
-	} else if (steps >= 0 && view->pos.lineno + 1 >= view->lines) {
-		report("Cannot move beyond the last line");
-		return;
+		} else if (steps >= 0 && pos.lineno + 1 >= view->lines) {
+			if (pos.lineno != view->pos.lineno)
+				report("No selectable line below this line");
+			else
+				report("Cannot move beyond the last line");
+			return;
+		}
+
+		/* Move the current line */
+		pos.lineno += steps;
+		assert(0 <= pos.lineno && pos.lineno < view->lines);
+
+		if (!view->line[pos.lineno].noaction)
+			break;
+		steps = steps > 0 ? 1 : -1;
 	}
 
-	/* Move the current line */
-	view->pos.lineno += steps;
-	assert(0 <= view->pos.lineno && view->pos.lineno < view->lines);
+	steps = pos.lineno - view->pos.lineno;
+	view->pos = pos;
 
 	/* Check whether the view needs to be scrolled */
 	if (view->pos.lineno < view->pos.offset ||
@@ -476,6 +492,13 @@ restore_view_position(struct view *view)
 	if (goto_view_line(view, view->prev_pos.offset, view->prev_pos.lineno) &&
 	    view_is_displayed(view))
 		werase(view->win);
+
+	if (view->line[view->pos.lineno].noaction) {
+		if (view->prev_pos.lineno < view->pos.lineno)
+			move_view(view, REQ_MOVE_UP);
+		else
+			move_view(view, REQ_MOVE_DOWN);
+	}
 
 	view->pos.col = view->prev_pos.col;
 	clear_position(&view->prev_pos);
@@ -849,7 +872,7 @@ find_line_by_type(struct view *view, struct line *line, enum line_type type, int
 DEFINE_ALLOCATOR(realloc_lines, struct line, 256)
 
 struct line *
-add_line_at(struct view *view, unsigned long pos, const void *data, enum line_type type, size_t data_size, bool custom)
+add_line_at(struct view *view, unsigned long pos, const void *data, enum line_type type, size_t data_size, bool custom, bool noaction)
 {
 	struct line *line;
 	unsigned long lineno;
@@ -887,6 +910,7 @@ add_line_at(struct view *view, unsigned long pos, const void *data, enum line_ty
 	line->type = type;
 	line->data = (void *) data;
 	line->dirty = 1;
+	line->noaction = noaction;
 
 	if (custom)
 		view->custom_lines++;
@@ -899,7 +923,7 @@ add_line_at(struct view *view, unsigned long pos, const void *data, enum line_ty
 struct line *
 add_line(struct view *view, const void *data, enum line_type type, size_t data_size, bool custom)
 {
-	return add_line_at(view, view->lines, data, type, data_size, custom);
+	return add_line_at(view, view->lines, data, type, data_size, custom, 0);
 }
 
 struct line *
@@ -913,9 +937,13 @@ add_line_alloc_(struct view *view, void **ptr, enum line_type type, size_t data_
 }
 
 struct line *
-add_line_nodata(struct view *view, enum line_type type)
+add_line_nodata(struct view *view, enum line_type type, bool noaction)
 {
-	return add_line(view, NULL, type, 0, FALSE);
+	struct line *line = add_line(view, NULL, type, 0, FALSE);
+
+	if (line)
+		line->noaction = !!noaction;
+	return line;
 }
 
 struct line *

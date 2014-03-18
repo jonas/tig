@@ -132,17 +132,19 @@ struct help_request_iterator {
 	const char *group;
 };
 
-static bool
+static struct line *
 add_help_line(struct view *view, struct help **help_ptr, struct keymap *keymap, enum line_type type)
 {
 	struct help *help;
+	struct line *line = add_line_alloc(view, &help, type, 0, FALSE);
 
-	if (!add_line_alloc(view, &help, type, 0, FALSE))
-		return FALSE;
+	if (!line)
+		return NULL;
 	help->keymap = keymap;
 	if (help_ptr)
 		*help_ptr = help;
-	return TRUE;
+	line->noaction = !keymap;
+	return line;
 }
 
 static bool
@@ -229,16 +231,20 @@ help_open(struct view *view, enum open_flags flags)
 {
 	struct keymap *keymap;
 	struct help *help;
+	struct line *line;
 
 	reset_view(view);
 
-	if (!add_help_line(view, &help, NULL, LINE_DEFAULT))
+	if (!(line = add_help_line(view, &help, NULL, LINE_DEFAULT)))
 		return FALSE;
 	help->data.text = "Quick reference for tig keybindings:";
 
-	if (!add_help_line(view, &help, NULL, LINE_DEFAULT))
+	if (!(line = add_help_line(view, &help, NULL, LINE_DEFAULT)))
 		return FALSE;
 	help->data.text = "";
+
+	if (!check_position(&view->prev_pos))
+		view->prev_pos.lineno = 2;
 
 	for (keymap = get_keymaps(); keymap; keymap = keymap->next) {
 		struct help_request_iterator iterator = { view, keymap, TRUE };
