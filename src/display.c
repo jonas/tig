@@ -253,13 +253,44 @@ static bool input_mode = FALSE;
 static bool status_empty = FALSE;
 
 /* Update status and title window. */
+static bool
+update_status_window(struct view *view, const char *msg, va_list args)
+{
+	if (input_mode)
+		return FALSE;
+
+	if (!status_empty || *msg) {
+		wmove(status_win, 0, 0);
+		if (view && view->has_scrolled && use_scroll_status_wclear)
+			wclear(status_win);
+		if (*msg) {
+			vwprintw(status_win, msg, args);
+			status_empty = FALSE;
+		} else {
+			status_empty = TRUE;
+		}
+		wclrtoeol(status_win);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+void
+update_status(const char *msg, ...)
+{
+	va_list args;
+
+	va_start(args, msg);
+	update_status_window(display[current_view], msg, args);
+	va_end(args);
+}
+
 void
 report(const char *msg, ...)
 {
 	struct view *view = display[current_view];
-
-	if (input_mode)
-		return;
+	va_list args;
 
 	if (!view) {
 		char buf[SIZEOF_STR];
@@ -269,25 +300,10 @@ report(const char *msg, ...)
 		die("%s", buf);
 	}
 
-	if (!status_empty || *msg) {
-		va_list args;
-
-		va_start(args, msg);
-
-		wmove(status_win, 0, 0);
-		if (view->has_scrolled && use_scroll_status_wclear)
-			wclear(status_win);
-		if (*msg) {
-			vwprintw(status_win, msg, args);
-			status_empty = FALSE;
-		} else {
-			status_empty = TRUE;
-		}
-		wclrtoeol(status_win);
+	va_start(args, msg);
+	if (update_status_window(view, msg, args))
 		wnoutrefresh(status_win);
-
-		va_end(args);
-	}
+	va_end(args);
 
 	update_view_title(view);
 }

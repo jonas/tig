@@ -32,7 +32,7 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 	buf[pos] = 0;
 
 	while (status == INPUT_OK || status == INPUT_SKIP) {
-		report("%s%.*s", prompt, pos, buf);
+		update_status("%s%.*s", prompt, pos, buf);
 
 		switch (get_input(pos + 1, &input, FALSE)) {
 		case KEY_RETURN:
@@ -137,8 +137,8 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 		char hotkey[] = { '[', (char) item->hotkey, ']', ' ', 0 };
 		int i;
 
-		report("%s (%d of %d) %s%s", prompt, *selected + 1, size,
-			item->hotkey ? hotkey : "", item->text);
+		update_status("%s (%d of %d) %s%s", prompt, *selected + 1, size,
+			      item->hotkey ? hotkey : "", item->text);
 
 		switch (get_input(COLS - 1, &input, FALSE)) {
 		case KEY_RETURN:
