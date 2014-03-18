@@ -104,7 +104,7 @@ open_grep_view(struct view *prev)
 	struct view *view = VIEW(REQ_VIEW_GREP);
 	bool in_grep_view = prev == view;
 
-	if (is_initial_view(view) || (view->lines && !in_grep_view)) {
+	if ((!prev && is_initial_view(view)) || (view->lines && !in_grep_view)) {
 		open_view(prev, REQ_VIEW_GREP, OPEN_DEFAULT);
 	} else {
 		if (grep_prompt())
