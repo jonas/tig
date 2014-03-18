@@ -174,7 +174,7 @@ bind generic	D	:toggle show-date	# Toggle date display
 bind generic	A	:toggle show-author	# Toggle author display
 bind generic	g	:toggle show-rev-graph	# Toggle revision graph visualization
 bind generic	~	:toggle line-graphics	# Toggle (line) graphics mode
-bind generic	Hash	:toggle showfilename	# Toggle file name display
+bind generic	Hash	:toggle show-filename	# Toggle file name display
 bind generic	F	:toggle show-refs	# Toggle reference display (tags/branches)
 # bind generic	???	:toogle show-changes	# Toggle local changes display in the main view
 bind generic	W	:toggle ignore-space	# Toggle ignoring whitespace in diffs
