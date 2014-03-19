@@ -813,23 +813,16 @@ open_argv(struct view *prev, struct view *view, const char *argv[], const char *
  */
 
 void
-sort_view(struct view *view, enum request request, struct sort_state *state,
-	  int (*compare)(const void *, const void *))
+sort_view(struct view *view, struct sortable *sortable, bool change_field)
 {
-	switch (request) {
-	case REQ_TOGGLE_SORT_FIELD:
+	struct sort_state *state = sortable->state;
+
+	if (change_field)
 		state->current = (state->current + 1) % state->size;
-		break;
-
-	case REQ_TOGGLE_SORT_ORDER:
+	else
 		state->reverse = !state->reverse;
-		break;
-	default:
-		die("Not a sort request");
-	}
 
-	qsort(view->line, view->lines, sizeof(*view->line), compare);
-	redraw_view(view);
+	qsort(view->line, view->lines, sizeof(*view->line), sortable->compare);
 }
 
 struct line *

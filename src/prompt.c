@@ -339,6 +339,16 @@ prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 		return VIEW_NO_FLAGS;
 	}
 
+	if (enum_equals_static("sort-field", name, namelen) ||
+	    enum_equals_static("sort-order", name, namelen)) {
+		if (!view->ops->sortable)
+			report("Sorting is not yet supported for the %s view", view->name);
+		else
+			sort_view(view, view->ops->sortable,
+				  enum_equals_static("sort-field", name, namelen));
+		return VIEW_NO_FLAGS;
+	}
+
 	for (i = 0; i < ARRAY_SIZE(option_toggles); i++) {
 		struct prompt_toggle *toggle = &option_toggles[i];
 

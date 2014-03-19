@@ -614,8 +614,6 @@ In addition to the actions below, options can also be toggled with the
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |options                 |Open the options menu
-|toggle-sort-order       |Toggle ascending/descending sort order
-|toggle-sort-field       |Toggle field to sort by
 |=============================================================================
 
 Misc

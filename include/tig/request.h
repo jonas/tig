@@ -71,8 +71,6 @@
 	\
 	REQ_GROUP("Option manipulation") \
 	REQ_(OPTIONS,		"Open the options menu"), \
-	REQ_(TOGGLE_SORT_ORDER,	"Toggle ascending/descending sort order"), \
-	REQ_(TOGGLE_SORT_FIELD,	"Toggle field to sort by"), \
 	\
 	REQ_GROUP("Misc") \
 	REQ_(EDIT,		"Open in editor"), \

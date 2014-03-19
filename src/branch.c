@@ -69,6 +69,8 @@ branch_compare(const void *l1, const void *l2)
 	}
 }
 
+static struct sortable branch_sortable = { &branch_sort_state, branch_compare };
+
 static bool
 branch_draw(struct view *view, struct line *line, unsigned int lineno)
 {
@@ -105,11 +107,6 @@ branch_request(struct view *view, enum request request, struct line *line)
 	case REQ_REFRESH:
 		load_refs(TRUE);
 		refresh_view(view);
-		return REQ_NONE;
-
-	case REQ_TOGGLE_SORT_FIELD:
-	case REQ_TOGGLE_SORT_ORDER:
-		sort_view(view, request, &branch_sort_state, branch_compare);
 		return REQ_NONE;
 
 	case REQ_ENTER:
@@ -270,6 +267,8 @@ struct view_ops branch_ops = {
 	branch_request,
 	branch_grep,
 	branch_select,
+	NULL,
+	&branch_sortable,
 };
 
 /* vim: set ts=8 sw=8 noexpandtab: */

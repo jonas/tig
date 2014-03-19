@@ -550,6 +550,8 @@ option_bind_command(int argc, const char *argv[])
 			ENUM_MAP_ENTRY("tree-parent",		REQ_PARENT),
 		};
 		static const char *toggles[][2] = {
+			{ "diff-context-down",		"diff-context" },
+			{ "diff-context-up",		"diff-context" },
 			{ "toggle-author",		"show-author" },
 			{ "toggle-changes",		"show-changes" },
 			{ "toggle-commit-order",	"show-commit-order" },
@@ -563,11 +565,11 @@ option_bind_command(int argc, const char *argv[])
 			{ "toggle-lineno",		"show-line-numbers" },
 			{ "toggle-refs",		"show-refs" },
 			{ "toggle-rev-graph",		"show-rev-graph" },
+			{ "toggle-sort-field",		"sort-field" },
+			{ "toggle-sort-order",		"sort-order" },
 			{ "toggle-title-overflow",	"show-title-overflow" },
 			{ "toggle-untracked-dirs",	"status-untracked-dirs" },
 			{ "toggle-vertical-split",	"show-vertical-split" },
-			{ "diff-context-up",		"diff-context" },
-			{ "diff-context-down",		"diff-context" },
 		};
 		int alias;
 

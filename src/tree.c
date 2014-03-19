@@ -129,6 +129,8 @@ tree_compare(const void *l1, const void *l2)
 	}
 }
 
+static struct sortable tree_sortable = { &tree_sort_state, tree_compare };
+
 
 static struct line *
 tree_entry(struct view *view, enum line_type type, const char *path,
@@ -376,11 +378,6 @@ tree_request(struct view *view, enum request request, struct line *line)
 		}
 		return REQ_NONE;
 
-	case REQ_TOGGLE_SORT_FIELD:
-	case REQ_TOGGLE_SORT_ORDER:
-		sort_view(view, request, &tree_sort_state, tree_compare);
-		return REQ_NONE;
-
 	case REQ_PARENT:
 	case REQ_BACK:
 		if (!*view->env->directory) {
@@ -520,6 +517,8 @@ struct view_ops tree_ops = {
 	tree_request,
 	tree_grep,
 	tree_select,
+	NULL,
+	&tree_sortable,
 };
 
 /* vim: set ts=8 sw=8 noexpandtab: */

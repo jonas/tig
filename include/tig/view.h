@@ -137,6 +137,23 @@ enum open_flags {
 #define open_in_pager_mode(flags) ((flags) & OPEN_PAGER_MODE)
 #define open_from_stdin(flags) ((flags) & OPEN_STDIN)
 
+enum sort_field {
+	ORDERBY_NAME,
+	ORDERBY_DATE,
+	ORDERBY_AUTHOR,
+};
+
+struct sort_state {
+	const enum sort_field *fields;
+	size_t size, current;
+	bool reverse;
+};
+
+struct sortable {
+	struct sort_state *state;
+	int (*compare)(const void *, const void *);
+};
+
 struct view_ops {
 	/* What type of content being displayed. Used in the title bar. */
 	const char *type;
@@ -162,6 +179,8 @@ struct view_ops {
 	void (*select)(struct view *view, struct line *line);
 	/* Release resources when reloading the view */
 	void (*done)(struct view *view);
+	/* Sorting information. */
+	struct sortable *sortable;
 };
 
 /*
@@ -235,24 +254,11 @@ void open_argv(struct view *prev, struct view *view, const char *argv[], const c
  * Various utilities.
  */
 
-enum sort_field {
-	ORDERBY_NAME,
-	ORDERBY_DATE,
-	ORDERBY_AUTHOR,
-};
-
-struct sort_state {
-	const enum sort_field *fields;
-	size_t size, current;
-	bool reverse;
-};
-
 #define SORT_STATE(fields) { fields, ARRAY_SIZE(fields), 0 }
 #define get_sort_field(state) ((state).fields[(state).current])
 #define sort_order(state, result) ((state).reverse ? -(result) : (result))
 
-void sort_view(struct view *view, enum request request, struct sort_state *state,
-	  int (*compare)(const void *, const void *));
+void sort_view(struct view *view, struct sortable *sortable, bool change_field);
 
 struct line *
 find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction);

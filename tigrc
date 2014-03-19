@@ -165,9 +165,9 @@ bind generic	N	find-prev
 
 # Option manipulation
 bind generic	o	options			# Open the options menu
-bind generic	I	toggle-sort-order
-bind generic	i	toggle-sort-field
 # Bindings for toggling settings
+bind generic	I	:toggle sort-order	# Toggle ascending/descending sort order
+bind generic	i	:toggle sort-field	# Toggle field to sort by
 bind generic	.	:toggle show-line-numbers
 						# Toggle line numbers
 bind generic	D	:toggle show-date	# Toggle date display

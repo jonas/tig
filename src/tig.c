@@ -294,11 +294,6 @@ view_driver(struct view *view, enum request request)
 		toggle_option(view);
 		break;
 
-	case REQ_TOGGLE_SORT_FIELD:
-	case REQ_TOGGLE_SORT_ORDER:
-		report("Sorting is not yet supported for the %s view", view->name);
-		break;
-
 	case REQ_SEARCH:
 	case REQ_SEARCH_BACK:
 		search_view(view, request);
