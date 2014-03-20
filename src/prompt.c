@@ -331,13 +331,13 @@ prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 		OPTION_INFO(TOGGLE_OPTIONS)
 	};
 	const char *name = argv[1];
-	size_t namelen = strlen(name);
 	int i;
 
 	if (!name) {
 		string_format_size(msg, SIZEOF_STR, "%s", "No option name given to :toggle");
 		return VIEW_NO_FLAGS;
 	}
+	size_t namelen = strlen(name);
 
 	if (enum_equals_static("sort-field", name, namelen) ||
 	    enum_equals_static("sort-order", name, namelen)) {
