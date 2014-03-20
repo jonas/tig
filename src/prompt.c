@@ -240,8 +240,8 @@ prompt_toggle_option(struct view *view, const char *argv[],
 				   enum_name(map->entries[*opt]));
 
 	} else if (!strcmp(toggle->type, "int")) {
-		const char *arg = argv[2];
-		int diff = arg ? atoi(arg) : 1;
+		const char *arg = argv[2] ? argv[2] : "1";
+		int diff = atoi(arg);
 		int *opt = toggle->opt;
 
 		if (!diff)
@@ -268,7 +268,7 @@ prompt_toggle_option(struct view *view, const char *argv[],
 		string_format_size(msg, SIZEOF_STR, "set %s = %d", name, *opt);
 
 	} else if (!strcmp(toggle->type, "double")) {
-		const char *arg = argv[2];
+		const char *arg = argv[2] ? argv[2] : "1.0";
 		double *opt = toggle->opt;
 		int sign = 1;
 		double diff;
@@ -331,7 +331,7 @@ prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 		OPTION_INFO(TOGGLE_OPTIONS)
 	};
 	const char *name = argv[1];
-	size_t namelen = strlen(name);
+	size_t namelen = name ? strlen(name) : 0;
 	int i;
 
 	if (!name) {
