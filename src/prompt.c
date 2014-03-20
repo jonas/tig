@@ -341,11 +341,17 @@ prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 
 	if (enum_equals_static("sort-field", name, namelen) ||
 	    enum_equals_static("sort-order", name, namelen)) {
-		if (!view->ops->sortable)
+		if (!view->ops->sortable) {
 			report("Sorting is not yet supported for the %s view", view->name);
-		else
-			sort_view(view, view->ops->sortable,
-				  enum_equals_static("sort-field", name, namelen));
+		} else {
+			bool sort_field = enum_equals_static("sort-field", name, namelen);
+			struct sort_state *state = view->ops->sortable->state;
+
+			sort_view(view, view->ops->sortable, sort_field);
+			string_format_size(msg, SIZEOF_STR, "set %s = %s", name,
+				sort_field ? enum_name(sort_field_map->entries[state->current])
+					   : state->reverse ? "descending" : "ascending");
+		}
 		return VIEW_NO_FLAGS;
 	}
 

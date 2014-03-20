@@ -99,7 +99,7 @@ tree_compare_entry(const struct line *line1, const struct line *line2)
 }
 
 static const enum sort_field tree_sort_fields[] = {
-	ORDERBY_NAME, ORDERBY_DATE, ORDERBY_AUTHOR
+	SORT_FIELD_NAME, SORT_FIELD_DATE, SORT_FIELD_AUTHOR
 };
 static struct sort_state tree_sort_state = SORT_STATE(tree_sort_fields);
 
@@ -117,13 +117,13 @@ tree_compare(const void *l1, const void *l2)
 		return 1;
 
 	switch (get_sort_field(tree_sort_state)) {
-	case ORDERBY_DATE:
+	case SORT_FIELD_DATE:
 		return sort_order(tree_sort_state, timecmp(&entry1->time, &entry2->time));
 
-	case ORDERBY_AUTHOR:
+	case SORT_FIELD_AUTHOR:
 		return sort_order(tree_sort_state, ident_compare(entry1->author, entry2->author));
 
-	case ORDERBY_NAME:
+	case SORT_FIELD_NAME:
 	default:
 		return sort_order(tree_sort_state, tree_compare_entry(line1, line2));
 	}

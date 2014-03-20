@@ -35,7 +35,7 @@ static const struct ref branch_all;
 #define branch_is_all(branch) ((branch)->ref == &branch_all)
 
 static const enum sort_field branch_sort_fields[] = {
-	ORDERBY_NAME, ORDERBY_DATE, ORDERBY_AUTHOR
+	SORT_FIELD_NAME, SORT_FIELD_DATE, SORT_FIELD_AUTHOR
 };
 
 static struct sort_state branch_sort_state = SORT_STATE(branch_sort_fields);
@@ -57,13 +57,13 @@ branch_compare(const void *l1, const void *l2)
 		return 1;
 
 	switch (get_sort_field(branch_sort_state)) {
-	case ORDERBY_DATE:
+	case SORT_FIELD_DATE:
 		return sort_order(branch_sort_state, timecmp(&branch1->time, &branch2->time));
 
-	case ORDERBY_AUTHOR:
+	case SORT_FIELD_AUTHOR:
 		return sort_order(branch_sort_state, ident_compare(branch1->author, branch2->author));
 
-	case ORDERBY_NAME:
+	case SORT_FIELD_NAME:
 	default:
 		return sort_order(branch_sort_state, strcmp(branch1->ref->name, branch2->ref->name));
 	}

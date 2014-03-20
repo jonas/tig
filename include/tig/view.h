@@ -137,12 +137,6 @@ enum open_flags {
 #define open_in_pager_mode(flags) ((flags) & OPEN_PAGER_MODE)
 #define open_from_stdin(flags) ((flags) & OPEN_STDIN)
 
-enum sort_field {
-	ORDERBY_NAME,
-	ORDERBY_DATE,
-	ORDERBY_AUTHOR,
-};
-
 struct sort_state {
 	const enum sort_field *fields;
 	size_t size, current;
