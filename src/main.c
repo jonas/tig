@@ -88,7 +88,7 @@ static bool draw_graph(struct view *view, struct graph_canvas *canvas)
 			return TRUE;
 	}
 
-	return draw_text(view, LINE_MAIN_REVGRAPH, " ");
+	return draw_text(view, LINE_DEFAULT, " ");
 }
 
 /*

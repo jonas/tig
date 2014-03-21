@@ -238,6 +238,24 @@ parse_color_name(const char *color, struct line_rule *rule, const char **prefix_
 	return SUCCESS;
 }
 
+static int
+find_remapped(const char *remapped[][2], size_t remapped_size, const char *arg)
+{
+	size_t arglen = strlen(arg);
+	int i;
+
+	for (i = 0; i < remapped_size; i++) {
+		const char *name = remapped[i][0];
+		size_t namelen = strlen(name);
+
+		if (arglen == namelen &&
+		    !string_enum_compare(arg, name, namelen))
+			return i;
+	}
+
+	return -1;
+}
+
 /* Wants: object fgcolor bgcolor [attribute] */
 static enum status_code
 option_color_command(int argc, const char *argv[])
@@ -256,17 +274,39 @@ option_color_command(int argc, const char *argv[])
 
 	info = add_line_rule(prefix, &rule);
 	if (!info) {
-		static const struct enum_map_entry obsolete[] = {
-			ENUM_MAP_ENTRY("main-delim",	LINE_DELIMITER),
-			ENUM_MAP_ENTRY("main-date",	LINE_DATE),
-			ENUM_MAP_ENTRY("main-author",	LINE_AUTHOR),
-			ENUM_MAP_ENTRY("blame-id",	LINE_ID),
+		static const char *obsolete[][2] = {
+			{ "acked",			"    Acked-by" },
+			{ "diff-copy-from",		"copy from " },
+			{ "diff-copy-to",		"copy to " },
+			{ "diff-deleted-file-mode",	"deleted file mode " },
+			{ "diff-dissimilarity",		"dissimilarity " },
+			{ "diff-rename-from",		"rename from " },
+			{ "diff-rename-to",		"rename to " },
+			{ "diff-tree",			"diff-tree" },
+			{ "pp-adate",			"AuthorDate: " },
+			{ "pp-author",			"Author: " },
+			{ "pp-cdate",			"CommitDate: " },
+			{ "pp-commit",			"Commit: " },
+			{ "pp-date",			"Date: " },
+			{ "reviewed",			"    Reviewed-by" },
+			{ "signoff",			"    Signed-off-by" },
+			{ "tested",			"    Tested-by" },
 		};
 		int index;
 
-		if (!map_enum(&index, obsolete, argv[0]))
+		index = find_remapped(obsolete, ARRAY_SIZE(obsolete), rule.name);
+		if (index != -1) {
+			rule.name = NULL;
+			rule.namelen = 0;
+			rule.line = obsolete[index][1];
+			rule.linelen = strlen(rule.line);
+			info = add_line_rule(prefix, &rule);
+		}
+
+		if (!info)
 			return ERROR_UNKNOWN_COLOR_NAME;
-		info = get_line_info(NULL, index);
+
+		code = ERROR_OBSOLETE_REQUEST_NAME;
 	}
 
 	if (!set_color(&info->fg, argv[1]) ||
@@ -282,7 +322,7 @@ option_color_command(int argc, const char *argv[])
 		info->attr |= attr;
 	}
 
-	return SUCCESS;
+	return code;
 }
 
 static enum status_code
@@ -505,24 +545,6 @@ option_set_command(int argc, const char *argv[])
 		return parse_int(&opt_mouse_scroll, argv[2], 0, 1024);
 
 	return ERROR_UNKNOWN_VARIABLE_NAME;
-}
-
-static int
-find_remapped(const char *remapped[][2], size_t remapped_size, const char *arg)
-{
-	size_t arglen = strlen(arg);
-	int i;
-
-	for (i = 0; i < remapped_size; i++) {
-		const char *name = remapped[i][0];
-		size_t namelen = strlen(name);
-
-		if (arglen == namelen &&
-		    !string_enum_compare(arg, name, namelen))
-			return i;
-	}
-
-	return -1;
 }
 
 /* Wants: mode request key */

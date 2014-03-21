@@ -272,7 +272,6 @@ color main-replace		cyan	default
 color main-tracked		yellow	default	bold
 color main-ref			cyan	default
 color main-head			cyan	default	bold
-color main-revgraph		magenta	default
 color tree-head			default	default	bold
 color tree-dir			yellow	default	normal
 color tree-file			default	default	normal

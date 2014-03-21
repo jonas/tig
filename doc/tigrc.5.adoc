@@ -723,6 +723,9 @@ setting the *default* color option.
 |date			|The commit date.
 |author			|The commit author.
 |mode			|The file mode holding the permissions and type.
+|overflow		|Title text overflow.
+|filename		|Filename.
+|file-size		|File size.
 |=============================================================================
 
 .Main view colors
@@ -739,6 +742,7 @@ example: palette-0 = red
 |main-tag		|Label of a signed tag.
 |main-local-tag		|Label of a local tag.
 |main-ref		|Label of any other reference.
+|main-replace		|Label of replaced reference.
 |=============================================================================
 
 .Status view
@@ -746,6 +750,7 @@ example: palette-0 = red
 |=============================================================================
 |stat-head		|The "On branch"-line.
 |stat-section		|Status section titles,
+|stat-none		|Empty status label.
 |stat-staged		|Status flag of staged files.
 |stat-unstaged		|Status flag of unstaged files.
 |stat-untracked		|Status flag of untracked files.
@@ -759,6 +764,14 @@ example: palette-0 = red
 |tree-file		|The file name.
 |=============================================================================
 
+.Help view
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|help-keymap		|Keymap name.
+|help-group		|Help group name.
+|help-action		|Help action name.
+|=============================================================================
+
 Highlighting
 ~~~~~~~~~~~~
 
@@ -768,7 +781,8 @@ Diff markup::
 
 Options concerning diff start, chunks and lines added and deleted.
 
-*diff-header*, *diff-chunk*, *diff-add*, *diff-del*
+*diff-header*, *diff-chunk*, *diff-add*, *diff-add2*, *diff-del*,
+*diff-del2*
 
 Enhanced Git diff markup::
 
@@ -776,8 +790,7 @@ Extra diff information emitted by the Git diff machinery, such as mode
 changes, rename detection, and similarity.
 
 *diff-oldmode*, *diff-newmode*, *diff-copy-from*, *diff-copy-to*,
-*diff-rename-from*, *diff-rename-to*, *diff-deleted-file-mode*,
-*diff-similarity*, *diff-dissimilarity* *diff-tree*, *diff-index*, *diff-stat*
+*diff-similarity*, *diff-index*
 
 Pretty print commit headers::
 
@@ -785,8 +798,7 @@ Commit diffs and the revision logs are usually formatted using pretty printed
 headers , unless `--pretty=raw` was given. This includes lines, such as merge
 info, commit ID, and author and committer date.
 
-*pp-author*, *pp-commit*, *pp-merge*, *pp-date*, *pp-adate*, *pp-cdate*,
-*pp-refs*
+*pp-refs*, *pp-reflog*, *pp-reflogmsg*, *pp-merge*
 
 Raw commit header::
 
@@ -800,7 +812,6 @@ Commit message::
 `Signed-off-by`, `Acked-by`, `Reviewed-by` and `Tested-by` lines are colorized.
 Characters in the commit title exceeding a predefined width can be highlighted.
 
-*signoff*, *acked*, *reviewed*, *tested*, *overflow*
 
 Tree markup::
 
