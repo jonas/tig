@@ -109,10 +109,10 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(COMMIT_ORDER, DATE), \
 	_(COMMIT_ORDER, REVERSE)
 
-#define SORT_FIELD_ENUM(_) \
-	_(SORT_FIELD, NAME), \
-	_(SORT_FIELD, DATE), \
-	_(SORT_FIELD, AUTHOR)
+#define VIEW_COLUMN_ENUM(_) \
+	_(VIEW_COLUMN, NAME), \
+	_(VIEW_COLUMN, DATE), \
+	_(VIEW_COLUMN, AUTHOR)
 
 #define ENUM_INFO(_) \
 	_(author, AUTHOR_ENUM) \
@@ -122,8 +122,8 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(filename, FILENAME_ENUM) \
 	_(graphic, GRAPHIC_ENUM) \
 	_(ignore_space, IGNORE_SPACE_ENUM) \
-	_(sort_field, SORT_FIELD_ENUM) \
 	_(vertical_split, VERTICAL_SPLIT_ENUM) \
+	_(view_column, VIEW_COLUMN_ENUM) \
 
 #define DEFINE_ENUMS(name, macro) DEFINE_ENUM(name, macro);
 ENUM_INFO(DEFINE_ENUMS);

@@ -350,7 +350,7 @@ prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 
 			sort_view(view, sort_field);
 			string_format_size(msg, SIZEOF_STR, "set %s = %s", name,
-				sort_field ? enum_name(sort_field_map->entries[get_sort_field(view)])
+				sort_field ? enum_name(view_column_map->entries[get_sort_field(view)])
 					   : sort->reverse ? "descending" : "ascending");
 		}
 		return VIEW_NO_FLAGS;

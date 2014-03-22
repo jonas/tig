@@ -35,8 +35,8 @@ static const struct ref branch_all;
 #define BRANCH_ALL_NAME	"All branches"
 #define branch_is_all(branch) ((branch)->ref == &branch_all)
 
-static const enum sort_field branch_sort_fields[] = {
-	SORT_FIELD_NAME, SORT_FIELD_DATE, SORT_FIELD_AUTHOR
+static const enum view_column branch_columns[] = {
+	VIEW_COLUMN_NAME, VIEW_COLUMN_DATE, VIEW_COLUMN_AUTHOR
 };
 
 struct branch_state {
@@ -255,8 +255,8 @@ static struct view_ops branch_ops = {
 	branch_select,
 	NULL,
 	branch_get_columns,
-	branch_sort_fields,
-	ARRAY_SIZE(branch_sort_fields),
+	branch_columns,
+	ARRAY_SIZE(branch_columns),
 };
 
 DEFINE_VIEW(branch);

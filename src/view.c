@@ -830,13 +830,13 @@ sort_view_compare(const void *l1, const void *l2)
 		return 1;
 
 	switch (get_sort_field(sorting_view)) {
-	case SORT_FIELD_DATE:
+	case VIEW_COLUMN_DATE:
 		return sort_order(sort, timecmp(columns1.date, columns2.date));
 
-	case SORT_FIELD_AUTHOR:
+	case VIEW_COLUMN_AUTHOR:
 		return sort_order(sort, ident_compare(columns1.author, columns2.author));
 
-	case SORT_FIELD_NAME:
+	case VIEW_COLUMN_NAME:
 	default:
 		if (columns1.mode != columns2.mode)
 			return sort_order(sort, S_ISDIR(*columns1.mode) ? -1 : 1);

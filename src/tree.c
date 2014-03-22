@@ -99,8 +99,8 @@ tree_compare_entry(const struct line *line1, const struct line *line2)
 	return strcmp(tree_path(line1), tree_path(line2));
 }
 
-static const enum sort_field tree_sort_fields[] = {
-	SORT_FIELD_NAME, SORT_FIELD_DATE, SORT_FIELD_AUTHOR
+static const enum view_column tree_columns[] = {
+	VIEW_COLUMN_NAME, VIEW_COLUMN_DATE, VIEW_COLUMN_AUTHOR
 };
 
 static bool
@@ -503,8 +503,8 @@ static struct view_ops tree_ops = {
 	tree_select,
 	NULL,
 	tree_get_columns,
-	tree_sort_fields,
-	ARRAY_SIZE(tree_sort_fields),
+	tree_columns,
+	ARRAY_SIZE(tree_columns),
 };
 
 DEFINE_VIEW(tree);

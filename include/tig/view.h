@@ -179,7 +179,7 @@ struct view_ops {
 	void (*done)(struct view *view);
 	/* Extract line information. */
 	bool (*get_columns)(struct view *view, const struct line *line, struct view_columns *columns);
-	const enum sort_field *columns;
+	const enum view_column *columns;
 	size_t columns_size;
 };
 
