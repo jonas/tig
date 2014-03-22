@@ -16,7 +16,7 @@
 
 #include "tig/view.h"
 
-extern struct view_ops stash_ops;
+extern struct view stash_view;
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

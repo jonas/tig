@@ -255,7 +255,7 @@ branch_select(struct view *view, struct line *line)
 	string_copy_rev(view->env->branch, branch->ref->name);
 }
 
-struct view_ops branch_ops = {
+static struct view_ops branch_ops = {
 	"branch",
 	{ "branch" },
 	argv_env.head,
@@ -270,5 +270,7 @@ struct view_ops branch_ops = {
 	NULL,
 	&branch_sortable,
 };
+
+DEFINE_VIEW(branch);
 
 /* vim: set ts=8 sw=8 noexpandtab: */

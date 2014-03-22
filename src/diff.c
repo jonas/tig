@@ -446,7 +446,7 @@ diff_select(struct view *view, struct line *line)
 	}
 }
 
-struct view_ops diff_ops = {
+static struct view_ops diff_ops = {
 	"line",
 	{ "diff" },
 	argv_env.commit,
@@ -459,5 +459,7 @@ struct view_ops diff_ops = {
 	pager_grep,
 	diff_select,
 };
+
+DEFINE_VIEW(diff);
 
 /* vim: set ts=8 sw=8 noexpandtab: */

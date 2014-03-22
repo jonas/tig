@@ -33,7 +33,7 @@ stash_select(struct view *view, struct line *line)
 	string_copy(view->ref, view->env->stash);
 }
 
-struct view_ops stash_ops = {
+static struct view_ops stash_ops = {
 	"stash",
 	{ "stash" },
 	argv_env.stash,
@@ -46,5 +46,7 @@ struct view_ops stash_ops = {
 	main_grep,
 	stash_select,
 };
+
+DEFINE_VIEW(stash);
 
 /* vim: set ts=8 sw=8 noexpandtab: */

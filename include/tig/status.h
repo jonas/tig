@@ -46,7 +46,7 @@ bool status_stage_info_(char *buf, size_t bufsize,
 			enum line_type type, struct status *status);
 #define status_stage_info(buf, type, status) \
 	status_stage_info_(buf, sizeof(buf), type, status)
-extern struct view_ops status_ops;
+extern struct view status_view;
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

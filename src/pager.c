@@ -222,7 +222,7 @@ pager_open(struct view *view, enum open_flags flags)
 	return begin_update(view, NULL, NULL, flags);
 }
 
-struct view_ops pager_ops = {
+static struct view_ops pager_ops = {
 	"line",
 	{ "pager" },
 	"",
@@ -235,5 +235,7 @@ struct view_ops pager_ops = {
 	pager_grep,
 	pager_select,
 };
+
+DEFINE_VIEW(pager);
 
 /* vim: set ts=8 sw=8 noexpandtab: */

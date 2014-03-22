@@ -277,7 +277,7 @@ help_select(struct view *view, struct line *line)
 {
 }
 
-struct view_ops help_ops = {
+static struct view_ops help_ops = {
 	"line",
 	{ "help" },
 	"",
@@ -291,5 +291,7 @@ struct view_ops help_ops = {
 	help_select,
 	NULL,
 };
+
+DEFINE_VIEW(help);
 
 /* vim: set ts=8 sw=8 noexpandtab: */

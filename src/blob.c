@@ -102,7 +102,7 @@ blob_request(struct view *view, enum request request, struct line *line)
 	}
 }
 
-struct view_ops blob_ops = {
+static struct view_ops blob_ops = {
 	"line",
 	{ "blob" },
 	argv_env.blob,
@@ -115,5 +115,7 @@ struct view_ops blob_ops = {
 	pager_grep,
 	pager_select,
 };
+
+DEFINE_VIEW(blob);
 
 /* vim: set ts=8 sw=8 noexpandtab: */

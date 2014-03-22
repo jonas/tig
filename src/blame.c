@@ -521,7 +521,7 @@ blame_select(struct view *view, struct line *line)
 		string_copy_rev(view->env->commit, commit->id);
 }
 
-struct view_ops blame_ops = {
+static struct view_ops blame_ops = {
 	"line",
 	{ "blame" },
 	argv_env.commit,
@@ -534,5 +534,7 @@ struct view_ops blame_ops = {
 	blame_grep,
 	blame_select,
 };
+
+DEFINE_VIEW(blame);
 
 /* vim: set ts=8 sw=8 noexpandtab: */

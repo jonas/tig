@@ -44,7 +44,7 @@ enum request main_request(struct view *view, enum request request, struct line *
 bool main_grep(struct view *view, struct line *line);
 void main_select(struct view *view, struct line *line);
 
-extern struct view_ops main_ops;
+extern struct view main_view;
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

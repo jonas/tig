@@ -24,7 +24,7 @@ bool pager_grep(struct view *view, struct line *line);
 void pager_select(struct view *view, struct line *line);
 bool pager_open(struct view *view, enum open_flags flags);
 
-extern struct view_ops pager_ops;
+extern struct view pager_view;
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

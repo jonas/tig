@@ -771,10 +771,9 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 #define reload_view(view) load_view(view, NULL, OPEN_RELOAD)
 
 void
-open_view(struct view *prev, enum request request, enum open_flags flags)
+open_view_do(struct view *prev, struct view *view, enum open_flags flags)
 {
 	bool reload = !!(flags & (OPEN_RELOAD | OPEN_PREPARED));
-	struct view *view = VIEW(request);
 	int nviews = displayed_views();
 
 	assert(flags ^ OPEN_REFRESH);
@@ -793,10 +792,14 @@ open_view(struct view *prev, enum request request, enum open_flags flags)
 }
 
 void
+open_view(struct view *prev, enum request request, enum open_flags flags)
+{
+	open_view_do(prev, VIEW(request), flags);
+}
+
+void
 open_argv(struct view *prev, struct view *view, const char *argv[], const char *dir, enum open_flags flags)
 {
-	enum request request = view - views + REQ_OFFSET + 1;
-
 	if (view->pipe)
 		end_update(view, TRUE);
 	view->dir = dir;
@@ -804,7 +807,7 @@ open_argv(struct view *prev, struct view *view, const char *argv[], const char *
 	if (!argv_copy(&view->argv, argv)) {
 		report("Failed to open %s view: %s", view->name, io_strerror(&view->io));
 	} else {
-		open_view(prev, request, flags | OPEN_PREPARED);
+		open_view_do(prev, view, flags | OPEN_PREPARED);
 	}
 }
 
@@ -946,9 +949,8 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 #include "tig/pager.h"
 #include "tig/help.h"
 
-struct view views[] = {
-#define VIEW_DATA(id, name) \
-	{ #name, &name##_ops, &argv_env }
+struct view *views[] = {
+#define VIEW_DATA(id, name) &name##_view
 	VIEW_INFO(VIEW_DATA)
 };
 

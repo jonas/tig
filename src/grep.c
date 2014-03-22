@@ -256,7 +256,7 @@ grep_grep(struct view *view, struct line *line)
 	return grep_text(view, text);
 }
 
-struct view_ops grep_ops = {
+static struct view_ops grep_ops = {
 	"line",
 	{ "grep" },
 	"grep",
@@ -269,5 +269,7 @@ struct view_ops grep_ops = {
 	grep_grep,
 	grep_select,
 };
+
+DEFINE_VIEW(grep);
 
 /* vim: set ts=8 sw=8 noexpandtab: */

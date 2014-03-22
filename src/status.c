@@ -744,7 +744,7 @@ status_grep(struct view *view, struct line *line)
 	return FALSE;
 }
 
-struct view_ops status_ops = {
+static struct view_ops status_ops = {
 	"file",
 	{ "status" },
 	"status",
@@ -757,5 +757,7 @@ struct view_ops status_ops = {
 	status_grep,
 	status_select,
 };
+
+DEFINE_VIEW(status);
 
 /* vim: set ts=8 sw=8 noexpandtab: */

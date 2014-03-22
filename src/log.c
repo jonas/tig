@@ -75,7 +75,7 @@ log_request(struct view *view, enum request request, struct line *line)
 	}
 }
 
-struct view_ops log_ops = {
+static struct view_ops log_ops = {
 	"line",
 	{ "log" },
 	argv_env.head,
@@ -88,5 +88,7 @@ struct view_ops log_ops = {
 	pager_grep,
 	log_select,
 };
+
+DEFINE_VIEW(log);
 
 /* vim: set ts=8 sw=8 noexpandtab: */

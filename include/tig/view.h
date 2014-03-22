@@ -121,6 +121,8 @@ struct view {
 	void *private;
 };
 
+#define DEFINE_VIEW(name) struct view name ##_view = { #name, &name##_ops, &argv_env }
+
 enum open_flags {
 	OPEN_DEFAULT = 0,	/* Use default view switching. */
 	OPEN_STDIN = 1,		/* Open in pager mode. */
@@ -181,13 +183,13 @@ struct view_ops {
  * Global view state.
  */
 
-extern struct view views[];
+extern struct view *views[];
 int views_size(void);
 
 #define foreach_view(view, i) \
-	for (i = 0; i < views_size() && (view = &views[i]); i++)
+	for (i = 0; i < views_size() && (view = views[i]); i++)
 
-#define VIEW(req) 	(&views[(req) - REQ_OFFSET - 1])
+#define VIEW(req) 	(views[(req) - REQ_OFFSET - 1])
 
 #define view_has_line(view, line_) \
 	((view)->line <= (line_) && (line_) < (view)->line + (view)->lines)

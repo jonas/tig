@@ -505,7 +505,7 @@ tree_open(struct view *view, enum open_flags flags)
 	return begin_update(view, repo.cdup, tree_argv, flags);
 }
 
-struct view_ops tree_ops = {
+static struct view_ops tree_ops = {
 	"file",
 	{ "tree" },
 	argv_env.commit,
@@ -520,5 +520,7 @@ struct view_ops tree_ops = {
 	NULL,
 	&tree_sortable,
 };
+
+DEFINE_VIEW(tree);
 
 /* vim: set ts=8 sw=8 noexpandtab: */

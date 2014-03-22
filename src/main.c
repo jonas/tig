@@ -616,7 +616,7 @@ main_select(struct view *view, struct line *line)
 	string_copy_rev(view->env->commit, commit->id);
 }
 
-struct view_ops main_ops = {
+static struct view_ops main_ops = {
 	"commit",
 	{ "main" },
 	argv_env.head,
@@ -630,5 +630,7 @@ struct view_ops main_ops = {
 	main_select,
 	main_done,
 };
+
+DEFINE_VIEW(main);
 
 /* vim: set ts=8 sw=8 noexpandtab: */

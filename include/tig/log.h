@@ -16,7 +16,7 @@
 
 #include "tig/view.h"
 
-extern struct view_ops log_ops;
+extern struct view log_view;
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

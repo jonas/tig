@@ -17,7 +17,7 @@
 #include "tig/view.h"
 
 void open_grep_view(struct view *prev);
-extern struct view_ops grep_ops;
+extern struct view grep_view;
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

@@ -31,7 +31,7 @@ enum request diff_common_enter(struct view *view, enum request request, struct l
 unsigned int diff_get_lineno(struct view *view, struct line *line);
 const char *diff_get_pathname(struct view *view, struct line *line);
 
-extern struct view_ops diff_ops;
+extern struct view diff_view;
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

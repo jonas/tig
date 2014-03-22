@@ -530,7 +530,7 @@ stage_read(struct view *view, char *data)
 	return pager_read(view, data);
 }
 
-struct view_ops stage_ops = {
+static struct view_ops stage_ops = {
 	"line",
 	{ "stage" },
 	argv_env.status,
@@ -543,5 +543,7 @@ struct view_ops stage_ops = {
 	pager_grep,
 	pager_select,
 };
+
+DEFINE_VIEW(stage);
 
 /* vim: set ts=8 sw=8 noexpandtab: */
