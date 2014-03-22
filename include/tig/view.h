@@ -183,11 +183,10 @@ struct view_ops {
  * Global view state.
  */
 
-extern struct view *views[];
-int views_size(void);
+struct view *get_view(int index);
 
 #define foreach_view(view, i) \
-	for (i = 0; i < views_size() && (view = views[i]); i++)
+	for (i = 0; (view = get_view(i)); i++)
 
 #define view_has_line(view, line_) \
 	((view)->line <= (line_) && (line_) < (view)->line + (view)->lines)

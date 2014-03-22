@@ -945,15 +945,15 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 #include "tig/pager.h"
 #include "tig/help.h"
 
-struct view *views[] = {
+static struct view *views[] = {
 #define VIEW_DATA(id, name) &name##_view
 	VIEW_INFO(VIEW_DATA)
 };
 
-int
-views_size(void)
+struct view *
+get_view(int i)
 {
-	return ARRAY_SIZE(views);
+	return 0 <= i && i < ARRAY_SIZE(views) ? views[i] : NULL;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */
