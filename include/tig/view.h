@@ -78,6 +78,8 @@ struct view {
 	WINDOW *win;		/* The main window */
 	WINDOW *title;		/* The title window */
 
+	struct keymap *keymap;	/* What keymap does this view have */
+
 	/* Navigation */
 	struct position pos;	/* Current position. */
 	struct position prev_pos; /* Previous position. */
@@ -153,8 +155,6 @@ struct sortable {
 struct view_ops {
 	/* What type of content being displayed. Used in the title bar. */
 	const char *type;
-	/* What keymap does this view have */
-	struct keymap keymap;
 	/* Points to either of ref_{head,commit,blob} */
 	const char *id;
 	/* Flags to control the view behavior. */
@@ -266,8 +266,8 @@ find_line_by_type(struct view *view, struct line *line, enum line_type type, int
 #define is_initial_view(view) (!(view)->prev && !(view)->argv)
 #define failed_to_load_initial_view(view) (!(view)->prev && !(view)->lines)
 
-#define get_view_color(view, type)	get_line_color((view)->ops->keymap.name, type)
-#define get_view_attr(view, type)	get_line_attr((view)->ops->keymap.name, type)
+#define get_view_color(view, type)	get_line_color((view)->keymap->name, type)
+#define get_view_attr(view, type)	get_line_attr((view)->keymap->name, type)
 
 /*
  * Incremental updating

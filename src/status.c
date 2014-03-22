@@ -747,7 +747,6 @@ status_grep(struct view *view, struct line *line)
 
 static struct view_ops status_ops = {
 	"file",
-	{ "status" },
 	"status",
 	VIEW_CUSTOM_STATUS | VIEW_SEND_CHILD_ENTER | VIEW_STATUS_LIKE | VIEW_REFRESH,
 	0,

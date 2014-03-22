@@ -654,16 +654,11 @@ main(int argc, const char *argv[])
 	bool pager_mode = !isatty(STDIN_FILENO);
 	enum request request = parse_options(argc, argv, pager_mode);
 	struct view *view;
-	int i;
 
 	signal(SIGPIPE, SIG_IGN);
 
 	if (setlocale(LC_ALL, "")) {
 		codeset = nl_langinfo(CODESET);
-	}
-
-	foreach_view(view, i) {
-		add_keymap(&view->ops->keymap);
 	}
 
 	if (load_repo_info() == ERR)
@@ -710,7 +705,7 @@ main(int argc, const char *argv[])
 #endif
 
 		view = display[current_view];
-		request = get_keybinding(&view->ops->keymap, &input);
+		request = get_keybinding(view->keymap, &input);
 
 		/* Some low-level request handling. This keeps access to
 		 * status_win restricted. */

@@ -104,7 +104,6 @@ blob_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops blob_ops = {
 	"line",
-	{ "blob" },
 	argv_env.blob,
 	VIEW_NO_FLAGS,
 	sizeof(struct blob_state),

@@ -258,7 +258,6 @@ grep_grep(struct view *view, struct line *line)
 
 static struct view_ops grep_ops = {
 	"line",
-	{ "grep" },
 	"grep",
 	VIEW_ALWAYS_LINENO | VIEW_CUSTOM_DIGITS | VIEW_REFRESH,
 	sizeof(struct grep_state),

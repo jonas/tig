@@ -619,7 +619,6 @@ main_select(struct view *view, struct line *line)
 
 static struct view_ops main_ops = {
 	"commit",
-	{ "main" },
 	argv_env.head,
 	VIEW_SEND_CHILD_ENTER | VIEW_FILE_FILTER | VIEW_LOG_LIKE | VIEW_REFRESH,
 	sizeof(struct main_state),

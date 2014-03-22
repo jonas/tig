@@ -788,6 +788,8 @@ open_view(struct view *prev, struct view *view, enum open_flags flags)
 		return;
 	}
 
+	if (!view->keymap)
+		view->keymap = get_keymap(view->name, strlen(view->name));
 	load_view(view, prev ? prev : view, flags);
 }
 

@@ -257,7 +257,6 @@ branch_select(struct view *view, struct line *line)
 
 static struct view_ops branch_ops = {
 	"branch",
-	{ "branch" },
 	argv_env.head,
 	VIEW_REFRESH,
 	sizeof(struct branch_state),

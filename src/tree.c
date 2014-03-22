@@ -505,7 +505,6 @@ tree_open(struct view *view, enum open_flags flags)
 
 static struct view_ops tree_ops = {
 	"file",
-	{ "tree" },
 	argv_env.commit,
 	VIEW_SEND_CHILD_ENTER,
 	sizeof(struct tree_state),

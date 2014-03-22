@@ -532,7 +532,6 @@ stage_read(struct view *view, char *data)
 
 static struct view_ops stage_ops = {
 	"line",
-	{ "stage" },
 	argv_env.status,
 	VIEW_DIFF_LIKE | VIEW_REFRESH,
 	sizeof(struct stage_state),

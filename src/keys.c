@@ -23,34 +23,29 @@ struct keybinding {
 	enum request request;
 };
 
-static struct keymap generic_keymap = { "generic" };
-#define is_generic_keymap(keymap) ((keymap) == &generic_keymap)
+static struct keymap keymaps[] = {
+	{ "generic" },
+#define VIEW_KEYMAP(id, name) { #name }
+	VIEW_INFO(VIEW_KEYMAP)
+};
 
-static struct keymap *keymaps = &generic_keymap;
+static struct keymap *generic_keymap = keymaps;
+#define is_generic_keymap(keymap) ((keymap) == generic_keymap)
 
 struct keymap *
-get_keymaps(void)
+get_keymap_by_index(int i)
 {
-	return keymaps;
-}
-
-void
-add_keymap(struct keymap *keymap)
-{
-	keymap->next = keymaps;
-	keymaps = keymap;
+	return 0 <= i && i < ARRAY_SIZE(keymaps) ? &keymaps[i] : NULL;
 }
 
 struct keymap *
 get_keymap(const char *name, size_t namelen)
 {
-	struct keymap *keymap = keymaps;
+	int i;
 
-	while (keymap) {
-		if (!strncasecmp(keymap->name, name, namelen))
-			return keymap;
-		keymap = keymap->next;
-	}
+	for (i = 0; i < ARRAY_SIZE(keymaps); i++)
+		if (!strncasecmp(keymaps[i].name, name, namelen))
+			return &keymaps[i];
 
 	return NULL;
 }
@@ -107,9 +102,9 @@ get_keybinding(struct keymap *keymap, struct key_input *input)
 		if (keybinding_equals(&keymap->data[i].input, input, NULL))
 			return keymap->data[i].request;
 
-	for (i = 0; i < generic_keymap.size; i++)
-		if (keybinding_equals(&generic_keymap.data[i].input, input, NULL))
-			return generic_keymap.data[i].request;
+	for (i = 0; i < generic_keymap->size; i++)
+		if (keybinding_equals(&generic_keymap->data[i].input, input, NULL))
+			return generic_keymap->data[i].request;
 
 	return REQ_NONE;
 }
@@ -262,7 +257,7 @@ get_keys(struct keymap *keymap, enum request request, bool all)
 		if (all)
 			return buf;
 
-		if (!append_keymap_request_keys(buf, &pos, request, &generic_keymap, all))
+		if (!append_keymap_request_keys(buf, &pos, request, generic_keymap, all))
 			return "Too many keybindings!";
 		if (pos)
 			return buf;

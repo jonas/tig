@@ -229,6 +229,7 @@ help_open(struct view *view, enum open_flags flags)
 {
 	struct keymap *keymap;
 	struct help *help;
+	int i;
 
 	reset_view(view);
 
@@ -240,7 +241,7 @@ help_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	help->data.text = "";
 
-	for (keymap = get_keymaps(); keymap; keymap = keymap->next) {
+	for (i = 0; (keymap = get_keymap_by_index(i)); i++) {
 		struct help_request_iterator iterator = { view, keymap, TRUE };
 
 		if (foreach_request(help_open_keymap, &iterator)) {
@@ -279,7 +280,6 @@ help_select(struct view *view, struct line *line)
 
 static struct view_ops help_ops = {
 	"line",
-	{ "help" },
 	"",
 	VIEW_NO_GIT_DIR,
 	sizeof(struct help_state),

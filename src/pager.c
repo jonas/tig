@@ -225,7 +225,6 @@ pager_open(struct view *view, enum open_flags flags)
 
 static struct view_ops pager_ops = {
 	"line",
-	{ "pager" },
 	"",
 	VIEW_OPEN_DIFF | VIEW_NO_REF | VIEW_NO_GIT_DIR,
 	0,

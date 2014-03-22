@@ -25,7 +25,6 @@ struct keybinding;
 
 struct keymap {
 	const char *name;
-	struct keymap *next;
 	struct keybinding *data;
 	size_t size;
 	bool hidden;
@@ -51,9 +50,8 @@ key_input_to_unicode(struct key_input *input)
 		: 0;
 }
 
-void add_keymap(struct keymap *keymap);
 struct keymap *get_keymap(const char *name, size_t namelen);
-struct keymap *get_keymaps(void);
+struct keymap *get_keymap_by_index(int i);
 
 const char *get_key_name(const struct key_input *input);
 int get_key_value(const char *name, struct key_input *input);
@@ -64,7 +62,7 @@ enum request get_keybinding(struct keymap *keymap, struct key_input *input);
 enum status_code add_keybinding(struct keymap *table, enum request request, struct key_input *input);
 
 const char *get_keys(struct keymap *keymap, enum request request, bool all);
-#define get_view_key(view, request) get_keys(&(view)->ops->keymap, request, FALSE)
+#define get_view_key(view, request) get_keys((view)->keymap, request, FALSE)
 
 struct run_request_flags {
 	bool silent;
