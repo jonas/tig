@@ -19,6 +19,7 @@
 #include "tig/display.h"
 #include "tig/view.h"
 #include "tig/draw.h"
+#include "tig/blob.h"
 
 /* The top of the path stack. */
 static struct view_history tree_view_history = { sizeof(char *) };
@@ -414,20 +415,17 @@ tree_request(struct view *view, enum request request, struct line *line)
 
 		/* Trees and subtrees share the same ID, so they are not not
 		 * unique like blobs. */
-		flags = OPEN_RELOAD;
-		request = REQ_VIEW_TREE;
+		reload_view(view);
 		break;
 
 	case LINE_TREE_FILE:
 		flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
-		request = REQ_VIEW_BLOB;
+		open_blob_view(view, flags);
 		break;
 
 	default:
 		return REQ_NONE;
 	}
-
-	open_view(view, request, flags);
 
 	return REQ_NONE;
 }

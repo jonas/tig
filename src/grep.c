@@ -101,14 +101,14 @@ grep_prompt(void)
 void
 open_grep_view(struct view *prev)
 {
-	struct view *view = VIEW(REQ_VIEW_GREP);
+	struct view *view = &grep_view;
 	bool in_grep_view = prev == view;
 
 	if ((!prev && is_initial_view(view)) || (view->lines && !in_grep_view)) {
-		open_view(prev, REQ_VIEW_GREP, OPEN_DEFAULT);
+		open_view(prev, view, OPEN_DEFAULT);
 	} else {
 		if (grep_prompt())
-			open_view(prev, REQ_VIEW_GREP, OPEN_RELOAD);
+			open_view(prev, view, OPEN_RELOAD);
 	}
 }
 

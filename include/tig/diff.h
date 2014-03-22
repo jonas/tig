@@ -33,5 +33,11 @@ const char *diff_get_pathname(struct view *view, struct line *line);
 
 extern struct view diff_view;
 
+static inline void
+open_diff_view(struct view *prev, enum open_flags flags)
+{
+	open_view(prev, &diff_view, flags);
+}
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

@@ -19,6 +19,7 @@
 #include "tig/display.h"
 #include "tig/view.h"
 #include "tig/draw.h"
+#include "tig/diff.h"
 
 /*
  * Pager backend
@@ -174,7 +175,7 @@ pager_request(struct view *view, enum request request, struct line *line)
 		return request;
 
 	if (line->type == LINE_COMMIT && view_has_flags(view, VIEW_OPEN_DIFF)) {
-		open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT);
+		open_diff_view(view, OPEN_SPLIT);
 		split = 1;
 	}
 

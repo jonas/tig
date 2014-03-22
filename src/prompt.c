@@ -17,6 +17,7 @@
 #include "tig/display.h"
 #include "tig/options.h"
 #include "tig/prompt.h"
+#include "tig/pager.h"
 
 typedef enum input_status (*input_handler)(void *data, char *buf, struct key_input *input);
 
@@ -422,7 +423,7 @@ run_prompt_command(struct view *view, const char *argv[])
 			argv_to_string(next->argv, next->ref, sizeof(next->ref), " ");
 
 			next->dir = NULL;
-			open_view(view, REQ_VIEW_PAGER, OPEN_PREPARED);
+			open_pager_view(view, OPEN_PREPARED);
 		}
 
 	} else if (!strcmp(cmd, "toggle")) {

@@ -20,6 +20,7 @@
 #include "tig/view.h"
 #include "tig/draw.h"
 #include "tig/git.h"
+#include "tig/diff.h"
 
 /*
  * Blame backend
@@ -478,7 +479,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 			if (diff->pipe)
 				string_copy_rev(diff->ref, NULL_ID);
 		} else {
-			open_view(view, REQ_VIEW_DIFF, flags);
+			open_diff_view(view, flags);
 		}
 		break;
 

@@ -31,7 +31,21 @@
 #include "tig/draw.h"
 #include "tig/display.h"
 #include "tig/prompt.h"
+
+/* Views. */
+#include "tig/blame.h"
+#include "tig/blob.h"
+#include "tig/branch.h"
+#include "tig/diff.h"
 #include "tig/grep.h"
+#include "tig/help.h"
+#include "tig/log.h"
+#include "tig/main.h"
+#include "tig/pager.h"
+#include "tig/stage.h"
+#include "tig/stash.h"
+#include "tig/status.h"
+#include "tig/tree.h"
 
 static bool
 forward_request_to_child(struct view *child, enum request request)
@@ -221,18 +235,40 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_VIEW_MAIN:
+		open_main_view(view, OPEN_DEFAULT);
+		break;
 	case REQ_VIEW_DIFF:
+		open_diff_view(view, OPEN_DEFAULT);
+		break;
 	case REQ_VIEW_LOG:
+		open_log_view(view, OPEN_DEFAULT);
+		break;
 	case REQ_VIEW_TREE:
+		open_tree_view(view, OPEN_DEFAULT);
+		break;
 	case REQ_VIEW_HELP:
+		open_help_view(view, OPEN_DEFAULT);
+		break;
 	case REQ_VIEW_BRANCH:
+		open_branch_view(view, OPEN_DEFAULT);
+		break;
 	case REQ_VIEW_BLAME:
+		open_blame_view(view, OPEN_DEFAULT);
+		break;
 	case REQ_VIEW_BLOB:
+		open_blob_view(view, OPEN_DEFAULT);
+		break;
 	case REQ_VIEW_STATUS:
+		open_status_view(view, OPEN_DEFAULT);
+		break;
 	case REQ_VIEW_STAGE:
+		open_stage_view(view, OPEN_DEFAULT);
+		break;
 	case REQ_VIEW_PAGER:
+		open_pager_view(view, OPEN_DEFAULT);
+		break;
 	case REQ_VIEW_STASH:
-		open_view(view, request, OPEN_DEFAULT);
+		open_stash_view(view, OPEN_DEFAULT);
 		break;
 
 	case REQ_NEXT:
@@ -524,32 +560,26 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 static enum request
 open_pager_mode(enum request request)
 {
-	enum open_flags flags = OPEN_DEFAULT;
-
 	if (request == REQ_VIEW_PAGER) {
 		/* Detect if the user requested the main view. */
 		if (argv_contains(opt_rev_argv, "--stdin")) {
-			request = REQ_VIEW_MAIN;
-			flags |= OPEN_FORWARD_STDIN;
+			open_main_view(NULL, OPEN_FORWARD_STDIN);
 		} else if (argv_contains(opt_cmdline_argv, "--pretty=raw")) {
-			request = REQ_VIEW_MAIN;
-			flags |= OPEN_STDIN;
+			open_main_view(NULL, OPEN_STDIN);
 		} else {
-			flags |= OPEN_STDIN;
+			open_pager_view(NULL, OPEN_STDIN);
 		}
 
 	} else if (request == REQ_VIEW_DIFF) {
 		if (argv_contains(opt_rev_argv, "--stdin"))
-			flags |= OPEN_FORWARD_STDIN;
-	}
+			open_diff_view(NULL, OPEN_FORWARD_STDIN);
+		else              
+			open_diff_view(NULL, OPEN_STDIN);
 
-	/* Open the requested view even if the pager mode is enabled so
-	 * the warning message below is displayed correctly. */
-	open_view(NULL, request, flags);
-
-	if (!open_in_pager_mode(flags)) {
+	} else {
 		close(STDIN_FILENO);
 		report("Ignoring stdin.");
+		return request;
 	}
 
 	return REQ_NONE;

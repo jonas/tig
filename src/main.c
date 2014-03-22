@@ -21,6 +21,7 @@
 #include "tig/git.h"
 #include "tig/status.h"
 #include "tig/main.h"
+#include "tig/diff.h"
 
 /*
  * Revision graph
@@ -510,7 +511,7 @@ main_request(struct view *view, enum request request, struct line *line)
 			break;
 		}
 
-		open_view(view, REQ_VIEW_DIFF, flags);
+		open_diff_view(view, flags);
 		break;
 
 	case REQ_REFRESH:

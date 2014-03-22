@@ -46,5 +46,11 @@ void main_select(struct view *view, struct line *line);
 
 extern struct view main_view;
 
+static inline void
+open_main_view(struct view *prev, enum open_flags flags)
+{
+	open_view(prev, &main_view, flags);
+}
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

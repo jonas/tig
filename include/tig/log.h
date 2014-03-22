@@ -18,5 +18,11 @@
 
 extern struct view log_view;
 
+static inline void
+open_log_view(struct view *prev, enum open_flags flags)
+{
+	open_view(prev, &log_view, flags);
+}
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

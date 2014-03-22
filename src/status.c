@@ -22,6 +22,7 @@
 #include "tig/draw.h"
 #include "tig/git.h"
 #include "tig/status.h"
+#include "tig/stage.h"
 
 /*
  * Status backend
@@ -374,7 +375,7 @@ status_enter(struct view *view, struct line *line)
 
 	stage_line_type = line->type;
 
-	open_view(view, REQ_VIEW_STAGE, flags);
+	open_stage_view(view, flags);
 	return REQ_NONE;
 }
 

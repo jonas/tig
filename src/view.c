@@ -771,7 +771,7 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 #define reload_view(view) load_view(view, NULL, OPEN_RELOAD)
 
 void
-open_view_do(struct view *prev, struct view *view, enum open_flags flags)
+open_view(struct view *prev, struct view *view, enum open_flags flags)
 {
 	bool reload = !!(flags & (OPEN_RELOAD | OPEN_PREPARED));
 	int nviews = displayed_views();
@@ -792,12 +792,6 @@ open_view_do(struct view *prev, struct view *view, enum open_flags flags)
 }
 
 void
-open_view(struct view *prev, enum request request, enum open_flags flags)
-{
-	open_view_do(prev, VIEW(request), flags);
-}
-
-void
 open_argv(struct view *prev, struct view *view, const char *argv[], const char *dir, enum open_flags flags)
 {
 	if (view->pipe)
@@ -807,7 +801,7 @@ open_argv(struct view *prev, struct view *view, const char *argv[], const char *
 	if (!argv_copy(&view->argv, argv)) {
 		report("Failed to open %s view: %s", view->name, io_strerror(&view->io));
 	} else {
-		open_view_do(prev, view, flags | OPEN_PREPARED);
+		open_view(prev, view, flags | OPEN_PREPARED);
 	}
 }
 

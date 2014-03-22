@@ -18,5 +18,11 @@
 
 extern struct view blame_view;
 
+static inline void
+open_blame_view(struct view *prev, enum open_flags flags)
+{
+	open_view(prev, &blame_view, flags);
+}
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

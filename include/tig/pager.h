@@ -26,5 +26,11 @@ bool pager_open(struct view *view, enum open_flags flags);
 
 extern struct view pager_view;
 
+static inline void
+open_pager_view(struct view *prev, enum open_flags flags)
+{
+	open_view(prev, &pager_view, flags);
+}
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

@@ -18,5 +18,11 @@
 
 extern struct view blob_view;
 
+static inline void
+open_blob_view(struct view *prev, enum open_flags flags)
+{
+	open_view(prev, &blob_view, flags);
+}
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

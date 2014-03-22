@@ -18,5 +18,11 @@
 
 extern struct view branch_view;
 
+static inline void
+open_branch_view(struct view *prev, enum open_flags flags)
+{
+	open_view(prev, &branch_view, flags);
+}
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

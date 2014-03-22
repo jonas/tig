@@ -20,5 +20,11 @@ void open_blob_editor(const char *id, const char *name, unsigned int lineno);
 
 extern struct view tree_view;
 
+static inline void
+open_tree_view(struct view *prev, enum open_flags flags)
+{
+	open_view(prev, &tree_view, flags);
+}
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

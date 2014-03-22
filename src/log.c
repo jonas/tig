@@ -14,6 +14,7 @@
 #include "tig/refs.h"
 #include "tig/display.h"
 #include "tig/log.h"
+#include "tig/diff.h"
 #include "tig/pager.h"
 
 struct log_state {
@@ -67,7 +68,7 @@ log_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_ENTER:
 		if (!display[1] || strcmp(display[1]->vid, view->ref))
-			open_view(view, REQ_VIEW_DIFF, OPEN_SPLIT);
+			open_diff_view(view, OPEN_SPLIT);
 		return REQ_NONE;
 
 	default:
