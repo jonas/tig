@@ -65,6 +65,11 @@ struct position {
 	unsigned long lineno;	/* Current line number */
 };
 
+struct sort_state {
+	size_t current;
+	bool reverse;
+};
+
 struct view {
 	const char *name;	/* View name */
 
@@ -79,6 +84,7 @@ struct view {
 	WINDOW *title;		/* The title window */
 
 	struct keymap *keymap;	/* What keymap does this view have */
+	struct sort_state sort;	/* Sorting information. */
 
 	/* Navigation */
 	struct position pos;	/* Current position. */
@@ -141,22 +147,11 @@ enum open_flags {
 #define open_in_pager_mode(flags) ((flags) & OPEN_PAGER_MODE)
 #define open_from_stdin(flags) ((flags) & OPEN_STDIN)
 
-struct sort_state {
-	const enum sort_field *fields;
-	size_t size, current;
-	bool reverse;
-};
-
 struct view_columns {
 	const struct time *date;
 	const struct ident *author;
 	const mode_t *mode;
 	const char *name;
-};
-
-struct sortable {
-	struct sort_state *state;
-	bool (*columns)(struct view *view, const struct line *line, struct view_columns *columns);
 };
 
 struct view_ops {
@@ -182,8 +177,10 @@ struct view_ops {
 	void (*select)(struct view *view, struct line *line);
 	/* Release resources when reloading the view */
 	void (*done)(struct view *view);
-	/* Sorting information. */
-	struct sortable *sortable;
+	/* Extract line information. */
+	bool (*get_columns)(struct view *view, const struct line *line, struct view_columns *columns);
+	const enum sort_field *columns;
+	size_t columns_size;
 };
 
 /*
@@ -254,9 +251,8 @@ void open_argv(struct view *prev, struct view *view, const char *argv[], const c
  * Various utilities.
  */
 
-#define SORT_STATE(fields) { fields, ARRAY_SIZE(fields), 0 }
-
-void sort_view(struct view *view, struct sortable *sortable, bool change_field);
+#define get_sort_field(view) ((view)->ops->columns[(view)->sort.current])
+void sort_view(struct view *view, bool change_field);
 
 struct line *
 find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction);

@@ -39,15 +39,13 @@ static const enum sort_field branch_sort_fields[] = {
 	SORT_FIELD_NAME, SORT_FIELD_DATE, SORT_FIELD_AUTHOR
 };
 
-static struct sort_state branch_sort_state = SORT_STATE(branch_sort_fields);
-
 struct branch_state {
 	char id[SIZEOF_REV];
 	size_t max_ref_length;
 };
 
 static bool
-branch_columns(struct view *view, const struct line *line, struct view_columns *columns)
+branch_get_columns(struct view *view, const struct line *line, struct view_columns *columns)
 {
 	const struct branch *branch = line->data;
 
@@ -60,8 +58,6 @@ branch_columns(struct view *view, const struct line *line, struct view_columns *
 
 	return TRUE;
 }
-
-static struct sortable branch_sortable = { &branch_sort_state, branch_columns };
 
 static bool
 branch_draw(struct view *view, struct line *line, unsigned int lineno)
@@ -258,7 +254,9 @@ static struct view_ops branch_ops = {
 	branch_grep,
 	branch_select,
 	NULL,
-	&branch_sortable,
+	branch_get_columns,
+	branch_sort_fields,
+	ARRAY_SIZE(branch_sort_fields),
 };
 
 DEFINE_VIEW(branch);

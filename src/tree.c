@@ -102,10 +102,9 @@ tree_compare_entry(const struct line *line1, const struct line *line2)
 static const enum sort_field tree_sort_fields[] = {
 	SORT_FIELD_NAME, SORT_FIELD_DATE, SORT_FIELD_AUTHOR
 };
-static struct sort_state tree_sort_state = SORT_STATE(tree_sort_fields);
 
 static bool
-tree_columns(struct view *view, const struct line *line, struct view_columns *columns)
+tree_get_columns(struct view *view, const struct line *line, struct view_columns *columns)
 {
 	const struct tree_entry *entry = line->data;
 
@@ -119,8 +118,6 @@ tree_columns(struct view *view, const struct line *line, struct view_columns *co
 
 	return TRUE;
 }
-
-static struct sortable tree_sortable = { &tree_sort_state, tree_columns };
 
 
 static struct line *
@@ -505,7 +502,9 @@ static struct view_ops tree_ops = {
 	tree_grep,
 	tree_select,
 	NULL,
-	&tree_sortable,
+	tree_get_columns,
+	tree_sort_fields,
+	ARRAY_SIZE(tree_sort_fields),
 };
 
 DEFINE_VIEW(tree);
