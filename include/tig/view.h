@@ -189,8 +189,6 @@ int views_size(void);
 #define foreach_view(view, i) \
 	for (i = 0; i < views_size() && (view = views[i]); i++)
 
-#define VIEW(req) 	(views[(req) - REQ_OFFSET - 1])
-
 #define view_has_line(view, line_) \
 	((view)->line <= (line_) && (line_) < (view)->line + (view)->lines)
 

@@ -18,6 +18,7 @@
 #include "tig/display.h"
 #include "tig/prompt.h"
 #include "tig/draw.h"
+#include "tig/blob.h"
 #include "tig/grep.h"
 
 struct grep_line {
@@ -136,8 +137,7 @@ grep_request(struct view *view, enum request request, struct line *line)
 {
 	struct grep_state *state = view->private;
 	struct grep_line *grep = grep_get_line(line);
-	enum request file_view_req = REQ_VIEW_BLOB;
-	struct view *file_view = VIEW(file_view_req);
+	struct view *file_view = &blob_view;
 
 	switch (request) {
 	case REQ_REFRESH:

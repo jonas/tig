@@ -493,7 +493,7 @@ main_request(struct view *view, enum request request, struct line *line)
 
 		if (line->type == LINE_STAT_UNSTAGED
 		    || line->type == LINE_STAT_STAGED) {
-			struct view *diff = VIEW(REQ_VIEW_DIFF);
+			struct view *diff = &diff_view;
 			const char *diff_staged_argv[] = {
 				GIT_DIFF_STAGED(encoding_arg,
 					diff_context_arg(),

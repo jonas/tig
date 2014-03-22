@@ -18,6 +18,7 @@
 #include "tig/view.h"
 #include "tig/draw.h"
 #include "tig/git.h"
+#include "tig/main.h"
 
 /*
  * Branch backend
@@ -115,9 +116,8 @@ branch_request(struct view *view, enum request request, struct line *line)
 		const char *all_branches_argv[] = {
 			GIT_MAIN_LOG(encoding_arg, commit_order_arg(), "", branch_is_all(branch) ? "--all" : ref->name, "")
 		};
-		struct view *main_view = VIEW(REQ_VIEW_MAIN);
 
-		open_argv(view, main_view, all_branches_argv, NULL, OPEN_SPLIT);
+		open_argv(view, &main_view, all_branches_argv, NULL, OPEN_SPLIT);
 		return REQ_NONE;
 	}
 	case REQ_JUMP_COMMIT:

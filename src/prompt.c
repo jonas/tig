@@ -406,7 +406,7 @@ run_prompt_command(struct view *view, const char *argv[])
 		return cmd[0] == '/' ? REQ_SEARCH : REQ_SEARCH_BACK;
 
 	} else if (cmdlen > 1 && cmd[0] == '!') {
-		struct view *next = VIEW(REQ_VIEW_PAGER);
+		struct view *next = &pager_view;
 		bool copied;
 
 		/* Trim the leading '!'. */

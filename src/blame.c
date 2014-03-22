@@ -439,6 +439,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 	struct blame *blame = line->data;
+	struct view *diff = &diff_view;
 
 	switch (request) {
 	case REQ_VIEW_BLAME:
@@ -456,12 +457,11 @@ blame_request(struct view *view, enum request request, struct line *line)
 		if (!check_blame_commit(blame, FALSE))
 			break;
 
-		if (view_is_displayed(VIEW(REQ_VIEW_DIFF)) &&
-		    !strcmp(blame->commit->id, VIEW(REQ_VIEW_DIFF)->ref))
+		if (view_is_displayed(diff) &&
+		    !strcmp(blame->commit->id, diff->ref))
 			break;
 
 		if (string_rev_is_null(blame->commit->id)) {
-			struct view *diff = VIEW(REQ_VIEW_DIFF);
 			const char *diff_parent_argv[] = {
 				GIT_DIFF_BLAME(encoding_arg,
 					diff_context_arg(),
