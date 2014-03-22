@@ -416,7 +416,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 			const char *file = diff_get_pathname(view, line);
 
 			if (file)
-				string_copy(view->env->file, file);
+				string_ncopy(view->env->file, file, strlen(file));
 		}
 
 		view->env->ref[0] = 0;
