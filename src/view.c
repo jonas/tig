@@ -811,6 +811,40 @@ open_argv(struct view *prev, struct view *view, const char *argv[], const char *
  * Various utilities.
  */
 
+static struct view *sorting_view;
+
+#define get_sort_field(state) ((state)->fields[(state)->current])
+#define sort_order(state, result) ((state)->reverse ? -(result) : (result))
+
+static int
+sort_view_compare(const void *l1, const void *l2)
+{
+	const struct line *line1 = l1;
+	const struct line *line2 = l2;
+	struct view_columns columns1 = {};
+	struct view_columns columns2 = {};
+	struct sortable *sortable = sorting_view->ops->sortable;
+
+	if (!sortable->columns(sorting_view, line1, &columns1))
+		return -1;
+	else if (!sortable->columns(sorting_view, line2, &columns2))
+		return 1;
+
+	switch (get_sort_field(sortable->state)) {
+	case SORT_FIELD_DATE:
+		return sort_order(sortable->state, timecmp(columns1.date, columns2.date));
+
+	case SORT_FIELD_AUTHOR:
+		return sort_order(sortable->state, ident_compare(columns1.author, columns2.author));
+
+	case SORT_FIELD_NAME:
+	default:
+		if (columns1.mode != columns2.mode)
+			return sort_order(sortable->state, S_ISDIR(*columns1.mode) ? -1 : 1);
+		return sort_order(sortable->state, strcmp(columns1.name, columns2.name));
+	}
+}
+
 void
 sort_view(struct view *view, struct sortable *sortable, bool change_field)
 {
@@ -821,7 +855,8 @@ sort_view(struct view *view, struct sortable *sortable, bool change_field)
 	else
 		state->reverse = !state->reverse;
 
-	qsort(view->line, view->lines, sizeof(*view->line), sortable->compare);
+	sorting_view = view;
+	qsort(view->line, view->lines, sizeof(*view->line), sort_view_compare);
 }
 
 struct line *

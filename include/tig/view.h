@@ -147,9 +147,16 @@ struct sort_state {
 	bool reverse;
 };
 
+struct view_columns {
+	const struct time *date;
+	const struct ident *author;
+	const mode_t *mode;
+	const char *name;
+};
+
 struct sortable {
 	struct sort_state *state;
-	int (*compare)(const void *, const void *);
+	bool (*columns)(struct view *view, const struct line *line, struct view_columns *columns);
 };
 
 struct view_ops {
@@ -248,8 +255,6 @@ void open_argv(struct view *prev, struct view *view, const char *argv[], const c
  */
 
 #define SORT_STATE(fields) { fields, ARRAY_SIZE(fields), 0 }
-#define get_sort_field(state) ((state).fields[(state).current])
-#define sort_order(state, result) ((state).reverse ? -(result) : (result))
 
 void sort_view(struct view *view, struct sortable *sortable, bool change_field);
 

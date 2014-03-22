@@ -104,33 +104,23 @@ static const enum sort_field tree_sort_fields[] = {
 };
 static struct sort_state tree_sort_state = SORT_STATE(tree_sort_fields);
 
-static int
-tree_compare(const void *l1, const void *l2)
+static bool
+tree_columns(struct view *view, const struct line *line, struct view_columns *columns)
 {
-	const struct line *line1 = (const struct line *) l1;
-	const struct line *line2 = (const struct line *) l2;
-	const struct tree_entry *entry1 = ((const struct line *) l1)->data;
-	const struct tree_entry *entry2 = ((const struct line *) l2)->data;
+	const struct tree_entry *entry = line->data;
 
-	if (line1->type == LINE_TREE_HEAD)
-		return -1;
-	if (line2->type == LINE_TREE_HEAD)
-		return 1;
+	if (line->type == LINE_TREE_HEAD)
+		return FALSE;
 
-	switch (get_sort_field(tree_sort_state)) {
-	case SORT_FIELD_DATE:
-		return sort_order(tree_sort_state, timecmp(&entry1->time, &entry2->time));
+	columns->date = &entry->time;
+	columns->author = entry->author;
+	columns->name = entry->name;
+	columns->mode = &entry->mode;
 
-	case SORT_FIELD_AUTHOR:
-		return sort_order(tree_sort_state, ident_compare(entry1->author, entry2->author));
-
-	case SORT_FIELD_NAME:
-	default:
-		return sort_order(tree_sort_state, tree_compare_entry(line1, line2));
-	}
+	return TRUE;
 }
 
-static struct sortable tree_sortable = { &tree_sort_state, tree_compare };
+static struct sortable tree_sortable = { &tree_sort_state, tree_columns };
 
 
 static struct line *

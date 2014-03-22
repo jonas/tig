@@ -46,31 +46,22 @@ struct branch_state {
 	size_t max_ref_length;
 };
 
-static int
-branch_compare(const void *l1, const void *l2)
+static bool
+branch_columns(struct view *view, const struct line *line, struct view_columns *columns)
 {
-	const struct branch *branch1 = ((const struct line *) l1)->data;
-	const struct branch *branch2 = ((const struct line *) l2)->data;
+	const struct branch *branch = line->data;
 
-	if (branch_is_all(branch1))
-		return -1;
-	else if (branch_is_all(branch2))
-		return 1;
+	if (branch_is_all(branch))
+		return FALSE;
 
-	switch (get_sort_field(branch_sort_state)) {
-	case SORT_FIELD_DATE:
-		return sort_order(branch_sort_state, timecmp(&branch1->time, &branch2->time));
+	columns->date = &branch->time;
+	columns->author = branch->author;
+	columns->name = branch->ref->name;
 
-	case SORT_FIELD_AUTHOR:
-		return sort_order(branch_sort_state, ident_compare(branch1->author, branch2->author));
-
-	case SORT_FIELD_NAME:
-	default:
-		return sort_order(branch_sort_state, strcmp(branch1->ref->name, branch2->ref->name));
-	}
+	return TRUE;
 }
 
-static struct sortable branch_sortable = { &branch_sort_state, branch_compare };
+static struct sortable branch_sortable = { &branch_sort_state, branch_columns };
 
 static bool
 branch_draw(struct view *view, struct line *line, unsigned int lineno)
