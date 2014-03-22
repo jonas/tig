@@ -214,19 +214,6 @@ branch_open(struct view *view, enum open_flags flags)
 	return TRUE;
 }
 
-static bool
-branch_grep(struct view *view, struct line *line)
-{
-	struct branch *branch = line->data;
-	const char *text[] = {
-		branch->ref->name,
-		mkauthor(branch->author, opt_author_width, opt_show_author),
-		NULL
-	};
-
-	return grep_text(view, text);
-}
-
 static void
 branch_select(struct view *view, struct line *line)
 {
@@ -251,7 +238,7 @@ static struct view_ops branch_ops = {
 	branch_read,
 	branch_draw,
 	branch_request,
-	branch_grep,
+	view_columns_grep,
 	branch_select,
 	NULL,
 	branch_get_columns,

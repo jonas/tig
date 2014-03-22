@@ -858,6 +858,22 @@ sort_view(struct view *view, bool change_field)
 	qsort(view->line, view->lines, sizeof(*view->line), sort_view_compare);
 }
 
+bool
+view_columns_grep(struct view *view, struct line *line)
+{
+	struct view_columns columns = {};
+	bool has_columns = view->ops->get_columns(view, line, &columns);
+	const char *text[] = {
+		has_columns && columns.name ? columns.name : "",
+		has_columns && columns.mode ? mkmode(*columns.mode) : "",
+		has_columns && columns.author ? mkauthor(columns.author, opt_author_width, opt_show_author) : "",
+		has_columns && columns.date ? mkdate(columns.date, opt_show_date) : "",
+		NULL
+	};
+
+	return grep_text(view, text);
+}
+
 struct line *
 find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction)
 {

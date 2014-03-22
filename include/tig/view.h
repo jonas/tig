@@ -254,6 +254,8 @@ void open_argv(struct view *prev, struct view *view, const char *argv[], const c
 #define get_sort_field(view) ((view)->ops->columns[(view)->sort.current])
 void sort_view(struct view *view, bool change_field);
 
+bool view_columns_grep(struct view *view, struct line *line);
+
 struct line *
 find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction);
 
