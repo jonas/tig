@@ -100,7 +100,12 @@ tree_compare_entry(const struct line *line1, const struct line *line2)
 }
 
 static const enum view_column tree_columns[] = {
-	VIEW_COLUMN_NAME, VIEW_COLUMN_DATE, VIEW_COLUMN_AUTHOR
+	VIEW_COLUMN_MODE,
+	VIEW_COLUMN_AUTHOR,
+	VIEW_COLUMN_FILE_SIZE,
+	VIEW_COLUMN_DATE,
+	VIEW_COLUMN_ID,
+	VIEW_COLUMN_FILE_NAME,
 };
 
 static bool
@@ -111,10 +116,13 @@ tree_get_columns(struct view *view, const struct line *line, struct view_columns
 	if (line->type == LINE_TREE_HEAD)
 		return FALSE;
 
-	columns->date = &entry->time;
 	columns->author = entry->author;
-	columns->name = entry->name;
+	columns->date = &entry->time;
+	if (line->type != LINE_TREE_DIR)
+		columns->file_size = &entry->size;
+	columns->id = entry->commit;
 	columns->mode = &entry->mode;
+	columns->file_name = entry->name;
 
 	return TRUE;
 }

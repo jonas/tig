@@ -31,12 +31,16 @@ struct branch {
 	const struct ref *ref;		/* Name and commit ID information. */
 };
 
-static const struct ref branch_all;
+static const struct ref *branch_all;
 #define BRANCH_ALL_NAME	"All branches"
-#define branch_is_all(branch) ((branch)->ref == &branch_all)
+#define branch_is_all(branch) ((branch)->ref == branch_all)
 
 static const enum view_column branch_columns[] = {
-	VIEW_COLUMN_NAME, VIEW_COLUMN_DATE, VIEW_COLUMN_AUTHOR
+	VIEW_COLUMN_DATE,
+	VIEW_COLUMN_AUTHOR,
+	VIEW_COLUMN_REF,
+	VIEW_COLUMN_ID,
+	VIEW_COLUMN_TITLE,
 };
 
 struct branch_state {
@@ -49,12 +53,11 @@ branch_get_columns(struct view *view, const struct line *line, struct view_colum
 {
 	const struct branch *branch = line->data;
 
-	if (branch_is_all(branch))
-		return FALSE;
-
-	columns->date = &branch->time;
 	columns->author = branch->author;
-	columns->name = branch->ref->name;
+	columns->date = &branch->time;
+	columns->id = branch->ref->id;
+	columns->ref = branch->ref;
+	columns->title = branch->title;
 
 	return TRUE;
 }
@@ -177,7 +180,7 @@ branch_open_visitor(void *data, const struct ref *ref)
 	struct view *view = data;
 	struct branch_state *state = view->private;
 	struct branch *branch;
-	bool is_all = ref == &branch_all;
+	bool is_all = ref == branch_all;
 	size_t ref_length;
 
 	if (ref->tag || ref->ltag)
@@ -203,12 +206,21 @@ branch_open(struct view *view, enum open_flags flags)
 			"--all", "--simplify-by-decoration", NULL
 	};
 
-	if (!begin_update(view, NULL, branch_log, OPEN_RELOAD)) {
+	if (!branch_all) {
+		struct ref *ref = calloc(1, sizeof(*branch_all) + strlen(BRANCH_ALL_NAME));
+
+		if (ref) {
+			strncpy(ref->name, BRANCH_ALL_NAME, strlen(BRANCH_ALL_NAME));
+			branch_all = ref;
+		}
+	}
+
+	if (!branch_all || !begin_update(view, NULL, branch_log, OPEN_RELOAD)) {
 		report("Failed to load branch data");
 		return FALSE;
 	}
 
-	branch_open_visitor(view, &branch_all);
+	branch_open_visitor(view, branch_all);
 	foreach_ref(branch_open_visitor, view);
 
 	return TRUE;

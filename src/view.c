@@ -813,7 +813,14 @@ open_argv(struct view *prev, struct view *view, const char *argv[], const char *
 
 static struct view *sorting_view;
 
-#define sort_order(state, result) ((state)->reverse ? -(result) : (result))
+#define sort_order_reverse(state, result) \
+	((state)->reverse ? -(result) : (result))
+
+#define sort_order(state, cmp, o1, o2) \
+	sort_order_reverse(state, (!(o1) || !(o2)) ? !!(o2) - !!(o1) : cmp(o1, o2))
+
+#define number_compare(size1, size2)	(*(size2) - *(size1))
+#define ref_compare(ref1, ref2)		strcmp((ref1)->name, (ref2)->name)
 
 static int
 sort_view_compare(const void *l1, const void *l2)
@@ -830,17 +837,34 @@ sort_view_compare(const void *l1, const void *l2)
 		return 1;
 
 	switch (get_sort_field(sorting_view)) {
-	case VIEW_COLUMN_DATE:
-		return sort_order(sort, timecmp(columns1.date, columns2.date));
-
 	case VIEW_COLUMN_AUTHOR:
-		return sort_order(sort, ident_compare(columns1.author, columns2.author));
+		return sort_order(sort, ident_compare, columns1.author, columns2.author);
 
-	case VIEW_COLUMN_NAME:
-	default:
+	case VIEW_COLUMN_DATE:
+		return sort_order(sort, timecmp, columns1.date, columns2.date);
+
+	case VIEW_COLUMN_ID:
+		return sort_order(sort, strcmp, columns1.id, columns2.id);
+
+	case VIEW_COLUMN_FILE_NAME:
 		if (columns1.mode != columns2.mode)
-			return sort_order(sort, S_ISDIR(*columns1.mode) ? -1 : 1);
-		return sort_order(sort, strcmp(columns1.name, columns2.name));
+			return sort_order_reverse(sort, S_ISDIR(*columns1.mode) ? -1 : 1);
+		return sort_order(sort, strcmp, columns1.file_name, columns2.file_name);
+
+	case VIEW_COLUMN_FILE_SIZE:
+		return sort_order(sort, number_compare, columns1.file_size, columns2.file_size);
+
+	case VIEW_COLUMN_MODE:
+		return sort_order(sort, number_compare, columns1.mode, columns2.mode);
+
+	case VIEW_COLUMN_REF:
+		return sort_order(sort, ref_compare, columns1.ref, columns2.ref);
+
+	case VIEW_COLUMN_TITLE:
+		return sort_order(sort, strcmp, columns1.title, columns2.title);
+
+	default:
+		die("Unknown view_column: %d", get_sort_field(sorting_view));
 	}
 }
 
@@ -849,10 +873,16 @@ sort_view(struct view *view, bool change_field)
 {
 	struct sort_state *state = &view->sort;
 
-	if (change_field)
-		state->current = (state->current + 1) % view->ops->columns_size;
-	else
+	if (change_field) {
+		while (TRUE) {
+			state->current = (state->current + 1) % view->ops->columns_size;
+			if (get_sort_field(view) == VIEW_COLUMN_ID && !opt_show_id)
+				continue;
+			break;
+		}
+	} else {
 		state->reverse = !state->reverse;
+	}
 
 	sorting_view = view;
 	qsort(view->line, view->lines, sizeof(*view->line), sort_view_compare);
@@ -864,10 +894,14 @@ view_columns_grep(struct view *view, struct line *line)
 	struct view_columns columns = {};
 	bool has_columns = view->ops->get_columns(view, line, &columns);
 	const char *text[] = {
-		has_columns && columns.name ? columns.name : "",
-		has_columns && columns.mode ? mkmode(*columns.mode) : "",
 		has_columns && columns.author ? mkauthor(columns.author, opt_author_width, opt_show_author) : "",
 		has_columns && columns.date ? mkdate(columns.date, opt_show_date) : "",
+		has_columns && columns.file_name ? columns.file_name : "",
+		has_columns && columns.file_size ? mkfilesize(*columns.file_size, opt_show_file_size) : "",
+		has_columns && columns.id && opt_show_id ? columns.id : "",
+		has_columns && columns.mode ? mkmode(*columns.mode) : "",
+		has_columns && columns.title ? columns.title : "",
+		has_columns && columns.ref ? columns.ref->name : "",
 		NULL
 	};
 

@@ -110,9 +110,14 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(COMMIT_ORDER, REVERSE)
 
 #define VIEW_COLUMN_ENUM(_) \
-	_(VIEW_COLUMN, NAME), \
+	_(VIEW_COLUMN, AUTHOR), \
 	_(VIEW_COLUMN, DATE), \
-	_(VIEW_COLUMN, AUTHOR)
+	_(VIEW_COLUMN, ID), \
+	_(VIEW_COLUMN, MODE), \
+	_(VIEW_COLUMN, FILE_NAME), \
+	_(VIEW_COLUMN, FILE_SIZE), \
+	_(VIEW_COLUMN, REF), \
+	_(VIEW_COLUMN, TITLE)
 
 #define ENUM_INFO(_) \
 	_(author, AUTHOR_ENUM) \

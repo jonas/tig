@@ -148,10 +148,14 @@ enum open_flags {
 #define open_from_stdin(flags) ((flags) & OPEN_STDIN)
 
 struct view_columns {
-	const struct time *date;
 	const struct ident *author;
+	const struct time *date;
+	const char *file_name;
+	const unsigned long *file_size;
+	const char *id;
 	const mode_t *mode;
-	const char *name;
+	const struct ref *ref;
+	const char *title;
 };
 
 struct view_ops {
