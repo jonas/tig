@@ -179,14 +179,6 @@ grep_request(struct view *view, enum request request, struct line *line)
 	}
 }
 
-static inline void *
-io_memchr(struct io *io, char *data, int c)
-{
-	if (data < io->buf || io->bufpos <= data)
-		return NULL;
-	return memchr(data, c, io->bufpos - data - 1);
-}
-
 static bool
 grep_read(struct view *view, char *line)
 {
@@ -207,13 +199,11 @@ grep_read(struct view *view, char *line)
 		return add_line_nodata(view, LINE_DELIMITER) != NULL;
 
 	lineno = io_memchr(&view->io, line, 0);
-	text = io_memchr(&view->io, lineno + 1, 0);
+	text = io_memchr(&view->io, lineno, 0);
 
 	if (!lineno || !text)
 		return FALSE;
 
-	lineno += 1;
-	text += 1;
 	textlen = strlen(text);
 
 	file = get_path(line);

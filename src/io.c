@@ -402,6 +402,18 @@ io_read(struct io *io, void *buf, size_t bufsize)
 	} while (1);
 }
 
+char *
+io_memchr(struct io *io, char *data, int c)
+{
+	char *pos;
+
+	if (data < io->buf || io->bufpos <= data)
+		return NULL;
+
+	pos = memchr(data, c, io->bufpos - data - 1);
+	return pos ? pos + 1 : NULL;
+}
+
 DEFINE_ALLOCATOR(io_realloc_buf, char, BUFSIZ)
 
 char *
@@ -425,9 +437,12 @@ io_get(struct io *io, int c, bool can_read)
 
 		if (io_eof(io)) {
 			if (io->bufsize) {
+				char *line = io->bufpos;
+
 				io->bufpos[io->bufsize] = 0;
+				io->bufpos += io->bufsize;
 				io->bufsize = 0;
-				return io->bufpos;
+				return line;
 			}
 			return NULL;
 		}

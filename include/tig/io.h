@@ -82,6 +82,7 @@ int io_load(struct io *io, const char *separators,
 	    io_read_fn read_property, void *data);
 int io_run_load(const char **argv, const char *separators,
 		io_read_fn read_property, void *data);
+char *io_memchr(struct io *io, char *data, int c);
 
 const char *get_temp_dir(void);
 
