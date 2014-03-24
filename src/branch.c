@@ -44,7 +44,6 @@ static const enum view_column branch_columns[] = {
 };
 
 struct branch_state {
-	char id[SIZEOF_REV];
 	size_t max_ref_length;
 };
 
@@ -132,38 +131,31 @@ branch_request(struct view *view, enum request request, struct line *line)
 static bool
 branch_read(struct view *view, char *line)
 {
-	struct branch_state *state = view->private;
-	const char *title = NULL;
-	const struct ident *author = NULL;
-	struct time time = {};
+	struct branch template = {};
+	char *author;
+	char *title;
 	size_t i;
 
 	if (!line)
 		return TRUE;
 
-	switch (get_line_type(line)) {
-	case LINE_COMMIT:
-		string_copy_rev_from_commit_line(state->id, line);
-		return TRUE;
+	if (!*line)
+		return FALSE;
 
-	case LINE_AUTHOR:
-		parse_author_line(line + STRING_SIZE("author "), &author, &time);
-		break;
+	author = io_memchr(&view->io, line, 0);
+	title = io_memchr(&view->io, author, 0);
 
-	default:
-		title = line + STRING_SIZE("title ");
-	}
+	if (author)
+		parse_author_line(author, &template.author, &template.time);
 
 	for (i = 0; i < view->lines; i++) {
 		struct branch *branch = view->line[i].data;
 
-		if (strcmp(branch->ref->id, state->id))
+		if (strcmp(branch->ref->id, line))
 			continue;
 
-		if (author) {
-			branch->author = author;
-			branch->time = time;
-		}
+		branch->author = template.author;
+		branch->time = template.time;
 
 		if (title)
 			string_expand(branch->title, sizeof(branch->title), title, 1);
@@ -202,7 +194,7 @@ branch_open(struct view *view, enum open_flags flags)
 {
 	const char *branch_log[] = {
 		"git", "log", encoding_arg, "--no-color", "--date=raw",
-			"--pretty=format:commit %H%nauthor %an <%ae> %ad%ntitle %s",
+			"--pretty=format:%H%x00%an <%ae> %ad%x00%s",
 			"--all", "--simplify-by-decoration", NULL
 	};
 
