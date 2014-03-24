@@ -16,21 +16,15 @@
 #include "tig/parse.h"
 
 size_t
-parse_size(const char *text, int *max_digits)
+parse_size(const char *text)
 {
 	size_t size = 0;
-	int digits = 0;
 
 	while (*text == ' ')
 		text++;
 
-	while (isdigit(*text)) {
+	while (isdigit(*text))
 		size = (size * 10) + (*text++ - '0');
-		digits++;
-	}
-
-	if (digits > *max_digits)
-		*max_digits = digits;
 
 	return size;
 }

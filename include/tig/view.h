@@ -70,6 +70,11 @@ struct sort_state {
 	bool reverse;
 };
 
+struct column_info {
+	int width;
+	unsigned long option;
+};
+
 struct view {
 	const char *name;	/* View name */
 
@@ -89,6 +94,9 @@ struct view {
 	/* Navigation */
 	struct position pos;	/* Current position. */
 	struct position prev_pos; /* Previous position. */
+
+	/* View columns rendering state */
+	struct column_info *columns_info;
 
 	/* Searching */
 	char grep[SIZEOF_STR];	/* Search string */
@@ -259,6 +267,9 @@ void open_argv(struct view *prev, struct view *view, const char *argv[], const c
 void sort_view(struct view *view, bool change_field);
 
 bool view_columns_grep(struct view *view, struct line *line);
+bool view_columns_draw(struct view *view, struct line *line, unsigned int lineno);
+bool view_columns_info_init(struct view *view);
+bool view_columns_info_update(struct view *view, struct line *line);
 
 struct line *
 find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction);

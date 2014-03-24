@@ -188,7 +188,7 @@ draw_field(struct view *view, enum line_type type, const char *text, int width, 
 }
 
 bool
-draw_date(struct view *view, struct time *time)
+draw_date(struct view *view, const struct time *time)
 {
 	const char *date = mkdate(time, opt_show_date);
 	int cols = opt_show_date == DATE_SHORT ? DATE_SHORT_WIDTH : DATE_WIDTH;

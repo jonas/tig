@@ -55,7 +55,7 @@ bool parse_blame_info(struct blame_commit *commit, char *line);
  */
 void parse_author_line(char *ident, const struct ident **author, struct time *time);
 
-size_t parse_size(const char *text, int *max_digits);
+size_t parse_size(const char *text);
 
 /*
  * Caches.

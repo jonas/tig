@@ -43,10 +43,6 @@ static const enum view_column branch_columns[] = {
 	VIEW_COLUMN_TITLE,
 };
 
-struct branch_state {
-	size_t max_ref_length;
-};
-
 static bool
 branch_get_columns(struct view *view, const struct line *line, struct view_columns *columns)
 {
@@ -58,33 +54,6 @@ branch_get_columns(struct view *view, const struct line *line, struct view_colum
 	columns->ref = branch->ref;
 	columns->title = branch->title;
 
-	return TRUE;
-}
-
-static bool
-branch_draw(struct view *view, struct line *line, unsigned int lineno)
-{
-	struct branch_state *state = view->private;
-	struct branch *branch = line->data;
-	enum line_type type = branch_is_all(branch) ? LINE_DEFAULT : get_line_type_from_ref(branch->ref);
-	const char *branch_name = branch_is_all(branch) ? BRANCH_ALL_NAME : branch->ref->name;
-
-	if (draw_lineno(view, lineno))
-		return TRUE;
-
-	if (draw_date(view, &branch->time))
-		return TRUE;
-
-	if (draw_author(view, branch->author))
-		return TRUE;
-
-	if (draw_field(view, type, branch_name, state->max_ref_length, ALIGN_LEFT, FALSE))
-		return TRUE;
-
-	if (draw_id(view, branch->ref->id))
-		return TRUE;
-
-	draw_text(view, LINE_DEFAULT, branch->title);
 	return TRUE;
 }
 
@@ -170,22 +139,20 @@ static bool
 branch_open_visitor(void *data, const struct ref *ref)
 {
 	struct view *view = data;
-	struct branch_state *state = view->private;
 	struct branch *branch;
 	bool is_all = ref == branch_all;
-	size_t ref_length;
+	struct line *line;
 
 	if (ref->tag || ref->ltag)
 		return TRUE;
 
-	if (!add_line_alloc(view, &branch, LINE_DEFAULT, 0, is_all))
+	line = add_line_alloc(view, &branch, LINE_DEFAULT, 0, is_all);
+	if (!line)
 		return FALSE;
 
-	ref_length = is_all ? STRING_SIZE(BRANCH_ALL_NAME) : strlen(ref->name);
-	if (ref_length > state->max_ref_length)
-		state->max_ref_length = ref_length;
-
 	branch->ref = ref;
+	view_columns_info_update(view, line);
+
 	return TRUE;
 }
 
@@ -237,10 +204,10 @@ static struct view_ops branch_ops = {
 	"branch",
 	argv_env.head,
 	VIEW_REFRESH,
-	sizeof(struct branch_state),
+	0,
 	branch_open,
 	branch_read,
-	branch_draw,
+	view_columns_draw,
 	branch_request,
 	view_columns_grep,
 	branch_select,

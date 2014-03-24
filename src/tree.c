@@ -81,7 +81,6 @@ struct tree_state {
 	char commit[SIZEOF_REV];
 	const struct ident *author;
 	struct time author_time;
-	int size_width;
 	bool read_date;
 };
 
@@ -242,7 +241,7 @@ tree_read(struct view *view, char *text)
 	    !tree_entry(view, LINE_TREE_HEAD, view->env->directory, NULL, NULL, 0))
 		return FALSE;
 
-	size = parse_size(attr_offset, &state->size_width);
+	size = parse_size(attr_offset);
 	path = strchr(attr_offset, '\t');
 	if (!path)
 		return FALSE;
@@ -268,6 +267,7 @@ tree_read(struct view *view, char *text)
 	if (!entry)
 		return FALSE;
 	data = entry->data;
+	view_columns_info_update(view, entry);
 
 	/* Skip "Directory ..." and ".." line. */
 	for (line = &view->line[1 + !!*view->env->directory]; line < entry; line++) {
@@ -293,32 +293,14 @@ tree_read(struct view *view, char *text)
 static bool
 tree_draw(struct view *view, struct line *line, unsigned int lineno)
 {
-	struct tree_state *state = view->private;
 	struct tree_entry *entry = line->data;
 
 	if (line->type == LINE_TREE_HEAD) {
-		if (draw_text(view, line->type, "Directory path /"))
-			return TRUE;
-	} else {
-		if (draw_mode(view, entry->mode))
-			return TRUE;
-
-		if (draw_author(view, entry->author))
-			return TRUE;
-
-		if (draw_file_size(view, entry->size, state->size_width,
-				   line->type != LINE_TREE_FILE))
-			return TRUE;
-
-		if (draw_date(view, &entry->time))
-			return TRUE;
-
-		if (draw_id(view, entry->commit))
-			return TRUE;
+		draw_formatted(view, line->type, "Directory path /%s", entry->name);
+		return TRUE;
 	}
 
-	draw_text(view, line->type, entry->name);
-	return TRUE;
+	return view_columns_draw(view, line, lineno);
 }
 
 void

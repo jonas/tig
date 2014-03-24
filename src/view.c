@@ -734,6 +734,16 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 			memset(view->private, 0, view->ops->private_size);
 	}
 
+	if (view->ops->columns_size) {
+		if (!view->columns_info)
+			view->columns_info = calloc(1, sizeof(*view->columns_info)
+							* view->ops->columns_size);
+		else
+			memset(view->columns_info, 0, sizeof(*view->columns_info)
+						      * view->ops->columns_size);
+		view_columns_info_init(view);
+	}
+
 	/* When prev == view it means this is the first loaded view. */
 	if (prev && view != prev) {
 		view->prev = prev;
@@ -906,6 +916,159 @@ view_columns_grep(struct view *view, struct line *line)
 	};
 
 	return grep_text(view, text);
+}
+
+bool
+view_columns_info_init(struct view *view)
+{
+	int i;
+
+	for (i = 0; i < view->ops->columns_size; i++) {
+		enum view_column column = view->ops->columns[i];
+		struct column_info *info = &view->columns_info[i];
+
+		switch (column) {
+		case VIEW_COLUMN_AUTHOR:
+			info->option = opt_show_author;
+			break;
+
+		case VIEW_COLUMN_DATE:
+			info->option = opt_show_date;
+			break;
+
+		case VIEW_COLUMN_FILE_SIZE:
+			info->option = opt_show_file_size;
+			break;
+
+		case VIEW_COLUMN_REF:
+		case VIEW_COLUMN_ID:
+		case VIEW_COLUMN_MODE:
+		case VIEW_COLUMN_TITLE:
+		case VIEW_COLUMN_FILE_NAME:
+			break;
+		}
+	}
+
+	return TRUE;
+}
+
+bool
+view_columns_info_update(struct view *view, struct line *line)
+{
+	struct view_columns columns = {};
+	int i;
+
+	if (!view->ops->get_columns(view, line, &columns))
+		return TRUE;
+
+	for (i = 0; i < view->ops->columns_size; i++) {
+		enum view_column column = view->ops->columns[i];
+		int width = 0;
+
+		switch (column) {
+		case VIEW_COLUMN_AUTHOR:
+			if (columns.author)
+				width = strlen(mkauthor(columns.author, opt_author_width, opt_show_author));
+			break;
+
+		case VIEW_COLUMN_DATE:
+			if (columns.date)
+				width = strlen(mkdate(columns.date, opt_show_date));
+			break;
+
+		case VIEW_COLUMN_REF:
+			if (columns.ref)
+				width = strlen(columns.ref->name);
+			break;
+
+		case VIEW_COLUMN_FILE_SIZE:
+			if (columns.file_size)
+				width = strlen(mkfilesize(*columns.file_size, opt_show_file_size));
+			break;
+
+		case VIEW_COLUMN_ID:
+		case VIEW_COLUMN_MODE:
+		case VIEW_COLUMN_TITLE:
+		case VIEW_COLUMN_FILE_NAME:
+			break;
+		}
+
+		if (width > view->columns_info[i].width)
+			view->columns_info[i].width = width;
+	}
+
+	return TRUE;
+}
+
+bool
+view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
+{
+	struct view_columns columns = {};
+	int i;
+
+	if (!view->ops->get_columns(view, line, &columns))
+		return TRUE;
+
+	if (draw_lineno(view, lineno))
+		return TRUE;
+
+	for (i = 0; i < view->ops->columns_size; i++) {
+		enum view_column column = view->ops->columns[i];
+		int width = view->columns_info[i].width;
+
+		switch (column) {
+		case VIEW_COLUMN_DATE:
+			if (draw_date(view, columns.date))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_AUTHOR:
+			if (draw_author(view, columns.author))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_REF:
+		{
+			const struct ref *ref = columns.ref;
+			enum line_type type = !ref || !ref->valid ? LINE_DEFAULT : get_line_type_from_ref(ref);
+			const char *name = ref ? ref->name : NULL;
+
+			if (draw_field(view, type, name, width, ALIGN_LEFT, FALSE))
+				return TRUE;
+			continue;
+		}
+
+		case VIEW_COLUMN_ID:
+			if (draw_id(view, columns.id))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_MODE:
+			if (draw_mode(view, columns.mode ? *columns.mode : 0))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_FILE_SIZE:
+			if (draw_file_size(view, columns.file_size ? *columns.file_size : 0, width, !columns.mode || S_ISDIR(*columns.mode)))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_TITLE:
+			if (draw_text(view, LINE_DEFAULT, columns.title))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_FILE_NAME:
+			if (draw_text(view, line->type, columns.file_name))
+				return TRUE;
+			continue;
+
+		default:
+			die("Unknown view_column: %d", column);
+		}
+	}
+
+	return TRUE;
 }
 
 struct line *
