@@ -40,7 +40,7 @@ static const enum view_column branch_columns[] = {
 	VIEW_COLUMN_AUTHOR,
 	VIEW_COLUMN_REF,
 	VIEW_COLUMN_ID,
-	VIEW_COLUMN_TITLE,
+	VIEW_COLUMN_COMMIT_TITLE,
 };
 
 static bool
@@ -52,7 +52,7 @@ branch_get_columns(struct view *view, const struct line *line, struct view_colum
 	columns->date = &branch->time;
 	columns->id = branch->ref->id;
 	columns->ref = branch->ref;
-	columns->title = branch->title;
+	columns->commit_title = branch->title;
 
 	return TRUE;
 }

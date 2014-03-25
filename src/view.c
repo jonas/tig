@@ -870,8 +870,8 @@ sort_view_compare(const void *l1, const void *l2)
 	case VIEW_COLUMN_REF:
 		return sort_order(sort, ref_compare, columns1.ref, columns2.ref);
 
-	case VIEW_COLUMN_TITLE:
-		return sort_order(sort, strcmp, columns1.title, columns2.title);
+	case VIEW_COLUMN_COMMIT_TITLE:
+		return sort_order(sort, strcmp, columns1.commit_title, columns2.commit_title);
 
 	default:
 		die("Unknown view_column: %d", get_sort_field(sorting_view));
@@ -910,7 +910,7 @@ view_columns_grep(struct view *view, struct line *line)
 		has_columns && columns.file_size ? mkfilesize(*columns.file_size, opt_show_file_size) : "",
 		has_columns && columns.id && opt_show_id ? columns.id : "",
 		has_columns && columns.mode ? mkmode(*columns.mode) : "",
-		has_columns && columns.title ? columns.title : "",
+		has_columns && columns.commit_title ? columns.commit_title : "",
 		has_columns && columns.ref ? columns.ref->name : "",
 		NULL
 	};
@@ -943,7 +943,7 @@ view_columns_info_init(struct view *view)
 		case VIEW_COLUMN_REF:
 		case VIEW_COLUMN_ID:
 		case VIEW_COLUMN_MODE:
-		case VIEW_COLUMN_TITLE:
+		case VIEW_COLUMN_COMMIT_TITLE:
 		case VIEW_COLUMN_FILE_NAME:
 			break;
 		}
@@ -988,8 +988,8 @@ view_columns_info_update(struct view *view, struct line *line)
 
 		case VIEW_COLUMN_ID:
 		case VIEW_COLUMN_MODE:
-		case VIEW_COLUMN_TITLE:
 		case VIEW_COLUMN_FILE_NAME:
+		case VIEW_COLUMN_COMMIT_TITLE:
 			break;
 		}
 
@@ -1053,8 +1053,8 @@ view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 				return TRUE;
 			continue;
 
-		case VIEW_COLUMN_TITLE:
-			if (draw_text(view, LINE_DEFAULT, columns.title))
+		case VIEW_COLUMN_COMMIT_TITLE:
+			if (draw_commit_title(view, columns.commit_title, 0))
 				return TRUE;
 			continue;
 

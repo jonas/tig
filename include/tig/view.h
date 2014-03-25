@@ -157,13 +157,13 @@ enum open_flags {
 
 struct view_columns {
 	const struct ident *author;
+	const char *commit_title;
 	const struct time *date;
 	const char *file_name;
 	const unsigned long *file_size;
 	const char *id;
 	const mode_t *mode;
 	const struct ref *ref;
-	const char *title;
 };
 
 struct view_ops {
