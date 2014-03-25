@@ -33,6 +33,13 @@ stash_select(struct view *view, struct line *line)
 	string_copy(view->ref, view->env->stash);
 }
 
+static const enum view_column stash_columns[] = {
+	VIEW_COLUMN_ID,
+	VIEW_COLUMN_DATE,
+	VIEW_COLUMN_AUTHOR,
+	VIEW_COLUMN_COMMIT_TITLE,
+};
+
 static struct view_ops stash_ops = {
 	"stash",
 	argv_env.stash,
@@ -40,10 +47,14 @@ static struct view_ops stash_ops = {
 	sizeof(struct main_state),
 	stash_open,
 	main_read,
-	main_draw,
+	view_columns_draw,
 	main_request,
-	main_grep,
+	view_columns_grep,
 	stash_select,
+	main_done,
+	main_get_columns,
+	stash_columns,
+	ARRAY_SIZE(stash_columns),
 };
 
 DEFINE_VIEW(stash);

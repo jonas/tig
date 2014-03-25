@@ -38,11 +38,11 @@ struct main_state {
 	bool with_graph;
 };
 
+bool main_get_columns(struct view *view, const struct line *line, struct view_columns *columns);
 bool main_read(struct view *view, char *line);
-bool main_draw(struct view *view, struct line *line, unsigned int lineno);
 enum request main_request(struct view *view, enum request request, struct line *line);
-bool main_grep(struct view *view, struct line *line);
 void main_select(struct view *view, struct line *line);
+void main_done(struct view *view);
 
 extern struct view main_view;
 

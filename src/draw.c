@@ -12,6 +12,7 @@
  */
 
 #include "tig/tig.h"
+#include "tig/graph.h"
 #include "tig/draw.h"
 #include "tig/options.h"
 
@@ -300,7 +301,7 @@ draw_lineno(struct view *view, unsigned int lineno)
 }
 
 bool
-draw_refs(struct view *view, struct ref_list *refs)
+draw_refs(struct view *view, const struct ref_list *refs)
 {
 	size_t i;
 
@@ -319,6 +320,76 @@ draw_refs(struct view *view, struct ref_list *refs)
 	}
 
 	return FALSE;
+}
+
+/*
+ * Revision graph
+ */
+
+static const enum line_type graph_colors[] = {
+	LINE_PALETTE_0,
+	LINE_PALETTE_1,
+	LINE_PALETTE_2,
+	LINE_PALETTE_3,
+	LINE_PALETTE_4,
+	LINE_PALETTE_5,
+	LINE_PALETTE_6,
+};
+
+static enum line_type get_graph_color(struct graph_symbol *symbol)
+{
+	if (symbol->commit)
+		return LINE_GRAPH_COMMIT;
+	assert(symbol->color < ARRAY_SIZE(graph_colors));
+	return graph_colors[symbol->color];
+}
+
+static bool
+draw_graph_utf8(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
+{
+	const char *chars = graph_symbol_to_utf8(symbol);
+
+	return draw_text(view, color, chars + !!first);
+}
+
+static bool
+draw_graph_ascii(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
+{
+	const char *chars = graph_symbol_to_ascii(symbol);
+
+	return draw_text(view, color, chars + !!first);
+}
+
+static bool
+draw_graph_chtype(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
+{
+	const chtype *chars = graph_symbol_to_chtype(symbol);
+
+	return draw_graphic(view, color, chars + !!first, 2 - !!first, FALSE);
+}
+
+typedef bool (*draw_graph_fn)(struct view *, struct graph_symbol *, enum line_type, bool);
+
+bool
+draw_graph(struct view *view, const struct graph_canvas *canvas)
+{
+	static const draw_graph_fn fns[] = {
+		draw_graph_ascii,
+		draw_graph_chtype,
+		draw_graph_utf8
+	};
+	draw_graph_fn fn = fns[opt_line_graphics];
+	int i;
+
+	for (i = 0; i < canvas->size; i++) {
+		struct graph_symbol *symbol = &canvas->symbols[i];
+		enum line_type color = get_graph_color(symbol);
+
+		if (fn(view, symbol, color, i == 0))
+			return TRUE;
+	}
+
+	return draw_text(view, LINE_DEFAULT, " ");
 }
 
 bool

@@ -20,6 +20,8 @@
 #include "tig/refs.h"
 #include "tig/util.h"
 
+struct graph_canvas;
+
 enum align {
 	ALIGN_LEFT,
 	ALIGN_RIGHT
@@ -42,7 +44,8 @@ bool draw_file_size(struct view *view, unsigned long size, int width, bool pad);
 bool draw_mode(struct view *view, mode_t mode);
 bool draw_lineno(struct view *view, unsigned int lineno);
 bool draw_lineno_custom(struct view *view, unsigned int lineno, bool show, int interval);
-bool draw_refs(struct view *view, struct ref_list *refs);
+bool draw_refs(struct view *view, const struct ref_list *refs);
+bool draw_graph(struct view *view, const struct graph_canvas *canvas);
 
 #define draw_commit_title(view, text, offset) \
 	draw_text_overflow(view, text, opt_title_overflow > 0, opt_title_overflow + offset, LINE_DEFAULT)

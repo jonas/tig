@@ -161,9 +161,11 @@ struct view_columns {
 	const struct time *date;
 	const char *file_name;
 	const unsigned long *file_size;
+	const struct graph_canvas *graph;
 	const char *id;
 	const mode_t *mode;
 	const struct ref *ref;
+	const struct ref_list *refs;
 };
 
 struct view_ops {

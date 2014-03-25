@@ -873,9 +873,12 @@ sort_view_compare(const void *l1, const void *l2)
 	case VIEW_COLUMN_COMMIT_TITLE:
 		return sort_order(sort, strcmp, columns1.commit_title, columns2.commit_title);
 
-	default:
-		die("Unknown view_column: %d", get_sort_field(sorting_view));
+	case VIEW_COLUMN_REFS:
+	case VIEW_COLUMN_GRAPH:
+		die("Unsupported search: %d", get_sort_field(sorting_view));
 	}
+
+	return 0;
 }
 
 void
@@ -888,6 +891,10 @@ sort_view(struct view *view, bool change_field)
 			state->current = (state->current + 1) % view->ops->columns_size;
 			if (get_sort_field(view) == VIEW_COLUMN_ID && !opt_show_id)
 				continue;
+			if (get_sort_field(view) == VIEW_COLUMN_REFS)
+				continue;
+			if (get_sort_field(view) == VIEW_COLUMN_GRAPH)
+				continue;
 			break;
 		}
 	} else {
@@ -896,6 +903,23 @@ sort_view(struct view *view, bool change_field)
 
 	sorting_view = view;
 	qsort(view->line, view->lines, sizeof(*view->line), sort_view_compare);
+}
+
+static bool
+grep_refs(struct view *view, const struct ref_list *list)
+{
+	regmatch_t pmatch;
+	size_t i;
+
+	if (!opt_show_refs || !list)
+		return FALSE;
+
+	for (i = 0; i < list->size; i++) {
+		if (!regexec(view->regex, list->refs[i]->name, 1, &pmatch, 0))
+			return TRUE;
+	}
+
+	return FALSE;
 }
 
 bool
@@ -914,6 +938,9 @@ view_columns_grep(struct view *view, struct line *line)
 		has_columns && columns.ref ? columns.ref->name : "",
 		NULL
 	};
+
+	if (has_columns && grep_refs(view, columns.refs))
+		return TRUE;
 
 	return grep_text(view, text);
 }
@@ -940,8 +967,19 @@ view_columns_info_init(struct view *view)
 			info->option = opt_show_file_size;
 			break;
 
-		case VIEW_COLUMN_REF:
+		case VIEW_COLUMN_GRAPH:
+			info->option = opt_show_rev_graph;
+			break;
+
+		case VIEW_COLUMN_REFS:
+			info->option = opt_show_refs;
+			break;
+
 		case VIEW_COLUMN_ID:
+			info->option = opt_show_id;
+			break;
+
+		case VIEW_COLUMN_REF:
 		case VIEW_COLUMN_MODE:
 		case VIEW_COLUMN_COMMIT_TITLE:
 		case VIEW_COLUMN_FILE_NAME:
@@ -987,8 +1025,14 @@ view_columns_info_update(struct view *view, struct line *line)
 			break;
 
 		case VIEW_COLUMN_ID:
+			if (columns.id && !iscommit(columns.id))
+				width = strlen(columns.id);
+			break;
+
 		case VIEW_COLUMN_MODE:
 		case VIEW_COLUMN_FILE_NAME:
+		case VIEW_COLUMN_REFS:
+		case VIEW_COLUMN_GRAPH:
 		case VIEW_COLUMN_COMMIT_TITLE:
 			break;
 		}
@@ -1038,8 +1082,20 @@ view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 		}
 
+		case VIEW_COLUMN_REFS:
+			if (draw_refs(view, columns.refs))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_GRAPH:
+			if (columns.graph && draw_graph(view, columns.graph))
+				return TRUE;
+			continue;
+
 		case VIEW_COLUMN_ID:
-			if (draw_id(view, columns.id))
+			if (!width && draw_id(view, columns.id))
+				return TRUE;
+			else if (opt_show_id && draw_id_custom(view, LINE_ID, columns.id, width))
 				return TRUE;
 			continue;
 
@@ -1062,9 +1118,6 @@ view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 			if (draw_text(view, line->type, columns.file_name))
 				return TRUE;
 			continue;
-
-		default:
-			die("Unknown view_column: %d", column);
 		}
 	}
 

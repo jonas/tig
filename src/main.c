@@ -24,75 +24,6 @@
 #include "tig/diff.h"
 
 /*
- * Revision graph
- */
-
-static const enum line_type graph_colors[] = {
-	LINE_PALETTE_0,
-	LINE_PALETTE_1,
-	LINE_PALETTE_2,
-	LINE_PALETTE_3,
-	LINE_PALETTE_4,
-	LINE_PALETTE_5,
-	LINE_PALETTE_6,
-};
-
-static enum line_type get_graph_color(struct graph_symbol *symbol)
-{
-	if (symbol->commit)
-		return LINE_GRAPH_COMMIT;
-	assert(symbol->color < ARRAY_SIZE(graph_colors));
-	return graph_colors[symbol->color];
-}
-
-static bool
-draw_graph_utf8(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
-{
-	const char *chars = graph_symbol_to_utf8(symbol);
-
-	return draw_text(view, color, chars + !!first);
-}
-
-static bool
-draw_graph_ascii(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
-{
-	const char *chars = graph_symbol_to_ascii(symbol);
-
-	return draw_text(view, color, chars + !!first);
-}
-
-static bool
-draw_graph_chtype(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
-{
-	const chtype *chars = graph_symbol_to_chtype(symbol);
-
-	return draw_graphic(view, color, chars + !!first, 2 - !!first, FALSE);
-}
-
-typedef bool (*draw_graph_fn)(struct view *, struct graph_symbol *, enum line_type, bool);
-
-static bool draw_graph(struct view *view, struct graph_canvas *canvas)
-{
-	static const draw_graph_fn fns[] = {
-		draw_graph_ascii,
-		draw_graph_chtype,
-		draw_graph_utf8
-	};
-	draw_graph_fn fn = fns[opt_line_graphics];
-	int i;
-
-	for (i = 0; i < canvas->size; i++) {
-		struct graph_symbol *symbol = &canvas->symbols[i];
-		enum line_type color = get_graph_color(symbol);
-
-		if (fn(view, symbol, color, i == 0))
-			return TRUE;
-	}
-
-	return draw_text(view, LINE_DEFAULT, " ");
-}
-
-/*
  * Main view backend
  */
 
@@ -116,6 +47,7 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 	size_t titlelen = strlen(title);
 	struct commit *commit;
 	char buf[SIZEOF_STR / 2];
+	struct line *line;
 
 	/* FIXME: More graceful handling of titles; append "..." to
 	 * shortened titles, etc. */
@@ -123,7 +55,8 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 	title = buf;
 	titlelen = strlen(title);
 
-	if (!add_line_alloc(view, &commit, type, titlelen, custom))
+	line = add_line_alloc(view, &commit, type, titlelen, custom);
+	if (!line)
 		return NULL;
 
 	*commit = *template;
@@ -131,6 +64,8 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 	state->graph.canvas = &commit->graph;
 	memset(template, 0, sizeof(*template));
 	state->reflogmsg[0] = 0;
+
+	view_columns_info_update(view, line);
 	return commit;
 }
 
@@ -267,7 +202,7 @@ main_open(struct view *view, enum open_flags flags)
 	return begin_update(view, NULL, main_argv, flags);
 }
 
-static void
+void
 main_done(struct view *view)
 {
 	struct main_state *state = view->private;
@@ -286,10 +221,10 @@ main_done(struct view *view)
 
 #define MAIN_NO_COMMIT_REFS 1
 #define main_check_commit_refs(line)	!((line)->user_flags & MAIN_NO_COMMIT_REFS)
-#define main_mark_no_commit_refs(line)	((line)->user_flags |= MAIN_NO_COMMIT_REFS)
+#define main_mark_no_commit_refs(line)	(((struct line *) (line))->user_flags |= MAIN_NO_COMMIT_REFS)
 
 static inline struct ref_list *
-main_get_commit_refs(struct line *line, struct commit *commit)
+main_get_commit_refs(const struct line *line, struct commit *commit)
 {
 	struct ref_list *refs = NULL;
 
@@ -299,44 +234,36 @@ main_get_commit_refs(struct line *line, struct commit *commit)
 	return refs;
 }
 
+static const enum view_column main_columns[] = {
+	VIEW_COLUMN_ID,
+	VIEW_COLUMN_DATE,
+	VIEW_COLUMN_AUTHOR,
+	VIEW_COLUMN_GRAPH,
+	VIEW_COLUMN_REFS,
+	VIEW_COLUMN_COMMIT_TITLE,
+};
+
 bool
-main_draw(struct view *view, struct line *line, unsigned int lineno)
+main_get_columns(struct view *view, const struct line *line, struct view_columns *columns)
 {
 	struct main_state *state = view->private;
 	struct commit *commit = line->data;
 	struct ref_list *refs = NULL;
 
-	if (!commit->author)
-		return FALSE;
+	columns->author = commit->author;
+	columns->date = &commit->time;
+	if (state->reflogs)
+		columns->id = state->reflog[line->lineno - 1];
+	else
+		columns->id = commit->id;
 
-	if (draw_lineno(view, lineno))
-		return TRUE;
+	columns->commit_title = commit->title;
+	if (state->with_graph)
+		columns->graph = &commit->graph;
 
-	if (opt_show_id) {
-		if (state->reflogs) {
-			const char *id = state->reflog[line->lineno - 1];
+	if ((refs = main_get_commit_refs(line, commit)))
+		columns->refs = refs;
 
-			if (draw_id_custom(view, LINE_ID, id, state->reflog_width))
-				return TRUE;
-		} else if (draw_id(view, commit->id)) {
-			return TRUE;
-		}
-	}
-
-	if (draw_date(view, &commit->time))
-		return TRUE;
-
-	if (draw_author(view, commit->author))
-		return TRUE;
-
-	if (state->with_graph && draw_graph(view, &commit->graph))
-		return TRUE;
-
-	if ((refs = main_get_commit_refs(line, commit)) && draw_refs(view, refs))
-		return TRUE;
-
-	if (commit->title)
-		draw_commit_title(view, commit->title, 0);
 	return TRUE;
 }
 
@@ -543,39 +470,6 @@ main_request(struct view *view, enum request request, struct line *line)
 	return REQ_NONE;
 }
 
-static bool
-grep_refs(struct line *line, struct commit *commit, regex_t *regex)
-{
-	struct ref_list *list;
-	regmatch_t pmatch;
-	size_t i;
-
-	if (!opt_show_refs || !(list = main_get_commit_refs(line, commit)))
-		return FALSE;
-
-	for (i = 0; i < list->size; i++) {
-		if (!regexec(regex, list->refs[i]->name, 1, &pmatch, 0))
-			return TRUE;
-	}
-
-	return FALSE;
-}
-
-bool
-main_grep(struct view *view, struct line *line)
-{
-	struct commit *commit = line->data;
-	const char *text[] = {
-		commit->id,
-		commit->title,
-		mkauthor(commit->author, opt_author_width, opt_show_author),
-		mkdate(&commit->time, opt_show_date),
-		NULL
-	};
-
-	return grep_text(view, text) || grep_refs(line, commit, view->regex);
-}
-
 static struct ref *
 main_get_commit_branch(struct line *line, struct commit *commit)
 {
@@ -624,11 +518,14 @@ static struct view_ops main_ops = {
 	sizeof(struct main_state),
 	main_open,
 	main_read,
-	main_draw,
+	view_columns_draw,
 	main_request,
-	main_grep,
+	view_columns_grep,
 	main_select,
 	main_done,
+	main_get_columns,
+	main_columns,
+	ARRAY_SIZE(main_columns),
 };
 
 DEFINE_VIEW(main);
