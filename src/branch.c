@@ -36,6 +36,7 @@ static const struct ref *branch_all;
 #define branch_is_all(branch) ((branch)->ref == branch_all)
 
 static const enum view_column branch_columns[] = {
+	VIEW_COLUMN_LINE_NUMBER,
 	VIEW_COLUMN_DATE,
 	VIEW_COLUMN_AUTHOR,
 	VIEW_COLUMN_REF,

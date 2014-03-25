@@ -864,6 +864,9 @@ sort_view_compare(const void *l1, const void *l2)
 	case VIEW_COLUMN_FILE_SIZE:
 		return sort_order(sort, number_compare, columns1.file_size, columns2.file_size);
 
+	case VIEW_COLUMN_LINE_NUMBER:
+		return sort_order_reverse(sort, line2->lineno - line1->lineno);
+
 	case VIEW_COLUMN_MODE:
 		return sort_order(sort, number_compare, columns1.mode, columns2.mode);
 
@@ -971,6 +974,10 @@ view_columns_info_init(struct view *view)
 			info->option = opt_show_rev_graph;
 			break;
 
+		case VIEW_COLUMN_LINE_NUMBER:
+			info->option = opt_show_line_numbers;
+			break;
+
 		case VIEW_COLUMN_REFS:
 			info->option = opt_show_refs;
 			break;
@@ -1029,11 +1036,12 @@ view_columns_info_update(struct view *view, struct line *line)
 				width = strlen(columns.id);
 			break;
 
-		case VIEW_COLUMN_MODE:
-		case VIEW_COLUMN_FILE_NAME:
-		case VIEW_COLUMN_REFS:
-		case VIEW_COLUMN_GRAPH:
 		case VIEW_COLUMN_COMMIT_TITLE:
+		case VIEW_COLUMN_FILE_NAME:
+		case VIEW_COLUMN_GRAPH:
+		case VIEW_COLUMN_LINE_NUMBER:
+		case VIEW_COLUMN_MODE:
+		case VIEW_COLUMN_REFS:
 			break;
 		}
 
@@ -1051,9 +1059,6 @@ view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 	int i;
 
 	if (!view->ops->get_columns(view, line, &columns))
-		return TRUE;
-
-	if (draw_lineno(view, lineno))
 		return TRUE;
 
 	for (i = 0; i < view->ops->columns_size; i++) {
@@ -1096,6 +1101,11 @@ view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 			if (!width && draw_id(view, columns.id))
 				return TRUE;
 			else if (opt_show_id && draw_id_custom(view, LINE_ID, columns.id, width))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_LINE_NUMBER:
+			if (draw_lineno(view, lineno))
 				return TRUE;
 			continue;
 

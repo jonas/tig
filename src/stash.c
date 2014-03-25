@@ -34,6 +34,7 @@ stash_select(struct view *view, struct line *line)
 }
 
 static const enum view_column stash_columns[] = {
+	VIEW_COLUMN_LINE_NUMBER,
 	VIEW_COLUMN_ID,
 	VIEW_COLUMN_DATE,
 	VIEW_COLUMN_AUTHOR,

@@ -117,6 +117,7 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(VIEW_COLUMN, FILE_SIZE), \
 	_(VIEW_COLUMN, GRAPH), \
 	_(VIEW_COLUMN, ID), \
+	_(VIEW_COLUMN, LINE_NUMBER), \
 	_(VIEW_COLUMN, MODE), \
 	_(VIEW_COLUMN, REF), \
 	_(VIEW_COLUMN, REFS)

@@ -99,6 +99,7 @@ tree_compare_entry(const struct line *line1, const struct line *line2)
 }
 
 static const enum view_column tree_columns[] = {
+	VIEW_COLUMN_LINE_NUMBER,
 	VIEW_COLUMN_MODE,
 	VIEW_COLUMN_AUTHOR,
 	VIEW_COLUMN_FILE_SIZE,
