@@ -48,8 +48,8 @@
 
 #define GIT_MAIN_LOG(encoding_arg, commit_order_arg, diffargs, revargs, fileargs) \
 	"git", "log", (encoding_arg), \
-		(commit_order_arg), (diffargs), (revargs), \
-		"--no-color", "--pretty=raw", "--parents", \
+		(commit_order_arg), (diffargs), (revargs), "--date=raw", "--parents", \
+		"--no-color", "--pretty=format:commit %H %P%x00%an <%ae> %ad%x00%s", \
 		"--", (fileargs), NULL
 
 /* FIXME(jfonseca): This is incomplete, but enough to support:

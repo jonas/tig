@@ -325,6 +325,7 @@ main_read(struct view *view, char *line)
 	type = get_line_type(line);
 	if (type == LINE_COMMIT) {
 		bool is_boundary;
+		char *author;
 
 		state->in_header = TRUE;
 		line += STRING_SIZE("commit ");
@@ -338,6 +339,18 @@ main_read(struct view *view, char *line)
 			main_flush_commit(view, commit);
 
 		main_register_commit(view, &state->current, line, is_boundary);
+
+		author = io_memchr(&view->io, line, 0);
+		if (author) {
+			char *title = io_memchr(&view->io, author, 0);
+
+			parse_author_line(author, &commit->author, &commit->time);
+			if (state->with_graph)
+				graph_render_parents(graph);
+			if (title)
+				main_add_commit(view, LINE_MAIN_COMMIT, commit, title, FALSE);
+		}
+
 		return TRUE;
 	}
 
