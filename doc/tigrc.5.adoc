@@ -133,7 +133,8 @@ The following variables can be set:
 'author-width' (int)::
 
 	Width of the author column. When set to 5 or below, the author name
-	will be abbreviated to the author's initials.
+	will be abbreviated to the author's initials. When set to zero, the
+	width is automatically sized to show the whole author.
 
 'filename-width' (int)::
 

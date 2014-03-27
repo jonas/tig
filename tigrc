@@ -10,7 +10,7 @@
 # UI display settings
 set show-date			= default	# Enum: no, default, local, relative, short
 set show-author			= full		# Enum: no, full, abbreviated, email, email-user
-set author-width		= 18		# The width of the author column
+set author-width		= 0		# The width of the author column; use 0 to auto-size
 set show-filename		= auto		# Enum: no, always, auto
 set filename-width		= 18		# The width of the file name column
 set show-file-size		= default	# Enum: no, default, units

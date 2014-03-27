@@ -35,7 +35,7 @@ bool PRINTF_LIKE(3, 4) draw_formatted(struct view *view, enum line_type type, co
 bool draw_graphic(struct view *view, enum line_type type, const chtype graphic[], size_t size, bool separator);
 bool draw_field(struct view *view, enum line_type type, const char *text, int width, enum align align, bool trim);
 bool draw_date(struct view *view, const struct time *time);
-bool draw_author(struct view *view, const struct ident *author);
+bool draw_author(struct view *view, const struct ident *author, int width);
 bool draw_id_custom(struct view *view, enum line_type type, const char *id, int width);
 bool draw_id(struct view *view, const char *id);
 bool draw_filename(struct view *view, const char *filename, bool auto_enabled);

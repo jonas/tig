@@ -362,7 +362,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_date(view, time))
 		return TRUE;
 
-	if (draw_author(view, author))
+	if (draw_author(view, author, opt_author_width ? opt_author_width : view->columns_info[1].width))
 		return TRUE;
 
 	if (draw_filename(view, filename, state->auto_filename_display))

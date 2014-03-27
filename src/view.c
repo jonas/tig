@@ -1113,7 +1113,7 @@ view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_AUTHOR:
-			if (draw_author(view, columns.author))
+			if (draw_author(view, columns.author, opt_author_width ? opt_author_width : width))
 				return TRUE;
 			continue;
 

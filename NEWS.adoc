@@ -63,6 +63,7 @@ Improvements:
    to support predefined searches, eg.: `bind stage 2 :?^@@`.
  - Add :toggle prompt command as a way to manipulate options using keybindings.
    For example: `bind diff D diff-options --patience --notes`. (GH #69)
+ - Adjust author width automatically. (GH #49)
 
 Bug fixes:
 

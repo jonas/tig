@@ -201,15 +201,15 @@ draw_date(struct view *view, const struct time *time)
 }
 
 bool
-draw_author(struct view *view, const struct ident *author)
+draw_author(struct view *view, const struct ident *author, int width)
 {
-	bool trim = author_trim(opt_author_width);
-	const char *text = mkauthor(author, opt_author_width, opt_show_author);
+	bool trim = author_trim(width);
+	const char *text = mkauthor(author, width, opt_show_author);
 
 	if (opt_show_author == AUTHOR_NO)
 		return FALSE;
 
-	return draw_field(view, LINE_AUTHOR, text, opt_author_width, ALIGN_LEFT, trim);
+	return draw_field(view, LINE_AUTHOR, text, width, ALIGN_LEFT, trim);
 }
 
 bool
