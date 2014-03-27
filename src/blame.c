@@ -277,10 +277,54 @@ blame_read(struct view *view, char *line)
 			      view->lines ? state->blamed * 100 / view->lines : 0);
 
 	} else if (parse_blame_info(state->commit, line)) {
+		bool update_view_columns = TRUE;
+		int i;
+
 		if (!state->commit->filename)
 			return FALSE;
+
+		for (i = 0; i < view->lines; i++) {
+			struct line *line = &view->line[i];
+			struct blame *blame = line->data;
+
+			if (blame && blame->commit == state->commit) {
+				line->dirty = 1;
+				if (update_view_columns)
+					view_columns_info_update(view, line);
+				update_view_columns = FALSE;
+			}
+		}
+
 		state->commit = NULL;
 	}
+
+	return TRUE;
+}
+
+static const enum view_column blame_columns[] = {
+	VIEW_COLUMN_DATE,
+	VIEW_COLUMN_AUTHOR,
+	VIEW_COLUMN_ID,
+	VIEW_COLUMN_LINE_NUMBER,
+	VIEW_COLUMN_TEXT,
+};
+
+bool
+blame_get_columns(struct view *view, const struct line *line, struct view_columns *columns)
+{
+	struct blame_state *state = view->private;
+	struct blame *blame = line->data;
+
+	if (blame->commit) {
+		columns->id = blame->commit->id;
+		columns->author = blame->commit->author;
+		if (opt_show_filename != FILENAME_AUTO || state->auto_filename_display)
+			columns->file_name = blame->commit->filename;
+		columns->date = &blame->commit->time;
+		columns->commit_title = blame->commit->title;
+	}
+
+	columns->text = blame->text;
 
 	return TRUE;
 }
@@ -490,23 +534,6 @@ blame_request(struct view *view, enum request request, struct line *line)
 	return REQ_NONE;
 }
 
-static bool
-blame_grep(struct view *view, struct line *line)
-{
-	struct blame *blame = line->data;
-	struct blame_commit *commit = blame->commit;
-	const char *text[] = {
-		blame->text,
-		commit ? commit->title : "",
-		commit ? commit->id : "",
-		commit ? mkauthor(commit->author, opt_author_width, opt_show_author) : "",
-		commit ? mkdate(&commit->time, opt_show_date) : "",
-		NULL
-	};
-
-	return grep_text(view, text);
-}
-
 static void
 blame_select(struct view *view, struct line *line)
 {
@@ -531,8 +558,12 @@ static struct view_ops blame_ops = {
 	blame_read,
 	blame_draw,
 	blame_request,
-	blame_grep,
+	view_columns_grep,
 	blame_select,
+	NULL,
+	blame_get_columns,
+	blame_columns,
+	ARRAY_SIZE(blame_columns),
 };
 
 DEFINE_VIEW(blame);

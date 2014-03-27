@@ -166,6 +166,7 @@ struct view_columns {
 	const mode_t *mode;
 	const struct ref *ref;
 	const struct ref_list *refs;
+	const char *text;
 };
 
 struct view_ops {

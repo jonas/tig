@@ -887,6 +887,9 @@ sort_view_compare(const void *l1, const void *l2)
 	case VIEW_COLUMN_COMMIT_TITLE:
 		return sort_order(sort, strcmp, columns1.commit_title, columns2.commit_title);
 
+	case VIEW_COLUMN_TEXT:
+		return sort_order(sort, strcmp, columns1.text, columns2.text);
+
 	case VIEW_COLUMN_REFS:
 	case VIEW_COLUMN_GRAPH:
 		die("Unsupported search: %d", get_sort_field(sorting_view));
@@ -950,6 +953,7 @@ view_columns_grep(struct view *view, struct line *line)
 		has_columns && columns.mode ? mkmode(*columns.mode) : "",
 		has_columns && columns.commit_title ? columns.commit_title : "",
 		has_columns && columns.ref ? columns.ref->name : "",
+		has_columns && columns.text ? columns.text : "",
 		NULL
 	};
 
@@ -999,10 +1003,11 @@ view_columns_info_changed(struct view *view, bool update)
 			option = opt_show_id;
 			break;
 
-		case VIEW_COLUMN_REF:
-		case VIEW_COLUMN_MODE:
 		case VIEW_COLUMN_COMMIT_TITLE:
 		case VIEW_COLUMN_FILE_NAME:
+		case VIEW_COLUMN_MODE:
+		case VIEW_COLUMN_REF:
+		case VIEW_COLUMN_TEXT:
 			break;
 		}
 
@@ -1073,6 +1078,7 @@ view_columns_info_update(struct view *view, struct line *line)
 		case VIEW_COLUMN_LINE_NUMBER:
 		case VIEW_COLUMN_MODE:
 		case VIEW_COLUMN_REFS:
+		case VIEW_COLUMN_TEXT:
 			break;
 		}
 
@@ -1160,7 +1166,13 @@ view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_FILE_NAME:
-			if (draw_text(view, line->type, columns.file_name))
+			if (draw_filename_custom(view, columns.file_name, TRUE, width))
+				return TRUE;
+
+			continue;
+
+		case VIEW_COLUMN_TEXT:
+			if (draw_text(view, line->type, columns.text))
 				return TRUE;
 			continue;
 		}

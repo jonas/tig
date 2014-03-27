@@ -120,7 +120,8 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(VIEW_COLUMN, LINE_NUMBER), \
 	_(VIEW_COLUMN, MODE), \
 	_(VIEW_COLUMN, REF), \
-	_(VIEW_COLUMN, REFS)
+	_(VIEW_COLUMN, REFS), \
+	_(VIEW_COLUMN, TEXT)
 
 #define ENUM_INFO(_) \
 	_(author, AUTHOR_ENUM) \
