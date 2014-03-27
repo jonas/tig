@@ -435,9 +435,6 @@ reset_view(struct view *view)
 {
 	int i;
 
-	if (view->ops->done)
-		view->ops->done(view);
-
 	for (i = 0; i < view->lines; i++)
 		free(view->line[i].data);
 	free(view->line);
@@ -732,32 +729,39 @@ maximize_view(struct view *view, bool redraw)
 void
 load_view(struct view *view, struct view *prev, enum open_flags flags)
 {
-	if (view->pipe)
-		end_update(view, TRUE);
-	if (view->ops->private_size) {
-		if (!view->private)
-			view->private = calloc(1, view->ops->private_size);
-		else
-			memset(view->private, 0, view->ops->private_size);
-	}
-
-	if (view->ops->columns_size) {
-		if (!view->columns_info)
-			view->columns_info = calloc(1, sizeof(*view->columns_info)
-							* view->ops->columns_size);
-		else
-			memset(view->columns_info, 0, sizeof(*view->columns_info)
-						      * view->ops->columns_size);
-		view_columns_info_init(view);
-	}
+	bool refresh = !view_no_refresh(view, flags);
 
 	/* When prev == view it means this is the first loaded view. */
 	if (prev && view != prev) {
 		view->prev = prev;
 	}
 
-	if (!view->ops->open(view, flags))
-		return;
+	if (refresh) {
+		if (view->pipe)
+			end_update(view, TRUE);
+		if (view->ops->private_size) {
+			if (!view->private) {
+				view->private = calloc(1, view->ops->private_size);
+			} else {
+				if (view->ops->done)
+					view->ops->done(view);
+				memset(view->private, 0, view->ops->private_size);
+			}
+		}
+
+		if (view->ops->columns_size) {
+			if (!view->columns_info)
+				view->columns_info = calloc(1, sizeof(*view->columns_info)
+						* view->ops->columns_size);
+			else
+				memset(view->columns_info, 0, sizeof(*view->columns_info)
+						* view->ops->columns_size);
+			view_columns_info_init(view);
+		}
+
+		if (!view->ops->open(view, flags))
+			return;
+	}
 
 	if (prev) {
 		bool split = !!(flags & OPEN_SPLIT);
