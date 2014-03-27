@@ -1044,36 +1044,40 @@ view_columns_info_update(struct view *view, struct line *line)
 
 	for (i = 0; i < view->ops->columns_size; i++) {
 		enum view_column column = view->ops->columns[i];
-		int width = 0;
+		const char *text = NULL;
 
 		switch (column) {
 		case VIEW_COLUMN_AUTHOR:
 			if (columns.author)
-				width = strlen(mkauthor(columns.author, opt_author_width, opt_show_author));
+				text = mkauthor(columns.author, opt_author_width, opt_show_author);
 			break;
 
 		case VIEW_COLUMN_DATE:
 			if (columns.date)
-				width = strlen(mkdate(columns.date, opt_show_date));
+				text = mkdate(columns.date, opt_show_date);
 			break;
 
 		case VIEW_COLUMN_REF:
 			if (columns.ref)
-				width = strlen(columns.ref->name);
+				text = columns.ref->name;
+			break;
+
+		case VIEW_COLUMN_FILE_NAME:
+			if (columns.file_name)
+				text = columns.file_name;
 			break;
 
 		case VIEW_COLUMN_FILE_SIZE:
 			if (columns.file_size)
-				width = strlen(mkfilesize(*columns.file_size, opt_show_file_size));
+				text = mkfilesize(*columns.file_size, opt_show_file_size);
 			break;
 
 		case VIEW_COLUMN_ID:
 			if (columns.id && !iscommit(columns.id))
-				width = strlen(columns.id);
+				text = columns.id;
 			break;
 
 		case VIEW_COLUMN_COMMIT_TITLE:
-		case VIEW_COLUMN_FILE_NAME:
 		case VIEW_COLUMN_GRAPH:
 		case VIEW_COLUMN_LINE_NUMBER:
 		case VIEW_COLUMN_MODE:
@@ -1082,9 +1086,13 @@ view_columns_info_update(struct view *view, struct line *line)
 			break;
 		}
 
-		if (width > view->columns_info[i].width) {
-			view->columns_info[i].width = width;
-			changed = TRUE;
+		if (text) {
+			int width = utf8_width(text, 99999, 1);
+
+			if (width > view->columns_info[i].width) {
+				view->columns_info[i].width = width;
+				changed = TRUE;
+			}
 		}
 	}
 
