@@ -212,6 +212,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 			entry->author = state->author;
 			entry->time = state->author_time;
 			line->dirty = 1;
+			view_columns_info_update(view, line);
 			break;
 		}
 
