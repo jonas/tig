@@ -960,41 +960,43 @@ view_columns_grep(struct view *view, struct line *line)
 }
 
 bool
-view_columns_info_init(struct view *view)
+view_columns_info_changed(struct view *view, bool update)
 {
+	bool changed = FALSE;
 	int i;
 
 	for (i = 0; i < view->ops->columns_size; i++) {
 		enum view_column column = view->ops->columns[i];
 		struct column_info *info = &view->columns_info[i];
+		unsigned long option = 0;
 
 		switch (column) {
 		case VIEW_COLUMN_AUTHOR:
-			info->option = opt_show_author;
+			option = opt_show_author;
 			break;
 
 		case VIEW_COLUMN_DATE:
-			info->option = opt_show_date;
+			option = opt_show_date;
 			break;
 
 		case VIEW_COLUMN_FILE_SIZE:
-			info->option = opt_show_file_size;
+			option = opt_show_file_size;
 			break;
 
 		case VIEW_COLUMN_GRAPH:
-			info->option = opt_show_rev_graph;
+			option = opt_show_rev_graph;
 			break;
 
 		case VIEW_COLUMN_LINE_NUMBER:
-			info->option = opt_show_line_numbers;
+			option = opt_show_line_numbers;
 			break;
 
 		case VIEW_COLUMN_REFS:
-			info->option = opt_show_refs;
+			option = opt_show_refs;
 			break;
 
 		case VIEW_COLUMN_ID:
-			info->option = opt_show_id;
+			option = opt_show_id;
 			break;
 
 		case VIEW_COLUMN_REF:
@@ -1003,19 +1005,37 @@ view_columns_info_init(struct view *view)
 		case VIEW_COLUMN_FILE_NAME:
 			break;
 		}
+
+		if (option != info->option) {
+			if (!update)
+				return TRUE;
+			info->option = option;
+			changed = TRUE;
+		}
 	}
 
-	return TRUE;
+	return changed;
+}
+
+void
+view_columns_info_init(struct view *view)
+{
+	int i;
+
+	view_columns_info_changed(view, TRUE);
+	for (i = 0; i < view->ops->columns_size; i++)
+		view->columns_info[i].width = 0;
 }
 
 bool
 view_columns_info_update(struct view *view, struct line *line)
 {
 	struct view_columns columns = {};
+	bool changed = FALSE;
 	int i;
 
 	if (!view->ops->get_columns(view, line, &columns))
-		return TRUE;
+		return FALSE;
 
 	for (i = 0; i < view->ops->columns_size; i++) {
 		enum view_column column = view->ops->columns[i];
@@ -1056,11 +1076,15 @@ view_columns_info_update(struct view *view, struct line *line)
 			break;
 		}
 
-		if (width > view->columns_info[i].width)
+		if (width > view->columns_info[i].width) {
 			view->columns_info[i].width = width;
+			changed = TRUE;
+		}
 	}
 
-	return TRUE;
+	if (changed)
+		view->force_redraw = TRUE;
+	return changed;
 }
 
 bool

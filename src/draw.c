@@ -451,6 +451,15 @@ redraw_view_from(struct view *view, int lineno)
 {
 	assert(0 <= lineno && lineno < view->height);
 
+	if (view->columns_info && view_columns_info_changed(view, FALSE)) {
+		int i;
+
+		view_columns_info_init(view);
+		for (i = 0; i < view->lines; i++) {
+			view_columns_info_update(view, &view->line[i]);
+		}
+	}
+
 	for (; lineno < view->height; lineno++) {
 		if (!draw_view_line(view, lineno))
 			break;
