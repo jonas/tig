@@ -507,17 +507,24 @@ setup_update(struct view *view, const char *vid)
 	view->start_time = time(NULL);
 }
 
+static bool
+view_no_refresh(struct view *view, enum open_flags flags)
+{
+	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED | OPEN_EXTRA | OPEN_PAGER_MODE));
+
+	return (!reload && !strcmp(view->vid, view->ops->id)) ||
+	       ((flags & OPEN_REFRESH) && view->unrefreshable);
+}
+
 bool
 begin_update(struct view *view, const char *dir, const char **argv, enum open_flags flags)
 {
 	bool extra = !!(flags & (OPEN_EXTRA));
-	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED | OPEN_EXTRA | OPEN_PAGER_MODE));
 	bool refresh = flags & (OPEN_REFRESH | OPEN_PREPARED | OPEN_STDIN);
 	bool forward_stdin = flags & OPEN_FORWARD_STDIN;
 	enum io_type io_type = forward_stdin ? IO_RD_STDIN : IO_RD;
 
-	if ((!reload && !strcmp(view->vid, view->ops->id)) ||
-	    ((flags & OPEN_REFRESH) && view->unrefreshable))
+	if (view_no_refresh(view, flags))
 		return TRUE;
 
 	if (view->pipe) {
