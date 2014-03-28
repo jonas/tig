@@ -131,6 +131,7 @@ branch_read(struct view *view, char *line)
 			string_expand(branch->title, sizeof(branch->title), title, 1);
 
 		view->line[i].dirty = TRUE;
+		view_columns_info_update(view, &view->line[i]);
 	}
 
 	return TRUE;
