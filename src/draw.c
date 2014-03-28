@@ -228,9 +228,9 @@ draw_id(struct view *view, const char *id)
 }
 
 bool
-draw_filename_custom(struct view *view, const char *filename, bool auto_enabled, int width)
+draw_filename(struct view *view, const char *filename, bool auto_enabled, int width)
 {
-	bool trim = filename && strlen(filename) >= opt_show_filename_width;
+	bool trim = filename && utf8_width(filename, 9999, 1) >= width;
 
 	if (opt_show_filename == FILENAME_NO)
 		return FALSE;
@@ -239,12 +239,6 @@ draw_filename_custom(struct view *view, const char *filename, bool auto_enabled,
 		return FALSE;
 
 	return draw_field(view, LINE_FILENAME, filename, width, ALIGN_LEFT, trim);
-}
-
-bool
-draw_filename(struct view *view, const char *filename, bool auto_enabled)
-{
-	return draw_filename_custom(view, filename, auto_enabled, opt_show_filename_width);
 }
 
 bool

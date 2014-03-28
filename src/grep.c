@@ -54,8 +54,7 @@ grep_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct grep_line *grep = grep_get_line(line);
 
 	if (*grep->file && !grep->lineno) {
-		//draw_lineno_custom(view, 13, TRUE, 42);
-		draw_filename_custom(view, grep->file, TRUE, state->filename_width);
+		draw_filename(view, grep->file, TRUE, state->filename_width);
 		return TRUE;
 	}
 

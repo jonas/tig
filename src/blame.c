@@ -304,6 +304,7 @@ blame_read(struct view *view, char *line)
 static const enum view_column blame_columns[] = {
 	VIEW_COLUMN_DATE,
 	VIEW_COLUMN_AUTHOR,
+	VIEW_COLUMN_FILE_NAME,
 	VIEW_COLUMN_ID,
 	VIEW_COLUMN_LINE_NUMBER,
 	VIEW_COLUMN_TEXT,
@@ -318,7 +319,7 @@ blame_get_columns(struct view *view, const struct line *line, struct view_column
 	if (blame->commit) {
 		columns->id = blame->commit->id;
 		columns->author = blame->commit->author;
-		if (opt_show_filename != FILENAME_AUTO || state->auto_filename_display)
+		if (opt_show_filename != FILENAME_AUTO || state->auto_filename_display || view->pipe)
 			columns->file_name = blame->commit->filename;
 		columns->date = &blame->commit->time;
 		columns->commit_title = blame->commit->title;
@@ -365,7 +366,8 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_author(view, author, opt_author_width ? opt_author_width : view->columns_info[1].width))
 		return TRUE;
 
-	if (draw_filename(view, filename, state->auto_filename_display))
+	if (draw_filename(view, filename, state->auto_filename_display,
+			  opt_show_filename_width ? opt_show_filename_width : view->columns_info[2].width))
 		return TRUE;
 
 	if (draw_id_custom(view, id_type, id, opt_id_width))
