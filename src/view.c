@@ -1087,7 +1087,7 @@ view_columns_info_update(struct view *view, struct line *line)
 		}
 
 		if (text) {
-			int width = utf8_width(text, 99999, 1);
+			int width = utf8_width(text);
 
 			if (width > view->columns_info[i].width) {
 				view->columns_info[i].width = width;

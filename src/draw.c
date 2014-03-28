@@ -173,7 +173,7 @@ draw_field(struct view *view, enum line_type type, const char *text, int width, 
 		return draw_space(view, type, max, max);
 
 	if (align == ALIGN_RIGHT) {
-		int textlen = utf8_width(text, max, 1);
+		int textlen = utf8_width_max(text, max);
 		int leftpad = max - textlen - 1;
 
 		if (leftpad > 0) {
@@ -230,7 +230,7 @@ draw_id(struct view *view, const char *id)
 bool
 draw_filename(struct view *view, const char *filename, bool auto_enabled, int width)
 {
-	bool trim = filename && utf8_width(filename, 9999, 1) >= width;
+	bool trim = filename && utf8_width(filename) >= width;
 
 	if (opt_show_filename == FILENAME_NO)
 		return FALSE;

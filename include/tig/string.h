@@ -117,7 +117,8 @@ unsigned long utf8_to_unicode(const char *string, size_t length);
  * Returns the number of bytes to output from string to satisfy max_width. */
 size_t utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve, int tab_size);
 
-int utf8_width(const char *text, int max, int tab_size);
+int utf8_width_max(const char *text, int max);
+#define utf8_width(text) utf8_width_max(text, -1)
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

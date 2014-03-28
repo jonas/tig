@@ -309,7 +309,7 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
 			*start += bytes;
 		}
 		*width  += ucwidth;
-		if (*width > max_width) {
+		if (max_width > 0 && *width > max_width) {
 			*trimmed = 1;
 			*width -= ucwidth;
 			if (reserve && *width == max_width) {
@@ -332,13 +332,13 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
 }
 
 int
-utf8_width(const char *text, int max, int tab_size)
+utf8_width_max(const char *text, int max)
 {
 	int text_width = 0;
 	const char *tmp = text;
 	int trimmed = FALSE;
 
-	utf8_length(&tmp, 0, &text_width, max, &trimmed, FALSE, tab_size);
+	utf8_length(&tmp, 0, &text_width, max, &trimmed, FALSE, 1);
 	return text_width;
 }
 
