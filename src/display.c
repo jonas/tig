@@ -37,7 +37,7 @@ open_external_viewer(const char *argv[], const char *dir, bool confirm, const ch
 	def_prog_mode();           /* save current tty modes */
 	endwin();                  /* restore original tty modes */
 	ok = io_run_fg(argv, dir);
-	if (confirm) {
+	if (confirm || !ok) {
 		if (!ok && *notice)
 			fprintf(stderr, "%s", notice);
 		fprintf(stderr, "Press Enter to continue");
@@ -84,7 +84,7 @@ open_editor(const char *file, unsigned int lineno)
 	if (lineno && opt_editor_line_number && string_format(lineno_cmd, "+%u", lineno))
 		editor_argv[argc++] = lineno_cmd;
 	editor_argv[argc] = file;
-	if (!open_external_viewer(editor_argv, repo.cdup, TRUE, EDITOR_LINENO_MSG))
+	if (!open_external_viewer(editor_argv, repo.cdup, FALSE, EDITOR_LINENO_MSG))
 		opt_editor_line_number = FALSE;
 }
 
