@@ -150,6 +150,7 @@ enum open_flags {
 	OPEN_EXTRA = 64,	/* Open extra data from command. */
 
 	OPEN_PAGER_MODE = OPEN_STDIN | OPEN_FORWARD_STDIN,
+	OPEN_ALWAYS_LOAD = OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED | OPEN_EXTRA | OPEN_PAGER_MODE,
 };
 
 #define open_in_pager_mode(flags) ((flags) & OPEN_PAGER_MODE)

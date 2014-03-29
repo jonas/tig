@@ -280,7 +280,7 @@ help_select(struct view *view, struct line *line)
 
 static struct view_ops help_ops = {
 	"line",
-	"help",
+	"",
 	VIEW_NO_GIT_DIR,
 	sizeof(struct help_state),
 	help_open,

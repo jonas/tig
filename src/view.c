@@ -507,7 +507,7 @@ setup_update(struct view *view, const char *vid)
 static bool
 view_no_refresh(struct view *view, enum open_flags flags)
 {
-	bool reload = !!(flags & (OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED | OPEN_EXTRA | OPEN_PAGER_MODE));
+	bool reload = !!(flags & OPEN_ALWAYS_LOAD) || !view->lines;
 
 	return (!reload && !strcmp(view->vid, view->ops->id)) ||
 	       ((flags & OPEN_REFRESH) && view->unrefreshable);
