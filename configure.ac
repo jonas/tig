@@ -1,4 +1,4 @@
-AC_INIT([tig],[0],[Jonas Fonseca <jonas.fonseca@gmail.com>],[tig])
+AC_INIT([tig],[0],[jonas.fonseca@gmail.com],[tig])
 
 AC_LANG([C])
 AC_CONFIG_HEADER(config.h)
