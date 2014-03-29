@@ -28,6 +28,7 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 	static char buf[SIZEOF_STR];
 	unsigned char chars_length[SIZEOF_STR];
 	struct key_input input;
+	size_t promptlen = strlen(prompt);
 	int pos = 0, chars = 0;
 
 	buf[pos] = 0;
@@ -35,7 +36,7 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 	while (status == INPUT_OK || status == INPUT_SKIP) {
 		update_status("%s%.*s", prompt, pos, buf);
 
-		switch (get_input(pos + 1, &input, FALSE)) {
+		switch (get_input(pos + promptlen, &input, FALSE)) {
 		case KEY_RETURN:
 		case KEY_ENTER:
 		case '\n':
