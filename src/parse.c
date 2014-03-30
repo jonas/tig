@@ -296,7 +296,7 @@ get_author(const char *name, const char *email)
 
 	while (from <= to) {
 		size_t pos = (to + from) / 2;
-		int cmp = strcmp(name, authors[pos]->name);
+		int cmp = strcmp(email, authors[pos]->email);
 
 		if (!cmp)
 			return authors[pos];
