@@ -225,6 +225,7 @@ static bool
 diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 		struct blame_header *header, struct blame_commit *commit)
 {
+	char author[SIZEOF_STR] = "";
 	char line_arg[SIZEOF_STR];
 	const char *blame_argv[] = {
 		"git", "blame", encoding_arg, "-p", line_arg, ref, "--", file, NULL
@@ -245,7 +246,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 				break;
 			header = NULL;
 
-		} else if (parse_blame_info(commit, buf)) {
+		} else if (parse_blame_info(commit, author, buf)) {
 			ok = commit->filename != NULL;
 			break;
 		}

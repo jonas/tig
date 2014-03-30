@@ -139,10 +139,20 @@ match_blame_header(const char *name, char **line)
 }
 
 bool
-parse_blame_info(struct blame_commit *commit, char *line)
+parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *line)
 {
 	if (match_blame_header("author ", &line)) {
-		parse_author_line(line, &commit->author, NULL);
+		string_ncopy_do(author, SIZEOF_STR, line, strlen(line));
+
+	} else if (match_blame_header("author-mail ", &line)) {
+		char *end = strchr(line, '>');
+
+		if (end)
+			*end = 0;
+		if (*line == '<')
+			line++;
+		commit->author = get_author(author, line);
+		author[0] = 0;
 
 	} else if (match_blame_header("author-time ", &line)) {
 		parse_timesec(&commit->time, line);

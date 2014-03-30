@@ -48,6 +48,7 @@ struct blame {
 
 struct blame_state {
 	struct blame_commit *commit;
+	char author[SIZEOF_STR];
 	int blamed;
 	bool done_reading;
 	bool auto_filename_display;
@@ -276,7 +277,7 @@ blame_read(struct view *view, char *line)
 		string_format(view->ref, "%s %2zd%%", view->vid,
 			      view->lines ? state->blamed * 100 / view->lines : 0);
 
-	} else if (parse_blame_info(state->commit, line)) {
+	} else if (parse_blame_info(state->commit, state->author, line)) {
 		bool update_view_columns = TRUE;
 		int i;
 
