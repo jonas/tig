@@ -655,7 +655,8 @@ main(int argc, const char *argv[])
 	enum request request = parse_options(argc, argv, pager_mode);
 	struct view *view;
 
-	signal(SIGPIPE, SIG_IGN);
+	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
+		die("Failed to setup signal handler");
 
 	if (setlocale(LC_ALL, "")) {
 		codeset = nl_langinfo(CODESET);
