@@ -64,8 +64,6 @@ struct ref;
 	_(MAIN_REF,		""), \
 	_(MAIN_HEAD,		""), \
 	_(TREE_HEAD,		""), \
-	_(TREE_DIR,		""), \
-	_(TREE_FILE,		""), \
 	_(STAT_HEAD,		""), \
 	_(STAT_SECTION,		""), \
 	_(STAT_NONE,		""), \

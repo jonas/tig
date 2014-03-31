@@ -94,7 +94,7 @@ static int
 tree_compare_entry(const struct line *line1, const struct line *line2)
 {
 	if (line1->type != line2->type)
-		return line1->type == LINE_TREE_DIR ? -1 : 1;
+		return line1->type == LINE_DIRECTORY ? -1 : 1;
 	return strcmp(tree_path(line1), tree_path(line2));
 }
 
@@ -118,7 +118,7 @@ tree_get_columns(struct view *view, const struct line *line, struct view_columns
 
 	columns->author = entry->author;
 	columns->date = &entry->time;
-	if (line->type != LINE_TREE_DIR)
+	if (line->type != LINE_DIRECTORY)
 		columns->file_size = &entry->size;
 	columns->id = entry->commit;
 	columns->mode = &entry->mode;
@@ -165,7 +165,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 
 		if (!view->lines) {
 			tree_entry(view, LINE_TREE_HEAD, view->env->directory, NULL, NULL, 0);
-			tree_entry(view, LINE_TREE_DIR, "..", "040000", view->ref, 0);
+			tree_entry(view, LINE_DIRECTORY, "..", "040000", view->ref, 0);
 			report("Tree is empty");
 			return TRUE;
 		}
@@ -260,11 +260,11 @@ tree_read(struct view *view, char *text)
 
 		/* Insert "link" to parent directory. */
 		if (view->lines == 1 &&
-		    !tree_entry(view, LINE_TREE_DIR, "..", "040000", view->ref, 0))
+		    !tree_entry(view, LINE_DIRECTORY, "..", "040000", view->ref, 0))
 			return FALSE;
 	}
 
-	type = text[SIZEOF_TREE_MODE] == 't' ? LINE_TREE_DIR : LINE_TREE_FILE;
+	type = text[SIZEOF_TREE_MODE] == 't' ? LINE_DIRECTORY : LINE_FILE;
 	entry = tree_entry(view, type, path, text, text + TREE_ID_OFFSET, size);
 	if (!entry)
 		return FALSE;
@@ -340,7 +340,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 
 	switch (request) {
 	case REQ_VIEW_BLAME:
-		if (line->type != LINE_TREE_FILE) {
+		if (line->type != LINE_FILE) {
 			report("Blame only supported for files");
 			return REQ_NONE;
 		}
@@ -349,7 +349,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 		return request;
 
 	case REQ_EDIT:
-		if (line->type != LINE_TREE_FILE) {
+		if (line->type != LINE_FILE) {
 			report("Edit only supported for files");
 		} else if (!is_head_commit(view->vid)) {
 			open_blob_editor(entry->id, entry->name, 0);
@@ -380,7 +380,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 		reset_view_history(&tree_view_history);
 
 	switch (line->type) {
-	case LINE_TREE_DIR:
+	case LINE_DIRECTORY:
 		/* Depending on whether it is a subdirectory or parent link
 		 * mangle the path buffer. */
 		if (line == &view->line[1] && *view->env->directory) {
@@ -397,7 +397,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 		reload_view(view);
 		break;
 
-	case LINE_TREE_FILE:
+	case LINE_FILE:
 		flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 		open_blob_view(view, flags);
 		break;
@@ -419,13 +419,13 @@ tree_select(struct view *view, struct line *line)
 		return;
 	}
 
-	if (line->type == LINE_TREE_DIR && tree_path_is_parent(entry->name)) {
+	if (line->type == LINE_DIRECTORY && tree_path_is_parent(entry->name)) {
 		string_copy(view->ref, "Open parent directory");
 		view->env->blob[0] = 0;
 		return;
 	}
 
-	if (line->type == LINE_TREE_FILE) {
+	if (line->type == LINE_FILE) {
 		string_copy_rev(view->env->blob, entry->id);
 		string_format(view->env->file, "%s%s", view->env->directory, tree_path(line));
 	}
