@@ -36,6 +36,10 @@ Incompatibilities:
    (see below) and add binding (`@` by default) to also work in the diff view.
  - Most view display options must now be set via the new `*-view` options in
    tigrc. Existing options are no longer recognized, but a warning is shown.
+ - Remap default bindings to have more consistent convention: use lower-case
+   keys primarily for view switching and non-destructive actions, use upper-case
+   keys for view-specific actions including user-defined commands. To preserve
+   old default key bindings see `contrib/bindings-v1.x.tigrc`. (GH #257)
 
 Improvements:
 

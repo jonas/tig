@@ -186,6 +186,10 @@ static const struct key_mapping key_mappings[] = {
 	{ "F10",	KEY_F(10) },
 	{ "F11",	KEY_F(11) },
 	{ "F12",	KEY_F(12) },
+	{ "ScrollBack",	KEY_SR },
+	{ "SBack",	KEY_SR },
+	{ "ScrollFwd",	KEY_SF },
+	{ "SFwd",	KEY_SF },
 };
 
 static const struct key_mapping *

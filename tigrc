@@ -148,7 +148,7 @@ bind status	C	!git commit
 bind stash	P	?git stash pop %(stash)
 bind stash	!	?git stash drop %(stash)
 bind refs	C	?git checkout %(branch)
-bind refs	!	?git branch -d %(branch)
+bind refs	!	?git branch -D %(branch)
 
 # Normal commands
 # ---------------
@@ -159,14 +159,15 @@ bind generic	d	view-diff
 bind generic	l	view-log
 bind generic	t	view-tree
 bind generic	f	view-blob
-bind generic	B	view-blame
-bind generic	H	view-refs
+bind generic	b	view-blame
+bind generic	r	view-refs
 bind generic	p	view-pager
 bind generic	h	view-help
-bind generic	S	view-status
+bind generic	s	view-status
+bind generic	S	view-status		# Compat binding to avoid going crazy!
 bind generic	c	view-stage
 bind generic	y	view-stash
-bind generic	G	view-grep
+bind generic	g	view-grep
 
 # View manipulation
 bind generic	<Enter>	enter			# Enter and open selected entry
@@ -198,6 +199,8 @@ bind stage	]	:toggle diff-context +1	# Increase the diff context
 bind diff	@	:/^@@			# Jump to next (c)hunk
 bind diff	[	:toggle diff-context -1
 bind diff	]	:toggle diff-context +1
+bind main	G	:toggle commit-title-graph # Toggle revision graph visualization
+bind main	F	:toggle commit-title-refs  # Toggle reference display (tags/branches)
 
 # Cursor navigation
 bind generic	k	move-up
@@ -207,7 +210,6 @@ bind generic	<C-D>	move-page-down
 bind generic	<Space>	move-page-down
 bind generic	<PgUp>	move-page-up
 bind generic	<C-U>	move-page-up
-bind generic	b	move-page-up
 bind generic	-	move-page-up
 bind generic	<Home>	move-first-line
 bind generic	<End>	move-last-line
@@ -220,8 +222,8 @@ bind generic	<Ins>	scroll-line-up
 bind generic	<C-Y>	scroll-line-up
 bind generic	<Del>	scroll-line-down
 bind generic	<C-E>	scroll-line-down
-bind generic	w	scroll-page-up
-bind generic	s	scroll-page-down
+bind generic	<SBack>	scroll-page-up
+bind generic	<SFwd>	scroll-page-down
 
 # Searching
 bind generic	/	search
@@ -234,15 +236,11 @@ bind generic	o	options			# Open the options menu
 # Bindings for toggling settings
 bind generic	I	:toggle sort-order	# Toggle ascending/descending sort order
 bind generic	i	:toggle sort-field	# Toggle field to sort by
-bind generic	.	:toggle line-number	# Toggle line numbers
+bind generic	<Hash>	:toggle line-number	# Toggle line numbers
 bind generic	D	:toggle date		# Toggle date display
 bind generic	A	:toggle author		# Toggle author display
-bind generic	g	:toggle commit-title-graph
-						# Toggle revision graph visualization
 bind generic	~	:toggle line-graphics	# Toggle (line) graphics mode
-bind generic	<Hash>	:toggle file-name	# Toggle file name display
-bind generic	F	:toggle commit-title-refs
-						# Toggle reference display (tags/branches)
+bind generic	F	:toggle file-name	# Toggle file name display
 # bind generic	???	:toogle show-changes	# Toggle local changes display in the main view
 bind generic	W	:toggle ignore-space	# Toggle ignoring whitespace in diffs
 # bind generic	?	:toggle commit-order	# Toggle commit ordering
@@ -259,8 +257,7 @@ bind generic	%	:toggle file-filter
 # Misc
 bind generic	e	edit			# Open in editor
 bind generic	:	prompt			# Open the prompt
-bind generic	r	screen-redraw		# Redraw the screen
-bind generic	<C-L>	screen-redraw
+bind generic	<C-L>	screen-redraw		# Redraw the screen
 bind generic	z	stop-loading		# Stop all loading views
 bind generic	v	show-version		# Show Tig version
 
