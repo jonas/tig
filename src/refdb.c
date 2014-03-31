@@ -16,7 +16,7 @@
 #include "tig/util.h"
 #include "tig/io.h"
 #include "tig/repo.h"
-#include "tig/refs.h"
+#include "tig/refdb.h"
 
 static struct ref **refs = NULL;
 static size_t refs_size = 0;

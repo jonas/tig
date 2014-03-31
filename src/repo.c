@@ -14,7 +14,7 @@
 #include "tig/tig.h"
 #include "tig/repo.h"
 #include "tig/io.h"
-#include "tig/refs.h"
+#include "tig/refdb.h"
 
 #define REPO_INFO_GIT_DIR	"--git-dir"
 #define REPO_INFO_WORK_TREE	"--is-inside-work-tree"

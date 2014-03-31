@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#include "tig/refs.h"
+#include "tig/refdb.h"
 #include "tig/parse.h"
 #include "tig/display.h"
 #include "tig/log.h"

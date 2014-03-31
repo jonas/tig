@@ -12,7 +12,7 @@
  */
 
 #include "tig/io.h"
-#include "tig/refs.h"
+#include "tig/refdb.h"
 #include "tig/repo.h"
 #include "tig/options.h"
 #include "tig/parse.h"

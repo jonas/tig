@@ -186,7 +186,7 @@ TIG_OBJS = \
 	src/argv.o \
 	src/io.o \
 	src/graph.o \
-	src/refs.o \
+	src/refdb.o \
 	src/builtin-config.o \
 	src/request.o \
 	src/line.o \

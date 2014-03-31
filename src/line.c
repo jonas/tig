@@ -13,7 +13,7 @@
 
 #include "tig/tig.h"
 #include "tig/types.h"
-#include "tig/refs.h"
+#include "tig/refdb.h"
 #include "tig/line.h"
 #include "tig/util.h"
 

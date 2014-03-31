@@ -17,7 +17,7 @@
 #include "tig/tig.h"
 #include "tig/line.h"
 #include "tig/view.h"
-#include "tig/refs.h"
+#include "tig/refdb.h"
 #include "tig/util.h"
 
 struct graph_canvas;

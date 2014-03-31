@@ -19,7 +19,7 @@
 #include "tig/parse.h"
 #include "tig/io.h"
 #include "tig/argv.h"
-#include "tig/refs.h"
+#include "tig/refdb.h"
 #include "tig/graph.h"
 #include "tig/git.h"
 #include "tig/request.h"

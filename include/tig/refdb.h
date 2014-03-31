@@ -11,8 +11,8 @@
  * GNU General Public License for more details.
  */
 
-#ifndef TIG_REFS_H
-#define TIG_REFS_H
+#ifndef TIG_REFDB_H
+#define TIG_REFDB_H
 
 #include "tig/tig.h"
 

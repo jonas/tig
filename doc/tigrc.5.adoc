@@ -565,7 +565,6 @@ View specific actions
 |status-revert           |Revert chunk or file changes
 |status-merge            |Merge file using external tool
 |stage-update-line       |Stage/unstage single line
-|stage-next              |Jump to next diff chunk
 |stage-split-chunk       |Split current diff chunk
 |=============================================================================
 
