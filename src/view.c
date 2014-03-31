@@ -1175,9 +1175,9 @@ view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 
 		case VIEW_COLUMN_FILE_NAME:
 			if (draw_filename(view, columns.file_name, TRUE,
+					  columns.mode ? *columns.mode : 0,
 					  opt_show_filename_width ? opt_show_filename_width : width))
 				return TRUE;
-
 			continue;
 
 		case VIEW_COLUMN_TEXT:

@@ -367,7 +367,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_author(view, author, opt_author_width ? opt_author_width : view->columns_info[1].width))
 		return TRUE;
 
-	if (draw_filename(view, filename, state->auto_filename_display,
+	if (draw_filename(view, filename, state->auto_filename_display, 0,
 			  opt_show_filename_width ? opt_show_filename_width : view->columns_info[2].width))
 		return TRUE;
 

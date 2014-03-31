@@ -49,7 +49,8 @@ struct ref;
 	_(MODE,      		""), \
 	_(ID,			""), \
 	_(OVERFLOW,		""), \
-	_(FILENAME,  		""), \
+	_(DIRECTORY,	 	""), \
+	_(FILE,  		""), \
 	_(FILE_SIZE, 		""), \
 	_(LINE_NUMBER,		""), \
 	_(TITLE_BLUR,		""), \

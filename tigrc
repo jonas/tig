@@ -258,8 +258,9 @@ color date			blue	default
 color mode			cyan	default
 color id			magenta	default
 color overflow			red	default
-color filename			default	default
-color grep.filename		blue	default
+color directory			yellow	default
+color file			default	default
+color grep.file			blue	default
 color file-size			default	default
 color line-number		cyan	default
 color title-blur		white	blue
@@ -273,8 +274,6 @@ color main-tracked		yellow	default	bold
 color main-ref			cyan	default
 color main-head			cyan	default	bold
 color tree-head			default	default	bold
-color tree-dir			yellow	default	normal
-color tree-file			default	default	normal
 color stat-head			yellow	default
 color stat-section		cyan	default
 color stat-none			default	default

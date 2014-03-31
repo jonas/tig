@@ -228,9 +228,10 @@ draw_id(struct view *view, const char *id)
 }
 
 bool
-draw_filename(struct view *view, const char *filename, bool auto_enabled, int width)
+draw_filename(struct view *view, const char *filename, bool auto_enabled, mode_t mode, int width)
 {
 	bool trim = filename && utf8_width(filename) >= width;
+	enum line_type type = S_ISDIR(mode) ? LINE_DIRECTORY : LINE_FILE;
 
 	if (opt_show_filename == FILENAME_NO)
 		return FALSE;
@@ -238,7 +239,7 @@ draw_filename(struct view *view, const char *filename, bool auto_enabled, int wi
 	if (opt_show_filename == FILENAME_AUTO && !auto_enabled)
 		return FALSE;
 
-	return draw_field(view, LINE_FILENAME, filename, width, ALIGN_LEFT, trim);
+	return draw_field(view, type, filename, width, ALIGN_LEFT, trim);
 }
 
 bool

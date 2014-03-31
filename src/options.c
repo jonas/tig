@@ -285,6 +285,7 @@ option_color_command(int argc, const char *argv[])
 			{ "diff-rename-from",		"'rename from '" },
 			{ "diff-rename-to",		"'rename to '" },
 			{ "diff-tree",			"'diff-tree '" },
+			{ "filename",			"file" },
 			{ "pp-adate",			"'AuthorDate: '" },
 			{ "pp-author",			"'Author: '" },
 			{ "pp-cdate",			"'CommitDate: '" },
@@ -293,6 +294,8 @@ option_color_command(int argc, const char *argv[])
 			{ "reviewed",			"'    Reviewed-by'" },
 			{ "signoff",			"'    Signed-off-by'" },
 			{ "tested",			"'    Tested-by'" },
+			{ "tree-dir",			"tree.directory" },
+			{ "tree-file",			"tree.file" },
 		};
 		int index;
 

@@ -54,7 +54,7 @@ grep_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct grep_line *grep = grep_get_line(line);
 
 	if (*grep->file && !grep->lineno) {
-		draw_filename(view, grep->file, TRUE, state->filename_width);
+		draw_filename(view, grep->file, TRUE, 0, state->filename_width);
 		return TRUE;
 	}
 
@@ -207,7 +207,7 @@ grep_read(struct view *view, char *line)
 
 	file = get_path(line);
 	if (!file ||
-	    (file != state->last_file && !add_line_text(view, file, LINE_FILENAME)))
+	    (file != state->last_file && !add_line_text(view, file, LINE_FILE)))
 		return FALSE;
 
 	if (!add_line_alloc(view, &grep, LINE_DEFAULT, textlen, FALSE))

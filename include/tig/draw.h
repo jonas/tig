@@ -38,7 +38,7 @@ bool draw_date(struct view *view, const struct time *time);
 bool draw_author(struct view *view, const struct ident *author, int width);
 bool draw_id_custom(struct view *view, enum line_type type, const char *id, int width);
 bool draw_id(struct view *view, const char *id);
-bool draw_filename(struct view *view, const char *filename, bool auto_enabled, int width);
+bool draw_filename(struct view *view, const char *filename, bool auto_enabled, mode_t mode, int width);
 bool draw_file_size(struct view *view, unsigned long size, int width, bool pad);
 bool draw_mode(struct view *view, mode_t mode);
 bool draw_lineno(struct view *view, unsigned int lineno);
