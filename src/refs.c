@@ -24,18 +24,18 @@
  * Branch backend
  */
 
-struct branch {
+struct reference {
 	const struct ident *author;	/* Author of the last commit. */
 	struct time time;		/* Date of the last activity. */
 	char title[128];		/* First line of the commit message. */
 	const struct ref *ref;		/* Name and commit ID information. */
 };
 
-static const struct ref *branch_all;
-#define BRANCH_ALL_NAME	"All branches"
-#define branch_is_all(branch) ((branch)->ref == branch_all)
+static const struct ref *refs_all;
+#define REFS_ALL_NAME	"All references"
+#define refs_is_all(reference) ((reference)->ref == refs_all)
 
-static const enum view_column branch_columns[] = {
+static const enum view_column refs_columns[] = {
 	VIEW_COLUMN_LINE_NUMBER,
 	VIEW_COLUMN_DATE,
 	VIEW_COLUMN_AUTHOR,
@@ -45,23 +45,23 @@ static const enum view_column branch_columns[] = {
 };
 
 static bool
-branch_get_columns(struct view *view, const struct line *line, struct view_columns *columns)
+refs_get_columns(struct view *view, const struct line *line, struct view_columns *columns)
 {
-	const struct branch *branch = line->data;
+	const struct reference *reference = line->data;
 
-	columns->author = branch->author;
-	columns->date = &branch->time;
-	columns->id = branch->ref->id;
-	columns->ref = branch->ref;
-	columns->commit_title = branch->title;
+	columns->author = reference->author;
+	columns->date = &reference->time;
+	columns->id = reference->ref->id;
+	columns->ref = reference->ref;
+	columns->commit_title = reference->title;
 
 	return TRUE;
 }
 
 static enum request
-branch_request(struct view *view, enum request request, struct line *line)
+refs_request(struct view *view, enum request request, struct line *line)
 {
-	struct branch *branch = line->data;
+	struct reference *reference = line->data;
 
 	switch (request) {
 	case REQ_REFRESH:
@@ -71,12 +71,12 @@ branch_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_ENTER:
 	{
-		const struct ref *ref = branch->ref;
-		const char *all_branches_argv[] = {
-			GIT_MAIN_LOG(encoding_arg, commit_order_arg(), "", branch_is_all(branch) ? "--all" : ref->name, "")
+		const struct ref *ref = reference->ref;
+		const char *all_references_argv[] = {
+			GIT_MAIN_LOG(encoding_arg, commit_order_arg(), "", refs_is_all(reference) ? "--all" : ref->name, "")
 		};
 
-		open_argv(view, &main_view, all_branches_argv, NULL, OPEN_SPLIT);
+		open_argv(view, &main_view, all_references_argv, NULL, OPEN_SPLIT);
 		return REQ_NONE;
 	}
 	case REQ_JUMP_COMMIT:
@@ -84,9 +84,9 @@ branch_request(struct view *view, enum request request, struct line *line)
 		int lineno;
 
 		for (lineno = 0; lineno < view->lines; lineno++) {
-			struct branch *branch = view->line[lineno].data;
+			struct reference *reference = view->line[lineno].data;
 
-			if (!strncasecmp(branch->ref->id, view->env->search, strlen(view->env->search))) {
+			if (!strncasecmp(reference->ref->id, view->env->search, strlen(view->env->search))) {
 				select_view_line(view, lineno);
 				report_clear();
 				return REQ_NONE;
@@ -99,9 +99,9 @@ branch_request(struct view *view, enum request request, struct line *line)
 }
 
 static bool
-branch_read(struct view *view, char *line)
+refs_read(struct view *view, char *line)
 {
-	struct branch template = {};
+	struct reference template = {};
 	char *author;
 	char *title;
 	size_t i;
@@ -119,16 +119,16 @@ branch_read(struct view *view, char *line)
 		parse_author_line(author, &template.author, &template.time);
 
 	for (i = 0; i < view->lines; i++) {
-		struct branch *branch = view->line[i].data;
+		struct reference *reference = view->line[i].data;
 
-		if (strcmp(branch->ref->id, line))
+		if (strcmp(reference->ref->id, line))
 			continue;
 
-		branch->author = template.author;
-		branch->time = template.time;
+		reference->author = template.author;
+		reference->time = template.time;
 
 		if (title)
-			string_expand(branch->title, sizeof(branch->title), title, 1);
+			string_expand(reference->title, sizeof(reference->title), title, 1);
 
 		view->line[i].dirty = TRUE;
 		view_columns_info_update(view, &view->line[i]);
@@ -138,68 +138,68 @@ branch_read(struct view *view, char *line)
 }
 
 static bool
-branch_open_visitor(void *data, const struct ref *ref)
+refs_open_visitor(void *data, const struct ref *ref)
 {
 	struct view *view = data;
-	struct branch *branch;
-	bool is_all = ref == branch_all;
+	struct reference *reference;
+	bool is_all = ref == refs_all;
 	struct line *line;
 
 	if (ref->tag || ref->ltag)
 		return TRUE;
 
-	line = add_line_alloc(view, &branch, LINE_DEFAULT, 0, is_all);
+	line = add_line_alloc(view, &reference, LINE_DEFAULT, 0, is_all);
 	if (!line)
 		return FALSE;
 
-	branch->ref = ref;
+	reference->ref = ref;
 	view_columns_info_update(view, line);
 
 	return TRUE;
 }
 
 static bool
-branch_open(struct view *view, enum open_flags flags)
+refs_open(struct view *view, enum open_flags flags)
 {
-	const char *branch_log[] = {
+	const char *refs_log[] = {
 		"git", "log", encoding_arg, "--no-color", "--date=raw",
 			"--pretty=format:%H%x00%an <%ae> %ad%x00%s",
 			"--all", "--simplify-by-decoration", NULL
 	};
 
-	if (!branch_all) {
-		struct ref *ref = calloc(1, sizeof(*branch_all) + strlen(BRANCH_ALL_NAME));
+	if (!refs_all) {
+		struct ref *ref = calloc(1, sizeof(*refs_all) + strlen(REFS_ALL_NAME));
 
 		if (ref) {
-			strncpy(ref->name, BRANCH_ALL_NAME, strlen(BRANCH_ALL_NAME));
-			branch_all = ref;
+			strncpy(ref->name, REFS_ALL_NAME, strlen(REFS_ALL_NAME));
+			refs_all = ref;
 		}
 	}
 
-	if (!branch_all || !begin_update(view, NULL, branch_log, OPEN_RELOAD)) {
-		report("Failed to load branch data");
+	if (!refs_all || !begin_update(view, NULL, refs_log, OPEN_RELOAD)) {
+		report("Failed to load reference data");
 		return FALSE;
 	}
 
-	branch_open_visitor(view, branch_all);
-	foreach_ref(branch_open_visitor, view);
+	refs_open_visitor(view, refs_all);
+	foreach_ref(refs_open_visitor, view);
 
 	return TRUE;
 }
 
 static void
-branch_select(struct view *view, struct line *line)
+refs_select(struct view *view, struct line *line)
 {
-	struct branch *branch = line->data;
+	struct reference *reference = line->data;
 
-	if (branch_is_all(branch)) {
-		string_copy(view->ref, BRANCH_ALL_NAME);
+	if (refs_is_all(reference)) {
+		string_copy(view->ref, REFS_ALL_NAME);
 		return;
 	}
-	string_copy_rev(view->ref, branch->ref->id);
-	string_copy_rev(view->env->commit, branch->ref->id);
-	string_copy_rev(view->env->head, branch->ref->id);
-	string_copy_rev(view->env->branch, branch->ref->name);
+	string_copy_rev(view->ref, reference->ref->id);
+	string_copy_rev(view->env->commit, reference->ref->id);
+	string_copy_rev(view->env->head, reference->ref->id);
+	string_copy_rev(view->env->ref, reference->ref->name);
 }
 
 static struct view_ops refs_ops = {
@@ -207,16 +207,16 @@ static struct view_ops refs_ops = {
 	argv_env.head,
 	VIEW_REFRESH,
 	0,
-	branch_open,
-	branch_read,
+	refs_open,
+	refs_read,
 	view_columns_draw,
-	branch_request,
+	refs_request,
 	view_columns_grep,
-	branch_select,
+	refs_select,
 	NULL,
-	branch_get_columns,
-	branch_columns,
-	ARRAY_SIZE(branch_columns),
+	refs_get_columns,
+	refs_columns,
+	ARRAY_SIZE(refs_columns),
 };
 
 DEFINE_VIEW(refs);
