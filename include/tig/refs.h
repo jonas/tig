@@ -11,17 +11,17 @@
  * GNU General Public License for more details.
  */
 
-#ifndef TIG_BRANCH_H
-#define TIG_BRANCH_H
+#ifndef TIG_REFS_H
+#define TIG_REFS_H
 
 #include "tig/view.h"
 
-extern struct view branch_view;
+extern struct view refs_view;
 
 static inline void
-open_branch_view(struct view *prev, enum open_flags flags)
+open_refs_view(struct view *prev, enum open_flags flags)
 {
-	open_view(prev, &branch_view, flags);
+	open_view(prev, &refs_view, flags);
 }
 
 #endif

@@ -563,8 +563,12 @@ option_bind_command(int argc, const char *argv[])
 	if (argc < 3)
 		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;
 
-	if (!(keymap = get_keymap(argv[0], strlen(argv[0]))))
-		return ERROR_UNKNOWN_KEY_MAP;
+	if (!(keymap = get_keymap(argv[0], strlen(argv[0])))) {
+		if (!strcmp(argv[0], "branch"))
+			keymap = get_keymap("refs", strlen("refs"));
+		if (!keymap)
+			return ERROR_UNKNOWN_KEY_MAP;
+	}
 
 	if (get_key_value(argv[1], &input) == ERR)
 		return ERROR_UNKNOWN_KEY;
@@ -572,9 +576,10 @@ option_bind_command(int argc, const char *argv[])
 	request = get_request(argv[2]);
 	if (request == REQ_UNKNOWN) {
 		static const struct enum_map_entry obsolete[] = {
-			ENUM_MAP_ENTRY("cherry-pick",		REQ_NONE),
+			ENUM_MAP_ENTRY("cherry-pick",	REQ_NONE),
 			ENUM_MAP_ENTRY("screen-resize",	REQ_NONE),
-			ENUM_MAP_ENTRY("tree-parent",		REQ_PARENT),
+			ENUM_MAP_ENTRY("tree-parent",	REQ_PARENT),
+			ENUM_MAP_ENTRY("view-branch",	REQ_VIEW_REFS),
 		};
 		static const char *toggles[][2] = {
 			{ "diff-context-down",		"diff-context" },

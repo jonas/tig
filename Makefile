@@ -205,7 +205,7 @@ TIG_OBJS = \
 	src/tree.o \
 	src/blob.o \
 	src/blame.o \
-	src/branch.o \
+	src/refs.o \
 	src/status.o \
 	src/stage.o \
 	src/main.o \

@@ -1303,7 +1303,7 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 #include "tig/tree.h"
 #include "tig/blob.h"
 #include "tig/blame.h"
-#include "tig/branch.h"
+#include "tig/refs.h"
 #include "tig/status.h"
 #include "tig/stage.h"
 #include "tig/stash.h"

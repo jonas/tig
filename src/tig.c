@@ -35,13 +35,13 @@
 /* Views. */
 #include "tig/blame.h"
 #include "tig/blob.h"
-#include "tig/branch.h"
 #include "tig/diff.h"
 #include "tig/grep.h"
 #include "tig/help.h"
 #include "tig/log.h"
 #include "tig/main.h"
 #include "tig/pager.h"
+#include "tig/refs.h"
 #include "tig/stage.h"
 #include "tig/stash.h"
 #include "tig/status.h"
@@ -249,8 +249,8 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_HELP:
 		open_help_view(view, OPEN_DEFAULT);
 		break;
-	case REQ_VIEW_BRANCH:
-		open_branch_view(view, OPEN_DEFAULT);
+	case REQ_VIEW_REFS:
+		open_refs_view(view, OPEN_DEFAULT);
 		break;
 	case REQ_VIEW_BLAME:
 		open_blame_view(view, OPEN_DEFAULT);

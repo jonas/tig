@@ -202,8 +202,8 @@ branch_select(struct view *view, struct line *line)
 	string_copy_rev(view->env->branch, branch->ref->name);
 }
 
-static struct view_ops branch_ops = {
-	"branch",
+static struct view_ops refs_ops = {
+	"reference",
 	argv_env.head,
 	VIEW_REFRESH,
 	0,
@@ -219,6 +219,6 @@ static struct view_ops branch_ops = {
 	ARRAY_SIZE(branch_columns),
 };
 
-DEFINE_VIEW(branch);
+DEFINE_VIEW(refs);
 
 /* vim: set ts=8 sw=8 noexpandtab: */

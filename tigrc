@@ -96,7 +96,7 @@ bind generic	l	view-log
 bind generic	t	view-tree
 bind generic	f	view-blob
 bind generic	B	view-blame
-bind generic	H	view-branch
+bind generic	H	view-refs
 bind generic	p	view-pager
 bind generic	h	view-help
 bind generic	S	view-status

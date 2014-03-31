@@ -143,7 +143,7 @@ void TIG_NORETURN usage(const char *message);
 	_(TREE,   tree), \
 	_(BLOB,   blob), \
 	_(BLAME,  blame), \
-	_(BRANCH, branch), \
+	_(REFS,   refs), \
 	_(STATUS, status), \
 	_(STAGE,  stage), \
 	_(STASH,  stash), \
