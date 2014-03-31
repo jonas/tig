@@ -223,10 +223,12 @@ parse_color_name(const char *color, struct line_rule *rule, const char **prefix_
 
 		if (!keymap)
 			return ERROR_UNKNOWN_KEY_MAP;
-		*prefix_ptr = keymap->name;
+		if (prefix_ptr)
+			*prefix_ptr = keymap->name;
 		color = prefixend + 1;
 	}
 
+	memset(rule, 0, sizeof(*rule));
 	if (is_quoted(*color)) {
 		rule->line = color + 1;
 		rule->linelen = strlen(color) - 2;
@@ -275,31 +277,31 @@ option_color_command(int argc, const char *argv[])
 	info = add_line_rule(prefix, &rule);
 	if (!info) {
 		static const char *obsolete[][2] = {
-			{ "acked",			"    Acked-by" },
-			{ "diff-copy-from",		"copy from " },
-			{ "diff-copy-to",		"copy to " },
-			{ "diff-deleted-file-mode",	"deleted file mode " },
-			{ "diff-dissimilarity",		"dissimilarity " },
-			{ "diff-rename-from",		"rename from " },
-			{ "diff-rename-to",		"rename to " },
-			{ "diff-tree",			"diff-tree" },
-			{ "pp-adate",			"AuthorDate: " },
-			{ "pp-author",			"Author: " },
-			{ "pp-cdate",			"CommitDate: " },
-			{ "pp-commit",			"Commit: " },
-			{ "pp-date",			"Date: " },
-			{ "reviewed",			"    Reviewed-by" },
-			{ "signoff",			"    Signed-off-by" },
-			{ "tested",			"    Tested-by" },
+			{ "acked",			"'    Acked-by'" },
+			{ "diff-copy-from",		"'copy from '" },
+			{ "diff-copy-to",		"'copy to '" },
+			{ "diff-deleted-file-mode",	"'deleted file mode '" },
+			{ "diff-dissimilarity",		"'dissimilarity '" },
+			{ "diff-rename-from",		"'rename from '" },
+			{ "diff-rename-to",		"'rename to '" },
+			{ "diff-tree",			"'diff-tree '" },
+			{ "pp-adate",			"'AuthorDate: '" },
+			{ "pp-author",			"'Author: '" },
+			{ "pp-cdate",			"'CommitDate: '" },
+			{ "pp-commit",			"'Commit: '" },
+			{ "pp-date",			"'Date: '" },
+			{ "reviewed",			"'    Reviewed-by'" },
+			{ "signoff",			"'    Signed-off-by'" },
+			{ "tested",			"'    Tested-by'" },
 		};
 		int index;
 
 		index = find_remapped(obsolete, ARRAY_SIZE(obsolete), rule.name);
 		if (index != -1) {
-			rule.name = NULL;
-			rule.namelen = 0;
-			rule.line = obsolete[index][1];
-			rule.linelen = strlen(rule.line);
+			/* Keep the initial prefix if defined. */
+			code = parse_color_name(obsolete[index][1], &rule, prefix ? NULL : &prefix);
+			if (code != SUCCESS)
+				return code;
 			info = add_line_rule(prefix, &rule);
 		}
 
