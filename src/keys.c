@@ -181,6 +181,10 @@ static const struct key_table key_table[] = {
 	{ "F10",	KEY_F(10) },
 	{ "F11",	KEY_F(11) },
 	{ "F12",	KEY_F(12) },
+	{ "ScrBack",	KEY_SR },
+	{ "ScrFwd",	KEY_SF },
+	{ "ScrollBack",	KEY_SR },
+	{ "ScrollFwd",	KEY_SF },
 };
 
 int
