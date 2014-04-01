@@ -181,7 +181,7 @@ main_open(struct view *view, enum open_flags flags)
 	state->with_graph = opt_show_rev_graph &&
 			    opt_commit_order != COMMIT_ORDER_REVERSE;
 
-	if (main_check_argv(view, opt_rev_argv))
+	if (opt_rev_argv && main_check_argv(view, opt_rev_argv))
 		main_argv = pretty_raw_argv;
 
 	if (flags & OPEN_PAGER_MODE) {
