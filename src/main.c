@@ -229,8 +229,6 @@ static const enum view_column main_columns[] = {
 	VIEW_COLUMN_ID,
 	VIEW_COLUMN_DATE,
 	VIEW_COLUMN_AUTHOR,
-	VIEW_COLUMN_GRAPH,
-	VIEW_COLUMN_REFS,
 	VIEW_COLUMN_COMMIT_TITLE,
 };
 

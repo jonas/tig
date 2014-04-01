@@ -890,9 +890,6 @@ sort_view_compare(const void *l1, const void *l2)
 	case VIEW_COLUMN_TEXT:
 		return sort_order(sort, strcmp, columns1.text, columns2.text);
 
-	case VIEW_COLUMN_REFS:
-	case VIEW_COLUMN_GRAPH:
-		die("Unsupported search: %d", get_sort_field(sorting_view));
 	}
 
 	return 0;
@@ -907,10 +904,6 @@ sort_view(struct view *view, bool change_field)
 		while (TRUE) {
 			state->current = (state->current + 1) % view->ops->columns_size;
 			if (get_sort_field(view) == VIEW_COLUMN_ID && !opt_show_id)
-				continue;
-			if (get_sort_field(view) == VIEW_COLUMN_REFS)
-				continue;
-			if (get_sort_field(view) == VIEW_COLUMN_GRAPH)
 				continue;
 			break;
 		}
@@ -987,16 +980,8 @@ view_columns_info_changed(struct view *view, bool update)
 			option = opt_show_file_size;
 			break;
 
-		case VIEW_COLUMN_GRAPH:
-			option = opt_show_rev_graph;
-			break;
-
 		case VIEW_COLUMN_LINE_NUMBER:
 			option = opt_show_line_numbers;
-			break;
-
-		case VIEW_COLUMN_REFS:
-			option = opt_show_refs;
 			break;
 
 		case VIEW_COLUMN_ID:
@@ -1078,10 +1063,8 @@ view_columns_info_update(struct view *view, struct line *line)
 			break;
 
 		case VIEW_COLUMN_COMMIT_TITLE:
-		case VIEW_COLUMN_GRAPH:
 		case VIEW_COLUMN_LINE_NUMBER:
 		case VIEW_COLUMN_MODE:
-		case VIEW_COLUMN_REFS:
 		case VIEW_COLUMN_TEXT:
 			break;
 		}
@@ -1136,16 +1119,6 @@ view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 		}
 
-		case VIEW_COLUMN_REFS:
-			if (draw_refs(view, columns.refs))
-				return TRUE;
-			continue;
-
-		case VIEW_COLUMN_GRAPH:
-			if (columns.graph && draw_graph(view, columns.graph))
-				return TRUE;
-			continue;
-
 		case VIEW_COLUMN_ID:
 			if (!width && draw_id(view, columns.id))
 				return TRUE;
@@ -1169,6 +1142,10 @@ view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_COMMIT_TITLE:
+			if (columns.graph && draw_graph(view, columns.graph))
+				return TRUE;
+			if (columns.refs && draw_refs(view, columns.refs))
+				return TRUE;
 			if (draw_commit_title(view, columns.commit_title, 0))
 				return TRUE;
 			continue;
