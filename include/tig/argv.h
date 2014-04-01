@@ -58,5 +58,12 @@ extern struct argv_env argv_env;
 
 bool argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter);
 
+struct rev_flags {
+	size_t search_offset;
+	bool with_graph;
+};
+
+bool argv_parse_rev_flag(const char *arg, struct rev_flags *flags);
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

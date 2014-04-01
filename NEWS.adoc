@@ -85,6 +85,7 @@ Bug fixes:
  - Fix stage-update-line by rewriting the diff chunk containing the line instead
    of using `--unidiff-zero` and a diff context of zero. (GH #130)
  - Fix status-update to work for untracked directories. (GH #236)
+ - Don't pass log parameters given on the command line to the diff view.
 
 tig-1.2.1
 ---------

@@ -52,11 +52,6 @@
 		"--no-color", "--pretty=format:commit %H %P%x00%an <%ae> %ad%x00%s", \
 		"--", (fileargs), NULL
 
-/* FIXME(jfonseca): This is incomplete, but enough to support:
- * git rev-list --author=vivien HEAD | tig --stdin --no-walk */
-#define GIT_REV_FLAGS \
-	"--stdin", "--no-walk", "--boundary"
-
 #endif
 
 /* vim: set ts=8 sw=8 noexpandtab: */

@@ -349,4 +349,117 @@ argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_a
 	return src_argv[argc] == NULL;
 }
 
+static inline bool
+argv_find_rev_flag(const char *argv[], size_t argc, const char *arg, size_t arglen,
+		   size_t *search_offset, bool *with_graph)
+{
+	int i;
+
+	for (i = 0; i < argc; i++) {
+		const char *flag = argv[i];
+		size_t flaglen = strlen(flag);
+
+		if (flaglen > arglen || strncmp(arg, flag, flaglen))
+			continue;
+
+		if (search_offset)
+			*search_offset = flaglen;
+		else if (flaglen != arglen && flag[flaglen - 1] != '=')
+			continue;
+
+		if (with_graph)
+			*with_graph = FALSE;
+
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+bool
+argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
+{
+	static const char *with_graph[] = {
+		"--after=",
+		"--all",
+		"--all-match",
+		"--ancestry-path",
+		"--author-date-order",
+		"--author=",
+		"--basic-regexp",
+		"--before=",
+		"--boundary",
+		"--branches",
+		"--branches=",
+		"--cherry",
+		"--cherry-mark",
+		"--cherry-pick",
+		"--committer=",
+		"--date-order",
+		"--dense",
+		"--extended-regexp",
+		"--first-parent",
+		"--fixed-strings",
+		"--full-history",
+		"--glob=",
+		"--left-only",
+		"--max-parents=",
+		"--merge",
+		"--merges",
+		"--min-parents=",
+		"--no-max-parents",
+		"--no-merges",
+		"--no-min-parents",
+		"--no-walk",
+		"--perl-regexp",
+		"--pickaxe-all",
+		"--pickaxe-regex",
+		"--regexp-ignore-case",
+		"--remotes",
+		"--remotes=",
+		"--remove-empty",
+		"--reverse",
+		"--right-only",
+		"--simplify-by-decoration",
+		"--simplify-merges",
+		"--since=",
+		"--skip=",
+		"--sparse",
+		"--stdin",
+		"--tags",
+		"--tags=",
+		"--topo-order",
+		"--until=",
+		"--walk-reflogs",
+		"-E",
+		"-F",
+		"-g",
+		"-i",
+	};
+	static const char *no_graph[] = {
+		"--follow",
+	};
+	static const char *search_no_graph[] = {
+		"--grep-reflog=",
+		"--grep=",
+		"-G",
+		"-S",
+	};
+	size_t arglen = strlen(arg);
+	bool graph = TRUE;
+	size_t search = 0;
+
+	if (argv_find_rev_flag(with_graph, ARRAY_SIZE(with_graph), arg, arglen, NULL, NULL) ||
+	    argv_find_rev_flag(no_graph, ARRAY_SIZE(no_graph), arg, arglen, NULL, &graph) ||
+	    argv_find_rev_flag(search_no_graph, ARRAY_SIZE(search_no_graph), arg, arglen, &search, &graph)) {
+		if (rev_flags) {
+			rev_flags->search_offset = search ? search : arglen;
+			rev_flags->with_graph = graph;
+		}
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 /* vim: set ts=8 sw=8 noexpandtab: */

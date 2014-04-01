@@ -435,19 +435,6 @@ filter_rev_parse(const char ***args, const char *arg1, const char *arg2, const c
 	free(all_argv);
 }
 
-static bool
-is_rev_flag(const char *flag)
-{
-	static const char *rev_flags[] = { GIT_REV_FLAGS };
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(rev_flags); i++)
-		if (!strcmp(flag, rev_flags[i]))
-			return TRUE;
-
-	return FALSE;
-}
-
 static void
 filter_options(const char *argv[], bool rev_parse)
 {
@@ -468,7 +455,7 @@ filter_options(const char *argv[], bool rev_parse)
 		for (next = flags_pos = 0; flags && flags[next]; next++) {
 			const char *flag = flags[next];
 
-			if (is_rev_flag(flag))
+			if (argv_parse_rev_flag(flag, NULL))
 				argv_append(&opt_rev_argv, flag);
 			else
 				flags[flags_pos++] = flag;

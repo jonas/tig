@@ -140,40 +140,24 @@ main_add_changes_commits(struct view *view, struct main_state *state, const char
 	main_add_changes_commit(view, LINE_STAT_UNSTAGED, unstaged_parent, "Unstaged changes");
 }
 
-static size_t
-main_find_argv(const char *arg, const char *argv[], size_t argc)
-{
-	int i;
-
-	for (i = argc - 1; i >= 0; i--) {
-		size_t prefixlen = strlen(argv[i]);
-
-		if (!strncmp(arg, argv[i], prefixlen))
-			return prefixlen;
-	}
-
-	return 0;
-}
-
 static void
 main_check_argv(struct view *view, const char *argv[])
 {
-	static const char *no_graph_search_args[] = {
-		"-S", "-G", "--grep="
-	};
 	struct main_state *state = view->private;
 	int i;
 
 	for (i = 0; argv[i]; i++) {
 		const char *arg = argv[i];
-		size_t len = main_find_argv(arg, no_graph_search_args,
-					    ARRAY_SIZE(no_graph_search_args));
+		struct rev_flags rev_flags = {};
 
-		if (len > 0) {
+		if (!argv_parse_rev_flag(arg, &rev_flags))
+			continue;
+		if (!rev_flags.with_graph)
 			state->with_graph = FALSE;
+		arg += rev_flags.search_offset;
+		if (*arg) {
 			if (!*view->env->search)
-				string_ncopy(view->env->search,
-					     arg + len, strlen(arg + len));
+				string_ncopy(view->env->search, arg, strlen(arg));
 			break;
 		}
 	}
@@ -190,8 +174,8 @@ main_open(struct view *view, enum open_flags flags)
 	state->with_graph = opt_show_rev_graph &&
 			    opt_commit_order != COMMIT_ORDER_REVERSE;
 
-	if (state->with_graph && opt_cmdline_argv) {
-		main_check_argv(view, opt_cmdline_argv);
+	if (state->with_graph && opt_rev_argv) {
+		main_check_argv(view, opt_rev_argv);
 	}
 
 	if (flags & OPEN_PAGER_MODE) {
