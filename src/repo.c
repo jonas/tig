@@ -49,6 +49,14 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 		string_ncopy(repo.cdup, name, namelen);
 
 	} else if (!strcmp(arg, REPO_INFO_SHOW_PREFIX)) {
+		/* Some versions of Git does not emit anything for --show-prefix
+		 * when the user is in the repository root directory. Try to detect
+		 * this special case by looking at the emitted value. If it looks
+		 * like a commit ID and there's no cdup path assume that no value
+		 * was emitted. */
+		if (!*repo.cdup && namelen == 40 && iscommit(name))
+			return read_repo_info(name, namelen, value, valuelen, data);
+
 		string_ncopy(repo.prefix, name, namelen);
 
 	} else if (!strcmp(arg, REPO_INFO_RESOLVED_HEAD)) {
