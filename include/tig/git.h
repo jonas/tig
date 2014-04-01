@@ -46,11 +46,18 @@
 #define GIT_DIFF_BLAME_NO_PARENT(encoding_arg, context_arg, space_arg, new_name) \
 	GIT_DIFF_INITIAL(encoding_arg, "", context_arg, space_arg, "/dev/null", new_name)
 
-#define GIT_MAIN_LOG(encoding_arg, commit_order_arg, diffargs, revargs, fileargs) \
+#define GIT_MAIN_LOG(encoding_arg, commit_order_arg, diffargs, revargs, fileargs, pretty_arg) \
 	"git", "log", (encoding_arg), \
 		(commit_order_arg), (diffargs), (revargs), "--date=raw", "--parents", \
-		"--no-color", "--pretty=format:commit %H %P%x00%an <%ae> %ad%x00%s", \
-		"--", (fileargs), NULL
+		"--no-color", (pretty_arg), "--", (fileargs), NULL
+
+#define GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg, diffargs, revargs, fileargs) \
+	GIT_MAIN_LOG(encoding_arg, commit_order_arg, diffargs, revargs, fileargs, \
+		     "--pretty=format:commit %H %P%x00%an <%ae> %ad%x00%s")
+
+#define GIT_MAIN_LOG_RAW(encoding_arg, commit_order_arg, diffargs, revargs, fileargs) \
+	GIT_MAIN_LOG(encoding_arg, commit_order_arg, diffargs, revargs, fileargs, \
+		     "--pretty=raw")
 
 #endif
 

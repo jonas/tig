@@ -351,7 +351,7 @@ argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_a
 
 static inline bool
 argv_find_rev_flag(const char *argv[], size_t argc, const char *arg, size_t arglen,
-		   size_t *search_offset, bool *with_graph)
+		   size_t *search_offset, bool *with_graph, bool *with_reflog)
 {
 	int i;
 
@@ -369,6 +369,8 @@ argv_find_rev_flag(const char *argv[], size_t argc, const char *arg, size_t argl
 
 		if (with_graph)
 			*with_graph = FALSE;
+		if (with_reflog)
+			*with_reflog = TRUE;
 
 		return TRUE;
 	}
@@ -430,14 +432,16 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 		"--tags=",
 		"--topo-order",
 		"--until=",
-		"--walk-reflogs",
 		"-E",
 		"-F",
-		"-g",
 		"-i",
 	};
 	static const char *no_graph[] = {
 		"--follow",
+	};
+	static const char *with_reflog[] = {
+		"--walk-reflogs",
+		"-g",
 	};
 	static const char *search_no_graph[] = {
 		"--grep-reflog=",
@@ -447,14 +451,17 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 	};
 	size_t arglen = strlen(arg);
 	bool graph = TRUE;
+	bool reflog = FALSE;
 	size_t search = 0;
 
-	if (argv_find_rev_flag(with_graph, ARRAY_SIZE(with_graph), arg, arglen, NULL, NULL) ||
-	    argv_find_rev_flag(no_graph, ARRAY_SIZE(no_graph), arg, arglen, NULL, &graph) ||
-	    argv_find_rev_flag(search_no_graph, ARRAY_SIZE(search_no_graph), arg, arglen, &search, &graph)) {
+	if (argv_find_rev_flag(with_graph, ARRAY_SIZE(with_graph), arg, arglen, NULL, NULL, NULL) ||
+	    argv_find_rev_flag(no_graph, ARRAY_SIZE(no_graph), arg, arglen, NULL, &graph, NULL) ||
+	    argv_find_rev_flag(with_reflog, ARRAY_SIZE(with_reflog), arg, arglen, NULL, NULL, &reflog) ||
+	    argv_find_rev_flag(search_no_graph, ARRAY_SIZE(search_no_graph), arg, arglen, &search, &graph, NULL)) {
 		if (rev_flags) {
 			rev_flags->search_offset = search ? search : arglen;
 			rev_flags->with_graph = graph;
+			rev_flags->with_reflog = reflog;
 		}
 		return TRUE;
 	}

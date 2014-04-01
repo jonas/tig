@@ -61,6 +61,7 @@ bool argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *
 struct rev_flags {
 	size_t search_offset;
 	bool with_graph;
+	bool with_reflog;
 };
 
 bool argv_parse_rev_flag(const char *arg, struct rev_flags *flags);

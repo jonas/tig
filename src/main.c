@@ -140,10 +140,11 @@ main_add_changes_commits(struct view *view, struct main_state *state, const char
 	main_add_changes_commit(view, LINE_STAT_UNSTAGED, unstaged_parent, "Unstaged changes");
 }
 
-static void
+static bool
 main_check_argv(struct view *view, const char *argv[])
 {
 	struct main_state *state = view->private;
+	bool with_reflog = FALSE;
 	int i;
 
 	for (i = 0; argv[i]; i++) {
@@ -152,31 +153,36 @@ main_check_argv(struct view *view, const char *argv[])
 
 		if (!argv_parse_rev_flag(arg, &rev_flags))
 			continue;
+
+		if (rev_flags.with_reflog)
+			with_reflog = TRUE;
 		if (!rev_flags.with_graph)
 			state->with_graph = FALSE;
 		arg += rev_flags.search_offset;
-		if (*arg) {
-			if (!*view->env->search)
-				string_ncopy(view->env->search, arg, strlen(arg));
-			break;
-		}
+		if (*arg && !*view->env->search)
+			string_ncopy(view->env->search, arg, strlen(arg));
 	}
+
+	return with_reflog;
 }
 
 static bool
 main_open(struct view *view, enum open_flags flags)
 {
-	const char *main_argv[] = {
-		GIT_MAIN_LOG(encoding_arg, commit_order_arg(), "%(cmdlineargs)", "%(revargs)", "%(fileargs)")
+	const char *pretty_custom_argv[] = {
+		GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg(), "%(cmdlineargs)", "%(revargs)", "%(fileargs)")
+	};
+	const char *pretty_raw_argv[] = {
+		GIT_MAIN_LOG_RAW(encoding_arg, commit_order_arg(), "%(cmdlineargs)", "%(revargs)", "%(fileargs)")
 	};
 	struct main_state *state = view->private;
+	const char **main_argv = pretty_custom_argv;
 
 	state->with_graph = opt_show_rev_graph &&
 			    opt_commit_order != COMMIT_ORDER_REVERSE;
 
-	if (state->with_graph && opt_rev_argv) {
-		main_check_argv(view, opt_rev_argv);
-	}
+	if (main_check_argv(view, opt_rev_argv))
+		main_argv = pretty_raw_argv;
 
 	if (flags & OPEN_PAGER_MODE) {
 		state->added_changes_commits = TRUE;

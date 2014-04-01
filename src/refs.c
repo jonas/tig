@@ -73,7 +73,8 @@ refs_request(struct view *view, enum request request, struct line *line)
 	{
 		const struct ref *ref = reference->ref;
 		const char *all_references_argv[] = {
-			GIT_MAIN_LOG(encoding_arg, commit_order_arg(), "", refs_is_all(reference) ? "--all" : ref->name, "")
+			GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg(), "",
+				refs_is_all(reference) ? "--all" : ref->name, "")
 		};
 
 		open_argv(view, &main_view, all_references_argv, NULL, OPEN_SPLIT);
