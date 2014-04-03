@@ -41,6 +41,13 @@ void foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data)
 int load_refs(bool force);
 int add_ref(const char *id, char *name, const char *remote_name, const char *head);
 
+struct ref_format {
+	const char *start;
+	const char *end;
+};
+
+const struct ref_format *get_ref_format(struct ref *ref);
+
 #endif
 
 /* vim: set ts=8 sw=8 noexpandtab: */

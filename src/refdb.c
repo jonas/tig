@@ -267,4 +267,18 @@ add_ref(const char *id, char *name, const char *remote_name, const char *head)
 	return add_to_refs(id, strlen(id), name, strlen(name), &opt);
 }
 
+const struct ref_format *
+get_ref_format(struct ref *ref)
+{
+	static const struct ref_format tag_format = { "[", "]" };
+	static const struct ref_format remote_format = { "<", ">" };
+	static const struct ref_format default_format = { "", "" };
+
+	if (ref_is_tag(ref))
+		return &tag_format;
+	if (ref_is_remote(ref))
+		return &remote_format;
+	return &default_format;
+}
+
 /* vim: set ts=8 sw=8 noexpandtab: */
