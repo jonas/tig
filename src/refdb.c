@@ -35,19 +35,8 @@ compare_refs(const void *ref1_, const void *ref2_)
 	const struct ref *ref1 = *(const struct ref **)ref1_;
 	const struct ref *ref2 = *(const struct ref **)ref2_;
 
-	if (ref1->tag != ref2->tag)
-		return ref2->tag - ref1->tag;
-	if (ref1->ltag != ref2->ltag)
-		return ref2->ltag - ref1->ltag;
-	if (ref1->head != ref2->head)
-		return ref2->head - ref1->head;
-	if (ref1->tracked != ref2->tracked)
-		return ref2->tracked - ref1->tracked;
-	if (ref1->replace != ref2->replace)
-		return ref2->replace - ref1->replace;
-	/* Order remotes last. */
-	if (ref1->remote != ref2->remote)
-		return ref1->remote - ref2->remote;
+	if (ref1->type != ref2->type)
+		return ref2->type - ref1->type;
 	return strcmp(ref1->name, ref2->name);
 }
 
@@ -126,34 +115,30 @@ static int
 add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref_opt *opt)
 {
 	struct ref *ref = NULL;
-	bool tag = FALSE;
-	bool ltag = FALSE;
-	bool remote = FALSE;
-	bool replace = FALSE;
-	bool tracked = FALSE;
-	bool head = FALSE;
+	enum reference_type type = REFERENCE_BRANCH;
 	int pos;
 
 	if (!prefixcmp(name, "refs/tags/")) {
+		type = REFERENCE_TAG;
 		if (!suffixcmp(name, namelen, "^{}")) {
 			namelen -= 3;
 			name[namelen] = 0;
 		} else {
-			ltag = TRUE;
+			type = REFERENCE_LOCAL_TAG;
 		}
 
-		tag = TRUE;
 		namelen -= STRING_SIZE("refs/tags/");
 		name	+= STRING_SIZE("refs/tags/");
 
 	} else if (!prefixcmp(name, "refs/remotes/")) {
-		remote = TRUE;
+		type = REFERENCE_REMOTE;
 		namelen -= STRING_SIZE("refs/remotes/");
 		name	+= STRING_SIZE("refs/remotes/");
-		tracked  = !strcmp(opt->remote, name);
+		if (!strcmp(opt->remote, name))
+			type = REFERENCE_TRACKED_REMOTE;
 
 	} else if (!prefixcmp(name, "refs/replace/")) {
-		replace = TRUE;
+		type = REFERENCE_REPLACE;
 		id	= name + strlen("refs/replace/");
 		idlen	= namelen - strlen("refs/replace/");
 		name	= "replaced";
@@ -162,15 +147,16 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	} else if (!prefixcmp(name, "refs/heads/")) {
 		namelen -= STRING_SIZE("refs/heads/");
 		name	+= STRING_SIZE("refs/heads/");
-		head	 = strlen(opt->head) == namelen
-			   && !strncmp(opt->head, name, namelen);
+		if (strlen(opt->head) == namelen &&
+		    !strncmp(opt->head, name, namelen))
+			type = REFERENCE_HEAD;
 
 	} else if (!strcmp(name, "HEAD")) {
 		/* Handle the case of HEAD not being a symbolic ref,
 		 * i.e. during a rebase. */
 		if (*opt->head)
 			return OK;
-		head = TRUE;
+		type = REFERENCE_HEAD;
 	}
 
 	/* If we are reloading or it's an annotated tag, replace the
@@ -178,7 +164,8 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	 * git-ls-remote lists the commit id of an annotated tag right
 	 * before the commit id it points to. */
 	for (pos = 0; pos < refs_size; pos++) {
-		int cmp = replace ? strcmp(id, refs[pos]->id) : strcmp(name, refs[pos]->name);
+		int cmp = type == REFERENCE_REPLACE
+			? strcmp(id, refs[pos]->id) : strcmp(name, refs[pos]->name);
 
 		if (!cmp) {
 			ref = refs[pos];
@@ -197,15 +184,10 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	}
 
 	ref->valid = TRUE;
-	ref->head = head;
-	ref->tag = tag;
-	ref->ltag = ltag;
-	ref->remote = remote;
-	ref->replace = replace;
-	ref->tracked = tracked;
+	ref->type = type;
 	string_ncopy_do(ref->id, SIZEOF_REV, id, idlen);
 
-	if (head)
+	if (type == REFERENCE_HEAD)
 		refs_head = ref;
 	return OK;
 }

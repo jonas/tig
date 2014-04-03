@@ -47,17 +47,17 @@ get_line_type(const char *line)
 enum line_type
 get_line_type_from_ref(const struct ref *ref)
 {
-	if (ref->head)
+	if (ref->type == REFERENCE_HEAD)
 		return LINE_MAIN_HEAD;
-	else if (ref->ltag)
+	else if (ref->type == REFERENCE_LOCAL_TAG)
 		return LINE_MAIN_LOCAL_TAG;
-	else if (ref->tag)
+	else if (ref->type == REFERENCE_TAG)
 		return LINE_MAIN_TAG;
-	else if (ref->tracked)
+	else if (ref->type == REFERENCE_TRACKED_REMOTE)
 		return LINE_MAIN_TRACKED;
-	else if (ref->remote)
+	else if (ref->type == REFERENCE_REMOTE)
 		return LINE_MAIN_REMOTE;
-	else if (ref->replace)
+	else if (ref->type == REFERENCE_REPLACE)
 		return LINE_MAIN_REPLACE;
 
 	return LINE_MAIN_REF;

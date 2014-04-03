@@ -15,15 +15,11 @@
 #define TIG_REFDB_H
 
 #include "tig/tig.h"
+#include "tig/types.h"
 
 struct ref {
+	enum reference_type type;
 	char id[SIZEOF_REV];	/* Commit SHA1 ID */
-	unsigned int head:1;	/* Is it the current HEAD? */
-	unsigned int tag:1;	/* Is it a tag? */
-	unsigned int ltag:1;	/* If so, is the tag local? */
-	unsigned int remote:1;	/* Is it a remote ref? */
-	unsigned int replace:1;	/* Is it a replace ref? */
-	unsigned int tracked:1;	/* Is it the remote for the current HEAD? */
 	unsigned int valid:1;	/* Is the ref still valid? */
 	char name[1];		/* Ref name; tag or head names are shortened. */
 };
@@ -36,6 +32,8 @@ struct ref_list {
 
 #define is_initial_commit()	(!get_ref_head())
 #define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
+#define ref_is_tag(ref)		((ref)->type == REFERENCE_TAG || (ref)->type == REFERENCE_LOCAL_TAG)
+#define ref_is_remote(ref)	((ref)->type == REFERENCE_REMOTE || (ref)->type == REFERENCE_TRACKED_REMOTE)
 
 struct ref *get_ref_head();
 struct ref_list *get_ref_list(const char *id);

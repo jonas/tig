@@ -72,13 +72,13 @@ add_pager_refs(struct view *view, const char *commit_id)
 
 	for (i = 0; i < list->size; i++) {
 		struct ref *ref = list->refs[i];
-		const char *fmt = ref->tag    ? "%s[%s]" :
-		                  ref->remote ? "%s<%s>" : "%s%s";
+		const char *fmt = ref_is_tag(ref)    ? "%s[%s]" :
+		                  ref_is_remote(ref) ? "%s<%s>" : "%s%s";
 
 		if (!string_format_from(buf, &bufpos, fmt, sep, ref->name))
 			return;
 		sep = ", ";
-		if (ref->tag)
+		if (ref_is_tag(ref))
 			is_tag = TRUE;
 	}
 

@@ -121,6 +121,15 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(VIEW_COLUMN, REF), \
 	_(VIEW_COLUMN, TEXT)
 
+#define REFERENCE_ENUM(_) \
+	_(REFERENCE, TAG), \
+	_(REFERENCE, LOCAL_TAG), \
+	_(REFERENCE, HEAD), \
+	_(REFERENCE, REPLACE), \
+	_(REFERENCE, REMOTE), \
+	_(REFERENCE, TRACKED_REMOTE), \
+	_(REFERENCE, BRANCH), \
+
 #define ENUM_INFO(_) \
 	_(author, AUTHOR_ENUM) \
 	_(commit_order, COMMIT_ORDER_ENUM) \
@@ -131,6 +140,7 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(ignore_space, IGNORE_SPACE_ENUM) \
 	_(vertical_split, VERTICAL_SPLIT_ENUM) \
 	_(view_column, VIEW_COLUMN_ENUM) \
+	_(reference_type, REFERENCE_ENUM) \
 
 #define DEFINE_ENUMS(name, macro) DEFINE_ENUM(name, macro);
 ENUM_INFO(DEFINE_ENUMS);
