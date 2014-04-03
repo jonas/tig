@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include "tig/draw.h"
 #include "tig/main.h"
 
 static bool

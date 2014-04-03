@@ -388,6 +388,89 @@ draw_graph(struct view *view, const struct graph_canvas *canvas)
 }
 
 bool
+view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
+{
+	struct view_columns columns = {};
+	int i;
+
+	if (!view->ops->get_columns(view, line, &columns))
+		return TRUE;
+
+	for (i = 0; i < view->ops->columns_size; i++) {
+		enum view_column column = view->ops->columns[i];
+		int width = view->columns_info[i].width;
+
+		switch (column) {
+		case VIEW_COLUMN_DATE:
+			if (draw_date(view, columns.date))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_AUTHOR:
+			if (draw_author(view, columns.author, opt_author_width ? opt_author_width : width))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_REF:
+		{
+			const struct ref *ref = columns.ref;
+			enum line_type type = !ref || !ref->valid ? LINE_DEFAULT : get_line_type_from_ref(ref);
+			const char *name = ref ? ref->name : NULL;
+
+			if (draw_field(view, type, name, width, ALIGN_LEFT, FALSE))
+				return TRUE;
+			continue;
+		}
+
+		case VIEW_COLUMN_ID:
+			if (!width && draw_id(view, columns.id))
+				return TRUE;
+			else if (opt_show_id && draw_id_custom(view, LINE_ID, columns.id, width))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_LINE_NUMBER:
+			if (draw_lineno(view, lineno))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_MODE:
+			if (draw_mode(view, columns.mode ? *columns.mode : 0))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_FILE_SIZE:
+			if (draw_file_size(view, columns.file_size ? *columns.file_size : 0, width, !columns.mode || S_ISDIR(*columns.mode)))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_COMMIT_TITLE:
+			if (columns.graph && draw_graph(view, columns.graph))
+				return TRUE;
+			if (columns.refs && draw_refs(view, columns.refs))
+				return TRUE;
+			if (draw_commit_title(view, columns.commit_title, 0))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_FILE_NAME:
+			if (draw_filename(view, columns.file_name, TRUE,
+					  columns.mode ? *columns.mode : 0,
+					  opt_show_filename_width ? opt_show_filename_width : width))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_TEXT:
+			if (draw_text(view, line->type, columns.text))
+				return TRUE;
+			continue;
+		}
+	}
+
+	return TRUE;
+}
+
+bool
 draw_view_line(struct view *view, unsigned int lineno)
 {
 	struct line *line;

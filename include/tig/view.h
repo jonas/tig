@@ -271,7 +271,6 @@ void open_argv(struct view *prev, struct view *view, const char *argv[], const c
 void sort_view(struct view *view, bool change_field);
 
 bool view_columns_grep(struct view *view, struct line *line);
-bool view_columns_draw(struct view *view, struct line *line, unsigned int lineno);
 bool view_columns_info_changed(struct view *view, bool update);
 void view_columns_info_init(struct view *view);
 bool view_columns_info_update(struct view *view, struct line *line);

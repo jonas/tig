@@ -45,6 +45,7 @@ bool draw_lineno(struct view *view, unsigned int lineno);
 bool draw_lineno_custom(struct view *view, unsigned int lineno, bool show, int interval);
 bool draw_refs(struct view *view, const struct ref_list *refs);
 bool draw_graph(struct view *view, const struct graph_canvas *canvas);
+bool view_columns_draw(struct view *view, struct line *line, unsigned int lineno);
 
 #define draw_commit_title(view, text, offset) \
 	draw_text_overflow(view, text, opt_title_overflow > 0, opt_title_overflow + offset, LINE_DEFAULT)
