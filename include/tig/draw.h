@@ -37,14 +37,9 @@ bool draw_field(struct view *view, enum line_type type, const char *text, int wi
 bool draw_date(struct view *view, const struct time *time);
 bool draw_author(struct view *view, const struct ident *author, int width);
 bool draw_id_custom(struct view *view, enum line_type type, const char *id, int width);
-bool draw_id(struct view *view, const char *id);
 bool draw_filename(struct view *view, const char *filename, bool auto_enabled, mode_t mode, int width);
-bool draw_file_size(struct view *view, unsigned long size, int width, bool pad);
-bool draw_mode(struct view *view, mode_t mode);
 bool draw_lineno(struct view *view, unsigned int lineno);
 bool draw_lineno_custom(struct view *view, unsigned int lineno, bool show, int interval);
-bool draw_refs(struct view *view, const struct ref_list *refs);
-bool draw_graph(struct view *view, const struct graph_canvas *canvas);
 bool view_columns_draw(struct view *view, struct line *line, unsigned int lineno);
 
 #define draw_commit_title(view, text, offset) \

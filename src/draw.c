@@ -218,7 +218,7 @@ draw_id_custom(struct view *view, enum line_type type, const char *id, int width
 	return draw_field(view, type, id, width, ALIGN_LEFT, FALSE);
 }
 
-bool
+static bool
 draw_id(struct view *view, const char *id)
 {
 	if (!opt_show_id)
@@ -242,7 +242,7 @@ draw_filename(struct view *view, const char *filename, bool auto_enabled, mode_t
 	return draw_field(view, type, filename, width, ALIGN_LEFT, trim);
 }
 
-bool
+static bool
 draw_file_size(struct view *view, unsigned long size, int width, bool pad)
 {
 	const char *str = pad ? NULL : mkfilesize(size, opt_show_file_size);
@@ -253,7 +253,7 @@ draw_file_size(struct view *view, unsigned long size, int width, bool pad)
 	return draw_field(view, LINE_FILE_SIZE, str, width, ALIGN_RIGHT, FALSE);
 }
 
-bool
+static bool
 draw_mode(struct view *view, mode_t mode)
 {
 	const char *str = mkmode(mode);
@@ -295,7 +295,7 @@ draw_lineno(struct view *view, unsigned int lineno)
 				  opt_line_number_interval);
 }
 
-bool
+static bool
 draw_refs(struct view *view, const struct ref_list *refs)
 {
 	size_t i;
@@ -365,7 +365,7 @@ draw_graph_chtype(struct view *view, struct graph_symbol *symbol, enum line_type
 
 typedef bool (*draw_graph_fn)(struct view *, struct graph_symbol *, enum line_type, bool);
 
-bool
+static bool
 draw_graph(struct view *view, const struct graph_canvas *canvas)
 {
 	static const draw_graph_fn fns[] = {
