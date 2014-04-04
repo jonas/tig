@@ -93,6 +93,9 @@ set show-line-numbers = no	# Show line numbers?
 set line-number-interval = 5	# Interval between line numbers
 set horizontal-scroll = 33%	# Scroll 33% of the view width
 set blame-options = -C -C -C	# Blame lines from other files
+
+# Wrap branch names with () and tags with <>
+set reference-format = (branch) <tag>
 --------------------------------------------------------------------------
 
 Or in the Git configuration files:
@@ -149,7 +152,7 @@ The following variables can be set:
 
 'diff-options' (string)::
 
-	A space separate string of diff options to use in the diff view.
+	A space separated string of diff options to use in the diff view.
 	git-show(1) is used for formatting and always passes --patch-with-stat.
 	This option overrides any options specified in the TIG_DIFF_OPTS
 	environment variable (described in manpage:tig[1]), but is itself
@@ -161,6 +164,22 @@ The following variables can be set:
 	telling git-blame(1) how to detect the origin of lines. The value
 	is ignored when Tig is started in blame mode and given blame options
 	on the command line.
+
+'reference-format' (string)::
+
+	A space separated string of format strings used for formatting reference
+	names. Wrap the name of the reference type with the characters you would
+	like to use for formatting, e.g. `[tag]` and `<remote>`. If no format is
+	specified for `local-tag`, the format for `tag` is used. Similarly, if no
+	format is specified for `tracked-remote` the `remote` format is used.
+	Supported reference types are:
+	 - head			: The current HEAD.
+	 - tag			: A signed tag.
+	 - local-tag		: An unsigned tag.
+	 - remote		: A remote.
+	 - tracked-remote	: The remote tracked by current HEAD.
+	 - replace		: A replaced reference.
+	 - branch		: Any other reference.
 
 'line-graphics' (mixed) [ "ascii" | "default" | "utf-8" | bool]::
 

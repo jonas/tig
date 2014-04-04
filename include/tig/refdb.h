@@ -47,6 +47,7 @@ struct ref_format {
 };
 
 const struct ref_format *get_ref_format(struct ref *ref);
+enum status_code parse_ref_formats(const char *argv[]);
 
 #endif
 

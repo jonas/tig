@@ -16,6 +16,7 @@
 #include "tig/argv.h"
 #include "tig/io.h"
 #include "tig/repo.h"
+#include "tig/refdb.h"
 #include "tig/options.h"
 #include "tig/request.h"
 #include "tig/line.h"
@@ -421,6 +422,9 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "diff-options"))
 		return parse_args(&opt_diff_options, argv + 2);
+
+	if (!strcmp(argv[0], "reference-format"))
+		return parse_ref_formats(argv + 2);
 
 	if (argc != 3)
 		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;

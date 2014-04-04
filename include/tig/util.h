@@ -39,6 +39,7 @@
 	_(UNKNOWN_OPTION_COMMAND, "Unknown option command"), \
 	_(UNKNOWN_REQUEST_NAME, "Unknown request name"), \
 	_(UNKNOWN_VARIABLE_NAME, "Unknown variable name"), \
+	_(UNKNOWN_REF_FORMAT, "Unknown reference format"), \
 	_(UNMATCHED_QUOTATION, "Unmatched quotation"), \
 	_(WRONG_NUMBER_OF_ARGUMENTS, "Wrong number of arguments"), \
 	_(HOME_UNRESOLVABLE, "HOME environment variable could not be resolved"),

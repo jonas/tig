@@ -26,6 +26,17 @@ set wrap-lines			= no		# Wrap long lines in pager views?
 set tab-size			= 8		# Number of spaces to use when expanding tabs
 set line-graphics		= default	# Enum: ascii, default, utf-8
 
+# Format reference names based on type.
+#  - head		: The current HEAD.
+#  - tag		: A signed tag.
+#  - local-tag		: An unsigned tag.
+#  - remote		: A remote.
+#  - tracked-remote	: The remote tracked by current HEAD.
+#  - replace		: A replaced reference.
+#  - branch		: Any other reference.
+# Expects a space separated list of format strings.
+set reference-format		= [branch] <tag> {remote} ~replace~
+
 # Settings controlling how content is read from Git
 set commit-order		= default	# Enum: default, topo, date, reverse (main)
 set status-untracked-dirs	= yes		# Show files in untracked directories? (status)

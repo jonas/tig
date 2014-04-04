@@ -306,8 +306,9 @@ draw_refs(struct view *view, const struct ref_list *refs)
 	for (i = 0; i < refs->size; i++) {
 		struct ref *ref = refs->refs[i];
 		enum line_type type = get_line_type_from_ref(ref);
+		const struct ref_format *format = get_ref_format(ref);
 
-		if (draw_formatted(view, type, "[%s]", ref->name))
+		if (draw_formatted(view, type, "%s%s%s", format->start, ref->name, format->end))
 			return TRUE;
 
 		if (draw_text(view, LINE_DEFAULT, " "))

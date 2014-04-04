@@ -15,6 +15,7 @@
 #include "tig/argv.h"
 #include "tig/util.h"
 #include "tig/io.h"
+#include "tig/options.h"
 #include "tig/repo.h"
 #include "tig/refdb.h"
 
@@ -267,18 +268,85 @@ add_ref(const char *id, char *name, const char *remote_name, const char *head)
 	return add_to_refs(id, strlen(id), name, strlen(name), &opt);
 }
 
+static struct ref_format **ref_formats;
+
 const struct ref_format *
 get_ref_format(struct ref *ref)
 {
-	static const struct ref_format tag_format = { "[", "]" };
-	static const struct ref_format remote_format = { "<", ">" };
 	static const struct ref_format default_format = { "", "" };
 
-	if (ref_is_tag(ref))
-		return &tag_format;
-	if (ref_is_remote(ref))
-		return &remote_format;
+	if (ref_formats) {
+		struct ref_format *format = ref_formats[ref->type];
+
+		if (!format && ref_is_tag(ref))
+			format = ref_formats[REFERENCE_TAG];
+		if (!format && ref_is_remote(ref))
+			format = ref_formats[REFERENCE_REMOTE];
+		if (!format)
+			format = ref_formats[REFERENCE_BRANCH];
+		if (format)
+			return format;
+	}
+
 	return &default_format;
+}
+
+static enum status_code
+parse_ref_format_arg(const char *arg, const struct enum_map *map)
+{
+	size_t arglen = strlen(arg);
+	const char *pos;
+
+	for (pos = arg; *pos && arglen > 0; pos++, arglen--) {
+		enum reference_type type;
+
+		for (type = 0; type < map->size; type++) {
+			const struct enum_map_entry *entry = &map->entries[type];
+			struct ref_format *format;
+
+			if (arglen < entry->namelen ||
+			    string_enum_compare(pos, entry->name, entry->namelen))
+				continue;
+
+			format = malloc(sizeof(*format));
+			if (!format)
+				return ERROR_TOO_MANY_OPTION_ARGUMENTS;
+			format->start = strndup(arg, pos - arg);
+			format->end = strdup(pos + entry->namelen);
+			if (!format->start || !format->end) {
+				free((void *) format->start);
+				free((void *) format->end);
+				free(format);
+				return ERROR_TOO_MANY_OPTION_ARGUMENTS;
+			}
+
+			ref_formats[type] = format;
+			return SUCCESS;
+		}
+	}
+
+	return ERROR_UNKNOWN_REF_FORMAT;
+}
+
+enum status_code
+parse_ref_formats(const char *argv[])
+{
+	const struct enum_map *map = reference_type_map;
+	int argc;
+
+	if (!ref_formats) {
+		ref_formats = calloc(reference_type_map->size, sizeof(struct ref_format *));
+		if (!ref_formats)
+			return ERROR_OUT_OF_MEMORY;
+	}
+
+	for (argc = 0; argv[argc]; argc++) {
+		enum status_code code = parse_ref_format_arg(argv[argc], map);
+		if (code != SUCCESS)
+			return code;
+	}
+
+	return SUCCESS;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */
