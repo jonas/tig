@@ -101,6 +101,8 @@ struct view {
 	/* Searching */
 	char grep[SIZEOF_STR];	/* Search string */
 	regex_t *regex;		/* Pre-compiled regexp */
+	unsigned int *matched_line;
+	size_t matched_lines;
 
 	/* If non-NULL, points to the view that opened this view. If this view
 	 * is closed tig will switch back to the parent view. */

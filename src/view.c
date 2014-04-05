@@ -260,6 +260,8 @@ move_view(struct view *view, enum request request)
  * Searching
  */
 
+DEFINE_ALLOCATOR(realloc_unsigned_ints, unsigned int, 32)
+
 bool
 grep_text(struct view *view, const char *text[])
 {
@@ -292,11 +294,31 @@ select_view_line(struct view *view, unsigned long lineno)
 	}
 }
 
+static bool
+find_matches(struct view *view)
+{
+	size_t lineno;
+
+	/* Note, lineno is unsigned long so will wrap around in which case it
+	 * will become bigger than view->lines. */
+	for (lineno = 0; lineno < view->lines; lineno++) {
+		if (!view->ops->grep(view, &view->line[lineno]))
+			continue;
+
+		if (!realloc_unsigned_ints(&view->matched_line, view->matched_lines, 1))
+			return FALSE;
+
+		view->matched_line[view->matched_lines++] = lineno;
+	}
+
+	return TRUE;
+}
+
 void
 find_next(struct view *view, enum request request)
 {
-	unsigned long lineno = view->pos.lineno;
 	int direction;
+	size_t i;
 
 	if (!*view->grep) {
 		if (!*view->env->search)
@@ -321,20 +343,37 @@ find_next(struct view *view, enum request request)
 		return;
 	}
 
-	if (request == REQ_FIND_NEXT || request == REQ_FIND_PREV)
-		lineno += direction;
+	if (!view->matched_lines && !find_matches(view)) {
+		report("Allocation failure");
+		return;
+	}
 
-	/* Note, lineno is unsigned long so will wrap around in which case it
-	 * will become bigger than view->lines. */
-	for (; lineno < view->lines; lineno += direction) {
-		if (view->ops->grep(view, &view->line[lineno])) {
-			select_view_line(view, lineno);
-			report("Line %ld matches '%s'", lineno + 1, view->grep);
-			return;
-		}
+	/* Note, `i` is unsigned and will wrap around in which case it
+	 * will become bigger than view->matched_lines. */
+	i = direction > 0 ? 0 : view->matched_lines - 1;
+	for (; i < view->matched_lines; i += direction) {
+		size_t lineno = view->matched_line[i];
+
+		if (direction > 0 && lineno <= view->pos.lineno)
+			continue;
+
+		if (direction < 0 && lineno >= view->pos.lineno)
+			continue;
+
+		select_view_line(view, lineno);
+		report("Line %ld matches '%s' (%ld of %ld)", lineno + 1, view->grep, i + 1, view->matched_lines);
+		return;
 	}
 
 	report("No match found for '%s'", view->grep);
+}
+
+static void
+reset_matches(struct view *view)
+{
+	free(view->matched_line);
+	view->matched_line = NULL;
+	view->matched_lines = 0;
 }
 
 void
@@ -362,6 +401,8 @@ search_view(struct view *view, enum request request)
 	}
 
 	string_copy(view->grep, view->env->search);
+
+	reset_matches(view);
 
 	find_next(view, request);
 }
@@ -439,6 +480,7 @@ reset_view(struct view *view)
 		free(view->line[i].data);
 	free(view->line);
 
+	reset_matches(view);
 	view->prev_pos = view->pos;
 	clear_position(&view->pos);
 
