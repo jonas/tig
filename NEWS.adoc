@@ -27,6 +27,8 @@ Incompatibilities:
    to restore it: `bind generic G ?git gc`.
  - To support view specific colors, '.' can no longer be used interchangeably
    with '-' and '_' in settings names and in particular color names.
+ - Replace 'stage-next' action with prompt command using a predefined search
+   (see below) and add binding (`@` by default) to also work in the diff view.
 
 Improvements:
 

@@ -43,7 +43,6 @@
 	REQ_(STATUS_REVERT,	"Revert chunk or file changes"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
 	REQ_(STAGE_UPDATE_LINE,	"Stage/unstage single line"), \
-	REQ_(STAGE_NEXT,	"Jump to next diff chunk"), \
 	REQ_(STAGE_SPLIT_CHUNK,	"Split current diff chunk"), \
 	\
 	REQ_GROUP("Cursor navigation") \

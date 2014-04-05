@@ -137,10 +137,11 @@ bind status	M	status-merge		# Open git-mergetool(1)
 bind stage	u	status-update		# Stage/unstage current diff (c)hunk
 bind stage	1	stage-update-line	# Stage/unstage current line
 bind stage	!	status-revert		# Revert current diff (c)hunk
-bind stage	@	stage-next		# Jump to next (c)hunk
 bind stage	\	stage-split-chunk	# Split current diff (c)hunk
+bind stage	@	:/^@@			# Jump to next (c)hunk
 bind stage	[	:toggle diff-context -1 # Decrease the diff context
 bind stage	]	:toggle diff-context +1	# Increase the diff context
+bind diff	@	:/^@@			# Jump to next (c)hunk
 bind diff	[	:toggle diff-context -1
 bind diff	]	:toggle diff-context +1
 

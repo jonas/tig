@@ -346,7 +346,7 @@ Examples:
 
 --------------------------------------------------------------------------
 # Add keybinding to quickly jump to the next diff chunk in the stage view
-bind stage Enter stage-next
+bind stage Enter :/^@@
 
 # Disable the default mapping for running git-gc
 bind generic G none
@@ -584,7 +584,6 @@ View specific actions
 |status-revert           |Revert chunk or file changes
 |status-merge            |Merge file using external tool
 |stage-update-line       |Stage/unstage single line
-|stage-next              |Jump to next diff chunk
 |stage-split-chunk       |Split current diff chunk
 |=============================================================================
 

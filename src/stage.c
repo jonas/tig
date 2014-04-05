@@ -24,12 +24,8 @@
 #include "tig/diff.h"
 #include "tig/status.h"
 
-DEFINE_ALLOCATOR(realloc_ints, int, 32)
-
 struct stage_state {
 	struct diff_state diff;
-	size_t chunks;
-	int *chunk;
 };
 
 static inline bool
@@ -206,38 +202,6 @@ stage_revert(struct view *view, struct line *line)
 	}
 }
 
-
-static void
-stage_next(struct view *view, struct line *line)
-{
-	struct stage_state *state = view->private;
-	int i;
-
-	if (!state->chunks) {
-		for (line = view->line; view_has_line(view, line); line++) {
-			if (line->type != LINE_DIFF_CHUNK)
-				continue;
-
-			if (!realloc_ints(&state->chunk, state->chunks, 1)) {
-				report("Allocation failure");
-				return;
-			}
-
-			state->chunk[state->chunks++] = line - view->line;
-		}
-	}
-
-	for (i = 0; i < state->chunks; i++) {
-		if (state->chunk[i] > view->pos.lineno) {
-			do_scroll_view(view, state->chunk[i] - view->pos.lineno);
-			report("Chunk %d of %zd", i + 1, state->chunks);
-			return;
-		}
-	}
-
-	report("No next chunk found");
-}
-
 static struct line *
 stage_insert_chunk(struct view *view, struct chunk_header *header,
 		   struct line *from, struct line *to, struct line *last_unchanged_line)
@@ -365,14 +329,6 @@ stage_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		break;
 
-	case REQ_STAGE_NEXT:
-		if (stage_line_type == LINE_STAT_UNTRACKED) {
-			report("File is untracked; press %s to add",
-			       get_view_key(view, REQ_STATUS_UPDATE));
-			return REQ_NONE;
-		}
-		stage_next(view, line);
-		return REQ_NONE;
 
 	case REQ_STAGE_SPLIT_CHUNK:
 		if (stage_line_type == LINE_STAT_UNTRACKED ||
