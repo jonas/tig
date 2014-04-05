@@ -424,10 +424,13 @@ view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 		}
 
 		case VIEW_COLUMN_ID:
-			if (!width && draw_id(view, columns.id))
-				return TRUE;
-			else if (opt_show_id && draw_id_custom(view, LINE_ID, columns.id, width))
-				return TRUE;
+			if (!width) {
+				if (draw_id(view, columns.id))
+					return TRUE;
+			} else if (opt_show_id) {
+				if (draw_id_custom(view, LINE_ID, columns.id, width))
+					return TRUE;
+			}
 			continue;
 
 		case VIEW_COLUMN_LINE_NUMBER:
