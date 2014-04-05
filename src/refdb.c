@@ -37,8 +37,8 @@ compare_refs(const void *ref1_, const void *ref2_)
 	const struct ref *ref2 = *(const struct ref **)ref2_;
 
 	if (ref1->type != ref2->type)
-		return ref2->type - ref1->type;
-	return strcmp(ref1->name, ref2->name);
+		return ref1->type - ref2->type;
+	return strcmp_numeric(ref1->name, ref2->name);
 }
 
 void

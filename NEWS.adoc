@@ -66,6 +66,7 @@ Improvements:
  - Adjust author width automatically. (GH #49)
  - Make reference label formatting configurable, for example:
    `set reference-format = (branch) <tags> remote`. (GH #201)
+ - Rename 'branch' view to 'refs' view and show tags. (GH #134)
 
 Bug fixes:
 

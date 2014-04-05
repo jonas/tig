@@ -146,9 +146,6 @@ refs_open_visitor(void *data, const struct ref *ref)
 	bool is_all = ref == refs_all;
 	struct line *line;
 
-	if (ref_is_tag(ref))
-		return TRUE;
-
 	line = add_line_alloc(view, &reference, LINE_DEFAULT, 0, is_all);
 	if (!line)
 		return FALSE;

@@ -162,6 +162,33 @@ strcmp_null(const char *s1, const char *s2)
 	return strcmp(s1, s2);
 }
 
+int
+strcmp_numeric(const char *s1, const char *s2)
+{
+	int number = 0;
+	int num1, num2;
+
+	for (; *s1 && *s2 && *s1 == *s2; s1++, s2++) {
+		int c = *s1;
+
+		if (isdigit(c)) {
+			number = 10 * number + (c - '0');
+		} else {
+			number = 0;
+		}
+	}
+
+	num1 = number * 10 + atoi(s1);
+	num2 = number * 10 + atoi(s2);
+
+	if (num1 != num2)
+		return num2 - num1;
+
+	if (!!*s1 != !!*s2)
+		return !!*s2 - !!*s1;
+	return *s1 - *s2;
+}
+
 /*
  * Unicode / UTF-8 handling
  *

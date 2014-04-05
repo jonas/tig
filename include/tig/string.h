@@ -97,6 +97,7 @@ bool PRINTF_LIKE(4, 5) string_nformat(char *buf, size_t bufsize, size_t *bufpos,
 	string_nformat(buf, sizeof(buf), from, fmt, args)
 
 int strcmp_null(const char *s1, const char *s2);
+int strcmp_numeric(const char *s1, const char *s2);
 
 /*
  * Unicode / UTF-8 handling
