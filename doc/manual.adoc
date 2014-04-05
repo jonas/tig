@@ -113,8 +113,8 @@ The blob view::
 The blame view::
 	Displays the file content annotated or blamed by commits.
 
-The branch view::
-	Displays the branches in the repository.
+The refs view::
+	Displays the branches, remotes and tags in the repository.
 
 The status view::
 	Displays status of files in the working tree and allows changes to be
@@ -302,7 +302,7 @@ View Switching
 |t	|Switch to (directory) tree view.
 |f	|Switch to (file) blob view.
 |B	|Switch to blame view.
-|H	|Switch to branch view.
+|H	|Switch to refs view.
 |y	|Switch to stash view.
 |h	|Switch to help view
 |S	|Switch to status view
