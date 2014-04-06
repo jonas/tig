@@ -1005,7 +1005,7 @@ view_columns_info_changed(struct view *view, bool update)
 	int i;
 
 	for (i = 0; i < view->ops->columns_size; i++) {
-		enum view_column column = view->ops->columns[i];
+		enum view_column_type column = view->ops->columns[i];
 		struct column_info *info = &view->columns_info[i];
 		unsigned long option = 0;
 
@@ -1070,7 +1070,7 @@ view_columns_info_update(struct view *view, struct line *line)
 		return FALSE;
 
 	for (i = 0; i < view->ops->columns_size; i++) {
-		enum view_column column = view->ops->columns[i];
+		enum view_column_type column = view->ops->columns[i];
 		const char *text = NULL;
 
 		switch (column) {

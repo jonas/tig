@@ -139,7 +139,7 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(graphic, GRAPHIC_ENUM) \
 	_(ignore_space, IGNORE_SPACE_ENUM) \
 	_(vertical_split, VERTICAL_SPLIT_ENUM) \
-	_(view_column, VIEW_COLUMN_ENUM) \
+	_(view_column_type, VIEW_COLUMN_ENUM) \
 	_(reference_type, REFERENCE_ENUM) \
 
 #define DEFINE_ENUMS(name, macro) DEFINE_ENUM(name, macro);

@@ -302,7 +302,7 @@ blame_read(struct view *view, char *line)
 	return TRUE;
 }
 
-static const enum view_column blame_columns[] = {
+static const enum view_column_type blame_columns[] = {
 	VIEW_COLUMN_DATE,
 	VIEW_COLUMN_AUTHOR,
 	VIEW_COLUMN_FILE_NAME,

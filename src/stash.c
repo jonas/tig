@@ -34,7 +34,7 @@ stash_select(struct view *view, struct line *line)
 	string_copy(view->ref, view->env->stash);
 }
 
-static const enum view_column stash_columns[] = {
+static const enum view_column_type stash_columns[] = {
 	VIEW_COLUMN_LINE_NUMBER,
 	VIEW_COLUMN_ID,
 	VIEW_COLUMN_DATE,

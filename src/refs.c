@@ -35,7 +35,7 @@ static const struct ref *refs_all;
 #define REFS_ALL_NAME	"All references"
 #define refs_is_all(reference) ((reference)->ref == refs_all)
 
-static const enum view_column refs_columns[] = {
+static const enum view_column_type refs_columns[] = {
 	VIEW_COLUMN_LINE_NUMBER,
 	VIEW_COLUMN_DATE,
 	VIEW_COLUMN_AUTHOR,

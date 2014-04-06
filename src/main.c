@@ -224,7 +224,7 @@ main_get_commit_refs(const struct line *line, struct commit *commit)
 	return refs;
 }
 
-static const enum view_column main_columns[] = {
+static const enum view_column_type main_columns[] = {
 	VIEW_COLUMN_LINE_NUMBER,
 	VIEW_COLUMN_ID,
 	VIEW_COLUMN_DATE,

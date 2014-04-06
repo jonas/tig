@@ -398,7 +398,7 @@ view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 		return TRUE;
 
 	for (i = 0; i < view->ops->columns_size; i++) {
-		enum view_column column = view->ops->columns[i];
+		enum view_column_type column = view->ops->columns[i];
 		int width = view->columns_info[i].width;
 
 		switch (column) {
