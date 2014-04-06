@@ -132,7 +132,7 @@ refs_read(struct view *view, char *line)
 			string_expand(reference->title, sizeof(reference->title), title, 1);
 
 		view->line[i].dirty = TRUE;
-		view_columns_info_update(view, &view->line[i]);
+		view_column_info_update(view, &view->line[i]);
 	}
 
 	return TRUE;
@@ -151,7 +151,7 @@ refs_open_visitor(void *data, const struct ref *ref)
 		return FALSE;
 
 	reference->ref = ref;
-	view_columns_info_update(view, line);
+	view_column_info_update(view, line);
 
 	return TRUE;
 }
@@ -207,9 +207,9 @@ static struct view_ops refs_ops = {
 	0,
 	refs_open,
 	refs_read,
-	view_columns_draw,
+	view_column_draw,
 	refs_request,
-	view_columns_grep,
+	view_column_grep,
 	refs_select,
 	NULL,
 	refs_get_column_data,

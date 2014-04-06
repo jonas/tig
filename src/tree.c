@@ -212,7 +212,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 			entry->author = state->author;
 			entry->time = state->author_time;
 			line->dirty = 1;
-			view_columns_info_update(view, line);
+			view_column_info_update(view, line);
 			break;
 		}
 
@@ -269,7 +269,7 @@ tree_read(struct view *view, char *text)
 	if (!entry)
 		return FALSE;
 	data = entry->data;
-	view_columns_info_update(view, entry);
+	view_column_info_update(view, entry);
 
 	/* Skip "Directory ..." and ".." line. */
 	for (line = &view->line[1 + !!*view->env->directory]; line < entry; line++) {
@@ -302,7 +302,7 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 		return TRUE;
 	}
 
-	return view_columns_draw(view, line, lineno);
+	return view_column_draw(view, line, lineno);
 }
 
 void
@@ -477,7 +477,7 @@ static struct view_ops tree_ops = {
 	tree_read,
 	tree_draw,
 	tree_request,
-	view_columns_grep,
+	view_column_grep,
 	tree_select,
 	NULL,
 	tree_get_column_data,

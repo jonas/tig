@@ -65,7 +65,7 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 	memset(template, 0, sizeof(*template));
 	state->reflogmsg[0] = 0;
 
-	view_columns_info_update(view, line);
+	view_column_info_update(view, line);
 	return commit;
 }
 
@@ -520,9 +520,9 @@ static struct view_ops main_ops = {
 	sizeof(struct main_state),
 	main_open,
 	main_read,
-	view_columns_draw,
+	view_column_draw,
 	main_request,
-	view_columns_grep,
+	view_column_grep,
 	main_select,
 	main_done,
 	main_get_column_data,

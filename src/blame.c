@@ -291,7 +291,7 @@ blame_read(struct view *view, char *line)
 			if (blame && blame->commit == state->commit) {
 				line->dirty = 1;
 				if (update_view_columns)
-					view_columns_info_update(view, line);
+					view_column_info_update(view, line);
 				update_view_columns = FALSE;
 			}
 		}
@@ -561,7 +561,7 @@ static struct view_ops blame_ops = {
 	blame_read,
 	blame_draw,
 	blame_request,
-	view_columns_grep,
+	view_column_grep,
 	blame_select,
 	NULL,
 	blame_get_column_data,

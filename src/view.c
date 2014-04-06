@@ -798,7 +798,7 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 			else
 				memset(view->columns_info, 0, sizeof(*view->columns_info)
 						* view->ops->columns_size);
-			view_columns_info_init(view);
+			view_column_info_init(view);
 		}
 
 		if (!view->ops->open(view, flags))
@@ -975,7 +975,7 @@ grep_refs(struct view *view, const struct ref_list *list)
 }
 
 bool
-view_columns_grep(struct view *view, struct line *line)
+view_column_grep(struct view *view, struct line *line)
 {
 	struct view_column_data column_data = {};
 	bool ok = view->ops->get_column_data(view, line, &column_data);
@@ -999,7 +999,7 @@ view_columns_grep(struct view *view, struct line *line)
 }
 
 bool
-view_columns_info_changed(struct view *view, bool update)
+view_column_info_changed(struct view *view, bool update)
 {
 	bool changed = FALSE;
 	int i;
@@ -1050,17 +1050,17 @@ view_columns_info_changed(struct view *view, bool update)
 }
 
 void
-view_columns_info_init(struct view *view)
+view_column_info_init(struct view *view)
 {
 	int i;
 
-	view_columns_info_changed(view, TRUE);
+	view_column_info_changed(view, TRUE);
 	for (i = 0; i < view->ops->columns_size; i++)
 		view->columns_info[i].width = 0;
 }
 
 bool
-view_columns_info_update(struct view *view, struct line *line)
+view_column_info_update(struct view *view, struct line *line)
 {
 	struct view_column_data column_data = {};
 	bool changed = FALSE;

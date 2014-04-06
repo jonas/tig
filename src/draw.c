@@ -389,7 +389,7 @@ draw_graph(struct view *view, const struct graph_canvas *canvas)
 }
 
 bool
-view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
+view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct view_column_data column_data = {};
 	int i;
@@ -533,12 +533,12 @@ redraw_view_from(struct view *view, int lineno)
 {
 	assert(0 <= lineno && lineno < view->height);
 
-	if (view->columns_info && view_columns_info_changed(view, FALSE)) {
+	if (view->columns_info && view_column_info_changed(view, FALSE)) {
 		int i;
 
-		view_columns_info_init(view);
+		view_column_info_init(view);
 		for (i = 0; i < view->lines; i++) {
-			view_columns_info_update(view, &view->line[i]);
+			view_column_info_update(view, &view->line[i]);
 		}
 	}
 

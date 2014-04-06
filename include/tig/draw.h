@@ -40,7 +40,7 @@ bool draw_id_custom(struct view *view, enum line_type type, const char *id, int 
 bool draw_filename(struct view *view, const char *filename, bool auto_enabled, mode_t mode, int width);
 bool draw_lineno(struct view *view, unsigned int lineno);
 bool draw_lineno_custom(struct view *view, unsigned int lineno, bool show, int interval);
-bool view_columns_draw(struct view *view, struct line *line, unsigned int lineno);
+bool view_column_draw(struct view *view, struct line *line, unsigned int lineno);
 
 #define draw_commit_title(view, text, offset) \
 	draw_text_overflow(view, text, opt_title_overflow > 0, opt_title_overflow + offset, LINE_DEFAULT)
