@@ -391,10 +391,10 @@ draw_graph(struct view *view, const struct graph_canvas *canvas)
 bool
 view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 {
-	struct view_columns columns = {};
+	struct view_column_data column_data = {};
 	int i;
 
-	if (!view->ops->get_columns(view, line, &columns))
+	if (!view->ops->get_column_data(view, line, &column_data))
 		return TRUE;
 
 	for (i = 0; i < view->ops->columns_size; i++) {
@@ -403,18 +403,18 @@ view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 
 		switch (column) {
 		case VIEW_COLUMN_DATE:
-			if (draw_date(view, columns.date))
+			if (draw_date(view, column_data.date))
 				return TRUE;
 			continue;
 
 		case VIEW_COLUMN_AUTHOR:
-			if (draw_author(view, columns.author, opt_author_width ? opt_author_width : width))
+			if (draw_author(view, column_data.author, opt_author_width ? opt_author_width : width))
 				return TRUE;
 			continue;
 
 		case VIEW_COLUMN_REF:
 		{
-			const struct ref *ref = columns.ref;
+			const struct ref *ref = column_data.ref;
 			enum line_type type = !ref || !ref->valid ? LINE_DEFAULT : get_line_type_from_ref(ref);
 			const char *name = ref ? ref->name : NULL;
 
@@ -425,10 +425,10 @@ view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 
 		case VIEW_COLUMN_ID:
 			if (!width) {
-				if (draw_id(view, columns.id))
+				if (draw_id(view, column_data.id))
 					return TRUE;
 			} else if (opt_show_id) {
-				if (draw_id_custom(view, LINE_ID, columns.id, width))
+				if (draw_id_custom(view, LINE_ID, column_data.id, width))
 					return TRUE;
 			}
 			continue;
@@ -439,33 +439,33 @@ view_columns_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_MODE:
-			if (draw_mode(view, columns.mode ? *columns.mode : 0))
+			if (draw_mode(view, column_data.mode ? *column_data.mode : 0))
 				return TRUE;
 			continue;
 
 		case VIEW_COLUMN_FILE_SIZE:
-			if (draw_file_size(view, columns.file_size ? *columns.file_size : 0, width, !columns.mode || S_ISDIR(*columns.mode)))
+			if (draw_file_size(view, column_data.file_size ? *column_data.file_size : 0, width, !column_data.mode || S_ISDIR(*column_data.mode)))
 				return TRUE;
 			continue;
 
 		case VIEW_COLUMN_COMMIT_TITLE:
-			if (columns.graph && draw_graph(view, columns.graph))
+			if (column_data.graph && draw_graph(view, column_data.graph))
 				return TRUE;
-			if (columns.refs && draw_refs(view, columns.refs))
+			if (column_data.refs && draw_refs(view, column_data.refs))
 				return TRUE;
-			if (draw_commit_title(view, columns.commit_title, 0))
+			if (draw_commit_title(view, column_data.commit_title, 0))
 				return TRUE;
 			continue;
 
 		case VIEW_COLUMN_FILE_NAME:
-			if (draw_filename(view, columns.file_name, TRUE,
-					  columns.mode ? *columns.mode : 0,
+			if (draw_filename(view, column_data.file_name, TRUE,
+					  column_data.mode ? *column_data.mode : 0,
 					  opt_show_filename_width ? opt_show_filename_width : width))
 				return TRUE;
 			continue;
 
 		case VIEW_COLUMN_TEXT:
-			if (draw_text(view, line->type, columns.text))
+			if (draw_text(view, line->type, column_data.text))
 				return TRUE;
 			continue;
 		}

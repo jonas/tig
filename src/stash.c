@@ -54,7 +54,7 @@ static struct view_ops stash_ops = {
 	view_columns_grep,
 	stash_select,
 	main_done,
-	main_get_columns,
+	main_get_column_data,
 	stash_columns,
 	ARRAY_SIZE(stash_columns),
 };

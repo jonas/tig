@@ -38,7 +38,7 @@ struct main_state {
 	bool with_graph;
 };
 
-bool main_get_columns(struct view *view, const struct line *line, struct view_columns *columns);
+bool main_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data);
 bool main_read(struct view *view, char *line);
 enum request main_request(struct view *view, enum request request, struct line *line);
 void main_select(struct view *view, struct line *line);

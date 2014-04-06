@@ -890,47 +890,47 @@ sort_view_compare(const void *l1, const void *l2)
 {
 	const struct line *line1 = l1;
 	const struct line *line2 = l2;
-	struct view_columns columns1 = {};
-	struct view_columns columns2 = {};
+	struct view_column_data column_data1 = {};
+	struct view_column_data column_data2 = {};
 	struct sort_state *sort = &sorting_view->sort;
 
-	if (!sorting_view->ops->get_columns(sorting_view, line1, &columns1))
+	if (!sorting_view->ops->get_column_data(sorting_view, line1, &column_data1))
 		return -1;
-	else if (!sorting_view->ops->get_columns(sorting_view, line2, &columns2))
+	else if (!sorting_view->ops->get_column_data(sorting_view, line2, &column_data2))
 		return 1;
 
 	switch (get_sort_field(sorting_view)) {
 	case VIEW_COLUMN_AUTHOR:
-		return sort_order(sort, ident_compare, columns1.author, columns2.author);
+		return sort_order(sort, ident_compare, column_data1.author, column_data2.author);
 
 	case VIEW_COLUMN_DATE:
-		return sort_order(sort, timecmp, columns1.date, columns2.date);
+		return sort_order(sort, timecmp, column_data1.date, column_data2.date);
 
 	case VIEW_COLUMN_ID:
-		return sort_order(sort, strcmp, columns1.id, columns2.id);
+		return sort_order(sort, strcmp, column_data1.id, column_data2.id);
 
 	case VIEW_COLUMN_FILE_NAME:
-		if (columns1.mode != columns2.mode)
-			return sort_order_reverse(sort, S_ISDIR(*columns1.mode) ? -1 : 1);
-		return sort_order(sort, strcmp, columns1.file_name, columns2.file_name);
+		if (column_data1.mode != column_data2.mode)
+			return sort_order_reverse(sort, S_ISDIR(*column_data1.mode) ? -1 : 1);
+		return sort_order(sort, strcmp, column_data1.file_name, column_data2.file_name);
 
 	case VIEW_COLUMN_FILE_SIZE:
-		return sort_order(sort, number_compare, columns1.file_size, columns2.file_size);
+		return sort_order(sort, number_compare, column_data1.file_size, column_data2.file_size);
 
 	case VIEW_COLUMN_LINE_NUMBER:
 		return sort_order_reverse(sort, line2->lineno - line1->lineno);
 
 	case VIEW_COLUMN_MODE:
-		return sort_order(sort, number_compare, columns1.mode, columns2.mode);
+		return sort_order(sort, number_compare, column_data1.mode, column_data2.mode);
 
 	case VIEW_COLUMN_REF:
-		return sort_order(sort, ref_compare, columns1.ref, columns2.ref);
+		return sort_order(sort, ref_compare, column_data1.ref, column_data2.ref);
 
 	case VIEW_COLUMN_COMMIT_TITLE:
-		return sort_order(sort, strcmp, columns1.commit_title, columns2.commit_title);
+		return sort_order(sort, strcmp, column_data1.commit_title, column_data2.commit_title);
 
 	case VIEW_COLUMN_TEXT:
-		return sort_order(sort, strcmp, columns1.text, columns2.text);
+		return sort_order(sort, strcmp, column_data1.text, column_data2.text);
 
 	}
 
@@ -977,22 +977,22 @@ grep_refs(struct view *view, const struct ref_list *list)
 bool
 view_columns_grep(struct view *view, struct line *line)
 {
-	struct view_columns columns = {};
-	bool has_columns = view->ops->get_columns(view, line, &columns);
+	struct view_column_data column_data = {};
+	bool ok = view->ops->get_column_data(view, line, &column_data);
 	const char *text[] = {
-		has_columns && columns.author ? mkauthor(columns.author, opt_author_width, opt_show_author) : "",
-		has_columns && columns.date ? mkdate(columns.date, opt_show_date) : "",
-		has_columns && columns.file_name ? columns.file_name : "",
-		has_columns && columns.file_size ? mkfilesize(*columns.file_size, opt_show_file_size) : "",
-		has_columns && columns.id && opt_show_id ? columns.id : "",
-		has_columns && columns.mode ? mkmode(*columns.mode) : "",
-		has_columns && columns.commit_title ? columns.commit_title : "",
-		has_columns && columns.ref ? columns.ref->name : "",
-		has_columns && columns.text ? columns.text : "",
+		ok && column_data.author ? mkauthor(column_data.author, opt_author_width, opt_show_author) : "",
+		ok && column_data.date ? mkdate(column_data.date, opt_show_date) : "",
+		ok && column_data.file_name ? column_data.file_name : "",
+		ok && column_data.file_size ? mkfilesize(*column_data.file_size, opt_show_file_size) : "",
+		ok && column_data.id && opt_show_id ? column_data.id : "",
+		ok && column_data.mode ? mkmode(*column_data.mode) : "",
+		ok && column_data.commit_title ? column_data.commit_title : "",
+		ok && column_data.ref ? column_data.ref->name : "",
+		ok && column_data.text ? column_data.text : "",
 		NULL
 	};
 
-	if (has_columns && grep_refs(view, columns.refs))
+	if (ok && grep_refs(view, column_data.refs))
 		return TRUE;
 
 	return grep_text(view, text);
@@ -1062,11 +1062,11 @@ view_columns_info_init(struct view *view)
 bool
 view_columns_info_update(struct view *view, struct line *line)
 {
-	struct view_columns columns = {};
+	struct view_column_data column_data = {};
 	bool changed = FALSE;
 	int i;
 
-	if (!view->ops->get_columns(view, line, &columns))
+	if (!view->ops->get_column_data(view, line, &column_data))
 		return FALSE;
 
 	for (i = 0; i < view->ops->columns_size; i++) {
@@ -1075,33 +1075,33 @@ view_columns_info_update(struct view *view, struct line *line)
 
 		switch (column) {
 		case VIEW_COLUMN_AUTHOR:
-			if (columns.author)
-				text = mkauthor(columns.author, opt_author_width, opt_show_author);
+			if (column_data.author)
+				text = mkauthor(column_data.author, opt_author_width, opt_show_author);
 			break;
 
 		case VIEW_COLUMN_DATE:
-			if (columns.date)
-				text = mkdate(columns.date, opt_show_date);
+			if (column_data.date)
+				text = mkdate(column_data.date, opt_show_date);
 			break;
 
 		case VIEW_COLUMN_REF:
-			if (columns.ref)
-				text = columns.ref->name;
+			if (column_data.ref)
+				text = column_data.ref->name;
 			break;
 
 		case VIEW_COLUMN_FILE_NAME:
-			if (columns.file_name)
-				text = columns.file_name;
+			if (column_data.file_name)
+				text = column_data.file_name;
 			break;
 
 		case VIEW_COLUMN_FILE_SIZE:
-			if (columns.file_size)
-				text = mkfilesize(*columns.file_size, opt_show_file_size);
+			if (column_data.file_size)
+				text = mkfilesize(*column_data.file_size, opt_show_file_size);
 			break;
 
 		case VIEW_COLUMN_ID:
-			if (columns.id && !iscommit(columns.id))
-				text = columns.id;
+			if (column_data.id && !iscommit(column_data.id))
+				text = column_data.id;
 			break;
 
 		case VIEW_COLUMN_COMMIT_TITLE:

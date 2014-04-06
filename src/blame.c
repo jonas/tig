@@ -312,21 +312,21 @@ static const enum view_column blame_columns[] = {
 };
 
 bool
-blame_get_columns(struct view *view, const struct line *line, struct view_columns *columns)
+blame_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
 	struct blame_state *state = view->private;
 	struct blame *blame = line->data;
 
 	if (blame->commit) {
-		columns->id = blame->commit->id;
-		columns->author = blame->commit->author;
+		column_data->id = blame->commit->id;
+		column_data->author = blame->commit->author;
 		if (opt_show_filename != FILENAME_AUTO || state->auto_filename_display || view->pipe)
-			columns->file_name = blame->commit->filename;
-		columns->date = &blame->commit->time;
-		columns->commit_title = blame->commit->title;
+			column_data->file_name = blame->commit->filename;
+		column_data->date = &blame->commit->time;
+		column_data->commit_title = blame->commit->title;
 	}
 
-	columns->text = blame->text;
+	column_data->text = blame->text;
 
 	return TRUE;
 }
@@ -564,7 +564,7 @@ static struct view_ops blame_ops = {
 	view_columns_grep,
 	blame_select,
 	NULL,
-	blame_get_columns,
+	blame_get_column_data,
 	blame_columns,
 	ARRAY_SIZE(blame_columns),
 };

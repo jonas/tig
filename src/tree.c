@@ -109,20 +109,20 @@ static const enum view_column tree_columns[] = {
 };
 
 static bool
-tree_get_columns(struct view *view, const struct line *line, struct view_columns *columns)
+tree_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
 	const struct tree_entry *entry = line->data;
 
 	if (line->type == LINE_TREE_HEAD)
 		return FALSE;
 
-	columns->author = entry->author;
-	columns->date = &entry->time;
+	column_data->author = entry->author;
+	column_data->date = &entry->time;
 	if (line->type != LINE_DIRECTORY)
-		columns->file_size = &entry->size;
-	columns->id = entry->commit;
-	columns->mode = &entry->mode;
-	columns->file_name = entry->name;
+		column_data->file_size = &entry->size;
+	column_data->id = entry->commit;
+	column_data->mode = &entry->mode;
+	column_data->file_name = entry->name;
 
 	return TRUE;
 }
@@ -480,7 +480,7 @@ static struct view_ops tree_ops = {
 	view_columns_grep,
 	tree_select,
 	NULL,
-	tree_get_columns,
+	tree_get_column_data,
 	tree_columns,
 	ARRAY_SIZE(tree_columns),
 };

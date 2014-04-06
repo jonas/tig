@@ -158,7 +158,7 @@ enum open_flags {
 #define open_in_pager_mode(flags) ((flags) & OPEN_PAGER_MODE)
 #define open_from_stdin(flags) ((flags) & OPEN_STDIN)
 
-struct view_columns {
+struct view_column_data {
 	const struct ident *author;
 	const char *commit_title;
 	const struct time *date;
@@ -196,7 +196,7 @@ struct view_ops {
 	/* Release resources when reloading the view */
 	void (*done)(struct view *view);
 	/* Extract line information. */
-	bool (*get_columns)(struct view *view, const struct line *line, struct view_columns *columns);
+	bool (*get_column_data)(struct view *view, const struct line *line, struct view_column_data *column_data);
 	const enum view_column *columns;
 	size_t columns_size;
 };

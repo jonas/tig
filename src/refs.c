@@ -45,15 +45,15 @@ static const enum view_column refs_columns[] = {
 };
 
 static bool
-refs_get_columns(struct view *view, const struct line *line, struct view_columns *columns)
+refs_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
 	const struct reference *reference = line->data;
 
-	columns->author = reference->author;
-	columns->date = &reference->time;
-	columns->id = reference->ref->id;
-	columns->ref = reference->ref;
-	columns->commit_title = reference->title;
+	column_data->author = reference->author;
+	column_data->date = &reference->time;
+	column_data->id = reference->ref->id;
+	column_data->ref = reference->ref;
+	column_data->commit_title = reference->title;
 
 	return TRUE;
 }
@@ -212,7 +212,7 @@ static struct view_ops refs_ops = {
 	view_columns_grep,
 	refs_select,
 	NULL,
-	refs_get_columns,
+	refs_get_column_data,
 	refs_columns,
 	ARRAY_SIZE(refs_columns),
 };

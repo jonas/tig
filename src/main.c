@@ -233,25 +233,25 @@ static const enum view_column main_columns[] = {
 };
 
 bool
-main_get_columns(struct view *view, const struct line *line, struct view_columns *columns)
+main_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
 	struct main_state *state = view->private;
 	struct commit *commit = line->data;
 	struct ref_list *refs = NULL;
 
-	columns->author = commit->author;
-	columns->date = &commit->time;
+	column_data->author = commit->author;
+	column_data->date = &commit->time;
 	if (state->reflogs)
-		columns->id = state->reflog[line->lineno - 1];
+		column_data->id = state->reflog[line->lineno - 1];
 	else
-		columns->id = commit->id;
+		column_data->id = commit->id;
 
-	columns->commit_title = commit->title;
+	column_data->commit_title = commit->title;
 	if (state->with_graph)
-		columns->graph = &commit->graph;
+		column_data->graph = &commit->graph;
 
 	if ((refs = main_get_commit_refs(line, commit)))
-		columns->refs = refs;
+		column_data->refs = refs;
 
 	return TRUE;
 }
@@ -525,7 +525,7 @@ static struct view_ops main_ops = {
 	view_columns_grep,
 	main_select,
 	main_done,
-	main_get_columns,
+	main_get_column_data,
 	main_columns,
 	ARRAY_SIZE(main_columns),
 };
