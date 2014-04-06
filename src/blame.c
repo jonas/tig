@@ -88,6 +88,15 @@ blame_detect_filename_display(struct view *view)
 	return show_filenames;
 }
 
+static const enum view_column_type blame_columns[] = {
+	VIEW_COLUMN_DATE,
+	VIEW_COLUMN_AUTHOR,
+	VIEW_COLUMN_FILE_NAME,
+	VIEW_COLUMN_ID,
+	VIEW_COLUMN_LINE_NUMBER,
+	VIEW_COLUMN_TEXT,
+};
+
 static bool
 blame_open(struct view *view, enum open_flags flags)
 {
@@ -95,6 +104,8 @@ blame_open(struct view *view, enum open_flags flags)
 	const char *file_argv[] = { repo.cdup, view->env->file , NULL };
 	char path[SIZEOF_STR];
 	size_t i;
+
+	view_column_init(view, blame_columns, ARRAY_SIZE(blame_columns));
 
 	if (is_initial_view(view)) {
 		/* Finish validating and setting up blame options */
@@ -302,15 +313,6 @@ blame_read(struct view *view, char *line)
 	return TRUE;
 }
 
-static const enum view_column_type blame_columns[] = {
-	VIEW_COLUMN_DATE,
-	VIEW_COLUMN_AUTHOR,
-	VIEW_COLUMN_FILE_NAME,
-	VIEW_COLUMN_ID,
-	VIEW_COLUMN_LINE_NUMBER,
-	VIEW_COLUMN_TEXT,
-};
-
 bool
 blame_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
@@ -364,11 +366,11 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_date(view, time))
 		return TRUE;
 
-	if (draw_author(view, author, opt_author_width ? opt_author_width : view->columns_info[1].width))
+	if (draw_author(view, author, opt_author_width ? opt_author_width : view->columns[1].width))
 		return TRUE;
 
 	if (draw_filename(view, filename, state->auto_filename_display, 0,
-			  opt_show_filename_width ? opt_show_filename_width : view->columns_info[2].width))
+			  opt_show_filename_width ? opt_show_filename_width : view->columns[2].width))
 		return TRUE;
 
 	if (draw_id_custom(view, id_type, id, opt_id_width))
@@ -565,8 +567,6 @@ static struct view_ops blame_ops = {
 	blame_select,
 	NULL,
 	blame_get_column_data,
-	blame_columns,
-	ARRAY_SIZE(blame_columns),
 };
 
 DEFINE_VIEW(blame);

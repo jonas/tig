@@ -791,16 +791,6 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 			}
 		}
 
-		if (view->ops->columns_size) {
-			if (!view->columns_info)
-				view->columns_info = calloc(1, sizeof(*view->columns_info)
-						* view->ops->columns_size);
-			else
-				memset(view->columns_info, 0, sizeof(*view->columns_info)
-						* view->ops->columns_size);
-			view_column_info_init(view);
-		}
-
 		if (!view->ops->open(view, flags))
 			return;
 	}
@@ -944,7 +934,8 @@ sort_view(struct view *view, bool change_field)
 
 	if (change_field) {
 		while (TRUE) {
-			state->current = (state->current + 1) % view->ops->columns_size;
+			state->current = state->current->next
+				? state->current->next : view->columns;
 			if (get_sort_field(view) == VIEW_COLUMN_ID && !opt_show_id)
 				continue;
 			break;
@@ -1001,15 +992,13 @@ view_column_grep(struct view *view, struct line *line)
 bool
 view_column_info_changed(struct view *view, bool update)
 {
+	struct view_column *column;
 	bool changed = FALSE;
-	int i;
 
-	for (i = 0; i < view->ops->columns_size; i++) {
-		enum view_column_type column = view->ops->columns[i];
-		struct column_info *info = &view->columns_info[i];
+	for (column = view->columns; column; column = column->next) {
 		unsigned long option = 0;
 
-		switch (column) {
+		switch (column->type) {
 		case VIEW_COLUMN_AUTHOR:
 			option = opt_show_author;
 			break;
@@ -1038,10 +1027,10 @@ view_column_info_changed(struct view *view, bool update)
 			break;
 		}
 
-		if (option != info->option) {
+		if (option != column->option) {
 			if (!update)
 				return TRUE;
-			info->option = option;
+			column->option = option;
 			changed = TRUE;
 		}
 	}
@@ -1050,30 +1039,53 @@ view_column_info_changed(struct view *view, bool update)
 }
 
 void
-view_column_info_init(struct view *view)
+view_column_reset(struct view *view)
 {
-	int i;
+	struct view_column *column;
 
 	view_column_info_changed(view, TRUE);
-	for (i = 0; i < view->ops->columns_size; i++)
-		view->columns_info[i].width = 0;
+	for (column = view->columns; column; column = column->next)
+		column->width = 0;
+}
+
+bool
+view_column_init(struct view *view, const enum view_column_type columns[], size_t columns_size)
+{
+	struct view_column *column;
+	int i;
+
+	if (view->columns)
+		return TRUE;
+
+	view->columns = calloc(columns_size, sizeof(*view->columns));
+	if (!view->columns)
+		return FALSE;
+
+	view->sort.current = view->columns;
+	for (column = NULL, i = 0; i < columns_size; i++) {
+		if (column)
+			column->next = &view->columns[i];
+		column = &view->columns[i];
+		column->type = columns[i];
+	}
+
+	return TRUE;
 }
 
 bool
 view_column_info_update(struct view *view, struct line *line)
 {
 	struct view_column_data column_data = {};
+	struct view_column *column;
 	bool changed = FALSE;
-	int i;
 
 	if (!view->ops->get_column_data(view, line, &column_data))
 		return FALSE;
 
-	for (i = 0; i < view->ops->columns_size; i++) {
-		enum view_column_type column = view->ops->columns[i];
+	for (column = view->columns; column; column = column->next) {
 		const char *text = NULL;
 
-		switch (column) {
+		switch (column->type) {
 		case VIEW_COLUMN_AUTHOR:
 			if (column_data.author)
 				text = mkauthor(column_data.author, opt_author_width, opt_show_author);
@@ -1114,8 +1126,8 @@ view_column_info_update(struct view *view, struct line *line)
 		if (text) {
 			int width = utf8_width(text);
 
-			if (width > view->columns_info[i].width) {
-				view->columns_info[i].width = width;
+			if (width > column->width) {
+				column->width = width;
 				changed = TRUE;
 			}
 		}

@@ -14,12 +14,22 @@
 #include "tig/draw.h"
 #include "tig/main.h"
 
+static const enum view_column_type stash_columns[] = {
+	VIEW_COLUMN_LINE_NUMBER,
+	VIEW_COLUMN_ID,
+	VIEW_COLUMN_DATE,
+	VIEW_COLUMN_AUTHOR,
+	VIEW_COLUMN_COMMIT_TITLE,
+};
+
 static bool
 stash_open(struct view *view, enum open_flags flags)
 {
 	static const char *stash_argv[] = { "git", "stash", "list",
 		encoding_arg, "--no-color", "--pretty=raw", NULL };
 	struct main_state *state = view->private;
+
+	view_column_init(view, stash_columns, ARRAY_SIZE(stash_columns));
 
 	state->added_changes_commits = TRUE;
 	state->with_graph = FALSE;
@@ -34,14 +44,6 @@ stash_select(struct view *view, struct line *line)
 	string_copy(view->ref, view->env->stash);
 }
 
-static const enum view_column_type stash_columns[] = {
-	VIEW_COLUMN_LINE_NUMBER,
-	VIEW_COLUMN_ID,
-	VIEW_COLUMN_DATE,
-	VIEW_COLUMN_AUTHOR,
-	VIEW_COLUMN_COMMIT_TITLE,
-};
-
 static struct view_ops stash_ops = {
 	"stash",
 	argv_env.stash,
@@ -55,8 +57,6 @@ static struct view_ops stash_ops = {
 	stash_select,
 	main_done,
 	main_get_column_data,
-	stash_columns,
-	ARRAY_SIZE(stash_columns),
 };
 
 DEFINE_VIEW(stash);

@@ -165,6 +165,8 @@ refs_open(struct view *view, enum open_flags flags)
 			"--all", "--simplify-by-decoration", NULL
 	};
 
+	view_column_init(view, refs_columns, ARRAY_SIZE(refs_columns));
+
 	if (!refs_all) {
 		struct ref *ref = calloc(1, sizeof(*refs_all) + strlen(REFS_ALL_NAME));
 
@@ -213,8 +215,6 @@ static struct view_ops refs_ops = {
 	refs_select,
 	NULL,
 	refs_get_column_data,
-	refs_columns,
-	ARRAY_SIZE(refs_columns),
 };
 
 DEFINE_VIEW(refs);

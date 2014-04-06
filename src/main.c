@@ -166,6 +166,14 @@ main_check_argv(struct view *view, const char *argv[])
 	return with_reflog;
 }
 
+static const enum view_column_type main_columns[] = {
+	VIEW_COLUMN_LINE_NUMBER,
+	VIEW_COLUMN_ID,
+	VIEW_COLUMN_DATE,
+	VIEW_COLUMN_AUTHOR,
+	VIEW_COLUMN_COMMIT_TITLE,
+};
+
 static bool
 main_open(struct view *view, enum open_flags flags)
 {
@@ -177,6 +185,8 @@ main_open(struct view *view, enum open_flags flags)
 	};
 	struct main_state *state = view->private;
 	const char **main_argv = pretty_custom_argv;
+
+	view_column_init(view, main_columns, ARRAY_SIZE(main_columns));
 
 	state->with_graph = opt_show_rev_graph &&
 			    opt_commit_order != COMMIT_ORDER_REVERSE;
@@ -223,14 +233,6 @@ main_get_commit_refs(const struct line *line, struct commit *commit)
 
 	return refs;
 }
-
-static const enum view_column_type main_columns[] = {
-	VIEW_COLUMN_LINE_NUMBER,
-	VIEW_COLUMN_ID,
-	VIEW_COLUMN_DATE,
-	VIEW_COLUMN_AUTHOR,
-	VIEW_COLUMN_COMMIT_TITLE,
-};
 
 bool
 main_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
@@ -526,8 +528,6 @@ static struct view_ops main_ops = {
 	main_select,
 	main_done,
 	main_get_column_data,
-	main_columns,
-	ARRAY_SIZE(main_columns),
 };
 
 DEFINE_VIEW(main);

@@ -391,17 +391,16 @@ draw_graph(struct view *view, const struct graph_canvas *canvas)
 bool
 view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 {
+	struct view_column *column;
 	struct view_column_data column_data = {};
-	int i;
 
 	if (!view->ops->get_column_data(view, line, &column_data))
 		return TRUE;
 
-	for (i = 0; i < view->ops->columns_size; i++) {
-		enum view_column_type column = view->ops->columns[i];
-		int width = view->columns_info[i].width;
+	for (column = view->columns; column; column = column->next) {
+		int width = column->width;
 
-		switch (column) {
+		switch (column->type) {
 		case VIEW_COLUMN_DATE:
 			if (draw_date(view, column_data.date))
 				return TRUE;
@@ -533,10 +532,10 @@ redraw_view_from(struct view *view, int lineno)
 {
 	assert(0 <= lineno && lineno < view->height);
 
-	if (view->columns_info && view_column_info_changed(view, FALSE)) {
+	if (view->columns && view_column_info_changed(view, FALSE)) {
 		int i;
 
-		view_column_info_init(view);
+		view_column_reset(view);
 		for (i = 0; i < view->lines; i++) {
 			view_column_info_update(view, &view->line[i]);
 		}

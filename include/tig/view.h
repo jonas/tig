@@ -15,6 +15,7 @@
 #define TIG_VIEW_H
 
 #include "tig/tig.h"
+#include "tig/types.h"
 #include "tig/argv.h"
 #include "tig/io.h"
 #include "tig/line.h"
@@ -66,11 +67,13 @@ struct position {
 };
 
 struct sort_state {
-	size_t current;
+	struct view_column *current;
 	bool reverse;
 };
 
-struct column_info {
+struct view_column {
+	struct view_column *next;
+	enum view_column_type type;
 	int width;
 	unsigned long option;
 };
@@ -96,7 +99,7 @@ struct view {
 	struct position prev_pos; /* Previous position. */
 
 	/* View columns rendering state */
-	struct column_info *columns_info;
+	struct view_column *columns;
 
 	/* Searching */
 	char grep[SIZEOF_STR];	/* Search string */
@@ -197,8 +200,6 @@ struct view_ops {
 	void (*done)(struct view *view);
 	/* Extract line information. */
 	bool (*get_column_data)(struct view *view, const struct line *line, struct view_column_data *column_data);
-	const enum view_column_type *columns;
-	size_t columns_size;
 };
 
 /*
@@ -269,12 +270,13 @@ void open_argv(struct view *prev, struct view *view, const char *argv[], const c
  * Various utilities.
  */
 
-#define get_sort_field(view) ((view)->ops->columns[(view)->sort.current])
+#define get_sort_field(view) ((view)->sort.current->type)
 void sort_view(struct view *view, bool change_field);
 
 bool view_column_grep(struct view *view, struct line *line);
 bool view_column_info_changed(struct view *view, bool update);
-void view_column_info_init(struct view *view);
+bool view_column_init(struct view *view, const enum view_column_type columns[], size_t columns_size);
+void view_column_reset(struct view *view);
 bool view_column_info_update(struct view *view, struct line *line);
 
 struct line *
