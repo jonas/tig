@@ -584,11 +584,8 @@ option_bind_command(int argc, const char *argv[])
 
 	request = get_request(argv[2]);
 	if (request == REQ_UNKNOWN) {
-		static const struct enum_map_entry obsolete[] = {
-			ENUM_MAP_ENTRY("cherry-pick",	REQ_NONE),
-			ENUM_MAP_ENTRY("screen-resize",	REQ_NONE),
-			ENUM_MAP_ENTRY("tree-parent",	REQ_PARENT),
-			ENUM_MAP_ENTRY("view-branch",	REQ_VIEW_REFS),
+		static const char *obsolete[][2] = {
+			{ "view-branch",		"view-refs" },
 		};
 		static const char *toggles[][2] = {
 			{ "diff-context-down",		"diff-context" },
@@ -614,9 +611,11 @@ option_bind_command(int argc, const char *argv[])
 		};
 		int alias;
 
-		if (map_enum(&alias, obsolete, argv[2])) {
-			if (alias != REQ_NONE)
-				add_keybinding(keymap, alias, &input);
+		alias = find_remapped(obsolete, ARRAY_SIZE(obsolete), argv[2]);
+		if (alias != -1) {
+			const char *action = obsolete[alias][1];
+
+			add_keybinding(keymap, get_request(action), &input);
 			return ERROR_OBSOLETE_REQUEST_NAME;
 		}
 
