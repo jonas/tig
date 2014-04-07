@@ -1098,7 +1098,7 @@ view_column_info_update(struct view *view, struct line *line)
 
 	for (column = view->columns; column; column = column->next) {
 		const char *text = NULL;
-		int width;
+		int width = 0;
 
 		switch (column->type) {
 		case VIEW_COLUMN_AUTHOR:
@@ -1141,7 +1141,6 @@ view_column_info_update(struct view *view, struct line *line)
 		case VIEW_COLUMN_LINE_NUMBER:
 		case VIEW_COLUMN_MODE:
 		case VIEW_COLUMN_TEXT:
-			width = 0;
 			break;
 		}
 
