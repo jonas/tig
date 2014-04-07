@@ -57,6 +57,7 @@ struct argv_env {
 extern struct argv_env argv_env;
 
 bool argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter);
+char *argv_format_arg(struct argv_env *argv_env, const char *src_arg);
 
 struct rev_flags {
 	size_t search_offset;
