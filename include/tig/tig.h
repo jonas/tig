@@ -111,11 +111,6 @@
 #endif
 #define ICONV_TRANSLIT	"//TRANSLIT"
 
-/* The format and size of the date column in the main view. */
-#define DATE_FORMAT	"%Y-%m-%d %H:%M"
-#define DATE_WIDTH	STRING_SIZE("2006-04-29 14:21")
-#define DATE_SHORT_WIDTH	STRING_SIZE("2006-04-29")
-
 #define MIN_VIEW_HEIGHT 4
 #define MIN_VIEW_WIDTH  4
 #define VSPLIT_SCALE	0.5

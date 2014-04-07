@@ -75,7 +75,7 @@ timecmp(const struct time *t1, const struct time *t2)
 const char *
 mkdate(const struct time *time, enum date date)
 {
-	static char buf[DATE_WIDTH + 1];
+	static char buf[STRING_SIZE("2006-04-29 14:21") + 1];
 	static const struct enum_map_entry reldate[] = {
 		{ "second", 1,			60 * 2 },
 		{ "minute", 60,			60 * 60 * 2 },
@@ -86,6 +86,7 @@ mkdate(const struct time *time, enum date date)
 		{ "year",   60 * 60 * 24 * 365, 0 },
 	};
 	struct tm tm;
+	const char *format;
 
 	if (!date || !time || !time->sec)
 		return "";
@@ -119,7 +120,9 @@ mkdate(const struct time *time, enum date date)
 	else {
 		gmtime_r(&time->sec, &tm);
 	}
-	return strftime(buf, sizeof(buf), DATE_FORMAT, &tm) ? buf : NULL;
+
+	format = date == DATE_SHORT ? "%Y-%m-%d" : "%Y-%m-%d %H:%M";
+	return strftime(buf, sizeof(buf), format, &tm) ? buf : NULL;
 }
 
 const char *
