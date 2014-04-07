@@ -20,6 +20,7 @@
 #include "tig/io.h"
 #include "tig/line.h"
 #include "tig/keys.h"
+#include "tig/options.h"
 
 struct view_ops;
 
@@ -75,7 +76,7 @@ struct view_column {
 	struct view_column *next;
 	enum view_column_type type;
 	int width;
-	unsigned long option;
+	union view_column_options opt;
 };
 
 struct view {

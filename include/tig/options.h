@@ -61,6 +61,65 @@
 OPTION_INFO(DEFINE_OPTION_EXTERNS);
 
 /*
+ * View column options.
+ */
+
+#define AUTHOR_COLUMN_OPTIONS(_) \
+	_(show,				enum author,		VIEW_NO_FLAGS) \
+	_(width,			int,			VIEW_NO_FLAGS) \
+
+#define COMMIT_TITLE_COLUMN_OPTIONS(_) \
+	_(overflow,			int,			VIEW_NO_FLAGS) \
+	_(graph,			bool,			VIEW_LOG_LIKE) \
+	_(refs,				bool,			VIEW_NO_FLAGS) \
+	_(width,			int,			VIEW_NO_FLAGS) \
+
+#define DATE_COLUMN_OPTIONS(_) \
+	_(show,				enum date,		VIEW_NO_FLAGS) \
+	_(width,			int,			VIEW_NO_FLAGS) \
+
+#define FILE_NAME_COLUMN_OPTIONS(_) \
+	_(show,				enum filename,		VIEW_NO_FLAGS) \
+	_(width,			int,			VIEW_NO_FLAGS) \
+
+#define FILE_SIZE_COLUMN_OPTIONS(_) \
+	_(show,				enum file_size,		VIEW_NO_FLAGS) \
+	_(width,			int,			VIEW_NO_FLAGS) \
+
+#define ID_COLUMN_OPTIONS(_) \
+	_(show,				bool,			VIEW_NO_FLAGS) \
+	_(width,			int,			VIEW_NO_FLAGS) \
+
+#define LINE_NUMBER_COLUMN_OPTIONS(_) \
+	_(interval,			int,			VIEW_NO_FLAGS) \
+	_(show,				bool,			VIEW_NO_FLAGS) \
+	_(width,			int,			VIEW_NO_FLAGS) \
+
+#define REF_COLUMN_OPTIONS(_) \
+	_(width,			int,			VIEW_NO_FLAGS) \
+
+#define COLUMN_OPTIONS(_) \
+	_(author, AUTHOR_COLUMN_OPTIONS) \
+	_(commit_title, COMMIT_TITLE_COLUMN_OPTIONS) \
+	_(date, DATE_COLUMN_OPTIONS) \
+	_(file_name, FILE_NAME_COLUMN_OPTIONS) \
+	_(file_size, FILE_SIZE_COLUMN_OPTIONS) \
+	_(id, ID_COLUMN_OPTIONS) \
+	_(line_number, LINE_NUMBER_COLUMN_OPTIONS) \
+	_(ref, REF_COLUMN_OPTIONS) \
+
+#define DEFINE_COLUMN_OPTIONS_STRUCT_VALUE(name, type, flags) type name;
+
+#define DEFINE_COLUMN_OPTIONS_STRUCT(name, options) \
+	struct name##_options { \
+		options(DEFINE_COLUMN_OPTIONS_STRUCT_VALUE) \
+	} name;
+
+union view_column_options {
+	COLUMN_OPTIONS(DEFINE_COLUMN_OPTIONS_STRUCT);
+};
+
+/*
  * Global state variables.
  */
 

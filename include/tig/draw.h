@@ -34,12 +34,12 @@ bool draw_text_overflow(struct view *view, const char *text, bool on, int overfl
 bool PRINTF_LIKE(3, 4) draw_formatted(struct view *view, enum line_type type, const char *format, ...);
 bool draw_graphic(struct view *view, enum line_type type, const chtype graphic[], size_t size, bool separator);
 bool draw_field(struct view *view, enum line_type type, const char *text, int width, enum align align, bool trim);
-bool draw_date(struct view *view, const struct time *time);
-bool draw_author(struct view *view, const struct ident *author, int width);
-bool draw_id_custom(struct view *view, enum line_type type, const char *id, int width);
-bool draw_filename(struct view *view, const char *filename, bool auto_enabled, mode_t mode, int width);
+bool draw_date(struct view *view, struct view_column *column, const struct time *time);
+bool draw_author(struct view *view, struct view_column *column, const struct ident *author);
+bool draw_id_custom(struct view *view, struct view_column *column, enum line_type type, const char *id);
+bool draw_filename(struct view *view, struct view_column *column, const char *filename, bool auto_enabled, mode_t mode);
 bool draw_lineno(struct view *view, unsigned int lineno);
-bool draw_lineno_custom(struct view *view, unsigned int lineno, bool show, int interval);
+bool draw_lineno_custom(struct view *view, struct view_column *column, unsigned int lineno);
 bool view_column_draw(struct view *view, struct line *line, unsigned int lineno);
 
 #define draw_commit_title(view, text, offset) \

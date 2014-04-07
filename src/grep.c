@@ -52,14 +52,21 @@ grep_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct grep_state *state = view->private;
 	struct grep_line *grep = grep_get_line(line);
+	struct view_column line_number_column = {};
 
 	if (*grep->file && !grep->lineno) {
-		draw_filename(view, grep->file, TRUE, 0, state->filename_width);
+		struct view_column file_name_column = {};
+
+		file_name_column.opt.file_name.show = FILENAME_ALWAYS;
+		file_name_column.width = state->filename_width;
+		draw_filename(view, &file_name_column, grep->file, TRUE, 0);
 		return TRUE;
 	}
 
+	line_number_column.opt.line_number.show = TRUE;
+	line_number_column.opt.line_number.interval = 1;
 
-	if (grep->lineno && draw_lineno_custom(view, grep->lineno, TRUE, 1))
+	if (grep->lineno && draw_lineno_custom(view, &line_number_column, grep->lineno))
 		return TRUE;
 
 	draw_text(view, LINE_DEFAULT, grep->text);

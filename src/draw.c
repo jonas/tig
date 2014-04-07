@@ -189,68 +189,69 @@ draw_field(struct view *view, enum line_type type, const char *text, int width, 
 }
 
 bool
-draw_date(struct view *view, const struct time *time)
+draw_date(struct view *view, struct view_column *column, const struct time *time)
 {
-	const char *date = mkdate(time, opt_show_date);
-	int cols = opt_show_date == DATE_SHORT ? DATE_SHORT_WIDTH : DATE_WIDTH;
+	enum date date = column->opt.date.show;
+	const char *text = mkdate(time, date);
+	int cols = date == DATE_SHORT ? DATE_SHORT_WIDTH : DATE_WIDTH;
 
-	if (opt_show_date == DATE_NO)
+	if (date == DATE_NO)
 		return FALSE;
 
-	return draw_field(view, LINE_DATE, date, cols, ALIGN_LEFT, FALSE);
+	return draw_field(view, LINE_DATE, text, cols, ALIGN_LEFT, FALSE);
 }
 
 bool
-draw_author(struct view *view, const struct ident *author, int width)
+draw_author(struct view *view, struct view_column *column, const struct ident *author)
 {
-	bool trim = author_trim(width);
-	const char *text = mkauthor(author, width, opt_show_author);
+	bool trim = author_trim(column->width);
+	const char *text = mkauthor(author, column->width, column->opt.author.show);
 
-	if (opt_show_author == AUTHOR_NO)
+	if (column->opt.author.show == AUTHOR_NO)
 		return FALSE;
 
-	return draw_field(view, LINE_AUTHOR, text, width, ALIGN_LEFT, trim);
+	return draw_field(view, LINE_AUTHOR, text, column->width, ALIGN_LEFT, trim);
 }
 
 bool
-draw_id_custom(struct view *view, enum line_type type, const char *id, int width)
+draw_id_custom(struct view *view, struct view_column *column, enum line_type type, const char *id)
 {
-	return draw_field(view, type, id, width, ALIGN_LEFT, FALSE);
+	return draw_field(view, type, id, column->width, ALIGN_LEFT, FALSE);
 }
 
 static bool
-draw_id(struct view *view, const char *id)
+draw_id(struct view *view, struct view_column *column, const char *id)
 {
-	if (!opt_show_id)
+	if (!column->opt.id.show)
 		return FALSE;
 
-	return draw_id_custom(view, LINE_ID, id, opt_id_width);
+	return draw_id_custom(view, column, LINE_ID, id);
 }
 
 bool
-draw_filename(struct view *view, const char *filename, bool auto_enabled, mode_t mode, int width)
+draw_filename(struct view *view, struct view_column *column, const char *filename, bool auto_enabled, mode_t mode)
 {
-	bool trim = filename && utf8_width(filename) >= width;
+	bool trim = filename && utf8_width(filename) >= column->width;
 	enum line_type type = S_ISDIR(mode) ? LINE_DIRECTORY : LINE_FILE;
 
-	if (opt_show_filename == FILENAME_NO)
+	if (column->opt.file_name.show == FILENAME_NO)
 		return FALSE;
 
-	if (opt_show_filename == FILENAME_AUTO && !auto_enabled)
+	if (column->opt.file_name.show == FILENAME_AUTO && !auto_enabled)
 		return FALSE;
 
-	return draw_field(view, type, filename, width, ALIGN_LEFT, trim);
+	return draw_field(view, type, filename, column->width, ALIGN_LEFT, trim);
 }
 
 static bool
-draw_file_size(struct view *view, unsigned long size, int width, bool pad)
+draw_file_size(struct view *view, struct view_column *column, unsigned long size, bool pad)
 {
-	const char *str = pad ? NULL : mkfilesize(size, opt_show_file_size);
+	const char *str = pad ? NULL : mkfilesize(size, column->opt.file_size.show);
 
-	if (!width || opt_show_file_size == FILE_SIZE_NO)
+	if (!column->width || column->opt.file_size.show == FILE_SIZE_NO)
 		return FALSE;
 
-	return draw_field(view, LINE_FILE_SIZE, str, width, ALIGN_RIGHT, FALSE);
+	return draw_field(view, LINE_FILE_SIZE, str, column->width, ALIGN_RIGHT, FALSE);
 }
 
 static bool
@@ -262,7 +263,7 @@ draw_mode(struct view *view, mode_t mode)
 }
 
 bool
-draw_lineno_custom(struct view *view, unsigned int lineno, bool show, int interval)
+draw_lineno_custom(struct view *view, struct view_column *column, unsigned int lineno)
 {
 	char number[10];
 	int digits3 = view->digits < 3 ? 3 : view->digits;
@@ -270,10 +271,10 @@ draw_lineno_custom(struct view *view, unsigned int lineno, bool show, int interv
 	char *text = NULL;
 	chtype separator = opt_line_graphics ? ACS_VLINE : '|';
 
-	if (!show)
+	if (!column->opt.line_number.show)
 		return FALSE;
 
-	if (lineno == 1 || (lineno % interval) == 0) {
+	if (lineno == 1 || (lineno % column->opt.line_number.interval) == 0) {
 		static char fmt[] = "%ld";
 
 		fmt[1] = '0' + (view->digits <= 9 ? digits3 : 1);
@@ -290,17 +291,20 @@ draw_lineno_custom(struct view *view, unsigned int lineno, bool show, int interv
 bool
 draw_lineno(struct view *view, unsigned int lineno)
 {
+	struct view_column column = {};
+
+	column.opt.line_number.show = opt_show_line_numbers;
+	column.opt.line_number.interval = opt_line_number_interval;
 	lineno += view->pos.offset + 1;
-	return draw_lineno_custom(view, lineno, opt_show_line_numbers,
-				  opt_line_number_interval);
+	return draw_lineno_custom(view, &column, lineno);
 }
 
 static bool
-draw_refs(struct view *view, const struct ref_list *refs)
+draw_refs(struct view *view, struct view_column *column, const struct ref_list *refs)
 {
 	size_t i;
 
-	if (!opt_show_refs || !refs)
+	if (!column->opt.commit_title.refs || !refs)
 		return FALSE;
 
 	for (i = 0; i < refs->size; i++) {
@@ -402,12 +406,12 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 
 		switch (column->type) {
 		case VIEW_COLUMN_DATE:
-			if (draw_date(view, column_data.date))
+			if (draw_date(view, column, column_data.date))
 				return TRUE;
 			continue;
 
 		case VIEW_COLUMN_AUTHOR:
-			if (draw_author(view, column_data.author, opt_author_width ? opt_author_width : width))
+			if (draw_author(view, column, column_data.author))
 				return TRUE;
 			continue;
 
@@ -424,10 +428,10 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 
 		case VIEW_COLUMN_ID:
 			if (!width) {
-				if (draw_id(view, column_data.id))
+				if (draw_id(view, column, column_data.id))
 					return TRUE;
 			} else if (opt_show_id) {
-				if (draw_id_custom(view, LINE_ID, column_data.id, width))
+				if (draw_id_custom(view, column, LINE_ID, column_data.id))
 					return TRUE;
 			}
 			continue;
@@ -443,23 +447,22 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_FILE_SIZE:
-			if (draw_file_size(view, column_data.file_size ? *column_data.file_size : 0, width, !column_data.mode || S_ISDIR(*column_data.mode)))
+			if (draw_file_size(view, column, column_data.file_size ? *column_data.file_size : 0, !column_data.mode || S_ISDIR(*column_data.mode)))
 				return TRUE;
 			continue;
 
 		case VIEW_COLUMN_COMMIT_TITLE:
 			if (column_data.graph && draw_graph(view, column_data.graph))
 				return TRUE;
-			if (column_data.refs && draw_refs(view, column_data.refs))
+			if (column_data.refs && draw_refs(view, column, column_data.refs))
 				return TRUE;
 			if (draw_commit_title(view, column_data.commit_title, 0))
 				return TRUE;
 			continue;
 
 		case VIEW_COLUMN_FILE_NAME:
-			if (draw_filename(view, column_data.file_name, TRUE,
-					  column_data.mode ? *column_data.mode : 0,
-					  opt_show_filename_width ? opt_show_filename_width : width))
+			if (draw_filename(view, column, column_data.file_name, TRUE,
+					  column_data.mode ? *column_data.mode : 0))
 				return TRUE;
 			continue;
 

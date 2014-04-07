@@ -363,20 +363,19 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 		id_type = BLAME_COLOR((long) blame->commit);
 	}
 
-	if (draw_date(view, time))
+	if (draw_date(view, &view->columns[0], time))
 		return TRUE;
 
-	if (draw_author(view, author, opt_author_width ? opt_author_width : view->columns[1].width))
+	if (draw_author(view, &view->columns[1], author))
 		return TRUE;
 
-	if (draw_filename(view, filename, state->auto_filename_display, 0,
-			  opt_show_filename_width ? opt_show_filename_width : view->columns[2].width))
+	if (draw_filename(view, &view->columns[2], filename, state->auto_filename_display, 0))
 		return TRUE;
 
-	if (draw_id_custom(view, id_type, id, opt_id_width))
+	if (draw_id_custom(view, &view->columns[3], id_type, id))
 		return TRUE;
 
-	if (draw_lineno(view, lineno))
+	if (draw_lineno_custom(view, &view->columns[4], lineno))
 		return TRUE;
 
 	draw_text(view, LINE_DEFAULT, blame->text);
