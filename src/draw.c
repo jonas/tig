@@ -243,9 +243,9 @@ draw_filename(struct view *view, struct view_column *column, const char *filenam
 }
 
 static bool
-draw_file_size(struct view *view, struct view_column *column, unsigned long size, bool pad)
+draw_file_size(struct view *view, struct view_column *column, unsigned long size, mode_t mode)
 {
-	const char *str = pad ? NULL : mkfilesize(size, column->opt.file_size.show);
+	const char *str = S_ISDIR(mode) ? NULL : mkfilesize(size, column->opt.file_size.show);
 
 	if (!column->width || column->opt.file_size.show == FILE_SIZE_NO)
 		return FALSE;
@@ -401,6 +401,7 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 		return TRUE;
 
 	for (column = view->columns; column; column = column->next) {
+		mode_t mode = column_data.mode ? *column_data.mode : 0;
 		int width = column->width;
 
 		switch (column->type) {
@@ -441,12 +442,12 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_MODE:
-			if (draw_mode(view, column_data.mode ? *column_data.mode : 0))
+			if (draw_mode(view, mode))
 				return TRUE;
 			continue;
 
 		case VIEW_COLUMN_FILE_SIZE:
-			if (draw_file_size(view, column, column_data.file_size ? *column_data.file_size : 0, !column_data.mode || S_ISDIR(*column_data.mode)))
+			if (draw_file_size(view, column, column_data.file_size ? *column_data.file_size : 0, mode))
 				return TRUE;
 			continue;
 
@@ -460,8 +461,7 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_FILE_NAME:
-			if (draw_filename(view, column, column_data.file_name, TRUE,
-					  column_data.mode ? *column_data.mode : 0))
+			if (draw_filename(view, column, column_data.file_name, TRUE, mode))
 				return TRUE;
 			continue;
 
