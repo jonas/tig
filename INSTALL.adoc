@@ -106,12 +106,14 @@ The following tools and packages are needed:
 				 into the binary.
 |=============================================================================
 
-The following optional tools and packages are needed for creating the
+The following tools and packages are optional and mainly needed for creating the
 configure script and building documentation:
 
 [cols="2<,8<",options="header"]
 |=============================================================================
 |Tool				|Description
+|readline			|Adds support for completion and history in
+				 search and command prompts.
 |autoconf			|Contains autoreconf for generating configure
 				 from configure.ac.
 |asciidoc (>= 8.4)		|Generates HTML and (DocBook) XML from text.

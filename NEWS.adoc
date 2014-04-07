@@ -69,6 +69,7 @@ Improvements:
  - Make reference label formatting configurable, for example:
    `set reference-format = (branch) <tags> remote`. (GH #201)
  - Rename 'branch' view to 'refs' view and show tags. (GH #134)
+ - Add completion and history support to the prompt via readline. (GH #185)
 
 Bug fixes:
 

@@ -642,6 +642,8 @@ main(int argc, const char *argv[])
 	enum request request = parse_options(argc, argv, pager_mode);
 	struct view *view;
 
+	prompt_init();
+
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
 		die("Failed to setup signal handler");
 

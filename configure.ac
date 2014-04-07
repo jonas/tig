@@ -30,6 +30,8 @@ case "$ax_cv_ncursesw" in "no")
 esac
 AC_SUBST(CURSES_LIB)
 
+AX_LIB_READLINE
+
 AM_ICONV
 
 AC_CHECK_PROGS(ASCIIDOC, [asciidoc], [false])

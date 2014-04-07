@@ -18,6 +18,12 @@
 #include "tig/options.h"
 #include "tig/prompt.h"
 #include "tig/pager.h"
+#include "tig/types.h"
+
+#ifdef HAVE_LIBREADLINE
+#include <readline/readline.h>
+#include <readline/history.h>
+#endif /* HAVE_LIBREADLINE */
 
 typedef enum input_status (*input_handler)(void *data, char *buf, struct key_input *input);
 
@@ -116,11 +122,287 @@ read_prompt_handler(void *data, char *buf, struct key_input *input)
 	return unicode_width(c, 8) ? INPUT_OK : INPUT_SKIP;
 }
 
+#ifdef HAVE_LIBREADLINE
+static void
+readline_display(void)
+{
+	wmove(status_win, 0, 0);
+	waddstr(status_win, rl_display_prompt);
+	waddstr(status_win, rl_line_buffer);
+	wclrtoeol(status_win);
+	wmove(status_win, 0, strlen(rl_display_prompt) + rl_point);
+	wrefresh(status_win);
+}
+
+static char *
+readline_variable_generator(const char *text, int state)
+{
+	static const char *vars[] = {
+#define FORMAT_VAR(name, ifempty, initval) "%(" #name ")"
+		ARGV_ENV_INFO(FORMAT_VAR),
+#undef FORMAT_VAR
+		NULL
+	};
+
+	static int index, len;
+	const char *name;
+	char *variable = NULL; /* No match */
+
+	/* If it is a new word to complete, initialize */
+	if (!state) {
+		index = 0;
+		len = strlen(text);
+	}
+
+	/* Return the next name which partially matches */
+	while ((name = vars[index])) {
+		index++;
+
+		/* Complete or format a variable */
+		if (strncmp(name, text, len) == 0) {
+			if (strlen(name) > len)
+				variable = strdup(name);
+			else
+				variable = argv_format_arg(&argv_env, text);
+			break;
+		}
+	}
+
+	return variable;
+}
+
+static char *
+readline_action_generator(const char *text, int state)
+{
+	static const char *actions[] = {
+		"!",
+		"source",
+		"color",
+		"bind",
+		"set",
+		"toggle",
+#define REQ_GROUP(help)
+#define REQ_(req, help)	#req
+		REQ_INFO,
+#undef	REQ_GROUP
+#undef	REQ_
+		NULL
+	};
+
+	static int index, len;
+	const char *name;
+	char *match = NULL; /* No match */
+
+	/* If it is a new word to complete, initialize */
+	if (!state) {
+		index = 0;
+		len = strlen(text);
+	}
+
+	/* Return the next name which partially matches */
+	while ((name = actions[index])) {
+		name = enum_name_static(name, strlen(name));
+		index++;
+
+		if (strncmp(name, text, len) == 0) {
+			/* Ignore exact completion */
+			if (strlen(name) > len)
+				match = strdup(name);
+			break;
+		}
+	}
+
+	return match;
+}
+
+static char *
+readline_set_generator(const char *text, int state)
+{
+	static const char *words[] = {
+#define DEFINE_OPTION_NAME(name, type, flags) #name " = ",
+		OPTION_INFO(DEFINE_OPTION_NAME)
+#undef DEFINE_OPTION_NAME
+		NULL
+	};
+
+	static int index, len;
+	const char *name;
+	char *match = NULL; /* No match */
+
+	/* If it is a new word to complete, initialize */
+	if (!state) {
+		index = 0;
+		len = strlen(text);
+	}
+
+	/* Return the next name which partially matches */
+	while ((name = words[index])) {
+		name = enum_name_static(name, strlen(name));
+		index++;
+
+		if (strncmp(name, text, len) == 0) {
+			/* Ignore exact completion */
+			if (strlen(name) > len)
+				match = strdup(name);
+			break;
+		}
+	}
+
+	return match;
+}
+
+static char *
+readline_toggle_generator(const char *text, int state)
+{
+	static const char *words[] = {
+#define DEFINE_OPTION_NAME(name, type, flags) #name,
+		OPTION_INFO(DEFINE_OPTION_NAME)
+#undef DEFINE_OPTION_NAME
+		NULL
+	};
+
+	static int index, len;
+	const char *name;
+	char *match = NULL; /* No match */
+
+	/* If it is a new word to complete, initialize */
+	if (!state) {
+		index = 0;
+		len = strlen(text);
+	}
+
+	/* Return the next name which partially matches */
+	while ((name = words[index])) {
+		name = enum_name_static(name, strlen(name));
+		index++;
+
+		if (strncmp(name, text, len) == 0) {
+			/* Ignore exact completion */
+			if (strlen(name) > len)
+				match = strdup(name);
+			break;
+		}
+	}
+
+	return match;
+}
+
+static int
+readline_getc(FILE *stream)
+{
+	return getc(opt_tty);
+}
+
+static char **
+readline_completion(const char *text, int start, int end)
+{
+	/* Do not append a space after a completion */
+	rl_completion_suppress_append = 1;
+
+	/*
+	 * If the word is at the start of the line,
+	 * then it is a tig action to complete.
+	 */
+	if (start == 0)
+		return rl_completion_matches(text, readline_action_generator);
+
+	/*
+	 * If the line begins with "toggle", then we complete toggle options.
+	 */
+	if (start >= 7 && strncmp(rl_line_buffer, "toggle ", 7) == 0)
+		return rl_completion_matches(text, readline_toggle_generator);
+
+	/*
+	 * If the line begins with "set", then we complete set options.
+	 * (unless it is already completed)
+	 */
+	if (start >= 4 && strncmp(rl_line_buffer, "set ", 4) == 0 &&
+			!strchr(rl_line_buffer, '='))
+		return rl_completion_matches(text, readline_set_generator);
+
+	/*
+	 * Otherwise it might be a variable name...
+	 */
+	if (strncmp(text, "%(", 2) == 0)
+		return rl_completion_matches(text, readline_variable_generator);
+
+	/*
+	 * ... or finally fall back to filename completion.
+	 */
+	return NULL;
+}
+
+static void
+readline_display_matches(char **matches, int num_matches, int max_length)
+{
+	unsigned int i;
+
+	wmove(status_win, 0, 0);
+	waddstr(status_win, "matches: ");
+
+	/* matches[0] is the incomplete word */
+	for (i = 1; i < num_matches + 1; ++i) {
+		waddstr(status_win, matches[i]);
+		waddch(status_win, ' ');
+	}
+
+	wgetch(status_win);
+	wrefresh(status_win);
+}
+
+static void
+readline_init(void)
+{
+	/* Allow conditional parsing of the ~/.inputrc file. */
+	rl_readline_name = "tig";
+
+	/* Word break caracters (we removed '(' to match variables) */
+	rl_basic_word_break_characters = " \t\n\"\\'`@$><=;|&{";
+
+	/* Custom display function */
+	rl_redisplay_function = readline_display;
+	rl_getc_function = readline_getc;
+
+	/* Completion support */
+	rl_attempted_completion_function = readline_completion;
+
+	rl_completion_display_matches_hook = readline_display_matches;
+}
+
+char *
+read_prompt(const char *prompt)
+{
+	static char *line = NULL;
+
+	if (line) {
+		free(line);
+		line = NULL;
+	}
+
+	line = readline(prompt);
+	if (line && *line)
+		add_history(line);
+
+	return line;
+}
+
+void
+prompt_init(void)
+{
+	readline_init();
+}
+#else
 char *
 read_prompt(const char *prompt)
 {
 	return prompt_input(prompt, read_prompt_handler, NULL);
 }
+
+void
+prompt_init(void)
+{
+}
+#endif /* HAVE_LIBREADLINE */
 
 bool
 prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
