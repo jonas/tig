@@ -330,25 +330,25 @@ prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 #define TOGGLE_OPTIONS(name, type, flags) { #name, #type, flags, &opt_ ## name },
 		OPTION_INFO(TOGGLE_OPTIONS)
 	};
-	const char *name = argv[1];
-	size_t namelen = name ? strlen(name) : 0;
+	const char *option = argv[1];
+	size_t optionlen = option ? strlen(option) : 0;
 	struct prompt_toggle *toggle;
 
-	if (!name) {
+	if (!option) {
 		string_format_size(msg, SIZEOF_STR, "%s", "No option name given to :toggle");
 		return VIEW_NO_FLAGS;
 	}
 
-	if (enum_equals_static("sort-field", name, namelen) ||
-	    enum_equals_static("sort-order", name, namelen)) {
+	if (enum_equals_static("sort-field", option, optionlen) ||
+	    enum_equals_static("sort-order", option, optionlen)) {
 		if (!view->columns) {
 			report("Sorting is not yet supported for the %s view", view->name);
 		} else {
-			bool sort_field = enum_equals_static("sort-field", name, namelen);
+			bool sort_field = enum_equals_static("sort-field", option, optionlen);
 			struct sort_state *sort = &view->sort;
 
 			sort_view(view, sort_field);
-			string_format_size(msg, SIZEOF_STR, "set %s = %s", name,
+			string_format_size(msg, SIZEOF_STR, "set %s = %s", option,
 				sort_field ? enum_name(view_column_type_map->entries[get_sort_field(view)])
 					   : sort->reverse ? "descending" : "ascending");
 		}
@@ -356,11 +356,11 @@ prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 	}
 
 	toggle = find_prompt_toggle(option_toggles, ARRAY_SIZE(option_toggles),
-				    name, namelen);
+				    option, optionlen);
 	if (toggle)
 		return prompt_toggle_option(view, argv, toggle, msg);
 
-	string_format_size(msg, SIZEOF_STR, "`:toggle %s` not supported", name);
+	string_format_size(msg, SIZEOF_STR, "`:toggle %s` not supported", option);
 	return VIEW_NO_FLAGS;
 }
 
