@@ -88,6 +88,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS);
 
 #define ID_COLUMN_OPTIONS(_) \
 	_(show,				bool,			VIEW_NO_FLAGS) \
+	_(color,			bool,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define LINE_NUMBER_COLUMN_OPTIONS(_) \

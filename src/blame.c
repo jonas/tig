@@ -341,26 +341,18 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct time *time = NULL;
 	const char *id = NULL, *filename = NULL;
 	const struct ident *author = NULL;
-	enum line_type id_type = LINE_ID;
-	static const enum line_type blame_colors[] = {
-		LINE_PALETTE_0,
-		LINE_PALETTE_1,
-		LINE_PALETTE_2,
-		LINE_PALETTE_3,
-		LINE_PALETTE_4,
-		LINE_PALETTE_5,
-		LINE_PALETTE_6,
-	};
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_ID);
 
-#define BLAME_COLOR(i) \
-	(blame_colors[(i) % ARRAY_SIZE(blame_colors)])
+	if (column) {
+		column->opt.id.show = TRUE;
+		column->opt.id.color = TRUE;
+	}
 
 	if (blame->commit && blame->commit->filename) {
 		id = blame->commit->id;
 		author = blame->commit->author;
 		filename = blame->commit->filename;
 		time = &blame->commit->time;
-		id_type = BLAME_COLOR((long) blame->commit);
 	}
 
 	if (draw_date(view, &view->columns[0], time))
@@ -372,7 +364,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_filename(view, &view->columns[2], filename, state->auto_filename_display, 0))
 		return TRUE;
 
-	if (draw_id_custom(view, &view->columns[3], id_type, id))
+	if (draw_id(view, &view->columns[3], id))
 		return TRUE;
 
 	if (draw_lineno_custom(view, &view->columns[4], lineno))

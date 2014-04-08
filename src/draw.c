@@ -213,18 +213,26 @@ draw_author(struct view *view, struct view_column *column, const struct ident *a
 }
 
 bool
-draw_id_custom(struct view *view, struct view_column *column, enum line_type type, const char *id)
-{
-	return draw_field(view, type, id, column->width, ALIGN_LEFT, FALSE);
-}
-
-static bool
 draw_id(struct view *view, struct view_column *column, const char *id)
 {
+	static const enum line_type colors[] = {
+		LINE_PALETTE_0,
+		LINE_PALETTE_1,
+		LINE_PALETTE_2,
+		LINE_PALETTE_3,
+		LINE_PALETTE_4,
+		LINE_PALETTE_5,
+		LINE_PALETTE_6,
+	};
+	enum line_type type = LINE_ID;
+
 	if (!column->opt.id.show)
 		return FALSE;
 
-	return draw_id_custom(view, column, LINE_ID, id);
+	if (column->opt.id.color)
+		type = colors[((long) id) % ARRAY_SIZE(colors)];
+
+	return draw_field(view, type, id, column->width, ALIGN_LEFT, FALSE);
 }
 
 bool
@@ -430,13 +438,8 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 		}
 
 		case VIEW_COLUMN_ID:
-			if (!width) {
-				if (draw_id(view, column, column_data.id))
-					return TRUE;
-			} else if (opt_show_id) {
-				if (draw_id_custom(view, column, LINE_ID, column_data.id))
-					return TRUE;
-			}
+			if (draw_id(view, column, column_data.id))
+				return TRUE;
 			continue;
 
 		case VIEW_COLUMN_LINE_NUMBER:
