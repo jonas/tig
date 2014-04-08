@@ -404,6 +404,9 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 		mode_t mode = column_data.mode ? *column_data.mode : 0;
 		int width = column->width;
 
+		if (column->hidden)
+			continue;
+
 		switch (column->type) {
 		case VIEW_COLUMN_DATE:
 			if (draw_date(view, column, column_data.date))

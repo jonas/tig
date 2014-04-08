@@ -1086,6 +1086,17 @@ view_column_init(struct view *view, const enum view_column_type columns[], size_
 	return TRUE;
 }
 
+struct view_column *
+get_view_column(struct view *view, enum view_column_type type)
+{
+	struct view_column *column;
+
+	for (column = view->columns; column; column = column->next)
+		if (column->type == type)
+			return column;
+	return NULL;
+}
+
 bool
 view_column_info_update(struct view *view, struct line *line)
 {

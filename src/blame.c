@@ -68,6 +68,20 @@ static const enum view_column_type blame_columns[] = {
 	VIEW_COLUMN_TEXT,
 };
 
+static void
+blame_update_file_name_visibility(struct view *view)
+{
+	struct blame_state *state = view->private;
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_FILE_NAME);
+
+	if (!column)
+		return;
+
+	column->hidden = column->opt.file_name.show == FILENAME_NO ||
+			 (column->opt.file_name.show == FILENAME_AUTO &&
+			  !state->auto_filename_display);
+}
+
 static bool
 blame_open(struct view *view, enum open_flags flags)
 {
@@ -85,6 +99,8 @@ blame_open(struct view *view, enum open_flags flags)
 			state->auto_filename_display = TRUE;
 		}
 	}
+
+	blame_update_file_name_visibility(view);
 
 	if (is_initial_view(view)) {
 		/* Finish validating and setting up blame options */
@@ -278,6 +294,7 @@ blame_read(struct view *view, char *line)
 		} else if (strcmp(state->filename, state->commit->filename)) {
 			state->auto_filename_display = TRUE;
 			view->force_redraw = TRUE;
+			blame_update_file_name_visibility(view);
 		}
 
 		for (i = 0; i < view->lines; i++) {
@@ -301,14 +318,12 @@ blame_read(struct view *view, char *line)
 bool
 blame_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
-	struct blame_state *state = view->private;
 	struct blame *blame = line->data;
 
 	if (blame->commit) {
 		column_data->id = blame->commit->id;
 		column_data->author = blame->commit->author;
-		if (opt_show_filename != FILENAME_AUTO || state->auto_filename_display || view->pipe)
-			column_data->file_name = blame->commit->filename;
+		column_data->file_name = blame->commit->filename;
 		column_data->date = &blame->commit->time;
 		column_data->commit_title = blame->commit->title;
 	}

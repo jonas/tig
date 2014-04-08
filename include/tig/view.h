@@ -77,6 +77,7 @@ struct view_column {
 	enum view_column_type type;
 	int width;
 	union view_column_options opt;
+	bool hidden;
 };
 
 struct view {
@@ -274,6 +275,7 @@ void open_argv(struct view *prev, struct view *view, const char *argv[], const c
 #define get_sort_field(view) ((view)->sort.current->type)
 void sort_view(struct view *view, bool change_field);
 
+struct view_column *get_view_column(struct view *view, enum view_column_type type);
 bool view_column_grep(struct view *view, struct line *line);
 bool view_column_info_changed(struct view *view, bool update);
 bool view_column_init(struct view *view, const enum view_column_type columns[], size_t columns_size);
