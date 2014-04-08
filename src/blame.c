@@ -52,41 +52,12 @@ struct blame_state {
 	int blamed;
 	bool done_reading;
 	bool auto_filename_display;
+	const char *filename;
 	/* The history state for the current view is cached in the view
 	 * state so it always matches what was used to load the current blame
 	 * view. */
 	struct blame_history_state history_state;
 };
-
-static bool
-blame_detect_filename_display(struct view *view)
-{
-	bool show_filenames = FALSE;
-	const char *filename = NULL;
-	int i;
-
-	if (opt_blame_options) {
-		for (i = 0; opt_blame_options[i]; i++) {
-			if (prefixcmp(opt_blame_options[i], "-C"))
-				continue;
-
-			show_filenames = TRUE;
-		}
-	}
-
-	for (i = 0; i < view->lines; i++) {
-		struct blame *blame = view->line[i].data;
-
-		if (blame->commit && blame->commit->id[0]) {
-			if (!filename)
-				filename = blame->commit->filename;
-			else if (strcmp(filename, blame->commit->filename))
-				show_filenames = TRUE;
-		}
-	}
-
-	return show_filenames;
-}
 
 static const enum view_column_type blame_columns[] = {
 	VIEW_COLUMN_DATE,
@@ -106,6 +77,14 @@ blame_open(struct view *view, enum open_flags flags)
 	size_t i;
 
 	view_column_init(view, blame_columns, ARRAY_SIZE(blame_columns));
+
+	if (opt_blame_options) {
+		for (i = 0; opt_blame_options[i]; i++) {
+			if (prefixcmp(opt_blame_options[i], "-C"))
+				continue;
+			state->auto_filename_display = TRUE;
+		}
+	}
 
 	if (is_initial_view(view)) {
 		/* Finish validating and setting up blame options */
@@ -274,7 +253,6 @@ blame_read(struct view *view, char *line)
 		return blame_read_file(view, line, state);
 
 	if (!line) {
-		state->auto_filename_display = blame_detect_filename_display(view);
 		string_format(view->ref, "%s", view->vid);
 		if (view_is_displayed(view)) {
 			update_view_title(view);
@@ -294,6 +272,13 @@ blame_read(struct view *view, char *line)
 
 		if (!state->commit->filename)
 			return FALSE;
+
+		if (!state->filename) {
+			state->filename = state->commit->filename;
+		} else if (strcmp(state->filename, state->commit->filename)) {
+			state->auto_filename_display = TRUE;
+			view->force_redraw = TRUE;
+		}
 
 		for (i = 0; i < view->lines; i++) {
 			struct line *line = &view->line[i];
