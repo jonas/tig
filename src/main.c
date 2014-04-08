@@ -185,10 +185,12 @@ main_open(struct view *view, enum open_flags flags)
 	};
 	struct main_state *state = view->private;
 	const char **main_argv = pretty_custom_argv;
+	struct view_column *column;
 
 	view_column_init(view, main_columns, ARRAY_SIZE(main_columns));
 
-	state->with_graph = opt_show_rev_graph &&
+	column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
+	state->with_graph = column && column->opt.commit_title.graph &&
 			    opt_commit_order != COMMIT_ORDER_REVERSE;
 
 	if (opt_rev_argv && main_check_argv(view, opt_rev_argv))

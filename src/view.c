@@ -990,7 +990,48 @@ view_column_info_changed(struct view *view, bool update)
 	bool changed = FALSE;
 
 	for (column = view->columns; column; column = column->next) {
+		if (memcmp(&column->prev_opt, &column->opt, sizeof(column->opt))) {
+			if (!update)
+				return TRUE;
+			column->prev_opt = column->opt;
+			changed = TRUE;
+		}
+	}
+
+	return changed;
+}
+
+void
+view_column_reset(struct view *view)
+{
+	struct view_column *column;
+
+	view_column_info_changed(view, TRUE);
+	for (column = view->columns; column; column = column->next)
+		column->width = 0;
+}
+
+bool
+view_column_init(struct view *view, const enum view_column_type columns[], size_t columns_size)
+{
+	struct view_column *column;
+	int i;
+
+	if (view->columns)
+		return TRUE;
+
+	view->columns = calloc(columns_size, sizeof(*view->columns));
+	if (!view->columns)
+		return FALSE;
+
+	view->sort.current = view->columns;
+	for (column = NULL, i = 0; i < columns_size; i++) {
 		union view_column_options opt = {};
+
+		if (column)
+			column->next = &view->columns[i];
+		column = &view->columns[i];
+		column->type = columns[i];
 
 		switch (column->type) {
 		case VIEW_COLUMN_AUTHOR:
@@ -1035,46 +1076,8 @@ view_column_info_changed(struct view *view, bool update)
 			break;
 		}
 
-		if (memcmp(&opt, &column->opt, sizeof(opt))) {
-			if (!update)
-				return TRUE;
-			column->opt = opt;
-			changed = TRUE;
-		}
-	}
-
-	return changed;
-}
-
-void
-view_column_reset(struct view *view)
-{
-	struct view_column *column;
-
-	view_column_info_changed(view, TRUE);
-	for (column = view->columns; column; column = column->next)
-		column->width = 0;
-}
-
-bool
-view_column_init(struct view *view, const enum view_column_type columns[], size_t columns_size)
-{
-	struct view_column *column;
-	int i;
-
-	if (view->columns)
-		return TRUE;
-
-	view->columns = calloc(columns_size, sizeof(*view->columns));
-	if (!view->columns)
-		return FALSE;
-
-	view->sort.current = view->columns;
-	for (column = NULL, i = 0; i < columns_size; i++) {
-		if (column)
-			column->next = &view->columns[i];
-		column = &view->columns[i];
-		column->type = columns[i];
+		column->opt = opt;
+		column->prev_opt = opt;
 	}
 
 	return TRUE;

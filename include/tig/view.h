@@ -75,6 +75,7 @@ struct view_column {
 	struct view_column *next;
 	enum view_column_type type;
 	int width;
+	union view_column_options prev_opt;
 	union view_column_options opt;
 	bool hidden;
 };

@@ -22,7 +22,6 @@
  */
 
 #define OPTION_INFO(_) \
-	_(author_width,			int,			VIEW_NO_FLAGS) \
 	_(blame_options,		const char **,		VIEW_BLAME_LIKE) \
 	_(commit_order,			enum commit_order,	VIEW_LOG_LIKE) \
 	_(diff_context,			int,			VIEW_DIFF_LIKE) \
@@ -35,20 +34,11 @@
 	_(ignore_case,			bool,			VIEW_NO_FLAGS) \
 	_(ignore_space,			enum ignore_space,	VIEW_DIFF_LIKE) \
 	_(line_graphics,		enum graphic,		VIEW_NO_FLAGS) \
-	_(line_number_interval,		int,			VIEW_NO_FLAGS) \
 	_(mouse,			bool,			VIEW_NO_FLAGS) \
 	_(mouse_scroll,			int,			VIEW_NO_FLAGS) \
 	_(read_git_colors,		bool,			VIEW_NO_FLAGS) \
-	_(show_author,			enum author,		VIEW_NO_FLAGS) \
 	_(show_changes,			bool,			VIEW_NO_FLAGS) \
-	_(show_date,			enum date,		VIEW_NO_FLAGS) \
-	_(show_file_size,		enum file_size,		VIEW_NO_FLAGS) \
-	_(show_filename,		enum filename,		VIEW_NO_FLAGS) \
-	_(show_filename_width,		int,			VIEW_NO_FLAGS) \
-	_(show_id,			bool,			VIEW_NO_FLAGS) \
-	_(show_line_numbers,		bool,			VIEW_NO_FLAGS) \
 	_(show_notes,			bool,			VIEW_NO_FLAGS) \
-	_(show_refs,			bool,			VIEW_NO_FLAGS) \
 	_(show_rev_graph,		bool,			VIEW_LOG_LIKE) \
 	_(split_view_height,		double,			VIEW_RESET_DISPLAY) \
 	_(status_untracked_dirs,	bool,			VIEW_STATUS_LIKE) \
@@ -57,8 +47,22 @@
 	_(vertical_split,		enum vertical_split,	VIEW_RESET_DISPLAY | VIEW_DIFF_LIKE) \
 	_(wrap_lines,			bool,			VIEW_NO_FLAGS) \
 
+#define VIEW_COLUMN_OPTION_INFO(_) \
+	_(author_width,			int,			VIEW_NO_FLAGS) \
+	_(line_number_interval,		int,			VIEW_NO_FLAGS) \
+	_(show_author,			enum author,		VIEW_NO_FLAGS) \
+	_(show_date,			enum date,		VIEW_NO_FLAGS) \
+	_(show_file_size,		enum file_size,		VIEW_NO_FLAGS) \
+	_(show_filename,		enum filename,		VIEW_NO_FLAGS) \
+	_(show_filename_width,		int,			VIEW_NO_FLAGS) \
+	_(show_id,			bool,			VIEW_NO_FLAGS) \
+	_(show_line_numbers,		bool,			VIEW_NO_FLAGS) \
+	_(show_refs,			bool,			VIEW_NO_FLAGS) \
+	_(show_rev_graph,		bool,			VIEW_LOG_LIKE) \
+
 #define DEFINE_OPTION_EXTERNS(name, type, flags) extern type opt_##name;
 OPTION_INFO(DEFINE_OPTION_EXTERNS);
+VIEW_COLUMN_OPTION_INFO(DEFINE_OPTION_EXTERNS);
 
 /*
  * View column options.
@@ -100,18 +104,18 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS);
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define COLUMN_OPTIONS(_) \
-	_(author, AUTHOR_COLUMN_OPTIONS) \
-	_(commit_title, COMMIT_TITLE_COLUMN_OPTIONS) \
-	_(date, DATE_COLUMN_OPTIONS) \
-	_(file_name, FILE_NAME_COLUMN_OPTIONS) \
-	_(file_size, FILE_SIZE_COLUMN_OPTIONS) \
-	_(id, ID_COLUMN_OPTIONS) \
-	_(line_number, LINE_NUMBER_COLUMN_OPTIONS) \
-	_(ref, REF_COLUMN_OPTIONS) \
+	_(author, AUTHOR, AUTHOR_COLUMN_OPTIONS) \
+	_(commit_title, COMMIT_TITLE, COMMIT_TITLE_COLUMN_OPTIONS) \
+	_(date, DATE, DATE_COLUMN_OPTIONS) \
+	_(file_name, FILE_NAME, FILE_NAME_COLUMN_OPTIONS) \
+	_(file_size, FILE_SIZE, FILE_SIZE_COLUMN_OPTIONS) \
+	_(id, ID, ID_COLUMN_OPTIONS) \
+	_(line_number, LINE_NUMBER, LINE_NUMBER_COLUMN_OPTIONS) \
+	_(ref, REF, REF_COLUMN_OPTIONS) \
 
 #define DEFINE_COLUMN_OPTIONS_STRUCT_VALUE(name, type, flags) type name;
 
-#define DEFINE_COLUMN_OPTIONS_STRUCT(name, options) \
+#define DEFINE_COLUMN_OPTIONS_STRUCT(name, id, options) \
 	struct name##_options { \
 		options(DEFINE_COLUMN_OPTIONS_STRUCT_VALUE) \
 	} name;

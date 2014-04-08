@@ -83,12 +83,12 @@ view_request(struct view *view, enum request request)
  */
 
 #define TOGGLE_MENU_INFO(_) \
-	_('.', "line numbers",			"show-line-numbers"), \
+	_('.', "line numbers",			"show-line-number"), \
 	_('D', "dates",				"show-date"), \
 	_('A', "author",			"show-author"), \
 	_('~', "graphics",			"line-graphics"), \
-	_('g', "revision graph",		"show-rev-graph"), \
-	_('#', "file names",			"show-filename"), \
+	_('g', "revision graph",		"commit-title-graph"), \
+	_('#', "file names",			"show-file-name"), \
 	_('*', "file sizes",			"show-file-size"), \
 	_('W', "space changes",			"ignore-space"), \
 	_('l', "commit order",			"commit-order"), \

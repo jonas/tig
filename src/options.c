@@ -28,6 +28,7 @@
 
 #define DEFINE_OPTION_VARIABLES(name, type, flags) type opt_##name;
 OPTION_INFO(DEFINE_OPTION_VARIABLES);
+VIEW_COLUMN_OPTION_INFO(DEFINE_OPTION_VARIABLES);
 
 /*
  * State variables.

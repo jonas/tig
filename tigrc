@@ -180,19 +180,22 @@ bind generic	o	options			# Open the options menu
 # Bindings for toggling settings
 bind generic	I	:toggle sort-order	# Toggle ascending/descending sort order
 bind generic	i	:toggle sort-field	# Toggle field to sort by
-bind generic	.	:toggle show-line-numbers
+bind generic	.	:toggle show-line-number
 						# Toggle line numbers
 bind generic	D	:toggle show-date	# Toggle date display
 bind generic	A	:toggle show-author	# Toggle author display
-bind generic	g	:toggle show-rev-graph	# Toggle revision graph visualization
+bind generic	g	:toggle commit-title-graph
+						# Toggle revision graph visualization
 bind generic	~	:toggle line-graphics	# Toggle (line) graphics mode
-bind generic	Hash	:toggle show-filename	# Toggle file name display
-bind generic	F	:toggle show-refs	# Toggle reference display (tags/branches)
+bind generic	Hash	:toggle show-file-name	# Toggle file name display
+bind generic	F	:toggle commit-title-refs
+						# Toggle reference display (tags/branches)
 # bind generic	???	:toogle show-changes	# Toggle local changes display in the main view
 bind generic	W	:toggle ignore-space	# Toggle ignoring whitespace in diffs
 # bind generic	?	:toggle commit-order	# Toggle commit ordering
 bind generic	X	:toggle show-id		# Toggle commit ID display
-bind generic	$	:toggle title-overflow	# Toggle highlighting of commit title overflow
+bind generic	$	:toggle commit-title-overflow
+						# Toggle highlighting of commit title overflow
 # bind generic	???	:toggle show-file-size	# Toggle file size format
 # bind generic	???	:toggle status-untracked-dirs
 						# Toggle display of file in untracked directories

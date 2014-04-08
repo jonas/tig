@@ -25,6 +25,10 @@
 #include <readline/history.h>
 #endif /* HAVE_READLINE */
 
+static void
+prompt_toggle_name(char buf[], size_t bufsize,
+		   const char *prefix, const char *name);
+
 typedef enum input_status (*input_handler)(void *data, char *buf, struct key_input *input);
 
 static char *
@@ -213,6 +217,7 @@ readline_set_generator(const char *text, int state)
 	static const char *words[] = {
 #define DEFINE_OPTION_NAME(name, type, flags) #name " = ",
 		OPTION_INFO(DEFINE_OPTION_NAME)
+		VIEW_COLUMN_OPTION_INFO(DEFINE_OPTION_NAME)
 #undef DEFINE_OPTION_NAME
 		NULL
 	};
@@ -246,16 +251,33 @@ readline_set_generator(const char *text, int state)
 static char *
 readline_toggle_generator(const char *text, int state)
 {
-	static const char *words[] = {
-#define DEFINE_OPTION_NAME(name, type, flags) #name,
-		OPTION_INFO(DEFINE_OPTION_NAME)
-#undef DEFINE_OPTION_NAME
-		NULL
-	};
-
+	static const char **words;
 	static int index, len;
 	const char *name;
 	char *match = NULL; /* No match */
+
+	if (!words) {
+		/* TODO: Only complete column options that are defined
+		 * for the view. */
+
+#define DEFINE_OPTION_WORD(name, type, flags) argv_append(&words, #name);
+#define DEFINE_COLUMN_OPTIONS_WORD(name, type, flags) #name,
+#define DEFINE_COLUMN_OPTIONS_WORDS(name, id, options) \
+	{ \
+		const char *vars[] = { \
+			options(DEFINE_COLUMN_OPTIONS_WORD) \
+		}; \
+		char buf[SIZEOF_STR]; \
+		int i; \
+		for (i = 0; i < ARRAY_SIZE(vars); i++) { \
+			prompt_toggle_name(buf, sizeof(buf), #name, vars[i]); \
+			argv_append(&words, buf); \
+		} \
+	}
+
+		OPTION_INFO(DEFINE_OPTION_WORD)
+		COLUMN_OPTIONS(DEFINE_COLUMN_OPTIONS_WORDS);
+	}
 
 	/* If it is a new word to complete, initialize */
 	if (!state) {
@@ -480,14 +502,32 @@ find_arg(const char *argv[], const char *arg)
 	return FALSE;
 }
 
+static void
+prompt_toggle_name(char buf[], size_t bufsize,
+		   const char *prefix, const char *name)
+{
+	if (*prefix) {
+		char tmp[SIZEOF_STR];
+
+		if (!strcasecmp("show", name)) {
+			string_format(tmp, "%s-%s", name, prefix);
+		} else {
+			string_format(tmp, "%s-%s", prefix, name);
+		}
+
+		enum_name_ncopy(buf, bufsize, tmp, strlen(tmp));
+	} else {
+		enum_name_ncopy(buf, bufsize, name, strlen(name));
+	}
+}
 
 static enum view_flag
-prompt_toggle_option(struct view *view, const char *argv[],
+prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 		     struct prompt_toggle *toggle, char msg[SIZEOF_STR])
 {
 	char name[SIZEOF_STR];
 
-	enum_name_copy(name, toggle->name, strlen(toggle->name));
+	prompt_toggle_name(name, sizeof(name), prefix, toggle->name);
 
 	if (!strcmp(toggle->type, "bool")) {
 		bool *opt = toggle->opt;
@@ -521,7 +561,7 @@ prompt_toggle_option(struct view *view, const char *argv[],
 				diff = -*opt;
 		}
 
-		if (opt == &opt_title_overflow) {
+		if (!strcmp(name, "commit-title-overflow")) {
 			*opt = *opt ? -*opt : 50;
 			if (*opt < 0) {
 				string_format_size(msg, SIZEOF_STR, "set %s = no", name);
@@ -590,15 +630,18 @@ prompt_toggle_option(struct view *view, const char *argv[],
 
 static struct prompt_toggle *
 find_prompt_toggle(struct prompt_toggle toggles[], size_t toggles_size,
-		   const char *name, size_t namelen)
+		   const char *prefix, const char *name, size_t namelen)
 {
+	char toggle_name[SIZEOF_STR];
 	int i;
 
 	for (i = 0; i < toggles_size; i++) {
 		struct prompt_toggle *toggle = &toggles[i];
 
-		if (namelen == strlen(toggle->name) &&
-			!string_enum_compare(toggle->name, name, namelen))
+		prompt_toggle_name(toggle_name, sizeof(toggle_name), prefix, toggle->name);
+
+		if (namelen == strlen(toggle_name) &&
+		    !string_enum_compare(toggle_name, name, namelen))
 			return toggle;
 	}
 
@@ -609,12 +652,13 @@ static enum view_flag
 prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 {
 	struct prompt_toggle option_toggles[] = {
-#define TOGGLE_OPTIONS(name, type, flags) { #name, #type, flags, &opt_ ## name },
-		OPTION_INFO(TOGGLE_OPTIONS)
+#define DEFINE_OPTION_TOGGLES(name, type, flags) { #name, #type, flags, &opt_ ## name },
+		OPTION_INFO(DEFINE_OPTION_TOGGLES)
 	};
 	const char *option = argv[1];
 	size_t optionlen = option ? strlen(option) : 0;
 	struct prompt_toggle *toggle;
+	struct view_column *column;
 
 	if (!option) {
 		string_format_size(msg, SIZEOF_STR, "%s", "No option name given to :toggle");
@@ -638,9 +682,27 @@ prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 	}
 
 	toggle = find_prompt_toggle(option_toggles, ARRAY_SIZE(option_toggles),
-				    option, optionlen);
+				    "", option, optionlen);
 	if (toggle)
-		return prompt_toggle_option(view, argv, toggle, msg);
+		return prompt_toggle_option(view, argv, "", toggle, msg);
+
+#define DEFINE_COLUMN_OPTIONS_TOGGLE(name, type, flags) \
+	{ #name, #type, flags, &opt->name },
+
+#define DEFINE_COLUMN_OPTIONS_CHECK(name, id, options) \
+	if (column->type == VIEW_COLUMN_##id) { \
+		struct name##_options *opt = &column->opt.name; \
+		struct prompt_toggle toggles[] = { \
+			options(DEFINE_COLUMN_OPTIONS_TOGGLE) \
+		}; \
+		toggle = find_prompt_toggle(toggles, ARRAY_SIZE(toggles), #name, option, optionlen); \
+		if (toggle) \
+			return prompt_toggle_option(view, argv, #name, toggle, msg); \
+	}
+
+	for (column = view->columns; column; column = column->next) {
+		COLUMN_OPTIONS(DEFINE_COLUMN_OPTIONS_CHECK);
+	}
 
 	string_format_size(msg, SIZEOF_STR, "`:toggle %s` not supported", option);
 	return VIEW_NO_FLAGS;
