@@ -181,11 +181,11 @@ parse_step(double *opt, const char *arg)
 	*opt = (*opt - 1) / 100;
 	if (*opt >= 1.0) {
 		*opt = 0.99;
-		return ERROR_INVALID_STEP_VALUE;
+		return error("Percentage is larger than 100%%");
 	}
 	if (*opt < 0.0) {
 		*opt = 1;
-		return ERROR_INVALID_STEP_VALUE;
+		return error("Percentage is less than 0%%");
 	}
 	return SUCCESS;
 }
@@ -200,7 +200,7 @@ parse_int(int *opt, const char *arg, int min, int max)
 		return SUCCESS;
 	}
 
-	return ERROR_INTEGER_VALUE_OUT_OF_BOUND;
+	return error("Value must be between %d and %d", min, max);
 }
 
 #define parse_id(opt, arg) \
@@ -228,7 +228,7 @@ parse_color_name(const char *color, struct line_rule *rule, const char **prefix_
 		struct keymap *keymap = get_keymap(color, prefixend - color);
 
 		if (!keymap)
-			return ERROR_UNKNOWN_KEY_MAP;
+			return error("Unknown key map: %.*s", (int) (prefixend - color), color);
 		if (prefix_ptr)
 			*prefix_ptr = keymap->name;
 		color = prefixend + 1;
@@ -274,7 +274,7 @@ option_color_command(int argc, const char *argv[])
 	enum status_code code;
 
 	if (argc < 3)
-		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;
+		return error("Invalid color mapping: color area fgcolor bgcolor [attrs]");
 
 	code = parse_color_name(argv[0], &rule, &prefix);
 	if (code != SUCCESS)
@@ -315,21 +315,24 @@ option_color_command(int argc, const char *argv[])
 		}
 
 		if (!info)
-			return ERROR_UNKNOWN_COLOR_NAME;
+			return error("Unknown color name: %s", argv[0]);
 
-		code = ERROR_OBSOLETE_REQUEST_NAME;
+		code = error("%s has been replaced by %s",
+			     obsolete[index][0], obsolete[index][1]);
 	}
 
-	if (!set_color(&info->fg, argv[1]) ||
-	    !set_color(&info->bg, argv[2]))
-		return ERROR_UNKNOWN_COLOR;
+	if (!set_color(&info->fg, argv[1]))
+		return error("Unknown color: %s", argv[1]);
+
+	if (!set_color(&info->bg, argv[2]))
+		return error("Unknown color: %s", argv[2]);
 
 	info->attr = 0;
 	while (argc-- > 3) {
 		int attr;
 
 		if (!set_attribute(&attr, argv[argc]))
-			return ERROR_UNKNOWN_ATTRIBUTE;
+			return error("Unknown color attribute: %s", argv[argc]);
 		info->attr |= attr;
 	}
 
@@ -412,10 +415,10 @@ static enum status_code
 option_set_command(int argc, const char *argv[])
 {
 	if (argc < 3)
-		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;
+		return error("Invalid set command: set option = value");
 
 	if (strcmp(argv[1], "="))
-		return ERROR_NO_VALUE_ASSIGNED;
+		return error("No value assigned to %s", argv[0]);
 
 	if (!strcmp(argv[0], "blame-options"))
 		return parse_args(&opt_blame_options, argv + 2);
@@ -427,7 +430,7 @@ option_set_command(int argc, const char *argv[])
 		return parse_ref_formats(argv + 2);
 
 	if (argc != 3)
-		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;
+		return error("Option %s expects only one value", argv[0]);
 
 	if (!strcmp(argv[0], "show-author"))
 		return parse_enum(&opt_show_author, argv[2], author_map);
@@ -558,7 +561,7 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "mouse-scroll"))
 		return parse_int(&opt_mouse_scroll, argv[2], 0, 1024);
 
-	return ERROR_UNKNOWN_VARIABLE_NAME;
+	return error("Unknown option name: %s", argv[0]);
 }
 
 /* Wants: mode request key */
@@ -570,17 +573,17 @@ option_bind_command(int argc, const char *argv[])
 	struct keymap *keymap;
 
 	if (argc < 3)
-		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;
+		return error("Invalid key binding: bind keymap key action");
 
 	if (!(keymap = get_keymap(argv[0], strlen(argv[0])))) {
 		if (!strcmp(argv[0], "branch"))
 			keymap = get_keymap("refs", strlen("refs"));
 		if (!keymap)
-			return ERROR_UNKNOWN_KEY_MAP;
+			return error("Unknown key map: %s", argv[0]);
 	}
 
 	if (get_key_value(argv[1], &input) == ERR)
-		return ERROR_UNKNOWN_KEY;
+		return error("Unknown key: %s", argv[1]);
 
 	request = get_request(argv[2]);
 	if (request == REQ_UNKNOWN) {
@@ -616,7 +619,8 @@ option_bind_command(int argc, const char *argv[])
 			const char *action = obsolete[alias][1];
 
 			add_keybinding(keymap, get_request(action), &input);
-			return ERROR_OBSOLETE_REQUEST_NAME;
+			return error("%s has been renamed to %s",
+				     obsolete[alias][0], action);
 		}
 
 		alias = find_remapped(toggles, ARRAY_SIZE(toggles), argv[2]);
@@ -627,7 +631,11 @@ option_bind_command(int argc, const char *argv[])
 			const char *toggle[] = { ":toggle", toggles[alias][1], arg, NULL};
 			enum status_code code = add_run_request(keymap, &input, toggle);
 
-			return code == SUCCESS ? ERROR_OBSOLETE_REQUEST_NAME : code;
+			if (code == SUCCESS)
+				code = error("%s has been replaced by `:toggle %s%s%s'",
+					     action, toggles[alias][1],
+					     arg ? " " : "", arg ? arg : "");
+			return code;
 		}
 	}
 
@@ -644,7 +652,7 @@ static enum status_code
 option_source_command(int argc, const char *argv[])
 {
 	if (argc < 1)
-		return ERROR_WRONG_NUMBER_OF_ARGUMENTS;
+		return error("Invalid source command: source path");
 
 	return load_option_file(argv[0]);
 }
@@ -664,7 +672,7 @@ set_option(const char *opt, int argc, const char *argv[])
 	if (!strcmp(opt, "source"))
 		return option_source_command(argc, argv);
 
-	return ERROR_UNKNOWN_OPTION_COMMAND;
+	return error("Unknown option command: %s", opt);
 }
 
 struct config_state {
@@ -699,14 +707,14 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 		}
 
 		if (!argv_from_string(argv, &argc, value))
-			status = ERROR_TOO_MANY_OPTION_ARGUMENTS;
+			status = error("Too many option arguments for %s", opt);
 		else
 			status = set_option(opt, argc, argv);
 	}
 
 	if (status != SUCCESS) {
-		warn("%s line %d: %s near '%.*s'", config->path, config->lineno,
-		     get_status_message(status), (int) optlen, opt);
+		warn("%s:%d: %s", config->path, config->lineno,
+		     get_status_message(status));
 		config->errors = TRUE;
 	}
 
@@ -729,13 +737,13 @@ load_option_file(const char *path)
 		const char *home = getenv("HOME");
 
 		if (!home || !string_format(buf, "%s/%s", home, path + 2))
-			return ERROR_HOME_UNRESOLVABLE;
+			return error("Failed to expand ~ to user home directory");
 		path = buf;
 	}
 
 	/* It's OK that the file doesn't exist. */
 	if (!io_open(&io, "%s", path))
-		return ERROR_FILE_DOES_NOT_EXIST;
+		return error("File does not exist: %s", path);
 
 	if (io_load(&io, " \t", read_option, &config) == ERR ||
 	    config.errors == TRUE)
@@ -814,15 +822,15 @@ set_repo_config_option(char *name, char *value, enum status_code (*cmd)(int, con
 {
 	const char *argv[SIZEOF_ARG] = { name, "=" };
 	int argc = 1 + (cmd == option_set_command);
-	enum status_code error;
+	enum status_code code;
 
 	if (!argv_from_string(argv, &argc, value))
-		error = ERROR_TOO_MANY_OPTION_ARGUMENTS;
+		code = error("Too many arguments");
 	else
-		error = cmd(argc, argv);
+		code = cmd(argc, argv);
 
-	if (error != SUCCESS)
-		warn("Option 'tig.%s': %s", name, get_status_message(error));
+	if (code != SUCCESS)
+		warn("Option 'tig.%s': %s", name, get_status_message(code));
 }
 
 static void

@@ -73,13 +73,24 @@ keybinding_equals(struct key_input *input1, struct key_input *input2, bool *conf
 enum status_code
 add_keybinding(struct keymap *table, enum request request, struct key_input *input)
 {
+	char buf[SIZEOF_STR];
 	bool conflict = FALSE;
 	size_t i;
 
 	for (i = 0; i < table->size; i++) {
 		if (keybinding_equals(&table->data[i].input, input, &conflict)) {
+			enum request old_request = table->data[i].request;
+			const char *old_name;
+
 			table->data[i].request = request;
-			return conflict ? ERROR_CTRL_KEY_CONFLICT : SUCCESS;
+			if (!conflict)
+				return SUCCESS;
+
+			old_name = get_request_name(old_request);
+			string_ncopy(buf, old_name, strlen(old_name));
+			return error("Key binding for %s and %s conflict; "
+				     "keys using Ctrl are case insensitive",
+				     buf, get_request_name(request));
 		}
 	}
 
@@ -278,7 +289,7 @@ add_run_request(struct keymap *keymap, struct key_input *input, const char **arg
 	struct run_request_flags flags = {};
 
 	if (!strchr(":!?@<", *argv[0]))
-		return ERROR_UNKNOWN_REQUEST_NAME;
+		return error("Unknown request name: %s", argv[0]);
 
 	while (*argv[0]) {
 		if (*argv[0] == ':') {

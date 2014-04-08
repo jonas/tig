@@ -24,12 +24,26 @@ static const char *status_messages[] = {
 	STATUS_CODE_INFO(STATUS_CODE_MESSAGE)
 };
 
+static char status_custom_message[SIZEOF_STR];
+
 const char *
 get_status_message(enum status_code code)
 {
 	if (code == SUCCESS)
 		return "";
+	if (code == ERROR_CUSTOM_MESSAGE)
+		return status_custom_message;
 	return status_messages[code];
+}
+
+enum status_code
+error(const char *msg, ...)
+{
+	int retval;
+
+	FORMAT_BUFFER(status_custom_message, sizeof(status_custom_message), msg, retval, TRUE);
+
+	return ERROR_CUSTOM_MESSAGE;
 }
 
 void

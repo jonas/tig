@@ -310,14 +310,14 @@ parse_ref_format_arg(const char *arg, const struct enum_map *map)
 
 			format = malloc(sizeof(*format));
 			if (!format)
-				return ERROR_TOO_MANY_OPTION_ARGUMENTS;
+				return ERROR_OUT_OF_MEMORY;
 			format->start = strndup(arg, pos - arg);
 			format->end = strdup(pos + entry->namelen);
 			if (!format->start || !format->end) {
 				free((void *) format->start);
 				free((void *) format->end);
 				free(format);
-				return ERROR_TOO_MANY_OPTION_ARGUMENTS;
+				return ERROR_OUT_OF_MEMORY;
 			}
 
 			ref_formats[type] = format;
@@ -325,7 +325,7 @@ parse_ref_format_arg(const char *arg, const struct enum_map *map)
 		}
 	}
 
-	return ERROR_UNKNOWN_REF_FORMAT;
+	return error("Unknown ref format: %s", arg);
 }
 
 enum status_code

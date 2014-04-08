@@ -36,6 +36,17 @@ get_request(const char *name)
 	return REQ_UNKNOWN;
 }
 
+const char *
+get_request_name(enum request request)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(req_info); i++)
+		if (req_info[i].request == request)
+			return enum_name(req_info[i]);
+	return "run request";
+}
+
 bool
 foreach_request(bool (*visitor)(void *data, const struct request_info *req_info, const char *group), void *data)
 {

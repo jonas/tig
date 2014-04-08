@@ -110,6 +110,7 @@ struct request_info {
 };
 
 enum request get_request(const char *name);
+const char *get_request_name(enum request request);
 bool foreach_request(bool (*visitor)(void *data, const struct request_info *req_info, const char *group), void *data);
 
 #endif
