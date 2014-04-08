@@ -188,7 +188,7 @@ draw_field(struct view *view, enum line_type type, const char *text, int width, 
 	    || draw_space(view, LINE_DEFAULT, max - (view->col - col), max);
 }
 
-bool
+static bool
 draw_date(struct view *view, struct view_column *column, const struct time *time)
 {
 	enum date date = column->opt.date.show;
@@ -200,7 +200,7 @@ draw_date(struct view *view, struct view_column *column, const struct time *time
 	return draw_field(view, LINE_DATE, text, column->width, ALIGN_LEFT, FALSE);
 }
 
-bool
+static bool
 draw_author(struct view *view, struct view_column *column, const struct ident *author)
 {
 	bool trim = author_trim(column->width);
@@ -212,7 +212,7 @@ draw_author(struct view *view, struct view_column *column, const struct ident *a
 	return draw_field(view, LINE_AUTHOR, text, column->width, ALIGN_LEFT, trim);
 }
 
-bool
+static bool
 draw_id(struct view *view, struct view_column *column, const char *id)
 {
 	static const enum line_type colors[] = {
