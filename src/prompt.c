@@ -306,6 +306,23 @@ prompt_toggle_option(struct view *view, const char *argv[],
 	return toggle->flags;
 }
 
+static struct prompt_toggle *
+find_prompt_toggle(struct prompt_toggle toggles[], size_t toggles_size,
+		   const char *name, size_t namelen)
+{
+	int i;
+
+	for (i = 0; i < toggles_size; i++) {
+		struct prompt_toggle *toggle = &toggles[i];
+
+		if (namelen == strlen(toggle->name) &&
+			!string_enum_compare(toggle->name, name, namelen))
+			return toggle;
+	}
+
+	return NULL;
+}
+
 static enum view_flag
 prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 {
@@ -315,7 +332,7 @@ prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 	};
 	const char *name = argv[1];
 	size_t namelen = name ? strlen(name) : 0;
-	int i;
+	struct prompt_toggle *toggle;
 
 	if (!name) {
 		string_format_size(msg, SIZEOF_STR, "%s", "No option name given to :toggle");
@@ -338,13 +355,10 @@ prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 		return VIEW_NO_FLAGS;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(option_toggles); i++) {
-		struct prompt_toggle *toggle = &option_toggles[i];
-
-		if (namelen == strlen(toggle->name) &&
-		    !string_enum_compare(toggle->name, name, namelen))
-			return prompt_toggle_option(view, argv, toggle, msg);
-	}
+	toggle = find_prompt_toggle(option_toggles, ARRAY_SIZE(option_toggles),
+				    name, namelen);
+	if (toggle)
+		return prompt_toggle_option(view, argv, toggle, msg);
 
 	string_format_size(msg, SIZEOF_STR, "`:toggle %s` not supported", name);
 	return VIEW_NO_FLAGS;
