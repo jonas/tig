@@ -252,16 +252,12 @@ io_trace(const char *fmt, ...)
 }
 
 bool
-io_run(struct io *io, enum io_type type, const char *dir, char * const env[], const char *argv[], ...)
+io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], const char *argv[], int custom)
 {
 	int pipefds[2] = { -1, -1 };
-	va_list args;
-	bool read_from_stdin = type == IO_RD_STDIN;
+	bool read_from_stdin = type == IO_RD && (custom & IO_RD_FORWARD_STDIN);
 
 	io_init(io);
-
-	if (read_from_stdin)
-		type = IO_RD;
 
 	if (dir && !strcmp(dir, argv[0]))
 		return io_open(io, "%s%s", dir, argv[1]);
@@ -270,9 +266,7 @@ io_run(struct io *io, enum io_type type, const char *dir, char * const env[], co
 		io->error = errno;
 		return FALSE;
 	} else if (type == IO_AP) {
-		va_start(args, argv);
-		pipefds[1] = va_arg(args, int);
-		va_end(args);
+		pipefds[1] = custom;
 	}
 
 	if ((io->pid = fork())) {
@@ -331,11 +325,17 @@ io_run(struct io *io, enum io_type type, const char *dir, char * const env[], co
 }
 
 bool
+io_run(struct io *io, enum io_type type, const char *dir, char * const env[], const char *argv[])
+{
+	return io_exec(io, type, dir, env, argv, 0);
+}
+
+bool
 io_complete(enum io_type type, const char **argv, const char *dir, int fd)
 {
 	struct io io;
 
-	return io_run(&io, type, dir, NULL, argv, fd) && io_done(&io);
+	return io_exec(&io, type, dir, NULL, argv, fd) && io_done(&io);
 }
 
 bool

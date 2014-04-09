@@ -560,8 +560,8 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 {
 	bool extra = !!(flags & (OPEN_EXTRA));
 	bool refresh = flags & (OPEN_REFRESH | OPEN_PREPARED | OPEN_STDIN);
-	bool forward_stdin = flags & OPEN_FORWARD_STDIN;
-	enum io_type io_type = forward_stdin ? IO_RD_STDIN : IO_RD;
+	int forward_stdin = (flags & OPEN_FORWARD_STDIN) ? IO_RD_FORWARD_STDIN : 0;
+	int io_flags = forward_stdin;
 
 	if (view_no_refresh(view, flags))
 		return TRUE;
@@ -592,7 +592,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	}
 
 	if (view->argv && view->argv[0] &&
-	    !io_run(&view->io, io_type, view->dir, opt_env, view->argv)) {
+	    !io_exec(&view->io, IO_RD, view->dir, opt_env, view->argv, io_flags)) {
 		report("Failed to open %s view", view->name);
 		return FALSE;
 	}

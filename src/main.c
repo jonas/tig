@@ -81,7 +81,7 @@ main_has_changes(const char *argv[])
 {
 	struct io io;
 
-	if (!io_run(&io, IO_BG, NULL, opt_env, argv, -1))
+	if (!io_exec(&io, IO_BG, NULL, opt_env, argv, -1))
 		return FALSE;
 	io_done(&io);
 	return io.status == 1;

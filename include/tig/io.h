@@ -36,12 +36,15 @@ extern struct encoding *default_encoding;
  * Executing external commands.
  */
 
+enum io_flags {
+	IO_RD_FORWARD_STDIN,	/* Forward stdin from parent process to child. */
+};
+
 enum io_type {
 	IO_FD,			/* File descriptor based IO. */
 	IO_BG,			/* Execute command in the background. */
 	IO_FG,			/* Execute command with same std{in,out,err}. */
 	IO_RD,			/* Read only fork+exec IO. */
-	IO_RD_STDIN,		/* Read only fork+exec IO with stdin. */
 	IO_WR,			/* Write only fork+exec IO. */
 	IO_AP,			/* Append fork+exec output to file. */
 };
@@ -64,7 +67,8 @@ bool io_open(struct io *io, const char *fmt, ...) PRINTF_LIKE(2, 3);
 bool io_from_string(struct io *io, const char *str);
 bool io_kill(struct io *io);
 bool io_done(struct io *io);
-bool io_run(struct io *io, enum io_type type, const char *dir, char * const env[], const char *argv[], ...);
+bool io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], const char *argv[], int custom);
+bool io_run(struct io *io, enum io_type type, const char *dir, char * const env[], const char *argv[]);
 bool io_run_bg(const char **argv);
 bool io_run_fg(const char **argv, const char *dir);
 bool io_run_append(const char **argv, int fd);
