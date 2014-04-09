@@ -45,6 +45,8 @@ const char *enum_name_static(const char *name, size_t namelen);
 #define enum_name(entry) enum_name_static((entry).name, (entry).namelen)
 #define enum_name_copy(buf, name, namelen) enum_name_ncopy(buf, sizeof(buf), name, namelen)
 
+const struct enum_map *find_enum_map(const char *type);
+
 bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, const char *name);
 
 #define map_enum(attr, map, name) \

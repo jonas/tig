@@ -187,25 +187,6 @@ struct prompt_toggle {
 	void *opt;
 };
 
-static const struct enum_map *
-find_enum_map(const char *type)
-{
-	static struct {
-		const char *type;
-		const struct enum_map *map;
-	} mappings[] = {
-#define DEFINE_ENUM_MAPPING(name, macro) { #name, name##_map },
-		ENUM_INFO(DEFINE_ENUM_MAPPING)
-	};
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(mappings); i++)
-		if (!strcmp(type, mappings[i].type))
-			return mappings[i].map;
-
-	die("%s not found in ENUM_INFO", type);
-}
-
 static bool
 find_arg(const char *argv[], const char *arg)
 {

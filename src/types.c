@@ -63,6 +63,23 @@ enum_name_static(const char *name, size_t namelen)
 	return enum_name_copy(buf, name, namelen) ? buf : name;
 }
 
+const struct enum_map *
+find_enum_map(const char *type)
+{
+	static struct {
+		const char *type;
+		const struct enum_map *map;
+	} mappings[] = {
+#define DEFINE_ENUM_MAPPING(name, macro) { #name, name##_map },
+		ENUM_INFO(DEFINE_ENUM_MAPPING)
+	};
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(mappings); i++)
+		if (!strcmp(type, mappings[i].type))
+			return mappings[i].map;
+	return NULL;
+}
 
 bool
 map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, const char *name)
