@@ -155,6 +155,7 @@ enum open_flags {
 	OPEN_REFRESH = 16,	/* Refresh view using previous command. */
 	OPEN_PREPARED = 32,	/* Open already prepared command. */
 	OPEN_EXTRA = 64,	/* Open extra data from command. */
+	OPEN_WITH_STDERR = 128,	/* Redirect stderr to stdin. */
 
 	OPEN_PAGER_MODE = OPEN_STDIN | OPEN_FORWARD_STDIN,
 	OPEN_ALWAYS_LOAD = OPEN_RELOAD | OPEN_REFRESH | OPEN_PREPARED | OPEN_EXTRA | OPEN_PAGER_MODE,

@@ -561,7 +561,8 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	bool extra = !!(flags & (OPEN_EXTRA));
 	bool refresh = flags & (OPEN_REFRESH | OPEN_PREPARED | OPEN_STDIN);
 	int forward_stdin = (flags & OPEN_FORWARD_STDIN) ? IO_RD_FORWARD_STDIN : 0;
-	int io_flags = forward_stdin;
+	int with_stderr = (flags & OPEN_WITH_STDERR) ? IO_RD_WITH_STDERR : 0;
+	int io_flags = forward_stdin | with_stderr;
 
 	if (view_no_refresh(view, flags))
 		return TRUE;

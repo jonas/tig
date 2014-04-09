@@ -256,6 +256,7 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 {
 	int pipefds[2] = { -1, -1 };
 	bool read_from_stdin = type == IO_RD && (custom & IO_RD_FORWARD_STDIN);
+	bool read_with_stderr = type == IO_RD && (custom & IO_RD_WITH_STDERR);
 
 	io_init(io);
 
@@ -293,7 +294,10 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 
 			dup2(readfd,  STDIN_FILENO);
 			dup2(writefd, STDOUT_FILENO);
-			dup2(errorfd, STDERR_FILENO);
+			if (read_with_stderr)
+				dup2(writefd, STDERR_FILENO);
+			else
+				dup2(errorfd, STDERR_FILENO);
 
 			if (devnull != errorfd)
 				close(errorfd);

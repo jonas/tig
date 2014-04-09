@@ -419,7 +419,7 @@ run_prompt_command(struct view *view, const char *argv[])
 			argv_to_string(next->argv, next->ref, sizeof(next->ref), " ");
 
 			next->dir = NULL;
-			open_pager_view(view, OPEN_PREPARED);
+			open_pager_view(view, OPEN_PREPARED | OPEN_WITH_STDERR);
 		}
 
 	} else if (!strcmp(cmd, "toggle")) {
