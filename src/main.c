@@ -194,7 +194,7 @@ main_open(struct view *view, enum open_flags flags)
 	if (opt_rev_argv && main_check_argv(view, opt_rev_argv))
 		main_argv = pretty_raw_argv;
 
-	if (flags & OPEN_PAGER_MODE) {
+	if (open_in_pager_mode(flags)) {
 		state->added_changes_commits = TRUE;
 		state->with_graph = FALSE;
 	}
