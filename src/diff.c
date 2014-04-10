@@ -34,6 +34,8 @@ diff_open(struct view *view, enum open_flags flags)
 			"--", "%(fileargs)", NULL
 	};
 
+	if (!pager_column_init(view))
+		return FALSE;
 	return begin_update(view, NULL, diff_argv, flags);
 }
 
@@ -456,8 +458,10 @@ static struct view_ops diff_ops = {
 	diff_read,
 	diff_common_draw,
 	diff_request,
-	pager_grep,
+	view_column_grep,
 	diff_select,
+	NULL,
+	pager_get_column_data,
 };
 
 DEFINE_VIEW(diff);

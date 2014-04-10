@@ -14,6 +14,7 @@
 #include "tig/refdb.h"
 #include "tig/parse.h"
 #include "tig/display.h"
+#include "tig/draw.h"
 #include "tig/log.h"
 #include "tig/pager.h"
 #include "tig/tree.h"
@@ -31,6 +32,9 @@ blob_open(struct view *view, enum open_flags flags)
 		"git", "cat-file", "blob", "%(blob)", NULL
 	};
 	const char **argv = (flags & OPEN_PREPARED) ? view->argv : blob_argv;
+
+	if (!pager_column_init(view))
+		return FALSE;
 
 	if (argv != blob_argv) {
 		state->file = get_path(view->env->file);
@@ -109,10 +113,12 @@ static struct view_ops blob_ops = {
 	sizeof(struct blob_state),
 	blob_open,
 	blob_read,
-	pager_draw,
+	view_column_draw,
 	blob_request,
-	pager_grep,
+	view_column_grep,
 	pager_select,
+	NULL,
+	pager_get_column_data,
 };
 
 DEFINE_VIEW(blob);

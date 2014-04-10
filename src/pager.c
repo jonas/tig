@@ -26,15 +26,20 @@
  */
 
 bool
-pager_draw(struct view *view, struct line *line, unsigned int lineno)
+pager_column_init(struct view *view)
 {
-	if (draw_lineno(view, lineno))
-		return TRUE;
+	enum view_column_type columns[] = {
+		VIEW_COLUMN_LINE_NUMBER,
+		VIEW_COLUMN_TEXT,
+	};
 
-	if (line->wrapped && draw_text(view, LINE_DELIMITER, "+"))
-		return TRUE;
+	return view_column_init(view, columns, ARRAY_SIZE(columns));
+}
 
-	draw_text(view, line->type, line->data);
+bool
+pager_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
+{
+	column_data->text = line->data;
 	return TRUE;
 }
 
@@ -193,14 +198,6 @@ pager_request(struct view *view, enum request request, struct line *line)
 	return REQ_NONE;
 }
 
-bool
-pager_grep(struct view *view, struct line *line)
-{
-	const char *text[] = { line->data, NULL };
-
-	return grep_text(view, text);
-}
-
 void
 pager_select(struct view *view, struct line *line)
 {
@@ -211,7 +208,7 @@ pager_select(struct view *view, struct line *line)
 	}
 }
 
-bool
+static bool
 pager_open(struct view *view, enum open_flags flags)
 {
 	if (!open_from_stdin(flags) && !view->lines && !(flags & OPEN_PREPARED)) {
@@ -220,6 +217,8 @@ pager_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	}
 
+	if (!pager_column_init(view))
+		return FALSE;
 	return begin_update(view, NULL, NULL, flags);
 }
 
@@ -230,10 +229,12 @@ static struct view_ops pager_ops = {
 	0,
 	pager_open,
 	pager_read,
-	pager_draw,
+	view_column_draw,
 	pager_request,
-	pager_grep,
+	view_column_grep,
 	pager_select,
+	NULL,
+	pager_get_column_data,
 };
 
 DEFINE_VIEW(pager);

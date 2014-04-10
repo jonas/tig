@@ -472,6 +472,8 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_TEXT:
+			if (line->wrapped && draw_text(view, LINE_DELIMITER, "+"))
+				return TRUE;
 			if (draw_text(view, line->type, column_data.text))
 				return TRUE;
 			continue;

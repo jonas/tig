@@ -13,6 +13,7 @@
 
 #include "tig/refdb.h"
 #include "tig/display.h"
+#include "tig/draw.h"
 #include "tig/log.h"
 #include "tig/diff.h"
 #include "tig/pager.h"
@@ -56,6 +57,8 @@ log_open(struct view *view, enum open_flags flags)
 			"--", "%(fileargs)", NULL
 	};
 
+	if (!pager_column_init(view))
+		return FALSE;
 	return begin_update(view, NULL, log_argv, flags);
 }
 
@@ -85,10 +88,12 @@ static struct view_ops log_ops = {
 	sizeof(struct log_state),
 	log_open,
 	pager_read,
-	pager_draw,
+	view_column_draw,
 	log_request,
-	pager_grep,
+	view_column_grep,
 	log_select,
+	NULL,
+	pager_get_column_data,
 };
 
 DEFINE_VIEW(log);

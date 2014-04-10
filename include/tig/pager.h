@@ -16,13 +16,12 @@
 
 #include "tig/view.h"
 
-bool pager_draw(struct view *view, struct line *line, unsigned int lineno);
+bool pager_column_init(struct view *view);
+bool pager_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data);
 bool pager_read(struct view *view, char *data);
 bool pager_common_read(struct view *view, const char *data, enum line_type type);
 enum request pager_request(struct view *view, enum request request, struct line *line);
-bool pager_grep(struct view *view, struct line *line);
 void pager_select(struct view *view, struct line *line);
-bool pager_open(struct view *view, enum open_flags flags);
 
 extern struct view pager_view;
 
