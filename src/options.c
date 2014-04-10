@@ -651,10 +651,15 @@ static enum status_code load_option_file(const char *path);
 static enum status_code
 option_source_command(int argc, const char *argv[])
 {
+	enum status_code code;
+
 	if (argc < 1)
 		return error("Invalid source command: source path");
 
-	return load_option_file(argv[0]);
+	code = load_option_file(argv[0]);
+
+	return code == ERROR_FILE_DOES_NOT_EXIST
+		? error("File does not exist: %s", argv[0]) : code;
 }
 
 enum status_code
@@ -742,8 +747,13 @@ load_option_file(const char *path)
 	}
 
 	/* It's OK that the file doesn't exist. */
-	if (!io_open(&io, "%s", path))
-		return error("File does not exist: %s", path);
+	if (!io_open(&io, "%s", path)) {
+		/* XXX: Must return ERROR_FILE_DOES_NOT_EXIST so missing
+		 * system tigrc is detected properly. */
+		if (io_error(&io) == ENOENT)
+			return ERROR_FILE_DOES_NOT_EXIST;
+		return error("Error loading file %s: %s", path, strerror(io_error(&io)));
+	}
 
 	if (io_load(&io, " \t", read_option, &config) == ERR ||
 	    config.errors == TRUE)
