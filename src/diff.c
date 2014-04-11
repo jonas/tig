@@ -169,6 +169,23 @@ diff_common_draw_part(struct view *view, enum line_type *type, char **text, char
 	return sep != NULL;
 }
 
+void
+diff_common_draw_diff_stat(struct view *view, enum line_type *type, char **text)
+{
+		diff_common_draw_part(view, type, text, '|', LINE_DEFAULT);
+		if (diff_common_draw_part(view, type, text, 'B', LINE_DEFAULT)) {
+			/* Handle binary diffstat: Bin <deleted> -> <added> bytes */
+			diff_common_draw_part(view, type, text, ' ', LINE_DIFF_DEL);
+			diff_common_draw_part(view, type, text, '-', LINE_DEFAULT);
+			diff_common_draw_part(view, type, text, ' ', LINE_DIFF_ADD);
+			diff_common_draw_part(view, type, text, 'b', LINE_DEFAULT);
+
+		} else {
+			diff_common_draw_part(view, type, text, '+', LINE_DIFF_ADD);
+			diff_common_draw_part(view, type, text, '-', LINE_DIFF_DEL);
+		}
+}
+
 bool
 diff_common_draw(struct view *view, struct line *line, unsigned int lineno)
 {
@@ -183,18 +200,7 @@ diff_common_draw(struct view *view, struct line *line, unsigned int lineno)
 		return TRUE;
 
 	if (type == LINE_DIFF_STAT) {
-		diff_common_draw_part(view, &type, &text, '|', LINE_DEFAULT);
-		if (diff_common_draw_part(view, &type, &text, 'B', LINE_DEFAULT)) {
-			/* Handle binary diffstat: Bin <deleted> -> <added> bytes */
-			diff_common_draw_part(view, &type, &text, ' ', LINE_DIFF_DEL);
-			diff_common_draw_part(view, &type, &text, '-', LINE_DEFAULT);
-			diff_common_draw_part(view, &type, &text, ' ', LINE_DIFF_ADD);
-			diff_common_draw_part(view, &type, &text, 'b', LINE_DEFAULT);
-
-		} else {
-			diff_common_draw_part(view, &type, &text, '+', LINE_DIFF_ADD);
-			diff_common_draw_part(view, &type, &text, '-', LINE_DIFF_DEL);
-		}
+		diff_common_draw_diff_stat(view, &type, &text);
 	}
 
 	if (line->user_flags & DIFF_LINE_COMMIT_TITLE)
