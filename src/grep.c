@@ -30,13 +30,12 @@ struct grep_line {
 struct grep_state {
 	const char *last_file;
 	int lineno_digits;
-	int filename_width;
 };
 
 #define grep_view_lineno(grep)	((grep)->lineno > 0 ? (grep)->lineno - 1 : 0)
 
 static struct grep_line *
-grep_get_line(struct line *line)
+grep_get_line(const struct line *line)
 {
 	static struct grep_line grep_line;
 
@@ -48,26 +47,41 @@ grep_get_line(struct line *line)
 }
 
 static bool
+grep_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
+{
+	struct grep_line *grep = grep_get_line(line);
+
+	if (line->type == LINE_DELIMITER)
+		return FALSE;
+
+	column_data->line_number = &grep->lineno;
+	column_data->file_name = grep->file;
+	column_data->text = grep->text;
+	return TRUE;
+}
+
+static bool
 grep_draw(struct view *view, struct line *line, unsigned int lineno)
 {
-	struct grep_state *state = view->private;
 	struct grep_line *grep = grep_get_line(line);
-	struct view_column line_number_column = {};
+	struct view_column *column;
 
 	if (*grep->file && !grep->lineno) {
-		struct view_column file_name_column = {};
-
-		file_name_column.opt.file_name.show = FILENAME_ALWAYS;
-		file_name_column.width = state->filename_width;
-		draw_filename(view, &file_name_column, grep->file, TRUE, 0);
+		column = get_view_column(view, VIEW_COLUMN_FILE_NAME);
+		if (!column)
+			return TRUE;
+		column->opt.file_name.show = FILENAME_ALWAYS;
+		draw_filename(view, column, grep->file, TRUE, 0);
 		return TRUE;
 	}
 
-	line_number_column.opt.line_number.show = TRUE;
-	line_number_column.opt.line_number.interval = 1;
-
-	if (grep->lineno && draw_lineno_custom(view, &line_number_column, grep->lineno))
-		return TRUE;
+	column = get_view_column(view, VIEW_COLUMN_LINE_NUMBER);
+	if (column && grep->lineno) {
+		column->opt.line_number.show = TRUE;
+		column->opt.line_number.interval = 1;
+		if (draw_lineno_custom(view, column, grep->lineno))
+			return TRUE;
+	}
 
 	draw_text(view, LINE_DEFAULT, grep->text);
 	return TRUE;
@@ -122,19 +136,25 @@ open_grep_view(struct view *prev)
 static bool
 grep_open(struct view *view, enum open_flags flags)
 {
-	struct grep_state *state = view->private;
 	const char **argv = NULL;
+	enum view_column_type columns[] = {
+		VIEW_COLUMN_FILE_NAME,
+		VIEW_COLUMN_LINE_NUMBER,
+		VIEW_COLUMN_TEXT,
+	};
 
 	if (is_initial_view(view)) {
 		grep_argv = opt_cmdline_argv;
 		opt_cmdline_argv = NULL;
 	}
 
+	if (!view_column_init(view, columns, ARRAY_SIZE(columns)))
+		return FALSE;
+
 	if (!argv_append_array(&argv, grep_args) ||
 	    !argv_append_array(&argv, grep_argv))
 		return FALSE;
 
-	state->filename_width = opt_show_filename_width;
 	return begin_update(view, NULL, argv, flags);
 }
 
@@ -186,25 +206,25 @@ grep_request(struct view *view, enum request request, struct line *line)
 }
 
 static bool
-grep_read(struct view *view, char *line)
+grep_read(struct view *view, char *data)
 {
 	struct grep_state *state = view->private;
 	struct grep_line *grep;
 	char *lineno, *text;
+	struct line *line;
 	const char *file;
 	size_t textlen;
 	unsigned long lineno_digits;
 
-	if (!line) {
-		view->digits = state->lineno_digits;
+	if (!data) {
 		state->last_file = NULL;
 		return TRUE;
 	}
 
-	if (!strcmp(line, "--"))
+	if (!strcmp(data, "--"))
 		return add_line_nodata(view, LINE_DELIMITER) != NULL;
 
-	lineno = io_memchr(&view->io, line, 0);
+	lineno = io_memchr(&view->io, data, 0);
 	text = io_memchr(&view->io, lineno, 0);
 
 	if (!lineno || !text)
@@ -212,12 +232,13 @@ grep_read(struct view *view, char *line)
 
 	textlen = strlen(text);
 
-	file = get_path(line);
+	file = get_path(data);
 	if (!file ||
 	    (file != state->last_file && !add_line_text(view, file, LINE_FILE)))
 		return FALSE;
 
-	if (!add_line_alloc(view, &grep, LINE_DEFAULT, textlen, FALSE))
+	line = add_line_alloc(view, &grep, LINE_DEFAULT, textlen, FALSE);
+	if (!line)
 		return FALSE;
 
 	grep->file = file;
@@ -230,26 +251,11 @@ grep_read(struct view *view, char *line)
 		view->digits = state->lineno_digits = lineno_digits;
 		view->force_redraw = TRUE;
 	}
-
-	if (strlen(grep->file) > state->filename_width)
-		state->filename_width = strlen(grep->file);
+	view_column_info_update(view, line);
 
 	state->last_file = file;
 
 	return TRUE;
-}
-
-static bool
-grep_grep(struct view *view, struct line *line)
-{
-	struct grep_line *grep = grep_get_line(line);
-	const char *text[] = {
-		grep->text,
-		grep->file,
-		NULL
-	};
-
-	return grep_text(view, text);
 }
 
 static struct view_ops grep_ops = {
@@ -261,8 +267,10 @@ static struct view_ops grep_ops = {
 	grep_read,
 	grep_draw,
 	grep_request,
-	grep_grep,
+	view_column_grep,
 	grep_select,
+	NULL,
+	grep_get_column_data,
 };
 
 DEFINE_VIEW(grep);
