@@ -24,6 +24,9 @@ struct log_state {
 	 * up/down in the log view. */
 	int last_lineno;
 	enum line_type last_type;
+	bool commit_title_read;
+	bool after_commit_header;
+	bool reading_diff_stat;
 };
 
 static void
@@ -81,14 +84,63 @@ log_request(struct view *view, enum request request, struct line *line)
 	}
 }
 
+static bool
+log_read(struct view *view, char *data)
+{
+	enum line_type type;
+	struct log_state *state = view->private;
+	size_t len;
+
+	if (!data)
+		return TRUE;
+
+	type = get_line_type(data);
+	len = strlen(data);
+
+	if (type == LINE_COMMIT)
+		state->commit_title_read = TRUE;
+	else if (state->commit_title_read && len < 1) {
+		state->commit_title_read = FALSE;
+		state->after_commit_header = TRUE;
+	} else if (state->after_commit_header && len < 1) {
+		state->after_commit_header = FALSE;
+		state->reading_diff_stat = TRUE;
+	} else if (state->reading_diff_stat) {
+		if (diff_common_add_diff_stat(view, data))
+			return TRUE;
+		state->reading_diff_stat = FALSE;
+	}
+
+	return pager_common_read(view, data, type);
+}
+
+static bool
+log_draw(struct view *view, struct line *line, unsigned int lineno)
+{
+	char *text = line->data;
+	enum line_type type = line->type;
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_LINE_NUMBER);
+
+	if (column && (type == LINE_DIFF_STAT) && draw_lineno(view, column, lineno))
+		return TRUE;
+
+	if (type == LINE_DIFF_STAT) {
+		diff_common_draw_diff_stat(view, &type, &text);
+		draw_text(view, type, text);
+		return TRUE;
+	}
+
+	return view_column_draw(view, line, lineno);
+}
+
 static struct view_ops log_ops = {
 	"line",
 	argv_env.head,
 	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER | VIEW_LOG_LIKE | VIEW_REFRESH,
 	sizeof(struct log_state),
 	log_open,
-	pager_read,
-	view_column_draw,
+	log_read,
+	log_draw,
 	log_request,
 	view_column_grep,
 	log_select,
