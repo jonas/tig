@@ -38,6 +38,21 @@ diff_open(struct view *view, enum open_flags flags)
 }
 
 bool
+diff_common_add_diff_stat(struct view *view, const char *data)
+{
+	size_t len = strlen(data);
+	char *pipe = strchr(data, '|');
+	bool has_histogram = data[len - 1] == '-' || data[len - 1] == '+';
+	bool has_bin_diff = pipe && strstr(pipe, "Bin") && strstr(pipe, "->");
+	bool has_rename = data[len - 1] == '0' && (strstr(data, "=>") || !strncmp(data, " ...", 4));
+	bool has_no_change = pipe && strstr(pipe, " 0");
+
+	if (pipe && (has_histogram || has_bin_diff || has_rename || has_no_change))
+		return add_line_text(view, data, LINE_DIFF_STAT) != NULL;
+	return FALSE;
+}
+
+bool
 diff_common_read(struct view *view, const char *data, struct diff_state *state)
 {
 	enum line_type type = get_line_type(data);
@@ -49,18 +64,9 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		state->reading_diff_stat = TRUE;
 
 	if (state->reading_diff_stat) {
-		size_t len = strlen(data);
-		char *pipe = strchr(data, '|');
-		bool has_histogram = data[len - 1] == '-' || data[len - 1] == '+';
-		bool has_bin_diff = pipe && strstr(pipe, "Bin") && strstr(pipe, "->");
-		bool has_rename = data[len - 1] == '0' && (strstr(data, "=>") || !strncmp(data, " ...", 4));
-		bool has_no_change = pipe && strstr(pipe, " 0");
-
-		if (pipe && (has_histogram || has_bin_diff || has_rename || has_no_change)) {
-			return add_line_text(view, data, LINE_DIFF_STAT) != NULL;
-		} else {
-			state->reading_diff_stat = FALSE;
-		}
+		if (diff_common_add_diff_stat(view, data))
+			return TRUE;
+		state->reading_diff_stat = FALSE;
 
 	} else if (!strcmp(data, "---")) {
 		state->reading_diff_stat = TRUE;
