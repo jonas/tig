@@ -28,6 +28,7 @@ bool diff_common_read(struct view *view, const char *data, struct diff_state *st
 bool diff_common_draw(struct view *view, struct line *line, unsigned int lineno);
 enum request diff_common_enter(struct view *view, enum request request, struct line *line);
 bool diff_common_add_diff_stat(struct view *view, const char *data);
+void diff_common_draw_diff_stat(struct view *view, enum line_type *type, char **text);
 
 unsigned int diff_get_lineno(struct view *view, struct line *line);
 const char *diff_get_pathname(struct view *view, struct line *line);
