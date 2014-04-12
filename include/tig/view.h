@@ -53,6 +53,7 @@ enum view_flag {
 	VIEW_LOG_LIKE		= 1 << 11,
 	VIEW_STATUS_LIKE	= 1 << 12,
 	VIEW_REFRESH		= 1 << 13,
+	VIEW_GREP_LIKE		= 1 << 14,
 	VIEW_SORTABLE		= 1 << 15,
 
 	VIEW_RESET_DISPLAY	= 1 << 31,

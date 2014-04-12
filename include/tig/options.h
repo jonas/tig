@@ -83,7 +83,7 @@ VIEW_COLUMN_OPTION_INFO(DEFINE_OPTION_EXTERNS);
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define FILE_NAME_COLUMN_OPTIONS(_) \
-	_(show,				enum filename,		VIEW_NO_FLAGS) \
+	_(show,				enum filename,		VIEW_GREP_LIKE) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define FILE_SIZE_COLUMN_OPTIONS(_) \

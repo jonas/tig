@@ -29,6 +29,7 @@ struct grep_line {
 
 struct grep_state {
 	const char *last_file;
+	bool no_file_group;
 };
 
 #define grep_view_lineno(grep)	((grep)->lineno > 0 ? (grep)->lineno - 1 : 0)
@@ -117,6 +118,7 @@ open_grep_view(struct view *prev)
 static bool
 grep_open(struct view *view, enum open_flags flags)
 {
+	struct grep_state *state = view->private;
 	const char **argv = NULL;
 
 	if (is_initial_view(view)) {
@@ -143,14 +145,19 @@ grep_open(struct view *view, enum open_flags flags)
 
 		column = get_view_column(view, VIEW_COLUMN_FILE_NAME);
 		if (column) {
-			column->opt.file_name.show = FILENAME_ALWAYS;
-			column->hidden = TRUE;
+			column->opt.file_name.show = FILENAME_NO;
 		}
 	}
 
 	if (!argv_append_array(&argv, grep_args) ||
 	    !argv_append_array(&argv, grep_argv))
 		return FALSE;
+
+	{
+		struct view_column *column = get_view_column(view, VIEW_COLUMN_FILE_NAME);
+
+		state->no_file_group = !column || column->opt.file_name.show != FILENAME_NO;
+	}
 
 	return begin_update(view, NULL, argv, flags);
 }
@@ -229,8 +236,11 @@ grep_read(struct view *view, char *data)
 	textlen = strlen(text);
 
 	file = get_path(data);
-	if (!file ||
-	    (file != state->last_file && !add_line_text(view, file, LINE_FILE)))
+	if (!file)
+		return FALSE;
+
+	if (!state->no_file_group && file != state->last_file &&
+	    !add_line_text(view, file, LINE_FILE))
 		return FALSE;
 
 	line = add_line_alloc(view, &grep, LINE_DEFAULT, textlen, FALSE);
@@ -251,7 +261,7 @@ grep_read(struct view *view, char *data)
 static struct view_ops grep_ops = {
 	"line",
 	"",
-	VIEW_REFRESH,
+	VIEW_REFRESH | VIEW_GREP_LIKE,
 	sizeof(struct grep_state),
 	grep_open,
 	grep_read,
