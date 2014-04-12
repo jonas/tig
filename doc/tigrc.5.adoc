@@ -147,8 +147,9 @@ The following variables can be set:
 'id-width' (int)::
 
 	Width of the commit ID. When unset Tig will use the value of
-	'core.abbrev' if found or default to 7.  See git-config(1) on how to
-	set 'core.abbrev'.
+	'core.abbrev' if found. See git-config(1) on how to set 'core.abbrev'.
+	When set to zero the width is automatically sized to fit the content of
+	reflog (e.g. `ref/stash@{4}`) IDs and otherwise default to 7.
 
 'diff-options' (string)::
 

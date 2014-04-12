@@ -1145,8 +1145,12 @@ view_column_info_update(struct view *view, struct line *line)
 
 		case VIEW_COLUMN_ID:
 			width = column->opt.id.width;
-			if (column_data.id && !iscommit(column_data.id))
-				text = column_data.id;
+			if (column_data.id) {
+				if (!iscommit(column_data.id))
+					text = column_data.id;
+				else if (!width)
+					width = 7;
+			}
 			break;
 
 		case VIEW_COLUMN_COMMIT_TITLE:

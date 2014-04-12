@@ -204,7 +204,7 @@ parse_int(int *opt, const char *arg, int min, int max)
 }
 
 #define parse_id(opt, arg) \
-	parse_int(opt, arg, 4, SIZEOF_REV - 1)
+	parse_int(opt, arg, 0, SIZEOF_REV - 1)
 
 static bool
 set_color(int *color, const char *name)
