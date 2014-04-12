@@ -50,8 +50,10 @@ log_select(struct view *view, struct line *line)
 static bool
 log_open(struct view *view, enum open_flags flags)
 {
-	static const char *log_argv[] = {
-		"git", "log", encoding_arg, "--no-color", "--cc", "--stat", "-n100", "%(head)", "--", NULL
+	const char *log_argv[] = {
+		"git", "log", encoding_arg, commit_order_arg(), "--cc",
+			"--stat", "%(cmdlineargs)", "%(revargs)", "--no-color",
+			"--", "%(fileargs)", NULL
 	};
 
 	return begin_update(view, NULL, log_argv, flags);
