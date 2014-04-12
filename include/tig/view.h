@@ -164,6 +164,7 @@ enum open_flags {
 #define open_from_stdin(flags) ((flags) & OPEN_STDIN)
 
 struct view_column_data {
+	struct view_column *section;
 	const struct ident *author;
 	const char *commit_title;
 	const struct time *date;

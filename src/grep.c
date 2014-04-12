@@ -53,36 +53,18 @@ grep_get_column_data(struct view *view, const struct line *line, struct view_col
 	if (line->type == LINE_DELIMITER)
 		return FALSE;
 
+	if (*grep->file && !grep->lineno) {
+		static struct view_column file_name_column;
+
+		file_name_column.type = VIEW_COLUMN_FILE_NAME;
+		file_name_column.opt.file_name.show = FILENAME_ALWAYS;
+
+		column_data->section = &file_name_column;
+	}
+
 	column_data->line_number = &grep->lineno;
 	column_data->file_name = grep->file;
 	column_data->text = grep->text;
-	return TRUE;
-}
-
-static bool
-grep_draw(struct view *view, struct line *line, unsigned int lineno)
-{
-	struct grep_line *grep = grep_get_line(line);
-	struct view_column *column;
-
-	if (*grep->file && !grep->lineno) {
-		column = get_view_column(view, VIEW_COLUMN_FILE_NAME);
-		if (!column)
-			return TRUE;
-		column->opt.file_name.show = FILENAME_ALWAYS;
-		draw_filename(view, column, grep->file, TRUE, 0);
-		return TRUE;
-	}
-
-	column = get_view_column(view, VIEW_COLUMN_LINE_NUMBER);
-	if (column && grep->lineno) {
-		column->opt.line_number.show = TRUE;
-		column->opt.line_number.interval = 1;
-		if (draw_lineno_custom(view, column, grep->lineno))
-			return TRUE;
-	}
-
-	draw_text(view, LINE_DEFAULT, grep->text);
 	return TRUE;
 }
 
@@ -136,19 +118,35 @@ static bool
 grep_open(struct view *view, enum open_flags flags)
 {
 	const char **argv = NULL;
-	enum view_column_type columns[] = {
-		VIEW_COLUMN_FILE_NAME,
-		VIEW_COLUMN_LINE_NUMBER,
-		VIEW_COLUMN_TEXT,
-	};
 
 	if (is_initial_view(view)) {
 		grep_argv = opt_cmdline_argv;
 		opt_cmdline_argv = NULL;
 	}
 
-	if (!view_column_init(view, columns, ARRAY_SIZE(columns)))
-		return FALSE;
+	if (!view->columns) {
+		enum view_column_type columns[] = {
+			VIEW_COLUMN_FILE_NAME,
+			VIEW_COLUMN_LINE_NUMBER,
+			VIEW_COLUMN_TEXT,
+		};
+		struct view_column *column;
+
+		if (!view_column_init(view, columns, ARRAY_SIZE(columns)))
+			return FALSE;
+
+		column = get_view_column(view, VIEW_COLUMN_LINE_NUMBER);
+		if (column) {
+			column->opt.line_number.show = TRUE;
+			column->opt.line_number.interval = 1;
+		}
+
+		column = get_view_column(view, VIEW_COLUMN_FILE_NAME);
+		if (column) {
+			column->opt.file_name.show = FILENAME_ALWAYS;
+			column->hidden = TRUE;
+		}
+	}
 
 	if (!argv_append_array(&argv, grep_args) ||
 	    !argv_append_array(&argv, grep_argv))
@@ -257,7 +255,7 @@ static struct view_ops grep_ops = {
 	sizeof(struct grep_state),
 	grep_open,
 	grep_read,
-	grep_draw,
+	view_column_draw,
 	grep_request,
 	view_column_grep,
 	grep_select,

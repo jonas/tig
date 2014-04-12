@@ -235,19 +235,18 @@ draw_id(struct view *view, struct view_column *column, const char *id)
 	return draw_field(view, type, id, column->width, ALIGN_LEFT, FALSE);
 }
 
-bool
-draw_filename(struct view *view, struct view_column *column, const char *filename, bool auto_enabled, mode_t mode)
+static bool
+draw_filename(struct view *view, struct view_column *column, const char *filename, mode_t mode)
 {
-	bool trim = filename && utf8_width(filename) >= column->width;
+	size_t width = filename ? utf8_width(filename) : 0;
+	bool trim = width >= column->width;
 	enum line_type type = S_ISDIR(mode) ? LINE_DIRECTORY : LINE_FILE;
+	int column_width = column->width ? column->width : width;
 
 	if (column->opt.file_name.show == FILENAME_NO)
 		return FALSE;
 
-	if (column->opt.file_name.show == FILENAME_AUTO && !auto_enabled)
-		return FALSE;
-
-	return draw_field(view, type, filename, column->width, ALIGN_LEFT, trim);
+	return draw_field(view, type, filename, column_width, ALIGN_LEFT, trim);
 }
 
 static bool
@@ -269,7 +268,7 @@ draw_mode(struct view *view, mode_t mode)
 	return draw_field(view, LINE_MODE, str, STRING_SIZE("-rw-r--r--"), ALIGN_LEFT, FALSE);
 }
 
-bool
+static bool
 draw_lineno_custom(struct view *view, struct view_column *column, unsigned int lineno)
 {
 	char number[10];
@@ -398,13 +397,16 @@ draw_graph(struct view *view, const struct graph_canvas *canvas)
 bool
 view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 {
-	struct view_column *column;
+	struct view_column *column = view->columns;
 	struct view_column_data column_data = {};
 
 	if (!view->ops->get_column_data(view, line, &column_data))
 		return TRUE;
 
-	for (column = view->columns; column; column = column->next) {
+	if (column_data.section)
+		column = column_data.section;
+
+	for (; column; column = column->next) {
 		mode_t mode = column_data.mode ? *column_data.mode : 0;
 		int width = column->width;
 
@@ -463,7 +465,7 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_FILE_NAME:
-			if (draw_filename(view, column, column_data.file_name, TRUE, mode))
+			if (draw_filename(view, column, column_data.file_name, mode))
 				return TRUE;
 			continue;
 

@@ -34,9 +34,7 @@ bool draw_text_overflow(struct view *view, const char *text, bool on, int overfl
 bool PRINTF_LIKE(3, 4) draw_formatted(struct view *view, enum line_type type, const char *format, ...);
 bool draw_graphic(struct view *view, enum line_type type, const chtype graphic[], size_t size, bool separator);
 bool draw_field(struct view *view, enum line_type type, const char *text, int width, enum align align, bool trim);
-bool draw_filename(struct view *view, struct view_column *column, const char *filename, bool auto_enabled, mode_t mode);
 bool draw_lineno(struct view *view, struct view_column *column, unsigned int lineno);
-bool draw_lineno_custom(struct view *view, struct view_column *column, unsigned int lineno);
 bool view_column_draw(struct view *view, struct line *line, unsigned int lineno);
 
 #define draw_commit_title(view, text, offset) \
