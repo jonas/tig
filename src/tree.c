@@ -280,8 +280,11 @@ tree_read(struct view *view, char *text)
 
 		line->data = data;
 		line->type = type;
-		for (; line <= entry; line++)
+		line->dirty = line->cleareol = 1;
+		for (line++; line <= entry; line++) {
 			line->dirty = line->cleareol = 1;
+			line->lineno++;
+		}
 		return TRUE;
 	}
 
