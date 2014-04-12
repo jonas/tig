@@ -29,7 +29,6 @@ struct grep_line {
 
 struct grep_state {
 	const char *last_file;
-	int lineno_digits;
 };
 
 #define grep_view_lineno(grep)	((grep)->lineno > 0 ? (grep)->lineno - 1 : 0)
@@ -214,7 +213,6 @@ grep_read(struct view *view, char *data)
 	struct line *line;
 	const char *file;
 	size_t textlen;
-	unsigned long lineno_digits;
 
 	if (!data) {
 		state->last_file = NULL;
@@ -245,12 +243,6 @@ grep_read(struct view *view, char *data)
 	grep->lineno = atoi(lineno);
 	strncpy(grep->text, text, textlen);
 	grep->text[textlen] = 0;
-
-	lineno_digits = count_digits(grep->lineno);
-	if (lineno_digits > state->lineno_digits) {
-		view->digits = state->lineno_digits = lineno_digits;
-		view->force_redraw = TRUE;
-	}
 	view_column_info_update(view, line);
 
 	state->last_file = file;
@@ -261,7 +253,7 @@ grep_read(struct view *view, char *data)
 static struct view_ops grep_ops = {
 	"line",
 	"",
-	VIEW_ALWAYS_LINENO | VIEW_CUSTOM_DIGITS | VIEW_REFRESH,
+	VIEW_REFRESH,
 	sizeof(struct grep_state),
 	grep_open,
 	grep_read,

@@ -273,7 +273,7 @@ bool
 draw_lineno_custom(struct view *view, struct view_column *column, unsigned int lineno)
 {
 	char number[10];
-	int digits3 = view->digits < 3 ? 3 : view->digits;
+	unsigned long digits3 = column->width < 3 ? 3 : column->width;
 	int max = MIN(VIEW_MAX_LEN(view), digits3);
 	char *text = NULL;
 	chtype separator = opt_line_graphics ? ACS_VLINE : '|';
@@ -284,7 +284,7 @@ draw_lineno_custom(struct view *view, struct view_column *column, unsigned int l
 	if (lineno == 1 || (lineno % column->opt.line_number.interval) == 0) {
 		static char fmt[] = "%ld";
 
-		fmt[1] = '0' + (view->digits <= 9 ? digits3 : 1);
+		fmt[1] = '0' + (digits3 <= 9 ? digits3 : 1);
 		if (string_format(number, fmt, lineno))
 			text = number;
 	}
@@ -296,14 +296,10 @@ draw_lineno_custom(struct view *view, struct view_column *column, unsigned int l
 }
 
 bool
-draw_lineno(struct view *view, unsigned int lineno)
+draw_lineno(struct view *view, struct view_column *column, unsigned int lineno)
 {
-	struct view_column column = {};
-
-	column.opt.line_number.show = opt_show_line_numbers;
-	column.opt.line_number.interval = opt_line_number_interval;
 	lineno += view->pos.offset + 1;
-	return draw_lineno_custom(view, &column, lineno);
+	return draw_lineno_custom(view, column, lineno);
 }
 
 static bool
@@ -443,7 +439,7 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_LINE_NUMBER:
-			if (draw_lineno(view, lineno))
+			if (draw_lineno(view, column, column_data.line_number ? *column_data.line_number : lineno))
 				return TRUE;
 			continue;
 

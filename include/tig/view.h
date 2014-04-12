@@ -40,7 +40,6 @@ struct line {
 
 enum view_flag {
 	VIEW_NO_FLAGS = 0,
-	VIEW_ALWAYS_LINENO	= 1 << 0,
 	VIEW_CUSTOM_STATUS	= 1 << 1,
 	VIEW_ADD_DESCRIBE_REF	= 1 << 2,
 	VIEW_ADD_PAGER_REFS	= 1 << 3,
@@ -54,7 +53,6 @@ enum view_flag {
 	VIEW_LOG_LIKE		= 1 << 11,
 	VIEW_STATUS_LIKE	= 1 << 12,
 	VIEW_REFRESH		= 1 << 13,
-	VIEW_CUSTOM_DIGITS	= 1 << 14,
 	VIEW_SORTABLE		= 1 << 15,
 
 	VIEW_RESET_DISPLAY	= 1 << 31,
@@ -118,7 +116,6 @@ struct view {
 	/* Buffering */
 	size_t lines;		/* Total number of lines */
 	struct line *line;	/* Line index */
-	unsigned int digits;	/* Number of digits in the lines member. */
 
 	/* Number of lines with custom status, not to be counted in the
 	 * view title. */
@@ -173,6 +170,7 @@ struct view_column_data {
 	const unsigned long *file_size;
 	const struct graph_canvas *graph;
 	const char *id;
+	const unsigned long *line_number;
 	const mode_t *mode;
 	const struct ref *ref;
 	const struct ref_list *refs;

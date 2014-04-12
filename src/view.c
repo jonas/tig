@@ -484,6 +484,9 @@ reset_view(struct view *view)
 	view->prev_pos = view->pos;
 	clear_position(&view->pos);
 
+	if (view->columns)
+		view_column_reset(view);
+
 	view->line = NULL;
 	view->lines  = 0;
 	view->vid[0] = 0;
@@ -645,17 +648,6 @@ update_view(struct view *view)
 			report("Allocation failure");
 			end_update(view, TRUE);
 			return FALSE;
-		}
-	}
-
-	if (!view_has_flags(view, VIEW_CUSTOM_DIGITS)) {
-		int digits = count_digits(view->lines);
-
-		/* Keep the displayed view in sync with line number scaling. */
-		if (digits != view->digits) {
-			view->digits = digits;
-			if (opt_show_line_numbers || view_has_flags(view, VIEW_ALWAYS_LINENO))
-				redraw = TRUE;
 		}
 	}
 
@@ -1154,8 +1146,16 @@ view_column_info_update(struct view *view, struct line *line)
 			}
 			break;
 
-		case VIEW_COLUMN_COMMIT_TITLE:
 		case VIEW_COLUMN_LINE_NUMBER:
+			if (column_data.line_number)
+				width = count_digits(*column_data.line_number);
+			else
+				width = count_digits(view->lines);
+			if (width < 3)
+				width = 3;
+			break;
+	
+		case VIEW_COLUMN_COMMIT_TITLE:
 		case VIEW_COLUMN_MODE:
 		case VIEW_COLUMN_TEXT:
 			break;

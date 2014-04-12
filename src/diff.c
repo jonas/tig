@@ -165,8 +165,9 @@ diff_common_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	char *text = line->data;
 	enum line_type type = line->type;
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_LINE_NUMBER);
 
-	if (draw_lineno(view, lineno))
+	if (column && draw_lineno(view, column, lineno))
 		return TRUE;
 
 	if (line->wrapped && draw_text(view, LINE_DELIMITER, "+"))

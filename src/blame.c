@@ -367,7 +367,7 @@ blame_draw(struct view *view, struct line *line, unsigned int lineno)
 	if (draw_id(view, &view->columns[3], id))
 		return TRUE;
 
-	if (draw_lineno_custom(view, &view->columns[4], lineno))
+	if (draw_lineno(view, &view->columns[4], lineno))
 		return TRUE;
 
 	draw_text(view, LINE_DEFAULT, blame->text);
@@ -548,7 +548,7 @@ blame_select(struct view *view, struct line *line)
 static struct view_ops blame_ops = {
 	"line",
 	argv_env.commit,
-	VIEW_ALWAYS_LINENO | VIEW_SEND_CHILD_ENTER | VIEW_BLAME_LIKE,
+	VIEW_SEND_CHILD_ENTER | VIEW_BLAME_LIKE,
 	sizeof(struct blame_state),
 	blame_open,
 	blame_read,
