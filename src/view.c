@@ -876,6 +876,8 @@ static struct view *sorting_view;
 #define number_compare(size1, size2)	(*(size2) - *(size1))
 #define ref_compare(ref1, ref2)		strcmp((ref1)->name, (ref2)->name)
 
+#define mode_is_dir(mode)		((mode) && S_ISDIR(*(mode)))
+
 static int
 sort_view_compare(const void *l1, const void *l2)
 {
@@ -901,8 +903,8 @@ sort_view_compare(const void *l1, const void *l2)
 		return sort_order(sort, strcmp, column_data1.id, column_data2.id);
 
 	case VIEW_COLUMN_FILE_NAME:
-		if (column_data1.mode != column_data2.mode)
-			return sort_order_reverse(sort, S_ISDIR(*column_data1.mode) ? -1 : 1);
+		if (mode_is_dir(column_data1.mode) != mode_is_dir(column_data2.mode))
+			return sort_order_reverse(sort, mode_is_dir(column_data1.mode) ? -1 : 1);
 		return sort_order(sort, strcmp, column_data1.file_name, column_data2.file_name);
 
 	case VIEW_COLUMN_FILE_SIZE:
