@@ -205,7 +205,7 @@ refs_select(struct view *view, struct line *line)
 static struct view_ops refs_ops = {
 	"reference",
 	argv_env.head,
-	VIEW_REFRESH,
+	VIEW_REFRESH | VIEW_SORTABLE,
 	0,
 	refs_open,
 	refs_read,

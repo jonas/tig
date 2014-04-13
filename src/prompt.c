@@ -341,7 +341,7 @@ prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 
 	if (enum_equals_static("sort-field", option, optionlen) ||
 	    enum_equals_static("sort-order", option, optionlen)) {
-		if (!view->columns) {
+		if (!view_has_flags(view, VIEW_SORTABLE)) {
 			report("Sorting is not yet supported for the %s view", view->name);
 		} else {
 			bool sort_field = enum_equals_static("sort-field", option, optionlen);
