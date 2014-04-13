@@ -873,7 +873,7 @@ static struct view *sorting_view;
 #define sort_order(state, cmp, o1, o2) \
 	sort_order_reverse(state, (!(o1) || !(o2)) ? !!(o2) - !!(o1) : cmp(o1, o2))
 
-#define number_compare(size1, size2)	(*(size2) - *(size1))
+#define number_compare(size1, size2)	(*(size1) - *(size2))
 #define ref_compare(ref1, ref2)		strcmp((ref1)->name, (ref2)->name)
 
 #define mode_is_dir(mode)		((mode) && S_ISDIR(*(mode)))
@@ -911,7 +911,7 @@ sort_view_compare(const void *l1, const void *l2)
 		return sort_order(sort, number_compare, column_data1.file_size, column_data2.file_size);
 
 	case VIEW_COLUMN_LINE_NUMBER:
-		return sort_order_reverse(sort, line2->lineno - line1->lineno);
+		return sort_order_reverse(sort, line1->lineno - line2->lineno);
 
 	case VIEW_COLUMN_MODE:
 		return sort_order(sort, number_compare, column_data1.mode, column_data2.mode);
