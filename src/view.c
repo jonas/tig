@@ -874,7 +874,6 @@ static struct view *sorting_view;
 	sort_order_reverse(state, (!(o1) || !(o2)) ? !!(o2) - !!(o1) : cmp(o1, o2))
 
 #define number_compare(size1, size2)	(*(size1) - *(size2))
-#define ref_compare(ref1, ref2)		strcmp((ref1)->name, (ref2)->name)
 
 #define mode_is_dir(mode)		((mode) && S_ISDIR(*(mode)))
 
