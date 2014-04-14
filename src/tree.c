@@ -368,7 +368,8 @@ tree_request(struct view *view, enum request request, struct line *line)
 			return REQ_VIEW_CLOSE;
 		}
 		/* fake 'cd  ..' */
-		line = &view->line[1];
+		pop_tree_stack_entry(&view->pos);
+		reload_view(view);
 		break;
 
 	case REQ_ENTER:
@@ -386,7 +387,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 	case LINE_DIRECTORY:
 		/* Depending on whether it is a subdirectory or parent link
 		 * mangle the path buffer. */
-		if (line == &view->line[1] && *view->env->directory) {
+		if (tree_path_is_parent(entry->name) && *view->env->directory) {
 			pop_tree_stack_entry(&view->pos);
 
 		} else {
