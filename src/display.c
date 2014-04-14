@@ -27,7 +27,7 @@ static WINDOW *display_win[2];
 static WINDOW *display_title[2];
 static WINDOW *display_sep;
 
-static FILE *opt_tty;
+FILE *opt_tty;
 
 bool
 open_external_viewer(const char *argv[], const char *dir, bool confirm, const char *notice)
@@ -245,7 +245,7 @@ static bool use_scroll_redrawwin;
 static bool use_scroll_status_wclear;
 
 /* The status window is used for polling keystrokes. */
-static WINDOW *status_win;
+WINDOW *status_win;
 
 /* Reading from the prompt? */
 static bool input_mode = FALSE;

@@ -469,4 +469,18 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 	return FALSE;
 }
 
+char *
+argv_format_arg(struct argv_env *argv_env, const char *src_arg)
+{
+	const char *src_argv[] = { src_arg, NULL };
+	const char **dst_argv = NULL;
+	char *dst_arg = NULL;
+
+	if (argv_format(argv_env, &dst_argv, src_argv, FALSE, TRUE))
+		dst_arg = (char *) dst_argv[0];
+
+	free(dst_argv);
+	return dst_arg;
+}
+
 /* vim: set ts=8 sw=8 noexpandtab: */

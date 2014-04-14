@@ -4,8 +4,12 @@
 prefix=/usr/local
 
 # Use ncursesw.
-LDLIBS =-lncursesw
-CPPFLAGS =-DHAVE_NCURSESW_CURSES_H
+LDLIBS = -lncursesw
+CPPFLAGS = -DHAVE_NCURSESW_CURSES_H
+
+# Use readline.
+#LDLIBS += -lreadline
+#CPPFLAGS += -DHAVE_LIBREADLINE
 
 # Uncomment to enable work-around for missing setenv().
 #NO_SETENV=y

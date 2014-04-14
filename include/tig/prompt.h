@@ -26,6 +26,7 @@ struct menu_item {
 };
 
 char *read_prompt(const char *prompt);
+void prompt_init(void);
 bool prompt_yesno(const char *prompt);
 bool prompt_menu(const char *prompt, const struct menu_item *items, int *selected);
 
