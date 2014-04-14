@@ -114,14 +114,6 @@ prompt_yesno(const char *prompt)
 	return !!prompt_input(prompt2, prompt_yesno_handler, NULL);
 }
 
-static enum input_status
-read_prompt_handler(void *data, char *buf, struct key_input *input)
-{
-	unsigned long c = key_input_to_unicode(input);
-
-	return unicode_width(c, 8) ? INPUT_OK : INPUT_SKIP;
-}
-
 #ifdef HAVE_LIBREADLINE
 static void
 readline_display(void)
@@ -392,6 +384,14 @@ prompt_init(void)
 	readline_init();
 }
 #else
+static enum input_status
+read_prompt_handler(void *data, char *buf, struct key_input *input)
+{
+	unsigned long c = key_input_to_unicode(input);
+
+	return unicode_width(c, 8) ? INPUT_OK : INPUT_SKIP;
+}
+
 char *
 read_prompt(const char *prompt)
 {
