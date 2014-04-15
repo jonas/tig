@@ -361,7 +361,7 @@ find_next(struct view *view, enum request request)
 			continue;
 
 		select_view_line(view, lineno);
-		report("Line %ld matches '%s' (%ld of %ld)", lineno + 1, view->grep, i + 1, view->matched_lines);
+		report("Line %zu matches '%s' (%zu of %zu)", lineno + 1, view->grep, i + 1, view->matched_lines);
 		return;
 	}
 
