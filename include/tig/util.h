@@ -47,6 +47,9 @@ count_digits(unsigned long i)
 {
 	int digits;
 
+	if (!i)
+		return 1;
+
 	for (digits = 0; i; digits++)
 		i /= 10;
 	return digits;
