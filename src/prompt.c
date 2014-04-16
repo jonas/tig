@@ -20,10 +20,10 @@
 #include "tig/pager.h"
 #include "tig/types.h"
 
-#ifdef HAVE_LIBREADLINE
+#ifdef HAVE_READLINE
 #include <readline/readline.h>
 #include <readline/history.h>
-#endif /* HAVE_LIBREADLINE */
+#endif /* HAVE_READLINE */
 
 typedef enum input_status (*input_handler)(void *data, char *buf, struct key_input *input);
 
@@ -114,7 +114,7 @@ prompt_yesno(const char *prompt)
 	return !!prompt_input(prompt2, prompt_yesno_handler, NULL);
 }
 
-#ifdef HAVE_LIBREADLINE
+#ifdef HAVE_READLINE
 static void
 readline_display(void)
 {
@@ -402,7 +402,7 @@ void
 prompt_init(void)
 {
 }
-#endif /* HAVE_LIBREADLINE */
+#endif /* HAVE_READLINE */
 
 bool
 prompt_menu(const char *prompt, const struct menu_item *items, int *selected)

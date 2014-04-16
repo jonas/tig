@@ -9,7 +9,7 @@ CPPFLAGS = -DHAVE_NCURSESW_CURSES_H
 
 # Use readline.
 #LDLIBS += -lreadline
-#CPPFLAGS += -DHAVE_LIBREADLINE
+#CPPFLAGS += -DHAVE_READLINE
 
 # Uncomment to enable work-around for missing setenv().
 #NO_SETENV=y
