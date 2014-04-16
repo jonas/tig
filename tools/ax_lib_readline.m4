@@ -20,6 +20,11 @@ dnl Configuration of --with-readline and result check at EOF.
 
 AC_DEFUN([BASH_CHECK_LIB_TERMCAP],
 [
+# save cpp and ld options
+_save_CFLAGS="$CFLAGS"
+_save_LDFLAGS="$LDFLAGS"
+_save_LIBS="$LIBS"
+
 if test "X$bash_cv_termcap_lib" = "X"; then
 _bash_needmsg=yes
 else
@@ -30,9 +35,15 @@ AC_CACHE_VAL(bash_cv_termcap_lib,
 [AC_CHECK_FUNC(tgetent, bash_cv_termcap_lib=libc,
   [AC_CHECK_LIB(termcap, tgetent, bash_cv_termcap_lib=libtermcap,
     [AC_CHECK_LIB(tinfo, tgetent, bash_cv_termcap_lib=libtinfo,
-        [AC_CHECK_LIB(curses, tgetent, bash_cv_termcap_lib=libcurses,
-	    [AC_CHECK_LIB(ncurses, tgetent, bash_cv_termcap_lib=libncurses,
-	        bash_cv_termcap_lib=gnutermcap)])])])])])
+        bash_cv_termcap_lib=gnutermcap
+if test "$ax_cv_curses_which" = "ncursesw"; then
+        [AC_CHECK_LIB(ncursesw, tgetent, bash_cv_termcap_lib=libncursesw)]
+elif test "$ax_cv_curses_which" = "ncurses"; then
+        [AC_CHECK_LIB(ncurses, tgetent, bash_cv_termcap_lib=libncurses)]
+elif test "$ax_cv_curses_which" = "plaincurses"; then
+        [AC_CHECK_LIB(curses, tgetent, bash_cv_termcap_lib=libcurses)]
+fi
+)])])])
 if test "X$_bash_needmsg" = "Xyes"; then
 AC_MSG_CHECKING(which library has the termcap functions)
 fi
@@ -47,6 +58,9 @@ TERMCAP_DEP=
 elif test $bash_cv_termcap_lib = libtinfo; then
 TERMCAP_LIB=-ltinfo
 TERMCAP_DEP=
+elif test $bash_cv_termcap_lib = libncursesw; then
+TERMCAP_LIB=-lncursesw
+TERMCAP_DEP=
 elif test $bash_cv_termcap_lib = libncurses; then
 TERMCAP_LIB=-lncurses
 TERMCAP_DEP=
@@ -57,6 +71,10 @@ else
 TERMCAP_LIB=-lcurses
 TERMCAP_DEP=
 fi
+
+CFLAGS="$_save_CFLAGS"
+LDFLAGS="$_save_LDFLAGS"
+LIBS="$_save_LIBS"
 ])
 
 AC_DEFUN([RL_LIB_READLINE_VERSION],
