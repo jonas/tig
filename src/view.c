@@ -942,6 +942,63 @@ sort_view(struct view *view, bool change_field)
 	qsort(view->line, view->lines, sizeof(*view->line), sort_view_compare);
 }
 
+static const char *
+view_column_text(struct view *view, struct view_column_data *column_data,
+		 struct view_column *column)
+{
+	const char *text = "";
+
+	switch (column->type) {
+	case VIEW_COLUMN_AUTHOR:
+		if (column_data->author)
+			text = mkauthor(column_data->author, column->opt.author.width, column->opt.author.show);
+		break;
+
+	case VIEW_COLUMN_COMMIT_TITLE:
+		text = column_data->commit_title;
+		break;
+
+	case VIEW_COLUMN_DATE:
+		if (column_data->date)
+			text = mkdate(column_data->date, column->opt.date.show);
+		break;
+
+	case VIEW_COLUMN_REF:
+		if (column_data->ref)
+			text = column_data->ref->name;
+		break;
+
+	case VIEW_COLUMN_FILE_NAME:
+		if (column_data->file_name)
+			text = column_data->file_name;
+		break;
+
+	case VIEW_COLUMN_FILE_SIZE:
+		if (column_data->file_size)
+			text = mkfilesize(*column_data->file_size, column->opt.file_size.show);
+		break;
+
+	case VIEW_COLUMN_ID:
+		if (column->opt.id.show)
+			text = column_data->id;
+		break;
+
+	case VIEW_COLUMN_LINE_NUMBER:
+		break;
+
+	case VIEW_COLUMN_MODE:
+		if (column_data->mode)
+			text = mkmode(*column_data->mode);
+		break;
+
+	case VIEW_COLUMN_TEXT:
+		text = column_data->text;
+		break;
+	}
+
+	return text ? text : "";
+}
+
 static bool
 grep_refs(struct view *view, const struct ref_list *list)
 {
@@ -964,23 +1021,22 @@ view_column_grep(struct view *view, struct line *line)
 {
 	struct view_column_data column_data = {};
 	bool ok = view->ops->get_column_data(view, line, &column_data);
-	const char *text[] = {
-		ok && column_data.author ? mkauthor(column_data.author, opt_author_width, opt_show_author) : "",
-		ok && column_data.date ? mkdate(column_data.date, opt_show_date) : "",
-		ok && column_data.file_name ? column_data.file_name : "",
-		ok && column_data.file_size ? mkfilesize(*column_data.file_size, opt_show_file_size) : "",
-		ok && column_data.id && opt_show_id ? column_data.id : "",
-		ok && column_data.mode ? mkmode(*column_data.mode) : "",
-		ok && column_data.commit_title ? column_data.commit_title : "",
-		ok && column_data.ref ? column_data.ref->name : "",
-		ok && column_data.text ? column_data.text : "",
-		NULL
-	};
+	struct view_column *column;
 
-	if (ok && grep_refs(view, column_data.refs))
-		return TRUE;
+	if (!ok)
+		return FALSE;
 
-	return grep_text(view, text);
+	for (column = view->columns; column; column = column->next) {
+		const char *text[] = {
+			view_column_text(view, &column_data, column),
+			NULL
+		};
+
+		if (grep_text(view, text))
+			return TRUE;
+	}
+
+	return grep_refs(view, column_data.refs);
 }
 
 bool
@@ -1105,48 +1161,34 @@ view_column_info_update(struct view *view, struct line *line)
 		return FALSE;
 
 	for (column = view->columns; column; column = column->next) {
-		const char *text = NULL;
+		const char *text = view_column_text(view, &column_data, column);
 		int width = 0;
 
 		switch (column->type) {
 		case VIEW_COLUMN_AUTHOR:
 			width = column->opt.author.width;
-			if (column_data.author)
-				text = mkauthor(column_data.author, column->opt.author.width, column->opt.author.show);
 			break;
 
 		case VIEW_COLUMN_DATE:
 			width = column->opt.date.width;
-			if (column_data.date)
-				text = mkdate(column_data.date, column->opt.date.show);
 			break;
 
 		case VIEW_COLUMN_REF:
 			width = column->opt.ref.width;
-			if (column_data.ref)
-				text = column_data.ref->name;
 			break;
 
 		case VIEW_COLUMN_FILE_NAME:
 			width = column->opt.file_name.width;
-			if (column_data.file_name)
-				text = column_data.file_name;
 			break;
 
 		case VIEW_COLUMN_FILE_SIZE:
 			width = column->opt.file_size.width;
-			if (column_data.file_size)
-				text = mkfilesize(*column_data.file_size, column->opt.file_size.show);
 			break;
 
 		case VIEW_COLUMN_ID:
 			width = column->opt.id.width;
-			if (column_data.id) {
-				if (!iscommit(column_data.id))
-					text = column_data.id;
-				else if (!width)
-					width = 7;
-			}
+			if (iscommit(text) && !width)
+				width = 7;
 			break;
 
 		case VIEW_COLUMN_LINE_NUMBER:
@@ -1164,7 +1206,7 @@ view_column_info_update(struct view *view, struct line *line)
 			break;
 		}
 
-		if (text && !width)
+		if (*text && !width)
 			width = utf8_width(text);
 
 		if (width > column->width) {
