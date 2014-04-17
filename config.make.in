@@ -22,7 +22,8 @@ DOCBOOK2PDF = @DOCBOOK2PDF@
 @NO_MKSTEMPS@ NO_MKSTEMPS = y
 @NO_SETENV@ NO_SETENV = y
 
-%.o: config.h
+# Add config.h as a dependency for all object files
+CONFIG_H = config.h
 
 config.status: configure
 	./config.status --recheck
