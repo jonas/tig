@@ -95,7 +95,9 @@ set mouse-scroll		= 3		# Number of lines to scroll via the mouse
 bind main	C	?git cherry-pick %(commit)
 bind status	C	!git commit
 bind stash	P	?git stash pop %(stash)
+bind stash	!	?git stash drop %(stash)
 bind branch	C	?git checkout %(branch)
+bind refs	!	?git branch -d %(branch)
 
 # Normal commands
 # ---------------
