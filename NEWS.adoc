@@ -71,6 +71,7 @@ Improvements:
  - Rename 'branch' view to 'refs' view and show tags. (GH #134)
  - More informative configuration error messages.
  - Add completion and history support to the prompt via readline. (GH #185)
+ - Add refs binding `!` to delete branch.
 
 Bug fixes:
 

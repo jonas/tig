@@ -96,6 +96,7 @@ bind main	C	?git cherry-pick %(commit)
 bind status	C	!git commit
 bind stash	P	?git stash pop %(stash)
 bind branch	C	?git checkout %(branch)
+bind refs	!	!?git branch -d %(branch)
 
 # Normal commands
 # ---------------
