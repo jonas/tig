@@ -43,7 +43,7 @@ struct key {
 };
 
 static inline unsigned long
-key_input_to_unicode(struct key *key)
+key_to_unicode(struct key *key)
 {
 	return key->modifiers.multibytes
 		? utf8_to_unicode(key->data.bytes, strlen(key->data.bytes))

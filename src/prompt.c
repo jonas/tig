@@ -121,7 +121,7 @@ prompt_default_handler(struct input *input, struct key *key)
 static enum input_status
 prompt_yesno_handler(struct input *input, struct key *key)
 {
-	unsigned long c = key_input_to_unicode(key);
+	unsigned long c = key_to_unicode(key);
 
 	if (c == 'y' || c == 'Y')
 		return INPUT_STOP;
@@ -156,7 +156,7 @@ read_prompt_handler(struct input *input, struct key *key)
 	if (incremental->edit_mode && !key->modifiers.multibytes)
 		return prompt_default_handler(input, key);
 
-	if (!unicode_width(key_input_to_unicode(key), 8))
+	if (!unicode_width(key_to_unicode(key), 8))
 		return INPUT_SKIP;
 
 	if (!incremental->handler)
