@@ -20,6 +20,7 @@
 enum input_status {
 	INPUT_OK,
 	INPUT_SKIP,
+	INPUT_DELETE,
 	INPUT_STOP,
 	INPUT_CANCEL
 };

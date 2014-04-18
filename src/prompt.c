@@ -44,45 +44,41 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 	buf[pos] = 0;
 
 	while (status == INPUT_OK || status == INPUT_SKIP) {
+
 		update_status("%s%.*s", prompt, pos, buf);
 
-		switch (get_input(pos + promptlen, &key, FALSE)) {
-		case KEY_RETURN:
-		case KEY_ENTER:
-		case '\n':
-			status = pos ? INPUT_STOP : INPUT_CANCEL;
-			break;
+		if (get_input(pos + promptlen, &key, FALSE) == OK) {
+			int len = strlen(key.data.bytes);
 
-		case KEY_BACKSPACE:
-			if (pos > 0) {
-				int len = chars_length[--chars];
-
-				pos -= len;
-				buf[pos] = 0;
-			} else {
-				status = INPUT_CANCEL;
-			}
-			break;
-
-		case KEY_ESC:
-			status = INPUT_CANCEL;
-			break;
-
-		default:
-			if (pos >= sizeof(buf)) {
+			if (pos + len >= sizeof(buf)) {
 				report("Input string too long");
 				return NULL;
 			}
 
+			string_ncopy_do(buf + pos, sizeof(buf) - pos, key.data.bytes, len);
+			pos += len;
+			chars_length[chars++] = len;
 			status = handler(data, buf, &key);
-			if (status == INPUT_OK) {
-				int len = strlen(key.data.bytes);
+			if (status != INPUT_OK) {
+				pos -= len;
+				chars--;
+			} else {
+				int changed_pos = strlen(buf);
 
-				string_ncopy_do(buf + pos, sizeof(buf) - pos, key.data.bytes, len);
-				pos += len;
-				chars_length[chars++] = len;
+				if (changed_pos != pos) {
+					pos = changed_pos;
+					chars_length[chars - 1] = changed_pos - (pos - len);
+				}
+			}
+		} else {
+			status = handler(data, buf, &key);
+			if (status == INPUT_DELETE) {
+				int len = chars_length[--chars];
+
+				pos -= len;
 			}
 		}
+		buf[pos] = 0;
 	}
 
 	report_clear();
@@ -96,6 +92,29 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 }
 
 static enum input_status
+prompt_default_handler(void *data, char *buf, struct key *key)
+{
+	if (key->modifiers.multibytes)
+		return INPUT_SKIP;
+
+	switch (key->data.value) {
+	case KEY_RETURN:
+	case KEY_ENTER:
+	case '\n':
+		return *buf ? INPUT_STOP : INPUT_CANCEL;
+
+	case KEY_BACKSPACE:
+		return *buf ? INPUT_DELETE : INPUT_CANCEL;
+
+	case KEY_ESC:
+		return INPUT_CANCEL;
+
+	default:
+		return INPUT_SKIP;
+	}
+}
+
+static enum input_status
 prompt_yesno_handler(void *data, char *buf, struct key *key)
 {
 	unsigned long c = key_input_to_unicode(key);
@@ -104,7 +123,7 @@ prompt_yesno_handler(void *data, char *buf, struct key *key)
 		return INPUT_STOP;
 	if (c == 'n' || c == 'N')
 		return INPUT_CANCEL;
-	return INPUT_SKIP;
+	return prompt_default_handler(data, buf, key);
 }
 
 bool
@@ -411,6 +430,8 @@ read_prompt_handler(void *data, char *buf, struct key *key)
 {
 	unsigned long c = key_input_to_unicode(key);
 
+	if (!key->modifiers.multibytes)
+		return prompt_default_handler(data, buf, key);
 	return unicode_width(c, 8) ? INPUT_OK : INPUT_SKIP;
 }
 
