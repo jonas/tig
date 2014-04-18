@@ -29,41 +29,48 @@ static void
 prompt_toggle_name(char buf[], size_t bufsize,
 		   const char *prefix, const char *name);
 
-typedef enum input_status (*input_handler)(void *data, char *buf, struct key *key);
+struct input;
+
+typedef enum input_status (*input_handler)(struct input *input, struct key *key);
+
+struct input {
+	input_handler handler;
+	void *data;
+	char buf[SIZEOF_STR];
+};
 
 static char *
-prompt_input(const char *prompt, input_handler handler, void *data)
+prompt_input(const char *prompt, struct input *input)
 {
 	enum input_status status = INPUT_OK;
-	static char buf[SIZEOF_STR];
 	unsigned char chars_length[SIZEOF_STR];
 	struct key key;
 	size_t promptlen = strlen(prompt);
 	int pos = 0, chars = 0;
 
-	buf[pos] = 0;
+	input->buf[pos] = 0;
 
 	while (status == INPUT_OK || status == INPUT_SKIP) {
 
-		update_status("%s%.*s", prompt, pos, buf);
+		update_status("%s%.*s", prompt, pos, input->buf);
 
 		if (get_input(pos + promptlen, &key, FALSE) == OK) {
 			int len = strlen(key.data.bytes);
 
-			if (pos + len >= sizeof(buf)) {
+			if (pos + len >= sizeof(input->buf)) {
 				report("Input string too long");
 				return NULL;
 			}
 
-			string_ncopy_do(buf + pos, sizeof(buf) - pos, key.data.bytes, len);
+			string_ncopy_do(input->buf + pos, sizeof(input->buf) - pos, key.data.bytes, len);
 			pos += len;
 			chars_length[chars++] = len;
-			status = handler(data, buf, &key);
+			status = input->handler(input, &key);
 			if (status != INPUT_OK) {
 				pos -= len;
 				chars--;
 			} else {
-				int changed_pos = strlen(buf);
+				int changed_pos = strlen(input->buf);
 
 				if (changed_pos != pos) {
 					pos = changed_pos;
@@ -71,14 +78,14 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 				}
 			}
 		} else {
-			status = handler(data, buf, &key);
+			status = input->handler(input, &key);
 			if (status == INPUT_DELETE) {
 				int len = chars_length[--chars];
 
 				pos -= len;
 			}
 		}
-		buf[pos] = 0;
+		input->buf[pos] = 0;
 	}
 
 	report_clear();
@@ -86,13 +93,13 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 	if (status == INPUT_CANCEL)
 		return NULL;
 
-	buf[pos++] = 0;
+	input->buf[pos++] = 0;
 
-	return buf;
+	return input->buf;
 }
 
 static enum input_status
-prompt_default_handler(void *data, char *buf, struct key *key)
+prompt_default_handler(struct input *input, struct key *key)
 {
 	if (key->modifiers.multibytes)
 		return INPUT_SKIP;
@@ -101,10 +108,10 @@ prompt_default_handler(void *data, char *buf, struct key *key)
 	case KEY_RETURN:
 	case KEY_ENTER:
 	case '\n':
-		return *buf ? INPUT_STOP : INPUT_CANCEL;
+		return *input->buf ? INPUT_STOP : INPUT_CANCEL;
 
 	case KEY_BACKSPACE:
-		return *buf ? INPUT_DELETE : INPUT_CANCEL;
+		return *input->buf ? INPUT_DELETE : INPUT_CANCEL;
 
 	case KEY_ESC:
 		return INPUT_CANCEL;
@@ -115,7 +122,7 @@ prompt_default_handler(void *data, char *buf, struct key *key)
 }
 
 static enum input_status
-prompt_yesno_handler(void *data, char *buf, struct key *key)
+prompt_yesno_handler(struct input *input, struct key *key)
 {
 	unsigned long c = key_input_to_unicode(key);
 
@@ -123,18 +130,19 @@ prompt_yesno_handler(void *data, char *buf, struct key *key)
 		return INPUT_STOP;
 	if (c == 'n' || c == 'N')
 		return INPUT_CANCEL;
-	return prompt_default_handler(data, buf, key);
+	return prompt_default_handler(input, key);
 }
 
 bool
 prompt_yesno(const char *prompt)
 {
 	char prompt2[SIZEOF_STR];
+	struct input input = { prompt_yesno_handler, NULL };
 
 	if (!string_format(prompt2, "%s [Yy/Nn]", prompt))
 		return FALSE;
 
-	return !!prompt_input(prompt2, prompt_yesno_handler, NULL);
+	return !!prompt_input(prompt2, &input);
 }
 
 #ifdef HAVE_READLINE
@@ -426,19 +434,21 @@ prompt_init(void)
 }
 #else
 static enum input_status
-read_prompt_handler(void *data, char *buf, struct key *key)
+read_prompt_handler(struct input *input, struct key *key)
 {
 	unsigned long c = key_input_to_unicode(key);
 
 	if (!key->modifiers.multibytes)
-		return prompt_default_handler(data, buf, key);
+		return prompt_default_handler(input, key);
 	return unicode_width(c, 8) ? INPUT_OK : INPUT_SKIP;
 }
 
 char *
 read_prompt(const char *prompt)
 {
-	return prompt_input(prompt, read_prompt_handler, NULL);
+	static struct input input = { read_prompt_handler, NULL };
+
+	return prompt_input(prompt, &input);
 }
 
 void
