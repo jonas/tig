@@ -695,7 +695,7 @@ main(int argc, const char *argv[])
 #endif
 
 		view = display[current_view];
-		request = get_keybinding(view->keymap, &key);
+		request = get_keybinding(view->keymap, &key, 1);
 
 		/* Some low-level request handling. This keeps access to
 		 * status_win restricted. */

@@ -813,7 +813,7 @@ run_prompt_command(struct view *view, const char *argv[])
 		/* Try :<key> */
 		key.modifiers.multibytes = 1;
 		string_ncopy(key.data.bytes, cmd, cmdlen);
-		request = get_keybinding(view->keymap, &key);
+		request = get_keybinding(view->keymap, &key, 1);
 		if (request != REQ_NONE)
 			return request;
 

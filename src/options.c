@@ -569,9 +569,11 @@ option_set_command(int argc, const char *argv[])
 static enum status_code
 option_bind_command(int argc, const char *argv[])
 {
-	struct key key;
+	struct key key[1];
+	size_t keys = 0;
 	enum request request;
 	struct keymap *keymap;
+	const char *key_arg;
 
 	if (argc < 3)
 		return error("Invalid key binding: bind keymap key action");
@@ -583,8 +585,13 @@ option_bind_command(int argc, const char *argv[])
 			return error("Unknown key map: %s", argv[0]);
 	}
 
-	if (get_key_value(argv[1], &key) == ERR)
-		return error("Unknown key: %s", argv[1]);
+	for (keys = 0, key_arg = argv[1]; *key_arg && keys < ARRAY_SIZE(key); keys++) {
+		if (get_key_value(&key_arg, &key[keys]) == ERR)
+			return error("Unknown key combo: %s", argv[1]);
+	}
+
+	if (*key_arg && keys == ARRAY_SIZE(key))
+		return error("Max %zu keys are allowed in key combos: %s", ARRAY_SIZE(key), argv[1]);
 
 	request = get_request(argv[2]);
 	if (request == REQ_UNKNOWN) {
@@ -619,7 +626,7 @@ option_bind_command(int argc, const char *argv[])
 		if (alias != -1) {
 			const char *action = obsolete[alias][1];
 
-			add_keybinding(keymap, get_request(action), &key);
+			add_keybinding(keymap, get_request(action), key, keys);
 			return error("%s has been renamed to %s",
 				     obsolete[alias][0], action);
 		}
@@ -630,7 +637,7 @@ option_bind_command(int argc, const char *argv[])
 			const char *arg = prefixcmp(action, "diff-context-")
 					? NULL : (strstr(action, "-down") ? "-1" : "+1");
 			const char *toggle[] = { ":toggle", toggles[alias][1], arg, NULL};
-			enum status_code code = add_run_request(keymap, &key, toggle);
+			enum status_code code = add_run_request(keymap, key, keys, toggle);
 
 			if (code == SUCCESS)
 				code = error("%s has been replaced by `:toggle %s%s%s'",
@@ -641,9 +648,9 @@ option_bind_command(int argc, const char *argv[])
 	}
 
 	if (request == REQ_UNKNOWN)
-		return add_run_request(keymap, &key, argv + 2);
+		return add_run_request(keymap, key, keys, argv + 2);
 
-	return add_keybinding(keymap, request, &key);
+	return add_keybinding(keymap, request, key, keys);
 }
 
 
