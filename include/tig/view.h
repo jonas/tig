@@ -33,8 +33,9 @@ struct line {
 	unsigned int dirty:1;
 	unsigned int cleareol:1;
 	unsigned int wrapped:1;
+	unsigned int commit_title:1;
+	unsigned int no_commit_refs:1;
 
-	unsigned int user_flags:6;
 	void *data;		/* User data */
 };
 

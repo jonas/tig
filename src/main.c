@@ -221,9 +221,8 @@ main_done(struct view *view)
 	free(state->reflog);
 }
 
-#define MAIN_NO_COMMIT_REFS 1
-#define main_check_commit_refs(line)	!((line)->user_flags & MAIN_NO_COMMIT_REFS)
-#define main_mark_no_commit_refs(line)	(((struct line *) (line))->user_flags |= MAIN_NO_COMMIT_REFS)
+#define main_check_commit_refs(line)	!((line)->no_commit_refs)
+#define main_mark_no_commit_refs(line)	(((struct line *) (line))->no_commit_refs = 1)
 
 static inline struct ref_list *
 main_get_commit_refs(const struct line *line, struct commit *commit)

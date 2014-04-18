@@ -21,8 +21,6 @@
 #include "tig/diff.h"
 #include "tig/draw.h"
 
-#define DIFF_LINE_COMMIT_TITLE 1
-
 static bool
 diff_open(struct view *view, enum open_flags flags)
 {
@@ -72,7 +70,7 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		struct line *line = add_line_text(view, data, LINE_DEFAULT);
 
 		if (line)
-			line->user_flags |= DIFF_LINE_COMMIT_TITLE;
+			line->commit_title = 1;
 		state->after_commit_title = TRUE;
 		return line != NULL;
 	}
@@ -188,7 +186,7 @@ diff_common_draw(struct view *view, struct line *line, unsigned int lineno)
 		}
 	}
 
-	if (line->user_flags & DIFF_LINE_COMMIT_TITLE)
+	if (line->commit_title)
 		draw_commit_title(view, text, 4);
 	else
 		draw_text(view, type, text);
