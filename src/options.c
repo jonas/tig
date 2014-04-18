@@ -569,7 +569,7 @@ option_set_command(int argc, const char *argv[])
 static enum status_code
 option_bind_command(int argc, const char *argv[])
 {
-	struct key_input input;
+	struct key key;
 	enum request request;
 	struct keymap *keymap;
 
@@ -583,7 +583,7 @@ option_bind_command(int argc, const char *argv[])
 			return error("Unknown key map: %s", argv[0]);
 	}
 
-	if (get_key_value(argv[1], &input) == ERR)
+	if (get_key_value(argv[1], &key) == ERR)
 		return error("Unknown key: %s", argv[1]);
 
 	request = get_request(argv[2]);
@@ -619,7 +619,7 @@ option_bind_command(int argc, const char *argv[])
 		if (alias != -1) {
 			const char *action = obsolete[alias][1];
 
-			add_keybinding(keymap, get_request(action), &input);
+			add_keybinding(keymap, get_request(action), &key);
 			return error("%s has been renamed to %s",
 				     obsolete[alias][0], action);
 		}
@@ -630,7 +630,7 @@ option_bind_command(int argc, const char *argv[])
 			const char *arg = prefixcmp(action, "diff-context-")
 					? NULL : (strstr(action, "-down") ? "-1" : "+1");
 			const char *toggle[] = { ":toggle", toggles[alias][1], arg, NULL};
-			enum status_code code = add_run_request(keymap, &input, toggle);
+			enum status_code code = add_run_request(keymap, &key, toggle);
 
 			if (code == SUCCESS)
 				code = error("%s has been replaced by `:toggle %s%s%s'",
@@ -641,9 +641,9 @@ option_bind_command(int argc, const char *argv[])
 	}
 
 	if (request == REQ_UNKNOWN)
-		return add_run_request(keymap, &input, argv + 2);
+		return add_run_request(keymap, &key, argv + 2);
 
-	return add_keybinding(keymap, request, &input);
+	return add_keybinding(keymap, request, &key);
 }
 
 

@@ -29,7 +29,7 @@ static void
 prompt_toggle_name(char buf[], size_t bufsize,
 		   const char *prefix, const char *name);
 
-typedef enum input_status (*input_handler)(void *data, char *buf, struct key_input *input);
+typedef enum input_status (*input_handler)(void *data, char *buf, struct key *key);
 
 static char *
 prompt_input(const char *prompt, input_handler handler, void *data)
@@ -37,7 +37,7 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 	enum input_status status = INPUT_OK;
 	static char buf[SIZEOF_STR];
 	unsigned char chars_length[SIZEOF_STR];
-	struct key_input input;
+	struct key key;
 	size_t promptlen = strlen(prompt);
 	int pos = 0, chars = 0;
 
@@ -46,7 +46,7 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 	while (status == INPUT_OK || status == INPUT_SKIP) {
 		update_status("%s%.*s", prompt, pos, buf);
 
-		switch (get_input(pos + promptlen, &input, FALSE)) {
+		switch (get_input(pos + promptlen, &key, FALSE)) {
 		case KEY_RETURN:
 		case KEY_ENTER:
 		case '\n':
@@ -74,11 +74,11 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 				return NULL;
 			}
 
-			status = handler(data, buf, &input);
+			status = handler(data, buf, &key);
 			if (status == INPUT_OK) {
-				int len = strlen(input.data.bytes);
+				int len = strlen(key.data.bytes);
 
-				string_ncopy_do(buf + pos, sizeof(buf) - pos, input.data.bytes, len);
+				string_ncopy_do(buf + pos, sizeof(buf) - pos, key.data.bytes, len);
 				pos += len;
 				chars_length[chars++] = len;
 			}
@@ -96,9 +96,9 @@ prompt_input(const char *prompt, input_handler handler, void *data)
 }
 
 static enum input_status
-prompt_yesno_handler(void *data, char *buf, struct key_input *input)
+prompt_yesno_handler(void *data, char *buf, struct key *key)
 {
-	unsigned long c = key_input_to_unicode(input);
+	unsigned long c = key_input_to_unicode(key);
 
 	if (c == 'y' || c == 'Y')
 		return INPUT_STOP;
@@ -407,9 +407,9 @@ prompt_init(void)
 }
 #else
 static enum input_status
-read_prompt_handler(void *data, char *buf, struct key_input *input)
+read_prompt_handler(void *data, char *buf, struct key *key)
 {
-	unsigned long c = key_input_to_unicode(input);
+	unsigned long c = key_input_to_unicode(key);
 
 	return unicode_width(c, 8) ? INPUT_OK : INPUT_SKIP;
 }
@@ -430,7 +430,7 @@ bool
 prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 {
 	enum input_status status = INPUT_OK;
-	struct key_input input;
+	struct key key;
 	int size = 0;
 
 	while (items[size].text)
@@ -446,7 +446,7 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 		update_status("%s (%d of %d) %s%s", prompt, *selected + 1, size,
 			      item->hotkey ? hotkey : "", item->text);
 
-		switch (get_input(COLS - 1, &input, FALSE)) {
+		switch (get_input(COLS - 1, &key, FALSE)) {
 		case KEY_RETURN:
 		case KEY_ENTER:
 		case '\n':
@@ -471,7 +471,7 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 
 		default:
 			for (i = 0; items[i].text; i++)
-				if (items[i].hotkey == input.data.bytes[0]) {
+				if (items[i].hotkey == key.data.bytes[0]) {
 					*selected = i;
 					status = INPUT_STOP;
 					break;
@@ -787,12 +787,12 @@ run_prompt_command(struct view *view, const char *argv[])
 			report("%s", action);
 
 	} else {
-		struct key_input input = {};
+		struct key key = {};
 
 		/* Try :<key> */
-		input.modifiers.multibytes = 1;
-		string_ncopy(input.data.bytes, cmd, cmdlen);
-		request = get_keybinding(view->keymap, &input);
+		key.modifiers.multibytes = 1;
+		string_ncopy(key.data.bytes, cmd, cmdlen);
+		request = get_keybinding(view->keymap, &key);
 		if (request != REQ_NONE)
 			return request;
 

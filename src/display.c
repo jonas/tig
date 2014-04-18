@@ -393,15 +393,15 @@ init_display(void)
 }
 
 int
-get_input(int prompt_position, struct key_input *input, bool modifiers)
+get_input(int prompt_position, struct key *key, bool modifiers)
 {
 	struct view *view;
-	int i, key, cursor_y, cursor_x;
+	int i, key_value, cursor_y, cursor_x;
 
 	if (prompt_position)
 		input_mode = TRUE;
 
-	memset(input, 0, sizeof(*input));
+	memset(key, 0, sizeof(*key));
 
 	while (TRUE) {
 		bool loading = FALSE;
@@ -431,16 +431,16 @@ get_input(int prompt_position, struct key_input *input, bool modifiers)
 		/* Refresh, accept single keystroke of input */
 		doupdate();
 		nodelay(status_win, loading);
-		key = wgetch(status_win);
+		key_value = wgetch(status_win);
 
 		/* wgetch() with nodelay() enabled returns ERR when
 		 * there's no input. */
-		if (key == ERR) {
+		if (key_value == ERR) {
 
-		} else if (key == KEY_ESC && modifiers) {
-			input->modifiers.escape = 1;
+		} else if (key_value == KEY_ESC && modifiers) {
+			key->modifiers.escape = 1;
 
-		} else if (key == KEY_RESIZE) {
+		} else if (key_value == KEY_RESIZE) {
 			int height, width;
 
 			getmaxyx(stdscr, height, width);
@@ -455,8 +455,8 @@ get_input(int prompt_position, struct key_input *input, bool modifiers)
 			int pos, key_length;
 
 			input_mode = FALSE;
-			if (key == erasechar())
-				key = KEY_BACKSPACE;
+			if (key_value == erasechar())
+				key_value = KEY_BACKSPACE;
 
 			/*
 			 * Ctrl-<key> values are represented using a 0x1F
@@ -470,22 +470,23 @@ get_input(int prompt_position, struct key_input *input, bool modifiers)
 			 * is set and the key value is updated to the proper
 			 * ASCII value.
 			 */
-			if (KEY_CTL('a') <= key && key <= KEY_CTL('x') && key != KEY_RETURN && key != KEY_TAB) {
-				input->modifiers.control = 1;
-				key = key | 0x40;
+			if (KEY_CTL('a') <= key_value && key_value <= KEY_CTL('x') &&
+			    key_value != KEY_RETURN && key_value != KEY_TAB) {
+				key->modifiers.control = 1;
+				key_value = key_value | 0x40;
 			}
 
-			if ((key >= KEY_MIN && key < KEY_MAX) || key < 0x1F) { // || key == ' ') {
-				input->data.key = key;
-				return input->data.key;
+			if ((key_value >= KEY_MIN && key_value < KEY_MAX) || key_value < 0x1F) {
+				key->data.value = key_value;
+				return key->data.value;
 			}
 
-			input->modifiers.multibytes = 1;
-			input->data.bytes[0] = key;
+			key->modifiers.multibytes = 1;
+			key->data.bytes[0] = key_value;
 
-			key_length = utf8_char_length(input->data.bytes);
-			for (pos = 1; pos < key_length && pos < sizeof(input->data.bytes) - 1; pos++) {
-				input->data.bytes[pos] = wgetch(status_win);
+			key_length = utf8_char_length(key->data.bytes);
+			for (pos = 1; pos < key_length && pos < sizeof(key->data.bytes) - 1; pos++) {
+				key->data.bytes[pos] = wgetch(status_win);
 			}
 
 			return OK;

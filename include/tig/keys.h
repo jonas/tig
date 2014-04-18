@@ -30,9 +30,9 @@ struct keymap {
 	bool hidden;
 };
 
-struct key_input {
+struct key {
 	union {
-		int key;
+		int value;
 		char bytes[7];
 	} data;
 	struct {
@@ -43,23 +43,23 @@ struct key_input {
 };
 
 static inline unsigned long
-key_input_to_unicode(struct key_input *input)
+key_input_to_unicode(struct key *key)
 {
-	return input->modifiers.multibytes
-		? utf8_to_unicode(input->data.bytes, strlen(input->data.bytes))
+	return key->modifiers.multibytes
+		? utf8_to_unicode(key->data.bytes, strlen(key->data.bytes))
 		: 0;
 }
 
 struct keymap *get_keymap(const char *name, size_t namelen);
 struct keymap *get_keymap_by_index(int i);
 
-const char *get_key_name(const struct key_input *input);
-int get_key_value(const char *name, struct key_input *input);
+const char *get_key_name(const struct key *key);
+int get_key_value(const char *name, struct key *key);
 
 /* Looks for a key binding first in the given map, then in the generic map, and
  * lastly in the default keybindings. */
-enum request get_keybinding(struct keymap *keymap, struct key_input *input);
-enum status_code add_keybinding(struct keymap *table, enum request request, struct key_input *input);
+enum request get_keybinding(struct keymap *keymap, struct key *key);
+enum status_code add_keybinding(struct keymap *table, enum request request, struct key *key);
 
 const char *get_keys(struct keymap *keymap, enum request request, bool all);
 #define get_view_key(view, request) get_keys((view)->keymap, request, FALSE)
@@ -78,7 +78,7 @@ struct run_request {
 };
 
 struct run_request *get_run_request(enum request request);
-enum status_code add_run_request(struct keymap *keymap, struct key_input *input, const char **argv);
+enum status_code add_run_request(struct keymap *keymap, struct key *key, const char **argv);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

@@ -19,7 +19,7 @@
 #include "tig/util.h"
 
 struct keybinding {
-	struct key_input input;
+	struct key key;
 	enum request request;
 };
 
@@ -51,15 +51,15 @@ get_keymap(const char *name, size_t namelen)
 }
 
 static bool
-keybinding_equals(struct key_input *input1, struct key_input *input2, bool *conflict)
+keybinding_equals(struct key *key1, struct key *key2, bool *conflict)
 {
-	if (input1->modifiers.control &&
-	    input1->modifiers.multibytes &&
-	    !memcmp(&input1->modifiers, &input2->modifiers, sizeof(input1->modifiers)) &&
-	    strlen(input1->data.bytes) == 1 &&
-	    strlen(input2->data.bytes) == 1) {
-		int c1 = input1->data.bytes[0];
-		int c2 = input2->data.bytes[0];
+	if (key1->modifiers.control &&
+	    key1->modifiers.multibytes &&
+	    !memcmp(&key1->modifiers, &key2->modifiers, sizeof(key1->modifiers)) &&
+	    strlen(key1->data.bytes) == 1 &&
+	    strlen(key2->data.bytes) == 1) {
+		int c1 = key1->data.bytes[0];
+		int c2 = key2->data.bytes[0];
 		bool equals = ascii_toupper(c1) == ascii_toupper(c2);
 
 		if (equals && c1 != c2)
@@ -67,18 +67,18 @@ keybinding_equals(struct key_input *input1, struct key_input *input2, bool *conf
 		return equals;
 	}
 
-	return !memcmp(input1, input2, sizeof(*input1));
+	return !memcmp(key1, key2, sizeof(*key1));
 }
 
 enum status_code
-add_keybinding(struct keymap *table, enum request request, struct key_input *input)
+add_keybinding(struct keymap *table, enum request request, struct key *key)
 {
 	char buf[SIZEOF_STR];
 	bool conflict = FALSE;
 	size_t i;
 
 	for (i = 0; i < table->size; i++) {
-		if (keybinding_equals(&table->data[i].input, input, &conflict)) {
+		if (keybinding_equals(&table->data[i].key, key, &conflict)) {
 			enum request old_request = table->data[i].request;
 			const char *old_name;
 
@@ -97,7 +97,7 @@ add_keybinding(struct keymap *table, enum request request, struct key_input *inp
 	table->data = realloc(table->data, (table->size + 1) * sizeof(*table->data));
 	if (!table->data)
 		die("Failed to allocate keybinding");
-	table->data[table->size].input = *input;
+	table->data[table->size].key = *key;
 	table->data[table->size++].request = request;
 	return SUCCESS;
 }
@@ -105,28 +105,28 @@ add_keybinding(struct keymap *table, enum request request, struct key_input *inp
 /* Looks for a key binding first in the given map, then in the generic map, and
  * lastly in the default keybindings. */
 enum request
-get_keybinding(struct keymap *keymap, struct key_input *input)
+get_keybinding(struct keymap *keymap, struct key *key)
 {
 	size_t i;
 
 	for (i = 0; i < keymap->size; i++)
-		if (keybinding_equals(&keymap->data[i].input, input, NULL))
+		if (keybinding_equals(&keymap->data[i].key, key, NULL))
 			return keymap->data[i].request;
 
 	for (i = 0; i < generic_keymap->size; i++)
-		if (keybinding_equals(&generic_keymap->data[i].input, input, NULL))
+		if (keybinding_equals(&generic_keymap->data[i].key, key, NULL))
 			return generic_keymap->data[i].request;
 
 	return REQ_NONE;
 }
 
 
-struct key {
+struct key_table {
 	const char *name;
 	int value;
 };
 
-static const struct key key_table[] = {
+static const struct key_table key_table[] = {
 	{ "Enter",	KEY_RETURN },
 	{ "Space",	' ' },
 	{ "Backspace",	KEY_BACKSPACE },
@@ -160,11 +160,11 @@ static const struct key key_table[] = {
 };
 
 int
-get_key_value(const char *name, struct key_input *input)
+get_key_value(const char *name, struct key *key)
 {
 	int i;
 
-	memset(input, 0, sizeof(*input));
+	memset(key, 0, sizeof(*key));
 
 	for (i = 0; i < ARRAY_SIZE(key_table); i++)
 		if (!strcasecmp(key_table[i].name, name)) {
@@ -176,22 +176,22 @@ get_key_value(const char *name, struct key_input *input)
 				name = "#";
 				break;
 			}
-			input->data.key = key_table[i].value;
+			key->data.value = key_table[i].value;
 			return OK;
 		}
 
 	if (name[0] == '^' && name[1] == '[') {
-		input->modifiers.escape = 1;
+		key->modifiers.escape = 1;
 		name += 2;
 	} else if (name[0] == '^') {
-		input->modifiers.control = 1;
+		key->modifiers.control = 1;
 		name += 1;
 	}
 
 	i = utf8_char_length(name);
 	if (strlen(name) == i && utf8_to_unicode(name, i) != 0) {
-		strncpy(input->data.bytes, name, i);
-		input->modifiers.multibytes = 1;
+		strncpy(key->data.bytes, name, i);
+		key->modifiers.multibytes = 1;
 		return OK;
 	}
 
@@ -199,24 +199,24 @@ get_key_value(const char *name, struct key_input *input)
 }
 
 const char *
-get_key_name(const struct key_input *input)
+get_key_name(const struct key *key)
 {
 	static char buf[SIZEOF_STR];
 	const char *modifier = "";
-	int key;
+	int i;
 
-	if (!input->modifiers.multibytes) {
-		for (key = 0; key < ARRAY_SIZE(key_table); key++)
-			if (key_table[key].value == input->data.key)
-				return key_table[key].name;
+	if (!key->modifiers.multibytes) {
+		for (i = 0; i < ARRAY_SIZE(key_table); i++)
+			if (key_table[i].value == key->data.value)
+				return key_table[i].name;
 	}
 
-	if (input->modifiers.escape)
+	if (key->modifiers.escape)
 		modifier = "^[";
-	else if (input->modifiers.control)
+	else if (key->modifiers.control)
 		modifier = "^";
 
-	if (string_format(buf, "'%s%s'", modifier, input->data.bytes))
+	if (string_format(buf, "'%s%s'", modifier, key->data.bytes))
 		return buf;
 
 	return "(no key)";
@@ -226,7 +226,7 @@ static bool
 append_key(char *buf, size_t *pos, const struct keybinding *keybinding)
 {
 	const char *sep = *pos > 0 ? ", " : "";
-	const char *keyname = get_key_name(&keybinding->input);
+	const char *keyname = get_key_name(&keybinding->key);
 
 	return string_nformat(buf, BUFSIZ, pos, "%s%s", sep, keyname);
 }
@@ -283,7 +283,7 @@ static size_t run_requests;
 DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 
 enum status_code
-add_run_request(struct keymap *keymap, struct key_input *input, const char **argv)
+add_run_request(struct keymap *keymap, struct key *key, const char **argv)
 {
 	struct run_request *req;
 	struct run_request_flags flags = {};
@@ -318,7 +318,7 @@ add_run_request(struct keymap *keymap, struct key_input *input, const char **arg
 	req->flags = flags;
 	req->keymap = keymap;
 
-	return add_keybinding(keymap, REQ_RUN_REQUESTS + run_requests, input);
+	return add_keybinding(keymap, REQ_RUN_REQUESTS + run_requests, key);
 }
 
 struct run_request *

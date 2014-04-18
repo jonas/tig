@@ -24,7 +24,7 @@ enum input_status {
 	INPUT_CANCEL
 };
 
-int get_input(int prompt_position, struct key_input *input, bool modifiers);
+int get_input(int prompt_position, struct key *key, bool modifiers);
 
 extern WINDOW *status_win;
 extern FILE *opt_tty;

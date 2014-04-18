@@ -684,18 +684,18 @@ main(int argc, const char *argv[])
 		request = open_pager_mode(request);
 
 	while (view_driver(display[current_view], request)) {
-		struct key_input input;
-		int key = get_input(0, &input, TRUE);
+		struct key key;
+		int key_value = get_input(0, &key, TRUE);
 
 #ifdef NCURSES_MOUSE_VERSION
-		if (key == KEY_MOUSE) {
+		if (key_value == KEY_MOUSE) {
 			request = handle_mouse_event();
 			continue;
 		}
 #endif
 
 		view = display[current_view];
-		request = get_keybinding(view->keymap, &input);
+		request = get_keybinding(view->keymap, &key);
 
 		/* Some low-level request handling. This keeps access to
 		 * status_win restricted. */
