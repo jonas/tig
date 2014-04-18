@@ -27,6 +27,7 @@
 #include "tig/line.h"
 #include "tig/keys.h"
 #include "tig/view.h"
+#include "tig/search.h"
 #include "tig/repo.h"
 #include "tig/options.h"
 #include "tig/draw.h"

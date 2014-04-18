@@ -13,6 +13,7 @@
 
 #include "tig/argv.h"
 #include "tig/view.h"
+#include "tig/search.h"
 #include "tig/draw.h"
 
 /*
