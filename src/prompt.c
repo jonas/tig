@@ -29,16 +29,6 @@ static void
 prompt_toggle_name(char buf[], size_t bufsize,
 		   const char *prefix, const char *name);
 
-struct input;
-
-typedef enum input_status (*input_handler)(struct input *input, struct key *key);
-
-struct input {
-	input_handler handler;
-	void *data;
-	char buf[SIZEOF_STR];
-};
-
 static char *
 prompt_input(const char *prompt, struct input *input)
 {
@@ -83,6 +73,13 @@ prompt_input(const char *prompt, struct input *input)
 				int len = chars_length[--chars];
 
 				pos -= len;
+			} else {
+				int changed_pos = strlen(input->buf);
+
+				if (changed_pos != pos) {
+					pos = changed_pos;
+					chars_length[chars++] = changed_pos - pos;
+				}
 			}
 		}
 		input->buf[pos] = 0;
@@ -143,6 +140,41 @@ prompt_yesno(const char *prompt)
 		return FALSE;
 
 	return !!prompt_input(prompt2, &input);
+}
+
+struct incremental_input {
+	struct input input;
+	input_handler handler;
+	bool edit_mode;
+};
+
+static enum input_status
+read_prompt_handler(struct input *input, struct key *key)
+{
+	struct incremental_input *incremental = (struct incremental_input *) input;
+
+	if (incremental->edit_mode && !key->modifiers.multibytes)
+		return prompt_default_handler(input, key);
+
+	if (!unicode_width(key_input_to_unicode(key), 8))
+		return INPUT_SKIP;
+
+	if (!incremental->handler)
+		return INPUT_OK;
+
+	return incremental->handler(input, key);
+}
+
+char *
+read_prompt_incremental(const char *prompt, bool edit_mode, input_handler handler, void *data)
+{
+	static struct incremental_input incremental = { { read_prompt_handler } };
+
+	incremental.input.data = data;
+	incremental.handler = handler;
+	incremental.edit_mode = edit_mode;
+
+	return prompt_input(prompt, (struct input *) &incremental);
 }
 
 #ifdef HAVE_READLINE
@@ -433,22 +465,10 @@ prompt_init(void)
 	readline_init();
 }
 #else
-static enum input_status
-read_prompt_handler(struct input *input, struct key *key)
-{
-	unsigned long c = key_input_to_unicode(key);
-
-	if (!key->modifiers.multibytes)
-		return prompt_default_handler(input, key);
-	return unicode_width(c, 8) ? INPUT_OK : INPUT_SKIP;
-}
-
 char *
 read_prompt(const char *prompt)
 {
-	static struct input input = { read_prompt_handler, NULL };
-
-	return prompt_input(prompt, &input);
+	return read_prompt_incremental(prompt, TRUE, NULL, NULL);
 }
 
 void

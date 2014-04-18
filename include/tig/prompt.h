@@ -18,6 +18,7 @@
 #include "tig/keys.h"
 
 struct view;
+struct input;
 
 struct menu_item {
 	int hotkey;
@@ -25,6 +26,15 @@ struct menu_item {
 	void *data;
 };
 
+typedef enum input_status (*input_handler)(struct input *input, struct key *key);
+
+struct input {
+	input_handler handler;
+	void *data;
+	char buf[SIZEOF_STR];
+};
+
+char *read_prompt_incremental(const char *prompt, bool edit_mode, input_handler handler, void *data);
 char *read_prompt(const char *prompt);
 void prompt_init(void);
 bool prompt_yesno(const char *prompt);
