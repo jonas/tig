@@ -470,7 +470,7 @@ get_input(int prompt_position, struct key *key, bool modifiers)
 			 * is set and the key value is updated to the proper
 			 * ASCII value.
 			 */
-			if (KEY_CTL('a') <= key_value && key_value <= KEY_CTL('x') &&
+			if (KEY_CTL('a') <= key_value && key_value <= KEY_CTL('y') &&
 			    key_value != KEY_RETURN && key_value != KEY_TAB) {
 				key->modifiers.control = 1;
 				key_value = key_value | 0x40;
