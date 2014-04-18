@@ -114,25 +114,6 @@ log_read(struct view *view, char *data)
 	return pager_common_read(view, data, type);
 }
 
-static bool
-log_draw(struct view *view, struct line *line, unsigned int lineno)
-{
-	char *text = line->data;
-	enum line_type type = line->type;
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_LINE_NUMBER);
-
-	if (column && (type == LINE_DIFF_STAT) && draw_lineno(view, column, lineno))
-		return TRUE;
-
-	if (type == LINE_DIFF_STAT) {
-		diff_common_draw_diff_stat(view, &type, &text);
-		draw_text(view, type, text);
-		return TRUE;
-	}
-
-	return view_column_draw(view, line, lineno);
-}
-
 static struct view_ops log_ops = {
 	"line",
 	argv_env.head,
@@ -140,7 +121,7 @@ static struct view_ops log_ops = {
 	sizeof(struct log_state),
 	log_open,
 	log_read,
-	log_draw,
+	view_column_draw,
 	log_request,
 	view_column_grep,
 	log_select,

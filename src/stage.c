@@ -496,7 +496,7 @@ static struct view_ops stage_ops = {
 	sizeof(struct stage_state),
 	stage_open,
 	stage_read,
-	diff_common_draw,
+	view_column_draw,
 	stage_request,
 	view_column_grep,
 	pager_select,

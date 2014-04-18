@@ -149,62 +149,6 @@ diff_common_enter(struct view *view, enum request request, struct line *line)
 }
 
 static bool
-diff_common_draw_part(struct view *view, enum line_type *type, char **text, char c, enum line_type next_type)
-{
-	char *sep = strchr(*text, c);
-
-	if (sep != NULL) {
-		*sep = 0;
-		draw_text(view, *type, *text);
-		*sep = c;
-		*text = sep;
-		*type = next_type;
-	}
-
-	return sep != NULL;
-}
-
-void
-diff_common_draw_diff_stat(struct view *view, enum line_type *type, char **text)
-{
-	diff_common_draw_part(view, type, text, '|', LINE_DEFAULT);
-	if (diff_common_draw_part(view, type, text, 'B', LINE_DEFAULT)) {
-		/* Handle binary diffstat: Bin <deleted> -> <added> bytes */
-		diff_common_draw_part(view, type, text, ' ', LINE_DIFF_DEL);
-		diff_common_draw_part(view, type, text, '-', LINE_DEFAULT);
-		diff_common_draw_part(view, type, text, ' ', LINE_DIFF_ADD);
-		diff_common_draw_part(view, type, text, 'b', LINE_DEFAULT);
-
-	} else {
-		diff_common_draw_part(view, type, text, '+', LINE_DIFF_ADD);
-		diff_common_draw_part(view, type, text, '-', LINE_DIFF_DEL);
-	}
-}
-
-bool
-diff_common_draw(struct view *view, struct line *line, unsigned int lineno)
-{
-	char *text = line->data;
-	enum line_type type = line->type;
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_LINE_NUMBER);
-
-	if (column && draw_lineno(view, column, lineno))
-		return TRUE;
-
-	if (line->wrapped && draw_text(view, LINE_DELIMITER, "+"))
-		return TRUE;
-
-	if (type == LINE_DIFF_STAT)
-		diff_common_draw_diff_stat(view, &type, &text);
-
-	if (line->commit_title)
-		draw_commit_title(view, text, 4);
-	else
-		draw_text(view, type, text);
-	return TRUE;
-}
-
-static bool
 diff_read(struct view *view, char *data)
 {
 	struct diff_state *state = view->private;
@@ -466,7 +410,7 @@ static struct view_ops diff_ops = {
 	sizeof(struct diff_state),
 	diff_open,
 	diff_read,
-	diff_common_draw,
+	view_column_draw,
 	diff_request,
 	view_column_grep,
 	diff_select,

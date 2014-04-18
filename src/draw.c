@@ -394,6 +394,37 @@ draw_graph(struct view *view, const struct graph_canvas *canvas)
 	return draw_text(view, LINE_DEFAULT, " ");
 }
 
+static bool
+draw_diff_stat_part(struct view *view, enum line_type *type, const char **text, char c, enum line_type next_type)
+{
+	const char *sep = strchr(*text, c);
+
+	if (sep != NULL) {
+		draw_text_expanded(view, *type, *text, sep - *text, FALSE);
+		*text = sep;
+		*type = next_type;
+	}
+
+	return sep != NULL;
+}
+
+static void
+draw_diff_stat(struct view *view, enum line_type *type, const char **text)
+{
+	draw_diff_stat_part(view, type, text, '|', LINE_DEFAULT);
+	if (draw_diff_stat_part(view, type, text, 'B', LINE_DEFAULT)) {
+		/* Handle binary diffstat: Bin <deleted> -> <added> bytes */
+		draw_diff_stat_part(view, type, text, ' ', LINE_DIFF_DEL);
+		draw_diff_stat_part(view, type, text, '-', LINE_DEFAULT);
+		draw_diff_stat_part(view, type, text, ' ', LINE_DIFF_ADD);
+		draw_diff_stat_part(view, type, text, 'b', LINE_DEFAULT);
+
+	} else {
+		draw_diff_stat_part(view, type, text, '+', LINE_DIFF_ADD);
+		draw_diff_stat_part(view, type, text, '-', LINE_DIFF_DEL);
+	}
+}
+
 bool
 view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 {
@@ -470,10 +501,21 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_TEXT:
+		{
+			enum line_type type = line->type;
+			const char *text = column_data.text;
+
 			if (line->wrapped && draw_text(view, LINE_DELIMITER, "+"))
 				return TRUE;
-			if (draw_text(view, line->type, column_data.text))
+			if (type == LINE_DIFF_STAT)
+				draw_diff_stat(view, &type, &text);
+			if (line->commit_title) {
+				if (draw_commit_title(view, text, 4))
+					return TRUE;
+			} else if (draw_text(view, type, text)) {
 				return TRUE;
+			}
+		}
 			continue;
 		}
 	}
