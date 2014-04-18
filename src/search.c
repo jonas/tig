@@ -14,9 +14,20 @@
 #include "tig/search.h"
 #include "tig/prompt.h"
 #include "tig/display.h"
+#include "tig/prompt.h"
 #include "tig/draw.h"
 #include "tig/main.h"
 #include "tig/graph.h"
+
+enum typeahead {
+	NO_TYPEAHEAD	=  0,
+	TYPEAHEAD	=  1,
+};
+
+enum result_message {
+	SHORT_MESSAGE,
+	FULL_MESSAGE,
+};
 
 DEFINE_ALLOCATOR(realloc_unsigned_ints, unsigned int, 32)
 
@@ -55,7 +66,8 @@ find_matches(struct view *view)
 	return true;
 }
 
-static enum status_code find_next_match(struct view *view, enum request request);
+static enum status_code
+find_next_match(struct view *view, enum request request, enum typeahead typeahead, enum result_message msg);
 
 static bool contains_uppercase(const char *search)
 {
@@ -68,7 +80,7 @@ static bool contains_uppercase(const char *search)
 }
 
 static enum status_code
-setup_and_find_next(struct view *view, enum request request)
+init_search(struct view *view)
 {
 	int regex_err;
 	int regex_flags = opt_ignore_case == IGNORE_CASE_YES ? REG_ICASE : 0;
@@ -97,49 +109,51 @@ setup_and_find_next(struct view *view, enum request request)
 	string_copy(view->grep, view->env->search);
 
 	reset_search(view);
-
-	return find_next_match(view, request);
+	return SUCCESS;
 }
 
 static enum status_code
-find_next_match_line(struct view *view, int direction, bool wrapped)
+find_next_match_line(struct view *view, int direction, bool wrapped, enum typeahead typeahead, enum result_message msg)
 {
 	/* Note, `i` is unsigned and will wrap around in which case it
 	 * will become bigger than view->matched_lines. */
 	size_t i = direction > 0 ? 0 : view->matched_lines - 1;
+	size_t offset = typeahead * direction;
 
 	for (; i < view->matched_lines; i += direction) {
 		size_t lineno = view->matched_line[i];
 
-		if (direction > 0) {
-			if (!wrapped && lineno <= view->pos.lineno)
-				continue;
-			if (wrapped && lineno > view->pos.lineno)
-				continue;
-		} else {
-			if (!wrapped && lineno >= view->pos.lineno)
-				continue;
-			if (wrapped && lineno < view->pos.lineno)
-				continue;
-		}
+		if (direction > 0 && lineno + offset <= view->pos.lineno)
+			continue;
+
+		if (direction < 0 && lineno + offset >= view->pos.lineno)
+			continue;
 
 		select_view_line(view, lineno);
+		if (msg == SHORT_MESSAGE)
+			return success("%zu of %zu", i + 1, view->matched_lines);
 		return success("Line %zu matches '%s' (%zu of %zu)", lineno + 1, view->grep, i + 1, view->matched_lines);
 	}
 
-	return -1;
+	if (msg == SHORT_MESSAGE)
+		return success("No match");
+	return success("No match found for '%s'", view->grep);
 }
 
 static enum status_code
-find_next_match(struct view *view, enum request request)
+find_next_match(struct view *view, enum request request, enum typeahead typeahead, enum result_message msg)
 {
 	enum status_code code;
 	int direction;
 
-	if (!*view->grep || strcmp(view->grep, view->env->search)) {
+	if (!*view->grep || strcmp(view->grep, view->env->search) || typeahead == TYPEAHEAD) {
+		enum status_code code;
+
 		if (!*view->env->search)
 			return success("No previous search");
-		return setup_and_find_next(view, request);
+		code = init_search(view);
+		if (code != SUCCESS)
+			return code;
 	}
 
 	switch (request) {
@@ -160,9 +174,9 @@ find_next_match(struct view *view, enum request request)
 	if (!view->matched_lines && !find_matches(view))
 		return ERROR_OUT_OF_MEMORY;
 
-	code = find_next_match_line(view, direction, false);
+	code = find_next_match_line(view, direction, false, typeahead, msg);
 	if (code != SUCCESS && opt_wrap_search)
-		code = find_next_match_line(view, direction, true);
+		code = find_next_match_line(view, direction, true, typeahead, msg);
 
 	return code == SUCCESS ? code : success("No match found for '%s'", view->grep);
 }
@@ -170,7 +184,7 @@ find_next_match(struct view *view, enum request request)
 void
 find_next(struct view *view, enum request request)
 {
-	enum status_code code = find_next_match(view, request);
+	enum status_code code = find_next_match(view, request, NO_TYPEAHEAD, FULL_MESSAGE);
 
 	report("%s", get_status_message(code));
 }
@@ -243,17 +257,65 @@ reset_search(struct view *view)
 	view->matched_lines = 0;
 }
 
+struct search_typeahead_context {
+	struct view *view;
+	struct keymap *keymap;
+	enum request request;
+	enum status_code code;
+};
+
+static enum input_status
+search_update_status(struct input *input, enum status_code code, enum input_status status)
+{
+	if (code != SUCCESS)
+		return INPUT_CANCEL;
+
+	string_format(input->context, "(%s)", get_status_message(code));
+	return status;
+}
+
+static enum input_status
+search_typeahead(struct input *input, struct key *key)
+{
+	struct search_typeahead_context *search = input->data;
+	enum input_status status = prompt_default_handler(input, key);
+	enum request request;
+
+	if (status != INPUT_SKIP)
+		return status;
+
+	request = get_keybinding(search->keymap, key, 1, NULL);
+	if (request != REQ_UNKNOWN) {
+		search->code = find_next_match(search->view, request, NO_TYPEAHEAD, SHORT_MESSAGE);
+		return search_update_status(input, search->code, INPUT_SKIP);
+	}
+
+	if (!key_to_value(key)) {
+		string_ncopy(argv_env.search, input->buf, strlen(input->buf));
+		search->code = find_next_match(search->view, search->request, TYPEAHEAD, SHORT_MESSAGE);
+		return search_update_status(input, search->code, INPUT_OK);
+	}
+
+	return INPUT_SKIP;
+}
+
 void
 search_view(struct view *view, enum request request)
 {
 	const char *prompt = request == REQ_SEARCH ? "/" : "?";
-	char *search = read_prompt(prompt);
+	struct search_typeahead_context context = {
+		view,
+		get_keymap("search", STRING_SIZE("search")),
+		request,
+		SUCCESS
+	};
+	char *search = read_prompt_incremental(prompt, false, false, search_typeahead, &context);
 
-	if (search && *search) {
-		enum status_code code;
+	if (context.code != SUCCESS) {
+		report("%s", get_status_message(context.code));
+	} else if (search && *search) {
+		enum status_code code = find_next_match(view, request, TYPEAHEAD, FULL_MESSAGE);
 
-		string_ncopy(argv_env.search, search, strlen(search));
-		code = setup_and_find_next(view, request);
 		report("%s", get_status_message(code));
 	} else if (search && *argv_env.search) {
 		find_next(view, request);
