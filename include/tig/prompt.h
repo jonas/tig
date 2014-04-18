@@ -40,6 +40,7 @@ struct input {
 	input_handler handler;
 	void *data;
 	char buf[SIZEOF_STR];
+	char status[SIZEOF_STR];
 };
 
 enum input_status prompt_default_handler(struct input *input, struct key *key);

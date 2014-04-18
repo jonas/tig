@@ -22,7 +22,7 @@ int get_input_char(void);
 
 extern WINDOW *status_win;
 
-void update_status(const char *msg, ...);
+void update_status(const char *right, const char *msg, ...) PRINTF_LIKE(2, 3);
 void report(const char *msg, ...) PRINTF_LIKE(1, 2);
 #define report_clear() report("%s", "")
 

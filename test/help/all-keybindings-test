@@ -84,6 +84,10 @@ Option toggling:
                               X :toggle id                                                
                               $ :toggle commit-title-overflow                             
                               % :toggle file-filter                                       
+[-] search bindings                                                                       
+Searching                                                                                 
+     <Down>, <Ctrl-N>, <Ctrl-J> find-next         Find next search match                  
+       <Up>, <Ctrl-P>, <Ctrl-K> find-prev         Find previous search match              
 [-] main bindings                                                                         
 Option toggling:                                                                          
                               G :toggle commit-title-graph                                
@@ -121,9 +125,5 @@ Internal commands:
 [-] stash bindings                                                                        
 External commands:                                                                        
                               P ?git stash pop %(stash)                                   
-                              ! ?git stash drop %(stash)                                  
-                                                                                          
-                                                                                          
-                                                                                          
-[help] - line 1 of 105                                                                100%
+[help] - line 1 of 109                                                                 99%
 EOF
