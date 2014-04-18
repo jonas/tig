@@ -247,14 +247,6 @@ void scroll_view(struct view *view, enum request request);
 void move_view(struct view *view, enum request request);
 
 /*
- * Searching
- */
-
-void search_view(struct view *view, enum request request);
-void find_next(struct view *view, enum request request);
-bool grep_text(struct view *view, const char *text[]);
-
-/*
  * View history
  */
 

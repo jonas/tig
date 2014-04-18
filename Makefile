@@ -249,6 +249,7 @@ TIG_OBJS = \
 	src/prompt.o \
 	src/display.o \
 	src/view.o \
+	src/search.o \
 	src/parse.o \
 	src/watch.o \
 	src/pager.o \

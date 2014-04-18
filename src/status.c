@@ -19,6 +19,7 @@
 #include "tig/display.h"
 #include "tig/prompt.h"
 #include "tig/view.h"
+#include "tig/search.h"
 #include "tig/draw.h"
 #include "tig/git.h"
 #include "tig/watch.h"
