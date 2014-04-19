@@ -151,6 +151,18 @@ main_check_argv(struct view *view, const char *argv[])
 		const char *arg = argv[i];
 		struct rev_flags rev_flags = {};
 
+		if (!strcmp(arg, "--graph")) {
+			struct view_column *column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
+
+			if (column) {
+				column->opt.commit_title.graph = TRUE;
+				if (opt_commit_order != COMMIT_ORDER_REVERSE)
+					state->with_graph = TRUE;
+			}
+			argv[i] = "";
+			continue;
+		}
+
 		if (!argv_parse_rev_flag(arg, &rev_flags))
 			continue;
 

@@ -130,11 +130,6 @@ update_options_from_argv(const char *argv[])
 			continue;
 		}
 
-		if (!strcmp(flag, "--graph")) {
-			opt_show_rev_graph = TRUE;
-			continue;
-		}
-
 		argv[flags_pos++] = flag;
 	}
 

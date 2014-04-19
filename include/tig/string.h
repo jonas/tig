@@ -26,6 +26,7 @@
 
 bool string_isnumber(const char *str);
 bool iscommit(const char *str);
+#define get_graph_indent(str) strspn(str, "*|\\/ ")
 
 static inline int
 ascii_toupper(int c)

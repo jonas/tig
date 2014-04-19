@@ -403,6 +403,7 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 		"--first-parent",
 		"--fixed-strings",
 		"--full-history",
+		"--graph",
 		"--glob=",
 		"--left-only",
 		"--max-parents=",

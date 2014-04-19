@@ -35,6 +35,7 @@ struct line {
 	unsigned int wrapped:1;
 	unsigned int commit_title:1;
 	unsigned int no_commit_refs:1;
+	unsigned int graph_indent:1;
 
 	void *data;		/* User data */
 };

@@ -140,7 +140,7 @@ pager_wrap_line(struct view *view, const char *data, enum line_type type)
 }
 
 bool
-pager_common_read(struct view *view, const char *data, enum line_type type)
+pager_common_read(struct view *view, const char *data, enum line_type type, struct line **line_ptr)
 {
 	struct line *line;
 
@@ -156,6 +156,9 @@ pager_common_read(struct view *view, const char *data, enum line_type type)
 	if (!line)
 		return FALSE;
 
+	if (line_ptr)
+		*line_ptr = line;
+
 	if (line->type == LINE_COMMIT && view_has_flags(view, VIEW_ADD_PAGER_REFS))
 		add_pager_refs(view, data + STRING_SIZE("commit "));
 
@@ -168,7 +171,7 @@ pager_read(struct view *view, char *data)
 	if (!data)
 		return TRUE;
 
-	return pager_common_read(view, data, get_line_type(data));
+	return pager_common_read(view, data, get_line_type(data), NULL);
 }
 
 enum request

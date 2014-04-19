@@ -37,9 +37,10 @@ diff_open(struct view *view, enum open_flags flags)
 	return begin_update(view, NULL, diff_argv, flags);
 }
 
-bool
-diff_common_add_diff_stat(struct view *view, const char *data)
+struct line *
+diff_common_add_diff_stat(struct view *view, const char *text, size_t offset)
 {
+	const char *data = text + offset;
 	size_t len = strlen(data);
 	char *pipe = strchr(data, '|');
 	bool has_histogram = data[len - 1] == '-' || data[len - 1] == '+';
@@ -48,8 +49,8 @@ diff_common_add_diff_stat(struct view *view, const char *data)
 	bool has_no_change = pipe && strstr(pipe, " 0");
 
 	if (pipe && (has_histogram || has_bin_diff || has_rename || has_no_change))
-		return add_line_text(view, data, LINE_DIFF_STAT) != NULL;
-	return FALSE;
+		return add_line_text(view, text, LINE_DIFF_STAT);
+	return NULL;
 }
 
 bool
@@ -64,7 +65,7 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		state->reading_diff_stat = TRUE;
 
 	if (state->reading_diff_stat) {
-		if (diff_common_add_diff_stat(view, data))
+		if (diff_common_add_diff_stat(view, data, 0))
 			return TRUE;
 		state->reading_diff_stat = FALSE;
 
@@ -97,7 +98,7 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	if (!state->combined_diff && (type == LINE_DIFF_ADD2 || type == LINE_DIFF_DEL2))
 		type = LINE_DEFAULT;
 
-	return pager_common_read(view, data, type);
+	return pager_common_read(view, data, type, NULL);
 }
 
 static bool
