@@ -173,6 +173,7 @@ The following variables can be set:
 	like to use for formatting, e.g. `[tag]` and `<remote>`. If no format is
 	specified for `local-tag`, the format for `tag` is used. Similarly, if no
 	format is specified for `tracked-remote` the `remote` format is used.
+	Prefix with `hide:` to not show that reference type, e.g. `hide:remote`.
 	Supported reference types are:
 	 - head			: The current HEAD.
 	 - tag			: A signed tag.

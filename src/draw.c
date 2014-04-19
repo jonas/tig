@@ -314,6 +314,9 @@ draw_refs(struct view *view, struct view_column *column, const struct ref_list *
 		enum line_type type = get_line_type_from_ref(ref);
 		const struct ref_format *format = get_ref_format(ref);
 
+		if (!strcmp(format->start, "hide:") && !*format->end)
+			continue;
+
 		if (draw_formatted(view, type, "%s%s%s", format->start, ref->name, format->end))
 			return TRUE;
 
