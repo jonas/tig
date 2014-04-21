@@ -92,7 +92,7 @@ view_request(struct view *view, enum request request)
 	_('*', "file sizes",			"show-file-size"), \
 	_('W', "space changes",			"ignore-space"), \
 	_('l', "commit order",			"commit-order"), \
-	_('F', "reference display",		"show-refs"), \
+	_('F', "reference display",		"commit-title-refs"), \
 	_('C', "local change display",		"show-changes"), \
 	_('X', "commit ID display",		"show-id"), \
 	_('%', "file filtering",		"file-filter"), \
