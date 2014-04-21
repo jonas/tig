@@ -288,8 +288,10 @@ main_add_reflog(struct view *view, struct main_state *state, char *reflog)
 	state->reflog[state->reflogs++] = reflog;
 	id_width = strlen(reflog);
 	if (state->reflog_width < id_width) {
+		struct view_column *column = get_view_column(view, VIEW_COLUMN_ID);
+
 		state->reflog_width = id_width;
-		if (opt_show_id)
+		if (column && column->opt.id.show)
 			view->force_redraw = TRUE;
 	}
 
