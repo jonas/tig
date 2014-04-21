@@ -930,7 +930,8 @@ sort_view(struct view *view, bool change_field)
 		while (TRUE) {
 			state->current = state->current->next
 				? state->current->next : view->columns;
-			if (get_sort_field(view) == VIEW_COLUMN_ID && !opt_show_id)
+			if (get_sort_field(view) == VIEW_COLUMN_ID &&
+			    !state->current->opt.id.show)
 				continue;
 			break;
 		}
