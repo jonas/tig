@@ -1001,12 +1001,12 @@ view_column_text(struct view *view, struct view_column_data *column_data,
 }
 
 static bool
-grep_refs(struct view *view, const struct ref_list *list)
+grep_refs(struct view *view, struct view_column *column, const struct ref_list *list)
 {
 	regmatch_t pmatch;
 	size_t i;
 
-	if (!opt_show_refs || !list)
+	if (!list)
 		return FALSE;
 
 	for (i = 0; i < list->size; i++) {
@@ -1035,9 +1035,14 @@ view_column_grep(struct view *view, struct line *line)
 
 		if (grep_text(view, text))
 			return TRUE;
+
+		if (column->type == VIEW_COLUMN_COMMIT_TITLE &&
+		    column->opt.commit_title.refs &&
+		    grep_refs(view, column, column_data.refs))
+			return TRUE;
 	}
 
-	return grep_refs(view, column_data.refs);
+	return FALSE;
 }
 
 bool
