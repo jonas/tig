@@ -30,15 +30,11 @@ enum align {
 #define VIEW_MAX_LEN(view) ((view)->width + (view)->pos.col - (view)->col)
 
 bool draw_text(struct view *view, enum line_type type, const char *string);
-bool draw_text_overflow(struct view *view, const char *text, bool on, int overflow, enum line_type type);
 bool PRINTF_LIKE(3, 4) draw_formatted(struct view *view, enum line_type type, const char *format, ...);
 bool draw_graphic(struct view *view, enum line_type type, const chtype graphic[], size_t size, bool separator);
 bool draw_field(struct view *view, enum line_type type, const char *text, int width, enum align align, bool trim);
 bool draw_lineno(struct view *view, struct view_column *column, unsigned int lineno);
 bool view_column_draw(struct view *view, struct line *line, unsigned int lineno);
-
-#define draw_commit_title(view, text, offset) \
-	draw_text_overflow(view, text, opt_title_overflow > 0, opt_title_overflow + offset, LINE_DEFAULT)
 
 void redraw_view(struct view *view);
 void redraw_view_from(struct view *view, int lineno);

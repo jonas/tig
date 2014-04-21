@@ -107,10 +107,14 @@ draw_text(struct view *view, enum line_type type, const char *string)
 	return draw_text_expanded(view, type, string, VIEW_MAX_LEN(view), TRUE);
 }
 
-bool
-draw_text_overflow(struct view *view, const char *text, bool on, int overflow, enum line_type type)
+static bool
+draw_text_overflow(struct view *view, const char *text, enum line_type type,
+		   int overflow_length, int offset)
 {
+	bool on = overflow_length > 0;
+
 	if (on) {
+		int overflow = overflow_length + offset;
 		int max = MIN(VIEW_MAX_LEN(view), overflow);
 		int len = strlen(text);
 
@@ -494,7 +498,8 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 				return TRUE;
 			if (column_data.refs && draw_refs(view, column, column_data.refs))
 				return TRUE;
-			if (draw_commit_title(view, column_data.commit_title, 0))
+			if (draw_text_overflow(view, column_data.commit_title, LINE_DEFAULT,
+					       column->opt.commit_title.overflow, 0))
 				return TRUE;
 			continue;
 
@@ -521,7 +526,8 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			if (type == LINE_DIFF_STAT)
 				draw_diff_stat(view, &type, &text);
 			if (line->commit_title) {
-				if (draw_commit_title(view, text, 4))
+				if (draw_text_overflow(view, text, LINE_DEFAULT,
+						       column->opt.text.commit_title_overflow, 4))
 					return TRUE;
 			} else if (draw_text(view, type, text)) {
 				return TRUE;

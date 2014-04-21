@@ -1128,7 +1128,10 @@ view_column_init(struct view *view, const enum view_column_type columns[], size_
 			break;
 
 		case VIEW_COLUMN_MODE:
+			break;
+
 		case VIEW_COLUMN_TEXT:
+			opt.text.commit_title_overflow = opt_title_overflow;
 			break;
 		}
 

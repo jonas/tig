@@ -612,12 +612,13 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 				diff = -*opt;
 		}
 
-		if (!strcmp(name, "commit-title-overflow")) {
+		if (strstr(name, "commit-title-overflow")) {
 			*opt = *opt ? -*opt : 50;
 			if (*opt < 0) {
 				string_format_size(msg, SIZEOF_STR, "set %s = no", name);
 				return toggle->flags;
 			}
+			diff = 0;
 		}
 
 		*opt += diff;
@@ -688,6 +689,10 @@ find_prompt_toggle(struct prompt_toggle toggles[], size_t toggles_size,
 
 	for (i = 0; i < toggles_size; i++) {
 		struct prompt_toggle *toggle = &toggles[i];
+
+		if (namelen == strlen(toggle->name) &&
+		    !string_enum_compare(toggle->name, name, namelen))
+			return toggle;
 
 		prompt_toggle_name(toggle_name, sizeof(toggle_name), prefix, toggle->name);
 
