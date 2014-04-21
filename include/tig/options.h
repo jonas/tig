@@ -47,12 +47,12 @@
 
 #define VIEW_COLUMN_OPTION_INFO(_) \
 	_(author_width,			int,			VIEW_NO_FLAGS) \
+	_(filename_width,		int,			VIEW_NO_FLAGS) \
 	_(line_number_interval,		int,			VIEW_NO_FLAGS) \
 	_(show_author,			enum author,		VIEW_NO_FLAGS) \
 	_(show_date,			enum date,		VIEW_NO_FLAGS) \
 	_(show_file_size,		enum file_size,		VIEW_NO_FLAGS) \
 	_(show_filename,		enum filename,		VIEW_NO_FLAGS) \
-	_(show_filename_width,		int,			VIEW_NO_FLAGS) \
 	_(show_id,			bool,			VIEW_NO_FLAGS) \
 	_(show_line_numbers,		bool,			VIEW_NO_FLAGS) \
 	_(show_refs,			bool,			VIEW_NO_FLAGS) \

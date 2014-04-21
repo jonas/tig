@@ -1116,7 +1116,7 @@ view_column_init(struct view *view, const enum view_column_type columns[], size_
 
 		case VIEW_COLUMN_FILE_NAME:
 			opt.file_name.show = opt_show_filename;
-			opt.file_name.width = opt_show_filename_width;
+			opt.file_name.width = opt_filename_width;
 			break;
 
 		case VIEW_COLUMN_FILE_SIZE:
