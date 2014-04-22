@@ -253,10 +253,12 @@ color "dissimilarity "		yellow	default
 color "diff-tree "		blue	default
 color "Author: "		cyan	default
 color "Commit: "		magenta	default
+color "Tagger: "		magenta	default
 color "Merge: "			blue	default
 color "Date: "			yellow	default
 color "AuthorDate: "		yellow	default
 color "CommitDate: "		yellow	default
+color "TaggerDate: "		yellow	default
 color "Refs: "			red	default
 color "Reflog: "		red	default
 color "Reflog message: "	yellow	default
