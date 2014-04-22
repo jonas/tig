@@ -158,6 +158,19 @@ update_options_from_argv(const char *argv[])
 			continue;
 		}
 
+		if (!strcmp(flag, "--no-notes")) {
+			opt_show_notes = FALSE;
+			mark_option_seen(&opt_show_notes);
+			continue;
+		}
+
+		if (!prefixcmp(flag, "--show-notes")) {
+			opt_show_notes = TRUE;
+			string_ncopy(opt_notes_arg, flag, strlen(flag));
+			mark_option_seen(&opt_show_notes);
+			continue;
+		}
+
 		if (!prefixcmp(flag, "-U")
 		    && parse_int(&value, flag + 2, 0, 999999) == SUCCESS) {
 			opt_diff_context = value;
