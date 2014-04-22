@@ -30,6 +30,45 @@
 OPTION_INFO(DEFINE_OPTION_VARIABLES);
 VIEW_COLUMN_OPTION_INFO(DEFINE_OPTION_VARIABLES);
 
+struct option_info {
+	const char *name;
+	size_t namelen;
+	const char *type;
+	void *value;
+	bool seen;
+};
+
+static struct option_info option_info[] = {
+#define DEFINE_OPTION_INFO(name, type, flags) { #name, STRING_SIZE(#name), #type, &opt_##name },
+	OPTION_INFO(DEFINE_OPTION_INFO)
+	VIEW_COLUMN_OPTION_INFO(DEFINE_OPTION_INFO)
+};
+
+static struct option_info *
+find_option_info(const char *name)
+{
+	size_t namelen = strlen(name);
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(option_info); i++)
+		if (enum_equals(option_info[i], name, namelen))
+			return &option_info[i];
+
+	return NULL;
+}
+
+static void
+mark_option_seen(void *value)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(option_info); i++)
+		if (option_info[i].value == value) {
+			option_info[i].seen = TRUE;
+			break;
+		}
+}
+
 /*
  * State variables.
  */
@@ -98,10 +137,6 @@ show_notes_arg()
 	return "";
 }
 
-static bool seen_commit_order_arg;
-static bool seen_ignore_space_arg;
-static bool seen_diff_context_arg;
-
 void
 update_options_from_argv(const char *argv[])
 {
@@ -113,20 +148,20 @@ update_options_from_argv(const char *argv[])
 
 		if (map_enum(&value, commit_order_arg_map, flag)) {
 			opt_commit_order = value;
-			seen_commit_order_arg = TRUE;
+			mark_option_seen(&opt_commit_order);
 			continue;
 		}
 
 		if (map_enum(&value, ignore_space_arg_map, flag)) {
 			opt_ignore_space = value;
-			seen_ignore_space_arg = TRUE;
+			mark_option_seen(&opt_ignore_space);
 			continue;
 		}
 
 		if (!prefixcmp(flag, "-U")
 		    && parse_int(&value, flag + 2, 0, 999999) == SUCCESS) {
 			opt_diff_context = value;
-			seen_diff_context_arg = TRUE;
+			mark_option_seen(&opt_diff_context);
 			continue;
 		}
 
@@ -198,9 +233,6 @@ parse_int(int *opt, const char *arg, int min, int max)
 
 	return error("Value must be between %d and %d", min, max);
 }
-
-#define parse_id(opt, arg) \
-	parse_int(opt, arg, 0, SIZEOF_REV - 1)
 
 static bool
 set_color(int *color, const char *name)
@@ -336,16 +368,14 @@ option_color_command(int argc, const char *argv[])
 }
 
 static enum status_code
-parse_bool_matched(bool *opt, const char *arg, bool *matched)
+parse_bool(bool *opt, const char *arg)
 {
 	*opt = (!strcmp(arg, "1") || !strcmp(arg, "true") || !strcmp(arg, "yes"))
 		? TRUE : FALSE;
-	if (matched)
-		*matched = *opt || (!strcmp(arg, "0") || !strcmp(arg, "false") || !strcmp(arg, "no"));
-	return SUCCESS;
+	if (*opt || !strcmp(arg, "0") || !strcmp(arg, "false") || !strcmp(arg, "no"))
+		return SUCCESS;
+	return error("Non-boolean value treated as false: %s", arg);
 }
-
-#define parse_bool(opt, arg) parse_bool_matched(opt, arg, NULL)
 
 static enum status_code
 parse_enum(unsigned int *opt, const char *arg, const struct enum_map *map)
@@ -406,156 +436,101 @@ parse_args(const char ***args, const char *argv[])
 	return SUCCESS;
 }
 
-/* Wants: name = value */
 static enum status_code
-option_set_command(int argc, const char *argv[])
+parse_option(struct option_info *option, const char *arg)
 {
-	if (argc < 3)
-		return error("Invalid set command: set option = value");
+	const char *name = enum_name_static(option->name, strlen(option->name));
 
-	if (strcmp(argv[1], "="))
-		return error("No value assigned to %s", argv[0]);
+	if (!strcmp("show-notes", name)) {
+		bool *value = option->value;
+		enum status_code res;
 
-	if (!strcmp(argv[0], "blame-options"))
-		return parse_args(&opt_blame_options, argv + 2);
+		if (parse_bool(option->value, arg) == SUCCESS)
+			return SUCCESS;
 
-	if (!strcmp(argv[0], "diff-options"))
-		return parse_args(&opt_diff_options, argv + 2);
-
-	if (!strcmp(argv[0], "reference-format"))
-		return parse_ref_formats(argv + 2);
-
-	if (argc != 3)
-		return error("Option %s expects only one value", argv[0]);
-
-	if (!strcmp(argv[0], "show-author"))
-		return parse_enum(&opt_show_author, argv[2], author_map);
-
-	if (!strcmp(argv[0], "show-date"))
-		return parse_enum(&opt_show_date, argv[2], date_map);
-
-	if (!strcmp(argv[0], "show-rev-graph"))
-		return parse_bool(&opt_show_rev_graph, argv[2]);
-
-	if (!strcmp(argv[0], "show-refs"))
-		return parse_bool(&opt_show_refs, argv[2]);
-
-	if (!strcmp(argv[0], "show-changes"))
-		return parse_bool(&opt_show_changes, argv[2]);
-
-	if (!strcmp(argv[0], "show-notes")) {
-		bool matched = FALSE;
-		enum status_code res = parse_bool_matched(&opt_show_notes, argv[2], &matched);
-
-		if (res == SUCCESS && matched)
-			return res;
-
-		opt_show_notes = TRUE;
+		*value = TRUE;
 		strcpy(opt_notes_arg, "--show-notes=");
-		res = parse_string(opt_notes_arg + 8, argv[2],
+		res = parse_string(opt_notes_arg + 8, arg,
 				   sizeof(opt_notes_arg) - 8);
 		if (res == SUCCESS && opt_notes_arg[8] == '\0')
 			opt_notes_arg[7] = '\0';
 		return res;
 	}
 
-	if (!strcmp(argv[0], "show-line-numbers"))
-		return parse_bool(&opt_show_line_numbers, argv[2]);
+	if (!strcmp(option->type, "bool"))
+		return parse_bool(option->value, arg);
 
-	if (!strcmp(argv[0], "line-graphics"))
-		return parse_enum(&opt_line_graphics, argv[2], graphic_map);
+	if (!strcmp(option->type, "double"))
+		return parse_step(option->value, arg);
 
-	if (!strcmp(argv[0], "line-number-interval"))
-		return parse_int(&opt_line_number_interval, argv[2], 1, 1024);
+	if (!strncmp(option->type, "enum", 4)) {
+		const char *type = option->type + STRING_SIZE("enum ");
+		const struct enum_map *map = find_enum_map(type);
 
-	if (!strcmp(argv[0], "author-width"))
-		return parse_int(&opt_author_width, argv[2], 0, 1024);
-
-	if (!strcmp(argv[0], "filename-width"))
-		return parse_int(&opt_show_filename_width, argv[2], 0, 1024);
-
-	if (!strcmp(argv[0], "show-filename"))
-		return parse_enum(&opt_show_filename, argv[2], filename_map);
-
-	if (!strcmp(argv[0], "show-file-size"))
-		return parse_enum(&opt_show_file_size, argv[2], file_size_map);
-
-	if (!strcmp(argv[0], "horizontal-scroll"))
-		return parse_step(&opt_horizontal_scroll, argv[2]);
-
-	if (!strcmp(argv[0], "split-view-height"))
-		return parse_step(&opt_split_view_height, argv[2]);
-
-	if (!strcmp(argv[0], "vertical-split"))
-		return parse_enum(&opt_vertical_split, argv[2], vertical_split_map);
-
-	if (!strcmp(argv[0], "tab-size"))
-		return parse_int(&opt_tab_size, argv[2], 1, 1024);
-
-	if (!strcmp(argv[0], "diff-context"))
-		return seen_diff_context_arg ? SUCCESS
-			: parse_int(&opt_diff_context, argv[2], 0, 999999);
-
-	if (!strcmp(argv[0], "ignore-space"))
-		return seen_ignore_space_arg ? SUCCESS
-			: parse_enum(&opt_ignore_space, argv[2], ignore_space_map);
-
-	if (!strcmp(argv[0], "commit-order"))
-		return seen_commit_order_arg ? SUCCESS
-			: parse_enum(&opt_commit_order, argv[2], commit_order_map);
-
-	if (!strcmp(argv[0], "status-untracked-dirs"))
-		return parse_bool(&opt_status_untracked_dirs, argv[2]);
-
-	if (!strcmp(argv[0], "read-git-colors"))
-		return parse_bool(&opt_read_git_colors, argv[2]);
-
-	if (!strcmp(argv[0], "ignore-case"))
-		return parse_bool(&opt_ignore_case, argv[2]);
-
-	if (!strcmp(argv[0], "focus-child"))
-		return parse_bool(&opt_focus_child, argv[2]);
-
-	if (!strcmp(argv[0], "wrap-lines"))
-		return parse_bool(&opt_wrap_lines, argv[2]);
-
-	if (!strcmp(argv[0], "show-id"))
-		return parse_bool(&opt_show_id, argv[2]);
-
-	if (!strcmp(argv[0], "id-width"))
-		return parse_id(&opt_id_width, argv[2]);
-
-	if (!strcmp(argv[0], "title-overflow")) {
-		bool enabled = FALSE;
-		bool matched;
-		enum status_code code;
-
-		/*
-		 * "title-overflow" is considered a boolint.
-		 * We try to parse it as a boolean (and set the value to 50 if true),
-		 * otherwise we parse it as an integer and use the given value.
-		 */
-		code = parse_bool_matched(&enabled, argv[2], &matched);
-		if (code == SUCCESS && matched) {
-			if (enabled)
-				opt_title_overflow = 50;
-		} else {
-			code = parse_int(&opt_title_overflow, argv[2], 2, 1024);
-			if (code != SUCCESS)
-				opt_title_overflow = 50;
-		}
-
-		return code;
+		return parse_enum(option->value, arg, map);
 	}
 
-	if (!strcmp(argv[0], "editor-line-number"))
-		return parse_bool(&opt_editor_line_number, argv[2]);
+	if (!strcmp(option->type, "int")) {
+		if (strstr(name, "title-overflow")) {
+			bool enabled = FALSE;
+			int *value = option->value;
 
-	if (!strcmp(argv[0], "mouse"))
-		return parse_bool(&opt_mouse, argv[2]);
+			/* We try to parse it as a boolean (and set the
+			 * value to 0 if fale), otherwise we parse it as
+			 * an integer and use the given value. */
+			if (parse_bool(&enabled, arg) == SUCCESS) {
+				if (!enabled) {
+					*value = 0;
+					return SUCCESS;
+				}
+				arg = "50";
+			}
+		}
 
-	if (!strcmp(argv[0], "mouse-scroll"))
-		return parse_int(&opt_mouse_scroll, argv[2], 0, 1024);
+		if (!strcmp(name, "line-number-interval") ||
+		    !strcmp(name, "tab-size"))
+			return parse_int(option->value, arg, 1, 1024);
+		else if (!strcmp(name, "id-width"))
+			return parse_int(option->value, arg, 0, SIZEOF_REV - 1);
+		else
+			return parse_int(option->value, arg, 0, 1024);
+	}
+
+	return error("Unhandled option: %s", name);
+}
+
+/* Wants: name = value */
+static enum status_code
+option_set_command(int argc, const char *argv[])
+{
+	struct option_info *option;
+
+	if (argc < 3)
+		return error("Invalid set command: set option = value");
+
+	if (strcmp(argv[1], "="))
+		return error("No value assigned to %s", argv[0]);
+
+	if (!strcmp(argv[0], "reference-format"))
+		return parse_ref_formats(argv + 2);
+
+	option = find_option_info(argv[0]);
+	if (option) {
+		enum status_code code;
+
+		if (option->seen)
+			return SUCCESS;
+
+		if (!strcmp(option->type, "const char **"))
+			return parse_args(option->value, argv + 2);
+
+		code = parse_option(option, argv[2]);
+		if (code == SUCCESS && argc != 3)
+			return error("Option %s only takes one value", argv[0]);
+
+		return code;
+
+	}
 
 	return error("Unknown option name: %s", argv[0]);
 }
@@ -958,7 +933,7 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 		set_work_tree(value);
 
 	else if (!strcmp(name, "core.abbrev"))
-		parse_id(&opt_id_width, value);
+		parse_int(&opt_id_width, value, 0, SIZEOF_REV - 1);
 
 	else if (!prefixcmp(name, "tig.color."))
 		set_repo_config_option(name + 10, value, option_color_command);
