@@ -39,6 +39,9 @@
 #   mode
 #    - show (bool)			: Show file modes?
 #
+#   status
+#    - show (bool)			: Show file status?
+#
 #   text
 #    - show (bool)			: Show text?
 #    - commit-title-overflow (boolint)	: Highlight overflow in log and diff view?
@@ -52,6 +55,7 @@ set grep-view	= file-name:no line-number:yes,interval=1 text
 set main-view	= line-number:no,interval=5 id:no date:default author:full commit-title:yes,graph,refs,overflow=no
 set refs-view	= date:default author:full ref commit-title
 set stash-view	= line-number:no,interval=5 id:no date:default author:full commit-title
+set status-view	= line-number:no,interval=5 status:yes,width=3 file-name
 set tree-view	= line-number:no,interval=5 mode author:full file-size date:default id:no file-name
 
 # Pager based views
@@ -243,6 +247,7 @@ bind generic	X	:toggle show-id		# Toggle commit ID display
 bind generic	$	:toggle commit-title-overflow
 						# Toggle highlighting of commit title overflow
 # bind generic	???	:toggle show-file-size	# Toggle file size format
+# bind generic	???	:toggle show-status	# Toggle status display
 # bind generic	???	:toggle status-untracked-dirs
 						# Toggle display of file in untracked directories
 # bind generic	???	:toggle vertical-split	# Toggle vertical split

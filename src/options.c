@@ -517,8 +517,9 @@ static struct view_config view_configs[] = {
 	{ "main-view", &opt_main_view },
 	{ "pager-view", &opt_pager_view },
 	{ "refs-view", &opt_refs_view },
-	{ "stash-view", &opt_stash_view },
 	{ "stage-view", &opt_stage_view },
+	{ "stash-view", &opt_stash_view },
+	{ "status-view", &opt_status_view },
 	{ "tree-view", &opt_tree_view },
 };
 

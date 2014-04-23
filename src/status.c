@@ -85,10 +85,12 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	add_line_nodata(view, type);
 
 	while ((buf = io_get(&io, 0, TRUE))) {
+		struct line *line = NULL;
 		struct status *file = unmerged;
 
 		if (!file) {
-			if (!add_line_alloc(view, &file, type, 0, FALSE))
+			line = add_line_alloc(view, &file, type, 0, FALSE);
+			if (!line)
 				goto error_out;
 		}
 
@@ -133,6 +135,8 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 		if (!*file->old.name)
 			string_copy(file->old.name, file->new.name);
 		file = NULL;
+		if (line)
+			view_column_info_update(view, line);
 	}
 
 	if (io_error(&io)) {
@@ -281,13 +285,18 @@ status_open(struct view *view, enum open_flags flags)
 }
 
 static bool
-status_draw(struct view *view, struct line *line, unsigned int lineno)
+status_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
 	struct status *status = line->data;
-	enum line_type type;
-	const char *text;
 
 	if (!status) {
+		static struct view_column group_column;
+		const char *text;
+		enum line_type type;
+
+		column_data->section = &group_column;
+		column_data->section->type = VIEW_COLUMN_SECTION;
+
 		switch (line->type) {
 		case LINE_STAT_STAGED:
 			type = LINE_STAT_SECTION;
@@ -317,17 +326,14 @@ status_draw(struct view *view, struct line *line, unsigned int lineno)
 		default:
 			return FALSE;
 		}
+
+		column_data->section->opt.section.text = text;
+		column_data->section->opt.section.type = type;
+
 	} else {
-		static char buf[] = { '?', ' ', ' ', ' ', 0 };
-
-		buf[0] = status->status;
-		if (draw_text(view, line->type, buf))
-			return TRUE;
-		type = LINE_DEFAULT;
-		text = status->new.name;
+		column_data->status = &status->status;
+		column_data->file_name = status->new.name;
 	}
-
-	draw_text(view, type, text);
 	return TRUE;
 }
 
@@ -730,21 +736,6 @@ status_select(struct view *view, struct line *line)
 		string_copy(view->env->file, status->new.name);
 }
 
-static bool
-status_grep(struct view *view, struct line *line)
-{
-	struct status *status = line->data;
-
-	if (status) {
-		const char buf[2] = { status->status, 0 };
-		const char *text[] = { status->new.name, buf, NULL };
-
-		return grep_text(view, text);
-	}
-
-	return FALSE;
-}
-
 static struct view_ops status_ops = {
 	"file",
 	"",
@@ -752,10 +743,14 @@ static struct view_ops status_ops = {
 	0,
 	status_open,
 	NULL,
-	status_draw,
+	view_column_draw,
 	status_request,
-	status_grep,
+	view_column_grep,
 	status_select,
+	NULL,
+	view_column_bit(FILE_NAME) | view_column_bit(LINE_NUMBER) |
+		view_column_bit(STATUS),
+	status_get_column_data,
 };
 
 DEFINE_VIEW(status);

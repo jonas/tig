@@ -913,9 +913,15 @@ sort_view_compare(const void *l1, const void *l2)
 	case VIEW_COLUMN_COMMIT_TITLE:
 		return sort_order(sort, strcmp, column_data1.commit_title, column_data2.commit_title);
 
+	case VIEW_COLUMN_SECTION:
+		return sort_order(sort, strcmp, column_data1.section->opt.section.text,
+						column_data2.section->opt.section.text);
+
+	case VIEW_COLUMN_STATUS:
+		return sort_order(sort, number_compare, column_data1.status, column_data2.status);
+
 	case VIEW_COLUMN_TEXT:
 		return sort_order(sort, strcmp, column_data1.text, column_data2.text);
-
 	}
 
 	return 0;
@@ -990,6 +996,19 @@ view_column_text(struct view *view, struct view_column_data *column_data,
 	case VIEW_COLUMN_MODE:
 		if (column_data->mode)
 			text = mkmode(*column_data->mode);
+		break;
+
+	case VIEW_COLUMN_STATUS:
+		if (column_data->status) {
+			static char buf[] = "?";
+
+			buf[0] = *column_data->status;
+			text = buf;
+		}
+		break;
+
+	case VIEW_COLUMN_SECTION:
+		text = column_data->section->opt.section.text;
 		break;
 
 	case VIEW_COLUMN_TEXT:
@@ -1289,13 +1308,20 @@ view_column_info_update(struct view *view, struct line *line)
 			if (width < 3)
 				width = 3;
 			break;
-	
+
 		case VIEW_COLUMN_MODE:
 			width = column->opt.mode.width;
 			break;
 
 		case VIEW_COLUMN_REF:
 			width = column->opt.ref.width;
+			break;
+
+		case VIEW_COLUMN_SECTION:
+			break;
+
+		case VIEW_COLUMN_STATUS:
+			width = column->opt.status.width;
 			break;
 
 		case VIEW_COLUMN_TEXT:

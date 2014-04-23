@@ -343,6 +343,15 @@ draw_refs(struct view *view, struct view_column *column, const struct ref_list *
 	return FALSE;
 }
 
+static bool
+draw_status(struct view *view, struct view_column *column,
+	    enum line_type type, const char *status)
+{
+	char label[] = { status ? *status : 0, 0 };
+
+	return draw_field(view, type, label, column->width, ALIGN_LEFT, FALSE);
+}
+
 /*
  * Revision graph
  */
@@ -520,6 +529,16 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 
 		case VIEW_COLUMN_FILE_NAME:
 			if (draw_filename(view, column, column_data.file_name, mode))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_SECTION:
+			if (draw_text(view, column->opt.section.type, column->opt.section.text))
+				return TRUE;
+			continue;
+
+		case VIEW_COLUMN_STATUS:
+			if (draw_status(view, column, line->type, column_data.status))
 				return TRUE;
 			continue;
 

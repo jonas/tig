@@ -16,6 +16,7 @@
 
 #include "tig/tig.h"
 #include "tig/util.h"
+#include "tig/line.h"
 
 /*
  * Option variables.
@@ -50,6 +51,7 @@
 	_(split_view_height,		double,			VIEW_RESET_DISPLAY) \
 	_(stage_view,			const char **,		VIEW_NO_FLAGS) \
 	_(status_untracked_dirs,	bool,			VIEW_STATUS_LIKE) \
+	_(status_view,			const char **,		VIEW_NO_FLAGS) \
 	_(stash_view,			const char **,		VIEW_NO_FLAGS) \
 	_(tab_size,			int,			VIEW_NO_FLAGS) \
 	_(tree_view,			const char **,		VIEW_NO_FLAGS) \
@@ -104,6 +106,14 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS);
 	_(show,				bool,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
+#define SECTION_COLUMN_OPTIONS(_) \
+	_(type,				enum line_type,		VIEW_NO_FLAGS) \
+	_(text,				const char *,		VIEW_NO_FLAGS) \
+
+#define STATUS_COLUMN_OPTIONS(_) \
+	_(show,				bool,			VIEW_NO_FLAGS) \
+	_(width,			int,			VIEW_NO_FLAGS) \
+
 #define TEXT_COLUMN_OPTIONS(_) \
 	_(show,				bool,			VIEW_NO_FLAGS) \
 	_(commit_title_overflow,	int,			VIEW_NO_FLAGS) \
@@ -119,6 +129,8 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS);
 	_(line_number, LINE_NUMBER, LINE_NUMBER_COLUMN_OPTIONS) \
 	_(mode, MODE, MODE_COLUMN_OPTIONS) \
 	_(ref, REF, REF_COLUMN_OPTIONS) \
+	_(section, SECTION, SECTION_COLUMN_OPTIONS) \
+	_(status, STATUS, STATUS_COLUMN_OPTIONS) \
 	_(text, TEXT, TEXT_COLUMN_OPTIONS) \
 
 #define DEFINE_COLUMN_OPTIONS_STRUCT_VALUE(name, type, flags) type name;

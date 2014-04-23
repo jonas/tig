@@ -179,6 +179,7 @@ struct view_column_data {
 	const mode_t *mode;
 	const struct ref *ref;
 	const struct ref_list *refs;
+	const char *status;
 	const char *text;
 };
 
