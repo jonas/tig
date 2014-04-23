@@ -309,6 +309,15 @@ draw_lineno(struct view *view, struct view_column *column, unsigned int lineno)
 }
 
 static bool
+draw_ref(struct view *view, struct view_column *column, const struct ref *ref)
+{
+	enum line_type type = !ref || !ref->valid ? LINE_DEFAULT : get_line_type_from_ref(ref);
+	const char *name = ref ? ref->name : NULL;
+
+	return draw_field(view, type, name, column->width, ALIGN_LEFT, FALSE);
+}
+
+static bool
 draw_refs(struct view *view, struct view_column *column, const struct ref_list *refs)
 {
 	size_t i;
@@ -449,7 +458,6 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 
 	for (; column; column = column->next) {
 		mode_t mode = column_data.mode ? *column_data.mode : 0;
-		int width = column->width;
 
 		if (column->hidden)
 			continue;
@@ -466,15 +474,9 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_REF:
-		{
-			const struct ref *ref = column_data.ref;
-			enum line_type type = !ref || !ref->valid ? LINE_DEFAULT : get_line_type_from_ref(ref);
-			const char *name = ref ? ref->name : NULL;
-
-			if (draw_field(view, type, name, width, ALIGN_LEFT, FALSE))
+			if (draw_ref(view, column, column_data.ref))
 				return TRUE;
 			continue;
-		}
 
 		case VIEW_COLUMN_ID:
 			if (draw_id(view, column, column_data.id))
