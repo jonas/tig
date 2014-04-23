@@ -265,11 +265,14 @@ draw_file_size(struct view *view, struct view_column *column, unsigned long size
 }
 
 static bool
-draw_mode(struct view *view, mode_t mode)
+draw_mode(struct view *view, struct view_column *column, mode_t mode)
 {
 	const char *str = mkmode(mode);
 
-	return draw_field(view, LINE_MODE, str, STRING_SIZE("-rw-r--r--"), ALIGN_LEFT, FALSE);
+	if (!column->width || !column->opt.mode.show)
+		return FALSE;
+
+	return draw_field(view, LINE_MODE, str, column->width, ALIGN_LEFT, FALSE);
 }
 
 static bool
@@ -484,7 +487,7 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_MODE:
-			if (draw_mode(view, mode))
+			if (draw_mode(view, column, mode))
 				return TRUE;
 			continue;
 
