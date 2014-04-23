@@ -83,27 +83,22 @@ is:
 Examples:
 
 --------------------------------------------------------------------------
-set show-author = abbreviated	# Show abbreviated author names.
-set show-date = relative	# Show relative commit date.
-set show-rev-graph = yes	# Show revision graph?
-set show-refs = yes		# Show references?
 set commit-order = topo		# Order commits topologically
 set read-git-colors = no	# Do not read Git's color settings.
-set show-line-numbers = no	# Show line numbers?
-set line-number-interval = 5	# Interval between line numbers
 set horizontal-scroll = 33%	# Scroll 33% of the view width
 set blame-options = -C -C -C	# Blame lines from other files
 
 # Wrap branch names with () and tags with <>
 set reference-format = (branch) <tag>
+
+# Configure blame view columns
+set blame-view = date:default author:abbreviated file-name:auto id:yes,color line-number:yes,interval=5 text
 --------------------------------------------------------------------------
 
 Or in the Git configuration files:
 
 --------------------------------------------------------------------------
 [tig]
-	show-date = yes		# Show commit date?
-	author-width = 10	# Set width of the author column
 	line-graphics = no	# Disable graphics characters
 	tab-size = 8		# Number of spaces per tab
 --------------------------------------------------------------------------
@@ -132,24 +127,6 @@ Variables
 ~~~~~~~~~
 
 The following variables can be set:
-
-'author-width' (int)::
-
-	Width of the author column. When set to 5 or below, the author name
-	will be abbreviated to the author's initials. When set to zero, the
-	width is automatically sized to fit the content.
-
-'filename-width' (int)::
-
-	Width of the filename column. When set to zero, the width is
-	automatically sized to fit the content.
-
-'id-width' (int)::
-
-	Width of the commit ID. When unset Tig will use the value of
-	'core.abbrev' if found. See git-config(1) on how to set 'core.abbrev'.
-	When set to zero the width is automatically sized to fit the content of
-	reflog (e.g. `ref/stash@{4}`) IDs and otherwise default to 7.
 
 'diff-options' (string)::
 
@@ -187,11 +164,6 @@ The following variables can be set:
 
 	What type of character graphics for line drawing.
 
-'line-number-interval' (int)::
-
-	Interval between line numbers. Note, you have to toggle on line
-	numbering with ".".  The default is to number every fifth line.
-
 'horizontal-scroll' (mixed)::
 
 	Interval to scroll horizontally in each step. Can be specified either
@@ -209,63 +181,15 @@ The following variables can be set:
 
 	Whether to read Git's color settings. True by default.
 
-'show-author' (mixed) ["full", "abbreviated" | "email" | "email-user" | bool]::
-
-	How to display author names. If set to "abbreviated" author initials
-	will be shown. Can be toggled.
-
-'show-filename' (mixed) ["auto" | "always" | bool]::
-
-	When to display file names. If set to "auto" file names are shown
-	only when needed, e.g. when running: tig blame -C <file>.
-
-'show-file-size' (mixed) ["default" | "units" | bool]::
-
-	How to display file sizes. When set to "units", sizes are shown using
-	binary prefixes, e.g. 12524 bytes is shown as "12.2K". Can be toggled.
-
-'show-date' (mixed) ["relative" | "short" | "default" | "local" | bool]::
-
-	Whether and how to show date. If set to "relative" a relative date will be
-	used, e.g. "2 minutes ago". If set to "short" no time information is
-	shown. If set to "local", localtime(3) is used. Can be toggled.
-
 'show-notes' (mixed) [note reference | bool]::
 
 	Whether to show notes for a commit. When set to a note reference the
 	reference is passed to `git show --notes=`. Notes are enabled by
 	default.
 
-'show-refs' (bool)::
-
-	Whether to show references (branches, tags, and remotes) in the main
-	view on start-up. Can be toggled.
-
-'show-id' (bool)::
-
-	Whether to show commit IDs in the main view. Disabled by default. Can
-	be toggled. See also 'id-width' option.
-
-'title-overflow' (mixed) [bool | int]::
-
-	Whether to highlight text in commit titles exceeding a given width.
-	When set to a boolean, it enables/disables the highlighting using the
-	default width of 50 character. When set to an int, the assigned value
-	is used as the maximum character width.
-
-'show-rev-graph' (bool)::
-
-	Whether to show revision graph in the main view on start-up.
-	Can be toggled. See also line-graphics options.
-
 'show-changes' (bool)::
 
 	Whether to show staged and unstaged changes in the main view.
-	Can be toggled.
-
-'show-line-numbers' (bool)::
-
-	Whether to show line numbers. Can be toggled.
 
 'vertical-split' (mixed) ["auto" | bool]::
 
@@ -334,6 +258,147 @@ The following variables can be set:
 	text from the terminal less intuitive. When enabled hold down Shift (or
 	Option on Mac) to select text. Mouse support requires that ncurses
 	itself support mouse events.
+
+View settings
+~~~~~~~~~~~~~
+
+The view settings, e.g. `blame-view`, can be used to configure the order and
+settings for the different columns of a view. Each view option expects a space
+separated list of column specifications. Column specifications first give the
+column type, and can optionally be followed by a colon (`:`) and a list of
+column settings, e.g.  `author:full,width=20`. The first setting value is always
+the 'show' setting. When no 'show' setting value is given, 'yes' is assumed,
+which for 'show' settings taking an enumerated value will automatically resolve
+to the default enum value. For example, `file-name` will automatically have its
+'show' setting resolve to 'auto'.
+
+The following list shows which the available view options and what column types
+they support:
+
+blob-view, diff-view, log-view, pager-view, stage-view::
+
+	*line-number*, *text*
+
+blame-view::
+
+	*author*, *date*, *file-name*, *id*, *line-number*, *text*
+
+grep-view::
+
+	*file-name*, *line-number*, *text*
+
+main-view::
+
+	*author*, *date*, *commit-title*, *id*, *line-number*
+
+refs-view::
+
+	*author*, *date*, *commit-title*, *id*, *line-number*, *ref*
+
+stash-view::
+
+	*author*, *date*, *commit-title*, *id*, *line-number*
+
+tree-view::
+
+	*author*, *date*, *id*, *file-name*, *file-size*, *line-number*, *mode*
+
+Supported column types and their respective settings:
+
+*author*::
+
+	- 'show' (mixed) [full|abbreviated|email|email-user|<bool>]: How to
+	  display author names. If set to "abbreviated" author initials will be
+	  shown.
+	- 'width' (int): Width of the column. When set to 5 or below, the author
+	  name will be abbreviated to the author's initials.  When set to zero,
+	  the width is automatically sized to fit the content.
+
+*commit-title*::
+	- 'graph' (bool): Whether to show revision graph in the main view on
+	  start-up. See also the 'line-graphics' options.
+	- 'refs' (bool): Whether to show references (branches, tags, and
+	  remotes) in the main view. Can be toggled.
+	- 'overflow' (bool or int): Whether to highlight text in commit titles
+	  exceeding a given width. When set to a boolean, it enables or disables
+	  the highlighting using the default width of 50 character. When set to
+	  an int, the assigned value is used as the maximum character width.
+
+*date*::
+	- 'show' (mixed) [relative|short|default|local|<bool>]: Whether and how
+	  to show date. If set to "relative" a relative date will be used, e.g.
+	  "2 minutes ago". If set to "short" no time information is shown. If
+	  set to "local", localtime(3) is used.
+	- 'width' (int): Width of the column. When set to zero, the width is
+	  automatically sized to fit the content.
+
+*file-name*::
+	- 'show' (mixed) [no|auto|always|bool]: When to display file names. If
+	  set to "auto" file names are shown only when needed, e.g. when
+	  running: tig blame -C <file>.
+	- 'width' (int): Width of the column. When set to zero, the width is
+	  automatically sized to fit the content.
+
+*file-size*::
+
+	- 'show' (mixed) [default|units|<bool>]: How to display file sizes. When
+	  set to "units", sizes are shown using binary prefixes, e.g. 12524
+	  bytes is shown as "12.2K".
+	- 'width' (int): Width of the filename column. When set to zero, the
+	  width is automatically sized to fit the content.
+
+*id*::
+	- 'show' (bool): Whether to show commit IDs in the main view.
+	- 'width' (int) : Width of the commit ID. When unset Tig will use the
+	  value of 'core.abbrev' if found. See git-config(1) on how to set
+	  'core.abbrev'. When set to zero the width is automatically sized to
+	  fit the content of reflog (e.g.  `ref/stash@{4}`) IDs and otherwise
+	  default to 7.
+
+*line-number*::
+	- 'show' (bool): Whether to show line numbers.
+	- 'interval' (int): Interval between line numbers.
+	- 'width' (int): Width of the column. When set to zero, the width is
+	  automatically sized to fit the content.
+
+*mode*::
+	- 'show' (bool): Whether to show file modes.
+	- 'width' (int): Width of the column. When set to zero, the width is
+	  automatically sized to fit the content.
+
+*ref*::
+	- 'show' (bool): Whether to show the reference name.
+	- 'width' (int): Width of the column. When set to zero, the width is
+	  automatically sized to fit the content.
+
+*text*::
+	- 'commit-title-overflow' (bool or int): Whether to highlight commit
+	  titles exceeding a given width in the diff view. When set to a
+	  boolean, it enables or disables the highlighting using the default
+	  width of 50 character. When set to an int, the assigned value is used
+	  as the maximum character width.
+
+Examples:
+--------------------------------------------------------------------------
+# Enable both ID and line numbers in the blame view
+set blame-view = date:default author:full file-name:auto id:yes,color line-number:yes,interval=5 text
+
+# Change grep view to be similar to `git grep` format
+set grep-view = file-name:yes line-number:yes,interval=1 text
+
+# Show file sizes as units
+set tree-view = line-number:no,interval=5 mode author:full file-size:units date:default id:no file-name
+
+# Show line numbers for every 10th line in the pager view
+set pager-view = line-number:yes,interval=10 text
+--------------------------------------------------------------------------
+
+Note that all column options can be toggled. For 'show' options, use the
+option name as the prefix followed by a dash and the column name. E.g.
+`:toggle show-author` will toggle the 'show' option in the 'author'
+column. For all other options use the column name followed by a dash and
+then the option name as the suffix. E.g. `:toggle commit-title-graph`
+will toggle the 'graph' option in the 'commit-title' column.
 
 Bind command
 ------------

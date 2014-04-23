@@ -33,9 +33,6 @@ blob_open(struct view *view, enum open_flags flags)
 	};
 	const char **argv = (flags & OPEN_PREPARED) ? view->argv : blob_argv;
 
-	if (!pager_column_init(view))
-		return FALSE;
-
 	if (argv != blob_argv) {
 		state->file = get_path(view->env->file);
 		state->commit[0] = 0;
@@ -118,6 +115,7 @@ static struct view_ops blob_ops = {
 	view_column_grep,
 	pager_select,
 	NULL,
+	view_column_bit(LINE_NUMBER) | view_column_bit(TEXT),
 	pager_get_column_data,
 };
 

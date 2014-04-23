@@ -23,45 +23,41 @@
 
 #define OPTION_INFO(_) \
 	_(blame_options,		const char **,		VIEW_BLAME_LIKE) \
+	_(blame_view,			const char **,		VIEW_NO_FLAGS) \
+	_(blob_view,			const char **,		VIEW_NO_FLAGS) \
 	_(commit_order,			enum commit_order,	VIEW_LOG_LIKE) \
 	_(diff_context,			int,			VIEW_DIFF_LIKE) \
 	_(diff_options,			const char **,		VIEW_DIFF_LIKE) \
+	_(diff_view,			const char **,		VIEW_NO_FLAGS) \
 	_(editor_line_number,		bool,			VIEW_NO_FLAGS) \
 	_(file_filter,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
 	_(focus_child,			bool,			VIEW_NO_FLAGS) \
+	_(grep_view,			const char **,		VIEW_NO_FLAGS) \
 	_(horizontal_scroll,		double,			VIEW_NO_FLAGS) \
 	_(id_width,			int,			VIEW_NO_FLAGS) \
 	_(ignore_case,			bool,			VIEW_NO_FLAGS) \
 	_(ignore_space,			enum ignore_space,	VIEW_DIFF_LIKE) \
 	_(line_graphics,		enum graphic,		VIEW_NO_FLAGS) \
+	_(log_view,			const char **,		VIEW_NO_FLAGS) \
+	_(main_view,			const char **,		VIEW_NO_FLAGS) \
 	_(mouse,			bool,			VIEW_NO_FLAGS) \
 	_(mouse_scroll,			int,			VIEW_NO_FLAGS) \
+	_(pager_view,			const char **,		VIEW_NO_FLAGS) \
 	_(read_git_colors,		bool,			VIEW_NO_FLAGS) \
+	_(refs_view,			const char **,		VIEW_NO_FLAGS) \
 	_(show_changes,			bool,			VIEW_NO_FLAGS) \
 	_(show_notes,			bool,			VIEW_NO_FLAGS) \
 	_(split_view_height,		double,			VIEW_RESET_DISPLAY) \
+	_(stage_view,			const char **,		VIEW_NO_FLAGS) \
 	_(status_untracked_dirs,	bool,			VIEW_STATUS_LIKE) \
+	_(stash_view,			const char **,		VIEW_NO_FLAGS) \
 	_(tab_size,			int,			VIEW_NO_FLAGS) \
+	_(tree_view,			const char **,		VIEW_NO_FLAGS) \
 	_(vertical_split,		enum vertical_split,	VIEW_RESET_DISPLAY | VIEW_DIFF_LIKE) \
 	_(wrap_lines,			bool,			VIEW_NO_FLAGS) \
 
-#define VIEW_COLUMN_OPTION_INFO(_) \
-	_(author_width,			int,			VIEW_NO_FLAGS) \
-	_(filename_width,		int,			VIEW_NO_FLAGS) \
-	_(line_number_interval,		int,			VIEW_NO_FLAGS) \
-	_(show_author,			enum author,		VIEW_NO_FLAGS) \
-	_(show_date,			enum date,		VIEW_NO_FLAGS) \
-	_(show_file_size,		enum file_size,		VIEW_NO_FLAGS) \
-	_(show_filename,		enum filename,		VIEW_NO_FLAGS) \
-	_(show_id,			bool,			VIEW_NO_FLAGS) \
-	_(show_line_numbers,		bool,			VIEW_NO_FLAGS) \
-	_(show_refs,			bool,			VIEW_NO_FLAGS) \
-	_(show_rev_graph,		bool,			VIEW_LOG_LIKE) \
-	_(title_overflow,		int,			VIEW_NO_FLAGS) \
-
 #define DEFINE_OPTION_EXTERNS(name, type, flags) extern type opt_##name;
 OPTION_INFO(DEFINE_OPTION_EXTERNS);
-VIEW_COLUMN_OPTION_INFO(DEFINE_OPTION_EXTERNS);
 
 /*
  * View column options.
@@ -72,9 +68,10 @@ VIEW_COLUMN_OPTION_INFO(DEFINE_OPTION_EXTERNS);
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define COMMIT_TITLE_COLUMN_OPTIONS(_) \
-	_(overflow,			int,			VIEW_NO_FLAGS) \
+	_(show,				bool,			VIEW_NO_FLAGS) \
 	_(graph,			bool,			VIEW_LOG_LIKE) \
 	_(refs,				bool,			VIEW_NO_FLAGS) \
+	_(overflow,			int,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define DATE_COLUMN_OPTIONS(_) \
@@ -95,15 +92,22 @@ VIEW_COLUMN_OPTION_INFO(DEFINE_OPTION_EXTERNS);
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define LINE_NUMBER_COLUMN_OPTIONS(_) \
+	_(show,				bool,			VIEW_NO_FLAGS) \
 	_(interval,			int,			VIEW_NO_FLAGS) \
+	_(width,			int,			VIEW_NO_FLAGS) \
+
+#define MODE_COLUMN_OPTIONS(_) \
 	_(show,				bool,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define REF_COLUMN_OPTIONS(_) \
+	_(show,				bool,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define TEXT_COLUMN_OPTIONS(_) \
+	_(show,				bool,			VIEW_NO_FLAGS) \
 	_(commit_title_overflow,	int,			VIEW_NO_FLAGS) \
+	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define COLUMN_OPTIONS(_) \
 	_(author, AUTHOR, AUTHOR_COLUMN_OPTIONS) \
@@ -113,6 +117,7 @@ VIEW_COLUMN_OPTION_INFO(DEFINE_OPTION_EXTERNS);
 	_(file_size, FILE_SIZE, FILE_SIZE_COLUMN_OPTIONS) \
 	_(id, ID, ID_COLUMN_OPTIONS) \
 	_(line_number, LINE_NUMBER, LINE_NUMBER_COLUMN_OPTIONS) \
+	_(mode, MODE, MODE_COLUMN_OPTIONS) \
 	_(ref, REF, REF_COLUMN_OPTIONS) \
 	_(text, TEXT, TEXT_COLUMN_OPTIONS) \
 
@@ -155,6 +160,16 @@ const char *show_notes_arg();
  * Option loading and parsing.
  */
 
+struct option_info {
+	const char *name;
+	size_t namelen;
+	const char *type;
+	void *value;
+	bool seen;
+};
+
+struct option_info *find_option_info(struct option_info *option, size_t options, const char *name);
+enum status_code parse_option(struct option_info *option, const char *arg);
 enum status_code parse_int(int *opt, const char *arg, int min, int max);
 enum status_code parse_step(double *opt, const char *arg);
 enum status_code set_option(const char *opt, int argc, const char *argv[]);

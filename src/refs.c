@@ -35,15 +35,6 @@ static const struct ref *refs_all;
 #define REFS_ALL_NAME	"All references"
 #define refs_is_all(reference) ((reference)->ref == refs_all)
 
-static const enum view_column_type refs_columns[] = {
-	VIEW_COLUMN_LINE_NUMBER,
-	VIEW_COLUMN_DATE,
-	VIEW_COLUMN_AUTHOR,
-	VIEW_COLUMN_REF,
-	VIEW_COLUMN_ID,
-	VIEW_COLUMN_COMMIT_TITLE,
-};
-
 static bool
 refs_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
@@ -165,8 +156,6 @@ refs_open(struct view *view, enum open_flags flags)
 			"--all", "--simplify-by-decoration", NULL
 	};
 
-	view_column_init(view, refs_columns, ARRAY_SIZE(refs_columns));
-
 	if (!refs_all) {
 		struct ref *ref = calloc(1, sizeof(*refs_all) + strlen(REFS_ALL_NAME));
 
@@ -216,6 +205,9 @@ static struct view_ops refs_ops = {
 	view_column_grep,
 	refs_select,
 	NULL,
+	view_column_bit(AUTHOR) | view_column_bit(COMMIT_TITLE) |
+		view_column_bit(DATE) | view_column_bit(ID) |
+		view_column_bit(LINE_NUMBER) | view_column_bit(REF),
 	refs_get_column_data,
 };
 

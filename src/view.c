@@ -1073,79 +1073,158 @@ view_column_reset(struct view *view)
 		column->width = 0;
 }
 
-bool
-view_column_init(struct view *view, const enum view_column_type columns[], size_t columns_size)
+static enum status_code
+parse_view_column_config(char **pos, const char **name, const char **value, bool first)
 {
-	struct view_column *column;
-	int i;
+	size_t len = strcspn(*pos, ",");
+	size_t optlen;
 
-	if (view->columns)
-		return TRUE;
+	if (strlen(*pos) > len)
+		(*pos)[len] = 0;
+	optlen = strcspn(*pos, ":=");
 
-	view->columns = calloc(columns_size, sizeof(*view->columns));
-	if (!view->columns)
-		return FALSE;
+	if (first) {
+		*name = "show";
 
-	view->sort.current = view->columns;
-	for (column = NULL, i = 0; i < columns_size; i++) {
-		union view_column_options opt = {};
-
-		if (column)
-			column->next = &view->columns[i];
-		column = &view->columns[i];
-		column->type = columns[i];
-
-		switch (column->type) {
-		case VIEW_COLUMN_AUTHOR:
-			opt.author.show = opt_show_author;
-			opt.author.width = opt_author_width;
-			break;
-
-		case VIEW_COLUMN_COMMIT_TITLE:
-			opt.commit_title.overflow = opt_title_overflow;
-			opt.commit_title.refs = opt_show_refs;
-			opt.commit_title.graph = opt_show_rev_graph;
-			break;
-
-		case VIEW_COLUMN_DATE:
-			opt.date.show = opt_show_date;
-			break;
-
-		case VIEW_COLUMN_REF:
-			break;
-
-		case VIEW_COLUMN_FILE_NAME:
-			opt.file_name.show = opt_show_filename;
-			opt.file_name.width = opt_filename_width;
-			break;
-
-		case VIEW_COLUMN_FILE_SIZE:
-			opt.file_size.show = opt_show_file_size;
-			break;
-
-		case VIEW_COLUMN_ID:
-			opt.id.show = opt_show_id;
-			opt.id.width = opt_id_width;
-			break;
-
-		case VIEW_COLUMN_LINE_NUMBER:
-			opt.line_number.show = opt_show_line_numbers;
-			opt.line_number.interval = opt_line_number_interval;
-			break;
-
-		case VIEW_COLUMN_MODE:
-			break;
-
-		case VIEW_COLUMN_TEXT:
-			opt.text.commit_title_overflow = opt_title_overflow;
-			break;
+		if (optlen == len) {
+			*value = len ? *pos : "yes";
+			*pos += len + 1;
+			return SUCCESS;
 		}
 
-		column->opt = opt;
-		column->prev_opt = opt;
+		/* Fake boolean enum value. */
+		*value = "yes";
+		return SUCCESS;
 	}
 
-	return TRUE;
+	*name = *pos;
+	if (optlen == len)
+		*value = "yes";
+	else
+		*value = *pos + optlen + 1;
+	(*pos)[optlen] = 0;
+	*pos += len + 1;
+
+	return SUCCESS;
+}
+
+static enum status_code
+parse_view_column_option(struct view_column *column,
+			 const char *opt_name, const char *opt_value)
+{
+#define DEFINE_COLUMN_OPTION_INFO(name, type, flags) \
+	{ #name, STRING_SIZE(#name), #type, &opt->name },
+
+#define DEFINE_COLUMN_OPTIONS_PARSE(name, id, options) \
+	if (column->type == VIEW_COLUMN_##id) { \
+		struct name##_options *opt = &column->opt.name; \
+		struct option_info info[] = { \
+			options(DEFINE_COLUMN_OPTION_INFO) \
+		}; \
+		struct option_info *option = find_option_info(info, ARRAY_SIZE(info), opt_name); \
+		if (!option) \
+			return error("Unknown option `%s' for column %s", opt_name, \
+				     enum_name(view_column_type_map->entries[VIEW_COLUMN_##id])); \
+		return parse_option(option, opt_value); \
+	}
+
+	COLUMN_OPTIONS(DEFINE_COLUMN_OPTIONS_PARSE);
+
+	return error("Unknown view column option: %s", opt_name);
+}
+
+static enum status_code
+parse_view_column_type(struct view_column *column, const char **arg)
+{
+	enum view_column_type type;
+	size_t typelen = strcspn(*arg, ":,");
+
+	for (type = 0; type < view_column_type_map->size; type++)
+		if (enum_equals(view_column_type_map->entries[type], *arg, typelen)) {
+			*arg += typelen + !!(*arg)[typelen];
+			column->type = type;
+			return SUCCESS;
+		}
+
+	return error("Failed to parse view column type: %.*s", (int) typelen, *arg);
+}
+
+static struct view *
+find_view(const char *view_name)
+{
+	struct view *view;
+	int i;
+
+	foreach_view(view, i)
+		if (!strncmp(view_name, view->name, strlen(view->name)))
+			return view;
+
+	return NULL;
+}
+
+enum status_code
+parse_view_config(const char *view_name, const char *argv[])
+{
+	enum status_code code = SUCCESS;
+	size_t size = argv_size(argv);
+	struct view_column *columns;
+	struct view_column *column;
+	struct view *view = find_view(view_name);
+	int i;
+
+	if (!view)
+		return error("Unknown view: %s", view_name);
+
+	columns = calloc(size, sizeof(*columns));
+	if (!columns)
+		return ERROR_OUT_OF_MEMORY;
+
+	for (i = 0, column = NULL; code == SUCCESS && i < size; i++) {
+		const char *arg = argv[i];
+		char buf[SIZEOF_STR] = "";
+		char *pos, *end;
+
+		if (column)
+			column->next = &columns[i];
+		column = &columns[i];
+
+		code = parse_view_column_type(column, &arg);
+		if (code != SUCCESS)
+			break;
+
+		if (!(view->ops->column_bits & (1 << column->type)))
+			return error("The %s view does not support %s column", view->name,
+				     enum_name(view_column_type_map->entries[column->type]));
+
+		if ((column->type == VIEW_COLUMN_TEXT ||
+		     column->type == VIEW_COLUMN_COMMIT_TITLE) &&
+		     i + 1 < size)
+			return error("The %s column must always be last",
+				     enum_name(view_column_type_map->entries[column->type]));
+
+		string_ncopy(buf, arg, strlen(arg));
+
+		for (pos = buf, end = pos + strlen(pos); code == SUCCESS && pos <= end; ) {
+			const char *name = NULL;
+			const char *value = NULL;
+
+			code = parse_view_column_config(&pos, &name, &value, buf == pos);
+			if (code == SUCCESS)
+				code = parse_view_column_option(column, name, value);
+		}
+
+		column->prev_opt = column->opt;
+	}
+
+	if (code == SUCCESS) {
+		free(view->columns);
+		view->columns = columns;
+		view->sort.current = view->columns;
+	} else {
+		free(columns);
+	}
+
+	return code;
 }
 
 struct view_column *
@@ -1178,12 +1257,12 @@ view_column_info_update(struct view *view, struct line *line)
 			width = column->opt.author.width;
 			break;
 
-		case VIEW_COLUMN_DATE:
-			width = column->opt.date.width;
+		case VIEW_COLUMN_COMMIT_TITLE:
+			width = column->opt.commit_title.width;
 			break;
 
-		case VIEW_COLUMN_REF:
-			width = column->opt.ref.width;
+		case VIEW_COLUMN_DATE:
+			width = column->opt.date.width;
 			break;
 
 		case VIEW_COLUMN_FILE_NAME:
@@ -1196,6 +1275,8 @@ view_column_info_update(struct view *view, struct line *line)
 
 		case VIEW_COLUMN_ID:
 			width = column->opt.id.width;
+			if (!width)
+				width = opt_id_width;
 			if (iscommit(text) && !width)
 				width = 7;
 			break;
@@ -1209,9 +1290,16 @@ view_column_info_update(struct view *view, struct line *line)
 				width = 3;
 			break;
 	
-		case VIEW_COLUMN_COMMIT_TITLE:
 		case VIEW_COLUMN_MODE:
+			width = column->opt.mode.width;
+			break;
+
+		case VIEW_COLUMN_REF:
+			width = column->opt.ref.width;
+			break;
+
 		case VIEW_COLUMN_TEXT:
+			width = column->opt.text.width;
 			break;
 		}
 

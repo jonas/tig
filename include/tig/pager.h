@@ -16,7 +16,6 @@
 
 #include "tig/view.h"
 
-bool pager_column_init(struct view *view);
 bool pager_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data);
 bool pager_read(struct view *view, char *data);
 bool pager_common_read(struct view *view, const char *data, enum line_type type, struct line **line);

@@ -26,17 +26,6 @@
  */
 
 bool
-pager_column_init(struct view *view)
-{
-	enum view_column_type columns[] = {
-		VIEW_COLUMN_LINE_NUMBER,
-		VIEW_COLUMN_TEXT,
-	};
-
-	return view_column_init(view, columns, ARRAY_SIZE(columns));
-}
-
-bool
 pager_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
 	column_data->text = line->data;
@@ -220,8 +209,6 @@ pager_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	}
 
-	if (!pager_column_init(view))
-		return FALSE;
 	return begin_update(view, NULL, NULL, flags);
 }
 
@@ -237,6 +224,7 @@ static struct view_ops pager_ops = {
 	view_column_grep,
 	pager_select,
 	NULL,
+	view_column_bit(LINE_NUMBER) | view_column_bit(TEXT),
 	pager_get_column_data,
 };
 

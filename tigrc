@@ -7,21 +7,62 @@
 # Most of these settings can be toggleable, either via the toggle-*
 # actions or via the option menu (bound to `o` by default).
 
+# View settings
+#
+# Supported column types and their options:
+#
+#   author
+#    - show (enum) [no|full|abbreviated|email|email-user]
+#					: Show author information?
+#   commit-title
+#    - show (bool)			: Show the commit title?
+#    - graph (bool)			: Show the commit revision graph? (main view only)
+#    - refs (bool)			: Show branches, tags and remotes? (main view only)
+#    - overflow (boolint)		: Highlight overflows? Default to 50 when enabled.
+#
+#   date
+#    - show (enum) [no|default|local|relative|short]
+#					: Show dates?
+#   file-name
+#    - show (enum) [no|always|auto]	: Show file names?
+#
+#   file-size
+#    - show (enum) [no||default|units]	: Show file sizes?
+#
+#   id
+#    - show (bool)			: Show commit/tree ID?
+#
+#   line-number
+#    - show (bool)			: Show line numbers?
+#    - interval (int)			: Interval between line numbers
+#
+#   mode
+#    - show (bool)			: Show file modes?
+#
+#   text
+#    - show (bool)			: Show text?
+#    - commit-title-overflow (boolint)	: Highlight overflow in log and diff view?
+#
+# All columns also support a width option to configure the max width of
+# the column. Use zero (the default value) to auto-size the column based
+# on the content.
+
+set blame-view	= date:default author:full file-name:auto id:yes,color line-number:no,interval=5 text
+set grep-view	= file-name:no line-number:yes,interval=1 text
+set main-view	= line-number:no,interval=5 id:no date:default author:full commit-title:yes,graph,refs,overflow=no
+set refs-view	= date:default author:full ref commit-title
+set stash-view	= line-number:no,interval=5 id:no date:default author:full commit-title
+set tree-view	= line-number:no,interval=5 mode author:full file-size date:default id:no file-name
+
+# Pager based views
+set pager-view	= line-number:no,interval=5 text
+set stage-view	= line-number:no,interval=5 text
+set log-view	= line-number:no,interval=5 text
+set blob-view	= line-number:no,interval=5 text
+set diff-view	= line-number:no,interval=5 text:yes,commit-title-overflow=no
+
 # UI display settings
-set show-date			= default	# Enum: no, default, local, relative, short
-set show-author			= full		# Enum: no, full, abbreviated, email, email-user
-set author-width		= 0		# The width of the author column; use 0 to auto-size
-set show-filename		= auto		# Enum: no, always, auto
-set filename-width		= 0		# The width of the file name column; use 0 to auto-size
-set show-file-size		= default	# Enum: no, default, units
-set show-rev-graph		= yes		# Show the commit revision graph?
-set show-line-numbers		= no		# Show line numbers?
-set line-number-interval	= 5		# Interval between line numbers.
-set show-refs			= yes		# Show branches, tags and remotes?
 set show-changes		= yes		# Show changes commits in the main view?
-set show-id			= no		# Show commit/tree ID?
-set id-width			= 0		# Number of characters for commit/tree ID; use 0 to auto-size
-set title-overflow		= no		# Boolean or int, overflows at 50 when enabled
 set wrap-lines			= no		# Wrap long lines in pager views?
 set tab-size			= 8		# Number of spaces to use when expanding tabs
 set line-graphics		= default	# Enum: ascii, default, utf-8

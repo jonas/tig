@@ -433,9 +433,6 @@ stage_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	}
 
-	if (!pager_column_init(view))
-		return FALSE;
-
 	view->encoding = NULL;
 
 	switch (stage_line_type) {
@@ -501,6 +498,7 @@ static struct view_ops stage_ops = {
 	view_column_grep,
 	pager_select,
 	NULL,
+	view_column_bit(LINE_NUMBER) | view_column_bit(TEXT),
 	pager_get_column_data,
 };
 

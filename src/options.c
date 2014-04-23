@@ -21,6 +21,7 @@
 #include "tig/request.h"
 #include "tig/line.h"
 #include "tig/keys.h"
+#include "tig/view.h"
 
 /*
  * Option variables.
@@ -28,31 +29,21 @@
 
 #define DEFINE_OPTION_VARIABLES(name, type, flags) type opt_##name;
 OPTION_INFO(DEFINE_OPTION_VARIABLES);
-VIEW_COLUMN_OPTION_INFO(DEFINE_OPTION_VARIABLES);
-
-struct option_info {
-	const char *name;
-	size_t namelen;
-	const char *type;
-	void *value;
-	bool seen;
-};
 
 static struct option_info option_info[] = {
 #define DEFINE_OPTION_INFO(name, type, flags) { #name, STRING_SIZE(#name), #type, &opt_##name },
 	OPTION_INFO(DEFINE_OPTION_INFO)
-	VIEW_COLUMN_OPTION_INFO(DEFINE_OPTION_INFO)
 };
 
-static struct option_info *
-find_option_info(const char *name)
+struct option_info *
+find_option_info(struct option_info *option, size_t options, const char *name)
 {
 	size_t namelen = strlen(name);
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(option_info); i++)
-		if (enum_equals(option_info[i], name, namelen))
-			return &option_info[i];
+	for (i = 0; i < options; i++)
+		if (enum_equals(option[i], name, namelen))
+			return &option[i];
 
 	return NULL;
 }
@@ -449,7 +440,7 @@ parse_args(const char ***args, const char *argv[])
 	return SUCCESS;
 }
 
-static enum status_code
+enum status_code
 parse_option(struct option_info *option, const char *arg)
 {
 	const char *name = enum_name_static(option->name, strlen(option->name));
@@ -512,6 +503,38 @@ parse_option(struct option_info *option, const char *arg)
 	return error("Unhandled option: %s", name);
 }
 
+struct view_config {
+	const char *name;
+	const char ***argv;
+};
+
+static struct view_config view_configs[] = {
+	{ "blame-view", &opt_blame_view },
+	{ "blob-view", &opt_blob_view },
+	{ "diff-view", &opt_diff_view },
+	{ "grep-view", &opt_grep_view },
+	{ "log-view", &opt_log_view },
+	{ "main-view", &opt_main_view },
+	{ "pager-view", &opt_pager_view },
+	{ "refs-view", &opt_refs_view },
+	{ "stash-view", &opt_stash_view },
+	{ "stage-view", &opt_stage_view },
+	{ "tree-view", &opt_tree_view },
+};
+
+static enum status_code
+check_view_config(struct option_info *option, const char *argv[])
+{
+	const char *name = enum_name_static(option->name, strlen(option->name));
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(view_configs); i++)
+		if (!strcmp(name, view_configs[i].name))
+			return parse_view_config(name, argv);
+
+	return SUCCESS;
+}
+
 /* Wants: name = value */
 static enum status_code
 option_set_command(int argc, const char *argv[])
@@ -527,15 +550,19 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "reference-format"))
 		return parse_ref_formats(argv + 2);
 
-	option = find_option_info(argv[0]);
+	option = find_option_info(option_info, ARRAY_SIZE(option_info), argv[0]);
 	if (option) {
 		enum status_code code;
 
 		if (option->seen)
 			return SUCCESS;
 
-		if (!strcmp(option->type, "const char **"))
+		if (!strcmp(option->type, "const char **")) {
+			code = check_view_config(option, argv + 2);
+			if (code != SUCCESS)
+				return code;
 			return parse_args(option->value, argv + 2);
+		}
 
 		code = parse_option(option, argv[2]);
 		if (code == SUCCESS && argc != 3)
@@ -543,6 +570,28 @@ option_set_command(int argc, const char *argv[])
 
 		return code;
 
+	}
+
+	{
+		const char *obsolete[][2] = {
+			{ "author-width",		"author" },
+			{ "filename-width",		"file-name" },
+			{ "line-number-interval",	"line-number" },
+			{ "show-author",		"author" },
+			{ "show-date",			"date" },
+			{ "show-file-size",		"file-size" },
+			{ "show-filename",		"file-name" },
+			{ "show-id",			"id" },
+			{ "show-line-numbers",		"line-number" },
+			{ "show-refs",			"commit-title" },
+			{ "show-rev-graph",		"commit-title" },
+			{ "title-overflow",		"commit-title and text" },
+		};
+		int index = find_remapped(obsolete, ARRAY_SIZE(obsolete), argv[0]);
+
+		if (index != -1)
+			return error("%s is obsolete; use the %s view column options instead",
+				     obsolete[index][0], obsolete[index][1]);
 	}
 
 	return error("Unknown option name: %s", argv[0]);

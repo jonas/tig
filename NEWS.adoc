@@ -29,9 +29,14 @@ Incompatibilities:
    with '-' and '_' in settings names and in particular color names.
  - Replace 'stage-next' action with prompt command using a predefined search
    (see below) and add binding (`@` by default) to also work in the diff view.
+ - Most view display options must now be set via the new `*-view` options in
+   tigrc. Existing options are no longer recognized, but a warning is shown.
 
 Improvements:
 
+ - Options can be configured and toggled individually for each view. Use the new
+   view settings to configure the order and options for each view columns. See
+   system tigrc and tigrc(5) for examples. (GH #89, #222)
  - Add mouse support: scroll view, click line to move cursor, double click line
    (or click again) to "Enter" cursor line, e.g. open commit diff. Disabled by
    default, since it makes text selection less intuitive. If you enable this
@@ -71,7 +76,6 @@ Improvements:
  - Rename 'branch' view to 'refs' view and show tags. (GH #134)
  - More informative configuration error messages.
  - Add completion and history support to the prompt via readline. (GH #185)
- - Options can be toggled individually for each view. (GH #89)
  - Add support for `--graph` and highlight diff stats in the log view.
  - Add builtin command bindings: `!` to delete branch, `!` to drop stash.
 

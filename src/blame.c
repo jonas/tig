@@ -81,27 +81,6 @@ blame_open(struct view *view, enum open_flags flags)
 	char path[SIZEOF_STR];
 	size_t i;
 
-	if (!view->columns) {
-		const enum view_column_type blame_columns[] = {
-			VIEW_COLUMN_DATE,
-			VIEW_COLUMN_AUTHOR,
-			VIEW_COLUMN_FILE_NAME,
-			VIEW_COLUMN_ID,
-			VIEW_COLUMN_LINE_NUMBER,
-			VIEW_COLUMN_TEXT,
-		};
-		struct view_column *column;
-
-		if (!view_column_init(view, blame_columns, ARRAY_SIZE(blame_columns)))
-			return FALSE;
-
-		column = get_view_column(view, VIEW_COLUMN_ID);
-		if (column) {
-			column->opt.id.show = TRUE;
-			column->opt.id.color = TRUE;
-		}
-	}
-
 	if (opt_blame_options) {
 		for (i = 0; opt_blame_options[i]; i++) {
 			if (prefixcmp(opt_blame_options[i], "-C"))
@@ -526,6 +505,9 @@ static struct view_ops blame_ops = {
 	view_column_grep,
 	blame_select,
 	NULL,
+	view_column_bit(AUTHOR) | view_column_bit(DATE) |
+		view_column_bit(FILE_NAME) | view_column_bit(ID) |
+		view_column_bit(LINE_NUMBER) | view_column_bit(TEXT),
 	blame_get_column_data,
 };
 

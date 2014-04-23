@@ -182,6 +182,8 @@ struct view_column_data {
 	const char *text;
 };
 
+#define view_column_bit(id) (1 << VIEW_COLUMN_##id)
+
 struct view_ops {
 	/* What type of content being displayed. Used in the title bar. */
 	const char *type;
@@ -205,6 +207,8 @@ struct view_ops {
 	void (*select)(struct view *view, struct line *line);
 	/* Release resources when reloading the view */
 	void (*done)(struct view *view);
+	/* Supported view columns. */
+	unsigned long column_bits;
 	/* Extract line information. */
 	bool (*get_column_data)(struct view *view, const struct line *line, struct view_column_data *column_data);
 };
@@ -283,9 +287,9 @@ void sort_view(struct view *view, bool change_field);
 struct view_column *get_view_column(struct view *view, enum view_column_type type);
 bool view_column_grep(struct view *view, struct line *line);
 bool view_column_info_changed(struct view *view, bool update);
-bool view_column_init(struct view *view, const enum view_column_type columns[], size_t columns_size);
 void view_column_reset(struct view *view);
 bool view_column_info_update(struct view *view, struct line *line);
+enum status_code parse_view_config(const char *view_name, const char *argv[]);
 
 struct line *
 find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction);

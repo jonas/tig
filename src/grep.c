@@ -126,29 +126,6 @@ grep_open(struct view *view, enum open_flags flags)
 		opt_cmdline_argv = NULL;
 	}
 
-	if (!view->columns) {
-		enum view_column_type columns[] = {
-			VIEW_COLUMN_FILE_NAME,
-			VIEW_COLUMN_LINE_NUMBER,
-			VIEW_COLUMN_TEXT,
-		};
-		struct view_column *column;
-
-		if (!view_column_init(view, columns, ARRAY_SIZE(columns)))
-			return FALSE;
-
-		column = get_view_column(view, VIEW_COLUMN_LINE_NUMBER);
-		if (column) {
-			column->opt.line_number.show = TRUE;
-			column->opt.line_number.interval = 1;
-		}
-
-		column = get_view_column(view, VIEW_COLUMN_FILE_NAME);
-		if (column) {
-			column->opt.file_name.show = FILENAME_NO;
-		}
-	}
-
 	if (!argv_append_array(&argv, grep_args) ||
 	    !argv_append_array(&argv, grep_argv))
 		return FALSE;
@@ -270,6 +247,8 @@ static struct view_ops grep_ops = {
 	view_column_grep,
 	grep_select,
 	NULL,
+	view_column_bit(FILE_NAME) | view_column_bit(LINE_NUMBER) |
+		view_column_bit(TEXT),
 	grep_get_column_data,
 };
 

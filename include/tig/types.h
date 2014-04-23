@@ -96,8 +96,8 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 
 #define FILENAME_ENUM(_) \
 	_(FILENAME, NO), \
-	_(FILENAME, ALWAYS), \
-	_(FILENAME, AUTO)
+	_(FILENAME, AUTO), \
+	_(FILENAME, ALWAYS)
 
 #define IGNORE_SPACE_ENUM(_) \
 	_(IGNORE_SPACE, NO), \

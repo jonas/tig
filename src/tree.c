@@ -98,16 +98,6 @@ tree_compare_entry(const struct line *line1, const struct line *line2)
 	return strcmp(tree_path(line1), tree_path(line2));
 }
 
-static const enum view_column_type tree_columns[] = {
-	VIEW_COLUMN_LINE_NUMBER,
-	VIEW_COLUMN_MODE,
-	VIEW_COLUMN_AUTHOR,
-	VIEW_COLUMN_FILE_SIZE,
-	VIEW_COLUMN_DATE,
-	VIEW_COLUMN_ID,
-	VIEW_COLUMN_FILE_NAME,
-};
-
 static bool
 tree_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
@@ -444,8 +434,6 @@ tree_open(struct view *view, enum open_flags flags)
 		"git", "ls-tree", "-l", "%(commit)", "%(directory)", NULL
 	};
 
-	view_column_init(view, tree_columns, ARRAY_SIZE(tree_columns));
-
 	if (string_rev_is_null(view->env->commit)) {
 		report("No tree exists for this commit");
 		return FALSE;
@@ -486,6 +474,10 @@ static struct view_ops tree_ops = {
 	view_column_grep,
 	tree_select,
 	NULL,
+	view_column_bit(AUTHOR) | view_column_bit(DATE) |
+		view_column_bit(FILE_NAME) | view_column_bit(FILE_SIZE) |
+		view_column_bit(ID) | view_column_bit(LINE_NUMBER) |
+		view_column_bit(MODE),
 	tree_get_column_data,
 };
 

@@ -69,8 +69,6 @@ log_open(struct view *view, enum open_flags flags)
 			"--", "%(fileargs)", NULL
 	};
 
-	if (!pager_column_init(view))
-		return FALSE;
 	return begin_update(view, NULL, log_argv, flags);
 }
 
@@ -149,6 +147,7 @@ static struct view_ops log_ops = {
 	view_column_grep,
 	log_select,
 	NULL,
+	view_column_bit(LINE_NUMBER) | view_column_bit(TEXT),
 	pager_get_column_data,
 };
 
