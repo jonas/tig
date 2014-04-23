@@ -414,6 +414,20 @@ draw_graph(struct view *view, const struct graph_canvas *canvas)
 }
 
 static bool
+draw_commit_title(struct view *view, struct view_column *column,
+		  const struct graph_canvas *graph, const struct ref_list *refs,
+		  const char *commit_title)
+{
+	if (graph && column->opt.commit_title.graph &&
+	    draw_graph(view, graph))
+		return TRUE;
+	if (draw_refs(view, column, refs))
+		return TRUE;
+	return draw_text_overflow(view, commit_title, LINE_DEFAULT,
+			column->opt.commit_title.overflow, 0);
+}
+
+static bool
 draw_diff_stat_part(struct view *view, enum line_type *type, const char **text, char c, enum line_type next_type)
 {
 	const char *sep = c == '|' ? strrchr(*text, c) : strchr(*text, c);
@@ -499,12 +513,8 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_COMMIT_TITLE:
-			if (column_data.graph && draw_graph(view, column_data.graph))
-				return TRUE;
-			if (column_data.refs && draw_refs(view, column, column_data.refs))
-				return TRUE;
-			if (draw_text_overflow(view, column_data.commit_title, LINE_DEFAULT,
-					       column->opt.commit_title.overflow, 0))
+			if (draw_commit_title(view, column, column_data.graph,
+					      column_data.refs, column_data.commit_title))
 				return TRUE;
 			continue;
 
