@@ -276,7 +276,6 @@ readline_set_generator(const char *text, int state)
 	static const char *words[] = {
 #define DEFINE_OPTION_NAME(name, type, flags) #name " = ",
 		OPTION_INFO(DEFINE_OPTION_NAME)
-		VIEW_COLUMN_OPTION_INFO(DEFINE_OPTION_NAME)
 #undef DEFINE_OPTION_NAME
 		NULL
 	};
