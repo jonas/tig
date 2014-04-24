@@ -275,41 +275,18 @@ to the default enum value. For example, `file-name` will automatically have its
 The following list shows which the available view options and what column types
 they support:
 
-blob-view, diff-view, log-view, pager-view, stage-view::
-
-	*line-number*, *text*
-
-blame-view::
-
-	*author*, *date*, *file-name*, *id*, *line-number*, *text*
-
-grep-view::
-
-	*file-name*, *line-number*, *text*
-
-main-view::
-
-	*author*, *date*, *commit-title*, *id*, *line-number*
-
-refs-view::
-
-	*author*, *date*, *commit-title*, *id*, *line-number*, *ref*
-
-stash-view::
-
-	*author*, *date*, *commit-title*, *id*, *line-number*
-
-status-view::
-
-	*file-name*, *line-number*, *status*
-
-tree-view::
-
-	*author*, *date*, *id*, *file-name*, *file-size*, *line-number*, *mode*
+blob-view, diff-view, log-view, pager-view, stage-view:: line-number, text
+blame-view:: author, date, file-name, id, line-number, text
+grep-view:: file-name, line-number, text
+main-view:: author, date, commit-title, id, line-number
+refs-view:: author, date, commit-title, id, line-number, ref
+stash-view:: author, date, commit-title, id, line-number
+status-view:: file-name, line-number, status
+tree-view:: author, date, id, file-name, file-size, line-number, mode
 
 Supported column types and their respective settings:
 
-*author*::
+author::
 
 	- 'show' (mixed) [full|abbreviated|email|email-user|<bool>]: How to
 	  display author names. If set to "abbreviated" author initials will be
@@ -318,7 +295,7 @@ Supported column types and their respective settings:
 	  name will be abbreviated to the author's initials.  When set to zero,
 	  the width is automatically sized to fit the content.
 
-*commit-title*::
+commit-title::
 	- 'graph' (bool): Whether to show revision graph in the main view on
 	  start-up. See also the 'line-graphics' options.
 	- 'refs' (bool): Whether to show references (branches, tags, and
@@ -328,7 +305,7 @@ Supported column types and their respective settings:
 	  the highlighting using the default width of 50 character. When set to
 	  an int, the assigned value is used as the maximum character width.
 
-*date*::
+date::
 	- 'show' (mixed) [relative|short|default|local|<bool>]: Whether and how
 	  to show date. If set to "relative" a relative date will be used, e.g.
 	  "2 minutes ago". If set to "short" no time information is shown. If
@@ -336,22 +313,22 @@ Supported column types and their respective settings:
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
 
-*file-name*::
+file-name::
 	- 'show' (mixed) [no|auto|always|bool]: When to display file names. If
 	  set to "auto" file names are shown only when needed, e.g. when
 	  running: tig blame -C <file>.
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
 
-*file-size*::
+file-size::
 
-	- 'show' (mixed) [default|units|<bool>]: How to display file sizes. When
-	  set to "units", sizes are shown using binary prefixes, e.g. 12524
+	- 'show' (mixed) [no|default|units|<bool>]: How to display file sizes.
+	  When set to "units", sizes are shown using binary prefixes, e.g. 12524
 	  bytes is shown as "12.2K".
 	- 'width' (int): Width of the filename column. When set to zero, the
 	  width is automatically sized to fit the content.
 
-*id*::
+id::
 	- 'show' (bool): Whether to show commit IDs in the main view.
 	- 'width' (int) : Width of the commit ID. When unset Tig will use the
 	  value of 'core.abbrev' if found. See git-config(1) on how to set
@@ -359,28 +336,28 @@ Supported column types and their respective settings:
 	  fit the content of reflog (e.g.  `ref/stash@{4}`) IDs and otherwise
 	  default to 7.
 
-*line-number*::
+line-number::
 	- 'show' (bool): Whether to show line numbers.
 	- 'interval' (int): Interval between line numbers.
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
 
-*mode*::
+mode::
 	- 'show' (bool): Whether to show file modes.
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
 
-*ref*::
+ref::
 	- 'show' (bool): Whether to show the reference name.
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
 
-*status*::
+status::
 	- 'show' (bool): Whether to show the status label.
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
 
-*text*::
+text::
 	- 'commit-title-overflow' (bool or int): Whether to highlight commit
 	  titles exceeding a given width in the diff view. When set to a
 	  boolean, it enables or disables the highlighting using the default
