@@ -156,7 +156,8 @@ update_options_from_argv(const char *argv[])
 			continue;
 		}
 
-		if (!prefixcmp(flag, "--show-notes")) {
+		if (!prefixcmp(flag, "--show-notes") ||
+		    !prefixcmp(flag, "--notes")) {
 			opt_show_notes = TRUE;
 			string_ncopy(opt_notes_arg, flag, strlen(flag));
 			mark_option_seen(&opt_show_notes);
