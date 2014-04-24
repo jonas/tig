@@ -584,6 +584,8 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 
 		*opt = !*opt;
 		string_format_size(msg, SIZEOF_STR, "set %s = %s", name, *opt ? "yes" : "no");
+		if (opt == &opt_mouse)
+			enable_mouse(*opt);
 
 	} else if (!strncmp(toggle->type, "enum", 4)) {
 		const char *type = toggle->type + STRING_SIZE("enum ");

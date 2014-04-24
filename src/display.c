@@ -356,13 +356,7 @@ init_display(void)
 	/* Enable keyboard mapping */
 	keypad(status_win, TRUE);
 	wbkgdset(status_win, get_line_attr(NULL, LINE_STATUS));
-#ifdef NCURSES_MOUSE_VERSION
-	/* Enable mouse */
-	if (opt_mouse){
-		mousemask(ALL_MOUSE_EVENTS, NULL);
-		mouseinterval(0);
-	}
-#endif
+	enable_mouse(opt_mouse);
 
 #if defined(NCURSES_VERSION_PATCH) && (NCURSES_VERSION_PATCH >= 20080119)
 	set_tabsize(opt_tab_size);
@@ -492,6 +486,22 @@ get_input(int prompt_position, struct key *key, bool modifiers)
 			return OK;
 		}
 	}
+}
+
+void
+enable_mouse(bool enable)
+{
+#ifdef NCURSES_MOUSE_VERSION
+	static bool enabled = FALSE;
+
+	if (enable != enabled) {
+		mmask_t mask = enable ? ALL_MOUSE_EVENTS : 0;
+
+		if (mousemask(mask, NULL))
+			mouseinterval(0);
+		enabled = enable;
+	}
+#endif
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

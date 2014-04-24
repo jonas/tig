@@ -56,6 +56,7 @@ void redraw_display(bool clear);
 
 bool open_external_viewer(const char *argv[], const char *dir, bool confirm, const char *notice);
 void open_editor(const char *file, unsigned int lineno);
+void enable_mouse(bool enable);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */
