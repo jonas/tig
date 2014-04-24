@@ -1432,7 +1432,11 @@ add_line_nodata(struct view *view, enum line_type type)
 struct line *
 add_line_text(struct view *view, const char *text, enum line_type type)
 {
-	return add_line(view, text, type, strlen(text) + 1, FALSE);
+	struct line *line = add_line(view, text, type, strlen(text) + 1, FALSE);
+
+	if (line && view->ops->column_bits)
+		view_column_info_update(view, line);
+	return line;
 }
 
 struct line * PRINTF_LIKE(3, 4)
