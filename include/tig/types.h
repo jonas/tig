@@ -109,6 +109,7 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(COMMIT_ORDER, DEFAULT), \
 	_(COMMIT_ORDER, TOPO), \
 	_(COMMIT_ORDER, DATE), \
+	_(COMMIT_ORDER, AUTHOR_DATE), \
 	_(COMMIT_ORDER, REVERSE)
 
 #define VIEW_COLUMN_ENUM(_) \

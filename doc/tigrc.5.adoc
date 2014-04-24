@@ -226,7 +226,7 @@ The following variables can be set:
     "--ignore-all-space", "--ignore-space" or "--ignore-space-at-eol"
     respectively to `git diff` or `git show`.
 
-'commit-order' (mixed) ["default" | "topo" | "date" | "reverse" | bool]::
+'commit-order' (mixed) [default|topo|date|author-date|reverse|<bool>]::
 
 	Commit ordering using the default (chronological reverse) order,
 	topological order, date order or reverse order. The default order is

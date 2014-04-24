@@ -105,10 +105,11 @@ ignore_space_arg()
 }
 
 static const struct enum_map_entry commit_order_arg_map[] = {
-	ENUM_ARG(COMMIT_ORDER_DEFAULT,	""),
-	ENUM_ARG(COMMIT_ORDER_TOPO,	"--topo-order"),
-	ENUM_ARG(COMMIT_ORDER_DATE,	"--date-order"),
-	ENUM_ARG(COMMIT_ORDER_REVERSE,	"--reverse"),
+	ENUM_ARG(COMMIT_ORDER_DEFAULT,		""),
+	ENUM_ARG(COMMIT_ORDER_TOPO,		"--topo-order"),
+	ENUM_ARG(COMMIT_ORDER_DATE,		"--date-order"),
+	ENUM_ARG(COMMIT_ORDER_AUTHOR_DATE,	"--author-date-order"),
+	ENUM_ARG(COMMIT_ORDER_REVERSE,		"--reverse"),
 };
 
 const char *
