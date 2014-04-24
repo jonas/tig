@@ -118,7 +118,11 @@ commit_order_arg()
 	return commit_order_arg_map[opt_commit_order].name;
 }
 
-static char opt_notes_arg[SIZEOF_STR] = "--show-notes";
+/* Use --show-notes to support Git >= 1.7.6 */
+#define NOTES_ARG	"--show-notes"
+#define NOTES_EQ_ARG	NOTES_ARG "="
+
+static char opt_notes_arg[SIZEOF_STR] = NOTES_ARG;
 
 const char *
 show_notes_arg()
@@ -455,11 +459,11 @@ parse_option(struct option_info *option, const char *arg)
 			return SUCCESS;
 
 		*value = TRUE;
-		strcpy(opt_notes_arg, "--show-notes=");
-		res = parse_string(opt_notes_arg + 8, arg,
-				   sizeof(opt_notes_arg) - 8);
-		if (res == SUCCESS && opt_notes_arg[8] == '\0')
-			opt_notes_arg[7] = '\0';
+		string_copy(opt_notes_arg, NOTES_EQ_ARG);
+		res = parse_string(opt_notes_arg + STRING_SIZE(NOTES_EQ_ARG), arg,
+				   sizeof(opt_notes_arg) - STRING_SIZE(NOTES_EQ_ARG));
+		if (res == SUCCESS && !opt_notes_arg[STRING_SIZE(NOTES_EQ_ARG)])
+			opt_notes_arg[STRING_SIZE(NOTES_ARG)] = 0;
 		return res;
 	}
 
