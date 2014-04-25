@@ -256,7 +256,7 @@ readline_action_generator(const char *text, int state)
 
 	/* Return the next name which partially matches */
 	while ((name = actions[index])) {
-		name = enum_name_static(name, strlen(name));
+		name = enum_name(name);
 		index++;
 
 		if (strncmp(name, text, len) == 0) {
@@ -292,7 +292,7 @@ readline_set_generator(const char *text, int state)
 
 	/* Return the next name which partially matches */
 	while ((name = words[index])) {
-		name = enum_name_static(name, strlen(name));
+		name = enum_name(name);
 		index++;
 
 		if (strncmp(name, text, len) == 0) {
@@ -345,7 +345,7 @@ readline_toggle_generator(const char *text, int state)
 
 	/* Return the next name which partially matches */
 	while ((name = words[index])) {
-		name = enum_name_static(name, strlen(name));
+		name = enum_name(name);
 		index++;
 
 		if (strncmp(name, text, len) == 0) {
@@ -565,9 +565,9 @@ prompt_toggle_name(char buf[], size_t bufsize,
 			string_format(tmp, "%s-%s", prefix, name);
 		}
 
-		enum_name_ncopy(buf, bufsize, tmp, strlen(tmp));
+		enum_name_copy(buf, bufsize, tmp);
 	} else {
-		enum_name_ncopy(buf, bufsize, name, strlen(name));
+		enum_name_copy(buf, bufsize, name);
 	}
 }
 
@@ -594,7 +594,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 
 		*opt = (*opt + 1) % map->size;
 		string_format_size(msg, SIZEOF_STR, "set %s = %s", name,
-				   enum_name(map->entries[*opt]));
+				   enum_name(map->entries[*opt].name));
 
 	} else if (!strcmp(toggle->type, "int")) {
 		const char *arg = argv[2] ? argv[2] : "1";
@@ -732,7 +732,7 @@ prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 
 			sort_view(view, sort_field);
 			string_format_size(msg, SIZEOF_STR, "set %s = %s", option,
-				sort_field ? enum_name(view_column_type_map->entries[get_sort_field(view)])
+				sort_field ? view_column_name(get_sort_field(view))
 					   : sort->reverse ? "descending" : "ascending");
 		}
 		return VIEW_NO_FLAGS;

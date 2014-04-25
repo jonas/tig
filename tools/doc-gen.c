@@ -55,7 +55,7 @@ doc_action_print(void *data, const struct request_info *req_info, const char *gr
 		iterator->end_group = TRUE;
 	}
 
-	printf("|%-24s|%s\n", enum_name(*req_info), req_info->help);
+	printf("|%-24s|%s\n", enum_name(req_info->name), req_info->help);
 	return TRUE;
 }
 

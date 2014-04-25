@@ -1143,7 +1143,7 @@ parse_view_column_option(struct view_column *column,
 		struct option_info *option = find_option_info(info, ARRAY_SIZE(info), opt_name); \
 		if (!option) \
 			return error("Unknown option `%s' for column %s", opt_name, \
-				     enum_name(view_column_type_map->entries[VIEW_COLUMN_##id])); \
+				     view_column_name(VIEW_COLUMN_##id)); \
 		return parse_option(option, opt_value); \
 	}
 
@@ -1213,13 +1213,13 @@ parse_view_config(const char *view_name, const char *argv[])
 
 		if (!(view->ops->column_bits & (1 << column->type)))
 			return error("The %s view does not support %s column", view->name,
-				     enum_name(view_column_type_map->entries[column->type]));
+				     view_column_name(column->type));
 
 		if ((column->type == VIEW_COLUMN_TEXT ||
 		     column->type == VIEW_COLUMN_COMMIT_TITLE) &&
 		     i + 1 < size)
 			return error("The %s column must always be last",
-				     enum_name(view_column_type_map->entries[column->type]));
+				     view_column_name(column->type));
 
 		string_ncopy(buf, arg, strlen(arg));
 

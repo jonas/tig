@@ -39,11 +39,8 @@ int string_enum_compare(const char *str1, const char *str2, int len);
 #define enum_equals_static(str, name, namelen) \
 	(namelen == STRING_SIZE(str) && !string_enum_compare(str, name, namelen))
 
-bool enum_name_ncopy(char *buf, size_t bufsize, const char *name, size_t namelen);
-const char *enum_name_static(const char *name, size_t namelen);
-
-#define enum_name(entry) enum_name_static((entry).name, (entry).namelen)
-#define enum_name_copy(buf, name, namelen) enum_name_ncopy(buf, sizeof(buf), name, namelen)
+const char *enum_name(const char *name);
+bool enum_name_copy(char *buf, size_t bufsize, const char *name);
 
 const struct enum_map *find_enum_map(const char *type);
 

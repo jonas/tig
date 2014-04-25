@@ -41,26 +41,26 @@ string_enum_compare(const char *str1, const char *str2, int len)
 }
 
 bool
-enum_name_ncopy(char *buf, size_t bufsize, const char *name, size_t namelen)
+enum_name_copy(char *buf, size_t bufsize, const char *name)
 {
 	int bufpos;
 
-	for (bufpos = 0; bufpos <= namelen && bufpos < bufsize - 1; bufpos++) {
+	for (bufpos = 0; name[bufpos] && bufpos < bufsize - 1; bufpos++) {
 		buf[bufpos] = ascii_tolower(name[bufpos]);
 		if (buf[bufpos] == '_')
 			buf[bufpos] = '-';
 	}
 
 	buf[bufpos] = 0;
-	return bufpos == namelen + 1;
+	return bufpos < bufsize;
 }
 
 const char *
-enum_name_static(const char *name, size_t namelen)
+enum_name(const char *name)
 {
 	static char buf[SIZEOF_STR];
 
-	return enum_name_copy(buf, name, namelen) ? buf : name;
+	return enum_name_copy(buf, sizeof(buf), name) ? buf : name;
 }
 
 const struct enum_map *

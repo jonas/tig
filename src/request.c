@@ -43,7 +43,7 @@ get_request_name(enum request request)
 
 	for (i = 0; i < ARRAY_SIZE(req_info); i++)
 		if (req_info[i].request == request)
-			return enum_name(req_info[i]);
+			return enum_name(req_info[i].name);
 	return "run request";
 }
 

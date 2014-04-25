@@ -80,7 +80,7 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 		if (draw_field(view, LINE_DEFAULT, key, state->keys_width + 2, ALIGN_RIGHT, FALSE))
 			return TRUE;
 
-		if (draw_field(view, LINE_HELP_ACTION, enum_name(*req_info), state->name_width, ALIGN_LEFT, FALSE))
+		if (draw_field(view, LINE_HELP_ACTION, enum_name(req_info->name), state->name_width, ALIGN_LEFT, FALSE))
 			return TRUE;
 
 		draw_text(view, LINE_DEFAULT, req_info->help);
@@ -119,7 +119,7 @@ help_grep(struct view *view, struct line *line)
 	} else {
 		const struct request_info *req_info = help->data.req_info;
 		const char *key = get_keys(keymap, req_info->request, TRUE);
-		const char *text[] = { key, enum_name(*req_info), req_info->help, NULL };
+		const char *text[] = { key, enum_name(req_info->name), req_info->help, NULL };
 
 		return grep_text(view, text);
 	}
@@ -184,7 +184,7 @@ help_open_keymap(void *data, const struct request_info *req_info, const char *gr
 		return FALSE;
 
 	state->keys_width = MAX(state->keys_width, strlen(key));
-	state->name_width = MAX(state->name_width, strlen(enum_name(*req_info)));
+	state->name_width = MAX(state->name_width, strlen(enum_name(req_info->name)));
 
 	help->data.req_info = req_info;
 	help->request = req_info->request;

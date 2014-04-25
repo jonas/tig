@@ -449,7 +449,7 @@ parse_args(const char ***args, const char *argv[])
 enum status_code
 parse_option(struct option_info *option, const char *arg)
 {
-	const char *name = enum_name_static(option->name, strlen(option->name));
+	const char *name = enum_name(option->name);
 
 	if (!strcmp("show-notes", name)) {
 		bool *value = option->value;
@@ -532,7 +532,7 @@ static struct view_config view_configs[] = {
 static enum status_code
 check_view_config(struct option_info *option, const char *argv[])
 {
-	const char *name = enum_name_static(option->name, strlen(option->name));
+	const char *name = enum_name(option->name);
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(view_configs); i++)

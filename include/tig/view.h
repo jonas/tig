@@ -185,6 +185,8 @@ struct view_column_data {
 
 #define view_column_bit(id) (1 << VIEW_COLUMN_##id)
 
+#define view_column_name(id) enum_name(view_column_type_map->entries[id].name)
+
 struct view_ops {
 	/* What type of content being displayed. Used in the title bar. */
 	const char *type;
