@@ -1001,12 +1001,8 @@ view_column_text(struct view *view, struct view_column_data *column_data,
 		break;
 
 	case VIEW_COLUMN_STATUS:
-		if (column_data->status) {
-			static char buf[] = "?";
-
-			buf[0] = *column_data->status;
-			text = buf;
-		}
+		if (column_data->status)
+			text = mkstatus(*column_data->status, column->opt.status.show);
 		break;
 
 	case VIEW_COLUMN_SECTION:

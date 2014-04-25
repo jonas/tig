@@ -111,7 +111,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS);
 	_(text,				const char *,		VIEW_NO_FLAGS) \
 
 #define STATUS_COLUMN_OPTIONS(_) \
-	_(show,				bool,			VIEW_NO_FLAGS) \
+	_(show,				enum status_label,	VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define TEXT_COLUMN_OPTIONS(_) \

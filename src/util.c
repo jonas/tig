@@ -290,4 +290,36 @@ mkmode(mode_t mode)
 		return "----------";
 }
 
+const char *
+mkstatus(const char status, enum status_label label)
+{
+	static char default_label[] = { '?', 0 };
+	static const char *labels[][2] = {
+		{ "!", "ignored" },
+		{ "?", "untracked" },
+		{ "A", "added" },
+		{ "C", "copied" },
+		{ "D", "deleted" },
+		{ "M", "modified" },
+		{ "R", "renamed" },
+		{ "U", "unmerged" },
+	};
+	int i;
+
+	if (label == STATUS_LABEL_NO)
+		return "";
+
+	for (i = 0; i < ARRAY_SIZE(labels); i++) {
+		if (status == *labels[i][0]) {
+			if (label == STATUS_LABEL_LONG)
+				return labels[i][1];
+			else
+				return labels[i][0];
+		}
+	}
+
+	default_label[0] = status;
+	return default_label;
+}
+
 /* vim: set ts=8 sw=8 noexpandtab: */

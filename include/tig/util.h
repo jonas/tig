@@ -88,6 +88,7 @@ const char *mkdate(const struct time *time, enum date date);
 const char *mkfilesize(unsigned long size, enum file_size format);
 const char *mkauthor(const struct ident *ident, int cols, enum author author);
 const char *mkmode(mode_t mode);
+const char *mkstatus(const char status, enum status_label label);
 
 #define author_trim(cols) (cols == 0 || cols > 10)
 

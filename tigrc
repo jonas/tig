@@ -27,7 +27,7 @@
 #    - show (enum) [no|always|auto]	: Show file names?
 #
 #   file-size
-#    - show (enum) [no||default|units]	: Show file sizes?
+#    - show (enum) [no|default|units]	: Show file sizes?
 #
 #   id
 #    - show (bool)			: Show commit/tree ID?
@@ -40,7 +40,7 @@
 #    - show (bool)			: Show file modes?
 #
 #   status
-#    - show (bool)			: Show file status?
+#    - show (enum) [no|short|long]	: Show status label?
 #
 #   text
 #    - show (bool)			: Show text?
@@ -55,7 +55,7 @@ set grep-view	= file-name:no line-number:yes,interval=1 text
 set main-view	= line-number:no,interval=5 id:no date:default author:full commit-title:yes,graph,refs,overflow=no
 set refs-view	= date:default author:full ref commit-title
 set stash-view	= line-number:no,interval=5 id:no date:default author:full commit-title
-set status-view	= line-number:no,interval=5 status:yes,width=3 file-name
+set status-view	= line-number:no,interval=5 status:short file-name
 set tree-view	= line-number:no,interval=5 mode author:full file-size date:default id:no file-name
 
 # Pager based views
@@ -184,6 +184,7 @@ bind generic	Q	quit			# Close all views and quit
 bind status	u	status-update		# Stage/unstage changes in file
 bind status	!	status-revert		# Revert changes in file
 bind status	M	status-merge		# Open git-mergetool(1)
+#bind status	???	:toggle show-status	# Show short or long status labels
 bind stage	u	status-update		# Stage/unstage current diff (c)hunk
 bind stage	1	stage-update-line	# Stage/unstage current line
 bind stage	!	status-revert		# Revert current diff (c)hunk

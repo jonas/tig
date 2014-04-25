@@ -353,7 +353,8 @@ ref::
 	  automatically sized to fit the content.
 
 status::
-	- 'show' (bool): Whether to show the status label.
+	- 'show' (mixed) [no|short|long|<bool>]: Whether to show the status
+	  label.
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
 

@@ -348,7 +348,7 @@ static bool
 draw_status(struct view *view, struct view_column *column,
 	    enum line_type type, const char *status)
 {
-	char label[] = { status ? *status : 0, 0 };
+	const char *label = mkstatus(status ? *status : 0, column->opt.status.show);
 
 	return draw_field(view, type, label, column->width, ALIGN_LEFT, FALSE);
 }
