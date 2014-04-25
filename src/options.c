@@ -917,17 +917,16 @@ set_work_tree(const char *value)
 	repo.is_inside_work_tree = TRUE;
 }
 
-static void
-parse_git_color_option(enum line_type type, char *value)
+static struct line_info *
+parse_git_color_option(struct line_info *info, char *value)
 {
-	struct line_info *info = get_line_info(NULL, type);
 	const char *argv[SIZEOF_ARG];
 	int argc = 0;
 	bool first_color = TRUE;
 	int i;
 
 	if (!argv_from_string(argv, &argc, value))
-		return;
+		return NULL;
 
 	info->fg = COLOR_DEFAULT;
 	info->bg = COLOR_DEFAULT;
@@ -947,38 +946,53 @@ parse_git_color_option(enum line_type type, char *value)
 			first_color = FALSE;
 		}
 	}
+	return info;
 }
 
 static void
 set_git_color_option(const char *name, char *value)
 {
-	static const struct enum_map_entry color_option_map[] = {
-		ENUM_MAP_ENTRY("branch.current", LINE_MAIN_HEAD),
-		ENUM_MAP_ENTRY("branch.local", LINE_MAIN_REF),
-		ENUM_MAP_ENTRY("branch.plain", LINE_MAIN_REF),
-		ENUM_MAP_ENTRY("branch.remote", LINE_MAIN_REMOTE),
+	static const char *git_colors[][2] = {
+		{ "branch.current", "main-head" },
+		{ "branch.local", "main-ref" },
+		{ "branch.plain", "main-ref" },
+		{ "branch.remote", "main-remote" },
 
-		ENUM_MAP_ENTRY("diff.meta", LINE_DIFF_HEADER),
-		ENUM_MAP_ENTRY("diff.meta", LINE_DIFF_INDEX),
-		ENUM_MAP_ENTRY("diff.meta", LINE_DIFF_OLDMODE),
-		ENUM_MAP_ENTRY("diff.meta", LINE_DIFF_NEWMODE),
-		ENUM_MAP_ENTRY("diff.frag", LINE_DIFF_CHUNK),
-		ENUM_MAP_ENTRY("diff.old", LINE_DIFF_DEL),
-		ENUM_MAP_ENTRY("diff.new", LINE_DIFF_ADD),
+		{ "diff.meta", "diff-header" },
+		{ "diff.meta", "diff-index" },
+		{ "diff.meta", "diff-oldmode" },
+		{ "diff.meta", "diff-newmode" },
+		{ "diff.frag", "diff-chunk" },
+		{ "diff.old", "diff-del" },
+		{ "diff.new", "diff-add" },
 
-		//ENUM_MAP_ENTRY("diff.commit", LINE_DIFF_ADD),
-
-		ENUM_MAP_ENTRY("status.branch", LINE_STAT_HEAD),
-		//ENUM_MAP_ENTRY("status.nobranch", LINE_STAT_HEAD),
-		ENUM_MAP_ENTRY("status.added", LINE_STAT_STAGED),
-		ENUM_MAP_ENTRY("status.updated", LINE_STAT_STAGED),
-		ENUM_MAP_ENTRY("status.changed", LINE_STAT_UNSTAGED),
-		ENUM_MAP_ENTRY("status.untracked", LINE_STAT_UNTRACKED),
+		{ "status.branch", "stat-head" },
+		{ "status.added", "stat-staged" },
+		{ "status.updated", "stat-staged" },
+		{ "status.changed", "stat-unstaged" },
+		{ "status.untracked", "stat-untracked" },
 	};
-	int type = LINE_NONE;
+	struct line_info parsed = {};
+	int i;
 
-	if (opt_read_git_colors && map_enum(&type, color_option_map, name)) {
-		parse_git_color_option(type, value);
+	if (!opt_read_git_colors)
+		return;
+
+	i = find_remapped(git_colors, ARRAY_SIZE(git_colors), name);
+	if (i < 0 || !parse_git_color_option(&parsed, value))
+		return;
+
+	for (; i < ARRAY_SIZE(git_colors) && !strcasecmp(git_colors[i][0], name); i++) {
+		struct line_rule rule = {};
+		const char *prefix = NULL;
+		struct line_info *info;
+
+		if (parse_color_name(git_colors[i][1], &rule, &prefix) == SUCCESS &&
+		    (info = add_line_rule(prefix, &rule))) {
+			info->fg = parsed.fg;
+			info->bg = parsed.bg;
+			info->attr = parsed.attr;
+		}
 	}
 }
 
