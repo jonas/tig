@@ -197,11 +197,12 @@ draw_date(struct view *view, struct view_column *column, const struct time *time
 {
 	enum date date = column->opt.date.show;
 	const char *text = mkdate(time, date);
+	enum align align = date == DATE_RELATIVE ? ALIGN_RIGHT : ALIGN_LEFT;
 
 	if (date == DATE_NO)
 		return FALSE;
 
-	return draw_field(view, LINE_DATE, text, column->width, ALIGN_LEFT, FALSE);
+	return draw_field(view, LINE_DATE, text, column->width, align, FALSE);
 }
 
 static bool
