@@ -51,8 +51,14 @@ grep_get_column_data(struct view *view, const struct line *line, struct view_col
 {
 	struct grep_line *grep = grep_get_line(line);
 
-	if (line->type == LINE_DELIMITER)
-		return FALSE;
+	if (line->type == LINE_DELIMITER) {
+		static struct view_column separator_column;
+
+		separator_column.type = VIEW_COLUMN_TEXT;
+		column_data->section = &separator_column;
+		column_data->text = "--";
+		return TRUE;
+	}
 
 	if (*grep->file && !grep->lineno) {
 		static struct view_column file_name_column;
