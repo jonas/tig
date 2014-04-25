@@ -185,6 +185,7 @@ struct view_column_data {
 };
 
 #define view_column_bit(id) (1 << VIEW_COLUMN_##id)
+#define view_has_column(view, id) ((view)->ops->column_bits & view_column_bit(id))
 
 #define view_column_name(id) enum_name(view_column_type_map->entries[id].name)
 

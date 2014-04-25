@@ -454,23 +454,6 @@ main_request(struct view *view, enum request request, struct line *line)
 		refresh_view(view);
 		break;
 
-	case REQ_JUMP_COMMIT:
-	{
-		int lineno;
-
-		for (lineno = 0; lineno < view->lines; lineno++) {
-			struct commit *commit = view->line[lineno].data;
-
-			if (!strncasecmp(commit->id, view->env->search, strlen(view->env->search))) {
-				select_view_line(view, lineno);
-				report_clear();
-				return REQ_NONE;
-			}
-		}
-
-		report("Unable to find commit '%s'", view->env->search);
-		break;
-	}
 	default:
 		return request;
 	}

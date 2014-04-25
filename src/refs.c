@@ -71,20 +71,6 @@ refs_request(struct view *view, enum request request, struct line *line)
 		open_argv(view, &main_view, all_references_argv, NULL, OPEN_SPLIT);
 		return REQ_NONE;
 	}
-	case REQ_JUMP_COMMIT:
-	{
-		int lineno;
-
-		for (lineno = 0; lineno < view->lines; lineno++) {
-			struct reference *reference = view->line[lineno].data;
-
-			if (!strncasecmp(reference->ref->id, view->env->search, strlen(view->env->search))) {
-				select_view_line(view, lineno);
-				report_clear();
-				return REQ_NONE;
-			}
-		}
-	}
 	default:
 		return request;
 	}

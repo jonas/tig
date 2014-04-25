@@ -753,8 +753,29 @@ run_prompt_command(struct view *view, const char *argv[])
 			report("Unable to parse '%s' as a line number", cmd);
 		}
 	} else if (iscommit(cmd)) {
-		string_ncopy(view->env->search, cmd, cmdlen);
-		return REQ_JUMP_COMMIT;
+		int lineno;
+
+		if (!(view->ops->column_bits & view_column_bit(ID))) {
+			report("Jumping to commits is not supported by the %s view", view->name);
+			return REQ_NONE;
+		}
+
+		for (lineno = 0; lineno < view->lines; lineno++) {
+			struct view_column_data column_data = {};
+			struct line *line = &view->line[lineno];
+
+			if (view->ops->get_column_data(view, line, &column_data) &&
+			    column_data.id &&
+			    !strncasecmp(column_data.id, cmd, cmdlen)) {
+				string_ncopy(view->env->search, cmd, cmdlen);
+				select_view_line(view, lineno);
+				report_clear();
+				return REQ_NONE;
+			}
+		}
+
+		report("Unable to find commit '%s'", view->env->search);
+		return REQ_NONE;
 
 	} else if (cmdlen > 1 && (cmd[0] == '/' || cmd[0] == '?')) {
 		char search[SIZEOF_STR];

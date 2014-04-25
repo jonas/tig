@@ -317,10 +317,6 @@ view_driver(struct view *view, enum request request)
 		report("Going back is not supported for by %s view", view->name);
 		break;
 
-	case REQ_JUMP_COMMIT:
-		report("Jumping to commits is not supported by the %s view", view->name);
-		break;
-
 	case REQ_MAXIMIZE:
 		if (displayed_views() == 2)
 			maximize_view(view, TRUE);

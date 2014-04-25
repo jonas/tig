@@ -91,7 +91,6 @@ enum request {
 	REQ_INFO,
 
 	/* Internal requests. */
-	REQ_JUMP_COMMIT,
 	REQ_SCROLL_WHEEL_DOWN,
 	REQ_SCROLL_WHEEL_UP,
 
