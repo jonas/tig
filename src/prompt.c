@@ -583,6 +583,8 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 		if (!diff)
 			diff = *arg == '-' ? -1 : 1;
 
+		if (opt == &opt_diff_context && *opt < 0)
+			*opt = -*opt;
 		if (opt == &opt_diff_context && diff < 0) {
 			if (!*opt)
 				return error("Diff context cannot be less than zero");

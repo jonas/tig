@@ -90,7 +90,7 @@ set commit-order		= default	# Enum: default, topo, date, reverse (main)
 set status-untracked-dirs	= yes		# Show files in untracked directories? (status)
 set ignore-space		= no		# Enum: no, all, some, at-eol (diff)
 set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
-set diff-context		= 3		# Number of lines to show around diff changes (diff)
+#set diff-context		= 3		# Number of lines to show around diff changes (diff)
 #set diff-options		= -C		# User-defined options for `tig show` (diff)
 #set blame-options		= -C -C -C	# User-defined options for `tig blame` (blame)
 

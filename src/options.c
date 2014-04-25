@@ -48,16 +48,25 @@ find_option_info(struct option_info *option, size_t options, const char *name)
 	return NULL;
 }
 
-static void
-mark_option_seen(void *value)
+static struct option_info *
+find_option_info_by_value(void *value)
 {
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(option_info); i++)
-		if (option_info[i].value == value) {
-			option_info[i].seen = TRUE;
-			break;
-		}
+		if (option_info[i].value == value)
+			return &option_info[i];
+
+	return NULL;
+}
+
+static void
+mark_option_seen(void *value)
+{
+	struct option_info *option = find_option_info_by_value(value);
+
+	if (option)
+		option->seen = TRUE;
 }
 
 /*
@@ -82,8 +91,9 @@ diff_context_arg()
 {
 	static char opt_diff_context_arg[9]	= "";
 
-	if (!string_format(opt_diff_context_arg, "-U%u", opt_diff_context))
-		string_ncopy(opt_diff_context_arg, "-U3", 3);
+	if (opt_diff_context < 0 ||
+	    !string_format(opt_diff_context_arg, "-U%u", opt_diff_context))
+		return "";
 
 	return opt_diff_context_arg;
 }
@@ -827,6 +837,8 @@ load_options(void)
 	bool custom_tigrc_system = !!tigrc_system;
 
 	opt_file_filter = TRUE;
+	if (!find_option_info_by_value(&opt_diff_context)->seen)
+		opt_diff_context = -3;
 
 	if (!custom_tigrc_system)
 		tigrc_system = SYSCONFDIR "/tigrc";
