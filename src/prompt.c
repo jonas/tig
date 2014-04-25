@@ -548,24 +548,24 @@ find_arg(const char *argv[], const char *arg)
 	return FALSE;
 }
 
-static enum view_flag
+static enum status_code
 prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
-		     struct prompt_toggle *toggle, char msg[SIZEOF_STR])
+		     struct prompt_toggle *toggle, enum view_flag *flags)
 {
 	char name[SIZEOF_STR];
 
-	if (!enum_name_prefixed(name, sizeof(name), prefix, toggle->name)) {
-		string_format_size(msg, SIZEOF_STR, "Failed to toggle option %s", toggle->name);
-		return VIEW_NO_FLAGS;
-	}
+	if (!enum_name_prefixed(name, sizeof(name), prefix, toggle->name))
+		return error("Failed to toggle option %s", toggle->name);
+
+	*flags = toggle->flags;
 
 	if (!strcmp(toggle->type, "bool")) {
 		bool *opt = toggle->opt;
 
 		*opt = !*opt;
-		string_format_size(msg, SIZEOF_STR, "set %s = %s", name, *opt ? "yes" : "no");
 		if (opt == &opt_mouse)
 			enable_mouse(*opt);
+		return success("set %s = %s", name, *opt ? "yes" : "no");
 
 	} else if (!strncmp(toggle->type, "enum", 4)) {
 		const char *type = toggle->type + STRING_SIZE("enum ");
@@ -573,8 +573,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 		const struct enum_map *map = find_enum_map(type);
 
 		*opt = (*opt + 1) % map->size;
-		string_format_size(msg, SIZEOF_STR, "set %s = %s", name,
-				   enum_name(map->entries[*opt].name));
+		return success("set %s = %s", name, enum_name(map->entries[*opt].name));
 
 	} else if (!strcmp(toggle->type, "int")) {
 		const char *arg = argv[2] ? argv[2] : "1";
@@ -585,25 +584,21 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 			diff = *arg == '-' ? -1 : 1;
 
 		if (opt == &opt_diff_context && diff < 0) {
-			if (!*opt) {
-				report("Diff context cannot be less than zero");
-				return VIEW_NO_FLAGS;
-			}
+			if (!*opt)
+				return error("Diff context cannot be less than zero");
 			if (*opt < -diff)
 				diff = -*opt;
 		}
 
 		if (strstr(name, "commit-title-overflow")) {
 			*opt = *opt ? -*opt : 50;
-			if (*opt < 0) {
-				string_format_size(msg, SIZEOF_STR, "set %s = no", name);
-				return toggle->flags;
-			}
+			if (*opt < 0)
+				return success("set %s = no", name);
 			diff = 0;
 		}
 
 		*opt += diff;
-		string_format_size(msg, SIZEOF_STR, "set %s = %d", name, *opt);
+		return success("set %s = %d", name, *opt);
 
 	} else if (!strcmp(toggle->type, "double")) {
 		const char *arg = argv[2] ? argv[2] : "1.0";
@@ -620,7 +615,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 			diff = strtod(arg, NULL);
 
 		*opt += sign * diff;
-		string_format_size(msg, SIZEOF_STR, "set %s = %.2f", name, *opt);
+		return success("set %s = %.2f", name, *opt);
 
 	} else if (!strcmp(toggle->type, "const char **")) {
 		const char ***opt = toggle->opt;
@@ -650,15 +645,13 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 			(*opt)[next] = NULL;
 
 		} else if (!argv_copy(opt, argv + 2)) {
-			report("Failed to append arguments");
-			return VIEW_NO_FLAGS;
+			return ERROR_OUT_OF_MEMORY;
 		}
+		return SUCCESS;
 
 	} else {
-		die("Unsupported `:toggle %s` (%s)", name, toggle->type);
+		return error("Unsupported `:toggle %s` (%s)", name, toggle->type);
 	}
-
-	return toggle->flags;
 }
 
 static struct prompt_toggle *
@@ -684,8 +677,8 @@ find_prompt_toggle(struct prompt_toggle toggles[], size_t toggles_size,
 	return NULL;
 }
 
-static enum view_flag
-prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
+static enum status_code
+prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 {
 	struct prompt_toggle option_toggles[] = {
 #define DEFINE_OPTION_TOGGLES(name, type, flags) { #name, #type, flags, &opt_ ## name },
@@ -696,31 +689,28 @@ prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 	struct prompt_toggle *toggle;
 	struct view_column *column;
 
-	if (!option) {
-		string_format_size(msg, SIZEOF_STR, "%s", "No option name given to :toggle");
-		return VIEW_NO_FLAGS;
-	}
+	if (!option)
+		return error("%s", "No option name given to :toggle");
 
 	if (enum_equals_static("sort-field", option, optionlen) ||
 	    enum_equals_static("sort-order", option, optionlen)) {
 		if (!view_has_flags(view, VIEW_SORTABLE)) {
-			report("Sorting is not yet supported for the %s view", view->name);
+			return error("Sorting is not yet supported for the %s view", view->name);
 		} else {
 			bool sort_field = enum_equals_static("sort-field", option, optionlen);
 			struct sort_state *sort = &view->sort;
 
 			sort_view(view, sort_field);
-			string_format_size(msg, SIZEOF_STR, "set %s = %s", option,
+			return success("set %s = %s", option,
 				sort_field ? view_column_name(get_sort_field(view))
 					   : sort->reverse ? "descending" : "ascending");
 		}
-		return VIEW_NO_FLAGS;
 	}
 
 	toggle = find_prompt_toggle(option_toggles, ARRAY_SIZE(option_toggles),
 				    "", option, optionlen);
 	if (toggle)
-		return prompt_toggle_option(view, argv, "", toggle, msg);
+		return prompt_toggle_option(view, argv, "", toggle, flags);
 
 #define DEFINE_COLUMN_OPTIONS_TOGGLE(name, type, flags) \
 	{ #name, #type, flags, &opt->name },
@@ -733,15 +723,14 @@ prompt_toggle(struct view *view, const char *argv[], char msg[SIZEOF_STR])
 		}; \
 		toggle = find_prompt_toggle(toggles, ARRAY_SIZE(toggles), #name, option, optionlen); \
 		if (toggle) \
-			return prompt_toggle_option(view, argv, #name, toggle, msg); \
+			return prompt_toggle_option(view, argv, #name, toggle, flags); \
 	}
 
 	for (column = view->columns; column; column = column->next) {
 		COLUMN_OPTIONS(DEFINE_COLUMN_OPTIONS_CHECK);
 	}
 
-	string_format_size(msg, SIZEOF_STR, "`:toggle %s` not supported", option);
-	return VIEW_NO_FLAGS;
+	return error("`:toggle %s` not supported", option);
 }
 
 enum request
@@ -803,9 +792,15 @@ run_prompt_command(struct view *view, const char *argv[])
 		}
 
 	} else if (!strcmp(cmd, "toggle")) {
-		char action[SIZEOF_STR] = "";
-		enum view_flag flags = prompt_toggle(view, argv, action);
+		enum view_flag flags = VIEW_NO_FLAGS;
+		enum status_code code = prompt_toggle(view, argv, &flags);
+		const char *action = get_status_message(code);
 		int i;
+
+		if (code != SUCCESS) {
+			report("%s", action);
+			return REQ_NONE;
+		}
 
 		if (flags & VIEW_RESET_DISPLAY) {
 			resize_display();

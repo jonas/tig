@@ -25,12 +25,17 @@ static const char *status_messages[] = {
 };
 
 static char status_custom_message[SIZEOF_STR];
+static bool status_success_message = FALSE;
 
 const char *
 get_status_message(enum status_code code)
 {
-	if (code == SUCCESS)
-		return "";
+	if (code == SUCCESS) {
+		const char *message = status_success_message ? status_custom_message : "";
+
+		status_success_message = FALSE;
+		return message;
+	}
 	if (code == ERROR_CUSTOM_MESSAGE)
 		return status_custom_message;
 	return status_messages[code];
@@ -42,8 +47,20 @@ error(const char *msg, ...)
 	int retval;
 
 	FORMAT_BUFFER(status_custom_message, sizeof(status_custom_message), msg, retval, TRUE);
+	status_success_message = FALSE;
 
 	return ERROR_CUSTOM_MESSAGE;
+}
+
+enum status_code
+success(const char *msg, ...)
+{
+	int retval;
+
+	FORMAT_BUFFER(status_custom_message, sizeof(status_custom_message), msg, retval, TRUE);
+	status_success_message = TRUE;
+
+	return SUCCESS;
 }
 
 void

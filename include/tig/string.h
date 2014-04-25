@@ -91,9 +91,6 @@ bool PRINTF_LIKE(4, 5) string_nformat(char *buf, size_t bufsize, size_t *bufpos,
 #define string_format(buf, fmt, args...) \
 	string_nformat(buf, sizeof(buf), NULL, fmt, args)
 
-#define string_format_size(buf, size, fmt, args...) \
-	string_nformat(buf, size, NULL, fmt, args)
-
 #define string_format_from(buf, from, fmt, args...) \
 	string_nformat(buf, sizeof(buf), from, fmt, args)
 

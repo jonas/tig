@@ -36,6 +36,7 @@ enum status_code {
 
 const char *get_status_message(enum status_code code);
 enum status_code error(const char *fmt, ...) PRINTF_LIKE(1, 2);
+enum status_code success(const char *fmt, ...) PRINTF_LIKE(1, 2);
 
 typedef void (*die_fn)(void);
 extern die_fn die_callback;
