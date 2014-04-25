@@ -797,7 +797,8 @@ setting the *default* color option.
 |author			|The commit author.
 |mode			|The file mode holding the permissions and type.
 |overflow		|Title text overflow.
-|filename		|Filename.
+|directory		|The directory name.
+|file			|The file name.
 |file-size		|File size.
 |=============================================================================
 
@@ -833,8 +834,6 @@ example: palette-0 = red
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |tree-head		|The "Directory /"-line
-|tree-dir		|The directory name.
-|tree-file		|The file name.
 |=============================================================================
 
 .Help view

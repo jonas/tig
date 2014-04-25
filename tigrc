@@ -270,7 +270,7 @@ bind generic	v	show-version		# Show Tig version
 #
 # Prefix the name of a view to set a color only for that view, e.g.
 #
-#	color grep.filename blue default
+#	color grep.file blue default
 #
 # As an example, this setting will to color Signed-off-by lines with a
 # yellow foreground color and use the default background color.
