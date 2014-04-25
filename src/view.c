@@ -1144,7 +1144,7 @@ parse_view_column_option(struct view_column *column,
 		if (!option) \
 			return error("Unknown option `%s' for column %s", opt_name, \
 				     view_column_name(VIEW_COLUMN_##id)); \
-		return parse_option(option, opt_value); \
+		return parse_option(option, #name, opt_value); \
 	}
 
 	COLUMN_OPTIONS(DEFINE_COLUMN_OPTIONS_PARSE);

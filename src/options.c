@@ -447,9 +447,12 @@ parse_args(const char ***args, const char *argv[])
 }
 
 enum status_code
-parse_option(struct option_info *option, const char *arg)
+parse_option(struct option_info *option, const char *prefix, const char *arg)
 {
-	const char *name = enum_name(option->name);
+	char name[SIZEOF_STR];
+
+	if (!enum_name_prefixed(name, sizeof(name), prefix, option->name))
+		return error("Failed to parse option");
 
 	if (!strcmp("show-notes", name)) {
 		bool *value = option->value;
@@ -571,7 +574,7 @@ option_set_command(int argc, const char *argv[])
 			return parse_args(option->value, argv + 2);
 		}
 
-		code = parse_option(option, argv[2]);
+		code = parse_option(option, "", argv[2]);
 		if (code == SUCCESS && argc != 3)
 			return error("Option %s only takes one value", argv[0]);
 
