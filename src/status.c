@@ -261,7 +261,7 @@ status_open(struct view *view, enum open_flags flags)
 
 	reset_view(view);
 
-	add_line_nodata(view, LINE_STAT_HEAD);
+	add_line_nodata(view, LINE_HEADER);
 	status_update_onbranch();
 
 	io_run_bg(update_index_argv);
@@ -318,8 +318,8 @@ status_get_column_data(struct view *view, const struct line *line, struct view_c
 			text = "  (no files)";
 			break;
 
-		case LINE_STAT_HEAD:
-			type = LINE_STAT_HEAD;
+		case LINE_HEADER:
+			type = LINE_HEADER;
 			text = status_onbranch;
 			break;
 
@@ -366,11 +366,9 @@ status_enter(struct view *view, struct line *line)
 		}
 		break;
 
-	case LINE_STAT_HEAD:
-		return REQ_NONE;
-
 	default:
-		die("line type %d not handled in switch", line->type);
+		report("Nothing to enter");
+		return REQ_NONE;
 	}
 
 	if (status) {
@@ -678,7 +676,7 @@ status_stage_info_(char *buf, size_t bufsize,
 		info = "Untracked file %s";
 		break;
 
-	case LINE_STAT_HEAD:
+	case LINE_HEADER:
 	default:
 		info = "";
 	}
@@ -713,13 +711,8 @@ status_select(struct view *view, struct line *line)
 		text = "Press %s to stage %s for addition";
 		break;
 
-	case LINE_STAT_HEAD:
-	case LINE_STAT_NONE:
-		text = "Nothing to update";
-		break;
-
 	default:
-		die("line type %d not handled in switch", line->type);
+		text = "Nothing to update";
 	}
 
 	if (status && status->status == 'U') {

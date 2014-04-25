@@ -456,7 +456,6 @@ stage_open(struct view *view, enum open_flags flags)
 		view->encoding = get_path_encoding(stage_status.old.name, default_encoding);
 		break;
 
-	case LINE_STAT_HEAD:
 	default:
 		die("line type %d not handled in switch", stage_line_type);
 	}

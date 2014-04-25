@@ -233,7 +233,7 @@ help_open(struct view *view, enum open_flags flags)
 
 	reset_view(view);
 
-	if (!add_help_line(view, &help, NULL, LINE_DEFAULT))
+	if (!add_help_line(view, &help, NULL, LINE_HEADER))
 		return FALSE;
 	help->data.text = "Quick reference for tig keybindings:";
 

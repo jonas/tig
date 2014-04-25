@@ -337,9 +337,11 @@ option_color_command(int argc, const char *argv[])
 			{ "pp-date",			"'Date: '" },
 			{ "reviewed",			"'    Reviewed-by'" },
 			{ "signoff",			"'    Signed-off-by'" },
+			{ "stat-head",			"status.header" },
 			{ "tested",			"'    Tested-by'" },
 			{ "tree-dir",			"tree.directory" },
 			{ "tree-file",			"tree.file" },
+			{ "tree-head",			"tree.header" },
 		};
 		int index;
 
@@ -970,7 +972,7 @@ set_git_color_option(const char *name, char *value)
 		{ "grep.linenumber", "grep.line-number" },
 		{ "grep.separator", "grep.delimiter" },
 
-		{ "status.branch", "stat-head" },
+		{ "status.branch", "status.header" },
 		{ "status.added", "stat-staged" },
 		{ "status.updated", "stat-staged" },
 		{ "status.changed", "stat-unstaged" },

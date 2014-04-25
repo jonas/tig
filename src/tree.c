@@ -103,7 +103,7 @@ tree_get_column_data(struct view *view, const struct line *line, struct view_col
 {
 	const struct tree_entry *entry = line->data;
 
-	if (line->type == LINE_TREE_HEAD)
+	if (line->type == LINE_HEADER)
 		return FALSE;
 
 	column_data->author = entry->author;
@@ -122,7 +122,7 @@ static struct line *
 tree_entry(struct view *view, enum line_type type, const char *path,
 	   const char *mode, const char *id, unsigned long size)
 {
-	bool custom = type == LINE_TREE_HEAD || tree_path_is_parent(path);
+	bool custom = type == LINE_HEADER || tree_path_is_parent(path);
 	struct tree_entry *entry;
 	struct line *line = add_line_alloc(view, &entry, type, strlen(path), custom);
 
@@ -154,7 +154,7 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 		};
 
 		if (!view->lines) {
-			tree_entry(view, LINE_TREE_HEAD, view->env->directory, NULL, NULL, 0);
+			tree_entry(view, LINE_HEADER, view->env->directory, NULL, NULL, 0);
 			tree_entry(view, LINE_DIRECTORY, "..", "040000", view->ref, 0);
 			report("Tree is empty");
 			return TRUE;
@@ -230,7 +230,7 @@ tree_read(struct view *view, char *text)
 	if (textlen <= SIZEOF_TREE_ATTR)
 		return FALSE;
 	if (view->lines == 0 &&
-	    !tree_entry(view, LINE_TREE_HEAD, view->env->directory, NULL, NULL, 0))
+	    !tree_entry(view, LINE_HEADER, view->env->directory, NULL, NULL, 0))
 		return FALSE;
 
 	size = parse_size(attr_offset);
@@ -290,7 +290,7 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct tree_entry *entry = line->data;
 
-	if (line->type == LINE_TREE_HEAD) {
+	if (line->type == LINE_HEADER) {
 		draw_formatted(view, line->type, "Directory path /%s", entry->name);
 		return TRUE;
 	}
@@ -408,7 +408,7 @@ tree_select(struct view *view, struct line *line)
 {
 	struct tree_entry *entry = line->data;
 
-	if (line->type == LINE_TREE_HEAD) {
+	if (line->type == LINE_HEADER) {
 		string_format(view->ref, "Files in /%s", view->env->directory);
 		return;
 	}

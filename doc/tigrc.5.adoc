@@ -791,6 +791,7 @@ setting the *default* color option.
 |title-focus		|The title window for the current view.
 |title-blur		|The title window of any backgrounded view.
 |delimiter		|Delimiter shown for truncated lines.
+|header			|The view header line.
 |line-number		|Line numbers.
 |id			|The commit ID.
 |date			|The commit date.
@@ -822,18 +823,11 @@ example: palette-0 = red
 .Status view
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|stat-head		|The "On branch"-line.
 |stat-section		|Status section titles,
 |stat-none		|Empty status label.
 |stat-staged		|Status flag of staged files.
 |stat-unstaged		|Status flag of unstaged files.
 |stat-untracked		|Status flag of untracked files.
-|=============================================================================
-
-.Tree view
-[frame="none",grid="none",cols="25<m,75<"]
-|=============================================================================
-|tree-head		|The "Directory /"-line
 |=============================================================================
 
 .Help view
