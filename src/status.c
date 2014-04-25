@@ -85,14 +85,9 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	add_line_nodata(view, type);
 
 	while ((buf = io_get(&io, 0, TRUE))) {
-		struct line *line = NULL;
-		struct status *file = unmerged;
-
-		if (!file) {
-			line = add_line_alloc(view, &file, type, 0, FALSE);
-			if (!line)
-				goto error_out;
-		}
+		struct line *line;
+		struct status parsed = {};
+		struct status *file = &parsed;
 
 		/* Parse diff info part. */
 		if (status) {
@@ -100,22 +95,13 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 			if (status == 'A')
 				string_copy(file->old.rev, NULL_ID);
 
-		} else if (!file->status || file == unmerged) {
-			if (!status_get_diff(file, buf, strlen(buf)))
+		} else {
+			if (!status_get_diff(&parsed, buf, strlen(buf)))
 				goto error_out;
 
 			buf = io_get(&io, 0, TRUE);
 			if (!buf)
 				break;
-
-			/* Collapse all modified entries that follow an
-			 * associated unmerged entry. */
-			if (unmerged == file) {
-				unmerged->status = 'U';
-				unmerged = NULL;
-			} else if (file->status == 'U') {
-				unmerged = file;
-			}
 		}
 
 		/* Grab the old name for rename/copy. */
@@ -134,9 +120,22 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 		string_ncopy(file->new.name, buf, strlen(buf));
 		if (!*file->old.name)
 			string_copy(file->old.name, file->new.name);
-		file = NULL;
-		if (line)
-			view_column_info_update(view, line);
+
+		/* Collapse all modified entries that follow an associated
+		 * unmerged entry. */
+		if (unmerged && !strcmp(unmerged->new.name, file->new.name)) {
+			unmerged->status = 'U';
+			unmerged = NULL;
+			continue;
+		}
+
+		line = add_line_alloc(view, &file, type, 0, FALSE);
+		if (!line)
+			goto error_out;
+		*file = parsed;
+		view_column_info_update(view, line);
+		if (file->status == 'U')
+			unmerged = file;
 	}
 
 	if (io_error(&io)) {
