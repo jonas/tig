@@ -69,6 +69,7 @@ prompt_input(const char *prompt, struct input *input)
 				int len = chars_length[--chars];
 
 				pos -= len;
+				status = INPUT_OK;
 			} else {
 				int changed_pos = strlen(input->buf);
 
