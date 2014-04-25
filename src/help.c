@@ -40,7 +40,7 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct keymap *keymap = help->keymap;
 	struct help_state *state = view->private;
 
-	if (line->type == LINE_HELP_KEYMAP) {
+	if (line->type == LINE_SECTION) {
 		draw_formatted(view, line->type, "[%c] %s bindings",
 			       keymap->hidden ? '+' : '-', keymap->name);
 
@@ -95,7 +95,7 @@ help_grep(struct view *view, struct line *line)
 	struct help *help = line->data;
 	struct keymap *keymap = help->keymap;
 
-	if (line->type == LINE_HELP_KEYMAP) {
+	if (line->type == LINE_SECTION) {
 		const char *text[] = { keymap->name, NULL };
 
 		return grep_text(view, text);
@@ -152,7 +152,7 @@ add_help_headers(struct help_request_iterator *iterator, const char *group)
 
 	if (iterator->add_title) {
 		iterator->add_title = FALSE;
-		if (!add_help_line(iterator->view, &help, iterator->keymap, LINE_HELP_KEYMAP) ||
+		if (!add_help_line(iterator->view, &help, iterator->keymap, LINE_SECTION) ||
 		    iterator->keymap->hidden)
 			return FALSE;
 	}
@@ -260,7 +260,7 @@ help_request(struct view *view, enum request request, struct line *line)
 
 	switch (request) {
 	case REQ_ENTER:
-		if (line->type == LINE_HELP_KEYMAP) {
+		if (line->type == LINE_SECTION) {
 			struct keymap *keymap = help->keymap;
 
 			keymap->hidden = !keymap->hidden;

@@ -56,6 +56,7 @@ struct ref;
 	_(TITLE_BLUR,		""), \
 	_(TITLE_FOCUS,		""), \
 	_(HEADER,		""), \
+	_(SECTION,		""), \
 	_(MAIN_COMMIT,		""), \
 	_(MAIN_TAG,		""), \
 	_(MAIN_LOCAL_TAG,	""), \
@@ -64,12 +65,10 @@ struct ref;
 	_(MAIN_TRACKED,		""), \
 	_(MAIN_REF,		""), \
 	_(MAIN_HEAD,		""), \
-	_(STAT_SECTION,		""), \
 	_(STAT_NONE,		""), \
 	_(STAT_STAGED,		""), \
 	_(STAT_UNSTAGED,	""), \
 	_(STAT_UNTRACKED,	""), \
-	_(HELP_KEYMAP,		""), \
 	_(HELP_GROUP,		""), \
 	_(HELP_ACTION,		""), \
 	_(DIFF_STAT,		""), \

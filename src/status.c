@@ -299,17 +299,17 @@ status_get_column_data(struct view *view, const struct line *line, struct view_c
 
 		switch (line->type) {
 		case LINE_STAT_STAGED:
-			type = LINE_STAT_SECTION;
+			type = LINE_SECTION;
 			text = "Changes to be committed:";
 			break;
 
 		case LINE_STAT_UNSTAGED:
-			type = LINE_STAT_SECTION;
+			type = LINE_SECTION;
 			text = "Changed but not updated:";
 			break;
 
 		case LINE_STAT_UNTRACKED:
-			type = LINE_STAT_SECTION;
+			type = LINE_SECTION;
 			text = "Untracked files:";
 			break;
 
