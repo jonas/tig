@@ -966,6 +966,10 @@ set_git_color_option(const char *name, char *value)
 		{ "diff.old", "diff-del" },
 		{ "diff.new", "diff-add" },
 
+		{ "grep.filename", "grep.file" },
+		{ "grep.linenumber", "grep.line-number" },
+		{ "grep.separator", "grep.delimiter" },
+
 		{ "status.branch", "stat-head" },
 		{ "status.added", "stat-staged" },
 		{ "status.updated", "stat-staged" },
