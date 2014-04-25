@@ -25,10 +25,6 @@
 #include <readline/history.h>
 #endif /* HAVE_READLINE */
 
-static void
-prompt_toggle_name(char buf[], size_t bufsize,
-		   const char *prefix, const char *name);
-
 static char *
 prompt_input(const char *prompt, struct input *input)
 {
@@ -328,8 +324,8 @@ readline_toggle_generator(const char *text, int state)
 		char buf[SIZEOF_STR]; \
 		int i; \
 		for (i = 0; i < ARRAY_SIZE(vars); i++) { \
-			prompt_toggle_name(buf, sizeof(buf), #name, vars[i]); \
-			argv_append(&words, buf); \
+			if (enum_name_prefixed(buf, sizeof(buf), #name, vars[i])) \
+				argv_append(&words, buf); \
 		} \
 	}
 
@@ -552,32 +548,16 @@ find_arg(const char *argv[], const char *arg)
 	return FALSE;
 }
 
-static void
-prompt_toggle_name(char buf[], size_t bufsize,
-		   const char *prefix, const char *name)
-{
-	if (*prefix) {
-		char tmp[SIZEOF_STR];
-
-		if (!strcasecmp("show", name)) {
-			string_format(tmp, "%s-%s", name, prefix);
-		} else {
-			string_format(tmp, "%s-%s", prefix, name);
-		}
-
-		enum_name_copy(buf, bufsize, tmp);
-	} else {
-		enum_name_copy(buf, bufsize, name);
-	}
-}
-
 static enum view_flag
 prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 		     struct prompt_toggle *toggle, char msg[SIZEOF_STR])
 {
 	char name[SIZEOF_STR];
 
-	prompt_toggle_name(name, sizeof(name), prefix, toggle->name);
+	if (!enum_name_prefixed(name, sizeof(name), prefix, toggle->name)) {
+		string_format_size(msg, SIZEOF_STR, "Failed to toggle option %s", toggle->name);
+		return VIEW_NO_FLAGS;
+	}
 
 	if (!strcmp(toggle->type, "bool")) {
 		bool *opt = toggle->opt;
@@ -685,7 +665,7 @@ static struct prompt_toggle *
 find_prompt_toggle(struct prompt_toggle toggles[], size_t toggles_size,
 		   const char *prefix, const char *name, size_t namelen)
 {
-	char toggle_name[SIZEOF_STR];
+	char prefixed[SIZEOF_STR];
 	int i;
 
 	for (i = 0; i < toggles_size; i++) {
@@ -695,10 +675,9 @@ find_prompt_toggle(struct prompt_toggle toggles[], size_t toggles_size,
 		    !string_enum_compare(toggle->name, name, namelen))
 			return toggle;
 
-		prompt_toggle_name(toggle_name, sizeof(toggle_name), prefix, toggle->name);
-
-		if (namelen == strlen(toggle_name) &&
-		    !string_enum_compare(toggle_name, name, namelen))
+		if (enum_name_prefixed(prefixed, sizeof(prefixed), prefix, toggle->name) &&
+		    namelen == strlen(prefixed) &&
+		    !string_enum_compare(prefixed, name, namelen))
 			return toggle;
 	}
 

@@ -63,6 +63,23 @@ enum_name(const char *name)
 	return enum_name_copy(buf, sizeof(buf), name) ? buf : name;
 }
 
+bool
+enum_name_prefixed(char buf[], size_t bufsize, const char *prefix, const char *name)
+{
+	char prefixed[SIZEOF_STR];
+
+	if (*prefix) {
+		const char *first = !strcasecmp("show", name) ? name : prefix;
+		const char *last = first == name ? prefix : name;
+
+		if (!string_format(prefixed, "%s-%s", first, last))
+			return FALSE;
+		name = prefixed;
+	}
+
+	return enum_name_copy(buf, bufsize, name);
+}
+
 const struct enum_map *
 find_enum_map(const char *type)
 {
