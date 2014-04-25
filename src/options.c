@@ -1057,6 +1057,11 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 		 !strncmp(name + 7, repo.head, strlen(repo.head)))
 		set_remote_branch(name + 7 + strlen(repo.head), value, valuelen);
 
+	else if (!strcmp(name, "diff.context")) {
+		if (!find_option_info_by_value(&opt_diff_context)->seen)
+			opt_diff_context = -atoi(value);
+	}
+
 	return OK;
 }
 
