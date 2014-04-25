@@ -453,12 +453,14 @@ blame_request(struct view *view, enum request request, struct line *line)
 			const char *diff_parent_argv[] = {
 				GIT_DIFF_BLAME(encoding_arg,
 					diff_context_arg(),
-					ignore_space_arg(), view->vid)
+					ignore_space_arg(),
+					blame->commit->filename)
 			};
 			const char *diff_no_parent_argv[] = {
 				GIT_DIFF_BLAME_NO_PARENT(encoding_arg,
 					diff_context_arg(),
-					ignore_space_arg(), view->vid)
+					ignore_space_arg(),
+					blame->commit->filename)
 			};
 			const char **diff_index_argv = *blame->commit->parent_id
 				? diff_parent_argv : diff_no_parent_argv;
