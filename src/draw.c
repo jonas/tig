@@ -503,7 +503,7 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_ID:
-			if (draw_id(view, column, column_data.id))
+			if (draw_id(view, column, column_data.reflog ? column_data.reflog : column_data.id))
 				return TRUE;
 			continue;
 

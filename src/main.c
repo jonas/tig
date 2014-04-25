@@ -246,10 +246,9 @@ main_get_column_data(struct view *view, const struct line *line, struct view_col
 
 	column_data->author = commit->author;
 	column_data->date = &commit->time;
+	column_data->id = commit->id;
 	if (state->reflogs)
-		column_data->id = state->reflog[line->lineno - 1];
-	else
-		column_data->id = commit->id;
+		column_data->reflog = state->reflog[line->lineno - 1];
 
 	column_data->commit_title = commit->title;
 	if (state->with_graph)
