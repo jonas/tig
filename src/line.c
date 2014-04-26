@@ -195,7 +195,7 @@ init_colors(void)
 
 	for (type = 0; type < line_rules; type++) {
 		struct line_rule *rule = &line_rule[type];
-		struct line_info *info = &rule->info;
+		struct line_info *info;
 
 		for (info = &rule->info; info; info = info->next) {
 			init_line_info_color_pair(info, type, default_bg, default_fg);

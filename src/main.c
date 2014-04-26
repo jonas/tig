@@ -45,7 +45,7 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 		const char *title, bool custom)
 {
 	struct main_state *state = view->private;
-	size_t titlelen = strlen(title);
+	size_t titlelen;
 	struct commit *commit;
 	char buf[SIZEOF_STR / 2];
 	struct line *line;
