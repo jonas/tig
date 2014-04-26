@@ -38,15 +38,32 @@ diff_open(struct view *view, enum open_flags flags)
 struct line *
 diff_common_add_diff_stat(struct view *view, const char *text, size_t offset)
 {
-	const char *data = text + offset;
+	const char *start = text + offset;
+	const char *data = start + strspn(start, " ");
 	size_t len = strlen(data);
 	char *pipe = strchr(data, '|');
-	bool has_histogram = data[len - 1] == '-' || data[len - 1] == '+';
-	bool has_bin_diff = pipe && strstr(pipe, "Bin") && strstr(pipe, "->");
-	bool has_rename = data[len - 1] == '0' && (strstr(data, "=>") || !strncmp(data, " ...", 4));
-	bool has_no_change = pipe && strstr(pipe, " 0");
 
-	if (pipe && (has_histogram || has_bin_diff || has_rename || has_no_change))
+	/* Ensure that '|' is present and the file name part contains
+	 * non-space characters. */
+	if (!pipe || pipe == data || strcspn(data, " ") == 0)
+		return NULL;
+
+	/* Detect remaining part of a diff stat line:
+	 *
+	 *	added                    |   40 +++++++++++
+	 *	remove                   |  124 --------------------------
+	 *	updated                  |   14 +----
+	 *	rename.from => rename.to |    0
+	 *	.../truncated file name  |   11 ++---
+	 *	binary add               |  Bin 0 -> 1234 bytes
+	 *	binary update            |  Bin 1234 -> 2345 bytes
+	 *	unmerged                 | Unmerged
+	 */
+	if ((data[len - 1] == '-' || data[len - 1] == '+') ||
+	    strstr(pipe, " 0") ||
+	    (strstr(pipe, "Bin") && strstr(pipe, "->")) ||
+	    strstr(pipe, "Unmerged") ||
+	    (data[len - 1] == '0' && (strstr(data, "=>") || !prefixcmp(data, "..."))))
 		return add_line_text(view, text, LINE_DIFF_STAT);
 	return NULL;
 }
