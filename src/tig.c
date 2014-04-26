@@ -83,18 +83,18 @@ view_request(struct view *view, enum request request)
  */
 
 #define TOGGLE_MENU_INFO(_) \
-	_('.', "line numbers",			"line-number-display"), \
-	_('D', "dates",				"date-display"), \
-	_('A', "author",			"author-display"), \
+	_('.', "line numbers",			"line-number"), \
+	_('D', "dates",				"date"), \
+	_('A', "author",			"author"), \
 	_('~', "graphics",			"line-graphics"), \
 	_('g', "revision graph",		"commit-title-graph"), \
-	_('#', "file names",			"file-name-display"), \
-	_('*', "file sizes",			"file-size-display"), \
+	_('#', "file names",			"file-name"), \
+	_('*', "file sizes",			"file-size"), \
 	_('W', "space changes",			"ignore-space"), \
 	_('l', "commit order",			"commit-order"), \
 	_('F', "reference display",		"commit-title-refs"), \
 	_('C', "local change display",		"show-changes"), \
-	_('X', "commit ID display",		"id-display"), \
+	_('X', "commit ID display",		"id"), \
 	_('%', "file filtering",		"file-filter"), \
 	_('$', "commit title overflow display",	"commit-title-overflow"), \
 	_('d', "untracked directory info",	"status-untracked-dirs"), \

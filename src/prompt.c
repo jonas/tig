@@ -664,6 +664,12 @@ find_prompt_toggle(struct prompt_toggle toggles[], size_t toggles_size,
 	char prefixed[SIZEOF_STR];
 	int i;
 
+	if (*prefix && namelen == strlen(prefix) &&
+	    !string_enum_compare(prefix, name, namelen)) {
+		name = "display";
+		namelen = strlen(name);
+	}
+
 	for (i = 0; i < toggles_size; i++) {
 		struct prompt_toggle *toggle = &toggles[i];
 
