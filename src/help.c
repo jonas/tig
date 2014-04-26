@@ -152,10 +152,12 @@ add_help_headers(struct help_request_iterator *iterator, const char *group)
 
 	if (iterator->add_title) {
 		iterator->add_title = FALSE;
-		if (!add_help_line(iterator->view, &help, iterator->keymap, LINE_SECTION) ||
-		    iterator->keymap->hidden)
+		if (!add_help_line(iterator->view, &help, iterator->keymap, LINE_SECTION))
 			return FALSE;
 	}
+
+	if (iterator->keymap->hidden)
+		return FALSE;
 
 	if (iterator->group != group) {
 		iterator->group = group;
