@@ -34,8 +34,8 @@ struct main_state {
 	int reflog_width;
 	char reflogmsg[SIZEOF_STR / 2];
 	bool in_header;
-	bool added_changes_commits;
 	bool with_graph;
+	bool add_changes_parents;
 };
 
 bool main_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data);

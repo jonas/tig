@@ -87,7 +87,7 @@ main_has_changes(const char *argv[])
 	return io.status == 1;
 }
 
-static void
+static bool
 main_add_changes_commit(struct view *view, enum line_type type, const char *parent, const char *title)
 {
 	char ids[SIZEOF_STR] = NULL_ID " ";
@@ -97,9 +97,12 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 	struct timezone tz;
 
 	if (!parent)
-		return;
+		return TRUE;
 
-	string_copy_rev(ids + STRING_SIZE(NULL_ID " "), parent);
+	if (*parent)
+		string_copy_rev(ids + STRING_SIZE(NULL_ID " "), parent);
+	else
+		ids[STRING_SIZE(NULL_ID)] = 0;
 
 	if (!gettimeofday(&now, &tz)) {
 		commit.time.tz = tz.tz_minuteswest * 60;
@@ -108,22 +111,25 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 
 	commit.author = &unknown_ident;
 	main_register_commit(view, &commit, ids, FALSE);
-	if (main_add_commit(view, type, &commit, title, TRUE) && state->with_graph)
-		graph_render_parents(&state->graph);
+	if (!main_add_commit(view, type, &commit, title, TRUE))
+		return FALSE;
+
+	if (state->with_graph) {
+		if (*parent)
+			return graph_render_parents(&state->graph);
+		state->add_changes_parents = TRUE;
+	}
+
+	return TRUE;
 }
 
-static void
+static bool
 main_add_changes_commits(struct view *view, struct main_state *state, const char *parent)
 {
 	const char *staged_argv[] = { GIT_DIFF_STAGED_FILES("--quiet") };
 	const char *unstaged_argv[] = { GIT_DIFF_UNSTAGED_FILES("--quiet") };
 	const char *staged_parent = NULL_ID;
 	const char *unstaged_parent = parent;
-
-	if (!is_head_commit(parent))
-		return;
-
-	state->added_changes_commits = TRUE;
 
 	io_run_bg(update_index_argv);
 
@@ -136,8 +142,8 @@ main_add_changes_commits(struct view *view, struct main_state *state, const char
 		staged_parent = NULL;
 	}
 
-	main_add_changes_commit(view, LINE_STAT_STAGED, staged_parent, "Staged changes");
-	main_add_changes_commit(view, LINE_STAT_UNSTAGED, unstaged_parent, "Unstaged changes");
+	return main_add_changes_commit(view, LINE_STAT_STAGED, staged_parent, "Staged changes")
+	    && main_add_changes_commit(view, LINE_STAT_UNSTAGED, unstaged_parent, "Unstaged changes");
 }
 
 static bool
@@ -190,6 +196,7 @@ main_open(struct view *view, enum open_flags flags)
 	struct main_state *state = view->private;
 	const char **main_argv = pretty_custom_argv;
 	struct view_column *column;
+	bool added_changes_commits = FALSE;
 
 	column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
 	state->with_graph = column && column->opt.commit_title.graph &&
@@ -199,11 +206,18 @@ main_open(struct view *view, enum open_flags flags)
 		main_argv = pretty_raw_argv;
 
 	if (open_in_pager_mode(flags)) {
-		state->added_changes_commits = TRUE;
+		added_changes_commits = TRUE;
 		state->with_graph = FALSE;
 	}
 
-	return begin_update(view, NULL, main_argv, flags);
+	/* This calls reset_view() so must be before adding changes commits. */
+	if (!begin_update(view, NULL, main_argv, flags))
+		return FALSE;
+
+	if (!added_changes_commits && opt_show_changes && repo.is_inside_work_tree)
+		main_add_changes_commits(view, state, "");
+
+	return TRUE;
 }
 
 void
@@ -327,11 +341,15 @@ main_read(struct view *view, char *line)
 		while (*line && !isalnum(*line))
 			line++;
 
-		if (!state->added_changes_commits && opt_show_changes && repo.is_inside_work_tree)
-			main_add_changes_commits(view, state, line);
-		else
-			main_flush_commit(view, commit);
+		if (state->add_changes_parents) {
+			state->add_changes_parents = FALSE;
+			if (!graph_add_parent(graph, line))
+				return FALSE;
+			graph->has_parents = TRUE;
+			graph_render_parents(graph);
+		}
 
+		main_flush_commit(view, commit);
 		main_register_commit(view, &state->current, line, is_boundary);
 
 		author = io_memchr(&view->io, line, 0);

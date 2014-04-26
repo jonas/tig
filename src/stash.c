@@ -21,7 +21,6 @@ stash_open(struct view *view, enum open_flags flags)
 		encoding_arg, "--no-color", "--pretty=raw", NULL };
 	struct main_state *state = view->private;
 
-	state->added_changes_commits = TRUE;
 	state->with_graph = FALSE;
 	return begin_update(view, NULL, stash_argv, flags | OPEN_RELOAD);
 }

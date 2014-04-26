@@ -616,6 +616,10 @@ graph_generate_symbols(struct graph *graph)
 bool
 graph_render_parents(struct graph *graph)
 {
+	if (graph->parents.size == 0 &&
+	    !graph_add_parent(graph, ""))
+		return FALSE;
+
 	if (!graph_expand(graph))
 		return FALSE;
 
@@ -646,10 +650,6 @@ graph_add_commit(struct graph *graph, struct graph_canvas *canvas,
 			return FALSE;
 		graph->has_parents = TRUE;
 	}
-
-	if (graph->parents.size == 0 &&
-	    !graph_add_parent(graph, ""))
-		return FALSE;
 
 	return TRUE;
 }
