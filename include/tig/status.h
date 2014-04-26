@@ -31,8 +31,6 @@ struct status {
 	} new;
 };
 
-extern struct status stage_status;
-extern enum line_type stage_line_type;
 extern const char *update_index_argv[];
 
 bool status_update_file(struct status *status, enum line_type type);

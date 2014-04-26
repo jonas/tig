@@ -23,6 +23,24 @@
 #include "tig/pager.h"
 #include "tig/diff.h"
 #include "tig/status.h"
+#include "tig/stage.h"
+
+static struct status stage_status;
+static enum line_type stage_line_type;
+
+void
+open_stage_view(struct view *prev, struct status *status, enum line_type type, enum open_flags flags)
+{
+	if (type) {
+		stage_line_type = type;
+		if (status)
+			stage_status = *status;
+		else
+			memset(&stage_status, 0, sizeof(stage_status));
+	}
+
+	open_view(prev, &stage_view, flags);
+}
 
 struct stage_state {
 	struct diff_state diff;

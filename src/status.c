@@ -29,8 +29,6 @@
  */
 
 static char status_onbranch[SIZEOF_STR];
-struct status stage_status;
-enum line_type stage_line_type;
 
 /* This should work even for the "On branch" line. */
 static inline bool
@@ -370,15 +368,7 @@ status_enter(struct view *view, struct line *line)
 		return REQ_NONE;
 	}
 
-	if (status) {
-		stage_status = *status;
-	} else {
-		memset(&stage_status, 0, sizeof(stage_status));
-	}
-
-	stage_line_type = line->type;
-
-	open_stage_view(view, flags);
+	open_stage_view(view, status, line->type, flags);
 	return REQ_NONE;
 }
 

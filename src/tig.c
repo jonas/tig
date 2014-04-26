@@ -262,7 +262,7 @@ view_driver(struct view *view, enum request request)
 		open_status_view(view, OPEN_DEFAULT);
 		break;
 	case REQ_VIEW_STAGE:
-		open_stage_view(view, OPEN_DEFAULT);
+		open_stage_view(view, NULL, 0, OPEN_DEFAULT);
 		break;
 	case REQ_VIEW_PAGER:
 		open_pager_view(view, OPEN_DEFAULT);

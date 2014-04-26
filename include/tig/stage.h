@@ -16,13 +16,11 @@
 
 #include "tig/view.h"
 
+struct status;
+
 extern struct view stage_view;
 
-static inline void
-open_stage_view(struct view *prev, enum open_flags flags)
-{
-	open_view(prev, &stage_view, flags);
-}
+void open_stage_view(struct view *prev, struct status *status, enum line_type type, enum open_flags flags);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */
