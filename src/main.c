@@ -20,6 +20,7 @@
 #include "tig/draw.h"
 #include "tig/git.h"
 #include "tig/status.h"
+#include "tig/stage.h"
 #include "tig/main.h"
 #include "tig/diff.h"
 
@@ -445,26 +446,10 @@ main_request(struct view *view, enum request request, struct line *line)
 			maximize_view(view, TRUE);
 
 		if (line->type == LINE_STAT_UNSTAGED
-		    || line->type == LINE_STAT_STAGED) {
-			struct view *diff = &diff_view;
-			const char *diff_staged_argv[] = {
-				GIT_DIFF_STAGED(encoding_arg,
-					diff_context_arg(),
-					ignore_space_arg(), NULL, NULL)
-			};
-			const char *diff_unstaged_argv[] = {
-				GIT_DIFF_UNSTAGED(encoding_arg,
-					diff_context_arg(),
-					ignore_space_arg(), NULL, NULL)
-			};
-			const char **diff_argv = line->type == LINE_STAT_STAGED
-				? diff_staged_argv : diff_unstaged_argv;
-
-			open_argv(view, diff, diff_argv, NULL, flags);
-			break;
-		}
-
-		open_diff_view(view, flags);
+		    || line->type == LINE_STAT_STAGED)
+			open_stage_view(view, NULL, line->type, flags); 
+		else
+			open_diff_view(view, flags);
 		break;
 
 	case REQ_REFRESH:
@@ -510,6 +495,7 @@ main_select(struct view *view, struct line *line)
 
 	if (line->type == LINE_STAT_STAGED || line->type == LINE_STAT_UNSTAGED) {
 		string_ncopy(view->ref, commit->title, strlen(commit->title));
+		status_stage_info(view->env->status, line->type, NULL);
 	} else {
 		struct ref *branch = main_get_commit_branch(line, commit);
 

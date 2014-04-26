@@ -167,8 +167,21 @@ stage_update_files(struct view *view, enum line_type type)
 {
 	struct line *line;
 
-	view = view->parent;
+	if (view->parent != &status_view) {
+		bool updated = FALSE;
 
+		for (line = view->line; (line = find_next_line_by_type(view, line, LINE_DIFF_CHUNK)); line++) {
+			if (!stage_apply_chunk(view, line, NULL, FALSE)) {
+				report("Failed to apply chunk");
+				return FALSE;
+			}
+			updated = TRUE;
+		}
+
+		return updated;
+	}
+
+	view = view->parent;
 	line = find_next_line_by_type(view, view->line, type);
 	return line && status_update_files(view, line + 1);
 }
@@ -327,6 +340,14 @@ stage_split_chunk(struct view *view, struct line *chunk_start)
 static bool
 stage_exists(struct view *view, struct status *status, enum line_type type)
 {
+	if (view->parent != &status_view) {
+		struct line *line = find_next_line_by_type(view, view->line, type);
+
+		if (line)
+			select_view_line(view, line - view->line);
+		return line != NULL;
+	}
+
 	return status_exists(view, status, type);
 }
 
