@@ -64,7 +64,7 @@ grep_get_column_data(struct view *view, const struct line *line, struct view_col
 		static struct view_column file_name_column;
 
 		file_name_column.type = VIEW_COLUMN_FILE_NAME;
-		file_name_column.opt.file_name.show = FILENAME_ALWAYS;
+		file_name_column.opt.file_name.display = FILENAME_ALWAYS;
 
 		column_data->section = &file_name_column;
 	}
@@ -139,7 +139,7 @@ grep_open(struct view *view, enum open_flags flags)
 	{
 		struct view_column *column = get_view_column(view, VIEW_COLUMN_FILE_NAME);
 
-		state->no_file_group = !column || column->opt.file_name.show != FILENAME_NO;
+		state->no_file_group = !column || column->opt.file_name.display != FILENAME_NO;
 	}
 
 	return begin_update(view, NULL, argv, flags);

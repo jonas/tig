@@ -68,8 +68,8 @@ blame_update_file_name_visibility(struct view *view)
 	if (!column)
 		return;
 
-	column->hidden = column->opt.file_name.show == FILENAME_NO ||
-			 (column->opt.file_name.show == FILENAME_AUTO &&
+	column->hidden = column->opt.file_name.display == FILENAME_NO ||
+			 (column->opt.file_name.display == FILENAME_AUTO &&
 			  !state->auto_filename_display);
 }
 

@@ -66,44 +66,44 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS);
  */
 
 #define AUTHOR_COLUMN_OPTIONS(_) \
-	_(show,				enum author,		VIEW_NO_FLAGS) \
+	_(display,			enum author,		VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define COMMIT_TITLE_COLUMN_OPTIONS(_) \
-	_(show,				bool,			VIEW_NO_FLAGS) \
+	_(display,			bool,			VIEW_NO_FLAGS) \
 	_(graph,			bool,			VIEW_LOG_LIKE) \
 	_(refs,				bool,			VIEW_NO_FLAGS) \
 	_(overflow,			int,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define DATE_COLUMN_OPTIONS(_) \
-	_(show,				enum date,		VIEW_NO_FLAGS) \
+	_(display,			enum date,		VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define FILE_NAME_COLUMN_OPTIONS(_) \
-	_(show,				enum filename,		VIEW_GREP_LIKE) \
+	_(display,			enum filename,		VIEW_GREP_LIKE) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define FILE_SIZE_COLUMN_OPTIONS(_) \
-	_(show,				enum file_size,		VIEW_NO_FLAGS) \
+	_(display,			enum file_size,		VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define ID_COLUMN_OPTIONS(_) \
-	_(show,				bool,			VIEW_NO_FLAGS) \
+	_(display,			bool,			VIEW_NO_FLAGS) \
 	_(color,			bool,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define LINE_NUMBER_COLUMN_OPTIONS(_) \
-	_(show,				bool,			VIEW_NO_FLAGS) \
+	_(display,			bool,			VIEW_NO_FLAGS) \
 	_(interval,			int,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define MODE_COLUMN_OPTIONS(_) \
-	_(show,				bool,			VIEW_NO_FLAGS) \
+	_(display,			bool,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define REF_COLUMN_OPTIONS(_) \
-	_(show,				bool,			VIEW_NO_FLAGS) \
+	_(display,			bool,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define SECTION_COLUMN_OPTIONS(_) \
@@ -111,11 +111,11 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS);
 	_(text,				const char *,		VIEW_NO_FLAGS) \
 
 #define STATUS_COLUMN_OPTIONS(_) \
-	_(show,				enum status_label,	VIEW_NO_FLAGS) \
+	_(display,			enum status_label,	VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define TEXT_COLUMN_OPTIONS(_) \
-	_(show,				bool,			VIEW_NO_FLAGS) \
+	_(display,			bool,			VIEW_NO_FLAGS) \
 	_(commit_title_overflow,	int,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 

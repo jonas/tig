@@ -939,7 +939,7 @@ sort_view(struct view *view, bool change_field)
 			state->current = state->current->next
 				? state->current->next : view->columns;
 			if (get_sort_field(view) == VIEW_COLUMN_ID &&
-			    !state->current->opt.id.show)
+			    !state->current->opt.id.display)
 				continue;
 			break;
 		}
@@ -960,7 +960,7 @@ view_column_text(struct view *view, struct view_column_data *column_data,
 	switch (column->type) {
 	case VIEW_COLUMN_AUTHOR:
 		if (column_data->author)
-			text = mkauthor(column_data->author, column->opt.author.width, column->opt.author.show);
+			text = mkauthor(column_data->author, column->opt.author.width, column->opt.author.display);
 		break;
 
 	case VIEW_COLUMN_COMMIT_TITLE:
@@ -969,7 +969,7 @@ view_column_text(struct view *view, struct view_column_data *column_data,
 
 	case VIEW_COLUMN_DATE:
 		if (column_data->date)
-			text = mkdate(column_data->date, column->opt.date.show);
+			text = mkdate(column_data->date, column->opt.date.display);
 		break;
 
 	case VIEW_COLUMN_REF:
@@ -984,11 +984,11 @@ view_column_text(struct view *view, struct view_column_data *column_data,
 
 	case VIEW_COLUMN_FILE_SIZE:
 		if (column_data->file_size)
-			text = mkfilesize(*column_data->file_size, column->opt.file_size.show);
+			text = mkfilesize(*column_data->file_size, column->opt.file_size.display);
 		break;
 
 	case VIEW_COLUMN_ID:
-		if (column->opt.id.show)
+		if (column->opt.id.display)
 			text = column_data->reflog ? column_data->reflog : column_data->id;
 		break;
 
@@ -1002,7 +1002,7 @@ view_column_text(struct view *view, struct view_column_data *column_data,
 
 	case VIEW_COLUMN_STATUS:
 		if (column_data->status)
-			text = mkstatus(*column_data->status, column->opt.status.show);
+			text = mkstatus(*column_data->status, column->opt.status.display);
 		break;
 
 	case VIEW_COLUMN_SECTION:
@@ -1101,7 +1101,7 @@ parse_view_column_config(char **pos, const char **name, const char **value, bool
 	optlen = strcspn(*pos, ":=");
 
 	if (first) {
-		*name = "show";
+		*name = "display";
 
 		if (optlen == len) {
 			*value = len ? *pos : "yes";

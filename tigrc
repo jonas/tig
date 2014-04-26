@@ -12,38 +12,38 @@
 # Supported column types and their options:
 #
 #   author
-#    - show (enum) [no|full|abbreviated|email|email-user]
+#    - display (enum) [no|full|abbreviated|email|email-user]
 #					: Show author information?
 #   commit-title
-#    - show (bool)			: Show the commit title?
+#    - display (bool)			: Show the commit title?
 #    - graph (bool)			: Show the commit revision graph? (main view only)
 #    - refs (bool)			: Show branches, tags and remotes? (main view only)
 #    - overflow (boolint)		: Highlight overflows? Default to 50 when enabled.
 #
 #   date
-#    - show (enum) [no|default|local|relative|short]
+#    - display (enum) [no|default|local|relative|short]
 #					: Show dates?
 #   file-name
-#    - show (enum) [no|always|auto]	: Show file names?
+#    - display (enum) [no|always|auto]	: Show file names?
 #
 #   file-size
-#    - show (enum) [no|default|units]	: Show file sizes?
+#    - display (enum) [no|default|units]	: Show file sizes?
 #
 #   id
-#    - show (bool)			: Show commit/tree ID?
+#    - display (bool)			: Show commit/tree ID?
 #
 #   line-number
-#    - show (bool)			: Show line numbers?
+#    - display (bool)			: Show line numbers?
 #    - interval (int)			: Interval between line numbers
 #
 #   mode
-#    - show (bool)			: Show file modes?
+#    - display (bool)			: Show file modes?
 #
 #   status
-#    - show (enum) [no|short|long]	: Show status label?
+#    - display (enum) [no|short|long]	: Show status label?
 #
 #   text
-#    - show (bool)			: Show text?
+#    - display (bool)			: Show text?
 #    - commit-title-overflow (boolint)	: Highlight overflow in log and diff view?
 #
 # All columns also support a width option to configure the max width of
@@ -184,7 +184,7 @@ bind generic	Q	quit			# Close all views and quit
 bind status	u	status-update		# Stage/unstage changes in file
 bind status	!	status-revert		# Revert changes in file
 bind status	M	status-merge		# Open git-mergetool(1)
-#bind status	???	:toggle show-status	# Show short or long status labels
+#bind status	???	:toggle status-display	# Show short or long status labels
 bind stage	u	status-update		# Stage/unstage current diff (c)hunk
 bind stage	1	stage-update-line	# Stage/unstage current line
 bind stage	!	status-revert		# Revert current diff (c)hunk
@@ -231,24 +231,25 @@ bind generic	o	options			# Open the options menu
 # Bindings for toggling settings
 bind generic	I	:toggle sort-order	# Toggle ascending/descending sort order
 bind generic	i	:toggle sort-field	# Toggle field to sort by
-bind generic	.	:toggle show-line-number
+bind generic	.	:toggle line-number-display
 						# Toggle line numbers
-bind generic	D	:toggle show-date	# Toggle date display
-bind generic	A	:toggle show-author	# Toggle author display
+bind generic	D	:toggle date-display	# Toggle date display
+bind generic	A	:toggle author-display	# Toggle author display
 bind generic	g	:toggle commit-title-graph
 						# Toggle revision graph visualization
 bind generic	~	:toggle line-graphics	# Toggle (line) graphics mode
-bind generic	Hash	:toggle show-file-name	# Toggle file name display
+bind generic	Hash	:toggle file-name-display
+						# Toggle file name display
 bind generic	F	:toggle commit-title-refs
 						# Toggle reference display (tags/branches)
 # bind generic	???	:toogle show-changes	# Toggle local changes display in the main view
 bind generic	W	:toggle ignore-space	# Toggle ignoring whitespace in diffs
 # bind generic	?	:toggle commit-order	# Toggle commit ordering
-bind generic	X	:toggle show-id		# Toggle commit ID display
+bind generic	X	:toggle id-display	# Toggle commit ID display
 bind generic	$	:toggle commit-title-overflow
 						# Toggle highlighting of commit title overflow
-# bind generic	???	:toggle show-file-size	# Toggle file size format
-# bind generic	???	:toggle show-status	# Toggle status display
+# bind generic	???	:toggle file-size-display	# Toggle file size format
+# bind generic	???	:toggle status-display	# Toggle status display
 # bind generic	???	:toggle status-untracked-dirs
 						# Toggle display of file in untracked directories
 # bind generic	???	:toggle vertical-split	# Toggle vertical split

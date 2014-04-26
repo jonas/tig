@@ -195,7 +195,7 @@ draw_field(struct view *view, enum line_type type, const char *text, int width, 
 static bool
 draw_date(struct view *view, struct view_column *column, const struct time *time)
 {
-	enum date date = column->opt.date.show;
+	enum date date = column->opt.date.display;
 	const char *text = mkdate(time, date);
 	enum align align = date == DATE_RELATIVE ? ALIGN_RIGHT : ALIGN_LEFT;
 
@@ -209,9 +209,9 @@ static bool
 draw_author(struct view *view, struct view_column *column, const struct ident *author)
 {
 	bool trim = author_trim(column->width);
-	const char *text = mkauthor(author, column->width, column->opt.author.show);
+	const char *text = mkauthor(author, column->width, column->opt.author.display);
 
-	if (column->opt.author.show == AUTHOR_NO)
+	if (column->opt.author.display == AUTHOR_NO)
 		return FALSE;
 
 	return draw_field(view, LINE_AUTHOR, text, column->width, ALIGN_LEFT, trim);
@@ -231,7 +231,7 @@ draw_id(struct view *view, struct view_column *column, const char *id)
 	};
 	enum line_type type = LINE_ID;
 
-	if (!column->opt.id.show)
+	if (!column->opt.id.display)
 		return FALSE;
 
 	if (column->opt.id.color)
@@ -248,7 +248,7 @@ draw_filename(struct view *view, struct view_column *column, const char *filenam
 	enum line_type type = S_ISDIR(mode) ? LINE_DIRECTORY : LINE_FILE;
 	int column_width = column->width ? column->width : width;
 
-	if (column->opt.file_name.show == FILENAME_NO)
+	if (column->opt.file_name.display == FILENAME_NO)
 		return FALSE;
 
 	return draw_field(view, type, filename, column_width, ALIGN_LEFT, trim);
@@ -257,9 +257,9 @@ draw_filename(struct view *view, struct view_column *column, const char *filenam
 static bool
 draw_file_size(struct view *view, struct view_column *column, unsigned long size, mode_t mode)
 {
-	const char *str = S_ISDIR(mode) ? NULL : mkfilesize(size, column->opt.file_size.show);
+	const char *str = S_ISDIR(mode) ? NULL : mkfilesize(size, column->opt.file_size.display);
 
-	if (!column->width || column->opt.file_size.show == FILE_SIZE_NO)
+	if (!column->width || column->opt.file_size.display == FILE_SIZE_NO)
 		return FALSE;
 
 	return draw_field(view, LINE_FILE_SIZE, str, column->width, ALIGN_RIGHT, FALSE);
@@ -270,7 +270,7 @@ draw_mode(struct view *view, struct view_column *column, mode_t mode)
 {
 	const char *str = mkmode(mode);
 
-	if (!column->width || !column->opt.mode.show)
+	if (!column->width || !column->opt.mode.display)
 		return FALSE;
 
 	return draw_field(view, LINE_MODE, str, column->width, ALIGN_LEFT, FALSE);
@@ -285,7 +285,7 @@ draw_lineno_custom(struct view *view, struct view_column *column, unsigned int l
 	char *text = NULL;
 	chtype separator = opt_line_graphics ? ACS_VLINE : '|';
 
-	if (!column->opt.line_number.show)
+	if (!column->opt.line_number.display)
 		return FALSE;
 
 	if (lineno == 1 || (lineno % column->opt.line_number.interval) == 0) {
@@ -348,7 +348,7 @@ static bool
 draw_status(struct view *view, struct view_column *column,
 	    enum line_type type, const char *status)
 {
-	const char *label = mkstatus(status ? *status : 0, column->opt.status.show);
+	const char *label = mkstatus(status ? *status : 0, column->opt.status.display);
 
 	return draw_field(view, type, label, column->width, ALIGN_LEFT, FALSE);
 }

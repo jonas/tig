@@ -69,10 +69,7 @@ enum_name_prefixed(char buf[], size_t bufsize, const char *prefix, const char *n
 	char prefixed[SIZEOF_STR];
 
 	if (*prefix) {
-		const char *first = !strcasecmp("show", name) ? name : prefix;
-		const char *last = first == name ? prefix : name;
-
-		if (!string_format(prefixed, "%s-%s", first, last))
+		if (!string_format(prefixed, "%s-%s", prefix, name))
 			return FALSE;
 		name = prefixed;
 	}

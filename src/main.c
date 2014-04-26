@@ -295,7 +295,7 @@ main_add_reflog(struct view *view, struct main_state *state, char *reflog)
 		struct view_column *column = get_view_column(view, VIEW_COLUMN_ID);
 
 		state->reflog_width = id_width;
-		if (column && column->opt.id.show)
+		if (column && column->opt.id.display)
 			view->force_redraw = TRUE;
 	}
 
