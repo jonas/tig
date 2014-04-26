@@ -318,7 +318,7 @@ readline_toggle_generator(const char *text, int state)
 #define DEFINE_OPTION_WORD(name, type, flags) argv_append(&words, #name);
 #define DEFINE_COLUMN_OPTIONS_WORD(name, type, flags) #name,
 #define DEFINE_COLUMN_OPTIONS_WORDS(name, id, options) \
-	{ \
+	if (VIEW_COLUMN_##id != VIEW_COLUMN_SECTION) { \
 		const char *vars[] = { \
 			options(DEFINE_COLUMN_OPTIONS_WORD) \
 		}; \
