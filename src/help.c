@@ -193,12 +193,14 @@ help_open_keymap(void *data, const struct request_info *req_info, const char *gr
 }
 
 static void
-help_open_keymap_run_requests(struct help_request_iterator *iterator, bool internal)
+help_open_keymap_run_requests(struct help_request_iterator *iterator, bool internal, bool toggles)
 {
 	struct view *view = iterator->view;
 	struct help_state *state = view->private;
 	struct keymap *keymap = iterator->keymap;
-	const char *group = internal ? "Internal commands: " : "External commands:";
+	const char *group = !internal ?	"External commands:" :
+			    toggles ?	"Option toggling:" :
+					"Internal commands:";
 	enum request request = REQ_RUN_REQUESTS + 1;
 	struct help *help;
 
@@ -212,6 +214,9 @@ help_open_keymap_run_requests(struct help_request_iterator *iterator, bool inter
 		if (req->flags.internal != !!internal ||
 		    req->keymap != keymap ||
 		    !*(key = get_keys(keymap, request, TRUE)))
+			continue;
+
+		if (toggles != !strcmp(req->argv[0], "toggle"))
 			continue;
 
 		if (!add_help_headers(iterator, group) ||
@@ -245,8 +250,9 @@ help_open(struct view *view, enum open_flags flags)
 		struct help_request_iterator iterator = { view, keymap, TRUE };
 
 		if (foreach_request(help_open_keymap, &iterator)) {
-			help_open_keymap_run_requests(&iterator, TRUE);
-			help_open_keymap_run_requests(&iterator, FALSE);
+			help_open_keymap_run_requests(&iterator, TRUE, TRUE);
+			help_open_keymap_run_requests(&iterator, TRUE, FALSE);
+			help_open_keymap_run_requests(&iterator, FALSE, FALSE);
 		}
 	}
 
