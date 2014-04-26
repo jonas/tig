@@ -38,7 +38,6 @@ bool status_update_files(struct view *view, struct line *line);
 
 bool status_revert(struct status *status, enum line_type type, bool has_none);
 bool status_exists(struct view *view, struct status *status, enum line_type type);
-void status_restore(struct view *view);
 
 bool status_stage_info_(char *buf, size_t bufsize,
 			enum line_type type, struct status *status);

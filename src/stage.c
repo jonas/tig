@@ -163,6 +163,17 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *single, bo
 }
 
 static bool
+stage_update_files(struct view *view, enum line_type type)
+{
+	struct line *line;
+
+	view = view->parent;
+
+	line = find_next_line_by_type(view, view->line, type);
+	return line && status_update_files(view, line + 1);
+}
+
+static bool
 stage_update(struct view *view, struct line *line, bool single)
 {
 	struct line *chunk = NULL;
@@ -177,13 +188,7 @@ stage_update(struct view *view, struct line *line, bool single)
 		}
 
 	} else if (!stage_status.status) {
-		view = view->parent;
-
-		for (line = view->line; view_has_line(view, line); line++)
-			if (line->type == stage_line_type)
-				break;
-
-		if (!status_update_files(view, line + 1)) {
+		if (!stage_update_files(view, stage_line_type)) {
 			report("Failed to update files");
 			return FALSE;
 		}
@@ -319,6 +324,12 @@ stage_split_chunk(struct view *view, struct line *chunk_start)
 	}
 }
 
+static bool
+stage_exists(struct view *view, struct status *status, enum line_type type)
+{
+	return status_exists(view, status, type);
+}
+
 static enum request
 stage_request(struct view *view, enum request request, struct line *line)
 {
@@ -410,10 +421,8 @@ stage_request(struct view *view, enum request request, struct line *line)
 
 	/* Check whether the staged entry still exists, and close the
 	 * stage view if it doesn't. */
-	if (!status_exists(view->parent, &stage_status, stage_line_type)) {
-		status_restore(view->parent);
+	if (!stage_exists(view->parent, &stage_status, stage_line_type))
 		return REQ_VIEW_CLOSE;
-	}
 
 	refresh_view(view);
 

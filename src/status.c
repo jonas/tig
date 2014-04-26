@@ -166,7 +166,7 @@ const char *update_index_argv[] = {
 
 /* Restore the previous line number to stay in the context or select a
  * line with something that can be updated. */
-void
+static void
 status_restore(struct view *view)
 {
 	if (!check_position(&view->prev_pos))
@@ -383,12 +383,10 @@ status_exists(struct view *view, struct status *status, enum line_type type)
 
 		if (line->type != type)
 			continue;
-		if (!pos && (!status || !status->status) && line[1].data) {
+		if ((!pos && (!status || !status->status) && line[1].data) ||
+		    (pos && !strcmp(status->new.name, pos->new.name))) {
 			select_view_line(view, lineno);
-			return TRUE;
-		}
-		if (pos && !strcmp(status->new.name, pos->new.name)) {
-			select_view_line(view, lineno);
+			status_restore(view);
 			return TRUE;
 		}
 	}
