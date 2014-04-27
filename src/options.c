@@ -852,9 +852,10 @@ load_options(void)
 		struct config_state config = { "<built-in>", 0, FALSE };
 		struct io io;
 
-		if (!io_from_string(&io, builtin_config) ||
-		    !io_load(&io, " \t", read_option, &config) == ERR ||
-		    config.errors == TRUE)
+		if (!io_from_string(&io, builtin_config))
+			die("Failed to get built-in config");
+		io.span = TRUE;
+		if (!io_load(&io, " \t", read_option, &config) == ERR || config.errors == TRUE)
 			die("Error in built-in config");
 	}
 
