@@ -182,8 +182,10 @@ init_line_info_color_pair(struct line_info *info, enum line_type type,
 void
 init_colors(void)
 {
-	int default_bg = line_rule[LINE_DEFAULT].info.bg;
-	int default_fg = line_rule[LINE_DEFAULT].info.fg;
+	struct line_rule query = { "default", STRING_SIZE("default") };
+	struct line_rule *rule = find_line_rule(&query);
+	int default_bg = rule->info.bg;
+	int default_fg = rule->info.fg;
 	enum line_type type;
 
 	start_color();
