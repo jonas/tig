@@ -79,6 +79,7 @@ Improvements:
  - Add support for `--graph` and highlight diff stats in the log view.
  - Add builtin command bindings: `!` to delete branch, `!` to drop stash.
  - Add %(remote) and %(tag) symbols to complement %(branch).
+ - Git color mappings can be configured in tigrc.
 
 Bug fixes:
 

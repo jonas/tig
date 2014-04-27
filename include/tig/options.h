@@ -33,6 +33,7 @@
 	_(editor_line_number,		bool,			VIEW_NO_FLAGS) \
 	_(file_filter,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
 	_(focus_child,			bool,			VIEW_NO_FLAGS) \
+	_(git_colors,			const char **,		VIEW_NO_FLAGS) \
 	_(grep_view,			const char **,		VIEW_NO_FLAGS) \
 	_(horizontal_scroll,		double,			VIEW_NO_FLAGS) \
 	_(id_width,			int,			VIEW_NO_FLAGS) \
@@ -44,7 +45,6 @@
 	_(mouse,			bool,			VIEW_NO_FLAGS) \
 	_(mouse_scroll,			int,			VIEW_NO_FLAGS) \
 	_(pager_view,			const char **,		VIEW_NO_FLAGS) \
-	_(read_git_colors,		bool,			VIEW_NO_FLAGS) \
 	_(refs_view,			const char **,		VIEW_NO_FLAGS) \
 	_(show_changes,			bool,			VIEW_NO_FLAGS) \
 	_(show_notes,			bool,			VIEW_NO_FLAGS) \

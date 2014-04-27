@@ -49,8 +49,8 @@ the Git configuration:
 
 'color.*'::
 
-	Colors for the various UI types. Can be completely disabled by setting
-	'read-git-colors'.
+	Colors for the various UI types. Can be configured via the 'git-colors'
+	setting.
 
 'core.abbrev'::
 
@@ -85,7 +85,7 @@ Examples:
 
 --------------------------------------------------------------------------
 set commit-order = topo		# Order commits topologically
-set read-git-colors = no	# Do not read Git's color settings.
+set git-colors = no		# Do not read Git's color settings.
 set horizontal-scroll = 33%	# Scroll 33% of the view width
 set blame-options = -C -C -C	# Blame lines from other files
 
@@ -183,9 +183,11 @@ The following variables can be set:
 	Mouse support requires that ncurses itself support mouse events and that
 	you have enabled mouse support in ~/.tigrc with `set mouse = true`.
 
-'read-git-colors' (bool)::
+'git-colors' (list)::
 
-	Whether to read Git's color settings. True by default.
+	A space separated list of "key=value" pairs where the key is a Git color
+	name and the value is a Tig color name, e.g. "branch.current=main-head"
+	and "grep.filename=grep.file". Set to "no" to disable.
 
 'show-notes' (mixed) [note reference | bool]::
 

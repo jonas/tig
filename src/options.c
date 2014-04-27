@@ -616,6 +616,9 @@ option_set_command(int argc, const char *argv[])
 		if (index != -1)
 			return error("%s is obsolete; use the %s view column options instead",
 				     obsolete[index][0], obsolete[index][1]);
+
+		if (!strcmp(argv[0], "read-git-colors"))
+			return error("read-git-colors has been obsoleted by the git-colors option");
 	}
 
 	return error("Unknown option name: %s", argv[0]);
@@ -970,46 +973,32 @@ parse_git_color_option(struct line_info *info, char *value)
 static void
 set_git_color_option(const char *name, char *value)
 {
-	static const char *git_colors[][2] = {
-		{ "branch.current", "main-head" },
-		{ "branch.local", "main-ref" },
-		{ "branch.plain", "main-ref" },
-		{ "branch.remote", "main-remote" },
-
-		{ "diff.meta", "diff-header" },
-		{ "diff.meta", "diff-index" },
-		{ "diff.meta", "diff-oldmode" },
-		{ "diff.meta", "diff-newmode" },
-		{ "diff.frag", "diff-chunk" },
-		{ "diff.old", "diff-del" },
-		{ "diff.new", "diff-add" },
-
-		{ "grep.filename", "grep.file" },
-		{ "grep.linenumber", "grep.line-number" },
-		{ "grep.separator", "grep.delimiter" },
-
-		{ "status.branch", "status.header" },
-		{ "status.added", "stat-staged" },
-		{ "status.updated", "stat-staged" },
-		{ "status.changed", "stat-unstaged" },
-		{ "status.untracked", "stat-untracked" },
-	};
 	struct line_info parsed = {};
+	struct line_info *color = NULL;
+	size_t namelen = strlen(name);
 	int i;
 
-	if (!opt_read_git_colors)
+	if (!opt_git_colors)
 		return;
 
-	i = find_remapped(git_colors, ARRAY_SIZE(git_colors), name);
-	if (i < 0 || !parse_git_color_option(&parsed, value))
-		return;
-
-	for (; i < ARRAY_SIZE(git_colors) && !strcasecmp(git_colors[i][0], name); i++) {
+	for (i = 0; opt_git_colors[i]; i++) {
 		struct line_rule rule = {};
 		const char *prefix = NULL;
 		struct line_info *info;
+		const char *alias = opt_git_colors[i];
+		const char *sep = strchr(alias, '=');
 
-		if (parse_color_name(git_colors[i][1], &rule, &prefix) == SUCCESS &&
+		if (!sep || namelen != sep - alias ||
+		    string_enum_compare(name, alias, namelen))
+			continue;
+
+		if (!color) {
+			color = parse_git_color_option(&parsed, value);
+			if (!color)
+				return;
+		}
+
+		if (parse_color_name(sep + 1, &rule, &prefix) == SUCCESS &&
 		    (info = add_line_rule(prefix, &rule))) {
 			info->fg = parsed.fg;
 			info->bg = parsed.bg;

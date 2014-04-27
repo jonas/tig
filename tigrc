@@ -95,7 +95,6 @@ set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set blame-options		= -C -C -C	# User-defined options for `tig blame` (blame)
 
 # Misc
-set read-git-colors		= yes		# Use Git colors?
 set ignore-case			= no		# Ignore case when searching?
 set focus-child			= yes		# Move focus to child view when opened?
 set horizontal-scroll		= 50%		# Number of columns to scroll as % of width
@@ -360,3 +359,29 @@ color palette-4			default	default
 color palette-5			white	default
 color palette-6			red	default
 color graph-commit		blue	default
+
+# Mappings for colors read from git configuration.
+# Set to "no" to disable.
+set git-colors = \
+	branch.current=main-head \
+	branch.local=main-ref \
+	branch.plain=main-ref \
+	branch.remote=main-remote \
+	\
+	diff.meta=diff-header \
+	diff.meta=diff-index \
+	diff.meta=diff-oldmode \
+	diff.meta=diff-newmode \
+	diff.frag=diff-chunk \
+	diff.old=diff-del \
+	diff.new=diff-add \
+	\
+	grep.filename=grep.file \
+	grep.linenumber=grep.line-number \
+	grep.separator=grep.delimiter \
+	\
+	status.branch=status.header \
+	status.added=stat-staged \
+	status.updated=stat-staged \
+	status.changed=stat-unstaged \
+	status.untracked=stat-untracked
