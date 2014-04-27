@@ -340,15 +340,16 @@ stage_split_chunk(struct view *view, struct line *chunk_start)
 static bool
 stage_exists(struct view *view, struct status *status, enum line_type type)
 {
-	if (view->parent != &status_view) {
-		struct line *line = find_next_line_by_type(view, view->line, type);
+	struct view *parent = view->parent;
+	struct line *line;
 
-		if (line)
-			select_view_line(view, line - view->line);
-		return line != NULL;
-	}
+	if (parent == &status_view)
+		return status_exists(parent, status, type);
 
-	return status_exists(view, status, type);
+	line = find_next_line_by_type(parent, parent->line, type);
+	if (line)
+		select_view_line(parent, line - parent->line);
+	return line != NULL;
 }
 
 static enum request
@@ -442,7 +443,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 
 	/* Check whether the staged entry still exists, and close the
 	 * stage view if it doesn't. */
-	if (!stage_exists(view->parent, &stage_status, stage_line_type))
+	if (!stage_exists(view, &stage_status, stage_line_type))
 		return REQ_VIEW_CLOSE;
 
 	refresh_view(view);
