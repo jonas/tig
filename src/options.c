@@ -848,7 +848,8 @@ load_options(void)
 	if (!custom_tigrc_system)
 		tigrc_system = SYSCONFDIR "/tigrc";
 
-	if (load_option_file(tigrc_system) == ERROR_FILE_DOES_NOT_EXIST && !custom_tigrc_system) {
+	if (!*tigrc_system ||
+	    (load_option_file(tigrc_system) == ERROR_FILE_DOES_NOT_EXIST && !custom_tigrc_system)) {
 		struct config_state config = { "<built-in>", 0, FALSE };
 		struct io io;
 

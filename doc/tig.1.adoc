@@ -186,7 +186,8 @@ TIGRC_USER::
 
 TIGRC_SYSTEM::
 	Path of the system wide configuration file (defaults to
-	`{sysconfdir}/tigrc`).
+	`{sysconfdir}/tigrc`). Define to empty string to use built-in
+	configuration.
 
 TIG_LS_REMOTE::
 	Set command for retrieving all repository references. The command
