@@ -78,6 +78,7 @@ Improvements:
  - Add completion and history support to the prompt via readline. (GH #185)
  - Add support for `--graph` and highlight diff stats in the log view.
  - Add builtin command bindings: `!` to delete branch, `!` to drop stash.
+ - Add %(remote) and %(tag) symbols to complement %(branch).
 
 Bug fixes:
 

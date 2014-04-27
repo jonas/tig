@@ -17,6 +17,8 @@
 #include "tig/tig.h"
 #include "tig/types.h"
 
+struct argv_env;
+
 struct ref {
 	enum reference_type type;
 	char id[SIZEOF_REV];	/* Commit SHA1 ID */
@@ -41,6 +43,7 @@ void foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data)
 int load_refs(bool force);
 int add_ref(const char *id, char *name, const char *remote_name, const char *head);
 int ref_compare(const struct ref *ref1, const struct ref *ref2);
+void ref_update_env(struct argv_env *env, const struct ref *ref, bool clear);
 
 struct ref_format {
 	const char *start;

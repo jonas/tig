@@ -172,11 +172,9 @@ refs_select(struct view *view, struct line *line)
 		return;
 	}
 	string_copy_rev(view->ref, reference->ref->id);
-	string_copy_rev(view->env->commit, reference->ref->id);
 	string_copy_rev(view->env->head, reference->ref->id);
 	string_copy_rev(view->env->ref, reference->ref->name);
-	if (reference->ref->type == REFERENCE_BRANCH)
-		string_copy_rev(view->env->branch, reference->ref->name);
+	ref_update_env(view->env, reference->ref, TRUE);
 }
 
 static struct view_ops refs_ops = {

@@ -129,6 +129,8 @@ set mouse-scroll		= 3		# Number of lines to scroll via the mouse
 #   %(commit)		The current commit ID.
 #   %(blob)		The current blob ID.
 #   %(branch)		The current branch name.
+#   %(remote)		The current remote name.
+#   %(tag)		The current tag name.
 #   %(stash)		The current stash name.
 #   %(directory)	The current directory path in the tree view; 
 #			empty for the root directory.

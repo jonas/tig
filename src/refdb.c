@@ -274,6 +274,30 @@ add_ref(const char *id, char *name, const char *remote_name, const char *head)
 	return add_to_refs(id, strlen(id), name, strlen(name), &opt);
 }
 
+void
+ref_update_env(struct argv_env *env, const struct ref *ref, bool clear)
+{
+	if (clear)
+		env->tag[0] = env->remote[0] = env->branch[0] = 0;
+
+	string_copy_rev(env->commit, ref->id);
+
+	if (ref_is_tag(ref)) {
+		string_copy_rev(env->tag, ref->name);
+
+	} else if (ref_is_remote(ref)) {
+		const char *sep = strchr(ref->name, '/');
+
+		if (!sep)
+			return;
+		string_ncopy(env->remote, ref->name, sep - ref->name);
+		string_copy_rev(env->branch, sep + 1);
+
+	} else if (ref->type == REFERENCE_BRANCH) {
+		string_copy_rev(env->branch, ref->name);
+	}
+}
+
 static struct ref_format **ref_formats;
 
 const struct ref_format *

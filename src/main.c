@@ -464,28 +464,14 @@ main_request(struct view *view, enum request request, struct line *line)
 	return REQ_NONE;
 }
 
-static struct ref *
-main_get_commit_branch(struct line *line, struct commit *commit)
+static void
+main_update_env(struct view *view, struct line *line, struct commit *commit)
 {
 	struct ref_list *list = main_get_commit_refs(line, commit);
-	struct ref *branch = NULL;
 	size_t i;
 
-	for (i = 0; list && i < list->size; i++) {
-		struct ref *ref = list->refs[i];
-
-		switch (get_line_type_from_ref(ref)) {
-		case LINE_MAIN_HEAD:
-		case LINE_MAIN_REF:
-			/* Always prefer local branches. */
-			return ref;
-
-		default:
-			branch = ref;
-		}
-	}
-
-	return branch;
+	for (i = 0; list && i < list->size; i++)
+		ref_update_env(view->env, list->refs[list->size - i - 1], !i);
 }
 
 void
@@ -497,11 +483,8 @@ main_select(struct view *view, struct line *line)
 		string_ncopy(view->ref, commit->title, strlen(commit->title));
 		status_stage_info(view->env->status, line->type, NULL);
 	} else {
-		struct ref *branch = main_get_commit_branch(line, commit);
-
-		if (branch)
-			string_copy_rev(view->env->branch, branch->name);
 		string_copy_rev(view->ref, commit->id);
+		main_update_env(view, line, commit);
 	}
 	string_copy_rev(view->env->commit, commit->id);
 }

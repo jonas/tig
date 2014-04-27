@@ -35,15 +35,17 @@ bool argv_remove_quotes(const char *argv[]);
 bool argv_contains(const char **argv, const char *arg);
 
 #define ARGV_ENV_INFO(_) \
-	_(commit,	"",	"HEAD"), \
-	_(blob,	 	"",	""), \
-	_(branch,	"",	""), \
-	_(directory,	".",	""), \
-	_(file,	 	"",	""), \
-	_(head,	 	"",	"HEAD"), \
-	_(ref,	 	"HEAD",	""), \
-	_(stash,	"",	""), \
-	_(status,	"",	"")
+	_(commit,	"",		"HEAD"), \
+	_(blob,		"",		""), \
+	_(branch,	"",		""), \
+	_(directory,	".",		""), \
+	_(file,		"",		""), \
+	_(head,		"",		"HEAD"), \
+	_(ref,		"HEAD",		""), \
+	_(remote,	"origin",	""), \
+	_(stash,	"",		""), \
+	_(status,	"",		""), \
+	_(tag,		"",		"")
 
 #define ARGV_ENV_FIELDS(name, ifempty, initval)	name[SIZEOF_STR]
 

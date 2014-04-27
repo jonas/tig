@@ -500,6 +500,9 @@ following variable names, which are substituted before commands are run:
 |%(commit)		|The currently selected commit ID.
 |%(blob)		|The currently selected blob ID.
 |%(branch)		|The currently selected branch name.
+|%(remote)		|The currently selected remote name. For remote
+			 branches %(branch) will contain the branch name.
+|%(tag)			|The currently selected tag name.
 |%(stash)		|The currently selected stash name.
 |%(directory)		|The current directory path in the tree view;
 			 empty for the root directory.
