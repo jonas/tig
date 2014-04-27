@@ -155,6 +155,7 @@ rpm: dist
 
 test: $(TOOLS)
 	test/unit-test-graph.sh
+	test/builtin-config.sh
 
 # Other autoconf-related rules are hidden in config.make.in so that
 # they don't confuse Make when we aren't actually using ./configure
