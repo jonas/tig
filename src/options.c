@@ -819,6 +819,8 @@ load_option_file(const char *path)
 		return error("Error loading file %s: %s", path, strerror(io_error(&io)));
 	}
 
+	io.span = TRUE;
+
 	if (io_load(&io, " \t", read_option, &config) == ERR ||
 	    config.errors == TRUE)
 		warn("Errors while loading %s.", path);

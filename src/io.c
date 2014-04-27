@@ -429,6 +429,11 @@ io_get(struct io *io, int c, bool can_read)
 	while (TRUE) {
 		if (io->bufsize > 0) {
 			eol = memchr(io->bufpos, c, io->bufsize);
+
+			while (io->span && io->bufpos < eol && eol[-1] == '\\') {
+				eol[-1] = eol[0] = ' ';
+				eol = memchr(io->bufpos, c, io->bufsize);
+			}
 			if (eol) {
 				char *line = io->bufpos;
 

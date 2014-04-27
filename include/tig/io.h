@@ -59,6 +59,7 @@ struct io {
 	size_t bufsize;		/* Buffer content size. */
 	char *bufpos;		/* Current buffer position. */
 	unsigned int eof:1;	/* Has end of file been reached. */
+	unsigned int span:1;	/* Support commands spanning multiple lines. */
 	int status:8;		/* Status exit code. */
 };
 

@@ -23,7 +23,8 @@ DESCRIPTION
 
 You can permanently set an option by putting it in the `~/.tigrc` file.  The
 file consists of a series of 'commands'.  Each line of the file may contain
-only one command.
+only one command.  Commands can span multiple lines if each line is
+terminated by a backslash ('\') character. 
 
 The hash mark ('#') is used as a 'comment' character. All text after the
 comment character to the end of the line is ignored. You can use comments to
@@ -91,8 +92,13 @@ set blame-options = -C -C -C	# Blame lines from other files
 # Wrap branch names with () and tags with <>
 set reference-format = (branch) <tag>
 
-# Configure blame view columns
-set blame-view = date:default author:abbreviated file-name:auto id:yes,color line-number:yes,interval=5 text
+# Configure blame view columns using command spanning multiple lines.
+set blame-view = \
+	date:default \
+	author:abbreviated \
+	file-name:auto \
+	id:yes,color \
+	line-number:yes,interval=5 text
 --------------------------------------------------------------------------
 
 Or in the Git configuration files:
