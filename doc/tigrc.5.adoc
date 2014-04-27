@@ -504,8 +504,8 @@ following variable names, which are substituted before commands are run:
 			 branches %(branch) will contain the branch name.
 |%(tag)			|The currently selected tag name.
 |%(stash)		|The currently selected stash name.
-|%(directory)		|The current directory path in the tree view;
-			 empty for the root directory.
+|%(directory)		|The current directory path in the tree view or
+			 "." if undefined.
 |%(file)		|The currently selected file.
 |%(ref)			|The reference given to blame or HEAD if undefined.
 |%(revargs)		|The revision arguments passed on the command line.
@@ -794,7 +794,10 @@ setting the *default* color option.
 |title-focus		|The title window for the current view.
 |title-blur		|The title window of any backgrounded view.
 |delimiter		|Delimiter shown for truncated lines.
-|header			|The view header line.
+|header			|The view header lines. Use 'status.header' to color
+			 the staged, unstaged, and untracked sections in the
+			 status view. Use 'help.header' to color the keymap
+			 sections in the help view.
 |line-number		|Line numbers.
 |id			|The commit ID.
 |date			|The commit date.
@@ -826,7 +829,6 @@ example: palette-0 = red
 .Status view
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|stat-section		|Status section titles,
 |stat-none		|Empty status label.
 |stat-staged		|Status flag of staged files.
 |stat-unstaged		|Status flag of unstaged files.
@@ -836,7 +838,6 @@ example: palette-0 = red
 .Help view
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
-|help-keymap		|Keymap name.
 |help-group		|Help group name.
 |help-action		|Help action name.
 |=============================================================================
