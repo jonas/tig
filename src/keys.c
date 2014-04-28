@@ -232,7 +232,6 @@ get_key_value(const char **name_ptr, struct key *key)
 {
 	const char *name = *name_ptr;
 	const char *end = NULL;
-	enum status_code code;
 
 	memset(key, 0, sizeof(*key));
 
