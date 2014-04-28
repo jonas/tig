@@ -160,10 +160,6 @@ static const char *status_list_no_head_argv[] = {
 	"git", "ls-files", "-z", "--cached", "--exclude-standard", NULL
 };
 
-const char *update_index_argv[] = {
-	"git", "update-index", "-q", "--unmerged", "--refresh", NULL
-};
-
 /* Restore the previous line number to stay in the context or select a
  * line with something that can be updated. */
 static void
@@ -261,7 +257,7 @@ status_open(struct view *view, enum open_flags flags)
 	add_line_nodata(view, LINE_HEADER);
 	status_update_onbranch();
 
-	io_run_bg(update_index_argv);
+	update_index();
 
 	status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 3] =
 		opt_status_untracked_dirs ? NULL : "--directory";

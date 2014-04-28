@@ -29,5 +29,9 @@ extern struct repo_info repo;
 
 int load_repo_info(void);
 
+bool update_index(void);
+bool index_diff_staged(void);
+bool index_diff_unstaged(void);
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

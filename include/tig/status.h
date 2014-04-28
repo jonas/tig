@@ -31,8 +31,6 @@ struct status {
 	} new;
 };
 
-extern const char *update_index_argv[];
-
 bool status_update_file(struct status *status, enum line_type type);
 bool status_update_files(struct view *view, struct line *line);
 

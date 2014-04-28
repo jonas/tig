@@ -15,6 +15,7 @@
 #include "tig/repo.h"
 #include "tig/io.h"
 #include "tig/refdb.h"
+#include "tig/git.h"
 
 #define REPO_INFO_GIT_DIR	"--git-dir"
 #define REPO_INFO_WORK_TREE	"--is-inside-work-tree"
@@ -90,5 +91,46 @@ load_repo_info(void)
 }
 
 struct repo_info repo;
+
+/*
+ * Git index utils.
+ */
+
+bool
+update_index(void)
+{
+	const char *update_index_argv[] = {
+		"git", "update-index", "-q", "--unmerged", "--refresh", NULL
+	};
+
+	return io_run_bg(update_index_argv);
+}
+
+static bool
+index_diff(const char *argv[])
+{
+	struct io io;
+
+	if (!io_exec(&io, IO_BG, NULL, NULL, argv, -1))
+		return FALSE;
+	io_done(&io);
+	return io.status == 1;
+}
+
+bool
+index_diff_staged(void)
+{
+	const char *staged_argv[] = { GIT_DIFF_STAGED_FILES("--quiet") };
+
+	return index_diff(staged_argv);
+}
+
+bool
+index_diff_unstaged(void)
+{
+	const char *unstaged_argv[] = { GIT_DIFF_UNSTAGED_FILES("--quiet") };
+
+	return index_diff(unstaged_argv);
+}
 
 /* vim: set ts=8 sw=8 noexpandtab: */

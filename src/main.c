@@ -78,17 +78,6 @@ main_flush_commit(struct view *view, struct commit *commit)
 }
 
 static bool
-main_has_changes(const char *argv[])
-{
-	struct io io;
-
-	if (!io_exec(&io, IO_BG, NULL, opt_env, argv, -1))
-		return FALSE;
-	io_done(&io);
-	return io.status == 1;
-}
-
-static bool
 main_add_changes_commit(struct view *view, enum line_type type, const char *parent, const char *title)
 {
 	char ids[SIZEOF_STR] = NULL_ID " ";
@@ -127,19 +116,17 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 static bool
 main_add_changes_commits(struct view *view, struct main_state *state, const char *parent)
 {
-	const char *staged_argv[] = { GIT_DIFF_STAGED_FILES("--quiet") };
-	const char *unstaged_argv[] = { GIT_DIFF_UNSTAGED_FILES("--quiet") };
 	const char *staged_parent = NULL_ID;
 	const char *unstaged_parent = parent;
 
-	io_run_bg(update_index_argv);
+	update_index();
 
-	if (!main_has_changes(unstaged_argv)) {
+	if (!index_diff_unstaged()) {
 		unstaged_parent = NULL;
 		staged_parent = parent;
 	}
 
-	if (!main_has_changes(staged_argv)) {
+	if (!index_diff_staged()) {
 		staged_parent = NULL;
 	}
 
