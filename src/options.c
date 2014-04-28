@@ -645,8 +645,10 @@ option_bind_command(int argc, const char *argv[])
 	}
 
 	for (keys = 0, key_arg = argv[1]; *key_arg && keys < ARRAY_SIZE(key); keys++) {
-		if (get_key_value(&key_arg, &key[keys]) == ERR)
-			return error("Unknown key combo: %s", argv[1]);
+		enum status_code code = get_key_value(&key_arg, &key[keys]);
+
+		if (code != SUCCESS)
+			return code;
 	}
 
 	if (*key_arg && keys == ARRAY_SIZE(key))

@@ -145,23 +145,26 @@ get_keybinding(struct keymap *keymap, struct key key[], size_t keys)
 }
 
 
-struct key_table {
+struct key_mapping {
 	const char *name;
 	int value;
 };
 
-static const struct key_table key_table[] = {
+static const struct key_mapping key_mappings[] = {
 	{ "Enter",	KEY_RETURN },
 	{ "Space",	' ' },
 	{ "Backspace",	KEY_BACKSPACE },
 	{ "Tab",	KEY_TAB },
 	{ "Escape",	KEY_ESC },
+	{ "Esc",	KEY_ESC },
 	{ "Left",	KEY_LEFT },
 	{ "Right",	KEY_RIGHT },
 	{ "Up",		KEY_UP },
 	{ "Down",	KEY_DOWN },
 	{ "Insert",	KEY_IC },
+	{ "Ins",	KEY_IC },
 	{ "Delete",	KEY_DC },
+	{ "Del",	KEY_DC },
 	{ "Hash",	'#' },
 	{ "Home",	KEY_HOME },
 	{ "End",	KEY_END },
@@ -169,6 +172,8 @@ static const struct key_table key_table[] = {
 	{ "PgUp",	KEY_PPAGE },
 	{ "PageDown",	KEY_NPAGE },
 	{ "PgDown",	KEY_NPAGE },
+	{ "LessThan",	'<' },
+	{ "LT",		'<' },
 	{ "F1",		KEY_F(1) },
 	{ "F2",		KEY_F(2) },
 	{ "F3",		KEY_F(3) },
@@ -183,50 +188,104 @@ static const struct key_table key_table[] = {
 	{ "F12",	KEY_F(12) },
 };
 
-int
+static const struct key_mapping *
+get_key_mapping(const char *name, size_t namelen)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(key_mappings); i++) {
+		if (namelen == strlen(key_mappings[i].name) &&
+		    !strncasecmp(key_mappings[i].name, name, namelen))
+			return &key_mappings[i];
+	}
+
+	return NULL;
+}
+
+static enum status_code
+parse_key_value(struct key *key, const char **name_ptr, size_t offset,
+		const char *replacement, const char *end)
+{
+	const char *name = replacement ? replacement : *name_ptr + offset;
+	size_t namelen = utf8_char_length(name);
+	const char *nameend = name + namelen;
+
+	if (strlen(name) < namelen || utf8_to_unicode(name, namelen) == 0)
+		return error("Error parsing UTF-8 bytes: %s", name);
+
+	strncpy(key->data.bytes, name, namelen);
+	key->modifiers.multibytes = 1;
+	if (end) {
+		*name_ptr = end + 1;
+		if (!replacement && nameend + 1 < end)
+			return success("Ignoring text after key mapping: %.*s",
+				(int) (end - nameend), nameend);
+	} else {
+		*name_ptr = nameend;
+	}
+
+	return SUCCESS;
+}
+
+enum status_code
 get_key_value(const char **name_ptr, struct key *key)
 {
 	const char *name = *name_ptr;
-	size_t namelen = 0;
-	int i;
+	const char *end = NULL;
+	enum status_code code;
 
 	memset(key, 0, sizeof(*key));
 
-	for (i = 0; i < ARRAY_SIZE(key_table); i++)
-		if (!strcasecmp(key_table[i].name, name)) {
-			namelen = strlen(key_table[i].name);
-			if (key_table[i].value == ' ') {
-				name = " ";
-				break;
+	if (*name == '<') {
+		end = strchr(name + 1, '>');
+		if (!end)
+			return error("Missing '>' from key mapping: %s", name);
+
+		if (!prefixcmp(name, "<Ctrl-")) {
+			key->modifiers.control = 1;
+			return parse_key_value(key, name_ptr, 6, NULL, end);
+
+		} else if (!prefixcmp(name, "<C-")) {
+			key->modifiers.control = 1;
+			return parse_key_value(key, name_ptr, 3, NULL, end);
+
+		} else {
+			const struct key_mapping *mapping;
+			const char *start = name + 1;
+			int len = end - start;
+
+			mapping = get_key_mapping(start, len);
+			if (!mapping)
+				return error("Unknown key mapping: %.*s", len, start);
+
+			if (mapping->value == ' ')
+				return parse_key_value(key, name_ptr, 0, " ", end);
+
+			if (mapping->value == '#')
+				return parse_key_value(key, name_ptr, 0, "#", end);
+
+			if (mapping->value == KEY_ESC) {
+				size_t offset = (end - name) + 1;
+
+				key->modifiers.escape = 1;
+				return parse_key_value(key, name_ptr, offset, NULL, NULL);
 			}
-			if (key_table[i].value == '#') {
-				name = "#";
-				break;
-			}
-			*name_ptr = name + namelen;
-			key->data.value = key_table[i].value;
-			return OK;
+
+			*name_ptr = end + 1;
+			key->data.value = mapping->value;
+			return SUCCESS;
 		}
+	}
 
 	if (name[0] == '^' && name[1] == '[') {
-		key->modifiers.escape = 1;
-		name += 2;
+		return error("Escape key combo must now use '<Esc>%s' "
+			     "instead of '%s'", name + 2, name);
 	} else if (name[0] == '^') {
-		key->modifiers.control = 1;
-		name += 1;
+		return error("Control key mapping must now use '<Ctrl-%s>' "
+			     "instead of '%s'", name + 1, name);
 	}
 
-	i = utf8_char_length(name);
-	if (strlen(name) >= i && utf8_to_unicode(name, i) != 0) {
-		strncpy(key->data.bytes, name, i);
-		key->modifiers.multibytes = 1;
-		if (!namelen)
-			namelen += i + (name - *name_ptr);
-		*name_ptr += namelen;
-		return OK;
-	}
-
-	return ERR;
+	return parse_key_value(key, name_ptr, 0, NULL, end);
 }
 
 const char *
@@ -238,9 +297,9 @@ get_key_name(const struct key key[], size_t keys)
 	int i;
 
 	if (keys == 1 && !key->modifiers.multibytes) {
-		for (i = 0; i < ARRAY_SIZE(key_table); i++)
-			if (key_table[i].value == key->data.value)
-				return key_table[i].name;
+		for (i = 0; i < ARRAY_SIZE(key_mappings); i++)
+			if (key_mappings[i].value == key->data.value)
+				return key_mappings[i].name;
 	}
 
 	for (i = 0; i < keys; i++) {

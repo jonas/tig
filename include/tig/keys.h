@@ -54,7 +54,7 @@ struct keymap *get_keymap(const char *name, size_t namelen);
 struct keymap *get_keymap_by_index(int i);
 
 const char *get_key_name(const struct key key[], size_t keys);
-int get_key_value(const char **name, struct key *key);
+enum status_code get_key_value(const char **name, struct key *key);
 
 /* Looks for a key binding first in the given map, then in the generic map, and
  * lastly in the default keybindings. */

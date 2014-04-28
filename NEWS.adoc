@@ -19,6 +19,11 @@ Note to packagers:
 
 Incompatibilities:
 
+ - In preparation for key combo support, key mappings for symbolic key (e.g.
+   `Up` and `Down`) must now start with `<` and end with `>`, e.g. `<Up>` and
+   `<Down>`. Furthermore, escape key combos must now use `<Esc>key` instead of
+   `^[key`, and control key mappings must now use `<Ctrl-key>` instead of
+   `^key`.
  - Only use 'diff-options' for the diff view and introduce '%(cmdlineargs)' to
    hold non-file and non-revision flags passed on the command line. Affects all
    user-defined commands that expect '%(diffargs)' to hold both 'diff-options'
@@ -65,7 +70,9 @@ Improvements:
  - Support view specific colors: `color stage.diff-add yellow default`.
  - Add grep view as a front-end to git-grep(1): `tig grep -p strchr`. From
    within Tig, the key for switching or grepping is bound to 'G' by default.
- - Warn about conflicting keybindings using Ctrl, e.g. `^f` and `^F`. (GH #218)
+ - Key mappings can contain UTF-8 multibyte unicode keys.
+ - Warn about conflicting keybindings using Ctrl, e.g. `<Ctrl-f>` and
+   `<Ctrl-F>`. (GH #218)
  - Extend key bindings for prompt commands (ie. `bind <keymap> <key> :<prompt>`)
    to support predefined searches, eg.: `bind stage 2 :?^@@`.
  - Add :toggle prompt command as a way to manipulate options using keybindings.
