@@ -166,7 +166,7 @@ The following variables can be set:
 	 - replace		: A replaced reference.
 	 - branch		: Any other reference.
 
-'line-graphics' (mixed) [ "ascii" | "default" | "utf-8" | bool]::
+'line-graphics' (mixed) [ascii|default|utf-8|<bool>]::
 
 	What type of character graphics for line drawing.
 
@@ -178,18 +178,13 @@ The following variables can be set:
 	always ensured that at least one column is scrolled. The default is to
 	scroll '50%' of the view width.
 
-'mouse-scroll' (int)::
-	Interval to scroll up or down using the mouse. The default is 3 lines.
-	Mouse support requires that ncurses itself support mouse events and that
-	you have enabled mouse support in ~/.tigrc with `set mouse = true`.
-
 'git-colors' (list)::
 
 	A space separated list of "key=value" pairs where the key is a Git color
 	name and the value is a Tig color name, e.g. "branch.current=main-head"
 	and "grep.filename=grep.file". Set to "no" to disable.
 
-'show-notes' (mixed) [note reference | bool]::
+'show-notes' (mixed) [<reference>|<bool>]::
 
 	Whether to show notes for a commit. When set to a note reference the
 	reference is passed to `git show --notes=`. Notes are enabled by
@@ -199,7 +194,7 @@ The following variables can be set:
 
 	Whether to show staged and unstaged changes in the main view.
 
-'vertical-split' (mixed) ["auto" | bool]::
+'vertical-split' (mixed) [auto|<bool>]::
 
 	Whether to split the view horizontally or vertically.
 	"auto" (which is the default) means that it will depend on the window
@@ -227,12 +222,12 @@ The following variables can be set:
 
 	Number of context lines to show for diffs.
 
-'ignore-space' (mixed) ["no" | "all" | "some" | "at-eol" | bool]::
+'ignore-space' (mixed) [no|all|some|at-eol|<bool>]::
 
-    Ignore space changes in diff view. By default no space changes are ignored.
-    Changing this to "all", "some" or "at-eol" is equivalent to passing
-    "--ignore-all-space", "--ignore-space" or "--ignore-space-at-eol"
-    respectively to `git diff` or `git show`.
+	Ignore space changes in diff view. By default no space changes are
+	ignored. Changing this to "all", "some" or "at-eol" is equivalent to
+	passing "--ignore-all-space", "--ignore-space" or
+	"--ignore-space-at-eol" respectively to `git diff` or `git show`.
 
 'commit-order' (mixed) [default|topo|date|author-date|reverse|<bool>]::
 
@@ -262,10 +257,17 @@ The following variables can be set:
 	Example: `vim +10 tig.c`
 
 'mouse' (bool)::
+
 	Whether to enable mouse support. Off by default since it makes selecting
 	text from the terminal less intuitive. When enabled hold down Shift (or
 	Option on Mac) to select text. Mouse support requires that ncurses
 	itself support mouse events.
+
+'mouse-scroll' (int)::
+
+	Interval to scroll up or down using the mouse. The default is 3 lines.
+	Mouse support requires that ncurses itself support mouse events and that
+	you have enabled mouse support in ~/.tigrc with `set mouse = true`.
 
 View settings
 ~~~~~~~~~~~~~
