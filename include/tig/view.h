@@ -62,6 +62,8 @@ enum view_flag {
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))
+#define view_can_refresh(view) \
+	(view_has_flags(view, VIEW_REFRESH) && !(view)->unrefreshable)
 
 struct position {
 	unsigned long offset;	/* Offset of the window top */

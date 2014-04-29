@@ -838,7 +838,7 @@ run_prompt_command(struct view *view, const char *argv[])
 		}
 
 		foreach_displayed_view(view, i) {
-			if (view_has_flags(view, flags) && !view->unrefreshable)
+			if (view_has_flags(view, flags) && view_can_refresh(view))
 				reload_view(view);
 			else
 				redraw_view(view);
@@ -863,7 +863,7 @@ run_prompt_command(struct view *view, const char *argv[])
 			return request;
 
 		if (set_option(argv[0], argv_size(argv + 1), &argv[1]) == SUCCESS) {
-			request = !view->unrefreshable ? REQ_REFRESH : REQ_SCREEN_REDRAW;
+			request = view_can_refresh(view) ? REQ_REFRESH : REQ_SCREEN_REDRAW;
 			if (!strcmp(cmd, "color"))
 				init_colors();
 			resize_display();

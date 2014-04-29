@@ -70,7 +70,7 @@ view_request(struct view *view, enum request request)
 		}
 	}
 
-	if (request == REQ_REFRESH && view->unrefreshable) {
+	if (request == REQ_REFRESH && !view_can_refresh(view)) {
 		report("This view can not be refreshed");
 		return REQ_NONE;
 	}
