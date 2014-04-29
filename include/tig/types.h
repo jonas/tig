@@ -138,6 +138,12 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(STATUS_LABEL, SHORT), \
 	_(STATUS_LABEL, LONG), \
 
+#define REFRESH_MODE_ENUM(_) \
+	_(REFRESH_MODE, MANUEL), \
+	_(REFRESH_MODE, AUTO), \
+	_(REFRESH_MODE, ON_RETURN), \
+	_(REFRESH_MODE, PERIODIC), \
+
 #define ENUM_INFO(_) \
 	_(author, AUTHOR_ENUM) \
 	_(commit_order, COMMIT_ORDER_ENUM) \
@@ -149,6 +155,7 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(vertical_split, VERTICAL_SPLIT_ENUM) \
 	_(view_column_type, VIEW_COLUMN_ENUM) \
 	_(reference_type, REFERENCE_ENUM) \
+	_(refresh_mode, REFRESH_MODE_ENUM) \
 	_(status_label, STATUS_LABEL_ENUM) \
 
 #define DEFINE_ENUMS(name, macro) DEFINE_ENUM(name, macro);

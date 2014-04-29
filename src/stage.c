@@ -486,6 +486,7 @@ stage_open(struct view *view, enum open_flags flags)
 
 	switch (stage_line_type) {
 	case LINE_STAT_STAGED:
+		watch_register(&view->watch, WATCH_INDEX_STAGED);
 		if (is_initial_commit()) {
 			argv = no_head_diff_argv;
 		} else {
@@ -494,6 +495,7 @@ stage_open(struct view *view, enum open_flags flags)
 		break;
 
 	case LINE_STAT_UNSTAGED:
+		watch_register(&view->watch, WATCH_INDEX_UNSTAGED);
 		if (stage_status.status != 'U')
 			argv = files_show_argv;
 		else

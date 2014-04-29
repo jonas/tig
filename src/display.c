@@ -19,6 +19,7 @@
 #include "tig/view.h"
 #include "tig/draw.h"
 #include "tig/display.h"
+#include "tig/watch.h"
 
 struct view *display[2];
 unsigned int current_view;
@@ -44,6 +45,15 @@ open_external_viewer(const char *argv[], const char *dir, bool confirm, const ch
 		getc(opt_tty);
 	}
 	reset_prog_mode();
+	if (watch_update(WATCH_EVENT_AFTER_EXTERNAL)) {
+		struct view *view;
+		int i;
+
+		foreach_displayed_view (view, i) {
+			if (watch_dirty(&view->watch))
+				refresh_view(view);
+		}
+	}
 	redraw_display(TRUE);
 	return ok;
 }
@@ -398,7 +408,16 @@ get_input(int prompt_position, struct key *key, bool modifiers)
 	memset(key, 0, sizeof(*key));
 
 	while (TRUE) {
-		bool loading = FALSE;
+		int delay = -1;
+
+		if (opt_refresh_mode == REFRESH_MODE_PERIODIC) {
+			delay = watch_periodic(opt_refresh_interval);
+			foreach_displayed_view (view, i) {
+				if (view_can_refresh(view) &&
+				    watch_dirty(&view->watch))
+					refresh_view(view);
+			}
+		}
 
 		foreach_view (view, i) {
 			update_view(view);
@@ -407,7 +426,7 @@ get_input(int prompt_position, struct key *key, bool modifiers)
 				redrawwin(view->win);
 			view->has_scrolled = FALSE;
 			if (view->pipe)
-				loading = TRUE;
+				delay = 0;
 		}
 
 		/* Update the cursor position. */
@@ -424,7 +443,7 @@ get_input(int prompt_position, struct key *key, bool modifiers)
 
 		/* Refresh, accept single keystroke of input */
 		doupdate();
-		nodelay(status_win, loading);
+		wtimeout(status_win, delay);
 		key_value = wgetch(status_win);
 
 		/* wgetch() with nodelay() enabled returns ERR when
@@ -479,6 +498,7 @@ get_input(int prompt_position, struct key *key, bool modifiers)
 			key->data.bytes[0] = key_value;
 
 			key_length = utf8_char_length(key->data.bytes);
+			nodelay(status_win, TRUE);
 			for (pos = 1; pos < key_length && pos < sizeof(key->data.bytes) - 1; pos++) {
 				key->data.bytes[pos] = wgetch(status_win);
 			}

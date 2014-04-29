@@ -87,6 +87,8 @@ Improvements:
  - Add builtin command bindings: `!` to delete branch, `!` to drop stash.
  - Add %(remote) and %(tag) symbols to complement %(branch).
  - Git color mappings can be configured in tigrc.
+ - Auto-refresh views based on watched repository changes. Configure by setting
+   `refresh-mode` to 'manuel', 'auto' (the default), or 'periodic'. (GH #190)
 
 Bug fixes:
 

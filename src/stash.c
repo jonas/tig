@@ -22,6 +22,7 @@ stash_open(struct view *view, enum open_flags flags)
 	struct main_state *state = view->private;
 
 	state->with_graph = FALSE;
+	watch_register(&view->watch, WATCH_STASH);
 	return begin_update(view, NULL, stash_argv, flags | OPEN_RELOAD);
 }
 

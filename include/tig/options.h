@@ -55,6 +55,8 @@
 	_(stash_view,			const char **,		VIEW_NO_FLAGS) \
 	_(tab_size,			int,			VIEW_NO_FLAGS) \
 	_(tree_view,			const char **,		VIEW_NO_FLAGS) \
+	_(refresh_mode,			enum refresh_mode,	VIEW_NO_FLAGS) \
+	_(refresh_interval,		int,			VIEW_NO_FLAGS) \
 	_(vertical_split,		enum vertical_split,	VIEW_RESET_DISPLAY | VIEW_DIFF_LIKE) \
 	_(wrap_lines,			bool,			VIEW_NO_FLAGS) \
 

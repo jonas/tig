@@ -14,6 +14,7 @@
 #include "tig/repo.h"
 #include "tig/options.h"
 #include "tig/parse.h"
+#include "tig/watch.h"
 #include "tig/graph.h"
 #include "tig/display.h"
 #include "tig/view.h"
@@ -185,6 +186,7 @@ main_open(struct view *view, enum open_flags flags)
 	const char **main_argv = pretty_custom_argv;
 	struct view_column *column;
 	bool added_changes_commits = FALSE;
+	enum watch_trigger trigger = WATCH_NONE;
 
 	column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
 	state->with_graph = column && column->opt.commit_title.graph &&
@@ -202,8 +204,13 @@ main_open(struct view *view, enum open_flags flags)
 	if (!begin_update(view, NULL, main_argv, flags))
 		return FALSE;
 
-	if (!added_changes_commits && opt_show_changes && repo.is_inside_work_tree)
+	if (!added_changes_commits && opt_show_changes && repo.is_inside_work_tree) {
 		main_add_changes_commits(view, state, "");
+		trigger |= WATCH_INDEX_STAGED | WATCH_INDEX_UNSTAGED;
+	}
+
+	if (trigger)
+		watch_register(&view->watch, trigger);
 
 	return TRUE;
 }

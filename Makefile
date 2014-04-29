@@ -199,6 +199,7 @@ TIG_OBJS = \
 	src/display.o \
 	src/view.o \
 	src/parse.o \
+	src/watch.o \
 	src/pager.o \
 	src/log.o \
 	src/diff.o \

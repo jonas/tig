@@ -17,6 +17,7 @@
 #include "tig/tig.h"
 #include "tig/types.h"
 #include "tig/argv.h"
+#include "tig/watch.h"
 #include "tig/io.h"
 #include "tig/line.h"
 #include "tig/keys.h"
@@ -143,6 +144,7 @@ struct view {
 	time_t update_secs;
 	struct encoding *encoding;
 	bool unrefreshable;
+	struct watch watch;
 
 	/* Private data */
 	void *private;

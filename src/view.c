@@ -14,6 +14,7 @@
 #include "tig/tig.h"
 #include "tig/argv.h"
 #include "tig/repo.h"
+#include "tig/watch.h"
 #include "tig/options.h"
 #include "tig/view.h"
 #include "tig/draw.h"
@@ -769,6 +770,13 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 	/* When prev == view it means this is the first loaded view. */
 	if (prev && view != prev) {
 		view->prev = prev;
+	}
+
+	if (!refresh && view_can_refresh(view) &&
+	    watch_update(WATCH_EVENT_SWITCH_VIEW)) {
+		refresh = watch_dirty(&view->watch);
+		if (refresh)
+			flags |= OPEN_REFRESH;
 	}
 
 	if (refresh) {

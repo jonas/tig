@@ -20,6 +20,7 @@
 #include "tig/io.h"
 #include "tig/argv.h"
 #include "tig/refdb.h"
+#include "tig/watch.h"
 #include "tig/graph.h"
 #include "tig/git.h"
 #include "tig/request.h"
@@ -177,9 +178,6 @@ open_run_request(struct view *view, enum request request)
 
 		else if (req->flags.exit)
 			request = REQ_QUIT;
-
-		else if (!req->flags.internal && view_has_flags(view, VIEW_REFRESH) && !view->unrefreshable)
-			request = REQ_REFRESH;
 	}
 	return request;
 }
@@ -367,6 +365,7 @@ view_driver(struct view *view, enum request request)
 		if (view->prev && view->prev != view) {
 			maximize_view(view->prev, TRUE);
 			view->prev = view;
+			watch_unregister(&view->watch);
 			break;
 		}
 		/* Fall-through */

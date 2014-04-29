@@ -21,6 +21,7 @@
 #include "tig/view.h"
 #include "tig/draw.h"
 #include "tig/git.h"
+#include "tig/watch.h"
 #include "tig/status.h"
 #include "tig/stage.h"
 
@@ -253,6 +254,9 @@ status_open(struct view *view, enum open_flags flags)
 	}
 
 	reset_view(view);
+
+	/* FIXME: Watch untracked files and on-branch info. */
+	watch_register(&view->watch, WATCH_INDEX_STAGED | WATCH_INDEX_UNSTAGED);
 
 	add_line_nodata(view, LINE_HEADER);
 	status_update_onbranch();
