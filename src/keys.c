@@ -316,10 +316,13 @@ get_key_name(const struct key key[], size_t keys)
 		const char *end = "";
 
 		if (key[i].modifiers.escape) {
-			start = "<Esc>'";
+			start = "<Esc>";
 		} else if (key[i].modifiers.control) {
 			start = "<Ctrl-";
 			end = ">";
+		} else if (key[i].data.bytes[0] == ',' && !*start) {
+			start = "'";
+			end = "'";
 		}
 
 		if (!string_format_from(buf, &pos, "%s%s%s",
