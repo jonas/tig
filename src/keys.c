@@ -267,6 +267,9 @@ get_key_value(const char **name_ptr, struct key *key)
 			if (mapping->value == '#')
 				return parse_key_value(key, name_ptr, 0, "#", end);
 
+			if (mapping->value == '<')
+				return parse_key_value(key, name_ptr, 0, "<", end);
+
 			if (mapping->value == KEY_ESC) {
 				size_t offset = (end - name) + 1;
 
@@ -283,7 +286,7 @@ get_key_value(const char **name_ptr, struct key *key)
 	if (name[0] == '^' && name[1] == '[') {
 		return error("Escape key combo must now use '<Esc>%s' "
 			     "instead of '%s'", name + 2, name);
-	} else if (name[0] == '^') {
+	} else if (name[0] == '^' && name[1] != '\0') {
 		return error("Control key mapping must now use '<Ctrl-%s>' "
 			     "instead of '%s'", name + 1, name);
 	}
@@ -313,10 +316,13 @@ get_key_name(const struct key key[], size_t keys)
 		const char *end = "";
 
 		if (key[i].modifiers.escape) {
-			start = "<Esc>'";
+			start = "<Esc>";
 		} else if (key[i].modifiers.control) {
 			start = "<Ctrl-";
 			end = ">";
+		} else if (key[i].data.bytes[0] == ',' && !*start) {
+			start = "'";
+			end = "'";
 		}
 
 		if (!string_format_from(buf, &pos, "%s%s%s",

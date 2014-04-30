@@ -1,6 +1,14 @@
 Release notes
 =============
 
+tig-2.0.1
+---------
+
+Bug fixes:
+
+ - Fix compilation in watch.c.
+ - Fix parsing of key bindings mapped to '^' and '<'. (GH #280, #282)
+
 tig-2.0
 -------
 
