@@ -64,7 +64,7 @@ Improvements:
  - Add 'back' action bound to '<' by default, which will return the blame view
    to the previous revision and line after moving e.g. to the parent. (GH #124)
  - Auto-refresh views based on watched repository changes. Configure by setting
-   `refresh-mode` to 'manuel', 'auto' (the default), or 'periodic'. (GH #190)
+   `refresh-mode` to 'manual', 'auto', 'after-command', or 'periodic'. (GH #190)
  - All default settings are in well-documented system `tigrc`.
  - Add `:toggle` prompt command to manipulate options using keybindings. For
    example: `bind diff D :toggle diff-options --patience --notes`. (GH #69)
