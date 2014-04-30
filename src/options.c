@@ -652,7 +652,8 @@ option_bind_command(int argc, const char *argv[])
 	}
 
 	if (*key_arg && keys == ARRAY_SIZE(key))
-		return error("Max %zu keys are allowed in key combos: %s", ARRAY_SIZE(key), argv[1]);
+		return error("Except for <Esc> combos only one key is allowed "
+			     "in key combos: %s", argv[1]);
 
 	request = get_request(argv[2]);
 	if (request == REQ_UNKNOWN) {
