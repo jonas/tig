@@ -159,8 +159,7 @@ refs_open(struct view *view, enum open_flags flags)
 	refs_open_visitor(view, refs_all);
 	foreach_ref(refs_open_visitor, view);
 
-	/* FIXME: watch refdb. */
-	watch_register(&view->watch, WATCH_HEAD);
+	watch_register(&view->watch, WATCH_HEAD | WATCH_REFS);
 
 	return TRUE;
 }

@@ -125,10 +125,16 @@ main_add_changes_commits(struct view *view, struct main_state *state, const char
 	if (!index_diff_unstaged()) {
 		unstaged_parent = NULL;
 		staged_parent = parent;
+		watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_NO);
+	} else {
+		watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_YES);
 	}
 
 	if (!index_diff_staged()) {
 		staged_parent = NULL;
+		watch_apply(&view->watch, WATCH_INDEX_STAGED_NO);
+	} else {
+		watch_apply(&view->watch, WATCH_INDEX_STAGED_YES);
 	}
 
 	return main_add_changes_commit(view, LINE_STAT_STAGED, staged_parent, "Staged changes")
@@ -185,8 +191,10 @@ main_open(struct view *view, enum open_flags flags)
 	struct main_state *state = view->private;
 	const char **main_argv = pretty_custom_argv;
 	struct view_column *column;
-	bool added_changes_commits = FALSE;
-	enum watch_trigger trigger = WATCH_NONE;
+	enum watch_trigger changes_triggers = WATCH_NONE;
+
+	if (opt_show_changes && repo.is_inside_work_tree)
+		changes_triggers |= WATCH_INDEX;
 
 	column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
 	state->with_graph = column && column->opt.commit_title.graph &&
@@ -196,7 +204,7 @@ main_open(struct view *view, enum open_flags flags)
 		main_argv = pretty_raw_argv;
 
 	if (open_in_pager_mode(flags)) {
-		added_changes_commits = TRUE;
+		changes_triggers = WATCH_NONE;
 		state->with_graph = FALSE;
 	}
 
@@ -204,13 +212,13 @@ main_open(struct view *view, enum open_flags flags)
 	if (!begin_update(view, NULL, main_argv, flags))
 		return FALSE;
 
-	if (!added_changes_commits && opt_show_changes && repo.is_inside_work_tree) {
-		main_add_changes_commits(view, state, "");
-		trigger |= WATCH_INDEX_STAGED | WATCH_INDEX_UNSTAGED;
-	}
+	/* Register watch before changes commits are added to record the
+	 * start. */
+	if (view_can_refresh(view))
+		watch_register(&view->watch, WATCH_HEAD | WATCH_REFS | changes_triggers);
 
-	if (trigger)
-		watch_register(&view->watch, trigger);
+	if (changes_triggers)
+		main_add_changes_commits(view, state, "");
 
 	return TRUE;
 }

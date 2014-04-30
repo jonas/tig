@@ -29,7 +29,8 @@ watch_register(struct watch *watch, enum watch_trigger triggers)
 	watches = watch;
 
 	watch->triggers = triggers;
-	watch->dirty = FALSE;
+	watch->changed = WATCH_NONE;
+	watch->state = WATCH_NONE;
 }
 
 void
@@ -54,7 +55,6 @@ struct watch_handler {
 	enum watch_trigger (*check)(struct watch_handler *handler, enum watch_event event, enum watch_trigger check);
 	enum watch_trigger triggers;
 	time_t last_modified;
-	enum watch_trigger last_check;
 };
 
 static bool
@@ -80,8 +80,7 @@ watch_head_handler(struct watch_handler *handler, enum watch_event event, enum w
 {
 	struct ref *head;
 
-	if (*repo.git_dir &&
-	    check_file_mtime(&handler->last_modified, "%s/HEAD", repo.git_dir))
+	if (check_file_mtime(&handler->last_modified, "%s/HEAD", repo.git_dir))
 		return WATCH_HEAD;
 
 	// FIXME: check branch
@@ -95,8 +94,7 @@ watch_head_handler(struct watch_handler *handler, enum watch_event event, enum w
 static enum watch_trigger
 watch_stash_handler(struct watch_handler *handler, enum watch_event event, enum watch_trigger check)
 {
-	if (*repo.git_dir &&
-	    check_file_mtime(&handler->last_modified, "%s/refs/stash", repo.git_dir))
+	if (check_file_mtime(&handler->last_modified, "%s/refs/stash", repo.git_dir))
 		return WATCH_STASH;
 
 	return WATCH_NONE;
@@ -106,35 +104,29 @@ static enum watch_trigger
 watch_index_handler(struct watch_handler *handler, enum watch_event event, enum watch_trigger check)
 {
 	enum watch_trigger changed = WATCH_NONE;
-	enum watch_trigger diff = WATCH_NONE;
-
-	if (!*repo.git_dir)
-		return WATCH_NONE;
 
 	if (event == WATCH_EVENT_AFTER_EXTERNAL)
 		return check_file_mtime(&handler->last_modified, "%s/index", repo.git_dir)
 			? check : WATCH_NONE;
 
 	if (!check_file_mtime(&handler->last_modified, "%s/index", repo.git_dir) ||
+	    event == WATCH_EVENT_SWITCH_VIEW ||
 	    !update_index())
 		return WATCH_NONE;
 
 	if (check & WATCH_INDEX_STAGED) {
 		if (index_diff_staged())
-			changed |= WATCH_INDEX_STAGED;
-		else if (handler->last_check & WATCH_INDEX_STAGED)
-			diff |= WATCH_INDEX_STAGED;
+			changed |= WATCH_INDEX_STAGED_YES;
+		else
+			changed |= WATCH_INDEX_STAGED_NO;
 	}
 
 	if (check & WATCH_INDEX_UNSTAGED) {
 		if (index_diff_unstaged())
-			changed |= WATCH_INDEX_UNSTAGED;
-		else if (handler->last_check & WATCH_INDEX_UNSTAGED)
-			diff |= WATCH_INDEX_UNSTAGED;
+			changed |= WATCH_INDEX_UNSTAGED_YES;
+		else
+			changed |= WATCH_INDEX_UNSTAGED_NO;
 	}
-
-	handler->last_check = changed;
-	changed |= diff;
 
 	if (changed)
 		handler->last_modified = time(NULL);
@@ -142,10 +134,21 @@ watch_index_handler(struct watch_handler *handler, enum watch_event event, enum 
 	return changed;
 }
 
+static enum watch_trigger
+watch_refs_handler(struct watch_handler *handler, enum watch_event event,
+		   enum watch_trigger check)
+{
+	if (event == WATCH_EVENT_AFTER_EXTERNAL)
+		load_refs(TRUE);
+
+	return WATCH_NONE;
+}
+
 static struct watch_handler watch_handlers[] = {
-	{ watch_index_handler, WATCH_INDEX_STAGED | WATCH_INDEX_UNSTAGED },
+	{ watch_index_handler, WATCH_INDEX },
 	{ watch_head_handler, WATCH_HEAD },
 	{ watch_stash_handler, WATCH_STASH },
+	{ watch_refs_handler, WATCH_HEAD | WATCH_REFS },
 };
 
 static bool
@@ -156,35 +159,83 @@ watch_no_refresh(enum watch_event event)
 		event != WATCH_EVENT_AFTER_EXTERNAL);
 }
 
-enum watch_trigger
-watch_update(enum watch_event event)
+static void
+watch_apply_changes(struct watch *source, enum watch_event event,
+		    enum watch_trigger changed)
 {
-	enum watch_trigger trigger = WATCH_NONE;
-	enum watch_trigger changed = WATCH_NONE;
 	struct watch *watch;
+
+	if (watch_no_refresh(event))
+		return;
+
+	for (watch = watches; watch; watch = watch->next) {
+		enum watch_trigger triggers = changed & watch->triggers;
+
+		if (source == watch)
+			source->state |= triggers;
+		else if (triggers)
+			watch->changed |= triggers;
+	}
+}
+
+void
+watch_apply(struct watch *source, enum watch_trigger changed)
+{
+	return watch_apply_changes(source, WATCH_EVENT_LOAD, changed);
+}
+
+static enum watch_trigger
+watch_update_event(enum watch_event event, enum watch_trigger trigger,
+		   enum watch_trigger changed)
+{
 	int i;
 
 	if (watch_no_refresh(event))
-		return changed;
-
-	/* Collect triggers to check. Skkipping watches that are already
-	 * marked dirty to avoid unnecessary checks. */
-	for (watch = watches; watch; watch = watch->next)
-		if (!watch->dirty)
-			trigger |= watch->triggers;
+		return WATCH_NONE;
 
 	for (i = 0; trigger && i < ARRAY_SIZE(watch_handlers); i++) {
 		struct watch_handler *handler = &watch_handlers[i];
 
-		if (trigger & handler->triggers)
+		if (*repo.git_dir &&
+		    (trigger & handler->triggers) &&
+		    (changed | handler->triggers) != changed)
 			changed |= handler->check(handler, event, trigger);
 	}
 
-	for (watch = watches; watch; watch = watch->next)
-		if (changed & watch->triggers)
-			watch->dirty = TRUE;
+	if (changed)
+		watch_apply_changes(NULL, event, changed);
 
 	return changed;
+}
+
+#define watch_trigger_unmask(triggers, set) ((triggers) & ~(set))
+
+static inline enum watch_trigger
+watch_unchanged_triggers(struct watch *watch)
+{
+	return watch_trigger_unmask(watch->triggers, watch->changed);
+}
+
+enum watch_trigger
+watch_update_single(struct watch *watch, enum watch_event event)
+{
+	enum watch_trigger trigger = watch_unchanged_triggers(watch);
+
+	return watch_update_event(event, trigger, watch->changed);
+}
+
+enum watch_trigger
+watch_update(enum watch_event event)
+{
+	enum watch_trigger trigger = WATCH_NONE;
+	struct watch *watch;
+
+	/* Collect triggers to check. Skkipping watches that are already
+	 * marked dirty to avoid unnecessary checks. */
+	for (watch = watches; watch; watch = watch->next)
+		trigger |= watch_unchanged_triggers(watch);
+
+	return watch_update_event(event, trigger, WATCH_NONE);
 }
 
 int
@@ -212,13 +263,13 @@ watch_periodic(int interval)
 bool
 watch_dirty(struct watch *watch)
 {
-	bool dirty = FALSE;
+	enum watch_trigger old_index = watch->state & WATCH_INDEX;
+	enum watch_trigger new_index = watch->changed & WATCH_INDEX;
+	enum watch_trigger index = watch_trigger_unmask(new_index, old_index);
+	enum watch_trigger other = watch_trigger_unmask(watch->changed, WATCH_INDEX);
+	bool dirty = !!(index | other);
 
-	if (watch) {
-		dirty = watch->dirty;
-		watch->dirty = FALSE;
-	}
-
+	watch->changed = WATCH_NONE;
 	return dirty;
 }
 

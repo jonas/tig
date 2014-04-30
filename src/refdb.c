@@ -15,6 +15,7 @@
 #include "tig/argv.h"
 #include "tig/util.h"
 #include "tig/io.h"
+#include "tig/watch.h"
 #include "tig/options.h"
 #include "tig/repo.h"
 #include "tig/refdb.h"
@@ -99,6 +100,7 @@ get_ref_list(const char *id)
 struct ref_opt {
 	const char *remote;
 	const char *head;
+	enum watch_trigger changed;
 };
 
 static void
@@ -190,12 +192,19 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		strncpy(ref->name, name, namelen);
 	}
 
+	if (strncmp(ref->id, id, idlen))
+		opt->changed |= WATCH_REFS;
+
 	ref->valid = TRUE;
 	ref->type = type;
 	string_ncopy_do(ref->id, SIZEOF_REV, id, idlen);
 
-	if (type == REFERENCE_HEAD)
+	if (type == REFERENCE_HEAD) {
+		if (!refs_head ||
+		    (refs_head != ref && memcmp(refs_head, ref, sizeof(*ref))))
+			opt->changed |= WATCH_HEAD;
 		refs_head = ref;
+	}
 	return OK;
 }
 
@@ -206,16 +215,17 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 }
 
 static int
-reload_refs(const char *git_dir, const char *remote_name, char *head, size_t headlen)
+reload_refs(bool force)
 {
 	const char *head_argv[] = {
 		"git", "symbolic-ref", "HEAD", NULL
 	};
 	const char *ls_remote_argv[SIZEOF_ARG] = {
-		"git", "ls-remote", git_dir, NULL
+		"git", "ls-remote", repo.git_dir, NULL
 	};
 	static bool init = FALSE;
-	struct ref_opt opt = { remote_name, head };
+	struct ref_opt opt = { repo.remote, repo.head, WATCH_NONE };
+	struct repo_info old_repo = repo;
 	size_t i;
 
 	if (!init) {
@@ -224,15 +234,18 @@ reload_refs(const char *git_dir, const char *remote_name, char *head, size_t hea
 		init = TRUE;
 	}
 
-	if (!*git_dir)
+	if (!*repo.git_dir)
 		return OK;
 
-	if (!*head && io_run_buf(head_argv, head, headlen) &&
-	    !prefixcmp(head, "refs/heads/")) {
-		char *offset = head + STRING_SIZE("refs/heads/");
+	if ((force || !*repo.head) && io_run_buf(head_argv, repo.head, sizeof(repo.head)) &&
+	    !prefixcmp(repo.head, "refs/heads/")) {
+		char *offset = repo.head + STRING_SIZE("refs/heads/");
 
-		memmove(head, offset, strlen(offset) + 1);
+		memmove(repo.head, offset, strlen(offset) + 1);
 	}
+
+	if (strcmp(old_repo.head, repo.head))
+		opt.changed |= WATCH_HEAD;
 
 	refs_head = NULL;
 	for (i = 0; i < refs_size; i++)
@@ -244,9 +257,14 @@ reload_refs(const char *git_dir, const char *remote_name, char *head, size_t hea
 		return ERR;
 
 	for (i = 0; i < refs_size; i++)
-		if (!refs[i]->valid)
+		if (!refs[i]->valid) {
 			refs[i]->id[0] = 0;
+			opt.changed |= WATCH_REFS;
+		}
 
+
+	if (opt.changed)
+		watch_apply(NULL, opt.changed);
 	qsort(refs, refs_size, sizeof(*refs), compare_refs);
 
 	return OK;
@@ -257,13 +275,11 @@ load_refs(bool force)
 {
 	static bool loaded = FALSE;
 
-	if (force)
-		repo.head[0] = 0;
-	else if (loaded)
+	if (!force && loaded)
 		return OK;
 
 	loaded = TRUE;
-	return reload_refs(repo.git_dir, repo.remote, repo.head, sizeof(repo.head));
+	return reload_refs(force);
 }
 
 int

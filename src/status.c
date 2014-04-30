@@ -143,8 +143,18 @@ error_out:
 		return FALSE;
 	}
 
-	if (!view->line[view->lines - 1].data)
+	if (!view->line[view->lines - 1].data) {
 		add_line_nodata(view, LINE_STAT_NONE);
+		if (type == LINE_STAT_STAGED)
+			watch_apply(&view->watch, WATCH_INDEX_STAGED_NO);
+		else if (type == LINE_STAT_UNSTAGED)
+			watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_NO);
+	} else {
+		if (type == LINE_STAT_STAGED)
+			watch_apply(&view->watch, WATCH_INDEX_STAGED_YES);
+		else if (type == LINE_STAT_UNSTAGED)
+			watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_YES);
+	}
 
 	io_done(&io);
 	return TRUE;
@@ -256,7 +266,7 @@ status_open(struct view *view, enum open_flags flags)
 	reset_view(view);
 
 	/* FIXME: Watch untracked files and on-branch info. */
-	watch_register(&view->watch, WATCH_INDEX_STAGED | WATCH_INDEX_UNSTAGED);
+	watch_register(&view->watch, WATCH_INDEX);
 
 	add_line_nodata(view, LINE_HEADER);
 	status_update_onbranch();

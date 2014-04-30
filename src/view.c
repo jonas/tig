@@ -773,7 +773,7 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 	}
 
 	if (!refresh && view_can_refresh(view) &&
-	    watch_update(WATCH_EVENT_SWITCH_VIEW)) {
+	    watch_update_single(&view->watch, WATCH_EVENT_SWITCH_VIEW)) {
 		refresh = watch_dirty(&view->watch);
 		if (refresh)
 			flags |= OPEN_REFRESH;
