@@ -31,7 +31,7 @@ blob_open(struct view *view, enum open_flags flags)
 	static const char *blob_argv[] = {
 		"git", "cat-file", "blob", "%(blob)", NULL
 	};
-	const char **argv = (flags & OPEN_PREPARED) ? view->argv : blob_argv;
+	const char **argv = (flags & (OPEN_PREPARED | OPEN_REFRESH)) ? view->argv : blob_argv;
 
 	if (argv != blob_argv) {
 		state->file = get_path(view->env->file);
@@ -86,6 +86,15 @@ blob_request(struct view *view, enum request request, struct line *line)
 	struct blob_state *state = view->private;
 
 	switch (request) {
+	case REQ_REFRESH:
+		if (!state->file) {
+			report("Cannot reload immutable blob");
+		} else {
+			string_ncopy(view->env->file, state->file, strlen(state->file));
+			refresh_view(view);
+		}
+		return REQ_NONE;
+
 	case REQ_VIEW_BLAME:
 		string_ncopy(view->env->ref, state->commit, strlen(state->commit));
 		view->env->lineno = line - view->line;
@@ -106,7 +115,7 @@ blob_request(struct view *view, enum request request, struct line *line)
 static struct view_ops blob_ops = {
 	"line",
 	argv_env.blob,
-	VIEW_NO_FLAGS,
+	VIEW_NO_FLAGS | VIEW_REFRESH,
 	sizeof(struct blob_state),
 	blob_open,
 	blob_read,
