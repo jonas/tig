@@ -283,7 +283,7 @@ get_key_value(const char **name_ptr, struct key *key)
 	if (name[0] == '^' && name[1] == '[') {
 		return error("Escape key combo must now use '<Esc>%s' "
 			     "instead of '%s'", name + 2, name);
-	} else if (name[0] == '^') {
+	} else if (name[0] == '^' && name[1] != '\0') {
 		return error("Control key mapping must now use '<Ctrl-%s>' "
 			     "instead of '%s'", name + 1, name);
 	}
