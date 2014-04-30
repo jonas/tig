@@ -295,27 +295,32 @@ const char *
 get_key_name(const struct key key[], size_t keys)
 {
 	static char buf[SIZEOF_STR];
-	const char *modifier = "";
 	size_t pos = 0;
 	int i;
 
 	if (keys == 1 && !key->modifiers.multibytes) {
 		for (i = 0; i < ARRAY_SIZE(key_mappings); i++)
-			if (key_mappings[i].value == key->data.value)
-				return key_mappings[i].name;
+			if (key_mappings[i].value == key->data.value) {
+				if (!string_format_from(buf, &pos, "<%s>",
+							key_mappings[i].name))
+					return key_mappings[i].name;
+				return buf;
+			}
 	}
 
 	for (i = 0; i < keys; i++) {
-		const char *start = pos ? "" : "'";
-		const char *end = i + 1 == keys ? "'" : "";
+		const char *start = "";
+		const char *end = "";
 
-		if (key[i].modifiers.escape)
-			modifier = "^[";
-		else if (key[i].modifiers.control)
-			modifier = "^";
+		if (key[i].modifiers.escape) {
+			start = "<Esc>'";
+		} else if (key[i].modifiers.control) {
+			start = "<Ctrl-";
+			end = ">";
+		}
 
-		if (!string_format_from(buf, &pos, "%s%s%s%s",
-					start, modifier, key[i].data.bytes, end))
+		if (!string_format_from(buf, &pos, "%s%s%s",
+					start, key[i].data.bytes, end))
 			return "(no key)";
 	}
 
