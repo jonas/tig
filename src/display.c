@@ -31,7 +31,7 @@ static WINDOW *display_sep;
 FILE *opt_tty;
 
 bool
-open_external_viewer(const char *argv[], const char *dir, bool confirm, const char *notice)
+open_external_viewer(const char *argv[], const char *dir, bool confirm, bool refresh, const char *notice)
 {
 	bool ok;
 
@@ -45,7 +45,7 @@ open_external_viewer(const char *argv[], const char *dir, bool confirm, const ch
 		getc(opt_tty);
 	}
 	reset_prog_mode();
-	if (watch_update(WATCH_EVENT_AFTER_EXTERNAL)) {
+	if (watch_update(WATCH_EVENT_AFTER_EXTERNAL) && refresh) {
 		struct view *view;
 		int i;
 
@@ -94,7 +94,7 @@ open_editor(const char *file, unsigned int lineno)
 	if (lineno && opt_editor_line_number && string_format(lineno_cmd, "+%u", lineno))
 		editor_argv[argc++] = lineno_cmd;
 	editor_argv[argc] = file;
-	if (!open_external_viewer(editor_argv, repo.cdup, FALSE, EDITOR_LINENO_MSG))
+	if (!open_external_viewer(editor_argv, repo.cdup, FALSE, TRUE, EDITOR_LINENO_MSG))
 		opt_editor_line_number = FALSE;
 }
 

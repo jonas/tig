@@ -54,7 +54,7 @@ void init_display(void);
 void resize_display(void);
 void redraw_display(bool clear);
 
-bool open_external_viewer(const char *argv[], const char *dir, bool confirm, const char *notice);
+bool open_external_viewer(const char *argv[], const char *dir, bool confirm, bool refresh, const char *notice);
 void open_editor(const char *file, unsigned int lineno);
 void enable_mouse(bool enable);
 

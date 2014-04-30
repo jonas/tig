@@ -141,7 +141,7 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 #define REFRESH_MODE_ENUM(_) \
 	_(REFRESH_MODE, MANUEL), \
 	_(REFRESH_MODE, AUTO), \
-	_(REFRESH_MODE, ON_RETURN), \
+	_(REFRESH_MODE, AFTER_COMMAND), \
 	_(REFRESH_MODE, PERIODIC), \
 
 #define ENUM_INFO(_) \

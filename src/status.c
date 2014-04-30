@@ -570,7 +570,7 @@ open_mergetool(const char *file)
 {
 	const char *mergetool_argv[] = { "git", "mergetool", file, NULL };
 
-	open_external_viewer(mergetool_argv, repo.cdup, TRUE, "");
+	open_external_viewer(mergetool_argv, repo.cdup, TRUE, TRUE, "");
 }
 
 static enum request

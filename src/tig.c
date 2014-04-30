@@ -164,7 +164,7 @@ open_run_request(struct view *view, enum request request)
 			if (req->flags.silent)
 				io_run_bg(argv);
 			else
-				open_external_viewer(argv, NULL, !req->flags.exit, "");
+				open_external_viewer(argv, NULL, !req->flags.exit, FALSE, "");
 		}
 	}
 
@@ -178,6 +178,10 @@ open_run_request(struct view *view, enum request request)
 
 		else if (req->flags.exit)
 			request = REQ_QUIT;
+
+		else if (!req->flags.internal && watch_dirty(&view->watch))
+			request = REQ_REFRESH;
+
 	}
 	return request;
 }

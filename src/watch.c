@@ -148,6 +148,14 @@ static struct watch_handler watch_handlers[] = {
 	{ watch_stash_handler, WATCH_STASH },
 };
 
+static bool
+watch_no_refresh(enum watch_event event)
+{
+	return opt_refresh_mode == REFRESH_MODE_MANUEL ||
+	       (opt_refresh_mode == REFRESH_MODE_AFTER_COMMAND &&
+		event != WATCH_EVENT_AFTER_EXTERNAL);
+}
+
 enum watch_trigger
 watch_update(enum watch_event event)
 {
@@ -156,7 +164,7 @@ watch_update(enum watch_event event)
 	struct watch *watch;
 	int i;
 
-	if (opt_refresh_mode == REFRESH_MODE_MANUEL)
+	if (watch_no_refresh(event))
 		return changed;
 
 	/* Collect triggers to check. Skkipping watches that are already
