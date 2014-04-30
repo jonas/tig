@@ -421,7 +421,7 @@ io_memchr(struct io *io, char *data, int c)
 DEFINE_ALLOCATOR(io_realloc_buf, char, BUFSIZ)
 
 char *
-io_get(struct io *io, int c, bool can_read)
+io_get_line(struct io *io, int c, size_t *lineno, bool can_read)
 {
 	char *eol;
 	ssize_t readsize;
@@ -431,6 +431,8 @@ io_get(struct io *io, int c, bool can_read)
 			eol = memchr(io->bufpos, c, io->bufsize);
 
 			while (io->span && io->bufpos < eol && eol[-1] == '\\') {
+				if (lineno)
+					(*lineno)++;
 				eol[-1] = eol[0] = ' ';
 				eol = memchr(io->bufpos, c, io->bufsize);
 			}
@@ -440,6 +442,8 @@ io_get(struct io *io, int c, bool can_read)
 				*eol = 0;
 				io->bufpos = eol + 1;
 				io->bufsize -= io->bufpos - line;
+				if (lineno)
+					(*lineno)++;
 				return line;
 			}
 		}
@@ -451,6 +455,8 @@ io_get(struct io *io, int c, bool can_read)
 				io->bufpos[io->bufsize] = 0;
 				io->bufpos += io->bufsize;
 				io->bufsize = 0;
+				if (lineno)
+					(*lineno)++;
 				return line;
 			}
 			return NULL;
@@ -474,6 +480,12 @@ io_get(struct io *io, int c, bool can_read)
 			return NULL;
 		io->bufsize += readsize;
 	}
+}
+
+char *
+io_get(struct io *io, int c, bool can_read)
+{
+	return io_get_line(io, c, NULL, can_read);
 }
 
 bool
@@ -550,14 +562,14 @@ io_from_string(struct io *io, const char *str)
 	return TRUE;
 }
 
-int
-io_load(struct io *io, const char *separators,
-	io_read_fn read_property, void *data)
+static int
+io_load_file(struct io *io, const char *separators,
+	     size_t *lineno, io_read_fn read_property, void *data)
 {
 	char *name;
 	int state = OK;
 
-	while (state == OK && (name = io_get(io, '\n', TRUE))) {
+	while (state == OK && (name = io_get_line(io, '\n', lineno, TRUE))) {
 		char *value;
 		size_t namelen;
 		size_t valuelen;
@@ -583,6 +595,21 @@ io_load(struct io *io, const char *separators,
 	io_done(io);
 
 	return state;
+}
+
+int
+io_load_span(struct io *io, const char *separators, size_t *lineno,
+	     io_read_fn read_property, void *data)
+{
+	io->span = TRUE;
+	return io_load_file(io, separators, lineno, read_property, data);
+}
+
+int
+io_load(struct io *io, const char *separators,
+	io_read_fn read_property, void *data)
+{
+	return io_load_file(io, separators, NULL, read_property, data);
 }
 
 int

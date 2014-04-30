@@ -86,6 +86,8 @@ bool io_read_buf(struct io *io, char buf[], size_t bufsize);
 bool io_run_buf(const char **argv, char buf[], size_t bufsize);
 int io_load(struct io *io, const char *separators,
 	    io_read_fn read_property, void *data);
+int io_load_span(struct io *io, const char *separators,
+	     size_t *lineno, io_read_fn read_property, void *data);
 int io_run_load(const char **argv, const char *separators,
 		io_read_fn read_property, void *data);
 char *io_memchr(struct io *io, char *data, int c);

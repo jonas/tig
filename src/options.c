@@ -751,7 +751,7 @@ set_option(const char *opt, int argc, const char *argv[])
 
 struct config_state {
 	const char *path;
-	int lineno;
+	size_t lineno;
 	bool errors;
 };
 
@@ -760,8 +760,6 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 {
 	struct config_state *config = data;
 	enum status_code status = ERROR_NO_OPTION_VALUE;
-
-	config->lineno++;
 
 	/* Check for comment markers, since read_properties() will
 	 * only ensure opt and value are split at first " \t". */
@@ -787,7 +785,7 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 	}
 
 	if (status != SUCCESS) {
-		warn("%s:%d: %s", config->path, config->lineno,
+		warn("%s:%zu: %s", config->path, config->lineno,
 		     get_status_message(status));
 		config->errors = TRUE;
 	}
@@ -824,9 +822,7 @@ load_option_file(const char *path)
 		return error("Error loading file %s: %s", path, strerror(io_error(&io)));
 	}
 
-	io.span = TRUE;
-
-	if (io_load(&io, " \t", read_option, &config) == ERR ||
+	if (io_load_span(&io, " \t", &config.lineno, read_option, &config) == ERR ||
 	    config.errors == TRUE)
 		warn("Errors while loading %s.", path);
 	return SUCCESS;
@@ -857,8 +853,7 @@ load_options(void)
 
 		if (!io_from_string(&io, builtin_config))
 			die("Failed to get built-in config");
-		io.span = TRUE;
-		if (!io_load(&io, " \t", read_option, &config) == ERR || config.errors == TRUE)
+		if (!io_load_span(&io, " \t", &config.lineno, read_option, &config) == ERR || config.errors == TRUE)
 			die("Error in built-in config");
 	}
 
