@@ -285,7 +285,7 @@ help_select(struct view *view, struct line *line)
 static struct view_ops help_ops = {
 	"line",
 	"",
-	VIEW_NO_GIT_DIR,
+	VIEW_NO_GIT_DIR | VIEW_REFRESH,
 	sizeof(struct help_state),
 	help_open,
 	NULL,
