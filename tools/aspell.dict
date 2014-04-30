@@ -1,4 +1,4 @@
-personal_ws-1.1 en 215 
+personal_ws-1.1 en 226 
 CJK
 del
 Ctrl
@@ -23,6 +23,7 @@ args
 asciidoc
 AsciiDoc
 unstanged
+gitattributes
 revgraph
 revargs
 topo
@@ -31,6 +32,7 @@ tmp
 cwd
 frontend
 boolean
+readline
 waddnstr
 config
 alloc
@@ -44,18 +46,21 @@ bgcolor
 env
 lrwxrwxrwx
 backend
-ESC
+Esc
 doctype
 gitlink
 colorN
 nowarn
 sys
+subshell
 tty
+cmdlineargs
 combi
 signoff
 utf
 Cogito
 keymap
+adoc
 Nano
 DSSL
 manpages
@@ -63,8 +68,10 @@ LDLIBS
 lookup
 stdout
 ncurses
+txt
 Makefile
 cacheinfo
+enum
 PgDown
 libexecdir
 bool
@@ -74,7 +81,6 @@ README
 submodules
 Reenable
 xhtml
-gitattributes
 aterm
 mkstemps
 iconv
@@ -83,22 +89,24 @@ Scrool
 ELinks
 subdir
 Debian
+subdirectories
 gui
 bindir
 tigmanual
+reachability
 PgUp
 wrt
 libiconv
 unicode
 multi
 Naïvely
-reachability
 autoconf
 xpm
 filesystem
 Fonseca
 tigrc
 ifdef
+printf
 XSL
 newwin
 charset
@@ -106,6 +114,7 @@ tigblob
 autobuild
 reflog
 diffargs
+commitencoding
 erasechar
 lds
 bg
@@ -141,12 +150,11 @@ Git's
 tig's
 dirs
 ld
+subdirectory
 newmode
 keymaps
 endif
 namespace
-commitencoding
-subdirectory
 utils
 delim
 unstaged
@@ -157,7 +165,7 @@ VLINE
 extdiff
 keybindings
 ifndef
-subdirectories
+multibyte
 COLORTERM
 ncursesw
 PDF
@@ -176,10 +184,13 @@ PID
 tz
 DocBook
 docbook
+submodule
 startup
 Yi
+docext
 renderer
 textconv
+strchr
 lineno
 repo
 NUL
@@ -190,11 +201,11 @@ Yy
 fgcolor
 localtime
 filename
+backgrounded
 lncursesw
 waitpid
 wgetch
 Pre
-backgrounded
 waddch
 subcommand
 errno

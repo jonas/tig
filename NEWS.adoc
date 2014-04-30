@@ -1,8 +1,8 @@
 Release notes
 =============
 
-master
-------
+tig-2.0
+-------
 
 Note to packagers:
 
@@ -53,7 +53,7 @@ Improvements:
    view settings to configure the order and display options for each view
    columns. See system tigrc and tigrc(5) for examples. (GH #89, #222)
  - Add grep view as a front-end to git-grep(1): `tig grep -p strchr`. From
-   within Tig, the key for switching or grepping is bound to 'G' by default.
+   within Tig, the key for switching or grepping is bound to 'g' by default.
  - Rename 'branch' view to 'refs' view and show tags. (GH #134)
  - Add main view pager mode that reads git-log's '--pretty=raw' data
    from stdin, e.g. `git reflog --pretty=raw | tig --pretty=raw`.
