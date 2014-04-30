@@ -154,7 +154,7 @@ static struct watch_handler watch_handlers[] = {
 static bool
 watch_no_refresh(enum watch_event event)
 {
-	return opt_refresh_mode == REFRESH_MODE_MANUEL ||
+	return opt_refresh_mode == REFRESH_MODE_MANUAL ||
 	       (opt_refresh_mode == REFRESH_MODE_AFTER_COMMAND &&
 		event != WATCH_EVENT_AFTER_EXTERNAL);
 }
