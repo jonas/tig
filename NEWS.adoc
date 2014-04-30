@@ -6,20 +6,20 @@ master
 
 Note to packagers:
 
- - Rename README, INSTALL, and NEWS to end in '.adoc'.
- - BUGS file has been merged into README.
- - Rename (again) doc/ AsciiDoc files to end in '.adoc'.
- - Default keybindings have been moved to a system-level tigrc file, which is
-   installed to ${sysconfdir} by default. A version of the tigrc file is
+ - Add `.adoc` extension to AsciiDoc files so they show correctly on GitHub.
+   This includes `README`, `INSTALL`, and `NEWS` and files in `doc/` directory.
+ - `BUGS` file has been merged into `README.adoc`.
+ - Default keybindings have been moved to a system-level `tigrc` file, which is
+   installed to ${sysconfdir} by default. The content of the `tigrc` file is
    included inside the binary as a fall-back. Pass `NO_BUILTIN_TIGRC=y` to not
-   include the tigrc and reduce the size of the binary.
+   include the system `tigrc` content and reduce the size of the binary.
  - The example `contrib/tigrc` file (made obsolete by `tigrc`) has been removed.
- - Source files was moved to `src` and `include`.
- - Build output is less verbose by default; use `make V=1` for full output.
+ - Source files have been moved to `src` and `include` and `tig.c` was split up.
+ - Build output is less verbose by default; use `make V=1` for old output.
 
 Incompatibilities:
 
- - In preparation for key combo support, key mappings for symbolic key (e.g.
+ - In preparation for key combo support, key mappings for symbolic keys (e.g.
    `Up` and `Down`) must now start with `<` and end with `>`, e.g. `<Up>` and
    `<Down>`. Furthermore, escape key combos must now use `<Esc>key` instead of
    `^[key`, and control key mappings must now use `<Ctrl-key>` instead of
@@ -43,56 +43,59 @@ Incompatibilities:
 
 Improvements:
 
- - Options can be configured and toggled individually for each view. Use the new
-   view settings to configure the order and options for each view columns. See
-   system tigrc and tigrc(5) for examples. (GH #89, #222)
  - Add mouse support: scroll view, click line to move cursor, double click line
    (or click again) to "Enter" cursor line, e.g. open commit diff. Disabled by
    default, since it makes text selection less intuitive. If you enable this
    remember to hold down Shift (or Option on Mac) when selecting text.
- - Rewrite and improve the rendering of the commit graph. (GH #144, GH #46)
- - Add a new "auto" value for the 'vertical-split' option to let Tig choose the
-   split orientation (this is the new default behavior).
- - Add toggle-vertical-split option to change the vertical split value.
+ - Rewrite and improve the rendering of the commit graph. (GH #144, #46)
+ - Add completion and history support to the prompt via readline. (GH #185)
+ - Options can be configured and toggled individually for each view. Use the new
+   view settings to configure the order and display options for each view
+   columns. See system tigrc and tigrc(5) for examples. (GH #89, #222)
+ - Add grep view as a front-end to git-grep(1): `tig grep -p strchr`. From
+   within Tig, the key for switching or grepping is bound to 'G' by default.
+ - Rename 'branch' view to 'refs' view and show tags. (GH #134)
+ - Add main view pager mode that reads git-log's '--pretty=raw' data
+   from stdin, e.g. `git reflog --pretty=raw | tig --pretty=raw`.
+ - Add support for `--graph` and highlight diff stats in the log view.
+ - Add default command bindings: `!` to delete branch, `!` to drop stash.
  - Add 'stage-split-chunk' action for splitting chunks in the stage view.
    Bound to '\' by default. (GH #107)
  - Add 'back' action bound to '<' by default, which will return the blame view
    to the previous revision and line after moving e.g. to the parent. (GH #124)
- - User-defined commands no longer needs to always be prefixed with '!'.
- - Add auto-configuration for Cygwin (OS name: CYGWIN_NT-6.1). (GH #92)
- - Add toggling for display files of untracked directories.
- - Add main view pager mode that reads git-log's '--pretty=raw' data
-   from stdin, e.g. `git reflog --pretty=raw | tig --pretty=raw`.
- - Document the Git commands supported by the pager mode.  (GH #1)
- - Optionally specify custom prompt for `%(prompt)` in shell commands, e.g.
-   `bind main B ?git checkout -b "%(prompt Enter new branch name: )"`.
- - Allow Tig to be started with no default keybindings or built-in user-defined
-   commands by running: `TIGRC_SYSTEM=~/.tigrc.safe tig`. (GH #235)
- - Open editor at line number for combined diffs e.g. diffs of unmerged files.
- - Copy `-S`, `-G` and `--grep=` pattern to search buffer so 'find-next' and
-   'find-prev' work as expected.
- - Support view specific colors: `color stage.diff-add yellow default`.
- - Add grep view as a front-end to git-grep(1): `tig grep -p strchr`. From
-   within Tig, the key for switching or grepping is bound to 'G' by default.
+ - Auto-refresh views based on watched repository changes. Configure by setting
+   `refresh-mode` to 'manuel', 'auto' (the default), or 'periodic'. (GH #190)
+ - All default settings are in well-documented system `tigrc`.
+ - Add `:toggle` prompt command to manipulate options using keybindings. For
+   example: `bind diff D :toggle diff-options --patience --notes`. (GH #69)
+ - Add a new "auto" value for the 'vertical-split' option to let Tig choose the
+   split orientation (this is the new default behavior). Can be toggled.
+ - Make it possible to toggle the display of files in untracked directories.
+ - Allow Tig to be started with no default configuration by specifying an
+   alternative system `tigrc` file, e.g.: `TIGRC_SYSTEM=~/.tigrc.safe tig`. Set
+   `TIGRC_SYSTEM` to the empty string to use built-in configuration instead of
  - Key mappings can contain UTF-8 multibyte unicode keys.
  - Warn about conflicting keybindings using Ctrl, e.g. `<Ctrl-f>` and
    `<Ctrl-F>`. (GH #218)
  - Extend key bindings for prompt commands (ie. `bind <keymap> <key> :<prompt>`)
    to support predefined searches, eg.: `bind stage 2 :?^@@`.
- - Add :toggle prompt command as a way to manipulate options using keybindings.
-   For example: `bind diff D diff-options --patience --notes`. (GH #69)
- - Adjust author width automatically. (GH #49)
+ - Git color mappings can be configured in tigrc.
+ - More informative configuration error messages.
  - Make reference label formatting configurable, for example:
    `set reference-format = (branch) <tags> remote`. (GH #201)
- - Rename 'branch' view to 'refs' view and show tags. (GH #134)
- - More informative configuration error messages.
- - Add completion and history support to the prompt via readline. (GH #185)
- - Add support for `--graph` and highlight diff stats in the log view.
- - Add builtin command bindings: `!` to delete branch, `!` to drop stash.
- - Add %(remote) and %(tag) symbols to complement %(branch).
- - Git color mappings can be configured in tigrc.
- - Auto-refresh views based on watched repository changes. Configure by setting
-   `refresh-mode` to 'manuel', 'auto' (the default), or 'periodic'. (GH #190)
+ - Adjust author width and other view columns automatically. (GH #49)
+ - Support view specific colors: `color stage.diff-add yellow default`.
+ - Copy `-S`, `-G` and `--grep=` pattern to search buffer so 'find-next' and
+   'find-prev' work as expected.
+ - Optionally specify custom prompt for `%(prompt)` in shell commands, e.g.
+   `bind main B ?git checkout -b "%(prompt Enter new branch name: )"`.
+ - Add `%(remote)` and `%(tag)` symbols to complement `%(branch)`.
+ - User-defined commands can now be prefixed with any of the supported flags,
+   e.g. `?git checkout -b %(branch)`.
+ - Open editor at line number for combined diffs e.g. diffs of unmerged files.
+ - Add build configuration for Cygwin (OS name: CYGWIN_NT-6.1). (GH #92)
+ - Document the Git commands supported by the pager mode.  (GH #1)
+   system `tigrc` configuration. (GH #235)
 
 Bug fixes:
 
