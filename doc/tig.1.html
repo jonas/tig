@@ -604,6 +604,7 @@ tig(1) Manual Page
 tig log    [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
 tig blame  [options] [rev] [--] path
+tig grep   [options] [pattern]
 tig stash
 tig status
 tig &lt;      [Git command output]</pre>
@@ -614,13 +615,10 @@ tig &lt;      [Git command output]</pre>
 <div class="sect1">
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Browse changes in a Git repository. Additionally, tig(1) can also act
-as a pager for output of various Git commands.</p></div>
-<div class="paragraph"><p>When browsing repositories, tig(1) uses the underlying Git commands
-to present the user with various views, such as summarized commit log
-and showing the commit with the log message, diffstat, and the diff.</p></div>
-<div class="paragraph"><p>Using tig(1) as a pager, it will display input from stdin and try
-to colorize it.</p></div>
+<div class="paragraph"><p>Tig is an ncurses-based text-mode interface for git(1). It functions
+mainly as a Git repository browser, but can also assist in staging
+changes for commit at chunk level and act as a pager for output from
+various Git commands.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -630,8 +628,7 @@ to colorize it.</p></div>
 git-diff(1) options, as well as the following subcommands and Tig specific
 options. The first command line parameter not starting with "-" is interpreted
 as being either a revision specification or a path and will end the option
-parsing. All following options will be passed untouched to the underlying Git
-command.</p></div>
+parsing. All additional options will be passed to the underlying Git command.</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
 show
@@ -668,6 +665,22 @@ log
 </p>
 </dd>
 <dt class="hdlist1">
+stash
+</dt>
+<dd>
+<p>
+        Start up in stash view.
+</p>
+</dd>
+<dt class="hdlist1">
+grep
+</dt>
+<dd>
+<p>
+        Open the grep view. Supports the same options as git-grep(1).
+</p>
+</dd>
+<dt class="hdlist1">
 +&lt;number&gt;
 </dt>
 <dd>
@@ -695,14 +708,70 @@ log
 </div>
 </div>
 <div class="sect1">
+<h2 id="_pager_mode">PAGER MODE</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Tig enters pager mode when input is provided via stdin and supports the
+following subcommands and options:</p></div>
+<div class="openblock">
+<div class="content">
+<div class="ulist"><ul>
+<li>
+<p>
+When the <em>show</em> subcommand is specified and the <em>--stdin</em> option is given,
+   stdin is assumed to be a list of commit IDs and will be forwarded to the diff
+   view&#8217;s underlying git-show(1) command. For example:
+</p>
+</li>
+</ul></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ git rev-list --author=vivien HEAD | tig show --stdin</tt></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+When <em>--stdin</em> is given, stdin is assumed to be a list of commit IDs
+   and will be forwarded to the main view&#8217;s underlying git-log(1)
+   command. For example:
+</p>
+</li>
+</ul></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ tig --no-walk --stdin &lt; cherry-picks.txt</tt></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+When <em>--pretty=raw</em> is given, stdin is assumed to be a "pretty=raw"
+   formatted output similar to that of git-log(1). For example:
+</p>
+</li>
+</ul></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ git reflog --pretty=raw | tig --pretty=raw</tt></pre>
+</div></div>
+</div></div>
+<div class="paragraph"><p>When no subcommands nor options are given, the pager view will be used for
+displaying the Git command input given on stdin. The pager view assumes the
+input is either from git-log(1) or git-diff(1) and will highlight it similar to
+the log and diff views. For example:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ git log -Schange -p --raw | tig</tt></pre>
+</div></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Display the current branch:</p></div>
+<div class="paragraph"><p>Display the list of commits for the current branch:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig</tt></pre>
 </div></div>
-<div class="paragraph"><p>Display one or more specific branches:</p></div>
+<div class="paragraph"><p>Display commits from one or more branches:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><tt>$ tig test master</tt></pre>
@@ -747,6 +816,11 @@ log
 <div class="content">
 <pre><tt>$ tig stash</tt></pre>
 </div></div>
+<div class="paragraph"><p>Grep all files for lines containing <tt>DEFINE_ENUM</tt>:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>$ tig grep -p DEFINE_ENUM</tt></pre>
+</div></div>
 </div>
 </div>
 <div class="sect1">
@@ -772,7 +846,8 @@ TIGRC_SYSTEM
 <dd>
 <p>
         Path of the system wide configuration file (defaults to
-        <tt>{sysconfdir}/tigrc</tt>).
+        <tt>{sysconfdir}/tigrc</tt>). Define to empty string to use built-in
+        configuration.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -791,7 +866,7 @@ TIG_DIFF_OPTS
 <p>
         The diff options to use in the diff view. The diff view uses
         git-show(1) for formatting and always passes --patch-with-stat.  You
-        may also set the diff-options setting in your <a href="tigrc.5.html">tigrc(5)</a>.
+        may also set the <tt>diff-options</tt> setting in the configuration file.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -844,9 +919,17 @@ TIG_TRACE
 </div>
 </div>
 <div class="sect1">
+<h2 id="_bugs">BUGS</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Please visit Tig&#8217;s <a href="http://jonas.nitro.dk/tig">home page</a> or
+<a href="https://github.com/jonas/tig">main Git repository</a> for information about
+new releases and how to report bugs or feature request.</p></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_copyright">COPYRIGHT</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Copyright (c) 2006-2012 Jonas Fonseca &lt;<a href="mailto:fonseca@diku.dk">fonseca@diku.dk</a>&gt;</p></div>
+<div class="paragraph"><p>Copyright (c) 2006-2014 Jonas Fonseca &lt;<a href="mailto:jonas.fonseca@gmail.com">jonas.fonseca@gmail.com</a>&gt;</p></div>
 <div class="paragraph"><p>This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -865,7 +948,7 @@ git(7)</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-08-24 10:42:22 EDT
+Last updated 2014-04-30 00:20:17 EDT
 </div>
 </div>
 </body>

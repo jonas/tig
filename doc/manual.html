@@ -569,7 +569,7 @@ footnotes: function () {
 <div id="header">
 <h1>The Tig Manual</h1>
 <span id="author">Jonas Fonseca</span><br />
-<span id="email"><tt>&lt;<a href="mailto:fonseca@diku.dk">fonseca@diku.dk</a>&gt;</tt></span><br />
+<span id="email"><tt>&lt;<a href="mailto:jonas.fonseca@gmail.com">jonas.fonseca@gmail.com</a>&gt;</tt></span><br />
 </div>
 <div id="content">
 <div id="preamble">
@@ -865,11 +865,11 @@ The blame view
 </p>
 </dd>
 <dt class="hdlist1">
-The branch view
+The refs view
 </dt>
 <dd>
 <p>
-        Displays the branches in the repository.
+        Displays the branches, remotes and tags in the repository.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -896,6 +896,15 @@ The stash view
 <dd>
 <p>
         Displays the list of stashes in the repository.
+</p>
+</dd>
+<dt class="hdlist1">
+The grep view
+</dt>
+<dd>
+<p>
+        Displays a list of files and all the lines that matches a search
+        pattern.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -980,8 +989,12 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">The file arguments passed on the command line.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><tt>%(cmdlineargs)</tt></p></td>
+<td align="left" valign="top"><p class="table">All other options passed on the command line.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><tt>%(diffargs)</tt></p></td>
-<td align="left" valign="top"><p class="table">The diff options passed on the command line.</p></td>
+<td align="left" valign="top"><p class="table">The diff options from <em>diff-options</em> or <em>TIG_DIFF_OPTS</em></p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><tt>%(prompt)</tt></p></td>
@@ -1034,7 +1047,7 @@ Rebase current branch on top of the selected branch:
 </p>
 <div class="literalblock">
 <div class="content">
-<pre><tt>bind branch 3 !git rebase -i %(branch)</tt></pre>
+<pre><tt>bind refs 3 !git rebase -i %(branch)</tt></pre>
 </div></div>
 </li>
 </ul></div>
@@ -1185,7 +1198,7 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">H</p></td>
-<td align="left" valign="top"><p class="table">Switch to branch view.</p></td>
+<td align="left" valign="top"><p class="table">Switch to refs view.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">y</p></td>
@@ -1733,19 +1746,17 @@ accomplished using:</p></div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_bugs">6. BUGS</h2>
+<h2 id="_more_information">6. More Information</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Bugs and feature requests can be reported using the issue tracker at
-<a href="https://github.com/jonas/tig/issues">https://github.com/jonas/tig/issues</a> or by mail to either the Git mailing
-list or directly to the maintainer. Ensure that the word "tig" is in the
-subject. For other Tig related questions please use Stack Overflow:
-<a href="http://stackoverflow.com/questions/tagged/tig">http://stackoverflow.com/questions/tagged/tig</a>.</p></div>
+<div class="paragraph"><p>Please visit Tig&#8217;s <a href="http://jonas.nitro.dk/tig">home page</a> or
+<a href="https://github.com/jonas/tig">main Git repository</a> for information about
+new releases and how to report bugs and feature requests.</p></div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="copy-right">7. Copyright</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Copyright (c) 2006-2012 Jonas Fonseca &lt;<a href="mailto:fonseca@diku.dk">fonseca@diku.dk</a>&gt;</p></div>
+<div class="paragraph"><p>Copyright (c) 2006-2014 Jonas Fonseca &lt;<a href="mailto:jonas.fonseca@gmail.com">jonas.fonseca@gmail.com</a>&gt;</p></div>
 <div class="paragraph"><p>This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -1774,7 +1785,7 @@ the Free Software Foundation; either version 2 of the License, or
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-08-24 10:42:22 EDT
+Last updated 2014-04-30 00:20:17 EDT
 </div>
 </div>
 </body>

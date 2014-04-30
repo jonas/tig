@@ -2,12 +2,12 @@
 .\"     Title: tig
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 08/24/2013
+.\"      Date: 04/30/2014
 .\"    Manual: Tig Manual
-.\"    Source: Tig 1.2.1
+.\"    Source: Tig 2.0
 .\"  Language: English
 .\"
-.TH "TIG" "1" "08/24/2013" "Tig 1\&.2\&.1" "Tig Manual"
+.TH "TIG" "1" "04/30/2014" "Tig 2\&.0" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -36,6 +36,7 @@ tig        [options] [revisions] [\-\-] [paths]
 tig log    [options] [revisions] [\-\-] [paths]
 tig show   [options] [revisions] [\-\-] [paths]
 tig blame  [options] [rev] [\-\-] path
+tig grep   [options] [pattern]
 tig stash
 tig status
 tig <      [Git command output]
@@ -43,14 +44,10 @@ tig <      [Git command output]
 .sp
 .SH "DESCRIPTION"
 .sp
-Browse changes in a Git repository\&. Additionally, tig(1) can also act as a pager for output of various Git commands\&.
-.sp
-When browsing repositories, tig(1) uses the underlying Git commands to present the user with various views, such as summarized commit log and showing the commit with the log message, diffstat, and the diff\&.
-.sp
-Using tig(1) as a pager, it will display input from stdin and try to colorize it\&.
+Tig is an ncurses\-based text\-mode interface for git(1)\&. It functions mainly as a Git repository browser, but can also assist in staging changes for commit at chunk level and act as a pager for output from various Git commands\&.
 .SH "OPTIONS"
 .sp
-Command line options recognized by Tig include all valid git\-log(1) and git\-diff(1) options, as well as the following subcommands and Tig specific options\&. The first command line parameter not starting with "\-" is interpreted as being either a revision specification or a path and will end the option parsing\&. All following options will be passed untouched to the underlying Git command\&.
+Command line options recognized by Tig include all valid git\-log(1) and git\-diff(1) options, as well as the following subcommands and Tig specific options\&. The first command line parameter not starting with "\-" is interpreted as being either a revision specification or a path and will end the option parsing\&. All additional options will be passed to the underlying Git command\&.
 .PP
 show
 .RS 4
@@ -72,6 +69,16 @@ log
 Start up in log view, displaying git\-log(1) output\&.
 .RE
 .PP
+stash
+.RS 4
+Start up in stash view\&.
+.RE
+.PP
+grep
+.RS 4
+Open the grep view\&. Supports the same options as git\-grep(1)\&.
+.RE
+.PP
 +<number>
 .RS 4
 Show the first view with line <number> visible and selected\&.
@@ -86,9 +93,101 @@ Show version and exit\&.
 .RS 4
 Show help message and exit\&.
 .RE
+.SH "PAGER MODE"
+.sp
+Tig enters pager mode when input is provided via stdin and supports the following subcommands and options:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+When the
+\fIshow\fR
+subcommand is specified and the
+\fI\-\-stdin\fR
+option is given, stdin is assumed to be a list of commit IDs and will be forwarded to the diff view\(cqs underlying git\-show(1) command\&. For example:
+.RE
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ git rev\-list \-\-author=vivien HEAD | tig show \-\-stdin
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+When
+\fI\-\-stdin\fR
+is given, stdin is assumed to be a list of commit IDs and will be forwarded to the main view\(cqs underlying git\-log(1) command\&. For example:
+.RE
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ tig \-\-no\-walk \-\-stdin < cherry\-picks\&.txt
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+When
+\fI\-\-pretty=raw\fR
+is given, stdin is assumed to be a "pretty=raw" formatted output similar to that of git\-log(1)\&. For example:
+.RE
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ git reflog \-\-pretty=raw | tig \-\-pretty=raw
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+When no subcommands nor options are given, the pager view will be used for displaying the Git command input given on stdin\&. The pager view assumes the input is either from git\-log(1) or git\-diff(1) and will highlight it similar to the log and diff views\&. For example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ git log \-Schange \-p \-\-raw | tig
+.fi
+.if n \{\
+.RE
+.\}
+.sp
 .SH "EXAMPLES"
 .sp
-Display the current branch:
+Display the list of commits for the current branch:
 .sp
 .if n \{\
 .RS 4
@@ -101,7 +200,7 @@ $ tig
 .\}
 .sp
 .sp
-Display one or more specific branches:
+Display commits from one or more branches:
 .sp
 .if n \{\
 .RS 4
@@ -217,6 +316,19 @@ $ tig stash
 .RE
 .\}
 .sp
+.sp
+Grep all files for lines containing DEFINE_ENUM:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ tig grep \-p DEFINE_ENUM
+.fi
+.if n \{\
+.RE
+.\}
+.sp
 .SH "ENVIRONMENT VARIABLES"
 .sp
 In addition to environment variables used by Git (e\&.g\&. GIT_DIR), Tig defines the ones below\&. The command related environment variables have access to the internal state of Tig via replacement variables, such as %(commit) and %(blob)\&. See \fBtigrc\fR(5) for a full list\&.
@@ -230,7 +342,7 @@ Path of the user configuration file (defaults to
 TIGRC_SYSTEM
 .RS 4
 Path of the system wide configuration file (defaults to
-{sysconfdir}/tigrc)\&.
+{sysconfdir}/tigrc)\&. Define to empty string to use built\-in configuration\&.
 .RE
 .PP
 TIG_LS_REMOTE
@@ -240,8 +352,9 @@ Set command for retrieving all repository references\&. The command should outpu
 .PP
 TIG_DIFF_OPTS
 .RS 4
-The diff options to use in the diff view\&. The diff view uses git\-show(1) for formatting and always passes \-\-patch\-with\-stat\&. You may also set the diff\-options setting in your
-\fBtigrc\fR(5)\&.
+The diff options to use in the diff view\&. The diff view uses git\-show(1) for formatting and always passes \-\-patch\-with\-stat\&. You may also set the
+diff\-options
+setting in the configuration file\&.
 .RE
 .PP
 TIG_TRACE
@@ -266,9 +379,12 @@ System wide configuration file\&.
 .RS 4
 Git configuration files\&. Read on start\-up with the help of git\-config(1)\&.
 .RE
+.SH "BUGS"
+.sp
+Please visit Tig\(cqs \m[blue]\fBhome page\fR\m[]\&\s-2\u[1]\d\s+2 or \m[blue]\fBmain Git repository\fR\m[]\&\s-2\u[2]\d\s+2 for information about new releases and how to report bugs or feature request\&.
 .SH "COPYRIGHT"
 .sp
-Copyright (c) 2006\-2012 Jonas Fonseca <\m[blue]\fBfonseca@diku\&.dk\fR\m[]\&\s-2\u[1]\d\s+2>
+Copyright (c) 2006\-2014 Jonas Fonseca <\m[blue]\fBjonas\&.fonseca@gmail\&.com\fR\m[]\&\s-2\u[3]\d\s+2>
 .sp
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version\&.
 .SH "SEE ALSO"
@@ -276,7 +392,17 @@ This program is free software; you can redistribute it and/or modify it under th
 \fBtigrc\fR(5), \fBtigmanual\fR(7), git(7)
 .SH "NOTES"
 .IP " 1." 4
-fonseca@diku.dk
+home page
 .RS 4
-\%mailto:fonseca@diku.dk
+\%http://jonas.nitro.dk/tig
+.RE
+.IP " 2." 4
+main Git repository
+.RS 4
+\%https://github.com/jonas/tig
+.RE
+.IP " 3." 4
+jonas.fonseca@gmail.com
+.RS 4
+\%mailto:jonas.fonseca@gmail.com
 .RE

@@ -2,12 +2,12 @@
 .\"     Title: tigmanual
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 08/24/2013
+.\"      Date: 04/30/2014
 .\"    Manual: Tig Manual
-.\"    Source: Tig 1.2.1
+.\"    Source: Tig 2.0
 .\"  Language: English
 .\"
-.TH "TIGMANUAL" "7" "08/24/2013" "Tig 1\&.2\&.1" "Tig Manual"
+.TH "TIGMANUAL" "7" "04/30/2014" "Tig 2\&.0" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -147,9 +147,9 @@ The blame view
 Displays the file content annotated or blamed by commits\&.
 .RE
 .PP
-The branch view
+The refs view
 .RS 4
-Displays the branches in the repository\&.
+Displays the branches, remotes and tags in the repository\&.
 .RE
 .PP
 The status view
@@ -165,6 +165,11 @@ Displays diff changes for staged or unstaged files being tracked or file content
 The stash view
 .RS 4
 Displays the list of stashes in the repository\&.
+.RE
+.PP
+The grep view
+.RS 4
+Displays a list of files and all the lines that matches a search pattern\&.
 .RE
 .PP
 The pager view
@@ -189,6 +194,7 @@ Some of the commands used or provided by Tig can be configured\&. This goes for 
 .B Table\ \&1.\ \&Browsing state variables
 .TS
 tab(:);
+lt lt
 lt lt
 lt lt
 lt lt
@@ -273,10 +279,17 @@ The file arguments passed on the command line\&.
 T}
 T{
 .sp
+%(cmdlineargs)
+T}:T{
+.sp
+All other options passed on the command line\&.
+T}
+T{
+.sp
 %(diffargs)
 T}:T{
 .sp
-The diff options passed on the command line\&.
+The diff options from \fIdiff\-options\fR or \fITIG_DIFF_OPTS\fR
 T}
 T{
 .sp
@@ -388,7 +401,7 @@ Rebase current branch on top of the selected branch:
 .RS 4
 .\}
 .nf
-bind branch 3 !git rebase \-i %(branch)
+bind refs 3 !git rebase \-i %(branch)
 .fi
 .if n \{\
 .RE
@@ -577,7 +590,7 @@ T{
 H
 T}:T{
 .sp
-Switch to branch view\&.
+Switch to refs view\&.
 T}
 T{
 .sp
@@ -1313,12 +1326,12 @@ $ tig \-\-all \-\-since=1\&.week \-\- Makefile
 .RE
 .\}
 .sp
-.SH "BUGS"
+.SH "MORE INFORMATION"
 .sp
-Bugs and feature requests can be reported using the issue tracker at \m[blue]\fBhttps://github\&.com/jonas/tig/issues\fR\m[] or by mail to either the Git mailing list or directly to the maintainer\&. Ensure that the word "tig" is in the subject\&. For other Tig related questions please use Stack Overflow: \m[blue]\fBhttp://stackoverflow\&.com/questions/tagged/tig\fR\m[]\&.
+Please visit Tig\(cqs \m[blue]\fBhome page\fR\m[]\&\s-2\u[1]\d\s+2 or \m[blue]\fBmain Git repository\fR\m[]\&\s-2\u[2]\d\s+2 for information about new releases and how to report bugs and feature requests\&.
 .SH "COPYRIGHT"
 .sp
-Copyright (c) 2006\-2012 Jonas Fonseca <\m[blue]\fBfonseca@diku\&.dk\fR\m[]\&\s-2\u[1]\d\s+2>
+Copyright (c) 2006\-2014 Jonas Fonseca <\m[blue]\fBjonas\&.fonseca@gmail\&.com\fR\m[]\&\s-2\u[3]\d\s+2>
 .sp
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version\&.
 .SH "SEE ALSO"
@@ -1350,7 +1363,17 @@ Manpages:
 .RE
 .SH "NOTES"
 .IP " 1." 4
-fonseca@diku.dk
+home page
 .RS 4
-\%mailto:fonseca@diku.dk
+\%http://jonas.nitro.dk/tig
+.RE
+.IP " 2." 4
+main Git repository
+.RS 4
+\%https://github.com/jonas/tig
+.RE
+.IP " 3." 4
+jonas.fonseca@gmail.com
+.RS 4
+\%mailto:jonas.fonseca@gmail.com
 .RE

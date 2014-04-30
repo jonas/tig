@@ -571,6 +571,370 @@ footnotes: function () {
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_0">tig-2.0</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Note to packagers:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Add <tt>.adoc</tt> extension to AsciiDoc files so they show correctly on GitHub.
+   This includes <tt>README</tt>, <tt>INSTALL</tt>, and <tt>NEWS</tt> and files in <tt>doc/</tt> directory.
+</p>
+</li>
+<li>
+<p>
+<tt>BUGS</tt> file has been merged into <tt>README.adoc</tt>.
+</p>
+</li>
+<li>
+<p>
+Default keybindings have been moved to a system-level <tt>tigrc</tt> file, which is
+   installed to $++SYSCONFDIR++ by default. The content of the <tt>tigrc</tt> file is
+   included inside the binary as a fall-back. Pass <tt>NO_BUILTIN_TIGRC=y</tt> to not
+   include the system <tt>tigrc</tt> content and reduce the size of the binary.
+</p>
+</li>
+<li>
+<p>
+The example <tt>contrib/tigrc</tt> file (made obsolete by <tt>tigrc</tt>) has been removed.
+</p>
+</li>
+<li>
+<p>
+Source files have been moved to <tt>src</tt> and <tt>include</tt> and <tt>tig.c</tt> was split up.
+</p>
+</li>
+<li>
+<p>
+Build output is less verbose by default; use <tt>make V=1</tt> for old output.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Incompatibilities:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+In preparation for key combo support, key mappings for symbolic keys (e.g.
+   <tt>Up</tt> and <tt>Down</tt>) must now start with <tt>&lt;</tt> and end with <tt>&gt;</tt>, e.g. <tt>&lt;Up&gt;</tt> and
+   <tt>&lt;Down&gt;</tt>. Furthermore, escape key combos must now use <tt>&lt;Esc&gt;key</tt> instead of
+   <tt>^[key</tt>, and control key mappings must now use <tt>&lt;Ctrl-key&gt;</tt> instead of
+   <tt>^key</tt>.
+</p>
+</li>
+<li>
+<p>
+Only use <em>diff-options</em> for the diff view and introduce <em>%(cmdlineargs)</em> to
+   hold non-file and non-revision flags passed on the command line. Affects all
+   user-defined commands that expect <em>%(diffargs)</em> to hold both <em>diff-options</em>
+   arguments and those passed on the command line. (GH #228)
+</p>
+</li>
+<li>
+<p>
+Remove built-in keybinding for <tt>git gc</tt>. Add the following line to <tt>~/.tigrc</tt>
+   to restore it: <tt>bind generic G ?git gc</tt>.
+</p>
+</li>
+<li>
+<p>
+To support view specific colors, <em>.</em> can no longer be used interchangeably
+   with <em>-</em> and <em>_</em> in settings names and in particular color names.
+</p>
+</li>
+<li>
+<p>
+Replace <em>stage-next</em> action with prompt command using a predefined search
+   (see below) and add binding (<tt>@</tt> by default) to also work in the diff view.
+</p>
+</li>
+<li>
+<p>
+Most view display options must now be set via the new <tt>*-view</tt> options in
+   tigrc. Existing options are no longer recognized, but a warning is shown.
+</p>
+</li>
+<li>
+<p>
+Remap default bindings to have more consistent convention: use lower-case
+   keys primarily for view switching and non-destructive actions, use upper-case
+   keys for view-specific actions including user-defined commands. To preserve
+   old default key bindings see <tt>contrib/bindings-v1.x.tigrc</tt>. (GH #257)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Add mouse support: scroll view, click line to move cursor, double click line
+   (or click again) to "Enter" cursor line, e.g. open commit diff. Disabled by
+   default, since it makes text selection less intuitive. If you enable this
+   remember to hold down Shift (or Option on Mac) when selecting text.
+</p>
+</li>
+<li>
+<p>
+Rewrite and improve the rendering of the commit graph. (GH #144, #46)
+</p>
+</li>
+<li>
+<p>
+Add completion and history support to the prompt via readline. (GH #185)
+</p>
+</li>
+<li>
+<p>
+Options can be configured and toggled individually for each view. Use the new
+   view settings to configure the order and display options for each view
+   columns. See system tigrc and tigrc(5) for examples. (GH #89, #222)
+</p>
+</li>
+<li>
+<p>
+Add grep view as a front-end to git-grep(1): <tt>tig grep -p strchr</tt>. From
+   within Tig, the key for switching or grepping is bound to <em>g</em> by default.
+</p>
+</li>
+<li>
+<p>
+Rename <em>branch</em> view to <em>refs</em> view and show tags. (GH #134)
+</p>
+</li>
+<li>
+<p>
+Add main view pager mode that reads git-log&#8217;s <em>--pretty=raw</em> data
+   from stdin, e.g. <tt>git reflog --pretty=raw | tig --pretty=raw</tt>.
+</p>
+</li>
+<li>
+<p>
+Add support for <tt>--graph</tt> and highlight diff stats in the log view.
+</p>
+</li>
+<li>
+<p>
+Add default command bindings: <tt>!</tt> to delete branch, <tt>!</tt> to drop stash.
+</p>
+</li>
+<li>
+<p>
+Add <em>stage-split-chunk</em> action for splitting chunks in the stage view.
+   Bound to <em>\</em> by default. (GH #107)
+</p>
+</li>
+<li>
+<p>
+Add <em>back</em> action bound to <em>&lt;</em> by default, which will return the blame view
+   to the previous revision and line after moving e.g. to the parent. (GH #124)
+</p>
+</li>
+<li>
+<p>
+Auto-refresh views based on watched repository changes. Configure by setting
+   <tt>refresh-mode</tt> to <em>manual</em>, <em>auto</em>, <em>after-command</em>, or <em>periodic</em>. (GH #190)
+</p>
+</li>
+<li>
+<p>
+All default settings are in well-documented system <tt>tigrc</tt>.
+</p>
+</li>
+<li>
+<p>
+Add <tt>:toggle</tt> prompt command to manipulate options using keybindings. For
+   example: <tt>bind diff D :toggle diff-options --patience --notes</tt>. (GH #69)
+</p>
+</li>
+<li>
+<p>
+Add a new "auto" value for the <em>vertical-split</em> option to let Tig choose the
+   split orientation (this is the new default behavior). Can be toggled.
+</p>
+</li>
+<li>
+<p>
+Make it possible to toggle the display of files in untracked directories.
+</p>
+</li>
+<li>
+<p>
+Allow Tig to be started with no default configuration by specifying an
+   alternative system <tt>tigrc</tt> file, e.g.: <tt>TIGRC_SYSTEM=~/.tigrc.safe tig</tt>. Set
+   <tt>TIGRC_SYSTEM</tt> to the empty string to use built-in configuration instead of
+</p>
+</li>
+<li>
+<p>
+Key mappings can contain UTF-8 multibyte unicode keys.
+</p>
+</li>
+<li>
+<p>
+Warn about conflicting keybindings using Ctrl, e.g. <tt>&lt;Ctrl-f&gt;</tt> and
+   <tt>&lt;Ctrl-F&gt;</tt>. (GH #218)
+</p>
+</li>
+<li>
+<p>
+Extend key bindings for prompt commands (ie. <tt>bind &lt;keymap&gt; &lt;key&gt; :&lt;prompt&gt;</tt>)
+   to support predefined searches, eg.: <tt>bind stage 2 :?^@@</tt>.
+</p>
+</li>
+<li>
+<p>
+Git color mappings can be configured in tigrc.
+</p>
+</li>
+<li>
+<p>
+More informative configuration error messages.
+</p>
+</li>
+<li>
+<p>
+Make reference label formatting configurable, for example:
+   <tt>set reference-format = (branch) &lt;tags&gt; remote</tt>. (GH #201)
+</p>
+</li>
+<li>
+<p>
+Adjust author width and other view columns automatically. (GH #49)
+</p>
+</li>
+<li>
+<p>
+Support view specific colors: <tt>color stage.diff-add yellow default</tt>.
+</p>
+</li>
+<li>
+<p>
+Copy <tt>-S</tt>, <tt>-G</tt> and <tt>--grep=</tt> pattern to search buffer so <em>find-next</em> and
+   <em>find-prev</em> work as expected.
+</p>
+</li>
+<li>
+<p>
+Optionally specify custom prompt for <tt>%(prompt)</tt> in shell commands, e.g.
+   <tt>bind main B ?git checkout -b "%(prompt Enter new branch name: )"</tt>.
+</p>
+</li>
+<li>
+<p>
+Add <tt>%(remote)</tt> and <tt>%(tag)</tt> symbols to complement <tt>%(branch)</tt>.
+</p>
+</li>
+<li>
+<p>
+User-defined commands can now be prefixed with any of the supported flags,
+   e.g. <tt>?git checkout -b %(branch)</tt>.
+</p>
+</li>
+<li>
+<p>
+Open editor at line number for combined diffs e.g. diffs of unmerged files.
+</p>
+</li>
+<li>
+<p>
+Add build configuration for Cygwin (OS name: CYGWIN_NT-6.1). (GH #92)
+</p>
+</li>
+<li>
+<p>
+Document the Git commands supported by the pager mode.  (GH #1)
+   system <tt>tigrc</tt> configuration. (GH #235)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix stash diff display when reloading the stash view after a deleting.
+</p>
+</li>
+<li>
+<p>
+Set the commit reference when opening the blame view from the blob view.
+</p>
+</li>
+<li>
+<p>
+Correctly identify and highlight the remote branch tracked by HEAD.
+</p>
+</li>
+<li>
+<p>
+Pass --no-color after user defined arguments to ensure that colors do not
+   break the output parsing. (GH #191)
+</p>
+</li>
+<li>
+<p>
+Close stdin when pager mode is not supported.
+</p>
+</li>
+<li>
+<p>
+Show newly created branches in the main view. (GH #196)
+</p>
+</li>
+<li>
+<p>
+File with 0 changes breaks diffstat highlighting (GH #215)
+</p>
+</li>
+<li>
+<p>
+Update %(branch) variable in the main view. (GH #223)
+</p>
+</li>
+<li>
+<p>
+Disable graph rendering when either of <tt>--reverse</tt>, <tt>-S</tt>, <tt>-G</tt>, and <tt>--grep</tt>
+   are passed to the main view. (GH #127)
+</p>
+</li>
+<li>
+<p>
+Only refresh views that support it.
+</p>
+</li>
+<li>
+<p>
+Fix author and date annotation of renamed entries in the tree view.
+</p>
+</li>
+<li>
+<p>
+Fix use of unsafe methods in the signal handler. (GH #245)
+</p>
+</li>
+<li>
+<p>
+Fix rendering in non-UTF8 terminals.
+</p>
+</li>
+<li>
+<p>
+Fix stage-update-line by rewriting the diff chunk containing the line instead
+   of using <tt>--unidiff-zero</tt> and a diff context of zero. (GH #130)
+</p>
+</li>
+<li>
+<p>
+Fix status-update to work for untracked directories. (GH #236)
+</p>
+</li>
+<li>
+<p>
+Don&#8217;t pass log parameters given on the command line to the diff view.
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_1_2_1">tig-1.2.1</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Incompatibilities:</p></div>
@@ -2231,7 +2595,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-08-24 10:42:22 EDT
+Last updated 2014-04-30 00:20:17 EDT
 </div>
 </div>
 </body>

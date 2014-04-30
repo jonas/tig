@@ -2,12 +2,12 @@
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 08/24/2013
+.\"      Date: 04/30/2014
 .\"    Manual: Tig Manual
-.\"    Source: Tig 1.2.1
+.\"    Source: Tig 2.0
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "08/24/2013" "Tig 1\&.2\&.1" "Tig Manual"
+.TH "TIGRC" "5" "04/30/2014" "Tig 2\&.0" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -40,7 +40,7 @@ tigrc \- Tig configuration file
 .sp
 .SH "DESCRIPTION"
 .sp
-You can permanently set an option by putting it in the ~/\&.tigrc file\&. The file consists of a series of \fIcommands\fR\&. Each line of the file may contain only one command\&.
+You can permanently set an option by putting it in the ~/\&.tigrc file\&. The file consists of a series of \fIcommands\fR\&. Each line of the file may contain only one command\&. Commands can span multiple lines if each line is terminated by a backslash (\fI\e\fR) character\&.
 .sp
 The hash mark (\fI#\fR) is used as a \fIcomment\fR character\&. All text after the comment character to the end of the line is ignored\&. You can use comments to annotate your initialization file\&.
 .SH "GIT CONFIGURATION"
@@ -64,8 +64,9 @@ In addition to tig\-specific options, the following Git options are read from th
 .PP
 \fIcolor\&.*\fR
 .RS 4
-Colors for the various UI types\&. Can be completely disabled by setting
-\fIread\-git\-colors\fR\&.
+Colors for the various UI types\&. Can be configured via the
+\fIgit\-colors\fR
+setting\&.
 .RE
 .PP
 \fIcore\&.abbrev\fR
@@ -115,16 +116,21 @@ Examples:
 .RS 4
 .\}
 .nf
-set show\-author = abbreviated   # Show abbreviated author names\&.
-set show\-date = relative        # Show relative commit date\&.
-set show\-rev\-graph = yes        # Show revision graph?
-set show\-refs = yes             # Show references?
 set commit\-order = topo         # Order commits topologically
-set read\-git\-colors = no        # Do not read Git\*(Aqs color settings\&.
-set show\-line\-numbers = no      # Show line numbers?
-set line\-number\-interval = 5    # Interval between line numbers
+set git\-colors = no             # Do not read Git\*(Aqs color settings\&.
 set horizontal\-scroll = 33%     # Scroll 33% of the view width
 set blame\-options = \-C \-C \-C    # Blame lines from other files
+
+# Wrap branch names with () and tags with <>
+set reference\-format = (branch) <tag>
+
+# Configure blame view columns using command spanning multiple lines\&.
+set blame\-view = \e
+        date:default \e
+        author:abbreviated \e
+        file\-name:auto \e
+        id:yes,color \e
+        line\-number:yes,interval=5 text
 .fi
 .if n \{\
 .RE
@@ -138,8 +144,6 @@ Or in the Git configuration files:
 .\}
 .nf
 [tig]
-        show\-date = yes         # Show commit date?
-        author\-width = 10       # Set width of the author column
         line\-graphics = no      # Disable graphics characters
         tab\-size = 8            # Number of spaces per tab
 .fi
@@ -173,27 +177,9 @@ These values are composites of the above types\&. The valid values are specified
 .sp
 The following variables can be set:
 .PP
-\fIauthor\-width\fR (int)
-.RS 4
-Width of the author column\&. When set to 5 or below, the author name will be abbreviated to the author\(cqs initials\&.
-.RE
-.PP
-\fIfilename\-width\fR (int)
-.RS 4
-Width of the filename column\&.
-.RE
-.PP
-\fIid\-width\fR (int)
-.RS 4
-Width of the commit ID\&. When unset Tig will use the value of
-\fIcore\&.abbrev\fR
-if found or default to 7\&. See git\-config(1) on how to set
-\fIcore\&.abbrev\fR\&.
-.RE
-.PP
 \fIdiff\-options\fR (string)
 .RS 4
-A space separate string of diff options to use in the diff view\&. git\-show(1) is used for formatting and always passes \-\-patch\-with\-stat\&. This option overrides any options specified in the TIG_DIFF_OPTS environment variable (described in
+A space separated string of diff options to use in the diff view\&. git\-show(1) is used for formatting and always passes \-\-patch\-with\-stat\&. This option overrides any options specified in the TIG_DIFF_OPTS environment variable (described in
 \fBtig\fR(1)), but is itself overridden by diff flags given on the command line invocation\&.
 .RE
 .PP
@@ -202,14 +188,104 @@ A space separate string of diff options to use in the diff view\&. git\-show(1) 
 A space separated string of extra blame options\&. Can be used for telling git\-blame(1) how to detect the origin of lines\&. The value is ignored when Tig is started in blame mode and given blame options on the command line\&.
 .RE
 .PP
-\fIline\-graphics\fR (mixed) [ "ascii" | "default" | "utf\-8" | bool]
+\fIreference\-format\fR (string)
 .RS 4
-What type of character graphics for line drawing\&.
+A space separated string of format strings used for formatting reference names\&. Wrap the name of the reference type with the characters you would like to use for formatting, e\&.g\&.
+[tag]
+and
+<remote>\&. If no format is specified for
+local\-tag, the format for
+tag
+is used\&. Similarly, if no format is specified for
+tracked\-remote
+the
+remote
+format is used\&. Prefix with
+hide:
+to not show that reference type, e\&.g\&.
+hide:remote\&. Supported reference types are:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+head : The current HEAD\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+tag : A signed tag\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+local\-tag : An unsigned tag\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+remote : A remote\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+tracked\-remote : The remote tracked by current HEAD\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+replace : A replaced reference\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+branch : Any other reference\&.
+.RE
 .RE
 .PP
-\fIline\-number\-interval\fR (int)
+\fIline\-graphics\fR (mixed) [ascii|default|utf\-8|<bool>]
 .RS 4
-Interval between line numbers\&. Note, you have to toggle on line numbering with "\&."\&. The default is to number every fifth line\&.
+What type of character graphics for line drawing\&.
 .RE
 .PP
 \fIhorizontal\-scroll\fR (mixed)
@@ -221,72 +297,25 @@ Interval to scroll horizontally in each step\&. Can be specified either as the n
 of the view width\&.
 .RE
 .PP
-\fIread\-git\-colors\fR (bool)
+\fIgit\-colors\fR (list)
 .RS 4
-Whether to read Git\(cqs color settings\&. True by default\&.
+A space separated list of "key=value" pairs where the key is a Git color name and the value is a Tig color name, e\&.g\&. "branch\&.current=main\-head" and "grep\&.filename=grep\&.file"\&. Set to "no" to disable\&.
 .RE
 .PP
-\fIshow\-author\fR (mixed) ["full", "abbreviated" | "email" | "email\-user" | bool]
-.RS 4
-How to display author names\&. If set to "abbreviated" author initials will be shown\&. Can be toggled\&.
-.RE
-.PP
-\fIshow\-filename\fR (mixed) ["auto" | "always" | bool]
-.RS 4
-When to display file names\&. If set to "auto" file names are shown only when needed, e\&.g\&. when running: tig blame \-C <file>\&.
-.RE
-.PP
-\fIshow\-file\-size\fR (mixed) ["default" | "units" | bool]
-.RS 4
-How to display file sizes\&. When set to "units", sizes are shown using binary prefixes, e\&.g\&. 12524 bytes is shown as "12\&.2K"\&. Can be toggled\&.
-.RE
-.PP
-\fIshow\-date\fR (mixed) ["relative" | "short" | "default" | "local" | bool]
-.RS 4
-Whether and how to show date\&. If set to "relative" a relative date will be used, e\&.g\&. "2 minutes ago"\&. If set to "short" no time information is shown\&. If set to "local", localtime(3) is used\&. Can be toggled\&.
-.RE
-.PP
-\fIshow\-notes\fR (mixed) [note reference | bool]
+\fIshow\-notes\fR (mixed) [<reference>|<bool>]
 .RS 4
 Whether to show notes for a commit\&. When set to a note reference the reference is passed to
 git show \-\-notes=\&. Notes are enabled by default\&.
 .RE
 .PP
-\fIshow\-refs\fR (bool)
-.RS 4
-Whether to show references (branches, tags, and remotes) in the main view on start\-up\&. Can be toggled\&.
-.RE
-.PP
-\fIshow\-id\fR (bool)
-.RS 4
-Whether to show commit IDs in the main view\&. Disabled by default\&. Can be toggled\&. See also
-\fIid\-width\fR
-option\&.
-.RE
-.PP
-\fItitle\-overflow\fR (mixed) [bool | int]
-.RS 4
-Whether to highlight text in commit titles exceeding a given width\&. When set to a boolean, it enables/disables the highlighting using the default width of 50 character\&. When set to an int, the assigned value is used as the maximum character width\&.
-.RE
-.PP
-\fIshow\-rev\-graph\fR (bool)
-.RS 4
-Whether to show revision graph in the main view on start\-up\&. Can be toggled\&. See also line\-graphics options\&.
-.RE
-.PP
 \fIshow\-changes\fR (bool)
 .RS 4
-Whether to show staged and unstaged changes in the main view\&. Can be toggled\&.
+Whether to show staged and unstaged changes in the main view\&.
 .RE
 .PP
-\fIshow\-line\-numbers\fR (bool)
+\fIvertical\-split\fR (mixed) [auto|<bool>]
 .RS 4
-Whether to show line numbers\&. Can be toggled\&.
-.RE
-.PP
-\fIvertical\-split\fR (bool)
-.RS 4
-Whether to split the view horizontally or vertically\&.
+Whether to split the view horizontally or vertically\&. "auto" (which is the default) means that it will depend on the window dimensions\&. When true vertical orientation is used, and false sets the orientation to horizontal\&.
 .RE
 .PP
 \fIsplit\-view\-height\fR (mixed)
@@ -314,7 +343,7 @@ Number of spaces per tab\&. The default is 8 spaces\&.
 Number of context lines to show for diffs\&.
 .RE
 .PP
-\fIignore\-space\fR (mixed) ["no" | "all" | "some" | "at\-eol" | bool]
+\fIignore\-space\fR (mixed) [no|all|some|at\-eol|<bool>]
 .RS 4
 Ignore space changes in diff view\&. By default no space changes are ignored\&. Changing this to "all", "some" or "at\-eol" is equivalent to passing "\-\-ignore\-all\-space", "\-\-ignore\-space" or "\-\-ignore\-space\-at\-eol" respectively to
 git diff
@@ -322,7 +351,7 @@ or
 git show\&.
 .RE
 .PP
-\fIcommit\-order\fR (mixed) ["default" | "topo" | "date" | "reverse" | bool]
+\fIcommit\-order\fR (mixed) [default|topo|date|author\-date|reverse|<bool>]
 .RS 4
 Commit ordering using the default (chronological reverse) order, topological order, date order or reverse order\&. The default order is used when the option is set to false, and topo order when set to true\&.
 .RE
@@ -349,9 +378,460 @@ Whether to pass the selected line number to the editor command\&. The line numbe
 in front of the file name\&. Example:
 vim +10 tig\&.c
 .RE
+.PP
+\fImouse\fR (bool)
+.RS 4
+Whether to enable mouse support\&. Off by default since it makes selecting text from the terminal less intuitive\&. When enabled hold down Shift (or Option on Mac) to select text\&. Mouse support requires that ncurses itself support mouse events\&.
+.RE
+.PP
+\fImouse\-scroll\fR (int)
+.RS 4
+Interval to scroll up or down using the mouse\&. The default is 3 lines\&. Mouse support requires that ncurses itself support mouse events and that you have enabled mouse support in ~/\&.tigrc with
+set mouse = true\&.
+.RE
+.PP
+\fIrefresh\-mode\fR (mixed) [manual|auto|after\-command|periodic|<bool>]
+.RS 4
+Configures how views are refreshed based on modifications to watched files in the repository\&. When set to
+\fImanual\fR, nothing is refreshed automatically\&. When set to
+\fIauto\fR, views are refreshed when a modification is detected\&. When set to
+\fIafter\-command\fR
+only refresh after returning from an external command\&. When set to
+\fIperiodic\fR, visible views are refreshed periodically using
+\fIrefresh\-interval\fR\&.
+.RE
+.PP
+\fIrefresh\-interval\fR (int)
+.RS 4
+Interval in seconds between view refresh update checks when
+\fIrefresh\-mode\fR
+is set to
+\fIperiodic\fR\&.
+.RE
+.SS "View settings"
+.sp
+The view settings, e\&.g\&. blame\-view, can be used to configure the order and settings for the different columns of a view\&. Each view option expects a space separated list of column specifications\&. Column specifications first give the column type, and can optionally be followed by a colon (:) and a list of column settings, e\&.g\&. author:full,width=20\&. The first setting value is always the \fIdisplay\fR setting\&. When no \fIdisplay\fR setting value is given, \fIyes\fR is assumed\&. For \fIdisplay\fR settings taking an enumerated value this will automatically resolve to the default enum value\&. For example, file\-name will automatically have its \fIdisplay\fR setting resolve to \fIauto\fR\&.
+.sp
+The following list shows which the available view options and what column types they support:
+.PP
+blob\-view, diff\-view, log\-view, pager\-view, stage\-view
+.RS 4
+line\-number, text
+.RE
+.PP
+blame\-view
+.RS 4
+author, date, file\-name, id, line\-number, text
+.RE
+.PP
+grep\-view
+.RS 4
+file\-name, line\-number, text
+.RE
+.PP
+main\-view
+.RS 4
+author, date, commit\-title, id, line\-number
+.RE
+.PP
+refs\-view
+.RS 4
+author, date, commit\-title, id, line\-number, ref
+.RE
+.PP
+stash\-view
+.RS 4
+author, date, commit\-title, id, line\-number
+.RE
+.PP
+status\-view
+.RS 4
+file\-name, line\-number, status
+.RE
+.PP
+tree\-view
+.RS 4
+author, date, id, file\-name, file\-size, line\-number, mode
+.RE
+.sp
+Supported column types and their respective settings:
+.PP
+author
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIdisplay\fR
+(mixed) [full|abbreviated|email|email\-user|<bool>]: How to display author names\&. If set to "abbreviated" author initials will be shown\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIwidth\fR
+(int): Width of the column\&. When set to 5 or below, the author name will be abbreviated to the author\(cqs initials\&. When set to zero, the width is automatically sized to fit the content\&.
+.RE
+.RE
+.PP
+commit\-title
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIgraph\fR
+(bool): Whether to show revision graph in the main view on start\-up\&. See also the
+\fIline\-graphics\fR
+options\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIrefs\fR
+(bool): Whether to show references (branches, tags, and remotes) in the main view\&. Can be toggled\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIoverflow\fR
+(bool or int): Whether to highlight text in commit titles exceeding a given width\&. When set to a boolean, it enables or disables the highlighting using the default width of 50 character\&. When set to an int, the assigned value is used as the maximum character width\&.
+.RE
+.RE
+.PP
+date
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIdisplay\fR
+(mixed) [relative|short|default|local|<bool>]: How to display dates\&. If set to "relative" a relative date will be used, e\&.g\&. "2 minutes ago"\&. If set to "short" no time information is shown\&. If set to "local", localtime(3) is used\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIwidth\fR
+(int): Width of the column\&. When set to zero, the width is automatically sized to fit the content\&.
+.RE
+.RE
+.PP
+file\-name
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIdisplay\fR
+(mixed) [auto|always|<bool>]: When to display file names\&. If set to "auto" file names are shown only when needed, e\&.g\&. when running: tig blame \-C <file>\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIwidth\fR
+(int): Width of the column\&. When set to zero, the width is automatically sized to fit the content\&.
+.RE
+.RE
+.PP
+file\-size
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIdisplay\fR
+(mixed) [default|units|<bool>]: How to display file sizes\&. When set to "units", sizes are shown using binary prefixes, e\&.g\&. 12524 bytes is shown as "12\&.2K"\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIwidth\fR
+(int): Width of the filename column\&. When set to zero, the width is automatically sized to fit the content\&.
+.RE
+.RE
+.PP
+id
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIdisplay\fR
+(bool): Whether to show commit IDs in the main view\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIwidth\fR
+(int) : Width of the commit ID\&. When unset Tig will use the value of
+\fIcore\&.abbrev\fR
+if found\&. See git\-config(1) on how to set
+\fIcore\&.abbrev\fR\&. When set to zero the width is automatically sized to fit the content of reflog (e\&.g\&.
+ref/stash@{4}) IDs and otherwise default to 7\&.
+.RE
+.RE
+.PP
+line\-number
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIdisplay\fR
+(bool): Whether to show line numbers\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIinterval\fR
+(int): Interval between line numbers\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIwidth\fR
+(int): Width of the column\&. When set to zero, the width is automatically sized to fit the content\&.
+.RE
+.RE
+.PP
+mode
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIdisplay\fR
+(bool): Whether to show file modes\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIwidth\fR
+(int): Width of the column\&. When set to zero, the width is automatically sized to fit the content\&.
+.RE
+.RE
+.PP
+ref
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIdisplay\fR
+(bool): Whether to show the reference name\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIwidth\fR
+(int): Width of the column\&. When set to zero, the width is automatically sized to fit the content\&.
+.RE
+.RE
+.PP
+status
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIdisplay\fR
+(mixed) [no|short|long|<bool>]: How to display the status label\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIwidth\fR
+(int): Width of the column\&. When set to zero, the width is automatically sized to fit the content\&.
+.RE
+.RE
+.PP
+text
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIcommit\-title\-overflow\fR
+(bool or int): Whether to highlight commit titles exceeding a given width in the diff view\&. When set to a boolean, it enables or disables the highlighting using the default width of 50 character\&. When set to an int, the assigned value is used as the maximum character width\&.
+.RE
+.RE
+.sp
+Examples:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+# Enable both ID and line numbers in the blame view
+set blame\-view = date:default author:full file\-name:auto id:yes,color line\-number:yes,interval=5 text
+
+# Change grep view to be similar to `git grep` format
+set grep\-view = file\-name:yes line\-number:yes,interval=1 text
+
+# Show file sizes as units
+set tree\-view = line\-number:no,interval=5 mode author:full file\-size:units date:default id:no file\-name
+
+# Show line numbers for every 10th line in the pager view
+set pager\-view = line\-number:yes,interval=10 text
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+Note that all column options can be toggled\&. For \fIdisplay\fR options, use the option name as the prefix followed by a dash and the column name\&. E\&.g\&. :toggle author\-display will toggle the \fIdisplay\fR option in the \fIauthor\fR column\&. For all other options use the column name followed by a dash and then the option name as the suffix\&. E\&.g\&. :toggle commit\-title\-graph will toggle the \fIgraph\fR option in the \fIcommit\-title\fR column\&.
 .SH "BIND COMMAND"
 .sp
-Using bind commands keys can be mapped to an action when pressed in a given key map\&. The syntax is:
+Using bind commands, keys can be mapped to an action when pressed in a given key map\&. The syntax is:
 .sp
 .if n \{\
 .RS 4
@@ -370,15 +850,20 @@ Examples:
 .RS 4
 .\}
 .nf
-# A few keybindings
-bind main w scroll\-line\-up
-bind main s scroll\-line\-down
-bind main space enter
-bind diff a previous
-bind diff d next
-bind diff b move\-first\-line
-# An external command to update from upstream
-bind generic F !git fetch
+# Add keybinding to quickly jump to the next diff chunk in the stage view
+bind stage Enter :/^@@
+
+# Disable the default mapping for running git\-gc
+bind generic G none
+
+# User\-defined external command to amend the last commit
+bind status + !git commit \-\-amend
+
+# User\-defined internal command that reloads ~/\&.tigrc
+bind generic S :source ~/\&.tigrc
+
+# UTF8\-encoded characters can be used as key values\&.
+bind generic \(/o @sh \-c "printf \*(Aq%s\*(Aq %(commit) | pbcopy"
 .fi
 .if n \{\
 .RE
@@ -402,7 +887,7 @@ Or in the Git configuration files:
 .\}
 .sp
 .sp
-Keys are mapped by first searching the keybindings for the current view, then the keybindings for the \fBgeneric\fR keymap, and last the default keybindings\&. Thus, the view keybindings shadow the generic keybindings which Shadow the built\-in keybindings\&.
+Keys are mapped by first searching the keybindings for the current view, then the keybindings for the \fBgeneric\fR keymap, and last the default keybindings\&. Thus, the view keybindings override the generic keybindings which override the built\-in keybindings\&.
 .PP
 Keymaps
 .RS 4
@@ -417,7 +902,10 @@ Valid keymaps are:
 \fBtree\fR,
 \fBblob\fR,
 \fBblame\fR,
-\fBbranch\fR, and
+\fBrefs\fR,
+\fBstash\fR,
+\fBgrep\fR
+and
 \fBgeneric\fR\&. Use
 \fBgeneric\fR
 to set key mapping in all keymaps\&.
@@ -425,42 +913,99 @@ to set key mapping in all keymaps\&.
 .PP
 Key values
 .RS 4
-Key values should never be quoted\&. Use either the ASCII value or one of the following symbolic key names\&. Symbolic key names are case insensitive, Use
-\fBHash\fR
+Key values should never be quoted\&. Use either an ASCII or UTF8\-encoded character or one of the following symbolic key names\&. Symbolic key names are case insensitive and starts with "<" and ends with ">"\&. Use
+\fB<Hash>\fR
 to bind to the
 #
-key, since the hash mark is used as a comment character\&.
+key, since the hash mark is used as a comment character\&. Use
+\fB<LessThan>\fR
+to bind to the
+<
+key\&.
 .RE
 .sp
-\fBEnter\fR, \fBSpace\fR, \fBBackspace\fR, \fBTab\fR, \fBEscape\fR, \fBLeft\fR, \fBRight\fR, \fBUp\fR, \fBDown\fR, \fBInsert\fR, \fBDelete\fR, \fBHash\fR, \fBHome\fR, \fBEnd\fR, \fBPageUp\fR, \fBPageDown\fR, \fBF1\fR, \fBF2\fR, \fBF3\fR, \fBF4\fR, \fBF5\fR, \fBF6\fR, \fBF7\fR, \fBF8\fR, \fBF9\fR, \fBF10\fR, \fBF11\fR, \fBF12\fR\&.
+\fB<Enter>\fR, \fB<Space>\fR, \fB<Backspace>\fR, \fB<Tab>\fR, \fB<Escape>\fR or \fB<Esc>\fR, \fB<Left>\fR, \fB<Right>\fR, \fB<Up>\fR, \fB<Down>\fR, \fB<Insert>\fR or \fB<Ins>\fR, \fB<Delete>\fR or \fB<Del>\fR, \fB<Hash>\fR, \fB<LessThan>\fR or \fB<LT>\fR, \fB<Home>\fR, \fB<End>\fR, \fB<PageUp>\fR or \fB<PgUp>\fR, \fB<PageDown>\fR or \fB<PgDown>\fR, \fB<F1>\fR, \fB<F2>\fR, \fB<F3>\fR, \fB<F4>\fR, \fB<F5>\fR, \fB<F6>\fR, \fB<F7>\fR, \fB<F8>\fR, \fB<F9>\fR, \fB<F10>\fR, \fB<F11>\fR, \fB<F12>\fR\&.
 .sp
-To add a key mapping that uses the Ctrl key, use a ^ prefix in your mapping\&. For example, Ctrl\-f could be mapped to \fBscroll\-page\-down\fR with the following line:
+To define key mappings with the Ctrl key, use <Ctrl\-key>\&. In addition, key combos consisting of an initial Escape key followed by a normal key value can be bound using <Esc>key\&.
 .sp
-bind main ^f scroll\-page\-down
-.PP
-Action names
+Examples:
+.sp
+.if n \{\
 .RS 4
-Valid action names are described below\&. Note, all names are case\-insensitive, and you may use
-\fI\-\fR,
-\fI_\fR, and
-\fI\&.\fR
-interchangeably, e\&.g\&. "view\-main", "View\&.Main", and "VIEW_MAIN" are the same\&.
+.\}
+.nf
+bind main R             reload
+bind main <Down>        next
+bind main <Ctrl\-f>      scroll\-page\-down
+bind main <Esc>o        options
+.fi
+.if n \{\
 .RE
-.SS "Actions"
+.\}
 .sp
-Apart from the action names listed below, all actions starting with a \fI!\fR or \fI:\fR are treated specially\&.
 .sp
-Actions beginning with a \fI:\fR will run an internal Tig command\&. These internal commands are those which you put in a configuration file or type at the Tig prompt\&. As an example, "bind generic S :source \&.tigrc" will source a \&.tigrc file in the current directory when \fIS\fR is pressed\&.
+Note that due to the way ncurses encodes Ctrl key mappings, Ctrl\-m and Ctrl\-i cannot be bound as they conflict with \fIEnter\fR and \fITab\fR respectively\&. Furthermore, ncurses does not allow to distinguish between Ctrl\-f and Ctrl\-F\&. Finally, Ctrl\-z is automatically used for process control and will suspend Tig and open a subshell (use fg to reenter Tig)\&.
+.PP
+Actions
+.RS 4
+Actions are either specified as user\-defined commands (external or internal) or using action names as described in the following sections\&.
+.RE
+.SS "External user\-defined command"
 .sp
-Actions beginning with a \fI!\fR will be available as an external command\&. External commands can contain variable names that will be substituted before the command is run\&. Valid variable names are:
+These actions start with one or more of the following option flags followed by the command that should be executed\&.
+.TS
+tab(:);
+lt lt
+lt lt
+lt lt
+lt lt.
+T{
+.sp
+!
+T}:T{
+.sp
+Run the command in the foreground with output shown\&.
+T}
+T{
+.sp
+@
+T}:T{
+.sp
+Run the command in the background with no output\&.
+T}
+T{
+.sp
+?
+T}:T{
+.sp
+Prompt the user before executing the command\&.
+T}
+T{
+.sp
+<
+T}:T{
+.sp
+Exit Tig after executing the command\&.
+T}
+.TE
+.sp 1
+.sp
+Unless otherwise specified, commands are run in the foreground with their console output shown (as if \fI!\fR was specified)\&. When multiple command options are specified their behavior are combined, e\&.g\&. "?<git commit" will prompt the user whether to execute the command and will exit Tig after completion\&.
 .sp
 .it 1 an-trap
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&1.\ \&Browsing state variables
+.ps +1
+\fBBrowsing state variables\fR
+.RS 4
+.sp
+User\-defined commands can optionally refer to Tig\(cqs internal state using the following variable names, which are substituted before commands are run:
 .TS
 tab(:);
+lt lt
+lt lt
+lt lt
 lt lt
 lt lt
 lt lt
@@ -503,6 +1048,20 @@ The currently selected branch name\&.
 T}
 T{
 .sp
+%(remote)
+T}:T{
+.sp
+The currently selected remote name\&. For remote branches %(branch) will contain the branch name\&.
+T}
+T{
+.sp
+%(tag)
+T}:T{
+.sp
+The currently selected tag name\&.
+T}
+T{
+.sp
 %(stash)
 T}:T{
 .sp
@@ -513,7 +1072,7 @@ T{
 %(directory)
 T}:T{
 .sp
-The current directory path in the tree view; empty for the root directory\&.
+The current directory path in the tree view or "\&." if undefined\&.
 T}
 T{
 .sp
@@ -545,30 +1104,64 @@ The file arguments passed on the command line\&.
 T}
 T{
 .sp
+%(cmdlineargs)
+T}:T{
+.sp
+All other options passed on the command line\&.
+T}
+T{
+.sp
 %(diffargs)
 T}:T{
 .sp
-The diff options passed on the command line\&.
+The diff options from \fIdiff\-options\fR or \fITIG_DIFF_OPTS\fR
 T}
 T{
 .sp
 %(prompt)
 T}:T{
 .sp
-Prompt for the argument value\&.
+Prompt for the argument value\&. Optionally specify a custom prompt using "%(prompt Enter branch name: )"
 T}
 .TE
 .sp 1
 .sp
-As an example, the following external command will save the current commit as a patch file: "!git format\-patch \-1 %(commit)"\&. If your external command requires use of dynamic features, such as subshells, expansion of environment variables and process control, this can be achieved by using a shell command:
-.PP
-\fBExample\ \&1.\ \&Configure a binding in ~/.tigrc to put a commit ID in the clipboard.\fR
+Examples:
 .sp
 .if n \{\
 .RS 4
 .\}
 .nf
-bind generic I !@sh \-c "echo \-n %(commit) | xclip \-selection c"
+# Save save the current commit as a patch file when the user selects a
+# commit in the main view and presses \*(AqS\*(Aq\&.
+bind main S !git format\-patch \-1 %(commit)
+
+# Create and checkout a new branch; specify custom prompt
+bind main B ?git checkout \-b "%(prompt Enter new branch name: )"
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBAdvanced shell-like commands\fR
+.RS 4
+.sp
+If your command requires use of dynamic features, such as subshells, expansion of environment variables and process control, this can be achieved by using a shell command:
+.PP
+\fBExample\ \&1.\ \&Configure a binding to copy the current commit ID to the clipboard.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+bind generic I @sh \-c "echo \-n %(commit) | xclip \-selection c"
 .fi
 .if n \{\
 .RE
@@ -597,52 +1190,55 @@ Or by using a combination of Git aliases and Tig external commands\&. The follow
 .\}
 .sp
 
+.RE
+.SS "Internal user\-defined commands"
 .sp
-By default, commands are run in the foreground with their console output shown\&. For different behavior, commands can be prefixed with one or more of the following control flags to specify how it should be executed:
+Actions beginning with a \fI:\fR will be run and interpreted as internal commands and act similar to commands run via Tig\(cqs prompt\&. Valid internal commands are configuration file options (as described in this document) and pager view commands\&. Examples:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+# Reload ~/\&.tigrc when \*(AqS\*(Aq is pressed
+bind generic S :source \&.tigrc
+
+# Change diff view to show all commit changes regardless of file limitations
+bind diff F :set diff\-options = \-\-full\-diff
+
+# Show the output of git\-reflog(1) in the pager view
+bind generic W :!git reflog
+
+# Search for previous diff (c)hunk and next diff header
+bind stage 2 :?^@@
+bind stage D :/^diff \-\-(git|cc)
+
+bind main I :toggle show\-id                     # Show/hide the ID column
+bind diff D :toggle diff\-options \-\-minimal      # Use minimal diff algorithm
+bind diff [ :toggle diff\-context \-3             # Decrease context (\-U arg)
+bind diff ] :toggle diff\-context +3             # Increase context
+bind generic V :toggle split\-view\-height \-10%   # Decrease split height
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+Similar to external commands, pager view commands can contain variable names that will be substituted before the command is run\&.
+.SS "Action names"
+.sp
+Valid action names are described below\&. Note, all action names are case\-insensitive, and you may use \fI\-\fR, \fI_\fR, and \fI\&.\fR interchangeably, e\&.g\&. "view\-main", "View\&.Main", and "VIEW_MAIN" are the same\&.
 .sp
 .it 1 an-trap
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&2.\ \&External command control flags
+.ps +1
+\fBView switching\fR
+.RS 4
 .TS
 tab(:);
 lt lt
 lt lt
-lt lt.
-T{
-.sp
-@
-T}:T{
-.sp
-Run the command in the background with no output\&.
-T}
-T{
-.sp
-?
-T}:T{
-.sp
-Prompt the user before executing the command\&.
-T}
-T{
-.sp
-<
-T}:T{
-.sp
-Exit Tig after executing the command\&.
-T}
-.TE
-.sp 1
-.sp
-Control flags can be combined, e\&.g\&. "!?<git commit" will prompt whether to execute the command and will exit Tig after completion\&.
-.sp
-.it 1 an-trap
-.nr an-no-space-flag 1
-.nr an-break-flag 1
-.br
-.B Table\ \&3.\ \&View switching
-.TS
-tab(:);
 lt lt
 lt lt
 lt lt
@@ -698,10 +1294,10 @@ Show blame view
 T}
 T{
 .sp
-view\-branch
+view\-refs
 T}:T{
 .sp
-Show branch view
+Show refs view
 T}
 T{
 .sp
@@ -719,6 +1315,20 @@ Show stage view
 T}
 T{
 .sp
+view\-stash
+T}:T{
+.sp
+Show stash view
+T}
+T{
+.sp
+view\-grep
+T}:T{
+.sp
+Show grep view
+T}
+T{
+.sp
 view\-pager
 T}:T{
 .sp
@@ -729,18 +1339,22 @@ T{
 view\-help
 T}:T{
 .sp
-Show help page
+Show help view
 T}
 .TE
 .sp 1
+.RE
 .sp
 .it 1 an-trap
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&4.\ \&View manipulation
+.ps +1
+\fBView manipulation\fR
+.RS 4
 .TS
 tab(:);
+lt lt
 lt lt
 lt lt
 lt lt
@@ -755,7 +1369,14 @@ T{
 enter
 T}:T{
 .sp
-Enter current line and scroll
+Enter and open selected line
+T}
+T{
+.sp
+back
+T}:T{
+.sp
+Go back to the previous view state
 T}
 T{
 .sp
@@ -783,7 +1404,7 @@ T{
 view\-next
 T}:T{
 .sp
-Move focus to next view
+Move focus to the next view
 T}
 T{
 .sp
@@ -815,15 +1436,17 @@ Close all views and quit
 T}
 .TE
 .sp 1
+.RE
 .sp
 .it 1 an-trap
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&5.\ \&View specific actions
+.ps +1
+\fBView specific actions\fR
+.RS 4
 .TS
 tab(:);
-lt lt
 lt lt
 lt lt
 lt lt
@@ -834,51 +1457,47 @@ T{
 status\-update
 T}:T{
 .sp
-Update file status
+Stage/unstage chunk or file changes
+T}
+T{
+.sp
+status\-revert
+T}:T{
+.sp
+Revert chunk or file changes
 T}
 T{
 .sp
 status\-merge
 T}:T{
 .sp
-Resolve unmerged file
+Merge file using external tool
 T}
 T{
 .sp
 stage\-update\-line
 T}:T{
 .sp
-Stage single line
+Stage/unstage single line
 T}
 T{
 .sp
-stage\-next
+stage\-split\-chunk
 T}:T{
 .sp
-Find next chunk to stage
-T}
-T{
-.sp
-diff\-context\-up
-T}:T{
-.sp
-Increase the diff context
-T}
-T{
-.sp
-diff\-context\-down
-T}:T{
-.sp
-Decrease the diff context
+Split current diff chunk
 T}
 .TE
 .sp 1
+.RE
 .sp
 .it 1 an-trap
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&6.\ \&Cursor navigation
+.ps +1
+\fBCursor navigation\fR
+.RS 4
 .TS
 tab(:);
 lt lt
@@ -931,12 +1550,15 @@ Move cursor to last line
 T}
 .TE
 .sp 1
+.RE
 .sp
 .it 1 an-trap
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&7.\ \&Scrolling
+.ps +1
+\fBScrolling\fR
+.RS 4
 .TS
 tab(:);
 lt lt
@@ -979,30 +1601,33 @@ T{
 scroll\-first\-col
 T}:T{
 .sp
-Scroll to the first column
+Scroll to the first line columns
 T}
 T{
 .sp
 scroll\-left
 T}:T{
 .sp
-Scroll one column left
+Scroll two columns left
 T}
 T{
 .sp
 scroll\-right
 T}:T{
 .sp
-Scroll one column right
+Scroll two columns right
 T}
 .TE
 .sp 1
+.RE
 .sp
 .it 1 an-trap
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&8.\ \&Searching
+.ps +1
+\fBSearching\fR
+.RS 4
 .TS
 tab(:);
 lt lt
@@ -1039,25 +1664,40 @@ Find previous search match
 T}
 .TE
 .sp 1
+.RE
 .sp
 .it 1 an-trap
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&9.\ \&Misc
+.ps +1
+\fBOption manipulation\fR
+.RS 4
+.sp
+In addition to the actions below, options can also be toggled with the :toggle prompt command\&.
 .TS
 tab(:);
-lt lt
-lt lt
-lt lt
-lt lt
-lt lt
-lt lt
-lt lt
-lt lt
-lt lt
-lt lt
-lt lt
+lt lt.
+T{
+.sp
+options
+T}:T{
+.sp
+Open the options menu
+T}
+.TE
+.sp 1
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBMisc\fR
+.RS 4
+.TS
+tab(:);
 lt lt
 lt lt
 lt lt
@@ -1066,10 +1706,17 @@ lt lt
 lt lt.
 T{
 .sp
+edit
+T}:T{
+.sp
+Open in editor
+T}
+T{
+.sp
 prompt
 T}:T{
 .sp
-Bring up the prompt
+Open the prompt
 T}
 T{
 .sp
@@ -1080,10 +1727,10 @@ Redraw the screen
 T}
 T{
 .sp
-screen\-resize
+stop\-loading
 T}:T{
 .sp
-Resize the screen
+Stop all loading views
 T}
 T{
 .sp
@@ -1094,90 +1741,6 @@ Show version information
 T}
 T{
 .sp
-stop\-loading
-T}:T{
-.sp
-Stop all loading views
-T}
-T{
-.sp
-options
-T}:T{
-.sp
-Open options menu
-T}
-T{
-.sp
-toggle\-lineno
-T}:T{
-.sp
-Toggle line numbers
-T}
-T{
-.sp
-toggle\-date
-T}:T{
-.sp
-Toggle date display
-T}
-T{
-.sp
-toggle\-author
-T}:T{
-.sp
-Toggle author display
-T}
-T{
-.sp
-toggle\-filename
-T}:T{
-.sp
-Toggle file name display
-T}
-T{
-.sp
-toggle\-file\-size
-T}:T{
-.sp
-Toggle file size display
-T}
-T{
-.sp
-toggle\-rev\-graph
-T}:T{
-.sp
-Toggle revision graph visualization
-T}
-T{
-.sp
-toggle\-graphic
-T}:T{
-.sp
-Toggle (line) graphics mode
-T}
-T{
-.sp
-toggle\-refs
-T}:T{
-.sp
-Toggle reference display
-T}
-T{
-.sp
-toggle\-files
-T}:T{
-.sp
-Toggle file filtering for the diff and main views
-T}
-T{
-.sp
-edit
-T}:T{
-.sp
-Open in editor
-T}
-T{
-.sp
 none
 T}:T{
 .sp
@@ -1185,6 +1748,7 @@ Do nothing
 T}
 .TE
 .sp 1
+.RE
 .SH "COLOR COMMAND"
 .sp
 Color commands control highlighting and the user interface styles\&. If your terminal supports color, these commands can be used to assign foreground and background combinations to certain areas\&. Optionally, an attribute can be given as the last parameter\&. The syntax is:
@@ -1213,6 +1777,8 @@ color diff\-header       yellow  default
 color diff\-index        blue    default
 color diff\-chunk        magenta default
 color "Reported\-by:"    green   default
+# View specific color
+color tree\&.date         black   cyan    bold
 .fi
 .if n \{\
 .RE
@@ -1227,10 +1793,13 @@ Or in the Git configuration files:
 .nf
 [tig "color"]
         # A strange looking cursor line
-        cursor          red     default underline
+        cursor          = red   default underline
         # UI colors
-        title\-blur      white   blue
-        title\-focus     white   blue    bold
+        title\-blur      = white blue
+        title\-focus     = white blue    bold
+# View specific color
+[tig "color\&.tree"]
+        date            = cyan  default bold
 .fi
 .if n \{\
 .RE
@@ -1240,10 +1809,9 @@ Or in the Git configuration files:
 Area names
 .RS 4
 Can be either a built\-in area name or a custom quoted string\&. The latter allows custom color rules to be added for lines matching a quoted string\&. Valid built\-in area names are described below\&. Note, all names are case\-insensitive, and you may use
-\fI\-\fR,
-\fI_\fR, and
-\fI\&.\fR
-interchangeably, e\&.g\&. "Diff\-Header", "DIFF_HEADER", and "diff\&.header" are the same\&.
+\fI\-\fR, and
+\fI_\fR
+interchangeably, e\&.g\&. "Diff\-Header" and "DIFF_HEADER" are the same\&. View specific colors can be defined by prefixing the view name to the area name, e\&.g\&. "stage\&.diff\-chunk" and "diff\&.diff\-chunk"\&.
 .RE
 .PP
 Color names
@@ -1295,9 +1863,14 @@ The colors and attributes to be used for the text that is not highlighted or tha
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&10.\ \&General
+.B Table\ \&1.\ \&General
 .TS
 tab(:);
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
 lt lt
 lt lt
 lt lt
@@ -1353,6 +1926,13 @@ Delimiter shown for truncated lines\&.
 T}
 T{
 .sp
+header
+T}:T{
+.sp
+The view header lines\&. Use \fIstatus\&.header\fR to color the staged, unstaged, and untracked sections in the status view\&. Use \fIhelp\&.header\fR to color the keymap sections in the help view\&.
+T}
+T{
+.sp
 line\-number
 T}:T{
 .sp
@@ -1386,6 +1966,34 @@ T}:T{
 .sp
 The file mode holding the permissions and type\&.
 T}
+T{
+.sp
+overflow
+T}:T{
+.sp
+Title text overflow\&.
+T}
+T{
+.sp
+directory
+T}:T{
+.sp
+The directory name\&.
+T}
+T{
+.sp
+file
+T}:T{
+.sp
+The file name\&.
+T}
+T{
+.sp
+file\-size
+T}:T{
+.sp
+File size\&.
+T}
 .TE
 .sp 1
 .sp
@@ -1393,9 +2001,10 @@ T}
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&11.\ \&Main view colors
+.B Table\ \&2.\ \&Main view colors
 .TS
 tab(:);
+lt lt
 lt lt
 lt lt
 lt lt
@@ -1468,6 +2077,13 @@ T}:T{
 .sp
 Label of any other reference\&.
 T}
+T{
+.sp
+main\-replace
+T}:T{
+.sp
+Label of replaced reference\&.
+T}
 .TE
 .sp 1
 .sp
@@ -1475,27 +2091,19 @@ T}
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&12.\ \&Status view
+.B Table\ \&3.\ \&Status view
 .TS
 tab(:);
-lt lt
 lt lt
 lt lt
 lt lt
 lt lt.
 T{
 .sp
-stat\-head
+stat\-none
 T}:T{
 .sp
-The "On branch"\-line\&.
-T}
-T{
-.sp
-stat\-section
-T}:T{
-.sp
-Status section titles,
+Empty status label\&.
 T}
 T{
 .sp
@@ -1525,32 +2133,24 @@ T}
 .nr an-no-space-flag 1
 .nr an-break-flag 1
 .br
-.B Table\ \&13.\ \&Tree view
+.B Table\ \&4.\ \&Help view
 .TS
 tab(:);
-lt lt
 lt lt
 lt lt.
 T{
 .sp
-tree\-head
+help\-group
 T}:T{
 .sp
-The "Directory /"\-line
+Help group name\&.
 T}
 T{
 .sp
-tree\-dir
+help\-action
 T}:T{
 .sp
-The directory name\&.
-T}
-T{
-.sp
-tree\-file
-T}:T{
-.sp
-The file name\&.
+Help action name\&.
 T}
 .TE
 .sp 1
@@ -1561,14 +2161,14 @@ Diff markup
 Options concerning diff start, chunks and lines added and deleted\&.
 .RE
 .sp
-\fBdiff\-header\fR, \fBdiff\-chunk\fR, \fBdiff\-add\fR, \fBdiff\-del\fR
+\fBdiff\-header\fR, \fBdiff\-chunk\fR, \fBdiff\-add\fR, \fBdiff\-add2\fR, \fBdiff\-del\fR, \fBdiff\-del2\fR
 .PP
 Enhanced Git diff markup
 .RS 4
 Extra diff information emitted by the Git diff machinery, such as mode changes, rename detection, and similarity\&.
 .RE
 .sp
-\fBdiff\-oldmode\fR, \fBdiff\-newmode\fR, \fBdiff\-copy\-from\fR, \fBdiff\-copy\-to\fR, \fBdiff\-rename\-from\fR, \fBdiff\-rename\-to\fR, \fBdiff\-deleted\-file\-mode\fR, \fBdiff\-similarity\fR, \fBdiff\-dissimilarity\fR \fBdiff\-tree\fR, \fBdiff\-index\fR, \fBdiff\-stat\fR
+\fBdiff\-oldmode\fR, \fBdiff\-newmode\fR, \fBdiff\-copy\-from\fR, \fBdiff\-copy\-to\fR, \fBdiff\-similarity\fR, \fBdiff\-index\fR
 .PP
 Pretty print commit headers
 .RS 4
@@ -1577,7 +2177,7 @@ Commit diffs and the revision logs are usually formatted using pretty printed he
 was given\&. This includes lines, such as merge info, commit ID, and author and committer date\&.
 .RE
 .sp
-\fBpp\-author\fR, \fBpp\-commit\fR, \fBpp\-merge\fR, \fBpp\-date\fR, \fBpp\-adate\fR, \fBpp\-cdate\fR, \fBpp\-refs\fR
+\fBpp\-refs\fR, \fBpp\-reflog\fR, \fBpp\-reflogmsg\fR, \fBpp\-merge\fR
 .PP
 Raw commit header
 .RS 4
@@ -1600,8 +2200,6 @@ and
 Tested\-by
 lines are colorized\&. Characters in the commit title exceeding a predefined width can be highlighted\&.
 .RE
-.sp
-\fBsignoff\fR, \fBacked\fR, \fBreviewed\fR, \fBtested\fR, \fBoverflow\fR
 .PP
 Tree markup
 .RS 4
@@ -1639,7 +2237,7 @@ source ~/\&.tig/keybindings\&.tigrc
 .sp
 .SH "COPYRIGHT"
 .sp
-Copyright (c) 2006\-2012 Jonas Fonseca <\m[blue]\fBfonseca@diku\&.dk\fR\m[]\&\s-2\u[1]\d\s+2>
+Copyright (c) 2006\-2014 Jonas Fonseca <\m[blue]\fBjonas\&.fonseca@gmail\&.com\fR\m[]\&\s-2\u[1]\d\s+2>
 .sp
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version\&.
 .SH "SEE ALSO"
@@ -1647,7 +2245,7 @@ This program is free software; you can redistribute it and/or modify it under th
 \fBtig\fR(1), \fBtigmanual\fR(7), git(7), git\-config(1)
 .SH "NOTES"
 .IP " 1." 4
-fonseca@diku.dk
+jonas.fonseca@gmail.com
 .RS 4
-\%mailto:fonseca@diku.dk
+\%mailto:jonas.fonseca@gmail.com
 .RE

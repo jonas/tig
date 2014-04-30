@@ -580,8 +580,8 @@ repository <a href="http://github.com/jonas/tig">git://github.com/jonas/tig.git<
 <pre><tt>$ make
 $ make install</tt></pre>
 </div></div>
-<div class="paragraph"><p>By default, <tt>tig</tt> is installed in <tt>$HOME/bin</tt>. To install <tt>tig elsewhere set
-`prefix</tt> to the desired path:</p></div>
+<div class="paragraph"><p>By default, <tt>tig</tt> is installed in <tt>$HOME/bin</tt>. To install <tt>tig</tt> elsewhere set
+<tt>prefix</tt> to the desired path:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><tt>$ make prefix=/usr/local
@@ -601,8 +601,7 @@ can be installed from the <em>release</em> branch using:</p></div>
 <div class="content">
 <pre><tt>$ make install-release-doc</tt></pre>
 </div></div>
-<div class="paragraph"><p>Release notes documenting notable changes are available in the NEWS file. When
-upgrading, you are advised to read them before you install.</p></div>
+<div class="paragraph"><p>Before upgrading, you are advised to read <a href="NEWS.html">the release notes</a>.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -637,7 +636,7 @@ configure the build without having to use the <tt>configure</tt> script. As a si
 note, <tt>configure</tt> itself generates a <tt>config.make</tt> file.</p></div>
 <div class="paragraph"><p>Apart from the different standard <tt>make</tt> build variables (<tt>CC</tt>, <tt>CFLAGS</tt>, etc.)
 and standard <tt>configure</tt> variables (<tt>prefix</tt>, <tt>bindir</tt>, etc.), build settings
-can be one of the following compatibility flags:</p></div>
+can be one of the following flags:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
@@ -649,6 +648,13 @@ can be one of the following compatibility flags:</p></div>
 <p>
 <tt>NO_MKSTEMPS</tt>: Define this variable to enable work-around for missing
    <tt>mkstemps()</tt>.
+</p>
+</li>
+<li>
+<p>
+<tt>NO_BUILTIN_TIGRC</tt>: Reduce the size of the binary by not including a
+   built-in tigrc. The built-in tigrc is used as a fallback when no
+   <tt>tigrc</tt> is found in the system configuration directory (e.g. <tt>/etc</tt>).
 </p>
 </li>
 </ul></div>
@@ -708,7 +714,7 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<div class="paragraph"><p>The following optional tools and packages are needed for creating the
+<div class="paragraph"><p>The following tools and packages are optional and mainly needed for creating the
 configure script and building documentation:</p></div>
 <div class="tableblock">
 <table rules="all"
@@ -724,6 +730,11 @@ cellspacing="0" cellpadding="4">
 </tr>
 </thead>
 <tbody>
+<tr>
+<td align="left" valign="top"><p class="table">readline</p></td>
+<td align="left" valign="top"><p class="table">Adds support for completion and history in
+                                 search and command prompts.</p></td>
+</tr>
 <tr>
 <td align="left" valign="top"><p class="table">autoconf</p></td>
 <td align="left" valign="top"><p class="table">Contains autoreconf for generating configure
@@ -755,7 +766,7 @@ cellspacing="0" cellpadding="4">
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-08-24 10:42:22 EDT
+Last updated 2014-04-30 00:20:17 EDT
 </div>
 </div>
 </body>
