@@ -267,6 +267,9 @@ get_key_value(const char **name_ptr, struct key *key)
 			if (mapping->value == '#')
 				return parse_key_value(key, name_ptr, 0, "#", end);
 
+			if (mapping->value == '<')
+				return parse_key_value(key, name_ptr, 0, "<", end);
+
 			if (mapping->value == KEY_ESC) {
 				size_t offset = (end - name) + 1;
 
