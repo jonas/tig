@@ -1,0 +1,963 @@
+tigrc(5)
+========
+:docext: adoc
+
+NAME
+----
+tigrc - Tig configuration file
+
+
+SYNOPSIS
+--------
+[verse]
+_______________________________________________________________________
+*set*   'variable' *=* 'value'
+*bind*  'keymap' 'key' 'action'
+*color* 'area' 'fgcolor' 'bgcolor' '[attributes]'
+*source* 'path'
+_______________________________________________________________________
+
+
+DESCRIPTION
+-----------
+
+You can permanently set an option by putting it in the `~/.tigrc` file.  The
+file consists of a series of 'commands'.  Each line of the file may contain
+only one command.  Commands can span multiple lines if each line is
+terminated by a backslash ('\') character. 
+
+The hash mark ('#') is used as a 'comment' character. All text after the
+comment character to the end of the line is ignored. You can use comments to
+annotate your initialization file.
+
+Git configuration
+-----------------
+
+Alternatively to using `~/.tigrc`, Tig options can be set by putting them in
+one of the Git configuration files, which are read by Tig on startup. See
+'git-config(1)' for which files to use. The following example show the basic
+syntax to use for settings, bindings and colors.
+
+--------------------------------------------------------------------------
+[tig] show-rev-graph = true
+[tig "color"] cursor = yellow red bold 
+[tig "bind"] generic = P parent
+--------------------------------------------------------------------------
+
+In addition to tig-specific options, the following Git options are read from
+the Git configuration:
+
+'color.*'::
+
+	Colors for the various UI types. Can be configured via the 'git-colors'
+	setting.
+
+'core.abbrev'::
+
+	The width of the commit ID. See also 'id-width' option.
+
+'core.editor'::
+
+	The editor command. Can be overridden by setting GIT_EDITOR.
+
+'core.worktree'::
+
+	The path to the root of the working tree.
+
+'gui.encoding'::
+
+	The encoding to use for displaying of file content.
+
+'i18n.commitencoding'::
+
+	The encoding used for commits. The default is UTF-8.
+
+Set command
+-----------
+
+A few selective variables can be configured via the set command. The syntax
+is:
+
+[verse]
+*set* variables *=* value
+
+Examples:
+
+--------------------------------------------------------------------------
+set commit-order = topo		# Order commits topologically
+set git-colors = no		# Do not read Git's color settings.
+set horizontal-scroll = 33%	# Scroll 33% of the view width
+set blame-options = -C -C -C	# Blame lines from other files
+
+# Wrap branch names with () and tags with <>
+set reference-format = (branch) <tag>
+
+# Configure blame view columns using command spanning multiple lines.
+set blame-view = \
+	date:default \
+	author:abbreviated \
+	file-name:auto \
+	id:yes,color \
+	line-number:yes,interval=5 text
+--------------------------------------------------------------------------
+
+Or in the Git configuration files:
+
+--------------------------------------------------------------------------
+[tig]
+	line-graphics = no	# Disable graphics characters
+	tab-size = 8		# Number of spaces per tab
+--------------------------------------------------------------------------
+
+The type of variables is either bool, int, string, or mixed.
+
+Valid bool values::
+
+	To set a bool variable to true use either "1", "true", or "yes".
+	Any other value will set the variable to false.
+
+Valid int values::
+
+	A non-negative integer.
+
+Valid string values::
+
+	A string of characters. Optionally, use either ' or " as delimiters.
+
+Valid mixed values::
+
+	These values are composites of the above types. The valid values are
+	specified in the description.
+
+Variables
+~~~~~~~~~
+
+The following variables can be set:
+
+'diff-options' (string)::
+
+	A space separated string of diff options to use in the diff view.
+	git-show(1) is used for formatting and always passes --patch-with-stat.
+	This option overrides any options specified in the TIG_DIFF_OPTS
+	environment variable (described in manpage:tig[1]), but is itself
+	overridden by diff flags given on the command line invocation.
+
+'blame-options' (string)::
+
+	A space separated string of extra blame options. Can be used for
+	telling git-blame(1) how to detect the origin of lines. The value
+	is ignored when Tig is started in blame mode and given blame options
+	on the command line.
+
+'reference-format' (string)::
+
+	A space separated string of format strings used for formatting reference
+	names. Wrap the name of the reference type with the characters you would
+	like to use for formatting, e.g. `[tag]` and `<remote>`. If no format is
+	specified for `local-tag`, the format for `tag` is used. Similarly, if no
+	format is specified for `tracked-remote` the `remote` format is used.
+	Prefix with `hide:` to not show that reference type, e.g. `hide:remote`.
+	Supported reference types are:
+	 - head			: The current HEAD.
+	 - tag			: A signed tag.
+	 - local-tag		: An unsigned tag.
+	 - remote		: A remote.
+	 - tracked-remote	: The remote tracked by current HEAD.
+	 - replace		: A replaced reference.
+	 - branch		: Any other reference.
+
+'line-graphics' (mixed) [ascii|default|utf-8|<bool>]::
+
+	What type of character graphics for line drawing.
+
+'horizontal-scroll' (mixed)::
+
+	Interval to scroll horizontally in each step. Can be specified either
+	as the number of columns, e.g. '5', or as a percentage of the view
+	width, e.g. '33%', where the maximum is 100%. For percentages it is
+	always ensured that at least one column is scrolled. The default is to
+	scroll '50%' of the view width.
+
+'git-colors' (list)::
+
+	A space separated list of "key=value" pairs where the key is a Git color
+	name and the value is a Tig color name, e.g. "branch.current=main-head"
+	and "grep.filename=grep.file". Set to "no" to disable.
+
+'show-notes' (mixed) [<reference>|<bool>]::
+
+	Whether to show notes for a commit. When set to a note reference the
+	reference is passed to `git show --notes=`. Notes are enabled by
+	default.
+
+'show-changes' (bool)::
+
+	Whether to show staged and unstaged changes in the main view.
+
+'vertical-split' (mixed) [auto|<bool>]::
+
+	Whether to split the view horizontally or vertically.
+	"auto" (which is the default) means that it will depend on the window
+	dimensions. When true vertical orientation is used, and false sets the
+	orientation to horizontal.
+
+'split-view-height' (mixed)::
+
+	Height of the lower view in a split view. Can be specified either as
+	the number of rows, e.g. '5', or as a percentage of the view height,
+	e.g. '80%', where the maximum is 100%. It is always ensured that the
+	smaller of the views is at least four rows high. The default is a view
+	height of '66%'.
+
+'status-untracked-dirs' (bool)::
+
+	Show untracked directories contents in the status view (analog to
+	`git ls-files --directory` option). On by default.
+
+'tab-size' (int)::
+
+	Number of spaces per tab. The default is 8 spaces.
+
+'diff-context' (int)::
+
+	Number of context lines to show for diffs.
+
+'ignore-space' (mixed) [no|all|some|at-eol|<bool>]::
+
+	Ignore space changes in diff view. By default no space changes are
+	ignored. Changing this to "all", "some" or "at-eol" is equivalent to
+	passing "--ignore-all-space", "--ignore-space" or
+	"--ignore-space-at-eol" respectively to `git diff` or `git show`.
+
+'commit-order' (mixed) [default|topo|date|author-date|reverse|<bool>]::
+
+	Commit ordering using the default (chronological reverse) order,
+	topological order, date order or reverse order. The default order is
+	used when the option is set to false, and topo order when set to true.
+
+'ignore-case' (bool)::
+
+	Ignore case in searches. By default, the search is case sensitive.
+
+'wrap-lines' (bool)::
+
+	Wrap long lines. By default, lines are not wrapped.
+	Not compatible with line numbers enabled.
+
+'focus-child' (bool)::
+
+	Whether to focus the child view when it is opened. When disabled the
+	focus will remain in the parent view, avoiding reloads of the child
+	view when navigating the parent view. True by default.
+
+'editor-line-number' (bool)::
+
+	Whether to pass the selected line number to the editor command. The
+	line number is passed as `+<line-number>` in front of the file name.
+	Example: `vim +10 tig.c`
+
+'mouse' (bool)::
+
+	Whether to enable mouse support. Off by default since it makes selecting
+	text from the terminal less intuitive. When enabled hold down Shift (or
+	Option on Mac) to select text. Mouse support requires that ncurses
+	itself support mouse events.
+
+'mouse-scroll' (int)::
+
+	Interval to scroll up or down using the mouse. The default is 3 lines.
+	Mouse support requires that ncurses itself support mouse events and that
+	you have enabled mouse support in ~/.tigrc with `set mouse = true`.
+
+'refresh-mode' (mixed) [manual|auto|after-command|periodic|<bool>]::
+
+	Configures how views are refreshed based on modifications to watched
+	files in the repository. When set to 'manual', nothing is refreshed
+	automatically. When set to 'auto', views are refreshed when a
+	modification is detected. When set to 'after-command' only refresh after
+	returning from an external command. When set to 'periodic', visible
+	views are refreshed periodically using 'refresh-interval'.
+
+'refresh-interval' (int)::
+
+	Interval in seconds between view refresh update checks when
+	'refresh-mode' is set to 'periodic'.
+
+View settings
+~~~~~~~~~~~~~
+
+The view settings, e.g. `blame-view`, can be used to configure the order and
+settings for the different columns of a view. Each view option expects a space
+separated list of column specifications. Column specifications first give the
+column type, and can optionally be followed by a colon (`:`) and a list of
+column settings, e.g. `author:full,width=20`. The first setting value is always
+the 'display' setting. When no 'display' setting value is given, 'yes' is
+assumed. For 'display' settings taking an enumerated value this will
+automatically resolve to the default enum value. For example, `file-name` will
+automatically have its 'display' setting resolve to 'auto'.
+
+The following list shows which the available view options and what column types
+they support:
+
+blob-view, diff-view, log-view, pager-view, stage-view:: line-number, text
+blame-view:: author, date, file-name, id, line-number, text
+grep-view:: file-name, line-number, text
+main-view:: author, date, commit-title, id, line-number
+refs-view:: author, date, commit-title, id, line-number, ref
+stash-view:: author, date, commit-title, id, line-number
+status-view:: file-name, line-number, status
+tree-view:: author, date, id, file-name, file-size, line-number, mode
+
+Supported column types and their respective settings:
+
+author::
+
+	- 'display' (mixed) [full|abbreviated|email|email-user|<bool>]: How to
+	  display author names. If set to "abbreviated" author initials will be
+	  shown.
+	- 'width' (int): Width of the column. When set to 5 or below, the author
+	  name will be abbreviated to the author's initials.  When set to zero,
+	  the width is automatically sized to fit the content.
+
+commit-title::
+	- 'graph' (bool): Whether to show revision graph in the main view on
+	  start-up. See also the 'line-graphics' options.
+	- 'refs' (bool): Whether to show references (branches, tags, and
+	  remotes) in the main view. Can be toggled.
+	- 'overflow' (bool or int): Whether to highlight text in commit titles
+	  exceeding a given width. When set to a boolean, it enables or disables
+	  the highlighting using the default width of 50 character. When set to
+	  an int, the assigned value is used as the maximum character width.
+
+date::
+	- 'display' (mixed) [relative|short|default|local|<bool>]: How to
+	  display dates. If set to "relative" a relative date will be used, e.g.
+	  "2 minutes ago". If set to "short" no time information is shown.  If
+	  set to "local", localtime(3) is used.
+	- 'width' (int): Width of the column. When set to zero, the width is
+	  automatically sized to fit the content.
+
+file-name::
+	- 'display' (mixed) [auto|always|<bool>]: When to display file names.
+	  If set to "auto" file names are shown only when needed, e.g. when
+	  running: tig blame -C <file>.
+	- 'width' (int): Width of the column. When set to zero, the width is
+	  automatically sized to fit the content.
+
+file-size::
+	- 'display' (mixed) [default|units|<bool>]: How to display file sizes.
+	  When set to "units", sizes are shown using binary prefixes, e.g. 12524
+	  bytes is shown as "12.2K".
+	- 'width' (int): Width of the filename column. When set to zero, the
+	  width is automatically sized to fit the content.
+
+id::
+	- 'display' (bool): Whether to show commit IDs in the main view.
+	- 'width' (int) : Width of the commit ID. When unset Tig will use the
+	  value of 'core.abbrev' if found. See git-config(1) on how to set
+	  'core.abbrev'. When set to zero the width is automatically sized to
+	  fit the content of reflog (e.g.  `ref/stash@{4}`) IDs and otherwise
+	  default to 7.
+
+line-number::
+	- 'display' (bool): Whether to show line numbers.
+	- 'interval' (int): Interval between line numbers.
+	- 'width' (int): Width of the column. When set to zero, the width is
+	  automatically sized to fit the content.
+
+mode::
+	- 'display' (bool): Whether to show file modes.
+	- 'width' (int): Width of the column. When set to zero, the width is
+	  automatically sized to fit the content.
+
+ref::
+	- 'display' (bool): Whether to show the reference name.
+	- 'width' (int): Width of the column. When set to zero, the width is
+	  automatically sized to fit the content.
+
+status::
+	- 'display' (mixed) [no|short|long|<bool>]: How to display the status
+	  label.
+	- 'width' (int): Width of the column. When set to zero, the width is
+	  automatically sized to fit the content.
+
+text::
+	- 'commit-title-overflow' (bool or int): Whether to highlight commit
+	  titles exceeding a given width in the diff view. When set to a
+	  boolean, it enables or disables the highlighting using the default
+	  width of 50 character. When set to an int, the assigned value is used
+	  as the maximum character width.
+
+Examples:
+--------------------------------------------------------------------------
+# Enable both ID and line numbers in the blame view
+set blame-view = date:default author:full file-name:auto id:yes,color line-number:yes,interval=5 text
+
+# Change grep view to be similar to `git grep` format
+set grep-view = file-name:yes line-number:yes,interval=1 text
+
+# Show file sizes as units
+set tree-view = line-number:no,interval=5 mode author:full file-size:units date:default id:no file-name
+
+# Show line numbers for every 10th line in the pager view
+set pager-view = line-number:yes,interval=10 text
+--------------------------------------------------------------------------
+
+Note that all column options can be toggled. For 'display' options, use the
+option name as the prefix followed by a dash and the column name. E.g.
+`:toggle author-display` will toggle the 'display' option in the 'author'
+column. For all other options use the column name followed by a dash and
+then the option name as the suffix. E.g. `:toggle commit-title-graph`
+will toggle the 'graph' option in the 'commit-title' column.
+
+Bind command
+------------
+
+Using bind commands, keys can be mapped to an action when pressed in a given
+key map. The syntax is:
+
+[verse]
+*bind* 'keymap' 'key' 'action'
+
+Examples:
+
+--------------------------------------------------------------------------
+# Add keybinding to quickly jump to the next diff chunk in the stage view
+bind stage Enter :/^@@
+
+# Disable the default mapping for running git-gc
+bind generic G none
+
+# User-defined external command to amend the last commit
+bind status + !git commit --amend
+
+# User-defined internal command that reloads ~/.tigrc
+bind generic S :source ~/.tigrc
+
+# UTF8-encoded characters can be used as key values.
+bind generic ø @sh -c "printf '%s' %(commit) | pbcopy"
+--------------------------------------------------------------------------
+
+Or in the Git configuration files:
+
+--------------------------------------------------------------------------
+[tig "bind"]
+	# 'unbind' the default quit key binding
+	main = Q none
+	# Cherry-pick current commit onto current branch
+	generic = C !git cherry-pick %(commit)
+--------------------------------------------------------------------------
+
+Keys are mapped by first searching the keybindings for the current view, then
+the keybindings for the *generic* keymap, and last the default keybindings.
+Thus, the view keybindings override the generic keybindings which override the
+built-in keybindings.
+
+--
+
+Keymaps::
+
+Valid keymaps are: *main*, *diff*, *log*, *help*, *pager*, *status*, *stage*,
+*tree*, *blob*, *blame*, *refs*, *stash*, *grep* and *generic*. Use *generic*
+to set key mapping in all keymaps.
+
+Key values::
+
+Key values should never be quoted. Use either an ASCII or UTF8-encoded character
+or one of the following symbolic key names. Symbolic key names are case
+insensitive and starts with "<" and ends with ">". Use *<Hash>* to bind to the
+`#` key, since the hash mark is used as a comment character. Use *<LessThan>* to
+bind to the `<` key.
+
+*<Enter>*, *<Space>*, *<Backspace>*, *<Tab>*, *<Escape>* or *<Esc>*, *<Left>*,
+*<Right>*, *<Up>*, *<Down>*, *<Insert>* or *<Ins>*, *<Delete>* or *<Del>*,
+*<Hash>*, *<LessThan>* or *<LT>*, *<Home>*, *<End>*, *<PageUp>* or *<PgUp>*,
+*<PageDown>* or *<PgDown>*, *<F1>*, *<F2>*, *<F3>*, *<F4>*, *<F5>*, *<F6>*,
+*<F7>*, *<F8>*, *<F9>*, *<F10>*, *<F11>*, *<F12>*.
+
+To define key mappings with the `Ctrl` key, use `<Ctrl-key>`. In addition, key
+combos consisting of an initial `Escape` key followed by a normal key value can
+be bound using `<Esc>key`.
+
+Examples:
+
+--------------------------------------------------------------------------
+bind main R		reload
+bind main <Down>	next
+bind main <Ctrl-f>	scroll-page-down
+bind main <Esc>o	options
+--------------------------------------------------------------------------
+
+Note that due to the way ncurses encodes `Ctrl` key mappings, `Ctrl-m` and
+`Ctrl-i` cannot be bound as they conflict with 'Enter' and 'Tab' respectively.
+Furthermore, ncurses does not allow to distinguish between `Ctrl-f` and
+`Ctrl-F`. Finally, `Ctrl-z` is automatically used for process control and will
+suspend Tig and open a subshell (use `fg` to reenter Tig).
+
+Actions::
+
+Actions are either specified as user-defined commands (external or internal) or
+using action names as described in the following sections.
+
+--
+
+External user-defined command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These actions start with one or more of the following option flags followed by
+the command that should be executed.
+
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|!			|Run the command in the foreground with output shown.
+|@			|Run the command in the background with no output.
+|?			|Prompt the user before executing the command.
+|<			|Exit Tig after executing the command.
+|=============================================================================
+
+Unless otherwise specified, commands are run in the foreground with their
+console output shown (as if '!' was specified). When multiple command options
+are specified their behavior are combined, e.g. "?<git commit" will prompt the
+user whether to execute the command and will exit Tig after completion.
+
+Browsing state variables
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+User-defined commands can optionally refer to Tig's internal state using the
+following variable names, which are substituted before commands are run:
+
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|%(head)		|The currently viewed 'head' ID. Defaults to HEAD
+|%(commit)		|The currently selected commit ID.
+|%(blob)		|The currently selected blob ID.
+|%(branch)		|The currently selected branch name.
+|%(remote)		|The currently selected remote name. For remote
+			 branches %(branch) will contain the branch name.
+|%(tag)			|The currently selected tag name.
+|%(stash)		|The currently selected stash name.
+|%(directory)		|The current directory path in the tree view or
+			 "." if undefined.
+|%(file)		|The currently selected file.
+|%(ref)			|The reference given to blame or HEAD if undefined.
+|%(revargs)		|The revision arguments passed on the command line.
+|%(fileargs)		|The file arguments passed on the command line.
+|%(cmdlineargs)		|All other options passed on the command line.
+|%(diffargs)		|The diff options from 'diff-options' or 'TIG_DIFF_OPTS'
+|%(prompt)		|Prompt for the argument value. Optionally specify a
+			 custom prompt using `"%(prompt Enter branch name: )"`
+|=============================================================================
+
+Examples:
+
+--------------------------------------------------------------------------
+# Save save the current commit as a patch file when the user selects a
+# commit in the main view and presses 'S'.
+bind main S !git format-patch -1 %(commit)
+
+# Create and checkout a new branch; specify custom prompt
+bind main B ?git checkout -b "%(prompt Enter new branch name: )"
+--------------------------------------------------------------------------
+
+Advanced shell-like commands
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If your command requires use of dynamic features, such as subshells,
+expansion of environment variables and process control, this can be achieved by
+using a shell command:
+
+.Configure a binding to copy the current commit ID to the clipboard.
+--------------------------------------------------------------------------
+bind generic I @sh -c "echo -n %(commit) | xclip -selection c"
+--------------------------------------------------------------------------
+
+Or by using a combination of Git aliases and Tig external commands. The
+following example entries can be put in either the .gitconfig or .git/config
+file:
+
+.Git configuration which binds Tig keys to Git command aliases.
+--------------------------------------------------------------------------
+[alias]
+	gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &"
+	publish = !"for i in origin public; do git push $i; done"
+[tig "bind"]
+	# @-prefix means that the console output will not be shown.
+	generic = V !@git gitk-bg
+	generic = > !git publish
+--------------------------------------------------------------------------
+
+Internal user-defined commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Actions beginning with a ':' will be run and interpreted as internal commands
+and act similar to commands run via Tig's prompt. Valid internal commands are
+configuration file options (as described in this document) and pager view
+commands. Examples:
+
+--------------------------------------------------------------------------
+# Reload ~/.tigrc when 'S' is pressed
+bind generic S :source .tigrc
+
+# Change diff view to show all commit changes regardless of file limitations
+bind diff F :set diff-options = --full-diff
+
+# Show the output of git-reflog(1) in the pager view
+bind generic W :!git reflog
+
+# Search for previous diff (c)hunk and next diff header
+bind stage 2 :?^@@
+bind stage D :/^diff --(git|cc)
+
+bind main I :toggle show-id			# Show/hide the ID column
+bind diff D :toggle diff-options --minimal	# Use minimal diff algorithm
+bind diff [ :toggle diff-context -3		# Decrease context (-U arg)
+bind diff ] :toggle diff-context +3		# Increase context
+bind generic V :toggle split-view-height -10%	# Decrease split height
+--------------------------------------------------------------------------
+
+Similar to external commands, pager view commands can contain variable names
+that will be substituted before the command is run.
+
+Action names
+~~~~~~~~~~~~
+
+Valid action names are described below. Note, all action names are
+case-insensitive, and you may use '-', '_', and '.' interchangeably, e.g.
+"view-main", "View.Main", and "VIEW_MAIN" are the same.
+
+ifndef::DOC_GEN_ACTIONS[]
+View switching
+^^^^^^^^^^^^^^
+
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|view-main               |Show main view
+|view-diff               |Show diff view
+|view-log                |Show log view
+|view-tree               |Show tree view
+|view-blob               |Show blob view
+|view-blame              |Show blame view
+|view-refs               |Show refs view
+|view-status             |Show status view
+|view-stage              |Show stage view
+|view-stash              |Show stash view
+|view-grep               |Show grep view
+|view-pager              |Show pager view
+|view-help               |Show help view
+|=============================================================================
+
+View manipulation
+^^^^^^^^^^^^^^^^^
+
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|enter                   |Enter and open selected line
+|back                    |Go back to the previous view state
+|next                    |Move to next
+|previous                |Move to previous
+|parent                  |Move to parent
+|view-next               |Move focus to the next view
+|refresh                 |Reload and refresh view
+|maximize                |Maximize the current view
+|view-close              |Close the current view
+|quit                    |Close all views and quit
+|=============================================================================
+
+View specific actions
+^^^^^^^^^^^^^^^^^^^^^
+
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|status-update           |Stage/unstage chunk or file changes
+|status-revert           |Revert chunk or file changes
+|status-merge            |Merge file using external tool
+|stage-update-line       |Stage/unstage single line
+|stage-split-chunk       |Split current diff chunk
+|=============================================================================
+
+Cursor navigation
+^^^^^^^^^^^^^^^^^
+
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|move-up                 |Move cursor one line up
+|move-down               |Move cursor one line down
+|move-page-down          |Move cursor one page down
+|move-page-up            |Move cursor one page up
+|move-first-line         |Move cursor to first line
+|move-last-line          |Move cursor to last line
+|=============================================================================
+
+Scrolling
+^^^^^^^^^
+
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|scroll-line-up          |Scroll one line up
+|scroll-line-down        |Scroll one line down
+|scroll-page-up          |Scroll one page up
+|scroll-page-down        |Scroll one page down
+|scroll-first-col        |Scroll to the first line columns
+|scroll-left             |Scroll two columns left
+|scroll-right            |Scroll two columns right
+|=============================================================================
+
+Searching
+^^^^^^^^^
+
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|search                  |Search the view
+|search-back             |Search backwards in the view
+|find-next               |Find next search match
+|find-prev               |Find previous search match
+|=============================================================================
+
+Option manipulation
+^^^^^^^^^^^^^^^^^^^
+
+In addition to the actions below, options can also be toggled with the
+`:toggle` prompt command.
+
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|options                 |Open the options menu
+|=============================================================================
+
+Misc
+^^^^
+
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|edit                    |Open in editor
+|prompt                  |Open the prompt
+|screen-redraw           |Redraw the screen
+|stop-loading            |Stop all loading views
+|show-version            |Show version information
+|none                    |Do nothing
+|=============================================================================
+endif::DOC_GEN_ACTIONS[]
+
+Color command
+-------------
+
+Color commands control highlighting and the user interface styles. If your
+terminal supports color, these commands can be used to assign foreground and
+background combinations to certain areas. Optionally, an attribute can be
+given as the last parameter. The syntax is:
+
+[verse]
+*color* 'area' 'fgcolor' 'bgcolor' '[attributes]'
+
+Examples:
+
+------------------------------------------------------------------------------
+# Override the default terminal colors to white on black.
+color default		white	black
+# Diff colors
+color diff-header	yellow	default
+color diff-index	blue	default
+color diff-chunk	magenta	default
+color "Reported-by:"	green	default
+# View specific color
+color tree.date		black	cyan	bold
+--------------------------------------------------------------------------
+
+Or in the Git configuration files:
+
+--------------------------------------------------------------------------
+[tig "color"]
+	# A strange looking cursor line
+	cursor		= red	default underline
+	# UI colors
+	title-blur	= white	blue
+	title-focus	= white	blue	bold
+# View specific color
+[tig "color.tree"]
+	date		= cyan	default	bold
+------------------------------------------------------------------------------
+
+Area names::
+
+	Can be either a built-in area name or a custom quoted string. The
+	latter allows custom color rules to be added for lines matching a
+	quoted string.
+	Valid built-in area names are described below. Note, all names are
+	case-insensitive, and you may use '-', and '_' interchangeably,
+	e.g. "Diff-Header" and "DIFF_HEADER" are the same.
+	View specific colors can be defined by prefixing the view name to
+	the area name, e.g. "stage.diff-chunk" and "diff.diff-chunk".
+
+Color names::
+
+	Valid colors include: *white*, *black*, *green*, *magenta*, *blue*,
+	*cyan*, *yellow*, *red*, *default*. Use *default* to refer to the
+	default terminal colors, for example, to keep the background
+	transparent when you are using a terminal with a transparent
+	background.
++
+Colors can also be specified using the keywords *color0*, *color1*, ...,
+*colorN-1* (where *N* is the number of colors supported by your terminal).
+This is useful when you remap the colors for your display or want to enable
+colors supported by 88-color and 256-color terminals. Note that the 'color'
+prefix is optional. If you prefer, you can specify colors directly by their
+numbers *0*, *1*, ..., *N-1* instead, just like in the configuration file of
+Git.
+
+Attribute names::
+
+	Valid attributes include: *normal*, *blink*, *bold*, *dim*, *reverse*,
+	*standout*, and *underline*. Note, not all attributes may be supported
+	by the terminal.
+
+UI colors
+~~~~~~~~~
+
+The colors and attributes to be used for the text that is not highlighted or
+that specify the use of the default terminal colors can be controlled by
+setting the *default* color option.
+
+.General
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|default		|Override default terminal colors (see above).
+|cursor			|The cursor line.
+|status			|The status window showing info messages.
+|title-focus		|The title window for the current view.
+|title-blur		|The title window of any backgrounded view.
+|delimiter		|Delimiter shown for truncated lines.
+|header			|The view header lines. Use 'status.header' to color
+			 the staged, unstaged, and untracked sections in the
+			 status view. Use 'help.header' to color the keymap
+			 sections in the help view.
+|line-number		|Line numbers.
+|id			|The commit ID.
+|date			|The commit date.
+|author			|The commit author.
+|mode			|The file mode holding the permissions and type.
+|overflow		|Title text overflow.
+|directory		|The directory name.
+|file			|The file name.
+|file-size		|File size.
+|=============================================================================
+
+.Main view colors
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|graph-commit		|The commit dot in the revision graph.
+|palette-[0-6]		|7 different colors,
+used for distinguishing branches or commits.
+example: palette-0 = red
+|main-commit		|The commit comment.
+|main-head		|Label of the current branch.
+|main-remote		|Label of a remote.
+|main-tracked		|Label of the remote tracked by the current branch.
+|main-tag		|Label of a signed tag.
+|main-local-tag		|Label of a local tag.
+|main-ref		|Label of any other reference.
+|main-replace		|Label of replaced reference.
+|=============================================================================
+
+.Status view
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|stat-none		|Empty status label.
+|stat-staged		|Status flag of staged files.
+|stat-unstaged		|Status flag of unstaged files.
+|stat-untracked		|Status flag of untracked files.
+|=============================================================================
+
+.Help view
+[frame="none",grid="none",cols="25<m,75<"]
+|=============================================================================
+|help-group		|Help group name.
+|help-action		|Help action name.
+|=============================================================================
+
+Highlighting
+~~~~~~~~~~~~
+
+--
+
+Diff markup::
+
+Options concerning diff start, chunks and lines added and deleted.
+
+*diff-header*, *diff-chunk*, *diff-add*, *diff-add2*, *diff-del*,
+*diff-del2*
+
+Enhanced Git diff markup::
+
+Extra diff information emitted by the Git diff machinery, such as mode
+changes, rename detection, and similarity.
+
+*diff-oldmode*, *diff-newmode*, *diff-copy-from*, *diff-copy-to*,
+*diff-similarity*, *diff-index*
+
+Pretty print commit headers::
+
+Commit diffs and the revision logs are usually formatted using pretty printed
+headers , unless `--pretty=raw` was given. This includes lines, such as merge
+info, commit ID, and author and committer date.
+
+*pp-refs*, *pp-reflog*, *pp-reflogmsg*, *pp-merge*
+
+Raw commit header::
+
+Usually shown when `--pretty=raw` is given, however 'commit' is pretty much
+omnipresent.
+
+*commit*, *parent*, *tree*, *author*, *committer*
+
+Commit message::
+
+`Signed-off-by`, `Acked-by`, `Reviewed-by` and `Tested-by` lines are colorized.
+Characters in the commit title exceeding a predefined width can be highlighted.
+
+
+Tree markup::
+
+Colors for information of the tree view.
+
+*tree-dir*, *tree-file*
+
+--
+
+Source command
+-------------
+
+Source commands make it possible to read additional configuration files.
+Sourced files are included in-place, meaning when a 'source' command is
+encountered the file will be immediately read. Any commands later in the
+current configuration file will take precedence. The syntax is:
+
+[verse]
+*source* 'path'
+
+Examples:
+
+--------------------------------------------------------------------------
+source ~/.tig/colorscheme.tigrc
+source ~/.tig/keybindings.tigrc
+--------------------------------------------------------------------------
+
+COPYRIGHT
+---------
+Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+SEE ALSO
+--------
+ifndef::backend-docbook[]
+link:tig.1.{docext}[tig(1)],
+link:manual.{docext}[the Tig manual],
+endif::backend-docbook[]
+ifdef::backend-docbook[]
+manpage:tig[1],
+manpage:tigmanual[7],
+endif::backend-docbook[]
+git(7), git-config(1)

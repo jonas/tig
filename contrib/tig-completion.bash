@@ -240,7 +240,7 @@ _tig ()
 		case "${COMP_WORDS[COMP_CWORD]}" in
 		--*=*) COMPREPLY=() ;;
 		-*)   _tig_options ;;
-		*)    _tigcomp "blame status show log $(__tig_refs)" ;;
+		*)    _tigcomp "blame status show log stash grep $(__tig_refs)" ;;
 		esac
 		return
 	fi
@@ -255,6 +255,13 @@ _tig ()
 		" ;;
 	esac
 }
+
+# Detect if current shell is ZSH, and if so, load this file in bash
+# compatibility mode.
+if [ -n "$ZSH_VERSION" ]; then
+	autoload bashcompinit
+	bashcompinit
+fi
 
 complete -o default -o nospace -F _tig tig
 

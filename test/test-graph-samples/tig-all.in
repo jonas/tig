@@ -1,0 +1,286 @@
+commit 9ba5aa1e29924175e52b79e8b255f1903aa73833 85e82d060ce75a840f84cd53259413461633aaa5 210fe58ba8f4aeb35ddfdae052cf8f0fc4f54ff2
+tree fc9515a1d77204f13690e8a646ab56ec87466736
+parent 85e82d060ce75a840f84cd53259413461633aaa5
+parent 210fe58ba8f4aeb35ddfdae052cf8f0fc4f54ff2
+author Benjamin Bergman <bbergman@tenable.com> 1383861571 -0600
+committer Benjamin Bergman <bbergman@tenable.com> 1383861571 -0600
+
+    On fix-graph: debug printout stuff
+
+commit 210fe58ba8f4aeb35ddfdae052cf8f0fc4f54ff2 85e82d060ce75a840f84cd53259413461633aaa5
+tree 0751a22a3cfde6d0c3fad0910c77664b0e9dfd1c
+parent 85e82d060ce75a840f84cd53259413461633aaa5
+author Benjamin Bergman <bbergman@tenable.com> 1383861571 -0600
+committer Benjamin Bergman <bbergman@tenable.com> 1383861571 -0600
+
+    index on fix-graph: 85e82d0 One more fix
+
+commit 85e82d060ce75a840f84cd53259413461633aaa5 3c5321af10963dedb71361173e17fea5fddbcd09
+tree 0751a22a3cfde6d0c3fad0910c77664b0e9dfd1c
+parent 3c5321af10963dedb71361173e17fea5fddbcd09
+author Benjamin Bergman <bbergman@tenable.com> 1382970000 -0500
+committer Benjamin Bergman <bbergman@tenable.com> 1382970000 -0500
+
+    One more fix
+
+commit 3c5321af10963dedb71361173e17fea5fddbcd09 fa53fb34d6bed0444dfc65254dfccf5ec27fb5a8
+tree 91c965c280d9b6faa89ce6fe648d8676e8233b2a
+parent fa53fb34d6bed0444dfc65254dfccf5ec27fb5a8
+author Benjamin Bergman <bbergman@tenable.com> 1382968508 -0500
+committer Benjamin Bergman <bbergman@tenable.com> 1382968508 -0500
+
+    Another fix
+
+commit fa53fb34d6bed0444dfc65254dfccf5ec27fb5a8 48a6ca25bd8c018117f9cd752cd8acf962d90060
+tree badae0344d4e7e59357a2905442aa2ed04505dbf
+parent 48a6ca25bd8c018117f9cd752cd8acf962d90060
+author Benjamin Bergman <bbergman@tenable.com> 1382935317 -0500
+committer Benjamin Bergman <bbergman@tenable.com> 1382935317 -0500
+
+    Use pre-generated next row
+
+commit 48a6ca25bd8c018117f9cd752cd8acf962d90060 5a0a8ed21bcf5be036fe66479f2be89d32e4c214
+tree 0579c24b661ed3863bbcc1c6cddafd0a13b9d7fd
+parent 5a0a8ed21bcf5be036fe66479f2be89d32e4c214
+author Benjamin Bergman <bbergman@tenable.com> 1382933509 -0500
+committer Benjamin Bergman <bbergman@tenable.com> 1382933509 -0500
+
+    Add function to pre-generate next row
+
+commit 5a0a8ed21bcf5be036fe66479f2be89d32e4c214 2696d90c257f97226447bac12dfa9ec266b1221d
+tree 01d6e82f68c014dd7bf9f3539b7738531ee005cb
+parent 2696d90c257f97226447bac12dfa9ec266b1221d
+author Benjamin Bergman <bbergman@tenable.com> 1382906024 -0500
+committer Benjamin Bergman <bbergman@tenable.com> 1382906024 -0500
+
+    A little more broken to make it better
+
+commit 2696d90c257f97226447bac12dfa9ec266b1221d c445378c6aef243a63c805bb1da7afba9821dd07
+tree 3e8dc50a65b9e3a95a128aa65b6a804e2b479e57
+parent c445378c6aef243a63c805bb1da7afba9821dd07
+author Benjamin Bergman <bbergman@tenable.com> 1382852608 -0500
+committer Benjamin Bergman <bbergman@tenable.com> 1382852608 -0500
+
+    Always insert extra columns at the end
+
+commit c445378c6aef243a63c805bb1da7afba9821dd07 02cb3450c52aff5f9daafd479e97a52d01edaf2f
+tree ac394f2b65aee9be50ce61eab2c9db6865640777
+parent 02cb3450c52aff5f9daafd479e97a52d01edaf2f
+author Benjamin Bergman <bbergman@tenable.com> 1382772930 -0500
+committer Benjamin Bergman <bbergman@tenable.com> 1382772930 -0500
+
+    Works for first test case
+
+commit 02cb3450c52aff5f9daafd479e97a52d01edaf2f 05927494e74b8ddcebfe9163338bf1e6ddb899d5
+tree 0f0513ed6df99f7db29b7b821660636af9f5410b
+parent 05927494e74b8ddcebfe9163338bf1e6ddb899d5
+author Benjamin Bergman <bbergman@tenable.com> 1382768031 -0500
+committer Benjamin Bergman <bbergman@tenable.com> 1382768031 -0500
+
+    Better, but missing some lines still
+
+commit 05927494e74b8ddcebfe9163338bf1e6ddb899d5 bc911786d75680d0fa28ac81c846775f6a7c894f
+tree e83f2f19de9422f1a4ba24e406e7daf43b3781bd
+parent bc911786d75680d0fa28ac81c846775f6a7c894f
+author Benjamin Bergman <bbergman@tenable.com> 1382764756 -0500
+committer Benjamin Bergman <bbergman@tenable.com> 1382764756 -0500
+
+    A little better at the top, a little worse at the bottom
+
+commit bc911786d75680d0fa28ac81c846775f6a7c894f 7088a1081ba353bd0bb8f3d38426d24861c694c2
+tree 10db6fa2507bd3fa59b3cb6f9701fa48a453d968
+parent 7088a1081ba353bd0bb8f3d38426d24861c694c2
+author Jonas Fonseca <fonseca@diku.dk> 1382580247 -0700
+committer Jonas Fonseca <fonseca@diku.dk> 1382580247 -0700
+
+    Fix reloading diffs of staged and unstaged changes
+
+commit 7088a1081ba353bd0bb8f3d38426d24861c694c2 7c949baaf493b812702ec78b087d2540e8827bf3
+tree 19bbb16e4b01bcc7de1412563ca3bf3f5b1c819d
+parent 7c949baaf493b812702ec78b087d2540e8827bf3
+author Jonas Fonseca <fonseca@diku.dk> 1382578049 -0700
+committer Jonas Fonseca <fonseca@diku.dk> 1382578049 -0700
+
+    Fix map size assertion in parse_enum
+
+commit fc602a04798a0f1fcb6aa71e9613b0c0acbb7e2f 2be80ae3bc7f056ad88ba71acc47ab99e9dd0166
+tree 82e24ccb2d2cc98fe9e6ebd3464a9ebc31af9863
+parent 2be80ae3bc7f056ad88ba71acc47ab99e9dd0166
+author Jonas Fonseca <fonseca@diku.dk> 1377865223 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248987 -0400
+
+    Move view draw methods to draw module
+
+commit 2be80ae3bc7f056ad88ba71acc47ab99e9dd0166 2a45940e80b5326a5fc1b7bbb7d8e1719cf5634d
+tree f2a5888a534af6e521dfd1f9d4820d7a363b08ed
+parent 2a45940e80b5326a5fc1b7bbb7d8e1719cf5634d
+author Jonas Fonseca <fonseca@diku.dk> 1377825820 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248987 -0400
+
+    Move option handling code to options.c
+
+commit 2a45940e80b5326a5fc1b7bbb7d8e1719cf5634d 5fc7c50410bcc61bc0dc89a8e2c354444e0e3fad
+tree deafe0b382f3cfb977dc659366648ab5fde465f4
+parent 5fc7c50410bcc61bc0dc89a8e2c354444e0e3fad
+author Jonas Fonseca <fonseca@diku.dk> 1377823028 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248987 -0400
+
+    Move option declarations to separate files
+
+commit 5fc7c50410bcc61bc0dc89a8e2c354444e0e3fad 7ecc9fb460c833fa6f669ef2e81b804441b00b95
+tree 1e2eaf1d68d0663d9018c38b960f8b55fd7b6399
+parent 7ecc9fb460c833fa6f669ef2e81b804441b00b95
+author Jonas Fonseca <fonseca@diku.dk> 1377822278 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248987 -0400
+
+    Use symbols to track diff and log argument formatting
+
+commit 7ecc9fb460c833fa6f669ef2e81b804441b00b95 aa2eabbb7879cabe87b2fa22d186848ebf51497d
+tree d83e96ffc715863c88b2906b1256040fcd74c206
+parent aa2eabbb7879cabe87b2fa22d186848ebf51497d
+author Jonas Fonseca <fonseca@diku.dk> 1377821969 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248986 -0400
+
+    Group environment-based options
+
+commit aa2eabbb7879cabe87b2fa22d186848ebf51497d 951666702f8705388fc3b980ce09ad4be069fe30
+tree b9bae82e2fcacff2c65a6d8ca0ac18abf2d4b1b5
+parent 951666702f8705388fc3b980ce09ad4be069fe30
+author Jonas Fonseca <fonseca@diku.dk> 1378434482 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248986 -0400
+
+    Move refs helpers to refs module
+
+commit 951666702f8705388fc3b980ce09ad4be069fe30 d9c8a7473f3c81957316998910305b8bc346ee89
+tree 2390627cd8caf71626ef73c602338479ad33db00
+parent d9c8a7473f3c81957316998910305b8bc346ee89
+author Jonas Fonseca <fonseca@diku.dk> 1377821898 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248986 -0400
+
+    Move repository information to repo.[ch]
+
+commit d9c8a7473f3c81957316998910305b8bc346ee89 c531bcde787601952c018551f27f27a4d07afb24
+tree 5de054e17653f35c549d3d0f422c928f63a82264
+parent c531bcde787601952c018551f27f27a4d07afb24
+author Jonas Fonseca <fonseca@diku.dk> 1377735198 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248986 -0400
+
+    Add tool to generate doc from data structures
+
+commit c531bcde787601952c018551f27f27a4d07afb24 f0161de385a0f3240d0a7d11c7ff582a83759942
+tree 92b1bbcf2eb25fd558d5cad43f22c2090e9d455a
+parent f0161de385a0f3240d0a7d11c7ff582a83759942
+author Jonas Fonseca <fonseca@diku.dk> 1377609285 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248986 -0400
+
+    Move view declarations to view.h
+
+commit f0161de385a0f3240d0a7d11c7ff582a83759942 9abb2ac9aa375f0794ee84a5d258128f1258dd0b
+tree 5e0f47015f82a8f48db7c88dffd587c93b5fb239
+parent 9abb2ac9aa375f0794ee84a5d258128f1258dd0b
+author Jonas Fonseca <fonseca@diku.dk> 1377609022 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248986 -0400
+
+    Move keybinding and run requests to keys.[ch]
+
+commit 9abb2ac9aa375f0794ee84a5d258128f1258dd0b 31331173eadd9efaba2f7044e4e141127ad98ee9
+tree e6c0d0f4b379efa1ffc8bc0aabcef7308ba4521c
+parent 31331173eadd9efaba2f7044e4e141127ad98ee9
+author Jonas Fonseca <fonseca@diku.dk> 1379026390 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248985 -0400
+
+    Move line and color code to line.c
+
+commit 31331173eadd9efaba2f7044e4e141127ad98ee9 d1cc009c134f143befffcff148ff33e12f3fc06b
+tree a596ed1293fc493f8005f42e2a4db7ab13b69900
+parent d1cc009c134f143befffcff148ff33e12f3fc06b
+author Jonas Fonseca <fonseca@diku.dk> 1349143875 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248985 -0400
+
+    Move line definitions to line.h
+
+commit d1cc009c134f143befffcff148ff33e12f3fc06b 1569d15bf38d0a15683b5a73c51763871225e9b9
+tree af32e5ba3a47a44893a8eb631cb033174e632089
+parent 1569d15bf38d0a15683b5a73c51763871225e9b9
+author Jonas Fonseca <fonseca@diku.dk> 1377607388 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248985 -0400
+
+    Move request handling code to request.c
+
+commit 1569d15bf38d0a15683b5a73c51763871225e9b9 a48b0f5dd687202110498d1775edcc6a3bdf6c72
+tree 14afa84fea795fac6beec02db5b1953c8ea98269
+parent a48b0f5dd687202110498d1775edcc6a3bdf6c72
+author Jonas Fonseca <fonseca@diku.dk> 1377607333 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248985 -0400
+
+    Move request definitions to request.h
+
+commit a48b0f5dd687202110498d1775edcc6a3bdf6c72 0db5d56c7a0c1e74a481387dd22e0da603be902f
+tree 929ddd7ba53bb299fe99ef9ce5ee43c9650ab42e
+parent 0db5d56c7a0c1e74a481387dd22e0da603be902f
+author Jonas Fonseca <fonseca@diku.dk> 1349143750 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248985 -0400
+
+    Move view macro to tig.h
+
+commit 0db5d56c7a0c1e74a481387dd22e0da603be902f 7c949baaf493b812702ec78b087d2540e8827bf3
+tree 29917131dafd0d1041c80141b7396e28e28a648f
+parent 7c949baaf493b812702ec78b087d2540e8827bf3
+author Jonas Fonseca <fonseca@diku.dk> 1377864465 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248985 -0400
+
+    Move enums and various utility methods to util module
+
+commit 7c949baaf493b812702ec78b087d2540e8827bf3 536d565fcd789a2ea9dda43b3ae989e9d651af55
+tree 93d3104b94f044a1c7772ca60a63ef4b5ee83b66
+parent 536d565fcd789a2ea9dda43b3ae989e9d651af55
+author Jonas Fonseca <fonseca@diku.dk> 1382226054 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248932 -0400
+
+    Refactor defined enum maps to contain size information
+    
+    The existing struct enum_map is renamed to enum_map_entry.
+
+commit 536d565fcd789a2ea9dda43b3ae989e9d651af55 57787a3668d28808764dd1525a1157e3564d9b46
+tree a679b29f2740f740b826d89f82c049b04bc99cb0
+parent 57787a3668d28808764dd1525a1157e3564d9b46
+author Jonas Fonseca <fonseca@diku.dk> 1382229219 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382248932 -0400
+
+    Detect renames when generating the announcement
+
+commit 57787a3668d28808764dd1525a1157e3564d9b46 0d68e41d80c642af766fe5adb320a9cc204f56dc
+tree be39dfa48d4c43f7a0667700b230d8fe312e0c96
+parent 0d68e41d80c642af766fe5adb320a9cc204f56dc
+author Jonas Fonseca <fonseca@diku.dk> 1382225913 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382225929 -0400
+
+    Fix warning about uninitialized lineno variable
+
+commit 0d68e41d80c642af766fe5adb320a9cc204f56dc c14792afc41efcb1126ca0ab896eac6d1a12e580
+tree 5879870a174f110d6ee8facae1e92ff032ccd048
+parent c14792afc41efcb1126ca0ab896eac6d1a12e580
+author Jonas Fonseca <fonseca@diku.dk> 1382133286 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1382133286 -0400
+
+    Set the commit reference when opening the blame view from the blob view
+    
+    This is what tree_request does. Else the blame view is opened against an
+    unrelated version of %(ref) or HEAD.
+
+commit c14792afc41efcb1126ca0ab896eac6d1a12e580 bf740aa9b7afc29a05f2bc6a8b44035e639fda0e
+tree 838f1135838567884b2c6c02a428542c6e3c1995
+parent bf740aa9b7afc29a05f2bc6a8b44035e639fda0e
+author Jonas Fonseca <fonseca@diku.dk> 1381192201 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1381192201 -0400
+
+    Fix clean rule to remove DocBook XML files in doc/
+
+commit bf740aa9b7afc29a05f2bc6a8b44035e639fda0e f9399028a8ecdd7342bc977b7334fc76a902d3a7
+tree 7d2442e3ecdba05ef9746ded3d8e38ff299bb89e
+parent f9399028a8ecdd7342bc977b7334fc76a902d3a7
+author Jonas Fonseca <fonseca@diku.dk> 1381189194 -0400
+committer Jonas Fonseca <fonseca@diku.dk> 1381189194 -0400
+
+    Fix and improve inter-document linking
+

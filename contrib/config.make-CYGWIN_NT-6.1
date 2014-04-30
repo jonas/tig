@@ -1,0 +1,19 @@
+# Example configuration for Cygwin (`uname -s` = CYGWIN_NT-6.1)
+#
+# Use ncursesw.
+
+NCURSESW_LIBS = $(shell ncursesw5-config --libs 2>/dev/null) 
+HAS_ICONV = $(shell test -e "/usr/include/iconv.h" && echo true)
+
+ifeq ($(NCURSESW_LIBS),)
+$(error Please install the libncursesw-devel package)
+endif
+
+ifneq ($(HAS_ICONV),true)
+$(error Please install the libiconv-devel package)
+endif
+
+LDLIBS = $(NCURSESW_LIBS) -liconv
+CPPFLAGS = -DHAVE_NCURSESW_CURSES_H
+
+# vim: ft=make:

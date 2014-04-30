@@ -1,0 +1,40 @@
+Tig: text-mode interface for Git
+================================
+:docext: adoc
+
+image::https://secure.travis-ci.org/jonas/tig.png?branch=master[Build Status,link=http://travis-ci.org/jonas/tig]
+
+What is Tig?
+------------
+Tig is an ncurses-based text-mode interface for git. It functions mainly
+as a Git repository browser, but can also assist in staging changes for
+commit at chunk level and act as a pager for output from various Git
+commands.
+
+Resources
+---------
+
+ - Homepage:	http://jonas.nitro.dk/tig/[]
+ - Manual:	http://jonas.nitro.dk/tig/manual.html[]
+ - Tarballs:	http://jonas.nitro.dk/tig/releases/[]
+ - Git URL:	git://github.com/jonas/tig.git (master) or
+		git://repo.or.cz/tig.git (mirror)
+ - Gitweb:	http://repo.or.cz/w/tig.git[]
+ - Q&A:		http://stackoverflow.com/questions/tagged/tig[]
+
+Bugs and Feature Requests
+-------------------------
+Bugs and feature requests can be reported using the issue tracker at
+https://github.com/jonas/tig/issues[] or by mail to either the Git mailing
+list or directly to the maintainer. Ensure that the word "tig" is in the
+subject. For other Tig related questions please use Stack Overflow:
+http://stackoverflow.com/questions/tagged/tig[].
+
+Installation and News
+---------------------
+
+Information on how to build and install Tig are found in
+link:INSTALL.{docext}[the installation instructions].
+
+News about releases and latest features and bug fixes are found in
+link:NEWS.{docext}[the release notes].

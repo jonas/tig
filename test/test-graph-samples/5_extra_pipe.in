@@ -1,0 +1,12 @@
+commit A B C
+    Commit A - merge B and C
+commit C D
+    Commit C after D
+commit B E D
+    Commit B - merge E and D
+commit D F
+    Commit D after F
+commit E
+    Commit E
+commit F
+    Commit F

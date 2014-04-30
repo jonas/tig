@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2013 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2013 Jonas Fonseca <jonas.fonseca@gmail.com>
  * Copyright (c) 2013 Drew Northup <n1xim.email@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -19,6 +19,7 @@
 /*
  * Enable inclusion of header files checked by configure.
  */
+#define HAVE_STDINT_H
 #define HAVE_STDLIB_H
 #define HAVE_STRING_H
 #define HAVE_SYS_TIME_H

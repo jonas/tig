@@ -1,0 +1,18 @@
+commit A Z B C D E F
+    Commit A - merge Z, B, C, D, E, and F
+commit C B
+    Commit C - after B
+commit B H
+    Commit B - after H
+commit F G
+    Commit F - after G
+commit H D
+    Commit H - after D
+commit D E
+    Commit D - after E
+commit E G
+    Commit E - after G
+commit G Z
+    Commit G - after Z
+commit Z
+    Commit Z

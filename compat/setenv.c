@@ -39,7 +39,7 @@ environment.  This implementation is not safe for multithreaded code.
 */
 
 #ifdef HAVE_CONFIG_H
-#include "../config.h"
+#include "config.h"
 #endif
 
 #include "compat.h"

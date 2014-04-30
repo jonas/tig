@@ -1,0 +1,72 @@
+commit A B C D E
+    Commit A - merge B, C, D, and E
+commit D B
+    Commit D - after B
+commit C F
+    Commit C - after F
+commit E H
+    Commit E - after H
+commit B H F
+    Commit B - merge H and F
+commit F G
+    Commit F - after G
+commit G H
+    Commit G - after H
+commit H I
+    Commit H - after I
+commit I J K L M P O
+    Commit I - merge J, K, L, M, P, and O
+commit K J
+    Commit K - after J
+commit J N
+    Commit J - after N
+commit N O
+    Commit N - after O
+commit O Q
+    Commit O - after Q
+commit Q R S
+    Commit Q - merge R and S
+commit R T U
+    Commit R - merge T and U
+commit T V W
+    Commit T - merge V and W
+commit V X W
+    Commit V - merge X and W
+commit X Y Z
+    Commit X - merge Y and Z
+commit W
+    Commit W
+commit M Y 1 2
+    Commit M - merge Y, 1, and 2
+commit P Y
+    Commit P - after Y
+commit Z Y
+    Commit Z - after Y
+commit Y 1
+    Commit Y - after 1
+commit 1 2
+    Commit 1 - after 2
+commit 2 S
+    Commit 2 - after S
+commit S U
+    Commit S - after U
+commit U 3
+    Commit U - after 3
+commit 3 4 5 8
+    Commit 3 - merge 4, 5, and 8
+commit 4 6 5
+    Commit 4 - merge 6 and 5
+commit 5 7 9
+    Commit 5 - merge 7 and 9
+commit 6 A 9
+    Commit 6 - merge A and 9
+commit A
+    Commit A
+commit L
+    Commit L
+commit 7
+    Commit 7
+commit 8
+    Commit 8
+commit 9
+    Commit 9

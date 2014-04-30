@@ -1,17 +1,17 @@
-AC_INIT([tig],[0],[Jonas Fonseca <fonseca@diku.dk>],[tig])
+AC_INIT([tig],[0],[jonas.fonseca@gmail.com],[tig])
 
 AC_LANG([C])
 AC_CONFIG_HEADER(config.h)
-AC_CONFIG_SRCDIR(tig.c)
+AC_CONFIG_SRCDIR(src)
 
 dnl  Document where we keep our .m4 file.
-AC_CONFIG_MACRO_DIR([contrib])
+AC_CONFIG_MACRO_DIR([tools])
 dnl  Make sure aclocal actually found it!
 m4_pattern_forbid([^AX_])
 
 AC_PROG_CC
 
-AC_CHECK_HEADERS([stdlib.h string.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/time.h unistd.h])
 AC_CHECK_FUNCS([gettimeofday])
 AC_CHECK_DECLS([environ])
 AC_CHECK_DECLS([errno], [], [], [#include <errno.h>])
@@ -29,6 +29,8 @@ case "$ax_cv_ncursesw" in "no")
 	AC_MSG_WARN([This means that tig will not correctly render UTF-8.])
 esac
 AC_SUBST(CURSES_LIB)
+
+AX_LIB_READLINE(6.2)
 
 AM_ICONV
 

@@ -1,0 +1,9 @@
+●─┬─╮ Commit A - merge B, D, and E
+● │ │ Commit B - after F
+│ ● │ Commit D - after F
+│ │ ● Commit E - after Z
+●─╯ │ Commit F - after I
+●─╭─╯─╮ Commit F - merge H and I
+● │ ╭─╯ Commit H - after I
+●─│─╯ Commit I - after Z
+◎─╯ Commit Z

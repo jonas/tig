@@ -1,0 +1,5 @@
+●─┬─╮ Commit A - Merges B, C, and D
+│ ● │ Commit C after E
+│ ●─│─╮ Commit E - Merges D and B
+●─│─│─╯ Commit B after D
+◎─┴─╯ Commit D

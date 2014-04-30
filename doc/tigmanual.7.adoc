@@ -1,0 +1,20 @@
+tigmanual(7)
+============
+
+NAME
+----
+tigmanual - text-mode interface for Git
+
+SYNOPSIS
+--------
+[verse]
+tig        [options] [revisions] [--] [paths]
+tig show   [options] [revisions] [--] [paths]
+tig blame  [options] [rev] [--] path
+tig status
+tig <      [Git command output]
+
+DESCRIPTION
+-----------
+
+include::manual.adoc[]

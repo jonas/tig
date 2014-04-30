@@ -1,0 +1,18 @@
+language: c
+
+compiler:
+  - clang
+  - gcc
+
+env:
+  - TEST=autoconf VERBOSE=1
+  - TEST=make     VERBOSE=@
+
+before_install: sudo apt-get update -qq
+
+install: sudo apt-get install -qq --no-install-recommends asciidoc xmlto docbook-utils
+
+script:
+  - if [ "$TEST" = autoconf ]; then ./autogen.sh && ./configure; fi
+  - if [ "$TEST" = make ]; then cp contrib/config.make .; fi
+  - make V=$VERBOSE DESTDIR=/tmp all test install install-doc

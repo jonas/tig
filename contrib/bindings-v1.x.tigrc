@@ -1,0 +1,23 @@
+# Bindings from before version 2.0
+#
+# To use these bindings copy the file to your HOME directory and include
+# it from your ~/.tigrc file:
+#
+#	$ cp contrib/bindings-v1.x.tigrc ~/.tigrc.compat
+#	$ echo "source ~/.tigrc.compat" >> ~/.tigrc
+
+bind generic	B	view-blame
+bind generic	G	view-grep
+bind generic	H	view-refs
+bind generic	S	view-status
+
+bind generic	r	screen-redraw
+bind generic	w	scroll-page-up
+bind generic	s	scroll-page-down
+bind generic	b	move-page-up
+
+bind generic	g	:toggle commit-title-graph
+bind generic	i	:toggle sort-field
+bind generic	.	:toggle line-number
+bind generic	<Hash>	:toggle file-name
+bind generic	F	:toggle commit-title-refs
