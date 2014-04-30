@@ -530,6 +530,11 @@ stage_read(struct view *view, char *data)
 	if (stage_line_type == LINE_STAT_UNTRACKED)
 		return pager_common_read(view, data, LINE_DEFAULT, NULL);
 
+	if (!data && !view->lines && view->parent) {
+		maximize_view(view->parent, TRUE);
+		return TRUE;
+	}
+
 	if (data && diff_common_read(view, data, &state->diff))
 		return TRUE;
 
