@@ -119,10 +119,12 @@ main_add_changes_commits(struct view *view, struct main_state *state, const char
 {
 	const char *staged_parent = NULL_ID;
 	const char *unstaged_parent = parent;
+	struct index_diff diff;
 
-	update_index();
+	if (!index_diff(&diff, FALSE, FALSE))
+		return FALSE;
 
-	if (!index_diff_unstaged()) {
+	if (!diff.unstaged) {
 		unstaged_parent = NULL;
 		staged_parent = parent;
 		watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_NO);
@@ -130,7 +132,7 @@ main_add_changes_commits(struct view *view, struct main_state *state, const char
 		watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_YES);
 	}
 
-	if (!index_diff_staged()) {
+	if (!diff.staged) {
 		staged_parent = NULL;
 		watch_apply(&view->watch, WATCH_INDEX_STAGED_NO);
 	} else {
