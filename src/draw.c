@@ -209,7 +209,7 @@ static bool
 draw_author(struct view *view, struct view_column *column, const struct ident *author)
 {
 	bool trim = author_trim(column->width);
-	const char *text = mkauthor(author, column->width, column->opt.author.display);
+	const char *text = mkauthor(author, column->opt.author.width, column->opt.author.display);
 
 	if (column->opt.author.display == AUTHOR_NO)
 		return FALSE;
