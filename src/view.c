@@ -1208,6 +1208,7 @@ parse_view_config(const char *view_name, const char *argv[])
 		const char *arg = argv[i];
 		char buf[SIZEOF_STR] = "";
 		char *pos, *end;
+		bool first = TRUE;
 
 		if (column)
 			column->next = &columns[i];
@@ -1229,11 +1230,11 @@ parse_view_config(const char *view_name, const char *argv[])
 
 		string_ncopy(buf, arg, strlen(arg));
 
-		for (pos = buf, end = pos + strlen(pos); code == SUCCESS && pos <= end; ) {
+		for (pos = buf, end = pos + strlen(pos); code == SUCCESS && pos <= end; first = FALSE) {
 			const char *name = NULL;
 			const char *value = NULL;
 
-			code = parse_view_column_config(&pos, &name, &value, buf == pos);
+			code = parse_view_column_config(&pos, &name, &value, first);
 			if (code == SUCCESS)
 				code = parse_view_column_option(column, name, value);
 		}
