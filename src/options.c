@@ -1010,6 +1010,8 @@ set_git_color_option(const char *name, char *value)
 static void
 set_encoding(struct encoding **encoding_ref, const char *arg, bool priority)
 {
+	if (!strcasecmp(arg, "utf-8") || !strcasecmp(arg, "utf8"))
+		return;
 	if (parse_encoding(encoding_ref, arg, priority) == SUCCESS)
 		encoding_arg[0] = 0;
 }
