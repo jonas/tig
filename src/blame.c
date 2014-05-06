@@ -346,14 +346,16 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 	struct io io;
 	int parent_lineno = -1;
 	int blamed_lineno = -1;
-	char *line;
+	struct buffer buf;
 
 	if (!string_format(from, "%s:%s", view->env->ref, view->env->file) ||
 	    !string_format(to, "%s:%s", blame->commit->id, blame->commit->filename) ||
 	    !io_run(&io, IO_RD, NULL, opt_env, diff_tree_argv))
 		return;
 
-	while ((line = io_get(&io, '\n', TRUE))) {
+	while (io_get(&io, &buf, '\n', TRUE)) {
+		char *line = buf.data;
+
 		if (*line == '@') {
 			char *pos = strchr(line, '+');
 

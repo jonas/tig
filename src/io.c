@@ -62,32 +62,37 @@ encoding_open(const char *fromcode)
 	return encoding;
 }
 
-static char *
-encoding_convert_string(iconv_t iconv_cd, char *line, size_t linelen)
+static bool
+encoding_convert_string(iconv_t iconv_cd, struct buffer *buf)
 {
 	static char out_buffer[BUFSIZ * 2];
-	ICONV_CONST char *inbuf = line;
-	size_t inlen = linelen + 1;
+	ICONV_CONST char *inbuf = buf->data;
+	size_t inlen = buf->size + 1;
 
 	char *outbuf = out_buffer;
 	size_t outlen = sizeof(out_buffer);
 
 	size_t ret = iconv(iconv_cd, &inbuf, &inlen, &outbuf, &outlen);
+	if (ret != (size_t) -1) {
+		buf->data = out_buffer;
+		buf->size = ret;
+	}
 
-	return (ret != (size_t) -1) ? out_buffer : line;
+	return (ret != (size_t) -1);
 }
 
-char *
-encoding_convert(struct encoding *encoding, char *line)
+bool
+encoding_convert(struct encoding *encoding, struct buffer *buf)
 {
-	return encoding_convert_string(encoding->cd, line, strlen(line));
+	return encoding_convert_string(encoding->cd, buf);
 }
 
 const char *
 encoding_iconv(iconv_t iconv_cd, const char *string, size_t length)
 {
 	char *instr = strndup(string, length);
-	const char *ret = instr ? encoding_convert_string(iconv_cd, instr, length) : string;
+	struct buffer buf = { instr, length };
+	const char *ret = buf.data && encoding_convert_string(iconv_cd, &buf) ? buf.data : string;
 
 	free(instr);
 	return ret == instr ? string : ret;
@@ -420,8 +425,8 @@ io_memchr(struct io *io, char *data, int c)
 
 DEFINE_ALLOCATOR(io_realloc_buf, char, BUFSIZ)
 
-char *
-io_get_line(struct io *io, int c, size_t *lineno, bool can_read)
+static bool
+io_get_line(struct io *io, struct buffer *buf, int c, size_t *lineno, bool can_read)
 {
 	char *eol;
 	ssize_t readsize;
@@ -437,40 +442,42 @@ io_get_line(struct io *io, int c, size_t *lineno, bool can_read)
 				eol = memchr(io->bufpos, c, io->bufsize);
 			}
 			if (eol) {
-				char *line = io->bufpos;
+				buf->data = io->bufpos;
+				buf->size = eol - buf->data;
 
 				*eol = 0;
 				io->bufpos = eol + 1;
-				io->bufsize -= io->bufpos - line;
+				io->bufsize -= io->bufpos - buf->data;
 				if (lineno)
 					(*lineno)++;
-				return line;
+				return TRUE;
 			}
 		}
 
 		if (io_eof(io)) {
 			if (io->bufsize) {
-				char *line = io->bufpos;
+				buf->data = io->bufpos;
+				buf->size = io->bufsize;
 
 				io->bufpos[io->bufsize] = 0;
 				io->bufpos += io->bufsize;
 				io->bufsize = 0;
 				if (lineno)
 					(*lineno)++;
-				return line;
+				return TRUE;
 			}
-			return NULL;
+			return FALSE;
 		}
 
 		if (!can_read)
-			return NULL;
+			return FALSE;
 
 		if (io->bufsize > 0 && io->bufpos > io->buf)
 			memmove(io->buf, io->bufpos, io->bufsize);
 
 		if (io->bufalloc == io->bufsize) {
 			if (!io_realloc_buf(&io->buf, io->bufalloc, BUFSIZ))
-				return NULL;
+				return FALSE;
 			io->bufalloc += BUFSIZ;
 		}
 
@@ -482,10 +489,10 @@ io_get_line(struct io *io, int c, size_t *lineno, bool can_read)
 	}
 }
 
-char *
-io_get(struct io *io, int c, bool can_read)
+bool
+io_get(struct io *io, struct buffer *buf, int c, bool can_read)
 {
-	return io_get_line(io, c, NULL, can_read);
+	return io_get_line(io, buf, c, NULL, can_read);
 }
 
 bool
@@ -526,14 +533,14 @@ io_printf(struct io *io, const char *fmt, ...)
 bool
 io_read_buf(struct io *io, char buf[], size_t bufsize)
 {
-	char *result = io_get(io, '\n', TRUE);
+	struct buffer result = {};
 
-	if (result) {
-		result = chomp_string(result);
-		string_ncopy_do(buf, bufsize, result, strlen(result));
+	if (io_get(io, &result, '\n', TRUE)) {
+		result.data = chomp_string(result.data);
+		string_ncopy_do(buf, bufsize, result.data, strlen(result.data));
 	}
 
-	return io_done(io) && result;
+	return io_done(io) && result.data;
 }
 
 bool
@@ -566,15 +573,16 @@ static int
 io_load_file(struct io *io, const char *separators,
 	     size_t *lineno, io_read_fn read_property, void *data)
 {
-	char *name;
+	struct buffer buf;
 	int state = OK;
 
-	while (state == OK && (name = io_get_line(io, '\n', lineno, TRUE))) {
+	while (state == OK && io_get_line(io, &buf, '\n', lineno, TRUE)) {
+		char *name;
 		char *value;
 		size_t namelen;
 		size_t valuelen;
 
-		name = chomp_string(name);
+		name = chomp_string(buf.data);
 		namelen = strcspn(name, separators);
 
 		if (name[namelen]) {

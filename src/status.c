@@ -75,7 +75,7 @@ static bool
 status_run(struct view *view, const char *argv[], char status, enum line_type type)
 {
 	struct status *unmerged = NULL;
-	char *buf;
+	struct buffer buf;
 	struct io io;
 
 	if (!io_run(&io, IO_RD, repo.cdup, opt_env, argv))
@@ -83,7 +83,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 
 	add_line_nodata(view, type);
 
-	while ((buf = io_get(&io, 0, TRUE))) {
+	while (io_get(&io, &buf, 0, TRUE)) {
 		struct line *line;
 		struct status parsed = {};
 		struct status *file = &parsed;
@@ -95,28 +95,26 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 				string_copy(file->old.rev, NULL_ID);
 
 		} else {
-			if (!status_get_diff(&parsed, buf, strlen(buf)))
+			if (!status_get_diff(&parsed, buf.data, buf.size))
 				goto error_out;
 
-			buf = io_get(&io, 0, TRUE);
-			if (!buf)
+			if (!io_get(&io, &buf, 0, TRUE))
 				break;
 		}
 
 		/* Grab the old name for rename/copy. */
 		if (!*file->old.name &&
 		    (file->status == 'R' || file->status == 'C')) {
-			string_ncopy(file->old.name, buf, strlen(buf));
+			string_ncopy(file->old.name, buf.data, buf.size);
 
-			buf = io_get(&io, 0, TRUE);
-			if (!buf)
+			if (!io_get(&io, &buf, 0, TRUE))
 				break;
 		}
 
 		/* git-ls-files just delivers a NUL separated list of
 		 * file names similar to the second half of the
 		 * git-diff-* output. */
-		string_ncopy(file->new.name, buf, strlen(buf));
+		string_ncopy(file->new.name, buf.data, buf.size);
 		if (!*file->old.name)
 			string_copy(file->old.name, file->new.name);
 

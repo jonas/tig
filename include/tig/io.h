@@ -16,6 +16,11 @@
 
 #include "tig/tig.h"
 
+struct buffer {
+	char *data;
+	size_t size;
+};
+
 /*
  * Encoding conversion.
  */
@@ -25,7 +30,7 @@
 struct encoding;
 
 struct encoding *encoding_open(const char *fromcode);
-char *encoding_convert(struct encoding *encoding, char *line);
+bool encoding_convert(struct encoding *encoding, struct buffer *buf);
 const char *encoding_iconv(iconv_t iconv_out, const char *string, size_t length);
 struct encoding *get_path_encoding(const char *path, struct encoding *default_encoding);
 
@@ -79,7 +84,7 @@ int io_error(struct io *io);
 char * io_strerror(struct io *io);
 bool io_can_read(struct io *io, bool can_block);
 ssize_t io_read(struct io *io, void *buf, size_t bufsize);
-char * io_get(struct io *io, int c, bool can_read);
+bool io_get(struct io *io, struct buffer *buf, int c, bool can_read);
 bool io_write(struct io *io, const void *buf, size_t bufsize);
 bool io_printf(struct io *io, const char *fmt, ...) PRINTF_LIKE(2, 3);
 bool io_read_buf(struct io *io, char buf[], size_t bufsize);

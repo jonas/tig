@@ -616,12 +616,12 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 bool
 update_view(struct view *view)
 {
-	char *line;
 	/* Clear the view and redraw everything since the tree sorting
 	 * might have rearranged things. */
 	bool redraw = view->lines == 0;
 	bool can_read = TRUE;
 	struct encoding *encoding = view->encoding ? view->encoding : default_encoding;
+	struct buffer line;
 
 	if (!view->pipe)
 		return TRUE;
@@ -640,12 +640,14 @@ update_view(struct view *view)
 		return TRUE;
 	}
 
-	for (; (line = io_get(view->pipe, '\n', can_read)); can_read = FALSE) {
-		if (encoding) {
-			line = encoding_convert(encoding, line);
+	for (; io_get(view->pipe, &line, '\n', can_read); can_read = FALSE) {
+		if (encoding && !encoding_convert(encoding, &line)) {
+			report("Encoding failure");
+			end_update(view, TRUE);
+			return FALSE;
 		}
 
-		if (!view->ops->read(view, line)) {
+		if (!view->ops->read(view, line.data)) {
 			report("Allocation failure");
 			end_update(view, TRUE);
 			return FALSE;

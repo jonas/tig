@@ -204,7 +204,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	};
 	struct io io;
 	bool ok = FALSE;
-	char *buf;
+	struct buffer buf;
 
 	if (!string_format(line_arg, "-L%ld,+1", lineno))
 		return FALSE;
@@ -212,13 +212,13 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	if (!io_run(&io, IO_RD, repo.cdup, opt_env, blame_argv))
 		return FALSE;
 
-	while ((buf = io_get(&io, '\n', TRUE))) {
+	while (io_get(&io, &buf, '\n', TRUE)) {
 		if (header) {
-			if (!parse_blame_header(header, buf, 9999999))
+			if (!parse_blame_header(header, buf.data, 9999999))
 				break;
 			header = NULL;
 
-		} else if (parse_blame_info(commit, author, buf)) {
+		} else if (parse_blame_info(commit, author, buf.data)) {
 			ok = commit->filename != NULL;
 			break;
 		}

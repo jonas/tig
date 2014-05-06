@@ -35,7 +35,7 @@ main(int argc, const char *argv[])
 {
 	struct graph graph = { };
 	struct io io = { };
-	char *line;
+	struct buffer buf;
 	struct commit **commits = NULL;
 	size_t ncommits = 0;
 	struct commit *commit = NULL;
@@ -55,7 +55,9 @@ main(int argc, const char *argv[])
 	while (!io_eof(&io)) {
 		bool can_read = io_can_read(&io, TRUE);
 
-		for (; (line = io_get(&io, '\n', can_read)); can_read = FALSE) {
+		for (; io_get(&io, &buf, '\n', can_read); can_read = FALSE) {
+			char *line = buf.data;
+
 			if (!prefixcmp(line, "commit ")) {
 				line += STRING_SIZE("commit ");
 				is_boundary = *line == '-';

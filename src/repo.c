@@ -116,7 +116,7 @@ index_diff(struct index_diff *diff, bool untracked, bool count_all)
 		"git", "status", "--porcelain", "-z", untracked_arg, NULL
 	};
 	struct io io;
-	char *data;
+	struct buffer buf;
 	bool ok = TRUE;
 
 	memset(diff, 0, sizeof(*diff));
@@ -124,12 +124,12 @@ index_diff(struct index_diff *diff, bool untracked, bool count_all)
 	if (!io_run(&io, IO_RD, repo.cdup, NULL, status_argv))
 		return FALSE;
 
-	while ((data = io_get(&io, 0, TRUE)) && (ok = strlen(data) > 3)) {
-		if (data[0] == '?')
+	while (io_get(&io, &buf, 0, TRUE) && (ok = buf.size > 3)) {
+		if (buf.data[0] == '?')
 			diff->untracked++;
-		else if (data[0] != ' ')
+		else if (buf.data[0] != ' ')
 			diff->staged++;
-		if (data[1] != ' ')
+		if (buf.data[1] != ' ')
 			diff->unstaged++;
 		if (!count_all && diff->staged && diff->unstaged &&
 		    (!untracked || diff->untracked))
