@@ -205,7 +205,7 @@ struct view_ops {
 	/* Open and reads in all view content. */
 	bool (*open)(struct view *view, enum open_flags flags);
 	/* Read one line; updates view->line. */
-	bool (*read)(struct view *view, char *data);
+	bool (*read)(struct view *view, struct buffer *buf);
 	/* Draw one line; @lineno must be < view->height. */
 	bool (*draw)(struct view *view, struct line *line, unsigned int lineno);
 	/* Depending on view handle a special requests. */

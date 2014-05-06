@@ -165,11 +165,11 @@ diff_common_enter(struct view *view, enum request request, struct line *line)
 }
 
 static bool
-diff_read(struct view *view, char *data)
+diff_read(struct view *view, struct buffer *buf)
 {
 	struct diff_state *state = view->private;
 
-	if (!data) {
+	if (!buf) {
 		/* Fall back to retry if no diff will be shown. */
 		if (view->lines == 0 && opt_file_argv) {
 			int pos = argv_size(view->argv)
@@ -190,7 +190,7 @@ diff_read(struct view *view, char *data)
 		return TRUE;
 	}
 
-	return diff_common_read(view, data, state);
+	return diff_common_read(view, buf->data, state);
 }
 
 static bool

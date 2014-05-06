@@ -1,6 +1,13 @@
 Release notes
 =============
 
+master
+------
+
+Bug fixes:
+
+ - Fix refs, main and grep loading when 'gui.encoding' is set. (GH #287)
+
 tig-2.0.1
 ---------
 

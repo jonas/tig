@@ -75,7 +75,7 @@ encoding_convert_string(iconv_t iconv_cd, struct buffer *buf)
 	size_t ret = iconv(iconv_cd, &inbuf, &inlen, &outbuf, &outlen);
 	if (ret != (size_t) -1) {
 		buf->data = out_buffer;
-		buf->size = ret;
+		buf->size = sizeof(out_buffer) - outlen;
 	}
 
 	return (ret != (size_t) -1);
@@ -412,14 +412,14 @@ io_read(struct io *io, void *buf, size_t bufsize)
 }
 
 char *
-io_memchr(struct io *io, char *data, int c)
+io_memchr(struct buffer *buf, char *data, int c)
 {
 	char *pos;
 
-	if (data < io->buf || io->bufpos <= data)
+	if (!buf || data < buf->data || buf->data + buf->size <= data)
 		return NULL;
 
-	pos = memchr(data, c, io->bufpos - data - 1);
+	pos = memchr(data, c, buf->size - (data - buf->data));
 	return pos ? pos + 1 : NULL;
 }
 

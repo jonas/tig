@@ -67,9 +67,9 @@ blob_open(struct view *view, enum open_flags flags)
 }
 
 static bool
-blob_read(struct view *view, char *line)
+blob_read(struct view *view, struct buffer *buf)
 {
-	if (!line) {
+	if (!buf) {
 		if (view->env->lineno > 0) {
 			select_view_line(view, view->env->lineno);
 			view->env->lineno = 0;
@@ -77,7 +77,7 @@ blob_read(struct view *view, char *line)
 		return TRUE;
 	}
 
-	return add_line_text(view, line, LINE_DEFAULT) != NULL;
+	return add_line_text(view, buf->data, LINE_DEFAULT) != NULL;
 }
 
 static enum request

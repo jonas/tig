@@ -211,9 +211,9 @@ read_blame_commit(struct view *view, const char *text, struct blame_state *state
 }
 
 static bool
-blame_read_file(struct view *view, const char *text, struct blame_state *state)
+blame_read_file(struct view *view, struct buffer *buf, struct blame_state *state)
 {
-	if (!text) {
+	if (!buf) {
 		const char *blame_argv[] = {
 			"git", "blame", encoding_arg, "%(blameargs)", "--incremental",
 				*view->env->ref ? view->env->ref : "--incremental", "--", view->env->file, NULL
@@ -236,28 +236,27 @@ blame_read_file(struct view *view, const char *text, struct blame_state *state)
 		return FALSE;
 
 	} else {
-		size_t textlen = strlen(text);
 		struct blame *blame;
 
-		if (!add_line_alloc(view, &blame, LINE_DEFAULT, textlen, FALSE))
+		if (!add_line_alloc(view, &blame, LINE_DEFAULT, buf->size, FALSE))
 			return FALSE;
 
 		blame->commit = NULL;
-		strncpy(blame->text, text, textlen);
-		blame->text[textlen] = 0;
+		strncpy(blame->text, buf->data, buf->size);
+		blame->text[buf->size] = 0;
 		return TRUE;
 	}
 }
 
 static bool
-blame_read(struct view *view, char *line)
+blame_read(struct view *view, struct buffer *buf)
 {
 	struct blame_state *state = view->private;
 
 	if (!state->done_reading)
-		return blame_read_file(view, line, state);
+		return blame_read_file(view, buf, state);
 
-	if (!line) {
+	if (!buf) {
 		string_format(view->ref, "%s", view->vid);
 		if (view_is_displayed(view)) {
 			update_view_title(view);
@@ -267,11 +266,11 @@ blame_read(struct view *view, char *line)
 	}
 
 	if (!state->commit) {
-		state->commit = read_blame_commit(view, line, state);
+		state->commit = read_blame_commit(view, buf->data, state);
 		string_format(view->ref, "%s %2zd%%", view->vid,
 			      view->lines ? state->blamed * 100 / view->lines : 0);
 
-	} else if (parse_blame_info(state->commit, state->author, line)) {
+	} else if (parse_blame_info(state->commit, state->author, buf->data)) {
 		bool update_view_columns = TRUE;
 		int i;
 

@@ -308,14 +308,15 @@ main_add_reflog(struct view *view, struct main_state *state, char *reflog)
 
 /* Reads git log --pretty=raw output and parses it into the commit struct. */
 bool
-main_read(struct view *view, char *line)
+main_read(struct view *view, struct buffer *buf)
 {
 	struct main_state *state = view->private;
 	struct graph *graph = &state->graph;
 	enum line_type type;
 	struct commit *commit = &state->current;
+	char *line;
 
-	if (!line) {
+	if (!buf) {
 		main_flush_commit(view, commit);
 
 		if (failed_to_load_initial_view(view))
@@ -335,6 +336,7 @@ main_read(struct view *view, char *line)
 		return TRUE;
 	}
 
+	line = buf->data;
 	type = get_line_type(line);
 	if (type == LINE_COMMIT) {
 		bool is_boundary;
@@ -357,9 +359,9 @@ main_read(struct view *view, char *line)
 		main_flush_commit(view, commit);
 		main_register_commit(view, &state->current, line, is_boundary);
 
-		author = io_memchr(&view->io, line, 0);
+		author = io_memchr(buf, line, 0);
 		if (author) {
-			char *title = io_memchr(&view->io, author, 0);
+			char *title = io_memchr(buf, author, 0);
 
 			parse_author_line(author, &commit->author, &commit->time);
 			if (state->with_graph)

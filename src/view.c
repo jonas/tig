@@ -647,7 +647,7 @@ update_view(struct view *view)
 			return FALSE;
 		}
 
-		if (!view->ops->read(view, line.data)) {
+		if (!view->ops->read(view, &line)) {
 			report("Allocation failure");
 			end_update(view, TRUE);
 			return FALSE;
