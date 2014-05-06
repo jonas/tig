@@ -104,7 +104,7 @@ draw_text_expanded(struct view *view, enum line_type type, const char *string, i
 bool
 draw_text(struct view *view, enum line_type type, const char *string)
 {
-	return draw_text_expanded(view, type, string, VIEW_MAX_LEN(view), TRUE);
+	return draw_text_expanded(view, type, string, VIEW_MAX_LEN(view), FALSE);
 }
 
 static bool
