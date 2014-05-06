@@ -163,18 +163,16 @@ argv_remove_quotes(const char *argv[])
 	for (argc = 0; argv[argc]; argc++) {
 		char quoted = 0;
 		const char *arg = argv[argc];
-		int arglen = get_arg_valuelen(arg, &quoted);
-		int unquotedlen = arglen - 1 - (arg[arglen - 1] == quoted);
+		const int arglen = get_arg_valuelen(arg, &quoted);
+		const int unquotedlen = arglen - 1 - (arg[arglen - 1] == quoted);
 		char *unquoted;
 
 		if (!quoted)
 			continue;
 
-		unquoted = malloc(unquotedlen + 1);
+		unquoted = strndup(arg + 1, unquotedlen);
 		if (!unquoted)
 			return FALSE;
-		strncpy(unquoted, arg + 1, unquotedlen);
-		unquoted[unquotedlen] = 0;
 		free((void *) arg);
 		argv[argc] = unquoted;
 	}

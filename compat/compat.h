@@ -40,6 +40,12 @@ int compat_mkstemps(char *pattern, int suffix_len);
 int compat_setenv(const char *name, const char *value, int replace);
 #endif
 
+#ifdef NO_STRNDUP
+#include <stddef.h>
+#define strndup compat_strndup
+char *compat_strndup(const char *s, size_t n);
+#endif
+
 #endif
 
 /* vim: set ts=8 sw=8 noexpandtab: */

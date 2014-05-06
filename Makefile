@@ -175,6 +175,11 @@ COMPAT_CPPFLAGS += -DNO_SETENV
 COMPAT_OBJS += compat/setenv.o
 endif
 
+ifdef NO_STRNDUP
+COMPAT_CPPFLAGS += -DNO_STRNDUP
+COMPAT_OBJS += compat/strndup.o
+endif
+
 COMPAT_OBJS += compat/hashtab.o
 
 override CPPFLAGS += $(COMPAT_CPPFLAGS)

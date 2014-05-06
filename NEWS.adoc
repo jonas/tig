@@ -8,6 +8,7 @@ Bug fixes:
 
  - Fix refs, main and grep loading when 'gui.encoding' is set. (GH #287)
  - Ignore 'gui.encoding' and 'i18n.commitencoding' when set to 'UTF-8'.
+ - Add work-around for missing strndup() on Mac OS X v10.6. (GH #286)
 
 tig-2.0.1
 ---------
