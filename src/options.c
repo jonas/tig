@@ -614,7 +614,7 @@ option_set_command(int argc, const char *argv[])
 		int index = find_remapped(obsolete, ARRAY_SIZE(obsolete), argv[0]);
 
 		if (index != -1)
-			return error("%s is obsolete; use the %s view column options instead",
+			return error("%s is obsolete; see tigrc(5) for how to set the %s column option",
 				     obsolete[index][0], obsolete[index][1]);
 
 		if (!strcmp(argv[0], "read-git-colors"))
