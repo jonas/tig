@@ -45,13 +45,13 @@ get_keymap(const char *name, size_t namelen)
 }
 
 static bool
-keybinding_equals(const struct keybinding *keybinding, const struct key key[],
+keybinding_matches(const struct keybinding *keybinding, const struct key key[],
 		  size_t keys, bool *conflict_ptr)
 {
 	bool conflict = FALSE;
 	int i;
 
-	if (keybinding->keys != keys)
+	if (keybinding->request == REQ_NONE)
 		return FALSE;
 
 	for (i = 0; i < keys; i++) {
@@ -79,6 +79,15 @@ keybinding_equals(const struct keybinding *keybinding, const struct key key[],
 	if (conflict_ptr)
 		*conflict_ptr = conflict;
 	return TRUE;
+}
+
+static bool
+keybinding_equals(const struct keybinding *keybinding, const struct key key[],
+		  size_t keys, bool *conflict_ptr)
+{
+	if (keybinding->keys != keys)
+		return FALSE;
+	return keybinding_matches(keybinding, key, keys, conflict_ptr);
 }
 
 enum status_code
@@ -122,19 +131,28 @@ add_keybinding(struct keymap *table, enum request request,
 /* Looks for a key binding first in the given map, then in the generic map, and
  * lastly in the default keybindings. */
 enum request
-get_keybinding(const struct keymap *keymap, const struct key key[], size_t keys)
+get_keybinding(const struct keymap *keymap, const struct key key[], size_t keys, int *matches)
 {
+	enum request request = REQ_UNKNOWN;
 	size_t i;
 
 	for (i = 0; i < keymap->size; i++)
-		if (keybinding_equals(keymap->data[i], key, keys, NULL))
-			return keymap->data[i]->request;
+		if (keybinding_matches(keymap->data[i], key, keys, NULL)) {
+			if (matches)
+				(*matches)++;
+			if (keymap->data[i]->keys == keys)
+				request = keymap->data[i]->request;
+		}
 
 	for (i = 0; i < generic_keymap->size; i++)
-		if (keybinding_equals(generic_keymap->data[i], key, keys, NULL))
-			return generic_keymap->data[i]->request;
+		if (keybinding_matches(generic_keymap->data[i], key, keys, NULL)) {
+			if (matches)
+				(*matches)++;
+			if (request == REQ_UNKNOWN && generic_keymap->data[i]->keys == keys)
+				request = generic_keymap->data[i]->request;
+		}
 
-	return REQ_NONE;
+	return request;
 }
 
 
@@ -263,13 +281,6 @@ get_key_value(const char **name_ptr, struct key *key)
 			if (mapping->value == '<')
 				return parse_key_value(key, name_ptr, 0, "<", end);
 
-			if (mapping->value == KEY_ESC) {
-				size_t offset = (end - name) + 1;
-
-				key->modifiers.escape = 1;
-				return parse_key_value(key, name_ptr, offset, NULL, NULL);
-			}
-
 			*name_ptr = end + 1;
 			key->data.value = mapping->value;
 			return SUCCESS;
@@ -287,7 +298,7 @@ get_key_value(const char **name_ptr, struct key *key)
 	return parse_key_value(key, name_ptr, 0, NULL, end);
 }
 
-static const char *
+const char *
 get_key_name(const struct key key[], size_t keys, bool quote_comma)
 {
 	static char buf[SIZEOF_STR];
@@ -301,9 +312,7 @@ get_key_name(const struct key key[], size_t keys, bool quote_comma)
 		const char *end = "";
 		bool use_symbolic;
 
-		if (key[i].modifiers.escape) {
-			start = "<Esc>";
-		} else if (key[i].modifiers.control) {
+		if (key[i].modifiers.control) {
 			start = "<Ctrl-";
 			end = ">";
 		} else if (*name == ',' && quote_comma) {
@@ -325,7 +334,7 @@ get_key_name(const struct key key[], size_t keys, bool quote_comma)
 			name = "<?>";
 			for (j = 0; j < ARRAY_SIZE(key_mappings); j++)
 				if (key_mappings[j].value == value) {
-					start = key[i].modifiers.escape ? "<Esc><" : "<";
+					start = "<";
 					end = ">";
 					name = key_mappings[j].name;
 					break;

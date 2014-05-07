@@ -544,12 +544,12 @@ get_input_char(void)
 }
 
 int
-get_input(int prompt_position, struct key *key, bool modifiers)
+get_input(int prompt_position, struct key *key)
 {
 	struct view *view;
 	int i, key_value, cursor_y, cursor_x;
 
-	if (prompt_position)
+	if (prompt_position > 0)
 		input_mode = TRUE;
 
 	memset(key, 0, sizeof(*key));
@@ -604,9 +604,6 @@ get_input(int prompt_position, struct key *key, bool modifiers)
 		/* wgetch() with nodelay() enabled returns ERR when
 		 * there's no input. */
 		if (key_value == ERR) {
-
-		} else if (key_value == KEY_ESC && modifiers) {
-			key->modifiers.escape = 1;
 
 		} else if (key_value == KEY_RESIZE) {
 			int height, width;

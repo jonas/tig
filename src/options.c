@@ -698,7 +698,7 @@ option_set_command(int argc, const char *argv[])
 static enum status_code
 option_bind_command(int argc, const char *argv[])
 {
-	struct key key[1];
+	struct key key[16];
 	size_t keys = 0;
 	enum request request;
 	struct keymap *keymap;

@@ -37,10 +37,12 @@ prompt_input(const char *prompt, struct input *input)
 	input->buf[pos] = 0;
 
 	while (status == INPUT_OK || status == INPUT_SKIP) {
+		int offset = pos ? pos + promptlen : -1;
 
-		update_status("%s%.*s", prompt, pos, input->buf);
+		if (offset >= 0)
+			update_status("%s%.*s", prompt, pos, input->buf);
 
-		if (get_input(pos + promptlen, &key, FALSE) == OK) {
+		if (get_input(offset, &key) == OK) {
 			int len = strlen(key.data.bytes);
 
 			if (pos + len >= sizeof(input->buf)) {
@@ -498,7 +500,7 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 		update_status("%s (%d of %d) %s%s", prompt, *selected + 1, size,
 			      item->hotkey ? hotkey : "", item->text);
 
-		switch (get_input(COLS - 1, &key, FALSE)) {
+		switch (get_input(COLS - 1, &key)) {
 		case KEY_RETURN:
 		case KEY_ENTER:
 		case '\n':
@@ -864,8 +866,8 @@ run_prompt_command(struct view *view, const char *argv[])
 		/* Try :<key> */
 		key.modifiers.multibytes = 1;
 		string_ncopy(key.data.bytes, cmd, cmdlen);
-		request = get_keybinding(view->keymap, &key, 1);
-		if (request != REQ_NONE)
+		request = get_keybinding(view->keymap, &key, 1, NULL);
+		if (request != REQ_UNKNOWN)
 			return request;
 
 		/* Try :<command> */

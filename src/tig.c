@@ -590,6 +590,50 @@ handle_mouse_event(void)
 }
 #endif
 
+struct key_combo {
+	enum request request;
+	struct keymap *keymap;
+	size_t bufpos;
+	size_t keys;
+	struct key key[16];
+};
+
+static enum input_status
+key_combo_handler(struct input *input, struct key *key)
+{
+	struct key_combo *combo = input->data;
+	int matches = 0;
+
+#ifdef NCURSES_MOUSE_VERSION
+	if (!key->modifiers.multibytes && key->data.value == KEY_MOUSE) {
+		combo->request = handle_mouse_event();
+		return INPUT_STOP;
+	}
+#endif
+
+	if (!key->modifiers.multibytes && combo->keys &&
+	    key->data.value == KEY_ESC)
+		return INPUT_CANCEL;
+
+	string_format_from(input->buf, &combo->bufpos, "%s%s",
+			   combo->bufpos ? " " : "Keys: ", get_key_name(key, 1, FALSE));
+	combo->key[combo->keys++] = *key;
+	combo->request = get_keybinding(combo->keymap, combo->key, combo->keys, &matches);
+
+	if (combo->request == REQ_UNKNOWN)
+		return matches > 0 ? INPUT_OK : INPUT_STOP;
+	return INPUT_STOP;
+}
+
+enum request
+read_key_combo(struct keymap *keymap)
+{
+	struct key_combo combo = { REQ_NONE, keymap, 0 };
+	char *value = read_prompt_incremental("", FALSE, key_combo_handler, &combo);
+
+	return value ? combo.request : REQ_NONE;
+}
+
 int
 main(int argc, const char *argv[])
 {
@@ -646,25 +690,16 @@ main(int argc, const char *argv[])
 	}
 
 	while (view_driver(display[current_view], request)) {
-		struct key key;
-		int key_value = get_input(0, &key, TRUE);
-
-#ifdef NCURSES_MOUSE_VERSION
-		if (key_value == KEY_MOUSE) {
-			request = handle_mouse_event();
-			continue;
-		}
-#endif
-
 		view = display[current_view];
-		request = get_keybinding(view->keymap, &key, 1);
+		request = read_key_combo(view->keymap);
 
 		/* Some low-level request handling. This keeps access to
 		 * status_win restricted. */
 		switch (request) {
-		case REQ_NONE:
+		case REQ_UNKNOWN:
 			report("Unknown key, press %s for help",
 			       get_view_key(view, REQ_VIEW_HELP));
+			request = REQ_NONE;
 			break;
 		case REQ_PROMPT:
 			request = open_prompt(view);

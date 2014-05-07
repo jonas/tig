@@ -1,0 +1,15 @@
+# Vim-style keybindings for Tig
+#
+# To use these keybindings copy the file to your HOME directory and include
+# it from your ~/.tigrc file:
+#
+#	$ cp contrib/vim.tigrc ~/.tigrc.vim
+#	$ echo "source ~/.tigrc.vim" >> ~/.tigrc
+
+# Rebind and clear default bindings
+bind generic	F	view-grep	# Rebind the grep view
+bind generic	g	none		# Clear old 'g' binding to allow for 'gg' etc.
+bind generic	gg	move-first-line
+
+bind main	G	none		# Clear commit graph toggling
+bind generic	G	move-last-line

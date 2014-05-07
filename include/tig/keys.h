@@ -37,7 +37,6 @@ struct key {
 		char bytes[7];
 	} data;
 	struct {
-		bool escape:1;
 		bool control:1;
 		bool multibytes:1;
 	} modifiers;
@@ -53,11 +52,12 @@ key_to_unicode(const struct key *key)
 
 struct keymap *get_keymap(const char *name, size_t namelen);
 
+const char *get_key_name(const struct key key[], size_t keys, bool quote_comma);
 enum status_code get_key_value(const char **name, struct key *key);
 
 /* Looks for a key binding first in the given map, then in the generic map, and
  * lastly in the default keybindings. */
-enum request get_keybinding(const struct keymap *keymap, const struct key key[], size_t keys);
+enum request get_keybinding(const struct keymap *keymap, const struct key key[], size_t keys, int *matches);
 enum status_code add_keybinding(struct keymap *table, enum request request, const struct key key[], size_t keys);
 
 const char *get_keys(const struct keymap *keymap, enum request request, bool all);
