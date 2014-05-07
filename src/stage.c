@@ -475,6 +475,7 @@ stage_open(struct view *view, enum open_flags flags)
 	};
 	static const char *file_argv[] = { repo.cdup, stage_status.new.name, NULL };
 	const char **argv = NULL;
+	struct stage_state *state = view->private;
 
 	if (!stage_line_type) {
 		report("No stage content, press %s to open the status view and choose file",
@@ -517,6 +518,9 @@ stage_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	}
 
+	if (stage_line_type != LINE_STAT_UNTRACKED)
+		diff_save_line(view, &state->diff, flags);
+
 	view->vid[0] = 0;
 	view->dir = repo.cdup;
 	return begin_update(view, NULL, NULL, flags);
@@ -534,6 +538,9 @@ stage_read(struct view *view, struct buffer *buf)
 		maximize_view(view->parent, TRUE);
 		return TRUE;
 	}
+
+	if (!buf)
+		diff_restore_line(view, &state->diff);
 
 	if (buf && diff_common_read(view, buf->data, &state->diff))
 		return TRUE;
