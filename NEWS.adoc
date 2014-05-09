@@ -1,14 +1,21 @@
 Release notes
 =============
 
-master
-------
+tig-2.0.2
+---------
+
+Improvements:
+
+ - Use git-status for diffing the index.
+ - Group toggle options together in the help view.
 
 Bug fixes:
 
  - Fix refs, main and grep loading when 'gui.encoding' is set. (GH #287)
  - Ignore 'gui.encoding' and 'i18n.commitencoding' when set to 'UTF-8'.
  - Add work-around for missing strndup() on Mac OS X v10.6. (GH #286)
+ - Fix spurious abbreviation of author names. (GH #288)
+ - Don't show empty action groups in the help view.
 
 tig-2.0.1
 ---------

@@ -23,7 +23,6 @@ args
 asciidoc
 AsciiDoc
 unstanged
-gitattributes
 revgraph
 revargs
 topo
@@ -81,6 +80,7 @@ README
 submodules
 Reenable
 xhtml
+gitattributes
 aterm
 mkstemps
 iconv
@@ -89,17 +89,16 @@ Scrool
 ELinks
 subdir
 Debian
-subdirectories
 gui
 bindir
 tigmanual
-reachability
 PgUp
 wrt
 libiconv
 unicode
 multi
 Naïvely
+reachability
 autoconf
 xpm
 filesystem
@@ -114,7 +113,6 @@ tigblob
 autobuild
 reflog
 diffargs
-commitencoding
 erasechar
 lds
 bg
@@ -150,11 +148,12 @@ Git's
 tig's
 dirs
 ld
-subdirectory
 newmode
 keymaps
 endif
 namespace
+commitencoding
+subdirectory
 utils
 delim
 unstaged
@@ -165,6 +164,7 @@ VLINE
 extdiff
 keybindings
 ifndef
+subdirectories
 multibyte
 COLORTERM
 ncursesw
@@ -201,11 +201,11 @@ Yy
 fgcolor
 localtime
 filename
-backgrounded
 lncursesw
 waitpid
 wgetch
 Pre
+backgrounded
 waddch
 subcommand
 errno
