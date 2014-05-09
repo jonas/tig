@@ -3,27 +3,24 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.4" />
+<meta name="generator" content="AsciiDoc 8.6.8" />
 <title>Installation instructions</title>
 <style type="text/css">
-/* Sans-serif font. */
+/* Shared CSS for AsciiDoc xhtml11 and html5 backends */
+
+/* Default font. */
+body {
+  font-family: Georgia,serif;
+}
+
+/* Title font. */
 h1, h2, h3, h4, h5, h6,
 div.title, caption.title,
 thead, p.table.header,
-div#toctitle,
-span#author, span#revnumber, span#revdate, span#revremark,
-div#footer {
+#toctitle,
+#author, #revnumber, #revdate, #revremark,
+#footer {
   font-family: Arial,Helvetica,sans-serif;
-}
-
-/* Serif font. */
-div.sectionbody {
-  font-family: Georgia,"Times New Roman",Times,serif;
-}
-
-/* Monospace font. */
-tt {
-  font-size: inherit;
 }
 
 body {
@@ -48,11 +45,6 @@ strong {
   color: #083194;
 }
 
-tt {
-  font-size: inherit;
-  color: navy;
-}
-
 h1, h2, h3, h4, h5, h6 {
   color: #527bbd;
   margin-top: 1.2em;
@@ -71,6 +63,9 @@ h3 {
 }
 h3 + * {
   clear: left;
+}
+h5 {
+  font-size: 1.0em;
 }
 
 div.sectionbody {
@@ -92,41 +87,45 @@ ul, ol, li > p {
 ul > li     { color: #aaa; }
 ul > li > * { color: black; }
 
-pre {
+.monospaced, code, pre {
+  font-family: "Courier New", Courier, monospace;
+  font-size: inherit;
+  color: navy;
   padding: 0;
   margin: 0;
 }
 
-span#author {
+
+#author {
   color: #527bbd;
   font-weight: bold;
   font-size: 1.1em;
 }
-span#email {
+#email {
 }
-span#revnumber, span#revdate, span#revremark {
+#revnumber, #revdate, #revremark {
 }
 
-div#footer {
+#footer {
   font-size: small;
   border-top: 2px solid silver;
   padding-top: 0.5em;
   margin-top: 4.0em;
 }
-div#footer-text {
+#footer-text {
   float: left;
   padding-bottom: 0.5em;
 }
-div#footer-badges {
+#footer-badges {
   float: right;
   padding-bottom: 0.5em;
 }
 
-div#preamble {
+#preamble {
   margin-top: 1.5em;
   margin-bottom: 1.5em;
 }
-div.tableblock, div.imageblock, div.exampleblock, div.verseblock,
+div.imageblock, div.exampleblock, div.verseblock,
 div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
 div.admonitionblock {
   margin-top: 1.0em;
@@ -184,7 +183,7 @@ div.quoteblock, div.verseblock {
   margin-left: 1.0em;
   margin-right: 10%;
   border-left: 5px solid #f0f0f0;
-  color: #777777;
+  color: #888;
 }
 
 div.quoteblock > div.attribution {
@@ -267,35 +266,12 @@ div.compact div, div.compact div {
   margin-bottom: 0.1em;
 }
 
-div.tableblock > table {
-  border: 3px solid #527bbd;
-}
-thead, p.table.header {
-  font-weight: bold;
-  color: #527bbd;
-}
 tfoot {
   font-weight: bold;
 }
 td > div.verse {
   white-space: pre;
 }
-p.table {
-  margin-top: 0;
-}
-/* Because the table frame attribute is overriden by CSS in most browsers. */
-div.tableblock > table[frame="void"] {
-  border-style: none;
-}
-div.tableblock > table[frame="hsides"] {
-  border-left-style: none;
-  border-right-style: none;
-}
-div.tableblock > table[frame="vsides"] {
-  border-top-style: none;
-  border-bottom-style: none;
-}
-
 
 div.hdlist {
   margin-top: 0.8em;
@@ -362,14 +338,14 @@ div.colist td img {
 }
 
 @media print {
-  div#footer-badges { display: none; }
+  #footer-badges { display: none; }
 }
 
-div#toc {
+#toc {
   margin-bottom: 2.5em;
 }
 
-div#toctitle {
+#toctitle {
   color: #527bbd;
   font-size: 1.1em;
   font-weight: bold;
@@ -377,7 +353,7 @@ div#toctitle {
   margin-bottom: 0.1em;
 }
 
-div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+div.toclevel0, div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
   margin-top: 0;
   margin-bottom: 0;
 }
@@ -430,10 +406,136 @@ span.yellow-background { background: yellow; }
 
 span.big { font-size: 2em; }
 span.small { font-size: 0.6em; }
+
+span.underline { text-decoration: underline; }
+span.overline { text-decoration: overline; }
+span.line-through { text-decoration: line-through; }
+
+div.unbreakable { page-break-inside: avoid; }
+
+
+/*
+ * xhtml11 specific
+ *
+ * */
+
+div.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead, p.table.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overriden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+/*
+ * html5 specific
+ *
+ * */
+
+table.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+thead, p.tableblock.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.tableblock {
+  margin-top: 0;
+}
+table.tableblock {
+  border-width: 3px;
+  border-spacing: 0px;
+  border-style: solid;
+  border-color: #527bbd;
+  border-collapse: collapse;
+}
+th.tableblock, td.tableblock {
+  border-width: 1px;
+  padding: 4px;
+  border-style: solid;
+  border-color: #527bbd;
+}
+
+table.tableblock.frame-topbot {
+  border-left-style: hidden;
+  border-right-style: hidden;
+}
+table.tableblock.frame-sides {
+  border-top-style: hidden;
+  border-bottom-style: hidden;
+}
+table.tableblock.frame-none {
+  border-style: hidden;
+}
+
+th.tableblock.halign-left, td.tableblock.halign-left {
+  text-align: left;
+}
+th.tableblock.halign-center, td.tableblock.halign-center {
+  text-align: center;
+}
+th.tableblock.halign-right, td.tableblock.halign-right {
+  text-align: right;
+}
+
+th.tableblock.valign-top, td.tableblock.valign-top {
+  vertical-align: top;
+}
+th.tableblock.valign-middle, td.tableblock.valign-middle {
+  vertical-align: middle;
+}
+th.tableblock.valign-bottom, td.tableblock.valign-bottom {
+  vertical-align: bottom;
+}
+
+
+/*
+ * manpage specific
+ *
+ * */
+
+body.manpage h1 {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-top: 2px solid silver;
+  border-bottom: 2px solid silver;
+}
+body.manpage h2 {
+  border-style: none;
+}
+body.manpage div.sectionbody {
+  margin-left: 3em;
+}
+
+@media print {
+  body.manpage div#toc { display: none; }
+}
+
+
 </style>
 <script type="text/javascript">
 /*<![CDATA[*/
-window.onload = function(){asciidoc.footnotes();}
 var asciidoc = {  // Namespace.
 
 /////////////////////////////////////////////////////////////////////
@@ -475,7 +577,7 @@ toc: function (toclevels) {
 
   function tocEntries(el, toclevels) {
     var result = new Array;
-    var re = new RegExp('[hH]([2-'+(toclevels+1)+'])');
+    var re = new RegExp('[hH]([1-'+(toclevels+1)+'])');
     // Function that scans the DOM tree for header elements (the DOM2
     // nodeIterator API would be a better technique but not supported by all
     // browsers).
@@ -495,6 +597,25 @@ toc: function (toclevels) {
   }
 
   var toc = document.getElementById("toc");
+  if (!toc) {
+    return;
+  }
+
+  // Delete existing TOC entries in case we're reloading the TOC.
+  var tocEntriesToRemove = [];
+  var i;
+  for (i = 0; i < toc.childNodes.length; i++) {
+    var entry = toc.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div'
+     && entry.getAttribute("class")
+     && entry.getAttribute("class").match(/^toclevel/))
+      tocEntriesToRemove.push(entry);
+  }
+  for (i = 0; i < tocEntriesToRemove.length; i++) {
+    toc.removeChild(tocEntriesToRemove[i]);
+  }
+
+  // Rebuild TOC entries.
   var entries = tocEntries(document.getElementById("content"), toclevels);
   for (var i = 0; i < entries.length; ++i) {
     var entry = entries[i];
@@ -522,24 +643,44 @@ toc: function (toclevels) {
  */
 
 footnotes: function () {
-  var cont = document.getElementById("content");
+  // Delete existing footnote entries in case we're reloading the footnodes.
+  var i;
   var noteholder = document.getElementById("footnotes");
+  if (!noteholder) {
+    return;
+  }
+  var entriesToRemove = [];
+  for (i = 0; i < noteholder.childNodes.length; i++) {
+    var entry = noteholder.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div' && entry.getAttribute("class") == "footnote")
+      entriesToRemove.push(entry);
+  }
+  for (i = 0; i < entriesToRemove.length; i++) {
+    noteholder.removeChild(entriesToRemove[i]);
+  }
+
+  // Rebuild footnote entries.
+  var cont = document.getElementById("content");
   var spans = cont.getElementsByTagName("span");
   var refs = {};
   var n = 0;
   for (i=0; i<spans.length; i++) {
     if (spans[i].className == "footnote") {
       n++;
-      // Use [\s\S] in place of . so multi-line matches work.
-      // Because JavaScript has no s (dotall) regex flag.
-      note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+      var note = spans[i].getAttribute("data-note");
+      if (!note) {
+        // Use [\s\S] in place of . so multi-line matches work.
+        // Because JavaScript has no s (dotall) regex flag.
+        note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+        spans[i].innerHTML =
+          "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+        spans[i].setAttribute("data-note", note);
+      }
       noteholder.innerHTML +=
         "<div class='footnote' id='_footnote_" + n + "'>" +
         "<a href='#_footnoteref_" + n + "' title='Return to text'>" +
         n + "</a>. " + note + "</div>";
-      spans[i].innerHTML =
-        "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
-        "' title='View footnote' class='footnote'>" + n + "</a>]";
       var id =spans[i].getAttribute("id");
       if (id != null) refs["#"+id] = n;
     }
@@ -559,9 +700,32 @@ footnotes: function () {
       }
     }
   }
+},
+
+install: function(toclevels) {
+  var timerId;
+
+  function reinstall() {
+    asciidoc.footnotes();
+    if (toclevels) {
+      asciidoc.toc(toclevels);
+    }
+  }
+
+  function reinstallAndRemoveTimer() {
+    clearInterval(timerId);
+    reinstall();
+  }
+
+  timerId = setInterval(reinstall, 500);
+  if (document.addEventListener)
+    document.addEventListener("DOMContentLoaded", reinstallAndRemoveTimer, false);
+  else
+    window.onload = reinstallAndRemoveTimer;
 }
 
 }
+asciidoc.install();
 /*]]>*/
 </script>
 </head>
@@ -577,97 +741,97 @@ repository <a href="http://github.com/jonas/tig">git://github.com/jonas/tig.git<
 <div class="paragraph"><p>The quick and simple way to install Tig is:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>$ make
-$ make install</tt></pre>
+<pre><code>$ make
+$ make install</code></pre>
 </div></div>
-<div class="paragraph"><p>By default, <tt>tig</tt> is installed in <tt>$HOME/bin</tt>. To install <tt>tig</tt> elsewhere set
-<tt>prefix</tt> to the desired path:</p></div>
+<div class="paragraph"><p>By default, <code>tig</code> is installed in <code>$HOME/bin</code>. To install <code>tig</code> elsewhere set
+<code>prefix</code> to the desired path:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>$ make prefix=/usr/local
-$ sudo make install prefix=/usr/local</tt></pre>
+<pre><code>$ make prefix=/usr/local
+$ sudo make install prefix=/usr/local</code></pre>
 </div></div>
 <div class="paragraph"><p>Documentation files, such as manpages, are distributed in the release tarballs,
 and can be installed using:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>$ make install-doc</tt></pre>
+<pre><code>$ make install-doc</code></pre>
 </div></div>
-<div class="paragraph"><p>When installing directly from the Tig repository, <tt>make install-doc</tt> will assume
+<div class="paragraph"><p>When installing directly from the Tig repository, <code>make install-doc</code> will assume
 that the documentation tool chain is available and build the documentation
 locally. In case you do not wish to install the required tools, documentation
 can be installed from the <em>release</em> branch using:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>$ make install-release-doc</tt></pre>
+<pre><code>$ make install-release-doc</code></pre>
 </div></div>
 <div class="paragraph"><p>Before upgrading, you are advised to read <a href="NEWS.html">the release notes</a>.</p></div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_installation_using_tt_configure_tt">Installation using <tt>configure</tt></h2>
+<h2 id="_installation_using_code_configure_code">Installation using <code>configure</code></h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Optionally, you can use the <tt>configure</tt> script to detect dependencies:</p></div>
+<div class="paragraph"><p>Optionally, you can use the <code>configure</code> script to detect dependencies:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>$ ./configure
+<pre><code>$ ./configure
 $ make
-$ make install</tt></pre>
+$ make install</code></pre>
 </div></div>
-<div class="paragraph"><p>If your <tt>iconv</tt> library is not in the default library and include path, you need
-to pass the <tt>--with-libiconv</tt> option to <tt>configure</tt> to tell it where to look.</p></div>
+<div class="paragraph"><p>If your <code>iconv</code> library is not in the default library and include path, you need
+to pass the <code>--with-libiconv</code> option to <code>configure</code> to tell it where to look.</p></div>
 <div class="paragraph"><p>Note, if you are building from the Tig repository, you need to generate
-<tt>configure</tt> yourself. First, ensure that <tt>autoconf</tt> is installed on your system,
+<code>configure</code> yourself. First, ensure that <code>autoconf</code> is installed on your system,
 and then run the following command:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>$ make configure</tt></pre>
+<pre><code>$ make configure</code></pre>
 </div></div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_build_configuration">Build configuration</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Build settings are read from the file <tt>config.make</tt> and for certain systems also
-from <tt>contrib/config.make-$kernel</tt>. An example of the latter is Mac OS X, where
-<tt>contrib/config.make-Darwin</tt> provides out-of-the-box configuration for using the
+<div class="paragraph"><p>Build settings are read from the file <code>config.make</code> and for certain systems also
+from <code>contrib/config.make-$kernel</code>. An example of the latter is Mac OS X, where
+<code>contrib/config.make-Darwin</code> provides out-of-the-box configuration for using the
 system ncurses library and linking with the iconv library. This makes it easy to
-configure the build without having to use the <tt>configure</tt> script. As a side
-note, <tt>configure</tt> itself generates a <tt>config.make</tt> file.</p></div>
-<div class="paragraph"><p>Apart from the different standard <tt>make</tt> build variables (<tt>CC</tt>, <tt>CFLAGS</tt>, etc.)
-and standard <tt>configure</tt> variables (<tt>prefix</tt>, <tt>bindir</tt>, etc.), build settings
+configure the build without having to use the <code>configure</code> script. As a side
+note, <code>configure</code> itself generates a <code>config.make</code> file.</p></div>
+<div class="paragraph"><p>Apart from the different standard <code>make</code> build variables (<code>CC</code>, <code>CFLAGS</code>, etc.)
+and standard <code>configure</code> variables (<code>prefix</code>, <code>bindir</code>, etc.), build settings
 can be one of the following flags:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-<tt>NO_SETENV</tt>: Define this variable to enable work-around for missing
-   <tt>setenv()</tt>.
+<code>NO_SETENV</code>: Define this variable to enable work-around for missing
+   <code>setenv()</code>.
 </p>
 </li>
 <li>
 <p>
-<tt>NO_MKSTEMPS</tt>: Define this variable to enable work-around for missing
-   <tt>mkstemps()</tt>.
+<code>NO_MKSTEMPS</code>: Define this variable to enable work-around for missing
+   <code>mkstemps()</code>.
 </p>
 </li>
 <li>
 <p>
-<tt>NO_BUILTIN_TIGRC</tt>: Reduce the size of the binary by not including a
+<code>NO_BUILTIN_TIGRC</code>: Reduce the size of the binary by not including a
    built-in tigrc. The built-in tigrc is used as a fallback when no
-   <tt>tigrc</tt> is found in the system configuration directory (e.g. <tt>/etc</tt>).
+   <code>tigrc</code> is found in the system configuration directory (e.g. <code>/etc</code>).
 </p>
 </li>
 </ul></div>
-<div class="paragraph"><p>The following example <tt>config.make</tt> manually configures Tig to use the ncurses
+<div class="paragraph"><p>The following example <code>config.make</code> manually configures Tig to use the ncurses
 library with wide character support and include the proper ncurses header file
 (see tig.h for more information):</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>LDLIBS = -lncursesw
-CPPFLAGS = -DHAVE_NCURSESW_CURSES_H</tt></pre>
+<pre><code>LDLIBS = -lncursesw
+CPPFLAGS = -DHAVE_NCURSESW_CURSES_H</code></pre>
 </div></div>
-<div class="paragraph"><p>For more examples of build settings, see <tt>contrib/config.make</tt> and
-<tt>config.make.in</tt>.</p></div>
+<div class="paragraph"><p>For more examples of build settings, see <code>contrib/config.make</code> and
+<code>config.make.in</code>.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -696,14 +860,14 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">ncurses or ncursesw</p></td>
 <td align="left" valign="top"><p class="table">Be sure to have the development files
                                  installed. Usually they are available in a
-                                 separate package ending with <tt>-dev</tt>.</p>
+                                 separate package ending with <code>-dev</code>.</p>
 <p class="table">                                 Ncurses with wide character support (ncursesw)
                                  is required to properly handle UTF-8 encoded
                                  strings.</p>
-<p class="table">                                 Note for packagers: For Tig&#8217;s <tt>configure</tt>
+<p class="table">                                 Note for packagers: For Tig&#8217;s <code>configure</code>
                                  script to work as expected you should avoid
                                  configuring and building ncurses using
-                                 <tt>--with-shared</tt>.</p></td>
+                                 <code>--with-shared</code>.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">iconv</p></td>
@@ -766,7 +930,7 @@ cellspacing="0" cellpadding="4">
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-04-30 00:20:17 EDT
+Last updated 2014-05-06 00:51:24 EDT
 </div>
 </div>
 </body>

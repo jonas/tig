@@ -3,27 +3,24 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.4" />
+<meta name="generator" content="AsciiDoc 8.6.8" />
 <title>Release notes</title>
 <style type="text/css">
-/* Sans-serif font. */
+/* Shared CSS for AsciiDoc xhtml11 and html5 backends */
+
+/* Default font. */
+body {
+  font-family: Georgia,serif;
+}
+
+/* Title font. */
 h1, h2, h3, h4, h5, h6,
 div.title, caption.title,
 thead, p.table.header,
-div#toctitle,
-span#author, span#revnumber, span#revdate, span#revremark,
-div#footer {
+#toctitle,
+#author, #revnumber, #revdate, #revremark,
+#footer {
   font-family: Arial,Helvetica,sans-serif;
-}
-
-/* Serif font. */
-div.sectionbody {
-  font-family: Georgia,"Times New Roman",Times,serif;
-}
-
-/* Monospace font. */
-tt {
-  font-size: inherit;
 }
 
 body {
@@ -48,11 +45,6 @@ strong {
   color: #083194;
 }
 
-tt {
-  font-size: inherit;
-  color: navy;
-}
-
 h1, h2, h3, h4, h5, h6 {
   color: #527bbd;
   margin-top: 1.2em;
@@ -71,6 +63,9 @@ h3 {
 }
 h3 + * {
   clear: left;
+}
+h5 {
+  font-size: 1.0em;
 }
 
 div.sectionbody {
@@ -92,41 +87,45 @@ ul, ol, li > p {
 ul > li     { color: #aaa; }
 ul > li > * { color: black; }
 
-pre {
+.monospaced, code, pre {
+  font-family: "Courier New", Courier, monospace;
+  font-size: inherit;
+  color: navy;
   padding: 0;
   margin: 0;
 }
 
-span#author {
+
+#author {
   color: #527bbd;
   font-weight: bold;
   font-size: 1.1em;
 }
-span#email {
+#email {
 }
-span#revnumber, span#revdate, span#revremark {
+#revnumber, #revdate, #revremark {
 }
 
-div#footer {
+#footer {
   font-size: small;
   border-top: 2px solid silver;
   padding-top: 0.5em;
   margin-top: 4.0em;
 }
-div#footer-text {
+#footer-text {
   float: left;
   padding-bottom: 0.5em;
 }
-div#footer-badges {
+#footer-badges {
   float: right;
   padding-bottom: 0.5em;
 }
 
-div#preamble {
+#preamble {
   margin-top: 1.5em;
   margin-bottom: 1.5em;
 }
-div.tableblock, div.imageblock, div.exampleblock, div.verseblock,
+div.imageblock, div.exampleblock, div.verseblock,
 div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
 div.admonitionblock {
   margin-top: 1.0em;
@@ -184,7 +183,7 @@ div.quoteblock, div.verseblock {
   margin-left: 1.0em;
   margin-right: 10%;
   border-left: 5px solid #f0f0f0;
-  color: #777777;
+  color: #888;
 }
 
 div.quoteblock > div.attribution {
@@ -267,35 +266,12 @@ div.compact div, div.compact div {
   margin-bottom: 0.1em;
 }
 
-div.tableblock > table {
-  border: 3px solid #527bbd;
-}
-thead, p.table.header {
-  font-weight: bold;
-  color: #527bbd;
-}
 tfoot {
   font-weight: bold;
 }
 td > div.verse {
   white-space: pre;
 }
-p.table {
-  margin-top: 0;
-}
-/* Because the table frame attribute is overriden by CSS in most browsers. */
-div.tableblock > table[frame="void"] {
-  border-style: none;
-}
-div.tableblock > table[frame="hsides"] {
-  border-left-style: none;
-  border-right-style: none;
-}
-div.tableblock > table[frame="vsides"] {
-  border-top-style: none;
-  border-bottom-style: none;
-}
-
 
 div.hdlist {
   margin-top: 0.8em;
@@ -362,14 +338,14 @@ div.colist td img {
 }
 
 @media print {
-  div#footer-badges { display: none; }
+  #footer-badges { display: none; }
 }
 
-div#toc {
+#toc {
   margin-bottom: 2.5em;
 }
 
-div#toctitle {
+#toctitle {
   color: #527bbd;
   font-size: 1.1em;
   font-weight: bold;
@@ -377,7 +353,7 @@ div#toctitle {
   margin-bottom: 0.1em;
 }
 
-div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+div.toclevel0, div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
   margin-top: 0;
   margin-bottom: 0;
 }
@@ -430,10 +406,136 @@ span.yellow-background { background: yellow; }
 
 span.big { font-size: 2em; }
 span.small { font-size: 0.6em; }
+
+span.underline { text-decoration: underline; }
+span.overline { text-decoration: overline; }
+span.line-through { text-decoration: line-through; }
+
+div.unbreakable { page-break-inside: avoid; }
+
+
+/*
+ * xhtml11 specific
+ *
+ * */
+
+div.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead, p.table.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overriden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+/*
+ * html5 specific
+ *
+ * */
+
+table.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+thead, p.tableblock.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.tableblock {
+  margin-top: 0;
+}
+table.tableblock {
+  border-width: 3px;
+  border-spacing: 0px;
+  border-style: solid;
+  border-color: #527bbd;
+  border-collapse: collapse;
+}
+th.tableblock, td.tableblock {
+  border-width: 1px;
+  padding: 4px;
+  border-style: solid;
+  border-color: #527bbd;
+}
+
+table.tableblock.frame-topbot {
+  border-left-style: hidden;
+  border-right-style: hidden;
+}
+table.tableblock.frame-sides {
+  border-top-style: hidden;
+  border-bottom-style: hidden;
+}
+table.tableblock.frame-none {
+  border-style: hidden;
+}
+
+th.tableblock.halign-left, td.tableblock.halign-left {
+  text-align: left;
+}
+th.tableblock.halign-center, td.tableblock.halign-center {
+  text-align: center;
+}
+th.tableblock.halign-right, td.tableblock.halign-right {
+  text-align: right;
+}
+
+th.tableblock.valign-top, td.tableblock.valign-top {
+  vertical-align: top;
+}
+th.tableblock.valign-middle, td.tableblock.valign-middle {
+  vertical-align: middle;
+}
+th.tableblock.valign-bottom, td.tableblock.valign-bottom {
+  vertical-align: bottom;
+}
+
+
+/*
+ * manpage specific
+ *
+ * */
+
+body.manpage h1 {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-top: 2px solid silver;
+  border-bottom: 2px solid silver;
+}
+body.manpage h2 {
+  border-style: none;
+}
+body.manpage div.sectionbody {
+  margin-left: 3em;
+}
+
+@media print {
+  body.manpage div#toc { display: none; }
+}
+
+
 </style>
 <script type="text/javascript">
 /*<![CDATA[*/
-window.onload = function(){asciidoc.footnotes();}
 var asciidoc = {  // Namespace.
 
 /////////////////////////////////////////////////////////////////////
@@ -475,7 +577,7 @@ toc: function (toclevels) {
 
   function tocEntries(el, toclevels) {
     var result = new Array;
-    var re = new RegExp('[hH]([2-'+(toclevels+1)+'])');
+    var re = new RegExp('[hH]([1-'+(toclevels+1)+'])');
     // Function that scans the DOM tree for header elements (the DOM2
     // nodeIterator API would be a better technique but not supported by all
     // browsers).
@@ -495,6 +597,25 @@ toc: function (toclevels) {
   }
 
   var toc = document.getElementById("toc");
+  if (!toc) {
+    return;
+  }
+
+  // Delete existing TOC entries in case we're reloading the TOC.
+  var tocEntriesToRemove = [];
+  var i;
+  for (i = 0; i < toc.childNodes.length; i++) {
+    var entry = toc.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div'
+     && entry.getAttribute("class")
+     && entry.getAttribute("class").match(/^toclevel/))
+      tocEntriesToRemove.push(entry);
+  }
+  for (i = 0; i < tocEntriesToRemove.length; i++) {
+    toc.removeChild(tocEntriesToRemove[i]);
+  }
+
+  // Rebuild TOC entries.
   var entries = tocEntries(document.getElementById("content"), toclevels);
   for (var i = 0; i < entries.length; ++i) {
     var entry = entries[i];
@@ -522,24 +643,44 @@ toc: function (toclevels) {
  */
 
 footnotes: function () {
-  var cont = document.getElementById("content");
+  // Delete existing footnote entries in case we're reloading the footnodes.
+  var i;
   var noteholder = document.getElementById("footnotes");
+  if (!noteholder) {
+    return;
+  }
+  var entriesToRemove = [];
+  for (i = 0; i < noteholder.childNodes.length; i++) {
+    var entry = noteholder.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div' && entry.getAttribute("class") == "footnote")
+      entriesToRemove.push(entry);
+  }
+  for (i = 0; i < entriesToRemove.length; i++) {
+    noteholder.removeChild(entriesToRemove[i]);
+  }
+
+  // Rebuild footnote entries.
+  var cont = document.getElementById("content");
   var spans = cont.getElementsByTagName("span");
   var refs = {};
   var n = 0;
   for (i=0; i<spans.length; i++) {
     if (spans[i].className == "footnote") {
       n++;
-      // Use [\s\S] in place of . so multi-line matches work.
-      // Because JavaScript has no s (dotall) regex flag.
-      note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+      var note = spans[i].getAttribute("data-note");
+      if (!note) {
+        // Use [\s\S] in place of . so multi-line matches work.
+        // Because JavaScript has no s (dotall) regex flag.
+        note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+        spans[i].innerHTML =
+          "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+        spans[i].setAttribute("data-note", note);
+      }
       noteholder.innerHTML +=
         "<div class='footnote' id='_footnote_" + n + "'>" +
         "<a href='#_footnoteref_" + n + "' title='Return to text'>" +
         n + "</a>. " + note + "</div>";
-      spans[i].innerHTML =
-        "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
-        "' title='View footnote' class='footnote'>" + n + "</a>]";
       var id =spans[i].getAttribute("id");
       if (id != null) refs["#"+id] = n;
     }
@@ -559,9 +700,32 @@ footnotes: function () {
       }
     }
   }
+},
+
+install: function(toclevels) {
+  var timerId;
+
+  function reinstall() {
+    asciidoc.footnotes();
+    if (toclevels) {
+      asciidoc.toc(toclevels);
+    }
+  }
+
+  function reinstallAndRemoveTimer() {
+    clearInterval(timerId);
+    reinstall();
+  }
+
+  timerId = setInterval(reinstall, 500);
+  if (document.addEventListener)
+    document.addEventListener("DOMContentLoaded", reinstallAndRemoveTimer, false);
+  else
+    window.onload = reinstallAndRemoveTimer;
 }
 
 }
+asciidoc.install();
 /*]]>*/
 </script>
 </head>
@@ -570,6 +734,52 @@ footnotes: function () {
 <h1>Release notes</h1>
 </div>
 <div id="content">
+<div class="sect1">
+<h2 id="_tig_2_0_2">tig-2.0.2</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Use git-status for diffing the index.
+</p>
+</li>
+<li>
+<p>
+Group toggle options together in the help view.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix refs, main and grep loading when <em>gui.encoding</em> is set. (GH #287)
+</p>
+</li>
+<li>
+<p>
+Ignore <em>gui.encoding</em> and <em>i18n.commitencoding</em> when set to <em>UTF-8</em>.
+</p>
+</li>
+<li>
+<p>
+Add work-around for missing strndup() on Mac OS X v10.6. (GH #286)
+</p>
+</li>
+<li>
+<p>
+Fix spurious abbreviation of author names. (GH #288)
+</p>
+</li>
+<li>
+<p>
+Don&#8217;t show empty action groups in the help view.
+</p>
+</li>
+</ul></div>
+</div>
+</div>
 <div class="sect1">
 <h2 id="_tig_2_0_1">tig-2.0.1</h2>
 <div class="sectionbody">
@@ -595,36 +805,36 @@ Fix parsing of key bindings mapped to <em>^</em> and <em>&lt;</em>. (GH #280, #2
 <div class="ulist"><ul>
 <li>
 <p>
-Add <tt>.adoc</tt> extension to AsciiDoc files so they show correctly on GitHub.
-   This includes <tt>README</tt>, <tt>INSTALL</tt>, and <tt>NEWS</tt> and files in <tt>doc/</tt> directory.
+Add <code>.adoc</code> extension to AsciiDoc files so they show correctly on GitHub.
+   This includes <code>README</code>, <code>INSTALL</code>, and <code>NEWS</code> and files in <code>doc/</code> directory.
 </p>
 </li>
 <li>
 <p>
-<tt>BUGS</tt> file has been merged into <tt>README.adoc</tt>.
+<code>BUGS</code> file has been merged into <code>README.adoc</code>.
 </p>
 </li>
 <li>
 <p>
-Default keybindings have been moved to a system-level <tt>tigrc</tt> file, which is
-   installed to $++SYSCONFDIR++ by default. The content of the <tt>tigrc</tt> file is
-   included inside the binary as a fall-back. Pass <tt>NO_BUILTIN_TIGRC=y</tt> to not
-   include the system <tt>tigrc</tt> content and reduce the size of the binary.
+Default keybindings have been moved to a system-level <code>tigrc</code> file, which is
+   installed to $++SYSCONFDIR++ by default. The content of the <code>tigrc</code> file is
+   included inside the binary as a fall-back. Pass <code>NO_BUILTIN_TIGRC=y</code> to not
+   include the system <code>tigrc</code> content and reduce the size of the binary.
 </p>
 </li>
 <li>
 <p>
-The example <tt>contrib/tigrc</tt> file (made obsolete by <tt>tigrc</tt>) has been removed.
+The example <code>contrib/tigrc</code> file (made obsolete by <code>tigrc</code>) has been removed.
 </p>
 </li>
 <li>
 <p>
-Source files have been moved to <tt>src</tt> and <tt>include</tt> and <tt>tig.c</tt> was split up.
+Source files have been moved to <code>src</code> and <code>include</code> and <code>tig.c</code> was split up.
 </p>
 </li>
 <li>
 <p>
-Build output is less verbose by default; use <tt>make V=1</tt> for old output.
+Build output is less verbose by default; use <code>make V=1</code> for old output.
 </p>
 </li>
 </ul></div>
@@ -633,10 +843,10 @@ Build output is less verbose by default; use <tt>make V=1</tt> for old output.
 <li>
 <p>
 In preparation for key combo support, key mappings for symbolic keys (e.g.
-   <tt>Up</tt> and <tt>Down</tt>) must now start with <tt>&lt;</tt> and end with <tt>&gt;</tt>, e.g. <tt>&lt;Up&gt;</tt> and
-   <tt>&lt;Down&gt;</tt>. Furthermore, escape key combos must now use <tt>&lt;Esc&gt;key</tt> instead of
-   <tt>^[key</tt>, and control key mappings must now use <tt>&lt;Ctrl-key&gt;</tt> instead of
-   <tt>^key</tt>.
+   <code>Up</code> and <code>Down</code>) must now start with <code>&lt;</code> and end with <code>&gt;</code>, e.g. <code>&lt;Up&gt;</code> and
+   <code>&lt;Down&gt;</code>. Furthermore, escape key combos must now use <code>&lt;Esc&gt;key</code> instead of
+   <code>^[key</code>, and control key mappings must now use <code>&lt;Ctrl-key&gt;</code> instead of
+   <code>^key</code>.
 </p>
 </li>
 <li>
@@ -649,8 +859,8 @@ Only use <em>diff-options</em> for the diff view and introduce <em>%(cmdlineargs
 </li>
 <li>
 <p>
-Remove built-in keybinding for <tt>git gc</tt>. Add the following line to <tt>~/.tigrc</tt>
-   to restore it: <tt>bind generic G ?git gc</tt>.
+Remove built-in keybinding for <code>git gc</code>. Add the following line to <code>~/.tigrc</code>
+   to restore it: <code>bind generic G ?git gc</code>.
 </p>
 </li>
 <li>
@@ -662,12 +872,12 @@ To support view specific colors, <em>.</em> can no longer be used interchangeabl
 <li>
 <p>
 Replace <em>stage-next</em> action with prompt command using a predefined search
-   (see below) and add binding (<tt>@</tt> by default) to also work in the diff view.
+   (see below) and add binding (<code>@</code> by default) to also work in the diff view.
 </p>
 </li>
 <li>
 <p>
-Most view display options must now be set via the new <tt>*-view</tt> options in
+Most view display options must now be set via the new <code>*-view</code> options in
    tigrc. Existing options are no longer recognized, but a warning is shown.
 </p>
 </li>
@@ -676,7 +886,7 @@ Most view display options must now be set via the new <tt>*-view</tt> options in
 Remap default bindings to have more consistent convention: use lower-case
    keys primarily for view switching and non-destructive actions, use upper-case
    keys for view-specific actions including user-defined commands. To preserve
-   old default key bindings see <tt>contrib/bindings-v1.x.tigrc</tt>. (GH #257)
+   old default key bindings see <code>contrib/bindings-v1.x.tigrc</code>. (GH #257)
 </p>
 </li>
 </ul></div>
@@ -709,7 +919,7 @@ Options can be configured and toggled individually for each view. Use the new
 </li>
 <li>
 <p>
-Add grep view as a front-end to git-grep(1): <tt>tig grep -p strchr</tt>. From
+Add grep view as a front-end to git-grep(1): <code>tig grep -p strchr</code>. From
    within Tig, the key for switching or grepping is bound to <em>g</em> by default.
 </p>
 </li>
@@ -721,17 +931,17 @@ Rename <em>branch</em> view to <em>refs</em> view and show tags. (GH #134)
 <li>
 <p>
 Add main view pager mode that reads git-log&#8217;s <em>--pretty=raw</em> data
-   from stdin, e.g. <tt>git reflog --pretty=raw | tig --pretty=raw</tt>.
+   from stdin, e.g. <code>git reflog --pretty=raw | tig --pretty=raw</code>.
 </p>
 </li>
 <li>
 <p>
-Add support for <tt>--graph</tt> and highlight diff stats in the log view.
+Add support for <code>--graph</code> and highlight diff stats in the log view.
 </p>
 </li>
 <li>
 <p>
-Add default command bindings: <tt>!</tt> to delete branch, <tt>!</tt> to drop stash.
+Add default command bindings: <code>!</code> to delete branch, <code>!</code> to drop stash.
 </p>
 </li>
 <li>
@@ -749,18 +959,18 @@ Add <em>back</em> action bound to <em>&lt;</em> by default, which will return th
 <li>
 <p>
 Auto-refresh views based on watched repository changes. Configure by setting
-   <tt>refresh-mode</tt> to <em>manual</em>, <em>auto</em>, <em>after-command</em>, or <em>periodic</em>. (GH #190)
+   <code>refresh-mode</code> to <em>manual</em>, <em>auto</em>, <em>after-command</em>, or <em>periodic</em>. (GH #190)
 </p>
 </li>
 <li>
 <p>
-All default settings are in well-documented system <tt>tigrc</tt>.
+All default settings are in well-documented system <code>tigrc</code>.
 </p>
 </li>
 <li>
 <p>
-Add <tt>:toggle</tt> prompt command to manipulate options using keybindings. For
-   example: <tt>bind diff D :toggle diff-options --patience --notes</tt>. (GH #69)
+Add <code>:toggle</code> prompt command to manipulate options using keybindings. For
+   example: <code>bind diff D :toggle diff-options --patience --notes</code>. (GH #69)
 </p>
 </li>
 <li>
@@ -777,8 +987,8 @@ Make it possible to toggle the display of files in untracked directories.
 <li>
 <p>
 Allow Tig to be started with no default configuration by specifying an
-   alternative system <tt>tigrc</tt> file, e.g.: <tt>TIGRC_SYSTEM=~/.tigrc.safe tig</tt>. Set
-   <tt>TIGRC_SYSTEM</tt> to the empty string to use built-in configuration instead of
+   alternative system <code>tigrc</code> file, e.g.: <code>TIGRC_SYSTEM=~/.tigrc.safe tig</code>. Set
+   <code>TIGRC_SYSTEM</code> to the empty string to use built-in configuration instead of
 </p>
 </li>
 <li>
@@ -788,14 +998,14 @@ Key mappings can contain UTF-8 multibyte unicode keys.
 </li>
 <li>
 <p>
-Warn about conflicting keybindings using Ctrl, e.g. <tt>&lt;Ctrl-f&gt;</tt> and
-   <tt>&lt;Ctrl-F&gt;</tt>. (GH #218)
+Warn about conflicting keybindings using Ctrl, e.g. <code>&lt;Ctrl-f&gt;</code> and
+   <code>&lt;Ctrl-F&gt;</code>. (GH #218)
 </p>
 </li>
 <li>
 <p>
-Extend key bindings for prompt commands (ie. <tt>bind &lt;keymap&gt; &lt;key&gt; :&lt;prompt&gt;</tt>)
-   to support predefined searches, eg.: <tt>bind stage 2 :?^@@</tt>.
+Extend key bindings for prompt commands (ie. <code>bind &lt;keymap&gt; &lt;key&gt; :&lt;prompt&gt;</code>)
+   to support predefined searches, eg.: <code>bind stage 2 :?^@@</code>.
 </p>
 </li>
 <li>
@@ -811,7 +1021,7 @@ More informative configuration error messages.
 <li>
 <p>
 Make reference label formatting configurable, for example:
-   <tt>set reference-format = (branch) &lt;tags&gt; remote</tt>. (GH #201)
+   <code>set reference-format = (branch) &lt;tags&gt; remote</code>. (GH #201)
 </p>
 </li>
 <li>
@@ -821,30 +1031,30 @@ Adjust author width and other view columns automatically. (GH #49)
 </li>
 <li>
 <p>
-Support view specific colors: <tt>color stage.diff-add yellow default</tt>.
+Support view specific colors: <code>color stage.diff-add yellow default</code>.
 </p>
 </li>
 <li>
 <p>
-Copy <tt>-S</tt>, <tt>-G</tt> and <tt>--grep=</tt> pattern to search buffer so <em>find-next</em> and
+Copy <code>-S</code>, <code>-G</code> and <code>--grep=</code> pattern to search buffer so <em>find-next</em> and
    <em>find-prev</em> work as expected.
 </p>
 </li>
 <li>
 <p>
-Optionally specify custom prompt for <tt>%(prompt)</tt> in shell commands, e.g.
-   <tt>bind main B ?git checkout -b "%(prompt Enter new branch name: )"</tt>.
+Optionally specify custom prompt for <code>%(prompt)</code> in shell commands, e.g.
+   <code>bind main B ?git checkout -b "%(prompt Enter new branch name: )"</code>.
 </p>
 </li>
 <li>
 <p>
-Add <tt>%(remote)</tt> and <tt>%(tag)</tt> symbols to complement <tt>%(branch)</tt>.
+Add <code>%(remote)</code> and <code>%(tag)</code> symbols to complement <code>%(branch)</code>.
 </p>
 </li>
 <li>
 <p>
 User-defined commands can now be prefixed with any of the supported flags,
-   e.g. <tt>?git checkout -b %(branch)</tt>.
+   e.g. <code>?git checkout -b %(branch)</code>.
 </p>
 </li>
 <li>
@@ -860,7 +1070,7 @@ Add build configuration for Cygwin (OS name: CYGWIN_NT-6.1). (GH #92)
 <li>
 <p>
 Document the Git commands supported by the pager mode.  (GH #1)
-   system <tt>tigrc</tt> configuration. (GH #235)
+   system <code>tigrc</code> configuration. (GH #235)
 </p>
 </li>
 </ul></div>
@@ -909,7 +1119,7 @@ Update %(branch) variable in the main view. (GH #223)
 </li>
 <li>
 <p>
-Disable graph rendering when either of <tt>--reverse</tt>, <tt>-S</tt>, <tt>-G</tt>, and <tt>--grep</tt>
+Disable graph rendering when either of <code>--reverse</code>, <code>-S</code>, <code>-G</code>, and <code>--grep</code>
    are passed to the main view. (GH #127)
 </p>
 </li>
@@ -936,7 +1146,7 @@ Fix rendering in non-UTF8 terminals.
 <li>
 <p>
 Fix stage-update-line by rewriting the diff chunk containing the line instead
-   of using <tt>--unidiff-zero</tt> and a diff context of zero. (GH #130)
+   of using <code>--unidiff-zero</code> and a diff context of zero. (GH #130)
 </p>
 </li>
 <li>
@@ -969,7 +1179,7 @@ Move manual and man pages to doc/ directory and rename AsciiDoc files
 <li>
 <p>
 Show blob sizes in the tree view either as bytes or using binary unit
-   prefixes. Example: <tt>set show-file-size = units</tt>. (GH #163)
+   prefixes. Example: <code>set show-file-size = units</code>. (GH #163)
 </p>
 </li>
 <li>
@@ -1006,13 +1216,13 @@ Tig now has its own tag on Stack Overflow, where users are invited to
 <li>
 <p>
 Prompt commands can be bound to keys. For example:
-   <tt>bind diff F :set diff-options = --full-diff</tt>. (GH #69, #116)
+   <code>bind diff F :set diff-options = --full-diff</code>. (GH #69, #116)
 </p>
 </li>
 <li>
 <p>
 Add a diff-options setting for specifying default diff options.
-   Example: <tt>set diff-options = --patience</tt>. (GH #116)
+   Example: <code>set diff-options = --patience</code>. (GH #116)
 </p>
 </li>
 <li>
@@ -1039,8 +1249,8 @@ Add toggles for showing author email or email user names. (GH #115)
 <li>
 <p>
 Open editor at the selected line by prefixing the file argument with
-   <tt>+&lt;lineno&gt;</tt>. Tested in vi, Vim, Emacs, Nano, Gedit, Geany. Disable
-   by adding <tt>set editor-line-number = no</tt> to ~/.tigrc. (GH #118, #119)
+   <code>+&lt;lineno&gt;</code>. Tested in vi, Vim, Emacs, Nano, Gedit, Geany. Disable
+   by adding <code>set editor-line-number = no</code> to ~/.tigrc. (GH #118, #119)
 </p>
 </li>
 <li>
@@ -1053,12 +1263,12 @@ Add toggle-files to control whether to show full commit diff or only
 <p>
 Optionally highlight exceeding characters in long commit titles.
    The default title max width is 50 characters. Customize using:
-   <tt>set title-overflow = 50</tt> (GH #125)
+   <code>set title-overflow = 50</code> (GH #125)
 </p>
 </li>
 <li>
 <p>
-Add +ESC key bindings. Example: <tt>bind generic ^[v move-page-up</tt> (GH #120)
+Add +ESC key bindings. Example: <code>bind generic ^[v move-page-up</code> (GH #120)
 </p>
 </li>
 <li>
@@ -1068,7 +1278,7 @@ Create temporary files in TMPDIR, TEMP, or TMP before defaulting to /tmp.
 </li>
 <li>
 <p>
-Reenable <tt>tig log</tt> as a subcommand. (GH #146)
+Reenable <code>tig log</code> as a subcommand. (GH #146)
 </p>
 </li>
 <li>
@@ -1201,31 +1411,31 @@ Typing a text in the prompt will be interpreted as a Tig command.
 <li>
 <p>
 Basic support for wrapping long line in pager, diff, and stage views.
-   Enable using: <tt>set wrap-lines = yes</tt>. (GH #2)
+   Enable using: <code>set wrap-lines = yes</code>. (GH #2)
 </p>
 </li>
 <li>
 <p>
 User-defined commands prefixed with a <em>?</em> means prompt before
-   execution. Example: <tt>bind main B !?git rebase -i %(commit)</tt>.
+   execution. Example: <code>bind main B !?git rebase -i %(commit)</code>.
 </p>
 </li>
 <li>
 <p>
 User-defined commands prefixed with a <em>&lt;</em> means exit after execution.
-   Example: <tt>bind main C !&lt;git commit</tt>. (GH #66)
+   Example: <code>bind main C !&lt;git commit</code>. (GH #66)
 </p>
 </li>
 <li>
 <p>
 User-defined commands are executed unquoted to support shell commands.
-   Example: <tt>bind generic I !@sh -c "echo -n %(commit) | xclip -selection c"</tt>.
+   Example: <code>bind generic I !@sh -c "echo -n %(commit) | xclip -selection c"</code>.
    (GH #65)
 </p>
 </li>
 <li>
 <p>
-Configure case-insensitive searches using: <tt>set ignore-case = yes</tt>.
+Configure case-insensitive searches using: <code>set ignore-case = yes</code>.
 </p>
 </li>
 <li>
@@ -1280,13 +1490,13 @@ Improve autobuild support to track generated files and work with
 <li>
 <p>
 Commit IDs are read from stdin when --stdin is given; works for main
-   and diff view, e.g. <tt>tig --no-walk --stdin &lt; cherry-picks.txt</tt>.
+   and diff view, e.g. <code>tig --no-walk --stdin &lt; cherry-picks.txt</code>.
 </p>
 </li>
 <li>
 <p>
 Add option to disable focusing of the child view when it&#8217;s opened.
-   Disable using: <tt>set focus-child = no</tt>. (GH #83)
+   Disable using: <code>set focus-child = no</code>. (GH #83)
 </p>
 </li>
 <li>
@@ -1340,7 +1550,7 @@ master repository (<a href="http://jonas.nitro.dk/tig/tig.git">http://jonas.nitr
 <li>
 <p>
 Use git-log(1)s default commit ordering. The old behavior can be
-   restored by adding <tt>set commit-order = topo</tt> to ~/.tigrc.
+   restored by adding <code>set commit-order = topo</code> to ~/.tigrc.
 </p>
 </li>
 <li>
@@ -1387,7 +1597,7 @@ Custom colorization of lines matching a string prefix (GH #16).
 <li>
 <p>
 Use Git&#8217;s color settings for the main, status and diff views.
-   Put <tt>set read-git-colors = no</tt> in ~/.tigrc to disable.
+   Put <code>set read-git-colors = no</code> in ~/.tigrc to disable.
 </p>
 </li>
 <li>
@@ -1412,7 +1622,7 @@ User-defined commands prefixed with <em>@</em> are run with no console
 </p>
 <div class="literalblock">
 <div class="content">
-<pre><tt>bind generic 3 !@rm sys$command</tt></pre>
+<pre><code>bind generic 3 !@rm sys$command</code></pre>
 </div></div>
 </li>
 <li>
@@ -1436,7 +1646,7 @@ Obsolete commit-encoding option and pass --encoding=UTF-8 to revision
 <li>
 <p>
 Main view: show uncommitted changes as staged/unstaged commits.
-   Can be disabled by putting <tt>set show-changes = no</tt> in ~/.tigrc.
+   Can be disabled by putting <code>set show-changes = no</code> in ~/.tigrc.
 </p>
 </li>
 <li>
@@ -1448,7 +1658,7 @@ Add %(prompt) external command variable, which will prompt for the
 <li>
 <p>
 Log information about Git commands when the TIG_TRACE environment
-   variable is set. Example: <tt>TIG_TRACE=/tmp/tig.log tig</tt>
+   variable is set. Example: <code>TIG_TRACE=/tmp/tig.log tig</code>
 </p>
 </li>
 <li>
@@ -1550,7 +1760,7 @@ Add diff-context option and bindings to increase the diff context in
 </p>
 <div class="literalblock">
 <div class="content">
-<pre><tt>set blame-options = -C -C -C</tt></pre>
+<pre><code>set blame-options = -C -C -C</code></pre>
 </div></div>
 </li>
 </ul></div>
@@ -1856,7 +2066,7 @@ Allow multiple text attributes for color commands:
 </p>
 <div class="literalblock">
 <div class="content">
-<pre><tt>color cursor white blue underline bold</tt></pre>
+<pre><code>color cursor white blue underline bold</code></pre>
 </div></div>
 </li>
 </ul></div>
@@ -1988,9 +2198,9 @@ Read tigrc(5) options from Git configuration files using the syntax:
 </p>
 <div class="literalblock">
 <div class="content">
-<pre><tt>[tig] show-rev-graph = true
+<pre><code>[tig] show-rev-graph = true
 [tig "color"] cursor = yellow red bold
-[tig "bind"] generic = P parent</tt></pre>
+[tig "bind"] generic = P parent</code></pre>
 </div></div>
 </li>
 <li>
@@ -2560,7 +2770,7 @@ Fix out-of-range current line when reloading the status view.
 </li>
 <li>
 <p>
-Include autoconf files in the tarball generated by <tt>make dist</tt>.
+Include autoconf files in the tarball generated by <code>make dist</code>.
 </p>
 </li>
 </ul></div>
@@ -2613,7 +2823,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-04-30 08:18:13 EDT
+Last updated 2014-05-08 22:01:18 EDT
 </div>
 </div>
 </body>

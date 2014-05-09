@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 04/30/2014
+.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
+.\"      Date: 05/08/2014
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.0.1
+.\"    Source: Tig 2.0.2
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "04/30/2014" "Tig 2\&.0\&.1" "Tig Manual"
+.TH "TIGRC" "5" "05/08/2014" "Tig 2\&.0\&.2" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -410,9 +410,36 @@ is set to
 .RE
 .SS "View settings"
 .sp
-The view settings, e\&.g\&. blame\-view, can be used to configure the order and settings for the different columns of a view\&. Each view option expects a space separated list of column specifications\&. Column specifications first give the column type, and can optionally be followed by a colon (:) and a list of column settings, e\&.g\&. author:full,width=20\&. The first setting value is always the \fIdisplay\fR setting\&. When no \fIdisplay\fR setting value is given, \fIyes\fR is assumed\&. For \fIdisplay\fR settings taking an enumerated value this will automatically resolve to the default enum value\&. For example, file\-name will automatically have its \fIdisplay\fR setting resolve to \fIauto\fR\&.
+The view settings define the order and options for the different columns of a view\&. Each view setting expects a space separated list of column specifications\&. Column specifications starts with the column type, and can optionally be followed by a colon (:) and a list of column options\&. E\&.g\&. the following column specification defines an \fIauthor\fR column displaying the author email and with a maximum width of 20 characters: author:email,width=20\&.
 .sp
-The following list shows which the available view options and what column types they support:
+The first option value in a column specification is always the \fIdisplay\fR option\&. When no \fIdisplay\fR value is given, \fIyes\fR is assumed\&. For \fIdisplay\fR options expecting an enumerated value this will automatically resolve to the default enum value\&. For example, file\-name will automatically have its \fIdisplay\fR setting resolve to \fIauto\fR\&.
+.sp
+Examples:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+# Enable both ID and line numbers in the blame view
+set blame\-view = date:default author:full file\-name:auto id:yes,color \e
+                 line\-number:yes,interval=5 text
+
+# Change grep view to be similar to `git grep` format
+set grep\-view = file\-name:yes line\-number:yes,interval=1 text
+
+# Show file sizes as units
+set tree\-view = line\-number:no,interval=5 mode author:full \e
+                file\-size:units date:default id:no file\-name
+
+# Show line numbers for every 10th line in the pager view
+set pager\-view = line\-number:yes,interval=10 text
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+The following list shows which the available view settings and what column types they support:
 .PP
 blob\-view, diff\-view, log\-view, pager\-view, stage\-view
 .RS 4
@@ -454,7 +481,7 @@ tree\-view
 author, date, id, file\-name, file\-size, line\-number, mode
 .RE
 .sp
-Supported column types and their respective settings:
+Supported column types and their respective column options:
 .PP
 author
 .RS 4
@@ -482,7 +509,7 @@ author
 .\}
 
 \fIwidth\fR
-(int): Width of the column\&. When set to 5 or below, the author name will be abbreviated to the author\(cqs initials\&. When set to zero, the width is automatically sized to fit the content\&.
+(int): Width of the column\&. When set to a value between 1 and 10, the author name will be abbreviated to the author\(cqs initials\&. When set to zero, the width is automatically sized to fit the content\&.
 .RE
 .RE
 .PP
@@ -805,30 +832,7 @@ text
 .RE
 .RE
 .sp
-Examples:
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-# Enable both ID and line numbers in the blame view
-set blame\-view = date:default author:full file\-name:auto id:yes,color line\-number:yes,interval=5 text
-
-# Change grep view to be similar to `git grep` format
-set grep\-view = file\-name:yes line\-number:yes,interval=1 text
-
-# Show file sizes as units
-set tree\-view = line\-number:no,interval=5 mode author:full file\-size:units date:default id:no file\-name
-
-# Show line numbers for every 10th line in the pager view
-set pager\-view = line\-number:yes,interval=10 text
-.fi
-.if n \{\
-.RE
-.\}
-.sp
-.sp
-Note that all column options can be toggled\&. For \fIdisplay\fR options, use the option name as the prefix followed by a dash and the column name\&. E\&.g\&. :toggle author\-display will toggle the \fIdisplay\fR option in the \fIauthor\fR column\&. For all other options use the column name followed by a dash and then the option name as the suffix\&. E\&.g\&. :toggle commit\-title\-graph will toggle the \fIgraph\fR option in the \fIcommit\-title\fR column\&.
+All column options can be toggled\&. For \fIdisplay\fR options, use the option name as the prefix followed by a dash and the column name\&. E\&.g\&. :toggle author\-display will toggle the \fIdisplay\fR option in the \fIauthor\fR column\&. For all other options use the column name followed by a dash and then the option name as the suffix\&. E\&.g\&. :toggle commit\-title\-graph will toggle the \fIgraph\fR option in the \fIcommit\-title\fR column\&.
 .SH "BIND COMMAND"
 .sp
 Using bind commands, keys can be mapped to an action when pressed in a given key map\&. The syntax is:
@@ -1805,6 +1809,7 @@ Or in the Git configuration files:
 .RE
 .\}
 .sp
+
 .PP
 Area names
 .RS 4
