@@ -2,7 +2,7 @@
 
 # The last tagged version. Can be overridden either by the version from
 # git or from the value of the DIST_VERSION environment variable.
-VERSION	= 2.0.1
+VERSION	= 2.0.2.1
 
 all:
 
@@ -173,6 +173,11 @@ endif
 ifdef NO_SETENV
 COMPAT_CPPFLAGS += -DNO_SETENV
 COMPAT_OBJS += compat/setenv.o
+endif
+
+ifdef NO_STRNDUP
+COMPAT_CPPFLAGS += -DNO_STRNDUP
+COMPAT_OBJS += compat/strndup.o
 endif
 
 COMPAT_OBJS += compat/hashtab.o

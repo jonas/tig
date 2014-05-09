@@ -77,21 +77,21 @@ refs_request(struct view *view, enum request request, struct line *line)
 }
 
 static bool
-refs_read(struct view *view, char *line)
+refs_read(struct view *view, struct buffer *buf)
 {
 	struct reference template = {};
 	char *author;
 	char *title;
 	size_t i;
 
-	if (!line)
+	if (!buf)
 		return TRUE;
 
-	if (!*line)
+	if (!*buf->data)
 		return FALSE;
 
-	author = io_memchr(&view->io, line, 0);
-	title = io_memchr(&view->io, author, 0);
+	author = io_memchr(buf, buf->data, 0);
+	title = io_memchr(buf, author, 0);
 
 	if (author)
 		parse_author_line(author, &template.author, &template.time);
@@ -99,7 +99,7 @@ refs_read(struct view *view, char *line)
 	for (i = 0; i < view->lines; i++) {
 		struct reference *reference = view->line[i].data;
 
-		if (strcmp(reference->ref->id, line))
+		if (strcmp(reference->ref->id, buf->data))
 			continue;
 
 		reference->author = template.author;

@@ -193,7 +193,7 @@ grep_request(struct view *view, enum request request, struct line *line)
 }
 
 static bool
-grep_read(struct view *view, char *data)
+grep_read(struct view *view, struct buffer *buf)
 {
 	struct grep_state *state = view->private;
 	struct grep_line *grep;
@@ -202,23 +202,23 @@ grep_read(struct view *view, char *data)
 	const char *file;
 	size_t textlen;
 
-	if (!data) {
+	if (!buf) {
 		state->last_file = NULL;
 		return TRUE;
 	}
 
-	if (!strcmp(data, "--"))
+	if (!strcmp(buf->data, "--"))
 		return add_line_nodata(view, LINE_DELIMITER) != NULL;
 
-	lineno = io_memchr(&view->io, data, 0);
-	text = io_memchr(&view->io, lineno, 0);
+	lineno = io_memchr(buf, buf->data, 0);
+	text = io_memchr(buf, lineno, 0);
 
 	if (!lineno || !text)
 		return FALSE;
 
 	textlen = strlen(text);
 
-	file = get_path(data);
+	file = get_path(buf->data);
 	if (!file)
 		return FALSE;
 

@@ -104,6 +104,7 @@ static enum watch_trigger
 watch_index_handler(struct watch_handler *handler, enum watch_event event, enum watch_trigger check)
 {
 	enum watch_trigger changed = WATCH_NONE;
+	struct index_diff diff;
 
 	if (event == WATCH_EVENT_AFTER_EXTERNAL)
 		return check_file_mtime(&handler->last_modified, "%s/index", repo.git_dir)
@@ -111,18 +112,18 @@ watch_index_handler(struct watch_handler *handler, enum watch_event event, enum 
 
 	if (!check_file_mtime(&handler->last_modified, "%s/index", repo.git_dir) ||
 	    event == WATCH_EVENT_SWITCH_VIEW ||
-	    !update_index())
+	    !index_diff(&diff, FALSE, FALSE))
 		return WATCH_NONE;
 
 	if (check & WATCH_INDEX_STAGED) {
-		if (index_diff_staged())
+		if (diff.staged)
 			changed |= WATCH_INDEX_STAGED_YES;
 		else
 			changed |= WATCH_INDEX_STAGED_NO;
 	}
 
 	if (check & WATCH_INDEX_UNSTAGED) {
-		if (index_diff_unstaged())
+		if (diff.unstaged)
 			changed |= WATCH_INDEX_UNSTAGED_YES;
 		else
 			changed |= WATCH_INDEX_UNSTAGED_NO;

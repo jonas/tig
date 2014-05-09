@@ -614,7 +614,7 @@ option_set_command(int argc, const char *argv[])
 		int index = find_remapped(obsolete, ARRAY_SIZE(obsolete), argv[0]);
 
 		if (index != -1)
-			return error("%s is obsolete; use the %s view column options instead",
+			return error("%s is obsolete; see tigrc(5) for how to set the %s column option",
 				     obsolete[index][0], obsolete[index][1]);
 
 		if (!strcmp(argv[0], "read-git-colors"))
@@ -1010,6 +1010,8 @@ set_git_color_option(const char *name, char *value)
 static void
 set_encoding(struct encoding **encoding_ref, const char *arg, bool priority)
 {
+	if (!strcasecmp(arg, "utf-8") || !strcasecmp(arg, "utf8"))
+		return;
 	if (parse_encoding(encoding_ref, arg, priority) == SUCCESS)
 		encoding_arg[0] = 0;
 }

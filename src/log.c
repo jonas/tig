@@ -92,17 +92,19 @@ log_request(struct view *view, enum request request, struct line *line)
 }
 
 static bool
-log_read(struct view *view, char *data)
+log_read(struct view *view, struct buffer *buf)
 {
 	struct line *line = NULL;
 	enum line_type type;
 	struct log_state *state = view->private;
 	size_t len;
 	char *commit;
+	char *data;
 
-	if (!data)
+	if (!buf)
 		return TRUE;
 
+	data = buf->data;
 	commit = strstr(data, "commit ");
 	if (commit && get_graph_indent(data) == commit - data)
 		state->graph_indent = commit - data;

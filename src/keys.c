@@ -301,17 +301,9 @@ get_key_name(const struct key key[], size_t keys)
 	size_t pos = 0;
 	int i;
 
-	if (keys == 1 && !key->modifiers.multibytes) {
-		for (i = 0; i < ARRAY_SIZE(key_mappings); i++)
-			if (key_mappings[i].value == key->data.value) {
-				if (!string_format_from(buf, &pos, "<%s>",
-							key_mappings[i].name))
-					return key_mappings[i].name;
-				return buf;
-			}
-	}
-
 	for (i = 0; i < keys; i++) {
+		bool multibytes = key[i].modifiers.multibytes;
+		const char *name = multibytes ? key[i].data.bytes : "";
 		const char *start = "";
 		const char *end = "";
 
@@ -320,13 +312,28 @@ get_key_name(const struct key key[], size_t keys)
 		} else if (key[i].modifiers.control) {
 			start = "<Ctrl-";
 			end = ">";
-		} else if (key[i].data.bytes[0] == ',' && !*start) {
+		} else if (*name == ',') {
+			/* Quote commas so they stand out in the help view. */
 			start = "'";
 			end = "'";
 		}
 
-		if (!string_format_from(buf, &pos, "%s%s%s",
-					start, key[i].data.bytes, end))
+		/* Use symbolic name for spaces so they are readable. */
+		if (!*name || *name == ' ') {
+			int value = *name ? *name : key[i].data.value;
+			int j;
+
+			name = "<?>";
+			for (j = 0; j < ARRAY_SIZE(key_mappings); j++)
+				if (key_mappings[j].value == value) {
+					start = key[i].modifiers.escape ? "<Esc><" : "<";
+					end = ">";
+					name = key_mappings[j].name;
+					break;
+				}
+		}
+
+		if (!string_format_from(buf, &pos, "%s%s%s", start, name, end))
 			return "(no key)";
 	}
 

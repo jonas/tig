@@ -140,8 +140,10 @@ tree_entry(struct view *view, enum line_type type, const char *path,
 }
 
 static bool
-tree_read_date(struct view *view, char *text, struct tree_state *state)
+tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 {
+	char *text = buf ? buf->data : NULL;
+
 	if (!text && state->read_date) {
 		state->read_date = FALSE;
 		return TRUE;
@@ -213,28 +215,26 @@ tree_read_date(struct view *view, char *text, struct tree_state *state)
 }
 
 static bool
-tree_read(struct view *view, char *text)
+tree_read(struct view *view, struct buffer *buf)
 {
 	struct tree_state *state = view->private;
 	struct tree_entry *data;
 	struct line *entry, *line;
 	enum line_type type;
-	size_t textlen = text ? strlen(text) : 0;
-	const char *attr_offset = text + SIZEOF_TREE_ATTR;
 	char *path;
 	size_t size;
 
-	if (state->read_date || !text)
-		return tree_read_date(view, text, state);
+	if (state->read_date || !buf)
+		return tree_read_date(view, buf, state);
 
-	if (textlen <= SIZEOF_TREE_ATTR)
+	if (buf->size <= SIZEOF_TREE_ATTR)
 		return FALSE;
 	if (view->lines == 0 &&
 	    !tree_entry(view, LINE_HEADER, view->env->directory, NULL, NULL, 0))
 		return FALSE;
 
-	size = parse_size(attr_offset);
-	path = strchr(attr_offset, '\t');
+	size = parse_size(buf->data + SIZEOF_TREE_ATTR);
+	path = strchr(buf->data + SIZEOF_TREE_ATTR, '\t');
 	if (!path)
 		return FALSE;
 	path++;
@@ -254,8 +254,8 @@ tree_read(struct view *view, char *text)
 			return FALSE;
 	}
 
-	type = text[SIZEOF_TREE_MODE] == 't' ? LINE_DIRECTORY : LINE_FILE;
-	entry = tree_entry(view, type, path, text, text + TREE_ID_OFFSET, size);
+	type = buf->data[SIZEOF_TREE_MODE] == 't' ? LINE_DIRECTORY : LINE_FILE;
+	entry = tree_entry(view, type, path, buf->data, buf->data + TREE_ID_OFFSET, size);
 	if (!entry)
 		return FALSE;
 	data = entry->data;

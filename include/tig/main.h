@@ -39,7 +39,7 @@ struct main_state {
 };
 
 bool main_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data);
-bool main_read(struct view *view, char *line);
+bool main_read(struct view *view, struct buffer *buf);
 enum request main_request(struct view *view, enum request request, struct line *line);
 void main_select(struct view *view, struct line *line);
 void main_done(struct view *view);

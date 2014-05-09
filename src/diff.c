@@ -165,11 +165,11 @@ diff_common_enter(struct view *view, enum request request, struct line *line)
 }
 
 static bool
-diff_read(struct view *view, char *data)
+diff_read(struct view *view, struct buffer *buf)
 {
 	struct diff_state *state = view->private;
 
-	if (!data) {
+	if (!buf) {
 		/* Fall back to retry if no diff will be shown. */
 		if (view->lines == 0 && opt_file_argv) {
 			int pos = argv_size(view->argv)
@@ -190,7 +190,7 @@ diff_read(struct view *view, char *data)
 		return TRUE;
 	}
 
-	return diff_common_read(view, data, state);
+	return diff_common_read(view, buf->data, state);
 }
 
 static bool
@@ -204,7 +204,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	};
 	struct io io;
 	bool ok = FALSE;
-	char *buf;
+	struct buffer buf;
 
 	if (!string_format(line_arg, "-L%ld,+1", lineno))
 		return FALSE;
@@ -212,13 +212,13 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	if (!io_run(&io, IO_RD, repo.cdup, opt_env, blame_argv))
 		return FALSE;
 
-	while ((buf = io_get(&io, '\n', TRUE))) {
+	while (io_get(&io, &buf, '\n', TRUE)) {
 		if (header) {
-			if (!parse_blame_header(header, buf, 9999999))
+			if (!parse_blame_header(header, buf.data, 9999999))
 				break;
 			header = NULL;
 
-		} else if (parse_blame_info(commit, author, buf)) {
+		} else if (parse_blame_info(commit, author, buf.data)) {
 			ok = commit->filename != NULL;
 			break;
 		}

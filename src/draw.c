@@ -104,7 +104,7 @@ draw_text_expanded(struct view *view, enum line_type type, const char *string, i
 bool
 draw_text(struct view *view, enum line_type type, const char *string)
 {
-	return draw_text_expanded(view, type, string, VIEW_MAX_LEN(view), TRUE);
+	return draw_text_expanded(view, type, string, VIEW_MAX_LEN(view), FALSE);
 }
 
 static bool
@@ -209,7 +209,7 @@ static bool
 draw_author(struct view *view, struct view_column *column, const struct ident *author)
 {
 	bool trim = author_trim(column->width);
-	const char *text = mkauthor(author, column->width, column->opt.author.display);
+	const char *text = mkauthor(author, column->opt.author.width, column->opt.author.display);
 
 	if (column->opt.author.display == AUTHOR_NO)
 		return FALSE;

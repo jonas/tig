@@ -286,17 +286,37 @@ The following variables can be set:
 View settings
 ~~~~~~~~~~~~~
 
-The view settings, e.g. `blame-view`, can be used to configure the order and
-settings for the different columns of a view. Each view option expects a space
-separated list of column specifications. Column specifications first give the
-column type, and can optionally be followed by a colon (`:`) and a list of
-column settings, e.g. `author:full,width=20`. The first setting value is always
-the 'display' setting. When no 'display' setting value is given, 'yes' is
-assumed. For 'display' settings taking an enumerated value this will
-automatically resolve to the default enum value. For example, `file-name` will
-automatically have its 'display' setting resolve to 'auto'.
+The view settings define the order and options for the different columns of a
+view. Each view setting expects a space separated list of column specifications.
+Column specifications starts with the column type, and can optionally be
+followed by a colon (`:`) and a list of column options. E.g. the following
+column specification defines an 'author' column displaying the author email and
+with a maximum width of 20 characters: `author:email,width=20`.
 
-The following list shows which the available view options and what column types
+The first option value in a column specification is always the 'display' option.
+When no 'display' value is given, 'yes' is assumed. For 'display' options
+expecting an enumerated value this will automatically resolve to the default
+enum value. For example, `file-name` will automatically have its 'display'
+setting resolve to 'auto'.
+
+Examples:
+--------------------------------------------------------------------------
+# Enable both ID and line numbers in the blame view
+set blame-view = date:default author:full file-name:auto id:yes,color \
+		 line-number:yes,interval=5 text
+
+# Change grep view to be similar to `git grep` format
+set grep-view = file-name:yes line-number:yes,interval=1 text
+
+# Show file sizes as units
+set tree-view = line-number:no,interval=5 mode author:full \
+		file-size:units date:default id:no file-name
+
+# Show line numbers for every 10th line in the pager view
+set pager-view = line-number:yes,interval=10 text
+--------------------------------------------------------------------------
+
+The following list shows which the available view settings and what column types
 they support:
 
 blob-view, diff-view, log-view, pager-view, stage-view:: line-number, text
@@ -308,16 +328,16 @@ stash-view:: author, date, commit-title, id, line-number
 status-view:: file-name, line-number, status
 tree-view:: author, date, id, file-name, file-size, line-number, mode
 
-Supported column types and their respective settings:
+Supported column types and their respective column options:
 
 author::
 
 	- 'display' (mixed) [full|abbreviated|email|email-user|<bool>]: How to
 	  display author names. If set to "abbreviated" author initials will be
 	  shown.
-	- 'width' (int): Width of the column. When set to 5 or below, the author
-	  name will be abbreviated to the author's initials.  When set to zero,
-	  the width is automatically sized to fit the content.
+	- 'width' (int): Width of the column. When set to a value between 1 and
+	  10, the author name will be abbreviated to the author's initials.
+	  When set to zero, the width is automatically sized to fit the content.
 
 commit-title::
 	- 'graph' (bool): Whether to show revision graph in the main view on
@@ -388,22 +408,7 @@ text::
 	  width of 50 character. When set to an int, the assigned value is used
 	  as the maximum character width.
 
-Examples:
---------------------------------------------------------------------------
-# Enable both ID and line numbers in the blame view
-set blame-view = date:default author:full file-name:auto id:yes,color line-number:yes,interval=5 text
-
-# Change grep view to be similar to `git grep` format
-set grep-view = file-name:yes line-number:yes,interval=1 text
-
-# Show file sizes as units
-set tree-view = line-number:no,interval=5 mode author:full file-size:units date:default id:no file-name
-
-# Show line numbers for every 10th line in the pager view
-set pager-view = line-number:yes,interval=10 text
---------------------------------------------------------------------------
-
-Note that all column options can be toggled. For 'display' options, use the
+All column options can be toggled. For 'display' options, use the
 option name as the prefix followed by a dash and the column name. E.g.
 `:toggle author-display` will toggle the 'display' option in the 'author'
 column. For all other options use the column name followed by a dash and

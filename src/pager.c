@@ -155,12 +155,12 @@ pager_common_read(struct view *view, const char *data, enum line_type type, stru
 }
 
 bool
-pager_read(struct view *view, char *data)
+pager_read(struct view *view, struct buffer *buf)
 {
-	if (!data)
+	if (!buf)
 		return TRUE;
 
-	return pager_common_read(view, data, get_line_type(data), NULL);
+	return pager_common_read(view, buf->data, get_line_type(buf->data), NULL);
 }
 
 enum request

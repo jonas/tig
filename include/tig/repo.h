@@ -29,9 +29,14 @@ extern struct repo_info repo;
 
 int load_repo_info(void);
 
+struct index_diff {
+	int staged;
+	int unstaged;
+	int untracked;
+};
+
+bool index_diff(struct index_diff *diff, bool untracked, bool count_all);
 bool update_index(void);
-bool index_diff_staged(void);
-bool index_diff_unstaged(void);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

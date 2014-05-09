@@ -616,12 +616,12 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 bool
 update_view(struct view *view)
 {
-	char *line;
 	/* Clear the view and redraw everything since the tree sorting
 	 * might have rearranged things. */
 	bool redraw = view->lines == 0;
 	bool can_read = TRUE;
 	struct encoding *encoding = view->encoding ? view->encoding : default_encoding;
+	struct buffer line;
 
 	if (!view->pipe)
 		return TRUE;
@@ -640,12 +640,14 @@ update_view(struct view *view)
 		return TRUE;
 	}
 
-	for (; (line = io_get(view->pipe, '\n', can_read)); can_read = FALSE) {
-		if (encoding) {
-			line = encoding_convert(encoding, line);
+	for (; io_get(view->pipe, &line, '\n', can_read); can_read = FALSE) {
+		if (encoding && !encoding_convert(encoding, &line)) {
+			report("Encoding failure");
+			end_update(view, TRUE);
+			return FALSE;
 		}
 
-		if (!view->ops->read(view, line)) {
+		if (!view->ops->read(view, &line)) {
 			report("Allocation failure");
 			end_update(view, TRUE);
 			return FALSE;
@@ -1208,6 +1210,7 @@ parse_view_config(const char *view_name, const char *argv[])
 		const char *arg = argv[i];
 		char buf[SIZEOF_STR] = "";
 		char *pos, *end;
+		bool first = TRUE;
 
 		if (column)
 			column->next = &columns[i];
@@ -1229,11 +1232,11 @@ parse_view_config(const char *view_name, const char *argv[])
 
 		string_ncopy(buf, arg, strlen(arg));
 
-		for (pos = buf, end = pos + strlen(pos); code == SUCCESS && pos <= end; ) {
+		for (pos = buf, end = pos + strlen(pos); code == SUCCESS && pos <= end; first = FALSE) {
 			const char *name = NULL;
 			const char *value = NULL;
 
-			code = parse_view_column_config(&pos, &name, &value, buf == pos);
+			code = parse_view_column_config(&pos, &name, &value, first);
 			if (code == SUCCESS)
 				code = parse_view_column_option(column, name, value);
 		}

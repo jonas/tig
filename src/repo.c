@@ -106,31 +106,41 @@ update_index(void)
 	return io_run_bg(update_index_argv);
 }
 
-static bool
-index_diff(const char *argv[])
+bool
+index_diff(struct index_diff *diff, bool untracked, bool count_all)
 {
+	const char *untracked_arg = !untracked ? "--untracked-files=no" :
+				     count_all ? "--untracked-files=all" :
+						 "--untracked-files=normal";
+	const char *status_argv[] = {
+		"git", "status", "--porcelain", "-z", untracked_arg, NULL
+	};
 	struct io io;
+	struct buffer buf;
+	bool ok = TRUE;
 
-	if (!io_exec(&io, IO_BG, NULL, NULL, argv, -1))
+	memset(diff, 0, sizeof(*diff));
+
+	if (!io_run(&io, IO_RD, repo.cdup, NULL, status_argv))
 		return FALSE;
+
+	while (io_get(&io, &buf, 0, TRUE) && (ok = buf.size > 3)) {
+		if (buf.data[0] == '?')
+			diff->untracked++;
+		else if (buf.data[0] != ' ')
+			diff->staged++;
+		if (buf.data[1] != ' ')
+			diff->unstaged++;
+		if (!count_all && diff->staged && diff->unstaged &&
+		    (!untracked || diff->untracked))
+			break;
+	}
+
+	if (io_error(&io))
+		ok = FALSE;
+
 	io_done(&io);
-	return io.status == 1;
-}
-
-bool
-index_diff_staged(void)
-{
-	const char *staged_argv[] = { GIT_DIFF_STAGED_FILES("--quiet") };
-
-	return index_diff(staged_argv);
-}
-
-bool
-index_diff_unstaged(void)
-{
-	const char *unstaged_argv[] = { GIT_DIFF_UNSTAGED_FILES("--quiet") };
-
-	return index_diff(unstaged_argv);
+	return ok;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

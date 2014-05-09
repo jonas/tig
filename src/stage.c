@@ -523,22 +523,22 @@ stage_open(struct view *view, enum open_flags flags)
 }
 
 static bool
-stage_read(struct view *view, char *data)
+stage_read(struct view *view, struct buffer *buf)
 {
 	struct stage_state *state = view->private;
 
 	if (stage_line_type == LINE_STAT_UNTRACKED)
-		return pager_common_read(view, data, LINE_DEFAULT, NULL);
+		return pager_common_read(view, buf ? buf->data : NULL, LINE_DEFAULT, NULL);
 
-	if (!data && !view->lines && view->parent) {
+	if (!buf && !view->lines && view->parent) {
 		maximize_view(view->parent, TRUE);
 		return TRUE;
 	}
 
-	if (data && diff_common_read(view, data, &state->diff))
+	if (buf && diff_common_read(view, buf->data, &state->diff))
 		return TRUE;
 
-	return pager_read(view, data);
+	return pager_read(view, buf);
 }
 
 static struct view_ops stage_ops = {
