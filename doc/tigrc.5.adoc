@@ -335,9 +335,9 @@ author::
 	- 'display' (mixed) [full|abbreviated|email|email-user|<bool>]: How to
 	  display author names. If set to "abbreviated" author initials will be
 	  shown.
-	- 'width' (int): Width of the column. When set to 5 or below, the author
-	  name will be abbreviated to the author's initials.  When set to zero,
-	  the width is automatically sized to fit the content.
+	- 'width' (int): Width of the column. When set to a value between 1 and
+	  10, the author name will be abbreviated to the author's initials.
+	  When set to zero, the width is automatically sized to fit the content.
 
 commit-title::
 	- 'graph' (bool): Whether to show revision graph in the main view on
