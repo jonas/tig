@@ -10,6 +10,10 @@ Improvement:
  - Add `:script <file>` prompt command for scripting the Tig UI.
  - Add test framework and convert existing tests to use it.
 
+Bug fixes:
+
+ - Add warnings for more obsolete actions and colors.
+
 tig-2.0.2
 ---------
 

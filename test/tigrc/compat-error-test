@@ -1,0 +1,125 @@
+#!/bin/sh
+#
+# Check error messages for renamed settings, actions and colirs in
+# tigrc.
+
+. libtest.sh
+
+tigrc <<EOF
+set show-date			= default
+set show-author			= full
+set author-width		= 18
+set show-filename		= auto
+set filename-width		= 18
+set show-file-size		= default
+set show-rev-graph		= yes
+set show-line-numbers		= no
+set line-number-interval	= 5
+set show-refs			= yes
+set show-id			= no
+set title-overflow		= no
+set read-git-colors		= yes
+
+# Renamed to view-refs
+bind generic	B	view-blame
+
+# Keymap renamed to refs
+bind branch	[	refresh
+
+# Changes in key parsing
+bind generic	Enter	enter
+bind generic	<	back
+bind generic	^N	next
+bind generic	^[v	move-page-up
+bind generic	F5	refresh
+
+# Replaced by prompt commands - ':/' and ':toggle'
+bind stage	@	stage-next
+bind stage	[	diff-context-down
+bind stage	]	diff-context-up
+bind diff	[	diff-context-down
+bind diff	]	diff-context-up
+bind generic	.	toggle-lineno
+bind generic	D	toggle-date
+bind generic	A	toggle-author
+bind generic	g	toggle-rev-graph
+bind generic	~	toggle-graphic
+bind generic	H	toggle-filename
+bind generic	F	toggle-refs
+bind generic	?	toggle-show-changes
+bind generic	I	toggle-sort-order
+bind generic	i	toggle-sort-field
+bind generic	W	toggle-ignore-space
+bind generic	?	toggle-commit-order
+bind generic	X	toggle-id
+bind generic	%	toggle-files
+bind generic	$	toggle-title-overflow
+bind generic	?	toggle-file-size
+bind generic	?	toggle-untracked-dirs
+
+# Removed
+color main-revgraph		magenta	default
+
+# Consolidated
+color tree-head			default	default	bold
+color tree-dir			yellow	default	normal
+color tree-file			default	default	normal
+color stat-head			yellow	default
+color stat-section		cyan	default
+color help-keymap		cyan	default
+EOF
+
+steps ":quit"
+
+test_tig
+
+assert_equals stderr <<EOF
+tig warning: ~/tigrc:1: show-date is obsolete; see tigrc(5) for how to set the date column option
+tig warning: ~/tigrc:2: show-author is obsolete; see tigrc(5) for how to set the author column option
+tig warning: ~/tigrc:3: author-width is obsolete; see tigrc(5) for how to set the author column option
+tig warning: ~/tigrc:4: show-filename is obsolete; see tigrc(5) for how to set the file-name column option
+tig warning: ~/tigrc:5: filename-width is obsolete; see tigrc(5) for how to set the file-name column option
+tig warning: ~/tigrc:6: show-file-size is obsolete; see tigrc(5) for how to set the file-size column option
+tig warning: ~/tigrc:7: show-rev-graph is obsolete; see tigrc(5) for how to set the commit-title column option
+tig warning: ~/tigrc:8: show-line-numbers is obsolete; see tigrc(5) for how to set the line-number column option
+tig warning: ~/tigrc:9: line-number-interval is obsolete; see tigrc(5) for how to set the line-number column option
+tig warning: ~/tigrc:10: show-refs is obsolete; see tigrc(5) for how to set the commit-title column option
+tig warning: ~/tigrc:11: show-id is obsolete; see tigrc(5) for how to set the id column option
+tig warning: ~/tigrc:12: title-overflow is obsolete; see tigrc(5) for how to set the commit-title and text column option
+tig warning: ~/tigrc:13: read-git-colors has been obsoleted by the git-colors option
+tig warning: ~/tigrc:22: Except for <Esc> combos only one key is allowed in key combos: Enter
+tig warning: ~/tigrc:23: Missing '>' from key mapping: <
+tig warning: ~/tigrc:24: Control key mapping must now use '<Ctrl-N>' instead of '^N'
+tig warning: ~/tigrc:25: Escape key combo must now use '<Esc>v' instead of '^[v'
+tig warning: ~/tigrc:26: Except for <Esc> combos only one key is allowed in key combos: F5
+tig warning: ~/tigrc:29: stage-next has been replaced by \`:/^@@'
+tig warning: ~/tigrc:30: diff-context-down has been replaced by \`:toggle diff-context -1'
+tig warning: ~/tigrc:31: diff-context-up has been replaced by \`:toggle diff-context +1'
+tig warning: ~/tigrc:32: diff-context-down has been replaced by \`:toggle diff-context -1'
+tig warning: ~/tigrc:33: diff-context-up has been replaced by \`:toggle diff-context +1'
+tig warning: ~/tigrc:34: toggle-lineno has been replaced by \`:toggle line-number'
+tig warning: ~/tigrc:35: toggle-date has been replaced by \`:toggle date'
+tig warning: ~/tigrc:36: toggle-author has been replaced by \`:toggle author'
+tig warning: ~/tigrc:37: toggle-rev-graph has been replaced by \`:toggle commit-title-graph'
+tig warning: ~/tigrc:38: toggle-graphic has been replaced by \`:toggle show-graphic'
+tig warning: ~/tigrc:39: toggle-filename has been replaced by \`:toggle filename'
+tig warning: ~/tigrc:40: toggle-refs has been replaced by \`:toggle commit-title-refs'
+tig warning: ~/tigrc:41: toggle-show-changes has been replaced by \`:toggle show-changes'
+tig warning: ~/tigrc:42: toggle-sort-order has been replaced by \`:toggle sort-order'
+tig warning: ~/tigrc:43: toggle-sort-field has been replaced by \`:toggle sort-field'
+tig warning: ~/tigrc:44: toggle-ignore-space has been replaced by \`:toggle show-ignore-space'
+tig warning: ~/tigrc:45: toggle-commit-order has been replaced by \`:toggle show-commit-order'
+tig warning: ~/tigrc:46: toggle-id has been replaced by \`:toggle id'
+tig warning: ~/tigrc:47: toggle-files has been replaced by \`:toggle file-filter'
+tig warning: ~/tigrc:48: toggle-title-overflow has been replaced by \`:toggle commit-title-overflow'
+tig warning: ~/tigrc:49: toggle-file-size has been replaced by \`:toggle file-size'
+tig warning: ~/tigrc:50: toggle-untracked-dirs has been replaced by \`:toggle status-untracked-dirs'
+tig warning: ~/tigrc:53: main-revgraph is obsolete
+tig warning: ~/tigrc:56: tree-head has been replaced by tree.header
+tig warning: ~/tigrc:57: tree-dir has been replaced by tree.directory
+tig warning: ~/tigrc:58: tree-file has been replaced by tree.file
+tig warning: ~/tigrc:59: stat-head has been replaced by status.header
+tig warning: ~/tigrc:60: stat-section has been replaced by status.section
+tig warning: ~/tigrc:61: help-keymap has been replaced by help.section
+tig warning: Errors while loading HOME/tigrc.
+EOF

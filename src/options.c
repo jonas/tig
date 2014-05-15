@@ -341,6 +341,7 @@ option_color_command(int argc, const char *argv[])
 			{ "diff-tree",			"'diff-tree '" },
 			{ "filename",			"file" },
 			{ "help-keymap",		"help.section" },
+			{ "main-revgraph",		"" },
 			{ "pp-adate",			"'AuthorDate: '" },
 			{ "pp-author",			"'Author: '" },
 			{ "pp-cdate",			"'CommitDate: '" },
@@ -359,6 +360,8 @@ option_color_command(int argc, const char *argv[])
 
 		index = find_remapped(obsolete, ARRAY_SIZE(obsolete), rule.name);
 		if (index != -1) {
+			if (!*obsolete[index][1])
+				return error("%s is obsolete", argv[0]);
 			/* Keep the initial prefix if defined. */
 			code = parse_color_name(obsolete[index][1], &rule, prefix ? NULL : &prefix);
 			if (code != SUCCESS)
@@ -663,10 +666,12 @@ option_bind_command(int argc, const char *argv[])
 		static const char *toggles[][2] = {
 			{ "diff-context-down",		"diff-context" },
 			{ "diff-context-up",		"diff-context" },
+			{ "stage-next",			":/^@@" },
 			{ "toggle-author",		"author" },
 			{ "toggle-changes",		"show-changes" },
 			{ "toggle-commit-order",	"show-commit-order" },
 			{ "toggle-date",		"date" },
+			{ "toggle-files",		"file-filter" },
 			{ "toggle-file-filter",		"file-filter" },
 			{ "toggle-file-size",		"file-size" },
 			{ "toggle-filename",		"filename" },
@@ -676,6 +681,7 @@ option_bind_command(int argc, const char *argv[])
 			{ "toggle-lineno",		"line-number" },
 			{ "toggle-refs",		"commit-title-refs" },
 			{ "toggle-rev-graph",		"commit-title-graph" },
+			{ "toggle-show-changes",	"show-changes" },
 			{ "toggle-sort-field",		"sort-field" },
 			{ "toggle-sort-order",		"sort-order" },
 			{ "toggle-title-overflow",	"commit-title-overflow" },
@@ -698,12 +704,16 @@ option_bind_command(int argc, const char *argv[])
 			const char *action = toggles[alias][0];
 			const char *arg = prefixcmp(action, "diff-context-")
 					? NULL : (strstr(action, "-down") ? "-1" : "+1");
-			const char *toggle[] = { ":toggle", toggles[alias][1], arg, NULL};
-			enum status_code code = add_run_request(keymap, key, keys, toggle);
+			const char *mapped = toggles[alias][1];
+			const char *toggle[] = { ":toggle", mapped, arg, NULL};
+			const char *other[] = { mapped, NULL };
+			const char **prompt = *mapped == ':' ? other : toggle;
+			enum status_code code = add_run_request(keymap, key, keys, prompt);
 
 			if (code == SUCCESS)
-				code = error("%s has been replaced by `:toggle %s%s%s'",
-					     action, toggles[alias][1],
+				code = error("%s has been replaced by `%s%s%s%s'",
+					     action, prompt == other ? mapped : ":toggle ",
+					     prompt == other ? "" : mapped,
 					     arg ? " " : "", arg ? arg : "");
 			return code;
 		}
