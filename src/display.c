@@ -391,6 +391,7 @@ done_display(void)
 void
 init_display(void)
 {
+	bool no_display = !!getenv("TIG_NO_DISPLAY");
 	const char *term;
 	int x, y;
 
@@ -400,15 +401,18 @@ init_display(void)
 		die("Failed to register done_display");
 
 	/* Initialize the curses library */
-	if (isatty(STDIN_FILENO)) {
+	if (!no_display && isatty(STDIN_FILENO)) {
 		cursed = !!initscr();
 		opt_tty = stdin;
 	} else {
 		/* Leave stdin and stdout alone when acting as a pager. */
+		FILE *out_tty;
+
 		opt_tty = fopen("/dev/tty", "r+");
-		if (!opt_tty)
+		out_tty = no_display ? fopen("/dev/null", "w+") : opt_tty;
+		if (!opt_tty || !out_tty)
 			die("Failed to open /dev/tty");
-		cursed = !!newterm(NULL, opt_tty, opt_tty);
+		cursed = !!newterm(NULL, out_tty, opt_tty);
 	}
 
 	if (!cursed)

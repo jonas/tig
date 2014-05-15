@@ -201,6 +201,16 @@ TIG_DIFF_OPTS::
 TIG_TRACE::
 	Path for trace file where information about Git commands are logged.
 
+TIG_SCRIPT::
+	Path to script that should be executed automatically on startup. If this
+	environment variable is defined to the empty string, the script is read
+	from stdin. The script is interpreted line-by-line and can contain
+	prompt commands and key mappings.
+
+TIG_NO_DISPLAY::
+	Open Tig without rendering anything to the terminal. This force Ncurses
+	to write to /dev/null. The main use is for automated testing of Tig.
+
 FILES
 -----
 '~/.tigrc'::
