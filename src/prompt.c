@@ -444,6 +444,9 @@ read_prompt(const char *prompt)
 {
 	static char *line = NULL;
 
+	if (is_script_executing())
+		return read_prompt_incremental(prompt, TRUE, NULL, NULL);
+
 	if (line) {
 		free(line);
 		line = NULL;
@@ -857,6 +860,13 @@ run_prompt_command(struct view *view, const char *argv[])
 
 		if (*action)
 			report("%s", action);
+
+	} else if (!strcmp(cmd, "script")) {
+		if (is_script_executing()) {
+			report("Scripts cannot be run from scripts");
+		} else if (!open_script(argv[1])) {
+			report("Failed to open %s", argv[1]);
+		}
 
 	} else {
 		struct key key = {};

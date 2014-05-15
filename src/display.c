@@ -460,6 +460,52 @@ init_display(void)
 	}
 }
 
+static struct io script_io = { -1 };
+
+bool
+open_script(const char *path)
+{
+	return io_open(&script_io, "%s", path);
+}
+
+bool
+is_script_executing(void)
+{
+	return script_io.pipe != -1;
+}
+
+static bool
+read_script(struct key *key, int delay)
+{
+	static struct buffer input_buffer;
+	static const char *line = "";
+	enum status_code code;
+
+	if (!line || !*line) {
+		if (input_buffer.data && *input_buffer.data == ':') {
+			line = "<Enter>";
+			memset(&input_buffer, 0, sizeof(input_buffer));
+
+		} else if (!io_get(&script_io, &input_buffer, '\n', TRUE)) {
+			io_done(&script_io);
+			return FALSE;
+		} else {
+			line = input_buffer.data;
+		}
+	}
+
+	if (!strcmp(line, ":wait")) {
+		if (delay != 0)
+			line = input_buffer.data = NULL;
+		return FALSE;
+	}
+
+	code = get_key_value(&line, key);
+	if (code != SUCCESS)
+		die("Error reading script: %s", get_status_message(code));
+	return TRUE;
+}
+
 int
 get_input(int prompt_position, struct key *key, bool modifiers)
 {
@@ -505,10 +551,17 @@ get_input(int prompt_position, struct key *key, bool modifiers)
 		}
 		setsyx(cursor_y, cursor_x);
 
-		/* Refresh, accept single keystroke of input */
-		doupdate();
-		wtimeout(status_win, delay);
-		key_value = wgetch(status_win);
+		if (is_script_executing()) {
+			if (!read_script(key, delay))
+				continue;
+			return key->modifiers.multibytes ? OK : key->data.value;
+
+		} else {
+			/* Refresh, accept single keystroke of input */
+			doupdate();
+			wtimeout(status_win, delay);
+			key_value = wgetch(status_win);
+		}
 
 		/* wgetch() with nodelay() enabled returns ERR when
 		 * there's no input. */
