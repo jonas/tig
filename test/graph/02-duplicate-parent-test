@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# Graph test: duplicate parent
+
+. libtest.sh
+
+test_graph <<EOF
+commit A B C
+    Commit A - Merge C into B
+commit B C E
+    Commit B - Merge E into C
+commit C D
+    Commit C after D
+commit E D
+    Commit E after D
+commit D F
+    Commit D after F
+commit F G H
+    Commit F - Merge H into G
+commit G H I
+    Commit G - Merge I into H
+commit I H
+    Commit I after H
+commit H
+    Commit H
+EOF
+
+assert_equals stdout <<EOF
+●─╮ Commit A - Merge C into B
+●─│─╮ Commit B - Merge E into C
+●─╯ │ Commit C after D
+│ ●─╯ Commit E after D
+●─╯ Commit D after F
+●─╮ Commit F - Merge H into G
+●─│─╮ Commit G - Merge I into H
+│ │ ● Commit I after H
+◎─┴─╯ Commit H
+EOF

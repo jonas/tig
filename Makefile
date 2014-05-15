@@ -41,7 +41,7 @@ LDLIBS ?= -lcurses
 CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
 EXE	= src/tig
-TOOLS	= test/test-graph tools/doc-gen
+TOOLS	= test/tools/test-graph tools/doc-gen
 TXTDOC	= doc/tig.1.adoc doc/tigrc.5.adoc doc/manual.adoc NEWS.adoc README.adoc INSTALL.adoc
 MANDOC	= doc/tig.1 doc/tigrc.5 doc/tigmanual.7
 HTMLDOC = doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html INSTALL.html NEWS.html
@@ -103,7 +103,7 @@ install-release-doc-html:
 install-doc: install-doc-man install-doc-html
 install-release-doc: install-release-doc-man install-release-doc-html
 
-clean:
+clean: clean-test
 	$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5 .deps
 	$(RM) $(EXE) $(TOOLS) $(OBJS) core doc/*.xml src/builtin-config.c
 
@@ -153,16 +153,24 @@ dist: configure tig.spec
 rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
 
-test: $(TOOLS)
-	test/unit-test-graph.sh
-	test/builtin-config.sh
+TESTS  = $(sort $(shell find test -type f -name '*-test'))
+
+clean-test:
+	$(Q)$(RM) -r test/tmp
+
+test: clean-test $(TESTS)
+	$(QUIET_SUMMARY)test/tools/show-results.sh
+
+$(TESTS): PATH := $(CURDIR)/test/tools:$(CURDIR)/src:$(PATH)
+$(TESTS): $(EXE) test/tools/test-graph
+	$(QUIET_TEST)$@
 
 # Other autoconf-related rules are hidden in config.make.in so that
 # they don't confuse Make when we aren't actually using ./configure
 configure: configure.ac acinclude.m4 tools/*.m4
 	./autogen.sh
 
-.PHONY: all all-debug doc doc-man doc-html install install-doc \
+.PHONY: all all-debug doc doc-man doc-html install install-doc $(TESTS) \
 	install-doc-man install-doc-html clean spell-check dist rpm test
 
 ifdef NO_MKSTEMPS
@@ -222,8 +230,8 @@ TIG_OBJS = \
 
 src/tig: $(TIG_OBJS)
 
-TEST_GRAPH_OBJS = test/test-graph.o src/string.o src/util.o src/io.o src/graph.o $(COMPAT_OBJS)
-test/test-graph: $(TEST_GRAPH_OBJS)
+TEST_GRAPH_OBJS = test/tools/test-graph.o src/string.o src/util.o src/io.o src/graph.o $(COMPAT_OBJS)
+test/tools/test-graph: $(TEST_GRAPH_OBJS)
 
 DOC_GEN_OBJS = tools/doc-gen.o src/string.o src/types.o src/util.o src/request.o
 tools/doc-gen: $(DOC_GEN_OBJS)
@@ -317,6 +325,8 @@ QUIET_DB2PDF		= $(Q:@=@echo    '    DB2PDF  '$@;)
 # tools/install.sh will print 'file -> $install_dir/file'
 QUIET_INSTALL		= $(Q:@=@printf  '   INSTALL  ';)
 QUIET_INSTALL_EACH	= $(Q:@=printf   '   INSTALL  ';)
+QUIET_TEST		= $(Q:@=@printf  '      TEST  '$@;)
+QUIET_SUMMARY		= $(Q:@=@printf  '   SUMMARY  ';)
 
 export V
 endif

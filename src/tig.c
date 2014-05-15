@@ -679,14 +679,18 @@ main(int argc, const char *argv[])
 
 	init_display();
 
+	if (pager_mode)
+		request = open_pager_mode(request);
+
 	if (getenv("TIG_SCRIPT")) {
 		const char *script_command[] = { "script", getenv("TIG_SCRIPT"), NULL };
 
-		/* Open a 'neutral' view. */
-		open_help_view(NULL, OPEN_DEFAULT);
+		if (!displayed_views()) {
+			/* Open a 'neutral' view. */
+			open_help_view(NULL, OPEN_DEFAULT);
+		}
+
 		request = run_prompt_command(NULL, script_command);
-	} else if (pager_mode) {
-		request = open_pager_mode(request);
 	}
 
 	while (view_driver(display[current_view], request)) {

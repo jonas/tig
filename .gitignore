@@ -22,7 +22,8 @@ doc/release-docs/
 src/builtin-config.c
 src/tig
 tags
-test/test-graph
+test/tools/test-graph
+test/tmp
 tig-*.tar.gz
 tig-*.tar.gz.md5
 tig.spec

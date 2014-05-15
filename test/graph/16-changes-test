@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# Graph test: changes
+
+. libtest.sh
+
+test_graph <<EOF
+commit 0000000000000000000000000000000000000000 0000000000000000000000000000000000000000
+    Staged changes
+commit 0000000000000000000000000000000000000000 007ae1f1c611254aaf67b71d42d2326be7ab4047
+    Unstaged changes
+commit 007ae1f1c611254aaf67b71d42d2326be7ab4047 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    First commit
+commit XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    Last commit
+EOF
+
+assert_equals stdout <<EOF
+● Staged changes
+● Unstaged changes
+● First commit
+◎ Last commit
+EOF
