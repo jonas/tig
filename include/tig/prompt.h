@@ -20,6 +20,14 @@
 struct view;
 struct input;
 
+enum input_status {
+	INPUT_OK,
+	INPUT_SKIP,
+	INPUT_DELETE,
+	INPUT_STOP,
+	INPUT_CANCEL
+};
+
 struct menu_item {
 	int hotkey;
 	const char *text;

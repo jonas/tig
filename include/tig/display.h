@@ -17,14 +17,6 @@
 #include "tig/tig.h"
 #include "tig/keys.h"
 
-enum input_status {
-	INPUT_OK,
-	INPUT_SKIP,
-	INPUT_DELETE,
-	INPUT_STOP,
-	INPUT_CANCEL
-};
-
 int get_input(int prompt_position, struct key *key, bool modifiers);
 
 extern WINDOW *status_win;
