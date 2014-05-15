@@ -233,6 +233,7 @@ readline_action_generator(const char *text, int state)
 		"bind",
 		"set",
 		"toggle",
+		"save-display",
 #define REQ_GROUP(help)
 #define REQ_(req, help)	#req
 		REQ_INFO,
@@ -822,6 +823,14 @@ run_prompt_command(struct view *view, const char *argv[])
 			next->dir = NULL;
 			open_pager_view(view, OPEN_PREPARED | OPEN_WITH_STDERR);
 		}
+
+	} else if (!strcmp(cmd, "save-display")) {
+		const char *path = argv[1] ? argv[1] : "tig-display.txt";
+
+		if (!save_display(path))
+			report("Failed to save screen to %s", path);
+		else
+			report("Saved screen to %s", path);
 
 	} else if (!strcmp(cmd, "toggle")) {
 		enum view_flag flags = VIEW_NO_FLAGS;

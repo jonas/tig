@@ -243,6 +243,70 @@ redraw_display(bool clear)
 	redraw_display_separator(clear);
 }
 
+static bool
+save_window_line(FILE *file, WINDOW *win, int y, char *buf, size_t bufsize)
+{
+	int read = mvwinnstr(win, y, 0, buf, bufsize);
+
+	return read == ERR ? FALSE : fprintf(file, "%s\n", buf) == read + 1;
+}
+
+static bool
+save_window_vline(FILE *file, WINDOW *left, WINDOW *right, int y, char *buf, size_t bufsize)
+{
+	int read1 = mvwinnstr(left, y, 0, buf, bufsize);
+	int read2 = read1 == ERR ? ERR : mvwinnstr(right, y, 0, buf + read1 + 1, bufsize - read1 - 1);
+
+	if (read2 == ERR)
+		return FALSE;
+	buf[read1] = '|';
+
+	return fprintf(file, "%s\n", buf) == read1 + 1 + read2 + 1;
+}
+
+bool
+save_display(const char *path)
+{
+	int i, width;
+	char *line;
+	FILE *file = fopen(path, "w");
+	bool ok = TRUE;
+	struct view *view = display[0];
+
+	if (!file)
+		return FALSE;
+
+	getmaxyx(stdscr, i, width);
+	line = malloc(width + 1);
+	if (!line) {
+		fclose(file);
+		return FALSE;
+	}
+
+	if (view->width < width) {
+		struct view *left = display[0],
+			    *right = display[1];
+
+		for (i = 0; ok && i < left->height; i++)
+			ok = save_window_vline(file, left->win, right->win, i, line, width);
+		if (ok)
+			ok = save_window_vline(file, left->title, right->title, 0, line, width);
+	} else {
+		int j;
+
+		foreach_displayed_view (view, j) {
+			for (i = 0; ok && i < view->height; i++)
+				ok = save_window_line(file, view->win, i, line, width);
+			if (ok)
+				ok = save_window_line(file, view->title, 0, line, width);
+		}
+	}
+
+	free(line);
+	fclose(file);
+	return ok;
+}
+
 /*
  * Status management
  */
