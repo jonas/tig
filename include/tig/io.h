@@ -42,8 +42,8 @@ extern struct encoding *default_encoding;
  */
 
 enum io_flags {
-	IO_RD_FORWARD_STDIN,	/* Forward stdin from parent process to child. */
-	IO_RD_WITH_STDERR,	/* Redirect stderr to stdin. */
+	IO_RD_FORWARD_STDIN = 1 << 0,	/* Forward stdin from parent process to child. */
+	IO_RD_WITH_STDERR   = 1 << 1,	/* Redirect stderr to stdin. */
 };
 
 enum io_type {
