@@ -1,0 +1,79 @@
+#!/bin/sh
+#
+# Test tigrc parsing errors.
+
+. libtest.sh
+
+tigrc <<EOF
+s				# Unknown command
+set				# Missing name, equals and value
+set ignore-space		# Missing equals and value
+set ignore-space =		# Missing value
+set ignore-space=no		# Missing space
+set something = jada		# Unknown settings name
+set ignore-space = jada		# Bad enum value
+set tab-size = long		# Bad int value
+set split-view-height = half	# Bad scale value
+set split-view-height = 110%	# Bad scale value
+set split-view-height = -10%	# Bad scale value
+
+bind				# Missing map, key and action
+bind generic			# Missing key and action
+bind generic B			# Missing action
+bind generic # refresh		# Must use Hash instead of '#'
+
+color				# Missing area and colors
+color file			# Missing colors
+color grep.file			# Missing colors
+color file green		# Missing fg color
+color file green bold		# Attribute used as fg color
+color file dark green		# Unknown color
+color file green dark		# Unknown color
+color file green green normally # Unknown attribute
+
+# Test that lines continue correctly \\
+ignored \\
+
+set main-view = \\
+	line-number \\
+	commit-title		# Multi-line option
+
+# Non-ending multi-line command
+c\\
+o\\
+l\\
+o\\
+r\\
+EOF
+
+steps ":quit"
+
+test_tig
+
+assert_equals stderr <<EOF
+tig warning: ~/tigrc:1: Unknown option command: s
+tig warning: ~/tigrc:2: Invalid set command: set option = value
+tig warning: ~/tigrc:3: Invalid set command: set option = value
+tig warning: ~/tigrc:4: Invalid set command: set option = value
+tig warning: ~/tigrc:5: Invalid set command: set option = value
+tig warning: ~/tigrc:6: Unknown option name: something
+tig warning: ~/tigrc:7: 'jada' is not a valid value for ignore-space; using no
+tig warning: ~/tigrc:8: Value must be between 1 and 1024
+tig warning: ~/tigrc:9: Invalid double or percentage
+tig warning: ~/tigrc:10: Percentage is larger than 100%
+tig warning: ~/tigrc:11: Percentage is less than 0%
+tig warning: ~/tigrc:13: Invalid key binding: bind keymap key action
+tig warning: ~/tigrc:14: Invalid key binding: bind keymap key action
+tig warning: ~/tigrc:15: Invalid key binding: bind keymap key action
+tig warning: ~/tigrc:16: Invalid key binding: bind keymap key action
+tig warning: ~/tigrc:18: Invalid color mapping: color area fgcolor bgcolor [attrs]
+tig warning: ~/tigrc:19: Invalid color mapping: color area fgcolor bgcolor [attrs]
+tig warning: ~/tigrc:20: Invalid color mapping: color area fgcolor bgcolor [attrs]
+tig warning: ~/tigrc:21: Invalid color mapping: color area fgcolor bgcolor [attrs]
+tig warning: ~/tigrc:22: Unknown color: bold
+tig warning: ~/tigrc:23: Unknown color: dark
+tig warning: ~/tigrc:24: Unknown color: dark
+tig warning: ~/tigrc:25: Unknown color attribute: normally
+tig warning: ~/tigrc:40: Unknown option command: c
+tig warning: Errors while loading HOME/tigrc.
+EOF

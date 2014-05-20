@@ -224,7 +224,12 @@ static const struct enum_map_entry attr_map[] = {
 enum status_code
 parse_step(double *opt, const char *arg)
 {
-	*opt = atoi(arg);
+	int value = atoi(arg);
+
+	if (!value && !isdigit(*arg))
+		return error("Invalid double or percentage");
+
+	*opt = value;
 	if (!strchr(arg, '%'))
 		return SUCCESS;
 
@@ -259,10 +264,12 @@ set_color(int *color, const char *name)
 {
 	if (map_enum(color, color_map, name))
 		return TRUE;
+	/* Git expects a plain int w/o prefix, however, color<int> is
+	 * the preferred Tig color notation.  */
 	if (!prefixcmp(name, "color"))
-		return parse_int(color, name + 5, 0, 255) == SUCCESS;
-	/* Used when reading git colors. Git expects a plain int w/o prefix.  */
-	return parse_int(color, name, 0, 255) == SUCCESS;
+		name += 5;
+	return string_isnumber(name) &&
+	       parse_int(color, name, 0, 255) == SUCCESS;
 }
 
 #define is_quoted(c)	((c) == '"' || (c) == '\'')
@@ -405,18 +412,23 @@ parse_bool(bool *opt, const char *arg)
 }
 
 static enum status_code
-parse_enum(unsigned int *opt, const char *arg, const struct enum_map *map)
+parse_enum(const char *name, unsigned int *opt, const char *arg,
+	   const struct enum_map *map)
 {
 	bool is_true;
+	enum status_code code;
 
 	assert(map->size > 1);
 
 	if (map_enum_do(map->entries, map->size, (int *) opt, arg))
 		return SUCCESS;
 
-	parse_bool(&is_true, arg);
+	code = parse_bool(&is_true, arg);
 	*opt = is_true ? map->entries[1].value : map->entries[0].value;
-	return SUCCESS;
+	if (code == SUCCESS)
+		return code;
+	return error("'%s' is not a valid value for %s; using %s",
+		     arg, name, enum_name(map->entries[*opt].name));
 }
 
 static enum status_code
@@ -497,7 +509,7 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 		const char *type = option->type + STRING_SIZE("enum ");
 		const struct enum_map *map = find_enum_map(type);
 
-		return parse_enum(option->value, arg, map);
+		return parse_enum(name, option->value, arg, map);
 	}
 
 	if (!strcmp(option->type, "int")) {
