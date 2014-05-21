@@ -613,7 +613,7 @@ bind generic W :!git reflog
 bind stage 2 :?^@@
 bind stage D :/^diff --(git|cc)
 
-bind main I :toggle show-id			# Show/hide the ID column
+bind main I :toggle id-display			# Show/hide the ID column
 bind diff D :toggle diff-options --minimal	# Use minimal diff algorithm
 bind diff [ :toggle diff-context -3		# Decrease context (-U arg)
 bind diff ] :toggle diff-context +3		# Increase context
