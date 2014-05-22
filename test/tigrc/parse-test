@@ -51,29 +51,29 @@ steps ":quit"
 test_tig
 
 assert_equals stderr <<EOF
-tig warning: ~/tigrc:1: Unknown option command: s
-tig warning: ~/tigrc:2: Invalid set command: set option = value
-tig warning: ~/tigrc:3: Invalid set command: set option = value
-tig warning: ~/tigrc:4: Invalid set command: set option = value
-tig warning: ~/tigrc:5: Invalid set command: set option = value
-tig warning: ~/tigrc:6: Unknown option name: something
-tig warning: ~/tigrc:7: 'jada' is not a valid value for ignore-space; using no
-tig warning: ~/tigrc:8: Value must be between 1 and 1024
-tig warning: ~/tigrc:9: Invalid double or percentage
-tig warning: ~/tigrc:10: Percentage is larger than 100%
-tig warning: ~/tigrc:11: Percentage is less than 0%
-tig warning: ~/tigrc:13: Invalid key binding: bind keymap key action
-tig warning: ~/tigrc:14: Invalid key binding: bind keymap key action
-tig warning: ~/tigrc:15: Invalid key binding: bind keymap key action
-tig warning: ~/tigrc:16: Invalid key binding: bind keymap key action
-tig warning: ~/tigrc:18: Invalid color mapping: color area fgcolor bgcolor [attrs]
-tig warning: ~/tigrc:19: Invalid color mapping: color area fgcolor bgcolor [attrs]
-tig warning: ~/tigrc:20: Invalid color mapping: color area fgcolor bgcolor [attrs]
-tig warning: ~/tigrc:21: Invalid color mapping: color area fgcolor bgcolor [attrs]
-tig warning: ~/tigrc:22: Unknown color: bold
-tig warning: ~/tigrc:23: Unknown color: dark
-tig warning: ~/tigrc:24: Unknown color: dark
-tig warning: ~/tigrc:25: Unknown color attribute: normally
-tig warning: ~/tigrc:40: Unknown option command: c
-tig warning: Errors while loading HOME/tigrc.
+tig warning: ~/.tigrc:1: Unknown option command: s
+tig warning: ~/.tigrc:2: Invalid set command: set option = value
+tig warning: ~/.tigrc:3: Invalid set command: set option = value
+tig warning: ~/.tigrc:4: Invalid set command: set option = value
+tig warning: ~/.tigrc:5: Invalid set command: set option = value
+tig warning: ~/.tigrc:6: Unknown option name: something
+tig warning: ~/.tigrc:7: 'jada' is not a valid value for ignore-space; using no
+tig warning: ~/.tigrc:8: Value must be between 1 and 1024
+tig warning: ~/.tigrc:9: Invalid double or percentage
+tig warning: ~/.tigrc:10: Percentage is larger than 100%
+tig warning: ~/.tigrc:11: Percentage is less than 0%
+tig warning: ~/.tigrc:13: Invalid key binding: bind keymap key action
+tig warning: ~/.tigrc:14: Invalid key binding: bind keymap key action
+tig warning: ~/.tigrc:15: Invalid key binding: bind keymap key action
+tig warning: ~/.tigrc:16: Invalid key binding: bind keymap key action
+tig warning: ~/.tigrc:18: Invalid color mapping: color area fgcolor bgcolor [attrs]
+tig warning: ~/.tigrc:19: Invalid color mapping: color area fgcolor bgcolor [attrs]
+tig warning: ~/.tigrc:20: Invalid color mapping: color area fgcolor bgcolor [attrs]
+tig warning: ~/.tigrc:21: Invalid color mapping: color area fgcolor bgcolor [attrs]
+tig warning: ~/.tigrc:22: Unknown color: bold
+tig warning: ~/.tigrc:23: Unknown color: dark
+tig warning: ~/.tigrc:24: Unknown color: dark
+tig warning: ~/.tigrc:25: Unknown color attribute: normally
+tig warning: ~/.tigrc:40: Unknown option command: c
+tig warning: Errors while loading HOME/.tigrc.
 EOF

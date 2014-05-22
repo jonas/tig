@@ -49,7 +49,7 @@ unset GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE
 
 # Tig env
 export TIGRC_SYSTEM=
-export TIGRC_USER="~/tigrc"
+unset TIGRC_USER
 
 # Ncurses env
 export ESCDELAY=200
@@ -96,7 +96,7 @@ stdin() {
 }
 
 tigrc() {
-	file "tigrc" "$@"
+	file ".tigrc" "$@"
 }
 
 gitconfig() {
