@@ -100,7 +100,7 @@ tigrc() {
 }
 
 gitconfig() {
-	file "gitconfig" "$@"
+	file "$HOME/.gitconfig" "$@"
 }
 
 #

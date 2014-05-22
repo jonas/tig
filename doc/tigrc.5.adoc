@@ -38,8 +38,9 @@ one of the Git configuration files, which are read by Tig on startup. See
 'git-config(1)' for which files to use. The following example show the basic
 syntax to use for settings, bindings and colors.
 
+// TEST: gitconfig
 --------------------------------------------------------------------------
-[tig] show-rev-graph = true
+[tig] show-changes = true
 [tig "color"] cursor = yellow red bold 
 [tig "bind"] generic = P parent
 --------------------------------------------------------------------------
@@ -83,6 +84,7 @@ is:
 
 Examples:
 
+// TEST: tigrc
 --------------------------------------------------------------------------
 set commit-order = topo		# Order commits topologically
 set git-colors = no		# Do not read Git's color settings.
@@ -103,6 +105,7 @@ set blame-view = \
 
 Or in the Git configuration files:
 
+// TEST: gitconfig
 --------------------------------------------------------------------------
 [tig]
 	line-graphics = no	# Disable graphics characters
@@ -300,6 +303,7 @@ enum value. For example, `file-name` will automatically have its 'display'
 setting resolve to 'auto'.
 
 Examples:
+// TEST: tigrc
 --------------------------------------------------------------------------
 # Enable both ID and line numbers in the blame view
 set blame-view = date:default author:full file-name:auto id:yes,color \
@@ -425,10 +429,10 @@ key map. The syntax is:
 *bind* 'keymap' 'key' 'action'
 
 Examples:
-
+// TEST: tigrc
 --------------------------------------------------------------------------
 # Add keybinding to quickly jump to the next diff chunk in the stage view
-bind stage Enter :/^@@
+bind stage <Enter> :/^@@
 
 # Disable the default mapping for running git-gc
 bind generic G none
@@ -444,7 +448,7 @@ bind generic ø @sh -c "printf '%s' %(commit) | pbcopy"
 --------------------------------------------------------------------------
 
 Or in the Git configuration files:
-
+// TEST: gitconfig
 --------------------------------------------------------------------------
 [tig "bind"]
 	# 'unbind' the default quit key binding
@@ -485,9 +489,9 @@ combos consisting of an initial `Escape` key followed by a normal key value can
 be bound using `<Esc>key`.
 
 Examples:
-
+// TEST: tigrc
 --------------------------------------------------------------------------
-bind main R		reload
+bind main R		refresh
 bind main <Down>	next
 bind main <Ctrl-f>	scroll-page-down
 bind main <Esc>o	options
@@ -554,7 +558,7 @@ following variable names, which are substituted before commands are run:
 |=============================================================================
 
 Examples:
-
+// TEST: tigrc
 --------------------------------------------------------------------------
 # Save save the current commit as a patch file when the user selects a
 # commit in the main view and presses 'S'.
@@ -572,6 +576,7 @@ expansion of environment variables and process control, this can be achieved by
 using a shell command:
 
 .Configure a binding to copy the current commit ID to the clipboard.
+// TEST: tigrc
 --------------------------------------------------------------------------
 bind generic I @sh -c "echo -n %(commit) | xclip -selection c"
 --------------------------------------------------------------------------
@@ -581,6 +586,7 @@ following example entries can be put in either the .gitconfig or .git/config
 file:
 
 .Git configuration which binds Tig keys to Git command aliases.
+// TEST: gitconfig
 --------------------------------------------------------------------------
 [alias]
 	gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &"
@@ -599,6 +605,7 @@ and act similar to commands run via Tig's prompt. Valid internal commands are
 configuration file options (as described in this document) and pager view
 commands. Examples:
 
+// TEST: tigrc
 --------------------------------------------------------------------------
 # Reload ~/.tigrc when 'S' is pressed
 bind generic S :source .tigrc
@@ -755,7 +762,7 @@ given as the last parameter. The syntax is:
 *color* 'area' 'fgcolor' 'bgcolor' '[attributes]'
 
 Examples:
-
+// TEST: tigrc
 ------------------------------------------------------------------------------
 # Override the default terminal colors to white on black.
 color default		white	black
@@ -769,7 +776,7 @@ color tree.date		black	cyan	bold
 --------------------------------------------------------------------------
 
 Or in the Git configuration files:
-
+// TEST: gitconfig
 --------------------------------------------------------------------------
 [tig "color"]
 	# A strange looking cursor line
@@ -940,7 +947,7 @@ current configuration file will take precedence. The syntax is:
 *source* 'path'
 
 Examples:
-
+// TEST: tigrc
 --------------------------------------------------------------------------
 source ~/.tig/colorscheme.tigrc
 source ~/.tig/keybindings.tigrc
