@@ -29,6 +29,12 @@ output_dir="$tmp_dir/$prefix_dir/$test"
 [ -e "$output_dir" ] && rm -rf "$output_dir"
 mkdir -p "$output_dir"
 
+if [ ! -d "$tmp_dir/.git" ]; then
+	# Create a dummy repository to avoid reading .git/config
+	# settings from the tig repository.
+	git init -q "$tmp_dir"
+fi
+
 # The locale must specify UTF-8 for Ncurses to output correctly. Since C.UTF-8
 # does not exist on Mac OS X, we end up with en_US as the only sane choice.
 export LANG=en_US.UTF-8
@@ -43,7 +49,7 @@ unset CDPATH
 
 # Git env
 export GIT_CONFIG_NOSYSTEM
-unset GIT_CONFIG
+unset GIT_CONFIG GIT_DIR
 unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
 unset GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE
 
@@ -86,8 +92,8 @@ steps() {
 	# Ensure that the steps finish by quitting
 	printf '%s\n:quit\n' "$@" \
 		| sed -e 's/^[ 	]*//' -e '/^$/d' \
-		| sed 's#:save-display\s\+\(\S*\)#:save-display ../\1#' \
-		     > steps
+		| sed "s|:save-display\s\+\(\S*\)|:save-display $HOME/\1|" \
+		> steps
 	export TIG_SCRIPT="$HOME/steps"
 }
 
@@ -96,7 +102,7 @@ stdin() {
 }
 
 tigrc() {
-	file ".tigrc" "$@"
+	file "$HOME/.tigrc" "$@"
 }
 
 gitconfig() {
@@ -134,9 +140,11 @@ show_test_results()
 	if [ ! -e .test-result ]; then
 		echo
 		{
-			echo "No test results found"
 			[ -e stderr ] &&
 				sed "s/^/[stderr] /" < stderr
+			[ -e stderr.orig ] &&
+				sed "s/^/[stderr] /" < stderr.orig
+			echo "No test results found"
 		} | sed "s/^/$indent| /"
 	elif grep FAIL -q < .test-result; then
 		failed="$(grep FAIL < .test-result | wc -l)"

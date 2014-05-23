@@ -38,6 +38,15 @@ set main-view = \\
 	line-number \\
 	commit-title		# Multi-line option
 
+bind generic : prompt		# Must have prompt mapping
+bind generic ø view-tree	# Binding to UTF-8 keys
+bind main <Hash> :/s e a r c h	# Toggle option
+bind main 1 !external command
+bind main 2 @silent command
+bind main 3 ?prompted command
+bind main 4 <quitting command
+bind main 0 !@?<all modifiers
+
 # Non-ending multi-line command
 c\\
 o\\
@@ -46,7 +55,13 @@ o\\
 r\\
 EOF
 
-steps ":quit"
+steps "
+	:view-help
+	:wait
+	:save-display help.screen
+"
+
+TIGRC_SYSTEM="should-not-be-loaded"
 
 test_tig
 
@@ -74,6 +89,38 @@ tig warning: ~/.tigrc:22: Unknown color: bold
 tig warning: ~/.tigrc:23: Unknown color: dark
 tig warning: ~/.tigrc:24: Unknown color: dark
 tig warning: ~/.tigrc:25: Unknown color attribute: normally
-tig warning: ~/.tigrc:40: Unknown option command: c
+tig warning: ~/.tigrc:49: Unknown option command: c
 tig warning: Errors while loading HOME/.tigrc.
+EOF
+
+assert_equals help.screen <<EOF
+Quick reference for tig keybindings:                                            
+                                                                                
+[-] generic bindings                                                            
+View switching                                                                  
+   ø view-tree Show tree view                                                  
+Misc                                                                            
+   : prompt    Open the prompt                                                  
+[-] main bindings                                                               
+Internal commands:                                                              
+   # :/s e a r c h                                                              
+External commands:                                                              
+   1 !external command                                                          
+   2 @silent command                                                            
+   3 ?prompted command                                                          
+   4 <quitting command                                                          
+   0 @?<all modifiers                                                           
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[help] - line 1 of 16                                                       100%
 EOF
