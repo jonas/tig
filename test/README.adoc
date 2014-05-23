@@ -1,0 +1,30 @@
+Test Overview
+=============
+
+All tests can be run with `make test`. This will run all scripts that
+end with `-test` in the `test` folder and summarize the test results
+using the script `test/tools/show-results.sh`.
+
+To run individual tests, use `make <path-to-test>` e.g. `make
+test/tigrc/parse-test`. Alternatively, tests can be run directly via the
+test scripts as long as `PATH` is set to include the directories `src/`
+and `test/tools`. The latter directory is where the test helper
+libraries are located, the most important of which is `libtest.sh`.
+
+Options
+-------
+
+Tests can be configured by setting the `TEST_OPTS` environment variable.
+The variable should contain a space-separated list of options. The
+following options are supported:
+
+verbose::
+
+	Whether to print individual test results even when all
+	assertions passed. The default is to not results for passed
+	tests.
+
+no-indent::
+
+	Do not indent test output. This is automatically set depending
+	on whether `V=1` was passed to `make` to show verbose output.

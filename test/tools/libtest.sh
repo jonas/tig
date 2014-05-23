@@ -26,6 +26,19 @@ output_dir="$tmp_dir/$prefix_dir/$test"
 
 [ -t 1 ] && diff_color_arg=--color
 
+indent='            '
+verbose=
+
+set -- $TEST_OPTS
+
+while [ $# -gt 0 ]; do
+	arg="$1"; shift
+	case "$arg" in
+		verbose) verbose=yes ;;
+		no-indent) indent= ;;
+	esac
+done
+
 [ -e "$output_dir" ] && rm -rf "$output_dir"
 mkdir -p "$output_dir"
 
@@ -135,36 +148,28 @@ assert_equals()
 
 show_test_results()
 {
-	indent='            '
-
 	if [ ! -e .test-result ]; then
-		echo
-		{
-			[ -e stderr ] &&
-				sed "s/^/[stderr] /" < stderr
-			[ -e stderr.orig ] &&
-				sed "s/^/[stderr] /" < stderr.orig
-			echo "No test results found"
-		} | sed "s/^/$indent| /"
+		[ -e stderr ] &&
+			sed "s/^/[stderr] /" < stderr
+		[ -e stderr.orig ] &&
+			sed "s/^/[stderr] /" < stderr.orig
+		echo "No test results found"
 	elif grep FAIL -q < .test-result; then
 		failed="$(grep FAIL < .test-result | wc -l)"
 		count="$(sed -n '/\(FAIL\|OK\)/p' < .test-result | wc -l)"
 
-		echo
-		{
-			printf "Failed %d out of %d test(s)%s\n" $failed $count 
+		printf "Failed %d out of %d test(s)%s\n" $failed $count 
 
-			# Show output from stderr if no output is expected
-			[ -e expected/stderr ] ||
-				sed "s/^/[stderr] /" < stderr
+		# Show output from stderr if no output is expected
+		[ -e expected/stderr ] ||
+			sed "s/^/[stderr] /" < stderr
 
-			[ -e .test-result ] &&
-				cat .test-result
-		} | sed "s/^/$indent| /"
-	else
+		[ -e .test-result ] &&
+			cat .test-result
+	elif [ "$verbose" ]; then
 		count="$(sed -n '/\(OK\)/p' < .test-result | wc -l)"
-		printf " (passed %d)\n" $count
-	fi
+		printf "Passed %d assertions\n" $count
+	fi | sed "s/^/$indent| /"
 }
 
 trap 'show_test_results' EXIT

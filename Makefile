@@ -161,6 +161,8 @@ clean-test:
 test: clean-test $(TESTS)
 	$(QUIET_SUMMARY)test/tools/show-results.sh
 
+export TEST_OPTS ?= $(V:1=no-indent)
+
 $(TESTS): PATH := $(CURDIR)/test/tools:$(CURDIR)/src:$(PATH)
 $(TESTS): $(EXE) test/tools/test-graph
 	$(QUIET_TEST)$@
@@ -325,7 +327,7 @@ QUIET_DB2PDF		= $(Q:@=@echo    '    DB2PDF  '$@;)
 # tools/install.sh will print 'file -> $install_dir/file'
 QUIET_INSTALL		= $(Q:@=@printf  '   INSTALL  ';)
 QUIET_INSTALL_EACH	= $(Q:@=printf   '   INSTALL  ';)
-QUIET_TEST		= $(Q:@=@printf  '      TEST  '$@;)
+QUIET_TEST		= $(Q:@=@echo    '      TEST  '$@;)
 QUIET_SUMMARY		= $(Q:@=@printf  '   SUMMARY  ';)
 
 export V
