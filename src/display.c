@@ -423,8 +423,7 @@ init_display(void)
 	noecho();       /* Don't echo input */
 	leaveok(stdscr, FALSE);
 
-	if (has_colors())
-		init_colors();
+	init_colors();
 
 	getmaxyx(stdscr, y, x);
 	status_win = newwin(1, x, y - 1, 0);
