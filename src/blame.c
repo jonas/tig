@@ -433,7 +433,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_VIEW_BLAME:
 	case REQ_PARENT:
-		if (!check_blame_commit(blame, TRUE))
+		if (!check_blame_commit(blame, request == REQ_VIEW_BLAME))
 			break;
 		blame_go_forward(view, blame, request == REQ_PARENT);
 		break;
