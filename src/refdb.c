@@ -299,7 +299,7 @@ ref_update_env(struct argv_env *env, const struct ref *ref, bool clear)
 	string_copy_rev(env->commit, ref->id);
 
 	if (ref_is_tag(ref)) {
-		string_copy_rev(env->tag, ref->name);
+		string_ncopy(env->tag, ref->name, strlen(ref->name));
 
 	} else if (ref_is_remote(ref)) {
 		const char *sep = strchr(ref->name, '/');
@@ -307,10 +307,10 @@ ref_update_env(struct argv_env *env, const struct ref *ref, bool clear)
 		if (!sep)
 			return;
 		string_ncopy(env->remote, ref->name, sep - ref->name);
-		string_copy_rev(env->branch, sep + 1);
+		string_ncopy(env->branch, sep + 1, strlen(sep + 1));
 
 	} else if (ref->type == REFERENCE_BRANCH) {
-		string_copy_rev(env->branch, ref->name);
+		string_ncopy(env->branch, ref->name, strlen(ref->name));
 	}
 }
 
