@@ -1,0 +1,152 @@
+#!/bin/sh
+#
+# Test main view display of index changes and interaction with the stage view.
+
+. libtest.sh
+. libgit.sh
+
+export LINES=16
+
+steps '
+	:view-main
+	:wait
+	:save-display main-with-unstaged.screen
+	:enter
+	:wait
+	:save-display main-with-unstaged-split.screen
+
+	:status-update
+	:wait
+	:save-display main-with-staged.screen
+
+	:enter
+	:wait
+	:save-display main-with-staged-split.screen
+
+	:view-close
+	<F1>
+	:refresh
+	:wait
+	:save-display main-with-staged-and-unstaged.screen
+'
+
+tigrc <<EOF
+set vertical-split = no
+bind generic <F1> @sh -c 'git reset a b.c'
+EOF
+
+prepare_git_repo()
+{
+	echo "*.o" > .gitignore
+	echo "*~" > .git/info/exclude
+
+	for file in a b.c "d~" e/f "g h" i.o .j "h~/k"; do
+		dir="$(dirname "$file")"
+		[ -n "$dir" ] && mkdir -p "$dir"
+		printf "%s\n%s" "$file" "$(seq 1 10)" > "$file"
+	done
+
+	git add .
+	git_commit --author="$IDENT_A" --message="Initial commit"
+
+	for file in a b.c "d~" e/f "g h" i.o .j "h~/k"; do
+		printf "%s\n%s" "$file CHANGED" "$(seq 1 8)" > "$file"
+	done
+}
+
+git_init
+in_work_dir prepare_git_repo
+
+test_tig
+
+YYY_MM_DD_HH_MM="$(date +"%Y-%m-%d %H:%M")"
+
+assert_equals 'main-with-unstaged.screen' <<EOF
+$YYY_MM_DD_HH_MM Unknown    o Unstaged changes                                  
+2009-02-13 23:31 A. U. Thor I [master] Initial commit                           
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[main] Unstaged changes                                                     100%
+EOF
+
+assert_equals 'main-with-unstaged-split.screen' <<EOF
+$YYY_MM_DD_HH_MM Unknown    o Unstaged changes                                  
+2009-02-13 23:31 A. U. Thor I [master] Initial commit                           
+                                                                                
+                                                                                
+[main] Unstaged changes                                                     100%
+ .j  | 6 ++----                                                                 
+ a   | 6 ++----                                                                 
+ b.c | 6 ++----                                                                 
+ e/f | 6 ++----                                                                 
+ g h | 6 ++----                                                                 
+ 5 files changed, 10 insertions(+), 20 deletions(-)                             
+                                                                                
+diff --git a/.j b/.j                                                            
+index e697dfd..9d8ef3d 100644                                                   
+[stage] Unstaged changes - line 1 of 107                                      8%
+EOF
+
+assert_equals 'main-with-staged.screen' <<EOF
+$YYY_MM_DD_HH_MM Unknown    o Staged changes                                    
+2009-02-13 23:31 A. U. Thor I [master] Initial commit                           
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[main] Staged changes                                                       100%
+EOF
+
+assert_equals 'main-with-staged-split.screen' <<EOF
+$YYY_MM_DD_HH_MM Unknown    o Staged changes                                    
+2009-02-13 23:31 A. U. Thor I [master] Initial commit                           
+                                                                                
+                                                                                
+[main] Staged changes                                                       100%
+ .j  | 6 ++----                                                                 
+ a   | 6 ++----                                                                 
+ b.c | 6 ++----                                                                 
+ e/f | 6 ++----                                                                 
+ g h | 6 ++----                                                                 
+ 5 files changed, 10 insertions(+), 20 deletions(-)                             
+                                                                                
+diff --git a/.j b/.j                                                            
+index e697dfd..9d8ef3d 100644                                                   
+[stage] Staged changes - line 1 of 107                                        8%
+EOF
+
+assert_equals 'main-with-staged-and-unstaged.screen' <<EOF
+$YYY_MM_DD_HH_MM Unknown    o Staged changes                                    
+$YYY_MM_DD_HH_MM Unknown    o Unstaged changes                                  
+2009-02-13 23:31 A. U. Thor I [master] Initial commit                           
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[main] Staged changes                                                       100%
+EOF
