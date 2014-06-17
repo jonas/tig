@@ -450,7 +450,9 @@ read_prompt(const char *prompt)
 	}
 
 	line = readline(prompt);
-	if (line && *line)
+	if (line && !*line)
+		line = NULL;
+	if (line)
 		add_history(line);
 
 	return line;
