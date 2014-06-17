@@ -618,7 +618,6 @@ get_input(int prompt_position, struct key *key, bool modifiers)
 			key->data.bytes[0] = key_value;
 
 			key_length = utf8_char_length(key->data.bytes);
-			nodelay(status_win, TRUE);
 			for (pos = 1; pos < key_length && pos < sizeof(key->data.bytes) - 1; pos++) {
 				key->data.bytes[pos] = wgetch(status_win);
 			}
