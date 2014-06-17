@@ -844,7 +844,7 @@ setting the *default* color option.
 			 sections in the help view.
 |line-number		|Line numbers.
 |id			|The commit ID.
-|date			|The commit date.
+|date			|The author date.
 |author			|The commit author.
 |mode			|The file mode holding the permissions and type.
 |overflow		|Title text overflow.
