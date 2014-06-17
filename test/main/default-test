@@ -7,6 +7,10 @@
 
 export LINES=16
 
+tigrc <<EOF
+set vertical-split = no
+EOF
+
 steps '
 	:view-main
 	:wait
@@ -24,7 +28,6 @@ steps '
 	:wait
 	:save-display main-no-graph.screen
 
-	:set vertical-split = no
 	:957f2b368e6fa5c0757f36b1441e32729ee5e9c7
 	<Enter>
 	:wait
