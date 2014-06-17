@@ -18,9 +18,9 @@
 #include "tig/keys.h"
 
 int get_input(int prompt_position, struct key *key, bool modifiers);
+int get_input_char(void);
 
 extern WINDOW *status_win;
-extern FILE *opt_tty;
 
 void update_status(const char *msg, ...);
 void report(const char *msg, ...) PRINTF_LIKE(1, 2);

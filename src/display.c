@@ -28,7 +28,7 @@ static WINDOW *display_win[2];
 static WINDOW *display_title[2];
 static WINDOW *display_sep;
 
-FILE *opt_tty;
+static FILE *opt_tty;
 
 bool
 open_external_viewer(const char *argv[], const char *dir, bool confirm, bool refresh, const char *notice)
@@ -507,6 +507,31 @@ read_script(struct key *key, int delay)
 	if (code != SUCCESS)
 		die("Error reading script: %s", get_status_message(code));
 	return TRUE;
+}
+
+int
+get_input_char(void)
+{
+	if (is_script_executing()) {
+		static struct key key;
+		static int bytes_pos;
+
+		if (!key.modifiers.multibytes || bytes_pos >= strlen(key.data.bytes)) {
+			if (!read_script(&key, 0))
+				return 0;
+			bytes_pos = 0;
+		}
+
+		if (!key.modifiers.multibytes) {
+			if (key.data.value < 128)
+				return key.data.value;
+			die("Only ASCII control characters can be used in prompts: %d", key.data.value);
+		}
+
+		return key.data.bytes[bytes_pos++];
+	}
+
+	return getc(opt_tty);
 }
 
 int

@@ -360,7 +360,7 @@ readline_toggle_generator(const char *text, int state)
 static int
 readline_getc(FILE *stream)
 {
-	return getc(opt_tty);
+	return get_input_char();
 }
 
 static char **
@@ -443,9 +443,6 @@ char *
 read_prompt(const char *prompt)
 {
 	static char *line = NULL;
-
-	if (is_script_executing())
-		return read_prompt_incremental(prompt, TRUE, NULL, NULL);
 
 	if (line) {
 		free(line);
