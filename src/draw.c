@@ -228,14 +228,24 @@ draw_id(struct view *view, struct view_column *column, const char *id)
 		LINE_PALETTE_4,
 		LINE_PALETTE_5,
 		LINE_PALETTE_6,
+		LINE_PALETTE_7,
+		LINE_PALETTE_8,
+		LINE_PALETTE_9,
+		LINE_PALETTE_10,
+		LINE_PALETTE_11,
+		LINE_PALETTE_12,
+		LINE_PALETTE_13,
 	};
 	enum line_type type = LINE_ID;
 
 	if (!column->opt.id.display)
 		return FALSE;
 
-	if (column->opt.id.color)
-		type = colors[((long) id) % ARRAY_SIZE(colors)];
+	if (column->opt.id.color && id) {
+		hashval_t color = iterative_hash(id, SIZEOF_REV - 1, 0);
+
+		type = colors[color % ARRAY_SIZE(colors)];
+	}
 
 	return draw_field(view, type, id, column->width, ALIGN_LEFT, FALSE);
 }

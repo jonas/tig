@@ -857,9 +857,11 @@ setting the *default* color option.
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |graph-commit		|The commit dot in the revision graph.
-|palette-[0-6]		|7 different colors,
-used for distinguishing branches or commits.
-example: palette-0 = red
+|palette-[0-13]		|14 different colors, used for distinguishing branches
+			 or commits. By default, the palette uses the ASCII
+			 colors, where the second half of them have the bold
+			 attribute enabled to give a brighter color.
+			 Example: palette-0 = red
 |main-commit		|The commit comment.
 |main-head		|Label of the current branch.
 |main-remote		|Label of a remote.
