@@ -446,8 +446,12 @@ read_prompt(const char *prompt)
 	}
 
 	line = readline(prompt);
-	if (line && !*line)
+
+	if (line && !*line) {
+		free(line);
 		line = NULL;
+	}
+
 	if (line)
 		add_history(line);
 
