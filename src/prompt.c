@@ -178,11 +178,7 @@ read_prompt_incremental(const char *prompt, bool edit_mode, input_handler handle
 static void
 readline_display(void)
 {
-	wmove(status_win, 0, 0);
-	waddstr(status_win, rl_display_prompt);
-	waddstr(status_win, rl_line_buffer);
-	wclrtoeol(status_win);
-	wmove(status_win, 0, strlen(rl_display_prompt) + rl_point);
+	update_status("%s%s", rl_display_prompt, rl_line_buffer);
 	wrefresh(status_win);
 }
 

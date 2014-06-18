@@ -12,6 +12,9 @@ Improvement:
 
 Bug fixes:
 
+ - Fix readline completion.
+ - Fix '/' to `find-next` when readline support is enabled. (GH #302)
+ - Fix readline prompt to correctly handle UTF-8 characters.
  - Add warnings for more obsolete actions and colors.
  - Fix passing of commit IDS via stdin to the main view.
 
