@@ -35,27 +35,7 @@ set vertical-split = no
 bind generic <F1> @sh -c 'git reset a b.c'
 EOF
 
-prepare_git_repo()
-{
-	echo "*.o" > .gitignore
-	echo "*~" > .git/info/exclude
-
-	for file in a b.c "d~" e/f "g h" i.o .j "h~/k"; do
-		dir="$(dirname "$file")"
-		[ -n "$dir" ] && mkdir -p "$dir"
-		printf "%s\n%s" "$file" "$(seq 1 10)" > "$file"
-	done
-
-	git add .
-	git_commit --author="$IDENT_A" --message="Initial commit"
-
-	for file in a b.c "d~" e/f "g h" i.o .j "h~/k"; do
-		printf "%s\n%s" "$file CHANGED" "$(seq 1 8)" > "$file"
-	done
-}
-
-git_init
-in_work_dir prepare_git_repo
+in_work_dir create_dirty_workdir
 
 test_tig
 

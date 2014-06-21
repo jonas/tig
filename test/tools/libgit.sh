@@ -73,6 +73,28 @@ git_commit()
 	unset GIT_COMMITTER_DATE
 }
 
+create_dirty_workdir()
+{
+	git init -q .
+	git_config
+
+	echo "*.o" > .gitignore
+	echo "*~" > .git/info/exclude
+
+	for file in a b.c "d~" e/f "g h" i.o .j "h~/k"; do
+		dir="$(dirname "$file")"
+		[ -n "$dir" ] && mkdir -p "$dir"
+		printf "%s\n%s" "$file" "$(seq 1 10)" > "$file"
+	done
+
+	git add .
+	git_commit --author="$IDENT_A" --message="Initial commit"
+
+	for file in a b.c "d~" e/f "g h" i.o .j "h~/k"; do
+		printf "%s\n%s" "$file CHANGED" "$(seq 1 8)" > "$file"
+	done
+}
+
 create_repo_one()
 {
 	for i in $(seq 1 10); do
