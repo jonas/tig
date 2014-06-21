@@ -18,7 +18,7 @@
 set -e
 
 tests="$(find test/ -name ".test-result" | wc -l)"
-asserts="$(find test/ -name ".test-result" | xargs cat | wc -l)"
+asserts="$(find test/ -name ".test-result" | xargs sed -n '/\[\(OK\|FAIL\)\]/p' | wc -l)"
 failures="$(find test/ -name ".test-result" | xargs grep FAIL | wc -l)"
 
 if [ $failures = 0 ]; then
