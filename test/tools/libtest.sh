@@ -24,32 +24,6 @@ output_dir="$base_dir/tmp/$prefix_dir/$test"
 tmp_dir="$base_dir/tmp"
 output_dir="$tmp_dir/$prefix_dir/$test"
 
-[ -t 1 ] && diff_color_arg=--color
-
-indent='            '
-verbose=
-debugger=
-
-set -- $TEST_OPTS
-
-while [ $# -gt 0 ]; do
-	arg="$1"; shift
-	case "$arg" in
-		verbose) verbose=yes ;;
-		no-indent) indent= ;;
-		debugger=*) debugger=$(expr "$arg" : 'debugger=\(.*\)')
-	esac
-done
-
-[ -e "$output_dir" ] && rm -rf "$output_dir"
-mkdir -p "$output_dir"
-
-if [ ! -d "$tmp_dir/.git" ]; then
-	# Create a dummy repository to avoid reading .git/config
-	# settings from the tig repository.
-	git init -q "$tmp_dir"
-fi
-
 # The locale must specify UTF-8 for Ncurses to output correctly. Since C.UTF-8
 # does not exist on Mac OS X, we end up with en_US as the only sane choice.
 export LANG=en_US.UTF-8
@@ -76,6 +50,15 @@ unset TIGRC_USER
 export ESCDELAY=200
 export LINES=30
 export COLUMNS=80
+
+[ -e "$output_dir" ] && rm -rf "$output_dir"
+mkdir -p "$output_dir"
+
+if [ ! -d "$tmp_dir/.git" ]; then
+	# Create a dummy repository to avoid reading .git/config
+	# settings from the tig repository.
+	git init -q "$tmp_dir"
+fi
 
 cd "$output_dir"
 
@@ -123,6 +106,27 @@ tigrc() {
 gitconfig() {
 	file "$HOME/.gitconfig" "$@"
 }
+
+#
+# Parse TEST_OPTS
+#
+
+[ -t 1 ] && diff_color_arg=--color
+
+indent='            '
+verbose=
+debugger=
+
+set -- $TEST_OPTS
+
+while [ $# -gt 0 ]; do
+	arg="$1"; shift
+	case "$arg" in
+		verbose) verbose=yes ;;
+		no-indent) indent= ;;
+		debugger=*) debugger=$(expr "$arg" : 'debugger=\(.*\)') ;;
+	esac
+done
 
 #
 # Test runners and assertion checking.
