@@ -28,6 +28,7 @@ output_dir="$tmp_dir/$prefix_dir/$test"
 
 indent='            '
 verbose=
+debugger=
 
 set -- $TEST_OPTS
 
@@ -36,6 +37,7 @@ while [ $# -gt 0 ]; do
 	case "$arg" in
 		verbose) verbose=yes ;;
 		no-indent) indent= ;;
+		debugger=*) debugger=$(expr "$arg" : 'debugger=\(.*\)')
 	esac
 done
 
@@ -177,11 +179,21 @@ trap 'show_test_results' EXIT
 test_tig()
 {
 	export TIG_NO_DISPLAY=
-	touch stdin
-	(cd "$work_dir" && tig "$@") < stdin > stdout 2> stderr.orig
+	touch stdin stderr
+	if [ -n "$debugger" ]; then
+		if [ -s "$work_dir/stdin" ]; then
+			echo "*** This test requires data to be injected via stdin."
+			echo "*** The expected input file is: '$work_dir/stdin'"
+		fi
+		(cd "$work_dir" && $debugger tig "$@")
+	else
+		(cd "$work_dir" && tig "$@") < stdin > stdout 2> stderr.orig
+	fi
 	# Normalize paths in stderr output
-	sed "s#$output_dir#HOME#" < stderr.orig > stderr
-	rm -f stderr.orig
+	if [ -e stderr.orig ]; then
+		sed "s#$output_dir#HOME#" < stderr.orig > stderr
+		rm -f stderr.orig
+	fi
 }
 
 test_graph()

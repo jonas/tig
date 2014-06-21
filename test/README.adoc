@@ -28,3 +28,8 @@ no-indent::
 
 	Do not indent test output. This is automatically set depending
 	on whether `V=1` was passed to `make` to show verbose output.
+
+debugger=<program>::
+
+	Invoke tig via a debugger, for example `debugger=lldb`. Remember
+	to recompile using `make clean all-debug` to expose all symbols.
