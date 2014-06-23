@@ -33,3 +33,7 @@ debugger=<program>::
 
 	Invoke tig via a debugger, for example `debugger=lldb`. Remember
 	to recompile using `make clean all-debug` to expose all symbols.
+
+trace::
+
+	Show trace information.

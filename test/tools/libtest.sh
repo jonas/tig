@@ -116,6 +116,7 @@ gitconfig() {
 indent='            '
 verbose=
 debugger=
+trace=
 
 set -- $TEST_OPTS
 
@@ -125,6 +126,7 @@ while [ $# -gt 0 ]; do
 		verbose) verbose=yes ;;
 		no-indent) indent= ;;
 		debugger=*) debugger=$(expr "$arg" : 'debugger=\(.*\)') ;;
+		trace) trace=yes ;;
 	esac
 done
 
@@ -154,7 +156,12 @@ assert_equals()
 
 show_test_results()
 {
-	if [ ! -e .test-result ]; then
+	if [ -n "$trace" -a -e "$TIG_TRACE" ]; then
+		sed "s/^/$indent[trace] /" < "$TIG_TRACE"
+	fi
+	if [ ! -d "$HOME" ]; then
+		echo "Skipped"
+	elif [ ! -e .test-result ]; then
 		[ -e stderr ] &&
 			sed "s/^/[stderr] /" < stderr
 		[ -e stderr.orig ] &&
@@ -183,6 +190,9 @@ trap 'show_test_results' EXIT
 test_tig()
 {
 	export TIG_NO_DISPLAY=
+	if [ -n "$trace" ]; then
+		export TIG_TRACE="$HOME/.tig-trace"
+	fi
 	touch stdin stderr
 	if [ -n "$debugger" ]; then
 		if [ -s "$work_dir/stdin" ]; then
