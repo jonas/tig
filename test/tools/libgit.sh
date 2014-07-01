@@ -97,40 +97,42 @@ create_dirty_workdir()
 
 create_repo_one()
 {
-	for i in $(seq 1 10); do
-		git_commit --author="$IDENT_A" --message="Commit $i A"
-		git_commit --author="$IDENT_B" --message="Commit $i B"
-		git_commit --author="$IDENT_C" --message="Commit $i C"
-		git_commit --author="$IDENT_D" --message="Commit $i D"
-		git_commit --author="$IDENT_E" --message="Commit $i E"
-	done
+	git_init "$1"
+	(cd "$1" && {
 
-	remote=upstream
-	git remote add $remote http://example.org/repo.git
-	mkdir -p .git/refs/remotes/$remote
-	echo 5633519083f21695dda4fe1f546272abb80668cd > .git/refs/remotes/$remote/master
+		for i in $(seq 1 10); do
+			git_commit --author="$IDENT_A" --message="Commit $i A"
+			git_commit --author="$IDENT_B" --message="Commit $i B"
+			git_commit --author="$IDENT_C" --message="Commit $i C"
+			git_commit --author="$IDENT_D" --message="Commit $i D"
+			git_commit --author="$IDENT_E" --message="Commit $i E"
+		done
 
-	tagged=957f2b368e6fa5c0757f36b1441e32729ee5e9c7
-	git tag v1.0 $tagged
+		remote=upstream
+		git remote add $remote http://example.org/repo.git
+		mkdir -p .git/refs/remotes/$remote
+		echo 5633519083f21695dda4fe1f546272abb80668cd > .git/refs/remotes/$remote/master
+
+		tagged=957f2b368e6fa5c0757f36b1441e32729ee5e9c7
+		git tag v1.0 $tagged
+	})
+}
+
+create_repo()
+{
+	if [ ! -d "$1" ]; then
+		case "$(basename "$1")" in
+			repo-one) create_repo_one "$1";;
+			*) exit 1 ;;
+		esac
+	fi
 }
 
 git_clone()
 {
-	cwd="$(pwd)"
-	name="$1"
-	repo="$tmp_dir/git-repos/$name"
+	create_repo "$tmp_dir/git-repos/$1"
 
-	if [ ! -d "$repo" ]; then
-		git_init "$repo"
-		cd "$repo"
-		case "$name" in
-			repo-one) create_repo_one ;;
-			*) exit 1 ;;
-		esac
-		cd "$cwd"
-	fi
-	git clone -q "$repo" "$work_dir"
-	cd "$work_dir"
-	git_config
-	cd "$cwd"
+	clone_dir="${2:-$work_dir}"
+	git clone -q "$tmp_dir/git-repos/$1" "$clone_dir"
+	(cd "$clone_dir" && git_config)
 }
