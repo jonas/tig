@@ -10,24 +10,19 @@ export LINES=16
 
 steps '
 	:view-main
-	:wait
 	:save-display main-with-unstaged.screen
 	:enter
-	:wait
 	:save-display main-with-unstaged-split.screen
 
 	:status-update
-	:wait
 	:save-display main-with-staged.screen
 
 	:enter
-	:wait
 	:save-display main-with-staged-split.screen
 
 	:view-close
 	<F1>
 	:refresh
-	:wait
 	:save-display main-with-staged-and-unstaged.screen
 '
 

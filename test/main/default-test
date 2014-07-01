@@ -13,27 +13,21 @@ EOF
 
 steps '
 	:view-main
-	:wait
 	:save-display main-default.screen
 	:set reference-format = (branch) [tag] @remote
-	:wait
 	:save-display main-ref-format.screen
 	:set reference-format = (branch) [tag] hide:remote
-	:wait
 	:save-display main-remotes-hidden.screen
 
 	:toggle commit-title-refs
 	:save-display main-no-refs.screen
 	:toggle commit-title-graph
-	:wait
 	:save-display main-no-graph.screen
 
 	:957f2b368e6fa5c0757f36b1441e32729ee5e9c7
 	<Enter>
-	:wait
 	:save-display main-with-diff.screen
 	<Down>
-	:wait
 	:save-display main-with-diff-next.screen
 '
 

@@ -9,7 +9,6 @@ export LINES=16
 
 steps '
 	:view-main
-	:wait
 	/作者<Enter>
 	:save-display main-search-author.screen
 	/<Enter>

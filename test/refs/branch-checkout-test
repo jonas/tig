@@ -21,19 +21,16 @@ EOF
 
 steps '
 	:view-refs
-	:wait
 	:save-display refs-init.screen
 	:3
 	<F1>
 	<F2>
-	:wait
 	:2
 	:save-display refs-checked-out-branch.screen
 	<F4>
 	:6
 	<F1>
 	<F3>
-	:wait
 	:save-display refs-checked-out-tag.screen
 	<F4>
 '

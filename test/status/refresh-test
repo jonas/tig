@@ -7,49 +7,38 @@ export LINES=15
 
 steps '
 	:view-status
-	:wait
 	:save-display status-with-unstaged.screen
 
 	<F1>
-	:wait
 	:save-display status-after-add-a.screen
 
 	<F2>
-	:wait
 	:save-display status-after-add-all.screen
 
 	<F3>
-	:wait
 	:save-display status-after-commit.screen
 
 	<F4>
-	:wait
 	:save-display status-after-reset-soft.screen
 
 	<F5>
-	:wait
 	:save-display status-after-reset-a-and-bc.screen
 
 	:8
 	<F6>
-	:wait
 	:save-display status-after-checkout-bc.screen
 
 	<F7>
-	:wait
 	:save-display status-after-reset-hard.screen
 
 	<F8>
-	:wait
 	:save-display status-after-touch-new-file.screen
 
 	<F9>
-	:wait
 	:save-display status-after-rm-a.screen
 
 	:5
 	<F6>
-	:wait
 	:save-display status-after-checkout-a.screen
 
 '

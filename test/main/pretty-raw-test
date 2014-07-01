@@ -10,7 +10,6 @@ export LINES=16
 git_clone 'repo-one'
 
 steps '
-	:wait
 	:save-display main-pretty-raw.screen
 '
 

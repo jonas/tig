@@ -8,31 +8,24 @@ export LINES=5
 
 steps '
 	:view-main
-	:wait
 	:save-display main-with-unstaged.screen
 
 	<F1>
-	:wait
 	:save-display main-after-add-a.screen
 
 	<F2>
-	:wait
 	:save-display main-after-add-all.screen
 
 	<F3>
-	:wait
 	:save-display main-after-commit.screen
 
 	<F4>
-	:wait
 	:save-display main-after-reset-soft.screen
 
 	<F5>
-	:wait
 	:save-display main-after-reset-a-and-bc.screen
 
 	<F6>
-	:wait
 	:save-display main-after-reset-hard.screen
 '
 

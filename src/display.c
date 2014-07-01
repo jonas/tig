@@ -486,7 +486,7 @@ is_script_executing(void)
 }
 
 static bool
-read_script(struct key *key, int delay)
+read_script(struct key *key)
 {
 	static struct buffer input_buffer;
 	static const char *line = "";
@@ -505,12 +505,6 @@ read_script(struct key *key, int delay)
 		}
 	}
 
-	if (!strcmp(line, ":wait")) {
-		if (delay != 0)
-			line = input_buffer.data = NULL;
-		return FALSE;
-	}
-
 	code = get_key_value(&line, key);
 	if (code != SUCCESS)
 		die("Error reading script: %s", get_status_message(code));
@@ -525,7 +519,7 @@ get_input_char(void)
 		static int bytes_pos;
 
 		if (!key.modifiers.multibytes || bytes_pos >= strlen(key.data.bytes)) {
-			if (!read_script(&key, 0))
+			if (!read_script(&key))
 				return 0;
 			bytes_pos = 0;
 		}
@@ -588,7 +582,8 @@ get_input(int prompt_position, struct key *key, bool modifiers)
 		setsyx(cursor_y, cursor_x);
 
 		if (is_script_executing()) {
-			if (!read_script(key, delay))
+			/* Wait for the current command to complete. */
+			if (delay == 0 || !read_script(key))
 				continue;
 			return key->modifiers.multibytes ? OK : key->data.value;
 

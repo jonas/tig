@@ -57,7 +57,6 @@ EOF
 
 steps "
 	:view-help
-	:wait
 	:save-display help.screen
 "
 
