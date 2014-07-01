@@ -160,12 +160,9 @@ open_run_request(struct view *view, enum request request)
 			}
 		}
 
-		if (confirmed && argv_remove_quotes(argv)) {
-			if (req->flags.silent)
-				io_run_bg(argv);
-			else
-				open_external_viewer(argv, NULL, !req->flags.exit, FALSE, "");
-		}
+		if (confirmed && argv_remove_quotes(argv))
+			open_external_viewer(argv, NULL, req->flags.silent,
+					     !req->flags.exit, FALSE, "");
 	}
 
 	if (argv)

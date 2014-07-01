@@ -30,11 +30,16 @@ steps '
 	:wait
 	:save-display status-after-reset-a-and-bc.screen
 
+	:4
 	<F6>
+	:wait
+	:save-display status-after-checkout.screen
+
+	<F7>
 	:wait
 	:save-display status-after-reset-hard.screen
 
-	<F7>
+	<F8>
 	:wait
 	:save-display status-after-touch-new-file.screen
 '
@@ -42,12 +47,13 @@ steps '
 tigrc <<EOF
 set refresh-mode = after-command
 bind generic <F1> !sh -c 'git add a'
-bind generic <F2> !sh -c 'git add -u'
+bind generic <F2> @sh -c 'git add -u'
 bind generic <F3> !sh -c 'git commit -m "Commit changes"'
-bind generic <F4> !sh -c 'git reset --soft HEAD^'
+bind generic <F4> @sh -c 'git reset --soft HEAD^'
 bind generic <F5> !sh -c 'git reset a b.c'
-bind generic <F6> !sh -c 'git reset --hard'
-bind generic <F7> !sh -c 'touch new-file'
+bind generic <F6> @git checkout -- %(file)
+bind generic <F7> !sh -c 'git reset --hard'
+bind generic <F8> !sh -c 'touch new-file'
 EOF
 
 in_work_dir create_dirty_workdir
