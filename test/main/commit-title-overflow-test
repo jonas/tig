@@ -1,0 +1,114 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=51
+
+tigrc <<EOF
+set vertical-split = no
+set main-view	= line-number:no id:no date:no author:no commit-title:yes,graph=no,refs=no,overflow=5
+EOF
+
+steps '
+	:view-main
+	:save-display main-commit-titles.screen
+'
+
+prepare_repo()
+{
+	offset=0
+	prefix0=
+	prefix1=
+	prefix2=
+	prefix3=
+	prefix4=
+
+	for i in $(seq 1 7); do
+		git_commit -m "${prefix0}æøå		: #1 - ASCII prefix"
+		git_commit -m "${prefix0}作者		: #2 - ASCII prefix"
+		offset=$(expr $offset + 1)
+		if [ $offset -eq 5 ]; then
+			prefix0="${prefix0}|"
+			offset=0
+		else
+			prefix0="${prefix0}."
+		fi
+
+		git_commit -m "${prefix1}æøå		: #3 - mixed prefix"
+		git_commit -m "${prefix2}作者		: #4 - mixed prefix"
+		if [ -z "$prefix1" ]; then
+			prefix1="${prefix1}>"
+			prefix2="${prefix2}>"
+		else
+			prefix1="${prefix1}å"
+			prefix2="${prefix2}者"
+		fi
+
+		git_commit -m "${prefix3}æøå		: #5 - non-ASCII prefix"
+		prefix3="${prefix3}å"
+
+		git_commit -m "${prefix4}作者		: #6 - non-ASCII prefix"
+		prefix4="${prefix4}者"
+
+		git_commit -m "__________________________________________[ Variation $i ]"
+	done
+}
+
+git_init
+in_work_dir prepare_repo
+
+test_tig
+
+assert_equals 'main-commit-titles.screen' <<EOF
+__________________________________________[ Variation 7 ]                       
+者者者者者者作者  : #6 - non-ASCII prefix                               
+ååååååæøå  : #5 - non-ASCII prefix                                     
+>者者者者者作者  : #4 - mixed prefix                                     
+>åååååæøå  : #3 - mixed prefix                                          
+....|.作者  : #2 - ASCII prefix                                               
+....|.æøå  : #1 - ASCII prefix                                               
+__________________________________________[ Variation 6 ]                       
+者者者者者作者  : #6 - non-ASCII prefix                                  
+åååååæøå  : #5 - non-ASCII prefix                                       
+>者者者者作者  : #4 - mixed prefix                                        
+>ååååæøå  : #3 - mixed prefix                                            
+....|作者  : #2 - ASCII prefix                                                
+....|æøå  : #1 - ASCII prefix                                                
+__________________________________________[ Variation 5 ]                       
+者者者者作者  : #6 - non-ASCII prefix                                     
+ååååæøå  : #5 - non-ASCII prefix                                         
+>者者者作者  : #4 - mixed prefix                                           
+>åååæøå  : #3 - mixed prefix                                              
+....作者  : #2 - ASCII prefix                                                 
+....æøå  : #1 - ASCII prefix                                                 
+__________________________________________[ Variation 4 ]                       
+者者者作者  : #6 - non-ASCII prefix                                        
+åååæøå  : #5 - non-ASCII prefix                                           
+>者者作者  : #4 - mixed prefix                                              
+>ååæøå  : #3 - mixed prefix                                                
+...作者  : #2 - ASCII prefix                                                  
+...æøå  : #1 - ASCII prefix                                                  
+__________________________________________[ Variation 3 ]                       
+者者作者  : #6 - non-ASCII prefix                                           
+ååæøå  : #5 - non-ASCII prefix                                             
+>者作者  : #4 - mixed prefix                                                 
+>åæøå  : #3 - mixed prefix                                                  
+..作者  : #2 - ASCII prefix                                                   
+..æøå  : #1 - ASCII prefix                                                   
+__________________________________________[ Variation 2 ]                       
+者作者  : #6 - non-ASCII prefix                                              
+åæøå  : #5 - non-ASCII prefix                                               
+>作者  : #4 - mixed prefix                                                    
+>æøå  : #3 - mixed prefix                                                    
+.作者  : #2 - ASCII prefix                                                    
+.æøå  : #1 - ASCII prefix                                                    
+__________________________________________[ Variation 1 ]                       
+作者  : #6 - non-ASCII prefix                                                 
+æøå  : #5 - non-ASCII prefix                                                 
+作者  : #4 - mixed prefix                                                     
+æøå  : #3 - mixed prefix                                                     
+作者  : #2 - ASCII prefix                                                     
+æøå  : #1 - ASCII prefix                                                     
+[main] 2c360aa85544dd96eb1c4be5234c06c192f9a895 - commit 1 of 49            100%
+EOF
