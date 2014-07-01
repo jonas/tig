@@ -133,12 +133,12 @@ draw_text_overflow(struct view *view, const char *text, enum line_type type,
 	if (on) {
 		int overflow = overflow_length + offset;
 		int max = MIN(VIEW_MAX_LEN(view), overflow);
-		int len = strlen(text);
+		int len = utf8_char_count(text);
 
 		if (draw_text_expanded(view, type, text, max, max < overflow))
 			return TRUE;
 
-		text = len > overflow ? text + overflow : "";
+		text = len > overflow ? utf8_skip(text, overflow) : "";
 		type = LINE_OVERFLOW;
 	}
 

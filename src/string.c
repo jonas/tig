@@ -297,6 +297,37 @@ utf8_to_unicode(const char *string, size_t length)
 	return unicode > 0xffff ? 0 : unicode;
 }
 
+size_t
+utf8_char_count(const char *string)
+{
+	size_t count = 0;
+	while (1) {
+		unsigned char len = utf8_char_length(string);
+		while (len-- > 0) {
+			if (!*string)
+				return count;
+			string++;
+		}
+		count += 1;
+	}
+}
+
+
+const char*
+utf8_skip(const char *string, size_t skip)
+{
+	while (skip-- > 0) {
+		unsigned char len = utf8_char_length(string);
+		assert(len > 0);
+		while (len-- > 0) {
+			if (!*string)
+				return string;
+			string++;
+		}
+	}
+	return string;
+}
+
 /* Calculates how much of string can be shown within the given maximum width
  * and sets trimmed parameter to non-zero value if all of string could not be
  * shown. If the reserve flag is TRUE, it will reserve at least one

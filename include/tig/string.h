@@ -105,6 +105,11 @@ int unicode_width(unsigned long c, int tab_size);
 
 unsigned char utf8_char_length(const char *string);
 
+size_t utf8_char_count(const char *string);
+
+/* Advance string by `skip' UTF-8 characters. */
+const char* utf8_skip(const char *string, size_t skip);
+
 /* Decode UTF-8 multi-byte representation into a Unicode character. */
 unsigned long utf8_to_unicode(const char *string, size_t length);
 
