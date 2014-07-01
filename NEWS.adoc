@@ -10,7 +10,7 @@ Improvement:
  - Add `:script <file>` prompt command for scripting the Tig UI.
  - Add test framework and convert existing tests to use it.
  - Make blame commit ID colors stable across reloads. (GH #303)
- - Increase blame ID color palette to 14 colors.
+ - Increase blame ID and graph rendering color palette to 14 colors.
 
 Bug fixes:
 
