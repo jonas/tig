@@ -14,6 +14,8 @@ Improvement:
 
 Bug fixes:
 
+ - Refresh the current view when returning from an external command and
+   `refresh-mode=after-command`. (GH #289)
  - Fix readline completion.
  - Fix '/' to `find-next` when readline support is enabled. (GH #302)
  - Fix readline prompt to correctly handle UTF-8 characters.

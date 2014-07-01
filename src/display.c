@@ -41,11 +41,13 @@ open_external_viewer(const char *argv[], const char *dir, bool confirm, bool ref
 	if (confirm || !ok) {
 		if (!ok && *notice)
 			fprintf(stderr, "%s", notice);
-		fprintf(stderr, "Press Enter to continue");
-		getc(opt_tty);
+		if (!is_script_executing()) {
+			fprintf(stderr, "Press Enter to continue");
+			getc(opt_tty);
+		}
 	}
 	reset_prog_mode();
-	if (watch_update(WATCH_EVENT_AFTER_EXTERNAL) && refresh) {
+	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && refresh) {
 		struct view *view;
 		int i;
 
