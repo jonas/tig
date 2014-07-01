@@ -2,6 +2,7 @@
 
 . libtest.sh
 . libgit.sh
+. "$source_dir/util.sh"
 
 export LINES=5
 
@@ -52,7 +53,7 @@ export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
 
 test_tig
 
-YYY_MM_DD_HH_MM="$(date +"%Y-%m-%d %H:%M")"
+main_replace_index_changes_date
 
 assert_equals 'main-with-unstaged.screen' <<EOF
 $YYY_MM_DD_HH_MM Unknown    o Unstaged changes                                  

@@ -4,6 +4,7 @@
 
 . libtest.sh
 . libgit.sh
+. "$source_dir/util.sh"
 
 export LINES=16
 
@@ -39,7 +40,7 @@ in_work_dir create_dirty_workdir
 
 test_tig
 
-YYY_MM_DD_HH_MM="$(date +"%Y-%m-%d %H:%M")"
+main_replace_index_changes_date
 
 assert_equals 'main-with-unstaged.screen' <<EOF
 $YYY_MM_DD_HH_MM Unknown    o Unstaged changes                                  
