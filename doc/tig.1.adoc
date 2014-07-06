@@ -16,6 +16,7 @@ tig log    [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
 tig blame  [options] [rev] [--] path
 tig grep   [options] [pattern]
+tig refs
 tig stash
 tig status
 tig <      [Git command output]
@@ -51,6 +52,9 @@ status::
 
 log::
 	Start up in log view, displaying git-log(1) output.
+
+refs::
+	Start up in refs view.
 
 stash::
 	Start up in stash view.
@@ -165,6 +169,11 @@ $ tig stash
 Grep all files for lines containing `DEFINE_ENUM`:
 -----------------------------------------------------------------------------
 $ tig grep -p DEFINE_ENUM
+-----------------------------------------------------------------------------
+
+Show references (branches, remotes and tags):
+-----------------------------------------------------------------------------
+$ tig refs
 -----------------------------------------------------------------------------
 
 ENVIRONMENT VARIABLES

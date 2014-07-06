@@ -9,6 +9,7 @@ Improvement:
  - Add `:save-display <file>` prompt command to save the current display.
  - Add `:script <file>` prompt command for scripting the Tig UI.
  - Add test framework and convert existing tests to use it.
+ - Add command-line option for starting in refs view: `tig refs`. (GH #309)
  - Make blame commit ID colors stable across reloads. (GH #303)
  - Increase blame ID and graph rendering color palette to 14 colors.
 
@@ -21,7 +22,7 @@ Bug fixes:
  - Fix readline prompt to correctly handle UTF-8 characters.
  - Add warnings for more obsolete actions and colors.
  - Fix passing of commit IDS via stdin to the main view.
- - Fix commit title overflow drawing for multibyte text
+ - Fix commit title overflow drawing for multibyte text. (GH #307)
 
 tig-2.0.2
 ---------
