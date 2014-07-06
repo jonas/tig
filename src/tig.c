@@ -500,6 +500,9 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 	} else if (!strcmp(subcommand, "stash")) {
 		request = REQ_VIEW_STASH;
 
+	} else if (!strcmp(subcommand, "refs")) {
+		request = REQ_VIEW_REFS;
+
 	} else {
 		subcommand = NULL;
 	}
