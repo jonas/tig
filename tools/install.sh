@@ -28,7 +28,7 @@ case "$data" in data)
 	mode=0644
 esac
 
-mkdir -p "$dest"
+install -d "$dest"
 
 if [ "$V" = "@" ]; then
 	echo "$src -> $dest"
