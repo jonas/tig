@@ -23,6 +23,7 @@ Bug fixes:
  - Add warnings for more obsolete actions and colors.
  - Fix passing of commit IDS via stdin to the main view.
  - Fix commit title overflow drawing for multibyte text. (GH #307)
+ - Fix installation directory permissions.
 
 tig-2.0.2
 ---------
