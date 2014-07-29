@@ -451,10 +451,11 @@ init_display(void)
 
 	term = getenv("XTERM_VERSION") ? NULL : getenv("COLORTERM");
 	if (term && !strcmp(term, "gnome-terminal")) {
-		/* In the gnome-terminal-emulator, the message from
-		 * scrolling up one line when impossible followed by
-		 * scrolling down one line causes corruption of the
-		 * status line. This is fixed by calling wclear. */
+		/* In the gnome-terminal-emulator, the warning message
+		 * shown when scrolling up one line while the cursor is
+		 * on the first line followed by scrolling down one line
+		 * corrupts the status line. This is fixed by calling
+		 * wclear. */
 		use_scroll_status_wclear = TRUE;
 		use_scroll_redrawwin = FALSE;
 
