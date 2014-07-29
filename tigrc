@@ -175,8 +175,10 @@ bind generic	<Enter>	enter			# Enter and open selected entry
 bind generic	<Lt>	back			# Go back to the previous view state
 bind generic	<Down>	next			# Move to next
 bind generic	<C-N>	next
+bind generic	J	next
 bind generic	<Up>	previous		# Move to previous
 bind generic	<C-P>	previous
+bind generic	K	previous
 bind generic	,	parent			# Move to parent
 bind generic	<Tab>	view-next		# Move focus to the next view
 bind generic	R	refresh			# Reload and refresh view
