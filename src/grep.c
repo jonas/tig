@@ -213,8 +213,14 @@ grep_read(struct view *view, struct buffer *buf)
 	lineno = io_memchr(buf, buf->data, 0);
 	text = io_memchr(buf, lineno, 0);
 
+	/*
+	 * No data indicates binary file matches, e.g.:
+	 *	> git grep vertical- -- test
+	 *	test/graph/20-tig-all-long-test:● │ Add "auto" vertical-split
+	 *	Binary file test/graph/20-tig-all-long-test.in matches
+	 */
 	if (!lineno || !text)
-		return FALSE;
+		return TRUE;
 
 	textlen = strlen(text);
 

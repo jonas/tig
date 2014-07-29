@@ -24,6 +24,7 @@ Bug fixes:
  - Fix passing of commit IDS via stdin to the main view.
  - Fix commit title overflow drawing for multibyte text. (GH #307)
  - Fix installation directory permissions.
+ - Handle binary files matches reported by git-grep.
 
 tig-2.0.2
 ---------
