@@ -206,11 +206,19 @@ The following variables can be set:
 
 'split-view-height' (mixed)::
 
-	Height of the lower view in a split view. Can be specified either as
-	the number of rows, e.g. '5', or as a percentage of the view height,
-	e.g. '80%', where the maximum is 100%. It is always ensured that the
-	smaller of the views is at least four rows high. The default is a view
-	height of '66%'.
+	The height of the bottom view in a horizontally split display. Can be
+	specified either as the number of rows, e.g. '5', or as a percentage of
+	the view height, e.g. '80%', where the maximum is 100%. It is always
+	ensured that the smaller of the views is at least four rows high. The
+	default is '67%'.
+
+'split-view-width' (mixed)::
+
+	Width of the right-most view in a vertically split display. Can be
+	specified either as the number of column, e.g. '5', or as a percentage
+	of the view width, e.g. '80%', where the maximum is 100%. It is always
+	ensured that the smaller of the views is at least four columns wide. The
+	default is '50%'.
 
 'status-untracked-dirs' (bool)::
 

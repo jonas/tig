@@ -12,6 +12,8 @@ Improvement:
  - Add command-line option for starting in refs view: `tig refs`. (GH #309)
  - Make blame commit ID colors stable across reloads. (GH #303)
  - Increase blame ID and graph rendering color palette to 14 colors.
+ - New setting 'split-view-width' controls the width for vertical splits. It
+   takes the width of the right-most view either as a number or a percentage.
 
 Bug fixes:
 

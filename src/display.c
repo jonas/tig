@@ -121,7 +121,7 @@ static void
 apply_vertical_split(struct view *base, struct view *view)
 {
 	view->height = base->height;
-	view->width  = apply_step(VSPLIT_SCALE, base->width);
+	view->width  = apply_step(opt_split_view_width, base->width);
 	view->width  = MAX(view->width, MIN_VIEW_WIDTH);
 	view->width  = MIN(view->width, base->width - MIN_VIEW_WIDTH);
 	base->width -= view->width;
@@ -577,7 +577,7 @@ get_input(int prompt_position, struct key *key, bool modifiers)
 		} else {
 			view = display[current_view];
 			getbegyx(view->win, cursor_y, cursor_x);
-			cursor_x = view->width - 1;
+			cursor_x += view->width - 1;
 			cursor_y += view->pos.lineno - view->pos.offset;
 		}
 		setsyx(cursor_y, cursor_x);

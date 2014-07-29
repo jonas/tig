@@ -49,6 +49,7 @@
 	_(show_changes,			bool,			VIEW_NO_FLAGS) \
 	_(show_notes,			bool,			VIEW_NO_FLAGS) \
 	_(split_view_height,		double,			VIEW_RESET_DISPLAY) \
+	_(split_view_width,		double,			VIEW_RESET_DISPLAY) \
 	_(stage_view,			const char **,		VIEW_NO_FLAGS) \
 	_(status_untracked_dirs,	bool,			VIEW_STATUS_LIKE) \
 	_(status_view,			const char **,		VIEW_NO_FLAGS) \
