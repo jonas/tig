@@ -17,6 +17,8 @@ Improvement:
  - Expose settings holding command line argument lists: `file-args`, `rev-args`,
    and `cmdline-args`. They are mainly intended for testing purposes but also
    allows to change the filtering arguments dynamically. (GH #306)
+ - Add `log-options` setting for specifying default log view options.
+   Example: `set log-options = --pretty=fuller`.
 
 Bug fixes:
 
@@ -30,6 +32,10 @@ Bug fixes:
  - Fix commit title overflow drawing for multibyte text. (GH #307)
  - Fix installation directory permissions.
  - Handle binary files matches reported by git-grep.
+ - Toggling of "args"-typed options without any arguments will clear the current
+   arguments. Example: `:toggle blame-options`.
+ - Detect custom `pretty.format` settings that break the log view and fallback
+   to use the `medium` format. (GH #225)
 
 tig-2.0.2
 ---------

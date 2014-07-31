@@ -42,6 +42,7 @@
 	_(ignore_case,			bool,			VIEW_NO_FLAGS) \
 	_(ignore_space,			enum ignore_space,	VIEW_DIFF_LIKE) \
 	_(line_graphics,		enum graphic,		VIEW_NO_FLAGS) \
+	_(log_options,			const char **,		VIEW_LOG_LIKE) \
 	_(log_view,			const char **,		VIEW_NO_FLAGS) \
 	_(main_view,			const char **,		VIEW_NO_FLAGS) \
 	_(mouse,			bool,			VIEW_NO_FLAGS) \

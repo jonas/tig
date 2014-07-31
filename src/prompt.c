@@ -628,6 +628,12 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 		bool found = TRUE;
 		int i;
 
+		if (argv_size(argv) <= 2) {
+			argv_free(*opt);
+			(*opt)[0] = NULL;
+			return SUCCESS;
+		}
+
 		for (i = 2; argv[i]; i++) {
 			if (!find_arg(*opt, argv[i])) {
 				found = FALSE;

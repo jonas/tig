@@ -1075,6 +1075,10 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	else if (!strcmp(name, "diff.context")) {
 		if (!find_option_info_by_value(&opt_diff_context)->seen)
 			opt_diff_context = -atoi(value);
+
+	} else if (!strcmp(name, "format.pretty")) {
+		if (!prefixcmp(value, "format:") && strstr(value, "%C("))
+			argv_append(&opt_log_options, "--pretty=medium");
 	}
 
 	return OK;
