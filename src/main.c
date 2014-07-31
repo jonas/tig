@@ -202,7 +202,7 @@ main_open(struct view *view, enum open_flags flags)
 	state->with_graph = column && column->opt.commit_title.graph &&
 			    opt_commit_order != COMMIT_ORDER_REVERSE;
 
-	if (opt_rev_argv && main_check_argv(view, opt_rev_argv))
+	if (opt_rev_args && main_check_argv(view, opt_rev_args))
 		main_argv = pretty_raw_argv;
 
 	if (open_in_pager_mode(flags)) {

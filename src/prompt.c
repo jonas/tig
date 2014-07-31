@@ -546,7 +546,7 @@ find_arg(const char *argv[], const char *arg)
 {
 	int i;
 
-	for (i = 0; argv[i]; i++)
+	for (i = 0; argv && argv[i]; i++)
 		if (!strcmp(argv[i], arg))
 			return TRUE;
 	return FALSE;

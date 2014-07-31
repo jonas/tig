@@ -93,17 +93,17 @@ blame_open(struct view *view, enum open_flags flags)
 
 	if (is_initial_view(view)) {
 		/* Finish validating and setting up blame options */
-		if (!opt_file_argv || opt_file_argv[1] || (opt_rev_argv && opt_rev_argv[1]))
+		if (!opt_file_args || opt_file_args[1] || (opt_rev_args && opt_rev_args[1]))
 			usage("Invalid number of options to blame");
 
-		if (opt_rev_argv) {
-			string_ncopy(view->env->ref, opt_rev_argv[0], strlen(opt_rev_argv[0]));
+		if (opt_rev_args) {
+			string_ncopy(view->env->ref, opt_rev_args[0], strlen(opt_rev_args[0]));
 		}
 
-		string_ncopy(view->env->file, opt_file_argv[0], strlen(opt_file_argv[0]));
+		string_ncopy(view->env->file, opt_file_args[0], strlen(opt_file_args[0]));
 
-		opt_blame_options = opt_cmdline_argv;
-		opt_cmdline_argv = NULL;
+		opt_blame_options = opt_cmdline_args;
+		opt_cmdline_args = NULL;
 	}
 
 	if (!view->env->file[0]) {

@@ -128,8 +128,8 @@ grep_open(struct view *view, enum open_flags flags)
 	const char **argv = NULL;
 
 	if (is_initial_view(view)) {
-		grep_argv = opt_cmdline_argv;
-		opt_cmdline_argv = NULL;
+		grep_argv = opt_cmdline_args;
+		opt_cmdline_args = NULL;
 	}
 
 	if (!argv_append_array(&argv, grep_args) ||

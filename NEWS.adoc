@@ -14,6 +14,9 @@ Improvement:
  - Increase blame ID and graph rendering color palette to 14 colors.
  - New setting 'split-view-width' controls the width for vertical splits. It
    takes the width of the right-most view either as a number or a percentage.
+ - Expose settings holding command line argument lists: `file-args`, `rev-args`,
+   and `cmdline-args`. They are mainly intended for testing purposes but also
+   allows to change the filtering arguments dynamically. (GH #306)
 
 Bug fixes:
 

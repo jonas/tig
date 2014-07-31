@@ -441,11 +441,11 @@ filter_options(const char *argv[], bool rev_parse)
 	update_options_from_argv(argv);
 
 	if (!rev_parse) {
-		opt_cmdline_argv = argv;
+		opt_cmdline_args = argv;
 		return;
 	}
 
-	filter_rev_parse(&opt_file_argv, "--no-revs", "--no-flags", argv);
+	filter_rev_parse(&opt_file_args, "--no-revs", "--no-flags", argv);
 	filter_rev_parse(&flags, "--flags", "--no-revs", argv);
 
 	if (flags) {
@@ -453,17 +453,17 @@ filter_options(const char *argv[], bool rev_parse)
 			const char *flag = flags[next];
 
 			if (argv_parse_rev_flag(flag, NULL))
-				argv_append(&opt_rev_argv, flag);
+				argv_append(&opt_rev_args, flag);
 			else
 				flags[flags_pos++] = flag;
 		}
 
 		flags[flags_pos] = NULL;
 
-		opt_cmdline_argv = flags;
+		opt_cmdline_args = flags;
 	}
 
-	filter_rev_parse(&opt_rev_argv, "--symbolic", "--revs-only", argv);
+	filter_rev_parse(&opt_rev_args, "--symbolic", "--revs-only", argv);
 }
 
 static enum request
@@ -549,16 +549,16 @@ open_pager_mode(enum request request)
 {
 	if (request == REQ_VIEW_PAGER) {
 		/* Detect if the user requested the main view. */
-		if (argv_contains(opt_rev_argv, "--stdin")) {
+		if (argv_contains(opt_rev_args, "--stdin")) {
 			open_main_view(NULL, OPEN_FORWARD_STDIN);
-		} else if (argv_contains(opt_cmdline_argv, "--pretty=raw")) {
+		} else if (argv_contains(opt_cmdline_args, "--pretty=raw")) {
 			open_main_view(NULL, OPEN_STDIN);
 		} else {
 			open_pager_view(NULL, OPEN_STDIN);
 		}
 
 	} else if (request == REQ_VIEW_DIFF) {
-		if (argv_contains(opt_rev_argv, "--stdin"))
+		if (argv_contains(opt_rev_args, "--stdin"))
 			open_diff_view(NULL, OPEN_FORWARD_STDIN);
 		else              
 			open_diff_view(NULL, OPEN_STDIN);
