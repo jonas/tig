@@ -186,22 +186,40 @@ _tig_options ()
 
 _tig_blame ()
 {
-	local reply="" ref=HEAD cur="${COMP_WORDS[COMP_CWORD]}"
+	local reply="" ref=HEAD cur="${COMP_WORDS[COMP_CWORD]}" p=""
+	local pfx=$(git rev-parse --show-prefix 2>/dev/null)
 
 	if test "$COMP_CWORD" -lt 3; then
-		reply="$(__tig_refs)"
+		_tigcomp "$(__tig_refs)"
 	else
 		ref="${COMP_WORDS[2]}"
 	fi
 
-	reply="$reply $(git --git-dir="$(__tigdir)" ls-tree "$ref" \
-			| sed '/^100... blob /s,^.*	,,
-			       /^040000 tree /{
-			           s,^.*	,,
-			           s,$,/,
-			       }
-			       s/^.*	//')"
-	_tigcomp "$reply"
+	case "$cur" in
+		*/)	p=${cur%/} ;;
+		*/*)	p=${cur%/*} ;;
+		*)	p= ;;
+	esac
+
+	i=${#COMPREPLY[@]}
+	local IFS=$'\n'
+	for c in $(git --git-dir="$(__tigdir)" ls-tree "$ref:$pfx$p" 2>/dev/null |
+		sed -n '/^100... blob /{
+			s,^.*	,,
+			s,$, ,
+			p
+		}
+		/^040000 tree /{
+			s,^.*	,,
+			s,$,/,
+			p
+		}')
+	do
+		c="${p:+$p/}$c"
+		if [[ "$c" == "$cur"* ]]; then
+			COMPREPLY[i++]=$c
+		fi
+	done
 }
 
 _tig_show ()
