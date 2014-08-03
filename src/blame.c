@@ -339,7 +339,7 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 	char from[SIZEOF_REF + SIZEOF_STR];
 	char to[SIZEOF_REF + SIZEOF_STR];
 	const char *diff_tree_argv[] = {
-		"git", "diff", encoding_arg, "--no-textconv", "--no-extdiff",
+		"git", "diff", encoding_arg, "--no-textconv", "--no-ext-diff",
 			"--no-color", "-U0", from, to, "--", NULL
 	};
 	struct io io;
