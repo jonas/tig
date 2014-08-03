@@ -37,6 +37,7 @@ Bug fixes:
  - Detect custom `pretty.format` settings that break the log view and fallback
    to use the `medium` format. (GH #225)
  - Fix invocation of git-diff for the blame view's line tracking. (GH #316)
+ - Fix blame completion of directory names. (GH #317)
 
 tig-2.0.2
 ---------
