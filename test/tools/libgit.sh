@@ -118,12 +118,106 @@ create_repo_one()
 	})
 }
 
+submodule_pull()
+{
+	repo_name="$(basename "$1")"
+	cd "$1"; shift
+
+	git submodule foreach git checkout master
+	git submodule foreach git pull
+
+	repos=""
+	repos_sep=
+	clog=""
+	for repo in $@; do
+		repo="$(basename "$repo")"
+		repos="$repos$repos_sep$repo"
+		repos_sep=", "
+
+		summary="$(git submodule summary "$repo")"
+		revspec="$(git diff --submodule=log "$repo" | sed -n '/Submodule/,1 s/Submodule [^ ]* \([^:]*\):/\1/p')"
+		diffstat="$(cd "$repo" && git diff --stat "$revspec")"
+		clog="$clog
+
+$summary
+
+$diffstat"
+		git add "$repo"
+	done
+
+	git_commit --author="$IDENT_A" --message="[$repo_name] Integrate feature from $repos"
+}
+
+submodule_commit()
+{
+	repo_name="$(basename "$1")"
+	cd "$1"; shift
+
+	for file in $@; do
+		mkdir -p "$(dirname "$file")"
+		echo "$file" >> "$file"
+		git add "$file"
+	done
+	git_commit --author="$IDENT_A" --message="[$repo_name] Commit $(git rev-list HEAD 2> /dev/null | wc -l | sed 's/ *//')"
+}
+
+submodule_create()
+{
+	repo_name="$(basename "$1")"
+	cd "$1"; shift
+
+	git submodule init
+	for repo in $@; do
+		git submodule add "$repo"
+	done
+
+	git_commit --author="$IDENT_A" --message="[$repo_name] Creating repository"
+}
+
+create_repo_two()
+{
+	repo_main="$1"
+	repo_a="$1-a"
+	repo_b="$1-b"
+	repo_c="$1-c"
+
+	for repo in "$repo_main" "$repo_a" "$repo_b" "$repo_c"; do
+		git_init "$repo"
+
+		submodule_commit "$repo" Makefile
+		submodule_commit "$repo" include/api.h
+		submodule_commit "$repo" src/impl.c
+	done
+
+	submodule_create "$repo_main" "$repo_a" "$repo_b" "$repo_c"
+
+	submodule_commit "$repo_a" include/api.h
+	submodule_commit "$repo_a" src/impl.c
+
+	submodule_commit "$repo_c" README
+	submodule_commit "$repo_c" INSTALL
+
+	submodule_pull "$repo_main" "$repo_a" "$repo_c"
+
+	submodule_commit "$repo_b" README
+	submodule_commit "$repo_b" Makefile
+
+	submodule_pull "$repo_main" "$repo_b"
+
+	submodule_commit "$repo_a" README
+	submodule_commit "$repo_c" src/impl.c
+	submodule_commit "$repo_b" include/api.h
+
+	submodule_pull "$repo_main" "$repo_a" "$repo_b" "$repo_c"
+}
+
 create_repo()
 {
 	if [ ! -d "$1" ]; then
 		case "$(basename "$1")" in
-			repo-one) create_repo_one "$1";;
-			*) exit 1 ;;
+			repo-one) create_repo_one "$1" ;;
+			repo-two) (create_repo_two "$1") ;;
+			*) die "No generator for $(basname "$1")" ;;
 		esac
 	fi
 }
