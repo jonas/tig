@@ -29,7 +29,7 @@ in_work_dir prepare_repo 1>>"$HOME/prepare-repo.log" 2>>"$HOME/prepare-repo.log"
 test_tig
 
 assert_equals 'log-submodule.screen' <<EOF
-commit 8b00b511ea5429298b9fb6454d73689c8d3d2215                                 
+commit 8d2fa18ab8ef94d85a99504e143279bb1ce4f719                                 
 Refs: [master], {origin/master}, {origin/HEAD}                                  
 Author: A. U. Thor <a.u.thor@example.com>                                       
 Date:   Sun Sep 6 08:23:30 2009 +0000                                           
@@ -41,7 +41,7 @@ Date:   Sun Sep 6 08:23:30 2009 +0000
  repo-two-c | 2 +-                                                              
  3 files changed, 3 insertions(+), 3 deletions(-)                               
                                                                                 
-commit 92191f18da55d78671fa7bbc9c38882b4b9f5bf1                                 
+commit 02086c59d402236784ea1fd76c5e7896541ac582                                 
 Author: A. U. Thor <a.u.thor@example.com>                                       
 Date:   Mon Aug 3 06:54:50 2009 +0000                                           
                                                                                 
@@ -50,7 +50,7 @@ Date:   Mon Aug 3 06:54:50 2009 +0000
  repo-two-b | 2 +-                                                              
  1 file changed, 1 insertion(+), 1 deletion(-)                                  
                                                                                 
-commit bb30015624a4b20d6741e8f1ddb636bc04aeb294                                 
+commit e35ffcb9d416d0367f3effe5997c78678dd46ced                                 
 Author: A. U. Thor <a.u.thor@example.com>                                       
 Date:   Wed Jul 8 17:48:20 2009 +0000                                           
                                                                                 
@@ -60,7 +60,7 @@ Date:   Wed Jul 8 17:48:20 2009 +0000
  repo-two-c | 2 +-                                                              
  2 files changed, 2 insertions(+), 2 deletions(-)                               
                                                                                 
-commit cecc80ec7e88f41be13437c1b2a4a7d6a38ba438                                 
+commit dfe0f3afc5bc19406049be37829359d2f576bf46                                 
 Author: A. U. Thor <a.u.thor@example.com>                                       
 Date:   Wed May 27 03:57:30 2009 +0000                                          
                                                                                 
@@ -74,11 +74,11 @@ Date:   Wed May 27 03:57:30 2009 +0000
                                                                                 
 commit 9bb0f0da3dd2dec58efa5d8fa9d2b1f4768504e9                                 
 Author: A. U. Thor <a.u.thor@example.com>                                       
-[log] 8b00b511ea5429298b9fb6454d73689c8d3d2215 - line 1 of 69                65%
+[log] 8d2fa18ab8ef94d85a99504e143279bb1ce4f719 - line 1 of 69                65%
 EOF
 
 assert_equals 'log-submodule-diff.screen' <<EOF
-commit 8b00b511ea5429298b9fb6454d73689c8d3d2215                                 
+commit 8d2fa18ab8ef94d85a99504e143279bb1ce4f719                                 
 Refs: [master], {origin/master}, {origin/HEAD}                                  
 Author: A. U. Thor <a.u.thor@example.com>                                       
 Date:   Sun Sep 6 08:23:30 2009 +0000                                           
@@ -97,7 +97,7 @@ Submodule repo-two-b f3866fb..8ab92f1:
 Submodule repo-two-c cd41885..e4b7821:                                          
   > [repo-two-c] Commit 5                                                       
                                                                                 
-commit 92191f18da55d78671fa7bbc9c38882b4b9f5bf1                                 
+commit 02086c59d402236784ea1fd76c5e7896541ac582                                 
 Author: A. U. Thor <a.u.thor@example.com>                                       
 Date:   Mon Aug 3 06:54:50 2009 +0000                                           
                                                                                 
@@ -110,7 +110,7 @@ Submodule repo-two-b e795b27..f3866fb:
   > [repo-two-b] Commit 4                                                       
   > [repo-two-b] Commit 3                                                       
                                                                                 
-commit bb30015624a4b20d6741e8f1ddb636bc04aeb294                                 
+commit e35ffcb9d416d0367f3effe5997c78678dd46ced                                 
 Author: A. U. Thor <a.u.thor@example.com>                                       
 Date:   Wed Jul 8 17:48:20 2009 +0000                                           
                                                                                 
@@ -123,5 +123,5 @@ Date:   Wed Jul 8 17:48:20 2009 +0000
 Submodule repo-two-a 7df88b0..a1d2fa2:                                          
   > [repo-two-a] Commit 4                                                       
   > [repo-two-a] Commit 3                                                       
-[log] 8b00b511ea5429298b9fb6454d73689c8d3d2215 - line 1 of 130               34%
+[log] 8d2fa18ab8ef94d85a99504e143279bb1ce4f719 - line 1 of 130               34%
 EOF

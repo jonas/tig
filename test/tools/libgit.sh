@@ -168,7 +168,7 @@ submodule_create()
 
 	git submodule init
 	for repo in $@; do
-		git submodule add "$repo"
+		git submodule add "../../git-repos/$(basename "$repo")"
 	done
 
 	git_commit --author="$IDENT_A" --message="[$repo_name] Creating repository"
