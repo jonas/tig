@@ -8,7 +8,7 @@ export LINES=47
 tigrc <<EOF
 set split-view-height = 37
 set vertical-split = no
-set main-view = commit-title:yes,graph=no,refs=no,overflow=no
+set main-view = id:width=7 date:short commit-title:yes,graph=no,refs=no,overflow=no
 EOF
 
 steps '
@@ -32,13 +32,13 @@ in_work_dir prepare_repo 1>>"$HOME/prepare-repo.log" 2>>"$HOME/prepare-repo.log"
 test_tig
 
 assert_equals 'main-submodule.screen' <<EOF
-[repo-two] Integrate feature from repo-two-a, repo-two-b, repo-two-c            
-[repo-two] Integrate feature from repo-two-b                                    
-[repo-two] Integrate feature from repo-two-a, repo-two-c                        
-[repo-two] Creating repository                                                  
-[repo-two] Commit 2                                                             
-[repo-two] Commit 1                                                             
-[repo-two] Commit 0                                                             
+8b00b51 2009-09-06 [repo-two] Integrate feature from repo-two-a, repo-two-b, rep
+92191f1 2009-08-03 [repo-two] Integrate feature from repo-two-b                 
+bb30015 2009-07-08 [repo-two] Integrate feature from repo-two-a, repo-two-c     
+cecc80e 2009-05-27 [repo-two] Creating repository                               
+9bb0f0d 2009-03-03 [repo-two] Commit 2                                          
+4f3cb50 2009-02-22 [repo-two] Commit 1                                          
+a9db5c5 2009-02-13 [repo-two] Commit 0                                          
                                                                                 
 [main] 8b00b511ea5429298b9fb6454d73689c8d3d2215 - commit 1 of 7             100%
 commit 8b00b511ea5429298b9fb6454d73689c8d3d2215                                 
@@ -81,13 +81,13 @@ index cd41885..e4b7821 160000
 EOF
 
 assert_equals 'main-submodule-diff.screen' <<EOF
-[repo-two] Integrate feature from repo-two-a, repo-two-b, repo-two-c            
-[repo-two] Integrate feature from repo-two-b                                    
-[repo-two] Integrate feature from repo-two-a, repo-two-c                        
-[repo-two] Creating repository                                                  
-[repo-two] Commit 2                                                             
-[repo-two] Commit 1                                                             
-[repo-two] Commit 0                                                             
+8b00b51 2009-09-06 [repo-two] Integrate feature from repo-two-a, repo-two-b, rep
+92191f1 2009-08-03 [repo-two] Integrate feature from repo-two-b                 
+bb30015 2009-07-08 [repo-two] Integrate feature from repo-two-a, repo-two-c     
+cecc80e 2009-05-27 [repo-two] Creating repository                               
+9bb0f0d 2009-03-03 [repo-two] Commit 2                                          
+4f3cb50 2009-02-22 [repo-two] Commit 1                                          
+a9db5c5 2009-02-13 [repo-two] Commit 0                                          
                                                                                 
 [main] 8b00b511ea5429298b9fb6454d73689c8d3d2215 - commit 1 of 7             100%
 commit 8b00b511ea5429298b9fb6454d73689c8d3d2215                                 
