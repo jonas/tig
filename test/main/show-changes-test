@@ -24,11 +24,16 @@ steps '
 	<F1>
 	:refresh
 	:save-display main-with-staged-and-unstaged.screen
+
+	<F2>
+	:refresh
+	:save-display main-with-conflict.screen
 '
 
 tigrc <<EOF
 set vertical-split = no
 bind generic <F1> @sh -c 'git reset a b.c'
+bind generic <F2> @setup-conflict.sh
 EOF
 
 in_work_dir create_dirty_workdir
@@ -125,4 +130,22 @@ $YYY_MM_DD_HH_MM Unknown    o Unstaged changes
                                                                                 
                                                                                 
 [main] Staged changes                                                       100%
+EOF
+
+assert_equals 'main-with-conflict.screen' <<EOF
+$YYY_MM_DD_HH_MM Unknown    o Unstaged changes                                  
+2009-03-03 00:15 Committer  o [conflict-master] Change: c                       
+2009-02-13 23:31 Committer  o Change: a                                         
+2009-02-13 23:31 A. U. Thor I [master] Initial commit                           
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[main] Unstaged changes                                                     100%
 EOF
