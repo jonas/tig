@@ -39,6 +39,7 @@ Bug fixes:
  - Fix invocation of git-diff for the blame view's line tracking. (GH #316)
  - Fix blame completion of directory names. (GH #317)
  - Fix display of conflicts in the main view when 'show-changes' is enabled.
+ - Fix off-by-one error when displaying line numbers in the grep view.
 
 tig-2.0.2
 ---------

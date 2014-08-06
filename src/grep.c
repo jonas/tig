@@ -32,8 +32,6 @@ struct grep_state {
 	bool no_file_group;
 };
 
-#define grep_view_lineno(grep)	((grep)->lineno > 0 ? (grep)->lineno - 1 : 0)
-
 static struct grep_line *
 grep_get_line(const struct line *line)
 {
@@ -60,7 +58,7 @@ grep_get_column_data(struct view *view, const struct line *line, struct view_col
 		return TRUE;
 	}
 
-	if (*grep->file && !grep->lineno) {
+	if (*grep->file && !*grep->text) {
 		static struct view_column file_name_column;
 
 		file_name_column.type = VIEW_COLUMN_FILE_NAME;
@@ -116,8 +114,10 @@ open_grep_view(struct view *prev)
 	if ((!prev && is_initial_view(view)) || (view->lines && !in_grep_view)) {
 		open_view(prev, view, OPEN_DEFAULT);
 	} else {
-		if (grep_prompt())
+		if (grep_prompt()) {
+			clear_position(&view->pos);
 			open_view(prev, view, OPEN_RELOAD);
+		}
 	}
 }
 
@@ -162,14 +162,16 @@ grep_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		if (file_view->parent == view && file_view->prev == view &&
 		    state->last_file == grep->file && view_is_displayed(file_view)) {
-			if (grep_view_lineno(grep))
-				select_view_line(file_view, grep_view_lineno(grep));
+			if (*grep->text) {
+				select_view_line(file_view, grep->lineno);
+				update_view_title(file_view);
+			}
 
 		} else {
 			const char *file_argv[] = { repo.cdup, grep->file, NULL };
 
 			clear_position(&file_view->pos);
-			view->env->lineno = grep_view_lineno(grep);
+			view->env->lineno = grep->lineno;
 			view->env->blob[0] = 0;
 			open_argv(view, file_view, file_argv, repo.cdup, OPEN_SPLIT | OPEN_RELOAD);
 		}
@@ -184,7 +186,7 @@ grep_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_VIEW_BLAME:
 		view->env->ref[0] = 0;
-		view->env->lineno = grep_view_lineno(grep);
+		view->env->lineno = grep->lineno;
 		return request;
 
 	default:
@@ -204,6 +206,10 @@ grep_read(struct view *view, struct buffer *buf)
 
 	if (!buf) {
 		state->last_file = NULL;
+		if (!view->lines) {
+			view->ref[0] = 0;
+			report("No matches found");
+		}
 		return TRUE;
 	}
 
@@ -238,6 +244,8 @@ grep_read(struct view *view, struct buffer *buf)
 
 	grep->file = file;
 	grep->lineno = atoi(lineno);
+	if (grep->lineno > 0)
+		grep->lineno -= 1;
 	strncpy(grep->text, text, textlen);
 	grep->text[textlen] = 0;
 	view_column_info_update(view, line);
