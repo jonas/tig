@@ -541,6 +541,11 @@ struct prompt_toggle {
 	void *opt;
 };
 
+static struct prompt_toggle option_toggles[] = {
+#define DEFINE_OPTION_TOGGLES(name, type, flags) { #name, #type, flags, &opt_ ## name },
+	OPTION_INFO(DEFINE_OPTION_TOGGLES)
+};
+
 static bool
 find_arg(const char *argv[], const char *arg)
 {
@@ -698,10 +703,6 @@ find_prompt_toggle(struct prompt_toggle toggles[], size_t toggles_size,
 static enum status_code
 prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 {
-	struct prompt_toggle option_toggles[] = {
-#define DEFINE_OPTION_TOGGLES(name, type, flags) { #name, #type, flags, &opt_ ## name },
-		OPTION_INFO(DEFINE_OPTION_TOGGLES)
-	};
 	const char *option = argv[1];
 	size_t optionlen = option ? strlen(option) : 0;
 	struct prompt_toggle *toggle;
@@ -749,6 +750,25 @@ prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 	}
 
 	return error("`:toggle %s` not supported", option);
+}
+
+static void
+prompt_update_display(enum view_flag flags)
+{
+	struct view *view;
+	int i;
+
+	if (flags & VIEW_RESET_DISPLAY) {
+		resize_display();
+		redraw_display(TRUE);
+	}
+
+	foreach_displayed_view(view, i) {
+		if (view_has_flags(view, flags) && view_can_refresh(view))
+			reload_view(view);
+		else
+			redraw_view(view);
+	}
 }
 
 enum request
@@ -851,17 +871,7 @@ run_prompt_command(struct view *view, const char *argv[])
 			return REQ_NONE;
 		}
 
-		if (flags & VIEW_RESET_DISPLAY) {
-			resize_display();
-			redraw_display(TRUE);
-		}
-
-		foreach_displayed_view(view, i) {
-			if (view_has_flags(view, flags) && view_can_refresh(view))
-				reload_view(view);
-			else
-				redraw_view(view);
-		}
+		prompt_update_display(flags);
 
 		if (*action)
 			report("%s", action);
@@ -876,6 +886,7 @@ run_prompt_command(struct view *view, const char *argv[])
 	} else {
 		struct key key = {};
 		enum status_code code;
+		enum view_flag flags = VIEW_NO_FLAGS;
 
 		/* Try :<key> */
 		key.modifiers.multibytes = 1;
@@ -893,6 +904,20 @@ run_prompt_command(struct view *view, const char *argv[])
 		if (code != SUCCESS) {
 			report("%s", get_status_message(code));
 			return REQ_NONE;
+		}
+
+		if (!strcmp(cmd, "set")) {
+			struct prompt_toggle *toggle;
+
+			toggle = find_prompt_toggle(option_toggles, ARRAY_SIZE(option_toggles),
+						    "", argv[1], strlen(argv[1]));
+
+			if (toggle)
+				flags = toggle->flags;
+		}
+
+		if (flags) {
+			prompt_update_display(flags);
 
 		} else {
 			request = view_can_refresh(view) ? REQ_REFRESH : REQ_SCREEN_REDRAW;
@@ -901,7 +926,7 @@ run_prompt_command(struct view *view, const char *argv[])
 			resize_display();
 			redraw_display(TRUE);
 		}
-		return request;
+
 	}
 	return REQ_NONE;
 }

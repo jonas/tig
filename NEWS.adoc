@@ -19,6 +19,7 @@ Improvement:
    allows to change the filtering arguments dynamically. (GH #306)
  - Add `log-options` setting for specifying default log view options.
    Example: `set log-options = --pretty=fuller`.
+ - Use option specific view flags to reload view after `:set` commands.
 
 Bug fixes:
 
