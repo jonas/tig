@@ -128,6 +128,20 @@ commit_order_arg()
 	return commit_order_arg_map[opt_commit_order].name;
 }
 
+const char *
+commit_order_arg_with_graph(bool with_graph)
+{
+	enum commit_order commit_order = opt_commit_order;
+
+	if (with_graph &&
+	    commit_order != COMMIT_ORDER_TOPO &&
+	    commit_order != COMMIT_ORDER_DATE &&
+	    commit_order != COMMIT_ORDER_AUTHOR_DATE)
+		commit_order = COMMIT_ORDER_TOPO;
+
+	return commit_order_arg_map[commit_order].name;
+}
+
 /* Use --show-notes to support Git >= 1.7.6 */
 #define NOTES_ARG	"--show-notes"
 #define NOTES_EQ_ARG	NOTES_ARG "="

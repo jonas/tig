@@ -245,6 +245,8 @@ The following variables can be set:
 	Commit ordering using the default (chronological reverse) order,
 	topological order, date order or reverse order. The default order is
 	used when the option is set to false, and topo order when set to true.
+	Note that topological order is automatically used in the main view when
+	the commit graph is enabled and the commit order is set to the default.
 
 'ignore-case' (bool)::
 

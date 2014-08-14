@@ -182,32 +182,43 @@ main_check_argv(struct view *view, const char *argv[])
 }
 
 static bool
+main_with_graph(struct view *view, enum open_flags flags)
+{
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
+
+	if (open_in_pager_mode(flags))
+		return FALSE;
+
+	return column && column->opt.commit_title.graph &&
+	       opt_commit_order != COMMIT_ORDER_REVERSE;
+}
+
+static bool
 main_open(struct view *view, enum open_flags flags)
 {
+	bool with_graph = main_with_graph(view, flags);
 	const char *pretty_custom_argv[] = {
-		GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg(), "%(cmdlineargs)", "%(revargs)", "%(fileargs)")
+		GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg_with_graph(with_graph),
+			"%(cmdlineargs)", "%(revargs)", "%(fileargs)")
 	};
 	const char *pretty_raw_argv[] = {
-		GIT_MAIN_LOG_RAW(encoding_arg, commit_order_arg(), "%(cmdlineargs)", "%(revargs)", "%(fileargs)")
+		GIT_MAIN_LOG_RAW(encoding_arg, commit_order_arg_with_graph(with_graph),
+			"%(cmdlineargs)", "%(revargs)", "%(fileargs)")
 	};
 	struct main_state *state = view->private;
 	const char **main_argv = pretty_custom_argv;
-	struct view_column *column;
 	enum watch_trigger changes_triggers = WATCH_NONE;
 
 	if (opt_show_changes && repo.is_inside_work_tree)
 		changes_triggers |= WATCH_INDEX;
 
-	column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
-	state->with_graph = column && column->opt.commit_title.graph &&
-			    opt_commit_order != COMMIT_ORDER_REVERSE;
+	state->with_graph = with_graph;
 
 	if (opt_rev_args && main_check_argv(view, opt_rev_args))
 		main_argv = pretty_raw_argv;
 
 	if (open_in_pager_mode(flags)) {
 		changes_triggers = WATCH_NONE;
-		state->with_graph = FALSE;
 	}
 
 	/* This calls reset_view() so must be before adding changes commits. */

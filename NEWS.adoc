@@ -41,6 +41,8 @@ Bug fixes:
  - Fix blame completion of directory names. (GH #317)
  - Fix display of conflicts in the main view when 'show-changes' is enabled.
  - Fix off-by-one error when displaying line numbers in the grep view.
+ - When showing the commit graph ensure that either topo, date or author-date
+   commit order is used. (Debian #757692) (GH #238)
 
 tig-2.0.2
 ---------

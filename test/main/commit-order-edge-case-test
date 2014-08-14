@@ -1,0 +1,53 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=10
+
+tigrc <<EOF
+set line-graphics = utf-8
+set main-view = date author commit-title:yes,graph
+EOF
+
+steps '
+	:view-main
+	:save-display ensure-topo-order-with-graph.screen
+
+	:set commit-order = date
+	:save-display graph-supports-date-order.screen
+'
+
+prepare_repo()
+{
+	tar zxf "$source_dir/$test.tgz"
+	git reset -q --hard
+}
+
+in_work_dir prepare_repo
+
+test_tig
+
+assert_equals 'ensure-topo-order-with-graph.screen' <<EOF
+2014-02-01 22:36 Benjamin Bergman ●─╮ Merge branch 'feature_branch'       
+2014-02-01 22:35 Benjamin Bergman │ ● More featuresA                        
+2014-02-01 22:36 Benjamin Bergman ● │ More master                           
+2014-02-01 22:21 Benjamin Bergman ●─│─╮ Merge branch 'feature_branch' 
+2014-02-01 23:00 Benjamin Bergman │ ●─╯ Add feature                     
+2014-02-01 22:21 Benjamin Bergman ● │ Add to master                         
+2014-02-01 22:18 Benjamin Bergman ◎─╯ init                                
+                                                                                
+[main] 324309341617186ec7f9bf2f9b504a956b9c382a - commit 1 of 7             100%
+EOF
+
+assert_equals 'graph-supports-date-order.screen' <<EOF
+2014-02-01 22:36 Benjamin Bergman ●─╮ Merge branch 'feature_branch'       
+2014-02-01 22:36 Benjamin Bergman ● │ More master                           
+2014-02-01 22:35 Benjamin Bergman │ ● More featuresA                        
+2014-02-01 22:21 Benjamin Bergman ●─│─╮ Merge branch 'feature_branch' 
+2014-02-01 23:00 Benjamin Bergman │ ●─╯ Add feature                     
+2014-02-01 22:21 Benjamin Bergman ● │ Add to master                         
+2014-02-01 22:18 Benjamin Bergman ◎─╯ init                                
+                                                                                
+[main] 324309341617186ec7f9bf2f9b504a956b9c382a - commit 1 of 7             100%
+EOF

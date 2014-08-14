@@ -169,6 +169,7 @@ void update_options_from_argv(const char *argv[]);
 
 const char *ignore_space_arg();
 const char *commit_order_arg();
+const char *commit_order_arg_with_graph(bool with_graph);
 const char *diff_context_arg();
 const char *show_notes_arg();
 
