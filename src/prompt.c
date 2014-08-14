@@ -875,6 +875,7 @@ run_prompt_command(struct view *view, const char *argv[])
 
 	} else {
 		struct key key = {};
+		enum status_code code;
 
 		/* Try :<key> */
 		key.modifiers.multibytes = 1;
@@ -888,7 +889,12 @@ run_prompt_command(struct view *view, const char *argv[])
 		if (request != REQ_UNKNOWN)
 			return request;
 
-		if (set_option(argv[0], argv_size(argv + 1), &argv[1]) == SUCCESS) {
+		code = set_option(argv[0], argv_size(argv + 1), &argv[1]);
+		if (code != SUCCESS) {
+			report("%s", get_status_message(code));
+			return REQ_NONE;
+
+		} else {
 			request = view_can_refresh(view) ? REQ_REFRESH : REQ_SCREEN_REDRAW;
 			if (!strcmp(cmd, "color"))
 				init_colors();
