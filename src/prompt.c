@@ -864,7 +864,6 @@ run_prompt_command(struct view *view, const char *argv[])
 		enum view_flag flags = VIEW_NO_FLAGS;
 		enum status_code code = prompt_toggle(view, argv, &flags);
 		const char *action = get_status_message(code);
-		int i;
 
 		if (code != SUCCESS) {
 			report("%s", action);
