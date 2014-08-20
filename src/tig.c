@@ -291,7 +291,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_NEXT:
 	{
 		int nviews = displayed_views();
-		int next_view = (current_view + 1) % nviews;
+		int next_view = nviews ? (current_view + 1) % nviews : current_view;
 
 		if (next_view == current_view) {
 			report("Only one view is displayed");

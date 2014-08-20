@@ -37,7 +37,7 @@ extern unsigned int current_view;
 #define foreach_displayed_view(view, i) \
 	for (i = 0; i < ARRAY_SIZE(display) && (view = display[i]); i++)
 
-#define displayed_views()	(display[1] != NULL ? 2 : 1)
+#define displayed_views()	(!!display[0] + !!display[1])
 
 #define view_is_displayed(view) \
 	(view == display[0] || view == display[1])
