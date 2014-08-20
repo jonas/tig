@@ -10,7 +10,6 @@ export LINES=18
 
 steps '
 	:view-refs
-	:wait
 	:save-display refs-default.screen
 '
 
