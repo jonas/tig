@@ -16,6 +16,7 @@
 
 #include "tig/tig.h"
 #include "tig/types.h"
+#include "tig/util.h"
 
 struct argv_env;
 

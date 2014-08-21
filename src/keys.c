@@ -16,7 +16,6 @@
 #include "tig/argv.h"
 #include "tig/io.h"
 #include "tig/keys.h"
-#include "tig/util.h"
 
 struct keybinding {
 	enum request request;

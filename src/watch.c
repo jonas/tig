@@ -189,7 +189,7 @@ watch_apply_changes(struct watch *source, enum watch_event event,
 void
 watch_apply(struct watch *source, enum watch_trigger changed)
 {
-	return watch_apply_changes(source, WATCH_EVENT_LOAD, changed);
+	watch_apply_changes(source, WATCH_EVENT_LOAD, changed);
 }
 
 static enum watch_trigger

@@ -13,7 +13,6 @@
 
 #include "tig/tig.h"
 #include "tig/argv.h"
-#include "tig/util.h"
 #include "tig/io.h"
 #include "tig/watch.h"
 #include "tig/options.h"
