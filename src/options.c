@@ -890,7 +890,7 @@ load_options(void)
 
 		if (!io_from_string(&io, builtin_config))
 			die("Failed to get built-in config");
-		if (!io_load_span(&io, " \t", &config.lineno, read_option, &config) == ERR || config.errors == TRUE)
+		if (io_load_span(&io, " \t", &config.lineno, read_option, &config) == ERR || config.errors == TRUE)
 			die("Error in built-in config");
 	}
 
