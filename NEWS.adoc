@@ -1,10 +1,17 @@
 Release notes
 =============
 
+master
+------
+
+Improvements:
+
+ - Add move-half-page-up and move-half-page-down actions (GH #323)
+
 tig-2.0.3
 ---------
 
-Improvement:
+Improvements:
 
  - Add `:save-display <file>` prompt command to save the current display.
  - Add `:script <file>` prompt command for scripting the Tig UI.
