@@ -86,13 +86,18 @@ file() {
 	fi
 }
 
-steps() {
+tig_script() {
+	export TIG_SCRIPT="$HOME/$1"; shift
+
 	# Ensure that the steps finish by quitting
 	printf '%s\n:quit\n' "$@" \
 		| sed -e 's/^[ 	]*//' -e '/^$/d' \
 		| sed "s|:save-display\s\+\(\S*\)|:save-display $HOME/\1|" \
-		> steps
-	export TIG_SCRIPT="$HOME/steps"
+		> "$TIG_SCRIPT"
+}
+
+steps() {
+	tig_script 'steps' "$@"
 }
 
 stdin() {
