@@ -165,7 +165,7 @@ export TEST_OPTS ?= $(V:1=no-indent)
 
 $(TESTS): PATH := $(CURDIR)/test/tools:$(CURDIR)/src:$(PATH)
 $(TESTS): $(EXE) test/tools/test-graph
-	$(QUIET_TEST)$@
+	$(QUIET_TEST)$(TEST_SHELL) $@
 
 # Other autoconf-related rules are hidden in config.make.in so that
 # they don't confuse Make when we aren't actually using ./configure
