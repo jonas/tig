@@ -222,6 +222,13 @@ create_repo()
 	fi
 }
 
+create_repo_from_tgz()
+{
+	git_init
+	tar zxf "$1"
+	git reset -q --hard
+}
+
 git_clone()
 {
 	create_repo "$tmp_dir/git-repos/$1"
