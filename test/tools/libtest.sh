@@ -15,8 +15,10 @@
 # GNU General Public License for more details.
 
 set -eu
-[ -n "${BASH_VERSION:-}" ] && set -o pipefail
-IFS=$'\n\t'
+if [ -n "${BASH_VERSION:-}" ]; then
+	set -o pipefail
+	IFS=$'\n\t'
+fi
 
 test="$(basename "$0")"
 source_dir="$(cd "$(dirname "$0")" && pwd)"
@@ -120,6 +122,7 @@ gitconfig() {
 # Parse TEST_OPTS
 #
 
+diff_color_arg=
 [ -t 1 ] && diff_color_arg=--color
 
 indent='            '
@@ -150,7 +153,7 @@ assert_equals()
 	file "expected/$file" "$@"
 
 	if [ -e "$file" ]; then
-		git diff --no-index $diff_color_arg "expected/$file" "$file" > "$file.diff" || true
+		git diff -w --no-index $diff_color_arg "expected/$file" "$file" > "$file.diff" || true
 		if [ -s "$file.diff" ]; then
 			echo "[FAIL] $file != expected/$file" >> .test-result
 			cat "$file.diff" >> .test-result

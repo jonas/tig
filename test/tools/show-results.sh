@@ -16,8 +16,10 @@
 # GNU General Public License for more details.
 
 set -eu
-[ -n "${BASH_VERSION:-}" ] && set -o pipefail
-IFS=$' \n\t'
+if [ -n "${BASH_VERSION:-}" ]; then
+	set -o pipefail
+	IFS=$' \n\t'
+fi
 
 tests="$(find test/ -name ".test-result" | wc -l)"
 asserts="$(find test/ -name ".test-result" | xargs sed -n '/\[\(OK\|FAIL\)\]/p' | wc -l)"

@@ -48,8 +48,8 @@ file "$work_dir/as测试asd" <<EOF
 漢
 EOF
 
-touch "$work_dir/øå"
-touch "$work_dir/可愛いコーデ特集"
+touch "$work_dir/øå"
+touch "$work_dir/可愛いコー特集"
 
 test_tig
 
@@ -64,7 +64,7 @@ Untracked files:
 ? a                                                                                                                     
 ? as测试asd                                                                                                           
 ? øå                                                                                                                  
-? 可愛いコーデ特集                                                                                              
+? 可愛いコー特集                                                                                                 
                                                                                                                         
                                                                                                                         
 [status] Nothing to update                                                                                          100%
@@ -81,7 +81,7 @@ Untracked files:                                            |
 ? a                                                         |                                                           
 ? as测试asd                                                 |                                                         
 ? øå                                                        |                                                         
-? 可愛いコーデ特集                                          |                                                   
+? 可愛いコー特集                                            |                                                    
                                                             |                                                           
                                                             |                                                           
 [status] Press u to stage '0' for addition              100%|[stage] Untracked file 0                                 0%
@@ -98,7 +98,7 @@ Untracked files:                                            |ø
 ? a                                                         |                                                           
 ? as测试asd                                                 |                                                         
 ? øå                                                        |                                                         
-? 可愛いコーデ特集                                          |                                                   
+? 可愛いコー特集                                            |                                                    
                                                             |                                                           
                                                             |                                                           
 [status] Press u to stage 'a' for addition              100%|[stage] Untracked file a - line 1 of 6                 100%
@@ -114,7 +114,7 @@ Changed but not updated:                                    |
 Untracked files:                                            |                                                           
 ? as测试asd                                                 |                                                         
 ? øå                                                        |                                                         
-? 可愛いコーデ特集                                          |                                                   
+? 可愛いコー特集                                            |                                                    
                                                             |                                                           
                                                             |                                                           
                                                             |                                                           

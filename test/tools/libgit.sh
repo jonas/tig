@@ -15,8 +15,10 @@
 # GNU General Public License for more details.
 
 set -eu
-[ -n "${BASH_VERSION:-}" ] && set -o pipefail
-IFS=$'\n\t'
+if [ -n "${BASH_VERSION:-}" ]; then
+	set -o pipefail
+	IFS=$'\n\t'
+fi
 
 author_date=1234567890
 author_date_delta=735730
