@@ -15,7 +15,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-set -euo pipefail
+set -eu
+[ -n "${BASH_VERSION:-}" ] && set -o pipefail
 IFS=$' \n\t'
 
 tests="$(find test/ -name ".test-result" | wc -l)"
