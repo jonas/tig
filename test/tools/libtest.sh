@@ -14,7 +14,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-set -e
+set -euo pipefail
+IFS=$'\n\t'
 
 test="$(basename "$0")"
 source_dir="$(cd "$(dirname "$0")" && pwd)"
@@ -23,6 +24,7 @@ prefix_dir="$(echo "$source_dir" | sed -n 's#\(.*/test/\)\([/].*\)*#\2#p')"
 output_dir="$base_dir/tmp/$prefix_dir/$test"
 tmp_dir="$base_dir/tmp"
 output_dir="$tmp_dir/$prefix_dir/$test"
+work_dir="work dir"
 
 # The locale must specify UTF-8 for Ncurses to output correctly. Since C.UTF-8
 # does not exist on Mac OS X, we end up with en_US as the only sane choice.
@@ -43,6 +45,7 @@ unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
 unset GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE
 
 # Tig env
+export TIG_TRACE=
 export TIGRC_SYSTEM=
 unset TIGRC_USER
 
@@ -52,7 +55,7 @@ export LINES=30
 export COLUMNS=80
 
 [ -e "$output_dir" ] && rm -rf "$output_dir"
-mkdir -p "$output_dir"
+mkdir -p "$output_dir/$work_dir"
 
 if [ ! -d "$tmp_dir/.git" ]; then
 	# Create a dummy repository to avoid reading .git/config
@@ -76,7 +79,7 @@ file() {
 	path="$1"; shift
 
 	mkdir -p "$(dirname "$path")"
-	if [ -z "$1" ]; then
+	if [ -z "$@" ]; then
 		case "$path" in
 			stdin|expected*) cat ;;
 			*) sed 's/^[ ]//' ;;
@@ -161,7 +164,7 @@ assert_equals()
 
 show_test_results()
 {
-	if [ -n "$trace" -a -e "$TIG_TRACE" ]; then
+	if [ -n "$trace" -a -n "$TIG_TRACE" -a -e "$TIG_TRACE" ]; then
 		sed "s/^/$indent[trace] /" < "$TIG_TRACE"
 	fi
 	if [ ! -d "$HOME" ]; then

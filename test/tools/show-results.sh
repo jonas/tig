@@ -15,11 +15,12 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-set -e
+set -euo pipefail
+IFS=$' \n\t'
 
 tests="$(find test/ -name ".test-result" | wc -l)"
 asserts="$(find test/ -name ".test-result" | xargs sed -n '/\[\(OK\|FAIL\)\]/p' | wc -l)"
-failures="$(find test/ -name ".test-result" | xargs grep FAIL | wc -l)"
+failures="$(find test/ -name ".test-result" | xargs grep FAIL | wc -l || true)"
 
 if [ $failures = 0 ]; then
 	printf "Passed %d assertions in %d tests\n" "$asserts" "$tests"

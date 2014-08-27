@@ -14,8 +14,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-work_dir="work dir"
-mkdir -p "$output_dir/$work_dir"
+set -euo pipefail
+IFS=$'\n\t'
 
 author_date=1234567890
 author_date_delta=735730
@@ -66,7 +66,7 @@ git_commit()
 
 	export GIT_AUTHOR_DATE="$author_date"
 	author_date="$(expr $author_date + $author_date_delta)"
-	[ -z "$GIT_COMMITTER_DATE" ] &&
+	[ -z "${GIT_COMMITTER_DATE:-}" ] &&
 		export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
 
 	git commit -q --allow-empty "$@"
