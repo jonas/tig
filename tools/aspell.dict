@@ -1,4 +1,4 @@
-personal_ws-1.1 en 226 
+personal_ws-1.1 en 235 
 CJK
 del
 Ctrl
@@ -42,6 +42,7 @@ contrib
 xclip
 eol
 bgcolor
+LessThan
 env
 lrwxrwxrwx
 backend
@@ -55,6 +56,7 @@ subshell
 tty
 cmdlineargs
 combi
+Petr
 signoff
 utf
 Cogito
@@ -87,6 +89,7 @@ iconv
 sysconfdir
 Scrool
 ELinks
+unidiff
 subdir
 Debian
 gui
@@ -102,6 +105,7 @@ reachability
 autoconf
 xpm
 filesystem
+reflogmsg
 Fonseca
 tigrc
 ifdef
@@ -176,6 +180,7 @@ UI
 CommitDate
 wclear
 chunked
+BUILTIN
 drwxr
 ascii
 Baudis
@@ -185,6 +190,7 @@ tz
 DocBook
 docbook
 submodule
+strndup
 startup
 Yi
 docext
@@ -201,7 +207,9 @@ Yy
 fgcolor
 localtime
 filename
+pbcopy
 lncursesw
+Geany
 waitpid
 wgetch
 Pre
@@ -220,6 +228,7 @@ adate
 PageUp
 sha
 TODO
+cmdline
 Jamo
 FIXME
 whitespace
