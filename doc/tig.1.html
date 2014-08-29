@@ -751,6 +751,7 @@ tig log    [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
 tig blame  [options] [rev] [--] path
 tig grep   [options] [pattern]
+tig refs
 tig stash
 tig status
 tig &lt;      [Git command output]</pre>
@@ -808,6 +809,14 @@ log
 <dd>
 <p>
         Start up in log view, displaying git-log(1) output.
+</p>
+</dd>
+<dt class="hdlist1">
+refs
+</dt>
+<dd>
+<p>
+        Start up in refs view.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -967,6 +976,11 @@ the log and diff views. For example:</p></div>
 <div class="content">
 <pre><code>$ tig grep -p DEFINE_ENUM</code></pre>
 </div></div>
+<div class="paragraph"><p>Show references (branches, remotes and tags):</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>$ tig refs</code></pre>
+</div></div>
 </div>
 </div>
 <div class="sect1">
@@ -1021,6 +1035,26 @@ TIG_TRACE
 <dd>
 <p>
         Path for trace file where information about Git commands are logged.
+</p>
+</dd>
+<dt class="hdlist1">
+TIG_SCRIPT
+</dt>
+<dd>
+<p>
+        Path to script that should be executed automatically on startup. If this
+        environment variable is defined to the empty string, the script is read
+        from stdin. The script is interpreted line-by-line and can contain
+        prompt commands and key mappings.
+</p>
+</dd>
+<dt class="hdlist1">
+TIG_NO_DISPLAY
+</dt>
+<dd>
+<p>
+        Open Tig without rendering anything to the terminal. This force Ncurses
+        to write to /dev/null. The main use is for automated testing of Tig.
 </p>
 </dd>
 </dl></div>
@@ -1094,7 +1128,7 @@ git(7)</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-04-30 22:31:53 EDT
+Last updated 2014-08-28 21:17:31 EDT
 </div>
 </div>
 </body>

@@ -2,12 +2,12 @@
 .\"     Title: tig
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 05/08/2014
+.\"      Date: 08/28/2014
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.0.2
+.\"    Source: Tig 2.0.3
 .\"  Language: English
 .\"
-.TH "TIG" "1" "05/08/2014" "Tig 2\&.0\&.2" "Tig Manual"
+.TH "TIG" "1" "08/28/2014" "Tig 2\&.0\&.3" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -37,6 +37,7 @@ tig log    [options] [revisions] [\-\-] [paths]
 tig show   [options] [revisions] [\-\-] [paths]
 tig blame  [options] [rev] [\-\-] path
 tig grep   [options] [pattern]
+tig refs
 tig stash
 tig status
 tig <      [Git command output]
@@ -67,6 +68,11 @@ Start up in status view\&.
 log
 .RS 4
 Start up in log view, displaying git\-log(1) output\&.
+.RE
+.PP
+refs
+.RS 4
+Start up in refs view\&.
 .RE
 .PP
 stash
@@ -329,6 +335,19 @@ $ tig grep \-p DEFINE_ENUM
 .RE
 .\}
 .sp
+.sp
+Show references (branches, remotes and tags):
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ tig refs
+.fi
+.if n \{\
+.RE
+.\}
+.sp
 .SH "ENVIRONMENT VARIABLES"
 .sp
 In addition to environment variables used by Git (e\&.g\&. GIT_DIR), Tig defines the ones below\&. The command related environment variables have access to the internal state of Tig via replacement variables, such as %(commit) and %(blob)\&. See \fBtigrc\fR(5) for a full list\&.
@@ -360,6 +379,16 @@ setting in the configuration file\&.
 TIG_TRACE
 .RS 4
 Path for trace file where information about Git commands are logged\&.
+.RE
+.PP
+TIG_SCRIPT
+.RS 4
+Path to script that should be executed automatically on startup\&. If this environment variable is defined to the empty string, the script is read from stdin\&. The script is interpreted line\-by\-line and can contain prompt commands and key mappings\&.
+.RE
+.PP
+TIG_NO_DISPLAY
+.RS 4
+Open Tig without rendering anything to the terminal\&. This force Ncurses to write to /dev/null\&. The main use is for automated testing of Tig\&.
 .RE
 .SH "FILES"
 .PP

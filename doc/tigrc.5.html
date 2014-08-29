@@ -775,7 +775,7 @@ one of the Git configuration files, which are read by Tig on startup. See
 syntax to use for settings, bindings and colors.</p></div>
 <div class="listingblock">
 <div class="content">
-<pre><code>[tig] show-rev-graph = true
+<pre><code>[tig] show-changes = true
 [tig "color"] cursor = yellow red bold
 [tig "bind"] generic = P parent</code></pre>
 </div></div>
@@ -1048,11 +1048,23 @@ branch               : Any other reference.
 </dt>
 <dd>
 <p>
-        Height of the lower view in a split view. Can be specified either as
-        the number of rows, e.g. <em>5</em>, or as a percentage of the view height,
-        e.g. <em>80%</em>, where the maximum is 100%. It is always ensured that the
-        smaller of the views is at least four rows high. The default is a view
-        height of <em>66%</em>.
+        The height of the bottom view in a horizontally split display. Can be
+        specified either as the number of rows, e.g. <em>5</em>, or as a percentage of
+        the view height, e.g. <em>80%</em>, where the maximum is 100%. It is always
+        ensured that the smaller of the views is at least four rows high. The
+        default is <em>67%</em>.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>split-view-width</em> (mixed)
+</dt>
+<dd>
+<p>
+        Width of the right-most view in a vertically split display. Can be
+        specified either as the number of column, e.g. <em>5</em>, or as a percentage
+        of the view width, e.g. <em>80%</em>, where the maximum is 100%. It is always
+        ensured that the smaller of the views is at least four columns wide. The
+        default is <em>50%</em>.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1099,6 +1111,8 @@ branch               : Any other reference.
         Commit ordering using the default (chronological reverse) order,
         topological order, date order or reverse order. The default order is
         used when the option is set to false, and topo order when set to true.
+        Note that topological order is automatically used in the main view when
+        the commit graph is enabled and the commit order is set to the default.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1179,6 +1193,33 @@ branch               : Any other reference.
 <p>
         Interval in seconds between view refresh update checks when
         <em>refresh-mode</em> is set to <em>periodic</em>.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>file-args</em> (args)
+</dt>
+<dd>
+<p>
+        Command line arguments referring to files. These are filtered using
+        <code>git-rev-parse(1)</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>rev-args</em> (args)
+</dt>
+<dd>
+<p>
+        Command line arguments referring to revisions. These are filtered using
+        <code>git-rev-parse(1)</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>cmdline-args</em> (args)
+</dt>
+<dd>
+<p>
+        All remaining command line arguments that are not either filtered into
+        <em>file-args</em> or <em>rev-args</em>.
 </p>
 </dd>
 </dl></div>
@@ -1530,7 +1571,7 @@ key map. The syntax is:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><code># Add keybinding to quickly jump to the next diff chunk in the stage view
-bind stage Enter :/^@@
+bind stage &lt;Enter&gt; :/^@@
 
 # Disable the default mapping for running git-gc
 bind generic G none
@@ -1594,7 +1635,7 @@ be bound using <code>&lt;Esc&gt;key</code>.</p></div>
 <div class="paragraph"><p>Examples:</p></div>
 <div class="listingblock">
 <div class="content">
-<pre><code>bind main R             reload
+<pre><code>bind main R             refresh
 bind main &lt;Down&gt;        next
 bind main &lt;Ctrl-f&gt;      scroll-page-down
 bind main &lt;Esc&gt;o        options</code></pre>
@@ -1787,7 +1828,7 @@ bind generic W :!git reflog
 bind stage 2 :?^@@
 bind stage D :/^diff --(git|cc)
 
-bind main I :toggle show-id                     # Show/hide the ID column
+bind main I :toggle id                          # Show/hide the ID column
 bind diff D :toggle diff-options --minimal      # Use minimal diff algorithm
 bind diff [ :toggle diff-context -3             # Decrease context (-U arg)
 bind diff ] :toggle diff-context +3             # Increase context
@@ -2264,7 +2305,7 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>date</code></p></td>
-<td align="left" valign="top"><p class="table">The commit date.</p></td>
+<td align="left" valign="top"><p class="table">The author date.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>author</code></p></td>
@@ -2307,10 +2348,12 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">The commit dot in the revision graph.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table"><code>palette-[0-6]</code></p></td>
-<td align="left" valign="top"><p class="table">7 different colors,
-used for distinguishing branches or commits.
-example: palette-0 = red</p></td>
+<td align="left" valign="top"><p class="table"><code>palette-[0-13]</code></p></td>
+<td align="left" valign="top"><p class="table">14 different colors, used for distinguishing branches
+                         or commits. By default, the palette uses the ASCII
+                         colors, where the second half of them have the bold
+                         attribute enabled to give a brighter color.
+                         Example: palette-0 = red</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>main-commit</code></p></td>
@@ -2515,7 +2558,7 @@ git(7), git-config(1)</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-05-08 22:01:18 EDT
+Last updated 2014-08-28 21:17:31 EDT
 </div>
 </div>
 </body>

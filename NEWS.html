@@ -735,6 +735,155 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_0_3">tig-2.0.3</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Improvement:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Add <code>:save-display &lt;file&gt;</code> prompt command to save the current display.
+</p>
+</li>
+<li>
+<p>
+Add <code>:script &lt;file&gt;</code> prompt command for scripting the Tig UI.
+</p>
+</li>
+<li>
+<p>
+Add test framework and convert existing tests to use it.
+</p>
+</li>
+<li>
+<p>
+Add command-line option for starting in refs view: <code>tig refs</code>. (GH #309)
+</p>
+</li>
+<li>
+<p>
+Make blame commit ID colors stable across reloads. (GH #303)
+</p>
+</li>
+<li>
+<p>
+Increase blame ID and graph rendering color palette to 14 colors.
+</p>
+</li>
+<li>
+<p>
+New setting <em>split-view-width</em> controls the width for vertical splits. It
+   takes the width of the right-most view either as a number or a percentage.
+</p>
+</li>
+<li>
+<p>
+Expose settings holding command line argument lists: <code>file-args</code>, <code>rev-args</code>,
+   and <code>cmdline-args</code>. They are mainly intended for testing purposes but also
+   allows to change the filtering arguments dynamically. (GH #306)
+</p>
+</li>
+<li>
+<p>
+Add <code>log-options</code> setting for specifying default log view options.
+   Example: <code>set log-options = --pretty=fuller</code>.
+</p>
+</li>
+<li>
+<p>
+Use option specific view flags to reload view after <code>:set</code> commands.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Refresh the current view when returning from an external command and
+   <code>refresh-mode=after-command</code>. (GH #289)
+</p>
+</li>
+<li>
+<p>
+Fix readline completion.
+</p>
+</li>
+<li>
+<p>
+Fix <em>/</em> to <code>find-next</code> when readline support is enabled. (GH #302)
+</p>
+</li>
+<li>
+<p>
+Fix readline prompt to correctly handle UTF-8 characters.
+</p>
+</li>
+<li>
+<p>
+Add warnings for more obsolete actions and colors.
+</p>
+</li>
+<li>
+<p>
+Fix passing of commit IDS via stdin to the main view.
+</p>
+</li>
+<li>
+<p>
+Fix commit title overflow drawing for multibyte text. (GH #307)
+</p>
+</li>
+<li>
+<p>
+Fix installation directory permissions.
+</p>
+</li>
+<li>
+<p>
+Handle binary files matches reported by git-grep.
+</p>
+</li>
+<li>
+<p>
+Toggling of "args"-typed options without any arguments will clear the current
+   arguments. Example: <code>:toggle blame-options</code>.
+</p>
+</li>
+<li>
+<p>
+Detect custom <code>pretty.format</code> settings that break the log view and fallback
+   to use the <code>medium</code> format. (GH #225)
+</p>
+</li>
+<li>
+<p>
+Fix invocation of git-diff for the blame view&#8217;s line tracking. (GH #316)
+</p>
+</li>
+<li>
+<p>
+Fix blame completion of directory names. (GH #317)
+</p>
+</li>
+<li>
+<p>
+Fix display of conflicts in the main view when <em>show-changes</em> is enabled.
+</p>
+</li>
+<li>
+<p>
+Fix off-by-one error when displaying line numbers in the grep view.
+</p>
+</li>
+<li>
+<p>
+When showing the commit graph ensure that either topo, date or author-date
+   commit order is used. (Debian #757692) (GH #238)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_0_2">tig-2.0.2</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Improvements:</p></div>
@@ -2823,7 +2972,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-05-08 22:01:18 EDT
+Last updated 2014-08-28 21:17:31 EDT
 </div>
 </div>
 </body>
