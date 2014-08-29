@@ -5,7 +5,7 @@ compiler:
   - gcc
 
 env:
-  - TEST=autoconf VERBOSE=1
+  - TEST=autoconf VERBOSE=1 TEST_SHELL=bash
   - TEST=make     VERBOSE=@
 
 before_install: sudo apt-get update -qq
@@ -15,4 +15,4 @@ install: sudo apt-get install -qq --no-install-recommends asciidoc xmlto docbook
 script:
   - if [ "$TEST" = autoconf ]; then ./autogen.sh && ./configure; fi
   - if [ "$TEST" = make ]; then cp contrib/config.make .; fi
-  - make V=$VERBOSE DESTDIR=/tmp all test install install-doc
+  - make V=$VERBOSE DESTDIR=/tmp TEST_SHELL=$TEST_SHELL all test install install-doc

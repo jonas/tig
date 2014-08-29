@@ -171,9 +171,9 @@ diff_read(struct view *view, struct buffer *buf)
 
 	if (!buf) {
 		/* Fall back to retry if no diff will be shown. */
-		if (view->lines == 0 && opt_file_argv) {
+		if (view->lines == 0 && opt_file_args) {
 			int pos = argv_size(view->argv)
-				- argv_size(opt_file_argv) - 1;
+				- argv_size(opt_file_args) - 1;
 
 			if (pos > 0 && !strcmp(view->argv[pos], "--")) {
 				for (; view->argv[pos]; pos++) {

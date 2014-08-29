@@ -106,7 +106,7 @@ watch_index_handler(struct watch_handler *handler, enum watch_event event, enum 
 	enum watch_trigger changed = WATCH_NONE;
 	struct index_diff diff;
 
-	if (event == WATCH_EVENT_AFTER_EXTERNAL)
+	if (event == WATCH_EVENT_AFTER_COMMAND)
 		return check_file_mtime(&handler->last_modified, "%s/index", repo.git_dir)
 			? check : WATCH_NONE;
 
@@ -139,7 +139,7 @@ static enum watch_trigger
 watch_refs_handler(struct watch_handler *handler, enum watch_event event,
 		   enum watch_trigger check)
 {
-	if (event == WATCH_EVENT_AFTER_EXTERNAL)
+	if (event == WATCH_EVENT_AFTER_COMMAND)
 		load_refs(TRUE);
 
 	return WATCH_NONE;
@@ -157,7 +157,7 @@ watch_no_refresh(enum watch_event event)
 {
 	return opt_refresh_mode == REFRESH_MODE_MANUAL ||
 	       (opt_refresh_mode == REFRESH_MODE_AFTER_COMMAND &&
-		event != WATCH_EVENT_AFTER_EXTERNAL);
+		event != WATCH_EVENT_AFTER_COMMAND);
 }
 
 static void
@@ -172,30 +172,47 @@ watch_apply_changes(struct watch *source, enum watch_event event,
 	for (watch = watches; watch; watch = watch->next) {
 		enum watch_trigger triggers = changed & watch->triggers;
 
-		if (source == watch)
+		if (source == watch) {
 			source->state |= triggers;
-		else if (triggers)
-			watch->changed |= triggers;
+			continue;
+		}
+
+		if (event == WATCH_EVENT_AFTER_COMMAND) {
+			watch->state = WATCH_NONE;
+			triggers = watch->triggers;
+		}
+
+		watch->changed |= triggers;
 	}
 }
 
 void
 watch_apply(struct watch *source, enum watch_trigger changed)
 {
-	return watch_apply_changes(source, WATCH_EVENT_LOAD, changed);
+	watch_apply_changes(source, WATCH_EVENT_LOAD, changed);
 }
 
 static enum watch_trigger
 watch_update_event(enum watch_event event, enum watch_trigger trigger,
 		   enum watch_trigger changed)
 {
+	time_t timestamp = 0;
 	int i;
 
 	if (watch_no_refresh(event))
 		return WATCH_NONE;
 
-	for (i = 0; trigger && i < ARRAY_SIZE(watch_handlers); i++) {
+	if (event == WATCH_EVENT_AFTER_COMMAND)
+		timestamp = time(NULL);
+
+	for (i = 0; i < ARRAY_SIZE(watch_handlers); i++) {
 		struct watch_handler *handler = &watch_handlers[i];
+
+		if (event == WATCH_EVENT_AFTER_COMMAND) {
+			changed = handler->triggers;
+			handler->last_modified = timestamp;
+			continue;
+		}
 
 		if (*repo.git_dir &&
 		    (trigger & handler->triggers) &&

@@ -160,12 +160,9 @@ open_run_request(struct view *view, enum request request)
 			}
 		}
 
-		if (confirmed && argv_remove_quotes(argv)) {
-			if (req->flags.silent)
-				io_run_bg(argv);
-			else
-				open_external_viewer(argv, NULL, !req->flags.exit, FALSE, "");
-		}
+		if (confirmed && argv_remove_quotes(argv))
+			open_external_viewer(argv, NULL, req->flags.silent,
+					     !req->flags.exit, FALSE, "");
 	}
 
 	if (argv)
@@ -294,7 +291,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_NEXT:
 	{
 		int nviews = displayed_views();
-		int next_view = (current_view + 1) % nviews;
+		int next_view = nviews ? (current_view + 1) % nviews : current_view;
 
 		if (next_view == current_view) {
 			report("Only one view is displayed");
@@ -397,6 +394,7 @@ static const char usage_string[] =
 "   or: tig show   [options] [revs] [--] [paths]\n"
 "   or: tig blame  [options] [rev] [--] path\n"
 "   or: tig grep   [options] [pattern]\n"
+"   or: tig refs\n"
 "   or: tig stash\n"
 "   or: tig status\n"
 "   or: tig <      [git command output]\n"
@@ -443,11 +441,11 @@ filter_options(const char *argv[], bool rev_parse)
 	update_options_from_argv(argv);
 
 	if (!rev_parse) {
-		opt_cmdline_argv = argv;
+		opt_cmdline_args = argv;
 		return;
 	}
 
-	filter_rev_parse(&opt_file_argv, "--no-revs", "--no-flags", argv);
+	filter_rev_parse(&opt_file_args, "--no-revs", "--no-flags", argv);
 	filter_rev_parse(&flags, "--flags", "--no-revs", argv);
 
 	if (flags) {
@@ -455,17 +453,17 @@ filter_options(const char *argv[], bool rev_parse)
 			const char *flag = flags[next];
 
 			if (argv_parse_rev_flag(flag, NULL))
-				argv_append(&opt_rev_argv, flag);
+				argv_append(&opt_rev_args, flag);
 			else
 				flags[flags_pos++] = flag;
 		}
 
 		flags[flags_pos] = NULL;
 
-		opt_cmdline_argv = flags;
+		opt_cmdline_args = flags;
 	}
 
-	filter_rev_parse(&opt_rev_argv, "--symbolic", "--revs-only", argv);
+	filter_rev_parse(&opt_rev_args, "--symbolic", "--revs-only", argv);
 }
 
 static enum request
@@ -502,6 +500,9 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 
 	} else if (!strcmp(subcommand, "stash")) {
 		request = REQ_VIEW_STASH;
+
+	} else if (!strcmp(subcommand, "refs")) {
+		request = REQ_VIEW_REFS;
 
 	} else {
 		subcommand = NULL;
@@ -548,16 +549,16 @@ open_pager_mode(enum request request)
 {
 	if (request == REQ_VIEW_PAGER) {
 		/* Detect if the user requested the main view. */
-		if (argv_contains(opt_rev_argv, "--stdin")) {
+		if (argv_contains(opt_rev_args, "--stdin")) {
 			open_main_view(NULL, OPEN_FORWARD_STDIN);
-		} else if (argv_contains(opt_cmdline_argv, "--pretty=raw")) {
+		} else if (argv_contains(opt_cmdline_args, "--pretty=raw")) {
 			open_main_view(NULL, OPEN_STDIN);
 		} else {
 			open_pager_view(NULL, OPEN_STDIN);
 		}
 
 	} else if (request == REQ_VIEW_DIFF) {
-		if (argv_contains(opt_rev_argv, "--stdin"))
+		if (argv_contains(opt_rev_args, "--stdin"))
 			open_diff_view(NULL, OPEN_FORWARD_STDIN);
 		else              
 			open_diff_view(NULL, OPEN_STDIN);
@@ -681,6 +682,17 @@ main(int argc, const char *argv[])
 
 	if (pager_mode)
 		request = open_pager_mode(request);
+
+	if (getenv("TIG_SCRIPT")) {
+		const char *script_command[] = { "script", getenv("TIG_SCRIPT"), NULL };
+
+		if (!displayed_views()) {
+			/* Open a 'neutral' view. */
+			open_help_view(NULL, OPEN_DEFAULT);
+		}
+
+		request = run_prompt_command(NULL, script_command);
+	}
 
 	while (view_driver(display[current_view], request)) {
 		struct key key;

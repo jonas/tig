@@ -16,7 +16,7 @@
 
 #include "compat/hashtab.h"
 
-#define GRAPH_COLORS	7
+#define GRAPH_COLORS	14
 
 struct graph_symbol {
 	unsigned int color:8;

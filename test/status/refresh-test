@@ -1,0 +1,251 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=15
+
+steps '
+	:view-status
+	:save-display status-with-unstaged.screen
+
+	<F1>
+	:save-display status-after-add-a.screen
+
+	<F2>
+	:save-display status-after-add-all.screen
+
+	<F3>
+	:save-display status-after-commit.screen
+
+	<F4>
+	:save-display status-after-reset-soft.screen
+
+	<F5>
+	:save-display status-after-reset-a-and-bc.screen
+
+	:8
+	<F6>
+	:save-display status-after-checkout-bc.screen
+
+	<F7>
+	:save-display status-after-reset-hard.screen
+
+	<F8>
+	:save-display status-after-touch-new-file.screen
+
+	<F9>
+	:save-display status-after-rm-a.screen
+
+	:5
+	<F6>
+	:save-display status-after-checkout-a.screen
+
+'
+
+tigrc <<EOF
+set refresh-mode = after-command
+bind generic <F1> !git add a
+bind generic <F2> @git add -u
+bind generic <F3> !git commit -m "Commit changes"
+bind generic <F4> @git reset --soft HEAD^
+bind generic <F5> !git reset a b.c
+bind generic <F6> @git checkout -- %(file)
+bind generic <F7> !git reset --hard
+bind generic <F8> !touch new-file
+bind generic <F9> @rm a
+EOF
+
+in_work_dir create_dirty_workdir
+
+export GIT_AUTHOR_DATE="$(expr $author_date + $author_date_delta)"
+export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
+
+test_tig
+
+assert_equals 'status-with-unstaged.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+M .j                                                                            
+M a                                                                             
+M b.c                                                                           
+M e/f                                                                           
+M g h                                                                           
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'status-after-add-a.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+M a                                                                             
+Changed but not updated:                                                        
+M .j                                                                            
+M b.c                                                                           
+M e/f                                                                           
+M g h                                                                           
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+                                                                                
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'status-after-add-all.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+M .j                                                                            
+M a                                                                             
+M b.c                                                                           
+M e/f                                                                           
+M g h                                                                           
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'status-after-commit.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'status-after-reset-soft.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+M .j                                                                            
+M a                                                                             
+M b.c                                                                           
+M e/f                                                                           
+M g h                                                                           
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'status-after-reset-a-and-bc.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+M .j                                                                            
+M e/f                                                                           
+M g h                                                                           
+Changed but not updated:                                                        
+M a                                                                             
+M b.c                                                                           
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+                                                                                
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'status-after-checkout-bc.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+M .j                                                                            
+M e/f                                                                           
+M g h                                                                           
+Changed but not updated:                                                        
+M a                                                                             
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[status] Press u to stage 'a' for commit                                    100%
+EOF
+
+assert_equals 'status-after-reset-hard.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'status-after-touch-new-file.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+? new-file                                                                      
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'status-after-rm-a.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+D a                                                                             
+Untracked files:                                                                
+? new-file                                                                      
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'status-after-checkout-a.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+? new-file                                                                      
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[status] Press u to stage 'new-file' for addition                           100%
+EOF

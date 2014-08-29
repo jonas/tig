@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# Test reading commit IDs from stdin with --stdin.
+
+. libtest.sh
+. libgit.sh
+
+export LINES=16
+
+git_clone 'repo-one'
+
+steps '
+	:save-display main-stdin.screen
+'
+
+stdin <<EOF
+$(cd "$work_dir" && git rev-list --grep='Commit 8' HEAD)
+EOF
+
+test_tig --no-walk --stdin
+
+assert_equals 'main-stdin.screen' <<EOF
+2010-01-12 01:56 Max Power             Commit 8 E                               
+2010-01-03 13:33 Jørgen Thygesen Brahe Commit 8 D                              
+2009-12-26 01:11 作者                  Commit 8 C                             
+2009-12-17 12:49 René Lévesque         <v1.0> Commit 8 B                      
+2009-12-09 00:27 A. U. Thor            Commit 8 A                               
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[main] d9a8c8b1e52ba7f1673cebb271f1fc0bdac3579b - commit 1 of 5             100%
+EOF

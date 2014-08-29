@@ -228,7 +228,7 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 		char msgbuf[SIZEOF_STR];
 		const char *value;
 		const char *msgstart = name + STRING_SIZE("%(prompt");
-		int msglen = end - msgstart - 1;
+		const int msglen = end - msgstart - 1;
 
 		if (end && msglen > 0 && string_format(msgbuf, "%.*s", msglen, msgstart)) {
 			const char *msg = msgbuf;
@@ -271,9 +271,13 @@ format_append_arg(struct format_context *format, const char ***dst_argv, const c
 	format->bufpos = 0;
 
 	while (arg) {
-		char *var = strstr(arg, "%(");
-		int len = var ? var - arg : strlen(arg);
-		char *next = var ? strchr(var, ')') + 1 : NULL;
+		const char *var = strstr(arg, "%(");
+		const char *closing = var ? strchr(var, ')') : NULL;
+		const char *next = closing ? closing + 1 : NULL;
+		const int len = var ? var - arg : strlen(arg);
+
+		if (var && !closing)
+			return FALSE;
 
 		if (len && !string_format_from(format->buf, &format->bufpos, "%.*s", len, arg))
 			return FALSE;
@@ -319,7 +323,7 @@ argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_a
 		const char *arg = src_argv[argc];
 
 		if (!strcmp(arg, "%(fileargs)")) {
-			if (file_filter && !argv_append_array(dst_argv, opt_file_argv))
+			if (file_filter && !argv_append_array(dst_argv, opt_file_args))
 				break;
 
 		} else if (!strcmp(arg, "%(diffargs)")) {
@@ -330,13 +334,17 @@ argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_a
 			if (!format_append_argv(&format, dst_argv, opt_blame_options))
 				break;
 
+		} else if (!strcmp(arg, "%(logargs)")) {
+			if (!format_append_argv(&format, dst_argv, opt_log_options))
+				break;
+
 		} else if (!strcmp(arg, "%(cmdlineargs)")) {
-			if (!format_append_argv(&format, dst_argv, opt_cmdline_argv))
+			if (!format_append_argv(&format, dst_argv, opt_cmdline_args))
 				break;
 
 		} else if (!strcmp(arg, "%(revargs)") ||
 			   (first && !strcmp(arg, "%(commit)"))) {
-			if (!argv_append_array(dst_argv, opt_rev_argv))
+			if (!argv_append_array(dst_argv, opt_rev_args))
 				break;
 
 		} else if (!format_append_arg(&format, dst_argv, arg)) {

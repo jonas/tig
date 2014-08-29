@@ -38,8 +38,9 @@ one of the Git configuration files, which are read by Tig on startup. See
 'git-config(1)' for which files to use. The following example show the basic
 syntax to use for settings, bindings and colors.
 
+// TEST: gitconfig
 --------------------------------------------------------------------------
-[tig] show-rev-graph = true
+[tig] show-changes = true
 [tig "color"] cursor = yellow red bold 
 [tig "bind"] generic = P parent
 --------------------------------------------------------------------------
@@ -83,6 +84,7 @@ is:
 
 Examples:
 
+// TEST: tigrc
 --------------------------------------------------------------------------
 set commit-order = topo		# Order commits topologically
 set git-colors = no		# Do not read Git's color settings.
@@ -103,6 +105,7 @@ set blame-view = \
 
 Or in the Git configuration files:
 
+// TEST: gitconfig
 --------------------------------------------------------------------------
 [tig]
 	line-graphics = no	# Disable graphics characters
@@ -203,11 +206,19 @@ The following variables can be set:
 
 'split-view-height' (mixed)::
 
-	Height of the lower view in a split view. Can be specified either as
-	the number of rows, e.g. '5', or as a percentage of the view height,
-	e.g. '80%', where the maximum is 100%. It is always ensured that the
-	smaller of the views is at least four rows high. The default is a view
-	height of '66%'.
+	The height of the bottom view in a horizontally split display. Can be
+	specified either as the number of rows, e.g. '5', or as a percentage of
+	the view height, e.g. '80%', where the maximum is 100%. It is always
+	ensured that the smaller of the views is at least four rows high. The
+	default is '67%'.
+
+'split-view-width' (mixed)::
+
+	Width of the right-most view in a vertically split display. Can be
+	specified either as the number of column, e.g. '5', or as a percentage
+	of the view width, e.g. '80%', where the maximum is 100%. It is always
+	ensured that the smaller of the views is at least four columns wide. The
+	default is '50%'.
 
 'status-untracked-dirs' (bool)::
 
@@ -234,6 +245,8 @@ The following variables can be set:
 	Commit ordering using the default (chronological reverse) order,
 	topological order, date order or reverse order. The default order is
 	used when the option is set to false, and topo order when set to true.
+	Note that topological order is automatically used in the main view when
+	the commit graph is enabled and the commit order is set to the default.
 
 'ignore-case' (bool)::
 
@@ -283,6 +296,21 @@ The following variables can be set:
 	Interval in seconds between view refresh update checks when
 	'refresh-mode' is set to 'periodic'.
 
+'file-args' (args)::
+
+	Command line arguments referring to files. These are filtered using
+	`git-rev-parse(1)`.
+
+'rev-args' (args)::
+
+	Command line arguments referring to revisions. These are filtered using
+	`git-rev-parse(1)`.
+
+'cmdline-args' (args)::
+
+	All remaining command line arguments that are not either filtered into
+	'file-args' or 'rev-args'.
+
 View settings
 ~~~~~~~~~~~~~
 
@@ -300,6 +328,7 @@ enum value. For example, `file-name` will automatically have its 'display'
 setting resolve to 'auto'.
 
 Examples:
+// TEST: tigrc
 --------------------------------------------------------------------------
 # Enable both ID and line numbers in the blame view
 set blame-view = date:default author:full file-name:auto id:yes,color \
@@ -425,10 +454,10 @@ key map. The syntax is:
 *bind* 'keymap' 'key' 'action'
 
 Examples:
-
+// TEST: tigrc
 --------------------------------------------------------------------------
 # Add keybinding to quickly jump to the next diff chunk in the stage view
-bind stage Enter :/^@@
+bind stage <Enter> :/^@@
 
 # Disable the default mapping for running git-gc
 bind generic G none
@@ -444,7 +473,7 @@ bind generic ø @sh -c "printf '%s' %(commit) | pbcopy"
 --------------------------------------------------------------------------
 
 Or in the Git configuration files:
-
+// TEST: gitconfig
 --------------------------------------------------------------------------
 [tig "bind"]
 	# 'unbind' the default quit key binding
@@ -485,9 +514,9 @@ combos consisting of an initial `Escape` key followed by a normal key value can
 be bound using `<Esc>key`.
 
 Examples:
-
+// TEST: tigrc
 --------------------------------------------------------------------------
-bind main R		reload
+bind main R		refresh
 bind main <Down>	next
 bind main <Ctrl-f>	scroll-page-down
 bind main <Esc>o	options
@@ -554,7 +583,7 @@ following variable names, which are substituted before commands are run:
 |=============================================================================
 
 Examples:
-
+// TEST: tigrc
 --------------------------------------------------------------------------
 # Save save the current commit as a patch file when the user selects a
 # commit in the main view and presses 'S'.
@@ -572,6 +601,7 @@ expansion of environment variables and process control, this can be achieved by
 using a shell command:
 
 .Configure a binding to copy the current commit ID to the clipboard.
+// TEST: tigrc
 --------------------------------------------------------------------------
 bind generic I @sh -c "echo -n %(commit) | xclip -selection c"
 --------------------------------------------------------------------------
@@ -581,6 +611,7 @@ following example entries can be put in either the .gitconfig or .git/config
 file:
 
 .Git configuration which binds Tig keys to Git command aliases.
+// TEST: gitconfig
 --------------------------------------------------------------------------
 [alias]
 	gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &"
@@ -599,6 +630,7 @@ and act similar to commands run via Tig's prompt. Valid internal commands are
 configuration file options (as described in this document) and pager view
 commands. Examples:
 
+// TEST: tigrc
 --------------------------------------------------------------------------
 # Reload ~/.tigrc when 'S' is pressed
 bind generic S :source .tigrc
@@ -613,7 +645,7 @@ bind generic W :!git reflog
 bind stage 2 :?^@@
 bind stage D :/^diff --(git|cc)
 
-bind main I :toggle show-id			# Show/hide the ID column
+bind main I :toggle id				# Show/hide the ID column
 bind diff D :toggle diff-options --minimal	# Use minimal diff algorithm
 bind diff [ :toggle diff-context -3		# Decrease context (-U arg)
 bind diff ] :toggle diff-context +3		# Increase context
@@ -755,7 +787,7 @@ given as the last parameter. The syntax is:
 *color* 'area' 'fgcolor' 'bgcolor' '[attributes]'
 
 Examples:
-
+// TEST: tigrc
 ------------------------------------------------------------------------------
 # Override the default terminal colors to white on black.
 color default		white	black
@@ -769,7 +801,7 @@ color tree.date		black	cyan	bold
 --------------------------------------------------------------------------
 
 Or in the Git configuration files:
-
+// TEST: gitconfig
 --------------------------------------------------------------------------
 [tig "color"]
 	# A strange looking cursor line
@@ -837,7 +869,7 @@ setting the *default* color option.
 			 sections in the help view.
 |line-number		|Line numbers.
 |id			|The commit ID.
-|date			|The commit date.
+|date			|The author date.
 |author			|The commit author.
 |mode			|The file mode holding the permissions and type.
 |overflow		|Title text overflow.
@@ -850,9 +882,11 @@ setting the *default* color option.
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |graph-commit		|The commit dot in the revision graph.
-|palette-[0-6]		|7 different colors,
-used for distinguishing branches or commits.
-example: palette-0 = red
+|palette-[0-13]		|14 different colors, used for distinguishing branches
+			 or commits. By default, the palette uses the ASCII
+			 colors, where the second half of them have the bold
+			 attribute enabled to give a brighter color.
+			 Example: palette-0 = red
 |main-commit		|The commit comment.
 |main-head		|Label of the current branch.
 |main-remote		|Label of a remote.
@@ -940,7 +974,7 @@ current configuration file will take precedence. The syntax is:
 *source* 'path'
 
 Examples:
-
+// TEST: tigrc
 --------------------------------------------------------------------------
 source ~/.tig/colorscheme.tigrc
 source ~/.tig/keybindings.tigrc

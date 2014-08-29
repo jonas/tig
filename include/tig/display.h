@@ -17,18 +17,10 @@
 #include "tig/tig.h"
 #include "tig/keys.h"
 
-enum input_status {
-	INPUT_OK,
-	INPUT_SKIP,
-	INPUT_DELETE,
-	INPUT_STOP,
-	INPUT_CANCEL
-};
-
 int get_input(int prompt_position, struct key *key, bool modifiers);
+int get_input_char(void);
 
 extern WINDOW *status_win;
-extern FILE *opt_tty;
 
 void update_status(const char *msg, ...);
 void report(const char *msg, ...) PRINTF_LIKE(1, 2);
@@ -45,7 +37,7 @@ extern unsigned int current_view;
 #define foreach_displayed_view(view, i) \
 	for (i = 0; i < ARRAY_SIZE(display) && (view = display[i]); i++)
 
-#define displayed_views()	(display[1] != NULL ? 2 : 1)
+#define displayed_views()	(!!display[0] + !!display[1])
 
 #define view_is_displayed(view) \
 	(view == display[0] || view == display[1])
@@ -53,10 +45,14 @@ extern unsigned int current_view;
 void init_display(void);
 void resize_display(void);
 void redraw_display(bool clear);
+bool save_display(const char *path);
 
-bool open_external_viewer(const char *argv[], const char *dir, bool confirm, bool refresh, const char *notice);
+bool open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool refresh, const char *notice);
 void open_editor(const char *file, unsigned int lineno);
 void enable_mouse(bool enable);
+
+bool open_script(const char *path);
+bool is_script_executing(void);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

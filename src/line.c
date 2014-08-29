@@ -188,6 +188,13 @@ init_colors(void)
 	int default_fg = rule->info.fg;
 	enum line_type type;
 
+	/* XXX: Even if the terminal does not support colors (e.g.
+	 * TERM=dumb) init_colors() must ensure that the built-in rules
+	 * have been initialized. This is done by the above call to
+	 * find_line_rule(). */
+	if (!has_colors())
+		return;
+
 	start_color();
 
 	if (assume_default_colors(default_fg, default_bg) == ERR) {

@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# Graph test: multi collapse
+
+. libtest.sh
+
+test_graph <<EOF
+commit A B C D E F
+    Commit A - merge B, C, D, E, and F
+commit C B
+    Commit C - after B
+commit B H
+    Commit B - after H
+commit F G
+    Commit F - after G
+commit H D
+    Commit H - after D
+commit D E
+    Commit D - after E
+commit E G
+    Commit E - after G
+commit G
+    Commit G
+EOF
+
+assert_equals stdout <<EOF
+●─┬─┬─┬─╮ Commit A - merge B, C, D, E, and F
+│ ● │ │ │ Commit C - after B
+●─╯ │ │ │ Commit B - after H
+│ ╭─╯ │ ● Commit F - after G
+● │ ╭─╯ │ Commit H - after D
+●─╯ │ ╭─╯ Commit D - after E
+●───╯ │ Commit E - after G
+◎─────╯ Commit G
+EOF

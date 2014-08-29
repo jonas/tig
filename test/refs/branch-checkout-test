@@ -1,0 +1,106 @@
+#!/bin/sh
+#
+# Test branch checkout (GitHub issue #290)
+
+. libtest.sh
+. libgit.sh
+
+export LINES=9
+
+tigrc <<EOF
+# Dump information about the current reference
+bind generic <F1> \
+	@sh -c 'printf "refs=%s\nbranch=%s\ntag=%s\n" \
+		"%(ref)" "%(branch)" "%(tag)" > $HOME/%(commit).refinfo'
+
+bind generic <F2> @git checkout -q %(branch)
+bind generic <F3> @git checkout -q %(tag)
+
+bind generic <F4> @sh -c 'git rev-parse HEAD > $HOME/%(ref).head'
+EOF
+
+steps '
+	:view-refs
+	:save-display refs-init.screen
+	:3
+	<F1>
+	<F2>
+	:2
+	:save-display refs-checked-out-branch.screen
+	<F4>
+	:6
+	<F1>
+	<F3>
+	:save-display refs-checked-out-tag.screen
+	<F4>
+'
+
+LONG_BRANCH_NAME_ID=19455fa3642af6a6a7d527dd043caf5a70eaad2d
+LONG_BRANCH_NAME=this_is_really_a_long_long_long_long_long_long_long_branch
+
+LONG_TAG_NAME_ID=a3f25ca556c1cef1ef3a0704f5deaec8687c84b9
+LONG_TAG_NAME=this_is_really_a_long_long_long_long_long_long_long_tag
+
+create_branches()
+{
+	git branch "$LONG_BRANCH_NAME" HEAD~4
+	git tag "$LONG_TAG_NAME" HEAD~9
+}
+
+git_clone 'repo-one'
+in_work_dir create_branches
+
+test_tig
+
+assert_equals "$LONG_BRANCH_NAME_ID.refinfo" <<EOF
+refs=$LONG_BRANCH_NAME
+branch=$LONG_BRANCH_NAME
+tag=
+EOF
+
+assert_equals "$LONG_BRANCH_NAME.head" <<EOF
+$LONG_BRANCH_NAME_ID
+EOF
+
+assert_equals "$LONG_TAG_NAME_ID.refinfo" <<EOF
+refs=$LONG_TAG_NAME
+branch=
+tag=$LONG_TAG_NAME
+EOF
+
+assert_equals "$LONG_TAG_NAME.head" <<EOF
+$LONG_TAG_NAME_ID
+EOF
+
+assert_equals 'refs-init.screen' <<EOF
+                               All references                                   
+2010-04-07 05:37 Max Power     master                                           
+2010-03-04 04:09 A. U. Thor    this_is_really_a_long_long_long_long_long_long_l 
+2010-04-07 05:37 Max Power     origin/master                                    
+2010-04-07 05:37 Max Power     origin/HEAD                                      
+2010-01-20 14:18 A. U. Thor    this_is_really_a_long_long_long_long_long_long_l 
+2009-12-17 12:49 René Lévesque v1.0                                           
+[refs] All references                                                       100%
+EOF
+
+assert_equals 'refs-checked-out-branch.screen' <<EOF
+                               All references                                   
+2010-03-04 04:09 A. U. Thor    this_is_really_a_long_long_long_long_long_long_l 
+2010-04-07 05:37 Max Power     master                                           
+2010-04-07 05:37 Max Power     origin/master                                    
+2010-04-07 05:37 Max Power     origin/HEAD                                      
+2010-01-20 14:18 A. U. Thor    this_is_really_a_long_long_long_long_long_long_l 
+2009-12-17 12:49 René Lévesque v1.0                                           
+[refs] 19455fa3642af6a6a7d527dd043caf5a70eaad2d - reference 1 of 6          100%
+EOF
+
+assert_equals 'refs-checked-out-tag.screen' <<EOF
+                               All references                                   
+2010-03-04 04:09 A. U. Thor    this_is_really_a_long_long_long_long_long_long_l 
+2010-04-07 05:37 Max Power     master                                           
+2010-04-07 05:37 Max Power     origin/master                                    
+2010-04-07 05:37 Max Power     origin/HEAD                                      
+2010-01-20 14:18 A. U. Thor    this_is_really_a_long_long_long_long_long_long_l 
+2009-12-17 12:49 René Lévesque v1.0                                           
+[refs] a3f25ca556c1cef1ef3a0704f5deaec8687c84b9 - reference 5 of 6          100%
+EOF

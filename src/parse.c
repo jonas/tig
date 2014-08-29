@@ -12,7 +12,6 @@
  */
 
 #include "tig/tig.h"
-#include "tig/util.h"
 #include "tig/parse.h"
 
 size_t

@@ -178,11 +178,7 @@ read_prompt_incremental(const char *prompt, bool edit_mode, input_handler handle
 static void
 readline_display(void)
 {
-	wmove(status_win, 0, 0);
-	waddstr(status_win, rl_display_prompt);
-	waddstr(status_win, rl_line_buffer);
-	wclrtoeol(status_win);
-	wmove(status_win, 0, strlen(rl_display_prompt) + rl_point);
+	update_status("%s%s", rl_display_prompt, rl_line_buffer);
 	wrefresh(status_win);
 }
 
@@ -233,6 +229,7 @@ readline_action_generator(const char *text, int state)
 		"bind",
 		"set",
 		"toggle",
+		"save-display",
 #define REQ_GROUP(help)
 #define REQ_(req, help)	#req
 		REQ_INFO,
@@ -359,7 +356,7 @@ readline_toggle_generator(const char *text, int state)
 static int
 readline_getc(FILE *stream)
 {
-	return getc(opt_tty);
+	return get_input_char();
 }
 
 static char **
@@ -449,7 +446,13 @@ read_prompt(const char *prompt)
 	}
 
 	line = readline(prompt);
-	if (line && *line)
+
+	if (line && !*line) {
+		free(line);
+		line = NULL;
+	}
+
+	if (line)
 		add_history(line);
 
 	return line;
@@ -538,12 +541,17 @@ struct prompt_toggle {
 	void *opt;
 };
 
+static struct prompt_toggle option_toggles[] = {
+#define DEFINE_OPTION_TOGGLES(name, type, flags) { #name, #type, flags, &opt_ ## name },
+	OPTION_INFO(DEFINE_OPTION_TOGGLES)
+};
+
 static bool
 find_arg(const char *argv[], const char *arg)
 {
 	int i;
 
-	for (i = 0; argv[i]; i++)
+	for (i = 0; argv && argv[i]; i++)
 		if (!strcmp(argv[i], arg))
 			return TRUE;
 	return FALSE;
@@ -625,6 +633,12 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 		bool found = TRUE;
 		int i;
 
+		if (argv_size(argv) <= 2) {
+			argv_free(*opt);
+			(*opt)[0] = NULL;
+			return SUCCESS;
+		}
+
 		for (i = 2; argv[i]; i++) {
 			if (!find_arg(*opt, argv[i])) {
 				found = FALSE;
@@ -689,10 +703,6 @@ find_prompt_toggle(struct prompt_toggle toggles[], size_t toggles_size,
 static enum status_code
 prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 {
-	struct prompt_toggle option_toggles[] = {
-#define DEFINE_OPTION_TOGGLES(name, type, flags) { #name, #type, flags, &opt_ ## name },
-		OPTION_INFO(DEFINE_OPTION_TOGGLES)
-	};
 	const char *option = argv[1];
 	size_t optionlen = option ? strlen(option) : 0;
 	struct prompt_toggle *toggle;
@@ -740,6 +750,25 @@ prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 	}
 
 	return error("`:toggle %s` not supported", option);
+}
+
+static void
+prompt_update_display(enum view_flag flags)
+{
+	struct view *view;
+	int i;
+
+	if (flags & VIEW_RESET_DISPLAY) {
+		resize_display();
+		redraw_display(TRUE);
+	}
+
+	foreach_displayed_view(view, i) {
+		if (view_has_flags(view, flags) && view_can_refresh(view))
+			reload_view(view);
+		else
+			redraw_view(view);
+	}
 }
 
 enum request
@@ -823,34 +852,40 @@ run_prompt_command(struct view *view, const char *argv[])
 			open_pager_view(view, OPEN_PREPARED | OPEN_WITH_STDERR);
 		}
 
+	} else if (!strcmp(cmd, "save-display")) {
+		const char *path = argv[1] ? argv[1] : "tig-display.txt";
+
+		if (!save_display(path))
+			report("Failed to save screen to %s", path);
+		else
+			report("Saved screen to %s", path);
+
 	} else if (!strcmp(cmd, "toggle")) {
 		enum view_flag flags = VIEW_NO_FLAGS;
 		enum status_code code = prompt_toggle(view, argv, &flags);
 		const char *action = get_status_message(code);
-		int i;
 
 		if (code != SUCCESS) {
 			report("%s", action);
 			return REQ_NONE;
 		}
 
-		if (flags & VIEW_RESET_DISPLAY) {
-			resize_display();
-			redraw_display(TRUE);
-		}
-
-		foreach_displayed_view(view, i) {
-			if (view_has_flags(view, flags) && view_can_refresh(view))
-				reload_view(view);
-			else
-				redraw_view(view);
-		}
+		prompt_update_display(flags);
 
 		if (*action)
 			report("%s", action);
 
+	} else if (!strcmp(cmd, "script")) {
+		if (is_script_executing()) {
+			report("Scripts cannot be run from scripts");
+		} else if (!open_script(argv[1])) {
+			report("Failed to open %s", argv[1]);
+		}
+
 	} else {
 		struct key key = {};
+		enum status_code code;
+		enum view_flag flags = VIEW_NO_FLAGS;
 
 		/* Try :<key> */
 		key.modifiers.multibytes = 1;
@@ -864,14 +899,33 @@ run_prompt_command(struct view *view, const char *argv[])
 		if (request != REQ_UNKNOWN)
 			return request;
 
-		if (set_option(argv[0], argv_size(argv + 1), &argv[1]) == SUCCESS) {
+		code = set_option(argv[0], argv_size(argv + 1), &argv[1]);
+		if (code != SUCCESS) {
+			report("%s", get_status_message(code));
+			return REQ_NONE;
+		}
+
+		if (!strcmp(cmd, "set")) {
+			struct prompt_toggle *toggle;
+
+			toggle = find_prompt_toggle(option_toggles, ARRAY_SIZE(option_toggles),
+						    "", argv[1], strlen(argv[1]));
+
+			if (toggle)
+				flags = toggle->flags;
+		}
+
+		if (flags) {
+			prompt_update_display(flags);
+
+		} else {
 			request = view_can_refresh(view) ? REQ_REFRESH : REQ_SCREEN_REDRAW;
 			if (!strcmp(cmd, "color"))
 				init_colors();
 			resize_display();
 			redraw_display(TRUE);
 		}
-		return request;
+
 	}
 	return REQ_NONE;
 }

@@ -26,11 +26,13 @@
 	_(blame_options,		const char **,		VIEW_BLAME_LIKE) \
 	_(blame_view,			const char **,		VIEW_NO_FLAGS) \
 	_(blob_view,			const char **,		VIEW_NO_FLAGS) \
+	_(cmdline_args,			const char **,		VIEW_NO_FLAGS) \
 	_(commit_order,			enum commit_order,	VIEW_LOG_LIKE) \
 	_(diff_context,			int,			VIEW_DIFF_LIKE) \
 	_(diff_options,			const char **,		VIEW_DIFF_LIKE) \
 	_(diff_view,			const char **,		VIEW_NO_FLAGS) \
 	_(editor_line_number,		bool,			VIEW_NO_FLAGS) \
+	_(file_args,			const char **,		VIEW_NO_FLAGS) \
 	_(file_filter,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
 	_(focus_child,			bool,			VIEW_NO_FLAGS) \
 	_(git_colors,			const char **,		VIEW_NO_FLAGS) \
@@ -40,23 +42,26 @@
 	_(ignore_case,			bool,			VIEW_NO_FLAGS) \
 	_(ignore_space,			enum ignore_space,	VIEW_DIFF_LIKE) \
 	_(line_graphics,		enum graphic,		VIEW_NO_FLAGS) \
+	_(log_options,			const char **,		VIEW_LOG_LIKE) \
 	_(log_view,			const char **,		VIEW_NO_FLAGS) \
 	_(main_view,			const char **,		VIEW_NO_FLAGS) \
 	_(mouse,			bool,			VIEW_NO_FLAGS) \
 	_(mouse_scroll,			int,			VIEW_NO_FLAGS) \
 	_(pager_view,			const char **,		VIEW_NO_FLAGS) \
+	_(refresh_interval,		int,			VIEW_NO_FLAGS) \
+	_(refresh_mode,			enum refresh_mode,	VIEW_NO_FLAGS) \
 	_(refs_view,			const char **,		VIEW_NO_FLAGS) \
+	_(rev_args,			const char **,		VIEW_NO_FLAGS) \
 	_(show_changes,			bool,			VIEW_NO_FLAGS) \
 	_(show_notes,			bool,			VIEW_NO_FLAGS) \
 	_(split_view_height,		double,			VIEW_RESET_DISPLAY) \
+	_(split_view_width,		double,			VIEW_RESET_DISPLAY) \
 	_(stage_view,			const char **,		VIEW_NO_FLAGS) \
+	_(stash_view,			const char **,		VIEW_NO_FLAGS) \
 	_(status_untracked_dirs,	bool,			VIEW_STATUS_LIKE) \
 	_(status_view,			const char **,		VIEW_NO_FLAGS) \
-	_(stash_view,			const char **,		VIEW_NO_FLAGS) \
 	_(tab_size,			int,			VIEW_NO_FLAGS) \
 	_(tree_view,			const char **,		VIEW_NO_FLAGS) \
-	_(refresh_mode,			enum refresh_mode,	VIEW_NO_FLAGS) \
-	_(refresh_interval,		int,			VIEW_NO_FLAGS) \
 	_(vertical_split,		enum vertical_split,	VIEW_RESET_DISPLAY | VIEW_DIFF_LIKE) \
 	_(wrap_lines,			bool,			VIEW_NO_FLAGS) \
 
@@ -152,9 +157,6 @@ union view_column_options {
 
 extern iconv_t opt_iconv_out;
 extern char opt_editor[SIZEOF_STR];
-extern const char **opt_cmdline_argv;
-extern const char **opt_rev_argv;
-extern const char **opt_file_argv;
 extern char opt_env_lines[64];
 extern char opt_env_columns[64];
 extern char *opt_env[];
@@ -167,6 +169,7 @@ void update_options_from_argv(const char *argv[]);
 
 const char *ignore_space_arg();
 const char *commit_order_arg();
+const char *commit_order_arg_with_graph(bool with_graph);
 const char *diff_context_arg();
 const char *show_notes_arg();
 

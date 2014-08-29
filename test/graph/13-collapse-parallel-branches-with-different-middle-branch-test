@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# Graph test: collapse parallel branches with different middle branch
+
+. libtest.sh
+
+test_graph <<EOF
+commit A B C D E F
+    Commit A - merge B, C, D, E, and F
+commit D I
+    Commit D - after I
+commit E J
+    Commit E - after J
+commit F I
+    Commit F - after I
+commit B C
+    Commit B - after C
+commit C G
+    Commit C - after G
+commit G H
+    Commit G - after H
+commit H I
+    Commit H - after I
+commit I J
+    Commit I - after J
+commit J
+    Commit J
+EOF
+
+assert_equals stdout <<EOF
+●─┬─┬─┬─╮ Commit A - merge B, C, D, E, and F
+│ │ ● │ │ Commit D - after I
+│ │ │ ● │ Commit E - after J
+│ │ │ │ ● Commit F - after I
+● │ │ │ │ Commit B - after C
+●─╯ │ │ │ Commit C - after G
+● ╭─╯ │ │ Commit G - after H
+● │ ╭─╯ │ Commit H - after I
+●─┴─│───╯ Commit I - after J
+◎───╯ Commit J
+EOF

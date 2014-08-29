@@ -16,6 +16,7 @@ tig log    [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
 tig blame  [options] [rev] [--] path
 tig grep   [options] [pattern]
+tig refs
 tig stash
 tig status
 tig <      [Git command output]
@@ -51,6 +52,9 @@ status::
 
 log::
 	Start up in log view, displaying git-log(1) output.
+
+refs::
+	Start up in refs view.
 
 stash::
 	Start up in stash view.
@@ -167,6 +171,11 @@ Grep all files for lines containing `DEFINE_ENUM`:
 $ tig grep -p DEFINE_ENUM
 -----------------------------------------------------------------------------
 
+Show references (branches, remotes and tags):
+-----------------------------------------------------------------------------
+$ tig refs
+-----------------------------------------------------------------------------
+
 ENVIRONMENT VARIABLES
 ---------------------
 
@@ -200,6 +209,16 @@ TIG_DIFF_OPTS::
 
 TIG_TRACE::
 	Path for trace file where information about Git commands are logged.
+
+TIG_SCRIPT::
+	Path to script that should be executed automatically on startup. If this
+	environment variable is defined to the empty string, the script is read
+	from stdin. The script is interpreted line-by-line and can contain
+	prompt commands and key mappings.
+
+TIG_NO_DISPLAY::
+	Open Tig without rendering anything to the terminal. This force Ncurses
+	to write to /dev/null. The main use is for automated testing of Tig.
 
 FILES
 -----

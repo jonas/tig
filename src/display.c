@@ -28,24 +28,32 @@ static WINDOW *display_win[2];
 static WINDOW *display_title[2];
 static WINDOW *display_sep;
 
-FILE *opt_tty;
+static FILE *opt_tty;
 
 bool
-open_external_viewer(const char *argv[], const char *dir, bool confirm, bool refresh, const char *notice)
+open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool refresh, const char *notice)
 {
 	bool ok;
 
-	def_prog_mode();           /* save current tty modes */
-	endwin();                  /* restore original tty modes */
-	ok = io_run_fg(argv, dir);
-	if (confirm || !ok) {
-		if (!ok && *notice)
-			fprintf(stderr, "%s", notice);
-		fprintf(stderr, "Press Enter to continue");
-		getc(opt_tty);
+	if (silent) {
+		ok = io_run_bg(argv);
+
+	} else {
+		def_prog_mode();           /* save current tty modes */
+		endwin();                  /* restore original tty modes */
+		ok = io_run_fg(argv, dir);
+		if (confirm || !ok) {
+			if (!ok && *notice)
+				fprintf(stderr, "%s", notice);
+			if (!is_script_executing()) {
+				fprintf(stderr, "Press Enter to continue");
+				getc(opt_tty);
+			}
+		}
+		reset_prog_mode();
 	}
-	reset_prog_mode();
-	if (watch_update(WATCH_EVENT_AFTER_EXTERNAL) && refresh) {
+
+	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && refresh) {
 		struct view *view;
 		int i;
 
@@ -94,7 +102,7 @@ open_editor(const char *file, unsigned int lineno)
 	if (lineno && opt_editor_line_number && string_format(lineno_cmd, "+%u", lineno))
 		editor_argv[argc++] = lineno_cmd;
 	editor_argv[argc] = file;
-	if (!open_external_viewer(editor_argv, repo.cdup, FALSE, TRUE, EDITOR_LINENO_MSG))
+	if (!open_external_viewer(editor_argv, repo.cdup, FALSE, FALSE, TRUE, EDITOR_LINENO_MSG))
 		opt_editor_line_number = FALSE;
 }
 
@@ -113,7 +121,7 @@ static void
 apply_vertical_split(struct view *base, struct view *view)
 {
 	view->height = base->height;
-	view->width  = apply_step(VSPLIT_SCALE, base->width);
+	view->width  = apply_step(opt_split_view_width, base->width);
 	view->width  = MAX(view->width, MIN_VIEW_WIDTH);
 	view->width  = MIN(view->width, base->width - MIN_VIEW_WIDTH);
 	base->width -= view->width;
@@ -243,6 +251,70 @@ redraw_display(bool clear)
 	redraw_display_separator(clear);
 }
 
+static bool
+save_window_line(FILE *file, WINDOW *win, int y, char *buf, size_t bufsize)
+{
+	int read = mvwinnstr(win, y, 0, buf, bufsize);
+
+	return read == ERR ? FALSE : fprintf(file, "%s\n", buf) == read + 1;
+}
+
+static bool
+save_window_vline(FILE *file, WINDOW *left, WINDOW *right, int y, char *buf, size_t bufsize)
+{
+	int read1 = mvwinnstr(left, y, 0, buf, bufsize);
+	int read2 = read1 == ERR ? ERR : mvwinnstr(right, y, 0, buf + read1 + 1, bufsize - read1 - 1);
+
+	if (read2 == ERR)
+		return FALSE;
+	buf[read1] = '|';
+
+	return fprintf(file, "%s\n", buf) == read1 + 1 + read2 + 1;
+}
+
+bool
+save_display(const char *path)
+{
+	int i, width;
+	char *line;
+	FILE *file = fopen(path, "w");
+	bool ok = TRUE;
+	struct view *view = display[0];
+
+	if (!file)
+		return FALSE;
+
+	getmaxyx(stdscr, i, width);
+	line = malloc(width + 1);
+	if (!line) {
+		fclose(file);
+		return FALSE;
+	}
+
+	if (view->width < width) {
+		struct view *left = display[0],
+			    *right = display[1];
+
+		for (i = 0; ok && i < left->height; i++)
+			ok = save_window_vline(file, left->win, right->win, i, line, width);
+		if (ok)
+			ok = save_window_vline(file, left->title, right->title, 0, line, width);
+	} else {
+		int j;
+
+		foreach_displayed_view (view, j) {
+			for (i = 0; ok && i < view->height; i++)
+				ok = save_window_line(file, view->win, i, line, width);
+			if (ok)
+				ok = save_window_line(file, view->title, 0, line, width);
+		}
+	}
+
+	free(line);
+	fclose(file);
+	return ok;
+}
+
 /*
  * Status management
  */
@@ -327,6 +399,7 @@ done_display(void)
 void
 init_display(void)
 {
+	bool no_display = !!getenv("TIG_NO_DISPLAY");
 	const char *term;
 	int x, y;
 
@@ -336,15 +409,18 @@ init_display(void)
 		die("Failed to register done_display");
 
 	/* Initialize the curses library */
-	if (isatty(STDIN_FILENO)) {
+	if (!no_display && isatty(STDIN_FILENO)) {
 		cursed = !!initscr();
 		opt_tty = stdin;
 	} else {
 		/* Leave stdin and stdout alone when acting as a pager. */
+		FILE *out_tty;
+
 		opt_tty = fopen("/dev/tty", "r+");
-		if (!opt_tty)
+		out_tty = no_display ? fopen("/dev/null", "w+") : opt_tty;
+		if (!opt_tty || !out_tty)
 			die("Failed to open /dev/tty");
-		cursed = !!newterm(NULL, opt_tty, opt_tty);
+		cursed = !!newterm(NULL, out_tty, opt_tty);
 	}
 
 	if (!cursed)
@@ -355,8 +431,7 @@ init_display(void)
 	noecho();       /* Don't echo input */
 	leaveok(stdscr, FALSE);
 
-	if (has_colors())
-		init_colors();
+	init_colors();
 
 	getmaxyx(stdscr, y, x);
 	status_win = newwin(1, x, y - 1, 0);
@@ -376,10 +451,11 @@ init_display(void)
 
 	term = getenv("XTERM_VERSION") ? NULL : getenv("COLORTERM");
 	if (term && !strcmp(term, "gnome-terminal")) {
-		/* In the gnome-terminal-emulator, the message from
-		 * scrolling up one line when impossible followed by
-		 * scrolling down one line causes corruption of the
-		 * status line. This is fixed by calling wclear. */
+		/* In the gnome-terminal-emulator, the warning message
+		 * shown when scrolling up one line while the cursor is
+		 * on the first line followed by scrolling down one line
+		 * corrupts the status line. This is fixed by calling
+		 * wclear. */
 		use_scroll_status_wclear = TRUE;
 		use_scroll_redrawwin = FALSE;
 
@@ -394,6 +470,71 @@ init_display(void)
 		use_scroll_redrawwin = TRUE;
 		use_scroll_status_wclear = FALSE;
 	}
+}
+
+static struct io script_io = { -1 };
+
+bool
+open_script(const char *path)
+{
+	return io_open(&script_io, "%s", path);
+}
+
+bool
+is_script_executing(void)
+{
+	return script_io.pipe != -1;
+}
+
+static bool
+read_script(struct key *key)
+{
+	static struct buffer input_buffer;
+	static const char *line = "";
+	enum status_code code;
+
+	if (!line || !*line) {
+		if (input_buffer.data && *input_buffer.data == ':') {
+			line = "<Enter>";
+			memset(&input_buffer, 0, sizeof(input_buffer));
+
+		} else if (!io_get(&script_io, &input_buffer, '\n', TRUE)) {
+			io_done(&script_io);
+			return FALSE;
+		} else {
+			line = input_buffer.data;
+		}
+	}
+
+	code = get_key_value(&line, key);
+	if (code != SUCCESS)
+		die("Error reading script: %s", get_status_message(code));
+	return TRUE;
+}
+
+int
+get_input_char(void)
+{
+	if (is_script_executing()) {
+		static struct key key;
+		static int bytes_pos;
+
+		if (!key.modifiers.multibytes || bytes_pos >= strlen(key.data.bytes)) {
+			if (!read_script(&key))
+				return 0;
+			bytes_pos = 0;
+		}
+
+		if (!key.modifiers.multibytes) {
+			if (key.data.value < 128)
+				return key.data.value;
+			die("Only ASCII control characters can be used in prompts: %d", key.data.value);
+		}
+
+		return key.data.bytes[bytes_pos++];
+	}
+
+	return getc(opt_tty);
 }
 
 int
@@ -436,15 +577,23 @@ get_input(int prompt_position, struct key *key, bool modifiers)
 		} else {
 			view = display[current_view];
 			getbegyx(view->win, cursor_y, cursor_x);
-			cursor_x = view->width - 1;
+			cursor_x += view->width - 1;
 			cursor_y += view->pos.lineno - view->pos.offset;
 		}
 		setsyx(cursor_y, cursor_x);
 
-		/* Refresh, accept single keystroke of input */
-		doupdate();
-		wtimeout(status_win, delay);
-		key_value = wgetch(status_win);
+		if (is_script_executing()) {
+			/* Wait for the current command to complete. */
+			if (delay == 0 || !read_script(key))
+				continue;
+			return key->modifiers.multibytes ? OK : key->data.value;
+
+		} else {
+			/* Refresh, accept single keystroke of input */
+			doupdate();
+			wtimeout(status_win, delay);
+			key_value = wgetch(status_win);
+		}
 
 		/* wgetch() with nodelay() enabled returns ERR when
 		 * there's no input. */
@@ -498,7 +647,6 @@ get_input(int prompt_position, struct key *key, bool modifiers)
 			key->data.bytes[0] = key_value;
 
 			key_length = utf8_char_length(key->data.bytes);
-			nodelay(status_win, TRUE);
 			for (pos = 1; pos < key_length && pos < sizeof(key->data.bytes) - 1; pos++) {
 				key->data.bytes[pos] = wgetch(status_win);
 			}

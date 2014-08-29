@@ -93,17 +93,17 @@ blame_open(struct view *view, enum open_flags flags)
 
 	if (is_initial_view(view)) {
 		/* Finish validating and setting up blame options */
-		if (!opt_file_argv || opt_file_argv[1] || (opt_rev_argv && opt_rev_argv[1]))
+		if (!opt_file_args || opt_file_args[1] || (opt_rev_args && opt_rev_args[1]))
 			usage("Invalid number of options to blame");
 
-		if (opt_rev_argv) {
-			string_ncopy(view->env->ref, opt_rev_argv[0], strlen(opt_rev_argv[0]));
+		if (opt_rev_args) {
+			string_ncopy(view->env->ref, opt_rev_args[0], strlen(opt_rev_args[0]));
 		}
 
-		string_ncopy(view->env->file, opt_file_argv[0], strlen(opt_file_argv[0]));
+		string_ncopy(view->env->file, opt_file_args[0], strlen(opt_file_args[0]));
 
-		opt_blame_options = opt_cmdline_argv;
-		opt_cmdline_argv = NULL;
+		opt_blame_options = opt_cmdline_args;
+		opt_cmdline_args = NULL;
 	}
 
 	if (!view->env->file[0]) {
@@ -339,7 +339,7 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 	char from[SIZEOF_REF + SIZEOF_STR];
 	char to[SIZEOF_REF + SIZEOF_STR];
 	const char *diff_tree_argv[] = {
-		"git", "diff", encoding_arg, "--no-textconv", "--no-extdiff",
+		"git", "diff", encoding_arg, "--no-textconv", "--no-ext-diff",
 			"--no-color", "-U0", from, to, "--", NULL
 	};
 	struct io io;
@@ -433,7 +433,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_VIEW_BLAME:
 	case REQ_PARENT:
-		if (!check_blame_commit(blame, TRUE))
+		if (!check_blame_commit(blame, request == REQ_VIEW_BLAME))
 			break;
 		blame_go_forward(view, blame, request == REQ_PARENT);
 		break;

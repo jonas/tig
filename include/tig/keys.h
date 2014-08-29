@@ -16,6 +16,7 @@
 
 #include "tig/tig.h"
 #include "tig/request.h"
+#include "tig/util.h"
 
 /*
  * Keys

@@ -1,0 +1,39 @@
+#!/bin/sh
+
+. libtest.sh
+
+LINES=7
+
+# Disable built-in configuration
+export TIGRC_SYSTEM=does-not-exist
+
+# Use non-default user configuration
+export TIGRC_USER="$HOME/.tigrc.safe"
+
+file "$HOME/.tigrc.safe" <<EOF
+bind generic : prompt		# Must have prompt mapping to execute script
+EOF
+
+tigrc <<EOF
+This will generate an error if Tig reads this file instead of $TIGRC_USER.
+Asserted with the empty stderr below.
+EOF
+
+steps "
+	:view-help
+	:save-display help.screen
+"
+
+test_tig
+
+assert_equals stderr <<EOF
+EOF
+
+assert_equals help.screen <<EOF
+Quick reference for tig keybindings:                                            
+                                                                                
+[-] generic bindings                                                            
+Misc                                                                            
+  : prompt Open the prompt                                                      
+[help] - line 1 of 5                                                        100%
+EOF

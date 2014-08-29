@@ -175,7 +175,7 @@ refs_select(struct view *view, struct line *line)
 	}
 	string_copy_rev(view->ref, reference->ref->id);
 	string_copy_rev(view->env->head, reference->ref->id);
-	string_copy_rev(view->env->ref, reference->ref->name);
+	string_ncopy(view->env->ref, reference->ref->name, strlen(reference->ref->name));
 	ref_update_env(view->env, reference->ref, TRUE);
 }
 

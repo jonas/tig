@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# Read --pretty=raw output from stdin.
+
+. libtest.sh
+. libgit.sh
+
+export LINES=16
+
+git_clone 'repo-one'
+
+steps '
+	:save-display main-pretty-raw.screen
+'
+
+stdin <<EOF
+$(in_work_dir git log --pretty=raw --author=brache)
+EOF
+
+test_tig --pretty=raw
+
+assert_equals 'main-pretty-raw.screen' <<EOF
+2010-03-29 17:15 Jørgen Thygesen Brahe Commit 10 D                             
+2010-02-15 03:24 Jørgen Thygesen Brahe Commit 9 D                              
+2010-01-03 13:33 Jørgen Thygesen Brahe Commit 8 D                              
+2009-11-21 23:43 Jørgen Thygesen Brahe Commit 7 D                              
+2009-10-10 09:52 Jørgen Thygesen Brahe Commit 6 D                              
+2009-08-28 20:01 Jørgen Thygesen Brahe Commit 5 D                              
+2009-07-17 06:10 Jørgen Thygesen Brahe Commit 4 D                              
+2009-06-04 16:19 Jørgen Thygesen Brahe Commit 3 D                              
+2009-04-23 02:28 Jørgen Thygesen Brahe Commit 2 D                              
+2009-03-11 12:38 Jørgen Thygesen Brahe Commit 1 D                              
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[main] 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4 - commit 1 of 10            100%
+EOF

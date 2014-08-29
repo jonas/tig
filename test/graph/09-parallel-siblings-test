@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# Graph test: parallel siblings
+
+. libtest.sh
+
+test_graph <<EOF
+commit A Z B C
+    Commit A - merge Z, B, and C
+commit B D C
+    Commit B - merge D and C
+commit D E C
+    Commit D - merge C and E
+commit E Z
+    Commit E - after Z
+commit Z Y
+    Commit Z - after Y
+commit Y X
+    Commit Y - after X
+commit X W
+    Commit X - after W
+commit W C
+    Commit W - after C
+commit C
+    Commit C
+EOF
+
+assert_equals stdout <<EOF
+●─┬─╮ Commit A - merge Z, B, and C
+│ ●─│─╮ Commit B - merge D and C
+│ ●─│─│─╮ Commit D - merge C and E
+│ ● │ │ │ Commit E - after Z
+●─╯ │ │ │ Commit Z - after Y
+● ╭─╯ │ │ Commit Y - after X
+● │ ╭─╯ │ Commit X - after W
+● │ │ ╭─╯ Commit W - after C
+◎─┴─┴─╯ Commit C
+EOF

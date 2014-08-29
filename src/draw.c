@@ -16,6 +16,23 @@
 #include "tig/draw.h"
 #include "tig/options.h"
 
+static const enum line_type palette_colors[] = {
+	LINE_PALETTE_0,
+	LINE_PALETTE_1,
+	LINE_PALETTE_2,
+	LINE_PALETTE_3,
+	LINE_PALETTE_4,
+	LINE_PALETTE_5,
+	LINE_PALETTE_6,
+	LINE_PALETTE_7,
+	LINE_PALETTE_8,
+	LINE_PALETTE_9,
+	LINE_PALETTE_10,
+	LINE_PALETTE_11,
+	LINE_PALETTE_12,
+	LINE_PALETTE_13,
+};
+
 /*
  * View drawing.
  */
@@ -116,12 +133,15 @@ draw_text_overflow(struct view *view, const char *text, enum line_type type,
 	if (on) {
 		int overflow = overflow_length + offset;
 		int max = MIN(VIEW_MAX_LEN(view), overflow);
-		int len = strlen(text);
+		const char *tmp = text;
+		int text_width = 0;
+		int trimmed = FALSE;
+		size_t len = utf8_length(&tmp, 0, &text_width, max, &trimmed, FALSE, 1);
 
-		if (draw_text_expanded(view, type, text, max, max < overflow))
+		if (draw_text_expanded(view, type, text, text_width, max < overflow))
 			return TRUE;
 
-		text = len > overflow ? text + overflow : "";
+		text += len;
 		type = LINE_OVERFLOW;
 	}
 
@@ -220,22 +240,16 @@ draw_author(struct view *view, struct view_column *column, const struct ident *a
 static bool
 draw_id(struct view *view, struct view_column *column, const char *id)
 {
-	static const enum line_type colors[] = {
-		LINE_PALETTE_0,
-		LINE_PALETTE_1,
-		LINE_PALETTE_2,
-		LINE_PALETTE_3,
-		LINE_PALETTE_4,
-		LINE_PALETTE_5,
-		LINE_PALETTE_6,
-	};
 	enum line_type type = LINE_ID;
 
 	if (!column->opt.id.display)
 		return FALSE;
 
-	if (column->opt.id.color)
-		type = colors[((long) id) % ARRAY_SIZE(colors)];
+	if (column->opt.id.color && id) {
+		hashval_t color = iterative_hash(id, SIZEOF_REV - 1, 0);
+
+		type = palette_colors[color % ARRAY_SIZE(palette_colors)];
+	}
 
 	return draw_field(view, type, id, column->width, ALIGN_LEFT, FALSE);
 }
@@ -357,22 +371,12 @@ draw_status(struct view *view, struct view_column *column,
  * Revision graph
  */
 
-static const enum line_type graph_colors[] = {
-	LINE_PALETTE_0,
-	LINE_PALETTE_1,
-	LINE_PALETTE_2,
-	LINE_PALETTE_3,
-	LINE_PALETTE_4,
-	LINE_PALETTE_5,
-	LINE_PALETTE_6,
-};
-
 static enum line_type get_graph_color(struct graph_symbol *symbol)
 {
 	if (symbol->commit)
 		return LINE_GRAPH_COMMIT;
-	assert(symbol->color < ARRAY_SIZE(graph_colors));
-	return graph_colors[symbol->color];
+	assert(symbol->color < ARRAY_SIZE(palette_colors));
+	return palette_colors[symbol->color];
 }
 
 static bool

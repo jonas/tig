@@ -128,6 +128,20 @@ commit_order_arg()
 	return commit_order_arg_map[opt_commit_order].name;
 }
 
+const char *
+commit_order_arg_with_graph(bool with_graph)
+{
+	enum commit_order commit_order = opt_commit_order;
+
+	if (with_graph &&
+	    commit_order != COMMIT_ORDER_TOPO &&
+	    commit_order != COMMIT_ORDER_DATE &&
+	    commit_order != COMMIT_ORDER_AUTHOR_DATE)
+		commit_order = COMMIT_ORDER_TOPO;
+
+	return commit_order_arg_map[commit_order].name;
+}
+
 /* Use --show-notes to support Git >= 1.7.6 */
 #define NOTES_ARG	"--show-notes"
 #define NOTES_EQ_ARG	NOTES_ARG "="
@@ -224,7 +238,12 @@ static const struct enum_map_entry attr_map[] = {
 enum status_code
 parse_step(double *opt, const char *arg)
 {
-	*opt = atoi(arg);
+	int value = atoi(arg);
+
+	if (!value && !isdigit(*arg))
+		return error("Invalid double or percentage");
+
+	*opt = value;
 	if (!strchr(arg, '%'))
 		return SUCCESS;
 
@@ -259,10 +278,12 @@ set_color(int *color, const char *name)
 {
 	if (map_enum(color, color_map, name))
 		return TRUE;
+	/* Git expects a plain int w/o prefix, however, color<int> is
+	 * the preferred Tig color notation.  */
 	if (!prefixcmp(name, "color"))
-		return parse_int(color, name + 5, 0, 255) == SUCCESS;
-	/* Used when reading git colors. Git expects a plain int w/o prefix.  */
-	return parse_int(color, name, 0, 255) == SUCCESS;
+		name += 5;
+	return string_isnumber(name) &&
+	       parse_int(color, name, 0, 255) == SUCCESS;
 }
 
 #define is_quoted(c)	((c) == '"' || (c) == '\'')
@@ -341,6 +362,7 @@ option_color_command(int argc, const char *argv[])
 			{ "diff-tree",			"'diff-tree '" },
 			{ "filename",			"file" },
 			{ "help-keymap",		"help.section" },
+			{ "main-revgraph",		"" },
 			{ "pp-adate",			"'AuthorDate: '" },
 			{ "pp-author",			"'Author: '" },
 			{ "pp-cdate",			"'CommitDate: '" },
@@ -359,6 +381,8 @@ option_color_command(int argc, const char *argv[])
 
 		index = find_remapped(obsolete, ARRAY_SIZE(obsolete), rule.name);
 		if (index != -1) {
+			if (!*obsolete[index][1])
+				return error("%s is obsolete", argv[0]);
 			/* Keep the initial prefix if defined. */
 			code = parse_color_name(obsolete[index][1], &rule, prefix ? NULL : &prefix);
 			if (code != SUCCESS)
@@ -402,18 +426,23 @@ parse_bool(bool *opt, const char *arg)
 }
 
 static enum status_code
-parse_enum(unsigned int *opt, const char *arg, const struct enum_map *map)
+parse_enum(const char *name, unsigned int *opt, const char *arg,
+	   const struct enum_map *map)
 {
 	bool is_true;
+	enum status_code code;
 
 	assert(map->size > 1);
 
 	if (map_enum_do(map->entries, map->size, (int *) opt, arg))
 		return SUCCESS;
 
-	parse_bool(&is_true, arg);
+	code = parse_bool(&is_true, arg);
 	*opt = is_true ? map->entries[1].value : map->entries[0].value;
-	return SUCCESS;
+	if (code == SUCCESS)
+		return code;
+	return error("'%s' is not a valid value for %s; using %s",
+		     arg, name, enum_name(map->entries[*opt].name));
 }
 
 static enum status_code
@@ -494,7 +523,7 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 		const char *type = option->type + STRING_SIZE("enum ");
 		const struct enum_map *map = find_enum_map(type);
 
-		return parse_enum(option->value, arg, map);
+		return parse_enum(name, option->value, arg, map);
 	}
 
 	if (!strcmp(option->type, "int")) {
@@ -663,10 +692,12 @@ option_bind_command(int argc, const char *argv[])
 		static const char *toggles[][2] = {
 			{ "diff-context-down",		"diff-context" },
 			{ "diff-context-up",		"diff-context" },
+			{ "stage-next",			":/^@@" },
 			{ "toggle-author",		"author" },
 			{ "toggle-changes",		"show-changes" },
 			{ "toggle-commit-order",	"show-commit-order" },
 			{ "toggle-date",		"date" },
+			{ "toggle-files",		"file-filter" },
 			{ "toggle-file-filter",		"file-filter" },
 			{ "toggle-file-size",		"file-size" },
 			{ "toggle-filename",		"filename" },
@@ -676,6 +707,7 @@ option_bind_command(int argc, const char *argv[])
 			{ "toggle-lineno",		"line-number" },
 			{ "toggle-refs",		"commit-title-refs" },
 			{ "toggle-rev-graph",		"commit-title-graph" },
+			{ "toggle-show-changes",	"show-changes" },
 			{ "toggle-sort-field",		"sort-field" },
 			{ "toggle-sort-order",		"sort-order" },
 			{ "toggle-title-overflow",	"commit-title-overflow" },
@@ -698,12 +730,16 @@ option_bind_command(int argc, const char *argv[])
 			const char *action = toggles[alias][0];
 			const char *arg = prefixcmp(action, "diff-context-")
 					? NULL : (strstr(action, "-down") ? "-1" : "+1");
-			const char *toggle[] = { ":toggle", toggles[alias][1], arg, NULL};
-			enum status_code code = add_run_request(keymap, key, keys, toggle);
+			const char *mapped = toggles[alias][1];
+			const char *toggle[] = { ":toggle", mapped, arg, NULL};
+			const char *other[] = { mapped, NULL };
+			const char **prompt = *mapped == ':' ? other : toggle;
+			enum status_code code = add_run_request(keymap, key, keys, prompt);
 
 			if (code == SUCCESS)
-				code = error("%s has been replaced by `:toggle %s%s%s'",
-					     action, toggles[alias][1],
+				code = error("%s has been replaced by `%s%s%s%s'",
+					     action, prompt == other ? mapped : ":toggle ",
+					     prompt == other ? "" : mapped,
 					     arg ? " " : "", arg ? arg : "");
 			return code;
 		}
@@ -854,7 +890,7 @@ load_options(void)
 
 		if (!io_from_string(&io, builtin_config))
 			die("Failed to get built-in config");
-		if (!io_load_span(&io, " \t", &config.lineno, read_option, &config) == ERR || config.errors == TRUE)
+		if (io_load_span(&io, " \t", &config.lineno, read_option, &config) == ERR || config.errors == TRUE)
 			die("Error in built-in config");
 	}
 
@@ -1053,6 +1089,10 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	else if (!strcmp(name, "diff.context")) {
 		if (!find_option_info_by_value(&opt_diff_context)->seen)
 			opt_diff_context = -atoi(value);
+
+	} else if (!strcmp(name, "format.pretty")) {
+		if (!prefixcmp(value, "format:") && strstr(value, "%C("))
+			argv_append(&opt_log_options, "--pretty=medium");
 	}
 
 	return OK;

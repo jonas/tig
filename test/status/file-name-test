@@ -1,0 +1,122 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=15
+export COLUMNS=120
+
+steps '
+	:view-status
+	:save-display status-with-untracked.screen
+
+	:7
+	:enter
+	:save-display status-with-file-0.screen
+	:status-update
+	:view-close
+
+	:8
+	:enter
+	:save-display status-with-file-1.screen
+	:status-update
+
+	:7
+	:status-update
+
+	:9
+	:enter
+	:save-display status-with-file-2.screen
+'
+
+git_init
+
+touch "$work_dir/0"
+
+file "$work_dir/a" <<EOF
+ø
+å
+12
+
+å
+ø
+EOF
+
+file "$work_dir/as测试asd" <<EOF
+我
+树
+漢
+EOF
+
+touch "$work_dir/øå"
+touch "$work_dir/可愛いコー特集"
+
+test_tig
+
+assert_equals 'status-with-untracked.screen' <<EOF
+Initial commit                                                                                                          
+Changes to be committed:                                                                                                
+  (no files)                                                                                                            
+Changed but not updated:                                                                                                
+  (no files)                                                                                                            
+Untracked files:                                                                                                        
+? 0                                                                                                                     
+? a                                                                                                                     
+? as测试asd                                                                                                           
+? øå                                                                                                                  
+? 可愛いコー特集                                                                                                 
+                                                                                                                        
+                                                                                                                        
+[status] Nothing to update                                                                                          100%
+EOF
+
+assert_equals 'status-with-file-0.screen' <<EOF
+Initial commit                                              |                                                           
+Changes to be committed:                                    |                                                           
+  (no files)                                                |                                                           
+Changed but not updated:                                    |                                                           
+  (no files)                                                |                                                           
+Untracked files:                                            |                                                           
+? 0                                                         |                                                           
+? a                                                         |                                                           
+? as测试asd                                                 |                                                         
+? øå                                                        |                                                         
+? 可愛いコー特集                                            |                                                    
+                                                            |                                                           
+                                                            |                                                           
+[status] Press u to stage '0' for addition              100%|[stage] Untracked file 0                                 0%
+EOF
+
+assert_equals 'status-with-file-1.screen' <<EOF
+Initial commit                                              |ø                                                         
+Changes to be committed:                                    |å                                                         
+  (no files)                                                |12                                                         
+Changed but not updated:                                    |                                                           
+  (no files)                                                |å                                                         
+Untracked files:                                            |ø                                                         
+? 0                                                         |                                                           
+? a                                                         |                                                           
+? as测试asd                                                 |                                                         
+? øå                                                        |                                                         
+? 可愛いコー特集                                            |                                                    
+                                                            |                                                           
+                                                            |                                                           
+[status] Press u to stage 'a' for addition              100%|[stage] Untracked file a - line 1 of 6                 100%
+EOF
+
+assert_equals 'status-with-file-2.screen' <<EOF
+Initial commit                                              |                                                           
+Changes to be committed:                                    |                                                           
+A 0                                                         |                                                           
+A a                                                         |                                                           
+Changed but not updated:                                    |                                                           
+  (no files)                                                |                                                           
+Untracked files:                                            |                                                           
+? as测试asd                                                 |                                                         
+? øå                                                        |                                                         
+? 可愛いコー特集                                            |                                                    
+                                                            |                                                           
+                                                            |                                                           
+                                                            |                                                           
+[status] Press u to stage 'øå' for addition             100%|[stage] Untracked file øå                              
+EOF

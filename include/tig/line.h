@@ -79,6 +79,13 @@ struct ref;
 	_(PALETTE_4,		""), \
 	_(PALETTE_5,		""), \
 	_(PALETTE_6,		""), \
+	_(PALETTE_7,		""), \
+	_(PALETTE_8,		""), \
+	_(PALETTE_9,		""), \
+	_(PALETTE_10,		""), \
+	_(PALETTE_11,		""), \
+	_(PALETTE_12,		""), \
+	_(PALETTE_13,		""), \
 	_(GRAPH_COMMIT,		"")
 
 enum line_type {

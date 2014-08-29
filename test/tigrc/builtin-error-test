@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# Verify that the built-in config does not contain any errors.
+
+. libtest.sh
+
+steps ":quit"
+
+test_tig
+
+assert_equals stderr <<EOF
+EOF
