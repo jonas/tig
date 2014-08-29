@@ -190,6 +190,16 @@ move_view(struct view *view, enum request request)
 		      ? view->lines - view->pos.lineno - 1 : view->height;
 		break;
 
+	case REQ_MOVE_HALF_PAGE_UP:
+		steps = view->height/2 > view->pos.lineno
+		      ? -view->pos.lineno : -(view->height/2);
+		break;
+
+	case REQ_MOVE_HALF_PAGE_DOWN:
+		steps = view->pos.lineno + view->height/2 >= view->lines
+		      ? view->lines - view->pos.lineno - 1 : view->height/2;
+		break;
+
 	case REQ_MOVE_UP:
 	case REQ_PREVIOUS:
 		steps = -1;

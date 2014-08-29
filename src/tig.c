@@ -212,6 +212,8 @@ view_driver(struct view *view, enum request request)
 	case REQ_MOVE_DOWN:
 	case REQ_MOVE_PAGE_UP:
 	case REQ_MOVE_PAGE_DOWN:
+	case REQ_MOVE_HALF_PAGE_UP:
+	case REQ_MOVE_HALF_PAGE_DOWN:
 	case REQ_MOVE_FIRST_LINE:
 	case REQ_MOVE_LAST_LINE:
 		move_view(view, request);
