@@ -869,15 +869,78 @@ open_argv(struct view *prev, struct view *view, const char *argv[], const char *
 
 static struct view *sorting_view;
 
-#define sort_order_reverse(state, result) \
-	((state)->reverse ? -(result) : (result))
-
-#define sort_order(state, cmp, o1, o2) \
-	sort_order_reverse(state, (!(o1) || !(o2)) ? !!(o2) - !!(o1) : cmp(o1, o2))
+#define apply_comparator(cmp, o1, o2) \
+	(!(o1) || !(o2)) ? !!(o2) - !!(o1) : cmp(o1, o2)
 
 #define number_compare(size1, size2)	(*(size1) - *(size2))
 
 #define mode_is_dir(mode)		((mode) && S_ISDIR(*(mode)))
+
+static int
+compare_view_column(enum view_column_type column, bool use_file_mode,
+		    const struct line *line1, struct view_column_data *column_data1,
+		    const struct line *line2, struct view_column_data *column_data2)
+{
+	switch (column) {
+	case VIEW_COLUMN_AUTHOR:
+		return apply_comparator(ident_compare, column_data1->author, column_data2->author);
+
+	case VIEW_COLUMN_DATE:
+		return apply_comparator(timecmp, column_data1->date, column_data2->date);
+
+	case VIEW_COLUMN_ID:
+		if (column_data1->reflog && column_data2->reflog)
+			return apply_comparator(strcmp, column_data1->reflog, column_data2->reflog);
+		return apply_comparator(strcmp, column_data1->id, column_data2->id);
+
+	case VIEW_COLUMN_FILE_NAME:
+		if (use_file_mode && mode_is_dir(column_data1->mode) != mode_is_dir(column_data2->mode))
+			return mode_is_dir(column_data1->mode) ? -1 : 1;
+		return apply_comparator(strcmp, column_data1->file_name, column_data2->file_name);
+
+	case VIEW_COLUMN_FILE_SIZE:
+		return apply_comparator(number_compare, column_data1->file_size, column_data2->file_size);
+
+	case VIEW_COLUMN_LINE_NUMBER:
+		return line1->lineno - line2->lineno;
+
+	case VIEW_COLUMN_MODE:
+		return apply_comparator(number_compare, column_data1->mode, column_data2->mode);
+
+	case VIEW_COLUMN_REF:
+		return apply_comparator(ref_compare, column_data1->ref, column_data2->ref);
+
+	case VIEW_COLUMN_COMMIT_TITLE:
+		return apply_comparator(strcmp, column_data1->commit_title, column_data2->commit_title);
+
+	case VIEW_COLUMN_SECTION:
+		return apply_comparator(strcmp, column_data1->section->opt.section.text,
+						column_data2->section->opt.section.text);
+
+	case VIEW_COLUMN_STATUS:
+		return apply_comparator(number_compare, column_data1->status, column_data2->status);
+
+	case VIEW_COLUMN_TEXT:
+		return apply_comparator(strcmp, column_data1->text, column_data2->text);
+	}
+
+	return 0;
+}
+
+static enum view_column_type view_column_order[] = {
+	VIEW_COLUMN_FILE_NAME,
+	VIEW_COLUMN_STATUS,
+	VIEW_COLUMN_MODE,
+	VIEW_COLUMN_FILE_SIZE,
+	VIEW_COLUMN_DATE,
+	VIEW_COLUMN_AUTHOR,
+	VIEW_COLUMN_COMMIT_TITLE,
+	VIEW_COLUMN_LINE_NUMBER,
+	VIEW_COLUMN_SECTION,
+	VIEW_COLUMN_TEXT,
+	VIEW_COLUMN_REF,
+	VIEW_COLUMN_ID,
+};
 
 static int
 sort_view_compare(const void *l1, const void *l2)
@@ -887,56 +950,26 @@ sort_view_compare(const void *l1, const void *l2)
 	struct view_column_data column_data1 = {};
 	struct view_column_data column_data2 = {};
 	struct sort_state *sort = &sorting_view->sort;
+	enum view_column_type column = get_sort_field(sorting_view);
+	int cmp;
+	int i;
 
 	if (!sorting_view->ops->get_column_data(sorting_view, line1, &column_data1))
 		return -1;
 	else if (!sorting_view->ops->get_column_data(sorting_view, line2, &column_data2))
 		return 1;
 
-	switch (get_sort_field(sorting_view)) {
-	case VIEW_COLUMN_AUTHOR:
-		return sort_order(sort, ident_compare, column_data1.author, column_data2.author);
+	cmp = compare_view_column(column, TRUE, line1, &column_data1, line2, &column_data2);
 
-	case VIEW_COLUMN_DATE:
-		return sort_order(sort, timecmp, column_data1.date, column_data2.date);
+	/* Ensure stable sorting by ordering ordering by the other
+	 * columns if the selected column values are equal. */
+	for (i = 0; !cmp && i < ARRAY_SIZE(view_column_order); i++)
+		if (column != view_column_order[i])
+			cmp = compare_view_column(view_column_order[i], FALSE,
+						  line1, &column_data1,
+						  line2, &column_data2);
 
-	case VIEW_COLUMN_ID:
-		if (column_data1.reflog && column_data2.reflog)
-			return sort_order(sort, strcmp, column_data1.reflog, column_data2.reflog);
-		return sort_order(sort, strcmp, column_data1.id, column_data2.id);
-
-	case VIEW_COLUMN_FILE_NAME:
-		if (mode_is_dir(column_data1.mode) != mode_is_dir(column_data2.mode))
-			return sort_order_reverse(sort, mode_is_dir(column_data1.mode) ? -1 : 1);
-		return sort_order(sort, strcmp, column_data1.file_name, column_data2.file_name);
-
-	case VIEW_COLUMN_FILE_SIZE:
-		return sort_order(sort, number_compare, column_data1.file_size, column_data2.file_size);
-
-	case VIEW_COLUMN_LINE_NUMBER:
-		return sort_order_reverse(sort, line1->lineno - line2->lineno);
-
-	case VIEW_COLUMN_MODE:
-		return sort_order(sort, number_compare, column_data1.mode, column_data2.mode);
-
-	case VIEW_COLUMN_REF:
-		return sort_order(sort, ref_compare, column_data1.ref, column_data2.ref);
-
-	case VIEW_COLUMN_COMMIT_TITLE:
-		return sort_order(sort, strcmp, column_data1.commit_title, column_data2.commit_title);
-
-	case VIEW_COLUMN_SECTION:
-		return sort_order(sort, strcmp, column_data1.section->opt.section.text,
-						column_data2.section->opt.section.text);
-
-	case VIEW_COLUMN_STATUS:
-		return sort_order(sort, number_compare, column_data1.status, column_data2.status);
-
-	case VIEW_COLUMN_TEXT:
-		return sort_order(sort, strcmp, column_data1.text, column_data2.text);
-	}
-
-	return 0;
+	return sort->reverse ? -cmp : cmp;
 }
 
 void

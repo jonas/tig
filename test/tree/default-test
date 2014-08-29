@@ -58,20 +58,20 @@ EOF
 
 assert_equals 'tree-default-author.screen' <<EOF
 Directory path /                                                                
+-rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore                      
+-rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE                         
 drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common                          
 drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue                       
 drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project                         
 drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards                        
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku                          
--rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore                      
--rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE                         
 -rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh                          
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku                          
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer                          
 -rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md                       
                                                                                 
                                                                                 
                                                                                 
-[tree] 1a4ced7066ada2b26dcb0044f763a8438cd375df - file 1 of 10              100%
+[tree] be06d7d413c0b3f2d2f6f18061c8bfb65c510b64 - file 7 of 10              100%
 EOF
 
 assert_equals 'tree-default-date.screen' <<EOF
@@ -79,13 +79,13 @@ Directory path /
 -rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore                      
 -rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE                         
 -rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md                       
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards                        
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project                         
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue                       
 drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common                          
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue                       
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project                         
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards                        
 -rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer                          
 drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku                          
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer                          
                                                                                 
                                                                                 
                                                                                 
@@ -98,12 +98,12 @@ Directory path /
 -rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh                          
 -rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE                         
 -rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md                       
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards                        
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project                         
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue                       
 drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common                          
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue                       
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project                         
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards                        
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku                          
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer                          
                                                                                 
                                                                                 
                                                                                 
@@ -116,8 +116,8 @@ drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common
 drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue                       
 drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project                         
 drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards                        
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer                          
 drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku                          
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer                          
 -rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore                      
 -rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE                         
 -rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md                       
