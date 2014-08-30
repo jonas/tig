@@ -9,7 +9,6 @@
 export LINES=16
 
 steps '
-	:view-main
 	:save-display main-with-unstaged.screen
 	:enter
 	:save-display main-with-unstaged-split.screen

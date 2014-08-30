@@ -43,7 +43,7 @@ gitconfig <<EOF
 $(find snippets -name "gitconfig.*" | xargs cat)
 EOF
 
-test_tig
+test_tig status
 
 assert_equals stderr <<EOF
 EOF

@@ -9,7 +9,6 @@
 export LINES=18
 
 steps '
-	:view-refs
 	:save-display refs-default.screen
 '
 
@@ -37,7 +36,7 @@ prepare_repo()
 
 in_work_dir prepare_repo
 
-test_tig
+test_tig refs
 
 assert_equals 'refs-default.screen' <<EOF
                                All references                                   

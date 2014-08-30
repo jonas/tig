@@ -12,7 +12,6 @@ set vertical-split = no
 EOF
 
 steps '
-	:view-main
 	:save-display main-default.screen
 	:set reference-format = (branch) [tag] @remote
 	:save-display main-ref-format.screen

@@ -16,7 +16,6 @@ gitconfig <<EOF
 EOF
 
 steps '
-	:view-log
 	:save-display log-pretty-format-override.screen
 
 	:toggle log-options --pretty=raw
@@ -32,7 +31,7 @@ steps '
 
 git_clone 'repo-one'
 
-test_tig
+test_tig log
 
 assert_equals 'log-pretty-format-override.screen' <<EOF
 commit 5cb3412a5e06e506840495b91acc885037a48b72                                 

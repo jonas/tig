@@ -62,7 +62,7 @@ steps "
 
 TIGRC_SYSTEM="should-not-be-loaded"
 
-test_tig
+test_tig status
 
 assert_equals stderr <<EOF
 tig warning: ~/.tigrc:1: Unknown option command: s

@@ -291,7 +291,7 @@ save_display(const char *path)
 		return FALSE;
 	}
 
-	if (view->width < width) {
+	if (view->width < width && display[1]) {
 		struct view *left = display[0],
 			    *right = display[1];
 

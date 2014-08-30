@@ -11,7 +11,6 @@ set main-view	= line-number:no id:no date:no author:no commit-title:yes,graph=no
 EOF
 
 steps '
-	:view-main
 	:save-display main-commit-titles.screen
 '
 

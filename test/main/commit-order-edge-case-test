@@ -11,7 +11,6 @@ set main-view = date author commit-title:yes,graph
 EOF
 
 steps '
-	:view-main
 	:save-display ensure-topo-order-with-graph.screen
 
 	:set commit-order = date

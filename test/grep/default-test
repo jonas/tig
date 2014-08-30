@@ -11,8 +11,6 @@ set line-graphics = ascii
 EOF
 
 steps '
-	:view-grep
-	text<Enter>
 	:save-display grep-text.screen
 
 	:enter
@@ -84,7 +82,7 @@ EOF
 
 in_work_dir prepare_repo
 
-test_tig
+test_tig grep text
 
 assert_equals 'grep-text.screen' <<EOF
 README                                                                          

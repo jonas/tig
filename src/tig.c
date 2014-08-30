@@ -688,12 +688,7 @@ main(int argc, const char *argv[])
 	if (getenv("TIG_SCRIPT")) {
 		const char *script_command[] = { "script", getenv("TIG_SCRIPT"), NULL };
 
-		if (!displayed_views()) {
-			/* Open a 'neutral' view. */
-			open_help_view(NULL, OPEN_DEFAULT);
-		}
-
-		request = run_prompt_command(NULL, script_command);
+		run_prompt_command(NULL, script_command);
 	}
 
 	while (view_driver(display[current_view], request)) {

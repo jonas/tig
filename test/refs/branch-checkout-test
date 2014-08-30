@@ -20,7 +20,6 @@ bind generic <F4> @sh -c 'git rev-parse HEAD > $HOME/%(ref).head'
 EOF
 
 steps '
-	:view-refs
 	:save-display refs-init.screen
 	:3
 	<F1>
@@ -50,7 +49,7 @@ create_branches()
 git_clone 'repo-one'
 in_work_dir create_branches
 
-test_tig
+test_tig refs
 
 assert_equals "$LONG_BRANCH_NAME_ID.refinfo" <<EOF
 refs=$LONG_BRANCH_NAME

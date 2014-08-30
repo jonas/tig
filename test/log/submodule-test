@@ -10,7 +10,6 @@ set vertical-split = no
 EOF
 
 steps '
-	:view-log
 	:save-display log-submodule.screen
 
 	:toggle log-options --submodule -p
@@ -26,7 +25,7 @@ prepare_repo()
 
 in_work_dir prepare_repo 1>>"$HOME/prepare-repo.log" 2>>"$HOME/prepare-repo.log"
 
-test_tig
+test_tig log
 
 assert_equals 'log-submodule.screen' <<EOF
 commit 8d2fa18ab8ef94d85a99504e143279bb1ce4f719                                 

@@ -24,7 +24,7 @@ steps "
 	:save-display help.screen
 "
 
-test_tig
+test_tig status
 
 assert_equals stderr <<EOF
 EOF

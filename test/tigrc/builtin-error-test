@@ -6,7 +6,7 @@
 
 steps ":quit"
 
-test_tig
+test_tig status
 
 assert_equals stderr <<EOF
 EOF

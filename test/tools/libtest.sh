@@ -207,13 +207,16 @@ test_tig()
 	fi
 	touch stdin stderr
 	if [ -n "$debugger" ]; then
+		echo "*** Running tests in '$(pwd)/$work_dir'"
 		if [ -s "$work_dir/stdin" ]; then
 			echo "*** This test requires data to be injected via stdin."
-			echo "*** The expected input file is: '$work_dir/stdin'"
+			echo "*** The expected input file is: '../stdin'"
 		fi
 		(cd "$work_dir" && $debugger tig "$@")
-	else
+	elif [ -s stdin ]; then
 		(cd "$work_dir" && tig "$@") < stdin > stdout 2> stderr.orig
+	else
+		(cd "$work_dir" && tig "$@") > stdout 2> stderr.orig
 	fi
 	# Normalize paths in stderr output
 	if [ -e stderr.orig ]; then

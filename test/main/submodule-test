@@ -12,7 +12,6 @@ set main-view = id commit-title:yes,graph=no,refs=no,overflow=no
 EOF
 
 steps '
-	:view-main
 	:enter
 	:save-display main-submodule.screen
 

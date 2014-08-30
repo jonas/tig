@@ -7,7 +7,6 @@
 export LINES=5
 
 steps '
-	:view-main
 	:save-display main-with-unstaged.screen
 
 	<F1>
