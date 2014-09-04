@@ -9,6 +9,10 @@ Improvements:
  - Add move-half-page-up and move-half-page-down actions. (GH #323)
  - Preserve the cursor position when changing the diff context. 
 
+Bug fixes:
+
+ - Update manual to reflect default keybinding changes. (GH #325)
+
 tig-2.0.3
 ---------
 
