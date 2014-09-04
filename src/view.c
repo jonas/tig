@@ -493,6 +493,9 @@ reset_view(struct view *view)
 
 	reset_matches(view);
 	view->prev_pos = view->pos;
+	/* A view without a previous view is the first view */
+	if (!view->prev && !view->lines && view->prev_pos.lineno == 0)
+		view->prev_pos.lineno = view->env->lineno;
 	clear_position(&view->pos);
 
 	if (view->columns)
@@ -508,12 +511,6 @@ reset_view(struct view *view)
 static bool
 restore_view_position(struct view *view)
 {
-	/* A view without a previous view is the first view */
-	if (!view->prev && view->env->lineno && view->env->lineno <= view->lines) {
-		select_view_line(view, view->env->lineno);
-		view->env->lineno = 0;
-	}
-
 	/* Ensure that the view position is in a valid state. */
 	if (!check_position(&view->prev_pos) ||
 	    (view->pipe && view->lines <= view->prev_pos.lineno))
@@ -824,7 +821,8 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 		/* Clear the old view and let the incremental updating refill
 		 * the screen. */
 		werase(view->win);
-		if (!(flags & (OPEN_RELOAD | OPEN_REFRESH)))
+		/* Do not clear the position if it is the first view. */
+		if (view->prev && !(flags & (OPEN_RELOAD | OPEN_REFRESH)))
 			clear_position(&view->prev_pos);
 		report_clear();
 	} else if (view_is_displayed(view)) {

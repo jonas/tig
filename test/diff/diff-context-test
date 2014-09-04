@@ -19,6 +19,26 @@ steps '
 	[
 	[
 	:save-display diff-u8.screen
+
+	:0
+	:set diff-context = 3
+	:view-main
+	:view-diff
+	:save-display diff-default-from-main.screen
+
+	:21
+	]
+	:save-display diff-u4-from-main.screen
+
+	]
+	:save-display diff-u5-from-main.screen
+
+	:toggle diff-context +5
+	:save-display diff-u10-from-main.screen
+
+	[
+	[
+	:save-display diff-u8-from-main.screen
 '
 
 in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
@@ -154,6 +174,8 @@ index 65f914a..3aa4320 100644
 EOF
 
 assert_equals 'diff-u8.screen' <<EOF
+CommitDate: Sat Mar 1 15:59:02 2014 -0500                                       
+                                                                                
     Add type parameter for js.Dynamic                                           
 ---                                                                             
  common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 2 +-             
@@ -180,7 +202,12 @@ index 65f914a..3aa4320 100644
    def add(benchmark: Benchmark) {                                              
      benchmarks.push(benchmark)                                                 
      if (benchmark.isInstanceOf[BenchmarkApp]) {                                
-       benchmarkApps.push(benchmark.asInstanceOf[BenchmarkApp])                 
-     }                                                                          
-[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sca100%
+[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.scal94%
 EOF
+
+for i in expected/*.screen; do
+	diff_file="$(basename "$i" | sed 's/[.]screen/-from-main.screen/')"
+	assert_equals "$diff_file" <<EOF
+$(cat "$i")
+EOF
+done

@@ -6,7 +6,8 @@ master
 
 Improvements:
 
- - Add move-half-page-up and move-half-page-down actions (GH #323)
+ - Add move-half-page-up and move-half-page-down actions. (GH #323)
+ - Preserve the cursor position when changing the diff context. 
 
 tig-2.0.3
 ---------

@@ -227,7 +227,7 @@ create_repo()
 
 create_repo_from_tgz()
 {
-	git_init
+	git_init .
 	tar zxf "$1"
 	git reset -q --hard
 }
