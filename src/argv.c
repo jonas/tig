@@ -406,6 +406,7 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 		"--date-order",
 		"--dense",
 		"--extended-regexp",
+		"--first-parent",
 		"--fixed-strings",
 		"--full-history",
 		"--graph",
@@ -443,7 +444,6 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 		"-i",
 	};
 	static const char *no_graph[] = {
-		"--first-parent",
 		"--follow",
 	};
 	static const char *with_reflog[] = {

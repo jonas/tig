@@ -35,6 +35,7 @@ struct main_state {
 	char reflogmsg[SIZEOF_STR / 2];
 	bool in_header;
 	bool with_graph;
+	bool first_parent;
 	bool add_changes_parents;
 };
 

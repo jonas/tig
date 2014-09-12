@@ -166,6 +166,9 @@ main_check_argv(struct view *view, const char *argv[])
 			continue;
 		}
 
+		if (!strcmp(arg, "--first-parent"))
+			state->first_parent = TRUE;
+
 		if (!argv_parse_rev_flag(arg, &rev_flags))
 			continue;
 
@@ -368,9 +371,21 @@ main_read(struct view *view, struct buffer *buf)
 		}
 
 		main_flush_commit(view, commit);
-		main_register_commit(view, &state->current, line, is_boundary);
 
 		author = io_memchr(buf, line, 0);
+
+		if (state->first_parent) {
+			char *parent = strchr(line, ' ');
+			char *parent_end = parent ? strchr(parent + 1, ' ') : NULL;
+
+			if (parent_end)
+				*parent_end = 0;
+
+			io_trace("[parent] %s\n", line);
+		}
+
+		main_register_commit(view, &state->current, line, is_boundary);
+
 		if (author) {
 			char *title = io_memchr(buf, author, 0);
 
