@@ -12,6 +12,7 @@ Improvements:
 Bug fixes:
 
  - Update manual to reflect default keybinding changes. (GH #325)
+ - Disable the graph when `--first-parent` is passed to the main view. (GH #326)
 
 tig-2.0.3
 ---------
