@@ -226,8 +226,11 @@ test_tig()
 	if [ -n "$debugger" ]; then
 		echo "*** Running tests in '$(pwd)/$work_dir'"
 		if [ -s "$work_dir/stdin" ]; then
-			echo "*** This test requires data to be injected via stdin."
-			echo "*** The expected input file is: '../stdin'"
+			echo "*** - This test requires data to be injected via stdin."
+			echo "***   The expected input file is: '../stdin'"
+		fi
+		if [ "$#" -gt 0 ]; then
+			echo "*** - This test expects the following arguments: $@"
 		fi
 		(cd "$work_dir" && $debugger tig "$@")
 	elif [ -s stdin ]; then
