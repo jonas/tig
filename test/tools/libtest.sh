@@ -38,7 +38,6 @@ export PAGER=cat
 export TZ=UTC
 export TERM=dumb
 export HOME="$output_dir"
-export EDITOR=:
 unset CDPATH
 
 # Git env
@@ -65,6 +64,24 @@ if [ ! -d "$tmp_dir/.git" ]; then
 	# settings from the tig repository.
 	git init -q "$tmp_dir"
 fi
+
+mkdir -p "$tmp_dir/bin"
+
+# Setup fake editor
+fake_editor="$tmp_dir/bin/vim"
+cat > "$fake_editor" <<EOF
+#!/bin/sh
+
+lineno="\$(printf "%d" "\$1")"
+file="\$2"
+
+echo "\$@" >> "$HOME/editor.log"
+sed -n -e "\${lineno}p" "\$file" >> "$HOME/editor.log"
+EOF
+
+chmod +x "$fake_editor"
+export EDITOR="$(basename "$fake_editor")"
+export PATH="$(dirname "$fake_editor"):$PATH"
 
 cd "$output_dir"
 

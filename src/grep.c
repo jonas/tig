@@ -181,7 +181,7 @@ grep_request(struct view *view, enum request request, struct line *line)
 	case REQ_EDIT:
 		if (!*grep->file)
 			return request;
-		open_editor(grep->file, grep->lineno);
+		open_editor(grep->file, grep->lineno + 1);
 		return REQ_NONE;
 
 	case REQ_VIEW_BLAME:
