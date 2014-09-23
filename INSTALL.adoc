@@ -48,6 +48,12 @@ and then run the following command:
 
 	$ make configure
 
+Installation using Homebrew
+---------------------------
+You can use link:http://brew.sh[Homebrew] to install Tig on OS X:
+
+        $ brew install git-tig
+
 Build configuration
 -------------------
 
