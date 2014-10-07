@@ -8,6 +8,8 @@ Improvements:
 
  - Add move-half-page-up and move-half-page-down actions. (GH #323)
  - Preserve the cursor position when changing the diff context. 
+ - Add option to turn off automatic enabling of `--topo-order` when the graph is
+   shown in the main view. (GH #310)
 
 Bug fixes:
 

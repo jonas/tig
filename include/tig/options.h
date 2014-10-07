@@ -78,7 +78,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS);
 
 #define COMMIT_TITLE_COLUMN_OPTIONS(_) \
 	_(display,			bool,			VIEW_NO_FLAGS) \
-	_(graph,			bool,			VIEW_LOG_LIKE) \
+	_(graph,			enum graph_display,	VIEW_LOG_LIKE) \
 	_(refs,				bool,			VIEW_NO_FLAGS) \
 	_(overflow,			int,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
@@ -169,7 +169,7 @@ void update_options_from_argv(const char *argv[]);
 
 const char *ignore_space_arg();
 const char *commit_order_arg();
-const char *commit_order_arg_with_graph(bool with_graph);
+const char *commit_order_arg_with_graph(enum graph_display graph_display);
 const char *diff_context_arg();
 const char *show_notes_arg();
 

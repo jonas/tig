@@ -129,11 +129,11 @@ commit_order_arg()
 }
 
 const char *
-commit_order_arg_with_graph(bool with_graph)
+commit_order_arg_with_graph(enum graph_display graph_display)
 {
 	enum commit_order commit_order = opt_commit_order;
 
-	if (with_graph &&
+	if (graph_display == GRAPH_DISPLAY_YES &&
 	    commit_order != COMMIT_ORDER_TOPO &&
 	    commit_order != COMMIT_ORDER_DATE &&
 	    commit_order != COMMIT_ORDER_AUTHOR_DATE)

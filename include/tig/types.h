@@ -73,6 +73,11 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(GRAPHIC, DEFAULT), \
 	_(GRAPHIC, UTF_8)
 
+#define GRAPH_DISPLAY_ENUM(_) \
+	_(GRAPH_DISPLAY, NO), \
+	_(GRAPH_DISPLAY, YES), \
+	_(GRAPH_DISPLAY, NO_TOPO)
+
 #define DATE_ENUM(_) \
 	_(DATE, NO), \
 	_(DATE, DEFAULT), \
@@ -151,6 +156,7 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(file_size, FILE_SIZE_ENUM) \
 	_(filename, FILENAME_ENUM) \
 	_(graphic, GRAPHIC_ENUM) \
+	_(graph_display, GRAPH_DISPLAY_ENUM) \
 	_(ignore_space, IGNORE_SPACE_ENUM) \
 	_(vertical_split, VERTICAL_SPLIT_ENUM) \
 	_(view_column_type, VIEW_COLUMN_ENUM) \
