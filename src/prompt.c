@@ -230,6 +230,7 @@ readline_action_generator(const char *text, int state)
 		"set",
 		"toggle",
 		"save-display",
+		"exec",
 #define REQ_GROUP(help)
 #define REQ_(req, help)	#req
 		REQ_INFO,
@@ -860,6 +861,16 @@ run_prompt_command(struct view *view, const char *argv[])
 		else
 			report("Saved screen to %s", path);
 
+	} else if (!strcmp(cmd, "exec")) {
+		struct run_request req = { view->keymap, {}, argv + 1 };
+		enum status_code code = parse_run_request_flags(&req.flags, argv + 1);
+
+		if (code != SUCCESS) {
+			report("Failed to execute command: %s", get_status_message(code));
+		} else {
+			return exec_run_request(view, &req);
+		}
+
 	} else if (!strcmp(cmd, "toggle")) {
 		enum view_flag flags = VIEW_NO_FLAGS;
 		enum status_code code = prompt_toggle(view, argv, &flags);
@@ -928,6 +939,59 @@ run_prompt_command(struct view *view, const char *argv[])
 
 	}
 	return REQ_NONE;
+}
+
+enum request
+exec_run_request(struct view *view, struct run_request *req)
+{
+	const char **argv = NULL;
+	bool confirmed = FALSE;
+	enum request request = REQ_NONE;
+
+	if (!argv_format(view->env, &argv, req->argv, FALSE, TRUE)) {
+		report("Failed to format arguments");
+		return REQ_NONE;
+	}
+
+	if (req->flags.internal) {
+		request = run_prompt_command(view, argv);
+
+	} else {
+		confirmed = !req->flags.confirm;
+
+		if (req->flags.confirm) {
+			char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
+			const char *and_exit = req->flags.exit ? " and exit" : "";
+
+			if (argv_to_string(argv, cmd, sizeof(cmd), " ") &&
+			    string_format(prompt, "Run `%s`%s?", cmd, and_exit) &&
+			    prompt_yesno(prompt)) {
+				confirmed = TRUE;
+			}
+		}
+
+		if (confirmed && argv_remove_quotes(argv))
+			open_external_viewer(argv, NULL, req->flags.silent,
+					     !req->flags.exit, FALSE, "");
+	}
+
+	if (argv)
+		argv_free(argv);
+	free(argv);
+
+	if (request == REQ_NONE) {
+		if (req->flags.confirm && !confirmed)
+			request = REQ_NONE;
+
+		else if (req->flags.exit)
+			request = REQ_QUIT;
+
+		else if (!req->flags.internal && watch_dirty(&view->watch))
+			request = REQ_REFRESH;
+
+	}
+
+	return request;
 }
 
 enum request

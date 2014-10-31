@@ -440,12 +440,16 @@ Prompt
 
 [frame="none",grid="none",cols="2<,8<",options="header"]
 |=============================================================================
-|Key		|Action
-|:<number>	|Jump to the specific line number, e.g. `:80`.
-|:<sha>		|Jump to a specific commit, e.g. `:2f12bcc`.
-|:<x>		|Execute the corresponding key binding, e.g. `:q`.
-|:!<command>	|Execute a system command in a pager, e.g. `:!git log -p`.
-|:<action>	|Execute a Tig command, e.g. `:edit`.
+|Key			|Action
+|:<number>		|Jump to the specific line number, e.g. `:80`.
+|:<sha>			|Jump to a specific commit, e.g. `:2f12bcc`.
+|:<x>			|Execute the corresponding key binding, e.g. `:q`.
+|:!<command>		|Execute a system command in a pager, e.g. `:!git log -p`.
+|:<action>		|Execute a Tig command, e.g. `:edit`.
+|:save-display <file>	|Save current display to `<file>`.
+|:script <file>		|Execute commands from `<file>`.
+|:exec <flags><args...> |Execute command using `<args>` with external
+			 user-defined command option flags defined in `<flags>`.
 |=============================================================================
 
 [[external-commands]]

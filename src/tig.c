@@ -128,59 +128,13 @@ static enum request
 open_run_request(struct view *view, enum request request)
 {
 	struct run_request *req = get_run_request(request);
-	const char **argv = NULL;
-	bool confirmed = FALSE;
-
-	request = REQ_NONE;
 
 	if (!req) {
 		report("Unknown run request");
-		return request;
-	}
-
-	if (!argv_format(view->env, &argv, req->argv, FALSE, TRUE)) {
-		report("Failed to format arguments");
 		return REQ_NONE;
 	}
 
-	if (req->flags.internal) {
-		request = run_prompt_command(view, argv);
-
-	} else {
-		confirmed = !req->flags.confirm;
-
-		if (req->flags.confirm) {
-			char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
-			const char *and_exit = req->flags.exit ? " and exit" : "";
-
-			if (argv_to_string(argv, cmd, sizeof(cmd), " ") &&
-			    string_format(prompt, "Run `%s`%s?", cmd, and_exit) &&
-			    prompt_yesno(prompt)) {
-				confirmed = TRUE;
-			}
-		}
-
-		if (confirmed && argv_remove_quotes(argv))
-			open_external_viewer(argv, NULL, req->flags.silent,
-					     !req->flags.exit, FALSE, "");
-	}
-
-	if (argv)
-		argv_free(argv);
-	free(argv);
-
-	if (request == REQ_NONE) {
-		if (req->flags.confirm && !confirmed)
-			request = REQ_NONE;
-
-		else if (req->flags.exit)
-			request = REQ_QUIT;
-
-		else if (!req->flags.internal && watch_dirty(&view->watch))
-			request = REQ_REFRESH;
-
-	}
-	return request;
+	return exec_run_request(view, req);
 }
 
 /*

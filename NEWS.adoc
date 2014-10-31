@@ -10,6 +10,7 @@ Improvements:
  - Preserve the cursor position when changing the diff context. 
  - Add option to turn off automatic enabling of `--topo-order` when the graph is
    shown in the main view. (GH #310)
+ - Add `:exec <flags><args...>` prompt command to execute commands.
 
 Bug fixes:
 

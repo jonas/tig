@@ -80,6 +80,7 @@ struct run_request {
 
 struct run_request *get_run_request(enum request request);
 enum status_code add_run_request(struct keymap *keymap, struct key key[], size_t keys, const char **argv);
+enum status_code parse_run_request_flags(struct run_request_flags *flags, const char **argv);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

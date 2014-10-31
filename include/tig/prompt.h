@@ -50,6 +50,7 @@ bool prompt_menu(const char *prompt, const struct menu_item *items, int *selecte
 
 enum request run_prompt_command(struct view *view, const char *argv[]);
 enum request open_prompt(struct view *view);
+enum request exec_run_request(struct view *view, struct run_request *req);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

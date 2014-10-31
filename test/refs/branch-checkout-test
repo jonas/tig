@@ -7,31 +7,19 @@
 
 export LINES=9
 
-tigrc <<EOF
-# Dump information about the current reference
-bind generic <F1> \
-	@sh -c 'printf "refs=%s\nbranch=%s\ntag=%s\n" \
-		"%(ref)" "%(branch)" "%(tag)" > $HOME/%(commit).refinfo'
-
-bind generic <F2> @git checkout -q %(branch)
-bind generic <F3> @git checkout -q %(tag)
-
-bind generic <F4> @sh -c 'git rev-parse HEAD > $HOME/%(ref).head'
-EOF
-
 steps '
 	:save-display refs-init.screen
 	:3
-	<F1>
-	<F2>
+	:exec @sh -c '\''printf "refs=%s\nbranch=%s\ntag=%s\n" "%(ref)" "%(branch)" "%(tag)" > $HOME/%(commit).refinfo'\''
+	:exec @git checkout -q %(branch)
 	:2
 	:save-display refs-checked-out-branch.screen
-	<F4>
+	:exec @sh -c "git rev-parse HEAD > $HOME/%(ref).head"
 	:6
-	<F1>
-	<F3>
+	:exec @sh -c '\''printf "refs=%s\nbranch=%s\ntag=%s\n" "%(ref)" "%(branch)" "%(tag)" > $HOME/%(commit).refinfo'\''
+	:exec @git checkout -q %(tag)
 	:save-display refs-checked-out-tag.screen
-	<F4>
+	:exec @sh -c "git rev-parse HEAD > $HOME/%(ref).head"
 '
 
 LONG_BRANCH_NAME_ID=19455fa3642af6a6a7d527dd043caf5a70eaad2d

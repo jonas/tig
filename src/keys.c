@@ -399,32 +399,44 @@ static size_t run_requests;
 
 DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 
+#define COMMAND_FLAGS ":!?@<"
+
+enum status_code
+parse_run_request_flags(struct run_request_flags *flags, const char **argv)
+{
+	if (!strchr(COMMAND_FLAGS, *argv[0]))
+		return error("Unknown command flag '%c'; expected one of %s", argv[0][0], COMMAND_FLAGS);
+
+	while (*argv[0]) {
+		if (*argv[0] == ':') {
+			flags->internal = 1;
+			argv[0]++;
+			break;
+		} else if (*argv[0] == '@') {
+			flags->silent = 1;
+		} else if (*argv[0] == '?') {
+			flags->confirm = 1;
+		} else if (*argv[0] == '<') {
+			flags->exit = 1;
+		} else if (*argv[0] != '!') {
+			break;
+		}
+		argv[0]++;
+	}
+
+	return SUCCESS;
+}
+
 enum status_code
 add_run_request(struct keymap *keymap, struct key key[],
 		size_t keys, const char **argv)
 {
 	struct run_request *req;
 	struct run_request_flags flags = {};
+	enum status_code code = parse_run_request_flags(&flags, argv);
 
-	if (!strchr(":!?@<", *argv[0]))
-		return error("Unknown request name: %s", argv[0]);
-
-	while (*argv[0]) {
-		if (*argv[0] == ':') {
-			flags.internal = 1;
-			argv[0]++;
-			break;
-		} else if (*argv[0] == '@') {
-			flags.silent = 1;
-		} else if (*argv[0] == '?') {
-			flags.confirm = 1;
-		} else if (*argv[0] == '<') {
-			flags.exit = 1;
-		} else if (*argv[0] != '!') {
-			break;
-		}
-		argv[0]++;
-	}
+	if (code != SUCCESS)
+		return code;
 
 	if (!realloc_run_requests(&run_request, run_requests, 1))
 		return ERROR_OUT_OF_MEMORY;
