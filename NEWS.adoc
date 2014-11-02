@@ -17,6 +17,7 @@ Bug fixes:
  - Update manual to reflect default keybinding changes. (GH #325)
  - Fix graph support for `--first-parent`. (GH #326)
  - Fix off-by-one error when opening editor from the grep view.
+ - Fix status on-branch information.
 
 tig-2.0.3
 ---------

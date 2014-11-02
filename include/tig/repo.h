@@ -18,6 +18,7 @@
 
 struct repo_info {
 	char head[SIZEOF_REF];
+	char head_id[SIZEOF_REV];
 	char remote[SIZEOF_REF];
 	char cdup[SIZEOF_STR];
 	char prefix[SIZEOF_STR];
@@ -28,6 +29,7 @@ struct repo_info {
 extern struct repo_info repo;
 
 int load_repo_info(void);
+int load_repo_head(void);
 
 struct index_diff {
 	int staged;

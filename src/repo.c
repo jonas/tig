@@ -26,7 +26,6 @@
 
 struct repo_info_state {
 	const char **argv;
-	char head_id[SIZEOF_REV];
 };
 
 static int
@@ -61,19 +60,26 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 		string_ncopy(repo.prefix, name, namelen);
 
 	} else if (!strcmp(arg, REPO_INFO_RESOLVED_HEAD)) {
-		string_ncopy(state->head_id, name, namelen);
+		string_ncopy(repo.head_id, name, namelen);
 
 	} else if (!strcmp(arg, REPO_INFO_SYMBOLIC_HEAD)) {
 		if (!prefixcmp(name, "refs/heads/")) {
-			char *offset = name + STRING_SIZE("refs/heads/");
-
-			string_ncopy(repo.head, offset, strlen(offset) + 1);
-			add_ref(state->head_id, name, repo.remote, repo.head);
+			add_ref(repo.head_id, name, repo.remote, repo.head);
+			name += STRING_SIZE("refs/heads/");
 		}
+		string_ncopy(repo.head, name, strlen(name) + 1);
 		state->argv++;
 	}
 
 	return OK;
+}
+
+static int
+reload_repo_info(const char **rev_parse_argv)
+{
+	struct repo_info_state state = { rev_parse_argv + 2 };
+
+	return io_run_load(rev_parse_argv, "=", read_repo_info, &state);
 }
 
 int
@@ -85,9 +91,19 @@ load_repo_info(void)
 			REPO_INFO_RESOLVED_HEAD, REPO_INFO_SYMBOLIC_HEAD, "HEAD",
 			NULL
 	};
-	struct repo_info_state state = { rev_parse_argv + 2 };
 
-	return io_run_load(rev_parse_argv, "=", read_repo_info, &state);
+	return reload_repo_info(rev_parse_argv);
+}
+
+int
+load_repo_head(void)
+{
+	const char *rev_parse_argv[] = {
+		"git", "rev-parse", REPO_INFO_RESOLVED_HEAD,
+			REPO_INFO_SYMBOLIC_HEAD, "HEAD", NULL
+	};
+
+	return reload_repo_info(rev_parse_argv);
 }
 
 struct repo_info repo;

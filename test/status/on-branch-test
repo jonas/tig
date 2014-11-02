@@ -1,0 +1,143 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=10
+
+steps "
+	:save-display on-branch-master.screen
+
+	:exec @git bisect start master
+	:save-display bisecting-master.screen
+	:exec @git bisect reset
+
+	:exec @git checkout HEAD~10
+	:save-display on-detached-head.screen
+	:exec @git checkout master
+
+	:exec @git merge conflict-branch
+	:save-display merging-master.screen
+	:exec @git reset --hard
+
+	:exec @git checkout conflict-branch
+	:exec @git rebase master
+	:save-display rebasing-master.screen
+	:exec @git rebase --abort
+	:exec @git checkout master
+
+	:exec @git am $HOME/mailbox
+	:save-display applying-mailbox-to-master.screen
+	:exec @git am --abort
+
+	:exec @git checkout conflict-branch
+	:exec @git rebase -i master
+	:save-display interactive-rebase-of-branch.screen
+	:exec @git rebase --abort
+	:exec @git checkout master
+"
+
+prepare_repo()
+{
+	git checkout -b topic-branch HEAD~4
+	echo "Topic branch" >> README.md
+	git add README.md
+	git_commit -m "Topic branch"
+	git checkout master
+
+	git checkout -b conflict-branch HEAD~4
+	git rm -f run.sh
+	git_commit -m "Conflict branch"
+	git checkout master
+
+	git format-patch -1 conflict-branch --stdout > "$HOME/mailbox"
+}
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+in_work_dir prepare_repo 1>>"$HOME/prepare-repo.log" 2>>"$HOME/prepare-repo.log"
+
+test_tig status
+
+assert_equals 'on-branch-master.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'bisecting-master.screen' <<EOF
+Bisecting master                                                                
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'on-detached-head.screen' <<EOF
+On detached head 988c77aad5798f1e087e5d7efe3b3319ee6de744                       
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'merging-master.screen' <<EOF
+Merging master                                                                  
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+U run.sh                                                                        
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'rebasing-master.screen' <<EOF
+Rebasing conflict-branch                                                        
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+U run.sh                                                                        
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'applying-mailbox-to-master.screen' <<EOF
+Applying mailbox to master
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'interactive-rebase-of-branch.screen' << EOF
+Interactive rebase conflict-branch                                              
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+U run.sh                                                                        
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF

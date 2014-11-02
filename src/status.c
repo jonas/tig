@@ -201,15 +201,15 @@ status_restore(struct view *view)
 static void
 status_update_onbranch(void)
 {
-	static const char *paths[][2] = {
-		{ "rebase-apply/rebasing",	"Rebasing" },
-		{ "rebase-apply/applying",	"Applying mailbox" },
-		{ "rebase-apply/",		"Rebasing mailbox" },
-		{ "rebase-merge/interactive",	"Interactive rebase" },
-		{ "rebase-merge/",		"Rebase merge" },
-		{ "MERGE_HEAD",			"Merging" },
-		{ "BISECT_LOG",			"Bisecting" },
-		{ "HEAD",			"On branch" },
+	static const char *paths[][3] = {
+		{ "rebase-apply/rebasing",	"rebase-apply/head-name",	"Rebasing" },
+		{ "rebase-apply/applying",	"rebase-apply/head-name",	"Applying mailbox to" },
+		{ "rebase-apply/",		"rebase-apply/head-name",	"Rebasing mailbox onto" },
+		{ "rebase-merge/interactive",	"rebase-merge/head-name",	"Interactive rebase" },
+		{ "rebase-merge/",		"rebase-merge/head-name",	"Rebase merge" },
+		{ "MERGE_HEAD",			NULL,				"Merging" },
+		{ "BISECT_LOG",			NULL,				"Bisecting" },
+		{ "HEAD",			NULL,				"On branch" },
 	};
 	char buf[SIZEOF_STR];
 	struct stat stat;
@@ -221,16 +221,17 @@ status_update_onbranch(void)
 	}
 
 	for (i = 0; i < ARRAY_SIZE(paths); i++) {
+		const char *prefix = paths[i][2];
 		char *head = repo.head;
 
 		if (!string_format(buf, "%s/%s", repo.git_dir, paths[i][0]) ||
 		    lstat(buf, &stat) < 0)
 			continue;
 
-		if (!*repo.head) {
+		if (paths[i][1]) {
 			struct io io;
 
-			if (io_open(&io, "%s/rebase-merge/head-name", repo.git_dir) &&
+			if (io_open(&io, "%s/%s", repo.git_dir, paths[i][1]) &&
 			    io_read_buf(&io, buf, sizeof(buf))) {
 				head = buf;
 				if (!prefixcmp(head, "refs/heads/"))
@@ -238,7 +239,12 @@ status_update_onbranch(void)
 			}
 		}
 
-		if (!string_format(status_onbranch, "%s %s", paths[i][1], head))
+		if (!strcmp(head, "HEAD") && !strcmp(paths[i][0], "HEAD") && *repo.head_id) {
+			prefix = "On detached head";
+			head = repo.head_id;
+		}
+
+		if (!string_format(status_onbranch, "%s %s", prefix, head))
 			string_copy(status_onbranch, repo.head);
 		return;
 	}
@@ -633,7 +639,7 @@ status_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_REFRESH:
 		/* Load the current branch information and then the view. */
-		load_refs(TRUE);
+		load_repo_head();
 		break;
 
 	default:
