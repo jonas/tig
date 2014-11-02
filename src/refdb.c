@@ -216,9 +216,6 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 static int
 reload_refs(bool force)
 {
-	const char *head_argv[] = {
-		"git", "symbolic-ref", "HEAD", NULL
-	};
 	const char *ls_remote_argv[SIZEOF_ARG] = {
 		"git", "ls-remote", repo.git_dir, NULL
 	};
@@ -236,12 +233,8 @@ reload_refs(bool force)
 	if (!*repo.git_dir)
 		return OK;
 
-	if ((force || !*repo.head) && io_run_buf(head_argv, repo.head, sizeof(repo.head)) &&
-	    !prefixcmp(repo.head, "refs/heads/")) {
-		char *offset = repo.head + STRING_SIZE("refs/heads/");
-
-		memmove(repo.head, offset, strlen(offset) + 1);
-	}
+	if (force || !*repo.head)
+		load_repo_head();
 
 	if (strcmp(old_repo.head, repo.head))
 		opt.changed |= WATCH_HEAD;

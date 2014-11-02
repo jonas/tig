@@ -6,6 +6,7 @@
 . libgit.sh
 
 export LINES=9
+export COLUMNS=90
 
 steps '
 	:save-display refs-init.screen
@@ -60,34 +61,34 @@ $LONG_TAG_NAME_ID
 EOF
 
 assert_equals 'refs-init.screen' <<EOF
-                               All references                                   
-2010-04-07 05:37 Max Power     master                                           
-2010-03-04 04:09 A. U. Thor    this_is_really_a_long_long_long_long_long_long_l 
-2010-04-07 05:37 Max Power     origin/master                                    
-2010-04-07 05:37 Max Power     origin/HEAD                                      
-2010-01-20 14:18 A. U. Thor    this_is_really_a_long_long_long_long_long_long_l 
-2009-12-17 12:49 René Lévesque v1.0                                           
-[refs] All references                                                       100%
+                               All references                                             
+2010-04-07 05:37 Max Power     master                                                     
+2010-03-04 04:09 A. U. Thor    this_is_really_a_long_long_long_long_long_long_long_branch 
+2010-04-07 05:37 Max Power     origin/master                                              
+2010-04-07 05:37 Max Power     origin/HEAD                                                
+2010-01-20 14:18 A. U. Thor    this_is_really_a_long_long_long_long_long_long_long_tag    
+2009-12-17 12:49 René Lévesque v1.0                                                     
+[refs] All references                                                                 100%
 EOF
 
 assert_equals 'refs-checked-out-branch.screen' <<EOF
-                               All references                                   
-2010-03-04 04:09 A. U. Thor    this_is_really_a_long_long_long_long_long_long_l 
-2010-04-07 05:37 Max Power     master                                           
-2010-04-07 05:37 Max Power     origin/master                                    
-2010-04-07 05:37 Max Power     origin/HEAD                                      
-2010-01-20 14:18 A. U. Thor    this_is_really_a_long_long_long_long_long_long_l 
-2009-12-17 12:49 René Lévesque v1.0                                           
-[refs] 19455fa3642af6a6a7d527dd043caf5a70eaad2d - reference 1 of 6          100%
+                               All references                                             
+2010-03-04 04:09 A. U. Thor    this_is_really_a_long_long_long_long_long_long_long_branch 
+2010-04-07 05:37 Max Power     master                                                     
+2010-04-07 05:37 Max Power     origin/master                                              
+2010-04-07 05:37 Max Power     origin/HEAD                                                
+2010-01-20 14:18 A. U. Thor    this_is_really_a_long_long_long_long_long_long_long_tag    
+2009-12-17 12:49 René Lévesque v1.0                                                     
+[refs] 19455fa3642af6a6a7d527dd043caf5a70eaad2d - reference 1 of 6                    100%
 EOF
 
 assert_equals 'refs-checked-out-tag.screen' <<EOF
-                               All references                                   
-2010-03-04 04:09 A. U. Thor    this_is_really_a_long_long_long_long_long_long_l 
-2010-04-07 05:37 Max Power     master                                           
-2010-04-07 05:37 Max Power     origin/master                                    
-2010-04-07 05:37 Max Power     origin/HEAD                                      
-2010-01-20 14:18 A. U. Thor    this_is_really_a_long_long_long_long_long_long_l 
-2009-12-17 12:49 René Lévesque v1.0                                           
-[refs] a3f25ca556c1cef1ef3a0704f5deaec8687c84b9 - reference 5 of 6          100%
+                               All references                                             
+2010-04-07 05:37 Max Power     master                                                     
+2010-03-04 04:09 A. U. Thor    this_is_really_a_long_long_long_long_long_long_long_branch 
+2010-04-07 05:37 Max Power     origin/master                                              
+2010-04-07 05:37 Max Power     origin/HEAD                                                
+2010-01-20 14:18 A. U. Thor    this_is_really_a_long_long_long_long_long_long_long_tag    
+2009-12-17 12:49 René Lévesque v1.0                                                     
+[refs] a3f25ca556c1cef1ef3a0704f5deaec8687c84b9 - reference 5 of 6                    100%
 EOF
