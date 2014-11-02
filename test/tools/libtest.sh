@@ -72,8 +72,11 @@ fake_editor="$tmp_dir/bin/vim"
 cat > "$fake_editor" <<EOF
 #!/bin/sh
 
-lineno="\$(printf "%d" "\$1")"
-file="\$2"
+file="\$1"
+lineno="\$(expr "\$1" : '+\([0-9]*\)')"
+if [ -n "\$lineno" ]; then
+	file="\$2"
+fi
 
 echo "\$@" >> "$HOME/editor.log"
 sed -n -e "\${lineno}p" "\$file" >> "$HOME/editor.log"
