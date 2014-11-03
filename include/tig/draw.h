@@ -20,8 +20,6 @@
 #include "tig/refdb.h"
 #include "tig/util.h"
 
-struct graph_canvas;
-
 enum align {
 	ALIGN_LEFT,
 	ALIGN_RIGHT
