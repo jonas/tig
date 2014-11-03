@@ -142,6 +142,7 @@ gitconfig() {
 # Parse TEST_OPTS
 #
 
+expected_status_code=0
 diff_color_arg=
 [ -t 1 ] && diff_color_arg=--color
 
@@ -183,6 +184,17 @@ assert_equals()
 		rm -f "$file.diff"
 	else
 		echo "[FAIL] $file not found" >> .test-result
+	fi
+}
+
+assert_not_exists()
+{
+	file="$1"; shift
+
+	if [ -e "$file" ]; then
+		echo "[FAIL] $file should not exist" >> .test-result
+	else
+		echo "  [OK] $file does not exist" >> .test-result
 	fi
 }
 
@@ -236,10 +248,18 @@ test_tig()
 			echo "*** - This test expects the following arguments: $@"
 		fi
 		(cd "$work_dir" && $debugger tig "$@")
-	elif [ -s stdin ]; then
-		(cd "$work_dir" && tig "$@") < stdin > stdout 2> stderr.orig
 	else
-		(cd "$work_dir" && tig "$@") > stdout 2> stderr.orig
+		set +e
+		if [ -s stdin ]; then
+			(cd "$work_dir" && tig "$@") < stdin > stdout 2> stderr.orig
+		else
+			(cd "$work_dir" && tig "$@") > stdout 2> stderr.orig
+		fi
+		status_code="$?"
+		if [ "$status_code" != "$expected_status_code" ]; then
+			echo "[FAIL] unexpected status code: $status_code (should be $expected_status_code)" >> .test-result
+		fi
+		set -e
 	fi
 	# Normalize paths in stderr output
 	if [ -e stderr.orig ]; then

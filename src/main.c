@@ -108,35 +108,49 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 	if (state->with_graph) {
 		if (*parent)
 			return graph_render_parents(&state->graph);
-		state->add_changes_parents = TRUE;
 	}
 
 	return TRUE;
 }
 
 static bool
-main_add_changes_commits(struct view *view, struct main_state *state, const char *parent)
+main_check_index(struct view *view, struct main_state *state)
 {
-	const char *staged_parent = NULL_ID;
-	const char *unstaged_parent = parent;
 	struct index_diff diff;
 
 	if (!index_diff(&diff, FALSE, FALSE))
 		return FALSE;
 
 	if (!diff.unstaged) {
-		unstaged_parent = NULL;
-		staged_parent = parent;
 		watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_NO);
 	} else {
 		watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_YES);
+		state->add_changes_unstaged = TRUE;
 	}
 
 	if (!diff.staged) {
-		staged_parent = NULL;
 		watch_apply(&view->watch, WATCH_INDEX_STAGED_NO);
 	} else {
 		watch_apply(&view->watch, WATCH_INDEX_STAGED_YES);
+		state->add_changes_staged = TRUE;
+	}
+
+	return TRUE;
+}
+
+static bool
+main_add_changes(struct view *view, struct main_state *state, const char *parent)
+{
+	const char *staged_parent = NULL_ID;
+	const char *unstaged_parent = parent;
+
+	if (!state->add_changes_unstaged) {
+		unstaged_parent = NULL;
+		staged_parent = parent;
+	}
+
+	if (!state->add_changes_staged) {
+		staged_parent = NULL;
 	}
 
 	return main_add_changes_commit(view, LINE_STAT_STAGED, staged_parent, "Staged changes")
@@ -231,7 +245,7 @@ main_open(struct view *view, enum open_flags flags)
 		watch_register(&view->watch, WATCH_HEAD | WATCH_REFS | changes_triggers);
 
 	if (changes_triggers)
-		main_add_changes_commits(view, state, "");
+		main_check_index(view, state);
 
 	return TRUE;
 }
@@ -359,12 +373,9 @@ main_read(struct view *view, struct buffer *buf)
 		while (*line && !isalnum(*line))
 			line++;
 
-		if (state->add_changes_parents) {
-			state->add_changes_parents = FALSE;
-			if (!graph_add_parent(graph, line))
-				return FALSE;
-			graph->has_parents = TRUE;
-			graph_render_parents(graph);
+		if (state->add_changes_unstaged || state->add_changes_staged) {
+			main_add_changes(view, state, line);
+			state->add_changes_unstaged = state->add_changes_staged = FALSE;
 		}
 
 		main_flush_commit(view, commit);

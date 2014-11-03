@@ -36,7 +36,8 @@ struct main_state {
 	bool in_header;
 	bool with_graph;
 	bool first_parent;
-	bool add_changes_parents;
+	bool add_changes_staged;
+	bool add_changes_unstaged;
 };
 
 bool main_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data);

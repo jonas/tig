@@ -18,6 +18,7 @@ Bug fixes:
  - Fix graph support for `--first-parent`. (GH #326)
  - Fix off-by-one error when opening editor from the grep view.
  - Fix status on-branch information.
+ - Fix main view to handle the case when git-log doesn't find any commits.
 
 tig-2.0.3
 ---------
