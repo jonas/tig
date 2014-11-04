@@ -82,6 +82,7 @@ struct graph {
 	bool is_boundary;
 };
 
+struct graph *init_graph(void);
 void done_graph(struct graph *graph);
 
 bool graph_render_parents(struct graph *graph, struct graph_canvas *canvas);

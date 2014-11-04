@@ -38,7 +38,7 @@ main_register_commit(struct view *view, struct commit *commit, const char *ids, 
 
 	string_copy_rev(commit->id, ids);
 	if (state->with_graph)
-		graph_add_commit(&state->graph, &commit->graph, commit->id, ids, is_boundary);
+		graph_add_commit(state->graph, &commit->graph, commit->id, ids, is_boundary);
 }
 
 static struct commit *
@@ -102,7 +102,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 	commit.author = &unknown_ident;
 	main_register_commit(view, &commit, ids, FALSE);
 	if (state->with_graph && *parent)
-		graph_render_parents(&state->graph, &commit.graph);
+		graph_render_parents(state->graph, &commit.graph);
 
 	if (!main_add_commit(view, type, &commit, title, TRUE))
 		return FALSE;
@@ -228,6 +228,12 @@ main_open(struct view *view, enum open_flags flags)
 	if (opt_rev_args && main_check_argv(view, opt_rev_args))
 		main_argv = pretty_raw_argv;
 
+	if (state->with_graph) {
+		state->graph = init_graph();
+		if (!state->graph)
+			return FALSE;
+	}
+
 	if (open_in_pager_mode(flags)) {
 		changes_triggers = WATCH_NONE;
 	}
@@ -333,7 +339,7 @@ bool
 main_read(struct view *view, struct buffer *buf)
 {
 	struct main_state *state = view->private;
-	struct graph *graph = &state->graph;
+	struct graph *graph = state->graph;
 	enum line_type type;
 	struct commit *commit = &state->current;
 	char *line;
@@ -353,8 +359,10 @@ main_read(struct view *view, struct buffer *buf)
 			}
 		}
 
-		if (state->with_graph)
+		if (state->graph) {
 			done_graph(graph);
+			state->graph = NULL;
+		}
 		return TRUE;
 	}
 

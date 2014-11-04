@@ -146,6 +146,12 @@ get_color(struct graph *graph, char *new_id)
 	return color;
 }
 
+struct graph *
+init_graph(void)
+{
+	return calloc(1, sizeof(struct graph));
+}
+
 void
 done_graph(struct graph *graph)
 {
@@ -153,7 +159,7 @@ done_graph(struct graph *graph)
 	free(graph->row.columns);
 	free(graph->next_row.columns);
 	free(graph->parents.columns);
-	memset(graph, 0, sizeof(*graph));
+	free(graph);
 }
 
 #define graph_column_has_commit(col) ((col)->id[0])

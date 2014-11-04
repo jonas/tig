@@ -27,7 +27,7 @@ struct commit {
 };
 
 struct main_state {
-	struct graph graph;
+	struct graph *graph;
 	struct commit current;
 	char **reflog;
 	size_t reflogs;
