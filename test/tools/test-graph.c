@@ -88,7 +88,7 @@ main(int argc, const char *argv[])
 				commits[ncommits++] = commit;
 				string_copy_rev(commit->id, line);
 				graph_add_commit(&graph, &commit->canvas, commit->id, line, is_boundary);
-				graph_render_parents(&graph);
+				graph_render_parents(&graph, &commit->canvas);
 
 				if ((line = io_memchr(&buf, line, 0))) {
 					print_commit(commit, line);

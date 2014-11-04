@@ -63,7 +63,6 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 
 	*commit = *template;
 	strncpy(commit->title, title, titlelen);
-	state->graph.canvas = &commit->graph;
 	memset(template, 0, sizeof(*template));
 	state->reflogmsg[0] = 0;
 
@@ -102,13 +101,11 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 
 	commit.author = &unknown_ident;
 	main_register_commit(view, &commit, ids, FALSE);
+	if (state->with_graph && *parent)
+		graph_render_parents(&state->graph, &commit.graph);
+
 	if (!main_add_commit(view, type, &commit, title, TRUE))
 		return FALSE;
-
-	if (state->with_graph) {
-		if (*parent)
-			return graph_render_parents(&state->graph);
-	}
 
 	return TRUE;
 }
@@ -399,7 +396,7 @@ main_read(struct view *view, struct buffer *buf)
 
 			parse_author_line(author, &commit->author, &commit->time);
 			if (state->with_graph)
-				graph_render_parents(graph);
+				graph_render_parents(graph, &commit->graph);
 			if (title)
 				main_add_commit(view, LINE_MAIN_COMMIT, commit, title, FALSE);
 		}
@@ -434,7 +431,7 @@ main_read(struct view *view, struct buffer *buf)
 		parse_author_line(line + STRING_SIZE("author "),
 				  &commit->author, &commit->time);
 		if (state->with_graph)
-			graph_render_parents(graph);
+			graph_render_parents(graph, &commit->graph);
 		break;
 
 	default:

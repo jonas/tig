@@ -257,10 +257,8 @@ graph_collapse(struct graph *graph)
 }
 
 static void
-graph_canvas_append_symbol(struct graph *graph, struct graph_symbol *symbol)
+graph_canvas_append_symbol(struct graph *graph, struct graph_canvas *canvas, struct graph_symbol *symbol)
 {
-	struct graph_canvas *canvas = graph->canvas;
-
 	if (realloc_graph_symbols(&canvas->symbols, canvas->size, 1))
 		canvas->symbols[canvas->size++] = *symbol;
 }
@@ -563,7 +561,7 @@ below_commit(int pos, struct graph *graph)
 }
 
 static void
-graph_generate_symbols(struct graph *graph)
+graph_generate_symbols(struct graph *graph, struct graph_canvas *canvas)
 {
 	struct graph_row *prev_row = &graph->prev_row;
 	struct graph_row *row = &graph->row;
@@ -607,14 +605,14 @@ graph_generate_symbols(struct graph *graph)
 		}
 		symbol->color = get_color(graph, id);
 
-		graph_canvas_append_symbol(graph, symbol);
+		graph_canvas_append_symbol(graph, canvas, symbol);
 	}
 
 	colors_remove_id(&graph->colors, graph->id);
 }
 
 bool
-graph_render_parents(struct graph *graph)
+graph_render_parents(struct graph *graph, struct graph_canvas *canvas)
 {
 	if (graph->parents.size == 0 &&
 	    !graph_add_parent(graph, ""))
@@ -624,7 +622,7 @@ graph_render_parents(struct graph *graph)
 		return FALSE;
 
 	graph_generate_next_row(graph);
-	graph_generate_symbols(graph);
+	graph_generate_symbols(graph, canvas);
 	graph_commit_next_row(graph);
 
 	graph->parents.size = graph->position = 0;
@@ -641,7 +639,6 @@ graph_add_commit(struct graph *graph, struct graph_canvas *canvas,
 {
 	graph->position = graph_find_column_by_id(&graph->row, id);
 	string_copy_rev(graph->id, id);
-	graph->canvas = canvas;
 	graph->is_boundary = is_boundary;
 
 	while ((parents = strchr(parents, ' '))) {

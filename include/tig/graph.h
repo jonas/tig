@@ -77,7 +77,6 @@ struct graph {
 	size_t prev_position;
 	size_t expanded;
 	char id[SIZEOF_REV];
-	struct graph_canvas *canvas;
 	struct colors colors;
 	bool has_parents;
 	bool is_boundary;
@@ -85,7 +84,7 @@ struct graph {
 
 void done_graph(struct graph *graph);
 
-bool graph_render_parents(struct graph *graph);
+bool graph_render_parents(struct graph *graph, struct graph_canvas *canvas);
 bool graph_add_commit(struct graph *graph, struct graph_canvas *canvas,
 		      const char *id, const char *parents, bool is_boundary);
 struct graph_column *graph_add_parent(struct graph *graph, const char *parent);
