@@ -1181,7 +1181,7 @@ parse_view_column_option(struct view_column *column,
 			 const char *opt_name, const char *opt_value)
 {
 #define DEFINE_COLUMN_OPTION_INFO(name, type, flags) \
-	{ #name, STRING_SIZE(#name), #type, &opt->name },
+	{ #name, STRING_SIZE(#name), #type, &opt->name, flags },
 
 #define DEFINE_COLUMN_OPTIONS_PARSE(name, id, options) \
 	if (column->type == VIEW_COLUMN_##id) { \
@@ -1189,7 +1189,7 @@ parse_view_column_option(struct view_column *column,
 		struct option_info info[] = { \
 			options(DEFINE_COLUMN_OPTION_INFO) \
 		}; \
-		struct option_info *option = find_option_info(info, ARRAY_SIZE(info), opt_name); \
+		struct option_info *option = find_option_info(info, ARRAY_SIZE(info), "", opt_name); \
 		if (!option) \
 			return error("Unknown option `%s' for column %s", opt_name, \
 				     view_column_name(VIEW_COLUMN_##id)); \

@@ -36,14 +36,27 @@ static struct option_info option_info[] = {
 };
 
 struct option_info *
-find_option_info(struct option_info *option, size_t options, const char *name)
+find_option_info(struct option_info *option, size_t options, const char *prefix, const char *name)
 {
 	size_t namelen = strlen(name);
+	char prefixed[SIZEOF_STR];
 	int i;
 
-	for (i = 0; i < options; i++)
+	if (*prefix && namelen == strlen(prefix) &&
+	    !string_enum_compare(prefix, name, namelen)) {
+		name = "display";
+		namelen = strlen(name);
+	}
+
+	for (i = 0; i < options; i++) {
 		if (enum_equals(option[i], name, namelen))
 			return &option[i];
+
+		if (enum_name_prefixed(prefixed, sizeof(prefixed), prefix, option[i].name) &&
+		    namelen == strlen(prefixed) &&
+		    !string_enum_compare(prefixed, name, namelen))
+			return &option[i];
+	}
 
 	return NULL;
 }
@@ -603,7 +616,7 @@ option_set_command(int argc, const char *argv[])
 	if (!strcmp(argv[0], "reference-format"))
 		return parse_ref_formats(argv + 2);
 
-	option = find_option_info(option_info, ARRAY_SIZE(option_info), argv[0]);
+	option = find_option_info(option_info, ARRAY_SIZE(option_info), "", argv[0]);
 	if (option) {
 		enum status_code code;
 

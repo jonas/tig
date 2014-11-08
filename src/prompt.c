@@ -535,15 +535,8 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 	return status != INPUT_CANCEL;
 }
 
-struct prompt_toggle {
-	const char *name;
-	const char *type;
-	enum view_flag flags;
-	void *opt;
-};
-
-static struct prompt_toggle option_toggles[] = {
-#define DEFINE_OPTION_TOGGLES(name, type, flags) { #name, #type, flags, &opt_ ## name },
+static struct option_info option_toggles[] = {
+#define DEFINE_OPTION_TOGGLES(name, type, flags) { #name, STRING_SIZE(#name), #type, &opt_ ## name, flags },
 	OPTION_INFO(DEFINE_OPTION_TOGGLES)
 };
 
@@ -560,7 +553,7 @@ find_arg(const char *argv[], const char *arg)
 
 static enum status_code
 prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
-		     struct prompt_toggle *toggle, enum view_flag *flags)
+		     struct option_info *toggle, enum view_flag *flags)
 {
 	char name[SIZEOF_STR];
 
@@ -570,7 +563,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 	*flags = toggle->flags;
 
 	if (!strcmp(toggle->type, "bool")) {
-		bool *opt = toggle->opt;
+		bool *opt = toggle->value;
 
 		*opt = !*opt;
 		if (opt == &opt_mouse)
@@ -579,7 +572,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 
 	} else if (!strncmp(toggle->type, "enum", 4)) {
 		const char *type = toggle->type + STRING_SIZE("enum ");
-		enum author *opt = toggle->opt;
+		enum author *opt = toggle->value;
 		const struct enum_map *map = find_enum_map(type);
 
 		*opt = (*opt + 1) % map->size;
@@ -588,7 +581,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 	} else if (!strcmp(toggle->type, "int")) {
 		const char *arg = argv[2] ? argv[2] : "1";
 		int diff = atoi(arg);
-		int *opt = toggle->opt;
+		int *opt = toggle->value;
 
 		if (!diff)
 			diff = *arg == '-' ? -1 : 1;
@@ -614,7 +607,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 
 	} else if (!strcmp(toggle->type, "double")) {
 		const char *arg = argv[2] ? argv[2] : "1.0";
-		double *opt = toggle->opt;
+		double *opt = toggle->value;
 		int sign = 1;
 		double diff;
 
@@ -630,7 +623,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 		return success("set %s = %.2f", name, *opt);
 
 	} else if (!strcmp(toggle->type, "const char **")) {
-		const char ***opt = toggle->opt;
+		const char ***opt = toggle->value;
 		bool found = TRUE;
 		int i;
 
@@ -672,41 +665,12 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 	}
 }
 
-static struct prompt_toggle *
-find_prompt_toggle(struct prompt_toggle toggles[], size_t toggles_size,
-		   const char *prefix, const char *name, size_t namelen)
-{
-	char prefixed[SIZEOF_STR];
-	int i;
-
-	if (*prefix && namelen == strlen(prefix) &&
-	    !string_enum_compare(prefix, name, namelen)) {
-		name = "display";
-		namelen = strlen(name);
-	}
-
-	for (i = 0; i < toggles_size; i++) {
-		struct prompt_toggle *toggle = &toggles[i];
-
-		if (namelen == strlen(toggle->name) &&
-		    !string_enum_compare(toggle->name, name, namelen))
-			return toggle;
-
-		if (enum_name_prefixed(prefixed, sizeof(prefixed), prefix, toggle->name) &&
-		    namelen == strlen(prefixed) &&
-		    !string_enum_compare(prefixed, name, namelen))
-			return toggle;
-	}
-
-	return NULL;
-}
-
 static enum status_code
 prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 {
 	const char *option = argv[1];
 	size_t optionlen = option ? strlen(option) : 0;
-	struct prompt_toggle *toggle;
+	struct option_info *toggle;
 	struct view_column *column;
 
 	if (!option)
@@ -727,21 +691,20 @@ prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 		}
 	}
 
-	toggle = find_prompt_toggle(option_toggles, ARRAY_SIZE(option_toggles),
-				    "", option, optionlen);
+	toggle = find_option_info(option_toggles, ARRAY_SIZE(option_toggles), "", option);
 	if (toggle)
 		return prompt_toggle_option(view, argv, "", toggle, flags);
 
 #define DEFINE_COLUMN_OPTIONS_TOGGLE(name, type, flags) \
-	{ #name, #type, flags, &opt->name },
+	{ #name, STRING_SIZE(#name), #type, &opt->name, flags },
 
 #define DEFINE_COLUMN_OPTIONS_CHECK(name, id, options) \
 	if (column->type == VIEW_COLUMN_##id) { \
 		struct name##_options *opt = &column->opt.name; \
-		struct prompt_toggle toggles[] = { \
+		struct option_info toggles[] = { \
 			options(DEFINE_COLUMN_OPTIONS_TOGGLE) \
 		}; \
-		toggle = find_prompt_toggle(toggles, ARRAY_SIZE(toggles), #name, option, optionlen); \
+		toggle = find_option_info(toggles, ARRAY_SIZE(toggles), #name, option); \
 		if (toggle) \
 			return prompt_toggle_option(view, argv, #name, toggle, flags); \
 	}
@@ -917,10 +880,10 @@ run_prompt_command(struct view *view, const char *argv[])
 		}
 
 		if (!strcmp(cmd, "set")) {
-			struct prompt_toggle *toggle;
+			struct option_info *toggle;
 
-			toggle = find_prompt_toggle(option_toggles, ARRAY_SIZE(option_toggles),
-						    "", argv[1], strlen(argv[1]));
+			toggle = find_option_info(option_toggles, ARRAY_SIZE(option_toggles),
+						  "", argv[1]);
 
 			if (toggle)
 				flags = toggle->flags;

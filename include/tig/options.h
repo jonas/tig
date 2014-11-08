@@ -182,10 +182,11 @@ struct option_info {
 	size_t namelen;
 	const char *type;
 	void *value;
+	int flags;
 	bool seen;
 };
 
-struct option_info *find_option_info(struct option_info *option, size_t options, const char *name);
+struct option_info *find_option_info(struct option_info *option, size_t options, const char *prefix, const char *name);
 enum status_code parse_option(struct option_info *option, const char *prefix, const char *arg);
 enum status_code parse_int(int *opt, const char *arg, int min, int max);
 enum status_code parse_step(double *opt, const char *arg);
