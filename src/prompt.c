@@ -670,8 +670,10 @@ prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 {
 	const char *option = argv[1];
 	size_t optionlen = option ? strlen(option) : 0;
+	struct option_info template;
 	struct option_info *toggle;
 	struct view_column *column;
+	const char *column_name;
 
 	if (!option)
 		return error("%s", "No option name given to :toggle");
@@ -695,22 +697,10 @@ prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 	if (toggle)
 		return prompt_toggle_option(view, argv, "", toggle, flags);
 
-#define DEFINE_COLUMN_OPTIONS_TOGGLE(name, type, flags) \
-	{ #name, STRING_SIZE(#name), #type, &opt->name, flags },
-
-#define DEFINE_COLUMN_OPTIONS_CHECK(name, id, options) \
-	if (column->type == VIEW_COLUMN_##id) { \
-		struct name##_options *opt = &column->opt.name; \
-		struct option_info toggles[] = { \
-			options(DEFINE_COLUMN_OPTIONS_TOGGLE) \
-		}; \
-		toggle = find_option_info(toggles, ARRAY_SIZE(toggles), #name, option); \
-		if (toggle) \
-			return prompt_toggle_option(view, argv, #name, toggle, flags); \
-	}
-
 	for (column = view->columns; column; column = column->next) {
-		COLUMN_OPTIONS(DEFINE_COLUMN_OPTIONS_CHECK);
+		toggle = find_column_option_info(column->type, &column->opt, option, &template, &column_name);
+		if (toggle)
+			return prompt_toggle_option(view, argv, column_name, toggle, flags);
 	}
 
 	return error("`:toggle %s` not supported", option);

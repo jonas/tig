@@ -188,6 +188,8 @@ struct option_info {
 
 struct option_info *find_option_info(struct option_info *option, size_t options, const char *prefix, const char *name);
 enum status_code parse_option(struct option_info *option, const char *prefix, const char *arg);
+struct option_info *find_column_option_info(enum view_column_type type, union view_column_options *opts,
+					const char *option, struct option_info *column_info, const char **column_name);
 enum status_code parse_int(int *opt, const char *arg, int min, int max);
 enum status_code parse_step(double *opt, const char *arg);
 enum status_code set_option(const char *opt, int argc, const char *argv[]);

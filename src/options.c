@@ -82,6 +82,37 @@ mark_option_seen(void *value)
 		option->seen = TRUE;
 }
 
+struct option_info *
+find_column_option_info(enum view_column_type type, union view_column_options *opts,
+			const char *option, struct option_info *column_info,
+			const char **column_name)
+{
+	size_t optionlen = strlen(option);
+
+#define DEFINE_COLUMN_OPTION_INFO(name, type, flags) \
+	{ #name, STRING_SIZE(#name), #type, &opt->name, flags },
+
+#define DEFINE_COLUMN_OPTION_INFO_CHECK(name, id, options) \
+	if (type == VIEW_COLUMN_##id) { \
+		struct name##_options *opt = &opts->name; \
+		struct option_info info[] = { \
+			options(DEFINE_COLUMN_OPTION_INFO) \
+		}; \
+		struct option_info *match; \
+		match = find_option_info(info, ARRAY_SIZE(info), #name, option); \
+		if (match) { \
+			*column_info = *match; \
+			*column_name = #name; \
+			return column_info; \
+		} \
+	}
+
+	COLUMN_OPTIONS(DEFINE_COLUMN_OPTION_INFO_CHECK);
+
+	*column_name = NULL;
+	return NULL;
+}
+
 /*
  * State variables.
  */
