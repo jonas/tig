@@ -352,6 +352,8 @@ set pager-view = line-number:yes,interval=10 text
 # Shorthands to change view settings for a previously defined column
 set main-view-date = short
 set blame-view-line-number = no
+# Do not automatically use topo-order for the commit graph
+set main-view-commit-title-graph = no-topo
 --------------------------------------------------------------------------
 
 The following list shows which the available view settings and what column types
