@@ -601,33 +601,35 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 
 struct view_config {
 	const char *name;
+	size_t namelen;
 	const char ***argv;
 };
 
+#define VIEW_CONFIG(name) { #name, STRING_SIZE(#name), &opt_ ## name }
 static struct view_config view_configs[] = {
-	{ "blame-view", &opt_blame_view },
-	{ "blob-view", &opt_blob_view },
-	{ "diff-view", &opt_diff_view },
-	{ "grep-view", &opt_grep_view },
-	{ "log-view", &opt_log_view },
-	{ "main-view", &opt_main_view },
-	{ "pager-view", &opt_pager_view },
-	{ "refs-view", &opt_refs_view },
-	{ "stage-view", &opt_stage_view },
-	{ "stash-view", &opt_stash_view },
-	{ "status-view", &opt_status_view },
-	{ "tree-view", &opt_tree_view },
+	VIEW_CONFIG(blame_view),
+	VIEW_CONFIG(blob_view),
+	VIEW_CONFIG(diff_view),
+	VIEW_CONFIG(grep_view),
+	VIEW_CONFIG(log_view),
+	VIEW_CONFIG(main_view),
+	VIEW_CONFIG(pager_view),
+	VIEW_CONFIG(refs_view),
+	VIEW_CONFIG(stage_view),
+	VIEW_CONFIG(stash_view),
+	VIEW_CONFIG(status_view),
+	VIEW_CONFIG(tree_view),
 };
 
 static enum status_code
-check_view_config(struct option_info *option, const char *argv[])
+check_view_config(const char *name, const char *argv[])
 {
-	const char *name = enum_name(option->name);
+	size_t namelen = strlen(name);
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(view_configs); i++)
-		if (!strcmp(name, view_configs[i].name))
-			return parse_view_config(name, argv);
+		if (enum_equals(view_configs[i], name, namelen))
+			return parse_view_config(enum_name(name), argv);
 
 	return SUCCESS;
 }
@@ -655,7 +657,7 @@ option_set_command(int argc, const char *argv[])
 			return SUCCESS;
 
 		if (!strcmp(option->type, "const char **")) {
-			code = check_view_config(option, argv + 2);
+			code = check_view_config(option->name, argv + 2);
 			if (code != SUCCESS)
 				return code;
 			return parse_args(option->value, argv + 2);
