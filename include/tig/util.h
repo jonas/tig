@@ -23,6 +23,7 @@
 
 #define STATUS_CODE_INFO(_) \
 	_(CUSTOM_MESSAGE, NULL), \
+	_(NO_ENTRY_FOUND, "No entry found"), \
 	_(NO_OPTION_VALUE, "No option value"), \
 	_(OUT_OF_MEMORY, "Out of memory"), \
 	_(FILE_DOES_NOT_EXIST, "File does not exist"), \

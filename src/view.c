@@ -1253,6 +1253,32 @@ find_view(const char *view_name)
 }
 
 enum status_code
+parse_view_column_config(const char *view_name, enum view_column_type type,
+			 const char *option_name, const char *argv[])
+{
+	enum status_code code = SUCCESS;
+	struct view_column *columns;
+	struct view_column *column;
+	struct view *view = find_view(view_name);
+
+	if (!view)
+		return error("Unknown view: %s", view_name);
+
+	if (!(view->ops->column_bits & (1 << type)))
+		return error("The %s view does not support %s column", view->name,
+			     view_column_name(column->type));
+
+	column = get_view_column(view, type);
+	if (!column)
+		return error("The %s view does not have a %s column configured", view->name,
+			     view_column_name(column->type));
+
+	if (option_name)
+		return parse_view_column_option(column, option_name, argv[0]);
+	return parse_view_column_config_exprs(column, argv[0]);
+}
+
+enum status_code
 parse_view_config(const char *view_name, const char *argv[])
 {
 	enum status_code code = SUCCESS;

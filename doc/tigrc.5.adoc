@@ -327,6 +327,11 @@ expecting an enumerated value this will automatically resolve to the default
 enum value. For example, `file-name` will automatically have its 'display'
 setting resolve to 'auto'.
 
+Specifications can also be given for a single column, for example to override
+the defaults in the system tigrc file. To override a single column, use the
+column name as a suffix after the view setting name, e.g. `main-view-date` will
+allow to set the date in the main view.
+
 Examples:
 // TEST: tigrc
 --------------------------------------------------------------------------
@@ -343,6 +348,10 @@ set tree-view = line-number:no,interval=5 mode author:full \
 
 # Show line numbers for every 10th line in the pager view
 set pager-view = line-number:yes,interval=10 text
+
+# Shorthands to change view settings for a previously defined column
+set main-view-date = short
+set blame-view-line-number = no
 --------------------------------------------------------------------------
 
 The following list shows which the available view settings and what column types

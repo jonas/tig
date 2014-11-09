@@ -299,6 +299,7 @@ bool view_column_info_changed(struct view *view, bool update);
 void view_column_reset(struct view *view);
 bool view_column_info_update(struct view *view, struct line *line);
 enum status_code parse_view_config(const char *view_name, const char *argv[]);
+enum status_code parse_view_column_config(const char *view_name, enum view_column_type type, const char *option_name, const char *argv[]);
 
 struct line *
 find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction);

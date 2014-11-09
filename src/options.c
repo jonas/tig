@@ -634,11 +634,47 @@ check_view_config(const char *name, const char *argv[])
 	return SUCCESS;
 }
 
+static enum status_code
+parse_view_column_config_name(const char *name, const char **view_name,
+			      enum view_column_type *column_type, const char **option_name)
+{
+	size_t namelen = strlen(name);
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(view_configs); i++) {
+		if (enum_equals_prefix(view_configs[i], name, namelen, '-')) {
+			const char *column_name = name + view_configs[i].namelen + 1;
+			size_t column_namelen = strlen(column_name);
+			enum view_column_type type;
+
+			*view_name = view_configs[i].name;
+
+			for (type = 0; type < view_column_type_map->size; type++) {
+				const struct enum_map_entry *column = &view_column_type_map->entries[type];
+
+				*column_type = type;
+				*option_name = NULL;
+
+				if (enum_equals(*column, column_name, column_namelen))
+					return SUCCESS;
+
+				if (enum_equals_prefix(*column, column_name, column_namelen, '-')) {
+					*option_name = column_name + column->namelen + 1;
+					return SUCCESS;
+				}
+			}
+		}
+	}
+
+	return ERROR_NO_ENTRY_FOUND;
+}
+
 /* Wants: name = value */
 static enum status_code
 option_set_command(int argc, const char *argv[])
 {
 	struct option_info *option;
+	enum status_code code;
 
 	if (argc < 3)
 		return error("Invalid set command: set option = value");
@@ -651,8 +687,6 @@ option_set_command(int argc, const char *argv[])
 
 	option = find_option_info(option_info, ARRAY_SIZE(option_info), "", argv[0]);
 	if (option) {
-		enum status_code code;
-
 		if (option->seen)
 			return SUCCESS;
 
@@ -669,6 +703,14 @@ option_set_command(int argc, const char *argv[])
 
 		return code;
 
+	}
+
+	{
+		const char *view_name, *option_name;
+		enum view_column_type column_type;
+
+		if (parse_view_column_config_name(argv[0], &view_name, &column_type, &option_name) == SUCCESS)
+			return parse_view_column_config(view_name, column_type, option_name, argv + 2);
 	}
 
 	{
