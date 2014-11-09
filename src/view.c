@@ -1142,7 +1142,7 @@ view_column_reset(struct view *view)
 }
 
 static enum status_code
-parse_view_column_config(char **pos, const char **name, const char **value, bool first)
+parse_view_column_config_expr(char **pos, const char **name, const char **value, bool first)
 {
 	size_t len = strcspn(*pos, ",");
 	size_t optlen;
@@ -1199,6 +1199,28 @@ parse_view_column_option(struct view_column *column,
 	COLUMN_OPTIONS(DEFINE_COLUMN_OPTIONS_PARSE);
 
 	return error("Unknown view column option: %s", opt_name);
+}
+
+static enum status_code
+parse_view_column_config_exprs(struct view_column *column, const char *arg)
+{
+	char buf[SIZEOF_STR] = "";
+	char *pos, *end;
+	bool first = TRUE;
+	enum status_code code = SUCCESS;
+
+	string_ncopy(buf, arg, strlen(arg));
+
+	for (pos = buf, end = pos + strlen(pos); code == SUCCESS && pos <= end; first = FALSE) {
+		const char *name = NULL;
+		const char *value = NULL;
+
+		code = parse_view_column_config_expr(&pos, &name, &value, first);
+		if (code == SUCCESS)
+			code = parse_view_column_option(column, name, value);
+	}
+
+	return code;
 }
 
 static enum status_code
@@ -1271,17 +1293,7 @@ parse_view_config(const char *view_name, const char *argv[])
 			return error("The %s column must always be last",
 				     view_column_name(column->type));
 
-		string_ncopy(buf, arg, strlen(arg));
-
-		for (pos = buf, end = pos + strlen(pos); code == SUCCESS && pos <= end; first = FALSE) {
-			const char *name = NULL;
-			const char *value = NULL;
-
-			code = parse_view_column_config(&pos, &name, &value, first);
-			if (code == SUCCESS)
-				code = parse_view_column_option(column, name, value);
-		}
-
+		code = parse_view_column_config_exprs(column, arg);
 		column->prev_opt = column->opt;
 	}
 
