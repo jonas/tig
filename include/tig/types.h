@@ -40,7 +40,7 @@ int string_enum_compare(const char *str1, const char *str2, int len);
 	(namelen == STRING_SIZE(str) && !string_enum_compare(str, name, namelen))
 
 const char *enum_name(const char *name);
-bool enum_name_copy(char *buf, size_t bufsize, const char *name);
+bool enum_name_copy(char buf[], size_t bufsize, const char *name);
 bool enum_name_prefixed(char buf[], size_t bufsize, const char *prefix, const char *name);
 
 const struct enum_map *find_enum_map(const char *type);

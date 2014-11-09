@@ -41,7 +41,7 @@ string_enum_compare(const char *str1, const char *str2, int len)
 }
 
 bool
-enum_name_copy(char *buf, size_t bufsize, const char *name)
+enum_name_copy(char buf[], size_t bufsize, const char *name)
 {
 	int bufpos;
 
