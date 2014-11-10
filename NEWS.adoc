@@ -22,6 +22,7 @@ Bug fixes:
  - Fix off-by-one error when opening editor from the grep view.
  - Fix status on-branch information.
  - Fix main view to handle the case when git-log doesn't find any commits.
+ - Fix corner case when parsing diff chunk when lines information is missing.
 
 tig-2.0.3
 ---------

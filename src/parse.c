@@ -184,22 +184,22 @@ parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *lin
  */
 
 static bool
-parse_ulong(const char **pos_ptr, unsigned long *value, const char *skip)
+parse_ulong(const char **pos_ptr, unsigned long *value, char skip, bool optional)
 {
 	const char *start = *pos_ptr;
 	char *end;
 
-	if (!isdigit(*start))
-		return 0;
+	if (*start != skip)
+		return optional;
 
+	start++;
 	*value = strtoul(start, &end, 10);
 	if (end == start)
 		return FALSE;
 
-	start = end;
-	while (skip && *start && strchr(skip, *start))
-		start++;
-	*pos_ptr = start;
+	while (isspace(*end))
+		end++;
+	*pos_ptr = end;
 	return TRUE;
 }
 
@@ -209,18 +209,17 @@ parse_chunk_header(struct chunk_header *header, const char *line)
 	memset(header, 0, sizeof(*header));
 
 	if (!prefixcmp(line, "@@ -"))
-		line += STRING_SIZE("@@ -");
+		line += STRING_SIZE("@@ -") - 1;
 	else if (!prefixcmp(line, "@@@ -") &&
 		 (line = strchr(line + STRING_SIZE("@@@ -"), '-')))
-		line += 1;
+		/* Stay at that '-'. */ ;
 	else
 		return FALSE;
 
-
-	return  parse_ulong(&line, &header->old.position, ",") &&
-		parse_ulong(&line, &header->old.lines, " +") &&
-		parse_ulong(&line, &header->new.position, ",") &&
-		parse_ulong(&line, &header->new.lines, NULL);
+	return  parse_ulong(&line, &header->old.position, '-', FALSE) &&
+		parse_ulong(&line, &header->old.lines, ',', TRUE) &&
+		parse_ulong(&line, &header->new.position, '+', FALSE) &&
+		parse_ulong(&line, &header->new.lines, ',', FALSE);
 }
 
 bool
