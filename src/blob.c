@@ -70,9 +70,9 @@ static bool
 blob_read(struct view *view, struct buffer *buf)
 {
 	if (!buf) {
-		if (view->env->lineno > 0) {
-			select_view_line(view, view->env->lineno);
-			view->env->lineno = 0;
+		if (view->env->goto_lineno > 0) {
+			select_view_line(view, view->env->goto_lineno);
+			view->env->goto_lineno = 0;
 		}
 		return TRUE;
 	}
@@ -97,7 +97,7 @@ blob_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_VIEW_BLAME:
 		string_ncopy(view->env->ref, state->commit, strlen(state->commit));
-		view->env->lineno = line - view->line;
+		view->env->goto_lineno = line - view->line;
 		return request;
 
 	case REQ_EDIT:

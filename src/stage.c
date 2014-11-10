@@ -427,9 +427,9 @@ stage_request(struct view *view, enum request request, struct line *line)
 		}
 
 		view->env->ref[0] = 0;
-		view->env->lineno = diff_get_lineno(view, line);
-		if (view->env->lineno > 0)
-			view->env->lineno--;
+		view->env->goto_lineno = diff_get_lineno(view, line);
+		if (view->env->goto_lineno > 0)
+			view->env->goto_lineno--;
 		return request;
 
 	case REQ_ENTER:

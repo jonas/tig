@@ -484,7 +484,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 			} else if (strlen(opt) >= 2 && *opt == '+' && string_isnumber(opt + 1)) {
 				int lineno = atoi(opt + 1);
 
-				argv_env.lineno = lineno > 0 ? lineno - 1 : 0;
+				argv_env.goto_lineno = lineno > 0 ? lineno - 1 : 0;
 				continue;
 
 			}

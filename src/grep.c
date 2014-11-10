@@ -171,7 +171,7 @@ grep_request(struct view *view, enum request request, struct line *line)
 			const char *file_argv[] = { repo.cdup, grep->file, NULL };
 
 			clear_position(&file_view->pos);
-			view->env->lineno = grep->lineno;
+			view->env->goto_lineno = grep->lineno;
 			view->env->blob[0] = 0;
 			open_argv(view, file_view, file_argv, repo.cdup, OPEN_SPLIT | OPEN_RELOAD);
 		}
@@ -186,7 +186,7 @@ grep_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_VIEW_BLAME:
 		view->env->ref[0] = 0;
-		view->env->lineno = grep->lineno;
+		view->env->goto_lineno = grep->lineno;
 		return request;
 
 	default:

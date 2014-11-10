@@ -384,7 +384,7 @@ diff_trace_origin(struct view *view, struct line *line)
 	if (string_rev_is_null(ref)) {
 		string_ncopy(view->env->file, file, strlen(file));
 		string_copy(view->env->ref, "");
-		view->env->lineno = lineno - 1;
+		view->env->goto_lineno = lineno - 1;
 
 	} else {
 		if (!diff_blame_line(ref, file, lineno, &header, &commit)) {
@@ -394,7 +394,7 @@ diff_trace_origin(struct view *view, struct line *line)
 
 		string_ncopy(view->env->file, commit.filename, strlen(commit.filename));
 		string_copy(view->env->ref, header.id);
-		view->env->lineno = header.orig_lineno - 1;
+		view->env->goto_lineno = header.orig_lineno - 1;
 	}
 
 	return REQ_VIEW_BLAME;
@@ -471,7 +471,7 @@ diff_select(struct view *view, struct line *line)
 		if (file) {
 			string_format(view->ref, "Changes to '%s'", file);
 			string_format(view->env->file, "%s", file);
-			view->env->lineno = diff_get_lineno(view, line);
+			view->env->goto_lineno = diff_get_lineno(view, line);
 			view->env->blob[0] = 0;
 		} else {
 			string_ncopy(view->ref, view->ops->id, strlen(view->ops->id));

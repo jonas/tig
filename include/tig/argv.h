@@ -51,7 +51,7 @@ bool argv_contains(const char **argv, const char *arg);
 
 struct argv_env {
 	char ARGV_ENV_INFO(ARGV_ENV_FIELDS);
-	unsigned long lineno;
+	unsigned long goto_lineno;
 	char search[SIZEOF_STR];
 	char none[1];
 };

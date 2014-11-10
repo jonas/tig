@@ -495,7 +495,7 @@ reset_view(struct view *view)
 	view->prev_pos = view->pos;
 	/* A view without a previous view is the first view */
 	if (!view->prev && !view->lines && view->prev_pos.lineno == 0)
-		view->prev_pos.lineno = view->env->lineno;
+		view->prev_pos.lineno = view->env->goto_lineno;
 	clear_position(&view->pos);
 
 	if (view->columns)
