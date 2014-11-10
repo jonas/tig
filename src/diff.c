@@ -459,8 +459,8 @@ diff_request(struct view *view, enum request request, struct line *line)
 	}
 }
 
-static void
-diff_select(struct view *view, struct line *line)
+void
+diff_common_select(struct view *view, struct line *line, const char *changes_msg)
 {
 	if (line->type == LINE_DIFF_STAT) {
 		string_format(view->ref, "Press '%s' to jump to file diff",
@@ -469,7 +469,8 @@ diff_select(struct view *view, struct line *line)
 		const char *file = diff_get_pathname(view, line);
 
 		if (file) {
-			string_format(view->ref, "Changes to '%s'", file);
+			if (changes_msg)
+				string_format(view->ref, "%s to '%s'", changes_msg, file);
 			string_format(view->env->file, "%s", file);
 			view->env->goto_lineno = diff_get_lineno(view, line);
 			view->env->blob[0] = 0;
@@ -478,6 +479,12 @@ diff_select(struct view *view, struct line *line)
 			pager_select(view, line);
 		}
 	}
+}
+
+static void
+diff_select(struct view *view, struct line *line)
+{
+	diff_common_select(view, line, "Changes");
 }
 
 static struct view_ops diff_ops = {

@@ -13,6 +13,7 @@ Improvements:
  - Add `:exec <flags><args...>` prompt command to execute commands.
  - Add shorthand for changing the view settings of a single column,
    eg. `set main-view-author = short`. (GH #318)
+ - Show better diff context info in the stage view.
 
 Bug fixes:
 

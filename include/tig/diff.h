@@ -30,6 +30,7 @@ enum request diff_common_edit(struct view *view, enum request request, struct li
 bool diff_common_read(struct view *view, const char *data, struct diff_state *state);
 enum request diff_common_enter(struct view *view, enum request request, struct line *line);
 struct line *diff_common_add_diff_stat(struct view *view, const char *text, size_t offset);
+void diff_common_select(struct view *view, struct line *line, const char *changes_msg);
 void diff_save_line(struct view *view, struct diff_state *state, enum open_flags flags);
 void diff_restore_line(struct view *view, struct diff_state *state);
 

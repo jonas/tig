@@ -451,6 +451,16 @@ stage_request(struct view *view, enum request request, struct line *line)
 	return REQ_NONE;
 }
 
+static void
+stage_select(struct view *view, struct line *line)
+{
+	const char *changes_msg = stage_line_type == LINE_STAT_STAGED ? "Staged changes"
+				: stage_line_type == LINE_STAT_UNSTAGED ? "Unstaged changes"
+				: NULL;
+
+	diff_common_select(view, line, changes_msg);
+}
+
 static bool
 stage_open(struct view *view, enum open_flags flags)
 {
@@ -558,7 +568,7 @@ static struct view_ops stage_ops = {
 	view_column_draw,
 	stage_request,
 	view_column_grep,
-	pager_select,
+	stage_select,
 	NULL,
 	view_column_bit(LINE_NUMBER) | view_column_bit(TEXT),
 	pager_get_column_data,

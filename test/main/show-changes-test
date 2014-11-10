@@ -72,7 +72,7 @@ $YYY_MM_DD_HH_MM Unknown    o Unstaged changes
                                                                                 
 diff --git a/.j b/.j                                                            
 index e697dfd..9d8ef3d 100644                                                   
-[stage] Unstaged changes - line 1 of 107                                      8%
+[stage] Press '<Enter>' to jump to file diff - line 1 of 107                  8%
 EOF
 
 assert_equals 'main-with-staged.screen' <<EOF
@@ -108,7 +108,7 @@ $YYY_MM_DD_HH_MM Unknown    o Staged changes
                                                                                 
 diff --git a/.j b/.j                                                            
 index e697dfd..9d8ef3d 100644                                                   
-[stage] Staged changes - line 1 of 107                                        8%
+[stage] Press '<Enter>' to jump to file diff - line 1 of 107                  8%
 EOF
 
 assert_equals 'main-with-staged-and-unstaged.screen' <<EOF
