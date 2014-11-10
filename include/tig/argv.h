@@ -34,23 +34,27 @@ bool argv_copy(const char ***dst, const char *src[]);
 bool argv_remove_quotes(const char *argv[]);
 bool argv_contains(const char **argv, const char *arg);
 
-#define ARGV_ENV_INFO(_) \
-	_(commit,	"",		"HEAD"), \
-	_(blob,		"",		""), \
-	_(branch,	"",		""), \
-	_(directory,	".",		""), \
-	_(file,		"",		""), \
-	_(head,		"",		"HEAD"), \
-	_(ref,		"HEAD",		""), \
-	_(remote,	"origin",	""), \
-	_(stash,	"",		""), \
-	_(status,	"",		""), \
-	_(tag,		"",		"")
+typedef char argv_string[SIZEOF_STR];
+typedef unsigned long argv_number;
 
-#define ARGV_ENV_FIELDS(name, ifempty, initval)	name[SIZEOF_STR]
+#define ARGV_ENV_INFO(_) \
+	_(argv_string,	 commit,	"",		"HEAD") \
+	_(argv_string,	 blob,		"",		"") \
+	_(argv_string,	 branch,	"",		"") \
+	_(argv_string,	 directory,	".",		"") \
+	_(argv_string,	 file,		"",		"") \
+	_(argv_string,	 head,		"",		"HEAD") \
+	_(argv_number,	 lineno,	"",		0) \
+	_(argv_string,	 ref,		"HEAD",		"") \
+	_(argv_string,	 remote,	"origin",	"") \
+	_(argv_string,	 stash,		"",		"") \
+	_(argv_string,	 status,	"",		"") \
+	_(argv_string,	 tag,		"",		"")
+
+#define ARGV_ENV_FIELDS(type, name, ifempty, initval)	type name;
 
 struct argv_env {
-	char ARGV_ENV_INFO(ARGV_ENV_FIELDS);
+	ARGV_ENV_INFO(ARGV_ENV_FIELDS);
 	unsigned long goto_lineno;
 	char search[SIZEOF_STR];
 	char none[1];

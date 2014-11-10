@@ -196,10 +196,13 @@ argv_copy(const char ***dst, const char *src[])
  * Argument formatting.
  */
 
+struct format_context;
+
 struct format_var {
 	const char *name;
 	size_t namelen;
-	const char *value;
+	bool (*formatter)(struct format_context *, struct format_var *);
+	void *value_ref;
 	const char *value_if_empty;
 };
 
@@ -211,7 +214,7 @@ struct format_context {
 	bool file_filter;
 };
 
-#define ARGV_ENV_INIT(name, ifempty, initval)	initval
+#define ARGV_ENV_INIT(type, name, ifempty, initval)	initval,
 
 struct argv_env argv_env = {
 	ARGV_ENV_INFO(ARGV_ENV_INIT)
@@ -246,19 +249,13 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 	}
 
 	for (i = 0; i < format->vars_size; i++) {
-		const char *value;
-
 		if (strncmp(name, vars[i].name, vars[i].namelen))
 			continue;
 
-		if (vars[i].value == argv_env.file && !format->file_filter)
+		if (vars[i].value_ref == &argv_env.file && !format->file_filter)
 			return TRUE;
 
-		value = *vars[i].value ? vars[i].value : vars[i].value_if_empty;
-		if (!*value)
-			return TRUE;
-
-		return string_format_from(format->buf, &format->bufpos, "%s", value);
+		return vars[i].formatter(format, &vars[i]);
 	}
 
 	return FALSE;
@@ -306,12 +303,35 @@ format_append_argv(struct format_context *format, const char ***dst_argv, const 
 	return src_argv[argc] == NULL;
 }
 
+static bool
+argv_string_formatter(struct format_context *format, struct format_var *var)
+{
+	argv_string *value_ref = var->value_ref;
+	const char *value = *value_ref;
+
+	if (!*value)
+		value = var->value_if_empty;
+
+	if (!*value)
+		return TRUE;
+
+	return string_format_from(format->buf, &format->bufpos, "%s", value);
+}
+
+static bool
+argv_number_formatter(struct format_context *format, struct format_var *var)
+{
+	unsigned long value = *(unsigned long *) var->value_ref;
+
+	return string_format_from(format->buf, &format->bufpos, "%ld", value);
+}
+
 bool
 argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter)
 {
 	struct format_var vars[] = {
-#define FORMAT_VAR(name, ifempty, initval) \
-	{ "%(" #name ")", STRING_SIZE("%(" #name ")"), argv_env->name, ifempty }
+#define FORMAT_VAR(type, name, ifempty, initval) \
+	{ "%(" #name ")", STRING_SIZE("%(" #name ")"), type ## _formatter, &argv_env->name, ifempty },
 		ARGV_ENV_INFO(FORMAT_VAR)
 	};
 	struct format_context format = { vars, ARRAY_SIZE(vars), "", 0, file_filter };

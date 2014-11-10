@@ -165,6 +165,7 @@ following variables.
 |%(directory)		|The current directory path in the tree view;
 			 empty for the root directory.
 |%(file)		|The currently selected file.
+|%(lineno)		|The currently selected line number. Defaults to 0.
 |%(ref)			|The reference given to blame or HEAD if undefined.
 |%(revargs)		|The revision arguments passed on the command line.
 |%(fileargs)		|The file arguments passed on the command line.

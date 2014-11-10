@@ -494,6 +494,10 @@ blame_select(struct view *view, struct line *line)
 		string_ncopy(view->env->commit, "HEAD", 4);
 	else
 		string_copy_rev(view->env->commit, commit->id);
+
+	if (commit->filename)
+		string_format(view->env->file, "%s", commit->filename);
+	view->env->lineno = view->pos.lineno + 1;
 }
 
 static struct view_ops blame_ops = {

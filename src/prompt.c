@@ -186,8 +186,8 @@ static char *
 readline_variable_generator(const char *text, int state)
 {
 	static const char *vars[] = {
-#define FORMAT_VAR(name, ifempty, initval) "%(" #name ")"
-		ARGV_ENV_INFO(FORMAT_VAR),
+#define FORMAT_VAR(type, name, ifempty, initval) "%(" #name ")",
+		ARGV_ENV_INFO(FORMAT_VAR)
 #undef FORMAT_VAR
 		NULL
 	};

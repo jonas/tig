@@ -80,6 +80,16 @@ blob_read(struct view *view, struct buffer *buf)
 	return add_line_text(view, buf->data, LINE_DEFAULT) != NULL;
 }
 
+static void
+blob_select(struct view *view, struct line *line)
+{
+	struct blob_state *state = view->private;
+
+	if (state->file)
+		string_format(view->env->file, "%s", state->file);
+	view->env->lineno = view->pos.lineno + 1;
+}
+
 static enum request
 blob_request(struct view *view, enum request request, struct line *line)
 {
@@ -122,7 +132,7 @@ static struct view_ops blob_ops = {
 	view_column_draw,
 	blob_request,
 	view_column_grep,
-	pager_select,
+	blob_select,
 	NULL,
 	view_column_bit(LINE_NUMBER) | view_column_bit(TEXT),
 	pager_get_column_data,
