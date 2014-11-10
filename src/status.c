@@ -493,7 +493,7 @@ status_update_files(struct view *view, struct line *line)
 	for (file = 0, done = 5; result && file < files; line++, file++) {
 		int almost_done = file * 100 / files;
 
-		if (almost_done > done) {
+		if (almost_done > done && view_is_displayed(view)) {
 			done = almost_done;
 			string_format(view->ref, "updating file %u of %u (%d%% done)",
 				      file, files, done);
