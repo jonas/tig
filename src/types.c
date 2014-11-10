@@ -23,8 +23,6 @@ string_enum_compare(const char *str1, const char *str2, int len)
 {
 	size_t i;
 
-#define string_enum_sep(x) ((x) == '-' || (x) == '_')
-
 	/* Diff-Header == DIFF_HEADER */
 	for (i = 0; i < len; i++) {
 		if (ascii_toupper(str1[i]) == ascii_toupper(str2[i]))
@@ -47,7 +45,7 @@ enum_name_copy(char buf[], size_t bufsize, const char *name)
 
 	for (bufpos = 0; name[bufpos] && bufpos < bufsize - 1; bufpos++) {
 		buf[bufpos] = ascii_tolower(name[bufpos]);
-		if (buf[bufpos] == '_')
+		if (string_enum_sep(buf[bufpos]))
 			buf[bufpos] = '-';
 	}
 

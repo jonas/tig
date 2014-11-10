@@ -50,7 +50,7 @@ find_option_info(struct option_info *option, size_t options, const char *prefix,
 
 	for (i = 0; i < options; i++) {
 		if (!strcmp(option[i].type, "view_settings") &&
-		    enum_equals_prefix(option[i], name, namelen, '-'))
+		    enum_equals_prefix(option[i], name, namelen))
 			return &option[i];
 
 		if (enum_equals(option[i], name, namelen))
@@ -635,7 +635,7 @@ parse_view_settings(const char *name, const char *argv[])
 		if (enum_equals(view_configs[i], name, namelen))
 			return parse_view_config(enum_name(name), argv);
 
-		if (enum_equals_prefix(view_configs[i], name, namelen, '-')) {
+		if (enum_equals_prefix(view_configs[i], name, namelen)) {
 			const char *column_name = name + view_configs[i].namelen + 1;
 			size_t column_namelen = strlen(column_name);
 			enum view_column_type type;
@@ -646,7 +646,7 @@ parse_view_settings(const char *name, const char *argv[])
 				if (enum_equals(*column, column_name, column_namelen))
 					return parse_view_column_config(view_configs[i].name, type, NULL, argv);
 
-				if (enum_equals_prefix(*column, column_name, column_namelen, '-'))
+				if (enum_equals_prefix(*column, column_name, column_namelen))
 					return parse_view_column_config(view_configs[i].name, type,
 									column_name + column->namelen + 1,
 									argv);

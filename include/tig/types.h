@@ -31,6 +31,7 @@ struct enum_map {
 	const int size;
 };
 
+#define string_enum_sep(x) ((x) == '-' || (x) == '_')
 int string_enum_compare(const char *str1, const char *str2, int len);
 
 #define enum_equals(entry, str, len) \
@@ -39,9 +40,9 @@ int string_enum_compare(const char *str1, const char *str2, int len);
 #define enum_equals_static(str, name, namelen) \
 	(namelen == STRING_SIZE(str) && !string_enum_compare(str, name, namelen))
 
-#define enum_equals_prefix(entry, name_, namelen_, sep) \
+#define enum_equals_prefix(entry, name_, namelen_) \
 	((namelen_) > (entry).namelen && \
-	 (name_)[(entry).namelen] == sep && \
+	 string_enum_sep((name_)[(entry).namelen]) && \
 	 enum_equals(entry, name_, (entry).namelen))
 
 const char *enum_name(const char *name);

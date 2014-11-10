@@ -38,6 +38,8 @@ set main-view = \\
 	line-number \\
 	commit-title		# Multi-line option
 
+set main_view_line_number_visibility = yes
+
 bind generic : prompt		# Must have prompt mapping
 bind generic ø view-tree	# Binding to UTF-8 keys
 bind main <Hash> :/s e a r c h	# Toggle option
@@ -88,7 +90,8 @@ tig warning: ~/.tigrc:22: Unknown color: bold
 tig warning: ~/.tigrc:23: Unknown color: dark
 tig warning: ~/.tigrc:24: Unknown color: dark
 tig warning: ~/.tigrc:25: Unknown color attribute: normally
-tig warning: ~/.tigrc:49: Unknown option command: c
+tig warning: ~/.tigrc:34: Unknown option \`visibility' for column line-number
+tig warning: ~/.tigrc:51: Unknown option command: c
 tig warning: Errors while loading HOME/.tigrc.
 EOF
 
