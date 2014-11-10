@@ -22,46 +22,48 @@
  * Option variables.
  */
 
+typedef const char **view_settings;
+
 #define OPTION_INFO(_) \
 	_(blame_options,		const char **,		VIEW_BLAME_LIKE) \
-	_(blame_view,			const char **,		VIEW_NO_FLAGS) \
-	_(blob_view,			const char **,		VIEW_NO_FLAGS) \
+	_(blame_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(blob_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(cmdline_args,			const char **,		VIEW_NO_FLAGS) \
 	_(commit_order,			enum commit_order,	VIEW_LOG_LIKE) \
 	_(diff_context,			int,			VIEW_DIFF_LIKE) \
 	_(diff_options,			const char **,		VIEW_DIFF_LIKE) \
-	_(diff_view,			const char **,		VIEW_NO_FLAGS) \
+	_(diff_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(editor_line_number,		bool,			VIEW_NO_FLAGS) \
 	_(file_args,			const char **,		VIEW_NO_FLAGS) \
 	_(file_filter,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
 	_(focus_child,			bool,			VIEW_NO_FLAGS) \
 	_(git_colors,			const char **,		VIEW_NO_FLAGS) \
-	_(grep_view,			const char **,		VIEW_NO_FLAGS) \
+	_(grep_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(horizontal_scroll,		double,			VIEW_NO_FLAGS) \
 	_(id_width,			int,			VIEW_NO_FLAGS) \
 	_(ignore_case,			bool,			VIEW_NO_FLAGS) \
 	_(ignore_space,			enum ignore_space,	VIEW_DIFF_LIKE) \
 	_(line_graphics,		enum graphic,		VIEW_NO_FLAGS) \
 	_(log_options,			const char **,		VIEW_LOG_LIKE) \
-	_(log_view,			const char **,		VIEW_NO_FLAGS) \
-	_(main_view,			const char **,		VIEW_NO_FLAGS) \
+	_(log_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(main_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(mouse,			bool,			VIEW_NO_FLAGS) \
 	_(mouse_scroll,			int,			VIEW_NO_FLAGS) \
-	_(pager_view,			const char **,		VIEW_NO_FLAGS) \
+	_(pager_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(refresh_interval,		int,			VIEW_NO_FLAGS) \
 	_(refresh_mode,			enum refresh_mode,	VIEW_NO_FLAGS) \
-	_(refs_view,			const char **,		VIEW_NO_FLAGS) \
+	_(refs_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(rev_args,			const char **,		VIEW_NO_FLAGS) \
 	_(show_changes,			bool,			VIEW_NO_FLAGS) \
 	_(show_notes,			bool,			VIEW_NO_FLAGS) \
 	_(split_view_height,		double,			VIEW_RESET_DISPLAY) \
 	_(split_view_width,		double,			VIEW_RESET_DISPLAY) \
-	_(stage_view,			const char **,		VIEW_NO_FLAGS) \
-	_(stash_view,			const char **,		VIEW_NO_FLAGS) \
+	_(stage_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(stash_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(status_untracked_dirs,	bool,			VIEW_STATUS_LIKE) \
-	_(status_view,			const char **,		VIEW_NO_FLAGS) \
+	_(status_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(tab_size,			int,			VIEW_NO_FLAGS) \
-	_(tree_view,			const char **,		VIEW_NO_FLAGS) \
+	_(tree_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(vertical_split,		enum vertical_split,	VIEW_RESET_DISPLAY | VIEW_DIFF_LIKE) \
 	_(wrap_lines,			bool,			VIEW_NO_FLAGS) \
 

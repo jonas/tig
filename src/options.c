@@ -49,6 +49,10 @@ find_option_info(struct option_info *option, size_t options, const char *prefix,
 	}
 
 	for (i = 0; i < options; i++) {
+		if (!strcmp(option[i].type, "view_settings") &&
+		    enum_equals_prefix(option[i], name, namelen, '-'))
+			return &option[i];
+
 		if (enum_equals(option[i], name, namelen))
 			return &option[i];
 
@@ -622,51 +626,35 @@ static struct view_config view_configs[] = {
 };
 
 static enum status_code
-check_view_config(const char *name, const char *argv[])
-{
-	size_t namelen = strlen(name);
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(view_configs); i++)
-		if (enum_equals(view_configs[i], name, namelen))
-			return parse_view_config(enum_name(name), argv);
-
-	return SUCCESS;
-}
-
-static enum status_code
-parse_view_column_config_name(const char *name, const char **view_name,
-			      enum view_column_type *column_type, const char **option_name)
+parse_view_settings(const char *name, const char *argv[])
 {
 	size_t namelen = strlen(name);
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(view_configs); i++) {
+		if (enum_equals(view_configs[i], name, namelen))
+			return parse_view_config(enum_name(name), argv);
+
 		if (enum_equals_prefix(view_configs[i], name, namelen, '-')) {
 			const char *column_name = name + view_configs[i].namelen + 1;
 			size_t column_namelen = strlen(column_name);
 			enum view_column_type type;
 
-			*view_name = view_configs[i].name;
-
 			for (type = 0; type < view_column_type_map->size; type++) {
 				const struct enum_map_entry *column = &view_column_type_map->entries[type];
 
-				*column_type = type;
-				*option_name = NULL;
-
 				if (enum_equals(*column, column_name, column_namelen))
-					return SUCCESS;
+					return parse_view_column_config(view_configs[i].name, type, NULL, argv);
 
-				if (enum_equals_prefix(*column, column_name, column_namelen, '-')) {
-					*option_name = column_name + column->namelen + 1;
-					return SUCCESS;
-				}
+				if (enum_equals_prefix(*column, column_name, column_namelen, '-'))
+					return parse_view_column_config(view_configs[i].name, type,
+									column_name + column->namelen + 1,
+									argv);
 			}
 		}
 	}
 
-	return ERROR_NO_ENTRY_FOUND;
+	return error("No view setting matched: %s", name);
 }
 
 /* Wants: name = value */
@@ -690,12 +678,11 @@ option_set_command(int argc, const char *argv[])
 		if (option->seen)
 			return SUCCESS;
 
-		if (!strcmp(option->type, "const char **")) {
-			code = check_view_config(option->name, argv + 2);
-			if (code != SUCCESS)
-				return code;
+		if (!strcmp(option->type, "view_settings"))
+			return parse_view_settings(argv[0], argv + 2);
+
+		if (!strcmp(option->type, "const char **"))
 			return parse_args(option->value, argv + 2);
-		}
 
 		code = parse_option(option, "", argv[2]);
 		if (code == SUCCESS && argc != 3)
@@ -703,14 +690,6 @@ option_set_command(int argc, const char *argv[])
 
 		return code;
 
-	}
-
-	{
-		const char *view_name, *option_name;
-		enum view_column_type column_type;
-
-		if (parse_view_column_config_name(argv[0], &view_name, &column_type, &option_name) == SUCCESS)
-			return parse_view_column_config(view_name, column_type, option_name, argv + 2);
 	}
 
 	{
