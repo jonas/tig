@@ -609,52 +609,34 @@ struct view_config {
 	const char ***argv;
 };
 
-#define VIEW_CONFIG(name) { #name, STRING_SIZE(#name), &opt_ ## name }
-static struct view_config view_configs[] = {
-	VIEW_CONFIG(blame_view),
-	VIEW_CONFIG(blob_view),
-	VIEW_CONFIG(diff_view),
-	VIEW_CONFIG(grep_view),
-	VIEW_CONFIG(log_view),
-	VIEW_CONFIG(main_view),
-	VIEW_CONFIG(pager_view),
-	VIEW_CONFIG(refs_view),
-	VIEW_CONFIG(stage_view),
-	VIEW_CONFIG(stash_view),
-	VIEW_CONFIG(status_view),
-	VIEW_CONFIG(tree_view),
-};
-
 static enum status_code
-parse_view_settings(const char *name, const char *argv[])
+parse_view_settings(const char *name_, const char *argv[])
 {
+	char buf[SIZEOF_STR];
+	const char *name = enum_name_copy(buf, sizeof(buf), name_) ? buf : name_;
+	const char *prefixed;
 	size_t namelen = strlen(name);
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(view_configs); i++) {
-		if (enum_equals(view_configs[i], name, namelen))
-			return parse_view_config(enum_name(name), argv);
+	if ((prefixed = strstr(name, "-view-"))) {
+		const char *column_name = prefixed + STRING_SIZE("-view-");
+		size_t column_namelen = strlen(column_name);
+		enum view_column_type type;
 
-		if (enum_equals_prefix(view_configs[i], name, namelen)) {
-			const char *column_name = name + view_configs[i].namelen + 1;
-			size_t column_namelen = strlen(column_name);
-			enum view_column_type type;
+		for (type = 0; type < view_column_type_map->size; type++) {
+			const struct enum_map_entry *column = &view_column_type_map->entries[type];
 
-			for (type = 0; type < view_column_type_map->size; type++) {
-				const struct enum_map_entry *column = &view_column_type_map->entries[type];
+			if (enum_equals(*column, column_name, column_namelen))
+				return parse_view_column_config(name, type, NULL, argv);
 
-				if (enum_equals(*column, column_name, column_namelen))
-					return parse_view_column_config(view_configs[i].name, type, NULL, argv);
-
-				if (enum_equals_prefix(*column, column_name, column_namelen))
-					return parse_view_column_config(view_configs[i].name, type,
-									column_name + column->namelen + 1,
-									argv);
-			}
+			if (enum_equals_prefix(*column, column_name, column_namelen))
+				return parse_view_column_config(name, type,
+								column_name + column->namelen + 1,
+								argv);
 		}
 	}
 
-	return error("No view setting matched: %s", name);
+	return parse_view_config(name, argv);
 }
 
 /* Wants: name = value */
