@@ -27,6 +27,12 @@ steps '
 	:exec @setup-conflict.sh
 	:refresh
 	:save-display main-with-conflict.screen
+
+	:set line-graphics = ascii
+	:view-refs
+	:enter
+	:maximize
+	:save-display main-all-refs.screen
 '
 
 tigrc <<EOF
@@ -131,11 +137,11 @@ EOF
 
 assert_equals 'main-with-conflict.screen' <<EOF
 $YYY_MM_DD_HH_MM Unknown    o Unstaged changes                                  
-2009-03-03 00:15 Committer  o [conflict-master] Change: c                       
+2009-03-11 12:38 Committer  o [conflict-master] Change: c'                      
+2009-03-03 00:15 Committer  o Change: c                                         
+2009-02-22 11:53 Committer  o [master] Change: b                                
 2009-02-13 23:31 Committer  o Change: a                                         
-2009-02-13 23:31 A. U. Thor I [master] Initial commit                           
-                                                                                
-                                                                                
+2009-02-13 23:31 A. U. Thor I Initial commit                                    
                                                                                 
                                                                                 
                                                                                 
@@ -145,4 +151,22 @@ $YYY_MM_DD_HH_MM Unknown    o Unstaged changes
                                                                                 
                                                                                 
 [main] Unstaged changes                                                     100%
+EOF
+
+assert_equals 'main-all-refs.screen' <<EOF
+2009-03-28 13:22 Committer  * [conflict-branch] Change: d'                      
+2009-03-20 01:00 Committer  * Change: d                                         
+$YYY_MM_DD_HH_MM Unknown    | * Unstaged changes                                
+2009-03-11 12:38 Committer  | * [conflict-master] Change: c'                    
+2009-03-03 00:15 Committer  | * Change: c                                       
+2009-02-22 11:53 Committer  *-' [master] Change: b                              
+2009-02-13 23:31 Committer  * Change: a                                         
+2009-02-13 23:31 A. U. Thor I Initial commit                                    
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[main] d62d8545d99da3de587bf2ef43703dde0ce68084 - commit 1 of 7             100%
 EOF

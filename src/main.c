@@ -31,12 +31,21 @@
 
 DEFINE_ALLOCATOR(realloc_reflogs, char *, 32)
 
+static bool main_add_changes(struct view *view, struct main_state *state, const char *parent);
+
 static void
 main_register_commit(struct view *view, struct commit *commit, const char *ids, bool is_boundary)
 {
 	struct main_state *state = view->private;
 
 	string_copy_rev(commit->id, ids);
+
+	/* FIXME: lazily check index state here instead of in main_open. */
+	if ((state->add_changes_unstaged || state->add_changes_staged) && is_head_commit(commit->id)) {
+		main_add_changes(view, state, ids);
+		state->add_changes_unstaged = state->add_changes_staged = FALSE;
+	}
+
 	if (state->with_graph)
 		graph_add_commit(state->graph, &commit->graph, commit->id, ids, is_boundary);
 }
@@ -378,11 +387,6 @@ main_read(struct view *view, struct buffer *buf)
 		while (*line && !isalnum(*line))
 			line++;
 
-		if (state->add_changes_unstaged || state->add_changes_staged) {
-			main_add_changes(view, state, line);
-			state->add_changes_unstaged = state->add_changes_staged = FALSE;
-		}
-
 		main_flush_commit(view, commit);
 
 		author = io_memchr(buf, line, 0);
@@ -393,8 +397,6 @@ main_read(struct view *view, struct buffer *buf)
 
 			if (parent_end)
 				*parent_end = 0;
-
-			io_trace("[parent] %s\n", line);
 		}
 
 		main_register_commit(view, &state->current, line, is_boundary);
