@@ -91,8 +91,6 @@ find_column_option_info(enum view_column_type type, union view_column_options *o
 			const char *option, struct option_info *column_info,
 			const char **column_name)
 {
-	size_t optionlen = strlen(option);
-
 #define DEFINE_COLUMN_OPTION_INFO(name, type, flags) \
 	{ #name, STRING_SIZE(#name), #type, &opt->name, flags },
 
