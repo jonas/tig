@@ -1264,12 +1264,12 @@ parse_view_column_config(const char *view_name, enum view_column_type type,
 
 	if (!(view->ops->column_bits & (1 << type)))
 		return error("The %s view does not support %s column", view->name,
-			     view_column_name(column->type));
+			     view_column_name(type));
 
 	column = get_view_column(view, type);
 	if (!column)
 		return error("The %s view does not have a %s column configured", view->name,
-			     view_column_name(column->type));
+			     view_column_name(type));
 
 	if (option_name)
 		return parse_view_column_option(column, option_name, argv[0]);
