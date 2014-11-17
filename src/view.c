@@ -1256,8 +1256,6 @@ enum status_code
 parse_view_column_config(const char *view_name, enum view_column_type type,
 			 const char *option_name, const char *argv[])
 {
-	enum status_code code = SUCCESS;
-	struct view_column *columns;
 	struct view_column *column;
 	struct view *view = find_view(view_name);
 
