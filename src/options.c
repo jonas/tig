@@ -613,8 +613,6 @@ parse_view_settings(const char *name_, const char *argv[])
 	char buf[SIZEOF_STR];
 	const char *name = enum_name_copy(buf, sizeof(buf), name_) ? buf : name_;
 	const char *prefixed;
-	size_t namelen = strlen(name);
-	int i;
 
 	if ((prefixed = strstr(name, "-view-"))) {
 		const char *column_name = prefixed + STRING_SIZE("-view-");
