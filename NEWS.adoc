@@ -25,6 +25,7 @@ Bug fixes:
  - Fix main view to handle the case when git-log doesn't find any commits.
  - Fix corner case when parsing diff chunk when lines information is missing.
  - Ensure main view changes commits are shown right before the current HEAD.
+ - Fix rendering of boundary commits.
 
 tig-2.0.3
 ---------

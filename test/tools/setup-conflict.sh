@@ -25,4 +25,4 @@ change "d"
 change "d'"
 
 git checkout conflict-master
-git merge conflict-branch
+git merge conflict-branch || true

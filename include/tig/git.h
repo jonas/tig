@@ -54,7 +54,7 @@
 
 #define GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg, diffargs, revargs, fileargs) \
 	GIT_MAIN_LOG(encoding_arg, commit_order_arg, diffargs, revargs, fileargs, \
-		     "--pretty=format:commit %H %P%x00%an <%ae> %ad%x00%s")
+		     "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s")
 
 #define GIT_MAIN_LOG_RAW(encoding_arg, commit_order_arg, diffargs, revargs, fileargs) \
 	GIT_MAIN_LOG(encoding_arg, commit_order_arg, diffargs, revargs, fileargs, \
