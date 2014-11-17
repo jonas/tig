@@ -1297,9 +1297,6 @@ parse_view_config(const char *view_name, const char *argv[])
 
 	for (i = 0, column = NULL; code == SUCCESS && i < size; i++) {
 		const char *arg = argv[i];
-		char buf[SIZEOF_STR] = "";
-		char *pos, *end;
-		bool first = TRUE;
 
 		if (column)
 			column->next = &columns[i];
