@@ -50,7 +50,7 @@ print_commit(struct commit *commit, const char *title)
 int
 main(int argc, const char *argv[])
 {
-	struct graph graph = { };
+	struct graph *graph;
 	struct io io = { };
 	struct buffer buf;
 	struct commit **commits = NULL;
@@ -65,6 +65,8 @@ main(int argc, const char *argv[])
 		die(USAGE);
 	}
 
+	if (!(graph = init_graph()))
+		die("Failed to allocated graph");
 	if (!io_open(&io, "%s", ""))
 		die("IO");
 
@@ -87,8 +89,8 @@ main(int argc, const char *argv[])
 					die("Commit");
 				commits[ncommits++] = commit;
 				string_copy_rev(commit->id, line);
-				graph_add_commit(&graph, &commit->canvas, commit->id, line, is_boundary);
-				graph_render_parents(&graph, &commit->canvas);
+				graph_add_commit(graph, &commit->canvas, commit->id, line, is_boundary);
+				graph_render_parents(graph, &commit->canvas);
 
 				if ((line = io_memchr(&buf, line, 0))) {
 					print_commit(commit, line);
