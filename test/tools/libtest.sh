@@ -218,8 +218,10 @@ show_test_results()
 		printf "Failed %d out of %d test(s)%s\n" $failed $count 
 
 		# Show output from stderr if no output is expected
-		[ -e expected/stderr ] ||
-			sed "s/^/[stderr] /" < stderr
+		if [ -e stderr ]; then
+			[ -e expected/stderr ] ||
+				sed "s/^/[stderr] /" < stderr
+		fi
 
 		[ -e .test-result ] &&
 			cat .test-result
