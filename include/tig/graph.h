@@ -17,35 +17,7 @@
 #define GRAPH_COMMIT_COLOR	(-1)
 #define GRAPH_COLORS		14
 
-struct graph_symbol {
-	unsigned int color:8;
-
-	unsigned int commit:1;
-	unsigned int boundary:1;
-	unsigned int initial:1;
-	unsigned int merge:1;
-
-	unsigned int continued_down:1;
-	unsigned int continued_up:1;
-	unsigned int continued_right:1;
-	unsigned int continued_left:1;
-	unsigned int continued_up_left:1;
-
-	unsigned int parent_down:1;
-	unsigned int parent_right:1;
-
-	unsigned int below_commit:1;
-	unsigned int flanked:1;
-	unsigned int next_right:1;
-	unsigned int matches_commit:1;
-
-	unsigned int shift_left:1;
-	unsigned int continue_shift:1;
-	unsigned int below_shift:1;
-
-	unsigned int new_column:1;
-	unsigned int empty:1;
-};
+struct graph_symbol;
 
 struct graph_canvas {
 	size_t size;			/* The width of the graph array. */
