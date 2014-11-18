@@ -88,7 +88,7 @@ void done_graph(struct graph *graph);
 bool graph_render_parents(struct graph *graph, struct graph_canvas *canvas);
 bool graph_add_commit(struct graph *graph, struct graph_canvas *canvas,
 		      const char *id, const char *parents, bool is_boundary);
-struct graph_column *graph_add_parent(struct graph *graph, const char *parent);
+bool graph_add_parent(struct graph *graph, const char *parent);
 
 const char *graph_symbol_to_ascii(struct graph_symbol *symbol);
 const char *graph_symbol_to_utf8(struct graph_symbol *symbol);

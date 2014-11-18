@@ -214,10 +214,12 @@ graph_insert_column(struct graph *graph, struct graph_row *row, size_t pos, cons
 	return column;
 }
 
-struct graph_column *
+bool
 graph_add_parent(struct graph *graph, const char *parent)
 {
-	return graph_insert_column(graph, &graph->parents, graph->parents.size, parent);
+	if (graph->has_parents)
+		return TRUE;
+	return graph_insert_column(graph, &graph->parents, graph->parents.size, parent) != NULL;
 }
 
 static bool
@@ -643,16 +645,21 @@ bool
 graph_add_commit(struct graph *graph, struct graph_canvas *canvas,
 		 const char *id, const char *parents, bool is_boundary)
 {
+	int has_parents = 0;
+
 	graph->position = graph_find_column_by_id(&graph->row, id);
 	string_copy_rev(graph->id, id);
 	graph->is_boundary = is_boundary;
+	graph->has_parents = FALSE;
 
 	while ((parents = strchr(parents, ' '))) {
 		parents++;
 		if (!graph_add_parent(graph, parents))
 			return FALSE;
-		graph->has_parents = TRUE;
+		has_parents++;
 	}
+
+	graph->has_parents = has_parents > 0;
 
 	return TRUE;
 }

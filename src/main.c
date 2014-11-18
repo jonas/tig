@@ -431,7 +431,7 @@ main_read(struct view *view, struct buffer *buf)
 		break;
 
 	case LINE_PARENT:
-		if (state->with_graph && !graph->has_parents)
+		if (state->with_graph)
 			graph_add_parent(graph, line + STRING_SIZE("parent "));
 		break;
 
