@@ -13,7 +13,7 @@ ifneq ($(HAS_ICONV),true)
 $(error Please install the libiconv-devel package)
 endif
 
-LDLIBS = $(NCURSESW_LIBS) -liconv
-CPPFLAGS = -DHAVE_NCURSESW_CURSES_H
+TIG_LDLIBS = $(NCURSESW_LIBS) -liconv
+TIG_CPPFLAGS = -DHAVE_NCURSESW_CURSES_H
 
 # vim: ft=make:

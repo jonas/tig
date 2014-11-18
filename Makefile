@@ -13,6 +13,13 @@ kernel_name := $(shell sh -c 'uname -s 2>/dev/null || echo unknown')
 # Include setting from the configure script
 -include config.make
 
+# Optional defaults.
+# TIG_ variables are set by contrib/config.make-$(kernel_name).
+LDFLAGS ?= $(TIG_LDFLAGS)
+CPPFLAGS ?= $(TIG_CPPFLAGS)
+LDLIBS ?= -lcurses $(TIG_LDLIBS)
+CFLAGS ?= -Wall -O2 $(TIG_CFLAGS)
+
 prefix ?= $(HOME)
 bindir ?= $(prefix)/bin
 datarootdir ?= $(prefix)/share
@@ -37,8 +44,6 @@ RPM_VERLIST = $(filter-out g% dirty,$(subst -, ,$(VERSION))) 0
 RPM_VERSION = $(word 1,$(RPM_VERLIST))
 RPM_RELEASE = $(word 2,$(RPM_VERLIST))$(if $(WTDIRTY),.dirty)
 
-LDLIBS ?= -lcurses
-CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
 EXE	= src/tig
 TOOLS	= test/tools/test-graph tools/doc-gen
