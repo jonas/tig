@@ -14,7 +14,8 @@
 #ifndef TIG_GRAPH_H
 #define TIG_GRAPH_H
 
-#define GRAPH_COLORS	14
+#define GRAPH_COMMIT_COLOR	(-1)
+#define GRAPH_COLORS		14
 
 struct graph_symbol {
 	unsigned int color:8;
@@ -52,6 +53,9 @@ struct graph_canvas {
 };
 
 struct graph;
+
+typedef bool (*graph_symbol_iterator_fn)(void *, struct graph_symbol *, int color_id, bool);
+void graph_foreach_symbol(const struct graph_canvas *canvas, graph_symbol_iterator_fn fn, void *data);
 
 struct graph *init_graph(void);
 void done_graph(struct graph *graph);

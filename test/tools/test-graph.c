@@ -32,18 +32,19 @@ DEFINE_ALLOCATOR(realloc_commits, struct commit *, 8)
 
 static const char *(*graph_fn)(struct graph_symbol *) = graph_symbol_to_utf8;
 
+static bool
+print_symbol(void *__, struct graph_symbol *symbol, int color_id, bool first)
+{
+	const char *chars = graph_fn(symbol);
+
+	printf("%s", chars + !!first);
+	return FALSE;
+}
+
 static void
 print_commit(struct commit *commit, const char *title)
 {
-	int i;
-
-	for (i = 0; i < commit->canvas.size; i++) {
-		struct graph_symbol *symbol = &commit->canvas.symbols[i];
-		const char *chars = graph_fn(symbol);
-
-		printf("%s", chars + (i == 0));
-	}
-
+	graph_foreach_symbol(&commit->canvas, print_symbol, NULL);
 	printf(" %s\n", title);
 }
 

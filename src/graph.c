@@ -1036,4 +1036,18 @@ graph_symbol_to_ascii(struct graph_symbol *symbol)
 	return "  ";
 }
 
+void
+graph_foreach_symbol(const struct graph_canvas *canvas, graph_symbol_iterator_fn fn, void *data)
+{
+	int i;
+
+	for (i = 0; i < canvas->size; i++) {
+		struct graph_symbol *symbol = &canvas->symbols[i];
+		int color_id = symbol->commit ? GRAPH_COMMIT_COLOR : symbol->color;
+
+		if (fn(data, symbol, color_id, i == 0))
+			break;
+	}
+}
+
 /* vim: set ts=8 sw=8 noexpandtab: */

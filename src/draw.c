@@ -370,59 +370,49 @@ draw_status(struct view *view, struct view_column *column,
  * Revision graph
  */
 
-static enum line_type get_graph_color(struct graph_symbol *symbol)
+static inline enum line_type
+get_graph_color(int color_id)
 {
-	if (symbol->commit)
+	if (color_id == GRAPH_COMMIT_COLOR)
 		return LINE_GRAPH_COMMIT;
-	assert(symbol->color < ARRAY_SIZE(palette_colors));
-	return palette_colors[symbol->color];
+	assert(color_id < ARRAY_SIZE(palette_colors));
+	return palette_colors[color_id];
 }
 
 static bool
-draw_graph_utf8(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
+draw_graph_utf8(void *view, struct graph_symbol *symbol, int color_id, bool first)
 {
 	const char *chars = graph_symbol_to_utf8(symbol);
 
-	return draw_text(view, color, chars + !!first);
+	return draw_text(view, get_graph_color(color_id), chars + !!first);
 }
 
 static bool
-draw_graph_ascii(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
+draw_graph_ascii(void *view, struct graph_symbol *symbol, int color_id, bool first)
 {
 	const char *chars = graph_symbol_to_ascii(symbol);
 
-	return draw_text(view, color, chars + !!first);
+	return draw_text(view, get_graph_color(color_id), chars + !!first);
 }
 
 static bool
-draw_graph_chtype(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
+draw_graph_chtype(void *view, struct graph_symbol *symbol, int color_id, bool first)
 {
 	const chtype *chars = graph_symbol_to_chtype(symbol);
 
-	return draw_graphic(view, color, chars + !!first, 2 - !!first, FALSE);
+	return draw_graphic(view, get_graph_color(color_id), chars + !!first, 2 - !!first, FALSE);
 }
-
-typedef bool (*draw_graph_fn)(struct view *, struct graph_symbol *, enum line_type, bool);
 
 static bool
 draw_graph(struct view *view, const struct graph_canvas *canvas)
 {
-	static const draw_graph_fn fns[] = {
+	static const graph_symbol_iterator_fn fns[] = {
 		draw_graph_ascii,
 		draw_graph_chtype,
 		draw_graph_utf8
 	};
-	draw_graph_fn fn = fns[opt_line_graphics];
-	int i;
 
-	for (i = 0; i < canvas->size; i++) {
-		struct graph_symbol *symbol = &canvas->symbols[i];
-		enum line_type color = get_graph_color(symbol);
-
-		if (fn(view, symbol, color, i == 0))
-			return TRUE;
-	}
-
+	graph_foreach_symbol(canvas, fns[opt_line_graphics], view);
 	return draw_text(view, LINE_DEFAULT, " ");
 }
 
