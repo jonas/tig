@@ -15,6 +15,7 @@
 #include "tig/graph.h"
 #include "tig/draw.h"
 #include "tig/options.h"
+#include "compat/hashtab.h"
 
 static const enum line_type palette_colors[] = {
 	LINE_PALETTE_0,

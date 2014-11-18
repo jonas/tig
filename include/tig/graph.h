@@ -14,8 +14,6 @@
 #ifndef TIG_GRAPH_H
 #define TIG_GRAPH_H
 
-#include "compat/hashtab.h"
-
 #define GRAPH_COLORS	14
 
 struct graph_symbol {

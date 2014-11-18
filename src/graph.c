@@ -14,6 +14,7 @@
 #include "tig/tig.h"
 #include "tig/util.h"
 #include "tig/graph.h"
+#include "compat/hashtab.h"
 
 struct graph_column {
 	struct graph_symbol symbol;
