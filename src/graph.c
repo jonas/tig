@@ -15,6 +15,35 @@
 #include "tig/util.h"
 #include "tig/graph.h"
 
+struct graph_column {
+	struct graph_symbol symbol;
+	char id[SIZEOF_REV];		/* Parent SHA1 ID. */
+};
+
+struct graph_row {
+	size_t size;
+	struct graph_column *columns;
+};
+
+struct colors {
+	htab_t id_map;
+	size_t count[GRAPH_COLORS];
+};
+
+struct graph {
+	struct graph_row row;
+	struct graph_row parents;
+	struct graph_row prev_row;
+	struct graph_row next_row;
+	size_t position;
+	size_t prev_position;
+	size_t expanded;
+	char id[SIZEOF_REV];
+	struct colors colors;
+	bool has_parents;
+	bool is_boundary;
+};
+
 DEFINE_ALLOCATOR(realloc_graph_columns, struct graph_column, 32)
 DEFINE_ALLOCATOR(realloc_graph_symbols, struct graph_symbol, 1)
 
