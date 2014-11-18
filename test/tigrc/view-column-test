@@ -8,20 +8,25 @@ export LINES=16
 tigrc <<EOF
 set line-graphics = ascii
 
-# Default view setting
-set main-view = line-number:no,interval=5 id:no date:default author:full commit-title:yes,graph,refs,overflow=no
+# Default view setting without ID column
+set main-view = line-number:no,interval=5 date:default author:full commit-title:yes,graph,refs,overflow=no
 
 # Test change of view settings
 set main-view-date = short
 set main-view-line-number = yes
-set main-view-author = abbreviated
 set main-view-commit-title = yes,graph,refs=no
 
 # Test change of of view column settings
 set main-view-line-number-interval = 3
-set main-view-id-display = yes
-set main-view-id-width = 12
+set main-view-author-display = abbreviated
+set main-view-author-width = 12
 set main-view-commit-title-graph = no
+
+# Test set of unconfigured or unknown columns
+set main-view-id = yes
+set main-view-id-width = 12
+set main-view-committer = short
+set main-view-committer-display = short
 EOF
 
 steps '
@@ -33,19 +38,27 @@ git_clone 'repo-one'
 test_tig
 
 assert_equals 'main-view.screen' <<EOF
-  1| 5cb3412a5e06 2010-04-07 MPower    Commit 10 E                              
-   | 2843bfd58b98 2010-03-29 JTBrahe   Commit 10 D                              
-  3| 8d53d6a41f85 2010-03-21 作者      Commit 10 C                            
-   | 51b758035f2b 2010-03-12 RLévesque Commit 10 B                             
-   | 19455fa3642a 2010-03-04 AUThor    Commit 10 A                              
-  6| 276c3a4a8d90 2010-02-23 MPower    Commit 9 E                               
-   | 5633519083f2 2010-02-15 JTBrahe   Commit 9 D                               
-   | 711615619913 2010-02-06 作者      Commit 9 C                             
-  9| 99278700109a 2010-01-29 RLévesque Commit 9 B                              
-   | a3f25ca556c1 2010-01-20 AUThor    Commit 9 A                               
-   | d9a8c8b1e52b 2010-01-12 MPower    Commit 8 E                               
- 12| 545eb1fa92b9 2010-01-03 JTBrahe   Commit 8 D                               
-   | b45b5704c34d 2009-12-26 作者      Commit 8 C                             
-   | 957f2b368e6f 2009-12-17 RLévesque Commit 8 B                              
+  1| 2010-04-07 MPower       Commit 10 E                                        
+   | 2010-03-29 JTBrahe      Commit 10 D                                        
+  3| 2010-03-21 作者         Commit 10 C                                      
+   | 2010-03-12 RLévesque    Commit 10 B                                       
+   | 2010-03-04 AUThor       Commit 10 A                                        
+  6| 2010-02-23 MPower       Commit 9 E                                         
+   | 2010-02-15 JTBrahe      Commit 9 D                                         
+   | 2010-02-06 作者         Commit 9 C                                       
+  9| 2010-01-29 RLévesque    Commit 9 B                                        
+   | 2010-01-20 AUThor       Commit 9 A                                         
+   | 2010-01-12 MPower       Commit 8 E                                         
+ 12| 2010-01-03 JTBrahe      Commit 8 D                                         
+   | 2009-12-26 作者         Commit 8 C                                       
+   | 2009-12-17 RLévesque    Commit 8 B                                        
 [main] 5cb3412a5e06e506840495b91acc885037a48b72 - commit 1 of 50             28%
+EOF
+
+assert_equals 'stderr' <<EOF
+tig warning: ~/.tigrc:18: The main view does not have a id column configured
+tig warning: ~/.tigrc:19: The main view does not have a id column configured
+tig warning: ~/.tigrc:20: Failed to parse view column type: short
+tig warning: ~/.tigrc:21: Failed to parse view column type: short
+tig warning: Errors while loading HOME/.tigrc.
 EOF
