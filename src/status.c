@@ -240,8 +240,13 @@ status_update_onbranch(void)
 		}
 
 		if (!*head && !strcmp(paths[i][0], "HEAD") && *repo.head_id) {
-			prefix = "On detached head";
+			struct ref *ref = get_canonical_ref(repo.head_id);
+
+			prefix = "HEAD detached at";
 			head = repo.head_id;
+
+			if (ref && strcmp(ref->name, "HEAD"))
+				head = ref->name;
 		}
 
 		if (!string_format(status_onbranch, "%s %s", prefix, head))

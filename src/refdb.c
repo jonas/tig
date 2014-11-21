@@ -47,6 +47,18 @@ ref_compare(const struct ref *ref1, const struct ref *ref2)
 	return strcmp_numeric(ref1->name, ref2->name);
 }
 
+static int
+ref_canonical_compare(const struct ref *ref1, const struct ref *ref2)
+{
+	int tag_diff = !!ref_is_tag(ref2) - !!ref_is_tag(ref1);
+
+	if (tag_diff)
+		return tag_diff;
+	if (ref1->type != ref2->type)
+		return !tag_diff ? ref1->type - ref2->type : ref2->type - ref1->type;
+	return strcmp_numeric(ref1->name, ref2->name);
+}
+
 void
 foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data)
 {
@@ -94,6 +106,20 @@ get_ref_list(const char *id)
 	qsort(list->refs, list->size, sizeof(*list->refs), compare_refs);
 	ref_lists[ref_lists_size++] = list;
 	return list;
+}
+
+struct ref *
+get_canonical_ref(const char *id)
+{
+	struct ref_list *list = get_ref_list(id);
+	struct ref *ref = NULL;
+	size_t i;
+
+	for (i = 0; list && i < list->size; i++)
+		if (!ref || ref_canonical_compare(list->refs[i], ref) < 0)
+			ref = list->refs[i];
+
+	return ref;
 }
 
 struct ref_opt {

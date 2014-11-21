@@ -40,6 +40,7 @@ struct ref_list {
 
 struct ref *get_ref_head();
 struct ref_list *get_ref_list(const char *id);
+struct ref *get_canonical_ref(const char *id);
 void foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data);
 int load_refs(bool force);
 int add_ref(const char *id, char *name, const char *remote_name, const char *head);

@@ -26,6 +26,9 @@ prepare_repo()
 	git_commit -m "Conflict branch"
 	git checkout master
 
+	git tag v0.2 HEAD~20
+	git branch v0.2-branch v0.2
+
 	git format-patch -1 conflict-branch --stdout > "$HOME/mailbox"
 }
 
@@ -76,7 +79,22 @@ test_case on-detached-head \
 	"git checkout HEAD~10" \
 	"git checkout master" \
 <<EOF
-On detached head 988c77aad5798f1e087e5d7efe3b3319ee6de744                       
+HEAD detached at 988c77aad5798f1e087e5d7efe3b3319ee6de744                       
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+test_case on-detached-tag \
+	"git checkout v0.2" \
+	"git checkout master" \
+<<EOF
+HEAD detached at v0.2                                                          
 Changes to be committed:                                                        
   (no files)                                                                    
 Changed but not updated:                                                        
