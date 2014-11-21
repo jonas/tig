@@ -5,37 +5,13 @@
 
 export LINES=10
 
-steps "
-	:save-display on-branch-master.screen
-
-	:exec @git bisect start master
-	:save-display bisecting-master.screen
-	:exec @git bisect reset
-
-	:exec @git checkout HEAD~10
-	:save-display on-detached-head.screen
-	:exec @git checkout master
-
-	:exec @git merge conflict-branch
-	:save-display merging-master.screen
-	:exec @git reset --hard
-
-	:exec @git checkout conflict-branch
-	:exec @git rebase master
-	:save-display rebasing-master.screen
-	:exec @git rebase --abort
-	:exec @git checkout master
-
-	:exec @git am $HOME/mailbox
-	:save-display applying-mailbox-to-master.screen
-	:exec @git am --abort
-
-	:exec @git checkout conflict-branch
-	:exec @git rebase -i master
-	:save-display interactive-rebase-of-branch.screen
-	:exec @git rebase --abort
-	:exec @git checkout master
-"
+run_prep()
+{
+	echo "=== $@ ===" > "$HOME/prepare-repo.log"
+	set +e
+	in_work_dir "$@" 1>>"$HOME/prepare-repo.log" 2>>"$HOME/prepare-repo.log"
+	set -e
+}
 
 prepare_repo()
 {
@@ -54,11 +30,23 @@ prepare_repo()
 }
 
 in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
-in_work_dir prepare_repo 1>>"$HOME/prepare-repo.log" 2>>"$HOME/prepare-repo.log"
+run_prep prepare_repo
 
-test_tig status
+test_case()
+{
+	name="$1";
+	before="$2";
+	after="$3";
 
-assert_equals 'on-branch-master.screen' <<EOF
+	echo "$name" >> test-cases
+	echo "$before" > "$name-before.sh"
+	echo "$after" > "$name-after.sh"
+	cat > "$name.expected"
+}
+
+test_case on-branch-master \
+	'git checkout master' \
+	'' <<EOF
 On branch master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
@@ -70,7 +58,9 @@ Untracked files:
 [status] Nothing to update                                                  100%
 EOF
 
-assert_equals 'bisecting-master.screen' <<EOF
+test_case bisecting-master \
+	"git bisect start master" \
+	"git bisect reset" <<EOF
 Bisecting master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
@@ -82,7 +72,10 @@ Untracked files:
 [status] Nothing to update                                                  100%
 EOF
 
-assert_equals 'on-detached-head.screen' <<EOF
+test_case on-detached-head \
+	"git checkout HEAD~10" \
+	"git checkout master" \
+<<EOF
 On detached head 988c77aad5798f1e087e5d7efe3b3319ee6de744                       
 Changes to be committed:                                                        
   (no files)                                                                    
@@ -94,7 +87,10 @@ Untracked files:
 [status] Nothing to update                                                  100%
 EOF
 
-assert_equals 'merging-master.screen' <<EOF
+test_case merging-master \
+	"git merge conflict-branch" \
+	"git reset --hard" \
+<<EOF
 Merging master                                                                  
 Changes to be committed:                                                        
   (no files)                                                                    
@@ -106,7 +102,12 @@ Untracked files:
 [status] Nothing to update                                                  100%
 EOF
 
-assert_equals 'rebasing-master.screen' <<EOF
+test_case rebasing-master \
+	"git checkout conflict-branch
+	 git rebase master" \
+	"git rebase --abort
+	 git checkout master" \
+<<EOF
 Rebasing conflict-branch                                                        
 Changes to be committed:                                                        
   (no files)                                                                    
@@ -118,7 +119,10 @@ Untracked files:
 [status] Nothing to update                                                  100%
 EOF
 
-assert_equals 'applying-mailbox-to-master.screen' <<EOF
+test_case applying-mailbox-to-master \
+	"git am $HOME/mailbox" \
+	"git am --abort" \
+<<EOF
 Applying mailbox to master
 Changes to be committed:                                                        
   (no files)                                                                    
@@ -130,7 +134,12 @@ Untracked files:
 [status] Nothing to update                                                  100%
 EOF
 
-assert_equals 'interactive-rebase-of-branch.screen' << EOF
+test_case interactive-rebase-of-branch \
+	"git checkout conflict-branch
+	 git rebase -i master" \
+	"git rebase --abort
+	 git checkout master" \
+<<EOF
 Interactive rebase conflict-branch                                              
 Changes to be committed:                                                        
   (no files)                                                                    
@@ -141,3 +150,37 @@ Untracked files:
                                                                                 
 [status] Nothing to update                                                  100%
 EOF
+
+for name in $(cat test-cases); do
+	tig_script "$name.script" "
+		:save-display $name.screen
+	"
+	run_prep sh "$HOME/$name-before.sh" 
+	(cd "$work_dir" && tig status) >"$name.stdout" 2>"$name.stderr"
+	run_prep sh "$HOME/$name-after.sh" 
+
+	assert_equals "$name.screen" < "$name.expected"
+	assert_equals "$name.stderr" ''
+done
+
+add_exec_prefix()
+{
+	code="$(cat "$1")"
+	if [ -n "$code" ]; then
+		echo "$code" | sed -e 's/^[ 	]*//' -e '/^$/d' -e 's/^/:exec @/'
+	fi
+}
+
+tig_script "all.script" "
+	$(for name in $(cat test-cases); do
+		add_exec_prefix "$name-before.sh"
+		echo :save-display all-$name.screen
+		add_exec_prefix "$name-after.sh"
+	done)
+"
+
+test_tig status
+
+for name in $(cat test-cases); do
+	assert_equals "all-$name.screen" < "$name.expected"
+done

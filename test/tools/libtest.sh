@@ -102,7 +102,7 @@ file() {
 	path="$1"; shift
 
 	mkdir -p "$(dirname "$path")"
-	if [ -z "$@" ]; then
+	if [ "$#" = 0 ]; then
 		case "$path" in
 			stdin|expected*) cat ;;
 			*) sed 's/^[ ]//' ;;

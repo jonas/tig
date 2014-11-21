@@ -239,7 +239,7 @@ status_update_onbranch(void)
 			}
 		}
 
-		if (!strcmp(head, "HEAD") && !strcmp(paths[i][0], "HEAD") && *repo.head_id) {
+		if (!*head && !strcmp(paths[i][0], "HEAD") && *repo.head_id) {
 			prefix = "On detached head";
 			head = repo.head_id;
 		}

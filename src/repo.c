@@ -66,8 +66,8 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 		if (!prefixcmp(name, "refs/heads/")) {
 			add_ref(repo.head_id, name, repo.remote, repo.head);
 			name += STRING_SIZE("refs/heads/");
+			string_ncopy(repo.head, name, strlen(name) + 1);
 		}
-		string_ncopy(repo.head, name, strlen(name) + 1);
 		state->argv++;
 	}
 
@@ -92,6 +92,7 @@ load_repo_info(void)
 			NULL
 	};
 
+	memset(&repo, 0, sizeof(repo));
 	return reload_repo_info(rev_parse_argv);
 }
 
@@ -103,6 +104,8 @@ load_repo_head(void)
 			REPO_INFO_SYMBOLIC_HEAD, "HEAD", NULL
 	};
 
+	memset(repo.head, 0, sizeof(repo.head));
+	memset(repo.head_id, 0, sizeof(repo.head_id));
 	return reload_repo_info(rev_parse_argv);
 }
 
