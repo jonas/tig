@@ -3,7 +3,7 @@
 # Work-around for Homebrew-based xmlto.
 export XML_CATALOG_FILES=/usr/local/etc/xml/catalog
 
-TIG_LDLIBS = -lcurses -liconv
+TIG_LDLIBS = -liconv
 TIG_CPPFLAGS = -DHAVE_CURSES_H
 
 READLINE_DIR = $(wildcard /usr/local/opt/readline)

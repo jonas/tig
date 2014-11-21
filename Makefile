@@ -15,9 +15,10 @@ kernel_name := $(shell sh -c 'uname -s 2>/dev/null || echo unknown')
 
 # Optional defaults.
 # TIG_ variables are set by contrib/config.make-$(kernel_name).
+TIG_NCURSES ?= -lcurses
 LDFLAGS ?= $(TIG_LDFLAGS)
 CPPFLAGS ?= $(TIG_CPPFLAGS)
-LDLIBS ?= -lcurses $(TIG_LDLIBS)
+LDLIBS ?= $(TIG_NCURSES) $(TIG_LDLIBS)
 CFLAGS ?= -Wall -O2 $(TIG_CFLAGS)
 
 prefix ?= $(HOME)
