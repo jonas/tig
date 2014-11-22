@@ -13,7 +13,7 @@
 
 #include "tig/tig.h"
 #include "tig/string.h"
-#include "compat/wcwidth.h"
+#include "compat/utf8proc.h"
 
 /*
  * Strings.
@@ -223,16 +223,8 @@ unicode_width(unsigned long c, int tab_size)
 	if (c == '\t')
 		return tab_size;
 
-	int result = mk_wcwidth((wchar_t) c);
-
-	if (result < 0)
-		/*
-		 * xterm mk_wcwidth() returns -1 for unmapped codepoints and
-		 * control characters, which might be smarter semantics.
-		 */
-		return 0;
-
-	return result;
+	/* Guaranteed to return 0 for unmapped codepints. */
+	return utf8proc_charwidth((utf8proc_int32_t) c);
 }
 
 /* Number of bytes used for encoding a UTF-8 character indexed by first byte.
@@ -375,6 +367,36 @@ utf8_width_of(const char *text, int max_bytes, int max_width)
 
 	utf8_length(&tmp, max_bytes, 0, &text_width, max_width, &trimmed, false, 1);
 	return text_width;
+}
+
+static bool
+utf8_string_contains(const char *text, int category)
+{
+	ssize_t textlen = strlen(text);
+
+	while (textlen > 0) {
+		int32_t unicode;
+		ssize_t slen = utf8proc_iterate((uint8_t *) text, textlen, &unicode);
+		const utf8proc_property_t *property;
+
+		if (slen <= 0)
+			break;
+
+		property = utf8proc_get_property(unicode);
+		if (property->category & category)
+			return true;
+
+		text += slen;
+		textlen -= slen;
+	}
+
+	return false;
+}
+
+bool
+utf8_string_contains_uppercase(const char *search)
+{
+	return utf8_string_contains(search, UTF8PROC_CATEGORY_LU);
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

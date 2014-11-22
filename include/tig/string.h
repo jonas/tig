@@ -121,5 +121,7 @@ int utf8_width_of(const char *text, int max_bytes, int max_width);
 #define utf8_width_max(text, width) utf8_width_of(text, -1, width)
 #define utf8_width(text) utf8_width_max(text, -1)
 
+bool utf8_string_contains_uppercase(const char *text);
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */
