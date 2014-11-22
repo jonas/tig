@@ -269,7 +269,7 @@ COMPAT_CPPFLAGS += -DNO_WORDEXP
 COMPAT_OBJS += compat/wordexp.o
 endif
 
-COMPAT_OBJS += compat/hashtab.o compat/wcwidth.o
+COMPAT_OBJS += compat/hashtab.o compat/utf8proc.o
 
 override CPPFLAGS += $(COMPAT_CPPFLAGS)
 
@@ -320,7 +320,7 @@ src/tig: $(TIG_OBJS)
 TEST_GRAPH_OBJS = test/tools/test-graph.o src/string.o src/util.o src/io.o $(GRAPH_OBJS) $(COMPAT_OBJS)
 test/tools/test-graph: $(TEST_GRAPH_OBJS)
 
-DOC_GEN_OBJS = tools/doc-gen.o src/string.o src/types.o src/util.o src/request.o compat/wcwidth.o
+DOC_GEN_OBJS = tools/doc-gen.o src/string.o src/types.o src/util.o src/request.o $(COMPAT_OBJS)
 tools/doc-gen: $(DOC_GEN_OBJS)
 
 OBJS = $(sort $(TIG_OBJS) $(TEST_GRAPH_OBJS) $(DOC_GEN_OBJS))
