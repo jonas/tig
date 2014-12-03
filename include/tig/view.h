@@ -183,7 +183,7 @@ struct view_column_data {
 	const mode_t *mode;
 	const struct ref *ref;
 	const char *reflog;
-	const struct ref_list *refs;
+	const struct ref *refs;
 	const char *status;
 	const char *text;
 };

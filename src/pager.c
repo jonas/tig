@@ -52,8 +52,8 @@ static void
 add_pager_refs(struct view *view, const char *commit_id)
 {
 	char buf[SIZEOF_STR];
-	const struct ref_list *list;
-	size_t bufpos = 0, i;
+	const struct ref *list;
+	size_t bufpos = 0;
 	const char *sep = "Refs: ";
 	bool is_tag = FALSE;
 
@@ -64,8 +64,8 @@ add_pager_refs(struct view *view, const char *commit_id)
 		return;
 	}
 
-	for (i = 0; i < list->size; i++) {
-		struct ref *ref = list->refs[i];
+	for (; list; list = list->next) {
+		const struct ref *ref = list;
 		const struct ref_format *fmt = get_ref_format(ref);
 
 		if (!string_format_from(buf, &bufpos, "%s%s%s%s", sep,

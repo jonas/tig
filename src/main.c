@@ -282,10 +282,10 @@ main_done(struct view *view)
 #define main_check_commit_refs(line)	!((line)->no_commit_refs)
 #define main_mark_no_commit_refs(line)	(((struct line *) (line))->no_commit_refs = 1)
 
-static inline const struct ref_list *
+static inline const struct ref *
 main_get_commit_refs(const struct line *line, struct commit *commit)
 {
-	const struct ref_list *refs = NULL;
+	const struct ref *refs = NULL;
 
 	if (main_check_commit_refs(line) && !(refs = get_ref_list(commit->id)))
 		main_mark_no_commit_refs(line);
@@ -298,7 +298,6 @@ main_get_column_data(struct view *view, const struct line *line, struct view_col
 {
 	struct main_state *state = view->private;
 	struct commit *commit = line->data;
-	const struct ref_list *refs = NULL;
 
 	column_data->author = commit->author;
 	column_data->date = &commit->time;
@@ -310,8 +309,7 @@ main_get_column_data(struct view *view, const struct line *line, struct view_col
 	if (state->with_graph)
 		column_data->graph = &commit->graph;
 
-	if ((refs = main_get_commit_refs(line, commit)))
-		column_data->refs = refs;
+	column_data->refs = main_get_commit_refs(line, commit);
 
 	return TRUE;
 }
@@ -511,14 +509,13 @@ main_request(struct view *view, enum request request, struct line *line)
 	return REQ_NONE;
 }
 
+/* Update the env from last ref to first using recursion. */
 static void
-main_update_env(struct view *view, struct line *line, struct commit *commit)
+main_update_env(struct view *view, const struct ref *ref)
 {
-	const struct ref_list *list = main_get_commit_refs(line, commit);
-	size_t i;
-
-	for (i = 0; list && i < list->size; i++)
-		ref_update_env(view->env, list->refs[list->size - i - 1], !i);
+	if (ref->next)
+		main_update_env(view, ref->next);
+	ref_update_env(view->env, ref, !ref->next);
 }
 
 void
@@ -530,8 +527,11 @@ main_select(struct view *view, struct line *line)
 		string_ncopy(view->ref, commit->title, strlen(commit->title));
 		status_stage_info(view->env->status, line->type, NULL);
 	} else {
+		const struct ref *ref = main_get_commit_refs(line, commit);
+
 		string_copy_rev(view->ref, commit->id);
-		main_update_env(view, line, commit);
+		if (ref)
+			main_update_env(view, ref);
 	}
 	string_copy_rev(view->env->commit, commit->id);
 }

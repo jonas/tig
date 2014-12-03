@@ -23,12 +23,11 @@ static struct ref **refs = NULL;
 static size_t refs_size = 0;
 static struct ref *refs_head = NULL;
 
-static struct ref_list **ref_lists = NULL;
+static struct ref **ref_lists = NULL;
 static size_t ref_lists_size = 0;
 
 DEFINE_ALLOCATOR(realloc_refs, struct ref *, 256)
-DEFINE_ALLOCATOR(realloc_refs_list, struct ref *, 8)
-DEFINE_ALLOCATOR(realloc_ref_lists, struct ref_list *, 8)
+DEFINE_ALLOCATOR(realloc_ref_lists, struct ref *, 8)
 
 static int
 compare_refs(const void *ref1_, const void *ref2_)
@@ -75,49 +74,27 @@ get_ref_head()
 	return refs_head;
 }
 
-const struct ref_list *
+const struct ref *
 get_ref_list(const char *id)
 {
-	struct ref_list *list;
 	size_t i;
 
 	for (i = 0; i < ref_lists_size; i++)
 		if (!strcmp(id, ref_lists[i]->id))
 			return ref_lists[i];
 
-	if (!realloc_ref_lists(&ref_lists, ref_lists_size, 1))
-		return NULL;
-	list = calloc(1, sizeof(*list));
-	if (!list)
-		return NULL;
-	string_copy_rev(list->id, id);
-
-	for (i = 0; i < refs_size; i++) {
-		if (!strcmp(id, refs[i]->id) &&
-		    realloc_refs_list(&list->refs, list->size, 1))
-			list->refs[list->size++] = refs[i];
-	}
-
-	if (!list->refs) {
-		free(list);
-		return NULL;
-	}
-
-	qsort(list->refs, list->size, sizeof(*list->refs), compare_refs);
-	ref_lists[ref_lists_size++] = list;
-	return list;
+	return NULL;
 }
 
 const struct ref *
 get_canonical_ref(const char *id)
 {
-	const struct ref_list *list = get_ref_list(id);
-	struct ref *ref = NULL;
-	size_t i;
+	const struct ref *ref = NULL;
+	const struct ref *pos;
 
-	for (i = 0; list && i < list->size; i++)
-		if (!ref || ref_canonical_compare(list->refs[i], ref) < 0)
-			ref = list->refs[i];
+	foreach_ref_list(pos, id)
+		if (!ref || ref_canonical_compare(pos, ref) < 0)
+			ref = pos;
 
 	return ref;
 }
@@ -131,15 +108,6 @@ struct ref_opt {
 static void
 done_ref_lists(void)
 {
-	int i;
-
-	for (i = 0; i < ref_lists_size; i++) {
-		struct ref_list *list = ref_lists[i];
-
-		free(list->refs);
-		free(list);
-	}
-
 	free(ref_lists);
 	ref_lists = NULL;
 	ref_lists_size = 0;
@@ -150,6 +118,7 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 {
 	struct ref *ref = NULL;
 	enum reference_type type = REFERENCE_BRANCH;
+	size_t ref_lists_pos;
 	int pos;
 
 	if (!prefixcmp(name, "refs/tags/")) {
@@ -193,6 +162,14 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		type = REFERENCE_HEAD;
 	}
 
+	for (ref_lists_pos = 0; ref_lists_pos < ref_lists_size; ref_lists_pos++)
+		if (!strcmp(id, ref_lists[ref_lists_pos]->id))
+			break;
+
+	if (ref_lists_pos >= ref_lists_size &&
+	    !realloc_ref_lists(&ref_lists, ref_lists_size, 1))
+		return ERR;
+
 	/* If we are reloading or it's an annotated tag, replace the
 	 * previous SHA1 with the resolved commit id; relies on the fact
 	 * git-ls-remote lists the commit id of an annotated tag right
@@ -230,6 +207,24 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 			opt->changed |= WATCH_HEAD;
 		refs_head = ref;
 	}
+
+	ref->next = ref_lists[ref_lists_pos];
+	ref_lists[ref_lists_pos] = ref;
+	if (ref_lists_pos >= ref_lists_size)
+		ref_lists_size++;
+
+	while (ref->next) {
+		struct ref *head = ref->next;
+
+		if (head == ref || ref_compare(ref, head) <= 0)
+			break;
+
+		if (ref_lists[ref_lists_pos] == ref)
+			ref_lists[ref_lists_pos] = head;
+		ref->next = head->next;
+		head->next = ref;
+	}
+
 	return OK;
 }
 
@@ -266,8 +261,10 @@ reload_refs(bool force)
 		opt.changed |= WATCH_HEAD;
 
 	refs_head = NULL;
-	for (i = 0; i < refs_size; i++)
+	for (i = 0; i < refs_size; i++) {
 		refs[i]->valid = 0;
+		refs[i]->next = NULL;
+	}
 
 	done_ref_lists();
 

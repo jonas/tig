@@ -1069,16 +1069,12 @@ view_column_text(struct view *view, struct view_column_data *column_data,
 }
 
 static bool
-grep_refs(struct view *view, struct view_column *column, const struct ref_list *list)
+grep_refs(struct view *view, struct view_column *column, const struct ref *ref)
 {
 	regmatch_t pmatch;
-	size_t i;
 
-	if (!list)
-		return FALSE;
-
-	for (i = 0; i < list->size; i++) {
-		if (!regexec(view->regex, list->refs[i]->name, 1, &pmatch, 0))
+	for (; ref; ref = ref->next) {
+		if (!regexec(view->regex, ref->name, 1, &pmatch, 0))
 			return TRUE;
 	}
 
