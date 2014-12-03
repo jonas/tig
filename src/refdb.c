@@ -12,6 +12,7 @@
  */
 
 #include "tig/tig.h"
+#include "tig/map.h"
 #include "tig/argv.h"
 #include "tig/io.h"
 #include "tig/watch.h"
@@ -23,11 +24,9 @@ static struct ref **refs = NULL;
 static size_t refs_size = 0;
 static struct ref *refs_head = NULL;
 
-static struct ref **ref_lists = NULL;
-static size_t ref_lists_size = 0;
-
 DEFINE_ALLOCATOR(realloc_refs, struct ref *, 256)
-DEFINE_ALLOCATOR(realloc_ref_lists, struct ref *, 8)
+
+DEFINE_STRING_MAP(refs_by_id, struct ref *, id, 16)
 
 static int
 compare_refs(const void *ref1_, const void *ref2_)
@@ -77,13 +76,7 @@ get_ref_head()
 const struct ref *
 get_ref_list(const char *id)
 {
-	size_t i;
-
-	for (i = 0; i < ref_lists_size; i++)
-		if (!strcmp(id, ref_lists[i]->id))
-			return ref_lists[i];
-
-	return NULL;
+	return string_map_get(&refs_by_id, id);
 }
 
 const struct ref *
@@ -105,20 +98,12 @@ struct ref_opt {
 	enum watch_trigger changed;
 };
 
-static void
-done_ref_lists(void)
-{
-	free(ref_lists);
-	ref_lists = NULL;
-	ref_lists_size = 0;
-}
-
 static int
 add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref_opt *opt)
 {
 	struct ref *ref = NULL;
 	enum reference_type type = REFERENCE_BRANCH;
-	size_t ref_lists_pos;
+	void **ref_lists_slot;
 	int pos;
 
 	if (!prefixcmp(name, "refs/tags/")) {
@@ -162,14 +147,6 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		type = REFERENCE_HEAD;
 	}
 
-	for (ref_lists_pos = 0; ref_lists_pos < ref_lists_size; ref_lists_pos++)
-		if (!strcmp(id, ref_lists[ref_lists_pos]->id))
-			break;
-
-	if (ref_lists_pos >= ref_lists_size &&
-	    !realloc_ref_lists(&ref_lists, ref_lists_size, 1))
-		return ERR;
-
 	/* If we are reloading or it's an annotated tag, replace the
 	 * previous SHA1 with the resolved commit id; relies on the fact
 	 * git-ls-remote lists the commit id of an annotated tag right
@@ -208,10 +185,12 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		refs_head = ref;
 	}
 
-	ref->next = ref_lists[ref_lists_pos];
-	ref_lists[ref_lists_pos] = ref;
-	if (ref_lists_pos >= ref_lists_size)
-		ref_lists_size++;
+	ref_lists_slot = string_map_put_to(&refs_by_id, id);
+	if (!ref_lists_slot)
+		return OK;
+
+	ref->next = *ref_lists_slot;
+	*ref_lists_slot = ref;
 
 	while (ref->next) {
 		struct ref *head = ref->next;
@@ -219,8 +198,8 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		if (head == ref || ref_compare(ref, head) <= 0)
 			break;
 
-		if (ref_lists[ref_lists_pos] == ref)
-			ref_lists[ref_lists_pos] = head;
+		if (*ref_lists_slot == ref)
+			*ref_lists_slot = head;
 		ref->next = head->next;
 		head->next = ref;
 	}
@@ -266,7 +245,7 @@ reload_refs(bool force)
 		refs[i]->next = NULL;
 	}
 
-	done_ref_lists();
+	string_map_clear(&refs_by_id);
 
 	if (io_run_load(ls_remote_argv, "\t", read_ref, &opt) == ERR)
 		return ERR;
