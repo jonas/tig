@@ -52,7 +52,7 @@ static void
 add_pager_refs(struct view *view, const char *commit_id)
 {
 	char buf[SIZEOF_STR];
-	struct ref_list *list;
+	const struct ref_list *list;
 	size_t bufpos = 0, i;
 	const char *sep = "Refs: ";
 	bool is_tag = FALSE;

@@ -222,7 +222,7 @@ status_update_onbranch(void)
 
 	for (i = 0; i < ARRAY_SIZE(paths); i++) {
 		const char *prefix = paths[i][2];
-		char *head = repo.head;
+		const char *head = repo.head;
 
 		if (!string_format(buf, "%s/%s", repo.git_dir, paths[i][0]) ||
 		    lstat(buf, &stat) < 0)
@@ -240,7 +240,7 @@ status_update_onbranch(void)
 		}
 
 		if (!*head && !strcmp(paths[i][0], "HEAD") && *repo.head_id) {
-			struct ref *ref = get_canonical_ref(repo.head_id);
+			const struct ref *ref = get_canonical_ref(repo.head_id);
 
 			prefix = "HEAD detached at";
 			head = repo.head_id;

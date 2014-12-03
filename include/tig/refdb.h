@@ -38,9 +38,9 @@ struct ref_list {
 #define ref_is_tag(ref)		((ref)->type == REFERENCE_TAG || (ref)->type == REFERENCE_LOCAL_TAG)
 #define ref_is_remote(ref)	((ref)->type == REFERENCE_REMOTE || (ref)->type == REFERENCE_TRACKED_REMOTE)
 
-struct ref *get_ref_head();
-struct ref_list *get_ref_list(const char *id);
-struct ref *get_canonical_ref(const char *id);
+const struct ref *get_ref_head();
+const struct ref_list *get_ref_list(const char *id);
+const struct ref *get_canonical_ref(const char *id);
 void foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data);
 int load_refs(bool force);
 int add_ref(const char *id, char *name, const char *remote_name, const char *head);
@@ -52,7 +52,7 @@ struct ref_format {
 	const char *end;
 };
 
-const struct ref_format *get_ref_format(struct ref *ref);
+const struct ref_format *get_ref_format(const struct ref *ref);
 enum status_code parse_ref_formats(const char *argv[]);
 
 #endif

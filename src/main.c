@@ -282,10 +282,10 @@ main_done(struct view *view)
 #define main_check_commit_refs(line)	!((line)->no_commit_refs)
 #define main_mark_no_commit_refs(line)	(((struct line *) (line))->no_commit_refs = 1)
 
-static inline struct ref_list *
+static inline const struct ref_list *
 main_get_commit_refs(const struct line *line, struct commit *commit)
 {
-	struct ref_list *refs = NULL;
+	const struct ref_list *refs = NULL;
 
 	if (main_check_commit_refs(line) && !(refs = get_ref_list(commit->id)))
 		main_mark_no_commit_refs(line);
@@ -298,7 +298,7 @@ main_get_column_data(struct view *view, const struct line *line, struct view_col
 {
 	struct main_state *state = view->private;
 	struct commit *commit = line->data;
-	struct ref_list *refs = NULL;
+	const struct ref_list *refs = NULL;
 
 	column_data->author = commit->author;
 	column_data->date = &commit->time;
@@ -514,7 +514,7 @@ main_request(struct view *view, enum request request, struct line *line)
 static void
 main_update_env(struct view *view, struct line *line, struct commit *commit)
 {
-	struct ref_list *list = main_get_commit_refs(line, commit);
+	const struct ref_list *list = main_get_commit_refs(line, commit);
 	size_t i;
 
 	for (i = 0; list && i < list->size; i++)

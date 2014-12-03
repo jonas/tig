@@ -78,7 +78,7 @@ check_file_mtime(time_t *last_modified, const char *path_fmt, ...)
 static enum watch_trigger
 watch_head_handler(struct watch_handler *handler, enum watch_event event, enum watch_trigger check)
 {
-	struct ref *head;
+	const struct ref *head;
 
 	if (check_file_mtime(&handler->last_modified, "%s/HEAD", repo.git_dir))
 		return WATCH_HEAD;

@@ -69,13 +69,13 @@ foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data)
 			break;
 }
 
-struct ref *
+const struct ref *
 get_ref_head()
 {
 	return refs_head;
 }
 
-struct ref_list *
+const struct ref_list *
 get_ref_list(const char *id)
 {
 	struct ref_list *list;
@@ -108,10 +108,10 @@ get_ref_list(const char *id)
 	return list;
 }
 
-struct ref *
+const struct ref *
 get_canonical_ref(const char *id)
 {
-	struct ref_list *list = get_ref_list(id);
+	const struct ref_list *list = get_ref_list(id);
 	struct ref *ref = NULL;
 	size_t i;
 
@@ -335,7 +335,7 @@ ref_update_env(struct argv_env *env, const struct ref *ref, bool clear)
 static struct ref_format **ref_formats;
 
 const struct ref_format *
-get_ref_format(struct ref *ref)
+get_ref_format(const struct ref *ref)
 {
 	static const struct ref_format default_format = { "", "" };
 
