@@ -291,6 +291,7 @@ void open_argv(struct view *prev, struct view *view, const char *argv[], const c
  */
 
 #define get_sort_field(view) ((view)->sort.current->type)
+void resort_view(struct view *view, bool renumber);
 void sort_view(struct view *view, bool change_field);
 
 struct view_column *get_view_column(struct view *view, enum view_column_type type);

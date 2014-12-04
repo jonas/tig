@@ -64,6 +64,17 @@ string_map_put(struct string_map *map, const char *key, void *value)
 	return value;
 }
 
+void *
+string_map_remove(struct string_map *map, void **slot)
+{
+	void *value = slot ? *slot : NULL;
+
+	if (map->htab && slot)
+		htab_clear_slot(map->htab, slot);
+
+	return value;
+}
+
 void
 string_map_clear(struct string_map *map)
 {

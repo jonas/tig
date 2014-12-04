@@ -20,22 +20,10 @@
 #include "tig/repo.h"
 #include "tig/refdb.h"
 
-static struct ref **refs = NULL;
-static size_t refs_size = 0;
 static struct ref *refs_head = NULL;
 
-DEFINE_ALLOCATOR(realloc_refs, struct ref *, 256)
-
+DEFINE_STRING_MAP(refs_by_name, struct ref *, name, 32)
 DEFINE_STRING_MAP(refs_by_id, struct ref *, id, 16)
-
-static int
-compare_refs(const void *ref1_, const void *ref2_)
-{
-	const struct ref *ref1 = *(const struct ref **)ref1_;
-	const struct ref *ref2 = *(const struct ref **)ref2_;
-
-	return ref_compare(ref1, ref2);
-}
 
 int
 ref_compare(const struct ref *ref1, const struct ref *ref2)
@@ -60,11 +48,7 @@ ref_canonical_compare(const struct ref *ref1, const struct ref *ref2)
 void
 foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data)
 {
-	size_t i;
-
-	for (i = 0; i < refs_size; i++)
-		if (refs[i]->id[0] && !visitor(data, refs[i]))
-			break;
+	string_map_foreach(&refs_by_name, (string_map_iterator_fn) visitor, data);
 }
 
 const struct ref *
@@ -104,7 +88,7 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	struct ref *ref = NULL;
 	enum reference_type type = REFERENCE_BRANCH;
 	void **ref_lists_slot;
-	int pos;
+	void **ref_slot;
 
 	if (!prefixcmp(name, "refs/tags/")) {
 		type = REFERENCE_TAG;
@@ -151,24 +135,26 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	 * previous SHA1 with the resolved commit id; relies on the fact
 	 * git-ls-remote lists the commit id of an annotated tag right
 	 * before the commit id it points to. */
-	for (pos = 0; pos < refs_size; pos++) {
-		int cmp = type == REFERENCE_REPLACE
-			? strcmp(id, refs[pos]->id) : strcmp(name, refs[pos]->name);
+	if (type == REFERENCE_REPLACE) {
+		ref_slot = string_map_put_to(&refs_by_id, id);
+		if (!ref_slot)
+			return ERR;
+		if (*ref_slot)
+			ref = string_map_remove(&refs_by_id, ref_slot);
 
-		if (!cmp) {
-			ref = refs[pos];
-			break;
-		}
+	} else {
+		ref_slot = string_map_put_to(&refs_by_name, name);
+		if (!ref_slot)
+			return ERR;
+		ref = *ref_slot;
 	}
 
 	if (!ref) {
-		if (!realloc_refs(&refs, refs_size, 1))
-			return ERR;
 		ref = calloc(1, sizeof(*ref) + namelen);
 		if (!ref)
 			return ERR;
-		refs[refs_size++] = ref;
 		strncpy(ref->name, name, namelen);
+		*ref_slot = ref;
 	}
 
 	if (strncmp(ref->id, id, idlen))
@@ -213,6 +199,30 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 	return add_to_refs(id, idlen, name, namelen, data);
 }
 
+static bool
+invalidate_refs(void *data, void *ref_)
+{
+	struct ref *ref = ref_;
+
+	ref->valid = 0;
+	ref->next = NULL;
+	return TRUE;
+}
+
+static bool
+cleanup_refs(void *data, void *ref_)
+{
+	struct ref_opt *opt = data;
+	struct ref *ref = ref_;
+
+	if (!ref->valid) {
+		ref->id[0] = 0;
+		opt->changed |= WATCH_REFS;
+	}
+
+	return TRUE;
+}
+
 static int
 reload_refs(bool force)
 {
@@ -222,7 +232,6 @@ reload_refs(bool force)
 	static bool init = FALSE;
 	struct ref_opt opt = { repo.remote, repo.head, WATCH_NONE };
 	struct repo_info old_repo = repo;
-	size_t i;
 
 	if (!init) {
 		if (!argv_from_env(ls_remote_argv, "TIG_LS_REMOTE"))
@@ -240,26 +249,16 @@ reload_refs(bool force)
 		opt.changed |= WATCH_HEAD;
 
 	refs_head = NULL;
-	for (i = 0; i < refs_size; i++) {
-		refs[i]->valid = 0;
-		refs[i]->next = NULL;
-	}
-
 	string_map_clear(&refs_by_id);
+	string_map_foreach(&refs_by_name, invalidate_refs, NULL);
 
 	if (io_run_load(ls_remote_argv, "\t", read_ref, &opt) == ERR)
 		return ERR;
 
-	for (i = 0; i < refs_size; i++)
-		if (!refs[i]->valid) {
-			refs[i]->id[0] = 0;
-			opt.changed |= WATCH_REFS;
-		}
-
+	string_map_foreach(&refs_by_name, cleanup_refs, &opt);
 
 	if (opt.changed)
 		watch_apply(NULL, opt.changed);
-	qsort(refs, refs_size, sizeof(*refs), compare_refs);
 
 	return OK;
 }

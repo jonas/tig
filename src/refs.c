@@ -156,8 +156,11 @@ refs_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	}
 
+	if (!view->lines)
+		view->sort.current = get_view_column(view, VIEW_COLUMN_REF);
 	refs_open_visitor(view, refs_all);
 	foreach_ref(refs_open_visitor, view);
+	resort_view(view, TRUE);
 
 	watch_register(&view->watch, WATCH_HEAD | WATCH_REFS);
 

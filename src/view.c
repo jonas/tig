@@ -969,7 +969,7 @@ sort_view_compare(const void *l1, const void *l2)
 
 	cmp = compare_view_column(column, TRUE, line1, &column_data1, line2, &column_data2);
 
-	/* Ensure stable sorting by ordering ordering by the other
+	/* Ensure stable sorting by ordering by the other
 	 * columns if the selected column values are equal. */
 	for (i = 0; !cmp && i < ARRAY_SIZE(view_column_order); i++)
 		if (column != view_column_order[i])
@@ -978,6 +978,21 @@ sort_view_compare(const void *l1, const void *l2)
 						  line2, &column_data2);
 
 	return sort->reverse ? -cmp : cmp;
+}
+
+void
+resort_view(struct view *view, bool renumber)
+{
+	sorting_view = view;
+	qsort(view->line, view->lines, sizeof(*view->line), sort_view_compare);
+
+	if (renumber) {
+		size_t i, lineno;
+
+		for (i = 0, lineno = 1; i < view->lines; i++)
+			if (view->line[i].lineno)
+				view->line[i].lineno = lineno++;
+	}
 }
 
 void
@@ -998,8 +1013,7 @@ sort_view(struct view *view, bool change_field)
 		state->reverse = !state->reverse;
 	}
 
-	sorting_view = view;
-	qsort(view->line, view->lines, sizeof(*view->line), sort_view_compare);
+	resort_view(view, FALSE);
 }
 
 static const char *
