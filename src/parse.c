@@ -13,6 +13,7 @@
 
 #include "tig/tig.h"
 #include "tig/parse.h"
+#include "tig/map.h"
 
 size_t
 parse_size(const char *text)
@@ -279,48 +280,30 @@ get_path(const char *path)
 	return entry;
 }
 
-DEFINE_ALLOCATOR(realloc_authors, struct ident *, 256)
+DEFINE_STRING_MAP(author_cache, const struct ident *, email, 32)
 
-/* Small author cache to reduce memory consumption. It uses binary
- * search to lookup or find place to position new entries. No entries
+/* Small author cache to reduce memory consumption. No entries
  * are ever freed. */
 struct ident *
 get_author(const char *name, const char *email)
 {
-	static struct ident **authors;
-	static size_t authors_size;
-	int from = 0, to = authors_size - 1;
-	struct ident *ident;
+	struct ident *ident = string_map_get(&author_cache, email);
 
-	while (from <= to) {
-		size_t pos = (to + from) / 2;
-		int cmp = strcmp(email, authors[pos]->email);
+	if (ident)
+		return ident;
 
-		if (!cmp)
-			return authors[pos];
-
-		if (cmp < 0)
-			to = pos - 1;
-		else
-			from = pos + 1;
-	}
-
-	if (!realloc_authors(&authors, authors_size, 1))
-		return NULL;
 	ident = calloc(1, sizeof(*ident));
 	if (!ident)
 		return NULL;
 	ident->name = strdup(name);
 	ident->email = strdup(email);
-	if (!ident->name || !ident->email) {
+	if (!ident->name || !ident->email ||
+	    !string_map_put(&author_cache, email, ident)) {
 		free((void *) ident->name);
+		free((void *) ident->email);
 		free(ident);
 		return NULL;
 	}
-
-	memmove(authors + from + 1, authors + from, (authors_size - from) * sizeof(*authors));
-	authors[from] = ident;
-	authors_size++;
 
 	return ident;
 }

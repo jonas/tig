@@ -205,6 +205,7 @@ TIG_OBJS = \
 	src/types.o \
 	src/string.o \
 	src/util.o \
+	src/map.o \
 	src/argv.o \
 	src/io.o \
 	src/graph.o \
