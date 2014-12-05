@@ -241,43 +241,29 @@ parse_chunk_lineno(unsigned long *lineno, const char *chunk, int marker)
  * Caches.
  */
 
-DEFINE_ALLOCATOR(realloc_paths, const char *, 256)
+struct path_entry {
+	char path[1];
+};
 
-/* Small cache to reduce memory consumption. It uses binary search to
- * lookup or find place to position new entries. No entries are ever
+DEFINE_STRING_MAP(path_cache, struct path_entry *, path, 32)
+
+/* Small cache to reduce memory consumption. No entries are ever
  * freed. */
 const char *
 get_path(const char *path)
 {
-	static const char **paths;
-	static size_t paths_size;
-	int from = 0, to = paths_size - 1;
-	char *entry;
+	struct path_entry *entry = string_map_get(&path_cache, path);
 
-	while (from <= to) {
-		size_t pos = (to + from) / 2;
-		int cmp = strcmp(path, paths[pos]);
-
-		if (!cmp)
-			return paths[pos];
-
-		if (cmp < 0)
-			to = pos - 1;
-		else
-			from = pos + 1;
+	if (!entry) {
+		entry = calloc(1, sizeof(*entry) + strlen(path));
+		if (!entry || !string_map_put(&path_cache, path, entry)) {
+			free(entry);
+			return NULL;
+		}
+		strncpy(entry->path, path, strlen(path));
 	}
 
-	if (!realloc_paths(&paths, paths_size, 1))
-		return NULL;
-	entry = strdup(path);
-	if (!entry)
-		return NULL;
-
-	memmove(paths + from + 1, paths + from, (paths_size - from) * sizeof(*paths));
-	paths[from] = entry;
-	paths_size++;
-
-	return entry;
+	return entry->path;
 }
 
 DEFINE_STRING_MAP(author_cache, const struct ident *, email, 32)
