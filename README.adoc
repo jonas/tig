@@ -2,7 +2,7 @@ Tig: text-mode interface for Git
 ================================
 :docext: adoc
 
-image::https://secure.travis-ci.org/jonas/tig.png?branch=master[Build Status,link=http://travis-ci.org/jonas/tig]
+image::https://secure.travis-ci.org/jonas/tig.svg?branch=master[Build Status,link=http://travis-ci.org/jonas/tig]
 
 What is Tig?
 ------------
