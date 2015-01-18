@@ -755,9 +755,15 @@ split_view(struct view *prev, struct view *view)
 void
 maximize_view(struct view *view, bool redraw)
 {
+	static bool display_initialized;
+
 	memset(display, 0, sizeof(display));
 	current_view = 0;
 	display[current_view] = view;
+	if (!display_initialized) {
+		init_display();
+		display_initialized = true;
+	}
 	resize_display();
 	if (redraw) {
 		redraw_display(FALSE);

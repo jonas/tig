@@ -634,8 +634,6 @@ main(int argc, const char *argv[])
 	if (load_refs(FALSE) == ERR)
 		die("Failed to load refs.");
 
-	init_display();
-
 	if (pager_mode)
 		request = open_pager_mode(request);
 
