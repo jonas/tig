@@ -253,7 +253,7 @@ DEPS_CFLAGS ?= -MMD -MP -MF .deps/$*.d
 	$(QUIET_LINK)$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 %.o: %.c $(CONFIG_H)
-	@mkdir -p $(abspath .deps/$(*D))
+	@mkdir -p .deps/$(*D)
 	$(QUIET_CC)$(CC) -I. -Iinclude $(CFLAGS) $(DEPS_CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 -include $(OBJS:%.o=.deps/%.d)

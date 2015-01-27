@@ -26,6 +26,7 @@ Bug fixes:
  - Fix corner case when parsing diff chunk when lines information is missing.
  - Ensure main view changes commits are shown right before the current HEAD.
  - Fix rendering of boundary commits.
+ - Fix compilation with GNU Make 3.80 by removing `$(abspath)`. (GH #362)
 
 tig-2.0.3
 ---------
