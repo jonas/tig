@@ -5,6 +5,8 @@ Installation instructions
 Download a tarball from http://jonas.nitro.dk/tig/releases[] or clone the Tig
 repository http://github.com/jonas/tig[git://github.com/jonas/tig.git].
 
+NB: Do not use tig-2.0.tar because it will fail to compile due to these issues https://github.com/jonas/tig/pull/283 and https://github.com/jonas/tig/issues/337
+
 The quick and simple way to install Tig is:
 
 	$ make
