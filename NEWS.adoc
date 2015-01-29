@@ -15,6 +15,7 @@ Improvements:
    eg. `set main-view-author = short`. (GH #318)
  - Show better diff context info in the stage view.
  - Add `%(lineno)` state variable. (GH #304)
+ - Use hash table to speed up refs lookup. (GH #350)
 
 Bug fixes:
 

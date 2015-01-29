@@ -333,15 +333,13 @@ draw_ref(struct view *view, struct view_column *column, const struct ref *ref)
 }
 
 static bool
-draw_refs(struct view *view, struct view_column *column, const struct ref_list *refs)
+draw_refs(struct view *view, struct view_column *column, const struct ref *refs)
 {
-	size_t i;
-
 	if (!column->opt.commit_title.refs || !refs)
 		return FALSE;
 
-	for (i = 0; i < refs->size; i++) {
-		struct ref *ref = refs->refs[i];
+	for (; refs; refs = refs->next) {
+		const struct ref *ref = refs;
 		enum line_type type = get_line_type_from_ref(ref);
 		const struct ref_format *format = get_ref_format(ref);
 
@@ -429,7 +427,7 @@ draw_graph(struct view *view, const struct graph_canvas *canvas)
 
 static bool
 draw_commit_title(struct view *view, struct view_column *column,
-		  const struct graph_canvas *graph, const struct ref_list *refs,
+		  const struct graph_canvas *graph, const struct ref *refs,
 		  const char *commit_title)
 {
 	if (graph && column->opt.commit_title.graph &&
