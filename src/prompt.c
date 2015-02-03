@@ -840,11 +840,11 @@ run_prompt_command(struct view *view, const char *argv[])
 			report("%s", action);
 
 	} else if (!strcmp(cmd, "script")) {
-		if (is_script_executing()) {
-			report("Scripts cannot be run from scripts");
-		} else if (!open_script(argv[1])) {
-			report("Failed to open %s", argv[1]);
-		}
+		enum status_code code = open_script(argv[1]);
+
+		if (code != SUCCESS)
+			report("%s", get_status_message(code));
+		return REQ_NONE;
 
 	} else {
 		struct key key = {};

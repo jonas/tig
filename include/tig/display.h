@@ -51,8 +51,7 @@ bool open_external_viewer(const char *argv[], const char *dir, bool silent, bool
 void open_editor(const char *file, unsigned int lineno);
 void enable_mouse(bool enable);
 
-bool open_script(const char *path);
-bool is_script_executing(void);
+enum status_code open_script(const char *path);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */
