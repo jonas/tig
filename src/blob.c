@@ -61,7 +61,11 @@ blob_open(struct view *view, enum open_flags flags)
 	}
 
 	view->encoding = get_path_encoding(view->env->file, default_encoding);
-	string_copy(view->ref, view->env->file);
+
+	if (*view->env->file)
+		string_copy(view->ref, view->env->file);
+	else
+		string_copy_rev(view->ref, view->ops->id);
 
 	return begin_update(view, NULL, argv, flags);
 }

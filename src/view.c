@@ -595,12 +595,6 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 			report("Failed to format %s arguments", view->name);
 			return FALSE;
 		}
-
-		/* Put the current view ref value to the view title ref
-		 * member. This is needed by the blob view. Most other
-		 * views sets it automatically after loading because the
-		 * first line is a commit line. */
-		string_copy_rev(view->ref, view->ops->id);
 	}
 
 	if (view->argv && view->argv[0] &&
