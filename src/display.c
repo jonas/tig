@@ -30,6 +30,20 @@ static WINDOW *display_sep;
 
 static FILE *opt_tty;
 
+static struct io script_io = { -1 };
+
+bool
+is_script_executing(void)
+{
+	return script_io.pipe != -1;
+}
+
+bool
+open_script(const char *path)
+{
+	return io_open(&script_io, "%s", path);
+}
+
 bool
 open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool refresh, const char *notice)
 {
@@ -470,20 +484,6 @@ init_display(void)
 		use_scroll_redrawwin = TRUE;
 		use_scroll_status_wclear = FALSE;
 	}
-}
-
-static struct io script_io = { -1 };
-
-bool
-open_script(const char *path)
-{
-	return io_open(&script_io, "%s", path);
-}
-
-bool
-is_script_executing(void)
-{
-	return script_io.pipe != -1;
 }
 
 static bool
