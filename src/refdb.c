@@ -21,6 +21,7 @@
 #include "tig/refdb.h"
 
 static struct ref *refs_head = NULL;
+static bool refs_tags;
 
 DEFINE_STRING_MAP(refs_by_name, struct ref *, name, 32)
 DEFINE_STRING_MAP(refs_by_id, struct ref *, id, 16)
@@ -74,6 +75,18 @@ get_canonical_ref(const char *id)
 			ref = pos;
 
 	return ref;
+}
+
+bool
+ref_list_contains_tag(const char *id)
+{
+	const struct ref *ref;
+
+	foreach_ref_list(ref, id)
+		if (ref_is_tag(ref))
+			return TRUE;
+
+	return FALSE;
 }
 
 struct ref_opt {
@@ -171,6 +184,9 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		refs_head = ref;
 	}
 
+	if (type == REFERENCE_TAG)
+		refs_tags++;
+
 	ref_lists_slot = string_map_put_to(&refs_by_id, id);
 	if (!ref_lists_slot)
 		return OK;
@@ -249,6 +265,7 @@ reload_refs(bool force)
 		opt.changed |= WATCH_HEAD;
 
 	refs_head = NULL;
+	refs_tags = 0;
 	string_map_clear(&refs_by_id);
 	string_map_foreach(&refs_by_name, invalidate_refs, NULL);
 
@@ -305,6 +322,12 @@ ref_update_env(struct argv_env *env, const struct ref *ref, bool clear)
 	} else if (ref->type == REFERENCE_BRANCH) {
 		string_ncopy(env->branch, ref->name, strlen(ref->name));
 	}
+}
+
+bool
+refs_contain_tag(void)
+{
+	return refs_tags > 0;
 }
 
 static struct ref_format **ref_formats;

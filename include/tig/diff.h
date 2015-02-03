@@ -21,6 +21,7 @@ struct diff_state {
 	bool after_diff;
 	bool reading_diff_stat;
 	bool combined_diff;
+	bool adding_describe_ref;
 	const char *file;
 	unsigned int lineno;
 	struct position pos;

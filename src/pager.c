@@ -32,22 +32,6 @@ pager_get_column_data(struct view *view, const struct line *line, struct view_co
 	return TRUE;
 }
 
-static bool
-add_describe_ref(char *buf, size_t *bufpos, const char *commit_id, const char *sep)
-{
-	const char *describe_argv[] = { "git", "describe", commit_id, NULL };
-	char ref[SIZEOF_STR];
-
-	if (!io_run_buf(describe_argv, ref, sizeof(ref)) || !*ref)
-		return TRUE;
-
-	/* This is the only fatal call, since it can "corrupt" the buffer. */
-	if (!string_nformat(buf, SIZEOF_STR, bufpos, "%s%s", sep, ref))
-		return FALSE;
-
-	return TRUE;
-}
-
 static void
 add_pager_refs(struct view *view, const char *commit_id)
 {
@@ -55,12 +39,11 @@ add_pager_refs(struct view *view, const char *commit_id)
 	const struct ref *list;
 	size_t bufpos = 0;
 	const char *sep = "Refs: ";
-	bool is_tag = FALSE;
 
 	list = get_ref_list(commit_id);
 	if (!list) {
-		if (view_has_flags(view, VIEW_ADD_DESCRIBE_REF))
-			goto try_add_describe_ref;
+		if (view_has_flags(view, VIEW_ADD_DESCRIBE_REF) && refs_contain_tag())
+			add_line_text(view, sep, LINE_PP_REFS);
 		return;
 	}
 
@@ -72,15 +55,6 @@ add_pager_refs(struct view *view, const char *commit_id)
 					fmt->start, ref->name, fmt->end))
 			return;
 		sep = ", ";
-		if (ref_is_tag(ref))
-			is_tag = TRUE;
-	}
-
-	if (!is_tag && view_has_flags(view, VIEW_ADD_DESCRIBE_REF)) {
-try_add_describe_ref:
-		/* Add <tag>-g<commit_id> "fake" reference. */
-		if (!add_describe_ref(buf, &bufpos, commit_id, sep))
-			return;
 	}
 
 	if (bufpos == 0)

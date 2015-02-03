@@ -1536,6 +1536,41 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 	return retval >= 0 ? add_line_text(view, buf, type) : NULL;
 }
 
+bool
+append_line_format(struct view *view, struct line *line, const char *fmt, ...)
+{
+	char *text = NULL;
+	size_t textlen = 0;
+	int fmtlen, retval;
+	va_list args;
+
+	va_start(args, fmt);
+	fmtlen = vsnprintf(NULL, 0, fmt, args);
+	va_end(args);
+
+	if (fmtlen <= 0)
+		return FALSE;
+
+	text = line->data;
+	textlen = strlen(text);
+
+	text = realloc(text, textlen + fmtlen + 1);
+	if (!text)
+		return FALSE;
+
+	FORMAT_BUFFER(text + textlen, fmtlen + 1, fmt, retval, FALSE);
+	if (retval < 0)
+		text[textlen] = 0;
+
+	line->data = text;
+	line->dirty = TRUE;
+
+	if (view->ops->column_bits)
+		view_column_info_update(view, line);
+
+	return TRUE;
+}
+
 /*
  * Global view state.
  */

@@ -17,6 +17,8 @@ Improvements:
  - Add `%(lineno)` state variable. (GH #304)
  - Use hash table to speed up refs lookup. (GH #350)
  - Show the file path in the blob view when available.
+ - Speed up the diff view in large repos by loading git-describe info after the
+   diff content has been read. (GH #324)
 
 Bug fixes:
 

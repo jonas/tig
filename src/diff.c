@@ -222,9 +222,28 @@ diff_restore_line(struct view *view, struct diff_state *state)
 }
 
 static bool
+diff_read_describe(struct view *view, struct buffer *buffer, struct diff_state *state)
+{
+	struct line *line = find_next_line_by_type(view, view->line, LINE_PP_REFS);
+
+	if (line && buffer) {
+		const char *ref = chomp_string(buffer->data);
+		const char *sep = !strcmp("Refs: ", line->data) ? "" : ", ";
+
+		if (*ref && !append_line_format(view, line, "%s%s", sep, ref))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static bool
 diff_read(struct view *view, struct buffer *buf)
 {
 	struct diff_state *state = view->private;
+
+	if (state->adding_describe_ref)
+		return diff_read_describe(view, buf, state);
 
 	if (!buf) {
 		/* Fall back to retry if no diff will be shown. */
@@ -246,6 +265,18 @@ diff_read(struct view *view, struct buffer *buf)
 		}
 
 		diff_restore_line(view, state);
+
+		if (!state->adding_describe_ref && !ref_list_contains_tag(view->vid)) {
+			const char *describe_argv[] = { "git", "describe", view->vid, NULL };
+
+			if (!begin_update(view, NULL, describe_argv, OPEN_EXTRA)) {
+				report("Failed to load describe data");
+				return TRUE;
+			}
+
+			state->adding_describe_ref = TRUE;
+			return FALSE;
+		}
 
 		return TRUE;
 	}

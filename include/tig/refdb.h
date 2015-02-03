@@ -38,11 +38,14 @@ struct ref {
 const struct ref *get_ref_head();
 const struct ref *get_ref_list(const char *id);
 const struct ref *get_canonical_ref(const char *id);
+bool ref_list_contains_tag(const char *id);
 void foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data);
 int load_refs(bool force);
 int add_ref(const char *id, char *name, const char *remote_name, const char *head);
 int ref_compare(const struct ref *ref1, const struct ref *ref2);
 void ref_update_env(struct argv_env *env, const struct ref *ref, bool clear);
+
+bool refs_contain_tag(void);
 
 struct ref_format {
 	const char *start;

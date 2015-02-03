@@ -353,6 +353,7 @@ struct line *add_line_alloc_(struct view *view, void **ptr, enum line_type type,
 struct line *add_line_nodata(struct view *view, enum line_type type);
 struct line *add_line_text(struct view *view, const char *text, enum line_type type);
 struct line * PRINTF_LIKE(3, 4) add_line_format(struct view *view, enum line_type type, const char *fmt, ...);
+bool append_line_format(struct view *view, struct line *line, const char *fmt, ...);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */
