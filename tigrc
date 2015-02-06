@@ -16,7 +16,7 @@
 #					: Show author information?
 #   commit-title
 #    - display (bool)			: Show the commit title?
-#    - graph (enum) [no|yes|no-topo]	: Show the commit graph? (main view only)
+#    - graph (enum) [no|v2|no-topo]	: Show the commit graph? (main view only)
 #    - refs (bool)			: Show branches, tags and remotes? (main view only)
 #    - overflow (boolint)		: Highlight overflows? Default to 50 when enabled.
 #

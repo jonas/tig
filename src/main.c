@@ -207,10 +207,8 @@ main_check_argv(struct view *view, const char *argv[])
 }
 
 static enum graph_display
-main_with_graph(struct view *view, enum open_flags flags)
+main_with_graph(struct view *view, struct view_column *column, enum open_flags flags)
 {
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
-
 	return column && opt_commit_order != COMMIT_ORDER_REVERSE && !open_in_pager_mode(flags)
 	       ? column->opt.commit_title.graph : GRAPH_DISPLAY_NO;
 }
@@ -218,7 +216,8 @@ main_with_graph(struct view *view, enum open_flags flags)
 static bool
 main_open(struct view *view, enum open_flags flags)
 {
-	enum graph_display graph_display = main_with_graph(view, flags);
+	struct view_column *commit_title_column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
+	enum graph_display graph_display = main_with_graph(view, commit_title_column, flags);
 	const char *pretty_custom_argv[] = {
 		GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg_with_graph(graph_display),
 			"%(cmdlineargs)", "%(revargs)", "%(fileargs)")
@@ -240,7 +239,7 @@ main_open(struct view *view, enum open_flags flags)
 		main_argv = pretty_raw_argv;
 
 	if (state->with_graph) {
-		state->graph = init_graph();
+		state->graph = init_graph(commit_title_column->opt.commit_title.graph);
 		if (!state->graph)
 			return FALSE;
 	}

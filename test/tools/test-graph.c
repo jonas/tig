@@ -63,7 +63,7 @@ main(int argc, const char *argv[])
 		die(USAGE);
 	}
 
-	if (!(graph = init_graph()))
+	if (!(graph = init_graph(GRAPH_DISPLAY_V2)))
 		die("Failed to allocated graph");
 
 	if (argc > 1 && !strcmp(argv[1], "--ascii"))

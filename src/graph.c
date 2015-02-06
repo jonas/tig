@@ -17,9 +17,11 @@
 struct graph *init_graph_v2(void);
 
 struct graph *
-init_graph(void)
+init_graph(enum graph_display display)
 {
-	return init_graph_v2();
+	if (display == GRAPH_DISPLAY_V2 || display == GRAPH_DISPLAY_NO_TOPO)
+		return init_graph_v2();
+	return NULL;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

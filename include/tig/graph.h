@@ -14,6 +14,8 @@
 #ifndef TIG_GRAPH_H
 #define TIG_GRAPH_H
 
+#include "tig/types.h"
+
 #define GRAPH_COMMIT_COLOR	(-1)
 #define GRAPH_COLORS		14
 
@@ -45,7 +47,7 @@ struct graph {
 	const chtype *(*symbol_to_chtype)(const struct graph_symbol *symbol);
 };
 
-struct graph *init_graph(void);
+struct graph *init_graph(enum graph_display display);
 
 #endif
 
