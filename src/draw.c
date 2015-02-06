@@ -380,7 +380,7 @@ get_graph_color(int color_id)
 }
 
 static bool
-draw_graph_utf8(void *view, const struct graph_symbol *symbol, int color_id, bool first)
+draw_graph_utf8(void *view, const struct graph *graph, const struct graph_symbol *symbol, int color_id, bool first)
 {
 	const char *chars = graph_symbol_to_utf8(symbol);
 
@@ -388,7 +388,7 @@ draw_graph_utf8(void *view, const struct graph_symbol *symbol, int color_id, boo
 }
 
 static bool
-draw_graph_ascii(void *view, const struct graph_symbol *symbol, int color_id, bool first)
+draw_graph_ascii(void *view, const struct graph *graph, const struct graph_symbol *symbol, int color_id, bool first)
 {
 	const char *chars = graph_symbol_to_ascii(symbol);
 
@@ -396,7 +396,7 @@ draw_graph_ascii(void *view, const struct graph_symbol *symbol, int color_id, bo
 }
 
 static bool
-draw_graph_chtype(void *view, const struct graph_symbol *symbol, int color_id, bool first)
+draw_graph_chtype(void *view, const struct graph *graph, const struct graph_symbol *symbol, int color_id, bool first)
 {
 	const chtype *chars = graph_symbol_to_chtype(symbol);
 
@@ -404,7 +404,7 @@ draw_graph_chtype(void *view, const struct graph_symbol *symbol, int color_id, b
 }
 
 static bool
-draw_graph(struct view *view, const struct graph_canvas *canvas)
+draw_graph(struct view *view, const struct graph *graph, const struct graph_canvas *canvas)
 {
 	static const graph_symbol_iterator_fn fns[] = {
 		draw_graph_ascii,
@@ -412,17 +412,17 @@ draw_graph(struct view *view, const struct graph_canvas *canvas)
 		draw_graph_utf8
 	};
 
-	graph_foreach_symbol(canvas, fns[opt_line_graphics], view);
+	graph_foreach_symbol(graph, canvas, fns[opt_line_graphics], view);
 	return draw_text(view, LINE_DEFAULT, " ");
 }
 
 static bool
 draw_commit_title(struct view *view, struct view_column *column,
-		  const struct graph_canvas *graph, const struct ref *refs,
-		  const char *commit_title)
+		  const struct graph *graph, const struct graph_canvas *graph_canvas,
+		  const struct ref *refs, const char *commit_title)
 {
-	if (graph && column->opt.commit_title.graph &&
-	    draw_graph(view, graph))
+	if (graph && graph_canvas && column->opt.commit_title.graph &&
+	    draw_graph(view, graph, graph_canvas))
 		return TRUE;
 	if (draw_refs(view, column, refs))
 		return TRUE;
@@ -516,7 +516,7 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_COMMIT_TITLE:
-			if (draw_commit_title(view, column, column_data.graph,
+			if (draw_commit_title(view, column, column_data.graph, column_data.graph_canvas,
 					      column_data.refs, column_data.commit_title))
 				return TRUE;
 			continue;

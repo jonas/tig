@@ -177,7 +177,8 @@ struct view_column_data {
 	const struct time *date;
 	const char *file_name;
 	const unsigned long *file_size;
-	const struct graph_canvas *graph;
+	const struct graph *graph;
+	const struct graph_canvas *graph_canvas;
 	const char *id;
 	const unsigned long *line_number;
 	const mode_t *mode;

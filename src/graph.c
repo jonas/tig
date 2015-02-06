@@ -213,12 +213,17 @@ init_graph(void)
 }
 
 void
-done_graph(struct graph *graph)
+done_graph_rendering(struct graph *graph)
 {
 	free(graph->prev_row.columns);
 	free(graph->row.columns);
 	free(graph->next_row.columns);
 	free(graph->parents.columns);
+}
+
+void
+done_graph(struct graph *graph)
+{
 	free(graph);
 }
 
@@ -1067,7 +1072,8 @@ graph_symbol_to_ascii(const struct graph_symbol *symbol)
 }
 
 void
-graph_foreach_symbol(const struct graph_canvas *canvas, graph_symbol_iterator_fn fn, void *data)
+graph_foreach_symbol(const struct graph *graph, const struct graph_canvas *canvas,
+		     graph_symbol_iterator_fn fn, void *data)
 {
 	int i;
 
@@ -1075,7 +1081,7 @@ graph_foreach_symbol(const struct graph_canvas *canvas, graph_symbol_iterator_fn
 		struct graph_symbol *symbol = &canvas->symbols[i];
 		int color_id = symbol->commit ? GRAPH_COMMIT_COLOR : symbol->color;
 
-		if (fn(data, symbol, color_id, i == 0))
+		if (fn(data, graph, symbol, color_id, i == 0))
 			break;
 	}
 }

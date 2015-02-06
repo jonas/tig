@@ -273,6 +273,7 @@ main_done(struct view *view)
 
 		free(commit->graph.symbols);
 	}
+	done_graph(state->graph);
 
 	for (i = 0; i < state->reflogs; i++)
 		free(state->reflog[i]);
@@ -306,8 +307,10 @@ main_get_column_data(struct view *view, const struct line *line, struct view_col
 		column_data->reflog = state->reflog[line->lineno - 1];
 
 	column_data->commit_title = commit->title;
-	if (state->with_graph)
-		column_data->graph = &commit->graph;
+	if (state->with_graph) {
+		column_data->graph = state->graph;
+		column_data->graph_canvas = &commit->graph;
+	}
 
 	column_data->refs = main_get_commit_refs(line, commit);
 
@@ -366,10 +369,8 @@ main_read(struct view *view, struct buffer *buf)
 			}
 		}
 
-		if (state->graph) {
-			done_graph(graph);
-			state->graph = NULL;
-		}
+		if (state->graph)
+			done_graph_rendering(graph);
 		return TRUE;
 	}
 

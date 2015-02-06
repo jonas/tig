@@ -26,11 +26,12 @@ struct graph_canvas {
 
 struct graph;
 
-typedef bool (*graph_symbol_iterator_fn)(void *, const struct graph_symbol *, int color_id, bool);
-void graph_foreach_symbol(const struct graph_canvas *canvas, graph_symbol_iterator_fn fn, void *data);
+typedef bool (*graph_symbol_iterator_fn)(void *, const struct graph *graph, const struct graph_symbol *, int color_id, bool);
+void graph_foreach_symbol(const struct graph *graph, const struct graph_canvas *canvas, graph_symbol_iterator_fn fn, void *data);
 
 struct graph *init_graph(void);
 void done_graph(struct graph *graph);
+void done_graph_rendering(struct graph *graph);
 
 bool graph_render_parents(struct graph *graph, struct graph_canvas *canvas);
 bool graph_add_commit(struct graph *graph, struct graph_canvas *canvas,
