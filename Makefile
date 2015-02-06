@@ -200,6 +200,8 @@ COMPAT_OBJS += compat/hashtab.o
 
 override CPPFLAGS += $(COMPAT_CPPFLAGS)
 
+GRAPH_OBJS = src/graph.o src/graph-v2.o
+
 TIG_OBJS = \
 	src/tig.o \
 	src/types.o \
@@ -208,7 +210,6 @@ TIG_OBJS = \
 	src/map.o \
 	src/argv.o \
 	src/io.o \
-	src/graph.o \
 	src/refdb.o \
 	src/builtin-config.o \
 	src/request.o \
@@ -235,11 +236,12 @@ TIG_OBJS = \
 	src/main.o \
 	src/stash.o \
 	src/grep.o \
+	$(GRAPH_OBJS) \
 	$(COMPAT_OBJS)
 
 src/tig: $(TIG_OBJS)
 
-TEST_GRAPH_OBJS = test/tools/test-graph.o src/string.o src/util.o src/io.o src/graph.o $(COMPAT_OBJS)
+TEST_GRAPH_OBJS = test/tools/test-graph.o src/string.o src/util.o src/io.o $(GRAPH_OBJS) $(COMPAT_OBJS)
 test/tools/test-graph: $(TEST_GRAPH_OBJS)
 
 DOC_GEN_OBJS = tools/doc-gen.o src/string.o src/types.o src/util.o src/request.o
