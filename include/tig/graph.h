@@ -24,7 +24,9 @@ struct graph_canvas {
 	struct graph_symbol *symbols;	/* Symbols for this row. */
 };
 
-struct graph;
+struct graph {
+	void *private;
+};
 
 typedef bool (*graph_symbol_iterator_fn)(void *, const struct graph *graph, const struct graph_symbol *, int color_id, bool);
 void graph_foreach_symbol(const struct graph *graph, const struct graph_canvas *canvas, graph_symbol_iterator_fn fn, void *data);

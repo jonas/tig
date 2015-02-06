@@ -61,7 +61,8 @@ struct colors {
 	size_t count[GRAPH_COLORS];
 };
 
-struct graph {
+struct graph_v2 {
+	struct graph api;
 	struct graph_row row;
 	struct graph_row parents;
 	struct graph_row prev_row;
@@ -189,7 +190,7 @@ colors_init(struct colors *colors)
 }
 
 static size_t
-get_color(struct graph *graph, char *new_id)
+get_color(struct graph_v2 *graph, char *new_id)
 {
 	size_t color;
 
@@ -209,12 +210,23 @@ get_color(struct graph *graph, char *new_id)
 struct graph *
 init_graph(void)
 {
-	return calloc(1, sizeof(struct graph));
+	struct graph_v2 *graph = calloc(1, sizeof(*graph));
+	struct graph *api;
+
+	if (!graph)
+		return NULL;
+
+	api = &graph->api;
+	api->private = graph;
+
+	return api;
 }
 
 void
-done_graph_rendering(struct graph *graph)
+done_graph_rendering(struct graph *graph_ref)
 {
+	struct graph_v2 *graph = graph_ref->private;
+
 	free(graph->prev_row.columns);
 	free(graph->row.columns);
 	free(graph->next_row.columns);
@@ -222,8 +234,10 @@ done_graph_rendering(struct graph *graph)
 }
 
 void
-done_graph(struct graph *graph)
+done_graph(struct graph *graph_ref)
 {
+	struct graph_v2 *graph = graph_ref->private;
+
 	free(graph);
 }
 
@@ -259,7 +273,7 @@ graph_find_free_column(struct graph_row *row)
 }
 
 static struct graph_column *
-graph_insert_column(struct graph *graph, struct graph_row *row, size_t pos, const char *id)
+graph_insert_column(struct graph_v2 *graph, struct graph_row *row, size_t pos, const char *id)
 {
 	struct graph_column *column;
 
@@ -280,21 +294,23 @@ graph_insert_column(struct graph *graph, struct graph_row *row, size_t pos, cons
 }
 
 bool
-graph_add_parent(struct graph *graph, const char *parent)
+graph_add_parent(struct graph *graph_ref, const char *parent)
 {
+	struct graph_v2 *graph = graph_ref->private;
+
 	if (graph->has_parents)
 		return TRUE;
 	return graph_insert_column(graph, &graph->parents, graph->parents.size, parent) != NULL;
 }
 
 static bool
-graph_needs_expansion(struct graph *graph)
+graph_needs_expansion(struct graph_v2 *graph)
 {
 	return graph->position + graph->parents.size > graph->row.size;
 }
 
 static bool
-graph_expand(struct graph *graph)
+graph_expand(struct graph_v2 *graph)
 {
 	while (graph_needs_expansion(graph)) {
 		if (!graph_insert_column(graph, &graph->prev_row, graph->prev_row.size, ""))
@@ -311,14 +327,14 @@ graph_expand(struct graph *graph)
 }
 
 static bool
-graph_needs_collapsing(struct graph *graph)
+graph_needs_collapsing(struct graph_v2 *graph)
 {
 	return graph->row.size > 1
 	    && !graph_column_has_commit(&graph->row.columns[graph->row.size - 1]);
 }
 
 static bool
-graph_collapse(struct graph *graph)
+graph_collapse(struct graph_v2 *graph)
 {
 	while (graph_needs_collapsing(graph)) {
 		graph->prev_row.size--;
@@ -330,7 +346,7 @@ graph_collapse(struct graph *graph)
 }
 
 static void
-graph_canvas_append_symbol(struct graph *graph, struct graph_canvas *canvas, struct graph_symbol *symbol)
+graph_canvas_append_symbol(struct graph_v2 *graph, struct graph_canvas *canvas, struct graph_symbol *symbol)
 {
 	if (realloc_graph_symbols(&canvas->symbols, canvas->size, 1))
 		canvas->symbols[canvas->size++] = *symbol;
@@ -349,7 +365,7 @@ graph_row_clear_commit(struct graph_row *row, const char *id)
 }
 
 static void
-graph_insert_parents(struct graph *graph)
+graph_insert_parents(struct graph_v2 *graph)
 {
 	struct graph_row *prev_row = &graph->prev_row;
 	struct graph_row *row = &graph->row;
@@ -390,7 +406,7 @@ commit_is_in_row(const char *id, struct graph_row *row)
 }
 
 static void
-graph_remove_collapsed_columns(struct graph *graph)
+graph_remove_collapsed_columns(struct graph_v2 *graph)
 {
 	struct graph_row *row = &graph->next_row;
 	int i;
@@ -417,7 +433,7 @@ graph_remove_collapsed_columns(struct graph *graph)
 }
 
 static void
-graph_fill_empty_columns(struct graph *graph)
+graph_fill_empty_columns(struct graph_v2 *graph)
 {
 	struct graph_row *row = &graph->next_row;
 	int i;
@@ -430,7 +446,7 @@ graph_fill_empty_columns(struct graph *graph)
 }
 
 static void
-graph_generate_next_row(struct graph *graph)
+graph_generate_next_row(struct graph_v2 *graph)
 {
 	graph_row_clear_commit(&graph->next_row, graph->id);
 	graph_insert_parents(graph);
@@ -453,7 +469,7 @@ commits_in_row(struct graph_row *row)
 }
 
 static void
-graph_commit_next_row(struct graph *graph)
+graph_commit_next_row(struct graph_v2 *graph)
 {
 	int i;
 
@@ -622,7 +638,7 @@ flanked(struct graph_row *row, int pos, int commit_pos, const char *commit_id)
 }
 
 static bool
-below_commit(int pos, struct graph *graph)
+below_commit(int pos, struct graph_v2 *graph)
 {
 	if (!pos == graph->prev_position)
 		return false;
@@ -634,7 +650,7 @@ below_commit(int pos, struct graph *graph)
 }
 
 static void
-graph_generate_symbols(struct graph *graph, struct graph_canvas *canvas)
+graph_generate_symbols(struct graph_v2 *graph, struct graph_canvas *canvas)
 {
 	struct graph_row *prev_row = &graph->prev_row;
 	struct graph_row *row = &graph->row;
@@ -685,10 +701,12 @@ graph_generate_symbols(struct graph *graph, struct graph_canvas *canvas)
 }
 
 bool
-graph_render_parents(struct graph *graph, struct graph_canvas *canvas)
+graph_render_parents(struct graph *graph_ref, struct graph_canvas *canvas)
 {
+	struct graph_v2 *graph = graph_ref->private;
+
 	if (graph->parents.size == 0 &&
-	    !graph_add_parent(graph, ""))
+	    !graph_add_parent(graph_ref, ""))
 		return FALSE;
 
 	if (!graph_expand(graph))
@@ -707,9 +725,10 @@ graph_render_parents(struct graph *graph, struct graph_canvas *canvas)
 }
 
 bool
-graph_add_commit(struct graph *graph, struct graph_canvas *canvas,
+graph_add_commit(struct graph *graph_ref, struct graph_canvas *canvas,
 		 const char *id, const char *parents, bool is_boundary)
 {
+	struct graph_v2 *graph = graph_ref->private;
 	int has_parents = 0;
 
 	graph->position = graph_find_column_by_id(&graph->row, id);
@@ -719,7 +738,7 @@ graph_add_commit(struct graph *graph, struct graph_canvas *canvas,
 
 	while ((parents = strchr(parents, ' '))) {
 		parents++;
-		if (!graph_add_parent(graph, parents))
+		if (!graph_add_parent(graph_ref, parents))
 			return FALSE;
 		has_parents++;
 	}
