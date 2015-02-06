@@ -26,7 +26,7 @@ struct graph_canvas {
 
 struct graph;
 
-typedef bool (*graph_symbol_iterator_fn)(void *, struct graph_symbol *, int color_id, bool);
+typedef bool (*graph_symbol_iterator_fn)(void *, const struct graph_symbol *, int color_id, bool);
 void graph_foreach_symbol(const struct graph_canvas *canvas, graph_symbol_iterator_fn fn, void *data);
 
 struct graph *init_graph(void);
@@ -37,9 +37,9 @@ bool graph_add_commit(struct graph *graph, struct graph_canvas *canvas,
 		      const char *id, const char *parents, bool is_boundary);
 bool graph_add_parent(struct graph *graph, const char *parent);
 
-const char *graph_symbol_to_ascii(struct graph_symbol *symbol);
-const char *graph_symbol_to_utf8(struct graph_symbol *symbol);
-const chtype *graph_symbol_to_chtype(struct graph_symbol *symbol);
+const char *graph_symbol_to_ascii(const struct graph_symbol *symbol);
+const char *graph_symbol_to_utf8(const struct graph_symbol *symbol);
+const chtype *graph_symbol_to_chtype(const struct graph_symbol *symbol);
 
 #endif
 

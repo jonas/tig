@@ -30,7 +30,7 @@ struct commit {
 
 DEFINE_ALLOCATOR(realloc_commits, struct commit *, 8)
 
-static const char *(*graph_fn)(struct graph_symbol *) = graph_symbol_to_utf8;
+static const char *(*graph_fn)(const struct graph_symbol *) = graph_symbol_to_utf8;
 
 static bool
 print_symbol(void *__, struct graph_symbol *symbol, int color_id, bool first)

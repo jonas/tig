@@ -380,7 +380,7 @@ get_graph_color(int color_id)
 }
 
 static bool
-draw_graph_utf8(void *view, struct graph_symbol *symbol, int color_id, bool first)
+draw_graph_utf8(void *view, const struct graph_symbol *symbol, int color_id, bool first)
 {
 	const char *chars = graph_symbol_to_utf8(symbol);
 
@@ -388,7 +388,7 @@ draw_graph_utf8(void *view, struct graph_symbol *symbol, int color_id, bool firs
 }
 
 static bool
-draw_graph_ascii(void *view, struct graph_symbol *symbol, int color_id, bool first)
+draw_graph_ascii(void *view, const struct graph_symbol *symbol, int color_id, bool first)
 {
 	const char *chars = graph_symbol_to_ascii(symbol);
 
@@ -396,7 +396,7 @@ draw_graph_ascii(void *view, struct graph_symbol *symbol, int color_id, bool fir
 }
 
 static bool
-draw_graph_chtype(void *view, struct graph_symbol *symbol, int color_id, bool first)
+draw_graph_chtype(void *view, const struct graph_symbol *symbol, int color_id, bool first)
 {
 	const chtype *chars = graph_symbol_to_chtype(symbol);
 
