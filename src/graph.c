@@ -207,22 +207,7 @@ get_color(struct graph_v2 *graph, char *new_id)
 	return color;
 }
 
-struct graph *
-init_graph(void)
-{
-	struct graph_v2 *graph = calloc(1, sizeof(*graph));
-	struct graph *api;
-
-	if (!graph)
-		return NULL;
-
-	api = &graph->api;
-	api->private = graph;
-
-	return api;
-}
-
-void
+static void
 done_graph_rendering(struct graph *graph_ref)
 {
 	struct graph_v2 *graph = graph_ref->private;
@@ -233,7 +218,7 @@ done_graph_rendering(struct graph *graph_ref)
 	free(graph->parents.columns);
 }
 
-void
+static void
 done_graph(struct graph *graph_ref)
 {
 	struct graph_v2 *graph = graph_ref->private;
@@ -293,7 +278,7 @@ graph_insert_column(struct graph_v2 *graph, struct graph_row *row, size_t pos, c
 	return column;
 }
 
-bool
+static bool
 graph_add_parent(struct graph *graph_ref, const char *parent)
 {
 	struct graph_v2 *graph = graph_ref->private;
@@ -700,7 +685,7 @@ graph_generate_symbols(struct graph_v2 *graph, struct graph_canvas *canvas)
 	colors_remove_id(&graph->colors, graph->id);
 }
 
-bool
+static bool
 graph_render_parents(struct graph *graph_ref, struct graph_canvas *canvas)
 {
 	struct graph_v2 *graph = graph_ref->private;
@@ -724,7 +709,7 @@ graph_render_parents(struct graph *graph_ref, struct graph_canvas *canvas)
 	return TRUE;
 }
 
-bool
+static bool
 graph_add_commit(struct graph *graph_ref, struct graph_canvas *canvas,
 		 const char *id, const char *parents, bool is_boundary)
 {
@@ -935,7 +920,7 @@ graph_symbol_multi_branch(const struct graph_symbol *symbol)
 	return false;
 }
 
-const char *
+static const char *
 graph_symbol_to_utf8(const struct graph_symbol *symbol)
 {
 	if (symbol->commit) {
@@ -981,7 +966,7 @@ graph_symbol_to_utf8(const struct graph_symbol *symbol)
 	return "  ";
 }
 
-const chtype *
+static const chtype *
 graph_symbol_to_chtype(const struct graph_symbol *symbol)
 {
 	static chtype graphics[2];
@@ -1044,7 +1029,7 @@ graph_symbol_to_chtype(const struct graph_symbol *symbol)
 	return graphics;
 }
 
-const char *
+static const char *
 graph_symbol_to_ascii(const struct graph_symbol *symbol)
 {
 	if (symbol->commit) {
@@ -1090,7 +1075,7 @@ graph_symbol_to_ascii(const struct graph_symbol *symbol)
 	return "  ";
 }
 
-void
+static void
 graph_foreach_symbol(const struct graph *graph, const struct graph_canvas *canvas,
 		     graph_symbol_iterator_fn fn, void *data)
 {
@@ -1103,6 +1088,30 @@ graph_foreach_symbol(const struct graph *graph, const struct graph_canvas *canva
 		if (fn(data, graph, symbol, color_id, i == 0))
 			break;
 	}
+}
+
+struct graph *
+init_graph(void)
+{
+	struct graph_v2 *graph = calloc(1, sizeof(*graph));
+	struct graph *api;
+
+	if (!graph)
+		return NULL;
+
+	api = &graph->api;
+	api->private = graph;
+	api->done = done_graph;
+	api->done_rendering = done_graph_rendering;
+	api->add_commit = graph_add_commit;
+	api->add_parent = graph_add_parent;
+	api->render_parents = graph_render_parents;
+	api->foreach_symbol = graph_foreach_symbol;
+	api->symbol_to_ascii = graph_symbol_to_ascii;
+	api->symbol_to_utf8 = graph_symbol_to_utf8;
+	api->symbol_to_chtype = graph_symbol_to_chtype;
+
+	return api;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

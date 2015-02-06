@@ -37,6 +37,7 @@ static void
 main_register_commit(struct view *view, struct commit *commit, const char *ids, bool is_boundary)
 {
 	struct main_state *state = view->private;
+	struct graph *graph = state->graph;
 
 	string_copy_rev(commit->id, ids);
 
@@ -47,7 +48,7 @@ main_register_commit(struct view *view, struct commit *commit, const char *ids, 
 	}
 
 	if (state->with_graph)
-		graph_add_commit(state->graph, &commit->graph, commit->id, ids, is_boundary);
+		graph->add_commit(graph, &commit->graph, commit->id, ids, is_boundary);
 }
 
 static struct commit *
@@ -91,6 +92,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 {
 	char ids[SIZEOF_STR] = NULL_ID " ";
 	struct main_state *state = view->private;
+	struct graph *graph = state->graph;
 	struct commit commit = {};
 	struct timeval now;
 	struct timezone tz;
@@ -111,7 +113,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 	commit.author = &unknown_ident;
 	main_register_commit(view, &commit, ids, FALSE);
 	if (state->with_graph && *parent)
-		graph_render_parents(state->graph, &commit.graph);
+		graph->render_parents(graph, &commit.graph);
 
 	if (!main_add_commit(view, type, &commit, title, TRUE))
 		return FALSE;
@@ -273,7 +275,9 @@ main_done(struct view *view)
 
 		free(commit->graph.symbols);
 	}
-	done_graph(state->graph);
+
+	if (state->graph)
+		state->graph->done(state->graph);
 
 	for (i = 0; i < state->reflogs; i++)
 		free(state->reflog[i]);
@@ -370,7 +374,7 @@ main_read(struct view *view, struct buffer *buf)
 		}
 
 		if (state->graph)
-			done_graph_rendering(graph);
+			state->graph->done_rendering(graph);
 		return TRUE;
 	}
 
@@ -405,7 +409,7 @@ main_read(struct view *view, struct buffer *buf)
 
 			parse_author_line(author, &commit->author, &commit->time);
 			if (state->with_graph)
-				graph_render_parents(graph, &commit->graph);
+				graph->render_parents(graph, &commit->graph);
 			if (title)
 				main_add_commit(view, LINE_MAIN_COMMIT, commit, title, FALSE);
 		}
@@ -433,14 +437,14 @@ main_read(struct view *view, struct buffer *buf)
 
 	case LINE_PARENT:
 		if (state->with_graph)
-			graph_add_parent(graph, line + STRING_SIZE("parent "));
+			graph->add_parent(graph, line + STRING_SIZE("parent "));
 		break;
 
 	case LINE_AUTHOR:
 		parse_author_line(line + STRING_SIZE("author "),
 				  &commit->author, &commit->time);
 		if (state->with_graph)
-			graph_render_parents(graph, &commit->graph);
+			graph->render_parents(graph, &commit->graph);
 		break;
 
 	default:

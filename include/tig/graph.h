@@ -17,6 +17,7 @@
 #define GRAPH_COMMIT_COLOR	(-1)
 #define GRAPH_COLORS		14
 
+struct graph;
 struct graph_symbol;
 
 struct graph_canvas {
@@ -24,25 +25,27 @@ struct graph_canvas {
 	struct graph_symbol *symbols;	/* Symbols for this row. */
 };
 
+typedef bool (*graph_symbol_iterator_fn)(void *, const struct graph *graph, const struct graph_symbol *, int color_id, bool);
+
 struct graph {
 	void *private;
+
+	void (*done)(struct graph *graph);
+	void (*done_rendering)(struct graph *graph);
+
+	bool (*add_commit)(struct graph *graph, struct graph_canvas *canvas,
+			   const char *id, const char *parents, bool is_boundary);
+	bool (*add_parent)(struct graph *graph, const char *parent);
+	bool (*render_parents)(struct graph *graph, struct graph_canvas *canvas);
+
+	void (*foreach_symbol)(const struct graph *graph, const struct graph_canvas *canvas, graph_symbol_iterator_fn fn, void *data);
+
+	const char *(*symbol_to_ascii)(const struct graph_symbol *symbol);
+	const char *(*symbol_to_utf8)(const struct graph_symbol *symbol);
+	const chtype *(*symbol_to_chtype)(const struct graph_symbol *symbol);
 };
 
-typedef bool (*graph_symbol_iterator_fn)(void *, const struct graph *graph, const struct graph_symbol *, int color_id, bool);
-void graph_foreach_symbol(const struct graph *graph, const struct graph_canvas *canvas, graph_symbol_iterator_fn fn, void *data);
-
 struct graph *init_graph(void);
-void done_graph(struct graph *graph);
-void done_graph_rendering(struct graph *graph);
-
-bool graph_render_parents(struct graph *graph, struct graph_canvas *canvas);
-bool graph_add_commit(struct graph *graph, struct graph_canvas *canvas,
-		      const char *id, const char *parents, bool is_boundary);
-bool graph_add_parent(struct graph *graph, const char *parent);
-
-const char *graph_symbol_to_ascii(const struct graph_symbol *symbol);
-const char *graph_symbol_to_utf8(const struct graph_symbol *symbol);
-const chtype *graph_symbol_to_chtype(const struct graph_symbol *symbol);
 
 #endif
 

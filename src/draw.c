@@ -382,7 +382,7 @@ get_graph_color(int color_id)
 static bool
 draw_graph_utf8(void *view, const struct graph *graph, const struct graph_symbol *symbol, int color_id, bool first)
 {
-	const char *chars = graph_symbol_to_utf8(symbol);
+	const char *chars = graph->symbol_to_utf8(symbol);
 
 	return draw_text(view, get_graph_color(color_id), chars + !!first);
 }
@@ -390,7 +390,7 @@ draw_graph_utf8(void *view, const struct graph *graph, const struct graph_symbol
 static bool
 draw_graph_ascii(void *view, const struct graph *graph, const struct graph_symbol *symbol, int color_id, bool first)
 {
-	const char *chars = graph_symbol_to_ascii(symbol);
+	const char *chars = graph->symbol_to_ascii(symbol);
 
 	return draw_text(view, get_graph_color(color_id), chars + !!first);
 }
@@ -398,7 +398,7 @@ draw_graph_ascii(void *view, const struct graph *graph, const struct graph_symbo
 static bool
 draw_graph_chtype(void *view, const struct graph *graph, const struct graph_symbol *symbol, int color_id, bool first)
 {
-	const chtype *chars = graph_symbol_to_chtype(symbol);
+	const chtype *chars = graph->symbol_to_chtype(symbol);
 
 	return draw_graphic(view, get_graph_color(color_id), chars + !!first, 2 - !!first, FALSE);
 }
@@ -412,7 +412,7 @@ draw_graph(struct view *view, const struct graph *graph, const struct graph_canv
 		draw_graph_utf8
 	};
 
-	graph_foreach_symbol(graph, canvas, fns[opt_line_graphics], view);
+	graph->foreach_symbol(graph, canvas, fns[opt_line_graphics], view);
 	return draw_text(view, LINE_DEFAULT, " ");
 }
 

@@ -30,7 +30,7 @@ struct commit {
 
 DEFINE_ALLOCATOR(realloc_commits, struct commit *, 8)
 
-static const char *(*graph_fn)(const struct graph_symbol *) = graph_symbol_to_utf8;
+static const char *(*graph_fn)(const struct graph_symbol *);
 
 static bool
 print_symbol(void *__, const struct graph *graph, const struct graph_symbol *symbol, int color_id, bool first)
@@ -44,7 +44,7 @@ print_symbol(void *__, const struct graph *graph, const struct graph_symbol *sym
 static void
 print_commit(struct graph *graph, struct commit *commit, const char *title)
 {
-	graph_foreach_symbol(graph, &commit->canvas, print_symbol, NULL);
+	graph->foreach_symbol(graph, &commit->canvas, print_symbol, NULL);
 	printf(" %s\n", title);
 }
 
@@ -59,15 +59,18 @@ main(int argc, const char *argv[])
 	struct commit *commit = NULL;
 	bool is_boundary;
 
-	if (argc > 1 && !strcmp(argv[1], "--ascii"))
-		graph_fn = graph_symbol_to_ascii;
-
 	if (isatty(STDIN_FILENO)) {
 		die(USAGE);
 	}
 
 	if (!(graph = init_graph()))
 		die("Failed to allocated graph");
+
+	if (argc > 1 && !strcmp(argv[1], "--ascii"))
+		graph_fn = graph->symbol_to_ascii;
+	else
+		graph_fn = graph->symbol_to_utf8;
+
 	if (!io_open(&io, "%s", ""))
 		die("IO");
 
@@ -90,8 +93,8 @@ main(int argc, const char *argv[])
 					die("Commit");
 				commits[ncommits++] = commit;
 				string_copy_rev(commit->id, line);
-				graph_add_commit(graph, &commit->canvas, commit->id, line, is_boundary);
-				graph_render_parents(graph, &commit->canvas);
+				graph->add_commit(graph, &commit->canvas, commit->id, line, is_boundary);
+				graph->render_parents(graph, &commit->canvas);
 
 				if ((line = io_memchr(&buf, line, 0))) {
 					print_commit(graph, commit, line);
