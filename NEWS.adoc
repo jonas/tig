@@ -19,6 +19,7 @@ Improvements:
  - Show the file path in the blob view when available.
  - Speed up the diff view in large repos by loading git-describe info after the
    diff content has been read. (GH #324)
+ - Add the old graph rendering as an option. (GH #310, #324)
 
 Bug fixes:
 

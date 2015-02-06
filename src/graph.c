@@ -14,11 +14,14 @@
 #include "tig/tig.h"
 #include "tig/graph.h"
 
+struct graph *init_graph_v1(void);
 struct graph *init_graph_v2(void);
 
 struct graph *
 init_graph(enum graph_display display)
 {
+	if (display == GRAPH_DISPLAY_V1)
+		return init_graph_v1();
 	if (display == GRAPH_DISPLAY_V2 || display == GRAPH_DISPLAY_NO_TOPO)
 		return init_graph_v2();
 	return NULL;

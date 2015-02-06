@@ -200,7 +200,7 @@ COMPAT_OBJS += compat/hashtab.o
 
 override CPPFLAGS += $(COMPAT_CPPFLAGS)
 
-GRAPH_OBJS = src/graph.o src/graph-v2.o
+GRAPH_OBJS = src/graph.o src/graph-v1.o src/graph-v2.o
 
 TIG_OBJS = \
 	src/tig.o \

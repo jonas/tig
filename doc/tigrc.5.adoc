@@ -380,9 +380,11 @@ author::
 	  When set to zero, the width is automatically sized to fit the content.
 
 commit-title::
-	- 'graph' (mixed) [no|v2|no-topo]: Whether to show the revision graph
+	- 'graph' (mixed) [no|v2|v1|no-topo]: Whether to show the revision graph
 	  in the main view on start-up. If set to "no-topo" topo-order is not
-	  automatically enabled. See also the 'line-graphics' options.
+	  automatically enabled. "v1" refers to the old graph rendering, which
+	  is less accurate but faster and thus recommended in large repositories.
+	  See also the 'line-graphics' options.
 	- 'refs' (bool): Whether to show references (branches, tags, and
 	  remotes) in the main view. Can be toggled.
 	- 'overflow' (bool or int): Whether to highlight text in commit titles
