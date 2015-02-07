@@ -22,6 +22,8 @@ Improvements:
  - Add the old graph rendering as an option. (GH #310, #324)
  - Add `main-options` setting for specifying default main view options.
    Example: `set main-options = --max-count=1000`. (GH #368)
+ - See `contrib/large-repo.tigrc` for settings that will help to speed up Tig in
+   large repos. (GH #368)
 
 Bug fixes:
 
