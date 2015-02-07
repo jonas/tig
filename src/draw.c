@@ -342,7 +342,7 @@ draw_refs(struct view *view, struct view_column *column, const struct ref *refs)
 	for (; refs; refs = refs->next) {
 		const struct ref *ref = refs;
 		enum line_type type = get_line_type_from_ref(ref);
-		const struct ref_format *format = get_ref_format(ref);
+		const struct ref_format *format = get_ref_format(opt_reference_format, ref);
 
 		if (!strcmp(format->start, "hide:") && !*format->end)
 			continue;

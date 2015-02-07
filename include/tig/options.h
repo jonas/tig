@@ -23,6 +23,7 @@
  */
 
 typedef const char **view_settings;
+struct ref_format;
 
 #define OPTION_INFO(_) \
 	_(blame_options,		const char **,		VIEW_BLAME_LIKE) \
@@ -51,6 +52,7 @@ typedef const char **view_settings;
 	_(mouse,			bool,			VIEW_NO_FLAGS) \
 	_(mouse_scroll,			int,			VIEW_NO_FLAGS) \
 	_(pager_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(reference_format,		struct ref_format **,	VIEW_NO_FLAGS) \
 	_(refresh_interval,		int,			VIEW_NO_FLAGS) \
 	_(refresh_mode,			enum refresh_mode,	VIEW_NO_FLAGS) \
 	_(refs_view,			view_settings,		VIEW_NO_FLAGS) \

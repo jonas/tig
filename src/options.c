@@ -649,9 +649,6 @@ option_set_command(int argc, const char *argv[])
 	if (strcmp(argv[1], "="))
 		return error("No value assigned to %s", argv[0]);
 
-	if (!strcmp(argv[0], "reference-format"))
-		return parse_ref_formats(argv + 2);
-
 	option = find_option_info(option_info, ARRAY_SIZE(option_info), "", argv[0]);
 	if (option) {
 		if (option->seen)
@@ -659,6 +656,9 @@ option_set_command(int argc, const char *argv[])
 
 		if (!strcmp(option->type, "view_settings"))
 			return parse_view_settings(argv[0], argv + 2);
+
+		if (!strcmp(option->type, "struct ref_format **"))
+			return parse_ref_formats(option->value, argv + 2);
 
 		if (!strcmp(option->type, "const char **"))
 			return parse_args(option->value, argv + 2);

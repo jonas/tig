@@ -49,7 +49,7 @@ add_pager_refs(struct view *view, const char *commit_id)
 
 	for (; list; list = list->next) {
 		const struct ref *ref = list;
-		const struct ref_format *fmt = get_ref_format(ref);
+		const struct ref_format *fmt = get_ref_format(opt_reference_format, ref);
 
 		if (!string_format_from(buf, &bufpos, "%s%s%s%s", sep,
 					fmt->start, ref->name, fmt->end))

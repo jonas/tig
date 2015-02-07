@@ -330,10 +330,8 @@ refs_contain_tag(void)
 	return refs_tags > 0;
 }
 
-static struct ref_format **ref_formats;
-
 const struct ref_format *
-get_ref_format(const struct ref *ref)
+get_ref_format(struct ref_format **ref_formats, const struct ref *ref)
 {
 	static const struct ref_format default_format = { "", "" };
 
@@ -354,7 +352,7 @@ get_ref_format(const struct ref *ref)
 }
 
 static enum status_code
-parse_ref_format_arg(const char *arg, const struct enum_map *map)
+parse_ref_format_arg(struct ref_format **ref_formats, const char *arg, const struct enum_map *map)
 {
 	size_t arglen = strlen(arg);
 	const char *pos;
@@ -391,19 +389,19 @@ parse_ref_format_arg(const char *arg, const struct enum_map *map)
 }
 
 enum status_code
-parse_ref_formats(const char *argv[])
+parse_ref_formats(struct ref_format ***formats, const char *argv[])
 {
 	const struct enum_map *map = reference_type_map;
 	int argc;
 
-	if (!ref_formats) {
-		ref_formats = calloc(reference_type_map->size, sizeof(struct ref_format *));
-		if (!ref_formats)
+	if (!*formats) {
+		*formats = calloc(reference_type_map->size, sizeof(struct ref_format *));
+		if (!*formats)
 			return ERROR_OUT_OF_MEMORY;
 	}
 
 	for (argc = 0; argv[argc]; argc++) {
-		enum status_code code = parse_ref_format_arg(argv[argc], map);
+		enum status_code code = parse_ref_format_arg(*formats, argv[argc], map);
 		if (code != SUCCESS)
 			return code;
 	}
