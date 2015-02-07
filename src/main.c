@@ -220,11 +220,11 @@ main_open(struct view *view, enum open_flags flags)
 	enum graph_display graph_display = main_with_graph(view, commit_title_column, flags);
 	const char *pretty_custom_argv[] = {
 		GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg_with_graph(graph_display),
-			"%(cmdlineargs)", "%(revargs)", "%(fileargs)")
+			"%(mainargs)", "%(cmdlineargs)", "%(revargs)", "%(fileargs)")
 	};
 	const char *pretty_raw_argv[] = {
 		GIT_MAIN_LOG_RAW(encoding_arg, commit_order_arg_with_graph(graph_display),
-			"%(cmdlineargs)", "%(revargs)", "%(fileargs)")
+			"%(mainargs)", "%(cmdlineargs)", "%(revargs)", "%(fileargs)")
 	};
 	struct main_state *state = view->private;
 	const char **main_argv = pretty_custom_argv;

@@ -64,11 +64,15 @@ refs_request(struct view *view, enum request request, struct line *line)
 	{
 		const struct ref *ref = reference->ref;
 		const char *all_references_argv[] = {
-			GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg(), "",
+			GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg(),
+				"%(mainargs)", "",
 				refs_is_all(reference) ? "--all" : ref->name, "")
 		};
 
-		open_argv(view, &main_view, all_references_argv, NULL, OPEN_SPLIT);
+		if (!argv_format(main_view.env, &main_view.argv, all_references_argv, FALSE, FALSE))
+			report("Failed to format argument");
+		else
+			open_view(view, &main_view, OPEN_SPLIT | OPEN_PREPARED);
 		return REQ_NONE;
 	}
 	default:

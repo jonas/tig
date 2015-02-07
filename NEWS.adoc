@@ -20,6 +20,8 @@ Improvements:
  - Speed up the diff view in large repos by loading git-describe info after the
    diff content has been read. (GH #324)
  - Add the old graph rendering as an option. (GH #310, #324)
+ - Add `main-options` setting for specifying default main view options.
+   Example: `set main-options = --max-count=1000`. (GH #368)
 
 Bug fixes:
 

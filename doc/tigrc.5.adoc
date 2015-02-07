@@ -147,10 +147,23 @@ The following variables can be set:
 
 'blame-options' (string)::
 
-	A space separated string of extra blame options. Can be used for
-	telling git-blame(1) how to detect the origin of lines. The value
-	is ignored when Tig is started in blame mode and given blame options
+	A space separated string of default blame options. Can be used for
+	telling git-blame(1) how to detect the origin of lines. The options
+	are ignored when Tig is started in blame mode and given blame options
 	on the command line.
+
+'log-options' (string)::
+
+	A space separated string of default options that should be passed to the
+	git-log(1) command used by the log view. Options can be overridden by
+	command line options. Used internally override custom `pretty.format'
+	settings that break the log view.
+
+'main-options' (string)::
+
+	A space separated string of default options that should be passed to the
+	git-log(1) command used by the main view. Options can be overridden by
+	command line options.
 
 'reference-format' (string)::
 
@@ -592,7 +605,11 @@ following variable names, which are substituted before commands are run:
 |%(revargs)		|The revision arguments passed on the command line.
 |%(fileargs)		|The file arguments passed on the command line.
 |%(cmdlineargs)		|All other options passed on the command line.
-|%(diffargs)		|The diff options from 'diff-options' or 'TIG_DIFF_OPTS'
+|%(diffargs)		|Options from 'diff-options' or 'TIG_DIFF_OPTS' used
+			 used by the diff view.
+|%(blameargs)		|Options from 'blame-options' used by the blame view.
+|%(logargs)		|Options from 'log-options' used by the log view.
+|%(mainargs)		|Options from 'main-options' used by the main view.
 |%(prompt)		|Prompt for the argument value. Optionally specify a
 			 custom prompt using `"%(prompt Enter branch name: )"`
 |=============================================================================

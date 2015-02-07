@@ -46,6 +46,7 @@ typedef const char **view_settings;
 	_(line_graphics,		enum graphic,		VIEW_NO_FLAGS) \
 	_(log_options,			const char **,		VIEW_LOG_LIKE) \
 	_(log_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(main_options,			const char **,		VIEW_LOG_LIKE) \
 	_(main_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(mouse,			bool,			VIEW_NO_FLAGS) \
 	_(mouse_scroll,			int,			VIEW_NO_FLAGS) \
