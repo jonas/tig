@@ -30,6 +30,10 @@ The hash mark ('#') is used as a 'comment' character. All text after the
 comment character to the end of the line is ignored. You can use comments to
 annotate your initialization file.
 
+Certain options can be manipulated at runtime via the option menu. In
+addition, options can also be toggled with the `:toggle` prompt command
+or by entering the configuration command into the prompt.
+
 Git configuration
 -----------------
 
@@ -469,7 +473,8 @@ option name as the prefix followed by a dash and the column name. E.g.
 `:toggle author-display` will toggle the 'display' option in the 'author'
 column. For all other options use the column name followed by a dash and
 then the option name as the suffix. E.g. `:toggle commit-title-graph`
-will toggle the 'graph' option in the 'commit-title' column.
+will toggle the 'graph' option in the 'commit-title' column. Alternatively,
+use the option menu to manipulate options.
 
 Bind command
 ------------
@@ -751,10 +756,10 @@ Cursor navigation
 |=============================================================================
 |move-up                 |Move cursor one line up
 |move-down               |Move cursor one line down
-|move-page-up            |Move cursor one page up
 |move-page-down          |Move cursor one page down
-|move-half-page-up       |Move cursor half a page up
+|move-page-up            |Move cursor half a page up
 |move-half-page-down     |Move cursor half a page down
+|move-half-page-up       |Move cursor one page up
 |move-first-line         |Move cursor to first line
 |move-last-line          |Move cursor to last line
 |=============================================================================
@@ -784,17 +789,6 @@ Searching
 |find-prev               |Find previous search match
 |=============================================================================
 
-Option manipulation
-^^^^^^^^^^^^^^^^^^^
-
-In addition to the actions below, options can also be toggled with the
-`:toggle` prompt command.
-
-[frame="none",grid="none",cols="25<m,75<"]
-|=============================================================================
-|options                 |Open the options menu
-|=============================================================================
-
 Misc
 ^^^^
 
@@ -802,6 +796,7 @@ Misc
 |=============================================================================
 |edit                    |Open in editor
 |prompt                  |Open the prompt
+|options                 |Open the options menu
 |screen-redraw           |Redraw the screen
 |stop-loading            |Stop all loading views
 |show-version            |Show version information

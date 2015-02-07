@@ -70,12 +70,10 @@
 	REQ_(FIND_NEXT,		"Find next search match"), \
 	REQ_(FIND_PREV,		"Find previous search match"), \
 	\
-	REQ_GROUP("Option manipulation") \
-	REQ_(OPTIONS,		"Open the options menu"), \
-	\
 	REQ_GROUP("Misc") \
 	REQ_(EDIT,		"Open in editor"), \
 	REQ_(PROMPT,		"Open the prompt"), \
+	REQ_(OPTIONS,		"Open the options menu"), \
 	REQ_(SCREEN_REDRAW,	"Redraw the screen"), \
 	REQ_(STOP_LOADING,	"Stop all loading views"), \
 	REQ_(SHOW_VERSION,	"Show version information"), \
