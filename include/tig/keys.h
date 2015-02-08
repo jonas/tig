@@ -79,6 +79,7 @@ struct run_request {
 struct run_request *get_run_request(enum request request);
 enum status_code add_run_request(struct keymap *keymap, const struct key key[], size_t keys, const char **argv);
 enum status_code parse_run_request_flags(struct run_request_flags *flags, const char **argv);
+const char *format_run_request_flags(const struct run_request *req);
 
 typedef bool (*key_visitor_fn)(void *data, const char *group, struct keymap *keymap,
 			       enum request request, const char *key,

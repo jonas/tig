@@ -50,22 +50,11 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 	} else if (help->request > REQ_RUN_REQUESTS) {
 		struct run_request *req = get_run_request(help->request);
 		const char *key = get_keys(keymap, help->request, TRUE);
-		char flags[8] = { req->flags.internal ? ':' : '!', 0 };
-		const char *sep = flags;
-		int flagspos = req->flags.internal ? 1 : 0;
+		const char *sep = format_run_request_flags(req);
 		int i;
 
 		if (draw_field(view, LINE_DEFAULT, key, state->keys_width + 2, ALIGN_RIGHT, FALSE))
 			return TRUE;
-
-		if (req->flags.silent)
-			flags[flagspos++] = '@';
-		if (req->flags.confirm)
-			flags[flagspos++] = '?';
-		if (req->flags.exit)
-			flags[flagspos++] = '<';
-		if (flagspos > 1)
-			flags[flagspos++] = 0;
 
 		for (i = 0; req->argv[i]; i++) {
 			if (draw_formatted(view, LINE_HELP_ACTION, "%s%s", sep, req->argv[i]))

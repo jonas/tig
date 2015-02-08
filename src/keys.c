@@ -453,6 +453,28 @@ get_run_request(enum request request)
 	return &run_request[request - REQ_RUN_REQUESTS - 1];
 }
 
+const char *
+format_run_request_flags(const struct run_request *req)
+{
+	static char flags[8];
+	int flagspos = 0;
+
+	if (req->flags.internal)
+		flags[flagspos++] = ':';
+	else
+		flags[flagspos] = '!'; /* Optional, if other flags are defined */
+
+	if (req->flags.silent)
+	    flags[flagspos++] = '@';
+	if (req->flags.confirm)
+	    flags[flagspos++] = '?';
+	if (req->flags.exit)
+		flags[flagspos++] = '<';
+	if (flagspos > 1)
+		flags[flagspos++] = 0;
+
+	return flags;
+}
 
 struct key_visitor_state {
 	key_visitor_fn visitor;
