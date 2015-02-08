@@ -37,7 +37,7 @@ static bool
 help_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct help *help = line->data;
-	struct keymap *keymap = help->keymap;
+	const struct keymap *keymap = help->keymap;
 	struct help_state *state = view->private;
 
 	if (line->type == LINE_SECTION) {
@@ -93,7 +93,7 @@ bool
 help_grep(struct view *view, struct line *line)
 {
 	struct help *help = line->data;
-	struct keymap *keymap = help->keymap;
+	const struct keymap *keymap = help->keymap;
 
 	if (line->type == LINE_SECTION) {
 		const char *text[] = { keymap->name, NULL };
@@ -128,8 +128,6 @@ help_grep(struct view *view, struct line *line)
 struct help_request_iterator {
 	struct view *view;
 	struct keymap *keymap;
-	bool add_title;
-	const char *group;
 };
 
 static bool
@@ -146,97 +144,49 @@ add_help_line(struct view *view, struct help **help_ptr, struct keymap *keymap, 
 }
 
 static bool
-add_help_headers(struct help_request_iterator *iterator, const char *group)
+help_keys_visitor(void *data, const char *group, struct keymap *keymap,
+		  enum request request, const char *key,
+		  const struct request_info *req_info, const struct run_request *run_req)
 {
+	struct help_request_iterator *iterator = data;
+	struct view *view = iterator->view;
+	struct help_state *state = view->private;
 	struct help *help;
 
-	if (iterator->add_title) {
-		iterator->add_title = FALSE;
-		if (!add_help_line(iterator->view, &help, iterator->keymap, LINE_SECTION))
+	if (iterator->keymap != keymap) {
+		iterator->keymap = keymap;
+		if (!add_help_line(iterator->view, &help, keymap, LINE_SECTION))
 			return FALSE;
 	}
 
-	if (iterator->keymap->hidden)
-		return FALSE;
+	if (keymap->hidden)
+		return TRUE;
 
-	if (iterator->group != group) {
-		iterator->group = group;
-		if (!add_help_line(iterator->view, &help, iterator->keymap, LINE_HELP_GROUP))
+	if (group) {
+		if (!add_help_line(iterator->view, &help, keymap, LINE_HELP_GROUP))
 			return FALSE;
 		help->data.text = group;
 	}
 
-	return TRUE;
-}
-
-static bool
-help_open_keymap(void *data, const struct request_info *req_info, const char *group)
-{
-	struct help_request_iterator *iterator = data;
-	struct help_state *state = iterator->view->private;
-	struct keymap *keymap = iterator->keymap;
-	const char *key = get_keys(keymap, req_info->request, TRUE);
-	struct help *help;
-
-	if (req_info->request == REQ_NONE || !key || !*key)
-		return TRUE;
-
-	if (!add_help_headers(iterator, group) ||
-	    !add_help_line(iterator->view, &help, iterator->keymap, LINE_DEFAULT))
+	if (!add_help_line(view, &help, keymap, LINE_DEFAULT))
 		return FALSE;
 
 	state->keys_width = MAX(state->keys_width, strlen(key));
-	state->name_width = MAX(state->name_width, strlen(enum_name(req_info->name)));
+	help->request = request;
 
-	help->data.req_info = req_info;
-	help->request = req_info->request;
+	if (req_info) {
+		state->name_width = MAX(state->name_width, strlen(enum_name(req_info->name)));
+		help->data.req_info = req_info;
+	}
 
 	return TRUE;
-}
-
-static void
-help_open_keymap_run_requests(struct help_request_iterator *iterator, bool internal, bool toggles)
-{
-	struct view *view = iterator->view;
-	struct help_state *state = view->private;
-	struct keymap *keymap = iterator->keymap;
-	const char *group = !internal ?	"External commands:" :
-			    toggles ?	"Option toggling:" :
-					"Internal commands:";
-	enum request request = REQ_RUN_REQUESTS + 1;
-	struct help *help;
-
-	for (; TRUE; request++) {
-		struct run_request *req = get_run_request(request);
-		const char *key;
-
-		if (!req)
-			break;
-
-		if (req->flags.internal != !!internal ||
-		    req->keymap != keymap ||
-		    !*(key = get_keys(keymap, request, TRUE)))
-			continue;
-
-		if (toggles != !strcmp(req->argv[0], "toggle"))
-			continue;
-
-		if (!add_help_headers(iterator, group) ||
-		    !add_help_line(view, &help, keymap, LINE_DEFAULT))
-			return;
-
-		state->keys_width = MAX(state->keys_width, strlen(key));
-
-		help->request = request;
-	}
 }
 
 static bool
 help_open(struct view *view, enum open_flags flags)
 {
-	struct keymap *keymap;
+	struct help_request_iterator iterator = { view };
 	struct help *help;
-	int i;
 
 	reset_view(view);
 
@@ -248,17 +198,7 @@ help_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	help->data.text = "";
 
-	for (i = 0; (keymap = get_keymap_by_index(i)); i++) {
-		struct help_request_iterator iterator = { view, keymap, TRUE };
-
-		if (foreach_request(help_open_keymap, &iterator)) {
-			help_open_keymap_run_requests(&iterator, TRUE, TRUE);
-			help_open_keymap_run_requests(&iterator, TRUE, FALSE);
-			help_open_keymap_run_requests(&iterator, FALSE, FALSE);
-		}
-	}
-
-	return TRUE;
+	return foreach_key(help_keys_visitor, &iterator, TRUE);
 }
 
 static enum request

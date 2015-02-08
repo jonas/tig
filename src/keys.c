@@ -33,12 +33,6 @@ static struct keymap *generic_keymap = keymaps;
 #define is_generic_keymap(keymap) ((keymap) == generic_keymap)
 
 struct keymap *
-get_keymap_by_index(int i)
-{
-	return 0 <= i && i < ARRAY_SIZE(keymaps) ? &keymaps[i] : NULL;
-}
-
-struct keymap *
 get_keymap(const char *name, size_t namelen)
 {
 	int i;
@@ -293,8 +287,8 @@ get_key_value(const char **name_ptr, struct key *key)
 	return parse_key_value(key, name_ptr, 0, NULL, end);
 }
 
-const char *
-get_key_name(const struct key key[], size_t keys)
+static const char *
+get_key_name(const struct key key[], size_t keys, bool quote_comma)
 {
 	static char buf[SIZEOF_STR];
 	size_t pos = 0;
@@ -311,7 +305,7 @@ get_key_name(const struct key key[], size_t keys)
 		} else if (key[i].modifiers.control) {
 			start = "<Ctrl-";
 			end = ">";
-		} else if (*name == ',') {
+		} else if (*name == ',' && quote_comma) {
 			/* Quote commas so they stand out in the help view. */
 			start = "'";
 			end = "'";
@@ -340,10 +334,10 @@ get_key_name(const struct key key[], size_t keys)
 }
 
 static bool
-append_key(char *buf, size_t *pos, const struct keybinding *keybinding)
+append_key(char *buf, size_t *pos, const struct keybinding *keybinding, bool all)
 {
 	const char *sep = *pos > 0 ? ", " : "";
-	const char *keyname = get_key_name(keybinding->key, keybinding->keys);
+	const char *keyname = get_key_name(keybinding->key, keybinding->keys, all);
 
 	return string_nformat(buf, BUFSIZ, pos, "%s%s", sep, keyname);
 }
@@ -356,7 +350,7 @@ append_keymap_request_keys(char *buf, size_t *pos, enum request request,
 
 	for (i = 0; i < keymap->size; i++) {
 		if (keymap->data[i]->request == request) {
-			if (!append_key(buf, pos, keymap->data[i]))
+			if (!append_key(buf, pos, keymap->data[i], all))
 				return FALSE;
 			if (!all)
 				break;
@@ -457,6 +451,119 @@ get_run_request(enum request request)
 	if (request <= REQ_RUN_REQUESTS || request > REQ_RUN_REQUESTS + run_requests)
 		return NULL;
 	return &run_request[request - REQ_RUN_REQUESTS - 1];
+}
+
+
+struct key_visitor_state {
+	key_visitor_fn visitor;
+	void *data;
+	struct keymap *keymap;
+	bool combine_keys;
+	const char *group;
+};
+
+static bool
+foreach_key_visit(struct key_visitor_state *state, const char *group,
+		  enum request request,
+		  const struct request_info *req_info, const struct run_request *run_req)
+{
+	struct keymap *keymap = state->keymap;
+	int i;
+
+	if (state->group == group)
+		group = NULL;
+
+	if (state->combine_keys) {
+		const char *key = get_keys(keymap, request, TRUE);
+
+		if (!key || !*key)
+			return TRUE;
+
+		if (group)
+			state->group = group;
+		return state->visitor(state->data, group, keymap, request,
+				      key, req_info, run_req);
+	}
+
+	for (i = 0; i < keymap->size; i++) {
+		if (keymap->data[i]->request == request) {
+			struct keybinding *keybinding = keymap->data[i];
+			const char *key = get_key_name(keybinding->key, keybinding->keys, FALSE);
+
+			if (!key || !*key)
+				continue;
+
+			if (!state->visitor(state->data, group, keymap, request,
+					    key, req_info, run_req))
+				return FALSE;
+
+			if (group)
+				state->group = group;
+			group = NULL;
+		}
+	}
+
+	return TRUE;
+}
+
+static bool
+foreach_key_request(void *data, const struct request_info *req_info, const char *group)
+{
+	struct key_visitor_state *state = data;
+
+	if (req_info->request == REQ_NONE)
+		return TRUE;
+
+	return foreach_key_visit(state, group, req_info->request, req_info, NULL);
+}
+
+static bool
+foreach_key_run_request(struct key_visitor_state *state, bool internal, bool toggles)
+{
+	struct keymap *keymap = state->keymap;
+	const char *group = !internal ?	"External commands:" :
+			    toggles ?	"Option toggling:" :
+					"Internal commands:";
+	enum request request = REQ_RUN_REQUESTS + 1;
+
+	for (; TRUE; request++) {
+		struct run_request *req = get_run_request(request);
+		const char *key;
+
+		if (!req)
+			break;
+
+		if (req->flags.internal != !!internal ||
+		    req->keymap != keymap ||
+		    !*(key = get_keys(keymap, request, TRUE)))
+			continue;
+
+		if (toggles != !strcmp(req->argv[0], "toggle"))
+			continue;
+
+		if (!foreach_key_visit(state, group, request, NULL, req))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+bool
+foreach_key(key_visitor_fn visitor, void *data, bool combine_keys)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(keymaps); i++) {
+		struct key_visitor_state state = { visitor, data, &keymaps[i], combine_keys };
+
+		if (!foreach_request(foreach_key_request, &state)
+		    || !foreach_key_run_request(&state, TRUE, TRUE)
+		    || !foreach_key_run_request(&state, TRUE, FALSE)
+		    || !foreach_key_run_request(&state, FALSE, FALSE))
+			return FALSE;
+	}
+
+	return TRUE;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

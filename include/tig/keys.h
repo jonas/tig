@@ -52,9 +52,7 @@ key_to_unicode(const struct key *key)
 }
 
 struct keymap *get_keymap(const char *name, size_t namelen);
-struct keymap *get_keymap_by_index(int i);
 
-const char *get_key_name(const struct key key[], size_t keys);
 enum status_code get_key_value(const char **name, struct key *key);
 
 /* Looks for a key binding first in the given map, then in the generic map, and
@@ -81,6 +79,11 @@ struct run_request {
 struct run_request *get_run_request(enum request request);
 enum status_code add_run_request(struct keymap *keymap, const struct key key[], size_t keys, const char **argv);
 enum status_code parse_run_request_flags(struct run_request_flags *flags, const char **argv);
+
+typedef bool (*key_visitor_fn)(void *data, const char *group, struct keymap *keymap,
+			       enum request request, const char *key,
+			       const struct request_info *req_info, const struct run_request *run_req);
+bool foreach_key(key_visitor_fn fn, void *data, bool combine_keys);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */
