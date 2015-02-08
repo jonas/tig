@@ -44,7 +44,7 @@ struct key {
 };
 
 static inline unsigned long
-key_to_unicode(struct key *key)
+key_to_unicode(const struct key *key)
 {
 	return key->modifiers.multibytes
 		? utf8_to_unicode(key->data.bytes, strlen(key->data.bytes))
@@ -59,10 +59,10 @@ enum status_code get_key_value(const char **name, struct key *key);
 
 /* Looks for a key binding first in the given map, then in the generic map, and
  * lastly in the default keybindings. */
-enum request get_keybinding(struct keymap *keymap, struct key key[], size_t keys);
-enum status_code add_keybinding(struct keymap *table, enum request request, struct key key[], size_t keys);
+enum request get_keybinding(const struct keymap *keymap, const struct key key[], size_t keys);
+enum status_code add_keybinding(struct keymap *table, enum request request, const struct key key[], size_t keys);
 
-const char *get_keys(struct keymap *keymap, enum request request, bool all);
+const char *get_keys(const struct keymap *keymap, enum request request, bool all);
 #define get_view_key(view, request) get_keys((view)->keymap, request, FALSE)
 
 struct run_request_flags {
@@ -79,7 +79,7 @@ struct run_request {
 };
 
 struct run_request *get_run_request(enum request request);
-enum status_code add_run_request(struct keymap *keymap, struct key key[], size_t keys, const char **argv);
+enum status_code add_run_request(struct keymap *keymap, const struct key key[], size_t keys, const char **argv);
 enum status_code parse_run_request_flags(struct run_request_flags *flags, const char **argv);
 
 #endif

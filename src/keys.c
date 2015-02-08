@@ -51,7 +51,7 @@ get_keymap(const char *name, size_t namelen)
 }
 
 static bool
-keybinding_equals(struct keybinding *keybinding, struct key key[],
+keybinding_equals(const struct keybinding *keybinding, const struct key key[],
 		  size_t keys, bool *conflict_ptr)
 {
 	bool conflict = FALSE;
@@ -61,8 +61,8 @@ keybinding_equals(struct keybinding *keybinding, struct key key[],
 		return FALSE;
 
 	for (i = 0; i < keys; i++) {
-		struct key *key1 = &keybinding->key[i];
-		struct key *key2 = &key[i];
+		const struct key *key1 = &keybinding->key[i];
+		const struct key *key2 = &key[i];
 
 		if (key1->modifiers.control &&
 		    key1->modifiers.multibytes &&
@@ -89,7 +89,7 @@ keybinding_equals(struct keybinding *keybinding, struct key key[],
 
 enum status_code
 add_keybinding(struct keymap *table, enum request request,
-	       struct key key[], size_t keys)
+	       const struct key key[], size_t keys)
 {
 	struct keybinding *keybinding;
 	char buf[SIZEOF_STR];
@@ -128,7 +128,7 @@ add_keybinding(struct keymap *table, enum request request,
 /* Looks for a key binding first in the given map, then in the generic map, and
  * lastly in the default keybindings. */
 enum request
-get_keybinding(struct keymap *keymap, struct key key[], size_t keys)
+get_keybinding(const struct keymap *keymap, const struct key key[], size_t keys)
 {
 	size_t i;
 
@@ -350,7 +350,7 @@ append_key(char *buf, size_t *pos, const struct keybinding *keybinding)
 
 static bool
 append_keymap_request_keys(char *buf, size_t *pos, enum request request,
-			   struct keymap *keymap, bool all)
+			   const struct keymap *keymap, bool all)
 {
 	int i;
 
@@ -367,7 +367,7 @@ append_keymap_request_keys(char *buf, size_t *pos, enum request request,
 }
 
 const char *
-get_keys(struct keymap *keymap, enum request request, bool all)
+get_keys(const struct keymap *keymap, enum request request, bool all)
 {
 	static char buf[BUFSIZ];
 	size_t pos = 0;
@@ -428,7 +428,7 @@ parse_run_request_flags(struct run_request_flags *flags, const char **argv)
 }
 
 enum status_code
-add_run_request(struct keymap *keymap, struct key key[],
+add_run_request(struct keymap *keymap, const struct key key[],
 		size_t keys, const char **argv)
 {
 	struct run_request *req;
