@@ -54,6 +54,7 @@ struct ref_format {
 
 const struct ref_format *get_ref_format(struct ref_format **formats, const struct ref *ref);
 enum status_code parse_ref_formats(struct ref_format ***formats, const char *argv[]);
+enum status_code format_ref_formats(struct ref_format **formats, char buf[], size_t bufsize);
 
 #endif
 

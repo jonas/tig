@@ -24,6 +24,7 @@ Improvements:
    Example: `set main-options = --max-count=1000`. (GH #368)
  - See `contrib/large-repo.tigrc` for settings that will help to speed up Tig in
    large repos. (GH #368)
+ - Add `:save-options <file>` prompt command to save config to file. (GH #315)
 
 Bug fixes:
 

@@ -631,6 +631,23 @@ io_run_load(const char **argv, const char *separators,
 	return io_load(&io, separators, read_property, data);
 }
 
+bool
+io_fprintf(FILE *file, const char *fmt, ...)
+{
+	va_list args;
+	int fmtlen, retval;
+
+	va_start(args, fmt);
+	fmtlen = vsnprintf(NULL, 0, fmt, args);
+	va_end(args);
+
+	va_start(args, fmt);
+	retval = vfprintf(file, fmt, args);
+	va_end(args);
+
+	return fmtlen == retval;
+}
+
 const char *
 get_temp_dir(void)
 {

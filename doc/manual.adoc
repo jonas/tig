@@ -452,6 +452,7 @@ Prompt
 |:!<command>		|Execute a system command in a pager, e.g. `:!git log -p`.
 |:<action>		|Execute a Tig command, e.g. `:edit`.
 |:save-display <file>	|Save current display to `<file>`.
+|:save-options <file>	|Save current options to `<file>`.
 |:script <file>		|Execute commands from `<file>`.
 |:exec <flags><args...> |Execute command using `<args>` with external
 			 user-defined command option flags defined in `<flags>`.

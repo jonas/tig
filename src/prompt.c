@@ -230,6 +230,7 @@ readline_action_generator(const char *text, int state)
 		"set",
 		"toggle",
 		"save-display",
+		"save-options",
 		"exec",
 #define REQ_GROUP(help)
 #define REQ_(req, help)	#req
@@ -813,6 +814,15 @@ run_prompt_command(struct view *view, const char *argv[])
 			report("Failed to save screen to %s", path);
 		else
 			report("Saved screen to %s", path);
+
+	} else if (!strcmp(cmd, "save-options")) {
+		const char *path = argv[1] ? argv[1] : "tig-options.txt";
+		enum status_code code = save_options(path);
+
+		if (code != SUCCESS)
+			report("Failed to save options: %s", get_status_message(code));
+		else
+			report("Saved options to %s", path);
 
 	} else if (!strcmp(cmd, "exec")) {
 		struct run_request req = { view->keymap, {}, argv + 1 };

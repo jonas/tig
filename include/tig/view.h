@@ -302,6 +302,7 @@ void view_column_reset(struct view *view);
 bool view_column_info_update(struct view *view, struct line *line);
 enum status_code parse_view_config(struct view_column **column, const char *view_name, const char *argv[]);
 enum status_code parse_view_column_config(const char *view_name, enum view_column_type type, const char *option_name, const char *argv[]);
+enum status_code format_view_config(struct view_column *column, char buf[], size_t bufsize);
 
 struct line *
 find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction);

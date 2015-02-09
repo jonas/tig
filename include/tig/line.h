@@ -116,6 +116,9 @@ struct line_info *get_line_info(const char *prefix, enum line_type type);
 struct line_info *add_line_rule(const char *prefix, struct line_rule *rule);
 void init_colors(void);
 
+typedef bool (*line_rule_visitor_fn)(void *data, const struct line_rule *rule);
+bool foreach_line_rule(line_rule_visitor_fn fn, void *data);
+
 /* Color IDs must be 1 or higher. [GH #15] */
 #define COLOR_ID(line_type)		((line_type) + 1)
 

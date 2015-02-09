@@ -156,6 +156,21 @@ add_line_rule(const char *prefix, struct line_rule *query)
 	return info;
 }
 
+bool
+foreach_line_rule(line_rule_visitor_fn visitor, void *data)
+{
+	enum line_type type;
+
+	for (type = 0; type < line_rules; type++) {
+		struct line_rule *rule = &line_rule[type];
+
+		if (!visitor(data, rule))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 static void
 init_line_info_color_pair(struct line_info *info, enum line_type type,
 	int default_bg, int default_fg)

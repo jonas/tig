@@ -1334,6 +1334,104 @@ parse_view_config(struct view_column **column_ref, const char *view_name, const 
 	return code;
 }
 
+static enum status_code
+format_view_column_options(struct option_info options[], size_t options_size, char buf[], size_t bufsize)
+{
+	char name[SIZEOF_STR];
+	char value[SIZEOF_STR];
+	size_t bufpos = 0;
+	const char *sep = ":";
+	int i;
+
+	buf[0] = 0;
+
+	for (i = 0; i < options_size; i++) {
+		struct option_info *option = &options[i];
+		const char *assign = "=";
+
+		if (!enum_name_copy(name, sizeof(name), option->name)
+		    || !format_option_value(option, value, sizeof(value)))
+			return error("No space left in buffer");
+
+		if (!strcmp(name, "display")) {
+			name[0] = 0;
+			assign = "";
+
+		}
+
+		if (!strcmp(option->type, "bool") && !strcmp(value, "yes")) {
+			if (!*name) {
+				sep = ":yes,";
+				continue;
+			}
+
+			/* For non-display boolean options 'yes' is implied. */
+#if 0
+			value[0] = 0;
+			assign = "";
+#endif
+		}
+
+		if (!strcmp(option->type, "int") && !strcmp(value, "0"))
+			continue;
+
+		if (!string_nformat(buf, bufsize, &bufpos, "%s%s%s%s",
+				    sep, name, assign, value))
+			return error("No space left in buffer");
+
+		sep = ",";
+	}
+
+	return SUCCESS;
+}
+
+static enum status_code
+format_view_column(struct view_column *column, char buf[], size_t bufsize)
+{
+#define FORMAT_COLUMN_OPTION_INFO(name, type, flags) \
+	{ #name, STRING_SIZE(#name), #type, &opt->name, flags },
+
+#define FORMAT_COLUMN_OPTIONS_PARSE(col_name, id, options) \
+	if (column->type == VIEW_COLUMN_##id) { \
+		struct col_name##_options *opt = &column->opt.col_name; \
+		struct option_info info[] = { \
+			options(FORMAT_COLUMN_OPTION_INFO) \
+		}; \
+		\
+		return format_view_column_options(info, ARRAY_SIZE(info), buf, bufsize); \
+	}
+
+	COLUMN_OPTIONS(FORMAT_COLUMN_OPTIONS_PARSE);
+
+	return error("Unknown view column type: %d", column->type);
+}
+
+enum status_code
+format_view_config(struct view_column *column, char buf[], size_t bufsize)
+{
+	const struct enum_map *map = view_column_type_map;
+	const char *sep = "";
+	size_t bufpos = 0;
+	char type[SIZEOF_STR];
+	char value[SIZEOF_STR];
+
+	for (; column; column = column->next) {
+		enum status_code code = format_view_column(column, value, sizeof(value));
+
+		if (code != SUCCESS)
+			return code;
+
+		if (!enum_name_copy(type, sizeof(type), map->entries[column->type].name)
+		    || !string_nformat(buf, bufsize, &bufpos, "%s%s%s",
+				       sep, type, value))
+			return error("No space left in buffer");
+
+		sep = " ";
+	}
+
+	return SUCCESS;
+}
+
 struct view_column *
 get_view_column(struct view *view, enum view_column_type type)
 {

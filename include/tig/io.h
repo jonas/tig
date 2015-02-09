@@ -99,6 +99,7 @@ char *io_memchr(struct buffer *buf, char *data, int c);
 
 const char *get_temp_dir(void);
 
+bool PRINTF_LIKE(2, 3) io_fprintf(FILE *file, const char *fmt, ...);
 bool io_trace(const char *fmt, ...);
 
 #endif

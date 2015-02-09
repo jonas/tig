@@ -201,6 +201,8 @@ enum status_code parse_step(double *opt, const char *arg);
 enum status_code set_option(const char *opt, int argc, const char *argv[]);
 int load_options(void);
 int load_git_config(void);
+enum status_code save_options(const char *path);
+const char *format_option_value(const struct option_info *option, char buf[], size_t bufsize);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

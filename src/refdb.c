@@ -409,4 +409,30 @@ parse_ref_formats(struct ref_format ***formats, const char *argv[])
 	return SUCCESS;
 }
 
+enum status_code
+format_ref_formats(struct ref_format **formats, char buf[], size_t bufsize)
+{
+	const struct enum_map *map = reference_type_map;
+	char name[SIZEOF_STR];
+	enum reference_type type;
+	size_t bufpos = 0;
+	const char *sep = "";
+
+	for (type = 0; type < map->size; type++) {
+		struct ref_format *format = formats[type];
+
+		if (!format)
+			continue;
+
+		if (!enum_name_copy(name, sizeof(name), map->entries[type].name)
+		    || !string_nformat(buf, bufsize, &bufpos, "%s%s%s%s",
+				       sep, format->start, name, format->end))
+			return error("No space left in buffer");
+
+		sep = " ";
+	}
+
+	return SUCCESS;
+}
+
 /* vim: set ts=8 sw=8 noexpandtab: */

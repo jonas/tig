@@ -637,7 +637,7 @@ option_set_command(int argc, const char *argv[])
 	struct option_info *option;
 	enum status_code code;
 
-	if (argc < 3)
+	if (argc < 2)
 		return error("Invalid set command: set option = value");
 
 	if (strcmp(argv[1], "="))
@@ -648,14 +648,17 @@ option_set_command(int argc, const char *argv[])
 		if (option->seen)
 			return SUCCESS;
 
+		if (!strcmp(option->type, "const char **"))
+			return parse_args(option->value, argv + 2);
+
+		if (argc < 3)
+			return error("Invalid set command: set option = value");
+
 		if (!strcmp(option->type, "view_settings"))
 			return parse_view_settings(option->value, argv[0], argv + 2);
 
 		if (!strcmp(option->type, "struct ref_format **"))
 			return parse_ref_formats(option->value, argv + 2);
-
-		if (!strcmp(option->type, "const char **"))
-			return parse_args(option->value, argv + 2);
 
 		code = parse_option(option, "", argv[2]);
 		if (code == SUCCESS && argc != 3)
@@ -951,6 +954,225 @@ load_options(void)
 	}
 
 	return OK;
+}
+
+const char *
+format_option_value(const struct option_info *option, char buf[], size_t bufsize)
+{
+	buf[0] = 0;
+
+	if (!strcmp(option->type, "bool")) {
+		bool *opt = option->value;
+
+		if (string_nformat(buf, bufsize, NULL, "%s", *opt ? "yes" : "no"))
+			return buf;
+
+	} else if (!strncmp(option->type, "enum", 4)) {
+		const char *type = option->type + STRING_SIZE("enum ");
+		enum author *opt = option->value;
+		const struct enum_map *map = find_enum_map(type);
+
+		if (enum_name_copy(buf, bufsize, map->entries[*opt].name))
+			return buf;
+
+	} else if (!strcmp(option->type, "int")) {
+		int *opt = option->value;
+
+		if (opt == &opt_diff_context && *opt < 0)
+			*opt = -*opt;
+
+		if (string_nformat(buf, bufsize, NULL, "%d", *opt))
+			return buf;
+
+	} else if (!strcmp(option->type, "double")) {
+		double *opt = option->value;
+
+		if (*opt >= 1) {
+			if (string_nformat(buf, bufsize, NULL, "%d", (int) *opt))
+				return buf;
+
+		} else if (string_nformat(buf, bufsize, NULL, "%.0f%%", (*opt) * 100)) {
+			return buf;
+		}
+
+	} else if (!strcmp(option->type, "const char **")) {
+		const char *sep = "";
+		const char ***opt = option->value;
+		size_t bufpos = 0;
+		int i;
+
+		for (i = 0; (*opt) && (*opt)[i]; i++) {
+			const char *arg = (*opt)[i];
+
+			if (!string_nformat(buf, bufsize, &bufpos, "%s%s", sep, arg))
+				return NULL;
+
+			sep = " ";
+		}
+
+		return buf;
+
+	} else if (!strcmp(option->type, "struct ref_format **")) {
+		struct ref_format ***opt = option->value;
+
+		if (format_ref_formats(*opt, buf, bufsize) == SUCCESS)
+			return buf;
+
+	} else if (!strcmp(option->type, "view_settings")) {
+		struct view_column **opt = option->value;
+
+		if (format_view_config(*opt, buf, bufsize) == SUCCESS)
+			return buf;
+
+	} else {
+		if (string_nformat(buf, bufsize, NULL, "<%s>", option->type))
+			return buf;
+	}
+
+	return NULL;
+}
+
+static bool
+save_option_settings(FILE *file)
+{
+	char buf[SIZEOF_STR];
+	int i;
+
+	if (!io_fprintf(file, "%s", "\n## Settings\n"))
+		return FALSE;
+
+	for (i = 0; i < ARRAY_SIZE(option_info); i++) {
+		struct option_info *option = &option_info[i];
+		const char *name = enum_name(option->name);
+		const char *value = format_option_value(option, buf, sizeof(buf));
+
+		if (!suffixcmp(name, strlen(name), "-args"))
+			continue;
+
+		if (!io_fprintf(file, "\nset %-25s = %s", name, value))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static bool
+save_option_keybinding(void *data, const char *group, struct keymap *keymap,
+		       enum request request, const char *key,
+		       const struct request_info *req_info,
+		       const struct run_request *run_req)
+{
+	FILE *file = data;
+
+	if (group && !io_fprintf(file, "\n# %s", group))
+		return FALSE;
+
+	if (!io_fprintf(file, "\nbind %-10s %-15s ", enum_name(keymap->name), key))
+		return FALSE;
+
+	if (req_info) {
+		return io_fprintf(file, "%s", enum_name(req_info->name));
+
+	} else {
+		const char *sep = format_run_request_flags(run_req);
+		int i;
+
+		for (i = 0; run_req->argv[i]; i++) {
+			if (!io_fprintf(file, "%s%s", sep, run_req->argv[i]))
+				return FALSE;
+			sep = " ";
+		}
+
+		return TRUE;
+	}
+}
+
+static bool
+save_option_keybindings(FILE *file)
+{
+	if (!io_fprintf(file, "%s", "\n\n## Keybindings\n"))
+		return FALSE;
+
+	return foreach_key(save_option_keybinding, file, FALSE);
+}
+
+static bool
+save_option_color_name(FILE *file, int color)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(color_map); i++)
+		if (color_map[i].value == color)
+			return io_fprintf(file, " %-8s", enum_name(color_map[i].name));
+
+	return io_fprintf(file, " color%d", color);
+}
+
+static bool
+save_option_color_attr(FILE *file, int attr)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(attr_map); i++)
+		if ((attr & attr_map[i].value) &&
+		    !io_fprintf(file, " %s", enum_name(attr_map[i].name)))
+			return FALSE;
+
+	return TRUE;
+}
+
+static bool
+save_option_color(void *data, const struct line_rule *rule)
+{
+	FILE *file = data;
+	const struct line_info *info;
+
+	for (info = &rule->info; info; info = info->next) {
+		const char *prefix = info->prefix ? info->prefix : "";
+		const char *prefix_sep = info->prefix ? "." : "";
+		const char *quote = *rule->line ? "\"" : "";
+		const char *name = *rule->line ? rule->line : enum_name(rule->name);
+		int name_width = strlen(prefix) + strlen(prefix_sep) + 2 * strlen(quote) + strlen(name);
+		int padding = name_width > 30 ? 0 : 30 - name_width;
+
+		if (!io_fprintf(file, "\ncolor %s%s%s%s%s%-*s",
+				      prefix, prefix_sep, quote, name, quote, padding, "")
+		    || !save_option_color_name(file, info->fg)
+		    || !save_option_color_name(file, info->bg)
+		    || !save_option_color_attr(file, info->attr))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static bool
+save_option_colors(FILE *file)
+{
+	if (!io_fprintf(file, "%s", "\n\n## Colors\n"))
+		return FALSE;
+
+	return foreach_line_rule(save_option_color, file);
+}
+
+enum status_code
+save_options(const char *path)
+{
+	int fd = open(path, O_WRONLY | O_CREAT | O_EXCL, 0666);
+	FILE *file = fd != -1 ? fdopen(fd, "w") : NULL;
+	enum status_code code = SUCCESS;
+
+	if (!file)
+		return error("%s", strerror(errno));
+
+	if (!io_fprintf(file, "%s", "# Saved by Tig\n")
+	    || !save_option_settings(file)
+	    || !save_option_keybindings(file)
+	    || !save_option_colors(file))
+		code = error("Write returned an error");
+
+	fclose(file);
+	return code;
 }
 
 /*

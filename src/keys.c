@@ -299,6 +299,7 @@ get_key_name(const struct key key[], size_t keys, bool quote_comma)
 		const char *name = multibytes ? key[i].data.bytes : "";
 		const char *start = "";
 		const char *end = "";
+		bool use_symbolic;
 
 		if (key[i].modifiers.escape) {
 			start = "<Esc>";
@@ -312,7 +313,12 @@ get_key_name(const struct key key[], size_t keys, bool quote_comma)
 		}
 
 		/* Use symbolic name for spaces so they are readable. */
-		if (!*name || *name == ' ') {
+		use_symbolic = !*name || *name == ' ';
+		/* When listing keys for :save-options quote illegal characters. */
+		if (!quote_comma && (*name == '<' || *name == '#'))
+			use_symbolic = TRUE;
+
+		if (use_symbolic) {
 			int value = *name ? *name : key[i].data.value;
 			int j;
 
