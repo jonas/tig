@@ -91,8 +91,10 @@ set status-untracked-dirs	= yes		# Show files in untracked directories? (status)
 set ignore-space		= no		# Enum: no, all, some, at-eol (diff)
 set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set diff-context		= 3		# Number of lines to show around diff changes (diff)
-#set diff-options		= -C		# User-defined options for `tig show` (diff)
-#set blame-options		= -C -C -C	# User-defined options for `tig blame` (blame)
+#set diff-options		= -C		# User-defined options for `tig show` (git-diff)
+#set blame-options		= -C -C -C	# User-defined options for `tig blame` (git-blame)
+#set log-options		= --pretty=raw	# User-defined options for `tig log` (git-log)
+#set main-options		= -n 1000	# User-defined options for `tig` (git-log)
 
 # Misc
 set refresh-mode		= auto		# Enum: manual, auto, after-command, periodic
