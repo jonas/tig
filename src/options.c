@@ -295,7 +295,7 @@ parse_step(double *opt, const char *arg)
 		return SUCCESS;
 
 	/* "Shift down" so 100% and 1 does not conflict. */
-	*opt = (*opt - 1) / 100;
+	*opt /= 100;
 	if (*opt >= 1.0) {
 		*opt = 0.99;
 		return error("Percentage is larger than 100%%");

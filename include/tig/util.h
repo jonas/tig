@@ -61,7 +61,7 @@ apply_step(double step, int value)
 {
 	if (step >= 1)
 		return (int) step;
-	value *= step + 0.01;
+	value *= step;
 	return value ? value : 1;
 }
 
