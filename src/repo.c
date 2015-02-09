@@ -64,9 +64,10 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 
 	} else if (!strcmp(arg, REPO_INFO_SYMBOLIC_HEAD)) {
 		if (!prefixcmp(name, "refs/heads/")) {
+			const char *head = name + STRING_SIZE("refs/heads/");
+
+			string_ncopy(repo.head, head, strlen(head) + 1);
 			add_ref(repo.head_id, name, repo.remote, repo.head);
-			name += STRING_SIZE("refs/heads/");
-			string_ncopy(repo.head, name, strlen(name) + 1);
 		}
 		state->argv++;
 	}

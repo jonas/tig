@@ -170,12 +170,8 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		*ref_slot = ref;
 	}
 
-	if (strncmp(ref->id, id, idlen))
-		opt->changed |= WATCH_REFS;
-
 	ref->valid = TRUE;
 	ref->type = type;
-	string_ncopy_do(ref->id, SIZEOF_REV, id, idlen);
 
 	if (type == REFERENCE_HEAD) {
 		if (!refs_head ||
@@ -186,6 +182,12 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 
 	if (type == REFERENCE_TAG)
 		refs_tags++;
+
+	if (!strncmp(ref->id, id, idlen))
+		return OK;
+
+	opt->changed |= WATCH_REFS;
+	string_ncopy_do(ref->id, SIZEOF_REV, id, idlen);
 
 	ref_lists_slot = string_map_put_to(&refs_by_id, id);
 	if (!ref_lists_slot)
