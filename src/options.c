@@ -602,14 +602,8 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 	return error("Unhandled option: %s", name);
 }
 
-struct view_config {
-	const char *name;
-	size_t namelen;
-	const char ***argv;
-};
-
 static enum status_code
-parse_view_settings(const char *name_, const char *argv[])
+parse_view_settings(struct view_column **view_column, const char *name_, const char *argv[])
 {
 	char buf[SIZEOF_STR];
 	const char *name = enum_name_copy(buf, sizeof(buf), name_) ? buf : name_;
@@ -633,7 +627,7 @@ parse_view_settings(const char *name_, const char *argv[])
 		}
 	}
 
-	return parse_view_config(name, argv);
+	return parse_view_config(view_column, name, argv);
 }
 
 /* Wants: name = value */
@@ -655,7 +649,7 @@ option_set_command(int argc, const char *argv[])
 			return SUCCESS;
 
 		if (!strcmp(option->type, "view_settings"))
-			return parse_view_settings(argv[0], argv + 2);
+			return parse_view_settings(option->value, argv[0], argv + 2);
 
 		if (!strcmp(option->type, "struct ref_format **"))
 			return parse_ref_formats(option->value, argv + 2);

@@ -1281,7 +1281,7 @@ parse_view_column_config(const char *view_name, enum view_column_type type,
 }
 
 enum status_code
-parse_view_config(const char *view_name, const char *argv[])
+parse_view_config(struct view_column **column_ref, const char *view_name, const char *argv[])
 {
 	enum status_code code = SUCCESS;
 	size_t size = argv_size(argv);
@@ -1326,6 +1326,7 @@ parse_view_config(const char *view_name, const char *argv[])
 		free(view->columns);
 		view->columns = columns;
 		view->sort.current = view->columns;
+		*column_ref = columns;
 	} else {
 		free(columns);
 	}

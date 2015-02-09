@@ -22,8 +22,9 @@
  * Option variables.
  */
 
-typedef const char **view_settings;
 struct ref_format;
+struct view_column;
+typedef struct view_column *view_settings;
 
 #define OPTION_INFO(_) \
 	_(blame_options,		const char **,		VIEW_BLAME_LIKE) \
