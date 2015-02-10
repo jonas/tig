@@ -65,12 +65,20 @@ string_map_put(struct string_map *map, const char *key, void *value)
 }
 
 void *
-string_map_remove(struct string_map *map, void **slot)
+string_map_remove(struct string_map *map, const char *key)
 {
-	void *value = slot ? *slot : NULL;
+	void *value = NULL;
+	void **slot;
 
-	if (map->htab && slot)
+	if (!map->htab)
+		return NULL;
+
+	map->key = key;
+	slot = htab_find_slot_with_hash(map->htab, map, htab_hash_string(key), NO_INSERT);
+	if (slot) {
+		value = *slot;
 		htab_clear_slot(map->htab, slot);
+	}
 
 	return value;
 }

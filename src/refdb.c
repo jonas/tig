@@ -149,11 +149,9 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	 * git-ls-remote lists the commit id of an annotated tag right
 	 * before the commit id it points to. */
 	if (type == REFERENCE_REPLACE) {
-		ref_slot = string_map_put_to(&refs_by_id, id);
-		if (!ref_slot)
+		ref = string_map_remove(&refs_by_id, id);
+		if (!ref)
 			return ERR;
-		if (*ref_slot)
-			ref = string_map_remove(&refs_by_id, ref_slot);
 
 	} else {
 		ref_slot = string_map_put_to(&refs_by_name, name);
