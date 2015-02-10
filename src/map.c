@@ -40,6 +40,17 @@ string_map_get(struct string_map *map, const char *key)
 }
 
 void **
+string_map_get_at(struct string_map *map, const char *key)
+{
+	if (map->htab) {
+		map->key = key;
+		return htab_find_slot_with_hash(map->htab, map, htab_hash_string(key), NO_INSERT);
+	}
+
+	return NULL;
+}
+
+void **
 string_map_put_to(struct string_map *map, const char *key)
 {
 	if (!map->htab) {
@@ -68,13 +79,8 @@ void *
 string_map_remove(struct string_map *map, const char *key)
 {
 	void *value = NULL;
-	void **slot;
+	void **slot = string_map_get_at(map, key);
 
-	if (!map->htab)
-		return NULL;
-
-	map->key = key;
-	slot = htab_find_slot_with_hash(map->htab, map, htab_hash_string(key), NO_INSERT);
 	if (slot) {
 		value = *slot;
 		htab_clear_slot(map->htab, slot);

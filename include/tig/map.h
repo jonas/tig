@@ -35,6 +35,7 @@ struct string_map {
 
 extern string_map_hash_fn string_map_hash_helper;
 void *string_map_get(struct string_map *map, const char *key);
+void **string_map_get_at(struct string_map *map, const char *key);
 void *string_map_put(struct string_map *map, const char *key, void *value);
 void **string_map_put_to(struct string_map *map, const char *key);
 void *string_map_remove(struct string_map *map, const char *key);

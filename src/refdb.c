@@ -95,6 +95,29 @@ struct ref_opt {
 	enum watch_trigger changed;
 };
 
+static void
+remove_ref_from_id_map(struct ref *ref)
+{
+	void **ref_slot = string_map_get_at(&refs_by_id, ref->id);
+	struct ref *list = ref_slot ? *ref_slot : NULL;
+	struct ref *prev = NULL;
+
+	for (; list; prev = list, list = list->next) {
+		if (list != ref)
+			continue;
+
+		if (!prev)
+			*ref_slot = ref->next;
+		else
+			prev->next = ref->next;
+		ref->next = NULL;
+		break;
+	}
+
+	if (ref_slot && !*ref_slot)
+		string_map_remove(&refs_by_id, ref->id);
+}
+
 static int
 add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref_opt *opt)
 {
@@ -168,8 +191,11 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		*ref_slot = ref;
 	}
 
-	if (strncmp(ref->id, id, idlen) || ref->type != type)
+	if (strncmp(ref->id, id, idlen) || ref->type != type) {
 		opt->changed |= WATCH_REFS;
+		if (*ref->id)
+			remove_ref_from_id_map(ref);
+	}
 
 	ref->valid = TRUE;
 	ref->type = type;
