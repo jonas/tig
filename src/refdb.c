@@ -170,8 +170,12 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		*ref_slot = ref;
 	}
 
+	if (strncmp(ref->id, id, idlen) || ref->type != type)
+		opt->changed |= WATCH_REFS;
+
 	ref->valid = TRUE;
 	ref->type = type;
+	string_ncopy_do(ref->id, SIZEOF_REV, id, idlen);
 
 	if (type == REFERENCE_HEAD) {
 		if (!refs_head ||
@@ -183,15 +187,25 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	if (type == REFERENCE_TAG)
 		refs_tags++;
 
-	if (!strncmp(ref->id, id, idlen))
-		return OK;
-
-	opt->changed |= WATCH_REFS;
-	string_ncopy_do(ref->id, SIZEOF_REV, id, idlen);
-
 	ref_lists_slot = string_map_put_to(&refs_by_id, id);
 	if (!ref_lists_slot)
 		return OK;
+
+	/* First remove the ref from the ID list, to ensure that it is
+	 * reinserted at the right position if the type changes. */
+	{
+		struct ref *list, *prev;
+
+		for (list = *ref_lists_slot, prev = NULL; list; prev = list, list = list->next)
+			if (list == ref) {
+				if (!prev)
+					*ref_lists_slot = ref->next;
+				else
+					prev->next = ref->next;
+			}
+
+		ref->next = NULL;
+	}
 
 	ref->next = *ref_lists_slot;
 	*ref_lists_slot = ref;
