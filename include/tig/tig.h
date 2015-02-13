@@ -60,7 +60,7 @@
 #include <iconv.h>
 
 /* ncurses(3): Must be defined to have extended wide-character functions. */
-#define _XOPEN_SOURCE_EXTENDED
+#define _XOPEN_SOURCE_EXTENDED 1
 
 #if defined HAVE_NCURSESW_CURSES_H
 #  include <ncursesw/curses.h>
