@@ -498,12 +498,13 @@ io_get(struct io *io, struct buffer *buf, int c, bool can_read)
 bool
 io_write(struct io *io, const void *buf, size_t bufsize)
 {
+	const char *bytes = buf;
 	size_t written = 0;
 
 	while (!io_error(io) && written < bufsize) {
 		ssize_t size;
 
-		size = write(io->pipe, buf + written, bufsize - written);
+		size = write(io->pipe, bytes + written, bufsize - written);
 		if (size < 0 && (errno == EAGAIN || errno == EINTR))
 			continue;
 		else if (size == -1)

@@ -6,6 +6,8 @@ master
 
 Improvements:
 
+ - Improve C99 compliance so Tig compiles with the native compilers on
+   Solaris (SunStudio cc) and AIX (xlc). (GH #380)
  - Add move-half-page-up and move-half-page-down actions. (GH #323)
  - Preserve the cursor position when changing the diff context. 
  - Add option to turn off automatic enabling of `--topo-order` when the graph is
