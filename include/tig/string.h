@@ -88,11 +88,11 @@ char *chomp_string(char *name);
 
 bool PRINTF_LIKE(4, 5) string_nformat(char *buf, size_t bufsize, size_t *bufpos, const char *fmt, ...);
 
-#define string_format(buf, fmt, args...) \
-	string_nformat(buf, sizeof(buf), NULL, fmt, args)
+#define string_format(buf, fmt, ...) \
+	string_nformat(buf, sizeof(buf), NULL, fmt, ## __VA_ARGS__)
 
-#define string_format_from(buf, from, fmt, args...) \
-	string_nformat(buf, sizeof(buf), from, fmt, args)
+#define string_format_from(buf, from, fmt, ...) \
+	string_nformat(buf, sizeof(buf), from, fmt, ## __VA_ARGS__)
 
 int strcmp_null(const char *s1, const char *s2);
 int strcmp_numeric(const char *s1, const char *s2);
