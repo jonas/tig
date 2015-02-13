@@ -467,7 +467,7 @@ bool
 view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct view_column *column = view->columns;
-	struct view_column_data column_data = {};
+	struct view_column_data column_data = {0};
 
 	if (!view->ops->get_column_data(view, line, &column_data))
 		return TRUE;

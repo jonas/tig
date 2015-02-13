@@ -949,8 +949,8 @@ sort_view_compare(const void *l1, const void *l2)
 {
 	const struct line *line1 = l1;
 	const struct line *line2 = l2;
-	struct view_column_data column_data1 = {};
-	struct view_column_data column_data2 = {};
+	struct view_column_data column_data1 = {0};
+	struct view_column_data column_data2 = {0};
 	struct sort_state *sort = &sorting_view->sort;
 	enum view_column_type column = get_sort_field(sorting_view);
 	int cmp;
@@ -1092,7 +1092,7 @@ grep_refs(struct view *view, struct view_column *column, const struct ref *ref)
 bool
 view_column_grep(struct view *view, struct line *line)
 {
-	struct view_column_data column_data = {};
+	struct view_column_data column_data = {0};
 	bool ok = view->ops->get_column_data(view, line, &column_data);
 	struct view_column *column;
 
@@ -1446,7 +1446,7 @@ get_view_column(struct view *view, enum view_column_type type)
 bool
 view_column_info_update(struct view *view, struct line *line)
 {
-	struct view_column_data column_data = {};
+	struct view_column_data column_data = {0};
 	struct view_column *column;
 	bool changed = FALSE;
 

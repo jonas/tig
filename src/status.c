@@ -85,7 +85,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 
 	while (io_get(&io, &buf, 0, TRUE)) {
 		struct line *line;
-		struct status parsed = {};
+		struct status parsed = {0};
 		struct status *file = &parsed;
 
 		/* Parse diff info part. */

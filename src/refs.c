@@ -83,7 +83,7 @@ refs_request(struct view *view, enum request request, struct line *line)
 static bool
 refs_read(struct view *view, struct buffer *buf)
 {
-	struct reference template = {};
+	struct reference template = {0};
 	char *author;
 	char *title;
 	size_t i;

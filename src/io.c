@@ -533,7 +533,7 @@ io_printf(struct io *io, const char *fmt, ...)
 bool
 io_read_buf(struct io *io, char buf[], size_t bufsize)
 {
-	struct buffer result = {};
+	struct buffer result = {0};
 
 	if (io_get(io, &result, '\n', TRUE)) {
 		result.data = chomp_string(result.data);

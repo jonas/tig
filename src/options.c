@@ -384,7 +384,7 @@ find_remapped(const char *remapped[][2], size_t remapped_size, const char *arg)
 static enum status_code
 option_color_command(int argc, const char *argv[])
 {
-	struct line_rule rule = {};
+	struct line_rule rule = {0};
 	const char *prefix = NULL;
 	struct line_info *info;
 	enum status_code code;
@@ -1271,7 +1271,7 @@ parse_git_color_option(struct line_info *info, char *value)
 static void
 set_git_color_option(const char *name, char *value)
 {
-	struct line_info parsed = {};
+	struct line_info parsed = {0};
 	struct line_info *color = NULL;
 	size_t namelen = strlen(name);
 	int i;
@@ -1280,7 +1280,7 @@ set_git_color_option(const char *name, char *value)
 		return;
 
 	for (i = 0; opt_git_colors[i]; i++) {
-		struct line_rule rule = {};
+		struct line_rule rule = {0};
 		const char *prefix = NULL;
 		struct line_info *info;
 		const char *alias = opt_git_colors[i];

@@ -52,7 +52,7 @@ int
 main(int argc, const char *argv[])
 {
 	struct graph *graph;
-	struct io io = { };
+	struct io io = {0};
 	struct buffer buf;
 	struct commit **commits = NULL;
 	size_t ncommits = 0;

@@ -756,7 +756,7 @@ run_prompt_command(struct view *view, const char *argv[])
 		}
 
 		for (lineno = 0; lineno < view->lines; lineno++) {
-			struct view_column_data column_data = {};
+			struct view_column_data column_data = {0};
 			struct line *line = &view->line[lineno];
 
 			if (view->ops->get_column_data(view, line, &column_data) &&
@@ -825,7 +825,7 @@ run_prompt_command(struct view *view, const char *argv[])
 			report("Saved options to %s", path);
 
 	} else if (!strcmp(cmd, "exec")) {
-		struct run_request req = { view->keymap, {}, argv + 1 };
+		struct run_request req = { view->keymap, {0}, argv + 1 };
 		enum status_code code = parse_run_request_flags(&req.flags, argv + 1);
 
 		if (code != SUCCESS) {
@@ -857,7 +857,7 @@ run_prompt_command(struct view *view, const char *argv[])
 		return REQ_NONE;
 
 	} else {
-		struct key key = {};
+		struct key key = {{0}};
 		enum status_code code;
 		enum view_flag flags = VIEW_NO_FLAGS;
 

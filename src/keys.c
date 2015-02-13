@@ -432,7 +432,7 @@ add_run_request(struct keymap *keymap, const struct key key[],
 		size_t keys, const char **argv)
 {
 	struct run_request *req;
-	struct run_request_flags flags = {};
+	struct run_request_flags flags = {0};
 	enum status_code code = parse_run_request_flags(&flags, argv);
 
 	if (code != SUCCESS)

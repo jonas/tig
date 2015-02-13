@@ -93,7 +93,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 	char ids[SIZEOF_STR] = NULL_ID " ";
 	struct main_state *state = view->private;
 	struct graph *graph = state->graph;
-	struct commit commit = {};
+	struct commit commit = {{0}};
 	struct timeval now;
 	struct timezone tz;
 
@@ -174,7 +174,7 @@ main_check_argv(struct view *view, const char *argv[])
 
 	for (i = 0; argv[i]; i++) {
 		const char *arg = argv[i];
-		struct rev_flags rev_flags = {};
+		struct rev_flags rev_flags = {0};
 
 		if (!strcmp(arg, "--graph")) {
 			struct view_column *column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
