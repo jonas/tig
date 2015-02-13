@@ -54,7 +54,7 @@ typedef unsigned long argv_number;
 #define ARGV_ENV_FIELDS(type, name, ifempty, initval)	type name;
 
 struct argv_env {
-	ARGV_ENV_INFO(ARGV_ENV_FIELDS);
+	ARGV_ENV_INFO(ARGV_ENV_FIELDS)
 	unsigned long goto_lineno;
 	char search[SIZEOF_STR];
 	char none[1];

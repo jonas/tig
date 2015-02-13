@@ -171,8 +171,8 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(refresh_mode, REFRESH_MODE_ENUM) \
 	_(status_label, STATUS_LABEL_ENUM) \
 
-#define DEFINE_ENUMS(name, macro) DEFINE_ENUM(name, macro);
-ENUM_INFO(DEFINE_ENUMS);
+#define DEFINE_ENUMS(name, macro) DEFINE_ENUM(name, macro)
+ENUM_INFO(DEFINE_ENUMS)
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

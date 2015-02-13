@@ -72,7 +72,7 @@ typedef struct view_column *view_settings;
 	_(wrap_lines,			bool,			VIEW_NO_FLAGS) \
 
 #define DEFINE_OPTION_EXTERNS(name, type, flags) extern type opt_##name;
-OPTION_INFO(DEFINE_OPTION_EXTERNS);
+OPTION_INFO(DEFINE_OPTION_EXTERNS)
 
 /*
  * View column options.
@@ -154,7 +154,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS);
 	} name;
 
 union view_column_options {
-	COLUMN_OPTIONS(DEFINE_COLUMN_OPTIONS_STRUCT);
+	COLUMN_OPTIONS(DEFINE_COLUMN_OPTIONS_STRUCT)
 };
 
 /*

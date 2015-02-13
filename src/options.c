@@ -28,7 +28,7 @@
  */
 
 #define DEFINE_OPTION_VARIABLES(name, type, flags) type opt_##name;
-OPTION_INFO(DEFINE_OPTION_VARIABLES);
+OPTION_INFO(DEFINE_OPTION_VARIABLES)
 
 static struct option_info option_info[] = {
 #define DEFINE_OPTION_INFO(name, type, flags) { #name, STRING_SIZE(#name), #type, &opt_##name },

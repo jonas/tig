@@ -109,6 +109,6 @@ map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, const
 }
 
 #define DEFINE_ENUM_MAPS(name, macro) DEFINE_ENUM_MAP(name, macro);
-ENUM_INFO(DEFINE_ENUM_MAPS);
+ENUM_INFO(DEFINE_ENUM_MAPS)
 
 /* vim: set ts=8 sw=8 noexpandtab: */
