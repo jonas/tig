@@ -46,10 +46,28 @@ ref_canonical_compare(const struct ref *ref1, const struct ref *ref2)
 	return strcmp_numeric(ref1->name, ref2->name);
 }
 
-void
-foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data)
+struct ref_visitor_data {
+	ref_visitor_fn visitor;
+	void *data;
+};
+
+static bool
+foreach_ref_visitor(void *data, void *value)
 {
-	string_map_foreach(&refs_by_name, (string_map_iterator_fn) visitor, data);
+	struct ref_visitor_data *visitor_data = data;
+	const struct ref *ref = value;
+
+	if (!ref->valid)
+		return TRUE;
+	return visitor_data->visitor(visitor_data->data, ref);
+}
+
+void
+foreach_ref(ref_visitor_fn visitor, void *data)
+{
+	struct ref_visitor_data visitor_data = { visitor, data };
+
+	string_map_foreach(&refs_by_name, foreach_ref_visitor, &visitor_data);
 }
 
 const struct ref *
