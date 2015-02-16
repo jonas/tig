@@ -95,6 +95,48 @@ struct ref_opt {
 	enum watch_trigger changed;
 };
 
+static int
+add_ref_to_id_map(struct ref *ref)
+{
+	void **ref_lists_slot = string_map_put_to(&refs_by_id, ref->id);
+
+	if (!ref_lists_slot)
+		return OK;
+
+	/* First remove the ref from the ID list, to ensure that it is
+	 * reinserted at the right position if the type changes. */
+	{
+		struct ref *list, *prev;
+
+		for (list = *ref_lists_slot, prev = NULL; list; prev = list, list = list->next)
+			if (list == ref) {
+				if (!prev)
+					*ref_lists_slot = ref->next;
+				else
+					prev->next = ref->next;
+			}
+
+		ref->next = NULL;
+	}
+
+	ref->next = *ref_lists_slot;
+	*ref_lists_slot = ref;
+
+	while (ref->next) {
+		struct ref *head = ref->next;
+
+		if (head == ref || ref_compare(ref, head) <= 0)
+			break;
+
+		if (*ref_lists_slot == ref)
+			*ref_lists_slot = head;
+		ref->next = head->next;
+		head->next = ref;
+	}
+
+	return OK;
+}
+
 static void
 remove_ref_from_id_map(struct ref *ref)
 {
@@ -123,7 +165,6 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 {
 	struct ref *ref = NULL;
 	enum reference_type type = REFERENCE_BRANCH;
-	void **ref_lists_slot;
 	void **ref_slot = NULL;
 
 	if (!prefixcmp(name, "refs/tags/")) {
@@ -210,42 +251,7 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	if (type == REFERENCE_TAG)
 		refs_tags++;
 
-	ref_lists_slot = string_map_put_to(&refs_by_id, id);
-	if (!ref_lists_slot)
-		return OK;
-
-	/* First remove the ref from the ID list, to ensure that it is
-	 * reinserted at the right position if the type changes. */
-	{
-		struct ref *list, *prev;
-
-		for (list = *ref_lists_slot, prev = NULL; list; prev = list, list = list->next)
-			if (list == ref) {
-				if (!prev)
-					*ref_lists_slot = ref->next;
-				else
-					prev->next = ref->next;
-			}
-
-		ref->next = NULL;
-	}
-
-	ref->next = *ref_lists_slot;
-	*ref_lists_slot = ref;
-
-	while (ref->next) {
-		struct ref *head = ref->next;
-
-		if (head == ref || ref_compare(ref, head) <= 0)
-			break;
-
-		if (*ref_lists_slot == ref)
-			*ref_lists_slot = head;
-		ref->next = head->next;
-		head->next = ref;
-	}
-
-	return OK;
+	return add_ref_to_id_map(ref);
 }
 
 static int
