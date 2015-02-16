@@ -124,7 +124,7 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	struct ref *ref = NULL;
 	enum reference_type type = REFERENCE_BRANCH;
 	void **ref_lists_slot;
-	void **ref_slot;
+	void **ref_slot = NULL;
 
 	if (!prefixcmp(name, "refs/tags/")) {
 		type = REFERENCE_TAG;
@@ -173,8 +173,6 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	 * before the commit id it points to. */
 	if (type == REFERENCE_REPLACE) {
 		ref = string_map_remove(&refs_by_id, id);
-		if (!ref)
-			return ERR;
 
 	} else {
 		ref_slot = string_map_put_to(&refs_by_name, name);
@@ -188,7 +186,8 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		if (!ref)
 			return ERR;
 		strncpy(ref->name, name, namelen);
-		*ref_slot = ref;
+		if (ref_slot)
+			*ref_slot = ref;
 	}
 
 	if (strncmp(ref->id, id, idlen) || ref->type != type) {
