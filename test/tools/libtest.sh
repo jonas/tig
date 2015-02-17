@@ -138,6 +138,18 @@ gitconfig() {
 	file "$HOME/.gitconfig" "$@"
 }
 
+auto_detect_debugger() {
+	for dbg in gdb lldb; do
+		dbg="$(command -v "$dbg" 2>/dev/null || true)"
+		if [ -n "$dbg" ]; then
+			echo "$dbg"
+			return
+		fi
+	done
+
+	die "Failed to detect a supported debugger"
+}
+
 #
 # Parse TEST_OPTS
 #
@@ -159,6 +171,7 @@ while [ $# -gt 0 ]; do
 		verbose) verbose=yes ;;
 		no-indent) indent= ;;
 		debugger=*) debugger=$(expr "$arg" : 'debugger=\(.*\)') ;;
+		debugger) debugger="$(auto_detect_debugger)" ;;
 		trace) trace=yes ;;
 	esac
 done
