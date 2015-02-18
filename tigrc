@@ -288,6 +288,8 @@ bind generic	v	show-version		# Show Tig version
 # Git automatically indents commit messages by four spaces.
 
 color "diff --"			yellow	default
+color "--- "			yellow	default
+color "+++ "			yellow	default
 color "@@"			magenta	default
 color "+"			green	default
 color " +"			green	default

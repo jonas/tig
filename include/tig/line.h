@@ -23,6 +23,8 @@ struct ref;
 
 #define LINE_INFO(_) \
 	_(DIFF_HEADER,  	"diff --"), \
+	_(DIFF_DEL_FILE,  	"--- "), \
+	_(DIFF_ADD_FILE,  	"+++ "), \
 	_(DIFF_CHUNK,   	"@@"), \
 	_(DIFF_ADD,		"+"), \
 	_(DIFF_ADD2,		" +"), \
