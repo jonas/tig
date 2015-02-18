@@ -1,0 +1,63 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+LINES=3
+
+tigrc <<EOF
+bind generic 1 !@sh -c "echo \"double \$@\" 'quoted' \"shell command\" > $HOME/shell-command.txt"
+bind generic 2 !@sh -c 'echo \'single \'\$@ "quoted" \'shell command\' >> $HOME/shell-command.txt'
+
+bind generic 3 :!echo git log "%(prompt Prompt: )"
+bind generic 4 :!echo git log -G"%(prompt Prompt: )"
+bind generic 5 :!echo git log -G' \' "\" \\\a\b'
+bind generic 6 :!echo git log -G"'\'  \" \\\a\b"
+EOF
+
+steps "
+	1
+	2
+
+	3
+	|Quoted 'prompt' input|<Enter>
+	:save-display quoted-prompt-with-spaces.screen
+	4
+	|\"Mid-quoted\" prompt input|<Enter>
+	:save-display mid-quoted-prompt-with-spaces.screen
+	5
+	:save-display single-quoted-arg-with-escaped-chars.screen
+	6
+	:save-display double-quoted-arg-with-escaped-chars.screen
+"
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+test_tig
+
+assert_equals stderr <<EOF
+EOF
+
+assert_equals 'shell-command.txt' <<EOF
+double quoted shell command
+single quoted shell command
+EOF
+
+assert_equals 'quoted-prompt-with-spaces.screen' <<EOF
+git log |Quoted 'prompt' input|                                                 
+[pager] echo git log |Quoted 'prompt' input| - line 1 of 1                  100%
+EOF
+
+assert_equals 'mid-quoted-prompt-with-spaces.screen' <<EOF
+git log -G|"Mid-quoted" prompt input|                                           
+[pager] echo git log -G|"Mid-quoted" prompt input| - line 1 of 1            100%
+EOF
+
+assert_equals 'single-quoted-arg-with-escaped-chars.screen' <<EOF
+git log -G ' "" \\ab                                                             
+[pager] echo git log -G ' "" \\ab - line 1 of 1                              100%
+EOF
+
+assert_equals 'double-quoted-arg-with-escaped-chars.screen' <<EOF
+git log -G''  " \\ab                                                             
+[pager] echo git log -G''  " \\ab - line 1 of 1                              100%
+EOF
