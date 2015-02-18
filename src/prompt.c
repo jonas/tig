@@ -910,8 +910,13 @@ exec_run_request(struct view *view, struct run_request *req)
 	const char **argv = NULL;
 	bool confirmed = FALSE;
 	enum request request = REQ_NONE;
+	char cmd[SIZEOF_STR];
+	const char *req_argv[SIZEOF_ARG];
+	int req_argc = 0;
 
-	if (!argv_format(view->env, &argv, req->argv, FALSE, TRUE)) {
+	if (!argv_to_string(req->argv, cmd, sizeof(cmd), " ")
+	    || !argv_from_string_no_quotes(req_argv, &req_argc, cmd)
+	    || !argv_format(view->env, &argv, req_argv, FALSE, TRUE)) {
 		report("Failed to format arguments");
 		return REQ_NONE;
 	}
@@ -926,14 +931,14 @@ exec_run_request(struct view *view, struct run_request *req)
 			char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
 			const char *and_exit = req->flags.exit ? " and exit" : "";
 
-			if (argv_to_string(argv, cmd, sizeof(cmd), " ") &&
+			if (argv_to_string_quoted(argv, cmd, sizeof(cmd), " ") &&
 			    string_format(prompt, "Run `%s`%s?", cmd, and_exit) &&
 			    prompt_yesno(prompt)) {
 				confirmed = TRUE;
 			}
 		}
 
-		if (confirmed && argv_remove_quotes(argv))
+		if (confirmed)
 			open_external_viewer(argv, NULL, req->flags.silent,
 					     !req->flags.exit, FALSE, "");
 	}

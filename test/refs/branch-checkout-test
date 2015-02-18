@@ -11,13 +11,13 @@ export COLUMNS=90
 steps '
 	:save-display refs-init.screen
 	:3
-	:exec @sh -c '\''printf "refs=%s\nbranch=%s\ntag=%s\n" "%(ref)" "%(branch)" "%(tag)" > $HOME/%(commit).refinfo'\''
+	:exec @sh -c '\''printf "refs=%s\\nbranch=%s\\ntag=%s\\n" "%(ref)" "%(branch)" "%(tag)" > $HOME/%(commit).refinfo'\''
 	:exec @git checkout -q %(branch)
 	:2
 	:save-display refs-checked-out-branch.screen
 	:exec @sh -c "git rev-parse HEAD > $HOME/%(ref).head"
 	:6
-	:exec @sh -c '\''printf "refs=%s\nbranch=%s\ntag=%s\n" "%(ref)" "%(branch)" "%(tag)" > $HOME/%(commit).refinfo'\''
+	:exec @sh -c '\''printf "refs=%s\\nbranch=%s\\ntag=%s\\n" "%(ref)" "%(branch)" "%(tag)" > $HOME/%(commit).refinfo'\''
 	:exec @git checkout -q %(tag)
 	:save-display refs-checked-out-tag.screen
 	:7

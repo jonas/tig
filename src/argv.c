@@ -16,50 +16,124 @@
 #include "tig/options.h"
 #include "tig/prompt.h"
 
-bool
-argv_to_string(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep)
+static bool
+concat_argv(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep, bool quoted)
 {
 	size_t bufpos, argc;
 
-	for (bufpos = 0, argc = 0; argv[argc]; argc++)
-		if (!string_nformat(buf, buflen, &bufpos, "%s%s",
-				argc ? sep : "", argv[argc]))
+	for (bufpos = 0, argc = 0; argv[argc]; argc++) {
+		const char *arg_sep = argc ? sep : "";
+		const char *arg = argv[argc];
+		int pos;
+
+		if (quoted && arg[(pos = strcspn(arg, " \t\""))]) {
+			if (!string_nformat(buf, buflen, &bufpos, "%s\"", arg_sep))
+				return FALSE;
+
+			while (*arg) {
+				int pos = strcspn(arg, "\"");
+				const char *qesc = arg[pos] == '"' ? "\\\"" : "";
+
+				if (!string_nformat(buf, buflen, &bufpos, "%.*s%s", pos, arg, qesc))
+					return FALSE;
+				arg += pos + 1;
+			}
+
+			if (!string_nformat(buf, buflen, &bufpos, "\""))
+				return FALSE;
+
+			continue;
+		}
+
+		if (!string_nformat(buf, buflen, &bufpos, "%s%s", arg_sep, arg))
 			return FALSE;
+	}
 
 	return TRUE;
 }
 
-static inline int
-get_arg_valuelen(const char *arg, char *quoted)
+bool
+argv_to_string_quoted(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep)
 {
-	if (*arg == '"' || *arg == '\'') {
-		const char *end = *arg == '"' ? "\"" : "'";
-		int valuelen = strcspn(arg + 1, end);
+	return concat_argv(argv, buf, buflen, sep, TRUE);
+}
 
-		if (quoted)
-			*quoted = *arg;
-		if (arg[valuelen + 1] == *arg)
-			valuelen += 2;
-		return valuelen > 0 ? valuelen : strlen(arg);
-	} else {
-		if (quoted)
-			*quoted = 0;
-		return strcspn(arg, " \t");
+bool
+argv_to_string(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep)
+{
+	return concat_argv(argv, buf, buflen, sep, FALSE);
+}
+
+static char *
+parse_arg(char **cmd, bool remove_quotes)
+{
+	int quote = 0;
+	char *arg = *cmd;
+	char *next, *pos;
+
+	for (pos = next = arg; *pos; pos++) {
+		int c = *pos;
+
+		if (c == '"' || c == '\'') {
+			if (quote == c) {
+				quote = 0;
+				if (remove_quotes) {
+					if (pos == arg) {
+						arg++;
+						next++;
+					}
+					continue;
+				}
+
+			} else if (!quote) {
+				quote = c;
+				if (remove_quotes) {
+					if (pos == arg) {
+						arg++;
+						next++;
+					}
+					continue;
+				}
+			}
+
+		} else if (quote && c == '\\') {
+			if (remove_quotes) {
+				if (pos == arg) {
+					arg++;
+					next++;
+				}
+			} else {
+				*next++ = *pos;
+			}
+			pos++;
+			if (!*pos)
+				break;
+		}
+
+		if (!quote && isspace(c))
+			break;
+
+		*next++ = *pos;
 	}
+
+	if (*pos)
+		*cmd = pos + 1;
+	else
+		*cmd = pos;
+	*next = 0;
+	return (!remove_quotes || !quote) ? arg : NULL;
 }
 
 static bool
 split_argv_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd, bool remove_quotes)
 {
 	while (*cmd && *argc < SIZEOF_ARG) {
-		char quoted = 0;
-		int valuelen = get_arg_valuelen(cmd, &quoted);
-		bool advance = cmd[valuelen] != 0;
-		int quote_offset = !!(quoted && remove_quotes);
+		char *arg = parse_arg(&cmd, remove_quotes);
 
-		cmd[valuelen - quote_offset] = 0;
-		argv[(*argc)++] = chomp_string(cmd + quote_offset);
-		cmd = chomp_string(cmd + valuelen + advance);
+		if (!arg)
+			break;
+		argv[(*argc)++] = arg;
+		cmd = chomp_string(cmd);
 	}
 
 	if (*argc < SIZEOF_ARG)
@@ -154,31 +228,6 @@ argv_append_array(const char ***dst_argv, const char *src_argv[])
 	for (i = 0; src_argv && src_argv[i]; i++)
 		if (!argv_append(dst_argv, src_argv[i]))
 			return FALSE;
-	return TRUE;
-}
-
-bool
-argv_remove_quotes(const char *argv[])
-{
-	int argc;
-
-	for (argc = 0; argv[argc]; argc++) {
-		char quoted = 0;
-		const char *arg = argv[argc];
-		const int arglen = get_arg_valuelen(arg, &quoted);
-		const int unquotedlen = arglen - 1 - (arg[arglen - 1] == quoted);
-		char *unquoted;
-
-		if (!quoted)
-			continue;
-
-		unquoted = strndup(arg + 1, unquotedlen);
-		if (!unquoted)
-			return FALSE;
-		free((void *) arg);
-		argv[argc] = unquoted;
-	}
-
 	return TRUE;
 }
 

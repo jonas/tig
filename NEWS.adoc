@@ -37,6 +37,8 @@ Bug fixes:
  - Ensure main view changes commits are shown right before the current HEAD.
  - Fix rendering of boundary commits.
  - Fix compilation with GNU Make 3.80 by removing `$(abspath)`. (GH #362)
+ - Fix config parsing to support shell-like quoting in user-defined command,
+   e.g. `bind generic <Ctrl-f> :!git log -G"%(prompt Prompt: )"` (GH #371)
 
 tig-2.0.3
 ---------
