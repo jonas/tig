@@ -40,6 +40,11 @@ set main-view = \\
 
 set main_view_line_number_visibility = yes
 
+bind generic " edit
+bind generic ' options
+bind generic " @sh -c "echo %(commit) | pbcopy"
+bind generic ' !sh -c 'git | tig'
+
 bind generic : prompt		# Must have prompt mapping
 bind generic ø view-tree	# Binding to UTF-8 keys
 bind main <Hash> :/s e a r c h	# Toggle option
@@ -91,7 +96,11 @@ tig warning: ~/.tigrc:23: Unknown color: dark
 tig warning: ~/.tigrc:24: Unknown color: dark
 tig warning: ~/.tigrc:25: Unknown color attribute: normally
 tig warning: ~/.tigrc:34: Unknown option \`visibility' for column line-number
-tig warning: ~/.tigrc:51: Unknown option command: c
+tig warning: ~/.tigrc:36: Invalid key binding: bind keymap key action
+tig warning: ~/.tigrc:37: Invalid key binding: bind keymap key action
+tig warning: ~/.tigrc:38: Except for <Esc> combos only one key is allowed in key combos: " @sh -c "
+tig warning: ~/.tigrc:39: Except for <Esc> combos only one key is allowed in key combos: ' !sh -c '
+tig warning: ~/.tigrc:56: Unknown option command: c
 tig warning: Errors while loading HOME/.tigrc.
 EOF
 

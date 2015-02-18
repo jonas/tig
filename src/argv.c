@@ -38,7 +38,9 @@ get_arg_valuelen(const char *arg, char *quoted)
 
 		if (quoted)
 			*quoted = *arg;
-		return valuelen > 0 ? valuelen + 2 : strlen(arg);
+		if (arg[valuelen + 1] == *arg)
+			valuelen += 2;
+		return valuelen > 0 ? valuelen : strlen(arg);
 	} else {
 		if (quoted)
 			*quoted = 0;
