@@ -439,7 +439,8 @@ stage_request(struct view *view, enum request request, struct line *line)
 		return request;
 	}
 
-	refresh_view(view->parent);
+	if (view->parent)
+		refresh_view(view->parent);
 
 	/* Check whether the staged entry still exists, and close the
 	 * stage view if it doesn't. */

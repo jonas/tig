@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# GitHub issue #376 regarding a segfault
+
+. libtest.sh
+. libgit.sh
+. "$source_dir/util.sh"
+
+export LINES=5
+
+steps '
+	d
+	@
+	j
+	u
+	:save-display result.screen
+'
+
+tigrc <<EOF
+set vertical-split = no
+EOF
+
+in_work_dir create_dirty_workdir
+
+test_tig
+
+main_replace_index_changes_date
+
+assert_equals 'result.screen' <<EOF
+$YYY_MM_DD_HH_MM Unknown    o Staged changes                                    
+$YYY_MM_DD_HH_MM Unknown    o Unstaged changes                                  
+2009-02-13 23:31 A. U. Thor I [master] Initial commit                           
+[main] Staged changes                                                       100%
+EOF

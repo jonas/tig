@@ -40,6 +40,8 @@ Bug fixes:
  - Fix config parsing to support shell-like quoting in user-defined command,
    e.g. `bind generic <Ctrl-f> :!git log -G"%(prompt Prompt: )"` (GH #371)
  - Make diff meta information colors more consistent with Git. (GH #375)
+ - Fix segfault when updating changes in a maximized stage view opened via the
+   main view. (GH #376)
 
 tig-2.0.3
 ---------
