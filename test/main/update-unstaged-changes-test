@@ -9,6 +9,7 @@
 export LINES=5
 
 steps '
+	:save-display start.screen
 	d
 	@
 	j
@@ -26,9 +27,16 @@ test_tig
 
 main_replace_index_changes_date
 
-assert_equals 'result.screen' <<EOF
-$YYY_MM_DD_HH_MM Unknown    o Staged changes                                    
+assert_equals 'start.screen' <<EOF
 $YYY_MM_DD_HH_MM Unknown    o Unstaged changes                                  
 2009-02-13 23:31 A. U. Thor I [master] Initial commit                           
-[main] Staged changes                                                       100%
+                                                                                
+[main] Unstaged changes                                                     100%
+EOF
+
+assert_equals 'result.screen' <<EOF
++++ b/.j                                                                        
+@@ -6,6 +6,4 @@                                                                 
+ 5                                                                              
+[stage] Unstaged changes to '.j' - line 13 of 101                            12%
 EOF
