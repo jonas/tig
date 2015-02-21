@@ -42,6 +42,7 @@ Bug fixes:
  - Make diff meta information colors more consistent with Git. (GH #375)
  - Fix segfault when updating changes in a maximized stage view opened via the
    main view. (GH #376)
+ - Handle line number configs where the interval is not specified. (GH #378)
 
 tig-2.0.3
 ---------

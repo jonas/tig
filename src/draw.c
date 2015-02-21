@@ -299,11 +299,13 @@ draw_lineno_custom(struct view *view, struct view_column *column, unsigned int l
 	int max = MIN(VIEW_MAX_LEN(view), digits3);
 	char *text = NULL;
 	chtype separator = opt_line_graphics ? ACS_VLINE : '|';
+	struct line_number_options *opts = &column->opt.line_number;
+	int interval = opts->interval > 0 ? opts->interval : 5;
 
 	if (!column->opt.line_number.display)
 		return FALSE;
 
-	if (lineno == 1 || (lineno % column->opt.line_number.interval) == 0) {
+	if (lineno == 1 || (lineno % interval) == 0) {
 		static char fmt[] = "%ld";
 
 		fmt[1] = '0' + (digits3 <= 9 ? digits3 : 1);
