@@ -734,6 +734,7 @@ split_view(struct view *prev, struct view *view)
 {
 	display[1] = view;
 	current_view = opt_focus_child ? 1 : 0;
+	view->parent = prev;
 	resize_display();
 
 	if (prev->pos.lineno - prev->pos.offset >= prev->height) {
@@ -801,7 +802,6 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 	if (prev) {
 		bool split = !!(flags & OPEN_SPLIT);
 
-		view->parent = prev;
 		if (split) {
 			split_view(prev, view);
 		} else {
