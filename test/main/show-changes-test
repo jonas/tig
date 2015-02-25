@@ -118,8 +118,8 @@ index e697dfd..9d8ef3d 100644
 EOF
 
 assert_equals 'main-with-staged-and-unstaged.screen' <<EOF
-$YYY_MM_DD_HH_MM Unknown    o Staged changes                                    
 $YYY_MM_DD_HH_MM Unknown    o Unstaged changes                                  
+$YYY_MM_DD_HH_MM Unknown    o Staged changes                                    
 2009-02-13 23:31 A. U. Thor I [master] Initial commit                           
                                                                                 
                                                                                 
@@ -132,7 +132,7 @@ $YYY_MM_DD_HH_MM Unknown    o Unstaged changes
                                                                                 
                                                                                 
                                                                                 
-[main] Staged changes                                                       100%
+[main] Unstaged changes                                                     100%
 EOF
 
 assert_equals 'main-with-conflict.screen' <<EOF

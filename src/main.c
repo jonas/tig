@@ -149,20 +149,20 @@ main_check_index(struct view *view, struct main_state *state)
 static bool
 main_add_changes(struct view *view, struct main_state *state, const char *parent)
 {
-	const char *staged_parent = NULL_ID;
-	const char *unstaged_parent = parent;
-
-	if (!state->add_changes_unstaged) {
-		unstaged_parent = NULL;
-		staged_parent = parent;
-	}
+	const char *staged_parent = parent;
+	const char *unstaged_parent = NULL_ID;
 
 	if (!state->add_changes_staged) {
 		staged_parent = NULL;
+		unstaged_parent = parent;
 	}
 
-	return main_add_changes_commit(view, LINE_STAT_STAGED, staged_parent, "Staged changes")
-	    && main_add_changes_commit(view, LINE_STAT_UNSTAGED, unstaged_parent, "Unstaged changes");
+	if (!state->add_changes_unstaged) {
+		unstaged_parent = NULL;
+	}
+
+	return main_add_changes_commit(view, LINE_STAT_UNSTAGED, unstaged_parent, "Unstaged changes")
+	    && main_add_changes_commit(view, LINE_STAT_STAGED, staged_parent, "Staged changes");
 }
 
 static bool
