@@ -39,6 +39,7 @@ export TZ=UTC
 export TERM=dumb
 export HOME="$output_dir"
 unset CDPATH
+unset VISUAL
 
 # Git env
 export GIT_CONFIG_NOSYSTEM
