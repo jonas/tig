@@ -9,7 +9,7 @@ datarootdir = @datarootdir@
 sysconfdir = @sysconfdir@
 
 CC = @CC@
-CFLAGS = @CFLAGS@
+CFLAGS = @CFLAGS@ @COVERAGE_CFLAGS@
 CPPFLAGS = @CPPFLAGS@ -DHAVE_CONFIG_H
 LDFLAGS = @LDFLAGS@
 LDLIBS = @LIBS@ @CURSES_LIB@
@@ -17,6 +17,9 @@ LDLIBS = @LIBS@ @CURSES_LIB@
 ASCIIDOC = @ASCIIDOC@
 XMLTO = @XMLTO@
 DOCBOOK2PDF = @DOCBOOK2PDF@
+
+LCOV = @LCOV@
+GENHTML = @GENHTML@
 
 # Special compatibility features
 @NO_MKSTEMPS@ NO_MKSTEMPS = y
