@@ -170,11 +170,11 @@ Untracked files:
 EOF
 
 for name in $(cat test-cases); do
-	tig_script "$name.script" "
+	tig_script "$name" "
 		:save-display $name.screen
 	"
 	run_prep sh "$HOME/$name-before.sh" 
-	(cd "$work_dir" && tig status) >"$name.stdout" 2>"$name.stderr"
+	test_tig status
 	run_prep sh "$HOME/$name-after.sh" 
 
 	assert_equals "$name.screen" < "$name.expected"
@@ -189,7 +189,7 @@ add_exec_prefix()
 	fi
 }
 
-tig_script "all.script" "
+tig_script "all" "
 	$(for name in $(cat test-cases); do
 		add_exec_prefix "$name-before.sh"
 		echo :save-display all-$name.screen

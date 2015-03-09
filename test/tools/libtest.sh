@@ -59,6 +59,10 @@ export ESCDELAY=200
 export LINES=30
 export COLUMNS=80
 
+# Internal test env
+# Used by tig_script to set the test "scope" used by test_tig.
+export TEST_NAME=
+
 [ -e "$output_dir" ] && rm -rf "$output_dir"
 mkdir -p "$output_dir/$work_dir"
 
@@ -116,7 +120,11 @@ file() {
 }
 
 tig_script() {
-	export TIG_SCRIPT="$HOME/$1"; shift
+	name="$1"; shift
+	prefix="${name:+$name.}"
+
+	export TIG_SCRIPT="$HOME/${prefix}steps"
+	export TEST_NAME="$name"
 
 	# Ensure that the steps finish by quitting
 	printf '%s\n:quit\n' "$@" \
@@ -126,7 +134,7 @@ tig_script() {
 }
 
 steps() {
-	tig_script 'steps' "$@"
+	tig_script "" "$@"
 }
 
 stdin() {
@@ -251,16 +259,19 @@ trap 'show_test_results' EXIT
 
 test_tig()
 {
+	name="$TEST_NAME"
+	prefix="${name:+$name.}"
+
 	export TIG_NO_DISPLAY=
 	if [ -n "$trace" ]; then
-		export TIG_TRACE="$HOME/.tig-trace"
+		export TIG_TRACE="$HOME/${prefix}tig-trace"
 	fi
-	touch stdin stderr
+	touch "${prefix}stdin" "${prefix}stderr"
 	if [ -n "$debugger" ]; then
 		echo "*** Running tests in '$(pwd)/$work_dir'"
-		if [ -s "$work_dir/stdin" ]; then
+		if [ -s "$work_dir/${prefix}stdin" ]; then
 			echo "*** - This test requires data to be injected via stdin."
-			echo "***   The expected input file is: '../stdin'"
+			echo "***   The expected input file is: '../${prefix}stdin'"
 		fi
 		if [ "$#" -gt 0 ]; then
 			echo "*** - This test expects the following arguments: $@"
@@ -268,10 +279,10 @@ test_tig()
 		(cd "$work_dir" && $debugger tig "$@")
 	else
 		set +e
-		if [ -s stdin ]; then
-			(cd "$work_dir" && tig "$@") < stdin > stdout 2> stderr.orig
+		if [ -s "${prefix}stdin" ]; then
+			(cd "$work_dir" && tig "$@") < "${prefix}stdin" > "${prefix}stdout" 2> "${prefix}stderr.orig"
 		else
-			(cd "$work_dir" && tig "$@") > stdout 2> stderr.orig
+			(cd "$work_dir" && tig "$@") > "${prefix}stdout" 2> "${prefix}stderr.orig"
 		fi
 		status_code="$?"
 		if [ "$status_code" != "$expected_status_code" ]; then
@@ -280,9 +291,16 @@ test_tig()
 		set -e
 	fi
 	# Normalize paths in stderr output
-	if [ -e stderr.orig ]; then
-		sed "s#$output_dir#HOME#" < stderr.orig > stderr
-		rm -f stderr.orig
+	if [ -e "${prefix}stderr.orig" ]; then
+		sed "s#$output_dir#HOME#" < "${prefix}stderr.orig" > "${prefix}stderr"
+		rm -f "${prefix}stderr.orig"
+	fi
+	if [ -n "$trace" ]; then
+		export TIG_TRACE="$HOME/.tig-trace"
+		sed "s#^#[$name] #" < "$HOME/${prefix}tig-trace" >> "$HOME/.tig-trace"
+	fi
+	if [ -n "$prefix" ]; then
+		sed "s#^#[$name] #" < "${prefix}stderr" >> "stderr"
 	fi
 }
 
