@@ -411,7 +411,9 @@ report(const char *msg, ...)
 static void
 done_display(void)
 {
-	endwin();
+	if (cursed)
+		endwin();
+	cursed = FALSE;
 }
 
 void

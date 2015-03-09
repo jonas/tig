@@ -46,6 +46,7 @@ Bug fixes:
  - Fix segfault when updating changes in a maximized stage view opened via the
    main view. (GH #376)
  - Handle line number configs where the interval is not specified. (GH #378)
+ - Fix display of error messages during startup. (GH #385)
 
 tig-2.0.3
 ---------
