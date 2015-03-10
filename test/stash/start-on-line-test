@@ -3,10 +3,9 @@
 . libtest.sh
 . libgit.sh
 
-in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
-
-prepare_repo()
+test_setup_work_dir()
 {
+	create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
 	file .git/logs/refs/stash <<EOF
 EOF
 	for i in $(seq 1 10); do
@@ -14,8 +13,6 @@ EOF
 		git stash save -q -u "Stash #$i"
 	done
 }
-
-in_work_dir prepare_repo
 
 steps '
 	:save-display position.screen

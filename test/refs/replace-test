@@ -20,7 +20,7 @@ steps '
 
 git_clone 'repo-one'
 
-prepare_repo()
+test_setup_work_dir()
 {
 	replaced_id=$(git rev-parse HEAD~10)
 	replacement_id=$(git rev-parse HEAD~20)
@@ -36,8 +36,6 @@ prepare_repo()
 	git replace "$replaced_no_branch_1_id" "$replacement_no_branch_1_id"
 	git replace "$replaced_no_branch_2_id" "$replacement_no_branch_2_id"
 }
-
-in_work_dir prepare_repo
 
 test_tig refs
 

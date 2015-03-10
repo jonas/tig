@@ -48,7 +48,7 @@ steps '
 
 git_init
 
-prepare_repo()
+test_setup_work_dir()
 {
 	cat > README <<EOF
 = Title
@@ -79,8 +79,6 @@ EOF
 	git add .
 	git_commit -m "Initial import"
 }
-
-in_work_dir prepare_repo
 
 test_tig grep text
 

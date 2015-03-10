@@ -151,6 +151,11 @@ gitconfig() {
 	file "$HOME/.gitconfig" "$@"
 }
 
+in_work_dir()
+{
+	(cd "$work_dir" && $@)
+}
+
 auto_detect_debugger() {
 	for dbg in gdb lldb; do
 		dbg="$(command -v "$dbg" 2>/dev/null || true)"
@@ -259,11 +264,31 @@ show_test_results()
 
 trap 'show_test_results' EXIT
 
+test_exec_work_dir()
+{
+	echo "=== $@ ===" >> "$HOME/test-exec.log"
+	set +e
+	in_work_dir "$@" 1>>"$HOME/test-exec.log" 2>>"$HOME/test-exec.log"
+	set -e
+}
+
+test_setup()
+{
+	run_setup="$(type test_setup_work_dir 2>/dev/null | grep 'function' || true)"
+
+	if [ -n "$run_setup" ]; then
+		if test ! -e "$HOME/test-exec.log" || ! grep -q test_setup_work_dir "$HOME/test-exec.log"; then
+			test_exec_work_dir test_setup_work_dir
+		fi
+	fi
+}
+
 test_tig()
 {
 	name="$TEST_NAME"
 	prefix="${name:+$name.}"
 
+	test_setup
 	export TIG_NO_DISPLAY=
 	if [ -n "$trace" ]; then
 		export TIG_TRACE="$HOME/${prefix}tig-trace"

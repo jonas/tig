@@ -29,11 +29,6 @@ IDENT_C="作者 <zuozhea@example.ch>"
 IDENT_D="Jørgen Thygesen Brahe <brache@example.dk>"
 IDENT_E="Max Power <power123@example.org>"
 
-in_work_dir()
-{
-	(cd "$work_dir" && $@)
-}
-
 git_config()
 {
 	git config --local user.name "Committer"
