@@ -25,21 +25,9 @@ test_setup_work_dir()
 	git format-patch -1 conflict-branch --stdout > "$HOME/mailbox"
 }
 
-test_case()
-{
-	name="$1";
-	before="$2";
-	after="$3";
-
-	echo "$name" >> test-cases
-	echo "$before" > "$name-before.sh"
-	echo "$after" > "$name-after.sh"
-	cat > "$name.expected"
-}
-
 test_case on-branch-master \
-	'git checkout master' \
-	'' <<EOF
+	--args='status' \
+	--before='git checkout master' <<EOF
 On branch master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
@@ -52,8 +40,9 @@ Untracked files:
 EOF
 
 test_case bisecting-master \
-	"git bisect start master" \
-	"git bisect reset" <<EOF
+	--args='status' \
+	--before="git bisect start master" \
+	--after="git bisect reset" <<EOF
 Bisecting master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
@@ -66,8 +55,9 @@ Untracked files:
 EOF
 
 test_case on-detached-head \
-	"git checkout HEAD~10" \
-	"git checkout master" \
+	--args='status' \
+	--before="git checkout HEAD~10" \
+	--after="git checkout master" \
 <<EOF
 HEAD detached at 988c77aad5798f1e087e5d7efe3b3319ee6de744                       
 Changes to be committed:                                                        
@@ -81,8 +71,9 @@ Untracked files:
 EOF
 
 test_case on-detached-tag \
-	"git checkout v0.2" \
-	"git checkout master" \
+	--args='status' \
+	--before="git checkout v0.2" \
+	--after="git checkout master" \
 <<EOF
 HEAD detached at v0.2                                                          
 Changes to be committed:                                                        
@@ -96,8 +87,9 @@ Untracked files:
 EOF
 
 test_case merging-master \
-	"git merge conflict-branch" \
-	"git reset --hard" \
+	--args='status' \
+	--before="git merge conflict-branch" \
+	--after="git reset --hard" \
 <<EOF
 Merging master                                                                  
 Changes to be committed:                                                        
@@ -111,10 +103,11 @@ Untracked files:
 EOF
 
 test_case rebasing-master \
-	"git checkout conflict-branch
-	 git rebase master" \
-	"git rebase --abort
-	 git checkout master" \
+	--args='status' \
+	--before="git checkout conflict-branch
+		  git rebase master" \
+	--after=" git rebase --abort
+		  git checkout master" \
 <<EOF
 Rebasing conflict-branch                                                        
 Changes to be committed:                                                        
@@ -128,8 +121,9 @@ Untracked files:
 EOF
 
 test_case applying-mailbox-to-master \
-	"git am $HOME/mailbox" \
-	"git am --abort" \
+	--args='status' \
+	--before="git am $HOME/mailbox" \
+	--after="git am --abort" \
 <<EOF
 Applying mailbox to master
 Changes to be committed:                                                        
@@ -143,10 +137,11 @@ Untracked files:
 EOF
 
 test_case interactive-rebase-of-branch \
-	"git checkout conflict-branch
-	 git rebase -i master" \
-	"git rebase --abort
-	 git checkout master" \
+	--args='status' \
+	--before="git checkout conflict-branch
+		  git rebase -i master" \
+	--after=" git rebase --abort
+		  git checkout master" \
 <<EOF
 Interactive rebase conflict-branch                                              
 Changes to be committed:                                                        
@@ -159,17 +154,7 @@ Untracked files:
 [status] Nothing to update                                                  100%
 EOF
 
-for name in $(cat test-cases); do
-	tig_script "$name" "
-		:save-display $name.screen
-	"
-	test_exec_work_dir sh "$HOME/$name-before.sh" 
-	test_tig status
-	test_exec_work_dir sh "$HOME/$name-after.sh" 
-
-	assert_equals "$name.screen" < "$name.expected"
-	assert_equals "$name.stderr" ''
-done
+run_test_cases
 
 add_exec_prefix()
 {

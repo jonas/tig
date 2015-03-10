@@ -335,3 +335,56 @@ test_graph()
 {
 	test-graph $@ > stdout 2> stderr.orig
 }
+
+test_case()
+{
+	name="$1"; shift
+
+	echo "$name" >> test-cases
+	cat > "$name.expected"
+
+	touch "$name-before.sh" "$name-after.sh" "$name.script" "$name-args"
+
+	while [ "$#" -gt 0 ]; do
+		arg="$1"; shift
+		value="$(expr "$arg" : '--[^=]*=\(.*\)')"
+
+		case "$arg" in
+		--before=*) echo "$value" > "$name-before.sh" ;;
+		--after=*)  echo "$value" > "$name-after.sh" ;;
+		--script=*) echo "$value" > "$name.script" ;;
+		--args=*)   echo "$value" > "$name-args" ;;
+		--cwd=*)    echo "$value" > "$name-cwd" ;;
+		*)	    die "Unknown test_case argument: $arg"
+		esac
+	done
+}
+
+run_test_cases()
+{
+	if [ ! -e test-cases ]; then
+		return
+	fi
+	test_setup
+	for name in $(cat test-cases); do
+		tig_script "$name" "
+			$(if [ -e "$name.script" ]; then cat "$name.script"; fi)
+			:save-display $name.screen
+		"
+		if [ -e "$name-before.sh" ]; then
+			test_exec_work_dir sh "$HOME/$name-before.sh" 
+		fi
+		old_work_dir="$work_dir"
+		if [ -e "$name-cwd" ]; then
+			work_dir="$work_dir/$(cat "$name-cwd")"
+		fi
+		test_tig $(if [ -e "$name-args" ]; then cat "$name-args"; fi)
+		work_dir="$old_work_dir"
+		if [ -e "$name-after.sh" ]; then
+			test_exec_work_dir sh "$HOME/$name-after.sh" 
+		fi
+
+		assert_equals "$name.screen" < "$name.expected"
+		assert_equals "$name.stderr" ''
+	done
+}
