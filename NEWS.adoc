@@ -47,6 +47,7 @@ Bug fixes:
    main view. (GH #376)
  - Handle line number configs where the interval is not specified. (GH #378)
  - Fix display of error messages during startup. (GH #385)
+ - Show untracked files outside the current directory like git-status. (GH #230)
 
 tig-2.0.3
 ---------

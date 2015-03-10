@@ -162,7 +162,7 @@ static const char *status_diff_index_argv[] = { GIT_DIFF_STAGED_FILES("-z") };
 static const char *status_diff_files_argv[] = { GIT_DIFF_UNSTAGED_FILES("-z") };
 
 static const char *status_list_other_argv[] = {
-	"git", "ls-files", "-z", "--others", "--exclude-standard", repo.prefix, NULL, NULL, NULL
+	"git", "ls-files", "-z", "--others", "--exclude-standard", NULL, NULL, NULL
 };
 
 static const char *status_list_no_head_argv[] = {
