@@ -167,7 +167,7 @@ clean-test:
 test: clean-test $(TESTS)
 	$(QUIET_SUMMARY)test/tools/show-results.sh
 
-export TEST_OPTS ?= $(V:1=no-indent)
+export TIG_TEST_OPTS = $(V:1=no-indent)
 
 $(TESTS): PATH := $(CURDIR)/test/tools:$(CURDIR)/src:$(PATH)
 $(TESTS): $(EXE) test/tools/test-graph

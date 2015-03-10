@@ -60,6 +60,8 @@ export LINES=30
 export COLUMNS=80
 
 # Internal test env
+# A comma-separated list of options. See docs in test/README.
+export TEST_OPTS="${TEST_OPTS:-}"
 # Used by tig_script to set the test "scope" used by test_tig.
 export TEST_NAME=
 
@@ -174,7 +176,7 @@ verbose=
 debugger=
 trace=
 
-set -- $TEST_OPTS
+set -- $TIG_TEST_OPTS $TEST_OPTS
 
 while [ $# -gt 0 ]; do
 	arg="$1"; shift
