@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.8" />
+<meta name="generator" content="AsciiDoc 8.6.9" />
 <title>The Tig Manual</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -94,7 +94,9 @@ ul > li > * { color: black; }
   padding: 0;
   margin: 0;
 }
-
+pre {
+  white-space: pre-wrap;
+}
 
 #author {
   color: #527bbd;
@@ -223,7 +225,7 @@ div.exampleblock > div.content {
 }
 
 div.imageblock div.content { padding-left: 0; }
-span.image img { border-style: none; }
+span.image img { border-style: none; vertical-align: text-bottom; }
 a.image:visited { color: white; }
 
 dl {
@@ -1141,6 +1143,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">The currently selected file.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><code>%(lineno)</code></p></td>
+<td align="left" valign="top"><p class="table">The currently selected line number. Defaults to 0.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><code>%(ref)</code></p></td>
 <td align="left" valign="top"><p class="table">The reference given to blame or HEAD if undefined.</p></td>
 </tr>
@@ -1158,7 +1164,20 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(diffargs)</code></p></td>
-<td align="left" valign="top"><p class="table">The diff options from <em>diff-options</em> or <em>TIG_DIFF_OPTS</em></p></td>
+<td align="left" valign="top"><p class="table">Options from <em>diff-options</em> or <em>TIG_DIFF_OPTS</em> used
+                         used by the diff view.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(blameargs)</code></p></td>
+<td align="left" valign="top"><p class="table">Options from <em>blame-options</em> used by the blame view.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(logargs)</code></p></td>
+<td align="left" valign="top"><p class="table">Options from <em>log-options</em> used by the log view.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(mainargs)</code></p></td>
+<td align="left" valign="top"><p class="table">Options from <em>main-options</em> used by the main view.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(prompt)</code></p></td>
@@ -1357,11 +1376,15 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Switch to (file) blob view.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">B</p></td>
+<td align="left" valign="top"><p class="table">g</p></td>
+<td align="left" valign="top"><p class="table">Switch to grep view.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">b</p></td>
 <td align="left" valign="top"><p class="table">Switch to blame view.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">H</p></td>
+<td align="left" valign="top"><p class="table">r</p></td>
 <td align="left" valign="top"><p class="table">Switch to refs view.</p></td>
 </tr>
 <tr>
@@ -1373,7 +1396,7 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Switch to help view</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">S</p></td>
+<td align="left" valign="top"><p class="table">s</p></td>
 <td align="left" valign="top"><p class="table">Switch to status view</p></td>
 </tr>
 <tr>
@@ -1571,11 +1594,11 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Scroll view one line down.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">w</p></td>
+<td align="left" valign="top"><p class="table">ScrBack</p></td>
 <td align="left" valign="top"><p class="table">Scroll view one page up.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">s</p></td>
+<td align="left" valign="top"><p class="table">ScrFwd</p></td>
 <td align="left" valign="top"><p class="table">Scroll view one page down.</p></td>
 </tr>
 <tr>
@@ -1651,7 +1674,7 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Quit.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">r</p></td>
+<td align="left" valign="top"><p class="table">&lt;C-L&gt;</p></td>
 <td align="left" valign="top"><p class="table">Redraw screen.</p></td>
 </tr>
 <tr>
@@ -1669,7 +1692,7 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Open option menu</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">.</p></td>
+<td align="left" valign="top"><p class="table">#</p></td>
 <td align="left" valign="top"><p class="table">Toggle line numbers on/off.</p></td>
 </tr>
 <tr>
@@ -1681,7 +1704,7 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Toggle author display on/off/abbreviated/email/email user name.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">g</p></td>
+<td align="left" valign="top"><p class="table">G</p></td>
 <td align="left" valign="top"><p class="table">Toggle revision graph visualization on/off.</p></td>
 </tr>
 <tr>
@@ -1732,7 +1755,7 @@ cellspacing="0" cellpadding="4">
 <col width="80%" />
 <thead>
 <tr>
-<th align="left" valign="top">Key            </th>
+<th align="left" valign="top">Key                    </th>
 <th align="left" valign="top">Action</th>
 </tr>
 </thead>
@@ -1756,6 +1779,23 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table">:&lt;action&gt;</p></td>
 <td align="left" valign="top"><p class="table">Execute a Tig command, e.g. <code>:edit</code>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">:save-display &lt;file&gt;</p></td>
+<td align="left" valign="top"><p class="table">Save current display to <code>&lt;file&gt;</code>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">:save-options &lt;file&gt;</p></td>
+<td align="left" valign="top"><p class="table">Save current options to <code>&lt;file&gt;</code>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">:script &lt;file&gt;</p></td>
+<td align="left" valign="top"><p class="table">Execute commands from <code>&lt;file&gt;</code>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">:exec &lt;flags&gt;&lt;args&#8230;&gt;</p></td>
+<td align="left" valign="top"><p class="table">Execute command using <code>&lt;args&gt;</code> with external
+                         user-defined command option flags defined in <code>&lt;flags&gt;</code>.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1949,7 +1989,7 @@ the Free Software Foundation; either version 2 of the License, or
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-08-28 21:17:31 EDT
+Last updated 2015-03-10 23:30:12 EDT
 </div>
 </div>
 </body>

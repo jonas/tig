@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.8" />
+<meta name="generator" content="AsciiDoc 8.6.9" />
 <title>Release notes</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -94,7 +94,9 @@ ul > li > * { color: black; }
   padding: 0;
   margin: 0;
 }
-
+pre {
+  white-space: pre-wrap;
+}
 
 #author {
   color: #527bbd;
@@ -223,7 +225,7 @@ div.exampleblock > div.content {
 }
 
 div.imageblock div.content { padding-left: 0; }
-span.image img { border-style: none; }
+span.image img { border-style: none; vertical-align: text-bottom; }
 a.image:visited { color: white; }
 
 dl {
@@ -735,9 +737,184 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_1">tig-2.1</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Improve C99 compliance so Tig compiles with the native compilers on
+   Solaris (SunStudio cc) and AIX (xlc). (GH #380)
+</p>
+</li>
+<li>
+<p>
+Add move-half-page-up and move-half-page-down actions. (GH #323)
+</p>
+</li>
+<li>
+<p>
+Preserve the cursor position when changing the diff context.
+</p>
+</li>
+<li>
+<p>
+Show <em>Unstaged changes</em> above <em>Staged changes</em> in the main view. (GH #383)
+</p>
+</li>
+<li>
+<p>
+Add <code>:exec &lt;flags&gt;&lt;args...&gt;</code> prompt command to execute commands.
+</p>
+</li>
+<li>
+<p>
+Add shorthand for changing the view settings of a single column,
+   eg. <code>set main-view-author = short</code>. (GH #318)
+</p>
+</li>
+<li>
+<p>
+Show better diff context info in the stage view.
+</p>
+</li>
+<li>
+<p>
+Add <code>%(lineno)</code> state variable. (GH #304)
+</p>
+</li>
+<li>
+<p>
+Use hash table to speed up refs lookup. (GH #350)
+</p>
+</li>
+<li>
+<p>
+Show the file path in the blob view when available.
+</p>
+</li>
+<li>
+<p>
+Use <code>set commit-order = default</code> to use Git&#8217;s default commit order, even when
+   the commit graph is enabled. The option will turn off automatic enabling of
+   <code>--topo-order</code> when the graph is shown in the main view. (GH #310, #324)
+</p>
+</li>
+<li>
+<p>
+Speed up the diff view in large repos by loading git-describe info after the
+   diff content has been read. (GH #324)
+</p>
+</li>
+<li>
+<p>
+Add the old graph rendering as an option. (GH #310, #324)
+</p>
+</li>
+<li>
+<p>
+Add <code>main-options</code> setting for specifying default main view options.
+   Example: <code>set main-options = --max-count=1000</code>. (GH #368)
+</p>
+</li>
+<li>
+<p>
+See <code>contrib/large-repo.tigrc</code> for settings that will help to speed up Tig in
+   large repos. (GH #368)
+</p>
+</li>
+<li>
+<p>
+Add <code>:save-options &lt;file&gt;</code> prompt command to save config to file. (GH #315)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Update manual to reflect default keybinding changes. (GH #325)
+</p>
+</li>
+<li>
+<p>
+Fix graph support for <code>--first-parent</code>. (GH #326)
+</p>
+</li>
+<li>
+<p>
+Fix off-by-one error when opening editor from the grep view.
+</p>
+</li>
+<li>
+<p>
+Fix status on-branch information.
+</p>
+</li>
+<li>
+<p>
+Fix main view to handle the case when git-log doesn&#8217;t find any commits.
+</p>
+</li>
+<li>
+<p>
+Fix corner case when parsing diff chunk when lines information is missing.
+</p>
+</li>
+<li>
+<p>
+Ensure main view changes commits are shown right before the current HEAD.
+</p>
+</li>
+<li>
+<p>
+Fix rendering of boundary commits.
+</p>
+</li>
+<li>
+<p>
+Fix compilation with GNU Make 3.80 by removing <code>$(abspath)</code>. (GH #362)
+</p>
+</li>
+<li>
+<p>
+Fix config parsing to support shell-like quoting in user-defined command,
+   e.g. <code>bind generic &lt;Ctrl-f&gt; :!git log -G"%(prompt Prompt: )"</code> (GH #371)
+</p>
+</li>
+<li>
+<p>
+Make diff meta information colors more consistent with Git. (GH #375)
+</p>
+</li>
+<li>
+<p>
+Fix segfault when updating changes in a maximized stage view opened via the
+   main view. (GH #376)
+</p>
+</li>
+<li>
+<p>
+Handle line number configs where the interval is not specified. (GH #378)
+</p>
+</li>
+<li>
+<p>
+Fix display of error messages during startup. (GH #385)
+</p>
+</li>
+<li>
+<p>
+Show untracked files outside the current directory like git-status. (GH #230)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_0_3">tig-2.0.3</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Improvement:</p></div>
+<div class="paragraph"><p>Improvements:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
@@ -2972,7 +3149,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-08-28 21:17:31 EDT
+Last updated 2015-03-10 23:30:12 EDT
 </div>
 </div>
 </body>

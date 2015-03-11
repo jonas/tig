@@ -2,12 +2,12 @@
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 08/28/2014
+.\"      Date: 03/10/2015
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.0.3
+.\"    Source: Tig 2.1
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "08/28/2014" "Tig 2\&.0\&.3" "Tig Manual"
+.TH "TIGRC" "5" "03/10/2015" "Tig 2\&.1" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -43,6 +43,8 @@ tigrc \- Tig configuration file
 You can permanently set an option by putting it in the ~/\&.tigrc file\&. The file consists of a series of \fIcommands\fR\&. Each line of the file may contain only one command\&. Commands can span multiple lines if each line is terminated by a backslash (\fI\e\fR) character\&.
 .sp
 The hash mark (\fI#\fR) is used as a \fIcomment\fR character\&. All text after the comment character to the end of the line is ignored\&. You can use comments to annotate your initialization file\&.
+.sp
+Certain options can be manipulated at runtime via the option menu\&. In addition, options can also be toggled with the :toggle prompt command or by entering the configuration command into the prompt\&.
 .SH "GIT CONFIGURATION"
 .sp
 Alternatively to using ~/\&.tigrc, Tig options can be set by putting them in one of the Git configuration files, which are read by Tig on startup\&. See \fIgit\-config(1)\fR for which files to use\&. The following example show the basic syntax to use for settings, bindings and colors\&.
@@ -185,7 +187,17 @@ A space separated string of diff options to use in the diff view\&. git\-show(1)
 .PP
 \fIblame\-options\fR (string)
 .RS 4
-A space separated string of extra blame options\&. Can be used for telling git\-blame(1) how to detect the origin of lines\&. The value is ignored when Tig is started in blame mode and given blame options on the command line\&.
+A space separated string of default blame options\&. Can be used for telling git\-blame(1) how to detect the origin of lines\&. The options are ignored when Tig is started in blame mode and given blame options on the command line\&.
+.RE
+.PP
+\fIlog\-options\fR (string)
+.RS 4
+A space separated string of default options that should be passed to the git\-log(1) command used by the log view\&. Options can be overridden by command line options\&. Used internally override custom \(oqpretty\&.format\(cq settings that break the log view\&.
+.RE
+.PP
+\fImain\-options\fR (string)
+.RS 4
+A space separated string of default options that should be passed to the git\-log(1) command used by the main view\&. Options can be overridden by command line options\&.
 .RE
 .PP
 \fIreference\-format\fR (string)
@@ -359,9 +371,9 @@ or
 git show\&.
 .RE
 .PP
-\fIcommit\-order\fR (mixed) [default|topo|date|author\-date|reverse|<bool>]
+\fIcommit\-order\fR (enum) [auto|default|topo|date|author\-date|reverse]
 .RS 4
-Commit ordering using the default (chronological reverse) order, topological order, date order or reverse order\&. The default order is used when the option is set to false, and topo order when set to true\&. Note that topological order is automatically used in the main view when the commit graph is enabled and the commit order is set to the default\&.
+Commit ordering using the default (chronological reverse) order, topological order, date order or reverse order\&. When set to "auto" (which is the default), topological order is automatically used in the main view when the commit graph is enabled\&. In repositories with a long commit history it is advised to set this option to "default" to speed up loading of the main view\&.
 .RE
 .PP
 \fIignore\-case\fR (bool)
@@ -442,6 +454,8 @@ The view settings define the order and options for the different columns of a vi
 .sp
 The first option value in a column specification is always the \fIdisplay\fR option\&. When no \fIdisplay\fR value is given, \fIyes\fR is assumed\&. For \fIdisplay\fR options expecting an enumerated value this will automatically resolve to the default enum value\&. For example, file\-name will automatically have its \fIdisplay\fR setting resolve to \fIauto\fR\&.
 .sp
+Specifications can also be given for a single column, for example to override the defaults in the system tigrc file\&. To override a single column, use the column name as a suffix after the view setting name, e\&.g\&. main\-view\-date will allow to set the date in the main view\&.
+.sp
 Examples:
 .sp
 .if n \{\
@@ -461,6 +475,12 @@ set tree\-view = line\-number:no,interval=5 mode author:full \e
 
 # Show line numbers for every 10th line in the pager view
 set pager\-view = line\-number:yes,interval=10 text
+
+# Shorthands to change view settings for a previously defined column
+set main\-view\-date = short
+set blame\-view\-line\-number = no
+# Use Git\*(Aqs default commit order, even when the commit graph is enabled\&.
+set commit\-order = default
 .fi
 .if n \{\
 .RE
@@ -554,7 +574,7 @@ commit\-title
 .\}
 
 \fIgraph\fR
-(bool): Whether to show revision graph in the main view on start\-up\&. See also the
+(mixed) [no|v2|v1]: Whether to show the revision graph in the main view on start\-up\&. "v1" refers to the old graph rendering, which is less accurate but faster and thus recommended in large repositories\&. See also the
 \fIline\-graphics\fR
 options\&.
 .RE
@@ -860,7 +880,7 @@ text
 .RE
 .RE
 .sp
-All column options can be toggled\&. For \fIdisplay\fR options, use the option name as the prefix followed by a dash and the column name\&. E\&.g\&. :toggle author\-display will toggle the \fIdisplay\fR option in the \fIauthor\fR column\&. For all other options use the column name followed by a dash and then the option name as the suffix\&. E\&.g\&. :toggle commit\-title\-graph will toggle the \fIgraph\fR option in the \fIcommit\-title\fR column\&.
+All column options can be toggled\&. For \fIdisplay\fR options, use the option name as the prefix followed by a dash and the column name\&. E\&.g\&. :toggle author\-display will toggle the \fIdisplay\fR option in the \fIauthor\fR column\&. For all other options use the column name followed by a dash and then the option name as the suffix\&. E\&.g\&. :toggle commit\-title\-graph will toggle the \fIgraph\fR option in the \fIcommit\-title\fR column\&. Alternatively, use the option menu to manipulate options\&.
 .SH "BIND COMMAND"
 .sp
 Using bind commands, keys can be mapped to an action when pressed in a given key map\&. The syntax is:
@@ -1049,6 +1069,10 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
+lt lt
+lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1115,6 +1139,13 @@ The currently selected file\&.
 T}
 T{
 .sp
+%(lineno)
+T}:T{
+.sp
+The currently selected line number\&. Defaults to 0\&.
+T}
+T{
+.sp
 %(ref)
 T}:T{
 .sp
@@ -1146,7 +1177,28 @@ T{
 %(diffargs)
 T}:T{
 .sp
-The diff options from \fIdiff\-options\fR or \fITIG_DIFF_OPTS\fR
+Options from \fIdiff\-options\fR or \fITIG_DIFF_OPTS\fR used used by the diff view\&.
+T}
+T{
+.sp
+%(blameargs)
+T}:T{
+.sp
+Options from \fIblame\-options\fR used by the blame view\&.
+T}
+T{
+.sp
+%(logargs)
+T}:T{
+.sp
+Options from \fIlog\-options\fR used by the log view\&.
+T}
+T{
+.sp
+%(mainargs)
+T}:T{
+.sp
+Options from \fImain\-options\fR used by the main view\&.
 T}
 T{
 .sp
@@ -1537,6 +1589,8 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1562,6 +1616,20 @@ T}
 T{
 .sp
 move\-page\-up
+T}:T{
+.sp
+Move cursor half a page up
+T}
+T{
+.sp
+move\-half\-page\-down
+T}:T{
+.sp
+Move cursor half a page down
+T}
+T{
+.sp
+move\-half\-page\-up
 T}:T{
 .sp
 Move cursor one page up
@@ -1703,33 +1771,11 @@ T}
 .nr an-break-flag 1
 .br
 .ps +1
-\fBOption manipulation\fR
-.RS 4
-.sp
-In addition to the actions below, options can also be toggled with the :toggle prompt command\&.
-.TS
-tab(:);
-lt lt.
-T{
-.sp
-options
-T}:T{
-.sp
-Open the options menu
-T}
-.TE
-.sp 1
-.RE
-.sp
-.it 1 an-trap
-.nr an-no-space-flag 1
-.nr an-break-flag 1
-.br
-.ps +1
 \fBMisc\fR
 .RS 4
 .TS
 tab(:);
+lt lt
 lt lt
 lt lt
 lt lt
@@ -1749,6 +1795,13 @@ prompt
 T}:T{
 .sp
 Open the prompt
+T}
+T{
+.sp
+options
+T}:T{
+.sp
+Open the options menu
 T}
 T{
 .sp

@@ -2,12 +2,12 @@
 .\"     Title: tigmanual
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 08/28/2014
+.\"      Date: 03/10/2015
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.0.3
+.\"    Source: Tig 2.1
 .\"  Language: English
 .\"
-.TH "TIGMANUAL" "7" "08/28/2014" "Tig 2\&.0\&.3" "Tig Manual"
+.TH "TIGMANUAL" "7" "03/10/2015" "Tig 2\&.1" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -206,6 +206,10 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
+lt lt
+lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -258,6 +262,13 @@ The currently selected file\&.
 T}
 T{
 .sp
+%(lineno)
+T}:T{
+.sp
+The currently selected line number\&. Defaults to 0\&.
+T}
+T{
+.sp
 %(ref)
 T}:T{
 .sp
@@ -289,7 +300,28 @@ T{
 %(diffargs)
 T}:T{
 .sp
-The diff options from \fIdiff\-options\fR or \fITIG_DIFF_OPTS\fR
+Options from \fIdiff\-options\fR or \fITIG_DIFF_OPTS\fR used used by the diff view\&.
+T}
+T{
+.sp
+%(blameargs)
+T}:T{
+.sp
+Options from \fIblame\-options\fR used by the blame view\&.
+T}
+T{
+.sp
+%(logargs)
+T}:T{
+.sp
+Options from \fIlog\-options\fR used by the log view\&.
+T}
+T{
+.sp
+%(mainargs)
+T}:T{
+.sp
+Options from \fImain\-options\fR used by the main view\&.
 T}
 T{
 .sp
@@ -535,6 +567,7 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -580,14 +613,21 @@ Switch to (file) blob view\&.
 T}
 T{
 .sp
-B
+g
+T}:T{
+.sp
+Switch to grep view\&.
+T}
+T{
+.sp
+b
 T}:T{
 .sp
 Switch to blame view\&.
 T}
 T{
 .sp
-H
+r
 T}:T{
 .sp
 Switch to refs view\&.
@@ -608,7 +648,7 @@ Switch to help view
 T}
 T{
 .sp
-S
+s
 T}:T{
 .sp
 Switch to status view
@@ -859,14 +899,14 @@ Scroll view one line down\&.
 T}
 T{
 .sp
-w
+ScrBack
 T}:T{
 .sp
 Scroll view one page up\&.
 T}
 T{
 .sp
-s
+ScrFwd
 T}:T{
 .sp
 Scroll view one page down\&.
@@ -974,7 +1014,7 @@ Quit\&.
 T}
 T{
 .sp
-r
+<C\-L>
 T}:T{
 .sp
 Redraw screen\&.
@@ -1002,7 +1042,7 @@ Open option menu
 T}
 T{
 .sp
-\&.
+#
 T}:T{
 .sp
 Toggle line numbers on/off\&.
@@ -1023,7 +1063,7 @@ Toggle author display on/off/abbreviated/email/email user name\&.
 T}
 T{
 .sp
-g
+G
 T}:T{
 .sp
 Toggle revision graph visualization on/off\&.
@@ -1100,6 +1140,10 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
+lt lt
+lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1135,6 +1179,34 @@ T{
 T}:T{
 .sp
 Execute a Tig command, e\&.g\&. :edit\&.
+T}
+T{
+.sp
+:save\-display <file>
+T}:T{
+.sp
+Save current display to <file>\&.
+T}
+T{
+.sp
+:save\-options <file>
+T}:T{
+.sp
+Save current options to <file>\&.
+T}
+T{
+.sp
+:script <file>
+T}:T{
+.sp
+Execute commands from <file>\&.
+T}
+T{
+.sp
+:exec <flags><args\&...>
+T}:T{
+.sp
+Execute command using <args> with external user\-defined command option flags defined in <flags>\&.
 T}
 .TE
 .sp 1

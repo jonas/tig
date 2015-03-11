@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.8" />
+<meta name="generator" content="AsciiDoc 8.6.9" />
 <title>tigrc(5)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -94,7 +94,9 @@ ul > li > * { color: black; }
   padding: 0;
   margin: 0;
 }
-
+pre {
+  white-space: pre-wrap;
+}
 
 #author {
   color: #527bbd;
@@ -223,7 +225,7 @@ div.exampleblock > div.content {
 }
 
 div.imageblock div.content { padding-left: 0; }
-span.image img { border-style: none; }
+span.image img { border-style: none; vertical-align: text-bottom; }
 a.image:visited { color: white; }
 
 dl {
@@ -764,6 +766,9 @@ terminated by a backslash (<em>\</em>) character.</p></div>
 <div class="paragraph"><p>The hash mark (<em>#</em>) is used as a <em>comment</em> character. All text after the
 comment character to the end of the line is ignored. You can use comments to
 annotate your initialization file.</p></div>
+<div class="paragraph"><p>Certain options can be manipulated at runtime via the option menu. In
+addition, options can also be toggled with the <code>:toggle</code> prompt command
+or by entering the configuration command into the prompt.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -927,10 +932,31 @@ Valid mixed values
 </dt>
 <dd>
 <p>
-        A space separated string of extra blame options. Can be used for
-        telling git-blame(1) how to detect the origin of lines. The value
-        is ignored when Tig is started in blame mode and given blame options
+        A space separated string of default blame options. Can be used for
+        telling git-blame(1) how to detect the origin of lines. The options
+        are ignored when Tig is started in blame mode and given blame options
         on the command line.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>log-options</em> (string)
+</dt>
+<dd>
+<p>
+        A space separated string of default options that should be passed to the
+        git-log(1) command used by the log view. Options can be overridden by
+        command line options. Used internally override custom &#8216;pretty.format&#8217;
+        settings that break the log view.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>main-options</em> (string)
+</dt>
+<dd>
+<p>
+        A space separated string of default options that should be passed to the
+        git-log(1) command used by the main view. Options can be overridden by
+        command line options.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1104,15 +1130,16 @@ branch               : Any other reference.
 </p>
 </dd>
 <dt class="hdlist1">
-<em>commit-order</em> (mixed) [default|topo|date|author-date|reverse|&lt;bool&gt;]
+<em>commit-order</em> (enum) [auto|default|topo|date|author-date|reverse]
 </dt>
 <dd>
 <p>
         Commit ordering using the default (chronological reverse) order,
-        topological order, date order or reverse order. The default order is
-        used when the option is set to false, and topo order when set to true.
-        Note that topological order is automatically used in the main view when
-        the commit graph is enabled and the commit order is set to the default.
+        topological order, date order or reverse order. When set to "auto"
+        (which is the default), topological order is automatically used in the
+        main view when the commit graph is enabled. In repositories with a long
+        commit history it is advised to set this option to "default" to speed up
+        loading of the main view.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1237,6 +1264,10 @@ When no <em>display</em> value is given, <em>yes</em> is assumed. For <em>displa
 expecting an enumerated value this will automatically resolve to the default
 enum value. For example, <code>file-name</code> will automatically have its <em>display</em>
 setting resolve to <em>auto</em>.</p></div>
+<div class="paragraph"><p>Specifications can also be given for a single column, for example to override
+the defaults in the system tigrc file. To override a single column, use the
+column name as a suffix after the view setting name, e.g. <code>main-view-date</code> will
+allow to set the date in the main view.</p></div>
 <div class="paragraph"><p>Examples:</p></div>
 <div class="listingblock">
 <div class="content">
@@ -1252,7 +1283,13 @@ set tree-view = line-number:no,interval=5 mode author:full \
                 file-size:units date:default id:no file-name
 
 # Show line numbers for every 10th line in the pager view
-set pager-view = line-number:yes,interval=10 text</code></pre>
+set pager-view = line-number:yes,interval=10 text
+
+# Shorthands to change view settings for a previously defined column
+set main-view-date = short
+set blame-view-line-number = no
+# Use Git's default commit order, even when the commit graph is enabled.
+set commit-order = default</code></pre>
 </div></div>
 <div class="paragraph"><p>The following list shows which the available view settings and what column types
 they support:</p></div>
@@ -1352,8 +1389,10 @@ commit-title
 <div class="ulist"><ul>
 <li>
 <p>
-<em>graph</em> (bool): Whether to show revision graph in the main view on
-          start-up. See also the <em>line-graphics</em> options.
+<em>graph</em> (mixed) [no|v2|v1]: Whether to show the revision graph in the
+          main view on start-up. "v1" refers to the old graph rendering, which
+          is less accurate but faster and thus recommended in large
+          repositories.  See also the <em>line-graphics</em> options.
 </p>
 </li>
 <li>
@@ -1554,7 +1593,8 @@ option name as the prefix followed by a dash and the column name. E.g.
 <code>:toggle author-display</code> will toggle the <em>display</em> option in the <em>author</em>
 column. For all other options use the column name followed by a dash and
 then the option name as the suffix. E.g. <code>:toggle commit-title-graph</code>
-will toggle the <em>graph</em> option in the <em>commit-title</em> column.</p></div>
+will toggle the <em>graph</em> option in the <em>commit-title</em> column. Alternatively,
+use the option menu to manipulate options.</p></div>
 </div>
 </div>
 </div>
@@ -1743,6 +1783,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">The currently selected file.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><code>%(lineno)</code></p></td>
+<td align="left" valign="top"><p class="table">The currently selected line number. Defaults to 0.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><code>%(ref)</code></p></td>
 <td align="left" valign="top"><p class="table">The reference given to blame or HEAD if undefined.</p></td>
 </tr>
@@ -1760,7 +1804,20 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(diffargs)</code></p></td>
-<td align="left" valign="top"><p class="table">The diff options from <em>diff-options</em> or <em>TIG_DIFF_OPTS</em></p></td>
+<td align="left" valign="top"><p class="table">Options from <em>diff-options</em> or <em>TIG_DIFF_OPTS</em> used
+                         used by the diff view.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(blameargs)</code></p></td>
+<td align="left" valign="top"><p class="table">Options from <em>blame-options</em> used by the blame view.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(logargs)</code></p></td>
+<td align="left" valign="top"><p class="table">Options from <em>log-options</em> used by the log view.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(mainargs)</code></p></td>
+<td align="left" valign="top"><p class="table">Options from <em>main-options</em> used by the main view.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(prompt)</code></p></td>
@@ -2020,6 +2077,14 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>move-page-up</code></p></td>
+<td align="left" valign="top"><p class="table">Move cursor half a page up</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>move-half-page-down</code></p></td>
+<td align="left" valign="top"><p class="table">Move cursor half a page down</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>move-half-page-up</code></p></td>
 <td align="left" valign="top"><p class="table">Move cursor one page up</p></td>
 </tr>
 <tr>
@@ -2107,26 +2172,6 @@ cellspacing="0" cellpadding="4">
 </div>
 </div>
 <div class="sect3">
-<h4 id="_option_manipulation">Option manipulation</h4>
-<div class="paragraph"><p>In addition to the actions below, options can also be toggled with the
-<code>:toggle</code> prompt command.</p></div>
-<div class="tableblock">
-<table rules="none"
-width="100%"
-frame="void"
-cellspacing="0" cellpadding="4">
-<col width="25%" />
-<col width="75%" />
-<tbody>
-<tr>
-<td align="left" valign="top"><p class="table"><code>options</code></p></td>
-<td align="left" valign="top"><p class="table">Open the options menu</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="sect3">
 <h4 id="_misc">Misc</h4>
 <div class="tableblock">
 <table rules="none"
@@ -2143,6 +2188,10 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><code>prompt</code></p></td>
 <td align="left" valign="top"><p class="table">Open the prompt</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>options</code></p></td>
+<td align="left" valign="top"><p class="table">Open the options menu</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>screen-redraw</code></p></td>
@@ -2558,7 +2607,7 @@ git(7), git-config(1)</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-08-28 21:17:31 EDT
+Last updated 2015-03-10 23:30:12 EDT
 </div>
 </div>
 </body>
