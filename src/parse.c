@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -13,6 +13,7 @@
 
 #include "tig/tig.h"
 #include "tig/parse.h"
+#include "tig/map.h"
 
 size_t
 parse_size(const char *text)
@@ -184,22 +185,22 @@ parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *lin
  */
 
 static bool
-parse_ulong(const char **pos_ptr, unsigned long *value, const char *skip)
+parse_ulong(const char **pos_ptr, unsigned long *value, char skip, bool optional)
 {
 	const char *start = *pos_ptr;
 	char *end;
 
-	if (!isdigit(*start))
-		return 0;
+	if (*start != skip)
+		return optional;
 
+	start++;
 	*value = strtoul(start, &end, 10);
 	if (end == start)
 		return FALSE;
 
-	start = end;
-	while (skip && *start && strchr(skip, *start))
-		start++;
-	*pos_ptr = start;
+	while (isspace(*end))
+		end++;
+	*pos_ptr = end;
 	return TRUE;
 }
 
@@ -209,18 +210,17 @@ parse_chunk_header(struct chunk_header *header, const char *line)
 	memset(header, 0, sizeof(*header));
 
 	if (!prefixcmp(line, "@@ -"))
-		line += STRING_SIZE("@@ -");
+		line += STRING_SIZE("@@ -") - 1;
 	else if (!prefixcmp(line, "@@@ -") &&
 		 (line = strchr(line + STRING_SIZE("@@@ -"), '-')))
-		line += 1;
+		/* Stay at that '-'. */ ;
 	else
 		return FALSE;
 
-
-	return  parse_ulong(&line, &header->old.position, ",") &&
-		parse_ulong(&line, &header->old.lines, " +") &&
-		parse_ulong(&line, &header->new.position, ",") &&
-		parse_ulong(&line, &header->new.lines, NULL);
+	return  parse_ulong(&line, &header->old.position, '-', FALSE) &&
+		parse_ulong(&line, &header->old.lines, ',', TRUE) &&
+		parse_ulong(&line, &header->new.position, '+', FALSE) &&
+		parse_ulong(&line, &header->new.lines, ',', FALSE);
 }
 
 bool
@@ -241,87 +241,55 @@ parse_chunk_lineno(unsigned long *lineno, const char *chunk, int marker)
  * Caches.
  */
 
-DEFINE_ALLOCATOR(realloc_paths, const char *, 256)
+struct path_entry {
+	char path[1];
+};
 
-/* Small cache to reduce memory consumption. It uses binary search to
- * lookup or find place to position new entries. No entries are ever
+DEFINE_STRING_MAP(path_cache, struct path_entry *, path, 32)
+
+/* Small cache to reduce memory consumption. No entries are ever
  * freed. */
 const char *
 get_path(const char *path)
 {
-	static const char **paths;
-	static size_t paths_size;
-	int from = 0, to = paths_size - 1;
-	char *entry;
+	struct path_entry *entry = string_map_get(&path_cache, path);
 
-	while (from <= to) {
-		size_t pos = (to + from) / 2;
-		int cmp = strcmp(path, paths[pos]);
-
-		if (!cmp)
-			return paths[pos];
-
-		if (cmp < 0)
-			to = pos - 1;
-		else
-			from = pos + 1;
+	if (!entry) {
+		entry = calloc(1, sizeof(*entry) + strlen(path));
+		if (!entry || !string_map_put(&path_cache, path, entry)) {
+			free(entry);
+			return NULL;
+		}
+		strncpy(entry->path, path, strlen(path));
 	}
 
-	if (!realloc_paths(&paths, paths_size, 1))
-		return NULL;
-	entry = strdup(path);
-	if (!entry)
-		return NULL;
-
-	memmove(paths + from + 1, paths + from, (paths_size - from) * sizeof(*paths));
-	paths[from] = entry;
-	paths_size++;
-
-	return entry;
+	return entry->path;
 }
 
-DEFINE_ALLOCATOR(realloc_authors, struct ident *, 256)
+DEFINE_STRING_MAP(author_cache, const struct ident *, email, 32)
 
-/* Small author cache to reduce memory consumption. It uses binary
- * search to lookup or find place to position new entries. No entries
+/* Small author cache to reduce memory consumption. No entries
  * are ever freed. */
 struct ident *
 get_author(const char *name, const char *email)
 {
-	static struct ident **authors;
-	static size_t authors_size;
-	int from = 0, to = authors_size - 1;
-	struct ident *ident;
+	struct ident *ident = string_map_get(&author_cache, email);
 
-	while (from <= to) {
-		size_t pos = (to + from) / 2;
-		int cmp = strcmp(email, authors[pos]->email);
+	if (ident)
+		return ident;
 
-		if (!cmp)
-			return authors[pos];
-
-		if (cmp < 0)
-			to = pos - 1;
-		else
-			from = pos + 1;
-	}
-
-	if (!realloc_authors(&authors, authors_size, 1))
-		return NULL;
 	ident = calloc(1, sizeof(*ident));
 	if (!ident)
 		return NULL;
 	ident->name = strdup(name);
 	ident->email = strdup(email);
-	if (!ident->name || !ident->email) {
+	if (!ident->name || !ident->email ||
+	    !string_map_put(&author_cache, email, ident)) {
 		free((void *) ident->name);
+		free((void *) ident->email);
 		free(ident);
 		return NULL;
 	}
-
-	memmove(authors + from + 1, authors + from, (authors_size - from) * sizeof(*authors));
-	authors[from] = ident;
-	authors_size++;
 
 	return ident;
 }

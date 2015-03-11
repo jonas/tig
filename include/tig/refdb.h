@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -21,16 +21,11 @@
 struct argv_env;
 
 struct ref {
+	struct ref *next;
 	enum reference_type type;
 	char id[SIZEOF_REV];	/* Commit SHA1 ID */
 	unsigned int valid:1;	/* Is the ref still valid? */
 	char name[1];		/* Ref name; tag or head names are shortened. */
-};
-
-struct ref_list {
-	char id[SIZEOF_REV];	/* Commit SHA1 ID */
-	size_t size;		/* Number of refs. */
-	struct ref **refs;	/* References for this ID. */
 };
 
 #define is_initial_commit()	(!get_ref_head())
@@ -38,21 +33,30 @@ struct ref_list {
 #define ref_is_tag(ref)		((ref)->type == REFERENCE_TAG || (ref)->type == REFERENCE_LOCAL_TAG)
 #define ref_is_remote(ref)	((ref)->type == REFERENCE_REMOTE || (ref)->type == REFERENCE_TRACKED_REMOTE)
 
-struct ref *get_ref_head();
-struct ref_list *get_ref_list(const char *id);
-void foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data);
+#define foreach_ref_list(ref, id)	for (ref = get_ref_list(id); ref; ref = ref->next)
+
+const struct ref *get_ref_head();
+const struct ref *get_ref_list(const char *id);
+const struct ref *get_canonical_ref(const char *id);
+bool ref_list_contains_tag(const char *id);
 int load_refs(bool force);
 int add_ref(const char *id, char *name, const char *remote_name, const char *head);
 int ref_compare(const struct ref *ref1, const struct ref *ref2);
 void ref_update_env(struct argv_env *env, const struct ref *ref, bool clear);
+
+bool refs_contain_tag(void);
+
+typedef bool (*ref_visitor_fn)(void *data, const struct ref *ref);
+void foreach_ref(ref_visitor_fn visitor, void *data);
 
 struct ref_format {
 	const char *start;
 	const char *end;
 };
 
-const struct ref_format *get_ref_format(struct ref *ref);
-enum status_code parse_ref_formats(const char *argv[]);
+const struct ref_format *get_ref_format(struct ref_format **formats, const struct ref *ref);
+enum status_code parse_ref_formats(struct ref_format ***formats, const char *argv[]);
+enum status_code format_ref_formats(struct ref_format **formats, char buf[], size_t bufsize);
 
 #endif
 

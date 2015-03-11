@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -15,6 +15,7 @@
 #include "tig/graph.h"
 #include "tig/draw.h"
 #include "tig/options.h"
+#include "compat/hashtab.h"
 
 static const enum line_type palette_colors[] = {
 	LINE_PALETTE_0,
@@ -298,11 +299,13 @@ draw_lineno_custom(struct view *view, struct view_column *column, unsigned int l
 	int max = MIN(VIEW_MAX_LEN(view), digits3);
 	char *text = NULL;
 	chtype separator = opt_line_graphics ? ACS_VLINE : '|';
+	struct line_number_options *opts = &column->opt.line_number;
+	int interval = opts->interval > 0 ? opts->interval : 5;
 
 	if (!column->opt.line_number.display)
 		return FALSE;
 
-	if (lineno == 1 || (lineno % column->opt.line_number.interval) == 0) {
+	if (lineno == 1 || (lineno % interval) == 0) {
 		static char fmt[] = "%ld";
 
 		fmt[1] = '0' + (digits3 <= 9 ? digits3 : 1);
@@ -333,17 +336,15 @@ draw_ref(struct view *view, struct view_column *column, const struct ref *ref)
 }
 
 static bool
-draw_refs(struct view *view, struct view_column *column, const struct ref_list *refs)
+draw_refs(struct view *view, struct view_column *column, const struct ref *refs)
 {
-	size_t i;
-
 	if (!column->opt.commit_title.refs || !refs)
 		return FALSE;
 
-	for (i = 0; i < refs->size; i++) {
-		struct ref *ref = refs->refs[i];
+	for (; refs; refs = refs->next) {
+		const struct ref *ref = refs;
 		enum line_type type = get_line_type_from_ref(ref);
-		const struct ref_format *format = get_ref_format(ref);
+		const struct ref_format *format = get_ref_format(opt_reference_format, ref);
 
 		if (!strcmp(format->start, "hide:") && !*format->end)
 			continue;
@@ -371,69 +372,59 @@ draw_status(struct view *view, struct view_column *column,
  * Revision graph
  */
 
-static enum line_type get_graph_color(struct graph_symbol *symbol)
+static inline enum line_type
+get_graph_color(int color_id)
 {
-	if (symbol->commit)
+	if (color_id == GRAPH_COMMIT_COLOR)
 		return LINE_GRAPH_COMMIT;
-	assert(symbol->color < ARRAY_SIZE(palette_colors));
-	return palette_colors[symbol->color];
+	assert(color_id < ARRAY_SIZE(palette_colors));
+	return palette_colors[color_id];
 }
 
 static bool
-draw_graph_utf8(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
+draw_graph_utf8(void *view, const struct graph *graph, const struct graph_symbol *symbol, int color_id, bool first)
 {
-	const char *chars = graph_symbol_to_utf8(symbol);
+	const char *chars = graph->symbol_to_utf8(symbol);
 
-	return draw_text(view, color, chars + !!first);
+	return draw_text(view, get_graph_color(color_id), chars + !!first);
 }
 
 static bool
-draw_graph_ascii(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
+draw_graph_ascii(void *view, const struct graph *graph, const struct graph_symbol *symbol, int color_id, bool first)
 {
-	const char *chars = graph_symbol_to_ascii(symbol);
+	const char *chars = graph->symbol_to_ascii(symbol);
 
-	return draw_text(view, color, chars + !!first);
+	return draw_text(view, get_graph_color(color_id), chars + !!first);
 }
 
 static bool
-draw_graph_chtype(struct view *view, struct graph_symbol *symbol, enum line_type color, bool first)
+draw_graph_chtype(void *view, const struct graph *graph, const struct graph_symbol *symbol, int color_id, bool first)
 {
-	const chtype *chars = graph_symbol_to_chtype(symbol);
+	const chtype *chars = graph->symbol_to_chtype(symbol);
 
-	return draw_graphic(view, color, chars + !!first, 2 - !!first, FALSE);
+	return draw_graphic(view, get_graph_color(color_id), chars + !!first, 2 - !!first, FALSE);
 }
 
-typedef bool (*draw_graph_fn)(struct view *, struct graph_symbol *, enum line_type, bool);
-
 static bool
-draw_graph(struct view *view, const struct graph_canvas *canvas)
+draw_graph(struct view *view, const struct graph *graph, const struct graph_canvas *canvas)
 {
-	static const draw_graph_fn fns[] = {
+	static const graph_symbol_iterator_fn fns[] = {
 		draw_graph_ascii,
 		draw_graph_chtype,
 		draw_graph_utf8
 	};
-	draw_graph_fn fn = fns[opt_line_graphics];
-	int i;
 
-	for (i = 0; i < canvas->size; i++) {
-		struct graph_symbol *symbol = &canvas->symbols[i];
-		enum line_type color = get_graph_color(symbol);
-
-		if (fn(view, symbol, color, i == 0))
-			return TRUE;
-	}
-
+	graph->foreach_symbol(graph, canvas, fns[opt_line_graphics], view);
 	return draw_text(view, LINE_DEFAULT, " ");
 }
 
 static bool
 draw_commit_title(struct view *view, struct view_column *column,
-		  const struct graph_canvas *graph, const struct ref_list *refs,
-		  const char *commit_title)
+		  const struct graph *graph, const struct graph_canvas *graph_canvas,
+		  const struct ref *refs, const char *commit_title)
 {
-	if (graph && column->opt.commit_title.graph &&
-	    draw_graph(view, graph))
+	if (graph && graph_canvas && column->opt.commit_title.graph &&
+	    draw_graph(view, graph, graph_canvas))
 		return TRUE;
 	if (draw_refs(view, column, refs))
 		return TRUE;
@@ -476,7 +467,7 @@ bool
 view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct view_column *column = view->columns;
-	struct view_column_data column_data = {};
+	struct view_column_data column_data = {0};
 
 	if (!view->ops->get_column_data(view, line, &column_data))
 		return TRUE;
@@ -527,7 +518,7 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_COMMIT_TITLE:
-			if (draw_commit_title(view, column, column_data.graph,
+			if (draw_commit_title(view, column, column_data.graph, column_data.graph_canvas,
 					      column_data.refs, column_data.commit_title))
 				return TRUE;
 			continue;

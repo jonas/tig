@@ -3,15 +3,15 @@
 # Work-around for Homebrew-based xmlto.
 export XML_CATALOG_FILES=/usr/local/etc/xml/catalog
 
-LDLIBS = -lcurses -liconv
-CPPFLAGS = -DHAVE_CURSES_H
+TIG_LDLIBS = -liconv
+TIG_CPPFLAGS = -DHAVE_CURSES_H
 
 READLINE_DIR = $(wildcard /usr/local/opt/readline)
 
 ifneq ($(READLINE_DIR),)
-	LDFLAGS = -L$(READLINE_DIR)/lib
-	CFLAGS = -I$(READLINE_DIR)/include -DHAVE_READLINE
-	LDLIBS += -lreadline
+	TIG_LDFLAGS = -L$(READLINE_DIR)/lib
+	TIG_CFLAGS = -I$(READLINE_DIR)/include -DHAVE_READLINE
+	TIG_LDLIBS += -lreadline
 endif
 
 # vim: ft=make:

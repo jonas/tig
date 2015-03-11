@@ -1,0 +1,50 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+test_setup_work_dir()
+{
+	create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+	for i in $(seq 1 40); do
+		git branch "ref-$i" master~$i
+	done
+}
+
+steps '
+	:save-display position.screen
+'
+
+test_tig refs +42
+
+assert_equals 'position.screen' <<EOF
+2013-11-19 21:56 Jonas Fonseca ref-15         sudoku: use iterator instead of Tr
+2013-11-26 20:13 Jonas Fonseca ref-14         Rename projects to be grouped toge
+2013-11-26 22:03 Jonas Fonseca ref-13         Move benchmark registration to Sca
+2013-11-26 22:52 Jonas Fonseca ref-12         Fix reference setup to work for no
+2013-11-26 22:55 Jonas Fonseca ref-11         Exclude Sudoku when running all be
+2013-11-26 23:22 Jonas Fonseca ref-10         Disable phantomjs by default      
+2013-11-26 23:31 Jonas Fonseca ref-9          Solve the easiest sudoku grid     
+2013-11-26 23:39 Jonas Fonseca ref-8          Extract the benchmark list variabl
+2013-12-03 23:35 Jonas Fonseca ref-7          Use Scala.js 0.2-SNAPSHOT         
+2013-12-17 00:02 Jonas Fonseca ref-6          Update links to reflect project na
+2014-01-16 07:47 Jonas Fonseca ref-5          Merge pull request #4 from phaller
+2014-01-16 17:39 Jonas Fonseca ref-4          Integrate app code into the benchm
+2014-01-16 17:43 Jonas Fonseca ref-3          Bump Scala.js version to 0.3-SNAPS
+2014-01-16 22:51 Jonas Fonseca ref-2          Move classes under org.scalajs.ben
+2014-03-01 15:59 Jonas Fonseca ref-1          Add type parameter for js.Dynamic 
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[refs] a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff - reference 41 of 41        100%
+EOF

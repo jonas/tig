@@ -165,11 +165,16 @@ following variables.
 |%(directory)		|The current directory path in the tree view;
 			 empty for the root directory.
 |%(file)		|The currently selected file.
+|%(lineno)		|The currently selected line number. Defaults to 0.
 |%(ref)			|The reference given to blame or HEAD if undefined.
 |%(revargs)		|The revision arguments passed on the command line.
 |%(fileargs)		|The file arguments passed on the command line.
 |%(cmdlineargs)		|All other options passed on the command line.
-|%(diffargs)		|The diff options from 'diff-options' or 'TIG_DIFF_OPTS'
+|%(diffargs)		|Options from 'diff-options' or 'TIG_DIFF_OPTS' used
+			 used by the diff view.
+|%(blameargs)		|Options from 'blame-options' used by the blame view.
+|%(logargs)		|Options from 'log-options' used by the log view.
+|%(mainargs)		|Options from 'main-options' used by the main view.
 |%(prompt)		|Prompt for the argument value.
 |=============================================================================
 
@@ -301,11 +306,12 @@ View Switching
 |p	|Switch to pager view.
 |t	|Switch to (directory) tree view.
 |f	|Switch to (file) blob view.
-|B	|Switch to blame view.
-|H	|Switch to refs view.
+|g	|Switch to grep view.
+|b	|Switch to blame view.
+|r	|Switch to refs view.
 |y	|Switch to stash view.
 |h	|Switch to help view
-|S	|Switch to status view
+|s	|Switch to status view
 |c	|Switch to stage view
 |=============================================================================
 
@@ -384,8 +390,8 @@ Scrolling
 |Key	|Action
 |Insert	|Scroll view one line up.
 |Delete	|Scroll view one line down.
-|w	|Scroll view one page up.
-|s	|Scroll view one page down.
+|ScrBack|Scroll view one page up.
+|ScrFwd	|Scroll view one page down.
 |Left	|Scroll view one column left.
 |Right	|Scroll view one column right.
 |\|	|Scroll view to the first column.
@@ -412,16 +418,16 @@ Misc
 |=============================================================================
 |Key	|Action
 |Q	|Quit.
-|r	|Redraw screen.
+|<C-L>	|Redraw screen.
 |z	|Stop all background loading. This can be useful if you use
 	 Tig in a repository with a long history without limiting
 	 the revision log.
 |v	|Show version.
 |o	|Open option menu
-|.	|Toggle line numbers on/off.
+|#	|Toggle line numbers on/off.
 |D	|Toggle date display on/off/short/relative/local.
 |A	|Toggle author display on/off/abbreviated/email/email user name.
-|g	|Toggle revision graph visualization on/off.
+|G	|Toggle revision graph visualization on/off.
 |~	|Toggle (line) graphics mode
 |F	|Toggle reference display on/off (tag and branch names).
 |W	|Toggle ignoring whitespace on/off for diffs
@@ -439,12 +445,17 @@ Prompt
 
 [frame="none",grid="none",cols="2<,8<",options="header"]
 |=============================================================================
-|Key		|Action
-|:<number>	|Jump to the specific line number, e.g. `:80`.
-|:<sha>		|Jump to a specific commit, e.g. `:2f12bcc`.
-|:<x>		|Execute the corresponding key binding, e.g. `:q`.
-|:!<command>	|Execute a system command in a pager, e.g. `:!git log -p`.
-|:<action>	|Execute a Tig command, e.g. `:edit`.
+|Key			|Action
+|:<number>		|Jump to the specific line number, e.g. `:80`.
+|:<sha>			|Jump to a specific commit, e.g. `:2f12bcc`.
+|:<x>			|Execute the corresponding key binding, e.g. `:q`.
+|:!<command>		|Execute a system command in a pager, e.g. `:!git log -p`.
+|:<action>		|Execute a Tig command, e.g. `:edit`.
+|:save-display <file>	|Save current display to `<file>`.
+|:save-options <file>	|Save current options to `<file>`.
+|:script <file>		|Execute commands from `<file>`.
+|:exec <flags><args...> |Execute command using `<args>` with external
+			 user-defined command option flags defined in `<flags>`.
 |=============================================================================
 
 [[external-commands]]

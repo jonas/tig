@@ -7,7 +7,6 @@ export LINES=15
 export COLUMNS=120
 
 steps '
-	:view-status
 	:save-display status-with-untracked.screen
 
 	:7
@@ -51,7 +50,7 @@ EOF
 touch "$work_dir/øå"
 touch "$work_dir/可愛いコー特集"
 
-test_tig
+test_tig status
 
 assert_equals 'status-with-untracked.screen' <<EOF
 Initial commit                                                                                                          

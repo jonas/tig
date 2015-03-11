@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -99,6 +99,7 @@ char *io_memchr(struct buffer *buf, char *data, int c);
 
 const char *get_temp_dir(void);
 
+bool PRINTF_LIKE(2, 3) io_fprintf(FILE *file, const char *fmt, ...);
 bool io_trace(const char *fmt, ...);
 
 #endif

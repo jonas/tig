@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -31,14 +31,24 @@
 
 DEFINE_ALLOCATOR(realloc_reflogs, char *, 32)
 
+static bool main_add_changes(struct view *view, struct main_state *state, const char *parent);
+
 static void
 main_register_commit(struct view *view, struct commit *commit, const char *ids, bool is_boundary)
 {
 	struct main_state *state = view->private;
+	struct graph *graph = state->graph;
 
 	string_copy_rev(commit->id, ids);
+
+	/* FIXME: lazily check index state here instead of in main_open. */
+	if ((state->add_changes_unstaged || state->add_changes_staged) && is_head_commit(commit->id)) {
+		main_add_changes(view, state, ids);
+		state->add_changes_unstaged = state->add_changes_staged = FALSE;
+	}
+
 	if (state->with_graph)
-		graph_add_commit(&state->graph, &commit->graph, commit->id, ids, is_boundary);
+		graph->add_commit(graph, &commit->graph, commit->id, ids, is_boundary);
 }
 
 static struct commit *
@@ -63,7 +73,6 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 
 	*commit = *template;
 	strncpy(commit->title, title, titlelen);
-	state->graph.canvas = &commit->graph;
 	memset(template, 0, sizeof(*template));
 	state->reflogmsg[0] = 0;
 
@@ -83,7 +92,8 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 {
 	char ids[SIZEOF_STR] = NULL_ID " ";
 	struct main_state *state = view->private;
-	struct commit commit = {};
+	struct graph *graph = state->graph;
+	struct commit commit = {{0}};
 	struct timeval now;
 	struct timezone tz;
 
@@ -102,45 +112,57 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 
 	commit.author = &unknown_ident;
 	main_register_commit(view, &commit, ids, FALSE);
+	if (state->with_graph && *parent)
+		graph->render_parents(graph, &commit.graph);
+
 	if (!main_add_commit(view, type, &commit, title, TRUE))
 		return FALSE;
-
-	if (state->with_graph) {
-		if (*parent)
-			return graph_render_parents(&state->graph);
-		state->add_changes_parents = TRUE;
-	}
 
 	return TRUE;
 }
 
 static bool
-main_add_changes_commits(struct view *view, struct main_state *state, const char *parent)
+main_check_index(struct view *view, struct main_state *state)
 {
-	const char *staged_parent = NULL_ID;
-	const char *unstaged_parent = parent;
 	struct index_diff diff;
 
 	if (!index_diff(&diff, FALSE, FALSE))
 		return FALSE;
 
 	if (!diff.unstaged) {
-		unstaged_parent = NULL;
-		staged_parent = parent;
 		watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_NO);
 	} else {
 		watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_YES);
+		state->add_changes_unstaged = TRUE;
 	}
 
 	if (!diff.staged) {
-		staged_parent = NULL;
 		watch_apply(&view->watch, WATCH_INDEX_STAGED_NO);
 	} else {
 		watch_apply(&view->watch, WATCH_INDEX_STAGED_YES);
+		state->add_changes_staged = TRUE;
 	}
 
-	return main_add_changes_commit(view, LINE_STAT_STAGED, staged_parent, "Staged changes")
-	    && main_add_changes_commit(view, LINE_STAT_UNSTAGED, unstaged_parent, "Unstaged changes");
+	return TRUE;
+}
+
+static bool
+main_add_changes(struct view *view, struct main_state *state, const char *parent)
+{
+	const char *staged_parent = parent;
+	const char *unstaged_parent = NULL_ID;
+
+	if (!state->add_changes_staged) {
+		staged_parent = NULL;
+		unstaged_parent = parent;
+	}
+
+	if (!state->add_changes_unstaged) {
+		unstaged_parent = NULL;
+	}
+
+	return main_add_changes_commit(view, LINE_STAT_UNSTAGED, unstaged_parent, "Unstaged changes")
+	    && main_add_changes_commit(view, LINE_STAT_STAGED, staged_parent, "Staged changes");
 }
 
 static bool
@@ -152,7 +174,7 @@ main_check_argv(struct view *view, const char *argv[])
 
 	for (i = 0; argv[i]; i++) {
 		const char *arg = argv[i];
-		struct rev_flags rev_flags = {};
+		struct rev_flags rev_flags = {0};
 
 		if (!strcmp(arg, "--graph")) {
 			struct view_column *column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
@@ -165,6 +187,9 @@ main_check_argv(struct view *view, const char *argv[])
 			argv[i] = "";
 			continue;
 		}
+
+		if (!strcmp(arg, "--first-parent"))
+			state->first_parent = TRUE;
 
 		if (!argv_parse_rev_flag(arg, &rev_flags))
 			continue;
@@ -181,29 +206,25 @@ main_check_argv(struct view *view, const char *argv[])
 	return with_reflog;
 }
 
-static bool
-main_with_graph(struct view *view, enum open_flags flags)
+static enum graph_display
+main_with_graph(struct view *view, struct view_column *column, enum open_flags flags)
 {
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
-
-	if (open_in_pager_mode(flags))
-		return FALSE;
-
-	return column && column->opt.commit_title.graph &&
-	       opt_commit_order != COMMIT_ORDER_REVERSE;
+	return column && opt_commit_order != COMMIT_ORDER_REVERSE && !open_in_pager_mode(flags)
+	       ? column->opt.commit_title.graph : GRAPH_DISPLAY_NO;
 }
 
 static bool
 main_open(struct view *view, enum open_flags flags)
 {
-	bool with_graph = main_with_graph(view, flags);
+	struct view_column *commit_title_column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
+	enum graph_display graph_display = main_with_graph(view, commit_title_column, flags);
 	const char *pretty_custom_argv[] = {
-		GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg_with_graph(with_graph),
-			"%(cmdlineargs)", "%(revargs)", "%(fileargs)")
+		GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg_with_graph(graph_display),
+			"%(mainargs)", "%(cmdlineargs)", "%(revargs)", "%(fileargs)")
 	};
 	const char *pretty_raw_argv[] = {
-		GIT_MAIN_LOG_RAW(encoding_arg, commit_order_arg_with_graph(with_graph),
-			"%(cmdlineargs)", "%(revargs)", "%(fileargs)")
+		GIT_MAIN_LOG_RAW(encoding_arg, commit_order_arg_with_graph(graph_display),
+			"%(mainargs)", "%(cmdlineargs)", "%(revargs)", "%(fileargs)")
 	};
 	struct main_state *state = view->private;
 	const char **main_argv = pretty_custom_argv;
@@ -212,10 +233,16 @@ main_open(struct view *view, enum open_flags flags)
 	if (opt_show_changes && repo.is_inside_work_tree)
 		changes_triggers |= WATCH_INDEX;
 
-	state->with_graph = with_graph;
+	state->with_graph = graph_display != GRAPH_DISPLAY_NO;
 
 	if (opt_rev_args && main_check_argv(view, opt_rev_args))
 		main_argv = pretty_raw_argv;
+
+	if (state->with_graph) {
+		state->graph = init_graph(commit_title_column->opt.commit_title.graph);
+		if (!state->graph)
+			return FALSE;
+	}
 
 	if (open_in_pager_mode(flags)) {
 		changes_triggers = WATCH_NONE;
@@ -231,7 +258,7 @@ main_open(struct view *view, enum open_flags flags)
 		watch_register(&view->watch, WATCH_HEAD | WATCH_REFS | changes_triggers);
 
 	if (changes_triggers)
-		main_add_changes_commits(view, state, "");
+		main_check_index(view, state);
 
 	return TRUE;
 }
@@ -248,6 +275,9 @@ main_done(struct view *view)
 		free(commit->graph.symbols);
 	}
 
+	if (state->graph)
+		state->graph->done(state->graph);
+
 	for (i = 0; i < state->reflogs; i++)
 		free(state->reflog[i]);
 	free(state->reflog);
@@ -256,10 +286,10 @@ main_done(struct view *view)
 #define main_check_commit_refs(line)	!((line)->no_commit_refs)
 #define main_mark_no_commit_refs(line)	(((struct line *) (line))->no_commit_refs = 1)
 
-static inline struct ref_list *
+static inline const struct ref *
 main_get_commit_refs(const struct line *line, struct commit *commit)
 {
-	struct ref_list *refs = NULL;
+	const struct ref *refs = NULL;
 
 	if (main_check_commit_refs(line) && !(refs = get_ref_list(commit->id)))
 		main_mark_no_commit_refs(line);
@@ -272,7 +302,6 @@ main_get_column_data(struct view *view, const struct line *line, struct view_col
 {
 	struct main_state *state = view->private;
 	struct commit *commit = line->data;
-	struct ref_list *refs = NULL;
 
 	column_data->author = commit->author;
 	column_data->date = &commit->time;
@@ -281,11 +310,12 @@ main_get_column_data(struct view *view, const struct line *line, struct view_col
 		column_data->reflog = state->reflog[line->lineno - 1];
 
 	column_data->commit_title = commit->title;
-	if (state->with_graph)
-		column_data->graph = &commit->graph;
+	if (state->with_graph) {
+		column_data->graph = state->graph;
+		column_data->graph_canvas = &commit->graph;
+	}
 
-	if ((refs = main_get_commit_refs(line, commit)))
-		column_data->refs = refs;
+	column_data->refs = main_get_commit_refs(line, commit);
 
 	return TRUE;
 }
@@ -322,7 +352,7 @@ bool
 main_read(struct view *view, struct buffer *buf)
 {
 	struct main_state *state = view->private;
-	struct graph *graph = &state->graph;
+	struct graph *graph = state->graph;
 	enum line_type type;
 	struct commit *commit = &state->current;
 	char *line;
@@ -342,8 +372,8 @@ main_read(struct view *view, struct buffer *buf)
 			}
 		}
 
-		if (state->with_graph)
-			done_graph(graph);
+		if (state->graph)
+			state->graph->done_rendering(graph);
 		return TRUE;
 	}
 
@@ -359,24 +389,26 @@ main_read(struct view *view, struct buffer *buf)
 		while (*line && !isalnum(*line))
 			line++;
 
-		if (state->add_changes_parents) {
-			state->add_changes_parents = FALSE;
-			if (!graph_add_parent(graph, line))
-				return FALSE;
-			graph->has_parents = TRUE;
-			graph_render_parents(graph);
-		}
-
 		main_flush_commit(view, commit);
-		main_register_commit(view, &state->current, line, is_boundary);
 
 		author = io_memchr(buf, line, 0);
+
+		if (state->first_parent) {
+			char *parent = strchr(line, ' ');
+			char *parent_end = parent ? strchr(parent + 1, ' ') : NULL;
+
+			if (parent_end)
+				*parent_end = 0;
+		}
+
+		main_register_commit(view, &state->current, line, is_boundary);
+
 		if (author) {
 			char *title = io_memchr(buf, author, 0);
 
 			parse_author_line(author, &commit->author, &commit->time);
 			if (state->with_graph)
-				graph_render_parents(graph);
+				graph->render_parents(graph, &commit->graph);
 			if (title)
 				main_add_commit(view, LINE_MAIN_COMMIT, commit, title, FALSE);
 		}
@@ -403,15 +435,15 @@ main_read(struct view *view, struct buffer *buf)
 		break;
 
 	case LINE_PARENT:
-		if (state->with_graph && !graph->has_parents)
-			graph_add_parent(graph, line + STRING_SIZE("parent "));
+		if (state->with_graph)
+			graph->add_parent(graph, line + STRING_SIZE("parent "));
 		break;
 
 	case LINE_AUTHOR:
 		parse_author_line(line + STRING_SIZE("author "),
 				  &commit->author, &commit->time);
 		if (state->with_graph)
-			graph_render_parents(graph);
+			graph->render_parents(graph, &commit->graph);
 		break;
 
 	default:
@@ -481,14 +513,13 @@ main_request(struct view *view, enum request request, struct line *line)
 	return REQ_NONE;
 }
 
+/* Update the env from last ref to first using recursion. */
 static void
-main_update_env(struct view *view, struct line *line, struct commit *commit)
+main_update_env(struct view *view, const struct ref *ref)
 {
-	struct ref_list *list = main_get_commit_refs(line, commit);
-	size_t i;
-
-	for (i = 0; list && i < list->size; i++)
-		ref_update_env(view->env, list->refs[list->size - i - 1], !i);
+	if (ref->next)
+		main_update_env(view, ref->next);
+	ref_update_env(view->env, ref, !ref->next);
 }
 
 void
@@ -500,8 +531,11 @@ main_select(struct view *view, struct line *line)
 		string_ncopy(view->ref, commit->title, strlen(commit->title));
 		status_stage_info(view->env->status, line->type, NULL);
 	} else {
+		const struct ref *ref = main_get_commit_refs(line, commit);
+
 		string_copy_rev(view->ref, commit->id);
-		main_update_env(view, line, commit);
+		if (ref)
+			main_update_env(view, ref);
 	}
 	string_copy_rev(view->env->commit, commit->id);
 }

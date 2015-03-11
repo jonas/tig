@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -14,85 +14,40 @@
 #ifndef TIG_GRAPH_H
 #define TIG_GRAPH_H
 
-#include "compat/hashtab.h"
+#include "tig/types.h"
 
-#define GRAPH_COLORS	14
+#define GRAPH_COMMIT_COLOR	(-1)
+#define GRAPH_COLORS		14
 
-struct graph_symbol {
-	unsigned int color:8;
-
-	unsigned int commit:1;
-	unsigned int boundary:1;
-	unsigned int initial:1;
-	unsigned int merge:1;
-
-	unsigned int continued_down:1;
-	unsigned int continued_up:1;
-	unsigned int continued_right:1;
-	unsigned int continued_left:1;
-	unsigned int continued_up_left:1;
-
-	unsigned int parent_down:1;
-	unsigned int parent_right:1;
-
-	unsigned int below_commit:1;
-	unsigned int flanked:1;
-	unsigned int next_right:1;
-	unsigned int matches_commit:1;
-
-	unsigned int shift_left:1;
-	unsigned int continue_shift:1;
-	unsigned int below_shift:1;
-
-	unsigned int new_column:1;
-	unsigned int empty:1;
-};
+struct graph;
+struct graph_symbol;
 
 struct graph_canvas {
 	size_t size;			/* The width of the graph array. */
 	struct graph_symbol *symbols;	/* Symbols for this row. */
 };
 
-struct graph_column {
-	struct graph_symbol symbol;
-	char id[SIZEOF_REV];		/* Parent SHA1 ID. */
-};
-
-struct graph_row {
-	size_t size;
-	struct graph_column *columns;
-};
-
-struct colors {
-	htab_t id_map;
-	size_t count[GRAPH_COLORS];
-};
+typedef bool (*graph_symbol_iterator_fn)(void *, const struct graph *graph, const struct graph_symbol *, int color_id, bool);
 
 struct graph {
-	struct graph_row row;
-	struct graph_row parents;
-	struct graph_row prev_row;
-	struct graph_row next_row;
-	size_t position;
-	size_t prev_position;
-	size_t expanded;
-	char id[SIZEOF_REV];
-	struct graph_canvas *canvas;
-	struct colors colors;
-	bool has_parents;
-	bool is_boundary;
+	void *private;
+
+	void (*done)(struct graph *graph);
+	void (*done_rendering)(struct graph *graph);
+
+	bool (*add_commit)(struct graph *graph, struct graph_canvas *canvas,
+			   const char *id, const char *parents, bool is_boundary);
+	bool (*add_parent)(struct graph *graph, const char *parent);
+	bool (*render_parents)(struct graph *graph, struct graph_canvas *canvas);
+
+	void (*foreach_symbol)(const struct graph *graph, const struct graph_canvas *canvas, graph_symbol_iterator_fn fn, void *data);
+
+	const char *(*symbol_to_ascii)(const struct graph_symbol *symbol);
+	const char *(*symbol_to_utf8)(const struct graph_symbol *symbol);
+	const chtype *(*symbol_to_chtype)(const struct graph_symbol *symbol);
 };
 
-void done_graph(struct graph *graph);
-
-bool graph_render_parents(struct graph *graph);
-bool graph_add_commit(struct graph *graph, struct graph_canvas *canvas,
-		      const char *id, const char *parents, bool is_boundary);
-struct graph_column *graph_add_parent(struct graph *graph, const char *parent);
-
-const char *graph_symbol_to_ascii(struct graph_symbol *symbol);
-const char *graph_symbol_to_utf8(struct graph_symbol *symbol);
-const chtype *graph_symbol_to_chtype(struct graph_symbol *symbol);
+struct graph *init_graph(enum graph_display display);
 
 #endif
 

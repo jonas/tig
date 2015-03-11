@@ -30,6 +30,10 @@ The hash mark ('#') is used as a 'comment' character. All text after the
 comment character to the end of the line is ignored. You can use comments to
 annotate your initialization file.
 
+Certain options can be manipulated at runtime via the option menu. In
+addition, options can also be toggled with the `:toggle` prompt command
+or by entering the configuration command into the prompt.
+
 Git configuration
 -----------------
 
@@ -147,10 +151,23 @@ The following variables can be set:
 
 'blame-options' (string)::
 
-	A space separated string of extra blame options. Can be used for
-	telling git-blame(1) how to detect the origin of lines. The value
-	is ignored when Tig is started in blame mode and given blame options
+	A space separated string of default blame options. Can be used for
+	telling git-blame(1) how to detect the origin of lines. The options
+	are ignored when Tig is started in blame mode and given blame options
 	on the command line.
+
+'log-options' (string)::
+
+	A space separated string of default options that should be passed to the
+	git-log(1) command used by the log view. Options can be overridden by
+	command line options. Used internally override custom `pretty.format'
+	settings that break the log view.
+
+'main-options' (string)::
+
+	A space separated string of default options that should be passed to the
+	git-log(1) command used by the main view. Options can be overridden by
+	command line options.
 
 'reference-format' (string)::
 
@@ -240,13 +257,14 @@ The following variables can be set:
 	passing "--ignore-all-space", "--ignore-space" or
 	"--ignore-space-at-eol" respectively to `git diff` or `git show`.
 
-'commit-order' (mixed) [default|topo|date|author-date|reverse|<bool>]::
+'commit-order' (enum) [auto|default|topo|date|author-date|reverse]::
 
 	Commit ordering using the default (chronological reverse) order,
-	topological order, date order or reverse order. The default order is
-	used when the option is set to false, and topo order when set to true.
-	Note that topological order is automatically used in the main view when
-	the commit graph is enabled and the commit order is set to the default.
+	topological order, date order or reverse order. When set to "auto"
+	(which is the default), topological order is automatically used in the
+	main view when the commit graph is enabled. In repositories with a long
+	commit history it is advised to set this option to "default" to speed up
+	loading of the main view.
 
 'ignore-case' (bool)::
 
@@ -327,6 +345,11 @@ expecting an enumerated value this will automatically resolve to the default
 enum value. For example, `file-name` will automatically have its 'display'
 setting resolve to 'auto'.
 
+Specifications can also be given for a single column, for example to override
+the defaults in the system tigrc file. To override a single column, use the
+column name as a suffix after the view setting name, e.g. `main-view-date` will
+allow to set the date in the main view.
+
 Examples:
 // TEST: tigrc
 --------------------------------------------------------------------------
@@ -343,6 +366,12 @@ set tree-view = line-number:no,interval=5 mode author:full \
 
 # Show line numbers for every 10th line in the pager view
 set pager-view = line-number:yes,interval=10 text
+
+# Shorthands to change view settings for a previously defined column
+set main-view-date = short
+set blame-view-line-number = no
+# Use Git's default commit order, even when the commit graph is enabled.
+set commit-order = default
 --------------------------------------------------------------------------
 
 The following list shows which the available view settings and what column types
@@ -369,8 +398,10 @@ author::
 	  When set to zero, the width is automatically sized to fit the content.
 
 commit-title::
-	- 'graph' (bool): Whether to show revision graph in the main view on
-	  start-up. See also the 'line-graphics' options.
+	- 'graph' (mixed) [no|v2|v1]: Whether to show the revision graph in the
+	  main view on start-up. "v1" refers to the old graph rendering, which
+	  is less accurate but faster and thus recommended in large
+	  repositories.  See also the 'line-graphics' options.
 	- 'refs' (bool): Whether to show references (branches, tags, and
 	  remotes) in the main view. Can be toggled.
 	- 'overflow' (bool or int): Whether to highlight text in commit titles
@@ -442,7 +473,8 @@ option name as the prefix followed by a dash and the column name. E.g.
 `:toggle author-display` will toggle the 'display' option in the 'author'
 column. For all other options use the column name followed by a dash and
 then the option name as the suffix. E.g. `:toggle commit-title-graph`
-will toggle the 'graph' option in the 'commit-title' column.
+will toggle the 'graph' option in the 'commit-title' column. Alternatively,
+use the option menu to manipulate options.
 
 Bind command
 ------------
@@ -573,11 +605,16 @@ following variable names, which are substituted before commands are run:
 |%(directory)		|The current directory path in the tree view or
 			 "." if undefined.
 |%(file)		|The currently selected file.
+|%(lineno)		|The currently selected line number. Defaults to 0.
 |%(ref)			|The reference given to blame or HEAD if undefined.
 |%(revargs)		|The revision arguments passed on the command line.
 |%(fileargs)		|The file arguments passed on the command line.
 |%(cmdlineargs)		|All other options passed on the command line.
-|%(diffargs)		|The diff options from 'diff-options' or 'TIG_DIFF_OPTS'
+|%(diffargs)		|Options from 'diff-options' or 'TIG_DIFF_OPTS' used
+			 used by the diff view.
+|%(blameargs)		|Options from 'blame-options' used by the blame view.
+|%(logargs)		|Options from 'log-options' used by the log view.
+|%(mainargs)		|Options from 'main-options' used by the main view.
 |%(prompt)		|Prompt for the argument value. Optionally specify a
 			 custom prompt using `"%(prompt Enter branch name: )"`
 |=============================================================================
@@ -720,7 +757,9 @@ Cursor navigation
 |move-up                 |Move cursor one line up
 |move-down               |Move cursor one line down
 |move-page-down          |Move cursor one page down
-|move-page-up            |Move cursor one page up
+|move-page-up            |Move cursor half a page up
+|move-half-page-down     |Move cursor half a page down
+|move-half-page-up       |Move cursor one page up
 |move-first-line         |Move cursor to first line
 |move-last-line          |Move cursor to last line
 |=============================================================================
@@ -750,17 +789,6 @@ Searching
 |find-prev               |Find previous search match
 |=============================================================================
 
-Option manipulation
-^^^^^^^^^^^^^^^^^^^
-
-In addition to the actions below, options can also be toggled with the
-`:toggle` prompt command.
-
-[frame="none",grid="none",cols="25<m,75<"]
-|=============================================================================
-|options                 |Open the options menu
-|=============================================================================
-
 Misc
 ^^^^
 
@@ -768,6 +796,7 @@ Misc
 |=============================================================================
 |edit                    |Open in editor
 |prompt                  |Open the prompt
+|options                 |Open the options menu
 |screen-redraw           |Redraw the screen
 |stop-loading            |Stop all loading views
 |show-version            |Show version information

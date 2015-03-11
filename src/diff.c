@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -31,6 +31,8 @@ diff_open(struct view *view, enum open_flags flags)
 			"%(diffargs)", "%(cmdlineargs)", "--no-color", "%(commit)",
 			"--", "%(fileargs)", NULL
 	};
+
+	diff_save_line(view, view->private, flags);
 
 	return begin_update(view, NULL, diff_argv, flags);
 }
@@ -164,10 +166,84 @@ diff_common_enter(struct view *view, enum request request, struct line *line)
 	}
 }
 
+void
+diff_save_line(struct view *view, struct diff_state *state, enum open_flags flags)
+{
+	if (flags & OPEN_RELOAD) {
+		struct line *line = &view->line[view->pos.lineno];
+		const char *file = view_has_line(view, line) ? diff_get_pathname(view, line) : NULL;
+
+		if (file) {
+			state->file = get_path(file);
+			state->lineno = diff_get_lineno(view, line);
+			state->pos = view->pos;
+		}
+	}
+}
+
+void
+diff_restore_line(struct view *view, struct diff_state *state)
+{
+	struct line *line = &view->line[view->lines - 1];
+
+	if (!state->file)
+		return;
+
+	while ((line = find_prev_line_by_type(view, line, LINE_DIFF_HEADER))) {
+		const char *file = diff_get_pathname(view, line);
+
+		if (file && !strcmp(file, state->file))
+			break;
+		line--;
+	}
+
+	state->file = NULL;
+
+	if (!line)
+		return;
+
+	while ((line = find_next_line_by_type(view, line, LINE_DIFF_CHUNK))) {
+		unsigned int lineno = diff_get_lineno(view, line);
+
+		for (line++; view_has_line(view, line) && line->type != LINE_DIFF_CHUNK; line++) {
+			if (lineno == state->lineno) {
+				unsigned long lineno = line - view->line;
+				unsigned long offset = lineno - (state->pos.lineno - state->pos.offset);
+
+				goto_view_line(view, offset, lineno);
+				redraw_view(view);
+				return;
+			}
+			if (line->type != LINE_DIFF_DEL &&
+			    line->type != LINE_DIFF_DEL2)
+				lineno++;
+		}
+	}
+}
+
+static bool
+diff_read_describe(struct view *view, struct buffer *buffer, struct diff_state *state)
+{
+	struct line *line = find_next_line_by_type(view, view->line, LINE_PP_REFS);
+
+	if (line && buffer) {
+		const char *ref = chomp_string(buffer->data);
+		const char *sep = !strcmp("Refs: ", line->data) ? "" : ", ";
+
+		if (*ref && !append_line_format(view, line, "%s%s", sep, ref))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 static bool
 diff_read(struct view *view, struct buffer *buf)
 {
 	struct diff_state *state = view->private;
+
+	if (state->adding_describe_ref)
+		return diff_read_describe(view, buf, state);
 
 	if (!buf) {
 		/* Fall back to retry if no diff will be shown. */
@@ -187,6 +263,21 @@ diff_read(struct view *view, struct buffer *buf)
 					return FALSE;
 			}
 		}
+
+		diff_restore_line(view, state);
+
+		if (!state->adding_describe_ref && !ref_list_contains_tag(view->vid)) {
+			const char *describe_argv[] = { "git", "describe", view->vid, NULL };
+
+			if (!begin_update(view, NULL, describe_argv, OPEN_EXTRA)) {
+				report("Failed to load describe data");
+				return TRUE;
+			}
+
+			state->adding_describe_ref = TRUE;
+			return FALSE;
+		}
+
 		return TRUE;
 	}
 
@@ -324,7 +415,7 @@ diff_trace_origin(struct view *view, struct line *line)
 	if (string_rev_is_null(ref)) {
 		string_ncopy(view->env->file, file, strlen(file));
 		string_copy(view->env->ref, "");
-		view->env->lineno = lineno - 1;
+		view->env->goto_lineno = lineno - 1;
 
 	} else {
 		if (!diff_blame_line(ref, file, lineno, &header, &commit)) {
@@ -334,7 +425,7 @@ diff_trace_origin(struct view *view, struct line *line)
 
 		string_ncopy(view->env->file, commit.filename, strlen(commit.filename));
 		string_copy(view->env->ref, header.id);
-		view->env->lineno = header.orig_lineno - 1;
+		view->env->goto_lineno = header.orig_lineno - 1;
 	}
 
 	return REQ_VIEW_BLAME;
@@ -399,8 +490,8 @@ diff_request(struct view *view, enum request request, struct line *line)
 	}
 }
 
-static void
-diff_select(struct view *view, struct line *line)
+void
+diff_common_select(struct view *view, struct line *line, const char *changes_msg)
 {
 	if (line->type == LINE_DIFF_STAT) {
 		string_format(view->ref, "Press '%s' to jump to file diff",
@@ -409,14 +500,22 @@ diff_select(struct view *view, struct line *line)
 		const char *file = diff_get_pathname(view, line);
 
 		if (file) {
-			string_format(view->ref, "Changes to '%s'", file);
+			if (changes_msg)
+				string_format(view->ref, "%s to '%s'", changes_msg, file);
 			string_format(view->env->file, "%s", file);
+			view->env->lineno = view->env->goto_lineno = diff_get_lineno(view, line);
 			view->env->blob[0] = 0;
 		} else {
 			string_ncopy(view->ref, view->ops->id, strlen(view->ops->id));
 			pager_select(view, line);
 		}
 	}
+}
+
+static void
+diff_select(struct view *view, struct line *line)
+{
+	diff_common_select(view, line, "Changes");
 }
 
 static struct view_ops diff_ops = {

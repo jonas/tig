@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2013 Jonas Fonseca <fonseca@diku.dk>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -30,40 +30,46 @@ struct commit {
 
 DEFINE_ALLOCATOR(realloc_commits, struct commit *, 8)
 
-static const char *(*graph_fn)(struct graph_symbol *) = graph_symbol_to_utf8;
+static const char *(*graph_fn)(const struct graph_symbol *);
+
+static bool
+print_symbol(void *__, const struct graph *graph, const struct graph_symbol *symbol, int color_id, bool first)
+{
+	const char *chars = graph_fn(symbol);
+
+	printf("%s", chars + !!first);
+	return FALSE;
+}
 
 static void
-print_commit(struct commit *commit, const char *title)
+print_commit(struct graph *graph, struct commit *commit, const char *title)
 {
-	int i;
-
-	for (i = 0; i < commit->canvas.size; i++) {
-		struct graph_symbol *symbol = &commit->canvas.symbols[i];
-		const char *chars = graph_fn(symbol);
-
-		printf("%s", chars + (i == 0));
-	}
-
+	graph->foreach_symbol(graph, &commit->canvas, print_symbol, NULL);
 	printf(" %s\n", title);
 }
 
 int
 main(int argc, const char *argv[])
 {
-	struct graph graph = { };
-	struct io io = { };
+	struct graph *graph;
+	struct io io = {0};
 	struct buffer buf;
 	struct commit **commits = NULL;
 	size_t ncommits = 0;
 	struct commit *commit = NULL;
 	bool is_boundary;
 
-	if (argc > 1 && !strcmp(argv[1], "--ascii"))
-		graph_fn = graph_symbol_to_ascii;
-
 	if (isatty(STDIN_FILENO)) {
 		die(USAGE);
 	}
+
+	if (!(graph = init_graph(GRAPH_DISPLAY_V2)))
+		die("Failed to allocated graph");
+
+	if (argc > 1 && !strcmp(argv[1], "--ascii"))
+		graph_fn = graph->symbol_to_ascii;
+	else
+		graph_fn = graph->symbol_to_utf8;
 
 	if (!io_open(&io, "%s", ""))
 		die("IO");
@@ -87,11 +93,11 @@ main(int argc, const char *argv[])
 					die("Commit");
 				commits[ncommits++] = commit;
 				string_copy_rev(commit->id, line);
-				graph_add_commit(&graph, &commit->canvas, commit->id, line, is_boundary);
-				graph_render_parents(&graph);
+				graph->add_commit(graph, &commit->canvas, commit->id, line, is_boundary);
+				graph->render_parents(graph, &commit->canvas);
 
 				if ((line = io_memchr(&buf, line, 0))) {
-					print_commit(commit, line);
+					print_commit(graph, commit, line);
 					commit = NULL;
 				}
 
@@ -100,7 +106,7 @@ main(int argc, const char *argv[])
 				if (!commit)
 					continue;
 
-				print_commit(commit, line + 4);
+				print_commit(graph, commit, line + 4);
 
 				commit = NULL;
 			}

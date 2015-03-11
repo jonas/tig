@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -12,6 +12,7 @@
  */
 
 #include "tig/tig.h"
+#include "tig/map.h"
 #include "tig/argv.h"
 #include "tig/io.h"
 #include "tig/watch.h"
@@ -19,25 +20,11 @@
 #include "tig/repo.h"
 #include "tig/refdb.h"
 
-static struct ref **refs = NULL;
-static size_t refs_size = 0;
 static struct ref *refs_head = NULL;
+static bool refs_tags;
 
-static struct ref_list **ref_lists = NULL;
-static size_t ref_lists_size = 0;
-
-DEFINE_ALLOCATOR(realloc_refs, struct ref *, 256)
-DEFINE_ALLOCATOR(realloc_refs_list, struct ref *, 8)
-DEFINE_ALLOCATOR(realloc_ref_lists, struct ref_list *, 8)
-
-static int
-compare_refs(const void *ref1_, const void *ref2_)
-{
-	const struct ref *ref1 = *(const struct ref **)ref1_;
-	const struct ref *ref2 = *(const struct ref **)ref2_;
-
-	return ref_compare(ref1, ref2);
-}
+DEFINE_STRING_MAP(refs_by_name, struct ref *, name, 32)
+DEFINE_STRING_MAP(refs_by_id, struct ref *, id, 16)
 
 int
 ref_compare(const struct ref *ref1, const struct ref *ref2)
@@ -47,53 +34,77 @@ ref_compare(const struct ref *ref1, const struct ref *ref2)
 	return strcmp_numeric(ref1->name, ref2->name);
 }
 
-void
-foreach_ref(bool (*visitor)(void *data, const struct ref *ref), void *data)
+static int
+ref_canonical_compare(const struct ref *ref1, const struct ref *ref2)
 {
-	size_t i;
+	int tag_diff = !!ref_is_tag(ref2) - !!ref_is_tag(ref1);
 
-	for (i = 0; i < refs_size; i++)
-		if (refs[i]->id[0] && !visitor(data, refs[i]))
-			break;
+	if (tag_diff)
+		return tag_diff;
+	if (ref1->type != ref2->type)
+		return !tag_diff ? ref1->type - ref2->type : ref2->type - ref1->type;
+	return strcmp_numeric(ref1->name, ref2->name);
 }
 
-struct ref *
+struct ref_visitor_data {
+	ref_visitor_fn visitor;
+	void *data;
+};
+
+static bool
+foreach_ref_visitor(void *data, void *value)
+{
+	struct ref_visitor_data *visitor_data = data;
+	const struct ref *ref = value;
+
+	if (!ref->valid)
+		return TRUE;
+	return visitor_data->visitor(visitor_data->data, ref);
+}
+
+void
+foreach_ref(ref_visitor_fn visitor, void *data)
+{
+	struct ref_visitor_data visitor_data = { visitor, data };
+
+	string_map_foreach(&refs_by_name, foreach_ref_visitor, &visitor_data);
+}
+
+const struct ref *
 get_ref_head()
 {
 	return refs_head;
 }
 
-struct ref_list *
+const struct ref *
 get_ref_list(const char *id)
 {
-	struct ref_list *list;
-	size_t i;
+	return string_map_get(&refs_by_id, id);
+}
 
-	for (i = 0; i < ref_lists_size; i++)
-		if (!strcmp(id, ref_lists[i]->id))
-			return ref_lists[i];
+const struct ref *
+get_canonical_ref(const char *id)
+{
+	const struct ref *ref = NULL;
+	const struct ref *pos;
 
-	if (!realloc_ref_lists(&ref_lists, ref_lists_size, 1))
-		return NULL;
-	list = calloc(1, sizeof(*list));
-	if (!list)
-		return NULL;
-	string_copy_rev(list->id, id);
+	foreach_ref_list(pos, id)
+		if (!ref || ref_canonical_compare(pos, ref) < 0)
+			ref = pos;
 
-	for (i = 0; i < refs_size; i++) {
-		if (!strcmp(id, refs[i]->id) &&
-		    realloc_refs_list(&list->refs, list->size, 1))
-			list->refs[list->size++] = refs[i];
-	}
+	return ref;
+}
 
-	if (!list->refs) {
-		free(list);
-		return NULL;
-	}
+bool
+ref_list_contains_tag(const char *id)
+{
+	const struct ref *ref;
 
-	qsort(list->refs, list->size, sizeof(*list->refs), compare_refs);
-	ref_lists[ref_lists_size++] = list;
-	return list;
+	foreach_ref_list(ref, id)
+		if (ref_is_tag(ref))
+			return TRUE;
+
+	return FALSE;
 }
 
 struct ref_opt {
@@ -102,21 +113,69 @@ struct ref_opt {
 	enum watch_trigger changed;
 };
 
-static void
-done_ref_lists(void)
+static int
+add_ref_to_id_map(struct ref *ref)
 {
-	int i;
+	void **ref_lists_slot = string_map_put_to(&refs_by_id, ref->id);
 
-	for (i = 0; i < ref_lists_size; i++) {
-		struct ref_list *list = ref_lists[i];
+	if (!ref_lists_slot)
+		return OK;
 
-		free(list->refs);
-		free(list);
+	/* First remove the ref from the ID list, to ensure that it is
+	 * reinserted at the right position if the type changes. */
+	{
+		struct ref *list, *prev;
+
+		for (list = *ref_lists_slot, prev = NULL; list; prev = list, list = list->next)
+			if (list == ref) {
+				if (!prev)
+					*ref_lists_slot = ref->next;
+				else
+					prev->next = ref->next;
+			}
+
+		ref->next = NULL;
 	}
 
-	free(ref_lists);
-	ref_lists = NULL;
-	ref_lists_size = 0;
+	ref->next = *ref_lists_slot;
+	*ref_lists_slot = ref;
+
+	while (ref->next) {
+		struct ref *head = ref->next;
+
+		if (head == ref || ref_compare(ref, head) <= 0)
+			break;
+
+		if (*ref_lists_slot == ref)
+			*ref_lists_slot = head;
+		ref->next = head->next;
+		head->next = ref;
+	}
+
+	return OK;
+}
+
+static void
+remove_ref_from_id_map(struct ref *ref)
+{
+	void **ref_slot = string_map_get_at(&refs_by_id, ref->id);
+	struct ref *list = ref_slot ? *ref_slot : NULL;
+	struct ref *prev = NULL;
+
+	for (; list; prev = list, list = list->next) {
+		if (list != ref)
+			continue;
+
+		if (!prev)
+			*ref_slot = ref->next;
+		else
+			prev->next = ref->next;
+		ref->next = NULL;
+		break;
+	}
+
+	if (ref_slot && !*ref_slot)
+		string_map_remove(&refs_by_id, ref->id);
 }
 
 static int
@@ -124,7 +183,7 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 {
 	struct ref *ref = NULL;
 	enum reference_type type = REFERENCE_BRANCH;
-	int pos;
+	void **ref_slot = NULL;
 
 	if (!prefixcmp(name, "refs/tags/")) {
 		type = REFERENCE_TAG;
@@ -171,28 +230,30 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	 * previous SHA1 with the resolved commit id; relies on the fact
 	 * git-ls-remote lists the commit id of an annotated tag right
 	 * before the commit id it points to. */
-	for (pos = 0; pos < refs_size; pos++) {
-		int cmp = type == REFERENCE_REPLACE
-			? strcmp(id, refs[pos]->id) : strcmp(name, refs[pos]->name);
+	if (type == REFERENCE_REPLACE) {
+		ref = string_map_remove(&refs_by_id, id);
 
-		if (!cmp) {
-			ref = refs[pos];
-			break;
-		}
+	} else {
+		ref_slot = string_map_put_to(&refs_by_name, name);
+		if (!ref_slot)
+			return ERR;
+		ref = *ref_slot;
 	}
 
 	if (!ref) {
-		if (!realloc_refs(&refs, refs_size, 1))
-			return ERR;
 		ref = calloc(1, sizeof(*ref) + namelen);
 		if (!ref)
 			return ERR;
-		refs[refs_size++] = ref;
 		strncpy(ref->name, name, namelen);
+		if (ref_slot)
+			*ref_slot = ref;
 	}
 
-	if (strncmp(ref->id, id, idlen))
+	if (strncmp(ref->id, id, idlen) || ref->type != type) {
 		opt->changed |= WATCH_REFS;
+		if (*ref->id)
+			remove_ref_from_id_map(ref);
+	}
 
 	ref->valid = TRUE;
 	ref->type = type;
@@ -204,7 +265,11 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 			opt->changed |= WATCH_HEAD;
 		refs_head = ref;
 	}
-	return OK;
+
+	if (type == REFERENCE_TAG)
+		refs_tags++;
+
+	return add_ref_to_id_map(ref);
 }
 
 static int
@@ -213,19 +278,39 @@ read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 	return add_to_refs(id, idlen, name, namelen, data);
 }
 
+static bool
+invalidate_refs(void *data, void *ref_)
+{
+	struct ref *ref = ref_;
+
+	ref->valid = 0;
+	ref->next = NULL;
+	return TRUE;
+}
+
+static bool
+cleanup_refs(void *data, void *ref_)
+{
+	struct ref_opt *opt = data;
+	struct ref *ref = ref_;
+
+	if (!ref->valid) {
+		ref->id[0] = 0;
+		opt->changed |= WATCH_REFS;
+	}
+
+	return TRUE;
+}
+
 static int
 reload_refs(bool force)
 {
-	const char *head_argv[] = {
-		"git", "symbolic-ref", "HEAD", NULL
-	};
 	const char *ls_remote_argv[SIZEOF_ARG] = {
 		"git", "ls-remote", repo.git_dir, NULL
 	};
 	static bool init = FALSE;
 	struct ref_opt opt = { repo.remote, repo.head, WATCH_NONE };
 	struct repo_info old_repo = repo;
-	size_t i;
 
 	if (!init) {
 		if (!argv_from_env(ls_remote_argv, "TIG_LS_REMOTE"))
@@ -236,35 +321,24 @@ reload_refs(bool force)
 	if (!*repo.git_dir)
 		return OK;
 
-	if ((force || !*repo.head) && io_run_buf(head_argv, repo.head, sizeof(repo.head)) &&
-	    !prefixcmp(repo.head, "refs/heads/")) {
-		char *offset = repo.head + STRING_SIZE("refs/heads/");
-
-		memmove(repo.head, offset, strlen(offset) + 1);
-	}
+	if (force || !*repo.head)
+		load_repo_head();
 
 	if (strcmp(old_repo.head, repo.head))
 		opt.changed |= WATCH_HEAD;
 
 	refs_head = NULL;
-	for (i = 0; i < refs_size; i++)
-		refs[i]->valid = 0;
-
-	done_ref_lists();
+	refs_tags = 0;
+	string_map_clear(&refs_by_id);
+	string_map_foreach(&refs_by_name, invalidate_refs, NULL);
 
 	if (io_run_load(ls_remote_argv, "\t", read_ref, &opt) == ERR)
 		return ERR;
 
-	for (i = 0; i < refs_size; i++)
-		if (!refs[i]->valid) {
-			refs[i]->id[0] = 0;
-			opt.changed |= WATCH_REFS;
-		}
-
+	string_map_foreach(&refs_by_name, cleanup_refs, &opt);
 
 	if (opt.changed)
 		watch_apply(NULL, opt.changed);
-	qsort(refs, refs_size, sizeof(*refs), compare_refs);
 
 	return OK;
 }
@@ -313,10 +387,14 @@ ref_update_env(struct argv_env *env, const struct ref *ref, bool clear)
 	}
 }
 
-static struct ref_format **ref_formats;
+bool
+refs_contain_tag(void)
+{
+	return refs_tags > 0;
+}
 
 const struct ref_format *
-get_ref_format(struct ref *ref)
+get_ref_format(struct ref_format **ref_formats, const struct ref *ref)
 {
 	static const struct ref_format default_format = { "", "" };
 
@@ -337,7 +415,7 @@ get_ref_format(struct ref *ref)
 }
 
 static enum status_code
-parse_ref_format_arg(const char *arg, const struct enum_map *map)
+parse_ref_format_arg(struct ref_format **ref_formats, const char *arg, const struct enum_map *map)
 {
 	size_t arglen = strlen(arg);
 	const char *pos;
@@ -374,21 +452,47 @@ parse_ref_format_arg(const char *arg, const struct enum_map *map)
 }
 
 enum status_code
-parse_ref_formats(const char *argv[])
+parse_ref_formats(struct ref_format ***formats, const char *argv[])
 {
 	const struct enum_map *map = reference_type_map;
 	int argc;
 
-	if (!ref_formats) {
-		ref_formats = calloc(reference_type_map->size, sizeof(struct ref_format *));
-		if (!ref_formats)
+	if (!*formats) {
+		*formats = calloc(reference_type_map->size, sizeof(struct ref_format *));
+		if (!*formats)
 			return ERROR_OUT_OF_MEMORY;
 	}
 
 	for (argc = 0; argv[argc]; argc++) {
-		enum status_code code = parse_ref_format_arg(argv[argc], map);
+		enum status_code code = parse_ref_format_arg(*formats, argv[argc], map);
 		if (code != SUCCESS)
 			return code;
+	}
+
+	return SUCCESS;
+}
+
+enum status_code
+format_ref_formats(struct ref_format **formats, char buf[], size_t bufsize)
+{
+	const struct enum_map *map = reference_type_map;
+	char name[SIZEOF_STR];
+	enum reference_type type;
+	size_t bufpos = 0;
+	const char *sep = "";
+
+	for (type = 0; type < map->size; type++) {
+		struct ref_format *format = formats[type];
+
+		if (!format)
+			continue;
+
+		if (!enum_name_copy(name, sizeof(name), map->entries[type].name)
+		    || !string_nformat(buf, bufsize, &bufpos, "%s%s%s%s",
+				       sep, format->start, name, format->end))
+			return error("No space left in buffer");
+
+		sep = " ";
 	}
 
 	return SUCCESS;

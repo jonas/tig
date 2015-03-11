@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -85,7 +85,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 
 	while (io_get(&io, &buf, 0, TRUE)) {
 		struct line *line;
-		struct status parsed = {};
+		struct status parsed = {0};
 		struct status *file = &parsed;
 
 		/* Parse diff info part. */
@@ -162,7 +162,7 @@ static const char *status_diff_index_argv[] = { GIT_DIFF_STAGED_FILES("-z") };
 static const char *status_diff_files_argv[] = { GIT_DIFF_UNSTAGED_FILES("-z") };
 
 static const char *status_list_other_argv[] = {
-	"git", "ls-files", "-z", "--others", "--exclude-standard", repo.prefix, NULL, NULL, NULL
+	"git", "ls-files", "-z", "--others", "--exclude-standard", NULL, NULL, NULL
 };
 
 static const char *status_list_no_head_argv[] = {
@@ -201,15 +201,15 @@ status_restore(struct view *view)
 static void
 status_update_onbranch(void)
 {
-	static const char *paths[][2] = {
-		{ "rebase-apply/rebasing",	"Rebasing" },
-		{ "rebase-apply/applying",	"Applying mailbox" },
-		{ "rebase-apply/",		"Rebasing mailbox" },
-		{ "rebase-merge/interactive",	"Interactive rebase" },
-		{ "rebase-merge/",		"Rebase merge" },
-		{ "MERGE_HEAD",			"Merging" },
-		{ "BISECT_LOG",			"Bisecting" },
-		{ "HEAD",			"On branch" },
+	static const char *paths[][3] = {
+		{ "rebase-apply/rebasing",	"rebase-apply/head-name",	"Rebasing" },
+		{ "rebase-apply/applying",	"rebase-apply/head-name",	"Applying mailbox to" },
+		{ "rebase-apply/",		"rebase-apply/head-name",	"Rebasing mailbox onto" },
+		{ "rebase-merge/interactive",	"rebase-merge/head-name",	"Interactive rebase" },
+		{ "rebase-merge/",		"rebase-merge/head-name",	"Rebase merge" },
+		{ "MERGE_HEAD",			NULL,				"Merging" },
+		{ "BISECT_LOG",			NULL,				"Bisecting" },
+		{ "HEAD",			NULL,				"On branch" },
 	};
 	char buf[SIZEOF_STR];
 	struct stat stat;
@@ -221,16 +221,17 @@ status_update_onbranch(void)
 	}
 
 	for (i = 0; i < ARRAY_SIZE(paths); i++) {
-		char *head = repo.head;
+		const char *prefix = paths[i][2];
+		const char *head = repo.head;
 
 		if (!string_format(buf, "%s/%s", repo.git_dir, paths[i][0]) ||
 		    lstat(buf, &stat) < 0)
 			continue;
 
-		if (!*repo.head) {
+		if (paths[i][1]) {
 			struct io io;
 
-			if (io_open(&io, "%s/rebase-merge/head-name", repo.git_dir) &&
+			if (io_open(&io, "%s/%s", repo.git_dir, paths[i][1]) &&
 			    io_read_buf(&io, buf, sizeof(buf))) {
 				head = buf;
 				if (!prefixcmp(head, "refs/heads/"))
@@ -238,7 +239,17 @@ status_update_onbranch(void)
 			}
 		}
 
-		if (!string_format(status_onbranch, "%s %s", paths[i][1], head))
+		if (!*head && !strcmp(paths[i][0], "HEAD") && *repo.head_id) {
+			const struct ref *ref = get_canonical_ref(repo.head_id);
+
+			prefix = "HEAD detached at";
+			head = repo.head_id;
+
+			if (ref && strcmp(ref->name, "HEAD"))
+				head = ref->name;
+		}
+
+		if (!string_format(status_onbranch, "%s %s", prefix, head))
 			string_copy(status_onbranch, repo.head);
 		return;
 	}
@@ -487,7 +498,7 @@ status_update_files(struct view *view, struct line *line)
 	for (file = 0, done = 5; result && file < files; line++, file++) {
 		int almost_done = file * 100 / files;
 
-		if (almost_done > done) {
+		if (almost_done > done && view_is_displayed(view)) {
 			done = almost_done;
 			string_format(view->ref, "updating file %u of %u (%d%% done)",
 				      file, files, done);
@@ -633,7 +644,7 @@ status_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_REFRESH:
 		/* Load the current branch information and then the view. */
-		load_refs(TRUE);
+		load_repo_head();
 		break;
 
 	default:

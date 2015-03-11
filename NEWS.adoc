@@ -1,10 +1,59 @@
 Release notes
 =============
 
+tig-2.1
+-------
+
+Improvements:
+
+ - Improve C99 compliance so Tig compiles with the native compilers on
+   Solaris (SunStudio cc) and AIX (xlc). (GH #380)
+ - Add move-half-page-up and move-half-page-down actions. (GH #323)
+ - Preserve the cursor position when changing the diff context. 
+ - Show 'Unstaged changes' above 'Staged changes' in the main view. (GH #383)
+ - Add `:exec <flags><args...>` prompt command to execute commands.
+ - Add shorthand for changing the view settings of a single column,
+   eg. `set main-view-author = short`. (GH #318)
+ - Show better diff context info in the stage view.
+ - Add `%(lineno)` state variable. (GH #304)
+ - Use hash table to speed up refs lookup. (GH #350)
+ - Show the file path in the blob view when available.
+ - Use `set commit-order = default` to use Git's default commit order, even when
+   the commit graph is enabled. The option will turn off automatic enabling of
+   `--topo-order` when the graph is shown in the main view. (GH #310, #324)
+ - Speed up the diff view in large repos by loading git-describe info after the
+   diff content has been read. (GH #324)
+ - Add the old graph rendering as an option. (GH #310, #324)
+ - Add `main-options` setting for specifying default main view options.
+   Example: `set main-options = --max-count=1000`. (GH #368)
+ - See `contrib/large-repo.tigrc` for settings that will help to speed up Tig in
+   large repos. (GH #368)
+ - Add `:save-options <file>` prompt command to save config to file. (GH #315)
+
+Bug fixes:
+
+ - Update manual to reflect default keybinding changes. (GH #325)
+ - Fix graph support for `--first-parent`. (GH #326)
+ - Fix off-by-one error when opening editor from the grep view.
+ - Fix status on-branch information.
+ - Fix main view to handle the case when git-log doesn't find any commits.
+ - Fix corner case when parsing diff chunk when lines information is missing.
+ - Ensure main view changes commits are shown right before the current HEAD.
+ - Fix rendering of boundary commits.
+ - Fix compilation with GNU Make 3.80 by removing `$(abspath)`. (GH #362)
+ - Fix config parsing to support shell-like quoting in user-defined command,
+   e.g. `bind generic <Ctrl-f> :!git log -G"%(prompt Prompt: )"` (GH #371)
+ - Make diff meta information colors more consistent with Git. (GH #375)
+ - Fix segfault when updating changes in a maximized stage view opened via the
+   main view. (GH #376)
+ - Handle line number configs where the interval is not specified. (GH #378)
+ - Fix display of error messages during startup. (GH #385)
+ - Show untracked files outside the current directory like git-status. (GH #230)
+
 tig-2.0.3
 ---------
 
-Improvement:
+Improvements:
 
  - Add `:save-display <file>` prompt command to save the current display.
  - Add `:script <file>` prompt command for scripting the Tig UI.

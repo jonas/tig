@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -128,59 +128,13 @@ static enum request
 open_run_request(struct view *view, enum request request)
 {
 	struct run_request *req = get_run_request(request);
-	const char **argv = NULL;
-	bool confirmed = FALSE;
-
-	request = REQ_NONE;
 
 	if (!req) {
 		report("Unknown run request");
-		return request;
-	}
-
-	if (!argv_format(view->env, &argv, req->argv, FALSE, TRUE)) {
-		report("Failed to format arguments");
 		return REQ_NONE;
 	}
 
-	if (req->flags.internal) {
-		request = run_prompt_command(view, argv);
-
-	} else {
-		confirmed = !req->flags.confirm;
-
-		if (req->flags.confirm) {
-			char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
-			const char *and_exit = req->flags.exit ? " and exit" : "";
-
-			if (argv_to_string(argv, cmd, sizeof(cmd), " ") &&
-			    string_format(prompt, "Run `%s`%s?", cmd, and_exit) &&
-			    prompt_yesno(prompt)) {
-				confirmed = TRUE;
-			}
-		}
-
-		if (confirmed && argv_remove_quotes(argv))
-			open_external_viewer(argv, NULL, req->flags.silent,
-					     !req->flags.exit, FALSE, "");
-	}
-
-	if (argv)
-		argv_free(argv);
-	free(argv);
-
-	if (request == REQ_NONE) {
-		if (req->flags.confirm && !confirmed)
-			request = REQ_NONE;
-
-		else if (req->flags.exit)
-			request = REQ_QUIT;
-
-		else if (!req->flags.internal && watch_dirty(&view->watch))
-			request = REQ_REFRESH;
-
-	}
-	return request;
+	return exec_run_request(view, req);
 }
 
 /*
@@ -212,6 +166,8 @@ view_driver(struct view *view, enum request request)
 	case REQ_MOVE_DOWN:
 	case REQ_MOVE_PAGE_UP:
 	case REQ_MOVE_PAGE_DOWN:
+	case REQ_MOVE_HALF_PAGE_UP:
+	case REQ_MOVE_HALF_PAGE_DOWN:
 	case REQ_MOVE_FIRST_LINE:
 	case REQ_MOVE_LAST_LINE:
 		move_view(view, request);
@@ -528,7 +484,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 			} else if (strlen(opt) >= 2 && *opt == '+' && string_isnumber(opt + 1)) {
 				int lineno = atoi(opt + 1);
 
-				argv_env.lineno = lineno > 0 ? lineno - 1 : 0;
+				argv_env.goto_lineno = lineno > 0 ? lineno - 1 : 0;
 				continue;
 
 			}
@@ -686,12 +642,7 @@ main(int argc, const char *argv[])
 	if (getenv("TIG_SCRIPT")) {
 		const char *script_command[] = { "script", getenv("TIG_SCRIPT"), NULL };
 
-		if (!displayed_views()) {
-			/* Open a 'neutral' view. */
-			open_help_view(NULL, OPEN_DEFAULT);
-		}
-
-		request = run_prompt_command(NULL, script_command);
+		run_prompt_command(NULL, script_command);
 	}
 
 	while (view_driver(display[current_view], request)) {

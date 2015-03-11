@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -49,7 +49,9 @@
 	REQ_(MOVE_UP,		"Move cursor one line up"), \
 	REQ_(MOVE_DOWN,		"Move cursor one line down"), \
 	REQ_(MOVE_PAGE_DOWN,	"Move cursor one page down"), \
-	REQ_(MOVE_PAGE_UP,	"Move cursor one page up"), \
+	REQ_(MOVE_PAGE_UP,	"Move cursor half a page up"), \
+	REQ_(MOVE_HALF_PAGE_DOWN,	"Move cursor half a page down"), \
+	REQ_(MOVE_HALF_PAGE_UP,	"Move cursor one page up"), \
 	REQ_(MOVE_FIRST_LINE,	"Move cursor to first line"), \
 	REQ_(MOVE_LAST_LINE,	"Move cursor to last line"), \
 	\
@@ -68,12 +70,10 @@
 	REQ_(FIND_NEXT,		"Find next search match"), \
 	REQ_(FIND_PREV,		"Find previous search match"), \
 	\
-	REQ_GROUP("Option manipulation") \
-	REQ_(OPTIONS,		"Open the options menu"), \
-	\
 	REQ_GROUP("Misc") \
 	REQ_(EDIT,		"Open in editor"), \
 	REQ_(PROMPT,		"Open the prompt"), \
+	REQ_(OPTIONS,		"Open the options menu"), \
 	REQ_(SCREEN_REDRAW,	"Redraw the screen"), \
 	REQ_(STOP_LOADING,	"Stop all loading views"), \
 	REQ_(SHOW_VERSION,	"Show version information"), \

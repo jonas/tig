@@ -1,0 +1,50 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export COLUMNS=100
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+steps '
+	:save-display position.screen
+'
+
+tigrc <<EOF
+set line-graphics = ascii
+EOF
+
+test_tig grep class +42
+
+assert_equals 'position.screen' <<EOF
+554| class Planner {                                                                                
+724| class Plan {                                                                                   
+richards/src/main/scala/org/scalajs/benchmark/richards/Richards.scala                               
+151| class Scheduler {                                                                              
+279| class TaskControlBlock(val link: TaskControlBlock, val id: Int, val priority: Int, var queue: P
+343| sealed abstract class Task(scheduler: Scheduler) {                                             
+354| case class IdleTask(scheduler: Scheduler, var v1: Int, var count: Int) extends Task(scheduler) 
+375| case class DeviceTask(scheduler: Scheduler) extends Task(scheduler) {                          
+398| case class WorkerTask(scheduler: Scheduler, var v1: Int, var v2: Int) extends Task(scheduler) {
+424| case class HandlerTask(scheduler: Scheduler) extends Task(scheduler) {                         
+471| case class Packet(var link: Packet, var id: Int, val kind: Int) {                              
+tracer/src/main/scala/org/scalajs/benchmark/tracer/Color.scala                                      
+ 46| class Color(val red: Double, val green: Double, val blue: Double) {                            
+tracer/src/main/scala/org/scalajs/benchmark/tracer/Engine.scala                                     
+ 49| case class EngineConfiguration(                                                                
+ 64| class Engine(val config: EngineConfiguration) {                                                
+tracer/src/main/scala/org/scalajs/benchmark/tracer/Material.scala                                   
+ 49| abstract class Material(val reflection: Double, val transparency: Double, val gloss: Double) { 
+ 55| class Chessboard(colorEven: Color, colorOdd: Color,                                            
+ 85| class Solid(color: Color, reflection: Double, refraction: Double, transparency: Double, gloss: 
+tracer/src/main/scala/org/scalajs/benchmark/tracer/RenderScene.scala                                
+ 49| class RenderScene extends Scene {                                                              
+tracer/src/main/scala/org/scalajs/benchmark/tracer/Scene.scala                                      
+ 46| class Ray(val position: Vector, val direction: Vector) {                                       
+ 50| class Camera(val position: Vector, val lookAt: Vector, val up: Vector) {                       
+ 64| class Background(val color: Color, val ambience: Double)                                       
+ 66| class Light(val position: Vector, val color: Color, val intensity: Double = 10.0)              
+ 68| abstract class Scene {                                                                         
+[grep] tracer/src/main/scala/org/scalajs/benchmark/tracer/Engine.scala - line 42 of 62           88%
+EOF

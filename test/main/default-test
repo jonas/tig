@@ -12,7 +12,6 @@ set vertical-split = no
 EOF
 
 steps '
-	:view-main
 	:save-display main-default.screen
 	:set reference-format = (branch) [tag] @remote
 	:save-display main-ref-format.screen
@@ -21,6 +20,7 @@ steps '
 
 	:toggle commit-title-refs
 	:save-display main-no-refs.screen
+	:toggle commit-title-graph
 	:toggle commit-title-graph
 	:save-display main-no-graph.screen
 

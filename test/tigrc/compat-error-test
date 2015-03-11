@@ -71,7 +71,7 @@ EOF
 
 steps ":quit"
 
-test_tig
+test_tig status
 
 assert_equals stderr <<EOF
 tig warning: ~/.tigrc:1: show-date is obsolete; see tigrc(5) for how to set the date column option

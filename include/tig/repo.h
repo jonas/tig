@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -18,6 +18,7 @@
 
 struct repo_info {
 	char head[SIZEOF_REF];
+	char head_id[SIZEOF_REV];
 	char remote[SIZEOF_REF];
 	char cdup[SIZEOF_STR];
 	char prefix[SIZEOF_STR];
@@ -28,6 +29,7 @@ struct repo_info {
 extern struct repo_info repo;
 
 int load_repo_info(void);
+int load_repo_head(void);
 
 struct index_diff {
 	int staged;

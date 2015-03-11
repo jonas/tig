@@ -12,7 +12,6 @@ set main-view = id commit-title:yes,graph=no,refs=no,overflow=no
 EOF
 
 steps '
-	:view-main
 	:enter
 	:save-display main-submodule.screen
 
@@ -20,14 +19,12 @@ steps '
 	:save-display main-submodule-diff.screen
 '
 
-prepare_repo()
+test_setup_work_dir()
 {
 	git_clone 'repo-two' .
 	git submodule init
 	git submodule update
 }
-
-in_work_dir prepare_repo 1>>"$HOME/prepare-repo.log" 2>>"$HOME/prepare-repo.log"
 
 test_tig
 

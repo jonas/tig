@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -28,7 +28,7 @@
  */
 
 #define DEFINE_OPTION_VARIABLES(name, type, flags) type opt_##name;
-OPTION_INFO(DEFINE_OPTION_VARIABLES);
+OPTION_INFO(DEFINE_OPTION_VARIABLES)
 
 static struct option_info option_info[] = {
 #define DEFINE_OPTION_INFO(name, type, flags) { #name, STRING_SIZE(#name), #type, &opt_##name },
@@ -36,14 +36,31 @@ static struct option_info option_info[] = {
 };
 
 struct option_info *
-find_option_info(struct option_info *option, size_t options, const char *name)
+find_option_info(struct option_info *option, size_t options, const char *prefix, const char *name)
 {
 	size_t namelen = strlen(name);
+	char prefixed[SIZEOF_STR];
 	int i;
 
-	for (i = 0; i < options; i++)
+	if (*prefix && namelen == strlen(prefix) &&
+	    !string_enum_compare(prefix, name, namelen)) {
+		name = "display";
+		namelen = strlen(name);
+	}
+
+	for (i = 0; i < options; i++) {
+		if (!strcmp(option[i].type, "view_settings") &&
+		    enum_equals_prefix(option[i], name, namelen))
+			return &option[i];
+
 		if (enum_equals(option[i], name, namelen))
 			return &option[i];
+
+		if (enum_name_prefixed(prefixed, sizeof(prefixed), prefix, option[i].name) &&
+		    namelen == strlen(prefixed) &&
+		    !string_enum_compare(prefixed, name, namelen))
+			return &option[i];
+	}
 
 	return NULL;
 }
@@ -67,6 +84,35 @@ mark_option_seen(void *value)
 
 	if (option)
 		option->seen = TRUE;
+}
+
+struct option_info *
+find_column_option_info(enum view_column_type type, union view_column_options *opts,
+			const char *option, struct option_info *column_info,
+			const char **column_name)
+{
+#define DEFINE_COLUMN_OPTION_INFO(name, type, flags) \
+	{ #name, STRING_SIZE(#name), #type, &opt->name, flags },
+
+#define DEFINE_COLUMN_OPTION_INFO_CHECK(name, id, options) \
+	if (type == VIEW_COLUMN_##id) { \
+		struct name##_options *opt = &opts->name; \
+		struct option_info info[] = { \
+			options(DEFINE_COLUMN_OPTION_INFO) \
+		}; \
+		struct option_info *match; \
+		match = find_option_info(info, ARRAY_SIZE(info), #name, option); \
+		if (match) { \
+			*column_info = *match; \
+			*column_name = #name; \
+			return column_info; \
+		} \
+	}
+
+	COLUMN_OPTIONS(DEFINE_COLUMN_OPTION_INFO_CHECK);
+
+	*column_name = NULL;
+	return NULL;
 }
 
 /*
@@ -115,6 +161,7 @@ ignore_space_arg()
 }
 
 static const struct enum_map_entry commit_order_arg_map[] = {
+	ENUM_ARG(COMMIT_ORDER_AUTO,		""),
 	ENUM_ARG(COMMIT_ORDER_DEFAULT,		""),
 	ENUM_ARG(COMMIT_ORDER_TOPO,		"--topo-order"),
 	ENUM_ARG(COMMIT_ORDER_DATE,		"--date-order"),
@@ -129,14 +176,12 @@ commit_order_arg()
 }
 
 const char *
-commit_order_arg_with_graph(bool with_graph)
+commit_order_arg_with_graph(enum graph_display graph_display)
 {
 	enum commit_order commit_order = opt_commit_order;
 
-	if (with_graph &&
-	    commit_order != COMMIT_ORDER_TOPO &&
-	    commit_order != COMMIT_ORDER_DATE &&
-	    commit_order != COMMIT_ORDER_AUTHOR_DATE)
+	if (commit_order == COMMIT_ORDER_AUTO &&
+	    graph_display != GRAPH_DISPLAY_NO)
 		commit_order = COMMIT_ORDER_TOPO;
 
 	return commit_order_arg_map[commit_order].name;
@@ -248,7 +293,7 @@ parse_step(double *opt, const char *arg)
 		return SUCCESS;
 
 	/* "Shift down" so 100% and 1 does not conflict. */
-	*opt = (*opt - 1) / 100;
+	*opt /= 100;
 	if (*opt >= 1.0) {
 		*opt = 0.99;
 		return error("Percentage is larger than 100%%");
@@ -337,7 +382,7 @@ find_remapped(const char *remapped[][2], size_t remapped_size, const char *arg)
 static enum status_code
 option_color_command(int argc, const char *argv[])
 {
-	struct line_rule rule = {};
+	struct line_rule rule = {0};
 	const char *prefix = NULL;
 	struct line_info *info;
 	enum status_code code;
@@ -555,37 +600,32 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 	return error("Unhandled option: %s", name);
 }
 
-struct view_config {
-	const char *name;
-	const char ***argv;
-};
-
-static struct view_config view_configs[] = {
-	{ "blame-view", &opt_blame_view },
-	{ "blob-view", &opt_blob_view },
-	{ "diff-view", &opt_diff_view },
-	{ "grep-view", &opt_grep_view },
-	{ "log-view", &opt_log_view },
-	{ "main-view", &opt_main_view },
-	{ "pager-view", &opt_pager_view },
-	{ "refs-view", &opt_refs_view },
-	{ "stage-view", &opt_stage_view },
-	{ "stash-view", &opt_stash_view },
-	{ "status-view", &opt_status_view },
-	{ "tree-view", &opt_tree_view },
-};
-
 static enum status_code
-check_view_config(struct option_info *option, const char *argv[])
+parse_view_settings(struct view_column **view_column, const char *name_, const char *argv[])
 {
-	const char *name = enum_name(option->name);
-	int i;
+	char buf[SIZEOF_STR];
+	const char *name = enum_name_copy(buf, sizeof(buf), name_) ? buf : name_;
+	const char *prefixed;
 
-	for (i = 0; i < ARRAY_SIZE(view_configs); i++)
-		if (!strcmp(name, view_configs[i].name))
-			return parse_view_config(name, argv);
+	if ((prefixed = strstr(name, "-view-"))) {
+		const char *column_name = prefixed + STRING_SIZE("-view-");
+		size_t column_namelen = strlen(column_name);
+		enum view_column_type type;
 
-	return SUCCESS;
+		for (type = 0; type < view_column_type_map->size; type++) {
+			const struct enum_map_entry *column = &view_column_type_map->entries[type];
+
+			if (enum_equals(*column, column_name, column_namelen))
+				return parse_view_column_config(name, type, NULL, argv);
+
+			if (enum_equals_prefix(*column, column_name, column_namelen))
+				return parse_view_column_config(name, type,
+								column_name + column->namelen + 1,
+								argv);
+		}
+	}
+
+	return parse_view_config(view_column, name, argv);
 }
 
 /* Wants: name = value */
@@ -593,29 +633,30 @@ static enum status_code
 option_set_command(int argc, const char *argv[])
 {
 	struct option_info *option;
+	enum status_code code;
 
-	if (argc < 3)
+	if (argc < 2)
 		return error("Invalid set command: set option = value");
 
 	if (strcmp(argv[1], "="))
 		return error("No value assigned to %s", argv[0]);
 
-	if (!strcmp(argv[0], "reference-format"))
-		return parse_ref_formats(argv + 2);
-
-	option = find_option_info(option_info, ARRAY_SIZE(option_info), argv[0]);
+	option = find_option_info(option_info, ARRAY_SIZE(option_info), "", argv[0]);
 	if (option) {
-		enum status_code code;
-
 		if (option->seen)
 			return SUCCESS;
 
-		if (!strcmp(option->type, "const char **")) {
-			code = check_view_config(option, argv + 2);
-			if (code != SUCCESS)
-				return code;
+		if (!strcmp(option->type, "const char **"))
 			return parse_args(option->value, argv + 2);
-		}
+
+		if (argc < 3)
+			return error("Invalid set command: set option = value");
+
+		if (!strcmp(option->type, "view_settings"))
+			return parse_view_settings(option->value, argv[0], argv + 2);
+
+		if (!strcmp(option->type, "struct ref_format **"))
+			return parse_ref_formats(option->value, argv + 2);
 
 		code = parse_option(option, "", argv[2]);
 		if (code == SUCCESS && argc != 3)
@@ -913,6 +954,225 @@ load_options(void)
 	return OK;
 }
 
+const char *
+format_option_value(const struct option_info *option, char buf[], size_t bufsize)
+{
+	buf[0] = 0;
+
+	if (!strcmp(option->type, "bool")) {
+		bool *opt = option->value;
+
+		if (string_nformat(buf, bufsize, NULL, "%s", *opt ? "yes" : "no"))
+			return buf;
+
+	} else if (!strncmp(option->type, "enum", 4)) {
+		const char *type = option->type + STRING_SIZE("enum ");
+		enum author *opt = option->value;
+		const struct enum_map *map = find_enum_map(type);
+
+		if (enum_name_copy(buf, bufsize, map->entries[*opt].name))
+			return buf;
+
+	} else if (!strcmp(option->type, "int")) {
+		int *opt = option->value;
+
+		if (opt == &opt_diff_context && *opt < 0)
+			*opt = -*opt;
+
+		if (string_nformat(buf, bufsize, NULL, "%d", *opt))
+			return buf;
+
+	} else if (!strcmp(option->type, "double")) {
+		double *opt = option->value;
+
+		if (*opt >= 1) {
+			if (string_nformat(buf, bufsize, NULL, "%d", (int) *opt))
+				return buf;
+
+		} else if (string_nformat(buf, bufsize, NULL, "%.0f%%", (*opt) * 100)) {
+			return buf;
+		}
+
+	} else if (!strcmp(option->type, "const char **")) {
+		const char *sep = "";
+		const char ***opt = option->value;
+		size_t bufpos = 0;
+		int i;
+
+		for (i = 0; (*opt) && (*opt)[i]; i++) {
+			const char *arg = (*opt)[i];
+
+			if (!string_nformat(buf, bufsize, &bufpos, "%s%s", sep, arg))
+				return NULL;
+
+			sep = " ";
+		}
+
+		return buf;
+
+	} else if (!strcmp(option->type, "struct ref_format **")) {
+		struct ref_format ***opt = option->value;
+
+		if (format_ref_formats(*opt, buf, bufsize) == SUCCESS)
+			return buf;
+
+	} else if (!strcmp(option->type, "view_settings")) {
+		struct view_column **opt = option->value;
+
+		if (format_view_config(*opt, buf, bufsize) == SUCCESS)
+			return buf;
+
+	} else {
+		if (string_nformat(buf, bufsize, NULL, "<%s>", option->type))
+			return buf;
+	}
+
+	return NULL;
+}
+
+static bool
+save_option_settings(FILE *file)
+{
+	char buf[SIZEOF_STR];
+	int i;
+
+	if (!io_fprintf(file, "%s", "\n## Settings\n"))
+		return FALSE;
+
+	for (i = 0; i < ARRAY_SIZE(option_info); i++) {
+		struct option_info *option = &option_info[i];
+		const char *name = enum_name(option->name);
+		const char *value = format_option_value(option, buf, sizeof(buf));
+
+		if (!suffixcmp(name, strlen(name), "-args"))
+			continue;
+
+		if (!io_fprintf(file, "\nset %-25s = %s", name, value))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static bool
+save_option_keybinding(void *data, const char *group, struct keymap *keymap,
+		       enum request request, const char *key,
+		       const struct request_info *req_info,
+		       const struct run_request *run_req)
+{
+	FILE *file = data;
+
+	if (group && !io_fprintf(file, "\n# %s", group))
+		return FALSE;
+
+	if (!io_fprintf(file, "\nbind %-10s %-15s ", enum_name(keymap->name), key))
+		return FALSE;
+
+	if (req_info) {
+		return io_fprintf(file, "%s", enum_name(req_info->name));
+
+	} else {
+		const char *sep = format_run_request_flags(run_req);
+		int i;
+
+		for (i = 0; run_req->argv[i]; i++) {
+			if (!io_fprintf(file, "%s%s", sep, run_req->argv[i]))
+				return FALSE;
+			sep = " ";
+		}
+
+		return TRUE;
+	}
+}
+
+static bool
+save_option_keybindings(FILE *file)
+{
+	if (!io_fprintf(file, "%s", "\n\n## Keybindings\n"))
+		return FALSE;
+
+	return foreach_key(save_option_keybinding, file, FALSE);
+}
+
+static bool
+save_option_color_name(FILE *file, int color)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(color_map); i++)
+		if (color_map[i].value == color)
+			return io_fprintf(file, " %-8s", enum_name(color_map[i].name));
+
+	return io_fprintf(file, " color%d", color);
+}
+
+static bool
+save_option_color_attr(FILE *file, int attr)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(attr_map); i++)
+		if ((attr & attr_map[i].value) &&
+		    !io_fprintf(file, " %s", enum_name(attr_map[i].name)))
+			return FALSE;
+
+	return TRUE;
+}
+
+static bool
+save_option_color(void *data, const struct line_rule *rule)
+{
+	FILE *file = data;
+	const struct line_info *info;
+
+	for (info = &rule->info; info; info = info->next) {
+		const char *prefix = info->prefix ? info->prefix : "";
+		const char *prefix_sep = info->prefix ? "." : "";
+		const char *quote = *rule->line ? "\"" : "";
+		const char *name = *rule->line ? rule->line : enum_name(rule->name);
+		int name_width = strlen(prefix) + strlen(prefix_sep) + 2 * strlen(quote) + strlen(name);
+		int padding = name_width > 30 ? 0 : 30 - name_width;
+
+		if (!io_fprintf(file, "\ncolor %s%s%s%s%s%-*s",
+				      prefix, prefix_sep, quote, name, quote, padding, "")
+		    || !save_option_color_name(file, info->fg)
+		    || !save_option_color_name(file, info->bg)
+		    || !save_option_color_attr(file, info->attr))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static bool
+save_option_colors(FILE *file)
+{
+	if (!io_fprintf(file, "%s", "\n\n## Colors\n"))
+		return FALSE;
+
+	return foreach_line_rule(save_option_color, file);
+}
+
+enum status_code
+save_options(const char *path)
+{
+	int fd = open(path, O_WRONLY | O_CREAT | O_EXCL, 0666);
+	FILE *file = fd != -1 ? fdopen(fd, "w") : NULL;
+	enum status_code code = SUCCESS;
+
+	if (!file)
+		return error("%s", strerror(errno));
+
+	if (!io_fprintf(file, "%s", "# Saved by Tig\n")
+	    || !save_option_settings(file)
+	    || !save_option_keybindings(file)
+	    || !save_option_colors(file))
+		code = error("Write returned an error");
+
+	fclose(file);
+	return code;
+}
+
 /*
  * Repository properties
  */
@@ -1009,7 +1269,7 @@ parse_git_color_option(struct line_info *info, char *value)
 static void
 set_git_color_option(const char *name, char *value)
 {
-	struct line_info parsed = {};
+	struct line_info parsed = {0};
 	struct line_info *color = NULL;
 	size_t namelen = strlen(name);
 	int i;
@@ -1018,7 +1278,7 @@ set_git_color_option(const char *name, char *value)
 		return;
 
 	for (i = 0; opt_git_colors[i]; i++) {
-		struct line_rule rule = {};
+		struct line_rule rule = {0};
 		const char *prefix = NULL;
 		struct line_info *info;
 		const char *alias = opt_git_colors[i];

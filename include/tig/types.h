@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -31,6 +31,7 @@ struct enum_map {
 	const int size;
 };
 
+#define string_enum_sep(x) ((x) == '-' || (x) == '_')
 int string_enum_compare(const char *str1, const char *str2, int len);
 
 #define enum_equals(entry, str, len) \
@@ -39,8 +40,13 @@ int string_enum_compare(const char *str1, const char *str2, int len);
 #define enum_equals_static(str, name, namelen) \
 	(namelen == STRING_SIZE(str) && !string_enum_compare(str, name, namelen))
 
+#define enum_equals_prefix(entry, name_, namelen_) \
+	((namelen_) > (entry).namelen && \
+	 string_enum_sep((name_)[(entry).namelen]) && \
+	 enum_equals(entry, name_, (entry).namelen))
+
 const char *enum_name(const char *name);
-bool enum_name_copy(char *buf, size_t bufsize, const char *name);
+bool enum_name_copy(char buf[], size_t bufsize, const char *name);
 bool enum_name_prefixed(char buf[], size_t bufsize, const char *prefix, const char *name);
 
 const struct enum_map *find_enum_map(const char *type);
@@ -73,6 +79,11 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(GRAPHIC, DEFAULT), \
 	_(GRAPHIC, UTF_8)
 
+#define GRAPH_DISPLAY_ENUM(_) \
+	_(GRAPH_DISPLAY, NO), \
+	_(GRAPH_DISPLAY, V2), \
+	_(GRAPH_DISPLAY, V1)
+
 #define DATE_ENUM(_) \
 	_(DATE, NO), \
 	_(DATE, DEFAULT), \
@@ -104,6 +115,7 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(IGNORE_SPACE, AT_EOL)
 
 #define COMMIT_ORDER_ENUM(_) \
+	_(COMMIT_ORDER, AUTO), \
 	_(COMMIT_ORDER, DEFAULT), \
 	_(COMMIT_ORDER, TOPO), \
 	_(COMMIT_ORDER, DATE), \
@@ -151,6 +163,7 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(file_size, FILE_SIZE_ENUM) \
 	_(filename, FILENAME_ENUM) \
 	_(graphic, GRAPHIC_ENUM) \
+	_(graph_display, GRAPH_DISPLAY_ENUM) \
 	_(ignore_space, IGNORE_SPACE_ENUM) \
 	_(vertical_split, VERTICAL_SPLIT_ENUM) \
 	_(view_column_type, VIEW_COLUMN_ENUM) \
@@ -158,8 +171,8 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(refresh_mode, REFRESH_MODE_ENUM) \
 	_(status_label, STATUS_LABEL_ENUM) \
 
-#define DEFINE_ENUMS(name, macro) DEFINE_ENUM(name, macro);
-ENUM_INFO(DEFINE_ENUMS);
+#define DEFINE_ENUMS(name, macro) DEFINE_ENUM(name, macro)
+ENUM_INFO(DEFINE_ENUMS)
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

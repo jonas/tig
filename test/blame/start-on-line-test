@@ -1,0 +1,50 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export COLUMNS=200
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+steps '
+	:save-display position.screen
+'
+
+tigrc <<EOF
+set line-graphics = utf-8
+EOF
+
+test_tig blame deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala +42
+
+assert_equals 'position.screen' <<EOF
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989 // Dart by Google 2008-2010.                                                            
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989 // Translated to Scala.js by Jonas Fonseca 2013                                         
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989                                                                                         
+2014-01-16 22:51 Jonas Fonseca deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala 296fc90 package org.scalajs.benchmark.deltablue                                                 
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989                                                                                         
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989 /**                                                                                     
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989  * A Scala implementation of the DeltaBlue constraint-solving                           
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989  * algorithm, as described in:                                                          
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989  *                                                                                      
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989  * "The DeltaBlue Algorithm: An Incremental Constraint Hierarchy Solver"                
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989  *   Bjorn N. Freeman-Benson and John Maloney                                           
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989  *   January 1990 Communications of the ACM,                                            
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989  *   also available as University of Washington TR 89-08-06.                            
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989  *                                                                                      
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989  * Beware: this benchmark is written in a grotesque style where                         
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989  * the constraint model is built by side-effects from constructors.                     
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989  * I've kept it this way to avoid deviating too much from the original                  
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989  * implementation.                                                                      
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989  */                                                                                     
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989                                                                                         
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989 import scala.collection.mutable.ArrayBuffer                                             
+2014-03-01 17:26 Jonas Fonseca deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala ee91287 import scala.scalajs.js.annotation.JSExport                                             
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989                                                                                         
+2014-03-01 17:26 Jonas Fonseca deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala ee91287 @JSExport                                                                               
+2014-01-16 22:51 Jonas Fonseca deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala 296fc90 object DeltaBlue extends org.scalajs.benchmark.Benchmark {                              
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989                                                                                         
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989   override def prefix = "DeltaBlue"                                                     
+2013-10-18 18:00 Jonas Fonseca deltablue/DeltaBlue.scala                                                b103989                                                                                         
+[blame] deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala - line 42 of 711                                                                                                     7%
+EOF

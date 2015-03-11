@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -188,6 +188,16 @@ move_view(struct view *view, enum request request)
 	case REQ_MOVE_PAGE_DOWN:
 		steps = view->pos.lineno + view->height >= view->lines
 		      ? view->lines - view->pos.lineno - 1 : view->height;
+		break;
+
+	case REQ_MOVE_HALF_PAGE_UP:
+		steps = view->height / 2 > view->pos.lineno
+		      ? -view->pos.lineno : -(view->height / 2);
+		break;
+
+	case REQ_MOVE_HALF_PAGE_DOWN:
+		steps = view->pos.lineno + view->height / 2 >= view->lines
+		      ? view->lines - view->pos.lineno - 1 : view->height / 2;
 		break;
 
 	case REQ_MOVE_UP:
@@ -483,6 +493,9 @@ reset_view(struct view *view)
 
 	reset_matches(view);
 	view->prev_pos = view->pos;
+	/* A view without a previous view is the first view */
+	if (!view->prev && !view->lines && view->prev_pos.lineno == 0)
+		view->prev_pos.lineno = view->env->goto_lineno;
 	clear_position(&view->pos);
 
 	if (view->columns)
@@ -498,12 +511,6 @@ reset_view(struct view *view)
 static bool
 restore_view_position(struct view *view)
 {
-	/* A view without a previous view is the first view */
-	if (!view->prev && view->env->lineno && view->env->lineno <= view->lines) {
-		select_view_line(view, view->env->lineno);
-		view->env->lineno = 0;
-	}
-
 	/* Ensure that the view position is in a valid state. */
 	if (!check_position(&view->prev_pos) ||
 	    (view->pipe && view->lines <= view->prev_pos.lineno))
@@ -588,12 +595,6 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 			report("Failed to format %s arguments", view->name);
 			return FALSE;
 		}
-
-		/* Put the current view ref value to the view title ref
-		 * member. This is needed by the blob view. Most other
-		 * views sets it automatically after loading because the
-		 * first line is a commit line. */
-		string_copy_rev(view->ref, view->ops->id);
 	}
 
 	if (view->argv && view->argv[0] &&
@@ -814,7 +815,8 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 		/* Clear the old view and let the incremental updating refill
 		 * the screen. */
 		werase(view->win);
-		if (!(flags & (OPEN_RELOAD | OPEN_REFRESH)))
+		/* Do not clear the position if it is the first view. */
+		if (view->prev && !(flags & (OPEN_RELOAD | OPEN_REFRESH)))
 			clear_position(&view->prev_pos);
 		report_clear();
 	} else if (view_is_displayed(view)) {
@@ -947,8 +949,8 @@ sort_view_compare(const void *l1, const void *l2)
 {
 	const struct line *line1 = l1;
 	const struct line *line2 = l2;
-	struct view_column_data column_data1 = {};
-	struct view_column_data column_data2 = {};
+	struct view_column_data column_data1 = {0};
+	struct view_column_data column_data2 = {0};
 	struct sort_state *sort = &sorting_view->sort;
 	enum view_column_type column = get_sort_field(sorting_view);
 	int cmp;
@@ -961,7 +963,7 @@ sort_view_compare(const void *l1, const void *l2)
 
 	cmp = compare_view_column(column, TRUE, line1, &column_data1, line2, &column_data2);
 
-	/* Ensure stable sorting by ordering ordering by the other
+	/* Ensure stable sorting by ordering by the other
 	 * columns if the selected column values are equal. */
 	for (i = 0; !cmp && i < ARRAY_SIZE(view_column_order); i++)
 		if (column != view_column_order[i])
@@ -970,6 +972,21 @@ sort_view_compare(const void *l1, const void *l2)
 						  line2, &column_data2);
 
 	return sort->reverse ? -cmp : cmp;
+}
+
+void
+resort_view(struct view *view, bool renumber)
+{
+	sorting_view = view;
+	qsort(view->line, view->lines, sizeof(*view->line), sort_view_compare);
+
+	if (renumber) {
+		size_t i, lineno;
+
+		for (i = 0, lineno = 1; i < view->lines; i++)
+			if (view->line[i].lineno)
+				view->line[i].lineno = lineno++;
+	}
 }
 
 void
@@ -990,8 +1007,7 @@ sort_view(struct view *view, bool change_field)
 		state->reverse = !state->reverse;
 	}
 
-	sorting_view = view;
-	qsort(view->line, view->lines, sizeof(*view->line), sort_view_compare);
+	resort_view(view, FALSE);
 }
 
 static const char *
@@ -1061,16 +1077,12 @@ view_column_text(struct view *view, struct view_column_data *column_data,
 }
 
 static bool
-grep_refs(struct view *view, struct view_column *column, const struct ref_list *list)
+grep_refs(struct view *view, struct view_column *column, const struct ref *ref)
 {
 	regmatch_t pmatch;
-	size_t i;
 
-	if (!list)
-		return FALSE;
-
-	for (i = 0; i < list->size; i++) {
-		if (!regexec(view->regex, list->refs[i]->name, 1, &pmatch, 0))
+	for (; ref; ref = ref->next) {
+		if (!regexec(view->regex, ref->name, 1, &pmatch, 0))
 			return TRUE;
 	}
 
@@ -1080,7 +1092,7 @@ grep_refs(struct view *view, struct view_column *column, const struct ref_list *
 bool
 view_column_grep(struct view *view, struct line *line)
 {
-	struct view_column_data column_data = {};
+	struct view_column_data column_data = {0};
 	bool ok = view->ops->get_column_data(view, line, &column_data);
 	struct view_column *column;
 
@@ -1134,7 +1146,7 @@ view_column_reset(struct view *view)
 }
 
 static enum status_code
-parse_view_column_config(char **pos, const char **name, const char **value, bool first)
+parse_view_column_config_expr(char **pos, const char **name, const char **value, bool first)
 {
 	size_t len = strcspn(*pos, ",");
 	size_t optlen;
@@ -1173,7 +1185,7 @@ parse_view_column_option(struct view_column *column,
 			 const char *opt_name, const char *opt_value)
 {
 #define DEFINE_COLUMN_OPTION_INFO(name, type, flags) \
-	{ #name, STRING_SIZE(#name), #type, &opt->name },
+	{ #name, STRING_SIZE(#name), #type, &opt->name, flags },
 
 #define DEFINE_COLUMN_OPTIONS_PARSE(name, id, options) \
 	if (column->type == VIEW_COLUMN_##id) { \
@@ -1181,7 +1193,7 @@ parse_view_column_option(struct view_column *column,
 		struct option_info info[] = { \
 			options(DEFINE_COLUMN_OPTION_INFO) \
 		}; \
-		struct option_info *option = find_option_info(info, ARRAY_SIZE(info), opt_name); \
+		struct option_info *option = find_option_info(info, ARRAY_SIZE(info), "", opt_name); \
 		if (!option) \
 			return error("Unknown option `%s' for column %s", opt_name, \
 				     view_column_name(VIEW_COLUMN_##id)); \
@@ -1191,6 +1203,28 @@ parse_view_column_option(struct view_column *column,
 	COLUMN_OPTIONS(DEFINE_COLUMN_OPTIONS_PARSE);
 
 	return error("Unknown view column option: %s", opt_name);
+}
+
+static enum status_code
+parse_view_column_config_exprs(struct view_column *column, const char *arg)
+{
+	char buf[SIZEOF_STR] = "";
+	char *pos, *end;
+	bool first = TRUE;
+	enum status_code code = SUCCESS;
+
+	string_ncopy(buf, arg, strlen(arg));
+
+	for (pos = buf, end = pos + strlen(pos); code == SUCCESS && pos <= end; first = FALSE) {
+		const char *name = NULL;
+		const char *value = NULL;
+
+		code = parse_view_column_config_expr(&pos, &name, &value, first);
+		if (code == SUCCESS)
+			code = parse_view_column_option(column, name, value);
+	}
+
+	return code;
 }
 
 static enum status_code
@@ -1223,7 +1257,31 @@ find_view(const char *view_name)
 }
 
 enum status_code
-parse_view_config(const char *view_name, const char *argv[])
+parse_view_column_config(const char *view_name, enum view_column_type type,
+			 const char *option_name, const char *argv[])
+{
+	struct view_column *column;
+	struct view *view = find_view(view_name);
+
+	if (!view)
+		return error("Unknown view: %s", view_name);
+
+	if (!(view->ops->column_bits & (1 << type)))
+		return error("The %s view does not support %s column", view->name,
+			     view_column_name(type));
+
+	column = get_view_column(view, type);
+	if (!column)
+		return error("The %s view does not have a %s column configured", view->name,
+			     view_column_name(type));
+
+	if (option_name)
+		return parse_view_column_option(column, option_name, argv[0]);
+	return parse_view_column_config_exprs(column, argv[0]);
+}
+
+enum status_code
+parse_view_config(struct view_column **column_ref, const char *view_name, const char *argv[])
 {
 	enum status_code code = SUCCESS;
 	size_t size = argv_size(argv);
@@ -1241,9 +1299,6 @@ parse_view_config(const char *view_name, const char *argv[])
 
 	for (i = 0, column = NULL; code == SUCCESS && i < size; i++) {
 		const char *arg = argv[i];
-		char buf[SIZEOF_STR] = "";
-		char *pos, *end;
-		bool first = TRUE;
 
 		if (column)
 			column->next = &columns[i];
@@ -1263,17 +1318,7 @@ parse_view_config(const char *view_name, const char *argv[])
 			return error("The %s column must always be last",
 				     view_column_name(column->type));
 
-		string_ncopy(buf, arg, strlen(arg));
-
-		for (pos = buf, end = pos + strlen(pos); code == SUCCESS && pos <= end; first = FALSE) {
-			const char *name = NULL;
-			const char *value = NULL;
-
-			code = parse_view_column_config(&pos, &name, &value, first);
-			if (code == SUCCESS)
-				code = parse_view_column_option(column, name, value);
-		}
-
+		code = parse_view_column_config_exprs(column, arg);
 		column->prev_opt = column->opt;
 	}
 
@@ -1281,11 +1326,110 @@ parse_view_config(const char *view_name, const char *argv[])
 		free(view->columns);
 		view->columns = columns;
 		view->sort.current = view->columns;
+		*column_ref = columns;
 	} else {
 		free(columns);
 	}
 
 	return code;
+}
+
+static enum status_code
+format_view_column_options(struct option_info options[], size_t options_size, char buf[], size_t bufsize)
+{
+	char name[SIZEOF_STR];
+	char value[SIZEOF_STR];
+	size_t bufpos = 0;
+	const char *sep = ":";
+	int i;
+
+	buf[0] = 0;
+
+	for (i = 0; i < options_size; i++) {
+		struct option_info *option = &options[i];
+		const char *assign = "=";
+
+		if (!enum_name_copy(name, sizeof(name), option->name)
+		    || !format_option_value(option, value, sizeof(value)))
+			return error("No space left in buffer");
+
+		if (!strcmp(name, "display")) {
+			name[0] = 0;
+			assign = "";
+
+		}
+
+		if (!strcmp(option->type, "bool") && !strcmp(value, "yes")) {
+			if (!*name) {
+				sep = ":yes,";
+				continue;
+			}
+
+			/* For non-display boolean options 'yes' is implied. */
+#if 0
+			value[0] = 0;
+			assign = "";
+#endif
+		}
+
+		if (!strcmp(option->type, "int") && !strcmp(value, "0"))
+			continue;
+
+		if (!string_nformat(buf, bufsize, &bufpos, "%s%s%s%s",
+				    sep, name, assign, value))
+			return error("No space left in buffer");
+
+		sep = ",";
+	}
+
+	return SUCCESS;
+}
+
+static enum status_code
+format_view_column(struct view_column *column, char buf[], size_t bufsize)
+{
+#define FORMAT_COLUMN_OPTION_INFO(name, type, flags) \
+	{ #name, STRING_SIZE(#name), #type, &opt->name, flags },
+
+#define FORMAT_COLUMN_OPTIONS_PARSE(col_name, id, options) \
+	if (column->type == VIEW_COLUMN_##id) { \
+		struct col_name##_options *opt = &column->opt.col_name; \
+		struct option_info info[] = { \
+			options(FORMAT_COLUMN_OPTION_INFO) \
+		}; \
+		\
+		return format_view_column_options(info, ARRAY_SIZE(info), buf, bufsize); \
+	}
+
+	COLUMN_OPTIONS(FORMAT_COLUMN_OPTIONS_PARSE);
+
+	return error("Unknown view column type: %d", column->type);
+}
+
+enum status_code
+format_view_config(struct view_column *column, char buf[], size_t bufsize)
+{
+	const struct enum_map *map = view_column_type_map;
+	const char *sep = "";
+	size_t bufpos = 0;
+	char type[SIZEOF_STR];
+	char value[SIZEOF_STR];
+
+	for (; column; column = column->next) {
+		enum status_code code = format_view_column(column, value, sizeof(value));
+
+		if (code != SUCCESS)
+			return code;
+
+		if (!enum_name_copy(type, sizeof(type), map->entries[column->type].name)
+		    || !string_nformat(buf, bufsize, &bufpos, "%s%s%s",
+				       sep, type, value))
+			return error("No space left in buffer");
+
+		sep = " ";
+	}
+
+	return SUCCESS;
 }
 
 struct view_column *
@@ -1302,7 +1446,7 @@ get_view_column(struct view *view, enum view_column_type type)
 bool
 view_column_info_update(struct view *view, struct line *line)
 {
-	struct view_column_data column_data = {};
+	struct view_column_data column_data = {0};
 	struct view_column *column;
 	bool changed = FALSE;
 
@@ -1489,6 +1633,41 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 
 	FORMAT_BUFFER(buf, sizeof(buf), fmt, retval, FALSE);
 	return retval >= 0 ? add_line_text(view, buf, type) : NULL;
+}
+
+bool
+append_line_format(struct view *view, struct line *line, const char *fmt, ...)
+{
+	char *text = NULL;
+	size_t textlen = 0;
+	int fmtlen, retval;
+	va_list args;
+
+	va_start(args, fmt);
+	fmtlen = vsnprintf(NULL, 0, fmt, args);
+	va_end(args);
+
+	if (fmtlen <= 0)
+		return FALSE;
+
+	text = line->data;
+	textlen = strlen(text);
+
+	text = realloc(text, textlen + fmtlen + 1);
+	if (!text)
+		return FALSE;
+
+	FORMAT_BUFFER(text + textlen, fmtlen + 1, fmt, retval, FALSE);
+	if (retval < 0)
+		text[textlen] = 0;
+
+	line->data = text;
+	line->dirty = TRUE;
+
+	if (view->ops->column_bits)
+		view_column_info_update(view, line);
+
+	return TRUE;
 }
 
 /*

@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -154,6 +154,21 @@ add_line_rule(const char *prefix, struct line_rule *query)
 		info->prefix = prefix;
 	last->next = info;
 	return info;
+}
+
+bool
+foreach_line_rule(line_rule_visitor_fn visitor, void *data)
+{
+	enum line_type type;
+
+	for (type = 0; type < line_rules; type++) {
+		struct line_rule *rule = &line_rule[type];
+
+		if (!visitor(data, rule))
+			return FALSE;
+	}
+
+	return TRUE;
 }
 
 static void

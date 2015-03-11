@@ -38,14 +38,16 @@ export PAGER=cat
 export TZ=UTC
 export TERM=dumb
 export HOME="$output_dir"
-export EDITOR=:
 unset CDPATH
+unset VISUAL
 
 # Git env
 export GIT_CONFIG_NOSYSTEM
-unset GIT_CONFIG GIT_DIR
+unset GIT_CONFIG GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
 unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
 unset GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE
+unset GIT_EDITOR GIT_SEQUENCE_EDITOR GIT_PAGER GIT_EXTERNAL_DIFF
+unset GIT_NOTES_REF GIT_NOTES_DISPLAY_REF
 
 # Tig env
 export TIG_TRACE=
@@ -57,6 +59,12 @@ export ESCDELAY=200
 export LINES=30
 export COLUMNS=80
 
+# Internal test env
+# A comma-separated list of options. See docs in test/README.
+export TEST_OPTS="${TEST_OPTS:-}"
+# Used by tig_script to set the test "scope" used by test_tig.
+export TEST_NAME=
+
 [ -e "$output_dir" ] && rm -rf "$output_dir"
 mkdir -p "$output_dir/$work_dir"
 
@@ -65,6 +73,27 @@ if [ ! -d "$tmp_dir/.git" ]; then
 	# settings from the tig repository.
 	git init -q "$tmp_dir"
 fi
+
+mkdir -p "$tmp_dir/bin"
+
+# Setup fake editor
+fake_editor="$tmp_dir/bin/vim"
+cat > "$fake_editor" <<EOF
+#!/bin/sh
+
+file="\$1"
+lineno="\$(expr "\$1" : '+\([0-9]*\)')"
+if [ -n "\$lineno" ]; then
+	file="\$2"
+fi
+
+echo "\$@" >> "$HOME/editor.log"
+sed -n -e "\${lineno}p" "\$file" >> "$HOME/editor.log"
+EOF
+
+chmod +x "$fake_editor"
+export EDITOR="$(basename "$fake_editor")"
+export PATH="$(dirname "$fake_editor"):$PATH"
 
 cd "$output_dir"
 
@@ -82,7 +111,7 @@ file() {
 	path="$1"; shift
 
 	mkdir -p "$(dirname "$path")"
-	if [ -z "$@" ]; then
+	if [ "$#" = 0 ]; then
 		case "$path" in
 			stdin|expected*) cat ;;
 			*) sed 's/^[ ]//' ;;
@@ -93,7 +122,11 @@ file() {
 }
 
 tig_script() {
-	export TIG_SCRIPT="$HOME/$1"; shift
+	name="$1"; shift
+	prefix="${name:+$name.}"
+
+	export TIG_SCRIPT="$HOME/${prefix}steps"
+	export TEST_NAME="$name"
 
 	# Ensure that the steps finish by quitting
 	printf '%s\n:quit\n' "$@" \
@@ -103,7 +136,7 @@ tig_script() {
 }
 
 steps() {
-	tig_script 'steps' "$@"
+	tig_script "" "$@"
 }
 
 stdin() {
@@ -118,10 +151,28 @@ gitconfig() {
 	file "$HOME/.gitconfig" "$@"
 }
 
+in_work_dir()
+{
+	(cd "$work_dir" && $@)
+}
+
+auto_detect_debugger() {
+	for dbg in gdb lldb; do
+		dbg="$(command -v "$dbg" 2>/dev/null || true)"
+		if [ -n "$dbg" ]; then
+			echo "$dbg"
+			return
+		fi
+	done
+
+	die "Failed to detect a supported debugger"
+}
+
 #
 # Parse TEST_OPTS
 #
 
+expected_status_code=0
 diff_color_arg=
 [ -t 1 ] && diff_color_arg=--color
 
@@ -130,7 +181,7 @@ verbose=
 debugger=
 trace=
 
-set -- $TEST_OPTS
+set -- $TIG_TEST_OPTS $TEST_OPTS
 
 while [ $# -gt 0 ]; do
 	arg="$1"; shift
@@ -138,6 +189,7 @@ while [ $# -gt 0 ]; do
 		verbose) verbose=yes ;;
 		no-indent) indent= ;;
 		debugger=*) debugger=$(expr "$arg" : 'debugger=\(.*\)') ;;
+		debugger) debugger="$(auto_detect_debugger)" ;;
 		trace) trace=yes ;;
 	esac
 done
@@ -166,6 +218,17 @@ assert_equals()
 	fi
 }
 
+assert_not_exists()
+{
+	file="$1"; shift
+
+	if [ -e "$file" ]; then
+		echo "[FAIL] $file should not exist" >> .test-result
+	else
+		echo "  [OK] $file does not exist" >> .test-result
+	fi
+}
+
 show_test_results()
 {
 	if [ -n "$trace" -a -n "$TIG_TRACE" -a -e "$TIG_TRACE" ]; then
@@ -186,8 +249,10 @@ show_test_results()
 		printf "Failed %d out of %d test(s)%s\n" $failed $count 
 
 		# Show output from stderr if no output is expected
-		[ -e expected/stderr ] ||
-			sed "s/^/[stderr] /" < stderr
+		if [ -e stderr ]; then
+			[ -e expected/stderr ] ||
+				sed "s/^/[stderr] /" < stderr
+		fi
 
 		[ -e .test-result ] &&
 			cat .test-result
@@ -199,30 +264,131 @@ show_test_results()
 
 trap 'show_test_results' EXIT
 
+test_exec_work_dir()
+{
+	echo "=== $@ ===" >> "$HOME/test-exec.log"
+	set +e
+	in_work_dir "$@" 1>>"$HOME/test-exec.log" 2>>"$HOME/test-exec.log"
+	set -e
+}
+
+test_setup()
+{
+	run_setup="$(type test_setup_work_dir 2>/dev/null | grep 'function' || true)"
+
+	if [ -n "$run_setup" ]; then
+		if test ! -e "$HOME/test-exec.log" || ! grep -q test_setup_work_dir "$HOME/test-exec.log"; then
+			test_exec_work_dir test_setup_work_dir
+		fi
+	fi
+}
+
 test_tig()
 {
+	name="$TEST_NAME"
+	prefix="${name:+$name.}"
+
+	test_setup
 	export TIG_NO_DISPLAY=
 	if [ -n "$trace" ]; then
-		export TIG_TRACE="$HOME/.tig-trace"
+		export TIG_TRACE="$HOME/${prefix}tig-trace"
 	fi
-	touch stdin stderr
+	touch "${prefix}stdin" "${prefix}stderr"
 	if [ -n "$debugger" ]; then
-		if [ -s "$work_dir/stdin" ]; then
-			echo "*** This test requires data to be injected via stdin."
-			echo "*** The expected input file is: '$work_dir/stdin'"
+		echo "*** Running tests in '$(pwd)/$work_dir'"
+		if [ -s "$work_dir/${prefix}stdin" ]; then
+			echo "*** - This test requires data to be injected via stdin."
+			echo "***   The expected input file is: '../${prefix}stdin'"
+		fi
+		if [ "$#" -gt 0 ]; then
+			echo "*** - This test expects the following arguments: $@"
 		fi
 		(cd "$work_dir" && $debugger tig "$@")
 	else
-		(cd "$work_dir" && tig "$@") < stdin > stdout 2> stderr.orig
+		set +e
+		if [ -s "${prefix}stdin" ]; then
+			(cd "$work_dir" && tig "$@") < "${prefix}stdin" > "${prefix}stdout" 2> "${prefix}stderr.orig"
+		else
+			(cd "$work_dir" && tig "$@") > "${prefix}stdout" 2> "${prefix}stderr.orig"
+		fi
+		status_code="$?"
+		if [ "$status_code" != "$expected_status_code" ]; then
+			echo "[FAIL] unexpected status code: $status_code (should be $expected_status_code)" >> .test-result
+		fi
+		set -e
 	fi
 	# Normalize paths in stderr output
-	if [ -e stderr.orig ]; then
-		sed "s#$output_dir#HOME#" < stderr.orig > stderr
-		rm -f stderr.orig
+	if [ -e "${prefix}stderr.orig" ]; then
+		sed "s#$output_dir#HOME#" < "${prefix}stderr.orig" > "${prefix}stderr"
+		rm -f "${prefix}stderr.orig"
+	fi
+	if [ -n "$trace" ]; then
+		export TIG_TRACE="$HOME/.tig-trace"
+		if [ -n "$name" ]; then
+			sed "s#^#[$name] #" < "$HOME/${prefix}tig-trace" >> "$HOME/.tig-trace"
+		else
+			mv "$HOME/${prefix}tig-trace" "$HOME/.tig-trace"
+		fi
+	fi
+	if [ -n "$prefix" ]; then
+		sed "s#^#[$name] #" < "${prefix}stderr" >> "stderr"
 	fi
 }
 
 test_graph()
 {
 	test-graph $@ > stdout 2> stderr.orig
+}
+
+test_case()
+{
+	name="$1"; shift
+
+	echo "$name" >> test-cases
+	cat > "$name.expected"
+
+	touch "$name-before.sh" "$name-after.sh" "$name.script" "$name-args"
+
+	while [ "$#" -gt 0 ]; do
+		arg="$1"; shift
+		value="$(expr "$arg" : '--[^=]*=\(.*\)')"
+
+		case "$arg" in
+		--before=*) echo "$value" > "$name-before.sh" ;;
+		--after=*)  echo "$value" > "$name-after.sh" ;;
+		--script=*) echo "$value" > "$name.script" ;;
+		--args=*)   echo "$value" > "$name-args" ;;
+		--cwd=*)    echo "$value" > "$name-cwd" ;;
+		*)	    die "Unknown test_case argument: $arg"
+		esac
+	done
+}
+
+run_test_cases()
+{
+	if [ ! -e test-cases ]; then
+		return
+	fi
+	test_setup
+	for name in $(cat test-cases); do
+		tig_script "$name" "
+			$(if [ -e "$name.script" ]; then cat "$name.script"; fi)
+			:save-display $name.screen
+		"
+		if [ -e "$name-before.sh" ]; then
+			test_exec_work_dir sh "$HOME/$name-before.sh" 
+		fi
+		old_work_dir="$work_dir"
+		if [ -e "$name-cwd" ]; then
+			work_dir="$work_dir/$(cat "$name-cwd")"
+		fi
+		test_tig $(if [ -e "$name-args" ]; then cat "$name-args"; fi)
+		work_dir="$old_work_dir"
+		if [ -e "$name-after.sh" ]; then
+			test_exec_work_dir sh "$HOME/$name-after.sh" 
+		fi
+
+		assert_equals "$name.screen" < "$name.expected"
+		assert_equals "$name.stderr" ''
+	done
 }

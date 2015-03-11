@@ -1,0 +1,44 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+steps '
+	:save-display position.screen
+'
+
+test_tig log +42
+
+assert_equals 'position.screen' <<EOF
+Author: Jonas Fonseca <jonas.fonseca@gmail.com>                                 
+Date:   Sat Mar 1 15:59:02 2014 -0500                                           
+                                                                                
+    Add type parameter for js.Dynamic                                           
+                                                                                
+ common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 2 +-             
+ 1 file changed, 1 insertion(+), 1 deletion(-)                                  
+                                                                                
+commit 296fc90ba2c47ba3d2b6ab8e984ea3a82bb4cd6e                                 
+Author: Jonas Fonseca <jonas.fonseca@gmail.com>                                 
+Date:   Thu Jan 16 22:51:27 2014 -0500                                          
+                                                                                
+    Move classes under org.scalajs.benchmark package scope                      
+                                                                                
+ common/Benchmark.scala                             | 110 ----                  
+ common/BenchmarkApp.scala                          |  47 --                    
+ common/DOMTypes.scala                              |  49 --                    
+ .../scala/org/scalajs/benchmark/Benchmark.scala    | 110 ++++                  
+ .../scala/org/scalajs/benchmark/BenchmarkApp.scala |  46 ++                    
+ .../scala/org/scalajs/benchmark/dom/DOMTypes.scala |  49 ++                    
+ deltablue/DeltaBlue.scala                          | 704 --------------------- 
+ deltablue/exports.js                               |   2 +-                    
+ .../scalajs/benchmark/deltablue/DeltaBlue.scala    | 704 +++++++++++++++++++++ 
+ richards/Richards.scala                            | 460 --------------        
+ richards/exports.js                                |   2 +-                    
+ .../org/scalajs/benchmark/richards/Richards.scala  | 460 ++++++++++++++        
+ sudoku/Sudoku.scala                                | 197 ------                
+ sudoku/exports.js                                  |   2 +-                    
+[log] 296fc90ba2c47ba3d2b6ab8e984ea3a82bb4cd6e - line 42 of 668               8%
+EOF

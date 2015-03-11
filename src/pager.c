@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -32,55 +32,29 @@ pager_get_column_data(struct view *view, const struct line *line, struct view_co
 	return TRUE;
 }
 
-static bool
-add_describe_ref(char *buf, size_t *bufpos, const char *commit_id, const char *sep)
-{
-	const char *describe_argv[] = { "git", "describe", commit_id, NULL };
-	char ref[SIZEOF_STR];
-
-	if (!io_run_buf(describe_argv, ref, sizeof(ref)) || !*ref)
-		return TRUE;
-
-	/* This is the only fatal call, since it can "corrupt" the buffer. */
-	if (!string_nformat(buf, SIZEOF_STR, bufpos, "%s%s", sep, ref))
-		return FALSE;
-
-	return TRUE;
-}
-
 static void
 add_pager_refs(struct view *view, const char *commit_id)
 {
 	char buf[SIZEOF_STR];
-	struct ref_list *list;
-	size_t bufpos = 0, i;
+	const struct ref *list;
+	size_t bufpos = 0;
 	const char *sep = "Refs: ";
-	bool is_tag = FALSE;
 
 	list = get_ref_list(commit_id);
 	if (!list) {
-		if (view_has_flags(view, VIEW_ADD_DESCRIBE_REF))
-			goto try_add_describe_ref;
+		if (view_has_flags(view, VIEW_ADD_DESCRIBE_REF) && refs_contain_tag())
+			add_line_text(view, sep, LINE_PP_REFS);
 		return;
 	}
 
-	for (i = 0; i < list->size; i++) {
-		struct ref *ref = list->refs[i];
-		const struct ref_format *fmt = get_ref_format(ref);
+	for (; list; list = list->next) {
+		const struct ref *ref = list;
+		const struct ref_format *fmt = get_ref_format(opt_reference_format, ref);
 
 		if (!string_format_from(buf, &bufpos, "%s%s%s%s", sep,
 					fmt->start, ref->name, fmt->end))
 			return;
 		sep = ", ";
-		if (ref_is_tag(ref))
-			is_tag = TRUE;
-	}
-
-	if (!is_tag && view_has_flags(view, VIEW_ADD_DESCRIBE_REF)) {
-try_add_describe_ref:
-		/* Add <tag>-g<commit_id> "fake" reference. */
-		if (!add_describe_ref(buf, &bufpos, commit_id, sep))
-			return;
 	}
 
 	if (bufpos == 0)

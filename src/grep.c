@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -83,6 +83,7 @@ grep_select(struct view *view, struct line *line)
 	view->env->ref[0] = 0;
 	string_ncopy(view->env->file, grep->file, strlen(grep->file));
 	string_ncopy(view->ref, grep->file, strlen(grep->file));
+	view->env->lineno = grep->lineno + 1;
 }
 
 static const char *grep_args[] = {
@@ -171,7 +172,7 @@ grep_request(struct view *view, enum request request, struct line *line)
 			const char *file_argv[] = { repo.cdup, grep->file, NULL };
 
 			clear_position(&file_view->pos);
-			view->env->lineno = grep->lineno;
+			view->env->goto_lineno = grep->lineno;
 			view->env->blob[0] = 0;
 			open_argv(view, file_view, file_argv, repo.cdup, OPEN_SPLIT | OPEN_RELOAD);
 		}
@@ -181,12 +182,12 @@ grep_request(struct view *view, enum request request, struct line *line)
 	case REQ_EDIT:
 		if (!*grep->file)
 			return request;
-		open_editor(grep->file, grep->lineno);
+		open_editor(grep->file, grep->lineno + 1);
 		return REQ_NONE;
 
 	case REQ_VIEW_BLAME:
 		view->env->ref[0] = 0;
-		view->env->lineno = grep->lineno;
+		view->env->goto_lineno = grep->lineno;
 		return request;
 
 	default:

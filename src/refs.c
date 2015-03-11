@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -64,11 +64,15 @@ refs_request(struct view *view, enum request request, struct line *line)
 	{
 		const struct ref *ref = reference->ref;
 		const char *all_references_argv[] = {
-			GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg(), "",
+			GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg(),
+				"%(mainargs)", "",
 				refs_is_all(reference) ? "--all" : ref->name, "")
 		};
 
-		open_argv(view, &main_view, all_references_argv, NULL, OPEN_SPLIT);
+		if (!argv_format(main_view.env, &main_view.argv, all_references_argv, FALSE, FALSE))
+			report("Failed to format argument");
+		else
+			open_view(view, &main_view, OPEN_SPLIT | OPEN_PREPARED);
 		return REQ_NONE;
 	}
 	default:
@@ -79,7 +83,7 @@ refs_request(struct view *view, enum request request, struct line *line)
 static bool
 refs_read(struct view *view, struct buffer *buf)
 {
-	struct reference template = {};
+	struct reference template = {0};
 	char *author;
 	char *title;
 	size_t i;
@@ -156,8 +160,11 @@ refs_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	}
 
+	if (!view->lines)
+		view->sort.current = get_view_column(view, VIEW_COLUMN_REF);
 	refs_open_visitor(view, refs_all);
 	foreach_ref(refs_open_visitor, view);
+	resort_view(view, TRUE);
 
 	watch_register(&view->watch, WATCH_HEAD | WATCH_REFS);
 

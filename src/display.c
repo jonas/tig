@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -29,6 +29,24 @@ static WINDOW *display_title[2];
 static WINDOW *display_sep;
 
 static FILE *opt_tty;
+
+static struct io script_io = { -1 };
+
+static bool
+is_script_executing(void)
+{
+	return script_io.pipe != -1;
+}
+
+enum status_code
+open_script(const char *path)
+{
+	if (is_script_executing())
+		return error("Scripts cannot be run from scripts");
+
+	return io_open(&script_io, "%s", path)
+		? SUCCESS : error("Failed to open %s", path);
+}
 
 bool
 open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool refresh, const char *notice)
@@ -291,7 +309,7 @@ save_display(const char *path)
 		return FALSE;
 	}
 
-	if (view->width < width) {
+	if (view->width < width && display[1]) {
 		struct view *left = display[0],
 			    *right = display[1];
 
@@ -393,7 +411,9 @@ report(const char *msg, ...)
 static void
 done_display(void)
 {
-	endwin();
+	if (cursed)
+		endwin();
+	cursed = FALSE;
 }
 
 void
@@ -470,20 +490,6 @@ init_display(void)
 		use_scroll_redrawwin = TRUE;
 		use_scroll_status_wclear = FALSE;
 	}
-}
-
-static struct io script_io = { -1 };
-
-bool
-open_script(const char *path)
-{
-	return io_open(&script_io, "%s", path);
-}
-
-bool
-is_script_executing(void)
-{
-	return script_io.pipe != -1;
 }
 
 static bool

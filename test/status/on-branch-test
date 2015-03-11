@@ -1,0 +1,179 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=10
+
+test_setup_work_dir()
+{
+	create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+	git checkout -b topic-branch HEAD~4
+	echo "Topic branch" >> README.md
+	git add README.md
+	git_commit -m "Topic branch"
+	git checkout master
+
+	git checkout -b conflict-branch HEAD~4
+	git rm -f run.sh
+	git_commit -m "Conflict branch"
+	git checkout master
+
+	git tag v0.2 HEAD~20
+	git branch v0.2-branch v0.2
+
+	git format-patch -1 conflict-branch --stdout > "$HOME/mailbox"
+}
+
+test_case on-branch-master \
+	--args='status' \
+	--before='git checkout master' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+test_case bisecting-master \
+	--args='status' \
+	--before="git bisect start master" \
+	--after="git bisect reset" <<EOF
+Bisecting master                                                                
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+test_case on-detached-head \
+	--args='status' \
+	--before="git checkout HEAD~10" \
+	--after="git checkout master" \
+<<EOF
+HEAD detached at 988c77aad5798f1e087e5d7efe3b3319ee6de744                       
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+test_case on-detached-tag \
+	--args='status' \
+	--before="git checkout v0.2" \
+	--after="git checkout master" \
+<<EOF
+HEAD detached at v0.2                                                          
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+test_case merging-master \
+	--args='status' \
+	--before="git merge conflict-branch" \
+	--after="git reset --hard" \
+<<EOF
+Merging master                                                                  
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+U run.sh                                                                        
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+test_case rebasing-master \
+	--args='status' \
+	--before="git checkout conflict-branch
+		  git rebase master" \
+	--after=" git rebase --abort
+		  git checkout master" \
+<<EOF
+Rebasing conflict-branch                                                        
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+U run.sh                                                                        
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+test_case applying-mailbox-to-master \
+	--args='status' \
+	--before="git am $HOME/mailbox" \
+	--after="git am --abort" \
+<<EOF
+Applying mailbox to master
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+test_case interactive-rebase-of-branch \
+	--args='status' \
+	--before="git checkout conflict-branch
+		  git rebase -i master" \
+	--after=" git rebase --abort
+		  git checkout master" \
+<<EOF
+Interactive rebase conflict-branch                                              
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changed but not updated:                                                        
+U run.sh                                                                        
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+run_test_cases
+
+add_exec_prefix()
+{
+	code="$(cat "$1")"
+	if [ -n "$code" ]; then
+		echo "$code" | sed -e 's/^[ 	]*//' -e '/^$/d' -e 's/^/:exec @/'
+	fi
+}
+
+tig_script "all" "
+	$(for name in $(cat test-cases); do
+		add_exec_prefix "$name-before.sh"
+		echo :save-display all-$name.screen
+		add_exec_prefix "$name-after.sh"
+	done)
+"
+
+test_tig status
+
+for name in $(cat test-cases); do
+	assert_equals "all-$name.screen" < "$name.expected"
+done

@@ -2,7 +2,7 @@
 
 # The last tagged version. Can be overridden either by the version from
 # git or from the value of the DIST_VERSION environment variable.
-VERSION	= 2.0.3
+VERSION	= 2.1
 
 all:
 
@@ -12,6 +12,14 @@ kernel_name := $(shell sh -c 'uname -s 2>/dev/null || echo unknown')
 
 # Include setting from the configure script
 -include config.make
+
+# Optional defaults.
+# TIG_ variables are set by contrib/config.make-$(kernel_name).
+TIG_NCURSES ?= -lcurses
+LDFLAGS ?= $(TIG_LDFLAGS)
+CPPFLAGS ?= $(TIG_CPPFLAGS)
+LDLIBS ?= $(TIG_NCURSES) $(TIG_LDLIBS)
+CFLAGS ?= -Wall -O2 $(TIG_CFLAGS)
 
 prefix ?= $(HOME)
 bindir ?= $(prefix)/bin
@@ -37,8 +45,6 @@ RPM_VERLIST = $(filter-out g% dirty,$(subst -, ,$(VERSION))) 0
 RPM_VERSION = $(word 1,$(RPM_VERLIST))
 RPM_RELEASE = $(word 2,$(RPM_VERLIST))$(if $(WTDIRTY),.dirty)
 
-LDLIBS ?= -lcurses
-CFLAGS ?= -Wall -O2
 DFLAGS	= -g -DDEBUG -Werror -O0
 EXE	= src/tig
 TOOLS	= test/tools/test-graph tools/doc-gen
@@ -122,7 +128,7 @@ strip: $(EXE)
 	strip $(EXE)
 
 update-headers:
-	@for file in include/*.h src/*.c tools/*.c; do \
+	@for file in include/tig/*.h src/*.c tools/*.c test/tools/*.c; do \
 		grep -q '/* Copyright' "$$file" && \
 			sed '0,/.*\*\//d' < "$$file" | \
 			grep -v '/* vim: set' > "$$file.tmp"; \
@@ -161,7 +167,7 @@ clean-test:
 test: clean-test $(TESTS)
 	$(QUIET_SUMMARY)test/tools/show-results.sh
 
-export TEST_OPTS ?= $(V:1=no-indent)
+export TIG_TEST_OPTS = $(V:1=no-indent)
 
 $(TESTS): PATH := $(CURDIR)/test/tools:$(CURDIR)/src:$(PATH)
 $(TESTS): $(EXE) test/tools/test-graph
@@ -194,14 +200,16 @@ COMPAT_OBJS += compat/hashtab.o
 
 override CPPFLAGS += $(COMPAT_CPPFLAGS)
 
+GRAPH_OBJS = src/graph.o src/graph-v1.o src/graph-v2.o
+
 TIG_OBJS = \
 	src/tig.o \
 	src/types.o \
 	src/string.o \
 	src/util.o \
+	src/map.o \
 	src/argv.o \
 	src/io.o \
-	src/graph.o \
 	src/refdb.o \
 	src/builtin-config.o \
 	src/request.o \
@@ -228,11 +236,12 @@ TIG_OBJS = \
 	src/main.o \
 	src/stash.o \
 	src/grep.o \
+	$(GRAPH_OBJS) \
 	$(COMPAT_OBJS)
 
 src/tig: $(TIG_OBJS)
 
-TEST_GRAPH_OBJS = test/tools/test-graph.o src/string.o src/util.o src/io.o src/graph.o $(COMPAT_OBJS)
+TEST_GRAPH_OBJS = test/tools/test-graph.o src/string.o src/util.o src/io.o $(GRAPH_OBJS) $(COMPAT_OBJS)
 test/tools/test-graph: $(TEST_GRAPH_OBJS)
 
 DOC_GEN_OBJS = tools/doc-gen.o src/string.o src/types.o src/util.o src/request.o
@@ -246,7 +255,7 @@ DEPS_CFLAGS ?= -MMD -MP -MF .deps/$*.d
 	$(QUIET_LINK)$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 %.o: %.c $(CONFIG_H)
-	@mkdir -p $(abspath .deps/$(*D))
+	@mkdir -p .deps/$(*D)
 	$(QUIET_CC)$(CC) -I. -Iinclude $(CFLAGS) $(DEPS_CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 -include $(OBJS:%.o=.deps/%.d)

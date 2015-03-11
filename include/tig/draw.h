@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -19,8 +19,6 @@
 #include "tig/view.h"
 #include "tig/refdb.h"
 #include "tig/util.h"
-
-struct graph_canvas;
 
 enum align {
 	ALIGN_LEFT,

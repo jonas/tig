@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -227,9 +227,9 @@ blame_read_file(struct view *view, struct buffer *buf, struct blame_state *state
 			return TRUE;
 		}
 
-		if (view->env->lineno > 0) {
-			select_view_line(view, view->env->lineno);
-			view->env->lineno = 0;
+		if (view->env->goto_lineno > 0) {
+			select_view_line(view, view->env->goto_lineno);
+			view->env->goto_lineno = 0;
 		}
 
 		state->done_reading = TRUE;
@@ -403,7 +403,7 @@ blame_go_forward(struct view *view, struct blame *blame, bool parent)
 	string_ncopy(view->env->file, filename, strlen(filename));
 	if (parent)
 		setup_blame_parent_line(view, blame);
-	view->env->lineno = blame->lineno;
+	view->env->goto_lineno = blame->lineno;
 	reload_view(view);
 }
 
@@ -419,7 +419,7 @@ blame_go_back(struct view *view)
 
 	string_copy(view->env->ref, history_state.id);
 	string_ncopy(view->env->file, history_state.filename, strlen(history_state.filename));
-	view->env->lineno = view->pos.lineno;
+	view->env->goto_lineno = view->pos.lineno;
 	reload_view(view);
 }
 
@@ -494,6 +494,10 @@ blame_select(struct view *view, struct line *line)
 		string_ncopy(view->env->commit, "HEAD", 4);
 	else
 		string_copy_rev(view->env->commit, commit->id);
+
+	if (commit->filename)
+		string_format(view->env->file, "%s", commit->filename);
+	view->env->lineno = view->pos.lineno + 1;
 }
 
 static struct view_ops blame_ops = {

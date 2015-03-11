@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -61,7 +61,11 @@ blob_open(struct view *view, enum open_flags flags)
 	}
 
 	view->encoding = get_path_encoding(view->env->file, default_encoding);
-	string_copy(view->ref, view->env->file);
+
+	if (*view->env->file)
+		string_copy(view->ref, view->env->file);
+	else
+		string_copy_rev(view->ref, view->ops->id);
 
 	return begin_update(view, NULL, argv, flags);
 }
@@ -70,14 +74,24 @@ static bool
 blob_read(struct view *view, struct buffer *buf)
 {
 	if (!buf) {
-		if (view->env->lineno > 0) {
-			select_view_line(view, view->env->lineno);
-			view->env->lineno = 0;
+		if (view->env->goto_lineno > 0) {
+			select_view_line(view, view->env->goto_lineno);
+			view->env->goto_lineno = 0;
 		}
 		return TRUE;
 	}
 
 	return add_line_text(view, buf->data, LINE_DEFAULT) != NULL;
+}
+
+static void
+blob_select(struct view *view, struct line *line)
+{
+	struct blob_state *state = view->private;
+
+	if (state->file)
+		string_format(view->env->file, "%s", state->file);
+	view->env->lineno = view->pos.lineno + 1;
 }
 
 static enum request
@@ -97,7 +111,7 @@ blob_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_VIEW_BLAME:
 		string_ncopy(view->env->ref, state->commit, strlen(state->commit));
-		view->env->lineno = line - view->line;
+		view->env->goto_lineno = line - view->line;
 		return request;
 
 	case REQ_EDIT:
@@ -122,7 +136,7 @@ static struct view_ops blob_ops = {
 	view_column_draw,
 	blob_request,
 	view_column_grep,
-	pager_select,
+	blob_select,
 	NULL,
 	view_column_bit(LINE_NUMBER) | view_column_bit(TEXT),
 	pager_get_column_data,

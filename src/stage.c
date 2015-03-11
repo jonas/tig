@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -427,9 +427,9 @@ stage_request(struct view *view, enum request request, struct line *line)
 		}
 
 		view->env->ref[0] = 0;
-		view->env->lineno = diff_get_lineno(view, line);
-		if (view->env->lineno > 0)
-			view->env->lineno--;
+		view->env->goto_lineno = diff_get_lineno(view, line);
+		if (view->env->goto_lineno > 0)
+			view->env->goto_lineno--;
 		return request;
 
 	case REQ_ENTER:
@@ -439,16 +439,28 @@ stage_request(struct view *view, enum request request, struct line *line)
 		return request;
 	}
 
-	refresh_view(view->parent);
+	if (view->parent) {
+		refresh_view(view->parent);
 
-	/* Check whether the staged entry still exists, and close the
-	 * stage view if it doesn't. */
-	if (!stage_exists(view, &stage_status, stage_line_type))
-		return REQ_VIEW_CLOSE;
+		/* Check whether the staged entry still exists, and close the
+		 * stage view if it doesn't. */
+		if (!stage_exists(view, &stage_status, stage_line_type))
+			return REQ_VIEW_CLOSE;
+	}
 
 	refresh_view(view);
 
 	return REQ_NONE;
+}
+
+static void
+stage_select(struct view *view, struct line *line)
+{
+	const char *changes_msg = stage_line_type == LINE_STAT_STAGED ? "Staged changes"
+				: stage_line_type == LINE_STAT_UNSTAGED ? "Unstaged changes"
+				: NULL;
+
+	diff_common_select(view, line, changes_msg);
 }
 
 static bool
@@ -475,6 +487,7 @@ stage_open(struct view *view, enum open_flags flags)
 	};
 	static const char *file_argv[] = { repo.cdup, stage_status.new.name, NULL };
 	const char **argv = NULL;
+	struct stage_state *state = view->private;
 
 	if (!stage_line_type) {
 		report("No stage content, press %s to open the status view and choose file",
@@ -517,6 +530,9 @@ stage_open(struct view *view, enum open_flags flags)
 		return FALSE;
 	}
 
+	if (stage_line_type != LINE_STAT_UNTRACKED)
+		diff_save_line(view, &state->diff, flags);
+
 	view->vid[0] = 0;
 	view->dir = repo.cdup;
 	return begin_update(view, NULL, NULL, flags);
@@ -535,6 +551,9 @@ stage_read(struct view *view, struct buffer *buf)
 		return TRUE;
 	}
 
+	if (!buf)
+		diff_restore_line(view, &state->diff);
+
 	if (buf && diff_common_read(view, buf->data, &state->diff))
 		return TRUE;
 
@@ -551,7 +570,7 @@ static struct view_ops stage_ops = {
 	view_column_draw,
 	stage_request,
 	view_column_grep,
-	pager_select,
+	stage_select,
 	NULL,
 	view_column_bit(LINE_NUMBER) | view_column_bit(TEXT),
 	pager_get_column_data,

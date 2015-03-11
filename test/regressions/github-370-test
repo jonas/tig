@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# Issue #370
+
+. libtest.sh
+. libgit.sh
+
+steps '
+	s
+	R
+	q
+'
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+test_tig
+
+assert_equals 'stderr' <<EOF
+EOF

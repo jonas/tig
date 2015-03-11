@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -23,6 +23,8 @@ struct ref;
 
 #define LINE_INFO(_) \
 	_(DIFF_HEADER,  	"diff --"), \
+	_(DIFF_DEL_FILE,  	"--- "), \
+	_(DIFF_ADD_FILE,  	"+++ "), \
 	_(DIFF_CHUNK,   	"@@"), \
 	_(DIFF_ADD,		"+"), \
 	_(DIFF_ADD2,		" +"), \
@@ -115,6 +117,9 @@ enum line_type get_line_type_from_ref(const struct ref *ref);
 struct line_info *get_line_info(const char *prefix, enum line_type type);
 struct line_info *add_line_rule(const char *prefix, struct line_rule *rule);
 void init_colors(void);
+
+typedef bool (*line_rule_visitor_fn)(void *data, const struct line_rule *rule);
+bool foreach_line_rule(line_rule_visitor_fn fn, void *data);
 
 /* Color IDs must be 1 or higher. [GH #15] */
 #define COLOR_ID(line_type)		((line_type) + 1)

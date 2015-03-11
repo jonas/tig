@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -498,12 +498,13 @@ io_get(struct io *io, struct buffer *buf, int c, bool can_read)
 bool
 io_write(struct io *io, const void *buf, size_t bufsize)
 {
+	const char *bytes = buf;
 	size_t written = 0;
 
 	while (!io_error(io) && written < bufsize) {
 		ssize_t size;
 
-		size = write(io->pipe, buf + written, bufsize - written);
+		size = write(io->pipe, bytes + written, bufsize - written);
 		if (size < 0 && (errno == EAGAIN || errno == EINTR))
 			continue;
 		else if (size == -1)
@@ -533,7 +534,7 @@ io_printf(struct io *io, const char *fmt, ...)
 bool
 io_read_buf(struct io *io, char buf[], size_t bufsize)
 {
-	struct buffer result = {};
+	struct buffer result = {0};
 
 	if (io_get(io, &result, '\n', TRUE)) {
 		result.data = chomp_string(result.data);
@@ -629,6 +630,23 @@ io_run_load(const char **argv, const char *separators,
 	if (!io_run(&io, IO_RD, NULL, NULL, argv))
 		return ERR;
 	return io_load(&io, separators, read_property, data);
+}
+
+bool
+io_fprintf(FILE *file, const char *fmt, ...)
+{
+	va_list args;
+	int fmtlen, retval;
+
+	va_start(args, fmt);
+	fmtlen = vsnprintf(NULL, 0, fmt, args);
+	va_end(args);
+
+	va_start(args, fmt);
+	retval = vfprintf(file, fmt, args);
+	va_end(args);
+
+	return fmtlen == retval;
 }
 
 const char *

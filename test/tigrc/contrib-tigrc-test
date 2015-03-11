@@ -1,0 +1,26 @@
+#!/bin/sh
+
+. libtest.sh
+
+CONTRIB_PATH="$base_dir/../contrib/"
+
+source_tigrc_files()
+{
+	find "$CONTRIB_PATH" -name "*.tigrc" | while read file; do
+		echo "source $file";
+	done
+}
+
+tigrc <<EOF
+$(source_tigrc_files)
+EOF
+
+steps ":quit"
+
+test_tig status
+
+mv stderr stderr.orig
+sed "s#$CONTRIB_PATH#TIGRC_REPO/contrib#" < stderr.orig > stderr
+
+assert_equals stderr <<EOF
+EOF

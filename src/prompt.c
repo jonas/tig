@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -186,8 +186,8 @@ static char *
 readline_variable_generator(const char *text, int state)
 {
 	static const char *vars[] = {
-#define FORMAT_VAR(name, ifempty, initval) "%(" #name ")"
-		ARGV_ENV_INFO(FORMAT_VAR),
+#define FORMAT_VAR(type, name, ifempty, initval) "%(" #name ")",
+		ARGV_ENV_INFO(FORMAT_VAR)
 #undef FORMAT_VAR
 		NULL
 	};
@@ -230,6 +230,8 @@ readline_action_generator(const char *text, int state)
 		"set",
 		"toggle",
 		"save-display",
+		"save-options",
+		"exec",
 #define REQ_GROUP(help)
 #define REQ_(req, help)	#req
 		REQ_INFO,
@@ -534,15 +536,8 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 	return status != INPUT_CANCEL;
 }
 
-struct prompt_toggle {
-	const char *name;
-	const char *type;
-	enum view_flag flags;
-	void *opt;
-};
-
-static struct prompt_toggle option_toggles[] = {
-#define DEFINE_OPTION_TOGGLES(name, type, flags) { #name, #type, flags, &opt_ ## name },
+static struct option_info option_toggles[] = {
+#define DEFINE_OPTION_TOGGLES(name, type, flags) { #name, STRING_SIZE(#name), #type, &opt_ ## name, flags },
 	OPTION_INFO(DEFINE_OPTION_TOGGLES)
 };
 
@@ -559,7 +554,7 @@ find_arg(const char *argv[], const char *arg)
 
 static enum status_code
 prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
-		     struct prompt_toggle *toggle, enum view_flag *flags)
+		     struct option_info *toggle, enum view_flag *flags)
 {
 	char name[SIZEOF_STR];
 
@@ -569,7 +564,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 	*flags = toggle->flags;
 
 	if (!strcmp(toggle->type, "bool")) {
-		bool *opt = toggle->opt;
+		bool *opt = toggle->value;
 
 		*opt = !*opt;
 		if (opt == &opt_mouse)
@@ -578,7 +573,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 
 	} else if (!strncmp(toggle->type, "enum", 4)) {
 		const char *type = toggle->type + STRING_SIZE("enum ");
-		enum author *opt = toggle->opt;
+		enum author *opt = toggle->value;
 		const struct enum_map *map = find_enum_map(type);
 
 		*opt = (*opt + 1) % map->size;
@@ -587,7 +582,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 	} else if (!strcmp(toggle->type, "int")) {
 		const char *arg = argv[2] ? argv[2] : "1";
 		int diff = atoi(arg);
-		int *opt = toggle->opt;
+		int *opt = toggle->value;
 
 		if (!diff)
 			diff = *arg == '-' ? -1 : 1;
@@ -613,7 +608,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 
 	} else if (!strcmp(toggle->type, "double")) {
 		const char *arg = argv[2] ? argv[2] : "1.0";
-		double *opt = toggle->opt;
+		double *opt = toggle->value;
 		int sign = 1;
 		double diff;
 
@@ -629,7 +624,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 		return success("set %s = %.2f", name, *opt);
 
 	} else if (!strcmp(toggle->type, "const char **")) {
-		const char ***opt = toggle->opt;
+		const char ***opt = toggle->value;
 		bool found = TRUE;
 		int i;
 
@@ -671,42 +666,15 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 	}
 }
 
-static struct prompt_toggle *
-find_prompt_toggle(struct prompt_toggle toggles[], size_t toggles_size,
-		   const char *prefix, const char *name, size_t namelen)
-{
-	char prefixed[SIZEOF_STR];
-	int i;
-
-	if (*prefix && namelen == strlen(prefix) &&
-	    !string_enum_compare(prefix, name, namelen)) {
-		name = "display";
-		namelen = strlen(name);
-	}
-
-	for (i = 0; i < toggles_size; i++) {
-		struct prompt_toggle *toggle = &toggles[i];
-
-		if (namelen == strlen(toggle->name) &&
-		    !string_enum_compare(toggle->name, name, namelen))
-			return toggle;
-
-		if (enum_name_prefixed(prefixed, sizeof(prefixed), prefix, toggle->name) &&
-		    namelen == strlen(prefixed) &&
-		    !string_enum_compare(prefixed, name, namelen))
-			return toggle;
-	}
-
-	return NULL;
-}
-
 static enum status_code
 prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 {
 	const char *option = argv[1];
 	size_t optionlen = option ? strlen(option) : 0;
-	struct prompt_toggle *toggle;
+	struct option_info template;
+	struct option_info *toggle;
 	struct view_column *column;
+	const char *column_name;
 
 	if (!option)
 		return error("%s", "No option name given to :toggle");
@@ -726,27 +694,14 @@ prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 		}
 	}
 
-	toggle = find_prompt_toggle(option_toggles, ARRAY_SIZE(option_toggles),
-				    "", option, optionlen);
+	toggle = find_option_info(option_toggles, ARRAY_SIZE(option_toggles), "", option);
 	if (toggle)
 		return prompt_toggle_option(view, argv, "", toggle, flags);
 
-#define DEFINE_COLUMN_OPTIONS_TOGGLE(name, type, flags) \
-	{ #name, #type, flags, &opt->name },
-
-#define DEFINE_COLUMN_OPTIONS_CHECK(name, id, options) \
-	if (column->type == VIEW_COLUMN_##id) { \
-		struct name##_options *opt = &column->opt.name; \
-		struct prompt_toggle toggles[] = { \
-			options(DEFINE_COLUMN_OPTIONS_TOGGLE) \
-		}; \
-		toggle = find_prompt_toggle(toggles, ARRAY_SIZE(toggles), #name, option, optionlen); \
-		if (toggle) \
-			return prompt_toggle_option(view, argv, #name, toggle, flags); \
-	}
-
 	for (column = view->columns; column; column = column->next) {
-		COLUMN_OPTIONS(DEFINE_COLUMN_OPTIONS_CHECK);
+		toggle = find_column_option_info(column->type, &column->opt, option, &template, &column_name);
+		if (toggle)
+			return prompt_toggle_option(view, argv, column_name, toggle, flags);
 	}
 
 	return error("`:toggle %s` not supported", option);
@@ -801,7 +756,7 @@ run_prompt_command(struct view *view, const char *argv[])
 		}
 
 		for (lineno = 0; lineno < view->lines; lineno++) {
-			struct view_column_data column_data = {};
+			struct view_column_data column_data = {0};
 			struct line *line = &view->line[lineno];
 
 			if (view->ops->get_column_data(view, line, &column_data) &&
@@ -860,6 +815,25 @@ run_prompt_command(struct view *view, const char *argv[])
 		else
 			report("Saved screen to %s", path);
 
+	} else if (!strcmp(cmd, "save-options")) {
+		const char *path = argv[1] ? argv[1] : "tig-options.txt";
+		enum status_code code = save_options(path);
+
+		if (code != SUCCESS)
+			report("Failed to save options: %s", get_status_message(code));
+		else
+			report("Saved options to %s", path);
+
+	} else if (!strcmp(cmd, "exec")) {
+		struct run_request req = { view->keymap, {0}, argv + 1 };
+		enum status_code code = parse_run_request_flags(&req.flags, argv + 1);
+
+		if (code != SUCCESS) {
+			report("Failed to execute command: %s", get_status_message(code));
+		} else {
+			return exec_run_request(view, &req);
+		}
+
 	} else if (!strcmp(cmd, "toggle")) {
 		enum view_flag flags = VIEW_NO_FLAGS;
 		enum status_code code = prompt_toggle(view, argv, &flags);
@@ -876,14 +850,14 @@ run_prompt_command(struct view *view, const char *argv[])
 			report("%s", action);
 
 	} else if (!strcmp(cmd, "script")) {
-		if (is_script_executing()) {
-			report("Scripts cannot be run from scripts");
-		} else if (!open_script(argv[1])) {
-			report("Failed to open %s", argv[1]);
-		}
+		enum status_code code = open_script(argv[1]);
+
+		if (code != SUCCESS)
+			report("%s", get_status_message(code));
+		return REQ_NONE;
 
 	} else {
-		struct key key = {};
+		struct key key = {{0}};
 		enum status_code code;
 		enum view_flag flags = VIEW_NO_FLAGS;
 
@@ -906,10 +880,10 @@ run_prompt_command(struct view *view, const char *argv[])
 		}
 
 		if (!strcmp(cmd, "set")) {
-			struct prompt_toggle *toggle;
+			struct option_info *toggle;
 
-			toggle = find_prompt_toggle(option_toggles, ARRAY_SIZE(option_toggles),
-						    "", argv[1], strlen(argv[1]));
+			toggle = find_option_info(option_toggles, ARRAY_SIZE(option_toggles),
+						  "", argv[1]);
 
 			if (toggle)
 				flags = toggle->flags;
@@ -928,6 +902,64 @@ run_prompt_command(struct view *view, const char *argv[])
 
 	}
 	return REQ_NONE;
+}
+
+enum request
+exec_run_request(struct view *view, struct run_request *req)
+{
+	const char **argv = NULL;
+	bool confirmed = FALSE;
+	enum request request = REQ_NONE;
+	char cmd[SIZEOF_STR];
+	const char *req_argv[SIZEOF_ARG];
+	int req_argc = 0;
+
+	if (!argv_to_string(req->argv, cmd, sizeof(cmd), " ")
+	    || !argv_from_string_no_quotes(req_argv, &req_argc, cmd)
+	    || !argv_format(view->env, &argv, req_argv, FALSE, TRUE)) {
+		report("Failed to format arguments");
+		return REQ_NONE;
+	}
+
+	if (req->flags.internal) {
+		request = run_prompt_command(view, argv);
+
+	} else {
+		confirmed = !req->flags.confirm;
+
+		if (req->flags.confirm) {
+			char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
+			const char *and_exit = req->flags.exit ? " and exit" : "";
+
+			if (argv_to_string_quoted(argv, cmd, sizeof(cmd), " ") &&
+			    string_format(prompt, "Run `%s`%s?", cmd, and_exit) &&
+			    prompt_yesno(prompt)) {
+				confirmed = TRUE;
+			}
+		}
+
+		if (confirmed)
+			open_external_viewer(argv, NULL, req->flags.silent,
+					     !req->flags.exit, FALSE, "");
+	}
+
+	if (argv)
+		argv_free(argv);
+	free(argv);
+
+	if (request == REQ_NONE) {
+		if (req->flags.confirm && !confirmed)
+			request = REQ_NONE;
+
+		else if (req->flags.exit)
+			request = REQ_QUIT;
+
+		else if (!req->flags.internal && watch_dirty(&view->watch))
+			request = REQ_REFRESH;
+
+	}
+
+	return request;
 }
 
 enum request

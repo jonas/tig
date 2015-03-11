@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -177,13 +177,14 @@ struct view_column_data {
 	const struct time *date;
 	const char *file_name;
 	const unsigned long *file_size;
-	const struct graph_canvas *graph;
+	const struct graph *graph;
+	const struct graph_canvas *graph_canvas;
 	const char *id;
 	const unsigned long *line_number;
 	const mode_t *mode;
 	const struct ref *ref;
 	const char *reflog;
-	const struct ref_list *refs;
+	const struct ref *refs;
 	const char *status;
 	const char *text;
 };
@@ -291,6 +292,7 @@ void open_argv(struct view *prev, struct view *view, const char *argv[], const c
  */
 
 #define get_sort_field(view) ((view)->sort.current->type)
+void resort_view(struct view *view, bool renumber);
 void sort_view(struct view *view, bool change_field);
 
 struct view_column *get_view_column(struct view *view, enum view_column_type type);
@@ -298,7 +300,9 @@ bool view_column_grep(struct view *view, struct line *line);
 bool view_column_info_changed(struct view *view, bool update);
 void view_column_reset(struct view *view);
 bool view_column_info_update(struct view *view, struct line *line);
-enum status_code parse_view_config(const char *view_name, const char *argv[]);
+enum status_code parse_view_config(struct view_column **column, const char *view_name, const char *argv[]);
+enum status_code parse_view_column_config(const char *view_name, enum view_column_type type, const char *option_name, const char *argv[]);
+enum status_code format_view_config(struct view_column *column, char buf[], size_t bufsize);
 
 struct line *
 find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction);
@@ -351,6 +355,7 @@ struct line *add_line_alloc_(struct view *view, void **ptr, enum line_type type,
 struct line *add_line_nodata(struct view *view, enum line_type type);
 struct line *add_line_text(struct view *view, const char *text, enum line_type type);
 struct line * PRINTF_LIKE(3, 4) add_line_format(struct view *view, enum line_type type, const char *fmt, ...);
+bool append_line_format(struct view *view, struct line *line, const char *fmt, ...);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

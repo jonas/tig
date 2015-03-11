@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -51,8 +51,7 @@ bool open_external_viewer(const char *argv[], const char *dir, bool silent, bool
 void open_editor(const char *file, unsigned int lineno);
 void enable_mouse(bool enable);
 
-bool open_script(const char *path);
-bool is_script_executing(void);
+enum status_code open_script(const char *path);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

@@ -10,13 +10,19 @@ change() {
 	git_commit --message="Change: $@"
 }
 
-git checkout -b conflict-master
 change "a"
-
-git checkout -b conflict-branch
 change "b"
+
+git branch conflict-master
+git branch conflict-branch
 
 git checkout conflict-master
 change "c"
+change "c'"
 
-git merge conflict-branch
+git checkout conflict-branch
+change "d"
+change "d'"
+
+git checkout conflict-master
+git merge conflict-branch || true

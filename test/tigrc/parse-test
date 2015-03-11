@@ -38,6 +38,13 @@ set main-view = \\
 	line-number \\
 	commit-title		# Multi-line option
 
+set main_view_line_number_visibility = yes
+
+bind generic " edit
+bind generic ' options
+bind generic " @sh -c "echo %(commit) | pbcopy"
+bind generic ' !sh -c 'git | tig'
+
 bind generic : prompt		# Must have prompt mapping
 bind generic ø view-tree	# Binding to UTF-8 keys
 bind main <Hash> :/s e a r c h	# Toggle option
@@ -62,7 +69,7 @@ steps "
 
 TIGRC_SYSTEM="should-not-be-loaded"
 
-test_tig
+test_tig status
 
 assert_equals stderr <<EOF
 tig warning: ~/.tigrc:1: Unknown option command: s
@@ -88,7 +95,12 @@ tig warning: ~/.tigrc:22: Unknown color: bold
 tig warning: ~/.tigrc:23: Unknown color: dark
 tig warning: ~/.tigrc:24: Unknown color: dark
 tig warning: ~/.tigrc:25: Unknown color attribute: normally
-tig warning: ~/.tigrc:49: Unknown option command: c
+tig warning: ~/.tigrc:34: Unknown option \`visibility' for column line-number
+tig warning: ~/.tigrc:36: Invalid key binding: bind keymap key action
+tig warning: ~/.tigrc:37: Invalid key binding: bind keymap key action
+tig warning: ~/.tigrc:38: Except for <Esc> combos only one key is allowed in key combos: " @sh -c "echo
+tig warning: ~/.tigrc:39: Except for <Esc> combos only one key is allowed in key combos: ' !sh -c 'git
+tig warning: ~/.tigrc:56: Unknown option command: c
 tig warning: Errors while loading HOME/.tigrc.
 EOF
 

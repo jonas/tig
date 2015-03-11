@@ -16,9 +16,9 @@
 #					: Show author information?
 #   commit-title
 #    - display (bool)			: Show the commit title?
-#    - graph (bool)			: Show the commit revision graph? (main view only)
+#    - graph (enum) [no|v2|v1]		: Show the commit graph? (main view only)
 #    - refs (bool)			: Show branches, tags and remotes? (main view only)
-#    - overflow (boolint)		: Highlight overflows? Default to 50 when enabled.
+#    - overflow (boolint)		: Highlight overflows? Defaults to 50 when enabled.
 #
 #   date
 #    - display (enum) [no|default|local|relative|short]
@@ -34,7 +34,7 @@
 #
 #   line-number
 #    - display (bool)			: Show line numbers?
-#    - interval (int)			: Interval between line numbers
+#    - interval (int)			: Interval between line numbers; defaults to 5
 #
 #   mode
 #    - display (bool)			: Show file modes?
@@ -53,7 +53,7 @@
 set blame-view	= date:default author:full file-name:auto id:yes,color line-number:no,interval=5 text
 set grep-view	= file-name:no line-number:yes,interval=1 text
 set main-view	= line-number:no,interval=5 id:no date:default author:full commit-title:yes,graph,refs,overflow=no
-set refs-view	= date:default author:full ref commit-title
+set refs-view	= line-number:no id:no date:default author:full ref commit-title
 set stash-view	= line-number:no,interval=5 id:no date:default author:full commit-title
 set status-view	= line-number:no,interval=5 status:short file-name
 set tree-view	= line-number:no,interval=5 mode author:full file-size date:default id:no file-name
@@ -86,13 +86,15 @@ set line-graphics		= default	# Enum: ascii, default, utf-8
 set reference-format		= [branch] <tag> {remote} ~replace~
 
 # Settings controlling how content is read from Git
-set commit-order		= default	# Enum: default, topo, date, reverse (main)
+set commit-order		= auto		# Enum: auto, default, topo, date, reverse (main)
 set status-untracked-dirs	= yes		# Show files in untracked directories? (status)
 set ignore-space		= no		# Enum: no, all, some, at-eol (diff)
 set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set diff-context		= 3		# Number of lines to show around diff changes (diff)
-#set diff-options		= -C		# User-defined options for `tig show` (diff)
-#set blame-options		= -C -C -C	# User-defined options for `tig blame` (blame)
+#set diff-options		= -C		# User-defined options for `tig show` (git-diff)
+#set blame-options		= -C -C -C	# User-defined options for `tig blame` (git-blame)
+#set log-options		= --pretty=raw	# User-defined options for `tig log` (git-log)
+#set main-options		= -n 1000	# User-defined options for `tig` (git-log)
 
 # Misc
 set refresh-mode		= auto		# Enum: manual, auto, after-command, periodic
@@ -206,8 +208,10 @@ bind main	G	:toggle commit-title-graph # Toggle revision graph visualization
 bind main	F	:toggle commit-title-refs  # Toggle reference display (tags/branches)
 
 # Cursor navigation
-bind generic	k	move-up
 bind generic	j	move-down
+bind generic	k	move-up
+#bind generic	?	move-half-page-down
+#bind generic	?	move-half-page-up
 bind generic	<PgDown> move-page-down
 bind generic	<C-D>	move-page-down
 bind generic	<Space>	move-page-down
@@ -284,6 +288,8 @@ bind generic	v	show-version		# Show Tig version
 # Git automatically indents commit messages by four spaces.
 
 color "diff --"			yellow	default
+color "--- "			yellow	default
+color "+++ "			yellow	default
 color "@@"			magenta	default
 color "+"			green	default
 color " +"			green	default

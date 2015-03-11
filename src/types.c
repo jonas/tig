@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -23,8 +23,6 @@ string_enum_compare(const char *str1, const char *str2, int len)
 {
 	size_t i;
 
-#define string_enum_sep(x) ((x) == '-' || (x) == '_')
-
 	/* Diff-Header == DIFF_HEADER */
 	for (i = 0; i < len; i++) {
 		if (ascii_toupper(str1[i]) == ascii_toupper(str2[i]))
@@ -41,13 +39,13 @@ string_enum_compare(const char *str1, const char *str2, int len)
 }
 
 bool
-enum_name_copy(char *buf, size_t bufsize, const char *name)
+enum_name_copy(char buf[], size_t bufsize, const char *name)
 {
 	int bufpos;
 
 	for (bufpos = 0; name[bufpos] && bufpos < bufsize - 1; bufpos++) {
 		buf[bufpos] = ascii_tolower(name[bufpos]);
-		if (buf[bufpos] == '_')
+		if (string_enum_sep(buf[bufpos]))
 			buf[bufpos] = '-';
 	}
 
@@ -111,6 +109,6 @@ map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, const
 }
 
 #define DEFINE_ENUM_MAPS(name, macro) DEFINE_ENUM_MAP(name, macro);
-ENUM_INFO(DEFINE_ENUM_MAPS);
+ENUM_INFO(DEFINE_ENUM_MAPS)
 
 /* vim: set ts=8 sw=8 noexpandtab: */

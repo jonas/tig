@@ -1,0 +1,25 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=5
+expected_status_code=1
+
+steps '
+	:save-display tig-did-not-exit-as-expected
+'
+
+in_work_dir create_dirty_workdir
+
+export GIT_AUTHOR_DATE="$(expr $author_date + $author_date_delta)"
+export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
+
+
+test_tig some-ref-that-does-not-exist
+
+assert_equals stderr <<EOF
+tig: No revisions match the given arguments.
+EOF
+
+assert_not_exists 'tig-did-not-exit-as-expected'

@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -27,7 +27,7 @@ struct commit {
 };
 
 struct main_state {
-	struct graph graph;
+	struct graph *graph;
 	struct commit current;
 	char **reflog;
 	size_t reflogs;
@@ -35,7 +35,9 @@ struct main_state {
 	char reflogmsg[SIZEOF_STR / 2];
 	bool in_header;
 	bool with_graph;
-	bool add_changes_parents;
+	bool first_parent;
+	bool add_changes_staged;
+	bool add_changes_unstaged;
 };
 
 bool main_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data);

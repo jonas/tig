@@ -11,11 +11,10 @@ set main-view	= line-number:no id:no date:no author:no commit-title:yes,graph=no
 EOF
 
 steps '
-	:view-main
 	:save-display main-commit-titles.screen
 '
 
-prepare_repo()
+test_setup_work_dir()
 {
 	offset=0
 	prefix0=
@@ -56,8 +55,6 @@ prepare_repo()
 }
 
 git_init
-in_work_dir prepare_repo
-
 test_tig
 
 assert_equals 'main-commit-titles.screen' <<EOF

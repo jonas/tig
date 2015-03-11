@@ -11,8 +11,8 @@ git_clone 'repo-one'
 test_tig_script() {
 	name="$1"; shift
 
-	tig_script "$name.script" "$@"
-	(cd "$work_dir" && tig) >"$name.stdout" 2>"$name.stderr"
+	tig_script "$name" "$@"
+	test_tig
 
 	assert_equals "$name.stderr" <<EOF
 EOF
