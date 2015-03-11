@@ -257,13 +257,14 @@ The following variables can be set:
 	passing "--ignore-all-space", "--ignore-space" or
 	"--ignore-space-at-eol" respectively to `git diff` or `git show`.
 
-'commit-order' (mixed) [default|topo|date|author-date|reverse|<bool>]::
+'commit-order' (enum) [auto|default|topo|date|author-date|reverse]::
 
 	Commit ordering using the default (chronological reverse) order,
-	topological order, date order or reverse order. The default order is
-	used when the option is set to false, and topo order when set to true.
-	Note that topological order is automatically used in the main view when
-	the commit graph is enabled and the commit order is set to the default.
+	topological order, date order or reverse order. When set to "auto"
+	(which is the default), topological order is automatically used in the
+	main view when the commit graph is enabled. In repositories with a long
+	commit history it is advised to set this option to "default" to speed up
+	loading of the main view.
 
 'ignore-case' (bool)::
 
@@ -369,8 +370,8 @@ set pager-view = line-number:yes,interval=10 text
 # Shorthands to change view settings for a previously defined column
 set main-view-date = short
 set blame-view-line-number = no
-# Do not automatically use topo-order for the commit graph
-set main-view-commit-title-graph = no-topo
+# Use Git's default commit order, even when the commit graph is enabled.
+set commit-order = default
 --------------------------------------------------------------------------
 
 The following list shows which the available view settings and what column types
@@ -397,11 +398,10 @@ author::
 	  When set to zero, the width is automatically sized to fit the content.
 
 commit-title::
-	- 'graph' (mixed) [no|v2|v1|no-topo]: Whether to show the revision graph
-	  in the main view on start-up. If set to "no-topo" topo-order is not
-	  automatically enabled. "v1" refers to the old graph rendering, which
-	  is less accurate but faster and thus recommended in large repositories.
-	  See also the 'line-graphics' options.
+	- 'graph' (mixed) [no|v2|v1]: Whether to show the revision graph in the
+	  main view on start-up. "v1" refers to the old graph rendering, which
+	  is less accurate but faster and thus recommended in large
+	  repositories.  See also the 'line-graphics' options.
 	- 'refs' (bool): Whether to show references (branches, tags, and
 	  remotes) in the main view. Can be toggled.
 	- 'overflow' (bool or int): Whether to highlight text in commit titles

@@ -11,8 +11,6 @@ Improvements:
  - Add move-half-page-up and move-half-page-down actions. (GH #323)
  - Preserve the cursor position when changing the diff context. 
  - Show 'Unstaged changes' above 'Staged changes' in the main view. (GH #383)
- - Add option to turn off automatic enabling of `--topo-order` when the graph is
-   shown in the main view. (GH #310)
  - Add `:exec <flags><args...>` prompt command to execute commands.
  - Add shorthand for changing the view settings of a single column,
    eg. `set main-view-author = short`. (GH #318)
@@ -20,6 +18,9 @@ Improvements:
  - Add `%(lineno)` state variable. (GH #304)
  - Use hash table to speed up refs lookup. (GH #350)
  - Show the file path in the blob view when available.
+ - Use `set commit-order = default` to use Git's default commit order, even when
+   the commit graph is enabled. The option will turn off automatic enabling of
+   `--topo-order` when the graph is shown in the main view. (GH #310, #324)
  - Speed up the diff view in large repos by loading git-describe info after the
    diff content has been read. (GH #324)
  - Add the old graph rendering as an option. (GH #310, #324)

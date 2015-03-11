@@ -161,6 +161,7 @@ ignore_space_arg()
 }
 
 static const struct enum_map_entry commit_order_arg_map[] = {
+	ENUM_ARG(COMMIT_ORDER_AUTO,		""),
 	ENUM_ARG(COMMIT_ORDER_DEFAULT,		""),
 	ENUM_ARG(COMMIT_ORDER_TOPO,		"--topo-order"),
 	ENUM_ARG(COMMIT_ORDER_DATE,		"--date-order"),
@@ -179,11 +180,8 @@ commit_order_arg_with_graph(enum graph_display graph_display)
 {
 	enum commit_order commit_order = opt_commit_order;
 
-	if ((graph_display == GRAPH_DISPLAY_V1 ||
-	     graph_display == GRAPH_DISPLAY_V2) &&
-	    commit_order != COMMIT_ORDER_TOPO &&
-	    commit_order != COMMIT_ORDER_DATE &&
-	    commit_order != COMMIT_ORDER_AUTHOR_DATE)
+	if (commit_order == COMMIT_ORDER_AUTO &&
+	    graph_display != GRAPH_DISPLAY_NO)
 		commit_order = COMMIT_ORDER_TOPO;
 
 	return commit_order_arg_map[commit_order].name;
