@@ -32,7 +32,7 @@ prompt_input(const char *prompt, struct input *input)
 	unsigned char chars_length[SIZEOF_STR];
 	struct key key;
 	size_t promptlen = strlen(prompt);
-	int pos = 0, chars = 0;
+	int pos = -1, chars = 0;
 
 	input->buf[pos] = 0;
 
@@ -41,6 +41,8 @@ prompt_input(const char *prompt, struct input *input)
 
 		if (offset >= 0)
 			update_status("%s%.*s", prompt, pos, input->buf);
+		if (pos == -1)
+			pos = 0;
 
 		if (get_input(offset, &key) == OK) {
 			int len = strlen(key.data.bytes);
