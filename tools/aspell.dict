@@ -1,8 +1,9 @@
-personal_ws-1.1 en 235 
+personal_ws-1.1 en 241 
 CJK
 del
 Ctrl
 refspec
+Shorthands
 Gedit
 cmd
 dev
@@ -25,6 +26,7 @@ AsciiDoc
 unstanged
 revgraph
 revargs
+configs
 topo
 toc
 tmp
@@ -89,6 +91,7 @@ iconv
 sysconfdir
 Scrool
 ELinks
+runtime
 unidiff
 subdir
 Debian
@@ -96,6 +99,7 @@ gui
 bindir
 tigmanual
 PgUp
+SunStudio
 wrt
 libiconv
 unicode
@@ -179,6 +183,7 @@ fileargs
 UI
 CommitDate
 wclear
+Homebrew
 chunked
 BUILTIN
 drwxr
@@ -187,8 +192,8 @@ Baudis
 substring
 PID
 tz
-DocBook
 docbook
+DocBook
 submodule
 strndup
 startup
@@ -207,6 +212,7 @@ Yy
 fgcolor
 localtime
 filename
+AIX
 pbcopy
 lncursesw
 Geany
