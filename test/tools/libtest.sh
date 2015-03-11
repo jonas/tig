@@ -324,7 +324,11 @@ test_tig()
 	fi
 	if [ -n "$trace" ]; then
 		export TIG_TRACE="$HOME/.tig-trace"
-		sed "s#^#[$name] #" < "$HOME/${prefix}tig-trace" >> "$HOME/.tig-trace"
+		if [ -n "$name" ]; then
+			sed "s#^#[$name] #" < "$HOME/${prefix}tig-trace" >> "$HOME/.tig-trace"
+		else
+			mv "$HOME/${prefix}tig-trace" "$HOME/.tig-trace"
+		fi
 	fi
 	if [ -n "$prefix" ]; then
 		sed "s#^#[$name] #" < "${prefix}stderr" >> "stderr"
