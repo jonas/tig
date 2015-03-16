@@ -605,14 +605,13 @@ key_combo_handler(struct input *input, struct key *key)
 	int matches = 0;
 
 #ifdef NCURSES_MOUSE_VERSION
-	if (!key->modifiers.multibytes && key->data.value == KEY_MOUSE) {
+	if (key_to_value(key) == KEY_MOUSE) {
 		combo->request = handle_mouse_event();
 		return INPUT_STOP;
 	}
 #endif
 
-	if (!key->modifiers.multibytes && combo->keys &&
-	    key->data.value == KEY_ESC)
+	if (combo->keys && key_to_value(key) == KEY_ESC)
 		return INPUT_CANCEL;
 
 	string_format_from(input->buf, &combo->bufpos, "%s%s",

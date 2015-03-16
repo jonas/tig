@@ -42,6 +42,12 @@ struct key {
 	} modifiers;
 };
 
+static inline int
+key_to_value(const struct key *key)
+{
+	return key->modifiers.multibytes ? 0 : key->data.value;
+}
+
 static inline unsigned long
 key_to_unicode(const struct key *key)
 {

@@ -100,10 +100,7 @@ prompt_input(const char *prompt, struct input *input)
 static enum input_status
 prompt_default_handler(struct input *input, struct key *key)
 {
-	if (key->modifiers.multibytes)
-		return INPUT_SKIP;
-
-	switch (key->data.value) {
+	switch (key_to_value(key)) {
 	case KEY_RETURN:
 	case KEY_ENTER:
 	case '\n':
