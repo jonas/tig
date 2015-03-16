@@ -10,6 +10,10 @@ Improvements:
  - See `contrib/vim.tigrc` for Vim-like keybindings. (GH #273, #351)
  - Add GitHub inspired file finder to search for and open any file. (GH #342)
 
+Bug fixes:
+
+ - Fix display of multiple references per commit. (GH #390, #391)
+
 tig-2.1
 -------
 
