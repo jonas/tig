@@ -42,6 +42,7 @@ struct input {
 	char buf[SIZEOF_STR];
 };
 
+enum input_status prompt_default_handler(struct input *input, struct key *key);
 char *read_prompt_incremental(const char *prompt, bool edit_mode, input_handler handler, void *data);
 char *read_prompt(const char *prompt);
 void prompt_init(void);

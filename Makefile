@@ -264,6 +264,7 @@ TIG_OBJS = \
 	src/main.o \
 	src/stash.o \
 	src/grep.o \
+	src/ui.o \
 	$(GRAPH_OBJS) \
 	$(COMPAT_OBJS)
 

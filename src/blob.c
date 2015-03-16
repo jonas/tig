@@ -13,16 +13,40 @@
 
 #include "tig/refdb.h"
 #include "tig/parse.h"
+#include "tig/repo.h"
 #include "tig/display.h"
 #include "tig/draw.h"
-#include "tig/log.h"
+#include "tig/ui.h"
 #include "tig/pager.h"
 #include "tig/tree.h"
+#include "tig/blob.h"
 
 struct blob_state {
 	char commit[SIZEOF_REF];
 	const char *file;
 };
+
+void
+open_blob_view(struct view *prev, enum open_flags flags)
+{
+	struct view *view = &blob_view;
+	bool in_blob_view = prev == view;
+	bool has_blob_selection = view->env->blob[0] || view->env->file[0];
+
+	if (!in_blob_view && (view->lines || has_blob_selection)) {
+		open_view(prev, view, flags);
+
+	} else {
+		const char *file = open_file_finder(view->env->commit);
+
+		if (file) {
+			clear_position(&view->pos);
+			string_ncopy(view->env->file, file, strlen(file));
+			view->env->blob[0] = 0;
+			open_view(prev, view, OPEN_RELOAD);
+		}
+	}
+}
 
 static bool
 blob_open(struct view *view, enum open_flags flags)
@@ -39,7 +63,8 @@ blob_open(struct view *view, enum open_flags flags)
 	}
 
 	if (!state->file && !view->env->blob[0] && view->env->file[0]) {
-		const char *commit = view->env->commit[0] ? view->env->commit : "HEAD";
+		const char *commit = view->env->commit[0] && !string_rev_is_null(view->env->commit)
+				   ? view->env->commit : "HEAD";
 		char blob_spec[SIZEOF_STR];
 		const char *rev_parse_argv[] = {
 			"git", "rev-parse", blob_spec, NULL

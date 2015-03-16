@@ -97,7 +97,7 @@ prompt_input(const char *prompt, struct input *input)
 	return input->buf;
 }
 
-static enum input_status
+enum input_status
 prompt_default_handler(struct input *input, struct key *key)
 {
 	switch (key_to_value(key)) {
