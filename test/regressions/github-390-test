@@ -10,7 +10,7 @@ export COLUMNS=90
 
 steps '
 	:save-display initial.screen
-	:exec !git tag Marke
+	:exec @git tag Marke
 	:save-display tagged.screen
 '
 
@@ -36,6 +36,6 @@ assert_equals 'initial.screen' <<EOF
 EOF
 
 assert_equals 'tagged.screen' <<EOF
-2009-02-13 23:31 Committer I [master] {origin/master} {origin/HEAD} <Marke> committed                                                                                                
-[main] 6b55d08be93000f4bdf67f74177ab14f590910d4 - commit 1 of 1                       100%                                                                                           
+2009-02-13 23:31 Committer I [master] {origin/master} {origin/HEAD} <Marke> committed     
+[main] 6b55d08be93000f4bdf67f74177ab14f590910d4 - commit 1 of 1                       100%
 EOF
