@@ -137,19 +137,19 @@ add_ref_to_id_map(struct ref *ref)
 		ref->next = NULL;
 	}
 
-	ref->next = *ref_lists_slot;
-	*ref_lists_slot = ref;
+	if (*ref_lists_slot == NULL || ref_compare(ref, *ref_lists_slot) <= 0) {
+		ref->next = *ref_lists_slot;
+		*ref_lists_slot = ref;
+	}
+	else {
+		struct ref *refs;
+		for (refs = *ref_lists_slot; refs->next; refs = refs->next) {
+			if (ref_compare(ref, refs->next) <= 0)
+				break;
+		}
 
-	while (ref->next) {
-		struct ref *head = ref->next;
-
-		if (head == ref || ref_compare(ref, head) <= 0)
-			break;
-
-		if (*ref_lists_slot == ref)
-			*ref_lists_slot = head;
-		ref->next = head->next;
-		head->next = ref;
+		ref->next = refs->next;
+		refs->next = ref;
 	}
 
 	return OK;
