@@ -294,6 +294,7 @@ bool
 save_display(const char *path)
 {
 	int i, width;
+	size_t linelen;
 	char *line;
 	FILE *file = fopen(path, "w");
 	bool ok = TRUE;
@@ -303,7 +304,8 @@ save_display(const char *path)
 		return FALSE;
 
 	getmaxyx(stdscr, i, width);
-	line = malloc(width + 1);
+	linelen = width * 4;
+	line = malloc(linelen + 1);
 	if (!line) {
 		fclose(file);
 		return FALSE;
@@ -314,17 +316,17 @@ save_display(const char *path)
 			    *right = display[1];
 
 		for (i = 0; ok && i < left->height; i++)
-			ok = save_window_vline(file, left->win, right->win, i, line, width);
+			ok = save_window_vline(file, left->win, right->win, i, line, linelen);
 		if (ok)
-			ok = save_window_vline(file, left->title, right->title, 0, line, width);
+			ok = save_window_vline(file, left->title, right->title, 0, line, linelen);
 	} else {
 		int j;
 
 		foreach_displayed_view (view, j) {
 			for (i = 0; ok && i < view->height; i++)
-				ok = save_window_line(file, view->win, i, line, width);
+				ok = save_window_line(file, view->win, i, line, linelen);
 			if (ok)
-				ok = save_window_line(file, view->title, 0, line, width);
+				ok = save_window_line(file, view->title, 0, line, linelen);
 		}
 	}
 

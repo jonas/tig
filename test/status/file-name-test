@@ -111,11 +111,11 @@ A a                                                         |
 Changed but not updated:                                    |                                                           
   (no files)                                                |                                                           
 Untracked files:                                            |                                                           
-? as测试asd                                                 |                                                         
-? øå                                                        |                                                         
-? 可愛いコー特集                                            |                                                    
+? as测试asd                                                 |                                                           
+? øå                                                        |                                                           
+? 可愛いコー特集                                            |                                                           
                                                             |                                                           
                                                             |                                                           
                                                             |                                                           
-[status] Press u to stage 'øå' for addition             100%|[stage] Untracked file øå                              
+[status] Press u to stage 'øå' for addition             100%|[stage] Untracked file øå                                0%
 EOF
