@@ -49,6 +49,37 @@ find_matches(struct view *view)
 	return true;
 }
 
+static void
+setup_and_find_next(struct view *view, enum request request)
+{
+	int regex_err;
+	int regex_flags = opt_ignore_case ? REG_ICASE : 0;
+
+	if (view->regex) {
+		regfree(view->regex);
+		*view->grep = 0;
+	} else {
+		view->regex = calloc(1, sizeof(*view->regex));
+		if (!view->regex)
+			return;
+	}
+
+	regex_err = regcomp(view->regex, view->env->search, REG_EXTENDED | regex_flags);
+	if (regex_err != 0) {
+		char buf[SIZEOF_STR] = "unknown error";
+
+		regerror(regex_err, view->regex, buf, sizeof(buf));
+		report("Search failed: %s", buf);
+		return;
+	}
+
+	string_copy(view->grep, view->env->search);
+
+	reset_search(view);
+
+	find_next(view, request);
+}
+
 void
 find_next(struct view *view, enum request request)
 {
@@ -59,7 +90,7 @@ find_next(struct view *view, enum request request)
 		if (!*view->env->search)
 			report("No previous search");
 		else
-			search_view(view, request);
+			setup_and_find_next(view, request);
 		return;
 	}
 
@@ -114,32 +145,7 @@ reset_search(struct view *view)
 void
 search_view(struct view *view, enum request request)
 {
-	int regex_err;
-	int regex_flags = opt_ignore_case ? REG_ICASE : 0;
-
-	if (view->regex) {
-		regfree(view->regex);
-		*view->grep = 0;
-	} else {
-		view->regex = calloc(1, sizeof(*view->regex));
-		if (!view->regex)
-			return;
-	}
-
-	regex_err = regcomp(view->regex, view->env->search, REG_EXTENDED | regex_flags);
-	if (regex_err != 0) {
-		char buf[SIZEOF_STR] = "unknown error";
-
-		regerror(regex_err, view->regex, buf, sizeof(buf));
-		report("Search failed: %s", buf);
-		return;
-	}
-
-	string_copy(view->grep, view->env->search);
-
-	reset_search(view);
-
-	find_next(view, request);
+	setup_and_find_next(view, request);
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */
