@@ -789,7 +789,7 @@ run_prompt_command(struct view *view, const char *argv[])
 			return cmd[0] == '/' ? REQ_FIND_NEXT : REQ_FIND_PREV;
 
 		string_ncopy(view->env->search, search + 1, strlen(search + 1));
-		return cmd[0] == '/' ? REQ_SEARCH : REQ_SEARCH_BACK;
+		return cmd[0] == '/' ? REQ_FIND_NEXT : REQ_FIND_PREV;
 
 	} else if (cmdlen > 1 && cmd[0] == '!') {
 		struct view *next = &pager_view;

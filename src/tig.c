@@ -705,22 +705,6 @@ main(int argc, const char *argv[])
 		case REQ_PROMPT:
 			request = open_prompt(view);
 			break;
-		case REQ_SEARCH:
-		case REQ_SEARCH_BACK:
-		{
-			const char *prompt = request == REQ_SEARCH ? "/" : "?";
-			char *search = read_prompt(prompt);
-
-			if (search)
-				string_ncopy(argv_env.search, search, strlen(search));
-			else if (*argv_env.search)
-				request = request == REQ_SEARCH ?
-					REQ_FIND_NEXT :
-					REQ_FIND_PREV;
-			else
-				request = REQ_NONE;
-			break;
-		}
 		default:
 			break;
 		}
