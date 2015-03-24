@@ -12,6 +12,7 @@
  */
 
 #include "tig/search.h"
+#include "tig/prompt.h"
 #include "tig/display.h"
 #include "tig/draw.h"
 
@@ -145,7 +146,17 @@ reset_search(struct view *view)
 void
 search_view(struct view *view, enum request request)
 {
-	setup_and_find_next(view, request);
+	const char *prompt = request == REQ_SEARCH ? "/" : "?";
+	char *search = read_prompt(prompt);
+
+	if (search) {
+		string_ncopy(argv_env.search, search, strlen(search));
+		setup_and_find_next(view, request);
+	} else if (*argv_env.search) {
+		find_next(view, request);
+	} else {
+		report_clear();
+	}
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */
