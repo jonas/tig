@@ -50,7 +50,9 @@ find_matches(struct view *view)
 	return true;
 }
 
-static void
+static enum status_code find_next_match(struct view *view, enum request request);
+
+static enum status_code
 setup_and_find_next(struct view *view, enum request request)
 {
 	int regex_err;
@@ -62,7 +64,7 @@ setup_and_find_next(struct view *view, enum request request)
 	} else {
 		view->regex = calloc(1, sizeof(*view->regex));
 		if (!view->regex)
-			return;
+			return ERROR_OUT_OF_MEMORY;
 	}
 
 	regex_err = regcomp(view->regex, view->env->search, REG_EXTENDED | regex_flags);
@@ -70,29 +72,26 @@ setup_and_find_next(struct view *view, enum request request)
 		char buf[SIZEOF_STR] = "unknown error";
 
 		regerror(regex_err, view->regex, buf, sizeof(buf));
-		report("Search failed: %s", buf);
-		return;
+		return error("Search failed: %s", buf);
 	}
 
 	string_copy(view->grep, view->env->search);
 
 	reset_search(view);
 
-	find_next(view, request);
+	return find_next_match(view, request);
 }
 
-void
-find_next(struct view *view, enum request request)
+static enum status_code
+find_next_match(struct view *view, enum request request)
 {
 	int direction;
 	size_t i;
 
 	if (!*view->grep) {
 		if (!*view->env->search)
-			report("No previous search");
-		else
-			setup_and_find_next(view, request);
-		return;
+			return success("No previous search");
+		return setup_and_find_next(view, request);
 	}
 
 	switch (request) {
@@ -107,13 +106,11 @@ find_next(struct view *view, enum request request)
 		break;
 
 	default:
-		return;
+		return error("Unknown search request");
 	}
 
-	if (!view->matched_lines && !find_matches(view)) {
-		report("Allocation failure");
-		return;
-	}
+	if (!view->matched_lines && !find_matches(view))
+		return ERROR_OUT_OF_MEMORY;
 
 	/* Note, `i` is unsigned and will wrap around in which case it
 	 * will become bigger than view->matched_lines. */
@@ -128,11 +125,18 @@ find_next(struct view *view, enum request request)
 			continue;
 
 		select_view_line(view, lineno);
-		report("Line %zu matches '%s' (%zu of %zu)", lineno + 1, view->grep, i + 1, view->matched_lines);
-		return;
+		return success("Line %zu matches '%s' (%zu of %zu)", lineno + 1, view->grep, i + 1, view->matched_lines);
 	}
 
-	report("No match found for '%s'", view->grep);
+	return success("No match found for '%s'", view->grep);
+}
+
+void
+find_next(struct view *view, enum request request)
+{
+	enum status_code code = find_next_match(view, request);
+
+	report("%s", get_status_message(code));
 }
 
 void
@@ -150,8 +154,11 @@ search_view(struct view *view, enum request request)
 	char *search = read_prompt(prompt);
 
 	if (search) {
+		enum status_code code;
+
 		string_ncopy(argv_env.search, search, strlen(search));
-		setup_and_find_next(view, request);
+		code = setup_and_find_next(view, request);
+		report("%s", get_status_message(code));
 	} else if (*argv_env.search) {
 		find_next(view, request);
 	} else {
