@@ -60,10 +60,10 @@ foreach_request(bool (*visitor)(void *data, const struct request_info *req_info,
 		}
 
 		if (!visitor(data, &req_info[i], group))
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

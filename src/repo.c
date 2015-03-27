@@ -43,7 +43,7 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 		 * understand --is-inside-work-tree it will simply echo
 		 * the option else either "true" or "false" is printed.
 		 * Default to true for the unknown case. */
-		repo.is_inside_work_tree = strcmp(name, "false") ? TRUE : FALSE;
+		repo.is_inside_work_tree = strcmp(name, "false") ? true : false;
 
 	} else if (!strcmp(arg, REPO_INFO_SHOW_CDUP)) {
 		string_ncopy(repo.cdup, name, namelen);
@@ -137,14 +137,14 @@ index_diff(struct index_diff *diff, bool untracked, bool count_all)
 	};
 	struct io io;
 	struct buffer buf;
-	bool ok = TRUE;
+	bool ok = true;
 
 	memset(diff, 0, sizeof(*diff));
 
 	if (!io_run(&io, IO_RD, repo.cdup, NULL, status_argv))
-		return FALSE;
+		return false;
 
-	while (io_get(&io, &buf, 0, TRUE) && (ok = buf.size > 3)) {
+	while (io_get(&io, &buf, 0, true) && (ok = buf.size > 3)) {
 		if (buf.data[0] == '?')
 			diff->untracked++;
 		/* Ignore staged but unmerged entries. */
@@ -158,7 +158,7 @@ index_diff(struct index_diff *diff, bool untracked, bool count_all)
 	}
 
 	if (io_error(&io))
-		ok = FALSE;
+		ok = false;
 
 	io_done(&io);
 	return ok;

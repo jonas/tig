@@ -29,7 +29,7 @@ bool
 pager_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
 	column_data->text = line->data;
-	return TRUE;
+	return true;
 }
 
 static void
@@ -67,7 +67,7 @@ static struct line *
 pager_wrap_line(struct view *view, const char *data, enum line_type type)
 {
 	size_t first_line = 0;
-	bool has_first_line = FALSE;
+	bool has_first_line = false;
 	size_t datalen = strlen(data);
 	size_t lineno = 0;
 
@@ -82,7 +82,7 @@ pager_wrap_line(struct view *view, const char *data, enum line_type type)
 			break;
 		if (!has_first_line) {
 			first_line = view->lines - 1;
-			has_first_line = TRUE;
+			has_first_line = true;
 		}
 
 		if (!wrapped)
@@ -108,7 +108,7 @@ pager_common_read(struct view *view, const char *data, enum line_type type, stru
 	struct line *line;
 
 	if (!data)
-		return TRUE;
+		return true;
 
 	if (opt_wrap_lines) {
 		line = pager_wrap_line(view, data, type);
@@ -117,7 +117,7 @@ pager_common_read(struct view *view, const char *data, enum line_type type, stru
 	}
 
 	if (!line)
-		return FALSE;
+		return false;
 
 	if (line_ptr)
 		*line_ptr = line;
@@ -125,14 +125,14 @@ pager_common_read(struct view *view, const char *data, enum line_type type, stru
 	if (line->type == LINE_COMMIT && view_has_flags(view, VIEW_ADD_PAGER_REFS))
 		add_pager_refs(view, data + STRING_SIZE("commit "));
 
-	return TRUE;
+	return true;
 }
 
 bool
 pager_read(struct view *view, struct buffer *buf)
 {
 	if (!buf)
-		return TRUE;
+		return true;
 
 	return pager_common_read(view, buf->data, get_line_type(buf->data), NULL);
 }
@@ -180,7 +180,7 @@ pager_open(struct view *view, enum open_flags flags)
 	if (!open_from_stdin(flags) && !view->lines && !(flags & OPEN_PREPARED)) {
 		report("No pager content, press %s to run command from prompt",
 			get_view_key(view, REQ_PROMPT));
-		return FALSE;
+		return false;
 	}
 
 	return begin_update(view, NULL, NULL, flags);

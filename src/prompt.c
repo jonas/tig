@@ -137,7 +137,7 @@ prompt_yesno(const char *prompt)
 	struct input input = { prompt_yesno_handler, FALSE, NULL };
 
 	if (!string_format(prompt2, "%s [Yy/Nn]", prompt))
-		return FALSE;
+		return false;
 
 	return !!prompt_input(prompt2, &input);
 }
@@ -474,7 +474,7 @@ prompt_init(void)
 char *
 read_prompt(const char *prompt)
 {
-	return read_prompt_incremental(prompt, TRUE, FALSE, NULL, NULL);
+	return read_prompt_incremental(prompt, true, false, NULL, NULL);
 }
 
 void
@@ -553,8 +553,8 @@ find_arg(const char *argv[], const char *arg)
 
 	for (i = 0; argv && argv[i]; i++)
 		if (!strcmp(argv[i], arg))
-			return TRUE;
-	return FALSE;
+			return true;
+	return false;
 }
 
 static enum status_code
@@ -630,7 +630,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 
 	} else if (!strcmp(toggle->type, "const char **")) {
 		const char ***opt = toggle->value;
-		bool found = TRUE;
+		bool found = true;
 		int i;
 
 		if (argv_size(argv) <= 2) {
@@ -641,7 +641,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 
 		for (i = 2; argv[i]; i++) {
 			if (!find_arg(*opt, argv[i])) {
-				found = FALSE;
+				found = false;
 				break;
 			}
 		}
@@ -720,7 +720,7 @@ prompt_update_display(enum view_flag flags)
 
 	if (flags & VIEW_RESET_DISPLAY) {
 		resize_display();
-		redraw_display(TRUE);
+		redraw_display(true);
 	}
 
 	foreach_displayed_view(view, i) {
@@ -797,7 +797,7 @@ run_prompt_command(struct view *view, const char *argv[])
 
 		/* Trim the leading '!'. */
 		argv[0] = cmd + 1;
-		copied = argv_format(view->env, &next->argv, argv, FALSE, TRUE);
+		copied = argv_format(view->env, &next->argv, argv, false, true);
 		argv[0] = cmd;
 
 		if (!copied) {
@@ -902,7 +902,7 @@ run_prompt_command(struct view *view, const char *argv[])
 			if (!strcmp(cmd, "color"))
 				init_colors();
 			resize_display();
-			redraw_display(TRUE);
+			redraw_display(true);
 		}
 
 	}
@@ -913,7 +913,7 @@ enum request
 exec_run_request(struct view *view, struct run_request *req)
 {
 	const char **argv = NULL;
-	bool confirmed = FALSE;
+	bool confirmed = false;
 	enum request request = REQ_NONE;
 	char cmd[SIZEOF_STR];
 	const char *req_argv[SIZEOF_ARG];
@@ -921,7 +921,7 @@ exec_run_request(struct view *view, struct run_request *req)
 
 	if (!argv_to_string(req->argv, cmd, sizeof(cmd), " ")
 	    || !argv_from_string_no_quotes(req_argv, &req_argc, cmd)
-	    || !argv_format(view->env, &argv, req_argv, FALSE, TRUE)) {
+	    || !argv_format(view->env, &argv, req_argv, false, true)) {
 		report("Failed to format arguments");
 		return REQ_NONE;
 	}
@@ -939,13 +939,13 @@ exec_run_request(struct view *view, struct run_request *req)
 			if (argv_to_string_quoted(argv, cmd, sizeof(cmd), " ") &&
 			    string_format(prompt, "Run `%s`%s?", cmd, and_exit) &&
 			    prompt_yesno(prompt)) {
-				confirmed = TRUE;
+				confirmed = true;
 			}
 		}
 
 		if (confirmed)
 			open_external_viewer(argv, repo.cdup, req->flags.silent,
-					     !req->flags.exit, FALSE, "");
+					     !req->flags.exit, false, "");
 	}
 
 	if (argv)

@@ -25,7 +25,7 @@ string_isnumber(const char *str)
 
 	for (pos = 0; str[pos]; pos++) {
 		if (!isdigit(str[pos]))
-			return FALSE;
+			return false;
 	}
 
 	return pos > 0;
@@ -38,7 +38,7 @@ iscommit(const char *str)
 
 	for (pos = 0; str[pos]; pos++) {
 		if (!isxdigit(str[pos]))
-			return FALSE;
+			return false;
 	}
 
 	return 7 <= pos && pos < SIZEOF_REV;
@@ -145,11 +145,11 @@ string_nformat(char *buf, size_t bufsize, size_t *bufpos, const char *fmt, ...)
 	size_t pos = bufpos ? *bufpos : 0;
 	int retval;
 
-	FORMAT_BUFFER(buf + pos, bufsize - pos, fmt, retval, FALSE);
+	FORMAT_BUFFER(buf + pos, bufsize - pos, fmt, retval, false);
 	if (bufpos && retval > 0)
 		*bufpos = pos + retval;
 
-	return pos >= bufsize ? FALSE : TRUE;
+	return pos >= bufsize ? false : true;
 }
 
 int
@@ -299,7 +299,7 @@ utf8_to_unicode(const char *string, size_t length)
 
 /* Calculates how much of string can be shown within the given maximum width
  * and sets trimmed parameter to non-zero value if all of string could not be
- * shown. If the reserve flag is TRUE, it will reserve at least one
+ * shown. If the reserve flag is true, it will reserve at least one
  * trailing character, which can be useful when drawing a delimiter.
  *
  * Returns the number of bytes to output from string to satisfy max_width. */
@@ -363,9 +363,9 @@ utf8_width_max(const char *text, int max)
 {
 	int text_width = 0;
 	const char *tmp = text;
-	int trimmed = FALSE;
+	int trimmed = false;
 
-	utf8_length(&tmp, 0, &text_width, max, &trimmed, FALSE, 1);
+	utf8_length(&tmp, 0, &text_width, max, &trimmed, false, 1);
 	return text_width;
 }
 

@@ -284,7 +284,7 @@ graph_add_parent(struct graph *graph_ref, const char *parent)
 	struct graph_v2 *graph = graph_ref->private;
 
 	if (graph->has_parents)
-		return TRUE;
+		return true;
 	return graph_insert_column(graph, &graph->parents, graph->parents.size, parent) != NULL;
 }
 
@@ -299,16 +299,16 @@ graph_expand(struct graph_v2 *graph)
 {
 	while (graph_needs_expansion(graph)) {
 		if (!graph_insert_column(graph, &graph->prev_row, graph->prev_row.size, ""))
-			return FALSE;
+			return false;
 
 		if (!graph_insert_column(graph, &graph->row, graph->row.size, ""))
-			return FALSE;
+			return false;
 
 		if (!graph_insert_column(graph, &graph->next_row, graph->next_row.size, ""))
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -327,7 +327,7 @@ graph_collapse(struct graph_v2 *graph)
 		graph->next_row.size--;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static void
@@ -692,10 +692,10 @@ graph_render_parents(struct graph *graph_ref, struct graph_canvas *canvas)
 
 	if (graph->parents.size == 0 &&
 	    !graph_add_parent(graph_ref, ""))
-		return FALSE;
+		return false;
 
 	if (!graph_expand(graph))
-		return FALSE;
+		return false;
 
 	graph_generate_next_row(graph);
 	graph_generate_symbols(graph, canvas);
@@ -704,9 +704,9 @@ graph_render_parents(struct graph *graph_ref, struct graph_canvas *canvas)
 	graph->parents.size = graph->position = 0;
 
 	if (!graph_collapse(graph))
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -719,18 +719,18 @@ graph_add_commit(struct graph *graph_ref, struct graph_canvas *canvas,
 	graph->position = graph_find_column_by_id(&graph->row, id);
 	string_copy_rev(graph->id, id);
 	graph->is_boundary = is_boundary;
-	graph->has_parents = FALSE;
+	graph->has_parents = false;
 
 	while ((parents = strchr(parents, ' '))) {
 		parents++;
 		if (!graph_add_parent(graph_ref, parents))
-			return FALSE;
+			return false;
 		has_parents++;
 	}
 
 	graph->has_parents = has_parents > 0;
 
-	return TRUE;
+	return true;
 }
 
 static const bool

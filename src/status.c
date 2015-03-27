@@ -56,7 +56,7 @@ status_get_diff(struct status *file, const char *buf, size_t bufsize)
 	    old_rev[-1]  != ' ' ||
 	    new_rev[-1]  != ' ' ||
 	    status[-1]   != ' ')
-		return FALSE;
+		return false;
 
 	file->status = *status;
 
@@ -68,7 +68,7 @@ status_get_diff(struct status *file, const char *buf, size_t bufsize)
 
 	file->old.name[0] = file->new.name[0] = 0;
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -79,11 +79,11 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	struct io io;
 
 	if (!io_run(&io, IO_RD, repo.cdup, opt_env, argv))
-		return FALSE;
+		return false;
 
 	add_line_nodata(view, type);
 
-	while (io_get(&io, &buf, 0, TRUE)) {
+	while (io_get(&io, &buf, 0, true)) {
 		struct line *line;
 		struct status parsed = {0};
 		struct status *file = &parsed;
@@ -98,7 +98,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 			if (!status_get_diff(&parsed, buf.data, buf.size))
 				goto error_out;
 
-			if (!io_get(&io, &buf, 0, TRUE))
+			if (!io_get(&io, &buf, 0, true))
 				break;
 		}
 
@@ -107,7 +107,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 		    (file->status == 'R' || file->status == 'C')) {
 			string_ncopy(file->old.name, buf.data, buf.size);
 
-			if (!io_get(&io, &buf, 0, TRUE))
+			if (!io_get(&io, &buf, 0, true))
 				break;
 		}
 
@@ -126,7 +126,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 			continue;
 		}
 
-		line = add_line_alloc(view, &file, type, 0, FALSE);
+		line = add_line_alloc(view, &file, type, 0, false);
 		if (!line)
 			goto error_out;
 		*file = parsed;
@@ -138,7 +138,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	if (io_error(&io)) {
 error_out:
 		io_done(&io);
-		return FALSE;
+		return false;
 	}
 
 	if (!view->line[view->lines - 1].data) {
@@ -155,7 +155,7 @@ error_out:
 	}
 
 	io_done(&io);
-	return TRUE;
+	return true;
 }
 
 static const char *status_diff_index_argv[] = { GIT_DIFF_STAGED_FILES("-z") };
@@ -267,9 +267,9 @@ status_open(struct view *view, enum open_flags flags)
 		status_list_no_head_argv : status_diff_index_argv;
 	char staged_status = staged_argv == status_list_no_head_argv ? 'A' : 0;
 
-	if (repo.is_inside_work_tree == FALSE) {
+	if (repo.is_inside_work_tree == false) {
 		report("The status view requires a working tree");
-		return FALSE;
+		return false;
 	}
 
 	reset_view(view);
@@ -291,13 +291,13 @@ status_open(struct view *view, enum open_flags flags)
 	    !status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED) ||
 	    !status_run(view, status_list_other_argv, '?', LINE_STAT_UNTRACKED)) {
 		report("Failed to load status data");
-		return FALSE;
+		return false;
 	}
 
 	/* Restore the exact position or use the specialized restore
 	 * mode? */
 	status_restore(view);
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -340,7 +340,7 @@ status_get_column_data(struct view *view, const struct line *line, struct view_c
 			break;
 
 		default:
-			return FALSE;
+			return false;
 		}
 
 		column_data->section->opt.section.text = text;
@@ -350,7 +350,7 @@ status_get_column_data(struct view *view, const struct line *line, struct view_c
 		column_data->status = &status->status;
 		column_data->file_name = status->new.name;
 	}
-	return TRUE;
+	return true;
 }
 
 static enum request
@@ -408,11 +408,11 @@ status_exists(struct view *view, struct status *status, enum line_type type)
 		    (pos && !strcmp(status->new.name, pos->new.name))) {
 			select_view_line(view, lineno);
 			status_restore(view);
-			return TRUE;
+			return true;
 		}
 	}
 
-	return FALSE;
+	return false;
 }
 
 
@@ -436,7 +436,7 @@ status_update_prepare(struct io *io, enum line_type type)
 
 	default:
 		die("line type %d not handled in switch", type);
-		return FALSE;
+		return false;
 	}
 }
 
@@ -454,7 +454,7 @@ status_update_write(struct io *io, struct status *status, enum line_type type)
 
 	default:
 		die("line type %d not handled in switch", type);
-		return FALSE;
+		return false;
 	}
 }
 
@@ -472,7 +472,7 @@ status_update_file(struct status *status, enum line_type type)
 	}
 
 	if (!status_update_prepare(&io, type))
-		return FALSE;
+		return false;
 
 	result = status_update_write(&io, status, type);
 	return io_done(&io) && result;
@@ -483,14 +483,14 @@ status_update_files(struct view *view, struct line *line)
 {
 	char buf[sizeof(view->ref)];
 	struct io io;
-	bool result = TRUE;
+	bool result = true;
 	struct line *pos;
 	int files = 0;
 	int file, done;
 	int cursor_y = -1, cursor_x = -1;
 
 	if (!status_update_prepare(&io, line->type))
-		return FALSE;
+		return false;
 
 	for (pos = line; view_has_line(view, pos) && pos->data; pos++)
 		files++;
@@ -525,20 +525,20 @@ status_update(struct view *view)
 	if (!line->data) {
 		if (status_has_none(view, line)) {
 			report("Nothing to update");
-			return FALSE;
+			return false;
 		}
 
 		if (!status_update_files(view, line + 1)) {
 			report("Failed to update file status");
-			return FALSE;
+			return false;
 		}
 
 	} else if (!status_update_file(line->data, line->type)) {
 		report("Failed to update file status");
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -575,15 +575,15 @@ status_revert(struct status *status, enum line_type type, bool has_none)
 			}
 
 			if (!io_run_fg(reset_argv, repo.cdup))
-				return FALSE;
+				return false;
 			if (status->old.mode == 0 && status->new.mode == 0)
-				return TRUE;
+				return true;
 		}
 
 		return io_run_fg(checkout_argv, repo.cdup);
 	}
 
-	return FALSE;
+	return false;
 }
 
 static void
@@ -591,7 +591,7 @@ open_mergetool(const char *file)
 {
 	const char *mergetool_argv[] = { "git", "mergetool", file, NULL };
 
-	open_external_viewer(mergetool_argv, repo.cdup, FALSE, TRUE, TRUE, "");
+	open_external_viewer(mergetool_argv, repo.cdup, false, true, true, "");
 }
 
 static enum request

@@ -46,7 +46,7 @@ refs_get_column_data(struct view *view, const struct line *line, struct view_col
 	column_data->ref = reference->ref;
 	column_data->commit_title = reference->title;
 
-	return TRUE;
+	return true;
 }
 
 static enum request
@@ -56,7 +56,7 @@ refs_request(struct view *view, enum request request, struct line *line)
 
 	switch (request) {
 	case REQ_REFRESH:
-		load_refs(TRUE);
+		load_refs(true);
 		refresh_view(view);
 		return REQ_NONE;
 
@@ -70,7 +70,7 @@ refs_request(struct view *view, enum request request, struct line *line)
 				log_custom_pretty_arg())
 		};
 
-		if (!argv_format(main_view.env, &main_view.argv, all_references_argv, FALSE, FALSE))
+		if (!argv_format(main_view.env, &main_view.argv, all_references_argv, false, false))
 			report("Failed to format argument");
 		else
 			open_view(view, &main_view, OPEN_SPLIT | OPEN_PREPARED);
@@ -90,10 +90,10 @@ refs_read(struct view *view, struct buffer *buf)
 	size_t i;
 
 	if (!buf)
-		return TRUE;
+		return true;
 
 	if (!*buf->data)
-		return FALSE;
+		return false;
 
 	author = io_memchr(buf, buf->data, 0);
 	title = io_memchr(buf, author, 0);
@@ -113,11 +113,11 @@ refs_read(struct view *view, struct buffer *buf)
 		if (title)
 			string_expand(reference->title, sizeof(reference->title), title, 1);
 
-		view->line[i].dirty = TRUE;
+		view->line[i].dirty = true;
 		view_column_info_update(view, &view->line[i]);
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -130,12 +130,12 @@ refs_open_visitor(void *data, const struct ref *ref)
 
 	line = add_line_alloc(view, &reference, LINE_DEFAULT, 0, is_all);
 	if (!line)
-		return FALSE;
+		return false;
 
 	reference->ref = ref;
 	view_column_info_update(view, line);
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -159,18 +159,18 @@ refs_open(struct view *view, enum open_flags flags)
 
 	if (!refs_all || !begin_update(view, NULL, refs_log, OPEN_RELOAD)) {
 		report("Failed to load reference data");
-		return FALSE;
+		return false;
 	}
 
 	if (!view->lines)
 		view->sort.current = get_view_column(view, VIEW_COLUMN_REF);
 	refs_open_visitor(view, refs_all);
 	foreach_ref(refs_open_visitor, view);
-	resort_view(view, TRUE);
+	resort_view(view, true);
 
 	watch_register(&view->watch, WATCH_HEAD | WATCH_REFS);
 
-	return TRUE;
+	return true;
 }
 
 static void
@@ -185,7 +185,7 @@ refs_select(struct view *view, struct line *line)
 	string_copy_rev(view->ref, reference->ref->id);
 	string_copy_rev(view->env->head, reference->ref->id);
 	string_ncopy(view->env->ref, reference->ref->name, strlen(reference->ref->name));
-	ref_update_env(view->env, reference->ref, TRUE);
+	ref_update_env(view->env, reference->ref, true);
 }
 
 static struct view_ops refs_ops = {

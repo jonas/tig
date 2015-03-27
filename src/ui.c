@@ -52,21 +52,21 @@ file_finder_read(struct file_finder *finder, const char *commit)
 	struct buffer buf;
 	struct io io;
 	size_t files;
-	bool ok = TRUE;
+	bool ok = true;
 
 	if (!io_run(&io, IO_RD, repo.cdup, NULL, ls_tree_files_argv))
-		return FALSE;
+		return false;
 
-	for (files = 0; io_get(&io, &buf, 0, TRUE); files++) {
+	for (files = 0; io_get(&io, &buf, 0, true); files++) {
 		/* Alloc two to ensure NULL terminated array. */
 		if (!realloc_file_array(&finder->file, files, 2)) {
-			ok = FALSE;
+			ok = false;
 			break;
 		}
 
 		finder->file[files] = calloc(1, sizeof(*finder->file) + buf.size);
 		if (!finder->file[files]) {
-			ok = FALSE;
+			ok = false;
 			break;
 		}
 
@@ -74,7 +74,7 @@ file_finder_read(struct file_finder *finder, const char *commit)
 	}
 
 	if (io_error(&io) || !realloc_file_array(&finder->line, 0, files + 1))
-		ok = FALSE;
+		ok = false;
 	io_done(&io);
 	return ok;
 }
@@ -279,7 +279,7 @@ open_file_finder(const char *commit)
 
 	if (!file_finder_read(&finder, commit)) {
 		file_finder_done(&finder);
-		return FALSE;
+		return false;
 	}
 
 	getmaxyx(stdscr, finder.height, finder.width);
@@ -287,17 +287,17 @@ open_file_finder(const char *commit)
 	finder.win = newwin(finder.height, finder.width, 0, 0);
 	if (!finder.win) {
 		file_finder_done(&finder);
-		return FALSE;
+		return false;
 	}
 
 	finder.keymap = get_keymap("search", STRING_SIZE("search")),
 	file_finder_update(&finder);
 	file_finder_draw(&finder);
-	if (read_prompt_incremental("Find file: ", FALSE, TRUE, file_finder_input_handler, &finder) && finder.pos.lineno < finder.lines)
+	if (read_prompt_incremental("Find file: ", false, true, file_finder_input_handler, &finder) && finder.pos.lineno < finder.lines)
 		file = get_path(finder.line[finder.pos.lineno]->text);
 
 	file_finder_done(&finder);
-	redraw_display(TRUE);
+	redraw_display(true);
 	return file;
 }
 

@@ -61,7 +61,7 @@ main_register_commit(struct view *view, struct commit *commit, const char *ids, 
 	/* FIXME: lazily check index state here instead of in main_open. */
 	if ((state->add_changes_unstaged || state->add_changes_staged) && is_head_commit(commit->id)) {
 		main_add_changes(view, state, ids);
-		state->add_changes_unstaged = state->add_changes_staged = FALSE;
+		state->add_changes_unstaged = state->add_changes_staged = false;
 	}
 
 	if (state->with_graph)
@@ -101,7 +101,7 @@ static inline void
 main_flush_commit(struct view *view, struct commit *commit)
 {
 	if (*commit->id)
-		main_add_commit(view, LINE_MAIN_COMMIT, commit, "", FALSE);
+		main_add_commit(view, LINE_MAIN_COMMIT, commit, "", false);
 }
 
 static bool
@@ -115,7 +115,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 	struct timezone tz;
 
 	if (!parent)
-		return TRUE;
+		return true;
 
 	if (*parent)
 		string_copy_rev(ids + STRING_SIZE(NULL_ID " "), parent);
@@ -128,17 +128,17 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 	}
 
 	commit.author = &unknown_ident;
-	main_register_commit(view, &commit, ids, FALSE);
+	main_register_commit(view, &commit, ids, false);
 	if (state->with_graph && *parent)
 		graph->render_parents(graph, &commit.graph);
 
-	if (!main_add_commit(view, type, &commit, title, TRUE))
-		return FALSE;
+	if (!main_add_commit(view, type, &commit, title, true))
+		return false;
 
 	if (state->goto_line_type == type)
 		select_view_line(view, view->lines - 1);
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -146,24 +146,24 @@ main_check_index(struct view *view, struct main_state *state)
 {
 	struct index_diff diff;
 
-	if (!index_diff(&diff, FALSE, FALSE))
-		return FALSE;
+	if (!index_diff(&diff, false, false))
+		return false;
 
 	if (!diff.unstaged) {
 		watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_NO);
 	} else {
 		watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_YES);
-		state->add_changes_unstaged = TRUE;
+		state->add_changes_unstaged = true;
 	}
 
 	if (!diff.staged) {
 		watch_apply(&view->watch, WATCH_INDEX_STAGED_NO);
 	} else {
 		watch_apply(&view->watch, WATCH_INDEX_STAGED_YES);
-		state->add_changes_staged = TRUE;
+		state->add_changes_staged = true;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -189,7 +189,7 @@ static bool
 main_check_argv(struct view *view, const char *argv[])
 {
 	struct main_state *state = view->private;
-	bool with_reflog = FALSE;
+	bool with_reflog = false;
 	int i;
 
 	for (i = 0; argv[i]; i++) {
@@ -200,24 +200,24 @@ main_check_argv(struct view *view, const char *argv[])
 			struct view_column *column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
 
 			if (column) {
-				column->opt.commit_title.graph = TRUE;
+				column->opt.commit_title.graph = true;
 				if (opt_commit_order != COMMIT_ORDER_REVERSE)
-					state->with_graph = TRUE;
+					state->with_graph = true;
 			}
 			argv[i] = "";
 			continue;
 		}
 
 		if (!strcmp(arg, "--first-parent"))
-			state->first_parent = TRUE;
+			state->first_parent = true;
 
 		if (!argv_parse_rev_flag(arg, &rev_flags))
 			continue;
 
 		if (rev_flags.with_reflog)
-			with_reflog = TRUE;
+			with_reflog = true;
 		if (!rev_flags.with_graph)
-			state->with_graph = FALSE;
+			state->with_graph = false;
 		arg += rev_flags.search_offset;
 		if (*arg && !*view->env->search)
 			string_ncopy(view->env->search, arg, strlen(arg));
@@ -262,7 +262,7 @@ main_open(struct view *view, enum open_flags flags)
 	if (state->with_graph) {
 		state->graph = init_graph(commit_title_column->opt.commit_title.graph);
 		if (!state->graph)
-			return FALSE;
+			return false;
 	}
 
 	if (open_in_pager_mode(flags)) {
@@ -271,7 +271,7 @@ main_open(struct view *view, enum open_flags flags)
 
 	/* This calls reset_view() so must be before adding changes commits. */
 	if (!begin_update(view, NULL, main_argv, flags))
-		return FALSE;
+		return false;
 
 	/* Register watch before changes commits are added to record the
 	 * start. */
@@ -281,7 +281,7 @@ main_open(struct view *view, enum open_flags flags)
 	if (changes_triggers)
 		main_check_index(view, state);
 
-	return TRUE;
+	return true;
 }
 
 void
@@ -338,7 +338,7 @@ main_get_column_data(struct view *view, const struct line *line, struct view_col
 
 	column_data->refs = main_get_commit_refs(line, commit);
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -348,12 +348,12 @@ main_add_reflog(struct view *view, struct main_state *state, char *reflog)
 	int id_width;
 
 	if (!end)
-		return FALSE;
+		return false;
 	*end = 0;
 
 	if (!realloc_reflogs(&state->reflog, state->reflogs, 1)
 	    || !(reflog = strdup(reflog)))
-		return FALSE;
+		return false;
 
 	state->reflog[state->reflogs++] = reflog;
 	id_width = strlen(reflog);
@@ -362,10 +362,10 @@ main_add_reflog(struct view *view, struct main_state *state, char *reflog)
 
 		state->reflog_width = id_width;
 		if (column && column->opt.id.display)
-			view->force_redraw = TRUE;
+			view->force_redraw = true;
 	}
 
-	return TRUE;
+	return true;
 }
 
 /* Reads git log --pretty=raw output and parses it into the commit struct. */
@@ -395,7 +395,7 @@ main_read(struct view *view, struct buffer *buf)
 
 		if (state->graph)
 			state->graph->done_rendering(graph);
-		return TRUE;
+		return true;
 	}
 
 	line = buf->data;
@@ -404,7 +404,7 @@ main_read(struct view *view, struct buffer *buf)
 		bool is_boundary;
 		char *author;
 
-		state->in_header = TRUE;
+		state->in_header = true;
 		line += STRING_SIZE("commit ");
 		is_boundary = *line == '-';
 		while (*line && !isalnum(*line))
@@ -431,23 +431,23 @@ main_read(struct view *view, struct buffer *buf)
 			if (state->with_graph)
 				graph->render_parents(graph, &commit->graph);
 			if (title)
-				main_add_commit(view, LINE_MAIN_COMMIT, commit, title, FALSE);
+				main_add_commit(view, LINE_MAIN_COMMIT, commit, title, false);
 		}
 
-		return TRUE;
+		return true;
 	}
 
 	if (!*commit->id)
-		return TRUE;
+		return true;
 
 	/* Empty line separates the commit header from the log itself. */
 	if (*line == '\0')
-		state->in_header = FALSE;
+		state->in_header = false;
 
 	switch (type) {
 	case LINE_PP_REFLOG:
 		if (!main_add_reflog(view, state, line + STRING_SIZE("Reflog: ")))
-			return FALSE;
+			return false;
 		break;
 
 	case LINE_PP_REFLOGMSG:
@@ -489,10 +489,10 @@ main_read(struct view *view, struct buffer *buf)
 			break;
 		if (*state->reflogmsg)
 			line = state->reflogmsg;
-		main_add_commit(view, LINE_MAIN_COMMIT, commit, line, FALSE);
+		main_add_commit(view, LINE_MAIN_COMMIT, commit, line, false);
 	}
 
-	return TRUE;
+	return true;
 }
 
 enum request
@@ -513,7 +513,7 @@ main_request(struct view *view, enum request request, struct line *line)
 	case REQ_VIEW_DIFF:
 	case REQ_ENTER:
 		if (view_is_displayed(view) && display[0] != view)
-			maximize_view(view, TRUE);
+			maximize_view(view, true);
 
 		if (line->type == LINE_STAT_UNSTAGED
 		    || line->type == LINE_STAT_STAGED)
@@ -523,7 +523,7 @@ main_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_REFRESH:
-		load_refs(TRUE);
+		load_refs(true);
 		refresh_view(view);
 		break;
 

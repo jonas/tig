@@ -80,7 +80,7 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 				refresh_view(view);
 		}
 	}
-	redraw_display(TRUE);
+	redraw_display(true);
 	return ok;
 }
 
@@ -120,8 +120,8 @@ open_editor(const char *file, unsigned int lineno)
 	if (lineno && opt_editor_line_number && string_format(lineno_cmd, "+%u", lineno))
 		editor_argv[argc++] = lineno_cmd;
 	editor_argv[argc] = file;
-	if (!open_external_viewer(editor_argv, repo.cdup, FALSE, FALSE, TRUE, EDITOR_LINENO_MSG))
-		opt_editor_line_number = FALSE;
+	if (!open_external_viewer(editor_argv, repo.cdup, false, FALSE, true, EDITOR_LINENO_MSG))
+		opt_editor_line_number = false;
 }
 
 
@@ -216,7 +216,7 @@ resize_display(void)
 			if (!display_win[i])
 				die("Failed to create %s view", view->name);
 
-			scrollok(display_win[i], FALSE);
+			scrollok(display_win[i], false);
 
 			display_title[i] = newwin(1, view->width, y + view->height, x);
 			if (!display_title[i])
@@ -250,7 +250,7 @@ resize_display(void)
 			y += view->height + 1;
 	}
 
-	redraw_display_separator(FALSE);
+	redraw_display_separator(false);
 }
 
 void
@@ -274,7 +274,7 @@ save_window_line(FILE *file, WINDOW *win, int y, char *buf, size_t bufsize)
 {
 	int read = mvwinnstr(win, y, 0, buf, bufsize);
 
-	return read == ERR ? FALSE : fprintf(file, "%s\n", buf) == read + 1;
+	return read == ERR ? false : fprintf(file, "%s\n", buf) == read + 1;
 }
 
 static bool
@@ -284,7 +284,7 @@ save_window_vline(FILE *file, WINDOW *left, WINDOW *right, int y, char *buf, siz
 	int read2 = read1 == ERR ? ERR : mvwinnstr(right, y, 0, buf + read1 + 1, bufsize - read1 - 1);
 
 	if (read2 == ERR)
-		return FALSE;
+		return false;
 	buf[read1] = '|';
 
 	return fprintf(file, "%s\n", buf) == read1 + 1 + read2 + 1;
@@ -297,18 +297,18 @@ save_display(const char *path)
 	size_t linelen;
 	char *line;
 	FILE *file = fopen(path, "w");
-	bool ok = TRUE;
+	bool ok = true;
 	struct view *view = display[0];
 
 	if (!file)
-		return FALSE;
+		return false;
 
 	getmaxyx(stdscr, i, width);
 	linelen = width * 4;
 	line = malloc(linelen + 1);
 	if (!line) {
 		fclose(file);
-		return FALSE;
+		return false;
 	}
 
 	if (view->width < width && display[1]) {
@@ -340,7 +340,7 @@ save_display(const char *path)
  */
 
 /* Whether or not the curses interface has been initialized. */
-static bool cursed = FALSE;
+static bool cursed = false;
 
 /* Terminal hacks and workarounds. */
 static bool use_scroll_redrawwin;
@@ -350,16 +350,16 @@ static bool use_scroll_status_wclear;
 WINDOW *status_win;
 
 /* Reading from the prompt? */
-static bool input_mode = FALSE;
+static bool input_mode = false;
 
-static bool status_empty = FALSE;
+static bool status_empty = false;
 
 /* Update status and title window. */
 static bool
 update_status_window(struct view *view, const char *msg, va_list args)
 {
 	if (input_mode)
-		return FALSE;
+		return false;
 
 	if (!status_empty || *msg) {
 		wmove(status_win, 0, 0);
@@ -367,15 +367,15 @@ update_status_window(struct view *view, const char *msg, va_list args)
 			wclear(status_win);
 		if (*msg) {
 			vwprintw(status_win, msg, args);
-			status_empty = FALSE;
+			status_empty = false;
 		} else {
-			status_empty = TRUE;
+			status_empty = true;
 		}
 		wclrtoeol(status_win);
-		return TRUE;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 void
@@ -398,7 +398,7 @@ report(const char *msg, ...)
 		char buf[SIZEOF_STR];
 		int retval;
 
-		FORMAT_BUFFER(buf, sizeof(buf), msg, retval, TRUE);
+		FORMAT_BUFFER(buf, sizeof(buf), msg, retval, true);
 		die("%s", buf);
 	}
 
@@ -415,7 +415,7 @@ done_display(void)
 {
 	if (cursed)
 		endwin();
-	cursed = FALSE;
+	cursed = false;
 }
 
 void
@@ -451,7 +451,7 @@ init_display(void)
 	nonl();		/* Disable conversion and detect newlines from input. */
 	cbreak();       /* Take input chars one at a time, no wait for \n */
 	noecho();       /* Don't echo input */
-	leaveok(stdscr, FALSE);
+	leaveok(stdscr, false);
 
 	init_colors();
 
@@ -461,7 +461,7 @@ init_display(void)
 		die("Failed to create status window");
 
 	/* Enable keyboard mapping */
-	keypad(status_win, TRUE);
+	keypad(status_win, true);
 	wbkgdset(status_win, get_line_attr(NULL, LINE_STATUS));
 	enable_mouse(opt_mouse);
 
@@ -478,19 +478,19 @@ init_display(void)
 		 * on the first line followed by scrolling down one line
 		 * corrupts the status line. This is fixed by calling
 		 * wclear. */
-		use_scroll_status_wclear = TRUE;
-		use_scroll_redrawwin = FALSE;
+		use_scroll_status_wclear = true;
+		use_scroll_redrawwin = false;
 
 	} else if (term && !strcmp(term, "xrvt-xpm")) {
 		/* No problems with full optimizations in xrvt-(unicode)
 		 * and aterm. */
-		use_scroll_status_wclear = use_scroll_redrawwin = FALSE;
+		use_scroll_status_wclear = use_scroll_redrawwin = false;
 
 	} else {
 		/* When scrolling in (u)xterm the last line in the
 		 * scrolling direction will update slowly. */
-		use_scroll_redrawwin = TRUE;
-		use_scroll_status_wclear = FALSE;
+		use_scroll_redrawwin = true;
+		use_scroll_status_wclear = false;
 	}
 }
 
@@ -506,9 +506,9 @@ read_script(struct key *key)
 			line = "<Enter>";
 			memset(&input_buffer, 0, sizeof(input_buffer));
 
-		} else if (!io_get(&script_io, &input_buffer, '\n', TRUE)) {
+		} else if (!io_get(&script_io, &input_buffer, '\n', true)) {
 			io_done(&script_io);
-			return FALSE;
+			return false;
 		} else {
 			line = input_buffer.data;
 		}
@@ -517,7 +517,7 @@ read_script(struct key *key)
 	code = get_key_value(&line, key);
 	if (code != SUCCESS)
 		die("Error reading script: %s", get_status_message(code));
-	return TRUE;
+	return true;
 }
 
 int
@@ -552,11 +552,11 @@ get_input(int prompt_position, struct key *key)
 	int i, key_value, cursor_y, cursor_x;
 
 	if (prompt_position > 0)
-		input_mode = TRUE;
+		input_mode = true;
 
 	memset(key, 0, sizeof(*key));
 
-	while (TRUE) {
+	while (true) {
 		int delay = -1;
 
 		if (opt_refresh_mode == REFRESH_MODE_PERIODIC) {
@@ -573,7 +573,7 @@ get_input(int prompt_position, struct key *key)
 			if (view_is_displayed(view) && view->has_scrolled &&
 			    use_scroll_redrawwin)
 				redrawwin(view->win);
-			view->has_scrolled = FALSE;
+			view->has_scrolled = false;
 			if (view->pipe)
 				delay = 0;
 		}
@@ -616,12 +616,12 @@ get_input(int prompt_position, struct key *key)
 			mvwin(status_win, height - 1, 0);
 			wnoutrefresh(status_win);
 			resize_display();
-			redraw_display(TRUE);
+			redraw_display(true);
 
 		} else {
 			int pos, key_length;
 
-			input_mode = FALSE;
+			input_mode = false;
 			if (key_value == erasechar())
 				key_value = KEY_BACKSPACE;
 
@@ -665,7 +665,7 @@ void
 enable_mouse(bool enable)
 {
 #ifdef NCURSES_MOUSE_VERSION
-	static bool enabled = FALSE;
+	static bool enabled = false;
 
 	if (enable != enabled) {
 		mmask_t mask = enable ? ALL_MOUSE_EVENTS : 0;

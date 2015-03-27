@@ -73,7 +73,7 @@ blob_open(struct view *view, enum open_flags flags)
 		if (!string_format(blob_spec, "%s:%s", commit, view->env->file) ||
 		    !io_run_buf(rev_parse_argv, view->env->blob, sizeof(view->env->blob))) {
 			report("Failed to resolve blob from file name");
-			return FALSE;
+			return false;
 		}
 
 		string_ncopy(state->commit, commit, strlen(commit));
@@ -82,7 +82,7 @@ blob_open(struct view *view, enum open_flags flags)
 	if (!state->file && !view->env->blob[0]) {
 		report("No file chosen, press %s to open tree view",
 				get_view_key(view, REQ_VIEW_TREE));
-		return FALSE;
+		return false;
 	}
 
 	view->encoding = get_path_encoding(view->env->file, default_encoding);
@@ -103,7 +103,7 @@ blob_read(struct view *view, struct buffer *buf)
 			select_view_line(view, view->env->goto_lineno);
 			view->env->goto_lineno = 0;
 		}
-		return TRUE;
+		return true;
 	}
 
 	return add_line_text(view, buf->data, LINE_DEFAULT) != NULL;

@@ -28,40 +28,40 @@ concat_argv(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *
 
 		if (quoted && arg[(pos = strcspn(arg, " \t\""))]) {
 			if (!string_nformat(buf, buflen, &bufpos, "%s\"", arg_sep))
-				return FALSE;
+				return false;
 
 			while (*arg) {
 				int pos = strcspn(arg, "\"");
 				const char *qesc = arg[pos] == '"' ? "\\\"" : "";
 
 				if (!string_nformat(buf, buflen, &bufpos, "%.*s%s", pos, arg, qesc))
-					return FALSE;
+					return false;
 				arg += pos + 1;
 			}
 
 			if (!string_nformat(buf, buflen, &bufpos, "\""))
-				return FALSE;
+				return false;
 
 			continue;
 		}
 
 		if (!string_nformat(buf, buflen, &bufpos, "%s%s", arg_sep, arg))
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 bool
 argv_to_string_quoted(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep)
 {
-	return concat_argv(argv, buf, buflen, sep, TRUE);
+	return concat_argv(argv, buf, buflen, sep, true);
 }
 
 bool
 argv_to_string(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep)
 {
-	return concat_argv(argv, buf, buflen, sep, FALSE);
+	return concat_argv(argv, buf, buflen, sep, false);
 }
 
 static char *
@@ -144,13 +144,13 @@ split_argv_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd, bool remov
 bool
 argv_from_string_no_quotes(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
 {
-	return split_argv_string(argv, argc, cmd, TRUE);
+	return split_argv_string(argv, argc, cmd, true);
 }
 
 bool
 argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
 {
-	return split_argv_string(argv, argc, cmd, FALSE);
+	return split_argv_string(argv, argc, cmd, false);
 }
 
 bool
@@ -194,8 +194,8 @@ argv_contains(const char **argv, const char *arg)
 
 	for (i = 0; argv && argv[i]; i++)
 		if (!strcmp(argv[i], arg))
-			return TRUE;
-	return FALSE;
+			return true;
+	return false;
 }
 
 DEFINE_ALLOCATOR(argv_realloc, const char *, SIZEOF_ARG)
@@ -207,10 +207,10 @@ argv_append(const char ***argv, const char *arg)
 	char *alloc;
 
 	if (!*arg && argc > 0)
-		return TRUE;
+		return true;
 
 	if (!argv_realloc(argv, argc, 2))
-		return FALSE;
+		return false;
 
 	alloc = strdup(arg);
 
@@ -227,8 +227,8 @@ argv_append_array(const char ***dst_argv, const char *src_argv[])
 
 	for (i = 0; src_argv && src_argv[i]; i++)
 		if (!argv_append(dst_argv, src_argv[i]))
-			return FALSE;
-	return TRUE;
+			return false;
+	return true;
 }
 
 bool
@@ -239,8 +239,8 @@ argv_copy(const char ***dst, const char *src[])
 	argv_free(*dst);
 	for (argc = 0; src[argc]; argc++)
 		if (!argv_append(dst, src[argc]))
-			return FALSE;
-	return TRUE;
+			return false;
+	return true;
 }
 
 /*
@@ -295,7 +295,7 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 
 		value = read_prompt(prompt);
 		if (value == NULL)
-			return FALSE;
+			return false;
 		return string_format_from(format->buf, &format->bufpos, "%s", value);
 	}
 
@@ -304,12 +304,12 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 			continue;
 
 		if (vars[i].value_ref == &argv_env.file && !format->file_filter)
-			return TRUE;
+			return true;
 
 		return vars[i].formatter(format, &vars[i]);
 	}
 
-	return FALSE;
+	return false;
 }
 
 static bool
@@ -325,13 +325,13 @@ format_append_arg(struct format_context *format, const char ***dst_argv, const c
 		const int len = var ? var - arg : strlen(arg);
 
 		if (var && !closing)
-			return FALSE;
+			return false;
 
 		if (len && !string_format_from(format->buf, &format->bufpos, "%.*s", len, arg))
-			return FALSE;
+			return false;
 
 		if (var && !format_expand_arg(format, var, next))
-			return FALSE;
+			return false;
 
 		arg = next;
 	}
@@ -345,11 +345,11 @@ format_append_argv(struct format_context *format, const char ***dst_argv, const 
 	int argc;
 
 	if (!src_argv)
-		return TRUE;
+		return true;
 
 	for (argc = 0; src_argv[argc]; argc++)
 		if (!format_append_arg(format, dst_argv, src_argv[argc]))
-			return FALSE;
+			return false;
 
 	return src_argv[argc] == NULL;
 }
@@ -364,7 +364,7 @@ argv_string_formatter(struct format_context *format, struct format_var *var)
 		value = var->value_if_empty;
 
 	if (!*value)
-		return TRUE;
+		return true;
 
 	return string_format_from(format->buf, &format->bufpos, "%s", value);
 }
@@ -449,14 +449,14 @@ argv_find_rev_flag(const char *argv[], size_t argc, const char *arg, size_t argl
 			continue;
 
 		if (with_graph)
-			*with_graph = FALSE;
+			*with_graph = false;
 		if (with_reflog)
-			*with_reflog = TRUE;
+			*with_reflog = true;
 
-		return TRUE;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 bool
@@ -532,8 +532,8 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 		"-S",
 	};
 	size_t arglen = strlen(arg);
-	bool graph = TRUE;
-	bool reflog = FALSE;
+	bool graph = true;
+	bool reflog = false;
 	size_t search = 0;
 
 	if (argv_find_rev_flag(with_graph, ARRAY_SIZE(with_graph), arg, arglen, NULL, NULL, NULL) ||
@@ -545,10 +545,10 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 			rev_flags->with_graph = graph;
 			rev_flags->with_reflog = reflog;
 		}
-		return TRUE;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 char *
@@ -558,7 +558,7 @@ argv_format_arg(struct argv_env *argv_env, const char *src_arg)
 	const char **dst_argv = NULL;
 	char *dst_arg = NULL;
 
-	if (argv_format(argv_env, &dst_argv, src_argv, FALSE, TRUE))
+	if (argv_format(argv_env, &dst_argv, src_argv, false, true))
 		dst_arg = (char *) dst_argv[0];
 
 	free(dst_argv);

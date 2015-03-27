@@ -68,7 +68,7 @@ enum_name_prefixed(char buf[], size_t bufsize, const char *prefix, const char *n
 
 	if (*prefix) {
 		if (!string_format(prefixed, "%s-%s", prefix, name))
-			return FALSE;
+			return false;
 		name = prefixed;
 	}
 
@@ -102,10 +102,10 @@ map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, const
 	for (i = 0; i < map_size; i++)
 		if (enum_equals(map[i], name, namelen)) {
 			*value = map[i].value;
-			return TRUE;
+			return true;
 		}
 
-	return FALSE;
+	return false;
 }
 
 #define DEFINE_ENUM_MAPS(name, macro) DEFINE_ENUM_MAP(name, macro);

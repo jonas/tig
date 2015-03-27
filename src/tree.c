@@ -104,7 +104,7 @@ tree_get_column_data(struct view *view, const struct line *line, struct view_col
 	const struct tree_entry *entry = line->data;
 
 	if (line->type == LINE_HEADER)
-		return FALSE;
+		return false;
 
 	column_data->author = entry->author;
 	column_data->date = &entry->time;
@@ -114,7 +114,7 @@ tree_get_column_data(struct view *view, const struct line *line, struct view_col
 	column_data->mode = &entry->mode;
 	column_data->file_name = entry->name;
 
-	return TRUE;
+	return true;
 }
 
 
@@ -145,8 +145,8 @@ tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 	char *text = buf ? buf->data : NULL;
 
 	if (!text && state->read_date) {
-		state->read_date = FALSE;
-		return TRUE;
+		state->read_date = false;
+		return true;
 
 	} else if (!text) {
 		/* Find next entry to process */
@@ -159,16 +159,16 @@ tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 			tree_entry(view, LINE_HEADER, view->env->directory, NULL, NULL, 0);
 			tree_entry(view, LINE_DIRECTORY, "..", "040000", view->ref, 0);
 			report("Tree is empty");
-			return TRUE;
+			return true;
 		}
 
 		if (!begin_update(view, repo.cdup, log_file, OPEN_EXTRA)) {
 			report("Failed to load tree data");
-			return TRUE;
+			return true;
 		}
 
-		state->read_date = TRUE;
-		return FALSE;
+		state->read_date = true;
+		return false;
 
 	} else if (*text == 'c' && get_line_type(text) == LINE_COMMIT) {
 		string_copy_rev_from_commit_line(state->commit, text);
@@ -184,7 +184,7 @@ tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 
 		pos = strrchr(text, '\t');
 		if (!pos)
-			return TRUE;
+			return true;
 		text = pos + 1;
 		if (*view->env->directory && !strncmp(text, view->env->directory, strlen(view->env->directory)))
 			text += strlen(view->env->directory);
@@ -211,7 +211,7 @@ tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 		if (annotated == view->lines)
 			io_kill(view->pipe);
 	}
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -228,15 +228,15 @@ tree_read(struct view *view, struct buffer *buf)
 		return tree_read_date(view, buf, state);
 
 	if (buf->size <= SIZEOF_TREE_ATTR)
-		return FALSE;
+		return false;
 	if (view->lines == 0 &&
 	    !tree_entry(view, LINE_HEADER, view->env->directory, NULL, NULL, 0))
-		return FALSE;
+		return false;
 
 	size = parse_size(buf->data + SIZEOF_TREE_ATTR);
 	path = strchr(buf->data + SIZEOF_TREE_ATTR, '\t');
 	if (!path)
-		return FALSE;
+		return false;
 	path++;
 
 	/* Strip the path part ... */
@@ -251,13 +251,13 @@ tree_read(struct view *view, struct buffer *buf)
 		/* Insert "link" to parent directory. */
 		if (view->lines == 1 &&
 		    !tree_entry(view, LINE_DIRECTORY, "..", "040000", view->ref, 0))
-			return FALSE;
+			return false;
 	}
 
 	type = buf->data[SIZEOF_TREE_MODE] == 't' ? LINE_DIRECTORY : LINE_FILE;
 	entry = tree_entry(view, type, path, buf->data, buf->data + TREE_ID_OFFSET, size);
 	if (!entry)
-		return FALSE;
+		return false;
 	data = entry->data;
 	view_column_info_update(view, entry);
 
@@ -275,14 +275,14 @@ tree_read(struct view *view, struct buffer *buf)
 			line->dirty = line->cleareol = 1;
 			line->lineno++;
 		}
-		return TRUE;
+		return true;
 	}
 
 	/* Move the current line to the first tree entry. */
 	if (!check_position(&view->prev_pos) && !check_position(&view->pos))
 		goto_view_line(view, 0, 1);
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -292,7 +292,7 @@ tree_draw(struct view *view, struct line *line, unsigned int lineno)
 
 	if (line->type == LINE_HEADER) {
 		draw_formatted(view, line->type, "Directory path /%s", entry->name);
-		return TRUE;
+		return true;
 	}
 
 	return view_column_draw(view, line, lineno);
@@ -436,7 +436,7 @@ tree_open(struct view *view, enum open_flags flags)
 
 	if (string_rev_is_null(view->env->commit)) {
 		report("No tree exists for this commit");
-		return FALSE;
+		return false;
 	}
 
 	if (view->lines == 0 && repo.prefix[0]) {

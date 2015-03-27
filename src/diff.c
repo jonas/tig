@@ -76,18 +76,18 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	enum line_type type = get_line_type(data);
 
 	if (!view->lines && type != LINE_COMMIT)
-		state->reading_diff_stat = TRUE;
+		state->reading_diff_stat = true;
 
 	if (state->combined_diff && !state->after_diff && data[0] == ' ' && data[1] != ' ')
-		state->reading_diff_stat = TRUE;
+		state->reading_diff_stat = true;
 
 	if (state->reading_diff_stat) {
 		if (diff_common_add_diff_stat(view, data, 0))
-			return TRUE;
-		state->reading_diff_stat = FALSE;
+			return true;
+		state->reading_diff_stat = false;
 
 	} else if (!strcmp(data, "---")) {
-		state->reading_diff_stat = TRUE;
+		state->reading_diff_stat = true;
 	}
 
 	if (!state->after_commit_title && !prefixcmp(data, "    ")) {
@@ -95,20 +95,20 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 
 		if (line)
 			line->commit_title = 1;
-		state->after_commit_title = TRUE;
+		state->after_commit_title = true;
 		return line != NULL;
 	}
 
 	if (type == LINE_DIFF_HEADER) {
 		const int len = STRING_SIZE("diff --");
 
-		state->after_diff = TRUE;
+		state->after_diff = true;
 		if (!strncmp(data + len, "combined ", strlen("combined ")) ||
 		    !strncmp(data + len, "cc ", strlen("cc ")))
-			state->combined_diff = TRUE;
+			state->combined_diff = true;
 
 	} else if (type == LINE_PP_MERGE) {
-		state->combined_diff = TRUE;
+		state->combined_diff = true;
 	}
 
 	/* ADD2 and DEL2 are only valid in combined diff hunks */
@@ -242,10 +242,10 @@ diff_read_describe(struct view *view, struct buffer *buffer, struct diff_state *
 		const char *sep = !strcmp("Refs: ", line->data) ? "" : ", ";
 
 		if (*ref && !append_line_format(view, line, "%s%s", sep, ref))
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -271,7 +271,7 @@ diff_read(struct view *view, struct buffer *buf)
 				if (view->pipe)
 					io_done(view->pipe);
 				if (io_run(&view->io, IO_RD, view->dir, opt_env, view->argv))
-					return FALSE;
+					return false;
 			}
 		}
 
@@ -282,14 +282,14 @@ diff_read(struct view *view, struct buffer *buf)
 
 			if (!begin_update(view, NULL, describe_argv, OPEN_EXTRA)) {
 				report("Failed to load describe data");
-				return TRUE;
+				return true;
 			}
 
-			state->adding_describe_ref = TRUE;
-			return FALSE;
+			state->adding_describe_ref = true;
+			return false;
 		}
 
-		return TRUE;
+		return true;
 	}
 
 	return diff_common_read(view, buf->data, state);
@@ -305,16 +305,16 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 		"git", "blame", encoding_arg, "-p", line_arg, ref, "--", file, NULL
 	};
 	struct io io;
-	bool ok = FALSE;
+	bool ok = false;
 	struct buffer buf;
 
 	if (!string_format(line_arg, "-L%ld,+1", lineno))
-		return FALSE;
+		return false;
 
 	if (!io_run(&io, IO_RD, repo.cdup, opt_env, blame_argv))
-		return FALSE;
+		return false;
 
-	while (io_get(&io, &buf, '\n', TRUE)) {
+	while (io_get(&io, &buf, '\n', true)) {
 		if (header) {
 			if (!parse_blame_header(header, buf.data, 9999999))
 				break;
@@ -327,7 +327,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	}
 
 	if (io_error(&io))
-		ok = FALSE;
+		ok = false;
 
 	io_done(&io);
 	return ok;

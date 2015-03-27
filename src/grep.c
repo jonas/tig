@@ -55,7 +55,7 @@ grep_get_column_data(struct view *view, const struct line *line, struct view_col
 		separator_column.type = VIEW_COLUMN_TEXT;
 		column_data->section = &separator_column;
 		column_data->text = "--";
-		return TRUE;
+		return true;
 	}
 
 	if (*grep->file && !*grep->text) {
@@ -70,7 +70,7 @@ grep_get_column_data(struct view *view, const struct line *line, struct view_col
 	column_data->line_number = &grep->lineno;
 	column_data->file_name = grep->file;
 	column_data->text = grep->text;
-	return TRUE;
+	return true;
 }
 
 static void
@@ -100,7 +100,7 @@ grep_prompt(void)
 	char *grep = read_prompt("grep: ");
 
 	if (!grep || !argv_from_string_no_quotes(argv, &argc, grep))
-		return FALSE;
+		return false;
 	if (grep_argv)
 		argv_free(grep_argv);
 	return argv_append_array(&grep_argv, argv);
@@ -135,7 +135,7 @@ grep_open(struct view *view, enum open_flags flags)
 
 	if (!argv_append_array(&argv, grep_args) ||
 	    !argv_append_array(&argv, grep_argv))
-		return FALSE;
+		return false;
 
 	{
 		struct view_column *column = get_view_column(view, VIEW_COLUMN_FILE_NAME);
@@ -211,7 +211,7 @@ grep_read(struct view *view, struct buffer *buf)
 			view->ref[0] = 0;
 			report("No matches found");
 		}
-		return TRUE;
+		return true;
 	}
 
 	if (!strcmp(buf->data, "--"))
@@ -227,21 +227,21 @@ grep_read(struct view *view, struct buffer *buf)
 	 *	Binary file test/graph/20-tig-all-long-test.in matches
 	 */
 	if (!lineno || !text)
-		return TRUE;
+		return true;
 
 	textlen = strlen(text);
 
 	file = get_path(buf->data);
 	if (!file)
-		return FALSE;
+		return false;
 
 	if (!state->no_file_group && file != state->last_file &&
 	    !add_line_text(view, file, LINE_FILE))
-		return FALSE;
+		return false;
 
-	line = add_line_alloc(view, &grep, LINE_DEFAULT, textlen, FALSE);
+	line = add_line_alloc(view, &grep, LINE_DEFAULT, textlen, false);
 	if (!line)
-		return FALSE;
+		return false;
 
 	grep->file = file;
 	grep->lineno = atoi(lineno);
@@ -253,7 +253,7 @@ grep_read(struct view *view, struct buffer *buf)
 
 	state->last_file = file;
 
-	return TRUE;
+	return true;
 }
 
 static struct view_ops grep_ops = {

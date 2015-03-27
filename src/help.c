@@ -49,33 +49,33 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 
 	} else if (help->request > REQ_RUN_REQUESTS) {
 		struct run_request *req = get_run_request(help->request);
-		const char *key = get_keys(keymap, help->request, TRUE);
+		const char *key = get_keys(keymap, help->request, true);
 		const char *sep = format_run_request_flags(req);
 		int i;
 
-		if (draw_field(view, LINE_DEFAULT, key, state->keys_width + 2, ALIGN_RIGHT, FALSE))
-			return TRUE;
+		if (draw_field(view, LINE_DEFAULT, key, state->keys_width + 2, ALIGN_RIGHT, false))
+			return true;
 
 		for (i = 0; req->argv[i]; i++) {
 			if (draw_formatted(view, LINE_HELP_ACTION, "%s%s", sep, req->argv[i]))
-				return TRUE;
+				return true;
 			sep = " ";
 		}
 
 	} else {
 		const struct request_info *req_info = help->data.req_info;
-		const char *key = get_keys(keymap, req_info->request, TRUE);
+		const char *key = get_keys(keymap, req_info->request, true);
 
-		if (draw_field(view, LINE_DEFAULT, key, state->keys_width + 2, ALIGN_RIGHT, FALSE))
-			return TRUE;
+		if (draw_field(view, LINE_DEFAULT, key, state->keys_width + 2, ALIGN_RIGHT, false))
+			return true;
 
-		if (draw_field(view, LINE_HELP_ACTION, enum_name(req_info->name), state->name_width, ALIGN_LEFT, FALSE))
-			return TRUE;
+		if (draw_field(view, LINE_HELP_ACTION, enum_name(req_info->name), state->name_width, ALIGN_LEFT, false))
+			return true;
 
 		draw_text(view, LINE_DEFAULT, req_info->help);
 	}
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -96,18 +96,18 @@ help_grep(struct view *view, struct line *line)
 
 	} else if (help->request > REQ_RUN_REQUESTS) {
 		struct run_request *req = get_run_request(help->request);
-		const char *key = get_keys(keymap, help->request, TRUE);
+		const char *key = get_keys(keymap, help->request, true);
 		char buf[SIZEOF_STR] = "";
 		const char *text[] = { key, buf, NULL };
 
 		if (!argv_to_string(req->argv, buf, sizeof(buf), " "))
-			return FALSE;
+			return false;
 
 		return grep_text(view, text);
 
 	} else {
 		const struct request_info *req_info = help->data.req_info;
-		const char *key = get_keys(keymap, req_info->request, TRUE);
+		const char *key = get_keys(keymap, req_info->request, true);
 		const char *text[] = { key, enum_name(req_info->name), req_info->help, NULL };
 
 		return grep_text(view, text);
@@ -124,12 +124,12 @@ add_help_line(struct view *view, struct help **help_ptr, struct keymap *keymap, 
 {
 	struct help *help;
 
-	if (!add_line_alloc(view, &help, type, 0, FALSE))
-		return FALSE;
+	if (!add_line_alloc(view, &help, type, 0, false))
+		return false;
 	help->keymap = keymap;
 	if (help_ptr)
 		*help_ptr = help;
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -145,20 +145,20 @@ help_keys_visitor(void *data, const char *group, struct keymap *keymap,
 	if (iterator->keymap != keymap) {
 		iterator->keymap = keymap;
 		if (!add_help_line(iterator->view, &help, keymap, LINE_SECTION))
-			return FALSE;
+			return false;
 	}
 
 	if (keymap->hidden)
-		return TRUE;
+		return true;
 
 	if (group) {
 		if (!add_help_line(iterator->view, &help, keymap, LINE_HELP_GROUP))
-			return FALSE;
+			return false;
 		help->data.text = group;
 	}
 
 	if (!add_help_line(view, &help, keymap, LINE_DEFAULT))
-		return FALSE;
+		return false;
 
 	state->keys_width = MAX(state->keys_width, strlen(key));
 	help->request = request;
@@ -168,7 +168,7 @@ help_keys_visitor(void *data, const char *group, struct keymap *keymap,
 		help->data.req_info = req_info;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -180,14 +180,14 @@ help_open(struct view *view, enum open_flags flags)
 	reset_view(view);
 
 	if (!add_help_line(view, &help, NULL, LINE_HEADER))
-		return FALSE;
+		return false;
 	help->data.text = "Quick reference for tig keybindings:";
 
 	if (!add_help_line(view, &help, NULL, LINE_DEFAULT))
-		return FALSE;
+		return false;
 	help->data.text = "";
 
-	return foreach_key(help_keys_visitor, &iterator, TRUE);
+	return foreach_key(help_keys_visitor, &iterator, true);
 }
 
 static enum request

@@ -58,7 +58,7 @@ foreach_ref_visitor(void *data, void *value)
 	const struct ref *ref = value;
 
 	if (!ref->valid)
-		return TRUE;
+		return true;
 	return visitor_data->visitor(visitor_data->data, ref);
 }
 
@@ -102,9 +102,9 @@ ref_list_contains_tag(const char *id)
 
 	foreach_ref_list(ref, id)
 		if (ref_is_tag(ref))
-			return TRUE;
+			return true;
 
-	return FALSE;
+	return false;
 }
 
 struct ref_opt {
@@ -256,7 +256,7 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 			remove_ref_from_id_map(ref);
 	}
 
-	ref->valid = TRUE;
+	ref->valid = true;
 	ref->type = type;
 	string_ncopy_do(ref->id, SIZEOF_REV, id, idlen);
 
@@ -286,7 +286,7 @@ invalidate_refs(void *data, void *ref_)
 
 	ref->valid = 0;
 	ref->next = NULL;
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -300,7 +300,7 @@ cleanup_refs(void *data, void *ref_)
 		opt->changed |= WATCH_REFS;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static enum status_code
@@ -309,7 +309,7 @@ reload_refs(bool force)
 	const char *ls_remote_argv[SIZEOF_ARG] = {
 		"git", "ls-remote", repo.git_dir, NULL
 	};
-	static bool init = FALSE;
+	static bool init = false;
 	struct ref_opt opt = { repo.remote, repo.head, WATCH_NONE };
 	struct repo_info old_repo = repo;
 	enum status_code code;
@@ -317,7 +317,7 @@ reload_refs(bool force)
 	if (!init) {
 		if (!argv_from_env(ls_remote_argv, "TIG_LS_REMOTE"))
 			return ERROR_OUT_OF_MEMORY;
-		init = TRUE;
+		init = true;
 	}
 
 	if (!*repo.git_dir)
@@ -349,12 +349,12 @@ reload_refs(bool force)
 enum status_code
 load_refs(bool force)
 {
-	static bool loaded = FALSE;
+	static bool loaded = false;
 
 	if (!force && loaded)
 		return SUCCESS;
 
-	loaded = TRUE;
+	loaded = true;
 	return reload_refs(force);
 }
 

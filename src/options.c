@@ -83,7 +83,7 @@ mark_option_seen(void *value)
 	struct option_info *option = find_option_info_by_value(value);
 
 	if (option)
-		option->seen = TRUE;
+		option->seen = true;
 }
 
 struct option_info *
@@ -237,14 +237,14 @@ update_options_from_argv(const char *argv[])
 		}
 
 		if (!strcmp(flag, "--no-notes")) {
-			opt_show_notes = FALSE;
+			opt_show_notes = false;
 			mark_option_seen(&opt_show_notes);
 			continue;
 		}
 
 		if (!prefixcmp(flag, "--show-notes") ||
 		    !prefixcmp(flag, "--notes")) {
-			opt_show_notes = TRUE;
+			opt_show_notes = true;
 			string_ncopy(opt_notes_arg, flag, strlen(flag));
 			mark_option_seen(&opt_show_notes);
 			continue;
@@ -335,7 +335,7 @@ static bool
 set_color(int *color, const char *name)
 {
 	if (map_enum(color, color_map, name))
-		return TRUE;
+		return true;
 	/* Git expects a plain int w/o prefix, however, color<int> is
 	 * the preferred Tig color notation.  */
 	if (!prefixcmp(name, "color"))
@@ -477,7 +477,7 @@ static enum status_code
 parse_bool(bool *opt, const char *arg)
 {
 	*opt = (!strcmp(arg, "1") || !strcmp(arg, "true") || !strcmp(arg, "yes"))
-		? TRUE : FALSE;
+		? true : false;
 	if (*opt || !strcmp(arg, "0") || !strcmp(arg, "false") || !strcmp(arg, "no"))
 		return SUCCESS;
 	return error("Non-boolean value treated as false: %s", arg);
@@ -562,7 +562,7 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 		if (parse_bool(option->value, arg) == SUCCESS)
 			return SUCCESS;
 
-		*value = TRUE;
+		*value = true;
 		string_copy(opt_notes_arg, NOTES_EQ_ARG);
 		res = parse_string(opt_notes_arg + STRING_SIZE(NOTES_EQ_ARG), arg,
 				   sizeof(opt_notes_arg) - STRING_SIZE(NOTES_EQ_ARG));
@@ -586,7 +586,7 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 
 	if (!strcmp(option->type, "int")) {
 		if (strstr(name, "title-overflow")) {
-			bool enabled = FALSE;
+			bool enabled = false;
 			int *value = option->value;
 
 			/* We try to parse it as a boolean (and set the
@@ -878,7 +878,7 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 	if (status != SUCCESS) {
 		warn("%s:%zu: %s", config->path, config->lineno,
 		     get_status_message(status));
-		config->errors = TRUE;
+		config->errors = true;
 	}
 
 	/* Always keep going if errors are encountered. */
@@ -888,7 +888,7 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 static enum status_code
 load_option_file(const char *path)
 {
-	struct config_state config = { path, 0, FALSE };
+	struct config_state config = { path, 0, false };
 	struct io io;
 	char buf[SIZEOF_STR];
 
@@ -914,7 +914,7 @@ load_option_file(const char *path)
 	}
 
 	if (io_load_span(&io, " \t", &config.lineno, read_option, &config) != SUCCESS ||
-	    config.errors == TRUE)
+	    config.errors == true)
 		warn("Errors while loading %s.", path);
 	return SUCCESS;
 }
@@ -930,7 +930,7 @@ load_options(void)
 	const bool diff_opts_from_args = !!opt_diff_options;
 	bool custom_tigrc_system = !!tigrc_system;
 
-	opt_file_filter = TRUE;
+	opt_file_filter = true;
 	if (!find_option_info_by_value(&opt_diff_context)->seen)
 		opt_diff_context = -3;
 
@@ -939,12 +939,12 @@ load_options(void)
 
 	if (!*tigrc_system ||
 	    (load_option_file(tigrc_system) == ERROR_FILE_DOES_NOT_EXIST && !custom_tigrc_system)) {
-		struct config_state config = { "<built-in>", 0, FALSE };
+		struct config_state config = { "<built-in>", 0, false };
 		struct io io;
 
 		if (!io_from_string(&io, builtin_config))
 			return error("Failed to get built-in config");
-		if (io_load_span(&io, " \t", &config.lineno, read_option, &config) != SUCCESS || config.errors == TRUE)
+		if (io_load_span(&io, " \t", &config.lineno, read_option, &config) != SUCCESS || config.errors == true)
 			return error("Error in built-in config");
 	}
 
@@ -1050,7 +1050,7 @@ save_option_settings(FILE *file)
 	int i;
 
 	if (!io_fprintf(file, "%s", "\n## Settings\n"))
-		return FALSE;
+		return false;
 
 	for (i = 0; i < ARRAY_SIZE(option_info); i++) {
 		struct option_info *option = &option_info[i];
@@ -1061,10 +1061,10 @@ save_option_settings(FILE *file)
 			continue;
 
 		if (!io_fprintf(file, "\nset %-25s = %s", name, value))
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -1076,10 +1076,10 @@ save_option_keybinding(void *data, const char *group, struct keymap *keymap,
 	FILE *file = data;
 
 	if (group && !io_fprintf(file, "\n# %s", group))
-		return FALSE;
+		return false;
 
 	if (!io_fprintf(file, "\nbind %-10s %-15s ", enum_name(keymap->name), key))
-		return FALSE;
+		return false;
 
 	if (req_info) {
 		return io_fprintf(file, "%s", enum_name(req_info->name));
@@ -1090,11 +1090,11 @@ save_option_keybinding(void *data, const char *group, struct keymap *keymap,
 
 		for (i = 0; run_req->argv[i]; i++) {
 			if (!io_fprintf(file, "%s%s", sep, run_req->argv[i]))
-				return FALSE;
+				return false;
 			sep = " ";
 		}
 
-		return TRUE;
+		return true;
 	}
 }
 
@@ -1102,9 +1102,9 @@ static bool
 save_option_keybindings(FILE *file)
 {
 	if (!io_fprintf(file, "%s", "\n\n## Keybindings\n"))
-		return FALSE;
+		return false;
 
-	return foreach_key(save_option_keybinding, file, FALSE);
+	return foreach_key(save_option_keybinding, file, false);
 }
 
 static bool
@@ -1127,9 +1127,9 @@ save_option_color_attr(FILE *file, int attr)
 	for (i = 0; i < ARRAY_SIZE(attr_map); i++)
 		if ((attr & attr_map[i].value) &&
 		    !io_fprintf(file, " %s", enum_name(attr_map[i].name)))
-			return FALSE;
+			return false;
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -1151,17 +1151,17 @@ save_option_color(void *data, const struct line_rule *rule)
 		    || !save_option_color_name(file, info->fg)
 		    || !save_option_color_name(file, info->bg)
 		    || !save_option_color_attr(file, info->attr))
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
 save_option_colors(FILE *file)
 {
 	if (!io_fprintf(file, "%s", "\n\n## Colors\n"))
-		return FALSE;
+		return false;
 
 	return foreach_line_rule(save_option_color, file);
 }
@@ -1240,11 +1240,11 @@ set_work_tree(const char *value)
 		die("Failed to chdir(%s): %s", value, strerror(errno));
 	if (!getcwd(cwd, sizeof(cwd)))
 		die("Failed to get cwd path: %s", strerror(errno));
-	if (setenv("GIT_WORK_TREE", cwd, TRUE))
+	if (setenv("GIT_WORK_TREE", cwd, true))
 		die("Failed to set GIT_WORK_TREE to '%s'", cwd);
-	if (setenv("GIT_DIR", repo.git_dir, TRUE))
+	if (setenv("GIT_DIR", repo.git_dir, true))
 		die("Failed to set GIT_DIR to '%s'", repo.git_dir);
-	repo.is_inside_work_tree = TRUE;
+	repo.is_inside_work_tree = true;
 }
 
 static struct line_info *
@@ -1252,7 +1252,7 @@ parse_git_color_option(struct line_info *info, char *value)
 {
 	const char *argv[SIZEOF_ARG];
 	int argc = 0;
-	bool first_color = TRUE;
+	bool first_color = true;
 	int i;
 
 	if (!argv_from_string(argv, &argc, value))
@@ -1273,7 +1273,7 @@ parse_git_color_option(struct line_info *info, char *value)
 				info->fg = attr;
 			else
 				info->bg = attr;
-			first_color = FALSE;
+			first_color = false;
 		}
 	}
 	return info;
@@ -1329,10 +1329,10 @@ static enum status_code
 read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
 	if (!strcmp(name, "i18n.commitencoding"))
-		set_encoding(&default_encoding, value, FALSE);
+		set_encoding(&default_encoding, value, false);
 
 	else if (!strcmp(name, "gui.encoding"))
-		set_encoding(&default_encoding, value, TRUE);
+		set_encoding(&default_encoding, value, true);
 
 	else if (!strcmp(name, "core.editor"))
 		string_ncopy(opt_editor, value, valuelen);

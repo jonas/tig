@@ -141,25 +141,25 @@ open_run_request(struct view *view, enum request request)
  * User request switch noodle
  */
 
-static int
+static bool
 view_driver(struct view *view, enum request request)
 {
 	int i;
 
 	if (request == REQ_NONE)
-		return TRUE;
+		return true;
 
 	if (request >= REQ_RUN_REQUESTS) {
 		request = open_run_request(view, request);
 
 		// exit quickly rather than going through view_request and back
 		if (request == REQ_QUIT)
-			return FALSE;
+			return false;
 	}
 
 	request = view_request(view, request);
 	if (request == REQ_NONE)
-		return TRUE;
+		return true;
 
 	switch (request) {
 	case REQ_MOVE_UP:
@@ -274,7 +274,7 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_MAXIMIZE:
 		if (displayed_views() == 2)
-			maximize_view(view, TRUE);
+			maximize_view(view, true);
 		break;
 
 	case REQ_OPTIONS:
@@ -295,16 +295,16 @@ view_driver(struct view *view, enum request request)
 		foreach_view(view, i) {
 			if (view->pipe)
 				report("Stopped loading the %s view", view->name),
-			end_update(view, TRUE);
+			end_update(view, true);
 		}
 		break;
 
 	case REQ_SHOW_VERSION:
 		report("tig-%s (built %s)", TIG_VERSION, __DATE__);
-		return TRUE;
+		return true;
 
 	case REQ_SCREEN_REDRAW:
-		redraw_display(TRUE);
+		redraw_display(true);
 		break;
 
 	case REQ_EDIT:
@@ -320,22 +320,22 @@ view_driver(struct view *view, enum request request)
 		 * view itself. Parents to closed view should never be
 		 * followed. */
 		if (view->prev && view->prev != view) {
-			maximize_view(view->prev, TRUE);
+			maximize_view(view->prev, true);
 			view->prev = view;
 			watch_unregister(&view->watch);
 			break;
 		}
 		/* Fall-through */
 	case REQ_QUIT:
-		return FALSE;
+		return false;
 
 	default:
 		report("Unknown key, press %s for help",
 		       get_view_key(view, REQ_VIEW_HELP));
-		return TRUE;
+		return true;
 	}
 
-	return TRUE;
+	return true;
 }
 
 /*
@@ -427,8 +427,8 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 {
 	enum request request;
 	const char *subcommand;
-	bool seen_dashdash = FALSE;
-	bool rev_parse = TRUE;
+	bool seen_dashdash = false;
+	bool rev_parse = true;
 	const char **filter_argv = NULL;
 	int i;
 
@@ -446,7 +446,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 
 	} else if (!strcmp(subcommand, "grep")) {
 		request = REQ_VIEW_GREP;
-		rev_parse = FALSE;
+		rev_parse = false;
 
 	} else if (!strcmp(subcommand, "show")) {
 		request = REQ_VIEW_DIFF;
@@ -470,7 +470,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 		// stop parsing our options after -- and let rev-parse handle the rest
 		if (!seen_dashdash) {
 			if (!strcmp(opt, "--")) {
-				seen_dashdash = TRUE;
+				seen_dashdash = true;
 				continue;
 
 			} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
@@ -615,7 +615,7 @@ key_combo_handler(struct input *input, struct key *key)
 		return INPUT_CANCEL;
 
 	string_format_from(input->buf, &combo->bufpos, "%s%s",
-			   combo->bufpos ? " " : "Keys: ", get_key_name(key, 1, FALSE));
+			   combo->bufpos ? " " : "Keys: ", get_key_name(key, 1, false));
 	combo->key[combo->keys++] = *key;
 	combo->request = get_keybinding(combo->keymap, combo->key, combo->keys, &matches);
 
@@ -628,7 +628,7 @@ enum request
 read_key_combo(struct keymap *keymap)
 {
 	struct key_combo combo = { REQ_NONE, keymap, 0 };
-	char *value = read_prompt_incremental("", FALSE, FALSE, key_combo_handler, &combo);
+	char *value = read_prompt_incremental("", false, false, key_combo_handler, &combo);
 
 	return value ? combo.request : REQ_NONE;
 }
@@ -676,7 +676,7 @@ main(int argc, const char *argv[])
 			die("Failed to initialize character set conversion");
 	}
 
-	die_if_failed(load_refs(FALSE), "Failed to load refs.");
+	die_if_failed(load_refs(false), "Failed to load refs.");
 
 	init_display();
 

@@ -99,13 +99,13 @@ parse_number(const char **posref, size_t *number, size_t min, size_t max)
 	*posref = NULL;
 	pos = strchr(pos + 1, ' ');
 	if (!pos || !isdigit(pos[1]))
-		return FALSE;
+		return false;
 	*number = atoi(pos + 1);
 	if (*number < min || *number > max)
-		return FALSE;
+		return false;
 
 	*posref = pos;
-	return TRUE;
+	return true;
 }
 
 bool
@@ -114,16 +114,16 @@ parse_blame_header(struct blame_header *header, const char *text, size_t max_lin
 	const char *pos = text + SIZEOF_REV - 2;
 
 	if (strlen(text) <= SIZEOF_REV || pos[1] != ' ')
-		return FALSE;
+		return false;
 
 	string_ncopy(header->id, text, SIZEOF_REV);
 
 	if (!parse_number(&pos, &header->orig_lineno, 1, 9999999) ||
 	    !parse_number(&pos, &header->lineno, 1, max_lineno) ||
 	    !parse_number(&pos, &header->group, 1, max_lineno - header->lineno + 1))
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -165,19 +165,19 @@ parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *lin
 
 	} else if (match_blame_header("previous ", &line)) {
 		if (strlen(line) <= SIZEOF_REV)
-			return FALSE;
+			return false;
 		string_copy_rev(commit->parent_id, line);
 		line += SIZEOF_REV;
 		commit->parent_filename = get_path(line);
 		if (!commit->parent_filename)
-			return TRUE;
+			return true;
 
 	} else if (match_blame_header("filename ", &line)) {
 		commit->filename = get_path(line);
-		return TRUE;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 /*
@@ -196,12 +196,12 @@ parse_ulong(const char **pos_ptr, unsigned long *value, char skip, bool optional
 	start++;
 	*value = strtoul(start, &end, 10);
 	if (end == start)
-		return FALSE;
+		return false;
 
 	while (isspace(*end))
 		end++;
 	*pos_ptr = end;
-	return TRUE;
+	return true;
 }
 
 bool
@@ -216,12 +216,12 @@ parse_chunk_header(struct chunk_header *header, const char *line)
 		 (line = strchr(line + STRING_SIZE("@@@ -"), '-')))
 		/* Stay at that '-'. */ ;
 	else
-		return FALSE;
+		return false;
 
-	return  parse_ulong(&line, &header->old.position, '-', FALSE) &&
-		parse_ulong(&line, &header->old.lines, ',', TRUE) &&
-		parse_ulong(&line, &header->new.position, '+', FALSE) &&
-		parse_ulong(&line, &header->new.lines, ',', FALSE);
+	return  parse_ulong(&line, &header->old.position, '-', false) &&
+		parse_ulong(&line, &header->old.lines, ',', true) &&
+		parse_ulong(&line, &header->new.position, '+', false) &&
+		parse_ulong(&line, &header->new.lines, ',', false);
 }
 
 bool
@@ -232,10 +232,10 @@ parse_chunk_lineno(unsigned long *lineno, const char *chunk, int marker)
 	*lineno = 0;
 
 	if (!parse_chunk_header(&chunk_header, chunk))
-		return FALSE;
+		return false;
 
 	*lineno = marker == '-' ? chunk_header.old.position : chunk_header.new.position;
-	return TRUE;
+	return true;
 }
 
 /*

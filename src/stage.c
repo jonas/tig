@@ -61,13 +61,13 @@ stage_diff_write(struct io *io, struct line *line, struct line *end)
 	while (line < end) {
 		if (!io_write(io, line->data, strlen(line->data)) ||
 		    !io_write(io, "\n", 1))
-			return FALSE;
+			return false;
 		line++;
 		if (stage_diff_done(line, end))
 			break;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -93,14 +93,14 @@ stage_diff_single_write(struct io *io, bool staged,
 		}
 
 		if (data && !io_printf(io, "%s%s\n", prefix, data))
-			return FALSE;
+			return false;
 
 		line++;
 		if (stage_diff_done(line, end))
 			break;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -111,7 +111,7 @@ stage_apply_line(struct io *io, struct line *diff_hdr, struct line *chunk, struc
 	int diff = single->type == LINE_DIFF_DEL ? -1 : 1;
 
 	if (!parse_chunk_header(&header, chunk->data))
-		return FALSE;
+		return false;
 
 	if (staged)
 		header.old.lines = header.new.lines - diff;
@@ -137,7 +137,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *single, bo
 
 	diff_hdr = find_prev_line_by_type(view, chunk, LINE_DIFF_HEADER);
 	if (!diff_hdr)
-		return FALSE;
+		return false;
 
 	if (!revert)
 		apply_argv[argc++] = "--cached";
@@ -146,7 +146,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *single, bo
 	apply_argv[argc++] = "-";
 	apply_argv[argc++] = NULL;
 	if (!io_run(&io, IO_WR, repo.cdup, opt_env, apply_argv))
-		return FALSE;
+		return false;
 
 	if (single != NULL) {
 		if (!stage_apply_line(&io, diff_hdr, chunk, single, view->line + view->lines))
@@ -167,14 +167,14 @@ stage_update_files(struct view *view, enum line_type type)
 	struct line *line;
 
 	if (view->parent != &status_view) {
-		bool updated = FALSE;
+		bool updated = false;
 
 		for (line = view->line; (line = find_next_line_by_type(view, line, LINE_DIFF_CHUNK)); line++) {
-			if (!stage_apply_chunk(view, line, NULL, FALSE)) {
+			if (!stage_apply_chunk(view, line, NULL, false)) {
 				report("Failed to apply chunk");
-				return FALSE;
+				return false;
 			}
-			updated = TRUE;
+			updated = true;
 		}
 
 		return updated;
@@ -194,23 +194,23 @@ stage_update(struct view *view, struct line *line, bool single)
 		chunk = find_prev_line_by_type(view, line, LINE_DIFF_CHUNK);
 
 	if (chunk) {
-		if (!stage_apply_chunk(view, chunk, single ? line : NULL, FALSE)) {
+		if (!stage_apply_chunk(view, chunk, single ? line : NULL, false)) {
 			report("Failed to apply chunk");
-			return FALSE;
+			return false;
 		}
 
 	} else if (!stage_status.status) {
 		if (!stage_update_files(view, stage_line_type)) {
 			report("Failed to update files");
-			return FALSE;
+			return false;
 		}
 
 	} else if (!status_update_file(&stage_status, stage_line_type)) {
 		report("Failed to update file");
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -223,17 +223,17 @@ stage_revert(struct view *view, struct line *line)
 
 	if (chunk) {
 		if (!prompt_yesno("Are you sure you want to revert changes?"))
-			return FALSE;
+			return false;
 
-		if (!stage_apply_chunk(view, chunk, NULL, TRUE)) {
+		if (!stage_apply_chunk(view, chunk, NULL, true)) {
 			report("Failed to revert chunk");
-			return FALSE;
+			return false;
 		}
-		return TRUE;
+		return true;
 
 	} else {
 		return status_revert(stage_status.status ? &stage_status : NULL,
-				     stage_line_type, FALSE);
+				     stage_line_type, false);
 	}
 }
 
@@ -262,14 +262,14 @@ stage_insert_chunk(struct view *view, struct chunk_header *header,
 	if (!to)
 		return from;
 
-	if (!add_line_at(view, after_lineno++, buf, LINE_DIFF_CHUNK, strlen(buf) + 1, FALSE))
+	if (!add_line_at(view, after_lineno++, buf, LINE_DIFF_CHUNK, strlen(buf) + 1, false))
 		return NULL;
 
 	while (from_lineno < to_lineno) {
 		struct line *line = &view->line[from_lineno++];
 
-		if (!add_line_at(view, after_lineno++, line->data, line->type, strlen(line->data) + 1, FALSE))
-			return FALSE;
+		if (!add_line_at(view, after_lineno++, line->data, line->type, strlen(line->data) + 1, false))
+			return false;
 	}
 
 	return view->line + after_lineno;
@@ -370,7 +370,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 {
 	switch (request) {
 	case REQ_STATUS_UPDATE:
-		if (!stage_update(view, line, FALSE))
+		if (!stage_update(view, line, false))
 			return REQ_NONE;
 		break;
 
@@ -393,7 +393,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 			report("Staging is not supported for wrapped lines");
 			return REQ_NONE;
 		}
-		if (!stage_update(view, line, TRUE))
+		if (!stage_update(view, line, true))
 			return REQ_NONE;
 		break;
 
@@ -425,7 +425,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_REFRESH:
 		/* Reload everything(including current branch information) ... */
-		load_refs(TRUE);
+		load_refs(true);
 		break;
 
 	case REQ_VIEW_BLAME:
@@ -505,7 +505,7 @@ stage_open(struct view *view, enum open_flags flags)
 	if (!stage_line_type) {
 		report("No stage content, press %s to open the status view and choose file",
 			get_view_key(view, REQ_VIEW_STATUS));
-		return FALSE;
+		return false;
 	}
 
 	view->encoding = NULL;
@@ -540,7 +540,7 @@ stage_open(struct view *view, enum open_flags flags)
 	if (!status_stage_info(view->ref, stage_line_type, &stage_status)
 		|| !argv_copy(&view->argv, argv)) {
 		report("Failed to open staged view");
-		return FALSE;
+		return false;
 	}
 
 	if (stage_line_type != LINE_STAT_UNTRACKED)
@@ -560,15 +560,15 @@ stage_read(struct view *view, struct buffer *buf)
 		return pager_common_read(view, buf ? buf->data : NULL, LINE_DEFAULT, NULL);
 
 	if (!buf && !view->lines && view->parent) {
-		maximize_view(view->parent, TRUE);
-		return TRUE;
+		maximize_view(view->parent, true);
+		return true;
 	}
 
 	if (!buf)
 		diff_restore_line(view, &state->diff);
 
 	if (buf && diff_common_read(view, buf->data, &state->diff))
-		return TRUE;
+		return true;
 
 	return pager_read(view, buf);
 }

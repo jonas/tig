@@ -42,17 +42,17 @@ goto_view_line(struct view *view, unsigned long offset, unsigned long lineno)
 	if (offset != view->pos.offset || lineno != view->pos.lineno) {
 		view->pos.offset = offset;
 		view->pos.lineno = lineno;
-		return TRUE;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 /* Scrolling backend */
 void
 do_scroll_view(struct view *view, int lines)
 {
-	bool redraw_current_line = FALSE;
+	bool redraw_current_line = false;
 
 	/* The rendering expects the new offset. */
 	view->pos.offset += lines;
@@ -63,10 +63,10 @@ do_scroll_view(struct view *view, int lines)
 	/* Move current line into the view. */
 	if (view->pos.lineno < view->pos.offset) {
 		view->pos.lineno = view->pos.offset;
-		redraw_current_line = TRUE;
+		redraw_current_line = true;
 	} else if (view->pos.lineno >= view->pos.offset + view->height) {
 		view->pos.lineno = view->pos.offset + view->height - 1;
-		redraw_current_line = TRUE;
+		redraw_current_line = true;
 	}
 
 	assert(view->pos.offset <= view->pos.lineno && view->pos.lineno < view->lines);
@@ -79,9 +79,9 @@ do_scroll_view(struct view *view, int lines)
 		int line = lines > 0 ? view->height - lines : 0;
 		int end = line + ABS(lines);
 
-		scrollok(view->win, TRUE);
+		scrollok(view->win, true);
 		wscrl(view->win, lines);
-		scrollok(view->win, FALSE);
+		scrollok(view->win, false);
 
 		while (line < end && draw_view_line(view, line))
 			line++;
@@ -91,7 +91,7 @@ do_scroll_view(struct view *view, int lines)
 		wnoutrefresh(view->win);
 	}
 
-	view->has_scrolled = TRUE;
+	view->has_scrolled = true;
 	report_clear();
 }
 
@@ -281,8 +281,8 @@ grep_text(struct view *view, const char *text[])
 
 	for (i = 0; text[i]; i++)
 		if (*text[i] && !regexec(view->regex, text[i], 1, &pmatch, 0))
-			return TRUE;
-	return FALSE;
+			return true;
+	return false;
 }
 
 void
@@ -317,12 +317,12 @@ find_matches(struct view *view)
 			continue;
 
 		if (!realloc_unsigned_ints(&view->matched_line, view->matched_lines, 1))
-			return FALSE;
+			return false;
 
 		view->matched_line[view->matched_lines++] = lineno;
 	}
 
-	return TRUE;
+	return true;
 }
 
 void
@@ -457,7 +457,7 @@ pop_view_history_state(struct view_history *history, struct position *position, 
 	struct view_state *state = history->stack;
 
 	if (view_history_is_empty(history))
-		return FALSE;
+		return false;
 
 	history->position = state->position;
 	history->stack = state->prev;
@@ -468,7 +468,7 @@ pop_view_history_state(struct view_history *history, struct position *position, 
 		*position = state->position;
 
 	free(state);
-	return TRUE;
+	return true;
 }
 
 void
@@ -520,7 +520,7 @@ restore_view_position(struct view *view)
 	/* FIXME: Changing back to the first line is not detected. */
 	if (check_position(&view->pos)) {
 		clear_position(&view->prev_pos);
-		return FALSE;
+		return false;
 	}
 
 	if (goto_view_line(view, view->prev_pos.offset, view->prev_pos.lineno) &&
@@ -530,7 +530,7 @@ restore_view_position(struct view *view)
 	view->pos.col = view->prev_pos.col;
 	clear_position(&view->prev_pos);
 
-	return TRUE;
+	return true;
 }
 
 void
@@ -576,13 +576,13 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	enum io_flags io_flags = forward_stdin | with_stderr;
 
 	if (view_no_refresh(view, flags))
-		return TRUE;
+		return true;
 
 	if (view->pipe) {
 		if (extra)
 			io_done(view->pipe);
 		else
-			end_update(view, TRUE);
+			end_update(view, true);
 	}
 
 	view->unrefreshable = open_in_pager_mode(flags);
@@ -593,14 +593,14 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 		view->dir = dir;
 		if (!argv_format(view->env, &view->argv, argv, !view->prev, file_filter)) {
 			report("Failed to format %s arguments", view->name);
-			return FALSE;
+			return false;
 		}
 	}
 
 	if (view->argv && view->argv[0] &&
 	    !io_exec(&view->io, IO_RD, view->dir, opt_env, view->argv, io_flags)) {
 		report("Failed to open %s view", view->name);
-		return FALSE;
+		return false;
 	}
 
 	if (open_from_stdin(flags)) {
@@ -611,7 +611,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	if (!extra)
 		setup_update(view, view->ops->id);
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -620,14 +620,14 @@ update_view(struct view *view)
 	/* Clear the view and redraw everything since the tree sorting
 	 * might have rearranged things. */
 	bool redraw = view->lines == 0;
-	bool can_read = TRUE;
+	bool can_read = true;
 	struct encoding *encoding = view->encoding ? view->encoding : default_encoding;
 	struct buffer line;
 
 	if (!view->pipe)
-		return TRUE;
+		return true;
 
-	if (!io_can_read(view->pipe, FALSE)) {
+	if (!io_can_read(view->pipe, false)) {
 		if (view->lines == 0 && view_is_displayed(view)) {
 			time_t secs = time(NULL) - view->start_time;
 
@@ -638,47 +638,47 @@ update_view(struct view *view)
 				view->update_secs = secs;
 			}
 		}
-		return TRUE;
+		return true;
 	}
 
-	for (; io_get(view->pipe, &line, '\n', can_read); can_read = FALSE) {
+	for (; io_get(view->pipe, &line, '\n', can_read); can_read = false) {
 		if (encoding && !encoding_convert(encoding, &line)) {
 			report("Encoding failure");
-			end_update(view, TRUE);
-			return FALSE;
+			end_update(view, true);
+			return false;
 		}
 
 		if (!view->ops->read(view, &line)) {
 			report("Allocation failure");
-			end_update(view, TRUE);
-			return FALSE;
+			end_update(view, true);
+			return false;
 		}
 	}
 
 	if (io_error(view->pipe)) {
 		report("Failed to read: %s", io_strerror(view->pipe));
-		end_update(view, TRUE);
+		end_update(view, true);
 
 	} else if (io_eof(view->pipe)) {
-		end_update(view, FALSE);
+		end_update(view, false);
 	}
 
 	if (restore_view_position(view))
-		redraw = TRUE;
+		redraw = true;
 
 	if (!view_is_displayed(view))
-		return TRUE;
+		return true;
 
 	if (redraw || view->force_redraw)
 		redraw_view_from(view, 0);
 	else
 		redraw_view_dirty(view);
-	view->force_redraw = FALSE;
+	view->force_redraw = false;
 
 	/* Update the title _after_ the redraw so that if the redraw picks up a
 	 * commit reference in view->ref it'll be available here. */
 	update_view_title(view);
-	return TRUE;
+	return true;
 }
 
 void
@@ -760,7 +760,7 @@ maximize_view(struct view *view, bool redraw)
 	display[current_view] = view;
 	resize_display();
 	if (redraw) {
-		redraw_display(FALSE);
+		redraw_display(false);
 		report_clear();
 	}
 }
@@ -784,7 +784,7 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 
 	if (refresh) {
 		if (view->pipe)
-			end_update(view, TRUE);
+			end_update(view, true);
 		if (view->ops->private_size) {
 			if (!view->private) {
 				view->private = calloc(1, view->ops->private_size);
@@ -805,7 +805,7 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 		if (split) {
 			split_view(prev, view);
 		} else {
-			maximize_view(view, FALSE);
+			maximize_view(view, false);
 		}
 	}
 
@@ -855,7 +855,7 @@ void
 open_argv(struct view *prev, struct view *view, const char *argv[], const char *dir, enum open_flags flags)
 {
 	if (view->pipe)
-		end_update(view, TRUE);
+		end_update(view, true);
 	view->dir = dir;
 
 	if (!argv_copy(&view->argv, argv)) {
@@ -961,13 +961,13 @@ sort_view_compare(const void *l1, const void *l2)
 	else if (!sorting_view->ops->get_column_data(sorting_view, line2, &column_data2))
 		return 1;
 
-	cmp = compare_view_column(column, TRUE, line1, &column_data1, line2, &column_data2);
+	cmp = compare_view_column(column, true, line1, &column_data1, line2, &column_data2);
 
 	/* Ensure stable sorting by ordering by the other
 	 * columns if the selected column values are equal. */
 	for (i = 0; !cmp && i < ARRAY_SIZE(view_column_order); i++)
 		if (column != view_column_order[i])
-			cmp = compare_view_column(view_column_order[i], FALSE,
+			cmp = compare_view_column(view_column_order[i], false,
 						  line1, &column_data1,
 						  line2, &column_data2);
 
@@ -995,7 +995,7 @@ sort_view(struct view *view, bool change_field)
 	struct sort_state *state = &view->sort;
 
 	if (change_field) {
-		while (TRUE) {
+		while (true) {
 			state->current = state->current->next
 				? state->current->next : view->columns;
 			if (get_sort_field(view) == VIEW_COLUMN_ID &&
@@ -1007,7 +1007,7 @@ sort_view(struct view *view, bool change_field)
 		state->reverse = !state->reverse;
 	}
 
-	resort_view(view, FALSE);
+	resort_view(view, false);
 }
 
 static const char *
@@ -1083,10 +1083,10 @@ grep_refs(struct view *view, struct view_column *column, const struct ref *ref)
 
 	for (; ref; ref = ref->next) {
 		if (!regexec(view->regex, ref->name, 1, &pmatch, 0))
-			return TRUE;
+			return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 bool
@@ -1097,7 +1097,7 @@ view_column_grep(struct view *view, struct line *line)
 	struct view_column *column;
 
 	if (!ok)
-		return FALSE;
+		return false;
 
 	for (column = view->columns; column; column = column->next) {
 		const char *text[] = {
@@ -1106,29 +1106,29 @@ view_column_grep(struct view *view, struct line *line)
 		};
 
 		if (grep_text(view, text))
-			return TRUE;
+			return true;
 
 		if (column->type == VIEW_COLUMN_COMMIT_TITLE &&
 		    column->opt.commit_title.refs &&
 		    grep_refs(view, column, column_data.refs))
-			return TRUE;
+			return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 bool
 view_column_info_changed(struct view *view, bool update)
 {
 	struct view_column *column;
-	bool changed = FALSE;
+	bool changed = false;
 
 	for (column = view->columns; column; column = column->next) {
 		if (memcmp(&column->prev_opt, &column->opt, sizeof(column->opt))) {
 			if (!update)
-				return TRUE;
+				return true;
 			column->prev_opt = column->opt;
-			changed = TRUE;
+			changed = true;
 		}
 	}
 
@@ -1140,7 +1140,7 @@ view_column_reset(struct view *view)
 {
 	struct view_column *column;
 
-	view_column_info_changed(view, TRUE);
+	view_column_info_changed(view, true);
 	for (column = view->columns; column; column = column->next)
 		column->width = 0;
 }
@@ -1210,12 +1210,12 @@ parse_view_column_config_exprs(struct view_column *column, const char *arg)
 {
 	char buf[SIZEOF_STR] = "";
 	char *pos, *end;
-	bool first = TRUE;
+	bool first = true;
 	enum status_code code = SUCCESS;
 
 	string_ncopy(buf, arg, strlen(arg));
 
-	for (pos = buf, end = pos + strlen(pos); code == SUCCESS && pos <= end; first = FALSE) {
+	for (pos = buf, end = pos + strlen(pos); code == SUCCESS && pos <= end; first = false) {
 		const char *name = NULL;
 		const char *value = NULL;
 
@@ -1448,10 +1448,10 @@ view_column_info_update(struct view *view, struct line *line)
 {
 	struct view_column_data column_data = {0};
 	struct view_column *column;
-	bool changed = FALSE;
+	bool changed = false;
 
 	if (!view->ops->get_column_data(view, line, &column_data))
-		return FALSE;
+		return false;
 
 	for (column = view->columns; column; column = column->next) {
 		const char *text = view_column_text(view, &column_data, column);
@@ -1520,12 +1520,12 @@ view_column_info_update(struct view *view, struct line *line)
 
 		if (width > column->width) {
 			column->width = width;
-			changed = TRUE;
+			changed = true;
 		}
 	}
 
 	if (changed)
-		view->force_redraw = TRUE;
+		view->force_redraw = true;
 	return changed;
 }
 
@@ -1612,13 +1612,13 @@ add_line_alloc_(struct view *view, void **ptr, enum line_type type, size_t data_
 struct line *
 add_line_nodata(struct view *view, enum line_type type)
 {
-	return add_line(view, NULL, type, 0, FALSE);
+	return add_line(view, NULL, type, 0, false);
 }
 
 struct line *
 add_line_text(struct view *view, const char *text, enum line_type type)
 {
-	struct line *line = add_line(view, text, type, strlen(text) + 1, FALSE);
+	struct line *line = add_line(view, text, type, strlen(text) + 1, false);
 
 	if (line && view->ops->column_bits)
 		view_column_info_update(view, line);
@@ -1631,7 +1631,7 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 	char buf[SIZEOF_STR];
 	int retval;
 
-	FORMAT_BUFFER(buf, sizeof(buf), fmt, retval, FALSE);
+	FORMAT_BUFFER(buf, sizeof(buf), fmt, retval, false);
 	return retval >= 0 ? add_line_text(view, buf, type) : NULL;
 }
 
@@ -1648,26 +1648,26 @@ append_line_format(struct view *view, struct line *line, const char *fmt, ...)
 	va_end(args);
 
 	if (fmtlen <= 0)
-		return FALSE;
+		return false;
 
 	text = line->data;
 	textlen = strlen(text);
 
 	text = realloc(text, textlen + fmtlen + 1);
 	if (!text)
-		return FALSE;
+		return false;
 
-	FORMAT_BUFFER(text + textlen, fmtlen + 1, fmt, retval, FALSE);
+	FORMAT_BUFFER(text + textlen, fmtlen + 1, fmt, retval, false);
 	if (retval < 0)
 		text[textlen] = 0;
 
 	line->data = text;
-	line->dirty = TRUE;
+	line->dirty = true;
 
 	if (view->ops->column_bits)
 		view_column_info_update(view, line);
 
-	return TRUE;
+	return true;
 }
 
 /*
