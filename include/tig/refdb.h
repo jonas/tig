@@ -39,8 +39,8 @@ const struct ref *get_ref_head();
 const struct ref *get_ref_list(const char *id);
 const struct ref *get_canonical_ref(const char *id);
 bool ref_list_contains_tag(const char *id);
-int load_refs(bool force);
-int add_ref(const char *id, char *name, const char *remote_name, const char *head);
+enum status_code load_refs(bool force);
+enum status_code add_ref(const char *id, char *name, const char *remote_name, const char *head);
 int ref_compare(const struct ref *ref1, const struct ref *ref2);
 void ref_update_env(struct argv_env *env, const struct ref *ref, bool clear);
 

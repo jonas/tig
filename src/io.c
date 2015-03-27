@@ -570,14 +570,14 @@ io_from_string(struct io *io, const char *str)
 	return TRUE;
 }
 
-static int
+static enum status_code
 io_load_file(struct io *io, const char *separators,
 	     size_t *lineno, io_read_fn read_property, void *data)
 {
 	struct buffer buf;
-	int state = OK;
+	enum status_code state = SUCCESS;
 
-	while (state == OK && io_get_line(io, &buf, '\n', lineno, TRUE)) {
+	while (state == SUCCESS && io_get_line(io, &buf, '\n', lineno, TRUE)) {
 		char *name;
 		char *value;
 		size_t namelen;
@@ -599,14 +599,14 @@ io_load_file(struct io *io, const char *separators,
 		state = read_property(name, namelen, value, valuelen, data);
 	}
 
-	if (state != ERR && io_error(io))
-		state = ERR;
+	if (state == SUCCESS && io_error(io))
+		state = error("%s", io_strerror(io));
 	io_done(io);
 
 	return state;
 }
 
-int
+enum status_code
 io_load_span(struct io *io, const char *separators, size_t *lineno,
 	     io_read_fn read_property, void *data)
 {
@@ -614,21 +614,21 @@ io_load_span(struct io *io, const char *separators, size_t *lineno,
 	return io_load_file(io, separators, lineno, read_property, data);
 }
 
-int
+enum status_code
 io_load(struct io *io, const char *separators,
 	io_read_fn read_property, void *data)
 {
 	return io_load_file(io, separators, NULL, read_property, data);
 }
 
-int
+enum status_code
 io_run_load(const char **argv, const char *separators,
 	    io_read_fn read_property, void *data)
 {
 	struct io io;
 
 	if (!io_run(&io, IO_RD, NULL, NULL, argv))
-		return ERR;
+		return error("Failed to open IO");
 	return io_load(&io, separators, read_property, data);
 }
 

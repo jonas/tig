@@ -28,7 +28,7 @@ struct repo_info_state {
 	const char **argv;
 };
 
-static int
+static enum status_code
 read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
 	struct repo_info_state *state = data;
@@ -72,10 +72,10 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 		state->argv++;
 	}
 
-	return OK;
+	return SUCCESS;
 }
 
-static int
+static enum status_code
 reload_repo_info(const char **rev_parse_argv)
 {
 	struct repo_info_state state = { rev_parse_argv + 2 };
@@ -83,7 +83,7 @@ reload_repo_info(const char **rev_parse_argv)
 	return io_run_load(rev_parse_argv, "=", read_repo_info, &state);
 }
 
-int
+enum status_code
 load_repo_info(void)
 {
 	const char *rev_parse_argv[] = {
@@ -97,7 +97,7 @@ load_repo_info(void)
 	return reload_repo_info(rev_parse_argv);
 }
 
-int
+enum status_code
 load_repo_head(void)
 {
 	const char *rev_parse_argv[] = {

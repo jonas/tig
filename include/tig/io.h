@@ -68,7 +68,7 @@ struct io {
 	int status:8;		/* Status exit code. */
 };
 
-typedef int (*io_read_fn)(char *, size_t, char *, size_t, void *data);
+typedef enum status_code (*io_read_fn)(char *, size_t, char *, size_t, void *data);
 
 bool io_open(struct io *io, const char *fmt, ...) PRINTF_LIKE(2, 3);
 bool io_from_string(struct io *io, const char *str);
@@ -89,11 +89,11 @@ bool io_write(struct io *io, const void *buf, size_t bufsize);
 bool io_printf(struct io *io, const char *fmt, ...) PRINTF_LIKE(2, 3);
 bool io_read_buf(struct io *io, char buf[], size_t bufsize);
 bool io_run_buf(const char **argv, char buf[], size_t bufsize);
-int io_load(struct io *io, const char *separators,
+enum status_code io_load(struct io *io, const char *separators,
 	    io_read_fn read_property, void *data);
-int io_load_span(struct io *io, const char *separators,
+enum status_code io_load_span(struct io *io, const char *separators,
 	     size_t *lineno, io_read_fn read_property, void *data);
-int io_run_load(const char **argv, const char *separators,
+enum status_code io_run_load(const char **argv, const char *separators,
 		io_read_fn read_property, void *data);
 char *io_memchr(struct buffer *buf, char *data, int c);
 

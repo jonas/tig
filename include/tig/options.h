@@ -202,8 +202,8 @@ struct option_info *find_column_option_info(enum view_column_type type, union vi
 enum status_code parse_int(int *opt, const char *arg, int min, int max);
 enum status_code parse_step(double *opt, const char *arg);
 enum status_code set_option(const char *opt, int argc, const char *argv[]);
-int load_options(void);
-int load_git_config(void);
+enum status_code load_options(void);
+enum status_code load_git_config(void);
 enum status_code save_options(const char *path);
 const char *format_option_value(const struct option_info *option, char buf[], size_t bufsize);
 

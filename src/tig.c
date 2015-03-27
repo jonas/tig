@@ -366,12 +366,12 @@ usage(const char *message)
 	die("%s\n\n%s", message, usage_string);
 }
 
-static int
+static enum status_code
 read_filter_args(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
 	const char ***filter_args = data;
 
-	return argv_append(filter_args, name) ? OK : ERR;
+	return argv_append(filter_args, name) ? SUCCESS : ERROR_OUT_OF_MEMORY;
 }
 
 static void
@@ -382,7 +382,7 @@ filter_rev_parse(const char ***args, const char *arg1, const char *arg2, const c
 
 	if (!argv_append_array(&all_argv, rev_parse_argv) ||
 	    !argv_append_array(&all_argv, argv) ||
-	    io_run_load(all_argv, "\n", read_filter_args, args) == ERR)
+	    io_run_load(all_argv, "\n", read_filter_args, args) != SUCCESS)
 		die("Failed to split arguments");
 	argv_free(all_argv);
 	free(all_argv);
@@ -633,6 +633,13 @@ read_key_combo(struct keymap *keymap)
 	return value ? combo.request : REQ_NONE;
 }
 
+static inline void
+die_if_failed(enum status_code code, const char *msg)
+{
+	if (code != SUCCESS)
+		die("%s: %s", msg, get_status_message(code));
+}
+
 int
 main(int argc, const char *argv[])
 {
@@ -650,14 +657,9 @@ main(int argc, const char *argv[])
 		codeset = nl_langinfo(CODESET);
 	}
 
-	if (load_repo_info() == ERR)
-		die("Failed to load repo info.");
-
-	if (load_options() == ERR)
-		die("Failed to load user config.");
-
-	if (load_git_config() == ERR)
-		die("Failed to load repo config.");
+	die_if_failed(load_repo_info(), "Failed to load repo info.");
+	die_if_failed(load_options(), "Failed to load user config.");
+	die_if_failed(load_git_config(), "Failed to load repo config.");
 
 	/* Require a git repository unless when running in pager mode. */
 	if (!repo.git_dir[0] && request != REQ_VIEW_PAGER)
@@ -674,8 +676,7 @@ main(int argc, const char *argv[])
 			die("Failed to initialize character set conversion");
 	}
 
-	if (load_refs(FALSE) == ERR)
-		die("Failed to load refs.");
+	die_if_failed(load_refs(FALSE), "Failed to load refs.");
 
 	init_display();
 

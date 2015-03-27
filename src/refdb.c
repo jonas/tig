@@ -113,13 +113,13 @@ struct ref_opt {
 	enum watch_trigger changed;
 };
 
-static int
+static enum status_code
 add_ref_to_id_map(struct ref *ref)
 {
 	void **ref_lists_slot = string_map_put_to(&refs_by_id, ref->id);
 
 	if (!ref_lists_slot)
-		return OK;
+		return SUCCESS;
 
 	/* First remove the ref from the ID list, to ensure that it is
 	 * reinserted at the right position if the type changes. */
@@ -153,7 +153,7 @@ add_ref_to_id_map(struct ref *ref)
 		list->next = ref;
 	}
 
-	return OK;
+	return SUCCESS;
 }
 
 static void
@@ -179,7 +179,7 @@ remove_ref_from_id_map(struct ref *ref)
 		string_map_remove(&refs_by_id, ref->id);
 }
 
-static int
+static enum status_code
 add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref_opt *opt)
 {
 	struct ref *ref = NULL;
@@ -223,7 +223,7 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		/* Handle the case of HEAD not being a symbolic ref,
 		 * i.e. during a rebase. */
 		if (*opt->head)
-			return OK;
+			return SUCCESS;
 		type = REFERENCE_HEAD;
 	}
 
@@ -237,14 +237,14 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	} else {
 		ref_slot = string_map_put_to(&refs_by_name, name);
 		if (!ref_slot)
-			return ERR;
+			return ERROR_OUT_OF_MEMORY;
 		ref = *ref_slot;
 	}
 
 	if (!ref) {
 		ref = calloc(1, sizeof(*ref) + namelen);
 		if (!ref)
-			return ERR;
+			return ERROR_OUT_OF_MEMORY;
 		strncpy(ref->name, name, namelen);
 		if (ref_slot)
 			*ref_slot = ref;
@@ -273,7 +273,7 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	return add_ref_to_id_map(ref);
 }
 
-static int
+static enum status_code
 read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 {
 	return add_to_refs(id, idlen, name, namelen, data);
@@ -303,7 +303,7 @@ cleanup_refs(void *data, void *ref_)
 	return TRUE;
 }
 
-static int
+static enum status_code
 reload_refs(bool force)
 {
 	const char *ls_remote_argv[SIZEOF_ARG] = {
@@ -312,15 +312,16 @@ reload_refs(bool force)
 	static bool init = FALSE;
 	struct ref_opt opt = { repo.remote, repo.head, WATCH_NONE };
 	struct repo_info old_repo = repo;
+	enum status_code code;
 
 	if (!init) {
 		if (!argv_from_env(ls_remote_argv, "TIG_LS_REMOTE"))
-			return ERR;
+			return ERROR_OUT_OF_MEMORY;
 		init = TRUE;
 	}
 
 	if (!*repo.git_dir)
-		return OK;
+		return SUCCESS;
 
 	if (force || !*repo.head)
 		load_repo_head();
@@ -333,30 +334,31 @@ reload_refs(bool force)
 	string_map_clear(&refs_by_id);
 	string_map_foreach(&refs_by_name, invalidate_refs, NULL);
 
-	if (io_run_load(ls_remote_argv, "\t", read_ref, &opt) == ERR)
-		return ERR;
+	code = io_run_load(ls_remote_argv, "\t", read_ref, &opt);
+	if (code != SUCCESS)
+		return code;
 
 	string_map_foreach(&refs_by_name, cleanup_refs, &opt);
 
 	if (opt.changed)
 		watch_apply(NULL, opt.changed);
 
-	return OK;
+	return SUCCESS;
 }
 
-int
+enum status_code
 load_refs(bool force)
 {
 	static bool loaded = FALSE;
 
 	if (!force && loaded)
-		return OK;
+		return SUCCESS;
 
 	loaded = TRUE;
 	return reload_refs(force);
 }
 
-int
+enum status_code
 add_ref(const char *id, char *name, const char *remote_name, const char *head)
 {
 	struct ref_opt opt = { remote_name, head };

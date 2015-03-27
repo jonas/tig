@@ -28,8 +28,8 @@ struct repo_info {
 
 extern struct repo_info repo;
 
-int load_repo_info(void);
-int load_repo_head(void);
+enum status_code load_repo_info(void);
+enum status_code load_repo_head(void);
 
 struct index_diff {
 	int staged;

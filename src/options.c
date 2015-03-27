@@ -846,7 +846,7 @@ struct config_state {
 	bool errors;
 };
 
-static int
+static enum status_code
 read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 {
 	struct config_state *config = data;
@@ -856,7 +856,7 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 	 * only ensure opt and value are split at first " \t". */
 	optlen = strcspn(opt, "#");
 	if (optlen == 0)
-		return OK;
+		return SUCCESS;
 
 	if (opt[optlen] == 0) {
 		/* Look for comment endings in the value. */
@@ -882,7 +882,7 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 	}
 
 	/* Always keep going if errors are encountered. */
-	return OK;
+	return SUCCESS;
 }
 
 static enum status_code
@@ -910,10 +910,10 @@ load_option_file(const char *path)
 		 * system tigrc is detected properly. */
 		if (io_error(&io) == ENOENT)
 			return ERROR_FILE_DOES_NOT_EXIST;
-		return error("Error loading file %s: %s", path, strerror(io_error(&io)));
+		return error("Error loading file %s: %s", path, io_strerror(&io));
 	}
 
-	if (io_load_span(&io, " \t", &config.lineno, read_option, &config) == ERR ||
+	if (io_load_span(&io, " \t", &config.lineno, read_option, &config) != SUCCESS ||
 	    config.errors == TRUE)
 		warn("Errors while loading %s.", path);
 	return SUCCESS;
@@ -921,7 +921,7 @@ load_option_file(const char *path)
 
 extern const char *builtin_config;
 
-int
+enum status_code
 load_options(void)
 {
 	const char *tigrc_user = getenv("TIGRC_USER");
@@ -943,9 +943,9 @@ load_options(void)
 		struct io io;
 
 		if (!io_from_string(&io, builtin_config))
-			die("Failed to get built-in config");
-		if (io_load_span(&io, " \t", &config.lineno, read_option, &config) == ERR || config.errors == TRUE)
-			die("Error in built-in config");
+			return error("Failed to get built-in config");
+		if (io_load_span(&io, " \t", &config.lineno, read_option, &config) != SUCCESS || config.errors == TRUE)
+			return error("Error in built-in config");
 	}
 
 	if (!tigrc_user)
@@ -959,12 +959,12 @@ load_options(void)
 
 		if (!string_format(buf, "%s", tig_diff_opts) ||
 		    !argv_from_string(diff_opts, &argc, buf))
-			die("TIG_DIFF_OPTS contains too many arguments");
+			return error("TIG_DIFF_OPTS contains too many arguments");
 		else if (!argv_copy(&opt_diff_options, diff_opts))
-			die("Failed to format TIG_DIFF_OPTS arguments");
+			return error("Failed to format TIG_DIFF_OPTS arguments");
 	}
 
-	return OK;
+	return SUCCESS;
 }
 
 const char *
@@ -1325,7 +1325,7 @@ set_encoding(struct encoding **encoding_ref, const char *arg, bool priority)
 		encoding_arg[0] = 0;
 }
 
-static int
+static enum status_code
 read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
 	if (!strcmp(name, "i18n.commitencoding"))
@@ -1368,10 +1368,10 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 			argv_append(&opt_log_options, "--pretty=medium");
 	}
 
-	return OK;
+	return SUCCESS;
 }
 
-int
+enum status_code
 load_git_config(void)
 {
 	const char *config_list_argv[] = { "git", "config", "--list", NULL };
