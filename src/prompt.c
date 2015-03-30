@@ -181,6 +181,7 @@ static void
 readline_display(void)
 {
 	update_status("%s%s", rl_display_prompt, rl_line_buffer);
+	wmove(status_win, 0, strlen(rl_display_prompt) + rl_point);
 	wrefresh(status_win);
 }
 
