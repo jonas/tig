@@ -525,7 +525,8 @@ Keymaps::
 
 Valid keymaps are: *main*, *diff*, *log*, *help*, *pager*, *status*, *stage*,
 *tree*, *blob*, *blame*, *refs*, *stash*, *grep* and *generic*. Use *generic*
-to set key mapping in all keymaps.
+to set key mapping in all keymaps. Use *search* to define keys for navigating
+search results during search.
 
 Key values::
 

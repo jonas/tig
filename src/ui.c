@@ -36,6 +36,7 @@ struct file_finder {
 	size_t lines;
 	struct position pos;
 
+	struct keymap *keymap;
 	const char **search;
 	size_t searchlen;
 };
@@ -244,26 +245,27 @@ file_finder_input_handler(struct input *input, struct key *key)
 	if (status != INPUT_SKIP)
 		return status;
 
-	switch (key_to_value(key)) {
-	case 0:
-		argv_append(&finder->search, key->data.bytes);
-		finder->searchlen++;
-		file_finder_update(finder);
-		file_finder_move(finder, 0);
-		file_finder_draw(finder);
-		return INPUT_OK;
-
-	case KEY_UP:
+	switch (get_keybinding(finder->keymap, key, 1, NULL)) {
+	case REQ_FIND_PREV:
 		file_finder_move(finder, -1);
 		file_finder_draw(finder);
 		return INPUT_SKIP;
 
-	case KEY_DOWN:
+	case REQ_FIND_NEXT:
 		file_finder_move(finder, +1);
 		file_finder_draw(finder);
 		return INPUT_SKIP;
 
 	default:
+		if (key_to_value(key) == 0) {
+			argv_append(&finder->search, key->data.bytes);
+			finder->searchlen++;
+			file_finder_update(finder);
+			file_finder_move(finder, 0);
+			file_finder_draw(finder);
+			return INPUT_OK;
+		}
+
 		/* Catch all non-multibyte keys. */
 		return INPUT_SKIP;
 	}
@@ -288,6 +290,7 @@ open_file_finder(const char *commit)
 		return FALSE;
 	}
 
+	finder.keymap = get_keymap("search", STRING_SIZE("search")),
 	file_finder_update(&finder);
 	file_finder_draw(&finder);
 	if (read_prompt_incremental("Find file: ", FALSE, file_finder_input_handler, &finder))

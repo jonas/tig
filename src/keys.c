@@ -25,12 +25,16 @@ struct keybinding {
 
 static struct keymap keymaps[] = {
 	{ "generic" },
+	{ "search" },
 #define VIEW_KEYMAP(id, name) { #name }
 	VIEW_INFO(VIEW_KEYMAP)
 };
 
 static struct keymap *generic_keymap = keymaps;
 #define is_generic_keymap(keymap) ((keymap) == generic_keymap)
+
+static struct keymap *search_keymap = keymaps + 1;
+#define is_search_keymap(keymap) ((keymap) == search_keymap)
 
 struct keymap *
 get_keymap(const char *name, size_t namelen)
@@ -143,6 +147,9 @@ get_keybinding(const struct keymap *keymap, const struct key key[], size_t keys,
 			if (keymap->data[i]->keys == keys)
 				request = keymap->data[i]->request;
 		}
+
+	if (is_search_keymap(keymap))
+		return request;
 
 	for (i = 0; i < generic_keymap->size; i++)
 		if (keybinding_matches(generic_keymap->data[i], key, keys, NULL)) {
