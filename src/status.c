@@ -396,6 +396,8 @@ status_exists(struct view *view, struct status *status, enum line_type type)
 {
 	unsigned long lineno;
 
+	refresh_view(view);
+
 	for (lineno = 0; lineno < view->lines; lineno++) {
 		struct line *line = &view->line[lineno];
 		struct status *pos = line->data;

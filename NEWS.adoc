@@ -14,6 +14,7 @@ Bug fixes:
 
  - Fix display of multiple references per commit. (GH #390, #391)
  - Sync the prompt's cursor position with readline's internal position. (#396)
+ - Keep unstaged changes view open after an staging command. (#399)
 
 tig-2.1
 -------
