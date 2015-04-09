@@ -33,14 +33,19 @@ prompt_input(const char *prompt, struct input *input)
 	struct key key;
 	size_t promptlen = strlen(prompt);
 	int pos = 0, chars = 0;
+	int last_buf_length = promptlen ? -1 : promptlen;
 
-	input->buf[pos] = 0;
+	input->buf[0] = 0;
 
 	while (status == INPUT_OK || status == INPUT_SKIP) {
+		int buf_length = strlen(input->buf) + promptlen;
+		int offset = pos || buf_length != last_buf_length ? pos + promptlen : -1;
 
-		update_status("%s%.*s", prompt, pos, input->buf);
+		last_buf_length = buf_length;
+		if (offset >= 0)
+			update_status("%s%.*s", prompt, pos, input->buf);
 
-		if (get_input(pos + promptlen, &key, FALSE) == OK) {
+		if (get_input(offset, &key) == OK) {
 			int len = strlen(key.data.bytes);
 
 			if (pos + len >= sizeof(input->buf)) {
@@ -92,13 +97,10 @@ prompt_input(const char *prompt, struct input *input)
 	return input->buf;
 }
 
-static enum input_status
+enum input_status
 prompt_default_handler(struct input *input, struct key *key)
 {
-	if (key->modifiers.multibytes)
-		return INPUT_SKIP;
-
-	switch (key->data.value) {
+	switch (key_to_value(key)) {
 	case KEY_RETURN:
 	case KEY_ENTER:
 	case '\n':
@@ -179,6 +181,7 @@ static void
 readline_display(void)
 {
 	update_status("%s%s", rl_display_prompt, rl_line_buffer);
+	wmove(status_win, 0, strlen(rl_display_prompt) + rl_point);
 	wrefresh(status_win);
 }
 
@@ -498,7 +501,7 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 		update_status("%s (%d of %d) %s%s", prompt, *selected + 1, size,
 			      item->hotkey ? hotkey : "", item->text);
 
-		switch (get_input(COLS - 1, &key, FALSE)) {
+		switch (get_input(COLS - 1, &key)) {
 		case KEY_RETURN:
 		case KEY_ENTER:
 		case '\n':
@@ -864,8 +867,8 @@ run_prompt_command(struct view *view, const char *argv[])
 		/* Try :<key> */
 		key.modifiers.multibytes = 1;
 		string_ncopy(key.data.bytes, cmd, cmdlen);
-		request = get_keybinding(view->keymap, &key, 1);
-		if (request != REQ_NONE)
+		request = get_keybinding(view->keymap, &key, 1, NULL);
+		if (request != REQ_UNKNOWN)
 			return request;
 
 		/* Try :<command> */

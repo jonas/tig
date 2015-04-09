@@ -17,7 +17,7 @@
 #include "tig/tig.h"
 #include "tig/keys.h"
 
-int get_input(int prompt_position, struct key *key, bool modifiers);
+int get_input(int prompt_position, struct key *key);
 int get_input_char(void);
 
 extern WINDOW *status_win;

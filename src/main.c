@@ -31,6 +31,23 @@
 
 DEFINE_ALLOCATOR(realloc_reflogs, char *, 32)
 
+bool
+main_status_exists(struct view *view, enum line_type type)
+{
+	struct main_state *state;
+
+	refresh_view(view);
+
+	state = view->private;
+	state->goto_line_type = type;
+	if (type == LINE_STAT_STAGED && state->add_changes_staged)
+		return true;
+	if (type == LINE_STAT_UNSTAGED && state->add_changes_unstaged)
+		return true;
+
+	return false;
+}
+
 static bool main_add_changes(struct view *view, struct main_state *state, const char *parent);
 
 static void
@@ -117,6 +134,9 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 
 	if (!main_add_commit(view, type, &commit, title, TRUE))
 		return FALSE;
+
+	if (state->goto_line_type == type)
+		select_view_line(view, view->lines - 1);
 
 	return TRUE;
 }

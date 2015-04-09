@@ -13,6 +13,12 @@ steps '
 	:enter
 	:save-display main-with-unstaged-split.screen
 
+	:/b.c CHANGED
+	:status-update
+	:status-update
+	:0
+	:save-display main-with-unstaged-and-staged-split.screen
+
 	:status-update
 	:save-display main-with-staged.screen
 
@@ -79,6 +85,24 @@ $YYY_MM_DD_HH_MM Unknown    o Unstaged changes
 diff --git a/.j b/.j                                                            
 index e697dfd..9d8ef3d 100644                                                   
 [stage] Press '<Enter>' to jump to file diff - line 1 of 107                  8%
+EOF
+
+assert_equals 'main-with-unstaged-and-staged-split.screen' <<EOF
+$YYY_MM_DD_HH_MM Unknown    o Unstaged changes                                  
+$YYY_MM_DD_HH_MM Unknown    o Staged changes                                    
+2009-02-13 23:31 A. U. Thor I [master] Initial commit                           
+                                                                                
+[main] Unstaged changes                                                     100%
+ .j  | 6 ++----                                                                 
+ a   | 6 ++----                                                                 
+ e/f | 6 ++----                                                                 
+ g h | 6 ++----                                                                 
+ 4 files changed, 8 insertions(+), 16 deletions(-)                              
+                                                                                
+diff --git a/.j b/.j                                                            
+index e697dfd..9d8ef3d 100644                                                   
+--- a/.j                                                                        
+[stage] Press '<Enter>' to jump to file diff - line 1 of 86                  10%
 EOF
 
 assert_equals 'main-with-staged.screen' <<EOF

@@ -33,6 +33,7 @@ struct main_state {
 	size_t reflogs;
 	int reflog_width;
 	char reflogmsg[SIZEOF_STR / 2];
+	enum line_type goto_line_type;
 	bool in_header;
 	bool with_graph;
 	bool first_parent;
@@ -45,6 +46,7 @@ bool main_read(struct view *view, struct buffer *buf);
 enum request main_request(struct view *view, enum request request, struct line *line);
 void main_select(struct view *view, struct line *line);
 void main_done(struct view *view);
+bool main_status_exists(struct view *view, enum line_type type);
 
 extern struct view main_view;
 

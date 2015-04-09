@@ -2,7 +2,7 @@
 
 # The last tagged version. Can be overridden either by the version from
 # git or from the value of the DIST_VERSION environment variable.
-VERSION	= 2.1
+VERSION	= 2.1.1
 
 all:
 
@@ -69,8 +69,11 @@ ASCIIDOC_FLAGS = -aversion=$(VERSION) -asysconfdir=$(sysconfdir) -f doc/asciidoc
 XMLTO ?= xmlto
 DOCBOOK2PDF ?= docbook2pdf
 
+LCOV ?= lcov
+GENHTML ?= genhtml
+
 all: $(EXE) $(TOOLS)
-all-debug: $(EXE) $(TOOLS)
+all-debug: all
 all-debug: CFLAGS += $(DFLAGS)
 doc: $(ALLDOC)
 doc-man: $(MANDOC)
@@ -109,9 +112,10 @@ install-release-doc-html:
 install-doc: install-doc-man install-doc-html
 install-release-doc: install-release-doc-man install-release-doc-html
 
-clean: clean-test
-	$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5 .deps
-	$(RM) $(EXE) $(TOOLS) $(OBJS) core doc/*.xml src/builtin-config.c
+clean: clean-test clean-coverage
+	$(Q)$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5 .deps
+	$(Q)$(RM) $(EXE) $(TOOLS) $(OBJS) core doc/*.xml src/builtin-config.c
+	$(Q)$(RM) $(OBJS:%.o=%.gcda) $(OBJS:%.o=%.gcno)
 
 distclean: clean
 	$(RM) -r doc/manual.html-chunked autom4te.cache release-docs
@@ -159,6 +163,27 @@ dist: configure tig.spec
 rpm: dist
 	rpmbuild -ta $(TARNAME).tar.gz
 
+COVERAGE_CFLAGS ?= -fprofile-arcs -ftest-coverage
+all-coverage: all
+all-coverage: CFLAGS += $(COVERAGE_CFLAGS)
+
+COVERAGE_DIR 	?= test/coverage
+
+clean-coverage:
+	@$(RM) -rf $(COVERAGE_DIR)
+
+reset-coverage: clean-coverage
+	$(LCOV) --reset-counters
+
+test-coverage: clean-coverage all-coverage test $(COVERAGE_DIR)/index.html
+
+$(COVERAGE_DIR)/trace:
+	@mkdir -p $(COVERAGE_DIR)
+	$(QUIET_LCOV)$(LCOV) $(Q:@=--quiet) --capture --no-external --directory . --output-file $@
+
+$(COVERAGE_DIR)/index.html: $(COVERAGE_DIR)/trace
+	$(QUIET_GENHTML)$(GENHTML) $(Q:@=--quiet) --output-directory $(COVERAGE_DIR) $<
+
 TESTS  = $(sort $(shell find test -type f -name '*-test'))
 
 clean-test:
@@ -178,8 +203,11 @@ $(TESTS): $(EXE) test/tools/test-graph
 configure: configure.ac acinclude.m4 tools/*.m4
 	./autogen.sh
 
-.PHONY: all all-debug doc doc-man doc-html install install-doc $(TESTS) \
-	install-doc-man install-doc-html clean spell-check dist rpm test
+.PHONY: all all-coverage all-debug clean clean-coverage clean-test doc \
+	doc-man doc-html dist distclean install install-doc \
+	install-doc-man install-doc-html install-release-doc-html \
+	install-release-doc-man rpm spell-check strip test \
+	test-coverage update-docs update-headers $(TESTS)
 
 ifdef NO_MKSTEMPS
 COMPAT_CPPFLAGS += -DNO_MKSTEMPS
@@ -236,6 +264,7 @@ TIG_OBJS = \
 	src/main.o \
 	src/stash.o \
 	src/grep.o \
+	src/ui.o \
 	$(GRAPH_OBJS) \
 	$(COMPAT_OBJS)
 
@@ -338,6 +367,8 @@ QUIET_INSTALL		= $(Q:@=@printf  '   INSTALL  ';)
 QUIET_INSTALL_EACH	= $(Q:@=printf   '   INSTALL  ';)
 QUIET_TEST		= $(Q:@=@echo    '      TEST  '$@;)
 QUIET_SUMMARY		= $(Q:@=@printf  '   SUMMARY  ';)
+QUIET_LCOV		= $(Q:@=@echo    '      LCOV  '$@;)
+QUIET_GENHTML		= $(Q:@=@echo    '   GENHTML  '$@;)
 
 export V
 endif

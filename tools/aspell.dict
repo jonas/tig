@@ -1,4 +1,4 @@
-personal_ws-1.1 en 241 
+personal_ws-1.1 en 249 
 CJK
 del
 Ctrl
@@ -14,6 +14,7 @@ AuthorDate
 TMPDIR
 tig
 dir
+readline's
 keybinding
 unstage
 acked
@@ -50,6 +51,7 @@ lrwxrwxrwx
 backend
 Esc
 doctype
+abspath
 gitlink
 colorN
 nowarn
@@ -87,6 +89,7 @@ xhtml
 gitattributes
 aterm
 mkstemps
+logargs
 iconv
 sysconfdir
 Scrool
@@ -113,6 +116,7 @@ reflogmsg
 Fonseca
 tigrc
 ifdef
+Gitter
 printf
 XSL
 newwin
@@ -153,6 +157,7 @@ nav
 Fullwidth
 rebasing
 Git's
+mainargs
 tig's
 dirs
 ld
@@ -192,8 +197,8 @@ Baudis
 substring
 PID
 tz
-docbook
 DocBook
+docbook
 submodule
 strndup
 startup
@@ -207,9 +212,11 @@ repo
 NUL
 worktree
 unmerged
+blameargs
 GitHub
 Yy
 fgcolor
+ScrFwd
 localtime
 filename
 AIX
@@ -236,6 +243,7 @@ sha
 TODO
 cmdline
 Jamo
+unrepresentable
 FIXME
 whitespace
 subtrees

@@ -237,6 +237,13 @@ bind generic	/	search
 bind generic	?	search-back
 bind generic	n	find-next
 bind generic	N	find-prev
+# Navigation keys used while searching
+bind search	<Down>	find-next
+bind search	<C-N>	find-next
+bind search	<C-J>	find-next
+bind search	<Up>	find-prev
+bind search	<C-P>	find-prev
+bind search	<C-K>	find-prev
 
 # Option manipulation
 bind generic	o	options			# Open the options menu

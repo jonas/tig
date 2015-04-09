@@ -23,6 +23,7 @@
 #include "tig/pager.h"
 #include "tig/diff.h"
 #include "tig/status.h"
+#include "tig/main.h"
 #include "tig/stage.h"
 
 static struct status stage_status;
@@ -341,15 +342,14 @@ static bool
 stage_exists(struct view *view, struct status *status, enum line_type type)
 {
 	struct view *parent = view->parent;
-	struct line *line;
 
 	if (parent == &status_view)
 		return status_exists(parent, status, type);
 
-	line = find_next_line_by_type(parent, parent->line, type);
-	if (line)
-		select_view_line(parent, line - parent->line);
-	return line != NULL;
+	if (parent == &main_view)
+		return main_status_exists(parent, type);
+
+	return false;
 }
 
 static enum request
@@ -439,14 +439,10 @@ stage_request(struct view *view, enum request request, struct line *line)
 		return request;
 	}
 
-	if (view->parent) {
-		refresh_view(view->parent);
-
-		/* Check whether the staged entry still exists, and close the
-		 * stage view if it doesn't. */
-		if (!stage_exists(view, &stage_status, stage_line_type))
-			return REQ_VIEW_CLOSE;
-	}
+	/* Check whether the staged entry still exists, and close the
+	 * stage view if it doesn't. */
+	if (view->parent && !stage_exists(view, &stage_status, stage_line_type))
+		return REQ_VIEW_CLOSE;
 
 	refresh_view(view);
 

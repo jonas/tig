@@ -87,11 +87,9 @@ tig warning: ~/.tigrc:10: show-refs is obsolete; see tigrc(5) for how to set the
 tig warning: ~/.tigrc:11: show-id is obsolete; see tigrc(5) for how to set the id column option
 tig warning: ~/.tigrc:12: title-overflow is obsolete; see tigrc(5) for how to set the commit-title and text column option
 tig warning: ~/.tigrc:13: read-git-colors has been obsoleted by the git-colors option
-tig warning: ~/.tigrc:22: Except for <Esc> combos only one key is allowed in key combos: Enter
 tig warning: ~/.tigrc:23: Missing '>' from key mapping: <
 tig warning: ~/.tigrc:24: Control key mapping must now use '<Ctrl-N>' instead of '^N'
 tig warning: ~/.tigrc:25: Escape key combo must now use '<Esc>v' instead of '^[v'
-tig warning: ~/.tigrc:26: Except for <Esc> combos only one key is allowed in key combos: F5
 tig warning: ~/.tigrc:29: stage-next has been replaced by \`:/^@@'
 tig warning: ~/.tigrc:30: diff-context-down has been replaced by \`:toggle diff-context -1'
 tig warning: ~/.tigrc:31: diff-context-up has been replaced by \`:toggle diff-context +1'

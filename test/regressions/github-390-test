@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# Issue #390
+
+. libtest.sh
+. libgit.sh
+
+export LINES=3
+export COLUMNS=90
+
+steps '
+	:save-display initial.screen
+	:exec @git tag Marke
+	:save-display tagged.screen
+'
+
+REMOTE_REPO="$HOME/remote"
+
+test_setup_work_dir() {
+	pwd="$(pwd)"
+	git_init "$REMOTE_REPO"
+	cd "$REMOTE_REPO" && {
+		echo 3.14 > file
+		git add file
+		git_commit -m "committed"
+		cd "$pwd"
+	}
+	git clone "$REMOTE_REPO" .
+}
+
+test_tig
+
+assert_equals 'initial.screen' <<EOF
+2009-02-13 23:31 Committer I [master] {origin/master} {origin/HEAD} committed             
+[main] 6b55d08be93000f4bdf67f74177ab14f590910d4 - commit 1 of 1                       100%
+EOF
+
+assert_equals 'tagged.screen' <<EOF
+2009-02-13 23:31 Committer I [master] {origin/master} {origin/HEAD} <Marke> committed     
+[main] 6b55d08be93000f4bdf67f74177ab14f590910d4 - commit 1 of 1                       100%
+EOF

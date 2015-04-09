@@ -20,7 +20,7 @@ Resources
  - Tarballs:	http://jonas.nitro.dk/tig/releases/[]
  - Git URL:	git://github.com/jonas/tig.git (master) or
 		git://repo.or.cz/tig.git (mirror)
- - Gitweb:	http://repo.or.cz/w/tig.git[]
+ - Gitter:	https://gitter.im/jonas/tig[]
  - Q&A:		http://stackoverflow.com/questions/tagged/tig[]
 
 Bugs and Feature Requests

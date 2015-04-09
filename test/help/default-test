@@ -11,7 +11,9 @@ steps '
 
 	:3
 	:enter
-	:save-display help-generic-collapsed.screen
+	:4
+	:enter
+	:save-display help-collapsed.screen
 '
 
 stdin <<EOF
@@ -49,7 +51,7 @@ View manipulation
                               O maximize          Maximize the current view     
                               q view-close        Close the current view        
                               Q quit              Close all views and quit      
-[help] - line 1 of 105                                                       26%
+[help] - line 1 of 109                                                       25%
 EOF
 
 assert_equals 'help-search.screen' <<EOF
@@ -81,13 +83,14 @@ View manipulation
                               O maximize          Maximize the current view     
                               q view-close        Close the current view        
                               Q quit              Close all views and quit      
-[help] - line 18 of 105                                                      26%
+[help] - line 18 of 109                                                      25%
 EOF
 
-assert_equals 'help-generic-collapsed.screen' <<EOF
+assert_equals 'help-collapsed.screen' <<EOF
 Quick reference for tig keybindings:                                            
                                                                                 
 [+] generic bindings                                                            
+[+] search bindings                                                             
 [-] main bindings                                                               
 Option toggling:                                                                
   G :toggle commit-title-graph                                                  
@@ -112,6 +115,5 @@ View specific actions
 External commands:                                                              
   C !git commit                                                                 
 [-] stage bindings                                                              
-View specific actions                                                           
-[help] - line 3 of 41                                                        68%
+[help] - line 4 of 42                                                        66%
 EOF

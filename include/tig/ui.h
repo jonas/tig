@@ -11,13 +11,10 @@
  * GNU General Public License for more details.
  */
 
-#ifndef TIG_BLOB_H
-#define TIG_BLOB_H
+#ifndef TIG_UI_H
+#define TIG_UI_H
 
-#include "tig/view.h"
-
-extern struct view blob_view;
-void open_blob_view(struct view *prev, enum open_flags flags);
+const char *open_file_finder(const char *commit);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */
