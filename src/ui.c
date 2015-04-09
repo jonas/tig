@@ -293,7 +293,7 @@ open_file_finder(const char *commit)
 	finder.keymap = get_keymap("search", STRING_SIZE("search")),
 	file_finder_update(&finder);
 	file_finder_draw(&finder);
-	if (read_prompt_incremental("Find file: ", FALSE, FALSE, file_finder_input_handler, &finder) && finder.pos.lineno < finder.lines)
+	if (read_prompt_incremental("Find file: ", FALSE, TRUE, file_finder_input_handler, &finder) && finder.pos.lineno < finder.lines)
 		file = get_path(finder.line[finder.pos.lineno]->text);
 
 	file_finder_done(&finder);
