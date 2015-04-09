@@ -104,7 +104,7 @@ prompt_default_handler(struct input *input, struct key *key)
 	case KEY_RETURN:
 	case KEY_ENTER:
 	case '\n':
-		return *input->buf ? INPUT_STOP : INPUT_CANCEL;
+		return *input->buf || input->allow_empty ? INPUT_STOP : INPUT_CANCEL;
 
 	case KEY_BACKSPACE:
 		return *input->buf ? INPUT_DELETE : INPUT_CANCEL;
@@ -133,7 +133,7 @@ bool
 prompt_yesno(const char *prompt)
 {
 	char prompt2[SIZEOF_STR];
-	struct input input = { prompt_yesno_handler, NULL };
+	struct input input = { prompt_yesno_handler, FALSE, NULL };
 
 	if (!string_format(prompt2, "%s [Yy/Nn]", prompt))
 		return FALSE;
@@ -165,10 +165,11 @@ read_prompt_handler(struct input *input, struct key *key)
 }
 
 char *
-read_prompt_incremental(const char *prompt, bool edit_mode, input_handler handler, void *data)
+read_prompt_incremental(const char *prompt, bool edit_mode, bool allow_empty, input_handler handler, void *data)
 {
 	static struct incremental_input incremental = { { read_prompt_handler } };
 
+	incremental.input.allow_empty = allow_empty;
 	incremental.input.data = data;
 	incremental.handler = handler;
 	incremental.edit_mode = edit_mode;
@@ -472,7 +473,7 @@ prompt_init(void)
 char *
 read_prompt(const char *prompt)
 {
-	return read_prompt_incremental(prompt, TRUE, NULL, NULL);
+	return read_prompt_incremental(prompt, TRUE, FALSE, NULL, NULL);
 }
 
 void

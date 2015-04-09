@@ -628,7 +628,7 @@ enum request
 read_key_combo(struct keymap *keymap)
 {
 	struct key_combo combo = { REQ_NONE, keymap, 0 };
-	char *value = read_prompt_incremental("", FALSE, key_combo_handler, &combo);
+	char *value = read_prompt_incremental("", FALSE, FALSE, key_combo_handler, &combo);
 
 	return value ? combo.request : REQ_NONE;
 }
