@@ -737,6 +737,52 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_1_1">tig-2.1.1</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Add support for key combos. (GH #67)
+</p>
+</li>
+<li>
+<p>
+See <code>contrib/vim.tigrc</code> for Vim-like keybindings. (GH #273, #351)
+</p>
+</li>
+<li>
+<p>
+Add GitHub inspired file finder to search for and open any file. (GH #342)
+</p>
+</li>
+<li>
+<p>
+Add <code>search</code> keymap for navigation file finder search results.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix display of multiple references per commit. (GH #390, #391)
+</p>
+</li>
+<li>
+<p>
+Sync the prompt&#8217;s cursor position with readline&#8217;s internal position. (#396)
+</p>
+</li>
+<li>
+<p>
+Keep unstaged changes view open after an staging command. (#399)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_1">tig-2.1</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Improvements:</p></div>
@@ -3149,7 +3195,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-03-10 23:30:12 EDT
+Last updated 2015-04-08 20:18:50 EDT
 </div>
 </div>
 </body>
