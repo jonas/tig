@@ -505,6 +505,17 @@ void
 diff_common_select(struct view *view, struct line *line, const char *changes_msg)
 {
 	if (line->type == LINE_DIFF_STAT) {
+		struct line *header = diff_find_header_from_stat(view, line);
+		if (header) {
+			const char *file = diff_get_pathname(view, header);
+
+			if (file) {
+				string_format(view->env->file, "%s", file);
+				view->env->lineno = view->env->goto_lineno = 0;
+				view->env->blob[0] = 0;
+			}
+		}
+
 		string_format(view->ref, "Press '%s' to jump to file diff",
 			      get_view_key(view, REQ_ENTER));
 	} else {
