@@ -127,8 +127,8 @@ diff_find_stat_entry(struct view *view, struct line *line, enum line_type type)
 		line == find_prev_line_by_type(view, marker, LINE_DIFF_HEADER);
 }
 
-enum request
-diff_common_enter(struct view *view, enum request request, struct line *line)
+static struct line *
+diff_find_header_from_stat(struct view *view, struct line *line)
 {
 	if (line->type == LINE_DIFF_STAT) {
 		int file_number = 0;
@@ -152,6 +152,17 @@ diff_common_enter(struct view *view, enum request request, struct line *line)
 			}
 		}
 
+		return line;
+	}
+
+	return NULL;
+}
+
+enum request
+diff_common_enter(struct view *view, enum request request, struct line *line)
+{
+	if (line->type == LINE_DIFF_STAT) {
+		line = diff_find_header_from_stat(view, line);
 		if (!line) {
 			report("Failed to find file diff");
 			return REQ_NONE;
