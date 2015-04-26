@@ -127,8 +127,8 @@ diff_find_stat_entry(struct view *view, struct line *line, enum line_type type)
 		line == find_prev_line_by_type(view, marker, LINE_DIFF_HEADER);
 }
 
-enum request
-diff_common_enter(struct view *view, enum request request, struct line *line)
+static struct line *
+diff_find_header_from_stat(struct view *view, struct line *line)
 {
 	if (line->type == LINE_DIFF_STAT) {
 		int file_number = 0;
@@ -152,6 +152,17 @@ diff_common_enter(struct view *view, enum request request, struct line *line)
 			}
 		}
 
+		return line;
+	}
+
+	return NULL;
+}
+
+enum request
+diff_common_enter(struct view *view, enum request request, struct line *line)
+{
+	if (line->type == LINE_DIFF_STAT) {
+		line = diff_find_header_from_stat(view, line);
 		if (!line) {
 			report("Failed to find file diff");
 			return REQ_NONE;
@@ -452,16 +463,24 @@ diff_get_pathname(struct view *view, struct line *line)
 enum request
 diff_common_edit(struct view *view, enum request request, struct line *line)
 {
-	const char *file = diff_get_pathname(view, line);
+	const char *file;
 	char path[SIZEOF_STR];
-	bool has_path = file && string_format(path, "%s%s", repo.cdup, file);
+	unsigned int lineno;
 
-	if (has_path && access(path, R_OK)) {
+	if (line->type == LINE_DIFF_STAT) {
+		file = view->env->file;
+		lineno = view->env->lineno;
+	} else {
+		file = diff_get_pathname(view, line);
+		lineno = diff_get_lineno(view, line);
+	}
+
+	if (file && string_format(path, "%s%s", repo.cdup, file) && access(path, R_OK)) {
 		report("Failed to open file: %s", file);
 		return REQ_NONE;
 	}
 
-	open_editor(file, diff_get_lineno(view, line));
+	open_editor(file, lineno);
 	return REQ_NONE;
 }
 
@@ -494,6 +513,17 @@ void
 diff_common_select(struct view *view, struct line *line, const char *changes_msg)
 {
 	if (line->type == LINE_DIFF_STAT) {
+		struct line *header = diff_find_header_from_stat(view, line);
+		if (header) {
+			const char *file = diff_get_pathname(view, header);
+
+			if (file) {
+				string_format(view->env->file, "%s", file);
+				view->env->lineno = view->env->goto_lineno = 0;
+				view->env->blob[0] = 0;
+			}
+		}
+
 		string_format(view->ref, "Press '%s' to jump to file diff",
 			      get_view_key(view, REQ_ENTER));
 	} else {
