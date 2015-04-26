@@ -463,16 +463,24 @@ diff_get_pathname(struct view *view, struct line *line)
 enum request
 diff_common_edit(struct view *view, enum request request, struct line *line)
 {
-	const char *file = diff_get_pathname(view, line);
+	const char *file;
 	char path[SIZEOF_STR];
-	bool has_path = file && string_format(path, "%s%s", repo.cdup, file);
+	unsigned int lineno;
 
-	if (has_path && access(path, R_OK)) {
+	if (line->type == LINE_DIFF_STAT) {
+		file = view->env->file;
+		lineno = view->env->lineno;
+	} else {
+		file = diff_get_pathname(view, line);
+		lineno = diff_get_lineno(view, line);
+	}
+
+	if (file && string_format(path, "%s%s", repo.cdup, file) && access(path, R_OK)) {
 		report("Failed to open file: %s", file);
 		return REQ_NONE;
 	}
 
-	open_editor(file, diff_get_lineno(view, line));
+	open_editor(file, lineno);
 	return REQ_NONE;
 }
 
