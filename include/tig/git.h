@@ -52,10 +52,6 @@
 		(commit_order_arg), (mainargs), (diffargs), (revargs), "--date=raw", "--parents", \
 		"--no-color", (pretty_arg), "--", (fileargs), NULL
 
-#define GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg, mainargs, diffargs, revargs, fileargs) \
-	GIT_MAIN_LOG(encoding_arg, commit_order_arg, mainargs, diffargs, revargs, fileargs, \
-		     "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s")
-
 #define GIT_MAIN_LOG_RAW(encoding_arg, commit_order_arg, mainargs, diffargs, revargs, fileargs) \
 	GIT_MAIN_LOG(encoding_arg, commit_order_arg, mainargs, diffargs, revargs, fileargs, \
 		     "--pretty=raw")

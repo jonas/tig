@@ -95,6 +95,7 @@ set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set blame-options		= -C -C -C	# User-defined options for `tig blame` (git-blame)
 #set log-options		= --pretty=raw	# User-defined options for `tig log` (git-log)
 #set main-options		= -n 1000	# User-defined options for `tig` (git-log)
+#set mailmap			= yes		# Use .mailmap to show canonical name and email address
 
 # Misc
 set refresh-mode		= auto		# Enum: manual, auto, after-command, periodic

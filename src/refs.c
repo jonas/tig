@@ -64,9 +64,10 @@ refs_request(struct view *view, enum request request, struct line *line)
 	{
 		const struct ref *ref = reference->ref;
 		const char *all_references_argv[] = {
-			GIT_MAIN_LOG_CUSTOM(encoding_arg, commit_order_arg(),
+			GIT_MAIN_LOG(encoding_arg, commit_order_arg(),
 				"%(mainargs)", "",
-				refs_is_all(reference) ? "--all" : ref->name, "")
+				refs_is_all(reference) ? "--all" : ref->name, "",
+				log_custom_pretty_arg())
 		};
 
 		if (!argv_format(main_view.env, &main_view.argv, all_references_argv, FALSE, FALSE))
@@ -142,7 +143,8 @@ refs_open(struct view *view, enum open_flags flags)
 {
 	const char *refs_log[] = {
 		"git", "log", encoding_arg, "--no-color", "--date=raw",
-			"--pretty=format:%H%x00%an <%ae> %ad%x00%s",
+			opt_mailmap ? "--pretty=format:%H%x00%aN <%aE> %ad%x00%s"
+				    : "--pretty=format:%H%x00%an <%ae> %ad%x00%s",
 			"--all", "--simplify-by-decoration", NULL
 	};
 

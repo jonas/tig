@@ -270,6 +270,11 @@ The following variables can be set:
 
 	Ignore case in searches. By default, the search is case sensitive.
 
+'mailmap' (bool)::
+
+	Read canonical name and email addresses for authors and committers from
+	`.mailmap`. Off by default. See `git-shortlog(1)`.
+
 'wrap-lines' (bool)::
 
 	Wrap long lines. By default, lines are not wrapped.

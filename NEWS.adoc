@@ -12,6 +12,8 @@ Incompatibilities:
 Improvements:
 
  - Add support for key combos. (GH #67)
+ - Use .mailmap to show canonical name and email addresses, off by default.
+   Add `set mailmap = yes` to `~/.tigrc` to enable. (GH #411)
  - See `contrib/vim.tigrc` for Vim-like keybindings. (GH #273, #351)
  - Add GitHub inspired file finder to search for and open any file. (GH #342)
  - Add `search` keymap for navigation file finder search results.
