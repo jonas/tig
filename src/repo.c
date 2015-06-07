@@ -123,7 +123,7 @@ update_index(void)
 		"git", "update-index", "-q", "--unmerged", "--refresh", NULL
 	};
 
-	return io_run_bg(update_index_argv);
+	return io_run_bg(update_index_argv, repo.cdup);
 }
 
 bool

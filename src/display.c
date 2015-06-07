@@ -54,7 +54,7 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 	bool ok;
 
 	if (silent) {
-		ok = io_run_bg(argv);
+		ok = io_run_bg(argv, dir);
 
 	} else {
 		def_prog_mode();           /* save current tty modes */

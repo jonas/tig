@@ -76,7 +76,7 @@ bool io_kill(struct io *io);
 bool io_done(struct io *io);
 bool io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], const char *argv[], int custom);
 bool io_run(struct io *io, enum io_type type, const char *dir, char * const env[], const char *argv[]);
-bool io_run_bg(const char **argv);
+bool io_run_bg(const char **argv, const char *dir);
 bool io_run_fg(const char **argv, const char *dir);
 bool io_run_append(const char **argv, int fd);
 bool io_eof(struct io *io);

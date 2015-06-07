@@ -468,7 +468,7 @@ status_update_file(struct status *status, enum line_type type)
 	if (type == LINE_STAT_UNTRACKED && !suffixcmp(name, strlen(name), "/")) {
 		const char *add_argv[] = { "git", "add", "--", name, NULL };
 
-		return io_run_bg(add_argv);
+		return io_run_bg(add_argv, repo.cdup);
 	}
 
 	if (!status_update_prepare(&io, type))

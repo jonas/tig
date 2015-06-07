@@ -348,9 +348,9 @@ io_complete(enum io_type type, const char **argv, const char *dir, int fd)
 }
 
 bool
-io_run_bg(const char **argv)
+io_run_bg(const char **argv, const char *dir)
 {
-	return io_complete(IO_BG, argv, NULL, -1);
+	return io_complete(IO_BG, argv, dir, -1);
 }
 
 bool
