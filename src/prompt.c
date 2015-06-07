@@ -12,6 +12,7 @@
  */
 
 #include "tig/tig.h"
+#include "tig/repo.h"
 #include "tig/view.h"
 #include "tig/draw.h"
 #include "tig/display.h"
@@ -943,7 +944,7 @@ exec_run_request(struct view *view, struct run_request *req)
 		}
 
 		if (confirmed)
-			open_external_viewer(argv, NULL, req->flags.silent,
+			open_external_viewer(argv, repo.cdup, req->flags.silent,
 					     !req->flags.exit, FALSE, "");
 	}
 

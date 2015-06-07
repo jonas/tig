@@ -4,6 +4,11 @@ Release notes
 tig-2.1.1
 ---------
 
+Incompatibilities:
+
+ - Note that all user-defined commands are now executed at the repository root
+   instead of whatever subdirectory Tig was started in. (GH #412)
+
 Improvements:
 
  - Add support for key combos. (GH #67)
@@ -857,3 +862,5 @@ Improvements:
  - Status view: Add support for opening files in an editor. Bound to 'e'
    by default.
  - Tree view: use a stack for remembering the lines for parent tree.
+
+/* vim: set tw=80: */
