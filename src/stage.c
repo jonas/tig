@@ -350,6 +350,21 @@ stage_exists(struct view *view, struct status *status, enum line_type type)
 	return false;
 }
 
+static bool
+stage_chunk_is_wrapped(struct view *view, struct line *line)
+{
+	struct line *pos = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
+
+	if (!opt_wrap_lines || !pos)
+		return false;
+
+	for (; pos <= line; pos++)
+		if (pos->wrapped)
+			return true;
+
+	return false;
+}
+
 static enum request
 stage_request(struct view *view, enum request request, struct line *line)
 {
@@ -372,6 +387,10 @@ stage_request(struct view *view, enum request request, struct line *line)
 		}
 		if (line->type != LINE_DIFF_DEL && line->type != LINE_DIFF_ADD) {
 			report("Please select a change to stage");
+			return REQ_NONE;
+		}
+		if (stage_chunk_is_wrapped(view, line)) {
+			report("Staging is not supported for wrapped lines");
 			return REQ_NONE;
 		}
 		if (!stage_update(view, line, TRUE))
