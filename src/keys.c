@@ -603,7 +603,7 @@ foreach_key(key_visitor_fn visitor, void *data, bool combine_keys)
 		if (!foreach_request(foreach_key_request, &state)
 		    || !foreach_key_run_request(&state, true, true)
 		    || !foreach_key_run_request(&state, true, false)
-		    || !foreach_key_run_request(&state, false, FALSE))
+		    || !foreach_key_run_request(&state, false, false))
 			return false;
 	}
 

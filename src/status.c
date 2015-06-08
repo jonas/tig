@@ -505,7 +505,7 @@ status_update_files(struct view *view, struct line *line)
 			string_format(view->ref, "updating file %u of %u (%d%% done)",
 				      file, files, done);
 			update_view_title(view);
-			setsyx(cursor_y, cursor_x);
+			move(cursor_y, cursor_x);
 			doupdate();
 		}
 		result = status_update_write(&io, line->data, line->type);

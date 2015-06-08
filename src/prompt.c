@@ -134,7 +134,7 @@ bool
 prompt_yesno(const char *prompt)
 {
 	char prompt2[SIZEOF_STR];
-	struct input input = { prompt_yesno_handler, FALSE, NULL };
+	struct input input = { prompt_yesno_handler, false, NULL };
 
 	if (!string_format(prompt2, "%s [Yy/Nn]", prompt))
 		return false;
