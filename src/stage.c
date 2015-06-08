@@ -158,9 +158,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *single, bo
 			chunk = NULL;
 	}
 
-	io_done(&io);
-
-	return chunk ? TRUE : FALSE;
+	return io_done(&io) && chunk;
 }
 
 static bool
