@@ -18,9 +18,10 @@ steps '
 	:save-display status-after.screen
 '
 
+git_init
+
 test_setup_work_dir()
 {
-	git init
 	echo "Hello" > hello.txt
 	git add .
 	git_commit -m "first commit"
