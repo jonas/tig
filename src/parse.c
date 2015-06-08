@@ -208,6 +208,7 @@ bool
 parse_chunk_header(struct chunk_header *header, const char *line)
 {
 	memset(header, 0, sizeof(*header));
+	header->new.lines = header->old.lines = 1;
 
 	if (!prefixcmp(line, "@@ -"))
 		line += STRING_SIZE("@@ -") - 1;
