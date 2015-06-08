@@ -23,7 +23,7 @@ test_setup_work_dir()
 	git init
 	echo "Hello" > hello.txt
 	git add .
-	git commit -m "first commit"
+	git_commit -m "first commit"
 	echo "Hello2" >> hello.txt
 }
 
