@@ -588,7 +588,7 @@ get_input(int prompt_position, struct key *key)
 			cursor_x += view->width - 1;
 			cursor_y += view->pos.lineno - view->pos.offset;
 		}
-		move(cursor_y, cursor_x);
+		set_cursor_pos(cursor_y, cursor_x);
 
 		if (is_script_executing()) {
 			/* Wait for the current command to complete. */
