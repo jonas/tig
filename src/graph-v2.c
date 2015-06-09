@@ -668,7 +668,7 @@ graph_generate_symbols(struct graph_v2 *graph, struct graph_canvas *canvas)
 		symbol->matches_commit    = (strcmp(column->id, graph->id) == 0);
 
 		symbol->shift_left        = shift_left(row, prev_row, pos);
-		symbol->continue_shift    = shift_left(row, prev_row, pos + 1);
+		symbol->continue_shift    = (pos + 1 < row->size) ? shift_left(row, prev_row, pos + 1) : 0;
 		symbol->below_shift       = prev_row->columns[pos].symbol.shift_left;
 
 		symbol->new_column        = new_column(row, prev_row, pos);
