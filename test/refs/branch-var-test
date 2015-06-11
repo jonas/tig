@@ -2,7 +2,6 @@
 
 . libtest.sh
 . libgit.sh
-. "$source_dir/util.sh"
 
 export LINES=18
 
@@ -14,6 +13,9 @@ EOF
 steps '
 	:save-display refs.screen
 
+	:1
+	:exec !assert-var " " == "%(branch)"
+
 	:2
 	:exec !assert-var "master" == "%(branch)"
 
@@ -21,27 +23,16 @@ steps '
 	:exec !assert-var "mp/feature" == "%(branch)"
 
 	:4
-	:exec !assert-var "v1.1-fixes" == "%(branch)"
+	:exec !assert-var "r1.1.2" == "%(branch)"
+
+	:5
+	:exec !assert-var "r1.1.x" == "%(branch)"
+
+	:6
+	:exec !assert-var "r1.0" == "%(branch)"
 '
 
-git_clone 'repo-one'
-
-mp_repo="$HOME/max-power-repo"
-create_repo_max_power "$mp_repo"
-
-test_setup_work_dir()
-{
-	git remote add -f max-power "$mp_repo"
-
-	git tag v1.1 HEAD~12
-	git tag v1.1.1 HEAD~9
-	git tag v2.0 HEAD~4
-	git tag v2.0.1 HEAD~3
-
-	git branch v1.0 v1.0
-	git branch v1.1-fixes v1.1
-	git branch -q mp/feature max-power/mp/feature
-}
+in_work_dir create_repo_from_tgz "$base_dir/files/refs-repo.tgz"
 
 test_tig refs
 
@@ -51,18 +42,18 @@ assert_equals 'refs.screen' <<EOF
                                All references                                   
 2010-04-07 05:37 Max Power     master               Commit 10 E                 
 2009-02-13 23:31 Max Power     mp/feature           WIP: feature                
-2009-12-26 01:11 作者          v1.1-fixes           Commit 8 C                
+2009-12-26 01:11 作者          r1.1.2               Commit 8 C                  
+2009-12-26 01:11 作者          r1.1.x               Commit 8 C                  
+2009-12-17 12:49 René Lévesque r1.0                 Commit 8 B                  
 2010-04-07 05:37 Max Power     origin/master        Commit 10 E                 
 2010-04-07 05:37 Max Power     max-power/master     Commit 10 E                 
 2009-02-13 23:31 Max Power     max-power/mp/feature WIP: feature                
 2009-11-30 12:05 Max Power     max-power/mp/gh-123  Commit 7 E                  
 2010-04-07 05:37 Max Power     origin/HEAD          Commit 10 E                 
 2010-01-12 01:56 Max Power     mp/good              Commit 8 E                  
-2010-03-12 16:31 René Lévesque v2.0.1               Commit 10 B               
+2010-03-12 16:31 René Lévesque v2.0.1               Commit 10 B                 
 2010-03-04 04:09 A. U. Thor    v2.0                 Commit 10 A                 
 2010-01-20 14:18 A. U. Thor    v1.1.1               Commit 9 A                  
-2009-12-26 01:11 作者          v1.1                 Commit 8 C                
-2009-12-17 12:49 René Lévesque v1.0                 Commit 8 B                
-                                                                                
-[refs] All references                                                       100%
+2009-12-26 01:11 作者          v1.1                 Commit 8 C                  
+[refs] All references                                                        94%
 EOF
