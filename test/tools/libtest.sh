@@ -74,11 +74,28 @@ if [ ! -d "$tmp_dir/.git" ]; then
 	git init -q "$tmp_dir"
 fi
 
-mkdir -p "$tmp_dir/bin"
+# For any utilities used in Tig scripts
+BIN_DIR="$HOME/bin"
+mkdir -p "$BIN_DIR"
+export PATH="$BIN_DIR:$PATH"
+
+executable() {
+	path="$BIN_DIR/$1"; shift
+
+	if [ "$#" = 0 ]; then
+		case "$path" in
+			stdin|expected*) cat ;;
+			*) sed 's/^[ ]//' ;;
+		esac > "$path"
+	else
+		printf '%s' "$@" > "$path"
+	fi
+	chmod +x "$path"
+}
 
 # Setup fake editor
-fake_editor="$tmp_dir/bin/vim"
-cat > "$fake_editor" <<EOF
+export EDITOR="vim"
+executable 'vim' <<EOF
 #!/bin/sh
 
 file="\$1"
@@ -90,10 +107,6 @@ fi
 echo "\$@" >> "$HOME/editor.log"
 sed -n -e "\${lineno}p" "\$file" >> "$HOME/editor.log"
 EOF
-
-chmod +x "$fake_editor"
-export EDITOR="$(basename "$fake_editor")"
-export PATH="$(dirname "$fake_editor"):$PATH"
 
 cd "$output_dir"
 
