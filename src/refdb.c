@@ -367,8 +367,13 @@ add_ref(const char *id, char *name, const char *remote_name, const char *head)
 }
 
 void
-ref_update_env(struct argv_env *env, const struct ref *ref, bool clear)
+ref_update_env(struct argv_env *env, const struct ref *ref, bool recurse)
 {
+	bool clear = recurse ? !ref->next : true;
+
+	if (recurse && ref->next)
+		ref_update_env(env, ref->next, true);
+
 	if (clear)
 		env->tag[0] = env->remote[0] = env->branch[0] = 0;
 

@@ -534,15 +534,6 @@ main_request(struct view *view, enum request request, struct line *line)
 	return REQ_NONE;
 }
 
-/* Update the env from last ref to first using recursion. */
-static void
-main_update_env(struct view *view, const struct ref *ref)
-{
-	if (ref->next)
-		main_update_env(view, ref->next);
-	ref_update_env(view->env, ref, !ref->next);
-}
-
 void
 main_select(struct view *view, struct line *line)
 {
@@ -556,7 +547,7 @@ main_select(struct view *view, struct line *line)
 
 		string_copy_rev(view->ref, commit->id);
 		if (ref)
-			main_update_env(view, ref);
+			ref_update_env(view->env, ref, true);
 	}
 	string_copy_rev(view->env->commit, commit->id);
 }

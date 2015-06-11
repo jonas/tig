@@ -42,7 +42,7 @@ bool ref_list_contains_tag(const char *id);
 enum status_code load_refs(bool force);
 enum status_code add_ref(const char *id, char *name, const char *remote_name, const char *head);
 int ref_compare(const struct ref *ref1, const struct ref *ref2);
-void ref_update_env(struct argv_env *env, const struct ref *ref, bool clear);
+void ref_update_env(struct argv_env *env, const struct ref *ref, bool recurse);
 
 bool refs_contain_tag(void);
 
