@@ -26,7 +26,6 @@ create_repo_max_power "$mp_repo"
 
 test_setup_work_dir()
 {
-	# Capture std{out,err} so it doesn't pollute the test output
 	git remote add -f max-power "$mp_repo"
 
 	git tag v1.1 HEAD~12
