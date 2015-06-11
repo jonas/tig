@@ -385,7 +385,7 @@ ref_update_env(struct argv_env *env, const struct ref *ref, bool clear)
 		string_ncopy(env->remote, ref->name, sep - ref->name);
 		string_ncopy(env->branch, sep + 1, strlen(sep + 1));
 
-	} else if (ref->type == REFERENCE_BRANCH) {
+	} else if (ref->type == REFERENCE_BRANCH || ref->type == REFERENCE_HEAD) {
 		string_ncopy(env->branch, ref->name, strlen(ref->name));
 	}
 }

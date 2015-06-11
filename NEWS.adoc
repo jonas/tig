@@ -17,12 +17,16 @@ Improvements:
  - See `contrib/vim.tigrc` for Vim-like keybindings. (GH #273, #351)
  - Add GitHub inspired file finder to search for and open any file. (GH #342)
  - Add `search` keymap for navigation file finder search results.
+ - Populate `%(file)` with file names from diff stat. (GH #404)
 
 Bug fixes:
 
  - Fix display of multiple references per commit. (GH #390, #391)
- - Sync the prompt's cursor position with readline's internal position. (#396)
- - Keep unstaged changes view open after an staging command. (#399)
+ - Sync the prompt's cursor position with readline's internal position. (GH #396)
+ - Keep unstaged changes view open after an staging command. (GH #399)
+ - Fix corrupt chunk header during staging of single lines. (GH #410)
+ - Fix out of bounds read in graph-v2 module. (GH #402)
+ - Add currently checked out branch to `%(branch)`. (GH #416)
 
 tig-2.1
 -------

@@ -242,6 +242,22 @@ assert_not_exists()
 	fi
 }
 
+vars_file="vars"
+expected_var_file="$HOME/expected/$vars_file"
+
+executable 'assert-var' <<EOF
+#!/bin/sh
+
+mkdir -p "$(dirname "$expected_var_file")"
+echo "\$1" >> "$expected_var_file"
+echo "\$3" >> "$HOME/$vars_file"
+EOF
+
+assert_vars()
+{
+	assert_equals "$vars_file" "$(cat "$expected_var_file")"
+}
+
 show_test_results()
 {
 	if [ -n "$trace" -a -n "$TIG_TRACE" -a -e "$TIG_TRACE" ]; then
