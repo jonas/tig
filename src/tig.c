@@ -265,11 +265,11 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_PARENT:
-		report("Moving to parent is not supported by the the %s view", view->name);
+		report("Moving to parent is not supported by the %s view", view->name);
 		break;
 
 	case REQ_BACK:
-		report("Going back is not supported for by %s view", view->name);
+		report("Going back is not supported by the %s view", view->name);
 		break;
 
 	case REQ_MAXIMIZE:
