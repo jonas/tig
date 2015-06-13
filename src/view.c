@@ -567,13 +567,42 @@ view_no_refresh(struct view *view, enum open_flags flags)
 }
 
 bool
+view_exec(struct view *view, enum open_flags flags)
+{
+	char opt_env_lines[64] = "";
+	char opt_env_columns[64] = "";
+	char * const opt_env[]	= { opt_env_lines, opt_env_columns, NULL };
+
+	enum io_flags forward_stdin = (flags & OPEN_FORWARD_STDIN) ? IO_RD_FORWARD_STDIN : 0;
+	enum io_flags with_stderr = (flags & OPEN_WITH_STDERR) ? IO_RD_WITH_STDERR : 0;
+	enum io_flags io_flags = forward_stdin | with_stderr;
+
+	int views = displayed_views();
+	bool split = (views == 1 && !!(flags & OPEN_SPLIT)) || views == 2;
+	int height, width;
+
+	getmaxyx(stdscr, height, width);
+	if (split && vertical_split_is_enabled(opt_vertical_split, height, width)) {
+		bool is_base_view = display[0] == view;
+		int split_width = apply_vertical_split(width);
+
+		if (is_base_view)
+			width -= split_width;
+		else
+			width = split_width - 1;
+	}
+
+	string_format(opt_env_columns, "COLUMNS=%d", MAX(0, width));
+	string_format(opt_env_lines, "LINES=%d", height);
+
+	return io_exec(&view->io, IO_RD, view->dir, opt_env, view->argv, io_flags);
+}
+
+bool
 begin_update(struct view *view, const char *dir, const char **argv, enum open_flags flags)
 {
 	bool extra = !!(flags & (OPEN_EXTRA));
 	bool refresh = flags & (OPEN_REFRESH | OPEN_PREPARED | OPEN_STDIN);
-	enum io_flags forward_stdin = (flags & OPEN_FORWARD_STDIN) ? IO_RD_FORWARD_STDIN : 0;
-	enum io_flags with_stderr = (flags & OPEN_WITH_STDERR) ? IO_RD_WITH_STDERR : 0;
-	enum io_flags io_flags = forward_stdin | with_stderr;
 
 	if (view_no_refresh(view, flags))
 		return true;
@@ -598,7 +627,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	}
 
 	if (view->argv && view->argv[0] &&
-	    !io_exec(&view->io, IO_RD, view->dir, opt_env, view->argv, io_flags)) {
+	    !view_exec(view, flags)) {
 		report("Failed to open %s view", view->name);
 		return false;
 	}
@@ -750,6 +779,9 @@ split_view(struct view *prev, struct view *view)
 		/* "Blur" the previous view. */
 		update_view_title(prev);
 	}
+
+	if (view_has_flags(prev, VIEW_FLEX_WIDTH))
+		load_view(prev, NULL, OPEN_RELOAD);
 }
 
 void
@@ -763,6 +795,9 @@ maximize_view(struct view *view, bool redraw)
 		redraw_display(false);
 		report_clear();
 	}
+
+	if (view_has_flags(view, VIEW_FLEX_WIDTH))
+		load_view(view, NULL, OPEN_RELOAD);
 }
 
 void

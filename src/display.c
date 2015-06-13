@@ -135,33 +135,29 @@ apply_horizontal_split(struct view *base, struct view *view)
 	base->height -= view->height;
 }
 
-static void
-apply_vertical_split(struct view *base, struct view *view)
+int
+apply_vertical_split(int base_width)
 {
-	view->height = base->height;
-	view->width  = apply_step(opt_split_view_width, base->width);
-	view->width  = MAX(view->width, MIN_VIEW_WIDTH);
-	view->width  = MIN(view->width, base->width - MIN_VIEW_WIDTH);
-	base->width -= view->width;
+	int width  = apply_step(opt_split_view_width, base_width);
+
+	width = MAX(width, MIN_VIEW_WIDTH);
+	width = MIN(width, base_width - MIN_VIEW_WIDTH);
+
+	return width;
 }
 
-static bool
-vertical_split_is_enabled(void)
+bool
+vertical_split_is_enabled(enum vertical_split vsplit, int height, int width)
 {
-	if (opt_vertical_split == VERTICAL_SPLIT_AUTO) {
-		int height, width;
-
-		getmaxyx(stdscr, height, width);
+	if (vsplit == VERTICAL_SPLIT_AUTO)
 		return width > 160 || width * VSPLIT_SCALE > (height - 1) * 2;
-	}
-
-	return opt_vertical_split == VERTICAL_SPLIT_VERTICAL;
+	return vsplit == VERTICAL_SPLIT_VERTICAL;
 }
 
 static void
 redraw_display_separator(bool clear)
 {
-	if (displayed_views() > 1 && vertical_split_is_enabled()) {
+	if (display_sep) {
 		chtype separator = opt_line_graphics ? ACS_VLINE : '|';
 
 		if (clear)
@@ -175,35 +171,52 @@ void
 resize_display(void)
 {
 	int x, y, i;
+	int height, width;
 	struct view *base = display[0];
 	struct view *view = display[1] ? display[1] : display[0];
 	bool vsplit;
 
 	/* Setup window dimensions */
 
-	getmaxyx(stdscr, base->height, base->width);
+	getmaxyx(stdscr, height, width);
 
 	/* Make room for the status window. */
-	base->height -= 1;
+	base->height = height - 1;
+	base->width = width;
 
-	vsplit = vertical_split_is_enabled();
+	vsplit = vertical_split_is_enabled(opt_vertical_split, height, width);
 
 	if (view != base) {
 		if (vsplit) {
-			apply_vertical_split(base, view);
+			view->height = base->height;
+			view->width = apply_vertical_split(base->width);
+			base->width -= view->width;
 
 			/* Make room for the separator bar. */
 			view->width -= 1;
+
+			if (!display_sep) {
+				display_sep = newwin(base->height, 1, 0, base->width);
+				if (!display_sep)
+					die("Failed to create separator window");
+
+			} else {
+				wresize(display_sep, base->height, 1);
+				mvwin(display_sep, 0, base->width);
+			}
+
+			redraw_display_separator(false);
 		} else {
 			apply_horizontal_split(base, view);
 		}
 
 		/* Make room for the title bar. */
 		view->height -= 1;
-	}
 
-	string_format(opt_env_columns, "COLUMNS=%d", base->width);
-	string_format(opt_env_lines, "LINES=%d", base->height);
+	} else if (display_sep) {
+		delwin(display_sep);
+		display_sep = NULL;
+	}
 
 	/* Make room for the title bar. */
 	base->height -= 1;
@@ -227,18 +240,6 @@ resize_display(void)
 			mvwin(display_win[i], y, x);
 			wresize(display_title[i], 1, view->width);
 			mvwin(display_title[i], y + view->height, x);
-		}
-
-		if (i > 0 && vsplit) {
-			if (!display_sep) {
-				display_sep = newwin(view->height, 1, 0, x - 1);
-				if (!display_sep)
-					die("Failed to create separator window");
-
-			} else {
-				wresize(display_sep, view->height, 1);
-				mvwin(display_sep, 0, x - 1);
-			}
 		}
 
 		view->win = display_win[i];

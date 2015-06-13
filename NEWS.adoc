@@ -28,6 +28,7 @@ Bug fixes:
  - Fix corrupt chunk header during staging of single lines. (GH #410)
  - Fix out of bounds read in graph-v2 module. (GH #402)
  - Add currently checked out branch to `%(branch)`. (GH #416)
+ - Size diff stats correctly for split views.
 
 tig-2.1
 -------

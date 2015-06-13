@@ -1,0 +1,86 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export COLUMNS=181
+
+steps '
+	:enter
+	:save-display diff-stat.screen
+	:view-next
+	:refresh
+	:save-display diff-stat-after-refresh.screen
+'
+
+tigrc <<EOF
+set line-graphics = utf-8
+EOF
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+test_tig log
+
+assert_equals 'diff-stat.screen' <<EOF
+commit ee912870202200a0b9cf4fd86ba57243212d341e                                            |commit ee912870202200a0b9cf4fd86ba57243212d341e                                          
+Refs: [master]                                                                             |Refs: [master]                                                                           
+Author: Jonas Fonseca <jonas.fonseca@gmail.com>                                            |Author:     Jonas Fonseca <jonas.fonseca@gmail.com>                                      
+Date:   Sat Mar 1 17:26:01 2014 -0500                                                      |AuthorDate: Sat Mar 1 17:26:01 2014 -0500                                                
+                                                                                           |Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>                                      
+    WIP: Upgrade to 0.4-SNAPSHOT and DCE                                                   |CommitDate: Sat Mar 1 17:26:01 2014 -0500                                                
+                                                                                           |                                                                                         
+ common/benchmark-runner.sh                                             |  5 +++--         |    WIP: Upgrade to 0.4-SNAPSHOT and DCE                                                 
+ common/src/main/scala/org/scalajs/benchmark/Benchmark.scala            | 11 +++++------   |---                                                                                      
+ common/src/main/scala/org/scalajs/benchmark/BenchmarkApp.scala         |  2 +-            | common/benchmark-runner.sh                                           |  5 +++--         
+ common/start-benchmark.js                                              |  9 +++++++--     | common/src/main/scala/org/scalajs/benchmark/Benchmark.scala          | 11 +++++------   
+ deltablue/exports.js                                                   | 13 ------------- | common/src/main/scala/org/scalajs/benchmark/BenchmarkApp.scala       |  2 +-            
+ .../src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala     |  7 +++++++       | common/start-benchmark.js                                            |  9 +++++++--     
+ project/Build.scala                                                    | 13 ++++--------- | deltablue/exports.js                                                 | 13 ------------- 
+ project/build.sbt                                                      |  5 ++++-         | .../src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala   |  7 +++++++       
+ richards/exports.js                                                    | 13 ------------- | project/Build.scala                                                  | 13 ++++--------- 
+ richards/src/main/scala/org/scalajs/benchmark/richards/Richards.scala  |  3 +++           | project/build.sbt                                                    |  5 ++++-         
+ run.sh                                                                 |  2 +-            | richards/exports.js                                                  | 13 ------------- 
+ sudoku/exports.js                                                      | 13 ------------- | .../src/main/scala/org/scalajs/benchmark/richards/Richards.scala     |  3 +++           
+ sudoku/src/main/scala/org/scalajs/benchmark/sudoku/Sudoku.scala        |  2 ++            | run.sh                                                               |  2 +-            
+ tracer/exports.js                                                      | 13 ------------- | sudoku/exports.js                                                    | 13 ------------- 
+ tracer/index-dev.html                                                  |  2 +-            | sudoku/src/main/scala/org/scalajs/benchmark/sudoku/Sudoku.scala      |  2 ++            
+ tracer/index.html                                                      |  2 +-            | tracer/exports.js                                                    | 13 ------------- 
+ tracer/src/main/scala/org/scalajs/benchmark/tracer/Tracer.scala        |  3 +++           | tracer/index-dev.html                                                |  2 +-            
+ 17 files changed, 42 insertions(+), 76 deletions(-)                                       | tracer/index.html                                                    |  2 +-            
+                                                                                           | tracer/src/main/scala/org/scalajs/benchmark/tracer/Tracer.scala      |  3 +++           
+commit a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff                                            | 17 files changed, 42 insertions(+), 76 deletions(-)                                     
+Author: Jonas Fonseca <jonas.fonseca@gmail.com>                                            |                                                                                         
+[log] ee912870202200a0b9cf4fd86ba57243212d341e - line 1 of 668                           4%|[diff] ee912870202200a0b9cf4fd86ba57243212d341e - line 1 of 367                        7%
+EOF
+
+assert_equals 'diff-stat-after-refresh.screen' <<EOF
+commit ee912870202200a0b9cf4fd86ba57243212d341e                                            |commit ee912870202200a0b9cf4fd86ba57243212d341e                                          
+Refs: [master]                                                                             |Refs: [master]                                                                           
+Author: Jonas Fonseca <jonas.fonseca@gmail.com>                                            |Author:     Jonas Fonseca <jonas.fonseca@gmail.com>                                      
+Date:   Sat Mar 1 17:26:01 2014 -0500                                                      |AuthorDate: Sat Mar 1 17:26:01 2014 -0500                                                
+                                                                                           |Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>                                      
+    WIP: Upgrade to 0.4-SNAPSHOT and DCE                                                   |CommitDate: Sat Mar 1 17:26:01 2014 -0500                                                
+                                                                                           |                                                                                         
+ common/benchmark-runner.sh                                             |  5 +++--         |    WIP: Upgrade to 0.4-SNAPSHOT and DCE                                                 
+ common/src/main/scala/org/scalajs/benchmark/Benchmark.scala            | 11 +++++------   |---                                                                                      
+ common/src/main/scala/org/scalajs/benchmark/BenchmarkApp.scala         |  2 +-            | common/benchmark-runner.sh                                           |  5 +++--         
+ common/start-benchmark.js                                              |  9 +++++++--     | common/src/main/scala/org/scalajs/benchmark/Benchmark.scala          | 11 +++++------   
+ deltablue/exports.js                                                   | 13 ------------- | common/src/main/scala/org/scalajs/benchmark/BenchmarkApp.scala       |  2 +-            
+ .../src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala     |  7 +++++++       | common/start-benchmark.js                                            |  9 +++++++--     
+ project/Build.scala                                                    | 13 ++++--------- | deltablue/exports.js                                                 | 13 ------------- 
+ project/build.sbt                                                      |  5 ++++-         | .../src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala   |  7 +++++++       
+ richards/exports.js                                                    | 13 ------------- | project/Build.scala                                                  | 13 ++++--------- 
+ richards/src/main/scala/org/scalajs/benchmark/richards/Richards.scala  |  3 +++           | project/build.sbt                                                    |  5 ++++-         
+ run.sh                                                                 |  2 +-            | richards/exports.js                                                  | 13 ------------- 
+ sudoku/exports.js                                                      | 13 ------------- | .../src/main/scala/org/scalajs/benchmark/richards/Richards.scala     |  3 +++           
+ sudoku/src/main/scala/org/scalajs/benchmark/sudoku/Sudoku.scala        |  2 ++            | run.sh                                                               |  2 +-            
+ tracer/exports.js                                                      | 13 ------------- | sudoku/exports.js                                                    | 13 ------------- 
+ tracer/index-dev.html                                                  |  2 +-            | sudoku/src/main/scala/org/scalajs/benchmark/sudoku/Sudoku.scala      |  2 ++            
+ tracer/index.html                                                      |  2 +-            | tracer/exports.js                                                    | 13 ------------- 
+ tracer/src/main/scala/org/scalajs/benchmark/tracer/Tracer.scala        |  3 +++           | tracer/index-dev.html                                                |  2 +-            
+ 17 files changed, 42 insertions(+), 76 deletions(-)                                       | tracer/index.html                                                    |  2 +-            
+                                                                                           | tracer/src/main/scala/org/scalajs/benchmark/tracer/Tracer.scala      |  3 +++           
+commit a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff                                            | 17 files changed, 42 insertions(+), 76 deletions(-)                                     
+Author: Jonas Fonseca <jonas.fonseca@gmail.com>                                            |                                                                                         
+[log] ee912870202200a0b9cf4fd86ba57243212d341e - line 1 of 668                           4%|[diff] ee912870202200a0b9cf4fd86ba57243212d341e - line 1 of 367                        7%
+EOF

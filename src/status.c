@@ -78,7 +78,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	struct buffer buf;
 	struct io io;
 
-	if (!io_run(&io, IO_RD, repo.cdup, opt_env, argv))
+	if (!io_run(&io, IO_RD, repo.cdup, NULL, argv))
 		return false;
 
 	add_line_nodata(view, type);
@@ -428,11 +428,11 @@ status_update_prepare(struct io *io, enum line_type type)
 
 	switch (type) {
 	case LINE_STAT_STAGED:
-		return io_run(io, IO_WR, repo.cdup, opt_env, staged_argv);
+		return io_run(io, IO_WR, repo.cdup, NULL, staged_argv);
 
 	case LINE_STAT_UNSTAGED:
 	case LINE_STAT_UNTRACKED:
-		return io_run(io, IO_WR, repo.cdup, opt_env, others_argv);
+		return io_run(io, IO_WR, repo.cdup, NULL, others_argv);
 
 	default:
 		die("line type %d not handled in switch", type);

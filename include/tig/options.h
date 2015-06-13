@@ -164,9 +164,6 @@ union view_column_options {
 
 extern iconv_t opt_iconv_out;
 extern char opt_editor[SIZEOF_STR];
-extern char opt_env_lines[64];
-extern char opt_env_columns[64];
-extern char *opt_env[];
 
 /*
  * Mapping between options and command argument mapping.

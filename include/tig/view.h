@@ -58,6 +58,7 @@ enum view_flag {
 	VIEW_REFRESH		= 1 << 13,
 	VIEW_GREP_LIKE		= 1 << 14,
 	VIEW_SORTABLE		= 1 << 15,
+	VIEW_FLEX_WIDTH		= 1 << 16,
 
 	VIEW_RESET_DISPLAY	= 1 << 31,
 };
@@ -286,6 +287,7 @@ void load_view(struct view *view, struct view *prev, enum open_flags flags);
 
 void open_view(struct view *prev, struct view *view, enum open_flags flags);
 void open_argv(struct view *prev, struct view *view, const char *argv[], const char *dir, enum open_flags flags);
+bool view_exec(struct view *view, enum open_flags flags);
 
 /*
  * Various utilities.

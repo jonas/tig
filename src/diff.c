@@ -270,7 +270,7 @@ diff_read(struct view *view, struct buffer *buf)
 
 				if (view->pipe)
 					io_done(view->pipe);
-				if (io_run(&view->io, IO_RD, view->dir, opt_env, view->argv))
+				if (view_exec(view, 0))
 					return false;
 			}
 		}
@@ -311,7 +311,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	if (!string_format(line_arg, "-L%ld,+1", lineno))
 		return false;
 
-	if (!io_run(&io, IO_RD, repo.cdup, opt_env, blame_argv))
+	if (!io_run(&io, IO_RD, repo.cdup, NULL, blame_argv))
 		return false;
 
 	while (io_get(&io, &buf, '\n', true)) {
@@ -551,7 +551,7 @@ diff_select(struct view *view, struct line *line)
 static struct view_ops diff_ops = {
 	"line",
 	argv_env.commit,
-	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_FILE_FILTER | VIEW_REFRESH,
+	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_FILE_FILTER | VIEW_REFRESH | VIEW_FLEX_WIDTH,
 	sizeof(struct diff_state),
 	diff_open,
 	diff_read,

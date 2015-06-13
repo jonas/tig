@@ -349,7 +349,7 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 
 	if (!string_format(from, "%s:%s", view->env->ref, view->env->file) ||
 	    !string_format(to, "%s:%s", blame->commit->id, blame->commit->filename) ||
-	    !io_run(&io, IO_RD, NULL, opt_env, diff_tree_argv))
+	    !io_run(&io, IO_RD, NULL, NULL, diff_tree_argv))
 		return;
 
 	while (io_get(&io, &buf, '\n', true)) {

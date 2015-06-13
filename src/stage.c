@@ -145,7 +145,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *single, bo
 		apply_argv[argc++] = "-R";
 	apply_argv[argc++] = "-";
 	apply_argv[argc++] = NULL;
-	if (!io_run(&io, IO_WR, repo.cdup, opt_env, apply_argv))
+	if (!io_run(&io, IO_WR, repo.cdup, NULL, apply_argv))
 		return false;
 
 	if (single != NULL) {
@@ -576,7 +576,7 @@ stage_read(struct view *view, struct buffer *buf)
 static struct view_ops stage_ops = {
 	"line",
 	argv_env.status,
-	VIEW_DIFF_LIKE | VIEW_REFRESH,
+	VIEW_DIFF_LIKE | VIEW_REFRESH | VIEW_FLEX_WIDTH,
 	sizeof(struct stage_state),
 	stage_open,
 	stage_read,

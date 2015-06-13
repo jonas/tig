@@ -124,9 +124,6 @@ char opt_editor[SIZEOF_STR]	= "";
 const char **opt_cmdline_argv	= NULL;
 const char **opt_rev_argv	= NULL;
 const char **opt_file_argv	= NULL;
-char opt_env_lines[64]		= "";
-char opt_env_columns[64]	= "";
-char *opt_env[]			= { opt_env_lines, opt_env_columns, NULL };
 
 /*
  * Mapping between options and command argument mapping.
