@@ -13,6 +13,7 @@
 
 #include "tig/tig.h"
 #include "tig/argv.h"
+#include "tig/repo.h"
 #include "tig/options.h"
 #include "tig/prompt.h"
 
@@ -300,7 +301,7 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 	}
 
 	for (i = 0; i < format->vars_size; i++) {
-		if (strncmp(name, vars[i].name, vars[i].namelen))
+		if (string_enum_compare(name, vars[i].name, vars[i].namelen))
 			continue;
 
 		if (vars[i].value_ref == &argv_env.file && !format->file_filter)
@@ -377,6 +378,32 @@ argv_number_formatter(struct format_context *format, struct format_var *var)
 	return string_format_from(format->buf, &format->bufpos, "%ld", value);
 }
 
+static bool
+bool_formatter(struct format_context *format, struct format_var *var)
+{
+	bool value = *(bool *)var->value_ref;
+
+	return string_format_from(format->buf, &format->bufpos, "%s", value ? "true" : "false");
+}
+
+static bool
+repo_str_formatter(struct format_context *format, struct format_var *var)
+{
+	return argv_string_formatter(format, var);
+}
+
+static bool
+repo_ref_formatter(struct format_context *format, struct format_var *var)
+{
+	return argv_string_formatter(format, var);
+}
+
+static bool
+repo_rev_formatter(struct format_context *format, struct format_var *var)
+{
+	return argv_string_formatter(format, var);
+}
+
 bool
 argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter)
 {
@@ -384,6 +411,9 @@ argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_a
 #define FORMAT_VAR(type, name, ifempty, initval) \
 	{ "%(" #name ")", STRING_SIZE("%(" #name ")"), type ## _formatter, &argv_env->name, ifempty },
 		ARGV_ENV_INFO(FORMAT_VAR)
+#define FORMAT_REPO_VAR(type, name) \
+	{ "%(repo:" #name ")", STRING_SIZE("%(repo:" #name ")"), type ## _formatter, &repo.name, "" },
+		REPO_INFO(FORMAT_REPO_VAR)
 	};
 	struct format_context format = { vars, ARRAY_SIZE(vars), "", 0, file_filter };
 	int argc;

@@ -16,14 +16,23 @@
 
 #include "tig/tig.h"
 
+typedef char repo_ref[SIZEOF_REF];
+typedef char repo_rev[SIZEOF_REV];
+typedef char repo_str[SIZEOF_STR];
+
+#define REPO_INFO(_) \
+	_(repo_ref, head) \
+	_(repo_rev, head_id) \
+	_(repo_ref, remote) \
+	_(repo_str, cdup) \
+	_(repo_str, prefix) \
+	_(repo_str, git_dir) \
+	_(bool,     is_inside_work_tree)
+
+#define REPO_INFO_FIELDS(type, name)	type name;
+
 struct repo_info {
-	char head[SIZEOF_REF];
-	char head_id[SIZEOF_REV];
-	char remote[SIZEOF_REF];
-	char cdup[SIZEOF_STR];
-	char prefix[SIZEOF_STR];
-	char git_dir[SIZEOF_STR];
-	bool is_inside_work_tree;
+	REPO_INFO(REPO_INFO_FIELDS)
 };
 
 extern struct repo_info repo;

@@ -1,0 +1,21 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+steps "
+	:exec !assert-var '%(repo:head)' == master
+	:exec !assert-var '%(repo:head-id)' == feeb2dfd5e09e887e4b6c901e7d91a4c85a7831d
+	:exec !assert-var '%(repo:remote)' == origin/master
+	:exec !assert-var '%(repo:cdup)' == ../
+	:exec !assert-var '%(repo:prefix)' == repo-two-a/
+	:exec !assert-var '%(repo:git-dir)' == '$HOME/$work_dir/.git'
+	:exec !assert-var '%(repo:is-inside-work-tree)' == true
+"
+
+in_work_dir create_repo_from_tgz "$base_dir/files/repo-two.tgz"
+
+work_dir="$work_dir/repo-two-a"
+test_tig status
+
+assert_vars

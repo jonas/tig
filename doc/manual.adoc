@@ -161,9 +161,12 @@ following variables.
 |%(commit)		|The currently selected commit ID.
 |%(blob)		|The currently selected blob ID.
 |%(branch)		|The currently selected branch name.
+|%(remote)		|The currently selected remote name. For remote
+			 branches %(branch) will contain the branch name.
+|%(tag)			|The currently selected tag name.
 |%(stash)		|The currently selected stash name.
-|%(directory)		|The current directory path in the tree view;
-			 empty for the root directory.
+|%(directory)		|The current directory path in the tree view or
+			 "." if undefined.
 |%(file)		|The currently selected file.
 |%(lineno)		|The currently selected line number. Defaults to 0.
 |%(ref)			|The reference given to blame or HEAD if undefined.
@@ -175,7 +178,20 @@ following variables.
 |%(blameargs)		|Options from 'blame-options' used by the blame view.
 |%(logargs)		|Options from 'log-options' used by the log view.
 |%(mainargs)		|Options from 'main-options' used by the main view.
-|%(prompt)		|Prompt for the argument value.
+|%(prompt)		|Prompt for the argument value. Optionally specify a
+			 custom prompt using `"%(prompt Enter branch name: )"`
+|%(repo:head)		|The name of the checked out branch, e.g. `master`
+|%(repo:head-id)	|The commit ID of the checked out branch.
+|%(repo:remote)		|The remote associated with the checked out branch,
+			 e.g. `origin/master`.
+|%(repo:cdup)		|The path to change directory to the repository root,
+			 e.g. `../`
+|%(repo:prefix)		|The path prefix of the current work directory,
+			 e.g `subdir/`.
+|%(repo:git-dir)	|The path to the Git directory, e.g. `/src/repo/.git`.
+|%(repo:is-inside-work-tree)
+			|Whether Tig is running inside a work tree,
+			 either `true` or `false`.
 |=============================================================================
 
 Example user-defined commands:

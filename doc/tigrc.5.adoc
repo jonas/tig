@@ -623,6 +623,18 @@ following variable names, which are substituted before commands are run:
 |%(mainargs)		|Options from 'main-options' used by the main view.
 |%(prompt)		|Prompt for the argument value. Optionally specify a
 			 custom prompt using `"%(prompt Enter branch name: )"`
+|%(repo:head)		|The name of the checked out branch, e.g. `master`
+|%(repo:head-id)	|The commit ID of the checked out branch.
+|%(repo:remote)		|The remote associated with the checked out branch,
+			 e.g. `origin/master`.
+|%(repo:cdup)		|The path to change directory to the repository root,
+			 e.g. `../`
+|%(repo:prefix)		|The path prefix of the current work directory,
+			 e.g `subdir/`.
+|%(repo:git-dir)	|The path to the Git directory, e.g. `/src/repo/.git`.
+|%(repo:is-inside-work-tree)
+			|Whether Tig is running inside a work tree,
+			 either `true` or `false`.
 |=============================================================================
 
 Examples:
