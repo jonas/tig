@@ -18,6 +18,7 @@ Improvements:
  - Add GitHub inspired file finder to search for and open any file. (GH #342)
  - Add `search` keymap for navigation file finder search results.
  - Populate `%(file)` with file names from diff stat. (GH #404)
+ - `tig --merge` implies `--boundary` similar to gitk.
 
 Bug fixes:
 

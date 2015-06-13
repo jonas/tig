@@ -208,6 +208,11 @@ main_check_argv(struct view *view, const char *argv[])
 			continue;
 		}
 
+		if (!strcmp(arg, "--merge")) {
+			argv_append(&opt_rev_args, "--boundary");
+			continue;
+		}
+
 		if (!strcmp(arg, "--first-parent"))
 			state->first_parent = true;
 
