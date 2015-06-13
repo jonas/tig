@@ -255,7 +255,11 @@ EOF
 
 assert_vars()
 {
-	assert_equals "$vars_file" "$(cat "$expected_var_file")"
+	if [ -e "$expected_var_file" ]; then
+		assert_equals "$vars_file" "$(cat "$expected_var_file")"
+	else
+		echo "[FAIL] $expected_var_file not found" >> .test-result
+	fi
 }
 
 show_test_results()
