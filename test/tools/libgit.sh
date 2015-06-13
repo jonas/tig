@@ -93,133 +93,6 @@ create_dirty_workdir()
 	done
 }
 
-create_repo_one()
-{
-	git_init "$1"
-	(cd "$1" && {
-
-		for i in $(seq 1 10); do
-			git_commit --author="$IDENT_A" --message="Commit $i A"
-			git_commit --author="$IDENT_B" --message="Commit $i B"
-			git_commit --author="$IDENT_C" --message="Commit $i C"
-			git_commit --author="$IDENT_D" --message="Commit $i D"
-			git_commit --author="$IDENT_E" --message="Commit $i E"
-		done
-
-		remote=upstream
-		git remote add $remote http://example.org/repo.git
-		mkdir -p .git/refs/remotes/$remote
-		echo 5633519083f21695dda4fe1f546272abb80668cd > .git/refs/remotes/$remote/master
-
-		tagged=957f2b368e6fa5c0757f36b1441e32729ee5e9c7
-		git tag v1.0 $tagged
-	})
-}
-
-submodule_pull()
-{
-	repo_name="$(basename "$1")"
-	cd "$1"; shift
-
-	git submodule foreach git checkout master
-	git submodule foreach git pull
-
-	repos=""
-	repos_sep=
-	clog=""
-	for repo in $@; do
-		repo="$(basename "$repo")"
-		repos="$repos$repos_sep$repo"
-		repos_sep=", "
-
-		summary="$(git submodule summary "$repo")"
-		revspec="$(git diff --submodule=log "$repo" | sed -n '/Submodule/,1 s/Submodule [^ ]* \([^:]*\):/\1/p')"
-		diffstat="$(cd "$repo" && git diff --stat "$revspec")"
-		clog="$clog
-
-$summary
-
-$diffstat"
-		git add "$repo"
-	done
-
-	git_commit --author="$IDENT_A" --message="[$repo_name] Integrate feature from $repos"
-}
-
-submodule_commit()
-{
-	repo_name="$(basename "$1")"
-	cd "$1"; shift
-
-	for file in $@; do
-		mkdir -p "$(dirname "$file")"
-		echo "$file" >> "$file"
-		git add "$file"
-	done
-	git_commit --author="$IDENT_A" --message="[$repo_name] Commit $(git rev-list HEAD 2> /dev/null | wc -l | sed 's/ *//')"
-}
-
-submodule_create()
-{
-	repo_name="$(basename "$1")"
-	cd "$1"; shift
-
-	git submodule init
-	for repo in $@; do
-		git submodule add "../../git-repos/$(basename "$repo")"
-	done
-
-	git_commit --author="$IDENT_A" --message="[$repo_name] Creating repository"
-}
-
-create_repo_two()
-{
-	repo_main="$1"
-	repo_a="$1-a"
-	repo_b="$1-b"
-	repo_c="$1-c"
-
-	for repo in "$repo_main" "$repo_a" "$repo_b" "$repo_c"; do
-		git_init "$repo"
-
-		submodule_commit "$repo" Makefile
-		submodule_commit "$repo" include/api.h
-		submodule_commit "$repo" src/impl.c
-	done
-
-	submodule_create "$repo_main" "$repo_a" "$repo_b" "$repo_c"
-
-	submodule_commit "$repo_a" include/api.h
-	submodule_commit "$repo_a" src/impl.c
-
-	submodule_commit "$repo_c" README
-	submodule_commit "$repo_c" INSTALL
-
-	submodule_pull "$repo_main" "$repo_a" "$repo_c"
-
-	submodule_commit "$repo_b" README
-	submodule_commit "$repo_b" Makefile
-
-	submodule_pull "$repo_main" "$repo_b"
-
-	submodule_commit "$repo_a" README
-	submodule_commit "$repo_c" src/impl.c
-	submodule_commit "$repo_b" include/api.h
-
-	submodule_pull "$repo_main" "$repo_a" "$repo_b" "$repo_c"
-}
-
-create_repo()
-{
-	if [ ! -d "$1" ]; then
-		case "$(basename "$1")" in
-			repo-one) create_repo_one "$1" ;;
-			repo-two) (create_repo_two "$1") ;;
-			*) die "No generator for $(basname "$1")" ;;
-		esac
-	fi
-}
-
 create_repo_from_tgz()
 {
 	git_init .
@@ -229,9 +102,15 @@ create_repo_from_tgz()
 
 git_clone()
 {
-	create_repo "$tmp_dir/git-repos/$1"
-
-	clone_dir="${2:-$work_dir}"
-	git clone -q "$tmp_dir/git-repos/$1" "$clone_dir"
-	(cd "$clone_dir" && git_config)
+	repo_tgz="$base_dir/files/$1.tgz"
+	if [ -e "$repo_tgz" ]; then
+		clone_dir="${2:-$work_dir}"
+		(cd "$clone_dir" && {
+			git_init .
+			tar zxf "$repo_tgz"
+			git reset -q --hard
+		})
+	else
+		die "No generator for $(basename "$1")"
+	fi
 }
