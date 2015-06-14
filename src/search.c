@@ -86,10 +86,39 @@ setup_and_find_next(struct view *view, enum request request)
 }
 
 static enum status_code
+find_next_match_line(struct view *view, int direction, bool wrapped)
+{
+	/* Note, `i` is unsigned and will wrap around in which case it
+	 * will become bigger than view->matched_lines. */
+	size_t i = direction > 0 ? 0 : view->matched_lines - 1;
+
+	for (; i < view->matched_lines; i += direction) {
+		size_t lineno = view->matched_line[i];
+
+		if (direction > 0) {
+			if (!wrapped && lineno <= view->pos.lineno)
+				continue;
+			if (wrapped && lineno > view->pos.lineno)
+				continue;
+		} else {
+			if (!wrapped && lineno >= view->pos.lineno)
+				continue;
+			if (wrapped && lineno < view->pos.lineno)
+				continue;
+		}
+
+		select_view_line(view, lineno);
+		return success("Line %zu matches '%s' (%zu of %zu)", lineno + 1, view->grep, i + 1, view->matched_lines);
+	}
+
+	return -1;
+}
+
+static enum status_code
 find_next_match(struct view *view, enum request request)
 {
+	enum status_code code;
 	int direction;
-	size_t i;
 
 	if (!*view->grep) {
 		if (!*view->env->search)
@@ -115,23 +144,11 @@ find_next_match(struct view *view, enum request request)
 	if (!view->matched_lines && !find_matches(view))
 		return ERROR_OUT_OF_MEMORY;
 
-	/* Note, `i` is unsigned and will wrap around in which case it
-	 * will become bigger than view->matched_lines. */
-	i = direction > 0 ? 0 : view->matched_lines - 1;
-	for (; i < view->matched_lines; i += direction) {
-		size_t lineno = view->matched_line[i];
+	code = find_next_match_line(view, direction, false);
+	if (code != SUCCESS && opt_wrap_search)
+		code = find_next_match_line(view, direction, true);
 
-		if (direction > 0 && lineno <= view->pos.lineno)
-			continue;
-
-		if (direction < 0 && lineno >= view->pos.lineno)
-			continue;
-
-		select_view_line(view, lineno);
-		return success("Line %zu matches '%s' (%zu of %zu)", lineno + 1, view->grep, i + 1, view->matched_lines);
-	}
-
-	return success("No match found for '%s'", view->grep);
+	return code == SUCCESS ? code : success("No match found for '%s'", view->grep);
 }
 
 void
