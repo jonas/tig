@@ -114,9 +114,10 @@ unsigned long utf8_to_unicode(const char *string, size_t length);
  * trailing character, which can be useful when drawing a delimiter.
  *
  * Returns the number of bytes to output from string to satisfy max_width. */
-size_t utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve, int tab_size);
+size_t utf8_length(const char **start, int max_bytes, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve, int tab_size);
 
-int utf8_width_max(const char *text, int max);
+int utf8_width_of(const char *text, int max_bytes, int max_width);
+#define utf8_width_max(text, width) utf8_width_of(text, -1, width)
 #define utf8_width(text) utf8_width_max(text, -1)
 
 #endif

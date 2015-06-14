@@ -21,11 +21,10 @@ DEFINE_ALLOCATOR(realloc_unsigned_ints, unsigned int, 32)
 bool
 grep_text(struct view *view, const char *text[])
 {
-	regmatch_t pmatch;
 	size_t i;
 
 	for (i = 0; text[i]; i++)
-		if (*text[i] && !regexec(view->regex, text[i], 1, &pmatch, 0))
+		if (*text[i] && !regexec(view->regex, text[i], 0, NULL, 0))
 			return true;
 	return false;
 }
@@ -44,8 +43,12 @@ find_matches(struct view *view)
 		if (!realloc_unsigned_ints(&view->matched_line, view->matched_lines, 1))
 			return false;
 
+		view->line[lineno].search_result = true;
 		view->matched_line[view->matched_lines++] = lineno;
 	}
+
+	/* Clear and show highlighted results. */
+	redraw_view_from(view, 0);
 
 	return true;
 }

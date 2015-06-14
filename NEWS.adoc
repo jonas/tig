@@ -16,6 +16,7 @@ Improvements:
    Add `set mailmap = yes` to `~/.tigrc` to enable. (GH #411)
  - See `contrib/vim.tigrc` for Vim-like keybindings. (GH #273, #351)
  - Add GitHub inspired file finder to search for and open any file. (GH #342)
+ - Highlight search results, configurable via `search-result` color.
  - Add `search` keymap for navigation file finder search results.
  - Populate `%(file)` with file names from diff stat. (GH #404)
  - `tig --merge` implies `--boundary` similar to gitk.

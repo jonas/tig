@@ -382,6 +382,7 @@ color palette-11		default	default bold
 color palette-12		white	default bold
 color palette-13		red	default bold
 color graph-commit		blue	default
+color search-result		black	yellow
 
 # Mappings for colors read from git configuration.
 # Set to "no" to disable.

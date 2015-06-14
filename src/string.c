@@ -304,10 +304,10 @@ utf8_to_unicode(const char *string, size_t length)
  *
  * Returns the number of bytes to output from string to satisfy max_width. */
 size_t
-utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve, int tab_size)
+utf8_length(const char **start, int max_chars, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve, int tab_size)
 {
 	const char *string = *start;
-	const char *end = strchr(string, '\0');
+	const char *end = max_chars < 0 ? strchr(string, '\0') : string + max_chars;
 	unsigned char last_bytes = 0;
 	size_t last_ucwidth = 0;
 
@@ -359,13 +359,13 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
 }
 
 int
-utf8_width_max(const char *text, int max)
+utf8_width_of(const char *text, int max_bytes, int max_width)
 {
 	int text_width = 0;
 	const char *tmp = text;
 	int trimmed = false;
 
-	utf8_length(&tmp, 0, &text_width, max, &trimmed, false, 1);
+	utf8_length(&tmp, max_bytes, 0, &text_width, max_width, &trimmed, false, 1);
 	return text_width;
 }
 

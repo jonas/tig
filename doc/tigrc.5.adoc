@@ -909,6 +909,7 @@ setting the *default* color option.
 |status			|The status window showing info messages.
 |title-focus		|The title window for the current view.
 |title-blur		|The title window of any backgrounded view.
+|search-result		|Highlighted search result.
 |delimiter		|Delimiter shown for truncated lines.
 |header			|The view header lines. Use 'status.header' to color
 			 the staged, unstaged, and untracked sections in the

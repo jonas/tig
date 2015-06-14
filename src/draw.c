@@ -62,7 +62,7 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 	if (max_len <= 0)
 		return VIEW_MAX_LEN(view) <= 0;
 
-	len = utf8_length(&string, skip, &col, max_len, &trimmed, use_tilde, opt_tab_size);
+	len = utf8_length(&string, -1, skip, &col, max_len, &trimmed, use_tilde, opt_tab_size);
 
 	if (opt_iconv_out != ICONV_NONE) {
 		string = encoding_iconv(opt_iconv_out, string, len);
@@ -137,7 +137,7 @@ draw_text_overflow(struct view *view, const char *text, enum line_type type,
 		const char *tmp = text;
 		int text_width = 0;
 		int trimmed = false;
-		size_t len = utf8_length(&tmp, 0, &text_width, max, &trimmed, false, 1);
+		size_t len = utf8_length(&tmp, -1, 0, &text_width, max, &trimmed, false, 1);
 
 		if (draw_text_expanded(view, type, text, text_width, max < overflow))
 			return true;
@@ -570,11 +570,43 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 	return true;
 }
 
+static void
+draw_view_line_search_result(struct view *view, unsigned int lineno)
+{
+	size_t bufsize = view->width * 4;
+	char *buf = malloc(bufsize);
+	regmatch_t pmatch[1];
+	int i;
+
+	if (!buf || mvwinnstr(view->win, lineno, 0, buf, bufsize) == ERR ||
+	    regexec(view->regex, buf, ARRAY_SIZE(pmatch), pmatch, 0)) {
+		free(buf);
+		return;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(pmatch); i++) {
+		regoff_t start = pmatch[i].rm_so;
+
+		if (start == -1)
+			continue;
+
+		mvwchgat(view->win, lineno,
+			 utf8_width_of(buf, start, -1),
+			 utf8_width_of(buf + start, pmatch[i].rm_eo - start, -1),
+			 get_view_attr(view, LINE_SEARCH_RESULT),
+			 get_view_color(view, LINE_SEARCH_RESULT),
+			 NULL);
+	}
+
+	free(buf);
+}
+
 bool
 draw_view_line(struct view *view, unsigned int lineno)
 {
 	struct line *line;
 	bool selected = (view->pos.offset + lineno == view->pos.lineno);
+	bool ok;
 
 	/* FIXME: Disabled during code split.
 	assert(view_is_displayed(view));
@@ -600,7 +632,12 @@ draw_view_line(struct view *view, unsigned int lineno)
 		view->ops->select(view, line);
 	}
 
-	return view->ops->draw(view, line, lineno);
+	ok = view->ops->draw(view, line, lineno);
+
+	if (ok && line->search_result && view->regex)
+		draw_view_line_search_result(view, lineno);
+
+	return ok;
 }
 
 void
