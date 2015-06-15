@@ -23,6 +23,7 @@ Improvements:
  - `tig --merge` implies `--boundary` similar to gitk.
  - Expose repository variables to external commands, e.g. `%(repo:head)` gives the
    branch name of the current HEAD and `%(repo:cdup)` for the repo root path.
+ - Add `make uninstall`. (GH #417)
 
 Bug fixes:
 

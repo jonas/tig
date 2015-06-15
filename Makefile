@@ -112,6 +112,18 @@ install-release-doc-html:
 install-doc: install-doc-man install-doc-html
 install-release-doc: install-release-doc-man install-release-doc-html
 
+uninstall:
+	$(QUIET_UNINSTALL)tools/uninstall.sh "$(DESTDIR)$(bindir)/$(EXE:src/%=%)"
+	$(QUIET_UNINSTALL)tools/uninstall.sh "$(DESTDIR)$(sysconfdir)/tigrc"
+	$(Q)$(foreach doc, $(filter %.1, $(MANDOC:doc/%=%)), \
+		$(QUIET_UNINSTALL_EACH)tools/uninstall.sh "$(DESTDIR)$(mandir)/man1/$(doc)";)
+	$(Q)$(foreach doc, $(filter %.5, $(MANDOC:doc/%=%)), \
+		$(QUIET_UNINSTALL_EACH)tools/uninstall.sh "$(DESTDIR)$(mandir)/man5/$(doc)";)
+	$(Q)$(foreach doc, $(filter %.7, $(MANDOC:doc/%=%)), \
+		$(QUIET_UNINSTALL_EACH)tools/uninstall.sh "$(DESTDIR)$(mandir)/man7/$(doc)";)
+	$(Q)$(foreach doc, $(HTMLDOC:doc/%=%), \
+		$(QUIET_UNINSTALL_EACH)tools/uninstall.sh "$(DESTDIR)$(docdir)/tig/$(doc)";)
+
 clean: clean-test clean-coverage
 	$(Q)$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5 .deps
 	$(Q)$(RM) $(EXE) $(TOOLS) $(OBJS) core doc/*.xml src/builtin-config.c
@@ -366,6 +378,8 @@ QUIET_DB2PDF		= $(Q:@=@echo    '    DB2PDF  '$@;)
 # tools/install.sh will print 'file -> $install_dir/file'
 QUIET_INSTALL		= $(Q:@=@printf  '   INSTALL  ';)
 QUIET_INSTALL_EACH	= $(Q:@=printf   '   INSTALL  ';)
+QUIET_UNINSTALL		= $(Q:@=@printf  ' UNINSTALL  ';)
+QUIET_UNINSTALL_EACH	= $(Q:@=printf   ' UNINSTALL  ';)
 QUIET_TEST		= $(Q:@=@echo    '      TEST  '$@;)
 QUIET_SUMMARY		= $(Q:@=@printf  '   SUMMARY  ';)
 QUIET_LCOV		= $(Q:@=@echo    '      LCOV  '$@;)
