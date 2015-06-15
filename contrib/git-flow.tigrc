@@ -27,19 +27,23 @@ bind generic F none
 bind generic Fi ?git flow init
 
 # Feature
+bind generic Ffl !git flow feature
 bind generic Ffs !git flow feature start "%(prompt New feature name: )"
 bind generic Fff ?sh -c "git flow feature finish `echo %(repo:head) | sed -e s/feature.//`"
 bind refs    Fff ?sh -c "git flow feature finish `echo %(branch) | sed -e s/feature.//`"
 
 # Release
+bind generic Frl !git flow release
 bind generic Frs !git flow release start "%(prompt New release name: )"
 bind generic Frf ?sh -c "git flow release finish `echo %(repo:head) | sed -e s/release.//`"
 bind refs    Frf ?sh -c "git flow release finish `echo %(branch) | sed -e s/release.//`"
 
 # Hot Fix
+bind generic Fhl !git flow hotfix
 bind generic Fhs !git flow hotfix start "%(prompt New hotfix name: )"
 bind generic Fhf ?sh -c "git flow hotfix finish `echo %(repo:head) | sed -e s/hotfix.//`"
 bind refs    Fhf ?sh -c "git flow hotfix finish `echo %(branch) | sed -e s/hotfix.//`"
 
 # Support
+bind generic Fsl !git flow support
 bind refs    Fss !git flow support start "%(prompt New support name: )" %(branch)
