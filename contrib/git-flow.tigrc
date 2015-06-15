@@ -42,10 +42,4 @@ bind generic Fhf ?sh -c "git flow hotfix finish `echo %(repo:head) | sed -e s/ho
 bind refs    Fhf ?sh -c "git flow hotfix finish `echo %(branch) | sed -e s/hotfix.//`"
 
 # Support
-#
-# Support is commented out, it is still a "very EXPERIMENTAL!" feature as described
-# by git flow commands themselves. Further, the command for git flow support start
-# isn't yet correct.
-#bind refs    Fss !git flow support start "%(prompt New support name: )" %(branch)
-#bind generic Fsf ?sh -c "git flow support finish `echo %(repo:head) | sed -e s/support.//`"
-#bind refs    Fsf ?sh -c "git flow support finish `echo %(branch) | sed -e s/support.//`"
+bind refs    Fss !git flow support start "%(prompt New support name: )" %(branch)
