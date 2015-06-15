@@ -193,6 +193,7 @@ indent='            '
 verbose=
 debugger=
 trace=
+valgrind=
 
 set -- $TIG_TEST_OPTS $TEST_OPTS
 
@@ -204,6 +205,7 @@ while [ $# -gt 0 ]; do
 		debugger=*) debugger=$(expr "$arg" : 'debugger=\(.*\)') ;;
 		debugger) debugger="$(auto_detect_debugger)" ;;
 		trace) trace=yes ;;
+		valgrind) valgrind="$HOME/valgrind.log" ;;
 	esac
 done
 
@@ -267,6 +269,9 @@ show_test_results()
 	if [ -n "$trace" -a -n "$TIG_TRACE" -a -e "$TIG_TRACE" ]; then
 		sed "s/^/$indent[trace] /" < "$TIG_TRACE"
 	fi
+	if [ -n "$valgrind" -a -e "$valgrind" ]; then
+		sed "s/^/$indent[valgrind] /" < "$valgrind"
+	fi
 	if [ ! -d "$HOME" ]; then
 		echo "Skipped"
 	elif [ ! -e .test-result ]; then
@@ -316,6 +321,28 @@ test_setup()
 	fi
 }
 
+valgrind_exec()
+{
+	kernel="$(uname -s 2>/dev/null || echo unknown)"
+	kernel_supp="test/tools/valgrind-$kernel.supp"
+
+	valgrind_ops=
+	if [ -e "$kernel_supp" ]; then
+		valgrind_ops="$valgrind_ops --suppresions='$kernel_supp'"
+	fi
+
+	valgrind -q --gen-suppressions=all --track-origins=yes --error-exitcode=1 \
+		--log-file="$valgrind.orig" $valgrind_ops \
+		"$@"
+
+	case "$kernel" in
+	Darwin)	grep -v "mach_msg unhandled MACH_SEND_TRAILER option" < "$valgrind.orig" > "$valgrind" ;;
+	*)	mv "$valgrind.orig" "$valgrind" ;;
+	esac
+
+	rm -f "$valgrind.orig" 
+}
+
 test_tig()
 {
 	name="$TEST_NAME"
@@ -339,10 +366,15 @@ test_tig()
 		(cd "$work_dir" && $debugger tig "$@")
 	else
 		set +e
+		runner=
+		# FIXME: Tell Valgrind to forward status code
+		if [ "$expected_status_code" = 0 -a -n "$valgrind" ]; then
+			runner=valgrind_exec
+		fi
 		if [ -s "${prefix}stdin" ]; then
-			(cd "$work_dir" && tig "$@") < "${prefix}stdin" > "${prefix}stdout" 2> "${prefix}stderr.orig"
+			(cd "$work_dir" && $runner tig "$@") < "${prefix}stdin" > "${prefix}stdout" 2> "${prefix}stderr.orig"
 		else
-			(cd "$work_dir" && tig "$@") > "${prefix}stdout" 2> "${prefix}stderr.orig"
+			(cd "$work_dir" && $runner tig "$@") > "${prefix}stdout" 2> "${prefix}stderr.orig"
 		fi
 		status_code="$?"
 		if [ "$status_code" != "$expected_status_code" ]; then

@@ -4,15 +4,19 @@ compiler:
   - clang
   - gcc
 
-env:
-  - TEST=autoconf VERBOSE=1 TEST_SHELL=bash
-  - TEST=make     VERBOSE=@
-
 before_install: sudo apt-get update -qq
 
-install: sudo apt-get install -qq --no-install-recommends asciidoc xmlto docbook-utils
+install: sudo apt-get install -qq --no-install-recommends asciidoc xmlto docbook-utils valgrind
 
 script:
-  - if [ "$TEST" = autoconf ]; then ./autogen.sh && ./configure; fi
-  - if [ "$TEST" = make ]; then cp contrib/config.make .; fi
-  - make V=$VERBOSE DESTDIR=/tmp TEST_SHELL=$TEST_SHELL all test install install-doc
+  - # ============ Build from config ===============
+  - cp contrib/config.make .
+  - make DESTDIR=/tmp/bare-prefix all-debug install install-doc
+  - make test
+  - make test TEST_OPTS=valgrind
+  - make distclean
+  - # ============ Build using autoconf ============
+  - make dist
+  - ./configure --prefix=/tmp/conf-prefix
+  - make V=1 TEST_SHELL=bash all test install install-doc
+  - make clean
