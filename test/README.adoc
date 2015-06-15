@@ -38,3 +38,7 @@ debugger[=<program]::
 trace::
 
 	Show trace information.
+
+valgrind::
+
+	Run tests and verify memory access with Valgrind.
