@@ -239,7 +239,7 @@ diff_read_describe(struct view *view, struct buffer *buffer, struct diff_state *
 
 	if (line && buffer) {
 		const char *ref = chomp_string(buffer->data);
-		const char *sep = !strcmp("Refs: ", line->data) ? "" : ", ";
+		const char *sep = !strcmp("Refs: ", box_text(line)) ? "" : ", ";
 
 		if (*ref && !append_line_format(view, line, "%s%s", sep, ref))
 			return false;
@@ -351,7 +351,7 @@ diff_get_lineno(struct view *view, struct line *line)
 	 * following line, in the new version of the file. We increment this
 	 * number for each non-deletion line, until the given line position.
 	 */
-	if (!parse_chunk_header(&chunk_header, chunk->data))
+	if (!parse_chunk_header(&chunk_header, box_text(chunk)))
 		return 0;
 
 	lineno = chunk_header.new.position;
@@ -383,7 +383,7 @@ diff_trace_origin(struct view *view, struct line *line)
 	}
 
 	for (; diff < line && !file; diff++) {
-		const char *data = diff->data;
+		const char *data = box_text(diff);
 
 		if (!prefixcmp(data, "--- a/")) {
 			file = data + STRING_SIZE("--- a/");
@@ -396,7 +396,7 @@ diff_trace_origin(struct view *view, struct line *line)
 		return REQ_NONE;
 	}
 
-	chunk_data = chunk->data;
+	chunk_data = box_text(chunk);
 
 	if (!parse_chunk_lineno(&lineno, chunk_data, chunk_marker)) {
 		report("Failed to read the line number");
@@ -455,7 +455,7 @@ diff_get_pathname(struct view *view, struct line *line)
 		return NULL;
 
 	for (i = 0; i < ARRAY_SIZE(prefixes) && !dst; i++)
-		dst = strstr(header->data, prefixes[i]);
+		dst = strstr(box_text(header), prefixes[i]);
 
 	return dst ? dst + strlen(prefixes[--i]) : NULL;
 }

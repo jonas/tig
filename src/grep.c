@@ -40,7 +40,7 @@ grep_get_line(const struct line *line)
 	if (line->type == LINE_DEFAULT)
 		return line->data;
 
-	grep_line.file = line->type == LINE_DELIMITER ? "" : get_path(line->data);
+	grep_line.file = line->type == LINE_DELIMITER ? "" : get_path(box_text(line));
 	return &grep_line;
 }
 

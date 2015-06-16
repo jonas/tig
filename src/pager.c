@@ -28,7 +28,8 @@
 bool
 pager_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
-	column_data->text = line->data;
+	column_data->text = box_text(line);
+	column_data->box = line->data;
 	return true;
 }
 
@@ -75,9 +76,9 @@ pager_wrap_line(struct view *view, const char *data, enum line_type type)
 		bool wrapped = !!first_line;
 		size_t linelen = string_expanded_length(data, datalen, opt_tab_size, view->width - !!wrapped);
 		struct line *line;
-		char *text;
+		struct box *box;
 
-		line = add_line(view, NULL, type, linelen + 1, wrapped);
+		line = add_line_alloc(view, &box, type, linelen + 1, wrapped);
 		if (!line)
 			break;
 		if (!has_first_line) {
@@ -90,10 +91,7 @@ pager_wrap_line(struct view *view, const char *data, enum line_type type)
 
 		line->wrapped = wrapped;
 		line->lineno = lineno;
-		text = line->data;
-		if (linelen)
-			strncpy(text, data, linelen);
-		text[linelen] = 0;
+		box_text_copy(box, 1, data, linelen);
 
 		datalen -= linelen;
 		data += linelen;
@@ -168,7 +166,7 @@ void
 pager_select(struct view *view, struct line *line)
 {
 	if (line->type == LINE_COMMIT) {
-		string_copy_rev_from_commit_line(view->env->commit, line->data);
+		string_copy_rev_from_commit_line(view->env->commit, box_text(line));
 		if (!view_has_flags(view, VIEW_NO_REF))
 			string_copy_rev(view->ref, view->env->commit);
 	}

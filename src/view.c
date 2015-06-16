@@ -828,6 +828,9 @@ compare_view_column(enum view_column_type column, bool use_file_mode,
 		return apply_comparator(number_compare, column_data1->status, column_data2->status);
 
 	case VIEW_COLUMN_TEXT:
+		if (column_data1->box && column_data2->box)
+			return apply_comparator(strcmp, column_data1->box->text,
+							column_data2->box->text);
 		return apply_comparator(strcmp, column_data1->text, column_data2->text);
 	}
 
@@ -1450,6 +1453,21 @@ find_line_by_type(struct view *view, struct line *line, enum line_type type, int
 
 DEFINE_ALLOCATOR(realloc_lines, struct line, 256)
 
+static inline char *
+box_text_offset(struct box *box, size_t cells)
+{
+	return (char *) &box->cell[cells];
+}
+
+void
+box_text_copy(struct box *box, size_t cells, const char *src, size_t srclen)
+{
+	char *dst = box_text_offset(box, cells);
+
+	box->text = dst;
+	strncpy(dst, src, srclen);
+}
+
 struct line *
 add_line_at(struct view *view, unsigned long pos, const void *data, enum line_type type, size_t data_size, bool custom)
 {
@@ -1521,13 +1539,28 @@ add_line_nodata(struct view *view, enum line_type type)
 }
 
 struct line *
-add_line_text(struct view *view, const char *text, enum line_type type)
+add_line_text_at(struct view *view, unsigned long pos, const char *text, enum line_type type, size_t cells)
 {
-	struct line *line = add_line(view, text, type, strlen(text) + 1, false);
+	struct box *box;
+	size_t extra_cells = cells > 1 ? sizeof(box->cell) * (cells - 1) : 0;
+	struct line *line = add_line_at(view, pos, NULL, type, sizeof(*box) + extra_cells + strlen(text) + 1, false);
 
-	if (line && view->ops->column_bits)
+	if (!line)
+		return NULL;
+
+	box = line->data;
+	box->cell[box->cells++].type = type;
+	box_text_copy(box, cells, text, strlen(text));
+
+	if (view->ops->column_bits)
 		view_column_info_update(view, line);
 	return line;
+}
+
+struct line *
+add_line_text(struct view *view, const char *text, enum line_type type)
+{
+	return add_line_text_at(view, view->lines, text, type, 1);
 }
 
 struct line * PRINTF_LIKE(3, 4)
@@ -1543,10 +1576,11 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 bool
 append_line_format(struct view *view, struct line *line, const char *fmt, ...)
 {
-	char *text = NULL;
+	struct box *box;
 	size_t textlen = 0;
 	int fmtlen, retval;
 	va_list args;
+	char *text;
 
 	va_start(args, fmt);
 	fmtlen = vsnprintf(NULL, 0, fmt, args);
@@ -1555,18 +1589,20 @@ append_line_format(struct view *view, struct line *line, const char *fmt, ...)
 	if (fmtlen <= 0)
 		return false;
 
-	text = line->data;
-	textlen = strlen(text);
+	box = line->data;
+	textlen = strlen(box->text);
 
-	text = realloc(text, textlen + fmtlen + 1);
-	if (!text)
+	box = realloc(box, sizeof(*box) + textlen + fmtlen + 1);
+	if (!box)
 		return false;
 
+	box->text = text = box_text_offset(box, box->cells);
 	FORMAT_BUFFER(text + textlen, fmtlen + 1, fmt, retval, false);
 	if (retval < 0)
 		text[textlen] = 0;
 
-	line->data = text;
+	box->cell[box->cells - 1].length += fmtlen;
+	line->data = box;
 	line->dirty = true;
 
 	if (view->ops->column_bits)

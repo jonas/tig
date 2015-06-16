@@ -59,7 +59,9 @@ static bool
 stage_diff_write(struct io *io, struct line *line, struct line *end)
 {
 	while (line < end) {
-		if (!io_write(io, line->data, strlen(line->data)) ||
+		const char *text = box_text(line);
+
+		if (!io_write(io, text, strlen(text)) ||
 		    !io_write(io, "\n", 1))
 			return false;
 		line++;
@@ -79,7 +81,7 @@ stage_diff_single_write(struct io *io, bool staged,
 
 	while (line < end) {
 		const char *prefix = "";
-		const char *data = line->data;
+		const char *data = box_text(line);
 
 		if (line == single) {
 			/* Write the complete line. */
@@ -110,7 +112,7 @@ stage_apply_line(struct io *io, struct line *diff_hdr, struct line *chunk, struc
 	bool staged = stage_line_type == LINE_STAT_STAGED;
 	int diff = single->type == LINE_DIFF_DEL ? -1 : 1;
 
-	if (!parse_chunk_header(&header, chunk->data))
+	if (!parse_chunk_header(&header, box_text(chunk)))
 		return false;
 
 	if (staged)
@@ -242,7 +244,7 @@ stage_insert_chunk(struct view *view, struct chunk_header *header,
 		   struct line *from, struct line *to, struct line *last_unchanged_line)
 {
 	char buf[SIZEOF_STR];
-	char *chunk_line;
+	struct box *box;
 	unsigned long from_lineno = last_unchanged_line - view->line;
 	unsigned long to_lineno = to - view->line;
 	unsigned long after_lineno = to_lineno;
@@ -252,23 +254,22 @@ stage_insert_chunk(struct view *view, struct chunk_header *header,
 			header->new.position, header->new.lines))
 		return NULL;
 
-	chunk_line = strdup(buf);
-	if (!chunk_line)
+	box = from->data;
+	box_text_copy(box, box->cells, "", 0);
+	if (!append_line_format(view, from, "%s", buf))
 		return NULL;
-
-	free(from->data);
-	from->data = chunk_line;
 
 	if (!to)
 		return from;
 
-	if (!add_line_at(view, after_lineno++, buf, LINE_DIFF_CHUNK, strlen(buf) + 1, false))
+	if (!add_line_text_at(view, after_lineno++, buf, LINE_DIFF_CHUNK, 1))
 		return NULL;
 
 	while (from_lineno < to_lineno) {
 		struct line *line = &view->line[from_lineno++];
+		const char *text = box_text(line);
 
-		if (!add_line_at(view, after_lineno++, line->data, line->type, strlen(line->data) + 1, false))
+		if (!add_line_text_at(view, after_lineno++, text, line->type, 1))
 			return false;
 	}
 

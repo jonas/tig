@@ -25,6 +25,17 @@
 
 struct view_ops;
 
+struct box_cell {
+	enum line_type type;
+	size_t offset;
+};
+
+struct box {
+	const char *text;
+	size_t cells;
+	struct box_cell cell[1];
+};
+
 struct line {
 	enum line_type type;
 	unsigned int lineno:24;
@@ -189,6 +200,7 @@ struct view_column_data {
 	const struct ref *refs;
 	const char *status;
 	const char *text;
+	const struct box *box;
 };
 
 #define view_column_bit(id) (1 << VIEW_COLUMN_##id)
@@ -341,6 +353,16 @@ void update_view_title(struct view *view);
  * Line utilities.
  */
 
+static inline const char *
+box_text(const struct line *line)
+{
+	const struct box *box = line->data;
+
+	return box->text;
+}
+
+void box_text_copy(struct box *box, size_t cells, const char *src, size_t srclen);
+
 struct line *add_line_at(struct view *view, unsigned long pos, const void *data, enum line_type type, size_t data_size, bool custom);
 struct line *add_line(struct view *view, const void *data, enum line_type type, size_t data_size, bool custom);
 struct line *add_line_alloc_(struct view *view, void **ptr, enum line_type type, size_t data_size, bool custom);
@@ -350,6 +372,7 @@ struct line *add_line_alloc_(struct view *view, void **ptr, enum line_type type,
 
 struct line *add_line_nodata(struct view *view, enum line_type type);
 struct line *add_line_text(struct view *view, const char *text, enum line_type type);
+struct line *add_line_text_at(struct view *view, unsigned long pos, const char *text, enum line_type type, size_t cells);
 struct line * PRINTF_LIKE(3, 4) add_line_format(struct view *view, enum line_type type, const char *fmt, ...);
 bool append_line_format(struct view *view, struct line *line, const char *fmt, ...);
 
