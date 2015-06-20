@@ -51,18 +51,18 @@ set_view_attr(struct view *view, enum line_type type)
 #define VIEW_MAX_LEN(view) ((view)->width + (view)->pos.col - (view)->col)
 
 static bool
-draw_chars(struct view *view, enum line_type type, const char *string,
-	   int max_len, bool use_tilde)
+draw_chars(struct view *view, enum line_type type, const char *string, int length,
+	   int max_width, bool use_tilde)
 {
 	int len = 0;
 	int col = 0;
 	int trimmed = false;
 	size_t skip = view->pos.col > view->col ? view->pos.col - view->col : 0;
 
-	if (max_len <= 0)
+	if (max_width <= 0)
 		return VIEW_MAX_LEN(view) <= 0;
 
-	len = utf8_length(&string, -1, skip, &col, max_len, &trimmed, use_tilde, opt_tab_size);
+	len = utf8_length(&string, length, skip, &col, max_width, &trimmed, use_tilde, opt_tab_size);
 
 	if (opt_iconv_out != ICONV_NONE) {
 		string = encoding_iconv(opt_iconv_out, string, len);
@@ -95,7 +95,7 @@ draw_space(struct view *view, enum line_type type, int max, int spaces)
 	while (spaces > 0) {
 		int len = MIN(spaces, sizeof(space) - 1);
 
-		if (draw_chars(view, type, space, len, false))
+		if (draw_chars(view, type, space, -1, len, false))
 			return true;
 		spaces -= len;
 	}
@@ -104,25 +104,35 @@ draw_space(struct view *view, enum line_type type, int max, int spaces)
 }
 
 static bool
-draw_text_expanded(struct view *view, enum line_type type, const char *string, int max_len, bool use_tilde)
+draw_text_expanded(struct view *view, enum line_type type, const char *string, int length, int max_width, bool use_tilde)
 {
 	static char text[SIZEOF_STR];
 
-	do {
-		size_t pos = string_expand(text, sizeof(text), string, opt_tab_size);
+	if (length == -1)
+		length = strlen(string);
 
-		if (draw_chars(view, type, text, max_len, use_tilde))
+	do {
+		size_t pos = string_expand(text, sizeof(text), string, length, opt_tab_size);
+
+		if (draw_chars(view, type, text, -1, max_width, use_tilde))
 			return true;
 		string += pos;
-	} while (*string);
+		length -= pos;
+	} while (*string && length > 0);
 
 	return VIEW_MAX_LEN(view) <= 0;
+}
+
+static inline bool
+draw_textn(struct view *view, enum line_type type, const char *string, int length)
+{
+	return draw_text_expanded(view, type, string, length, VIEW_MAX_LEN(view), false);
 }
 
 bool
 draw_text(struct view *view, enum line_type type, const char *string)
 {
-	return draw_text_expanded(view, type, string, VIEW_MAX_LEN(view), false);
+	return draw_textn(view, type, string, -1);
 }
 
 static bool
@@ -139,7 +149,7 @@ draw_text_overflow(struct view *view, const char *text, enum line_type type,
 		int trimmed = false;
 		size_t len = utf8_length(&tmp, -1, 0, &text_width, max, &trimmed, false, 1);
 
-		if (draw_text_expanded(view, type, text, text_width, max < overflow))
+		if (draw_text_expanded(view, type, text, -1, text_width, max < overflow))
 			return true;
 
 		text += len;
@@ -209,7 +219,7 @@ draw_field(struct view *view, enum line_type type, const char *text, int width, 
 		}
 	}
 
-	return draw_chars(view, type, text, max - 1, trim)
+	return draw_chars(view, type, text, -1, max - 1, trim)
 	    || draw_space(view, LINE_DEFAULT, max - (view->col - col), max);
 }
 
@@ -313,7 +323,7 @@ draw_lineno_custom(struct view *view, struct view_column *column, unsigned int l
 			text = number;
 	}
 	if (text)
-		draw_chars(view, LINE_LINE_NUMBER, text, max, true);
+		draw_chars(view, LINE_LINE_NUMBER, text, -1, max, true);
 	else
 		draw_space(view, LINE_LINE_NUMBER, max, digits3);
 	return draw_graphic(view, LINE_DEFAULT, &separator, 1, true);
@@ -438,7 +448,7 @@ draw_diff_stat_part(struct view *view, enum line_type *type, const char **text, 
 	const char *sep = c == '|' ? strrchr(*text, c) : strchr(*text, c);
 
 	if (sep != NULL) {
-		draw_text_expanded(view, *type, *text, sep - *text, false);
+		draw_text_expanded(view, *type, *text, -1, sep - *text, false);
 		*text = sep;
 		*type = next_type;
 	}
@@ -549,18 +559,35 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			if (line->graph_indent) {
 				size_t indent = get_graph_indent(text);
 
-				if (draw_text_expanded(view, LINE_DEFAULT, text, indent, false))
+				if (draw_text_expanded(view, LINE_DEFAULT, text, -1, indent, false))
 					return true;
 				text += indent;
 			}
-			if (type == LINE_DIFF_STAT)
-				draw_diff_stat(view, &type, &text);
+
 			if (line->commit_title) {
 				if (draw_text_overflow(view, text, LINE_DEFAULT,
 						       column->opt.text.commit_title_overflow, 4))
 					return true;
-			} else if (draw_text(view, type, text)) {
-				return true;
+
+			} else if (column_data.box && type != LINE_DIFF_STAT) {
+				const struct box *box = column_data.box;
+				const char *text = box->text;
+				size_t i;
+
+				for (i = 0; i < box->cells; i++) {
+					const struct box_cell *cell = &box->cell[i];
+
+					if (draw_textn(view, cell->type, text, cell->length))
+						return true;
+
+					text += cell->length;
+				}
+
+			} else {
+				if (type == LINE_DIFF_STAT)
+					draw_diff_stat(view, &type, &text);
+				if (draw_text(view, type, text))
+					return true;
 			}
 		}
 			continue;

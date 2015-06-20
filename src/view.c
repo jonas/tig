@@ -1542,15 +1542,17 @@ struct line *
 add_line_text_at(struct view *view, unsigned long pos, const char *text, enum line_type type, size_t cells)
 {
 	struct box *box;
+	size_t textlen = strlen(text);
 	size_t extra_cells = cells > 1 ? sizeof(box->cell) * (cells - 1) : 0;
-	struct line *line = add_line_at(view, pos, NULL, type, sizeof(*box) + extra_cells + strlen(text) + 1, false);
+	struct line *line = add_line_at(view, pos, NULL, type, sizeof(*box) + extra_cells + textlen + 1, false);
 
 	if (!line)
 		return NULL;
 
 	box = line->data;
+	box->cell[box->cells].length = textlen;
 	box->cell[box->cells++].type = type;
-	box_text_copy(box, cells, text, strlen(text));
+	box_text_copy(box, cells, text, textlen);
 
 	if (view->ops->column_bits)
 		view_column_info_update(view, line);

@@ -27,7 +27,7 @@ struct view_ops;
 
 struct box_cell {
 	enum line_type type;
-	size_t offset;
+	size_t length;
 };
 
 struct box {

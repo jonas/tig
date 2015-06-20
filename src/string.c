@@ -103,11 +103,11 @@ string_expanded_length(const char *src, size_t srclen, size_t tabsize, size_t ma
 }
 
 size_t
-string_expand(char *dst, size_t dstlen, const char *src, int tabsize)
+string_expand(char *dst, size_t dstlen, const char *src, int srclen, int tabsize)
 {
 	size_t size, pos;
 
-	for (size = pos = 0; size < dstlen - 1 && src[pos]; pos++) {
+	for (size = pos = 0; size < dstlen - 1 && (srclen == -1 || pos < srclen) && src[pos]; pos++) {
 		if (src[pos] == '\t') {
 			size_t expanded = tabsize - (size % tabsize);
 

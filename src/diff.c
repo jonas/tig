@@ -107,6 +107,22 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		    !strncmp(data + len, "cc ", strlen("cc ")))
 			state->combined_diff = true;
 
+	} else if (type == LINE_DIFF_CHUNK) {
+		const char *context = strstr(data + STRING_SIZE("@@"), "@@");
+		struct line *line =
+			context ? add_line_text_at(view, view->lines, data, LINE_DIFF_CHUNK, 2)
+				: NULL;
+		struct box *box;
+
+		if (!line)
+			return false;
+
+		box = line->data;
+		box->cell[0].length = (context + 2) - data;
+		box->cell[1].length = strlen(context + 2);
+		box->cell[box->cells++].type = LINE_DIFF_STAT;
+		return true;
+
 	} else if (type == LINE_PP_MERGE) {
 		state->combined_diff = true;
 	}

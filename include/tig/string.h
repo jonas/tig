@@ -82,7 +82,7 @@ void string_copy_rev_from_commit_line(char *dst, const char *src);
 	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
 
 size_t string_expanded_length(const char *src, size_t srclen, size_t tabsize, size_t max_size);
-size_t string_expand(char *dst, size_t dstlen, const char *src, int tabsize);
+size_t string_expand(char *dst, size_t dstlen, const char *src, int srclen, int tabsize);
 
 char *chomp_string(char *name);
 
