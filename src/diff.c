@@ -37,6 +37,71 @@ diff_open(struct view *view, enum open_flags flags)
 	return begin_update(view, NULL, diff_argv, flags);
 }
 
+struct diff_stat_context {
+	const char *text;
+	enum line_type type;
+	size_t cells;
+	struct box_cell cell[10];
+};
+
+static void
+diff_common_add_cell(struct diff_stat_context *context, size_t length)
+{
+	assert(ARRAY_SIZE(context->cell) > context->cells);
+	if (length == 0)
+		return;
+	context->cell[context->cells].length = length;
+	context->cell[context->cells].type = context->type;
+	context->cells++;
+}
+
+static bool
+diff_common_read_diff_stat_part(struct diff_stat_context *context, char c, enum line_type next_type)
+{
+	const char *sep = c == '|' ? strrchr(context->text, c) : strchr(context->text, c);
+
+	if (sep == NULL)
+		return false;
+
+	diff_common_add_cell(context, sep - context->text);
+	context->text = sep;
+	context->type = next_type;
+
+	return true;
+}
+
+static struct line *
+diff_common_read_diff_stat(struct view *view, const char *text)
+{
+	struct diff_stat_context context = { text, LINE_DIFF_STAT };
+	struct line *line;
+	struct box *box;
+
+	diff_common_read_diff_stat_part(&context, '|', LINE_DEFAULT);
+	if (diff_common_read_diff_stat_part(&context, 'B', LINE_DEFAULT)) {
+		/* Handle binary diffstat: Bin <deleted> -> <added> bytes */
+		diff_common_read_diff_stat_part(&context, ' ', LINE_DIFF_DEL);
+		diff_common_read_diff_stat_part(&context, '-', LINE_DEFAULT);
+		diff_common_read_diff_stat_part(&context, ' ', LINE_DIFF_ADD);
+		diff_common_read_diff_stat_part(&context, 'b', LINE_DEFAULT);
+
+	} else {
+		diff_common_read_diff_stat_part(&context, '+', LINE_DIFF_ADD);
+		diff_common_read_diff_stat_part(&context, '-', LINE_DIFF_DEL);
+	}
+	diff_common_add_cell(&context, strlen(context.text));
+
+	line = add_line_text_at(view, view->lines, text, LINE_DIFF_STAT, context.cells);
+	if (!line)
+		return NULL;
+
+	box = line->data;
+	if (context.cells)
+		memcpy(box->cell, context.cell, sizeof(struct box_cell) * context.cells);
+	box->cells = context.cells;
+	return line;
+}
+
 struct line *
 diff_common_add_diff_stat(struct view *view, const char *text, size_t offset)
 {
@@ -66,7 +131,7 @@ diff_common_add_diff_stat(struct view *view, const char *text, size_t offset)
 	    (strstr(pipe, "Bin") && strstr(pipe, "->")) ||
 	    strstr(pipe, "Unmerged") ||
 	    (data[len - 1] == '0' && (strstr(data, "=>") || !prefixcmp(data, "..."))))
-		return add_line_text(view, text, LINE_DIFF_STAT);
+		return diff_common_read_diff_stat(view, text);
 	return NULL;
 }
 
