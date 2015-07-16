@@ -167,6 +167,27 @@ redraw_display_separator(bool clear)
 	}
 }
 
+static void create_or_move_display_separator(int height, int x)
+{
+	if (!display_sep) {
+		display_sep = newwin(height, 1, 0, x);
+		if (!display_sep)
+			die("Failed to create separator window");
+
+	} else {
+		wresize(display_sep, height, 1);
+		mvwin(display_sep, 0, x);
+	}
+}
+
+static void remove_display_separator(void)
+{
+	if (display_sep) {
+		delwin(display_sep);
+		display_sep = NULL;
+	}
+}
+
 void
 resize_display(void)
 {
@@ -195,16 +216,7 @@ resize_display(void)
 			/* Make room for the separator bar. */
 			view->width -= 1;
 
-			if (!display_sep) {
-				display_sep = newwin(base->height, 1, 0, base->width);
-				if (!display_sep)
-					die("Failed to create separator window");
-
-			} else {
-				wresize(display_sep, base->height, 1);
-				mvwin(display_sep, 0, base->width);
-			}
-
+			create_or_move_display_separator(base->height, base->width);
 			redraw_display_separator(false);
 		} else {
 			apply_horizontal_split(base, view);
@@ -213,9 +225,8 @@ resize_display(void)
 		/* Make room for the title bar. */
 		view->height -= 1;
 
-	} else if (display_sep) {
-		delwin(display_sep);
-		display_sep = NULL;
+	} else {
+		remove_display_separator();
 	}
 
 	/* Make room for the title bar. */
