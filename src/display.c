@@ -219,6 +219,7 @@ resize_display(void)
 			create_or_move_display_separator(base->height, base->width);
 			redraw_display_separator(false);
 		} else {
+			remove_display_separator();
 			apply_horizontal_split(base, view);
 		}
 
