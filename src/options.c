@@ -121,9 +121,7 @@ find_column_option_info(enum view_column_type type, union view_column_options *o
 
 iconv_t opt_iconv_out		= ICONV_NONE;
 char opt_editor[SIZEOF_STR]	= "";
-const char **opt_cmdline_argv	= NULL;
-const char **opt_rev_argv	= NULL;
-const char **opt_file_argv	= NULL;
+const char **opt_cmdline_args	= NULL;
 
 /*
  * Mapping between options and command argument mapping.
@@ -699,6 +697,9 @@ option_set_command(int argc, const char *argv[])
 
 		if (!strcmp(argv[0], "read-git-colors"))
 			return error("read-git-colors has been obsoleted by the git-colors option");
+
+		if (!strcmp(argv[0], "cmdline-args"))
+			return error("cmdline-args is obsolete; use view-specific options instead, e.g. main-options");
 	}
 
 	return error("Unknown option name: %s", argv[0]);

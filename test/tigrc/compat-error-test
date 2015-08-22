@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Check error messages for renamed settings, actions and colirs in
+# Check error messages for renamed settings, actions and colours in
 # tigrc.
 
 . libtest.sh
@@ -67,6 +67,8 @@ color tree-file			default	default	normal
 color stat-head			yellow	default
 color stat-section		cyan	default
 color help-keymap		cyan	default
+
+set cmdline-args = --all
 EOF
 
 steps ":quit"
@@ -119,5 +121,6 @@ tig warning: ~/.tigrc:58: tree-file has been replaced by tree.file
 tig warning: ~/.tigrc:59: stat-head has been replaced by status.header
 tig warning: ~/.tigrc:60: stat-section has been replaced by status.section
 tig warning: ~/.tigrc:61: help-keymap has been replaced by help.section
+tig warning: ~/.tigrc:63: cmdline-args is obsolete; use view-specific options instead, e.g. main-options
 tig warning: Errors while loading HOME/.tigrc.
 EOF

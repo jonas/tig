@@ -30,7 +30,6 @@ typedef struct view_column *view_settings;
 	_(blame_options,		const char **,		VIEW_BLAME_LIKE) \
 	_(blame_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(blob_view,			view_settings,		VIEW_NO_FLAGS) \
-	_(cmdline_args,			const char **,		VIEW_NO_FLAGS) \
 	_(commit_order,			enum commit_order,	VIEW_LOG_LIKE) \
 	_(diff_context,			int,			VIEW_DIFF_LIKE) \
 	_(diff_options,			const char **,		VIEW_DIFF_LIKE) \
@@ -165,6 +164,7 @@ union view_column_options {
 
 extern iconv_t opt_iconv_out;
 extern char opt_editor[SIZEOF_STR];
+extern const char **opt_cmdline_args;
 
 /*
  * Mapping between options and command argument mapping.

@@ -8,6 +8,7 @@ Incompatibilities:
 
  - Note that all user-defined commands are now executed at the repository root
    instead of whatever subdirectory Tig was started in. (GH #412)
+ - Remove `cmdline-args` option; setting it may break other views. (GH #431)
 
 Improvements:
 

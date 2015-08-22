@@ -329,11 +329,6 @@ The following variables can be set:
 	Command line arguments referring to revisions. These are filtered using
 	`git-rev-parse(1)`.
 
-'cmdline-args' (args)::
-
-	All remaining command line arguments that are not either filtered into
-	'file-args' or 'rev-args'.
-
 View settings
 ~~~~~~~~~~~~~
 
