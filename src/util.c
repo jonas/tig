@@ -322,4 +322,33 @@ mkstatus(const char status, enum status_label label)
 	return default_label;
 }
 
+/*
+ * Allocation helper.
+ */
+
+void *
+chunk_allocator(void *mem, size_t type_size, size_t chunk_size, size_t size, size_t increase)
+{
+	size_t num_chunks = (size + chunk_size - 1) / chunk_size;
+	size_t num_chunks_new = (size + increase + chunk_size - 1) / chunk_size;
+
+	if (mem == NULL || num_chunks != num_chunks_new) {
+		size_t newsize = num_chunks_new * chunk_size * type_size;
+		void *tmp = realloc(mem, newsize);
+
+		if (!tmp)
+			return NULL;
+
+		if (num_chunks_new > num_chunks) {
+			size_t oldsize = num_chunks * chunk_size * type_size;
+
+			memset(tmp + oldsize, 0, newsize - oldsize);
+		}
+
+		return tmp;
+	}
+
+	return mem;
+}
+
 /* vim: set ts=8 sw=8 noexpandtab: */

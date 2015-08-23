@@ -96,31 +96,21 @@ const char *mkstatus(const char status, enum status_label label);
  * Allocation helper.
  */
 
+void *chunk_allocator(void *mem, size_t type_size, size_t chunk_size, size_t size, size_t increase);
+
 #define DEFINE_ALLOCATOR(name, type, chunk_size)				\
 static type *									\
 name(type **mem, size_t size, size_t increase)					\
 {										\
-	size_t num_chunks = (size + chunk_size - 1) / chunk_size;		\
-	size_t num_chunks_new = (size + increase + chunk_size - 1) / chunk_size;\
-	type *tmp = (mem ? *mem : NULL);							\
+	type *tmp;								\
 										\
-	if (mem == NULL || num_chunks != num_chunks_new) {			\
-		size_t newsize = num_chunks_new * chunk_size * sizeof(type);	\
+	assert(mem);								\
+	if (mem == NULL)							\
+		return NULL;							\
 										\
-		tmp = realloc(tmp, newsize);					\
-		if (tmp) {							\
-			if (mem) {						\
-				*mem = tmp;					\
-			}								\
-			if (num_chunks_new > num_chunks) {			\
-				size_t offset = num_chunks * chunk_size;	\
-				size_t oldsize = offset * sizeof(type);		\
-										\
-				memset(tmp + offset, 0,	newsize - oldsize);	\
-			}							\
-		}								\
-	}									\
-										\
+	tmp = chunk_allocator(*mem, sizeof(type), chunk_size, size, increase);	\
+	if (tmp)								\
+		*mem = tmp;							\
 	return tmp;								\
 }
 
