@@ -135,10 +135,10 @@ mkdate(const struct time *time, enum date date)
 				continue;
 
 			seconds /= reldate[i].namelen;
-			if (!string_format(buf, "%ld %s%s %s",
+			if (!string_format(buf, "%s%ld %s%s",
+					   now.tv_sec >= date ? "-" : "+",
 					   seconds, reldate[i].name,
-					   seconds > 1 ? "s" : "",
-					   now.tv_sec >= date ? "ago" : "ahead"))
+					   seconds > 1 ? "s" : ""))
 				break;
 			return buf;
 		}
