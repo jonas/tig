@@ -48,7 +48,7 @@ CFLAGS="$RPM_OPT_FLAGS -DVERSION=tig-%{version}-%{release}"
 %defattr(-,root,root)
 %{_bindir}/*
 %{_sysconfdir}/*
-%doc README.adoc COPYING INSTALL.adoc NEWS.adoc contrib/tig-completion.bash
+%doc README.adoc COPYING INSTALL.adoc NEWS.adoc contrib/tig-completion.bash contrib/tig-completion.zsh
 %{!?_without_docs: %{_mandir}/man1/*.1*}
 %{!?_without_docs: %{_mandir}/man5/*.5*}
 %{!?_without_docs: %{_mandir}/man7/*.7*}
