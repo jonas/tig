@@ -125,10 +125,9 @@ timecmp(const struct time *t1, const struct time *t2)
 	return t1->sec - t2->sec;
 }
 
-const char *
-mkdate(const struct time *time, enum date date)
+static const char *
+get_relative_date(const struct time *time, char *buf, size_t buflen)
 {
-	static char buf[STRING_SIZE("2006-04-29 14:21") + 1];
 	static const struct enum_map_entry reldate[] = {
 		{ "second", 1,			60 * 2 },
 		{ "minute", 60,			60 * 60 * 2 },
@@ -138,35 +137,45 @@ mkdate(const struct time *time, enum date date)
 		{ "month",  60 * 60 * 24 * 30,	60 * 60 * 24 * 365 },
 		{ "year",   60 * 60 * 24 * 365, 0 },
 	};
+	struct timeval now;
+	time_t timestamp = time->sec + time->tz;
+	time_t seconds;
+	int i;
+
+	if (time_now(&now, NULL))
+		return "";
+
+	seconds = now.tv_sec < timestamp ? timestamp - now.tv_sec : now.tv_sec - timestamp;
+
+	for (i = 0; i < ARRAY_SIZE(reldate); i++) {
+		if (seconds >= reldate[i].value && reldate[i].value)
+			continue;
+
+		seconds /= reldate[i].namelen;
+		if (!string_nformat(buf, buflen, NULL, "%ld %s%s %s",
+				    seconds, reldate[i].name,
+				    seconds > 1 ? "s" : "",
+				    now.tv_sec >= timestamp ? "ago" : "ahead"))
+			return "";
+
+		return buf;
+	}
+
+	return "";
+}
+
+const char *
+mkdate(const struct time *time, enum date date)
+{
+	static char buf[STRING_SIZE("2006-04-29 14:21") + 1];
 	struct tm tm;
 	const char *format;
 
 	if (!date || !time || !time->sec)
 		return "";
 
-	if (date == DATE_RELATIVE) {
-		struct timeval now;
-		time_t date = time->sec + time->tz;
-		time_t seconds;
-		int i;
-
-		if (time_now(&now, NULL))
-			return "";
-
-		seconds = now.tv_sec < date ? date - now.tv_sec : now.tv_sec - date;
-		for (i = 0; i < ARRAY_SIZE(reldate); i++) {
-			if (seconds >= reldate[i].value && reldate[i].value)
-				continue;
-
-			seconds /= reldate[i].namelen;
-			if (!string_format(buf, "%ld %s%s %s",
-					   seconds, reldate[i].name,
-					   seconds > 1 ? "s" : "",
-					   now.tv_sec >= date ? "ago" : "ahead"))
-				break;
-			return buf;
-		}
-	}
+	if (date == DATE_RELATIVE)
+		return get_relative_date(time, buf, sizeof(buf));
 
 	if (date == DATE_LOCAL) {
 		time_t date = time->sec + time->tz;
