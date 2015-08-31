@@ -122,7 +122,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 	else
 		ids[STRING_SIZE(NULL_ID)] = 0;
 
-	if (!gettimeofday(&now, &tz)) {
+	if (!time_now(&now, &tz)) {
 		commit.time.tz = tz.tz_minuteswest * 60;
 		commit.time.sec = now.tv_sec - commit.time.tz;
 	}

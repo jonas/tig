@@ -20,8 +20,6 @@ in_work_dir setup-conflict.sh > repo.log 2>&1
 
 test_tig --merge
 
-main_replace_index_changes_date
-
 assert_equals 'main-with-conflict.screen' <<EOF
 2009-03-28 13:22 Committer * [conflict-branch] Change: d'                       
 2009-03-20 01:00 Committer * Change: d                                          

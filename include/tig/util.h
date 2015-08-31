@@ -81,6 +81,7 @@ struct ident {
 
 extern const struct ident unknown_ident;
 
+int time_now(struct timeval *timeval, struct timezone *tz);
 int timecmp(const struct time *t1, const struct time *t2);
 int ident_compare(const struct ident *i1, const struct ident *i2);
 

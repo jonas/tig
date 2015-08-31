@@ -1,16 +1,7 @@
 #!/bin/sh
 
-# Utilities to replace the date displayed as part of the index changes
-# to a system independent dummy string.
+# Set timestamp to return from gettimeofday-like stub.
+export TEST_TIME_NOW=1401046937
 
-YYY_MM_DD_HH_MM="YYYY_MM_DD_HH_MM"
-
-main_replace_index_changes_date()
-{
-	D="[0-9][0-9]"
-
-	for screen in $(find . -name "*.screen"); do
-		mv "$screen" "$screen.orig"
-		sed "s/^20$D-$D-$D $D:$D\( Unknown\)/$YYY_MM_DD_HH_MM\1/" < "$screen.orig" > "$screen"
-	done
-}
+# The default formatted date of the above timestamp.
+YYY_MM_DD_HH_MM="2014-05-25 19:42"

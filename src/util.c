@@ -98,6 +98,28 @@ die(const char *err, ...)
  */
 
 int
+time_now(struct timeval *timeval, struct timezone *tz)
+{
+	static bool check_env = true;
+
+	if (check_env) {
+		const char *time;
+
+		if ((time = getenv("TEST_TIME_NOW"))) {
+			memset(timeval, 0, sizeof(*timeval));
+			if (tz)
+				memset(tz, 0, sizeof(*tz));
+			timeval->tv_sec = atoi(time);
+			return 0;
+		}
+
+		check_env = false;
+	}
+
+	return gettimeofday(timeval, tz);
+}
+
+int
 timecmp(const struct time *t1, const struct time *t2)
 {
 	return t1->sec - t2->sec;
@@ -128,7 +150,9 @@ mkdate(const struct time *time, enum date date)
 		time_t seconds;
 		int i;
 
-		gettimeofday(&now, NULL);
+		if (time_now(&now, NULL))
+			return "";
+
 		seconds = now.tv_sec < date ? date - now.tv_sec : now.tv_sec - date;
 		for (i = 0; i < ARRAY_SIZE(reldate); i++) {
 			if (seconds >= reldate[i].value && reldate[i].value)
