@@ -1543,8 +1543,7 @@ add_line_text_at(struct view *view, unsigned long pos, const char *text, enum li
 {
 	struct box *box;
 	size_t textlen = strlen(text);
-	size_t extra_cells = cells > 1 ? sizeof(box->cell) * (cells - 1) : 0;
-	struct line *line = add_line_at(view, pos, NULL, type, sizeof(*box) + extra_cells + textlen + 1, false);
+	struct line *line = add_line_at(view, pos, NULL, type, box_sizeof(NULL, cells, textlen), false);
 
 	if (!line)
 		return NULL;
@@ -1578,8 +1577,8 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 bool
 append_line_format(struct view *view, struct line *line, const char *fmt, ...)
 {
-	struct box *box;
-	size_t textlen = 0;
+	struct box *box = line->data;
+	size_t textlen = box_text_length(box);
 	int fmtlen, retval;
 	va_list args;
 	char *text;
@@ -1591,10 +1590,7 @@ append_line_format(struct view *view, struct line *line, const char *fmt, ...)
 	if (fmtlen <= 0)
 		return false;
 
-	box = line->data;
-	textlen = box_text_length(box);
-
-	box = realloc(box, sizeof(*box) + textlen + fmtlen + 1);
+	box = realloc(box, box_sizeof(box, 0, fmtlen));
 	if (!box)
 		return false;
 

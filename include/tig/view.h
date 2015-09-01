@@ -372,6 +372,16 @@ box_text_length(const struct box *box)
 	return length;
 }
 
+static inline size_t
+box_sizeof(const struct box *box, size_t extra_cells, size_t extra_textlen)
+{
+	size_t textlen = (box ? box_text_length(box) : 0) + extra_textlen;
+	size_t cells = (box ? box->cells : 0) + extra_cells;
+	size_t cells_size = cells > 1 ? sizeof(box->cell) * (cells - 1) : 0;
+
+	return sizeof(*box) + cells_size + textlen + 1;
+}
+
 void box_text_copy(struct box *box, size_t cells, const char *src, size_t srclen);
 
 struct line *add_line_at(struct view *view, unsigned long pos, const void *data, enum line_type type, size_t data_size, bool custom);
