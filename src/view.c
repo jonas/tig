@@ -1592,7 +1592,7 @@ append_line_format(struct view *view, struct line *line, const char *fmt, ...)
 		return false;
 
 	box = line->data;
-	textlen = strlen(box->text);
+	textlen = box_text_length(box);
 
 	box = realloc(box, sizeof(*box) + textlen + fmtlen + 1);
 	if (!box)

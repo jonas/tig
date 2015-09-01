@@ -243,26 +243,26 @@ static struct line *
 stage_insert_chunk(struct view *view, struct chunk_header *header,
 		   struct line *from, struct line *to, struct line *last_unchanged_line)
 {
-	char buf[SIZEOF_STR];
 	struct box *box;
 	unsigned long from_lineno = last_unchanged_line - view->line;
 	unsigned long to_lineno = to - view->line;
 	unsigned long after_lineno = to_lineno;
-
-	if (!string_format(buf, "@@ -%lu,%lu +%lu,%lu @@",
-			header->old.position, header->old.lines,
-			header->new.position, header->new.lines))
-		return NULL;
+	int i;
 
 	box = from->data;
-	box_text_copy(box, box->cells, "", 0);
-	if (!append_line_format(view, from, "%s", buf))
+	for (i = 0; i < box->cells; i++)
+		box->cell[i].length = 0;
+
+	if (!append_line_format(view, from, "@@ -%lu,%lu +%lu,%lu @@",
+			header->old.position, header->old.lines,
+			header->new.position, header->new.lines))
 		return NULL;
 
 	if (!to)
 		return from;
 
-	if (!add_line_text_at(view, after_lineno++, buf, LINE_DIFF_CHUNK, 1))
+	// Next diff chunk line
+	if (!add_line_text_at(view, after_lineno++, "", LINE_DIFF_CHUNK, 1))
 		return NULL;
 
 	while (from_lineno < to_lineno) {
@@ -283,7 +283,7 @@ stage_split_chunk(struct view *view, struct line *chunk_start)
 	struct line *last_changed_line = NULL, *last_unchanged_line = NULL, *pos;
 	int chunks = 0;
 
-	if (!chunk_start || !parse_chunk_header(&header, chunk_start->data)) {
+	if (!chunk_start || !parse_chunk_header(&header, box_text(chunk_start))) {
 		report("Failed to parse chunk header");
 		return;
 	}
@@ -291,7 +291,7 @@ stage_split_chunk(struct view *view, struct line *chunk_start)
 	header.old.lines = header.new.lines = 0;
 
 	for (pos = chunk_start + 1; view_has_line(view, pos); pos++) {
-		const char *chunk_line = pos->data;
+		const char *chunk_line = box_text(pos);
 
 		if (*chunk_line == '@' || *chunk_line == '\\')
 			break;
