@@ -4,9 +4,14 @@ compiler:
   - clang
   - gcc
 
-before_install: sudo apt-get update -qq
+sudo: false
 
-install: sudo apt-get install -qq --no-install-recommends asciidoc xmlto docbook-utils valgrind
+addons:
+  apt:
+    packages:
+    - asciidoc
+    - xmlto
+    - valgrind
 
 script:
   - # ============ Build from config ===============
