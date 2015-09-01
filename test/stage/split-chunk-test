@@ -17,7 +17,7 @@ steps '
 '
 
 in_work_dir create_dirty_workdir
-in_work_dir sed -i -e 's/[36]/edited too/' a
+in_work_dir sed -i -e 's/[36]/edited-too/' a
 
 test_tig status
 
@@ -26,7 +26,7 @@ assert_equals 'default-diff.screen' <<EOF
  1 file changed, 4 insertions(+), 6 deletions(-)                                
                                                                                 
 diff --git a/a b/a                                                              
-index 12d1d9e..c6200f0 100644                                                   
+index 12d1d9e..931fee6 100644                                                   
 --- a/a                                                                         
 +++ b/a                                                                         
 @@ -1,11 +1,9 @@                                                                
@@ -35,11 +35,11 @@ index 12d1d9e..c6200f0 100644
  1                                                                              
  2                                                                              
 -3                                                                              
-+edited too                                                                     
++edited-too                                                                     
  4                                                                              
  5                                                                              
 -6                                                                              
-+edited too                                                                     
++edited-too                                                                     
  7                                                                              
 -8                                                                              
 -9                                                                              
@@ -63,7 +63,7 @@ assert_equals 'split-diff.screen' <<EOF
  1 file changed, 4 insertions(+), 6 deletions(-)                                
                                                                                 
 diff --git a/a b/a                                                              
-index 12d1d9e..c6200f0 100644                                                   
+index 12d1d9e..931fee6 100644                                                   
 --- a/a                                                                         
 +++ b/a                                                                         
 @@ -1,3 +1,3 @@                                                                 
@@ -75,14 +75,14 @@ index 12d1d9e..c6200f0 100644
  1                                                                              
  2                                                                              
 -3                                                                              
-+edited too                                                                     
++edited-too                                                                     
  4                                                                              
  5                                                                              
 @@ -5,4 +5,4 @@                                                                 
  4                                                                              
  5                                                                              
 -6                                                                              
-+edited too                                                                     
++edited-too                                                                     
  7                                                                              
 @@ -8,4 +8,1 @@                                                                 
  7                                                                              
