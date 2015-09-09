@@ -93,6 +93,19 @@ create_dirty_workdir()
 	done
 }
 
+create_worktree()
+{
+	worktree_base_dir="$HOME/worktree-base"
+	work_dir_abs="$(pwd)"
+
+	mkdir -p "$worktree_base_dir"
+	(cd "$worktree_base_dir" && {
+		create_repo_from_tgz "$base_dir/files/repo-one.tgz" &&
+		git branch dev
+		git worktree add "$work_dir_abs" dev
+	})
+}
+
 create_repo_from_tgz()
 {
 	git_init .

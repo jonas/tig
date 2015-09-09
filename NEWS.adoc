@@ -25,6 +25,7 @@ Improvements:
  - Expose repository variables to external commands, e.g. `%(repo:head)` gives the
    branch name of the current HEAD and `%(repo:cdup)` for the repo root path.
  - Add `make uninstall`. (GH #417)
+ - Add ZSH completion file (based on Bash completion) (GH #433)
 
 Bug fixes:
 
@@ -35,6 +36,7 @@ Bug fixes:
  - Fix out of bounds read in graph-v2 module. (GH #402)
  - Add currently checked out branch to `%(branch)`. (GH #416)
  - Size diff stats correctly for split views.
+ - Fix `git-worktree` support. (GH #437)
 
 tig-2.1
 -------

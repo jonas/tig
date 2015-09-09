@@ -307,7 +307,7 @@ static enum status_code
 reload_refs(bool force)
 {
 	const char *ls_remote_argv[SIZEOF_ARG] = {
-		"git", "ls-remote", repo.git_dir, NULL
+		"git", "show-ref", "--head", "--dereference", NULL
 	};
 	static bool init = false;
 	struct ref_opt opt = { repo.remote, repo.head, WATCH_NONE };
@@ -334,7 +334,7 @@ reload_refs(bool force)
 	string_map_clear(&refs_by_id);
 	string_map_foreach(&refs_by_name, invalidate_refs, NULL);
 
-	code = io_run_load(ls_remote_argv, "\t", read_ref, &opt);
+	code = io_run_load(ls_remote_argv, " ", read_ref, &opt);
 	if (code != SUCCESS)
 		return code;
 
