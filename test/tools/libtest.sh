@@ -21,7 +21,7 @@ if [ -n "${BASH_VERSION:-}" ]; then
 fi
 
 test="$(basename "$0")"
-source_dir="$(cd "$(dirname "$0")" && pwd)"
+source_dir="$(cd $(dirname "$0") >/dev/null && pwd)"
 base_dir="$(echo "$source_dir" | sed -n 's#\(.*/test\)\([/].*\)*#\1#p')"
 prefix_dir="$(echo "$source_dir" | sed -n 's#\(.*/test/\)\([/].*\)*#\2#p')"
 output_dir="$base_dir/tmp/$prefix_dir/$test"
