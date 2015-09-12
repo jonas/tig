@@ -166,9 +166,9 @@ add_exec_prefix()
 
 tig_script "all" "
 	$(for name in $(cat test-cases); do
-		add_exec_prefix "$name-before.sh"
+		add_exec_prefix "$name-before"
 		echo :save-display all-$name.screen
-		add_exec_prefix "$name-after.sh"
+		add_exec_prefix "$name-after"
 	done)
 "
 

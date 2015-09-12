@@ -412,19 +412,17 @@ test_case()
 	echo "$name" >> test-cases
 	cat > "$name.expected"
 
-	touch "$name-before.sh" "$name-after.sh" "$name.script" "$name-args"
+	touch "$name-before" "$name-after" "$name.script" "$name-args"
 
 	while [ "$#" -gt 0 ]; do
 		arg="$1"; shift
-		value="$(expr "$arg" : '--[^=]*=\(.*\)')"
+		key="$(expr "X$arg" : 'X--\([^=]*\).*')"
+		value="$(expr "X$arg" : 'X--[^=]*=\(.*\)')"
 
-		case "$arg" in
-		--before=*) echo "$value" > "$name-before.sh" ;;
-		--after=*)  echo "$value" > "$name-after.sh" ;;
-		--script=*) echo "$value" > "$name.script" ;;
-		--args=*)   echo "$value" > "$name-args" ;;
-		--cwd=*)    echo "$value" > "$name-cwd" ;;
-		*)	    die "Unknown test_case argument: $arg"
+		case "$key" in
+		before|after|script|args|cwd)
+			echo "$value" > "$name-$key" ;;
+		*)	die "Unknown test_case argument: $arg"
 		esac
 	done
 }
@@ -440,8 +438,8 @@ run_test_cases()
 			$(if [ -e "$name.script" ]; then cat "$name.script"; fi)
 			:save-display $name.screen
 		"
-		if [ -e "$name-before.sh" ]; then
-			test_exec_work_dir sh "$HOME/$name-before.sh" 
+		if [ -e "$name-before" ]; then
+			test_exec_work_dir sh "$HOME/$name-before" 
 		fi
 		old_work_dir="$work_dir"
 		if [ -e "$name-cwd" ]; then
@@ -449,8 +447,8 @@ run_test_cases()
 		fi
 		test_tig $(if [ -e "$name-args" ]; then cat "$name-args"; fi)
 		work_dir="$old_work_dir"
-		if [ -e "$name-after.sh" ]; then
-			test_exec_work_dir sh "$HOME/$name-after.sh" 
+		if [ -e "$name-after" ]; then
+			test_exec_work_dir sh "$HOME/$name-after" 
 		fi
 
 		assert_equals "$name.screen" < "$name.expected"
