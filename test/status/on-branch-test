@@ -88,7 +88,8 @@ EOF
 
 test_case merging-master \
 	--args='status' \
-	--before="git merge conflict-branch" \
+	--before="git merge conflict-branch
+		  true" \
 	--after="git reset --hard" \
 <<EOF
 Merging master                                                                  
@@ -105,7 +106,8 @@ EOF
 test_case rebasing-master \
 	--args='status' \
 	--before="git checkout conflict-branch
-		  git rebase master" \
+		  git rebase master
+		  true" \
 	--after=" git rebase --abort
 		  git checkout master" \
 <<EOF
@@ -122,7 +124,8 @@ EOF
 
 test_case applying-mailbox-to-master \
 	--args='status' \
-	--before="git am $HOME/mailbox" \
+	--before="git am $HOME/mailbox
+		  true" \
 	--after="git am --abort" \
 <<EOF
 Applying mailbox to master
@@ -139,7 +142,8 @@ EOF
 test_case interactive-rebase-of-branch \
 	--args='status' \
 	--before="git checkout conflict-branch
-		  git rebase -i master" \
+		  git rebase -i master
+		  true" \
 	--after=" git rebase --abort
 		  git checkout master" \
 <<EOF

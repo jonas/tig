@@ -292,8 +292,8 @@ show_test_results()
 				sed "s/^/[stderr] /" < stderr
 		fi
 
-		[ -e .test-result ] &&
-			cat .test-result
+		# Replace CR used by Git progress messages
+		tr '\r' '\n' < .test-result
 	elif [ "$verbose" ]; then
 		count="$(sed -n '/\(OK\)/p' < .test-result | wc -l)"
 		printf "Passed %d assertions\n" $count
@@ -305,9 +305,22 @@ trap 'show_test_results' EXIT
 test_exec_work_dir()
 {
 	echo "=== $@ ===" >> "$HOME/test-exec.log"
+	test_exec_log="$HOME/test-exec.log.tmp"
+	rm -f "$test_exec_log"
+
 	set +e
-	in_work_dir "$@" 1>>"$HOME/test-exec.log" 2>>"$HOME/test-exec.log"
+	in_work_dir "$@" 1>>"$test_exec_log" 2>>"$test_exec_log"
+	test_exec_exit_code=$?
 	set -e
+
+	cat "$test_exec_log" >> "$HOME/test-exec.log"
+	if [ "$test_exec_exit_code" != 0 ]; then
+		cmd="$@"
+		echo "[FAIL] unexpected exit code while executing '$cmd': $test_exec_exit_code" >> .test-result
+		cat "$test_exec_log" >> .test-result
+		# Exit gracefully to allow additional tests to run
+		exit 0
+	fi
 }
 
 test_setup()
