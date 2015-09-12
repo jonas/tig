@@ -6,6 +6,8 @@
 . libtest.sh
 . libgit.sh
 
+test_require git-worktree
+
 export LINES=9
 
 test_setup_work_dir()

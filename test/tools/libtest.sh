@@ -266,15 +266,17 @@ assert_vars()
 
 show_test_results()
 {
+	if [ -e .test-skipped ]; then
+		sed "s/^/$indent[skipped] /" < .test-skipped
+		return
+	fi
 	if [ -n "$trace" -a -n "$TIG_TRACE" -a -e "$TIG_TRACE" ]; then
 		sed "s/^/$indent[trace] /" < "$TIG_TRACE"
 	fi
 	if [ -n "$valgrind" -a -e "$valgrind" ]; then
 		sed "s/^/$indent[valgrind] /" < "$valgrind"
 	fi
-	if [ ! -d "$HOME" ]; then
-		echo "Skipped"
-	elif [ ! -e .test-result ]; then
+	if [ ! -d "$HOME" ] || [ ! -e .test-result ]; then
 		[ -e stderr ] &&
 			sed "s/^/[stderr] /" < stderr
 		[ -e stderr.orig ] &&
@@ -302,6 +304,43 @@ show_test_results()
 
 trap 'show_test_results' EXIT
 
+test_skip()
+{
+	echo "$@" >> .test-skipped
+}
+
+require_git_version()
+{
+	git_version="$(git version | sed 's/git version \([0-9\.]*\).*/\1/')"
+	actual_major="$(expr "$git_version" : '\([0-9]\).*')"
+	actual_minor="$(expr "$git_version" : '[0-9]\.\([0-9]\).*')"
+
+	required_version="$1"; shift
+	required_major="$(expr "$required_version" : '\([0-9]\).*')"
+	required_minor="$(expr "$required_version" : '[0-9]\.\([0-9]\).*')"
+
+	if [ "$required_major" -gt "$actual_major" ] ||
+	   [ "$required_minor" -gt "$actual_minor" ]; then
+		test_skip "$@"
+	fi
+}
+
+test_require()
+{
+	while [ $# -gt 0 ]; do
+		feature="$1"; shift
+
+		case "$feature" in
+		git-worktree)
+			require_git_version 2.5 \
+				"The test requires git-worktree, available in git version 2.5 or newer"
+			;;
+		*)
+			test_skip "Unknown feature requirement: $feature" 
+		esac
+	done
+}
+
 test_exec_work_dir()
 {
 	echo "=== $@ ===" >> "$HOME/test-exec.log"
@@ -325,6 +364,10 @@ test_exec_work_dir()
 
 test_setup()
 {
+	if [ -e .test-skipped ]; then
+		exit 0
+	fi
+
 	run_setup="$(type test_setup_work_dir 2>/dev/null | grep 'function' || true)"
 
 	if [ -n "$run_setup" ]; then
