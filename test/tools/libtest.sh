@@ -439,7 +439,7 @@ run_test_cases()
 			:save-display $name.screen
 		"
 		if [ -e "$name-before" ]; then
-			test_exec_work_dir sh "$HOME/$name-before" 
+			test_exec_work_dir "$SHELL" "$HOME/$name-before" 
 		fi
 		old_work_dir="$work_dir"
 		if [ -e "$name-cwd" ]; then
@@ -448,7 +448,7 @@ run_test_cases()
 		test_tig $(if [ -e "$name-args" ]; then cat "$name-args"; fi)
 		work_dir="$old_work_dir"
 		if [ -e "$name-after" ]; then
-			test_exec_work_dir sh "$HOME/$name-after" 
+			test_exec_work_dir "$SHELL" "$HOME/$name-after" 
 		fi
 
 		assert_equals "$name.screen" < "$name.expected"
