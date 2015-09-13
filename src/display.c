@@ -57,7 +57,6 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 		ok = io_run_bg(argv, dir);
 
 	} else {
-		def_prog_mode();           /* save current tty modes */
 		endwin();                  /* restore original tty modes */
 		ok = io_run_fg(argv, dir);
 		if (confirm || !ok) {
@@ -68,7 +67,6 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 				getc(opt_tty);
 			}
 		}
-		reset_prog_mode();
 	}
 
 	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && refresh) {
