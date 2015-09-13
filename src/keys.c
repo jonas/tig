@@ -481,6 +481,8 @@ format_run_request_flags(const struct run_request *req)
 	static char flags[8];
 	int flagspos = 0;
 
+	memset(flags, 0, sizeof(flags));
+
 	if (req->flags.internal)
 		flags[flagspos++] = ':';
 	else
