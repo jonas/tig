@@ -4,14 +4,23 @@
 export XML_CATALOG_FILES=/usr/local/etc/xml/catalog
 
 TIG_LDLIBS = -liconv
-TIG_CPPFLAGS = -DHAVE_CURSES_H
+
+NCURSES_DIR = $(wildcard /usr/local/opt/ncurses)
+
+ifneq ($(NCURSES_DIR),)
+	TIG_NCURSES = -lncursesw
+	TIG_CPPFLAGS += -I$(NCURSES_DIR)/include -DHAVE_NCURSESW_CURSES_H
+	TIG_LDFLAGS += -L$(NCURSES_DIR)/lib
+else
+	TIG_CPPFLAGS += -DHAVE_CURSES_H
+endif
 
 READLINE_DIR = $(wildcard /usr/local/opt/readline)
 
 ifneq ($(READLINE_DIR),)
-	TIG_LDFLAGS = -L$(READLINE_DIR)/lib
-	TIG_CFLAGS = -I$(READLINE_DIR)/include -DHAVE_READLINE
 	TIG_LDLIBS += -lreadline
+	TIG_LDFLAGS += -L$(READLINE_DIR)/lib
+	TIG_CPPFLAGS += -I$(READLINE_DIR)/include -DHAVE_READLINE
 endif
 
 # vim: ft=make:
