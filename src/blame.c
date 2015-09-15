@@ -93,17 +93,35 @@ blame_open(struct view *view, enum open_flags flags)
 
 	if (is_initial_view(view)) {
 		/* Finish validating and setting up blame options */
-		if (!opt_file_args || opt_file_args[1] || (opt_rev_args && opt_rev_args[1]))
+		if (!opt_file_args || opt_file_args[1])
 			usage("Invalid number of options to blame");
-
-		if (opt_rev_args) {
-			string_ncopy(view->env->ref, opt_rev_args[0], strlen(opt_rev_args[0]));
-		}
 
 		string_ncopy(view->env->file, opt_file_args[0], strlen(opt_file_args[0]));
 
 		opt_blame_options = opt_cmdline_args;
 		opt_cmdline_args = NULL;
+
+		/*
+		 * flags (like "--max-age=123") and bottom limits (like "^foo")
+		 * will be passed as-is, and retained even if we re-blame from
+		 * a parent.
+		 *
+		 * Positive start points (like "HEAD") are placed only in
+		 * view->env->ref, which may be later overridden. We must
+		 * ensure there's only one of these.
+		 */
+		if (opt_rev_args) {
+			for (i = 0; opt_rev_args[i]; i++) {
+				const char *arg = opt_rev_args[i];
+
+				if (arg[0] == '-' || arg[0] == '^')
+					argv_append(&opt_blame_options, arg);
+				else if (!view->env->ref[0])
+					string_ncopy(view->env->ref, arg, strlen(arg));
+				else
+					usage("Invalid number of options to blame");
+			}
+		}
 	}
 
 	if (!view->env->file[0]) {
