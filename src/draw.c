@@ -362,7 +362,7 @@ draw_refs(struct view *view, struct view_column *column, const struct ref *refs)
 		if (draw_formatted(view, type, "%s%s%s", format->start, ref->name, format->end))
 			return true;
 
-		if (draw_text(view, LINE_DEFAULT, " "))
+		if (draw_text(view, LINE_MESSAGE, " "))
 			return true;
 	}
 
@@ -425,7 +425,7 @@ draw_graph(struct view *view, const struct graph *graph, const struct graph_canv
 	};
 
 	graph->foreach_symbol(graph, canvas, fns[opt_line_graphics], view);
-	return draw_text(view, LINE_DEFAULT, " ");
+	return draw_text(view, LINE_MESSAGE, " ");
 }
 
 static bool
@@ -438,7 +438,7 @@ draw_commit_title(struct view *view, struct view_column *column,
 		return true;
 	if (draw_refs(view, column, refs))
 		return true;
-	return draw_text_overflow(view, commit_title, LINE_DEFAULT,
+	return draw_text_overflow(view, commit_title, LINE_MESSAGE,
 			column->opt.commit_title.overflow, 0);
 }
 
