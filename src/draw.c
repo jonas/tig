@@ -220,7 +220,7 @@ draw_field(struct view *view, enum line_type type, const char *text, int width, 
 	}
 
 	return draw_chars(view, type, text, -1, max - 1, trim)
-	    || draw_space(view, LINE_DEFAULT, max - (view->col - col), max);
+	    || draw_space(view, type, max - (view->col - col), max);
 }
 
 static bool
