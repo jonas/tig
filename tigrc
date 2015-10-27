@@ -296,6 +296,7 @@ bind generic	v	show-version		# Show Tig version
 # Note the four leading spaces in the string to match. This is because
 # Git automatically indents commit messages by four spaces.
 
+color "---"			blue	default
 color "diff --"			yellow	default
 color "--- "			yellow	default
 color "+++ "			yellow	default

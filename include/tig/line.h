@@ -25,6 +25,7 @@ struct ref;
 	_(DIFF_HEADER,  	"diff --"), \
 	_(DIFF_DEL_FILE,  	"--- "), \
 	_(DIFF_ADD_FILE,  	"+++ "), \
+	_(DIFF_START,   	"---"), \
 	_(DIFF_CHUNK,   	"@@"), \
 	_(DIFF_ADD,		"+"), \
 	_(DIFF_ADD2,		" +"), \
