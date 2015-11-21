@@ -165,8 +165,12 @@ pager_request(struct view *view, enum request request, struct line *line)
 void
 pager_select(struct view *view, struct line *line)
 {
+	const char *text = box_text(line);
+
+	string_ncopy(view->env->text, text, strlen(text));
+
 	if (line->type == LINE_COMMIT) {
-		string_copy_rev_from_commit_line(view->env->commit, box_text(line));
+		string_copy_rev_from_commit_line(view->env->commit, text);
 		if (!view_has_flags(view, VIEW_NO_REF))
 			string_copy_rev(view->ref, view->env->commit);
 	}
