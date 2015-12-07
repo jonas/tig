@@ -2,6 +2,8 @@
 
 . libtest.sh
 
+export COLUMNS=100
+
 tigrc <<EOF
 bind generic a !?@user-test-cmd
 bind generic b ?@user-test-cmd
@@ -25,33 +27,33 @@ EOF
 test_tig
 
 assert_equals 'default.screen' <<EOF
-                             oa :toggle author                                  
-                             og :toggle line-graphics                           
-                             of :toggle file-name                               
-                             op :toggle ignore-space                            
-                             oi :toggle id                                      
-                             ot :toggle commit-title-overflow                   
-                             oF :toggle file-filter                             
-                             or :toggle commit-title-refs                       
-                             @- :toggle diff-context -1                         
-                             @+ :toggle diff-context +1                         
-Internal commands:                                                              
-                             @j :/^@@                                           
-                             @k :?^@@                                           
-External commands:                                                              
-                              a @?user-test-cmd                                 
-                              b @?user-test-cmd                                 
-                              d !user-test-cmd                                  
-                             cc !git commit                                     
-                             ca @?git commit --amend --no-edit                  
-[-] search bindings                                                             
-Searching                                                                       
-     <Down>, <Ctrl-N>, <Ctrl-J> find-next         Find next search match        
-       <Up>, <Ctrl-P>, <Ctrl-K> find-prev         Find previous search match    
-[-] main bindings                                                               
-Option toggling:                                                                
-                              F :toggle commit-title-refs                       
-External commands:                                                              
-                              C ?git cherry-pick %(commit)                      
-[help] - line 76 of 133                                                      77%
+                                       oa :toggle author                                            
+                                       og :toggle line-graphics                                     
+                                       of :toggle file-name                                         
+                                       op :toggle ignore-space                                      
+                                       oi :toggle id                                                
+                                       ot :toggle commit-title-overflow                             
+                                       oF :toggle file-filter                                       
+                                       or :toggle commit-title-refs                                 
+                                       @- :toggle diff-context -1                                   
+                                       @+ :toggle diff-context +1                                   
+Internal commands:                                                                                  
+                                       @j :/^@@                                                     
+                                       @k :?^@@                                                     
+External commands:                                                                                  
+                                        a @?user-test-cmd                                           
+                                        b @?user-test-cmd                                           
+                                        d !user-test-cmd                                            
+                                       cc !git commit                                               
+                                       ca @?git commit --amend --no-edit                            
+[-] search bindings                                                                                 
+Searching                                                                                           
+               <Down>, <Ctrl-N>, <Ctrl-J> find-next         Find next search match                  
+                 <Up>, <Ctrl-P>, <Ctrl-K> find-prev         Find previous search match              
+[-] main bindings                                                                                   
+Option toggling:                                                                                    
+                                        F :toggle commit-title-refs                                 
+External commands:                                                                                  
+                                        C ?git cherry-pick %(commit)                                
+[help] - line 76 of 133                                                                          77%
 EOF
