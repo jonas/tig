@@ -1,42 +1,61 @@
 Release notes
 =============
 
-tig-2.1.1
----------
+master
+------
 
 Incompatibilities:
 
  - Note that all user-defined commands are now executed at the repository root
    instead of whatever subdirectory Tig was started in. (GH #412)
- - Remove `cmdline-args` option; setting it may break other views. (GH #431)
+ - Remove `cmdline-args` option to avoid problems where setting it in `~/.tigrc`
+   potentially breaks other views due to its "context-sensitive" nature, where
+   a `git-log` option maybe cause `git-grep` to fail. (GH #431)
 
 Improvements:
 
- - Add support for key combos. (GH #67)
  - Use .mailmap to show canonical name and email addresses, off by default.
    Add `set mailmap = yes` to `~/.tigrc` to enable. (GH #411)
- - See `contrib/vim.tigrc` for Vim-like keybindings. (GH #273, #351)
- - Add GitHub inspired file finder to search for and open any file. (GH #342)
  - Highlight search results, configurable via `search-result` color.
  - Wrap around when searching, configurable via `wrap-search` setting.
- - Add `search` keymap for navigation file finder search results.
  - Populate `%(file)` with file names from diff stat. (GH #404)
  - `tig --merge` implies `--boundary` similar to gitk.
  - Expose repository variables to external commands, e.g. `%(repo:head)` gives the
    branch name of the current HEAD and `%(repo:cdup)` for the repo root path.
  - Add `make uninstall`. (GH #417)
  - Add ZSH completion file (based on Bash completion) (GH #433)
+ - Expose the text of the currently selected line as the %(text) (GH #457)
+ - Allow users to specify rev arguments to blame (GH #439)
+ - Update OSX make config to find brew installed ncurses
+ - Add sample git-flow keybinding (GH #421)
+ - Add chocolate theme (GH #432)
+
+Bug fixes:
+
+ - Fix corrupt chunk header during staging of single lines. (GH #410)
+ - Fix out of bounds read in graph-v2 module. (GH #402)
+ - Add currently checked out branch to `%(branch)`. (GH #416)
+ - Size diff stats correctly for split views.
+ - Fix `git-worktree` support by using `git-show-ref`. (GH #437)
+ - Add currently checked out branch to `%(branch)` (GH #416)
+ - Fix segfault when hitting return in empty file search (GH #464)
+ - Remove separator on horizontal split when switching from vertical split
+
+tig-2.1.1
+---------
+
+Improvements:
+
+ - Add support for key combos. (GH #67)
+ - See `contrib/vim.tigrc` for Vim-like keybindings. (GH #273, #351)
+ - Add GitHub inspired file finder to search for and open any file. (GH #342)
+ - Add `search` keymap for navigation file finder search results.
 
 Bug fixes:
 
  - Fix display of multiple references per commit. (GH #390, #391)
  - Sync the prompt's cursor position with readline's internal position. (GH #396)
  - Keep unstaged changes view open after an staging command. (GH #399)
- - Fix corrupt chunk header during staging of single lines. (GH #410)
- - Fix out of bounds read in graph-v2 module. (GH #402)
- - Add currently checked out branch to `%(branch)`. (GH #416)
- - Size diff stats correctly for split views.
- - Fix `git-worktree` support. (GH #437)
 
 tig-2.1
 -------
