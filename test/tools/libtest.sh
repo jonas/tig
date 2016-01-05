@@ -251,8 +251,15 @@ executable 'assert-var' <<EOF
 #!/bin/sh
 
 mkdir -p "$(dirname "$expected_var_file")"
-echo "\$1" >> "$expected_var_file"
-echo "\$3" >> "$HOME/$vars_file"
+while [ \$# -gt 1 ]; do
+	arg="\$1"; shift
+
+	case "\$arg" in
+		==) break ;;
+		*)  echo "\$arg" >> "$HOME/$vars_file" ;;
+	esac
+done
+echo "\$@" >> "$expected_var_file"
 EOF
 
 assert_vars()

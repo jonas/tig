@@ -40,6 +40,7 @@ Bug fixes:
  - Add currently checked out branch to `%(branch)` (GH #416)
  - Fix segfault when hitting return in empty file search (GH #464)
  - Remove separator on horizontal split when switching from vertical split
+ - Do not expand `--all` when parsing `%(revargs)` (GH #442, #462)
 
 tig-2.1.1
 ---------
