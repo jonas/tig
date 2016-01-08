@@ -56,6 +56,17 @@ You can use link:http://brew.sh[Homebrew] to install Tig on OS X:
 
         $ brew install tig
 
+Installation on Windows
+-----------------------
+To run on Windows, you will need link:https://www.cygwin.com/[cygwin].
+You must then install the packages `git`, `gcc-core`, `make`, `libiconv-devel`
+and `libncurses-devel`. Extract the tarball and install by using `configure`
+as explained above.
+
+If you want to install from the sources, then you will also need the `automake`
+package (which will also install `autoconf`). Then run `make configure` and install
+by using `configure` as explained above.
+
 Build configuration
 -------------------
 
