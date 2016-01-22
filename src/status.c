@@ -322,7 +322,7 @@ status_get_column_data(struct view *view, const struct line *line, struct view_c
 
 		case LINE_STAT_UNSTAGED:
 			type = LINE_SECTION;
-			text = "Changed but not updated:";
+			text = "Changes not staged for commit:";
 			break;
 
 		case LINE_STAT_UNTRACKED:
