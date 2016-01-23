@@ -24,7 +24,7 @@ assert_equals 'worktree.screen' <<EOF
 On branch dev
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
   (no files)                                                                    
 Untracked files:                                                                
   (no files)                                                                    

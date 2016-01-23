@@ -58,7 +58,7 @@ assert_equals 'status-with-unstaged.screen' <<EOF
 On branch master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
 M .j                                                                            
 M a                                                                             
 M b.c                                                                           
@@ -75,7 +75,7 @@ assert_equals 'status-after-add-a.screen' <<EOF
 On branch master                                                                
 Changes to be committed:                                                        
 M a                                                                             
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
 M .j                                                                            
 M b.c                                                                           
 M e/f                                                                           
@@ -96,7 +96,7 @@ M a
 M b.c                                                                           
 M e/f                                                                           
 M g h                                                                           
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
   (no files)                                                                    
 Untracked files:                                                                
   (no files)                                                                    
@@ -109,7 +109,7 @@ assert_equals 'status-after-commit.screen' <<EOF
 On branch master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
   (no files)                                                                    
 Untracked files:                                                                
   (no files)                                                                    
@@ -130,7 +130,7 @@ M a
 M b.c                                                                           
 M e/f                                                                           
 M g h                                                                           
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
   (no files)                                                                    
 Untracked files:                                                                
   (no files)                                                                    
@@ -145,7 +145,7 @@ Changes to be committed:
 M .j                                                                            
 M e/f                                                                           
 M g h                                                                           
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
 M a                                                                             
 M b.c                                                                           
 Untracked files:                                                                
@@ -162,7 +162,7 @@ Changes to be committed:
 M .j                                                                            
 M e/f                                                                           
 M g h                                                                           
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
 M a                                                                             
 Untracked files:                                                                
   (no files)                                                                    
@@ -177,7 +177,7 @@ assert_equals 'status-after-reset-hard.screen' <<EOF
 On branch master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
   (no files)                                                                    
 Untracked files:                                                                
   (no files)                                                                    
@@ -194,7 +194,7 @@ assert_equals 'status-after-touch-new-file.screen' <<EOF
 On branch master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
   (no files)                                                                    
 Untracked files:                                                                
 ? new-file                                                                      
@@ -211,7 +211,7 @@ assert_equals 'status-after-rm-a.screen' <<EOF
 On branch master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
 D a                                                                             
 Untracked files:                                                                
 ? new-file                                                                      
@@ -228,7 +228,7 @@ assert_equals 'status-after-checkout-a.screen' <<EOF
 On branch master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
   (no files)                                                                    
 Untracked files:                                                                
 ? new-file                                                                      
