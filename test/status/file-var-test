@@ -26,7 +26,7 @@ assert_equals 'before-rm-file.screen' <<EOF
 On branch master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
 M .j                                                                            
 M a                                                                             
 M b.c                                                                           
@@ -44,7 +44,7 @@ assert_equals 'after-rm-file.screen' <<EOF
 On branch master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
 M .j                                                                            
 M a                                                                             
 M b.c                                                                           

@@ -29,7 +29,7 @@ test_case 'initial' \
 On branch master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
 M .j                                                                            
 M a                                                                             
 M b.c                                                                           
@@ -56,7 +56,7 @@ test_case 'inside-dir-a' \
 On branch master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
 M .j                                                                            
 M a                                                                             
 M b.c                                                                           

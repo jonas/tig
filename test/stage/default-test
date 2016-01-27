@@ -51,7 +51,7 @@ On branch master
 Changes to be committed:                                                        
 M .j                                                                            
 M a                                                                             
-Changed but not updated:                                                        
+Changes not staged for commit:                                                 
 M b.c                                                                           
 M e/f                                                                           
 M g h                                                                           
@@ -230,7 +230,7 @@ M a
 M b.c                                                                           
 M e/f                                                                           
 M g h                                                                           
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
   (no files)                                                                    
 Untracked files:                                                                
   (no files)                                                                    

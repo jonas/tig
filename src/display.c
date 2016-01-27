@@ -53,7 +53,7 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 {
 	bool ok;
 
-	if (silent) {
+	if (silent || is_script_executing()) {
 		ok = io_run_bg(argv, dir);
 
 	} else {
@@ -62,10 +62,8 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 		if (confirm || !ok) {
 			if (!ok && *notice)
 				fprintf(stderr, "%s", notice);
-			if (!is_script_executing()) {
-				fprintf(stderr, "Press Enter to continue");
-				getc(opt_tty);
-			}
+			fprintf(stderr, "Press Enter to continue");
+			getc(opt_tty);
 		}
 	}
 

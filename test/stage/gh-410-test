@@ -34,7 +34,7 @@ assert_equals 'status-before.screen' <<EOF
 On branch master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
 M hello.txt                                                                     
 Untracked files:                                                                
   (no files)                                                                    
@@ -62,7 +62,7 @@ assert_equals 'status-after.screen' <<EOF
 On branch master                                                                
 Changes to be committed:                                                        
 M hello.txt                                                                     
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
   (no files)                                                                    
 Untracked files:                                                                
   (no files)                                                                    
