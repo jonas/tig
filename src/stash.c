@@ -11,8 +11,10 @@
  * GNU General Public License for more details.
  */
 
+#include "tig/display.h"
 #include "tig/draw.h"
 #include "tig/main.h"
+#include "tig/diff.h"
 
 static bool
 stash_open(struct view *view, enum open_flags flags)
@@ -34,6 +36,41 @@ stash_select(struct view *view, struct line *line)
 	string_copy(view->ref, view->env->stash);
 }
 
+enum request
+stash_request(struct view *view, enum request request, struct line *line)
+{
+	enum open_flags flags = (view_is_displayed(view) && request != REQ_VIEW_DIFF)
+				? OPEN_SPLIT : OPEN_DEFAULT;
+	struct view *diff = &diff_view;
+
+	switch (request) {
+	case REQ_VIEW_DIFF:
+	case REQ_ENTER:
+		if (view_is_displayed(view) && display[0] != view)
+			maximize_view(view, true);
+
+		if (!view_is_displayed(diff) ||
+		    strcmp(view->env->stash, diff->ref)) {
+			const char *diff_argv[] = {
+				"git", "stash", "show", encoding_arg, "--pretty=fuller",
+					"--root", "--patch-with-stat", use_mailmap_arg(),
+					show_notes_arg(), diff_context_arg(),
+					ignore_space_arg(), "%(diffargs)",
+					"--no-color", "%(stash)", NULL
+			};
+
+			if (!argv_format(diff_view.env, &diff_view.argv, diff_argv, false, false))
+				report("Failed to format argument");
+			else
+				open_view(view, &diff_view, flags | OPEN_PREPARED);
+		}
+		return REQ_NONE;
+
+	default:
+		return main_request(view, request, line);
+	}
+}
+
 static struct view_ops stash_ops = {
 	"stash",
 	argv_env.stash,
@@ -42,7 +79,7 @@ static struct view_ops stash_ops = {
 	stash_open,
 	main_read,
 	view_column_draw,
-	main_request,
+	stash_request,
 	view_column_grep,
 	stash_select,
 	main_done,

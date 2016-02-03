@@ -29,6 +29,7 @@ Improvements:
  - Update OSX make config to find brew installed ncurses
  - Add sample git-flow keybinding (GH #421)
  - Add chocolate theme (GH #432)
+ - Show stash diffs. (GH #328)
 
 Bug fixes:
 
