@@ -947,7 +947,7 @@ load_options(void)
 	}
 
 	if (!tigrc_user)
-		tigrc_user = "~/.tigrc";
+		tigrc_user = TIG_USER_CONFIG;
 	load_option_file(tigrc_user);
 
 	if (!diff_opts_from_args && tig_diff_opts && *tig_diff_opts) {

@@ -63,6 +63,9 @@ endif
 
 override CPPFLAGS += '-DTIG_VERSION="$(VERSION)"'
 override CPPFLAGS += '-DSYSCONFDIR="$(sysconfdir)"'
+ifdef TIG_USER_CONFIG
+override CPPFLAGS += '-DTIG_USER_CONFIG="$(TIG_USER_CONFIG)"'
+endif
 
 ASCIIDOC ?= asciidoc
 ASCIIDOC_FLAGS = -aversion=$(VERSION) -asysconfdir=$(sysconfdir) -f doc/asciidoc.conf

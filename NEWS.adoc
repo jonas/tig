@@ -30,6 +30,7 @@ Improvements:
  - Add sample git-flow keybinding (GH #421)
  - Add chocolate theme (GH #432)
  - Show stash diffs. (GH #328)
+ - Make user tigrc location configurable. (GH #479)
 
 Bug fixes:
 

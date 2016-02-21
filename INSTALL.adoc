@@ -88,6 +88,7 @@ can be one of the following flags:
  - `NO_BUILTIN_TIGRC`: Reduce the size of the binary by not including a
    built-in tigrc. The built-in tigrc is used as a fallback when no
    `tigrc` is found in the system configuration directory (e.g. `/etc`).
+ - `TIG_USER_CONFIG`: Allow to customize the `tigrc` path (default `~/.tigrc`).
 
 The following example `config.make` manually configures Tig to use the ncurses
 library with wide character support and include the proper ncurses header file
