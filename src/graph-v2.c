@@ -625,10 +625,10 @@ flanked(struct graph_row *row, int pos, int commit_pos, const char *commit_id)
 static bool
 below_commit(int pos, struct graph_v2 *graph)
 {
-	if (!pos == graph->prev_position)
+	if (pos != graph->prev_position)
 		return false;
 
-	if (!strcmp(graph->row.columns[pos].id, graph->prev_row.columns[pos].id) == 0)
+	if (strcmp(graph->row.columns[pos].id, graph->prev_row.columns[pos].id))
 		return false;
 
 	return true;
