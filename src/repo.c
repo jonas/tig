@@ -155,6 +155,11 @@ index_diff(struct index_diff *diff, bool untracked, bool count_all)
 		if (!count_all && diff->staged && diff->unstaged &&
 		    (!untracked || diff->untracked))
 			break;
+
+		/* Skip source filename in rename */
+		if (buf.data[0] == 'R') {
+			io_get(&io, &buf, 0, true);
+		}
 	}
 
 	if (io_error(&io))

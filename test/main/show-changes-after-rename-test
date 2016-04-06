@@ -1,0 +1,32 @@
+#!/bin/sh
+#
+# Test case from https://github.com/jonas/tig/issues/472
+
+. libtest.sh
+. libgit.sh
+. "$source_dir/util.sh"
+
+export LINES=4
+
+steps '
+	:save-display default.screen
+'
+
+git_init
+
+test_setup_work_dir() {
+	echo data >file1
+	git add file1
+	git_commit -m "commit1"
+	echo data >file2
+	git add file2
+	git rm file1
+}
+
+test_tig
+
+assert_equals 'default.screen' <<EOF
+$YYY_MM_DD_HH_MM Unknown   o Staged changes                                     
+2009-02-13 23:31 Committer I [master] commit1                                   
+[main] Staged changes                                                       100%
+EOF
