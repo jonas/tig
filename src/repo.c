@@ -137,6 +137,7 @@ index_diff(struct index_diff *diff, bool untracked, bool count_all)
 	};
 	struct io io;
 	struct buffer buf;
+	unsigned skip_count = 0;
 	bool ok = true;
 
 	memset(diff, 0, sizeof(*diff));
@@ -144,7 +145,17 @@ index_diff(struct index_diff *diff, bool untracked, bool count_all)
 	if (!io_run(&io, IO_RD, repo.cdup, NULL, status_argv))
 		return false;
 
-	while (io_get(&io, &buf, 0, true) && (ok = buf.size > 3)) {
+	while (io_get(&io, &buf, 0, true) && ((ok = buf.size > 3) || skip_count)) {
+
+		if (skip_count > 0){
+			skip_count--;
+			continue;
+		}
+
+		/* Skip source filename in rename */
+		if (buf.data[0] == 'R')
+			skip_count = 1;
+
 		if (buf.data[0] == '?')
 			diff->untracked++;
 		/* Ignore staged but unmerged entries. */
