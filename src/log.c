@@ -64,7 +64,7 @@ static bool
 log_open(struct view *view, enum open_flags flags)
 {
 	const char *log_argv[] = {
-		"git", "log", encoding_arg, commit_order_arg(), "--cc",
+		"git", "log", "--show-signature", encoding_arg, commit_order_arg(), "--cc",
 			"--stat", "%(logargs)", "%(cmdlineargs)", "%(revargs)",
 			"--no-color", "--", "%(fileargs)", NULL
 	};
