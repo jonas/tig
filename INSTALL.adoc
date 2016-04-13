@@ -133,6 +133,9 @@ configure script and building documentation:
 |Tool				|Description
 |readline			|Adds support for completion and history in
 				 search and command prompts.
+|gsed (i.e. GNU sed)		|Required for running the test suite.
+				 Can be installed with `brew install gnu-sed`
+				 on OS X.
 |autoconf			|Contains autoreconf for generating configure
 				 from configure.ac.
 |asciidoc (>= 8.4)		|Generates HTML and (DocBook) XML from text.
