@@ -13,7 +13,7 @@ set -e
 # done.
 
 run () {
-    echo $0: running: "$@"
+    test ${V} = 1 && echo $0: running: "$@"
     "$@"
 }
 

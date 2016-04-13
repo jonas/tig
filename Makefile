@@ -213,7 +213,7 @@ $(TESTS): $(EXE) test/tools/test-graph
 # Other autoconf-related rules are hidden in config.make.in so that
 # they don't confuse Make when we aren't actually using ./configure
 configure: configure.ac acinclude.m4 tools/*.m4
-	./autogen.sh
+	$(QUIET_GEN)./autogen.sh
 
 .PHONY: all all-coverage all-debug clean clean-coverage clean-test doc \
 	doc-man doc-html dist distclean install install-doc \
