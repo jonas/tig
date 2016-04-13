@@ -21,7 +21,7 @@ following options are supported:
 verbose::
 
 	Whether to print individual test results even when all
-	assertions passed. The default is to not results for passed
+	assertions passed. The default is to not show results for passed
 	tests.
 
 no-indent::
