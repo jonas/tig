@@ -178,7 +178,7 @@ get_relative_date(const struct time *time, char *buf, size_t buflen, bool compac
 }
 
 const char *
-mkdate(const struct time *time, enum date date)
+mkdate(const struct time *time, enum date date, bool local)
 {
 	static char buf[STRING_SIZE("2006-04-29 14:21") + 1];
 	struct tm tm;
@@ -191,7 +191,7 @@ mkdate(const struct time *time, enum date date)
 		return get_relative_date(time, buf, sizeof(buf),
 					 date == DATE_RELATIVE_COMPACT);
 
-	if (date == DATE_LOCAL) {
+	if (local) {
 		time_t date = time->sec + time->tz;
 		localtime_r(&date, &tm);
 	}

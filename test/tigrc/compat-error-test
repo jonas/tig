@@ -68,6 +68,10 @@ color stat-head			yellow	default
 color stat-section		cyan	default
 color help-keymap		cyan	default
 
+# Replaced by '*-view-date-local' flag
+set main-view-date		= local
+set main-view-date-local	= true
+
 set cmdline-args = --all
 EOF
 
@@ -121,6 +125,7 @@ tig warning: ~/.tigrc:58: tree-file has been replaced by tree.file
 tig warning: ~/.tigrc:59: stat-head has been replaced by status.header
 tig warning: ~/.tigrc:60: stat-section has been replaced by status.section
 tig warning: ~/.tigrc:61: help-keymap has been replaced by help.section
-tig warning: ~/.tigrc:63: cmdline-args is obsolete; use view-specific options instead, e.g. main-options
+tig warning: ~/.tigrc:64: 'local' is no longer supported for date-display, use the 'date-local' column option
+tig warning: ~/.tigrc:67: cmdline-args is obsolete; use view-specific options instead, e.g. main-options
 tig warning: Errors while loading HOME/.tigrc.
 EOF

@@ -32,6 +32,7 @@ Improvements:
  - Show stash diffs. (GH #328)
  - Make user tigrc location configurable. (GH #479)
  - Compact relative date display mode. (GH #331)
+ - Add date column option controlling whether to show local date.
 
 Bug fixes:
 

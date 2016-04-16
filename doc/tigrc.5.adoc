@@ -410,11 +410,12 @@ commit-title::
 	  an int, the assigned value is used as the maximum character width.
 
 date::
-	- 'display' (mixed)
-	  [relative|relative-compact|short|default|local|<bool>]: How to display
-	  dates. If set to "relative" or "relative-compact" a relative date will
-	  be used, e.g. "2 minutes ago" or "2m". If set to "short" no time
-	  information is shown.  If set to "local", localtime(3) is used.
+	- 'display' (mixed) [relative|relative-compact|short|default|<bool>]:
+	  How to display dates. If set to "relative" or "relative-compact" a
+	  relative date will be used, e.g. "2 minutes ago" or "2m". If set to
+	  "short" no time information is shown.
+	- 'local' (bool): If true, use localtime(3) to convert to local
+	  timezone. Note that relative dates always use local offsets.
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
 

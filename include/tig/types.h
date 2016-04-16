@@ -87,7 +87,6 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 #define DATE_ENUM(_) \
 	_(DATE, NO), \
 	_(DATE, DEFAULT), \
-	_(DATE, LOCAL), \
 	_(DATE, RELATIVE), \
 	_(DATE, RELATIVE_COMPACT), \
 	_(DATE, SHORT)

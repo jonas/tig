@@ -85,7 +85,7 @@ int time_now(struct timeval *timeval, struct timezone *tz);
 int timecmp(const struct time *t1, const struct time *t2);
 int ident_compare(const struct ident *i1, const struct ident *i2);
 
-const char *mkdate(const struct time *time, enum date date);
+const char *mkdate(const struct time *time, enum date date, bool local);
 const char *mkfilesize(unsigned long size, enum file_size format);
 const char *mkauthor(const struct ident *ident, int cols, enum author author);
 const char *mkmode(mode_t mode);

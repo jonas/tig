@@ -494,6 +494,16 @@ parse_enum(const char *name, unsigned int *opt, const char *arg,
 	*opt = is_true ? map->entries[1].value : map->entries[0].value;
 	if (code == SUCCESS)
 		return code;
+
+	if (!strcmp(name, "date-display")) {
+		const char *msg = "";
+
+		if (!strcasecmp(arg, "local"))
+			msg = ", use the 'date-local' column option";
+		*opt = map->entries[1].value;
+		return error("'%s' is no longer supported for %s%s", arg, name, msg);
+	}
+
 	return error("'%s' is not a valid value for %s; using %s",
 		     arg, name, enum_name(map->entries[*opt].name));
 }

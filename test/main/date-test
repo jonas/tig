@@ -13,8 +13,9 @@ EOF
 steps '
 	:save-display default-date.screen
                       
-	:toggle date  
+	:toggle date-local  
 	:save-display local-date.screen
+	:toggle date-local
                       
 	:toggle date  
 	:save-display relative-date.screen

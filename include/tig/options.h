@@ -96,6 +96,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 
 #define DATE_COLUMN_OPTIONS(_) \
 	_(display,			enum date,		VIEW_NO_FLAGS) \
+	_(local,			bool,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define FILE_NAME_COLUMN_OPTIONS(_) \
