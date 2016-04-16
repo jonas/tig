@@ -125,18 +125,25 @@ timecmp(const struct time *t1, const struct time *t2)
 	return t1->sec - t2->sec;
 }
 
+struct reldate {
+	const char *name;
+	const char compact_symbol;
+	int in_seconds, interval;
+};
+
+static const struct reldate reldate[] = {
+	{ "second", 's', 1,			 60 * 2 },
+	{ "minute", 'M', 60,			 60 * 60 * 2 },
+	{ "hour",   'h', 60 * 60,		 60 * 60 * 24 * 2 },
+	{ "day",    'd', 60 * 60 * 24,		 60 * 60 * 24 * 7 * 2 },
+	{ "week",   'w', 60 * 60 * 24 * 7,	 60 * 60 * 24 * 7 * 5 },
+	{ "month",  'm', 60 * 60 * 24 * 30,	 60 * 60 * 24 * 365 },
+	{ "year",   'y', 60 * 60 * 24 * 365,  0 },
+};
+
 static const char *
-get_relative_date(const struct time *time, char *buf, size_t buflen)
+get_relative_date(const struct time *time, char *buf, size_t buflen, bool compact)
 {
-	static const struct enum_map_entry reldate[] = {
-		{ "second", 1,			60 * 2 },
-		{ "minute", 60,			60 * 60 * 2 },
-		{ "hour",   60 * 60,		60 * 60 * 24 * 2 },
-		{ "day",    60 * 60 * 24,	60 * 60 * 24 * 7 * 2 },
-		{ "week",   60 * 60 * 24 * 7,	60 * 60 * 24 * 7 * 5 },
-		{ "month",  60 * 60 * 24 * 30,	60 * 60 * 24 * 365 },
-		{ "year",   60 * 60 * 24 * 365, 0 },
-	};
 	struct timeval now;
 	time_t timestamp = time->sec + time->tz;
 	time_t seconds;
@@ -148,11 +155,17 @@ get_relative_date(const struct time *time, char *buf, size_t buflen)
 	seconds = now.tv_sec < timestamp ? timestamp - now.tv_sec : now.tv_sec - timestamp;
 
 	for (i = 0; i < ARRAY_SIZE(reldate); i++) {
-		if (seconds >= reldate[i].value && reldate[i].value)
+		if (seconds >= reldate[i].interval && reldate[i].interval)
 			continue;
 
-		seconds /= reldate[i].namelen;
-		if (!string_nformat(buf, buflen, NULL, "%ld %s%s %s",
+		seconds /= reldate[i].in_seconds;
+		if (compact) {
+			if (!string_nformat(buf, buflen, NULL, "%s%ld%c",
+				    now.tv_sec >= timestamp ? "" : "-",
+				    seconds, reldate[i].compact_symbol))
+				return "";
+
+		} else if (!string_nformat(buf, buflen, NULL, "%ld %s%s %s",
 				    seconds, reldate[i].name,
 				    seconds > 1 ? "s" : "",
 				    now.tv_sec >= timestamp ? "ago" : "ahead"))
@@ -174,8 +187,9 @@ mkdate(const struct time *time, enum date date)
 	if (!date || !time || !time->sec)
 		return "";
 
-	if (date == DATE_RELATIVE)
-		return get_relative_date(time, buf, sizeof(buf));
+	if (date == DATE_RELATIVE || date == DATE_RELATIVE_COMPACT)
+		return get_relative_date(time, buf, sizeof(buf),
+					 date == DATE_RELATIVE_COMPACT);
 
 	if (date == DATE_LOCAL) {
 		time_t date = time->sec + time->tz;

@@ -21,7 +21,7 @@
 #    - overflow (boolint)		: Highlight overflows? Defaults to 50 when enabled.
 #
 #   date
-#    - display (enum) [no|default|local|relative|short]
+#    - display (enum) [no|default|local|relative|relative-compact|short]
 #					: Show dates?
 #   file-name
 #    - display (enum) [no|always|auto]	: Show file names?

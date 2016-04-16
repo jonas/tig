@@ -31,6 +31,7 @@ Improvements:
  - Add chocolate theme (GH #432)
  - Show stash diffs. (GH #328)
  - Make user tigrc location configurable. (GH #479)
+ - Compact relative date display mode. (GH #331)
 
 Bug fixes:
 
