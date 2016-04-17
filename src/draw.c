@@ -228,7 +228,7 @@ draw_date(struct view *view, struct view_column *column, const struct time *time
 {
 	struct date_options *opt = &column->opt.date;
 	enum date date = opt->display;
-	const char *text = mkdate(time, date, opt->local);
+	const char *text = mkdate(time, date, opt->local, opt->format);
 	enum align align = date == DATE_RELATIVE ? ALIGN_RIGHT : ALIGN_LEFT;
 
 	if (date == DATE_NO)

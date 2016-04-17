@@ -72,6 +72,11 @@ color help-keymap		cyan	default
 set main-view-date		= local
 set main-view-date-local	= true
 
+# Replaced by '*-view-date-custom' flag
+set main-view-date		= short
+set main-view-date		= custom
+set main-view-date-format	= "%Y-%m-%d %H:%M"
+
 set cmdline-args = --all
 EOF
 
@@ -126,6 +131,7 @@ tig warning: ~/.tigrc:59: stat-head has been replaced by status.header
 tig warning: ~/.tigrc:60: stat-section has been replaced by status.section
 tig warning: ~/.tigrc:61: help-keymap has been replaced by help.section
 tig warning: ~/.tigrc:64: 'local' is no longer supported for date-display, use the 'date-local' column option
-tig warning: ~/.tigrc:67: cmdline-args is obsolete; use view-specific options instead, e.g. main-options
+tig warning: ~/.tigrc:68: 'short' is no longer supported for date-display, use the 'custom' display mode and set 'date-format'
+tig warning: ~/.tigrc:72: cmdline-args is obsolete; use view-specific options instead, e.g. main-options
 tig warning: Errors while loading HOME/.tigrc.
 EOF

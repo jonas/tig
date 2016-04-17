@@ -178,7 +178,7 @@ get_relative_date(const struct time *time, char *buf, size_t buflen, bool compac
 }
 
 const char *
-mkdate(const struct time *time, enum date date, bool local)
+mkdate(const struct time *time, enum date date, bool local, const char *custom_format)
 {
 	static char buf[STRING_SIZE("2006-04-29 14:21") + 1];
 	struct tm tm;
@@ -199,7 +199,9 @@ mkdate(const struct time *time, enum date date, bool local)
 		gmtime_r(&time->sec, &tm);
 	}
 
-	format = date == DATE_SHORT ? "%Y-%m-%d" : "%Y-%m-%d %H:%M";
+	format = date != DATE_CUSTOM
+	       ? "%Y-%m-%d %H:%M"
+	       : custom_format ? custom_format : "%Y-%m-%d";
 	return strftime(buf, sizeof(buf), format, &tm) ? buf : NULL;
 }
 

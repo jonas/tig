@@ -368,7 +368,8 @@ set tree-view = line-number:no,interval=5 mode author:full \
 set pager-view = line-number:yes,interval=10 text
 
 # Shorthands to change view settings for a previously defined column
-set main-view-date = short
+set main-view-date = custom
+set main-view-date-format = "%Y-%m-%d %H:%M"
 set blame-view-line-number = no
 # Use Git's default commit order, even when the commit graph is enabled.
 set commit-order = default
@@ -410,12 +411,15 @@ commit-title::
 	  an int, the assigned value is used as the maximum character width.
 
 date::
-	- 'display' (mixed) [relative|relative-compact|short|default|<bool>]:
+	- 'display' (mixed) [relative|relative-compact|custom|default|<bool>]:
 	  How to display dates. If set to "relative" or "relative-compact" a
 	  relative date will be used, e.g. "2 minutes ago" or "2m". If set to
-	  "short" no time information is shown.
+	  "custom", the strftime(3) string format specified in the "format"
+	  option is used.
 	- 'local' (bool): If true, use localtime(3) to convert to local
 	  timezone. Note that relative dates always use local offsets.
+	- 'format' (string): format string to pass to strftime(3) when 'custom'
+	  display mode has been selected.
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
 

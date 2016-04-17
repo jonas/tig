@@ -89,7 +89,7 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(DATE, DEFAULT), \
 	_(DATE, RELATIVE), \
 	_(DATE, RELATIVE_COMPACT), \
-	_(DATE, SHORT)
+	_(DATE, CUSTOM)
 
 #define FILE_SIZE_ENUM(_) \
 	_(FILE_SIZE, NO), \

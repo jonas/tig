@@ -936,7 +936,8 @@ view_column_text(struct view *view, struct view_column_data *column_data,
 
 	case VIEW_COLUMN_DATE:
 		if (column_data->date)
-			text = mkdate(column_data->date, column->opt.date.display, column->opt.date.local);
+			text = mkdate(column_data->date, column->opt.date.display,
+				      column->opt.date.local, column->opt.date.format);
 		break;
 
 	case VIEW_COLUMN_REF:

@@ -442,7 +442,7 @@ Misc
 |v	|Show version.
 |o	|Open option menu
 |#	|Toggle line numbers on/off.
-|D	|Toggle date display on/off/short/relative/local.
+|D	|Toggle date display on/off/relative/relative-compact/custom
 |A	|Toggle author display on/off/abbreviated/email/email user name.
 |G	|Toggle revision graph visualization on/off.
 |~	|Toggle (line) graphics mode

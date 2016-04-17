@@ -33,6 +33,10 @@ Improvements:
  - Make user tigrc location configurable. (GH #479)
  - Compact relative date display mode. (GH #331)
  - Add date column option controlling whether to show local date.
+ - Support for custom `strftime(3)` date formats, e.g.:
+
+	set main-view-date = custom
+	set main-view-date-format = "%Y-%m-%d"
 
 Bug fixes:
 
