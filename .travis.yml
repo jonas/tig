@@ -19,6 +19,7 @@ script:
   - make all-debug
   - make test
   - make test TEST_OPTS=valgrind
+  - if [ $CC = clang ]; then make test-address-sanitizer; fi
   - make DESTDIR=/tmp/bare-destdir install install-doc
   - make DESTDIR=/tmp/bare-destdir uninstall
   - test ! -d /tmp/bare-destdir

@@ -342,6 +342,11 @@ test_require()
 			require_git_version 2.5 \
 				"The test requires git-worktree, available in git version 2.5 or newer"
 			;;
+		address-sanitizer)
+			if [ "${TIG_ADDRESS_SANITIZER_ENABLED:-no}" != yes ]; then
+				test_skip "The test requires clang and is only run via \`make test-address-sanitizer\`"
+			fi
+			;;
 		*)
 			test_skip "Unknown feature requirement: $feature" 
 		esac

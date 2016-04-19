@@ -412,8 +412,12 @@ graph_remove_collapsed_columns(struct graph_v2 *graph)
 		if (commit_is_in_row(row->columns[i].id, &graph->parents) && !graph_column_has_commit(&graph->prev_row.columns[i]))
 			continue;
 
-		if (strcmp(row->columns[i - 1].id, graph->prev_row.columns[i - 1].id) != 0 || graph->prev_row.columns[i - 1].symbol.shift_left)
-			row->columns[i] = row->columns[i + 1];
+		if (strcmp(row->columns[i - 1].id, graph->prev_row.columns[i - 1].id) != 0 || graph->prev_row.columns[i - 1].symbol.shift_left) {
+			if (i + 1 >= row->size)
+				memset(&row->columns[i], 0, sizeof(row->columns[i]));
+			else
+				row->columns[i] = row->columns[i + 1];
+		}
 	}
 }
 

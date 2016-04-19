@@ -199,6 +199,13 @@ $(COVERAGE_DIR)/trace:
 $(COVERAGE_DIR)/index.html: $(COVERAGE_DIR)/trace
 	$(QUIET_GENHTML)$(GENHTML) $(Q:@=--quiet) --output-directory $(COVERAGE_DIR) $<
 
+ADDRESS_SANITIZER_CFLAGS ?= -fsanitize=address -fno-omit-frame-pointer
+all-address-sanitizer: all
+all-address-sanitizer: CFLAGS += $(ADDRESS_SANITIZER_CFLAGS)
+
+test-address-sanitizer: clean all-address-sanitizer test
+test-address-sanitizer: export TIG_ADDRESS_SANITIZER_ENABLED=yes
+
 TESTS  = $(sort $(shell find test -type f -name '*-test'))
 
 clean-test:
