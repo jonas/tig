@@ -553,7 +553,7 @@ stage_open(struct view *view, enum open_flags flags)
 }
 
 static bool
-stage_read(struct view *view, struct buffer *buf)
+stage_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct stage_state *state = view->private;
 
@@ -571,7 +571,7 @@ stage_read(struct view *view, struct buffer *buf)
 	if (buf && diff_common_read(view, buf->data, &state->diff))
 		return true;
 
-	return pager_read(view, buf);
+	return pager_read(view, buf, force_stop);
 }
 
 static struct view_ops stage_ops = {

@@ -50,6 +50,7 @@ Bug fixes:
  - Fix segfault when hitting return in empty file search (GH #464)
  - Remove separator on horizontal split when switching from vertical split
  - Do not expand `--all` when parsing `%(revargs)` (GH #442, #462)
+ - Fix exit when the main view is reloaded due to option toggling. (GH #470)
 
 tig-2.1.1
 ---------

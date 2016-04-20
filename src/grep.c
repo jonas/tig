@@ -196,7 +196,7 @@ grep_request(struct view *view, enum request request, struct line *line)
 }
 
 static bool
-grep_read(struct view *view, struct buffer *buf)
+grep_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct grep_state *state = view->private;
 	struct grep_line *grep;

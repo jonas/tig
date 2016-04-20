@@ -96,7 +96,7 @@ blob_open(struct view *view, enum open_flags flags)
 }
 
 static bool
-blob_read(struct view *view, struct buffer *buf)
+blob_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	if (!buf) {
 		if (view->env->goto_lineno > 0) {

@@ -330,7 +330,7 @@ diff_read_describe(struct view *view, struct buffer *buffer, struct diff_state *
 }
 
 static bool
-diff_read(struct view *view, struct buffer *buf)
+diff_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct diff_state *state = view->private;
 

@@ -375,7 +375,7 @@ main_add_reflog(struct view *view, struct main_state *state, char *reflog)
 
 /* Reads git log --pretty=raw output and parses it into the commit struct. */
 bool
-main_read(struct view *view, struct buffer *buf)
+main_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct main_state *state = view->private;
 	struct graph *graph = state->graph;
@@ -386,7 +386,7 @@ main_read(struct view *view, struct buffer *buf)
 	if (!buf) {
 		main_flush_commit(view, commit);
 
-		if (failed_to_load_initial_view(view))
+		if (!force_stop && failed_to_load_initial_view(view))
 			die("No revisions match the given arguments.");
 		if (view->lines > 0) {
 			struct commit *last = view->line[view->lines - 1].data;

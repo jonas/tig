@@ -408,7 +408,7 @@ end_update(struct view *view, bool force)
 {
 	if (!view->pipe)
 		return;
-	while (!view->ops->read(view, NULL))
+	while (!view->ops->read(view, NULL, force))
 		if (!force)
 			return;
 	if (force)
@@ -547,7 +547,7 @@ update_view(struct view *view)
 			return false;
 		}
 
-		if (!view->ops->read(view, &line)) {
+		if (!view->ops->read(view, &line, false)) {
 			report("Allocation failure");
 			end_update(view, true);
 			return false;

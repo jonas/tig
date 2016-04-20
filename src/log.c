@@ -92,7 +92,7 @@ log_request(struct view *view, enum request request, struct line *line)
 }
 
 static bool
-log_read(struct view *view, struct buffer *buf)
+log_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct line *line = NULL;
 	enum line_type type;

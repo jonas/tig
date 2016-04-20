@@ -267,7 +267,7 @@ blame_read_file(struct view *view, struct buffer *buf, struct blame_state *state
 }
 
 static bool
-blame_read(struct view *view, struct buffer *buf)
+blame_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct blame_state *state = view->private;
 

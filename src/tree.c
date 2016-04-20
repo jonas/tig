@@ -215,7 +215,7 @@ tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 }
 
 static bool
-tree_read(struct view *view, struct buffer *buf)
+tree_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct tree_state *state = view->private;
 	struct tree_entry *data;
