@@ -108,13 +108,17 @@ string_expand(char *dst, size_t dstlen, const char *src, int srclen, int tabsize
 	size_t size, pos;
 
 	for (size = pos = 0; size < dstlen - 1 && (srclen == -1 || pos < srclen) && src[pos]; pos++) {
-		if (src[pos] == '\t') {
+		const char c = src[pos];
+
+		if (c == '\t') {
 			size_t expanded = tabsize - (size % tabsize);
 
 			if (expanded + size >= dstlen - 1)
 				expanded = dstlen - size - 1;
 			memcpy(dst + size, "        ", expanded);
 			size += expanded;
+		} else if (isspace(c) || iscntrl(c)) {
+			dst[size++] = ' ';
 		} else {
 			dst[size++] = src[pos];
 		}
