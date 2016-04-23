@@ -570,26 +570,28 @@ draw_view_line_search_result(struct view *view, unsigned int lineno)
 	size_t bufsize = view->width * 4;
 	char *buf = malloc(bufsize);
 	regmatch_t pmatch[1];
-	int i;
+	regoff_t bufpos = 0;
 
-	if (!buf || mvwinnstr(view->win, lineno, 0, buf, bufsize) == ERR ||
-	    regexec(view->regex, buf, ARRAY_SIZE(pmatch), pmatch, 0)) {
+	if (!buf || mvwinnstr(view->win, lineno, 0, buf, bufsize) == ERR) {
 		free(buf);
 		return;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(pmatch); i++) {
-		regoff_t start = pmatch[i].rm_so;
+	while (bufpos < bufsize && !regexec(view->regex, buf + bufpos, ARRAY_SIZE(pmatch), pmatch, 0)) {
+		regoff_t start = pmatch[0].rm_so;
+		regoff_t end = pmatch[0].rm_eo;
 
-		if (start == -1)
+		if (start == -1 || end <= 0 || end <= start)
 			continue;
 
 		mvwchgat(view->win, lineno,
-			 utf8_width_of(buf, start, -1),
-			 utf8_width_of(buf + start, pmatch[i].rm_eo - start, -1),
+			 utf8_width_of(buf, bufpos + start, -1),
+			 utf8_width_of(buf + bufpos + start, end - start, -1),
 			 get_view_attr(view, LINE_SEARCH_RESULT),
 			 get_view_color(view, LINE_SEARCH_RESULT),
 			 NULL);
+
+		bufpos += end;
 	}
 
 	free(buf);

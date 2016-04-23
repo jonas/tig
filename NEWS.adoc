@@ -16,7 +16,7 @@ Improvements:
 
  - Use .mailmap to show canonical name and email addresses, off by default.
    Add `set mailmap = yes` to `~/.tigrc` to enable. (GH #411)
- - Highlight search results, configurable via `search-result` color.
+ - Highlight search results, configurable via `search-result` color. (GH #493)
  - Wrap around when searching, configurable via `wrap-search` setting.
  - Populate `%(file)` with file names from diff stat. (GH #404)
  - `tig --merge` implies `--boundary` similar to gitk.
