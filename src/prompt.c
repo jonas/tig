@@ -830,13 +830,19 @@ run_prompt_command(struct view *view, const char *argv[])
 			report("Saved options to %s", path);
 
 	} else if (!strcmp(cmd, "exec")) {
+		// argv may be allocated and mutations below will cause
+		// free() to error out so backup and restore. :(
+		const char *cmd = argv[1];
 		struct run_request req = { view->keymap, {0}, argv + 1 };
 		enum status_code code = parse_run_request_flags(&req.flags, argv + 1);
 
 		if (code != SUCCESS) {
+			argv[1] = cmd;
 			report("Failed to execute command: %s", get_status_message(code));
 		} else {
-			return exec_run_request(view, &req);
+			request = exec_run_request(view, &req);
+			argv[1] = cmd;
+			return request;
 		}
 
 	} else if (!strcmp(cmd, "toggle")) {
