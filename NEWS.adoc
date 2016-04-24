@@ -52,6 +52,7 @@ Bug fixes:
  - Do not expand `--all` when parsing `%(revargs)` (GH #442, #462)
  - Fix exit when the main view is reloaded due to option toggling. (GH #470)
  - Expand all whitespace and control characters to spaces. (GH #485)
+ - Restore ability to unbind a default keybinding with `none`. (GH #483)
 
 tig-2.1.1
 ---------

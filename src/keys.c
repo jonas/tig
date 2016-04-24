@@ -55,9 +55,6 @@ keybinding_matches(const struct keybinding *keybinding, const struct key key[],
 	bool conflict = false;
 	int i;
 
-	if (keybinding->request == REQ_NONE)
-		return false;
-
 	for (i = 0; i < keys; i++) {
 		const struct key *key1 = &keybinding->key[i];
 		const struct key *key2 = &key[i];
@@ -140,7 +137,7 @@ get_keybinding_in_keymap(const struct keymap *keymap, const struct key key[], si
 
 	for (i = 0; i < keymap->size; i++)
 		if (keybinding_matches(keymap->data[i], key, keys, NULL)) {
-			if (matches)
+			if (matches && keymap->data[i]->request != REQ_NONE)
 				(*matches)++;
 			/* Overriding keybindings, might have been added
 			 * at the end of the keymap so we need to
@@ -159,13 +156,27 @@ get_keybinding(const struct keymap *keymap, const struct key key[], size_t keys,
 	enum request request = get_keybinding_in_keymap(keymap, key, keys, matches);
 
 	if (!is_search_keymap(keymap)) {
-		enum request generic_request = get_keybinding_in_keymap(generic_keymap, key, keys, matches);
+		int generic_matches = 0;
+		enum request generic_request = get_keybinding_in_keymap(generic_keymap, key, keys, &generic_matches);
 
+		/* Include generic matches iff there are more than one
+		 * so unbound keys in the current keymap still override
+		 * generic keys while still ensuring that the key combo
+		 * handler continues to wait for more keys if there is
+		 * another possible match. E.g. while in `main` view:
+		 *
+		 *   bind generic q  quit  # 'q' will quit
+		 *   bind main    q  none  # 'q' will do nothing
+		 *   bind generic qa quit  # 'qa' will quit
+		 *   bind main    qn next  # 'qn' will move to next entry
+		 */
+		if (matches && (request == REQ_UNKNOWN || generic_matches > 1))
+			(*matches) += generic_matches;
 		if (request == REQ_UNKNOWN)
 			request = generic_request;
 	}
 
-	return request;
+	return request == REQ_NONE ? REQ_UNKNOWN : request;
 }
 
 

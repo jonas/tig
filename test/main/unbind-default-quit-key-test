@@ -1,0 +1,31 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+tigrc <<EOF
+set refresh-mode = manual
+bind main q none
+EOF
+
+steps '
+	:exec @touch gh-483-main-q-noquit
+	q
+	:exec @rm -f gh-483-main-q-noquit
+
+	:bind generic qb :exec @rm -f gh-483-generic-qb-executed
+	:exec @touch gh-483-generic-qb-executed
+	qb
+
+	:bind main qa :exec @rm -f gh-483-main-qa-executed
+	:exec @touch gh-483-main-qa-executed
+	qa
+'
+
+git_clone 'repo-one'
+
+test_tig
+
+assert_not_exists "$work_dir/gh-483-main-q-noquit"
+assert_not_exists "$work_dir/gh-483-generic-qb-executed"
+assert_not_exists "$work_dir/gh-483-main-qa-executed"
