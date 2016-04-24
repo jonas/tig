@@ -196,7 +196,7 @@ file_finder_update(struct file_finder *finder)
 	memset(finder->line, 0, sizeof(finder->line) * finder->lines);
 	finder->lines = 0;
 
-	for (i = 0; finder->file[i]; i++) {
+	for (i = 0; finder->file && finder->file[i]; i++) {
 		struct file_finder_line *line = finder->file[i];
 
 		if (line == current)
