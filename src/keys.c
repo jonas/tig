@@ -55,6 +55,9 @@ keybinding_matches(const struct keybinding *keybinding, const struct key key[],
 	bool conflict = false;
 	int i;
 
+	if (keybinding->keys < keys)
+		return false;
+
 	for (i = 0; i < keys; i++) {
 		const struct key *key1 = &keybinding->key[i];
 		const struct key *key2 = &key[i];
@@ -77,7 +80,7 @@ keybinding_matches(const struct keybinding *keybinding, const struct key key[],
 		}
 	}
 
-	if (conflict_ptr)
+	if (conflict_ptr && keybinding->request != REQ_NONE)
 		*conflict_ptr = conflict;
 	return true;
 }
