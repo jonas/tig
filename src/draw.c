@@ -113,11 +113,13 @@ draw_text_expanded(struct view *view, enum line_type type, const char *string, i
 
 	do {
 		size_t pos = string_expand(text, sizeof(text), string, length, opt_tab_size);
+		size_t col = view->col;
 
 		if (draw_chars(view, type, text, -1, max_width, use_tilde))
 			return true;
 		string += pos;
 		length -= pos;
+		max_width -= view->col - col;
 	} while (*string && length > 0);
 
 	return VIEW_MAX_LEN(view) <= 0;
