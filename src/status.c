@@ -199,6 +199,71 @@ status_restore(struct view *view)
 	clear_position(&view->prev_pos);
 }
 
+static bool
+status_branch_tracking_info(char *buf, size_t buf_len, const char *head,
+			    const char *remote)
+{
+	if (!string_nformat(buf, buf_len, NULL, "%s...%s",
+			    head, remote)) {
+		return false;
+	}
+
+	const char *tracking_info_argv[] = {
+		"git", "rev-list", "--left-right", buf, NULL
+	};
+
+	struct io io;
+
+	if (!io_run(&io, IO_RD, repo.cdup, NULL, tracking_info_argv)) {
+		return false;
+	}
+
+	struct buffer result = { 0 };
+	int ahead = 0;
+	int behind = 0;
+
+	while (io_get(&io, &result, '\n', true)) {
+		if (result.size > 0 && result.data) {
+			if (result.data[0] == '<') {
+				ahead++;
+			} else if (result.data[0] == '>') {
+				behind++;
+			}
+		}
+	}
+
+	bool io_failed = io_error(&io);
+	io_done(&io);
+
+	if (io_failed) {
+		return false;
+	}
+
+	if (ahead == 0 && behind == 0) {
+		return string_nformat(buf, buf_len, NULL,
+				      "Your branch is up-to-date with '%s'.",
+				      remote);
+	} else if (ahead > 0 && behind > 0) {
+		return string_nformat(buf, buf_len, NULL,
+				      "Your branch and '%s' have diverged, "
+				      "and have %d and %d different commits "
+				      "each, respectively",
+				      remote, ahead, behind);
+	} else if (ahead > 0) {
+		return string_nformat(buf, buf_len, NULL,
+				      "Your branch is ahead of '%s' by "
+				      "%d commit%s.", remote, ahead,
+				      ahead > 1 ? "s" : "");
+	} else if (behind > 0) {
+		return string_nformat(buf, buf_len, NULL,
+				      "Your branch is behind '%s' by "
+				      "%d commit%s.", remote, behind,
+				      behind > 1 ? "s" : "");
+	}
+
+	return false;
+}
+
 static void
 status_update_onbranch(void)
 {
@@ -224,6 +289,7 @@ status_update_onbranch(void)
 	for (i = 0; i < ARRAY_SIZE(paths); i++) {
 		const char *prefix = paths[i][2];
 		const char *head = repo.head;
+		const char *tracking_info = "";
 
 		if (!string_format(buf, "%s/%s", repo.git_dir, paths[i][0]) ||
 		    lstat(buf, &stat) < 0)
@@ -248,9 +314,17 @@ status_update_onbranch(void)
 
 			if (ref && strcmp(ref->name, "HEAD"))
 				head = ref->name;
+		} else if (!paths[i][1] && *repo.remote) {
+			if (status_branch_tracking_info(buf, sizeof(buf),
+							head, repo.remote)) {
+				tracking_info = buf;
+			}
 		}
 
-		if (!string_format(status_onbranch, "%s %s", prefix, head))
+		const char *fmt = *tracking_info == '\0' ? "%s %s" : "%s %s. %s";
+
+		if (!string_format(status_onbranch, fmt,
+				   prefix, head, tracking_info))
 			string_copy(status_onbranch, repo.head);
 		return;
 	}
