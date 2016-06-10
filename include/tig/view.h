@@ -396,6 +396,7 @@ struct line *add_line_text(struct view *view, const char *text, enum line_type t
 struct line *add_line_text_at(struct view *view, unsigned long pos, const char *text, enum line_type type, size_t cells);
 struct line * PRINTF_LIKE(3, 4) add_line_format(struct view *view, enum line_type type, const char *fmt, ...);
 bool append_line_format(struct view *view, struct line *line, const char *fmt, ...);
+enum status_code read_hash(char *id, size_t idlen, char *s2, size_t n2, void *data);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */
