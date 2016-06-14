@@ -33,6 +33,7 @@ git_config()
 {
 	git config --local user.name "Committer"
 	git config --local user.email "c.ommitter@example.net"
+	git config --local diff.renames false
 }
 
 git_init()
