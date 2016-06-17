@@ -505,6 +505,12 @@ main_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags = (view_is_displayed(view) && request != REQ_VIEW_DIFF)
 				? OPEN_SPLIT : OPEN_DEFAULT;
+	struct commit *commit = view->line[view->pos.lineno].data;
+
+	char current_hash[SIZEOF_REV + 1] = "";
+	char parent_hash[SIZEOF_REV] = "";
+	static const char *rev_list_parents_argv[] = { "git", "rev-list", "-n1", NULL, NULL };
+	rev_list_parents_argv[3] = current_hash;
 
 	switch (request) {
 	case REQ_NEXT:
@@ -530,6 +536,38 @@ main_request(struct view *view, enum request request, struct line *line)
 	case REQ_REFRESH:
 		load_refs(true);
 		refresh_view(view);
+		break;
+
+	case REQ_PARENT:
+		string_copy_rev(current_hash, commit->id);
+
+		if(!strcasecmp(commit->id, NULL_ID)) {
+			// Unstaged changes - parent is HEAD
+			strcpy(current_hash, "HEAD");
+		} else {
+			// Can't assume the hash takes the full 41 bytes
+			size_t n = strlen(commit->id);
+			current_hash[n] = '~';
+			current_hash[n + 1] = 0;
+		}
+
+
+		if(io_run_load(rev_list_parents_argv, " ", read_hash, parent_hash) != SUCCESS || !strlen(parent_hash)) {
+			report("Unable to locate parent.");
+			break;
+		}
+
+		int i;
+		for (i = 0; i < view->lines; i++) {
+			struct commit *commit = view->line[i].data;
+
+			if (!strncasecmp(commit->id, parent_hash, strlen(parent_hash))) {
+				select_view_line(view, i);
+				report_clear();
+				break;
+			}
+		}
+
 		break;
 
 	default:
@@ -574,6 +612,16 @@ static struct view_ops main_ops = {
 		view_column_bit(LINE_NUMBER),
 	main_get_column_data,
 };
+
+enum status_code read_hash(char *id, size_t idlen, char *s2, size_t s2len, void *data) {
+       char *result = data;
+
+       if (! result[0] && idlen > 0) {
+               string_copy_rev(result, id);
+       }
+
+       return SUCCESS;
+}
 
 DEFINE_VIEW(main);
 
