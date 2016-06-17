@@ -12,7 +12,6 @@
  */
 
 #include "tig/tig.h"
-#include "tig/main.h"
 #include "tig/argv.h"
 #include "tig/repo.h"
 #include "tig/watch.h"
@@ -172,12 +171,6 @@ move_view(struct view *view, enum request request)
 {
 	int scroll_steps = 0;
 	int steps;
-	struct commit *commit = view->line[view->pos.lineno].data;
-
-	char current_hash[SIZEOF_REV + 1] = "";
-	char parent_hash[SIZEOF_REV] = "";
-	static const char *rev_list_parents_argv[] = { "git", "rev-list", "-n1", NULL, NULL };
-	rev_list_parents_argv[3] = current_hash;
 
 	switch (request) {
 	case REQ_MOVE_FIRST_LINE:
@@ -216,31 +209,6 @@ move_view(struct view *view, enum request request)
 	case REQ_MOVE_DOWN:
 	case REQ_NEXT:
 		steps = 1;
-		break;
-
-	case REQ_PARENT:
-		string_copy_rev(current_hash, commit->id);
-
-		//can't assume the hash takes the full 41 bytes
-		size_t n = strlen(commit->id);
-		current_hash[n] = '~';
-		current_hash[n + 1] = 0;
-		int i;
-
-		if(io_run_load(rev_list_parents_argv, " ", read_hash, parent_hash) != SUCCESS || !strlen(parent_hash)) {
-			report("Unable to locate parent.");
-			return;
-		}
-
-		for (i = 0; i < view->lines; i++) {
-			struct commit *commit = view->line[i].data;
-
-			if (!strncasecmp(commit->id, parent_hash, strlen(parent_hash))) {
-				steps = i - view->pos.lineno;
-				break;
-			}
-		}
-
 		break;
 
 	default:
@@ -1640,16 +1608,6 @@ append_line_format(struct view *view, struct line *line, const char *fmt, ...)
 		view_column_info_update(view, line);
 
 	return true;
-}
-
-enum status_code read_hash(char *id, size_t idlen, char *s2, size_t s2len, void *data) {
-	char *result = data;
-
-	if (! result[0] && idlen > 0) {
-		string_copy_rev(result, id);
-	}
-
-	return SUCCESS;
 }
 
 /*

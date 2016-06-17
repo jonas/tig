@@ -266,11 +266,7 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_PARENT:
-		if (! strcmp(view->name, "main")) {
-			move_view(view, request);
-		} else {
-			report("Moving to parent is not supported by the %s view", view->name);
-		}
+		report("Moving to parent is not supported by the %s view", view->name);
 		break;
 
 	case REQ_BACK:
