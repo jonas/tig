@@ -1392,9 +1392,6 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	else if (!strcmp(name, "core.editor"))
 		string_ncopy(opt_editor, value, valuelen);
 
-	else if (!strcmp(name, "core.worktree"))
-		set_work_tree(value);
-
 	else if (!strcmp(name, "core.abbrev"))
 		parse_int(&opt_id_width, value, 0, SIZEOF_REV - 1);
 
@@ -1433,6 +1430,12 @@ enum status_code
 load_git_config(void)
 {
 	const char *config_list_argv[] = { "git", "config", "--list", NULL };
+	char worktree[SIZEOF_STR];
+	const char *worktree_argv[] = { "git", "rev-parse", "--show-toplevel", NULL };
+
+	if(io_run_buf(worktree_argv, worktree, sizeof(worktree) - 1, 0)) {
+		set_work_tree(worktree);
+	}
 
 	return io_run_load(config_list_argv, "=", read_repo_config_option, NULL);
 }
