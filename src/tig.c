@@ -470,7 +470,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 	} else if (!strcmp(subcommand, "stash")) {
 		request = REQ_VIEW_STASH;
 
-	} else if (!strcmp(subcommand, "refs")) {
+	} else if (!strcmp(subcommand, "refs") || !strcmp(subcommand, "branch") || !strcmp(subcommand, "tag")) {
 		request = REQ_VIEW_REFS;
 
 	} else {
