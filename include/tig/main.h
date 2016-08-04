@@ -47,6 +47,7 @@ enum request main_request(struct view *view, enum request request, struct line *
 void main_select(struct view *view, struct line *line);
 void main_done(struct view *view);
 bool main_status_exists(struct view *view, enum line_type type);
+enum status_code read_hash(char *id, size_t idlen, char *s2, size_t n2, void *data);
 
 extern struct view main_view;
 
