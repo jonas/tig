@@ -1,0 +1,28 @@
+#!/bin/sh
+
+. libtest.sh
+
+tigrc <<EOF
+This tigrc file should not be loaded!
+EOF
+
+steps "
+	<Ctrl-t>
+"
+
+#export TIGRC_SYSTEM="should-not-be-loaded"
+export XDG_CONFIG_HOME="$HOME/.config"
+mkdir -p "$XDG_CONFIG_HOME/tig"
+
+cat > "$XDG_CONFIG_HOME/tig/config" <<EOF
+bind generic <Ctrl-t> @sh -c 'echo ran > ~/RUNME'
+EOF
+
+test_tig status
+
+assert_equals stderr <<EOF
+EOF
+
+assert_equals RUNME <<EOF
+ran
+EOF

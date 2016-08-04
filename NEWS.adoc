@@ -34,6 +34,7 @@ Improvements:
  - Compact relative date display mode. (GH #331)
  - Add date column option controlling whether to show local date.
  - Move to parent commit in the main view. (GH #388)
+ - Respect the XDG standard for configuration files. (GH #513)
  - Support for custom `strftime(3)` date formats, e.g.:
 
 	set main-view-date = custom
