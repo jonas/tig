@@ -500,43 +500,6 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 	return true;
 }
 
-static void
-main_move_to_parent(struct view *view)
-{
-	struct line *line = &view->line[view->pos.lineno];
-	struct commit *commit = line->data;
-
-	/* Handle staged and unstaged commit lines. */
-	if (string_rev_is_null(commit->id)) {
-		line++;
-
-	} else {
-		const char *rev_list_parents_argv[] = {
-			"git", "log", "--no-color", "-n1", "--pretty=format:%P",
-				commit->id, NULL
-		};
-		char parents[SIZEOF_STR] = "";
-
-		if (!io_run_buf(rev_list_parents_argv, parents, sizeof(parents))) {
-			report("Failed to read commit parent(s)");
-			return;
-		}
-
-		/* Find a commit line matching the first parent commit ID. */
-		for (line++; view_has_line(view, line); line++) {
-			commit = line->data;
-
-			if (!strncasecmp(commit->id, parents, strlen(commit->id)))
-				break;
-		}
-	}
-
-	if (view_has_line(view, line)) {
-		select_view_line(view, line - view->line);
-		report_clear();
-	}
-}
-
 enum request
 main_request(struct view *view, enum request request, struct line *line)
 {
@@ -570,7 +533,7 @@ main_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_PARENT:
-		main_move_to_parent(view);
+		goto_id(view, "%(commit)^", true, false);
 		break;
 
 	default:

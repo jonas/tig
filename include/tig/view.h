@@ -258,6 +258,7 @@ void select_view_line(struct view *view, unsigned long lineno);
 void do_scroll_view(struct view *view, int lines);
 void scroll_view(struct view *view, enum request request);
 void move_view(struct view *view, enum request request);
+void goto_id(struct view *view, const char *expression, bool from_start, bool save_search);
 
 /*
  * View history

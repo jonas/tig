@@ -109,7 +109,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 
 	/* <path>: encoding: <encoding> */
 
-	if (!*path || !io_run_buf(check_attr_argv, buf, sizeof(buf))
+	if (!*path || !io_run_buf(check_attr_argv, buf, sizeof(buf), false)
 	    || !(encoding = strstr(buf, ENCODING_SEP)))
 		return default_encoding;
 
@@ -121,7 +121,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 			"file", "-I", "--", path, NULL
 		};
 
-		if (!*path || !io_run_buf(file_argv, buf, sizeof(buf))
+		if (!*path || !io_run_buf(file_argv, buf, sizeof(buf), false)
 		    || !(encoding = strstr(buf, CHARSET_SEP)))
 			return default_encoding;
 
@@ -532,7 +532,7 @@ io_printf(struct io *io, const char *fmt, ...)
 }
 
 bool
-io_read_buf(struct io *io, char buf[], size_t bufsize)
+io_read_buf(struct io *io, char buf[], size_t bufsize, bool allow_empty)
 {
 	struct buffer result = {0};
 
@@ -541,15 +541,15 @@ io_read_buf(struct io *io, char buf[], size_t bufsize)
 		string_ncopy_do(buf, bufsize, result.data, strlen(result.data));
 	}
 
-	return io_done(io) && result.data;
+	return io_done(io) && (result.data || allow_empty);
 }
 
 bool
-io_run_buf(const char **argv, char buf[], size_t bufsize)
+io_run_buf(const char **argv, char buf[], size_t bufsize, bool allow_empty)
 {
 	struct io io;
 
-	return io_run(&io, IO_RD, NULL, NULL, argv) && io_read_buf(&io, buf, bufsize);
+	return io_run(&io, IO_RD, NULL, NULL, argv) && io_read_buf(&io, buf, bufsize, allow_empty);
 }
 
 bool

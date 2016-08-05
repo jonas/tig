@@ -87,8 +87,8 @@ ssize_t io_read(struct io *io, void *buf, size_t bufsize);
 bool io_get(struct io *io, struct buffer *buf, int c, bool can_read);
 bool io_write(struct io *io, const void *buf, size_t bufsize);
 bool io_printf(struct io *io, const char *fmt, ...) PRINTF_LIKE(2, 3);
-bool io_read_buf(struct io *io, char buf[], size_t bufsize);
-bool io_run_buf(const char **argv, char buf[], size_t bufsize);
+bool io_read_buf(struct io *io, char buf[], size_t bufsize, bool allow_empty);
+bool io_run_buf(const char **argv, char buf[], size_t bufsize, bool allow_empty);
 enum status_code io_load(struct io *io, const char *separators,
 	    io_read_fn read_property, void *data);
 enum status_code io_load_span(struct io *io, const char *separators,

@@ -299,7 +299,7 @@ status_update_onbranch(void)
 			struct io io;
 
 			if (io_open(&io, "%s/%s", repo.git_dir, paths[i][1]) &&
-			    io_read_buf(&io, buf, sizeof(buf))) {
+			    io_read_buf(&io, buf, sizeof(buf), false)) {
 				head = buf;
 				if (!prefixcmp(head, "refs/heads/"))
 					head += STRING_SIZE("refs/heads/");

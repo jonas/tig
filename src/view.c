@@ -288,6 +288,61 @@ select_view_line(struct view *view, unsigned long lineno)
 	}
 }
 
+void
+goto_id(struct view *view, const char *expr, bool from_start, bool save_search)
+{
+	struct view_column_data column_data = {0};
+	char id[SIZEOF_STR] = "";
+	size_t idlen;
+	struct line *line = &view->line[view->pos.lineno];
+
+	if (!(view->ops->column_bits & view_column_bit(ID))) {
+		report("Jumping to ID is not supported by the %s view", view->name);
+		return;
+	} else {
+		char *rev = argv_format_arg(view->env, expr);
+		const char *rev_parse_argv[] = {
+			"git", "rev-parse", "--revs-only", rev, NULL
+		};
+		bool ok = rev && io_run_buf(rev_parse_argv, id, sizeof(id), true);
+
+		free(rev);
+		if (!ok) {
+			report("Failed to parse expression '%s'", expr);
+			return;
+		}
+	}
+
+	if (!id[0]) {
+		if (view->ops->get_column_data(view, line, &column_data)
+		    && column_data.id && string_rev_is_null(column_data.id)) {
+			select_view_line(view, view->pos.lineno + 1);
+			report_clear();
+		} else {
+			report("Expression '%s' is not a meaningful revision", expr);
+		}
+		return;
+	}
+
+	line = from_start ? view->line : &view->line[view->pos.lineno];
+
+	for (idlen = strlen(id); view_has_line(view, line); line++) {
+		struct view_column_data column_data = {0};
+
+		if (view->ops->get_column_data(view, line, &column_data) &&
+		    column_data.id &&
+		    !strncasecmp(column_data.id, id, idlen)) {
+			if (save_search)
+				string_ncopy(view->env->search, id, idlen);
+			select_view_line(view, line - view->line);
+			report_clear();
+			return;
+		}
+	}
+
+	report("Unable to find commit '%s'", view->env->search);
+}
+
 /*
  * View history
  */

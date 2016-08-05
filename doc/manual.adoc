@@ -468,6 +468,10 @@ Prompt
 |:<x>			|Execute the corresponding key binding, e.g. `:q`.
 |:!<command>		|Execute a system command in a pager, e.g. `:!git log -p`.
 |:<action>		|Execute a Tig command, e.g. `:edit`.
+|:goto <rev>		|Jump to a specific revision, e.g. `:goto %(commit)^2`
+			 to goto the current commit's 2nd parent or
+			 `:goto some/branch` to goto the commit denoting the
+			 branch `some/branch`.
 |:save-display <file>	|Save current display to `<file>`.
 |:save-options <file>	|Save current options to `<file>`.
 |:script <file>		|Execute commands from `<file>`.

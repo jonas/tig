@@ -7,6 +7,11 @@
 export LINES=10
 
 steps '
+	:3
+	:save-display unstaged-changes.screen
+	:parent
+	:save-display commit-3.screen
+	:goto conflict-branch
 	:save-display commit-1.screen
 	:parent
 	:save-display commit-2.screen
@@ -14,10 +19,6 @@ steps '
 	:save-display commit-5.screen
 	:parent
 	:save-display commit-5-still.screen
-	:3
-	:save-display unstaged-changes.screen
-	:parent
-	:save-display commit-3.screen
 '
 
 tigrc <<EOF
