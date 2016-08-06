@@ -73,7 +73,7 @@ stash_request(struct view *view, enum request request, struct line *line)
 
 static struct view_ops stash_ops = {
 	"stash",
-	argv_env.stash,
+	"",
 	VIEW_SEND_CHILD_ENTER | VIEW_REFRESH,
 	sizeof(struct main_state),
 	stash_open,
