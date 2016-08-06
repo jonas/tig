@@ -105,7 +105,7 @@ if [ -n "\$lineno" ]; then
 fi
 
 echo "\$@" >> "$HOME/editor.log"
-sed -n -e "\${lineno}p" "\$file" >> "$HOME/editor.log"
+sed -n -e "\${lineno}p" "\$file" >> "$HOME/editor.log" 2>&1
 EOF
 
 cd "$output_dir"
@@ -503,7 +503,7 @@ run_test_cases()
 	test_setup
 	for name in $(cat test-cases); do
 		tig_script "$name" "
-			$(if [ -e "$name.script" ]; then cat "$name.script"; fi)
+			$(if [ -e "$name-script" ]; then cat "$name-script"; fi)
 			:save-display $name.screen
 		"
 		if [ -e "$name-before" ]; then
@@ -513,7 +513,10 @@ run_test_cases()
 		if [ -e "$name-cwd" ]; then
 			work_dir="$work_dir/$(cat "$name-cwd")"
 		fi
+		ORIG_IFS="$IFS"
+	        IFS=$' '
 		test_tig $(if [ -e "$name-args" ]; then cat "$name-args"; fi)
+	        IFS="$ORIG_IFS"
 		work_dir="$old_work_dir"
 		if [ -e "$name-after" ]; then
 			test_exec_work_dir "$SHELL" "$HOME/$name-after" 

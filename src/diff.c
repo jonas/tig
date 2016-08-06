@@ -528,8 +528,17 @@ diff_get_pathname(struct view *view, struct line *line)
 {
 	const struct line *header;
 	const char *dst = NULL;
-	const char *prefixes[] = { " b/", "cc ", "combined " };
+	const char *prefixes[] = { " b/", "diff --cc ", "diff --combined " };
 	int i;
+
+	if (opt_diff_noprefix) {
+		header = find_prev_line_by_type(view, line, LINE_DIFF_ADD_FILE);
+		if (!header)
+			return NULL;
+
+		dst = strstr(box_text(header), "+++ ");
+		return dst ? dst + 4 : NULL;
+	}
 
 	header = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
 	if (!header)

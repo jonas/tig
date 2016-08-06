@@ -1395,6 +1395,9 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	else if (!strcmp(name, "core.abbrev"))
 		parse_int(&opt_id_width, value, 0, SIZEOF_REV - 1);
 
+	else if (!strcmp(name, "diff.noprefix"))
+		parse_bool(&opt_diff_noprefix, value);
+
 	else if (!prefixcmp(name, "tig.color."))
 		set_repo_config_option(name + 10, value, option_color_command);
 

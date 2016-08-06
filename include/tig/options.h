@@ -36,6 +36,7 @@ typedef struct view_column *view_settings;
 	_(blob_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(commit_order,			enum commit_order,	VIEW_LOG_LIKE) \
 	_(diff_context,			int,			VIEW_DIFF_LIKE) \
+	_(diff_noprefix,		bool,			VIEW_NO_FLAGS) \
 	_(diff_options,			const char **,		VIEW_DIFF_LIKE) \
 	_(diff_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(editor_line_number,		bool,			VIEW_NO_FLAGS) \
