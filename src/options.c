@@ -978,18 +978,21 @@ load_options(void)
 			return error("Error in built-in config");
 	}
 
-	if (!tigrc_user) {
+	if (tigrc_user) {
+		load_option_file(tigrc_user);
+	} else {
 		const char *xdg_config_home = getenv("XDG_CONFIG_HOME");
 
-		if (!xdg_config_home)
-			tigrc_user = TIG_USER_CONFIG;
+		if (!xdg_config_home || !*xdg_config_home)
+			tigrc_user = "~/.config/tig/config";
 		else if (!string_format(buf, "%s/tig/config", xdg_config_home))
 			return error("Failed to expand $XDG_CONFIG_HOME");
 		else
 			tigrc_user = buf;
-	}
 
-	load_option_file(tigrc_user);
+		if (load_option_file(tigrc_user) == ERROR_FILE_DOES_NOT_EXIST)
+			load_option_file(TIG_USER_CONFIG);
+	}
 
 	if (!diff_opts_from_args && tig_diff_opts && *tig_diff_opts) {
 		static const char *diff_opts[SIZEOF_ARG] = { NULL };
