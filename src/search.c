@@ -120,7 +120,7 @@ find_next_match(struct view *view, enum request request)
 	enum status_code code;
 	int direction;
 
-	if (!*view->grep) {
+	if (!*view->grep || strcmp(view->grep, view->env->search)) {
 		if (!*view->env->search)
 			return success("No previous search");
 		return setup_and_find_next(view, request);
