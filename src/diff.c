@@ -526,28 +526,30 @@ diff_trace_origin(struct view *view, struct line *line)
 const char *
 diff_get_pathname(struct view *view, struct line *line)
 {
-	const struct line *header;
-	const char *dst = NULL;
-	const char *prefixes[] = { " b/", "diff --cc ", "diff --combined " };
+	struct line *header;
+	const char *dst;
+	const char *prefixes[] = { "diff --cc ", "diff --combined " };
 	int i;
-
-	if (opt_diff_noprefix) {
-		header = find_prev_line_by_type(view, line, LINE_DIFF_ADD_FILE);
-		if (!header)
-			return NULL;
-
-		dst = strstr(box_text(header), "+++ ");
-		return dst ? dst + 4 : NULL;
-	}
 
 	header = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
 	if (!header)
 		return NULL;
 
-	for (i = 0; i < ARRAY_SIZE(prefixes) && !dst; i++)
+	for (i = 0; i < ARRAY_SIZE(prefixes); i++) {
 		dst = strstr(box_text(header), prefixes[i]);
+		if (dst)
+			return dst + strlen(prefixes[i]);
+	}
 
-	return dst ? dst + strlen(prefixes[--i]) : NULL;
+	header = find_next_line_by_type(view, header, LINE_DIFF_ADD_FILE);
+	if (!header)
+		return NULL;
+
+	if (opt_diff_noprefix)
+		return box_text(header) + STRING_SIZE("+++ ");
+
+	/* Handle mnemonic prefixes, such as "b/" and "w/". */
+	return box_text(header) + STRING_SIZE("+++ b/");
 }
 
 enum request
