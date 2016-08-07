@@ -11,6 +11,10 @@ steps '
 	:exec !assert-var "%(revargs)" == "--all"
 	:exec !git branch -D mp/feature
 	:save-display final.screen
+
+	:exec !git checkout HEAD~2
+	:refresh
+	:save-display detached.screen
 '
 
 in_work_dir create_repo_from_tgz "$base_dir/files/refs-repo.tgz"
@@ -27,6 +31,24 @@ assert_equals 'final.screen' <<EOF
 2010-04-07 05:37 Max Power             * [master] {origin/master} {max-power/mas
 2010-03-29 17:15 Jørgen Thygesen Brahe * Commit 10 D                            
 2010-03-21 04:53 作者                  * Commit 10 C                            
+2010-03-12 16:31 René Lévesque         * <v2.0.1> Commit 10 B                   
+2010-03-04 04:09 A. U. Thor            * <v2.0> Commit 10 A                     
+2010-02-23 15:46 Max Power             * Commit 9 E                             
+2010-02-15 03:24 Jørgen Thygesen Brahe * Commit 9 D                             
+2010-02-06 15:02 作者                  * Commit 9 C                             
+2010-01-29 02:40 René Lévesque         * Commit 9 B                             
+2010-01-20 14:18 A. U. Thor            * <v1.1.1> Commit 9 A                    
+2010-01-12 01:56 Max Power             * <mp/good> Commit 8 E                   
+2010-01-03 13:33 Jørgen Thygesen Brahe * Commit 8 D                             
+2009-12-26 01:11 作者                  * [r1.1.2] [r1.1.x] <v1.1> Commit 8 C    
+[main] 042f71a7592228ae84cbb3642c2666dcd35aa527 - commit 1 of 51             27%
+EOF
+
+assert_equals 'detached.screen' <<EOF
+2009-02-13 23:31 Max Power             * {max-power/mp/feature} WIP: feature    
+2010-04-07 05:37 Max Power             * [master] {origin/master} {max-power/mas
+2010-03-29 17:15 Jørgen Thygesen Brahe * Commit 10 D                            
+2010-03-21 04:53 作者                  * [HEAD] Commit 10 C                     
 2010-03-12 16:31 René Lévesque         * <v2.0.1> Commit 10 B                   
 2010-03-04 04:09 A. U. Thor            * <v2.0> Commit 10 A                     
 2010-02-23 15:46 Max Power             * Commit 9 E                             
