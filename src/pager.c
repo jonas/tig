@@ -76,9 +76,8 @@ pager_wrap_line(struct view *view, const char *data, enum line_type type)
 		bool wrapped = !!first_line;
 		size_t linelen = string_expanded_length(data, datalen, opt_tab_size, view->width - !!wrapped);
 		struct line *line;
-		struct box *box;
 
-		line = add_line_alloc(view, &box, type, linelen + 1, wrapped);
+		line = add_line_text_at_(view, view->lines, data, linelen, type, 1, wrapped);
 		if (!line)
 			break;
 		if (!has_first_line) {
@@ -91,7 +90,6 @@ pager_wrap_line(struct view *view, const char *data, enum line_type type)
 
 		line->wrapped = wrapped;
 		line->lineno = lineno;
-		box_text_copy(box, 1, data, linelen);
 
 		datalen -= linelen;
 		data += linelen;

@@ -1,0 +1,51 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export COLUMNS=40
+
+steps '
+	:save-display wrapped.screen
+'
+
+tigrc <<EOF
+set line-graphics = utf-8
+set wrap-lines = true
+EOF
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+test_tig show
+
+assert_equals 'wrapped.screen' <<EOF
+commit ee912870202200a0b9cf4fd86ba572432
+12d341e                                 
+Refs: [master]                          
+Author:     Jonas Fonseca <jonas.fonseca
++@gmail.com>                            
+AuthorDate: Sat Mar 1 17:26:01 2014 -050
++0                                      
+Commit:     Jonas Fonseca <jonas.fonseca
++@gmail.com>                            
+CommitDate: Sat Mar 1 17:26:01 2014 -050
++0                                      
+                                        
+    WIP: Upgrade to 0.4-SNAPSHOT and DCE
+---                                     
+ .../benchmark-runner.sh   |  5 ++-     
+ .../Benchmark.scala       | 11 +++---  
+ .../BenchmarkApp.scala    |  2 +-      
+ common/start-benchmark.js |  9 ++++-   
+ deltablue/exports.js      | 13 ------- 
+ .../DeltaBlue.scala       |  7 ++++    
+ project/Build.scala       | 13 ++----- 
+ project/build.sbt         |  5 ++-     
+ richards/exports.js       | 13 ------- 
+ .../Richards.scala        |  3 ++      
+ run.sh                    |  2 +-      
+ sudoku/exports.js         | 13 ------- 
+ .../sudoku/Sudoku.scala   |  2 +       
+ tracer/exports.js         | 13 ------- 
+[diff] ee912870202200a0b9cf4fd86ba57245%
+EOF

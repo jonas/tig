@@ -1595,11 +1595,10 @@ add_line_nodata(struct view *view, enum line_type type)
 }
 
 struct line *
-add_line_text_at(struct view *view, unsigned long pos, const char *text, enum line_type type, size_t cells)
+add_line_text_at_(struct view *view, unsigned long pos, const char *text, size_t textlen, enum line_type type, size_t cells, bool custom)
 {
 	struct box *box;
-	size_t textlen = strlen(text);
-	struct line *line = add_line_at(view, pos, NULL, type, box_sizeof(NULL, cells, textlen), false);
+	struct line *line = add_line_at(view, pos, NULL, type, box_sizeof(NULL, cells, textlen), custom);
 
 	if (!line)
 		return NULL;
@@ -1612,6 +1611,12 @@ add_line_text_at(struct view *view, unsigned long pos, const char *text, enum li
 	if (view->ops->column_bits)
 		view_column_info_update(view, line);
 	return line;
+}
+
+struct line *
+add_line_text_at(struct view *view, unsigned long pos, const char *text, enum line_type type, size_t cells)
+{
+	return add_line_text_at_(view, pos, text, strlen(text), type, cells, false);
 }
 
 struct line *
