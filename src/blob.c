@@ -106,7 +106,7 @@ blob_read(struct view *view, struct buffer *buf, bool force_stop)
 		return true;
 	}
 
-	return add_line_text(view, buf->data, LINE_DEFAULT) != NULL;
+	return pager_common_read(view, buf->data, LINE_DEFAULT, NULL);
 }
 
 static void

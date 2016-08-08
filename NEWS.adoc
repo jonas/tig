@@ -58,6 +58,7 @@ Bug fixes:
  - Fix exit when the main view is reloaded due to option toggling. (GH #470)
  - Expand all whitespace and control characters to spaces. (GH #485)
  - Restore ability to unbind a default keybinding with `none`. (GH #483)
+ - Fix blob view to honor the `wrap-lines` setting.
 
 tig-2.1.1
 ---------
