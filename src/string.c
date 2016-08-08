@@ -72,7 +72,7 @@ string_copy_rev(char *dst, const char *src)
 		return;
 
 	for (srclen = 0; srclen < SIZEOF_REV; srclen++)
-		if (isspace(src[srclen]))
+		if (!src[srclen] || isspace(src[srclen]))
 			break;
 
 	string_ncopy_do(dst, SIZEOF_REV, src, srclen);
