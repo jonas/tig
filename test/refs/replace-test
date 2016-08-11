@@ -2,7 +2,6 @@
 
 . libtest.sh
 . libgit.sh
-. "$source_dir/util.sh"
 
 export LINES=18
 

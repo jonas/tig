@@ -85,7 +85,7 @@ blame_open(struct view *view, enum open_flags flags)
 		for (i = 0; opt_blame_options[i]; i++) {
 			if (prefixcmp(opt_blame_options[i], "-C"))
 				continue;
-			state->auto_filename_display = TRUE;
+			state->auto_filename_display = true;
 		}
 	}
 
@@ -93,30 +93,48 @@ blame_open(struct view *view, enum open_flags flags)
 
 	if (is_initial_view(view)) {
 		/* Finish validating and setting up blame options */
-		if (!opt_file_args || opt_file_args[1] || (opt_rev_args && opt_rev_args[1]))
+		if (!opt_file_args || opt_file_args[1])
 			usage("Invalid number of options to blame");
-
-		if (opt_rev_args) {
-			string_ncopy(view->env->ref, opt_rev_args[0], strlen(opt_rev_args[0]));
-		}
 
 		string_ncopy(view->env->file, opt_file_args[0], strlen(opt_file_args[0]));
 
 		opt_blame_options = opt_cmdline_args;
 		opt_cmdline_args = NULL;
+
+		/*
+		 * flags (like "--max-age=123") and bottom limits (like "^foo")
+		 * will be passed as-is, and retained even if we re-blame from
+		 * a parent.
+		 *
+		 * Positive start points (like "HEAD") are placed only in
+		 * view->env->ref, which may be later overridden. We must
+		 * ensure there's only one of these.
+		 */
+		if (opt_rev_args) {
+			for (i = 0; opt_rev_args[i]; i++) {
+				const char *arg = opt_rev_args[i];
+
+				if (arg[0] == '-' || arg[0] == '^')
+					argv_append(&opt_blame_options, arg);
+				else if (!view->env->ref[0])
+					string_ncopy(view->env->ref, arg, strlen(arg));
+				else
+					usage("Invalid number of options to blame");
+			}
+		}
 	}
 
 	if (!view->env->file[0]) {
 		report("No file chosen, press %s to open tree view",
 			get_view_key(view, REQ_VIEW_TREE));
-		return FALSE;
+		return false;
 	}
 
 	if (!view->prev && *repo.prefix && !(flags & (OPEN_RELOAD | OPEN_REFRESH))) {
 		string_copy(path, view->env->file);
 		if (!string_format(view->env->file, "%s%s", repo.prefix, path)) {
 			report("Failed to setup the blame view");
-			return FALSE;
+			return false;
 		}
 	}
 
@@ -126,7 +144,7 @@ blame_open(struct view *view, enum open_flags flags)
 		};
 
 		if (!begin_update(view, repo.cdup, blame_cat_file_argv, flags))
-			return FALSE;
+			return false;
 	}
 
 	/* First pass: remove multiple references to the same commit. */
@@ -152,11 +170,11 @@ blame_open(struct view *view, enum open_flags flags)
 	string_copy_rev(state->history_state.id, view->env->ref);
 	state->history_state.filename = get_path(view->env->file);
 	if (!state->history_state.filename)
-		return FALSE;
+		return false;
 	string_format(view->vid, "%s", view->env->file);
 	string_format(view->ref, "%s ...", view->env->file);
 
-	return TRUE;
+	return true;
 }
 
 static struct blame_commit *
@@ -224,7 +242,7 @@ blame_read_file(struct view *view, struct buffer *buf, struct blame_state *state
 
 		if (view->lines == 0 || !begin_update(view, repo.cdup, blame_argv, OPEN_EXTRA)) {
 			report("Failed to load blame data");
-			return TRUE;
+			return true;
 		}
 
 		if (view->env->goto_lineno > 0) {
@@ -232,24 +250,24 @@ blame_read_file(struct view *view, struct buffer *buf, struct blame_state *state
 			view->env->goto_lineno = 0;
 		}
 
-		state->done_reading = TRUE;
-		return FALSE;
+		state->done_reading = true;
+		return false;
 
 	} else {
 		struct blame *blame;
 
-		if (!add_line_alloc(view, &blame, LINE_DEFAULT, buf->size, FALSE))
-			return FALSE;
+		if (!add_line_alloc(view, &blame, LINE_DEFAULT, buf->size, false))
+			return false;
 
 		blame->commit = NULL;
 		strncpy(blame->text, buf->data, buf->size);
 		blame->text[buf->size] = 0;
-		return TRUE;
+		return true;
 	}
 }
 
 static bool
-blame_read(struct view *view, struct buffer *buf)
+blame_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct blame_state *state = view->private;
 
@@ -262,7 +280,7 @@ blame_read(struct view *view, struct buffer *buf)
 			update_view_title(view);
 			redraw_view_from(view, 0);
 		}
-		return TRUE;
+		return true;
 	}
 
 	if (!state->commit) {
@@ -271,17 +289,17 @@ blame_read(struct view *view, struct buffer *buf)
 			      view->lines ? state->blamed * 100 / view->lines : 0);
 
 	} else if (parse_blame_info(state->commit, state->author, buf->data)) {
-		bool update_view_columns = TRUE;
+		bool update_view_columns = true;
 		int i;
 
 		if (!state->commit->filename)
-			return FALSE;
+			return false;
 
 		if (!state->filename) {
 			state->filename = state->commit->filename;
 		} else if (strcmp(state->filename, state->commit->filename)) {
-			state->auto_filename_display = TRUE;
-			view->force_redraw = TRUE;
+			state->auto_filename_display = true;
+			view->force_redraw = true;
 			blame_update_file_name_visibility(view);
 		}
 
@@ -293,14 +311,14 @@ blame_read(struct view *view, struct buffer *buf)
 				line->dirty = 1;
 				if (update_view_columns)
 					view_column_info_update(view, line);
-				update_view_columns = FALSE;
+				update_view_columns = false;
 			}
 		}
 
 		state->commit = NULL;
 	}
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -318,7 +336,7 @@ blame_get_column_data(struct view *view, const struct line *line, struct view_co
 
 	column_data->text = blame->text;
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -329,8 +347,8 @@ check_blame_commit(struct blame *blame, bool check_null_id)
 	else if (check_null_id && string_rev_is_null(blame->commit->id))
 		report("No commit exist for the selected line");
 	else
-		return TRUE;
-	return FALSE;
+		return true;
+	return false;
 }
 
 static void
@@ -349,10 +367,10 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 
 	if (!string_format(from, "%s:%s", view->env->ref, view->env->file) ||
 	    !string_format(to, "%s:%s", blame->commit->id, blame->commit->filename) ||
-	    !io_run(&io, IO_RD, NULL, opt_env, diff_tree_argv))
+	    !io_run(&io, IO_RD, NULL, NULL, diff_tree_argv))
 		return;
 
-	while (io_get(&io, &buf, '\n', TRUE)) {
+	while (io_get(&io, &buf, '\n', true)) {
 		char *line = buf.data;
 
 		if (*line == '@') {
@@ -443,7 +461,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_ENTER:
-		if (!check_blame_commit(blame, FALSE))
+		if (!check_blame_commit(blame, false))
 			break;
 
 		if (view_is_displayed(diff) &&

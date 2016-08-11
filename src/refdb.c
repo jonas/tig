@@ -58,7 +58,7 @@ foreach_ref_visitor(void *data, void *value)
 	const struct ref *ref = value;
 
 	if (!ref->valid)
-		return TRUE;
+		return true;
 	return visitor_data->visitor(visitor_data->data, ref);
 }
 
@@ -102,9 +102,9 @@ ref_list_contains_tag(const char *id)
 
 	foreach_ref_list(ref, id)
 		if (ref_is_tag(ref))
-			return TRUE;
+			return true;
 
-	return FALSE;
+	return false;
 }
 
 struct ref_opt {
@@ -113,13 +113,13 @@ struct ref_opt {
 	enum watch_trigger changed;
 };
 
-static int
+static enum status_code
 add_ref_to_id_map(struct ref *ref)
 {
 	void **ref_lists_slot = string_map_put_to(&refs_by_id, ref->id);
 
 	if (!ref_lists_slot)
-		return OK;
+		return SUCCESS;
 
 	/* First remove the ref from the ID list, to ensure that it is
 	 * reinserted at the right position if the type changes. */
@@ -153,7 +153,7 @@ add_ref_to_id_map(struct ref *ref)
 		list->next = ref;
 	}
 
-	return OK;
+	return SUCCESS;
 }
 
 static void
@@ -179,7 +179,7 @@ remove_ref_from_id_map(struct ref *ref)
 		string_map_remove(&refs_by_id, ref->id);
 }
 
-static int
+static enum status_code
 add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref_opt *opt)
 {
 	struct ref *ref = NULL;
@@ -223,7 +223,7 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		/* Handle the case of HEAD not being a symbolic ref,
 		 * i.e. during a rebase. */
 		if (*opt->head)
-			return OK;
+			return SUCCESS;
 		type = REFERENCE_HEAD;
 	}
 
@@ -237,14 +237,14 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	} else {
 		ref_slot = string_map_put_to(&refs_by_name, name);
 		if (!ref_slot)
-			return ERR;
+			return ERROR_OUT_OF_MEMORY;
 		ref = *ref_slot;
 	}
 
 	if (!ref) {
 		ref = calloc(1, sizeof(*ref) + namelen);
 		if (!ref)
-			return ERR;
+			return ERROR_OUT_OF_MEMORY;
 		strncpy(ref->name, name, namelen);
 		if (ref_slot)
 			*ref_slot = ref;
@@ -256,7 +256,7 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 			remove_ref_from_id_map(ref);
 	}
 
-	ref->valid = TRUE;
+	ref->valid = true;
 	ref->type = type;
 	string_ncopy_do(ref->id, SIZEOF_REV, id, idlen);
 
@@ -273,7 +273,7 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	return add_ref_to_id_map(ref);
 }
 
-static int
+static enum status_code
 read_ref(char *id, size_t idlen, char *name, size_t namelen, void *data)
 {
 	return add_to_refs(id, idlen, name, namelen, data);
@@ -286,7 +286,7 @@ invalidate_refs(void *data, void *ref_)
 
 	ref->valid = 0;
 	ref->next = NULL;
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -300,27 +300,28 @@ cleanup_refs(void *data, void *ref_)
 		opt->changed |= WATCH_REFS;
 	}
 
-	return TRUE;
+	return true;
 }
 
-static int
+static enum status_code
 reload_refs(bool force)
 {
 	const char *ls_remote_argv[SIZEOF_ARG] = {
-		"git", "ls-remote", repo.git_dir, NULL
+		"git", "show-ref", "--head", "--dereference", NULL
 	};
-	static bool init = FALSE;
+	static bool init = false;
 	struct ref_opt opt = { repo.remote, repo.head, WATCH_NONE };
 	struct repo_info old_repo = repo;
+	enum status_code code;
 
 	if (!init) {
 		if (!argv_from_env(ls_remote_argv, "TIG_LS_REMOTE"))
-			return ERR;
-		init = TRUE;
+			return ERROR_OUT_OF_MEMORY;
+		init = true;
 	}
 
 	if (!*repo.git_dir)
-		return OK;
+		return SUCCESS;
 
 	if (force || !*repo.head)
 		load_repo_head();
@@ -333,30 +334,31 @@ reload_refs(bool force)
 	string_map_clear(&refs_by_id);
 	string_map_foreach(&refs_by_name, invalidate_refs, NULL);
 
-	if (io_run_load(ls_remote_argv, "\t", read_ref, &opt) == ERR)
-		return ERR;
+	code = io_run_load(ls_remote_argv, " ", read_ref, &opt);
+	if (code != SUCCESS)
+		return code;
 
 	string_map_foreach(&refs_by_name, cleanup_refs, &opt);
 
 	if (opt.changed)
 		watch_apply(NULL, opt.changed);
 
-	return OK;
+	return SUCCESS;
 }
 
-int
+enum status_code
 load_refs(bool force)
 {
-	static bool loaded = FALSE;
+	static bool loaded = false;
 
 	if (!force && loaded)
-		return OK;
+		return SUCCESS;
 
-	loaded = TRUE;
+	loaded = true;
 	return reload_refs(force);
 }
 
-int
+enum status_code
 add_ref(const char *id, char *name, const char *remote_name, const char *head)
 {
 	struct ref_opt opt = { remote_name, head };
@@ -365,8 +367,13 @@ add_ref(const char *id, char *name, const char *remote_name, const char *head)
 }
 
 void
-ref_update_env(struct argv_env *env, const struct ref *ref, bool clear)
+ref_update_env(struct argv_env *env, const struct ref *ref, bool recurse)
 {
+	bool clear = recurse ? !ref->next : true;
+
+	if (recurse && ref->next)
+		ref_update_env(env, ref->next, true);
+
 	if (clear)
 		env->tag[0] = env->remote[0] = env->branch[0] = 0;
 
@@ -383,7 +390,7 @@ ref_update_env(struct argv_env *env, const struct ref *ref, bool clear)
 		string_ncopy(env->remote, ref->name, sep - ref->name);
 		string_ncopy(env->branch, sep + 1, strlen(sep + 1));
 
-	} else if (ref->type == REFERENCE_BRANCH) {
+	} else if (ref->type == REFERENCE_BRANCH || ref->type == REFERENCE_HEAD) {
 		string_ncopy(env->branch, ref->name, strlen(ref->name));
 	}
 }

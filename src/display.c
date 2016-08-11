@@ -53,22 +53,18 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 {
 	bool ok;
 
-	if (silent) {
-		ok = io_run_bg(argv);
+	if (silent || is_script_executing()) {
+		ok = io_run_bg(argv, dir);
 
 	} else {
-		def_prog_mode();           /* save current tty modes */
 		endwin();                  /* restore original tty modes */
 		ok = io_run_fg(argv, dir);
 		if (confirm || !ok) {
 			if (!ok && *notice)
 				fprintf(stderr, "%s", notice);
-			if (!is_script_executing()) {
-				fprintf(stderr, "Press Enter to continue");
-				getc(opt_tty);
-			}
+			fprintf(stderr, "Press Enter to continue");
+			getc(opt_tty);
 		}
-		reset_prog_mode();
 	}
 
 	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && refresh) {
@@ -80,7 +76,7 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 				refresh_view(view);
 		}
 	}
-	redraw_display(TRUE);
+	redraw_display(true);
 	return ok;
 }
 
@@ -120,8 +116,8 @@ open_editor(const char *file, unsigned int lineno)
 	if (lineno && opt_editor_line_number && string_format(lineno_cmd, "+%u", lineno))
 		editor_argv[argc++] = lineno_cmd;
 	editor_argv[argc] = file;
-	if (!open_external_viewer(editor_argv, repo.cdup, FALSE, FALSE, TRUE, EDITOR_LINENO_MSG))
-		opt_editor_line_number = FALSE;
+	if (!open_external_viewer(editor_argv, repo.cdup, false, false, true, EDITOR_LINENO_MSG))
+		opt_editor_line_number = false;
 }
 
 
@@ -135,33 +131,29 @@ apply_horizontal_split(struct view *base, struct view *view)
 	base->height -= view->height;
 }
 
-static void
-apply_vertical_split(struct view *base, struct view *view)
+int
+apply_vertical_split(int base_width)
 {
-	view->height = base->height;
-	view->width  = apply_step(opt_split_view_width, base->width);
-	view->width  = MAX(view->width, MIN_VIEW_WIDTH);
-	view->width  = MIN(view->width, base->width - MIN_VIEW_WIDTH);
-	base->width -= view->width;
+	int width  = apply_step(opt_split_view_width, base_width);
+
+	width = MAX(width, MIN_VIEW_WIDTH);
+	width = MIN(width, base_width - MIN_VIEW_WIDTH);
+
+	return width;
 }
 
-static bool
-vertical_split_is_enabled(void)
+bool
+vertical_split_is_enabled(enum vertical_split vsplit, int height, int width)
 {
-	if (opt_vertical_split == VERTICAL_SPLIT_AUTO) {
-		int height, width;
-
-		getmaxyx(stdscr, height, width);
+	if (vsplit == VERTICAL_SPLIT_AUTO)
 		return width > 160 || width * VSPLIT_SCALE > (height - 1) * 2;
-	}
-
-	return opt_vertical_split == VERTICAL_SPLIT_VERTICAL;
+	return vsplit == VERTICAL_SPLIT_VERTICAL;
 }
 
 static void
 redraw_display_separator(bool clear)
 {
-	if (displayed_views() > 1 && vertical_split_is_enabled()) {
+	if (display_sep) {
 		chtype separator = opt_line_graphics ? ACS_VLINE : '|';
 
 		if (clear)
@@ -171,39 +163,68 @@ redraw_display_separator(bool clear)
 	}
 }
 
+static void create_or_move_display_separator(int height, int x)
+{
+	if (!display_sep) {
+		display_sep = newwin(height, 1, 0, x);
+		if (!display_sep)
+			die("Failed to create separator window");
+
+	} else {
+		wresize(display_sep, height, 1);
+		mvwin(display_sep, 0, x);
+	}
+}
+
+static void remove_display_separator(void)
+{
+	if (display_sep) {
+		delwin(display_sep);
+		display_sep = NULL;
+	}
+}
+
 void
 resize_display(void)
 {
 	int x, y, i;
+	int height, width;
 	struct view *base = display[0];
 	struct view *view = display[1] ? display[1] : display[0];
 	bool vsplit;
 
 	/* Setup window dimensions */
 
-	getmaxyx(stdscr, base->height, base->width);
+	getmaxyx(stdscr, height, width);
 
 	/* Make room for the status window. */
-	base->height -= 1;
+	base->height = height - 1;
+	base->width = width;
 
-	vsplit = vertical_split_is_enabled();
+	vsplit = vertical_split_is_enabled(opt_vertical_split, height, width);
 
 	if (view != base) {
 		if (vsplit) {
-			apply_vertical_split(base, view);
+			view->height = base->height;
+			view->width = apply_vertical_split(base->width);
+			base->width -= view->width;
 
 			/* Make room for the separator bar. */
 			view->width -= 1;
+
+			create_or_move_display_separator(base->height, base->width);
+			redraw_display_separator(false);
 		} else {
+			remove_display_separator();
 			apply_horizontal_split(base, view);
 		}
 
 		/* Make room for the title bar. */
 		view->height -= 1;
-	}
 
-	string_format(opt_env_columns, "COLUMNS=%d", base->width);
-	string_format(opt_env_lines, "LINES=%d", base->height);
+	} else {
+		remove_display_separator();
+	}
 
 	/* Make room for the title bar. */
 	base->height -= 1;
@@ -216,7 +237,7 @@ resize_display(void)
 			if (!display_win[i])
 				die("Failed to create %s view", view->name);
 
-			scrollok(display_win[i], FALSE);
+			scrollok(display_win[i], false);
 
 			display_title[i] = newwin(1, view->width, y + view->height, x);
 			if (!display_title[i])
@@ -229,18 +250,6 @@ resize_display(void)
 			mvwin(display_title[i], y + view->height, x);
 		}
 
-		if (i > 0 && vsplit) {
-			if (!display_sep) {
-				display_sep = newwin(view->height, 1, 0, x - 1);
-				if (!display_sep)
-					die("Failed to create separator window");
-
-			} else {
-				wresize(display_sep, view->height, 1);
-				mvwin(display_sep, 0, x - 1);
-			}
-		}
-
 		view->win = display_win[i];
 		view->title = display_title[i];
 
@@ -250,7 +259,7 @@ resize_display(void)
 			y += view->height + 1;
 	}
 
-	redraw_display_separator(FALSE);
+	redraw_display_separator(false);
 }
 
 void
@@ -274,7 +283,7 @@ save_window_line(FILE *file, WINDOW *win, int y, char *buf, size_t bufsize)
 {
 	int read = mvwinnstr(win, y, 0, buf, bufsize);
 
-	return read == ERR ? FALSE : fprintf(file, "%s\n", buf) == read + 1;
+	return read == ERR ? false : fprintf(file, "%s\n", buf) == read + 1;
 }
 
 static bool
@@ -284,7 +293,7 @@ save_window_vline(FILE *file, WINDOW *left, WINDOW *right, int y, char *buf, siz
 	int read2 = read1 == ERR ? ERR : mvwinnstr(right, y, 0, buf + read1 + 1, bufsize - read1 - 1);
 
 	if (read2 == ERR)
-		return FALSE;
+		return false;
 	buf[read1] = '|';
 
 	return fprintf(file, "%s\n", buf) == read1 + 1 + read2 + 1;
@@ -297,18 +306,18 @@ save_display(const char *path)
 	size_t linelen;
 	char *line;
 	FILE *file = fopen(path, "w");
-	bool ok = TRUE;
+	bool ok = true;
 	struct view *view = display[0];
 
 	if (!file)
-		return FALSE;
+		return false;
 
 	getmaxyx(stdscr, i, width);
 	linelen = width * 4;
 	line = malloc(linelen + 1);
 	if (!line) {
 		fclose(file);
-		return FALSE;
+		return false;
 	}
 
 	if (view->width < width && display[1]) {
@@ -340,7 +349,7 @@ save_display(const char *path)
  */
 
 /* Whether or not the curses interface has been initialized. */
-static bool cursed = FALSE;
+static bool cursed = false;
 
 /* Terminal hacks and workarounds. */
 static bool use_scroll_redrawwin;
@@ -350,16 +359,16 @@ static bool use_scroll_status_wclear;
 WINDOW *status_win;
 
 /* Reading from the prompt? */
-static bool input_mode = FALSE;
+static bool input_mode = false;
 
-static bool status_empty = FALSE;
+static bool status_empty = false;
 
 /* Update status and title window. */
 static bool
 update_status_window(struct view *view, const char *msg, va_list args)
 {
 	if (input_mode)
-		return FALSE;
+		return false;
 
 	if (!status_empty || *msg) {
 		wmove(status_win, 0, 0);
@@ -367,15 +376,15 @@ update_status_window(struct view *view, const char *msg, va_list args)
 			wclear(status_win);
 		if (*msg) {
 			vwprintw(status_win, msg, args);
-			status_empty = FALSE;
+			status_empty = false;
 		} else {
-			status_empty = TRUE;
+			status_empty = true;
 		}
 		wclrtoeol(status_win);
-		return TRUE;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 void
@@ -398,7 +407,7 @@ report(const char *msg, ...)
 		char buf[SIZEOF_STR];
 		int retval;
 
-		FORMAT_BUFFER(buf, sizeof(buf), msg, retval, TRUE);
+		FORMAT_BUFFER(buf, sizeof(buf), msg, retval, true);
 		die("%s", buf);
 	}
 
@@ -415,7 +424,7 @@ done_display(void)
 {
 	if (cursed)
 		endwin();
-	cursed = FALSE;
+	cursed = false;
 }
 
 void
@@ -451,7 +460,7 @@ init_display(void)
 	nonl();		/* Disable conversion and detect newlines from input. */
 	cbreak();       /* Take input chars one at a time, no wait for \n */
 	noecho();       /* Don't echo input */
-	leaveok(stdscr, FALSE);
+	leaveok(stdscr, false);
 
 	init_colors();
 
@@ -461,7 +470,7 @@ init_display(void)
 		die("Failed to create status window");
 
 	/* Enable keyboard mapping */
-	keypad(status_win, TRUE);
+	keypad(status_win, true);
 	wbkgdset(status_win, get_line_attr(NULL, LINE_STATUS));
 	enable_mouse(opt_mouse);
 
@@ -478,19 +487,19 @@ init_display(void)
 		 * on the first line followed by scrolling down one line
 		 * corrupts the status line. This is fixed by calling
 		 * wclear. */
-		use_scroll_status_wclear = TRUE;
-		use_scroll_redrawwin = FALSE;
+		use_scroll_status_wclear = true;
+		use_scroll_redrawwin = false;
 
 	} else if (term && !strcmp(term, "xrvt-xpm")) {
 		/* No problems with full optimizations in xrvt-(unicode)
 		 * and aterm. */
-		use_scroll_status_wclear = use_scroll_redrawwin = FALSE;
+		use_scroll_status_wclear = use_scroll_redrawwin = false;
 
 	} else {
 		/* When scrolling in (u)xterm the last line in the
 		 * scrolling direction will update slowly. */
-		use_scroll_redrawwin = TRUE;
-		use_scroll_status_wclear = FALSE;
+		use_scroll_redrawwin = true;
+		use_scroll_status_wclear = false;
 	}
 }
 
@@ -506,9 +515,9 @@ read_script(struct key *key)
 			line = "<Enter>";
 			memset(&input_buffer, 0, sizeof(input_buffer));
 
-		} else if (!io_get(&script_io, &input_buffer, '\n', TRUE)) {
+		} else if (!io_get(&script_io, &input_buffer, '\n', true)) {
 			io_done(&script_io);
-			return FALSE;
+			return false;
 		} else {
 			line = input_buffer.data;
 		}
@@ -517,7 +526,7 @@ read_script(struct key *key)
 	code = get_key_value(&line, key);
 	if (code != SUCCESS)
 		die("Error reading script: %s", get_status_message(code));
-	return TRUE;
+	return true;
 }
 
 int
@@ -552,11 +561,11 @@ get_input(int prompt_position, struct key *key)
 	int i, key_value, cursor_y, cursor_x;
 
 	if (prompt_position > 0)
-		input_mode = TRUE;
+		input_mode = true;
 
 	memset(key, 0, sizeof(*key));
 
-	while (TRUE) {
+	while (true) {
 		int delay = -1;
 
 		if (opt_refresh_mode == REFRESH_MODE_PERIODIC) {
@@ -573,7 +582,7 @@ get_input(int prompt_position, struct key *key)
 			if (view_is_displayed(view) && view->has_scrolled &&
 			    use_scroll_redrawwin)
 				redrawwin(view->win);
-			view->has_scrolled = FALSE;
+			view->has_scrolled = false;
 			if (view->pipe)
 				delay = 0;
 		}
@@ -588,7 +597,7 @@ get_input(int prompt_position, struct key *key)
 			cursor_x += view->width - 1;
 			cursor_y += view->pos.lineno - view->pos.offset;
 		}
-		setsyx(cursor_y, cursor_x);
+		set_cursor_pos(cursor_y, cursor_x);
 
 		if (is_script_executing()) {
 			/* Wait for the current command to complete. */
@@ -616,12 +625,12 @@ get_input(int prompt_position, struct key *key)
 			mvwin(status_win, height - 1, 0);
 			wnoutrefresh(status_win);
 			resize_display();
-			redraw_display(TRUE);
+			redraw_display(true);
 
 		} else {
 			int pos, key_length;
 
-			input_mode = FALSE;
+			input_mode = false;
 			if (key_value == erasechar())
 				key_value = KEY_BACKSPACE;
 
@@ -665,7 +674,7 @@ void
 enable_mouse(bool enable)
 {
 #ifdef NCURSES_MOUSE_VERSION
-	static bool enabled = FALSE;
+	static bool enabled = false;
 
 	if (enable != enabled) {
 		mmask_t mask = enable ? ALL_MOUSE_EVENTS : 0;

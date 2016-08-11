@@ -81,10 +81,11 @@ struct ident {
 
 extern const struct ident unknown_ident;
 
+int time_now(struct timeval *timeval, struct timezone *tz);
 int timecmp(const struct time *t1, const struct time *t2);
 int ident_compare(const struct ident *i1, const struct ident *i2);
 
-const char *mkdate(const struct time *time, enum date date);
+const char *mkdate(const struct time *time, enum date date, bool local, const char *custom_format);
 const char *mkfilesize(unsigned long size, enum file_size format);
 const char *mkauthor(const struct ident *ident, int cols, enum author author);
 const char *mkmode(mode_t mode);
@@ -96,29 +97,21 @@ const char *mkstatus(const char status, enum status_label label);
  * Allocation helper.
  */
 
+void *chunk_allocator(void *mem, size_t type_size, size_t chunk_size, size_t size, size_t increase);
+
 #define DEFINE_ALLOCATOR(name, type, chunk_size)				\
 static type *									\
 name(type **mem, size_t size, size_t increase)					\
 {										\
-	size_t num_chunks = (size + chunk_size - 1) / chunk_size;		\
-	size_t num_chunks_new = (size + increase + chunk_size - 1) / chunk_size;\
-	type *tmp = *mem;							\
+	type *tmp;								\
 										\
-	if (mem == NULL || num_chunks != num_chunks_new) {			\
-		size_t newsize = num_chunks_new * chunk_size * sizeof(type);	\
+	assert(mem);								\
+	if (mem == NULL)							\
+		return NULL;							\
 										\
-		tmp = realloc(tmp, newsize);					\
-		if (tmp) {							\
-			*mem = tmp;						\
-			if (num_chunks_new > num_chunks) {			\
-				size_t offset = num_chunks * chunk_size;	\
-				size_t oldsize = offset * sizeof(type);		\
-										\
-				memset(tmp + offset, 0,	newsize - oldsize);	\
-			}							\
-		}								\
-	}									\
-										\
+	tmp = chunk_allocator(*mem, sizeof(type), chunk_size, size, increase);	\
+	if (tmp)								\
+		*mem = tmp;							\
 	return tmp;								\
 }
 

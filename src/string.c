@@ -25,7 +25,7 @@ string_isnumber(const char *str)
 
 	for (pos = 0; str[pos]; pos++) {
 		if (!isdigit(str[pos]))
-			return FALSE;
+			return false;
 	}
 
 	return pos > 0;
@@ -38,7 +38,7 @@ iscommit(const char *str)
 
 	for (pos = 0; str[pos]; pos++) {
 		if (!isxdigit(str[pos]))
-			return FALSE;
+			return false;
 	}
 
 	return 7 <= pos && pos < SIZEOF_REV;
@@ -72,7 +72,7 @@ string_copy_rev(char *dst, const char *src)
 		return;
 
 	for (srclen = 0; srclen < SIZEOF_REV; srclen++)
-		if (isspace(src[srclen]))
+		if (!src[srclen] || isspace(src[srclen]))
 			break;
 
 	string_ncopy_do(dst, SIZEOF_REV, src, srclen);
@@ -103,18 +103,22 @@ string_expanded_length(const char *src, size_t srclen, size_t tabsize, size_t ma
 }
 
 size_t
-string_expand(char *dst, size_t dstlen, const char *src, int tabsize)
+string_expand(char *dst, size_t dstlen, const char *src, int srclen, int tabsize)
 {
 	size_t size, pos;
 
-	for (size = pos = 0; size < dstlen - 1 && src[pos]; pos++) {
-		if (src[pos] == '\t') {
+	for (size = pos = 0; size < dstlen - 1 && (srclen == -1 || pos < srclen) && src[pos]; pos++) {
+		const char c = src[pos];
+
+		if (c == '\t') {
 			size_t expanded = tabsize - (size % tabsize);
 
 			if (expanded + size >= dstlen - 1)
 				expanded = dstlen - size - 1;
 			memcpy(dst + size, "        ", expanded);
 			size += expanded;
+		} else if (isspace(c) || iscntrl(c)) {
+			dst[size++] = ' ';
 		} else {
 			dst[size++] = src[pos];
 		}
@@ -145,11 +149,11 @@ string_nformat(char *buf, size_t bufsize, size_t *bufpos, const char *fmt, ...)
 	size_t pos = bufpos ? *bufpos : 0;
 	int retval;
 
-	FORMAT_BUFFER(buf + pos, bufsize - pos, fmt, retval, FALSE);
+	FORMAT_BUFFER(buf + pos, bufsize - pos, fmt, retval, false);
 	if (bufpos && retval > 0)
 		*bufpos = pos + retval;
 
-	return pos >= bufsize ? FALSE : TRUE;
+	return pos >= bufsize ? false : true;
 }
 
 int
@@ -299,15 +303,15 @@ utf8_to_unicode(const char *string, size_t length)
 
 /* Calculates how much of string can be shown within the given maximum width
  * and sets trimmed parameter to non-zero value if all of string could not be
- * shown. If the reserve flag is TRUE, it will reserve at least one
+ * shown. If the reserve flag is true, it will reserve at least one
  * trailing character, which can be useful when drawing a delimiter.
  *
  * Returns the number of bytes to output from string to satisfy max_width. */
 size_t
-utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve, int tab_size)
+utf8_length(const char **start, int max_chars, size_t skip, int *width, size_t max_width, int *trimmed, bool reserve, int tab_size)
 {
 	const char *string = *start;
-	const char *end = strchr(string, '\0');
+	const char *end = max_chars < 0 ? strchr(string, '\0') : string + max_chars;
 	unsigned char last_bytes = 0;
 	size_t last_ucwidth = 0;
 
@@ -359,13 +363,13 @@ utf8_length(const char **start, size_t skip, int *width, size_t max_width, int *
 }
 
 int
-utf8_width_max(const char *text, int max)
+utf8_width_of(const char *text, int max_bytes, int max_width)
 {
 	int text_width = 0;
 	const char *tmp = text;
-	int trimmed = FALSE;
+	int trimmed = false;
 
-	utf8_length(&tmp, 0, &text_width, max, &trimmed, FALSE, 1);
+	utf8_length(&tmp, max_bytes, 0, &text_width, max_width, &trimmed, false, 1);
 	return text_width;
 }
 

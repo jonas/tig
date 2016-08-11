@@ -67,7 +67,7 @@ enum request get_keybinding(const struct keymap *keymap, const struct key key[],
 enum status_code add_keybinding(struct keymap *table, enum request request, const struct key key[], size_t keys);
 
 const char *get_keys(const struct keymap *keymap, enum request request, bool all);
-#define get_view_key(view, request) get_keys((view)->keymap, request, FALSE)
+#define get_view_key(view, request) get_keys((view)->keymap, request, false)
 
 struct run_request_flags {
 	bool silent;

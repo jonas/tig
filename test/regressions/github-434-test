@@ -1,0 +1,123 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export COLUMNS=160
+export LINES=30
+
+tigrc <<EOF
+set vertical-split = auto
+EOF
+
+steps '
+	:enter
+	:save-display vsplit-auto.screen
+
+	:toggle vertical-split
+	:next
+	:save-display hsplit.screen
+
+	:toggle vertical-split
+	:save-display vsplit.screen
+'
+
+git_clone 'repo-one'
+
+test_tig
+
+assert_equals 'vsplit-auto.screen' <<EOF
+2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD} |commit 5cb3412a5e06e506840495b91acc885037a48b72                                
+2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D                            |Refs: [master], {origin/master}, {origin/HEAD}                                 
+2010-03-21 04:53 作者                  o Commit 10 C                            |Author:     Max Power <power123@example.org>                                   
+2010-03-12 16:31 René Lévesque         o Commit 10 B                            |AuthorDate: Wed Apr 7 05:37:40 2010 +0000                                      
+2010-03-04 04:09 A. U. Thor            o Commit 10 A                            |Commit:     Committer <c.ommitter@example.net>                                 
+2010-02-23 15:46 Max Power             o Commit 9 E                             |CommitDate: Wed Apr 7 05:37:40 2010 +0000                                      
+2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D                             |                                                                               
+2010-02-06 15:02 作者                  o Commit 9 C                             |    Commit 10 E                                                                
+2010-01-29 02:40 René Lévesque         o Commit 9 B                             |                                                                               
+2010-01-20 14:18 A. U. Thor            o Commit 9 A                             |                                                                               
+2010-01-12 01:56 Max Power             o Commit 8 E                             |                                                                               
+2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D                             |                                                                               
+2009-12-26 01:11 作者                  o Commit 8 C                             |                                                                               
+2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B                      |                                                                               
+2009-12-09 00:27 A. U. Thor            o Commit 8 A                             |                                                                               
+2009-11-30 12:05 Max Power             o Commit 7 E                             |                                                                               
+2009-11-21 23:43 Jørgen Thygesen Brahe o Commit 7 D                             |                                                                               
+2009-11-13 11:20 作者                  o Commit 7 C                             |                                                                               
+2009-11-04 22:58 René Lévesque         o Commit 7 B                             |                                                                               
+2009-10-27 10:36 A. U. Thor            o Commit 7 A                             |                                                                               
+2009-10-18 22:14 Max Power             o Commit 6 E                             |                                                                               
+2009-10-10 09:52 Jørgen Thygesen Brahe o Commit 6 D                             |                                                                               
+2009-10-01 21:30 作者                  o Commit 6 C                             |                                                                               
+2009-09-23 09:07 René Lévesque         o Commit 6 B                             |                                                                               
+2009-09-14 20:45 A. U. Thor            o Commit 6 A                             |                                                                               
+2009-09-06 08:23 Max Power             o Commit 5 E                             |                                                                               
+2009-08-28 20:01 Jørgen Thygesen Brahe o Commit 5 D                             |                                                                               
+2009-08-20 07:39 作者                  o Commit 5 C                             |                                                                               
+[main] 5cb3412a5e06e506840495b91acc885037a48b72 - commit 1 of 50             56%|[diff] 5cb3412a5e06e506840495b91acc885037a48b72 - line 1 of 8              100%
+EOF
+
+assert_equals 'hsplit.screen' <<EOF
+2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD} Commit 10 E                                                                     
+2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D                                                                                                            
+2010-03-21 04:53 作者                  o Commit 10 C                                                                                                            
+2010-03-12 16:31 René Lévesque         o Commit 10 B                                                                                                            
+2010-03-04 04:09 A. U. Thor            o Commit 10 A                                                                                                            
+2010-02-23 15:46 Max Power             o Commit 9 E                                                                                                             
+2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D                                                                                                             
+2010-02-06 15:02 作者                  o Commit 9 C                                                                                                             
+2010-01-29 02:40 René Lévesque         o Commit 9 B                                                                                                             
+[main] 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4 - commit 2 of 50                                                                                             18%
+commit 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4                                                                                                                 
+Author:     Jørgen Thygesen Brahe <brache@example.dk>                                                                                                           
+AuthorDate: Mon Mar 29 17:15:30 2010 +0000                                                                                                                      
+Commit:     Committer <c.ommitter@example.net>                                                                                                                  
+CommitDate: Mon Mar 29 17:15:30 2010 +0000                                                                                                                      
+                                                                                                                                                                
+    Commit 10 D                                                                                                                                                 
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                                                                                                                
+[diff] 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4 - line 1 of 7                                                                                               100%
+EOF
+
+assert_equals 'vsplit.screen' <<EOF
+2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD} |commit 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4                                
+2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D                            |Author:     Jørgen Thygesen Brahe <brache@example.dk>                          
+2010-03-21 04:53 作者                  o Commit 10 C                            |AuthorDate: Mon Mar 29 17:15:30 2010 +0000                                     
+2010-03-12 16:31 René Lévesque         o Commit 10 B                            |Commit:     Committer <c.ommitter@example.net>                                 
+2010-03-04 04:09 A. U. Thor            o Commit 10 A                            |CommitDate: Mon Mar 29 17:15:30 2010 +0000                                     
+2010-02-23 15:46 Max Power             o Commit 9 E                             |                                                                               
+2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D                             |    Commit 10 D                                                                
+2010-02-06 15:02 作者                  o Commit 9 C                             |                                                                               
+2010-01-29 02:40 René Lévesque         o Commit 9 B                             |                                                                               
+2010-01-20 14:18 A. U. Thor            o Commit 9 A                             |                                                                               
+2010-01-12 01:56 Max Power             o Commit 8 E                             |                                                                               
+2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D                             |                                                                               
+2009-12-26 01:11 作者                  o Commit 8 C                             |                                                                               
+2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B                      |                                                                               
+2009-12-09 00:27 A. U. Thor            o Commit 8 A                             |                                                                               
+2009-11-30 12:05 Max Power             o Commit 7 E                             |                                                                               
+2009-11-21 23:43 Jørgen Thygesen Brahe o Commit 7 D                             |                                                                               
+2009-11-13 11:20 作者                  o Commit 7 C                             |                                                                               
+2009-11-04 22:58 René Lévesque         o Commit 7 B                             |                                                                               
+2009-10-27 10:36 A. U. Thor            o Commit 7 A                             |                                                                               
+2009-10-18 22:14 Max Power             o Commit 6 E                             |                                                                               
+2009-10-10 09:52 Jørgen Thygesen Brahe o Commit 6 D                             |                                                                               
+2009-10-01 21:30 作者                  o Commit 6 C                             |                                                                               
+2009-09-23 09:07 René Lévesque         o Commit 6 B                             |                                                                               
+2009-09-14 20:45 A. U. Thor            o Commit 6 A                             |                                                                               
+2009-09-06 08:23 Max Power             o Commit 5 E                             |                                                                               
+2009-08-28 20:01 Jørgen Thygesen Brahe o Commit 5 D                             |                                                                               
+2009-08-20 07:39 作者                  o Commit 5 C                             |                                                                               
+[main] 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4 - commit 2 of 50             56%|[diff] 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4 - line 1 of 7              100%
+EOF

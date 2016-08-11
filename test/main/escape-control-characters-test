@@ -1,0 +1,33 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=20
+export COLUMNS=100
+
+steps ':save-display screen'
+
+test_tig --pretty=raw < "$source_dir/$test.in"
+
+assert_equals 'screen' <<EOF
+2015-08-19 11:12 a Check GBM_BO_USE_LINEAR correctly v2                                             
+2015-08-19 11:12 a extend conditional group GBM_BO_USE_LINEAR  over both usages                     
+2015-08-19 11:12 a glamor: Deal with glamor_glyphs_init being removed from xserver                  
+2015-08-19 11:12 a add some new tonga pci ids                                                       
+2015-08-19 11:12 a add new bonaire pci id                                                           
+2015-08-19 11:12 a Link against libgbm                                                              
+2015-08-19 11:12 a Disable tiling for PRIME shared pixmap                                           
+2015-08-19 11:12 a Use gbm_bo_get_fd to get DMA_BUF fd                                              
+2015-08-19 11:12 a ddx: use amdgpu_query_crtc_from_id                                               
+2015-08-19 11:12 a ddx: remove AMDGPUIsAccelWorking                                                 
+2015-08-19 11:12 a ddx: enable acceleration by default on Hawaii                                    
+2015-08-19 11:12 a Remove throttling from amdgpu_dri2_copy_region2                                  
+2015-08-19 11:12 a fixup README                                                                     
+2015-08-19 11:12 a Add 10-amdgpu.conf xorg.conf.d snippet                                           
+2015-08-19 11:12 a Document Option "AccelMethod" in the manpage                                     
+2015-08-19 11:12 a Fix build when gbm.h doesn't define GBM_BO_USE_LINEAR                            
+2015-08-19 11:12 a glamor: Handle GLAMOR_* flags removed from xserver                               
+2015-08-19 11:12 a Move #include "radeon_glamor.h" from amdgpu_drv.h to where it's needed           
+[main] 7363156 - commit 1 of 19                                                                  94%
+EOF

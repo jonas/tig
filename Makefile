@@ -2,7 +2,7 @@
 
 # The last tagged version. Can be overridden either by the version from
 # git or from the value of the DIST_VERSION environment variable.
-VERSION	= 2.1.1
+VERSION	= 2.2
 
 all:
 
@@ -63,6 +63,9 @@ endif
 
 override CPPFLAGS += '-DTIG_VERSION="$(VERSION)"'
 override CPPFLAGS += '-DSYSCONFDIR="$(sysconfdir)"'
+ifdef TIG_USER_CONFIG
+override CPPFLAGS += '-DTIG_USER_CONFIG="$(TIG_USER_CONFIG)"'
+endif
 
 ASCIIDOC ?= asciidoc
 ASCIIDOC_FLAGS = -aversion=$(VERSION) -asysconfdir=$(sysconfdir) -f doc/asciidoc.conf
@@ -111,6 +114,18 @@ install-release-doc-html:
 
 install-doc: install-doc-man install-doc-html
 install-release-doc: install-release-doc-man install-release-doc-html
+
+uninstall:
+	$(QUIET_UNINSTALL)tools/uninstall.sh "$(DESTDIR)$(bindir)/$(EXE:src/%=%)"
+	$(QUIET_UNINSTALL)tools/uninstall.sh "$(DESTDIR)$(sysconfdir)/tigrc"
+	$(Q)$(foreach doc, $(filter %.1, $(MANDOC:doc/%=%)), \
+		$(QUIET_UNINSTALL_EACH)tools/uninstall.sh "$(DESTDIR)$(mandir)/man1/$(doc)";)
+	$(Q)$(foreach doc, $(filter %.5, $(MANDOC:doc/%=%)), \
+		$(QUIET_UNINSTALL_EACH)tools/uninstall.sh "$(DESTDIR)$(mandir)/man5/$(doc)";)
+	$(Q)$(foreach doc, $(filter %.7, $(MANDOC:doc/%=%)), \
+		$(QUIET_UNINSTALL_EACH)tools/uninstall.sh "$(DESTDIR)$(mandir)/man7/$(doc)";)
+	$(Q)$(foreach doc, $(HTMLDOC:doc/%=%), \
+		$(QUIET_UNINSTALL_EACH)tools/uninstall.sh "$(DESTDIR)$(docdir)/tig/$(doc)";)
 
 clean: clean-test clean-coverage
 	$(Q)$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5 .deps
@@ -184,6 +199,13 @@ $(COVERAGE_DIR)/trace:
 $(COVERAGE_DIR)/index.html: $(COVERAGE_DIR)/trace
 	$(QUIET_GENHTML)$(GENHTML) $(Q:@=--quiet) --output-directory $(COVERAGE_DIR) $<
 
+ADDRESS_SANITIZER_CFLAGS ?= -fsanitize=address -fno-omit-frame-pointer
+all-address-sanitizer: all
+all-address-sanitizer: CFLAGS += $(ADDRESS_SANITIZER_CFLAGS)
+
+test-address-sanitizer: clean all-address-sanitizer test
+test-address-sanitizer: export TIG_ADDRESS_SANITIZER_ENABLED=yes
+
 TESTS  = $(sort $(shell find test -type f -name '*-test'))
 
 clean-test:
@@ -201,7 +223,7 @@ $(TESTS): $(EXE) test/tools/test-graph
 # Other autoconf-related rules are hidden in config.make.in so that
 # they don't confuse Make when we aren't actually using ./configure
 configure: configure.ac acinclude.m4 tools/*.m4
-	./autogen.sh
+	$(QUIET_GEN)./autogen.sh
 
 .PHONY: all all-coverage all-debug clean clean-coverage clean-test doc \
 	doc-man doc-html dist distclean install install-doc \
@@ -249,6 +271,7 @@ TIG_OBJS = \
 	src/prompt.o \
 	src/display.o \
 	src/view.o \
+	src/search.o \
 	src/parse.o \
 	src/watch.o \
 	src/pager.o \
@@ -365,6 +388,8 @@ QUIET_DB2PDF		= $(Q:@=@echo    '    DB2PDF  '$@;)
 # tools/install.sh will print 'file -> $install_dir/file'
 QUIET_INSTALL		= $(Q:@=@printf  '   INSTALL  ';)
 QUIET_INSTALL_EACH	= $(Q:@=printf   '   INSTALL  ';)
+QUIET_UNINSTALL		= $(Q:@=@printf  ' UNINSTALL  ';)
+QUIET_UNINSTALL_EACH	= $(Q:@=printf   ' UNINSTALL  ';)
 QUIET_TEST		= $(Q:@=@echo    '      TEST  '$@;)
 QUIET_SUMMARY		= $(Q:@=@printf  '   SUMMARY  ';)
 QUIET_LCOV		= $(Q:@=@echo    '      LCOV  '$@;)

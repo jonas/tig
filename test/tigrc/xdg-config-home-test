@@ -1,0 +1,31 @@
+#!/bin/sh
+
+. libtest.sh
+
+mkdir -p "$HOME/etc/tig" "$HOME/.config/tig"
+
+check()
+{
+	name="$(echo "$1" | tr / -)"
+	path="$HOME/$1"
+	env="${2:-undefined}"
+
+	case "$env" in
+	  undefined) unset XDG_CONFIG_HOME ;;
+	  *) export "$env" ;;
+	esac
+
+	mkdir -p "$(dirname "$path")"
+	tig_script "case-$name" '<Ctrl-t>'
+	echo "bind generic <Ctrl-t> @sh -c 'echo $name >> $HOME/$TEST_NAME.out'" > "$path"
+	test_tig status
+	assert_equals "$TEST_NAME.out" "$name"
+	assert_equals "$TEST_NAME.stderr" ''
+}
+
+unset XDG_CONFIG_HOME
+
+check .tigrc
+check .config/tig/config
+check .config/tig/config XDG_CONFIG_HOME="$HOME"
+check etc/tig/config XDG_CONFIG_HOME="$HOME/etc"

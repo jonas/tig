@@ -38,7 +38,7 @@ print_symbol(void *__, const struct graph *graph, const struct graph_symbol *sym
 	const char *chars = graph_fn(symbol);
 
 	printf("%s", chars + !!first);
-	return FALSE;
+	return false;
 }
 
 static void
@@ -75,7 +75,7 @@ main(int argc, const char *argv[])
 		die("IO");
 
 	while (!io_eof(&io)) {
-		for (; io_get(&io, &buf, '\n', TRUE); ) {
+		for (; io_get(&io, &buf, '\n', true); ) {
 			char *line = buf.data;
 
 			if (!prefixcmp(line, "commit ")) {

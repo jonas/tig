@@ -51,18 +51,18 @@ set_view_attr(struct view *view, enum line_type type)
 #define VIEW_MAX_LEN(view) ((view)->width + (view)->pos.col - (view)->col)
 
 static bool
-draw_chars(struct view *view, enum line_type type, const char *string,
-	   int max_len, bool use_tilde)
+draw_chars(struct view *view, enum line_type type, const char *string, int length,
+	   int max_width, bool use_tilde)
 {
 	int len = 0;
 	int col = 0;
-	int trimmed = FALSE;
+	int trimmed = false;
 	size_t skip = view->pos.col > view->col ? view->pos.col - view->col : 0;
 
-	if (max_len <= 0)
+	if (max_width <= 0)
 		return VIEW_MAX_LEN(view) <= 0;
 
-	len = utf8_length(&string, skip, &col, max_len, &trimmed, use_tilde, opt_tab_size);
+	len = utf8_length(&string, length, skip, &col, max_width, &trimmed, use_tilde, opt_tab_size);
 
 	if (opt_iconv_out != ICONV_NONE) {
 		string = encoding_iconv(opt_iconv_out, string, len);
@@ -95,8 +95,8 @@ draw_space(struct view *view, enum line_type type, int max, int spaces)
 	while (spaces > 0) {
 		int len = MIN(spaces, sizeof(space) - 1);
 
-		if (draw_chars(view, type, space, len, FALSE))
-			return TRUE;
+		if (draw_chars(view, type, space, -1, len, false))
+			return true;
 		spaces -= len;
 	}
 
@@ -104,25 +104,37 @@ draw_space(struct view *view, enum line_type type, int max, int spaces)
 }
 
 static bool
-draw_text_expanded(struct view *view, enum line_type type, const char *string, int max_len, bool use_tilde)
+draw_text_expanded(struct view *view, enum line_type type, const char *string, int length, int max_width, bool use_tilde)
 {
 	static char text[SIZEOF_STR];
 
-	do {
-		size_t pos = string_expand(text, sizeof(text), string, opt_tab_size);
+	if (length == -1)
+		length = strlen(string);
 
-		if (draw_chars(view, type, text, max_len, use_tilde))
-			return TRUE;
+	do {
+		size_t pos = string_expand(text, sizeof(text), string, length, opt_tab_size);
+		size_t col = view->col;
+
+		if (draw_chars(view, type, text, -1, max_width, use_tilde))
+			return true;
 		string += pos;
-	} while (*string);
+		length -= pos;
+		max_width -= view->col - col;
+	} while (*string && length > 0);
 
 	return VIEW_MAX_LEN(view) <= 0;
+}
+
+static inline bool
+draw_textn(struct view *view, enum line_type type, const char *string, int length)
+{
+	return draw_text_expanded(view, type, string, length, VIEW_MAX_LEN(view), false);
 }
 
 bool
 draw_text(struct view *view, enum line_type type, const char *string)
 {
-	return draw_text_expanded(view, type, string, VIEW_MAX_LEN(view), FALSE);
+	return draw_textn(view, type, string, -1);
 }
 
 static bool
@@ -136,18 +148,18 @@ draw_text_overflow(struct view *view, const char *text, enum line_type type,
 		int max = MIN(VIEW_MAX_LEN(view), overflow);
 		const char *tmp = text;
 		int text_width = 0;
-		int trimmed = FALSE;
-		size_t len = utf8_length(&tmp, 0, &text_width, max, &trimmed, FALSE, 1);
+		int trimmed = false;
+		size_t len = utf8_length(&tmp, -1, 0, &text_width, max, &trimmed, false, 1);
 
-		if (draw_text_expanded(view, type, text, text_width, max < overflow))
-			return TRUE;
+		if (draw_text_expanded(view, type, text, -1, text_width, max < overflow))
+			return true;
 
 		text += len;
 		type = LINE_OVERFLOW;
 	}
 
 	if (*text && draw_text(view, type, text))
-		return TRUE;
+		return true;
 
 	return VIEW_MAX_LEN(view) <= 0;
 }
@@ -158,7 +170,7 @@ draw_formatted(struct view *view, enum line_type type, const char *format, ...)
 	char text[SIZEOF_STR];
 	int retval;
 
-	FORMAT_BUFFER(text, sizeof(text), format, retval, TRUE);
+	FORMAT_BUFFER(text, sizeof(text), format, retval, true);
 	return retval >= 0 ? draw_text(view, type, text) : VIEW_MAX_LEN(view) <= 0;
 }
 
@@ -203,27 +215,28 @@ draw_field(struct view *view, enum line_type type, const char *text, int width, 
 
 		if (leftpad > 0) {
 	    		if (draw_space(view, type, leftpad, leftpad))
-				return TRUE;
+				return true;
 			max -= leftpad;
 			col += leftpad;;
 		}
 	}
 
-	return draw_chars(view, type, text, max - 1, trim)
-	    || draw_space(view, LINE_DEFAULT, max - (view->col - col), max);
+	return draw_chars(view, type, text, -1, max - 1, trim)
+	    || draw_space(view, type, max - (view->col - col), max);
 }
 
 static bool
 draw_date(struct view *view, struct view_column *column, const struct time *time)
 {
-	enum date date = column->opt.date.display;
-	const char *text = mkdate(time, date);
+	struct date_options *opt = &column->opt.date;
+	enum date date = opt->display;
+	const char *text = mkdate(time, date, opt->local, opt->format);
 	enum align align = date == DATE_RELATIVE ? ALIGN_RIGHT : ALIGN_LEFT;
 
 	if (date == DATE_NO)
-		return FALSE;
+		return false;
 
-	return draw_field(view, LINE_DATE, text, column->width, align, FALSE);
+	return draw_field(view, LINE_DATE, text, column->width, align, false);
 }
 
 static bool
@@ -233,7 +246,7 @@ draw_author(struct view *view, struct view_column *column, const struct ident *a
 	const char *text = mkauthor(author, column->opt.author.width, column->opt.author.display);
 
 	if (column->opt.author.display == AUTHOR_NO)
-		return FALSE;
+		return false;
 
 	return draw_field(view, LINE_AUTHOR, text, column->width, ALIGN_LEFT, trim);
 }
@@ -244,7 +257,7 @@ draw_id(struct view *view, struct view_column *column, const char *id)
 	enum line_type type = LINE_ID;
 
 	if (!column->opt.id.display)
-		return FALSE;
+		return false;
 
 	if (column->opt.id.color && id) {
 		hashval_t color = iterative_hash(id, SIZEOF_REV - 1, 0);
@@ -252,7 +265,7 @@ draw_id(struct view *view, struct view_column *column, const char *id)
 		type = palette_colors[color % ARRAY_SIZE(palette_colors)];
 	}
 
-	return draw_field(view, type, id, column->width, ALIGN_LEFT, FALSE);
+	return draw_field(view, type, id, column->width, ALIGN_LEFT, false);
 }
 
 static bool
@@ -264,7 +277,7 @@ draw_filename(struct view *view, struct view_column *column, const char *filenam
 	int column_width = column->width ? column->width : width;
 
 	if (column->opt.file_name.display == FILENAME_NO)
-		return FALSE;
+		return false;
 
 	return draw_field(view, type, filename, column_width, ALIGN_LEFT, trim);
 }
@@ -275,9 +288,9 @@ draw_file_size(struct view *view, struct view_column *column, unsigned long size
 	const char *str = S_ISDIR(mode) ? NULL : mkfilesize(size, column->opt.file_size.display);
 
 	if (!column->width || column->opt.file_size.display == FILE_SIZE_NO)
-		return FALSE;
+		return false;
 
-	return draw_field(view, LINE_FILE_SIZE, str, column->width, ALIGN_RIGHT, FALSE);
+	return draw_field(view, LINE_FILE_SIZE, str, column->width, ALIGN_RIGHT, false);
 }
 
 static bool
@@ -286,9 +299,9 @@ draw_mode(struct view *view, struct view_column *column, mode_t mode)
 	const char *str = mkmode(mode);
 
 	if (!column->width || !column->opt.mode.display)
-		return FALSE;
+		return false;
 
-	return draw_field(view, LINE_MODE, str, column->width, ALIGN_LEFT, FALSE);
+	return draw_field(view, LINE_MODE, str, column->width, ALIGN_LEFT, false);
 }
 
 static bool
@@ -303,7 +316,7 @@ draw_lineno_custom(struct view *view, struct view_column *column, unsigned int l
 	int interval = opts->interval > 0 ? opts->interval : 5;
 
 	if (!column->opt.line_number.display)
-		return FALSE;
+		return false;
 
 	if (lineno == 1 || (lineno % interval) == 0) {
 		static char fmt[] = "%ld";
@@ -313,10 +326,10 @@ draw_lineno_custom(struct view *view, struct view_column *column, unsigned int l
 			text = number;
 	}
 	if (text)
-		draw_chars(view, LINE_LINE_NUMBER, text, max, TRUE);
+		draw_chars(view, LINE_LINE_NUMBER, text, -1, max, true);
 	else
 		draw_space(view, LINE_LINE_NUMBER, max, digits3);
-	return draw_graphic(view, LINE_DEFAULT, &separator, 1, TRUE);
+	return draw_graphic(view, LINE_DEFAULT, &separator, 1, true);
 }
 
 bool
@@ -332,14 +345,14 @@ draw_ref(struct view *view, struct view_column *column, const struct ref *ref)
 	enum line_type type = !ref || !ref->valid ? LINE_DEFAULT : get_line_type_from_ref(ref);
 	const char *name = ref ? ref->name : NULL;
 
-	return draw_field(view, type, name, column->width, ALIGN_LEFT, FALSE);
+	return draw_field(view, type, name, column->width, ALIGN_LEFT, false);
 }
 
 static bool
 draw_refs(struct view *view, struct view_column *column, const struct ref *refs)
 {
 	if (!column->opt.commit_title.refs || !refs)
-		return FALSE;
+		return false;
 
 	for (; refs; refs = refs->next) {
 		const struct ref *ref = refs;
@@ -350,13 +363,13 @@ draw_refs(struct view *view, struct view_column *column, const struct ref *refs)
 			continue;
 
 		if (draw_formatted(view, type, "%s%s%s", format->start, ref->name, format->end))
-			return TRUE;
+			return true;
 
 		if (draw_text(view, LINE_DEFAULT, " "))
-			return TRUE;
+			return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 static bool
@@ -365,7 +378,7 @@ draw_status(struct view *view, struct view_column *column,
 {
 	const char *label = mkstatus(status ? *status : 0, column->opt.status.display);
 
-	return draw_field(view, type, label, column->width, ALIGN_LEFT, FALSE);
+	return draw_field(view, type, label, column->width, ALIGN_LEFT, false);
 }
 
 /*
@@ -402,7 +415,7 @@ draw_graph_chtype(void *view, const struct graph *graph, const struct graph_symb
 {
 	const chtype *chars = graph->symbol_to_chtype(symbol);
 
-	return draw_graphic(view, get_graph_color(color_id), chars + !!first, 2 - !!first, FALSE);
+	return draw_graphic(view, get_graph_color(color_id), chars + !!first, 2 - !!first, false);
 }
 
 static bool
@@ -425,42 +438,11 @@ draw_commit_title(struct view *view, struct view_column *column,
 {
 	if (graph && graph_canvas && column->opt.commit_title.graph &&
 	    draw_graph(view, graph, graph_canvas))
-		return TRUE;
+		return true;
 	if (draw_refs(view, column, refs))
-		return TRUE;
+		return true;
 	return draw_text_overflow(view, commit_title, LINE_DEFAULT,
 			column->opt.commit_title.overflow, 0);
-}
-
-static bool
-draw_diff_stat_part(struct view *view, enum line_type *type, const char **text, char c, enum line_type next_type)
-{
-	const char *sep = c == '|' ? strrchr(*text, c) : strchr(*text, c);
-
-	if (sep != NULL) {
-		draw_text_expanded(view, *type, *text, sep - *text, FALSE);
-		*text = sep;
-		*type = next_type;
-	}
-
-	return sep != NULL;
-}
-
-static void
-draw_diff_stat(struct view *view, enum line_type *type, const char **text)
-{
-	draw_diff_stat_part(view, type, text, '|', LINE_DEFAULT);
-	if (draw_diff_stat_part(view, type, text, 'B', LINE_DEFAULT)) {
-		/* Handle binary diffstat: Bin <deleted> -> <added> bytes */
-		draw_diff_stat_part(view, type, text, ' ', LINE_DIFF_DEL);
-		draw_diff_stat_part(view, type, text, '-', LINE_DEFAULT);
-		draw_diff_stat_part(view, type, text, ' ', LINE_DIFF_ADD);
-		draw_diff_stat_part(view, type, text, 'b', LINE_DEFAULT);
-
-	} else {
-		draw_diff_stat_part(view, type, text, '+', LINE_DIFF_ADD);
-		draw_diff_stat_part(view, type, text, '-', LINE_DIFF_DEL);
-	}
 }
 
 bool
@@ -470,7 +452,7 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct view_column_data column_data = {0};
 
 	if (!view->ops->get_column_data(view, line, &column_data))
-		return TRUE;
+		return true;
 
 	if (column_data.section)
 		column = column_data.section;
@@ -484,58 +466,58 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 		switch (column->type) {
 		case VIEW_COLUMN_DATE:
 			if (draw_date(view, column, column_data.date))
-				return TRUE;
+				return true;
 			continue;
 
 		case VIEW_COLUMN_AUTHOR:
 			if (draw_author(view, column, column_data.author))
-				return TRUE;
+				return true;
 			continue;
 
 		case VIEW_COLUMN_REF:
 			if (draw_ref(view, column, column_data.ref))
-				return TRUE;
+				return true;
 			continue;
 
 		case VIEW_COLUMN_ID:
 			if (draw_id(view, column, column_data.reflog ? column_data.reflog : column_data.id))
-				return TRUE;
+				return true;
 			continue;
 
 		case VIEW_COLUMN_LINE_NUMBER:
 			if (draw_lineno(view, column, column_data.line_number ? *column_data.line_number : lineno))
-				return TRUE;
+				return true;
 			continue;
 
 		case VIEW_COLUMN_MODE:
 			if (draw_mode(view, column, mode))
-				return TRUE;
+				return true;
 			continue;
 
 		case VIEW_COLUMN_FILE_SIZE:
 			if (draw_file_size(view, column, column_data.file_size ? *column_data.file_size : 0, mode))
-				return TRUE;
+				return true;
 			continue;
 
 		case VIEW_COLUMN_COMMIT_TITLE:
 			if (draw_commit_title(view, column, column_data.graph, column_data.graph_canvas,
 					      column_data.refs, column_data.commit_title))
-				return TRUE;
+				return true;
 			continue;
 
 		case VIEW_COLUMN_FILE_NAME:
 			if (draw_filename(view, column, column_data.file_name, mode))
-				return TRUE;
+				return true;
 			continue;
 
 		case VIEW_COLUMN_SECTION:
 			if (draw_text(view, column->opt.section.type, column->opt.section.text))
-				return TRUE;
+				return true;
 			continue;
 
 		case VIEW_COLUMN_STATUS:
 			if (draw_status(view, column, line->type, column_data.status))
-				return TRUE;
+				return true;
 			continue;
 
 		case VIEW_COLUMN_TEXT:
@@ -544,30 +526,77 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			const char *text = column_data.text;
 
 			if (line->wrapped && draw_text(view, LINE_DELIMITER, "+"))
-				return TRUE;
+				return true;
 
 			if (line->graph_indent) {
 				size_t indent = get_graph_indent(text);
 
-				if (draw_text_expanded(view, LINE_DEFAULT, text, indent, FALSE))
-					return TRUE;
+				if (draw_text_expanded(view, LINE_DEFAULT, text, -1, indent, false))
+					return true;
 				text += indent;
 			}
-			if (type == LINE_DIFF_STAT)
-				draw_diff_stat(view, &type, &text);
+
 			if (line->commit_title) {
 				if (draw_text_overflow(view, text, LINE_DEFAULT,
 						       column->opt.text.commit_title_overflow, 4))
-					return TRUE;
+					return true;
+
+			} else if (column_data.box) {
+				const struct box *box = column_data.box;
+				const char *text = box->text;
+				size_t i;
+
+				for (i = 0; i < box->cells; i++) {
+					const struct box_cell *cell = &box->cell[i];
+
+					if (draw_textn(view, cell->type, text, cell->length))
+						return true;
+
+					text += cell->length;
+				}
+
 			} else if (draw_text(view, type, text)) {
-				return TRUE;
+				return true;
 			}
 		}
 			continue;
 		}
 	}
 
-	return TRUE;
+	return true;
+}
+
+static void
+draw_view_line_search_result(struct view *view, unsigned int lineno)
+{
+	size_t bufsize = view->width * 4;
+	char *buf = malloc(bufsize);
+	regmatch_t pmatch[1];
+	regoff_t bufpos = 0;
+
+	if (!buf || mvwinnstr(view->win, lineno, 0, buf, bufsize) == ERR) {
+		free(buf);
+		return;
+	}
+
+	while (bufpos < bufsize && !regexec(view->regex, buf + bufpos, ARRAY_SIZE(pmatch), pmatch, 0)) {
+		regoff_t start = pmatch[0].rm_so;
+		regoff_t end = pmatch[0].rm_eo;
+
+		if (start == -1 || end <= 0 || end <= start)
+			continue;
+
+		mvwchgat(view->win, lineno,
+			 utf8_width_of(buf, bufpos + start, -1),
+			 utf8_width_of(buf + bufpos + start, end - start, -1),
+			 get_view_attr(view, LINE_SEARCH_RESULT),
+			 get_view_color(view, LINE_SEARCH_RESULT),
+			 NULL);
+
+		bufpos += end;
+	}
+
+	free(buf);
 }
 
 bool
@@ -575,13 +604,14 @@ draw_view_line(struct view *view, unsigned int lineno)
 {
 	struct line *line;
 	bool selected = (view->pos.offset + lineno == view->pos.lineno);
+	bool ok;
 
 	/* FIXME: Disabled during code split.
 	assert(view_is_displayed(view));
 	*/
 
 	if (view->pos.offset + lineno >= view->lines)
-		return FALSE;
+		return false;
 
 	line = &view->line[view->pos.offset + lineno];
 
@@ -591,22 +621,27 @@ draw_view_line(struct view *view, unsigned int lineno)
 	view->col = 0;
 	view->curline = line;
 	view->curtype = LINE_NONE;
-	line->selected = FALSE;
+	line->selected = false;
 	line->dirty = line->cleareol = 0;
 
 	if (selected) {
 		set_view_attr(view, LINE_CURSOR);
-		line->selected = TRUE;
+		line->selected = true;
 		view->ops->select(view, line);
 	}
 
-	return view->ops->draw(view, line, lineno);
+	ok = view->ops->draw(view, line, lineno);
+
+	if (ok && line->search_result && view->regex)
+		draw_view_line_search_result(view, lineno);
+
+	return ok;
 }
 
 void
 redraw_view_dirty(struct view *view)
 {
-	bool dirty = FALSE;
+	bool dirty = false;
 	int lineno;
 
 	for (lineno = 0; lineno < view->height; lineno++) {
@@ -614,7 +649,7 @@ redraw_view_dirty(struct view *view)
 			break;
 		if (!view->line[view->pos.offset + lineno].dirty)
 			continue;
-		dirty = TRUE;
+		dirty = true;
 		if (!draw_view_line(view, lineno))
 			break;
 	}
@@ -629,7 +664,7 @@ redraw_view_from(struct view *view, int lineno)
 {
 	assert(0 <= lineno && lineno < view->height);
 
-	if (view->columns && view_column_info_changed(view, FALSE)) {
+	if (view->columns && view_column_info_changed(view, false)) {
 		int i;
 
 		view_column_reset(view);

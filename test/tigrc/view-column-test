@@ -12,7 +12,8 @@ set line-graphics = ascii
 set main-view = line-number:no,interval=5 date:default author:full commit-title:yes,graph,refs,overflow=no
 
 # Test change of view settings
-set main-view-date = short
+set main-view-date = custom
+set main-view-date-format = "%Y-%m-%d"
 set main-view-line-number = yes
 set main-view-commit-title = yes,graph,refs=no
 
@@ -56,9 +57,9 @@ assert_equals 'main-view.screen' <<EOF
 EOF
 
 assert_equals 'stderr' <<EOF
-tig warning: ~/.tigrc:18: The main view does not have a id column configured
 tig warning: ~/.tigrc:19: The main view does not have a id column configured
-tig warning: ~/.tigrc:20: Failed to parse view column type: short
+tig warning: ~/.tigrc:20: The main view does not have a id column configured
 tig warning: ~/.tigrc:21: Failed to parse view column type: short
+tig warning: ~/.tigrc:22: Failed to parse view column type: short
 tig warning: Errors while loading HOME/.tigrc.
 EOF

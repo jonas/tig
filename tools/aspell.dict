@@ -1,6 +1,7 @@
-personal_ws-1.1 en 249 
+personal_ws-1.1 en 259 
 CJK
 del
+goto
 Ctrl
 refspec
 Shorthands
@@ -41,6 +42,7 @@ alloc
 committer
 cdate
 SHAs
+committers
 contrib
 xclip
 eol
@@ -52,12 +54,14 @@ backend
 Esc
 doctype
 abspath
+shortlog
 gitlink
 colorN
 nowarn
 sys
 subshell
 tty
+XDG
 cmdlineargs
 combi
 Petr
@@ -102,6 +106,7 @@ gui
 bindir
 tigmanual
 PgUp
+mailmap
 SunStudio
 wrt
 libiconv
@@ -142,6 +147,7 @@ Online
 qgit
 PageDown
 gc
+ZSH
 Solaris
 GH
 mergetool
@@ -197,14 +203,15 @@ Baudis
 substring
 PID
 tz
-DocBook
 docbook
+DocBook
 submodule
 strndup
 startup
 Yi
 docext
 renderer
+strftime
 textconv
 strchr
 lineno
@@ -225,6 +232,7 @@ lncursesw
 Geany
 waitpid
 wgetch
+OSX
 Pre
 backgrounded
 waddch
@@ -235,7 +243,9 @@ ACDMRTXB
 getch
 struct
 untracked
+commit's
 autoreconf
+ScrBack
 subcommands
 adate
 PageUp

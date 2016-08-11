@@ -21,7 +21,7 @@ if [ -n "${BASH_VERSION:-}" ]; then
 fi
 
 test="$(basename "$0")"
-source_dir="$(cd "$(dirname "$0")" && pwd)"
+source_dir="$(cd $(dirname "$0") >/dev/null && pwd)"
 base_dir="$(echo "$source_dir" | sed -n 's#\(.*/test\)\([/].*\)*#\1#p')"
 prefix_dir="$(echo "$source_dir" | sed -n 's#\(.*/test/\)\([/].*\)*#\2#p')"
 output_dir="$base_dir/tmp/$prefix_dir/$test"
@@ -74,11 +74,28 @@ if [ ! -d "$tmp_dir/.git" ]; then
 	git init -q "$tmp_dir"
 fi
 
-mkdir -p "$tmp_dir/bin"
+# For any utilities used in Tig scripts
+BIN_DIR="$HOME/bin"
+mkdir -p "$BIN_DIR"
+export PATH="$BIN_DIR:$PATH"
+
+executable() {
+	path="$BIN_DIR/$1"; shift
+
+	if [ "$#" = 0 ]; then
+		case "$path" in
+			stdin|expected*) cat ;;
+			*) sed 's/^[ ]//' ;;
+		esac > "$path"
+	else
+		printf '%s' "$@" > "$path"
+	fi
+	chmod +x "$path"
+}
 
 # Setup fake editor
-fake_editor="$tmp_dir/bin/vim"
-cat > "$fake_editor" <<EOF
+export EDITOR="vim"
+executable 'vim' <<EOF
 #!/bin/sh
 
 file="\$1"
@@ -88,12 +105,8 @@ if [ -n "\$lineno" ]; then
 fi
 
 echo "\$@" >> "$HOME/editor.log"
-sed -n -e "\${lineno}p" "\$file" >> "$HOME/editor.log"
+sed -n -e "\${lineno}p" "\$file" >> "$HOME/editor.log" 2>&1
 EOF
-
-chmod +x "$fake_editor"
-export EDITOR="$(basename "$fake_editor")"
-export PATH="$(dirname "$fake_editor"):$PATH"
 
 cd "$output_dir"
 
@@ -180,6 +193,7 @@ indent='            '
 verbose=
 debugger=
 trace=
+valgrind=
 
 set -- $TIG_TEST_OPTS $TEST_OPTS
 
@@ -191,6 +205,7 @@ while [ $# -gt 0 ]; do
 		debugger=*) debugger=$(expr "$arg" : 'debugger=\(.*\)') ;;
 		debugger) debugger="$(auto_detect_debugger)" ;;
 		trace) trace=yes ;;
+		valgrind) valgrind="$HOME/valgrind.log" ;;
 	esac
 done
 
@@ -229,14 +244,46 @@ assert_not_exists()
 	fi
 }
 
+vars_file="vars"
+expected_var_file="$HOME/expected/$vars_file"
+
+executable 'assert-var' <<EOF
+#!/bin/sh
+
+mkdir -p "$(dirname "$expected_var_file")"
+while [ \$# -gt 1 ]; do
+	arg="\$1"; shift
+
+	case "\$arg" in
+		==) break ;;
+		*)  echo "\$arg" >> "$HOME/$vars_file" ;;
+	esac
+done
+echo "\$@" >> "$expected_var_file"
+EOF
+
+assert_vars()
+{
+	if [ -e "$expected_var_file" ]; then
+		assert_equals "$vars_file" "$(cat "$expected_var_file")"
+	else
+		echo "[FAIL] $expected_var_file not found" >> .test-result
+	fi
+}
+
 show_test_results()
 {
+	if [ -e .test-skipped ]; then
+		sed "s/^/$indent[skipped] /" < .test-skipped
+		return
+	fi
 	if [ -n "$trace" -a -n "$TIG_TRACE" -a -e "$TIG_TRACE" ]; then
 		sed "s/^/$indent[trace] /" < "$TIG_TRACE"
 	fi
-	if [ ! -d "$HOME" ]; then
-		echo "Skipped"
-	elif [ ! -e .test-result ]; then
+	if [ -n "$valgrind" -a -e "$valgrind" ]; then
+		sed "s/^/$indent[valgrind] /" < "$valgrind"
+	fi
+	if [ ! -d "$HOME" ] || [ ! -e .test-result ]; then
 		[ -e stderr ] &&
 			sed "s/^/[stderr] /" < stderr
 		[ -e stderr.orig ] &&
@@ -254,8 +301,8 @@ show_test_results()
 				sed "s/^/[stderr] /" < stderr
 		fi
 
-		[ -e .test-result ] &&
-			cat .test-result
+		# Replace CR used by Git progress messages
+		tr '\r' '\n' < .test-result
 	elif [ "$verbose" ]; then
 		count="$(sed -n '/\(OK\)/p' < .test-result | wc -l)"
 		printf "Passed %d assertions\n" $count
@@ -264,16 +311,75 @@ show_test_results()
 
 trap 'show_test_results' EXIT
 
+test_skip()
+{
+	echo "$@" >> .test-skipped
+}
+
+require_git_version()
+{
+	git_version="$(git version | sed 's/git version \([0-9\.]*\).*/\1/')"
+	actual_major="$(expr "$git_version" : '\([0-9]\).*')"
+	actual_minor="$(expr "$git_version" : '[0-9]\.\([0-9]\).*')"
+
+	required_version="$1"; shift
+	required_major="$(expr "$required_version" : '\([0-9]\).*')"
+	required_minor="$(expr "$required_version" : '[0-9]\.\([0-9]\).*')"
+
+	if [ "$required_major" -gt "$actual_major" ] ||
+	   [ "$required_minor" -gt "$actual_minor" ]; then
+		test_skip "$@"
+	fi
+}
+
+test_require()
+{
+	while [ $# -gt 0 ]; do
+		feature="$1"; shift
+
+		case "$feature" in
+		git-worktree)
+			require_git_version 2.5 \
+				"The test requires git-worktree, available in git version 2.5 or newer"
+			;;
+		address-sanitizer)
+			if [ "${TIG_ADDRESS_SANITIZER_ENABLED:-no}" != yes ]; then
+				test_skip "The test requires clang and is only run via \`make test-address-sanitizer\`"
+			fi
+			;;
+		*)
+			test_skip "Unknown feature requirement: $feature" 
+		esac
+	done
+}
+
 test_exec_work_dir()
 {
 	echo "=== $@ ===" >> "$HOME/test-exec.log"
+	test_exec_log="$HOME/test-exec.log.tmp"
+	rm -f "$test_exec_log"
+
 	set +e
-	in_work_dir "$@" 1>>"$HOME/test-exec.log" 2>>"$HOME/test-exec.log"
+	in_work_dir "$@" 1>>"$test_exec_log" 2>>"$test_exec_log"
+	test_exec_exit_code=$?
 	set -e
+
+	cat "$test_exec_log" >> "$HOME/test-exec.log"
+	if [ "$test_exec_exit_code" != 0 ]; then
+		cmd="$@"
+		echo "[FAIL] unexpected exit code while executing '$cmd': $test_exec_exit_code" >> .test-result
+		cat "$test_exec_log" >> .test-result
+		# Exit gracefully to allow additional tests to run
+		exit 0
+	fi
 }
 
 test_setup()
 {
+	if [ -e .test-skipped ]; then
+		exit 0
+	fi
+
 	run_setup="$(type test_setup_work_dir 2>/dev/null | grep 'function' || true)"
 
 	if [ -n "$run_setup" ]; then
@@ -281,6 +387,28 @@ test_setup()
 			test_exec_work_dir test_setup_work_dir
 		fi
 	fi
+}
+
+valgrind_exec()
+{
+	kernel="$(uname -s 2>/dev/null || echo unknown)"
+	kernel_supp="test/tools/valgrind-$kernel.supp"
+
+	valgrind_ops=
+	if [ -e "$kernel_supp" ]; then
+		valgrind_ops="$valgrind_ops --suppresions='$kernel_supp'"
+	fi
+
+	valgrind -q --gen-suppressions=all --track-origins=yes --error-exitcode=1 \
+		--log-file="$valgrind.orig" $valgrind_ops \
+		"$@"
+
+	case "$kernel" in
+	Darwin)	grep -v "mach_msg unhandled MACH_SEND_TRAILER option" < "$valgrind.orig" > "$valgrind" ;;
+	*)	mv "$valgrind.orig" "$valgrind" ;;
+	esac
+
+	rm -f "$valgrind.orig" 
 }
 
 test_tig()
@@ -306,10 +434,15 @@ test_tig()
 		(cd "$work_dir" && $debugger tig "$@")
 	else
 		set +e
+		runner=
+		# FIXME: Tell Valgrind to forward status code
+		if [ "$expected_status_code" = 0 -a -n "$valgrind" ]; then
+			runner=valgrind_exec
+		fi
 		if [ -s "${prefix}stdin" ]; then
-			(cd "$work_dir" && tig "$@") < "${prefix}stdin" > "${prefix}stdout" 2> "${prefix}stderr.orig"
+			(cd "$work_dir" && $runner tig "$@") < "${prefix}stdin" > "${prefix}stdout" 2> "${prefix}stderr.orig"
 		else
-			(cd "$work_dir" && tig "$@") > "${prefix}stdout" 2> "${prefix}stderr.orig"
+			(cd "$work_dir" && $runner tig "$@") > "${prefix}stdout" 2> "${prefix}stderr.orig"
 		fi
 		status_code="$?"
 		if [ "$status_code" != "$expected_status_code" ]; then
@@ -347,19 +480,17 @@ test_case()
 	echo "$name" >> test-cases
 	cat > "$name.expected"
 
-	touch "$name-before.sh" "$name-after.sh" "$name.script" "$name-args"
+	touch "$name-before" "$name-after" "$name.script" "$name-args"
 
 	while [ "$#" -gt 0 ]; do
 		arg="$1"; shift
-		value="$(expr "$arg" : '--[^=]*=\(.*\)')"
+		key="$(expr "X$arg" : 'X--\([^=]*\).*')"
+		value="$(expr "X$arg" : 'X--[^=]*=\(.*\)')"
 
-		case "$arg" in
-		--before=*) echo "$value" > "$name-before.sh" ;;
-		--after=*)  echo "$value" > "$name-after.sh" ;;
-		--script=*) echo "$value" > "$name.script" ;;
-		--args=*)   echo "$value" > "$name-args" ;;
-		--cwd=*)    echo "$value" > "$name-cwd" ;;
-		*)	    die "Unknown test_case argument: $arg"
+		case "$key" in
+		before|after|script|args|cwd)
+			echo "$value" > "$name-$key" ;;
+		*)	die "Unknown test_case argument: $arg"
 		esac
 	done
 }
@@ -372,20 +503,23 @@ run_test_cases()
 	test_setup
 	for name in $(cat test-cases); do
 		tig_script "$name" "
-			$(if [ -e "$name.script" ]; then cat "$name.script"; fi)
+			$(if [ -e "$name-script" ]; then cat "$name-script"; fi)
 			:save-display $name.screen
 		"
-		if [ -e "$name-before.sh" ]; then
-			test_exec_work_dir sh "$HOME/$name-before.sh" 
+		if [ -e "$name-before" ]; then
+			test_exec_work_dir "$SHELL" "$HOME/$name-before" 
 		fi
 		old_work_dir="$work_dir"
 		if [ -e "$name-cwd" ]; then
 			work_dir="$work_dir/$(cat "$name-cwd")"
 		fi
+		ORIG_IFS="$IFS"
+	        IFS=$' '
 		test_tig $(if [ -e "$name-args" ]; then cat "$name-args"; fi)
+	        IFS="$ORIG_IFS"
 		work_dir="$old_work_dir"
-		if [ -e "$name-after.sh" ]; then
-			test_exec_work_dir sh "$HOME/$name-after.sh" 
+		if [ -e "$name-after" ]; then
+			test_exec_work_dir "$SHELL" "$HOME/$name-after" 
 		fi
 
 		assert_equals "$name.screen" < "$name.expected"

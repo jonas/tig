@@ -26,13 +26,17 @@ struct ref_format;
 struct view_column;
 typedef struct view_column *view_settings;
 
+#ifndef TIG_USER_CONFIG
+#define TIG_USER_CONFIG "~/.tigrc"
+#endif
+
 #define OPTION_INFO(_) \
 	_(blame_options,		const char **,		VIEW_BLAME_LIKE) \
 	_(blame_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(blob_view,			view_settings,		VIEW_NO_FLAGS) \
-	_(cmdline_args,			const char **,		VIEW_NO_FLAGS) \
 	_(commit_order,			enum commit_order,	VIEW_LOG_LIKE) \
 	_(diff_context,			int,			VIEW_DIFF_LIKE) \
+	_(diff_noprefix,		bool,			VIEW_NO_FLAGS) \
 	_(diff_options,			const char **,		VIEW_DIFF_LIKE) \
 	_(diff_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(editor_line_number,		bool,			VIEW_NO_FLAGS) \
@@ -48,6 +52,7 @@ typedef struct view_column *view_settings;
 	_(line_graphics,		enum graphic,		VIEW_NO_FLAGS) \
 	_(log_options,			const char **,		VIEW_LOG_LIKE) \
 	_(log_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(mailmap,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
 	_(main_options,			const char **,		VIEW_LOG_LIKE) \
 	_(main_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(mouse,			bool,			VIEW_NO_FLAGS) \
@@ -70,6 +75,7 @@ typedef struct view_column *view_settings;
 	_(tree_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(vertical_split,		enum vertical_split,	VIEW_RESET_DISPLAY | VIEW_DIFF_LIKE) \
 	_(wrap_lines,			bool,			VIEW_NO_FLAGS) \
+	_(wrap_search,			bool,			VIEW_NO_FLAGS) \
 
 #define DEFINE_OPTION_EXTERNS(name, type, flags) extern type opt_##name;
 OPTION_INFO(DEFINE_OPTION_EXTERNS)
@@ -91,6 +97,8 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 
 #define DATE_COLUMN_OPTIONS(_) \
 	_(display,			enum date,		VIEW_NO_FLAGS) \
+	_(local,			bool,			VIEW_NO_FLAGS) \
+	_(format,			const char *,		VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define FILE_NAME_COLUMN_OPTIONS(_) \
@@ -163,9 +171,7 @@ union view_column_options {
 
 extern iconv_t opt_iconv_out;
 extern char opt_editor[SIZEOF_STR];
-extern char opt_env_lines[64];
-extern char opt_env_columns[64];
-extern char *opt_env[];
+extern const char **opt_cmdline_args;
 
 /*
  * Mapping between options and command argument mapping.
@@ -176,6 +182,8 @@ void update_options_from_argv(const char *argv[]);
 const char *ignore_space_arg();
 const char *commit_order_arg();
 const char *commit_order_arg_with_graph(enum graph_display graph_display);
+const char *log_custom_pretty_arg();
+const char *use_mailmap_arg();
 const char *diff_context_arg();
 const char *show_notes_arg();
 
@@ -199,8 +207,8 @@ struct option_info *find_column_option_info(enum view_column_type type, union vi
 enum status_code parse_int(int *opt, const char *arg, int min, int max);
 enum status_code parse_step(double *opt, const char *arg);
 enum status_code set_option(const char *opt, int argc, const char *argv[]);
-int load_options(void);
-int load_git_config(void);
+enum status_code load_options(void);
+enum status_code load_git_config(void);
 enum status_code save_options(const char *path);
 const char *format_option_value(const struct option_info *option, char buf[], size_t bufsize);
 

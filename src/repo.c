@@ -28,7 +28,7 @@ struct repo_info_state {
 	const char **argv;
 };
 
-static int
+static enum status_code
 read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *data)
 {
 	struct repo_info_state *state = data;
@@ -43,7 +43,7 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 		 * understand --is-inside-work-tree it will simply echo
 		 * the option else either "true" or "false" is printed.
 		 * Default to true for the unknown case. */
-		repo.is_inside_work_tree = strcmp(name, "false") ? TRUE : FALSE;
+		repo.is_inside_work_tree = strcmp(name, "false") ? true : false;
 
 	} else if (!strcmp(arg, REPO_INFO_SHOW_CDUP)) {
 		string_ncopy(repo.cdup, name, namelen);
@@ -72,10 +72,10 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 		state->argv++;
 	}
 
-	return OK;
+	return SUCCESS;
 }
 
-static int
+static enum status_code
 reload_repo_info(const char **rev_parse_argv)
 {
 	struct repo_info_state state = { rev_parse_argv + 2 };
@@ -83,7 +83,7 @@ reload_repo_info(const char **rev_parse_argv)
 	return io_run_load(rev_parse_argv, "=", read_repo_info, &state);
 }
 
-int
+enum status_code
 load_repo_info(void)
 {
 	const char *rev_parse_argv[] = {
@@ -97,7 +97,7 @@ load_repo_info(void)
 	return reload_repo_info(rev_parse_argv);
 }
 
-int
+enum status_code
 load_repo_head(void)
 {
 	const char *rev_parse_argv[] = {
@@ -123,7 +123,7 @@ update_index(void)
 		"git", "update-index", "-q", "--unmerged", "--refresh", NULL
 	};
 
-	return io_run_bg(update_index_argv);
+	return io_run_bg(update_index_argv, repo.cdup);
 }
 
 bool
@@ -137,14 +137,14 @@ index_diff(struct index_diff *diff, bool untracked, bool count_all)
 	};
 	struct io io;
 	struct buffer buf;
-	bool ok = TRUE;
+	bool ok = true;
 
 	memset(diff, 0, sizeof(*diff));
 
 	if (!io_run(&io, IO_RD, repo.cdup, NULL, status_argv))
-		return FALSE;
+		return false;
 
-	while (io_get(&io, &buf, 0, TRUE) && (ok = buf.size > 3)) {
+	while (io_get(&io, &buf, 0, true) && (ok = buf.size > 3)) {
 		if (buf.data[0] == '?')
 			diff->untracked++;
 		/* Ignore staged but unmerged entries. */
@@ -155,10 +155,15 @@ index_diff(struct index_diff *diff, bool untracked, bool count_all)
 		if (!count_all && diff->staged && diff->unstaged &&
 		    (!untracked || diff->untracked))
 			break;
+
+		/* Skip source filename in rename */
+		if (buf.data[0] == 'R') {
+			io_get(&io, &buf, 0, true);
+		}
 	}
 
 	if (io_error(&io))
-		ok = FALSE;
+		ok = false;
 
 	io_done(&io);
 	return ok;

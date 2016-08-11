@@ -59,15 +59,17 @@ static bool
 stage_diff_write(struct io *io, struct line *line, struct line *end)
 {
 	while (line < end) {
-		if (!io_write(io, line->data, strlen(line->data)) ||
+		const char *text = box_text(line);
+
+		if (!io_write(io, text, strlen(text)) ||
 		    !io_write(io, "\n", 1))
-			return FALSE;
+			return false;
 		line++;
 		if (stage_diff_done(line, end))
 			break;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -79,7 +81,7 @@ stage_diff_single_write(struct io *io, bool staged,
 
 	while (line < end) {
 		const char *prefix = "";
-		const char *data = line->data;
+		const char *data = box_text(line);
 
 		if (line == single) {
 			/* Write the complete line. */
@@ -93,14 +95,14 @@ stage_diff_single_write(struct io *io, bool staged,
 		}
 
 		if (data && !io_printf(io, "%s%s\n", prefix, data))
-			return FALSE;
+			return false;
 
 		line++;
 		if (stage_diff_done(line, end))
 			break;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -110,8 +112,8 @@ stage_apply_line(struct io *io, struct line *diff_hdr, struct line *chunk, struc
 	bool staged = stage_line_type == LINE_STAT_STAGED;
 	int diff = single->type == LINE_DIFF_DEL ? -1 : 1;
 
-	if (!parse_chunk_header(&header, chunk->data))
-		return FALSE;
+	if (!parse_chunk_header(&header, box_text(chunk)))
+		return false;
 
 	if (staged)
 		header.old.lines = header.new.lines - diff;
@@ -137,7 +139,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *single, bo
 
 	diff_hdr = find_prev_line_by_type(view, chunk, LINE_DIFF_HEADER);
 	if (!diff_hdr)
-		return FALSE;
+		return false;
 
 	if (!revert)
 		apply_argv[argc++] = "--cached";
@@ -145,8 +147,8 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *single, bo
 		apply_argv[argc++] = "-R";
 	apply_argv[argc++] = "-";
 	apply_argv[argc++] = NULL;
-	if (!io_run(&io, IO_WR, repo.cdup, opt_env, apply_argv))
-		return FALSE;
+	if (!io_run(&io, IO_WR, repo.cdup, NULL, apply_argv))
+		return false;
 
 	if (single != NULL) {
 		if (!stage_apply_line(&io, diff_hdr, chunk, single, view->line + view->lines))
@@ -158,9 +160,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *single, bo
 			chunk = NULL;
 	}
 
-	io_done(&io);
-
-	return chunk ? TRUE : FALSE;
+	return io_done(&io) && chunk;
 }
 
 static bool
@@ -169,14 +169,14 @@ stage_update_files(struct view *view, enum line_type type)
 	struct line *line;
 
 	if (view->parent != &status_view) {
-		bool updated = FALSE;
+		bool updated = false;
 
 		for (line = view->line; (line = find_next_line_by_type(view, line, LINE_DIFF_CHUNK)); line++) {
-			if (!stage_apply_chunk(view, line, NULL, FALSE)) {
+			if (!stage_apply_chunk(view, line, NULL, false)) {
 				report("Failed to apply chunk");
-				return FALSE;
+				return false;
 			}
-			updated = TRUE;
+			updated = true;
 		}
 
 		return updated;
@@ -196,23 +196,23 @@ stage_update(struct view *view, struct line *line, bool single)
 		chunk = find_prev_line_by_type(view, line, LINE_DIFF_CHUNK);
 
 	if (chunk) {
-		if (!stage_apply_chunk(view, chunk, single ? line : NULL, FALSE)) {
+		if (!stage_apply_chunk(view, chunk, single ? line : NULL, false)) {
 			report("Failed to apply chunk");
-			return FALSE;
+			return false;
 		}
 
 	} else if (!stage_status.status) {
 		if (!stage_update_files(view, stage_line_type)) {
 			report("Failed to update files");
-			return FALSE;
+			return false;
 		}
 
 	} else if (!status_update_file(&stage_status, stage_line_type)) {
 		report("Failed to update file");
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -225,17 +225,17 @@ stage_revert(struct view *view, struct line *line)
 
 	if (chunk) {
 		if (!prompt_yesno("Are you sure you want to revert changes?"))
-			return FALSE;
+			return false;
 
-		if (!stage_apply_chunk(view, chunk, NULL, TRUE)) {
+		if (!stage_apply_chunk(view, chunk, NULL, true)) {
 			report("Failed to revert chunk");
-			return FALSE;
+			return false;
 		}
-		return TRUE;
+		return true;
 
 	} else {
 		return status_revert(stage_status.status ? &stage_status : NULL,
-				     stage_line_type, FALSE);
+				     stage_line_type, false);
 	}
 }
 
@@ -243,35 +243,34 @@ static struct line *
 stage_insert_chunk(struct view *view, struct chunk_header *header,
 		   struct line *from, struct line *to, struct line *last_unchanged_line)
 {
-	char buf[SIZEOF_STR];
-	char *chunk_line;
+	struct box *box;
 	unsigned long from_lineno = last_unchanged_line - view->line;
 	unsigned long to_lineno = to - view->line;
 	unsigned long after_lineno = to_lineno;
+	int i;
 
-	if (!string_format(buf, "@@ -%lu,%lu +%lu,%lu @@",
+	box = from->data;
+	for (i = 0; i < box->cells; i++)
+		box->cell[i].length = 0;
+
+	if (!append_line_format(view, from, "@@ -%lu,%lu +%lu,%lu @@",
 			header->old.position, header->old.lines,
 			header->new.position, header->new.lines))
 		return NULL;
 
-	chunk_line = strdup(buf);
-	if (!chunk_line)
-		return NULL;
-
-	free(from->data);
-	from->data = chunk_line;
-
 	if (!to)
 		return from;
 
-	if (!add_line_at(view, after_lineno++, buf, LINE_DIFF_CHUNK, strlen(buf) + 1, FALSE))
+	// Next diff chunk line
+	if (!add_line_text_at(view, after_lineno++, "", LINE_DIFF_CHUNK, 1))
 		return NULL;
 
 	while (from_lineno < to_lineno) {
 		struct line *line = &view->line[from_lineno++];
+		const char *text = box_text(line);
 
-		if (!add_line_at(view, after_lineno++, line->data, line->type, strlen(line->data) + 1, FALSE))
-			return FALSE;
+		if (!add_line_text_at(view, after_lineno++, text, line->type, 1))
+			return false;
 	}
 
 	return view->line + after_lineno;
@@ -284,7 +283,7 @@ stage_split_chunk(struct view *view, struct line *chunk_start)
 	struct line *last_changed_line = NULL, *last_unchanged_line = NULL, *pos;
 	int chunks = 0;
 
-	if (!chunk_start || !parse_chunk_header(&header, chunk_start->data)) {
+	if (!chunk_start || !parse_chunk_header(&header, box_text(chunk_start))) {
 		report("Failed to parse chunk header");
 		return;
 	}
@@ -292,7 +291,7 @@ stage_split_chunk(struct view *view, struct line *chunk_start)
 	header.old.lines = header.new.lines = 0;
 
 	for (pos = chunk_start + 1; view_has_line(view, pos); pos++) {
-		const char *chunk_line = pos->data;
+		const char *chunk_line = box_text(pos);
 
 		if (*chunk_line == '@' || *chunk_line == '\\')
 			break;
@@ -352,12 +351,27 @@ stage_exists(struct view *view, struct status *status, enum line_type type)
 	return false;
 }
 
+static bool
+stage_chunk_is_wrapped(struct view *view, struct line *line)
+{
+	struct line *pos = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
+
+	if (!opt_wrap_lines || !pos)
+		return false;
+
+	for (; pos <= line; pos++)
+		if (pos->wrapped)
+			return true;
+
+	return false;
+}
+
 static enum request
 stage_request(struct view *view, enum request request, struct line *line)
 {
 	switch (request) {
 	case REQ_STATUS_UPDATE:
-		if (!stage_update(view, line, FALSE))
+		if (!stage_update(view, line, false))
 			return REQ_NONE;
 		break;
 
@@ -376,7 +390,11 @@ stage_request(struct view *view, enum request request, struct line *line)
 			report("Please select a change to stage");
 			return REQ_NONE;
 		}
-		if (!stage_update(view, line, TRUE))
+		if (stage_chunk_is_wrapped(view, line)) {
+			report("Staging is not supported for wrapped lines");
+			return REQ_NONE;
+		}
+		if (!stage_update(view, line, true))
 			return REQ_NONE;
 		break;
 
@@ -408,7 +426,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_REFRESH:
 		/* Reload everything(including current branch information) ... */
-		load_refs(TRUE);
+		load_refs(true);
 		break;
 
 	case REQ_VIEW_BLAME:
@@ -488,7 +506,7 @@ stage_open(struct view *view, enum open_flags flags)
 	if (!stage_line_type) {
 		report("No stage content, press %s to open the status view and choose file",
 			get_view_key(view, REQ_VIEW_STATUS));
-		return FALSE;
+		return false;
 	}
 
 	view->encoding = NULL;
@@ -523,7 +541,7 @@ stage_open(struct view *view, enum open_flags flags)
 	if (!status_stage_info(view->ref, stage_line_type, &stage_status)
 		|| !argv_copy(&view->argv, argv)) {
 		report("Failed to open staged view");
-		return FALSE;
+		return false;
 	}
 
 	if (stage_line_type != LINE_STAT_UNTRACKED)
@@ -535,7 +553,7 @@ stage_open(struct view *view, enum open_flags flags)
 }
 
 static bool
-stage_read(struct view *view, struct buffer *buf)
+stage_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct stage_state *state = view->private;
 
@@ -543,23 +561,23 @@ stage_read(struct view *view, struct buffer *buf)
 		return pager_common_read(view, buf ? buf->data : NULL, LINE_DEFAULT, NULL);
 
 	if (!buf && !view->lines && view->parent) {
-		maximize_view(view->parent, TRUE);
-		return TRUE;
+		maximize_view(view->parent, true);
+		return true;
 	}
 
 	if (!buf)
 		diff_restore_line(view, &state->diff);
 
 	if (buf && diff_common_read(view, buf->data, &state->diff))
-		return TRUE;
+		return true;
 
-	return pager_read(view, buf);
+	return pager_read(view, buf, force_stop);
 }
 
 static struct view_ops stage_ops = {
 	"line",
 	argv_env.status,
-	VIEW_DIFF_LIKE | VIEW_REFRESH,
+	VIEW_DIFF_LIKE | VIEW_REFRESH | VIEW_FLEX_WIDTH,
 	sizeof(struct stage_state),
 	stage_open,
 	stage_read,

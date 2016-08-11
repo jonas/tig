@@ -25,8 +25,6 @@ in_work_dir create_dirty_workdir
 
 test_tig
 
-main_replace_index_changes_date
-
 assert_equals 'start.screen' <<EOF
 $YYY_MM_DD_HH_MM Unknown    o Unstaged changes                                  
 2009-02-13 23:31 A. U. Thor I [master] Initial commit                           

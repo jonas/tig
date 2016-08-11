@@ -25,6 +25,7 @@ struct ref;
 	_(DIFF_HEADER,  	"diff --"), \
 	_(DIFF_DEL_FILE,  	"--- "), \
 	_(DIFF_ADD_FILE,  	"+++ "), \
+	_(DIFF_START,   	"---"), \
 	_(DIFF_CHUNK,   	"@@"), \
 	_(DIFF_ADD,		"+"), \
 	_(DIFF_ADD2,		" +"), \
@@ -88,7 +89,8 @@ struct ref;
 	_(PALETTE_11,		""), \
 	_(PALETTE_12,		""), \
 	_(PALETTE_13,		""), \
-	_(GRAPH_COMMIT,		"")
+	_(GRAPH_COMMIT,		""), \
+	_(SEARCH_RESULT,	"")
 
 enum line_type {
 #define DEFINE_LINE_ENUM(type, line) LINE_##type

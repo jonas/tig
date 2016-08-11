@@ -165,10 +165,10 @@ foreach_line_rule(line_rule_visitor_fn visitor, void *data)
 		struct line_rule *rule = &line_rule[type];
 
 		if (!visitor(data, rule))
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static void

@@ -24,8 +24,7 @@ steps '
 	:toggle log-options --pretty=full
 	:save-display log-pretty-full.screen
 
-	:toggle cmdline-args --pretty=fuller
-	:toggle log-options
+	:toggle log-options --pretty=fuller
 	:save-display log-pretty-fuller.screen
 '
 

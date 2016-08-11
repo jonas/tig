@@ -3,25 +3,26 @@
 . libtest.sh
 . libgit.sh
 
-steps '
-	:set line-graphics = ascii
-	:set diff-view-line-number = yes
+tigrc <<EOF
+set line-graphics = ascii
+set diff-view-line-number = yes
+set stage-view-line-number = yes
+EOF
 
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+script='
 	:210
 	:scroll-line-down
-	:save-display diff-default.screen
-
 	:edit
 
 	:224
 	:exec !vim +%(lineno) %(file)
 '
 
-in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
-
-test_tig show ee912870202200a0b9cf4fd86ba57243212d341e
-
-assert_equals 'diff-default.screen' <<EOF
+test_case default \
+ --args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+ --script="$script" <<EOF
    | -  )                                                                       
    | -                                                                          
    |    lazy val parent: Project = Project(                                     
@@ -42,20 +43,194 @@ assert_equals 'diff-default.screen' <<EOF
    |                                                                            
 215|    def project(id: String, settings: Seq[sbt.Def.Setting[_]]) = Project(   
    |        id = id.toLowerCase,                                                
-   | diff --git a/project/build.sbt b/project/build.sbt                         
+   | diff --git a/project/build.sbt b/project/build.sbt                             
    | index 87c2e66..122abd0 100644                                              
-   | --- a/project/build.sbt                                                    
-220| +++ b/project/build.sbt                                                    
+   | --- a/project/build.sbt                                                      
+220| +++ b/project/build.sbt                                                      
    | @@ -1 +1,4 @@                                                              
    | -addSbtPlugin("org.scala-lang.modules.scalajs" % "scalajs-sbt-plugin" % "0.
    | +resolvers += Resolver.url("scala-js-snapshots",                           
    | +    url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatt
-[diff] Changes to 'project/Build.scala' - line 210 of 367                    61%
+[diff] Changes to 'project/build.sbt' - line 224 of 367                    61%
 EOF
+
+# This settings doesn't seem to apply to `git-show`
+test_case mnemonic \
+ --args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+ --before='git config diff.mnemonicPrefix true' \
+ --after='git config diff.mnemonicPrefix false' \
+ --script="$script" << EOF
+   | -  )                                                                       
+   | -                                                                          
+   |    lazy val parent: Project = Project(                                     
+200|        id = "parent",                                                      
+   |        base = file("."),                                                   
+   | @@ -53,10 +48,10 @@ object ScalaJSBenchmarks extends Build {               
+   |    )                                                                       
+   |                                                                            
+205|    lazy val common = project("Common", defaultSettings)                    
+   | -  lazy val deltablue = project("DeltaBlue", benchmarkSettings).dependsOn(c
+   | -  lazy val richards = project("Richards", benchmarkSettings).dependsOn(com
+   | -  lazy val sudoku = project("Sudoku", benchmarkSettings).dependsOn(common)
+   | -  lazy val tracer = project("Tracer", benchmarkSettings).dependsOn(common)
+210| +  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(com
+   | +  lazy val richards = project("Richards", defaultSettings).dependsOn(commo
+   | +  lazy val sudoku = project("Sudoku", defaultSettings).dependsOn(common)  
+   | +  lazy val tracer = project("Tracer", defaultSettings).dependsOn(common)  
+   |                                                                            
+215|    def project(id: String, settings: Seq[sbt.Def.Setting[_]]) = Project(   
+   |        id = id.toLowerCase,                                                
+   | diff --git a/project/build.sbt b/project/build.sbt                             
+   | index 87c2e66..122abd0 100644                                              
+   | --- a/project/build.sbt                                                      
+220| +++ b/project/build.sbt                                                      
+   | @@ -1 +1,4 @@                                                              
+   | -addSbtPlugin("org.scala-lang.modules.scalajs" % "scalajs-sbt-plugin" % "0.
+   | +resolvers += Resolver.url("scala-js-snapshots",                           
+   | +    url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatt
+[diff] Changes to 'project/build.sbt' - line 224 of 367                    61%
+EOF
+
+test_case noprefix \
+ --args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+ --before='git config diff.noprefix true' \
+ --after='git config diff.noprefix false' \
+ --script="$script" << EOF
+   | -  )                                                                       
+   | -                                                                          
+   |    lazy val parent: Project = Project(                                     
+200|        id = "parent",                                                      
+   |        base = file("."),                                                   
+   | @@ -53,10 +48,10 @@ object ScalaJSBenchmarks extends Build {               
+   |    )                                                                       
+   |                                                                            
+205|    lazy val common = project("Common", defaultSettings)                    
+   | -  lazy val deltablue = project("DeltaBlue", benchmarkSettings).dependsOn(c
+   | -  lazy val richards = project("Richards", benchmarkSettings).dependsOn(com
+   | -  lazy val sudoku = project("Sudoku", benchmarkSettings).dependsOn(common)
+   | -  lazy val tracer = project("Tracer", benchmarkSettings).dependsOn(common)
+210| +  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(com
+   | +  lazy val richards = project("Richards", defaultSettings).dependsOn(commo
+   | +  lazy val sudoku = project("Sudoku", defaultSettings).dependsOn(common)  
+   | +  lazy val tracer = project("Tracer", defaultSettings).dependsOn(common)  
+   |                                                                            
+215|    def project(id: String, settings: Seq[sbt.Def.Setting[_]]) = Project(   
+   |        id = id.toLowerCase,                                                
+   | diff --git project/build.sbt project/build.sbt                             
+   | index 87c2e66..122abd0 100644                                              
+   | --- project/build.sbt                                                      
+220| +++ project/build.sbt                                                      
+   | @@ -1 +1,4 @@                                                              
+   | -addSbtPlugin("org.scala-lang.modules.scalajs" % "scalajs-sbt-plugin" % "0.
+   | +resolvers += Resolver.url("scala-js-snapshots",                           
+   | +    url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatt
+[diff] Changes to 'project/build.sbt' - line 224 of 367                    61%
+EOF
+
+test_case default-conflict \
+ --before='setup-conflict.sh > config.setup' \
+ --script='
+ 	:view-diff
+	:7
+	:edit
+
+	:10
+	:exec !vim +%(lineno) %(file)
+' << EOF
+  1| diff --cc conflict-file                                                    
+   | index 86c5a05,b4c3de6..0000000                                             
+   | --- a/conflict-file                                                        
+   | +++ b/conflict-file                                                        
+  5| @@@ -1,1 -1,1 +1,5 @@@                                                     
+   | ++<<<<<<< HEAD                                                             
+   |  +c'                                                                       
+   | ++=======                                                                  
+   | + d'                                                                       
+ 10| ++>>>>>>> conflict-branch                                                  
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[stage] Unstaged changes to 'conflict-file' - line 10 of 10                 100%
+EOF
+
+test_case noprefix-conflict \
+ --before='git config diff.noprefix true' \
+ --after='git config diff.noprefix false' \
+ --script='
+ 	:view-diff
+	:7
+	:edit
+
+	:10
+	:exec !vim +%(lineno) %(file)
+' << EOF
+  1| diff --cc conflict-file                                                    
+   | index 86c5a05,b4c3de6..0000000                                             
+   | --- a/conflict-file                                                        
+   | +++ b/conflict-file                                                        
+  5| @@@ -1,1 -1,1 +1,5 @@@                                                     
+   | ++<<<<<<< HEAD                                                             
+   |  +c'                                                                       
+   | ++=======                                                                  
+   | + d'                                                                       
+ 10| ++>>>>>>> conflict-branch                                                  
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[stage] Unstaged changes to 'conflict-file' - line 10 of 10                 100%
+EOF
+
+run_test_cases
 
 assert_equals 'editor.log' <<EOF
 +51 project/Build.scala
   lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(common)
 +2 project/build.sbt
     url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatterns)
++51 project/Build.scala
+  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(common)
++2 project/build.sbt
+    url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatterns)
++51 project/Build.scala
+  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(common)
++2 project/build.sbt
+    url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatterns)
++2 conflict-file
+c'
++5 conflict-file
+>>>>>>> conflict-branch
++2 conflict-file
+c'
++5 conflict-file
+>>>>>>> conflict-branch
 EOF

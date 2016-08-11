@@ -24,7 +24,7 @@ D tracer/src/main/scala/org/scalajs/benchmark/tracer/Scene.scala
 D tracer/src/main/scala/org/scalajs/benchmark/tracer/Shapes.scala               
 D tracer/src/main/scala/org/scalajs/benchmark/tracer/Tracer.scala               
 D tracer/src/main/scala/org/scalajs/benchmark/tracer/Vector.scala               
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
   (no files)                                                                    
 Untracked files:                                                                
 ? .gitignore                                                                    

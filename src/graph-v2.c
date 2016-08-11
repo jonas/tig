@@ -284,7 +284,7 @@ graph_add_parent(struct graph *graph_ref, const char *parent)
 	struct graph_v2 *graph = graph_ref->private;
 
 	if (graph->has_parents)
-		return TRUE;
+		return true;
 	return graph_insert_column(graph, &graph->parents, graph->parents.size, parent) != NULL;
 }
 
@@ -299,16 +299,16 @@ graph_expand(struct graph_v2 *graph)
 {
 	while (graph_needs_expansion(graph)) {
 		if (!graph_insert_column(graph, &graph->prev_row, graph->prev_row.size, ""))
-			return FALSE;
+			return false;
 
 		if (!graph_insert_column(graph, &graph->row, graph->row.size, ""))
-			return FALSE;
+			return false;
 
 		if (!graph_insert_column(graph, &graph->next_row, graph->next_row.size, ""))
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -327,7 +327,7 @@ graph_collapse(struct graph_v2 *graph)
 		graph->next_row.size--;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static void
@@ -364,7 +364,7 @@ graph_insert_parents(struct graph_v2 *graph)
 		if (graph_column_has_commit(new)) {
 			size_t match = graph_find_free_column(next_row);
 
-			if (match == next_row->size && next_row->columns[next_row->size - 1].id) {
+			if (match == next_row->size && *next_row->columns[next_row->size - 1].id) {
 				graph_insert_column(graph, next_row, next_row->size, new->id);
 				graph_insert_column(graph, row, row->size, "");
 				graph_insert_column(graph, prev_row, prev_row->size, "");
@@ -412,8 +412,12 @@ graph_remove_collapsed_columns(struct graph_v2 *graph)
 		if (commit_is_in_row(row->columns[i].id, &graph->parents) && !graph_column_has_commit(&graph->prev_row.columns[i]))
 			continue;
 
-		if (strcmp(row->columns[i - 1].id, graph->prev_row.columns[i - 1].id) != 0 || graph->prev_row.columns[i - 1].symbol.shift_left)
-			row->columns[i] = row->columns[i + 1];
+		if (strcmp(row->columns[i - 1].id, graph->prev_row.columns[i - 1].id) != 0 || graph->prev_row.columns[i - 1].symbol.shift_left) {
+			if (i + 1 >= row->size)
+				memset(&row->columns[i], 0, sizeof(row->columns[i]));
+			else
+				row->columns[i] = row->columns[i + 1];
+		}
 	}
 }
 
@@ -625,10 +629,10 @@ flanked(struct graph_row *row, int pos, int commit_pos, const char *commit_id)
 static bool
 below_commit(int pos, struct graph_v2 *graph)
 {
-	if (!pos == graph->prev_position)
+	if (pos != graph->prev_position)
 		return false;
 
-	if (!strcmp(graph->row.columns[pos].id, graph->prev_row.columns[pos].id) == 0)
+	if (strcmp(graph->row.columns[pos].id, graph->prev_row.columns[pos].id))
 		return false;
 
 	return true;
@@ -668,7 +672,7 @@ graph_generate_symbols(struct graph_v2 *graph, struct graph_canvas *canvas)
 		symbol->matches_commit    = (strcmp(column->id, graph->id) == 0);
 
 		symbol->shift_left        = shift_left(row, prev_row, pos);
-		symbol->continue_shift    = shift_left(row, prev_row, pos + 1);
+		symbol->continue_shift    = (pos + 1 < row->size) ? shift_left(row, prev_row, pos + 1) : 0;
 		symbol->below_shift       = prev_row->columns[pos].symbol.shift_left;
 
 		symbol->new_column        = new_column(row, prev_row, pos);
@@ -692,10 +696,10 @@ graph_render_parents(struct graph *graph_ref, struct graph_canvas *canvas)
 
 	if (graph->parents.size == 0 &&
 	    !graph_add_parent(graph_ref, ""))
-		return FALSE;
+		return false;
 
 	if (!graph_expand(graph))
-		return FALSE;
+		return false;
 
 	graph_generate_next_row(graph);
 	graph_generate_symbols(graph, canvas);
@@ -704,9 +708,9 @@ graph_render_parents(struct graph *graph_ref, struct graph_canvas *canvas)
 	graph->parents.size = graph->position = 0;
 
 	if (!graph_collapse(graph))
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -719,18 +723,18 @@ graph_add_commit(struct graph *graph_ref, struct graph_canvas *canvas,
 	graph->position = graph_find_column_by_id(&graph->row, id);
 	string_copy_rev(graph->id, id);
 	graph->is_boundary = is_boundary;
-	graph->has_parents = FALSE;
+	graph->has_parents = false;
 
 	while ((parents = strchr(parents, ' '))) {
 		parents++;
 		if (!graph_add_parent(graph_ref, parents))
-			return FALSE;
+			return false;
 		has_parents++;
 	}
 
 	graph->has_parents = has_parents > 0;
 
-	return TRUE;
+	return true;
 }
 
 static const bool

@@ -1,0 +1,32 @@
+#!/bin/sh
+#
+# Test for GitHub issue #437
+
+. libtest.sh
+. libgit.sh
+
+test_require git-worktree
+
+export LINES=9
+
+test_setup_work_dir()
+{
+	create_worktree
+}
+
+steps '
+	:save-display worktree.screen
+'
+
+test_tig status
+
+assert_equals 'worktree.screen' <<EOF
+On branch dev
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changes not staged for commit:                                                  
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+[status] Nothing to update                                                  100%
+EOF

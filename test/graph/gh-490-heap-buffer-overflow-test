@@ -1,0 +1,18 @@
+#!/bin/sh
+
+. libtest.sh
+
+test_require address-sanitizer
+test_setup
+
+steps '
+	:save-display screen
+	:quit
+'
+
+export TIG_NO_DISPLAY=y
+
+gunzip --stdout "$source_dir/$test.gz" | tig --graph --pretty=raw 2>stderr >stdout
+
+assert_equals stderr <<EOF
+EOF

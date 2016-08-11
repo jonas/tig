@@ -30,6 +30,12 @@ steps '
 	:refresh
 	:save-display main-with-staged-and-unstaged.screen
 
+	:exec @git reset --hard
+	:exec @git mv b.c b1.c
+	:refresh
+	:save-display main-with-renamed.screen
+
+	:exec @git mv b1.c b.c
 	:exec @setup-conflict.sh
 	:refresh
 	:save-display main-with-conflict.screen
@@ -48,8 +54,6 @@ EOF
 in_work_dir create_dirty_workdir
 
 test_tig
-
-main_replace_index_changes_date
 
 assert_equals 'main-with-unstaged.screen' <<EOF
 $YYY_MM_DD_HH_MM Unknown    o Unstaged changes                                  
@@ -157,6 +161,24 @@ $YYY_MM_DD_HH_MM Unknown    o Staged changes
                                                                                 
                                                                                 
 [main] Unstaged changes                                                     100%
+EOF
+
+assert_equals 'main-with-renamed.screen' <<EOF
+$YYY_MM_DD_HH_MM Unknown    o Staged changes                                    
+2009-02-13 23:31 A. U. Thor I [master] Initial commit                           
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[main] Staged changes                                                       100%
 EOF
 
 assert_equals 'main-with-conflict.screen' <<EOF

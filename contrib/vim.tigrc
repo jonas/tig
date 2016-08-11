@@ -22,6 +22,9 @@ bind generic gn view-next
 bind main    G  none
 bind generic G  move-last-line
 
+bind generic <C-f> move-page-down
+bind generic <C-b> move-page-up
+
 bind generic v  none
 bind generic vm view-main
 bind generic vd view-diff

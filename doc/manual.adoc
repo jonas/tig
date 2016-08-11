@@ -161,9 +161,12 @@ following variables.
 |%(commit)		|The currently selected commit ID.
 |%(blob)		|The currently selected blob ID.
 |%(branch)		|The currently selected branch name.
+|%(remote)		|The currently selected remote name. For remote
+			 branches %(branch) will contain the branch name.
+|%(tag)			|The currently selected tag name.
 |%(stash)		|The currently selected stash name.
-|%(directory)		|The current directory path in the tree view;
-			 empty for the root directory.
+|%(directory)		|The current directory path in the tree view or
+			 "." if undefined.
 |%(file)		|The currently selected file.
 |%(lineno)		|The currently selected line number. Defaults to 0.
 |%(ref)			|The reference given to blame or HEAD if undefined.
@@ -175,7 +178,21 @@ following variables.
 |%(blameargs)		|Options from 'blame-options' used by the blame view.
 |%(logargs)		|Options from 'log-options' used by the log view.
 |%(mainargs)		|Options from 'main-options' used by the main view.
-|%(prompt)		|Prompt for the argument value.
+|%(prompt)		|Prompt for the argument value. Optionally specify a
+			 custom prompt using `"%(prompt Enter branch name: )"`
+|%(text)		|The text of the currently selected line.
+|%(repo:head)		|The name of the checked out branch, e.g. `master`
+|%(repo:head-id)	|The commit ID of the checked out branch.
+|%(repo:remote)		|The remote associated with the checked out branch,
+			 e.g. `origin/master`.
+|%(repo:cdup)		|The path to change directory to the repository root,
+			 e.g. `../`
+|%(repo:prefix)		|The path prefix of the current work directory,
+			 e.g `subdir/`.
+|%(repo:git-dir)	|The path to the Git directory, e.g. `/src/repo/.git`.
+|%(repo:is-inside-work-tree)
+			|Whether Tig is running inside a work tree,
+			 either `true` or `false`.
 |=============================================================================
 
 Example user-defined commands:
@@ -425,7 +442,7 @@ Misc
 |v	|Show version.
 |o	|Open option menu
 |#	|Toggle line numbers on/off.
-|D	|Toggle date display on/off/short/relative/local.
+|D	|Toggle date display on/off/relative/relative-compact/custom
 |A	|Toggle author display on/off/abbreviated/email/email user name.
 |G	|Toggle revision graph visualization on/off.
 |~	|Toggle (line) graphics mode
@@ -451,6 +468,10 @@ Prompt
 |:<x>			|Execute the corresponding key binding, e.g. `:q`.
 |:!<command>		|Execute a system command in a pager, e.g. `:!git log -p`.
 |:<action>		|Execute a Tig command, e.g. `:edit`.
+|:goto <rev>		|Jump to a specific revision, e.g. `:goto %(commit)^2`
+			 to goto the current commit's 2nd parent or
+			 `:goto some/branch` to goto the commit denoting the
+			 branch `some/branch`.
 |:save-display <file>	|Save current display to `<file>`.
 |:save-options <file>	|Save current options to `<file>`.
 |:script <file>		|Execute commands from `<file>`.

@@ -4,15 +4,33 @@ compiler:
   - clang
   - gcc
 
-env:
-  - TEST=autoconf VERBOSE=1 TEST_SHELL=bash
-  - TEST=make     VERBOSE=@
+sudo: false
 
-before_install: sudo apt-get update -qq
-
-install: sudo apt-get install -qq --no-install-recommends asciidoc xmlto docbook-utils
+addons:
+  apt:
+    packages:
+    - asciidoc
+    - xmlto
+    - valgrind
 
 script:
-  - if [ "$TEST" = autoconf ]; then ./autogen.sh && ./configure; fi
-  - if [ "$TEST" = make ]; then cp contrib/config.make .; fi
-  - make V=$VERBOSE DESTDIR=/tmp TEST_SHELL=$TEST_SHELL all test install install-doc
+  - # ============ Build from config ===============
+  - cp contrib/config.make .
+  - make all-debug
+  - make test
+  - make test TEST_OPTS=valgrind
+  - if [ $CC = clang ]; then make test-address-sanitizer; fi
+  - make DESTDIR=/tmp/bare-destdir install install-doc
+  - make DESTDIR=/tmp/bare-destdir uninstall
+  - test ! -d /tmp/bare-destdir
+  - make prefix=/tmp/bare-prefix install install-doc
+  - make prefix=/tmp/bare-prefix uninstall
+  - test ! -d /tmp/bare-prefix
+  - make distclean
+  - # ============ Build using autoconf ============
+  - make dist
+  - ./configure --prefix=/tmp/conf-prefix
+  - make V=1 TEST_SHELL=bash all test install install-doc
+  - make uninstall
+  - test ! -d /tmp/conf-prefix
+  - make clean

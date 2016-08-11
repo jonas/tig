@@ -64,15 +64,15 @@ check_file_mtime(time_t *last_modified, const char *path_fmt, ...)
 	struct stat stat;
 	int retval;
 
-	FORMAT_BUFFER(path, sizeof(path), path_fmt, retval, FALSE);
+	FORMAT_BUFFER(path, sizeof(path), path_fmt, retval, false);
 
 	if (retval < 0 ||
 	    lstat(path, &stat) < 0 ||
 	    stat.st_mtime <= *last_modified)
-		return FALSE;
+		return false;
 
 	*last_modified = stat.st_mtime;
-	return TRUE;
+	return true;
 }
 
 static enum watch_trigger
@@ -112,7 +112,7 @@ watch_index_handler(struct watch_handler *handler, enum watch_event event, enum 
 
 	if (!check_file_mtime(&handler->last_modified, "%s/index", repo.git_dir) ||
 	    event == WATCH_EVENT_SWITCH_VIEW ||
-	    !index_diff(&diff, FALSE, FALSE))
+	    !index_diff(&diff, false, false))
 		return WATCH_NONE;
 
 	if (check & WATCH_INDEX_STAGED) {
@@ -140,7 +140,7 @@ watch_refs_handler(struct watch_handler *handler, enum watch_event event,
 		   enum watch_trigger check)
 {
 	if (event == WATCH_EVENT_AFTER_COMMAND)
-		load_refs(TRUE);
+		load_refs(true);
 
 	return WATCH_NONE;
 }

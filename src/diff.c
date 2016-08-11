@@ -26,7 +26,7 @@ diff_open(struct view *view, enum open_flags flags)
 {
 	const char *diff_argv[] = {
 		"git", "show", encoding_arg, "--pretty=fuller", "--root",
-			"--patch-with-stat",
+			"--patch-with-stat", use_mailmap_arg(),
 			show_notes_arg(), diff_context_arg(), ignore_space_arg(),
 			"%(diffargs)", "%(cmdlineargs)", "--no-color", "%(commit)",
 			"--", "%(fileargs)", NULL
@@ -35,6 +35,71 @@ diff_open(struct view *view, enum open_flags flags)
 	diff_save_line(view, view->private, flags);
 
 	return begin_update(view, NULL, diff_argv, flags);
+}
+
+struct diff_stat_context {
+	const char *text;
+	enum line_type type;
+	size_t cells;
+	struct box_cell cell[10];
+};
+
+static void
+diff_common_add_cell(struct diff_stat_context *context, size_t length)
+{
+	assert(ARRAY_SIZE(context->cell) > context->cells);
+	if (length == 0)
+		return;
+	context->cell[context->cells].length = length;
+	context->cell[context->cells].type = context->type;
+	context->cells++;
+}
+
+static bool
+diff_common_read_diff_stat_part(struct diff_stat_context *context, char c, enum line_type next_type)
+{
+	const char *sep = c == '|' ? strrchr(context->text, c) : strchr(context->text, c);
+
+	if (sep == NULL)
+		return false;
+
+	diff_common_add_cell(context, sep - context->text);
+	context->text = sep;
+	context->type = next_type;
+
+	return true;
+}
+
+static struct line *
+diff_common_read_diff_stat(struct view *view, const char *text)
+{
+	struct diff_stat_context context = { text, LINE_DIFF_STAT };
+	struct line *line;
+	struct box *box;
+
+	diff_common_read_diff_stat_part(&context, '|', LINE_DEFAULT);
+	if (diff_common_read_diff_stat_part(&context, 'B', LINE_DEFAULT)) {
+		/* Handle binary diffstat: Bin <deleted> -> <added> bytes */
+		diff_common_read_diff_stat_part(&context, ' ', LINE_DIFF_DEL);
+		diff_common_read_diff_stat_part(&context, '-', LINE_DEFAULT);
+		diff_common_read_diff_stat_part(&context, ' ', LINE_DIFF_ADD);
+		diff_common_read_diff_stat_part(&context, 'b', LINE_DEFAULT);
+
+	} else {
+		diff_common_read_diff_stat_part(&context, '+', LINE_DIFF_ADD);
+		diff_common_read_diff_stat_part(&context, '-', LINE_DIFF_DEL);
+	}
+	diff_common_add_cell(&context, strlen(context.text));
+
+	line = add_line_text_at(view, view->lines, text, LINE_DIFF_STAT, context.cells);
+	if (!line)
+		return NULL;
+
+	box = line->data;
+	if (context.cells)
+		memcpy(box->cell, context.cell, sizeof(struct box_cell) * context.cells);
+	box->cells = context.cells;
+	return line;
 }
 
 struct line *
@@ -66,7 +131,7 @@ diff_common_add_diff_stat(struct view *view, const char *text, size_t offset)
 	    (strstr(pipe, "Bin") && strstr(pipe, "->")) ||
 	    strstr(pipe, "Unmerged") ||
 	    (data[len - 1] == '0' && (strstr(data, "=>") || !prefixcmp(data, "..."))))
-		return add_line_text(view, text, LINE_DIFF_STAT);
+		return diff_common_read_diff_stat(view, text);
 	return NULL;
 }
 
@@ -76,18 +141,18 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	enum line_type type = get_line_type(data);
 
 	if (!view->lines && type != LINE_COMMIT)
-		state->reading_diff_stat = TRUE;
+		state->reading_diff_stat = true;
 
 	if (state->combined_diff && !state->after_diff && data[0] == ' ' && data[1] != ' ')
-		state->reading_diff_stat = TRUE;
+		state->reading_diff_stat = true;
 
 	if (state->reading_diff_stat) {
 		if (diff_common_add_diff_stat(view, data, 0))
-			return TRUE;
-		state->reading_diff_stat = FALSE;
+			return true;
+		state->reading_diff_stat = false;
 
 	} else if (!strcmp(data, "---")) {
-		state->reading_diff_stat = TRUE;
+		state->reading_diff_stat = true;
 	}
 
 	if (!state->after_commit_title && !prefixcmp(data, "    ")) {
@@ -95,20 +160,36 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 
 		if (line)
 			line->commit_title = 1;
-		state->after_commit_title = TRUE;
+		state->after_commit_title = true;
 		return line != NULL;
 	}
 
 	if (type == LINE_DIFF_HEADER) {
 		const int len = STRING_SIZE("diff --");
 
-		state->after_diff = TRUE;
+		state->after_diff = true;
 		if (!strncmp(data + len, "combined ", strlen("combined ")) ||
 		    !strncmp(data + len, "cc ", strlen("cc ")))
-			state->combined_diff = TRUE;
+			state->combined_diff = true;
+
+	} else if (type == LINE_DIFF_CHUNK) {
+		const char *context = strstr(data + STRING_SIZE("@@"), "@@");
+		struct line *line =
+			context ? add_line_text_at(view, view->lines, data, LINE_DIFF_CHUNK, 2)
+				: NULL;
+		struct box *box;
+
+		if (!line)
+			return false;
+
+		box = line->data;
+		box->cell[0].length = (context + 2) - data;
+		box->cell[1].length = strlen(context + 2);
+		box->cell[box->cells++].type = LINE_DIFF_STAT;
+		return true;
 
 	} else if (type == LINE_PP_MERGE) {
-		state->combined_diff = TRUE;
+		state->combined_diff = true;
 	}
 
 	/* ADD2 and DEL2 are only valid in combined diff hunks */
@@ -127,8 +208,8 @@ diff_find_stat_entry(struct view *view, struct line *line, enum line_type type)
 		line == find_prev_line_by_type(view, marker, LINE_DIFF_HEADER);
 }
 
-enum request
-diff_common_enter(struct view *view, enum request request, struct line *line)
+static struct line *
+diff_find_header_from_stat(struct view *view, struct line *line)
 {
 	if (line->type == LINE_DIFF_STAT) {
 		int file_number = 0;
@@ -152,6 +233,17 @@ diff_common_enter(struct view *view, enum request request, struct line *line)
 			}
 		}
 
+		return line;
+	}
+
+	return NULL;
+}
+
+enum request
+diff_common_enter(struct view *view, enum request request, struct line *line)
+{
+	if (line->type == LINE_DIFF_STAT) {
+		line = diff_find_header_from_stat(view, line);
 		if (!line) {
 			report("Failed to find file diff");
 			return REQ_NONE;
@@ -228,17 +320,17 @@ diff_read_describe(struct view *view, struct buffer *buffer, struct diff_state *
 
 	if (line && buffer) {
 		const char *ref = chomp_string(buffer->data);
-		const char *sep = !strcmp("Refs: ", line->data) ? "" : ", ";
+		const char *sep = !strcmp("Refs: ", box_text(line)) ? "" : ", ";
 
 		if (*ref && !append_line_format(view, line, "%s%s", sep, ref))
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
-diff_read(struct view *view, struct buffer *buf)
+diff_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct diff_state *state = view->private;
 
@@ -259,8 +351,8 @@ diff_read(struct view *view, struct buffer *buf)
 
 				if (view->pipe)
 					io_done(view->pipe);
-				if (io_run(&view->io, IO_RD, view->dir, opt_env, view->argv))
-					return FALSE;
+				if (view_exec(view, 0))
+					return false;
 			}
 		}
 
@@ -271,14 +363,14 @@ diff_read(struct view *view, struct buffer *buf)
 
 			if (!begin_update(view, NULL, describe_argv, OPEN_EXTRA)) {
 				report("Failed to load describe data");
-				return TRUE;
+				return true;
 			}
 
-			state->adding_describe_ref = TRUE;
-			return FALSE;
+			state->adding_describe_ref = true;
+			return false;
 		}
 
-		return TRUE;
+		return true;
 	}
 
 	return diff_common_read(view, buf->data, state);
@@ -294,16 +386,16 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 		"git", "blame", encoding_arg, "-p", line_arg, ref, "--", file, NULL
 	};
 	struct io io;
-	bool ok = FALSE;
+	bool ok = false;
 	struct buffer buf;
 
 	if (!string_format(line_arg, "-L%ld,+1", lineno))
-		return FALSE;
+		return false;
 
-	if (!io_run(&io, IO_RD, repo.cdup, opt_env, blame_argv))
-		return FALSE;
+	if (!io_run(&io, IO_RD, repo.cdup, NULL, blame_argv))
+		return false;
 
-	while (io_get(&io, &buf, '\n', TRUE)) {
+	while (io_get(&io, &buf, '\n', true)) {
 		if (header) {
 			if (!parse_blame_header(header, buf.data, 9999999))
 				break;
@@ -316,7 +408,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	}
 
 	if (io_error(&io))
-		ok = FALSE;
+		ok = false;
 
 	io_done(&io);
 	return ok;
@@ -340,7 +432,7 @@ diff_get_lineno(struct view *view, struct line *line)
 	 * following line, in the new version of the file. We increment this
 	 * number for each non-deletion line, until the given line position.
 	 */
-	if (!parse_chunk_header(&chunk_header, chunk->data))
+	if (!parse_chunk_header(&chunk_header, box_text(chunk)))
 		return 0;
 
 	lineno = chunk_header.new.position;
@@ -372,7 +464,7 @@ diff_trace_origin(struct view *view, struct line *line)
 	}
 
 	for (; diff < line && !file; diff++) {
-		const char *data = diff->data;
+		const char *data = box_text(diff);
 
 		if (!prefixcmp(data, "--- a/")) {
 			file = data + STRING_SIZE("--- a/");
@@ -385,7 +477,7 @@ diff_trace_origin(struct view *view, struct line *line)
 		return REQ_NONE;
 	}
 
-	chunk_data = chunk->data;
+	chunk_data = box_text(chunk);
 
 	if (!parse_chunk_lineno(&lineno, chunk_data, chunk_marker)) {
 		report("Failed to read the line number");
@@ -434,34 +526,53 @@ diff_trace_origin(struct view *view, struct line *line)
 const char *
 diff_get_pathname(struct view *view, struct line *line)
 {
-	const struct line *header;
-	const char *dst = NULL;
-	const char *prefixes[] = { " b/", "cc ", "combined " };
+	struct line *header;
+	const char *dst;
+	const char *prefixes[] = { "diff --cc ", "diff --combined " };
 	int i;
 
 	header = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
 	if (!header)
 		return NULL;
 
-	for (i = 0; i < ARRAY_SIZE(prefixes) && !dst; i++)
-		dst = strstr(header->data, prefixes[i]);
+	for (i = 0; i < ARRAY_SIZE(prefixes); i++) {
+		dst = strstr(box_text(header), prefixes[i]);
+		if (dst)
+			return dst + strlen(prefixes[i]);
+	}
 
-	return dst ? dst + strlen(prefixes[--i]) : NULL;
+	header = find_next_line_by_type(view, header, LINE_DIFF_ADD_FILE);
+	if (!header)
+		return NULL;
+
+	if (opt_diff_noprefix)
+		return box_text(header) + STRING_SIZE("+++ ");
+
+	/* Handle mnemonic prefixes, such as "b/" and "w/". */
+	return box_text(header) + STRING_SIZE("+++ b/");
 }
 
 enum request
 diff_common_edit(struct view *view, enum request request, struct line *line)
 {
-	const char *file = diff_get_pathname(view, line);
+	const char *file;
 	char path[SIZEOF_STR];
-	bool has_path = file && string_format(path, "%s%s", repo.cdup, file);
+	unsigned int lineno;
 
-	if (has_path && access(path, R_OK)) {
+	if (line->type == LINE_DIFF_STAT) {
+		file = view->env->file;
+		lineno = view->env->lineno;
+	} else {
+		file = diff_get_pathname(view, line);
+		lineno = diff_get_lineno(view, line);
+	}
+
+	if (file && string_format(path, "%s%s", repo.cdup, file) && access(path, R_OK)) {
 		report("Failed to open file: %s", file);
 		return REQ_NONE;
 	}
 
-	open_editor(file, diff_get_lineno(view, line));
+	open_editor(file, lineno);
 	return REQ_NONE;
 }
 
@@ -494,6 +605,17 @@ void
 diff_common_select(struct view *view, struct line *line, const char *changes_msg)
 {
 	if (line->type == LINE_DIFF_STAT) {
+		struct line *header = diff_find_header_from_stat(view, line);
+		if (header) {
+			const char *file = diff_get_pathname(view, header);
+
+			if (file) {
+				string_format(view->env->file, "%s", file);
+				view->env->lineno = view->env->goto_lineno = 0;
+				view->env->blob[0] = 0;
+			}
+		}
+
 		string_format(view->ref, "Press '%s' to jump to file diff",
 			      get_view_key(view, REQ_ENTER));
 	} else {
@@ -521,7 +643,7 @@ diff_select(struct view *view, struct line *line)
 static struct view_ops diff_ops = {
 	"line",
 	argv_env.commit,
-	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_FILE_FILTER | VIEW_REFRESH,
+	VIEW_DIFF_LIKE | VIEW_ADD_DESCRIBE_REF | VIEW_ADD_PAGER_REFS | VIEW_FILE_FILTER | VIEW_REFRESH | VIEW_FLEX_WIDTH,
 	sizeof(struct diff_state),
 	diff_open,
 	diff_read,

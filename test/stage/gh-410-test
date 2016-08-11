@@ -1,0 +1,73 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=12
+
+steps '
+	:save-display status-before.screen
+
+	:5
+	:enter
+	:maximize
+	:save-display unstaged-changes.screen
+
+	:10
+	:stage-update-line
+	:save-display status-after.screen
+'
+
+git_init
+
+test_setup_work_dir()
+{
+	echo "Hello" > hello.txt
+	git add .
+	git_commit -m "first commit"
+	echo "Hello2" >> hello.txt
+}
+
+test_tig status
+
+assert_equals 'status-before.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changes not staged for commit:                                                  
+M hello.txt                                                                     
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+                                                                                
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'unstaged-changes.screen' <<EOF
+ hello.txt | 1 +                                                                
+ 1 file changed, 1 insertion(+)                                                 
+                                                                                
+diff --git a/hello.txt b/hello.txt                                              
+index e965047..7197273 100644                                                   
+--- a/hello.txt                                                                 
++++ b/hello.txt                                                                 
+@@ -1 +1,2 @@                                                                   
+ Hello                                                                          
++Hello2                                                                         
+[stage] Press '<Enter>' to jump to file diff - line 1 of 10                 100%
+EOF
+
+assert_equals 'status-after.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+M hello.txt                                                                     
+Changes not staged for commit:                                                  
+  (no files)                                                                    
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+                                                                                
+                                                                                
+[status] Press u to unstage 'hello.txt' for commit                          100%
+EOF

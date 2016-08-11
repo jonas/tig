@@ -24,11 +24,17 @@ fi
 tests="$(find test/ -name ".test-result" | wc -l)"
 asserts="$(find test/ -name ".test-result" | xargs sed -n '/\[\(OK\|FAIL\)\]/p' | wc -l)"
 failures="$(find test/ -name ".test-result" | xargs grep FAIL | wc -l || true)"
+skipped="$(find test/ -name ".test-skipped" | wc -l || true)"
 
 if [ $failures = 0 ]; then
-	printf "Passed %d assertions in %d tests\n" "$asserts" "$tests"
+	printf "Passed %d assertions in %d tests" "$asserts" "$tests"
 else
-	printf "Failed %d of %d assertions in %d tests\n" "$failures" "$asserts" "$tests"
+	printf "Failed %d of %d assertions in %d tests" "$failures" "$asserts" "$tests"
 fi
 
+if [ $skipped != 0 ]; then
+	printf " (%d skipped)" "$skipped"
+fi
+
+echo
 exit $failures

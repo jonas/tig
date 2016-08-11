@@ -1,0 +1,201 @@
+commit 91912eb97da4f6907015dab41ef9bba315730854
+author Kentaro Wada <www.kentaro.wada@example.com> 1440961292 +0900
+committer Kentaro Wada <www.kentaro.wada@example.com> 1440962158 +0900
+
+    Add zsh completion file for autoload
+
+commit 517b7e0decb2ec30333f045f7605025c0195f895
+author Jonas Fonseca <jonas.fonseca@example.com> 1440369159 -0400
+committer Jonas Fonseca <jonas.fonseca@example.com> 1440925276 +0200
+
+    Refactor DEFINE_ALLOCATOR to use helper method and asserts
+    
+    Move main code to helper method and only keep assertion checks and code
+    that dereferences the passed pointer.
+
+commit 0e6cbc428c16968abccb6cb298f95ddcf3969bc6
+author Sven Wegener <sven.wegener@example.com> 1437039987 +0200
+committer Sven Wegener <sven.wegener@example.com> 1440764705 +0200
+
+    display: factor out separator functions
+    
+    Signed-off-by: Sven Wegener <sven.wegener@example.com>
+
+commit 07b1b4dcbf6a4aae5f842be73d444403e53d488a
+author Jonas Fonseca <jonas.fonseca@example.com> 1440274835 -0400
+committer Jonas Fonseca <jonas.fonseca@example.com> 1440274835 -0400
+
+    Merge pull request #429 from ideal/master
+    
+    Check if mem is NULL in DEFINE_ALLOCATOR
+
+commit e2b39dcda6b1619c15414981d2ce17f32709faa5
+author ideal <idealities@example.com> 1439882656 +0800
+committer ideal <idealities@example.com> 1439882656 +0800
+
+    check if mem is NULL in DEFINE_ALLOCATOR
+
+commit decce5e3ae9073dbd2f11a4bbeb1ecee2a11a42a
+author Jonas Fonseca <jonas.fonseca@example.com> 1433735084 -0400
+committer Jonas Fonseca <jonas.fonseca@example.com> 1433735442 -0400
+
+    Use git_init to initialize the test/stage/gh-410-test repo
+    
+    This should finish this game of whack-a-mole to get the tests passing on
+    Travis.
+
+commit 8894095d3e4c2779d987303b666472a8ae48dc99
+author Jonas Fonseca <jonas.fonseca@example.com> 1428366879 -0400
+committer Jonas Fonseca <jonas.fonseca@example.com> 1428366879 -0400
+
+    Keep unstaged changes view open after an staging command
+    
+    Fix regression where the stage view was closed even if there were more
+    changes remaining after an update.
+    
+    Fixed #399
+
+commit aed7113e075464b8baba41080c93cf89df7ebd6b
+author Jonas Fonseca <jonas.fonseca@example.com> 1427715817 -0400
+committer Jonas Fonseca <jonas.fonseca@example.com> 1427715817 -0400
+
+    When redrawing the readline prompt also update the cursor position
+    
+    In the prompt, moving the cursor back and forth will correctly set the
+    internal cursor position, allowing for editing the input, but the visual
+    cursor was permanently stuck to the end of the line. Fix this by moving
+    the cursor to readline's internal cursor position.
+    
+    Fixes #396
+
+commit c2b2a8e5608e37d8115e4162d82ecc3cdf1041df
+author Jonas Fonseca <jonas.fonseca@example.com> 1422932012 -0500
+committer Jonas Fonseca <jonas.fonseca@example.com> 1422932136 -0500
+
+    Move script helper before usages in the display module
+
+commit 5b701322fd3a3dfffc7cdabf7b66cdfcfaa8fe00
+author Jonas Fonseca <jonas.fonseca@example.com> 1422546269 -0500
+committer Jonas Fonseca <jonas.fonseca@example.com> 1422546269 -0500
+
+    Merge branch 'hashed-refs'
+
+commit 6b143b1fe9679e44e2b79f78088bbddc17b039b6
+author Jonas Fonseca <jonas.fonseca@example.com> 1417710141 -0500
+committer Jonas Fonseca <jonas.fonseca@example.com> 1422546257 -0500
+
+    hashed-refs: Use a hash table as the main data structure for storing refs
+    
+    Fixes #350.
+
+commit a8015ea40fe8d40d92317940b8bd9e06f6c0786c
+author Jonas Fonseca <jonas.fonseca@example.com> 1415458521 -0500
+committer Jonas Fonseca <jonas.fonseca@example.com> 1415458521 -0500
+
+    Unify option_info lookup for normal options and view column options
+
+commit d4d11fae72afa4292a44cb5f159c3fc07912b4c5
+author Jonas Fonseca <jonas.fonseca@example.com> 1412644955 -0400
+committer Jonas Fonseca <jonas.fonseca@example.com> 1412644955 -0400
+
+    Add option to turn off automatic enabling of topo-order
+    
+    This permits to avoid any initial pause during startup due to git-log
+    buffering commits for reordering.
+    
+    References #310
+
+commit bfd137be6ddd4a51604d7e9b4f0cb92674b087b5
+author Tom Greuter <tomgreuter@example.com> 1411469699 +0200
+committer Jonas Fonseca <jonas.fonseca@example.com> 1412165197 -0400
+
+    Add option to install Tig with Homebrew
+
+commit 4028125bc58c727482a909f8275bd4fa4999a4f4
+author Jonas Fonseca <jonas.fonseca@example.com> 1409829591 -0400
+committer Jonas Fonseca <jonas.fonseca@example.com> 1409829591 -0400
+
+    Fix diff context restoring for diff opened directly via 'tig show'
+    
+    The code that allows to jump to a line when opening a view from the
+    command line (e.g. `tig +10`) conflicted with diff context restoring
+    since it always restored using `view->env->lineno` regardless of whether
+    it was the view's first rendering or not. Furthermore, since diff_select
+    sets `view->env->lineno` this lead to strange line jumps.
+    
+    The bug is fixed by using `view->prev_pos` for implementing `+<lineno>`
+    and ensuring that it only happens for the initial view rendering.
+
+commit 7b503675721ef4070bccb6eb5129e3b6abfd49e0
+author Michael Barlow <michaelbarlow7@example.com> 1387061741 +1100
+committer Jonas Fonseca <fonseca@example.com> 1390706924 -0500
+
+    Add mouse support
+
+commit 70c1014900d7f0e6ddaa4d8b4c588870f92bf130
+author Jonas Fonseca <fonseca@example.com> 1349059382 -0400
+committer Jonas Fonseca <fonseca@example.com> 1349059382 -0400
+
+    Refactor stage view title formatting
+
+commit c0cb28f11a6be7d5bc5f6c440a07ceb6ca17e99f
+author Jonas Fonseca <fonseca@example.com> 1346338047 -0400
+committer Jonas Fonseca <fonseca@example.com> 1349054302 -0400
+
+    [GH #83] WIP: main view lazy navigation mode prototype
+
+commit 1663d66a25ee1672d554e3080284444cc8e5a2de
+author P. Sadik <psadik@example.com> 1318486605 +0530
+committer Jonas Fonseca <jonas.fonseca@example.com> 1321728051 -0500
+
+    Create and use dup() of STDIN_FILENO instead of STDIN_FILENO itself
+    
+    Otheriwse, issues can pop up, since we close io->pipe in io_done(); and
+    in Pager mode io->pipe = STDIN_FILENO.
+    
+    Signed-off-by: Jonas Fonseca <fonseca@example.com>
+
+commit 0e324883ecdfcaade6061d518541572c327ae33a
+author Jonathan Neuschäfer <j.neuschaefer@example.com> 1284598870 -0400
+committer Jonas Fonseca <fonseca@example.com> 1284598870 -0400
+
+    Don't show out-of-sight tildes
+    
+    Signed-off-by: Jonas Fonseca <fonseca@example.com>
+
+commit 7630a8f859e723186a1e411edd304a90d7b7f439
+author Pierre Habouzit <madcoder@example.com> 1277713577 +0200
+committer Jonas Fonseca <fonseca@example.com> 1277777826 -0400
+
+    Add an option to ignore unknown directories contents in the status view
+    
+    Similar to git ls-files --directory
+    
+    Signed-off-by: Jonas Fonseca <fonseca@example.com>
+
+commit 9cb30bba43afa408be71233978a98bd03b468877
+author Jonas Fonseca <fonseca@example.com> 1232230221 +0100
+committer Jonas Fonseca <fonseca@example.com> 1232230484 +0100
+
+    Fix another regression from the dirty flag changes causing flickering
+    
+    Use redraw_view_from() instead of redraw_view() to avoid excessive calls
+    to wclear().
+
+commit b5a10859e8011fb0021f7d80f4565c6e587f57c6
+author Jonas Fonseca <fonseca@example.com> 1191101008 +0200
+committer Jonas Fonseca <fonseca@example.com> 1191101008 +0200
+
+    tig-0.10.git
+
+commit 2b42e5d686833a9f45020dfeb8148832d0ad30f7
+author Jonas Fonseca <fonseca@example.com> 1158013362 +0200
+committer Jonas Fonseca <fonseca@example.com> 1158013362 +0200
+
+    Only split the tree view when the tree view is visible
+
+commit 800a900c3eb2df114a30417537e7f3e9e47d5ad7
+author Jonas Fonseca <fonseca@example.com> 1144687141 +0200
+committer Jonas Fonseca <fonseca@example.com> 1144687141 +0200
+
+    Initial commit

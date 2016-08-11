@@ -1,0 +1,59 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=16
+
+steps '
+	:save-display before-rm-file.screen
+	:/e/f
+	:exec @rm %(file)
+	:0
+	:save-display after-rm-file.screen
+'
+
+tigrc <<EOF
+set vertical-split = no
+EOF
+
+in_work_dir create_dirty_workdir
+
+work_dir="$work_dir/e"
+test_tig status
+
+assert_equals 'before-rm-file.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changes not staged for commit:                                                  
+M .j                                                                            
+M a                                                                             
+M b.c                                                                           
+M e/f                                                                           
+M g h                                                                           
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+                                                                                
+                                                                                
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'after-rm-file.screen' <<EOF
+On branch master                                                                
+Changes to be committed:                                                        
+  (no files)                                                                    
+Changes not staged for commit:                                                  
+M .j                                                                            
+M a                                                                             
+M b.c                                                                           
+D e/f                                                                           
+M g h                                                                           
+Untracked files:                                                                
+  (no files)                                                                    
+                                                                                
+                                                                                
+                                                                                
+[status] Nothing to update                                                  100%
+EOF

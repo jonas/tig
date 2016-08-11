@@ -33,7 +33,7 @@ struct log_state {
 static inline void
 log_copy_rev(struct view *view, struct line *line)
 {
-	const char *text = line->data;
+	const char *text = box_text(line);
 	size_t offset = get_graph_indent(text);
 
 	string_copy_rev_from_commit_line(view->ref, text + offset);
@@ -77,7 +77,7 @@ log_request(struct view *view, enum request request, struct line *line)
 {
 	switch (request) {
 	case REQ_REFRESH:
-		load_refs(TRUE);
+		load_refs(true);
 		refresh_view(view);
 		return REQ_NONE;
 
@@ -92,7 +92,7 @@ log_request(struct view *view, enum request request, struct line *line)
 }
 
 static bool
-log_read(struct view *view, struct buffer *buf)
+log_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct line *line = NULL;
 	enum line_type type;
@@ -102,7 +102,7 @@ log_read(struct view *view, struct buffer *buf)
 	char *data;
 
 	if (!buf)
-		return TRUE;
+		return true;
 
 	data = buf->data;
 	commit = strstr(data, "commit ");
@@ -113,34 +113,34 @@ log_read(struct view *view, struct buffer *buf)
 	len = strlen(data + state->graph_indent);
 
 	if (type == LINE_COMMIT)
-		state->commit_title_read = TRUE;
+		state->commit_title_read = true;
 	else if (state->commit_title_read && len < 1) {
-		state->commit_title_read = FALSE;
-		state->after_commit_header = TRUE;
+		state->commit_title_read = false;
+		state->after_commit_header = true;
 	} else if (state->after_commit_header && len < 1) {
-		state->after_commit_header = FALSE;
-		state->reading_diff_stat = TRUE;
+		state->after_commit_header = false;
+		state->reading_diff_stat = true;
 	} else if (state->reading_diff_stat) {
 		line = diff_common_add_diff_stat(view, data, state->graph_indent);
 		if (line) {
 			if (state->graph_indent)
 				line->graph_indent = 1;
-			return TRUE;
+			return true;
 		}
-		state->reading_diff_stat = FALSE;
+		state->reading_diff_stat = false;
 	}
 
 	if (!pager_common_read(view, data, type, &line))
-		return FALSE;
+		return false;
 	if (line && state->graph_indent)
 		line->graph_indent = 1;
-	return TRUE;
+	return true;
 }
 
 static struct view_ops log_ops = {
 	"line",
 	argv_env.head,
-	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER | VIEW_LOG_LIKE | VIEW_REFRESH,
+	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER | VIEW_LOG_LIKE | VIEW_REFRESH | VIEW_FLEX_WIDTH,
 	sizeof(struct log_state),
 	log_open,
 	log_read,

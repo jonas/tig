@@ -12,6 +12,7 @@
  */
 
 #include "tig/tig.h"
+#include "tig/repo.h"
 #include "tig/view.h"
 #include "tig/draw.h"
 #include "tig/display.h"
@@ -104,7 +105,7 @@ prompt_default_handler(struct input *input, struct key *key)
 	case KEY_RETURN:
 	case KEY_ENTER:
 	case '\n':
-		return *input->buf ? INPUT_STOP : INPUT_CANCEL;
+		return *input->buf || input->allow_empty ? INPUT_STOP : INPUT_CANCEL;
 
 	case KEY_BACKSPACE:
 		return *input->buf ? INPUT_DELETE : INPUT_CANCEL;
@@ -133,10 +134,10 @@ bool
 prompt_yesno(const char *prompt)
 {
 	char prompt2[SIZEOF_STR];
-	struct input input = { prompt_yesno_handler, NULL };
+	struct input input = { prompt_yesno_handler, false, NULL };
 
 	if (!string_format(prompt2, "%s [Yy/Nn]", prompt))
-		return FALSE;
+		return false;
 
 	return !!prompt_input(prompt2, &input);
 }
@@ -165,10 +166,11 @@ read_prompt_handler(struct input *input, struct key *key)
 }
 
 char *
-read_prompt_incremental(const char *prompt, bool edit_mode, input_handler handler, void *data)
+read_prompt_incremental(const char *prompt, bool edit_mode, bool allow_empty, input_handler handler, void *data)
 {
 	static struct incremental_input incremental = { { read_prompt_handler } };
 
+	incremental.input.allow_empty = allow_empty;
 	incremental.input.data = data;
 	incremental.handler = handler;
 	incremental.edit_mode = edit_mode;
@@ -232,6 +234,7 @@ readline_action_generator(const char *text, int state)
 		"bind",
 		"set",
 		"toggle",
+		"goto",
 		"save-display",
 		"save-options",
 		"exec",
@@ -472,7 +475,7 @@ prompt_init(void)
 char *
 read_prompt(const char *prompt)
 {
-	return read_prompt_incremental(prompt, TRUE, NULL, NULL);
+	return read_prompt_incremental(prompt, true, false, NULL, NULL);
 }
 
 void
@@ -551,8 +554,8 @@ find_arg(const char *argv[], const char *arg)
 
 	for (i = 0; argv && argv[i]; i++)
 		if (!strcmp(argv[i], arg))
-			return TRUE;
-	return FALSE;
+			return true;
+	return false;
 }
 
 static enum status_code
@@ -628,7 +631,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 
 	} else if (!strcmp(toggle->type, "const char **")) {
 		const char ***opt = toggle->value;
-		bool found = TRUE;
+		bool found = true;
 		int i;
 
 		if (argv_size(argv) <= 2) {
@@ -639,7 +642,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 
 		for (i = 2; argv[i]; i++) {
 			if (!find_arg(*opt, argv[i])) {
-				found = FALSE;
+				found = false;
 				break;
 			}
 		}
@@ -718,7 +721,7 @@ prompt_update_display(enum view_flag flags)
 
 	if (flags & VIEW_RESET_DISPLAY) {
 		resize_display();
-		redraw_display(TRUE);
+		redraw_display(true);
 	}
 
 	foreach_displayed_view(view, i) {
@@ -751,28 +754,7 @@ run_prompt_command(struct view *view, const char *argv[])
 			report("Unable to parse '%s' as a line number", cmd);
 		}
 	} else if (iscommit(cmd)) {
-		int lineno;
-
-		if (!(view->ops->column_bits & view_column_bit(ID))) {
-			report("Jumping to commits is not supported by the %s view", view->name);
-			return REQ_NONE;
-		}
-
-		for (lineno = 0; lineno < view->lines; lineno++) {
-			struct view_column_data column_data = {0};
-			struct line *line = &view->line[lineno];
-
-			if (view->ops->get_column_data(view, line, &column_data) &&
-			    column_data.id &&
-			    !strncasecmp(column_data.id, cmd, cmdlen)) {
-				string_ncopy(view->env->search, cmd, cmdlen);
-				select_view_line(view, lineno);
-				report_clear();
-				return REQ_NONE;
-			}
-		}
-
-		report("Unable to find commit '%s'", view->env->search);
+		goto_id(view, cmd, true, true);
 		return REQ_NONE;
 
 	} else if (cmdlen > 1 && (cmd[0] == '/' || cmd[0] == '?')) {
@@ -787,7 +769,7 @@ run_prompt_command(struct view *view, const char *argv[])
 			return cmd[0] == '/' ? REQ_FIND_NEXT : REQ_FIND_PREV;
 
 		string_ncopy(view->env->search, search + 1, strlen(search + 1));
-		return cmd[0] == '/' ? REQ_SEARCH : REQ_SEARCH_BACK;
+		return cmd[0] == '/' ? REQ_FIND_NEXT : REQ_FIND_PREV;
 
 	} else if (cmdlen > 1 && cmd[0] == '!') {
 		struct view *next = &pager_view;
@@ -795,7 +777,7 @@ run_prompt_command(struct view *view, const char *argv[])
 
 		/* Trim the leading '!'. */
 		argv[0] = cmd + 1;
-		copied = argv_format(view->env, &next->argv, argv, FALSE, TRUE);
+		copied = argv_format(view->env, &next->argv, argv, false, true);
 		argv[0] = cmd;
 
 		if (!copied) {
@@ -809,6 +791,13 @@ run_prompt_command(struct view *view, const char *argv[])
 			next->dir = NULL;
 			open_pager_view(view, OPEN_PREPARED | OPEN_WITH_STDERR);
 		}
+
+	} else if (!strcmp(cmd, "goto")) {
+		if (!argv[1] || !strlen(argv[1]))
+			report("goto requires an argument");
+		else
+			goto_id(view, argv[1], true, true);
+		return REQ_NONE;
 
 	} else if (!strcmp(cmd, "save-display")) {
 		const char *path = argv[1] ? argv[1] : "tig-display.txt";
@@ -828,13 +817,19 @@ run_prompt_command(struct view *view, const char *argv[])
 			report("Saved options to %s", path);
 
 	} else if (!strcmp(cmd, "exec")) {
+		// argv may be allocated and mutations below will cause
+		// free() to error out so backup and restore. :(
+		const char *cmd = argv[1];
 		struct run_request req = { view->keymap, {0}, argv + 1 };
 		enum status_code code = parse_run_request_flags(&req.flags, argv + 1);
 
 		if (code != SUCCESS) {
+			argv[1] = cmd;
 			report("Failed to execute command: %s", get_status_message(code));
 		} else {
-			return exec_run_request(view, &req);
+			request = exec_run_request(view, &req);
+			argv[1] = cmd;
+			return request;
 		}
 
 	} else if (!strcmp(cmd, "toggle")) {
@@ -900,7 +895,7 @@ run_prompt_command(struct view *view, const char *argv[])
 			if (!strcmp(cmd, "color"))
 				init_colors();
 			resize_display();
-			redraw_display(TRUE);
+			redraw_display(true);
 		}
 
 	}
@@ -911,7 +906,7 @@ enum request
 exec_run_request(struct view *view, struct run_request *req)
 {
 	const char **argv = NULL;
-	bool confirmed = FALSE;
+	bool confirmed = false;
 	enum request request = REQ_NONE;
 	char cmd[SIZEOF_STR];
 	const char *req_argv[SIZEOF_ARG];
@@ -919,7 +914,7 @@ exec_run_request(struct view *view, struct run_request *req)
 
 	if (!argv_to_string(req->argv, cmd, sizeof(cmd), " ")
 	    || !argv_from_string_no_quotes(req_argv, &req_argc, cmd)
-	    || !argv_format(view->env, &argv, req_argv, FALSE, TRUE)) {
+	    || !argv_format(view->env, &argv, req_argv, false, true)) {
 		report("Failed to format arguments");
 		return REQ_NONE;
 	}
@@ -937,13 +932,13 @@ exec_run_request(struct view *view, struct run_request *req)
 			if (argv_to_string_quoted(argv, cmd, sizeof(cmd), " ") &&
 			    string_format(prompt, "Run `%s`%s?", cmd, and_exit) &&
 			    prompt_yesno(prompt)) {
-				confirmed = TRUE;
+				confirmed = true;
 			}
 		}
 
 		if (confirmed)
-			open_external_viewer(argv, NULL, req->flags.silent,
-					     !req->flags.exit, FALSE, "");
+			open_external_viewer(argv, repo.cdup, req->flags.silent,
+					     !req->flags.exit, false, "");
 	}
 
 	if (argv)

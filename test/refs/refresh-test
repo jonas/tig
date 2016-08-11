@@ -2,7 +2,6 @@
 
 . libtest.sh
 . libgit.sh
-. "$source_dir/util.sh"
 
 export LINES=18
 
@@ -18,28 +17,9 @@ steps '
 	:save-display refs-after-delete-reset.screen
 '
 
-git_clone 'repo-one'
-
-mp_repo="$HOME/max-power-repo"
-create_repo_max_power "$mp_repo"
-
-test_setup_work_dir()
-{
-	# Capture std{out,err} so it doesn't pollute the test output
-	git remote add -f max-power "$mp_repo"
-
-	git tag v1.1 HEAD~12
-	git tag v1.1.1 HEAD~9
-	git tag v2.0 HEAD~4
-	git tag v2.0.1 HEAD~3
-
-	git branch v1.0 v1.0
-	git branch v1.1-fixes v1.1
-	git branch -q mp/feature max-power/mp/feature
-
-	git branch feature-1 HEAD~10
-	git branch feature-2 HEAD~20
-}
+in_work_dir create_repo_from_tgz "$base_dir/files/refs-repo.tgz"
+in_work_dir git branch feature-1 HEAD~10
+in_work_dir git branch feature-2 HEAD~20
 
 test_tig refs
 
@@ -49,18 +29,18 @@ assert_equals 'refs-initial.screen' <<EOF
 2009-10-18 22:14 Max Power     feature-2            Commit 6 E                  
 2010-01-12 01:56 Max Power     feature-1            Commit 8 E                  
 2009-02-13 23:31 Max Power     mp/feature           WIP: feature                
-2009-12-26 01:11 作者          v1.1-fixes           Commit 8 C                
+2009-12-26 01:11 作者          r1.1.2               Commit 8 C                  
+2009-12-26 01:11 作者          r1.1.x               Commit 8 C                  
+2009-12-17 12:49 René Lévesque r1.0                 Commit 8 B                  
 2010-04-07 05:37 Max Power     origin/master        Commit 10 E                 
 2010-04-07 05:37 Max Power     max-power/master     Commit 10 E                 
 2009-02-13 23:31 Max Power     max-power/mp/feature WIP: feature                
 2009-11-30 12:05 Max Power     max-power/mp/gh-123  Commit 7 E                  
 2010-04-07 05:37 Max Power     origin/HEAD          Commit 10 E                 
 2010-01-12 01:56 Max Power     mp/good              Commit 8 E                  
-2010-03-12 16:31 René Lévesque v2.0.1               Commit 10 B               
+2010-03-12 16:31 René Lévesque v2.0.1               Commit 10 B                 
 2010-03-04 04:09 A. U. Thor    v2.0                 Commit 10 A                 
-2010-01-20 14:18 A. U. Thor    v1.1.1               Commit 9 A                  
-2009-12-26 01:11 作者          v1.1                 Commit 8 C                
-[refs] All references                                                        94%
+[refs] All references                                                        84%
 EOF
 
 assert_equals 'refs-after-move-add.screen' <<EOF
@@ -70,17 +50,17 @@ assert_equals 'refs-after-move-add.screen' <<EOF
 2009-10-18 22:14 Max Power     feature-2            Commit 6 E                  
 2010-01-12 01:56 Max Power     feature-one          Commit 8 E                  
 2009-02-13 23:31 Max Power     mp/feature           WIP: feature                
-2009-12-26 01:11 作者          v1.1-fixes           Commit 8 C                
+2009-12-26 01:11 作者          r1.1.2               Commit 8 C                  
+2009-12-26 01:11 作者          r1.1.x               Commit 8 C                  
+2009-12-17 12:49 René Lévesque r1.0                 Commit 8 B                  
 2010-04-07 05:37 Max Power     origin/master        Commit 10 E                 
 2010-04-07 05:37 Max Power     max-power/master     Commit 10 E                 
 2009-02-13 23:31 Max Power     max-power/mp/feature WIP: feature                
 2009-11-30 12:05 Max Power     max-power/mp/gh-123  Commit 7 E                  
 2010-04-07 05:37 Max Power     origin/HEAD          Commit 10 E                 
 2010-01-12 01:56 Max Power     mp/good              Commit 8 E                  
-2010-03-12 16:31 René Lévesque v2.0.1               Commit 10 B               
-2010-03-04 04:09 A. U. Thor    v2.0                 Commit 10 A                 
-2010-01-20 14:18 A. U. Thor    v1.1.1               Commit 9 A                  
-[refs] All references                                                        88%
+2010-03-12 16:31 René Lévesque v2.0.1               Commit 10 B                 
+[refs] All references                                                        80%
 EOF
 
 assert_equals 'refs-after-delete-reset.screen' <<EOF
@@ -89,16 +69,16 @@ assert_equals 'refs-after-delete-reset.screen' <<EOF
 2010-04-07 05:37 Max Power     feature-3            Commit 10 E                 
 2010-02-23 15:46 Max Power     feature-one          Commit 9 E                  
 2009-02-13 23:31 Max Power     mp/feature           WIP: feature                
-2009-12-26 01:11 作者          v1.1-fixes           Commit 8 C                
+2009-12-26 01:11 作者          r1.1.2               Commit 8 C                  
+2009-12-26 01:11 作者          r1.1.x               Commit 8 C                  
+2009-12-17 12:49 René Lévesque r1.0                 Commit 8 B                  
 2010-04-07 05:37 Max Power     origin/master        Commit 10 E                 
 2010-04-07 05:37 Max Power     max-power/master     Commit 10 E                 
 2009-02-13 23:31 Max Power     max-power/mp/feature WIP: feature                
 2009-11-30 12:05 Max Power     max-power/mp/gh-123  Commit 7 E                  
 2010-04-07 05:37 Max Power     origin/HEAD          Commit 10 E                 
 2010-01-12 01:56 Max Power     mp/good              Commit 8 E                  
-2010-03-12 16:31 René Lévesque v2.0.1               Commit 10 B               
+2010-03-12 16:31 René Lévesque v2.0.1               Commit 10 B                 
 2010-03-04 04:09 A. U. Thor    v2.0                 Commit 10 A                 
-2010-01-20 14:18 A. U. Thor    v1.1.1               Commit 9 A                  
-2009-12-26 01:11 作者          v1.1                 Commit 8 C                
-[refs] All references                                                        94%
+[refs] All references                                                        84%
 EOF

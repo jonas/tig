@@ -25,7 +25,7 @@ static const char *status_messages[] = {
 };
 
 static char status_custom_message[SIZEOF_STR];
-static bool status_success_message = FALSE;
+static bool status_success_message = false;
 
 const char *
 get_status_message(enum status_code code)
@@ -33,7 +33,7 @@ get_status_message(enum status_code code)
 	if (code == SUCCESS) {
 		const char *message = status_success_message ? status_custom_message : "";
 
-		status_success_message = FALSE;
+		status_success_message = false;
 		return message;
 	}
 	if (code == ERROR_CUSTOM_MESSAGE)
@@ -46,8 +46,8 @@ error(const char *msg, ...)
 {
 	int retval;
 
-	FORMAT_BUFFER(status_custom_message, sizeof(status_custom_message), msg, retval, TRUE);
-	status_success_message = FALSE;
+	FORMAT_BUFFER(status_custom_message, sizeof(status_custom_message), msg, retval, true);
+	status_success_message = false;
 
 	return ERROR_CUSTOM_MESSAGE;
 }
@@ -57,8 +57,8 @@ success(const char *msg, ...)
 {
 	int retval;
 
-	FORMAT_BUFFER(status_custom_message, sizeof(status_custom_message), msg, retval, TRUE);
-	status_success_message = TRUE;
+	FORMAT_BUFFER(status_custom_message, sizeof(status_custom_message), msg, retval, true);
+	status_success_message = true;
 
 	return SUCCESS;
 }
@@ -98,53 +98,100 @@ die(const char *err, ...)
  */
 
 int
+time_now(struct timeval *timeval, struct timezone *tz)
+{
+	static bool check_env = true;
+
+	if (check_env) {
+		const char *time;
+
+		if ((time = getenv("TEST_TIME_NOW"))) {
+			memset(timeval, 0, sizeof(*timeval));
+			if (tz)
+				memset(tz, 0, sizeof(*tz));
+			timeval->tv_sec = atoi(time);
+			return 0;
+		}
+
+		check_env = false;
+	}
+
+	return gettimeofday(timeval, tz);
+}
+
+int
 timecmp(const struct time *t1, const struct time *t2)
 {
 	return t1->sec - t2->sec;
 }
 
+struct reldate {
+	const char *name;
+	const char compact_symbol;
+	int in_seconds, interval;
+};
+
+static const struct reldate reldate[] = {
+	{ "second", 's', 1,			 60 * 2 },
+	{ "minute", 'M', 60,			 60 * 60 * 2 },
+	{ "hour",   'h', 60 * 60,		 60 * 60 * 24 * 2 },
+	{ "day",    'd', 60 * 60 * 24,		 60 * 60 * 24 * 7 * 2 },
+	{ "week",   'w', 60 * 60 * 24 * 7,	 60 * 60 * 24 * 7 * 5 },
+	{ "month",  'm', 60 * 60 * 24 * 30,	 60 * 60 * 24 * 365 },
+	{ "year",   'y', 60 * 60 * 24 * 365,  0 },
+};
+
+static const char *
+get_relative_date(const struct time *time, char *buf, size_t buflen, bool compact)
+{
+	struct timeval now;
+	time_t timestamp = time->sec + time->tz;
+	time_t seconds;
+	int i;
+
+	if (time_now(&now, NULL))
+		return "";
+
+	seconds = now.tv_sec < timestamp ? timestamp - now.tv_sec : now.tv_sec - timestamp;
+
+	for (i = 0; i < ARRAY_SIZE(reldate); i++) {
+		if (seconds >= reldate[i].interval && reldate[i].interval)
+			continue;
+
+		seconds /= reldate[i].in_seconds;
+		if (compact) {
+			if (!string_nformat(buf, buflen, NULL, "%s%ld%c",
+				    now.tv_sec >= timestamp ? "" : "-",
+				    seconds, reldate[i].compact_symbol))
+				return "";
+
+		} else if (!string_nformat(buf, buflen, NULL, "%ld %s%s %s",
+				    seconds, reldate[i].name,
+				    seconds > 1 ? "s" : "",
+				    now.tv_sec >= timestamp ? "ago" : "ahead"))
+			return "";
+
+		return buf;
+	}
+
+	return "";
+}
+
 const char *
-mkdate(const struct time *time, enum date date)
+mkdate(const struct time *time, enum date date, bool local, const char *custom_format)
 {
 	static char buf[STRING_SIZE("2006-04-29 14:21") + 1];
-	static const struct enum_map_entry reldate[] = {
-		{ "second", 1,			60 * 2 },
-		{ "minute", 60,			60 * 60 * 2 },
-		{ "hour",   60 * 60,		60 * 60 * 24 * 2 },
-		{ "day",    60 * 60 * 24,	60 * 60 * 24 * 7 * 2 },
-		{ "week",   60 * 60 * 24 * 7,	60 * 60 * 24 * 7 * 5 },
-		{ "month",  60 * 60 * 24 * 30,	60 * 60 * 24 * 365 },
-		{ "year",   60 * 60 * 24 * 365, 0 },
-	};
 	struct tm tm;
 	const char *format;
 
 	if (!date || !time || !time->sec)
 		return "";
 
-	if (date == DATE_RELATIVE) {
-		struct timeval now;
-		time_t date = time->sec + time->tz;
-		time_t seconds;
-		int i;
+	if (date == DATE_RELATIVE || date == DATE_RELATIVE_COMPACT)
+		return get_relative_date(time, buf, sizeof(buf),
+					 date == DATE_RELATIVE_COMPACT);
 
-		gettimeofday(&now, NULL);
-		seconds = now.tv_sec < date ? date - now.tv_sec : now.tv_sec - date;
-		for (i = 0; i < ARRAY_SIZE(reldate); i++) {
-			if (seconds >= reldate[i].value && reldate[i].value)
-				continue;
-
-			seconds /= reldate[i].namelen;
-			if (!string_format(buf, "%ld %s%s %s",
-					   seconds, reldate[i].name,
-					   seconds > 1 ? "s" : "",
-					   now.tv_sec >= date ? "ago" : "ahead"))
-				break;
-			return buf;
-		}
-	}
-
-	if (date == DATE_LOCAL) {
+	if (local) {
 		time_t date = time->sec + time->tz;
 		localtime_r(&date, &tm);
 	}
@@ -152,7 +199,9 @@ mkdate(const struct time *time, enum date date)
 		gmtime_r(&time->sec, &tm);
 	}
 
-	format = date == DATE_SHORT ? "%Y-%m-%d" : "%Y-%m-%d %H:%M";
+	format = date != DATE_CUSTOM
+	       ? "%Y-%m-%d %H:%M"
+	       : custom_format ? custom_format : "%Y-%m-%d";
 	return strftime(buf, sizeof(buf), format, &tm) ? buf : NULL;
 }
 
@@ -320,6 +369,35 @@ mkstatus(const char status, enum status_label label)
 
 	default_label[0] = status;
 	return default_label;
+}
+
+/*
+ * Allocation helper.
+ */
+
+void *
+chunk_allocator(void *mem, size_t type_size, size_t chunk_size, size_t size, size_t increase)
+{
+	size_t num_chunks = (size + chunk_size - 1) / chunk_size;
+	size_t num_chunks_new = (size + increase + chunk_size - 1) / chunk_size;
+
+	if (mem == NULL || num_chunks != num_chunks_new) {
+		size_t newsize = num_chunks_new * chunk_size * type_size;
+		void *tmp = realloc(mem, newsize);
+
+		if (!tmp)
+			return NULL;
+
+		if (num_chunks_new > num_chunks) {
+			size_t oldsize = num_chunks * chunk_size * type_size;
+
+			memset(tmp + oldsize, 0, newsize - oldsize);
+		}
+
+		return tmp;
+	}
+
+	return mem;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

@@ -1,0 +1,207 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export TEST_TIME_NOW=1441051553
+export LINES=27
+
+tigrc <<EOF
+set vertical-split = no
+EOF
+
+steps '
+	:save-display default-date.screen
+                      
+	:toggle date-local  
+	:save-display local-date.screen
+	:toggle date-local
+                      
+	:toggle date  
+	:save-display relative-date.screen
+                      
+	:toggle date  
+	:save-display relative-compact-date.screen
+                      
+	:toggle date  
+	:save-display short-date.screen
+                      
+	:toggle date  
+	:save-display no-date.screen
+'
+
+test_tig --pretty=raw < "$source_dir/$test.in"
+
+assert_equals 'default-date.screen' <<EOF
+2015-08-31 04:01 Kentaro Wada        Add zsh completion file for autoload       
+2015-08-23 18:32 Jonas Fonseca       Refactor DEFINE_ALLOCATOR to use helper met
+2015-07-16 11:46 Sven Wegener        display: factor out separator functions    
+2015-08-22 16:20 Jonas Fonseca       Merge pull request #429 from ideal/master  
+2015-08-18 15:24 ideal               check if mem is NULL in DEFINE_ALLOCATOR   
+2015-06-07 23:44 Jonas Fonseca       Use git_init to initialize the test/stage/g
+2015-04-06 20:34 Jonas Fonseca       Keep unstaged changes view open after an st
+2015-03-30 07:43 Jonas Fonseca       When redrawing the readline prompt also upd
+2015-02-02 21:53 Jonas Fonseca       Move script helper before usages in the dis
+2015-01-29 10:44 Jonas Fonseca       Merge branch 'hashed-refs'                 
+2014-12-04 11:22 Jonas Fonseca       hashed-refs: Use a hash table as the main d
+2014-11-08 09:55 Jonas Fonseca       Unify option_info lookup for normal options
+2014-10-06 21:22 Jonas Fonseca       Add option to turn off automatic enabling o
+2014-09-23 12:54 Tom Greuter         Add option to install Tig with Homebrew    
+2014-09-04 07:19 Jonas Fonseca       Fix diff context restoring for diff opened 
+2013-12-15 09:55 Michael Barlow      Add mouse support                          
+2012-09-30 22:43 Jonas Fonseca       Refactor stage view title formatting       
+2012-08-30 10:47 Jonas Fonseca       [GH #83] WIP: main view lazy navigation mod
+2011-10-13 11:46 P. Sadik            Create and use dup() of STDIN_FILENO instea
+2010-09-15 21:01 Jonathan Neuschäfer Don't show out-of-sight tildes             
+2010-06-28 10:26 Pierre Habouzit     Add an option to ignore unknown directories
+2009-01-17 23:10 Jonas Fonseca       Fix another regression from the dirty flag 
+2007-09-29 23:23 Jonas Fonseca       tig-0.10.git                               
+2006-09-12 00:22 Jonas Fonseca       Only split the tree view when the tree view
+2006-04-10 18:39 Jonas Fonseca       Initial commit                             
+[main] 91912eb97da4f6907015dab41ef9bba315730854 - commit 1 of 25            100%
+EOF
+
+assert_equals 'local-date.screen' <<EOF
+2015-08-30 19:01 Kentaro Wada        Add zsh completion file for autoload       
+2015-08-23 22:32 Jonas Fonseca       Refactor DEFINE_ALLOCATOR to use helper met
+2015-07-16 09:46 Sven Wegener        display: factor out separator functions    
+2015-08-22 20:20 Jonas Fonseca       Merge pull request #429 from ideal/master  
+2015-08-18 07:24 ideal               check if mem is NULL in DEFINE_ALLOCATOR   
+2015-06-08 03:44 Jonas Fonseca       Use git_init to initialize the test/stage/g
+2015-04-07 00:34 Jonas Fonseca       Keep unstaged changes view open after an st
+2015-03-30 11:43 Jonas Fonseca       When redrawing the readline prompt also upd
+2015-02-03 02:53 Jonas Fonseca       Move script helper before usages in the dis
+2015-01-29 15:44 Jonas Fonseca       Merge branch 'hashed-refs'                 
+2014-12-04 16:22 Jonas Fonseca       hashed-refs: Use a hash table as the main d
+2014-11-08 14:55 Jonas Fonseca       Unify option_info lookup for normal options
+2014-10-07 01:22 Jonas Fonseca       Add option to turn off automatic enabling o
+2014-09-23 10:54 Tom Greuter         Add option to install Tig with Homebrew    
+2014-09-04 11:19 Jonas Fonseca       Fix diff context restoring for diff opened 
+2013-12-14 22:55 Michael Barlow      Add mouse support                          
+2012-10-01 02:43 Jonas Fonseca       Refactor stage view title formatting       
+2012-08-30 14:47 Jonas Fonseca       [GH #83] WIP: main view lazy navigation mod
+2011-10-13 06:16 P. Sadik            Create and use dup() of STDIN_FILENO instea
+2010-09-16 01:01 Jonathan Neuschäfer Don't show out-of-sight tildes             
+2010-06-28 08:26 Pierre Habouzit     Add an option to ignore unknown directories
+2009-01-17 22:10 Jonas Fonseca       Fix another regression from the dirty flag 
+2007-09-29 21:23 Jonas Fonseca       tig-0.10.git                               
+2006-09-11 22:22 Jonas Fonseca       Only split the tree view when the tree view
+2006-04-10 16:39 Jonas Fonseca       Initial commit                             
+[main] 91912eb97da4f6907015dab41ef9bba315730854 - commit 1 of 25            100%
+EOF
+
+assert_equals 'relative-date.screen' <<EOF
+ 25 hours ago Kentaro Wada        Add zsh completion file for autoload          
+   7 days ago Jonas Fonseca       Refactor DEFINE_ALLOCATOR to use helper method
+  1 month ago Sven Wegener        display: factor out separator functions       
+   8 days ago Jonas Fonseca       Merge pull request #429 from ideal/master     
+  13 days ago ideal               check if mem is NULL in DEFINE_ALLOCATOR      
+ 2 months ago Jonas Fonseca       Use git_init to initialize the test/stage/gh-4
+ 4 months ago Jonas Fonseca       Keep unstaged changes view open after an stagi
+ 5 months ago Jonas Fonseca       When redrawing the readline prompt also update
+ 6 months ago Jonas Fonseca       Move script helper before usages in the displa
+ 7 months ago Jonas Fonseca       Merge branch 'hashed-refs'                    
+ 9 months ago Jonas Fonseca       hashed-refs: Use a hash table as the main data
+ 9 months ago Jonas Fonseca       Unify option_info lookup for normal options an
+10 months ago Jonas Fonseca       Add option to turn off automatic enabling of t
+11 months ago Tom Greuter         Add option to install Tig with Homebrew       
+12 months ago Jonas Fonseca       Fix diff context restoring for diff opened dir
+   1 year ago Michael Barlow      Add mouse support                             
+  2 years ago Jonas Fonseca       Refactor stage view title formatting          
+  3 years ago Jonas Fonseca       [GH #83] WIP: main view lazy navigation mode p
+  3 years ago P. Sadik            Create and use dup() of STDIN_FILENO instead o
+  4 years ago Jonathan Neuschäfer Don't show out-of-sight tildes                
+  5 years ago Pierre Habouzit     Add an option to ignore unknown directories co
+  6 years ago Jonas Fonseca       Fix another regression from the dirty flag cha
+  7 years ago Jonas Fonseca       tig-0.10.git                                  
+  8 years ago Jonas Fonseca       Only split the tree view when the tree view is
+  9 years ago Jonas Fonseca       Initial commit                                
+[main] 91912eb97da4f6907015dab41ef9bba315730854 - commit 1 of 25            100%
+EOF
+
+assert_equals 'relative-compact-date.screen' <<EOF
+25h Kentaro Wada        Add zsh completion file for autoload                    
+7d  Jonas Fonseca       Refactor DEFINE_ALLOCATOR to use helper method and asser
+1m  Sven Wegener        display: factor out separator functions                 
+8d  Jonas Fonseca       Merge pull request #429 from ideal/master               
+13d ideal               check if mem is NULL in DEFINE_ALLOCATOR                
+2m  Jonas Fonseca       Use git_init to initialize the test/stage/gh-410-test re
+4m  Jonas Fonseca       Keep unstaged changes view open after an staging command
+5m  Jonas Fonseca       When redrawing the readline prompt also update the curso
+6m  Jonas Fonseca       Move script helper before usages in the display module  
+7m  Jonas Fonseca       Merge branch 'hashed-refs'                              
+9m  Jonas Fonseca       hashed-refs: Use a hash table as the main data structure
+9m  Jonas Fonseca       Unify option_info lookup for normal options and view col
+10m Jonas Fonseca       Add option to turn off automatic enabling of topo-order 
+11m Tom Greuter         Add option to install Tig with Homebrew                 
+12m Jonas Fonseca       Fix diff context restoring for diff opened directly via 
+1y  Michael Barlow      Add mouse support                                       
+2y  Jonas Fonseca       Refactor stage view title formatting                    
+3y  Jonas Fonseca       [GH #83] WIP: main view lazy navigation mode prototype  
+3y  P. Sadik            Create and use dup() of STDIN_FILENO instead of STDIN_FI
+4y  Jonathan Neuschäfer Don't show out-of-sight tildes                          
+5y  Pierre Habouzit     Add an option to ignore unknown directories contents in 
+6y  Jonas Fonseca       Fix another regression from the dirty flag changes causi
+7y  Jonas Fonseca       tig-0.10.git                                            
+8y  Jonas Fonseca       Only split the tree view when the tree view is visible  
+9y  Jonas Fonseca       Initial commit                                          
+[main] 91912eb97da4f6907015dab41ef9bba315730854 - commit 1 of 25            100%
+EOF
+
+assert_equals 'short-date.screen' <<EOF
+2015-08-31 Kentaro Wada        Add zsh completion file for autoload             
+2015-08-23 Jonas Fonseca       Refactor DEFINE_ALLOCATOR to use helper method an
+2015-07-16 Sven Wegener        display: factor out separator functions          
+2015-08-22 Jonas Fonseca       Merge pull request #429 from ideal/master        
+2015-08-18 ideal               check if mem is NULL in DEFINE_ALLOCATOR         
+2015-06-07 Jonas Fonseca       Use git_init to initialize the test/stage/gh-410-
+2015-04-06 Jonas Fonseca       Keep unstaged changes view open after an staging 
+2015-03-30 Jonas Fonseca       When redrawing the readline prompt also update th
+2015-02-02 Jonas Fonseca       Move script helper before usages in the display m
+2015-01-29 Jonas Fonseca       Merge branch 'hashed-refs'                       
+2014-12-04 Jonas Fonseca       hashed-refs: Use a hash table as the main data st
+2014-11-08 Jonas Fonseca       Unify option_info lookup for normal options and v
+2014-10-06 Jonas Fonseca       Add option to turn off automatic enabling of topo
+2014-09-23 Tom Greuter         Add option to install Tig with Homebrew          
+2014-09-04 Jonas Fonseca       Fix diff context restoring for diff opened direct
+2013-12-15 Michael Barlow      Add mouse support                                
+2012-09-30 Jonas Fonseca       Refactor stage view title formatting             
+2012-08-30 Jonas Fonseca       [GH #83] WIP: main view lazy navigation mode prot
+2011-10-13 P. Sadik            Create and use dup() of STDIN_FILENO instead of S
+2010-09-15 Jonathan Neuschäfer Don't show out-of-sight tildes                   
+2010-06-28 Pierre Habouzit     Add an option to ignore unknown directories conte
+2009-01-17 Jonas Fonseca       Fix another regression from the dirty flag change
+2007-09-29 Jonas Fonseca       tig-0.10.git                                     
+2006-09-12 Jonas Fonseca       Only split the tree view when the tree view is vi
+2006-04-10 Jonas Fonseca       Initial commit                                   
+[main] 91912eb97da4f6907015dab41ef9bba315730854 - commit 1 of 25            100%
+EOF
+
+assert_equals 'no-date.screen' <<EOF
+Kentaro Wada        Add zsh completion file for autoload                        
+Jonas Fonseca       Refactor DEFINE_ALLOCATOR to use helper method and asserts  
+Sven Wegener        display: factor out separator functions                     
+Jonas Fonseca       Merge pull request #429 from ideal/master                   
+ideal               check if mem is NULL in DEFINE_ALLOCATOR                    
+Jonas Fonseca       Use git_init to initialize the test/stage/gh-410-test repo  
+Jonas Fonseca       Keep unstaged changes view open after an staging command    
+Jonas Fonseca       When redrawing the readline prompt also update the cursor po
+Jonas Fonseca       Move script helper before usages in the display module      
+Jonas Fonseca       Merge branch 'hashed-refs'                                  
+Jonas Fonseca       hashed-refs: Use a hash table as the main data structure for
+Jonas Fonseca       Unify option_info lookup for normal options and view column 
+Jonas Fonseca       Add option to turn off automatic enabling of topo-order     
+Tom Greuter         Add option to install Tig with Homebrew                     
+Jonas Fonseca       Fix diff context restoring for diff opened directly via 'tig
+Michael Barlow      Add mouse support                                           
+Jonas Fonseca       Refactor stage view title formatting                        
+Jonas Fonseca       [GH #83] WIP: main view lazy navigation mode prototype      
+P. Sadik            Create and use dup() of STDIN_FILENO instead of STDIN_FILENO
+Jonathan Neuschäfer Don't show out-of-sight tildes                              
+Pierre Habouzit     Add an option to ignore unknown directories contents in the 
+Jonas Fonseca       Fix another regression from the dirty flag changes causing f
+Jonas Fonseca       tig-0.10.git                                                
+Jonas Fonseca       Only split the tree view when the tree view is visible      
+Jonas Fonseca       Initial commit                                              
+[main] 91912eb97da4f6907015dab41ef9bba315730854 - commit 1 of 25            100%
+EOF

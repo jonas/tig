@@ -31,7 +31,7 @@ test_case on-branch-master \
 On branch master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
   (no files)                                                                    
 Untracked files:                                                                
   (no files)                                                                    
@@ -46,7 +46,7 @@ test_case bisecting-master \
 Bisecting master                                                                
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
   (no files)                                                                    
 Untracked files:                                                                
   (no files)                                                                    
@@ -62,7 +62,7 @@ test_case on-detached-head \
 HEAD detached at 988c77aad5798f1e087e5d7efe3b3319ee6de744                       
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
   (no files)                                                                    
 Untracked files:                                                                
   (no files)                                                                    
@@ -78,7 +78,7 @@ test_case on-detached-tag \
 HEAD detached at v0.2                                                          
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
   (no files)                                                                    
 Untracked files:                                                                
   (no files)                                                                    
@@ -88,13 +88,14 @@ EOF
 
 test_case merging-master \
 	--args='status' \
-	--before="git merge conflict-branch" \
+	--before="git merge conflict-branch
+		  true" \
 	--after="git reset --hard" \
 <<EOF
 Merging master                                                                  
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
 U run.sh                                                                        
 Untracked files:                                                                
   (no files)                                                                    
@@ -105,14 +106,15 @@ EOF
 test_case rebasing-master \
 	--args='status' \
 	--before="git checkout conflict-branch
-		  git rebase master" \
+		  git rebase master
+		  true" \
 	--after=" git rebase --abort
 		  git checkout master" \
 <<EOF
 Rebasing conflict-branch                                                        
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
 U run.sh                                                                        
 Untracked files:                                                                
   (no files)                                                                    
@@ -122,13 +124,14 @@ EOF
 
 test_case applying-mailbox-to-master \
 	--args='status' \
-	--before="git am $HOME/mailbox" \
+	--before="git am $HOME/mailbox
+		  true" \
 	--after="git am --abort" \
 <<EOF
 Applying mailbox to master
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
   (no files)                                                                    
 Untracked files:                                                                
   (no files)                                                                    
@@ -139,14 +142,15 @@ EOF
 test_case interactive-rebase-of-branch \
 	--args='status' \
 	--before="git checkout conflict-branch
-		  git rebase -i master" \
+		  git rebase -i master
+		  true" \
 	--after=" git rebase --abort
 		  git checkout master" \
 <<EOF
 Interactive rebase conflict-branch                                              
 Changes to be committed:                                                        
   (no files)                                                                    
-Changed but not updated:                                                        
+Changes not staged for commit:                                                  
 U run.sh                                                                        
 Untracked files:                                                                
   (no files)                                                                    
@@ -166,9 +170,9 @@ add_exec_prefix()
 
 tig_script "all" "
 	$(for name in $(cat test-cases); do
-		add_exec_prefix "$name-before.sh"
+		add_exec_prefix "$name-before"
 		echo :save-display all-$name.screen
-		add_exec_prefix "$name-after.sh"
+		add_exec_prefix "$name-after"
 	done)
 "
 

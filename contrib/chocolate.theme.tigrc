@@ -1,0 +1,16 @@
+color diff-stat			95	default
+color date			172	default
+color "Merge: "			cyan	default
+color graph-commit		red	default
+color id			167	default
+color "author "			95	default
+color "Commit: "		90	default
+color cursor			white	101	bold
+
+color palette-0			93	default
+color palette-1			95	default
+color palette-2			124	default
+color palette-7			90	default bold
+
+color delimiter			90	default
+color main-tracked		99	default	bold

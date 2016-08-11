@@ -82,6 +82,13 @@
 #  include <curses.h>
 #endif
 
+#ifdef TRUE
+#undef TRUE
+#endif
+#ifdef FALSE
+#undef FALSE
+#endif
+
 #if __GNUC__ >= 3
 #define TIG_NORETURN __attribute__((__noreturn__))
 #define PRINTF_LIKE(fmt, args) __attribute__((format (printf, fmt, args)))

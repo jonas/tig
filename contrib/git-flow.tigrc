@@ -1,0 +1,49 @@
+# Bindings for git-flow.
+#
+# Flow bindings start with the capital F and then follow the first character of
+# each operation. If executed from the refs view, the operations (that make
+# sense to) work on the selected branch. Otherwise, they work on the currently
+# checked out branch.
+#
+# Commands that finish a flow require confirmation to run. Commands that create
+# a new flow prompt for user input and run when that input is accepted with no
+# confirmation prompt.
+#
+# Note: Bindings assume the standard git-flow paths of feature, release, hotfix
+# and support.
+#
+# To use these keybindings copy the file to your HOME directory and include it
+# from your ~/.tigrc file:
+#
+#       $ cp contrib/git-flow.tigrc ~/.tigrc.git-flow
+#       $ echo "source ~/.tigrc.git-flow" >> ~/.tigrc
+
+# Get rid of default bindings for F, as that will be the entry point for all
+# git-flow related commands with this binding.
+bind main    F none
+bind generic F none
+
+# General
+bind generic Fi ?git flow init
+
+# Feature
+bind generic Ffl !git flow feature
+bind generic Ffs !git flow feature start "%(prompt New feature name: )"
+bind generic Fff ?sh -c "git flow feature finish `echo %(repo:head) | sed -e s/feature.//`"
+bind refs    Fff ?sh -c "git flow feature finish `echo %(branch) | sed -e s/feature.//`"
+
+# Release
+bind generic Frl !git flow release
+bind generic Frs !git flow release start "%(prompt New release name: )"
+bind generic Frf ?sh -c "git flow release finish `echo %(repo:head) | sed -e s/release.//`"
+bind refs    Frf ?sh -c "git flow release finish `echo %(branch) | sed -e s/release.//`"
+
+# Hot Fix
+bind generic Fhl !git flow hotfix
+bind generic Fhs !git flow hotfix start "%(prompt New hotfix name: )"
+bind generic Fhf ?sh -c "git flow hotfix finish `echo %(repo:head) | sed -e s/hotfix.//`"
+bind refs    Fhf ?sh -c "git flow hotfix finish `echo %(branch) | sed -e s/hotfix.//`"
+
+# Support
+bind generic Fsl !git flow support
+bind refs    Fss !git flow support start "%(prompt New support name: )" %(branch)

@@ -44,7 +44,7 @@ get_request_name(enum request request)
 	for (i = 0; i < ARRAY_SIZE(req_info); i++)
 		if (req_info[i].request == request)
 			return enum_name(req_info[i].name);
-	return "run request";
+	return request == REQ_UNKNOWN ? "unknown" : "run request";
 }
 
 bool
@@ -60,10 +60,10 @@ foreach_request(bool (*visitor)(void *data, const struct request_info *req_info,
 		}
 
 		if (!visitor(data, &req_info[i], group))
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

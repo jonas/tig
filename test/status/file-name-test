@@ -56,7 +56,7 @@ assert_equals 'status-with-untracked.screen' <<EOF
 Initial commit                                                                                                          
 Changes to be committed:                                                                                                
   (no files)                                                                                                            
-Changed but not updated:                                                                                                
+Changes not staged for commit:                                                                                          
   (no files)                                                                                                            
 Untracked files:                                                                                                        
 ? 0                                                                                                                     
@@ -73,7 +73,7 @@ assert_equals 'status-with-file-0.screen' <<EOF
 Initial commit                                              |                                                           
 Changes to be committed:                                    |                                                           
   (no files)                                                |                                                           
-Changed but not updated:                                    |                                                           
+Changes not staged for commit:                              |                                                           
   (no files)                                                |                                                           
 Untracked files:                                            |                                                           
 ? 0                                                         |                                                           
@@ -90,7 +90,7 @@ assert_equals 'status-with-file-1.screen' <<EOF
 Initial commit                                              |ø                                                         
 Changes to be committed:                                    |å                                                         
   (no files)                                                |12                                                         
-Changed but not updated:                                    |                                                           
+Changes not staged for commit:                              |                                                           
   (no files)                                                |å                                                         
 Untracked files:                                            |ø                                                         
 ? 0                                                         |                                                           
@@ -108,7 +108,7 @@ Initial commit                                              |
 Changes to be committed:                                    |                                                           
 A 0                                                         |                                                           
 A a                                                         |                                                           
-Changed but not updated:                                    |                                                           
+Changes not staged for commit:                              |                                                           
   (no files)                                                |                                                           
 Untracked files:                                            |                                                           
 ? as测试asd                                                 |                                                           

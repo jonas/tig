@@ -52,11 +52,11 @@ static bool
 keybinding_matches(const struct keybinding *keybinding, const struct key key[],
 		  size_t keys, bool *conflict_ptr)
 {
-	bool conflict = FALSE;
+	bool conflict = false;
 	int i;
 
-	if (keybinding->request == REQ_NONE)
-		return FALSE;
+	if (keybinding->keys < keys)
+		return false;
 
 	for (i = 0; i < keys; i++) {
 		const struct key *key1 = &keybinding->key[i];
@@ -71,18 +71,18 @@ keybinding_matches(const struct keybinding *keybinding, const struct key key[],
 			int c2 = key2->data.bytes[0];
 
 			if (ascii_toupper(c1) != ascii_toupper(c2))
-				return FALSE;
+				return false;
 			if (c1 != c2)
-				conflict = TRUE;
+				conflict = true;
 		} else {
 			if (memcmp(key1, key2, sizeof(*key1)))
-				return FALSE;
+				return false;
 		}
 	}
 
-	if (conflict_ptr)
+	if (conflict_ptr && keybinding->request != REQ_NONE)
 		*conflict_ptr = conflict;
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -90,7 +90,7 @@ keybinding_equals(const struct keybinding *keybinding, const struct key key[],
 		  size_t keys, bool *conflict_ptr)
 {
 	if (keybinding->keys != keys)
-		return FALSE;
+		return false;
 	return keybinding_matches(keybinding, key, keys, conflict_ptr);
 }
 
@@ -100,7 +100,7 @@ add_keybinding(struct keymap *table, enum request request,
 {
 	struct keybinding *keybinding;
 	char buf[SIZEOF_STR];
-	bool conflict = FALSE;
+	bool conflict = false;
 	size_t i;
 
 	for (i = 0; i < table->size; i++) {
@@ -132,34 +132,54 @@ add_keybinding(struct keymap *table, enum request request,
 	return SUCCESS;
 }
 
-/* Looks for a key binding first in the given map, then in the generic map, and
- * lastly in the default keybindings. */
-enum request
-get_keybinding(const struct keymap *keymap, const struct key key[], size_t keys, int *matches)
+static enum request
+get_keybinding_in_keymap(const struct keymap *keymap, const struct key key[], size_t keys, int *matches)
 {
 	enum request request = REQ_UNKNOWN;
 	size_t i;
 
 	for (i = 0; i < keymap->size; i++)
 		if (keybinding_matches(keymap->data[i], key, keys, NULL)) {
-			if (matches)
+			if (matches && keymap->data[i]->request != REQ_NONE)
 				(*matches)++;
+			/* Overriding keybindings, might have been added
+			 * at the end of the keymap so we need to
+			 * iterate all keybindings. */
 			if (keymap->data[i]->keys == keys)
 				request = keymap->data[i]->request;
 		}
 
-	if (is_search_keymap(keymap))
-		return request;
-
-	for (i = 0; i < generic_keymap->size; i++)
-		if (keybinding_matches(generic_keymap->data[i], key, keys, NULL)) {
-			if (matches)
-				(*matches)++;
-			if (request == REQ_UNKNOWN && generic_keymap->data[i]->keys == keys)
-				request = generic_keymap->data[i]->request;
-		}
-
 	return request;
+}
+
+/* Looks for a key binding first in the given keymap, then in the generic keymap. */
+enum request
+get_keybinding(const struct keymap *keymap, const struct key key[], size_t keys, int *matches)
+{
+	enum request request = get_keybinding_in_keymap(keymap, key, keys, matches);
+
+	if (!is_search_keymap(keymap)) {
+		int generic_matches = 0;
+		enum request generic_request = get_keybinding_in_keymap(generic_keymap, key, keys, &generic_matches);
+
+		/* Include generic matches iff there are more than one
+		 * so unbound keys in the current keymap still override
+		 * generic keys while still ensuring that the key combo
+		 * handler continues to wait for more keys if there is
+		 * another possible match. E.g. while in `main` view:
+		 *
+		 *   bind generic q  quit  # 'q' will quit
+		 *   bind main    q  none  # 'q' will do nothing
+		 *   bind generic qa quit  # 'qa' will quit
+		 *   bind main    qn next  # 'qn' will move to next entry
+		 */
+		if (matches && (request == REQ_UNKNOWN || generic_matches > 1))
+			(*matches) += generic_matches;
+		if (request == REQ_UNKNOWN)
+			request = generic_request;
+	}
+
+	return request == REQ_NONE ? REQ_UNKNOWN : request;
 }
 
 
@@ -332,7 +352,7 @@ get_key_name(const struct key key[], size_t keys, bool quote_comma)
 		use_symbolic = !*name || *name == ' ';
 		/* When listing keys for :save-options quote illegal characters. */
 		if (!quote_comma && (*name == '<' || *name == '#'))
-			use_symbolic = TRUE;
+			use_symbolic = true;
 
 		if (use_symbolic) {
 			int value = *name ? *name : key[i].data.value;
@@ -373,13 +393,13 @@ append_keymap_request_keys(char *buf, size_t *pos, enum request request,
 	for (i = 0; i < keymap->size; i++) {
 		if (keymap->data[i]->request == request) {
 			if (!append_key(buf, pos, keymap->data[i], all))
-				return FALSE;
+				return false;
 			if (!all)
 				break;
 		}
 	}
 
-	return TRUE;
+	return true;
 }
 
 const char *
@@ -481,6 +501,8 @@ format_run_request_flags(const struct run_request *req)
 	static char flags[8];
 	int flagspos = 0;
 
+	memset(flags, 0, sizeof(flags));
+
 	if (req->flags.internal)
 		flags[flagspos++] = ':';
 	else
@@ -518,10 +540,10 @@ foreach_key_visit(struct key_visitor_state *state, const char *group,
 		group = NULL;
 
 	if (state->combine_keys) {
-		const char *key = get_keys(keymap, request, TRUE);
+		const char *key = get_keys(keymap, request, true);
 
 		if (!key || !*key)
-			return TRUE;
+			return true;
 
 		if (group)
 			state->group = group;
@@ -532,14 +554,14 @@ foreach_key_visit(struct key_visitor_state *state, const char *group,
 	for (i = 0; i < keymap->size; i++) {
 		if (keymap->data[i]->request == request) {
 			struct keybinding *keybinding = keymap->data[i];
-			const char *key = get_key_name(keybinding->key, keybinding->keys, FALSE);
+			const char *key = get_key_name(keybinding->key, keybinding->keys, false);
 
 			if (!key || !*key)
 				continue;
 
 			if (!state->visitor(state->data, group, keymap, request,
 					    key, req_info, run_req))
-				return FALSE;
+				return false;
 
 			if (group)
 				state->group = group;
@@ -547,7 +569,7 @@ foreach_key_visit(struct key_visitor_state *state, const char *group,
 		}
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -556,7 +578,7 @@ foreach_key_request(void *data, const struct request_info *req_info, const char 
 	struct key_visitor_state *state = data;
 
 	if (req_info->request == REQ_NONE)
-		return TRUE;
+		return true;
 
 	return foreach_key_visit(state, group, req_info->request, req_info, NULL);
 }
@@ -570,7 +592,7 @@ foreach_key_run_request(struct key_visitor_state *state, bool internal, bool tog
 					"Internal commands:";
 	enum request request = REQ_RUN_REQUESTS + 1;
 
-	for (; TRUE; request++) {
+	for (; true; request++) {
 		struct run_request *req = get_run_request(request);
 		const char *key;
 
@@ -579,17 +601,17 @@ foreach_key_run_request(struct key_visitor_state *state, bool internal, bool tog
 
 		if (req->flags.internal != !!internal ||
 		    req->keymap != keymap ||
-		    !*(key = get_keys(keymap, request, TRUE)))
+		    !*(key = get_keys(keymap, request, true)))
 			continue;
 
 		if (toggles != !strcmp(req->argv[0], "toggle"))
 			continue;
 
 		if (!foreach_key_visit(state, group, request, NULL, req))
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -601,13 +623,13 @@ foreach_key(key_visitor_fn visitor, void *data, bool combine_keys)
 		struct key_visitor_state state = { visitor, data, &keymaps[i], combine_keys };
 
 		if (!foreach_request(foreach_key_request, &state)
-		    || !foreach_key_run_request(&state, TRUE, TRUE)
-		    || !foreach_key_run_request(&state, TRUE, FALSE)
-		    || !foreach_key_run_request(&state, FALSE, FALSE))
-			return FALSE;
+		    || !foreach_key_run_request(&state, true, true)
+		    || !foreach_key_run_request(&state, true, false)
+		    || !foreach_key_run_request(&state, false, false))
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

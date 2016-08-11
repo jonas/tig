@@ -44,28 +44,28 @@ doc_action_print(void *data, const struct request_info *req_info, const char *gr
 
 	if (iterator->group != group) {
 		if (iterator->end_group) {
-			doc_action_table_print(FALSE);
+			doc_action_table_print(false);
 			printf("\n");
 		}
 
 		doc_action_group_name_print(group);
-		doc_action_table_print(TRUE);
+		doc_action_table_print(true);
 
 		iterator->group = group;
-		iterator->end_group = TRUE;
+		iterator->end_group = true;
 	}
 
 	printf("|%-24s|%s\n", enum_name(req_info->name), req_info->help);
-	return TRUE;
+	return true;
 }
 
 static void
 doc_actions_print(void)
 {
-	struct doc_action_iterator iterator = { FALSE };
+	struct doc_action_iterator iterator = { false };
 
 	foreach_request(doc_action_print, &iterator);
-	doc_action_table_print(FALSE);
+	doc_action_table_print(false);
 }
 
 int

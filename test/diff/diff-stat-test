@@ -1,0 +1,51 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export COLUMNS=181
+
+steps '
+	:enter
+	:save-display diff-stat.screen
+'
+
+tigrc <<EOF
+set line-graphics = utf-8
+EOF
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+test_tig
+
+assert_equals 'diff-stat.screen' <<EOF
+2014-03-01 17:26 Jonas Fonseca      ● [master] WIP: Upgrade to 0.4-SNAPSHOT and DCE        |commit ee912870202200a0b9cf4fd86ba57243212d341e                                          
+2014-03-01 15:59 Jonas Fonseca      ● Add type parameter for js.Dynamic                    |Refs: [master]                                                                           
+2014-01-16 22:51 Jonas Fonseca      ● Move classes under org.scalajs.benchmark package scop|Author:     Jonas Fonseca <jonas.fonseca@gmail.com>                                      
+2014-01-16 17:43 Jonas Fonseca      ● Bump Scala.js version to 0.3-SNAPSHOT                |AuthorDate: Sat Mar 1 17:26:01 2014 -0500                                                
+2014-01-16 17:39 Jonas Fonseca      ● Integrate app code into the benchmark infrastructure |Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>                                      
+2014-01-16 07:47 Jonas Fonseca      ●─╮ Merge pull request #4 from phaller/patch-1         |CommitDate: Sat Mar 1 17:26:01 2014 -0500                                                
+2014-01-16 15:32 Philipp Haller     │ ● Fix link to Dart benchmark harness                 |                                                                                         
+2013-12-17 00:02 Jonas Fonseca      ●─╯ Update links to reflect project name change        |    WIP: Upgrade to 0.4-SNAPSHOT and DCE                                                 
+2013-12-03 23:35 Jonas Fonseca      ● Use Scala.js 0.2-SNAPSHOT                            |---                                                                                      
+2013-11-26 23:39 Jonas Fonseca      ● Extract the benchmark list variable name; fix push to| common/benchmark-runner.sh                                           |  5 +++--         
+2013-11-26 23:31 Jonas Fonseca      ● Solve the easiest sudoku grid                        | common/src/main/scala/org/scalajs/benchmark/Benchmark.scala          | 11 +++++------   
+2013-11-26 23:22 Jonas Fonseca      ● Disable phantomjs by default                         | common/src/main/scala/org/scalajs/benchmark/BenchmarkApp.scala       |  2 +-            
+2013-11-26 22:55 Jonas Fonseca      ● Exclude Sudoku when running all benchmarks           | common/start-benchmark.js                                            |  9 +++++++--     
+2013-11-26 22:52 Jonas Fonseca      ● Fix reference setup to work for node                 | deltablue/exports.js                                                 | 13 ------------- 
+2013-11-26 22:03 Jonas Fonseca      ● Move benchmark registration to Scala                 | .../src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala   |  7 +++++++       
+2013-11-26 20:13 Jonas Fonseca      ● Rename projects to be grouped together in Eclipse    | project/Build.scala                                                  | 13 ++++--------- 
+2013-11-19 21:56 Jonas Fonseca      ● sudoku: use iterator instead of Try()                | project/build.sbt                                                    |  5 ++++-         
+2013-11-11 21:56 Jonas Fonseca      ● Add verification of sudoku solutions                 | richards/exports.js                                                  | 13 ------------- 
+2013-11-11 21:50 Jonas Fonseca      ● Use stream to halt when first sudoku solution has bee| .../src/main/scala/org/scalajs/benchmark/richards/Richards.scala     |  3 +++           
+2013-11-11 01:11 Jonas Fonseca      ● Add initial version of sudoku benchmark              | run.sh                                                               |  2 +-            
+2013-11-05 23:20 Jonas Fonseca      ● Reformat code using Scala IDE                        | sudoku/exports.js                                                    | 13 ------------- 
+2013-11-05 20:41 Jonas Fonseca      ● Update exports.js files to use new Scala.js class nam| sudoku/src/main/scala/org/scalajs/benchmark/sudoku/Sudoku.scala      |  2 ++            
+2013-11-03 23:48 Jonas Fonseca      ● Add support for PhantomJS                            | tracer/exports.js                                                    | 13 ------------- 
+2013-11-03 23:11 Jonas Fonseca      ● Make the engine stubs file optional                  | tracer/index-dev.html                                                |  2 +-            
+2013-11-03 22:44 Jonas Fonseca      ● Refactor the benchmark shell code                    | tracer/index.html                                                    |  2 +-            
+2013-10-29 17:29 Jonas Fonseca      ●─╮ Merge pull request #2 from sjrd/patch-2            | tracer/src/main/scala/org/scalajs/benchmark/tracer/Tracer.scala      |  3 +++           
+2013-10-29 18:48 Sébastien Doeraene │ ● Remove workaround to support Node.js.              | 17 files changed, 42 insertions(+), 76 deletions(-)                                     
+2013-10-29 18:46 Sébastien Doeraene │ ● Update for new groupId and package structure of Sca|                                                                                         
+[main] ee912870202200a0b9cf4fd86ba57243212d341e - commit 1 of 48                        58%|[diff] ee912870202200a0b9cf4fd86ba57243212d341e - line 1 of 367                        7%
+EOF

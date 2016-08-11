@@ -1,0 +1,65 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=15
+
+git_clone 'repo-one'
+
+cat >"$work_dir/.mailmap" <<EOF
+Thoreau <thoreau@example.com> A. U. Thor <a.u.thor@example.com>"
+Ti-Poil <t.poil@example.qc.ca> René Lévesque <rene.levesque@example.qc.ca>"
+龙 <dragon@example.ch> 作者 <zuozhea@example.ch>"
+Stargazer <stargazer@example.dk> Jørgen Thygesen Brahe <brache@example.dk>"
+Full Throttle <f.throttle@example.org> Max Power <power123@example.org>"
+¯\_(ツ)_/¯ <omitter@example.net> Committer <c.ommitter@example.net>                                  
+EOF
+
+tigrc <<EOF
+set mailmap = yes
+# set diff-options = --use-mailmap
+# set main-options = --use-mailmap
+EOF
+
+steps '
+	:save-display mailmapped.screen
+	:view-diff
+	:save-display mailmapped-diff.screen
+'
+
+test_tig
+
+assert_equals 'mailmapped.screen' <<EOF
+2010-04-07 05:37 Full Throttle o [master] {origin/master} {origin/HEAD} Commit 1
+2010-03-29 17:15 Stargazer     o Commit 10 D                                    
+2010-03-21 04:53 龙            o Commit 10 C                                    
+2010-03-12 16:31 Ti-Poil       o Commit 10 B                                    
+2010-03-04 04:09 Thoreau       o Commit 10 A                                    
+2010-02-23 15:46 Full Throttle o Commit 9 E                                     
+2010-02-15 03:24 Stargazer     o Commit 9 D                                     
+2010-02-06 15:02 龙            o Commit 9 C                                     
+2010-01-29 02:40 Ti-Poil       o Commit 9 B                                     
+2010-01-20 14:18 Thoreau       o Commit 9 A                                     
+2010-01-12 01:56 Full Throttle o Commit 8 E                                     
+2010-01-03 13:33 Stargazer     o Commit 8 D                                     
+2009-12-26 01:11 龙            o Commit 8 C                                     
+[main] 5cb3412a5e06e506840495b91acc885037a48b72 - commit 1 of 50             26%
+EOF
+
+assert_equals 'mailmapped-diff.screen' <<EOF
+commit 5cb3412a5e06e506840495b91acc885037a48b72                                 
+Refs: [master], {origin/master}, {origin/HEAD}                                  
+Author:     Full Throttle <f.throttle@example.org>                              
+AuthorDate: Wed Apr 7 05:37:40 2010 +0000                                       
+Commit:     ¯\_(ツ)_/¯ <omitter@example.net>                                    
+CommitDate: Wed Apr 7 05:37:40 2010 +0000                                       
+                                                                                
+    Commit 10 E                                                                 
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+[diff] 5cb3412a5e06e506840495b91acc885037a48b72 - line 1 of 8               100%
+EOF

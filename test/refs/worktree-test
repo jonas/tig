@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# Test for GitHub issue #437
+# Mainly to document the behavior of the refs view in "worktree"s.
+
+. libtest.sh
+. libgit.sh
+
+test_require git-worktree
+
+export LINES=9
+
+test_setup_work_dir()
+{
+	create_worktree
+}
+
+steps '
+	:save-display worktree.screen
+'
+
+test_tig refs
+
+assert_equals 'worktree.screen' <<EOF
+                               All references                                   
+2010-04-07 05:37 Max Power     dev            Commit 10 E                       
+2010-04-07 05:37 Max Power     master         Commit 10 E                       
+2010-04-07 05:37 Max Power     origin/HEAD    Commit 10 E                       
+2010-04-07 05:37 Max Power     origin/master  Commit 10 E                       
+2009-12-17 12:49 René Lévesque v1.0           Commit 8 B                        
+                                                                                
+[refs] All references                                                       100%
+EOF

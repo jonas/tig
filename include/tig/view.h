@@ -25,6 +25,17 @@
 
 struct view_ops;
 
+struct box_cell {
+	enum line_type type;
+	size_t length;
+};
+
+struct box {
+	const char *text;
+	size_t cells;
+	struct box_cell cell[1];
+};
+
 struct line {
 	enum line_type type;
 	unsigned int lineno:24;
@@ -37,6 +48,7 @@ struct line {
 	unsigned int commit_title:1;
 	unsigned int no_commit_refs:1;
 	unsigned int graph_indent:1;
+	unsigned int search_result:1;
 
 	void *data;		/* User data */
 };
@@ -58,6 +70,7 @@ enum view_flag {
 	VIEW_REFRESH		= 1 << 13,
 	VIEW_GREP_LIKE		= 1 << 14,
 	VIEW_SORTABLE		= 1 << 15,
+	VIEW_FLEX_WIDTH		= 1 << 16,
 
 	VIEW_RESET_DISPLAY	= 1 << 31,
 };
@@ -187,6 +200,7 @@ struct view_column_data {
 	const struct ref *refs;
 	const char *status;
 	const char *text;
+	const struct box *box;
 };
 
 #define view_column_bit(id) (1 << VIEW_COLUMN_##id)
@@ -206,7 +220,7 @@ struct view_ops {
 	/* Open and reads in all view content. */
 	bool (*open)(struct view *view, enum open_flags flags);
 	/* Read one line; updates view->line. */
-	bool (*read)(struct view *view, struct buffer *buf);
+	bool (*read)(struct view *view, struct buffer *buf, bool force_stop);
 	/* Draw one line; @lineno must be < view->height. */
 	bool (*draw)(struct view *view, struct line *line, unsigned int lineno);
 	/* Depending on view handle a special requests. */
@@ -244,14 +258,7 @@ void select_view_line(struct view *view, unsigned long lineno);
 void do_scroll_view(struct view *view, int lines);
 void scroll_view(struct view *view, enum request request);
 void move_view(struct view *view, enum request request);
-
-/*
- * Searching
- */
-
-void search_view(struct view *view, enum request request);
-void find_next(struct view *view, enum request request);
-bool grep_text(struct view *view, const char *text[]);
+void goto_id(struct view *view, const char *expression, bool from_start, bool save_search);
 
 /*
  * View history
@@ -286,6 +293,7 @@ void load_view(struct view *view, struct view *prev, enum open_flags flags);
 
 void open_view(struct view *prev, struct view *view, enum open_flags flags);
 void open_argv(struct view *prev, struct view *view, const char *argv[], const char *dir, enum open_flags flags);
+bool view_exec(struct view *view, enum open_flags flags);
 
 /*
  * Various utilities.
@@ -303,6 +311,7 @@ bool view_column_info_update(struct view *view, struct line *line);
 enum status_code parse_view_config(struct view_column **column, const char *view_name, const char *argv[]);
 enum status_code parse_view_column_config(const char *view_name, enum view_column_type type, const char *option_name, const char *argv[]);
 enum status_code format_view_config(struct view_column *column, char buf[], size_t bufsize);
+bool view_has_wrapped_lines(struct view *view);
 
 struct line *
 find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction);
@@ -345,6 +354,37 @@ void update_view_title(struct view *view);
  * Line utilities.
  */
 
+static inline const char *
+box_text(const struct line *line)
+{
+	const struct box *box = line->data;
+
+	return box->text;
+}
+
+static inline size_t
+box_text_length(const struct box *box)
+{
+	size_t i, length = 0;
+
+	for (i = 0; i < box->cells; i++)
+		length += box->cell[i].length;
+
+	return length;
+}
+
+static inline size_t
+box_sizeof(const struct box *box, size_t extra_cells, size_t extra_textlen)
+{
+	size_t textlen = (box ? box_text_length(box) : 0) + extra_textlen;
+	size_t cells = (box ? box->cells : 0) + extra_cells;
+	size_t cells_size = cells > 1 ? sizeof(box->cell) * (cells - 1) : 0;
+
+	return sizeof(*box) + cells_size + textlen + 1;
+}
+
+void box_text_copy(struct box *box, size_t cells, const char *src, size_t srclen);
+
 struct line *add_line_at(struct view *view, unsigned long pos, const void *data, enum line_type type, size_t data_size, bool custom);
 struct line *add_line(struct view *view, const void *data, enum line_type type, size_t data_size, bool custom);
 struct line *add_line_alloc_(struct view *view, void **ptr, enum line_type type, size_t data_size, bool custom);
@@ -354,6 +394,8 @@ struct line *add_line_alloc_(struct view *view, void **ptr, enum line_type type,
 
 struct line *add_line_nodata(struct view *view, enum line_type type);
 struct line *add_line_text(struct view *view, const char *text, enum line_type type);
+struct line *add_line_text_at(struct view *view, unsigned long pos, const char *text, enum line_type type, size_t cells);
+struct line *add_line_text_at_(struct view *view, unsigned long pos, const char *text, size_t textlen, enum line_type type, size_t cells, bool custom);
 struct line * PRINTF_LIKE(3, 4) add_line_format(struct view *view, enum line_type type, const char *fmt, ...);
 bool append_line_format(struct view *view, struct line *line, const char *fmt, ...);
 

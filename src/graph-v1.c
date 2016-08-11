@@ -131,7 +131,7 @@ graph_add_parent(struct graph *graph_, const char *parent)
 	struct graph_v1 *graph = graph_->private;
 
 	if (graph->has_parents)
-		return TRUE;
+		return true;
 	return graph_insert_column(graph, &graph->parents, graph->parents.size, parent) != NULL;
 }
 
@@ -150,11 +150,11 @@ graph_expand(struct graph_v1 *graph)
 {
 	while (graph_needs_expansion(graph)) {
 		if (!graph_insert_column(graph, &graph->row, graph->position + graph->expanded, ""))
-			return FALSE;
+			return false;
 		graph->expanded++;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -171,7 +171,7 @@ graph_collapse(struct graph_v1 *graph)
 		graph->row.size--;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static void
@@ -210,7 +210,7 @@ graph_insert_parents(struct graph_v1 *graph)
 	struct graph_row *row = &graph->row;
 	struct graph_row *parents = &graph->parents;
 	size_t orig_size = row->size;
-	bool branched = FALSE;
+	bool branched = false;
 	bool merge = parents->size > 1;
 	int pos;
 
@@ -231,7 +231,7 @@ graph_insert_parents(struct graph_v1 *graph)
 		}
 		symbol.vbranch = !!branched;
 		if (!strcmp(column->id, graph->id)) {
-			branched = TRUE;
+			branched = true;
 			column->id[0] = 0;
 		}
 
@@ -294,7 +294,7 @@ graph_insert_parents(struct graph_v1 *graph)
 
 	graph->parents.size = graph->expanded = graph->position = 0;
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -303,13 +303,13 @@ graph_render_parents(struct graph *graph_, struct graph_canvas *canvas)
 	struct graph_v1 *graph = graph_->private;
 
 	if (!graph_expand(graph))
-		return FALSE;
+		return false;
 	graph_reorder_parents(graph);
 	graph_insert_parents(graph);
 	if (!graph_collapse(graph))
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -323,22 +323,22 @@ graph_add_commit(struct graph *graph_, struct graph_canvas *canvas,
 	graph->id = id;
 	graph->canvas = canvas;
 	graph->is_boundary = is_boundary;
-	graph->has_parents = FALSE;
+	graph->has_parents = false;
 
 	while ((parents = strchr(parents, ' '))) {
 		parents++;
 		if (!graph_add_parent(graph_, parents))
-			return FALSE;
+			return false;
 		has_parents++;
 	}
 
 	if (graph->parents.size == 0 &&
 	    !graph_add_parent(graph_, ""))
-		return FALSE;
+		return false;
 
 	graph->has_parents = has_parents > 0;
 
-	return TRUE;
+	return true;
 }
 
 static const char *

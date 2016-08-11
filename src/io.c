@@ -109,7 +109,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 
 	/* <path>: encoding: <encoding> */
 
-	if (!*path || !io_run_buf(check_attr_argv, buf, sizeof(buf))
+	if (!*path || !io_run_buf(check_attr_argv, buf, sizeof(buf), false)
 	    || !(encoding = strstr(buf, ENCODING_SEP)))
 		return default_encoding;
 
@@ -121,7 +121,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 			"file", "-I", "--", path, NULL
 		};
 
-		if (!*path || !io_run_buf(file_argv, buf, sizeof(buf))
+		if (!*path || !io_run_buf(file_argv, buf, sizeof(buf), false)
 		    || !(encoding = strstr(buf, CHARSET_SEP)))
 			return default_encoding;
 
@@ -150,10 +150,10 @@ io_open(struct io *io, const char *fmt, ...)
 
 	io_init(io);
 
-	FORMAT_BUFFER(name, sizeof(name), fmt, retval, FALSE);
+	FORMAT_BUFFER(name, sizeof(name), fmt, retval, false);
 	if (retval < 0) {
 		io->error = ENAMETOOLONG;
-		return FALSE;
+		return false;
 	}
 
 	io->pipe = *name ? open(name, O_RDONLY) : dup(STDIN_FILENO);
@@ -186,7 +186,7 @@ io_done(struct io *io)
 			if (errno == EINTR)
 				continue;
 			io->error = errno;
-			return FALSE;
+			return false;
 		}
 
 		if (WEXITSTATUS(status)) {
@@ -198,7 +198,7 @@ io_done(struct io *io)
 		       !io->status;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static int
@@ -245,7 +245,7 @@ io_trace(const char *fmt, ...)
 		if (trace_file)
 			trace_out = fopen(trace_file, "a");
 		if (!trace_out)
-			return FALSE;
+			return false;
 	}
 
 	va_start(args, fmt);
@@ -270,7 +270,7 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 
 	if ((type == IO_RD || type == IO_WR) && pipe(pipefds) < 0) {
 		io->error = errno;
-		return FALSE;
+		return false;
 	} else if (type == IO_AP) {
 		pipefds[1] = custom;
 	}
@@ -282,7 +282,7 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 			close(pipefds[!(type == IO_WR)]);
 		if (io->pid != -1) {
 			io->pipe = pipefds[!!(type == IO_WR)];
-			return TRUE;
+			return true;
 		}
 
 	} else {
@@ -330,7 +330,7 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 
 	if (pipefds[!!(type == IO_WR)] != -1)
 		close(pipefds[!!(type == IO_WR)]);
-	return FALSE;
+	return false;
 }
 
 bool
@@ -348,9 +348,9 @@ io_complete(enum io_type type, const char **argv, const char *dir, int fd)
 }
 
 bool
-io_run_bg(const char **argv)
+io_run_bg(const char **argv, const char *dir)
 {
-	return io_complete(IO_BG, argv, NULL, -1);
+	return io_complete(IO_BG, argv, dir, -1);
 }
 
 bool
@@ -431,7 +431,7 @@ io_get_line(struct io *io, struct buffer *buf, int c, size_t *lineno, bool can_r
 	char *eol;
 	ssize_t readsize;
 
-	while (TRUE) {
+	while (true) {
 		if (io->bufsize > 0) {
 			eol = memchr(io->bufpos, c, io->bufsize);
 
@@ -450,7 +450,7 @@ io_get_line(struct io *io, struct buffer *buf, int c, size_t *lineno, bool can_r
 				io->bufsize -= io->bufpos - buf->data;
 				if (lineno)
 					(*lineno)++;
-				return TRUE;
+				return true;
 			}
 		}
 
@@ -464,20 +464,20 @@ io_get_line(struct io *io, struct buffer *buf, int c, size_t *lineno, bool can_r
 				io->bufsize = 0;
 				if (lineno)
 					(*lineno)++;
-				return TRUE;
+				return true;
 			}
-			return FALSE;
+			return false;
 		}
 
 		if (!can_read)
-			return FALSE;
+			return false;
 
 		if (io->bufsize > 0 && io->bufpos > io->buf)
 			memmove(io->buf, io->bufpos, io->bufsize);
 
 		if (io->bufalloc == io->bufsize) {
 			if (!io_realloc_buf(&io->buf, io->bufalloc, BUFSIZ))
-				return FALSE;
+				return false;
 			io->bufalloc += BUFSIZ;
 		}
 
@@ -522,34 +522,34 @@ io_printf(struct io *io, const char *fmt, ...)
 	char buf[SIZEOF_STR] = "";
 	int retval;
 
-	FORMAT_BUFFER(buf, sizeof(buf), fmt, retval, FALSE);
+	FORMAT_BUFFER(buf, sizeof(buf), fmt, retval, false);
 	if (retval < 0) {
 		io->error = ENAMETOOLONG;
-		return FALSE;
+		return false;
 	}
 
 	return io_write(io, buf, retval);
 }
 
 bool
-io_read_buf(struct io *io, char buf[], size_t bufsize)
+io_read_buf(struct io *io, char buf[], size_t bufsize, bool allow_empty)
 {
 	struct buffer result = {0};
 
-	if (io_get(io, &result, '\n', TRUE)) {
+	if (io_get(io, &result, '\n', true)) {
 		result.data = chomp_string(result.data);
 		string_ncopy_do(buf, bufsize, result.data, strlen(result.data));
 	}
 
-	return io_done(io) && result.data;
+	return io_done(io) && (result.data || allow_empty);
 }
 
 bool
-io_run_buf(const char **argv, char buf[], size_t bufsize)
+io_run_buf(const char **argv, char buf[], size_t bufsize, bool allow_empty)
 {
 	struct io io;
 
-	return io_run(&io, IO_RD, NULL, NULL, argv) && io_read_buf(&io, buf, bufsize);
+	return io_run(&io, IO_RD, NULL, NULL, argv) && io_read_buf(&io, buf, bufsize, allow_empty);
 }
 
 bool
@@ -560,24 +560,24 @@ io_from_string(struct io *io, const char *str)
 	io_init(io);
 
 	if (!io_realloc_buf(&io->buf, io->bufalloc, len))
-		return FALSE;
+		return false;
 
 	io->bufsize = io->bufalloc = len;
 	io->bufpos = io->buf;
-	io->eof = TRUE;
+	io->eof = true;
 	strncpy(io->buf, str, len);
 
-	return TRUE;
+	return true;
 }
 
-static int
+static enum status_code
 io_load_file(struct io *io, const char *separators,
 	     size_t *lineno, io_read_fn read_property, void *data)
 {
 	struct buffer buf;
-	int state = OK;
+	enum status_code state = SUCCESS;
 
-	while (state == OK && io_get_line(io, &buf, '\n', lineno, TRUE)) {
+	while (state == SUCCESS && io_get_line(io, &buf, '\n', lineno, true)) {
 		char *name;
 		char *value;
 		size_t namelen;
@@ -599,36 +599,36 @@ io_load_file(struct io *io, const char *separators,
 		state = read_property(name, namelen, value, valuelen, data);
 	}
 
-	if (state != ERR && io_error(io))
-		state = ERR;
+	if (state == SUCCESS && io_error(io))
+		state = error("%s", io_strerror(io));
 	io_done(io);
 
 	return state;
 }
 
-int
+enum status_code
 io_load_span(struct io *io, const char *separators, size_t *lineno,
 	     io_read_fn read_property, void *data)
 {
-	io->span = TRUE;
+	io->span = true;
 	return io_load_file(io, separators, lineno, read_property, data);
 }
 
-int
+enum status_code
 io_load(struct io *io, const char *separators,
 	io_read_fn read_property, void *data)
 {
 	return io_load_file(io, separators, NULL, read_property, data);
 }
 
-int
+enum status_code
 io_run_load(const char **argv, const char *separators,
 	    io_read_fn read_property, void *data)
 {
 	struct io io;
 
 	if (!io_run(&io, IO_RD, NULL, NULL, argv))
-		return ERR;
+		return error("Failed to open IO");
 	return io_load(&io, separators, read_property, data);
 }
 

@@ -270,6 +270,11 @@ The following variables can be set:
 
 	Ignore case in searches. By default, the search is case sensitive.
 
+'mailmap' (bool)::
+
+	Read canonical name and email addresses for authors and committers from
+	`.mailmap`. Off by default. See `git-shortlog(1)`.
+
 'wrap-lines' (bool)::
 
 	Wrap long lines. By default, lines are not wrapped.
@@ -324,11 +329,6 @@ The following variables can be set:
 	Command line arguments referring to revisions. These are filtered using
 	`git-rev-parse(1)`.
 
-'cmdline-args' (args)::
-
-	All remaining command line arguments that are not either filtered into
-	'file-args' or 'rev-args'.
-
 View settings
 ~~~~~~~~~~~~~
 
@@ -368,7 +368,8 @@ set tree-view = line-number:no,interval=5 mode author:full \
 set pager-view = line-number:yes,interval=10 text
 
 # Shorthands to change view settings for a previously defined column
-set main-view-date = short
+set main-view-date = custom
+set main-view-date-format = "%Y-%m-%d %H:%M"
 set blame-view-line-number = no
 # Use Git's default commit order, even when the commit graph is enabled.
 set commit-order = default
@@ -410,10 +411,15 @@ commit-title::
 	  an int, the assigned value is used as the maximum character width.
 
 date::
-	- 'display' (mixed) [relative|short|default|local|<bool>]: How to
-	  display dates. If set to "relative" a relative date will be used, e.g.
-	  "2 minutes ago". If set to "short" no time information is shown.  If
-	  set to "local", localtime(3) is used.
+	- 'display' (mixed) [relative|relative-compact|custom|default|<bool>]:
+	  How to display dates. If set to "relative" or "relative-compact" a
+	  relative date will be used, e.g. "2 minutes ago" or "2m". If set to
+	  "custom", the strftime(3) string format specified in the "format"
+	  option is used.
+	- 'local' (bool): If true, use localtime(3) to convert to local
+	  timezone. Note that relative dates always use local offsets.
+	- 'format' (string): format string to pass to strftime(3) when 'custom'
+	  display mode has been selected.
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
 
@@ -618,6 +624,19 @@ following variable names, which are substituted before commands are run:
 |%(mainargs)		|Options from 'main-options' used by the main view.
 |%(prompt)		|Prompt for the argument value. Optionally specify a
 			 custom prompt using `"%(prompt Enter branch name: )"`
+|%(text)		|The text of the currently selected line.
+|%(repo:head)		|The name of the checked out branch, e.g. `master`
+|%(repo:head-id)	|The commit ID of the checked out branch.
+|%(repo:remote)		|The remote associated with the checked out branch,
+			 e.g. `origin/master`.
+|%(repo:cdup)		|The path to change directory to the repository root,
+			 e.g. `../`
+|%(repo:prefix)		|The path prefix of the current work directory,
+			 e.g `subdir/`.
+|%(repo:git-dir)	|The path to the Git directory, e.g. `/src/repo/.git`.
+|%(repo:is-inside-work-tree)
+			|Whether Tig is running inside a work tree,
+			 either `true` or `false`.
 |=============================================================================
 
 Examples:
@@ -892,6 +911,7 @@ setting the *default* color option.
 |status			|The status window showing info messages.
 |title-focus		|The title window for the current view.
 |title-blur		|The title window of any backgrounded view.
+|search-result		|Highlighted search result.
 |delimiter		|Delimiter shown for truncated lines.
 |header			|The view header lines. Use 'status.header' to color
 			 the staged, unstaged, and untracked sections in the
