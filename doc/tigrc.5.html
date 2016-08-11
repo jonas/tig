@@ -1151,6 +1151,15 @@ branch               : Any other reference.
 </p>
 </dd>
 <dt class="hdlist1">
+<em>mailmap</em> (bool)
+</dt>
+<dd>
+<p>
+        Read canonical name and email addresses for authors and committers from
+        <code>.mailmap</code>. Off by default. See <code>git-shortlog(1)</code>.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>wrap-lines</em> (bool)
 </dt>
 <dd>
@@ -1240,15 +1249,6 @@ branch               : Any other reference.
         <code>git-rev-parse(1)</code>.
 </p>
 </dd>
-<dt class="hdlist1">
-<em>cmdline-args</em> (args)
-</dt>
-<dd>
-<p>
-        All remaining command line arguments that are not either filtered into
-        <em>file-args</em> or <em>rev-args</em>.
-</p>
-</dd>
 </dl></div>
 </div>
 <div class="sect2">
@@ -1286,7 +1286,8 @@ set tree-view = line-number:no,interval=5 mode author:full \
 set pager-view = line-number:yes,interval=10 text
 
 # Shorthands to change view settings for a previously defined column
-set main-view-date = short
+set main-view-date = custom
+set main-view-date-format = "%Y-%m-%d %H:%M"
 set blame-view-line-number = no
 # Use Git's default commit order, even when the commit graph is enabled.
 set commit-order = default</code></pre>
@@ -1418,10 +1419,23 @@ date
 <div class="ulist"><ul>
 <li>
 <p>
-<em>display</em> (mixed) [relative|short|default|local|&lt;bool&gt;]: How to
-          display dates. If set to "relative" a relative date will be used, e.g.
-          "2 minutes ago". If set to "short" no time information is shown.  If
-          set to "local", localtime(3) is used.
+<em>display</em> (mixed) [relative|relative-compact|custom|default|&lt;bool&gt;]:
+          How to display dates. If set to "relative" or "relative-compact" a
+          relative date will be used, e.g. "2 minutes ago" or "2m". If set to
+          "custom", the strftime(3) string format specified in the "format"
+          option is used.
+</p>
+</li>
+<li>
+<p>
+<em>local</em> (bool): If true, use localtime(3) to convert to local
+          timezone. Note that relative dates always use local offsets.
+</p>
+</li>
+<li>
+<p>
+<em>format</em> (string): format string to pass to strftime(3) when <em>custom</em>
+          display mode has been selected.
 </p>
 </li>
 <li>
@@ -1824,6 +1838,42 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table"><code>%(prompt)</code></p></td>
 <td align="left" valign="top"><p class="table">Prompt for the argument value. Optionally specify a
                          custom prompt using <code>"%(prompt Enter branch name: )"</code></p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(text)</code></p></td>
+<td align="left" valign="top"><p class="table">The text of the currently selected line.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:head)</code></p></td>
+<td align="left" valign="top"><p class="table">The name of the checked out branch, e.g. <code>master</code></p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:head-id)</code></p></td>
+<td align="left" valign="top"><p class="table">The commit ID of the checked out branch.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:remote)</code></p></td>
+<td align="left" valign="top"><p class="table">The remote associated with the checked out branch,
+                         e.g. <code>origin/master</code>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:cdup)</code></p></td>
+<td align="left" valign="top"><p class="table">The path to change directory to the repository root,
+                         e.g. <code>../</code></p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:prefix)</code></p></td>
+<td align="left" valign="top"><p class="table">The path prefix of the current work directory,
+                         e.g <code>subdir/</code>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:git-dir)</code></p></td>
+<td align="left" valign="top"><p class="table">The path to the Git directory, e.g. <code>/src/repo/.git</code>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:is-inside-work-tree)</code></p></td>
+<td align="left" valign="top"><p class="table">Whether Tig is running inside a work tree,
+                         either <code>true</code> or <code>false</code>.</p></td>
 </tr>
 </tbody>
 </table>
@@ -2335,6 +2385,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">The title window of any backgrounded view.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><code>search-result</code></p></td>
+<td align="left" valign="top"><p class="table">Highlighted search result.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><code>delimiter</code></p></td>
 <td align="left" valign="top"><p class="table">Delimiter shown for truncated lines.</p></td>
 </tr>
@@ -2608,7 +2662,7 @@ git(7), git-config(1)</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-04-08 20:18:50 EDT
+Last updated 2016-08-10 22:38:39 EDT
 </div>
 </div>
 </body>

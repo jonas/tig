@@ -2,12 +2,12 @@
 .\"     Title: tigmanual
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 04/08/2015
+.\"      Date: 08/10/2016
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.1.1
+.\"    Source: Tig 2.2
 .\"  Language: English
 .\"
-.TH "TIGMANUAL" "7" "04/08/2015" "Tig 2\&.1\&.1" "Tig Manual"
+.TH "TIGMANUAL" "7" "08/10/2016" "Tig 2\&.2" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -210,6 +210,16 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -241,6 +251,20 @@ The currently selected branch name\&.
 T}
 T{
 .sp
+%(remote)
+T}:T{
+.sp
+The currently selected remote name\&. For remote branches %(branch) will contain the branch name\&.
+T}
+T{
+.sp
+%(tag)
+T}:T{
+.sp
+The currently selected tag name\&.
+T}
+T{
+.sp
 %(stash)
 T}:T{
 .sp
@@ -251,7 +275,7 @@ T{
 %(directory)
 T}:T{
 .sp
-The current directory path in the tree view; empty for the root directory\&.
+The current directory path in the tree view or "\&." if undefined\&.
 T}
 T{
 .sp
@@ -328,7 +352,63 @@ T{
 %(prompt)
 T}:T{
 .sp
-Prompt for the argument value\&.
+Prompt for the argument value\&. Optionally specify a custom prompt using "%(prompt Enter branch name: )"
+T}
+T{
+.sp
+%(text)
+T}:T{
+.sp
+The text of the currently selected line\&.
+T}
+T{
+.sp
+%(repo:head)
+T}:T{
+.sp
+The name of the checked out branch, e\&.g\&. master
+T}
+T{
+.sp
+%(repo:head\-id)
+T}:T{
+.sp
+The commit ID of the checked out branch\&.
+T}
+T{
+.sp
+%(repo:remote)
+T}:T{
+.sp
+The remote associated with the checked out branch, e\&.g\&. origin/master\&.
+T}
+T{
+.sp
+%(repo:cdup)
+T}:T{
+.sp
+The path to change directory to the repository root, e\&.g\&. \&.\&./
+T}
+T{
+.sp
+%(repo:prefix)
+T}:T{
+.sp
+The path prefix of the current work directory, e\&.g subdir/\&.
+T}
+T{
+.sp
+%(repo:git\-dir)
+T}:T{
+.sp
+The path to the Git directory, e\&.g\&. /src/repo/\&.git\&.
+T}
+T{
+.sp
+%(repo:is\-inside\-work\-tree)
+T}:T{
+.sp
+Whether Tig is running inside a work tree, either true or false\&.
 T}
 .TE
 .sp 1
@@ -1052,7 +1132,7 @@ T{
 D
 T}:T{
 .sp
-Toggle date display on/off/short/relative/local\&.
+Toggle date display on/off/relative/relative\-compact/custom
 T}
 T{
 .sp
@@ -1144,6 +1224,7 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1179,6 +1260,13 @@ T{
 T}:T{
 .sp
 Execute a Tig command, e\&.g\&. :edit\&.
+T}
+T{
+.sp
+:goto <rev>
+T}:T{
+.sp
+Jump to a specific revision, e\&.g\&. :goto %(commit)^2 to goto the current commit\(cqs 2nd parent or :goto some/branch to goto the commit denoting the branch some/branch\&.
 T}
 T{
 .sp

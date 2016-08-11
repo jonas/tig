@@ -2,12 +2,12 @@
 .\"     Title: tig
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 04/08/2015
+.\"      Date: 08/10/2016
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.1.1
+.\"    Source: Tig 2.2
 .\"  Language: English
 .\"
-.TH "TIG" "1" "04/08/2015" "Tig 2\&.1\&.1" "Tig Manual"
+.TH "TIG" "1" "08/10/2016" "Tig 2\&.2" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -392,9 +392,18 @@ Open Tig without rendering anything to the terminal\&. This force Ncurses to wri
 .RE
 .SH "FILES"
 .PP
-\fI~/\&.tigrc\fR
+\*(Aq$XDG_CONFIG_HOME/tig/config, \fI~/\&.config/tig/config\fR, \fI~/\&.tigrc\fR
 .RS 4
-User configuration file\&. See
+The Tig user configuration file is loaded in the following way\&. If
+$XDG_CONFIG_HOME
+is set, read user configuration from
+$XDG_CONFIG_HOME/tig/config\&. If
+$XDG_CONFIG_HOME
+is empty or undefined, read user configuration from
+~/\&.config/tig/config
+if it exists and fall back to
+~/\&.tigrc
+if it does not exist\&. See
 \fBtigrc\fR(5)
 for examples\&.
 .RE

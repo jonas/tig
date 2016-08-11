@@ -803,6 +803,18 @@ and then run the following command:</p></div>
 </div>
 </div>
 <div class="sect1">
+<h2 id="_installation_on_windows">Installation on Windows</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>To run on Windows, you will need <a href="https://www.cygwin.com/">cygwin</a>.
+You must then install the packages <code>git</code>, <code>gcc-core</code>, <code>make</code>, <code>libiconv-devel</code>
+and <code>libncurses-devel</code>. Extract the tarball and install by using <code>configure</code>
+as explained above.</p></div>
+<div class="paragraph"><p>If you want to install from the sources, then you will also need the <code>automake</code>
+package (which will also install <code>autoconf</code>). Then run <code>make configure</code> and install
+by using <code>configure</code> as explained above.</p></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_build_configuration">Build configuration</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Build settings are read from the file <code>config.make</code> and for certain systems also
@@ -832,6 +844,11 @@ can be one of the following flags:</p></div>
 <code>NO_BUILTIN_TIGRC</code>: Reduce the size of the binary by not including a
    built-in tigrc. The built-in tigrc is used as a fallback when no
    <code>tigrc</code> is found in the system configuration directory (e.g. <code>/etc</code>).
+</p>
+</li>
+<li>
+<p>
+<code>TIG_USER_CONFIG</code>: Allow to customize the <code>tigrc</code> path (default <code>~/.tigrc</code>).
 </p>
 </li>
 </ul></div>
@@ -913,6 +930,12 @@ cellspacing="0" cellpadding="4">
                                  search and command prompts.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table">gsed (i.e. GNU sed)</p></td>
+<td align="left" valign="top"><p class="table">Required for running the test suite.
+                                 Can be installed with <code>brew install gnu-sed</code>
+                                 on OS X.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table">autoconf</p></td>
 <td align="left" valign="top"><p class="table">Contains autoreconf for generating configure
                                  from configure.ac.</p></td>
@@ -943,7 +966,7 @@ cellspacing="0" cellpadding="4">
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-03-11 13:51:22 EDT
+Last updated 2016-08-10 22:38:39 EDT
 </div>
 </div>
 </body>

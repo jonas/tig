@@ -1130,13 +1130,22 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">The currently selected branch name.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><code>%(remote)</code></p></td>
+<td align="left" valign="top"><p class="table">The currently selected remote name. For remote
+                         branches %(branch) will contain the branch name.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(tag)</code></p></td>
+<td align="left" valign="top"><p class="table">The currently selected tag name.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><code>%(stash)</code></p></td>
 <td align="left" valign="top"><p class="table">The currently selected stash name.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(directory)</code></p></td>
-<td align="left" valign="top"><p class="table">The current directory path in the tree view;
-                         empty for the root directory.</p></td>
+<td align="left" valign="top"><p class="table">The current directory path in the tree view or
+                         "." if undefined.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(file)</code></p></td>
@@ -1181,7 +1190,44 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(prompt)</code></p></td>
-<td align="left" valign="top"><p class="table">Prompt for the argument value.</p></td>
+<td align="left" valign="top"><p class="table">Prompt for the argument value. Optionally specify a
+                         custom prompt using <code>"%(prompt Enter branch name: )"</code></p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(text)</code></p></td>
+<td align="left" valign="top"><p class="table">The text of the currently selected line.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:head)</code></p></td>
+<td align="left" valign="top"><p class="table">The name of the checked out branch, e.g. <code>master</code></p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:head-id)</code></p></td>
+<td align="left" valign="top"><p class="table">The commit ID of the checked out branch.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:remote)</code></p></td>
+<td align="left" valign="top"><p class="table">The remote associated with the checked out branch,
+                         e.g. <code>origin/master</code>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:cdup)</code></p></td>
+<td align="left" valign="top"><p class="table">The path to change directory to the repository root,
+                         e.g. <code>../</code></p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:prefix)</code></p></td>
+<td align="left" valign="top"><p class="table">The path prefix of the current work directory,
+                         e.g <code>subdir/</code>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:git-dir)</code></p></td>
+<td align="left" valign="top"><p class="table">The path to the Git directory, e.g. <code>/src/repo/.git</code>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:is-inside-work-tree)</code></p></td>
+<td align="left" valign="top"><p class="table">Whether Tig is running inside a work tree,
+                         either <code>true</code> or <code>false</code>.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1697,7 +1743,7 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">D</p></td>
-<td align="left" valign="top"><p class="table">Toggle date display on/off/short/relative/local.</p></td>
+<td align="left" valign="top"><p class="table">Toggle date display on/off/relative/relative-compact/custom</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">A</p></td>
@@ -1779,6 +1825,13 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table">:&lt;action&gt;</p></td>
 <td align="left" valign="top"><p class="table">Execute a Tig command, e.g. <code>:edit</code>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">:goto &lt;rev&gt;</p></td>
+<td align="left" valign="top"><p class="table">Jump to a specific revision, e.g. <code>:goto %(commit)^2</code>
+                         to goto the current commit&#8217;s 2nd parent or
+                         <code>:goto some/branch</code> to goto the commit denoting the
+                         branch <code>some/branch</code>.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">:save-display &lt;file&gt;</p></td>
@@ -1989,7 +2042,7 @@ the Free Software Foundation; either version 2 of the License, or
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-03-11 13:51:22 EDT
+Last updated 2016-08-10 22:38:39 EDT
 </div>
 </div>
 </body>

@@ -737,6 +737,221 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_2">tig-2.2</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Incompatibilities:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Note that all user-defined commands are now executed at the repository root
+   instead of whatever subdirectory Tig was started in. (GH #412)
+</p>
+</li>
+<li>
+<p>
+Remove <code>cmdline-args</code> option to avoid problems where setting it in <code>~/.tigrc</code>
+   potentially breaks other views due to its "context-sensitive" nature, where
+   a <code>git-log</code> option maybe cause <code>git-grep</code> to fail. (GH #431)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Use .mailmap to show canonical name and email addresses, off by default.
+   Add <code>set mailmap = yes</code> to <code>~/.tigrc</code> to enable. (GH #411)
+</p>
+</li>
+<li>
+<p>
+Highlight search results, configurable via <code>search-result</code> color. (GH #493)
+</p>
+</li>
+<li>
+<p>
+Wrap around when searching, configurable via <code>wrap-search</code> setting.
+</p>
+</li>
+<li>
+<p>
+Populate <code>%(file)</code> with file names from diff stat. (GH #404)
+</p>
+</li>
+<li>
+<p>
+<code>tig --merge</code> implies <code>--boundary</code> similar to gitk.
+</p>
+</li>
+<li>
+<p>
+Expose repository variables to external commands, e.g. <code>%(repo:head)</code> gives the
+   branch name of the current HEAD and <code>%(repo:cdup)</code> for the repo root path.
+</p>
+</li>
+<li>
+<p>
+Add <code>make uninstall</code>. (GH #417)
+</p>
+</li>
+<li>
+<p>
+Add ZSH completion file (based on Bash completion) (GH #433)
+</p>
+</li>
+<li>
+<p>
+Expose the text of the currently selected line as the %(text) (GH #457)
+</p>
+</li>
+<li>
+<p>
+Allow users to specify rev arguments to blame (GH #439)
+</p>
+</li>
+<li>
+<p>
+Update OSX make config to find brew installed ncurses
+</p>
+</li>
+<li>
+<p>
+Add sample git-flow keybinding (GH #421)
+</p>
+</li>
+<li>
+<p>
+Add chocolate theme (GH #432)
+</p>
+</li>
+<li>
+<p>
+Show stash diffs. (GH #328)
+</p>
+</li>
+<li>
+<p>
+Make user tigrc location configurable. (GH #479)
+</p>
+</li>
+<li>
+<p>
+Compact relative date display mode. (GH #331)
+</p>
+</li>
+<li>
+<p>
+Add date column option controlling whether to show local date.
+</p>
+</li>
+<li>
+<p>
+Move to parent commit in the main view. (GH #388)
+</p>
+</li>
+<li>
+<p>
+Add <code>:goto &lt;rev&gt;</code> prompt command to go to a <code>git-rev-parse`d revision, e.g.
+   `:goto some/branch</code> or <code>:goto %(commit)^2</code>.
+</p>
+</li>
+<li>
+<p>
+Respect the XDG standard for configuration files. (GH #513)
+</p>
+</li>
+<li>
+<p>
+Resolve diff paths when <code>diff.noprefix</code> is true. (GH #487, #488)
+</p>
+</li>
+<li>
+<p>
+Support for custom <code>strftime(3)</code> date formats, e.g.:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>set main-view-date = custom
+set main-view-date-format = "%Y-%m-%d"</code></pre>
+</div></div>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Prevent staged rename from displaying unstaged changes (GH #472, #491)
+</p>
+</li>
+<li>
+<p>
+Fix corrupt chunk header during staging of single lines. (GH #410)
+</p>
+</li>
+<li>
+<p>
+Fix out of bounds read in graph-v2 module. (GH #402)
+</p>
+</li>
+<li>
+<p>
+Add currently checked out branch to <code>%(branch)</code>. (GH #416)
+</p>
+</li>
+<li>
+<p>
+Size diff stats correctly for split views.
+</p>
+</li>
+<li>
+<p>
+Fix <code>git-worktree</code> support by using <code>git-show-ref</code>. (GH #437)
+</p>
+</li>
+<li>
+<p>
+Add currently checked out branch to <code>%(branch)</code> (GH #416)
+</p>
+</li>
+<li>
+<p>
+Fix segfault when hitting return in empty file search (GH #464)
+</p>
+</li>
+<li>
+<p>
+Remove separator on horizontal split when switching from vertical split
+</p>
+</li>
+<li>
+<p>
+Do not expand <code>--all</code> when parsing <code>%(revargs)</code> (GH #442, #462)
+</p>
+</li>
+<li>
+<p>
+Fix exit when the main view is reloaded due to option toggling. (GH #470)
+</p>
+</li>
+<li>
+<p>
+Expand all whitespace and control characters to spaces. (GH #485)
+</p>
+</li>
+<li>
+<p>
+Restore ability to unbind a default keybinding with <code>none</code>. (GH #483)
+</p>
+</li>
+<li>
+<p>
+Fix blob view to honor the <code>wrap-lines</code> setting.
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_1_1">tig-2.1.1</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Improvements:</p></div>
@@ -771,12 +986,12 @@ Fix display of multiple references per commit. (GH #390, #391)
 </li>
 <li>
 <p>
-Sync the prompt&#8217;s cursor position with readline&#8217;s internal position. (#396)
+Sync the prompt&#8217;s cursor position with readline&#8217;s internal position. (GH #396)
 </p>
 </li>
 <li>
 <p>
-Keep unstaged changes view open after an staging command. (#399)
+Keep unstaged changes view open after an staging command. (GH #399)
 </p>
 </li>
 </ul></div>
@@ -3189,13 +3404,14 @@ Tree view: use a stack for remembering the lines for parent tree.
 </p>
 </li>
 </ul></div>
+<div class="paragraph"><p>/* vim: set tw=80: */</p></div>
 </div>
 </div>
 </div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-04-08 20:18:50 EDT
+Last updated 2016-08-10 22:38:39 EDT
 </div>
 </div>
 </body>

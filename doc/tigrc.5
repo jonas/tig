@@ -2,12 +2,12 @@
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 04/08/2015
+.\"      Date: 08/10/2016
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.1.1
+.\"    Source: Tig 2.2
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "04/08/2015" "Tig 2\&.1\&.1" "Tig Manual"
+.TH "TIGRC" "5" "08/10/2016" "Tig 2\&.2" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -381,6 +381,13 @@ Commit ordering using the default (chronological reverse) order, topological ord
 Ignore case in searches\&. By default, the search is case sensitive\&.
 .RE
 .PP
+\fImailmap\fR (bool)
+.RS 4
+Read canonical name and email addresses for authors and committers from
+\&.mailmap\&. Off by default\&. See
+git\-shortlog(1)\&.
+.RE
+.PP
 \fIwrap\-lines\fR (bool)
 .RS 4
 Wrap long lines\&. By default, lines are not wrapped\&. Not compatible with line numbers enabled\&.
@@ -440,14 +447,6 @@ git\-rev\-parse(1)\&.
 Command line arguments referring to revisions\&. These are filtered using
 git\-rev\-parse(1)\&.
 .RE
-.PP
-\fIcmdline\-args\fR (args)
-.RS 4
-All remaining command line arguments that are not either filtered into
-\fIfile\-args\fR
-or
-\fIrev\-args\fR\&.
-.RE
 .SS "View settings"
 .sp
 The view settings define the order and options for the different columns of a view\&. Each view setting expects a space separated list of column specifications\&. Column specifications starts with the column type, and can optionally be followed by a colon (:) and a list of column options\&. E\&.g\&. the following column specification defines an \fIauthor\fR column displaying the author email and with a maximum width of 20 characters: author:email,width=20\&.
@@ -477,7 +476,8 @@ set tree\-view = line\-number:no,interval=5 mode author:full \e
 set pager\-view = line\-number:yes,interval=10 text
 
 # Shorthands to change view settings for a previously defined column
-set main\-view\-date = short
+set main\-view\-date = custom
+set main\-view\-date\-format = "%Y\-%m\-%d %H:%M"
 set blame\-view\-line\-number = no
 # Use Git\*(Aqs default commit order, even when the commit graph is enabled\&.
 set commit\-order = default
@@ -619,7 +619,35 @@ date
 .\}
 
 \fIdisplay\fR
-(mixed) [relative|short|default|local|<bool>]: How to display dates\&. If set to "relative" a relative date will be used, e\&.g\&. "2 minutes ago"\&. If set to "short" no time information is shown\&. If set to "local", localtime(3) is used\&.
+(mixed) [relative|relative\-compact|custom|default|<bool>]: How to display dates\&. If set to "relative" or "relative\-compact" a relative date will be used, e\&.g\&. "2 minutes ago" or "2m"\&. If set to "custom", the strftime(3) string format specified in the "format" option is used\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIlocal\fR
+(bool): If true, use localtime(3) to convert to local timezone\&. Note that relative dates always use local offsets\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fIformat\fR
+(string): format string to pass to strftime(3) when
+\fIcustom\fR
+display mode has been selected\&.
 .RE
 .sp
 .RS 4
@@ -1075,6 +1103,14 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1208,6 +1244,62 @@ T{
 T}:T{
 .sp
 Prompt for the argument value\&. Optionally specify a custom prompt using "%(prompt Enter branch name: )"
+T}
+T{
+.sp
+%(text)
+T}:T{
+.sp
+The text of the currently selected line\&.
+T}
+T{
+.sp
+%(repo:head)
+T}:T{
+.sp
+The name of the checked out branch, e\&.g\&. master
+T}
+T{
+.sp
+%(repo:head\-id)
+T}:T{
+.sp
+The commit ID of the checked out branch\&.
+T}
+T{
+.sp
+%(repo:remote)
+T}:T{
+.sp
+The remote associated with the checked out branch, e\&.g\&. origin/master\&.
+T}
+T{
+.sp
+%(repo:cdup)
+T}:T{
+.sp
+The path to change directory to the repository root, e\&.g\&. \&.\&./
+T}
+T{
+.sp
+%(repo:prefix)
+T}:T{
+.sp
+The path prefix of the current work directory, e\&.g subdir/\&.
+T}
+T{
+.sp
+%(repo:git\-dir)
+T}:T{
+.sp
+The path to the Git directory, e\&.g\&. /src/repo/\&.git\&.
+T}
+T{
+.sp
+%(repo:is\-inside\-work\-tree)
+T}:T{
+.sp
+Whether Tig is running inside a work tree, either true or false\&.
 T}
 .TE
 .sp 1
@@ -1969,6 +2061,7 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -2004,6 +2097,13 @@ title\-blur
 T}:T{
 .sp
 The title window of any backgrounded view\&.
+T}
+T{
+.sp
+search\-result
+T}:T{
+.sp
+Highlighted search result\&.
 T}
 T{
 .sp

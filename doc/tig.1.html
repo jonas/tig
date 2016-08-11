@@ -1067,11 +1067,22 @@ TIG_NO_DISPLAY
 <div class="sectionbody">
 <div class="dlist"><dl>
 <dt class="hdlist1">
+'$XDG_CONFIG_HOME/tig/config
+</dt>
+<dt class="hdlist1">
+<em>~/.config/tig/config</em>
+</dt>
+<dt class="hdlist1">
 <em>~/.tigrc</em>
 </dt>
 <dd>
 <p>
-        User configuration file. See <a href="tigrc.5.html">tigrc(5)</a> for examples.
+        The Tig user configuration file is loaded in the following way. If
+        <code>$XDG_CONFIG_HOME</code> is set, read user configuration from
+        <code>$XDG_CONFIG_HOME/tig/config</code>. If <code>$XDG_CONFIG_HOME</code> is empty or
+        undefined, read user configuration from <code>~/.config/tig/config</code> if it
+        exists and fall back to <code>~/.tigrc</code> if it does not exist. See
+        <a href="tigrc.5.html">tigrc(5)</a> for examples.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1130,7 +1141,7 @@ git(7)</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-02-09 23:58:36 EST
+Last updated 2016-08-10 22:38:39 EDT
 </div>
 </div>
 </body>
