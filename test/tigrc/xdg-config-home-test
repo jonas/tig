@@ -2,27 +2,30 @@
 
 . libtest.sh
 
-tigrc <<EOF
-This tigrc file should not be loaded!
-EOF
+mkdir -p "$HOME/etc/tig" "$HOME/.config/tig"
 
-steps "
-	<Ctrl-t>
-"
+check()
+{
+	name="$(echo "$1" | tr / -)"
+	path="$HOME/$1"
+	env="${2:-undefined}"
 
-#export TIGRC_SYSTEM="should-not-be-loaded"
-export XDG_CONFIG_HOME="$HOME/.config"
-mkdir -p "$XDG_CONFIG_HOME/tig"
+	case "$env" in
+	  undefined) unset XDG_CONFIG_HOME ;;
+	  *) export "$env" ;;
+	esac
 
-cat > "$XDG_CONFIG_HOME/tig/config" <<EOF
-bind generic <Ctrl-t> @sh -c 'echo ran > ~/RUNME'
-EOF
+	mkdir -p "$(dirname "$path")"
+	tig_script "case-$name" '<Ctrl-t>'
+	echo "bind generic <Ctrl-t> @sh -c 'echo $name >> $HOME/$TEST_NAME.out'" > "$path"
+	test_tig status
+	assert_equals "$TEST_NAME.out" "$name"
+	assert_equals "$TEST_NAME.stderr" ''
+}
 
-test_tig status
+unset XDG_CONFIG_HOME
 
-assert_equals stderr <<EOF
-EOF
-
-assert_equals RUNME <<EOF
-ran
-EOF
+check .tigrc
+check .config/tig/config
+check .config/tig/config XDG_CONFIG_HOME="$HOME"
+check etc/tig/config XDG_CONFIG_HOME="$HOME/etc"

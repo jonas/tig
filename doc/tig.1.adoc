@@ -222,8 +222,15 @@ TIG_NO_DISPLAY::
 
 FILES
 -----
+'$XDG_CONFIG_HOME/tig/config::
+'~/.config/tig/config'::
 '~/.tigrc'::
-	User configuration file. See manpage:tigrc[5] for examples.
+	The Tig user configuration file is loaded in the following way. If
+	`$XDG_CONFIG_HOME` is set, read user configuration from
+	`$XDG_CONFIG_HOME/tig/config`. If `$XDG_CONFIG_HOME` is empty or
+	undefined, read user configuration from `~/.config/tig/config` if it
+	exists and fall back to `~/.tigrc` if it does not exist. See
+	manpage:tigrc[5] for examples.
 
 '{sysconfdir}/tigrc'::
 	System wide configuration file.
