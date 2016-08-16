@@ -215,13 +215,11 @@ bind main	F	:toggle commit-title-refs  # Toggle reference display (tags/branches
 # Cursor navigation
 bind generic	j	move-down
 bind generic	k	move-up
-#bind generic	?	move-half-page-down
-#bind generic	?	move-half-page-up
+bind generic	<C-D>	move-half-page-down
+bind generic	<C-U>	move-half-page-up
 bind generic	<PgDown> move-page-down
-bind generic	<C-D>	move-page-down
 bind generic	<Space>	move-page-down
 bind generic	<PgUp>	move-page-up
-bind generic	<C-U>	move-page-up
 bind generic	-	move-page-up
 bind generic	<Home>	move-first-line
 bind generic	<End>	move-last-line
