@@ -37,6 +37,7 @@ Improvements:
  - Add `:goto <rev>` prompt command to go to a `git-rev-parse`d revision, e.g.
    `:goto some/branch` or `:goto %(commit)^2`.
  - Respect the XDG standard for configuration files. (GH #513)
+ - Show tracking information in `tig status` (GH #504)
  - Resolve diff paths when `diff.noprefix` is true. (GH #487, #488)
  - Support for custom `strftime(3)` date formats, e.g.:
 
