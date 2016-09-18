@@ -15,6 +15,8 @@
 #include "tig/prompt.h"
 #include "tig/display.h"
 #include "tig/draw.h"
+#include "tig/main.h"
+#include "tig/graph.h"
 
 DEFINE_ALLOCATOR(realloc_unsigned_ints, unsigned int, 32)
 
@@ -155,6 +157,77 @@ void
 find_next(struct view *view, enum request request)
 {
 	enum status_code code = find_next_match(view, request);
+
+	report("%s", get_status_message(code));
+}
+
+static enum status_code
+find_next_merge_line(struct view *view, int direction, bool wrapped)
+{
+	enum status_code code = -1;
+	int dist;
+	size_t max;
+
+	if (wrapped)
+		max = view->lines;
+	else
+		max = direction > 0 ? view->lines - view->pos.lineno
+				    : view->pos.lineno;
+
+	for (dist = direction; abs(dist) < max; dist += direction) {
+		ssize_t lineno = view->pos.lineno + dist;
+		if (lineno < 0)
+			lineno += view->lines;
+		else if (lineno >= view->lines)
+			lineno -= view->lines;
+
+		struct line *line = &view->line[lineno];
+		struct commit *commit = line->data;
+		struct graph_canvas *canvas = &commit->graph;
+		struct view_column_data column_data;
+
+		if (!view->ops->get_column_data(view, line, &column_data))
+			continue;
+
+		if (column_data.graph && !column_data.graph->is_merge(canvas))
+			continue;
+
+		select_view_line(view, lineno);
+		code = SUCCESS;
+		break;
+	}
+
+	return code;
+}
+
+static enum status_code
+find_next_merge(struct view *view, enum request request)
+{
+	int direction;
+	enum status_code code;
+
+	switch (request) {
+	case REQ_MOVE_NEXT_MERGE:
+		direction = 1;
+		break;
+
+	case REQ_MOVE_PREV_MERGE:
+		direction = -1;
+		break;
+
+	default:
+		return error("Invalid request searching for next merge");
+	}
+
+	code = find_next_merge_line(view, direction, opt_wrap_search);
+
+	return code == SUCCESS ? code : success("No merge commit found");
+}
+
+void
+find_merge(struct view *view, enum request request)
+{
+	enum status_code code = find_next_merge(view, request);
 
 	report("%s", get_status_message(code));
 }

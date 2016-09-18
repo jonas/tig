@@ -714,6 +714,12 @@ graph_render_parents(struct graph *graph_ref, struct graph_canvas *canvas)
 }
 
 static bool
+graph_is_merge(struct graph_canvas *canvas)
+{
+	return !!canvas->symbols->merge;
+}
+
+static bool
 graph_add_commit(struct graph *graph_ref, struct graph_canvas *canvas,
 		 const char *id, const char *parents, bool is_boundary)
 {
@@ -1109,6 +1115,7 @@ init_graph_v2(void)
 	api->done_rendering = done_graph_rendering;
 	api->add_commit = graph_add_commit;
 	api->add_parent = graph_add_parent;
+	api->is_merge = graph_is_merge;
 	api->render_parents = graph_render_parents;
 	api->foreach_symbol = graph_foreach_symbol;
 	api->symbol_to_ascii = graph_symbol_to_ascii;
