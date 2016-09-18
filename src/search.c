@@ -15,6 +15,8 @@
 #include "tig/prompt.h"
 #include "tig/display.h"
 #include "tig/draw.h"
+#include "tig/main.h"
+#include "tig/graph.h"
 
 DEFINE_ALLOCATOR(realloc_unsigned_ints, unsigned int, 32)
 
@@ -38,6 +40,36 @@ find_matches(struct view *view)
 	 * will become bigger than view->lines. */
 	for (lineno = 0; lineno < view->lines; lineno++) {
 		if (!view->ops->grep(view, &view->line[lineno]))
+			continue;
+
+		if (!realloc_unsigned_ints(&view->matched_line, view->matched_lines, 1))
+			return false;
+
+		view->line[lineno].search_result = true;
+		view->matched_line[view->matched_lines++] = lineno;
+	}
+
+	/* Clear and show highlighted results. */
+	redraw_view_from(view, 0);
+
+	return true;
+}
+
+static bool
+find_merges(struct view *view)
+{
+	size_t lineno;
+
+	for (lineno = 0; lineno < view->lines; lineno++) {
+		struct line *line = &view->line[lineno];
+		struct commit *commit = line->data;
+		struct graph_canvas *canvas = &commit->graph;
+		struct view_column_data column_data;
+
+		if (!view->ops->get_column_data(view, line, &column_data))
+			continue;
+
+		if (!column_data.graph->is_merge(canvas))
 			continue;
 
 		if (!realloc_unsigned_ints(&view->matched_line, view->matched_lines, 1))
@@ -155,6 +187,44 @@ void
 find_next(struct view *view, enum request request)
 {
 	enum status_code code = find_next_match(view, request);
+
+	report("%s", get_status_message(code));
+}
+
+static enum status_code
+find_next_merge(struct view *view, enum request request)
+{
+	int direction;
+	enum status_code code;
+
+	switch (request) {
+	case REQ_MOVE_NEXT_MERGE:
+		direction = 1;
+		break;
+
+	case REQ_MOVE_PREV_MERGE:
+		direction = -1;
+		break;
+
+	default:
+		return error("Unknown search request");
+	}
+
+	if (!view->matched_lines && find_merges(view))
+		return ERROR_OUT_OF_MEMORY;
+
+	code = find_next_match_line(view, direction, false);
+	if (code != SUCCESS && opt_wrap_search)
+		code = find_next_match_line(view, direction, true);
+
+
+	return code == SUCCESS ? code : success("No merge commit found");
+}
+
+void
+find_merge(struct view *view, enum request request)
+{
+	enum status_code code = find_next_merge(view, request);
 
 	report("%s", get_status_message(code));
 }

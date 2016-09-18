@@ -39,6 +39,7 @@ struct graph {
 			   const char *id, const char *parents, bool is_boundary);
 	bool (*add_parent)(struct graph *graph, const char *parent);
 	bool (*render_parents)(struct graph *graph, struct graph_canvas *canvas);
+	bool (*is_merge)(struct graph_canvas *canvas);
 
 	void (*foreach_symbol)(const struct graph *graph, const struct graph_canvas *canvas, graph_symbol_iterator_fn fn, void *data);
 
