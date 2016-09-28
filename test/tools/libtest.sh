@@ -325,12 +325,12 @@ test_skip()
 require_git_version()
 {
 	git_version="$(git version | sed 's/git version \([0-9\.]*\).*/\1/')"
-	actual_major="$(expr "$git_version" : '\([0-9]\).*')"
-	actual_minor="$(expr "$git_version" : '[0-9]\.\([0-9]\).*')"
+	actual_major="$(expr "$git_version" : '\([0-9]*\).*')"
+	actual_minor="$(expr "$git_version" : '[0-9]*\.\([0-9]*\).*')"
 
 	required_version="$1"; shift
-	required_major="$(expr "$required_version" : '\([0-9]\).*')"
-	required_minor="$(expr "$required_version" : '[0-9]\.\([0-9]\).*')"
+	required_major="$(expr "$required_version" : '\([0-9]*\).*')"
+	required_minor="$(expr "$required_version" : '[0-9]*\.\([0-9]*\).*')"
 
 	if [ "$required_major" -gt "$actual_major" ] ||
 	   [ "$required_minor" -gt "$actual_minor" ]; then
