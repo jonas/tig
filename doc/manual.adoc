@@ -353,7 +353,9 @@ View Manipulation
 	line up. However, if you opened a diff view from the main view
 	(split- or full-screen) it will change the cursor to point to
 	the previous commit in the main view and update the diff view
-	to display it.
+	to display it. If you prefer this key to move the cursor or
+	scroll within the diff view instead, use `bind diff <Up> move-up`
+	or `bind diff <Up> scroll-line-up`, respectively.
 |Down	|Similar to 'Up' but will move down.
 |,	|Move to parent. In the tree view, this means switch to the parent
 	directory. In the blame view it will load blame for the parent
