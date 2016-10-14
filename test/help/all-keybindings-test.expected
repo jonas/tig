@@ -106,4 +106,14 @@ Option toggling:
 Internal commands:                                                                        
                            @ :/^@@                                                        
 [-] stash bindings                                                                        
-[help] - line 1 of 111                                                                 97%
+External commands:                                                                        
+                           A ?git stash apply %(stash)                                    
+                           P ?git stash pop %(stash)                                      
+                           ! ?git stash drop %(stash)                                     
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+[help] - line 1 of 112                                                                100%
