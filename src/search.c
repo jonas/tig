@@ -69,7 +69,7 @@ find_merges(struct view *view)
 		if (!view->ops->get_column_data(view, line, &column_data))
 			continue;
 
-		if (!column_data.graph->is_merge(canvas))
+		if (column_data.graph && !column_data.graph->is_merge(canvas))
 			continue;
 
 		if (!realloc_unsigned_ints(&view->matched_line, view->matched_lines, 1))
