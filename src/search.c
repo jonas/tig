@@ -207,7 +207,7 @@ find_next_merge(struct view *view, enum request request)
 		break;
 
 	default:
-		return error("Unknown search request");
+		return error("Invalid request searching for next merge");
 	}
 
 	if (!view->matched_lines && !find_merges(view))
