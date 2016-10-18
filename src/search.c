@@ -210,7 +210,7 @@ find_next_merge(struct view *view, enum request request)
 		return error("Unknown search request");
 	}
 
-	if (!view->matched_lines && find_merges(view))
+	if (!view->matched_lines && !find_merges(view))
 		return ERROR_OUT_OF_MEMORY;
 
 	code = find_next_match_line(view, direction, false);
