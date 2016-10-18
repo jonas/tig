@@ -217,12 +217,16 @@ assert_equals()
 {
 	file="$1"; shift
 
-	file "expected/$file" "$@"
+	file "expected/$file"
 
 	if [ -e "$file" ]; then
 		git diff -w --no-index $diff_color_arg "expected/$file" "$file" > "$file.diff" || true
 		if [ -s "$file.diff" ]; then
 			echo "[FAIL] $file != expected/$file" >> .test-result
+			while [ $# -gt 0 ]; do
+				msg="$1"; shift
+				echo "[NOTE] $msg" >> .test-result
+			done
 			cat "$file.diff" >> .test-result
 		else
 			echo "  [OK] $file assertion" >> .test-result
