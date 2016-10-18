@@ -294,7 +294,7 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_MOVE_NEXT_MERGE:
 	case REQ_MOVE_PREV_MERGE:
-		find_merge(view, request);
+		report("Moving between merge commits is not supported by the %s view", view->name);
 		break;
 
 	case REQ_STOP_LOADING:
