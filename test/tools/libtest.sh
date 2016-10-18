@@ -217,7 +217,9 @@ assert_equals()
 {
 	file="$1"; shift
 
-	file "expected/$file"
+	if [ ! -s "expected/$file" ]; then
+		file "expected/$file"
+	fi
 
 	if [ -e "$file" ]; then
 		git diff -w --no-index $diff_color_arg "expected/$file" "$file" > "$file.diff" || true
@@ -255,7 +257,7 @@ executable 'assert-var' <<EOF
 #!/bin/sh
 
 mkdir -p "$(dirname "$expected_var_file")"
-while [ \$# -gt 1 ]; do
+while [ \$# -gt 0 ]; do
 	arg="\$1"; shift
 
 	case "\$arg" in
@@ -269,7 +271,7 @@ EOF
 assert_vars()
 {
 	if [ -e "$expected_var_file" ]; then
-		assert_equals "$vars_file" "$(cat "$expected_var_file")"
+		assert_equals "$vars_file" < "$expected_var_file"
 	else
 		echo "[FAIL] $expected_var_file not found" >> .test-result
 	fi
@@ -527,6 +529,6 @@ run_test_cases()
 		fi
 
 		assert_equals "$name.screen" < "$name.expected"
-		assert_equals "$name.stderr" ''
+		assert_equals "$name.stderr" < /dev/null
 	done
 }

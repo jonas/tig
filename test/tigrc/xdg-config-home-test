@@ -19,8 +19,9 @@ check()
 	tig_script "case-$name" '<Ctrl-t>'
 	echo "bind generic <Ctrl-t> @sh -c 'echo $name >> $HOME/$TEST_NAME.out'" > "$path"
 	test_tig status
-	assert_equals "$TEST_NAME.out" "$name"
-	assert_equals "$TEST_NAME.stderr" ''
+	echo "$name" > "$TEST_NAME.out.expected"
+	assert_equals "$TEST_NAME.out" < "$TEST_NAME.out.expected"
+	assert_equals "$TEST_NAME.stderr" < /dev/null
 }
 
 unset XDG_CONFIG_HOME
