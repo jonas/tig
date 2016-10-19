@@ -55,36 +55,6 @@ find_matches(struct view *view)
 	return true;
 }
 
-static bool
-find_merges(struct view *view)
-{
-	size_t lineno;
-
-	for (lineno = 0; lineno < view->lines; lineno++) {
-		struct line *line = &view->line[lineno];
-		struct commit *commit = line->data;
-		struct graph_canvas *canvas = &commit->graph;
-		struct view_column_data column_data;
-
-		if (!view->ops->get_column_data(view, line, &column_data))
-			continue;
-
-		if (column_data.graph && !column_data.graph->is_merge(canvas))
-			continue;
-
-		if (!realloc_unsigned_ints(&view->matched_line, view->matched_lines, 1))
-			return false;
-
-		view->line[lineno].search_result = true;
-		view->matched_line[view->matched_lines++] = lineno;
-	}
-
-	/* Clear and show highlighted results. */
-	redraw_view_from(view, 0);
-
-	return true;
-}
-
 static enum status_code find_next_match(struct view *view, enum request request);
 
 static enum status_code
@@ -192,6 +162,42 @@ find_next(struct view *view, enum request request)
 }
 
 static enum status_code
+find_next_merge_line(struct view *view, int direction, bool wrapped)
+{
+	enum status_code code = -1;
+	ssize_t dist;
+	size_t max;
+	if (wrapped)
+		max = view->lines;
+	else
+		max = direction > 0 ? view->lines - view->pos.lineno
+				    : view->pos.lineno;
+	for (dist = direction; abs(dist) < max; dist += direction) {
+		ssize_t lineno = view->pos.lineno + dist;
+		if (lineno < 0)
+			lineno += view->lines;
+		else if (lineno >= view->lines)
+			lineno -= view->lines;
+
+		struct line *line = &view->line[lineno];
+		struct commit *commit = line->data;
+		struct graph_canvas *canvas = &commit->graph;
+		struct view_column_data column_data;
+
+		if (!view->ops->get_column_data(view, line, &column_data))
+			continue;
+
+		if (column_data.graph && !column_data.graph->is_merge(canvas))
+			continue;
+
+		select_view_line(view, lineno);
+		code = SUCCESS;
+		break;
+	}
+	return code;
+}
+
+static enum status_code
 find_next_merge(struct view *view, enum request request)
 {
 	int direction;
@@ -210,13 +216,7 @@ find_next_merge(struct view *view, enum request request)
 		return error("Invalid request searching for next merge");
 	}
 
-	if (!view->matched_lines && !find_merges(view))
-		return ERROR_OUT_OF_MEMORY;
-
-	code = find_next_match_line(view, direction, false);
-	if (code != SUCCESS && opt_wrap_search)
-		code = find_next_match_line(view, direction, true);
-
+	code = find_next_merge_line(view, direction, opt_wrap_search);
 
 	return code == SUCCESS ? code : success("No merge commit found");
 }
