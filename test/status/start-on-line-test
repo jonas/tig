@@ -13,33 +13,33 @@ steps '
 test_tig status +42
 
 assert_equals 'position.screen' <<EOF
-D tracer/index.html                                                             
-D tracer/run.sh                                                                 
-D tracer/src/main/scala/org/scalajs/benchmark/tracer/App.scala                  
-D tracer/src/main/scala/org/scalajs/benchmark/tracer/Color.scala                
-D tracer/src/main/scala/org/scalajs/benchmark/tracer/Engine.scala               
-D tracer/src/main/scala/org/scalajs/benchmark/tracer/Material.scala             
-D tracer/src/main/scala/org/scalajs/benchmark/tracer/RenderScene.scala          
-D tracer/src/main/scala/org/scalajs/benchmark/tracer/Scene.scala                
-D tracer/src/main/scala/org/scalajs/benchmark/tracer/Shapes.scala               
-D tracer/src/main/scala/org/scalajs/benchmark/tracer/Tracer.scala               
-D tracer/src/main/scala/org/scalajs/benchmark/tracer/Vector.scala               
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-? .gitignore                                                                    
-? LICENSE                                                                       
-? README.md                                                                     
-? common/benchmark-runner.sh                                                    
-? common/build.sbt                                                              
-? common/d8-stubs.js                                                            
-? common/reference/bench.js                                                     
-? common/reference/deltablue.js                                                 
-? common/reference/richards.js                                                  
-? common/reference/tracer.js                                                    
-? common/src/main/scala/org/scalajs/benchmark/Benchmark.scala                   
-? common/src/main/scala/org/scalajs/benchmark/BenchmarkApp.scala                
-? common/src/main/scala/org/scalajs/benchmark/dom/DOMTypes.scala                
-? common/start-benchmark.js                                                     
+D tracer/index.html
+D tracer/run.sh
+D tracer/src/main/scala/org/scalajs/benchmark/tracer/App.scala
+D tracer/src/main/scala/org/scalajs/benchmark/tracer/Color.scala
+D tracer/src/main/scala/org/scalajs/benchmark/tracer/Engine.scala
+D tracer/src/main/scala/org/scalajs/benchmark/tracer/Material.scala
+D tracer/src/main/scala/org/scalajs/benchmark/tracer/RenderScene.scala
+D tracer/src/main/scala/org/scalajs/benchmark/tracer/Scene.scala
+D tracer/src/main/scala/org/scalajs/benchmark/tracer/Shapes.scala
+D tracer/src/main/scala/org/scalajs/benchmark/tracer/Tracer.scala
+D tracer/src/main/scala/org/scalajs/benchmark/tracer/Vector.scala
+Changes not staged for commit:
+  (no files)
+Untracked files:
+? .gitignore
+? LICENSE
+? README.md
+? common/benchmark-runner.sh
+? common/build.sbt
+? common/d8-stubs.js
+? common/reference/bench.js
+? common/reference/deltablue.js
+? common/reference/richards.js
+? common/reference/tracer.js
+? common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
+? common/src/main/scala/org/scalajs/benchmark/BenchmarkApp.scala
+? common/src/main/scala/org/scalajs/benchmark/dom/DOMTypes.scala
+? common/start-benchmark.js
 [status] Press u to stage '.gitignore' for addition                          70%
 EOF

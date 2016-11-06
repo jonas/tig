@@ -105,33 +105,33 @@ tig warning: Errors while loading HOME/.tigrc.
 EOF
 
 assert_equals help.screen <<EOF
-Quick reference for tig keybindings:                                            
-                                                                                
-[-] generic bindings                                                            
-View switching                                                                  
-   ø view-tree Show tree view                                                  
-Misc                                                                            
-   : prompt    Open the prompt                                                  
-[-] main bindings                                                               
-Internal commands:                                                              
-   # :/s e a r c h                                                              
-External commands:                                                              
-   1 !external command                                                          
-   2 @silent command                                                            
-   3 ?prompted command                                                          
-   4 <quitting command                                                          
-   0 @?<all modifiers                                                           
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+Quick reference for tig keybindings:
+
+[-] generic bindings
+View switching
+   ø view-tree Show tree view
+Misc
+   : prompt    Open the prompt
+[-] main bindings
+Internal commands:
+   # :/s e a r c h
+External commands:
+   1 !external command
+   2 @silent command
+   3 ?prompted command
+   4 <quitting command
+   0 @?<all modifiers
+
+
+
+
+
+
+
+
+
+
+
+
 [help] - line 1 of 16                                                       100%
 EOF

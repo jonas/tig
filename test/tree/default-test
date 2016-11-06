@@ -39,127 +39,127 @@ in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
 test_tig
 
 assert_equals 'tree-default.screen' <<EOF
-Directory path /                                                                
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue                       
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project                         
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards                        
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer                          
--rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore                      
--rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE                         
--rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md                       
--rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh                          
-                                                                                
-                                                                                
-                                                                                
+Directory path /
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer
+-rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore
+-rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE
+-rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md
+-rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh
+
+
+
 [tree] 1a4ced7066ada2b26dcb0044f763a8438cd375df - file 1 of 10              100%
 EOF
 
 assert_equals 'tree-default-author.screen' <<EOF
-Directory path /                                                                
--rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore                      
--rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE                         
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue                       
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project                         
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards                        
--rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer                          
--rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md                       
-                                                                                
-                                                                                
-                                                                                
+Directory path /
+-rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore
+-rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards
+-rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer
+-rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md
+
+
+
 [tree] be06d7d413c0b3f2d2f6f18061c8bfb65c510b64 - file 7 of 10              100%
 EOF
 
 assert_equals 'tree-default-date.screen' <<EOF
-Directory path /                                                                
--rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore                      
--rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE                         
--rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md                       
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue                       
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project                         
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards                        
--rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer                          
-                                                                                
-                                                                                
-                                                                                
+Directory path /
+-rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore
+-rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE
+-rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards
+-rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer
+
+
+
 [tree] be06d7d413c0b3f2d2f6f18061c8bfb65c510b64 - file 7 of 10              100%
 EOF
 
 assert_equals 'tree-default-file-size.screen' <<EOF
-Directory path /                                                                
--rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore                      
--rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh                          
--rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE                         
--rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md                       
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue                       
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project                         
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards                        
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer                          
-                                                                                
-                                                                                
-                                                                                
+Directory path /
+-rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore
+-rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh
+-rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE
+-rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer
+
+
+
 [tree] be06d7d413c0b3f2d2f6f18061c8bfb65c510b64 - file 7 of 10              100%
 EOF
 
 assert_equals 'tree-default-mode.screen' <<EOF
-Directory path /                                                                
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue                       
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project                         
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards                        
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku                          
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer                          
--rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore                      
--rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE                         
--rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md                       
--rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh                          
-                                                                                
-                                                                                
-                                                                                
+Directory path /
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer
+-rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore
+-rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE
+-rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md
+-rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh
+
+
+
 [tree] 1a4ced7066ada2b26dcb0044f763a8438cd375df - file 1 of 10              100%
 EOF
 
 assert_equals 'tree-common.screen' <<EOF
-Directory path /common/                                                         
-drwxr-xr-x                                     ..                               
-drwxr-xr-x Jonas Fonseca      2014-01-16 17:39 reference                        
-drwxr-xr-x Jonas Fonseca      2014-03-01 17:26 src                              
--rwxr-xr-x Jonas Fonseca 2875 2014-03-01 17:26 benchmark-runner.sh              
--rw-r--r-- Jonas Fonseca    0 2013-10-14 13:15 build.sbt                        
--rw-r--r-- Jonas Fonseca  702 2013-10-26 12:54 d8-stubs.js                      
--rw-r--r-- Jonas Fonseca  811 2014-03-01 17:26 start-benchmark.js               
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+Directory path /common/
+drwxr-xr-x                                     ..
+drwxr-xr-x Jonas Fonseca      2014-01-16 17:39 reference
+drwxr-xr-x Jonas Fonseca      2014-03-01 17:26 src
+-rwxr-xr-x Jonas Fonseca 2875 2014-03-01 17:26 benchmark-runner.sh
+-rw-r--r-- Jonas Fonseca    0 2013-10-14 13:15 build.sbt
+-rw-r--r-- Jonas Fonseca  702 2013-10-26 12:54 d8-stubs.js
+-rw-r--r-- Jonas Fonseca  811 2014-03-01 17:26 start-benchmark.js
+
+
+
+
+
+
 [tree] Open parent directory                                                100%
 EOF
 
 assert_equals 'tree-d8-stubs.screen' <<EOF
-drwxr-xr-x Jonas Fonseca      2014-03-01 17:26 src                              
--rwxr-xr-x Jonas Fonseca 2875 2014-03-01 17:26 benchmark-runner.sh              
--rw-r--r-- Jonas Fonseca    0 2013-10-14 13:15 build.sbt                        
--rw-r--r-- Jonas Fonseca  702 2013-10-26 12:54 d8-stubs.js                      
+drwxr-xr-x Jonas Fonseca      2014-03-01 17:26 src
+-rwxr-xr-x Jonas Fonseca 2875 2014-03-01 17:26 benchmark-runner.sh
+-rw-r--r-- Jonas Fonseca    0 2013-10-14 13:15 build.sbt
+-rw-r--r-- Jonas Fonseca  702 2013-10-26 12:54 d8-stubs.js
 [tree] f05286bfd477c28503b946e93925b3d32ce4178d - file 5 of 6                87%
-/*                     __                                               *\      
-**     ________ ___   / /  ___      __ ____  Scala.js Benchmarks        **      
-**    / __/ __// _ | / /  / _ | __ / // __/  (c) 2013, Jonas Fonseca    **      
-**  __\ \/ /__/ __ |/ /__/ __ |/_// /_\ \                               **      
-** /____/\___/_/ |_/____/_/ | |__/ /____/                               **      
-**                          |/____/                                     **      
-\*                                                                      */      
-                                                                                
-/*                                                                              
+/*                     __                                               *\\
+**     ________ ___   / /  ___      __ ____  Scala.js Benchmarks        **
+**    / __/ __// _ | / /  / _ | __ / // __/  (c) 2013, Jonas Fonseca    **
+**  __\ \/ /__/ __ |/ /__/ __ |/_// /_\ \                               **
+** /____/\___/_/ |_/____/_/ | |__/ /____/                               **
+**                          |/____/                                     **
+\*                                                                      */
+
+/*
 [blob] common/d8-stubs.js - line 1 of 16                                     56%
 EOF

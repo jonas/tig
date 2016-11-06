@@ -83,163 +83,163 @@ EOF
 test_tig grep text
 
 assert_equals 'grep-text.screen' <<EOF
-README                                                                          
-  3| Paragraph of text.                                                         
-main.c                                                                          
-  6|         /* Some text */                                                    
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+README
+  3| Paragraph of text.
+main.c
+  6|         /* Some text */
+
+
+
+
+
+
+
+
+
+
 [grep] README - line 1 of 4                                                 100%
 EOF
 
 assert_equals 'grep-text-split-1.screen' <<EOF
-README                                                                          
-  3| Paragraph of text.                                                         
-main.c                                                                          
-  6|         /* Some text */                                                    
+README
+  3| Paragraph of text.
+main.c
+  6|         /* Some text */
 [grep] README - line 1 of 4                                                 100%
-= Title                                                                         
-                                                                                
-Paragraph of text.                                                              
-Wherein.                                                                        
-Description.                                                                    
-Hidden.                                                                         
-Idling.                                                                         
-Is inserted.                                                                    
-                                                                                
+= Title
+
+Paragraph of text.
+Wherein.
+Description.
+Hidden.
+Idling.
+Is inserted.
+
 [blob] README - line 1 of 11                                                 81%
 EOF
 
 assert_equals 'grep-text-split-2.screen' <<EOF
-README                                                                          
-  3| Paragraph of text.                                                         
-main.c                                                                          
-  6|         /* Some text */                                                    
+README
+  3| Paragraph of text.
+main.c
+  6|         /* Some text */
 [grep] README - line 2 of 4                                                 100%
-= Title                                                                         
-                                                                                
-Paragraph of text.                                                              
-Wherein.                                                                        
-Description.                                                                    
-Hidden.                                                                         
-Idling.                                                                         
-Is inserted.                                                                    
-                                                                                
+= Title
+
+Paragraph of text.
+Wherein.
+Description.
+Hidden.
+Idling.
+Is inserted.
+
 [blob] README - line 3 of 11                                                 81%
 EOF
 
 assert_equals 'grep-text-split-3.screen' <<EOF
-README                                                                          
-  3| Paragraph of text.                                                         
-main.c                                                                          
-  6|         /* Some text */                                                    
+README
+  3| Paragraph of text.
+main.c
+  6|         /* Some text */
 [grep] main.c - line 3 of 4                                                 100%
-#include <stdin.h>                                                              
-                                                                                
-int                                                                             
-main(int argc, const char *argv[])                                              
-{                                                                               
-        /* Some text */                                                         
-        exit(0);                                                                
-}                                                                               
-                                                                                
+#include <stdin.h>
+
+int
+main(int argc, const char *argv[])
+{
+        /* Some text */
+        exit(0);
+}
+
 [blob] main.c - line 1 of 8                                                 100%
 EOF
 
 assert_equals 'grep-text-split-4.screen' <<EOF
-README                                                                          
-  3| Paragraph of text.                                                         
-main.c                                                                          
-  6|         /* Some text */                                                    
+README
+  3| Paragraph of text.
+main.c
+  6|         /* Some text */
 [grep] main.c - line 4 of 4                                                 100%
-#include <stdin.h>                                                              
-                                                                                
-int                                                                             
-main(int argc, const char *argv[])                                              
-{                                                                               
-        /* Some text */                                                         
-        exit(0);                                                                
-}                                                                               
-                                                                                
+#include <stdin.h>
+
+int
+main(int argc, const char *argv[])
+{
+        /* Some text */
+        exit(0);
+}
+
 [blob] main.c - line 6 of 8                                                 100%
 EOF
 
 assert_equals 'grep-main.screen' <<EOF
-main.c                                                                          
-  4| main(int argc, const char *argv[])                                         
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+main.c
+  4| main(int argc, const char *argv[])
+
+
+
+
+
+
+
+
+
+
+
+
 [grep] main.c - line 1 of 2                                                 100%
 EOF
 
 assert_equals 'grep-i.screen' <<EOF
-README                                                                          
-  1| = Title                                                                    
-  4| Wherein.                                                                   
-  5| Description.                                                               
-  6| Hidden.                                                                    
-  7| Idling.                                                                    
-  8| Is inserted.                                                               
- 10| The exit paragraph.                                                        
-main.c                                                                          
-  1| #include <stdin.h>                                                         
-  3| int                                                                        
-  4| main(int argc, const char *argv[])                                         
-  7|         exit(0);                                                           
-                                                                                
+README
+  1| = Title
+  4| Wherein.
+  5| Description.
+  6| Hidden.
+  7| Idling.
+  8| Is inserted.
+ 10| The exit paragraph.
+main.c
+  1| #include <stdin.h>
+  3| int
+  4| main(int argc, const char *argv[])
+  7|         exit(0);
+
 [grep] README - line 1 of 13                                                100%
 EOF
 
 assert_equals 'grep-i-split.screen' <<EOF
- 14| Is inserted.                                                               
- 16| The exit paragraph.                                                        
-main.c                                                                          
-  7| #include <stdin.h>                                                         
+ 14| Is inserted.
+ 16| The exit paragraph.
+main.c
+  7| #include <stdin.h>
 [grep] main.c - line 10 of 13                                                76%
-#include <stdin.h>                                                              
-                                                                                
-int                                                                             
-main(int argc, const char *argv[])                                              
-{                                                                               
-        /* Some text */                                                         
-        exit(0);                                                                
-}                                                                               
-                                                                                
+#include <stdin.h>
+
+int
+main(int argc, const char *argv[])
+{
+        /* Some text */
+        exit(0);
+}
+
 [blob] main.c - line 1 of 8                                                 100%
 EOF
 
 assert_equals 'grep-none.screen' <<EOF
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 [grep]                                                                        0%
 EOF

@@ -39,41 +39,41 @@ test_setup_work_dir()
 test_tig refs
 
 assert_equals 'refs.screen' <<EOF
-                                       All references                           
-5cb3412 2010-04-07 05:37 Max Power     master         Commit 10 E               
-5cb3412 2010-04-07 05:37 Max Power     origin/master  Commit 10 E               
-5cb3412 2010-04-07 05:37 Max Power     origin/HEAD    Commit 10 E               
-957f2b3 2009-12-17 12:49 René Lévesque v1.0           Commit 8 B              
-d9a8c8b 2009-10-18 22:14 Max Power     not-replace    Commit 6 E                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+                                       All references
+5cb3412 2010-04-07 05:37 Max Power     master         Commit 10 E
+5cb3412 2010-04-07 05:37 Max Power     origin/master  Commit 10 E
+5cb3412 2010-04-07 05:37 Max Power     origin/HEAD    Commit 10 E
+957f2b3 2009-12-17 12:49 René Lévesque v1.0           Commit 8 B
+d9a8c8b 2009-10-18 22:14 Max Power     not-replace    Commit 6 E
+
+
+
+
+
+
+
+
+
+
 [refs] All references                                                       100%
 EOF
 
 assert_equals 'main.screen' <<EOF
 5cb3412 2010-04-07 05:37 Max Power             o [master] {origin/master} {origi
-2843bfd 2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D                   
-8d53d6a 2010-03-21 04:53 作者                  o Commit 10 C                  
-51b7580 2010-03-12 16:31 René Lévesque         o Commit 10 B                  
-19455fa 2010-03-04 04:09 A. U. Thor            o Commit 10 A                    
-276c3a4 2010-02-23 15:46 Max Power             o Commit 9 E                     
-5633519 2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D                    
-7116156 2010-02-06 15:02 作者                  o Commit 9 C                   
-9927870 2010-01-29 02:40 René Lévesque         o Commit 9 B                   
-a3f25ca 2010-01-20 14:18 A. U. Thor            o Commit 9 A                     
-d9a8c8b 2009-10-18 22:14 Max Power             o ~not-replace~ Commit 6 E       
-02e1e72 2009-10-10 09:52 Jørgen Thygesen Brahe o Commit 6 D                    
-5d9d565 2009-09-23 09:07 René Lévesque         o ~replaced~ Commit 6 B        
-2ba9ed5 2009-09-14 20:45 A. U. Thor            o Commit 6 A                     
-2053940 2009-07-25 18:32 Max Power             o ~replaced~ Commit 4 E          
-ceac6c2 2009-07-17 06:10 Jørgen Thygesen Brahe o Commit 4 D                    
+2843bfd 2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D
+8d53d6a 2010-03-21 04:53 作者                  o Commit 10 C
+51b7580 2010-03-12 16:31 René Lévesque         o Commit 10 B
+19455fa 2010-03-04 04:09 A. U. Thor            o Commit 10 A
+276c3a4 2010-02-23 15:46 Max Power             o Commit 9 E
+5633519 2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D
+7116156 2010-02-06 15:02 作者                  o Commit 9 C
+9927870 2010-01-29 02:40 René Lévesque         o Commit 9 B
+a3f25ca 2010-01-20 14:18 A. U. Thor            o Commit 9 A
+d9a8c8b 2009-10-18 22:14 Max Power             o ~not-replace~ Commit 6 E
+02e1e72 2009-10-10 09:52 Jørgen Thygesen Brahe o Commit 6 D
+5d9d565 2009-09-23 09:07 René Lévesque         o ~replaced~ Commit 6 B
+2ba9ed5 2009-09-14 20:45 A. U. Thor            o Commit 6 A
+2053940 2009-07-25 18:32 Max Power             o ~replaced~ Commit 4 E
+ceac6c2 2009-07-17 06:10 Jørgen Thygesen Brahe o Commit 4 D
 [main] 5cb3412a5e06e506840495b91acc885037a48b72 - commit 1 of 34             47%
 EOF

@@ -29,99 +29,99 @@ test_setup_work_dir()
 test_tig
 
 assert_equals 'main-submodule.screen' <<EOF
-feeb2df [repo-two] Integrate feature from repo-two-a, repo-two-b, repo-two-c    
-7f9d74d [repo-two] Integrate feature from repo-two-b                            
-2bbde7f [repo-two] Integrate feature from repo-two-a, repo-two-c                
-3a2603a [repo-two] Creating repository                                          
-9bb0f0d [repo-two] Commit 2                                                     
-4f3cb50 [repo-two] Commit 1                                                     
-a9db5c5 [repo-two] Commit 0                                                     
-                                                                                
+feeb2df [repo-two] Integrate feature from repo-two-a, repo-two-b, repo-two-c
+7f9d74d [repo-two] Integrate feature from repo-two-b
+2bbde7f [repo-two] Integrate feature from repo-two-a, repo-two-c
+3a2603a [repo-two] Creating repository
+9bb0f0d [repo-two] Commit 2
+4f3cb50 [repo-two] Commit 1
+a9db5c5 [repo-two] Commit 0
+
 [main] feeb2dfd5e09e887e4b6c901e7d91a4c85a7831d - commit 1 of 7             100%
-commit feeb2dfd5e09e887e4b6c901e7d91a4c85a7831d                                 
-Refs: [master], {origin/master}, {origin/HEAD}                                  
-Author:     A. U. Thor <a.u.thor@example.com>                                   
-AuthorDate: Sun Sep 6 08:23:30 2009 +0000                                       
-Commit:     Committer <c.ommitter@example.net>                                  
-CommitDate: Sun Sep 6 08:23:30 2009 +0000                                       
-                                                                                
-    [repo-two] Integrate feature from repo-two-a, repo-two-b, repo-two-c        
----                                                                             
- repo-two-a | 2 +-                                                              
- repo-two-b | 2 +-                                                              
- repo-two-c | 2 +-                                                              
- 3 files changed, 3 insertions(+), 3 deletions(-)                               
-                                                                                
-diff --git a/repo-two-a b/repo-two-a                                            
-index a1d2fa2..598d4e4 160000                                                   
---- a/repo-two-a                                                                
-+++ b/repo-two-a                                                                
-@@ -1 +1 @@                                                                     
--Subproject commit a1d2fa223a5f983adaad9a22df5c518aefba1d07                     
-+Subproject commit 598d4e4d8b652f28e7b78fd4f95124fadb10efcf                     
-diff --git a/repo-two-b b/repo-two-b                                            
-index f3866fb..8ab92f1 160000                                                   
---- a/repo-two-b                                                                
-+++ b/repo-two-b                                                                
-@@ -1 +1 @@                                                                     
--Subproject commit f3866fb983d82c8fc2b01423dde37084f59385d5                     
-+Subproject commit 8ab92f1f22470039668eb12d405e4356dcae8305                     
-diff --git a/repo-two-c b/repo-two-c                                            
-index cd41885..e4b7821 160000                                                   
---- a/repo-two-c                                                                
-+++ b/repo-two-c                                                                
-@@ -1 +1 @@                                                                     
--Subproject commit cd41885fa2b86fa6aae5308bba55c76a97498dcc                     
-+Subproject commit e4b78219ea174bc0c7f97024cf18fc1e6c08013a                     
-                                                                                
+commit feeb2dfd5e09e887e4b6c901e7d91a4c85a7831d
+Refs: [master], {origin/master}, {origin/HEAD}
+Author:     A. U. Thor <a.u.thor@example.com>
+AuthorDate: Sun Sep 6 08:23:30 2009 +0000
+Commit:     Committer <c.ommitter@example.net>
+CommitDate: Sun Sep 6 08:23:30 2009 +0000
+
+    [repo-two] Integrate feature from repo-two-a, repo-two-b, repo-two-c
+---
+ repo-two-a | 2 +-
+ repo-two-b | 2 +-
+ repo-two-c | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/repo-two-a b/repo-two-a
+index a1d2fa2..598d4e4 160000
+--- a/repo-two-a
++++ b/repo-two-a
+@@ -1 +1 @@
+-Subproject commit a1d2fa223a5f983adaad9a22df5c518aefba1d07
++Subproject commit 598d4e4d8b652f28e7b78fd4f95124fadb10efcf
+diff --git a/repo-two-b b/repo-two-b
+index f3866fb..8ab92f1 160000
+--- a/repo-two-b
++++ b/repo-two-b
+@@ -1 +1 @@
+-Subproject commit f3866fb983d82c8fc2b01423dde37084f59385d5
++Subproject commit 8ab92f1f22470039668eb12d405e4356dcae8305
+diff --git a/repo-two-c b/repo-two-c
+index cd41885..e4b7821 160000
+--- a/repo-two-c
++++ b/repo-two-c
+@@ -1 +1 @@
+-Subproject commit cd41885fa2b86fa6aae5308bba55c76a97498dcc
++Subproject commit e4b78219ea174bc0c7f97024cf18fc1e6c08013a
+
 [diff] feeb2dfd5e09e887e4b6c901e7d91a4c85a7831d - line 1 of 35              100%
 EOF
 
 assert_equals 'main-submodule-diff.screen' <<EOF
-feeb2df [repo-two] Integrate feature from repo-two-a, repo-two-b, repo-two-c    
-7f9d74d [repo-two] Integrate feature from repo-two-b                            
-2bbde7f [repo-two] Integrate feature from repo-two-a, repo-two-c                
-3a2603a [repo-two] Creating repository                                          
-9bb0f0d [repo-two] Commit 2                                                     
-4f3cb50 [repo-two] Commit 1                                                     
-a9db5c5 [repo-two] Commit 0                                                     
-                                                                                
+feeb2df [repo-two] Integrate feature from repo-two-a, repo-two-b, repo-two-c
+7f9d74d [repo-two] Integrate feature from repo-two-b
+2bbde7f [repo-two] Integrate feature from repo-two-a, repo-two-c
+3a2603a [repo-two] Creating repository
+9bb0f0d [repo-two] Commit 2
+4f3cb50 [repo-two] Commit 1
+a9db5c5 [repo-two] Commit 0
+
 [main] feeb2dfd5e09e887e4b6c901e7d91a4c85a7831d - commit 1 of 7             100%
-commit feeb2dfd5e09e887e4b6c901e7d91a4c85a7831d                                 
-Refs: [master], {origin/master}, {origin/HEAD}                                  
-Author:     A. U. Thor <a.u.thor@example.com>                                   
-AuthorDate: Sun Sep 6 08:23:30 2009 +0000                                       
-Commit:     Committer <c.ommitter@example.net>                                  
-CommitDate: Sun Sep 6 08:23:30 2009 +0000                                       
-                                                                                
-    [repo-two] Integrate feature from repo-two-a, repo-two-b, repo-two-c        
----                                                                             
- repo-two-a | 2 +-                                                              
- repo-two-b | 2 +-                                                              
- repo-two-c | 2 +-                                                              
- 3 files changed, 3 insertions(+), 3 deletions(-)                               
-                                                                                
-Submodule repo-two-a a1d2fa2..598d4e4:                                          
-  > [repo-two-a] Commit 5                                                       
-Submodule repo-two-b f3866fb..8ab92f1:                                          
-  > [repo-two-b] Commit 5                                                       
-Submodule repo-two-c cd41885..e4b7821:                                          
-  > [repo-two-c] Commit 5                                                       
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+commit feeb2dfd5e09e887e4b6c901e7d91a4c85a7831d
+Refs: [master], {origin/master}, {origin/HEAD}
+Author:     A. U. Thor <a.u.thor@example.com>
+AuthorDate: Sun Sep 6 08:23:30 2009 +0000
+Commit:     Committer <c.ommitter@example.net>
+CommitDate: Sun Sep 6 08:23:30 2009 +0000
+
+    [repo-two] Integrate feature from repo-two-a, repo-two-b, repo-two-c
+---
+ repo-two-a | 2 +-
+ repo-two-b | 2 +-
+ repo-two-c | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+Submodule repo-two-a a1d2fa2..598d4e4:
+  > [repo-two-a] Commit 5
+Submodule repo-two-b f3866fb..8ab92f1:
+  > [repo-two-b] Commit 5
+Submodule repo-two-c cd41885..e4b7821:
+  > [repo-two-c] Commit 5
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 [diff] feeb2dfd5e09e887e4b6c901e7d91a4c85a7831d - line 1 of 20              100%
 EOF

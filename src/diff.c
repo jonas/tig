@@ -319,7 +319,7 @@ diff_read_describe(struct view *view, struct buffer *buffer, struct diff_state *
 	struct line *line = find_next_line_by_type(view, view->line, LINE_PP_REFS);
 
 	if (line && buffer) {
-		const char *ref = chomp_string(buffer->data);
+		const char *ref = string_trim(buffer->data);
 		const char *sep = !strcmp("Refs: ", box_text(line)) ? "" : ", ";
 
 		if (*ref && !append_line_format(view, line, "%s%s", sep, ref))

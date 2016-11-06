@@ -537,7 +537,7 @@ io_read_buf(struct io *io, char buf[], size_t bufsize, bool allow_empty)
 	struct buffer result = {0};
 
 	if (io_get(io, &result, '\n', true)) {
-		result.data = chomp_string(result.data);
+		result.data = string_trim(result.data);
 		string_ncopy_do(buf, bufsize, result.data, strlen(result.data));
 	}
 
@@ -583,12 +583,12 @@ io_load_file(struct io *io, const char *separators,
 		size_t namelen;
 		size_t valuelen;
 
-		name = chomp_string(buf.data);
+		name = string_trim(buf.data);
 		namelen = strcspn(name, separators);
 
 		if (name[namelen]) {
 			name[namelen] = 0;
-			value = chomp_string(name + namelen + 1);
+			value = string_trim(name + namelen + 1);
 			valuelen = strlen(value);
 
 		} else {

@@ -55,188 +55,188 @@ export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
 test_tig
 
 assert_equals 'status-with-unstaged.screen' <<EOF
-On branch master                                                                
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-M .j                                                                            
-M a                                                                             
-M b.c                                                                           
-M e/f                                                                           
-M g h                                                                           
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
-                                                                                
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+M .j
+M a
+M b.c
+M e/f
+M g h
+Untracked files:
+  (no files)
+
+
 [status] Nothing to update                                                  100%
 EOF
 
 assert_equals 'status-after-add-a.screen' <<EOF
-On branch master                                                                
-Changes to be committed:                                                        
-M a                                                                             
-Changes not staged for commit:                                                  
-M .j                                                                            
-M b.c                                                                           
-M e/f                                                                           
-M g h                                                                           
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
-                                                                                
-                                                                                
+On branch master
+Changes to be committed:
+M a
+Changes not staged for commit:
+M .j
+M b.c
+M e/f
+M g h
+Untracked files:
+  (no files)
+
+
+
 [status] Nothing to update                                                  100%
 EOF
 
 assert_equals 'status-after-add-all.screen' <<EOF
-On branch master                                                                
-Changes to be committed:                                                        
-M .j                                                                            
-M a                                                                             
-M b.c                                                                           
-M e/f                                                                           
-M g h                                                                           
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
-                                                                                
+On branch master
+Changes to be committed:
+M .j
+M a
+M b.c
+M e/f
+M g h
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
+
 [status] Nothing to update                                                  100%
 EOF
 
 assert_equals 'status-after-commit.screen' <<EOF
-On branch master                                                                
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
+
+
+
+
+
 [status] Nothing to update                                                  100%
 EOF
 
 assert_equals 'status-after-reset-soft.screen' <<EOF
-On branch master                                                                
-Changes to be committed:                                                        
-M .j                                                                            
-M a                                                                             
-M b.c                                                                           
-M e/f                                                                           
-M g h                                                                           
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
-                                                                                
+On branch master
+Changes to be committed:
+M .j
+M a
+M b.c
+M e/f
+M g h
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
+
 [status] Nothing to update                                                  100%
 EOF
 
 assert_equals 'status-after-reset-a-and-bc.screen' <<EOF
-On branch master                                                                
-Changes to be committed:                                                        
-M .j                                                                            
-M e/f                                                                           
-M g h                                                                           
-Changes not staged for commit:                                                  
-M a                                                                             
-M b.c                                                                           
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
-                                                                                
-                                                                                
+On branch master
+Changes to be committed:
+M .j
+M e/f
+M g h
+Changes not staged for commit:
+M a
+M b.c
+Untracked files:
+  (no files)
+
+
+
 [status] Nothing to update                                                  100%
 EOF
 
 assert_equals 'status-after-checkout-bc.screen' <<EOF
-On branch master                                                                
-Changes to be committed:                                                        
-M .j                                                                            
-M e/f                                                                           
-M g h                                                                           
-Changes not staged for commit:                                                  
-M a                                                                             
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+On branch master
+Changes to be committed:
+M .j
+M e/f
+M g h
+Changes not staged for commit:
+M a
+Untracked files:
+  (no files)
+
+
+
+
 [status] Press u to stage 'a' for commit                                    100%
 EOF
 
 assert_equals 'status-after-reset-hard.screen' <<EOF
-On branch master                                                                
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
+
+
+
+
+
 [status] Nothing to update                                                  100%
 EOF
 
 assert_equals 'status-after-touch-new-file.screen' <<EOF
-On branch master                                                                
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-? new-file                                                                      
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+? new-file
+
+
+
+
+
+
 [status] Nothing to update                                                  100%
 EOF
 
 assert_equals 'status-after-rm-a.screen' <<EOF
-On branch master                                                                
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-D a                                                                             
-Untracked files:                                                                
-? new-file                                                                      
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+D a
+Untracked files:
+? new-file
+
+
+
+
+
+
 [status] Nothing to update                                                  100%
 EOF
 
 assert_equals 'status-after-checkout-a.screen' <<EOF
-On branch master                                                                
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-? new-file                                                                      
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+? new-file
+
+
+
+
+
+
 [status] Press u to stage 'new-file' for addition                           100%
 EOF

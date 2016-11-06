@@ -58,54 +58,54 @@ git_init
 test_tig
 
 assert_equals 'main-commit-titles.screen' <<EOF
-__________________________________________[ Variation 7 ]                       
-者者者者者者作者  : #6 - non-ASCII prefix                               
-ååååååæøå  : #5 - non-ASCII prefix                                     
->者者者者者作者  : #4 - mixed prefix                                     
->åååååæøå  : #3 - mixed prefix                                          
-....|.作者  : #2 - ASCII prefix                                               
-....|.æøå  : #1 - ASCII prefix                                               
-__________________________________________[ Variation 6 ]                       
-者者者者者作者  : #6 - non-ASCII prefix                                  
-åååååæøå  : #5 - non-ASCII prefix                                       
->者者者者作者  : #4 - mixed prefix                                        
->ååååæøå  : #3 - mixed prefix                                            
-....|作者  : #2 - ASCII prefix                                                
-....|æøå  : #1 - ASCII prefix                                                
-__________________________________________[ Variation 5 ]                       
-者者者者作者  : #6 - non-ASCII prefix                                     
-ååååæøå  : #5 - non-ASCII prefix                                         
->者者者作者  : #4 - mixed prefix                                           
->åååæøå  : #3 - mixed prefix                                              
-....作者  : #2 - ASCII prefix                                                 
-....æøå  : #1 - ASCII prefix                                                 
-__________________________________________[ Variation 4 ]                       
-者者者作者  : #6 - non-ASCII prefix                                        
-åååæøå  : #5 - non-ASCII prefix                                           
->者者作者  : #4 - mixed prefix                                              
->ååæøå  : #3 - mixed prefix                                                
-...作者  : #2 - ASCII prefix                                                  
-...æøå  : #1 - ASCII prefix                                                  
-__________________________________________[ Variation 3 ]                       
-者者作者  : #6 - non-ASCII prefix                                           
-ååæøå  : #5 - non-ASCII prefix                                             
->者作者  : #4 - mixed prefix                                                 
->åæøå  : #3 - mixed prefix                                                  
-..作者  : #2 - ASCII prefix                                                   
-..æøå  : #1 - ASCII prefix                                                   
-__________________________________________[ Variation 2 ]                       
-者作者  : #6 - non-ASCII prefix                                              
-åæøå  : #5 - non-ASCII prefix                                               
->作者  : #4 - mixed prefix                                                    
->æøå  : #3 - mixed prefix                                                    
-.作者  : #2 - ASCII prefix                                                    
-.æøå  : #1 - ASCII prefix                                                    
-__________________________________________[ Variation 1 ]                       
-作者  : #6 - non-ASCII prefix                                                 
-æøå  : #5 - non-ASCII prefix                                                 
-作者  : #4 - mixed prefix                                                     
-æøå  : #3 - mixed prefix                                                     
-作者  : #2 - ASCII prefix                                                     
-æøå  : #1 - ASCII prefix                                                     
+__________________________________________[ Variation 7 ]
+者者者者者者作者  : #6 - non-ASCII prefix
+ååååååæøå  : #5 - non-ASCII prefix
+>者者者者者作者  : #4 - mixed prefix
+>åååååæøå  : #3 - mixed prefix
+....|.作者  : #2 - ASCII prefix
+....|.æøå  : #1 - ASCII prefix
+__________________________________________[ Variation 6 ]
+者者者者者作者  : #6 - non-ASCII prefix
+åååååæøå  : #5 - non-ASCII prefix
+>者者者者作者  : #4 - mixed prefix
+>ååååæøå  : #3 - mixed prefix
+....|作者  : #2 - ASCII prefix
+....|æøå  : #1 - ASCII prefix
+__________________________________________[ Variation 5 ]
+者者者者作者  : #6 - non-ASCII prefix
+ååååæøå  : #5 - non-ASCII prefix
+>者者者作者  : #4 - mixed prefix
+>åååæøå  : #3 - mixed prefix
+....作者  : #2 - ASCII prefix
+....æøå  : #1 - ASCII prefix
+__________________________________________[ Variation 4 ]
+者者者作者  : #6 - non-ASCII prefix
+åååæøå  : #5 - non-ASCII prefix
+>者者作者  : #4 - mixed prefix
+>ååæøå  : #3 - mixed prefix
+...作者  : #2 - ASCII prefix
+...æøå  : #1 - ASCII prefix
+__________________________________________[ Variation 3 ]
+者者作者  : #6 - non-ASCII prefix
+ååæøå  : #5 - non-ASCII prefix
+>者作者  : #4 - mixed prefix
+>åæøå  : #3 - mixed prefix
+..作者  : #2 - ASCII prefix
+..æøå  : #1 - ASCII prefix
+__________________________________________[ Variation 2 ]
+者作者  : #6 - non-ASCII prefix
+åæøå  : #5 - non-ASCII prefix
+>作者  : #4 - mixed prefix
+>æøå  : #3 - mixed prefix
+.作者  : #2 - ASCII prefix
+.æøå  : #1 - ASCII prefix
+__________________________________________[ Variation 1 ]
+作者  : #6 - non-ASCII prefix
+æøå  : #5 - non-ASCII prefix
+作者  : #4 - mixed prefix
+æøå  : #3 - mixed prefix
+作者  : #2 - ASCII prefix
+æøå  : #1 - ASCII prefix
 [main] 2c360aa85544dd96eb1c4be5234c06c192f9a895 - commit 1 of 49            100%
 EOF

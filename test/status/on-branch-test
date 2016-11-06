@@ -28,14 +28,14 @@ test_setup_work_dir()
 test_case on-branch-master \
 	--args='status' \
 	--before='git checkout master' <<EOF
-On branch master                                                                
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
 [status] Nothing to update                                                  100%
 EOF
 
@@ -43,14 +43,14 @@ test_case bisecting-master \
 	--args='status' \
 	--before="git bisect start master" \
 	--after="git bisect reset" <<EOF
-Bisecting master                                                                
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
+Bisecting master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
 [status] Nothing to update                                                  100%
 EOF
 
@@ -59,14 +59,14 @@ test_case on-detached-head \
 	--before="git checkout HEAD~10" \
 	--after="git checkout master" \
 <<EOF
-HEAD detached at 988c77aad5798f1e087e5d7efe3b3319ee6de744                       
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
+HEAD detached at 988c77aad5798f1e087e5d7efe3b3319ee6de744
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
 [status] Nothing to update                                                  100%
 EOF
 
@@ -75,14 +75,14 @@ test_case on-detached-tag \
 	--before="git checkout v0.2" \
 	--after="git checkout master" \
 <<EOF
-HEAD detached at v0.2                                                          
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
+HEAD detached at v0.2
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
 [status] Nothing to update                                                  100%
 EOF
 
@@ -92,14 +92,14 @@ test_case merging-master \
 		  true" \
 	--after="git reset --hard" \
 <<EOF
-Merging master                                                                  
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-U run.sh                                                                        
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
+Merging master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+U run.sh
+Untracked files:
+  (no files)
+
 [status] Nothing to update                                                  100%
 EOF
 
@@ -111,14 +111,14 @@ test_case rebasing-master \
 	--after=" git rebase --abort
 		  git checkout master" \
 <<EOF
-Rebasing conflict-branch                                                        
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-U run.sh                                                                        
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
+Rebasing conflict-branch
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+U run.sh
+Untracked files:
+  (no files)
+
 [status] Nothing to update                                                  100%
 EOF
 
@@ -129,13 +129,13 @@ test_case applying-mailbox-to-master \
 	--after="git am --abort" \
 <<EOF
 Applying mailbox to master
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
 [status] Nothing to update                                                  100%
 EOF
 
@@ -147,14 +147,14 @@ test_case interactive-rebase-of-branch \
 	--after=" git rebase --abort
 		  git checkout master" \
 <<EOF
-Interactive rebase conflict-branch                                              
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-U run.sh                                                                        
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
+Interactive rebase conflict-branch
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+U run.sh
+Untracked files:
+  (no files)
+
 [status] Nothing to update                                                  100%
 EOF
 

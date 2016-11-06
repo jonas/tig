@@ -47,199 +47,199 @@ in_work_dir git add .j a
 test_tig status
 
 assert_equals 'status.screen' <<EOF
-On branch master                                                                
-Changes to be committed:                                                        
-M .j                                                                            
-M a                                                                             
-Changes not staged for commit:                                                 
-M b.c                                                                           
-M e/f                                                                           
-M g h                                                                           
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+On branch master
+Changes to be committed:
+M .j
+M a
+Changes not staged for commit:
+M b.c
+M e/f
+M g h
+Untracked files:
+  (no files)
+
+
+
+
+
+
+
+
 [status] Nothing to update                                                  100%
 EOF
 
 assert_equals 'staged-changes.screen' <<EOF
- .j | 6 ++----                                                                  
- a  | 6 ++----                                                                  
- 2 files changed, 4 insertions(+), 8 deletions(-)                               
-                                                                                
-diff --git a/.j b/.j                                                            
-index e697dfd..9d8ef3d 100644                                                   
---- a/.j                                                                        
-+++ b/.j                                                                        
-@@ -1,4 +1,4 @@                                                                 
--.j                                                                             
-+.j CHANGED                                                                     
- 1                                                                              
- 2                                                                              
- 3                                                                              
-@@ -6,6 +6,4 @@                                                                 
- 5                                                                              
- 6                                                                              
- 7                                                                              
+ .j | 6 ++----
+ a  | 6 ++----
+ 2 files changed, 4 insertions(+), 8 deletions(-)
+
+diff --git a/.j b/.j
+index e697dfd..9d8ef3d 100644
+--- a/.j
++++ b/.j
+@@ -1,4 +1,4 @@
+-.j
++.j CHANGED
+ 1
+ 2
+ 3
+@@ -6,6 +6,4 @@
+ 5
+ 6
+ 7
 [stage] Press '<Enter>' to jump to file diff - line 1 of 44                  40%
 EOF
 
 assert_equals 'staged-changes-for-a.screen' <<EOF
- 5                                                                              
- 6                                                                              
- 7                                                                              
--8                                                                              
--9                                                                              
--10                                                                             
-\ No newline at end of file                                                     
-+8                                                                              
-\ No newline at end of file                                                     
-diff --git a/a b/a                                                              
-index 12d1d9e..0a4a332 100644                                                   
---- a/a                                                                         
-+++ b/a                                                                         
-@@ -1,4 +1,4 @@                                                                 
--a                                                                              
-+a CHANGED                                                                      
- 1                                                                              
- 2                                                                              
+ 5
+ 6
+ 7
+-8
+-9
+-10
+\ No newline at end of file
++8
+\ No newline at end of file
+diff --git a/a b/a
+index 12d1d9e..0a4a332 100644
+--- a/a
++++ b/a
+@@ -1,4 +1,4 @@
+-a
++a CHANGED
+ 1
+ 2
 [stage] Staged changes to 'a' - line 25 of 44                                75%
 EOF
 
 assert_equals 'unstaged-changes.screen' <<EOF
- b.c | 6 ++----                                                                 
- e/f | 6 ++----                                                                 
- g h | 6 ++----                                                                 
- 3 files changed, 6 insertions(+), 12 deletions(-)                              
-                                                                                
-diff --git a/b.c b/b.c                                                          
-index 0d8560f..81a0f74 100644                                                   
---- a/b.c                                                                       
-+++ b/b.c                                                                       
-@@ -1,4 +1,4 @@                                                                 
--b.c                                                                            
-+b.c CHANGED                                                                    
- 1                                                                              
- 2                                                                              
- 3                                                                              
-@@ -6,6 +6,4 @@ b.c                                                             
- 5                                                                              
- 6                                                                              
+ b.c | 6 ++----
+ e/f | 6 ++----
+ g h | 6 ++----
+ 3 files changed, 6 insertions(+), 12 deletions(-)
+
+diff --git a/b.c b/b.c
+index 0d8560f..81a0f74 100644
+--- a/b.c
++++ b/b.c
+@@ -1,4 +1,4 @@
+-b.c
++b.c CHANGED
+ 1
+ 2
+ 3
+@@ -6,6 +6,4 @@ b.c
+ 5
+ 6
 [stage] Press '<Enter>' to jump to file diff - line 1 of 65                  27%
 EOF
 
 assert_equals 'unstaged-changes-default-title.screen' <<EOF
- b.c | 6 ++----                                                                 
- e/f | 6 ++----                                                                 
- g h | 6 ++----                                                                 
- 3 files changed, 6 insertions(+), 12 deletions(-)                              
-                                                                                
-diff --git a/b.c b/b.c                                                          
-index 0d8560f..81a0f74 100644                                                   
---- a/b.c                                                                       
-+++ b/b.c                                                                       
-@@ -1,4 +1,4 @@                                                                 
--b.c                                                                            
-+b.c CHANGED                                                                    
- 1                                                                              
- 2                                                                              
- 3                                                                              
-@@ -6,6 +6,4 @@ b.c                                                             
- 5                                                                              
- 6                                                                              
+ b.c | 6 ++----
+ e/f | 6 ++----
+ g h | 6 ++----
+ 3 files changed, 6 insertions(+), 12 deletions(-)
+
+diff --git a/b.c b/b.c
+index 0d8560f..81a0f74 100644
+--- a/b.c
++++ b/b.c
+@@ -1,4 +1,4 @@
+-b.c
++b.c CHANGED
+ 1
+ 2
+ 3
+@@ -6,6 +6,4 @@ b.c
+ 5
+ 6
 [stage] Unstaged changes - line 4 of 65                                      27%
 EOF
 
 assert_equals 'unstaged-changes-staged-bc-line.screen' <<EOF
- b.c | 5 +----                                                                  
- e/f | 6 ++----                                                                 
- g h | 6 ++----                                                                 
- 3 files changed, 5 insertions(+), 12 deletions(-)                              
-                                                                                
-diff --git a/b.c b/b.c                                                          
-index 0262107..81a0f74 100644                                                   
---- a/b.c                                                                       
-+++ b/b.c                                                                       
-@@ -1,4 +1,3 @@                                                                 
--b.c                                                                            
- b.c CHANGED                                                                    
- 1                                                                              
- 2                                                                              
-@@ -7,6 +6,4 @@ b.c CHANGED                                                     
- 5                                                                              
- 6                                                                              
- 7                                                                              
+ b.c | 5 +----
+ e/f | 6 ++----
+ g h | 6 ++----
+ 3 files changed, 5 insertions(+), 12 deletions(-)
+
+diff --git a/b.c b/b.c
+index 0262107..81a0f74 100644
+--- a/b.c
++++ b/b.c
+@@ -1,4 +1,3 @@
+-b.c
+ b.c CHANGED
+ 1
+ 2
+@@ -7,6 +6,4 @@ b.c CHANGED
+ 5
+ 6
+ 7
 [stage] Unstaged changes to 'b.c' - line 12 of 64                            28%
 EOF
 
 assert_equals 'unstaged-changes-staged-bc-chunk.screen' <<EOF
- b.c | 4 +---                                                                   
- e/f | 6 ++----                                                                 
- g h | 6 ++----                                                                 
- 3 files changed, 5 insertions(+), 11 deletions(-)                              
-                                                                                
-diff --git a/b.c b/b.c                                                          
-index f16e197..81a0f74 100644                                                   
---- a/b.c                                                                       
-+++ b/b.c                                                                       
-@@ -6,6 +6,4 @@ b.c CHANGED                                                     
- 5                                                                              
- 6                                                                              
- 7                                                                              
--8                                                                              
--9                                                                              
--10                                                                             
-\ No newline at end of file                                                     
-+8                                                                              
+ b.c | 4 +---
+ e/f | 6 ++----
+ g h | 6 ++----
+ 3 files changed, 5 insertions(+), 11 deletions(-)
+
+diff --git a/b.c b/b.c
+index f16e197..81a0f74 100644
+--- a/b.c
++++ b/b.c
+@@ -6,6 +6,4 @@ b.c CHANGED
+ 5
+ 6
+ 7
+-8
+-9
+-10
+\ No newline at end of file
++8
 [stage] Unstaged changes to 'b.c' - line 12 of 59                            30%
 EOF
 
 assert_equals 'unstaged-changes-staged-bc-last-chunk.screen' <<EOF
- e/f | 6 ++----                                                                 
- g h | 6 ++----                                                                 
- 2 files changed, 4 insertions(+), 8 deletions(-)                               
-                                                                                
-diff --git a/e/f b/e/f                                                          
-index 7a93606..8cee1bb 100644                                                   
---- a/e/f                                                                       
-+++ b/e/f                                                                       
-@@ -1,4 +1,4 @@                                                                 
--e/f                                                                            
-+e/f CHANGED                                                                    
- 1                                                                              
- 2                                                                              
- 3                                                                              
-@@ -6,6 +6,4 @@ e/f                                                             
- 5                                                                              
- 6                                                                              
- 7                                                                              
+ e/f | 6 ++----
+ g h | 6 ++----
+ 2 files changed, 4 insertions(+), 8 deletions(-)
+
+diff --git a/e/f b/e/f
+index 7a93606..8cee1bb 100644
+--- a/e/f
++++ b/e/f
+@@ -1,4 +1,4 @@
+-e/f
++e/f CHANGED
+ 1
+ 2
+ 3
+@@ -6,6 +6,4 @@ e/f
+ 5
+ 6
+ 7
 [stage] Unstaged changes to 'e/f' - line 12 of 44                            40%
 EOF
 
 assert_equals 'unstaged-changes-staged-all.screen' <<EOF
-On branch master                                                                
-Changes to be committed:                                                        
-M .j                                                                            
-M a                                                                             
-M b.c                                                                           
-M e/f                                                                           
-M g h                                                                           
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+On branch master
+Changes to be committed:
+M .j
+M a
+M b.c
+M e/f
+M g h
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
+
+
+
+
+
+
 [status] Press u to unstage 'e/f' for commit                                100%
 EOF

@@ -39,20 +39,20 @@ git_clone 'repo-one'
 test_tig
 
 assert_equals 'main-view.screen' <<EOF
-  1| 2010-04-07 MPower       Commit 10 E                                        
-   | 2010-03-29 JTBrahe      Commit 10 D                                        
-  3| 2010-03-21 作者         Commit 10 C                                      
-   | 2010-03-12 RLévesque    Commit 10 B                                       
-   | 2010-03-04 AUThor       Commit 10 A                                        
-  6| 2010-02-23 MPower       Commit 9 E                                         
-   | 2010-02-15 JTBrahe      Commit 9 D                                         
-   | 2010-02-06 作者         Commit 9 C                                       
-  9| 2010-01-29 RLévesque    Commit 9 B                                        
-   | 2010-01-20 AUThor       Commit 9 A                                         
-   | 2010-01-12 MPower       Commit 8 E                                         
- 12| 2010-01-03 JTBrahe      Commit 8 D                                         
-   | 2009-12-26 作者         Commit 8 C                                       
-   | 2009-12-17 RLévesque    Commit 8 B                                        
+  1| 2010-04-07 MPower       Commit 10 E
+   | 2010-03-29 JTBrahe      Commit 10 D
+  3| 2010-03-21 作者         Commit 10 C
+   | 2010-03-12 RLévesque    Commit 10 B
+   | 2010-03-04 AUThor       Commit 10 A
+  6| 2010-02-23 MPower       Commit 9 E
+   | 2010-02-15 JTBrahe      Commit 9 D
+   | 2010-02-06 作者         Commit 9 C
+  9| 2010-01-29 RLévesque    Commit 9 B
+   | 2010-01-20 AUThor       Commit 9 A
+   | 2010-01-12 MPower       Commit 8 E
+ 12| 2010-01-03 JTBrahe      Commit 8 D
+   | 2009-12-26 作者         Commit 8 C
+   | 2009-12-17 RLévesque    Commit 8 B
 [main] 5cb3412a5e06e506840495b91acc885037a48b72 - commit 1 of 50             28%
 EOF
 

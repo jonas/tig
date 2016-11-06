@@ -282,8 +282,9 @@ static bool
 save_window_line(FILE *file, WINDOW *win, int y, char *buf, size_t bufsize)
 {
 	int read = mvwinnstr(win, y, 0, buf, bufsize);
+	const char *out = read == ERR ? "" : string_trim_end(buf);
 
-	return read == ERR ? false : fprintf(file, "%s\n", buf) == read + 1;
+	return read == ERR ? false : fprintf(file, "%s\n", out) == strlen(out) + 1;
 }
 
 static bool
@@ -295,8 +296,9 @@ save_window_vline(FILE *file, WINDOW *left, WINDOW *right, int y, char *buf, siz
 	if (read2 == ERR)
 		return false;
 	buf[read1] = '|';
+	buf = string_trim_end(buf);
 
-	return fprintf(file, "%s\n", buf) == read1 + 1 + read2 + 1;
+	return fprintf(file, "%s\n", string_trim_end(buf)) == strlen(buf) + 1;
 }
 
 bool

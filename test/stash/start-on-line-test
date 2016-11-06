@@ -25,33 +25,33 @@ EOF
 test_tig stash +42
 
 assert_equals 'position.screen' <<EOF
-Committer On master: Stash #10                                                  
-Committer On master: Stash #9                                                   
-Committer On master: Stash #8                                                   
-Committer On master: Stash #7                                                   
-Committer On master: Stash #6                                                   
-Committer On master: Stash #5                                                   
-Committer On master: Stash #4                                                   
-Committer On master: Stash #3                                                   
-Committer On master: Stash #2                                                   
-Committer On master: Stash #1                                                   
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+Committer On master: Stash #10
+Committer On master: Stash #9
+Committer On master: Stash #8
+Committer On master: Stash #7
+Committer On master: Stash #6
+Committer On master: Stash #5
+Committer On master: Stash #4
+Committer On master: Stash #3
+Committer On master: Stash #2
+Committer On master: Stash #1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 [stash] stash@{9} - stash 10 of 10                                          100%
 EOF

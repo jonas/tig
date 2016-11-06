@@ -31,11 +31,11 @@ test_setup_work_dir() {
 test_tig
 
 assert_equals 'initial.screen' <<EOF
-2009-02-13 23:31 Committer I [master] {origin/master} {origin/HEAD} committed             
+2009-02-13 23:31 Committer I [master] {origin/master} {origin/HEAD} committed
 [main] 6b55d08be93000f4bdf67f74177ab14f590910d4 - commit 1 of 1                       100%
 EOF
 
 assert_equals 'tagged.screen' <<EOF
-2009-02-13 23:31 Committer I [master] {origin/master} {origin/HEAD} <Marke> committed     
+2009-02-13 23:31 Committer I [master] {origin/master} {origin/HEAD} <Marke> committed
 [main] 6b55d08be93000f4bdf67f74177ab14f590910d4 - commit 1 of 1                       100%
 EOF

@@ -134,7 +134,7 @@ split_argv_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd, bool remov
 		if (!arg)
 			break;
 		argv[(*argc)++] = arg;
-		cmd = chomp_string(cmd);
+		cmd = string_trim(cmd);
 	}
 
 	if (*argc < SIZEOF_ARG)

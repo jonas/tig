@@ -23,97 +23,97 @@ EOF
 test_tig
 
 assert_equals 'help-default.screen' <<EOF
-Quick reference for tig keybindings:                                            
-                                                                                
-[-] generic bindings                                                            
-View switching                                                                  
-                           m view-main           Show main view                 
-                           d view-diff           Show diff view                 
-                           l view-log            Show log view                  
-                           t view-tree           Show tree view                 
-                           f view-blob           Show blob view                 
-                           b view-blame          Show blame view                
-                           r view-refs           Show refs view                 
-                        s, S view-status         Show status view               
-                           c view-stage          Show stage view                
-                           y view-stash          Show stash view                
-                           g view-grep           Show grep view                 
-                           p view-pager          Show pager view                
-                           h view-help           Show help view                 
-View manipulation                                                               
-                     <Enter> enter               Enter and open selected line   
+Quick reference for tig keybindings:
+
+[-] generic bindings
+View switching
+                           m view-main           Show main view
+                           d view-diff           Show diff view
+                           l view-log            Show log view
+                           t view-tree           Show tree view
+                           f view-blob           Show blob view
+                           b view-blame          Show blame view
+                           r view-refs           Show refs view
+                        s, S view-status         Show status view
+                           c view-stage          Show stage view
+                           y view-stash          Show stash view
+                           g view-grep           Show grep view
+                           p view-pager          Show pager view
+                           h view-help           Show help view
+View manipulation
+                     <Enter> enter               Enter and open selected line
                            < back                Go back to the previous view st
-         <Down>, <Ctrl-N>, J next                Move to next                   
-           <Up>, <Ctrl-P>, K previous            Move to previous               
-                         ',' parent              Move to parent                 
-                       <Tab> view-next           Move focus to the next view    
-                     R, <F5> refresh             Reload and refresh view        
-                           O maximize            Maximize the current view      
-                           q view-close          Close the current view         
-                           Q quit                Close all views and quit       
+         <Down>, <Ctrl-N>, J next                Move to next
+           <Up>, <Ctrl-P>, K previous            Move to previous
+                         ',' parent              Move to parent
+                       <Tab> view-next           Move focus to the next view
+                     R, <F5> refresh             Reload and refresh view
+                           O maximize            Maximize the current view
+                           q view-close          Close the current view
+                           Q quit                Close all views and quit
 [help] - line 1 of 112                                                       25%
 EOF
 
 assert_equals 'help-search.screen' <<EOF
-Quick reference for tig keybindings:                                            
-                                                                                
-[-] generic bindings                                                            
-View switching                                                                  
-                           m view-main           Show main view                 
-                           d view-diff           Show diff view                 
-                           l view-log            Show log view                  
-                           t view-tree           Show tree view                 
-                           f view-blob           Show blob view                 
-                           b view-blame          Show blame view                
-                           r view-refs           Show refs view                 
-                        s, S view-status         Show status view               
-                           c view-stage          Show stage view                
-                           y view-stash          Show stash view                
-                           g view-grep           Show grep view                 
-                           p view-pager          Show pager view                
-                           h view-help           Show help view                 
-View manipulation                                                               
-                     <Enter> enter               Enter and open selected line   
+Quick reference for tig keybindings:
+
+[-] generic bindings
+View switching
+                           m view-main           Show main view
+                           d view-diff           Show diff view
+                           l view-log            Show log view
+                           t view-tree           Show tree view
+                           f view-blob           Show blob view
+                           b view-blame          Show blame view
+                           r view-refs           Show refs view
+                        s, S view-status         Show status view
+                           c view-stage          Show stage view
+                           y view-stash          Show stash view
+                           g view-grep           Show grep view
+                           p view-pager          Show pager view
+                           h view-help           Show help view
+View manipulation
+                     <Enter> enter               Enter and open selected line
                            < back                Go back to the previous view st
-         <Down>, <Ctrl-N>, J next                Move to next                   
-           <Up>, <Ctrl-P>, K previous            Move to previous               
-                         ',' parent              Move to parent                 
-                       <Tab> view-next           Move focus to the next view    
-                     R, <F5> refresh             Reload and refresh view        
-                           O maximize            Maximize the current view      
-                           q view-close          Close the current view         
-                           Q quit                Close all views and quit       
+         <Down>, <Ctrl-N>, J next                Move to next
+           <Up>, <Ctrl-P>, K previous            Move to previous
+                         ',' parent              Move to parent
+                       <Tab> view-next           Move focus to the next view
+                     R, <F5> refresh             Reload and refresh view
+                           O maximize            Maximize the current view
+                           q view-close          Close the current view
+                           Q quit                Close all views and quit
 [help] - line 18 of 112                                                      25%
 EOF
 
 assert_equals 'help-collapsed.screen' <<EOF
-Quick reference for tig keybindings:                                            
-                                                                                
-[+] generic bindings                                                            
-[+] search bindings                                                             
-[-] main bindings                                                               
-Option toggling:                                                                
-  G :toggle commit-title-graph                                                  
-  F :toggle commit-title-refs                                                   
-External commands:                                                              
-  C ?git cherry-pick %(commit)                                                  
-[-] diff bindings                                                               
-Option toggling:                                                                
-  [ :toggle diff-context -1                                                     
-  ] :toggle diff-context +1                                                     
-Internal commands:                                                              
-  @ :/^@@                                                                       
-[-] refs bindings                                                               
-External commands:                                                              
-  C ?git checkout %(branch)                                                     
-  ! ?git branch -D %(branch)                                                    
-[-] status bindings                                                             
-View specific actions                                                           
-  u status-update     Stage/unstage chunk or file changes                       
-  ! status-revert     Revert chunk or file changes                              
-  M status-merge      Merge file using external tool                            
-External commands:                                                              
-  C !git commit                                                                 
-[-] stage bindings                                                              
+Quick reference for tig keybindings:
+
+[+] generic bindings
+[+] search bindings
+[-] main bindings
+Option toggling:
+  G :toggle commit-title-graph
+  F :toggle commit-title-refs
+External commands:
+  C ?git cherry-pick %(commit)
+[-] diff bindings
+Option toggling:
+  [ :toggle diff-context -1
+  ] :toggle diff-context +1
+Internal commands:
+  @ :/^@@
+[-] refs bindings
+External commands:
+  C ?git checkout %(branch)
+  ! ?git branch -D %(branch)
+[-] status bindings
+View specific actions
+  u status-update     Stage/unstage chunk or file changes
+  ! status-revert     Revert chunk or file changes
+  M status-merge      Merge file using external tool
+External commands:
+  C !git commit
+[-] stage bindings
 [help] - line 4 of 43                                                        65%
 EOF

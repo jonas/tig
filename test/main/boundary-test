@@ -17,19 +17,19 @@ in_work_dir setup-conflict.sh >> prepare.log 2>> prepare.log
 test_tig --boundary --all ^master
 
 assert_equals 'merge-view.screen' <<EOF
-2009-03-28 13:22 Committer * [conflict-branch] Change: d'                       
-2009-03-20 01:00 Committer * Change: d                                          
-$YYY_MM_DD_HH_MM Unknown   | * Unstaged changes                                 
-2009-03-11 12:38 Committer | * [conflict-master] Change: c'                     
-2009-03-03 00:15 Committer | * Change: c                                        
-2009-02-22 11:53 Committer o-' [master] Change: b                               
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+2009-03-28 13:22 Committer * [conflict-branch] Change: d'
+2009-03-20 01:00 Committer * Change: d
+$YYY_MM_DD_HH_MM Unknown   | * Unstaged changes
+2009-03-11 12:38 Committer | * [conflict-master] Change: c'
+2009-03-03 00:15 Committer | * Change: c
+2009-02-22 11:53 Committer o-' [master] Change: b
+
+
+
+
+
+
+
+
 [main] d62d8545d99da3de587bf2ef43703dde0ce68084 - commit 1 of 5             100%
 EOF

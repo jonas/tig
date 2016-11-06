@@ -299,7 +299,7 @@ show_test_results()
 		failed="$(grep FAIL < .test-result | wc -l)"
 		count="$(sed -n '/\(FAIL\|OK\)/p' < .test-result | wc -l)"
 
-		printf "Failed %d out of %d test(s)%s\n" $failed $count 
+		printf "Failed %d out of %d test(s)%s\n" $failed $count
 
 		# Show output from stderr if no output is expected
 		if [ -e stderr ]; then
@@ -354,7 +354,7 @@ test_require()
 			fi
 			;;
 		*)
-			test_skip "Unknown feature requirement: $feature" 
+			test_skip "Unknown feature requirement: $feature"
 		esac
 	done
 }
@@ -414,7 +414,7 @@ valgrind_exec()
 	*)	mv "$valgrind.orig" "$valgrind" ;;
 	esac
 
-	rm -f "$valgrind.orig" 
+	rm -f "$valgrind.orig"
 }
 
 test_tig()
@@ -513,7 +513,7 @@ run_test_cases()
 			:save-display $name.screen
 		"
 		if [ -e "$name-before" ]; then
-			test_exec_work_dir "$SHELL" "$HOME/$name-before" 
+			test_exec_work_dir "$SHELL" "$HOME/$name-before"
 		fi
 		old_work_dir="$work_dir"
 		if [ -e "$name-cwd" ]; then
@@ -525,7 +525,7 @@ run_test_cases()
 	        IFS="$ORIG_IFS"
 		work_dir="$old_work_dir"
 		if [ -e "$name-after" ]; then
-			test_exec_work_dir "$SHELL" "$HOME/$name-after" 
+			test_exec_work_dir "$SHELL" "$HOME/$name-after"
 		fi
 
 		assert_equals "$name.screen" < "$name.expected"

@@ -22,11 +22,11 @@ test_tig status
 
 assert_equals 'worktree.screen' <<EOF
 On branch dev
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-  (no files)                                                                    
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
 [status] Nothing to update                                                  100%
 EOF
