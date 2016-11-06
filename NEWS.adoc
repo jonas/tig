@@ -1,6 +1,20 @@
 Release notes
 =============
 
+master
+------
+
+Improvements:
+
+ - Add 'A' as a binding to apply a stash without dropping it.
+ - Bind 'Ctrl-D' and 'Ctrl-U' to half-page movements by default.
+ - manual: Mention how to change default Up/Down behavior in diff view.
+
+Bug fixes
+
+ - Reorganize checking of libraries for termcap functions.
+ - Fix `:goto <id>` error message.
+
 tig-2.2
 -------
 
