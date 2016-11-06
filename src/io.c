@@ -426,7 +426,7 @@ io_memchr(struct buffer *buf, char *data, int c)
 DEFINE_ALLOCATOR(io_realloc_buf, char, BUFSIZ)
 
 static bool
-io_get_line(struct io *io, struct buffer *buf, int c, size_t *lineno, bool can_read)
+io_get_line(struct io *io, struct buffer *buf, int c, size_t *lineno, bool can_read, char eol_char)
 {
 	char *eol;
 	ssize_t readsize;
@@ -435,7 +435,7 @@ io_get_line(struct io *io, struct buffer *buf, int c, size_t *lineno, bool can_r
 		if (io->bufsize > 0) {
 			eol = memchr(io->bufpos, c, io->bufsize);
 
-			while (io->span && io->bufpos < eol && eol[-1] == '\\') {
+			while (eol_char && io->bufpos < eol && eol[-1] == eol_char) {
 				if (lineno)
 					(*lineno)++;
 				eol[-1] = eol[0] = ' ';
@@ -492,7 +492,7 @@ io_get_line(struct io *io, struct buffer *buf, int c, size_t *lineno, bool can_r
 bool
 io_get(struct io *io, struct buffer *buf, int c, bool can_read)
 {
-	return io_get_line(io, buf, c, NULL, can_read);
+	return io_get_line(io, buf, c, NULL, can_read, 0);
 }
 
 bool
@@ -577,7 +577,7 @@ io_load_file(struct io *io, const char *separators,
 	struct buffer buf;
 	enum status_code state = SUCCESS;
 
-	while (state == SUCCESS && io_get_line(io, &buf, '\n', lineno, true)) {
+	while (state == SUCCESS && io_get_line(io, &buf, '\n', lineno, true, '\\')) {
 		char *name;
 		char *value;
 		size_t namelen;
@@ -610,7 +610,6 @@ enum status_code
 io_load_span(struct io *io, const char *separators, size_t *lineno,
 	     io_read_fn read_property, void *data)
 {
-	io->span = true;
 	return io_load_file(io, separators, lineno, read_property, data);
 }
 
