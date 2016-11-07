@@ -48,9 +48,10 @@ diff_init_highlight(struct view *view, struct diff_state *state)
 {
 	if (opt_diff_highlight) {
 		const char *argv[] = { opt_diff_highlight, NULL };
+		char * const env[] = { "GIT_CONFIG=/dev/null" };
 		struct io io;
 
-		if (io_exec(&io, IO_RP, view->dir, NULL, argv, view->io.pipe)) {
+		if (io_exec(&io, IO_RP, view->dir, env, argv, view->io.pipe)) {
 			state->view_io = view->io;
 			view->io = io;
 			state->highlight = true;
