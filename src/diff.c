@@ -58,7 +58,7 @@ diff_init_highlight(struct view *view, struct diff_state *state)
 		}
 	}
 
-	return false;
+	return true;
 }
 
 void
