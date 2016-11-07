@@ -549,7 +549,17 @@ stage_open(struct view *view, enum open_flags flags)
 
 	view->vid[0] = 0;
 	view->dir = repo.cdup;
-	return begin_update(view, NULL, NULL, flags);
+	{
+		bool ok = begin_update(view, NULL, NULL, flags);
+
+		if (ok && stage_line_type != LINE_STAT_UNTRACKED) {
+			struct stage_state *state = view->private;
+
+			return diff_init_highlight(view, &state->diff);
+		}
+
+		return ok;
+	}
 }
 
 static bool
@@ -559,6 +569,9 @@ stage_read(struct view *view, struct buffer *buf, bool force_stop)
 
 	if (stage_line_type == LINE_STAT_UNTRACKED)
 		return pager_common_read(view, buf ? buf->data : NULL, LINE_DEFAULT, NULL);
+
+	if (!buf)
+		diff_done_highlight(&state->diff);
 
 	if (!buf && !view->lines && view->parent) {
 		maximize_view(view->parent, true);

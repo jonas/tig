@@ -268,7 +268,7 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 	if (dir && !strcmp(dir, argv[0]))
 		return io_open(io, "%s%s", dir, argv[1]);
 
-	if ((type == IO_RD || type == IO_WR) && pipe(pipefds) < 0) {
+	if ((type == IO_RD || type == IO_RP || type == IO_WR) && pipe(pipefds) < 0) {
 		io->error = errno;
 		return false;
 	} else if (type == IO_AP) {
@@ -288,9 +288,11 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 	} else {
 		if (type != IO_FG) {
 			int devnull = open("/dev/null", O_RDWR);
-			int readfd  = type == IO_WR ? pipefds[0] : devnull;
-			int writefd = (type == IO_RD || type == IO_AP)
-							? pipefds[1] : devnull;
+			int readfd  = type == IO_WR ? pipefds[0]
+				    : type == IO_RP ? custom
+				    : devnull;
+			int writefd = (type == IO_RD || type == IO_RP || type == IO_AP)
+				    ? pipefds[1] : devnull;
 			int errorfd = open_trace(devnull, argv);
 
 			/* Inject stdin given on the command line. */

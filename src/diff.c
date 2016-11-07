@@ -34,25 +34,101 @@ diff_open(struct view *view, enum open_flags flags)
 
 	diff_save_line(view, view->private, flags);
 
-	return begin_update(view, NULL, diff_argv, flags);
+	if (begin_update(view, NULL, diff_argv, flags)) {
+		struct diff_state *state = view->private;
+
+		return diff_init_highlight(view, state);
+	}
+
+	return false;
+}
+
+bool
+diff_init_highlight(struct view *view, struct diff_state *state)
+{
+	if (opt_diff_highlight) {
+		const char *argv[] = { opt_diff_highlight, NULL };
+		struct io io;
+
+		if (io_exec(&io, IO_RP, view->dir, NULL, argv, view->io.pipe)) {
+			state->view_io = view->io;
+			view->io = io;
+			state->highlight = true;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void
+diff_done_highlight(struct diff_state *state)
+{
+	if (state->highlight) {
+		io_kill(&state->view_io);
+		io_done(&state->view_io);
+	}
 }
 
 struct diff_stat_context {
 	const char *text;
 	enum line_type type;
+	bool skip;
 	size_t cells;
-	struct box_cell cell[10];
+	const char **cell_text;
+	struct box_cell cell[256];
 };
 
-static void
+static bool
 diff_common_add_cell(struct diff_stat_context *context, size_t length)
 {
 	assert(ARRAY_SIZE(context->cell) > context->cells);
 	if (length == 0)
-		return;
+		return true;
+	if (context->skip && !argv_appendn(&context->cell_text, context->text, length))
+		return false;
 	context->cell[context->cells].length = length;
 	context->cell[context->cells].type = context->type;
 	context->cells++;
+	return true;
+}
+
+static struct line *
+diff_common_add_line(struct view *view, const char *text, enum line_type type, struct diff_stat_context *context)
+{
+	char *cell_text = context->cell_text ? argv_to_string_alloc(context->cell_text, "") : NULL;
+	const char *line_text = cell_text ? cell_text : text;
+	struct line *line = add_line_text_at(view, view->lines, line_text, type, context->cells);
+	struct box *box;
+
+	free(cell_text);
+	argv_free(context->cell_text);
+
+	if (!line)
+		return NULL;
+
+	box = line->data;
+	if (context->cells)
+		memcpy(box->cell, context->cell, sizeof(struct box_cell) * context->cells);
+	box->cells = context->cells;
+	return line;
+}
+
+static bool
+diff_common_add_cell_until(struct diff_stat_context *context, const char *s, enum line_type next_type)
+{
+	const char *sep = strstr(context->text, s);
+
+	if (sep == NULL)
+		return false;
+
+	if (!diff_common_add_cell(context, sep - context->text))
+		return false;
+
+	context->text = sep + (context->skip ? strlen(s) : 0);
+	context->type = next_type;
+
+	return true;
 }
 
 static bool
@@ -74,8 +150,6 @@ static struct line *
 diff_common_read_diff_stat(struct view *view, const char *text)
 {
 	struct diff_stat_context context = { text, LINE_DIFF_STAT };
-	struct line *line;
-	struct box *box;
 
 	diff_common_read_diff_stat_part(&context, '|', LINE_DEFAULT);
 	if (diff_common_read_diff_stat_part(&context, 'B', LINE_DEFAULT)) {
@@ -91,15 +165,7 @@ diff_common_read_diff_stat(struct view *view, const char *text)
 	}
 	diff_common_add_cell(&context, strlen(context.text));
 
-	line = add_line_text_at(view, view->lines, text, LINE_DIFF_STAT, context.cells);
-	if (!line)
-		return NULL;
-
-	box = line->data;
-	if (context.cells)
-		memcpy(box->cell, context.cell, sizeof(struct box_cell) * context.cells);
-	box->cells = context.cells;
-	return line;
+	return diff_common_add_line(view, text, LINE_DIFF_STAT, &context);
 }
 
 struct line *
@@ -133,6 +199,23 @@ diff_common_add_diff_stat(struct view *view, const char *text, size_t offset)
 	    (data[len - 1] == '0' && (strstr(data, "=>") || !prefixcmp(data, "..."))))
 		return diff_common_read_diff_stat(view, text);
 	return NULL;
+}
+
+static bool
+diff_common_highlight(struct view *view, const char *text, enum line_type type)
+{
+	struct diff_stat_context context = { text, type, true };
+	enum line_type hi_type = type == LINE_DIFF_ADD
+		               ? LINE_DIFF_ADD_HIGHLIGHT : LINE_DIFF_DEL_HIGHLIGHT;
+	const char *codes[] = { "\x1b[7m", "\x1b[27m" };
+	const enum line_type types[] = { hi_type, type };
+	int i;
+
+	for (i = 0; diff_common_add_cell_until(&context, codes[i], types[i]); i = (i + 1) % 2)
+		;
+
+	diff_common_add_cell(&context, strlen(context.text));
+	return diff_common_add_line(view, text, type, &context);
 }
 
 bool
@@ -187,6 +270,9 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		box->cell[1].length = strlen(context + 2);
 		box->cell[box->cells++].type = LINE_DIFF_STAT;
 		return true;
+
+	} else if (state->highlight && (type == LINE_DIFF_ADD || type == LINE_DIFF_DEL)) {
+		return diff_common_highlight(view, data, type);
 
 	} else if (type == LINE_PP_MERGE) {
 		state->combined_diff = true;
@@ -338,6 +424,8 @@ diff_read(struct view *view, struct buffer *buf, bool force_stop)
 		return diff_read_describe(view, buf, state);
 
 	if (!buf) {
+		diff_done_highlight(state);
+
 		/* Fall back to retry if no diff will be shown. */
 		if (view->lines == 0 && opt_file_args) {
 			int pos = argv_size(view->argv)

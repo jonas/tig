@@ -18,7 +18,7 @@
 #include "tig/prompt.h"
 
 static bool
-concat_argv(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep, bool quoted)
+concat_argv(const char *argv[], char *buf, size_t buflen, const char *sep, bool quoted)
 {
 	size_t bufpos, argc;
 
@@ -51,6 +51,22 @@ concat_argv(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *
 	}
 
 	return true;
+}
+
+char *
+argv_to_string_alloc(const char *argv[], const char *sep)
+{
+	size_t i, size = 0;
+	char *buf;
+
+	for (i = 0; argv[i]; i++)
+		size += strlen(argv[i]);
+
+	buf = malloc(size + 1);
+	if (buf && argv_to_string(argv, buf, size + 1, sep))
+		return buf;
+	free(buf);
+	return NULL;
 }
 
 bool
@@ -202,7 +218,7 @@ argv_contains(const char **argv, const char *arg)
 DEFINE_ALLOCATOR(argv_realloc, const char *, SIZEOF_ARG)
 
 bool
-argv_append(const char ***argv, const char *arg)
+argv_appendn(const char ***argv, const char *arg, size_t arglen)
 {
 	size_t argc = argv_size(*argv);
 	char *alloc;
@@ -213,12 +229,19 @@ argv_append(const char ***argv, const char *arg)
 	if (!argv_realloc(argv, argc, 2))
 		return false;
 
-	alloc = strdup(arg);
+	alloc = strndup(arg, arglen);
 
 	(*argv)[argc++] = alloc;
 	(*argv)[argc] = NULL;
 
 	return alloc != NULL;
+}
+
+
+bool
+argv_append(const char ***argv, const char *arg)
+{
+	return argv_appendn(argv, arg, strlen(arg));
 }
 
 bool

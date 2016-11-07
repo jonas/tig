@@ -250,6 +250,12 @@ The following variables can be set:
 
 	Number of context lines to show for diffs.
 
+'diff-highlight' (mixed)::
+
+	Whether to highlight diffs using Git's 'diff-highlight' program. Defaults
+	to false. When set to true then 'diff-highlight' is used, else the option
+	value is used as the path.
+
 'ignore-space' (mixed) [no|all|some|at-eol|<bool>]::
 
 	Ignore space changes in diff view. By default no space changes are

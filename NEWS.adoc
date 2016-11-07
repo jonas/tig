@@ -6,6 +6,8 @@ master
 
 Improvements:
 
+ - Support Git's 'diff-highlight' program when `diff-highlight` is set to either
+   true or the path of the script to use for post-processing.
  - Add 'A' as a binding to apply a stash without dropping it.
  - Bind 'Ctrl-D' and 'Ctrl-U' to half-page movements by default.
  - manual: Mention how to change default Up/Down behavior in diff view.
