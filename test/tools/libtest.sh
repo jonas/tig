@@ -353,6 +353,12 @@ test_require()
 				test_skip "The test requires clang and is only run via \`make test-address-sanitizer\`"
 			fi
 			;;
+		diff-highlight)
+			diff_highlight_path="$(git --exec-path)/../../share/git-core/contrib/diff-highlight/diff-highlight"
+			if [ ! -e "$diff_highlight_path" ]; then
+				test_skip "The test requires diff-highlight, usually found in share/git-core-contrib"
+			fi
+			;;
 		*)
 			test_skip "Unknown feature requirement: $feature"
 		esac
