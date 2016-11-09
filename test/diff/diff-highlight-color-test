@@ -4,7 +4,7 @@
 . libgit.sh
 
 test_require diff-highlight
-test -e "$diff_highlight_path" || die "diff-highlight not found"
+
 export PATH="$(dirname "$diff_highlight_path"):$PATH"
 
 gitconfig <<EOF
