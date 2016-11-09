@@ -292,6 +292,11 @@ view_driver(struct view *view, enum request request)
 		find_next(view, request);
 		break;
 
+	case REQ_MOVE_NEXT_MERGE:
+	case REQ_MOVE_PREV_MERGE:
+		report("Moving between merge commits is not supported by the %s view", view->name);
+		break;
+
 	case REQ_STOP_LOADING:
 		foreach_view(view, i) {
 			if (view->pipe)
