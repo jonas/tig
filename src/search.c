@@ -164,7 +164,6 @@ find_next(struct view *view, enum request request)
 static enum status_code
 find_next_merge_line(struct view *view, int direction, bool wrapped)
 {
-	enum status_code code = -1;
 	int dist;
 	size_t max;
 
@@ -193,35 +192,25 @@ find_next_merge_line(struct view *view, int direction, bool wrapped)
 			continue;
 
 		select_view_line(view, lineno);
-		code = SUCCESS;
-		break;
+		return SUCCESS;
 	}
 
-	return code;
+	return success("No merge commit found");
 }
 
 static enum status_code
 find_next_merge(struct view *view, enum request request)
 {
-	int direction;
-	enum status_code code;
-
 	switch (request) {
 	case REQ_MOVE_NEXT_MERGE:
-		direction = 1;
-		break;
+		return find_next_merge_line(view, 1, opt_wrap_search);
 
 	case REQ_MOVE_PREV_MERGE:
-		direction = -1;
-		break;
+		return find_next_merge_line(view, -1, opt_wrap_search);
 
 	default:
 		return error("Invalid request searching for next merge");
 	}
-
-	code = find_next_merge_line(view, direction, opt_wrap_search);
-
-	return code == SUCCESS ? code : success("No merge commit found");
 }
 
 void
