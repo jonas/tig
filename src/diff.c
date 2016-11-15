@@ -272,7 +272,7 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		box->cell[box->cells++].type = LINE_DIFF_STAT;
 		return true;
 
-	} else if (state->highlight && (type == LINE_DIFF_ADD || type == LINE_DIFF_DEL)) {
+	} else if (state->highlight && strchr(data, 0x1b)) {
 		return diff_common_highlight(view, data, type);
 
 	} else if (type == LINE_PP_MERGE) {
