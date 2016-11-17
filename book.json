@@ -1,0 +1,22 @@
+{
+  "gitbook": "3.2.x",
+  "title": "Tig - Text-mode interface for Git",
+  "structure": {
+     "readme": "README.adoc",
+     "summary": "book.md"
+  },
+  "links": {
+    "sharing": {
+      "twitter": false,
+      "facebook": false,
+      "google": false,
+      "all": false
+    }
+  },
+  "plugins": ["ga"],
+  "pluginsConfig": {
+    "ga": {
+      "token": "UA-7492166-1"
+    }
+  }
+}

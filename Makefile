@@ -128,12 +128,12 @@ uninstall:
 		$(QUIET_UNINSTALL_EACH)tools/uninstall.sh "$(DESTDIR)$(docdir)/tig/$(doc)";)
 
 clean: clean-test clean-coverage
-	$(Q)$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5 .deps
+	$(Q)$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5 .deps _book node_modules
 	$(Q)$(RM) $(EXE) $(TOOLS) $(OBJS) core doc/*.xml src/builtin-config.c
 	$(Q)$(RM) $(OBJS:%.o=%.gcda) $(OBJS:%.o=%.gcno)
 
 distclean: clean
-	$(RM) -r doc/manual.html-chunked autom4te.cache release-docs
+	$(RM) -r doc/manual.html-chunked autom4te.cache
 	$(RM) doc/*.toc $(ALLDOC) aclocal.m4 configure
 	$(RM) config.h config.log config.make config.status config.h.in
 
@@ -224,6 +224,10 @@ $(TESTS): $(EXE) test/tools/test-graph
 # they don't confuse Make when we aren't actually using ./configure
 configure: configure.ac acinclude.m4 tools/*.m4
 	$(QUIET_GEN)./autogen.sh
+
+site:
+	gitbook install
+	gitbook build
 
 .PHONY: all all-coverage all-debug clean clean-coverage clean-test doc \
 	doc-man doc-html dist distclean install install-doc \
