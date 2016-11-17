@@ -1,4 +1,4 @@
-personal_ws-1.1 en 259 
+personal_ws-1.1 en 261 
 CJK
 del
 goto
@@ -178,6 +178,7 @@ delim
 unstaged
 Nn
 xrvt
+automake
 nodelay
 VLINE
 extdiff
@@ -203,8 +204,8 @@ Baudis
 substring
 PID
 tz
-docbook
 DocBook
+docbook
 submodule
 strndup
 startup
@@ -214,6 +215,7 @@ renderer
 strftime
 textconv
 strchr
+termcap
 lineno
 repo
 NUL

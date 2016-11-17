@@ -95,7 +95,10 @@ struct ref;
 enum line_type {
 #define DEFINE_LINE_ENUM(type, line) LINE_##type
 	LINE_INFO(DEFINE_LINE_ENUM),
-	LINE_NONE
+	LINE_NONE,
+
+	LINE_DIFF_ADD_HIGHLIGHT,
+	LINE_DIFF_DEL_HIGHLIGHT
 };
 
 struct line_info {
@@ -136,8 +139,12 @@ static inline int
 get_line_attr(const char *prefix, enum line_type type)
 {
 	struct line_info *info = get_line_info(prefix, type);
+	int hi_attr = 0;
 
-	return COLOR_PAIR(COLOR_ID(info->color_pair)) | info->attr;
+	if (type == LINE_DIFF_ADD_HIGHLIGHT || type == LINE_DIFF_DEL_HIGHLIGHT)
+		hi_attr = A_STANDOUT;
+
+	return COLOR_PAIR(COLOR_ID(info->color_pair)) | info->attr | hi_attr;
 }
 
 #endif

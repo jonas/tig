@@ -340,7 +340,7 @@ goto_id(struct view *view, const char *expr, bool from_start, bool save_search)
 		}
 	}
 
-	report("Unable to find commit '%s'", view->env->search);
+	report("Unable to find commit '%s'", id);
 }
 
 /*

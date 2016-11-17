@@ -95,6 +95,8 @@ set ignore-space		= no		# Enum: no, all, some, at-eol (diff)
 set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set diff-context		= 3		# Number of lines to show around diff changes (diff)
 #set diff-options		= -C		# User-defined options for `tig show` (git-diff)
+#set diff-highlight		= true		# String (or bool): Path to diff-highlight script,
+						#                   defaults to `diff-highlight`.
 #set blame-options		= -C -C -C	# User-defined options for `tig blame` (git-blame)
 #set log-options		= --pretty=raw	# User-defined options for `tig log` (git-log)
 #set main-options		= -n 1000	# User-defined options for `tig` (git-log)
@@ -153,6 +155,7 @@ set mouse-scroll		= 3		# Number of lines to scroll via the mouse
 
 bind main	C	?git cherry-pick %(commit)
 bind status	C	!git commit
+bind stash	A	?git stash apply %(stash)
 bind stash	P	?git stash pop %(stash)
 bind stash	!	?git stash drop %(stash)
 bind refs	C	?git checkout %(branch)
@@ -215,13 +218,11 @@ bind main	F	:toggle commit-title-refs  # Toggle reference display (tags/branches
 # Cursor navigation
 bind generic	j	move-down
 bind generic	k	move-up
-#bind generic	?	move-half-page-down
-#bind generic	?	move-half-page-up
+bind generic	<C-D>	move-half-page-down
+bind generic	<C-U>	move-half-page-up
 bind generic	<PgDown> move-page-down
-bind generic	<C-D>	move-page-down
 bind generic	<Space>	move-page-down
 bind generic	<PgUp>	move-page-up
-bind generic	<C-U>	move-page-up
 bind generic	-	move-page-up
 bind generic	<Home>	move-first-line
 bind generic	<End>	move-last-line

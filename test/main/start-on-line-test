@@ -17,32 +17,32 @@ test_tig +42
 
 assert_equals 'position.screen' <<EOF
 2013-10-29 18:46 Sébastien Doeraene │ ● Update for new groupId and package struc
-2013-10-27 23:05 Jonas Fonseca      ●─╯ Add JavaScript benchmark reference code 
+2013-10-27 23:05 Jonas Fonseca      ●─╯ Add JavaScript benchmark reference code
 2013-10-27 18:12 Jonas Fonseca      ● Add check sum calculation for verifying ra
 2013-10-26 12:54 Jonas Fonseca      ● Add Scala.js LICENSE file and a cool licen
 2013-10-25 22:08 Jonas Fonseca      ● Add script to build and run all benchmarks
-2013-10-25 20:29 Jonas Fonseca      ● Support node as a JavaScript engine       
+2013-10-25 20:29 Jonas Fonseca      ● Support node as a JavaScript engine
 2013-10-25 00:34 Jonas Fonseca      ● Run benchmarks for a fixed number of milli
 2013-10-24 23:44 Jonas Fonseca      ● Rework the benchmark runner and add option
-2013-10-18 18:00 Jonas Fonseca      ● Add DeltaBlue benchmark                   
-2013-10-17 23:11 Jonas Fonseca      ● Tidyup indentation                        
+2013-10-18 18:00 Jonas Fonseca      ● Add DeltaBlue benchmark
+2013-10-17 23:11 Jonas Fonseca      ● Tidyup indentation
 2013-10-17 23:09 Jonas Fonseca      ● Use case class apply constructor when addi
-2013-10-18 07:00 Jonas Fonseca      ●─╮ Merge pull request #1 from sjrd/patch-1 
-2013-10-18 11:39 Sébastien Doeraene │ ● Fix the "./run.sh opt" invocation.      
-2013-10-17 20:34 Jonas Fonseca      ●─╯ Add Richards benchmark                  
+2013-10-18 07:00 Jonas Fonseca      ●─╮ Merge pull request #1 from sjrd/patch-1
+2013-10-18 11:39 Sébastien Doeraene │ ● Fix the "./run.sh opt" invocation.
+2013-10-17 20:34 Jonas Fonseca      ●─╯ Add Richards benchmark
 2013-10-17 20:29 Jonas Fonseca      ● Simplify render scene loop by using Range.
 2013-10-17 20:27 Jonas Fonseca      ● Make the run shell script infrastructure r
 2013-10-17 20:25 Jonas Fonseca      ● Simplify creation of new benchmark project
-2013-10-14 16:28 Jonas Fonseca      ● Add link to the github pages              
-2013-10-14 16:19 Jonas Fonseca      ● Add .gitignore file                       
+2013-10-14 16:28 Jonas Fonseca      ● Add link to the github pages
+2013-10-14 16:19 Jonas Fonseca      ● Add .gitignore file
 2013-10-14 16:09 Jonas Fonseca      ● Move description of the optimizeJS warning
-2013-10-14 13:15 Jonas Fonseca      ◎ Initial import of Tracer benchmark        
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
+2013-10-14 13:15 Jonas Fonseca      ◎ Initial import of Tracer benchmark
+
+
+
+
+
+
+
 [main] f02430d55d469abb9313734bacd2611f2384fe65 - commit 42 of 48           100%
 EOF

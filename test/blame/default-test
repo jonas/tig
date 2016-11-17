@@ -27,128 +27,128 @@ in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
 test_tig blame project/Build.scala
 
 assert_equals 'blame-default.screen' <<EOF
-2013-10-14 13:15 Jonas Fonseca      90286e0 import sbt._                        
-2013-10-14 13:15 Jonas Fonseca      90286e0 import Keys._                       
-2013-10-14 13:15 Jonas Fonseca      90286e0                                     
-2013-10-29 18:46 Sébastien Doeraene 74537d9 import scala.scalajs.sbtplugin._   
-2013-10-14 13:15 Jonas Fonseca      90286e0 import ScalaJSPlugin._              
-2013-10-14 13:15 Jonas Fonseca      90286e0 import ScalaJSKeys._                
-2013-10-14 13:15 Jonas Fonseca      90286e0                                     
+2013-10-14 13:15 Jonas Fonseca      90286e0 import sbt._
+2013-10-14 13:15 Jonas Fonseca      90286e0 import Keys._
+2013-10-14 13:15 Jonas Fonseca      90286e0
+2013-10-29 18:46 Sébastien Doeraene 74537d9 import scala.scalajs.sbtplugin._
+2013-10-14 13:15 Jonas Fonseca      90286e0 import ScalaJSPlugin._
+2013-10-14 13:15 Jonas Fonseca      90286e0 import ScalaJSKeys._
+2013-10-14 13:15 Jonas Fonseca      90286e0
 2013-11-26 20:13 Jonas Fonseca      4779f9b object ScalaJSBenchmarks extends Bui
-2013-10-14 13:15 Jonas Fonseca      90286e0                                     
+2013-10-14 13:15 Jonas Fonseca      90286e0
 2013-11-26 20:13 Jonas Fonseca      4779f9b   val scalaJSScalaVersion = "2.10.2"
-2013-10-14 13:15 Jonas Fonseca      90286e0                                     
+2013-10-14 13:15 Jonas Fonseca      90286e0
 2013-10-14 13:15 Jonas Fonseca      90286e0   val projectSettings = Defaults.def
 2013-10-14 13:15 Jonas Fonseca      90286e0       organization := "scalajs-bench
-2013-10-14 13:15 Jonas Fonseca      90286e0       version := "0.1-SNAPSHOT"     
-2013-10-14 13:15 Jonas Fonseca      90286e0   )                                 
-2013-10-14 13:15 Jonas Fonseca      90286e0                                     
+2013-10-14 13:15 Jonas Fonseca      90286e0       version := "0.1-SNAPSHOT"
+2013-10-14 13:15 Jonas Fonseca      90286e0   )
+2013-10-14 13:15 Jonas Fonseca      90286e0
 2013-10-14 13:15 Jonas Fonseca      90286e0   val defaultSettings = projectSetti
 2013-11-26 20:13 Jonas Fonseca      4779f9b       scalaVersion := scalaJSScalaVe
-2013-10-14 13:15 Jonas Fonseca      90286e0       scalacOptions ++= Seq(        
-2013-10-14 13:15 Jonas Fonseca      90286e0           "-deprecation",           
-2013-10-14 13:15 Jonas Fonseca      90286e0           "-unchecked",             
-2013-10-14 13:15 Jonas Fonseca      90286e0           "-feature",               
-2013-10-14 13:15 Jonas Fonseca      90286e0           "-encoding", "utf8"       
-2013-10-14 13:15 Jonas Fonseca      90286e0       )                             
-2013-10-14 13:15 Jonas Fonseca      90286e0   )                                 
-2013-10-14 13:15 Jonas Fonseca      90286e0                                     
+2013-10-14 13:15 Jonas Fonseca      90286e0       scalacOptions ++= Seq(
+2013-10-14 13:15 Jonas Fonseca      90286e0           "-deprecation",
+2013-10-14 13:15 Jonas Fonseca      90286e0           "-unchecked",
+2013-10-14 13:15 Jonas Fonseca      90286e0           "-feature",
+2013-10-14 13:15 Jonas Fonseca      90286e0           "-encoding", "utf8"
+2013-10-14 13:15 Jonas Fonseca      90286e0       )
+2013-10-14 13:15 Jonas Fonseca      90286e0   )
+2013-10-14 13:15 Jonas Fonseca      90286e0
 2013-10-14 13:15 Jonas Fonseca      90286e0   lazy val parent: Project = Project
-2013-10-14 13:15 Jonas Fonseca      90286e0       id = "parent",                
+2013-10-14 13:15 Jonas Fonseca      90286e0       id = "parent",
 [blame] project/Build.scala - line 1 of 64                                   43%
 EOF
 
 assert_equals 'blame-with-diff.screen' <<EOF
-2013-10-14 13:15 Jonas Fonseca      90286e0 import sbt._                        
-2013-10-14 13:15 Jonas Fonseca      90286e0 import Keys._                       
-2013-10-14 13:15 Jonas Fonseca      90286e0                                     
-2013-10-29 18:46 Sébastien Doeraene 74537d9 import scala.scalajs.sbtplugin._   
-2013-10-14 13:15 Jonas Fonseca      90286e0 import ScalaJSPlugin._              
-2013-10-14 13:15 Jonas Fonseca      90286e0 import ScalaJSKeys._                
-2013-10-14 13:15 Jonas Fonseca      90286e0                                     
+2013-10-14 13:15 Jonas Fonseca      90286e0 import sbt._
+2013-10-14 13:15 Jonas Fonseca      90286e0 import Keys._
+2013-10-14 13:15 Jonas Fonseca      90286e0
+2013-10-29 18:46 Sébastien Doeraene 74537d9 import scala.scalajs.sbtplugin._
+2013-10-14 13:15 Jonas Fonseca      90286e0 import ScalaJSPlugin._
+2013-10-14 13:15 Jonas Fonseca      90286e0 import ScalaJSKeys._
+2013-10-14 13:15 Jonas Fonseca      90286e0
 2013-11-26 20:13 Jonas Fonseca      4779f9b object ScalaJSBenchmarks extends Bui
-2013-10-14 13:15 Jonas Fonseca      90286e0                                     
+2013-10-14 13:15 Jonas Fonseca      90286e0
 [blame] project/Build.scala - line 4 of 64                                   14%
-commit 74537d9b257954056d3caa19eb3837500aded883                                 
-Author:     Sébastien Doeraene <sjrdoeraene@gmail.com>                         
-AuthorDate: Tue Oct 29 18:46:52 2013 +0100                                      
-Commit:     Sébastien Doeraene <sjrdoeraene@gmail.com>                         
-CommitDate: Tue Oct 29 18:46:52 2013 +0100                                      
-                                                                                
-    Update for new groupId and package structure of Scala.js.                   
----                                                                             
- project/Build.scala | 2 +-                                                     
- 1 file changed, 1 insertion(+), 1 deletion(-)                                  
-                                                                                
-diff --git a/project/Build.scala b/project/Build.scala                          
-index 560bca1..1713681 100644                                                   
---- a/project/Build.scala                                                       
-+++ b/project/Build.scala                                                       
-@@ -1,7 +1,7 @@                                                                 
- import sbt._                                                                   
- import Keys._                                                                  
+commit 74537d9b257954056d3caa19eb3837500aded883
+Author:     Sébastien Doeraene <sjrdoeraene@gmail.com>
+AuthorDate: Tue Oct 29 18:46:52 2013 +0100
+Commit:     Sébastien Doeraene <sjrdoeraene@gmail.com>
+CommitDate: Tue Oct 29 18:46:52 2013 +0100
+
+    Update for new groupId and package structure of Scala.js.
+---
+ project/Build.scala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/project/Build.scala b/project/Build.scala
+index 560bca1..1713681 100644
+--- a/project/Build.scala
++++ b/project/Build.scala
+@@ -1,7 +1,7 @@
+ import sbt._
+ import Keys._
 [diff] 74537d9b257954056d3caa19eb3837500aded883 - line 1 of 24               75%
 EOF
 
 assert_equals 'blame-with-diff-no-file-filter.screen' <<EOF
-2013-10-14 13:15 Jonas Fonseca      90286e0 import sbt._                        
-2013-10-14 13:15 Jonas Fonseca      90286e0 import Keys._                       
-2013-10-14 13:15 Jonas Fonseca      90286e0                                     
-2013-10-29 18:46 Sébastien Doeraene 74537d9 import scala.scalajs.sbtplugin._   
-2013-10-14 13:15 Jonas Fonseca      90286e0 import ScalaJSPlugin._              
-2013-10-14 13:15 Jonas Fonseca      90286e0 import ScalaJSKeys._                
-2013-10-14 13:15 Jonas Fonseca      90286e0                                     
+2013-10-14 13:15 Jonas Fonseca      90286e0 import sbt._
+2013-10-14 13:15 Jonas Fonseca      90286e0 import Keys._
+2013-10-14 13:15 Jonas Fonseca      90286e0
+2013-10-29 18:46 Sébastien Doeraene 74537d9 import scala.scalajs.sbtplugin._
+2013-10-14 13:15 Jonas Fonseca      90286e0 import ScalaJSPlugin._
+2013-10-14 13:15 Jonas Fonseca      90286e0 import ScalaJSKeys._
+2013-10-14 13:15 Jonas Fonseca      90286e0
 2013-11-26 20:13 Jonas Fonseca      4779f9b object ScalaJSBenchmarks extends Bui
-2013-10-14 13:15 Jonas Fonseca      90286e0                                     
+2013-10-14 13:15 Jonas Fonseca      90286e0
 [blame] project/Build.scala - line 4 of 64                                   14%
-commit 74537d9b257954056d3caa19eb3837500aded883                                 
-Author:     Sébastien Doeraene <sjrdoeraene@gmail.com>                         
-AuthorDate: Tue Oct 29 18:46:52 2013 +0100                                      
-Commit:     Sébastien Doeraene <sjrdoeraene@gmail.com>                         
-CommitDate: Tue Oct 29 18:46:52 2013 +0100                                      
-                                                                                
-    Update for new groupId and package structure of Scala.js.                   
----                                                                             
- project/Build.scala  | 2 +-                                                    
- project/build.sbt    | 2 +-                                                    
- tracer/App.scala     | 4 ++--                                                  
- tracer/Engine.scala  | 2 +-                                                    
- tracer/JSTypes.scala | 2 +-                                                    
- 5 files changed, 6 insertions(+), 6 deletions(-)                               
-                                                                                
-diff --git a/project/Build.scala b/project/Build.scala                          
-index 560bca1..1713681 100644                                                   
---- a/project/Build.scala                                                       
+commit 74537d9b257954056d3caa19eb3837500aded883
+Author:     Sébastien Doeraene <sjrdoeraene@gmail.com>
+AuthorDate: Tue Oct 29 18:46:52 2013 +0100
+Commit:     Sébastien Doeraene <sjrdoeraene@gmail.com>
+CommitDate: Tue Oct 29 18:46:52 2013 +0100
+
+    Update for new groupId and package structure of Scala.js.
+---
+ project/Build.scala  | 2 +-
+ project/build.sbt    | 2 +-
+ tracer/App.scala     | 4 ++--
+ tracer/Engine.scala  | 2 +-
+ tracer/JSTypes.scala | 2 +-
+ 5 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/project/Build.scala b/project/Build.scala
+index 560bca1..1713681 100644
+--- a/project/Build.scala
 [diff] 74537d9b257954056d3caa19eb3837500aded883 - line 1 of 76               23%
 EOF
 
 assert_equals 'blame-parent-of-74537d9.screen' <<EOF
-2013-10-14 13:15 Jonas Fonseca 90286e0 import sbt._                             
-2013-10-14 13:15 Jonas Fonseca 90286e0 import Keys._                            
-2013-10-14 13:15 Jonas Fonseca 90286e0                                          
-2013-10-14 13:15 Jonas Fonseca 90286e0 import ch.epfl.lamp.sbtscalajs._         
-2013-10-14 13:15 Jonas Fonseca 90286e0 import ScalaJSPlugin._                   
-2013-10-14 13:15 Jonas Fonseca 90286e0 import ScalaJSKeys._                     
-2013-10-14 13:15 Jonas Fonseca 90286e0                                          
-2013-10-14 13:15 Jonas Fonseca 90286e0 object ScalaJSBuild extends Build {      
-2013-10-14 13:15 Jonas Fonseca 90286e0                                          
-2013-10-14 13:15 Jonas Fonseca 90286e0   val scalajsScalaVersion = "2.10.2"     
-2013-10-14 13:15 Jonas Fonseca 90286e0                                          
+2013-10-14 13:15 Jonas Fonseca 90286e0 import sbt._
+2013-10-14 13:15 Jonas Fonseca 90286e0 import Keys._
+2013-10-14 13:15 Jonas Fonseca 90286e0
+2013-10-14 13:15 Jonas Fonseca 90286e0 import ch.epfl.lamp.sbtscalajs._
+2013-10-14 13:15 Jonas Fonseca 90286e0 import ScalaJSPlugin._
+2013-10-14 13:15 Jonas Fonseca 90286e0 import ScalaJSKeys._
+2013-10-14 13:15 Jonas Fonseca 90286e0
+2013-10-14 13:15 Jonas Fonseca 90286e0 object ScalaJSBuild extends Build {
+2013-10-14 13:15 Jonas Fonseca 90286e0
+2013-10-14 13:15 Jonas Fonseca 90286e0   val scalajsScalaVersion = "2.10.2"
+2013-10-14 13:15 Jonas Fonseca 90286e0
 2013-10-14 13:15 Jonas Fonseca 90286e0   val projectSettings = Defaults.defaultS
 2013-10-14 13:15 Jonas Fonseca 90286e0       organization := "scalajs-benchmarks
-2013-10-14 13:15 Jonas Fonseca 90286e0       version := "0.1-SNAPSHOT"          
-2013-10-14 13:15 Jonas Fonseca 90286e0   )                                      
-2013-10-14 13:15 Jonas Fonseca 90286e0                                          
+2013-10-14 13:15 Jonas Fonseca 90286e0       version := "0.1-SNAPSHOT"
+2013-10-14 13:15 Jonas Fonseca 90286e0   )
+2013-10-14 13:15 Jonas Fonseca 90286e0
 2013-10-14 13:15 Jonas Fonseca 90286e0   val defaultSettings = projectSettings +
 2013-10-14 13:15 Jonas Fonseca 90286e0       scalaVersion := scalajsScalaVersion
-2013-10-14 13:15 Jonas Fonseca 90286e0       scalacOptions ++= Seq(             
-2013-10-14 13:15 Jonas Fonseca 90286e0           "-deprecation",                
-2013-10-14 13:15 Jonas Fonseca 90286e0           "-unchecked",                  
-2013-10-14 13:15 Jonas Fonseca 90286e0           "-feature",                    
-2013-10-14 13:15 Jonas Fonseca 90286e0           "-encoding", "utf8"            
-2013-10-14 13:15 Jonas Fonseca 90286e0       )                                  
-2013-10-14 13:15 Jonas Fonseca 90286e0   )                                      
-2013-10-14 13:15 Jonas Fonseca 90286e0                                          
+2013-10-14 13:15 Jonas Fonseca 90286e0       scalacOptions ++= Seq(
+2013-10-14 13:15 Jonas Fonseca 90286e0           "-deprecation",
+2013-10-14 13:15 Jonas Fonseca 90286e0           "-unchecked",
+2013-10-14 13:15 Jonas Fonseca 90286e0           "-feature",
+2013-10-14 13:15 Jonas Fonseca 90286e0           "-encoding", "utf8"
+2013-10-14 13:15 Jonas Fonseca 90286e0       )
+2013-10-14 13:15 Jonas Fonseca 90286e0   )
+2013-10-14 13:15 Jonas Fonseca 90286e0
 2013-10-14 13:15 Jonas Fonseca 90286e0   lazy val benchmarkSettings = defaultSet
 2013-10-14 13:15 Jonas Fonseca 90286e0       unmanagedSources in (Compile, packa
 [blame] project/Build.scala - line 4 of 66                                   42%

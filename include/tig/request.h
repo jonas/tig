@@ -54,6 +54,8 @@
 	REQ_(MOVE_HALF_PAGE_UP,	"Move cursor one page up"), \
 	REQ_(MOVE_FIRST_LINE,	"Move cursor to first line"), \
 	REQ_(MOVE_LAST_LINE,	"Move cursor to last line"), \
+	REQ_(MOVE_NEXT_MERGE,	"Move cursor to next merge commit"), \
+	REQ_(MOVE_PREV_MERGE,	"Move cursor to previous merge commit"), \
 	\
 	REQ_GROUP("Scrolling") \
 	REQ_(SCROLL_LINE_UP,	"Scroll one line up"), \

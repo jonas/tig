@@ -244,7 +244,7 @@ FILES
 BUGS
 ----
 
-Please visit Tig's http://jonas.nitro.dk/tig[home page] or
+Please visit Tig's https://jonas.github.io/tig[home page] or
 https://github.com/jonas/tig[main Git repository] for information about
 new releases and how to report bugs or feature request.
 

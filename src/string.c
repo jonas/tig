@@ -129,18 +129,23 @@ string_expand(char *dst, size_t dstlen, const char *src, int srclen, int tabsize
 }
 
 char *
-chomp_string(char *name)
+string_trim_end(char *name)
 {
-	int namelen;
+	int namelen = strlen(name) - 1;
 
-	while (isspace(*name))
-		name++;
-
-	namelen = strlen(name) - 1;
 	while (namelen > 0 && isspace(name[namelen]))
 		name[namelen--] = 0;
 
 	return name;
+}
+
+char *
+string_trim(char *name)
+{
+	while (isspace(*name))
+		name++;
+
+	return string_trim_end(name);
 }
 
 bool PRINTF_LIKE(4, 5)

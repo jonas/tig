@@ -47,10 +47,10 @@ enum io_flags {
 };
 
 enum io_type {
-	IO_FD,			/* File descriptor based IO. */
 	IO_BG,			/* Execute command in the background. */
 	IO_FG,			/* Execute command with same std{in,out,err}. */
 	IO_RD,			/* Read only fork+exec IO. */
+	IO_RP,			/* Read only fork+exec IO with input pipe. */
 	IO_WR,			/* Write only fork+exec IO. */
 	IO_AP,			/* Append fork+exec output to file. */
 };
@@ -64,7 +64,6 @@ struct io {
 	size_t bufsize;		/* Buffer content size. */
 	char *bufpos;		/* Current buffer position. */
 	unsigned int eof:1;	/* Has end of file been reached. */
-	unsigned int span:1;	/* Support commands spanning multiple lines. */
 	int status:8;		/* Status exit code. */
 };
 

@@ -69,6 +69,12 @@ get_line_info(const char *prefix, enum line_type type)
 	struct line_info *info;
 	struct line_rule *rule;
 
+	/* XXX: Map special highligh types to avoid special settings. */
+	if (type == LINE_DIFF_ADD_HIGHLIGHT)
+		type = LINE_DIFF_ADD;
+	else if (type == LINE_DIFF_DEL_HIGHLIGHT)
+		type = LINE_DIFF_DEL;
+
 	assert(type < line_rules);
 	rule = &line_rule[type];
 	for (info = &rule->info; info; info = info->next) {

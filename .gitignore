@@ -5,7 +5,9 @@
 *.swp
 *~
 .deps
+/_book
 /config.make
+/node_modules/
 aclocal.m4
 autom4te.cache
 config.h

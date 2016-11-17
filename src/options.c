@@ -622,6 +622,18 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 		const char *alloc = NULL;
 		const char **value = option->value;
 
+		if (option->value == &opt_diff_highlight) {
+			bool enabled = false;
+
+			if (parse_bool(&enabled, arg) == SUCCESS) {
+				if (!enabled) {
+					*value = NULL;
+					return SUCCESS;
+				}
+				arg = "diff-highlight";
+			}
+		}
+
 		if (strlen(arg)) {
 			if (arg[0] == '"' && arg[strlen(arg) - 1] == '"')
 				alloc = strndup(arg + 1, strlen(arg + 1) - 1);

@@ -65,9 +65,9 @@ parse_author_line(char *ident, const struct ident **author, struct time *time)
 
 	if (nameend && emailend)
 		*nameend = *emailend = 0;
-	name = chomp_string(ident);
+	name = string_trim(ident);
 	if (nameend)
-		email = chomp_string(nameend + 1);
+		email = string_trim(nameend + 1);
 	if (!*name)
 		name = *email ? email : unknown_ident.name;
 	if (!*email)

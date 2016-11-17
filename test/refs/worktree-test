@@ -22,12 +22,12 @@ steps '
 test_tig refs
 
 assert_equals 'worktree.screen' <<EOF
-                               All references                                   
-2010-04-07 05:37 Max Power     dev            Commit 10 E                       
-2010-04-07 05:37 Max Power     master         Commit 10 E                       
-2010-04-07 05:37 Max Power     origin/HEAD    Commit 10 E                       
-2010-04-07 05:37 Max Power     origin/master  Commit 10 E                       
-2009-12-17 12:49 René Lévesque v1.0           Commit 8 B                        
-                                                                                
+                               All references
+2010-04-07 05:37 Max Power     dev            Commit 10 E
+2010-04-07 05:37 Max Power     master         Commit 10 E
+2010-04-07 05:37 Max Power     origin/HEAD    Commit 10 E
+2010-04-07 05:37 Max Power     origin/master  Commit 10 E
+2009-12-17 12:49 René Lévesque v1.0           Commit 8 B
+
 [refs] All references                                                       100%
 EOF

@@ -245,7 +245,7 @@ author Jonas Fonseca <fonseca@diku.dk> 1382226054 -0400
 committer Jonas Fonseca <fonseca@diku.dk> 1382248932 -0400
 
     Refactor defined enum maps to contain size information
-    
+
     The existing struct enum_map is renamed to enum_map_entry.
 
 commit 536d565fcd789a2ea9dda43b3ae989e9d651af55 57787a3668d28808764dd1525a1157e3564d9b46
@@ -271,7 +271,7 @@ author Jonas Fonseca <fonseca@diku.dk> 1382133286 -0400
 committer Jonas Fonseca <fonseca@diku.dk> 1382133286 -0400
 
     Set the commit reference when opening the blame view from the blob view
-    
+
     This is what tree_request does. Else the blame view is opened against an
     unrelated version of %(ref) or HEAD.
 

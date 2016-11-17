@@ -26,26 +26,26 @@ test_setup_work_dir() {
 test_case 'initial' \
 	--args='status' \
 <<EXPECTED_SCREEN
-On branch master                                                                
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-M .j                                                                            
-M a                                                                             
-M b.c                                                                           
-M e/f                                                                           
-M g h                                                                           
-Untracked files:                                                                
-? dir-a/aa.1                                                                    
-? dir-a/aa.2                                                                    
-? dir-a/aa.3                                                                    
-? dir-b/bb.1                                                                    
-? root.1                                                                        
-? root.2                                                                        
-? root.3                                                                        
-? root.4                                                                        
-? root.5                                                                        
-                                                                                
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+M .j
+M a
+M b.c
+M e/f
+M g h
+Untracked files:
+? dir-a/aa.1
+? dir-a/aa.2
+? dir-a/aa.3
+? dir-b/bb.1
+? root.1
+? root.2
+? root.3
+? root.4
+? root.5
+
 [status] Nothing to update                                                  100%
 EXPECTED_SCREEN
 
@@ -53,26 +53,26 @@ test_case 'inside-dir-a' \
 	--args='status' \
 	--cwd='dir-a' \
 <<EXPECTED_SCREEN
-On branch master                                                                
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-M .j                                                                            
-M a                                                                             
-M b.c                                                                           
-M e/f                                                                           
-M g h                                                                           
-Untracked files:                                                                
-? dir-a/aa.1                                                                    
-? dir-a/aa.2                                                                    
-? dir-a/aa.3                                                                    
-? dir-b/bb.1                                                                    
-? root.1                                                                        
-? root.2                                                                        
-? root.3                                                                        
-? root.4                                                                        
-? root.5                                                                        
-                                                                                
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+M .j
+M a
+M b.c
+M e/f
+M g h
+Untracked files:
+? dir-a/aa.1
+? dir-a/aa.2
+? dir-a/aa.3
+? dir-b/bb.1
+? root.1
+? root.2
+? root.3
+? root.4
+? root.5
+
 [status] Nothing to update                                                  100%
 EXPECTED_SCREEN
 

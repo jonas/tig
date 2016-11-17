@@ -268,7 +268,7 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 	if (dir && !strcmp(dir, argv[0]))
 		return io_open(io, "%s%s", dir, argv[1]);
 
-	if ((type == IO_RD || type == IO_WR) && pipe(pipefds) < 0) {
+	if ((type == IO_RD || type == IO_RP || type == IO_WR) && pipe(pipefds) < 0) {
 		io->error = errno;
 		return false;
 	} else if (type == IO_AP) {
@@ -288,9 +288,11 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 	} else {
 		if (type != IO_FG) {
 			int devnull = open("/dev/null", O_RDWR);
-			int readfd  = type == IO_WR ? pipefds[0] : devnull;
-			int writefd = (type == IO_RD || type == IO_AP)
-							? pipefds[1] : devnull;
+			int readfd  = type == IO_WR ? pipefds[0]
+				    : type == IO_RP ? custom
+				    : devnull;
+			int writefd = (type == IO_RD || type == IO_RP || type == IO_AP)
+				    ? pipefds[1] : devnull;
 			int errorfd = open_trace(devnull, argv);
 
 			/* Inject stdin given on the command line. */
@@ -426,7 +428,7 @@ io_memchr(struct buffer *buf, char *data, int c)
 DEFINE_ALLOCATOR(io_realloc_buf, char, BUFSIZ)
 
 static bool
-io_get_line(struct io *io, struct buffer *buf, int c, size_t *lineno, bool can_read)
+io_get_line(struct io *io, struct buffer *buf, int c, size_t *lineno, bool can_read, char eol_char)
 {
 	char *eol;
 	ssize_t readsize;
@@ -435,7 +437,7 @@ io_get_line(struct io *io, struct buffer *buf, int c, size_t *lineno, bool can_r
 		if (io->bufsize > 0) {
 			eol = memchr(io->bufpos, c, io->bufsize);
 
-			while (io->span && io->bufpos < eol && eol[-1] == '\\') {
+			while (eol_char && io->bufpos < eol && eol[-1] == eol_char) {
 				if (lineno)
 					(*lineno)++;
 				eol[-1] = eol[0] = ' ';
@@ -492,7 +494,7 @@ io_get_line(struct io *io, struct buffer *buf, int c, size_t *lineno, bool can_r
 bool
 io_get(struct io *io, struct buffer *buf, int c, bool can_read)
 {
-	return io_get_line(io, buf, c, NULL, can_read);
+	return io_get_line(io, buf, c, NULL, can_read, 0);
 }
 
 bool
@@ -537,7 +539,7 @@ io_read_buf(struct io *io, char buf[], size_t bufsize, bool allow_empty)
 	struct buffer result = {0};
 
 	if (io_get(io, &result, '\n', true)) {
-		result.data = chomp_string(result.data);
+		result.data = string_trim(result.data);
 		string_ncopy_do(buf, bufsize, result.data, strlen(result.data));
 	}
 
@@ -577,18 +579,18 @@ io_load_file(struct io *io, const char *separators,
 	struct buffer buf;
 	enum status_code state = SUCCESS;
 
-	while (state == SUCCESS && io_get_line(io, &buf, '\n', lineno, true)) {
+	while (state == SUCCESS && io_get_line(io, &buf, '\n', lineno, true, '\\')) {
 		char *name;
 		char *value;
 		size_t namelen;
 		size_t valuelen;
 
-		name = chomp_string(buf.data);
+		name = string_trim(buf.data);
 		namelen = strcspn(name, separators);
 
 		if (name[namelen]) {
 			name[namelen] = 0;
-			value = chomp_string(name + namelen + 1);
+			value = string_trim(name + namelen + 1);
 			valuelen = strlen(value);
 
 		} else {
@@ -610,7 +612,6 @@ enum status_code
 io_load_span(struct io *io, const char *separators, size_t *lineno,
 	     io_read_fn read_property, void *data)
 {
-	io->span = true;
 	return io_load_file(io, separators, lineno, read_property, data);
 }
 

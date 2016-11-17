@@ -7,7 +7,7 @@ export LINES=10
 
 test_setup_work_dir()
 {
-	create_repo_from_tgz "$base_dir/files/refs-repo.tgz" 
+	create_repo_from_tgz "$base_dir/files/refs-repo.tgz"
 
 	git checkout -b ahead
 	echo test > test.txt
@@ -24,14 +24,14 @@ test_setup_work_dir()
 
 test_case up-to-date-with-remote-master \
 	--args='status' <<EOF
-On branch master. Your branch is up-to-date with 'origin/master'.               
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
+On branch master. Your branch is up-to-date with 'origin/master'.
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
 [status] Nothing to update                                                  100%
 EOF
 
@@ -39,14 +39,14 @@ test_case behind-remote-master \
 	--args='status' \
 	--before="git reset --hard HEAD~2" \
 	--after="git reset --hard origin/master" <<EOF
-On branch master. Your branch is behind 'origin/master' by 2 commits.           
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
+On branch master. Your branch is behind 'origin/master' by 2 commits.
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
 [status] Nothing to update                                                  100%
 EOF
 
@@ -54,14 +54,14 @@ test_case ahead-of-remote-master \
 	--args='status' \
 	--before="git merge ahead" \
 	--after="git reset --hard origin/master" <<EOF
-On branch master. Your branch is ahead of 'origin/master' by 1 commit.          
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
+On branch master. Your branch is ahead of 'origin/master' by 1 commit.
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
 [status] Nothing to update                                                  100%
 EOF
 
@@ -69,14 +69,14 @@ test_case diverged-from-remote-master \
 	--args='status' \
 	--before="git reset --hard diverged" \
 	--after="git reset --hard origin/master" <<EOF
-On branch master. Your branch and 'origin/master' have diverged, and have 1 and 
-Changes to be committed:                                                        
-  (no files)                                                                    
-Changes not staged for commit:                                                  
-  (no files)                                                                    
-Untracked files:                                                                
-  (no files)                                                                    
-                                                                                
+On branch master. Your branch and 'origin/master' have diverged, and have 1 and
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
 [status] Nothing to update                                                  100%
 EOF
 

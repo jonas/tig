@@ -217,12 +217,18 @@ assert_equals()
 {
 	file="$1"; shift
 
-	file "expected/$file" "$@"
+	if [ ! -s "expected/$file" ]; then
+		file "expected/$file"
+	fi
 
 	if [ -e "$file" ]; then
 		git diff -w --no-index $diff_color_arg "expected/$file" "$file" > "$file.diff" || true
 		if [ -s "$file.diff" ]; then
 			echo "[FAIL] $file != expected/$file" >> .test-result
+			while [ $# -gt 0 ]; do
+				msg="$1"; shift
+				echo "[NOTE] $msg" >> .test-result
+			done
 			cat "$file.diff" >> .test-result
 		else
 			echo "  [OK] $file assertion" >> .test-result
@@ -251,7 +257,7 @@ executable 'assert-var' <<EOF
 #!/bin/sh
 
 mkdir -p "$(dirname "$expected_var_file")"
-while [ \$# -gt 1 ]; do
+while [ \$# -gt 0 ]; do
 	arg="\$1"; shift
 
 	case "\$arg" in
@@ -265,7 +271,7 @@ EOF
 assert_vars()
 {
 	if [ -e "$expected_var_file" ]; then
-		assert_equals "$vars_file" "$(cat "$expected_var_file")"
+		assert_equals "$vars_file" < "$expected_var_file"
 	else
 		echo "[FAIL] $expected_var_file not found" >> .test-result
 	fi
@@ -293,7 +299,7 @@ show_test_results()
 		failed="$(grep FAIL < .test-result | wc -l)"
 		count="$(sed -n '/\(FAIL\|OK\)/p' < .test-result | wc -l)"
 
-		printf "Failed %d out of %d test(s)%s\n" $failed $count 
+		printf "Failed %d out of %d test(s)%s\n" $failed $count
 
 		# Show output from stderr if no output is expected
 		if [ -e stderr ]; then
@@ -319,12 +325,12 @@ test_skip()
 require_git_version()
 {
 	git_version="$(git version | sed 's/git version \([0-9\.]*\).*/\1/')"
-	actual_major="$(expr "$git_version" : '\([0-9]\).*')"
-	actual_minor="$(expr "$git_version" : '[0-9]\.\([0-9]\).*')"
+	actual_major="$(expr "$git_version" : '\([0-9]*\).*')"
+	actual_minor="$(expr "$git_version" : '[0-9]*\.\([0-9]*\).*')"
 
 	required_version="$1"; shift
-	required_major="$(expr "$required_version" : '\([0-9]\).*')"
-	required_minor="$(expr "$required_version" : '[0-9]\.\([0-9]\).*')"
+	required_major="$(expr "$required_version" : '\([0-9]*\).*')"
+	required_minor="$(expr "$required_version" : '[0-9]*\.\([0-9]*\).*')"
 
 	if [ "$required_major" -gt "$actual_major" ] ||
 	   [ "$required_minor" -gt "$actual_minor" ]; then
@@ -347,8 +353,14 @@ test_require()
 				test_skip "The test requires clang and is only run via \`make test-address-sanitizer\`"
 			fi
 			;;
+		diff-highlight)
+			diff_highlight_path="$(git --exec-path)/../../share/git-core/contrib/diff-highlight/diff-highlight"
+			if [ ! -e "$diff_highlight_path" ]; then
+				test_skip "The test requires diff-highlight, usually found in share/git-core-contrib"
+			fi
+			;;
 		*)
-			test_skip "Unknown feature requirement: $feature" 
+			test_skip "Unknown feature requirement: $feature"
 		esac
 	done
 }
@@ -408,7 +420,7 @@ valgrind_exec()
 	*)	mv "$valgrind.orig" "$valgrind" ;;
 	esac
 
-	rm -f "$valgrind.orig" 
+	rm -f "$valgrind.orig"
 }
 
 test_tig()
@@ -507,7 +519,7 @@ run_test_cases()
 			:save-display $name.screen
 		"
 		if [ -e "$name-before" ]; then
-			test_exec_work_dir "$SHELL" "$HOME/$name-before" 
+			test_exec_work_dir "$SHELL" "$HOME/$name-before"
 		fi
 		old_work_dir="$work_dir"
 		if [ -e "$name-cwd" ]; then
@@ -519,10 +531,10 @@ run_test_cases()
 	        IFS="$ORIG_IFS"
 		work_dir="$old_work_dir"
 		if [ -e "$name-after" ]; then
-			test_exec_work_dir "$SHELL" "$HOME/$name-after" 
+			test_exec_work_dir "$SHELL" "$HOME/$name-after"
 		fi
 
 		assert_equals "$name.screen" < "$name.expected"
-		assert_equals "$name.stderr" ''
+		assert_equals "$name.stderr" < /dev/null
 	done
 }

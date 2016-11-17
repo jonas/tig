@@ -8,8 +8,8 @@ Release: 	@@RELEASE@@%{?dist}
 License: 	GPL
 Group: 		Development/Tools
 Vendor: 	Jonas Fonseca <jonas.fonseca@gmail.com>
-URL: 		http://jonas.nitro.dk/tig/
-Source: 	http://jonas.nitro.dk/tig/releases/%{name}-%{version}.tar.gz
+URL: 		https://jonas.github.io/tig
+Source: 	https://github.com/jonas/tig/releases/download/%{name}-%{version}/%{name}-%{version}.tar.gz
 BuildRequires: 	ncurses-devel%{!?_without_docs:, xmlto, asciidoc > 6.0.3}
 BuildRoot: 	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: 	git-core, ncurses

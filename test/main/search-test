@@ -33,127 +33,127 @@ git_clone 'repo-one'
 test_tig
 
 assert_equals 'main-search-author.screen' <<EOF
-2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD} 
-2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D                           
-2010-03-21 04:53 作者                  o Commit 10 C                          
-2010-03-12 16:31 René Lévesque         o Commit 10 B                          
-2010-03-04 04:09 A. U. Thor            o Commit 10 A                            
-2010-02-23 15:46 Max Power             o Commit 9 E                             
-2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D                            
-2010-02-06 15:02 作者                  o Commit 9 C                           
-2010-01-29 02:40 René Lévesque         o Commit 9 B                           
-2010-01-20 14:18 A. U. Thor            o Commit 9 A                             
-2010-01-12 01:56 Max Power             o Commit 8 E                             
-2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D                            
-2009-12-26 01:11 作者                  o Commit 8 C                           
-2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B                    
+2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD}
+2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D
+2010-03-21 04:53 作者                  o Commit 10 C
+2010-03-12 16:31 René Lévesque         o Commit 10 B
+2010-03-04 04:09 A. U. Thor            o Commit 10 A
+2010-02-23 15:46 Max Power             o Commit 9 E
+2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D
+2010-02-06 15:02 作者                  o Commit 9 C
+2010-01-29 02:40 René Lévesque         o Commit 9 B
+2010-01-20 14:18 A. U. Thor            o Commit 9 A
+2010-01-12 01:56 Max Power             o Commit 8 E
+2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D
+2009-12-26 01:11 作者                  o Commit 8 C
+2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B
 [main] 8d53d6a41f8540749c0db5d0b53e48d2f178dce4 - commit 3 of 50             28%
 EOF
 
 assert_equals 'main-search-author-empty.screen' <<EOF
-2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD} 
-2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D                           
-2010-03-21 04:53 作者                  o Commit 10 C                          
-2010-03-12 16:31 René Lévesque         o Commit 10 B                          
-2010-03-04 04:09 A. U. Thor            o Commit 10 A                            
-2010-02-23 15:46 Max Power             o Commit 9 E                             
-2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D                            
-2010-02-06 15:02 作者                  o Commit 9 C                           
-2010-01-29 02:40 René Lévesque         o Commit 9 B                           
-2010-01-20 14:18 A. U. Thor            o Commit 9 A                             
-2010-01-12 01:56 Max Power             o Commit 8 E                             
-2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D                            
-2009-12-26 01:11 作者                  o Commit 8 C                           
-2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B                    
+2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD}
+2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D
+2010-03-21 04:53 作者                  o Commit 10 C
+2010-03-12 16:31 René Lévesque         o Commit 10 B
+2010-03-04 04:09 A. U. Thor            o Commit 10 A
+2010-02-23 15:46 Max Power             o Commit 9 E
+2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D
+2010-02-06 15:02 作者                  o Commit 9 C
+2010-01-29 02:40 René Lévesque         o Commit 9 B
+2010-01-20 14:18 A. U. Thor            o Commit 9 A
+2010-01-12 01:56 Max Power             o Commit 8 E
+2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D
+2009-12-26 01:11 作者                  o Commit 8 C
+2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B
 [main] 711615619913109be8fd85f2c378839acaa6db11 - commit 8 of 50             28%
 EOF
 
 assert_equals 'main-search-author-find-next.screen' <<EOF
-2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD} 
-2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D                           
-2010-03-21 04:53 作者                  o Commit 10 C                          
-2010-03-12 16:31 René Lévesque         o Commit 10 B                          
-2010-03-04 04:09 A. U. Thor            o Commit 10 A                            
-2010-02-23 15:46 Max Power             o Commit 9 E                             
-2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D                            
-2010-02-06 15:02 作者                  o Commit 9 C                           
-2010-01-29 02:40 René Lévesque         o Commit 9 B                           
-2010-01-20 14:18 A. U. Thor            o Commit 9 A                             
-2010-01-12 01:56 Max Power             o Commit 8 E                             
-2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D                            
-2009-12-26 01:11 作者                  o Commit 8 C                           
-2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B                    
+2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD}
+2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D
+2010-03-21 04:53 作者                  o Commit 10 C
+2010-03-12 16:31 René Lévesque         o Commit 10 B
+2010-03-04 04:09 A. U. Thor            o Commit 10 A
+2010-02-23 15:46 Max Power             o Commit 9 E
+2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D
+2010-02-06 15:02 作者                  o Commit 9 C
+2010-01-29 02:40 René Lévesque         o Commit 9 B
+2010-01-20 14:18 A. U. Thor            o Commit 9 A
+2010-01-12 01:56 Max Power             o Commit 8 E
+2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D
+2009-12-26 01:11 作者                  o Commit 8 C
+2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B
 [main] b45b5704c34dbd4c5fd89d58d45238ad136ae166 - commit 13 of 50            28%
 EOF
 
 assert_equals 'main-search-title.screen' <<EOF
-2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD} 
-2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D                           
-2010-03-21 04:53 作者                  o Commit 10 C                          
-2010-03-12 16:31 René Lévesque         o Commit 10 B                          
-2010-03-04 04:09 A. U. Thor            o Commit 10 A                            
-2010-02-23 15:46 Max Power             o Commit 9 E                             
-2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D                            
-2010-02-06 15:02 作者                  o Commit 9 C                           
-2010-01-29 02:40 René Lévesque         o Commit 9 B                           
-2010-01-20 14:18 A. U. Thor            o Commit 9 A                             
-2010-01-12 01:56 Max Power             o Commit 8 E                             
-2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D                            
-2009-12-26 01:11 作者                  o Commit 8 C                           
-2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B                    
+2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD}
+2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D
+2010-03-21 04:53 作者                  o Commit 10 C
+2010-03-12 16:31 René Lévesque         o Commit 10 B
+2010-03-04 04:09 A. U. Thor            o Commit 10 A
+2010-02-23 15:46 Max Power             o Commit 9 E
+2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D
+2010-02-06 15:02 作者                  o Commit 9 C
+2010-01-29 02:40 René Lévesque         o Commit 9 B
+2010-01-20 14:18 A. U. Thor            o Commit 9 A
+2010-01-12 01:56 Max Power             o Commit 8 E
+2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D
+2009-12-26 01:11 作者                  o Commit 8 C
+2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B
 [main] 99278700109ac9fe4a80bbc1e5b26769e3614f1b - commit 9 of 50             28%
 EOF
 
 assert_equals 'main-search-title-no-match.screen' <<EOF
-2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD} 
-2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D                           
-2010-03-21 04:53 作者                  o Commit 10 C                          
-2010-03-12 16:31 René Lévesque         o Commit 10 B                          
-2010-03-04 04:09 A. U. Thor            o Commit 10 A                            
-2010-02-23 15:46 Max Power             o Commit 9 E                             
-2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D                            
-2010-02-06 15:02 作者                  o Commit 9 C                           
-2010-01-29 02:40 René Lévesque         o Commit 9 B                           
-2010-01-20 14:18 A. U. Thor            o Commit 9 A                             
-2010-01-12 01:56 Max Power             o Commit 8 E                             
-2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D                            
-2009-12-26 01:11 作者                  o Commit 8 C                           
-2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B                    
+2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD}
+2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D
+2010-03-21 04:53 作者                  o Commit 10 C
+2010-03-12 16:31 René Lévesque         o Commit 10 B
+2010-03-04 04:09 A. U. Thor            o Commit 10 A
+2010-02-23 15:46 Max Power             o Commit 9 E
+2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D
+2010-02-06 15:02 作者                  o Commit 9 C
+2010-01-29 02:40 René Lévesque         o Commit 9 B
+2010-01-20 14:18 A. U. Thor            o Commit 9 A
+2010-01-12 01:56 Max Power             o Commit 8 E
+2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D
+2009-12-26 01:11 作者                  o Commit 8 C
+2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B
 [main] 99278700109ac9fe4a80bbc1e5b26769e3614f1b - commit 9 of 50             28%
 EOF
 
 assert_equals 'main-search-refs.screen' <<EOF
-2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD} 
-2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D                           
-2010-03-21 04:53 作者                  o Commit 10 C                          
-2010-03-12 16:31 René Lévesque         o Commit 10 B                          
-2010-03-04 04:09 A. U. Thor            o Commit 10 A                            
-2010-02-23 15:46 Max Power             o Commit 9 E                             
-2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D                            
-2010-02-06 15:02 作者                  o Commit 9 C                           
-2010-01-29 02:40 René Lévesque         o Commit 9 B                           
-2010-01-20 14:18 A. U. Thor            o Commit 9 A                             
-2010-01-12 01:56 Max Power             o Commit 8 E                             
-2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D                            
-2009-12-26 01:11 作者                  o Commit 8 C                           
-2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B                    
+2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD}
+2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D
+2010-03-21 04:53 作者                  o Commit 10 C
+2010-03-12 16:31 René Lévesque         o Commit 10 B
+2010-03-04 04:09 A. U. Thor            o Commit 10 A
+2010-02-23 15:46 Max Power             o Commit 9 E
+2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D
+2010-02-06 15:02 作者                  o Commit 9 C
+2010-01-29 02:40 René Lévesque         o Commit 9 B
+2010-01-20 14:18 A. U. Thor            o Commit 9 A
+2010-01-12 01:56 Max Power             o Commit 8 E
+2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D
+2009-12-26 01:11 作者                  o Commit 8 C
+2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B
 [main] 957f2b368e6fa5c0757f36b1441e32729ee5e9c7 - commit 14 of 50            28%
 EOF
 
 assert_equals 'main-search-time.screen' <<EOF
-2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD} 
-2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D                           
-2010-03-21 04:53 作者                  o Commit 10 C                          
-2010-03-12 16:31 René Lévesque         o Commit 10 B                          
-2010-03-04 04:09 A. U. Thor            o Commit 10 A                            
-2010-02-23 15:46 Max Power             o Commit 9 E                             
-2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D                            
-2010-02-06 15:02 作者                  o Commit 9 C                           
-2010-01-29 02:40 René Lévesque         o Commit 9 B                           
-2010-01-20 14:18 A. U. Thor            o Commit 9 A                             
-2010-01-12 01:56 Max Power             o Commit 8 E                             
-2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D                            
-2009-12-26 01:11 作者                  o Commit 8 C                           
-2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B                    
+2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD}
+2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D
+2010-03-21 04:53 作者                  o Commit 10 C
+2010-03-12 16:31 René Lévesque         o Commit 10 B
+2010-03-04 04:09 A. U. Thor            o Commit 10 A
+2010-02-23 15:46 Max Power             o Commit 9 E
+2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D
+2010-02-06 15:02 作者                  o Commit 9 C
+2010-01-29 02:40 René Lévesque         o Commit 9 B
+2010-01-20 14:18 A. U. Thor            o Commit 9 A
+2010-01-12 01:56 Max Power             o Commit 8 E
+2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D
+2009-12-26 01:11 作者                  o Commit 8 C
+2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B
 [main] 545eb1fa92b902b6799e2a1691419c3158254a0a - commit 12 of 50            28%
 EOF

@@ -22,25 +22,25 @@ in_work_dir create_repo_from_tgz "$source_dir/$test.tgz"
 test_tig
 
 assert_equals 'ensure-topo-order-with-graph.screen' <<EOF
-2014-02-01 22:36 Benjamin Bergman ●─╮ Merge branch 'feature_branch'       
-2014-02-01 22:35 Benjamin Bergman │ ● More featuresA                        
-2014-02-01 22:36 Benjamin Bergman ● │ More master                           
-2014-02-01 22:21 Benjamin Bergman ●─│─╮ Merge branch 'feature_branch' 
-2014-02-01 23:00 Benjamin Bergman │ ●─╯ Add feature                     
-2014-02-01 22:21 Benjamin Bergman ● │ Add to master                         
-2014-02-01 22:18 Benjamin Bergman ◎─╯ init                                
-                                                                                
+2014-02-01 22:36 Benjamin Bergman ●─╮ Merge branch 'feature_branch'
+2014-02-01 22:35 Benjamin Bergman │ ● More featuresA
+2014-02-01 22:36 Benjamin Bergman ● │ More master
+2014-02-01 22:21 Benjamin Bergman ●─│─╮ Merge branch 'feature_branch'
+2014-02-01 23:00 Benjamin Bergman │ ●─╯ Add feature
+2014-02-01 22:21 Benjamin Bergman ● │ Add to master
+2014-02-01 22:18 Benjamin Bergman ◎─╯ init
+
 [main] 324309341617186ec7f9bf2f9b504a956b9c382a - commit 1 of 7             100%
 EOF
 
 assert_equals 'graph-supports-date-order.screen' <<EOF
-2014-02-01 22:36 Benjamin Bergman ●─╮ Merge branch 'feature_branch'       
-2014-02-01 22:36 Benjamin Bergman ● │ More master                           
-2014-02-01 22:35 Benjamin Bergman │ ● More featuresA                        
-2014-02-01 22:21 Benjamin Bergman ●─│─╮ Merge branch 'feature_branch' 
-2014-02-01 23:00 Benjamin Bergman │ ●─╯ Add feature                     
-2014-02-01 22:21 Benjamin Bergman ● │ Add to master                         
-2014-02-01 22:18 Benjamin Bergman ◎─╯ init                                
-                                                                                
+2014-02-01 22:36 Benjamin Bergman ●─╮ Merge branch 'feature_branch'
+2014-02-01 22:36 Benjamin Bergman ● │ More master
+2014-02-01 22:35 Benjamin Bergman │ ● More featuresA
+2014-02-01 22:21 Benjamin Bergman ●─│─╮ Merge branch 'feature_branch'
+2014-02-01 23:00 Benjamin Bergman │ ●─╯ Add feature
+2014-02-01 22:21 Benjamin Bergman ● │ Add to master
+2014-02-01 22:18 Benjamin Bergman ◎─╯ init
+
 [main] 324309341617186ec7f9bf2f9b504a956b9c382a - commit 1 of 7             100%
 EOF

@@ -19,6 +19,7 @@
 void reset_search(struct view *view);
 void search_view(struct view *view, enum request request);
 void find_next(struct view *view, enum request request);
+void find_merge(struct view *view, enum request request);
 bool grep_text(struct view *view, const char *text[]);
 
 #endif

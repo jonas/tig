@@ -33,89 +33,89 @@ git_clone 'repo-one'
 test_tig log
 
 assert_equals 'log-pretty-format-override.screen' <<EOF
-commit 5cb3412a5e06e506840495b91acc885037a48b72                                 
-Refs: [master], {origin/master}, {origin/HEAD}                                  
-Author: Max Power <power123@example.org>                                        
-Date:   2010-04-07                                                              
-                                                                                
-    Commit 10 E                                                                 
-                                                                                
-commit 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4                                 
-Author: Jørgen Thygesen Brahe <brache@example.dk>                              
-Date:   2010-03-29                                                              
-                                                                                
-    Commit 10 D                                                                 
-                                                                                
-commit 8d53d6a41f8540749c0db5d0b53e48d2f178dce4                                 
-Author: 作者 <zuozhea@example.ch>                                             
-Date:   2010-03-21                                                              
-                                                                                
-    Commit 10 C                                                                 
+commit 5cb3412a5e06e506840495b91acc885037a48b72
+Refs: [master], {origin/master}, {origin/HEAD}
+Author: Max Power <power123@example.org>
+Date:   2010-04-07
+
+    Commit 10 E
+
+commit 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4
+Author: Jørgen Thygesen Brahe <brache@example.dk>
+Date:   2010-03-29
+
+    Commit 10 D
+
+commit 8d53d6a41f8540749c0db5d0b53e48d2f178dce4
+Author: 作者 <zuozhea@example.ch>
+Date:   2010-03-21
+
+    Commit 10 C
 [log] 5cb3412a5e06e506840495b91acc885037a48b72 - line 1 of 301                5%
 EOF
 
 assert_equals 'log-pretty-raw.screen' <<EOF
-commit 5cb3412a5e06e506840495b91acc885037a48b72                                 
-Refs: [master], {origin/master}, {origin/HEAD}                                  
-tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904                                   
-parent 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4                                 
-author Max Power <power123@example.org> 1270618660 +0000                        
-committer Committer <c.ommitter@example.net> 1270618660 +0000                   
-                                                                                
-    Commit 10 E                                                                 
-                                                                                
-commit 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4                                 
-tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904                                   
-parent 8d53d6a41f8540749c0db5d0b53e48d2f178dce4                                 
-author Jørgen Thygesen Brahe <brache@example.dk> 1269882930 +0000              
-committer Committer <c.ommitter@example.net> 1269882930 +0000                   
-                                                                                
-    Commit 10 D                                                                 
-                                                                                
-commit 8d53d6a41f8540749c0db5d0b53e48d2f178dce4                                 
+commit 5cb3412a5e06e506840495b91acc885037a48b72
+Refs: [master], {origin/master}, {origin/HEAD}
+tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904
+parent 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4
+author Max Power <power123@example.org> 1270618660 +0000
+committer Committer <c.ommitter@example.net> 1270618660 +0000
+
+    Commit 10 E
+
+commit 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4
+tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904
+parent 8d53d6a41f8540749c0db5d0b53e48d2f178dce4
+author Jørgen Thygesen Brahe <brache@example.dk> 1269882930 +0000
+committer Committer <c.ommitter@example.net> 1269882930 +0000
+
+    Commit 10 D
+
+commit 8d53d6a41f8540749c0db5d0b53e48d2f178dce4
 [log] 5cb3412a5e06e506840495b91acc885037a48b72 - line 1 of 400                4%
 EOF
 
 assert_equals 'log-pretty-full.screen' <<EOF
-commit 5cb3412a5e06e506840495b91acc885037a48b72                                 
-Refs: [master], {origin/master}, {origin/HEAD}                                  
-Author: Max Power <power123@example.org>                                        
-Commit: Committer <c.ommitter@example.net>                                      
-                                                                                
-    Commit 10 E                                                                 
-                                                                                
-commit 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4                                 
-Author: Jørgen Thygesen Brahe <brache@example.dk>                              
-Commit: Committer <c.ommitter@example.net>                                      
-                                                                                
-    Commit 10 D                                                                 
-                                                                                
-commit 8d53d6a41f8540749c0db5d0b53e48d2f178dce4                                 
-Author: 作者 <zuozhea@example.ch>                                             
-Commit: Committer <c.ommitter@example.net>                                      
-                                                                                
-    Commit 10 C                                                                 
+commit 5cb3412a5e06e506840495b91acc885037a48b72
+Refs: [master], {origin/master}, {origin/HEAD}
+Author: Max Power <power123@example.org>
+Commit: Committer <c.ommitter@example.net>
+
+    Commit 10 E
+
+commit 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4
+Author: Jørgen Thygesen Brahe <brache@example.dk>
+Commit: Committer <c.ommitter@example.net>
+
+    Commit 10 D
+
+commit 8d53d6a41f8540749c0db5d0b53e48d2f178dce4
+Author: 作者 <zuozhea@example.ch>
+Commit: Committer <c.ommitter@example.net>
+
+    Commit 10 C
 [log] 5cb3412a5e06e506840495b91acc885037a48b72 - line 1 of 301                5%
 EOF
 
 assert_equals 'log-pretty-fuller.screen' <<EOF
-commit 5cb3412a5e06e506840495b91acc885037a48b72                                 
-Refs: [master], {origin/master}, {origin/HEAD}                                  
-Author:     Max Power <power123@example.org>                                    
-AuthorDate: Wed Apr 7 05:37:40 2010 +0000                                       
-Commit:     Committer <c.ommitter@example.net>                                  
-CommitDate: Wed Apr 7 05:37:40 2010 +0000                                       
-                                                                                
-    Commit 10 E                                                                 
-                                                                                
-commit 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4                                 
-Author:     Jørgen Thygesen Brahe <brache@example.dk>                          
-AuthorDate: Mon Mar 29 17:15:30 2010 +0000                                      
-Commit:     Committer <c.ommitter@example.net>                                  
-CommitDate: Mon Mar 29 17:15:30 2010 +0000                                      
-                                                                                
-    Commit 10 D                                                                 
-                                                                                
-commit 8d53d6a41f8540749c0db5d0b53e48d2f178dce4                                 
+commit 5cb3412a5e06e506840495b91acc885037a48b72
+Refs: [master], {origin/master}, {origin/HEAD}
+Author:     Max Power <power123@example.org>
+AuthorDate: Wed Apr 7 05:37:40 2010 +0000
+Commit:     Committer <c.ommitter@example.net>
+CommitDate: Wed Apr 7 05:37:40 2010 +0000
+
+    Commit 10 E
+
+commit 2843bfd58b98c7e23ab91e51ffa4db4f8e27c9a4
+Author:     Jørgen Thygesen Brahe <brache@example.dk>
+AuthorDate: Mon Mar 29 17:15:30 2010 +0000
+Commit:     Committer <c.ommitter@example.net>
+CommitDate: Mon Mar 29 17:15:30 2010 +0000
+
+    Commit 10 D
+
+commit 8d53d6a41f8540749c0db5d0b53e48d2f178dce4
 [log] 5cb3412a5e06e506840495b91acc885037a48b72 - line 1 of 401                4%
 EOF

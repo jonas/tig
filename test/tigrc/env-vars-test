@@ -30,10 +30,10 @@ assert_equals stderr <<EOF
 EOF
 
 assert_equals help.screen <<EOF
-Quick reference for tig keybindings:                                            
-                                                                                
-[-] generic bindings                                                            
-Misc                                                                            
-  : prompt Open the prompt                                                      
+Quick reference for tig keybindings:
+
+[-] generic bindings
+Misc
+  : prompt Open the prompt
 [help] - line 1 of 5                                                        100%
 EOF

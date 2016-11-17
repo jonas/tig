@@ -43,21 +43,21 @@ single quoted shell command
 EOF
 
 assert_equals 'quoted-prompt-with-spaces.screen' <<EOF
-git log |Quoted 'prompt' input|                                                 
+git log |Quoted 'prompt' input|
 [pager] echo git log |Quoted 'prompt' input| - line 1 of 1                  100%
 EOF
 
 assert_equals 'mid-quoted-prompt-with-spaces.screen' <<EOF
-git log -G|"Mid-quoted" prompt input|                                           
+git log -G|"Mid-quoted" prompt input|
 [pager] echo git log -G|"Mid-quoted" prompt input| - line 1 of 1            100%
 EOF
 
 assert_equals 'single-quoted-arg-with-escaped-chars.screen' <<EOF
-git log -G ' "" \\ab                                                             
+git log -G ' "" \\ab
 [pager] echo git log -G ' "" \\ab - line 1 of 1                              100%
 EOF
 
 assert_equals 'double-quoted-arg-with-escaped-chars.screen' <<EOF
-git log -G''  " \\ab                                                             
+git log -G''  " \\ab
 [pager] echo git log -G''  " \\ab - line 1 of 1                              100%
 EOF
