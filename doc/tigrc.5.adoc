@@ -788,6 +788,8 @@ Cursor navigation
 |move-half-page-up       |Move cursor one page up
 |move-first-line         |Move cursor to first line
 |move-last-line          |Move cursor to last line
+|move-next-merge         |Move cursor to next merge commit
+|move-prev-merge         |Move cursor to previous merge commit
 |=============================================================================
 
 Scrolling
