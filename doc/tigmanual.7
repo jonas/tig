@@ -2,12 +2,12 @@
 .\"     Title: tigmanual
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 08/10/2016
+.\"      Date: 11/16/2016
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.2
+.\"    Source: Tig 2.2.1
 .\"  Language: English
 .\"
-.TH "TIGMANUAL" "7" "08/10/2016" "Tig 2\&.2" "Tig Manual"
+.TH "TIGMANUAL" "7" "11/16/2016" "Tig 2\&.2\&.1" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -800,7 +800,7 @@ T{
 Up
 T}:T{
 .sp
-This key is "context sensitive" and will move the cursor one line up\&. However, if you opened a diff view from the main view (split\- or full\-screen) it will change the cursor to point to the previous commit in the main view and update the diff view to display it\&.
+This key is "context sensitive" and will move the cursor one line up\&. However, if you opened a diff view from the main view (split\- or full\-screen) it will change the cursor to point to the previous commit in the main view and update the diff view to display it\&. If you prefer this key to move the cursor or scroll within the diff view instead, use bind diff <Up> move\-up or bind diff <Up> scroll\-line\-up, respectively\&.
 T}
 T{
 .sp
@@ -1525,7 +1525,7 @@ Manpages:
 .IP " 1." 4
 home page
 .RS 4
-\%http://jonas.nitro.dk/tig
+\%https://jonas.github.io/tig
 .RE
 .IP " 2." 4
 main Git repository

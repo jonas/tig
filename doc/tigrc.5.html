@@ -1119,6 +1119,16 @@ branch               : Any other reference.
 </p>
 </dd>
 <dt class="hdlist1">
+<em>diff-highlight</em> (mixed)
+</dt>
+<dd>
+<p>
+        Whether to highlight diffs using Git&#8217;s <em>diff-highlight</em> program. Defaults
+        to false. When set to true then <em>diff-highlight</em> is used, else the option
+        value is used as the path.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>ignore-space</em> (mixed) [no|all|some|at-eol|&lt;bool&gt;]
 </dt>
 <dd>
@@ -2146,6 +2156,14 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table"><code>move-last-line</code></p></td>
 <td align="left" valign="top"><p class="table">Move cursor to last line</p></td>
 </tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>move-next-merge</code></p></td>
+<td align="left" valign="top"><p class="table">Move cursor to next merge commit</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>move-prev-merge</code></p></td>
+<td align="left" valign="top"><p class="table">Move cursor to previous merge commit</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -2662,7 +2680,7 @@ git(7), git-config(1)</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2016-08-10 22:38:39 EDT
+Last updated 2016-11-16 22:31:17 EST
 </div>
 </div>
 </body>

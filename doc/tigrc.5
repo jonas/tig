@@ -2,12 +2,12 @@
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 08/10/2016
+.\"      Date: 11/16/2016
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.2
+.\"    Source: Tig 2.2.1
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "08/10/2016" "Tig 2\&.2" "Tig Manual"
+.TH "TIGRC" "5" "11/16/2016" "Tig 2\&.2\&.1" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -361,6 +361,15 @@ Number of spaces per tab\&. The default is 8 spaces\&.
 \fIdiff\-context\fR (int)
 .RS 4
 Number of context lines to show for diffs\&.
+.RE
+.PP
+\fIdiff\-highlight\fR (mixed)
+.RS 4
+Whether to highlight diffs using Git\(cqs
+\fIdiff\-highlight\fR
+program\&. Defaults to false\&. When set to true then
+\fIdiff\-highlight\fR
+is used, else the option value is used as the path\&.
 .RE
 .PP
 \fIignore\-space\fR (mixed) [no|all|some|at\-eol|<bool>]
@@ -1685,6 +1694,8 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1741,6 +1752,20 @@ move\-last\-line
 T}:T{
 .sp
 Move cursor to last line
+T}
+T{
+.sp
+move\-next\-merge
+T}:T{
+.sp
+Move cursor to next merge commit
+T}
+T{
+.sp
+move\-prev\-merge
+T}:T{
+.sp
+Move cursor to previous merge commit
 T}
 .TE
 .sp 1

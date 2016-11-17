@@ -737,6 +737,66 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_2_1">tig-2.2.1</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Tarballs should now be downloaded from GitHub. Either go to
+<a href="https://github.com/jonas/tig/releases">https://github.com/jonas/tig/releases</a> or use the following pattern:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>https://github.com/jonas/tig/releases/download/tig-VERSION/tig-VERSION.tar.gz</code></pre>
+</div></div>
+<div class="paragraph"><p>MD5 checksums can be found at:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>https://github.com/jonas/tig/releases/download/tig-VERSION/tig-VERSION.tar.gz.md5</code></pre>
+</div></div>
+<div class="paragraph"><p>Similarly, the home page is now also on GitHub at <a href="https://jonas.github.io/tig/">https://jonas.github.io/tig/</a>.
+A big thanks to Simon L. B. Nielsen for generously hosting Tig on nitro.dk!</p></div>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Support Git&#8217;s <em>diff-highlight</em> program when <code>diff-highlight</code> is set to either
+   true or the path of the script to use for post-processing.
+</p>
+</li>
+<li>
+<p>
+Add navigation between merge commits. (GH #525)
+</p>
+</li>
+<li>
+<p>
+Add <em>A</em> as a binding to apply a stash without dropping it.
+</p>
+</li>
+<li>
+<p>
+Bind <em>Ctrl-D</em> and <em>Ctrl-U</em> to half-page movements by default.
+</p>
+</li>
+<li>
+<p>
+manual: Mention how to change default Up/Down behavior in diff view.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Reorganize checking of libraries for termcap functions.
+</p>
+</li>
+<li>
+<p>
+Fix <code>:goto &lt;id&gt;</code> error message.
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_2">tig-2.2</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Incompatibilities:</p></div>
@@ -858,6 +918,11 @@ Add <code>:goto &lt;rev&gt;</code> prompt command to go to a <code>git-rev-parse
 <li>
 <p>
 Respect the XDG standard for configuration files. (GH #513)
+</p>
+</li>
+<li>
+<p>
+Show tracking information in <code>tig status</code> (GH #504)
 </p>
 </li>
 <li>
@@ -3411,7 +3476,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2016-08-10 22:38:39 EDT
+Last updated 2016-11-16 22:31:17 EST
 </div>
 </div>
 </body>
