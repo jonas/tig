@@ -228,6 +228,7 @@ configure: configure.ac acinclude.m4 tools/*.m4
 site:
 	gitbook install
 	gitbook build
+	find _book -type f | grep -E -v '(gitbook|json|html)' | xargs rm
 
 .PHONY: all all-coverage all-debug clean clean-coverage clean-test doc \
 	doc-man doc-html dist distclean install install-doc \
