@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Prepare documentation for http://jonas.nitro.dk/tig/
+# Prepare documentation for https://jonas.github.io/tig/
 #
 # Copyright (c) 2009-2014 Jonas Fonseca <jonas.fonseca@gmail.com>
 

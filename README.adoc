@@ -15,21 +15,20 @@ commands.
 Resources
 ---------
 
- - Homepage:	http://jonas.nitro.dk/tig/[]
- - Manual:	http://jonas.nitro.dk/tig/manual.html[]
- - Tarballs:	http://jonas.nitro.dk/tig/releases/[]
- - Git URL:	git://github.com/jonas/tig.git (master) or
-		git://repo.or.cz/tig.git (mirror)
+ - Homepage:	https://jonas.github.io/tig/[]
+ - Manual:	https://jonas.github.io/manual.html[]
+ - Tarballs:	https://github.com/jonas/tig/releases[]
+ - Git URL:	git://github.com/jonas/tig.git
  - Gitter:	https://gitter.im/jonas/tig[]
  - Q&A:		http://stackoverflow.com/questions/tagged/tig[]
 
 Bugs and Feature Requests
 -------------------------
-Bugs and feature requests can be reported using the issue tracker at
-https://github.com/jonas/tig/issues[] or by mail to either the Git mailing
-list or directly to the maintainer. Ensure that the word "tig" is in the
-subject. For other Tig related questions please use Stack Overflow:
-http://stackoverflow.com/questions/tagged/tig[].
+Bugs and feature requests can be reported using the
+https://github.com/jonas/tig/issues[issue tracker] or by mail to either
+the Git mailing list or directly to the maintainer. Ensure that the word
+"tig" is in the subject. For other Tig related questions please use
+Stack Overflow: http://stackoverflow.com/questions/tagged/tig[].
 
 Installation and News
 ---------------------
