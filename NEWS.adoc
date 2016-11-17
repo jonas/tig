@@ -1,8 +1,20 @@
 Release notes
 =============
 
-master
-------
+tig-2.2.1
+---------
+
+Tarballs should now be downloaded from GitHub. Either go to
+https://github.com/jonas/tig/releases or use the following pattern:
+
+    https://github.com/jonas/tig/releases/download/tig-VERSION/tig-VERSION.tar.gz
+
+MD5 checksums can be found at:
+
+    https://github.com/jonas/tig/releases/download/tig-VERSION/tig-VERSION.tar.gz.md5
+
+Similarly, the home page is now also on GitHub at https://jonas.github.io/tig/.
+A big thanks to Simon L. B. Nielsen for generously hosting Tig on nitro.dk!
 
 Improvements:
 
