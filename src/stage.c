@@ -566,8 +566,12 @@ stage_read(struct view *view, struct buffer *buf, bool force_stop)
 	if (stage_line_type == LINE_STAT_UNTRACKED)
 		return pager_common_read(view, buf ? buf->data : NULL, LINE_DEFAULT, NULL);
 
-	if (!buf)
-		diff_done_highlight(&state->diff);
+	if (!buf) {
+		if (!diff_done_highlight(&state->diff)) {
+			report("Failed run the diff-highlight program: %s", opt_diff_highlight);
+			return true;
+		}
+	}
 
 	if (!buf && !view->lines && view->parent) {
 		maximize_view(view->parent, true);

@@ -61,13 +61,13 @@ diff_init_highlight(struct view *view, struct diff_state *state)
 	return SUCCESS;
 }
 
-void
+bool
 diff_done_highlight(struct diff_state *state)
 {
-	if (state->highlight) {
-		io_kill(&state->view_io);
-		io_done(&state->view_io);
-	}
+	if (!state->highlight)
+		return true;
+	io_kill(&state->view_io);
+	return io_done(&state->view_io);
 }
 
 struct diff_stat_context {
@@ -424,7 +424,10 @@ diff_read(struct view *view, struct buffer *buf, bool force_stop)
 		return diff_read_describe(view, buf, state);
 
 	if (!buf) {
-		diff_done_highlight(state);
+		if (!diff_done_highlight(state)) {
+			report("Failed run the diff-highlight program: %s", opt_diff_highlight);
+			return false;
+		}
 
 		/* Fall back to retry if no diff will be shown. */
 		if (view->lines == 0 && opt_file_args) {

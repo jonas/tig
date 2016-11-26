@@ -1,6 +1,13 @@
 Release notes
 =============
 
+master
+------
+
+Bug fixes:
+
+ - Add workaround for detecting failure to start the diff-highlight process.
+
 tig-2.2.1
 ---------
 
@@ -25,7 +32,7 @@ Improvements:
  - Bind 'Ctrl-D' and 'Ctrl-U' to half-page movements by default.
  - manual: Mention how to change default Up/Down behavior in diff view.
 
-Bug fixes
+Bug fixes:
 
  - Reorganize checking of libraries for termcap functions.
  - Fix `:goto <id>` error message.

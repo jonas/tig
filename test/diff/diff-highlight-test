@@ -4,7 +4,8 @@
 . libgit.sh
 
 file bin/diff-highlight <<EOF
-sed 's/Add type parameter for js.Dynamic/Changed by diff-highlight/'
+#!/bin/sh
+exec sed 's/Add type parameter for js.Dynamic/Changed by diff-highlight/'
 EOF
 
 chmod +x bin/diff-highlight
@@ -20,6 +21,9 @@ steps '
 
 	:set diff-highlight = cat
 	:save-display diff-custom.screen
+
+	:set diff-highlight = program-that-does-not-exist
+	:save-display diff-failure.screen
 '
 
 in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
@@ -88,4 +92,36 @@ index 65f914a..3aa4320 100644
 
 
 [diff] a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff - line 1 of 24              100%
+EOF
+
+assert_equals 'diff-failure.screen' <<EOF
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+[diff] a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff                               0%
 EOF
