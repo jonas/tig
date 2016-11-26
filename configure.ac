@@ -29,7 +29,7 @@ case "$ax_cv_ncursesw" in "no")
 	AC_MSG_WARN([The found ncurses library does not support wide-char.])
 	AC_MSG_WARN([This means that tig will not correctly render UTF-8.])
 esac
-AC_SUBST(CURSES_LIB)
+AC_SUBST(CURSES_LIBS)
 
 AX_LIB_READLINE(6.2)
 
