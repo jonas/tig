@@ -496,12 +496,13 @@ stage_open(struct view *view, enum open_flags flags)
 	 * path, so leave out the new path. */
 	const char *files_unmerged_argv[] = {
 		"git", "diff-files", encoding_arg, "--root", "--patch-with-stat",
-			diff_context_arg(), ignore_space_arg(), "--",
+			DIFF_ARGS, diff_context_arg(), ignore_space_arg(), "--",
 			stage_status.old.name, NULL
 	};
 	static const char *file_argv[] = { repo.cdup, stage_status.new.name, NULL };
 	const char **argv = NULL;
 	struct stage_state *state = view->private;
+	enum status_code code;
 
 	if (!stage_line_type)
 		return error("No stage content, press %s to open the status view and choose file",
@@ -536,26 +537,21 @@ stage_open(struct view *view, enum open_flags flags)
 		die("line type %d not handled in switch", stage_line_type);
 	}
 
-	if (!status_stage_info(view->ref, stage_line_type, &stage_status)
-	    || !argv_copy(&view->argv, argv))
+	if (!status_stage_info(view->ref, stage_line_type, &stage_status))
 		return error("Failed to open staged view");
 
 	if (stage_line_type != LINE_STAT_UNTRACKED)
 		diff_save_line(view, &state->diff, flags);
 
 	view->vid[0] = 0;
-	view->dir = repo.cdup;
-	{
-		enum status_code ok = begin_update(view, NULL, NULL, flags);
+	code = begin_update(view, repo.cdup, argv, flags);
+	if (code == SUCCESS && stage_line_type != LINE_STAT_UNTRACKED) {
+		struct stage_state *state = view->private;
 
-		if (ok == SUCCESS && stage_line_type != LINE_STAT_UNTRACKED) {
-			struct stage_state *state = view->private;
-
-			return diff_init_highlight(view, &state->diff);
-		}
-
-		return ok;
+		return diff_init_highlight(view, &state->diff);
 	}
+
+	return code;
 }
 
 static bool

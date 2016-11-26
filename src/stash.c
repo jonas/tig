@@ -55,7 +55,7 @@ stash_request(struct view *view, enum request request, struct line *line)
 				"git", "stash", "show", encoding_arg, "--pretty=fuller",
 					"--root", "--patch-with-stat", use_mailmap_arg(),
 					show_notes_arg(), diff_context_arg(),
-					ignore_space_arg(), "%(diffargs)",
+					ignore_space_arg(), DIFF_ARGS,
 					"--no-color", "%(stash)", NULL
 			};
 

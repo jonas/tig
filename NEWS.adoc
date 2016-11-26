@@ -4,6 +4,11 @@ Release notes
 master
 ------
 
+Improvements:
+
+ - Use `diff-options` when preparing the diff in the stage view to make the diff
+   state configurable. (GH #545)
+
 Bug fixes:
 
  - Add workaround for detecting failure to start the diff-highlight process.

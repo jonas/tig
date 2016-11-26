@@ -450,7 +450,7 @@ argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_a
 			if (file_filter && !argv_append_array(dst_argv, opt_file_args))
 				break;
 
-		} else if (!strcmp(arg, "%(diffargs)")) {
+		} else if (!strcmp(arg, DIFF_ARGS)) {
 			if (!format_append_argv(&format, dst_argv, opt_diff_options))
 				break;
 
