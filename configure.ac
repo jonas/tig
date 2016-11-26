@@ -21,15 +21,23 @@ AC_CHECK_FUNCS([mkstemps], [AC_SUBST([NO_MKSTEMPS], ["#"])])
 AC_CHECK_FUNCS([setenv], [AC_SUBST([NO_SETENV], ["#"])])
 AC_CHECK_FUNCS([strndup], [AC_SUBST([NO_STRNDUP], ["#"])])
 
-AX_WITH_CURSES
-case "$ax_cv_ncurses" in "no")
-	AC_MSG_ERROR([ncurses not found])
-esac
-case "$ax_cv_ncursesw" in "no")
-	AC_MSG_WARN([The found ncurses library does not support wide-char.])
-	AC_MSG_WARN([This means that tig will not correctly render UTF-8.])
-esac
-AC_SUBST(CURSES_LIB)
+PKG_CHECK_MODULES([CURSES], [ncursesw],
+	[AC_SUBST(CURSES_LIBS)], [
+	PKG_CHECK_MODULES([CURSES], [ncurses],
+		[AC_SUBST(CURSES_LIBS)
+		AC_MSG_WARN([The found ncurses library does not support wide-char.])
+		AC_MSG_WARN([This means that tig will not correctly render UTF-8.])],[
+			AX_WITH_CURSES
+			case "$ax_cv_ncurses" in "no")
+				AC_MSG_ERROR([ncurses not found])
+			esac
+			case "$ax_cv_ncursesw" in "no")
+				AC_MSG_WARN([The found ncurses library does not support wide-char.])
+				AC_MSG_WARN([This means that tig will not correctly render UTF-8.])
+			esac
+			AC_SUBST(CURSES_LIBS)
+		])
+	])
 
 AX_LIB_READLINE(6.2)
 
