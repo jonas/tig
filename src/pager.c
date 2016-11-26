@@ -174,14 +174,12 @@ pager_select(struct view *view, struct line *line)
 	}
 }
 
-static bool
+static enum status_code
 pager_open(struct view *view, enum open_flags flags)
 {
-	if (!open_from_stdin(flags) && !view->lines && !(flags & OPEN_PREPARED)) {
-		report("No pager content, press %s to run command from prompt",
-			get_view_key(view, REQ_PROMPT));
-		return false;
-	}
+	if (!open_from_stdin(flags) && !view->lines && !(flags & OPEN_PREPARED))
+		return error("No pager content, press %s to run command from prompt",
+			     get_view_key(view, REQ_PROMPT));
 
 	return begin_update(view, NULL, NULL, flags);
 }

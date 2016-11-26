@@ -239,7 +239,7 @@ main_with_graph(struct view *view, struct view_column *column, enum open_flags f
 	       ? column->opt.commit_title.graph : GRAPH_DISPLAY_NO;
 }
 
-static bool
+static enum status_code
 main_open(struct view *view, enum open_flags flags)
 {
 	struct view_column *commit_title_column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
@@ -268,16 +268,20 @@ main_open(struct view *view, enum open_flags flags)
 	if (state->with_graph) {
 		state->graph = init_graph(commit_title_column->opt.commit_title.graph);
 		if (!state->graph)
-			return false;
+			return ERROR_OUT_OF_MEMORY;
 	}
 
 	if (open_in_pager_mode(flags)) {
 		changes_triggers = WATCH_NONE;
 	}
 
-	/* This calls reset_view() so must be before adding changes commits. */
-	if (!begin_update(view, NULL, main_argv, flags))
-		return false;
+	{
+		/* This calls reset_view() so must be before adding changes commits. */
+		enum status_code code = begin_update(view, NULL, main_argv, flags);
+
+		if (code != SUCCESS)
+			return code;
+	}
 
 	/* Register watch before changes commits are added to record the
 	 * start. */
@@ -287,7 +291,7 @@ main_open(struct view *view, enum open_flags flags)
 	if (changes_triggers)
 		main_check_index(view, state);
 
-	return true;
+	return SUCCESS;
 }
 
 void

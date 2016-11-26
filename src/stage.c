@@ -477,7 +477,7 @@ stage_select(struct view *view, struct line *line)
 	diff_common_select(view, line, changes_msg);
 }
 
-static bool
+static enum status_code
 stage_open(struct view *view, enum open_flags flags)
 {
 	const char *no_head_diff_argv[] = {
@@ -503,11 +503,9 @@ stage_open(struct view *view, enum open_flags flags)
 	const char **argv = NULL;
 	struct stage_state *state = view->private;
 
-	if (!stage_line_type) {
-		report("No stage content, press %s to open the status view and choose file",
-			get_view_key(view, REQ_VIEW_STATUS));
-		return false;
-	}
+	if (!stage_line_type)
+		return error("No stage content, press %s to open the status view and choose file",
+			     get_view_key(view, REQ_VIEW_STATUS));
 
 	view->encoding = NULL;
 
@@ -539,10 +537,8 @@ stage_open(struct view *view, enum open_flags flags)
 	}
 
 	if (!status_stage_info(view->ref, stage_line_type, &stage_status)
-		|| !argv_copy(&view->argv, argv)) {
-		report("Failed to open staged view");
-		return false;
-	}
+	    || !argv_copy(&view->argv, argv))
+		return error("Failed to open staged view");
 
 	if (stage_line_type != LINE_STAT_UNTRACKED)
 		diff_save_line(view, &state->diff, flags);
@@ -550,9 +546,9 @@ stage_open(struct view *view, enum open_flags flags)
 	view->vid[0] = 0;
 	view->dir = repo.cdup;
 	{
-		bool ok = begin_update(view, NULL, NULL, flags);
+		enum status_code ok = begin_update(view, NULL, NULL, flags);
 
-		if (ok && stage_line_type != LINE_STAT_UNTRACKED) {
+		if (ok == SUCCESS && stage_line_type != LINE_STAT_UNTRACKED) {
 			struct stage_state *state = view->private;
 
 			return diff_init_highlight(view, &state->diff);

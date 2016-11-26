@@ -218,7 +218,7 @@ struct view_ops {
 	/* Size of private data. */
 	size_t private_size;
 	/* Open and reads in all view content. */
-	bool (*open)(struct view *view, enum open_flags flags);
+	enum status_code (*open)(struct view *view, enum open_flags flags);
 	/* Read one line; updates view->line. */
 	bool (*read)(struct view *view, struct buffer *buf, bool force_stop);
 	/* Draw one line; @lineno must be < view->height. */
@@ -345,7 +345,7 @@ clear_position(struct position *pos)
 }
 
 void reset_view(struct view *view);
-bool begin_update(struct view *view, const char *dir, const char **argv, enum open_flags flags);
+enum status_code begin_update(struct view *view, const char *dir, const char **argv, enum open_flags flags);
 void end_update(struct view *view, bool force);
 bool update_view(struct view *view);
 void update_view_title(struct view *view);

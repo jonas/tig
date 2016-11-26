@@ -138,7 +138,7 @@ refs_open_visitor(void *data, const struct ref *ref)
 	return true;
 }
 
-static bool
+static enum status_code
 refs_open(struct view *view, enum open_flags flags)
 {
 	const char *refs_log[] = {
@@ -147,20 +147,21 @@ refs_open(struct view *view, enum open_flags flags)
 				    : "--pretty=format:%H%x00%an <%ae> %ad%x00%s",
 			"--all", "--simplify-by-decoration", NULL
 	};
+	enum status_code code;
 
 	if (!refs_all) {
 		struct ref *ref = calloc(1, sizeof(*refs_all) + strlen(REFS_ALL_NAME));
 
-		if (ref) {
-			strncpy(ref->name, REFS_ALL_NAME, strlen(REFS_ALL_NAME));
-			refs_all = ref;
-		}
+		if (!ref)
+			return ERROR_OUT_OF_MEMORY;
+
+		strncpy(ref->name, REFS_ALL_NAME, strlen(REFS_ALL_NAME));
+		refs_all = ref;
 	}
 
-	if (!refs_all || !begin_update(view, NULL, refs_log, OPEN_RELOAD)) {
-		report("Failed to load reference data");
-		return false;
-	}
+	code = begin_update(view, NULL, refs_log, OPEN_RELOAD);
+	if (code != SUCCESS)
+		return code;
 
 	if (!view->lines)
 		view->sort.current = get_view_column(view, VIEW_COLUMN_REF);
@@ -170,7 +171,7 @@ refs_open(struct view *view, enum open_flags flags)
 
 	watch_register(&view->watch, WATCH_HEAD | WATCH_REFS);
 
-	return true;
+	return SUCCESS;
 }
 
 static void

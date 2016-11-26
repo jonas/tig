@@ -36,7 +36,7 @@ struct line *diff_common_add_diff_stat(struct view *view, const char *text, size
 void diff_common_select(struct view *view, struct line *line, const char *changes_msg);
 void diff_save_line(struct view *view, struct diff_state *state, enum open_flags flags);
 void diff_restore_line(struct view *view, struct diff_state *state);
-bool diff_init_highlight(struct view *view, struct diff_state *state);
+enum status_code diff_init_highlight(struct view *view, struct diff_state *state);
 void diff_done_highlight(struct diff_state *state);
 
 unsigned int diff_get_lineno(struct view *view, struct line *line);

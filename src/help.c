@@ -172,7 +172,7 @@ help_keys_visitor(void *data, const char *group, struct keymap *keymap,
 	return true;
 }
 
-static bool
+static enum status_code
 help_open(struct view *view, enum open_flags flags)
 {
 	struct help_request_iterator iterator = { view };
@@ -181,14 +181,15 @@ help_open(struct view *view, enum open_flags flags)
 	reset_view(view);
 
 	if (!add_help_line(view, &help, NULL, LINE_HEADER))
-		return false;
+		return ERROR_OUT_OF_MEMORY;
 	help->data.text = "Quick reference for tig keybindings:";
 
 	if (!add_help_line(view, &help, NULL, LINE_DEFAULT))
-		return false;
+		return ERROR_OUT_OF_MEMORY;
 	help->data.text = "";
 
-	return foreach_key(help_keys_visitor, &iterator, true);
+	return foreach_key(help_keys_visitor, &iterator, true)
+		? SUCCESS : error("Failed to render key bindings");
 }
 
 static enum request

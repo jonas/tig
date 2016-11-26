@@ -16,7 +16,7 @@
 #include "tig/main.h"
 #include "tig/diff.h"
 
-static bool
+static enum status_code
 stash_open(struct view *view, enum open_flags flags)
 {
 	static const char *stash_argv[] = { "git", "stash", "list",

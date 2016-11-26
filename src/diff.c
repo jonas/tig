@@ -21,7 +21,7 @@
 #include "tig/diff.h"
 #include "tig/draw.h"
 
-static bool
+static enum status_code
 diff_open(struct view *view, enum open_flags flags)
 {
 	const char *diff_argv[] = {
@@ -31,19 +31,18 @@ diff_open(struct view *view, enum open_flags flags)
 			"%(diffargs)", "%(cmdlineargs)", "--no-color", "%(commit)",
 			"--", "%(fileargs)", NULL
 	};
+	enum status_code code;
 
 	diff_save_line(view, view->private, flags);
 
-	if (begin_update(view, NULL, diff_argv, flags)) {
-		struct diff_state *state = view->private;
+	code = begin_update(view, NULL, diff_argv, flags);
+	if (code != SUCCESS)
+		return code;
 
-		return diff_init_highlight(view, state);
-	}
-
-	return false;
+	return diff_init_highlight(view, view->private);
 }
 
-bool
+enum status_code
 diff_init_highlight(struct view *view, struct diff_state *state)
 {
 	if (opt_diff_highlight) {
@@ -51,15 +50,15 @@ diff_init_highlight(struct view *view, struct diff_state *state)
 		char * const env[] = { "GIT_CONFIG=/dev/null", NULL };
 		struct io io;
 
-		if (io_exec(&io, IO_RP, view->dir, env, argv, view->io.pipe)) {
-			state->view_io = view->io;
-			view->io = io;
-			state->highlight = true;
-			return true;
-		}
+		if (!io_exec(&io, IO_RP, view->dir, env, argv, view->io.pipe))
+			return error("Failed to run %s", opt_diff_highlight);
+
+		state->view_io = view->io;
+		view->io = io;
+		state->highlight = true;
 	}
 
-	return true;
+	return SUCCESS;
 }
 
 void
@@ -449,9 +448,10 @@ diff_read(struct view *view, struct buffer *buf, bool force_stop)
 
 		if (!state->adding_describe_ref && !ref_list_contains_tag(view->vid)) {
 			const char *describe_argv[] = { "git", "describe", view->vid, NULL };
+			enum status_code code = begin_update(view, NULL, describe_argv, OPEN_EXTRA);
 
-			if (!begin_update(view, NULL, describe_argv, OPEN_EXTRA)) {
-				report("Failed to load describe data");
+			if (code != SUCCESS) {
+				report("Failed to load describe data: %s", get_status_message(code));
 				return true;
 			}
 
