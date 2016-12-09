@@ -12,6 +12,7 @@ Improvements:
 Bug fixes:
 
  - Add workaround for detecting failure to start the diff-highlight process.
+ - Show diffs in the stash view when `set mailmap = true`. (GH #556)
 
 tig-2.2.1
 ---------
