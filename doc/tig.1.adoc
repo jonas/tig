@@ -126,7 +126,7 @@ Display commits from one or more branches:
 $ tig test master
 -----------------------------------------------------------------------------
 
-Display all branches:
+Pretend as if all the refs in `refs/` are listed on the command line:
 -----------------------------------------------------------------------------
 $ tig --all
 -----------------------------------------------------------------------------
