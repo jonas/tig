@@ -415,7 +415,7 @@ filter_options(const char *argv[], bool rev_parse)
 		const char *arg = argv[next];
 
 		if (!strcmp(arg, "--"))
-			while (!argv[next])
+			while (argv[next])
 				argv[flags_pos++] = argv[next++];
 		else if (argv_parse_rev_flag(arg, NULL))
 			argv_append(&opt_rev_args, arg);

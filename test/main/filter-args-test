@@ -3,15 +3,29 @@
 . libtest.sh
 . libgit.sh
 
+# git log's --exclude flag was added in git commit e7b432c521b0177e86eaecd2bd16906b9fc53e10
+# and released in version 1.8.5
+require_git_version 1.9 "Requires git log's --exclude flag"
+
 # This test uses the trace output so do not show trace for this test.
 trace=
 export TIG_TRACE="$HOME/trace"
 
-in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+test_setup_work_dir()
+{
+	create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+	git checkout -b feature/x HEAD^
+	echo '// Feature X' >> common/build.sbt
+	export GIT_AUTHOR_DATE="1486403695"
+	export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
+	git commit -a -m "Feature X"
+}
 
-steps ':quit'
+steps '
+	:save-display filtered.screen
+'
 
-test_tig --exclude=refs/remotes/origin/* --all -- common tracer
+test_tig --exclude=refs/remotes/origin/* --exclude=refs/heads/master --all -- common tracer
 
 grep 'git rev-parse' < "$TIG_TRACE" > rev-parse.trace
 grep 'git log' < "$TIG_TRACE" > log.trace
@@ -24,5 +38,37 @@ git rev-parse --git-dir --is-inside-work-tree --show-cdup --show-prefix HEAD --s
 EOF
 
 assert_equals 'log.trace' <<EOF
-git log --encoding=UTF-8 --topo-order --exclude=refs/remotes/origin/* --all --date=raw --parents --no-color --pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s -- common tracer 
+git log --encoding=UTF-8 --topo-order --exclude=refs/remotes/origin/* --exclude=refs/heads/master --all --date=raw --parents --no-color --pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s -- common tracer
+EOF
+
+assert_equals 'filtered.screen' <<EOF
+2017-02-06 17:54 Committer          o [feature/x] Feature X
+2014-03-01 15:59 Jonas Fonseca      o Add type parameter for js.Dynamic
+2014-01-16 22:51 Jonas Fonseca      o Move classes under org.scalajs.benchmark p
+2014-01-16 17:39 Jonas Fonseca      o Integrate app code into the benchmark infr
+2013-11-26 23:39 Jonas Fonseca      o Extract the benchmark list variable name;
+2013-11-26 23:22 Jonas Fonseca      o Disable phantomjs by default
+2013-11-26 22:52 Jonas Fonseca      o Fix reference setup to work for node
+2013-11-26 22:03 Jonas Fonseca      o Move benchmark registration to Scala
+2013-11-05 23:20 Jonas Fonseca      o Reformat code using Scala IDE
+2013-11-05 20:41 Jonas Fonseca      o Update exports.js files to use new Scala.j
+2013-11-03 23:48 Jonas Fonseca      o Add support for PhantomJS
+2013-11-03 23:11 Jonas Fonseca      o Make the engine stubs file optional
+2013-11-03 22:44 Jonas Fonseca      o Refactor the benchmark shell code
+2013-10-29 18:48 Sébastien Doeraene o Remove workaround to support Node.js.
+2013-10-29 18:46 Sébastien Doeraene o Update for new groupId and package structu
+2013-10-27 23:05 Jonas Fonseca      o Add JavaScript benchmark reference code
+2013-10-27 18:12 Jonas Fonseca      o Add check sum calculation for verifying ra
+2013-10-26 12:54 Jonas Fonseca      o Add Scala.js LICENSE file and a cool licen
+2013-10-25 20:29 Jonas Fonseca      o Support node as a JavaScript engine
+2013-10-25 00:34 Jonas Fonseca      o Run benchmarks for a fixed number of milli
+2013-10-24 23:44 Jonas Fonseca      o Rework the benchmark runner and add option
+2013-10-18 11:39 Sébastien Doeraene o Fix the "./run.sh opt" invocation.
+2013-10-17 20:29 Jonas Fonseca      o Simplify render scene loop by using Range.
+2013-10-17 20:27 Jonas Fonseca      o Make the run shell script infrastructure r
+2013-10-14 13:15 Jonas Fonseca      I Initial import of Tracer benchmark
+ 
+ 
+ 
+[main] 48de84c3432145050fe77bd03555c13e7fdb87b4 - commit 1 of 25            100%
 EOF
