@@ -237,10 +237,15 @@ The following variables can be set:
 	ensured that the smaller of the views is at least four columns wide. The
 	default is '50%'.
 
-'status-untracked-dirs' (bool)::
+'status-show-untracked-dirs' (bool)::
 
 	Show untracked directories contents in the status view (analog to
 	`git ls-files --directory` option). On by default.
+
+'status-show-untracked-files' (bool)::
+
+	Show untracked files in the status view (mirrors git's
+	`status.showUntrackedFiles` option). On by default.
 
 'tab-size' (int)::
 

@@ -99,7 +99,7 @@ view_request(struct view *view, enum request request)
 	_('X', "commit ID display",		"id"), \
 	_('%', "file filtering",		"file-filter"), \
 	_('$', "commit title overflow display",	"commit-title-overflow"), \
-	_('d', "untracked directory info",	"status-untracked-dirs"), \
+	_('d', "untracked directory info",	"status-show-untracked-dirs"), \
 	_('|', "view split",			"vertical-split"), \
 
 static void

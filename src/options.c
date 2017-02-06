@@ -679,12 +679,38 @@ parse_view_settings(struct view_column **view_column, const char *name_, const c
 	return parse_view_config(view_column, name, argv);
 }
 
+static enum status_code
+option_update(struct option_info *option, int argc, const char *argv[])
+{
+	enum status_code code;
+
+	if (option->seen)
+		return SUCCESS;
+
+	if (!strcmp(option->type, "const char **"))
+		return parse_args(option->value, argv + 2);
+
+	if (argc < 3)
+		return error("Invalid set command: set option = value");
+
+	if (!strcmp(option->type, "view_settings"))
+		return parse_view_settings(option->value, argv[0], argv + 2);
+
+	if (!strcmp(option->type, "struct ref_format **"))
+		return parse_ref_formats(option->value, argv + 2);
+
+	code = parse_option(option, "", argv[2]);
+	if (code == SUCCESS && argc != 3)
+		return error("Option %s only takes one value", argv[0]);
+
+	return code;
+}
+
 /* Wants: name = value */
 static enum status_code
 option_set_command(int argc, const char *argv[])
 {
 	struct option_info *option;
-	enum status_code code;
 
 	if (argc < 2)
 		return error("Invalid set command: set option = value");
@@ -693,28 +719,26 @@ option_set_command(int argc, const char *argv[])
 		return error("No value assigned to %s", argv[0]);
 
 	option = find_option_info(option_info, ARRAY_SIZE(option_info), "", argv[0]);
-	if (option) {
-		if (option->seen)
-			return SUCCESS;
+	if (option)
+		return option_update(option, argc, argv);
 
-		if (!strcmp(option->type, "const char **"))
-			return parse_args(option->value, argv + 2);
+	{
+		const char *obsolete[][2] = {
+			{ "status-untracked-dirs", "status-show-untracked-dirs" },
+		};
+		int index = find_remapped(obsolete, ARRAY_SIZE(obsolete), argv[0]);
 
-		if (argc < 3)
-			return error("Invalid set command: set option = value");
+		if (index != -1) {
+			option = find_option_info(option_info, ARRAY_SIZE(option_info), "", obsolete[index][1]);
+			if (option) {
+				enum status_code code = option_update(option, argc, argv);
 
-		if (!strcmp(option->type, "view_settings"))
-			return parse_view_settings(option->value, argv[0], argv + 2);
-
-		if (!strcmp(option->type, "struct ref_format **"))
-			return parse_ref_formats(option->value, argv + 2);
-
-		code = parse_option(option, "", argv[2]);
-		if (code == SUCCESS && argc != 3)
-			return error("Option %s only takes one value", argv[0]);
-
-		return code;
-
+				if (code != SUCCESS)
+					return code;
+				return error("%s has been renamed to %s",
+					     obsolete[index][0], obsolete[index][1]);
+			}
+		}
 	}
 
 	{
@@ -788,6 +812,7 @@ option_bind_command(int argc, const char *argv[])
 			{ "diff-context-down",		"diff-context" },
 			{ "diff-context-up",		"diff-context" },
 			{ "stage-next",			":/^@@" },
+			{ "status-untracked-dirs",	"status-show-untracked-dirs" },
 			{ "toggle-author",		"author" },
 			{ "toggle-changes",		"show-changes" },
 			{ "toggle-commit-order",	"show-commit-order" },
@@ -806,7 +831,7 @@ option_bind_command(int argc, const char *argv[])
 			{ "toggle-sort-field",		"sort-field" },
 			{ "toggle-sort-order",		"sort-order" },
 			{ "toggle-title-overflow",	"commit-title-overflow" },
-			{ "toggle-untracked-dirs",	"status-untracked-dirs" },
+			{ "toggle-untracked-dirs",	"status-show-untracked-dirs" },
 			{ "toggle-vertical-split",	"show-vertical-split" },
 		};
 		int alias;
@@ -1412,6 +1437,9 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 
 	else if (!strcmp(name, "diff.noprefix"))
 		parse_bool(&opt_diff_noprefix, value);
+
+	else if (!strcmp(name, "status.showUntrackedFiles"))
+		parse_bool(&opt_status_show_untracked_files, value);
 
 	else if (!prefixcmp(name, "tig.color."))
 		set_repo_config_option(name + 10, value, option_color_command);
