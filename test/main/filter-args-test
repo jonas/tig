@@ -1,0 +1,28 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+# This test uses the trace output so do not show trace for this test.
+trace=
+export TIG_TRACE="$HOME/trace"
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+steps ':quit'
+
+test_tig --exclude=refs/remotes/origin/* --all -- common tracer
+
+grep 'git rev-parse' < "$TIG_TRACE" > rev-parse.trace
+grep 'git log' < "$TIG_TRACE" > log.trace
+
+assert_equals 'rev-parse.trace' <<EOF
+git rev-parse --no-revs --no-flags common tracer 
+git rev-parse --flags --no-revs common tracer 
+git rev-parse --symbolic --revs-only common tracer 
+git rev-parse --git-dir --is-inside-work-tree --show-cdup --show-prefix HEAD --symbolic-full-name HEAD 
+EOF
+
+assert_equals 'log.trace' <<EOF
+git log --encoding=UTF-8 --topo-order --exclude=refs/remotes/origin/* --all --date=raw --parents --no-color --pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s -- common tracer 
+EOF
