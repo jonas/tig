@@ -190,12 +190,11 @@ diff_common_add_diff_stat(struct view *view, const char *text, size_t offset)
 	 *	.../truncated file name  |   11 ++---
 	 *	binary add               |  Bin 0 -> 1234 bytes
 	 *	binary update            |  Bin 1234 -> 2345 bytes
+	 *	binary copy              |  Bin
 	 *	unmerged                 | Unmerged
 	 */
 	if ((data[len - 1] == '-' || data[len - 1] == '+') ||
-	    strstr(pipe, " 0") ||
-	    (strstr(pipe, "Bin") && strstr(pipe, "->")) ||
-	    strstr(pipe, "Unmerged") ||
+	    strstr(pipe, " 0") || strstr(pipe, "Bin") || strstr(pipe, "Unmerged") ||
 	    (data[len - 1] == '0' && (strstr(data, "=>") || !prefixcmp(data, "..."))))
 		return diff_common_read_diff_stat(view, text);
 	return NULL;

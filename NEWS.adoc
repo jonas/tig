@@ -24,6 +24,7 @@ Bug fixes:
  - Show diffs in the stash view when `set mailmap = true`. (GH #556)
  - Fix parsing of git-log revision arguments, such as `--exclude=...` in
    conjunction with `--all`. (GH #555)
+ - Fix diff stat parsing for binary copies.
 
 tig-2.2.1
 ---------
