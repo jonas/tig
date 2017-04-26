@@ -574,8 +574,10 @@ get_input(int prompt_position, struct key *key)
 			delay = watch_periodic(opt_refresh_interval);
 			foreach_displayed_view (view, i) {
 				if (view_can_refresh(view) &&
-				    watch_dirty(&view->watch))
+				    watch_dirty(&view->watch)){
+					load_refs(true);
 					refresh_view(view);
+				}
 			}
 		}
 
