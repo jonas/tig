@@ -281,6 +281,11 @@ The following variables can be set:
 
 	Ignore case in searches. By default, the search is case sensitive.
 
+'smart-case' (bool)::
+
+	Ignore case in searches only if search doesn't contain any uppercase
+	letters. By default, this is disabled.
+
 'mailmap' (bool)::
 
 	Read canonical name and email addresses for authors and committers from

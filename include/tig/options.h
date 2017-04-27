@@ -49,6 +49,7 @@ typedef struct view_column *view_settings;
 	_(horizontal_scroll,		double,			VIEW_NO_FLAGS) \
 	_(id_width,			int,			VIEW_NO_FLAGS) \
 	_(ignore_case,			bool,			VIEW_NO_FLAGS) \
+	_(smart_case,			bool,			VIEW_NO_FLAGS) \
 	_(ignore_space,			enum ignore_space,	VIEW_DIFF_LIKE) \
 	_(line_graphics,		enum graphic,		VIEW_NO_FLAGS) \
 	_(log_options,			const char **,		VIEW_LOG_LIKE) \
