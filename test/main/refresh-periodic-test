@@ -1,0 +1,74 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+. "$source_dir/util.sh"
+
+export LINES=5
+
+steps '
+	:save-display main-with-unstaged.screen
+
+	:exec @git add a
+	:save-display main-after-add-a.screen
+
+	:exec @git commit -m "Commit changes"
+	:save-display main-after-commit.screen
+
+	:exec @git add b.c
+	:exec @git commit -m "Another change: hello"
+	:exec @sleep 2
+	:save-display main-after-commiting-change-and-sleeping-hello.screen
+
+	:exec @git add i.o
+	:exec @git commit -am "Another change: world"
+	:exec @sleep 2
+	:save-display main-after-commiting-change-and-sleeping-world.screen
+'
+
+tigrc <<EOF
+set refresh-mode = periodic
+set refresh-interval = 1
+EOF
+
+in_work_dir create_dirty_workdir
+
+export GIT_AUTHOR_DATE="$(expr $author_date + $author_date_delta)"
+export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
+
+test_tig
+
+assert_equals 'main-with-unstaged.screen' <<EOF
+$YYY_MM_DD_HH_MM Unknown    o Unstaged changes
+2009-02-13 23:31 A. U. Thor I [master] Initial commit
+
+[main] Unstaged changes                                                     100%
+EOF
+
+assert_equals 'main-after-add-a.screen' <<EOF
+$YYY_MM_DD_HH_MM Unknown    o Unstaged changes
+$YYY_MM_DD_HH_MM Unknown    o Staged changes
+2009-02-13 23:31 A. U. Thor I [master] Initial commit
+[main] Unstaged changes                                                     100%
+EOF
+
+assert_equals 'main-after-commit.screen' <<EOF
+2014-05-25 19:42 Unknown    o Unstaged changes
+2009-02-22 11:53 Committer  o [master] Commit changes
+2009-02-13 23:31 A. U. Thor I Initial commit
+[main] Unstaged changes                                                     100%
+EOF
+
+assert_equals 'main-after-commiting-change-and-sleeping-hello.screen' <<EOF
+2014-05-25 19:42 Unknown    o Unstaged changes
+2009-02-22 11:53 Committer  o [master] Another change: hello
+2009-02-22 11:53 Committer  o Commit changes
+[main] Unstaged changes                                                      75%
+EOF
+
+assert_equals 'main-after-commiting-change-and-sleeping-world.screen' <<EOF
+2009-02-22 11:53 Committer  o [master] Another change: world
+2009-02-22 11:53 Committer  o Another change: hello
+2009-02-22 11:53 Committer  o Commit changes
+[main] 70bab5b220d2fd9bf61c125d52d59e10e93ec341 - commit 1 of 4              75%
+EOF
