@@ -244,7 +244,7 @@ The following variables can be set:
 
 'status-show-untracked-files' (bool)::
 
-	Show untracked files in the status view (mirrors git's
+	Show untracked files in the status view (mirrors Git's
 	`status.showUntrackedFiles` option). On by default.
 
 'tab-size' (int)::
