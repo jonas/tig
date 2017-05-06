@@ -1094,12 +1094,21 @@ branch               : Any other reference.
 </p>
 </dd>
 <dt class="hdlist1">
-<em>status-untracked-dirs</em> (bool)
+<em>status-show-untracked-dirs</em> (bool)
 </dt>
 <dd>
 <p>
         Show untracked directories contents in the status view (analog to
         <code>git ls-files --directory</code> option). On by default.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>status-show-untracked-files</em> (bool)
+</dt>
+<dd>
+<p>
+        Show untracked files in the status view (mirrors Git&#8217;s
+        <code>status.showUntrackedFiles</code> option). On by default.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1153,11 +1162,13 @@ branch               : Any other reference.
 </p>
 </dd>
 <dt class="hdlist1">
-<em>ignore-case</em> (bool)
+<em>ignore-case</em> (enum) [no|yes|smart-case]
 </dt>
 <dd>
 <p>
-        Ignore case in searches. By default, the search is case sensitive.
+        Ignore case in searches. "smart-case" ignores case if the search string
+        doesn&#8217;t contain any uppercase letters. By default, the search is case
+        sensitive.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1830,7 +1841,7 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(diffargs)</code></p></td>
 <td align="left" valign="top"><p class="table">Options from <em>diff-options</em> or <em>TIG_DIFF_OPTS</em> used
-                         used by the diff view.</p></td>
+                         used by the diff and stage view.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(blameargs)</code></p></td>
@@ -2680,7 +2691,7 @@ git(7), git-config(1)</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2016-11-16 22:31:17 EST
+Last updated 2017-05-06 10:37:09 EDT
 </div>
 </div>
 </body>

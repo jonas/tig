@@ -2,12 +2,12 @@
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 11/16/2016
+.\"      Date: 05/06/2017
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.2.1
+.\"    Source: Tig 2.2.2
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "11/16/2016" "Tig 2\&.2\&.1" "Tig Manual"
+.TH "TIGRC" "5" "05/06/2017" "Tig 2\&.2\&.2" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -346,10 +346,17 @@ Width of the right\-most view in a vertically split display\&. Can be specified 
 \fI50%\fR\&.
 .RE
 .PP
-\fIstatus\-untracked\-dirs\fR (bool)
+\fIstatus\-show\-untracked\-dirs\fR (bool)
 .RS 4
 Show untracked directories contents in the status view (analog to
 git ls\-files \-\-directory
+option)\&. On by default\&.
+.RE
+.PP
+\fIstatus\-show\-untracked\-files\fR (bool)
+.RS 4
+Show untracked files in the status view (mirrors Git\(cqs
+status\&.showUntrackedFiles
 option)\&. On by default\&.
 .RE
 .PP
@@ -385,9 +392,9 @@ git show\&.
 Commit ordering using the default (chronological reverse) order, topological order, date order or reverse order\&. When set to "auto" (which is the default), topological order is automatically used in the main view when the commit graph is enabled\&. In repositories with a long commit history it is advised to set this option to "default" to speed up loading of the main view\&.
 .RE
 .PP
-\fIignore\-case\fR (bool)
+\fIignore\-case\fR (enum) [no|yes|smart\-case]
 .RS 4
-Ignore case in searches\&. By default, the search is case sensitive\&.
+Ignore case in searches\&. "smart\-case" ignores case if the search string doesn\(cqt contain any uppercase letters\&. By default, the search is case sensitive\&.
 .RE
 .PP
 \fImailmap\fR (bool)
@@ -1224,7 +1231,7 @@ T{
 %(diffargs)
 T}:T{
 .sp
-Options from \fIdiff\-options\fR or \fITIG_DIFF_OPTS\fR used used by the diff view\&.
+Options from \fIdiff\-options\fR or \fITIG_DIFF_OPTS\fR used used by the diff and stage view\&.
 T}
 T{
 .sp

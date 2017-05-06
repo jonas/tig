@@ -737,6 +737,102 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_2_2">tig-2.2.2</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Upgrade instructions:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+The <code>status-untracked-dirs</code> option was renamed to
+   <code>status-show-untracked-dirs</code> to match the new <code>status-show-untracked-files</code>
+   option.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Use <code>diff-options</code> when preparing the diff in the stage view to make the diff
+   state configurable. (GH #545)
+</p>
+</li>
+<li>
+<p>
+Add <em>status-show-untracked-files</em> option mirroring Git&#8217;s
+   <em>status.showUntrackedFiles</em> to toggle display of untracked files.  in the
+   status view. On by default. (GH #562)
+</p>
+</li>
+<li>
+<p>
+Update <code>ax_with_curses.m4</code> and use <code>pkg-config</code> to detect. (GH #546)
+</p>
+</li>
+<li>
+<p>
+Add <code>tig-pick</code> script for using Tig as a commit picker. (GH #575, #580)
+</p>
+</li>
+<li>
+<p>
+Add "smart case" option (<em>set ignore-case = smart-case</em>) to ignore case when
+   the search string is lower-case only. (GH #320, #579)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix author ident cache being keyed by email only. (GH #424, #526, #547)
+</p>
+</li>
+<li>
+<p>
+Fix periodic refresh mode to properly detect ref changes. (GH #430, #591)
+</p>
+</li>
+<li>
+<p>
+Add workaround for detecting failure to start the diff-highlight process.
+</p>
+</li>
+<li>
+<p>
+Show diffs in the stash view when <code>set mailmap = true</code>. (GH #556)
+</p>
+</li>
+<li>
+<p>
+Fix parsing of git-log revision arguments, such as <code>--exclude=...</code> in
+   conjunction with <code>--all</code>. (GH #555)
+</p>
+</li>
+<li>
+<p>
+Fix diff stat parsing for binary copies.
+</p>
+</li>
+<li>
+<p>
+Fix crash when resizing terminal while search is in progress. (GH #515, #550)
+</p>
+</li>
+<li>
+<p>
+Fix argument filtering to pass more arguments through to Git.
+</p>
+</li>
+<li>
+<p>
+Check for termcap support in split tinfo libs. (GH #568, #585)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_2_1">tig-2.2.1</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Tarballs should now be downloaded from GitHub. Either go to
@@ -781,7 +877,7 @@ manual: Mention how to change default Up/Down behavior in diff view.
 </p>
 </li>
 </ul></div>
-<div class="paragraph"><p>Bug fixes</p></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
@@ -3476,7 +3572,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2016-11-16 22:31:17 EST
+Last updated 2017-05-06 10:37:09 EDT
 </div>
 </div>
 </body>

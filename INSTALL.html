@@ -741,8 +741,8 @@ asciidoc.install();
 <div class="paragraph"><p>Download a tarball from <a href="https://github.com/jonas/tig/releases">https://github.com/jonas/tig/releases</a> or clone the Tig
 repository <a href="http://github.com/jonas/tig">git://github.com/jonas/tig.git</a>.</p></div>
 <div class="paragraph"><p>The latest version is:
-<a href="https://github.com/jonas/tig/releases/download/tig-2.2.1/tig-2.2.1.tar.gz">tig-2.2.1</a>
-<a href="https://github.com/jonas/tig/releases/download/tig-2.2.1/tig-2.2.1.tar.gz.md5">(md5)</a></p></div>
+<a href="https://github.com/jonas/tig/releases/download/tig-2.2.2/tig-2.2.2.tar.gz">tig-2.2.2</a>
+<a href="https://github.com/jonas/tig/releases/download/tig-2.2.2/tig-2.2.2.tar.gz.md5">(md5)</a></p></div>
 <div class="paragraph"><p><strong>Note:</strong> Do not use the tar.gz file for version 2.0 because it will fail
 to compile due to issue <a href="https://github.com/jonas/tig/pull/283">#283</a> and
 <a href="https://github.com/jonas/tig/issues/337">#337</a></p></div>
@@ -788,6 +788,13 @@ $ make install</code></pre>
 </div></div>
 <div class="paragraph"><p>If your <code>iconv</code> library is not in the default library and include path, you need
 to pass the <code>--with-libiconv</code> option to <code>configure</code> to tell it where to look.</p></div>
+<div class="paragraph"><p>If you have installed ncurses with brew, run configure with the following
+flags to have it properly detected (note this done out of the box if you
+build without <code>configure</code>):</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ ./configure LDFLAGS=-L/usr/local/opt/ncurses/lib CPPFLAGS=-I/usr/local/opt/ncurses/include</code></pre>
+</div></div>
 <div class="paragraph"><p>Note, if you are building from the Tig repository, you need to generate
 <code>configure</code> yourself. First, ensure that <code>autoconf</code> is installed on your system,
 and then run the following command:</p></div>
@@ -971,7 +978,7 @@ cellspacing="0" cellpadding="4">
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2016-11-16 22:31:17 EST
+Last updated 2017-05-06 10:37:09 EDT
 </div>
 </div>
 </body>
