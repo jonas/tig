@@ -277,14 +277,11 @@ The following variables can be set:
 	commit history it is advised to set this option to "default" to speed up
 	loading of the main view.
 
-'ignore-case' (bool)::
+'ignore-case' (enum) [no|yes|smart-case]::
 
-	Ignore case in searches. By default, the search is case sensitive.
-
-'smart-case' (bool)::
-
-	Ignore case in searches only if search doesn't contain any uppercase
-	letters. By default, this is disabled.
+	Ignore case in searches. "smart-case" ignores case if the search string
+	doesn't contain any uppercase letters. By default, the search is case
+	sensitive.
 
 'mailmap' (bool)::
 

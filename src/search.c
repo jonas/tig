@@ -71,14 +71,11 @@ static enum status_code
 setup_and_find_next(struct view *view, enum request request)
 {
 	int regex_err;
-	int regex_flags = opt_ignore_case ? REG_ICASE : 0;
+	int regex_flags = opt_ignore_case == IGNORE_CASE_YES ? REG_ICASE : 0;
 
-	if (opt_smart_case == 1) {
-		if (contains_uppercase(view->env->search))
-			regex_flags &= ~REG_ICASE;
-		else
-			regex_flags |= REG_ICASE;
-	}
+	if (opt_ignore_case == IGNORE_CASE_SMART_CASE
+	    && !contains_uppercase(view->env->search))
+		regex_flags |= REG_ICASE;
 
 	if (view->regex) {
 		regfree(view->regex);

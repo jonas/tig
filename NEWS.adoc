@@ -19,6 +19,8 @@ Improvements:
    status view. On by default. (GH #562)
  - Update `ax_with_curses.m4` and use `pkg-config` to detect. (GH #546)
  - Add `tig-pick` script for using Tig as a commit picker. (GH #575, #580)
+ - Add "smart case" option ('set ignore-case = smart-case') to ignore case when
+   the search string is lower-case only. (GH #320, #579)
 
 Bug fixes:
 

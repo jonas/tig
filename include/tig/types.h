@@ -114,6 +114,11 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(IGNORE_SPACE, SOME), \
 	_(IGNORE_SPACE, AT_EOL)
 
+#define IGNORE_CASE_ENUM(_) \
+	_(IGNORE_CASE, NO), \
+	_(IGNORE_CASE, YES), \
+	_(IGNORE_CASE, SMART_CASE)
+
 #define COMMIT_ORDER_ENUM(_) \
 	_(COMMIT_ORDER, AUTO), \
 	_(COMMIT_ORDER, DEFAULT), \
@@ -143,18 +148,18 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(REFERENCE, REMOTE), \
 	_(REFERENCE, TAG), \
 	_(REFERENCE, LOCAL_TAG), \
-	_(REFERENCE, REPLACE), \
+	_(REFERENCE, REPLACE)
 
 #define STATUS_LABEL_ENUM(_) \
 	_(STATUS_LABEL, NO), \
 	_(STATUS_LABEL, SHORT), \
-	_(STATUS_LABEL, LONG), \
+	_(STATUS_LABEL, LONG)
 
 #define REFRESH_MODE_ENUM(_) \
 	_(REFRESH_MODE, MANUAL), \
 	_(REFRESH_MODE, AUTO), \
 	_(REFRESH_MODE, AFTER_COMMAND), \
-	_(REFRESH_MODE, PERIODIC), \
+	_(REFRESH_MODE, PERIODIC),
 
 #define ENUM_INFO(_) \
 	_(author, AUTHOR_ENUM) \
@@ -164,6 +169,7 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(filename, FILENAME_ENUM) \
 	_(graphic, GRAPHIC_ENUM) \
 	_(graph_display, GRAPH_DISPLAY_ENUM) \
+	_(ignore_case, IGNORE_CASE_ENUM) \
 	_(ignore_space, IGNORE_SPACE_ENUM) \
 	_(vertical_split, VERTICAL_SPLIT_ENUM) \
 	_(view_column_type, VIEW_COLUMN_ENUM) \

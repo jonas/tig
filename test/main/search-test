@@ -26,6 +26,10 @@ steps '
 	/13:33<Enter>
 	:save-display main-search-time.screen
 	:0
+	:set ignore-case = smart-case
+	/thor<Enter>
+	:save-display main-search-smart-case.screen
+	:0
 '
 
 git_clone 'repo-one'
@@ -156,4 +160,22 @@ assert_equals 'main-search-time.screen' <<EOF
 2009-12-26 01:11 作者                  o Commit 8 C
 2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B
 [main] 545eb1fa92b902b6799e2a1691419c3158254a0a - commit 12 of 50            28%
+EOF
+
+assert_equals 'main-search-smart-case.screen' <<EOF
+2010-04-07 05:37 Max Power             o [master] {origin/master} {origin/HEAD}
+2010-03-29 17:15 Jørgen Thygesen Brahe o Commit 10 D
+2010-03-21 04:53 作者                  o Commit 10 C
+2010-03-12 16:31 René Lévesque         o Commit 10 B
+2010-03-04 04:09 A. U. Thor            o Commit 10 A
+2010-02-23 15:46 Max Power             o Commit 9 E
+2010-02-15 03:24 Jørgen Thygesen Brahe o Commit 9 D
+2010-02-06 15:02 作者                  o Commit 9 C
+2010-01-29 02:40 René Lévesque         o Commit 9 B
+2010-01-20 14:18 A. U. Thor            o Commit 9 A
+2010-01-12 01:56 Max Power             o Commit 8 E
+2010-01-03 13:33 Jørgen Thygesen Brahe o Commit 8 D
+2009-12-26 01:11 作者                  o Commit 8 C
+2009-12-17 12:49 René Lévesque         o <v1.0> Commit 8 B
+[main] 19455fa3642af6a6a7d527dd043caf5a70eaad2d - commit 5 of 50             28%
 EOF
