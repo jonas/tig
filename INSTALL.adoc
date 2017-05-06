@@ -50,7 +50,7 @@ Optionally, you can use the `configure` script to detect dependencies:
 If your `iconv` library is not in the default library and include path, you need
 to pass the `--with-libiconv` option to `configure` to tell it where to look.
 
-If you have install ncurses with brew, run configure with the following
+If you have installed ncurses with brew, run configure with the following
 flags to have it properly detected (note this done out of the box if you
 build without `configure`):
 
