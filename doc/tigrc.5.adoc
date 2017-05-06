@@ -237,10 +237,15 @@ The following variables can be set:
 	ensured that the smaller of the views is at least four columns wide. The
 	default is '50%'.
 
-'status-untracked-dirs' (bool)::
+'status-show-untracked-dirs' (bool)::
 
 	Show untracked directories contents in the status view (analog to
 	`git ls-files --directory` option). On by default.
+
+'status-show-untracked-files' (bool)::
+
+	Show untracked files in the status view (mirrors Git's
+	`status.showUntrackedFiles` option). On by default.
 
 'tab-size' (int)::
 
@@ -272,9 +277,11 @@ The following variables can be set:
 	commit history it is advised to set this option to "default" to speed up
 	loading of the main view.
 
-'ignore-case' (bool)::
+'ignore-case' (enum) [no|yes|smart-case]::
 
-	Ignore case in searches. By default, the search is case sensitive.
+	Ignore case in searches. "smart-case" ignores case if the search string
+	doesn't contain any uppercase letters. By default, the search is case
+	sensitive.
 
 'mailmap' (bool)::
 
@@ -624,7 +631,7 @@ following variable names, which are substituted before commands are run:
 |%(fileargs)		|The file arguments passed on the command line.
 |%(cmdlineargs)		|All other options passed on the command line.
 |%(diffargs)		|Options from 'diff-options' or 'TIG_DIFF_OPTS' used
-			 used by the diff view.
+			 used by the diff and stage view.
 |%(blameargs)		|Options from 'blame-options' used by the blame view.
 |%(logargs)		|Options from 'log-options' used by the log view.
 |%(mainargs)		|Options from 'main-options' used by the main view.

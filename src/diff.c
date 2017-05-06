@@ -21,29 +21,28 @@
 #include "tig/diff.h"
 #include "tig/draw.h"
 
-static bool
+static enum status_code
 diff_open(struct view *view, enum open_flags flags)
 {
 	const char *diff_argv[] = {
 		"git", "show", encoding_arg, "--pretty=fuller", "--root",
 			"--patch-with-stat", use_mailmap_arg(),
 			show_notes_arg(), diff_context_arg(), ignore_space_arg(),
-			"%(diffargs)", "%(cmdlineargs)", "--no-color", "%(commit)",
+			DIFF_ARGS, "%(cmdlineargs)", "--no-color", "%(commit)",
 			"--", "%(fileargs)", NULL
 	};
+	enum status_code code;
 
 	diff_save_line(view, view->private, flags);
 
-	if (begin_update(view, NULL, diff_argv, flags)) {
-		struct diff_state *state = view->private;
+	code = begin_update(view, NULL, diff_argv, flags);
+	if (code != SUCCESS)
+		return code;
 
-		return diff_init_highlight(view, state);
-	}
-
-	return false;
+	return diff_init_highlight(view, view->private);
 }
 
-bool
+enum status_code
 diff_init_highlight(struct view *view, struct diff_state *state)
 {
 	if (opt_diff_highlight) {
@@ -51,24 +50,24 @@ diff_init_highlight(struct view *view, struct diff_state *state)
 		char * const env[] = { "GIT_CONFIG=/dev/null", NULL };
 		struct io io;
 
-		if (io_exec(&io, IO_RP, view->dir, env, argv, view->io.pipe)) {
-			state->view_io = view->io;
-			view->io = io;
-			state->highlight = true;
-			return true;
-		}
+		if (!io_exec(&io, IO_RP, view->dir, env, argv, view->io.pipe))
+			return error("Failed to run %s", opt_diff_highlight);
+
+		state->view_io = view->io;
+		view->io = io;
+		state->highlight = true;
 	}
 
-	return true;
+	return SUCCESS;
 }
 
-void
+bool
 diff_done_highlight(struct diff_state *state)
 {
-	if (state->highlight) {
-		io_kill(&state->view_io);
-		io_done(&state->view_io);
-	}
+	if (!state->highlight)
+		return true;
+	io_kill(&state->view_io);
+	return io_done(&state->view_io);
 }
 
 struct diff_stat_context {
@@ -191,12 +190,11 @@ diff_common_add_diff_stat(struct view *view, const char *text, size_t offset)
 	 *	.../truncated file name  |   11 ++---
 	 *	binary add               |  Bin 0 -> 1234 bytes
 	 *	binary update            |  Bin 1234 -> 2345 bytes
+	 *	binary copy              |  Bin
 	 *	unmerged                 | Unmerged
 	 */
 	if ((data[len - 1] == '-' || data[len - 1] == '+') ||
-	    strstr(pipe, " 0") ||
-	    (strstr(pipe, "Bin") && strstr(pipe, "->")) ||
-	    strstr(pipe, "Unmerged") ||
+	    strstr(pipe, " 0") || strstr(pipe, "Bin") || strstr(pipe, "Unmerged") ||
 	    (data[len - 1] == '0' && (strstr(data, "=>") || !prefixcmp(data, "..."))))
 		return diff_common_read_diff_stat(view, text);
 	return NULL;
@@ -425,7 +423,10 @@ diff_read(struct view *view, struct buffer *buf, bool force_stop)
 		return diff_read_describe(view, buf, state);
 
 	if (!buf) {
-		diff_done_highlight(state);
+		if (!diff_done_highlight(state)) {
+			report("Failed run the diff-highlight program: %s", opt_diff_highlight);
+			return false;
+		}
 
 		/* Fall back to retry if no diff will be shown. */
 		if (view->lines == 0 && opt_file_args) {
@@ -449,9 +450,10 @@ diff_read(struct view *view, struct buffer *buf, bool force_stop)
 
 		if (!state->adding_describe_ref && !ref_list_contains_tag(view->vid)) {
 			const char *describe_argv[] = { "git", "describe", view->vid, NULL };
+			enum status_code code = begin_update(view, NULL, describe_argv, OPEN_EXTRA);
 
-			if (!begin_update(view, NULL, describe_argv, OPEN_EXTRA)) {
-				report("Failed to load describe data");
+			if (code != SUCCESS) {
+				report("Failed to load describe data: %s", get_status_message(code));
 				return true;
 			}
 

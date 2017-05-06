@@ -162,7 +162,7 @@ tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 			return true;
 		}
 
-		if (!begin_update(view, repo.cdup, log_file, OPEN_EXTRA)) {
+		if (begin_update(view, repo.cdup, log_file, OPEN_EXTRA) != SUCCESS) {
 			report("Failed to load tree data");
 			return true;
 		}
@@ -427,17 +427,15 @@ tree_select(struct view *view, struct line *line)
 	string_copy_rev(view->ref, entry->id);
 }
 
-static bool
+static enum status_code
 tree_open(struct view *view, enum open_flags flags)
 {
 	static const char *tree_argv[] = {
 		"git", "ls-tree", "-l", "%(commit)", "%(directory)", NULL
 	};
 
-	if (string_rev_is_null(view->env->commit)) {
-		report("No tree exists for this commit");
-		return false;
-	}
+	if (string_rev_is_null(view->env->commit))
+		return error("No tree exists for this commit");
 
 	if (view->lines == 0 && repo.prefix[0]) {
 		char *pos = repo.prefix;

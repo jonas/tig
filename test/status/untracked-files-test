@@ -76,4 +76,31 @@ Untracked files:
 [status] Nothing to update                                                  100%
 EXPECTED_SCREEN
 
+test_case 'status-show-untracked-files-option-off' \
+	--args='status' \
+	--script=':toggle status-show-untracked-files' \
+<<EXPECTED_SCREEN
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+M .j
+M a
+M b.c
+M e/f
+M g h
+Untracked files:
+  (not shown)
+
+
+
+
+
+
+
+
+
+[status] Nothing to update                                                  100%
+EXPECTED_SCREEN
+
 run_test_cases

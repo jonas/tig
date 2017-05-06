@@ -122,7 +122,7 @@ open_grep_view(struct view *prev)
 	}
 }
 
-static bool
+static enum status_code
 grep_open(struct view *view, enum open_flags flags)
 {
 	struct grep_state *state = view->private;
@@ -135,7 +135,7 @@ grep_open(struct view *view, enum open_flags flags)
 
 	if (!argv_append_array(&argv, grep_args) ||
 	    !argv_append_array(&argv, grep_argv))
-		return false;
+		return ERROR_OUT_OF_MEMORY;
 
 	{
 		struct view_column *column = get_view_column(view, VIEW_COLUMN_FILE_NAME);

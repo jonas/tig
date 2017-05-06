@@ -267,25 +267,31 @@ get_path(const char *path)
 	return entry->path;
 }
 
-DEFINE_STRING_MAP(author_cache, const struct ident *, email, 32)
+DEFINE_STRING_MAP(author_cache, const struct ident *, key, 32)
 
 /* Small author cache to reduce memory consumption. No entries
  * are ever freed. */
 struct ident *
 get_author(const char *name, const char *email)
 {
-	struct ident *ident = string_map_get(&author_cache, email);
+	char key[SIZEOF_STR + SIZEOF_STR];
+	struct ident *ident;
 
+	string_format(key, "%s%s", email, name);
+
+	ident = string_map_get(&author_cache, key);
 	if (ident)
 		return ident;
 
 	ident = calloc(1, sizeof(*ident));
 	if (!ident)
 		return NULL;
+	ident->key = strdup(key);
 	ident->name = strdup(name);
 	ident->email = strdup(email);
-	if (!ident->name || !ident->email ||
-	    !string_map_put(&author_cache, email, ident)) {
+	if (!ident->key || !ident->name || !ident->email ||
+	    !string_map_put(&author_cache, key, ident)) {
+		free((void *) ident->key);
 		free((void *) ident->name);
 		free((void *) ident->email);
 		free(ident);

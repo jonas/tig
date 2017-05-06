@@ -85,7 +85,7 @@ watch_head_handler(struct watch_handler *handler, enum watch_event event, enum w
 
 	// FIXME: check branch
 	if ((head = get_ref_head()) &&
-	    check_file_mtime(&handler->last_modified, "%s/refs/head/%s", repo.git_dir, head->name))
+	    check_file_mtime(&handler->last_modified, "%s/refs/heads/%s", repo.git_dir, head->name))
 		return WATCH_HEAD;
 
 	return WATCH_NONE;

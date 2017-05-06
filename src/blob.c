@@ -48,7 +48,7 @@ open_blob_view(struct view *prev, enum open_flags flags)
 	}
 }
 
-static bool
+static enum status_code
 blob_open(struct view *view, enum open_flags flags)
 {
 	struct blob_state *state = view->private;
@@ -71,19 +71,15 @@ blob_open(struct view *view, enum open_flags flags)
 		};
 
 		if (!string_format(blob_spec, "%s:%s", commit, view->env->file) ||
-		    !io_run_buf(rev_parse_argv, view->env->blob, sizeof(view->env->blob), false)) {
-			report("Failed to resolve blob from file name");
-			return false;
-		}
+		    !io_run_buf(rev_parse_argv, view->env->blob, sizeof(view->env->blob), false))
+			return error("Failed to resolve blob from file name");
 
 		string_ncopy(state->commit, commit, strlen(commit));
 	}
 
-	if (!state->file && !view->env->blob[0]) {
-		report("No file chosen, press %s to open tree view",
-				get_view_key(view, REQ_VIEW_TREE));
-		return false;
-	}
+	if (!state->file && !view->env->blob[0])
+		return error("No file chosen, press %s to open tree view",
+			     get_view_key(view, REQ_VIEW_TREE));
 
 	view->encoding = get_path_encoding(view->env->file, default_encoding);
 

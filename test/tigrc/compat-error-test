@@ -78,6 +78,8 @@ set main-view-date		= custom
 set main-view-date-format	= "%Y-%m-%d %H:%M"
 
 set cmdline-args = --all
+
+set status-untracked-dirs = true
 EOF
 
 steps ":quit"
@@ -122,7 +124,7 @@ tig warning: ~/.tigrc:46: toggle-id has been replaced by \`:toggle id'
 tig warning: ~/.tigrc:47: toggle-files has been replaced by \`:toggle file-filter'
 tig warning: ~/.tigrc:48: toggle-title-overflow has been replaced by \`:toggle commit-title-overflow'
 tig warning: ~/.tigrc:49: toggle-file-size has been replaced by \`:toggle file-size'
-tig warning: ~/.tigrc:50: toggle-untracked-dirs has been replaced by \`:toggle status-untracked-dirs'
+tig warning: ~/.tigrc:50: toggle-untracked-dirs has been replaced by \`:toggle status-show-untracked-dirs'
 tig warning: ~/.tigrc:53: main-revgraph is obsolete
 tig warning: ~/.tigrc:56: tree-head has been replaced by tree.header
 tig warning: ~/.tigrc:57: tree-dir has been replaced by tree.directory
@@ -133,5 +135,6 @@ tig warning: ~/.tigrc:61: help-keymap has been replaced by help.section
 tig warning: ~/.tigrc:64: 'local' is no longer supported for date-display, use the 'date-local' column option
 tig warning: ~/.tigrc:68: 'short' is no longer supported for date-display, use the 'custom' display mode and set 'date-format'
 tig warning: ~/.tigrc:72: cmdline-args is obsolete; use view-specific options instead, e.g. main-options
+tig warning: ~/.tigrc:74: status-untracked-dirs has been renamed to status-show-untracked-dirs
 tig warning: Errors while loading HOME/.tigrc.
 EOF

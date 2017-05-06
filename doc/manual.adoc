@@ -174,7 +174,7 @@ following variables.
 |%(fileargs)		|The file arguments passed on the command line.
 |%(cmdlineargs)		|All other options passed on the command line.
 |%(diffargs)		|Options from 'diff-options' or 'TIG_DIFF_OPTS' used
-			 used by the diff view.
+			 used by the diff and stage view.
 |%(blameargs)		|Options from 'blame-options' used by the blame view.
 |%(logargs)		|Options from 'log-options' used by the log view.
 |%(mainargs)		|Options from 'main-options' used by the main view.
@@ -454,7 +454,8 @@ Misc
 |%	|Toggle file filtering in order to see the full diff instead of only
 	 the diff concerning the currently selected file.
 |$	|Toggle highlighting of commit title overflow.
-|:	|Open prompt. This allows you to specify what command to run.
+|:	|Open prompt. This allows you to specify what command to run and also to
+	 jump to a specific line, e.g. `:23`
 |e	|Open file in editor.
 |=============================================================================
 

@@ -60,7 +60,7 @@ log_select(struct view *view, struct line *line)
 	state->last_type = line->type;
 }
 
-static bool
+static enum status_code
 log_open(struct view *view, enum open_flags flags)
 {
 	const char *log_argv[] = {

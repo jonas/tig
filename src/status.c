@@ -332,20 +332,33 @@ status_update_onbranch(void)
 	string_copy(status_onbranch, "Not currently on any branch");
 }
 
+static bool
+status_read_untracked(struct view *view)
+{
+	if (!opt_status_show_untracked_files)
+		return add_line_nodata(view, LINE_STAT_UNTRACKED)
+		    && add_line_nodata(view, LINE_STAT_NONE);
+
+	status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 3] =
+		opt_status_show_untracked_dirs ? NULL : "--directory";
+	status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 2] =
+		opt_status_show_untracked_dirs ? NULL : "--no-empty-directory";
+
+	return status_run(view, status_list_other_argv, '?', LINE_STAT_UNTRACKED);
+}
+
 /* First parse staged info using git-diff-index(1), then parse unstaged
  * info using git-diff-files(1), and finally untracked files using
  * git-ls-files(1). */
-static bool
+static enum status_code
 status_open(struct view *view, enum open_flags flags)
 {
 	const char **staged_argv = is_initial_commit() ?
 		status_list_no_head_argv : status_diff_index_argv;
 	char staged_status = staged_argv == status_list_no_head_argv ? 'A' : 0;
 
-	if (repo.is_inside_work_tree == false) {
-		report("The status view requires a working tree");
-		return false;
-	}
+	if (repo.is_inside_work_tree == false)
+		return error("The status view requires a working tree");
 
 	reset_view(view);
 
@@ -357,22 +370,15 @@ status_open(struct view *view, enum open_flags flags)
 
 	update_index();
 
-	status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 3] =
-		opt_status_untracked_dirs ? NULL : "--directory";
-	status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 2] =
-		opt_status_untracked_dirs ? NULL : "--no-empty-directory";
-
 	if (!status_run(view, staged_argv, staged_status, LINE_STAT_STAGED) ||
 	    !status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED) ||
-	    !status_run(view, status_list_other_argv, '?', LINE_STAT_UNTRACKED)) {
-		report("Failed to load status data");
-		return false;
-	}
+	    !status_read_untracked(view))
+		return error("Failed to load status data");
 
 	/* Restore the exact position or use the specialized restore
 	 * mode? */
 	status_restore(view);
-	return true;
+	return SUCCESS;
 }
 
 static bool
@@ -407,6 +413,10 @@ status_get_column_data(struct view *view, const struct line *line, struct view_c
 		case LINE_STAT_NONE:
 			type = LINE_DEFAULT;
 			text = "  (no files)";
+			if (!opt_status_show_untracked_files
+			    && view->line < line
+			    && line[-1].type == LINE_STAT_UNTRACKED)
+				text = "  (not shown)";
 			break;
 
 		case LINE_HEADER:

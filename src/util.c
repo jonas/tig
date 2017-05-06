@@ -239,7 +239,11 @@ mkfilesize(unsigned long size, enum file_size format)
 	return string_format(buf, "%ld", size) ? buf : NULL;
 }
 
-const struct ident unknown_ident = { "Unknown", "unknown@localhost" };
+const struct ident unknown_ident = {
+	"unknown@localhostUnknown",	// key
+	"Unknown",			// name
+	"unknown@localhost"		// email
+};
 
 int
 ident_compare(const struct ident *i1, const struct ident *i2)

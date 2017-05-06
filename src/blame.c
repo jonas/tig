@@ -73,7 +73,7 @@ blame_update_file_name_visibility(struct view *view)
 			  !state->auto_filename_display);
 }
 
-static bool
+static enum status_code
 blame_open(struct view *view, enum open_flags flags)
 {
 	struct blame_state *state = view->private;
@@ -124,27 +124,24 @@ blame_open(struct view *view, enum open_flags flags)
 		}
 	}
 
-	if (!view->env->file[0]) {
-		report("No file chosen, press %s to open tree view",
-			get_view_key(view, REQ_VIEW_TREE));
-		return false;
-	}
+	if (!view->env->file[0])
+		return error("No file chosen, press %s to open tree view",
+			     get_view_key(view, REQ_VIEW_TREE));
 
 	if (!view->prev && *repo.prefix && !(flags & (OPEN_RELOAD | OPEN_REFRESH))) {
 		string_copy(path, view->env->file);
-		if (!string_format(view->env->file, "%s%s", repo.prefix, path)) {
-			report("Failed to setup the blame view");
-			return false;
-		}
+		if (!string_format(view->env->file, "%s%s", repo.prefix, path))
+			return error("Failed to setup the blame view");
 	}
 
-	if (*view->env->ref || !begin_update(view, repo.cdup, file_argv, flags)) {
+	if (*view->env->ref || begin_update(view, repo.cdup, file_argv, flags) != SUCCESS) {
 		const char *blame_cat_file_argv[] = {
 			"git", "cat-file", "blob", "%(ref):%(file)", NULL
 		};
+		enum status_code code = begin_update(view, repo.cdup, blame_cat_file_argv, flags);
 
-		if (!begin_update(view, repo.cdup, blame_cat_file_argv, flags))
-			return false;
+		if (code != SUCCESS)
+			return code;
 	}
 
 	/* First pass: remove multiple references to the same commit. */
@@ -170,11 +167,11 @@ blame_open(struct view *view, enum open_flags flags)
 	string_copy_rev(state->history_state.id, view->env->ref);
 	state->history_state.filename = get_path(view->env->file);
 	if (!state->history_state.filename)
-		return false;
+		return ERROR_OUT_OF_MEMORY;
 	string_format(view->vid, "%s", view->env->file);
 	string_format(view->ref, "%s ...", view->env->file);
 
-	return true;
+	return SUCCESS;
 }
 
 static struct blame_commit *
@@ -240,7 +237,7 @@ blame_read_file(struct view *view, struct buffer *buf, struct blame_state *state
 		if (failed_to_load_initial_view(view))
 			die("No blame exist for %s", view->vid);
 
-		if (view->lines == 0 || !begin_update(view, repo.cdup, blame_argv, OPEN_EXTRA)) {
+		if (view->lines == 0 || begin_update(view, repo.cdup, blame_argv, OPEN_EXTRA) != SUCCESS) {
 			report("Failed to load blame data");
 			return true;
 		}

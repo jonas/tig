@@ -1,6 +1,40 @@
 Release notes
 =============
 
+tig-2.2.2
+---------
+
+Upgrade instructions:
+
+ - The `status-untracked-dirs` option was renamed to
+   `status-show-untracked-dirs` to match the new `status-show-untracked-files`
+   option.
+
+Improvements:
+
+ - Use `diff-options` when preparing the diff in the stage view to make the diff
+   state configurable. (GH #545)
+ - Add 'status-show-untracked-files' option mirroring Git's
+   'status.showUntrackedFiles' to toggle display of untracked files.  in the
+   status view. On by default. (GH #562)
+ - Update `ax_with_curses.m4` and use `pkg-config` to detect. (GH #546)
+ - Add `tig-pick` script for using Tig as a commit picker. (GH #575, #580)
+ - Add "smart case" option ('set ignore-case = smart-case') to ignore case when
+   the search string is lower-case only. (GH #320, #579)
+
+Bug fixes:
+
+ - Fix author ident cache being keyed by email only. (GH #424, #526, #547)
+ - Fix periodic refresh mode to properly detect ref changes. (GH #430, #591)
+ - Add workaround for detecting failure to start the diff-highlight process.
+ - Show diffs in the stash view when `set mailmap = true`. (GH #556)
+ - Fix parsing of git-log revision arguments, such as `--exclude=...` in
+   conjunction with `--all`. (GH #555)
+ - Fix diff stat parsing for binary copies.
+ - Fix crash when resizing terminal while search is in progress. (GH #515, #550)
+ - Fix argument filtering to pass more arguments through to Git.
+ - Check for termcap support in split tinfo libs. (GH #568, #585)
+
 tig-2.2.1
 ---------
 
@@ -25,7 +59,7 @@ Improvements:
  - Bind 'Ctrl-D' and 'Ctrl-U' to half-page movements by default.
  - manual: Mention how to change default Up/Down behavior in diff view.
 
-Bug fixes
+Bug fixes:
 
  - Reorganize checking of libraries for termcap functions.
  - Fix `:goto <id>` error message.
@@ -114,7 +148,7 @@ Improvements:
  - Improve C99 compliance so Tig compiles with the native compilers on
    Solaris (SunStudio cc) and AIX (xlc). (GH #380)
  - Add move-half-page-up and move-half-page-down actions. (GH #323)
- - Preserve the cursor position when changing the diff context. 
+ - Preserve the cursor position when changing the diff context.
  - Show 'Unstaged changes' above 'Staged changes' in the main view. (GH #383)
  - Add `:exec <flags><args...>` prompt command to execute commands.
  - Add shorthand for changing the view settings of a single column,
@@ -521,7 +555,7 @@ Bug fixes:
  - Stage view: fix off-by-one error when jumping to a file in a diff
    with only one file.
  - Fix diff-header colorization. (GH #15)
-  
+
 tig-0.18
 --------
 
@@ -540,7 +574,7 @@ Improvements:
    the diff and stage view.
  - (GH-6) Make blame configurable via extra options passed from the command
    line and blame-options setting from ~/.tigrc. For example:
-   
+
    	set blame-options = -C -C -C
 
 Bug fixes:
@@ -714,7 +748,7 @@ Improvements:
  - Read tigrc(5) options from Git configuration files using the syntax:
 
 	[tig] show-rev-graph = true
-	[tig "color"] cursor = yellow red bold 
+	[tig "color"] cursor = yellow red bold
 	[tig "bind"] generic = P parent
 
  - Tree view: avoid flickering when updating.

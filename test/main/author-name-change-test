@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# Test display and options specific to the main view.
+
+. libtest.sh
+. libgit.sh
+
+export LINES=5
+
+tigrc <<EOF
+set vertical-split = no
+EOF
+
+steps '
+	:save-display main-default.screen
+'
+
+in_work_dir create_repo_from_tgz "$base_dir/files/repo-authornamechange.tgz"
+
+test_tig
+
+assert_equals 'main-default.screen' <<EOF
+2016-11-28 23:13 Mr. Hyde   o [master] Commit 2
+2016-11-28 23:13 Dr. Jekyll I Commit 1
+
+[main] 15c9cec4c9a64c560391c7e0bfb0913b908f9287 - commit 1 of 2             100%
+EOF

@@ -16,7 +16,7 @@
 #include "tig/main.h"
 #include "tig/diff.h"
 
-static bool
+static enum status_code
 stash_open(struct view *view, enum open_flags flags)
 {
 	static const char *stash_argv[] = { "git", "stash", "list",
@@ -53,9 +53,9 @@ stash_request(struct view *view, enum request request, struct line *line)
 		    strcmp(view->env->stash, diff->ref)) {
 			const char *diff_argv[] = {
 				"git", "stash", "show", encoding_arg, "--pretty=fuller",
-					"--root", "--patch-with-stat", use_mailmap_arg(),
+					"--root", "--patch-with-stat",
 					show_notes_arg(), diff_context_arg(),
-					ignore_space_arg(), "%(diffargs)",
+					ignore_space_arg(), DIFF_ARGS,
 					"--no-color", "%(stash)", NULL
 			};
 

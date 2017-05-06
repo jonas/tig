@@ -34,16 +34,19 @@ fi
 AC_CACHE_VAL(bash_cv_termcap_lib,
 [AC_CHECK_FUNC(tgetent, bash_cv_termcap_lib=libc,
 if test "$ax_cv_curses_which" = "ncursesw"; then
-	[AC_CHECK_LIB(ncursesw, tgetent, bash_cv_termcap_lib=libncursesw)]
+	[AC_CHECK_LIB(ncursesw, tgetent, bash_cv_termcap_lib=libncursesw,
+		[AC_CHECK_LIB(tinfow, tgetent, bash_cv_termcap_lib=libtinfow)]
+	)]
 elif test "$ax_cv_curses_which" = "ncurses"; then
-	[AC_CHECK_LIB(ncurses, tgetent, bash_cv_termcap_lib=libncurses)]
+	[AC_CHECK_LIB(ncurses, tgetent, bash_cv_termcap_lib=libncurses,
+		[AC_CHECK_LIB(tinfo, tgetent, bash_cv_termcap_lib=libtinfo)]
+	)]
 elif test "$ax_cv_curses_which" = "plaincurses"; then
 	[AC_CHECK_LIB(curses, tgetent, bash_cv_termcap_lib=libcurses)]
 else
 	[AC_CHECK_LIB(termcap, tgetent, bash_cv_termcap_lib=libtermcap,
-		[AC_CHECK_LIB(tinfo, tgetent, bash_cv_termcap_lib=libtinfo,
-			bash_cv_termcap_lib=gnutermcap
-	)])]
+		bash_cv_termcap_lib=gnutermcap
+	)]
 fi
 )])
 if test "X$_bash_needmsg" = "Xyes"; then
@@ -56,6 +59,9 @@ TERMCAP_LIB="./lib/termcap/libtermcap.a"
 TERMCAP_DEP="./lib/termcap/libtermcap.a"
 elif test $bash_cv_termcap_lib = libtermcap && test -z "$prefer_curses"; then
 TERMCAP_LIB=-ltermcap
+TERMCAP_DEP=
+elif test $bash_cv_termcap_lib = libtinfow; then
+TERMCAP_LIB=-ltinfow
 TERMCAP_DEP=
 elif test $bash_cv_termcap_lib = libtinfo; then
 TERMCAP_LIB=-ltinfo

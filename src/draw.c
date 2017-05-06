@@ -570,7 +570,7 @@ static void
 draw_view_line_search_result(struct view *view, unsigned int lineno)
 {
 	size_t bufsize = view->width * 4;
-	char *buf = malloc(bufsize);
+	char *buf = malloc(bufsize + 1);
 	regmatch_t pmatch[1];
 	regoff_t bufpos = 0;
 

@@ -90,7 +90,8 @@ set reference-format		= [branch] <tag> {remote} ~replace~
 
 # Settings controlling how content is read from Git
 set commit-order		= auto		# Enum: auto, default, topo, date, reverse (main)
-set status-untracked-dirs	= yes		# Show files in untracked directories? (status)
+set status-show-untracked-dirs	= yes		# Show files in untracked directories? (status)
+set status-show-untracked-files = yes		# Show untracked files?
 set ignore-space		= no		# Enum: no, all, some, at-eol (diff)
 set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set diff-context		= 3		# Number of lines to show around diff changes (diff)
@@ -105,7 +106,8 @@ set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 # Misc
 set refresh-mode		= auto		# Enum: manual, auto, after-command, periodic
 set refresh-interval		= 10		# Interval in seconds between refreshes
-set ignore-case			= no		# Ignore case when searching?
+set ignore-case			= no		# Enum: no, yes, smart-case
+                                                # Ignore case when searching? Smart-case option will
 set wrap-search			= yes		# Wrap around to top/bottom of view when searching
 set focus-child			= yes		# Move focus to child view when opened?
 set horizontal-scroll		= 50%		# Number of columns to scroll as % of width

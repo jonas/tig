@@ -179,7 +179,7 @@ io_done(struct io *io)
 	io_init(io);
 
 	while (pid > 0) {
-		int status;
+		int status = 0;
 		pid_t waiting = waitpid(pid, &status, 0);
 
 		if (waiting < 0) {
@@ -189,9 +189,7 @@ io_done(struct io *io)
 			return false;
 		}
 
-		if (WEXITSTATUS(status)) {
-			io->status = WEXITSTATUS(status);
-		}
+		io->status = WIFEXITED(status) ? WEXITSTATUS(status) : 0;
 
 		return waiting == pid &&
 		       !WIFSIGNALED(status) &&
@@ -327,6 +325,8 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 		}
 
 		execvp(argv[0], (char *const*) argv);
+
+		close(STDOUT_FILENO);
 		exit(errno);
 	}
 

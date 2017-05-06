@@ -1,4 +1,4 @@
-personal_ws-1.1 en 261 
+personal_ws-1.1 en 266 
 CJK
 del
 goto
@@ -7,6 +7,7 @@ refspec
 Shorthands
 Gedit
 cmd
+noprefix
 dev
 cdup
 ident
@@ -167,11 +168,13 @@ mainargs
 tig's
 dirs
 ld
+showUntrackedFiles
 newmode
 keymaps
 endif
 namespace
 commitencoding
+nitro
 subdirectory
 utils
 delim
@@ -182,6 +185,7 @@ automake
 nodelay
 VLINE
 extdiff
+checksums
 keybindings
 ifndef
 subdirectories
@@ -198,14 +202,15 @@ wclear
 Homebrew
 chunked
 BUILTIN
+tinfo
 drwxr
 ascii
 Baudis
 substring
 PID
 tz
-DocBook
 docbook
+DocBook
 submodule
 strndup
 startup

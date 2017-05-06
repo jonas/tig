@@ -523,14 +523,14 @@ view_exec(struct view *view, enum open_flags flags)
 	return io_exec(&view->io, IO_RD, view->dir, opt_env, view->argv, io_flags);
 }
 
-bool
+enum status_code
 begin_update(struct view *view, const char *dir, const char **argv, enum open_flags flags)
 {
 	bool extra = !!(flags & (OPEN_EXTRA));
 	bool refresh = flags & (OPEN_REFRESH | OPEN_PREPARED | OPEN_STDIN);
 
 	if (view_no_refresh(view, flags))
-		return true;
+		return SUCCESS;
 
 	if (view->pipe) {
 		if (extra)
@@ -545,17 +545,13 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 		bool file_filter = !view_has_flags(view, VIEW_FILE_FILTER) || opt_file_filter;
 
 		view->dir = dir;
-		if (!argv_format(view->env, &view->argv, argv, !view->prev, file_filter)) {
-			report("Failed to format %s arguments", view->name);
-			return false;
-		}
+		if (!argv_format(view->env, &view->argv, argv, !view->prev, file_filter))
+			return error("Failed to format %s arguments", view->name);
 	}
 
 	if (view->argv && view->argv[0] &&
-	    !view_exec(view, flags)) {
-		report("Failed to open %s view", view->name);
-		return false;
-	}
+	    !view_exec(view, flags))
+		return error("Failed to open %s view", view->name);
 
 	if (open_from_stdin(flags)) {
 		if (!io_open(&view->io, "%s", ""))
@@ -565,7 +561,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	if (!extra)
 		setup_update(view, view->ops->id);
 
-	return true;
+	return SUCCESS;
 }
 
 bool
@@ -743,6 +739,8 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 	}
 
 	if (refresh) {
+		enum status_code code;
+
 		if (view->pipe)
 			end_update(view, true);
 		if (view->ops->private_size) {
@@ -755,8 +753,11 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 			}
 		}
 
-		if (!view->ops->open(view, flags))
+		code = view->ops->open(view, flags);
+		if (code != SUCCESS) {
+			report("%s", get_status_message(code));
 			return;
+		}
 	}
 
 	if (prev) {

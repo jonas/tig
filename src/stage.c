@@ -477,7 +477,7 @@ stage_select(struct view *view, struct line *line)
 	diff_common_select(view, line, changes_msg);
 }
 
-static bool
+static enum status_code
 stage_open(struct view *view, enum open_flags flags)
 {
 	const char *no_head_diff_argv[] = {
@@ -496,18 +496,17 @@ stage_open(struct view *view, enum open_flags flags)
 	 * path, so leave out the new path. */
 	const char *files_unmerged_argv[] = {
 		"git", "diff-files", encoding_arg, "--root", "--patch-with-stat",
-			diff_context_arg(), ignore_space_arg(), "--",
+			DIFF_ARGS, diff_context_arg(), ignore_space_arg(), "--",
 			stage_status.old.name, NULL
 	};
 	static const char *file_argv[] = { repo.cdup, stage_status.new.name, NULL };
 	const char **argv = NULL;
 	struct stage_state *state = view->private;
+	enum status_code code;
 
-	if (!stage_line_type) {
-		report("No stage content, press %s to open the status view and choose file",
-			get_view_key(view, REQ_VIEW_STATUS));
-		return false;
-	}
+	if (!stage_line_type)
+		return error("No stage content, press %s to open the status view and choose file",
+			     get_view_key(view, REQ_VIEW_STATUS));
 
 	view->encoding = NULL;
 
@@ -538,28 +537,21 @@ stage_open(struct view *view, enum open_flags flags)
 		die("line type %d not handled in switch", stage_line_type);
 	}
 
-	if (!status_stage_info(view->ref, stage_line_type, &stage_status)
-		|| !argv_copy(&view->argv, argv)) {
-		report("Failed to open staged view");
-		return false;
-	}
+	if (!status_stage_info(view->ref, stage_line_type, &stage_status))
+		return error("Failed to open staged view");
 
 	if (stage_line_type != LINE_STAT_UNTRACKED)
 		diff_save_line(view, &state->diff, flags);
 
 	view->vid[0] = 0;
-	view->dir = repo.cdup;
-	{
-		bool ok = begin_update(view, NULL, NULL, flags);
+	code = begin_update(view, repo.cdup, argv, flags);
+	if (code == SUCCESS && stage_line_type != LINE_STAT_UNTRACKED) {
+		struct stage_state *state = view->private;
 
-		if (ok && stage_line_type != LINE_STAT_UNTRACKED) {
-			struct stage_state *state = view->private;
-
-			return diff_init_highlight(view, &state->diff);
-		}
-
-		return ok;
+		return diff_init_highlight(view, &state->diff);
 	}
+
+	return code;
 }
 
 static bool
@@ -570,8 +562,12 @@ stage_read(struct view *view, struct buffer *buf, bool force_stop)
 	if (stage_line_type == LINE_STAT_UNTRACKED)
 		return pager_common_read(view, buf ? buf->data : NULL, LINE_DEFAULT, NULL);
 
-	if (!buf)
-		diff_done_highlight(&state->diff);
+	if (!buf) {
+		if (!diff_done_highlight(&state->diff)) {
+			report("Failed run the diff-highlight program: %s", opt_diff_highlight);
+			return true;
+		}
+	}
 
 	if (!buf && !view->lines && view->parent) {
 		maximize_view(view->parent, true);

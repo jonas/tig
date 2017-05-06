@@ -75,6 +75,7 @@ struct time {
 };
 
 struct ident {
+	const char *key;
 	const char *name;
 	const char *email;
 };

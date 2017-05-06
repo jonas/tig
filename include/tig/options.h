@@ -48,7 +48,7 @@ typedef struct view_column *view_settings;
 	_(grep_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(horizontal_scroll,		double,			VIEW_NO_FLAGS) \
 	_(id_width,			int,			VIEW_NO_FLAGS) \
-	_(ignore_case,			bool,			VIEW_NO_FLAGS) \
+	_(ignore_case,			enum ignore_case,	VIEW_NO_FLAGS) \
 	_(ignore_space,			enum ignore_space,	VIEW_DIFF_LIKE) \
 	_(line_graphics,		enum graphic,		VIEW_NO_FLAGS) \
 	_(log_options,			const char **,		VIEW_LOG_LIKE) \
@@ -70,7 +70,8 @@ typedef struct view_column *view_settings;
 	_(split_view_width,		double,			VIEW_RESET_DISPLAY) \
 	_(stage_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(stash_view,			view_settings,		VIEW_NO_FLAGS) \
-	_(status_untracked_dirs,	bool,			VIEW_STATUS_LIKE) \
+	_(status_show_untracked_dirs,	bool,			VIEW_STATUS_LIKE) \
+	_(status_show_untracked_files,	bool,			VIEW_STATUS_LIKE) \
 	_(status_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(tab_size,			int,			VIEW_NO_FLAGS) \
 	_(tree_view,			view_settings,		VIEW_NO_FLAGS) \
