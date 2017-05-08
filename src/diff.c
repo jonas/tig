@@ -557,9 +557,20 @@ diff_trace_origin(struct view *view, struct line *line)
 	for (; diff < line && !file; diff++) {
 		const char *data = box_text(diff);
 
+                // TODO: get git's config for
+                // diff.noprefix, if it is true, use "--- "
+                // if diff.mnemonicprefix use "--- a/"
+                // then there is src-prefix and dst-prefix
+                // which change the prefix on the fly and we could use that
+                // to always be 100% sure of what to look for.
 		if (!prefixcmp(data, "--- a/")) {
 			file = data + STRING_SIZE("--- a/");
 			break;
+		}else if (!prefixcmp(data, "--- ")) {                                                                                                           
+         		// TODO: maybe do a first pass looking only for "--- a/" and
+         		// if that fails, do another full loop looking for "--- " alone?
+         		file = data + STRING_SIZE("--- ");
+         		break;
 		}
 	}
 
