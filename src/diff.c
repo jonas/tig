@@ -25,7 +25,7 @@ static enum status_code
 diff_open(struct view *view, enum open_flags flags)
 {
 	const char *diff_argv[] = {
-		"git", "show", encoding_arg, "--pretty=fuller", "--root",
+		"git", "show", "--show-signature", encoding_arg, "--pretty=fuller", "--root",
 			"--patch-with-stat", use_mailmap_arg(),
 			show_notes_arg(), diff_context_arg(), ignore_space_arg(),
 			DIFF_ARGS, "%(cmdlineargs)", "--no-color", "%(commit)",
