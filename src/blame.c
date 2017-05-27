@@ -81,16 +81,6 @@ blame_open(struct view *view, enum open_flags flags)
 	char path[SIZEOF_STR];
 	size_t i;
 
-	if (opt_blame_options) {
-		for (i = 0; opt_blame_options[i]; i++) {
-			if (prefixcmp(opt_blame_options[i], "-C"))
-				continue;
-			state->auto_filename_display = true;
-		}
-	}
-
-	blame_update_file_name_visibility(view);
-
 	if (is_initial_view(view)) {
 		/* Finish validating and setting up blame options */
 		if (!opt_file_args || opt_file_args[1])
@@ -123,6 +113,16 @@ blame_open(struct view *view, enum open_flags flags)
 			}
 		}
 	}
+
+	if (opt_blame_options) {
+		for (i = 0; opt_blame_options[i]; i++) {
+			if (prefixcmp(opt_blame_options[i], "-C"))
+				continue;
+			state->auto_filename_display = true;
+		}
+	}
+
+	blame_update_file_name_visibility(view);
 
 	if (!view->env->file[0])
 		return error("No file chosen, press %s to open tree view",
