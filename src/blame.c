@@ -88,8 +88,10 @@ blame_open(struct view *view, enum open_flags flags)
 
 		string_ncopy(view->env->file, opt_file_args[0], strlen(opt_file_args[0]));
 
-		opt_blame_options = opt_cmdline_args;
-		opt_cmdline_args = NULL;
+		if (opt_cmdline_args) {
+			opt_blame_options = opt_cmdline_args;
+			opt_cmdline_args = NULL;
+		}
 
 		/*
 		 * flags (like "--max-age=123") and bottom limits (like "^foo")
