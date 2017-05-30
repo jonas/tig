@@ -51,9 +51,9 @@ Searching
      <Down>, <Ctrl-N>, <Ctrl-J> find-next           Find next search match
        <Up>, <Ctrl-P>, <Ctrl-K> find-prev           Find previous search match
 [-] main bindings
+Cursor navigation
+                              G move-last-line      Move cursor to last line
 Option toggling:
                               F :toggle commit-title-refs
-External commands:
-                              C ?git cherry-pick %(commit)
-[help] - line 78 of 136                                                                          77%
+[help] - line 78 of 138                                                                          76%
 EOF
