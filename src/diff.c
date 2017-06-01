@@ -620,6 +620,7 @@ diff_get_pathname(struct view *view, struct line *line)
 	struct line *header;
 	const char *dst;
 	const char *prefixes[] = { "diff --cc ", "diff --combined " };
+	const char *name;
 	int i;
 
 	header = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
@@ -636,11 +637,17 @@ diff_get_pathname(struct view *view, struct line *line)
 	if (!header)
 		return NULL;
 
+	name = box_text(header);
+	if (!prefixcmp(name, "+++ "))
+		name += STRING_SIZE("+++ ");
+
 	if (opt_diff_noprefix)
-		return box_text(header) + STRING_SIZE("+++ ");
+		return name;
 
 	/* Handle mnemonic prefixes, such as "b/" and "w/". */
-	return box_text(header) + STRING_SIZE("+++ b/");
+	if (!prefixcmp(name, "b/") || !prefixcmp(name, "w/"))
+		name += STRING_SIZE("b/");
+	return name;
 }
 
 enum request
