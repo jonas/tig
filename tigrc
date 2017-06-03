@@ -271,7 +271,7 @@ bind generic	$	:toggle commit-title-overflow
 						# Toggle highlighting of commit title overflow
 # bind generic	???	:toggle file-size	# Toggle file size format
 # bind generic	???	:toggle status		# Toggle status display
-# bind generic	???	:toggle status-untracked-dirs
+# bind generic	???	:toggle status-show-untracked-dirs
 						# Toggle display of file in untracked directories
 # bind generic	???	:toggle vertical-split	# Toggle vertical split
 bind generic	%	:toggle file-filter
