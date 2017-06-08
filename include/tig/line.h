@@ -51,6 +51,7 @@ struct ref;
 	_(DATE,      		""), \
 	_(MODE,      		""), \
 	_(ID,			""), \
+	_(MESSAGE,			""), \
 	_(OVERFLOW,		""), \
 	_(DIRECTORY,	 	""), \
 	_(FILE,  		""), \
