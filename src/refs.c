@@ -27,7 +27,7 @@
 struct reference {
 	const struct ident *author;	/* Author of the last commit. */
 	struct time time;		/* Date of the last activity. */
-	char title[128];		/* First line of the commit message. */
+	char title[256];		/* First line of the commit message. */
 	const struct ref *ref;		/* Name and commit ID information. */
 };
 
