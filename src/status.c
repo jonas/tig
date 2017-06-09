@@ -394,6 +394,13 @@ status_open(struct view *view, enum open_flags flags)
 		}
 	}
 
+	/* move cursor forward in unstaged&untracked list */
+	if (emptylines_above_after > 3) {
+		if (view->prev_pos.lineno < view->lines) {
+			view->prev_pos.lineno++;
+		}
+	}
+
 	/* avoid changing direction after adding first file to the staging area */
 	if (emptylines_above_after < emptylines_above_before) {
 		if (view->prev_pos.lineno > 0) {
