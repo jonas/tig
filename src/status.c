@@ -359,11 +359,12 @@ status_open(struct view *view, enum open_flags flags)
 	unsigned long lineno = view->pos.lineno;
 	unsigned long emptylines_above_before = 0;
 	unsigned long emptylines_above_after = 0;
+	unsigned long i;
 
 	if (repo.is_inside_work_tree == false)
 		return error("The status view requires a working tree");
 
-	for (unsigned long i = 0; i < view->lines; i++) {
+	for (i = 0; i < view->lines; i++) {
 		if (view->line[i].data == NULL) {
 			if (i <= lineno) {
 				emptylines_above_before++;
@@ -386,7 +387,7 @@ status_open(struct view *view, enum open_flags flags)
 	    !status_read_untracked(view))
 		return error("Failed to load status data");
 
-	for (unsigned long i = 0; i < view->lines; i++) {
+	for (i = 0; i < view->lines; i++) {
 		if (view->line[i].data == NULL) {
 			if (i <= lineno) {
 				emptylines_above_after++;
