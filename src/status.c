@@ -356,9 +356,20 @@ status_open(struct view *view, enum open_flags flags)
 	const char **staged_argv = is_initial_commit() ?
 		status_list_no_head_argv : status_diff_index_argv;
 	char staged_status = staged_argv == status_list_no_head_argv ? 'A' : 0;
+	unsigned long lineno = view->pos.lineno;
+	unsigned long emptylines_above_before = 0;
+	unsigned long emptylines_above_after = 0;
 
 	if (repo.is_inside_work_tree == false)
 		return error("The status view requires a working tree");
+
+	for (unsigned long i = 0; i < view->lines; i++) {
+		if (view->line[i].data == NULL) {
+			if (i <= lineno) {
+				emptylines_above_before++;
+			}
+		}
+	}
 
 	reset_view(view);
 
@@ -374,6 +385,21 @@ status_open(struct view *view, enum open_flags flags)
 	    !status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED) ||
 	    !status_read_untracked(view))
 		return error("Failed to load status data");
+
+	for (unsigned long i = 0; i < view->lines; i++) {
+		if (view->line[i].data == NULL) {
+			if (i <= lineno) {
+				emptylines_above_after++;
+			}
+		}
+	}
+
+	/* avoid changing direction after adding first file to the staging area */
+	if (emptylines_above_after < emptylines_above_before) {
+		if (view->prev_pos.lineno > 0) {
+			view->prev_pos.lineno--;
+		}
+	}
 
 	/* Restore the exact position or use the specialized restore
 	 * mode? */
