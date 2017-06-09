@@ -395,7 +395,7 @@ status_open(struct view *view, enum open_flags flags)
 	}
 
 	/* move cursor forward in unstaged&untracked list */
-	if (emptylines_above_after > 3) {
+	if (emptylines_above_after >= 3) {
 		if (view->prev_pos.lineno < view->lines) {
 			view->prev_pos.lineno++;
 		}
