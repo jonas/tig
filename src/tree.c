@@ -431,7 +431,7 @@ static enum status_code
 tree_open(struct view *view, enum open_flags flags)
 {
 	static const char *tree_argv[] = {
-		"git", "ls-tree", "-l", "%(commit)", "%(directory)", NULL
+		"git", "ls-tree", "-l", "%(commit)", "--", "%(directory)", NULL
 	};
 
 	if (string_rev_is_null(view->env->commit))

@@ -1,0 +1,111 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=15
+export COLUMNS=80
+
+steps '
+	:set vertical-split = no
+
+	:view-tree
+	:save-display root-dir.screen
+
+	:enter
+	:save-display first-child-dir.screen
+	:enter
+
+	:3
+	:enter
+	:save-display second-child-dir.screen
+
+	:3
+	:enter
+	:save-display second-child-dir-first-file.screen
+'
+
+test_setup_work_dir()
+{
+	mkdir -- "-- foo bar"
+	touch -- "-- foo bar/-- boo far"
+	touch -- "-- foo bar/as测试asd"
+
+	mkdir -- "-foo"
+	echo OK >"-foo/-bar"
+	touch -- "-foo/-bar"
+
+	git add .
+	git_commit -m "Initial"
+}
+
+git_init
+test_tig
+
+assert_equals 'root-dir.screen' <<EOF
+Directory path /
+drwxr-xr-x Committer 2009-02-13 23:31 -- foo bar
+drwxr-xr-x Committer 2009-02-13 23:31 -foo
+
+
+
+
+
+
+
+
+
+
+[tree] 9aedb94abc2d704ba5c2182f882c5743e9d1e386 - file 1 of 2               100%
+EOF
+
+assert_equals 'first-child-dir.screen' <<EOF
+Directory path /-- foo bar/
+drwxr-xr-x                              ..
+-rw-r--r-- Committer 0 2009-02-13 23:31 -- boo far
+-rw-r--r--           0                  /as\346\265\213\350\257\225asd"
+
+
+
+
+
+
+
+
+
+[tree] Open parent directory                                                100%
+EOF
+
+assert_equals 'second-child-dir.screen' <<EOF
+Directory path /-foo/
+drwxr-xr-x                              ..
+-rw-r--r-- Committer 3 2009-02-13 23:31 -bar
+
+
+
+
+
+
+
+
+
+
+[tree] Open parent directory                                                100%
+EOF
+
+assert_equals 'second-child-dir-first-file.screen' <<EOF
+Directory path /-foo/
+drwxr-xr-x                              ..
+-rw-r--r-- Committer 3 2009-02-13 23:31 -bar
+
+[tree] d86bac9de59abcc26bc7956c1e842237c7581859 - file 1 of 1               100%
+OK
+
+
+
+
+
+
+
+[blob] -foo/-bar - line 1 of 1                                              100%
+EOF

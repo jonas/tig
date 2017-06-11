@@ -1,6 +1,13 @@
 Release notes
 =============
 
+master
+------
+
+Bug fixes:
+
+ - Handle hyphenated directory names when listing content. (GH #602)
+
 tig-2.2.2
 ---------
 
