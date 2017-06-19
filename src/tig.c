@@ -321,6 +321,7 @@ view_driver(struct view *view, enum request request)
 		report("Nothing to enter");
 		break;
 
+	case REQ_VIEW_CLOSE_NO_QUIT:
 	case REQ_VIEW_CLOSE:
 		/* XXX: Mark closed views by letting view->prev point to the
 		 * view itself. Parents to closed view should never be
@@ -330,6 +331,10 @@ view_driver(struct view *view, enum request request)
 			view->prev = view;
 			watch_unregister(&view->watch);
 			view->parent = NULL;
+			break;
+		}
+		if (request == REQ_VIEW_CLOSE_NO_QUIT) {
+			report("Can't close last remaining view");
 			break;
 		}
 		/* Fall-through */

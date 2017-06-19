@@ -767,6 +767,7 @@ View manipulation
 |refresh                 |Reload and refresh view
 |maximize                |Maximize the current view
 |view-close              |Close the current view
+|view-close-no-quit      |Close the current view, unless on the last view
 |quit                    |Close all views and quit
 |=============================================================================
 
