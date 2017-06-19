@@ -36,6 +36,7 @@
 	REQ_(REFRESH,		"Reload and refresh view"), \
 	REQ_(MAXIMIZE,		"Maximize the current view"), \
 	REQ_(VIEW_CLOSE,	"Close the current view"), \
+	REQ_(VIEW_CLOSE_NO_QUIT,	"Close the current view without quitting"), \
 	REQ_(QUIT,		"Close all views and quit"), \
 	\
 	REQ_GROUP("View specific actions") \
