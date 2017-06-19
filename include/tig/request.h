@@ -96,6 +96,8 @@ enum request {
 	/* Internal requests. */
 	REQ_SCROLL_WHEEL_DOWN,
 	REQ_SCROLL_WHEEL_UP,
+	REQ_MOVE_WHEEL_DOWN,
+	REQ_MOVE_WHEEL_UP,
 
 	/* Start of the run request IDs */
 	REQ_RUN_REQUESTS

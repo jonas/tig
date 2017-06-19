@@ -171,6 +171,8 @@ view_driver(struct view *view, enum request request)
 	case REQ_MOVE_HALF_PAGE_DOWN:
 	case REQ_MOVE_FIRST_LINE:
 	case REQ_MOVE_LAST_LINE:
+	case REQ_MOVE_WHEEL_DOWN:
+	case REQ_MOVE_WHEEL_UP:
 		move_view(view, request);
 		break;
 
@@ -599,10 +601,10 @@ handle_mouse_event(void)
 #else
 	if (event.bstate & BUTTON2_PRESSED)
 #endif
-		return REQ_SCROLL_WHEEL_DOWN;
+		return opt_mouse_wheel_cursor ? REQ_MOVE_WHEEL_DOWN : REQ_SCROLL_WHEEL_DOWN;
 
 	if (event.bstate & BUTTON4_PRESSED)
-		return REQ_SCROLL_WHEEL_UP;
+		return opt_mouse_wheel_cursor ? REQ_MOVE_WHEEL_UP : REQ_SCROLL_WHEEL_UP;
 
 	if (event.bstate & BUTTON1_PRESSED) {
 		if (event.y == view->pos.lineno - view->pos.offset) {
