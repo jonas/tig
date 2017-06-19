@@ -58,6 +58,7 @@ typedef struct view_column *view_settings;
 	_(main_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(mouse,			bool,			VIEW_NO_FLAGS) \
 	_(mouse_scroll,			int,			VIEW_NO_FLAGS) \
+	_(mouse_wheel_cursor,		bool,			VIEW_NO_FLAGS) \
 	_(pager_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(reference_format,		struct ref_format **,	VIEW_NO_FLAGS) \
 	_(refresh_interval,		int,			VIEW_NO_FLAGS) \

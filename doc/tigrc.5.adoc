@@ -318,6 +318,13 @@ The following variables can be set:
 	Mouse support requires that ncurses itself support mouse events and that
 	you have enabled mouse support in ~/.tigrc with `set mouse = true`.
 
+'mouse-wheel-cursor' (bool)::
+
+	Whether to prefer moving the cursor to scrolling the view when using the
+	mouse wheel. Off by default. Combines well with `set mouse-scroll = 1`.
+	Mouse support requires that ncurses itself support mouse events and that
+	you have enabled mouse support in ~/.tigrc with `set mouse = true`.
+
 'refresh-mode' (mixed) [manual|auto|after-command|periodic|<bool>]::
 
 	Configures how views are refreshed based on modifications to watched

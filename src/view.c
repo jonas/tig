@@ -201,6 +201,14 @@ move_view(struct view *view, enum request request)
 		      ? view->lines - view->pos.lineno - 1 : view->height / 2;
 		break;
 
+	case REQ_MOVE_WHEEL_DOWN:
+		steps = opt_mouse_scroll;
+		break;
+
+	case REQ_MOVE_WHEEL_UP:
+		steps = -opt_mouse_scroll;
+		break;
+
 	case REQ_MOVE_UP:
 	case REQ_PREVIOUS:
 		steps = -1;
