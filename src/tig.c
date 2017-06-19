@@ -589,7 +589,11 @@ handle_mouse_event(void)
 	if (!view)
 		return REQ_NONE;
 
+#ifdef BUTTON5_PRESSED
+	if (event.bstate & (BUTTON2_PRESSED | BUTTON5_PRESSED))
+#else
 	if (event.bstate & BUTTON2_PRESSED)
+#endif
 		return REQ_SCROLL_WHEEL_DOWN;
 
 	if (event.bstate & BUTTON4_PRESSED)
