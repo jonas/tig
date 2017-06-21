@@ -451,10 +451,18 @@ test_tig()
 		if [ "$expected_status_code" = 0 ] && [ -n "$valgrind" ]; then
 			runner=valgrind_exec
 		fi
-		if [ -s "${prefix}stdin" ]; then
-			(cd "$work_dir" && $runner tig "$@") < "${prefix}stdin" > "${prefix}stdout" 2> "${prefix}stderr.orig"
+		if [ -n "$runner" ]; then
+			if [ -s "${prefix}stdin" ]; then
+				(cd "$work_dir" && "$runner" tig "$@") < "${prefix}stdin" > "${prefix}stdout" 2> "${prefix}stderr.orig"
+			else
+				(cd "$work_dir" && "$runner" tig "$@") > "${prefix}stdout" 2> "${prefix}stderr.orig"
+			fi
 		else
-			(cd "$work_dir" && $runner tig "$@") > "${prefix}stdout" 2> "${prefix}stderr.orig"
+			if [ -s "${prefix}stdin" ]; then
+				(cd "$work_dir" && tig "$@") < "${prefix}stdin" > "${prefix}stdout" 2> "${prefix}stderr.orig"
+			else
+				(cd "$work_dir" && tig "$@") > "${prefix}stdout" 2> "${prefix}stderr.orig"
+			fi
 		fi
 		status_code="$?"
 		if [ "$status_code" != "$expected_status_code" ]; then
