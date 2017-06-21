@@ -144,7 +144,7 @@ tig_script() {
 	# Ensure that the steps finish by quitting
 	printf '%s\n:quit\n' "$@" \
 		| sed -e 's/^[ 	]*//' -e '/^$/d' \
-		| sed "s|:save-display\s\+\(\S*\)|:save-display $HOME/\1|" \
+		| sed "s|:save-display[ 	]\{1,\}\([^ 	]\{1,\}\)|:save-display $HOME/\1|" \
 		> "$TIG_SCRIPT"
 }
 
