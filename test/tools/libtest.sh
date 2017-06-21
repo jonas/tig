@@ -283,10 +283,10 @@ show_test_results()
 		sed "s/^/$indent[skipped] /" < .test-skipped
 		return
 	fi
-	if [ -n "$trace" -a -n "$TIG_TRACE" -a -e "$TIG_TRACE" ]; then
+	if [ -n "$trace" ] && [ -n "$TIG_TRACE" ] && [ -e "$TIG_TRACE" ]; then
 		sed "s/^/$indent[trace] /" < "$TIG_TRACE"
 	fi
-	if [ -n "$valgrind" -a -e "$valgrind" ]; then
+	if [ -n "$valgrind" ] && [ -e "$valgrind" ]; then
 		sed "s/^/$indent[valgrind] /" < "$valgrind"
 	fi
 	if [ ! -d "$HOME" ] || [ ! -e .test-result ]; then
@@ -448,7 +448,7 @@ test_tig()
 		set +e
 		runner=
 		# FIXME: Tell Valgrind to forward status code
-		if [ "$expected_status_code" = 0 -a -n "$valgrind" ]; then
+		if [ "$expected_status_code" = 0 ] && [ -n "$valgrind" ]; then
 			runner=valgrind_exec
 		fi
 		if [ -s "${prefix}stdin" ]; then
