@@ -299,7 +299,7 @@ show_test_results()
 		failed="$(grep FAIL < .test-result | wc -l)"
 		count="$(sed -n '/\(FAIL\|OK\)/p' < .test-result | wc -l)"
 
-		printf "Failed %d out of %d test(s)%s\n" $failed $count
+		printf "Failed %d out of %d test(s)\n" $failed $count
 
 		# Show output from stderr if no output is expected
 		if [ -e stderr ]; then
