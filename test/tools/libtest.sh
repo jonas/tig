@@ -433,6 +433,7 @@ test_tig()
 	if [ -n "$trace" ]; then
 		export TIG_TRACE="$HOME/${prefix}tig-trace"
 	fi
+	rm -f -- "expected/stdin" "expected/stderr"
 	touch "${prefix}stdin" "${prefix}stderr"
 	if [ -n "$debugger" ]; then
 		echo "*** Running tests in '$(pwd)/$work_dir'"
