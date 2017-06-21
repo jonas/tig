@@ -526,7 +526,7 @@ run_test_cases()
 			work_dir="$work_dir/$(cat "$name-cwd")"
 		fi
 		ORIG_IFS="$IFS"
-	        IFS=$' '
+	        IFS=' '
 		test_tig $(if [ -e "$name-args" ]; then cat "$name-args"; fi)
 	        IFS="$ORIG_IFS"
 		work_dir="$old_work_dir"
