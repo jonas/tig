@@ -195,7 +195,7 @@ debugger=
 trace=
 valgrind=
 
-set -- $TIG_TEST_OPTS $TEST_OPTS
+set -- ${TIG_TEST_OPTS:-} ${TEST_OPTS:-}
 
 while [ $# -gt 0 ]; do
 	arg="$1"; shift
