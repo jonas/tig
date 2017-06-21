@@ -166,7 +166,7 @@ gitconfig() {
 
 in_work_dir()
 {
-	(cd "$work_dir" && $@)
+	(cd "$work_dir" && "$@")
 }
 
 auto_detect_debugger() {
@@ -482,7 +482,7 @@ test_tig()
 
 test_graph()
 {
-	test-graph $@ > stdout 2> stderr.orig
+	test-graph "$@" > stdout 2> stderr.orig
 }
 
 test_case()
