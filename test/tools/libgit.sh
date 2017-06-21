@@ -64,7 +64,7 @@ git_commit()
 	GIT_COMMITTER_EMAIL="$0"
 
 	export GIT_AUTHOR_DATE="$author_date"
-	author_date="$(expr $author_date + $author_date_delta)"
+	author_date="$(expr "$author_date" + "$author_date_delta")"
 	[ -z "${GIT_COMMITTER_DATE:-}" ] &&
 		export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
 

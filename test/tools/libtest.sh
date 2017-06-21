@@ -144,7 +144,7 @@ tig_script() {
 	# Ensure that the steps finish by quitting
 	printf '%s\n:quit\n' "$@" \
 		| sed -e 's/^[ 	]*//' -e '/^$/d' \
-		| sed "s|:save-display\s\+\(\S*\)|:save-display $HOME/\1|" \
+		| sed "s|:save-display[ 	]\{1,\}\([^ 	]\{1,\}\)|:save-display $HOME/\1|" \
 		> "$TIG_SCRIPT"
 }
 
@@ -166,7 +166,7 @@ gitconfig() {
 
 in_work_dir()
 {
-	(cd "$work_dir" && $@)
+	(cd "$work_dir" && "$@")
 }
 
 auto_detect_debugger() {
@@ -195,7 +195,7 @@ debugger=
 trace=
 valgrind=
 
-set -- $TIG_TEST_OPTS $TEST_OPTS
+set -- ${TIG_TEST_OPTS:-} ${TEST_OPTS:-}
 
 while [ $# -gt 0 ]; do
 	arg="$1"; shift
@@ -283,10 +283,10 @@ show_test_results()
 		sed "s/^/$indent[skipped] /" < .test-skipped
 		return
 	fi
-	if [ -n "$trace" -a -n "$TIG_TRACE" -a -e "$TIG_TRACE" ]; then
+	if [ -n "$trace" ] && [ -n "$TIG_TRACE" ] && [ -e "$TIG_TRACE" ]; then
 		sed "s/^/$indent[trace] /" < "$TIG_TRACE"
 	fi
-	if [ -n "$valgrind" -a -e "$valgrind" ]; then
+	if [ -n "$valgrind" ] && [ -e "$valgrind" ]; then
 		sed "s/^/$indent[valgrind] /" < "$valgrind"
 	fi
 	if [ ! -d "$HOME" ] || [ ! -e .test-result ]; then
@@ -299,7 +299,7 @@ show_test_results()
 		failed="$(grep FAIL < .test-result | wc -l)"
 		count="$(sed -n '/\(FAIL\|OK\)/p' < .test-result | wc -l)"
 
-		printf "Failed %d out of %d test(s)%s\n" $failed $count
+		printf "Failed %d out of %d test(s)\n" "$failed" "$count"
 
 		# Show output from stderr if no output is expected
 		if [ -e stderr ]; then
@@ -311,7 +311,7 @@ show_test_results()
 		tr '\r' '\n' < .test-result
 	elif [ "$verbose" ]; then
 		count="$(sed -n '/\(OK\)/p' < .test-result | wc -l)"
-		printf "Passed %d assertions\n" $count
+		printf "Passed %d assertions\n" "$count"
 	fi | sed "s/^/$indent| /"
 }
 
@@ -355,6 +355,10 @@ test_require()
 			;;
 		diff-highlight)
 			diff_highlight_path="$(git --exec-path)/../../share/git-core/contrib/diff-highlight/diff-highlight"
+			if [ ! -e "$diff_highlight_path" ]; then
+				# alt path
+				diff_highlight_path="$(git --exec-path)/../../share/git/contrib/diff-highlight/diff-highlight"
+			fi
 			if [ ! -e "$diff_highlight_path" ]; then
 				test_skip "The test requires diff-highlight, usually found in share/git-core-contrib"
 			fi
@@ -443,18 +447,26 @@ test_tig()
 		if [ "$#" -gt 0 ]; then
 			echo "*** - This test expects the following arguments: $@"
 		fi
-		(cd "$work_dir" && $debugger tig "$@")
+		(cd "$work_dir" && "$debugger" tig "$@")
 	else
 		set +e
 		runner=
 		# FIXME: Tell Valgrind to forward status code
-		if [ "$expected_status_code" = 0 -a -n "$valgrind" ]; then
+		if [ "$expected_status_code" = 0 ] && [ -n "$valgrind" ]; then
 			runner=valgrind_exec
 		fi
-		if [ -s "${prefix}stdin" ]; then
-			(cd "$work_dir" && $runner tig "$@") < "${prefix}stdin" > "${prefix}stdout" 2> "${prefix}stderr.orig"
+		if [ -n "$runner" ]; then
+			if [ -s "${prefix}stdin" ]; then
+				(cd "$work_dir" && "$runner" tig "$@") < "${prefix}stdin" > "${prefix}stdout" 2> "${prefix}stderr.orig"
+			else
+				(cd "$work_dir" && "$runner" tig "$@") > "${prefix}stdout" 2> "${prefix}stderr.orig"
+			fi
 		else
-			(cd "$work_dir" && $runner tig "$@") > "${prefix}stdout" 2> "${prefix}stderr.orig"
+			if [ -s "${prefix}stdin" ]; then
+				(cd "$work_dir" && tig "$@") < "${prefix}stdin" > "${prefix}stdout" 2> "${prefix}stderr.orig"
+			else
+				(cd "$work_dir" && tig "$@") > "${prefix}stdout" 2> "${prefix}stderr.orig"
+			fi
 		fi
 		status_code="$?"
 		if [ "$status_code" != "$expected_status_code" ]; then
@@ -482,7 +494,7 @@ test_tig()
 
 test_graph()
 {
-	test-graph $@ > stdout 2> stderr.orig
+	test-graph "$@" > stdout 2> stderr.orig
 }
 
 test_case()
@@ -526,7 +538,7 @@ run_test_cases()
 			work_dir="$work_dir/$(cat "$name-cwd")"
 		fi
 		ORIG_IFS="$IFS"
-	        IFS=$' '
+	        IFS=' '
 		test_tig $(if [ -e "$name-args" ]; then cat "$name-args"; fi)
 	        IFS="$ORIG_IFS"
 		work_dir="$old_work_dir"
