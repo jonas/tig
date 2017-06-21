@@ -299,7 +299,7 @@ show_test_results()
 		failed="$(grep FAIL < .test-result | wc -l)"
 		count="$(sed -n '/\(FAIL\|OK\)/p' < .test-result | wc -l)"
 
-		printf "Failed %d out of %d test(s)\n" $failed $count
+		printf "Failed %d out of %d test(s)\n" "$failed" "$count"
 
 		# Show output from stderr if no output is expected
 		if [ -e stderr ]; then
@@ -311,7 +311,7 @@ show_test_results()
 		tr '\r' '\n' < .test-result
 	elif [ "$verbose" ]; then
 		count="$(sed -n '/\(OK\)/p' < .test-result | wc -l)"
-		printf "Passed %d assertions\n" $count
+		printf "Passed %d assertions\n" "$count"
 	fi | sed "s/^/$indent| /"
 }
 
@@ -443,7 +443,7 @@ test_tig()
 		if [ "$#" -gt 0 ]; then
 			echo "*** - This test expects the following arguments: $@"
 		fi
-		(cd "$work_dir" && $debugger tig "$@")
+		(cd "$work_dir" && "$debugger" tig "$@")
 	else
 		set +e
 		runner=
