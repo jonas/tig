@@ -492,7 +492,7 @@ test_case()
 	echo "$name" >> test-cases
 	cat > "$name.expected"
 
-	touch "$name-before" "$name-after" "$name.script" "$name-args"
+	touch "$name-before" "$name-after" "$name-script" "$name-args"
 
 	while [ "$#" -gt 0 ]; do
 		arg="$1"; shift
