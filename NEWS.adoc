@@ -8,7 +8,7 @@ Bug fixes:
 
  - Handle hyphenated directory names when listing content. (GH #602)
  - contrib/vim.tigrc: Also bind G in the main as a workaround for limitations of
-   the `none` action. (GH #599)
+   the `none` action. (GH #594, #599)
 
 tig-2.2.2
 ---------
