@@ -6,9 +6,7 @@ CONTRIB_PATH="$base_dir/../contrib/"
 
 source_tigrc_files()
 {
-	find "$CONTRIB_PATH" -name "*.tigrc" | while read file; do
-		echo "source $file";
-	done
+	find "$CONTRIB_PATH" -name "*.tigrc" -exec printf "source %s\n" "{}" \;
 }
 
 tigrc <<EOF

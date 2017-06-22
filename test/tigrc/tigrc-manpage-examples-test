@@ -4,11 +4,11 @@
 
 steps ":quit"
 
-mkdir snippets
+mkdir -p snippets
 
 out_file=
 
-while read line; do
+while read -r line; do
 	case "$line" in
 		"// TEST: tigrc")
 			out_file="$(mktemp snippets/tigrc.XXXXXX)"
@@ -20,27 +20,27 @@ while read line; do
 			if [ -s "$out_file" ]; then
 				out_file=
 			elif [ -e "$out_file" ]; then
-				echo >> "$out_file"
+				printf '\n' >> "$out_file"
 			fi
 			;;
 		*)
 			if [ -e "$out_file" ]; then
-				echo "$line" >> "$out_file"
+				printf '%s\n' "$line" >> "$out_file"
 			fi
 			;;
 	esac
 done < "$base_dir/../doc/tigrc.5.adoc"
 
 # Create files used by the `source` example
-mkdir .tig
+mkdir -p .tig
 touch .tig/colorscheme.tigrc .tig/keybindings.tigrc
 
 tigrc <<EOF
-$(find snippets -name "tigrc.*" | xargs cat)
+$(find snippets -name "tigrc.*" -exec cat -- "{}" \;)
 EOF
 
 gitconfig <<EOF
-$(find snippets -name "gitconfig.*" | xargs cat)
+$(find snippets -name "gitconfig.*" -exec cat -- "{}" \;)
 EOF
 
 test_tig status

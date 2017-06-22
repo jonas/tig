@@ -21,14 +21,14 @@ git_clone 'repo-one'
 
 test_setup_work_dir()
 {
-	replaced_id=$(git rev-parse HEAD~10)
-	replacement_id=$(git rev-parse HEAD~20)
+	replaced_id="$(git rev-parse HEAD~10)"
+	replacement_id="$(git rev-parse HEAD~20)"
 
-	replaced_no_branch_1_id=$(git rev-parse HEAD~22)
-	replacement_no_branch_1_id=$(git rev-parse HEAD~23)
+	replaced_no_branch_1_id="$(git rev-parse HEAD~22)"
+	replacement_no_branch_1_id="$(git rev-parse HEAD~23)"
 
-	replaced_no_branch_2_id=$(git rev-parse HEAD~25)
-	replacement_no_branch_2_id=$(git rev-parse HEAD~30)
+	replaced_no_branch_2_id="$(git rev-parse HEAD~25)"
+	replacement_no_branch_2_id="$(git rev-parse HEAD~30)"
 
 	git branch not-replace "$replaced_id"
 	git replace "$replaced_id" "$replacement_id"

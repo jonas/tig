@@ -5,9 +5,9 @@
 git reset --hard
 
 change() {
-	echo "$@" > conflict-file
+	printf '%s\n' "$*" > conflict-file
 	git add conflict-file
-	git_commit --message="Change: $@"
+	git_commit --message="Change: $*"
 }
 
 change "a"
