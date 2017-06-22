@@ -27,12 +27,12 @@ steps '
 
 test_setup_work_dir()
 {
-	mkdir -- "-- foo bar"
+	mkdir -p -- "-- foo bar"
 	touch -- "-- foo bar/-- boo far"
 	touch -- "-- foo bar/as测试asd"
 
-	mkdir -- "-foo"
-	echo OK >"-foo/-bar"
+	mkdir -p -- "-foo"
+	printf 'OK\n' > "-foo/-bar"
 	touch -- "-foo/-bar"
 
 	git add .

@@ -9,7 +9,7 @@ test_setup_work_dir()
 	file .git/logs/refs/stash <<EOF
 EOF
 	for i in $(seq 1 10); do
-		echo "$i" > "stashed-file-$i"
+		printf '%s\n' "$i" > "stashed-file-$i"
 		git stash save -q -u "Stash #$i"
 	done
 }

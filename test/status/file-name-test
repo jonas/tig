@@ -30,7 +30,7 @@ steps '
 
 git_init
 
-touch "$work_dir/0"
+touch -- "$work_dir/0"
 
 file "$work_dir/a" <<EOF
 ø
@@ -47,8 +47,8 @@ file "$work_dir/as测试asd" <<EOF
 漢
 EOF
 
-touch "$work_dir/øå"
-touch "$work_dir/可愛いコー特集"
+touch -- "$work_dir/øå"
+touch -- "$work_dir/可愛いコー特集"
 
 test_tig status
 

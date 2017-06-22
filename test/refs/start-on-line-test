@@ -7,7 +7,7 @@ test_setup_work_dir()
 {
 	create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
 	for i in $(seq 1 40); do
-		git branch "ref-$i" master~$i
+		git branch "ref-$i" "master~$i"
 	done
 }
 

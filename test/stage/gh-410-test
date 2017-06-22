@@ -22,10 +22,10 @@ git_init
 
 test_setup_work_dir()
 {
-	echo "Hello" > hello.txt
+	printf 'Hello\n' > hello.txt
 	git add .
 	git_commit -m "first commit"
-	echo "Hello2" >> hello.txt
+	printf 'Hello2\n' >> hello.txt
 }
 
 test_tig status

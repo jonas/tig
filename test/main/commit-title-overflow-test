@@ -26,8 +26,8 @@ test_setup_work_dir()
 	for i in $(seq 1 7); do
 		git_commit -m "${prefix0}æøå		: #1 - ASCII prefix"
 		git_commit -m "${prefix0}作者		: #2 - ASCII prefix"
-		offset=$(expr $offset + 1)
-		if [ $offset -eq 5 ]; then
+		offset="$(expr "$offset" + 1)"
+		if [ "$offset" -eq 5 ]; then
 			prefix0="${prefix0}|"
 			offset=0
 		else

@@ -41,7 +41,7 @@ git_init()
 	dir="${1:-$work_dir}"
 
 	if [ ! -d "$dir/.git" ]; then
-		git init -q "$dir"
+		git init -q -- "$dir"
 		(cd "$dir" && git_config)
 	fi
 }
@@ -51,9 +51,9 @@ git_add()
 	[ -d .git ] || die "git_add called outside of git repo"
 	path="$1"; shift
 
-	mkdir -p "$(dirname "$path")"
+	mkdir -p -- "$(dirname -- "$path")"
 	file "$path" "$@"
-	git add "$path"
+	git add -- "$path"
 }
 
 git_commit()
@@ -77,12 +77,12 @@ create_dirty_workdir()
 	git init -q .
 	git_config
 
-	echo "*.o" > .gitignore
-	echo "*~" > .git/info/exclude
+	printf '*.o\n' > .gitignore
+	printf '*~\n' > .git/info/exclude
 
 	for file in a b.c "d~" e/f "g h" i.o .j "h~/k"; do
-		dir="$(dirname "$file")"
-		[ -n "$dir" ] && mkdir -p "$dir"
+		dir="$(dirname -- "$file")"
+		[ -n "$dir" ] && mkdir -p -- "$dir"
 		printf "%s\n%s" "$file" "$(seq 1 10)" > "$file"
 	done
 
@@ -103,7 +103,7 @@ create_worktree()
 	(cd "$worktree_base_dir" && {
 		create_repo_from_tgz "$base_dir/files/repo-one.tgz" &&
 		git branch dev
-		git worktree add "$work_dir_abs" dev
+		git worktree add -- "$work_dir_abs" dev
 	})
 }
 

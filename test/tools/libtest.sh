@@ -20,10 +20,10 @@ if [ -n "${BASH_VERSION:-}" ]; then
 	IFS=$'\n\t'
 fi
 
-test="$(basename "$0")"
-source_dir="$(cd $(dirname "$0") >/dev/null && pwd)"
-base_dir="$(echo "$source_dir" | sed -n 's#\(.*/test\)\([/].*\)*#\1#p')"
-prefix_dir="$(echo "$source_dir" | sed -n 's#\(.*/test/\)\([/].*\)*#\2#p')"
+test="$(basename -- "$0")"
+source_dir="$(cd "$(dirname -- "$0")" >/dev/null && pwd)"
+base_dir="$(printf '%s\n' "$source_dir" | sed -n 's#\(.*/test\)\([/].*\)*#\1#p')"
+prefix_dir="$(printf '%s\n' "$source_dir" | sed -n 's#\(.*/test/\)\([/].*\)*#\2#p')"
 output_dir="$base_dir/tmp/$prefix_dir/$test"
 tmp_dir="$base_dir/tmp"
 output_dir="$tmp_dir/$prefix_dir/$test"
@@ -65,18 +65,18 @@ export TEST_OPTS="${TEST_OPTS:-}"
 # Used by tig_script to set the test "scope" used by test_tig.
 export TEST_NAME=
 
-[ -e "$output_dir" ] && rm -rf "$output_dir"
-mkdir -p "$output_dir/$work_dir"
+[ -e "$output_dir" ] && rm -rf -- "$output_dir"
+mkdir -p -- "$output_dir/$work_dir"
 
 if [ ! -d "$tmp_dir/.git" ]; then
 	# Create a dummy repository to avoid reading .git/config
 	# settings from the tig repository.
-	git init -q "$tmp_dir"
+	git init -q -- "$tmp_dir"
 fi
 
 # For any utilities used in Tig scripts
 BIN_DIR="$HOME/bin"
-mkdir -p "$BIN_DIR"
+mkdir -p -- "$BIN_DIR"
 export PATH="$BIN_DIR:$PATH"
 
 executable() {
@@ -88,9 +88,9 @@ executable() {
 			*) sed 's/^[ ]//' ;;
 		esac > "$path"
 	else
-		printf '%s' "$@" > "$path"
+		printf '%s' "$*" > "$path"
 	fi
-	chmod +x "$path"
+	chmod -- +x "$path"
 }
 
 # Setup fake editor
@@ -104,7 +104,7 @@ if [ -n "\$lineno" ]; then
 	file="\$2"
 fi
 
-echo "\$@" >> "$HOME/editor.log"
+printf '%s\\n' "\$*" >> "$HOME/editor.log"
 sed -n -e "\${lineno}p" "\$file" >> "$HOME/editor.log" 2>&1
 EOF
 
@@ -116,21 +116,21 @@ cd "$output_dir"
 
 die()
 {
-	echo >&2 "$*"
+	printf '%s\n' "$*" >&2
 	exit 1
 }
 
 file() {
 	path="$1"; shift
 
-	mkdir -p "$(dirname "$path")"
+	mkdir -p -- "$(dirname -- "$path")"
 	if [ "$#" = 0 ]; then
 		case "$path" in
 			stdin|expected*) cat ;;
 			*) sed 's/^[ ]//' ;;
 		esac > "$path"
 	else
-		printf '%s' "$@" > "$path"
+		printf '%s' "$*" > "$path"
 	fi
 }
 
@@ -142,7 +142,7 @@ tig_script() {
 	export TEST_NAME="$name"
 
 	# Ensure that the steps finish by quitting
-	printf '%s\n:quit\n' "$@" \
+	printf '%s\n:quit\n' "$*" \
 		| sed -e 's/^[ 	]*//' -e '/^$/d' \
 		| sed "s|:save-display[ 	]\{1,\}\([^ 	]\{1,\}\)|:save-display $HOME/\1|" \
 		| sed "s|:save-view[ 	]\{1,\}\([^ 	]\{1,\}\)|:save-view $HOME/\1|" \
@@ -174,7 +174,7 @@ auto_detect_debugger() {
 	for dbg in gdb lldb; do
 		dbg="$(command -v "$dbg" 2>/dev/null || true)"
 		if [ -n "$dbg" ]; then
-			echo "$dbg"
+			printf '%s\n' "$dbg"
 			return
 		fi
 	done
@@ -203,7 +203,7 @@ while [ $# -gt 0 ]; do
 	case "$arg" in
 		verbose) verbose=yes ;;
 		no-indent) indent= ;;
-		debugger=*) debugger=$(expr "$arg" : 'debugger=\(.*\)') ;;
+		debugger=*) debugger="$(expr "$arg" : 'debugger=\(.*\)')" ;;
 		debugger) debugger="$(auto_detect_debugger)" ;;
 		trace) trace=yes ;;
 		valgrind) valgrind="$HOME/valgrind.log" ;;
@@ -223,20 +223,20 @@ assert_equals()
 	fi
 
 	if [ -e "$file" ]; then
-		git diff -w --no-index $diff_color_arg "expected/$file" "$file" > "$file.diff" || true
+		git diff -w --no-index $diff_color_arg -- "expected/$file" "$file" > "$file.diff" || true
 		if [ -s "$file.diff" ]; then
-			echo "[FAIL] $file != expected/$file" >> .test-result
+			printf '[FAIL] %s != expected/%s\n' "$file" "$file" >> .test-result
 			while [ $# -gt 0 ]; do
 				msg="$1"; shift
-				echo "[NOTE] $msg" >> .test-result
+				printf '[NOTE] %s\n' "$msg" >> .test-result
 			done
-			cat "$file.diff" >> .test-result
+			cat < "$file.diff" >> .test-result
 		else
-			echo "  [OK] $file assertion" >> .test-result
+			printf '  [OK] %s assertion\n' "$file" >> .test-result
 		fi
-		rm -f "$file.diff"
+		rm -f -- "$file.diff"
 	else
-		echo "[FAIL] $file not found" >> .test-result
+		printf '[FAIL] %s not found\n' "$file" >> .test-result
 	fi
 }
 
@@ -245,9 +245,9 @@ assert_not_exists()
 	file="$1"; shift
 
 	if [ -e "$file" ]; then
-		echo "[FAIL] $file should not exist" >> .test-result
+		printf '[FAIL] %s should not exist\n' "$file" >> .test-result
 	else
-		echo "  [OK] $file does not exist" >> .test-result
+		printf '  [OK] %s does not exist\n' "$file" >> .test-result
 	fi
 }
 
@@ -257,16 +257,16 @@ expected_var_file="$HOME/expected/$vars_file"
 executable 'assert-var' <<EOF
 #!/bin/sh
 
-mkdir -p "$(dirname "$expected_var_file")"
+mkdir -p "$(dirname -- "$expected_var_file")"
 while [ \$# -gt 0 ]; do
 	arg="\$1"; shift
 
 	case "\$arg" in
 		==) break ;;
-		*)  echo "\$arg" >> "$HOME/$vars_file" ;;
+		*)  printf '%s\\n' "\$arg" >> "$HOME/$vars_file" ;;
 	esac
 done
-echo "\$@" >> "$expected_var_file"
+printf '%s\\n' "\$*" >> "$expected_var_file"
 EOF
 
 assert_vars()
@@ -274,7 +274,7 @@ assert_vars()
 	if [ -e "$expected_var_file" ]; then
 		assert_equals "$vars_file" < "$expected_var_file"
 	else
-		echo "[FAIL] $expected_var_file not found" >> .test-result
+		printf '[FAIL] %s not found\n' "$expected_var_file" >> .test-result
 	fi
 }
 
@@ -295,12 +295,12 @@ show_test_results()
 			sed "s/^/[stderr] /" < stderr
 		[ -e stderr.orig ] &&
 			sed "s/^/[stderr] /" < stderr.orig
-		echo "No test results found"
-	elif grep FAIL -q < .test-result; then
-		failed="$(grep FAIL < .test-result | wc -l)"
-		count="$(sed -n '/\(FAIL\|OK\)/p' < .test-result | wc -l)"
+		printf 'No test results found\n'
+	elif grep -q '^ *\[FAIL\]' < .test-result; then
+		failed="$(grep -c '^ *\[FAIL\]' < .test-result || true)"
+		count="$(grep -c '^ *\[(FAIL\|OK\)\]' < .test-result || true)"
 
-		printf "Failed %d out of %d test(s)\n" "$failed" "$count"
+		printf 'Failed %d out of %d test(s)\n' "$failed" "$count"
 
 		# Show output from stderr if no output is expected
 		if [ -e stderr ]; then
@@ -311,8 +311,8 @@ show_test_results()
 		# Replace CR used by Git progress messages
 		tr '\r' '\n' < .test-result
 	elif [ "$verbose" ]; then
-		count="$(sed -n '/\(OK\)/p' < .test-result | wc -l)"
-		printf "Passed %d assertions\n" "$count"
+		count="$(grep -c '^ *\[OK\]' < .test-result || true)"
+		printf 'Passed %d assertions\n' "$count"
 	fi | sed "s/^/$indent| /"
 }
 
@@ -320,7 +320,7 @@ trap 'show_test_results' EXIT
 
 test_skip()
 {
-	echo "$@" >> .test-skipped
+	printf '%s\n' "$*" >> .test-skipped
 }
 
 require_git_version()
@@ -372,20 +372,20 @@ test_require()
 
 test_exec_work_dir()
 {
-	echo "=== $@ ===" >> "$HOME/test-exec.log"
+	printf '=== %s ===\n' "$*" >> "$HOME/test-exec.log"
 	test_exec_log="$HOME/test-exec.log.tmp"
-	rm -f "$test_exec_log"
+	rm -f -- "$test_exec_log"
 
 	set +e
 	in_work_dir "$@" 1>>"$test_exec_log" 2>>"$test_exec_log"
 	test_exec_exit_code=$?
 	set -e
 
-	cat "$test_exec_log" >> "$HOME/test-exec.log"
+	cat < "$test_exec_log" >> "$HOME/test-exec.log"
 	if [ "$test_exec_exit_code" != 0 ]; then
-		cmd="$@"
-		echo "[FAIL] unexpected exit code while executing '$cmd': $test_exec_exit_code" >> .test-result
-		cat "$test_exec_log" >> .test-result
+		cmd="$*"
+		printf "[FAIL] unexpected exit code while executing '%s': %s\n" "$cmd" "$test_exec_exit_code" >> .test-result
+		cat < "$test_exec_log" >> .test-result
 		# Exit gracefully to allow additional tests to run
 		exit 0
 	fi
@@ -400,7 +400,7 @@ test_setup()
 	run_setup="$(type test_setup_work_dir 2>/dev/null | grep 'function' || true)"
 
 	if [ -n "$run_setup" ]; then
-		if test ! -e "$HOME/test-exec.log" || ! grep -q test_setup_work_dir "$HOME/test-exec.log"; then
+		if test ! -e "$HOME/test-exec.log" || ! grep -q test_setup_work_dir -- "$HOME/test-exec.log"; then
 			test_exec_work_dir test_setup_work_dir
 		fi
 	fi
@@ -408,12 +408,12 @@ test_setup()
 
 valgrind_exec()
 {
-	kernel="$(uname -s 2>/dev/null || echo unknown)"
+	kernel="$(uname -s 2>/dev/null || printf 'unknown\n')"
 	kernel_supp="test/tools/valgrind-$kernel.supp"
 
 	valgrind_ops=
 	if [ -e "$kernel_supp" ]; then
-		valgrind_ops="$valgrind_ops --suppresions='$kernel_supp'"
+		valgrind_ops="$valgrind_ops --suppressions='$kernel_supp'"
 	fi
 
 	valgrind -q --gen-suppressions=all --track-origins=yes --error-exitcode=1 \
@@ -422,10 +422,10 @@ valgrind_exec()
 
 	case "$kernel" in
 	Darwin)	grep -v "mach_msg unhandled MACH_SEND_TRAILER option" < "$valgrind.orig" > "$valgrind" ;;
-	*)	mv "$valgrind.orig" "$valgrind" ;;
+	*)	mv -- "$valgrind.orig" "$valgrind" ;;
 	esac
 
-	rm -f "$valgrind.orig"
+	rm -f -- "$valgrind.orig"
 }
 
 test_tig()
@@ -438,15 +438,15 @@ test_tig()
 	if [ -n "$trace" ]; then
 		export TIG_TRACE="$HOME/${prefix}tig-trace"
 	fi
-	touch "${prefix}stdin" "${prefix}stderr"
+	touch -- "${prefix}stdin" "${prefix}stderr"
 	if [ -n "$debugger" ]; then
-		echo "*** Running tests in '$(pwd)/$work_dir'"
+		printf "*** Running tests in '%s/%s'\n" "$(pwd)" "$work_dir"
 		if [ -s "$work_dir/${prefix}stdin" ]; then
-			echo "*** - This test requires data to be injected via stdin."
-			echo "***   The expected input file is: '../${prefix}stdin'"
+			printf '*** - This test requires data to be injected via stdin.\n'
+			printf "***   The expected input file is: '%s'\n" "../${prefix}stdin"
 		fi
 		if [ "$#" -gt 0 ]; then
-			echo "*** - This test expects the following arguments: $@"
+			printf '*** - This test expects the following arguments: %s\n' "$*"
 		fi
 		(cd "$work_dir" && "$debugger" tig "$@")
 	else
@@ -471,21 +471,21 @@ test_tig()
 		fi
 		status_code="$?"
 		if [ "$status_code" != "$expected_status_code" ]; then
-			echo "[FAIL] unexpected status code: $status_code (should be $expected_status_code)" >> .test-result
+			printf '[FAIL] unexpected status code: %s (should be %s)\n' "$status_code" "$expected_status_code" >> .test-result
 		fi
 		set -e
 	fi
 	# Normalize paths in stderr output
 	if [ -e "${prefix}stderr.orig" ]; then
 		sed "s#$output_dir#HOME#" < "${prefix}stderr.orig" > "${prefix}stderr"
-		rm -f "${prefix}stderr.orig"
+		rm -f -- "${prefix}stderr.orig"
 	fi
 	if [ -n "$trace" ]; then
 		export TIG_TRACE="$HOME/.tig-trace"
 		if [ -n "$name" ]; then
 			sed "s#^#[$name] #" < "$HOME/${prefix}tig-trace" >> "$HOME/.tig-trace"
 		else
-			mv "$HOME/${prefix}tig-trace" "$HOME/.tig-trace"
+			mv -- "$HOME/${prefix}tig-trace" "$HOME/.tig-trace"
 		fi
 	fi
 	if [ -n "$prefix" ]; then
@@ -502,10 +502,10 @@ test_case()
 {
 	name="$1"; shift
 
-	echo "$name" >> test-cases
+	printf '%s\n' "$name" >> test-cases
 	cat > "$name.expected"
 
-	touch "$name-before" "$name-after" "$name-script" "$name-args" "$name-tigrc" "$name-assert-stderr"
+	touch -- "$name-before" "$name-after" "$name-script" "$name-args" "$name-tigrc" "$name-assert-stderr"
 
 	while [ "$#" -gt 0 ]; do
 		arg="$1"; shift
@@ -514,7 +514,7 @@ test_case()
 
 		case "$key" in
 		before|after|script|args|cwd|tigrc|assert-stderr)
-			echo "$value" > "$name-$key" ;;
+			printf '%s\n' "$value" > "$name-$key" ;;
 		*)	die "Unknown test_case argument: $arg"
 		esac
 	done
@@ -526,9 +526,9 @@ run_test_cases()
 		return
 	fi
 	test_setup
-	for name in $(cat test-cases); do
+	while read -r name <&3; do
 		tig_script "$name" "
-			$(if [ -e "$name-script" ]; then cat "$name-script"; fi)
+			$(if [ -e "$name-script" ]; then cat < "$name-script"; fi)
 			:save-display $name.screen
 		"
 		if [ -s "$name-tigrc" ]; then
@@ -539,12 +539,12 @@ run_test_cases()
 		fi
 		old_work_dir="$work_dir"
 		if [ -e "$name-cwd" ]; then
-			work_dir="$work_dir/$(cat "$name-cwd")"
+			work_dir="$work_dir/$(cat < "$name-cwd")"
 		fi
 		ORIG_IFS="$IFS"
-	        IFS=' '
-		test_tig $(if [ -e "$name-args" ]; then cat "$name-args"; fi)
-	        IFS="$ORIG_IFS"
+		IFS=' '
+		test_tig $(if [ -e "$name-args" ]; then cat < "$name-args"; fi)
+		IFS="$ORIG_IFS"
 		work_dir="$old_work_dir"
 		if [ -e "$name-after" ]; then
 			test_exec_work_dir "$SHELL" "$HOME/$name-after"
@@ -556,5 +556,5 @@ run_test_cases()
 		else
 			assert_equals "$name.stderr" < /dev/null
 		fi
-	done
+	done 3< test-cases
 }
