@@ -308,7 +308,7 @@ view_driver(struct view *view, enum request request)
 		break;
 
 	case REQ_SHOW_VERSION:
-		report("tig-%s (built %s)", TIG_VERSION, __DATE__);
+		report("tig-%s", TIG_VERSION);
 		return true;
 
 	case REQ_SCREEN_REDRAW:
@@ -357,7 +357,7 @@ view_driver(struct view *view, enum request request)
  */
 
 static const char usage_string[] =
-"tig " TIG_VERSION " (" __DATE__ ")\n"
+"tig " TIG_VERSION " \n"
 "\n"
 "Usage: tig        [options] [revs] [--] [paths]\n"
 "   or: tig log    [options] [revs] [--] [paths]\n"
