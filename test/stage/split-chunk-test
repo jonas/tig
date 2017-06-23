@@ -17,7 +17,7 @@ steps '
 '
 
 in_work_dir create_dirty_workdir
-in_work_dir sed -i -e 's/[36]/edited-too/' a
+in_work_dir sh -c 'printf "a CHANGED\n1\n2\nedited-too\n4\n5\nedited-too\n7\n8" > a'
 
 test_tig status
 
