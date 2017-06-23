@@ -7,12 +7,16 @@ master
 Improvements:
 
  - Improve the test suite portability to not depend on GNU sed. (GH #609, #614)
+ - Make build reproducible. (https://reproducible-builds.org/) (GH #613)
+ - Add `view-close-no-quit` action, unbound by default. (GH #607)
 
 Bug fixes:
 
  - Handle hyphenated directory names when listing content. (GH #602)
  - contrib/vim.tigrc: Also bind G in the main as a workaround for limitations of
    the `none` action. (GH #594, #599)
+ - Only override `blame-options` when commands are given and fix parsing of
+   `-C`. (GH #597)
 
 tig-2.2.2
 ---------
