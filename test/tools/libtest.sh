@@ -504,7 +504,7 @@ test_case()
 	echo "$name" >> test-cases
 	cat > "$name.expected"
 
-	touch "$name-before" "$name-after" "$name.script" "$name-args"
+	touch "$name-before" "$name-after" "$name-script" "$name-args" "$name-tigrc" "$name-assert-stderr"
 
 	while [ "$#" -gt 0 ]; do
 		arg="$1"; shift
@@ -512,7 +512,7 @@ test_case()
 		value="$(expr "X$arg" : 'X--[^=]*=\(.*\)')"
 
 		case "$key" in
-		before|after|script|args|cwd)
+		before|after|script|args|cwd|tigrc|assert-stderr)
 			echo "$value" > "$name-$key" ;;
 		*)	die "Unknown test_case argument: $arg"
 		esac
@@ -530,6 +530,9 @@ run_test_cases()
 			$(if [ -e "$name-script" ]; then cat "$name-script"; fi)
 			:save-display $name.screen
 		"
+		if [ -s "$name-tigrc" ]; then
+			tigrc "$(cat < "$name-tigrc")"
+		fi
 		if [ -e "$name-before" ]; then
 			test_exec_work_dir "$SHELL" "$HOME/$name-before"
 		fi
@@ -547,6 +550,10 @@ run_test_cases()
 		fi
 
 		assert_equals "$name.screen" < "$name.expected"
-		assert_equals "$name.stderr" < /dev/null
+		if [ -s "$name.stderr" ]; then
+			assert_equals "$name.stderr" < "$name-assert-stderr"
+		else
+			assert_equals "$name.stderr" < /dev/null
+		fi
 	done
 }
