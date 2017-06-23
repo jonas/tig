@@ -22,11 +22,11 @@ if [ -n "${BASH_VERSION:-}" ]; then
 fi
 
 tests="$(find test/ -name ".test-result" | wc -l)"
-asserts="$(find test/ -name ".test-result" | xargs sed -n '/\[\(OK\|FAIL\)\]/p' | wc -l)"
+asserts="$(find test/ -name ".test-result" | xargs grep '\[\(OK\|FAIL\)\]' | wc -l)"
 failures="$(find test/ -name ".test-result" | xargs grep FAIL | wc -l || true)"
 skipped="$(find test/ -name ".test-skipped" | wc -l || true)"
 
-if [ "$failures" = 0 ]; then
+if [ "$((failures))" = 0 ]; then
 	printf "Passed %d assertions in %d tests" "$asserts" "$tests"
 else
 	printf "Failed %d of %d assertions in %d tests" "$failures" "$asserts" "$tests"

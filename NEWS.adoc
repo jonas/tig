@@ -4,6 +4,10 @@ Release notes
 master
 ------
 
+Improvements:
+
+ - Improve the test suite portability to not depend on GNU sed. (GH #609, #614)
+
 Bug fixes:
 
  - Handle hyphenated directory names when listing content. (GH #602)
