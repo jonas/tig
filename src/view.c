@@ -1436,7 +1436,6 @@ view_column_info_update(struct view *view, struct line *line)
 			break;
 
 		case VIEW_COLUMN_COMMIT_TITLE:
-			width = column->opt.commit_title.width;
 			break;
 
 		case VIEW_COLUMN_DATE:
@@ -1460,10 +1459,13 @@ view_column_info_update(struct view *view, struct line *line)
 			break;
 
 		case VIEW_COLUMN_LINE_NUMBER:
-			if (column_data.line_number)
-				width = count_digits(*column_data.line_number);
-			else
-				width = count_digits(view->lines);
+			width = column->opt.line_number.width;
+			if (!width) {
+				if (column_data.line_number)
+					width = count_digits(*column_data.line_number);
+				else
+					width = count_digits(view->lines);
+			}
 			if (width < 3)
 				width = 3;
 			break;
@@ -1480,11 +1482,9 @@ view_column_info_update(struct view *view, struct line *line)
 			break;
 
 		case VIEW_COLUMN_STATUS:
-			width = column->opt.status.width;
 			break;
 
 		case VIEW_COLUMN_TEXT:
-			width = column->opt.text.width;
 			break;
 		}
 

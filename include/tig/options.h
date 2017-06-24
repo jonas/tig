@@ -96,7 +96,6 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 	_(graph,			enum graph_display,	VIEW_LOG_LIKE) \
 	_(refs,				bool,			VIEW_NO_FLAGS) \
 	_(overflow,			int,			VIEW_NO_FLAGS) \
-	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define DATE_COLUMN_OPTIONS(_) \
 	_(display,			enum date,		VIEW_NO_FLAGS) \
@@ -136,12 +135,10 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 
 #define STATUS_COLUMN_OPTIONS(_) \
 	_(display,			enum status_label,	VIEW_NO_FLAGS) \
-	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define TEXT_COLUMN_OPTIONS(_) \
 	_(display,			bool,			VIEW_NO_FLAGS) \
 	_(commit_title_overflow,	int,			VIEW_NO_FLAGS) \
-	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define COLUMN_OPTIONS(_) \
 	_(author, AUTHOR, AUTHOR_COLUMN_OPTIONS) \
