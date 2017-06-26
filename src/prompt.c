@@ -972,6 +972,11 @@ open_prompt(struct view *view)
 		return REQ_NONE;
 	}
 
+	if (!cmd) {
+		report_clear();
+		return REQ_NONE;
+	}
+
 	return run_prompt_command(view, argv);
 }
 
