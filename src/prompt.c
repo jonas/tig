@@ -443,6 +443,10 @@ readline_init(void)
 	rl_completion_display_matches_hook = readline_display_matches;
 }
 
+static void sigint_absorb_handler(int sig) {
+	signal(SIGINT, SIG_DFL);
+}
+
 char *
 read_prompt(const char *prompt)
 {
@@ -453,7 +457,13 @@ read_prompt(const char *prompt)
 		line = NULL;
 	}
 
+	if (signal(SIGINT, sigint_absorb_handler) == SIG_ERR)
+		die("Failed to setup sigint handler");
+
 	line = readline(prompt);
+
+	if (signal(SIGINT, SIG_DFL) == SIG_ERR)
+		die("Failed to remove sigint handler");
 
 	if (line && !*line) {
 		free(line);

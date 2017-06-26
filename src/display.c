@@ -460,7 +460,7 @@ init_display(void)
 		die("Failed to initialize curses");
 
 	nonl();		/* Disable conversion and detect newlines from input. */
-	cbreak();       /* Take input chars one at a time, no wait for \n */
+	raw();       /* Take input chars one at a time, no wait for \n */
 	noecho();       /* Don't echo input */
 	leaveok(stdscr, false);
 
@@ -646,7 +646,7 @@ get_input(int prompt_position, struct key *key)
 			 * Ctrl-<key> values are represented using a 0x1F
 			 * bitmask on the key value. To 'unmap' we assume that:
 			 *
-			 * - Ctrl-Z is handled by Ncurses.
+			 * - Ctrl-Z is handled separately for job control.
 			 * - Ctrl-m is the same as Return/Enter.
 			 * - Ctrl-i is the same as Tab.
 			 *
@@ -654,11 +654,14 @@ get_input(int prompt_position, struct key *key)
 			 * is set and the key value is updated to the proper
 			 * ASCII value.
 			 */
-			if (KEY_CTL('a') <= key_value && key_value <= KEY_CTL('y') &&
+			if (KEY_CTL('@') <= key_value && key_value <= KEY_CTL('y') &&
 			    key_value != KEY_RETURN && key_value != KEY_TAB) {
 				key->modifiers.control = 1;
 				key_value = key_value | 0x40;
 			}
+
+			if (key_value == KEY_CTL('z'))
+				raise(SIGTSTP);
 
 			if ((key_value >= KEY_MIN && key_value < KEY_MAX) || key_value < 0x1F) {
 				key->data.value = key_value;

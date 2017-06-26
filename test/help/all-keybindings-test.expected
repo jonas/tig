@@ -25,7 +25,7 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view                  
                            O maximize            Maximize the current view                
                            q view-close          Close the current view                   
-                           Q quit                Close all views and quit                 
+                 Q, <Ctrl-C> quit                Close all views and quit                 
 Cursor navigation                                                                         
                            k move-up             Move cursor one line up                  
                            j move-down           Move cursor one line down                
