@@ -665,7 +665,10 @@ update_view_title(struct view *view)
 		wprintw(window, " - %s %d of %zd",
 					   view->ops->type,
 					   line->lineno,
-					   view->lines - view->custom_lines);
+					   MAX(line->lineno,
+					       view->pipe
+					       ? 100 * (size_t) ((view->lines - view->custom_lines) / 100)
+					       : view->lines - view->custom_lines));
 	}
 
 	if (view->pipe) {
