@@ -92,6 +92,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 #define AUTHOR_COLUMN_OPTIONS(_) \
 	_(display,			enum author,		VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
+	_(maxwidth,			int,			VIEW_NO_FLAGS) \
 
 #define COMMIT_TITLE_COLUMN_OPTIONS(_) \
 	_(display,			bool,			VIEW_NO_FLAGS) \
@@ -108,6 +109,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 #define FILE_NAME_COLUMN_OPTIONS(_) \
 	_(display,			enum filename,		VIEW_GREP_LIKE) \
 	_(width,			int,			VIEW_NO_FLAGS) \
+	_(maxwidth,			int,			VIEW_NO_FLAGS) \
 
 #define FILE_SIZE_COLUMN_OPTIONS(_) \
 	_(display,			enum file_size,		VIEW_NO_FLAGS) \
@@ -130,6 +132,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 #define REF_COLUMN_OPTIONS(_) \
 	_(display,			bool,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
+	_(maxwidth,			int,			VIEW_NO_FLAGS) \
 
 #define SECTION_COLUMN_OPTIONS(_) \
 	_(type,				enum line_type,		VIEW_NO_FLAGS) \

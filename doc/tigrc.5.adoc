@@ -440,6 +440,8 @@ author::
 	- 'width' (int): Fixed width for the column. When set to a value between
 	  1 and 10, the author name will be abbreviated to the author's initials.
 	  When set to zero, the width is automatically sized to fit the content.
+	- 'maxwidth' (int): Maximum width of the column. Permit automatically
+	  sizing content, up to this limit.
 
 commit-title::
 	- 'graph' (mixed) [no|v2|v1]: Whether to show the revision graph in the
@@ -472,6 +474,8 @@ file-name::
 	  running: tig blame -C <file>.
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
+	- 'maxwidth' (int): Maximum width of the column. Permit automatically
+	  sizing content, up to this limit.
 
 file-size::
 	- 'display' (mixed) [default|units|<bool>]: How to display file sizes.
@@ -503,6 +507,8 @@ ref::
 	- 'display' (bool): Whether to show the reference name.
 	- 'width' (int): Fixed width for the column. When set to zero, the width
 	  is automatically sized to fit the content.
+	- 'maxwidth' (int): Maximum width of the column. Permit automatically
+	  sizing content, up to this limit.
 
 status::
 	- 'display' (mixed) [no|short|long|<bool>]: How to display the status

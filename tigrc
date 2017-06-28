@@ -15,6 +15,7 @@
 #    - display (enum) [no|full|abbreviated|email|email-user]
 #					: Show author information?
 #    - width (int)			: Fixed width when nonzero
+#    - maxwidth (int)			: Autosize limit
 #
 #   commit-title
 #    - display (bool)			: Show the commit title?
@@ -32,6 +33,7 @@
 #   file-name
 #    - display (enum) [no|always|auto]	: Show file names?
 #    - width (int)			: Fixed width when nonzero
+#    - maxwidth (int)			: Autosize limit
 #
 #   file-size
 #    - display (enum) [no|default|units]	: Show file sizes?
@@ -53,6 +55,7 @@
 #   ref
 #    - display (bool)			: Show ref names?
 #    - width (int)			: Fixed width when nonzero
+#    - maxwidth (int)			: Autosize limit
 #
 #   status
 #    - display (enum) [no|short|long]	: Show status label?
