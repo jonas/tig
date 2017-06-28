@@ -42,6 +42,9 @@
 #   mode
 #    - display (bool)			: Show file modes?
 #
+#   ref
+#    - display (bool)			: Show ref names?
+#
 #   status
 #    - display (enum) [no|short|long]	: Show status label?
 #
