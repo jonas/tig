@@ -7,34 +7,20 @@ LINES=9
 # Disable built-in configuration
 export TIGRC_SYSTEM=does-not-exist
 
-# Use non-default user configuration
-export TIGRC_USER="$HOME/.tigrc.one"
-
-file "$HOME/.tigrc.one" <<EOF
-bind generic : prompt		# Must have prompt mapping to execute script
-source $HOME/.tigrc.bind.q.for.help.screen
-EOF
-
 file "$HOME/.tigrc.bind.q.for.help.screen" <<EOF
 bind generic q quit
 EOF
 
-tigrc <<EOF
-This will generate an error if Tig reads this file instead of $TIGRC_USER.
-Asserted with the empty stderr below.
-EOF
-
-steps "
-	:view-help
-	:save-display help.screen
-"
-
-test_tig status
-
-assert_equals stderr <<EOF
-EOF
-
-assert_equals help.screen <<EOF
+test_case source-file-plain \
+	--args='status' \
+	--tigrc="
+		bind generic : prompt
+		source $HOME/.tigrc.bind.q.for.help.screen
+		" \
+	--script="
+		:view-help
+		" \
+	<<EOF
 Quick reference for tig keybindings:
 
 [-] generic bindings
@@ -44,3 +30,67 @@ Misc
   : prompt Open the prompt
 [help] - line 1 of 7                                                        100%
 EOF
+
+test_case source-file-quietly \
+	--args='status' \
+	--tigrc="
+		bind generic : prompt
+		source -q $HOME/.tigrc.bind.q.for.help.screen
+		" \
+	--script="
+		:view-help
+		" \
+	<<EOF
+Quick reference for tig keybindings:
+
+[-] generic bindings
+View manipulation
+  q quit   Close all views and quit
+Misc
+  : prompt Open the prompt
+[help] - line 1 of 7                                                        100%
+EOF
+
+test_case source-nonexistent-file \
+	--args='status' \
+	--tigrc="
+		bind generic : prompt
+		source $HOME/.tigrc.nonexistent.file
+		" \
+	--script="
+		:view-help
+		" \
+	--assert-stderr="tig warning: ~/.tigrc:3: File does not exist: HOME/.tigrc.nonexistent.file
+tig warning: Errors while loading HOME/.tigrc." \
+	<<EOF
+Quick reference for tig keybindings:
+
+[-] generic bindings
+Misc
+  : prompt Open the prompt
+
+
+[help] - line 1 of 5                                                        100%
+EOF
+
+test_case source-nonexistent-file-quietly \
+	--args='status' \
+	--tigrc="
+		bind generic : prompt
+		source -q $HOME/.tigrc.nonexistent.file
+		" \
+	--script="
+		:view-help
+		" \
+	<<EOF
+Quick reference for tig keybindings:
+
+[-] generic bindings
+Misc
+  : prompt Open the prompt
+
+
+[help] - line 1 of 5                                                        100%
+EOF
+
+run_test_cases

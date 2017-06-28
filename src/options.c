@@ -878,14 +878,25 @@ static enum status_code
 option_source_command(int argc, const char *argv[])
 {
 	enum status_code code;
+	bool quiet = false;
 
-	if (argc < 1)
-		return error("Invalid source command: source path");
+	if ((argc < 1) || (argc > 2))
+		return error("Invalid source command: source [-q] <path>");
 
-	code = load_option_file(argv[0]);
+	if (argc == 2) {
+		if (!strcmp(argv[0], "-q"))
+			quiet = true;
+		else
+			return error("Invalid source option: %s", argv[0]);
+	}
+
+	code = load_option_file(argv[argc - 1]);
+
+	if (quiet)
+		return code == ERROR_FILE_DOES_NOT_EXIST ? 0 : code;
 
 	return code == ERROR_FILE_DOES_NOT_EXIST
-		? error("File does not exist: %s", argv[0]) : code;
+		? error("File does not exist: %s", argv[argc - 1]) : code;
 }
 
 enum status_code

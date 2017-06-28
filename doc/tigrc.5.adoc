@@ -1041,10 +1041,15 @@ Source command
 Source commands make it possible to read additional configuration files.
 Sourced files are included in-place, meaning when a 'source' command is
 encountered the file will be immediately read. Any commands later in the
-current configuration file will take precedence. The syntax is:
+current configuration file will take precedence.
+
+If the given path does not exist, tig will proceed with a warning. Give
+the `-q` parameter to suppress the warning.
+
+The syntax is:
 
 [verse]
-*source* 'path'
+*source* '[-q]' 'path'
 
 Examples:
 // TEST: tigrc
