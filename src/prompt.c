@@ -446,6 +446,7 @@ readline_init(void)
 
 static void sigint_absorb_handler(int sig) {
 	signal(SIGINT, SIG_DFL);
+	redraw_display(true);
 }
 
 char *
