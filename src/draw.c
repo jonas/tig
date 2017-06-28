@@ -71,14 +71,13 @@ draw_chars(struct view *view, enum line_type type, const char *string, int lengt
 	}
 
 	set_view_attr(view, type);
-	if (len > 0) {
+	if (len > 0)
 		waddnstr(view->win, string, len);
 
-		if (trimmed && use_tilde) {
-			set_view_attr(view, LINE_DELIMITER);
-			waddch(view->win, '~');
-			col++;
-		}
+	if (trimmed && use_tilde) {
+		set_view_attr(view, LINE_DELIMITER);
+		waddch(view->win, '~');
+		col++;
 	}
 
 	view->col += col;
@@ -308,7 +307,7 @@ static bool
 draw_lineno_custom(struct view *view, struct view_column *column, unsigned int lineno)
 {
 	char number[10];
-	unsigned long digits3 = column->width < 3 ? 3 : column->width;
+	unsigned long digits3 = MIN(9,MAX(3,column->width));
 	int max = MIN(VIEW_MAX_LEN(view), digits3);
 	char *text = NULL;
 	chtype separator = opt_line_graphics ? ACS_VLINE : '|';
@@ -321,7 +320,7 @@ draw_lineno_custom(struct view *view, struct view_column *column, unsigned int l
 	if (lineno == 1 || (lineno % interval) == 0) {
 		static char fmt[] = "%ld";
 
-		fmt[1] = '0' + (digits3 <= 9 ? digits3 : 1);
+		fmt[1] = '0' + digits3;
 		if (string_format(number, fmt, lineno))
 			text = number;
 	}

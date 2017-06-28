@@ -484,8 +484,6 @@ ref::
 status::
 	- 'display' (mixed) [no|short|long|<bool>]: How to display the status
 	  label.
-	- 'width' (int): Width of the column. When set to zero, the width is
-	  automatically sized to fit the content.
 
 text::
 	- 'commit-title-overflow' (bool or int): Whether to highlight commit
