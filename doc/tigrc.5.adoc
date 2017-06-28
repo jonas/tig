@@ -543,6 +543,9 @@ the keybindings for the *generic* keymap, and last the default keybindings.
 Thus, the view keybindings override the generic keybindings which override the
 built-in keybindings.
 
+Keybindings at the line-entry prompt are typically governed by the readline
+library, and are configured separately in `~/.inputrc`.  See 'readline(1)'.
+
 --
 
 Keymaps::
@@ -582,8 +585,9 @@ bind main <Esc>o	options
 Note that due to the way ncurses encodes `Ctrl` key mappings, `Ctrl-m` and
 `Ctrl-i` cannot be bound as they conflict with 'Enter' and 'Tab' respectively.
 Furthermore, ncurses does not allow to distinguish between `Ctrl-f` and
-`Ctrl-F`. Finally, `Ctrl-z` is automatically used for process control and will
-suspend Tig and open a subshell (use `fg` to reenter Tig).
+`Ctrl-F`. Ncurses typically translates `Ctrl-<Space>` to `Ctrl-@`, which is
+available for binding. Finally, `Ctrl-z` is automatically used for process
+control and will suspend Tig and open a subshell (use `fg` to reenter Tig).
 
 Actions::
 

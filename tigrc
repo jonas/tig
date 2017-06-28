@@ -199,6 +199,7 @@ bind generic	<F5>	refresh
 bind generic	O	maximize		# Maximize the current view
 bind generic	q	view-close		# Close the current view
 bind generic	Q	quit			# Close all views and quit
+bind generic	<C-C>	quit			# Close all views and quit
 
 # View specific
 bind status	u	status-update		# Stage/unstage changes in file

@@ -50,7 +50,7 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-                           Q quit                Close all views and quit
+                 Q, <Ctrl-C> quit                Close all views and quit
 [help] - line 1 of 112                                                       25%
 EOF
 
@@ -82,7 +82,7 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-                           Q quit                Close all views and quit
+                 Q, <Ctrl-C> quit                Close all views and quit
 [help] - line 18 of 112                                                      25%
 EOF
 
