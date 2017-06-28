@@ -24,6 +24,7 @@
 #ifdef HAVE_READLINE
 #include <readline/readline.h>
 #include <readline/history.h>
+#define HISTORY_SIZE 500
 #endif /* HAVE_READLINE */
 
 static char *
@@ -476,10 +477,44 @@ read_prompt(const char *prompt)
 	return line;
 }
 
+static const char *
+prompt_histfile(void)
+{
+	static char path[SIZEOF_STR] = "";
+	const char *xdg_data_home = getenv("XDG_DATA_HOME");
+	const char *home = getenv("HOME");
+	int fd;
+
+	if (!xdg_data_home || !*xdg_data_home) {
+		if (!string_format(path, "%s/.local/share/tig/history", home))
+			die("Failed to expand $HOME");
+	} else if (!string_format(path, "%s/tig/history", xdg_data_home))
+		die("Failed to expand $XDG_DATA_HOME");
+
+	fd = open(path, O_RDWR | O_CREAT | O_APPEND, 0666);
+	if (fd > 0)
+		close(fd);
+	else if (!string_format(path, "%s/.tig_history", home))
+		die("Failed to expand $HOME");
+
+	return path;
+}
+
+static void
+prompt_teardown(void)
+{
+	write_history(prompt_histfile());
+}
+
 void
 prompt_init(void)
 {
 	readline_init();
+	using_history();
+	stifle_history(HISTORY_SIZE);
+	read_history(prompt_histfile());
+	if (atexit(prompt_teardown))
+		die("Failed to register prompt_teardown");
 }
 #else
 char *

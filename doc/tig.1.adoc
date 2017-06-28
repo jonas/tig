@@ -241,6 +241,17 @@ FILES
 	Git configuration files. Read on start-up with the help of
 	git-config(1).
 
+'$XDG_DATA_HOME/tig/history'::
+'~/.local/share/tig/history'::
+'~/.tig_history'::
+	When compiled with readline support, Tig writes a persistent command and
+	search history. The location of the history file is determined in the
+	following way. If `$XDG_DATA_HOME` is set and `$XDG_DATA_HOME/tig/`
+	exists, store history to `$XDG_DATA_HOME/tig/history`. If
+	`$XDG_CONFIG_HOME` is empty or undefined, store history to
+	`~/.local/share/tig/history` if the directory `~/.local/share/tig/`
+	exists, and fall back to `~/.tig_history` if it does not exist.
+
 BUGS
 ----
 
