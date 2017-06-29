@@ -525,12 +525,18 @@ prompt_teardown(void)
 void
 prompt_init(void)
 {
+	HIST_ENTRY *last_entry;
+
 	readline_init();
 	using_history();
 	stifle_history(HISTORY_SIZE);
 	read_history(prompt_histfile());
 	if (atexit(prompt_teardown))
 		die("Failed to register prompt_teardown");
+
+	last_entry = history_get(history_length);
+	if (last_entry)
+		string_copy(argv_env.search, last_entry->line);
 }
 #else
 char *
