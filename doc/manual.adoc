@@ -487,6 +487,7 @@ Prompt
 |:script <file>		|Execute commands from `<file>`.
 |:exec <flags><args...> |Execute command using `<args>` with external
 			 user-defined command option flags defined in `<flags>`.
+|:echo <args...>        |Display text in the status bar.
 |=============================================================================
 
 [[external-commands]]

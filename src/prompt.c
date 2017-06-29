@@ -239,6 +239,7 @@ readline_action_generator(const char *text, int state)
 		"save-display",
 		"save-options",
 		"exec",
+		"echo",
 #define REQ_GROUP(help)
 #define REQ_(req, help)	#req
 		REQ_INFO,
@@ -842,6 +843,17 @@ run_prompt_command(struct view *view, const char *argv[])
 			report("goto requires an argument");
 		else
 			goto_id(view, argv[1], true, true);
+		return REQ_NONE;
+
+	} else if (!strcmp(cmd, "echo")) {
+		char text[SIZEOF_STR] = "";
+
+		if (argv[1] && !argv_to_string(&argv[1], text, sizeof(text), " ")) {
+			report("Failed to copy echo string");
+			return REQ_NONE;
+		}
+
+		report("%s", text);
 		return REQ_NONE;
 
 	} else if (!strcmp(cmd, "save-display")) {
