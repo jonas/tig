@@ -259,7 +259,9 @@ The following variables can be set:
 
 	Whether to highlight diffs using Git's 'diff-highlight' program. Defaults
 	to false. When set to true then 'diff-highlight' is used, else the option
-	value is used as the path.
+	value is used as the path. When this option is in effect, highlighted
+	regions are governed by `color diff-add-highlight` and
+	`color diff-del-highlight`.
 
 'ignore-space' (mixed) [no|all|some|at-eol|<bool>]::
 
@@ -998,7 +1000,7 @@ Diff markup::
 Options concerning diff start, chunks and lines added and deleted.
 
 *diff-header*, *diff-chunk*, *diff-add*, *diff-add2*, *diff-del*,
-*diff-del2*
+*diff-del2*, *diff-add-highlight*, *diff-del-highlight*
 
 Enhanced Git diff markup::
 

@@ -35,6 +35,8 @@ struct ref;
 	_(DIFF_OLDMODE,		"old file mode "), \
 	_(DIFF_NEWMODE,		"new file mode "), \
 	_(DIFF_SIMILARITY,	"similarity "), \
+	_(DIFF_ADD_HIGHLIGHT,	""), \
+	_(DIFF_DEL_HIGHLIGHT,	""), \
 	_(PP_MERGE,		"Merge: "), \
 	_(PP_REFS,		"Refs: "), \
 	_(PP_REFLOG,		"Reflog: "), \
@@ -95,10 +97,7 @@ struct ref;
 enum line_type {
 #define DEFINE_LINE_ENUM(type, line) LINE_##type
 	LINE_INFO(DEFINE_LINE_ENUM),
-	LINE_NONE,
-
-	LINE_DIFF_ADD_HIGHLIGHT,
-	LINE_DIFF_DEL_HIGHLIGHT
+	LINE_NONE
 };
 
 struct line_info {
@@ -139,12 +138,7 @@ static inline int
 get_line_attr(const char *prefix, enum line_type type)
 {
 	struct line_info *info = get_line_info(prefix, type);
-	int hi_attr = 0;
-
-	if (type == LINE_DIFF_ADD_HIGHLIGHT || type == LINE_DIFF_DEL_HIGHLIGHT)
-		hi_attr = A_STANDOUT;
-
-	return COLOR_PAIR(COLOR_ID(info->color_pair)) | info->attr | hi_attr;
+	return COLOR_PAIR(COLOR_ID(info->color_pair)) | info->attr;
 }
 
 #endif
