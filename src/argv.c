@@ -25,9 +25,8 @@ concat_argv(const char *argv[], char *buf, size_t buflen, const char *sep, bool 
 	for (bufpos = 0, argc = 0; argv[argc]; argc++) {
 		const char *arg_sep = argc ? sep : "";
 		const char *arg = argv[argc];
-		int pos;
 
-		if (quoted && arg[(pos = strcspn(arg, " \t\""))]) {
+		if (quoted && arg[strcspn(arg, " \t\"")]) {
 			if (!string_nformat(buf, buflen, &bufpos, "%s\"", arg_sep))
 				return false;
 
@@ -37,7 +36,10 @@ concat_argv(const char *argv[], char *buf, size_t buflen, const char *sep, bool 
 
 				if (!string_nformat(buf, buflen, &bufpos, "%.*s%s", pos, arg, qesc))
 					return false;
-				arg += pos + 1;
+				if (!arg[pos])
+					break;
+				else
+					arg += pos + 1;
 			}
 
 			if (!string_nformat(buf, buflen, &bufpos, "\""))
