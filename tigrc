@@ -412,6 +412,9 @@ set git-colors = \
 	diff.old=diff-del \
 	diff.new=diff-add \
 	\
+	diff-highlight.oldHighlight=diff-del-highlight \
+	diff-highlight.newHighlight=diff-add-highlight \
+	\
 	grep.filename=grep.file \
 	grep.linenumber=grep.line-number \
 	grep.separator=grep.delimiter \
