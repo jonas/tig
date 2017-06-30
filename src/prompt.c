@@ -126,7 +126,7 @@ prompt_yesno_handler(struct input *input, struct key *key)
 
 	if (c == 'y' || c == 'Y')
 		return INPUT_STOP;
-	if (c == 'n' || c == 'N')
+	if (c == 'n' || c == 'N' || key_to_control(key) == 'C')
 		return INPUT_CANCEL;
 	return prompt_default_handler(input, key);
 }
@@ -574,6 +574,11 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 			break;
 
 		default:
+			if (key_to_control(&key) == 'C') {
+				status = INPUT_CANCEL;
+				break;
+			}
+
 			for (i = 0; items[i].text; i++)
 				if (items[i].hotkey == key.data.bytes[0]) {
 					*selected = i;

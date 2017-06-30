@@ -56,6 +56,14 @@ key_to_unicode(const struct key *key)
 		: 0;
 }
 
+static inline char
+key_to_control(const struct key *key)
+{
+	return (key->modifiers.control && key->modifiers.multibytes && strlen(key->data.bytes) == 1)
+		? key->data.bytes[0]
+		: 0;
+}
+
 struct keymap *get_keymap(const char *name, size_t namelen);
 
 const char *get_key_name(const struct key key[], size_t keys, bool quote_comma);
