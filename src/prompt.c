@@ -860,10 +860,15 @@ run_prompt_command(struct view *view, const char *argv[])
 		return REQ_NONE;
 
 	} else if (!strcmp(cmd, "echo")) {
+		const char **fmt_argv = NULL;
 		char text[SIZEOF_STR] = "";
 
-		if (argv[1] && !argv_to_string(&argv[1], text, sizeof(text), " ")) {
-			report("Failed to copy echo string");
+		if (argv[1]
+		    && strlen(argv[1]) > 0
+		    && (!argv_format(view->env, &fmt_argv, &argv[1], false, true)
+			|| !argv_to_string(fmt_argv, text, sizeof(text), " ")
+			)) {
+			report("Failed to format echo string");
 			return REQ_NONE;
 		}
 
