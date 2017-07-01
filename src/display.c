@@ -500,7 +500,9 @@ init_display(void)
 	TABSIZE = opt_tab_size;
 #endif
 
-	term = getenv("XTERM_VERSION") ? NULL : getenv("COLORTERM");
+	term = getenv("XTERM_VERSION")
+		   ? NULL
+		   : (getenv("TERM_PROGRAM") ? getenv("TERM_PROGRAM") : getenv("COLORTERM"));
 	if (term && !strcmp(term, "gnome-terminal")) {
 		/* In the gnome-terminal-emulator, the warning message
 		 * shown when scrolling up one line while the cursor is
@@ -510,14 +512,20 @@ init_display(void)
 		use_scroll_status_wclear = true;
 		use_scroll_redrawwin = false;
 
-	} else if (term && !strcmp(term, "xrvt-xpm")) {
-		/* No problems with full optimizations in xrvt-(unicode)
-		 * and aterm. */
+	} else if (term &&
+			   (!strcmp(term, "xrvt-xpm") || !strcmp(term, "Apple_Terminal") ||
+				!strcmp(term, "iTerm.app"))) {
+		/* No problems with full optimizations in
+		 * xrvt-(unicode)
+		 * aterm
+		 * Terminal.app
+		 * iTerm2 */
 		use_scroll_status_wclear = use_scroll_redrawwin = false;
 
 	} else {
 		/* When scrolling in (u)xterm the last line in the
-		 * scrolling direction will update slowly. */
+		 * scrolling direction will update slowly.  This is
+		 * the conservative default. */
 		use_scroll_redrawwin = true;
 		use_scroll_status_wclear = false;
 	}
