@@ -847,6 +847,9 @@ graph_symbol_merge(const struct graph_symbol *symbol)
 	if (symbol->parent_right)
 		return false;
 
+	if (symbol->continued_right)
+		return false;
+
 	return true;
 }
 
@@ -856,7 +859,7 @@ graph_symbol_multi_merge(const struct graph_symbol *symbol)
 	if (!symbol->parent_down)
 		return false;
 
-	if (!symbol->parent_right)
+	if (!symbol->parent_right && !symbol->continued_right)
 		return false;
 
 	return true;
@@ -892,6 +895,9 @@ graph_symbol_vertical_bar(const struct graph_symbol *symbol)
 static const bool
 graph_symbol_horizontal_bar(const struct graph_symbol *symbol)
 {
+	if (!symbol->next_right)
+		return false;
+
 	if (symbol->shift_left)
 		return true;
 
