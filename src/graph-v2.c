@@ -364,7 +364,7 @@ graph_insert_parents(struct graph_v2 *graph)
 		if (graph_column_has_commit(new)) {
 			size_t match = graph_find_free_column(next_row);
 
-			if (match == next_row->size && *next_row->columns[next_row->size - 1].id) {
+			if (match == next_row->size && graph_column_has_commit(&next_row->columns[next_row->size - 1])) {
 				graph_insert_column(graph, next_row, next_row->size, new->id);
 				graph_insert_column(graph, row, row->size, "");
 				graph_insert_column(graph, prev_row, prev_row->size, "");
