@@ -136,7 +136,7 @@ assert_equals stdout <<EOF
 │ │ │ ● Commit M - after N
 │ │ │ ● Commit N - after O
 │ │ │ ● Commit O - after P
-●─┴─╯ │ Commit B - merge Q and R
+●─┼─╯ │ Commit B - merge Q and R
 │ ● ╭─╯ Commit R - after Q
 ●─┤ │ Commit Q - merge S and T
 │ ● │ Commit T - after S
@@ -174,7 +174,7 @@ assert_equals stdout <<EOF
 │ │ │ │ ●─╯ Commit i - after h
 │ ● │ │ │ Commit d - after h
 │ │ │ ● │ Commit r - after s
-●─┴─│─│─╯ Commit h - merge t and u
+●─┼─│─│─╯ Commit h - merge t and u
 │ │ │ ● Commit s - after v
 │ ● │ │ Commit u - after t
 │ │ │ │ ● Commit w - after x
