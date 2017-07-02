@@ -32,7 +32,7 @@ assert_equals stdout <<EOF
 │ │ ●─╮ Commit B2 - merge A1 and B1
 │ │ │ │ ●─╮ Commit C2 - merge A1 and C1
 ●─│─┴─│─╯ │ Commit A1 - after R
-│ │─╭─╯─╭─╯ ●─╮ Commit D2 - merge R and D1
+│ │ ╭─╯ ╭─╯ ●─╮ Commit D2 - merge R and D1
 │ │ │ ╭─╯ ╭─╯ ● Commit D1 - after R
 │ ● │ │ ╭─╯ ╭─╯ Commit A2 - after R
 │ │ ● │ │ ╭─╯ Commit B1 - after R
