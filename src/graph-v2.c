@@ -683,6 +683,9 @@ graph_generate_symbols(struct graph_v2 *graph, struct graph_canvas *canvas)
 	struct graph_row *row = &graph->row;
 	struct graph_row *next_row = &graph->next_row;
 	struct graph_row *parents = &graph->parents;
+	int commits = commits_in_row(parents);
+	int initial = commits < 1;
+	int merge = commits > 1;
 	int pos;
 
 	for (pos = 0; pos < row->size; pos++) {
@@ -692,8 +695,8 @@ graph_generate_symbols(struct graph_v2 *graph, struct graph_canvas *canvas)
 
 		symbol->commit            = (pos == graph->position);
 		symbol->boundary          = (pos == graph->position && next_row->columns[pos].symbol.boundary);
-		symbol->initial           = (commits_in_row(parents) < 1);
-		symbol->merge             = (commits_in_row(parents) > 1);
+		symbol->initial           = initial;
+		symbol->merge             = merge;
 
 		symbol->continued_down    = continued_down(row, next_row, pos);
 		symbol->continued_up      = continued_down(prev_row, row, pos);
