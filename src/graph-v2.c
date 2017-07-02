@@ -759,6 +759,30 @@ graph_symbol_forks(const struct graph_symbol *symbol)
 }
 
 static const bool
+graph_symbol_vertical_merge(const struct graph_symbol *symbol)
+{
+	if (symbol->empty)
+		return false;
+
+	if (!symbol->continued_up && !symbol->new_column && !symbol->below_commit)
+		return false;
+
+	if (symbol->shift_left && symbol->continued_up_left)
+		return false;
+
+	if (symbol->next_right)
+		return false;
+
+	if (!symbol->matches_commit)
+		return false;
+
+	if (symbol->merge && symbol->continued_up && symbol->continued_left && symbol->parent_down && !symbol->continued_right)
+		return true;
+
+	return false;
+}
+
+static const bool
 graph_symbol_cross_over(const struct graph_symbol *symbol)
 {
 	if (symbol->empty)
@@ -952,6 +976,9 @@ graph_symbol_to_utf8(const struct graph_symbol *symbol)
 		return " ●";
 	}
 
+	if (graph_symbol_vertical_merge(symbol))
+		return "─┤";
+
 	if (graph_symbol_cross_over(symbol))
 		return "─│";
 
@@ -1001,6 +1028,10 @@ graph_symbol_to_chtype(const struct graph_symbol *symbol)
 		else
 			graphics[1] = 'o'; //ACS_DIAMOND; //'*';
 		return graphics;
+
+	} else if (graph_symbol_vertical_merge(symbol)) {
+		graphics[0] = ACS_HLINE;
+		graphics[1] = ACS_RTEE;
 
 	} else if (graph_symbol_cross_over(symbol)) {
 		graphics[0] = ACS_HLINE;
@@ -1060,6 +1091,9 @@ graph_symbol_to_ascii(const struct graph_symbol *symbol)
 			return " M";
 		return " *";
 	}
+
+	if (graph_symbol_vertical_merge(symbol))
+		return "-|";
 
 	if (graph_symbol_cross_over(symbol))
 		return "-|";
