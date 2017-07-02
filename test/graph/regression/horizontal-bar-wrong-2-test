@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# Graph test: regression test for "─┬" instead of "──"
+
+. libtest.sh
+
+test_graph <<EOF
+commit A4 A3
+    Commit A4 - after A3
+commit B A3
+    Commit B - after A3
+commit C A3
+    Commit C - after A3
+commit D A2
+    Commit D - after A2
+commit E A2
+    Commit E - after A2
+commit A3 A2
+    Commit A3 - after A2
+commit A2 A1 F
+    Commit A2 - merge A1 and F
+commit F R
+    Commit F - after R
+commit A1 R
+    Commit A1 - after R
+commit R
+    Commit R
+EOF
+
+assert_equals stdout <<EOF
+● Commit A4 - after A3
+│ ● Commit B - after A3
+│ │ ● Commit C - after A3
+│ │ │ ● Commit D - after A2
+│ │ │ │ ● Commit E - after A2
+●─┴─╯ │ │ Commit A3 - after A2
+●─────┴─╯ Commit A2 - merge A1 and F
+│ ● Commit F - after R
+● │ Commit A1 - after R
+◎─╯ Commit R
+EOF
