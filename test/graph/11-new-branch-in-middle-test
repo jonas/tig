@@ -16,7 +16,7 @@ commit E Z
 commit F G I
     Commit F - merge G and I
 commit G H I
-    Commit F - merge H and I
+    Commit G - merge H and I
 commit H I
     Commit H - after I
 commit I Z
@@ -31,7 +31,7 @@ assert_equals stdout <<EOF
 │ ● │ Commit C - after F
 │ │ ● Commit E - after Z
 ●─╯ │ Commit F - merge G and I
-●─│─│─╮ Commit F - merge H and I
+●─│─│─╮ Commit G - merge H and I
 ● │ │ │ Commit H - after I
 ●─┴─│─╯ Commit I - after Z
 ◎───╯ Commit Z
