@@ -584,12 +584,22 @@ bind main <Ctrl-f>	scroll-page-down
 bind main <Esc>o	options
 --------------------------------------------------------------------------
 
-Note that due to the way ncurses encodes `Ctrl` key mappings, `Ctrl-m` and
-`Ctrl-i` cannot be bound as they conflict with 'Enter' and 'Tab' respectively.
-Furthermore, ncurses does not allow to distinguish between `Ctrl-f` and
-`Ctrl-F`. Ncurses typically translates `Ctrl-<Space>` to `Ctrl-@`, which is
-available for binding. Finally, `Ctrl-z` is automatically used for process
-control and will suspend Tig and open a subshell (use `fg` to reenter Tig).
+Notes
+
+- Tig reads keystrokes via ncurses and is subject to various limitations. See
+  'ncurses(3x)' and 'terminfo(5)' (or termcap).
+
+- `Ctrl-m` and `Ctrl-i` cannot be bound as they conflict with 'Enter' and 'Tab'
+  respectively.
+
+- Case differences cannot be distinguished in control sequences such as
+ `Ctrl-f` and `Ctrl-F`.
+
+- `Ctrl-<Space>` is typically translated to `Ctrl-@`, which is available for
+  binding.
+
+- `Ctrl-z` is automatically used for process control and will suspend Tig and
+  open a subshell (use `fg` to reenter Tig).
 
 Actions::
 
