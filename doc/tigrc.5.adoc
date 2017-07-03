@@ -569,7 +569,8 @@ bind to the `<` key.
 *<Right>*, *<Up>*, *<Down>*, *<Insert>* or *<Ins>*, *<Delete>* or *<Del>*,
 *<Hash>*, *<LessThan>* or *<LT>*, *<Home>*, *<End>*, *<PageUp>* or *<PgUp>*,
 *<PageDown>* or *<PgDown>*, *<ScrollBack>* or *<SBack>*, *<ScrollFwd>* or
-*<SFwd>*, *<F1>* ... *<F12>*
+*<SFwd>*, *<ShiftTab>* or *<BackTab>*, *<ShiftLeft>*, *<ShiftRight>*,
+*<ShiftDelete>* or *<ShiftDel>*, *<ShiftHome>*, *<ShiftEnd>*, *<F1>* ... *<F19>*
 
 To define key mappings with the `Ctrl` key, use `<Ctrl-key>`. In addition, key
 combos consisting of an initial `Escape` key followed by a normal key value can
@@ -582,6 +583,7 @@ bind main R		refresh
 bind main <Down>	next
 bind main <Ctrl-f>	scroll-page-down
 bind main <Esc>o	options
+bind main <ShiftTab>	parent
 --------------------------------------------------------------------------
 
 Notes
@@ -597,6 +599,9 @@ Notes
 
 - `Ctrl-<Space>` is typically translated to `Ctrl-@`, which is available for
   binding.
+
+- Only some subset of special symbolic keys such as `<ShiftTab>` will be
+  available in any given terminal emulator.
 
 - `Ctrl-z` is automatically used for process control and will suspend Tig and
   open a subshell (use `fg` to reenter Tig).
