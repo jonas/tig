@@ -360,7 +360,7 @@ tree_request(struct view *view, enum request request, struct line *line)
 		/* fake 'cd  ..' */
 		pop_tree_stack_entry(&view->pos);
 		reload_view(view);
-		break;
+		return REQ_NONE;
 
 	case REQ_ENTER:
 		break;
