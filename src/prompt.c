@@ -39,6 +39,9 @@ prompt_input(const char *prompt, struct input *input)
 
 	input->buf[0] = 0;
 
+	if (strlen(prompt) > 0)
+		curs_set(1);
+
 	while (status == INPUT_OK || status == INPUT_SKIP) {
 		int buf_length = strlen(input->buf) + promptlen;
 		int offset = pos || buf_length != last_buf_length ? pos + promptlen : -1;
@@ -52,6 +55,7 @@ prompt_input(const char *prompt, struct input *input)
 
 			if (pos + len >= sizeof(input->buf)) {
 				report("Input string too long");
+				curs_set(0);
 				return NULL;
 			}
 
@@ -89,6 +93,7 @@ prompt_input(const char *prompt, struct input *input)
 		input->buf[pos] = 0;
 	}
 
+	curs_set(0);
 	report_clear();
 
 	if (status == INPUT_CANCEL)
@@ -462,7 +467,9 @@ read_prompt(const char *prompt)
 	if (signal(SIGINT, sigint_absorb_handler) == SIG_ERR)
 		die("Failed to setup sigint handler");
 
+	curs_set(1);
 	line = readline(prompt);
+	curs_set(0);
 
 	if (signal(SIGINT, SIG_DFL) == SIG_ERR)
 		die("Failed to remove sigint handler");
@@ -542,6 +549,7 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 
 	assert(size > 0);
 
+	curs_set(1);
 	while (status == INPUT_OK) {
 		const struct menu_item *item = &items[*selected];
 		char hotkey[] = { '[', (char) item->hotkey, ']', ' ', 0 };
@@ -582,6 +590,7 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 				}
 		}
 	}
+	curs_set(0);
 
 	report_clear();
 
