@@ -568,8 +568,8 @@ bind to the `<` key.
 *<Enter>*, *<Space>*, *<Backspace>*, *<Tab>*, *<Escape>* or *<Esc>*, *<Left>*,
 *<Right>*, *<Up>*, *<Down>*, *<Insert>* or *<Ins>*, *<Delete>* or *<Del>*,
 *<Hash>*, *<LessThan>* or *<LT>*, *<Home>*, *<End>*, *<PageUp>* or *<PgUp>*,
-*<PageDown>* or *<PgDown>*, *<F1>*, *<F2>*, *<F3>*, *<F4>*, *<F5>*, *<F6>*,
-*<F7>*, *<F8>*, *<F9>*, *<F10>*, *<F11>*, *<F12>*.
+*<PageDown>* or *<PgDown>*, *<ScrollBack>* or *<SBack>*, *<ScrollFwd>* or
+*<SFwd>*, *<F1>* ... *<F12>*
 
 To define key mappings with the `Ctrl` key, use `<Ctrl-key>`. In addition, key
 combos consisting of an initial `Escape` key followed by a normal key value can
