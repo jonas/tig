@@ -462,6 +462,7 @@ init_display(void)
 	nonl();		/* Disable conversion and detect newlines from input. */
 	raw();       /* Take input chars one at a time, no wait for \n */
 	noecho();       /* Don't echo input */
+	curs_set(0);
 	leaveok(stdscr, false);
 
 	init_colors();
