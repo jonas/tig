@@ -245,6 +245,7 @@ readline_action_generator(const char *text, int state)
 		"save-options",
 		"exec",
 		"echo",
+		"save-echo",
 #define REQ_GROUP(help)
 #define REQ_(req, help)	#req
 		REQ_INFO,
@@ -891,6 +892,36 @@ run_prompt_command(struct view *view, const char *argv[])
 			report("Failed to save options: %s", get_status_message(code));
 		else
 			report("Saved options to %s", path);
+
+	} else if (!strcmp(cmd, "save-echo")) {
+		const char **fmt_argv = NULL;
+		char echo_string[SIZEOF_STR], arg_string[SIZEOF_STR];
+		const char *path;
+		enum status_code code;
+
+		if (argv[1]
+		    && strlen(argv[1]) > 0
+		    && (!argv_format(view->env, &fmt_argv, &argv[1], false, true)
+			|| !argv_to_string(&fmt_argv[1], arg_string, sizeof(arg_string), " ")
+			|| !string_format(echo_string, "%s\n", arg_string)
+			)) {
+			report("Failed to copy save-echo string");
+			return REQ_NONE;
+		}
+
+		if (!fmt_argv[0] || !strlen(fmt_argv[0])) {
+			report("save-echo requires a filename argument");
+			return REQ_NONE;
+		} else {
+			path=fmt_argv[0];
+		}
+
+		code = save_string(path, echo_string);
+
+		if (code != SUCCESS)
+			report("Failed to save echo string: %s", get_status_message(code));
+		else
+			report("Saved echo string to %s", path);
 
 	} else if (!strcmp(cmd, "exec")) {
 		// argv may be allocated and mutations below will cause

@@ -650,6 +650,23 @@ io_fprintf(FILE *file, const char *fmt, ...)
 	return fmtlen == retval;
 }
 
+enum status_code
+save_string(const char *path, const char *string)
+{
+	int fd = open(path, O_WRONLY | O_CREAT, 0666);
+	FILE *file = fd != -1 ? fdopen(fd, "w") : NULL;
+	enum status_code code = SUCCESS;
+
+	if (!file)
+		return error("%s, %d", strerror(errno), fd);
+
+	if (!io_fprintf(file, "%s", string))
+		code = error("Write returned an error");
+
+	fclose(file);
+	return code;
+}
+
 const char *
 get_temp_dir(void)
 {
