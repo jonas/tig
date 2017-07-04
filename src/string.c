@@ -303,7 +303,7 @@ utf8_to_unicode(const char *string, size_t length)
 
 	/* Invalid characters could return the special 0xfffd value but NUL
 	 * should be just as good. */
-	return unicode > 0xffff ? 0 : unicode;
+	return unicode > 0x10FFFF ? 0 : unicode;
 }
 
 /* Calculates how much of string can be shown within the given maximum width
