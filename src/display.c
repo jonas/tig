@@ -373,13 +373,17 @@ update_status_window(struct view *view, const char *msg, va_list args)
 		return false;
 
 	if (!status_empty || *msg) {
+		bool clear = view && view->has_scrolled && use_scroll_status_wclear;
+
 		wmove(status_win, 0, 0);
-		if (view && view->has_scrolled && use_scroll_status_wclear)
+		if (clear)
 			wclear(status_win);
 		if (*msg) {
 			vwprintw(status_win, msg, args);
 			status_empty = false;
 		} else {
+			if (!clear && !status_empty)
+				wclear(status_win);
 			status_empty = true;
 		}
 		wclrtoeol(status_win);
