@@ -304,6 +304,8 @@ view_driver(struct view *view, enum request request)
 			if (view->pipe)
 				report("Stopped loading the %s view", view->name),
 			end_update(view, true);
+			if (view_is_displayed(view))
+				update_view_title(view);
 		}
 		break;
 
