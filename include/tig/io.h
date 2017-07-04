@@ -96,6 +96,7 @@ enum status_code io_run_load(const char **argv, const char *separators,
 		io_read_fn read_property, void *data);
 char *io_memchr(struct buffer *buf, char *data, int c);
 
+enum status_code save_string(const char *path, const char *string);
 const char *get_temp_dir(void);
 
 bool PRINTF_LIKE(2, 3) io_fprintf(FILE *file, const char *fmt, ...);
