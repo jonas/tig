@@ -364,7 +364,7 @@ graph_insert_parents(struct graph_v2 *graph)
 		if (graph_column_has_commit(new)) {
 			size_t match = graph_find_free_column(next_row);
 
-			if (match == next_row->size && *next_row->columns[next_row->size - 1].id) {
+			if (match == next_row->size && graph_column_has_commit(&next_row->columns[next_row->size - 1])) {
 				graph_insert_column(graph, next_row, next_row->size, new->id);
 				graph_insert_column(graph, row, row->size, "");
 				graph_insert_column(graph, prev_row, prev_row->size, "");
@@ -759,6 +759,51 @@ graph_symbol_forks(const struct graph_symbol *symbol)
 }
 
 static const bool
+graph_symbol_cross_merge(const struct graph_symbol *symbol)
+{
+	if (symbol->empty)
+		return false;
+
+	if (!symbol->continued_up && !symbol->new_column && !symbol->below_commit)
+		return false;
+
+	if (symbol->shift_left && symbol->continued_up_left)
+		return false;
+
+	if (symbol->next_right)
+		return false;
+
+	if (symbol->merge && symbol->continued_up && symbol->continued_right && symbol->continued_left && symbol->parent_down && !symbol->next_right)
+		return true;
+
+	return false;
+}
+
+static const bool
+graph_symbol_vertical_merge(const struct graph_symbol *symbol)
+{
+	if (symbol->empty)
+		return false;
+
+	if (!symbol->continued_up && !symbol->new_column && !symbol->below_commit)
+		return false;
+
+	if (symbol->shift_left && symbol->continued_up_left)
+		return false;
+
+	if (symbol->next_right)
+		return false;
+
+	if (!symbol->matches_commit)
+		return false;
+
+	if (symbol->merge && symbol->continued_up && symbol->continued_left && symbol->parent_down && !symbol->continued_right)
+		return true;
+
+	return false;
+}
+
+static const bool
 graph_symbol_cross_over(const struct graph_symbol *symbol)
 {
 	if (symbol->empty)
@@ -811,6 +856,9 @@ graph_symbol_turn_down_cross_over(const struct graph_symbol *symbol)
 	if (!symbol->continued_right)
 		return false;
 
+	if (!symbol->parent_right && !symbol->flanked)
+		return false;
+
 	if (symbol->flanked)
 		return true;
 
@@ -844,6 +892,9 @@ graph_symbol_merge(const struct graph_symbol *symbol)
 	if (symbol->parent_right)
 		return false;
 
+	if (symbol->continued_right)
+		return false;
+
 	return true;
 }
 
@@ -853,7 +904,7 @@ graph_symbol_multi_merge(const struct graph_symbol *symbol)
 	if (!symbol->parent_down)
 		return false;
 
-	if (!symbol->parent_right)
+	if (!symbol->parent_right && !symbol->continued_right)
 		return false;
 
 	return true;
@@ -889,6 +940,9 @@ graph_symbol_vertical_bar(const struct graph_symbol *symbol)
 static const bool
 graph_symbol_horizontal_bar(const struct graph_symbol *symbol)
 {
+	if (!symbol->next_right)
+		return false;
+
 	if (symbol->shift_left)
 		return true;
 
@@ -943,6 +997,12 @@ graph_symbol_to_utf8(const struct graph_symbol *symbol)
 		return " ●";
 	}
 
+	if (graph_symbol_cross_merge(symbol))
+		return "─┼";
+
+	if (graph_symbol_vertical_merge(symbol))
+		return "─┤";
+
 	if (graph_symbol_cross_over(symbol))
 		return "─│";
 
@@ -992,6 +1052,14 @@ graph_symbol_to_chtype(const struct graph_symbol *symbol)
 		else
 			graphics[1] = 'o'; //ACS_DIAMOND; //'*';
 		return graphics;
+
+	} else if (graph_symbol_cross_merge(symbol)) {
+		graphics[0] = ACS_HLINE;
+		graphics[1] = ACS_PLUS;
+
+	} else if (graph_symbol_vertical_merge(symbol)) {
+		graphics[0] = ACS_HLINE;
+		graphics[1] = ACS_RTEE;
 
 	} else if (graph_symbol_cross_over(symbol)) {
 		graphics[0] = ACS_HLINE;
@@ -1051,6 +1119,12 @@ graph_symbol_to_ascii(const struct graph_symbol *symbol)
 			return " M";
 		return " *";
 	}
+
+	if (graph_symbol_cross_merge(symbol))
+		return "-+";
+
+	if (graph_symbol_vertical_merge(symbol))
+		return "-|";
 
 	if (graph_symbol_cross_over(symbol))
 		return "-|";
