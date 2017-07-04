@@ -178,7 +178,7 @@ diff_common_add_diff_stat(struct view *view, const char *text, size_t offset)
 
 	/* Ensure that '|' is present and the file name part contains
 	 * non-space characters. */
-	if (!pipe || pipe == data || strcspn(data, " ") == 0)
+	if (!pipe || pipe == data)
 		return NULL;
 
 	/* Detect remaining part of a diff stat line:
