@@ -726,10 +726,10 @@ maximize_view(struct view *view, bool redraw)
 	if (redraw) {
 		redraw_display(false);
 		report_clear();
-	}
 
-	if (view_has_flags(view, VIEW_FLEX_WIDTH))
-		load_view(view, NULL, OPEN_RELOAD);
+		if (view_has_flags(view, VIEW_FLEX_WIDTH))
+			load_view(view, NULL, OPEN_RELOAD);
+	}
 }
 
 void
