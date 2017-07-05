@@ -190,6 +190,12 @@ The following variables can be set:
 
 	What type of character graphics for line drawing.
 
+'truncation-delimiter' (mixed) [utf-8|<string>]::
+
+	A single character to draw where columns are truncated. The default is
+	"~".  The special value "utf-8" refers to the character "⋯"
+	("Midline Horizontal Ellipsis").
+
 'horizontal-scroll' (mixed)::
 
 	Interval to scroll horizontally in each step. Can be specified either

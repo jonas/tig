@@ -643,6 +643,18 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 				return ERROR_OUT_OF_MEMORY;
 		}
 
+		if (!strcmp(name, "truncation-delimiter")) {
+			if (!strcmp(alloc, "utf-8") || !strcmp(alloc, "utf8")) {
+				alloc = strdup("⋯");
+				if (!alloc)
+					return ERROR_OUT_OF_MEMORY;
+			} else if (utf8_width_of(alloc, -1, -1) != 1) {
+				alloc = strdup("~");
+				if (!alloc)
+					return ERROR_OUT_OF_MEMORY;
+			}
+		}
+
 		free((void *) *value);
 		*value = alloc;
 		return SUCCESS;
