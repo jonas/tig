@@ -1,0 +1,213 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=16
+export COLUMNS=100
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+test_case delimiter-default \
+	--tigrc='
+	set line-graphics = ascii
+	set grep-view = file-name:yes,width=5 line-number:yes,interval=1 text
+	' \
+	--script='
+	:g
+	source<Enter>
+	:refresh
+	' \
+	<<EOF
+LICE~   5| Redistribution and use in source and binary forms, with or without modification,
+LICE~   8|     * Redistributions of source code must retain the above copyright notice,
+READ~  27| time you save a source file, a compilation of the project is triggered.
+comm~ 633|  * Extract a plan for resatisfaction starting from the given source
+comm~ 649|  * Assume: sources are all satisfied.
+comm~ 651| Planner.prototype.makePlan = function (sources) {
+comm~ 654|   var todo = sources;
+comm~ 671|   var sources = new OrderedCollection();
+comm~ 676|       sources.add(c);
+comm~ 678|   return this.makePlan(sources);
+comm~   2| // Redistribution and use in source and binary forms, with or without
+comm~   6| //     * Redistributions of source code must retain the above copyright
+comm~  45| Object.extend = function(destination, source) {
+comm~  46|   for (var property in source) {
+[grep] LICENSE - line 1 of 24                                                                    58%
+EOF
+
+test_case delimiter-literal \
+	--tigrc='
+	set line-graphics = ascii
+	set grep-view = file-name:yes,width=5 line-number:yes,interval=1 text
+	set truncation-delimiter = _
+	' \
+	--script='
+	:g
+	source<Enter>
+	:refresh
+	' \
+	<<EOF
+LICE_   5| Redistribution and use in source and binary forms, with or without modification,
+LICE_   8|     * Redistributions of source code must retain the above copyright notice,
+READ_  27| time you save a source file, a compilation of the project is triggered.
+comm_ 633|  * Extract a plan for resatisfaction starting from the given source
+comm_ 649|  * Assume: sources are all satisfied.
+comm_ 651| Planner.prototype.makePlan = function (sources) {
+comm_ 654|   var todo = sources;
+comm_ 671|   var sources = new OrderedCollection();
+comm_ 676|       sources.add(c);
+comm_ 678|   return this.makePlan(sources);
+comm_   2| // Redistribution and use in source and binary forms, with or without
+comm_   6| //     * Redistributions of source code must retain the above copyright
+comm_  45| Object.extend = function(destination, source) {
+comm_  46|   for (var property in source) {
+[grep] LICENSE - line 1 of 24                                                                    58%
+EOF
+
+test_case delimiter-quoted-literal \
+	--tigrc='
+	set line-graphics = ascii
+	set grep-view = file-name:yes,width=5 line-number:yes,interval=1 text
+	set truncation-delimiter = "_"
+	' \
+	--script='
+	:g
+	source<Enter>
+	:refresh
+	' \
+	<<EOF
+LICE_   5| Redistribution and use in source and binary forms, with or without modification,
+LICE_   8|     * Redistributions of source code must retain the above copyright notice,
+READ_  27| time you save a source file, a compilation of the project is triggered.
+comm_ 633|  * Extract a plan for resatisfaction starting from the given source
+comm_ 649|  * Assume: sources are all satisfied.
+comm_ 651| Planner.prototype.makePlan = function (sources) {
+comm_ 654|   var todo = sources;
+comm_ 671|   var sources = new OrderedCollection();
+comm_ 676|       sources.add(c);
+comm_ 678|   return this.makePlan(sources);
+comm_   2| // Redistribution and use in source and binary forms, with or without
+comm_   6| //     * Redistributions of source code must retain the above copyright
+comm_  45| Object.extend = function(destination, source) {
+comm_  46|   for (var property in source) {
+[grep] LICENSE - line 1 of 24                                                                    58%
+EOF
+
+test_case delimiter-empty-fallback \
+	--tigrc='
+	set line-graphics = ascii
+	set grep-view = file-name:yes,width=5 line-number:yes,interval=1 text
+	set truncation-delimiter = ""
+	' \
+	--script='
+	:g
+	source<Enter>
+	:refresh
+	' \
+	<<EOF
+LICE~   5| Redistribution and use in source and binary forms, with or without modification,
+LICE~   8|     * Redistributions of source code must retain the above copyright notice,
+READ~  27| time you save a source file, a compilation of the project is triggered.
+comm~ 633|  * Extract a plan for resatisfaction starting from the given source
+comm~ 649|  * Assume: sources are all satisfied.
+comm~ 651| Planner.prototype.makePlan = function (sources) {
+comm~ 654|   var todo = sources;
+comm~ 671|   var sources = new OrderedCollection();
+comm~ 676|       sources.add(c);
+comm~ 678|   return this.makePlan(sources);
+comm~   2| // Redistribution and use in source and binary forms, with or without
+comm~   6| //     * Redistributions of source code must retain the above copyright
+comm~  45| Object.extend = function(destination, source) {
+comm~  46|   for (var property in source) {
+[grep] LICENSE - line 1 of 24                                                                    58%
+EOF
+
+test_case delimiter-too-long-fallback \
+	--tigrc='
+	set line-graphics = ascii
+	set grep-view = file-name:yes,width=5 line-number:yes,interval=1 text
+	set truncation-delimiter = multicharacter
+	' \
+	--script='
+	:g
+	source<Enter>
+	:refresh
+	' \
+	<<EOF
+LICE~   5| Redistribution and use in source and binary forms, with or without modification,
+LICE~   8|     * Redistributions of source code must retain the above copyright notice,
+READ~  27| time you save a source file, a compilation of the project is triggered.
+comm~ 633|  * Extract a plan for resatisfaction starting from the given source
+comm~ 649|  * Assume: sources are all satisfied.
+comm~ 651| Planner.prototype.makePlan = function (sources) {
+comm~ 654|   var todo = sources;
+comm~ 671|   var sources = new OrderedCollection();
+comm~ 676|       sources.add(c);
+comm~ 678|   return this.makePlan(sources);
+comm~   2| // Redistribution and use in source and binary forms, with or without
+comm~   6| //     * Redistributions of source code must retain the above copyright
+comm~  45| Object.extend = function(destination, source) {
+comm~  46|   for (var property in source) {
+[grep] LICENSE - line 1 of 24                                                                    58%
+EOF
+
+test_case delimiter-special-value \
+	--tigrc='
+	set line-graphics = ascii
+	set grep-view = file-name:yes,width=5 line-number:yes,interval=1 text
+	set truncation-delimiter = utf8
+	' \
+	--script='
+	:g
+	source<Enter>
+	:refresh
+	' \
+	<<EOF
+LICE⋯   5| Redistribution and use in source and binary forms, with or without modification,
+LICE⋯   8|     * Redistributions of source code must retain the above copyright notice,
+READ⋯  27| time you save a source file, a compilation of the project is triggered.
+comm⋯ 633|  * Extract a plan for resatisfaction starting from the given source
+comm⋯ 649|  * Assume: sources are all satisfied.
+comm⋯ 651| Planner.prototype.makePlan = function (sources) {
+comm⋯ 654|   var todo = sources;
+comm⋯ 671|   var sources = new OrderedCollection();
+comm⋯ 676|       sources.add(c);
+comm⋯ 678|   return this.makePlan(sources);
+comm⋯   2| // Redistribution and use in source and binary forms, with or without
+comm⋯   6| //     * Redistributions of source code must retain the above copyright
+comm⋯  45| Object.extend = function(destination, source) {
+comm⋯  46|   for (var property in source) {
+[grep] LICENSE - line 1 of 24                                                                    58%
+EOF
+
+test_case delimiter-utf8-literal \
+	--tigrc='
+	set line-graphics = ascii
+	set grep-view = file-name:yes,width=5 line-number:yes,interval=1 text
+	set truncation-delimiter = …
+	' \
+	--script='
+	:g
+	source<Enter>
+	:refresh
+	' \
+	<<EOF
+LICE…   5| Redistribution and use in source and binary forms, with or without modification,
+LICE…   8|     * Redistributions of source code must retain the above copyright notice,
+READ…  27| time you save a source file, a compilation of the project is triggered.
+comm… 633|  * Extract a plan for resatisfaction starting from the given source
+comm… 649|  * Assume: sources are all satisfied.
+comm… 651| Planner.prototype.makePlan = function (sources) {
+comm… 654|   var todo = sources;
+comm… 671|   var sources = new OrderedCollection();
+comm… 676|       sources.add(c);
+comm… 678|   return this.makePlan(sources);
+comm…   2| // Redistribution and use in source and binary forms, with or without
+comm…   6| //     * Redistributions of source code must retain the above copyright
+comm…  45| Object.extend = function(destination, source) {
+comm…  46|   for (var property in source) {
+[grep] LICENSE - line 1 of 24                                                                    58%
+EOF
+
+run_test_cases

@@ -76,7 +76,7 @@ draw_chars(struct view *view, enum line_type type, const char *string, int lengt
 
 	if (trimmed && use_tilde) {
 		set_view_attr(view, LINE_DELIMITER);
-		waddch(view->win, '~');
+		waddstr(view->win, opt_truncation_delimiter ? opt_truncation_delimiter : "~");
 		col++;
 	}
 

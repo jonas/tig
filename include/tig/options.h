@@ -76,6 +76,7 @@ typedef struct view_column *view_settings;
 	_(status_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(tab_size,			int,			VIEW_NO_FLAGS) \
 	_(tree_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(truncation_delimiter,		const char *,		VIEW_NO_FLAGS) \
 	_(vertical_split,		enum vertical_split,	VIEW_RESET_DISPLAY | VIEW_DIFF_LIKE) \
 	_(wrap_lines,			bool,			VIEW_NO_FLAGS) \
 	_(wrap_search,			bool,			VIEW_NO_FLAGS) \
