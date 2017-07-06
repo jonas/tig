@@ -25,6 +25,7 @@ extern WINDOW *status_win;
 void update_status(const char *msg, ...);
 void report(const char *msg, ...) PRINTF_LIKE(1, 2);
 void report_clear(void);
+void status_clear(void);
 
 /*
  * Display management.

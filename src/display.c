@@ -424,18 +424,29 @@ report(const char *msg, ...)
 void
 report_clear(void)
 {
-	struct view *view = display[current_view];
-
-	if (!view)
+	if (input_mode)
 		return;
 
-	if (!input_mode && !status_empty) {
-		wclear(status_win);
-		wclrtoeol(status_win);
+	if (!status_empty) {
+		werase(status_win);
 		wnoutrefresh(status_win);
 	}
 	status_empty = true;
-	update_view_title(view);
+
+	update_view_title(display[current_view]);
+}
+
+void
+status_clear(void)
+{
+	if (input_mode)
+		return;
+
+	werase(status_win);
+	wclear(status_win);
+	wnoutrefresh(status_win);
+	status_empty = true;
+	update_view_title(display[current_view]);
 }
 
 static void
