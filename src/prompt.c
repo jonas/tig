@@ -476,6 +476,9 @@ read_prompt(const char *prompt)
 	if (signal(SIGINT, SIG_DFL) == SIG_ERR)
 		die("Failed to remove sigint handler");
 
+	/* readline can leave the virtual cursor out-of-place */
+	set_cursor_pos(0, 0);
+
 	if (line && !*line) {
 		free(line);
 		line = NULL;
