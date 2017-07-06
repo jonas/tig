@@ -430,9 +430,8 @@ report_clear(void)
 		return;
 
 	if (!input_mode && !status_empty) {
-		wclear(status_win);
-		wclrtoeol(status_win);
-		wnoutrefresh(status_win);
+		werase(status_win);
+		doupdate();
 	}
 	status_empty = true;
 	update_view_title(view);
