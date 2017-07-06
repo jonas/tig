@@ -49,6 +49,8 @@ prompt_input(const char *prompt, struct input *input)
 		last_buf_length = buf_length;
 		if (offset >= 0)
 			update_status("%s%.*s", prompt, pos, input->buf);
+		else
+			wmove(status_win, 0, buf_length);
 
 		if (get_input(offset, &key) == OK) {
 			int len = strlen(key.data.bytes);
