@@ -254,6 +254,7 @@ bind search	<C-J>	find-next
 bind search	<Up>	find-prev
 bind search	<C-P>	find-prev
 bind search	<C-K>	find-prev
+bind search	<C-C>	view-close
 
 # Option manipulation
 bind generic	o	options			# Open the options menu
