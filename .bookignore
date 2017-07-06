@@ -1,0 +1,16 @@
+# Blacklist most files since documentation is co-located with the rest
+# of the source to avoid that GitBook copies them to the output
+# directory.
+*.*
+*-*
+COPYING
+Makefile
+tigrc
+
+## Whitelist AsciiDoc and GitBook files
+!*.adoc
+!*.md
+!*.json
+
+# ... except the manual man-page
+doc/tigmanual.7.adoc
