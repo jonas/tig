@@ -96,7 +96,7 @@ prompt_input(const char *prompt, struct input *input)
 	}
 
 	curs_set(0);
-	report_clear();
+	status_clear();
 
 	if (status == INPUT_CANCEL)
 		return NULL;
@@ -472,6 +472,7 @@ read_prompt(const char *prompt)
 	curs_set(1);
 	line = readline(prompt);
 	curs_set(0);
+	status_clear();
 
 	if (signal(SIGINT, SIG_DFL) == SIG_ERR)
 		die("Failed to remove sigint handler");
@@ -598,8 +599,7 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 		}
 	}
 	curs_set(0);
-
-	report_clear();
+	status_clear();
 
 	return status != INPUT_CANCEL;
 }
@@ -1045,13 +1045,11 @@ open_prompt(struct view *view)
 	const char *argv[SIZEOF_ARG] = { NULL };
 	int argc = 0;
 
-	if (cmd && !argv_from_string(argv, &argc, cmd)) {
-		report("Too many arguments");
+	if (!cmd)
 		return REQ_NONE;
-	}
 
-	if (!cmd) {
-		report_clear();
+	if (!argv_from_string(argv, &argc, cmd)) {
+		report("Too many arguments");
 		return REQ_NONE;
 	}
 
