@@ -68,6 +68,23 @@ You can use link:http://brew.sh[Homebrew] to install Tig on OS X:
 
         $ brew install tig
 
+Note, for older installations of Tig, Homebrew does not automatically
+update the system-wide `tigrc` file when upgrading Tig and the
+link:https://github.com/Homebrew/homebrew-core/commit/5600463d68620d68c9745acc490af7f8a16a75cb[behavior]
+was changed in 2015 to install the system-wide `tigrc` in the
+`/usr/local/share/tig/examples` directory so Tig always uses the
+defaults compiled into the binary.
+
+If you see warnings when starting Tig after upgrading, e.g.:
+
+	tig warning: Errors while loading /usr/local/etc/tigrc
+
+It means you either need to manually update `/usr/local/etc/tigrc` with
+changes from `/usr/local/share/tig/examples` rename the file if you
+never made any changes to it.
+
+	$ mv /usr/local/etc/tigrc{,.old}
+
 Installation on Windows
 -----------------------
 To run on Windows, you will need link:https://www.cygwin.com/[cygwin].
