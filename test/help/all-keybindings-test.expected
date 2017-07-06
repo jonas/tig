@@ -68,6 +68,8 @@ Option toggling:
                            $ :toggle commit-title-overflow                                
                            % :toggle file-filter                                          
 [-] search bindings                                                                       
+View manipulation
+                    <Ctrl-C> view-close          Close the current view
 Searching                                                                                 
   <Down>, <Ctrl-N>, <Ctrl-J> find-next           Find next search match                   
     <Up>, <Ctrl-P>, <Ctrl-K> find-prev           Find previous search match               
@@ -114,6 +116,4 @@ External commands:
                                                                                           
                                                                                           
                                                                                           
-                                                                                          
-                                                                                          
-[help] - line 1 of 112                                                                100%
+[help] - line 1 of 114                                                                100%

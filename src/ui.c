@@ -256,6 +256,12 @@ file_finder_input_handler(struct input *input, struct key *key)
 		file_finder_draw(finder);
 		return INPUT_SKIP;
 
+	case REQ_BACK:
+	case REQ_PARENT:
+	case REQ_VIEW_CLOSE:
+	case REQ_VIEW_CLOSE_NO_QUIT:
+		return INPUT_CANCEL;
+
 	default:
 		if (key_to_value(key) == 0) {
 			argv_append(&finder->search, key->data.bytes);

@@ -47,13 +47,13 @@ External commands:
                              cc !git commit
                              ca @?git commit --amend --no-edit
 [-] search bindings
+View manipulation
+                       <Ctrl-C> view-close          Close the current view
 Searching
      <Down>, <Ctrl-N>, <Ctrl-J> find-next           Find next search match
        <Up>, <Ctrl-P>, <Ctrl-K> find-prev           Find previous search match
 [-] main bindings
 Cursor navigation
                               G move-last-line      Move cursor to last line
-Option toggling:
-                              F :toggle commit-title-refs
-[help] - line 78 of 138                                                                          76%
+[help] - line 78 of 140                                                                          75%
 EOF
