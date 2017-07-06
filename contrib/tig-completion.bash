@@ -27,7 +27,7 @@
 #       which may be slightly slower.
 #
 
-__tig_cmds="blame status show log stash grep"
+__tig_cmds="blame status show log refs stash grep"
 
 __tig_complete_revlist_or_cmd ()
 {
