@@ -440,8 +440,13 @@ report_clear(void)
 static void
 done_display(void)
 {
-	if (cursed)
+	if (cursed) {
+		if (status_win) {
+			werase(status_win);
+			doupdate();
+		}
 		endwin();
+	}
 	cursed = false;
 }
 
