@@ -80,10 +80,10 @@ struct diff_stat_context {
 };
 
 static bool
-diff_common_add_cell(struct diff_stat_context *context, size_t length)
+diff_common_add_cell(struct diff_stat_context *context, size_t length, bool allow_empty)
 {
 	assert(ARRAY_SIZE(context->cell) > context->cells);
-	if (length == 0)
+	if (!allow_empty && (length == 0))
 		return true;
 	if (context->skip && !argv_appendn(&context->cell_text, context->text, length))
 		return false;
@@ -122,7 +122,7 @@ diff_common_add_cell_until(struct diff_stat_context *context, const char *s, enu
 	if (sep == NULL)
 		return false;
 
-	if (!diff_common_add_cell(context, sep - context->text))
+	if (!diff_common_add_cell(context, sep - context->text, false))
 		return false;
 
 	context->text = sep + (context->skip ? strlen(s) : 0);
@@ -139,7 +139,7 @@ diff_common_read_diff_stat_part(struct diff_stat_context *context, char c, enum 
 	if (sep == NULL)
 		return false;
 
-	diff_common_add_cell(context, sep - context->text);
+	diff_common_add_cell(context, sep - context->text, false);
 	context->text = sep;
 	context->type = next_type;
 
@@ -163,7 +163,7 @@ diff_common_read_diff_stat(struct view *view, const char *text)
 		diff_common_read_diff_stat_part(&context, '+', LINE_DIFF_ADD);
 		diff_common_read_diff_stat_part(&context, '-', LINE_DIFF_DEL);
 	}
-	diff_common_add_cell(&context, strlen(context.text));
+	diff_common_add_cell(&context, strlen(context.text), false);
 
 	return diff_common_add_line(view, text, LINE_DIFF_STAT, &context);
 }
@@ -213,7 +213,7 @@ diff_common_highlight(struct view *view, const char *text, enum line_type type)
 	for (i = 0; diff_common_add_cell_until(&context, codes[i], types[i]); i = (i + 1) % 2)
 		;
 
-	diff_common_add_cell(&context, strlen(context.text));
+	diff_common_add_cell(&context, strlen(context.text), true);
 	return diff_common_add_line(view, text, type, &context);
 }
 
