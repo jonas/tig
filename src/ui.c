@@ -145,7 +145,7 @@ file_finder_draw(struct file_finder *finder)
 	int column;
 
 	wbkgdset(finder->win, get_line_attr(NULL, LINE_DEFAULT));
-	wclear(finder->win);
+	werase(finder->win);
 
 	for (column = 0; *line_pos && column < finder->height - 1; line_pos++) {
 		struct file_finder_line *line = *line_pos;
