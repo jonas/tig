@@ -249,13 +249,13 @@ search_view(struct view *view, enum request request)
 	const char *prompt = request == REQ_SEARCH ? "/" : "?";
 	char *search = read_prompt(prompt);
 
-	if (search) {
+	if (search && *search) {
 		enum status_code code;
 
 		string_ncopy(argv_env.search, search, strlen(search));
 		code = setup_and_find_next(view, request);
 		report("%s", get_status_message(code));
-	} else if (*argv_env.search) {
+	} else if (search && *argv_env.search) {
 		find_next(view, request);
 	} else {
 		report_clear();

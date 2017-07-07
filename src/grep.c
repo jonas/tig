@@ -101,7 +101,7 @@ grep_prompt(void)
 
 	report_clear();
 
-	if (!grep || !argv_from_string_no_quotes(argv, &argc, grep))
+	if (!grep || !*grep || !argv_from_string_no_quotes(argv, &argc, grep))
 		return false;
 	if (grep_argv)
 		argv_free(grep_argv);
