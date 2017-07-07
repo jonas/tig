@@ -187,6 +187,8 @@ read_prompt_incremental(const char *prompt, bool edit_mode, bool allow_empty, in
 }
 
 #ifdef HAVE_READLINE
+static bool prompt_interrupted = false;
+
 static void
 readline_display(void)
 {
@@ -454,6 +456,7 @@ readline_init(void)
 
 static void sigint_absorb_handler(int sig) {
 	signal(SIGINT, SIG_DFL);
+	prompt_interrupted = true;
 }
 
 char *
@@ -479,10 +482,12 @@ read_prompt(const char *prompt)
 	/* readline can leave the virtual cursor out-of-place */
 	set_cursor_pos(0, 0);
 
-	if (line && !*line) {
+	if (prompt_interrupted) {
 		free(line);
 		line = NULL;
 	}
+
+	prompt_interrupted = false;
 
 	if (line)
 		add_history(line);
@@ -533,7 +538,7 @@ prompt_init(void)
 char *
 read_prompt(const char *prompt)
 {
-	return read_prompt_incremental(prompt, true, false, NULL, NULL);
+	return read_prompt_incremental(prompt, true, true, NULL, NULL);
 }
 
 void
@@ -1048,12 +1053,12 @@ open_prompt(struct view *view)
 	const char *argv[SIZEOF_ARG] = { NULL };
 	int argc = 0;
 
-	if (cmd && !argv_from_string(argv, &argc, cmd)) {
+	if (cmd && *cmd && !argv_from_string(argv, &argc, cmd)) {
 		report("Too many arguments");
 		return REQ_NONE;
 	}
 
-	if (!cmd) {
+	if (!cmd || !*cmd) {
 		report_clear();
 		return REQ_NONE;
 	}
