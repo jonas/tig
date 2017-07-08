@@ -64,7 +64,7 @@ file_finder_read(struct file_finder *finder, const char *commit)
 			break;
 		}
 
-		finder->file[files] = calloc(1, sizeof(*finder->file) + buf.size);
+		finder->file[files] = calloc(1, sizeof(struct file_finder_line) + buf.size);
 		if (!finder->file[files]) {
 			ok = false;
 			break;
