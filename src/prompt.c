@@ -187,7 +187,7 @@ read_prompt_incremental(const char *prompt, bool edit_mode, bool allow_empty, in
 }
 
 #ifdef HAVE_READLINE
-static bool prompt_interrupted = false;
+static volatile bool prompt_interrupted = false;
 
 static void
 readline_display(void)
