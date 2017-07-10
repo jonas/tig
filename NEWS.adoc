@@ -52,6 +52,7 @@ Bug fixes:
  - Fix memory corruption in `concat_argv` and file finder. (GH #634, #655)
  - Fix reading from stdin for `tig show`.
  - Document problem of outdated system-wide `tigrc` files in Homebrew. (GH #598)
+ - Repaint the display when toggling `line-graphics`. (GH #527)
 
 tig-2.2.2
 ---------

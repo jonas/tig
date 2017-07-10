@@ -50,7 +50,7 @@ typedef struct view_column *view_settings;
 	_(id_width,			int,			VIEW_NO_FLAGS) \
 	_(ignore_case,			enum ignore_case,	VIEW_NO_FLAGS) \
 	_(ignore_space,			enum ignore_space,	VIEW_DIFF_LIKE) \
-	_(line_graphics,		enum graphic,		VIEW_NO_FLAGS) \
+	_(line_graphics,		enum graphic,		VIEW_RESET_DISPLAY) \
 	_(log_options,			const char **,		VIEW_LOG_LIKE) \
 	_(log_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(mailmap,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
