@@ -357,7 +357,7 @@ graph_symbol_to_utf8(const struct graph_symbol *symbol)
 			return " ◎";
 		else if (symbol->merge)
 			return " ●";
-		return " ●";
+		return " ∙";
 	}
 
 	if (symbol->merge) {
