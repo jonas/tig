@@ -57,6 +57,8 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 		ok = io_run_bg(argv, dir);
 
 	} else {
+		clear();
+		refresh();
 		endwin();                  /* restore original tty modes */
 		ok = io_run_fg(argv, dir);
 		if (confirm || !ok) {
@@ -66,6 +68,11 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 			getc(opt_tty);
 			fseek(opt_tty, 0, SEEK_END);
 		}
+		nonl();		/* Disable conversion and detect newlines from input. */
+		raw();       /* Take input chars one at a time, no wait for \n */
+		noecho();       /* Don't echo input */
+		curs_set(0);
+		leaveok(stdscr, false);
 	}
 
 	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && refresh) {
@@ -547,10 +554,7 @@ init_display(void)
 		die("Failed to register done_display");
 
 	/* Initialize the curses library */
-	if (!no_display && isatty(STDIN_FILENO)) {
-		cursed = !!initscr();
-		opt_tty = stdin;
-	} else {
+	{
 		/* Leave stdin and stdout alone when acting as a pager. */
 		FILE *out_tty;
 
