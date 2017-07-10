@@ -145,6 +145,7 @@ tig_script() {
 	printf '%s\n:quit\n' "$@" \
 		| sed -e 's/^[ 	]*//' -e '/^$/d' \
 		| sed "s|:save-display[ 	]\{1,\}\([^ 	]\{1,\}\)|:save-display $HOME/\1|" \
+		| sed "s|:save-view[ 	]\{1,\}\([^ 	]\{1,\}\)|:save-view $HOME/\1|" \
 		> "$TIG_SCRIPT"
 }
 

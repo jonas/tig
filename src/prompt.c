@@ -893,6 +893,14 @@ run_prompt_command(struct view *view, const char *argv[])
 		else
 			report("Saved screen to %s", path);
 
+	} else if (!strcmp(cmd, "save-view")) {
+		const char *path = argv[1] ? argv[1] : "tig-view.txt";
+
+		if (!save_view(view, path))
+			report("Failed to save view to %s", path);
+		else
+			report("Saved view to %s", path);
+
 	} else if (!strcmp(cmd, "save-options")) {
 		const char *path = argv[1] ? argv[1] : "tig-options.txt";
 		enum status_code code = save_options(path);

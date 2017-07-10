@@ -347,6 +347,65 @@ save_display(const char *path)
 }
 
 /*
+ * Dump view data to file.
+ *
+ * FIXME: Add support for more line state and column data.
+ */
+bool
+save_view(struct view *view, const char *path)
+{
+	struct view_column_data column_data = {0};
+	FILE *file = fopen(path, "w");
+	size_t i;
+
+	if (!file)
+		return false;
+
+	fprintf(file, "View: %s\n", view->name);
+	if (view->parent && view->parent != view)
+		fprintf(file, "Parent: %s\n", view->parent->name);
+	fprintf(file, "Ref: %s\n", view->ref);
+	fprintf(file, "Dimensions: height=%d width=%d\n", view->height, view->width);
+	fprintf(file, "Position: offset=%ld column=%ld lineno=%ld\n",
+		view->pos.offset,
+		view->pos.col,
+		view->pos.lineno);
+
+	for (i = 0; i < view->lines; i++) {
+		struct line *line = &view->line[i];
+
+		fprintf(file, "line[%3ld] type=%s selected=%d\n",
+			i,
+			enum_name(get_line_type_name(line->type)),
+			line->selected);
+
+		if (!view->ops->get_column_data(view, line, &column_data))
+			return true;
+
+		if (column_data.box) {
+			const struct box *box = column_data.box;
+			size_t j;
+			size_t offset;
+
+			fprintf(file, "line[%3ld] cells=%ld text=",
+				i, box->cells);
+
+			for (j = 0, offset = 0; j < box->cells; j++) {
+				const struct box_cell *cell = &box->cell[j];
+
+				fprintf(file, "[%.*s]", (int) cell->length, box->text + offset);
+				offset += cell->length;
+			}
+
+			fprintf(file, "\n");
+		}
+	}
+
+	fclose(file);
+	return true;
+}
+
+/*
  * Status management
  */
 

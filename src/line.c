@@ -63,13 +63,20 @@ get_line_type_from_ref(const struct ref *ref)
 	return LINE_MAIN_REF;
 }
 
+const char *
+get_line_type_name(enum line_type type)
+{
+	assert(0 <= type < line_rules);
+	return line_rule[type].name;
+}
+
 struct line_info *
 get_line_info(const char *prefix, enum line_type type)
 {
 	struct line_info *info;
 	struct line_rule *rule;
 
-	assert(type < line_rules);
+	assert(0 <= type < line_rules);
 	rule = &line_rule[type];
 	for (info = &rule->info; info; info = info->next) {
 		if (prefix && info->prefix == prefix)

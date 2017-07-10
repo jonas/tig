@@ -118,6 +118,8 @@ struct line_rule {
 enum line_type get_line_type(const char *line);
 enum line_type get_line_type_from_ref(const struct ref *ref);
 
+const char *get_line_type_name(enum line_type type);
+
 struct line_info *get_line_info(const char *prefix, enum line_type type);
 struct line_info *add_line_rule(const char *prefix, struct line_rule *rule);
 void init_colors(void);

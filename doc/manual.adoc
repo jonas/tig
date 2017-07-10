@@ -484,6 +484,7 @@ Prompt
 			 branch `some/branch`.
 |:save-display <file>	|Save current display to `<file>`.
 |:save-options <file>	|Save current options to `<file>`.
+|:save-view <file>	|Save view info to `<file>` (for testing purposes).
 |:script <file>		|Execute commands from `<file>`.
 |:exec <flags><args...> |Execute command using `<args>` with external
 			 user-defined command option flags defined in `<flags>`.

@@ -46,6 +46,7 @@ void init_display(void);
 void resize_display(void);
 void redraw_display(bool clear);
 bool save_display(const char *path);
+bool save_view(struct view *view, const char *path);
 
 bool vertical_split_is_enabled(enum vertical_split vsplit, int height, int width);
 int apply_vertical_split(int base_width);
