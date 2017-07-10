@@ -469,15 +469,13 @@ read_prompt(const char *prompt)
 		line = NULL;
 	}
 
+	curs_set(1);
 	if (signal(SIGINT, sigint_absorb_handler) == SIG_ERR)
 		die("Failed to setup sigint handler");
-
-	curs_set(1);
 	line = readline(prompt);
-	curs_set(0);
-
 	if (signal(SIGINT, SIG_DFL) == SIG_ERR)
 		die("Failed to remove sigint handler");
+	curs_set(0);
 
 	/* readline can leave the virtual cursor out-of-place */
 	set_cursor_pos(0, 0);
