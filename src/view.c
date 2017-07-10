@@ -645,6 +645,9 @@ update_view_title(struct view *view)
 	WINDOW *window = view->title;
 	struct line *line = &view->line[view->pos.lineno];
 	unsigned int view_lines, lines;
+	int update_increment = view_has_flags(view, VIEW_LOG_LIKE | VIEW_GREP_LIKE)
+			       ? 100
+			       : view_has_flags(view, VIEW_DIFF_LIKE) ? 10 : 1;
 
 	assert(view_is_displayed(view));
 
@@ -667,7 +670,8 @@ update_view_title(struct view *view)
 					   line->lineno,
 					   MAX(line->lineno,
 					       view->pipe
-					       ? 100 * (size_t) ((view->lines - view->custom_lines) / 100)
+					       ? update_increment *
+						 (size_t) ((view->lines - view->custom_lines) / update_increment)
 					       : view->lines - view->custom_lines));
 	}
 
