@@ -811,9 +811,15 @@ View specific actions
 |status-update           |Stage/unstage chunk or file changes
 |status-revert           |Revert chunk or file changes
 |status-merge            |Merge file using external tool
-|stage-update-line       |Stage/unstage single line
+|stage-update-line       |Stage/unstage single line.
 |stage-split-chunk       |Split current diff chunk
 |=============================================================================
+
+NOTE: When `ignore-space` is set to `some`, `all` or `at-eol`, then
+*status-update* and *status-revert* may fail when updating or reverting
+chunks containing lines with space changes. Similarly,
+*stage-update-line* may fail when updating a line adjacent to a line
+with space changes 
 
 Cursor navigation
 ^^^^^^^^^^^^^^^^^
