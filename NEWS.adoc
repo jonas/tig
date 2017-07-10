@@ -4,19 +4,53 @@ Release notes
 master
 ------
 
+Incompatibilities:
+
+ - The `width` setting on the `status`, `text` and `commit-title` columns was
+   never applied and has been removed. (GH #617)
+
 Improvements:
 
+ - Improve load performance by throttling screen updates. (GH #622, #629)
+ - Speed up graph rendering. (GH #638)
+ - Enable scroll optimizations for Terminal.app and iTerm2. (GH #637)
  - Improve the test suite portability to not depend on GNU sed. (GH #609, #614)
  - Make build reproducible. (https://reproducible-builds.org/) (GH #613)
+ - Enable binding to `F13`-`F19`, `ShiftLeft`, `ShiftRight`, `Del`, `Home`,
+   `End`, `Tab`, `Ctrl-C`, `Ctrl-V`, `Ctrl-S`, and `Ctrl-@`. (GH #619, #642)
+ - Persist readline history to `~/.tig_history` or `$XDG_DATA_HOME/tig/history`.
+   (GH #620)
  - Add `view-close-no-quit` action, unbound by default. (GH #607)
+ - Add `mouse-wheel-cursor` option (off by default) when set to true causes
+   wheel actions to prefer moving the cursor instead of scrolling. (GH #608)
+ - Add `truncation-delimiter` option, set to `~` by default. (GH #646)
+ - Add `-q` parameter to `source` for "source-if-present". (GH #612)
+ - Add `:echo` prompt command to display text in the status bar. (GH #626, #636)
+ - Make `diff-highlight` colors configurable. (GH #625, #633)
+ - Let Ctrl-C exit Y/N dialog, menu prompts and the file finder. (GH #632, #648)
+ - Hide cursor unless at textual prompt. (GH #643)
 
 Bug fixes:
 
+ - Fix graph display issues. (GH #419, #638)
+ - Fix rendering of emojis. (GH #621, #644)
  - Handle hyphenated directory names when listing content. (GH #602)
+ - Do not jump to next match when cancelling the search prompt. (GH #627)
+ - Fix clearing of the status line after `Ctrl-C`. (GH #623, #649)
+ - Fix handling of width on line-number and trimmed width of 1. (GH #617)
+ - Set cursor position when not updating prompt contents. (GH #647)
+ - Erase status line at exit time for users without altscreen-capable terminals.
+   (GH #589)
  - contrib/vim.tigrc: Also bind G in the main as a workaround for limitations of
    the `none` action. (GH #594, #599)
  - Only override `blame-options` when commands are given and fix parsing of
    `-C`. (GH #597)
+ - Fix diff name discovery to better handle prefixes.
+ - Interpret button5 as wheel-down. (GH #321, #606)
+ - Fix `back` / `parent` in tree view. (GH #641)
+ - Fix memory corruption in `concat_argv` and file finder. (GH #634, #655)
+ - Fix reading from stdin for `tig show`.
+ - Document problem of outdated system-wide `tigrc` files in Homebrew. (GH #598)
 
 tig-2.2.2
 ---------
