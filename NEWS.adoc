@@ -17,8 +17,8 @@ Improvements:
  - Improve the test suite portability to not depend on GNU sed. (GH #609, #614)
  - Make build reproducible. (https://reproducible-builds.org/) (GH #613)
  - Enable binding to more symbolic keys and keys with control modifier:
-   `F13`-`F19`, `ShiftLeft`, `ShiftRight`, `Del`, `Home`, `End`, `Tab`,
-   `Ctrl-C`, `Ctrl-V`, `Ctrl-S`, and `Ctrl-@`. (GH #314, #619, #642)
+   `F13`-`F19`, `ShiftLeft`, `ShiftRight`, `ShiftDel`, `ShiftHome`, `ShiftEnd`,
+   `ShiftTab`, `Ctrl-C`, `Ctrl-V`, `Ctrl-S`, and `Ctrl-@`. (GH #314, #619, #642)
  - Persist readline history to `~/.tig_history` or `$XDG_DATA_HOME/tig/history`.
    (GH #620)
  - Add `view-close-no-quit` action, unbound by default. (GH #607)
