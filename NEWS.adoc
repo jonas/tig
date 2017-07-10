@@ -16,8 +16,9 @@ Improvements:
  - Enable scroll optimizations for Terminal.app and iTerm2. (GH #637)
  - Improve the test suite portability to not depend on GNU sed. (GH #609, #614)
  - Make build reproducible. (https://reproducible-builds.org/) (GH #613)
- - Enable binding to `F13`-`F19`, `ShiftLeft`, `ShiftRight`, `Del`, `Home`,
-   `End`, `Tab`, `Ctrl-C`, `Ctrl-V`, `Ctrl-S`, and `Ctrl-@`. (GH #619, #642)
+ - Enable binding to more symbolic keys and keys with control modifier:
+   `F13`-`F19`, `ShiftLeft`, `ShiftRight`, `Del`, `Home`, `End`, `Tab`,
+   `Ctrl-C`, `Ctrl-V`, `Ctrl-S`, and `Ctrl-@`. (GH #314, #619, #642)
  - Persist readline history to `~/.tig_history` or `$XDG_DATA_HOME/tig/history`.
    (GH #620)
  - Add `view-close-no-quit` action, unbound by default. (GH #607)
@@ -33,7 +34,7 @@ Improvements:
 Bug fixes:
 
  - Fix graph display issues. (GH #419, #638)
- - Fix rendering of emojis. (GH #621, #644)
+ - Fix rendering of emojis. (GH #330, #621, #644)
  - Handle hyphenated directory names when listing content. (GH #602)
  - Do not jump to next match when cancelling the search prompt. (GH #627)
  - Fix clearing of the status line after `Ctrl-C`. (GH #623, #649)
