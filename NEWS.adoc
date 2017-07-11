@@ -21,6 +21,7 @@ Improvements:
    `ShiftTab`, `Ctrl-C`, `Ctrl-V`, `Ctrl-S`, and `Ctrl-@`. (GH #314, #619, #642)
  - Persist readline history to `~/.tig_history` or `$XDG_DATA_HOME/tig/history`.
    (GH #620)
+ - Preload last search from persistent history. (GH #630)
  - Add `view-close-no-quit` action, unbound by default. (GH #607)
  - Add `mouse-wheel-cursor` option (off by default) when set to true causes
    wheel actions to prefer moving the cursor instead of scrolling. (GH #608)
@@ -185,7 +186,7 @@ Improvements:
  - Add support for key combos. (GH #67)
  - See `contrib/vim.tigrc` for Vim-like keybindings. (GH #273, #351)
  - Add GitHub inspired file finder to search for and open any file. (GH #342)
- - Add `search` keymap for navigation file finder search results.
+ - Add `search` keymap for navigating file finder search results.
 
 Bug fixes:
 
