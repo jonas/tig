@@ -38,6 +38,7 @@ prompt_input(const char *prompt, struct input *input)
 	int last_buf_length = promptlen ? -1 : promptlen;
 
 	input->buf[0] = 0;
+	input->context[0] = 0;
 
 	if (strlen(prompt) > 0)
 		curs_set(1);
@@ -48,7 +49,7 @@ prompt_input(const char *prompt, struct input *input)
 
 		last_buf_length = buf_length;
 		if (offset >= 0)
-			update_status("%s%.*s", prompt, pos, input->buf);
+			update_status_with_context(input->context, "%s%.*s", prompt, pos, input->buf);
 		else
 			wmove(status_win, 0, buf_length);
 
@@ -180,6 +181,8 @@ read_prompt_incremental(const char *prompt, bool edit_mode, bool allow_empty, in
 
 	incremental.input.allow_empty = allow_empty;
 	incremental.input.data = data;
+	incremental.input.buf[0] = 0;
+	incremental.input.context[0] = 0;
 	incremental.handler = handler;
 	incremental.edit_mode = edit_mode;
 
@@ -555,6 +558,7 @@ bool
 prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 {
 	enum input_status status = INPUT_OK;
+	char buf[128];
 	struct key key;
 	int size = 0;
 
@@ -566,11 +570,14 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 	curs_set(1);
 	while (status == INPUT_OK) {
 		const struct menu_item *item = &items[*selected];
-		char hotkey[] = { '[', (char) item->hotkey, ']', ' ', 0 };
+		const char hotkey[] = { ' ', '[', (char) item->hotkey, ']', 0 };
 		int i;
 
-		update_status("%s (%d of %d) %s%s", prompt, *selected + 1, size,
-			      item->hotkey ? hotkey : "", item->text);
+		if (!string_format(buf, "(%d of %d)", *selected + 1, size))
+			buf[0] = 0;
+
+		update_status_with_context(buf, "%s %s%s", prompt, item->text,
+			      item->hotkey ? hotkey : "");
 
 		switch (get_input(COLS - 1, &key)) {
 		case KEY_RETURN:
