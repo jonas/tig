@@ -449,6 +449,7 @@ update_status_window(struct view *view, const char *context, const char *msg, va
 
 			getyx(status_win, y, x);
 			getmaxyx(status_win, ___, width);
+			(void) ___;
 			if (contextlen < width - x) {
 				mvwprintw(status_win, 0, width - contextlen, "%s", context);
 				wmove(status_win, y, x);
