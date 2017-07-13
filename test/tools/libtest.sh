@@ -310,7 +310,7 @@ show_test_results()
 
 		# Replace CR used by Git progress messages
 		tr '\r' '\n' < .test-result
-	elif [ "$verbose" ]; then
+	elif [ -n "$verbose" ]; then
 		count="$(grep -c '^ *\[OK\]' < .test-result || true)"
 		printf 'Passed %d assertions\n' "$count"
 	fi | sed "s/^/$indent| /"
