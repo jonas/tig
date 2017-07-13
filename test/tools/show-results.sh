@@ -25,6 +25,7 @@ tests="$(find test/ -name ".test-result" | grep -c . || true)"
 asserts="$(find test/ -name ".test-result" -exec cat -- "{}" \; | grep -c '^ *\[\(OK\|FAIL\)\]' || true)"
 failures="$(find test/ -name ".test-result" -exec cat -- "{}" \; | grep -c '^ *\[FAIL\]' || true)"
 skipped="$(find test/ -name ".test-skipped" | grep -c . || true)"
+todos="$(find test/ \( -name ".test-skipped" -or -name ".test-skipped-subtest-*" \) -exec cat -- "{}" + | grep -c '^\[TODO\]' || true)"
 
 if [ "$failures" = 0 ]; then
 	printf "Passed %d assertions in %d tests" "$asserts" "$tests"
@@ -33,7 +34,11 @@ else
 fi
 
 if [ "$skipped" != 0 ]; then
-	printf " (%d skipped)" "$skipped"
+	todo_text=""
+	if [ "$todos" != 0 ]; then
+		todo_text=", $todos as todos"
+	fi
+	printf " (%d skipped%s)" "$skipped" "$todo_text"
 fi
 
 printf '\n'

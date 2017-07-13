@@ -194,6 +194,7 @@ indent='            '
 verbose=
 debugger=
 trace=
+todos=
 valgrind=
 
 set -- ${TIG_TEST_OPTS:-} ${TEST_OPTS:-}
@@ -206,6 +207,7 @@ while [ $# -gt 0 ]; do
 		debugger=*) debugger="$(expr "$arg" : 'debugger=\(.*\)')" ;;
 		debugger) debugger="$(auto_detect_debugger)" ;;
 		trace) trace=yes ;;
+		todos) todos=yes ;;
 		valgrind) valgrind="$HOME/valgrind.log" ;;
 	esac
 done
@@ -321,6 +323,25 @@ trap 'show_test_results' EXIT
 test_skip()
 {
 	printf '%s\n' "$*" >> .test-skipped
+}
+
+test_todo_message()
+{
+	explanation="$*"
+	if [ -n "$explanation" ]; then
+		explanation=": $explanation"
+	fi
+
+	printf '[TODO] The test is not expected to pass yet%s\n' "$explanation"
+}
+
+test_todo()
+{
+	if [ -n "$todos" ]; then
+		return
+	fi
+
+	test_todo_message "$*" >> .test-skipped
 }
 
 require_git_version()
@@ -505,7 +526,7 @@ test_case()
 	printf '%s\n' "$name" >> test-cases
 	cat > "$name.expected"
 
-	touch -- "$name-before" "$name-after" "$name-script" "$name-args" "$name-tigrc" "$name-assert-stderr"
+	touch -- "$name-before" "$name-after" "$name-script" "$name-args" "$name-tigrc" "$name-assert-stderr" "$name-todo"
 
 	while [ "$#" -gt 0 ]; do
 		arg="$1"; shift
@@ -513,7 +534,7 @@ test_case()
 		value="$(expr "X$arg" : 'X--[^=]*=\(.*\)')"
 
 		case "$key" in
-		before|after|script|args|cwd|tigrc|assert-stderr)
+		before|after|script|args|cwd|tigrc|assert-stderr|todo)
 			printf '%s\n' "$value" > "$name-$key" ;;
 		*)	die "Unknown test_case argument: $arg"
 		esac
@@ -527,6 +548,12 @@ run_test_cases()
 	fi
 	test_setup
 	while read -r name <&3; do
+		if [ -s "$name-todo" ] && [ -z "$todos" ]; then
+			printf '%s[skipped] ' "$indent"
+			test_todo_message "$(cat < "$name-todo")"
+			test_todo_message "$(cat < "$name-todo")" >> ".test-skipped-subtest-$name"
+			continue;
+		fi
 		tig_script "$name" "
 			$(if [ -e "$name-script" ]; then cat < "$name-script"; fi)
 			:save-display $name.screen
