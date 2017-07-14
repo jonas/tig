@@ -557,6 +557,7 @@ built-in keybindings.
 
 Keybindings at the line-entry prompt are typically governed by the readline
 library, and are configured separately in `~/.inputrc`.  See 'readline(1)'.
+Tig respects but does not require an `$if tig` section in `~/.inputrc`.
 
 --
 
