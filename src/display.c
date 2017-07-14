@@ -64,6 +64,7 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 				fprintf(stderr, "%s", notice);
 			fprintf(stderr, "Press Enter to continue");
 			getc(opt_tty);
+			fseek(opt_tty, 0, SEEK_END);
 		}
 	}
 
