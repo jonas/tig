@@ -291,9 +291,8 @@ Or set the variable permanently in your environment.
 
 TIG_LS_REMOTE::
 
-	Set command for retrieving all repository references. The command
-	should output data in the same format as git-ls-remote(1). Defaults
-	to:
+	Command for retrieving all repository references. The command should
+	output data in the same format as git-ls-remote(1). Defaults to:
 -----------------------------------------------------------------------------
 git ls-remote .
 -----------------------------------------------------------------------------

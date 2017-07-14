@@ -200,7 +200,7 @@ TIGRC_SYSTEM::
 	configuration.
 
 TIG_LS_REMOTE::
-	Set command for retrieving all repository references. The command
+	Command for retrieving all repository references. The command
 	should output data in the same format as git-ls-remote(1).
 
 TIG_DIFF_OPTS::
