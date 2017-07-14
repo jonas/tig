@@ -663,7 +663,7 @@ following variable names, which are substituted before commands are run:
 |%(fileargs)		|The file arguments passed on the command line.
 |%(cmdlineargs)		|All other options passed on the command line.
 |%(diffargs)		|Options from 'diff-options' or 'TIG_DIFF_OPTS' used
-			 used by the diff and stage view.
+			 by the diff and stage view.
 |%(blameargs)		|Options from 'blame-options' used by the blame view.
 |%(logargs)		|Options from 'log-options' used by the log view.
 |%(mainargs)		|Options from 'main-options' used by the main view.
@@ -687,8 +687,8 @@ following variable names, which are substituted before commands are run:
 Examples:
 // TEST: tigrc
 --------------------------------------------------------------------------
-# Save save the current commit as a patch file when the user selects a
-# commit in the main view and presses 'S'.
+# Save the current commit as a patch file when the user selects a commit
+# in the main view and presses 'S'.
 bind main S !git format-patch -1 %(commit)
 
 # Create and checkout a new branch; specify custom prompt
