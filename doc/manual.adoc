@@ -413,14 +413,14 @@ Scrolling
 
 [frame="none",grid="none",cols="2<,8<",options="header"]
 |=============================================================================
-|Key	|Action
-|Insert	|Scroll view one line up.
-|Delete	|Scroll view one line down.
-|ScrBack|Scroll view one page up.
-|ScrFwd	|Scroll view one page down.
-|Left	|Scroll view one column left.
-|Right	|Scroll view one column right.
-|\|	|Scroll view to the first column.
+|Key		|Action
+|Insert		|Scroll view one line up.
+|Delete		|Scroll view one line down.
+|ScrollBack	|Scroll view one page up.
+|ScrollFwd	|Scroll view one page down.
+|Left		|Scroll view one column left.
+|Right		|Scroll view one column right.
+|\|		|Scroll view to the first column.
 |=============================================================================
 
 [[searching]]
