@@ -34,6 +34,10 @@ Certain options can be manipulated at runtime via the option menu. In
 addition, options can also be toggled with the `:toggle` prompt command
 or by entering the configuration command into the prompt.
 
+In some environments, a user's configuration will be stored in the alternate
+location `$XDG_CONFIG_HOME/tig/config`.  For brevity, this document will
+refer only to `~/.tigrc`.
+
 Git configuration
 -----------------
 

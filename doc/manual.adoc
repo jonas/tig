@@ -249,8 +249,9 @@ Configuration Files
 
 Upon startup, Tig first reads the system wide configuration file
 (`{sysconfdir}/tigrc` by default) and then proceeds to read the user's
-configuration file (`~/.tigrc` by default). The paths to either of these files
-can be overridden through the following environment variables:
+configuration file (`~/.tigrc` or `$XDG_CONFIG_HOME/tig/config` by default).
+The paths to either of these files can be overridden through the following
+environment variables:
 
 TIGRC_USER::
 	Path of the user configuration file.

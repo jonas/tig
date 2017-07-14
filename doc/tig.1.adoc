@@ -191,7 +191,8 @@ See link:tigrc.5.{docext}[tigrc(5)] for a full list.
 endif::version[]
 
 TIGRC_USER::
-	Path of the user configuration file (defaults to `~/.tigrc`).
+	Path of the user configuration file (defaults to `~/.tigrc` or
+	`$XDG_CONFIG_HOME/tig/config`).
 
 TIGRC_SYSTEM::
 	Path of the system wide configuration file (defaults to
