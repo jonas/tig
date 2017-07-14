@@ -804,7 +804,7 @@ View manipulation
 |refresh                 |Reload and refresh view
 |maximize                |Maximize the current view
 |view-close              |Close the current view
-|view-close-no-quit      |Close the current view, unless on the last view
+|view-close-no-quit      |Close the current view without quitting
 |quit                    |Close all views and quit
 |=============================================================================
 
@@ -816,7 +816,7 @@ View-specific actions
 |status-update           |Stage/unstage chunk or file changes
 |status-revert           |Revert chunk or file changes
 |status-merge            |Merge file using external tool
-|stage-update-line       |Stage/unstage single line.
+|stage-update-line       |Stage/unstage single line
 |stage-split-chunk       |Split current diff chunk
 |=============================================================================
 
