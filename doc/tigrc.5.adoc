@@ -147,7 +147,7 @@ The following variables can be set:
 
 'diff-options' (string)::
 
-	A space separated string of diff options to use in the diff view.
+	A space-separated string of diff options to use in the diff view.
 	git-show(1) is used for formatting and always passes --patch-with-stat.
 	This option overrides any options specified in the TIG_DIFF_OPTS
 	environment variable (described in manpage:tig[1]), but is itself
@@ -155,27 +155,27 @@ The following variables can be set:
 
 'blame-options' (string)::
 
-	A space separated string of default blame options. Can be used for
+	A space-separated string of default blame options. Can be used for
 	telling git-blame(1) how to detect the origin of lines. The options
 	are ignored when Tig is started in blame mode and given blame options
 	on the command line.
 
 'log-options' (string)::
 
-	A space separated string of default options that should be passed to the
+	A space-separated string of default options that should be passed to the
 	git-log(1) command used by the log view. Options can be overridden by
 	command line options. Used internally override custom `pretty.format'
 	settings that break the log view.
 
 'main-options' (string)::
 
-	A space separated string of default options that should be passed to the
+	A space-separated string of default options that should be passed to the
 	git-log(1) command used by the main view. Options can be overridden by
 	command line options.
 
 'reference-format' (string)::
 
-	A space separated string of format strings used for formatting reference
+	A space-separated string of format strings used for formatting reference
 	names. Wrap the name of the reference type with the characters you would
 	like to use for formatting, e.g. `[tag]` and `<remote>`. If no format is
 	specified for `local-tag`, the format for `tag` is used. Similarly, if no
@@ -210,7 +210,7 @@ The following variables can be set:
 
 'git-colors' (list)::
 
-	A space separated list of "key=value" pairs where the key is a Git color
+	A space-separated list of "key=value" pairs where the key is a Git color
 	name and the value is a Tig color name, e.g. "branch.current=main-head"
 	and "grep.filename=grep.file". Set to "no" to disable.
 
@@ -365,7 +365,7 @@ View settings
 ~~~~~~~~~~~~~
 
 The view settings define the order and options for the different columns of a
-view. Each view setting expects a space separated list of column specifications.
+view. Each view setting expects a space-separated list of column specifications.
 Column specifications starts with the column type, and can optionally be
 followed by a colon (`:`) and a list of column options. E.g. the following
 column specification defines an 'author' column displaying the author email and
@@ -808,7 +808,7 @@ View manipulation
 |quit                    |Close all views and quit
 |=============================================================================
 
-View specific actions
+View-specific actions
 ^^^^^^^^^^^^^^^^^^^^^
 
 [frame="none",grid="none",cols="25<m,75<"]
@@ -904,7 +904,7 @@ color diff-header	yellow	default
 color diff-index	blue	default
 color diff-chunk	magenta	default
 color "Reported-by:"	green	default
-# View specific color
+# View-specific color
 color tree.date		black	cyan	bold
 --------------------------------------------------------------------------
 
@@ -917,7 +917,7 @@ Or in the Git configuration files:
 	# UI colors
 	title-blur	= white	blue
 	title-focus	= white	blue	bold
-# View specific color
+# View-specific color
 [tig "color.tree"]
 	date		= cyan	default	bold
 ------------------------------------------------------------------------------
@@ -930,7 +930,7 @@ Area names::
 	Valid built-in area names are described below. Note, all names are
 	case-insensitive, and you may use '-', and '_' interchangeably,
 	e.g. "Diff-Header" and "DIFF_HEADER" are the same.
-	View specific colors can be defined by prefixing the view name to
+	View-specific colors can be defined by prefixing the view name to
 	the area name, e.g. "stage.diff-chunk" and "diff.diff-chunk".
 
 Color names::

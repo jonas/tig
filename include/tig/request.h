@@ -39,7 +39,7 @@
 	REQ_(VIEW_CLOSE_NO_QUIT,	"Close the current view without quitting"), \
 	REQ_(QUIT,		"Close all views and quit"), \
 	\
-	REQ_GROUP("View specific actions") \
+	REQ_GROUP("View-specific actions") \
 	REQ_(STATUS_UPDATE,	"Stage/unstage chunk or file changes"), \
 	REQ_(STATUS_REVERT,	"Revert chunk or file changes"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \

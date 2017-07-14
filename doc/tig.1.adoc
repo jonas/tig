@@ -34,7 +34,7 @@ OPTIONS
 -------
 
 Command line options recognized by Tig include all valid git-log(1) and
-git-diff(1) options, as well as the following subcommands and Tig specific
+git-diff(1) options, as well as the following subcommands and Tig-specific
 options. The first command line parameter not starting with "-" is interpreted
 as being either a revision specification or a path and will end the option
 parsing. All additional options will be passed to the underlying Git command.

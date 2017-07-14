@@ -86,7 +86,7 @@ set truncation-delimiter	= ~		# Character drawn for truncations, or "utf-8"
 # If no format is defined for `local-tag` then the one for `tag` is used.
 # Similarly, `remote` is used if no `tracked-remote` format exists.
 # Prefix with `hide:` to not show that reference type, e.g. `hide:remote`.
-# Expects a space separated list of format strings.
+# Expects a space-separated list of format strings.
 set reference-format		= [branch] <tag> {remote} ~replace~
 
 # Settings controlling how content is read from Git
