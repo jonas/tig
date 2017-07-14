@@ -33,3 +33,4 @@ tig-*.tar.gz
 tig-*.tar.gz.md5
 tig.spec
 tools/doc-gen
+tig.dSYM
