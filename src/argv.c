@@ -286,7 +286,7 @@ struct format_var {
 struct format_context {
 	struct format_var *vars;
 	size_t vars_size;
-	char buf[SIZEOF_STR];
+	char buf[SIZEOF_CMD];
 	size_t bufpos;
 	bool file_filter;
 };

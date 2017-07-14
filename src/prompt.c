@@ -1013,7 +1013,7 @@ exec_run_request(struct view *view, struct run_request *req)
 	const char **argv = NULL;
 	bool confirmed = false;
 	enum request request = REQ_NONE;
-	char cmd[SIZEOF_STR];
+	char cmd[SIZEOF_CMD];
 	const char *req_argv[SIZEOF_ARG];
 	int req_argc = 0;
 
