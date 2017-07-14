@@ -108,7 +108,7 @@ External commands:
   C ?git checkout %(branch)
   ! ?git branch -D %(branch)
 [-] status bindings
-View specific actions
+View-specific actions
   u status-update     Stage/unstage chunk or file changes
   ! status-revert     Revert chunk or file changes
   M status-merge      Merge file using external tool

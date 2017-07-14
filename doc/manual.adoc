@@ -174,7 +174,7 @@ following variables.
 |%(fileargs)		|The file arguments passed on the command line.
 |%(cmdlineargs)		|All other options passed on the command line.
 |%(diffargs)		|Options from 'diff-options' or 'TIG_DIFF_OPTS' used
-			 used by the diff and stage view.
+			 by the diff and stage view.
 |%(blameargs)		|Options from 'blame-options' used by the blame view.
 |%(logargs)		|Options from 'log-options' used by the log view.
 |%(mainargs)		|Options from 'main-options' used by the main view.
@@ -249,8 +249,9 @@ Configuration Files
 
 Upon startup, Tig first reads the system wide configuration file
 (`{sysconfdir}/tigrc` by default) and then proceeds to read the user's
-configuration file (`~/.tigrc` by default). The paths to either of these files
-can be overridden through the following environment variables:
+configuration file (`~/.tigrc` or `$XDG_CONFIG_HOME/tig/config` by default).
+The paths to either of these files can be overridden through the following
+environment variables:
 
 TIGRC_USER::
 	Path of the user configuration file.
@@ -290,9 +291,8 @@ Or set the variable permanently in your environment.
 
 TIG_LS_REMOTE::
 
-	Set command for retrieving all repository references. The command
-	should output data in the same format as git-ls-remote(1). Defaults
-	to:
+	Command for retrieving all repository references. The command should
+	output data in the same format as git-ls-remote(1). Defaults to:
 -----------------------------------------------------------------------------
 git ls-remote .
 -----------------------------------------------------------------------------
@@ -413,14 +413,14 @@ Scrolling
 
 [frame="none",grid="none",cols="2<,8<",options="header"]
 |=============================================================================
-|Key	|Action
-|Insert	|Scroll view one line up.
-|Delete	|Scroll view one line down.
-|ScrBack|Scroll view one page up.
-|ScrFwd	|Scroll view one page down.
-|Left	|Scroll view one column left.
-|Right	|Scroll view one column right.
-|\|	|Scroll view to the first column.
+|Key		|Action
+|Insert		|Scroll view one line up.
+|Delete		|Scroll view one line down.
+|ScrollBack	|Scroll view one page up.
+|ScrollFwd	|Scroll view one page down.
+|Left		|Scroll view one column left.
+|Right		|Scroll view one column right.
+|\|		|Scroll view to the first column.
 |=============================================================================
 
 [[searching]]

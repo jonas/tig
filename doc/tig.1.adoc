@@ -34,7 +34,7 @@ OPTIONS
 -------
 
 Command line options recognized by Tig include all valid git-log(1) and
-git-diff(1) options, as well as the following subcommands and Tig specific
+git-diff(1) options, as well as the following subcommands and Tig-specific
 options. The first command line parameter not starting with "-" is interpreted
 as being either a revision specification or a path and will end the option
 parsing. All additional options will be passed to the underlying Git command.
@@ -191,7 +191,8 @@ See link:tigrc.5.{docext}[tigrc(5)] for a full list.
 endif::version[]
 
 TIGRC_USER::
-	Path of the user configuration file (defaults to `~/.tigrc`).
+	Path of the user configuration file (defaults to `~/.tigrc` or
+	`$XDG_CONFIG_HOME/tig/config`).
 
 TIGRC_SYSTEM::
 	Path of the system wide configuration file (defaults to
@@ -199,7 +200,7 @@ TIGRC_SYSTEM::
 	configuration.
 
 TIG_LS_REMOTE::
-	Set command for retrieving all repository references. The command
+	Command for retrieving all repository references. The command
 	should output data in the same format as git-ls-remote(1).
 
 TIG_DIFF_OPTS::
@@ -222,7 +223,7 @@ TIG_NO_DISPLAY::
 
 FILES
 -----
-'$XDG_CONFIG_HOME/tig/config::
+'$XDG_CONFIG_HOME/tig/config'::
 '~/.config/tig/config'::
 '~/.tigrc'::
 	The Tig user configuration file is loaded in the following way. If
@@ -236,8 +237,8 @@ FILES
 	System wide configuration file.
 
 '$GIT_DIR/config'::
-'~/.gitconfig::
-'{sysconfdir}/gitconfig::
+'~/.gitconfig'::
+'{sysconfdir}/gitconfig'::
 	Git configuration files. Read on start-up with the help of
 	git-config(1).
 
