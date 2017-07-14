@@ -43,6 +43,7 @@ Bug fixes:
  - Set cursor position when not updating prompt contents. (GH #647)
  - Erase status line at exit time for users without altscreen-capable terminals.
    (GH #589)
+ - Fix unexpected keys when restoring from suspend (`Ctrl-Z`). (GH #232)
  - contrib/vim.tigrc: Also bind G in the main as a workaround for limitations of
    the `none` action. (GH #594, #599)
  - Only override `blame-options` when commands are given and fix parsing of

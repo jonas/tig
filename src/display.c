@@ -749,6 +749,9 @@ get_input(int prompt_position, struct key *key)
 			resize_display();
 			redraw_display(true);
 
+		} else if (key_value == KEY_CTL('z')) {
+			raise(SIGTSTP);
+
 		} else {
 			int pos, key_length;
 
@@ -773,9 +776,6 @@ get_input(int prompt_position, struct key *key)
 				key->modifiers.control = 1;
 				key_value = key_value | 0x40;
 			}
-
-			if (key_value == KEY_CTL('z'))
-				raise(SIGTSTP);
 
 			if ((key_value >= KEY_MIN && key_value < KEY_MAX) || key_value < 0x1F) {
 				key->data.value = key_value;
