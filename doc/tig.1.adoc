@@ -222,7 +222,7 @@ TIG_NO_DISPLAY::
 
 FILES
 -----
-'$XDG_CONFIG_HOME/tig/config::
+'$XDG_CONFIG_HOME/tig/config'::
 '~/.config/tig/config'::
 '~/.tigrc'::
 	The Tig user configuration file is loaded in the following way. If
@@ -236,8 +236,8 @@ FILES
 	System wide configuration file.
 
 '$GIT_DIR/config'::
-'~/.gitconfig::
-'{sysconfdir}/gitconfig::
+'~/.gitconfig'::
+'{sysconfdir}/gitconfig'::
 	Git configuration files. Read on start-up with the help of
 	git-config(1).
 
