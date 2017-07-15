@@ -461,7 +461,7 @@ status_enter(struct view *view, struct line *line)
 			return REQ_NONE;
 		}
 
-	    	if (!suffixcmp(status->new.name, -1, "/")) {
+		if (!suffixcmp(status->new.name, -1, "/")) {
 			report("Cannot display a directory");
 			return REQ_NONE;
 		}

@@ -213,7 +213,7 @@ draw_field(struct view *view, enum line_type type, const char *text, int width, 
 		int leftpad = max - textlen - 1;
 
 		if (leftpad > 0) {
-	    		if (draw_space(view, type, leftpad, leftpad))
+			if (draw_space(view, type, leftpad, leftpad))
 				return true;
 			max -= leftpad;
 			col += leftpad;;

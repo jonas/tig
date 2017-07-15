@@ -34,7 +34,7 @@ if test -n "$VERSION"; then
 		git checkout master
 
 	# Update files which should reference the version.
-	sed -i "s/VERSION\s*=\s*[0-9.]\+/VERSION	= $VERSION/" Makefile	
+	sed -i "s/VERSION\s*=\s*[0-9.]\+/VERSION	= $VERSION/" Makefile
 	sed -i "s#tig-[0-9.]\+[0-9]\+#tig-$VERSION#g" INSTALL.adoc
 	perl -pi -e 's/^master$/RELEASE_TITLE/ms' "$NEWS"
 	perl -pi -e 's/^RELEASE_TITLE.*/RELEASE_TITLE/ms' "$NEWS"
