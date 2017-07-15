@@ -260,6 +260,11 @@ COMPAT_CPPFLAGS += -DNO_STRNDUP
 COMPAT_OBJS += compat/strndup.o
 endif
 
+ifdef NO_WORDEXP
+COMPAT_CPPFLAGS += -DNO_WORDEXP
+COMPAT_OBJS += compat/wordexp.o
+endif
+
 COMPAT_OBJS += compat/hashtab.o
 
 override CPPFLAGS += $(COMPAT_CPPFLAGS)

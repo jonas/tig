@@ -11,7 +11,7 @@ m4_pattern_forbid([^AX_])
 
 AC_PROG_CC
 
-AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/time.h unistd.h wordexp.h])
 AC_CHECK_FUNCS([gettimeofday])
 AC_CHECK_DECLS([environ])
 AC_CHECK_DECLS([errno], [], [], [#include <errno.h>])
@@ -20,6 +20,7 @@ dnl Checks for compatibility flags
 AC_CHECK_FUNCS([mkstemps], [AC_SUBST([NO_MKSTEMPS], ["#"])])
 AC_CHECK_FUNCS([setenv], [AC_SUBST([NO_SETENV], ["#"])])
 AC_CHECK_FUNCS([strndup], [AC_SUBST([NO_STRNDUP], ["#"])])
+AC_CHECK_FUNCS([wordexp], [AC_SUBST([NO_WORDEXP], ["#"])])
 
 AX_WITH_CURSES
 case "$ax_cv_ncurses" in "no")
