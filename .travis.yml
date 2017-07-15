@@ -17,6 +17,7 @@ script:
   - # ============ Build from config ===============
   - cp contrib/config.make .
   - make all-debug
+  - make update-docs && git diff --exit-code
   - make test
   - make test TEST_OPTS=valgrind
   - if [ $CC = clang ]; then make test-address-sanitizer; fi
