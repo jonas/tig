@@ -278,7 +278,13 @@ The following variables can be set:
 	Ignore space changes in diff view. By default no space changes are
 	ignored. Changing this to "all", "some" or "at-eol" is equivalent to
 	passing "--ignore-all-space", "--ignore-space" or
-	"--ignore-space-at-eol" respectively to `git diff` or `git show`.
+	"--ignore-space-at-eol" respectively to `git diff` or `git show`. +
+	 +
+	*Warning:* when `ignore-space` is set to `some`, `all` or `at-eol`, then
+	the *status-update* and *status-revert* may fail when updating or
+	reverting chunks containing lines with space changes. Similarly,
+	*stage-update-line* may fail when updating a line adjacent to a line
+	with space changes
 
 'commit-order' (enum) [auto|default|topo|date|author-date|reverse]::
 
@@ -820,12 +826,6 @@ View-specific actions
 |stage-split-chunk       |Split current diff chunk
 |=============================================================================
 
-NOTE: When `ignore-space` is set to `some`, `all` or `at-eol`, then
-*status-update* and *status-revert* may fail when updating or reverting
-chunks containing lines with space changes. Similarly,
-*stage-update-line* may fail when updating a line adjacent to a line
-with space changes 
-
 Cursor navigation
 ^^^^^^^^^^^^^^^^^
 
@@ -1114,3 +1114,4 @@ manpage:tig[1],
 manpage:tigmanual[7],
 endif::backend-docbook[]
 git(7), git-config(1)
+// vim: tw=80
