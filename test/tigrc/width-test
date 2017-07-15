@@ -15,11 +15,11 @@ in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
 ### main-view
 
 test_case main-widths-default \
-        --script='
-        :set main-view = id:yes line-number:yes,interval=5 date:default author:full commit-title:yes,graph,refs,overflow=no
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set main-view = id:yes line-number:yes,interval=5 date:default author:full commit-title:yes,graph,refs,overflow=no
+	:refresh
+	' \
+	<<EOF
 ee91287   1| 2014-03-01 17:26 Jonas Fonseca      * [master] WIP: Upgrade to 0.4-SNAPSHOT and DCE
 a1dcf1a    | 2014-03-01 15:59 Jonas Fonseca      * Add type parameter for js.Dynamic
 296fc90    | 2014-01-16 22:51 Jonas Fonseca      * Move classes under org.scalajs.benchmark package scope
@@ -38,11 +38,11 @@ c819b08  10| 2013-11-26 23:39 Jonas Fonseca      * Extract the benchmark list va
 EOF
 
 test_case main-widths-1 \
-        --script='
-        :set main-view = id:yes,width=1 line-number:yes,interval=5,width=1 date:default,width=1 author:full,width=1 commit-title:yes,graph,refs,overflow=no
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set main-view = id:yes,width=1 line-number:yes,interval=5,width=1 date:default,width=1 author:full,width=1 commit-title:yes,graph,refs,overflow=no
+	:refresh
+	' \
+	<<EOF
 e   1| 2 J * [master] WIP: Upgrade to 0.4-SNAPSHOT and DCE
 a    | 2 J * Add type parameter for js.Dynamic
 2    | 2 J * Move classes under org.scalajs.benchmark package scope
@@ -61,11 +61,11 @@ c  10| 2 J * Extract the benchmark list variable name; fix push to use scoped va
 EOF
 
 test_case main-widths-2 \
-        --script='
-        :set main-view = id:yes,width=2 line-number:yes,interval=5,width=2 date:default,width=2 author:full,width=2 commit-title:yes,graph,refs,overflow=no
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set main-view = id:yes,width=2 line-number:yes,interval=5,width=2 date:default,width=2 author:full,width=2 commit-title:yes,graph,refs,overflow=no
+	:refresh
+	' \
+	<<EOF
 ee   1| 20 JF * [master] WIP: Upgrade to 0.4-SNAPSHOT and DCE
 a1    | 20 JF * Add type parameter for js.Dynamic
 29    | 20 JF * Move classes under org.scalajs.benchmark package scope
@@ -84,11 +84,11 @@ c8  10| 20 JF * Extract the benchmark list variable name; fix push to use scoped
 EOF
 
 test_case main-widths-5 \
-        --script='
-        :set main-view = id:yes,width=5 line-number:yes,interval=5,width=5 date:default,width=5 author:full,width=5 commit-title:yes,graph,refs,overflow=no
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set main-view = id:yes,width=5 line-number:yes,interval=5,width=5 date:default,width=5 author:full,width=5 commit-title:yes,graph,refs,overflow=no
+	:refresh
+	' \
+	<<EOF
 ee912     1| 2014- JFons * [master] WIP: Upgrade to 0.4-SNAPSHOT and DCE
 a1dcf      | 2014- JFons * Add type parameter for js.Dynamic
 296fc      | 2014- JFons * Move classes under org.scalajs.benchmark package scope
@@ -107,11 +107,11 @@ c819b    10| 2013- JFons * Extract the benchmark list variable name; fix push to
 EOF
 
 test_case main-widths-20 \
-        --script='
-        :set main-view = id:yes,width=20 line-number:yes,interval=5,width=20 date:default,width=20 author:full,width=20 commit-title:yes,graph,refs,overflow=no
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set main-view = id:yes,width=20 line-number:yes,interval=5,width=20 date:default,width=20 author:full,width=20 commit-title:yes,graph,refs,overflow=no
+	:refresh
+	' \
+	<<EOF
 ee912870202200a0b9cf         1| 2014-03-01 17:26     Jonas Fonseca        * [master] WIP: Upgrade to 0.4-SNAPSHOT and DCE
 a1dcf1aaa11470978db1          | 2014-03-01 15:59     Jonas Fonseca        * Add type parameter for js.Dynamic
 296fc90ba2c47ba3d2b6          | 2014-01-16 22:51     Jonas Fonseca        * Move classes under org.scalajs.benchmark package scope
@@ -132,12 +132,12 @@ EOF
 ### tree-view
 
 test_case tree-widths-default \
-        --script='
-        :set tree-view = id:yes line-number:yes,interval=5 mode:yes file-size:yes file-name:yes
-        :view-tree
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set tree-view = id:yes line-number:yes,interval=5 mode:yes file-size:yes file-name:yes
+	:view-tree
+	:refresh
+	' \
+	<<EOF
 Directory path /
 ee91287    | drwxr-xr-x      common
 ee91287    | drwxr-xr-x      deltablue
@@ -156,12 +156,12 @@ ee91287    | -rwxr-xr-x  493 run.sh
 EOF
 
 test_case tree-widths-1 \
-        --script='
-        :set tree-view = id:yes,width=1 line-number:yes,interval=5,width=1 mode:yes,width=1 file-size:yes,width=1 file-name:yes,width=1
-        :view-tree
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set tree-view = id:yes,width=1 line-number:yes,interval=5,width=1 mode:yes,width=1 file-size:yes,width=1 file-name:yes,width=1
+	:view-tree
+	:refresh
+	' \
+	<<EOF
 Directory path /
 e    | d   ~
 e    | d   ~
@@ -180,12 +180,12 @@ e    | - 4 ~
 EOF
 
 test_case tree-widths-2 \
-        --script='
-        :set tree-view = id:yes,width=2 line-number:yes,interval=5,width=2 mode:yes,width=2 file-size:yes,width=2 file-name:yes,width=2
-        :view-tree
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set tree-view = id:yes,width=2 line-number:yes,interval=5,width=2 mode:yes,width=2 file-size:yes,width=2 file-name:yes,width=2
+	:view-tree
+	:refresh
+	' \
+	<<EOF
 Directory path /
 ee    | dr    c~
 ee    | dr    d~
@@ -204,12 +204,12 @@ ee    | -r 49 r~
 EOF
 
 test_case tree-widths-5 \
-        --script='
-        :set tree-view = id:yes,width=5 line-number:yes,interval=5,width=5 mode:yes,width=5 file-size:yes,width=5 file-name:yes,width=5
-        :view-tree
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set tree-view = id:yes,width=5 line-number:yes,interval=5,width=5 mode:yes,width=5 file-size:yes,width=5 file-name:yes,width=5
+	:view-tree
+	:refresh
+	' \
+	<<EOF
 Directory path /
 ee912      | drwxr       comm~
 ee912      | drwxr       delt~
@@ -228,12 +228,12 @@ ee912      | -rwxr   493 run.~
 EOF
 
 test_case tree-widths-20 \
-        --script='
-        :set tree-view = id:yes,width=20 line-number:yes,interval=5,width=20 mode:yes,width=20 file-size:yes,width=20 file-name:yes,width=20
-        :view-tree
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set tree-view = id:yes,width=20 line-number:yes,interval=5,width=20 mode:yes,width=20 file-size:yes,width=20 file-name:yes,width=20
+	:view-tree
+	:refresh
+	' \
+	<<EOF
 Directory path /
 ee912870202200a0b9cf          | drwxr-xr-x                                common
 ee912870202200a0b9cf          | drwxr-xr-x                                deltablue
@@ -254,12 +254,12 @@ EOF
 ### refs-vew
 
 test_case refs-widths-default \
-        --script='
-        :set refs-view = id:yes ref:yes author:yes commit-title
-        :view-refs
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set refs-view = id:yes ref:yes author:yes commit-title
+	:view-refs
+	:refresh
+	' \
+	<<EOF
         All references
 ee91287 master         Jonas Fonseca WIP: Upgrade to 0.4-SNAPSHOT and DCE
 
@@ -278,12 +278,12 @@ ee91287 master         Jonas Fonseca WIP: Upgrade to 0.4-SNAPSHOT and DCE
 EOF
 
 test_case refs-widths-1 \
-        --script='
-        :set refs-view = id:yes,width=1 ref:yes,width=1 author:yes,width=1 commit-title
-        :view-refs
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set refs-view = id:yes,width=1 ref:yes,width=1 author:yes,width=1 commit-title
+	:view-refs
+	:refresh
+	' \
+	<<EOF
   A
 e m J WIP: Upgrade to 0.4-SNAPSHOT and DCE
 
@@ -302,12 +302,12 @@ e m J WIP: Upgrade to 0.4-SNAPSHOT and DCE
 EOF
 
 test_case refs-widths-2 \
-        --script='
-        :set refs-view = id:yes,width=2 ref:yes,width=2 author:yes,width=2 commit-title
-        :view-refs
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set refs-view = id:yes,width=2 ref:yes,width=2 author:yes,width=2 commit-title
+	:view-refs
+	:refresh
+	' \
+	<<EOF
    Al
 ee ma JF WIP: Upgrade to 0.4-SNAPSHOT and DCE
 
@@ -326,12 +326,12 @@ ee ma JF WIP: Upgrade to 0.4-SNAPSHOT and DCE
 EOF
 
 test_case refs-widths-5 \
-        --script='
-        :set refs-view = id:yes,width=5 ref:yes,width=5 author:yes,width=5 commit-title
-        :view-refs
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set refs-view = id:yes,width=5 ref:yes,width=5 author:yes,width=5 commit-title
+	:view-refs
+	:refresh
+	' \
+	<<EOF
       All r
 ee912 maste JFons WIP: Upgrade to 0.4-SNAPSHOT and DCE
 
@@ -350,12 +350,12 @@ ee912 maste JFons WIP: Upgrade to 0.4-SNAPSHOT and DCE
 EOF
 
 test_case refs-widths-20 \
-        --script='
-        :set refs-view = id:yes,width=20 ref:yes,width=20 author:yes,width=20 commit-title
-        :view-refs
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set refs-view = id:yes,width=20 ref:yes,width=20 author:yes,width=20 commit-title
+	:view-refs
+	:refresh
+	' \
+	<<EOF
                      All references
 ee912870202200a0b9cf master               Jonas Fonseca        WIP: Upgrade to 0.4-SNAPSHOT and DCE
 
@@ -376,13 +376,13 @@ EOF
 ### grep-view
 
 test_case grep-widths-default \
-        --script='
-        :set grep-view = file-name:yes,width=20 line-number:yes,interval=1 text
-        :g
-        source<Enter>
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set grep-view = file-name:yes,width=20 line-number:yes,interval=1 text
+	:g
+	source<Enter>
+	:refresh
+	' \
+	<<EOF
 LICENSE                5| Redistribution and use in source and binary forms, with or without modification,
 LICENSE                8|     * Redistributions of source code must retain the above copyright notice,
 README.md             27| time you save a source file, a compilation of the project is triggered.
@@ -401,13 +401,13 @@ common/reference/tr~  46|   for (var property in source) {
 EOF
 
 test_case grep-widths-1 \
-        --script='
-        :set grep-view = file-name:yes,width=1 line-number:yes,interval=1,width=1 text
-        :g
-        source<Enter>
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set grep-view = file-name:yes,width=1 line-number:yes,interval=1,width=1 text
+	:g
+	source<Enter>
+	:refresh
+	' \
+	<<EOF
 ~    5| Redistribution and use in source and binary forms, with or without modification,
 ~    8|     * Redistributions of source code must retain the above copyright notice,
 ~   27| time you save a source file, a compilation of the project is triggered.
@@ -426,13 +426,13 @@ test_case grep-widths-1 \
 EOF
 
 test_case grep-widths-2 \
-        --script='
-        :set grep-view = file-name:yes,width=2 line-number:yes,interval=1,width=2 text
-        :g
-        source<Enter>
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set grep-view = file-name:yes,width=2 line-number:yes,interval=1,width=2 text
+	:g
+	source<Enter>
+	:refresh
+	' \
+	<<EOF
 L~     5| Redistribution and use in source and binary forms, with or without modification,
 L~     8|     * Redistributions of source code must retain the above copyright notice,
 R~    27| time you save a source file, a compilation of the project is triggered.
@@ -451,13 +451,13 @@ c~    46|   for (var property in source) {
 EOF
 
 test_case grep-widths-5 \
-        --script='
-        :set grep-view = file-name:yes,width=5 line-number:yes,interval=1,width=5 text
-        :g
-        source<Enter>
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set grep-view = file-name:yes,width=5 line-number:yes,interval=1,width=5 text
+	:g
+	source<Enter>
+	:refresh
+	' \
+	<<EOF
 LICE~     5| Redistribution and use in source and binary forms, with or without modification,
 LICE~     8|     * Redistributions of source code must retain the above copyright notice,
 READ~    27| time you save a source file, a compilation of the project is triggered.
@@ -476,13 +476,13 @@ comm~    46|   for (var property in source) {
 EOF
 
 test_case grep-widths-20 \
-        --script='
-        :set grep-view = file-name:yes,width=20 line-number:yes,interval=1,width=20 text
-        :g
-        source<Enter>
-        :refresh
-        ' \
-        <<EOF
+	--script='
+	:set grep-view = file-name:yes,width=20 line-number:yes,interval=1,width=20 text
+	:g
+	source<Enter>
+	:refresh
+	' \
+	<<EOF
 LICENSE                      5| Redistribution and use in source and binary forms, with or without modification,
 LICENSE                      8|     * Redistributions of source code must retain the above copyright notice,
 README.md                   27| time you save a source file, a compilation of the project is triggered.

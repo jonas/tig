@@ -527,7 +527,7 @@ main_request(struct view *view, enum request request, struct line *line)
 
 		if (line->type == LINE_STAT_UNSTAGED
 		    || line->type == LINE_STAT_STAGED)
-			open_stage_view(view, NULL, line->type, flags); 
+			open_stage_view(view, NULL, line->type, flags);
 		else
 			open_diff_view(view, flags);
 		break;

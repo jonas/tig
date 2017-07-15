@@ -66,7 +66,7 @@ view_request(struct view *view, enum request request)
 	    view_has_flags(view, VIEW_SEND_CHILD_ENTER)) {
 		struct view *child = display[1];
 
-	    	if (forward_request_to_child(child, request)) {
+		if (forward_request_to_child(child, request)) {
 			view_request(child, request);
 			return REQ_NONE;
 		}
@@ -549,7 +549,7 @@ open_pager_mode(enum request request)
 	} else if (request == REQ_VIEW_DIFF) {
 		if (argv_contains(opt_rev_args, "--stdin"))
 			open_diff_view(NULL, OPEN_FORWARD_STDIN);
-		else              
+		else
 			open_diff_view(NULL, OPEN_STDIN);
 
 	} else {

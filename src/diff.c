@@ -205,7 +205,7 @@ diff_common_highlight(struct view *view, const char *text, enum line_type type)
 {
 	struct diff_stat_context context = { text, type, true };
 	enum line_type hi_type = type == LINE_DIFF_ADD
-		               ? LINE_DIFF_ADD_HIGHLIGHT : LINE_DIFF_DEL_HIGHLIGHT;
+				 ? LINE_DIFF_ADD_HIGHLIGHT : LINE_DIFF_DEL_HIGHLIGHT;
 	const char *codes[] = { "\x1b[7m", "\x1b[27m" };
 	const enum line_type types[] = { hi_type, type };
 	int i;

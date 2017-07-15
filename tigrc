@@ -92,7 +92,7 @@ set reference-format		= [branch] <tag> {remote} ~replace~
 # Settings controlling how content is read from Git
 set commit-order		= auto		# Enum: auto, default, topo, date, reverse (main)
 set status-show-untracked-dirs	= yes		# Show files in untracked directories? (status)
-set status-show-untracked-files = yes		# Show untracked files?
+set status-show-untracked-files	= yes		# Show untracked files?
 set ignore-space		= no		# Enum: no, all, some, at-eol (diff)
 set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set diff-context		= 3		# Number of lines to show around diff changes (diff)
@@ -108,7 +108,7 @@ set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 set refresh-mode		= auto		# Enum: manual, auto, after-command, periodic
 set refresh-interval		= 10		# Interval in seconds between refreshes
 set ignore-case			= no		# Enum: no, yes, smart-case
-                                                # Ignore case when searching? Smart-case option will
+						# Ignore case when searching? Smart-case option will
 set wrap-search			= yes		# Wrap around to top/bottom of view when searching
 set focus-child			= yes		# Move focus to child view when opened?
 set horizontal-scroll		= 50%		# Number of columns to scroll as % of width
@@ -147,7 +147,7 @@ set mouse-wheel-cursor		= no		# Prefer moving the cursor to scrolling the view?
 #   %(remote)		The current remote name.
 #   %(tag)		The current tag name.
 #   %(stash)		The current stash name.
-#   %(directory)	The current directory path in the tree view; 
+#   %(directory)	The current directory path in the tree view;
 #			empty for the root directory.
 #   %(file)		The currently selected file.
 #   %(ref)		The reference given to blame or HEAD if undefined.
@@ -212,7 +212,7 @@ bind stage	1	stage-update-line	# Stage/unstage current line
 bind stage	!	status-revert		# Revert current diff (c)hunk
 bind stage	\	stage-split-chunk	# Split current diff (c)hunk
 bind stage	@	:/^@@			# Jump to next (c)hunk
-bind stage	[	:toggle diff-context -1 # Decrease the diff context
+bind stage	[	:toggle diff-context -1	# Decrease the diff context
 bind stage	]	:toggle diff-context +1	# Increase the diff context
 bind diff	@	:/^@@			# Jump to next (c)hunk
 bind diff	[	:toggle diff-context -1
@@ -379,8 +379,8 @@ color stat-untracked		magenta	default
 color help-group		blue	default
 color help-action		yellow	default
 color diff-stat			blue	default
-color diff-add-highlight	green	default standout
-color diff-del-highlight	red	default standout
+color diff-add-highlight	green	default	standout
+color diff-del-highlight	red	default	standout
 color palette-0			magenta	default
 color palette-1			yellow	default
 color palette-2			cyan	default
@@ -388,13 +388,13 @@ color palette-3			green	default
 color palette-4			default	default
 color palette-5			white	default
 color palette-6			red	default
-color palette-7			magenta	default bold
-color palette-8			yellow	default bold
-color palette-9			cyan	default bold
-color palette-10		green	default bold
-color palette-11		default	default bold
-color palette-12		white	default bold
-color palette-13		red	default bold
+color palette-7			magenta	default	bold
+color palette-8			yellow	default	bold
+color palette-9			cyan	default	bold
+color palette-10		green	default	bold
+color palette-11		default	default	bold
+color palette-12		white	default	bold
+color palette-13		red	default	bold
 color graph-commit		blue	default
 color search-result		black	yellow
 

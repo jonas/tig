@@ -22,11 +22,11 @@ struct ref;
  */
 
 #define LINE_INFO(_) \
-	_(DIFF_HEADER,  	"diff --"), \
-	_(DIFF_DEL_FILE,  	"--- "), \
-	_(DIFF_ADD_FILE,  	"+++ "), \
-	_(DIFF_START,   	"---"), \
-	_(DIFF_CHUNK,   	"@@"), \
+	_(DIFF_HEADER,		"diff --"), \
+	_(DIFF_DEL_FILE,	"--- "), \
+	_(DIFF_ADD_FILE,	"+++ "), \
+	_(DIFF_START,		"---"), \
+	_(DIFF_CHUNK,		"@@"), \
 	_(DIFF_ADD,		"+"), \
 	_(DIFF_ADD2,		" +"), \
 	_(DIFF_DEL,		"-"), \
@@ -50,13 +50,13 @@ struct ref;
 	_(CURSOR,		""), \
 	_(STATUS,		""), \
 	_(DELIMITER,		""), \
-	_(DATE,      		""), \
-	_(MODE,      		""), \
+	_(DATE,			""), \
+	_(MODE,			""), \
 	_(ID,			""), \
 	_(OVERFLOW,		""), \
-	_(DIRECTORY,	 	""), \
-	_(FILE,  		""), \
-	_(FILE_SIZE, 		""), \
+	_(DIRECTORY,		""), \
+	_(FILE,			""), \
+	_(FILE_SIZE,		""), \
 	_(LINE_NUMBER,		""), \
 	_(TITLE_BLUR,		""), \
 	_(TITLE_FOCUS,		""), \
