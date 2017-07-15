@@ -55,6 +55,7 @@ Bug fixes:
  - Fix reading from stdin for `tig show`.
  - Document problem of outdated system-wide `tigrc` files in Homebrew. (GH #598)
  - Repaint the display when toggling `line-graphics`. (GH #527)
+ - Fix custom date formatting support longer strings. (GH #522)
 
 tig-2.2.2
 ---------
