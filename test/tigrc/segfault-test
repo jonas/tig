@@ -1,0 +1,20 @@
+#!/bin/sh
+
+. libtest.sh
+
+test_todo "Segfault without 'set reference-format' in tigrc"
+
+export TIGRC_SYSTEM=/dev/null
+
+tigrc <<EOF
+bind generic : prompt
+# sufficient to rescue from crash
+# set reference-format = branch
+EOF
+
+steps ':save-options'
+
+test_tig status
+
+assert_equals stderr <<EOF
+EOF

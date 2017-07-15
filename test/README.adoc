@@ -39,6 +39,10 @@ trace::
 
 	Show trace information.
 
+todos::
+
+	Run TODO tests, which are otherwise skipped.
+
 valgrind::
 
 	Run tests and verify memory access with Valgrind.
