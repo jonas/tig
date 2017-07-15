@@ -447,11 +447,13 @@ date::
 	  How to display dates. If set to "relative" or "relative-compact" a
 	  relative date will be used, e.g. "2 minutes ago" or "2m". If set to
 	  "custom", the strftime(3) string format specified in the "format"
-	  option is used.
+	  option is used. 
 	- 'local' (bool): If true, use localtime(3) to convert to local
 	  timezone. Note that relative dates always use local offsets.
-	- 'format' (string): format string to pass to strftime(3) when 'custom'
-	  display mode has been selected.
+	- 'format' (string): custom date format string to pass to strftime(3)
+	  when 'custom' display mode has been selected. For time zones, "%z" is
+	  supported whereas "%Z" will always show "UTC", since Git only stores
+	  time zone offsets.
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
 
