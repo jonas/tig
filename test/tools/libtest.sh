@@ -60,7 +60,7 @@ export LINES=30
 export COLUMNS=80
 
 # Internal test env
-# A comma-separated list of options. See docs in test/README.
+# A space-separated list of options. See docs in test/README.
 export TEST_OPTS="${TEST_OPTS:-}"
 # Used by tig_script to set the test "scope" used by test_tig.
 export TEST_NAME=
@@ -197,20 +197,25 @@ trace=
 todos=
 valgrind=
 
-set -- ${TIG_TEST_OPTS:-} ${TEST_OPTS:-}
-
-while [ $# -gt 0 ]; do
-	arg="$1"; shift
+ORIG_IFS="$IFS"
+IFS=" 	"
+for arg in ${MAKE_TEST_OPTS:-} ${TEST_OPTS:-}; do
+	if [ -z "$arg" ]; then
+		continue;
+	fi
 	case "$arg" in
 		verbose) verbose=yes ;;
-		no-indent) indent= ;;
+		no[-_]indent|noindent) indent= ;;
 		debugger=*) debugger="$(expr "$arg" : 'debugger=\(.*\)')" ;;
 		debugger) debugger="$(auto_detect_debugger)" ;;
 		trace) trace=yes ;;
-		todos) todos=yes ;;
+		todo|todos) todos=yes ;;
 		valgrind) valgrind="$HOME/valgrind.log" ;;
+		*) die "unknown TEST_OPTS element '$arg'" ;;
 	esac
 done
+IFS="$ORIG_IFS"
+ORIG_IFS=
 
 #
 # Test runners and assertion checking.
