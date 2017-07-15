@@ -298,7 +298,7 @@ show_test_results()
 		printf 'No test results found\n'
 	elif grep -q '^ *\[FAIL\]' < .test-result; then
 		failed="$(grep -c '^ *\[FAIL\]' < .test-result || true)"
-		count="$(grep -c '^ *\[(FAIL\|OK\)\]' < .test-result || true)"
+		count="$(grep -c '^ *\[\(FAIL\|OK\)\]' < .test-result || true)"
 
 		printf 'Failed %d out of %d test(s)\n' "$failed" "$count"
 
