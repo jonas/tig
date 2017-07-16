@@ -183,9 +183,7 @@ mkdate(const struct time *time, enum date date, bool local, const char *custom_f
 	static char buf[SIZEOF_STR];
 	struct tm tm;
 	const char *format;
-	bool tz_restore = false;
-	char *tzdup = NULL;
-	bool ok;
+	char tzbuf[20] = "";
 
 	if (!date || !time || !time->sec)
 		return "";
@@ -198,12 +196,15 @@ mkdate(const struct time *time, enum date date, bool local, const char *custom_f
 	       ? "%Y-%m-%d %H:%M"
 	       : custom_format ? custom_format : "%Y-%m-%d";
 
+	tzset();
 	if (local) {
 		time_t date = time->sec + time->tz;
-
 		localtime_r(&date, &tm);
 
 	} else {
+		gmtime_r(&time->sec, &tm);
+
+#if HAVE_STRUCT_TM_TM_GMTOFF
 		/* Format dates with time zones by temporarily setting
 		 * the TZ environment variable and calling tzset(3) so
 		 * gmtime and strftime has the proper time zone info.
@@ -211,40 +212,16 @@ mkdate(const struct time *time, enum date date, bool local, const char *custom_f
 		 * offset +0200) since Git only records offsets in the
 		 * ident dates. */
 		if (format == custom_format) {
-			const char *tz = getenv("TZ");
-			char tzbuf[20] = "";
-
-			tzdup = tz ? strdup(tz) : NULL;
-			if (tz && !tzdup)
-				return "";
-
 			if (!string_format(tzbuf, "UTC%+03d:%02d",
-					   (time->tz / 60 / 60), (time->tz / 60 % 60))) {
-				free(tzdup);
+					   (time->tz / 60 / 60), (time->tz / 60 % 60)))
 				return "";
-			}
-
-			tz_restore = true;
-			setenv("TZ", tzbuf, 1);
-			tzset();
+			tm.tm_gmtoff = time->tz;
+			tm.tm_zone = tzbuf;
 		}
-
-		gmtime_r(&time->sec, &tm);
+#endif
 	}
 
-	ok = !!strftime(buf, sizeof(buf), format, &tm);
-
-	if (tz_restore) {
-		if (tzdup) {
-			setenv("TZ", tzdup, 1);
-			free(tzdup);
-		} else {
-			unsetenv("TZ");
-		}
-		tzset();
-	}
-
-	return ok ? buf : NULL;
+	return strftime(buf, sizeof(buf), format, &tm) ? buf : NULL;
 }
 
 const char *
