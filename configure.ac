@@ -21,6 +21,8 @@ AC_CHECK_FUNCS([mkstemps], [AC_SUBST([NO_MKSTEMPS], ["#"])])
 AC_CHECK_FUNCS([setenv], [AC_SUBST([NO_SETENV], ["#"])])
 AC_CHECK_FUNCS([strndup], [AC_SUBST([NO_STRNDUP], ["#"])])
 
+AC_CHECK_MEMBERS([struct tm.tm_gmtoff],,,[#include <time.h>])
+
 AX_WITH_CURSES
 case "$ax_cv_ncurses" in "no")
 	AC_MSG_ERROR([ncurses not found])

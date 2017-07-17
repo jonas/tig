@@ -180,9 +180,10 @@ get_relative_date(const struct time *time, char *buf, size_t buflen, bool compac
 const char *
 mkdate(const struct time *time, enum date date, bool local, const char *custom_format)
 {
-	static char buf[STRING_SIZE("2006-04-29 14:21") + 1];
+	static char buf[SIZEOF_STR];
 	struct tm tm;
 	const char *format;
+	char tzbuf[20] = "";
 
 	if (!date || !time || !time->sec)
 		return "";
@@ -191,17 +192,35 @@ mkdate(const struct time *time, enum date date, bool local, const char *custom_f
 		return get_relative_date(time, buf, sizeof(buf),
 					 date == DATE_RELATIVE_COMPACT);
 
-	if (local) {
-		time_t date = time->sec + time->tz;
-		localtime_r(&date, &tm);
-	}
-	else {
-		gmtime_r(&time->sec, &tm);
-	}
-
 	format = date != DATE_CUSTOM
 	       ? "%Y-%m-%d %H:%M"
 	       : custom_format ? custom_format : "%Y-%m-%d";
+
+	tzset();
+	if (local) {
+		time_t date = time->sec + time->tz;
+		localtime_r(&date, &tm);
+
+	} else {
+		gmtime_r(&time->sec, &tm);
+
+#if HAVE_STRUCT_TM_TM_GMTOFF
+		/* Format dates with time zones by temporarily setting
+		 * the TZ environment variable and calling tzset(3) so
+		 * gmtime and strftime has the proper time zone info.
+		 * NOTE: Only works for %z (ie. formatting time zones as
+		 * offset +0200) since Git only records offsets in the
+		 * ident dates. */
+		if (format == custom_format) {
+			if (!string_format(tzbuf, "UTC%+03d:%02d",
+					   (time->tz / 60 / 60), (time->tz / 60 % 60)))
+				return "";
+			tm.tm_gmtoff = time->tz;
+			tm.tm_zone = tzbuf;
+		}
+#endif
+	}
+
 	return strftime(buf, sizeof(buf), format, &tm) ? buf : NULL;
 }
 
