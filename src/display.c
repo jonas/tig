@@ -21,6 +21,8 @@
 #include "tig/display.h"
 #include "tig/watch.h"
 
+static void set_terminal_modes(void);
+
 struct view *display[2];
 unsigned int current_view;
 
@@ -68,11 +70,7 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 			getc(opt_tty);
 			fseek(opt_tty, 0, SEEK_END);
 		}
-		nonl();		/* Disable conversion and detect newlines from input. */
-		raw();       /* Take input chars one at a time, no wait for \n */
-		noecho();       /* Don't echo input */
-		curs_set(0);
-		leaveok(stdscr, false);
+		set_terminal_modes();
 	}
 
 	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && refresh) {
@@ -541,6 +539,16 @@ done_display(void)
 	cursed = false;
 }
 
+static void
+set_terminal_modes(void)
+{
+	nonl();		/* Disable conversion and detect newlines from input. */
+	raw();		/* Take input chars one at a time, no wait for \n */
+	noecho();	/* Don't echo input */
+	curs_set(0);
+	leaveok(stdscr, false);
+}
+
 void
 init_display(void)
 {
@@ -568,12 +576,7 @@ init_display(void)
 	if (!cursed)
 		die("Failed to initialize curses");
 
-	nonl();		/* Disable conversion and detect newlines from input. */
-	raw();       /* Take input chars one at a time, no wait for \n */
-	noecho();       /* Don't echo input */
-	curs_set(0);
-	leaveok(stdscr, false);
-
+	set_terminal_modes();
 	init_colors();
 
 	getmaxyx(stdscr, y, x);
