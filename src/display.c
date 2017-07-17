@@ -380,7 +380,7 @@ save_view(struct view *view, const char *path)
 	for (i = 0; i < view->lines; i++) {
 		struct line *line = &view->line[i];
 
-		fprintf(file, "line[%3ld] type=%s selected=%d\n",
+		fprintf(file, "line[%3zu] type=%s selected=%d\n",
 			i,
 			enum_name(get_line_type_name(line->type)),
 			line->selected);
@@ -393,7 +393,7 @@ save_view(struct view *view, const char *path)
 			size_t j;
 			size_t offset;
 
-			fprintf(file, "line[%3ld] cells=%ld text=",
+			fprintf(file, "line[%3zu] cells=%zu text=",
 				i, box->cells);
 
 			for (j = 0, offset = 0; j < box->cells; j++) {
