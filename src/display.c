@@ -46,8 +46,13 @@ open_script(const char *path)
 	if (is_script_executing())
 		return error("Scripts cannot be run from scripts");
 
-	return io_open(&script_io, "%s", path)
-		? SUCCESS : error("Failed to open %s", path);
+	char buf[SIZEOF_STR];
+
+	if (!expand_path(buf, sizeof(buf), path))
+		return error("Failed to expand path: %s", path);
+
+	return io_open(&script_io, "%s", buf)
+		? SUCCESS : error("Failed to open %s", buf);
 }
 
 bool
