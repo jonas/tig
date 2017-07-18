@@ -38,6 +38,12 @@ extern char encoding_arg[];
 extern struct encoding *default_encoding;
 
 /*
+ * Path manipulation.
+ */
+
+bool expand_path(char *dst, size_t dstlen, const char *src);
+
+/*
  * Executing external commands.
  */
 

@@ -985,26 +985,21 @@ load_option_file(const char *path)
 	if (!path || !strlen(path))
 		return SUCCESS;
 
-	if (!prefixcmp(path, "~/")) {
-		const char *home = getenv("HOME");
-
-		if (!home || !string_format(buf, "%s/%s", home, path + 2))
-			return error("Failed to expand ~ to user home directory");
-		path = buf;
-	}
+	if (!expand_path(buf, sizeof(buf), path))
+		return error("Failed to expand path: %s", path);
 
 	/* It's OK that the file doesn't exist. */
-	if (!io_open(&io, "%s", path)) {
+	if (!io_open(&io, "%s", buf)) {
 		/* XXX: Must return ERROR_FILE_DOES_NOT_EXIST so missing
 		 * system tigrc is detected properly. */
 		if (io_error(&io) == ENOENT)
 			return ERROR_FILE_DOES_NOT_EXIST;
-		return error("Error loading file %s: %s", path, io_strerror(&io));
+		return error("Error loading file %s: %s", buf, io_strerror(&io));
 	}
 
 	if (io_load_span(&io, " \t", &config.lineno, read_option, &config) != SUCCESS ||
 	    config.errors == true)
-		warn("Errors while loading %s.", path);
+		warn("Errors while loading %s.", buf);
 	return SUCCESS;
 }
 

@@ -132,6 +132,41 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 }
 
 /*
+ * Path manipulation.
+ */
+
+bool
+expand_path(char *dst, size_t dstlen, const char *src)
+{
+	if (!src)
+		return false;
+
+	if (src[0] == '~') {
+		/* constrain wordexp to tilde expansion only */
+		const char *ifs = getenv("IFS") ? getenv("IFS") : " \t\n";
+		wordexp_t we_result;
+		size_t metachar_pos;
+		char metachars[SIZEOF_STR];
+		char leading[SIZEOF_STR];
+
+		string_format(metachars, "%s%s", "/$|&;<>(){}`", ifs);
+		metachar_pos = strcspn(src, metachars);
+		if (src[metachar_pos] == '/' || src[metachar_pos] == 0) {
+			string_nformat(leading, metachar_pos + 1, NULL, "%s", src);
+			if (wordexp(leading, &we_result, WRDE_NOCMD))
+				return false;
+			string_nformat(dst, dstlen, NULL, "%s%s", we_result.we_wordv[0], src + metachar_pos);
+			wordfree(&we_result);
+			return true;
+		}
+	}
+
+	/* else */
+	string_ncopy_do(dst, dstlen, src, strlen(src));
+	return true;
+}
+
+/*
  * Executing external commands.
  */
 
