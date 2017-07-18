@@ -74,7 +74,7 @@ DOCBOOK2PDF ?= docbook2pdf
 
 LCOV ?= lcov
 GENHTML ?= genhtml
-ifneq (,$(shell which gsed))
+ifneq (,$(shell which gsed 2>/dev/null))
 SED ?= gsed
 else
 SED ?= sed
