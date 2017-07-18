@@ -93,4 +93,24 @@ Misc
 [help] - line 1 of 5                                                        100%
 EOF
 
+test_case source-tilde-path \
+	--args='status' \
+	--tigrc="
+		bind generic : prompt
+		source ~/.tigrc.bind.q.for.help.screen
+		" \
+	--script="
+		:view-help
+		" \
+	<<EOF
+Quick reference for tig keybindings:
+
+[-] generic bindings
+View manipulation
+  q quit   Close all views and quit
+Misc
+  : prompt Open the prompt
+[help] - line 1 of 7                                                        100%
+EOF
+
 run_test_cases
