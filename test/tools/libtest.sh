@@ -569,15 +569,13 @@ run_test_cases()
 		if [ -e "$name-before" ]; then
 			test_exec_work_dir "$SHELL" "$HOME/$name-before"
 		fi
-		old_work_dir="$work_dir"
-		if [ -e "$name-cwd" ]; then
-			work_dir="$work_dir/$(cat < "$name-cwd")"
-		fi
-		ORIG_IFS="$IFS"
-		IFS=' '
-		test_tig $(if [ -e "$name-args" ]; then cat < "$name-args"; fi)
-		IFS="$ORIG_IFS"
-		work_dir="$old_work_dir"
+		(
+			if [ -e "$name-cwd" ]; then
+				work_dir="$work_dir/$(cat < "$name-cwd")"
+			fi
+			IFS=' '
+			test_tig $(if [ -e "$name-args" ]; then cat < "$name-args"; fi)
+		)
 		if [ -e "$name-after" ]; then
 			test_exec_work_dir "$SHELL" "$HOME/$name-after"
 		fi
