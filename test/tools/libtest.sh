@@ -337,7 +337,7 @@ test_todo_message()
 		explanation=": $explanation"
 	fi
 
-	printf '[TODO] The test is not expected to pass yet%s\n' "$explanation"
+	printf '[TODO] Not yet expected to pass%s\n' "$explanation"
 }
 
 test_todo()
