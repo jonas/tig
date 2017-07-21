@@ -36,4 +36,39 @@ test_case emoji-commit-titles-col-40 \
 [main] 50a10e108b44c34548b9ba9e31841100%
 EOF
 
+# platform-specific failures:
+# - fails in Travis environment, both gcc/clang
+# - fails on Ubuntu 16.04 x86_64, gcc
+# - passes on OS X 10.11.6, both gcc/clang
+test_case emoji-commit-titles-col-unset \
+	--subshell='export COLUMNS=' \
+	--todo="Can't unset COLUMNS on Linux for line including VARIATION SELECTOR-16" \
+	<<EOF
+2009-04-06 01:44 Committer o [master] 🌏💧✋🕋🗡🚀🏜☀️🌡🌶💯🚱⏳🌅🌑😡💉😱😈💀💥🌛🌙🐭💥🚶🏻〰🐛️⌛️👳🙏💥😴🛌😳💥🐛
+2009-03-28 13:22 Committer o 💄 Polish the UI
+2009-03-20 01:00 Committer o 📚 Document new feature
+2009-03-11 12:38 Committer o 🎨 Reformat the code
+2009-03-03 00:15 Committer o ✨ Add new feature
+2009-02-22 11:53 Committer o 🐧 Fix Linux issue
+2009-02-13 23:31 Committer I 🚑 Fix bug
+
+[main] 50a10e108b44c34548b9ba9e318416b3027a0627 - commit 1 of 7             100%
+EOF
+
+# fails on both Linux and OS X
+test_case emoji-commit-titles-col-300 \
+	--subshell='export COLUMNS=300' \
+	--todo="Can't set COLUMNS to finite value large enough to include VARIATION SELECTOR-16" \
+	<<EOF
+2009-04-06 01:44 Committer o [master] 🌏💧✋🕋🗡🚀🏜☀️🌡🌶💯🚱⏳🌅🌑😡💉😱😈💀💥🌛🌙🐭💥🚶🏻〰🐛️⌛️👳🙏💥😴🛌😳💥🐛
+2009-03-28 13:22 Committer o 💄 Polish the UI
+2009-03-20 01:00 Committer o 📚 Document new feature
+2009-03-11 12:38 Committer o 🎨 Reformat the code
+2009-03-03 00:15 Committer o ✨ Add new feature
+2009-02-22 11:53 Committer o 🐧 Fix Linux issue
+2009-02-13 23:31 Committer I 🚑 Fix bug
+
+[main] 50a10e108b44c34548b9ba9e318416b3027a0627 - commit 1 of 7             100%
+EOF
+
 run_test_cases
