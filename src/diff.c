@@ -358,7 +358,7 @@ diff_save_line(struct view *view, struct diff_state *state, enum open_flags flag
 {
 	if (flags & OPEN_RELOAD) {
 		struct line *line = &view->line[view->pos.lineno];
-		const char *file = view_has_line(view, line) ? diff_get_pathname(view, line) : NULL;
+		const char *file = view_has_line(view, line) ? diff_get_pathname(view, line, true) : NULL;
 
 		if (file) {
 			state->file = get_path(file);
@@ -377,7 +377,7 @@ diff_restore_line(struct view *view, struct diff_state *state)
 		return;
 
 	while ((line = find_prev_line_by_type(view, line, LINE_DIFF_HEADER))) {
-		const char *file = diff_get_pathname(view, line);
+		const char *file = diff_get_pathname(view, line, true);
 
 		if (file && !strcmp(file, state->file))
 			break;
@@ -625,7 +625,7 @@ diff_trace_origin(struct view *view, struct line *line)
 }
 
 const char *
-diff_get_pathname(struct view *view, struct line *line)
+diff_get_pathname(struct view *view, struct line *line, bool strict)
 {
 	struct line *header;
 	const char *dst;
@@ -634,16 +634,20 @@ diff_get_pathname(struct view *view, struct line *line)
 	int i;
 
 	header = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
-	if (!header)
-		return NULL;
 
-	for (i = 0; i < ARRAY_SIZE(prefixes); i++) {
-		dst = strstr(box_text(header), prefixes[i]);
-		if (dst)
-			return dst + strlen(prefixes[i]);
+	if (strict && !header) {
+		return NULL;
+	} else if (strict || header) {
+		for (i = 0; i < ARRAY_SIZE(prefixes); i++) {
+			dst = strstr(box_text(header), prefixes[i]);
+			if (dst)
+				return dst + strlen(prefixes[i]);
+		}
+		header = find_next_line_by_type(view, header, LINE_DIFF_ADD_FILE);
+	} else {
+		header = find_next_line_by_type(view, line, LINE_DIFF_ADD_FILE);
 	}
 
-	header = find_next_line_by_type(view, header, LINE_DIFF_ADD_FILE);
 	if (!header)
 		return NULL;
 
@@ -671,7 +675,7 @@ diff_common_edit(struct view *view, enum request request, struct line *line)
 		file = view->env->file;
 		lineno = view->env->lineno;
 	} else {
-		file = diff_get_pathname(view, line);
+		file = diff_get_pathname(view, line, true);
 		lineno = diff_get_lineno(view, line);
 	}
 
@@ -715,7 +719,7 @@ diff_common_select(struct view *view, struct line *line, const char *changes_msg
 	if (line->type == LINE_DIFF_STAT) {
 		struct line *header = diff_find_header_from_stat(view, line);
 		if (header) {
-			const char *file = diff_get_pathname(view, header);
+			const char *file = diff_get_pathname(view, header, true);
 
 			if (file) {
 				string_format(view->env->file, "%s", file);
@@ -727,15 +731,18 @@ diff_common_select(struct view *view, struct line *line, const char *changes_msg
 		string_format(view->ref, "Press '%s' to jump to file diff",
 			      get_view_key(view, REQ_ENTER));
 	} else {
-		const char *file = diff_get_pathname(view, line);
+		const char *strict_file = diff_get_pathname(view, line, true);
+		const char *lax_file = diff_get_pathname(view, line, false);
 
-		if (file) {
-			if (changes_msg)
-				string_format(view->ref, "%s to '%s'", changes_msg, file);
-			string_format(view->env->file, "%s", file);
+		if (lax_file) {
+			string_format(view->env->file, "%s", lax_file);
 			view->env->lineno = view->env->goto_lineno = diff_get_lineno(view, line);
 			view->env->blob[0] = 0;
-		} else {
+		}
+
+		if (strict_file && changes_msg) {
+			string_format(view->ref, "%s to '%s'", changes_msg, strict_file);
+		} else if (!strict_file) {
 			string_ncopy(view->ref, view->ops->id, strlen(view->ops->id));
 			pager_select(view, line);
 		}
