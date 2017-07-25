@@ -455,6 +455,9 @@ DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 enum status_code
 parse_run_request_flags(struct run_request_flags *flags, const char **argv)
 {
+	if (!argv[0])
+		return error("No arguments");
+
 	if (!strchr(COMMAND_FLAGS, *argv[0]))
 		return error("Unknown command flag '%c'; expected one of %s", argv[0][0], COMMAND_FLAGS);
 
