@@ -204,6 +204,7 @@ debugger=
 trace=
 todos=
 valgrind=
+timeout=10
 
 ORIG_IFS="$IFS"
 IFS=" 	"
@@ -216,6 +217,7 @@ for arg in ${MAKE_TEST_OPTS:-} ${TEST_OPTS:-}; do
 		no[-_]indent|noindent) indent= ;;
 		debugger=*) debugger="$(expr "$arg" : 'debugger=\(.*\)')" ;;
 		debugger) debugger="$(auto_detect_debugger)" ;;
+		timeout=*) timeout="$(expr "$arg" : 'timeout=\(.*\)')" ;;
 		trace) trace=yes ;;
 		todo|todos) todos=yes ;;
 		valgrind) valgrind="$HOME/valgrind.log" ;;
@@ -469,6 +471,16 @@ test_setup()
 	fi
 }
 
+install_pid_timeout() {
+	pid="${1:-}"
+	signal="${2:-ALRM}"
+	test "$timeout" -gt 0 || return
+	test "$pid" -gt 0 || return
+	test "$pid" != "$$" || return
+	trap '' "$signal"
+	sleep "$timeout" && kill -0 "$pid" >/dev/null 2>&1 && kill -"$signal" "$pid" >/dev/null 2>&1 || true &
+}
+
 valgrind_exec()
 {
 	kernel="$(uname -s 2>/dev/null || printf 'unknown\n')"
@@ -535,10 +547,16 @@ test_tig()
 				exec 4<&0
 			fi
 			IFS=" 	"
-			$runner "$@" <&4 > "$HOME/${prefix}stdout" 2> "$HOME/${prefix}stderr.orig"
+			$runner "$@" <&4 > "$HOME/${prefix}stdout" 2> "$HOME/${prefix}stderr.orig" &
+			tig_pid="$!"
+			signal=14
+			install_pid_timeout "$tig_pid" "$signal"
+			wait "$tig_pid"
 		fi
 		status_code="$?"
-		if [ "$status_code" != "$expected_status_code" ]; then
+		if [ "$status_code" -eq "$(( 256 + signal))" ] || [ "$status_code" -eq "$(( 128 + signal))" ]; then
+			printf '[FAIL] Test timed out after %s seconds\n' "$timeout" >> "$HOME/.test-result"
+		elif [ "$status_code" != "$expected_status_code" ]; then
 			printf '[FAIL] unexpected status code: %s (should be %s)\n' "$status_code" "$expected_status_code" >> "$HOME/.test-result"
 		fi
 	)
@@ -572,7 +590,7 @@ test_case()
 	printf '%s\n' "$name" >> test-cases
 	cat > "$name.expected"
 
-	touch -- "$name-before" "$name-after" "$name-script" "$name-args" "$name-tigrc" "$name-assert-stderr" "$name-todo" "$name-subshell"
+	touch -- "$name-before" "$name-after" "$name-script" "$name-args" "$name-tigrc" "$name-assert-stderr" "$name-todo" "$name-subshell" "$name-timeout"
 
 	while [ "$#" -gt 0 ]; do
 		arg="$1"; shift
@@ -580,7 +598,7 @@ test_case()
 		value="$(expr "X$arg" : 'X--[^=]*=\(.*\)')"
 
 		case "$key" in
-		before|after|script|args|cwd|tigrc|assert-stderr|todo|subshell)
+		before|after|script|args|cwd|tigrc|assert-stderr|todo|subshell|timeout)
 			printf '%s\n' "$value" > "$name-$key" ;;
 		*)	die "Unknown test_case argument: $arg"
 		esac
@@ -616,6 +634,9 @@ run_test_cases()
 			fi
 			if [ -e ./"$name-subshell" ]; then
 				. ./"$name-subshell"
+			fi
+			if [ -s "$name-timeout" ]; then
+				timeout="$(cat < "$name-timeout")"
 			fi
 			IFS=' '
 			test_tig $(if [ -e "$name-args" ]; then cat < "$name-args"; fi)
