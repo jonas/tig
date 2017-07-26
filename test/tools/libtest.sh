@@ -510,41 +510,38 @@ test_tig()
 		export TIG_TRACE="$HOME/${prefix}tig-trace"
 	fi
 	touch -- "${prefix}stdin" "${prefix}stderr"
-	if [ -n "$debugger" ]; then
-		printf "*** Running tests in '%s/%s'\n" "$(pwd)" "$work_dir"
-		if [ -s "$work_dir/${prefix}stdin" ]; then
-			printf '*** - This test requires data to be injected via stdin.\n'
-			printf "***   The expected input file is: '%s'\n" "../${prefix}stdin"
-		fi
-		if [ "$#" -gt 0 ]; then
-			printf '*** - This test expects the following arguments: %s\n' "$*"
-		fi
-		(cd "$work_dir" && "$debugger" tig "$@")
-	else
-		set +e
-		runner=
-		if [ "$expected_status_code" = 0 ] && [ -n "$valgrind" ]; then
-			runner=valgrind_exec
-		fi
-		if [ -n "$runner" ]; then
-			if [ -s "${prefix}stdin" ]; then
-				(cd "$work_dir" && "$runner" tig "$@") < "${prefix}stdin" > "${prefix}stdout" 2> "${prefix}stderr.orig"
-			else
-				(cd "$work_dir" && "$runner" tig "$@") > "${prefix}stdout" 2> "${prefix}stderr.orig"
+	(
+		# subshell handles cleanup of cwd, variables, redirections, set +e
+		cd "$work_dir" || die "chdir failed"
+		if [ -n "$debugger" ]; then
+			printf "*** Running tests in '%s/%s'\n" "$HOME" "$work_dir"
+			if [ -s "$HOME/${prefix}stdin" ]; then
+				printf '*** - This test requires data to be injected via stdin.\n'
+				printf "***   The expected input file is: '%s'\n" "../${prefix}stdin"
 			fi
+			if [ "$#" -gt 0 ]; then
+				printf '*** - This test expects the following arguments: %s\n' "$*"
+			fi
+			"$debugger" tig "$@"
 		else
-			if [ -s "${prefix}stdin" ]; then
-				(cd "$work_dir" && tig "$@") < "${prefix}stdin" > "${prefix}stdout" 2> "${prefix}stderr.orig"
-			else
-				(cd "$work_dir" && tig "$@") > "${prefix}stdout" 2> "${prefix}stderr.orig"
+			set +e
+			runner=tig
+			if [ "$expected_status_code" = 0 ] && [ -n "$valgrind" ]; then
+				runner="valgrind_exec tig"
 			fi
+			if [ -s "$HOME/${prefix}stdin" ]; then
+				exec 4<"$HOME/${prefix}stdin"
+			else
+				exec 4<&0
+			fi
+			IFS=" 	"
+			$runner "$@" <&4 > "$HOME/${prefix}stdout" 2> "$HOME/${prefix}stderr.orig"
 		fi
 		status_code="$?"
 		if [ "$status_code" != "$expected_status_code" ]; then
-			printf '[FAIL] unexpected status code: %s (should be %s)\n' "$status_code" "$expected_status_code" >> .test-result
+			printf '[FAIL] unexpected status code: %s (should be %s)\n' "$status_code" "$expected_status_code" >> "$HOME/.test-result"
 		fi
-		set -e
-	fi
+	)
 	# Normalize paths in stderr output
 	if [ -e "${prefix}stderr.orig" ]; then
 		sed "s#$output_dir#HOME#" < "${prefix}stderr.orig" > "${prefix}stderr"
