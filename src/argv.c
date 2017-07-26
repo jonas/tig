@@ -549,7 +549,6 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 		"--merges",
 		"--min-parents=",
 		"--no-max-parents",
-		"--no-merges",
 		"--no-min-parents",
 		"--no-walk",
 		"--perl-regexp",
@@ -576,6 +575,7 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 		"-i",
 	};
 	static const char *no_graph[] = {
+		"--no-merges",
 		"--follow",
 	};
 	static const char *with_reflog[] = {
