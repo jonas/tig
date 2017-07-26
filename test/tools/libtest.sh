@@ -537,17 +537,16 @@ test_tig()
 			"$debugger" tig "$@"
 		else
 			set +e
-			runner=tig
+			runner=exec
 			if [ "$expected_status_code" = 0 ] && [ -n "$valgrind" ]; then
-				runner="valgrind_exec tig"
+				runner=valgrind_exec
 			fi
 			if [ -s "$HOME/${prefix}stdin" ]; then
 				exec 4<"$HOME/${prefix}stdin"
 			else
 				exec 4<&0
 			fi
-			IFS=" 	"
-			$runner "$@" <&4 > "$HOME/${prefix}stdout" 2> "$HOME/${prefix}stderr.orig" &
+			"$runner" tig "$@" <&4 > "$HOME/${prefix}stdout" 2> "$HOME/${prefix}stderr.orig" &
 			tig_pid="$!"
 			signal=14
 			install_pid_timeout "$tig_pid" "$signal"
