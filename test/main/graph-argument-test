@@ -4,7 +4,6 @@
 . libgit.sh
 
 export LINES=16
-export TIG_NO_DISPLAY=
 
 touch stderr
 
