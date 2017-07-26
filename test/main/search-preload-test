@@ -1,0 +1,35 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=3
+export COLUMNS=80
+
+test_require readline
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+tigrc <<EOF
+set line-graphics = ascii
+EOF
+
+# Force .tig_history since the final entry isn't guaranteed under the test harness.
+file .tig_history <<EOF
+Merge pull request #1 from sjrd/patch-1
+EOF
+
+steps '
+	:find-next
+	:save-display main.screen
+'
+
+test_tig
+
+assert_equals main.screen <<EOF
+2013-10-18 07:00 Jonas Fonseca      M-. Merge pull request #1 from sjrd/patch-1
+[main] 0b89f7997f696a7f6ae4c10e3b29817862e751d6 - commit 39 of 48            81%
+EOF
+
+assert_equals stderr <<EOF
+EOF
