@@ -340,7 +340,7 @@ test_todo_message()
 		explanation=": $explanation"
 	fi
 
-	printf '[TODO] The test is not expected to pass yet%s\n' "$explanation"
+	printf '[TODO] Not yet expected to pass%s\n' "$explanation"
 }
 
 test_todo()
@@ -534,7 +534,7 @@ test_case()
 	printf '%s\n' "$name" >> test-cases
 	cat > "$name.expected"
 
-	touch -- "$name-before" "$name-after" "$name-script" "$name-args" "$name-tigrc" "$name-assert-stderr" "$name-todo"
+	touch -- "$name-before" "$name-after" "$name-script" "$name-args" "$name-tigrc" "$name-assert-stderr" "$name-todo" "$name-subshell"
 
 	while [ "$#" -gt 0 ]; do
 		arg="$1"; shift
@@ -542,7 +542,7 @@ test_case()
 		value="$(expr "X$arg" : 'X--[^=]*=\(.*\)')"
 
 		case "$key" in
-		before|after|script|args|cwd|tigrc|assert-stderr|todo)
+		before|after|script|args|cwd|tigrc|assert-stderr|todo|subshell)
 			printf '%s\n' "$value" > "$name-$key" ;;
 		*)	die "Unknown test_case argument: $arg"
 		esac
@@ -572,15 +572,16 @@ run_test_cases()
 		if [ -e "$name-before" ]; then
 			test_exec_work_dir "$SHELL" "$HOME/$name-before"
 		fi
-		old_work_dir="$work_dir"
-		if [ -e "$name-cwd" ]; then
-			work_dir="$work_dir/$(cat < "$name-cwd")"
-		fi
-		ORIG_IFS="$IFS"
-		IFS=' '
-		test_tig $(if [ -e "$name-args" ]; then cat < "$name-args"; fi)
-		IFS="$ORIG_IFS"
-		work_dir="$old_work_dir"
+		(
+			if [ -e "$name-cwd" ]; then
+				work_dir="$work_dir/$(cat < "$name-cwd")"
+			fi
+			if [ -e ./"$name-subshell" ]; then
+				. ./"$name-subshell"
+			fi
+			IFS=' '
+			test_tig $(if [ -e "$name-args" ]; then cat < "$name-args"; fi)
+		)
 		if [ -e "$name-after" ]; then
 			test_exec_work_dir "$SHELL" "$HOME/$name-after"
 		fi
