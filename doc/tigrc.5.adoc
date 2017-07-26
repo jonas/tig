@@ -640,6 +640,8 @@ the command that should be executed.
 |=============================================================================
 |!			|Run the command in the foreground with output shown.
 |@			|Run the command in the background with no output.
+|+			|Run the command synchronously, and echo the first line
+			 of output to the status bar.
 |?			|Prompt the user before executing the command.
 |<			|Exit Tig after executing the command.
 |=============================================================================
@@ -704,6 +706,9 @@ bind main S !git format-patch -1 %(commit)
 
 # Create and checkout a new branch; specify custom prompt
 bind main B ?git checkout -b "%(prompt Enter new branch name: )"
+
+# Show commit statistics for the author under the cursor
+bind main U +sh -c 'git --no-pager shortlog -s --author="$(git show -s --format=%aE %(commit))" </dev/tty'
 --------------------------------------------------------------------------
 
 Advanced shell-like commands

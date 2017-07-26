@@ -82,6 +82,7 @@ struct run_request_flags {
 	bool confirm;
 	bool exit;
 	bool internal;
+	bool echo;
 };
 
 struct run_request {
