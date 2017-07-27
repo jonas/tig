@@ -438,23 +438,31 @@ test_setup()
 valgrind_exec()
 {
 	kernel="$(uname -s 2>/dev/null || printf 'unknown\n')"
-	kernel_supp="test/tools/valgrind-$kernel.supp"
+	kernel_supp="$base_dir/tools/valgrind-$kernel.supp"
 
-	valgrind_ops=
+	valgrind_ops=""
+
+	valgrind_supp="--suppressions=/dev/null"
 	if [ -e "$kernel_supp" ]; then
-		valgrind_ops="$valgrind_ops --suppressions='$kernel_supp'"
+		valgrind_supp="--suppressions=$kernel_supp"
 	fi
 
-	valgrind -q --gen-suppressions=all --track-origins=yes --error-exitcode=1 \
-		--log-file="$valgrind.orig" $valgrind_ops \
-		"$@"
+	(
+		IFS=' 	'
+		valgrind -q --gen-suppressions=all --track-origins=yes --error-exitcode=1 \
+			--log-file="$valgrind.orig" "$valgrind_supp" $valgrind_ops  \
+			"$@"
+	)
+	valgrind_status_code=$?
 
 	case "$kernel" in
-	Darwin)	grep -v "mach_msg unhandled MACH_SEND_TRAILER option" < "$valgrind.orig" > "$valgrind" ;;
-	*)	mv -- "$valgrind.orig" "$valgrind" ;;
+		Darwin)	grep -v "mach_msg unhandled MACH_SEND_TRAILER option" < "$valgrind.orig" > "$valgrind" ;;
+		*)	mv -- "$valgrind.orig" "$valgrind" ;;
 	esac
 
 	rm -f -- "$valgrind.orig"
+
+	return "$valgrind_status_code"
 }
 
 test_tig()
@@ -481,7 +489,6 @@ test_tig()
 	else
 		set +e
 		runner=
-		# FIXME: Tell Valgrind to forward status code
 		if [ "$expected_status_code" = 0 ] && [ -n "$valgrind" ]; then
 			runner=valgrind_exec
 		fi
