@@ -31,11 +31,15 @@ Improvements:
  - Make `diff-highlight` colors configurable. (GH #625, #633)
  - Let Ctrl-C exit Y/N dialog, menu prompts and the file finder. (GH #632, #648)
  - Hide cursor unless at textual prompt. (GH #643)
+ - Expand tilde ('~') in `:source` paths. (GH #674)
+ - Show single-line output of external command in status bar. (GH #200, #557,
+   #678)
+ - Disable the graph when `--no-merges` is passed. (GH #687) 
 
 Bug fixes:
 
  - Fix graph display issues. (GH #419, #638)
- - Fix rendering of emojis. (GH #330, #621, #644)
+ - Fix and improve rendering of Unicode characters. (GH #330, #621, #644, #682)
  - Handle hyphenated directory names when listing content. (GH #602)
  - Do not jump to next match when cancelling the search prompt. (GH #627)
  - Fix clearing of the status line after `Ctrl-C`. (GH #623, #649)
@@ -56,6 +60,7 @@ Bug fixes:
  - Document problem of outdated system-wide `tigrc` files in Homebrew. (GH #598)
  - Repaint the display when toggling `line-graphics`. (GH #527)
  - Fix custom date formatting support longer strings. (GH #522)
+ - Don't segfault on ":exec" irregular args. (GH #686)
 
 tig-2.2.2
 ---------
