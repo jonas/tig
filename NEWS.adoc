@@ -31,7 +31,7 @@ Improvements:
  - Make `diff-highlight` colors configurable. (GH #625, #633)
  - Let Ctrl-C exit Y/N dialog, menu prompts and the file finder. (GH #632, #648)
  - Hide cursor unless at textual prompt. (GH #643)
- - Expand tilde ('~') in `:source` paths. (GH #674)
+ - Expand tilde ('~') in `:script` paths. (GH #674)
  - Show single-line output of external command in status bar. (GH #200, #557,
    #678)
  - Disable the graph when `--no-merges` is passed. (GH #687) 
