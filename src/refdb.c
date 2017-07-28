@@ -489,6 +489,9 @@ format_ref_formats(struct ref_format **formats, char buf[], size_t bufsize)
 	size_t bufpos = 0;
 	const char *sep = "";
 
+	if (!formats)
+		return SUCCESS;
+
 	for (type = 0; type < map->size; type++) {
 		struct ref_format *format = formats[type];
 
