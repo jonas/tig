@@ -649,7 +649,7 @@ read_script(struct key *key)
 	static const char *line = "";
 	enum status_code code;
 
-	if (!line || !*line) {
+	while (!line || !*line) {
 		if (input_buffer.data && *input_buffer.data == ':') {
 			line = "<Enter>";
 			memset(&input_buffer, 0, sizeof(input_buffer));
