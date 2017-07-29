@@ -34,7 +34,7 @@ static FILE *opt_tty;
 
 static struct io script_io = { -1 };
 
-static bool
+bool
 is_script_executing(void)
 {
 	return script_io.pipe != -1;

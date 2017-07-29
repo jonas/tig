@@ -127,6 +127,20 @@ prompt_default_handler(struct input *input, struct key *key)
 }
 
 static enum input_status
+prompt_script_handler(struct input *input, struct key *key)
+{
+	switch (key_to_value(key)) {
+	case KEY_RETURN:
+	case KEY_ENTER:
+	case '\n':
+		return INPUT_STOP;
+
+	default:
+		return INPUT_OK;
+	}
+}
+
+static enum input_status
 prompt_yesno_handler(struct input *input, struct key *key)
 {
 	unsigned long c = key_to_unicode(key);
@@ -1120,9 +1134,14 @@ exec_run_request(struct view *view, struct run_request *req)
 enum request
 open_prompt(struct view *view)
 {
-	char *cmd = read_prompt(":");
+	char *cmd;
 	const char *argv[SIZEOF_ARG] = { NULL };
 	int argc = 0;
+
+	if (is_script_executing())
+		cmd = read_prompt_incremental(" ", false, true, prompt_script_handler, NULL);
+	else
+		cmd = read_prompt(":");
 
 	if (cmd && *cmd && !argv_from_string(argv, &argc, cmd)) {
 		report("Too many arguments");
