@@ -207,6 +207,9 @@ readline_variable_generator(const char *text, int state)
 #define FORMAT_VAR(type, name, ifempty, initval) "%(" #name ")",
 		ARGV_ENV_INFO(FORMAT_VAR)
 #undef FORMAT_VAR
+#define FORMAT_VAR(type, name) "%(repo:" #name ")",
+		REPO_INFO(FORMAT_VAR)
+#undef FORMAT_VAR
 		NULL
 	};
 
