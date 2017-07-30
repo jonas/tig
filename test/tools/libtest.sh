@@ -511,6 +511,11 @@ test_tig()
 		fi
 		set -e
 	fi
+	for file in tig-display.txt tig-options.txt tig-view.txt; do
+		if [ -e "$work_dir/$file" ]; then
+			mv -- "$work_dir/$file" "$HOME/${prefix}$file"
+		fi
+	done
 	# Normalize paths in stderr output
 	if [ -e "${prefix}stderr.orig" ]; then
 		sed "s#$output_dir#HOME#" < "${prefix}stderr.orig" > "${prefix}stderr"
