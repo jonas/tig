@@ -249,16 +249,19 @@ open_trace(int devnull, const char *argv[])
 		int fd = open(trace_file, O_RDWR | O_CREAT | O_APPEND, 0666);
 		int i;
 
+		flock(fd, LOCK_EX);
 		for (i = 0; argv[i]; i++) {
 			if (write(fd, argv[i], strlen(argv[i])) == -1
 			    || write(fd, " ", 1) == -1)
 				break;
 		}
 		if (argv[i] || write(fd, "\n", 1) == -1) {
+			flock(fd, LOCK_UN);
 			close(fd);
 			return devnull;
 		}
 
+		flock(fd, LOCK_UN);
 		return fd;
 	}
 
