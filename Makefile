@@ -210,6 +210,7 @@ all-address-sanitizer: CFLAGS += $(ADDRESS_SANITIZER_CFLAGS)
 
 test-address-sanitizer: clean all-address-sanitizer test
 test-address-sanitizer: export TIG_ADDRESS_SANITIZER_ENABLED=yes
+test-address-sanitizer: export ASAN_OPTIONS=detect_leaks=false
 
 TESTS  = $(sort $(shell find test -type f -name '*-test'))
 
