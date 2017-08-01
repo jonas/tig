@@ -239,11 +239,33 @@ argv_appendn(const char ***argv, const char *arg, size_t arglen)
 	return alloc != NULL;
 }
 
+bool
+argv_prependn(const char ***argv, const char *arg, size_t arglen)
+{
+	if (!argv_appendn(argv,arg,strlen(arg)))
+		return false;
+
+	size_t last_i = argv_size(*argv) - 1;
+
+	if (last_i > 0) {
+		const char *save = (*argv)[last_i];
+		memmove(*argv + 1, *argv, last_i * sizeof(*argv));
+		(*argv)[0] = save;
+	}
+
+	return true;
+}
 
 bool
 argv_append(const char ***argv, const char *arg)
 {
 	return argv_appendn(argv, arg, strlen(arg));
+}
+
+bool
+argv_prepend(const char ***argv, const char *arg)
+{
+	return argv_prependn(argv, arg, strlen(arg));
 }
 
 bool
