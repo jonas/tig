@@ -20,6 +20,7 @@ test_tig
 
 assert_equals \
 	'help-default.screen' \
+	'ignore' \
 	"Test failures due to changes to 'tigrc' can be fixed by running:" \
 	"  > make test/help/all-keybindings-test && cp test/tmp/help/all-keybindings-test/help-default.screen test/help/all-keybindings-test.expected" \
 	< "$expected"
