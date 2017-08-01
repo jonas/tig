@@ -1,0 +1,8 @@
+{
+	Memcheck:Cond
+	fun:strstr
+	fun:wordexp
+	fun:expand_path
+	...
+	fun:main
+}
