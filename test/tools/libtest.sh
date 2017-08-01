@@ -229,19 +229,29 @@ ORIG_IFS=
 assert_equals()
 {
 	file="$1"; shift
+	whitespace_arg="ignore";
+
+	if [ "$#" -ge 1 ]; then
+		whitespace_arg="${1:-}"
+		shift
+	fi
+	if [ "$whitespace_arg" = strict ]; then
+		whitespace_arg=''
+	elif [ "$whitespace_arg" = ignore ]; then
+		whitespace_arg='-w'
+	fi
 
 	if [ ! -s "expected/$file" ]; then
 		file "expected/$file"
 	fi
 
 	if [ -e "$file" ]; then
-		git diff -w --no-index $diff_color_arg -- "expected/$file" "$file" > "$file.diff" || true
+		git diff --no-index $diff_color_arg $whitespace_arg -- "expected/$file" "$file" > "$file.diff" || true
 		if [ -s "$file.diff" ]; then
 			printf '[FAIL] %s != expected/%s\n' "$file" "$file" >> .test-result
-			while [ $# -gt 0 ]; do
-				msg="$1"; shift
-				printf '[NOTE] %s\n' "$msg" >> .test-result
-			done
+			if [ -n "$*" ]; then
+				printf '[NOTE] %s\n' "$*" >> .test-result
+			fi
 			cat < "$file.diff" >> .test-result
 		else
 			printf '  [OK] %s assertion\n' "$file" >> .test-result
@@ -270,21 +280,30 @@ executable 'assert-var' <<EOF
 #!/bin/sh
 
 mkdir -p "$(dirname -- "$expected_var_file")"
-while [ \$# -gt 0 ]; do
-	arg="\$1"; shift
+lhs="\${1:-}"
+if [ "\$#" -gt 0 ]; then
+	shift
+fi
+if [ "\${1:-}" = "==" ]; then
+	shift
+fi
+rhs="\$*"
 
-	case "\$arg" in
-		==) break ;;
-		*)  printf '%s\\n' "\$arg" >> "$HOME/$vars_file" ;;
-	esac
-done
-printf '%s\\n' "\$*" >> "$expected_var_file"
+if [ -z "\$lhs" ]; then
+	lhs='\"\"'
+fi
+if [ -z "\$rhs" ]; then
+	rhs='\"\"'
+fi
+
+printf '%s\\n' "\$lhs" >> "$HOME/$vars_file"
+printf '%s\\n' "\$rhs" >> "$expected_var_file"
 EOF
 
 assert_vars()
 {
 	if [ -e "$expected_var_file" ]; then
-		assert_equals "$vars_file" < "$expected_var_file"
+		assert_equals "$vars_file" strict "message" < "$expected_var_file"
 	else
 		printf '[FAIL] %s not found\n' "$expected_var_file" >> .test-result
 	fi

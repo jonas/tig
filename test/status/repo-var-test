@@ -3,6 +3,8 @@
 . libtest.sh
 . libgit.sh
 
+export LINES=10
+
 steps "
 	:exec !assert-var '%(repo:head)' == master
 	:exec !assert-var '%(repo:head-id)' == feeb2dfd5e09e887e4b6c901e7d91a4c85a7831d
@@ -11,11 +13,24 @@ steps "
 	:exec !assert-var '%(repo:prefix)' == repo-two-a/
 	:exec !assert-var '%(repo:git-dir)' == '$HOME/$work_dir/.git'
 	:exec !assert-var '%(repo:is-inside-work-tree)' == true
+	:save-display status.screen
 "
 
 in_work_dir create_repo_from_tgz "$base_dir/files/repo-two.tgz"
 
 work_dir="$work_dir/repo-two-a"
 test_tig status
+
+assert_equals status.screen <<EOF
+On branch master. Your branch is up-to-date with 'origin/master'.
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
+[status] Nothing to update                                                  100%
+EOF
 
 assert_vars
