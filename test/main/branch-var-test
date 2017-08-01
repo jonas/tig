@@ -12,7 +12,6 @@ EOF
 
 steps '
 	:/mp/feature
-	:save-display main.screen
 
 	:1
 	:exec !assert-var "%(branch)" == "mp/feature"
@@ -25,6 +24,9 @@ steps '
 
 	:15
 	:exec !assert-var "%(branch)" == "r1.0"
+
+	:1
+	:save-display main.screen
 '
 
 in_work_dir create_repo_from_tgz "$base_dir/files/refs-repo.tgz"
