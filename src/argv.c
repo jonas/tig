@@ -386,7 +386,7 @@ argv_string_formatter(struct format_context *format, struct format_var *var)
 	argv_string *value_ref = var->value_ref;
 	const char *value = *value_ref;
 
-	if (!*value)
+	if (!value || !*value)
 		value = var->value_if_empty;
 
 	if (!*value)
