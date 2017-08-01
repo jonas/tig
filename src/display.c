@@ -657,6 +657,8 @@ read_script(struct key *key)
 		} else if (!io_get(&script_io, &input_buffer, '\n', true)) {
 			io_done(&script_io);
 			return false;
+		} else if (input_buffer.data[strspn(input_buffer.data, " \t")] == '#') {
+			continue;
 		} else {
 			line = input_buffer.data;
 		}
