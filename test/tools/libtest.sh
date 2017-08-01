@@ -40,6 +40,7 @@ export TERM=dumb
 export HOME="$output_dir"
 unset CDPATH
 unset VISUAL
+unset INPUTRC
 
 # Freedesktop env
 unset XDG_CONFIG_HOME XDG_CONFIG_DIRS XDG_DATA_HOME XDG_DATA_DIRS XDG_CACHE_HOME
