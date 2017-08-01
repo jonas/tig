@@ -326,6 +326,13 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 	}
 
 	for (i = 0; i < format->vars_size; i++) {
+		if (strncmp(name, vars[i].name, vars[i].namelen))
+			continue;
+
+		return vars[i].formatter(format, &vars[i]);
+	}
+
+	for (i = 0; i < format->vars_size; i++) {
 		if (string_enum_compare(name, vars[i].name, vars[i].namelen))
 			continue;
 
