@@ -63,6 +63,9 @@ export ESCDELAY=200
 export LINES=30
 export COLUMNS=80
 
+# Disable memleak detection for AddressSanitizer.
+export ASAN_OPTIONS=detect_leaks=false
+
 # Internal test env
 # A space-separated list of options. See docs in test/README.
 export TEST_OPTS="${TEST_OPTS:-}"
