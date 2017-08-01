@@ -27,7 +27,8 @@ test_tig_script() {
 	test_tig "$@"
 
 	assert_equals "$name.screen" < "$name.expected"
-	assert_equals "$name.stderr" ''
+	assert_equals "$name.stderr" <<-EOF
+	EOF
 }
 
 test_tig_script 'follow' --follow project/Build.scala <<EOF
