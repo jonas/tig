@@ -19,6 +19,7 @@
 #include "stddef.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 void
 compat_wordfree (wordexp_t *pwordexp)
@@ -30,20 +31,28 @@ compat_wordfree (wordexp_t *pwordexp)
 int
 compat_wordexp (const char *words, wordexp_t *pwordexp, int flags)
 {
-	pwordexp->we_wordv = calloc(2, sizeof(*pwordexp->we_wordv));
-	pwordexp->we_wordv[0] = calloc(1, strlen(words) + 1);
-	strncpy(pwordexp->we_wordv[0], words, strlen(words) + 1);
+	char *expanded = NULL;
+	const char *home = getenv("HOME");
 
-	if (    pwordexp->we_wordv[0][0] == '~'
-	    && (pwordexp->we_wordv[0][1] == '/' || pwordexp->we_wordv[0][1] == 0)) {
-		const char *home = getenv("HOME") ? getenv("HOME") : "~";
-		pwordexp->we_wordv[0] = realloc(pwordexp->we_wordv[0],
-						strlen(pwordexp->we_wordv[0]) + strlen(home));
-		memmove(pwordexp->we_wordv[0] + strlen(home) - 1, pwordexp->we_wordv[0],
-			strlen(pwordexp->we_wordv[0]));
-		/* intentional overwrite by one character */
-		memmove(pwordexp->we_wordv[0], home, strlen(home));
+	if (home && words[0] == '~' && (words[1] == '/' || words[1] == 0)) {
+		size_t len = strlen(home) + strlen(words + 1) + 1;
+		if ((expanded = malloc(len)) && !snprintf(expanded, len, "%s%s", home, words + 1)) {
+			free(expanded);
+			return -1;
+		}
+	} else {
+		expanded = strdup(words);
 	}
+
+	if (!expanded)
+		return -1;
+
+	pwordexp->we_wordv = calloc(2, sizeof(*pwordexp->we_wordv));
+	if (!pwordexp->we_wordv) {
+		free(expanded);
+		return -1;
+	}
+	pwordexp->we_wordv[0] = expanded;
 
 	return 0;
 }
