@@ -306,7 +306,7 @@ EOF
 assert_vars()
 {
 	if [ -e "$expected_var_file" ]; then
-		assert_equals "$vars_file" strict "message" < "$expected_var_file"
+		assert_equals "$vars_file" strict "$*" < "$expected_var_file"
 	else
 		printf '[FAIL] %s not found\n' "$expected_var_file" >> .test-result
 	fi
