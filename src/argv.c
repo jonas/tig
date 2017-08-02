@@ -16,6 +16,7 @@
 #include "tig/repo.h"
 #include "tig/options.h"
 #include "tig/prompt.h"
+#include "tig/registers.h"
 
 static bool
 concat_argv(const char *argv[], char *buf, size_t buflen, const char *sep, bool quoted)
@@ -376,6 +377,12 @@ format_append_arg(struct format_context *format, const char ***dst_argv, const c
 	while (arg) {
 		const char *var = strstr(arg, "%(");
 		const char *closing = var ? strchr(var, ')') : NULL;
+
+		/* todo hardcoding is robust and compact but ugly */
+		if (var &&
+		    (!strcmp(var, "%(register:\\))") || !strcmp(var, "%(register:))")))
+			closing++;
+
 		const char *next = closing ? closing + 1 : NULL;
 		const int len = var ? var - arg : strlen(arg);
 
@@ -468,6 +475,10 @@ argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_a
 #define FORMAT_REPO_VAR(type, name) \
 	{ "%(repo:" #name ")", STRING_SIZE("%(repo:" #name ")"), type ## _formatter, &repo.name, "" },
 		REPO_INFO(FORMAT_REPO_VAR)
+#define FORMAT_REGISTER_VAR(namestr, keychar) \
+	{ "%(register:" namestr ")", STRING_SIZE("%(register:" namestr ")"), argv_string_formatter, \
+	  argv_env->registers[ MIN(keychar,REGISTER_KEY_MAX) - REGISTER_KEY_OFFSET ], "" },
+		REGISTER_INFO(FORMAT_REGISTER_VAR)
 	};
 	struct format_context format = { vars, ARRAY_SIZE(vars), "", 0, file_filter };
 	int argc;

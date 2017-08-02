@@ -53,7 +53,8 @@ bind main 2 @silent command
 bind main 3 ?prompted command
 bind main 4 <quitting command
 bind main 5 +echoed command
-bind main 0 !@?<+all modifiers
+bind main 6 =(r)save-to-register command
+bind main 0 !@?<+>=(r)all modifiers
 
 # Non-ending multi-line command
 c\\
@@ -99,9 +100,9 @@ tig warning: ~/.tigrc:25: Unknown color attribute: normally
 tig warning: ~/.tigrc:34: Unknown option \`visibility' for column line-number
 tig warning: ~/.tigrc:36: Invalid key binding: bind keymap key action
 tig warning: ~/.tigrc:37: Invalid key binding: bind keymap key action
-tig warning: ~/.tigrc:38: Unknown command flag '%'; expected one of :!?@<+>
-tig warning: ~/.tigrc:39: Unknown command flag '|'; expected one of :!?@<+>
-tig warning: ~/.tigrc:57: Unknown option command: c
+tig warning: ~/.tigrc:38: Unknown command flag '%'; expected one of :!?@<+>=
+tig warning: ~/.tigrc:39: Unknown command flag '|'; expected one of :!?@<+>=
+tig warning: ~/.tigrc:58: Unknown option command: c
 tig warning: Errors while loading HOME/.tigrc.
 EOF
 
@@ -122,7 +123,8 @@ External commands:
    3 ?prompted command
    4 <quitting command
    5 +echoed command
-   0 @?<+all modifiers
+   6 =(r)save-to-register command
+   0 @?<+>=(r)all modifiers
 
 
 
@@ -133,6 +135,5 @@ External commands:
 
 
 
-
-[help] - line 1 of 17                                                       100%
+[help] - line 1 of 18                                                       100%
 EOF

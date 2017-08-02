@@ -84,6 +84,7 @@ struct run_request_flags {
 	bool internal;
 	bool echo;
 	bool quick;
+	char register_key;
 };
 
 struct run_request {

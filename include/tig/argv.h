@@ -15,6 +15,7 @@
 #define TIG_ARGV_H
 
 #include "tig/tig.h"
+#include "tig/registers.h"
 
 /*
  * Argument array helpers.
@@ -62,6 +63,7 @@ typedef unsigned long argv_number;
 struct argv_env {
 	ARGV_ENV_INFO(ARGV_ENV_FIELDS)
 	unsigned long goto_lineno;
+	char *registers[SIZEOF_REGISTERS];
 	char search[SIZEOF_STR];
 	char none[1];
 };

@@ -20,6 +20,7 @@
 #include "tig/draw.h"
 #include "tig/display.h"
 #include "tig/watch.h"
+#include "tig/registers.h"
 
 static void set_terminal_modes(void);
 
@@ -61,19 +62,29 @@ open_script(const char *path)
 }
 
 bool
-open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool quick, bool do_refresh, const char *notice)
+open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool quick, char register_key, bool do_refresh, const char *notice)
 {
 	bool ok;
 
-	if (echo) {
+	if (echo || register_key) {
 		char buf[SIZEOF_STR] = "";
 
 		io_run_buf(argv, buf, sizeof(buf), dir, false);
 		if (*buf) {
-			report("%s", buf);
+			if (register_key)
+				register_set(register_key, buf);
+			if (echo)
+				report("%s", buf);
+			else
+				report_clear();
 			return true;
 		} else {
-			report("No output");
+			if (register_key)
+				register_set(register_key, "");
+			if (echo)
+				report("No output");
+			else
+				report_clear();
 			return false;
 		}
 	} else if (silent || is_script_executing()) {
@@ -148,7 +159,7 @@ open_editor(const char *file, unsigned int lineno)
 	if (lineno && opt_editor_line_number && string_format(lineno_cmd, "+%u", lineno))
 		editor_argv[argc++] = lineno_cmd;
 	editor_argv[argc] = file;
-	if (!open_external_viewer(editor_argv, repo.cdup, false, false, false, false, true, EDITOR_LINENO_MSG))
+	if (!open_external_viewer(editor_argv, repo.cdup, false, false, false, false, 0, true, EDITOR_LINENO_MSG))
 		opt_editor_line_number = false;
 }
 
