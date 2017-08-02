@@ -277,12 +277,13 @@ assert_not_exists()
 }
 
 vars_file="vars"
-expected_var_file="$HOME/expected/$vars_file"
+vars_count_file="${vars_file}_assert_count"
+expected_vars_file="$HOME/expected/$vars_file"
 
 executable 'assert-var' <<EOF
 #!/bin/sh
 
-mkdir -p "$(dirname -- "$expected_var_file")"
+mkdir -p "$(dirname -- "$expected_vars_file")"
 lhs="\${1:-}"
 if [ "\$#" -gt 0 ]; then
 	shift
@@ -300,15 +301,24 @@ if [ -z "\$rhs" ]; then
 fi
 
 printf '%s\\n' "\$lhs" >> "$HOME/$vars_file"
-printf '%s\\n' "\$rhs" >> "$expected_var_file"
+printf '%s\\n' "\$rhs" >> "$expected_vars_file"
 EOF
 
 assert_vars()
 {
-	if [ -e "$expected_var_file" ]; then
-		assert_equals "$vars_file" strict "$*" < "$expected_var_file"
+	if [ -n "${1:-}" ]; then
+		printf '%s\n' "$1" > "$vars_count_file"
+		shift
 	else
-		printf '[FAIL] %s not found\n' "$expected_var_file" >> .test-result
+		die "Test must supply the expected count of assertions to assert_vars()"
+	fi
+
+	grep -c . "$vars_file" | assert_equals "$vars_count_file" strict "$*"
+
+	if [ -e "$expected_vars_file" ]; then
+		assert_equals "$vars_file" strict "$*" < "$expected_vars_file"
+	else
+		printf '[FAIL] %s not found\n' "$expected_vars_file" >> .test-result
 	fi
 }
 

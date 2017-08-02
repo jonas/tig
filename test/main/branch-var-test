@@ -33,7 +33,7 @@ in_work_dir create_repo_from_tgz "$base_dir/files/refs-repo.tgz"
 
 test_tig --all
 
-assert_vars
+assert_vars 4
 
 assert_equals 'main.screen' <<EOF
 2009-02-13 23:31 Max Power             * [mp/feature] {max-power/mp/feature} WIP
