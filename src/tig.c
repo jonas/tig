@@ -627,6 +627,43 @@ handle_mouse_event(void)
 }
 #endif
 
+/*
+ * Error handling.
+ *
+ * Inspired by code from src/util.c in ELinks
+ * (f86be659718c0cd0a67f88b42f07044c23d0d028).
+ */
+
+#ifdef DEBUG
+void
+sigsegv_handler(int sig)
+{
+	if (die_callback)
+		die_callback();
+
+	fputs("Tig crashed!\n\n"
+	      "Please report this issue along with all info printed below to\n\n"
+	      "  https://github.com/jonas/tig/issues/new\n\n", stderr);
+
+	fputs("Tig version: ", stderr);
+	fputs(TIG_VERSION, stderr);
+	fputs("\n\n", stderr);
+
+#ifdef HAVE_EXECINFO_H
+	{
+		/* glibc way of doing this */
+		void *stack[20];
+		size_t size = backtrace(stack, 20);
+
+		backtrace_symbols_fd(stack, size, STDERR_FILENO);
+	}
+#endif
+
+	/* The fastest way OUT! */
+	abort();
+}
+#endif
+
 struct key_combo {
 	enum request request;
 	struct keymap *keymap;
@@ -689,6 +726,11 @@ main(int argc, const char *argv[])
 
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
 		die("Failed to setup signal handler");
+
+#ifdef DEBUG
+	if (signal(SIGSEGV, sigsegv_handler) == SIG_ERR)
+		die("Failed to setup signal handler");
+#endif
 
 	if (setlocale(LC_ALL, "")) {
 		codeset = nl_langinfo(CODESET);

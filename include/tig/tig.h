@@ -60,6 +60,10 @@
 #include <langinfo.h>
 #include <iconv.h>
 
+#ifdef HAVE_EXECINFO_H
+#include <execinfo.h>
+#endif
+
 /* ncurses(3): Must be defined to have extended wide-character functions. */
 #define _XOPEN_SOURCE_EXTENDED 1
 
