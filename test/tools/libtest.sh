@@ -232,7 +232,7 @@ ORIG_IFS=
 assert_equals()
 {
 	file="$1"; shift
-	whitespace_arg="ignore";
+	whitespace_arg='-w';
 
 	if [ "$#" -ge 1 ]; then
 		whitespace_arg="${1:-}"
