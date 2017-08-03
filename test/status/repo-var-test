@@ -33,4 +33,4 @@ Untracked files:
 [status] Nothing to update                                                  100%
 EOF
 
-assert_vars
+assert_vars 7
