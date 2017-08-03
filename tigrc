@@ -118,6 +118,7 @@ set vertical-split		= auto		# Enum: horizontal, vertical, auto; Use auto to
 set split-view-width		= 50%		# Width of right-most view for vertical splits
 set editor-line-number		= yes		# Automatically pass line number to editor? Used
 						# for opening file at specific line e.g. from a diff
+set history-size		= 500		# Size of persistent history, 0 to disable
 set mouse			= no		# Enable mouse support?
 set mouse-scroll		= 3		# Number of lines to scroll via the mouse
 set mouse-wheel-cursor		= no		# Prefer moving the cursor to scrolling the view?

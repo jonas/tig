@@ -722,8 +722,6 @@ main(int argc, const char *argv[])
 	enum request request = parse_options(argc, argv, pager_mode);
 	struct view *view;
 
-	prompt_init();
-
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
 		die("Failed to setup signal handler");
 
@@ -739,6 +737,8 @@ main(int argc, const char *argv[])
 	die_if_failed(load_repo_info(), "Failed to load repo info.");
 	die_if_failed(load_options(), "Failed to load user config.");
 	die_if_failed(load_git_config(), "Failed to load repo config.");
+
+	prompt_init();
 
 	/* Require a git repository unless when running in pager mode. */
 	if (!repo.git_dir[0] && request != REQ_VIEW_PAGER)
