@@ -212,6 +212,7 @@ test-address-sanitizer: clean all-address-sanitizer test
 test-address-sanitizer: export TIG_ADDRESS_SANITIZER_ENABLED=yes
 
 TESTS  = $(sort $(shell find test -type f -name '*-test'))
+TESTS_TODO = $(sort $(shell find test -type f -name '*-test' -exec grep -l '\(test_todo\|-todo=\)' {} \+))
 
 clean-test:
 	$(Q)$(RM) -r test/tmp
@@ -228,6 +229,9 @@ endif
 $(TESTS): PATH := $(CURDIR)/test/tools:$(CURDIR)/src:$(PATH)
 $(TESTS): $(EXE) test/tools/test-graph
 	$(QUIET_TEST)$(TEST_SHELL) $@
+
+test-todo: MAKE_TEST_OPTS += todo
+test-todo: $(TESTS_TODO)
 
 # Other autoconf-related rules are hidden in config.make.in so that
 # they don't confuse Make when we aren't actually using ./configure
