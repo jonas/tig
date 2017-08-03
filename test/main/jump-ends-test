@@ -36,7 +36,6 @@ $last_line_content
 EOF
 
 test_case main-goto-max-plus-1 \
-	--todo="shouldn't be able to jump to max line plus one" \
 	--script='
 		:49
 	' \

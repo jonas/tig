@@ -832,7 +832,7 @@ run_prompt_command(struct view *view, const char *argv[])
 	if (string_isnumber(cmd)) {
 		int lineno = view->pos.lineno + 1;
 
-		if (parse_int(&lineno, cmd, 0, view->lines + 1) == SUCCESS) {
+		if (parse_int(&lineno, cmd, 0, view->lines) == SUCCESS) {
 			if (!lineno)
 				lineno = 1;
 			select_view_line(view, lineno - 1);
