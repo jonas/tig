@@ -468,6 +468,7 @@ char *
 read_prompt(const char *prompt)
 {
 	static char *line = NULL;
+	HIST_ENTRY *last_entry;
 
 	if (line) {
 		free(line);
@@ -492,7 +493,9 @@ read_prompt(const char *prompt)
 
 	prompt_interrupted = false;
 
-	if (line)
+	last_entry = history_get(history_length);
+	if (line && *line &&
+	    (!last_entry || strcmp(line, last_entry->line)))
 		add_history(line);
 
 	return line;
