@@ -46,6 +46,7 @@ typedef struct view_column *view_settings;
 	_(focus_child,			bool,			VIEW_NO_FLAGS) \
 	_(git_colors,			const char **,		VIEW_NO_FLAGS) \
 	_(grep_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(history_size,			int,			VIEW_NO_FLAGS) \
 	_(horizontal_scroll,		double,			VIEW_NO_FLAGS) \
 	_(id_width,			int,			VIEW_NO_FLAGS) \
 	_(ignore_case,			enum ignore_case,	VIEW_NO_FLAGS) \

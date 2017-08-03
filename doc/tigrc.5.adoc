@@ -323,6 +323,11 @@ The following variables can be set:
 	line number is passed as `+<line-number>` in front of the file name.
 	Example: `vim +10 tig.c`
 
+'history-size' (int)::
+
+	Size of the persistent `~/.tig_history` file when compiled with readline
+	support. Default is 500. Set to 0 to disable.
+
 'mouse' (bool)::
 
 	Whether to enable mouse support. Off by default since it makes selecting

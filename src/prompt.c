@@ -24,7 +24,6 @@
 #ifdef HAVE_READLINE
 #include <readline/readline.h>
 #include <readline/history.h>
-#define HISTORY_SIZE 500
 #endif /* HAVE_READLINE */
 
 static char *
@@ -534,8 +533,12 @@ prompt_init(void)
 	HIST_ENTRY *last_entry;
 
 	readline_init();
+
+	if (opt_history_size <= 0)
+		return;
+
 	using_history();
-	stifle_history(HISTORY_SIZE);
+	stifle_history(opt_history_size);
 	read_history(prompt_histfile());
 	if (atexit(prompt_teardown))
 		die("Failed to register prompt_teardown");
