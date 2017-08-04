@@ -235,7 +235,7 @@ test-todo: $(TESTS_TODO)
 
 # Other autoconf-related rules are hidden in config.make.in so that
 # they don't confuse Make when we aren't actually using ./configure
-configure: configure.ac acinclude.m4 tools/*.m4
+configure: configure.ac tools/*.m4
 	$(QUIET_GEN)./autogen.sh
 
 site:
