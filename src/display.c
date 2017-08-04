@@ -550,6 +550,7 @@ done_display(void)
 			werase(status_win);
 			doupdate();
 		}
+		curs_set(1);
 		endwin();
 	}
 	cursed = false;
