@@ -524,12 +524,51 @@ prompt_histfile(void)
 	return path;
 }
 
+static int
+history_go_line(int rel_line_num)
+{
+	/* history_set_pos confusingly takes an absolute index. Expose a
+	 * "relative offset" version consistent with the rest of readline.
+	 */
+	return history_set_pos(rel_line_num - history_base);
+}
+
+static void
+prompt_history_dedupe(void)
+{
+	HIST_ENTRY *uniq_entry, *earlier_entry;
+	int uniq_lineno;
+
+	using_history();
+	uniq_lineno = history_length;
+
+	while (uniq_lineno >= history_base) {
+		history_go_line(uniq_lineno);
+		uniq_entry = current_history();
+		if (!uniq_entry)
+			break;
+		while ((earlier_entry = previous_history())) {
+			if (!strcmp(earlier_entry->line, uniq_entry->line)
+			    && ((earlier_entry = remove_history(where_history())))) {
+				free_history_entry(earlier_entry);
+				uniq_lineno--;
+			}
+		}
+		uniq_lineno--;
+	}
+
+	/* defensive hard reset */
+	using_history();
+	history_go_line(history_length);
+}
+
 static void
 prompt_teardown(void)
 {
 	if (opt_history_size <= 0)
 		return;
 
+	prompt_history_dedupe();
 	write_history(prompt_histfile());
 }
 
