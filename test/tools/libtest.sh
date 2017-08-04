@@ -585,6 +585,11 @@ test_case()
 		case "$key" in
 		before|after|script|args|cwd|tigrc|assert-stderr|todo|subshell)
 			printf '%s\n' "$value" > "$name-$key" ;;
+		assert-equals)
+			filename="$(expr "X$value" : 'X\([^=]*\)')"
+			content="$(expr "X$value" : 'X[^=]*=\(.*\)')"
+			printf '%s\n' "$filename" > "$name-$key"
+			printf '%s\n' "$content" > "$name-$key-content" ;;
 		*)	die "Unknown test_case argument: $arg"
 		esac
 	done
@@ -632,6 +637,9 @@ run_test_cases()
 			assert_equals "$name.stderr" < "$name-assert-stderr"
 		else
 			assert_equals "$name.stderr" < /dev/null
+		fi
+		if [ -e "$name-assert-equals" ]; then
+			assert_equals "$(cat < "$name-assert-equals")" < "$name-assert-equals-content"
 		fi
 	done 3< test-cases
 }
