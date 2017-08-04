@@ -527,6 +527,9 @@ prompt_histfile(void)
 static void
 prompt_teardown(void)
 {
+	if (opt_history_size <= 0)
+		return;
+
 	write_history(prompt_histfile());
 }
 
