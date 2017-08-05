@@ -112,9 +112,9 @@
 #define STRING_SIZE(x)	(sizeof(x) - 1)
 
 #define SIZEOF_STR	1024	/* Default string size. */
+#define SIZEOF_MED_STR	8192	/* Medium string size. */
 #define SIZEOF_REF	256	/* Size of symbolic or SHA1 ID. */
 #define SIZEOF_REV	41	/* Holds a SHA-1 and an ending NUL. */
-#define SIZEOF_CMD	8192	/* Default command string size. */
 
 /* This color name can be used to refer to the default term colors. */
 #define COLOR_DEFAULT	(-1)
