@@ -20,6 +20,7 @@
 #include "tig/pager.h"
 #include "tig/diff.h"
 #include "tig/draw.h"
+#include "tig/apps.h"
 
 static enum status_code
 diff_open(struct view *view, enum open_flags flags)
@@ -45,18 +46,27 @@ diff_open(struct view *view, enum open_flags flags)
 enum status_code
 diff_init_highlight(struct view *view, struct diff_state *state)
 {
-	if (opt_diff_highlight) {
-		const char *argv[] = { opt_diff_highlight, NULL };
-		char * const env[] = { "GIT_CONFIG=/dev/null", NULL };
-		struct io io;
+	if (!opt_diff_highlight || !*opt_diff_highlight)
+		return SUCCESS;
 
-		if (!io_exec(&io, IO_RP, view->dir, env, argv, view->io.pipe))
-			return error("Failed to run %s", opt_diff_highlight);
+	struct app_external *app = app_diff_highlight_load(opt_diff_highlight);
+	struct io io;
 
-		state->view_io = view->io;
-		view->io = io;
-		state->highlight = true;
-	}
+	/* XXX This empty string keeps valgrind happy while preserving earlier
+	 * behavior of test diff/diff-highlight-test:diff-highlight-misconfigured.
+	 * Simpler would be to return error when user misconfigured, though we
+	 * don't want tig to fail when diff-highlight isn't present.  io_exec
+	 * below does not return error when app->argv[0] is empty or null as the
+	 * conditional might suggest. */
+	if (!*app->argv)
+		app->argv[0] = "";
+
+	if (!io_exec(&io, IO_RP, view->dir, app->env, app->argv, view->io.pipe))
+		return error("Failed to run %s", opt_diff_highlight);
+
+	state->view_io = view->io;
+	view->io = io;
+	state->highlight = true;
 
 	return SUCCESS;
 }

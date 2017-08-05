@@ -53,6 +53,7 @@
 #include <sys/file.h>
 #include <time.h>
 #include <fcntl.h>
+#include <libgen.h>
 
 #include <regex.h>
 

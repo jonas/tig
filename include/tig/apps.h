@@ -18,6 +18,21 @@
 #include "tig/argv.h"
 #include "tig/util.h"
 
+/*
+ * general
+ */
+
+struct app_external {
+	const char *argv[SIZEOF_ARG];
+	char * const env[SIZEOF_ARG];
+};
+
+/*
+ * diff-highlight
+ */
+
+struct app_external *app_diff_highlight_load(const char *query);
+
 #endif
 
 /* vim: set ts=8 sw=8 noexpandtab: */
