@@ -46,6 +46,7 @@ extern struct encoding *default_encoding;
 #endif
 
 bool path_expand(char *dst, size_t dstlen, const char *src);
+bool path_search(char *dst, size_t dstlen, const char *query, const char *colon_path, int access_flags);
 
 /*
  * Executing external commands.
