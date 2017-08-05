@@ -64,6 +64,10 @@
 #include <execinfo.h>
 #endif
 
+#ifdef HAVE_PATHS_H
+#include <paths.h>
+#endif
+
 /* ncurses(3): Must be defined to have extended wide-character functions. */
 #define _XOPEN_SOURCE_EXTENDED 1
 
