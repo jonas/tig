@@ -136,7 +136,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
  */
 
 bool
-expand_path(char *dst, size_t dstlen, const char *src)
+path_expand(char *dst, size_t dstlen, const char *src)
 {
 	if (!src)
 		return false;
