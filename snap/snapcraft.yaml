@@ -11,7 +11,7 @@ confinement: classic
 
 apps:
   tig:
-    command: tig
+    command: bin/tig
 
 parts:
   tig:
