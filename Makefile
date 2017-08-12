@@ -226,8 +226,8 @@ else
 export MAKE_TEST_OPTS =
 endif
 
-$(TESTS): PATH := $(CURDIR)/test/tools:$(CURDIR)/src:$(PATH)
-$(TESTS): $(EXE) test/tools/test-graph
+$(TESTS) $(addprefix $(CURDIR)/,$(TESTS)): PATH := $(CURDIR)/test/tools:$(CURDIR)/src:$(PATH)
+$(TESTS) $(addprefix $(CURDIR)/,$(TESTS)): $(EXE) test/tools/test-graph
 	$(QUIET_TEST)$(TEST_SHELL) $@
 
 test-todo: MAKE_TEST_OPTS += todo
