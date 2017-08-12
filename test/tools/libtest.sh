@@ -205,6 +205,7 @@ trace=
 todos=
 valgrind=
 timeout=10
+vlg_timeout_bonus=60
 
 ORIG_IFS="$IFS"
 IFS=" 	"
@@ -315,7 +316,7 @@ assert_vars()
 		die "Test must supply the expected count of assertions to assert_vars()"
 	fi
 
-	grep -c . "$vars_file" | assert_equals "$vars_count_file" strict "$*"
+	grep -c . < "$vars_file" | assert_equals "$vars_count_file" strict "$*"
 
 	if [ -e "$expected_vars_file" ]; then
 		assert_equals "$vars_file" strict "$*" < "$expected_vars_file"
@@ -386,6 +387,15 @@ test_todo()
 	fi
 
 	test_todo_message "$*" >> .test-skipped
+}
+
+test_timeout()
+{
+	if [ -z "${1:-}" ]; then
+		die 'test_timeout requires an argument'
+	fi
+
+	timeout="${1:-}"
 }
 
 require_git_version()
@@ -540,6 +550,9 @@ test_tig()
 			runner=exec
 			if [ "$expected_status_code" = 0 ] && [ -n "$valgrind" ]; then
 				runner=valgrind_exec
+				if [ "$timeout" -gt 0 ]; then
+					timeout="$((timeout + vlg_timeout_bonus))"
+				fi
 			fi
 			if [ -s "$HOME/${prefix}stdin" ]; then
 				exec 4<"$HOME/${prefix}stdin"
