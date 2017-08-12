@@ -389,6 +389,15 @@ test_todo()
 	test_todo_message "$*" >> .test-skipped
 }
 
+test_timeout()
+{
+	if [ -z "${1:-}" ]; then
+		die 'test_timeout requires an argument'
+	fi
+
+	timeout="${1:-}"
+}
+
 require_git_version()
 {
 	git_version="$(git version | sed 's/git version \([0-9\.]*\).*/\1/')"
