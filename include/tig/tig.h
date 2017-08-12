@@ -87,6 +87,13 @@
 #  include <curses.h>
 #endif
 
+#ifdef HAVE_ICU
+#define U_CHARSET_IS_UTF8 1
+#include <unicode/utypes.h>
+#include <unicode/uchar.h>
+#include <unicode/utf8.h>
+#endif
+
 #ifdef TRUE
 #undef TRUE
 #endif
