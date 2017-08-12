@@ -98,6 +98,8 @@ tig_script "all" "
 	done < test-cases)
 "
 
+test_timeout 60
+
 test_tig status
 
 while read -r name; do
