@@ -315,7 +315,7 @@ assert_vars()
 		die "Test must supply the expected count of assertions to assert_vars()"
 	fi
 
-	grep -c . "$vars_file" | assert_equals "$vars_count_file" strict "$*"
+	grep -c . < "$vars_file" | assert_equals "$vars_count_file" strict "$*"
 
 	if [ -e "$expected_vars_file" ]; then
 		assert_equals "$vars_file" strict "$*" < "$expected_vars_file"

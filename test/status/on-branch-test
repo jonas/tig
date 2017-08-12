@@ -169,15 +169,15 @@ add_exec_prefix()
 }
 
 tig_script "all" "
-	$(cat < test-cases | while read -r name; do
+	$(while read -r name; do
 		add_exec_prefix "$name-before"
 		printf ':save-display all-%s.screen\n' "$name"
 		add_exec_prefix "$name-after"
-	done)
+	done < test-cases)
 "
 
 test_tig status
 
-cat < test-cases | while read -r name; do
+while read -r name; do
 	assert_equals "all-$name.screen" < "$name.expected"
-done
+done < test-cases
