@@ -205,6 +205,7 @@ trace=
 todos=
 valgrind=
 timeout=10
+vlg_timeout_bonus=60
 
 ORIG_IFS="$IFS"
 IFS=" 	"
@@ -540,6 +541,9 @@ test_tig()
 			runner=exec
 			if [ "$expected_status_code" = 0 ] && [ -n "$valgrind" ]; then
 				runner=valgrind_exec
+				if [ "$timeout" -gt 0 ]; then
+					timeout="$((timeout + vlg_timeout_bonus))"
+				fi
 			fi
 			if [ -s "$HOME/${prefix}stdin" ]; then
 				exec 4<"$HOME/${prefix}stdin"
