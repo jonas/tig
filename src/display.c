@@ -83,14 +83,16 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 		clear();
 		refresh();
 		endwin();                  /* restore original tty modes */
+		tcsetattr(opt_tty.fd, TCSAFLUSH, opt_tty.attr);
 		ok = io_run_fg(argv, dir);
 		if (confirm || !ok) {
 			if (!ok && *notice)
 				fprintf(stderr, "%s", notice);
 			fprintf(stderr, "Press Enter to continue");
 			getc(opt_tty.file);
-			fseek(opt_tty.file, 0, SEEK_END);
 		}
+		fseek(opt_tty.file, 0, SEEK_END);
+		tcsetattr(opt_tty.fd, TCSAFLUSH, opt_tty.attr);
 		set_terminal_modes();
 	}
 
