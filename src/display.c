@@ -30,7 +30,12 @@ static WINDOW *display_win[2];
 static WINDOW *display_title[2];
 static WINDOW *display_sep;
 
-static FILE *opt_tty;
+struct display_tty {
+	FILE *file;
+	int fd;
+	struct termios *attr;
+};
+static struct display_tty opt_tty = { NULL, -1, NULL };
 
 static struct io script_io = { -1 };
 
@@ -83,8 +88,8 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 			if (!ok && *notice)
 				fprintf(stderr, "%s", notice);
 			fprintf(stderr, "Press Enter to continue");
-			getc(opt_tty);
-			fseek(opt_tty, 0, SEEK_END);
+			getc(opt_tty.file);
+			fseek(opt_tty.file, 0, SEEK_END);
 		}
 		set_terminal_modes();
 	}
@@ -554,6 +559,12 @@ done_display(void)
 		endwin();
 	}
 	cursed = false;
+
+	if (opt_tty.attr) {
+		tcsetattr(opt_tty.fd, TCSAFLUSH, opt_tty.attr);
+		free(opt_tty.attr);
+		opt_tty.attr = NULL;
+	}
 }
 
 static void
@@ -566,6 +577,22 @@ set_terminal_modes(void)
 	leaveok(stdscr, false);
 }
 
+static void
+init_tty(void)
+{
+	/* open */
+	opt_tty.file = fopen("/dev/tty", "r+");
+	if (!opt_tty.file)
+		die("Failed to open tty for input");
+	opt_tty.fd = fileno(opt_tty.file);
+
+	/* attributes */
+	opt_tty.attr = calloc(1, sizeof(struct termios));
+	if (!opt_tty.attr)
+		die("Failed allocation for tty attributes");
+	tcgetattr(opt_tty.fd, opt_tty.attr);
+}
+
 void
 init_display(void)
 {
@@ -573,8 +600,9 @@ init_display(void)
 	const char *term;
 	int x, y;
 
+	init_tty();
+
 	die_callback = done_display;
-	/* XXX: Restore tty modes and let the OS cleanup the rest! */
 	if (atexit(done_display))
 		die("Failed to register done_display");
 
@@ -583,11 +611,10 @@ init_display(void)
 		/* Leave stdin and stdout alone when acting as a pager. */
 		FILE *out_tty;
 
-		opt_tty = fopen("/dev/tty", "r+");
-		out_tty = no_display ? fopen("/dev/null", "w+") : opt_tty;
-		if (!opt_tty || !out_tty)
-			die("Failed to open /dev/tty");
-		cursed = !!newterm(NULL, out_tty, opt_tty);
+		out_tty = no_display ? fopen("/dev/null", "w+") : opt_tty.file;
+		if (!out_tty)
+			die("Failed to open tty for output");
+		cursed = !!newterm(NULL, out_tty, opt_tty.file);
 	}
 
 	if (!cursed)
@@ -693,7 +720,7 @@ get_input_char(void)
 		return key.data.bytes[bytes_pos++];
 	}
 
-	return getc(opt_tty);
+	return getc(opt_tty.file);
 }
 
 int
