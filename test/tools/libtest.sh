@@ -334,8 +334,8 @@ show_test_results()
 	if [ -n "$trace" ] && [ -n "$TIG_TRACE" ] && [ -e "$TIG_TRACE" ]; then
 		sed "s/^/$indent[trace] /" < "$TIG_TRACE"
 	fi
-	if [ -n "$valgrind" ] && [ -e "$valgrind" ]; then
-		sed "s/^/$indent[valgrind] /" < "$valgrind"
+	if [ -n "$valgrind" ] && [ -s "$valgrind" ]; then
+		grep -v '^-\+[0-9]\+-\+ \+run:' < "${valgrind}" || true | sed "s/^/$indent[valgrind] /"
 	fi
 	if [ ! -d "$HOME" ] || [ ! -e .test-result ]; then
 		[ -e stderr ] &&
