@@ -19,6 +19,32 @@
  * Strings.
  */
 
+#ifdef HAVE_ICU
+bool string_contains_uppercase(const char *search)
+{
+	int32_t i;
+	int32_t len = strlen(search);
+	UChar32 c;
+
+	for(i = 0; i < len;) {
+		U8_NEXT(search, i, len, c);
+		if (u_isUUppercase(c))
+			return true;
+	}
+	return false;
+}
+#else
+bool string_contains_uppercase(const char *search)
+{
+	const char *c = search;
+	for (; *c != '\0'; ++c) {
+		if (isupper(*c))
+			return true;
+	}
+	return false;
+}
+#endif
+
 bool
 string_isnumber(const char *str)
 {
