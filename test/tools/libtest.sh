@@ -135,7 +135,8 @@ file() {
 		case "$path" in
 			stdin|expected*) cat ;;
 			*) sed 's/^[ ]//' ;;
-		esac > "$path"
+		esac > "${path}.tmp"
+		mv -f -- "${path}.tmp" "$path"
 	else
 		printf '%s' "$*" > "$path"
 	fi
@@ -247,9 +248,7 @@ assert_equals()
 		whitespace_arg='-w'
 	fi
 
-	if [ ! -s "expected/$file" ]; then
-		file "expected/$file"
-	fi
+	file "expected/$file"
 
 	if [ -e "$file" ]; then
 		git diff --no-index $diff_color_arg $whitespace_arg -- "expected/$file" "$file" > "$file.diff" || true
