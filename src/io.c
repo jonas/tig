@@ -352,7 +352,7 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 		}
 
 		if (dir && *dir && chdir(dir) == -1)
-			exit(errno);
+			_exit(errno);
 
 		if (env) {
 			int i;
@@ -365,7 +365,7 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 		execvp(argv[0], (char *const*) argv);
 
 		close(STDOUT_FILENO);
-		exit(errno);
+		_exit(errno);
 	}
 
 	if (pipefds[!!(type == IO_WR)] != -1)
