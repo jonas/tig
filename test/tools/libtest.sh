@@ -487,7 +487,17 @@ install_pid_timeout() {
 	test "$pid" -gt 0 || return
 	test "$pid" != "$$" || return
 	trap '' "$signal"
-	sleep "$timeout" && kill -0 "$pid" >/dev/null 2>&1 && kill -"$signal" "$pid" >/dev/null 2>&1 || true &
+	(
+	trap '' "$signal"
+	count=0
+	granularity=1
+	while [ "$count" -lt "$timeout" ]; do
+		count="$((count + granularity))"
+		sleep "$granularity"
+		kill -0 "$pid" || break
+	done
+	kill -0 "$pid" && kill -"$signal" "$pid" || true
+	) >/dev/null 2>&1 &
 }
 
 valgrind_exec()
