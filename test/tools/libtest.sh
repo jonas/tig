@@ -138,6 +138,20 @@ tty_reset()
 	fi
 }
 
+tempfile_name()
+{
+	temp_base="${1:-tempfile}"
+	if which mktemp >/dev/null 2>&1; then
+		temp_file="$(mktemp "$tmp_dir/${temp_base}.XXXXXX")"
+	else
+		temp_file="$tmp_dir/${temp_base}.$$"
+		while [ -e "$temp_file" ]; do
+			temp_file="${temp_file}.alt"
+		done
+	fi
+	printf '%s\n' "$temp_file"
+}
+
 ### Testing API AsciiDoc
 #|
 #| file(filename, [content, ...]) [< content]::
