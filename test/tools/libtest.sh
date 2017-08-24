@@ -811,10 +811,6 @@ run_test_cases()
 			test_todo_message "$(cat < "$name-todo")" >> ".test-skipped-subtest-$name"
 			continue;
 		fi
-		tig_script "$name" "
-			$(if [ -e "$name-script" ]; then cat < "$name-script"; fi)
-			:save-display $name.screen
-		"
 		if [ -s "$name-tigrc" ]; then
 			tigrc "$(cat < "$name-tigrc")"
 		fi
@@ -822,6 +818,10 @@ run_test_cases()
 			test_exec_work_dir "$SHELL" "$HOME/$name-before"
 		fi
 		(
+			tig_script "$name" "
+				$(if [ -e "$name-script" ]; then cat < "$name-script"; fi)
+				:save-display $name.screen
+			"
 			if [ -e "$name-cwd" ]; then
 				work_dir="$work_dir/$(cat < "$name-cwd")"
 			fi
