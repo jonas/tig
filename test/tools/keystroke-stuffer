@@ -1,0 +1,431 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2006-2017 Jonas Fonseca <jonas.fonseca@gmail.com>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of
+# the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# notes
+#
+#     python 2/3 compatible
+#
+#     process groups are ignored if the first argument is set to 0
+#
+# bugs
+#
+#     no interface provided to send a newline
+#
+
+###
+### imports
+###
+
+from __future__ import print_function
+import atexit, fcntl, os, re, signal, subprocess, sys, termios, time, tty
+
+###
+### file-scoped variables
+###
+
+typing_interval         = .05
+tty_latency_interval    = 5 * typing_interval
+shutdown_grace_interval = 0.5
+tty_path                = '/dev/tty'
+tty_fd                  = None
+tty_attr                = None
+patterns                = {}
+patterns['value']       = {
+			   'keysym': r'(?:[A-Za-z\d<>-]+)',
+			   'keypause': r'(?:\d+(?:\.\d+)?|\.\d+)',
+			   'keysignal': r'(?:\d+|[A-Z]+)',
+}
+patterns['capture']     = {
+			   'keysym':    r'%\(keysym:('    + patterns['value']['keysym']    + r')\)',
+			   'keypause':  r'%\(keypause:('  + patterns['value']['keypause']  + r')\)',
+			   'keysignal': r'%\(keysignal:(' + patterns['value']['keysignal'] + r')\)',
+}
+patterns['no_capture']  = {
+			   'keysym':    r'%\(keysym:'    + patterns['value']['keysym']    + r'\)',
+			   'keypause':  r'%\(keypause:'  + patterns['value']['keypause']  + r'\)',
+			   'keysignal': r'%\(keysignal:' + patterns['value']['keysignal'] + r'\)',
+}
+regc                    = {
+			   'cluster_divider':  re.compile(r'('     + r'|'.join(patterns['no_capture'].values()) + r')'),
+			   'escaped_embedded': re.compile(r'\\(?=' + r'|'.join(patterns['no_capture'].values()) + r')'),
+			   'hanging_escape':   re.compile(r'(?:^|[^\\])(?:\\\\)*\\$'),
+			   'isolated': {
+					'keysym':    re.compile(r'^' + patterns['capture']['keysym']    + r'$'),
+					'keypause':  re.compile(r'^' + patterns['capture']['keypause']  + r'$'),
+					'keysignal': re.compile(r'^' + patterns['capture']['keysignal'] + r'$'),
+					'any':       re.compile(r'^(?:' + r'|'.join(patterns['capture'].values()) + r')$'),
+			   },
+			   'composed_keysym': {
+						'control': re.compile(r'^(?i)C(?:trl)?-([@-_])$'),
+						'escape':  re.compile(r'^(?i)<(?:Esc|Escape)>(\S)$'),
+			   },
+}
+opt_debug               = 0
+opt_with_shutdown       = 0
+
+# known_keysyms and regc['composed_keysym'] are tig-specific
+known_keysyms = {
+	'literal': {
+		'enter':       '\r',
+		'escape':      '\033',
+		'esc':         '\033',
+		'hash':        '#',
+		'lessthan':    '<',
+		'lt':          '<',
+		'space':       '\040',
+		'tab':         '\t',
+	},
+	'terminfo': {
+		'backspace':   'kbs',
+		'backtab':     'kcbt',
+		'shifttab':    'kcbt',
+		'delete':      'kdch1',
+		'del':         'kdch1',
+		'down':        'kcud1',
+		'end':         'kend',
+		'f1':          'kf1',
+		'f2':          'kf2',
+		'f3':          'kf3',
+		'f4':          'kf4',
+		'f5':          'kf5',
+		'f6':          'kf6',
+		'f7':          'kf7',
+		'f8':          'kf8',
+		'f9':          'kf9',
+		'f10':         'kf10',
+		'f11':         'kf11',
+		'f12':         'kf12',
+		'f13':         'kf13',
+		'f14':         'kf14',
+		'f15':         'kf15',
+		'f16':         'kf16',
+		'f17':         'kf17',
+		'f18':         'kf18',
+		'f19':         'kf19',
+		'home':        'khome',
+		'insert':      'kich1',
+		'ins':         'kich1',
+		'left':        'kcub1',
+		'pagedown':    'knp',
+		'pgdown':      'knp',
+		'pageup':      'kpp',
+		'pgup':        'kpp',
+		'right':       'kcuf1',
+		'scrollback':  'kri',
+		'sback':       'kri',
+		'scrollfwd':   'kind',
+		'sfwd':        'kind',
+		'shiftdelete': 'kDC',
+		'shiftdel':    'kDC',
+		'shiftend':    'kEND',
+		'shifthome':   'kHOM',
+		'shiftleft':   'kLFT',
+		'shiftright':  'kRIT',
+		'up':          'kcuu1',
+	},
+}
+
+###
+### main
+###
+
+def main(argv):
+	receiver_pgid, filename = process_args(argv)
+	content = read_content(filename)
+
+	sighandler_init(receiver_pgid)
+	tty_init(receiver_pgid)
+
+	allow_tty_latency()
+
+	for cluster in break_clusters(content):
+		cluster = handle_embedded_codes(cluster, receiver_pgid)
+		type_keystrokes(cluster)
+
+	allow_tty_latency()
+
+	if opt_with_shutdown:
+		shutdown_pgroup(receiver_pgid)
+
+###
+### functions
+###
+
+###
+### functions: utility
+###
+
+def warn(*args):
+	print('keystroke-stuffer:', *args, file=sys.stderr)
+
+def die(*args):
+	warn(*args)
+	sys.exit(1)
+
+def allow_tty_latency():
+	if opt_debug: return
+	time.sleep(tty_latency_interval)
+
+###
+### functions: argument processing
+###
+
+def process_args(argv):
+	global opt_debug
+	global opt_with_shutdown
+	argv.pop(0)
+	usage = '[--debug --debug --with-shutdown ] <receiver-pgid> <filename>'
+
+	while len(argv) >= 1 and re.compile('^-+(?:debug|with[_-]shutdown)$').match(argv[0]):
+		if re.compile('^-+debug$').match(argv[0]):
+			argv.pop(0)
+			opt_debug += 1
+		elif re.compile('^-+with[_-]shutdown$').match(argv[0]):
+			argv.pop(0)
+			opt_with_shutdown += 1
+
+	if len(argv) != 2:
+		die(usage)
+
+	try:
+		receiver_pgid = int(argv[0])
+		argv.pop(0)
+	except:
+		die(usage)
+
+	if not os.path.exists(argv[0]):
+		die(usage)
+
+	return (receiver_pgid, argv[0])
+
+###
+### functions: I/O
+###
+
+def read_content(filename):
+	with open(filename) as handle:
+		content = handle.read()
+	if not re.compile(r'\S').search(content):
+		die('empty input file')
+	content = re.sub(r'\A\s+', '', content)
+	content = re.sub(r'\s+\Z', '', content)
+	return content
+
+###
+### functions: embedded codes
+###
+
+def signal_num_from_text(text):
+	text = re.sub(r'\ASIG', '', text)
+	try:
+		signal_num = int(text)
+	except:
+		try:
+			signal_num = eval("signal.SIG" + text)
+		except:
+			die('could not convert text to signal:', text)
+	return signal_num
+
+def dispatch_embedded_pause(seconds):
+	if opt_debug:
+		print('[pause', seconds, 'seconds]')
+	else:
+		time.sleep(seconds)
+
+def dispatch_embedded_signal(sig_text):
+	send_sig = signal_num_from_text(sig_text)
+	if opt_debug:
+		print('[signal ', send_sig, ']', sep='')
+		return
+	if not receiver_pgid > 0:
+		return
+
+	old_handler = signal.signal(send_sig, signal.SIG_IGN)
+	try:
+		os.kill(receiver_pgid, send_sig)
+	except:
+		pass
+	signal.signal(send_sig, old_handler)
+
+def translate_keysym(symbol):
+	orig_symbol = symbol
+	symbol = re.sub(r'^<(\S+)>$', r'\1', symbol)
+
+	control_mt = regc['composed_keysym']['control'].match(symbol)
+	escape_mt  = regc['composed_keysym']['escape'].match(symbol)
+
+	if control_mt:
+		return chr(ord(control_mt.group(1)) & 0x1F)
+	elif escape_mt:
+		return '\033' + escape_mt.group(1)
+
+	if symbol.lower() in known_keysyms['literal']:
+		return known_keysyms['literal'][symbol.lower()]
+
+	if symbol.lower() in known_keysyms['terminfo']:
+		symbol = known_keysyms['terminfo'][symbol.lower()]
+
+	try:
+		string = subprocess.check_output(['tput', symbol], stdin=tty_fd)
+	except:
+		die('could not translate keysym', orig_symbol)
+	return string
+
+def handle_embedded_codes(string, receiver_pgid):
+	pause_mt  = regc['isolated']['keypause'].match(string)
+	signal_mt = regc['isolated']['keysignal'].match(string)
+	symbol_mt = regc['isolated']['keysym'].match(string)
+	if pause_mt:
+		dispatch_embedded_pause(float(pause_mt.group(1)))
+		return ''
+	elif signal_mt:
+		dispatch_embedded_signal(signal_mt.group(1))
+		return ''
+	elif symbol_mt:
+		return translate_keysym(symbol_mt.group(1))
+	else:
+		# corner case: restore literal escaped \%(embedded_code)
+		string = re.sub(regc['escaped_embedded'], '', string)
+		return string
+
+###
+### functions: strings
+###
+
+# string in:     'literal_keystrokes%(keypause:3)more_keystrokes'
+# clusters out: ['literal_keystrokes', '%(keypause:3)', 'more_keystrokes']
+def break_clusters(content):
+	clusters = regc['cluster_divider'].split(content)
+	clusters = filter((lambda x: len(x) > 0), clusters)
+	# merge when literal escaped \%(embedded_code)
+	for i in range(len(clusters), 0, -1):
+		if i >= len(clusters): continue
+		if regc['hanging_escape'].search(clusters[i-1]) and regc['isolated']['any'].match(clusters[i]):
+			clusters[i-1:i+1] = [''.join(clusters[i-1:i+1])]
+	return clusters
+
+def ensure_literals(string):
+	try:
+		string = string.encode('utf8').decode('unicode_escape')
+	except:
+		string = string.decode('string_escape')
+	return string
+
+def ensure_carriage_returns(string):
+	string = re.sub('\n', '\r', string)
+	return string
+
+def ensure_printable(string):
+	if opt_debug >= 2:
+		try:
+			string = string.encode('unicode_escape').decode('utf8')
+		except:
+			string = string.encode('string_escape')
+		string = re.sub(' ', r'\x20', string)
+	else:
+		string = re.sub('\r', '\n', string)
+		string = re.sub('\n\Z', '', string)
+	return string
+
+###
+### functions: tty
+###
+
+def tty_setmodes(opt):
+	tty.setraw(tty_fd, opt)
+	# tty attributes can be further modified here eg
+	#   local_attr = termios.tcgetattr(tty_fd)
+	#   local_attr[3] = local_attr[3] | termios.INLCR
+	#   termios.tcsetattr(tty_fd, opt, local_attr)
+
+def tty_reset(opt):
+	termios.tcsetattr(tty_fd, opt, tty_attr)
+
+def tty_init(receiver_pgid):
+	if opt_debug: return
+	global tty_fd
+	global tty_attr
+	tty_fd = os.open(tty_path, os.O_RDWR|os.O_NONBLOCK)
+
+	if receiver_pgid > 0:
+		try:
+			os.setpgid(os.getpid(), receiver_pgid)
+			os.tcsetpgrp(tty_fd, receiver_pgid)
+		except:
+			warn('warning: failed to join process group', receiver_pgid)
+
+	tty_attr = termios.tcgetattr(tty_fd)
+	atexit.register(lambda: tty_reset(termios.TCSAFLUSH))
+	tty_setmodes(termios.TCSAFLUSH)
+
+###
+### functions: signals/IPC
+###
+
+def sighandler_init(receiver_pgid):
+	for sig in [signal.SIGHUP, signal.SIGINT, signal.SIGPIPE, signal.SIGALRM, signal.SIGTERM]:
+		signal.signal(sig, lambda s, f: sys.exit(1))
+	if receiver_pgid > 0:
+		for sig in [signal.SIGTTOU, signal.SIGTTIN, signal.SIGTSTP]:
+			signal.signal(sig, signal.SIG_IGN)
+
+def shutdown_pgroup(receiver_pgid):
+	if not receiver_pgid > 0:
+		return
+	if opt_debug:
+		return
+
+	for sig in [signal.SIGHUP, signal.SIGINT, signal.SIGTERM, signal.SIGKILL]:
+		time.sleep(shutdown_grace_interval)
+		try:
+			os.kill(receiver_pgid, 0)
+		except:
+			break
+
+		try:
+			old_handler = signal.signal(sig, signal.SIG_IGN)
+		except:
+			old_handler = None
+		try:
+			os.kill(receiver_pgid, sig)
+		except:
+			pass
+
+		if old_handler:
+			signal.signal(sig, old_handler)
+
+###
+### functions: keystrokes
+###
+
+def type_keystrokes(string):
+	if len(string) == 0: return
+	string = ensure_literals(string)
+	string = ensure_carriage_returns(string)
+	if opt_debug:
+		string = ensure_printable(string)
+		print('[keystrokes |', string, '|]', sep='')
+		return
+	for char in string:
+		fcntl.ioctl(tty_fd, termios.TIOCSTI, char)
+		time.sleep(typing_interval)
+
+###
+### dispatch
+###
+
+if __name__ == "__main__":
+	main(sys.argv)
+
+# vim: set ts=8 sw=8 noexpandtab:
