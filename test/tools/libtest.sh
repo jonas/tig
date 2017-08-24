@@ -271,6 +271,39 @@ filter_file_ok()
 	esac
 }
 
+process_tree()
+{
+	pid="${1:-0}"; shift
+	pid="$(expr "$pid")"
+	test "$pid" -gt 0 || return
+
+	depth="${1:-0}"
+	maxdepth=20
+
+	printf '%s\n' "$pid"
+
+	depth="$((depth + 1))"
+	test "$depth" -ge "$maxdepth" && return
+
+	last_pid=-1
+	while [ "$pid" != "$last_pid" ]; do
+		last_pid="$pid"
+		proc_tmp="$(tempfile_name 'process_tree')"
+		ps -e -o ppid=,pid= | grep "^[ 0]*$pid[^0-9]" > "$proc_tmp" || continue
+		while read -r child_proc; do
+			test -z "$child_proc" && continue
+			ORIG_IFS="$IFS"; IFS=' '
+			set -- $child_proc
+			IFS="$ORIG_IFS"
+			test "$#" -ne 2 && continue
+			test "$pid" = "$2" && continue
+			pid="$2"
+			( process_tree "$pid" "$depth" )
+		done < "$proc_tmp"
+		rm -f -- "$proc_tmp"
+	done
+}
+
 #
 # Parse TEST_OPTS
 #
