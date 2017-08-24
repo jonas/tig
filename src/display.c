@@ -611,7 +611,6 @@ init_display(void)
 {
 	bool no_display = !!getenv("TIG_NO_DISPLAY");
 	const char *term;
-	int x, y;
 
 	if (!opt_tty.file)
 		die("Can't initialize display without tty");
@@ -621,29 +620,44 @@ init_display(void)
 		die("Failed to register done_display");
 
 	/* Initialize the curses library */
-	if (!no_display && isatty(STDIN_FILENO)) {
+	if (no_display)	{
+		FILE *null_file = fopen("/dev/null", "w+");
+
+		/* endwin() must not be called out of last-to-first order on instantiated
+		 * SCREENs. Not typically an issue, since after this block, tig will not
+		 * leave output_scr. */
+		SCREEN *input_scr = newterm(NULL, opt_tty.file, opt_tty.file);
+		SCREEN *output_scr = newterm(NULL, null_file, null_file);
+
+		if (!(cursed = input_scr && output_scr))
+			die("Failed to initialize curses");
+
+		set_term(input_scr);
+		/* buglet: unsafe for signals over next 5 statements due to endwin() in
+		 * done_display(). */
+		raw();
+		nonl();
+		noecho();
+		status_win = newwin(1, 1, 0, 0);
+		set_term(output_scr);
+	} else if (isatty(STDIN_FILENO)) {
 		/* Needed for ncurses 5.4 compatibility. */
 		cursed = !!initscr();
 	} else {
-		/* Leave stdin and stdout alone when acting as a pager. */
-		FILE *out_tty;
+		int x, y;
 
-		out_tty = no_display ? fopen("/dev/null", "w+") : opt_tty.file;
-		if (!out_tty)
-			die("Failed to open tty for output");
-		cursed = !!newterm(NULL, out_tty, opt_tty.file);
+		if (!(cursed = !!newterm(NULL, opt_tty.file, opt_tty.file)))
+			die("Failed to initialize curses");
+
+		getmaxyx(stdscr, y, x);
+		status_win = newwin(1, x, y - 1, 0);
 	}
 
-	if (!cursed)
-		die("Failed to initialize curses");
+	if (!status_win)
+		die("Failed to create status window");
 
 	set_terminal_modes();
 	init_colors();
-
-	getmaxyx(stdscr, y, x);
-	status_win = newwin(1, x, y - 1, 0);
-	if (!status_win)
-		die("Failed to create status window");
 
 	/* Enable keyboard mapping */
 	keypad(status_win, true);
