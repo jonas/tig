@@ -537,13 +537,17 @@ test_require()
 			fi
 			;;
 		diff-highlight)
-			diff_highlight_path="$(git --exec-path)/../../share/git-core/contrib/diff-highlight/diff-highlight"
-			if [ ! -e "$diff_highlight_path" ]; then
-				# alt path
-				diff_highlight_path="$(git --exec-path)/../../share/git/contrib/diff-highlight/diff-highlight"
+			if [ "$feature" = "diff-highlight" ]; then
+				for elt in "$(git --exec-path)/../../share/git-core/contrib/diff-highlight" \
+					   "$(git --exec-path)/../../share/git/contrib/diff-highlight" \
+					   ; do
+					if [ -d "$elt" ]; then
+						PATH="$PATH":"$elt"
+					fi
+				done
 			fi
-			if [ ! -e "$diff_highlight_path" ]; then
-				test_skip "The test requires diff-highlight, usually found in share/git-core-contrib"
+			if ! which "$feature" >/dev/null 2>&1; then
+				test_skip "The test requires a '$feature' executable"
 			fi
 			;;
 		readline)
