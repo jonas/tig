@@ -536,7 +536,7 @@ test_require()
 				test_skip "The test requires clang and is only run via \`make test-address-sanitizer\`"
 			fi
 			;;
-		diff-highlight)
+		diff-highlight|python)
 			if [ "$feature" = "diff-highlight" ]; then
 				for elt in "$(git --exec-path)/../../share/git-core/contrib/diff-highlight" \
 					   "$(git --exec-path)/../../share/git/contrib/diff-highlight" \
@@ -548,6 +548,11 @@ test_require()
 			fi
 			if ! which "$feature" >/dev/null 2>&1; then
 				test_skip "The test requires a '$feature' executable"
+			fi
+			;;
+		python-termios)
+			if ! python -c 'import termios; termios.TIOCSTI' >/dev/null 2>&1; then
+				test_skip "The test requires python with termios.TIOCSTI support"
 			fi
 			;;
 		readline)
