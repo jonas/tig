@@ -7,6 +7,64 @@ tig_script(name, content, [content, ...])::
 
 steps(content, [content, ...])::
 
+keystrokes([-append | -keysym | -repeat=<int>] key-sequence, [key-sequence, ...])::
+
+	Key sequences are given as Python strings, and accept
+	https://docs.python.org/2.0/ref/strings.html[the same string escapes as
+	Python]. Example: `'\134'` encodes a literal backslash. +
+	+
+	The key sequence may also contain special embedded codes:
+	`%(keysym:<name>)`, `%(keypause:<seconds>)`, or `%(keysignal:<signal>)`. +
+	+
+	*`%(keysym:<name>)`* will be translated into the raw characters
+	associated with the symbolic key name. <name> may be any form accepted
+	by 'bind' in `~/.tigrc`, or any terminal capability name known to
+	`tput`. Examples: `%(keysym:Left)`, `%(keysym:Ctrl-A)`. +
+	+
+	As a convenience, the `-keysym` option causes subsequent arguments to
+	be interpreted as a series of keysym names.  Example:
+-----------------------------------------------------------------------------
+	keystrokes -keysym 'Down' 'Up'
+-----------------------------------------------------------------------------
+	::
+	*`%(keypause:<seconds>)`* will insert a pause in the simulated
+	keystrokes. If pauses are added, the test timeout may also need to be
+	increased. +
+	+
+	*`%(keysignal:<signal>)`* will send a Unix signal to tig.  The signal
+	may be given as a number or symbol. Example: `%(keysignal:SIGWINCH)` +
+	+
+	To send tig a literal sequence matching the characters of an embedded
+	code, escape it with a backslash: `\%(keypause:1)`. +
+	+
+	Exiting: The passed key sequence should always arrange a clean exit.
+	Tig will otherwise be shut down by a signal, which is less consistent
+	for the purpose of testing. +
+	+
+	Appending: keystrokes may be defined in multiple passes using `-append`.
+	This enables composing keystrokes with and without `-keysym`.  The last
+	call to `keystrokes()` should arrange a clean exit from tig. +
+	+
+	Repeating: `-repeat=<int>` can be used to define repeated sequences.
+	Only one key-sequence argument may be used with `-repeat`.  Example:
+-----------------------------------------------------------------------------
+	keystrokes -keysym -repeat=20 'Down'
+-----------------------------------------------------------------------------
+	::
+	Interaction with `steps()`: It is possible to use both `steps()` and
+	`keystrokes()` in the same test: during test execution, the `steps()`
+	script will run first, and the simulated keystrokes will be sent to tig
+	after the script finishes. When used together, `steps()` is modified so
+	that it does not imply `:quit`. +
+	+
+	Whitespace handling: The "Enter" key will be fed to tig as a carriage
+	return (`\r`). Interior newlines in key sequences, whether literal or
+	encoded, will be translated to carriage returns before sending them to
+	tig. But note that leading or trailing whitespace on the key-sequence
+	argument is ignored. To send "Enter", "Tab", or "Space" as the first or
+	last key in the sequence, use escape codes or keysyms (_ie_ `\r`,`\t`,
+	`\040`, `%(keysym:Enter)`, `%(keysym:Tab)`, or `%(keysym:Space)`.) +
+
 stdin([content, ...]) [< content]::
 
 tigrc([content, ...]) [< content]::
