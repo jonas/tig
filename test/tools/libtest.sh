@@ -191,6 +191,33 @@ auto_detect_debugger() {
 	die "Failed to detect a supported debugger"
 }
 
+format_filter()
+{
+	test -z "$filter" && return
+
+	case "$filter" in
+		:*) filter="*$filter";;
+	esac
+	case "$filter" in
+		*:) filter="$filter*";;
+	esac
+	if [ "$filter" = "*:*" ]; then
+		filter=''
+	fi
+}
+
+filter_file_ok()
+{
+	test -z "$filter" && return 0
+
+	matcher="$0"
+	_filter_filename_part="${filter%:*}"
+	case "$matcher" in
+		$_filter_filename_part) return 0;;
+		*) return 1;;
+	esac
+}
+
 #
 # Parse TEST_OPTS
 #
@@ -205,6 +232,7 @@ debugger=
 trace=
 todos=
 valgrind=
+filter=
 timeout=10
 vlg_timeout_bonus=60
 
@@ -223,11 +251,14 @@ for arg in ${MAKE_TEST_OPTS:-} ${TEST_OPTS:-}; do
 		trace) trace=yes ;;
 		todo|todos) todos=yes ;;
 		valgrind) valgrind="$HOME/valgrind.log" ;;
+		filter=*) filter="$(expr "$arg" : 'filter=\(.*\)')" && format_filter;;
 		*) die "unknown TEST_OPTS element '$arg'" ;;
 	esac
 done
 IFS="$ORIG_IFS"
 ORIG_IFS=
+
+filter_file_ok || exit 0   # silently exit caller who sourced this file
 
 #
 # Test runners and assertion checking.
@@ -628,6 +659,16 @@ run_test_cases()
 	fi
 	test_setup
 	while read -r name <&3; do
+		if [ -n "$filter" ]; then
+			matcher="$name"
+			_filter_case_part="${filter#*:}"
+			if [ "$filter" != "$_filter_case_part" ]; then
+				case "$matcher" in
+					$_filter_case_part) true;;
+					*) continue;;
+				esac
+			fi
+		fi
 		if [ "${V:-}" = '@' ]; then
 			# align with output from make, based on $V which is inherited from make
 			printf '      CASE  %s\n' "$0:$name"
