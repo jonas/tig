@@ -628,6 +628,10 @@ run_test_cases()
 	fi
 	test_setup
 	while read -r name <&3; do
+		if [ "${V:-}" = '@' ]; then
+			# align with output from make, based on $V which is inherited from make
+			printf '      CASE  %s\n' "$0:$name"
+		fi
 		if [ -s "$name-todo" ] && [ -z "$todos" ]; then
 			printf '%s[skipped] ' "$indent"
 			test_todo_message "$(cat < "$name-todo")"
