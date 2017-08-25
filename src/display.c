@@ -56,7 +56,7 @@ open_script(const char *path)
 }
 
 bool
-open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool refresh, const char *notice)
+open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool quick, bool refresh, const char *notice)
 {
 	bool ok;
 
@@ -82,9 +82,12 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 		if (confirm || !ok) {
 			if (!ok && *notice)
 				fprintf(stderr, "%s", notice);
-			fprintf(stderr, "Press Enter to continue");
-			getc(opt_tty);
-			fseek(opt_tty, 0, SEEK_END);
+
+			if (!ok || !quick) {
+				fprintf(stderr, "Press Enter to continue");
+				getc(opt_tty);
+				fseek(opt_tty, 0, SEEK_END);
+			}
 		}
 		set_terminal_modes();
 	}
@@ -138,7 +141,7 @@ open_editor(const char *file, unsigned int lineno)
 	if (lineno && opt_editor_line_number && string_format(lineno_cmd, "+%u", lineno))
 		editor_argv[argc++] = lineno_cmd;
 	editor_argv[argc] = file;
-	if (!open_external_viewer(editor_argv, repo.cdup, false, false, false, true, EDITOR_LINENO_MSG))
+	if (!open_external_viewer(editor_argv, repo.cdup, false, false, false, false, true, EDITOR_LINENO_MSG))
 		opt_editor_line_number = false;
 }
 
