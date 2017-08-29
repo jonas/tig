@@ -765,6 +765,8 @@ get_input(int prompt_position, struct key *key)
 {
 	struct view *view;
 	int i, key_value, cursor_y, cursor_x;
+	static time_t last_winch = 0;
+	int winch_refresh_throttle = 1;
 
 	if (prompt_position > 0)
 		input_mode = true;
@@ -825,6 +827,21 @@ get_input(int prompt_position, struct key *key)
 
 		} else if (key_value == KEY_RESIZE) {
 			int height, width;
+			bool refs_refreshed = false;
+			time_t now = time(NULL);
+
+			if ((now - last_winch) >= winch_refresh_throttle) {
+				foreach_displayed_view (view, i) {
+					if (view_can_refresh(view)) {
+						if (!refs_refreshed) {
+							load_refs(true);
+							refs_refreshed = true;
+						}
+						refresh_view(view);
+					}
+				}
+			}
+			last_winch = now;
 
 			getmaxyx(stdscr, height, width);
 

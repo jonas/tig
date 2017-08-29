@@ -27,7 +27,7 @@ steps '
 
 test_tig --exclude=refs/remotes/origin/* --exclude=refs/heads/master --all -- common tracer
 
-grep 'git rev-parse' < "$TIG_TRACE" > rev-parse.trace
+grep 'git rev-parse' < "$TIG_TRACE" | grep -v 'TIG_PID' > rev-parse.trace
 grep 'git log' < "$TIG_TRACE" > log.trace
 
 assert_equals 'rev-parse.trace' <<EOF

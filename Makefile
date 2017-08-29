@@ -23,6 +23,7 @@ CFLAGS ?= -Wall -O2 $(TIG_CFLAGS)
 
 prefix ?= $(HOME)
 bindir ?= $(prefix)/bin
+libexecdir ?= $(prefix)/libexec
 datarootdir ?= $(prefix)/share
 sysconfdir ?= $(prefix)/etc
 docdir ?= $(datarootdir)/doc
@@ -63,12 +64,13 @@ endif
 
 override CPPFLAGS += '-DTIG_VERSION="$(VERSION)"'
 override CPPFLAGS += '-DSYSCONFDIR="$(sysconfdir)"'
+override CPPFLAGS += '-DLIBEXECDIR="$(libexecdir)"'
 ifdef TIG_USER_CONFIG
 override CPPFLAGS += '-DTIG_USER_CONFIG="$(TIG_USER_CONFIG)"'
 endif
 
 ASCIIDOC ?= asciidoc
-ASCIIDOC_FLAGS = -aversion=$(VERSION) -asysconfdir=$(sysconfdir) -f doc/asciidoc.conf
+ASCIIDOC_FLAGS = -aversion=$(VERSION) -asysconfdir=$(sysconfdir) -alibexecdir=$(libexecdir) -f doc/asciidoc.conf
 XMLTO ?= xmlto
 DOCBOOK2PDF ?= docbook2pdf
 
@@ -88,9 +90,11 @@ doc-man: $(MANDOC)
 doc-html: $(HTMLDOC)
 
 export sysconfdir
+export libexecdir
 
 install: all
 	$(QUIET_INSTALL)tools/install.sh bin $(EXE) "$(DESTDIR)$(bindir)"
+	$(QUIET_INSTALL)tools/install.sh bin contrib/tig-refresh-watcher "$(DESTDIR)$(libexecdir)"
 	$(QUIET_INSTALL)tools/install.sh data tigrc "$(DESTDIR)$(sysconfdir)"
 
 install-doc-man: doc-man
@@ -122,6 +126,7 @@ install-release-doc: install-release-doc-man install-release-doc-html
 
 uninstall:
 	$(QUIET_UNINSTALL)tools/uninstall.sh "$(DESTDIR)$(bindir)/$(EXE:src/%=%)"
+	$(QUIET_UNINSTALL)tools/uninstall.sh "$(DESTDIR)$(libexecdir)/tig-refresh-watcher"
 	$(QUIET_UNINSTALL)tools/uninstall.sh "$(DESTDIR)$(sysconfdir)/tigrc"
 	$(Q)$(foreach doc, $(filter %.1, $(MANDOC:doc/%=%)), \
 		$(QUIET_UNINSTALL_EACH)tools/uninstall.sh "$(DESTDIR)$(mandir)/man1/$(doc)";)

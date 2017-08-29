@@ -355,14 +355,18 @@ The following variables can be set:
 	Mouse support requires that ncurses itself support mouse events and that
 	you have enabled mouse support in ~/.tigrc with `set mouse = true`.
 
-'refresh-mode' (mixed) [manual|auto|after-command|periodic|<bool>]::
+'refresh-mode' (mixed) [manual|auto|after-command|periodic|entr|<bool>]::
 
 	Configures how views are refreshed based on modifications to watched
 	files in the repository. When set to 'manual', nothing is refreshed
 	automatically. When set to 'auto', views are refreshed when a
 	modification is detected. When set to 'after-command' only refresh after
 	returning from an external command. When set to 'periodic', visible
-	views are refreshed periodically using 'refresh-interval'.
+	views are refreshed periodically using 'refresh-interval'. When set
+	to 'entr', views are refreshed when the external tool
+	http://entrproject.org/[entr] reports a relevant filesystem event.
+	The `entr` executable must be installed separately from tig and
+	visible on `$PATH`.
 
 'refresh-interval' (int)::
 

@@ -38,6 +38,7 @@ fi
 case "$src" in doc/*)
 	dest="$dest/$(basename "$src")"
 	sed "s#++SYSCONFDIR++#${sysconfdir}#" < "$src" > "$src+"
+	sed "s#++LIBEXECDIR++#${libexecdir}#" < "$src" > "$src+"
 	trash="$src+"
 	src="$src+"
 esac
