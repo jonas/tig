@@ -906,7 +906,7 @@ given as the last parameter. The syntax is:
 
 Examples:
 // TEST: tigrc
-------------------------------------------------------------------------------
+--------------------------------------------------------------------------
 # Override the default terminal colors to white on black.
 color default		white	black
 # Diff colors
@@ -930,7 +930,7 @@ Or in the Git configuration files:
 # View-specific color
 [tig "color.tree"]
 	date		= cyan	default	bold
-------------------------------------------------------------------------------
+--------------------------------------------------------------------------
 
 Area names::
 
