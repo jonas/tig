@@ -258,7 +258,9 @@ done_graph(struct graph *graph_ref)
 	struct graph_v2 *graph = graph_ref->private;
 
 	free(graph);
-	htab_empty(intern_string_htab);
+
+	if (intern_string_htab)
+		htab_empty(intern_string_htab);
 }
 
 #define graph_column_has_commit(col) ((col)->id)
