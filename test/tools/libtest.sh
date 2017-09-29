@@ -17,8 +17,9 @@
 set -eu
 if [ -n "${BASH_VERSION:-}" ]; then
 	set -o pipefail
-	IFS=$'\n\t'
 fi
+IFS='
+	'
 
 test="$(basename -- "$0")"
 source_dir="$(cd "$(dirname -- "$0")" >/dev/null && pwd)"
@@ -251,7 +252,7 @@ assert_equals()
 	file "expected/$file"
 
 	if [ -e "$file" ]; then
-		git diff --no-index $diff_color_arg $whitespace_arg -- "expected/$file" "$file" > "$file.diff" || true
+		( IFS=' 	'; git diff --no-index $diff_color_arg $whitespace_arg -- "expected/$file" "$file" > "$file.diff" || true )
 		if [ -s "$file.diff" ]; then
 			printf '[FAIL] %s != expected/%s\n' "$file" "$file" >> .test-result
 			if [ -n "$*" ]; then
@@ -654,7 +655,7 @@ run_test_cases()
 			if [ -s "$name-timeout" ]; then
 				timeout="$(cat < "$name-timeout")"
 			fi
-			IFS=' '
+			IFS=' 	'
 			test_tig $(if [ -e "$name-args" ]; then cat < "$name-args"; fi)
 		)
 		if [ -e "$name-after" ]; then
