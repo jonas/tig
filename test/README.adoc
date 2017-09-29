@@ -35,6 +35,23 @@ debugger[=<program]::
 	program is specified it is auto-detected. Remember to recompile
 	using `make clean all-debug` to expose all symbols.
 
+filter=<file-glob>:<case-glob>::
+
+	Only run test files or cases matching a shell-style glob filter. A
+	colon separates the file glob from the case glob.  No colon, or
+	trailing colon, is equivalent to trailing `:*` (all cases). Leading
+	colon is equivalent to leading `*:` (all files).  The file portion
+	is matched against a path fragment from the project root.
+	Example:
+--------------------------------------------------------------------------------
+	$ TEST_OPTS='filter=*:*default' make test/tigrc/width-test
+--------------------------------------------------------------------------------
+	::
+	This option is a convenience for development against specific tests.
+	Test files and test cases are filtered, but not assertions.  Thus some
+	assertions are expected to fail in the presence of a filter.  Testing
+	output originating from `make` is also not filtered.
+
 trace::
 
 	Show trace information.
