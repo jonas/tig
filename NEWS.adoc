@@ -20,7 +20,8 @@ Improvements:
    `F13`-`F19`, `ShiftLeft`, `ShiftRight`, `ShiftDel`, `ShiftHome`, `ShiftEnd`,
    `ShiftTab`, `Ctrl-C`, `Ctrl-V`, `Ctrl-S`, and `Ctrl-@`. (GH #314, #619, #642)
  - Persist readline history to `~/.tig_history` or `$XDG_DATA_HOME/tig/history`.
-   (GH #620)
+   Use `history-size` to control the number of entries to save. (GH #620, #713,
+   #714, #718)
  - Preload last search from persistent history. (GH #630)
  - Add `view-close-no-quit` action, unbound by default. (GH #607)
  - Add `mouse-wheel-cursor` option (off by default) when set to true causes
@@ -35,6 +36,10 @@ Improvements:
  - Show single-line output of external command in status bar. (GH #200, #557,
    #678)
  - Disable the graph when `--no-merges` is passed. (GH #687) 
+ - Print backtraces on segfault in debug mode.
+ - Ignore script lines starting with `#` (comment). (GH #705)
+ - Complete `repo:*` variables when readline is enabled. (GH #702)
+ - Incorporate XTerm's `wcwidth.c` to find Unicode widths. (GH #691)
 
 Bug fixes:
 
@@ -61,6 +66,7 @@ Bug fixes:
  - Repaint the display when toggling `line-graphics`. (GH #527)
  - Fix custom date formatting support longer strings. (GH #522)
  - Don't segfault on ":exec" irregular args. (GH #686)
+ - Fix segfault when calling htab_empty. (GH #663, #745)
 
 tig-2.2.2
 ---------
