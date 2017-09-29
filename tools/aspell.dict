@@ -1,9 +1,10 @@
-personal_ws-1.1 en 266 
+personal_ws-1.1 en 286 
 CJK
 del
 goto
 Ctrl
 refspec
+BackTab
 Shorthands
 Gedit
 cmd
@@ -11,11 +12,14 @@ noprefix
 dev
 cdup
 ident
+SBack
 sudo
+optimizations
 AuthorDate
 TMPDIR
 tig
 dir
+ShiftTab
 readline's
 keybinding
 unstage
@@ -27,11 +31,14 @@ args
 asciidoc
 AsciiDoc
 unstanged
+ShiftDel
 revgraph
 revargs
 configs
 topo
 toc
+terminfo
+Preload
 tmp
 cwd
 frontend
@@ -60,6 +67,7 @@ gitlink
 colorN
 nowarn
 sys
+ShiftRight
 subshell
 tty
 XDG
@@ -74,11 +82,14 @@ adoc
 Nano
 DSSL
 manpages
+ShiftEnd
 LDLIBS
 lookup
 stdout
 ncurses
 txt
+SFwd
+resizing
 Makefile
 cacheinfo
 enum
@@ -112,12 +123,15 @@ SunStudio
 wrt
 libiconv
 unicode
+ShiftLeft
 multi
+altscreen
 Naïvely
 reachability
 autoconf
 xpm
 filesystem
+ScrollFwd
 reflogmsg
 Fonseca
 tigrc
@@ -194,6 +208,7 @@ COLORTERM
 ncursesw
 PDF
 CFLAGS
+ScrollBack
 linenumber
 fileargs
 UI
@@ -209,13 +224,14 @@ Baudis
 substring
 PID
 tz
-docbook
 DocBook
+docbook
 submodule
 strndup
 startup
 Yi
 docext
+ShiftHome
 renderer
 strftime
 textconv
@@ -228,8 +244,10 @@ worktree
 unmerged
 blameargs
 GitHub
+XTerm's
 Yy
 fgcolor
+backtraces
 ScrFwd
 localtime
 filename
@@ -251,6 +269,7 @@ getch
 struct
 untracked
 commit's
+sed
 autoreconf
 ScrBack
 subcommands
@@ -261,6 +280,7 @@ TODO
 cmdline
 Jamo
 unrepresentable
+ShiftDelete
 FIXME
 whitespace
 subtrees
