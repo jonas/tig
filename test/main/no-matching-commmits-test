@@ -12,7 +12,7 @@ steps '
 
 in_work_dir create_dirty_workdir
 
-export GIT_AUTHOR_DATE="$(expr $author_date + $author_date_delta)"
+export GIT_AUTHOR_DATE="$(expr "$author_date" + "$author_date_delta")"
 export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
 
 

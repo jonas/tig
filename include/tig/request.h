@@ -36,9 +36,10 @@
 	REQ_(REFRESH,		"Reload and refresh view"), \
 	REQ_(MAXIMIZE,		"Maximize the current view"), \
 	REQ_(VIEW_CLOSE,	"Close the current view"), \
+	REQ_(VIEW_CLOSE_NO_QUIT,	"Close the current view without quitting"), \
 	REQ_(QUIT,		"Close all views and quit"), \
 	\
-	REQ_GROUP("View specific actions") \
+	REQ_GROUP("View-specific actions") \
 	REQ_(STATUS_UPDATE,	"Stage/unstage chunk or file changes"), \
 	REQ_(STATUS_REVERT,	"Revert chunk or file changes"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
@@ -95,6 +96,8 @@ enum request {
 	/* Internal requests. */
 	REQ_SCROLL_WHEEL_DOWN,
 	REQ_SCROLL_WHEEL_UP,
+	REQ_MOVE_WHEEL_DOWN,
+	REQ_MOVE_WHEEL_UP,
 
 	/* Start of the run request IDs */
 	REQ_RUN_REQUESTS

@@ -2,7 +2,7 @@
 
 # The last tagged version. Can be overridden either by the version from
 # git or from the value of the DIST_VERSION environment variable.
-VERSION	= 2.2.2
+VERSION	= 2.3.0
 
 all:
 
@@ -74,6 +74,11 @@ DOCBOOK2PDF ?= docbook2pdf
 
 LCOV ?= lcov
 GENHTML ?= genhtml
+ifneq (,$(shell which gsed 2>/dev/null))
+SED ?= gsed
+else
+SED ?= sed
+endif
 
 all: $(EXE) $(TOOLS)
 all-debug: all
@@ -149,7 +154,7 @@ strip: $(EXE)
 update-headers:
 	@for file in include/tig/*.h src/*.c tools/*.c test/tools/*.c; do \
 		grep -q '/* Copyright' "$$file" && \
-			sed '0,/.*\*\//d' < "$$file" | \
+			$(SED) '0,/.*\*\//d' < "$$file" | \
 			grep -v '/* vim: set' > "$$file.tmp"; \
 		{ cat tools/header.h "$$file.tmp"; \
 		  echo "/* vim: set ts=8 sw=8 noexpandtab: */"; } > "$$file"; \
@@ -159,15 +164,15 @@ update-headers:
 
 update-docs: tools/doc-gen
 	doc="doc/tigrc.5.adoc"; \
-	sed -n '0,/ifndef::DOC_GEN_ACTIONS/p' < "$$doc" > "$$doc.gen"; \
+	$(SED) -n '0,/ifndef::DOC_GEN_ACTIONS/p' < "$$doc" > "$$doc.gen"; \
 	./tools/doc-gen actions >> "$$doc.gen"; \
-	sed -n '/endif::DOC_GEN_ACTIONS/,$$p' < "$$doc" >> "$$doc.gen" ; \
+	$(SED) -n '/endif::DOC_GEN_ACTIONS/,$$p' < "$$doc" >> "$$doc.gen" ; \
 	mv "$$doc.gen" "$$doc"
 
 dist: configure tig.spec
 	$(Q)mkdir -p $(TARNAME) && \
 	cp Makefile tig.spec configure config.h.in aclocal.m4 $(TARNAME) && \
-	sed -i "s/VERSION\s\+=\s\+[0-9]\+\([.][0-9]\+\)\+/VERSION	= $(VERSION)/" $(TARNAME)/Makefile
+	$(SED) -i "s/VERSION\s\+=\s\+[0-9]\+\([.][0-9]\+\)\+/VERSION	= $(VERSION)/" $(TARNAME)/Makefile
 	git archive --format=tar --prefix=$(TARNAME)/ HEAD | \
 	tar --delete $(TARNAME)/Makefile > $(TARNAME).tar && \
 	tar rf $(TARNAME).tar `find $(TARNAME)/*` && \
@@ -207,6 +212,7 @@ test-address-sanitizer: clean all-address-sanitizer test
 test-address-sanitizer: export TIG_ADDRESS_SANITIZER_ENABLED=yes
 
 TESTS  = $(sort $(shell find test -type f -name '*-test'))
+TESTS_TODO = $(sort $(shell find test -type f -name '*-test' -exec grep -l '\(test_todo\|-todo=\)' {} \+))
 
 clean-test:
 	$(Q)$(RM) -r test/tmp
@@ -214,15 +220,22 @@ clean-test:
 test: clean-test $(TESTS)
 	$(QUIET_SUMMARY)test/tools/show-results.sh
 
-export TIG_TEST_OPTS = $(V:1=no-indent)
+ifneq (,$(strip $(V:@=)))
+export MAKE_TEST_OPTS = no-indent
+else
+export MAKE_TEST_OPTS =
+endif
 
 $(TESTS): PATH := $(CURDIR)/test/tools:$(CURDIR)/src:$(PATH)
 $(TESTS): $(EXE) test/tools/test-graph
 	$(QUIET_TEST)$(TEST_SHELL) $@
 
+test-todo: MAKE_TEST_OPTS += todo
+test-todo: $(TESTS_TODO)
+
 # Other autoconf-related rules are hidden in config.make.in so that
 # they don't confuse Make when we aren't actually using ./configure
-configure: configure.ac acinclude.m4 tools/*.m4
+configure: configure.ac tools/*.m4
 	$(QUIET_GEN)./autogen.sh
 
 site:
@@ -251,7 +264,12 @@ COMPAT_CPPFLAGS += -DNO_STRNDUP
 COMPAT_OBJS += compat/strndup.o
 endif
 
-COMPAT_OBJS += compat/hashtab.o
+ifdef NO_WORDEXP
+COMPAT_CPPFLAGS += -DNO_WORDEXP
+COMPAT_OBJS += compat/wordexp.o
+endif
+
+COMPAT_OBJS += compat/hashtab.o compat/wcwidth.o
 
 override CPPFLAGS += $(COMPAT_CPPFLAGS)
 
@@ -301,7 +319,7 @@ src/tig: $(TIG_OBJS)
 TEST_GRAPH_OBJS = test/tools/test-graph.o src/string.o src/util.o src/io.o $(GRAPH_OBJS) $(COMPAT_OBJS)
 test/tools/test-graph: $(TEST_GRAPH_OBJS)
 
-DOC_GEN_OBJS = tools/doc-gen.o src/string.o src/types.o src/util.o src/request.o
+DOC_GEN_OBJS = tools/doc-gen.o src/string.o src/types.o src/util.o src/request.o compat/wcwidth.o
 tools/doc-gen: $(DOC_GEN_OBJS)
 
 OBJS = $(sort $(TIG_OBJS) $(TEST_GRAPH_OBJS) $(DOC_GEN_OBJS))
@@ -321,19 +339,19 @@ src/builtin-config.c: tigrc tools/make-builtin-config.sh
 	$(QUIET_GEN)tools/make-builtin-config.sh $< > $@
 
 tig.spec: contrib/tig.spec.in
-	$(QUIET_GEN)sed -e 's/@@VERSION@@/$(RPM_VERSION)/g' \
+	$(QUIET_GEN)$(SED) -e 's/@@VERSION@@/$(RPM_VERSION)/g' \
 	    -e 's/@@RELEASE@@/$(RPM_RELEASE)/g' < $< > $@
 
 doc/manual.html: doc/manual.toc
 doc/manual.html: ASCIIDOC_FLAGS += -ainclude-manual-toc
 %.toc: %.adoc
-	$(QUIET_GEN)sed -n '/^\[\[/,/\(---\|~~~\)/p' < $< | while read line; do \
+	$(QUIET_GEN)$(SED) -n '/^\[\[/,/\(---\|~~~\)/p' < $< | while read line; do \
 		case "$$line" in \
 		"----"*)  echo ". <<$$ref>>"; ref= ;; \
 		"~~~~"*)  echo "- <<$$ref>>"; ref= ;; \
 		"[["*"]]") ref="$$line" ;; \
 		*)	   ref="$$ref, $$line" ;; \
-		esac; done | sed 's/\[\[\(.*\)\]\]/\1/' > $@
+		esac; done | $(SED) 's/\[\[\(.*\)\]\]/\1/' > $@
 
 README.html: README.adoc doc/asciidoc.conf
 	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -a readme $<

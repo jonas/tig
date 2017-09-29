@@ -13,6 +13,7 @@
 
 #include "tig/tig.h"
 #include "tig/string.h"
+#include "compat/wcwidth.h"
 
 /*
  * Strings.
@@ -204,36 +205,34 @@ strcmp_numeric(const char *s1, const char *s2)
  * NOTE: Much of the following code for dealing with Unicode is derived from
  * ELinks' UTF-8 code developed by Scrool <scroolik@gmail.com>. Origin file is
  * src/intl/charset.c from the UTF-8 branch commit elinks-0.11.0-g31f2c28.
+ *
+ * unicode_width() is driven by xterm's mk_wcwidth(), which is the work of
+ * Markus Kuhn and Thomas Dickey.
  */
 
 int
 unicode_width(unsigned long c, int tab_size)
 {
-	if (c >= 0x1100 &&
-	   (c <= 0x115f				/* Hangul Jamo */
-	    || c == 0x2329
-	    || c == 0x232a
-	    || (c >= 0x2e80  && c <= 0xa4cf && c != 0x303f)
-						/* CJK ... Yi */
-	    || (c >= 0xac00  && c <= 0xd7a3)	/* Hangul Syllables */
-	    || (c >= 0xf900  && c <= 0xfaff)	/* CJK Compatibility Ideographs */
-	    || (c >= 0xfe30  && c <= 0xfe6f)	/* CJK Compatibility Forms */
-	    || (c >= 0xff00  && c <= 0xff60)	/* Fullwidth Forms */
-	    || (c >= 0xffe0  && c <= 0xffe6)
-	    || (c >= 0x20000 && c <= 0x2fffd)
-	    || (c >= 0x30000 && c <= 0x3fffd)))
-		return 2;
-	
-	if ((c >= 0x0300 && c <= 0x036f)	/* combining diacretical marks */
-	    || (c >= 0x1dc0 && c <= 0x1dff)	/* combining diacretical marks supplement */
-	    || (c >= 0x20d0 && c <= 0x20ff)	/* combining diacretical marks for symbols */
-	    || (c >= 0xfe20 && c <= 0xfe2f))	/* combining half marks */
-		return 0;
-
+	if (c == '\0')
+		/*
+		 * xterm mk_wcwidth() returns 0 for NUL, which causes two tig
+		 * tests to fail, which seems like a tig bug.  Return 1 here
+		 * as a workaround.
+		 */
+		return 1;
 	if (c == '\t')
 		return tab_size;
 
-	return 1;
+	int result = mk_wcwidth((wchar_t) c);
+
+	if (result < 0)
+		/*
+		 * xterm mk_wcwidth() returns -1 for unmapped codepoints and
+		 * control characters, which might be smarter semantics.
+		 */
+		return 0;
+
+	return result;
 }
 
 /* Number of bytes used for encoding a UTF-8 character indexed by first byte.
@@ -303,7 +302,7 @@ utf8_to_unicode(const char *string, size_t length)
 
 	/* Invalid characters could return the special 0xfffd value but NUL
 	 * should be just as good. */
-	return unicode > 0xffff ? 0 : unicode;
+	return unicode > 0x10FFFF ? 0 : unicode;
 }
 
 /* Calculates how much of string can be shown within the given maximum width

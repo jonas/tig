@@ -3,6 +3,7 @@
 # Work-around for Homebrew-based xmlto.
 export XML_CATALOG_FILES=/usr/local/etc/xml/catalog
 
+TIG_CFLAGS += -DHAVE_EXECINFO_H
 TIG_LDLIBS = -liconv
 
 NCURSES_DIR = $(wildcard /usr/local/opt/ncurses)

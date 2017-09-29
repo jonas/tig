@@ -643,6 +643,18 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 				return ERROR_OUT_OF_MEMORY;
 		}
 
+		if (!strcmp(name, "truncation-delimiter")) {
+			if (!strcmp(alloc, "utf-8") || !strcmp(alloc, "utf8")) {
+				alloc = strdup("⋯");
+				if (!alloc)
+					return ERROR_OUT_OF_MEMORY;
+			} else if (utf8_width_of(alloc, -1, -1) != 1) {
+				alloc = strdup("~");
+				if (!alloc)
+					return ERROR_OUT_OF_MEMORY;
+			}
+		}
+
 		free((void *) *value);
 		*value = alloc;
 		return SUCCESS;
@@ -878,14 +890,25 @@ static enum status_code
 option_source_command(int argc, const char *argv[])
 {
 	enum status_code code;
+	bool quiet = false;
 
-	if (argc < 1)
-		return error("Invalid source command: source path");
+	if ((argc < 1) || (argc > 2))
+		return error("Invalid source command: source [-q] <path>");
 
-	code = load_option_file(argv[0]);
+	if (argc == 2) {
+		if (!strcmp(argv[0], "-q"))
+			quiet = true;
+		else
+			return error("Invalid source option: %s", argv[0]);
+	}
+
+	code = load_option_file(argv[argc - 1]);
+
+	if (quiet)
+		return code == ERROR_FILE_DOES_NOT_EXIST ? 0 : code;
 
 	return code == ERROR_FILE_DOES_NOT_EXIST
-		? error("File does not exist: %s", argv[0]) : code;
+		? error("File does not exist: %s", argv[argc - 1]) : code;
 }
 
 enum status_code
@@ -962,26 +985,21 @@ load_option_file(const char *path)
 	if (!path || !strlen(path))
 		return SUCCESS;
 
-	if (!prefixcmp(path, "~/")) {
-		const char *home = getenv("HOME");
-
-		if (!home || !string_format(buf, "%s/%s", home, path + 2))
-			return error("Failed to expand ~ to user home directory");
-		path = buf;
-	}
+	if (!expand_path(buf, sizeof(buf), path))
+		return error("Failed to expand path: %s", path);
 
 	/* It's OK that the file doesn't exist. */
-	if (!io_open(&io, "%s", path)) {
+	if (!io_open(&io, "%s", buf)) {
 		/* XXX: Must return ERROR_FILE_DOES_NOT_EXIST so missing
 		 * system tigrc is detected properly. */
 		if (io_error(&io) == ENOENT)
 			return ERROR_FILE_DOES_NOT_EXIST;
-		return error("Error loading file %s: %s", path, io_strerror(&io));
+		return error("Error loading file %s: %s", buf, io_strerror(&io));
 	}
 
 	if (io_load_span(&io, " \t", &config.lineno, read_option, &config) != SUCCESS ||
 	    config.errors == true)
-		warn("Errors while loading %s.", path);
+		warn("Errors while loading %s.", buf);
 	return SUCCESS;
 }
 

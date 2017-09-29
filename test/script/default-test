@@ -4,7 +4,6 @@
 . libgit.sh
 
 export LINES=16
-export TIG_NO_DISPLAY=
 
 git_clone 'repo-one'
 
@@ -22,8 +21,24 @@ test_tig_script 'segfault-regression-for-bc4f8e83c590058641c9e1654db300798e9cd10
 	:view-main
 '
 
+view_open_file="view-is-open"
+touch -- "$view_open_file"
+
+tigrc <<EOF
+bind generic <F1> @sh -c 'echo "view not closed" > "$HOME/$view_open_file"'
+EOF
+
+test_tig_script 'view-close-no-quit-should-not-close-tig' '
+	:view-close-no-quit
+	<F1>
+'
+
+assert_equals "$view_open_file" <<EOF
+view not closed
+EOF
+
 view_closed_file="view-is-closed"
-touch "$view_closed_file"
+touch -- "$view_closed_file"
 
 tigrc <<EOF
 bind generic <F1> @sh -c 'echo "view not closed" > "$HOME/$view_closed_file"'
@@ -37,4 +52,4 @@ test_tig_script 'view-close-should-close-tig' '
 assert_equals "$view_closed_file" <<EOF
 EOF
 
-find . -name "*.stderr" | xargs cat > stderr
+find . -name "*.stderr" -exec cat -- "{}" \; > stderr

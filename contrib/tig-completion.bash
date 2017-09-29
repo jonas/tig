@@ -115,8 +115,8 @@ __tig_complete_file ()
 			-W "$(git --git-dir="$(__tigdir)" ls-tree "$ls" \
 				| sed '/^100... blob /s,^.*	,,
 				       /^040000 tree /{
-				           s,^.*	,,
-				           s,$,/,
+					   s,^.*	,,
+					   s,$,/,
 				       }
 				       s/^.*	//')" \
 			-- "$cur"))
@@ -287,5 +287,5 @@ complete -o default -o nospace -F _tig tig
 # when the user has tab-completed the executable name and consequently
 # included the '.exe' suffix.
 if [ Cygwin = "$(uname -o 2>/dev/null)" ]; then
-complete -o default -o nospace -F _tig tig.exe
+	complete -o default -o nospace -F _tig tig.exe
 fi

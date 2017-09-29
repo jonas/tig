@@ -22,9 +22,10 @@ int get_input_char(void);
 
 extern WINDOW *status_win;
 
-void update_status(const char *msg, ...);
+void update_status(const char *msg, ...) PRINTF_LIKE(1, 2);
+void update_status_with_context(const char *context, const char *msg, ...) PRINTF_LIKE(2, 3);
 void report(const char *msg, ...) PRINTF_LIKE(1, 2);
-#define report_clear() report("%s", "")
+void report_clear(void);
 
 /*
  * Display management.
@@ -46,11 +47,12 @@ void init_display(void);
 void resize_display(void);
 void redraw_display(bool clear);
 bool save_display(const char *path);
+bool save_view(struct view *view, const char *path);
 
 bool vertical_split_is_enabled(enum vertical_split vsplit, int height, int width);
 int apply_vertical_split(int base_width);
 
-bool open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool refresh, const char *notice);
+bool open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool refresh, const char *notice);
 void open_editor(const char *file, unsigned int lineno);
 void enable_mouse(bool enable);
 

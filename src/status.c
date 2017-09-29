@@ -461,7 +461,7 @@ status_enter(struct view *view, struct line *line)
 			return REQ_NONE;
 		}
 
-	    	if (!suffixcmp(status->new.name, -1, "/")) {
+		if (!suffixcmp(status->new.name, -1, "/")) {
 			report("Cannot display a directory");
 			return REQ_NONE;
 		}
@@ -676,7 +676,7 @@ open_mergetool(const char *file)
 {
 	const char *mergetool_argv[] = { "git", "mergetool", file, NULL };
 
-	open_external_viewer(mergetool_argv, repo.cdup, false, true, true, "");
+	open_external_viewer(mergetool_argv, repo.cdup, false, true, false, true, "");
 }
 
 static enum request

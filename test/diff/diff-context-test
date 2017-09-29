@@ -206,8 +206,8 @@ index 65f914a..3aa4320 100644
 EOF
 
 for i in expected/*.screen; do
-	diff_file="$(basename "$i" | sed 's/[.]screen/-from-main.screen/')"
+	diff_file="$(basename -- "$i" | sed 's/[.]screen/-from-main.screen/')"
 	assert_equals "$diff_file" <<EOF
-$(cat "$i")
+$(cat < "$i")
 EOF
 done

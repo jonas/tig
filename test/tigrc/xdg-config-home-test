@@ -6,7 +6,7 @@ mkdir -p "$HOME/etc/tig" "$HOME/.config/tig"
 
 check()
 {
-	name="$(echo "$1" | tr / -)"
+	name="$(printf '%s\n' "$1" | tr / -)"
 	path="$HOME/$1"
 	env="${2:-undefined}"
 
@@ -15,11 +15,11 @@ check()
 	  *) export "$env" ;;
 	esac
 
-	mkdir -p "$(dirname "$path")"
+	mkdir -p "$(dirname -- "$path")"
 	tig_script "case-$name" '<Ctrl-t>'
 	echo "bind generic <Ctrl-t> @sh -c 'echo $name >> $HOME/$TEST_NAME.out'" > "$path"
 	test_tig status
-	echo "$name" > "$TEST_NAME.out.expected"
+	printf '%s\n' "$name" > "$TEST_NAME.out.expected"
 	assert_equals "$TEST_NAME.out" < "$TEST_NAME.out.expected"
 	assert_equals "$TEST_NAME.stderr" < /dev/null
 }

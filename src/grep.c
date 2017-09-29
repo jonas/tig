@@ -99,7 +99,9 @@ grep_prompt(void)
 	int argc = 0;
 	char *grep = read_prompt("grep: ");
 
-	if (!grep || !argv_from_string_no_quotes(argv, &argc, grep))
+	report_clear();
+
+	if (!grep || !*grep || !argv_from_string_no_quotes(argv, &argc, grep))
 		return false;
 	if (grep_argv)
 		argv_free(grep_argv);

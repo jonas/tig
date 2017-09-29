@@ -64,7 +64,7 @@ file_finder_read(struct file_finder *finder, const char *commit)
 			break;
 		}
 
-		finder->file[files] = calloc(1, sizeof(*finder->file) + buf.size);
+		finder->file[files] = calloc(1, sizeof(struct file_finder_line) + buf.size);
 		if (!finder->file[files]) {
 			ok = false;
 			break;
@@ -145,7 +145,7 @@ file_finder_draw(struct file_finder *finder)
 	int column;
 
 	wbkgdset(finder->win, get_line_attr(NULL, LINE_DEFAULT));
-	wclear(finder->win);
+	werase(finder->win);
 
 	for (column = 0; *line_pos && column < finder->height - 1; line_pos++) {
 		struct file_finder_line *line = *line_pos;
@@ -255,6 +255,12 @@ file_finder_input_handler(struct input *input, struct key *key)
 		file_finder_move(finder, +1);
 		file_finder_draw(finder);
 		return INPUT_SKIP;
+
+	case REQ_BACK:
+	case REQ_PARENT:
+	case REQ_VIEW_CLOSE:
+	case REQ_VIEW_CLOSE_NO_QUIT:
+		return INPUT_CANCEL;
 
 	default:
 		if (key_to_value(key) == 0) {

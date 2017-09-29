@@ -116,5 +116,7 @@ name(type **mem, size_t size, size_t increase)					\
 	return tmp;								\
 }
 
+void sigsegv_handler(int sig);
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

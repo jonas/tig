@@ -50,8 +50,8 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-                           Q quit                Close all views and quit
-[help] - line 1 of 112                                                       25%
+                 Q, <Ctrl-C> quit                Close all views and quit
+[help] - line 1 of 114                                                       24%
 EOF
 
 assert_equals 'help-search.screen' <<EOF
@@ -82,8 +82,8 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-                           Q quit                Close all views and quit
-[help] - line 18 of 112                                                      25%
+                 Q, <Ctrl-C> quit                Close all views and quit
+[help] - line 18 of 114                                                      24%
 EOF
 
 assert_equals 'help-collapsed.screen' <<EOF
@@ -108,7 +108,7 @@ External commands:
   C ?git checkout %(branch)
   ! ?git branch -D %(branch)
 [-] status bindings
-View specific actions
+View-specific actions
   u status-update     Stage/unstage chunk or file changes
   ! status-revert     Revert chunk or file changes
   M status-merge      Merge file using external tool

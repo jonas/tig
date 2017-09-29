@@ -25,9 +25,8 @@ concat_argv(const char *argv[], char *buf, size_t buflen, const char *sep, bool 
 	for (bufpos = 0, argc = 0; argv[argc]; argc++) {
 		const char *arg_sep = argc ? sep : "";
 		const char *arg = argv[argc];
-		int pos;
 
-		if (quoted && arg[(pos = strcspn(arg, " \t\""))]) {
+		if (quoted && arg[strcspn(arg, " \t\"")]) {
 			if (!string_nformat(buf, buflen, &bufpos, "%s\"", arg_sep))
 				return false;
 
@@ -37,7 +36,10 @@ concat_argv(const char *argv[], char *buf, size_t buflen, const char *sep, bool 
 
 				if (!string_nformat(buf, buflen, &bufpos, "%.*s%s", pos, arg, qesc))
 					return false;
-				arg += pos + 1;
+				if (!arg[pos])
+					break;
+				else
+					arg += pos + 1;
 			}
 
 			if (!string_nformat(buf, buflen, &bufpos, "\""))
@@ -284,7 +286,7 @@ struct format_var {
 struct format_context {
 	struct format_var *vars;
 	size_t vars_size;
-	char buf[SIZEOF_STR];
+	char buf[SIZEOF_CMD];
 	size_t bufpos;
 	bool file_filter;
 };
@@ -547,7 +549,6 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 		"--merges",
 		"--min-parents=",
 		"--no-max-parents",
-		"--no-merges",
 		"--no-min-parents",
 		"--no-walk",
 		"--perl-regexp",
@@ -574,6 +575,7 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 		"-i",
 	};
 	static const char *no_graph[] = {
+		"--no-merges",
 		"--follow",
 	};
 	static const char *with_reflog[] = {

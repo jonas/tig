@@ -66,7 +66,7 @@ view_request(struct view *view, enum request request)
 	    view_has_flags(view, VIEW_SEND_CHILD_ENTER)) {
 		struct view *child = display[1];
 
-	    	if (forward_request_to_child(child, request)) {
+		if (forward_request_to_child(child, request)) {
 			view_request(child, request);
 			return REQ_NONE;
 		}
@@ -171,6 +171,8 @@ view_driver(struct view *view, enum request request)
 	case REQ_MOVE_HALF_PAGE_DOWN:
 	case REQ_MOVE_FIRST_LINE:
 	case REQ_MOVE_LAST_LINE:
+	case REQ_MOVE_WHEEL_DOWN:
+	case REQ_MOVE_WHEEL_UP:
 		move_view(view, request);
 		break;
 
@@ -302,11 +304,13 @@ view_driver(struct view *view, enum request request)
 			if (view->pipe)
 				report("Stopped loading the %s view", view->name),
 			end_update(view, true);
+			if (view_is_displayed(view))
+				update_view_title(view);
 		}
 		break;
 
 	case REQ_SHOW_VERSION:
-		report("tig-%s (built %s)", TIG_VERSION, __DATE__);
+		report("tig-%s", TIG_VERSION);
 		return true;
 
 	case REQ_SCREEN_REDRAW:
@@ -321,6 +325,7 @@ view_driver(struct view *view, enum request request)
 		report("Nothing to enter");
 		break;
 
+	case REQ_VIEW_CLOSE_NO_QUIT:
 	case REQ_VIEW_CLOSE:
 		/* XXX: Mark closed views by letting view->prev point to the
 		 * view itself. Parents to closed view should never be
@@ -330,6 +335,10 @@ view_driver(struct view *view, enum request request)
 			view->prev = view;
 			watch_unregister(&view->watch);
 			view->parent = NULL;
+			break;
+		}
+		if (request == REQ_VIEW_CLOSE_NO_QUIT) {
+			report("Can't close last remaining view");
 			break;
 		}
 		/* Fall-through */
@@ -350,7 +359,7 @@ view_driver(struct view *view, enum request request)
  */
 
 static const char usage_string[] =
-"tig " TIG_VERSION " (" __DATE__ ")\n"
+"tig " TIG_VERSION " \n"
 "\n"
 "Usage: tig        [options] [revs] [--] [paths]\n"
 "   or: tig log    [options] [revs] [--] [paths]\n"
@@ -540,7 +549,7 @@ open_pager_mode(enum request request)
 	} else if (request == REQ_VIEW_DIFF) {
 		if (argv_contains(opt_rev_args, "--stdin"))
 			open_diff_view(NULL, OPEN_FORWARD_STDIN);
-		else              
+		else
 			open_diff_view(NULL, OPEN_STDIN);
 
 	} else {
@@ -589,11 +598,15 @@ handle_mouse_event(void)
 	if (!view)
 		return REQ_NONE;
 
+#ifdef BUTTON5_PRESSED
+	if (event.bstate & (BUTTON2_PRESSED | BUTTON5_PRESSED))
+#else
 	if (event.bstate & BUTTON2_PRESSED)
-		return REQ_SCROLL_WHEEL_DOWN;
+#endif
+		return opt_mouse_wheel_cursor ? REQ_MOVE_WHEEL_DOWN : REQ_SCROLL_WHEEL_DOWN;
 
 	if (event.bstate & BUTTON4_PRESSED)
-		return REQ_SCROLL_WHEEL_UP;
+		return opt_mouse_wheel_cursor ? REQ_MOVE_WHEEL_UP : REQ_SCROLL_WHEEL_UP;
 
 	if (event.bstate & BUTTON1_PRESSED) {
 		if (event.y == view->pos.lineno - view->pos.offset) {
@@ -611,6 +624,43 @@ handle_mouse_event(void)
 	}
 
 	return REQ_NONE;
+}
+#endif
+
+/*
+ * Error handling.
+ *
+ * Inspired by code from src/util.c in ELinks
+ * (f86be659718c0cd0a67f88b42f07044c23d0d028).
+ */
+
+#ifdef DEBUG
+void
+sigsegv_handler(int sig)
+{
+	if (die_callback)
+		die_callback();
+
+	fputs("Tig crashed!\n\n"
+	      "Please report this issue along with all info printed below to\n\n"
+	      "  https://github.com/jonas/tig/issues/new\n\n", stderr);
+
+	fputs("Tig version: ", stderr);
+	fputs(TIG_VERSION, stderr);
+	fputs("\n\n", stderr);
+
+#ifdef HAVE_EXECINFO_H
+	{
+		/* glibc way of doing this */
+		void *stack[20];
+		size_t size = backtrace(stack, 20);
+
+		backtrace_symbols_fd(stack, size, STDERR_FILENO);
+	}
+#endif
+
+	/* The fastest way OUT! */
+	abort();
 }
 #endif
 
@@ -672,10 +722,13 @@ main(int argc, const char *argv[])
 	enum request request = parse_options(argc, argv, pager_mode);
 	struct view *view;
 
-	prompt_init();
-
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
 		die("Failed to setup signal handler");
+
+#ifdef DEBUG
+	if (signal(SIGSEGV, sigsegv_handler) == SIG_ERR)
+		die("Failed to setup signal handler");
+#endif
 
 	if (setlocale(LC_ALL, "")) {
 		codeset = nl_langinfo(CODESET);
@@ -684,6 +737,8 @@ main(int argc, const char *argv[])
 	die_if_failed(load_repo_info(), "Failed to load repo info.");
 	die_if_failed(load_options(), "Failed to load user config.");
 	die_if_failed(load_git_config(), "Failed to load repo config.");
+
+	prompt_init();
 
 	/* Require a git repository unless when running in pager mode. */
 	if (!repo.git_dir[0] && request != REQ_VIEW_PAGER)

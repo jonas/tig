@@ -224,10 +224,25 @@ static const struct key_mapping key_mappings[] = {
 	{ "F10",	KEY_F(10) },
 	{ "F11",	KEY_F(11) },
 	{ "F12",	KEY_F(12) },
+	{ "F13",	KEY_F(13) },
+	{ "F14",	KEY_F(14) },
+	{ "F15",	KEY_F(15) },
+	{ "F16",	KEY_F(16) },
+	{ "F17",	KEY_F(17) },
+	{ "F18",	KEY_F(18) },
+	{ "F19",	KEY_F(19) },
 	{ "ScrollBack",	KEY_SR },
 	{ "SBack",	KEY_SR },
 	{ "ScrollFwd",	KEY_SF },
 	{ "SFwd",	KEY_SF },
+	{ "BackTab",	KEY_BTAB },
+	{ "ShiftTab",	KEY_BTAB },
+	{ "ShiftLeft",	KEY_SLEFT },
+	{ "ShiftRight",	KEY_SRIGHT },
+	{ "ShiftDelete",	KEY_SDC },
+	{ "ShiftDel",	KEY_SDC },
+	{ "ShiftHome",	KEY_SHOME },
+	{ "ShiftEnd",	KEY_SEND },
 };
 
 static const struct key_mapping *
@@ -435,11 +450,14 @@ static size_t run_requests;
 
 DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 
-#define COMMAND_FLAGS ":!?@<"
+#define COMMAND_FLAGS ":!?@<+"
 
 enum status_code
 parse_run_request_flags(struct run_request_flags *flags, const char **argv)
 {
+	if (!argv[0])
+		return error("No arguments");
+
 	if (!strchr(COMMAND_FLAGS, *argv[0]))
 		return error("Unknown command flag '%c'; expected one of %s", argv[0][0], COMMAND_FLAGS);
 
@@ -454,6 +472,8 @@ parse_run_request_flags(struct run_request_flags *flags, const char **argv)
 			flags->confirm = 1;
 		} else if (*argv[0] == '<') {
 			flags->exit = 1;
+		} else if (*argv[0] == '+') {
+			flags->echo = 1;
 		} else if (*argv[0] != '!') {
 			break;
 		}
@@ -514,6 +534,8 @@ format_run_request_flags(const struct run_request *req)
 	    flags[flagspos++] = '?';
 	if (req->flags.exit)
 		flags[flagspos++] = '<';
+	if (req->flags.echo)
+		flags[flagspos++] = '+';
 	if (flagspos > 1)
 		flags[flagspos++] = 0;
 

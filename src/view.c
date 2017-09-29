@@ -201,6 +201,14 @@ move_view(struct view *view, enum request request)
 		      ? view->lines - view->pos.lineno - 1 : view->height / 2;
 		break;
 
+	case REQ_MOVE_WHEEL_DOWN:
+		steps = opt_mouse_scroll;
+		break;
+
+	case REQ_MOVE_WHEEL_UP:
+		steps = -opt_mouse_scroll;
+		break;
+
 	case REQ_MOVE_UP:
 	case REQ_PREVIOUS:
 		steps = -1;
@@ -304,7 +312,7 @@ goto_id(struct view *view, const char *expr, bool from_start, bool save_search)
 		const char *rev_parse_argv[] = {
 			"git", "rev-parse", "--revs-only", rev, NULL
 		};
-		bool ok = rev && io_run_buf(rev_parse_argv, id, sizeof(id), true);
+		bool ok = rev && io_run_buf(rev_parse_argv, id, sizeof(id), NULL, true);
 
 		free(rev);
 		if (!ok) {
@@ -637,6 +645,9 @@ update_view_title(struct view *view)
 	WINDOW *window = view->title;
 	struct line *line = &view->line[view->pos.lineno];
 	unsigned int view_lines, lines;
+	int update_increment = view_has_flags(view, VIEW_LOG_LIKE | VIEW_GREP_LIKE)
+			       ? 100
+			       : view_has_flags(view, VIEW_DIFF_LIKE) ? 10 : 1;
 
 	assert(view_is_displayed(view));
 
@@ -657,7 +668,11 @@ update_view_title(struct view *view)
 		wprintw(window, " - %s %d of %zd",
 					   view->ops->type,
 					   line->lineno,
-					   view->lines - view->custom_lines);
+					   MAX(line->lineno,
+					       view->pipe
+					       ? update_increment *
+						 (size_t) ((view->lines - view->custom_lines) / update_increment)
+					       : view->lines - view->custom_lines));
 	}
 
 	if (view->pipe) {
@@ -715,10 +730,10 @@ maximize_view(struct view *view, bool redraw)
 	if (redraw) {
 		redraw_display(false);
 		report_clear();
-	}
 
-	if (view_has_flags(view, VIEW_FLEX_WIDTH))
-		load_view(view, NULL, OPEN_RELOAD);
+		if (view_has_flags(view, VIEW_FLEX_WIDTH))
+			load_view(view, NULL, OPEN_RELOAD);
+	}
 }
 
 void
@@ -1428,7 +1443,6 @@ view_column_info_update(struct view *view, struct line *line)
 			break;
 
 		case VIEW_COLUMN_COMMIT_TITLE:
-			width = column->opt.commit_title.width;
 			break;
 
 		case VIEW_COLUMN_DATE:
@@ -1452,10 +1466,13 @@ view_column_info_update(struct view *view, struct line *line)
 			break;
 
 		case VIEW_COLUMN_LINE_NUMBER:
-			if (column_data.line_number)
-				width = count_digits(*column_data.line_number);
-			else
-				width = count_digits(view->lines);
+			width = column->opt.line_number.width;
+			if (!width) {
+				if (column_data.line_number)
+					width = count_digits(*column_data.line_number);
+				else
+					width = count_digits(view->lines);
+			}
 			if (width < 3)
 				width = 3;
 			break;
@@ -1472,11 +1489,9 @@ view_column_info_update(struct view *view, struct line *line)
 			break;
 
 		case VIEW_COLUMN_STATUS:
-			width = column->opt.status.width;
 			break;
 
 		case VIEW_COLUMN_TEXT:
-			width = column->opt.text.width;
 			break;
 		}
 

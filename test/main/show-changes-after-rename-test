@@ -15,10 +15,10 @@ steps '
 git_init
 
 test_setup_work_dir() {
-	echo data >file1
+	printf 'data\n' >file1
 	git add file1
 	git_commit -m "commit1"
-	echo data >file2
+	printf 'data\n' >file2
 	git add file2
 	git rm file1
 }

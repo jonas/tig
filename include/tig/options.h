@@ -46,11 +46,12 @@ typedef struct view_column *view_settings;
 	_(focus_child,			bool,			VIEW_NO_FLAGS) \
 	_(git_colors,			const char **,		VIEW_NO_FLAGS) \
 	_(grep_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(history_size,			int,			VIEW_NO_FLAGS) \
 	_(horizontal_scroll,		double,			VIEW_NO_FLAGS) \
 	_(id_width,			int,			VIEW_NO_FLAGS) \
 	_(ignore_case,			enum ignore_case,	VIEW_NO_FLAGS) \
 	_(ignore_space,			enum ignore_space,	VIEW_DIFF_LIKE) \
-	_(line_graphics,		enum graphic,		VIEW_NO_FLAGS) \
+	_(line_graphics,		enum graphic,		VIEW_RESET_DISPLAY) \
 	_(log_options,			const char **,		VIEW_LOG_LIKE) \
 	_(log_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(mailmap,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
@@ -58,6 +59,7 @@ typedef struct view_column *view_settings;
 	_(main_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(mouse,			bool,			VIEW_NO_FLAGS) \
 	_(mouse_scroll,			int,			VIEW_NO_FLAGS) \
+	_(mouse_wheel_cursor,		bool,			VIEW_NO_FLAGS) \
 	_(pager_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(reference_format,		struct ref_format **,	VIEW_NO_FLAGS) \
 	_(refresh_interval,		int,			VIEW_NO_FLAGS) \
@@ -75,6 +77,7 @@ typedef struct view_column *view_settings;
 	_(status_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(tab_size,			int,			VIEW_NO_FLAGS) \
 	_(tree_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(truncation_delimiter,		const char *,		VIEW_NO_FLAGS) \
 	_(vertical_split,		enum vertical_split,	VIEW_RESET_DISPLAY | VIEW_DIFF_LIKE) \
 	_(wrap_lines,			bool,			VIEW_NO_FLAGS) \
 	_(wrap_search,			bool,			VIEW_NO_FLAGS) \
@@ -95,7 +98,6 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 	_(graph,			enum graph_display,	VIEW_LOG_LIKE) \
 	_(refs,				bool,			VIEW_NO_FLAGS) \
 	_(overflow,			int,			VIEW_NO_FLAGS) \
-	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define DATE_COLUMN_OPTIONS(_) \
 	_(display,			enum date,		VIEW_NO_FLAGS) \
@@ -135,12 +137,10 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 
 #define STATUS_COLUMN_OPTIONS(_) \
 	_(display,			enum status_label,	VIEW_NO_FLAGS) \
-	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define TEXT_COLUMN_OPTIONS(_) \
 	_(display,			bool,			VIEW_NO_FLAGS) \
 	_(commit_title_overflow,	int,			VIEW_NO_FLAGS) \
-	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define COLUMN_OPTIONS(_) \
 	_(author, AUTHOR, AUTHOR_COLUMN_OPTIONS) \

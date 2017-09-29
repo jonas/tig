@@ -24,6 +24,7 @@
 #define HAVE_STRING_H
 #define HAVE_SYS_TIME_H
 #define HAVE_UNISTD_H
+#define HAVE_WORDEXP_H
 #endif
 
 /*
@@ -44,6 +45,20 @@ int compat_setenv(const char *name, const char *value, int replace);
 #include <stddef.h>
 #define strndup compat_strndup
 char *compat_strndup(const char *s, size_t n);
+#endif
+
+#ifdef NO_WORDEXP
+#define wordexp compat_wordexp
+#define wordfree compat_wordfree
+#define WRDE_NOCMD 4
+typedef struct
+{
+	char **we_wordv;
+} wordexp_t;
+int compat_wordexp (const char *words, wordexp_t *pwordexp, int flags);
+void compat_wordfree (wordexp_t *pwordexp);
+#else
+#include <wordexp.h>
 #endif
 
 #endif

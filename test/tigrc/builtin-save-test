@@ -1,0 +1,16 @@
+#!/bin/sh
+
+. libtest.sh
+
+export TIGRC_SYSTEM=/dev/null
+
+tigrc <<EOF
+bind generic : prompt
+EOF
+
+steps ':save-options'
+
+test_tig status
+
+assert_equals stderr <<EOF
+EOF

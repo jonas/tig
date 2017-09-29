@@ -25,6 +25,7 @@ GENHTML = @GENHTML@
 @NO_MKSTEMPS@ NO_MKSTEMPS = y
 @NO_SETENV@ NO_SETENV = y
 @NO_STRNDUP@ NO_STRNDUP = y
+@NO_WORDEXP@ NO_WORDEXP = y
 
 # Add config.h as a dependency for all object files
 CONFIG_H = config.h

@@ -109,7 +109,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 
 	/* <path>: encoding: <encoding> */
 
-	if (!*path || !io_run_buf(check_attr_argv, buf, sizeof(buf), false)
+	if (!*path || !io_run_buf(check_attr_argv, buf, sizeof(buf), NULL, false)
 	    || !(encoding = strstr(buf, ENCODING_SEP)))
 		return default_encoding;
 
@@ -121,7 +121,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 			"file", "-I", "--", path, NULL
 		};
 
-		if (!*path || !io_run_buf(file_argv, buf, sizeof(buf), false)
+		if (!*path || !io_run_buf(file_argv, buf, sizeof(buf), NULL, false)
 		    || !(encoding = strstr(buf, CHARSET_SEP)))
 			return default_encoding;
 
@@ -129,6 +129,41 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 	}
 
 	return encoding_open(encoding);
+}
+
+/*
+ * Path manipulation.
+ */
+
+bool
+expand_path(char *dst, size_t dstlen, const char *src)
+{
+	if (!src)
+		return false;
+
+	if (src[0] == '~') {
+		/* constrain wordexp to tilde expansion only */
+		const char *ifs = getenv("IFS") ? getenv("IFS") : " \t\n";
+		wordexp_t we_result;
+		size_t metachar_pos;
+		char metachars[SIZEOF_STR];
+		char leading[SIZEOF_STR];
+
+		string_format(metachars, "%s%s", "/$|&;<>(){}`", ifs);
+		metachar_pos = strcspn(src, metachars);
+		if (src[metachar_pos] == '/' || src[metachar_pos] == 0) {
+			string_nformat(leading, metachar_pos + 1, NULL, "%s", src);
+			if (wordexp(leading, &we_result, WRDE_NOCMD))
+				return false;
+			string_nformat(dst, dstlen, NULL, "%s%s", we_result.we_wordv[0], src + metachar_pos);
+			wordfree(&we_result);
+			return true;
+		}
+	}
+
+	/* else */
+	string_ncopy_do(dst, dstlen, src, strlen(src));
+	return true;
 }
 
 /*
@@ -214,16 +249,19 @@ open_trace(int devnull, const char *argv[])
 		int fd = open(trace_file, O_RDWR | O_CREAT | O_APPEND, 0666);
 		int i;
 
+		flock(fd, LOCK_EX);
 		for (i = 0; argv[i]; i++) {
 			if (write(fd, argv[i], strlen(argv[i])) == -1
 			    || write(fd, " ", 1) == -1)
 				break;
 		}
 		if (argv[i] || write(fd, "\n", 1) == -1) {
+			flock(fd, LOCK_UN);
 			close(fd);
 			return devnull;
 		}
 
+		flock(fd, LOCK_UN);
 		return fd;
 	}
 
@@ -314,7 +352,7 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 		}
 
 		if (dir && *dir && chdir(dir) == -1)
-			exit(errno);
+			_exit(errno);
 
 		if (env) {
 			int i;
@@ -327,7 +365,7 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 		execvp(argv[0], (char *const*) argv);
 
 		close(STDOUT_FILENO);
-		exit(errno);
+		_exit(errno);
 	}
 
 	if (pipefds[!!(type == IO_WR)] != -1)
@@ -547,11 +585,11 @@ io_read_buf(struct io *io, char buf[], size_t bufsize, bool allow_empty)
 }
 
 bool
-io_run_buf(const char **argv, char buf[], size_t bufsize, bool allow_empty)
+io_run_buf(const char **argv, char buf[], size_t bufsize, const char *dir, bool allow_empty)
 {
 	struct io io;
 
-	return io_run(&io, IO_RD, NULL, NULL, argv) && io_read_buf(&io, buf, bufsize, allow_empty);
+	return io_run(&io, IO_RD, dir, NULL, argv) && io_read_buf(&io, buf, bufsize, allow_empty);
 }
 
 bool

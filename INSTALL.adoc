@@ -6,8 +6,8 @@ Download a tarball from https://github.com/jonas/tig/releases[] or clone the Tig
 repository http://github.com/jonas/tig[git://github.com/jonas/tig.git].
 
 The latest version is:
-https://github.com/jonas/tig/releases/download/tig-2.2.2/tig-2.2.2.tar.gz[tig-2.2.2]
-https://github.com/jonas/tig/releases/download/tig-2.2.2/tig-2.2.2.tar.gz.md5[(md5)]
+https://github.com/jonas/tig/releases/download/tig-2.3.0/tig-2.3.0.tar.gz[tig-2.3.0]
+https://github.com/jonas/tig/releases/download/tig-2.3.0/tig-2.3.0.tar.gz.md5[(md5)]
 
 *Note:* Do not use the tar.gz file for version 2.0 because it will fail
 to compile due to issue https://github.com/jonas/tig/pull/283[#283] and
@@ -68,6 +68,23 @@ You can use link:http://brew.sh[Homebrew] to install Tig on OS X:
 
         $ brew install tig
 
+Note, for older installations of Tig, Homebrew does not automatically
+update the system-wide `tigrc` file when upgrading Tig and the
+link:https://github.com/Homebrew/homebrew-core/commit/5600463d68620d68c9745acc490af7f8a16a75cb[behavior]
+was changed in 2015 to install the system-wide `tigrc` in the
+`/usr/local/share/tig/examples` directory so Tig always uses the
+defaults compiled into the binary.
+
+If you see warnings when starting Tig after upgrading, e.g.:
+
+	tig warning: Errors while loading /usr/local/etc/tigrc
+
+It means you either need to manually update `/usr/local/etc/tigrc` with
+changes from `/usr/local/share/tig/examples` rename the file if you
+never made any changes to it.
+
+	$ mv /usr/local/etc/tigrc{,.old}
+
 Installation on Windows
 -----------------------
 To run on Windows, you will need link:https://www.cygwin.com/[cygwin].
@@ -97,6 +114,8 @@ can be one of the following flags:
    `setenv()`.
  - `NO_MKSTEMPS`: Define this variable to enable work-around for missing
    `mkstemps()`.
+ - `NO_WORDEXP`: Define this variable to enable work-around for missing
+   `wordexp()`.
  - `NO_BUILTIN_TIGRC`: Reduce the size of the binary by not including a
    built-in tigrc. The built-in tigrc is used as a fallback when no
    `tigrc` is found in the system configuration directory (e.g. `/etc`).
@@ -146,9 +165,6 @@ configure script and building documentation:
 |Tool				|Description
 |readline			|Adds support for completion and history in
 				 search and command prompts.
-|gsed (i.e. GNU sed)		|Required for running the test suite.
-				 Can be installed with `brew install gnu-sed`
-				 on OS X.
 |autoconf			|Contains autoreconf for generating configure
 				 from configure.ac.
 |asciidoc (>= 8.4)		|Generates HTML and (DocBook) XML from text.

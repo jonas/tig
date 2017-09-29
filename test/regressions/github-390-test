@@ -20,7 +20,7 @@ test_setup_work_dir() {
 	pwd="$(pwd)"
 	git_init "$REMOTE_REPO"
 	cd "$REMOTE_REPO" && {
-		echo 3.14 > file
+		printf '3.14\n' > file
 		git add file
 		git_commit -m "committed"
 		cd "$pwd"

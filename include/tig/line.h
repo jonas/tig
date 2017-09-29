@@ -22,11 +22,11 @@ struct ref;
  */
 
 #define LINE_INFO(_) \
-	_(DIFF_HEADER,  	"diff --"), \
-	_(DIFF_DEL_FILE,  	"--- "), \
-	_(DIFF_ADD_FILE,  	"+++ "), \
-	_(DIFF_START,   	"---"), \
-	_(DIFF_CHUNK,   	"@@"), \
+	_(DIFF_HEADER,		"diff --"), \
+	_(DIFF_DEL_FILE,	"--- "), \
+	_(DIFF_ADD_FILE,	"+++ "), \
+	_(DIFF_START,		"---"), \
+	_(DIFF_CHUNK,		"@@"), \
 	_(DIFF_ADD,		"+"), \
 	_(DIFF_ADD2,		" +"), \
 	_(DIFF_DEL,		"-"), \
@@ -35,6 +35,8 @@ struct ref;
 	_(DIFF_OLDMODE,		"old file mode "), \
 	_(DIFF_NEWMODE,		"new file mode "), \
 	_(DIFF_SIMILARITY,	"similarity "), \
+	_(DIFF_ADD_HIGHLIGHT,	""), \
+	_(DIFF_DEL_HIGHLIGHT,	""), \
 	_(PP_MERGE,		"Merge: "), \
 	_(PP_REFS,		"Refs: "), \
 	_(PP_REFLOG,		"Reflog: "), \
@@ -48,13 +50,13 @@ struct ref;
 	_(CURSOR,		""), \
 	_(STATUS,		""), \
 	_(DELIMITER,		""), \
-	_(DATE,      		""), \
-	_(MODE,      		""), \
+	_(DATE,			""), \
+	_(MODE,			""), \
 	_(ID,			""), \
 	_(OVERFLOW,		""), \
-	_(DIRECTORY,	 	""), \
-	_(FILE,  		""), \
-	_(FILE_SIZE, 		""), \
+	_(DIRECTORY,		""), \
+	_(FILE,			""), \
+	_(FILE_SIZE,		""), \
 	_(LINE_NUMBER,		""), \
 	_(TITLE_BLUR,		""), \
 	_(TITLE_FOCUS,		""), \
@@ -95,10 +97,7 @@ struct ref;
 enum line_type {
 #define DEFINE_LINE_ENUM(type, line) LINE_##type
 	LINE_INFO(DEFINE_LINE_ENUM),
-	LINE_NONE,
-
-	LINE_DIFF_ADD_HIGHLIGHT,
-	LINE_DIFF_DEL_HIGHLIGHT
+	LINE_NONE
 };
 
 struct line_info {
@@ -118,6 +117,8 @@ struct line_rule {
 
 enum line_type get_line_type(const char *line);
 enum line_type get_line_type_from_ref(const struct ref *ref);
+
+const char *get_line_type_name(enum line_type type);
 
 struct line_info *get_line_info(const char *prefix, enum line_type type);
 struct line_info *add_line_rule(const char *prefix, struct line_rule *rule);
@@ -139,12 +140,7 @@ static inline int
 get_line_attr(const char *prefix, enum line_type type)
 {
 	struct line_info *info = get_line_info(prefix, type);
-	int hi_attr = 0;
-
-	if (type == LINE_DIFF_ADD_HIGHLIGHT || type == LINE_DIFF_DEL_HIGHLIGHT)
-		hi_attr = A_STANDOUT;
-
-	return COLOR_PAIR(COLOR_ID(info->color_pair)) | info->attr | hi_attr;
+	return COLOR_PAIR(COLOR_ID(info->color_pair)) | info->attr;
 }
 
 #endif

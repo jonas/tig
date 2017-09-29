@@ -2,21 +2,18 @@
 
 . libtest.sh
 
-saved_tigrc="$HOME/saved-tigrc"
-check_tigrc="$HOME/check-tigrc"
-
 steps "
-	:save-options $saved_tigrc
+	:save-options saved-tigrc
 "
 
 test_tig status
 cp stderr stderr.1
 
 steps "
-	:save-options $check_tigrc
+	:save-options check-tigrc
 "
 
-TIGRC_USER="$saved_tigrc" test_tig status
+TIGRC_USER="$HOME/saved-tigrc" test_tig status
 cp stderr stderr.2
 
 cat stderr.* > stderr

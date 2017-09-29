@@ -73,6 +73,7 @@ set show-changes		= yes		# Show changes commits in the main view?
 set wrap-lines			= no		# Wrap long lines in pager views?
 set tab-size			= 8		# Number of spaces to use when expanding tabs
 set line-graphics		= default	# Enum: ascii, default, utf-8
+set truncation-delimiter	= ~		# Character drawn for truncations, or "utf-8"
 
 # Format reference names based on type.
 #  - head		: The current HEAD.
@@ -85,13 +86,13 @@ set line-graphics		= default	# Enum: ascii, default, utf-8
 # If no format is defined for `local-tag` then the one for `tag` is used.
 # Similarly, `remote` is used if no `tracked-remote` format exists.
 # Prefix with `hide:` to not show that reference type, e.g. `hide:remote`.
-# Expects a space separated list of format strings.
+# Expects a space-separated list of format strings.
 set reference-format		= [branch] <tag> {remote} ~replace~
 
 # Settings controlling how content is read from Git
 set commit-order		= auto		# Enum: auto, default, topo, date, reverse (main)
 set status-show-untracked-dirs	= yes		# Show files in untracked directories? (status)
-set status-show-untracked-files = yes		# Show untracked files?
+set status-show-untracked-files	= yes		# Show untracked files?
 set ignore-space		= no		# Enum: no, all, some, at-eol (diff)
 set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set diff-context		= 3		# Number of lines to show around diff changes (diff)
@@ -107,7 +108,7 @@ set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 set refresh-mode		= auto		# Enum: manual, auto, after-command, periodic
 set refresh-interval		= 10		# Interval in seconds between refreshes
 set ignore-case			= no		# Enum: no, yes, smart-case
-                                                # Ignore case when searching? Smart-case option will
+						# Ignore case when searching? Smart-case option will
 set wrap-search			= yes		# Wrap around to top/bottom of view when searching
 set focus-child			= yes		# Move focus to child view when opened?
 set horizontal-scroll		= 50%		# Number of columns to scroll as % of width
@@ -117,8 +118,10 @@ set vertical-split		= auto		# Enum: horizontal, vertical, auto; Use auto to
 set split-view-width		= 50%		# Width of right-most view for vertical splits
 set editor-line-number		= yes		# Automatically pass line number to editor? Used
 						# for opening file at specific line e.g. from a diff
+set history-size		= 500		# Size of persistent history, 0 to disable
 set mouse			= no		# Enable mouse support?
 set mouse-scroll		= 3		# Number of lines to scroll via the mouse
+set mouse-wheel-cursor		= no		# Prefer moving the cursor to scrolling the view?
 
 # User-defined commands
 # ---------------------
@@ -145,7 +148,7 @@ set mouse-scroll		= 3		# Number of lines to scroll via the mouse
 #   %(remote)		The current remote name.
 #   %(tag)		The current tag name.
 #   %(stash)		The current stash name.
-#   %(directory)	The current directory path in the tree view; 
+#   %(directory)	The current directory path in the tree view;
 #			empty for the root directory.
 #   %(file)		The currently selected file.
 #   %(ref)		The reference given to blame or HEAD if undefined.
@@ -198,6 +201,7 @@ bind generic	<F5>	refresh
 bind generic	O	maximize		# Maximize the current view
 bind generic	q	view-close		# Close the current view
 bind generic	Q	quit			# Close all views and quit
+bind generic	<C-C>	quit			# Close all views and quit
 
 # View specific
 bind status	u	status-update		# Stage/unstage changes in file
@@ -209,7 +213,7 @@ bind stage	1	stage-update-line	# Stage/unstage current line
 bind stage	!	status-revert		# Revert current diff (c)hunk
 bind stage	\	stage-split-chunk	# Split current diff (c)hunk
 bind stage	@	:/^@@			# Jump to next (c)hunk
-bind stage	[	:toggle diff-context -1 # Decrease the diff context
+bind stage	[	:toggle diff-context -1	# Decrease the diff context
 bind stage	]	:toggle diff-context +1	# Increase the diff context
 bind diff	@	:/^@@			# Jump to next (c)hunk
 bind diff	[	:toggle diff-context -1
@@ -252,6 +256,7 @@ bind search	<C-J>	find-next
 bind search	<Up>	find-prev
 bind search	<C-P>	find-prev
 bind search	<C-K>	find-prev
+bind search	<C-C>	view-close
 
 # Option manipulation
 bind generic	o	options			# Open the options menu
@@ -271,7 +276,7 @@ bind generic	$	:toggle commit-title-overflow
 						# Toggle highlighting of commit title overflow
 # bind generic	???	:toggle file-size	# Toggle file size format
 # bind generic	???	:toggle status		# Toggle status display
-# bind generic	???	:toggle status-untracked-dirs
+# bind generic	???	:toggle status-show-untracked-dirs
 						# Toggle display of file in untracked directories
 # bind generic	???	:toggle vertical-split	# Toggle vertical split
 bind generic	%	:toggle file-filter
@@ -375,6 +380,8 @@ color stat-untracked		magenta	default
 color help-group		blue	default
 color help-action		yellow	default
 color diff-stat			blue	default
+color diff-add-highlight	green	default	standout
+color diff-del-highlight	red	default	standout
 color palette-0			magenta	default
 color palette-1			yellow	default
 color palette-2			cyan	default
@@ -382,13 +389,13 @@ color palette-3			green	default
 color palette-4			default	default
 color palette-5			white	default
 color palette-6			red	default
-color palette-7			magenta	default bold
-color palette-8			yellow	default bold
-color palette-9			cyan	default bold
-color palette-10		green	default bold
-color palette-11		default	default bold
-color palette-12		white	default bold
-color palette-13		red	default bold
+color palette-7			magenta	default	bold
+color palette-8			yellow	default	bold
+color palette-9			cyan	default	bold
+color palette-10		green	default	bold
+color palette-11		default	default	bold
+color palette-12		white	default	bold
+color palette-13		red	default	bold
 color graph-commit		blue	default
 color search-result		black	yellow
 
@@ -407,6 +414,9 @@ set git-colors = \
 	diff.frag=diff-chunk \
 	diff.old=diff-del \
 	diff.new=diff-add \
+	\
+	diff-highlight.oldHighlight=diff-del-highlight \
+	diff-highlight.newHighlight=diff-add-highlight \
 	\
 	grep.filename=grep.file \
 	grep.linenumber=grep.line-number \

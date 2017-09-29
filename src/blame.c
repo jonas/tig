@@ -81,16 +81,6 @@ blame_open(struct view *view, enum open_flags flags)
 	char path[SIZEOF_STR];
 	size_t i;
 
-	if (opt_blame_options) {
-		for (i = 0; opt_blame_options[i]; i++) {
-			if (prefixcmp(opt_blame_options[i], "-C"))
-				continue;
-			state->auto_filename_display = true;
-		}
-	}
-
-	blame_update_file_name_visibility(view);
-
 	if (is_initial_view(view)) {
 		/* Finish validating and setting up blame options */
 		if (!opt_file_args || opt_file_args[1])
@@ -98,8 +88,10 @@ blame_open(struct view *view, enum open_flags flags)
 
 		string_ncopy(view->env->file, opt_file_args[0], strlen(opt_file_args[0]));
 
-		opt_blame_options = opt_cmdline_args;
-		opt_cmdline_args = NULL;
+		if (opt_cmdline_args) {
+			opt_blame_options = opt_cmdline_args;
+			opt_cmdline_args = NULL;
+		}
 
 		/*
 		 * flags (like "--max-age=123") and bottom limits (like "^foo")
@@ -123,6 +115,16 @@ blame_open(struct view *view, enum open_flags flags)
 			}
 		}
 	}
+
+	if (opt_blame_options) {
+		for (i = 0; opt_blame_options[i]; i++) {
+			if (prefixcmp(opt_blame_options[i], "-C"))
+				continue;
+			state->auto_filename_display = true;
+		}
+	}
+
+	blame_update_file_name_visibility(view);
 
 	if (!view->env->file[0])
 		return error("No file chosen, press %s to open tree view",
@@ -283,7 +285,7 @@ blame_read(struct view *view, struct buffer *buf, bool force_stop)
 	if (!state->commit) {
 		state->commit = read_blame_commit(view, buf->data, state);
 		string_format(view->ref, "%s %2zd%%", view->vid,
-			      view->lines ? state->blamed * 100 / view->lines : 0);
+			      view->lines ? 5 * (size_t) (state->blamed * 20 / view->lines) : 0);
 
 	} else if (parse_blame_info(state->commit, state->author, buf->data)) {
 		bool update_view_columns = true;

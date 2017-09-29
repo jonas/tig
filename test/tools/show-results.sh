@@ -21,20 +21,25 @@ if [ -n "${BASH_VERSION:-}" ]; then
 	IFS=$' \n\t'
 fi
 
-tests="$(find test/ -name ".test-result" | wc -l)"
-asserts="$(find test/ -name ".test-result" | xargs sed -n '/\[\(OK\|FAIL\)\]/p' | wc -l)"
-failures="$(find test/ -name ".test-result" | xargs grep FAIL | wc -l || true)"
-skipped="$(find test/ -name ".test-skipped" | wc -l || true)"
+tests="$(find test/ -name ".test-result" | grep -c . || true)"
+asserts="$(find test/ -name ".test-result" -exec cat -- "{}" \; | grep -c '^ *\[\(OK\|FAIL\)\]' || true)"
+failures="$(find test/ -name ".test-result" -exec cat -- "{}" \; | grep -c '^ *\[FAIL\]' || true)"
+skipped="$(find test/ -name ".test-skipped" | grep -c . || true)"
+todos="$(find test/ \( -name ".test-skipped" -or -name ".test-skipped-subtest-*" \) -exec cat -- "{}" + | grep -c '^\[TODO\]' || true)"
 
-if [ $failures = 0 ]; then
+if [ "$failures" = 0 ]; then
 	printf "Passed %d assertions in %d tests" "$asserts" "$tests"
 else
 	printf "Failed %d of %d assertions in %d tests" "$failures" "$asserts" "$tests"
 fi
 
-if [ $skipped != 0 ]; then
-	printf " (%d skipped)" "$skipped"
+if [ "$skipped" != 0 ]; then
+	todo_text=""
+	if [ "$todos" != 0 ]; then
+		todo_text=", $todos as todos"
+	fi
+	printf " (%d skipped%s)" "$skipped" "$todo_text"
 fi
 
-echo
-exit $failures
+printf '\n'
+exit "$failures"

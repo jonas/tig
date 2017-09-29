@@ -39,6 +39,16 @@ trace::
 
 	Show trace information.
 
+todos::
+
+	Run TODO tests, which are otherwise skipped.
+
 valgrind::
 
 	Run tests and verify memory access with Valgrind.
+
+timeout=<int>::
+
+	Set the default timeout for each invocation of tig under the
+	test harness. The default is 10 if unset. 0 means "no
+	timeout". Individual tests may override the value.

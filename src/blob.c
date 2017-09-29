@@ -71,7 +71,7 @@ blob_open(struct view *view, enum open_flags flags)
 		};
 
 		if (!string_format(blob_spec, "%s:%s", commit, view->env->file) ||
-		    !io_run_buf(rev_parse_argv, view->env->blob, sizeof(view->env->blob), false))
+		    !io_run_buf(rev_parse_argv, view->env->blob, sizeof(view->env->blob), NULL, false))
 			return error("Failed to resolve blob from file name");
 
 		string_ncopy(state->commit, commit, strlen(commit));

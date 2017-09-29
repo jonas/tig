@@ -41,6 +41,7 @@ struct input {
 	bool allow_empty;
 	void *data;
 	char buf[SIZEOF_STR];
+	char context[SIZEOF_STR];
 };
 
 enum input_status prompt_default_handler(struct input *input, struct key *key);

@@ -20,7 +20,7 @@ Resources
  - Tarballs:	https://github.com/jonas/tig/releases[]
  - Git URL:	git://github.com/jonas/tig.git
  - Gitter:	https://gitter.im/jonas/tig[]
- - Q&A:		http://stackoverflow.com/questions/tagged/tig[]
+ - Q&A:		https://stackoverflow.com/questions/tagged/tig[]
 
 Bugs and Feature Requests
 -------------------------

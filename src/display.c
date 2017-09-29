@@ -21,6 +21,8 @@
 #include "tig/display.h"
 #include "tig/watch.h"
 
+static void set_terminal_modes(void);
+
 struct view *display[2];
 unsigned int current_view;
 
@@ -44,19 +46,37 @@ open_script(const char *path)
 	if (is_script_executing())
 		return error("Scripts cannot be run from scripts");
 
-	return io_open(&script_io, "%s", path)
-		? SUCCESS : error("Failed to open %s", path);
+	char buf[SIZEOF_STR];
+
+	if (!expand_path(buf, sizeof(buf), path))
+		return error("Failed to expand path: %s", path);
+
+	return io_open(&script_io, "%s", buf)
+		? SUCCESS : error("Failed to open %s", buf);
 }
 
 bool
-open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool refresh, const char *notice)
+open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool refresh, const char *notice)
 {
 	bool ok;
 
-	if (silent || is_script_executing()) {
+	if (echo) {
+		char buf[SIZEOF_STR] = "";
+
+		io_run_buf(argv, buf, sizeof(buf), dir, false);
+		if (*buf) {
+			report("%s", buf);
+			return true;
+		} else {
+			report("No output");
+			return false;
+		}
+	} else if (silent || is_script_executing()) {
 		ok = io_run_bg(argv, dir);
 
 	} else {
+		clear();
+		refresh();
 		endwin();                  /* restore original tty modes */
 		ok = io_run_fg(argv, dir);
 		if (confirm || !ok) {
@@ -64,7 +84,9 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 				fprintf(stderr, "%s", notice);
 			fprintf(stderr, "Press Enter to continue");
 			getc(opt_tty);
+			fseek(opt_tty, 0, SEEK_END);
 		}
+		set_terminal_modes();
 	}
 
 	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && refresh) {
@@ -116,7 +138,7 @@ open_editor(const char *file, unsigned int lineno)
 	if (lineno && opt_editor_line_number && string_format(lineno_cmd, "+%u", lineno))
 		editor_argv[argc++] = lineno_cmd;
 	editor_argv[argc] = file;
-	if (!open_external_viewer(editor_argv, repo.cdup, false, false, true, EDITOR_LINENO_MSG))
+	if (!open_external_viewer(editor_argv, repo.cdup, false, false, false, true, EDITOR_LINENO_MSG))
 		opt_editor_line_number = false;
 }
 
@@ -347,6 +369,65 @@ save_display(const char *path)
 }
 
 /*
+ * Dump view data to file.
+ *
+ * FIXME: Add support for more line state and column data.
+ */
+bool
+save_view(struct view *view, const char *path)
+{
+	struct view_column_data column_data = {0};
+	FILE *file = fopen(path, "w");
+	size_t i;
+
+	if (!file)
+		return false;
+
+	fprintf(file, "View: %s\n", view->name);
+	if (view->parent && view->parent != view)
+		fprintf(file, "Parent: %s\n", view->parent->name);
+	fprintf(file, "Ref: %s\n", view->ref);
+	fprintf(file, "Dimensions: height=%d width=%d\n", view->height, view->width);
+	fprintf(file, "Position: offset=%ld column=%ld lineno=%ld\n",
+		view->pos.offset,
+		view->pos.col,
+		view->pos.lineno);
+
+	for (i = 0; i < view->lines; i++) {
+		struct line *line = &view->line[i];
+
+		fprintf(file, "line[%3zu] type=%s selected=%d\n",
+			i,
+			enum_name(get_line_type_name(line->type)),
+			line->selected);
+
+		if (!view->ops->get_column_data(view, line, &column_data))
+			return true;
+
+		if (column_data.box) {
+			const struct box *box = column_data.box;
+			size_t j;
+			size_t offset;
+
+			fprintf(file, "line[%3zu] cells=%zu text=",
+				i, box->cells);
+
+			for (j = 0, offset = 0; j < box->cells; j++) {
+				const struct box_cell *cell = &box->cell[j];
+
+				fprintf(file, "[%.*s]", (int) cell->length, box->text + offset);
+				offset += cell->length;
+			}
+
+			fprintf(file, "\n");
+		}
+	}
+
+	fclose(file);
+	return true;
+}
+
+/*
  * Status management
  */
 
@@ -367,7 +448,7 @@ static bool status_empty = false;
 
 /* Update status and title window. */
 static bool
-update_status_window(struct view *view, const char *msg, va_list args)
+update_status_window(struct view *view, const char *context, const char *msg, va_list args)
 {
 	if (input_mode)
 		return false;
@@ -383,6 +464,20 @@ update_status_window(struct view *view, const char *msg, va_list args)
 			status_empty = true;
 		}
 		wclrtoeol(status_win);
+
+		if (context && *context) {
+			size_t contextlen = strlen(context);
+			int x, y, width, ___;
+
+			getyx(status_win, y, x);
+			getmaxyx(status_win, ___, width);
+			(void) ___;
+			if (contextlen < width - x) {
+				mvwprintw(status_win, 0, width - contextlen, "%s", context);
+				wmove(status_win, y, x);
+			}
+		}
+
 		return true;
 	}
 
@@ -395,7 +490,17 @@ update_status(const char *msg, ...)
 	va_list args;
 
 	va_start(args, msg);
-	update_status_window(display[current_view], msg, args);
+	update_status_window(display[current_view], "", msg, args);
+	va_end(args);
+}
+
+void
+update_status_with_context(const char *context, const char *msg, ...)
+{
+	va_list args;
+
+	va_start(args, msg);
+	update_status_window(display[current_view], context, msg, args);
 	va_end(args);
 }
 
@@ -414,19 +519,51 @@ report(const char *msg, ...)
 	}
 
 	va_start(args, msg);
-	if (update_status_window(view, msg, args))
+	if (update_status_window(view, "", msg, args))
 		wnoutrefresh(status_win);
 	va_end(args);
 
 	update_view_title(view);
 }
 
+void
+report_clear(void)
+{
+	struct view *view = display[current_view];
+
+	if (!view)
+		return;
+
+	if (!input_mode && !status_empty) {
+		werase(status_win);
+		doupdate();
+	}
+	status_empty = true;
+	update_view_title(view);
+}
+
 static void
 done_display(void)
 {
-	if (cursed)
+	if (cursed) {
+		if (status_win) {
+			werase(status_win);
+			doupdate();
+		}
+		curs_set(1);
 		endwin();
+	}
 	cursed = false;
+}
+
+static void
+set_terminal_modes(void)
+{
+	nonl();		/* Disable conversion and detect newlines from input. */
+	raw();		/* Take input chars one at a time, no wait for \n */
+	noecho();	/* Don't echo input */
+	curs_set(0);
+	leaveok(stdscr, false);
 }
 
 void
@@ -442,10 +579,7 @@ init_display(void)
 		die("Failed to register done_display");
 
 	/* Initialize the curses library */
-	if (!no_display && isatty(STDIN_FILENO)) {
-		cursed = !!initscr();
-		opt_tty = stdin;
-	} else {
+	{
 		/* Leave stdin and stdout alone when acting as a pager. */
 		FILE *out_tty;
 
@@ -459,11 +593,7 @@ init_display(void)
 	if (!cursed)
 		die("Failed to initialize curses");
 
-	nonl();		/* Disable conversion and detect newlines from input. */
-	cbreak();       /* Take input chars one at a time, no wait for \n */
-	noecho();       /* Don't echo input */
-	leaveok(stdscr, false);
-
+	set_terminal_modes();
 	init_colors();
 
 	getmaxyx(stdscr, y, x);
@@ -482,7 +612,9 @@ init_display(void)
 	TABSIZE = opt_tab_size;
 #endif
 
-	term = getenv("XTERM_VERSION") ? NULL : getenv("COLORTERM");
+	term = getenv("XTERM_VERSION")
+		   ? NULL
+		   : (getenv("TERM_PROGRAM") ? getenv("TERM_PROGRAM") : getenv("COLORTERM"));
 	if (term && !strcmp(term, "gnome-terminal")) {
 		/* In the gnome-terminal-emulator, the warning message
 		 * shown when scrolling up one line while the cursor is
@@ -492,14 +624,20 @@ init_display(void)
 		use_scroll_status_wclear = true;
 		use_scroll_redrawwin = false;
 
-	} else if (term && !strcmp(term, "xrvt-xpm")) {
-		/* No problems with full optimizations in xrvt-(unicode)
-		 * and aterm. */
+	} else if (term &&
+			   (!strcmp(term, "xrvt-xpm") || !strcmp(term, "Apple_Terminal") ||
+				!strcmp(term, "iTerm.app"))) {
+		/* No problems with full optimizations in
+		 * xrvt-(unicode)
+		 * aterm
+		 * Terminal.app
+		 * iTerm2 */
 		use_scroll_status_wclear = use_scroll_redrawwin = false;
 
 	} else {
 		/* When scrolling in (u)xterm the last line in the
-		 * scrolling direction will update slowly. */
+		 * scrolling direction will update slowly.  This is
+		 * the conservative default. */
 		use_scroll_redrawwin = true;
 		use_scroll_status_wclear = false;
 	}
@@ -512,7 +650,7 @@ read_script(struct key *key)
 	static const char *line = "";
 	enum status_code code;
 
-	if (!line || !*line) {
+	while (!line || !*line) {
 		if (input_buffer.data && *input_buffer.data == ':') {
 			line = "<Enter>";
 			memset(&input_buffer, 0, sizeof(input_buffer));
@@ -520,6 +658,8 @@ read_script(struct key *key)
 		} else if (!io_get(&script_io, &input_buffer, '\n', true)) {
 			io_done(&script_io);
 			return false;
+		} else if (input_buffer.data[strspn(input_buffer.data, " \t")] == '#') {
+			continue;
 		} else {
 			line = input_buffer.data;
 		}
@@ -635,6 +775,9 @@ get_input(int prompt_position, struct key *key)
 			resize_display();
 			redraw_display(true);
 
+		} else if (key_value == KEY_CTL('z')) {
+			raise(SIGTSTP);
+
 		} else {
 			int pos, key_length;
 
@@ -646,7 +789,7 @@ get_input(int prompt_position, struct key *key)
 			 * Ctrl-<key> values are represented using a 0x1F
 			 * bitmask on the key value. To 'unmap' we assume that:
 			 *
-			 * - Ctrl-Z is handled by Ncurses.
+			 * - Ctrl-Z is handled separately for job control.
 			 * - Ctrl-m is the same as Return/Enter.
 			 * - Ctrl-i is the same as Tab.
 			 *
@@ -654,7 +797,7 @@ get_input(int prompt_position, struct key *key)
 			 * is set and the key value is updated to the proper
 			 * ASCII value.
 			 */
-			if (KEY_CTL('a') <= key_value && key_value <= KEY_CTL('y') &&
+			if (KEY_CTL('@') <= key_value && key_value <= KEY_CTL('y') &&
 			    key_value != KEY_RETURN && key_value != KEY_TAB) {
 				key->modifiers.control = 1;
 				key_value = key_value | 0x40;

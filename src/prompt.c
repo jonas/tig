@@ -37,6 +37,10 @@ prompt_input(const char *prompt, struct input *input)
 	int last_buf_length = promptlen ? -1 : promptlen;
 
 	input->buf[0] = 0;
+	input->context[0] = 0;
+
+	if (strlen(prompt) > 0)
+		curs_set(1);
 
 	while (status == INPUT_OK || status == INPUT_SKIP) {
 		int buf_length = strlen(input->buf) + promptlen;
@@ -44,13 +48,16 @@ prompt_input(const char *prompt, struct input *input)
 
 		last_buf_length = buf_length;
 		if (offset >= 0)
-			update_status("%s%.*s", prompt, pos, input->buf);
+			update_status_with_context(input->context, "%s%.*s", prompt, pos, input->buf);
+		else
+			wmove(status_win, 0, buf_length);
 
 		if (get_input(offset, &key) == OK) {
 			int len = strlen(key.data.bytes);
 
 			if (pos + len >= sizeof(input->buf)) {
 				report("Input string too long");
+				curs_set(0);
 				return NULL;
 			}
 
@@ -88,6 +95,7 @@ prompt_input(const char *prompt, struct input *input)
 		input->buf[pos] = 0;
 	}
 
+	curs_set(0);
 	report_clear();
 
 	if (status == INPUT_CANCEL)
@@ -125,7 +133,7 @@ prompt_yesno_handler(struct input *input, struct key *key)
 
 	if (c == 'y' || c == 'Y')
 		return INPUT_STOP;
-	if (c == 'n' || c == 'N')
+	if (c == 'n' || c == 'N' || key_to_control(key) == 'C')
 		return INPUT_CANCEL;
 	return prompt_default_handler(input, key);
 }
@@ -172,6 +180,8 @@ read_prompt_incremental(const char *prompt, bool edit_mode, bool allow_empty, in
 
 	incremental.input.allow_empty = allow_empty;
 	incremental.input.data = data;
+	incremental.input.buf[0] = 0;
+	incremental.input.context[0] = 0;
 	incremental.handler = handler;
 	incremental.edit_mode = edit_mode;
 
@@ -179,6 +189,8 @@ read_prompt_incremental(const char *prompt, bool edit_mode, bool allow_empty, in
 }
 
 #ifdef HAVE_READLINE
+static volatile bool prompt_interrupted = false;
+
 static void
 readline_display(void)
 {
@@ -193,6 +205,9 @@ readline_variable_generator(const char *text, int state)
 	static const char *vars[] = {
 #define FORMAT_VAR(type, name, ifempty, initval) "%(" #name ")",
 		ARGV_ENV_INFO(FORMAT_VAR)
+#undef FORMAT_VAR
+#define FORMAT_VAR(type, name) "%(repo:" #name ")",
+		REPO_INFO(FORMAT_VAR)
 #undef FORMAT_VAR
 		NULL
 	};
@@ -238,6 +253,7 @@ readline_action_generator(const char *text, int state)
 		"save-display",
 		"save-options",
 		"exec",
+		"echo",
 #define REQ_GROUP(help)
 #define REQ_(req, help)	#req
 		REQ_INFO,
@@ -443,39 +459,144 @@ readline_init(void)
 	rl_completion_display_matches_hook = readline_display_matches;
 }
 
+static void sigint_absorb_handler(int sig) {
+	signal(SIGINT, SIG_DFL);
+	prompt_interrupted = true;
+}
+
 char *
 read_prompt(const char *prompt)
 {
 	static char *line = NULL;
+	HIST_ENTRY *last_entry;
 
 	if (line) {
 		free(line);
 		line = NULL;
 	}
 
+	curs_set(1);
+	if (signal(SIGINT, sigint_absorb_handler) == SIG_ERR)
+		die("Failed to setup sigint handler");
 	line = readline(prompt);
+	if (signal(SIGINT, SIG_DFL) == SIG_ERR)
+		die("Failed to remove sigint handler");
+	curs_set(0);
 
-	if (line && !*line) {
+	/* readline can leave the virtual cursor out-of-place */
+	set_cursor_pos(0, 0);
+
+	if (prompt_interrupted) {
 		free(line);
 		line = NULL;
 	}
 
-	if (line)
+	prompt_interrupted = false;
+
+	last_entry = history_get(history_length);
+	if (line && *line &&
+	    (!last_entry || strcmp(line, last_entry->line)))
 		add_history(line);
 
 	return line;
 }
 
+static const char *
+prompt_histfile(void)
+{
+	static char path[SIZEOF_STR] = "";
+	const char *xdg_data_home = getenv("XDG_DATA_HOME");
+	const char *home = getenv("HOME");
+	int fd;
+
+	if (!xdg_data_home || !*xdg_data_home) {
+		if (!string_format(path, "%s/.local/share/tig/history", home))
+			die("Failed to expand $HOME");
+	} else if (!string_format(path, "%s/tig/history", xdg_data_home))
+		die("Failed to expand $XDG_DATA_HOME");
+
+	fd = open(path, O_RDWR | O_CREAT | O_APPEND, 0666);
+	if (fd > 0)
+		close(fd);
+	else if (!string_format(path, "%s/.tig_history", home))
+		die("Failed to expand $HOME");
+
+	return path;
+}
+
+static int
+history_go_line(int rel_line_num)
+{
+	/* history_set_pos confusingly takes an absolute index. Expose a
+	 * "relative offset" version consistent with the rest of readline.
+	 */
+	return history_set_pos(rel_line_num - history_base);
+}
+
+static void
+prompt_history_dedupe(void)
+{
+	HIST_ENTRY *uniq_entry, *earlier_entry;
+	int uniq_lineno;
+
+	using_history();
+	uniq_lineno = history_length;
+
+	while (uniq_lineno >= history_base) {
+		history_go_line(uniq_lineno);
+		uniq_entry = current_history();
+		if (!uniq_entry)
+			break;
+		while ((earlier_entry = previous_history())) {
+			if (!strcmp(earlier_entry->line, uniq_entry->line)
+			    && ((earlier_entry = remove_history(where_history())))) {
+				free_history_entry(earlier_entry);
+				uniq_lineno--;
+			}
+		}
+		uniq_lineno--;
+	}
+
+	/* defensive hard reset */
+	using_history();
+	history_go_line(history_length);
+}
+
+static void
+prompt_teardown(void)
+{
+	if (opt_history_size <= 0)
+		return;
+
+	prompt_history_dedupe();
+	write_history(prompt_histfile());
+}
+
 void
 prompt_init(void)
 {
+	HIST_ENTRY *last_entry;
+
 	readline_init();
+
+	if (opt_history_size <= 0)
+		return;
+
+	using_history();
+	stifle_history(opt_history_size);
+	read_history(prompt_histfile());
+	if (atexit(prompt_teardown))
+		die("Failed to register prompt_teardown");
+
+	last_entry = history_get(history_length);
+	if (last_entry)
+		string_copy(argv_env.search, last_entry->line);
 }
 #else
 char *
 read_prompt(const char *prompt)
 {
-	return read_prompt_incremental(prompt, true, false, NULL, NULL);
+	return read_prompt_incremental(prompt, true, true, NULL, NULL);
 }
 
 void
@@ -488,6 +609,7 @@ bool
 prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 {
 	enum input_status status = INPUT_OK;
+	char buf[128];
 	struct key key;
 	int size = 0;
 
@@ -496,13 +618,17 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 
 	assert(size > 0);
 
+	curs_set(1);
 	while (status == INPUT_OK) {
 		const struct menu_item *item = &items[*selected];
-		char hotkey[] = { '[', (char) item->hotkey, ']', ' ', 0 };
+		const char hotkey[] = { ' ', '[', (char) item->hotkey, ']', 0 };
 		int i;
 
-		update_status("%s (%d of %d) %s%s", prompt, *selected + 1, size,
-			      item->hotkey ? hotkey : "", item->text);
+		if (!string_format(buf, "(%d of %d)", *selected + 1, size))
+			buf[0] = 0;
+
+		update_status_with_context(buf, "%s %s%s", prompt, item->text,
+			      item->hotkey ? hotkey : "");
 
 		switch (get_input(COLS - 1, &key)) {
 		case KEY_RETURN:
@@ -528,6 +654,11 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 			break;
 
 		default:
+			if (key_to_control(&key) == 'C') {
+				status = INPUT_CANCEL;
+				break;
+			}
+
 			for (i = 0; items[i].text; i++)
 				if (items[i].hotkey == key.data.bytes[0]) {
 					*selected = i;
@@ -536,6 +667,7 @@ prompt_menu(const char *prompt, const struct menu_item *items, int *selected)
 				}
 		}
 	}
+	curs_set(0);
 
 	report_clear();
 
@@ -745,7 +877,7 @@ run_prompt_command(struct view *view, const char *argv[])
 	if (string_isnumber(cmd)) {
 		int lineno = view->pos.lineno + 1;
 
-		if (parse_int(&lineno, cmd, 0, view->lines + 1) == SUCCESS) {
+		if (parse_int(&lineno, cmd, 0, view->lines) == SUCCESS) {
 			if (!lineno)
 				lineno = 1;
 			select_view_line(view, lineno - 1);
@@ -799,6 +931,22 @@ run_prompt_command(struct view *view, const char *argv[])
 			goto_id(view, argv[1], true, true);
 		return REQ_NONE;
 
+	} else if (!strcmp(cmd, "echo")) {
+		const char **fmt_argv = NULL;
+		char text[SIZEOF_STR] = "";
+
+		if (argv[1]
+		    && strlen(argv[1]) > 0
+		    && (!argv_format(view->env, &fmt_argv, &argv[1], false, true)
+			|| !argv_to_string(fmt_argv, text, sizeof(text), " ")
+			)) {
+			report("Failed to format echo string");
+			return REQ_NONE;
+		}
+
+		report("%s", text);
+		return REQ_NONE;
+
 	} else if (!strcmp(cmd, "save-display")) {
 		const char *path = argv[1] ? argv[1] : "tig-display.txt";
 
@@ -806,6 +954,14 @@ run_prompt_command(struct view *view, const char *argv[])
 			report("Failed to save screen to %s", path);
 		else
 			report("Saved screen to %s", path);
+
+	} else if (!strcmp(cmd, "save-view")) {
+		const char *path = argv[1] ? argv[1] : "tig-view.txt";
+
+		if (!save_view(view, path))
+			report("Failed to save view to %s", path);
+		else
+			report("Saved view to %s", path);
 
 	} else if (!strcmp(cmd, "save-options")) {
 		const char *path = argv[1] ? argv[1] : "tig-options.txt";
@@ -908,13 +1064,14 @@ exec_run_request(struct view *view, struct run_request *req)
 	const char **argv = NULL;
 	bool confirmed = false;
 	enum request request = REQ_NONE;
-	char cmd[SIZEOF_STR];
+	char cmd[SIZEOF_CMD];
 	const char *req_argv[SIZEOF_ARG];
 	int req_argc = 0;
 
 	if (!argv_to_string(req->argv, cmd, sizeof(cmd), " ")
 	    || !argv_from_string_no_quotes(req_argv, &req_argc, cmd)
-	    || !argv_format(view->env, &argv, req_argv, false, true)) {
+	    || !argv_format(view->env, &argv, req_argv, false, true)
+	    || !argv) {
 		report("Failed to format arguments");
 		return REQ_NONE;
 	}
@@ -938,7 +1095,7 @@ exec_run_request(struct view *view, struct run_request *req)
 
 		if (confirmed)
 			open_external_viewer(argv, repo.cdup, req->flags.silent,
-					     !req->flags.exit, false, "");
+					     !req->flags.exit, req->flags.echo, false, "");
 	}
 
 	if (argv)
@@ -967,8 +1124,13 @@ open_prompt(struct view *view)
 	const char *argv[SIZEOF_ARG] = { NULL };
 	int argc = 0;
 
-	if (cmd && !argv_from_string(argv, &argc, cmd)) {
+	if (cmd && *cmd && !argv_from_string(argv, &argc, cmd)) {
 		report("Too many arguments");
+		return REQ_NONE;
+	}
+
+	if (!cmd || !*cmd) {
+		report_clear();
 		return REQ_NONE;
 	}
 
