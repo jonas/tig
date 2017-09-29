@@ -774,7 +774,7 @@ various Git commands.</p></div>
 <h2 id="_options">OPTIONS</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Command line options recognized by Tig include all valid git-log(1) and
-git-diff(1) options, as well as the following subcommands and Tig specific
+git-diff(1) options, as well as the following subcommands and Tig-specific
 options. The first command line parameter not starting with "-" is interpreted
 as being either a revision specification or a path and will end the option
 parsing. All additional options will be passed to the underlying Git command.</p></div>
@@ -999,7 +999,8 @@ TIGRC_USER
 </dt>
 <dd>
 <p>
-        Path of the user configuration file (defaults to <code>~/.tigrc</code>).
+        Path of the user configuration file (defaults to <code>~/.tigrc</code> or
+        <code>$XDG_CONFIG_HOME/tig/config</code>).
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1017,7 +1018,7 @@ TIG_LS_REMOTE
 </dt>
 <dd>
 <p>
-        Set command for retrieving all repository references. The command
+        Command for retrieving all repository references. The command
         should output data in the same format as git-ls-remote(1).
 </p>
 </dd>
@@ -1067,7 +1068,7 @@ TIG_NO_DISPLAY
 <div class="sectionbody">
 <div class="dlist"><dl>
 <dt class="hdlist1">
-'$XDG_CONFIG_HOME/tig/config
+<em>$XDG_CONFIG_HOME/tig/config</em>
 </dt>
 <dt class="hdlist1">
 <em>~/.config/tig/config</em>
@@ -1097,15 +1098,35 @@ TIG_NO_DISPLAY
 <em>$GIT_DIR/config</em>
 </dt>
 <dt class="hdlist1">
-'~/.gitconfig
+<em>~/.gitconfig</em>
 </dt>
 <dt class="hdlist1">
-'++SYSCONFDIR++/gitconfig
+<em>++SYSCONFDIR++/gitconfig</em>
 </dt>
 <dd>
 <p>
         Git configuration files. Read on start-up with the help of
         git-config(1).
+</p>
+</dd>
+<dt class="hdlist1">
+<em>$XDG_DATA_HOME/tig/history</em>
+</dt>
+<dt class="hdlist1">
+<em>~/.local/share/tig/history</em>
+</dt>
+<dt class="hdlist1">
+<em>~/.tig_history</em>
+</dt>
+<dd>
+<p>
+        When compiled with readline support, Tig writes a persistent command and
+        search history. The location of the history file is determined in the
+        following way. If <code>$XDG_DATA_HOME</code> is set and <code>$XDG_DATA_HOME/tig/</code>
+        exists, store history to <code>$XDG_DATA_HOME/tig/history</code>. If
+        <code>$XDG_CONFIG_HOME</code> is empty or undefined, store history to
+        <code>~/.local/share/tig/history</code> if the directory <code>~/.local/share/tig/</code>
+        exists, and fall back to <code>~/.tig_history</code> if it does not exist.
 </p>
 </dd>
 </dl></div>
@@ -1141,7 +1162,7 @@ git(7)</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-05-06 10:37:09 EDT
+Last updated 2017-09-29 11:15:06 EDT
 </div>
 </div>
 </body>

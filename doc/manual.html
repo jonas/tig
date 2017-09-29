@@ -800,6 +800,11 @@ commit with the log message, diffstat, and the diff.</p></div>
 </li>
 <li>
 <p>
+<a href="#history-files">History Files</a>
+</p>
+</li>
+<li>
+<p>
 <a href="#repo-refs">Repository References</a>
 </p>
 </li>
@@ -1174,7 +1179,7 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(diffargs)</code></p></td>
 <td align="left" valign="top"><p class="table">Options from <em>diff-options</em> or <em>TIG_DIFF_OPTS</em> used
-                         used by the diff and stage view.</p></td>
+                         by the diff and stage view.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(blameargs)</code></p></td>
@@ -1308,8 +1313,9 @@ environment options.</p></div>
 <h3 id="configuration-files">3.1. Configuration Files</h3>
 <div class="paragraph"><p>Upon startup, Tig first reads the system wide configuration file
 (<code>{sysconfdir}/tigrc</code> by default) and then proceeds to read the user&#8217;s
-configuration file (<code>~/.tigrc</code> by default). The paths to either of these files
-can be overridden through the following environment variables:</p></div>
+configuration file (<code>~/.tigrc</code> or <code>$XDG_CONFIG_HOME/tig/config</code> by default).
+The paths to either of these files can be overridden through the following
+environment variables:</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
 TIGRC_USER
@@ -1328,9 +1334,15 @@ TIGRC_SYSTEM
 </p>
 </dd>
 </dl></div>
-</div>
-<div class="sect2">
-<h3 id="repo-refs">3.2. Repository References</h3>
+<div class="paragraph" id="history-files"><p>History Files</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>If compiled with readline support, Tig writes a persistent command and search
+history to `~/.tig_history` or `$XDG_DATA_HOME/tig/history`.
+
+[[repo-refs]]
+Repository References</code></pre>
+</div></div>
 <div class="paragraph"><p>Commits that are referenced by tags and branch heads will be marked by the
 reference name surrounded by <em>[</em> and <em>]</em>:</p></div>
 <div class="listingblock">
@@ -1353,9 +1365,8 @@ TIG_LS_REMOTE
 </dt>
 <dd>
 <p>
-        Set command for retrieving all repository references. The command
-        should output data in the same format as git-ls-remote(1). Defaults
-        to:
+        Command for retrieving all repository references. The command should
+        output data in the same format as git-ls-remote(1). Defaults to:
 </p>
 </dd>
 </dl></div>
@@ -1366,7 +1377,7 @@ TIG_LS_REMOTE
 </div></div>
 </div>
 <div class="sect2">
-<h3 id="diff-options">3.3. Diff options</h3>
+<h3 id="diff-options">3.2. Diff options</h3>
 <div class="paragraph"><p>It is possible to alter how diffs are shown by the diff view. If for example
 you prefer to have commit and author dates shown as relative dates, use:</p></div>
 <div class="listingblock">
@@ -1628,7 +1639,7 @@ cellspacing="0" cellpadding="4">
 <col width="80%" />
 <thead>
 <tr>
-<th align="left" valign="top">Key    </th>
+<th align="left" valign="top">Key            </th>
 <th align="left" valign="top">Action</th>
 </tr>
 </thead>
@@ -1642,11 +1653,11 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Scroll view one line down.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">ScrBack</p></td>
+<td align="left" valign="top"><p class="table">ScrollBack</p></td>
 <td align="left" valign="top"><p class="table">Scroll view one page up.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">ScrFwd</p></td>
+<td align="left" valign="top"><p class="table">ScrollFwd</p></td>
 <td align="left" valign="top"><p class="table">Scroll view one page down.</p></td>
 </tr>
 <tr>
@@ -1845,6 +1856,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Save current options to <code>&lt;file&gt;</code>.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table">:save-view &lt;file&gt;</p></td>
+<td align="left" valign="top"><p class="table">Save view info to <code>&lt;file&gt;</code> (for testing purposes).</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table">:script &lt;file&gt;</p></td>
 <td align="left" valign="top"><p class="table">Execute commands from <code>&lt;file&gt;</code>.</p></td>
 </tr>
@@ -1852,6 +1867,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">:exec &lt;flags&gt;&lt;args&#8230;&gt;</p></td>
 <td align="left" valign="top"><p class="table">Execute command using <code>&lt;args&gt;</code> with external
                          user-defined command option flags defined in <code>&lt;flags&gt;</code>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">:echo &lt;args&#8230;&gt;</p></td>
+<td align="left" valign="top"><p class="table">Display text in the status bar.</p></td>
 </tr>
 </tbody>
 </table>
@@ -2045,7 +2064,7 @@ the Free Software Foundation; either version 2 of the License, or
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-05-06 10:37:09 EDT
+Last updated 2017-09-29 11:15:06 EDT
 </div>
 </div>
 </body>

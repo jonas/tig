@@ -2,12 +2,12 @@
 .\"     Title: tig
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 05/06/2017
+.\"      Date: 09/29/2017
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.2.2
+.\"    Source: Tig 2.3.0
 .\"  Language: English
 .\"
-.TH "TIG" "1" "05/06/2017" "Tig 2\&.2\&.2" "Tig Manual"
+.TH "TIG" "1" "09/29/2017" "Tig 2\&.3\&.0" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -48,7 +48,7 @@ tig <      [Git command output]
 Tig is an ncurses\-based text\-mode interface for git(1)\&. It functions mainly as a Git repository browser, but can also assist in staging changes for commit at chunk level and act as a pager for output from various Git commands\&.
 .SH "OPTIONS"
 .sp
-Command line options recognized by Tig include all valid git\-log(1) and git\-diff(1) options, as well as the following subcommands and Tig specific options\&. The first command line parameter not starting with "\-" is interpreted as being either a revision specification or a path and will end the option parsing\&. All additional options will be passed to the underlying Git command\&.
+Command line options recognized by Tig include all valid git\-log(1) and git\-diff(1) options, as well as the following subcommands and Tig\-specific options\&. The first command line parameter not starting with "\-" is interpreted as being either a revision specification or a path and will end the option parsing\&. All additional options will be passed to the underlying Git command\&.
 .PP
 show
 .RS 4
@@ -355,7 +355,9 @@ In addition to environment variables used by Git (e\&.g\&. GIT_DIR), Tig defines
 TIGRC_USER
 .RS 4
 Path of the user configuration file (defaults to
-~/\&.tigrc)\&.
+~/\&.tigrc
+or
+$XDG_CONFIG_HOME/tig/config)\&.
 .RE
 .PP
 TIGRC_SYSTEM
@@ -366,7 +368,7 @@ Path of the system wide configuration file (defaults to
 .PP
 TIG_LS_REMOTE
 .RS 4
-Set command for retrieving all repository references\&. The command should output data in the same format as git\-ls\-remote(1)\&.
+Command for retrieving all repository references\&. The command should output data in the same format as git\-ls\-remote(1)\&.
 .RE
 .PP
 TIG_DIFF_OPTS
@@ -392,7 +394,7 @@ Open Tig without rendering anything to the terminal\&. This force Ncurses to wri
 .RE
 .SH "FILES"
 .PP
-\*(Aq$XDG_CONFIG_HOME/tig/config, \fI~/\&.config/tig/config\fR, \fI~/\&.tigrc\fR
+\fI$XDG_CONFIG_HOME/tig/config\fR, \fI~/\&.config/tig/config\fR, \fI~/\&.tigrc\fR
 .RS 4
 The Tig user configuration file is loaded in the following way\&. If
 $XDG_CONFIG_HOME
@@ -413,9 +415,27 @@ for examples\&.
 System wide configuration file\&.
 .RE
 .PP
-\fI$GIT_DIR/config\fR, \*(Aq~/\&.gitconfig, \*(Aq++SYSCONFDIR++/gitconfig
+\fI$GIT_DIR/config\fR, \fI~/\&.gitconfig\fR, \fI++SYSCONFDIR++/gitconfig\fR
 .RS 4
 Git configuration files\&. Read on start\-up with the help of git\-config(1)\&.
+.RE
+.PP
+\fI$XDG_DATA_HOME/tig/history\fR, \fI~/\&.local/share/tig/history\fR, \fI~/\&.tig_history\fR
+.RS 4
+When compiled with readline support, Tig writes a persistent command and search history\&. The location of the history file is determined in the following way\&. If
+$XDG_DATA_HOME
+is set and
+$XDG_DATA_HOME/tig/
+exists, store history to
+$XDG_DATA_HOME/tig/history\&. If
+$XDG_CONFIG_HOME
+is empty or undefined, store history to
+~/\&.local/share/tig/history
+if the directory
+~/\&.local/share/tig/
+exists, and fall back to
+~/\&.tig_history
+if it does not exist\&.
 .RE
 .SH "BUGS"
 .sp

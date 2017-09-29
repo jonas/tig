@@ -2,12 +2,12 @@
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 05/06/2017
+.\"      Date: 09/29/2017
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.2.2
+.\"    Source: Tig 2.3.0
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "05/06/2017" "Tig 2\&.2\&.2" "Tig Manual"
+.TH "TIGRC" "5" "09/29/2017" "Tig 2\&.3\&.0" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -45,6 +45,8 @@ You can permanently set an option by putting it in the ~/\&.tigrc file\&. The fi
 The hash mark (\fI#\fR) is used as a \fIcomment\fR character\&. All text after the comment character to the end of the line is ignored\&. You can use comments to annotate your initialization file\&.
 .sp
 Certain options can be manipulated at runtime via the option menu\&. In addition, options can also be toggled with the :toggle prompt command or by entering the configuration command into the prompt\&.
+.sp
+In some environments, a user\(cqs configuration will be stored in the alternate location $XDG_CONFIG_HOME/tig/config\&. For brevity, this document will refer only to ~/\&.tigrc\&.
 .SH "GIT CONFIGURATION"
 .sp
 Alternatively to using ~/\&.tigrc, Tig options can be set by putting them in one of the Git configuration files, which are read by Tig on startup\&. See \fIgit\-config(1)\fR for which files to use\&. The following example show the basic syntax to use for settings, bindings and colors\&.
@@ -181,28 +183,28 @@ The following variables can be set:
 .PP
 \fIdiff\-options\fR (string)
 .RS 4
-A space separated string of diff options to use in the diff view\&. git\-show(1) is used for formatting and always passes \-\-patch\-with\-stat\&. This option overrides any options specified in the TIG_DIFF_OPTS environment variable (described in
+A space\-separated string of diff options to use in the diff view\&. git\-show(1) is used for formatting and always passes \-\-patch\-with\-stat\&. This option overrides any options specified in the TIG_DIFF_OPTS environment variable (described in
 \fBtig\fR(1)), but is itself overridden by diff flags given on the command line invocation\&.
 .RE
 .PP
 \fIblame\-options\fR (string)
 .RS 4
-A space separated string of default blame options\&. Can be used for telling git\-blame(1) how to detect the origin of lines\&. The options are ignored when Tig is started in blame mode and given blame options on the command line\&.
+A space\-separated string of default blame options\&. Can be used for telling git\-blame(1) how to detect the origin of lines\&. The options are ignored when Tig is started in blame mode and given blame options on the command line\&.
 .RE
 .PP
 \fIlog\-options\fR (string)
 .RS 4
-A space separated string of default options that should be passed to the git\-log(1) command used by the log view\&. Options can be overridden by command line options\&. Used internally override custom \(oqpretty\&.format\(cq settings that break the log view\&.
+A space\-separated string of default options that should be passed to the git\-log(1) command used by the log view\&. Options can be overridden by command line options\&. Used internally override custom \(oqpretty\&.format\(cq settings that break the log view\&.
 .RE
 .PP
 \fImain\-options\fR (string)
 .RS 4
-A space separated string of default options that should be passed to the git\-log(1) command used by the main view\&. Options can be overridden by command line options\&.
+A space\-separated string of default options that should be passed to the git\-log(1) command used by the main view\&. Options can be overridden by command line options\&.
 .RE
 .PP
 \fIreference\-format\fR (string)
 .RS 4
-A space separated string of format strings used for formatting reference names\&. Wrap the name of the reference type with the characters you would like to use for formatting, e\&.g\&.
+A space\-separated string of format strings used for formatting reference names\&. Wrap the name of the reference type with the characters you would like to use for formatting, e\&.g\&.
 [tag]
 and
 <remote>\&. If no format is specified for
@@ -300,6 +302,11 @@ branch : Any other reference\&.
 What type of character graphics for line drawing\&.
 .RE
 .PP
+\fItruncation\-delimiter\fR (mixed) [utf\-8|<string>]
+.RS 4
+A single character to draw where columns are truncated\&. The default is "~"\&. The special value "utf\-8" refers to the character "\&..." ("Midline Horizontal Ellipsis")\&.
+.RE
+.PP
 \fIhorizontal\-scroll\fR (mixed)
 .RS 4
 Interval to scroll horizontally in each step\&. Can be specified either as the number of columns, e\&.g\&.
@@ -311,7 +318,7 @@ of the view width\&.
 .PP
 \fIgit\-colors\fR (list)
 .RS 4
-A space separated list of "key=value" pairs where the key is a Git color name and the value is a Tig color name, e\&.g\&. "branch\&.current=main\-head" and "grep\&.filename=grep\&.file"\&. Set to "no" to disable\&.
+A space\-separated list of "key=value" pairs where the key is a Git color name and the value is a Tig color name, e\&.g\&. "branch\&.current=main\-head" and "grep\&.filename=grep\&.file"\&. Set to "no" to disable\&.
 .RE
 .PP
 \fIshow\-notes\fR (mixed) [<reference>|<bool>]
@@ -376,7 +383,10 @@ Whether to highlight diffs using Git\(cqs
 \fIdiff\-highlight\fR
 program\&. Defaults to false\&. When set to true then
 \fIdiff\-highlight\fR
-is used, else the option value is used as the path\&.
+is used, else the option value is used as the path\&. When this option is in effect, highlighted regions are governed by
+color diff\-add\-highlight
+and
+color diff\-del\-highlight\&.
 .RE
 .PP
 \fIignore\-space\fR (mixed) [no|all|some|at\-eol|<bool>]
@@ -385,6 +395,22 @@ Ignore space changes in diff view\&. By default no space changes are ignored\&. 
 git diff
 or
 git show\&.
+
+
+\fBWarning:\fR
+when
+ignore\-space
+is set to
+some,
+all
+or
+at\-eol, then the
+\fBstatus\-update\fR
+and
+\fBstatus\-revert\fR
+may fail when updating or reverting chunks containing lines with space changes\&. Similarly,
+\fBstage\-update\-line\fR
+may fail when updating a line adjacent to a line with space changes
 .RE
 .PP
 \fIcommit\-order\fR (enum) [auto|default|topo|date|author\-date|reverse]
@@ -422,6 +448,13 @@ in front of the file name\&. Example:
 vim +10 tig\&.c
 .RE
 .PP
+\fIhistory\-size\fR (int)
+.RS 4
+Size of the persistent
+~/\&.tig_history
+file when compiled with readline support\&. Default is 500\&. Set to 0 to disable\&.
+.RE
+.PP
 \fImouse\fR (bool)
 .RS 4
 Whether to enable mouse support\&. Off by default since it makes selecting text from the terminal less intuitive\&. When enabled hold down Shift (or Option on Mac) to select text\&. Mouse support requires that ncurses itself support mouse events\&.
@@ -430,6 +463,13 @@ Whether to enable mouse support\&. Off by default since it makes selecting text 
 \fImouse\-scroll\fR (int)
 .RS 4
 Interval to scroll up or down using the mouse\&. The default is 3 lines\&. Mouse support requires that ncurses itself support mouse events and that you have enabled mouse support in ~/\&.tigrc with
+set mouse = true\&.
+.RE
+.PP
+\fImouse\-wheel\-cursor\fR (bool)
+.RS 4
+Whether to prefer moving the cursor to scrolling the view when using the mouse wheel\&. Off by default\&. Combines well with
+set mouse\-scroll = 1\&. Mouse support requires that ncurses itself support mouse events and that you have enabled mouse support in ~/\&.tigrc with
 set mouse = true\&.
 .RE
 .PP
@@ -465,7 +505,7 @@ git\-rev\-parse(1)\&.
 .RE
 .SS "View settings"
 .sp
-The view settings define the order and options for the different columns of a view\&. Each view setting expects a space separated list of column specifications\&. Column specifications starts with the column type, and can optionally be followed by a colon (:) and a list of column options\&. E\&.g\&. the following column specification defines an \fIauthor\fR column displaying the author email and with a maximum width of 20 characters: author:email,width=20\&.
+The view settings define the order and options for the different columns of a view\&. Each view setting expects a space\-separated list of column specifications\&. Column specifications starts with the column type, and can optionally be followed by a colon (:) and a list of column options\&. E\&.g\&. the following column specification defines an \fIauthor\fR column displaying the author email and with a maximum width of 20 characters: author:email,width=20\&.
 .sp
 The first option value in a column specification is always the \fIdisplay\fR option\&. When no \fIdisplay\fR value is given, \fIyes\fR is assumed\&. For \fIdisplay\fR options expecting an enumerated value this will automatically resolve to the default enum value\&. For example, file\-name will automatically have its \fIdisplay\fR setting resolve to \fIauto\fR\&.
 .sp
@@ -892,19 +932,6 @@ status
 \fIdisplay\fR
 (mixed) [no|short|long|<bool>]: How to display the status label\&.
 .RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-
-\fIwidth\fR
-(int): Width of the column\&. When set to zero, the width is automatically sized to fit the content\&.
-.RE
 .RE
 .PP
 text
@@ -984,6 +1011,8 @@ Or in the Git configuration files:
 .sp
 .sp
 Keys are mapped by first searching the keybindings for the current view, then the keybindings for the \fBgeneric\fR keymap, and last the default keybindings\&. Thus, the view keybindings override the generic keybindings which override the built\-in keybindings\&.
+.sp
+Keybindings at the line\-entry prompt are typically governed by the readline library, and are configured separately in ~/\&.inputrc\&. See \fIreadline(1)\fR\&. Tig respects but does not require an $if tig section in ~/\&.inputrc\&.
 .PP
 Keymaps
 .RS 4
@@ -1022,7 +1051,7 @@ to bind to the
 key\&.
 .RE
 .sp
-\fB<Enter>\fR, \fB<Space>\fR, \fB<Backspace>\fR, \fB<Tab>\fR, \fB<Escape>\fR or \fB<Esc>\fR, \fB<Left>\fR, \fB<Right>\fR, \fB<Up>\fR, \fB<Down>\fR, \fB<Insert>\fR or \fB<Ins>\fR, \fB<Delete>\fR or \fB<Del>\fR, \fB<Hash>\fR, \fB<LessThan>\fR or \fB<LT>\fR, \fB<Home>\fR, \fB<End>\fR, \fB<PageUp>\fR or \fB<PgUp>\fR, \fB<PageDown>\fR or \fB<PgDown>\fR, \fB<F1>\fR, \fB<F2>\fR, \fB<F3>\fR, \fB<F4>\fR, \fB<F5>\fR, \fB<F6>\fR, \fB<F7>\fR, \fB<F8>\fR, \fB<F9>\fR, \fB<F10>\fR, \fB<F11>\fR, \fB<F12>\fR\&.
+\fB<Enter>\fR, \fB<Space>\fR, \fB<Backspace>\fR, \fB<Tab>\fR, \fB<Escape>\fR or \fB<Esc>\fR, \fB<Left>\fR, \fB<Right>\fR, \fB<Up>\fR, \fB<Down>\fR, \fB<Insert>\fR or \fB<Ins>\fR, \fB<Delete>\fR or \fB<Del>\fR, \fB<Hash>\fR, \fB<LessThan>\fR or \fB<LT>\fR, \fB<Home>\fR, \fB<End>\fR, \fB<PageUp>\fR or \fB<PgUp>\fR, \fB<PageDown>\fR or \fB<PgDown>\fR, \fB<ScrollBack>\fR or \fB<SBack>\fR, \fB<ScrollFwd>\fR or \fB<SFwd>\fR, \fB<ShiftTab>\fR or \fB<BackTab>\fR, \fB<ShiftLeft>\fR, \fB<ShiftRight>\fR, \fB<ShiftDelete>\fR or \fB<ShiftDel>\fR, \fB<ShiftHome>\fR, \fB<ShiftEnd>\fR, \fB<F1>\fR \&... \fB<F19>\fR
 .sp
 To define key mappings with the Ctrl key, use <Ctrl\-key>\&. In addition, key combos consisting of an initial Escape key followed by a normal key value can be bound using <Esc>key\&.
 .sp
@@ -1036,23 +1065,115 @@ bind main R             refresh
 bind main <Down>        next
 bind main <Ctrl\-f>      scroll\-page\-down
 bind main <Esc>o        options
+bind main <ShiftTab>    parent
 .fi
 .if n \{\
 .RE
 .\}
 .sp
 .sp
-Note that due to the way ncurses encodes Ctrl key mappings, Ctrl\-m and Ctrl\-i cannot be bound as they conflict with \fIEnter\fR and \fITab\fR respectively\&. Furthermore, ncurses does not allow to distinguish between Ctrl\-f and Ctrl\-F\&. Finally, Ctrl\-z is automatically used for process control and will suspend Tig and open a subshell (use fg to reenter Tig)\&.
+Notes
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Tig reads keystrokes via ncurses and is subject to various limitations\&. See
+\fIncurses(3x)\fR
+and
+\fIterminfo(5)\fR
+(or termcap)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+Ctrl\-m
+and
+Ctrl\-i
+cannot be bound as they conflict with
+\fIEnter\fR
+and
+\fITab\fR
+respectively\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Case differences cannot be distinguished in control sequences such as
+Ctrl\-f
+and
+Ctrl\-F\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+Ctrl\-<Space>
+is typically translated to
+Ctrl\-@, which is available for binding\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Only some subset of special symbolic keys such as
+<ShiftTab>
+will be available in any given terminal emulator\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+Ctrl\-z
+is automatically used for process control and will suspend Tig and open a subshell (use
+fg
+to reenter Tig)\&.
 .PP
 Actions
 .RS 4
 Actions are either specified as user\-defined commands (external or internal) or using action names as described in the following sections\&.
+.RE
 .RE
 .SS "External user\-defined command"
 .sp
 These actions start with one or more of the following option flags followed by the command that should be executed\&.
 .TS
 tab(:);
+lt lt
 lt lt
 lt lt
 lt lt
@@ -1070,6 +1191,13 @@ T{
 T}:T{
 .sp
 Run the command in the background with no output\&.
+T}
+T{
+.sp
++
+T}:T{
+.sp
+Run the command synchronously, and echo the first line of output to the status bar\&.
 T}
 T{
 .sp
@@ -1231,7 +1359,7 @@ T{
 %(diffargs)
 T}:T{
 .sp
-Options from \fIdiff\-options\fR or \fITIG_DIFF_OPTS\fR used used by the diff and stage view\&.
+Options from \fIdiff\-options\fR or \fITIG_DIFF_OPTS\fR used by the diff and stage view\&.
 T}
 T{
 .sp
@@ -1326,12 +1454,15 @@ Examples:
 .RS 4
 .\}
 .nf
-# Save save the current commit as a patch file when the user selects a
-# commit in the main view and presses \*(AqS\*(Aq\&.
+# Save the current commit as a patch file when the user selects a commit
+# in the main view and presses \*(AqS\*(Aq\&.
 bind main S !git format\-patch \-1 %(commit)
 
 # Create and checkout a new branch; specify custom prompt
 bind main B ?git checkout \-b "%(prompt Enter new branch name: )"
+
+# Show commit statistics for the author under the cursor
+bind main U +sh \-c \*(Aqgit \-\-no\-pager shortlog \-s \-\-author="$(git show \-s \-\-format=%aE %(commit))" </dev/tty\*(Aq
 .fi
 .if n \{\
 .RE
@@ -1557,6 +1688,7 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1623,6 +1755,13 @@ Close the current view
 T}
 T{
 .sp
+view\-close\-no\-quit
+T}:T{
+.sp
+Close the current view without quitting
+T}
+T{
+.sp
 quit
 T}:T{
 .sp
@@ -1637,7 +1776,7 @@ T}
 .nr an-break-flag 1
 .br
 .ps +1
-\fBView specific actions\fR
+\fBView-specific actions\fR
 .RS 4
 .TS
 tab(:);
@@ -1988,7 +2127,7 @@ color diff\-header       yellow  default
 color diff\-index        blue    default
 color diff\-chunk        magenta default
 color "Reported\-by:"    green   default
-# View specific color
+# View\-specific color
 color tree\&.date         black   cyan    bold
 .fi
 .if n \{\
@@ -2008,7 +2147,7 @@ Or in the Git configuration files:
         # UI colors
         title\-blur      = white blue
         title\-focus     = white blue    bold
-# View specific color
+# View\-specific color
 [tig "color\&.tree"]
         date            = cyan  default bold
 .fi
@@ -2023,7 +2162,7 @@ Area names
 Can be either a built\-in area name or a custom quoted string\&. The latter allows custom color rules to be added for lines matching a quoted string\&. Valid built\-in area names are described below\&. Note, all names are case\-insensitive, and you may use
 \fI\-\fR, and
 \fI_\fR
-interchangeably, e\&.g\&. "Diff\-Header" and "DIFF_HEADER" are the same\&. View specific colors can be defined by prefixing the view name to the area name, e\&.g\&. "stage\&.diff\-chunk" and "diff\&.diff\-chunk"\&.
+interchangeably, e\&.g\&. "Diff\-Header" and "DIFF_HEADER" are the same\&. View\-specific colors can be defined by prefixing the view name to the area name, e\&.g\&. "stage\&.diff\-chunk" and "diff\&.diff\-chunk"\&.
 .RE
 .PP
 Color names
@@ -2381,7 +2520,7 @@ Diff markup
 Options concerning diff start, chunks and lines added and deleted\&.
 .RE
 .sp
-\fBdiff\-header\fR, \fBdiff\-chunk\fR, \fBdiff\-add\fR, \fBdiff\-add2\fR, \fBdiff\-del\fR, \fBdiff\-del2\fR
+\fBdiff\-header\fR, \fBdiff\-chunk\fR, \fBdiff\-add\fR, \fBdiff\-add2\fR, \fBdiff\-del\fR, \fBdiff\-del2\fR, \fBdiff\-add\-highlight\fR, \fBdiff\-del\-highlight\fR
 .PP
 Enhanced Git diff markup
 .RS 4
@@ -2429,13 +2568,17 @@ Colors for information of the tree view\&.
 \fBtree\-dir\fR, \fBtree\-file\fR
 .SH "SOURCE COMMAND"
 .sp
-Source commands make it possible to read additional configuration files\&. Sourced files are included in\-place, meaning when a \fIsource\fR command is encountered the file will be immediately read\&. Any commands later in the current configuration file will take precedence\&. The syntax is:
+Source commands make it possible to read additional configuration files\&. Sourced files are included in\-place, meaning when a \fIsource\fR command is encountered the file will be immediately read\&. Any commands later in the current configuration file will take precedence\&.
+.sp
+If the given path does not exist, tig will proceed with a warning\&. Give the \-q parameter to suppress the warning\&.
+.sp
+The syntax is:
 .sp
 .if n \{\
 .RS 4
 .\}
 .nf
-\fBsource\fR \fIpath\fR
+\fBsource\fR \fI[\-q]\fR \fIpath\fR
 .fi
 .if n \{\
 .RE

@@ -737,6 +737,255 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_3_0">tig-2.3.0</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Incompatibilities:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+The <code>width</code> setting on the <code>status</code>, <code>text</code> and <code>commit-title</code> columns was
+   never applied and has been removed. (GH #617)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Improve load performance by throttling screen updates. (GH #622, #629)
+</p>
+</li>
+<li>
+<p>
+Speed up graph rendering. (GH #638)
+</p>
+</li>
+<li>
+<p>
+Enable scroll optimizations for Terminal.app and iTerm2. (GH #637)
+</p>
+</li>
+<li>
+<p>
+Improve the test suite portability to not depend on GNU sed. (GH #609, #614)
+</p>
+</li>
+<li>
+<p>
+Make build reproducible. (<a href="https://reproducible-builds.org/">https://reproducible-builds.org/</a>) (GH #613)
+</p>
+</li>
+<li>
+<p>
+Enable binding to more symbolic keys and keys with control modifier:
+   <code>F13</code>-<code>F19</code>, <code>ShiftLeft</code>, <code>ShiftRight</code>, <code>ShiftDel</code>, <code>ShiftHome</code>, <code>ShiftEnd</code>,
+   <code>ShiftTab</code>, <code>Ctrl-C</code>, <code>Ctrl-V</code>, <code>Ctrl-S</code>, and <code>Ctrl-@</code>. (GH #314, #619, #642)
+</p>
+</li>
+<li>
+<p>
+Persist readline history to <code>~/.tig_history</code> or <code>$XDG_DATA_HOME/tig/history</code>.
+   Use <code>history-size</code> to control the number of entries to save. (GH #620, #713,
+   #714, #718)
+</p>
+</li>
+<li>
+<p>
+Preload last search from persistent history. (GH #630)
+</p>
+</li>
+<li>
+<p>
+Add <code>view-close-no-quit</code> action, unbound by default. (GH #607)
+</p>
+</li>
+<li>
+<p>
+Add <code>mouse-wheel-cursor</code> option (off by default) when set to true causes
+   wheel actions to prefer moving the cursor instead of scrolling. (GH #608)
+</p>
+</li>
+<li>
+<p>
+Add <code>truncation-delimiter</code> option, set to <code>~</code> by default. (GH #646)
+</p>
+</li>
+<li>
+<p>
+Add <code>-q</code> parameter to <code>source</code> for "source-if-present". (GH #612)
+</p>
+</li>
+<li>
+<p>
+Add <code>:echo</code> prompt command to display text in the status bar. (GH #626, #636)
+</p>
+</li>
+<li>
+<p>
+Make <code>diff-highlight</code> colors configurable. (GH #625, #633)
+</p>
+</li>
+<li>
+<p>
+Let Ctrl-C exit Y/N dialog, menu prompts and the file finder. (GH #632, #648)
+</p>
+</li>
+<li>
+<p>
+Hide cursor unless at textual prompt. (GH #643)
+</p>
+</li>
+<li>
+<p>
+Expand tilde (<em>~</em>) in <code>:script</code> paths. (GH #674)
+</p>
+</li>
+<li>
+<p>
+Show single-line output of external command in status bar. (GH #200, #557,
+   #678)
+</p>
+</li>
+<li>
+<p>
+Disable the graph when <code>--no-merges</code> is passed. (GH #687)
+</p>
+</li>
+<li>
+<p>
+Print backtraces on segfault in debug mode.
+</p>
+</li>
+<li>
+<p>
+Ignore script lines starting with <code>#</code> (comment). (GH #705)
+</p>
+</li>
+<li>
+<p>
+Complete <code>repo:*</code> variables when readline is enabled. (GH #702)
+</p>
+</li>
+<li>
+<p>
+Incorporate XTerm&#8217;s <code>wcwidth.c</code> to find Unicode widths. (GH #691)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix graph display issues. (GH #419, #638)
+</p>
+</li>
+<li>
+<p>
+Fix and improve rendering of Unicode characters. (GH #330, #621, #644, #682)
+</p>
+</li>
+<li>
+<p>
+Handle hyphenated directory names when listing content. (GH #602)
+</p>
+</li>
+<li>
+<p>
+Do not jump to next match when cancelling the search prompt. (GH #627)
+</p>
+</li>
+<li>
+<p>
+Fix clearing of the status line after <code>Ctrl-C</code>. (GH #623, #649)
+</p>
+</li>
+<li>
+<p>
+Fix handling of width on line-number and trimmed width of 1. (GH #617)
+</p>
+</li>
+<li>
+<p>
+Set cursor position when not updating prompt contents. (GH #647)
+</p>
+</li>
+<li>
+<p>
+Erase status line at exit time for users without altscreen-capable terminals.
+   (GH #589)
+</p>
+</li>
+<li>
+<p>
+Fix unexpected keys when restoring from suspend (<code>Ctrl-Z</code>). (GH #232)
+</p>
+</li>
+<li>
+<p>
+contrib/vim.tigrc: Also bind G in the main as a workaround for limitations of
+   the <code>none</code> action. (GH #594, #599)
+</p>
+</li>
+<li>
+<p>
+Only override <code>blame-options</code> when commands are given and fix parsing of
+   <code>-C</code>. (GH #597)
+</p>
+</li>
+<li>
+<p>
+Fix diff name discovery to better handle prefixes.
+</p>
+</li>
+<li>
+<p>
+Interpret button5 as wheel-down. (GH #321, #606)
+</p>
+</li>
+<li>
+<p>
+Fix <code>back</code> / <code>parent</code> in tree view. (GH #641)
+</p>
+</li>
+<li>
+<p>
+Fix memory corruption in <code>concat_argv</code> and file finder. (GH #634, #655)
+</p>
+</li>
+<li>
+<p>
+Fix reading from stdin for <code>tig show</code>.
+</p>
+</li>
+<li>
+<p>
+Document problem of outdated system-wide <code>tigrc</code> files in Homebrew. (GH #598)
+</p>
+</li>
+<li>
+<p>
+Repaint the display when toggling <code>line-graphics</code>. (GH #527)
+</p>
+</li>
+<li>
+<p>
+Fix custom date formatting support longer strings. (GH #522)
+</p>
+</li>
+<li>
+<p>
+Don&#8217;t segfault on ":exec" irregular args. (GH #686)
+</p>
+</li>
+<li>
+<p>
+Fix segfault when calling htab_empty. (GH #663, #745)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_2_2">tig-2.2.2</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Upgrade instructions:</p></div>
@@ -1134,7 +1383,7 @@ Add GitHub inspired file finder to search for and open any file. (GH #342)
 </li>
 <li>
 <p>
-Add <code>search</code> keymap for navigation file finder search results.
+Add <code>search</code> keymap for navigating file finder search results.
 </p>
 </li>
 </ul></div>
@@ -3572,7 +3821,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-05-06 10:37:09 EDT
+Last updated 2017-09-29 11:15:06 EDT
 </div>
 </div>
 </body>

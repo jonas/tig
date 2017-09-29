@@ -769,6 +769,9 @@ annotate your initialization file.</p></div>
 <div class="paragraph"><p>Certain options can be manipulated at runtime via the option menu. In
 addition, options can also be toggled with the <code>:toggle</code> prompt command
 or by entering the configuration command into the prompt.</p></div>
+<div class="paragraph"><p>In some environments, a user&#8217;s configuration will be stored in the alternate
+location <code>$XDG_CONFIG_HOME/tig/config</code>.  For brevity, this document will
+refer only to <code>~/.tigrc</code>.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -920,7 +923,7 @@ Valid mixed values
 </dt>
 <dd>
 <p>
-        A space separated string of diff options to use in the diff view.
+        A space-separated string of diff options to use in the diff view.
         git-show(1) is used for formatting and always passes --patch-with-stat.
         This option overrides any options specified in the TIG_DIFF_OPTS
         environment variable (described in <a href="tig.1.html">tig(1)</a>), but is itself
@@ -932,7 +935,7 @@ Valid mixed values
 </dt>
 <dd>
 <p>
-        A space separated string of default blame options. Can be used for
+        A space-separated string of default blame options. Can be used for
         telling git-blame(1) how to detect the origin of lines. The options
         are ignored when Tig is started in blame mode and given blame options
         on the command line.
@@ -943,7 +946,7 @@ Valid mixed values
 </dt>
 <dd>
 <p>
-        A space separated string of default options that should be passed to the
+        A space-separated string of default options that should be passed to the
         git-log(1) command used by the log view. Options can be overridden by
         command line options. Used internally override custom &#8216;pretty.format&#8217;
         settings that break the log view.
@@ -954,7 +957,7 @@ Valid mixed values
 </dt>
 <dd>
 <p>
-        A space separated string of default options that should be passed to the
+        A space-separated string of default options that should be passed to the
         git-log(1) command used by the main view. Options can be overridden by
         command line options.
 </p>
@@ -964,7 +967,7 @@ Valid mixed values
 </dt>
 <dd>
 <p>
-        A space separated string of format strings used for formatting reference
+        A space-separated string of format strings used for formatting reference
         names. Wrap the name of the reference type with the characters you would
         like to use for formatting, e.g. <code>[tag]</code> and <code>&lt;remote&gt;</code>. If no format is
         specified for <code>local-tag</code>, the format for <code>tag</code> is used. Similarly, if no
@@ -1019,6 +1022,16 @@ branch               : Any other reference.
 </p>
 </dd>
 <dt class="hdlist1">
+<em>truncation-delimiter</em> (mixed) [utf-8|&lt;string&gt;]
+</dt>
+<dd>
+<p>
+        A single character to draw where columns are truncated. The default is
+        "~".  The special value "utf-8" refers to the character "⋯"
+        ("Midline Horizontal Ellipsis").
+</p>
+</dd>
+<dt class="hdlist1">
 <em>horizontal-scroll</em> (mixed)
 </dt>
 <dd>
@@ -1035,7 +1048,7 @@ branch               : Any other reference.
 </dt>
 <dd>
 <p>
-        A space separated list of "key=value" pairs where the key is a Git color
+        A space-separated list of "key=value" pairs where the key is a Git color
         name and the value is a Tig color name, e.g. "branch.current=main-head"
         and "grep.filename=grep.file". Set to "no" to disable.
 </p>
@@ -1134,7 +1147,9 @@ branch               : Any other reference.
 <p>
         Whether to highlight diffs using Git&#8217;s <em>diff-highlight</em> program. Defaults
         to false. When set to true then <em>diff-highlight</em> is used, else the option
-        value is used as the path.
+        value is used as the path. When this option is in effect, highlighted
+        regions are governed by <code>color diff-add-highlight</code> and
+        <code>color diff-del-highlight</code>.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1145,7 +1160,13 @@ branch               : Any other reference.
         Ignore space changes in diff view. By default no space changes are
         ignored. Changing this to "all", "some" or "at-eol" is equivalent to
         passing "--ignore-all-space", "--ignore-space" or
-        "--ignore-space-at-eol" respectively to <code>git diff</code> or <code>git show</code>.
+        "--ignore-space-at-eol" respectively to <code>git diff</code> or <code>git show</code>.<br />
+        <br />
+        <strong>Warning:</strong> when <code>ignore-space</code> is set to <code>some</code>, <code>all</code> or <code>at-eol</code>, then
+        the <strong>status-update</strong> and <strong>status-revert</strong> may fail when updating or
+        reverting chunks containing lines with space changes. Similarly,
+        <strong>stage-update-line</strong> may fail when updating a line adjacent to a line
+        with space changes
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1210,6 +1231,15 @@ branch               : Any other reference.
 </p>
 </dd>
 <dt class="hdlist1">
+<em>history-size</em> (int)
+</dt>
+<dd>
+<p>
+        Size of the persistent <code>~/.tig_history</code> file when compiled with readline
+        support. Default is 500. Set to 0 to disable.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>mouse</em> (bool)
 </dt>
 <dd>
@@ -1226,6 +1256,17 @@ branch               : Any other reference.
 <dd>
 <p>
         Interval to scroll up or down using the mouse. The default is 3 lines.
+        Mouse support requires that ncurses itself support mouse events and that
+        you have enabled mouse support in ~/.tigrc with <code>set mouse = true</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>mouse-wheel-cursor</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to prefer moving the cursor to scrolling the view when using the
+        mouse wheel. Off by default. Combines well with <code>set mouse-scroll = 1</code>.
         Mouse support requires that ncurses itself support mouse events and that
         you have enabled mouse support in ~/.tigrc with <code>set mouse = true</code>.
 </p>
@@ -1275,7 +1316,7 @@ branch               : Any other reference.
 <div class="sect2">
 <h3 id="_view_settings">View settings</h3>
 <div class="paragraph"><p>The view settings define the order and options for the different columns of a
-view. Each view setting expects a space separated list of column specifications.
+view. Each view setting expects a space-separated list of column specifications.
 Column specifications starts with the column type, and can optionally be
 followed by a colon (<code>:</code>) and a list of column options. E.g. the following
 column specification defines an <em>author</em> column displaying the author email and
@@ -1598,12 +1639,6 @@ status
           label.
 </p>
 </li>
-<li>
-<p>
-<em>width</em> (int): Width of the column. When set to zero, the width is
-          automatically sized to fit the content.
-</p>
-</li>
 </ul></div>
 </dd>
 <dt class="hdlist1">
@@ -1673,6 +1708,9 @@ bind generic ø @sh -c "printf '%s' %(commit) | pbcopy"</code></pre>
 the keybindings for the <strong>generic</strong> keymap, and last the default keybindings.
 Thus, the view keybindings override the generic keybindings which override the
 built-in keybindings.</p></div>
+<div class="paragraph"><p>Keybindings at the line-entry prompt are typically governed by the readline
+library, and are configured separately in <code>~/.inputrc</code>.  See <em>readline(1)</em>.
+Tig respects but does not require an <code>$if tig</code> section in <code>~/.inputrc</code>.</p></div>
 <div class="openblock">
 <div class="content">
 <div class="dlist"><dl>
@@ -1703,8 +1741,9 @@ bind to the <code>&lt;</code> key.
 <div class="paragraph"><p><strong>&lt;Enter&gt;</strong>, <strong>&lt;Space&gt;</strong>, <strong>&lt;Backspace&gt;</strong>, <strong>&lt;Tab&gt;</strong>, <strong>&lt;Escape&gt;</strong> or <strong>&lt;Esc&gt;</strong>, <strong>&lt;Left&gt;</strong>,
 <strong>&lt;Right&gt;</strong>, <strong>&lt;Up&gt;</strong>, <strong>&lt;Down&gt;</strong>, <strong>&lt;Insert&gt;</strong> or <strong>&lt;Ins&gt;</strong>, <strong>&lt;Delete&gt;</strong> or <strong>&lt;Del&gt;</strong>,
 <strong>&lt;Hash&gt;</strong>, <strong>&lt;LessThan&gt;</strong> or <strong>&lt;LT&gt;</strong>, <strong>&lt;Home&gt;</strong>, <strong>&lt;End&gt;</strong>, <strong>&lt;PageUp&gt;</strong> or <strong>&lt;PgUp&gt;</strong>,
-<strong>&lt;PageDown&gt;</strong> or <strong>&lt;PgDown&gt;</strong>, <strong>&lt;F1&gt;</strong>, <strong>&lt;F2&gt;</strong>, <strong>&lt;F3&gt;</strong>, <strong>&lt;F4&gt;</strong>, <strong>&lt;F5&gt;</strong>, <strong>&lt;F6&gt;</strong>,
-<strong>&lt;F7&gt;</strong>, <strong>&lt;F8&gt;</strong>, <strong>&lt;F9&gt;</strong>, <strong>&lt;F10&gt;</strong>, <strong>&lt;F11&gt;</strong>, <strong>&lt;F12&gt;</strong>.</p></div>
+<strong>&lt;PageDown&gt;</strong> or <strong>&lt;PgDown&gt;</strong>, <strong>&lt;ScrollBack&gt;</strong> or <strong>&lt;SBack&gt;</strong>, <strong>&lt;ScrollFwd&gt;</strong> or
+<strong>&lt;SFwd&gt;</strong>, <strong>&lt;ShiftTab&gt;</strong> or <strong>&lt;BackTab&gt;</strong>, <strong>&lt;ShiftLeft&gt;</strong>, <strong>&lt;ShiftRight&gt;</strong>,
+<strong>&lt;ShiftDelete&gt;</strong> or <strong>&lt;ShiftDel&gt;</strong>, <strong>&lt;ShiftHome&gt;</strong>, <strong>&lt;ShiftEnd&gt;</strong>, <strong>&lt;F1&gt;</strong> &#8230; <strong>&lt;F19&gt;</strong></p></div>
 <div class="paragraph"><p>To define key mappings with the <code>Ctrl</code> key, use <code>&lt;Ctrl-key&gt;</code>. In addition, key
 combos consisting of an initial <code>Escape</code> key followed by a normal key value can
 be bound using <code>&lt;Esc&gt;key</code>.</p></div>
@@ -1714,13 +1753,46 @@ be bound using <code>&lt;Esc&gt;key</code>.</p></div>
 <pre><code>bind main R             refresh
 bind main &lt;Down&gt;        next
 bind main &lt;Ctrl-f&gt;      scroll-page-down
-bind main &lt;Esc&gt;o        options</code></pre>
+bind main &lt;Esc&gt;o        options
+bind main &lt;ShiftTab&gt;    parent</code></pre>
 </div></div>
-<div class="paragraph"><p>Note that due to the way ncurses encodes <code>Ctrl</code> key mappings, <code>Ctrl-m</code> and
-<code>Ctrl-i</code> cannot be bound as they conflict with <em>Enter</em> and <em>Tab</em> respectively.
-Furthermore, ncurses does not allow to distinguish between <code>Ctrl-f</code> and
-<code>Ctrl-F</code>. Finally, <code>Ctrl-z</code> is automatically used for process control and will
-suspend Tig and open a subshell (use <code>fg</code> to reenter Tig).</p></div>
+<div class="paragraph"><p>Notes</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Tig reads keystrokes via ncurses and is subject to various limitations. See
+  <em>ncurses(3x)</em> and <em>terminfo(5)</em> (or termcap).
+</p>
+</li>
+<li>
+<p>
+<code>Ctrl-m</code> and <code>Ctrl-i</code> cannot be bound as they conflict with <em>Enter</em> and <em>Tab</em>
+  respectively.
+</p>
+</li>
+<li>
+<p>
+Case differences cannot be distinguished in control sequences such as
+ <code>Ctrl-f</code> and <code>Ctrl-F</code>.
+</p>
+</li>
+<li>
+<p>
+<code>Ctrl-&lt;Space&gt;</code> is typically translated to <code>Ctrl-@</code>, which is available for
+  binding.
+</p>
+</li>
+<li>
+<p>
+Only some subset of special symbolic keys such as <code>&lt;ShiftTab&gt;</code> will be
+  available in any given terminal emulator.
+</p>
+</li>
+<li>
+<p>
+<code>Ctrl-z</code> is automatically used for process control and will suspend Tig and
+  open a subshell (use <code>fg</code> to reenter Tig).
+</p>
 <div class="dlist"><dl>
 <dt class="hdlist1">
 Actions
@@ -1732,6 +1804,8 @@ using action names as described in the following sections.
 </p>
 </dd>
 </dl></div>
+</li>
+</ul></div>
 </div></div>
 <div class="sect2">
 <h3 id="_external_user_defined_command">External user-defined command</h3>
@@ -1752,6 +1826,11 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><code>@</code></p></td>
 <td align="left" valign="top"><p class="table">Run the command in the background with no output.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>+</code></p></td>
+<td align="left" valign="top"><p class="table">Run the command synchronously, and echo the first line
+                         of output to the status bar.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>?</code></p></td>
@@ -1841,7 +1920,7 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(diffargs)</code></p></td>
 <td align="left" valign="top"><p class="table">Options from <em>diff-options</em> or <em>TIG_DIFF_OPTS</em> used
-                         used by the diff and stage view.</p></td>
+                         by the diff and stage view.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(blameargs)</code></p></td>
@@ -1902,12 +1981,15 @@ cellspacing="0" cellpadding="4">
 <div class="paragraph"><p>Examples:</p></div>
 <div class="listingblock">
 <div class="content">
-<pre><code># Save save the current commit as a patch file when the user selects a
-# commit in the main view and presses 'S'.
+<pre><code># Save the current commit as a patch file when the user selects a commit
+# in the main view and presses 'S'.
 bind main S !git format-patch -1 %(commit)
 
 # Create and checkout a new branch; specify custom prompt
-bind main B ?git checkout -b "%(prompt Enter new branch name: )"</code></pre>
+bind main B ?git checkout -b "%(prompt Enter new branch name: )"
+
+# Show commit statistics for the author under the cursor
+bind main U +sh -c 'git --no-pager shortlog -s --author="$(git show -s --format=%aE %(commit))" &lt;/dev/tty'</code></pre>
 </div></div>
 </div>
 <div class="sect3">
@@ -2084,6 +2166,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Close the current view</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><code>view-close-no-quit</code></p></td>
+<td align="left" valign="top"><p class="table">Close the current view without quitting</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><code>quit</code></p></td>
 <td align="left" valign="top"><p class="table">Close all views and quit</p></td>
 </tr>
@@ -2092,7 +2178,7 @@ cellspacing="0" cellpadding="4">
 </div>
 </div>
 <div class="sect3">
-<h4 id="_view_specific_actions">View specific actions</h4>
+<h4 id="_view_specific_actions">View-specific actions</h4>
 <div class="tableblock">
 <table rules="none"
 width="100%"
@@ -2317,7 +2403,7 @@ color diff-header       yellow  default
 color diff-index        blue    default
 color diff-chunk        magenta default
 color "Reported-by:"    green   default
-# View specific color
+# View-specific color
 color tree.date         black   cyan    bold</code></pre>
 </div></div>
 <div class="paragraph"><p>Or in the Git configuration files:</p></div>
@@ -2329,7 +2415,7 @@ color tree.date         black   cyan    bold</code></pre>
         # UI colors
         title-blur      = white blue
         title-focus     = white blue    bold
-# View specific color
+# View-specific color
 [tig "color.tree"]
         date            = cyan  default bold</code></pre>
 </div></div>
@@ -2345,7 +2431,7 @@ Area names
         Valid built-in area names are described below. Note, all names are
         case-insensitive, and you may use <em>-</em>, and <em>_</em> interchangeably,
         e.g. "Diff-Header" and "DIFF_HEADER" are the same.
-        View specific colors can be defined by prefixing the view name to
+        View-specific colors can be defined by prefixing the view name to
         the area name, e.g. "stage.diff-chunk" and "diff.diff-chunk".
 </p>
 </dd>
@@ -2587,7 +2673,7 @@ Options concerning diff start, chunks and lines added and deleted.
 </dd>
 </dl></div>
 <div class="paragraph"><p><strong>diff-header</strong>, <strong>diff-chunk</strong>, <strong>diff-add</strong>, <strong>diff-add2</strong>, <strong>diff-del</strong>,
-<strong>diff-del2</strong></p></div>
+<strong>diff-del2</strong>, <strong>diff-add-highlight</strong>, <strong>diff-del-highlight</strong></p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
 Enhanced Git diff markup
@@ -2656,9 +2742,12 @@ Colors for information of the tree view.
 <div class="paragraph"><p>Source commands make it possible to read additional configuration files.
 Sourced files are included in-place, meaning when a <em>source</em> command is
 encountered the file will be immediately read. Any commands later in the
-current configuration file will take precedence. The syntax is:</p></div>
+current configuration file will take precedence.</p></div>
+<div class="paragraph"><p>If the given path does not exist, tig will proceed with a warning. Give
+the <code>-q</code> parameter to suppress the warning.</p></div>
+<div class="paragraph"><p>The syntax is:</p></div>
 <div class="verseblock">
-<pre class="content"><strong>source</strong> <em>path</em></pre>
+<pre class="content"><strong>source</strong> <em>[-q]</em> <em>path</em></pre>
 <div class="attribution">
 </div></div>
 <div class="paragraph"><p>Examples:</p></div>
@@ -2691,7 +2780,7 @@ git(7), git-config(1)</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-05-06 10:37:09 EDT
+Last updated 2017-09-29 11:15:06 EDT
 </div>
 </div>
 </body>

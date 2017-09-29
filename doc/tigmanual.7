@@ -2,12 +2,12 @@
 .\"     Title: tigmanual
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 05/06/2017
+.\"      Date: 09/29/2017
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.2.2
+.\"    Source: Tig 2.3.0
 .\"  Language: English
 .\"
-.TH "TIGMANUAL" "7" "05/06/2017" "Tig 2\&.2\&.2" "Tig Manual"
+.TH "TIGMANUAL" "7" "09/29/2017" "Tig 2\&.3\&.0" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -324,7 +324,7 @@ T{
 %(diffargs)
 T}:T{
 .sp
-Options from \fIdiff\-options\fR or \fITIG_DIFF_OPTS\fR used used by the diff and stage view\&.
+Options from \fIdiff\-options\fR or \fITIG_DIFF_OPTS\fR used by the diff and stage view\&.
 T}
 T{
 .sp
@@ -551,7 +551,7 @@ By default, the title of the current view is highlighted using bold font\&. For 
 Several options related to the interface with Git can be configured via environment options\&.
 .SS "Configuration Files"
 .sp
-Upon startup, Tig first reads the system wide configuration file ({sysconfdir}/tigrc by default) and then proceeds to read the user\(cqs configuration file (~/\&.tigrc by default)\&. The paths to either of these files can be overridden through the following environment variables:
+Upon startup, Tig first reads the system wide configuration file ({sysconfdir}/tigrc by default) and then proceeds to read the user\(cqs configuration file (~/\&.tigrc or $XDG_CONFIG_HOME/tig/config by default)\&. The paths to either of these files can be overridden through the following environment variables:
 .PP
 TIGRC_USER
 .RS 4
@@ -562,7 +562,23 @@ TIGRC_SYSTEM
 .RS 4
 Path of the system wide configuration file\&.
 .RE
-.SS "Repository References"
+.sp
+History Files
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+If compiled with readline support, Tig writes a persistent command and search
+history to `~/\&.tig_history` or `$XDG_DATA_HOME/tig/history`\&.
+
+[[repo\-refs]]
+Repository References
+.fi
+.if n \{\
+.RE
+.\}
+.sp
 .sp
 Commits that are referenced by tags and branch heads will be marked by the reference name surrounded by \fI[\fR and \fI]\fR:
 .sp
@@ -594,7 +610,7 @@ Or set the variable permanently in your environment\&.
 .PP
 TIG_LS_REMOTE
 .RS 4
-Set command for retrieving all repository references\&. The command should output data in the same format as git\-ls\-remote(1)\&. Defaults to:
+Command for retrieving all repository references\&. The command should output data in the same format as git\-ls\-remote(1)\&. Defaults to:
 .RE
 .sp
 .if n \{\
@@ -979,14 +995,14 @@ Scroll view one line down\&.
 T}
 T{
 .sp
-ScrBack
+ScrollBack
 T}:T{
 .sp
 Scroll view one page up\&.
 T}
 T{
 .sp
-ScrFwd
+ScrollFwd
 T}:T{
 .sp
 Scroll view one page down\&.
@@ -1225,6 +1241,8 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1284,6 +1302,13 @@ Save current options to <file>\&.
 T}
 T{
 .sp
+:save\-view <file>
+T}:T{
+.sp
+Save view info to <file> (for testing purposes)\&.
+T}
+T{
+.sp
 :script <file>
 T}:T{
 .sp
@@ -1295,6 +1320,13 @@ T{
 T}:T{
 .sp
 Execute command using <args> with external user\-defined command option flags defined in <flags>\&.
+T}
+T{
+.sp
+:echo <args\&...>
+T}:T{
+.sp
+Display text in the status bar\&.
 T}
 .TE
 .sp 1
