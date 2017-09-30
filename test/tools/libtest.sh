@@ -29,6 +29,7 @@ output_dir="$base_dir/tmp/$prefix_dir/$test"
 tmp_dir="$base_dir/tmp"
 output_dir="$tmp_dir/$prefix_dir/$test"
 work_dir="work dir"
+tty_attrs="$(stty -g </dev/tty)"
 
 # The locale must specify UTF-8 for Ncurses to output correctly. Since C.UTF-8
 # does not exist on Mac OS X, we end up with en_US as the only sane choice.
@@ -126,6 +127,13 @@ die()
 {
 	printf '%s\n' "$*" >&2
 	exit 1
+}
+
+tty_reset()
+{
+	if [ -n "$tty_attrs" ]; then
+		( trap '' TTOU; trap '' TTIN; stty "$tty_attrs" </dev/tty ) || true;
+	fi
 }
 
 file() {
@@ -394,7 +402,7 @@ show_test_results()
 	fi | sed "s/^/$indent| /"
 }
 
-trap 'show_test_results' EXIT
+trap "tty_reset; show_test_results" EXIT
 
 test_skip()
 {
@@ -576,6 +584,7 @@ test_tig()
 	(
 		# subshell handles cleanup of cwd, variables, redirections, set +e
 		cd "$work_dir" || die "chdir failed"
+		tty_reset
 		if [ -n "$debugger" ]; then
 			printf "*** Running tests in '%s/%s'\n" "$HOME" "$work_dir"
 			if [ -s "$HOME/${prefix}stdin" ]; then
@@ -607,6 +616,7 @@ test_tig()
 			wait "$tig_pid"
 		fi
 		status_code="$?"
+		tty_reset
 		if [ "$status_code" -eq "$(( 256 + signal))" ] || [ "$status_code" -eq "$(( 128 + signal))" ]; then
 			printf '[FAIL] Test timed out after %s seconds\n' "$timeout" >> "$HOME/.test-result"
 		elif [ "$status_code" != "$expected_status_code" ]; then
