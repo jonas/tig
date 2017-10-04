@@ -23,12 +23,13 @@ script: tools/travis.sh
 
 matrix:
   include:
-  - os: osx
+  - if: branch = master
+    os: osx
     env:
     compiler: clang
     script: brew install --HEAD tig
-  - os: osx
+  - if: branch = master
+    os: osx
     env:
     compiler: gcc
     script: brew install --HEAD tig
-
