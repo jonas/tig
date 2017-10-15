@@ -85,6 +85,13 @@ never made any changes to it.
 
 	$ mv /usr/local/etc/tigrc{,.old}
 
+
+Installation using Nix
+---------------------------
+You can use link:https://nixos.org/nix/[Nix] to install Tig on NixOS, or any Linux/OSX distirbution with Nix installed:
+
+        $ nix-env -i tig
+
 Installation on Windows
 -----------------------
 To run on Windows, you will need link:https://www.cygwin.com/[cygwin].
