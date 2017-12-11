@@ -87,13 +87,15 @@ never made any changes to it.
 
 
 Installation using Nix
----------------------------
+----------------------
+
 You can use link:https://nixos.org/nix/[Nix] to install Tig on NixOS, or any Linux/OSX distirbution with Nix installed:
 
         $ nix-env -i tig
 
 Installation on Windows
 -----------------------
+
 To run on Windows, you will need link:https://www.cygwin.com/[cygwin].
 You must then install the packages `git`, `gcc-core`, `make`, `libiconv-devel`
 and `libncurses-devel`. Extract the tarball and install by using `configure`
