@@ -745,6 +745,40 @@ update_views(void)
 	return is_loading;
 }
 
+/*
+ * Under normal circumstanecs this will do nothing, however, if the TTY
+ * is "corrupted" such as when running `nohup tig` and closing the
+ * terminal, then this will detect if the event loop starts doing a busy
+ * loop.
+ *
+ * This is a hack, and ideally it would be better to detect if the TTY
+ * is no longer in a good state, howver, testing suggest that the TTY fd
+ * is valid and ncurses does not seem to expose a way to check validity.
+ */
+static void
+detect_busy_loop(int loops_per_check, int max_loops_per_second)
+{
+	static size_t busy_loops = 0;
+	static time_t busy_loop_time = 0;
+
+	busy_loops++;
+
+	if ((busy_loops % loops_per_check) == 0) {
+		time_t now = time(NULL);
+		time_t diff = now - busy_loop_time;
+
+		if (diff > 0) {
+			size_t loops_per_second = busy_loops / diff;
+
+			if (loops_per_second > max_loops_per_second)
+				die("Busy loop detected");
+
+			busy_loops = 0;
+			busy_loop_time = now;
+		}
+	}
+}
+
 int
 get_input(int prompt_position, struct key *key)
 {
@@ -807,6 +841,7 @@ get_input(int prompt_position, struct key *key)
 		/* wgetch() with nodelay() enabled returns ERR when
 		 * there's no input. */
 		if (key_value == ERR) {
+			detect_busy_loop(1000, 5000);
 
 		} else if (key_value == KEY_RESIZE) {
 			int height, width;

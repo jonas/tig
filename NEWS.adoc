@@ -1,6 +1,15 @@
 Release notes
 =============
 
+master
+------
+
+Bug fixes:
+
+ - Add workaround that detects busy loops when Tig loses the TTY. This may
+   happen if Tig does not receive the HUP signal (e.g. when started with
+   `nohup`). (GH #164)
+
 tig-2.3.0
 ---------
 
