@@ -725,6 +725,26 @@ get_input_char(void)
 	return getc(opt_tty.file);
 }
 
+static bool
+update_views(void)
+{
+	struct view *view;
+	int i;
+	bool is_loading = false;
+
+	foreach_view (view, i) {
+		update_view(view);
+		if (view_is_displayed(view) && view->has_scrolled &&
+		    use_scroll_redrawwin)
+			redrawwin(view->win);
+		view->has_scrolled = false;
+		if (view->pipe)
+			is_loading = true;
+	}
+
+	return is_loading;
+}
+
 int
 get_input(int prompt_position, struct key *key)
 {
@@ -740,8 +760,10 @@ get_input(int prompt_position, struct key *key)
 		int delay = -1;
 
 		if (opt_refresh_mode == REFRESH_MODE_PERIODIC) {
-			delay = watch_periodic(opt_refresh_interval);
 			bool refs_refreshed = false;
+
+			delay = watch_periodic(opt_refresh_interval);
+
 			foreach_displayed_view (view, i) {
 				if (view_can_refresh(view) &&
 					watch_dirty(&view->watch)) {
@@ -754,15 +776,8 @@ get_input(int prompt_position, struct key *key)
 			}
 		}
 
-		foreach_view (view, i) {
-			update_view(view);
-			if (view_is_displayed(view) && view->has_scrolled &&
-			    use_scroll_redrawwin)
-				redrawwin(view->win);
-			view->has_scrolled = false;
-			if (view->pipe)
-				delay = 0;
-		}
+		if (update_views())
+			delay = 0;
 
 		/* Update the cursor position. */
 		if (prompt_position) {
