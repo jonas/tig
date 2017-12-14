@@ -1,9 +1,5 @@
 language: c
 
-compiler:
-  - clang
-  - gcc
-
 sudo: false
 
 addons:
@@ -13,25 +9,27 @@ addons:
     - xmlto
     - valgrind
 
-script:
-  - # ============ Build from config ===============
-  - cp contrib/config.make .
-  - make all-debug
-  - make update-docs && git diff --exit-code
-  - make test
-  - make test TEST_OPTS=valgrind
-  - if [ $CC = clang ]; then make test-address-sanitizer; fi
-  - make DESTDIR=/tmp/bare-destdir install install-doc
-  - make DESTDIR=/tmp/bare-destdir uninstall
-  - test ! -d /tmp/bare-destdir
-  - make prefix=/tmp/bare-prefix install install-doc
-  - make prefix=/tmp/bare-prefix uninstall
-  - test ! -d /tmp/bare-prefix
-  - make distclean
-  - # ============ Build using autoconf ============
-  - make dist
-  - ./configure --prefix=/tmp/conf-prefix
-  - make V=1 TEST_SHELL=bash all test install install-doc
-  - make uninstall
-  - test ! -d /tmp/conf-prefix
-  - make clean
+env:
+  global:
+  matrix:
+    - TRAVIS_TIG=autoconf
+    - TRAVIS_TIG=config
+
+compiler:
+  - gcc
+  - clang
+
+script: tools/travis.sh
+
+matrix:
+  include:
+  - if: branch = master
+    os: osx
+    env:
+    compiler: clang
+    script: brew install --HEAD tig
+  - if: branch = master
+    os: osx
+    env:
+    compiler: gcc
+    script: brew install --HEAD tig
