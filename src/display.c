@@ -866,6 +866,9 @@ get_input(int prompt_position, struct key *key)
 			input_mode = false;
 			if (key_value == erasechar())
 				key_value = KEY_BACKSPACE;
+			/* Handle \n just like \r */
+			else if (key_value == '\n')
+				key_value = KEY_RETURN;
 
 			/*
 			 * Ctrl-<key> values are represented using a 0x1F
