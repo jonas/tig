@@ -609,7 +609,10 @@ init_display(void)
 		die("Failed to register done_display");
 
 	/* Initialize the curses library */
-	{
+	if (!no_display && isatty(STDIN_FILENO)) {
+		/* Needed for ncurses 5.4 compatibility. */
+		cursed = !!initscr();
+	} else {
 		/* Leave stdin and stdout alone when acting as a pager. */
 		FILE *out_tty;
 
