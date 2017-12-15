@@ -17,8 +17,9 @@
 set -eu
 if [ -n "${BASH_VERSION:-}" ]; then
 	set -o pipefail
-	IFS=$'\n\t'
 fi
+IFS='
+	'
 
 test="$(basename -- "$0")"
 source_dir="$(cd "$(dirname -- "$0")" >/dev/null && pwd)"
@@ -28,6 +29,7 @@ output_dir="$base_dir/tmp/$prefix_dir/$test"
 tmp_dir="$base_dir/tmp"
 output_dir="$tmp_dir/$prefix_dir/$test"
 work_dir="work dir"
+tty_attrs="$(stty -g </dev/tty)"
 
 # The locale must specify UTF-8 for Ncurses to output correctly. Since C.UTF-8
 # does not exist on Mac OS X, we end up with en_US as the only sane choice.
@@ -127,6 +129,13 @@ die()
 	exit 1
 }
 
+tty_reset()
+{
+	if [ -n "$tty_attrs" ]; then
+		( trap '' TTOU; trap '' TTIN; stty "$tty_attrs" </dev/tty ) || true;
+	fi
+}
+
 file() {
 	path="$1"; shift
 
@@ -191,6 +200,33 @@ auto_detect_debugger() {
 	die "Failed to detect a supported debugger"
 }
 
+format_filter()
+{
+	test -z "$filter" && return
+
+	case "$filter" in
+		:*) filter="*$filter";;
+	esac
+	case "$filter" in
+		*:) filter="$filter*";;
+	esac
+	if [ "$filter" = "*:*" ]; then
+		filter=''
+	fi
+}
+
+filter_file_ok()
+{
+	test -z "$filter" && return 0
+
+	matcher="$0"
+	_filter_filename_part="${filter%:*}"
+	case "$matcher" in
+		$_filter_filename_part) return 0;;
+		*) return 1;;
+	esac
+}
+
 #
 # Parse TEST_OPTS
 #
@@ -205,6 +241,7 @@ debugger=
 trace=
 todos=
 valgrind=
+filter=
 timeout=10
 vlg_timeout_bonus=60
 
@@ -223,11 +260,14 @@ for arg in ${MAKE_TEST_OPTS:-} ${TEST_OPTS:-}; do
 		trace) trace=yes ;;
 		todo|todos) todos=yes ;;
 		valgrind) valgrind="$HOME/valgrind.log" ;;
+		filter=*) filter="$(expr "$arg" : 'filter=\(.*\)')" && format_filter;;
 		*) die "unknown TEST_OPTS element '$arg'" ;;
 	esac
 done
 IFS="$ORIG_IFS"
 ORIG_IFS=
+
+filter_file_ok || exit 0   # silently exit caller who sourced this file
 
 #
 # Test runners and assertion checking.
@@ -251,7 +291,7 @@ assert_equals()
 	file "expected/$file"
 
 	if [ -e "$file" ]; then
-		git diff --no-index $diff_color_arg $whitespace_arg -- "expected/$file" "$file" > "$file.diff" || true
+		( IFS=' 	'; git diff --no-index $diff_color_arg $whitespace_arg -- "expected/$file" "$file" > "$file.diff" || true )
 		if [ -s "$file.diff" ]; then
 			printf '[FAIL] %s != expected/%s\n' "$file" "$file" >> .test-result
 			if [ -n "$*" ]; then
@@ -362,7 +402,7 @@ show_test_results()
 	fi | sed "s/^/$indent| /"
 }
 
-trap 'show_test_results' EXIT
+trap "tty_reset; show_test_results" EXIT
 
 test_skip()
 {
@@ -487,7 +527,17 @@ install_pid_timeout() {
 	test "$pid" -gt 0 || return
 	test "$pid" != "$$" || return
 	trap '' "$signal"
-	sleep "$timeout" && kill -0 "$pid" >/dev/null 2>&1 && kill -"$signal" "$pid" >/dev/null 2>&1 || true &
+	(
+	trap '' "$signal"
+	count=0
+	granularity=1
+	while [ "$count" -lt "$timeout" ]; do
+		count="$((count + granularity))"
+		sleep "$granularity"
+		kill -0 "$pid" || break
+	done
+	kill -0 "$pid" && kill -"$signal" "$pid" || true
+	) >/dev/null 2>&1 &
 }
 
 valgrind_exec()
@@ -534,6 +584,7 @@ test_tig()
 	(
 		# subshell handles cleanup of cwd, variables, redirections, set +e
 		cd "$work_dir" || die "chdir failed"
+		tty_reset
 		if [ -n "$debugger" ]; then
 			printf "*** Running tests in '%s/%s'\n" "$HOME" "$work_dir"
 			if [ -s "$HOME/${prefix}stdin" ]; then
@@ -565,6 +616,7 @@ test_tig()
 			wait "$tig_pid"
 		fi
 		status_code="$?"
+		tty_reset
 		if [ "$status_code" -eq "$(( 256 + signal))" ] || [ "$status_code" -eq "$(( 128 + signal))" ]; then
 			printf '[FAIL] Test timed out after %s seconds\n' "$timeout" >> "$HOME/.test-result"
 		elif [ "$status_code" != "$expected_status_code" ]; then
@@ -628,6 +680,20 @@ run_test_cases()
 	fi
 	test_setup
 	while read -r name <&3; do
+		if [ -n "$filter" ]; then
+			matcher="$name"
+			_filter_case_part="${filter#*:}"
+			if [ "$filter" != "$_filter_case_part" ]; then
+				case "$matcher" in
+					$_filter_case_part) true;;
+					*) continue;;
+				esac
+			fi
+		fi
+		if [ "${V:-}" = '@' ]; then
+			# align with output from make, based on $V which is inherited from make
+			printf '      CASE  %s\n' "$0:$name"
+		fi
 		if [ -s "$name-todo" ] && [ -z "$todos" ]; then
 			printf '%s[skipped] ' "$indent"
 			test_todo_message "$(cat < "$name-todo")"
@@ -654,7 +720,7 @@ run_test_cases()
 			if [ -s "$name-timeout" ]; then
 				timeout="$(cat < "$name-timeout")"
 			fi
-			IFS=' '
+			IFS=' 	'
 			test_tig $(if [ -e "$name-args" ]; then cat < "$name-args"; fi)
 		)
 		if [ -e "$name-after" ]; then
