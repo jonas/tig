@@ -1,4 +1,4 @@
-personal_ws-1.1 en 286 
+personal_ws-1.1 en 294 
 CJK
 del
 goto
@@ -58,6 +58,7 @@ bgcolor
 LessThan
 env
 lrwxrwxrwx
+iTerm
 backend
 Esc
 doctype
@@ -94,6 +95,7 @@ Makefile
 cacheinfo
 enum
 PgDown
+wcwidth
 libexecdir
 bool
 diffstat
@@ -145,6 +147,7 @@ tigblob
 autobuild
 reflog
 diffargs
+Midline
 erasechar
 lds
 bg
@@ -224,13 +227,14 @@ Baudis
 substring
 PID
 tz
-DocBook
 docbook
+DocBook
 submodule
 strndup
 startup
 Yi
 docext
+LDFLAGS
 ShiftHome
 renderer
 strftime
@@ -249,13 +253,16 @@ Yy
 fgcolor
 backtraces
 ScrFwd
+nohup
 localtime
 filename
 AIX
 pbcopy
 lncursesw
 Geany
+concat
 waitpid
+NixOS
 wgetch
 OSX
 Pre
@@ -269,6 +276,7 @@ getch
 struct
 untracked
 commit's
+inputrc
 sed
 autoreconf
 ScrBack
