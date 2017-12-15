@@ -737,6 +737,45 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_3_1">tig-2.3.1</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Restore TTY attributes. (GH #725)
+</p>
+</li>
+<li>
+<p>
+Handle <code>\n</code> like <code>\r</code>. (GH #758)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Add workaround that detects busy loops when Tig loses the TTY. This may
+   happen if Tig does not receive the HUP signal (e.g. when started with
+   <code>nohup</code>). (GH #164)
+</p>
+</li>
+<li>
+<p>
+Fix compatibility with ncurses-5.4 which caused copy-pasting to not work
+   in the prompt. (GH #767)
+</p>
+</li>
+<li>
+<p>
+tig(1): document correct environment variable. (GH #752)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_3_0">tig-2.3.0</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Incompatibilities:</p></div>
@@ -3821,7 +3860,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-09-29 11:15:06 EDT
+Last updated 2017-12-14 21:14:51 EST
 </div>
 </div>
 </body>
