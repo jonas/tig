@@ -7,6 +7,7 @@ master
 Improvements:
 
  - Restore TTY attributes. (GH #725)
+ - Handle `\n` like `\r`. (GH #758)
 
 Bug fixes:
 
@@ -15,6 +16,7 @@ Bug fixes:
    `nohup`). (GH #164)
  - Fix compatibility with ncurses-5.4 which caused copy-pasting to not work
    in the prompt. (GH #767)
+ - tig(1): document correct environment variable. (GH #752)
 
 tig-2.3.0
 ---------
