@@ -844,7 +844,9 @@ get_input(int prompt_position, struct key *key)
 		/* wgetch() with nodelay() enabled returns ERR when
 		 * there's no input. */
 		if (key_value == ERR) {
-			detect_busy_loop(1000, 5000);
+			// Only check busy loop if no views are updating.
+			if (delay != 0)
+				detect_busy_loop(1000, 5000);
 
 		} else if (key_value == KEY_RESIZE) {
 			int height, width;
