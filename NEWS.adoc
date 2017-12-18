@@ -1,6 +1,13 @@
 Release notes
 =============
 
+master
+------
+
+Bug fixes:
+
+ - Fix busy loop detection to handle large repos. (GH #164)
+
 tig-2.3.1
 ---------
 
