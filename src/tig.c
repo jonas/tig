@@ -664,6 +664,15 @@ sigsegv_handler(int sig)
 }
 #endif
 
+void
+sighup_handler(int sig)
+{
+	if (die_callback)
+		die_callback();
+
+	exit(EXIT_SUCCESS);
+}
+
 struct key_combo {
 	enum request request;
 	struct keymap *keymap;
@@ -723,6 +732,9 @@ main(int argc, const char *argv[])
 	struct view *view;
 
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
+		die("Failed to setup signal handler");
+
+	if (signal(SIGHUP, sighup_handler) == SIG_ERR)
 		die("Failed to setup signal handler");
 
 #ifdef DEBUG
