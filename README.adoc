@@ -28,7 +28,7 @@ Bugs and feature requests can be reported using the
 https://github.com/jonas/tig/issues[issue tracker] or by mail to either
 the Git mailing list or directly to the maintainer. Ensure that the word
 "tig" is in the subject. For other Tig related questions please use
-Stack Overflow: http://stackoverflow.com/questions/tagged/tig[].
+Stack Overflow: https://stackoverflow.com/questions/tagged/tig[].
 
 Installation and News
 ---------------------
