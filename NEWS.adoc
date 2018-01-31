@@ -1,6 +1,15 @@
 Release notes
 =============
 
+tig-2.3.3
+---------
+
+Bug fixes:
+
+ - Revert "Handle \n like \r (#758)". (GH #769)
+ - Fix GH #164 by catching SIGHUP.
+ - Change `refs_tags` type to `size_t`.
+
 tig-2.3.2
 ---------
 

@@ -21,7 +21,7 @@
 #include "tig/refdb.h"
 
 static struct ref *refs_head = NULL;
-static bool refs_tags;
+static size_t refs_tags;
 
 DEFINE_STRING_MAP(refs_by_name, struct ref *, name, 32)
 DEFINE_STRING_MAP(refs_by_id, struct ref *, id, 16)
