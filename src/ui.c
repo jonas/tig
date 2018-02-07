@@ -193,7 +193,7 @@ file_finder_update(struct file_finder *finder)
 	size_t new_lineno = 0;
 	int i;
 
-	memset(finder->line, 0, sizeof(finder->line) * finder->lines);
+	memset(finder->line, 0, sizeof(*finder->line) * finder->lines);
 	finder->lines = 0;
 
 	for (i = 0; finder->file && finder->file[i]; i++) {

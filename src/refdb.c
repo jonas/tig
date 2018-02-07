@@ -42,7 +42,7 @@ ref_canonical_compare(const struct ref *ref1, const struct ref *ref2)
 	if (tag_diff)
 		return tag_diff;
 	if (ref1->type != ref2->type)
-		return !tag_diff ? ref1->type - ref2->type : ref2->type - ref1->type;
+		return (ref1->type - ref2->type);
 	return strcmp_numeric(ref1->name, ref2->name);
 }
 
