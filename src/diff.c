@@ -656,6 +656,7 @@ diff_common_edit(struct view *view, enum request request, struct line *line)
 	const char *file;
 	char path[SIZEOF_STR];
 	unsigned int lineno;
+	char cwd[SIZEOF_STR];
 
 	if (line->type == LINE_DIFF_STAT) {
 		file = view->env->file;
@@ -665,9 +666,20 @@ diff_common_edit(struct view *view, enum request request, struct line *line)
 		lineno = diff_get_lineno(view, line);
 	}
 
-	if (file && string_format(path, "%s%s", repo.cdup, file) && access(path, R_OK)) {
-		report("Failed to open file: %s", file);
-		return REQ_NONE;
+	if (file) {
+		if (repo.is_inside_work_tree) {
+			if (!getcwd(cwd, sizeof(cwd)))
+				die("Failed to get cwd path: %s", strerror(errno));
+			if (string_format(path, "%s/%s", cwd, file) && access(path, R_OK)) {
+				report("Failed to open file: %s", file);
+				return REQ_NONE;
+			}
+		} else {
+			if (string_format(path, "%s%s", repo.cdup, file) && access(path, R_OK)) {
+				report("Failed to open file: %s", file);
+				return REQ_NONE;
+			}
+		}
 	}
 
 	open_editor(file, lineno);
