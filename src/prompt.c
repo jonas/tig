@@ -1047,7 +1047,7 @@ run_prompt_command(struct view *view, const char *argv[])
 			prompt_update_display(flags);
 
 		} else {
-			request = view_can_refresh(view) ? REQ_REFRESH : REQ_SCREEN_REDRAW;
+			view_can_refresh(view) ? REQ_REFRESH : REQ_SCREEN_REDRAW;
 			if (!strcmp(cmd, "color"))
 				init_colors();
 			resize_display();
