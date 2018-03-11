@@ -66,6 +66,7 @@ typedef struct view_column *view_settings;
 	_(refresh_mode,			enum refresh_mode,	VIEW_NO_FLAGS) \
 	_(refs_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(rev_args,			const char **,		VIEW_NO_FLAGS) \
+	_(send_child_enter,		bool,			VIEW_NO_FLAGS) \
 	_(show_changes,			bool,			VIEW_NO_FLAGS) \
 	_(show_notes,			bool,			VIEW_NO_FLAGS) \
 	_(split_view_height,		double,			VIEW_RESET_DISPLAY) \
