@@ -111,6 +111,7 @@ set ignore-case			= no		# Enum: no, yes, smart-case
 						# Ignore case when searching? Smart-case option will
 set wrap-search			= yes		# Wrap around to top/bottom of view when searching
 set focus-child			= yes		# Move focus to child view when opened?
+set send-child-enter		= yes		# Propagate "enter" keypresses to child views?
 set horizontal-scroll		= 50%		# Number of columns to scroll as % of width
 set split-view-height		= 67%		# Height of the bottom view for horizontal splits
 set vertical-split		= auto		# Enum: horizontal, vertical, auto; Use auto to
