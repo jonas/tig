@@ -61,7 +61,7 @@ open_script(const char *path)
 }
 
 bool
-open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool refresh, const char *notice)
+open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool do_refresh, const char *notice)
 {
 	bool ok;
 
@@ -96,7 +96,7 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 		set_terminal_modes();
 	}
 
-	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && refresh) {
+	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && do_refresh) {
 		struct view *view;
 		int i;
 
