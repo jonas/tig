@@ -11,6 +11,7 @@ build_config () {
 	make DESTDIR=/tmp/bare-destdir uninstall
 	test ! -d /tmp/bare-destdir
 	make prefix=/tmp/bare-prefix install install-doc
+	/tmp/bare-prefix/bin/tig --version
 	make prefix=/tmp/bare-prefix uninstall
 	test ! -d /tmp/bare-prefix
  	make distclean
@@ -20,6 +21,7 @@ build_autoconf () {
 	make dist
 	./configure --prefix=/tmp/conf-prefix
 	make V=1 TEST_SHELL=bash all test install install-doc
+	/tmp/conf-prefix/bin/tig --version
 	make uninstall
 	test ! -d /tmp/conf-prefix
 	make clean
