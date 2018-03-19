@@ -1,6 +1,13 @@
 Release notes
 =============
 
+master
+------
+
+Improvements:
+
+ - Show commit signatures in the main view. (gh:[#754])
+
 tig-2.4.1
 ---------
 

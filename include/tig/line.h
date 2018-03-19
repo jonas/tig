@@ -93,7 +93,8 @@ struct ref;
 	_(PALETTE_12,		""), \
 	_(PALETTE_13,		""), \
 	_(GRAPH_COMMIT,		""), \
-	_(SEARCH_RESULT,	"")
+	_(SEARCH_RESULT,	""), \
+	_(SIGNATURE,		"")
 
 enum line_type {
 #define DEFINE_LINE_ENUM(type, line) LINE_##type

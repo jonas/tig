@@ -186,6 +186,7 @@ struct view_column_data {
 	struct view_column *section;
 	const struct ident *author;
 	const char *commit_title;
+	char commit_signature;
 	const struct time *date;
 	const char *file_name;
 	const unsigned long *file_size;

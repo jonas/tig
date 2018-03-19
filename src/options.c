@@ -148,9 +148,15 @@ use_mailmap_arg()
 const char *
 log_custom_pretty_arg(void)
 {
+#define LOG_PRETTY_FORMAT(ident_and_signature) \
+	"--pretty=format:commit %m %H %P%x00" ident_and_signature "%x00%s"
 	return opt_mailmap
-		? "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%s"
-		: "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s";
+		? (opt_show_signature
+			? LOG_PRETTY_FORMAT("%aN <%aE> %ad%x00%G?%x00%GS")
+			: LOG_PRETTY_FORMAT("%aN <%aE> %ad"))
+		: (opt_show_signature
+			? LOG_PRETTY_FORMAT("%an <%ae> %ad%x00%G?%x00%GS")
+			: LOG_PRETTY_FORMAT("%an <%ae> %ad"));
 }
 
 #define ENUM_ARG(enum_name, arg_string) ENUM_MAP_ENTRY(arg_string, enum_name)
@@ -208,6 +214,12 @@ show_notes_arg()
 		return opt_notes_arg;
 	/* Notes are disabled by default when passing --pretty args. */
 	return "";
+}
+
+const char *
+show_signature_arg()
+{
+	return opt_show_signature ? "--show-signature" : "";
 }
 
 void

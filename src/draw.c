@@ -242,7 +242,7 @@ draw_date(struct view *view, struct view_column *column, const struct time *time
 }
 
 static bool
-draw_author(struct view *view, struct view_column *column, const struct ident *author)
+draw_author(struct view *view, struct view_column *column, const struct ident *author, const char signature)
 {
 	bool trim = author_trim(column->width);
 	const char *text = mkauthor(author, MAX(column->opt.author.width, column->opt.author.maxwidth),
@@ -251,7 +251,31 @@ draw_author(struct view *view, struct view_column *column, const struct ident *a
 	if (column->opt.author.display == AUTHOR_NO)
 		return false;
 
-	return draw_field(view, LINE_AUTHOR, text, column->width, ALIGN_LEFT, trim);
+	if (draw_field(view, LINE_AUTHOR, text, column->width, ALIGN_LEFT, trim))
+		return true;
+
+	if (column->opt.author.signature) {
+		const char default_sign[] = { signature ? signature : ' ', 0 };
+		const char *sign = default_sign;
+
+		if (opt_signatures && signature) {
+			int i;
+
+			for (i = 0; opt_signatures[i]; i++) {
+				const char *alias = opt_signatures[i];
+				const char *sep = strchr(alias, '=');
+
+		                if (sep && sep - alias == 1 && signature == *alias) {
+					sign = sep + 1;
+					break;
+				}
+			}
+		}
+
+		return draw_field(view, LINE_SIGNATURE, sign, 1, ALIGN_LEFT, false);
+	}
+
+	return false;
 }
 
 static bool
@@ -475,7 +499,7 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_AUTHOR:
-			if (draw_author(view, column, column_data.author))
+			if (draw_author(view, column, column_data.author, column_data.commit_signature))
 				return true;
 			continue;
 

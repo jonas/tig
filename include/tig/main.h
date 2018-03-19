@@ -19,10 +19,11 @@
 #include "tig/util.h"
 
 struct commit {
-	char id[SIZEOF_REV];		/* SHA1 ID. */
 	const struct ident *author;	/* Author of the commit. */
 	struct time time;		/* Date from the author ident. */
 	struct graph_canvas graph;	/* Ancestry chain graphics. */
+	char id[SIZEOF_REV];		/* SHA1 ID. */
+	char signature;
 	char title[1];			/* First line of the commit message. */
 };
 
@@ -31,6 +32,8 @@ struct main_state {
 	struct commit current;
 	char **reflog;
 	size_t reflogs;
+	char **signature;
+	size_t signatures;
 	int reflog_width;
 	char reflogmsg[SIZEOF_STR / 2];
 	enum line_type goto_line_type;

@@ -70,6 +70,8 @@ typedef struct view_column *view_settings;
 	_(show_changes,			bool,			VIEW_NO_FLAGS) \
 	_(show_notes,			bool,			VIEW_NO_FLAGS) \
 	_(show_untracked,		bool,			VIEW_NO_FLAGS) \
+	_(show_signature,		bool,			VIEW_NO_FLAGS) \
+	_(signatures,			const char **,		VIEW_NO_FLAGS) \
 	_(split_view_height,		double,			VIEW_RESET_DISPLAY) \
 	_(split_view_width,		double,			VIEW_RESET_DISPLAY) \
 	_(stage_view,			view_settings,		VIEW_NO_FLAGS) \
@@ -93,6 +95,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 
 #define AUTHOR_COLUMN_OPTIONS(_) \
 	_(display,			enum author,		VIEW_NO_FLAGS) \
+	_(signature,			bool,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 	_(maxwidth,			int,			VIEW_NO_FLAGS) \
 
@@ -193,6 +196,7 @@ const char *log_custom_pretty_arg();
 const char *use_mailmap_arg();
 const char *diff_context_arg();
 const char *show_notes_arg();
+const char *show_signature_arg();
 
 /*
  * Option loading and parsing.

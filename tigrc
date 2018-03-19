@@ -70,6 +70,8 @@
 set blame-view	= id:yes,color file-name:auto author:full date:default line-number:yes,interval=1 text
 set grep-view	= file-name:no line-number:yes,interval=1 text
 set main-view	= line-number:no,interval=5 id:no date:default author:full commit-title:yes,graph,refs,overflow=no
+# Show pgp commit signatures
+# set main-view-author-signature = yes
 set refs-view	= line-number:no id:no date:default author:full ref commit-title
 set stash-view	= line-number:no,interval=5 id:no date:default author:full commit-title
 set status-view	= line-number:no,interval=5 status:short file-name
@@ -110,6 +112,7 @@ set status-show-untracked-dirs	= yes		# Show files in untracked directories? (st
 set status-show-untracked-files	= yes		# Show untracked files?
 set ignore-space		= no		# Enum: no, all, some, at-eol (diff)
 set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
+set show-signature		= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set diff-context		= 3		# Number of lines to show around diff changes (diff)
 #set diff-options		= -C		# User-defined options for `tig show` (git-diff)
 #set diff-highlight		= true		# String (or bool): Path to diff-highlight script,
@@ -356,6 +359,7 @@ color "TaggerDate: "		yellow	default
 color "Refs: "			red	default
 color "Reflog: "		red	default
 color "Reflog message: "	yellow	default
+color "gpg: "			magenta	default
 color "stash@{"			magenta	default
 color "commit "			green	default
 color "parent "			blue	default
@@ -416,6 +420,11 @@ color palette-12		white	default	bold
 color palette-13		red	default	bold
 color graph-commit		blue	default
 color search-result		black	yellow
+color signature			magenta default bold
+
+set signatures = \
+	N= \
+	G=V
 
 # Mappings for colors read from git configuration.
 # Set to "no" to disable.

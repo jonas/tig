@@ -113,7 +113,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 	char ids[SIZEOF_STR] = NULL_ID " ";
 	struct main_state *state = view->private;
 	struct graph *graph = state->graph;
-	struct commit commit = {{0}};
+	struct commit commit = {0};
 	struct timeval now;
 	struct timezone tz;
 
@@ -354,6 +354,7 @@ main_get_column_data(struct view *view, const struct line *line, struct view_col
 	struct commit *commit = line->data;
 
 	column_data->author = commit->author;
+	column_data->commit_signature = commit->signature;
 	column_data->date = &commit->time;
 	column_data->id = commit->id;
 	if (state->reflogs)
@@ -454,9 +455,23 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 		main_register_commit(view, &state->current, line, is_boundary);
 
 		if (author) {
-			char *title = io_memchr(buf, author, 0);
+			char *title;
 
-			parse_author_line(author, &commit->author, &commit->time);
+			if (opt_show_signature) {
+				char *signature = io_memchr(buf, author, 0);
+				char *signer = io_memchr(buf, signature, 0);
+
+				title = io_memchr(buf, signer, 0);
+				if (signature)
+					commit->signature = *signature;
+				parse_author_line(author, &commit->author, &commit->time);
+	//			if (signer && *signer)
+	//				parse_author_line(signer, &commit->author, NULL);
+			} else {
+				title = io_memchr(buf, author, 0);
+				parse_author_line(author, &commit->author, &commit->time);
+			}
+
 			if (state->with_graph)
 				graph->render_parents(graph, &commit->graph);
 			if (title)

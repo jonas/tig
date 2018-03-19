@@ -497,7 +497,7 @@ io_memchr(struct buffer *buf, char *data, int c)
 {
 	char *pos;
 
-	if (!buf || data < buf->data || buf->data + buf->size <= data)
+	if (!buf || !data || data < buf->data || buf->data + buf->size <= data)
 		return NULL;
 
 	pos = memchr(data, c, buf->size - (data - buf->data));
