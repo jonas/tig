@@ -790,7 +790,7 @@ graph_add_commit(struct graph *graph_ref, struct graph_canvas *canvas,
 	return true;
 }
 
-static const bool
+static bool
 graph_symbol_forks(const struct graph_symbol *symbol)
 {
 	if (!symbol->continued_down)
@@ -805,7 +805,7 @@ graph_symbol_forks(const struct graph_symbol *symbol)
 	return true;
 }
 
-static const bool
+static bool
 graph_symbol_cross_merge(const struct graph_symbol *symbol)
 {
 	if (symbol->empty)
@@ -826,7 +826,7 @@ graph_symbol_cross_merge(const struct graph_symbol *symbol)
 	return false;
 }
 
-static const bool
+static bool
 graph_symbol_vertical_merge(const struct graph_symbol *symbol)
 {
 	if (symbol->empty)
@@ -850,7 +850,7 @@ graph_symbol_vertical_merge(const struct graph_symbol *symbol)
 	return false;
 }
 
-static const bool
+static bool
 graph_symbol_cross_over(const struct graph_symbol *symbol)
 {
 	if (symbol->empty)
@@ -874,7 +874,7 @@ graph_symbol_cross_over(const struct graph_symbol *symbol)
 	return false;
 }
 
-static const bool
+static bool
 graph_symbol_turn_left(const struct graph_symbol *symbol)
 {
 	if (symbol->matches_commit && symbol->continued_right && !symbol->continued_down)
@@ -894,7 +894,7 @@ graph_symbol_turn_left(const struct graph_symbol *symbol)
 	return false;
 }
 
-static const bool
+static bool
 graph_symbol_turn_down_cross_over(const struct graph_symbol *symbol)
 {
 	if (!symbol->continued_down)
@@ -915,7 +915,7 @@ graph_symbol_turn_down_cross_over(const struct graph_symbol *symbol)
 	return false;
 }
 
-static const bool
+static bool
 graph_symbol_turn_down(const struct graph_symbol *symbol)
 {
 	if (!symbol->continued_down)
@@ -927,7 +927,7 @@ graph_symbol_turn_down(const struct graph_symbol *symbol)
 	return true;
 }
 
-static const bool
+static bool
 graph_symbol_merge(const struct graph_symbol *symbol)
 {
 	if (symbol->continued_down)
@@ -945,7 +945,7 @@ graph_symbol_merge(const struct graph_symbol *symbol)
 	return true;
 }
 
-static const bool
+static bool
 graph_symbol_multi_merge(const struct graph_symbol *symbol)
 {
 	if (!symbol->parent_down)
@@ -957,7 +957,7 @@ graph_symbol_multi_merge(const struct graph_symbol *symbol)
 	return true;
 }
 
-static const bool
+static bool
 graph_symbol_vertical_bar(const struct graph_symbol *symbol)
 {
 	if (symbol->empty)
@@ -984,7 +984,7 @@ graph_symbol_vertical_bar(const struct graph_symbol *symbol)
 	return true;
 }
 
-static const bool
+static bool
 graph_symbol_horizontal_bar(const struct graph_symbol *symbol)
 {
 	if (!symbol->next_right)
@@ -1008,7 +1008,7 @@ graph_symbol_horizontal_bar(const struct graph_symbol *symbol)
 	return false;
 }
 
-static const bool
+static bool
 graph_symbol_multi_branch(const struct graph_symbol *symbol)
 {
 	if (symbol->continued_down)
