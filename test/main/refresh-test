@@ -40,49 +40,49 @@ export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
 test_tig
 
 assert_equals 'main-with-unstaged.screen' <<EOF
-$YYY_MM_DD_HH_MM Unknown    o Unstaged changes
-2009-02-13 23:31 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
+2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
 
 [main] Unstaged changes                                                     100%
 EOF
 
 assert_equals 'main-after-add-a.screen' <<EOF
-$YYY_MM_DD_HH_MM Unknown    o Unstaged changes
-$YYY_MM_DD_HH_MM Unknown    o Staged changes
-2009-02-13 23:31 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
+$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
+2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
 [main] Unstaged changes                                                     100%
 EOF
 
 assert_equals 'main-after-add-all.screen' <<EOF
-$YYY_MM_DD_HH_MM Unknown    o Staged changes
-2009-02-13 23:31 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
+2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
 
 [main] Staged changes                                                       100%
 EOF
 
 assert_equals 'main-after-commit.screen' <<EOF
-2009-02-22 11:53 Committer  o [master] Commit changes
-2009-02-13 23:31 A. U. Thor I Initial commit
+2009-02-22 11:53 +0000 Committer  o [master] Commit changes
+2009-02-13 23:31 +0000 A. U. Thor I Initial commit
 
 [main] 559565d219fd061c3cec4f2071025374533bdfc6 - commit 1 of 2             100%
 EOF
 
 assert_equals 'main-after-reset-soft.screen' <<EOF
-$YYY_MM_DD_HH_MM Unknown    o Staged changes
-2009-02-13 23:31 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
+2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
 
 [main] Staged changes                                                       100%
 EOF
 
 assert_equals 'main-after-reset-a-and-bc.screen' <<EOF
-$YYY_MM_DD_HH_MM Unknown    o Unstaged changes
-$YYY_MM_DD_HH_MM Unknown    o Staged changes
-2009-02-13 23:31 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
+$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
+2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
 [main] Unstaged changes                                                     100%
 EOF
 
 assert_equals 'main-after-reset-hard.screen' <<EOF
-2009-02-13 23:31 A. U. Thor I [master] Initial commit
+2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
 
 
 [main] ca34b8bb5a0034fc5b5ab9840f74cae1fab2c3a9 - commit 1 of 1             100%

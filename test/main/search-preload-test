@@ -27,7 +27,7 @@ steps '
 test_tig
 
 assert_equals main.screen <<EOF
-2013-10-18 07:00 Jonas Fonseca      M-. Merge pull request #1 from sjrd/patch-1
+2013-10-18 07:00 -0700 Jonas Fonseca      M-. Merge pull request #1 from sjrd/pa
 [main] 0b89f7997f696a7f6ae4c10e3b29817862e751d6 - commit 39 of 48            81%
 EOF
 

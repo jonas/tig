@@ -18,33 +18,33 @@ EOF
 test_tig blame deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala +42
 
 assert_equals 'position.screen' <<EOF
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  28| // Dart by Google 2008-2010.
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  29| // Translated to Scala.js by Jonas Fonseca 2013
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  30|
-296fc90 deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala Jonas Fonseca 2014-01-16 22:51  31| package org.scalajs.benchmark.deltablue
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  32|
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  33| /**
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  34|  * A Scala implementation of the DeltaBlue constraint-solving
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  35|  * algorithm, as described in:
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  36|  *
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  37|  * "The DeltaBlue Algorithm: An Incremental Constraint Hierarchy Solver"
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  38|  *   Bjorn N. Freeman-Benson and John Maloney
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  39|  *   January 1990 Communications of the ACM,
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  40|  *   also available as University of Washington TR 89-08-06.
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  41|  *
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  42|  * Beware: this benchmark is written in a grotesque style where
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  43|  * the constraint model is built by side-effects from constructors.
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  44|  * I've kept it this way to avoid deviating too much from the original
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  45|  * implementation.
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  46|  */
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  47|
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  48| import scala.collection.mutable.ArrayBuffer
-ee91287 deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala Jonas Fonseca 2014-03-01 17:26  49| import scala.scalajs.js.annotation.JSExport
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  50|
-ee91287 deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala Jonas Fonseca 2014-03-01 17:26  51| @JSExport
-296fc90 deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala Jonas Fonseca 2014-01-16 22:51  52| object DeltaBlue extends org.scalajs.benchmark.Benchmark {
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  53|
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  54|   override def prefix = "DeltaBlue"
-b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00  55|
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  28| // Dart by Google 2008-2010.
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  29| // Translated to Scala.js by Jonas Fonseca 2013
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  30|
+296fc90 deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala Jonas Fonseca 2014-01-16 22:51 -0500  31| package org.scalajs.benchmark.deltablue
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  32|
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  33| /**
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  34|  * A Scala implementation of the DeltaBlue constraint-solving
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  35|  * algorithm, as described in:
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  36|  *
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  37|  * "The DeltaBlue Algorithm: An Incremental Constraint Hierarchy Solver"
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  38|  *   Bjorn N. Freeman-Benson and John Maloney
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  39|  *   January 1990 Communications of the ACM,
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  40|  *   also available as University of Washington TR 89-08-06.
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  41|  *
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  42|  * Beware: this benchmark is written in a grotesque style where
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  43|  * the constraint model is built by side-effects from constructors.
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  44|  * I've kept it this way to avoid deviating too much from the original
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  45|  * implementation.
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  46|  */
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  47|
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  48| import scala.collection.mutable.ArrayBuffer
+ee91287 deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala Jonas Fonseca 2014-03-01 17:26 -0500  49| import scala.scalajs.js.annotation.JSExport
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  50|
+ee91287 deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala Jonas Fonseca 2014-03-01 17:26 -0500  51| @JSExport
+296fc90 deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala Jonas Fonseca 2014-01-16 22:51 -0500  52| object DeltaBlue extends org.scalajs.benchmark.Benchmark {
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  53|
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  54|   override def prefix = "DeltaBlue"
+b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-18 18:00 -0400  55|
 [blame] deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala - line 42 of 711                                                                                                     7%
 EOF

@@ -24,7 +24,11 @@ steps '
 	:save-display relative-compact-date.screen
 
 	:toggle date
-	:save-display short-date.screen
+	:set main-view-date-format = "%Y-%m-%d"
+	:save-display custom-short-date.screen
+
+	:set main-view-date-format = "%Y-%m-%d z=%z Z=%Z z=%z"
+	:save-display custom-tz-date.screen
 
 	:toggle date
 	:save-display no-date.screen
@@ -38,31 +42,31 @@ steps '
 test_tig --pretty=raw < "$source_dir/$test.in"
 
 assert_equals 'default-date.screen' <<EOF
-2015-08-31 04:01 Kentaro Wada        Add zsh completion file for autoload
-2015-08-23 18:32 Jonas Fonseca       Refactor DEFINE_ALLOCATOR to use helper met
-2015-07-16 11:46 Sven Wegener        display: factor out separator functions
-2015-08-22 16:20 Jonas Fonseca       Merge pull request #429 from ideal/master
-2015-08-18 15:24 ideal               check if mem is NULL in DEFINE_ALLOCATOR
-2015-06-07 23:44 Jonas Fonseca       Use git_init to initialize the test/stage/g
-2015-04-06 20:34 Jonas Fonseca       Keep unstaged changes view open after an st
-2015-03-30 07:43 Jonas Fonseca       When redrawing the readline prompt also upd
-2015-02-02 21:53 Jonas Fonseca       Move script helper before usages in the dis
-2015-01-29 10:44 Jonas Fonseca       Merge branch 'hashed-refs'
-2014-12-04 11:22 Jonas Fonseca       hashed-refs: Use a hash table as the main d
-2014-11-08 09:55 Jonas Fonseca       Unify option_info lookup for normal options
-2014-10-06 21:22 Jonas Fonseca       Add option to turn off automatic enabling o
-2014-09-23 12:54 Tom Greuter         Add option to install Tig with Homebrew
-2014-09-04 07:19 Jonas Fonseca       Fix diff context restoring for diff opened
-2013-12-15 09:55 Michael Barlow      Add mouse support
-2012-09-30 22:43 Jonas Fonseca       Refactor stage view title formatting
-2012-08-30 10:47 Jonas Fonseca       [GH #83] WIP: main view lazy navigation mod
-2011-10-13 11:46 P. Sadik            Create and use dup() of STDIN_FILENO instea
-2010-09-15 21:01 Jonathan Neuschäfer Don't show out-of-sight tildes
-2010-06-28 10:26 Pierre Habouzit     Add an option to ignore unknown directories
-2009-01-17 23:10 Jonas Fonseca       Fix another regression from the dirty flag
-2007-09-29 23:23 Jonas Fonseca       tig-0.10.git
-2006-09-12 00:22 Jonas Fonseca       Only split the tree view when the tree view
-2006-04-10 18:39 Jonas Fonseca       Initial commit
+2015-08-31 04:01 +0900 Kentaro Wada        Add zsh completion file for autoload
+2015-08-23 18:32 -0400 Jonas Fonseca       Refactor DEFINE_ALLOCATOR to use help
+2015-07-16 11:46 +0200 Sven Wegener        display: factor out separator functio
+2015-08-22 16:20 -0400 Jonas Fonseca       Merge pull request #429 from ideal/ma
+2015-08-18 15:24 +0800 ideal               check if mem is NULL in DEFINE_ALLOCA
+2015-06-07 23:44 -0400 Jonas Fonseca       Use git_init to initialize the test/s
+2015-04-06 20:34 -0400 Jonas Fonseca       Keep unstaged changes view open after
+2015-03-30 07:43 -0400 Jonas Fonseca       When redrawing the readline prompt al
+2015-02-02 21:53 -0500 Jonas Fonseca       Move script helper before usages in t
+2015-01-29 10:44 -0500 Jonas Fonseca       Merge branch 'hashed-refs'
+2014-12-04 11:22 -0500 Jonas Fonseca       hashed-refs: Use a hash table as the
+2014-11-08 09:55 -0500 Jonas Fonseca       Unify option_info lookup for normal o
+2014-10-06 21:22 -0400 Jonas Fonseca       Add option to turn off automatic enab
+2014-09-23 12:54 +0200 Tom Greuter         Add option to install Tig with Homebr
+2014-09-04 07:19 -0400 Jonas Fonseca       Fix diff context restoring for diff o
+2013-12-15 09:55 +1100 Michael Barlow      Add mouse support
+2012-09-30 22:43 -0400 Jonas Fonseca       Refactor stage view title formatting
+2012-08-30 10:47 -0400 Jonas Fonseca       [GH #83] WIP: main view lazy navigati
+2011-10-13 11:46 +0530 P. Sadik            Create and use dup() of STDIN_FILENO
+2010-09-15 21:01 -0400 Jonathan Neuschäfer Don't show out-of-sight tildes
+2010-06-28 10:26 +0200 Pierre Habouzit     Add an option to ignore unknown direc
+2009-01-17 23:10 +0100 Jonas Fonseca       Fix another regression from the dirty
+2007-09-29 23:23 +0200 Jonas Fonseca       tig-0.10.git
+2006-09-12 00:22 +0200 Jonas Fonseca       Only split the tree view when the tre
+2006-04-10 18:39 +0200 Jonas Fonseca       Initial commit
 [main] 91912eb97da4f6907015dab41ef9bba315730854 - commit 1 of 25            100%
 EOF
 
@@ -153,7 +157,7 @@ assert_equals 'relative-compact-date.screen' <<EOF
 [main] 91912eb97da4f6907015dab41ef9bba315730854 - commit 1 of 25            100%
 EOF
 
-assert_equals 'short-date.screen' <<EOF
+assert_equals 'custom-short-date.screen' <<EOF
 2015-08-31 Kentaro Wada        Add zsh completion file for autoload
 2015-08-23 Jonas Fonseca       Refactor DEFINE_ALLOCATOR to use helper method an
 2015-07-16 Sven Wegener        display: factor out separator functions
@@ -179,6 +183,35 @@ assert_equals 'short-date.screen' <<EOF
 2007-09-29 Jonas Fonseca       tig-0.10.git
 2006-09-12 Jonas Fonseca       Only split the tree view when the tree view is vi
 2006-04-10 Jonas Fonseca       Initial commit
+[main] 91912eb97da4f6907015dab41ef9bba315730854 - commit 1 of 25            100%
+EOF
+
+assert_equals 'custom-tz-date.screen' <<EOF
+2015-08-31 z=+0900 Z=+0900 z=+0900 Kentaro Wada        Add zsh completion file f
+2015-08-23 z=-0400 Z=-0400 z=-0400 Jonas Fonseca       Refactor DEFINE_ALLOCATOR
+2015-07-16 z=+0200 Z=+0200 z=+0200 Sven Wegener        display: factor out separ
+2015-08-22 z=-0400 Z=-0400 z=-0400 Jonas Fonseca       Merge pull request #429 f
+2015-08-18 z=+0800 Z=+0800 z=+0800 ideal               check if mem is NULL in D
+2015-06-07 z=-0400 Z=-0400 z=-0400 Jonas Fonseca       Use git_init to initializ
+2015-04-06 z=-0400 Z=-0400 z=-0400 Jonas Fonseca       Keep unstaged changes vie
+2015-03-30 z=-0400 Z=-0400 z=-0400 Jonas Fonseca       When redrawing the readli
+2015-02-02 z=-0500 Z=-0500 z=-0500 Jonas Fonseca       Move script helper before
+2015-01-29 z=-0500 Z=-0500 z=-0500 Jonas Fonseca       Merge branch 'hashed-refs
+2014-12-04 z=-0500 Z=-0500 z=-0500 Jonas Fonseca       hashed-refs: Use a hash t
+2014-11-08 z=-0500 Z=-0500 z=-0500 Jonas Fonseca       Unify option_info lookup
+2014-10-06 z=-0400 Z=-0400 z=-0400 Jonas Fonseca       Add option to turn off au
+2014-09-23 z=+0200 Z=+0200 z=+0200 Tom Greuter         Add option to install Tig
+2014-09-04 z=-0400 Z=-0400 z=-0400 Jonas Fonseca       Fix diff context restorin
+2013-12-15 z=+1100 Z=+1100 z=+1100 Michael Barlow      Add mouse support
+2012-09-30 z=-0400 Z=-0400 z=-0400 Jonas Fonseca       Refactor stage view title
+2012-08-30 z=-0400 Z=-0400 z=-0400 Jonas Fonseca       [GH #83] WIP: main view l
+2011-10-13 z=+0530 Z=+0530 z=+0530 P. Sadik            Create and use dup() of S
+2010-09-15 z=-0400 Z=-0400 z=-0400 Jonathan Neuschäfer Don't show out-of-sight t
+2010-06-28 z=+0200 Z=+0200 z=+0200 Pierre Habouzit     Add an option to ignore u
+2009-01-17 z=+0100 Z=+0100 z=+0100 Jonas Fonseca       Fix another regression fr
+2007-09-29 z=+0200 Z=+0200 z=+0200 Jonas Fonseca       tig-0.10.git
+2006-09-12 z=+0200 Z=+0200 z=+0200 Jonas Fonseca       Only split the tree view
+2006-04-10 z=+0200 Z=+0200 z=+0200 Jonas Fonseca       Initial commit
 [main] 91912eb97da4f6907015dab41ef9bba315730854 - commit 1 of 25            100%
 EOF
 

@@ -57,32 +57,32 @@ assert_vars 1
 
 assert_equals 'bench-common-src.screen' <<EOF
 Directory path /common/src/
-drwxr-xr-x                                ..
-drwxr-xr-x Jonas Fonseca 2014-03-01 17:26 main
-
-
-
-
-
-
-
-
-
+drwxr-xr-x                                      ..
+drwxr-xr-x Jonas Fonseca 2014-03-01 17:26 -0500 main
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 [tree] Open parent directory                                                100%
 EOF
 
 assert_equals 'bench.screen' <<EOF
 Directory path /
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer
--rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore
--rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE
--rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md
--rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 -0500 common
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 -0500 deltablue
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 -0500 project
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 -0500 richards
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 -0500 sudoku
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 -0500 tracer
+-rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 -0400 .gitignore
+-rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 -0400 LICENSE
+-rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 +0100 README.md
+-rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 -0500 run.sh
  
 [tree] 08833305259e10b62c96bddf1def0487644885e3 - file 9 of 10              100%
 EOF

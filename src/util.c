@@ -183,6 +183,7 @@ mkdate(const struct time *time, enum date date, bool local, const char *custom_f
 	static char buf[SIZEOF_STR];
 	struct tm tm;
 	const char *format;
+	bool tz_fmt;
 
 	if (!date || !time || !time->sec)
 		return "";
@@ -191,18 +192,74 @@ mkdate(const struct time *time, enum date date, bool local, const char *custom_f
 		return get_relative_date(time, buf, sizeof(buf),
 					 date == DATE_RELATIVE_COMPACT);
 
+	format = (date == DATE_CUSTOM && custom_format)
+	       ? custom_format
+	       : local
+	       ? "%Y-%m-%d %H:%M"
+	       : "%Y-%m-%d %H:%M %z";
+
+	tz_fmt = strstr(format, "%z") || strstr(format, "%Z");
+
 	if (local) {
-		time_t date = time->sec + time->tz;
-		localtime_r(&date, &tm);
-	}
-	else {
+		time_t timestamp = time->sec + time->tz;
+
+		localtime_r(&timestamp, &tm);
+	} else {
 		gmtime_r(&time->sec, &tm);
 	}
 
-	format = date != DATE_CUSTOM
-	       ? "%Y-%m-%d %H:%M"
-	       : custom_format ? custom_format : "%Y-%m-%d";
-	return strftime(buf, sizeof(buf), format, &tm) ? buf : NULL;
+	if (local || (!tz_fmt))
+		return !strftime(buf, sizeof(buf), format, &tm) ? NULL : buf;
+
+	{
+		char format_buf[SIZEOF_STR];
+		char *format_pos = format_buf;
+		char *buf_pos = buf;
+		size_t buf_size = sizeof(buf);
+		int tz = ABS(time->tz);
+
+		string_ncopy(format_buf, format, strlen(format));
+
+		while (*format_pos) {
+			char *z_pos = strstr(format_pos, "%z");
+			char *Z_pos = strstr(format_pos, "%Z");
+			char *tz_pos = (z_pos && Z_pos) ? MIN(z_pos, Z_pos) : MAX(z_pos, Z_pos);
+			size_t time_len;
+
+			if (tz_pos)
+				*tz_pos = 0;
+
+			time_len = strftime(buf_pos, buf_size, format_pos, &tm);
+			if (!time_len)
+				return NULL;
+
+			buf_pos += time_len;
+			buf_size -= time_len;
+
+			if (!tz_pos)
+				break;
+
+			/* Skip the %z format flag and insert the timezone. */
+			format_pos = tz_pos + 2;
+
+			if (buf_size < 5)
+				return NULL;
+
+			buf_pos[0] = time->tz > 0 ? '-' : '+';
+			buf_pos[1] = '0' + (tz / 60 / 60 / 10);
+			buf_pos[2] = '0' + (tz / 60 / 60 % 10);
+			buf_pos[3] = '0' + (tz / 60 % 60 / 10);
+			buf_pos[4] = '0' + (tz / 60 % 60 % 10);
+			buf_pos[5] = 0;
+
+			buf_pos += 5;
+			buf_size -= 5;
+		}
+
+#undef buf_size
+	}
+
+	return buf;
 }
 
 const char *

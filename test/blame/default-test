@@ -28,47 +28,47 @@ in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
 test_tig blame project/Build.scala
 
 assert_equals 'blame-default.screen' <<EOF
-90286e0 Jonas Fonseca      2013-10-14 13:15   1| import sbt._
-90286e0 Jonas Fonseca      2013-10-14 13:15   2| import Keys._
-90286e0 Jonas Fonseca      2013-10-14 13:15   3|
-74537d9 Sébastien Doeraene 2013-10-29 18:46   4| import scala.scalajs.sbtplugin.
-90286e0 Jonas Fonseca      2013-10-14 13:15   5| import ScalaJSPlugin._
-90286e0 Jonas Fonseca      2013-10-14 13:15   6| import ScalaJSKeys._
-90286e0 Jonas Fonseca      2013-10-14 13:15   7|
-4779f9b Jonas Fonseca      2013-11-26 20:13   8| object ScalaJSBenchmarks extend
-90286e0 Jonas Fonseca      2013-10-14 13:15   9|
-4779f9b Jonas Fonseca      2013-11-26 20:13  10|   val scalaJSScalaVersion = "2.
-90286e0 Jonas Fonseca      2013-10-14 13:15  11|
-90286e0 Jonas Fonseca      2013-10-14 13:15  12|   val projectSettings = Default
-90286e0 Jonas Fonseca      2013-10-14 13:15  13|       organization := "scalajs-
-90286e0 Jonas Fonseca      2013-10-14 13:15  14|       version := "0.1-SNAPSHOT"
-90286e0 Jonas Fonseca      2013-10-14 13:15  15|   )
-90286e0 Jonas Fonseca      2013-10-14 13:15  16|
-90286e0 Jonas Fonseca      2013-10-14 13:15  17|   val defaultSettings = project
-4779f9b Jonas Fonseca      2013-11-26 20:13  18|       scalaVersion := scalaJSSc
-90286e0 Jonas Fonseca      2013-10-14 13:15  19|       scalacOptions ++= Seq(
-90286e0 Jonas Fonseca      2013-10-14 13:15  20|           "-deprecation",
-90286e0 Jonas Fonseca      2013-10-14 13:15  21|           "-unchecked",
-90286e0 Jonas Fonseca      2013-10-14 13:15  22|           "-feature",
-90286e0 Jonas Fonseca      2013-10-14 13:15  23|           "-encoding", "utf8"
-90286e0 Jonas Fonseca      2013-10-14 13:15  24|       )
-90286e0 Jonas Fonseca      2013-10-14 13:15  25|   )
-90286e0 Jonas Fonseca      2013-10-14 13:15  26|
-90286e0 Jonas Fonseca      2013-10-14 13:15  27|   lazy val parent: Project = Pr
-90286e0 Jonas Fonseca      2013-10-14 13:15  28|       id = "parent",
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   1| import sbt._
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   2| import Keys._
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   3|
+74537d9 Sébastien Doeraene 2013-10-29 18:46 +0100   4| import scala.scalajs.sbtp
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   5| import ScalaJSPlugin._
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   6| import ScalaJSKeys._
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   7|
+4779f9b Jonas Fonseca      2013-11-26 20:13 -0500   8| object ScalaJSBenchmarks
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   9|
+4779f9b Jonas Fonseca      2013-11-26 20:13 -0500  10|   val scalaJSScalaVersion
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  11|
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  12|   val projectSettings = D
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  13|       organization := "sc
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  14|       version := "0.1-SNA
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  15|   )
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  16|
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  17|   val defaultSettings = p
+4779f9b Jonas Fonseca      2013-11-26 20:13 -0500  18|       scalaVersion := sca
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  19|       scalacOptions ++= S
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  20|           "-deprecation",
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  21|           "-unchecked",
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  22|           "-feature",
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  23|           "-encoding", "u
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  24|       )
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  25|   )
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  26|
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  27|   lazy val parent: Projec
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  28|       id = "parent",
 [blame] project/Build.scala - line 1 of 64                                   43%
 EOF
 
 assert_equals 'blame-with-diff.screen' <<EOF
-90286e0 Jonas Fonseca      2013-10-14 13:15   1| import sbt._
-90286e0 Jonas Fonseca      2013-10-14 13:15   2| import Keys._
-90286e0 Jonas Fonseca      2013-10-14 13:15   3|
-74537d9 Sébastien Doeraene 2013-10-29 18:46   4| import scala.scalajs.sbtplugin.
-90286e0 Jonas Fonseca      2013-10-14 13:15   5| import ScalaJSPlugin._
-90286e0 Jonas Fonseca      2013-10-14 13:15   6| import ScalaJSKeys._
-90286e0 Jonas Fonseca      2013-10-14 13:15   7|
-4779f9b Jonas Fonseca      2013-11-26 20:13   8| object ScalaJSBenchmarks extend
-90286e0 Jonas Fonseca      2013-10-14 13:15   9|
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   1| import sbt._
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   2| import Keys._
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   3|
+74537d9 Sébastien Doeraene 2013-10-29 18:46 +0100   4| import scala.scalajs.sbtp
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   5| import ScalaJSPlugin._
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   6| import ScalaJSKeys._
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   7|
+4779f9b Jonas Fonseca      2013-11-26 20:13 -0500   8| object ScalaJSBenchmarks
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   9|
 [blame] project/Build.scala - line 4 of 64                                   14%
 commit 74537d9b257954056d3caa19eb3837500aded883
 Author:     Sébastien Doeraene <sjrdoeraene@gmail.com>
@@ -92,15 +92,15 @@ index 560bca1..1713681 100644
 EOF
 
 assert_equals 'blame-with-diff-no-file-filter.screen' <<EOF
-90286e0 Jonas Fonseca      2013-10-14 13:15   1| import sbt._
-90286e0 Jonas Fonseca      2013-10-14 13:15   2| import Keys._
-90286e0 Jonas Fonseca      2013-10-14 13:15   3|
-74537d9 Sébastien Doeraene 2013-10-29 18:46   4| import scala.scalajs.sbtplugin.
-90286e0 Jonas Fonseca      2013-10-14 13:15   5| import ScalaJSPlugin._
-90286e0 Jonas Fonseca      2013-10-14 13:15   6| import ScalaJSKeys._
-90286e0 Jonas Fonseca      2013-10-14 13:15   7|
-4779f9b Jonas Fonseca      2013-11-26 20:13   8| object ScalaJSBenchmarks extend
-90286e0 Jonas Fonseca      2013-10-14 13:15   9|
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   1| import sbt._
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   2| import Keys._
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   3|
+74537d9 Sébastien Doeraene 2013-10-29 18:46 +0100   4| import scala.scalajs.sbtp
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   5| import ScalaJSPlugin._
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   6| import ScalaJSKeys._
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   7|
+4779f9b Jonas Fonseca      2013-11-26 20:13 -0500   8| object ScalaJSBenchmarks
+90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   9|
 [blame] project/Build.scala - line 4 of 64                                   14%
 commit 74537d9b257954056d3caa19eb3837500aded883
 Author:     Sébastien Doeraene <sjrdoeraene@gmail.com>
@@ -124,33 +124,33 @@ index 560bca1..1713681 100644
 EOF
 
 assert_equals 'blame-parent-of-74537d9.screen' <<EOF
-90286e0 Jonas Fonseca 2013-10-14 13:15   1| import sbt._
-90286e0 Jonas Fonseca 2013-10-14 13:15   2| import Keys._
-90286e0 Jonas Fonseca 2013-10-14 13:15   3|
-90286e0 Jonas Fonseca 2013-10-14 13:15   4| import ch.epfl.lamp.sbtscalajs._
-90286e0 Jonas Fonseca 2013-10-14 13:15   5| import ScalaJSPlugin._
-90286e0 Jonas Fonseca 2013-10-14 13:15   6| import ScalaJSKeys._
-90286e0 Jonas Fonseca 2013-10-14 13:15   7|
-90286e0 Jonas Fonseca 2013-10-14 13:15   8| object ScalaJSBuild extends Build {
-90286e0 Jonas Fonseca 2013-10-14 13:15   9|
-90286e0 Jonas Fonseca 2013-10-14 13:15  10|   val scalajsScalaVersion = "2.10.2"
-90286e0 Jonas Fonseca 2013-10-14 13:15  11|
-90286e0 Jonas Fonseca 2013-10-14 13:15  12|   val projectSettings = Defaults.def
-90286e0 Jonas Fonseca 2013-10-14 13:15  13|       organization := "scalajs-bench
-90286e0 Jonas Fonseca 2013-10-14 13:15  14|       version := "0.1-SNAPSHOT"
-90286e0 Jonas Fonseca 2013-10-14 13:15  15|   )
-90286e0 Jonas Fonseca 2013-10-14 13:15  16|
-90286e0 Jonas Fonseca 2013-10-14 13:15  17|   val defaultSettings = projectSetti
-90286e0 Jonas Fonseca 2013-10-14 13:15  18|       scalaVersion := scalajsScalaVe
-90286e0 Jonas Fonseca 2013-10-14 13:15  19|       scalacOptions ++= Seq(
-90286e0 Jonas Fonseca 2013-10-14 13:15  20|           "-deprecation",
-90286e0 Jonas Fonseca 2013-10-14 13:15  21|           "-unchecked",
-90286e0 Jonas Fonseca 2013-10-14 13:15  22|           "-feature",
-90286e0 Jonas Fonseca 2013-10-14 13:15  23|           "-encoding", "utf8"
-90286e0 Jonas Fonseca 2013-10-14 13:15  24|       )
-90286e0 Jonas Fonseca 2013-10-14 13:15  25|   )
-90286e0 Jonas Fonseca 2013-10-14 13:15  26|
-90286e0 Jonas Fonseca 2013-10-14 13:15  27|   lazy val benchmarkSettings = defau
-90286e0 Jonas Fonseca 2013-10-14 13:15  28|       unmanagedSources in (Compile,
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400   1| import sbt._
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400   2| import Keys._
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400   3|
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400   4| import ch.epfl.lamp.sbtscalajs
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400   5| import ScalaJSPlugin._
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400   6| import ScalaJSKeys._
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400   7|
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400   8| object ScalaJSBuild extends Bu
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400   9|
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  10|   val scalajsScalaVersion = "2
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  11|
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  12|   val projectSettings = Defaul
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  13|       organization := "scalajs
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  14|       version := "0.1-SNAPSHOT
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  15|   )
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  16|
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  17|   val defaultSettings = projec
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  18|       scalaVersion := scalajsS
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  19|       scalacOptions ++= Seq(
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  20|           "-deprecation",
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  21|           "-unchecked",
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  22|           "-feature",
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  23|           "-encoding", "utf8"
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  24|       )
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  25|   )
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  26|
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  27|   lazy val benchmarkSettings =
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  28|       unmanagedSources in (Com
 [blame] project/Build.scala - line 4 of 66                                   42%
 EOF

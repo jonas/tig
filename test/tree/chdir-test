@@ -54,144 +54,144 @@ test_tig
 
 assert_equals 'tree-top.screen' <<EOF
 Directory path /
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku
-drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer
--rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore
--rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE
--rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md
--rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh
-
-
-
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 -0500 common
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 -0500 deltablue
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 -0500 project
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 -0500 richards
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 -0500 sudoku
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 -0500 tracer
+-rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 -0400 .gitignore
+-rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 -0400 LICENSE
+-rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 +0100 README.md
+-rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 -0500 run.sh
+ 
+ 
+ 
 [tree] 1a4ced7066ada2b26dcb0044f763a8438cd375df - file 1 of 10              100%
 EOF
 
 assert_equals 'tree-cd-depth-one.screen' <<EOF
 Directory path /common/
-drwxr-xr-x                                     ..
-drwxr-xr-x Jonas Fonseca      2014-01-16 17:39 reference
-drwxr-xr-x Jonas Fonseca      2014-03-01 17:26 src
--rwxr-xr-x Jonas Fonseca 2875 2014-03-01 17:26 benchmark-runner.sh
--rw-r--r-- Jonas Fonseca    0 2013-10-14 13:15 build.sbt
--rw-r--r-- Jonas Fonseca  702 2013-10-26 12:54 d8-stubs.js
--rw-r--r-- Jonas Fonseca  811 2014-03-01 17:26 start-benchmark.js
-
-
-
-
-
-
+drwxr-xr-x                                           ..
+drwxr-xr-x Jonas Fonseca      2014-01-16 17:39 -0500 reference
+drwxr-xr-x Jonas Fonseca      2014-03-01 17:26 -0500 src
+-rwxr-xr-x Jonas Fonseca 2875 2014-03-01 17:26 -0500 benchmark-runner.sh
+-rw-r--r-- Jonas Fonseca    0 2013-10-14 13:15 -0400 build.sbt
+-rw-r--r-- Jonas Fonseca  702 2013-10-26 12:54 -0400 d8-stubs.js
+-rw-r--r-- Jonas Fonseca  811 2014-03-01 17:26 -0500 start-benchmark.js
+ 
+ 
+ 
+ 
+ 
+ 
 [tree] Open parent directory                                                100%
 EOF
 
 assert_equals 'tree-cd-depth-two.screen' <<EOF
 Directory path /common/src/
-drwxr-xr-x                                ..
-drwxr-xr-x Jonas Fonseca 2014-03-01 17:26 main
-
-
-
-
-
-
-
-
-
-
-
+drwxr-xr-x                                      ..
+drwxr-xr-x Jonas Fonseca 2014-03-01 17:26 -0500 main
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 [tree] Open parent directory                                                100%
 EOF
 
 assert_equals 'tree-cd-depth-three.screen' <<EOF
 Directory path /common/src/main/
-drwxr-xr-x                                ..
-drwxr-xr-x Jonas Fonseca 2014-03-01 17:26 scala
-
-
-
-
-
-
-
-
-
-
-
+drwxr-xr-x                                      ..
+drwxr-xr-x Jonas Fonseca 2014-03-01 17:26 -0500 scala
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 [tree] Open parent directory                                                100%
 EOF
 
 assert_equals 'tree-cd-depth-seven.screen' <<EOF
 Directory path /common/src/main/scala/org/scalajs/benchmark/
-drwxr-xr-x                                     ..
-drwxr-xr-x Jonas Fonseca      2014-01-16 22:51 dom
--rw-r--r-- Jonas Fonseca 3121 2014-03-01 17:26 Benchmark.scala
--rw-r--r-- Jonas Fonseca 1380 2014-03-01 17:26 BenchmarkApp.scala
-
-
-
-
-
-
-
-
-
+drwxr-xr-x                                           ..
+drwxr-xr-x Jonas Fonseca      2014-01-16 22:51 -0500 dom
+-rw-r--r-- Jonas Fonseca 3121 2014-03-01 17:26 -0500 Benchmark.scala
+-rw-r--r-- Jonas Fonseca 1380 2014-03-01 17:26 -0500 BenchmarkApp.scala
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 [tree] 7c60e317c3f0e644881f3d0017f3e6ecc676978c - file 3 of 3               100%
 EOF
 
 assert_equals 'tree-cdup-depth-six.screen' <<EOF
 Directory path /common/src/main/scala/org/scalajs/
-drwxr-xr-x                                ..
-drwxr-xr-x Jonas Fonseca 2014-03-01 17:26 benchmark
-
-
-
-
-
-
-
-
-
-
-
+drwxr-xr-x                                      ..
+drwxr-xr-x Jonas Fonseca 2014-03-01 17:26 -0500 benchmark
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 [tree] 494e60e33bcd60b64bf30aed2c944d956a0f5534 - file 1 of 1               100%
 EOF
 
 assert_equals 'tree-cdup-depth-five.screen' <<EOF
 Directory path /common/src/main/scala/org/
-drwxr-xr-x                                ..
-drwxr-xr-x Jonas Fonseca 2014-03-01 17:26 scalajs
-
-
-
-
-
-
-
-
-
-
-
+drwxr-xr-x                                      ..
+drwxr-xr-x Jonas Fonseca 2014-03-01 17:26 -0500 scalajs
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 [tree] 0f27e103342d8dcd47881dc16913cd0719f591c2 - file 1 of 1               100%
 EOF
 
 assert_equals 'tree-cdup-depth-four.screen' <<EOF
 Directory path /common/src/main/scala/
-drwxr-xr-x                                ..
-drwxr-xr-x Jonas Fonseca 2014-03-01 17:26 org
-
-
-
-
-
-
-
-
-
-
-
+drwxr-xr-x                                      ..
+drwxr-xr-x Jonas Fonseca 2014-03-01 17:26 -0500 org
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 [tree] 72f232293e3e33cffbca8c0e60c978e0354658a1 - file 1 of 1               100%
 EOF

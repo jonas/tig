@@ -41,36 +41,36 @@ test_timeout 30
 test_tig
 
 assert_equals 'main-with-unstaged.screen' <<EOF
-$YYY_MM_DD_HH_MM Unknown    o Unstaged changes
-2009-02-13 23:31 A. U. Thor I [master] Initial commit
-
+$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
+2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
+ 
 [main] Unstaged changes                                                     100%
 EOF
 
 assert_equals 'main-after-add-a.screen' <<EOF
-$YYY_MM_DD_HH_MM Unknown    o Unstaged changes
-$YYY_MM_DD_HH_MM Unknown    o Staged changes
-2009-02-13 23:31 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
+$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
+2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
 [main] Unstaged changes                                                     100%
 EOF
 
 assert_equals 'main-after-commit.screen' <<EOF
-2014-05-25 19:42 Unknown    o Unstaged changes
-2009-02-22 11:53 Committer  o [master] Commit changes
-2009-02-13 23:31 A. U. Thor I Initial commit
+$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
+2009-02-22 11:53 +0000 Committer  o [master] Commit changes
+2009-02-13 23:31 +0000 A. U. Thor I Initial commit
 [main] Unstaged changes                                                     100%
 EOF
 
 assert_equals 'main-after-commiting-change-and-sleeping-hello.screen' <<EOF
-2014-05-25 19:42 Unknown    o Unstaged changes
-2009-02-22 11:53 Committer  o [master] Another change: hello
-2009-02-22 11:53 Committer  o Commit changes
+$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
+2009-02-22 11:53 +0000 Committer  o [master] Another change: hello
+2009-02-22 11:53 +0000 Committer  o Commit changes
 [main] Unstaged changes                                                      75%
 EOF
 
 assert_equals 'main-after-commiting-change-and-sleeping-world.screen' <<EOF
-2009-02-22 11:53 Committer  o [master] Another change: world
-2009-02-22 11:53 Committer  o Another change: hello
-2009-02-22 11:53 Committer  o Commit changes
+2009-02-22 11:53 +0000 Committer  o [master] Another change: world
+2009-02-22 11:53 +0000 Committer  o Another change: hello
+2009-02-22 11:53 +0000 Committer  o Commit changes
 [main] 70bab5b220d2fd9bf61c125d52d59e10e93ec341 - commit 1 of 4              75%
 EOF

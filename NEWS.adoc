@@ -13,6 +13,7 @@ Improvements:
  - Improve worktree and submodule support. (GH #459, #781, #783)
  - Support running Tig via a Git alias. (GH #763)
  - Use ISO-8601 letters for short relative dates. (GH #759)
+ - Change date formatting to show timezones by default. (GH #428, #811)
 
 Bug fixes:
 

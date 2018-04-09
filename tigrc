@@ -28,6 +28,7 @@
 #					: Show dates?
 #    - local (bool)			: Show local dates?
 #    - format (string)			: Custom strftime(3) format
+#					  Note: %Z is formatted as %z
 #    - width (int)			: Fixed width when nonzero
 #
 #   file-name
@@ -36,7 +37,8 @@
 #    - maxwidth (int)			: Autosize limit
 #
 #   file-size
-#    - display (enum) [no|default|units]	: Show file sizes?
+#    - display (enum) [no|default|units]
+#					: Show file sizes?
 #    - width (int)			: Fixed width when nonzero
 #
 #   id
