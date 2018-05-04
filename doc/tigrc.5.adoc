@@ -317,6 +317,13 @@ The following variables can be set:
 	focus will remain in the parent view, avoiding reloads of the child
 	view when navigating the parent view. True by default.
 
+'send-child-enter' (bool)::
+
+	Whether to send "enter" key presses to the child view, even if parent
+	view is active. When disabled the child view has to be explicitly
+	focused to receive the "enter" key presses. In practice only relevant
+	when `set focus-child = no`. True by default.
+
 'editor-line-number' (bool)::
 
 	Whether to pass the selected line number to the editor command. The

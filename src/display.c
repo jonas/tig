@@ -61,7 +61,7 @@ open_script(const char *path)
 }
 
 bool
-open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool quick, bool refresh, const char *notice)
+open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool quick, bool do_refresh, const char *notice)
 {
 	bool ok;
 
@@ -99,7 +99,7 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 		set_terminal_modes();
 	}
 
-	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && refresh) {
+	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && do_refresh) {
 		struct view *view;
 		int i;
 
@@ -411,8 +411,10 @@ save_view(struct view *view, const char *path)
 			enum_name(get_line_type_name(line->type)),
 			line->selected);
 
-		if (!view->ops->get_column_data(view, line, &column_data))
+		if (!view->ops->get_column_data(view, line, &column_data)) {
+			fclose(file);
 			return true;
+		}
 
 		if (column_data.box) {
 			const struct box *box = column_data.box;

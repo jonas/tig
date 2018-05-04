@@ -49,6 +49,10 @@
 #include "tig/status.h"
 #include "tig/tree.h"
 
+#ifdef HAVE_READLINE
+#include <readline/readline.h>
+#endif /* HAVE_READLINE */
+
 static bool
 forward_request_to_child(struct view *child, enum request request)
 {
@@ -62,7 +66,7 @@ view_request(struct view *view, enum request request)
 	if (!view || !view->lines)
 		return request;
 
-	if (request == REQ_ENTER && !opt_focus_child &&
+	if (request == REQ_ENTER && !opt_focus_child && opt_send_child_enter &&
 	    view_has_flags(view, VIEW_SEND_CHILD_ENTER)) {
 		struct view *child = display[1];
 
@@ -508,6 +512,18 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 
 			} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
 				printf("tig version %s\n", TIG_VERSION);
+#ifdef NCURSES_VERSION
+				printf("%s version %s.%d\n",
+#if NCURSES_WIDECHAR
+				       "ncursesw",
+#else
+				       "ncurses",
+#endif
+				       NCURSES_VERSION, NCURSES_VERSION_PATCH);
+#endif
+#ifdef HAVE_READLINE
+				printf("readline version %s\n", rl_library_version);
+#endif
 				exit(EXIT_SUCCESS);
 
 			} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {

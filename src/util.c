@@ -387,7 +387,7 @@ chunk_allocator(void *mem, size_t type_size, size_t chunk_size, size_t size, siz
 
 	if (mem == NULL || num_chunks != num_chunks_new) {
 		size_t newsize = num_chunks_new * chunk_size * type_size;
-		void *tmp = realloc(mem, newsize);
+		char *tmp = realloc(mem, newsize);
 
 		if (!tmp)
 			return NULL;

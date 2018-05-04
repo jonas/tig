@@ -209,10 +209,10 @@ main.c
 EOF
 
 assert_equals 'grep-i-split.screen' <<EOF
- 14| Is inserted.
- 16| The exit paragraph.
+  8| Is inserted.
+ 10| The exit paragraph.
 main.c
-  7| #include <stdin.h>
+  1| #include <stdin.h>
 [grep] main.c - line 10 of 13                                                76%
 #include <stdin.h>
 

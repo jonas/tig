@@ -522,6 +522,7 @@ parse_string(char *opt, const char *arg, size_t optsize)
 		if (arglen == 1 || arg[arglen - 1] != arg[0])
 			return ERROR_UNMATCHED_QUOTATION;
 		arg += 1; arglen -= 2;
+		/* Fall-through */
 	default:
 		string_ncopy_do(opt, optsize, arg, arglen);
 		return SUCCESS;
