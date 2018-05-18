@@ -206,8 +206,8 @@ init_colors(void)
 {
 	struct line_rule query = { "default", STRING_SIZE("default") };
 	struct line_rule *rule = find_line_rule(&query);
-	int default_bg = rule->info.bg;
-	int default_fg = rule->info.fg;
+	int default_bg = rule ? rule->info.bg : COLOR_BLACK;
+	int default_fg = rule ? rule->info.fg : COLOR_WHITE;
 	enum line_type type;
 
 	/* XXX: Even if the terminal does not support colors (e.g.

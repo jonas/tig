@@ -728,7 +728,7 @@ htab_remove_elt_with_hash (htab_t htab, PTR element, hashval_t hash)
   PTR *slot;
 
   slot = htab_find_slot_with_hash (htab, element, hash, NO_INSERT);
-  if (*slot == HTAB_EMPTY_ENTRY)
+  if (!slot || *slot == HTAB_EMPTY_ENTRY)
     return;
 
   if (htab->del_f)
