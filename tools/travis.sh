@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -euo pipefail
+IFS=$'\n\t'
+
 build_config () {
 	cp contrib/config.make .
 	make all-debug
