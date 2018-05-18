@@ -1,6 +1,25 @@
 Release notes
 =============
 
+master
+------
+
+Improvements:
+
+ - Add 'send-child-enter' option to control interaction with child views. (#791)
+ - Update make config defaults for Cygwin to ncurses6. (GH #792)
+ - Build against netbsd-curses. (GH #789)
+
+Bug fixes:
+
+ - Fix `file(1)` argument on Linux used for resolving encodings. (GH #788)
+ - Fix underflow in the file search. (GH #800, #801)
+ - Fix line numbers in grep view when scrolled. (GH #813)
+ - Pass command line args through to the stage view. (GH #569, #823)
+ - Fix resource leak. (GH #780)
+ - Fix various compiler warnings and pointer arithmetic. (GH #799, #803)
+ - Workaround potential null pointer dereferences. (GH #824)
+
 tig-2.3.3
 ---------
 
