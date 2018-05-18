@@ -514,7 +514,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 				printf("tig version %s\n", TIG_VERSION);
 #ifdef NCURSES_VERSION
 				printf("%s version %s.%d\n",
-#if NCURSES_WIDECHAR
+#ifdef NCURSES_WIDECHAR
 				       "ncursesw",
 #else
 				       "ncurses",

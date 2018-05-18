@@ -95,6 +95,11 @@
 #undef FALSE
 #endif
 
+#ifndef newscr
+/* `newscr` is a ncurses-ism, and doesn't exist in netbsd-curses. (#790) */
+#define newscr curscr
+#endif
+
 #if __GNUC__ >= 3
 #define TIG_NORETURN __attribute__((__noreturn__))
 #define PRINTF_LIKE(fmt, args) __attribute__((format (printf, fmt, args)))
