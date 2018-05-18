@@ -19,6 +19,8 @@ Bug fixes:
  - Fix resource leak. (GH #780)
  - Fix various compiler warnings and pointer arithmetic. (GH #799, #803)
  - Workaround potential null pointer dereferences. (GH #824)
+ - Bind to single and double quotes by using the *<SingleQuote>* and
+   *<DoubleQuote>* key mappings. (GH #821)
 
 tig-2.3.3
 ---------

@@ -243,6 +243,8 @@ static const struct key_mapping key_mappings[] = {
 	{ "ShiftDel",	KEY_SDC },
 	{ "ShiftHome",	KEY_SHOME },
 	{ "ShiftEnd",	KEY_SEND },
+	{ "SingleQuote", '\'' },
+	{ "DoubleQuote", '"' },
 };
 
 static const struct key_mapping *
@@ -314,14 +316,11 @@ get_key_value(const char **name_ptr, struct key *key)
 			if (!mapping)
 				return error("Unknown key mapping: %.*s", len, start);
 
-			if (mapping->value == ' ')
-				return parse_key_value(key, name_ptr, 0, " ", end);
+			if (strchr(" #<'\"", mapping->value)) {
+				const char replacement[] = { mapping->value, 0 };
 
-			if (mapping->value == '#')
-				return parse_key_value(key, name_ptr, 0, "#", end);
-
-			if (mapping->value == '<')
-				return parse_key_value(key, name_ptr, 0, "<", end);
+				return parse_key_value(key, name_ptr, 0, replacement, end);
+			}
 
 			*name_ptr = end + 1;
 			key->data.value = mapping->value;

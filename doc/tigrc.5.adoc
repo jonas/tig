@@ -599,7 +599,8 @@ bind to the `<` key.
 *<Hash>*, *<LessThan>* or *<LT>*, *<Home>*, *<End>*, *<PageUp>* or *<PgUp>*,
 *<PageDown>* or *<PgDown>*, *<ScrollBack>* or *<SBack>*, *<ScrollFwd>* or
 *<SFwd>*, *<ShiftTab>* or *<BackTab>*, *<ShiftLeft>*, *<ShiftRight>*,
-*<ShiftDelete>* or *<ShiftDel>*, *<ShiftHome>*, *<ShiftEnd>*, *<F1>* ... *<F19>*
+*<ShiftDelete>* or *<ShiftDel>*, *<ShiftHome>*, *<ShiftEnd>*, *<SingleQuote>*,
+*<DoubleQuote>*, *<F1>* ... *<F19>*
 
 To define key mappings with the `Ctrl` key, use `<Ctrl-key>`. In addition, key
 combos consisting of an initial `Escape` key followed by a normal key value can
