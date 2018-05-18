@@ -490,7 +490,7 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			 * in grep mode by special-treating that view. */
 			if (draw_lineno(view, column,
 			                column_data.line_number ? *column_data.line_number : lineno,
-			                strcmp(view->name, "grep")))
+			                !view_has_flags(view, VIEW_GREP_LIKE)))
 				return true;
 			continue;
 
