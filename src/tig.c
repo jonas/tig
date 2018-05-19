@@ -508,7 +508,6 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 		if (!seen_dashdash) {
 			if (!strcmp(opt, "--")) {
 				seen_dashdash = true;
-				continue;
 
 			} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
 				printf("tig version %s\n", TIG_VERSION);
