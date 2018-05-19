@@ -31,9 +31,9 @@ grep 'git rev-parse' < "$TIG_TRACE" > rev-parse.trace
 grep 'git log' < "$TIG_TRACE" > log.trace
 
 assert_equals 'rev-parse.trace' <<EOF
-git rev-parse --no-revs --no-flags common tracer
-git rev-parse --flags --no-revs common tracer
-git rev-parse --symbolic --revs-only common tracer
+git rev-parse --no-revs --no-flags -- common tracer
+git rev-parse --flags --no-revs -- common tracer
+git rev-parse --symbolic --revs-only -- common tracer
 git rev-parse --git-dir --is-inside-work-tree --show-cdup --show-prefix HEAD --symbolic-full-name HEAD
 EOF
 
