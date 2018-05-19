@@ -240,6 +240,7 @@ diff_color_arg=
 indent='            '
 verbose=
 debugger=
+runner=exec
 trace=
 todos=
 valgrind=
@@ -599,7 +600,6 @@ test_tig()
 			"$debugger" tig "$@"
 		else
 			set +e
-			runner=exec
 			if [ "$expected_status_code" = 0 ] && [ -n "$valgrind" ]; then
 				runner=valgrind_exec
 				if [ "$timeout" -gt 0 ]; then

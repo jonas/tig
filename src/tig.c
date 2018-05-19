@@ -738,6 +738,30 @@ die_if_failed(enum status_code code, const char *msg)
 		die("%s: %s", msg, get_status_message(code));
 }
 
+static inline enum status_code
+handle_git_prefix(void)
+{
+	const char *prefix = getenv("GIT_PREFIX");
+	char cwd[4096];
+
+	if (!prefix || !*prefix)
+		return SUCCESS;
+
+	/*
+	 * GIT_PREFIX is set when tig is invoked as a git alias.
+	 * Tig expects to run from the subdirectory so clear the prefix
+	 * and set GIT_WORK_TREE accordinglyt.
+	 */
+	if (!getcwd(cwd, sizeof(cwd)))
+		return error("Failed to read CWD");
+	if (setenv("GIT_WORK_TREE", cwd, 1))
+		return error("Failed to set GIT_WORK_TREE");
+	if (setenv("GIT_PREFIX", "", 1))
+		return error("Failed to clear GIT_PREFIX");
+
+	return chdir(prefix) ? error("Failed to change directory to %s", prefix) : SUCCESS;
+}
+
 int
 main(int argc, const char *argv[])
 {
@@ -761,6 +785,7 @@ main(int argc, const char *argv[])
 		codeset = nl_langinfo(CODESET);
 	}
 
+	die_if_failed(handle_git_prefix(), "Failed to handle GIT_PREFIX");
 	die_if_failed(load_repo_info(), "Failed to load repo info.");
 	die_if_failed(load_options(), "Failed to load user config.");
 	die_if_failed(load_git_config(), "Failed to load repo config.");
