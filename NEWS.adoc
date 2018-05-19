@@ -10,6 +10,7 @@ Improvements:
  - Update make config defaults for Cygwin to ncurses6. (GH #792)
  - Build against netbsd-curses. (GH #789)
  - Change the blame view to render more like `git blame`. (GH #812)
+ - Improve worktree and submodule support. (GH #459, #781, #783)
 
 Bug fixes:
 

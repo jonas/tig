@@ -705,6 +705,7 @@ following variable names, which are substituted before commands are run:
 |%(repo:prefix)		|The path prefix of the current work directory,
 			 e.g `subdir/`.
 |%(repo:git-dir)	|The path to the Git directory, e.g. `/src/repo/.git`.
+|%(repo:worktree)	|The worktree path, if defined.
 |%(repo:is-inside-work-tree)
 			|Whether Tig is running inside a work tree,
 			 either `true` or `false`.

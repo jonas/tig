@@ -3,13 +3,24 @@
 . libtest.sh
 . libgit.sh
 
+executable exec-env <<EOF
+#!/bin/sh
+
+{
+	echo "\$TEST_CASE"
+	printf ' - pwd='; pwd
+	for arg in git-dir show-cdup is-inside-work-tree show-superproject-working-tree; do
+		echo " - \$arg=\$(git rev-parse --\$arg)"
+	done
+} | sed "s,$output_dir,ROOT," >> $output_dir/exec-env
+EOF
+
 tigrc <<EOF
 set line-graphics = ascii
 set diff-view-line-number = yes
 set stage-view-line-number = yes
+bind diff <C-p> !sh -c 'TEST_CASE=\$TEST_CASE::exec exec-env'
 EOF
-
-in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
 
 script='
 	:210
@@ -20,8 +31,24 @@ script='
 	:exec !vim +%(lineno) %(file)
 '
 
+setup_submodule_project()
+{
+	mkdir -p "$output_dir/base"
+	cd "$output_dir/base"
+	create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+	cd "$output_dir"
+	git_init
+	cd "$output_dir/$work_dir"
+	git submodule add "$output_dir/base" bench
+  git_commit -m "Adding benchmark"
+}
+
+test_exec_work_dir setup_submodule_project
+work_dir="$work_dir/bench"
+
 test_case default \
  --args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+ --before='exec-env' \
  --script="$script" <<EOF
    | -  )
    | -
@@ -56,8 +83,11 @@ EOF
 
 test_case sub-directory \
  --args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
- --before='mkdir -p some/subdir && cd some/subdir' \
- --script="$script" <<EOF
+ --before='mkdir -p some/subdir && cd some/subdir && exec-env' \
+ --script="
+    $script
+    <C-p>
+" <<EOF
    | -  )
    | -
    |    lazy val parent: Project = Project(
@@ -91,7 +121,7 @@ EOF
 
 test_case sub-directory-diffstat \
  --args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
- --before='mkdir -p some/subdir && cd some/subdir' \
+ --before='mkdir -p some/subdir && cd some/subdir && exec-env' \
  --script='
 	:10
 	:edit
@@ -100,7 +130,7 @@ test_case sub-directory-diffstat \
 	<C-p>
 ' <<EOF
   1| commit ee912870202200a0b9cf4fd86ba57243212d341e
-   | Refs: [master]
+   | Refs: [master], {origin/master}, {origin/HEAD}
    | Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
    | AuthorDate: Sat Mar 1 17:26:01 2014 -0500
   5| Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
@@ -127,7 +157,7 @@ test_case sub-directory-diffstat \
    |  .../main/scala/org/scalajs/benchmark/tracer/Tracer.scala    |  3 +++
    |  17 files changed, 42 insertions(+), 76 deletions(-)
    |
-[diff] Press '<Enter>' to jump to file diff - line 25 of 367                  7%
+[diff] Press '<Enter>' to jump to file diff - line 26 of 367                  7%
 EOF
 
 # This settings doesn't seem to apply to `git-show`
@@ -325,4 +355,37 @@ c'
 c'
 +5 conflict-file
 >>>>>>> conflict-branch
+EOF
+
+assert_equals 'exec-env' <<EOF
+default
+ - pwd=ROOT/work dir/bench
+ - git-dir=ROOT/work dir/.git/modules/bench
+ - show-cdup=
+ - is-inside-work-tree=true
+ - show-superproject-working-tree=ROOT/work dir
+sub-directory
+ - pwd=ROOT/work dir/bench/some/subdir
+ - git-dir=ROOT/work dir/.git/modules/bench
+ - show-cdup=../../
+ - is-inside-work-tree=true
+ - show-superproject-working-tree=ROOT/work dir
+sub-directory::exec
+ - pwd=ROOT/work dir/bench
+ - git-dir=ROOT/work dir/.git/modules/bench
+ - show-cdup=
+ - is-inside-work-tree=true
+ - show-superproject-working-tree=ROOT/work dir
+sub-directory-diffstat
+ - pwd=ROOT/work dir/bench/some/subdir
+ - git-dir=ROOT/work dir/.git/modules/bench
+ - show-cdup=../../
+ - is-inside-work-tree=true
+ - show-superproject-working-tree=ROOT/work dir
+sub-directory-diffstat::exec
+ - pwd=ROOT/work dir/bench
+ - git-dir=ROOT/work dir/.git/modules/bench
+ - show-cdup=
+ - is-inside-work-tree=true
+ - show-superproject-working-tree=ROOT/work dir
 EOF
