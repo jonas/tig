@@ -1,0 +1,56 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=5
+
+benchmarks_git="$output_dir/benchmarks.git"
+benchmarks_dir="$output_dir/$work_dir"
+
+tigrc <<EOF
+set line-graphics = ascii
+EOF
+
+steps '
+	:save-display main.screen
+'
+
+executable alias-vars <<EOF
+{
+	echo "PWD=\$(pwd)"
+	env | grep GIT_
+} | sed 's,$output_dir,ROOT,' >> "$output_dir/alias-vars"
+EOF
+
+test_setup_work_dir()
+{
+	mkdir -p "$output_dir/base"
+	cd "$output_dir/base"
+	create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+	git branch work-branch ee912870202200a0b9cf4fd86ba57243212d341e
+	git worktree add "$output_dir/$work_dir" work-branch
+	git config --global alias.tig !tig
+	git config --global alias.alias-vars !alias-vars
+}
+
+test_exec_work_dir test_setup_work_dir
+
+runner=git
+
+work_dir="$work_dir/deltablue"
+test_tig -- src/main/scala
+in_work_dir git alias-vars
+
+assert_equals 'alias-vars' <<EOF
+PWD=ROOT/work dir
+GIT_DIR=ROOT/base/.git/worktrees/work dir
+GIT_PREFIX=deltablue/
+EOF
+
+assert_equals 'main.screen' <<EOF
+2014-03-01 17:26 Jonas Fonseca * [work-branch] [master] WIP: Upgrade to 0.4-SNAP
+2014-01-16 22:51 Jonas Fonseca I Move classes under org.scalajs.benchmark packag
+
+[main] ee912870202200a0b9cf4fd86ba57243212d341e - commit 1 of 2             100%
+EOF
