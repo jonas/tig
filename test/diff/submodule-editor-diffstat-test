@@ -1,0 +1,81 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=22
+
+executable exec-env <<EOF
+#!/bin/sh
+
+{
+	printf ' - pwd='; pwd
+	for arg in git-dir show-cdup is-inside-work-tree show-superproject-working-tree; do
+		echo " - \$arg=\$(git rev-parse --\$arg)"
+	done
+} | sed "s,$output_dir,ROOT," >> "$output_dir/exec-env"
+EOF
+
+tigrc <<EOF
+set line-graphics = ascii
+set diff-view-line-number = yes
+bind diff <C-p> !exec-env
+EOF
+
+steps '
+	:9
+	:edit
+	:save-display diff.screen
+	<C-p>
+'
+
+setup_submodule_project()
+{
+	create_repo_from_tgz "$base_dir/files/repo-two.tgz"
+	git submodule update
+	mkdir -p repo-two-a/src/subdir
+}
+
+test_exec_work_dir setup_submodule_project
+work_dir="$work_dir/repo-two-a/src/subdir"
+
+test_tig show 8cc26dd6e80e2fa7fa98d12f4670d8983bc83678
+
+assert_equals 'diff.screen' <<EOF
+  1| commit 8cc26dd6e80e2fa7fa98d12f4670d8983bc83678
+   | Author:     A. U. Thor <a.u.thor@example.com>
+   | AuthorDate: Thu Jun 4 16:19:40 2009 +0000
+   | Commit:     Committer <c.ommitter@example.net>
+  5| CommitDate: Thu Jun 4 16:19:40 2009 +0000
+   |
+   |     [repo-two-a] Commit 3
+   | ---
+   |  include/api.h | 1 +
+ 10|  1 file changed, 1 insertion(+)
+   |
+   | diff --git a/include/api.h b/include/api.h
+   | index f2eb956..1da0f3f 100644
+   | --- a/include/api.h
+ 15| +++ b/include/api.h
+   | @@ -1 +1,2 @@
+   |  include/api.h
+   | +include/api.h
+ 
+ 
+[diff] Press '<Enter>' to jump to file diff - line 9 of 18                  100%
+EOF
+
+# The file is called include/api.h and contains its name on two lines
+assert_equals 'editor.log' <<EOF
+include/api.h
+include/api.h
+include/api.h
+EOF
+
+assert_equals 'exec-env' <<EOF
+ - pwd=ROOT/work dir/repo-two-a
+ - git-dir=ROOT/work dir/.git/modules/repo-two-a
+ - show-cdup=
+ - is-inside-work-tree=true
+ - show-superproject-working-tree=ROOT/work dir
+EOF

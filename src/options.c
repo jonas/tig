@@ -1334,30 +1334,6 @@ set_repo_config_option(char *name, char *value, enum status_code (*cmd)(int, con
 		warn("Option 'tig.%s': %s", name, get_status_message(code));
 }
 
-static void
-set_work_tree(const char *value)
-{
-	char cwd[SIZEOF_STR];
-
-	if (!getcwd(cwd, sizeof(cwd)))
-		die("Failed to get cwd path: %s", strerror(errno));
-	if (chdir(cwd) < 0)
-		die("Failed to chdir(%s): %s", cwd, strerror(errno));
-	if (chdir(repo.git_dir) < 0)
-		die("Failed to chdir(%s): %s", repo.git_dir, strerror(errno));
-	if (!getcwd(repo.git_dir, sizeof(repo.git_dir)))
-		die("Failed to get git path: %s", strerror(errno));
-	if (chdir(value) < 0)
-		die("Failed to chdir(%s): %s", value, strerror(errno));
-	if (!getcwd(cwd, sizeof(cwd)))
-		die("Failed to get cwd path: %s", strerror(errno));
-	if (setenv("GIT_WORK_TREE", cwd, true))
-		die("Failed to set GIT_WORK_TREE to '%s'", cwd);
-	if (setenv("GIT_DIR", repo.git_dir, true))
-		die("Failed to set GIT_DIR to '%s'", repo.git_dir);
-	repo.is_inside_work_tree = true;
-}
-
 static struct line_info *
 parse_git_color_option(struct line_info *info, char *value)
 {
@@ -1449,7 +1425,7 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 		string_ncopy(opt_editor, value, valuelen);
 
 	else if (!strcmp(name, "core.worktree"))
-		set_work_tree(value);
+		string_ncopy(repo.worktree, value, valuelen);
 
 	else if (!strcmp(name, "core.abbrev"))
 		parse_int(&opt_id_width, value, 0, SIZEOF_REV - 1);

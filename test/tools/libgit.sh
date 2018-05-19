@@ -31,16 +31,16 @@ IDENT_E="Max Power <power123@example.org>"
 
 git_config()
 {
-	git config --local user.name "Committer"
-	git config --local user.email "c.ommitter@example.net"
-	git config --local diff.renames false
+	git config --global user.name "Committer"
+	git config --global user.email "c.ommitter@example.net"
+	git config --global diff.renames false
 }
 
 git_init()
 {
 	dir="${1:-$work_dir}"
 
-	if [ ! -d "$dir/.git" ]; then
+	if [ ! -e "$dir/.git" ]; then
 		git init -q -- "$dir"
 		(cd "$dir" && git_config)
 	fi
@@ -48,7 +48,7 @@ git_init()
 
 git_add()
 {
-	[ -d .git ] || die "git_add called outside of git repo"
+	[ -e .git ] || die "git_add called outside of git repo"
 	path="$1"; shift
 
 	mkdir -p -- "$(dirname -- "$path")"
@@ -58,7 +58,7 @@ git_add()
 
 git_commit()
 {
-	[ -d .git ] || die "git_commit called outside of git repo"
+	[ -e .git ] || die "git_commit called outside of git repo: $(pwd)"
 
 	GIT_COMMITTER_NAME="$0"
 	GIT_COMMITTER_EMAIL="$0"

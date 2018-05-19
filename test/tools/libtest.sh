@@ -111,6 +111,8 @@ file="\$1"
 lineno="\$(expr "\$1" : '+\([0-9]*\)')"
 if [ -n "\$lineno" ]; then
 	file="\$2"
+else
+	lineno=1,5
 fi
 
 printf '%s\\n' "\$*" >> "$HOME/editor.log"
@@ -486,7 +488,8 @@ test_require()
 
 test_exec_work_dir()
 {
-	printf '=== %s ===\n' "$*" >> "$HOME/test-exec.log"
+	cmd="$@"
+	printf '=== %s ===\n' "$cmd" >> "$HOME/test-exec.log"
 	test_exec_log="$HOME/test-exec.log.tmp"
 	rm -f -- "$test_exec_log"
 
@@ -497,7 +500,6 @@ test_exec_work_dir()
 
 	cat < "$test_exec_log" >> "$HOME/test-exec.log"
 	if [ "$test_exec_exit_code" != 0 ]; then
-		cmd="$*"
 		printf "[FAIL] unexpected exit code while executing '%s': %s\n" "$cmd" "$test_exec_exit_code" >> .test-result
 		cat < "$test_exec_log" >> .test-result
 		# Exit gracefully to allow additional tests to run
@@ -680,6 +682,7 @@ run_test_cases()
 	fi
 	test_setup
 	while read -r name <&3; do
+		export TEST_CASE="$name"
 		if [ -n "$filter" ]; then
 			matcher="$name"
 			_filter_case_part="${filter#*:}"
