@@ -9,6 +9,7 @@ Improvements:
  - Add 'send-child-enter' option to control interaction with child views. (#791)
  - Update make config defaults for Cygwin to ncurses6. (GH #792)
  - Build against netbsd-curses. (GH #789)
+ - Change the blame view to render more like `git blame`. (GH #812)
 
 Bug fixes:
 
