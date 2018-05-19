@@ -16,8 +16,8 @@ commit XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 EOF
 
 assert_equals stdout <<EOF
-● Staged changes
-● Unstaged changes
-● First commit
+∙ Staged changes
+∙ Unstaged changes
+∙ First commit
 ◎ Last commit
 EOF

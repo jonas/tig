@@ -50,19 +50,19 @@ test_tig_script 'follow' --follow project/Build.scala <<EOF
 EOF
 
 test_tig_script 'first-parent' --first-parent <<EOF
-2014-03-01 17:26 JFonseca ● WIP: Upgrade to 0.4-SNAPSHOT and DCE
-2014-03-01 15:59 JFonseca ● Add type parameter for js.Dynamic
-2014-01-16 22:51 JFonseca ● Move classes under org.scalajs.benchmark package sco
-2014-01-16 17:43 JFonseca ● Bump Scala.js version to 0.3-SNAPSHOT
-2014-01-16 17:39 JFonseca ● Integrate app code into the benchmark infrastructure
-2014-01-16 07:47 JFonseca ● Merge pull request #4 from phaller/patch-1
-2013-12-17 00:02 JFonseca ● Update links to reflect project name change
-2013-12-03 23:35 JFonseca ● Use Scala.js 0.2-SNAPSHOT
-2013-11-26 23:39 JFonseca ● Extract the benchmark list variable name; fix push t
-2013-11-26 23:31 JFonseca ● Solve the easiest sudoku grid
-2013-11-26 23:22 JFonseca ● Disable phantomjs by default
-2013-11-26 22:55 JFonseca ● Exclude Sudoku when running all benchmarks
-2013-11-26 22:52 JFonseca ● Fix reference setup to work for node
-2013-11-26 22:03 JFonseca ● Move benchmark registration to Scala
+2014-03-01 17:26 JFonseca ∙ WIP: Upgrade to 0.4-SNAPSHOT and DCE
+2014-03-01 15:59 JFonseca ∙ Add type parameter for js.Dynamic
+2014-01-16 22:51 JFonseca ∙ Move classes under org.scalajs.benchmark package sco
+2014-01-16 17:43 JFonseca ∙ Bump Scala.js version to 0.3-SNAPSHOT
+2014-01-16 17:39 JFonseca ∙ Integrate app code into the benchmark infrastructure
+2014-01-16 07:47 JFonseca ∙ Merge pull request #4 from phaller/patch-1
+2013-12-17 00:02 JFonseca ∙ Update links to reflect project name change
+2013-12-03 23:35 JFonseca ∙ Use Scala.js 0.2-SNAPSHOT
+2013-11-26 23:39 JFonseca ∙ Extract the benchmark list variable name; fix push t
+2013-11-26 23:31 JFonseca ∙ Solve the easiest sudoku grid
+2013-11-26 23:22 JFonseca ∙ Disable phantomjs by default
+2013-11-26 22:55 JFonseca ∙ Exclude Sudoku when running all benchmarks
+2013-11-26 22:52 JFonseca ∙ Fix reference setup to work for node
+2013-11-26 22:03 JFonseca ∙ Move benchmark registration to Scala
 [main] ee912870202200a0b9cf4fd86ba57243212d341e - commit 1 of 44             31%
 EOF
