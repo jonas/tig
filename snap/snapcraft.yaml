@@ -1,4 +1,4 @@
-name: tig
+name: tig-snaps
 version: git
 summary: Text-mode interface for git
 description: |
