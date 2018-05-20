@@ -1,0 +1,18 @@
+environment:
+  matrix:
+  - TARGET: cygwin
+    ARCH: x86
+  - TARGET: cygwin64
+    ARCH: x86_64
+
+install:
+ - cmd: C:\%TARGET%\setup-%ARCH%.exe -qgnNdO -l C:\%TARGET%\var\cache\setup -R C:\%TARGET% -s http://cygwin.mirror.constant.com -P git -P gcc-code -P make -P automake -P libiconv-devel -P libncurses-devel
+ - cmd: SET PATH=C:\%TARGET%\bin;%PATH%
+
+build_script:
+ - make configure
+ - sh configure
+ - make
+
+test_script:
+ - make test

@@ -3,6 +3,10 @@
 . libtest.sh
 . libgit.sh
 
+case "$(uname -s)" in CYGWIN*)
+	test_skip "Emojis are not well supported on CYGWIN"
+esac
+
 export LINES=10
 
 tigrc <<EOF
