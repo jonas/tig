@@ -8,7 +8,6 @@ build_config_make() {
 	make all-debug
 	make update-docs && git diff --exit-code
 	make test
-	make test TEST_OPTS=valgrind
 
 	make prefix=/tmp/bare-prefix install install-doc
 	/tmp/bare-prefix/bin/tig --version
@@ -41,10 +40,16 @@ build_address_sanitizer() {
 	make test-address-sanitizer
 }
 
+build_valgrind() {
+	cp contrib/config.make .
+	make all-debug test TEST_OPTS=valgrind
+}
+
 case "$TIG_BUILD" in
 	config.make)		build_config_make ;;
 	autoconf)		build_autoconf ;;
 	address-sanitizer)	build_address_sanitizer ;;
+	valgrind)		build_valgrind ;;
 
 	*)
 		echo "Unknown config: $TIG_BUILD"

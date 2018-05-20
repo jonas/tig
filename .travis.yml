@@ -20,9 +20,10 @@ script: tools/travis.sh
 
 matrix:
   include:
+  - env: TIG_BUILD=valgrind
+    script: tools/travis.sh
   - env: TIG_BUILD=address-sanitizer
     compiler: clang
-    os: linux
     # LeakSanitizer requires ptrace capabilities
     # https://github.com/travis-ci/travis-ci/issues/9033
     sudo: required
