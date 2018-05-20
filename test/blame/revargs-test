@@ -11,72 +11,76 @@ steps '
 	:save-display parent-of-4779f9b.screen
 '
 
+tigrc <<EOF
+set line-graphics = ascii
+EOF
+
 in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
 
 test_tig blame 74537d9..HEAD project/Build.scala
 
 # note that we show boundary commits, so the lower bound 74537d9 appears
 assert_equals 'limit.screen' <<EOF
-2013-10-29 18:46 Sébastien Doeraene 74537d9 import sbt._
-2013-10-29 18:46 Sébastien Doeraene 74537d9 import Keys._
-2013-10-29 18:46 Sébastien Doeraene 74537d9
-2013-10-29 18:46 Sébastien Doeraene 74537d9 import scala.scalajs.sbtplugin._
-2013-10-29 18:46 Sébastien Doeraene 74537d9 import ScalaJSPlugin._
-2013-10-29 18:46 Sébastien Doeraene 74537d9 import ScalaJSKeys._
-2013-10-29 18:46 Sébastien Doeraene 74537d9
-2013-11-26 20:13 Jonas Fonseca      4779f9b object ScalaJSBenchmarks extends Bui
-2013-10-29 18:46 Sébastien Doeraene 74537d9
-2013-11-26 20:13 Jonas Fonseca      4779f9b   val scalaJSScalaVersion = "2.10.2"
-2013-10-29 18:46 Sébastien Doeraene 74537d9
-2013-10-29 18:46 Sébastien Doeraene 74537d9   val projectSettings = Defaults.def
-2013-10-29 18:46 Sébastien Doeraene 74537d9       organization := "scalajs-bench
-2013-10-29 18:46 Sébastien Doeraene 74537d9       version := "0.1-SNAPSHOT"
-2013-10-29 18:46 Sébastien Doeraene 74537d9   )
-2013-10-29 18:46 Sébastien Doeraene 74537d9
-2013-10-29 18:46 Sébastien Doeraene 74537d9   val defaultSettings = projectSetti
-2013-11-26 20:13 Jonas Fonseca      4779f9b       scalaVersion := scalaJSScalaVe
-2013-10-29 18:46 Sébastien Doeraene 74537d9       scalacOptions ++= Seq(
-2013-10-29 18:46 Sébastien Doeraene 74537d9           "-deprecation",
-2013-10-29 18:46 Sébastien Doeraene 74537d9           "-unchecked",
-2013-10-29 18:46 Sébastien Doeraene 74537d9           "-feature",
-2013-10-29 18:46 Sébastien Doeraene 74537d9           "-encoding", "utf8"
-2013-10-29 18:46 Sébastien Doeraene 74537d9       )
-2013-10-29 18:46 Sébastien Doeraene 74537d9   )
-2013-10-29 18:46 Sébastien Doeraene 74537d9
-2013-10-29 18:46 Sébastien Doeraene 74537d9   lazy val parent: Project = Project
-2013-10-29 18:46 Sébastien Doeraene 74537d9       id = "parent",
+74537d9 Sébastien Doeraene 2013-10-29 18:46   1| import sbt._
+74537d9 Sébastien Doeraene 2013-10-29 18:46   2| import Keys._
+74537d9 Sébastien Doeraene 2013-10-29 18:46   3|
+74537d9 Sébastien Doeraene 2013-10-29 18:46   4| import scala.scalajs.sbtplugin.
+74537d9 Sébastien Doeraene 2013-10-29 18:46   5| import ScalaJSPlugin._
+74537d9 Sébastien Doeraene 2013-10-29 18:46   6| import ScalaJSKeys._
+74537d9 Sébastien Doeraene 2013-10-29 18:46   7|
+4779f9b Jonas Fonseca      2013-11-26 20:13   8| object ScalaJSBenchmarks extend
+74537d9 Sébastien Doeraene 2013-10-29 18:46   9|
+4779f9b Jonas Fonseca      2013-11-26 20:13  10|   val scalaJSScalaVersion = "2.
+74537d9 Sébastien Doeraene 2013-10-29 18:46  11|
+74537d9 Sébastien Doeraene 2013-10-29 18:46  12|   val projectSettings = Default
+74537d9 Sébastien Doeraene 2013-10-29 18:46  13|       organization := "scalajs-
+74537d9 Sébastien Doeraene 2013-10-29 18:46  14|       version := "0.1-SNAPSHOT"
+74537d9 Sébastien Doeraene 2013-10-29 18:46  15|   )
+74537d9 Sébastien Doeraene 2013-10-29 18:46  16|
+74537d9 Sébastien Doeraene 2013-10-29 18:46  17|   val defaultSettings = project
+4779f9b Jonas Fonseca      2013-11-26 20:13  18|       scalaVersion := scalaJSSc
+74537d9 Sébastien Doeraene 2013-10-29 18:46  19|       scalacOptions ++= Seq(
+74537d9 Sébastien Doeraene 2013-10-29 18:46  20|           "-deprecation",
+74537d9 Sébastien Doeraene 2013-10-29 18:46  21|           "-unchecked",
+74537d9 Sébastien Doeraene 2013-10-29 18:46  22|           "-feature",
+74537d9 Sébastien Doeraene 2013-10-29 18:46  23|           "-encoding", "utf8"
+74537d9 Sébastien Doeraene 2013-10-29 18:46  24|       )
+74537d9 Sébastien Doeraene 2013-10-29 18:46  25|   )
+74537d9 Sébastien Doeraene 2013-10-29 18:46  26|
+74537d9 Sébastien Doeraene 2013-10-29 18:46  27|   lazy val parent: Project = Pr
+74537d9 Sébastien Doeraene 2013-10-29 18:46  28|       id = "parent",
 [blame] project/Build.scala - line 1 of 64                                   43%
 EOF
 
 # confirm that we kept our lower bound
 assert_equals 'parent-of-4779f9b.screen' <<EOF
-2013-10-29 18:46 Sébastien Doeraene 74537d9 import sbt._
-2013-10-29 18:46 Sébastien Doeraene 74537d9 import Keys._
-2013-10-29 18:46 Sébastien Doeraene 74537d9
-2013-10-29 18:46 Sébastien Doeraene 74537d9 import scala.scalajs.sbtplugin._
-2013-10-29 18:46 Sébastien Doeraene 74537d9 import ScalaJSPlugin._
-2013-10-29 18:46 Sébastien Doeraene 74537d9 import ScalaJSKeys._
-2013-10-29 18:46 Sébastien Doeraene 74537d9
-2013-10-29 18:46 Sébastien Doeraene 74537d9 object ScalaJSBuild extends Build {
-2013-10-29 18:46 Sébastien Doeraene 74537d9
-2013-10-29 18:46 Sébastien Doeraene 74537d9   val scalajsScalaVersion = "2.10.2"
-2013-10-29 18:46 Sébastien Doeraene 74537d9
-2013-10-29 18:46 Sébastien Doeraene 74537d9   val projectSettings = Defaults.def
-2013-10-29 18:46 Sébastien Doeraene 74537d9       organization := "scalajs-bench
-2013-10-29 18:46 Sébastien Doeraene 74537d9       version := "0.1-SNAPSHOT"
-2013-10-29 18:46 Sébastien Doeraene 74537d9   )
-2013-10-29 18:46 Sébastien Doeraene 74537d9
-2013-10-29 18:46 Sébastien Doeraene 74537d9   val defaultSettings = projectSetti
-2013-10-29 18:46 Sébastien Doeraene 74537d9       scalaVersion := scalajsScalaVe
-2013-10-29 18:46 Sébastien Doeraene 74537d9       scalacOptions ++= Seq(
-2013-10-29 18:46 Sébastien Doeraene 74537d9           "-deprecation",
-2013-10-29 18:46 Sébastien Doeraene 74537d9           "-unchecked",
-2013-10-29 18:46 Sébastien Doeraene 74537d9           "-feature",
-2013-10-29 18:46 Sébastien Doeraene 74537d9           "-encoding", "utf8"
-2013-10-29 18:46 Sébastien Doeraene 74537d9       )
-2013-10-29 18:46 Sébastien Doeraene 74537d9   )
-2013-10-29 18:46 Sébastien Doeraene 74537d9
-2013-10-29 18:46 Sébastien Doeraene 74537d9   lazy val benchmarkSettings = defau
-2013-10-29 18:46 Sébastien Doeraene 74537d9       unmanagedSources in (Compile,
+74537d9 Sébastien Doeraene 2013-10-29 18:46   1| import sbt._
+74537d9 Sébastien Doeraene 2013-10-29 18:46   2| import Keys._
+74537d9 Sébastien Doeraene 2013-10-29 18:46   3|
+74537d9 Sébastien Doeraene 2013-10-29 18:46   4| import scala.scalajs.sbtplugin.
+74537d9 Sébastien Doeraene 2013-10-29 18:46   5| import ScalaJSPlugin._
+74537d9 Sébastien Doeraene 2013-10-29 18:46   6| import ScalaJSKeys._
+74537d9 Sébastien Doeraene 2013-10-29 18:46   7|
+74537d9 Sébastien Doeraene 2013-10-29 18:46   8| object ScalaJSBuild extends Bui
+74537d9 Sébastien Doeraene 2013-10-29 18:46   9|
+74537d9 Sébastien Doeraene 2013-10-29 18:46  10|   val scalajsScalaVersion = "2.
+74537d9 Sébastien Doeraene 2013-10-29 18:46  11|
+74537d9 Sébastien Doeraene 2013-10-29 18:46  12|   val projectSettings = Default
+74537d9 Sébastien Doeraene 2013-10-29 18:46  13|       organization := "scalajs-
+74537d9 Sébastien Doeraene 2013-10-29 18:46  14|       version := "0.1-SNAPSHOT"
+74537d9 Sébastien Doeraene 2013-10-29 18:46  15|   )
+74537d9 Sébastien Doeraene 2013-10-29 18:46  16|
+74537d9 Sébastien Doeraene 2013-10-29 18:46  17|   val defaultSettings = project
+74537d9 Sébastien Doeraene 2013-10-29 18:46  18|       scalaVersion := scalajsSc
+74537d9 Sébastien Doeraene 2013-10-29 18:46  19|       scalacOptions ++= Seq(
+74537d9 Sébastien Doeraene 2013-10-29 18:46  20|           "-deprecation",
+74537d9 Sébastien Doeraene 2013-10-29 18:46  21|           "-unchecked",
+74537d9 Sébastien Doeraene 2013-10-29 18:46  22|           "-feature",
+74537d9 Sébastien Doeraene 2013-10-29 18:46  23|           "-encoding", "utf8"
+74537d9 Sébastien Doeraene 2013-10-29 18:46  24|       )
+74537d9 Sébastien Doeraene 2013-10-29 18:46  25|   )
+74537d9 Sébastien Doeraene 2013-10-29 18:46  26|
+74537d9 Sébastien Doeraene 2013-10-29 18:46  27|   lazy val benchmarkSettings =
+74537d9 Sébastien Doeraene 2013-10-29 18:46  28|       unmanagedSources in (Comp
 [blame] project/Build.scala - line 8 of 69                                   40%
 EOF

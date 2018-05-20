@@ -99,8 +99,8 @@ tig warning: ~/.tigrc:25: Unknown color attribute: normally
 tig warning: ~/.tigrc:34: Unknown option \`visibility' for column line-number
 tig warning: ~/.tigrc:36: Invalid key binding: bind keymap key action
 tig warning: ~/.tigrc:37: Invalid key binding: bind keymap key action
-tig warning: ~/.tigrc:38: Unknown command flag '%'; expected one of :!?@<+
-tig warning: ~/.tigrc:39: Unknown command flag '|'; expected one of :!?@<+
+tig warning: ~/.tigrc:38: Unknown command flag '%'; expected one of :!?@<+>
+tig warning: ~/.tigrc:39: Unknown command flag '|'; expected one of :!?@<+>
 tig warning: ~/.tigrc:57: Unknown option command: c
 tig warning: Errors while loading HOME/.tigrc.
 EOF

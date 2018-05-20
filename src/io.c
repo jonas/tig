@@ -118,7 +118,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
 	    || !strcmp(encoding, "unspecified")
 	    || !strcmp(encoding, "set")) {
 		const char *file_argv[] = {
-			"file", "-I", "--", path, NULL
+			"file", "--mime", "--", path, NULL
 		};
 
 		if (!*path || !io_run_buf(file_argv, buf, sizeof(buf), NULL, false)

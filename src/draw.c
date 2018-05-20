@@ -242,7 +242,8 @@ static bool
 draw_author(struct view *view, struct view_column *column, const struct ident *author)
 {
 	bool trim = author_trim(column->width);
-	const char *text = mkauthor(author, column->opt.author.width, column->opt.author.display);
+	const char *text = mkauthor(author, MAX(column->opt.author.width, column->opt.author.maxwidth),
+				    column->opt.author.display);
 
 	if (column->opt.author.display == AUTHOR_NO)
 		return false;
@@ -332,9 +333,11 @@ draw_lineno_custom(struct view *view, struct view_column *column, unsigned int l
 }
 
 bool
-draw_lineno(struct view *view, struct view_column *column, unsigned int lineno)
+draw_lineno(struct view *view, struct view_column *column, unsigned int lineno, bool add_offset)
 {
-	lineno += view->pos.offset + 1;
+	lineno += 1;
+	if (add_offset)
+		lineno += view->pos.offset;
 	return draw_lineno_custom(view, column, lineno);
 }
 
@@ -484,7 +487,11 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_LINE_NUMBER:
-			if (draw_lineno(view, column, column_data.line_number ? *column_data.line_number : lineno))
+			/* Avoid corrupting line numbers (which actually are search results)
+			 * in grep mode by special-treating that view. */
+			if (draw_lineno(view, column,
+			                column_data.line_number ? *column_data.line_number : lineno,
+			                !view_has_flags(view, VIEW_GREP_LIKE)))
 				return true;
 			continue;
 

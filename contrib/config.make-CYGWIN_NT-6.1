@@ -2,7 +2,7 @@
 #
 # Use ncursesw.
 
-NCURSESW_LIBS = $(shell ncursesw5-config --libs 2>/dev/null)
+NCURSESW_LIBS = $(shell ncursesw6-config --libs 2>/dev/null)
 HAS_ICONV = $(shell test -e "/usr/include/iconv.h" && echo true)
 
 ifeq ($(NCURSESW_LIBS),)

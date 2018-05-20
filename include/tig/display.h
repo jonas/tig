@@ -52,11 +52,12 @@ bool save_view(struct view *view, const char *path);
 bool vertical_split_is_enabled(enum vertical_split vsplit, int height, int width);
 int apply_vertical_split(int base_width);
 
-bool open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool refresh, const char *notice);
+bool open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool quick, bool refresh, const char *notice);
 void open_editor(const char *file, unsigned int lineno);
 void enable_mouse(bool enable);
 
 enum status_code open_script(const char *path);
+bool is_script_executing(void);
 
 #define get_cursor_pos(cursor_y, cursor_x) getyx(newscr, cursor_y, cursor_x)
 #define set_cursor_pos(cursor_y, cursor_x) wmove(newscr, cursor_y, cursor_x)

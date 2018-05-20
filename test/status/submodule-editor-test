@@ -1,0 +1,62 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=14
+export COLUMNS=140
+
+tigrc <<EOF
+set line-graphics = ascii
+set stage-view-line-number = yes
+EOF
+
+steps '
+	:exec !assert-var [%(repo:worktree)] == [../../../bench]
+	:/README.md
+	:enter
+	:12
+	:save-display status.screen
+	:edit
+'
+
+setup_submodule_project()
+{
+	mkdir -p "$output_dir/base"
+	cd "$output_dir/base"
+	create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+	cd "$output_dir"
+	git_init
+	cd "$output_dir/$work_dir"
+	git submodule add "$output_dir/base" bench
+	git_commit -m "Adding benchmark"
+	echo CHANGE >> bench/README.md
+}
+
+test_exec_work_dir setup_submodule_project
+work_dir="$work_dir/bench/common/src"
+
+test_tig status
+
+assert_vars 1
+
+assert_equals 'status.screen' <<EOF
+On branch master. Your branch is up-to-date with 'origin/master'.     |  1|  README.md | 1 +
+Changes to be committed:                                              |   |  1 file changed, 1 insertion(+)
+  (no files)                                                          |   |
+Changes not staged for commit:                                        |   | diff --git a/README.md b/README.md
+M README.md                                                           |  5| index 0883330..86d6f04 100644
+Untracked files:                                                      |   | --- a/README.md
+  (no files)                                                          |   | +++ b/README.md
+                                                                      |   | @@ -60,3 +60,4 @@ script as an alternative to \`window\` to export
+                                                                      |   |  various startup code.  This allows the benchmarks to run both i
+                                                                      | 10|  browser and in the \`d8\` (the V8 shell), which does not define g
+                                                                      |   |  objects like \`window\`.
+                                                                      |   | +CHANGE
+[status] Press u to stage 'README.md' for commit                  100%|[stage] Unstaged changes to 'README.md' - line 12 of 12          100%
+EOF
+
+assert_equals 'editor.log' <<EOF
++63 README.md
+CHANGE
+EOF

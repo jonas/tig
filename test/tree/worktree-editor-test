@@ -1,0 +1,109 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=14
+
+executable exec-env <<EOF
+#!/bin/sh
+
+{
+	echo "\$1"
+	printf ' - pwd='; pwd
+	for arg in git-dir show-cdup is-inside-work-tree show-superproject-working-tree; do
+		echo " - \$arg=\$(git rev-parse --\$arg)"
+	done
+} | sed "s,$output_dir,ROOT," >> "$output_dir/exec-env"
+EOF
+
+tigrc <<EOF
+set line-graphics = ascii
+set diff-view-line-number = yes
+bind tree <C-p> !exec-env end
+EOF
+
+steps '
+	:view-tree
+	:exec !assert-var [%(repo:worktree)] == []
+	:save-display bench-common-src.screen
+	:parent
+	:parent
+	:/README.md
+	:save-display bench.screen
+	:edit
+	<C-p>
+'
+
+setup_worktree_project()
+{
+	mkdir -p "$output_dir/base"
+	cd "$output_dir/base"
+	create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+	git branch work-branch ee912870202200a0b9cf4fd86ba57243212d341e
+	git worktree add "$output_dir/$work_dir" work-branch
+}
+
+test_exec_work_dir setup_worktree_project
+work_dir="$work_dir/common/src"
+
+in_work_dir exec-env start
+test_tig
+
+assert_vars 1
+
+assert_equals 'bench-common-src.screen' <<EOF
+Directory path /common/src/
+drwxr-xr-x                                ..
+drwxr-xr-x Jonas Fonseca 2014-03-01 17:26 main
+
+
+
+
+
+
+
+
+
+[tree] Open parent directory                                                100%
+EOF
+
+assert_equals 'bench.screen' <<EOF
+Directory path /
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 common
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 deltablue
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 project
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 richards
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 sudoku
+drwxr-xr-x Jonas Fonseca       2014-03-01 17:26 tracer
+-rw-r--r-- Jonas Fonseca    53 2013-10-14 16:19 .gitignore
+-rw-r--r-- Jonas Fonseca  1499 2013-10-26 12:54 LICENSE
+-rw-r--r-- Philipp Haller 2609 2014-01-16 15:32 README.md
+-rwxr-xr-x Jonas Fonseca   493 2014-03-01 17:26 run.sh
+ 
+[tree] 08833305259e10b62c96bddf1def0487644885e3 - file 9 of 10              100%
+EOF
+
+assert_equals 'editor.log' <<EOF
+README.md
+# Scala.js Benchmarks
+
+This is a port of the Dart
+[benchmark harness](https://github.com/dart-lang/benchmark_harness) to
+[Scala.js](https://github.com/scala-js/scala-js).
+EOF
+
+assert_equals 'exec-env' <<EOF
+start
+ - pwd=ROOT/work dir/common/src
+ - git-dir=ROOT/base/.git/worktrees/work dir
+ - show-cdup=../../
+ - is-inside-work-tree=true
+ - show-superproject-working-tree=
+end
+ - pwd=ROOT/work dir
+ - git-dir=ROOT/base/.git/worktrees/work dir
+ - show-cdup=
+ - is-inside-work-tree=true
+ - show-superproject-working-tree=
+EOF

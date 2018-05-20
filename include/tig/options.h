@@ -66,6 +66,7 @@ typedef struct view_column *view_settings;
 	_(refresh_mode,			enum refresh_mode,	VIEW_NO_FLAGS) \
 	_(refs_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(rev_args,			const char **,		VIEW_NO_FLAGS) \
+	_(send_child_enter,		bool,			VIEW_NO_FLAGS) \
 	_(show_changes,			bool,			VIEW_NO_FLAGS) \
 	_(show_notes,			bool,			VIEW_NO_FLAGS) \
 	_(split_view_height,		double,			VIEW_RESET_DISPLAY) \
@@ -92,6 +93,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 #define AUTHOR_COLUMN_OPTIONS(_) \
 	_(display,			enum author,		VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
+	_(maxwidth,			int,			VIEW_NO_FLAGS) \
 
 #define COMMIT_TITLE_COLUMN_OPTIONS(_) \
 	_(display,			bool,			VIEW_NO_FLAGS) \
@@ -108,6 +110,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 #define FILE_NAME_COLUMN_OPTIONS(_) \
 	_(display,			enum filename,		VIEW_GREP_LIKE) \
 	_(width,			int,			VIEW_NO_FLAGS) \
+	_(maxwidth,			int,			VIEW_NO_FLAGS) \
 
 #define FILE_SIZE_COLUMN_OPTIONS(_) \
 	_(display,			enum file_size,		VIEW_NO_FLAGS) \
@@ -130,6 +133,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 #define REF_COLUMN_OPTIONS(_) \
 	_(display,			bool,			VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
+	_(maxwidth,			int,			VIEW_NO_FLAGS) \
 
 #define SECTION_COLUMN_OPTIONS(_) \
 	_(type,				enum line_type,		VIEW_NO_FLAGS) \

@@ -103,8 +103,12 @@ file_finder_move(struct file_finder *finder, int direction)
 	else
 		finder->pos.lineno += direction;
 
-	if (finder->pos.lineno >= finder->lines)
-		finder->pos.lineno = finder->lines - 1;
+	if (finder->pos.lineno >= finder->lines) {
+		if (finder->lines > 0)
+			finder->pos.lineno = finder->lines - 1;
+		else
+			finder->pos.lineno = 0;
+        }
 
 	if (finder->pos.offset + finder->height <= finder->pos.lineno)
 		finder->pos.offset = finder->pos.lineno - (finder->height / 2);
@@ -193,7 +197,7 @@ file_finder_update(struct file_finder *finder)
 	size_t new_lineno = 0;
 	int i;
 
-	memset(finder->line, 0, sizeof(finder->line) * finder->lines);
+	memset(finder->line, 0, sizeof(*finder->line) * finder->lines);
 	finder->lines = 0;
 
 	for (i = 0; finder->file && finder->file[i]; i++) {

@@ -1,9 +1,10 @@
-personal_ws-1.1 en 266 
+personal_ws-1.1 en 294 
 CJK
 del
 goto
 Ctrl
 refspec
+BackTab
 Shorthands
 Gedit
 cmd
@@ -11,11 +12,14 @@ noprefix
 dev
 cdup
 ident
+SBack
 sudo
+optimizations
 AuthorDate
 TMPDIR
 tig
 dir
+ShiftTab
 readline's
 keybinding
 unstage
@@ -27,11 +31,14 @@ args
 asciidoc
 AsciiDoc
 unstanged
+ShiftDel
 revgraph
 revargs
 configs
 topo
 toc
+terminfo
+Preload
 tmp
 cwd
 frontend
@@ -51,6 +58,7 @@ bgcolor
 LessThan
 env
 lrwxrwxrwx
+iTerm
 backend
 Esc
 doctype
@@ -60,6 +68,7 @@ gitlink
 colorN
 nowarn
 sys
+ShiftRight
 subshell
 tty
 XDG
@@ -74,15 +83,19 @@ adoc
 Nano
 DSSL
 manpages
+ShiftEnd
 LDLIBS
 lookup
 stdout
 ncurses
 txt
+SFwd
+resizing
 Makefile
 cacheinfo
 enum
 PgDown
+wcwidth
 libexecdir
 bool
 diffstat
@@ -112,12 +125,15 @@ SunStudio
 wrt
 libiconv
 unicode
+ShiftLeft
 multi
+altscreen
 Naïvely
 reachability
 autoconf
 xpm
 filesystem
+ScrollFwd
 reflogmsg
 Fonseca
 tigrc
@@ -131,6 +147,7 @@ tigblob
 autobuild
 reflog
 diffargs
+Midline
 erasechar
 lds
 bg
@@ -194,6 +211,7 @@ COLORTERM
 ncursesw
 PDF
 CFLAGS
+ScrollBack
 linenumber
 fileargs
 UI
@@ -216,6 +234,8 @@ strndup
 startup
 Yi
 docext
+LDFLAGS
+ShiftHome
 renderer
 strftime
 textconv
@@ -228,16 +248,21 @@ worktree
 unmerged
 blameargs
 GitHub
+XTerm's
 Yy
 fgcolor
+backtraces
 ScrFwd
+nohup
 localtime
 filename
 AIX
 pbcopy
 lncursesw
 Geany
+concat
 waitpid
+NixOS
 wgetch
 OSX
 Pre
@@ -251,6 +276,8 @@ getch
 struct
 untracked
 commit's
+inputrc
+sed
 autoreconf
 ScrBack
 subcommands
@@ -261,6 +288,7 @@ TODO
 cmdline
 Jamo
 unrepresentable
+ShiftDelete
 FIXME
 whitespace
 subtrees

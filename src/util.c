@@ -133,12 +133,12 @@ struct reldate {
 
 static const struct reldate reldate[] = {
 	{ "second", 's', 1,			 60 * 2 },
-	{ "minute", 'M', 60,			 60 * 60 * 2 },
+	{ "minute", 'm', 60,			 60 * 60 * 2 },
 	{ "hour",   'h', 60 * 60,		 60 * 60 * 24 * 2 },
-	{ "day",    'd', 60 * 60 * 24,		 60 * 60 * 24 * 7 * 2 },
-	{ "week",   'w', 60 * 60 * 24 * 7,	 60 * 60 * 24 * 7 * 5 },
-	{ "month",  'm', 60 * 60 * 24 * 30,	 60 * 60 * 24 * 365 },
-	{ "year",   'y', 60 * 60 * 24 * 365,  0 },
+	{ "day",    'D', 60 * 60 * 24,		 60 * 60 * 24 * 7 * 2 },
+	{ "week",   'W', 60 * 60 * 24 * 7,	 60 * 60 * 24 * 7 * 5 },
+	{ "month",  'M', 60 * 60 * 24 * 30,	 60 * 60 * 24 * 365 },
+	{ "year",   'Y', 60 * 60 * 24 * 365,  0 },
 };
 
 static const char *
@@ -387,7 +387,7 @@ chunk_allocator(void *mem, size_t type_size, size_t chunk_size, size_t size, siz
 
 	if (mem == NULL || num_chunks != num_chunks_new) {
 		size_t newsize = num_chunks_new * chunk_size * type_size;
-		void *tmp = realloc(mem, newsize);
+		char *tmp = realloc(mem, newsize);
 
 		if (!tmp)
 			return NULL;

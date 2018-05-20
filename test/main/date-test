@@ -126,30 +126,30 @@ EOF
 
 assert_equals 'relative-compact-date.screen' <<EOF
 25h Kentaro Wada        Add zsh completion file for autoload
-7d  Jonas Fonseca       Refactor DEFINE_ALLOCATOR to use helper method and asser
-1m  Sven Wegener        display: factor out separator functions
-8d  Jonas Fonseca       Merge pull request #429 from ideal/master
-13d ideal               check if mem is NULL in DEFINE_ALLOCATOR
-2m  Jonas Fonseca       Use git_init to initialize the test/stage/gh-410-test re
-4m  Jonas Fonseca       Keep unstaged changes view open after an staging command
-5m  Jonas Fonseca       When redrawing the readline prompt also update the curso
-6m  Jonas Fonseca       Move script helper before usages in the display module
-7m  Jonas Fonseca       Merge branch 'hashed-refs'
-9m  Jonas Fonseca       hashed-refs: Use a hash table as the main data structure
-9m  Jonas Fonseca       Unify option_info lookup for normal options and view col
-10m Jonas Fonseca       Add option to turn off automatic enabling of topo-order
-11m Tom Greuter         Add option to install Tig with Homebrew
-12m Jonas Fonseca       Fix diff context restoring for diff opened directly via
-1y  Michael Barlow      Add mouse support
-2y  Jonas Fonseca       Refactor stage view title formatting
-3y  Jonas Fonseca       [GH #83] WIP: main view lazy navigation mode prototype
-3y  P. Sadik            Create and use dup() of STDIN_FILENO instead of STDIN_FI
-4y  Jonathan Neuschäfer Don't show out-of-sight tildes
-5y  Pierre Habouzit     Add an option to ignore unknown directories contents in
-6y  Jonas Fonseca       Fix another regression from the dirty flag changes causi
-7y  Jonas Fonseca       tig-0.10.git
-8y  Jonas Fonseca       Only split the tree view when the tree view is visible
-9y  Jonas Fonseca       Initial commit
+7D  Jonas Fonseca       Refactor DEFINE_ALLOCATOR to use helper method and asser
+1M  Sven Wegener        display: factor out separator functions
+8D  Jonas Fonseca       Merge pull request #429 from ideal/master
+13D ideal               check if mem is NULL in DEFINE_ALLOCATOR
+2M  Jonas Fonseca       Use git_init to initialize the test/stage/gh-410-test re
+4M  Jonas Fonseca       Keep unstaged changes view open after an staging command
+5M  Jonas Fonseca       When redrawing the readline prompt also update the curso
+6M  Jonas Fonseca       Move script helper before usages in the display module
+7M  Jonas Fonseca       Merge branch 'hashed-refs'
+9M  Jonas Fonseca       hashed-refs: Use a hash table as the main data structure
+9M  Jonas Fonseca       Unify option_info lookup for normal options and view col
+10M Jonas Fonseca       Add option to turn off automatic enabling of topo-order
+11M Tom Greuter         Add option to install Tig with Homebrew
+12M Jonas Fonseca       Fix diff context restoring for diff opened directly via
+1Y  Michael Barlow      Add mouse support
+2Y  Jonas Fonseca       Refactor stage view title formatting
+3Y  Jonas Fonseca       [GH #83] WIP: main view lazy navigation mode prototype
+3Y  P. Sadik            Create and use dup() of STDIN_FILENO instead of STDIN_FI
+4Y  Jonathan Neuschäfer Don't show out-of-sight tildes
+5Y  Pierre Habouzit     Add an option to ignore unknown directories contents in
+6Y  Jonas Fonseca       Fix another regression from the dirty flag changes causi
+7Y  Jonas Fonseca       tig-0.10.git
+8Y  Jonas Fonseca       Only split the tree view when the tree view is visible
+9Y  Jonas Fonseca       Initial commit
 [main] 91912eb97da4f6907015dab41ef9bba315730854 - commit 1 of 25            100%
 EOF
 

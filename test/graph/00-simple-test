@@ -22,8 +22,8 @@ EOF
 assert_equals stdout <<EOF
 ●─╮ Merge branch 'branch3'
 ●─│─╮ Merge branch 'branch2'
-│ ● │ branch3
-│ │ ● branch2
-● │ │ branch1
+│ ∙ │ branch3
+│ │ ∙ branch2
+∙ │ │ branch1
 ◎─┴─╯ init
 EOF

@@ -54,6 +54,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <termios.h>
 
 #include <regex.h>
 
@@ -97,6 +98,11 @@
 #endif
 #ifdef FALSE
 #undef FALSE
+#endif
+
+#ifndef newscr
+/* `newscr` is a ncurses-ism, and doesn't exist in netbsd-curses. (#790) */
+#define newscr curscr
 #endif
 
 #if __GNUC__ >= 3

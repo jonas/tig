@@ -30,11 +30,16 @@ static WINDOW *display_win[2];
 static WINDOW *display_title[2];
 static WINDOW *display_sep;
 
-static FILE *opt_tty;
+struct display_tty {
+	FILE *file;
+	int fd;
+	struct termios *attr;
+};
+static struct display_tty opt_tty = { NULL, -1, NULL };
 
 static struct io script_io = { -1 };
 
-static bool
+bool
 is_script_executing(void)
 {
 	return script_io.pipe != -1;
@@ -56,7 +61,7 @@ open_script(const char *path)
 }
 
 bool
-open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool refresh, const char *notice)
+open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool quick, bool do_refresh, const char *notice)
 {
 	bool ok;
 
@@ -78,18 +83,23 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 		clear();
 		refresh();
 		endwin();                  /* restore original tty modes */
+		tcsetattr(opt_tty.fd, TCSAFLUSH, opt_tty.attr);
 		ok = io_run_fg(argv, dir);
 		if (confirm || !ok) {
 			if (!ok && *notice)
 				fprintf(stderr, "%s", notice);
-			fprintf(stderr, "Press Enter to continue");
-			getc(opt_tty);
-			fseek(opt_tty, 0, SEEK_END);
+
+			if (!ok || !quick) {
+				fprintf(stderr, "Press Enter to continue");
+				getc(opt_tty.file);
+			}
 		}
+		fseek(opt_tty.file, 0, SEEK_END);
+		tcsetattr(opt_tty.fd, TCSAFLUSH, opt_tty.attr);
 		set_terminal_modes();
 	}
 
-	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && refresh) {
+	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && do_refresh) {
 		struct view *view;
 		int i;
 
@@ -138,7 +148,7 @@ open_editor(const char *file, unsigned int lineno)
 	if (lineno && opt_editor_line_number && string_format(lineno_cmd, "+%u", lineno))
 		editor_argv[argc++] = lineno_cmd;
 	editor_argv[argc] = file;
-	if (!open_external_viewer(editor_argv, repo.cdup, false, false, false, true, EDITOR_LINENO_MSG))
+	if (!open_external_viewer(editor_argv, repo.cdup, false, false, false, false, true, EDITOR_LINENO_MSG))
 		opt_editor_line_number = false;
 }
 
@@ -401,8 +411,10 @@ save_view(struct view *view, const char *path)
 			enum_name(get_line_type_name(line->type)),
 			line->selected);
 
-		if (!view->ops->get_column_data(view, line, &column_data))
+		if (!view->ops->get_column_data(view, line, &column_data)) {
+			fclose(file);
 			return true;
+		}
 
 		if (column_data.box) {
 			const struct box *box = column_data.box;
@@ -554,6 +566,12 @@ done_display(void)
 		endwin();
 	}
 	cursed = false;
+
+	if (opt_tty.attr) {
+		tcsetattr(opt_tty.fd, TCSAFLUSH, opt_tty.attr);
+		free(opt_tty.attr);
+		opt_tty.attr = NULL;
+	}
 }
 
 static void
@@ -566,6 +584,22 @@ set_terminal_modes(void)
 	leaveok(stdscr, false);
 }
 
+static void
+init_tty(void)
+{
+	/* open */
+	opt_tty.file = fopen("/dev/tty", "r+");
+	if (!opt_tty.file)
+		die("Failed to open tty for input");
+	opt_tty.fd = fileno(opt_tty.file);
+
+	/* attributes */
+	opt_tty.attr = calloc(1, sizeof(struct termios));
+	if (!opt_tty.attr)
+		die("Failed allocation for tty attributes");
+	tcgetattr(opt_tty.fd, opt_tty.attr);
+}
+
 void
 init_display(void)
 {
@@ -573,21 +607,24 @@ init_display(void)
 	const char *term;
 	int x, y;
 
+	init_tty();
+
 	die_callback = done_display;
-	/* XXX: Restore tty modes and let the OS cleanup the rest! */
 	if (atexit(done_display))
 		die("Failed to register done_display");
 
 	/* Initialize the curses library */
-	{
+	if (!no_display && isatty(STDIN_FILENO)) {
+		/* Needed for ncurses 5.4 compatibility. */
+		cursed = !!initscr();
+	} else {
 		/* Leave stdin and stdout alone when acting as a pager. */
 		FILE *out_tty;
 
-		opt_tty = fopen("/dev/tty", "r+");
-		out_tty = no_display ? fopen("/dev/null", "w+") : opt_tty;
-		if (!opt_tty || !out_tty)
-			die("Failed to open /dev/tty");
-		cursed = !!newterm(NULL, out_tty, opt_tty);
+		out_tty = no_display ? fopen("/dev/null", "w+") : opt_tty.file;
+		if (!out_tty)
+			die("Failed to open tty for output");
+		cursed = !!newterm(NULL, out_tty, opt_tty.file);
 	}
 
 	if (!cursed)
@@ -693,7 +730,27 @@ get_input_char(void)
 		return key.data.bytes[bytes_pos++];
 	}
 
-	return getc(opt_tty);
+	return getc(opt_tty.file);
+}
+
+static bool
+update_views(void)
+{
+	struct view *view;
+	int i;
+	bool is_loading = false;
+
+	foreach_view (view, i) {
+		update_view(view);
+		if (view_is_displayed(view) && view->has_scrolled &&
+		    use_scroll_redrawwin)
+			redrawwin(view->win);
+		view->has_scrolled = false;
+		if (view->pipe)
+			is_loading = true;
+	}
+
+	return is_loading;
 }
 
 int
@@ -711,8 +768,10 @@ get_input(int prompt_position, struct key *key)
 		int delay = -1;
 
 		if (opt_refresh_mode == REFRESH_MODE_PERIODIC) {
-			delay = watch_periodic(opt_refresh_interval);
 			bool refs_refreshed = false;
+
+			delay = watch_periodic(opt_refresh_interval);
+
 			foreach_displayed_view (view, i) {
 				if (view_can_refresh(view) &&
 					watch_dirty(&view->watch)) {
@@ -725,15 +784,8 @@ get_input(int prompt_position, struct key *key)
 			}
 		}
 
-		foreach_view (view, i) {
-			update_view(view);
-			if (view_is_displayed(view) && view->has_scrolled &&
-			    use_scroll_redrawwin)
-				redrawwin(view->win);
-			view->has_scrolled = false;
-			if (view->pipe)
-				delay = 0;
-		}
+		if (update_views())
+			delay = 0;
 
 		/* Update the cursor position. */
 		if (prompt_position) {

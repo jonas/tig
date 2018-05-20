@@ -249,8 +249,7 @@ grep_read(struct view *view, struct buffer *buf, bool force_stop)
 	grep->lineno = atoi(lineno);
 	if (grep->lineno > 0)
 		grep->lineno -= 1;
-	strncpy(grep->text, text, textlen);
-	grep->text[textlen] = 0;
+	strncpy(grep->text, text, textlen + 1);
 	view_column_info_update(view, line);
 
 	state->last_file = file;
