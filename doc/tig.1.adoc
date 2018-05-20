@@ -56,6 +56,12 @@ log::
 refs::
 	Start up in refs view.
 
+branch::
+	Start up in refs view. Here for compatibility with the 'git branch' command.
+
+tag::
+	Start up in refs view. Here for compatibility with the 'git tag' command.
+
 stash::
 	Start up in stash view.
 
