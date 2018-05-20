@@ -604,7 +604,7 @@ prompt_init(void)
 
 	last_entry = history_get(history_length);
 	if (last_entry)
-		string_copy(argv_env.search, last_entry->line);
+		string_ncopy(argv_env.search, last_entry->line, strlen(last_entry->line));
 }
 #else
 char *

@@ -69,3 +69,8 @@ timeout=<int>::
 	Set the default timeout for each invocation of tig under the
 	test harness. The default is 10 if unset. 0 means "no
 	timeout". Individual tests may override the value.
+
+Testing API
+-----------
+
+test_require(git-worktree, address-sanitizer, diff-highlight, readline)::
