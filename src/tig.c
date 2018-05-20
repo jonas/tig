@@ -756,10 +756,12 @@ handle_git_prefix(void)
 		return error("Failed to read CWD");
 	if (setenv("GIT_WORK_TREE", cwd, 1))
 		return error("Failed to set GIT_WORK_TREE");
+	if (chdir(prefix))
+		return error("Failed to change directory to %s", prefix);
 	if (setenv("GIT_PREFIX", "", 1))
 		return error("Failed to clear GIT_PREFIX");
 
-	return chdir(prefix) ? error("Failed to change directory to %s", prefix) : SUCCESS;
+	return SUCCESS;
 }
 
 int
