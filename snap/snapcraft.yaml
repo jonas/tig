@@ -1,0 +1,19 @@
+name: tig
+version: git
+summary: Text-mode interface for git
+description: |
+  Tig is an ncurses-based text-mode interface for git. It functions mainly as a
+  Git repository browser, but can also assist in staging changes for commit at
+  chunk level and act as a pager for output from various Git commands.
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: classic
+
+apps:
+  tig:
+    command: bin/tig
+
+parts:
+  tig:
+    source: .
+    plugin: autotools
