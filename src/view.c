@@ -1664,6 +1664,7 @@ bool
 append_line_format(struct view *view, struct line *line, const char *fmt, ...)
 {
 	struct box *box = line->data;
+	struct box *temp_box;
 	size_t textlen = box_text_length(box);
 	int fmtlen, retval;
 	va_list args;
@@ -1676,9 +1677,10 @@ append_line_format(struct view *view, struct line *line, const char *fmt, ...)
 	if (fmtlen <= 0)
 		return false;
 
-	box = realloc(box, box_sizeof(box, 0, fmtlen));
-	if (!box)
+	temp_box = realloc(box, box_sizeof(box, 0, fmtlen));
+	if (!temp_box)
 		return false;
+	box = temp_box;
 
 	box->text = text = box_text_offset(box, box->cells);
 	FORMAT_BUFFER(text + textlen, fmtlen + 1, fmt, retval, false);
