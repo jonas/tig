@@ -183,6 +183,9 @@ mkdate(const struct time *time, enum date date, bool local, const char *custom_f
 	static char buf[SIZEOF_STR];
 	struct tm tm;
 	const char *format;
+	bool fmt_tz;
+	char *tz_str;
+	char tz_rp[5];
 
 	if (!date || !time || !time->sec)
 		return "";
@@ -191,18 +194,50 @@ mkdate(const struct time *time, enum date date, bool local, const char *custom_f
 		return get_relative_date(time, buf, sizeof(buf),
 					 date == DATE_RELATIVE_COMPACT);
 
-	if (local) {
-		time_t date = time->sec + time->tz;
-		localtime_r(&date, &tm);
-	}
-	else {
+	format = (date == DATE_CUSTOM && custom_format) ?
+		custom_format : (local ? "%Y-%m-%d %H:%M" : "%Y-%m-%d %H:%M %z");
+	fmt_tz = strstr(format, "%z") ? 1 : 0;
+	/* use local time if %z is not in format string */
+	if (local || (!fmt_tz)) {
+		time_t timestamp = time->sec + time->tz;
+		localtime_r(&timestamp, &tm);
+	} else {
 		gmtime_r(&time->sec, &tm);
 	}
 
-	format = date != DATE_CUSTOM
-	       ? "%Y-%m-%d %H:%M"
-	       : custom_format ? custom_format : "%Y-%m-%d";
-	return strftime(buf, sizeof(buf), format, &tm) ? buf : NULL;
+	if (!strftime(buf, sizeof(buf), format, &tm)) {
+		return NULL;
+	}
+	if (local || (!fmt_tz) || (time->tz == 0)) {
+		return buf;
+	}
+
+	/* gmtime_r uses +0000 for %z, replace it with the actual timezone */
+	tz_str = buf;
+	/* prepare tz_rp */
+	{
+		int tzv = time->tz;
+		char tz_sign;
+		int tmpv, tz_hr, tz_min;
+
+		tz_sign = tzv > 0 ? '-' : '+';
+		if (tzv < 0) tzv = -tzv;
+		tz_min = tzv / 60;
+		tz_hr = tz_min / 60;
+		tz_min -= (tz_hr * 60);
+
+		tz_rp[0] = tz_sign;
+		tmpv = tz_hr / 10;
+		tz_rp[1] = '0' + tmpv;
+		tz_rp[2] = '0' + (tz_hr - tmpv * 10);
+		tmpv = tz_min / 10;
+		tz_rp[3] = '0' + tmpv;
+		tz_rp[4] = '0' + (tz_min - tmpv * 10);
+	}
+	while ( (tz_str = strstr(tz_str, "+0000")) != NULL ) {
+		memcpy(tz_str, tz_rp, 5);
+	}
+	return buf;
 }
 
 const char *
