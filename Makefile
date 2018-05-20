@@ -311,6 +311,7 @@ TIG_OBJS = \
 	src/stash.o \
 	src/grep.o \
 	src/ui.o \
+	src/apps.o \
 	$(GRAPH_OBJS) \
 	$(COMPAT_OBJS)
 

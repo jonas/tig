@@ -3,6 +3,8 @@
 . libtest.sh
 . libgit.sh
 
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
 file bin/diff-highlight <<EOF
 #!/bin/sh
 exec sed 's/Add type parameter for js.Dynamic/Changed by diff-highlight/'
@@ -10,27 +12,11 @@ EOF
 
 chmod +x bin/diff-highlight
 
-tigrc <<EOF
-set diff-highlight = true
-EOF
-
-export PATH="./bin:$PATH"
-
-steps '
-	:save-display diff-default.screen
-
-	:set diff-highlight = cat
-	:save-display diff-custom.screen
-
-	:set diff-highlight = program-that-does-not-exist
-	:save-display diff-failure.screen
-'
-
-in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
-
-test_tig show master^
-
-assert_equals 'diff-default.screen' <<EOF
+test_case diff-highlight-true \
+	--tigrc='set diff-highlight = true' \
+	--args='show master^' \
+	--subshell='export PATH="./bin:$PATH"' \
+	<<EOF
 commit a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff
 Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
 AuthorDate: Sat Mar 1 15:59:02 2014 -0500
@@ -62,66 +48,74 @@ index 65f914a..3aa4320 100644
 [diff] a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff - line 1 of 24              100%
 EOF
 
-assert_equals 'diff-custom.screen' <<EOF
-commit a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff
-Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
-AuthorDate: Sat Mar 1 15:59:02 2014 -0500
-Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
-CommitDate: Sat Mar 1 15:59:02 2014 -0500
-
-    Add type parameter for js.Dynamic
----
- common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala b/commo
-index 65f914a..3aa4320 100644
---- a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
-+++ b/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
-@@ -15,7 +15,7 @@ object Benchmark {
-   val benchmarks = js.Array[Benchmark]()
-   val benchmarkApps = js.Array[BenchmarkApp]()
-
--  val global = js.Dynamic.global.asInstanceOf[js.Dictionary]
-+  val global = js.Dynamic.global.asInstanceOf[js.Dictionary[js.Any]]
-   global("runScalaJSBenchmarks") = runBenchmarks _
-   global("initScalaJSBenchmarkApps") = initBenchmarkApps _
+test_case diff-highlight-custom \
+	--tigrc='set diff-highlight = wc' \
+	--args='show master^' \
+	<<EOF
+24      85    1067
 
 
 
 
 
-[diff] a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff - line 1 of 24              100%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[diff] HEAD - line 1 of 1                                                   100%
 EOF
 
-assert_equals 'diff-failure.screen' <<EOF
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-[diff] a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff                               0%
+test_case diff-highlight-misconfigured \
+	--tigrc='set diff-highlight = program-that-does-not-exist' \
+	--args='show master^' \
+	<<EOF
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[diff]                                                                        0%
 EOF
+
+run_test_cases

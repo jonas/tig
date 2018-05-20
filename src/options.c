@@ -986,7 +986,7 @@ load_option_file(const char *path)
 	if (!path || !strlen(path))
 		return SUCCESS;
 
-	if (!expand_path(buf, sizeof(buf), path))
+	if (!path_expand(buf, sizeof(buf), path))
 		return error("Failed to expand path: %s", path);
 
 	/* It's OK that the file doesn't exist. */

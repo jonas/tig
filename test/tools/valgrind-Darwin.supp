@@ -3,7 +3,7 @@
 	Memcheck:Cond
 	fun:strstr
 	fun:wordexp
-	fun:expand_path
+	fun:path_expand
 	...
 	fun:main
 }

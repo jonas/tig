@@ -53,7 +53,7 @@ open_script(const char *path)
 
 	char buf[SIZEOF_STR];
 
-	if (!expand_path(buf, sizeof(buf), path))
+	if (!path_expand(buf, sizeof(buf), path))
 		return error("Failed to expand path: %s", path);
 
 	return io_open(&script_io, "%s", buf)

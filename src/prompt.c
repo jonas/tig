@@ -1078,7 +1078,7 @@ exec_run_request(struct view *view, struct run_request *req)
 	const char **argv = NULL;
 	bool confirmed = false;
 	enum request request = REQ_NONE;
-	char cmd[SIZEOF_CMD];
+	char cmd[SIZEOF_MED_STR];
 	const char *req_argv[SIZEOF_ARG];
 	int req_argc = 0;
 

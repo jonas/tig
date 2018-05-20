@@ -136,7 +136,7 @@ get_path_encoding(const char *path, struct encoding *default_encoding)
  */
 
 bool
-expand_path(char *dst, size_t dstlen, const char *src)
+path_expand(char *dst, size_t dstlen, const char *src)
 {
 	if (!src)
 		return false;
@@ -164,6 +164,47 @@ expand_path(char *dst, size_t dstlen, const char *src)
 	/* else */
 	string_ncopy_do(dst, dstlen, src, strlen(src));
 	return true;
+}
+
+bool
+path_search(char *dst, size_t dstlen, const char *query, const char *colon_path, int access_flags)
+{
+	const char *_colon_path = _PATH_DEFPATH; /* emulate execlp() */
+	char test[SIZEOF_STR];
+	char elt[SIZEOF_STR];
+	size_t elt_len;
+
+	if (!query || !*query)
+		return false;
+
+	if (strchr(query, '/')) {
+		if (access(query, access_flags))
+			return false;
+		string_ncopy_do(dst, dstlen, query, strlen(query));
+		return true;
+	}
+
+	if (colon_path && *colon_path)
+		_colon_path = colon_path;
+
+	while (_colon_path && *_colon_path) {
+		elt_len = strcspn(_colon_path, ":");
+		if (elt_len)
+			string_ncopy(elt, _colon_path, elt_len);
+		else
+			string_ncopy(elt, ".", 1);
+
+		_colon_path += elt_len;
+		if (*_colon_path)
+			_colon_path += 1;
+
+		string_format(test, "%s/%s", elt, query);
+		if (!access(test, access_flags)) {
+			string_ncopy_do(dst, dstlen, test, strlen(test));
+			return true;
+		}
+	}
+	return false;
 }
 
 /*
