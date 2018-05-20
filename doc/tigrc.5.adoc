@@ -387,7 +387,7 @@ view. Each view setting expects a space-separated list of column specifications.
 Column specifications starts with the column type, and can optionally be
 followed by a colon (`:`) and a list of column options. E.g. the following
 column specification defines an 'author' column displaying the author email and
-with a maximum width of 20 characters: `author:email,width=20`.
+with a fixed width of 20 characters: `author:email,width=20`.
 
 The first option value in a column specification is always the 'display' option.
 When no 'display' value is given, 'yes' is assumed. For 'display' options
@@ -444,9 +444,11 @@ author::
 	- 'display' (mixed) [full|abbreviated|email|email-user|<bool>]: How to
 	  display author names. If set to "abbreviated" author initials will be
 	  shown.
-	- 'width' (int): Width of the column. When set to a value between 1 and
-	  10, the author name will be abbreviated to the author's initials.
+	- 'width' (int): Fixed width for the column. When set to a value between
+	  1 and 10, the author name will be abbreviated to the author's initials.
 	  When set to zero, the width is automatically sized to fit the content.
+	- 'maxwidth' (int): Maximum width of the column. Permit automatically
+	  sizing content, up to this limit.
 
 commit-title::
 	- 'graph' (mixed) [no|v2|v1]: Whether to show the revision graph in the
@@ -470,8 +472,8 @@ date::
 	  timezone. Note that relative dates always use local offsets.
 	- 'format' (string): format string to pass to strftime(3) when 'custom'
 	  display mode has been selected.
-	- 'width' (int): Width of the column. When set to zero, the width is
-	  automatically sized to fit the content.
+	- 'width' (int): Fixed width for the column. When set to zero, the width
+	  is automatically sized to fit the content.
 
 file-name::
 	- 'display' (mixed) [auto|always|<bool>]: When to display file names.
@@ -479,37 +481,41 @@ file-name::
 	  running: tig blame -C <file>.
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
+	- 'maxwidth' (int): Maximum width of the column. Permit automatically
+	  sizing content, up to this limit.
 
 file-size::
 	- 'display' (mixed) [default|units|<bool>]: How to display file sizes.
 	  When set to "units", sizes are shown using binary prefixes, e.g. 12524
 	  bytes is shown as "12.2K".
-	- 'width' (int): Width of the filename column. When set to zero, the
-	  width is automatically sized to fit the content.
+	- 'width' (int): Fixed width for the filename column. When set to zero,
+	  the width is automatically sized to fit the content.
 
 id::
 	- 'display' (bool): Whether to show commit IDs in the main view.
-	- 'width' (int) : Width of the commit ID. When unset Tig will use the
-	  value of 'core.abbrev' if found. See git-config(1) on how to set
-	  'core.abbrev'. When set to zero the width is automatically sized to
-	  fit the content of reflog (e.g.  `ref/stash@{4}`) IDs and otherwise
+	- 'width' (int) : Fixed width for the commit ID column. When unset Tig
+	  will use the value of 'core.abbrev' if found. See git-config(1) on how
+	  to set 'core.abbrev'. When set to zero the width is automatically sized
+	  to fit the content of reflog (e.g.  `ref/stash@{4}`) IDs and otherwise
 	  default to 7.
 
 line-number::
 	- 'display' (bool): Whether to show line numbers.
 	- 'interval' (int): Interval between line numbers.
-	- 'width' (int): Width of the column. When set to zero, the width is
-	  automatically sized to fit the content.
+	- 'width' (int): Fixed width for the column. When set to zero, the width
+	  is automatically sized to fit the content.
 
 mode::
 	- 'display' (bool): Whether to show file modes.
-	- 'width' (int): Width of the column. When set to zero, the width is
-	  automatically sized to fit the content.
+	- 'width' (int): Fixed width for the column. When set to zero, the width
+	  is automatically sized to fit the content.
 
 ref::
 	- 'display' (bool): Whether to show the reference name.
-	- 'width' (int): Width of the column. When set to zero, the width is
-	  automatically sized to fit the content.
+	- 'width' (int): Fixed width for the column. When set to zero, the width
+	  is automatically sized to fit the content.
+	- 'maxwidth' (int): Maximum width of the column. Permit automatically
+	  sizing content, up to this limit.
 
 status::
 	- 'display' (mixed) [no|short|long|<bool>]: How to display the status

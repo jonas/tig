@@ -129,6 +129,52 @@ c819b08eb5b05dde4df5        10| 2013-11-26 23:39     Jonas Fonseca        * Extr
 [main] ee912870202200a0b9cf4fd86ba57243212d341e - commit 1 of 48                                                                                                                                     29%
 EOF
 
+test_case main-maxwidths-5 \
+	--script='
+	:set main-view = id:yes,width=5 line-number:yes,interval=5,width=5 date:default,width=5 author:full,maxwidth=5 commit-title:yes,graph,refs,overflow=no
+	:refresh
+	' \
+	<<EOF
+ee912     1| 2014- JFons * [master] WIP: Upgrade to 0.4-SNAPSHOT and DCE
+a1dcf      | 2014- JFons * Add type parameter for js.Dynamic
+296fc      | 2014- JFons * Move classes under org.scalajs.benchmark package scope
+b4ad8      | 2014- JFons * Bump Scala.js version to 0.3-SNAPSHOT
+4a68c     5| 2014- JFons * Integrate app code into the benchmark infrastructure
+e59a9      | 2014- JFons M-. Merge pull request #4 from phaller/patch-1
+940ef      | 2014- PHall | * Fix link to Dart benchmark harness
+110e0      | 2013- JFons *-' Update links to reflect project name change
+894a5      | 2013- JFons * Use Scala.js 0.2-SNAPSHOT
+c819b    10| 2013- JFons * Extract the benchmark list variable name; fix push to use scoped variable
+5bd6d      | 2013- JFons * Solve the easiest sudoku grid
+988c7      | 2013- JFons * Disable phantomjs by default
+5d84a      | 2013- JFons * Exclude Sudoku when running all benchmarks
+5d806      | 2013- JFons * Fix reference setup to work for node
+[main] ee912870202200a0b9cf4fd86ba57243212d341e - commit 1 of 48                                                                                                                                     29%
+EOF
+
+test_case main-maxwidths-20 \
+	--script='
+	:set main-view = id:yes,width=20 line-number:yes,interval=5,width=20 date:default,width=20 author:full,maxwidth=20 commit-title:yes,graph,refs,overflow=no
+	:refresh
+	' \
+	<<EOF
+ee912870202200a0b9cf         1| 2014-03-01 17:26     Jonas Fonseca  * [master] WIP: Upgrade to 0.4-SNAPSHOT and DCE
+a1dcf1aaa11470978db1          | 2014-03-01 15:59     Jonas Fonseca  * Add type parameter for js.Dynamic
+296fc90ba2c47ba3d2b6          | 2014-01-16 22:51     Jonas Fonseca  * Move classes under org.scalajs.benchmark package scope
+b4ad81f17b4c3fc33ed5          | 2014-01-16 17:43     Jonas Fonseca  * Bump Scala.js version to 0.3-SNAPSHOT
+4a68cf3c338f5724d838         5| 2014-01-16 17:39     Jonas Fonseca  * Integrate app code into the benchmark infrastructure
+e59a941c4e7d51cd172e          | 2014-01-16 07:47     Jonas Fonseca  M-. Merge pull request #4 from phaller/patch-1
+940efafc379db7c6df99          | 2014-01-16 15:32     Philipp Haller | * Fix link to Dart benchmark harness
+110e090f815f40d649f5          | 2013-12-17 00:02     Jonas Fonseca  *-' Update links to reflect project name change
+894a53e03a017642abdc          | 2013-12-03 23:35     Jonas Fonseca  * Use Scala.js 0.2-SNAPSHOT
+c819b08eb5b05dde4df5        10| 2013-11-26 23:39     Jonas Fonseca  * Extract the benchmark list variable name; fix push to use scoped variable
+5bd6df6603f25ff035f1          | 2013-11-26 23:31     Jonas Fonseca  * Solve the easiest sudoku grid
+988c77aad5798f1e087e          | 2013-11-26 23:22     Jonas Fonseca  * Disable phantomjs by default
+5d84af022bc87ef13c29          | 2013-11-26 22:55     Jonas Fonseca  * Exclude Sudoku when running all benchmarks
+5d80606b72b490e213a0          | 2013-11-26 22:52     Jonas Fonseca  * Fix reference setup to work for node
+[main] ee912870202200a0b9cf4fd86ba57243212d341e - commit 1 of 48                                                                                                                                     29%
+EOF
+
 ### tree-view
 
 test_case tree-widths-default \
@@ -373,6 +419,54 @@ ee912870202200a0b9cf master               Jonas Fonseca        WIP: Upgrade to 0
 [refs] All references                                                                                                                                                                               100%
 EOF
 
+test_case refs-maxwidths-5 \
+	--script='
+	:set refs-view = id:yes,width=5 ref:yes,maxwidth=5 author:yes,maxwidth=5 commit-title
+	:view-refs
+	:refresh
+	' \
+	<<EOF
+      All r
+ee912 maste JFons WIP: Upgrade to 0.4-SNAPSHOT and DCE
+
+
+
+
+
+
+
+
+
+
+
+
+[refs] All references                                                                                                                                                                               100%
+EOF
+
+test_case refs-maxwidths-20 \
+	--script='
+	:set refs-view = id:yes,width=20 ref:yes,maxwidth=20 author:yes,maxwidth=20 commit-title
+	:view-refs
+	:refresh
+	' \
+	<<EOF
+                     All references
+ee912870202200a0b9cf master Jonas Fonseca WIP: Upgrade to 0.4-SNAPSHOT and DCE
+
+
+
+
+
+
+
+
+
+
+
+
+[refs] All references                                                                                                                                                                               100%
+EOF
+
 ### grep-view
 
 test_case grep-widths-default \
@@ -478,6 +572,56 @@ EOF
 test_case grep-widths-20 \
 	--script='
 	:set grep-view = file-name:yes,width=20 line-number:yes,interval=1,width=20 text
+	:g
+	source<Enter>
+	:refresh
+	' \
+	<<EOF
+LICENSE                      5| Redistribution and use in source and binary forms, with or without modification,
+LICENSE                      8|     * Redistributions of source code must retain the above copyright notice,
+README.md                   27| time you save a source file, a compilation of the project is triggered.
+common/reference/de~       633|  * Extract a plan for resatisfaction starting from the given source
+common/reference/de~       649|  * Assume: sources are all satisfied.
+common/reference/de~       651| Planner.prototype.makePlan = function (sources) {
+common/reference/de~       654|   var todo = sources;
+common/reference/de~       671|   var sources = new OrderedCollection();
+common/reference/de~       676|       sources.add(c);
+common/reference/de~       678|   return this.makePlan(sources);
+common/reference/ri~         2| // Redistribution and use in source and binary forms, with or without
+common/reference/ri~         6| //     * Redistributions of source code must retain the above copyright
+common/reference/tr~        45| Object.extend = function(destination, source) {
+common/reference/tr~        46|   for (var property in source) {
+[grep] LICENSE - line 1 of 24                                                                                                                                                                        58%
+EOF
+
+test_case grep-maxwidths-5 \
+	--script='
+	:set grep-view = file-name:yes,maxwidth=5 line-number:yes,interval=1,width=5 text
+	:g
+	source<Enter>
+	:refresh
+	' \
+	<<EOF
+LICE~     5| Redistribution and use in source and binary forms, with or without modification,
+LICE~     8|     * Redistributions of source code must retain the above copyright notice,
+READ~    27| time you save a source file, a compilation of the project is triggered.
+comm~   633|  * Extract a plan for resatisfaction starting from the given source
+comm~   649|  * Assume: sources are all satisfied.
+comm~   651| Planner.prototype.makePlan = function (sources) {
+comm~   654|   var todo = sources;
+comm~   671|   var sources = new OrderedCollection();
+comm~   676|       sources.add(c);
+comm~   678|   return this.makePlan(sources);
+comm~     2| // Redistribution and use in source and binary forms, with or without
+comm~     6| //     * Redistributions of source code must retain the above copyright
+comm~    45| Object.extend = function(destination, source) {
+comm~    46|   for (var property in source) {
+[grep] LICENSE - line 1 of 24                                                                                                                                                                        58%
+EOF
+
+test_case grep-maxwidths-20 \
+	--script='
+	:set grep-view = file-name:yes,maxwidth=20 line-number:yes,interval=1,width=20 text
 	:g
 	source<Enter>
 	:refresh
