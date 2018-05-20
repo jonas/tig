@@ -657,6 +657,8 @@ the command that should be executed.
 			 of output to the status bar.
 |?			|Prompt the user before executing the command.
 |<			|Exit Tig after executing the command.
+|>			|Re-open Tig instantly in the last displayed view after
+			 executing the command.
 |=============================================================================
 
 Unless otherwise specified, commands are run in the foreground with their

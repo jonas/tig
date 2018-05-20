@@ -449,7 +449,7 @@ static size_t run_requests;
 
 DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 
-#define COMMAND_FLAGS ":!?@<+"
+#define COMMAND_FLAGS ":!?@<+>"
 
 enum status_code
 parse_run_request_flags(struct run_request_flags *flags, const char **argv)
@@ -473,6 +473,8 @@ parse_run_request_flags(struct run_request_flags *flags, const char **argv)
 			flags->exit = 1;
 		} else if (*argv[0] == '+') {
 			flags->echo = 1;
+		} else if (*argv[0] == '>') {
+			flags->quick = 1;
 		} else if (*argv[0] != '!') {
 			break;
 		}
@@ -535,6 +537,8 @@ format_run_request_flags(const struct run_request *req)
 		flags[flagspos++] = '<';
 	if (req->flags.echo)
 		flags[flagspos++] = '+';
+	if (req->flags.quick)
+		flags[flagspos++] = '>';
 	if (flagspos > 1)
 		flags[flagspos++] = 0;
 
