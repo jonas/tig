@@ -43,6 +43,7 @@ extern unsigned int current_view;
 #define view_is_displayed(view) \
 	(view == display[0] || view == display[1])
 
+void init_tty(void);
 void init_display(void);
 void resize_display(void);
 void redraw_display(bool clear);

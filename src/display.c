@@ -584,7 +584,7 @@ set_terminal_modes(void)
 	leaveok(stdscr, false);
 }
 
-static void
+void
 init_tty(void)
 {
 	/* open */
@@ -598,6 +598,12 @@ init_tty(void)
 	if (!opt_tty.attr)
 		die("Failed allocation for tty attributes");
 	tcgetattr(opt_tty.fd, opt_tty.attr);
+
+	/* process-group leader */
+	signal(SIGTTOU, SIG_IGN);
+	setpgid(getpid(), getpid());
+	tcsetpgrp(opt_tty.fd, getpid());
+	signal(SIGTTOU, SIG_DFL);
 }
 
 void
@@ -607,7 +613,8 @@ init_display(void)
 	const char *term;
 	int x, y;
 
-	init_tty();
+	if (!opt_tty.file)
+		die("Can't initialize display without tty");
 
 	die_callback = done_display;
 	if (atexit(done_display))

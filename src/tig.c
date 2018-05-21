@@ -738,6 +738,14 @@ die_if_failed(enum status_code code, const char *msg)
 		die("%s: %s", msg, get_status_message(code));
 }
 
+void
+hangup_children(void)
+{
+	if (signal(SIGHUP, SIG_IGN) == SIG_ERR)
+		return;
+	killpg(getpid(), SIGHUP);
+}
+
 static inline enum status_code
 handle_git_prefix(void)
 {
@@ -771,6 +779,10 @@ main(int argc, const char *argv[])
 	bool pager_mode = !isatty(STDIN_FILENO);
 	enum request request = parse_options(argc, argv, pager_mode);
 	struct view *view;
+
+	init_tty();
+
+	atexit(hangup_children);
 
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
 		die("Failed to setup signal handler");
