@@ -19,7 +19,7 @@ steps '
 executable alias-vars <<EOF
 {
 	echo "PWD=\$(pwd)"
-	env | sed -n '/^\(GIT_DIR\|GIT_PREFIX\|GIT_WORK_TREE\)=/p'
+	env | grep -e '^GIT_DIR=\|^GIT_PREFIX=\|^GIT_WORK_TREE='
 } | sed 's,$output_dir,ROOT,' >> "$output_dir/alias-vars"
 EOF
 
