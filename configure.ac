@@ -34,6 +34,8 @@ AC_SUBST(CURSES_LIBS)
 
 AX_LIB_READLINE(6.2)
 
+AX_WITH_ICU([48.0], [icu-uc])
+
 AM_ICONV
 
 AC_CHECK_PROGS(SED, [gsed], [sed])

@@ -21,6 +21,8 @@
  * Strings.
  */
 
+bool string_contains_uppercase(const char *search);
+
 #define prefixcmp(str1, str2) \
 	strncmp(str1, str2, STRING_SIZE(str2))
 
