@@ -458,17 +458,11 @@ require_git_version()
 
 has_readline()
 {
-	# Test functionality, since there isn't a good way to inspect the binary.
-	readline_exit_status=1
-	file readline_guard.script <<-EOF
-	:quit
-	EOF
-
-	TIG_NO_DISPLAY=1 TIG_SCRIPT=readline_guard.script tig status </dev/null >/dev/null 2>/dev/null || true
-	test -e .tig_history && readline_exit_status=0
-	rm -f -- readline_guard.script .tig_history
-
-	return "$readline_exit_status"
+	if tig --version | grep readline >/dev/null 2>&1; then
+		return 0
+	else
+		return 1
+	fi
 }
 
 test_require()
