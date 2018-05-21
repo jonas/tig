@@ -1,7 +1,5 @@
 environment:
   matrix:
-  - TARGET: cygwin
-    ARCH: x86
   - TARGET: cygwin64
     ARCH: x86_64
 
