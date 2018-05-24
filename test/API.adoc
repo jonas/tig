@@ -1,0 +1,49 @@
+Testing API
+-----------
+
+file(filename, [content, ...]) [< content]::
+
+tig_script(name, content, [content, ...])::
+
+steps(content, [content, ...])::
+
+stdin([content, ...]) [< content]::
+
+tigrc([content, ...]) [< content]::
+
+gitconfig(content, ...)::
+
+in_work_dir(command, [args, ...])::
+
+assert_equals(filename, [whitespace, note, ...]) < expected::
+
+assert_not_exists(filename)::
+
+assert_vars(count)::
+
+test_todo([note, ...])::
+
+test_timeout(seconds)::
+
+require_git_version(version, [note, ...])::
+
+test_require(git-worktree, address-sanitizer, diff-highlight, readline)::
+
+test_setup()::
+
+test_tig()::
+
+	Set up a controlled environment and report the test result.
+	Input to be processed via stdin is passed and stderr is captured and
+	can be used for later assertions.
+	Example
+--------------------------------------------------------------------------------
+test_tig show 1a2b3c4d5e6f
+--------------------------------------------------------------------------------
+
+test_graph() < expected::
+
+test_case([--before=<string>, --after=<string>, --script=<string>, --args=<string>, --cwd=<string>, --tigrc=<string>, --assert-stderr=<string>, --todo=<string>, --subshell=<string>, --timeout=<string>]) < expected::
+
+run_test_cases()::
+

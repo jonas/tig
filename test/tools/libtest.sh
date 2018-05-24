@@ -138,6 +138,10 @@ tty_reset()
 	fi
 }
 
+### Testing API AsciiDoc
+#|
+#| file(filename, [content, ...]) [< content]::
+#|
 file() {
 	path="$1"; shift
 
@@ -153,6 +157,10 @@ file() {
 	fi
 }
 
+### Testing API AsciiDoc
+#|
+#| tig_script(name, content, [content, ...])::
+#|
 tig_script() {
 	name="$1"; shift
 	prefix="${name:+$name.}"
@@ -169,22 +177,42 @@ tig_script() {
 		> "$TIG_SCRIPT"
 }
 
+### Testing API AsciiDoc
+#|
+#| steps(content, [content, ...])::
+#|
 steps() {
 	tig_script "" "$@"
 }
 
+### Testing API AsciiDoc
+#|
+#| stdin([content, ...]) [< content]::
+#|
 stdin() {
 	file "stdin" "$@"
 }
 
+### Testing API AsciiDoc
+#|
+#| tigrc([content, ...]) [< content]::
+#|
 tigrc() {
 	file "$HOME/.tigrc" "$@"
 }
 
+### Testing API AsciiDoc
+#|
+#| gitconfig(content, ...)::
+#|
 gitconfig() {
 	file "$HOME/.gitconfig" "$@"
 }
 
+### Testing API AsciiDoc
+#|
+#| in_work_dir(command, [args, ...])::
+#|
 in_work_dir()
 {
 	(cd "$work_dir" && "$@")
@@ -276,6 +304,10 @@ filter_file_ok || exit 0   # silently exit caller who sourced this file
 # Test runners and assertion checking.
 #
 
+### Testing API AsciiDoc
+#|
+#| assert_equals(filename, [whitespace, note, ...]) < expected::
+#|
 assert_equals()
 {
 	file="$1"; shift
@@ -310,6 +342,10 @@ assert_equals()
 	fi
 }
 
+### Testing API AsciiDoc
+#|
+#| assert_not_exists(filename)::
+#|
 assert_not_exists()
 {
 	file="$1"; shift
@@ -349,6 +385,10 @@ printf '%s\\n' "\$lhs" >> "$HOME/$vars_file"
 printf '%s\\n' "\$rhs" >> "$expected_vars_file"
 EOF
 
+### Testing API AsciiDoc
+#|
+#| assert_vars(count)::
+#|
 assert_vars()
 {
 	if [ -n "${1:-}" ]; then
@@ -422,6 +462,10 @@ test_todo_message()
 	printf '[TODO] Not yet expected to pass%s\n' "$explanation"
 }
 
+### Testing API AsciiDoc
+#|
+#| test_todo([note, ...])::
+#|
 test_todo()
 {
 	if [ -n "$todos" ]; then
@@ -431,6 +475,10 @@ test_todo()
 	test_todo_message "$*" >> .test-skipped
 }
 
+### Testing API AsciiDoc
+#|
+#| test_timeout(seconds)::
+#|
 test_timeout()
 {
 	if [ -z "${1:-}" ]; then
@@ -440,6 +488,10 @@ test_timeout()
 	timeout="${1:-}"
 }
 
+### Testing API AsciiDoc
+#|
+#| require_git_version(version, [note, ...])::
+#|
 require_git_version()
 {
 	git_version="$(git version | sed 's/git version \([0-9\.]*\).*/\1/')"
@@ -465,6 +517,10 @@ has_readline()
 	fi
 }
 
+### Testing API AsciiDoc
+#|
+#| test_require(git-worktree, address-sanitizer, diff-highlight, readline)::
+#|
 test_require()
 {
 	while [ $# -gt 0 ]; do
@@ -523,6 +579,10 @@ test_exec_work_dir()
 	fi
 }
 
+### Testing API AsciiDoc
+#|
+#| test_setup()::
+#|
 test_setup()
 {
 	if [ -e .test-skipped ]; then
@@ -588,6 +648,18 @@ valgrind_exec()
 	return "$valgrind_status_code"
 }
 
+### Testing API AsciiDoc
+#|
+#| test_tig()::
+#|
+#|	Set up a controlled environment and report the test result.
+#|	Input to be processed via stdin is passed and stderr is captured and
+#|	can be used for later assertions.
+#|	Example
+#| --------------------------------------------------------------------------------
+#| test_tig show 1a2b3c4d5e6f
+#| --------------------------------------------------------------------------------
+#|
 test_tig()
 {
 	name="$TEST_NAME"
@@ -658,11 +730,19 @@ test_tig()
 	fi
 }
 
+### Testing API AsciiDoc
+#|
+#| test_graph() < expected::
+#|
 test_graph()
 {
 	test-graph "$@" > stdout 2> stderr.orig
 }
 
+### Testing API AsciiDoc
+#|
+#| test_case([--before=<string>, --after=<string>, --script=<string>, --args=<string>, --cwd=<string>, --tigrc=<string>, --assert-stderr=<string>, --todo=<string>, --subshell=<string>, --timeout=<string>]) < expected::
+#|
 test_case()
 {
 	name="$1"; shift
@@ -690,6 +770,10 @@ test_case()
 	done
 }
 
+### Testing API AsciiDoc
+#|
+#| run_test_cases()::
+#|
 run_test_cases()
 {
 	if [ ! -e test-cases ]; then
