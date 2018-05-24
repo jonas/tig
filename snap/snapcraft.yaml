@@ -1,4 +1,4 @@
-name: tig-snaps
+name: tig
 version: git
 summary: Text-mode interface for git
 description: |
@@ -17,3 +17,7 @@ parts:
   tig:
     source: .
     plugin: autotools
+    build: |
+      make configure
+      ./configure
+      make install
