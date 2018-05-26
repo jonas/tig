@@ -20,14 +20,14 @@ trap "rm -f '$CONFIG'" EXIT
 
 # Prepare config file: source user config, if present
 if [ ! -z "$TIGRC_USER" ]; then
-	echo "source $TIGRC_USER" >> $CONFIG
+	echo "source $TIGRC_USER" >> "$CONFIG"
 elif [ -f "$HOME/.tigrc" ]; then
-	echo "source $HOME/.tigrc" >> $CONFIG
+	echo "source $HOME/.tigrc" >> "$CONFIG"
 fi
 
 # Bind Enter to print the selected commit ID to error output and exit after
 # that.
-echo 'bind main <Enter> <sh -c "echo %(commit) >&2"' >> $CONFIG
+echo 'bind main <Enter> <sh -c "echo %(commit) >&2"' >> "$CONFIG"
 
 
 # Run tig with the standard and error output channels swapped.
