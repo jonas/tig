@@ -235,7 +235,7 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_NEXT:
 	case REQ_PREVIOUS:
-		if (view->parent) {
+		if (view->parent && view == display[1]) {
 			int line;
 
 			view = view->parent;
