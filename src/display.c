@@ -34,8 +34,9 @@ struct display_tty {
 	FILE *file;
 	int fd;
 	struct termios *attr;
+	pid_t opgrp;
 };
-static struct display_tty opt_tty = { NULL, -1, NULL };
+static struct display_tty opt_tty = { NULL, -1, NULL, -1 };
 
 static struct io script_io = { -1 };
 
@@ -572,6 +573,9 @@ done_display(void)
 		free(opt_tty.attr);
 		opt_tty.attr = NULL;
 	}
+	signal(SIGTTOU, SIG_IGN);
+	tcsetpgrp(opt_tty.fd, opt_tty.opgrp);
+	signal(SIGTTOU, SIG_DFL);
 }
 
 static void
@@ -602,6 +606,7 @@ init_tty(void)
 	/* process-group leader */
 	signal(SIGTTOU, SIG_IGN);
 	setpgid(getpid(), getpid());
+	opt_tty.opgrp = tcgetpgrp(opt_tty.fd);
 	tcsetpgrp(opt_tty.fd, getpid());
 	signal(SIGTTOU, SIG_DFL);
 }
