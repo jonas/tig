@@ -200,7 +200,10 @@ view_driver(struct view *view, enum request request)
 		open_main_view(view, OPEN_DEFAULT);
 		break;
 	case REQ_VIEW_DIFF:
-		open_diff_view(view, OPEN_DEFAULT);
+		if (view && string_rev_is_null(view->env->commit))
+			open_stage_view(view, NULL, 0, OPEN_DEFAULT);
+		else
+			open_diff_view(view, OPEN_DEFAULT);
 		break;
 	case REQ_VIEW_LOG:
 		open_log_view(view, OPEN_DEFAULT);
