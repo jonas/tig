@@ -19,3 +19,5 @@ parts:
     plugin: autotools
     build-packages:
       - pkg-config
+      - libncursesw5-dev
+      - libreadline-dev
