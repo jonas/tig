@@ -17,7 +17,5 @@ parts:
   tig:
     source: .
     plugin: autotools
-    build: |
-      make configure
-      ./configure
-      make install
+    build-packages:
+      - pkg-config
