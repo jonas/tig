@@ -149,6 +149,7 @@ The following variables can be set:
 
 	A space-separated string of diff options to use in the diff view.
 	git-show(1) is used for formatting and always passes --patch-with-stat.
+	Can control display of commit header metadata, passing option --format.
 	This option overrides any options specified in the TIG_DIFF_OPTS
 	environment variable (described in manpage:tig[1]), but is itself
 	overridden by diff flags given on the command line invocation.
