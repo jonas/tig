@@ -471,6 +471,10 @@ readline_init(void)
 	rl_attempted_completion_function = readline_completion;
 
 	rl_completion_display_matches_hook = readline_display_matches;
+
+	/* Let ncurses deal with the LINES and COLUMNS environment variables */
+	rl_change_environment = 0;
+	rl_catch_sigwinch = 0;
 }
 
 static void sigint_absorb_handler(int sig) {
