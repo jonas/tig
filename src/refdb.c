@@ -195,8 +195,13 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 			type = REFERENCE_LOCAL_TAG;
 		}
 
-		namelen -= STRING_SIZE("refs/tags/");
-		name	+= STRING_SIZE("refs/tags/");
+		/* Don't remove the prefix if there is already a branch
+		 * with the same name. */
+		ref = string_map_get(&refs_by_name, name + STRING_SIZE("refs/tags/"));
+		if (ref == NULL || ref_is_tag(ref)) {
+			namelen -= STRING_SIZE("refs/tags/");
+			name	+= STRING_SIZE("refs/tags/");
+		}
 
 	} else if (!prefixcmp(name, "refs/remotes/")) {
 		type = REFERENCE_REMOTE;
