@@ -32,7 +32,7 @@ case "$ax_cv_ncursesw" in "no")
 esac
 AC_SUBST(CURSES_LIBS)
 
-AX_LIB_READLINE(6.2)
+AX_LIB_READLINE(6.3)
 
 AM_ICONV
 
