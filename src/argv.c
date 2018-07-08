@@ -172,17 +172,6 @@ argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
 	return split_argv_string(argv, argc, cmd, false);
 }
 
-bool
-argv_from_env(const char **argv, const char *name)
-{
-	char *env = argv ? getenv(name) : NULL;
-	int argc = 0;
-
-	if (env && *env)
-		env = strdup(env);
-	return !env || argv_from_string(argv, &argc, env);
-}
-
 void
 argv_free(const char *argv[])
 {
