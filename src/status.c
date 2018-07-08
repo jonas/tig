@@ -490,7 +490,7 @@ status_exists(struct view *view, struct status *status, enum line_type type)
 		if (line->type != type)
 			continue;
 		if ((!pos && (!status || !status->status) && line[1].data) ||
-		    (pos && !strcmp(status->new.name, pos->new.name))) {
+		    (pos && status && !strcmp(status->new.name, pos->new.name))) {
 			select_view_line(view, lineno);
 			status_restore(view);
 			return true;

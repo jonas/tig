@@ -620,8 +620,8 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 	}
 
 	if (!strcmp(option->type, "const char *")) {
-		const char *alloc = NULL;
 		const char **value = option->value;
+		char *alloc = NULL;
 
 		if (option->value == &opt_diff_highlight) {
 			bool enabled = false;
@@ -644,12 +644,14 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 				return ERROR_OUT_OF_MEMORY;
 		}
 
-		if (!strcmp(name, "truncation-delimiter")) {
+		if (alloc && !strcmp(name, "truncation-delimiter")) {
 			if (!strcmp(alloc, "utf-8") || !strcmp(alloc, "utf8")) {
+				free(alloc);
 				alloc = strdup("⋯");
 				if (!alloc)
 					return ERROR_OUT_OF_MEMORY;
 			} else if (utf8_width_of(alloc, -1, -1) != 1) {
+				free(alloc);
 				alloc = strdup("~");
 				if (!alloc)
 					return ERROR_OUT_OF_MEMORY;

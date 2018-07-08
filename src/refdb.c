@@ -314,15 +314,18 @@ reload_refs(bool force)
 	const char *ls_remote_argv[SIZEOF_ARG] = {
 		"git", "show-ref", "--head", "--dereference", NULL
 	};
-	static bool init = false;
+	char ls_remote_cmd[SIZEOF_STR];
 	struct ref_opt opt = { repo.remote, repo.head, WATCH_NONE };
 	struct repo_info old_repo = repo;
 	enum status_code code;
+	const char *env = getenv("TIG_LS_REMOTE");
 
-	if (!init) {
-		if (!argv_from_env(ls_remote_argv, "TIG_LS_REMOTE"))
-			return ERROR_OUT_OF_MEMORY;
-		init = true;
+	if (env && *env) {
+		int argc = 0;
+
+		string_ncopy(ls_remote_cmd, env, strlen(env));
+		if (!argv_from_string(ls_remote_argv, &argc, ls_remote_cmd))
+			return error("Failed to parse TIG_LS_REMOTE: %s", env);
 	}
 
 	if (!*repo.git_dir)
