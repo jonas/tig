@@ -34,6 +34,7 @@ struct ref;
 	_(DIFF_INDEX,		"index "), \
 	_(DIFF_OLDMODE,		"old file mode "), \
 	_(DIFF_NEWMODE,		"new file mode "), \
+	_(DIFF_DELMODE,		"deleted file mode "), \
 	_(DIFF_SIMILARITY,	"similarity "), \
 	_(DIFF_ADD_HIGHLIGHT,	""), \
 	_(DIFF_DEL_HIGHLIGHT,	""), \
