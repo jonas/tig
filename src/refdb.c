@@ -342,7 +342,7 @@ reload_refs(bool force)
 	string_map_clear(&refs_by_id);
 	string_map_foreach(&refs_by_name, invalidate_refs, NULL);
 
-	code = io_run_load(ls_remote_argv, " ", read_ref, &opt);
+	code = io_run_load(ls_remote_argv, " \t", read_ref, &opt);
 	if (code != SUCCESS)
 		return code;
 
