@@ -57,16 +57,6 @@ find_matches(struct view *view)
 
 static enum status_code find_next_match(struct view *view, enum request request);
 
-static bool contains_uppercase(const char *search)
-{
-	const char *c = search;
-	for (; *c != '\0'; ++c) {
-		if (isupper(*c))
-			return true;
-	}
-	return false;
-}
-
 static enum status_code
 setup_and_find_next(struct view *view, enum request request)
 {
@@ -74,7 +64,7 @@ setup_and_find_next(struct view *view, enum request request)
 	int regex_flags = opt_ignore_case == IGNORE_CASE_YES ? REG_ICASE : 0;
 
 	if (opt_ignore_case == IGNORE_CASE_SMART_CASE
-	    && !contains_uppercase(view->env->search))
+	    && !utf8_string_contains_uppercase(view->env->search))
 		regex_flags |= REG_ICASE;
 
 	if (view->regex) {

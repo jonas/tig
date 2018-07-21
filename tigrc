@@ -14,6 +14,9 @@
 #   author
 #    - display (enum) [no|full|abbreviated|email|email-user]
 #					: Show author information?
+#    - width (int)			: Fixed width when nonzero
+#    - maxwidth (int)			: Autosize limit
+#
 #   commit-title
 #    - display (bool)			: Show the commit title?
 #    - graph (enum) [no|v2|v1]		: Show the commit graph? (main view only)
@@ -25,22 +28,36 @@
 #					: Show dates?
 #    - local (bool)			: Show local dates?
 #    - format (string)			: Custom strftime(3) format
+#					  Note: %Z is formatted as %z
+#    - width (int)			: Fixed width when nonzero
 #
 #   file-name
 #    - display (enum) [no|always|auto]	: Show file names?
+#    - width (int)			: Fixed width when nonzero
+#    - maxwidth (int)			: Autosize limit
 #
 #   file-size
-#    - display (enum) [no|default|units]	: Show file sizes?
+#    - display (enum) [no|default|units]
+#					: Show file sizes?
+#    - width (int)			: Fixed width when nonzero
 #
 #   id
 #    - display (bool)			: Show commit/tree ID?
+#    - width (int)			: Fixed width when nonzero
 #
 #   line-number
 #    - display (bool)			: Show line numbers?
 #    - interval (int)			: Interval between line numbers; defaults to 5
+#    - width (int)			: Fixed width when nonzero
 #
 #   mode
 #    - display (bool)			: Show file modes?
+#    - width (int)			: Fixed width when nonzero
+#
+#   ref
+#    - display (bool)			: Show ref names?
+#    - width (int)			: Fixed width when nonzero
+#    - maxwidth (int)			: Autosize limit
 #
 #   status
 #    - display (enum) [no|short|long]	: Show status label?
@@ -49,11 +66,8 @@
 #    - display (bool)			: Show text?
 #    - commit-title-overflow (boolint)	: Highlight overflow in log and diff view?
 #
-# All columns also support a width option to configure the max width of
-# the column. Use zero (the default value) to auto-size the column based
-# on the content.
 
-set blame-view	= date:default author:full file-name:auto id:yes,color line-number:no,interval=5 text
+set blame-view	= id:yes,color file-name:auto author:full date:default line-number:yes,interval=1 text
 set grep-view	= file-name:no line-number:yes,interval=1 text
 set main-view	= line-number:no,interval=5 id:no date:default author:full commit-title:yes,graph,refs,overflow=no
 set refs-view	= line-number:no id:no date:default author:full ref commit-title
@@ -111,6 +125,7 @@ set ignore-case			= no		# Enum: no, yes, smart-case
 						# Ignore case when searching? Smart-case option will
 set wrap-search			= yes		# Wrap around to top/bottom of view when searching
 set focus-child			= yes		# Move focus to child view when opened?
+set send-child-enter		= yes		# Propagate "enter" keypresses to child views?
 set horizontal-scroll		= 50%		# Number of columns to scroll as % of width
 set split-view-height		= 67%		# Height of the bottom view for horizontal splits
 set vertical-split		= auto		# Enum: horizontal, vertical, auto; Use auto to
@@ -136,6 +151,7 @@ set mouse-wheel-cursor		= no		# Prefer moving the cursor to scrolling the view?
 #   @	Run the command in the background with no output.
 #   ?	Prompt the user before executing the command.
 #   <	Exit Tig after executing the command.
+#   >	Re-open Tig instantly in the last displayed view after executing the command.
 #
 # User-defined commands can optionally refer to Tig's internal state
 # using the following variable names, which are substituted before

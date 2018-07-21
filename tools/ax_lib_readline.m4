@@ -211,21 +211,23 @@ AC_DEFUN([AX_LIB_READLINE], [
   	[search for readline in DIR/include and DIR/lib])],
 	[ac_cv_rl_prefix=$with_readline])
 
-  AC_CHECK_HEADERS([readline/readline.h], [
-    AC_CHECK_HEADERS([readline/history.h], [
-      RL_LIB_READLINE_VERSION
+  AS_IF([test "x$with_readline" != xno], [
+    AC_CHECK_HEADERS([readline/readline.h], [
+      AC_CHECK_HEADERS([readline/history.h], [
+        RL_LIB_READLINE_VERSION
+      ])
     ])
+
+    if test $RL_MAJOR -gt $RL_MAJOR_REQUIRED || {
+       test $RL_MAJOR = $RL_MAJOR_REQUIRED && test $RL_MINOR -ge $RL_MINOR_REQUIRED ; } ; then
+      LIBS="$LIBS -lreadline ${TERMCAP_LIB}"
+      CFLAGS="$CFLAGS -I${RL_INCLUDEDIR}"
+      LDFLAGS="$LDFLAGS -L${RL_LIBDIR}"
+
+      AC_DEFINE(HAVE_READLINE, 1, [Define if you have a GNU readline compatible library])
+
+    elif test -n "$ac_cv_rl_prefix"; then
+      AC_MSG_WARN([Minimum required version of readline is $RL_VERSION_REQUIRED])
+    fi
   ])
-
-  if test $RL_MAJOR -ge $RL_MAJOR_REQUIRED || {
-     test $RL_MAJOR = $RL_MAJOR_REQUIRED && test $RL_MINOR -ge $RL_MINOR_REQUIRED ; } ; then
-    LIBS="$LIBS -lreadline ${TERMCAP_LIB}"
-    CFLAGS="$CFLAGS -I${RL_INCLUDEDIR}"
-    LDFLAGS="$LDFLAGS -L${RL_LIBDIR}"
-
-    AC_DEFINE(HAVE_READLINE, 1, [Define if you have a GNU readline compatible library])
-
-  elif test -n "$ac_cv_rl_prefix"; then
-    AC_MSG_WARN([Minimum required version of readline is $RL_VERSION_REQUIRED])
-  fi
 ])

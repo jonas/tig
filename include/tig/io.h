@@ -41,7 +41,12 @@ extern struct encoding *default_encoding;
  * Path manipulation.
  */
 
-bool expand_path(char *dst, size_t dstlen, const char *src);
+#ifndef _PATH_DEFPATH
+#define _PATH_DEFPATH	"/usr/bin:/bin"
+#endif
+
+bool path_expand(char *dst, size_t dstlen, const char *src);
+bool path_search(char *dst, size_t dstlen, const char *query, const char *colon_path, int access_flags);
 
 /*
  * Executing external commands.

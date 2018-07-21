@@ -2,7 +2,7 @@
 
 # The last tagged version. Can be overridden either by the version from
 # git or from the value of the DIST_VERSION environment variable.
-VERSION	= 2.3.3
+VERSION	= 2.4.0
 
 all:
 
@@ -48,7 +48,7 @@ RPM_RELEASE = $(word 2,$(RPM_VERLIST))$(if $(WTDIRTY),.dirty)
 DFLAGS	= -g -DDEBUG -Werror -O0
 EXE	= src/tig
 TOOLS	= test/tools/test-graph tools/doc-gen
-TXTDOC	= doc/tig.1.adoc doc/tigrc.5.adoc doc/manual.adoc NEWS.adoc README.adoc INSTALL.adoc
+TXTDOC	= doc/tig.1.adoc doc/tigrc.5.adoc doc/manual.adoc NEWS.adoc README.adoc INSTALL.adoc test/API.adoc
 MANDOC	= doc/tig.1 doc/tigrc.5 doc/tigmanual.7
 HTMLDOC = doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html INSTALL.html NEWS.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) doc/manual.html-chunked doc/manual.pdf
@@ -269,7 +269,7 @@ COMPAT_CPPFLAGS += -DNO_WORDEXP
 COMPAT_OBJS += compat/wordexp.o
 endif
 
-COMPAT_OBJS += compat/hashtab.o compat/wcwidth.o
+COMPAT_OBJS += compat/hashtab.o compat/utf8proc.o
 
 override CPPFLAGS += $(COMPAT_CPPFLAGS)
 
@@ -311,6 +311,7 @@ TIG_OBJS = \
 	src/stash.o \
 	src/grep.o \
 	src/ui.o \
+	src/apps.o \
 	$(GRAPH_OBJS) \
 	$(COMPAT_OBJS)
 
@@ -319,7 +320,7 @@ src/tig: $(TIG_OBJS)
 TEST_GRAPH_OBJS = test/tools/test-graph.o src/string.o src/util.o src/io.o $(GRAPH_OBJS) $(COMPAT_OBJS)
 test/tools/test-graph: $(TEST_GRAPH_OBJS)
 
-DOC_GEN_OBJS = tools/doc-gen.o src/string.o src/types.o src/util.o src/request.o compat/wcwidth.o
+DOC_GEN_OBJS = tools/doc-gen.o src/string.o src/types.o src/util.o src/request.o $(COMPAT_OBJS)
 tools/doc-gen: $(DOC_GEN_OBJS)
 
 OBJS = $(sort $(TIG_OBJS) $(TEST_GRAPH_OBJS) $(DOC_GEN_OBJS))
@@ -363,6 +364,10 @@ NEWS.html: NEWS.adoc doc/asciidoc.conf
 	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<
 
 doc/tigmanual.7: doc/manual.adoc
+
+test/API.adoc: test/tools/libtest.sh
+	@printf '%s\n%s\n' 'Testing API' '-----------' > $@
+	$(QUIET_ASCIIDOC)egrep '^#\|' test/tools/libtest.sh | $(SED) 's/^#| \{0,1\}//' | cat -s >> $@
 
 %.1.html : %.1.adoc doc/asciidoc.conf
 	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d manpage $<

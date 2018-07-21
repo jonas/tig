@@ -42,7 +42,7 @@ ref_canonical_compare(const struct ref *ref1, const struct ref *ref2)
 	if (tag_diff)
 		return tag_diff;
 	if (ref1->type != ref2->type)
-		return !tag_diff ? ref1->type - ref2->type : ref2->type - ref1->type;
+		return (ref1->type - ref2->type);
 	return strcmp_numeric(ref1->name, ref2->name);
 }
 
@@ -195,8 +195,13 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 			type = REFERENCE_LOCAL_TAG;
 		}
 
-		namelen -= STRING_SIZE("refs/tags/");
-		name	+= STRING_SIZE("refs/tags/");
+		/* Don't remove the prefix if there is already a branch
+		 * with the same name. */
+		ref = string_map_get(&refs_by_name, name + STRING_SIZE("refs/tags/"));
+		if (ref == NULL || ref_is_tag(ref)) {
+			namelen -= STRING_SIZE("refs/tags/");
+			name	+= STRING_SIZE("refs/tags/");
+		}
 
 	} else if (!prefixcmp(name, "refs/remotes/")) {
 		type = REFERENCE_REMOTE;
@@ -309,15 +314,18 @@ reload_refs(bool force)
 	const char *ls_remote_argv[SIZEOF_ARG] = {
 		"git", "show-ref", "--head", "--dereference", NULL
 	};
-	static bool init = false;
+	char ls_remote_cmd[SIZEOF_STR];
 	struct ref_opt opt = { repo.remote, repo.head, WATCH_NONE };
 	struct repo_info old_repo = repo;
 	enum status_code code;
+	const char *env = getenv("TIG_LS_REMOTE");
 
-	if (!init) {
-		if (!argv_from_env(ls_remote_argv, "TIG_LS_REMOTE"))
-			return ERROR_OUT_OF_MEMORY;
-		init = true;
+	if (env && *env) {
+		int argc = 0;
+
+		string_ncopy(ls_remote_cmd, env, strlen(env));
+		if (!argv_from_string(ls_remote_argv, &argc, ls_remote_cmd))
+			return error("Failed to parse TIG_LS_REMOTE: %s", env);
 	}
 
 	if (!*repo.git_dir)
@@ -334,7 +342,7 @@ reload_refs(bool force)
 	string_map_clear(&refs_by_id);
 	string_map_foreach(&refs_by_name, invalidate_refs, NULL);
 
-	code = io_run_load(ls_remote_argv, " ", read_ref, &opt);
+	code = io_run_load(ls_remote_argv, " \t", read_ref, &opt);
 	if (code != SUCCESS)
 		return code;
 

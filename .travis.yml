@@ -1,5 +1,4 @@
 language: c
-
 sudo: false
 
 addons:
@@ -10,10 +9,8 @@ addons:
     - valgrind
 
 env:
-  global:
-  matrix:
-    - TRAVIS_TIG=autoconf
-    - TRAVIS_TIG=config
+  - TIG_BUILD=autoconf
+  - TIG_BUILD=config.make
 
 compiler:
   - gcc
@@ -23,6 +20,14 @@ script: tools/travis.sh
 
 matrix:
   include:
+  - env: TIG_BUILD=valgrind
+    script: tools/travis.sh
+  - env: TIG_BUILD=address-sanitizer
+    compiler: clang
+    # LeakSanitizer requires ptrace capabilities
+    # https://github.com/travis-ci/travis-ci/issues/9033
+    sudo: required
+    script: tools/travis.sh
   - if: branch = master
     os: osx
     env:

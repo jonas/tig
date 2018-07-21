@@ -11,6 +11,9 @@ test scripts as long as `PATH` is set to include the directories `src/`
 and `test/tools`. The latter directory is where the test helper
 libraries are located, the most important of which is `libtest.sh`.
 
+The test suite requires `stty -tostop` to be set in the running terminal,
+which is typically the default.
+
 Options
 -------
 

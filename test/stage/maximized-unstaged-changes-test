@@ -1,0 +1,58 @@
+#!/bin/sh
+#
+# Test main view display of index changes and interaction with the stage view.
+
+. libtest.sh
+. libgit.sh
+
+# Set timestamp to return from gettimeofday-like stub.
+export TEST_TIME_NOW=1401046937
+
+# The default formatted date of the above timestamp.
+YYY_MM_DD_HH_MM="2014-05-25 19:42"
+
+export LINES=12
+
+steps '
+	:enter
+	:save-display split.screen
+	:view-diff
+	:save-display maximized.screen
+'
+
+tigrc <<EOF
+set vertical-split = no
+set vertical-split = horizontal
+EOF
+
+in_work_dir create_dirty_workdir
+
+test_tig
+
+assert_equals 'split.screen' <<EOF
+$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
+2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
+ 
+[main] Unstaged changes                                                     100%
+ .j  | 6 ++----
+ a   | 6 ++----
+ b.c | 6 ++----
+ e/f | 6 ++----
+ g h | 6 ++----
+ 5 files changed, 10 insertions(+), 20 deletions(-)
+[stage] Press '<Enter>' to jump to file diff - line 1 of 107                  5%
+EOF
+
+assert_equals 'maximized.screen' <<EOF
+ .j  | 6 ++----
+ a   | 6 ++----
+ b.c | 6 ++----
+ e/f | 6 ++----
+ g h | 6 ++----
+ 5 files changed, 10 insertions(+), 20 deletions(-)
+ 
+diff --git a/.j b/.j
+index e697dfd..9d8ef3d 100644
+--- a/.j
+[stage] Press '<Enter>' to jump to file diff - line 1 of 107                  9%
+EOF

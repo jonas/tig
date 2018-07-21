@@ -34,12 +34,13 @@ struct display_tty {
 	FILE *file;
 	int fd;
 	struct termios *attr;
+	pid_t opgrp;
 };
-static struct display_tty opt_tty = { NULL, -1, NULL };
+static struct display_tty opt_tty = { NULL, -1, NULL, -1 };
 
 static struct io script_io = { -1 };
 
-static bool
+bool
 is_script_executing(void)
 {
 	return script_io.pipe != -1;
@@ -53,7 +54,7 @@ open_script(const char *path)
 
 	char buf[SIZEOF_STR];
 
-	if (!expand_path(buf, sizeof(buf), path))
+	if (!path_expand(buf, sizeof(buf), path))
 		return error("Failed to expand path: %s", path);
 
 	return io_open(&script_io, "%s", buf)
@@ -61,7 +62,7 @@ open_script(const char *path)
 }
 
 bool
-open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool refresh, const char *notice)
+open_external_viewer(const char *argv[], const char *dir, bool silent, bool confirm, bool echo, bool quick, bool do_refresh, const char *notice)
 {
 	bool ok;
 
@@ -88,15 +89,18 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 		if (confirm || !ok) {
 			if (!ok && *notice)
 				fprintf(stderr, "%s", notice);
-			fprintf(stderr, "Press Enter to continue");
-			getc(opt_tty.file);
+
+			if (!ok || !quick) {
+				fprintf(stderr, "Press Enter to continue");
+				getc(opt_tty.file);
+			}
 		}
 		fseek(opt_tty.file, 0, SEEK_END);
 		tcsetattr(opt_tty.fd, TCSAFLUSH, opt_tty.attr);
 		set_terminal_modes();
 	}
 
-	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && refresh) {
+	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && do_refresh) {
 		struct view *view;
 		int i;
 
@@ -145,7 +149,7 @@ open_editor(const char *file, unsigned int lineno)
 	if (lineno && opt_editor_line_number && string_format(lineno_cmd, "+%u", lineno))
 		editor_argv[argc++] = lineno_cmd;
 	editor_argv[argc] = file;
-	if (!open_external_viewer(editor_argv, repo.cdup, false, false, false, true, EDITOR_LINENO_MSG))
+	if (!open_external_viewer(editor_argv, repo.cdup, false, false, false, false, true, EDITOR_LINENO_MSG))
 		opt_editor_line_number = false;
 }
 
@@ -408,8 +412,10 @@ save_view(struct view *view, const char *path)
 			enum_name(get_line_type_name(line->type)),
 			line->selected);
 
-		if (!view->ops->get_column_data(view, line, &column_data))
+		if (!view->ops->get_column_data(view, line, &column_data)) {
+			fclose(file);
 			return true;
+		}
 
 		if (column_data.box) {
 			const struct box *box = column_data.box;
@@ -567,6 +573,9 @@ done_display(void)
 		free(opt_tty.attr);
 		opt_tty.attr = NULL;
 	}
+	signal(SIGTTOU, SIG_IGN);
+	tcsetpgrp(opt_tty.fd, opt_tty.opgrp);
+	signal(SIGTTOU, SIG_DFL);
 }
 
 static void
@@ -579,7 +588,7 @@ set_terminal_modes(void)
 	leaveok(stdscr, false);
 }
 
-static void
+void
 init_tty(void)
 {
 	/* open */
@@ -593,6 +602,13 @@ init_tty(void)
 	if (!opt_tty.attr)
 		die("Failed allocation for tty attributes");
 	tcgetattr(opt_tty.fd, opt_tty.attr);
+
+	/* process-group leader */
+	signal(SIGTTOU, SIG_IGN);
+	setpgid(getpid(), getpid());
+	opt_tty.opgrp = tcgetpgrp(opt_tty.fd);
+	tcsetpgrp(opt_tty.fd, getpid());
+	signal(SIGTTOU, SIG_DFL);
 }
 
 void
@@ -602,7 +618,8 @@ init_display(void)
 	const char *term;
 	int x, y;
 
-	init_tty();
+	if (!opt_tty.file)
+		die("Can't initialize display without tty");
 
 	die_callback = done_display;
 	if (atexit(done_display))

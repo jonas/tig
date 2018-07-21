@@ -1,0 +1,392 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+executable exec-env <<EOF
+#!/bin/sh
+
+{
+	echo "\$TEST_CASE"
+	printf ' - pwd='; pwd
+	for arg in git-dir show-cdup is-inside-work-tree show-superproject-working-tree; do
+		echo " - \$arg=\$(git rev-parse --\$arg)"
+	done
+} | sed "s,$output_dir,ROOT," >> $output_dir/exec-env
+EOF
+
+tigrc <<EOF
+set line-graphics = ascii
+set diff-view-line-number = yes
+set stage-view-line-number = yes
+bind diff <C-p> !sh -c 'TEST_CASE=\$TEST_CASE::exec exec-env'
+EOF
+
+test_setup_work_dir()
+{
+	mkdir -p "$output_dir/base"
+	cd "$output_dir/base"
+	create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+	git branch work-branch ee912870202200a0b9cf4fd86ba57243212d341e
+	git worktree add "$output_dir/$work_dir" work-branch
+}
+
+script='
+	:210
+	:scroll-line-down
+	:edit
+
+	:224
+	:exec !vim +%(lineno) %(file)
+'
+
+exec_env_script='
+  <C-p>
+'
+
+test_case default \
+ --args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+ --before='exec-env' \
+ --script="$script$exec_env_script" <<EOF
+   | -  )
+   | -
+   |    lazy val parent: Project = Project(
+200|        id = "parent",
+   |        base = file("."),
+   | @@ -53,10 +48,10 @@ object ScalaJSBenchmarks extends Build {
+   |    )
+   |
+205|    lazy val common = project("Common", defaultSettings)
+   | -  lazy val deltablue = project("DeltaBlue", benchmarkSettings).dependsOn(c
+   | -  lazy val richards = project("Richards", benchmarkSettings).dependsOn(com
+   | -  lazy val sudoku = project("Sudoku", benchmarkSettings).dependsOn(common)
+   | -  lazy val tracer = project("Tracer", benchmarkSettings).dependsOn(common)
+210| +  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(com
+   | +  lazy val richards = project("Richards", defaultSettings).dependsOn(commo
+   | +  lazy val sudoku = project("Sudoku", defaultSettings).dependsOn(common)
+   | +  lazy val tracer = project("Tracer", defaultSettings).dependsOn(common)
+   |
+215|    def project(id: String, settings: Seq[sbt.Def.Setting[_]]) = Project(
+   |        id = id.toLowerCase,
+   | diff --git a/project/build.sbt b/project/build.sbt
+   | index 87c2e66..122abd0 100644
+   | --- a/project/build.sbt
+220| +++ b/project/build.sbt
+   | @@ -1 +1,4 @@
+   | -addSbtPlugin("org.scala-lang.modules.scalajs" % "scalajs-sbt-plugin" % "0.
+   | +resolvers += Resolver.url("scala-js-snapshots",
+   | +    url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatt
+[diff] Changes to 'project/build.sbt' - line 224 of 367                    61%
+EOF
+
+test_case sub-directory \
+ --args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+ --before='mkdir -p some/subdir && cd some/subdir && exec-env' \
+ --script="$script$exec_env_script" <<EOF
+   | -  )
+   | -
+   |    lazy val parent: Project = Project(
+200|        id = "parent",
+   |        base = file("."),
+   | @@ -53,10 +48,10 @@ object ScalaJSBenchmarks extends Build {
+   |    )
+   |
+205|    lazy val common = project("Common", defaultSettings)
+   | -  lazy val deltablue = project("DeltaBlue", benchmarkSettings).dependsOn(c
+   | -  lazy val richards = project("Richards", benchmarkSettings).dependsOn(com
+   | -  lazy val sudoku = project("Sudoku", benchmarkSettings).dependsOn(common)
+   | -  lazy val tracer = project("Tracer", benchmarkSettings).dependsOn(common)
+210| +  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(com
+   | +  lazy val richards = project("Richards", defaultSettings).dependsOn(commo
+   | +  lazy val sudoku = project("Sudoku", defaultSettings).dependsOn(common)
+   | +  lazy val tracer = project("Tracer", defaultSettings).dependsOn(common)
+   |
+215|    def project(id: String, settings: Seq[sbt.Def.Setting[_]]) = Project(
+   |        id = id.toLowerCase,
+   | diff --git a/project/build.sbt b/project/build.sbt
+   | index 87c2e66..122abd0 100644
+   | --- a/project/build.sbt
+220| +++ b/project/build.sbt
+   | @@ -1 +1,4 @@
+   | -addSbtPlugin("org.scala-lang.modules.scalajs" % "scalajs-sbt-plugin" % "0.
+   | +resolvers += Resolver.url("scala-js-snapshots",
+   | +    url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatt
+[diff] Changes to 'project/build.sbt' - line 224 of 367                    61%
+EOF
+
+test_case sub-directory-diffstat \
+ --args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+ --before='mkdir -p some/subdir && cd some/subdir && exec-env' \
+ --script='
+	:10
+	:edit
+	:26
+	:exec !vim %(file)
+	<C-p>
+' <<EOF
+  1| commit ee912870202200a0b9cf4fd86ba57243212d341e
+   | Refs: [work-branch], [master]
+   | Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
+   | AuthorDate: Sat Mar 1 17:26:01 2014 -0500
+  5| Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
+   | CommitDate: Sat Mar 1 17:26:01 2014 -0500
+   |
+   |     WIP: Upgrade to 0.4-SNAPSHOT and DCE
+   | ---
+ 10|  common/benchmark-runner.sh                                  |  5 +++--
+   |  common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 11 +++++----
+   |  .../src/main/scala/org/scalajs/benchmark/BenchmarkApp.scala |  2 +-
+   |  common/start-benchmark.js                                   |  9 +++++++--
+   |  deltablue/exports.js                                        | 13 ---------
+ 15|  .../scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala   |  7 +++++++
+   |  project/Build.scala                                         | 13 ++++-----
+   |  project/build.sbt                                           |  5 ++++-
+   |  richards/exports.js                                         | 13 ---------
+   |  .../scala/org/scalajs/benchmark/richards/Richards.scala     |  3 +++
+ 20|  run.sh                                                      |  2 +-
+   |  sudoku/exports.js                                           | 13 ---------
+   |  .../main/scala/org/scalajs/benchmark/sudoku/Sudoku.scala    |  2 ++
+   |  tracer/exports.js                                           | 13 ---------
+   |  tracer/index-dev.html                                       |  2 +-
+ 25|  tracer/index.html                                           |  2 +-
+   |  .../main/scala/org/scalajs/benchmark/tracer/Tracer.scala    |  3 +++
+   |  17 files changed, 42 insertions(+), 76 deletions(-)
+   |
+[diff] Press '<Enter>' to jump to file diff - line 26 of 367                  7%
+EOF
+
+# This settings doesn't seem to apply to `git-show`
+test_case mnemonic \
+ --args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+ --before='git config diff.mnemonicPrefix true' \
+ --after='git config diff.mnemonicPrefix false' \
+ --script="$script" << EOF
+   | -  )
+   | -
+   |    lazy val parent: Project = Project(
+200|        id = "parent",
+   |        base = file("."),
+   | @@ -53,10 +48,10 @@ object ScalaJSBenchmarks extends Build {
+   |    )
+   |
+205|    lazy val common = project("Common", defaultSettings)
+   | -  lazy val deltablue = project("DeltaBlue", benchmarkSettings).dependsOn(c
+   | -  lazy val richards = project("Richards", benchmarkSettings).dependsOn(com
+   | -  lazy val sudoku = project("Sudoku", benchmarkSettings).dependsOn(common)
+   | -  lazy val tracer = project("Tracer", benchmarkSettings).dependsOn(common)
+210| +  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(com
+   | +  lazy val richards = project("Richards", defaultSettings).dependsOn(commo
+   | +  lazy val sudoku = project("Sudoku", defaultSettings).dependsOn(common)
+   | +  lazy val tracer = project("Tracer", defaultSettings).dependsOn(common)
+   |
+215|    def project(id: String, settings: Seq[sbt.Def.Setting[_]]) = Project(
+   |        id = id.toLowerCase,
+   | diff --git a/project/build.sbt b/project/build.sbt
+   | index 87c2e66..122abd0 100644
+   | --- a/project/build.sbt
+220| +++ b/project/build.sbt
+   | @@ -1 +1,4 @@
+   | -addSbtPlugin("org.scala-lang.modules.scalajs" % "scalajs-sbt-plugin" % "0.
+   | +resolvers += Resolver.url("scala-js-snapshots",
+   | +    url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatt
+[diff] Changes to 'project/build.sbt' - line 224 of 367                    61%
+EOF
+
+test_case noprefix \
+ --args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+ --before='git config diff.noprefix true' \
+ --after='git config diff.noprefix false' \
+ --script="$script" << EOF
+   | -  )
+   | -
+   |    lazy val parent: Project = Project(
+200|        id = "parent",
+   |        base = file("."),
+   | @@ -53,10 +48,10 @@ object ScalaJSBenchmarks extends Build {
+   |    )
+   |
+205|    lazy val common = project("Common", defaultSettings)
+   | -  lazy val deltablue = project("DeltaBlue", benchmarkSettings).dependsOn(c
+   | -  lazy val richards = project("Richards", benchmarkSettings).dependsOn(com
+   | -  lazy val sudoku = project("Sudoku", benchmarkSettings).dependsOn(common)
+   | -  lazy val tracer = project("Tracer", benchmarkSettings).dependsOn(common)
+210| +  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(com
+   | +  lazy val richards = project("Richards", defaultSettings).dependsOn(commo
+   | +  lazy val sudoku = project("Sudoku", defaultSettings).dependsOn(common)
+   | +  lazy val tracer = project("Tracer", defaultSettings).dependsOn(common)
+   |
+215|    def project(id: String, settings: Seq[sbt.Def.Setting[_]]) = Project(
+   |        id = id.toLowerCase,
+   | diff --git project/build.sbt project/build.sbt
+   | index 87c2e66..122abd0 100644
+   | --- project/build.sbt
+220| +++ project/build.sbt
+   | @@ -1 +1,4 @@
+   | -addSbtPlugin("org.scala-lang.modules.scalajs" % "scalajs-sbt-plugin" % "0.
+   | +resolvers += Resolver.url("scala-js-snapshots",
+   | +    url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatt
+[diff] Changes to 'project/build.sbt' - line 224 of 367                    61%
+EOF
+
+test_case default-conflict \
+ --before='setup-conflict.sh > config.setup' \
+ --script='
+ 	:view-diff
+	:7
+	:edit
+
+	:10
+	:exec !vim +%(lineno) %(file)
+' << EOF
+  1| diff --cc conflict-file
+   | index 86c5a05,b4c3de6..0000000
+   | --- a/conflict-file
+   | +++ b/conflict-file
+  5| @@@ -1,1 -1,1 +1,5 @@@
+   | ++<<<<<<< HEAD
+   |  +c'
+   | ++=======
+   | + d'
+ 10| ++>>>>>>> conflict-branch
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[stage] Unstaged changes to 'conflict-file' - line 10 of 10                 100%
+EOF
+
+test_case noprefix-conflict \
+ --before='git config diff.noprefix true' \
+ --after='git config diff.noprefix false' \
+ --script='
+ 	:view-diff
+	:7
+	:edit
+
+	:10
+	:exec !vim +%(lineno) %(file)
+' << EOF
+  1| diff --cc conflict-file
+   | index 86c5a05,b4c3de6..0000000
+   | --- a/conflict-file
+   | +++ b/conflict-file
+  5| @@@ -1,1 -1,1 +1,5 @@@
+   | ++<<<<<<< HEAD
+   |  +c'
+   | ++=======
+   | + d'
+ 10| ++>>>>>>> conflict-branch
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[stage] Unstaged changes to 'conflict-file' - line 10 of 10                 100%
+EOF
+
+run_test_cases
+
+assert_equals 'editor.log' <<EOF
++51 project/Build.scala
+  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(common)
++2 project/build.sbt
+    url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatterns)
++51 project/Build.scala
+  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(common)
++2 project/build.sbt
+    url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatterns)
+common/benchmark-runner.sh
+#!/bin/sh
+#                     __
+#     ________ ___   / /  ___      __ ____  Scala.js Benchmarks
+#    / __/ __// _ | / /  / _ | __ / // __/  (c) 2013, Jonas Fonseca
+#  __\\ \\/ /__/ __ |/ /__/ __ |/_// /_\\ \\
+tracer/src/main/scala/org/scalajs/benchmark/tracer/Tracer.scala
+/*                     __                                               *\\
+**     ________ ___   / /  ___      __ ____  Scala.js Benchmarks        **
+**    / __/ __// _ | / /  / _ | __ / // __/  Adam Burmister             **
+**  __\\ \\/ /__/ __ |/ /__/ __ |/_// /_\\ \\    2012, Google, Inc          **
+** /____/\\___/_/ |_/____/_/ | |__/ /____/    2013, Jonas Fonseca        **
++51 project/Build.scala
+  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(common)
++2 project/build.sbt
+    url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatterns)
++51 project/Build.scala
+  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(common)
++2 project/build.sbt
+    url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatterns)
++2 conflict-file
+c'
++5 conflict-file
+>>>>>>> conflict-branch
++2 conflict-file
+c'
++5 conflict-file
+>>>>>>> conflict-branch
+EOF
+
+assert_equals 'exec-env' <<EOF
+default
+ - pwd=ROOT/work dir
+ - git-dir=ROOT/base/.git/worktrees/work dir
+ - show-cdup=
+ - is-inside-work-tree=true
+ - show-superproject-working-tree=
+default::exec
+ - pwd=ROOT/work dir
+ - git-dir=ROOT/base/.git/worktrees/work dir
+ - show-cdup=
+ - is-inside-work-tree=true
+ - show-superproject-working-tree=
+sub-directory
+ - pwd=ROOT/work dir/some/subdir
+ - git-dir=ROOT/base/.git/worktrees/work dir
+ - show-cdup=../../
+ - is-inside-work-tree=true
+ - show-superproject-working-tree=
+sub-directory::exec
+ - pwd=ROOT/work dir
+ - git-dir=ROOT/base/.git/worktrees/work dir
+ - show-cdup=
+ - is-inside-work-tree=true
+ - show-superproject-working-tree=
+sub-directory-diffstat
+ - pwd=ROOT/work dir/some/subdir
+ - git-dir=ROOT/base/.git/worktrees/work dir
+ - show-cdup=../../
+ - is-inside-work-tree=true
+ - show-superproject-working-tree=
+sub-directory-diffstat::exec
+ - pwd=ROOT/work dir
+ - git-dir=ROOT/base/.git/worktrees/work dir
+ - show-cdup=
+ - is-inside-work-tree=true
+ - show-superproject-working-tree=
+EOF

@@ -132,6 +132,7 @@ scroll_view(struct view *view, enum request request)
 		return;
 	case REQ_SCROLL_PAGE_DOWN:
 		lines = view->height;
+		/* Fall-through */
 	case REQ_SCROLL_WHEEL_DOWN:
 	case REQ_SCROLL_LINE_DOWN:
 		if (view->pos.offset + lines > view->lines)
@@ -145,6 +146,7 @@ scroll_view(struct view *view, enum request request)
 
 	case REQ_SCROLL_PAGE_UP:
 		lines = view->height;
+		/* Fall-through */
 	case REQ_SCROLL_LINE_UP:
 	case REQ_SCROLL_WHEEL_UP:
 		if (lines > view->pos.offset)
@@ -1436,10 +1438,12 @@ view_column_info_update(struct view *view, struct line *line)
 	for (column = view->columns; column; column = column->next) {
 		const char *text = view_column_text(view, &column_data, column);
 		int width = 0;
+		int maxwidth = 0;
 
 		switch (column->type) {
 		case VIEW_COLUMN_AUTHOR:
 			width = column->opt.author.width;
+			maxwidth = width == 0 ? column->opt.author.maxwidth : 0;
 			break;
 
 		case VIEW_COLUMN_COMMIT_TITLE:
@@ -1451,6 +1455,7 @@ view_column_info_update(struct view *view, struct line *line)
 
 		case VIEW_COLUMN_FILE_NAME:
 			width = column->opt.file_name.width;
+			maxwidth = width == 0 ? column->opt.file_name.maxwidth : 0;
 			break;
 
 		case VIEW_COLUMN_FILE_SIZE:
@@ -1483,6 +1488,7 @@ view_column_info_update(struct view *view, struct line *line)
 
 		case VIEW_COLUMN_REF:
 			width = column->opt.ref.width;
+			maxwidth = width == 0 ? column->opt.ref.maxwidth : 0;
 			break;
 
 		case VIEW_COLUMN_SECTION:
@@ -1497,6 +1503,9 @@ view_column_info_update(struct view *view, struct line *line)
 
 		if (*text && !width)
 			width = utf8_width(text);
+
+		if ((maxwidth > 0) && (width > maxwidth))
+			width = maxwidth;
 
 		if (width > column->width) {
 			column->width = width;

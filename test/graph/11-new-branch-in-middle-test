@@ -27,12 +27,12 @@ EOF
 
 assert_equals stdout <<EOF
 ●─┬─╮ Commit A - merge B, C, and E
-● │ │ Commit B - after F
-│ ● │ Commit C - after F
-│ │ ● Commit E - after Z
+∙ │ │ Commit B - after F
+│ ∙ │ Commit C - after F
+│ │ ∙ Commit E - after Z
 ●─┤ │ Commit F - merge G and I
 ●─│─│─╮ Commit G - merge H and I
-● │ │ │ Commit H - after I
-●─┴─│─╯ Commit I - after Z
+∙ │ │ │ Commit H - after I
+∙─┴─│─╯ Commit I - after Z
 ◎───╯ Commit Z
 EOF

@@ -49,6 +49,10 @@
 #include "tig/status.h"
 #include "tig/tree.h"
 
+#ifdef HAVE_READLINE
+#include <readline/readline.h>
+#endif /* HAVE_READLINE */
+
 static bool
 forward_request_to_child(struct view *child, enum request request)
 {
@@ -62,7 +66,7 @@ view_request(struct view *view, enum request request)
 	if (!view || !view->lines)
 		return request;
 
-	if (request == REQ_ENTER && !opt_focus_child &&
+	if (request == REQ_ENTER && !opt_focus_child && opt_send_child_enter &&
 	    view_has_flags(view, VIEW_SEND_CHILD_ENTER)) {
 		struct view *child = display[1];
 
@@ -196,7 +200,10 @@ view_driver(struct view *view, enum request request)
 		open_main_view(view, OPEN_DEFAULT);
 		break;
 	case REQ_VIEW_DIFF:
-		open_diff_view(view, OPEN_DEFAULT);
+		if (view && string_rev_is_null(view->env->commit))
+			open_stage_view(view, NULL, 0, OPEN_DEFAULT);
+		else
+			open_diff_view(view, OPEN_DEFAULT);
 		break;
 	case REQ_VIEW_LOG:
 		open_log_view(view, OPEN_DEFAULT);
@@ -231,7 +238,7 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_NEXT:
 	case REQ_PREVIOUS:
-		if (view->parent) {
+		if (view->parent && view == display[1]) {
 			int line;
 
 			view = view->parent;
@@ -504,10 +511,21 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 		if (!seen_dashdash) {
 			if (!strcmp(opt, "--")) {
 				seen_dashdash = true;
-				continue;
 
 			} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
 				printf("tig version %s\n", TIG_VERSION);
+#ifdef NCURSES_VERSION
+				printf("%s version %s.%d\n",
+#ifdef NCURSES_WIDECHAR
+				       "ncursesw",
+#else
+				       "ncurses",
+#endif
+				       NCURSES_VERSION, NCURSES_VERSION_PATCH);
+#endif
+#ifdef HAVE_READLINE
+				printf("readline version %s\n", rl_library_version);
+#endif
 				exit(EXIT_SUCCESS);
 
 			} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
@@ -723,6 +741,40 @@ die_if_failed(enum status_code code, const char *msg)
 		die("%s: %s", msg, get_status_message(code));
 }
 
+void
+hangup_children(void)
+{
+	if (signal(SIGHUP, SIG_IGN) == SIG_ERR)
+		return;
+	killpg(getpid(), SIGHUP);
+}
+
+static inline enum status_code
+handle_git_prefix(void)
+{
+	const char *prefix = getenv("GIT_PREFIX");
+	char cwd[4096];
+
+	if (!prefix || !*prefix)
+		return SUCCESS;
+
+	/*
+	 * GIT_PREFIX is set when tig is invoked as a git alias.
+	 * Tig expects to run from the subdirectory so clear the prefix
+	 * and set GIT_WORK_TREE accordinglyt.
+	 */
+	if (!getcwd(cwd, sizeof(cwd)))
+		return error("Failed to read CWD");
+	if (setenv("GIT_WORK_TREE", cwd, 1))
+		return error("Failed to set GIT_WORK_TREE");
+	if (chdir(prefix))
+		return error("Failed to change directory to %s", prefix);
+	if (setenv("GIT_PREFIX", "", 1))
+		return error("Failed to clear GIT_PREFIX");
+
+	return SUCCESS;
+}
+
 int
 main(int argc, const char *argv[])
 {
@@ -730,6 +782,10 @@ main(int argc, const char *argv[])
 	bool pager_mode = !isatty(STDIN_FILENO);
 	enum request request = parse_options(argc, argv, pager_mode);
 	struct view *view;
+
+	init_tty();
+
+	atexit(hangup_children);
 
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
 		die("Failed to setup signal handler");
@@ -746,6 +802,7 @@ main(int argc, const char *argv[])
 		codeset = nl_langinfo(CODESET);
 	}
 
+	die_if_failed(handle_git_prefix(), "Failed to handle GIT_PREFIX");
 	die_if_failed(load_repo_info(), "Failed to load repo info.");
 	die_if_failed(load_options(), "Failed to load user config.");
 	die_if_failed(load_git_config(), "Failed to load repo config.");

@@ -31,7 +31,7 @@ bool draw_text(struct view *view, enum line_type type, const char *string);
 bool PRINTF_LIKE(3, 4) draw_formatted(struct view *view, enum line_type type, const char *format, ...);
 bool draw_graphic(struct view *view, enum line_type type, const chtype graphic[], size_t size, bool separator);
 bool draw_field(struct view *view, enum line_type type, const char *text, int width, enum align align, bool trim);
-bool draw_lineno(struct view *view, struct view_column *column, unsigned int lineno);
+bool draw_lineno(struct view *view, struct view_column *column, unsigned int lineno, bool add_offset);
 bool view_column_draw(struct view *view, struct line *line, unsigned int lineno);
 
 void redraw_view(struct view *view);

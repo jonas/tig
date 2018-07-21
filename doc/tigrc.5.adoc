@@ -149,6 +149,7 @@ The following variables can be set:
 
 	A space-separated string of diff options to use in the diff view.
 	git-show(1) is used for formatting and always passes --patch-with-stat.
+	Can control display of commit header metadata, passing option --format.
 	This option overrides any options specified in the TIG_DIFF_OPTS
 	environment variable (described in manpage:tig[1]), but is itself
 	overridden by diff flags given on the command line invocation.
@@ -317,6 +318,13 @@ The following variables can be set:
 	focus will remain in the parent view, avoiding reloads of the child
 	view when navigating the parent view. True by default.
 
+'send-child-enter' (bool)::
+
+	Whether to send "enter" key presses to the child view, even if parent
+	view is active. When disabled the child view has to be explicitly
+	focused to receive the "enter" key presses. In practice only relevant
+	when `set focus-child = no`. True by default.
+
 'editor-line-number' (bool)::
 
 	Whether to pass the selected line number to the editor command. The
@@ -380,7 +388,7 @@ view. Each view setting expects a space-separated list of column specifications.
 Column specifications starts with the column type, and can optionally be
 followed by a colon (`:`) and a list of column options. E.g. the following
 column specification defines an 'author' column displaying the author email and
-with a maximum width of 20 characters: `author:email,width=20`.
+with a fixed width of 20 characters: `author:email,width=20`.
 
 The first option value in a column specification is always the 'display' option.
 When no 'display' value is given, 'yes' is assumed. For 'display' options
@@ -437,9 +445,11 @@ author::
 	- 'display' (mixed) [full|abbreviated|email|email-user|<bool>]: How to
 	  display author names. If set to "abbreviated" author initials will be
 	  shown.
-	- 'width' (int): Width of the column. When set to a value between 1 and
-	  10, the author name will be abbreviated to the author's initials.
+	- 'width' (int): Fixed width for the column. When set to a value between
+	  1 and 10, the author name will be abbreviated to the author's initials.
 	  When set to zero, the width is automatically sized to fit the content.
+	- 'maxwidth' (int): Maximum width of the column. Permit automatically
+	  sizing content, up to this limit.
 
 commit-title::
 	- 'graph' (mixed) [no|v2|v1]: Whether to show the revision graph in the
@@ -463,8 +473,8 @@ date::
 	  timezone. Note that relative dates always use local offsets.
 	- 'format' (string): format string to pass to strftime(3) when 'custom'
 	  display mode has been selected.
-	- 'width' (int): Width of the column. When set to zero, the width is
-	  automatically sized to fit the content.
+	- 'width' (int): Fixed width for the column. When set to zero, the width
+	  is automatically sized to fit the content.
 
 file-name::
 	- 'display' (mixed) [auto|always|<bool>]: When to display file names.
@@ -472,37 +482,41 @@ file-name::
 	  running: tig blame -C <file>.
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
+	- 'maxwidth' (int): Maximum width of the column. Permit automatically
+	  sizing content, up to this limit.
 
 file-size::
 	- 'display' (mixed) [default|units|<bool>]: How to display file sizes.
 	  When set to "units", sizes are shown using binary prefixes, e.g. 12524
 	  bytes is shown as "12.2K".
-	- 'width' (int): Width of the filename column. When set to zero, the
-	  width is automatically sized to fit the content.
+	- 'width' (int): Fixed width for the filename column. When set to zero,
+	  the width is automatically sized to fit the content.
 
 id::
 	- 'display' (bool): Whether to show commit IDs in the main view.
-	- 'width' (int) : Width of the commit ID. When unset Tig will use the
-	  value of 'core.abbrev' if found. See git-config(1) on how to set
-	  'core.abbrev'. When set to zero the width is automatically sized to
-	  fit the content of reflog (e.g.  `ref/stash@{4}`) IDs and otherwise
+	- 'width' (int) : Fixed width for the commit ID column. When unset Tig
+	  will use the value of 'core.abbrev' if found. See git-config(1) on how
+	  to set 'core.abbrev'. When set to zero the width is automatically sized
+	  to fit the content of reflog (e.g.  `ref/stash@{4}`) IDs and otherwise
 	  default to 7.
 
 line-number::
 	- 'display' (bool): Whether to show line numbers.
 	- 'interval' (int): Interval between line numbers.
-	- 'width' (int): Width of the column. When set to zero, the width is
-	  automatically sized to fit the content.
+	- 'width' (int): Fixed width for the column. When set to zero, the width
+	  is automatically sized to fit the content.
 
 mode::
 	- 'display' (bool): Whether to show file modes.
-	- 'width' (int): Width of the column. When set to zero, the width is
-	  automatically sized to fit the content.
+	- 'width' (int): Fixed width for the column. When set to zero, the width
+	  is automatically sized to fit the content.
 
 ref::
 	- 'display' (bool): Whether to show the reference name.
-	- 'width' (int): Width of the column. When set to zero, the width is
-	  automatically sized to fit the content.
+	- 'width' (int): Fixed width for the column. When set to zero, the width
+	  is automatically sized to fit the content.
+	- 'maxwidth' (int): Maximum width of the column. Permit automatically
+	  sizing content, up to this limit.
 
 status::
 	- 'display' (mixed) [no|short|long|<bool>]: How to display the status
@@ -592,7 +606,8 @@ bind to the `<` key.
 *<Hash>*, *<LessThan>* or *<LT>*, *<Home>*, *<End>*, *<PageUp>* or *<PgUp>*,
 *<PageDown>* or *<PgDown>*, *<ScrollBack>* or *<SBack>*, *<ScrollFwd>* or
 *<SFwd>*, *<ShiftTab>* or *<BackTab>*, *<ShiftLeft>*, *<ShiftRight>*,
-*<ShiftDelete>* or *<ShiftDel>*, *<ShiftHome>*, *<ShiftEnd>*, *<F1>* ... *<F19>*
+*<ShiftDelete>* or *<ShiftDel>*, *<ShiftHome>*, *<ShiftEnd>*, *<SingleQuote>*,
+*<DoubleQuote>*, *<F1>* ... *<F19>*
 
 To define key mappings with the `Ctrl` key, use `<Ctrl-key>`. In addition, key
 combos consisting of an initial `Escape` key followed by a normal key value can
@@ -649,6 +664,8 @@ the command that should be executed.
 			 of output to the status bar.
 |?			|Prompt the user before executing the command.
 |<			|Exit Tig after executing the command.
+|>			|Re-open Tig instantly in the last displayed view after
+			 executing the command.
 |=============================================================================
 
 Unless otherwise specified, commands are run in the foreground with their
@@ -697,6 +714,7 @@ following variable names, which are substituted before commands are run:
 |%(repo:prefix)		|The path prefix of the current work directory,
 			 e.g `subdir/`.
 |%(repo:git-dir)	|The path to the Git directory, e.g. `/src/repo/.git`.
+|%(repo:worktree)	|The worktree path, if defined.
 |%(repo:is-inside-work-tree)
 			|Whether Tig is running inside a work tree,
 			 either `true` or `false`.

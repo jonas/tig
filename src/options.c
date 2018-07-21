@@ -522,6 +522,7 @@ parse_string(char *opt, const char *arg, size_t optsize)
 		if (arglen == 1 || arg[arglen - 1] != arg[0])
 			return ERROR_UNMATCHED_QUOTATION;
 		arg += 1; arglen -= 2;
+		/* Fall-through */
 	default:
 		string_ncopy_do(opt, optsize, arg, arglen);
 		return SUCCESS;
@@ -619,8 +620,8 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 	}
 
 	if (!strcmp(option->type, "const char *")) {
-		const char *alloc = NULL;
 		const char **value = option->value;
+		char *alloc = NULL;
 
 		if (option->value == &opt_diff_highlight) {
 			bool enabled = false;
@@ -643,12 +644,14 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 				return ERROR_OUT_OF_MEMORY;
 		}
 
-		if (!strcmp(name, "truncation-delimiter")) {
+		if (alloc && !strcmp(name, "truncation-delimiter")) {
 			if (!strcmp(alloc, "utf-8") || !strcmp(alloc, "utf8")) {
+				free(alloc);
 				alloc = strdup("⋯");
 				if (!alloc)
 					return ERROR_OUT_OF_MEMORY;
 			} else if (utf8_width_of(alloc, -1, -1) != 1) {
+				free(alloc);
 				alloc = strdup("~");
 				if (!alloc)
 					return ERROR_OUT_OF_MEMORY;
@@ -985,7 +988,7 @@ load_option_file(const char *path)
 	if (!path || !strlen(path))
 		return SUCCESS;
 
-	if (!expand_path(buf, sizeof(buf), path))
+	if (!path_expand(buf, sizeof(buf), path))
 		return error("Failed to expand path: %s", path);
 
 	/* It's OK that the file doesn't exist. */
@@ -1333,30 +1336,6 @@ set_repo_config_option(char *name, char *value, enum status_code (*cmd)(int, con
 		warn("Option 'tig.%s': %s", name, get_status_message(code));
 }
 
-static void
-set_work_tree(const char *value)
-{
-	char cwd[SIZEOF_STR];
-
-	if (!getcwd(cwd, sizeof(cwd)))
-		die("Failed to get cwd path: %s", strerror(errno));
-	if (chdir(cwd) < 0)
-		die("Failed to chdir(%s): %s", cwd, strerror(errno));
-	if (chdir(repo.git_dir) < 0)
-		die("Failed to chdir(%s): %s", repo.git_dir, strerror(errno));
-	if (!getcwd(repo.git_dir, sizeof(repo.git_dir)))
-		die("Failed to get git path: %s", strerror(errno));
-	if (chdir(value) < 0)
-		die("Failed to chdir(%s): %s", value, strerror(errno));
-	if (!getcwd(cwd, sizeof(cwd)))
-		die("Failed to get cwd path: %s", strerror(errno));
-	if (setenv("GIT_WORK_TREE", cwd, true))
-		die("Failed to set GIT_WORK_TREE to '%s'", cwd);
-	if (setenv("GIT_DIR", repo.git_dir, true))
-		die("Failed to set GIT_DIR to '%s'", repo.git_dir);
-	repo.is_inside_work_tree = true;
-}
-
 static struct line_info *
 parse_git_color_option(struct line_info *info, char *value)
 {
@@ -1448,7 +1427,7 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 		string_ncopy(opt_editor, value, valuelen);
 
 	else if (!strcmp(name, "core.worktree"))
-		set_work_tree(value);
+		string_ncopy(repo.worktree, value, valuelen);
 
 	else if (!strcmp(name, "core.abbrev"))
 		parse_int(&opt_id_width, value, 0, SIZEOF_REV - 1);
