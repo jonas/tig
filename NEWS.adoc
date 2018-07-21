@@ -7,26 +7,38 @@ master
 Improvements:
 
  - Add 'send-child-enter' option to control interaction with child views. (#791)
- - Update make config defaults for Cygwin to ncurses6. (GH #792)
- - Build against netbsd-curses. (GH #789)
- - Change the blame view to render more like `git blame`. (GH #812)
- - Improve worktree and submodule support. (GH #459, #781, #783)
- - Support running Tig via a Git alias. (GH #763)
- - Use ISO-8601 letters for short relative dates. (GH #759, #760)
- - Change date formatting to show timezones by default. (GH #428, #811)
- - Use utf8proc to handle Unicode characters. (GH #827)
+ - Update make config defaults for Cygwin to ncurses6. (#792)
+ - Build against netbsd-curses. (#789)
+ - Change the blame view to render more like `git blame`. (#812)
+ - Improve worktree and submodule support. (#459, #781, #783)
+ - Support running Tig via a Git alias. (#763)
+ - Use ISO-8601 letters for short relative dates. (#759, #760)
+ - Change date formatting to show timezones by default. (#428, #811)
+ - Use utf8proc to handle Unicode characters. (#827)
 
 Bug fixes:
 
- - Fix `file(1)` argument on Linux used for resolving encodings. (GH #788)
- - Fix underflow in the file search. (GH #800, #801)
- - Fix line numbers in grep view when scrolled. (GH #813)
- - Pass command line args through to the stage view. (GH #569, #823)
- - Fix resource leak. (GH #780)
- - Fix various compiler warnings and pointer arithmetic. (GH #799, #803)
- - Workaround potential null pointer dereferences. (GH #824)
+ - Fix `file(1)` argument on Linux used for resolving encodings. (#788)
+ - Fix underflow in the file search. (#800, #801)
+ - Fix line numbers in grep view when scrolled. (#813)
+ - Pass command line args through to the stage view. (#569, #823)
+ - Fix resource leak. (#780)
+ - Fix various compiler warnings and pointer arithmetic. (#799, #803)
+ - Workaround potential null pointer dereferences. (#824)
  - Bind to single and double quotes by using the *<SingleQuote>* and
-   *<DoubleQuote>* key mappings. (GH #821)
+   *<DoubleQuote>* key mappings. (#821)
+ - Make Tig the process-group leader and clean child processes. (#828, #837)
+ - Fix sh compatibility in `contrib/tig-pick`. (#832)
+ - Fix incorrect behaviour of up and down keys in diff view when opened from
+   diff preview. (#802, #835)
+ - Open the stage view when maximizing a split diff view of (un)staged changes.
+   (#836)
+ - Use fully qualified reference name for tags when conflicting with branch
+   name. (#746, #787, #849)
+ - Fix resize not working after entering command. (#845) (#846)
+ - Use stack allocated memory to handle TIG_LS_REMOTE. (#839)
+ - Fix deleted file mode line remains highlighted after hovering in diff or stage view. (#851)
+ - Fix `TIG_LS_REMOTE` not working with git-ls-remote(1). (#853, #854)
 
 tig-2.3.3
 ---------
