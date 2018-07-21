@@ -926,6 +926,7 @@ Valid mixed values
 <p>
         A space-separated string of diff options to use in the diff view.
         git-show(1) is used for formatting and always passes --patch-with-stat.
+        Can control display of commit header metadata, passing option --format.
         This option overrides any options specified in the TIG_DIFF_OPTS
         environment variable (described in <a href="tig.1.html">tig(1)</a>), but is itself
         overridden by diff flags given on the command line invocation.
@@ -1222,6 +1223,17 @@ branch               : Any other reference.
 </p>
 </dd>
 <dt class="hdlist1">
+<em>send-child-enter</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to send "enter" key presses to the child view, even if parent
+        view is active. When disabled the child view has to be explicitly
+        focused to receive the "enter" key presses. In practice only relevant
+        when <code>set focus-child = no</code>. True by default.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>editor-line-number</em> (bool)
 </dt>
 <dd>
@@ -1321,7 +1333,7 @@ view. Each view setting expects a space-separated list of column specifications.
 Column specifications starts with the column type, and can optionally be
 followed by a colon (<code>:</code>) and a list of column options. E.g. the following
 column specification defines an <em>author</em> column displaying the author email and
-with a maximum width of 20 characters: <code>author:email,width=20</code>.</p></div>
+with a fixed width of 20 characters: <code>author:email,width=20</code>.</p></div>
 <div class="paragraph"><p>The first option value in a column specification is always the <em>display</em> option.
 When no <em>display</em> value is given, <em>yes</em> is assumed. For <em>display</em> options
 expecting an enumerated value this will automatically resolve to the default
@@ -1439,9 +1451,15 @@ author
 </li>
 <li>
 <p>
-<em>width</em> (int): Width of the column. When set to a value between 1 and
-          10, the author name will be abbreviated to the author&#8217;s initials.
+<em>width</em> (int): Fixed width for the column. When set to a value between
+          1 and 10, the author name will be abbreviated to the author&#8217;s initials.
           When set to zero, the width is automatically sized to fit the content.
+</p>
+</li>
+<li>
+<p>
+<em>maxwidth</em> (int): Maximum width of the column. Permit automatically
+          sizing content, up to this limit.
 </p>
 </li>
 </ul></div>
@@ -1503,8 +1521,8 @@ date
 </li>
 <li>
 <p>
-<em>width</em> (int): Width of the column. When set to zero, the width is
-          automatically sized to fit the content.
+<em>width</em> (int): Fixed width for the column. When set to zero, the width
+          is automatically sized to fit the content.
 </p>
 </li>
 </ul></div>
@@ -1527,6 +1545,12 @@ file-name
           automatically sized to fit the content.
 </p>
 </li>
+<li>
+<p>
+<em>maxwidth</em> (int): Maximum width of the column. Permit automatically
+          sizing content, up to this limit.
+</p>
+</li>
 </ul></div>
 </dd>
 <dt class="hdlist1">
@@ -1543,8 +1567,8 @@ file-size
 </li>
 <li>
 <p>
-<em>width</em> (int): Width of the filename column. When set to zero, the
-          width is automatically sized to fit the content.
+<em>width</em> (int): Fixed width for the filename column. When set to zero,
+          the width is automatically sized to fit the content.
 </p>
 </li>
 </ul></div>
@@ -1561,10 +1585,10 @@ id
 </li>
 <li>
 <p>
-<em>width</em> (int) : Width of the commit ID. When unset Tig will use the
-          value of <em>core.abbrev</em> if found. See git-config(1) on how to set
-          <em>core.abbrev</em>. When set to zero the width is automatically sized to
-          fit the content of reflog (e.g.  <code>ref/stash@{4}</code>) IDs and otherwise
+<em>width</em> (int) : Fixed width for the commit ID column. When unset Tig
+          will use the value of <em>core.abbrev</em> if found. See git-config(1) on how
+          to set <em>core.abbrev</em>. When set to zero the width is automatically sized
+          to fit the content of reflog (e.g.  <code>ref/stash@{4}</code>) IDs and otherwise
           default to 7.
 </p>
 </li>
@@ -1587,8 +1611,8 @@ line-number
 </li>
 <li>
 <p>
-<em>width</em> (int): Width of the column. When set to zero, the width is
-          automatically sized to fit the content.
+<em>width</em> (int): Fixed width for the column. When set to zero, the width
+          is automatically sized to fit the content.
 </p>
 </li>
 </ul></div>
@@ -1605,8 +1629,8 @@ mode
 </li>
 <li>
 <p>
-<em>width</em> (int): Width of the column. When set to zero, the width is
-          automatically sized to fit the content.
+<em>width</em> (int): Fixed width for the column. When set to zero, the width
+          is automatically sized to fit the content.
 </p>
 </li>
 </ul></div>
@@ -1623,8 +1647,14 @@ ref
 </li>
 <li>
 <p>
-<em>width</em> (int): Width of the column. When set to zero, the width is
-          automatically sized to fit the content.
+<em>width</em> (int): Fixed width for the column. When set to zero, the width
+          is automatically sized to fit the content.
+</p>
+</li>
+<li>
+<p>
+<em>maxwidth</em> (int): Maximum width of the column. Permit automatically
+          sizing content, up to this limit.
 </p>
 </li>
 </ul></div>
@@ -1744,7 +1774,8 @@ bind to the <code>&lt;</code> key.
 <strong>&lt;Hash&gt;</strong>, <strong>&lt;LessThan&gt;</strong> or <strong>&lt;LT&gt;</strong>, <strong>&lt;Home&gt;</strong>, <strong>&lt;End&gt;</strong>, <strong>&lt;PageUp&gt;</strong> or <strong>&lt;PgUp&gt;</strong>,
 <strong>&lt;PageDown&gt;</strong> or <strong>&lt;PgDown&gt;</strong>, <strong>&lt;ScrollBack&gt;</strong> or <strong>&lt;SBack&gt;</strong>, <strong>&lt;ScrollFwd&gt;</strong> or
 <strong>&lt;SFwd&gt;</strong>, <strong>&lt;ShiftTab&gt;</strong> or <strong>&lt;BackTab&gt;</strong>, <strong>&lt;ShiftLeft&gt;</strong>, <strong>&lt;ShiftRight&gt;</strong>,
-<strong>&lt;ShiftDelete&gt;</strong> or <strong>&lt;ShiftDel&gt;</strong>, <strong>&lt;ShiftHome&gt;</strong>, <strong>&lt;ShiftEnd&gt;</strong>, <strong>&lt;F1&gt;</strong> &#8230; <strong>&lt;F19&gt;</strong></p></div>
+<strong>&lt;ShiftDelete&gt;</strong> or <strong>&lt;ShiftDel&gt;</strong>, <strong>&lt;ShiftHome&gt;</strong>, <strong>&lt;ShiftEnd&gt;</strong>, <strong>&lt;SingleQuote&gt;</strong>,
+<strong>&lt;DoubleQuote&gt;</strong>, <strong>&lt;F1&gt;</strong> &#8230; <strong>&lt;F19&gt;</strong></p></div>
 <div class="paragraph"><p>To define key mappings with the <code>Ctrl</code> key, use <code>&lt;Ctrl-key&gt;</code>. In addition, key
 combos consisting of an initial <code>Escape</code> key followed by a normal key value can
 be bound using <code>&lt;Esc&gt;key</code>.</p></div>
@@ -1840,6 +1871,11 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><code>&lt;</code></p></td>
 <td align="left" valign="top"><p class="table">Exit Tig after executing the command.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>&gt;</code></p></td>
+<td align="left" valign="top"><p class="table">Re-open Tig instantly in the last displayed view after
+                         executing the command.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1970,6 +2006,10 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(repo:git-dir)</code></p></td>
 <td align="left" valign="top"><p class="table">The path to the Git directory, e.g. <code>/src/repo/.git</code>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:worktree)</code></p></td>
+<td align="left" valign="top"><p class="table">The worktree path, if defined.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(repo:is-inside-work-tree)</code></p></td>
@@ -2782,7 +2822,7 @@ git(7), git-config(1)</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2017-12-13 22:20:42 EST
+ 2018-07-21 15:08:50 EDT
 </div>
 </div>
 </body>

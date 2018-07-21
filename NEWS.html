@@ -738,6 +738,151 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_4_0">tig-2.4.0</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Add <em>send-child-enter</em> option to control interaction with child views. (#791)
+</p>
+</li>
+<li>
+<p>
+Update make config defaults for Cygwin to ncurses6. (#792)
+</p>
+</li>
+<li>
+<p>
+Build against netbsd-curses. (#789)
+</p>
+</li>
+<li>
+<p>
+Change the blame view to render more like <code>git blame</code>. (#812)
+</p>
+</li>
+<li>
+<p>
+Improve worktree and submodule support. (#459, #781, #783)
+</p>
+</li>
+<li>
+<p>
+Support running Tig via a Git alias. (#763)
+</p>
+</li>
+<li>
+<p>
+Use ISO-8601 letters for short relative dates. (#759, #760)
+</p>
+</li>
+<li>
+<p>
+Change date formatting to show time zones by default. (#428, #811)
+</p>
+</li>
+<li>
+<p>
+Use utf8proc to handle Unicode characters. (#827)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix <code>file(1)</code> argument on Linux used for resolving encodings. (#788)
+</p>
+</li>
+<li>
+<p>
+Fix underflow in the file search. (#800, #801)
+</p>
+</li>
+<li>
+<p>
+Fix line numbers in grep view when scrolled. (#813)
+</p>
+</li>
+<li>
+<p>
+Pass command line args through to the stage view. (#569, #823)
+</p>
+</li>
+<li>
+<p>
+Fix resource leak. (#780)
+</p>
+</li>
+<li>
+<p>
+Fix various compiler warnings and pointer arithmetic. (#799, #803)
+</p>
+</li>
+<li>
+<p>
+Workaround potential null pointer dereferences. (#824)
+</p>
+</li>
+<li>
+<p>
+Bind to single and double quotes by using the <strong>&lt;SingleQuote&gt;</strong> and
+   <strong>&lt;DoubleQuote&gt;</strong> key mappings. (#821)
+</p>
+</li>
+<li>
+<p>
+Make Tig the process-group leader and clean child processes. (#828, #837)
+</p>
+</li>
+<li>
+<p>
+Fix sh compatibility in <code>contrib/tig-pick</code>. (#832)
+</p>
+</li>
+<li>
+<p>
+Fix incorrect behaviour of up and down keys in diff view when opened from
+   diff preview. (#802, #835)
+</p>
+</li>
+<li>
+<p>
+Open the stage view when maximizing a split diff view of (un)staged changes.
+   (#836)
+</p>
+</li>
+<li>
+<p>
+Use fully qualified reference name for tags when conflicting with branch
+   name. (#746, #787, #849)
+</p>
+</li>
+<li>
+<p>
+Fix resize not working after entering command. (#845) (#846)
+</p>
+</li>
+<li>
+<p>
+Use stack allocated memory to handle TIG_LS_REMOTE. (#839)
+</p>
+</li>
+<li>
+<p>
+Fix deleted file mode line remains highlighted after hovering in diff or stage view. (#851)
+</p>
+</li>
+<li>
+<p>
+Fix <code>TIG_LS_REMOTE</code> not working with git-ls-remote(1). (#853, #854)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_3_3">tig-2.3.3</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Bug fixes:</p></div>
@@ -3898,7 +4043,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2018-01-30 20:13:03 EST
+ 2018-07-21 15:08:50 EDT
 </div>
 </div>
 </body>
