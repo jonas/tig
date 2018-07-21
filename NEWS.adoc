@@ -1,8 +1,8 @@
 Release notes
 =============
 
-master
-------
+tig-2.4.0
+---------
 
 Improvements:
 
@@ -13,7 +13,7 @@ Improvements:
  - Improve worktree and submodule support. (#459, #781, #783)
  - Support running Tig via a Git alias. (#763)
  - Use ISO-8601 letters for short relative dates. (#759, #760)
- - Change date formatting to show timezones by default. (#428, #811)
+ - Change date formatting to show time zones by default. (#428, #811)
  - Use utf8proc to handle Unicode characters. (#827)
 
 Bug fixes:

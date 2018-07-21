@@ -1,4 +1,4 @@
-personal_ws-1.1 en 294 
+personal_ws-1.1 en 302 
 CJK
 del
 goto
@@ -26,10 +26,12 @@ unstage
 acked
 Cygwin
 stdin
+SingleQuote
 rwxr
 args
 asciidoc
 AsciiDoc
+SIGHUP
 unstanged
 ShiftDel
 revgraph
@@ -46,6 +48,7 @@ boolean
 readline
 waddnstr
 config
+encodings
 alloc
 committer
 cdate
@@ -71,6 +74,7 @@ sys
 ShiftRight
 subshell
 tty
+netbsd
 XDG
 cmdlineargs
 combi
@@ -122,6 +126,7 @@ tigmanual
 PgUp
 mailmap
 SunStudio
+maxwidth
 wrt
 libiconv
 unicode
@@ -142,6 +147,7 @@ Gitter
 printf
 XSL
 newwin
+HUP
 charset
 tigblob
 autobuild
@@ -172,6 +178,7 @@ mergetool
 setenv
 stderr
 togglable
+dereferences
 tabsize
 CPPFLAGS
 gitk
@@ -284,6 +291,7 @@ subcommands
 adate
 PageUp
 sha
+DoubleQuote
 TODO
 cmdline
 Jamo
