@@ -10,7 +10,8 @@ sysconfdir = @sysconfdir@
 
 CC = @CC@
 CFLAGS = @CFLAGS@ @COVERAGE_CFLAGS@
-CPPFLAGS = @CPPFLAGS@ -DHAVE_CONFIG_H
+# CURSES_CFLAGS contain `-I..` flags so add to preprocessor flags.
+CPPFLAGS = @CPPFLAGS@ @CURSES_CFLAGS@ -DHAVE_CONFIG_H
 LDFLAGS = @LDFLAGS@
 LDLIBS = @LIBS@ @CURSES_LIBS@
 
