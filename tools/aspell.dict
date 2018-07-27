@@ -1,4 +1,4 @@
-personal_ws-1.1 en 302 
+personal_ws-1.1 en 303 
 CJK
 del
 goto
@@ -123,6 +123,7 @@ Debian
 gui
 bindir
 tigmanual
+Linuxbrew
 PgUp
 mailmap
 SunStudio
@@ -224,7 +225,7 @@ fileargs
 UI
 CommitDate
 wclear
-Homebrew
+homebrew
 chunked
 BUILTIN
 tinfo
