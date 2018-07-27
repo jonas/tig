@@ -1,6 +1,13 @@
 Release notes
 =============
 
+master
+------
+
+Bug fixes:
+
+ - Add `CURSES_CFLAGS` to `CPPFLAGS`. (#856, Linuxbrew/homebrew-core#8440)
+
 tig-2.4.0
 ---------
 
@@ -36,7 +43,7 @@ Bug fixes:
  - Use fully qualified reference name for tags when conflicting with branch
    name. (#746, #787, #849)
  - Fix resize not working after entering command. (#845) (#846)
- - Use stack allocated memory to handle TIG_LS_REMOTE. (#839)
+ - Use stack allocated memory to handle `TIG_LS_REMOTE`. (#839)
  - Fix deleted file mode line remains highlighted after hovering in diff or stage view. (#851)
  - Fix `TIG_LS_REMOTE` not working with git-ls-remote(1). (#853, #854)
 
