@@ -44,6 +44,9 @@ set_view_attr(struct view *view, enum line_type type)
 	if (!view->curline->selected && view->curtype != type) {
 		(void) wattrset(view->win, get_view_attr(view, type));
 		wchgat(view->win, -1, 0, get_view_color(view, type), NULL);
+#if defined(NCURSES_VERSION_PATCH) && NCURSES_VERSION_PATCH < 20061217
+		touchwin(view->win);
+#endif
 		view->curtype = type;
 	}
 }
