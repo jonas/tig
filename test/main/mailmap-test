@@ -17,6 +17,7 @@ Full Throttle <f.throttle@example.org> Max Power <power123@example.org>"
 EOF
 
 tigrc <<EOF
+set show-untracked = no
 set mailmap = yes
 # set diff-options = --use-mailmap
 # set main-options = --use-mailmap

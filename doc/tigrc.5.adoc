@@ -225,6 +225,10 @@ The following variables can be set:
 
 	Whether to show staged and unstaged changes in the main view.
 
+'show-untracked' (bool)::
+
+	Whether to show also untracked changes in the main view.
+
 'vertical-split' (mixed) [auto|<bool>]::
 
 	Whether to split the view horizontally or vertically.
