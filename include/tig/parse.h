@@ -63,10 +63,10 @@ size_t parse_size(const char *text);
 const char *get_path(const char *path);
 struct ident *get_author(const char *name, const char *email);
 
-static inline int
+static inline unsigned int
 chunk_header_marker_length(const char *data)
 {
-	int len = 0;
+	unsigned int len = 0;
 	for (; *data == '@'; data++)
 		len++;
 	return len;

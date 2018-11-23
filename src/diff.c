@@ -347,7 +347,7 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		state->reading_diff_chunk = false;
 
 	} else if (type == LINE_DIFF_CHUNK) {
-		const int len = chunk_header_marker_length(data);
+		const unsigned int len = chunk_header_marker_length(data);
 		const char *context = strstr(data + len, "@@");
 		struct line *line =
 			context ? add_line_text_at(view, view->lines, data, LINE_DIFF_CHUNK, len)
@@ -362,20 +362,26 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		box->cell[1].length = strlen(context + len);
 		box->cell[box->cells++].type = LINE_DIFF_STAT;
 		state->combined_diff = (len > 2);
+		state->parents = len - 1;
 		state->reading_diff_chunk = true;
 		return true;
 
 	} else if (type == LINE_COMMIT) {
 		state->reading_diff_chunk = false;
 
-	} else if (state->highlight && strchr(data, 0x1b)) {
-		return diff_common_highlight(view, data, type);
-
-	} else if (opt_word_diff && state->reading_diff_chunk &&
-		   /* combined diff format is not using word diff */
-		   !state->combined_diff) {
-		return diff_common_read_diff_wdiff(view, data);
 	}
+
+	if (opt_word_diff && state->reading_diff_chunk &&
+	    /* combined diff format is not using word diff */
+	    !state->combined_diff)
+		return diff_common_read_diff_wdiff(view, data);
+
+	if (!opt_diff_indicator && state->reading_diff_chunk &&
+	    !state->stage)
+		data += state->parents;
+
+	if (state->highlight && strchr(data, 0x1b))
+		return diff_common_highlight(view, data, type);
 
 	return pager_common_read(view, data, type, NULL);
 }

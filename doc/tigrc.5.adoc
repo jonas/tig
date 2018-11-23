@@ -290,6 +290,10 @@ The following variables can be set:
 	regions are governed by `color diff-add-highlight` and
 	`color diff-del-highlight`.
 
+'diff-indicator' (bool)::
+
+	Show +/- signs in the diff view. On by default.
+
 'ignore-space' (mixed) [no|all|some|at-eol|<bool>]::
 
 	Ignore space changes in diff view. By default no space changes are
@@ -301,7 +305,7 @@ The following variables can be set:
 	the *status-update* and *status-revert* may fail when updating or
 	reverting chunks containing lines with space changes. Similarly,
 	*stage-update-line* may fail when updating a line adjacent to a line
-	with space changes
+	with space changes.
 
 'commit-order' (enum) [auto|default|topo|date|author-date|reverse]::
 

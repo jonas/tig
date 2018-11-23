@@ -122,8 +122,9 @@ set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set diff-context		= 3		# Number of lines to show around diff changes (diff)
 #set word-diff			= yes		# Show a word diff? (diff)
 #set diff-options		= -C		# User-defined options for `tig show` (git-diff)
-#set diff-highlight		= true		# String (or bool): Path to diff-highlight script,
+#set diff-highlight		= yes		# String (or bool): Path to diff-highlight script,
 						#                   defaults to `diff-highlight`.
+set diff-indicator		= yes		# Show diff +/- signs?
 #set blame-options		= -C -C -C	# User-defined options for `tig blame` (git-blame)
 set log-options			= --cc --stat	# User-defined options for `tig log` (git-log)
 #set main-options		= -n 1000	# User-defined options for `tig` (git-log)
@@ -326,6 +327,7 @@ bind generic	$	:toggle commit-title-overflow
 						# Toggle display of file in untracked directories
 # bind generic	???	:toggle vertical-split	# Toggle vertical split
 # bind generic	???	:toggle word-diff	# Toggle word diff
+# bind generic	???	:toggle diff-indicator	# Toggle display of diff +/- signs
 bind generic	%	:toggle file-filter	# Toggle filtering by pathspecs in file-args
 bind generic	^	:toggle rev-filter	# Toggle filtering by revisions in rev-args
 
