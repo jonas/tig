@@ -214,7 +214,7 @@ static void
 colors_init(struct colors *colors)
 {
 	if (colors->id_map == NULL) {
-		uint size = 500;
+		size_t size = 500;
 
 		colors->id_map = htab_create_alloc(size, id_color_hash, id_color_eq, key_del, calloc, free);
 	}
