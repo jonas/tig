@@ -97,6 +97,10 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 	state->reflogmsg[0] = 0;
 
 	view_column_info_update(view, line);
+
+	if (opt_start_on_head && is_head_commit(commit->id))
+		select_view_line(view, line->lineno + 1);
+
 	return commit;
 }
 
