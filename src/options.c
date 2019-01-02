@@ -1461,6 +1461,9 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	} else if (!strcmp(name, "format.pretty")) {
 		if (!prefixcmp(value, "format:") && strstr(value, "%C("))
 			argv_append(&opt_log_options, "--pretty=medium");
+
+	} else if (!strcmp(name, "log.follow") && !strcmp(value, "true")) {
+		argv_append(&opt_rev_args, "--follow");
 	}
 
 	return SUCCESS;
