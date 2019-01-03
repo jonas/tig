@@ -1463,7 +1463,8 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 			argv_append(&opt_log_options, "--pretty=medium");
 
 	} else if (!strcmp(name, "log.follow") && !strcmp(value, "true")) {
-		argv_append(&opt_rev_args, "--follow");
+		if (opt_file_args && !opt_file_args[1]) /* single file */
+			argv_append(&opt_rev_args, "--follow");
 	}
 
 	return SUCCESS;
