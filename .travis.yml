@@ -30,11 +30,11 @@ matrix:
     script: tools/travis.sh
   - if: branch = master
     os: osx
-    env:
+    env: TIG_BUILD=brew
     compiler: clang
-    script: brew install --HEAD tig
+    script: tools/travis.sh
   - if: branch = master
     os: osx
-    env:
+    env: TIG_BUILD=brew
     compiler: gcc
-    script: brew install --HEAD tig
+    script: tools/travis.sh
