@@ -101,10 +101,38 @@ pager_wrap_line(struct view *view, const char *data, enum line_type type)
 bool
 pager_common_read(struct view *view, const char *data, enum line_type type, struct line **line_ptr)
 {
+	struct diff_state *state = view->private;
 	struct line *line;
 
 	if (!data)
 		return true;
+
+	if (type == LINE_DIFF_HEADER) {
+		const int len = STRING_SIZE("diff --");
+
+		if (!strncmp(data + len, "combined ", strlen("combined ")) ||
+		    !strncmp(data + len, "cc ", strlen("cc ")))
+			state->combined_diff = true;
+		state->reading_diff_chunk = false;
+
+	} else if (type == LINE_DIFF_CHUNK) {
+		state->reading_diff_chunk = true;
+
+	} else if (type == LINE_PP_MERGE) {
+		state->combined_diff = true;
+	}
+
+	/* ADD2 and DEL2 are only valid in combined diff hunks */
+	if (!state->combined_diff && (type == LINE_DIFF_ADD2 || type == LINE_DIFF_DEL2))
+		type = LINE_DEFAULT;
+
+	/* DEL_FILE, ADD_FILE and START are only valid outside diff chunks */
+	if (state->reading_diff_chunk) {
+		if (type == LINE_DIFF_DEL_FILE || type == LINE_DIFF_START)
+			type = LINE_DIFF_DEL;
+		else if (type == LINE_DIFF_ADD_FILE)
+			type = LINE_DIFF_ADD;
+	}
 
 	if (opt_wrap_lines) {
 		line = pager_wrap_line(view, data, type);
@@ -188,7 +216,7 @@ static struct view_ops pager_ops = {
 	"line",
 	"",
 	VIEW_OPEN_DIFF | VIEW_NO_REF | VIEW_NO_GIT_DIR,
-	0,
+	sizeof(struct diff_state),
 	pager_open,
 	pager_read,
 	view_column_draw,

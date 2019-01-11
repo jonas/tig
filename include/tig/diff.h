@@ -19,6 +19,7 @@
 struct diff_state {
 	bool after_commit_title;
 	bool after_diff;
+	bool reading_diff_chunk;
 	bool reading_diff_stat;
 	bool combined_diff;
 	bool adding_describe_ref;

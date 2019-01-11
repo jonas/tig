@@ -263,6 +263,7 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		if (!strncmp(data + len, "combined ", strlen("combined ")) ||
 		    !strncmp(data + len, "cc ", strlen("cc ")))
 			state->combined_diff = true;
+		state->reading_diff_chunk = false;
 
 	} else if (type == LINE_DIFF_CHUNK) {
 		const char *context = strstr(data + STRING_SIZE("@@"), "@@");
@@ -278,6 +279,7 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		box->cell[0].length = (context + 2) - data;
 		box->cell[1].length = strlen(context + 2);
 		box->cell[box->cells++].type = LINE_DIFF_STAT;
+		state->reading_diff_chunk = true;
 		return true;
 
 	} else if (state->highlight && strchr(data, 0x1b)) {
@@ -290,6 +292,14 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	/* ADD2 and DEL2 are only valid in combined diff hunks */
 	if (!state->combined_diff && (type == LINE_DIFF_ADD2 || type == LINE_DIFF_DEL2))
 		type = LINE_DEFAULT;
+
+	/* DEL_FILE, ADD_FILE and START are only valid outside diff chunks */
+	if (state->reading_diff_chunk) {
+		if (type == LINE_DIFF_DEL_FILE || type == LINE_DIFF_START)
+			type = LINE_DIFF_DEL;
+		else if (type == LINE_DIFF_ADD_FILE)
+			type = LINE_DIFF_ADD;
+	}
 
 	return pager_common_read(view, data, type, NULL);
 }

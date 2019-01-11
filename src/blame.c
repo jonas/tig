@@ -126,9 +126,23 @@ blame_open(struct view *view, enum open_flags flags)
 
 	blame_update_file_name_visibility(view);
 
-	if (!view->env->file[0])
-		return error("No file chosen, press %s to open tree view",
-			     get_view_key(view, REQ_VIEW_TREE));
+	if (!view->env->file[0]) {
+		struct stat statbuf;
+
+		if (opt_file_args && !opt_file_args[1] &&
+		    stat(opt_file_args[0], &statbuf) == 0 && !S_ISDIR(statbuf.st_mode)) {
+			const char *ls_files_argv[] = {
+				"git", "ls-files", "-z", "--full-name", "--", opt_file_args[0], NULL
+			};
+			char name[SIZEOF_STR] = "";
+
+ 			io_run_buf(ls_files_argv, name, sizeof(name), NULL, false);
+			string_ncopy(view->env->file, name, strlen(name));
+		} else {
+			return error("No file chosen, press %s to open tree view",
+				     get_view_key(view, REQ_VIEW_TREE));
+		}
+	}
 
 	if (!view->prev && *repo.prefix && !(flags & (OPEN_RELOAD | OPEN_REFRESH))) {
 		string_copy(path, view->env->file);

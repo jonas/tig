@@ -593,7 +593,7 @@ draw_view_line_search_result(struct view *view, unsigned int lineno)
 		regoff_t end = pmatch[0].rm_eo;
 
 		if (start == -1 || end <= 0 || end <= start)
-			continue;
+			break;
 
 		mvwchgat(view->win, lineno,
 			 utf8_width_of(buf, bufpos + start, -1),

@@ -4,6 +4,7 @@
 . libgit.sh
 
 tigrc <<EOF
+set show-untracked = no
 set line-graphics = ascii
 set diff-view-line-number = yes
 set stage-view-line-number = yes

@@ -45,6 +45,8 @@ main_status_exists(struct view *view, enum line_type type)
 		return true;
 	if (type == LINE_STAT_UNSTAGED && state->add_changes_unstaged)
 		return true;
+	if (type == LINE_STAT_UNTRACKED && state->add_changes_untracked)
+		return true;
 
 	return false;
 }
@@ -60,9 +62,9 @@ main_register_commit(struct view *view, struct commit *commit, const char *ids, 
 	string_copy_rev(commit->id, ids);
 
 	/* FIXME: lazily check index state here instead of in main_open. */
-	if ((state->add_changes_unstaged || state->add_changes_staged) && is_head_commit(commit->id)) {
+	if ((state->add_changes_untracked || state->add_changes_unstaged || state->add_changes_staged) && is_head_commit(commit->id)) {
 		main_add_changes(view, state, ids);
-		state->add_changes_unstaged = state->add_changes_staged = false;
+		state->add_changes_untracked = state->add_changes_unstaged = state->add_changes_staged = false;
 	}
 
 	if (state->with_graph)
@@ -147,8 +149,15 @@ main_check_index(struct view *view, struct main_state *state)
 {
 	struct index_diff diff;
 
-	if (!index_diff(&diff, false, false))
+	if (!index_diff(&diff, opt_show_untracked, false))
 		return false;
+
+	if (!diff.untracked) {
+		watch_apply(&view->watch, WATCH_INDEX_UNTRACKED_NO);
+	} else {
+		watch_apply(&view->watch, WATCH_INDEX_UNTRACKED_YES);
+		state->add_changes_untracked = true;
+	}
 
 	if (!diff.unstaged) {
 		watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_NO);
@@ -172,6 +181,7 @@ main_add_changes(struct view *view, struct main_state *state, const char *parent
 {
 	const char *staged_parent = parent;
 	const char *unstaged_parent = NULL_ID;
+	const char *untracked_parent = NULL_ID;
 
 	if (!state->add_changes_staged) {
 		staged_parent = NULL;
@@ -180,9 +190,16 @@ main_add_changes(struct view *view, struct main_state *state, const char *parent
 
 	if (!state->add_changes_unstaged) {
 		unstaged_parent = NULL;
+		if (!state->add_changes_staged)
+			untracked_parent = parent;
 	}
 
-	return main_add_changes_commit(view, LINE_STAT_UNSTAGED, unstaged_parent, "Unstaged changes")
+	if (!state->add_changes_untracked) {
+		untracked_parent = NULL;
+	}
+
+	return main_add_changes_commit(view, LINE_STAT_UNTRACKED, untracked_parent, "Untracked changes")
+	    && main_add_changes_commit(view, LINE_STAT_UNSTAGED, unstaged_parent, "Unstaged changes")
 	    && main_add_changes_commit(view, LINE_STAT_STAGED, staged_parent, "Staged changes");
 }
 
@@ -528,6 +545,8 @@ main_request(struct view *view, enum request request, struct line *line)
 		if (line->type == LINE_STAT_UNSTAGED
 		    || line->type == LINE_STAT_STAGED)
 			open_stage_view(view, NULL, line->type, flags);
+		else if (line->type == LINE_STAT_UNTRACKED)
+			open_status_view(view, flags);
 		else
 			open_diff_view(view, flags);
 		break;
@@ -558,7 +577,7 @@ main_select(struct view *view, struct line *line)
 {
 	struct commit *commit = line->data;
 
-	if (line->type == LINE_STAT_STAGED || line->type == LINE_STAT_UNSTAGED) {
+	if (line->type == LINE_STAT_STAGED || line->type == LINE_STAT_UNSTAGED || line->type == LINE_STAT_UNTRACKED) {
 		string_ncopy(view->ref, commit->title, strlen(commit->title));
 		status_stage_info(view->env->status, line->type, NULL);
 	} else {

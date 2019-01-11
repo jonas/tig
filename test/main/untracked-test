@@ -1,0 +1,67 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+. "$source_dir/util.sh"
+
+export LINES=20
+
+steps '
+	:save-display start.screen
+	<Enter>
+	:save-display result.screen
+'
+
+tigrc <<EOF
+set vertical-split = no
+EOF
+
+in_work_dir create_dirty_workdir
+in_work_dir git add .j
+in_work_dir touch z
+
+test_tig
+
+assert_equals 'start.screen' <<EOF
+$YYY_MM_DD_HH_MM +0000 Unknown    o Untracked changes
+$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
+$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
+2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[main] Untracked changes                                                    100%
+EOF
+
+assert_equals 'result.screen' <<EOF
+$YYY_MM_DD_HH_MM +0000 Unknown    o Untracked changes
+$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
+$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
+2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
+
+
+[main] Untracked changes                                                    100%
+On branch master
+Changes to be committed:
+M .j
+Changes not staged for commit:
+M a
+M b.c
+M e/f
+M g h
+Untracked files:
+? z
+
+[status] Nothing to update                                                  100%
+EOF
