@@ -15,6 +15,7 @@ https://github.com/jonas/tig/issues/337[#337]
 
 The quick and simple way to install Tig is:
 
+	$ ./autogen.sh
 	$ make
 	$ make install
 
@@ -43,6 +44,7 @@ Installation using `configure`
 
 Optionally, you can use the `configure` script to detect dependencies:
 
+	$ ./autogen.sh
 	$ ./configure
 	$ make
 	$ make install
