@@ -1354,6 +1354,9 @@ parse_git_color_option(struct line_info *info, char *value)
 	for (i = 0; i < argc; i++) {
 		int attr = 0;
 
+		if (!strncmp(argv[i], "ul", 2)) {
+			argv[i] = "underline";
+		}
 		if (set_attribute(&attr, argv[i])) {
 			info->attr |= attr;
 
