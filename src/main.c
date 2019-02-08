@@ -231,8 +231,10 @@ main_check_argv(struct view *view, const char *argv[])
 			continue;
 		}
 
-		if (!strcmp(arg, "--first-parent"))
+		if (!strcmp(arg, "--first-parent")) {
 			state->first_parent = true;
+			argv_append(&opt_diff_options, arg);
+		}
 
 		if (!argv_parse_rev_flag(arg, &rev_flags))
 			continue;
