@@ -53,6 +53,7 @@ typedef unsigned long argv_number;
 	_(argv_string,	 status,	"",		"") \
 	_(argv_string,	 tag,		"",		"") \
 	_(argv_string,	 text,		"",		"") \
+	_(argv_string,	 refname,	"",		"") \
 
 #define ARGV_ENV_FIELDS(type, name, ifempty, initval)	type name;
 
