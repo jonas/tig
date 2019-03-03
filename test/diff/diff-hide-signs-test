@@ -1,0 +1,48 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+tigrc <<EOF
+set diff-show-signs = false
+EOF
+
+steps '
+	:save-display diff-hide-signs.screen
+'
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+test_tig show master^
+
+assert_equals 'diff-hide-signs.screen' '' <<EOF
+commit a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff
+Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
+AuthorDate: Sat Mar 1 15:59:02 2014 -0500
+Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
+CommitDate: Sat Mar 1 15:59:02 2014 -0500
+ 
+   Add type parameter for js.Dynamic
+---
+ common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 2 +-
+1 file changed, 1 insertion(+), 1 deletion(-)
+ 
+diff --git a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala b/commo
+index 65f914a..3aa4320 100644
+--- a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
++++ b/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
+@@ -15,7 +15,7 @@ object Benchmark {
+  val benchmarks = js.Array[Benchmark]()
+  val benchmarkApps = js.Array[BenchmarkApp]()
+ 
+  val global = js.Dynamic.global.asInstanceOf[js.Dictionary]
+  val global = js.Dynamic.global.asInstanceOf[js.Dictionary[js.Any]]
+  global("runScalaJSBenchmarks") = runBenchmarks _
+  global("initScalaJSBenchmarkApps") = initBenchmarkApps _
+ 
+ 
+ 
+ 
+ 
+[diff] a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff - line 1 of 24              100%
+EOF

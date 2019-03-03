@@ -75,7 +75,18 @@ draw_chars(struct view *view, enum line_type type, const char *string, int lengt
 
 	set_view_attr(view, type);
 	if (len > 0)
-		waddnstr(view->win, string, len);
+	{
+		if (view_has_flags(view, VIEW_DIFF_LIKE) &&
+		    !opt_diff_show_signs &&
+		    view->col == 0 &&
+		    (type == LINE_DIFF_ADD || type == LINE_DIFF_DEL || type == LINE_DEFAULT) &&
+		    (string[0] == ' ' || string[0] == '+' || string[0] == '-') 
+		   ) {
+			waddnstr(view->win, string+1, len-1);
+		} else {
+			waddnstr(view->win, string, len);
+		}
+	}
 
 	if (trimmed && use_tilde) {
 		set_view_attr(view, LINE_DELIMITER);

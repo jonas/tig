@@ -270,6 +270,13 @@ The following variables can be set:
 
 	Number of context lines to show for diffs.
 
+'diff-show-signs' (bool)::
+
+	Show (or hide) the leading `+` and `-` signs in diff output. Copy-paste
+	of lines from the diff view may be aided by hiding these signs. Note
+	that disabling signs only makes sense when coloring is used to
+	distinguish added and removed lines. On by default.
+
 'diff-highlight' (mixed)::
 
 	Whether to highlight diffs using Git's 'diff-highlight' program. Defaults
