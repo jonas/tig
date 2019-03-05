@@ -115,6 +115,7 @@ set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set diff-highlight		= true		# String (or bool): Path to diff-highlight script,
 						#                   defaults to `diff-highlight`.
 set diff-show-signs		= yes		# Show diff signs (+ and -) at the start of diff lines
+set diff-column-highlight	= only-empty	# Enum: no, all, only-empty
 #set blame-options		= -C -C -C	# User-defined options for `tig blame` (git-blame)
 #set log-options		= --pretty=raw	# User-defined options for `tig log` (git-log)
 #set main-options		= -n 1000	# User-defined options for `tig` (git-log)

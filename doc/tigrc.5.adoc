@@ -277,6 +277,16 @@ The following variables can be set:
 	that disabling signs only makes sense when coloring is used to
 	distinguish added and removed lines. On by default.
 
+'diff-column-highlight' (enum) [no|all|only-empty]::
+
+	Highlight the left-most column in diff views visually when the option
+	'diff-show-signs' is not in effect. All added/removed lines can be
+	highlighted, or only empty lines. Changed lines are indicated in the
+	first column by a space highlighted by the color `diff-add-highlight` or
+	`diff-del-highlight`, respectively. Keeping the `standout` (reverse)
+	property set for these is suggested, as white space is otherwise
+	invisible. Default is to highlight only empty lines.
+
 'diff-highlight' (mixed)::
 
 	Whether to highlight diffs using Git's 'diff-highlight' program. Defaults

@@ -5,7 +5,7 @@
 
 tigrc <<EOF
 set diff-show-signs = false
-set diff-column-hightlight = no
+set diff-column-highlight = all
 EOF
 
 steps '
@@ -23,23 +23,23 @@ AuthorDate: Sat Mar 1 15:59:02 2014 -0500
 Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
 CommitDate: Sat Mar 1 15:59:02 2014 -0500
  
-   Add type parameter for js.Dynamic
+    Add type parameter for js.Dynamic
 ---
  common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 2 +-
-1 file changed, 1 insertion(+), 1 deletion(-)
+ 1 file changed, 1 insertion(+), 1 deletion(-)
  
 diff --git a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala b/commo
 index 65f914a..3aa4320 100644
 --- a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
 +++ b/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
 @@ -15,7 +15,7 @@ object Benchmark {
-  val benchmarks = js.Array[Benchmark]()
-  val benchmarkApps = js.Array[BenchmarkApp]()
+   val benchmarks = js.Array[Benchmark]()
+   val benchmarkApps = js.Array[BenchmarkApp]()
  
-  val global = js.Dynamic.global.asInstanceOf[js.Dictionary]
-  val global = js.Dynamic.global.asInstanceOf[js.Dictionary[js.Any]]
-  global("runScalaJSBenchmarks") = runBenchmarks _
-  global("initScalaJSBenchmarkApps") = initBenchmarkApps _
+   val global = js.Dynamic.global.asInstanceOf[js.Dictionary]
+   val global = js.Dynamic.global.asInstanceOf[js.Dictionary[js.Any]]
+   global("runScalaJSBenchmarks") = runBenchmarks _
+   global("initScalaJSBenchmarkApps") = initBenchmarkApps _
  
  
  

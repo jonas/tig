@@ -5,7 +5,7 @@
 
 tigrc <<EOF
 set diff-show-signs = false
-set diff-column-hightlight = no
+set diff-column-highlight = only-empty
 EOF
 
 steps '
