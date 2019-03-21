@@ -381,7 +381,8 @@ static const char usage_string[] =
 "Options:\n"
 "  +<number>       Select line <number> in the first view\n"
 "  -v, --version   Show version and exit\n"
-"  -h, --help      Show help message and exit";
+"  -h, --help      Show help message and exit\n"
+"  -C<path>        Start in <path>";
 
 void
 usage(const char *message)
@@ -531,6 +532,11 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 			} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
 				printf("%s\n", usage_string);
 				exit(EXIT_SUCCESS);
+
+			} else if (!strncmp(opt, "-C", 2)) {
+				if (chdir(opt + 2))
+					die("Failed to change directory to %s", opt + 2);
+				continue;
 
 			} else if (strlen(opt) >= 2 && *opt == '+' && string_isnumber(opt + 1)) {
 				int lineno = atoi(opt + 1);

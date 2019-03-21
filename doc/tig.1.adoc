@@ -71,6 +71,9 @@ grep::
 -h, --help::
 	Show help message and exit.
 
+-C<path>::
+	Run as if Tig was started in <path> instead of the current working directory.
+
 PAGER MODE
 ----------
 
