@@ -80,7 +80,7 @@ reload_repo_info(const char **rev_parse_argv)
 {
 	struct repo_info_state state = { rev_parse_argv + 2 };
 
-	return io_run_load(rev_parse_argv, "=", read_repo_info, &state);
+	return io_run_load(rev_parse_argv, "\n", read_repo_info, &state);
 }
 
 enum status_code
