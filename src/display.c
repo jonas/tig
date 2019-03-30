@@ -132,7 +132,9 @@ open_editor(const char *file, unsigned int lineno)
 	const char *editor;
 	int argc = 0;
 
-	editor = getenv("GIT_EDITOR");
+	editor = getenv("TIG_EDITOR");
+	if (!editor)
+		editor = getenv("GIT_EDITOR");
 	if (!editor && *opt_editor)
 		editor = opt_editor;
 	if (!editor)
