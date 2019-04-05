@@ -609,6 +609,8 @@ init_tty(void)
 	opt_tty.opgrp = tcgetpgrp(opt_tty.fd);
 	tcsetpgrp(opt_tty.fd, getpid());
 	signal(SIGTTOU, SIG_DFL);
+
+	die_callback = done_display;
 }
 
 void
@@ -621,7 +623,6 @@ init_display(void)
 	if (!opt_tty.file)
 		die("Can't initialize display without tty");
 
-	die_callback = done_display;
 	if (atexit(done_display))
 		die("Failed to register done_display");
 
