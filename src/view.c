@@ -1663,8 +1663,8 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 bool
 append_line_format(struct view *view, struct line *line, const char *fmt, ...)
 {
-	struct box *box = line->data;
-	size_t textlen = box_text_length(box);
+	struct box *box;
+	size_t textlen = box_text_length(line->data);
 	int fmtlen, retval;
 	va_list args;
 	char *text;
@@ -1676,7 +1676,7 @@ append_line_format(struct view *view, struct line *line, const char *fmt, ...)
 	if (fmtlen <= 0)
 		return false;
 
-	box = realloc(box, box_sizeof(box, 0, fmtlen));
+	box = realloc(line->data, box_sizeof(line->data, 0, fmtlen));
 	if (!box)
 		return false;
 
