@@ -160,11 +160,15 @@ error_out:
 			watch_apply(&view->watch, WATCH_INDEX_STAGED_NO);
 		else if (type == LINE_STAT_UNSTAGED)
 			watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_NO);
+		else if (type == LINE_STAT_UNTRACKED)
+			watch_apply(&view->watch, WATCH_INDEX_UNTRACKED_NO);
 	} else {
 		if (type == LINE_STAT_STAGED)
 			watch_apply(&view->watch, WATCH_INDEX_STAGED_YES);
 		else if (type == LINE_STAT_UNSTAGED)
 			watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_YES);
+		else if (type == LINE_STAT_UNTRACKED)
+			watch_apply(&view->watch, WATCH_INDEX_UNTRACKED_YES);
 	}
 
 	io_done(&io);

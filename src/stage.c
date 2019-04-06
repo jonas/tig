@@ -529,6 +529,7 @@ stage_open(struct view *view, enum open_flags flags)
 		break;
 
 	case LINE_STAT_UNTRACKED:
+		watch_register(&view->watch, WATCH_INDEX_UNTRACKED);
 		argv = file_argv;
 		view->encoding = get_path_encoding(stage_status.old.name, default_encoding);
 		break;
