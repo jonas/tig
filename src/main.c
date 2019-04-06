@@ -547,10 +547,9 @@ main_request(struct view *view, enum request request, struct line *line)
 		if (line->type == LINE_STAT_UNSTAGED
 		    || line->type == LINE_STAT_STAGED)
 			open_stage_view(view, NULL, line->type, flags);
-		else if (line->type == LINE_STAT_UNTRACKED) {
+		else if (line->type == LINE_STAT_UNTRACKED)
 			open_status_view(view, flags);
-			status_exists(&status_view, NULL, LINE_STAT_UNTRACKED);
-		} else
+		else
 			open_diff_view(view, flags);
 		break;
 
