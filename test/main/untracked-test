@@ -53,15 +53,15 @@ $YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
 
 [main] Untracked changes                                                    100%
 On branch master
-Changes to be committed:
-M .j
-Changes not staged for commit:
-M a
-M b.c
-M e/f
-M g h
 Untracked files:
 ? z
+
+
+
+
+
+
+
 
 [status] Nothing to update                                                  100%
 EOF
