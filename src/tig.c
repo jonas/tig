@@ -475,10 +475,22 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 
 	request = pager_mode ? REQ_VIEW_PAGER : REQ_VIEW_MAIN;
 
-	if (argc <= 1)
+	/* Options that must come before any subcommand. */
+	for (i = 1; i < argc; i++) {
+		const char *opt = argv[i];
+		if (!strncmp(opt, "-C", 2)) {
+			if (chdir(opt + 2))
+				die("Failed to change directory to %s", opt + 2);
+			continue;
+		} else {
+			break;
+		}
+	}
+
+	if (i >= argc)
 		return request;
 
-	subcommand = argv[1];
+	subcommand = argv[i++];
 	if (!strcmp(subcommand, "status")) {
 		request = REQ_VIEW_STATUS;
 
@@ -503,9 +515,10 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 
 	} else {
 		subcommand = NULL;
+		i--; /* revisit option in loop below */
 	}
 
-	for (i = 1 + !!subcommand; i < argc; i++) {
+	for (; i < argc; i++) {
 		const char *opt = argv[i];
 
 		// stop parsing our options after -- and let rev-parse handle the rest
@@ -532,11 +545,6 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 			} else if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
 				printf("%s\n", usage_string);
 				exit(EXIT_SUCCESS);
-
-			} else if (!strncmp(opt, "-C", 2)) {
-				if (chdir(opt + 2))
-					die("Failed to change directory to %s", opt + 2);
-				continue;
 
 			} else if (strlen(opt) >= 2 && *opt == '+' && string_isnumber(opt + 1)) {
 				int lineno = atoi(opt + 1);
