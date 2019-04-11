@@ -780,10 +780,11 @@ get_input(int prompt_position, struct key *key)
 	while (true) {
 		int delay = -1;
 
-		if (opt_refresh_mode == REFRESH_MODE_PERIODIC) {
+		if (opt_refresh_mode != REFRESH_MODE_MANUAL) {
 			bool refs_refreshed = false;
 
-			delay = watch_periodic(opt_refresh_interval);
+			if (opt_refresh_mode == REFRESH_MODE_PERIODIC)
+				delay = watch_periodic(opt_refresh_interval);
 
 			foreach_displayed_view (view, i) {
 				if (view_can_refresh(view) &&
