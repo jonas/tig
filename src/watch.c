@@ -55,6 +55,7 @@ struct watch_handler {
 	enum watch_trigger (*check)(struct watch_handler *handler, enum watch_event event, enum watch_trigger check);
 	enum watch_trigger triggers;
 	time_t last_modified;
+	struct index_diff diff;
 };
 
 static bool
@@ -63,6 +64,7 @@ check_file_mtime(time_t *last_modified, const char *path_fmt, ...)
 	char path[SIZEOF_STR];
 	struct stat stat;
 	int retval;
+	bool has_changed = !!*last_modified;
 
 	FORMAT_BUFFER(path, sizeof(path), path_fmt, retval, false);
 
@@ -72,7 +74,7 @@ check_file_mtime(time_t *last_modified, const char *path_fmt, ...)
 		return false;
 
 	*last_modified = stat.st_mtime;
-	return true;
+	return has_changed;
 }
 
 static enum watch_trigger
@@ -110,34 +112,32 @@ watch_index_handler(struct watch_handler *handler, enum watch_event event, enum 
 		return check_file_mtime(&handler->last_modified, "%s/index", repo.git_dir)
 			? check : WATCH_NONE;
 
-	if (!check_file_mtime(&handler->last_modified, "%s/index", repo.git_dir) ||
-	    event == WATCH_EVENT_SWITCH_VIEW ||
-	    !index_diff(&diff, opt_show_untracked, false))
+	if (event == WATCH_EVENT_SWITCH_VIEW)
 		return WATCH_NONE;
 
-	if (check & WATCH_INDEX_STAGED) {
-		if (diff.staged)
-			changed |= WATCH_INDEX_STAGED_YES;
-		else
-			changed |= WATCH_INDEX_STAGED_NO;
+	if (!index_diff(&diff, opt_show_untracked, opt_status_show_untracked_files))
+		return check_file_mtime(&handler->last_modified, "%s/index", repo.git_dir)
+			? check : WATCH_NONE;
+
+	if (check & WATCH_INDEX_STAGED && diff.staged != handler->diff.staged) {
+		if (handler->last_modified)
+			changed |= WATCH_INDEX_STAGED;
+		handler->diff.staged = diff.staged;
 	}
 
-	if (check & WATCH_INDEX_UNSTAGED) {
-		if (diff.unstaged)
-			changed |= WATCH_INDEX_UNSTAGED_YES;
-		else
-			changed |= WATCH_INDEX_UNSTAGED_NO;
+	if (check & WATCH_INDEX_UNSTAGED && diff.unstaged != handler->diff.unstaged) {
+		if (handler->last_modified)
+			changed |= WATCH_INDEX_UNSTAGED;
+		handler->diff.unstaged = diff.unstaged;
 	}
 
-	if (check & WATCH_INDEX_UNTRACKED) {
-		if (diff.untracked)
-			changed |= WATCH_INDEX_UNTRACKED_YES;
-		else
-			changed |= WATCH_INDEX_UNTRACKED_NO;
+	if (check & WATCH_INDEX_UNTRACKED && diff.untracked != handler->diff.untracked) {
+		if (handler->last_modified)
+			changed |= WATCH_INDEX_UNTRACKED;
+		handler->diff.untracked = diff.untracked;
 	}
 
-	if (changed)
-		handler->last_modified = time(NULL);
+	handler->last_modified = time(NULL);
 
 	return changed;
 }
