@@ -340,7 +340,6 @@ view_driver(struct view *view, enum request request)
 		if (view->prev && view->prev != view) {
 			maximize_view(view->prev, true);
 			view->prev = view;
-			watch_unregister(&view->watch);
 			view->parent = NULL;
 			break;
 		}

@@ -800,6 +800,13 @@ get_input(int prompt_position, struct key *key)
 
 		if (update_views())
 			delay = 0;
+		else
+			/* Check there is no pending update after update_views() */
+			foreach_displayed_view (view, i)
+				if (view->watch.changed) {
+					delay = 0;
+					break;
+				}
 
 		/* Update the cursor position. */
 		if (prompt_position) {
