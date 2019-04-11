@@ -515,6 +515,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 
 	} else {
 		subcommand = NULL;
+		i--; /* revisit option in loop below */
 	}
 
 	for (; i < argc; i++) {
