@@ -24,6 +24,7 @@
 #include "tig/git.h"
 #include "tig/watch.h"
 #include "tig/status.h"
+#include "tig/main.h"
 #include "tig/stage.h"
 
 /*
@@ -31,6 +32,17 @@
  */
 
 static char status_onbranch[SIZEOF_STR];
+static bool show_untracked_only = false;
+
+void
+open_status_view(struct view *prev, bool untracked_only, enum open_flags flags)
+{
+	if (show_untracked_only != untracked_only) {
+		show_untracked_only = untracked_only;
+		flags |= OPEN_RELOAD;
+	}
+	open_view(prev, &status_view, flags);
+}
 
 /* This should work even for the "On branch" line. */
 static inline bool
@@ -148,11 +160,15 @@ error_out:
 			watch_apply(&view->watch, WATCH_INDEX_STAGED_NO);
 		else if (type == LINE_STAT_UNSTAGED)
 			watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_NO);
+		else if (type == LINE_STAT_UNTRACKED)
+			watch_apply(&view->watch, WATCH_INDEX_UNTRACKED_NO);
 	} else {
 		if (type == LINE_STAT_STAGED)
 			watch_apply(&view->watch, WATCH_INDEX_STAGED_YES);
 		else if (type == LINE_STAT_UNSTAGED)
 			watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_YES);
+		else if (type == LINE_STAT_UNTRACKED)
+			watch_apply(&view->watch, WATCH_INDEX_UNTRACKED_YES);
 	}
 
 	io_done(&io);
@@ -370,8 +386,8 @@ status_open(struct view *view, enum open_flags flags)
 
 	update_index();
 
-	if (!status_run(view, staged_argv, staged_status, LINE_STAT_STAGED) ||
-	    !status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED) ||
+	if ((!show_untracked_only && !status_run(view, staged_argv, staged_status, LINE_STAT_STAGED)) ||
+	    (!show_untracked_only && !status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED)) ||
 	    !status_read_untracked(view))
 		return error("Failed to load status data");
 
@@ -737,6 +753,9 @@ status_request(struct view *view, enum request request, struct line *line)
 	default:
 		return request;
 	}
+
+	if (show_untracked_only && view->parent == &main_view && !main_status_exists(view->parent, LINE_STAT_UNTRACKED))
+		return REQ_VIEW_CLOSE;
 
 	refresh_view(view);
 

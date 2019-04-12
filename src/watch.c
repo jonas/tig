@@ -112,7 +112,7 @@ watch_index_handler(struct watch_handler *handler, enum watch_event event, enum 
 
 	if (!check_file_mtime(&handler->last_modified, "%s/index", repo.git_dir) ||
 	    event == WATCH_EVENT_SWITCH_VIEW ||
-	    !index_diff(&diff, false, false))
+	    !index_diff(&diff, opt_show_untracked, false))
 		return WATCH_NONE;
 
 	if (check & WATCH_INDEX_STAGED) {
@@ -127,6 +127,13 @@ watch_index_handler(struct watch_handler *handler, enum watch_event event, enum 
 			changed |= WATCH_INDEX_UNSTAGED_YES;
 		else
 			changed |= WATCH_INDEX_UNSTAGED_NO;
+	}
+
+	if (check & WATCH_INDEX_UNTRACKED) {
+		if (diff.untracked)
+			changed |= WATCH_INDEX_UNTRACKED_YES;
+		else
+			changed |= WATCH_INDEX_UNTRACKED_NO;
 	}
 
 	if (changed)

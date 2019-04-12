@@ -224,7 +224,7 @@ view_driver(struct view *view, enum request request)
 		open_blob_view(view, OPEN_DEFAULT);
 		break;
 	case REQ_VIEW_STATUS:
-		open_status_view(view, OPEN_DEFAULT);
+		open_status_view(view, false, OPEN_DEFAULT);
 		break;
 	case REQ_VIEW_STAGE:
 		open_stage_view(view, NULL, 0, OPEN_DEFAULT);

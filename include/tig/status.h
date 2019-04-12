@@ -43,11 +43,7 @@ bool status_stage_info_(char *buf, size_t bufsize,
 	status_stage_info_(buf, sizeof(buf), type, status)
 extern struct view status_view;
 
-static inline void
-open_status_view(struct view *prev, enum open_flags flags)
-{
-	open_view(prev, &status_view, flags);
-}
+void open_status_view(struct view *prev, bool untracked_only, enum open_flags flags);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */
