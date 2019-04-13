@@ -78,6 +78,7 @@
 	REQ_(PROMPT,		"Open the prompt"), \
 	REQ_(OPTIONS,		"Open the options menu"), \
 	REQ_(SCREEN_REDRAW,	"Redraw the screen"), \
+	REQ_(TOGGLE_BP_MARK,	"Toggle BP mark"), \
 	REQ_(STOP_LOADING,	"Stop all loading views"), \
 	REQ_(SHOW_VERSION,	"Show version information"), \
 	REQ_(NONE,		"Do nothing")
