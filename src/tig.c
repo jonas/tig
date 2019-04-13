@@ -387,6 +387,7 @@ static const char usage_string[] =
 "  +<number>       Select line <number> in the first view\n"
 "  -v, --version   Show version and exit\n"
 "  -h, --help      Show help message and exit\n"
+"  -l<path>        File to read/write marked commits to\n"
 "  -C<path>        Start in <path>";
 
 void

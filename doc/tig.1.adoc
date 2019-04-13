@@ -74,6 +74,10 @@ grep::
 -C<path>::
 	Run as if Tig was started in <path> instead of the current working directory.
 
+-l<path>::
+	If <path> exists, load marked commits and dump marked commits to it on exit.
+	Otherwise, create and dump marked commits to it on exit.
+
 PAGER MODE
 ----------
 
