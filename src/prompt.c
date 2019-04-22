@@ -475,11 +475,14 @@ readline_init(void)
 	/* Let ncurses deal with the LINES and COLUMNS environment variables */
 	rl_change_environment = 0;
 	rl_catch_sigwinch = 0;
+	rl_deprep_term_function = NULL;
+	rl_prep_term_function = NULL;
 }
 
 static void sigint_absorb_handler(int sig) {
 	signal(SIGINT, SIG_DFL);
 	prompt_interrupted = true;
+	rl_done = 1;
 }
 
 char *
@@ -496,7 +499,9 @@ read_prompt(const char *prompt)
 	curs_set(1);
 	if (signal(SIGINT, sigint_absorb_handler) == SIG_ERR)
 		die("Failed to setup sigint handler");
+	cbreak();
 	line = readline(prompt);
+	raw();
 	if (signal(SIGINT, SIG_DFL) == SIG_ERR)
 		die("Failed to remove sigint handler");
 	curs_set(0);
@@ -507,6 +512,7 @@ read_prompt(const char *prompt)
 	if (prompt_interrupted) {
 		free(line);
 		line = NULL;
+		report_clear();
 	}
 
 	prompt_interrupted = false;
