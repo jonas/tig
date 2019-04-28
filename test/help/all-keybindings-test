@@ -7,6 +7,9 @@ export LINES=130
 
 steps '
 	:view-help
+	:2
+	:enter
+	:enter
 	:save-display help-default.screen
 '
 

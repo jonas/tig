@@ -67,6 +67,8 @@ EOF
 
 steps "
 	:view-help
+	:9
+	:enter
 	:save-display help.screen
 "
 
@@ -126,5 +128,5 @@ External commands:
    4 <quitting command
    5 +echoed command
    0 @?<+all modifiers
-[help] - line 1 of 37                                                        48%
+[help] - line 9 of 37                                                        48%
 EOF

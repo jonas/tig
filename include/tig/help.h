@@ -21,6 +21,8 @@ extern struct view help_view;
 static inline void
 open_help_view(struct view *prev, enum open_flags flags)
 {
+	if (update_keymap_visibility(prev->name, strlen(prev->name)))
+		flags |= OPEN_RELOAD;
 	open_view(prev, &help_view, flags);
 }
 

@@ -52,8 +52,8 @@ View manipulation
 Searching
      <Down>, <Ctrl-N>, <Ctrl-J> find-next           Find next search match
        <Up>, <Ctrl-P>, <Ctrl-K> find-prev           Find previous search match
-[-] main bindings
-Cursor navigation
-                              G move-last-line      Move cursor to last line
-[help] - line 82 of 168                                                                          64%
+[+] main bindings
+[+] diff bindings
+[+] reflog bindings
+[help] - line 82 of 132                                                                          82%
 EOF
