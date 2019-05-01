@@ -13,6 +13,29 @@ as a Git repository browser, but can also assist in staging changes for
 commit at chunk level and act as a pager for output from various Git
 commands.
 
+What Tig Looks Like
+-------------------
+Here are some images using Tig on this repository:
+
+:imagesdir: ./tools/images/
+.Main View
+image::Tig-Main-View.png[]
+
+.Tree View
+image::Tig-Tree-View.png[]
+
+.Blame View
+image::Tig-Blame-View.png[]
+
+.Blob View
+image::Tig-Blob-View.png[]
+
+.Log View
+image::Tig-Log-View.png[]
+
+.Status View
+image::Tig-Status-View.png[]
+
 Resources
 ---------
 
