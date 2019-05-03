@@ -16,6 +16,7 @@
 #include "tig/repo.h"
 #include "tig/options.h"
 #include "tig/prompt.h"
+#include "tig/registers.h"
 
 static bool
 concat_argv(const char *argv[], char *buf, size_t buflen, const char *sep, bool quoted)
@@ -228,11 +229,33 @@ argv_appendn(const char ***argv, const char *arg, size_t arglen)
 	return alloc != NULL;
 }
 
+bool
+argv_prependn(const char ***argv, const char *arg, size_t arglen)
+{
+	if (!argv_appendn(argv,arg,strlen(arg)))
+		return false;
+
+	size_t last_i = argv_size(*argv) - 1;
+
+	if (last_i > 0) {
+		const char *save = (*argv)[last_i];
+		memmove(*argv + 1, *argv, last_i * sizeof(*argv));
+		(*argv)[0] = save;
+	}
+
+	return true;
+}
 
 bool
 argv_append(const char ***argv, const char *arg)
 {
 	return argv_appendn(argv, arg, strlen(arg));
+}
+
+bool
+argv_prepend(const char ***argv, const char *arg)
+{
+	return argv_prependn(argv, arg, strlen(arg));
 }
 
 bool
@@ -315,6 +338,13 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 	}
 
 	for (i = 0; i < format->vars_size; i++) {
+		if (strncmp(name, vars[i].name, vars[i].namelen))
+			continue;
+
+		return vars[i].formatter(format, &vars[i]);
+	}
+
+	for (i = 0; i < format->vars_size; i++) {
 		if (string_enum_compare(name, vars[i].name, vars[i].namelen))
 			continue;
 
@@ -336,6 +366,12 @@ format_append_arg(struct format_context *format, const char ***dst_argv, const c
 	while (arg) {
 		const char *var = strstr(arg, "%(");
 		const char *closing = var ? strchr(var, ')') : NULL;
+
+		/* todo hardcoding is robust and compact but ugly */
+		if (var &&
+		    (!strcmp(var, "%(register:\\))") || !strcmp(var, "%(register:))")))
+			closing++;
+
 		const char *next = closing ? closing + 1 : NULL;
 		const int len = var ? var - arg : strlen(arg);
 
@@ -375,7 +411,7 @@ argv_string_formatter(struct format_context *format, struct format_var *var)
 	argv_string *value_ref = var->value_ref;
 	const char *value = *value_ref;
 
-	if (!*value)
+	if (!value || !*value)
 		value = var->value_if_empty;
 
 	if (!*value)
@@ -428,6 +464,10 @@ argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_a
 #define FORMAT_REPO_VAR(type, name) \
 	{ "%(repo:" #name ")", STRING_SIZE("%(repo:" #name ")"), type ## _formatter, &repo.name, "" },
 		REPO_INFO(FORMAT_REPO_VAR)
+#define FORMAT_REGISTER_VAR(namestr, keychar) \
+	{ "%(register:" namestr ")", STRING_SIZE("%(register:" namestr ")"), argv_string_formatter, \
+	  argv_env->registers[ MIN(keychar,REGISTER_KEY_MAX) - REGISTER_KEY_OFFSET ], "" },
+		REGISTER_INFO(FORMAT_REGISTER_VAR)
 	};
 	struct format_context format = { vars, ARRAY_SIZE(vars), "", 0, file_filter };
 	int argc;

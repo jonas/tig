@@ -223,6 +223,7 @@ readline_variable_generator(const char *text, int state)
 #define FORMAT_VAR(type, name) "%(repo:" #name ")",
 		REPO_INFO(FORMAT_VAR)
 #undef FORMAT_VAR
+		"%(register:",
 		NULL
 	};
 
@@ -268,6 +269,7 @@ readline_action_generator(const char *text, int state)
 		"save-options",
 		"exec",
 		"echo",
+		"set-register",
 #define REQ_GROUP(help)
 #define REQ_(req, help)	#req
 		REQ_INFO,
@@ -888,6 +890,67 @@ prompt_update_display(enum view_flag flags)
 	}
 }
 
+bool
+parse_set_register(char *key, const char ***dst_argv, const char **src_argv)
+{
+	if (!src_argv || !src_argv[0] || !src_argv[1])
+		return false;
+
+	src_argv++;
+
+	/* src_argv is the product of one pass of argv_from_string and arrives
+	 * here in a halfway state.  Hack src_argv to tokenize as
+	 *   |set-register|"|hello there|
+	 * instead of
+	 *   |set-register|" hello there|
+	 * Consider adjusting argv_from_string instead.
+	 */
+	char prepend_tok[SIZEOF_STR] = "";
+	if (strlen(*src_argv) > 2
+	    && at_register_escd_pair(*src_argv)
+	    && isspace(src_argv[0][2])) {
+		string_ncopy(prepend_tok, *src_argv + 1, 1);
+		*src_argv += 2;
+		*src_argv += strspn(*src_argv, " ");
+		argv_prepend(&src_argv, prepend_tok);
+	} else if (strlen(*src_argv) > 1
+		   && register_key_to_index(src_argv[0][0])
+		   && isspace(src_argv[0][1])) {
+		string_ncopy(prepend_tok, *src_argv, 1);
+		*src_argv += 1;
+		*src_argv += strspn(*src_argv, " ");
+		argv_prepend(&src_argv, prepend_tok);
+	}
+	/* end of first hack */
+
+
+	if (strlen(*src_argv) == 2
+	    && at_register_escd_pair(*src_argv)) {
+		*key = src_argv[0][1];
+	} else if (strlen(*src_argv) == 1
+		   && register_key_to_index(src_argv[0][0])) {
+		*key = src_argv[0][0];
+	} else {
+		return false;
+	}
+	src_argv++;
+
+
+	/* Since we src_argv was hacked above, make extra certain it refers to sane
+	 * content. This is reasonable logic, but likely appearing in the wrong place.
+	 */
+	while (*src_argv && !src_argv[0][0] && src_argv[1]) {
+		src_argv++;
+		*src_argv += strspn(*src_argv, " ");
+	}
+	/* end of second hack */
+
+	if (!*src_argv || !src_argv[0][0] || !argv_copy(dst_argv, src_argv))
+		return false;
+
+	return true;
+}
+
 enum request
 run_prompt_command(struct view *view, const char *argv[])
 {
@@ -970,6 +1033,35 @@ run_prompt_command(struct view *view, const char *argv[])
 
 		report("%s", text);
 		return REQ_NONE;
+
+	} else if (!strcmp(cmd, "set-register")) {
+		const char **value_argv = NULL;
+		const char **fmt_argv = NULL;
+		char value[SIZEOF_STR] = "";
+		char key;
+
+		if (!parse_set_register(&key, &value_argv, argv)) {
+			report("Error: set-register <char> <expression>");
+			return REQ_NONE;
+		}
+
+		/* todo string escaping and quote unwrapping, with
+		 * appropriate handling of empty strings. The user
+		 * should be able to clear a register with
+		 * :set-register b ""
+		*/
+
+		if (!argv_format(view->env, &fmt_argv, value_argv, false, true)
+		    || !argv_to_string(&fmt_argv[0], value, sizeof(value), " ")) {
+			report("Failed to copy set-register string");
+			return REQ_NONE;
+		}
+
+		if (!register_set(key, value))
+			report("Failed to set register");
+		else
+			/* this message would be nicer if the key was distinguished in color */
+			report("Register %c %s", key, value);
 
 	} else if (!strcmp(cmd, "save-display")) {
 		const char *path = argv[1] ? argv[1] : "tig-display.txt";
@@ -1118,7 +1210,8 @@ exec_run_request(struct view *view, struct run_request *req)
 
 		if (confirmed)
 			open_external_viewer(argv, repo.cdup, req->flags.silent,
-					     !req->flags.exit, req->flags.echo, req->flags.quick, false, "");
+					     !req->flags.exit, req->flags.echo,
+					     req->flags.quick, req->flags.register_key, false, "");
 	}
 
 	if (argv)

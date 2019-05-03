@@ -670,6 +670,8 @@ the command that should be executed.
 |<			|Exit Tig after executing the command.
 |>			|Re-open Tig instantly in the last displayed view after
 			 executing the command.
+|=(x)			|Run the command synchronously, and store the first
+			 line of output in the register named `x`.
 |=============================================================================
 
 Unless otherwise specified, commands are run in the foreground with their
@@ -724,6 +726,8 @@ following variable names, which are substituted before commands are run:
 |%(repo:is-inside-work-tree)
 			|Whether Tig is running inside a work tree,
 			 either `true` or `false`.
+|%(register:x)		|A user-defined register value, where `x` is an ASCII
+			 character.
 |=============================================================================
 
 Examples:

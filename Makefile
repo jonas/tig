@@ -312,6 +312,7 @@ TIG_OBJS = \
 	src/grep.o \
 	src/ui.o \
 	src/apps.o \
+	src/registers.o \
 	$(GRAPH_OBJS) \
 	$(COMPAT_OBJS)
 

@@ -449,7 +449,7 @@ static size_t run_requests;
 
 DEFINE_ALLOCATOR(realloc_run_requests, struct run_request, 8)
 
-#define COMMAND_FLAGS ":!?@<+>"
+#define COMMAND_FLAGS ":!?@<+>="
 
 enum status_code
 parse_run_request_flags(struct run_request_flags *flags, const char **argv)
@@ -475,6 +475,21 @@ parse_run_request_flags(struct run_request_flags *flags, const char **argv)
 			flags->echo = 1;
 		} else if (*argv[0] == '>') {
 			flags->quick = 1;
+		} else if (at_register_flag_open(argv[0])
+			   && at_register_escd_pair(argv[0] + 2)
+			   && at_register_flag_close(argv[0] + 4)) {
+			flags->register_key = argv[0][3];
+			argv[0] += 5;
+			continue;
+		} else if (at_register_flag_open(argv[0])
+			   && argv[0][2] >= REGISTER_KEY_MIN
+			   && argv[0][2] <= REGISTER_KEY_MAX
+			   && at_register_flag_close(argv[0] + 3)) {
+			flags->register_key = argv[0][2];
+			argv[0] += 4;
+			continue;
+		} else if (at_register_flag_open(argv[0])) {
+			return error("Invalid register flag");
 		} else if (*argv[0] != '!') {
 			break;
 		}
@@ -519,7 +534,7 @@ get_run_request(enum request request)
 const char *
 format_run_request_flags(const struct run_request *req)
 {
-	static char flags[8];
+	static char flags[16];
 	int flagspos = 0;
 
 	memset(flags, 0, sizeof(flags));
@@ -530,15 +545,23 @@ format_run_request_flags(const struct run_request *req)
 		flags[flagspos] = '!'; /* Optional, if other flags are defined */
 
 	if (req->flags.silent)
-	    flags[flagspos++] = '@';
+		flags[flagspos++] = '@';
 	if (req->flags.confirm)
-	    flags[flagspos++] = '?';
+		flags[flagspos++] = '?';
 	if (req->flags.exit)
 		flags[flagspos++] = '<';
 	if (req->flags.echo)
 		flags[flagspos++] = '+';
 	if (req->flags.quick)
 		flags[flagspos++] = '>';
+	if (req->flags.register_key) {
+		flags[flagspos++] = REGISTER_FLAG_OPEN_STR[0];
+		flags[flagspos++] = REGISTER_FLAG_OPEN_STR[1];
+		if (is_register_meta_char(req->flags.register_key))
+			flags[flagspos++] = REGISTER_ESC_CHAR;
+		flags[flagspos++] = req->flags.register_key;
+		flags[flagspos++] = REGISTER_FLAG_CLOSE_STR[0];
+	}
 	if (flagspos > 1)
 		flags[flagspos++] = 0;
 

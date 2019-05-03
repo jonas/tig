@@ -194,6 +194,8 @@ following variables.
 |%(repo:is-inside-work-tree)
 			|Whether Tig is running inside a work tree,
 			 either `true` or `false`.
+|%(register:x)		|A user-defined register value, where `x` is an ASCII
+			 character.
 |=============================================================================
 
 Example user-defined commands:
@@ -489,7 +491,8 @@ Prompt
 |:script <file>		|Execute commands from `<file>`.
 |:exec <flags><args...> |Execute command using `<args>` with external
 			 user-defined command option flags defined in `<flags>`.
-|:echo <args...>        |Display text in the status bar.
+|:echo <args...>	|Display text in the status bar.
+|:set-register <char> <args...>	|Load a value into the register named `<char>`.
 |=============================================================================
 
 [[external-commands]]
