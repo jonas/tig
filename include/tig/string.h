@@ -81,6 +81,9 @@ void string_copy_rev_from_commit_line(char *dst, const char *src);
 #define string_add(dst, from, src) \
 	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
 
+#define string_concat_path(dst, path1, path2) \
+	string_format(dst, !*path1 || path1[strlen(path1) - 1] == '/' ? "%s%s" : "%s/%s", path1, path2)
+
 size_t string_expanded_length(const char *src, size_t srclen, size_t tabsize, size_t max_size);
 size_t string_expand(char *dst, size_t dstlen, const char *src, int srclen, int tabsize);
 

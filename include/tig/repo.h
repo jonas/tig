@@ -28,6 +28,7 @@ typedef char repo_str[SIZEOF_STR];
 	_(repo_str, prefix) \
 	_(repo_str, git_dir) \
 	_(repo_str, worktree) \
+	_(repo_str, exec_dir) \
 	_(bool,     is_inside_work_tree)
 
 #define REPO_INFO_FIELDS(type, name)	type name;

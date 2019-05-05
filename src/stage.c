@@ -147,7 +147,7 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *single, bo
 		apply_argv[argc++] = "-R";
 	apply_argv[argc++] = "-";
 	apply_argv[argc++] = NULL;
-	if (!io_run(&io, IO_WR, repo.cdup, NULL, apply_argv))
+	if (!io_run(&io, IO_WR, repo.exec_dir, NULL, apply_argv))
 		return false;
 
 	if (single != NULL) {
@@ -501,7 +501,7 @@ stage_open(struct view *view, enum open_flags flags)
 			DIFF_ARGS, diff_context_arg(), ignore_space_arg(), "--",
 			stage_status.old.name, NULL
 	};
-	static const char *file_argv[] = { repo.cdup, stage_status.new.name, NULL };
+	static const char *file_argv[] = { repo.exec_dir, stage_status.new.name, NULL };
 	const char **argv = NULL;
 	struct stage_state *state = view->private;
 	enum status_code code;
@@ -547,7 +547,7 @@ stage_open(struct view *view, enum open_flags flags)
 		diff_save_line(view, &state->diff, flags);
 
 	view->vid[0] = 0;
-	code = begin_update(view, repo.cdup, argv, flags);
+	code = begin_update(view, repo.exec_dir, argv, flags);
 	if (code == SUCCESS && stage_line_type != LINE_STAT_UNTRACKED) {
 		struct stage_state *state = view->private;
 

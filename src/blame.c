@@ -77,7 +77,7 @@ static enum status_code
 blame_open(struct view *view, enum open_flags flags)
 {
 	struct blame_state *state = view->private;
-	const char *file_argv[] = { repo.cdup, view->env->file , NULL };
+	const char *file_argv[] = { repo.exec_dir, view->env->file , NULL };
 	char path[SIZEOF_STR];
 	size_t i;
 
@@ -150,11 +150,11 @@ blame_open(struct view *view, enum open_flags flags)
 			return error("Failed to setup the blame view");
 	}
 
-	if (*view->env->ref || begin_update(view, repo.cdup, file_argv, flags) != SUCCESS) {
+	if (*view->env->ref || begin_update(view, repo.exec_dir, file_argv, flags) != SUCCESS) {
 		const char *blame_cat_file_argv[] = {
 			"git", "cat-file", "blob", "%(ref):%(file)", NULL
 		};
-		enum status_code code = begin_update(view, repo.cdup, blame_cat_file_argv, flags);
+		enum status_code code = begin_update(view, repo.exec_dir, blame_cat_file_argv, flags);
 
 		if (code != SUCCESS)
 			return code;
@@ -253,7 +253,7 @@ blame_read_file(struct view *view, struct buffer *buf, struct blame_state *state
 		if (failed_to_load_initial_view(view))
 			die("No blame exist for %s", view->vid);
 
-		if (view->lines == 0 || begin_update(view, repo.cdup, blame_argv, OPEN_EXTRA) != SUCCESS) {
+		if (view->lines == 0 || begin_update(view, repo.exec_dir, blame_argv, OPEN_EXTRA) != SUCCESS) {
 			report("Failed to load blame data");
 			return true;
 		}

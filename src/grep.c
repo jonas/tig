@@ -171,12 +171,12 @@ grep_request(struct view *view, enum request request, struct line *line)
 			}
 
 		} else {
-			const char *file_argv[] = { repo.cdup, grep->file, NULL };
+			const char *file_argv[] = { repo.exec_dir, grep->file, NULL };
 
 			clear_position(&file_view->pos);
 			view->env->goto_lineno = grep->lineno;
 			view->env->blob[0] = 0;
-			open_argv(view, file_view, file_argv, repo.cdup, OPEN_SPLIT | OPEN_RELOAD);
+			open_argv(view, file_view, file_argv, repo.exec_dir, OPEN_SPLIT | OPEN_RELOAD);
 		}
 		state->last_file = grep->file;
 		return REQ_NONE;

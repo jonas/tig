@@ -503,7 +503,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	if (!string_format(line_arg, "-L%ld,+1", lineno))
 		return false;
 
-	if (!io_run(&io, IO_RD, repo.cdup, NULL, blame_argv))
+	if (!io_run(&io, IO_RD, repo.exec_dir, NULL, blame_argv))
 		return false;
 
 	while (io_get(&io, &buf, '\n', true)) {
@@ -685,7 +685,7 @@ diff_common_edit(struct view *view, enum request request, struct line *line)
 		lineno = diff_get_lineno(view, line);
 	}
 
-	if (file && string_format(path, "%s%s", repo.cdup, file) && access(path, R_OK)) {
+	if (!file || !string_concat_path(path, repo.cdup, file) || access(path, R_OK)) {
 		report("Failed to open file: %s", file);
 		return REQ_NONE;
 	}
