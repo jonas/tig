@@ -1051,7 +1051,7 @@ run_prompt_command(struct view *view, const char *argv[])
 		if (request != REQ_UNKNOWN)
 			return request;
 
-		code = set_option(argv[0], argv_size(argv + 1), &argv[1]);
+		code = set_option(cmd, argv_size(argv + 1), &argv[1], NULL);
 		if (code != SUCCESS) {
 			report("%s", get_status_message(code));
 			return REQ_NONE;

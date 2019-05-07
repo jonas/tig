@@ -486,7 +486,7 @@ parse_run_request_flags(struct run_request_flags *flags, const char **argv)
 
 enum status_code
 add_run_request(struct keymap *keymap, const struct key key[],
-		size_t keys, const char **argv)
+		size_t keys, const char **argv, const char *help)
 {
 	struct run_request *req;
 	struct run_request_flags flags = {0};
@@ -504,6 +504,12 @@ add_run_request(struct keymap *keymap, const struct key key[],
 	req = &run_request[run_requests++];
 	req->flags = flags;
 	req->keymap = keymap;
+
+	/* If there is help text, then dupe it into the run_request struct */
+	req->help = NULL;
+	if (help)
+		if ((req->help = strdup(help)) == NULL)
+			return ERROR_OUT_OF_MEMORY;
 
 	return add_keybinding(keymap, REQ_RUN_REQUESTS + run_requests, key, keys);
 }

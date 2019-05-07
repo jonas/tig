@@ -62,6 +62,7 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 				return true;
 			sep = " ";
 		}
+		if (req->help) draw_text(view, LINE_DEFAULT, req->help);
 
 	} else {
 		const struct request_info *req_info = help->data.req_info;
