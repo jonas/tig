@@ -788,6 +788,7 @@ get_input(int prompt_position, struct key *key)
 
 			foreach_displayed_view (view, i) {
 				if (view_can_refresh(view) &&
+					!view->pipe &&
 					watch_dirty(&view->watch)) {
 					if (!refs_refreshed) {
 						load_refs(true);
