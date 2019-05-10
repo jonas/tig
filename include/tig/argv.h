@@ -24,6 +24,7 @@
 #define DIFF_ARGS "%(diffargs)"
 
 bool argv_to_string(const char *argv[], char *buf, size_t buflen, const char *sep);
+char *argv_to_string_alloc_prefix(const char *argv[], const char *sep, const char *prefix);
 char *argv_to_string_alloc(const char *argv[], const char *sep);
 bool argv_to_string_quoted(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep);
 bool argv_from_string_no_quotes(const char *argv[SIZEOF_ARG], int *argc, char *cmd);
