@@ -162,7 +162,7 @@ tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 			return true;
 		}
 
-		if (begin_update(view, repo.cdup, log_file, OPEN_EXTRA) != SUCCESS) {
+		if (begin_update(view, repo.exec_dir, log_file, OPEN_EXTRA) != SUCCESS) {
 			report("Failed to load tree data");
 			return true;
 		}
@@ -457,7 +457,7 @@ tree_open(struct view *view, enum open_flags flags)
 		view->env->directory[0] = 0;
 	}
 
-	return begin_update(view, repo.cdup, tree_argv, flags);
+	return begin_update(view, repo.exec_dir, tree_argv, flags);
 }
 
 static struct view_ops tree_ops = {

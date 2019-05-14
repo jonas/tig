@@ -47,6 +47,8 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 
 	} else if (!strcmp(arg, REPO_INFO_SHOW_CDUP)) {
 		string_ncopy(repo.cdup, name, namelen);
+		if (repo.is_inside_work_tree)
+			string_ncopy(repo.exec_dir, name, namelen);
 
 	} else if (!strcmp(arg, REPO_INFO_SHOW_PREFIX)) {
 		/* Some versions of Git does not emit anything for --show-prefix
@@ -123,7 +125,7 @@ update_index(void)
 		"git", "update-index", "-q", "--unmerged", "--refresh", NULL
 	};
 
-	return io_run_bg(update_index_argv, repo.cdup);
+	return io_run_bg(update_index_argv, repo.exec_dir);
 }
 
 bool
@@ -141,7 +143,7 @@ index_diff(struct index_diff *diff, bool untracked, bool count_all)
 
 	memset(diff, 0, sizeof(*diff));
 
-	if (!io_run(&io, IO_RD, repo.cdup, NULL, status_argv))
+	if (!io_run(&io, IO_RD, repo.exec_dir, NULL, status_argv))
 		return false;
 
 	while (io_get(&io, &buf, 0, true) && (ok = buf.size > 3)) {

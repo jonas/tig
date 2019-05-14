@@ -54,7 +54,7 @@ file_finder_read(struct file_finder *finder, const char *commit)
 	size_t files;
 	bool ok = true;
 
-	if (!io_run(&io, IO_RD, repo.cdup, NULL, ls_tree_files_argv))
+	if (!io_run(&io, IO_RD, repo.exec_dir, NULL, ls_tree_files_argv))
 		return false;
 
 	for (files = 0; io_get(&io, &buf, 0, true); files++) {

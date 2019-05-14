@@ -276,7 +276,7 @@ main_open(struct view *view, enum open_flags flags)
 	const char **main_argv = pretty_custom_argv;
 	enum watch_trigger changes_triggers = WATCH_NONE;
 
-	if (opt_show_changes && repo.is_inside_work_tree)
+	if (opt_show_changes && (repo.is_inside_work_tree || *repo.worktree))
 		changes_triggers |= WATCH_INDEX;
 
 	state->with_graph = graph_display != GRAPH_DISPLAY_NO;

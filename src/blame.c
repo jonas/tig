@@ -77,16 +77,13 @@ static enum status_code
 blame_open(struct view *view, enum open_flags flags)
 {
 	struct blame_state *state = view->private;
-	const char *file_argv[] = { repo.cdup, view->env->file , NULL };
-	char path[SIZEOF_STR];
+	const char *file_argv[] = { repo.exec_dir, view->env->file , NULL };
 	size_t i;
 
 	if (is_initial_view(view)) {
 		/* Finish validating and setting up blame options */
 		if (!opt_file_args || opt_file_args[1])
 			usage("Invalid number of options to blame");
-
-		string_ncopy(view->env->file, opt_file_args[0], strlen(opt_file_args[0]));
 
 		if (opt_cmdline_args) {
 			opt_blame_options = opt_cmdline_args;
@@ -126,35 +123,29 @@ blame_open(struct view *view, enum open_flags flags)
 
 	blame_update_file_name_visibility(view);
 
-	if (!view->env->file[0]) {
-		struct stat statbuf;
+	if (!view->env->file[0] && opt_file_args && !opt_file_args[1]) {
+		const char *ls_tree_argv[] = {
+			"git", "ls-tree", "-d", "-z", opt_rev_args ? opt_rev_args[0] : "HEAD", opt_file_args[0], NULL
+		};
+		char buf[SIZEOF_STR] = "";
 
-		if (opt_file_args && !opt_file_args[1] &&
-		    stat(opt_file_args[0], &statbuf) == 0 && !S_ISDIR(statbuf.st_mode)) {
-			const char *ls_files_argv[] = {
-				"git", "ls-files", "-z", "--full-name", "--", opt_file_args[0], NULL
-			};
-			char name[SIZEOF_STR] = "";
-
- 			io_run_buf(ls_files_argv, name, sizeof(name), NULL, false);
-			string_ncopy(view->env->file, name, strlen(name));
-		} else {
-			return error("No file chosen, press %s to open tree view",
-				     get_view_key(view, REQ_VIEW_TREE));
-		}
+		/* Check that opt_file_args[0] is not a directory */
+		if (!io_run_buf(ls_tree_argv, buf, sizeof(buf), NULL, false)) {
+			if (!string_concat_path(view->env->file, repo.prefix, opt_file_args[0]))
+				return error("Failed to setup the blame view");
+		} else if (is_initial_view(view))
+			return error("Cannot blame %s", opt_file_args[0]);
 	}
 
-	if (!view->prev && *repo.prefix && !(flags & (OPEN_RELOAD | OPEN_REFRESH))) {
-		string_copy(path, view->env->file);
-		if (!string_format(view->env->file, "%s%s", repo.prefix, path))
-			return error("Failed to setup the blame view");
-	}
+	if (!view->env->file[0])
+		return error("No file chosen, press %s to open tree view",
+			     get_view_key(view, REQ_VIEW_TREE));
 
-	if (*view->env->ref || begin_update(view, repo.cdup, file_argv, flags) != SUCCESS) {
+	if (*view->env->ref || begin_update(view, repo.exec_dir, file_argv, flags) != SUCCESS) {
 		const char *blame_cat_file_argv[] = {
 			"git", "cat-file", "blob", "%(ref):%(file)", NULL
 		};
-		enum status_code code = begin_update(view, repo.cdup, blame_cat_file_argv, flags);
+		enum status_code code = begin_update(view, repo.exec_dir, blame_cat_file_argv, flags);
 
 		if (code != SUCCESS)
 			return code;
@@ -253,7 +244,7 @@ blame_read_file(struct view *view, struct buffer *buf, struct blame_state *state
 		if (failed_to_load_initial_view(view))
 			die("No blame exist for %s", view->vid);
 
-		if (view->lines == 0 || begin_update(view, repo.cdup, blame_argv, OPEN_EXTRA) != SUCCESS) {
+		if (view->lines == 0 || begin_update(view, repo.exec_dir, blame_argv, OPEN_EXTRA) != SUCCESS) {
 			report("Failed to load blame data");
 			return true;
 		}
