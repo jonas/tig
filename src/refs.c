@@ -164,7 +164,8 @@ refs_open(struct view *view, enum open_flags flags)
 		return code;
 
 	if (!view->lines)
-		view->sort.current = get_view_column(view, VIEW_COLUMN_REF);
+		if (!(view->sort.current = get_view_column(view, VIEW_COLUMN_REF)))
+			die("Failed to setup the refs view");
 	refs_open_visitor(view, refs_all);
 	foreach_ref(refs_open_visitor, view);
 	resort_view(view, true);
