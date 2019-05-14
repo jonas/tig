@@ -780,13 +780,15 @@ get_input(int prompt_position, struct key *key)
 	while (true) {
 		int delay = -1;
 
-		if (opt_refresh_mode == REFRESH_MODE_PERIODIC) {
+		if (opt_refresh_mode != REFRESH_MODE_MANUAL) {
 			bool refs_refreshed = false;
 
-			delay = watch_periodic(opt_refresh_interval);
+			if (opt_refresh_mode == REFRESH_MODE_PERIODIC)
+				delay = watch_periodic(opt_refresh_interval);
 
 			foreach_displayed_view (view, i) {
 				if (view_can_refresh(view) &&
+					!view->pipe &&
 					watch_dirty(&view->watch)) {
 					if (!refs_refreshed) {
 						load_refs(true);
@@ -799,6 +801,13 @@ get_input(int prompt_position, struct key *key)
 
 		if (update_views())
 			delay = 0;
+		else
+			/* Check there is no pending update after update_views() */
+			foreach_displayed_view (view, i)
+				if (view->watch.changed) {
+					delay = 0;
+					break;
+				}
 
 		/* Update the cursor position. */
 		if (prompt_position) {
