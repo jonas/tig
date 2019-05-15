@@ -38,35 +38,35 @@ git rev-parse --git-dir --is-inside-work-tree --show-cdup --show-prefix HEAD --s
 EOF
 
 assert_equals 'log.trace' <<EOF
-git log --encoding=UTF-8 --exclude=refs/remotes/origin/* --exclude=refs/heads/master --all --date=raw --parents --no-color --pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s -- common tracer
+git log --encoding=UTF-8 --topo-order --exclude=refs/remotes/origin/* --exclude=refs/heads/master --all --date=raw --parents --no-color --pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s -- common tracer
 EOF
 
 assert_equals 'filtered.screen' <<EOF
-2017-02-06 17:54 +0000 Committer          [feature/x] Feature X
-2014-03-01 15:59 -0500 Jonas Fonseca      Add type parameter for js.Dynamic
-2014-01-16 22:51 -0500 Jonas Fonseca      Move classes under org.scalajs.benchma
-2014-01-16 17:39 -0500 Jonas Fonseca      Integrate app code into the benchmark
-2013-11-26 23:39 -0500 Jonas Fonseca      Extract the benchmark list variable na
-2013-11-26 23:22 -0500 Jonas Fonseca      Disable phantomjs by default
-2013-11-26 22:52 -0500 Jonas Fonseca      Fix reference setup to work for node
-2013-11-26 22:03 -0500 Jonas Fonseca      Move benchmark registration to Scala
-2013-11-05 23:20 -0500 Jonas Fonseca      Reformat code using Scala IDE
-2013-11-05 20:41 -0500 Jonas Fonseca      Update exports.js files to use new Sca
-2013-11-03 23:48 -0500 Jonas Fonseca      Add support for PhantomJS
-2013-11-03 23:11 -0500 Jonas Fonseca      Make the engine stubs file optional
-2013-11-03 22:44 -0500 Jonas Fonseca      Refactor the benchmark shell code
-2013-10-29 18:48 +0100 Sébastien Doeraene Remove workaround to support Node.js.
-2013-10-29 18:46 +0100 Sébastien Doeraene Update for new groupId and package str
-2013-10-27 23:05 -0400 Jonas Fonseca      Add JavaScript benchmark reference cod
-2013-10-27 18:12 -0400 Jonas Fonseca      Add check sum calculation for verifyin
-2013-10-26 12:54 -0400 Jonas Fonseca      Add Scala.js LICENSE file and a cool l
-2013-10-25 20:29 -0400 Jonas Fonseca      Support node as a JavaScript engine
-2013-10-25 00:34 -0400 Jonas Fonseca      Run benchmarks for a fixed number of m
-2013-10-24 23:44 -0400 Jonas Fonseca      Rework the benchmark runner and add op
-2013-10-18 11:39 +0200 Sébastien Doeraene Fix the "./run.sh opt" invocation.
-2013-10-17 20:29 -0400 Jonas Fonseca      Simplify render scene loop by using Ra
-2013-10-17 20:27 -0400 Jonas Fonseca      Make the run shell script infrastructu
-2013-10-14 13:15 -0400 Jonas Fonseca      Initial import of Tracer benchmark
+2017-02-06 17:54 +0000 Committer          o [feature/x] Feature X
+2014-03-01 15:59 -0500 Jonas Fonseca      o Add type parameter for js.Dynamic
+2014-01-16 22:51 -0500 Jonas Fonseca      o Move classes under org.scalajs.bench
+2014-01-16 17:39 -0500 Jonas Fonseca      o Integrate app code into the benchmar
+2013-11-26 23:39 -0500 Jonas Fonseca      o Extract the benchmark list variable
+2013-11-26 23:22 -0500 Jonas Fonseca      o Disable phantomjs by default
+2013-11-26 22:52 -0500 Jonas Fonseca      o Fix reference setup to work for node
+2013-11-26 22:03 -0500 Jonas Fonseca      o Move benchmark registration to Scala
+2013-11-05 23:20 -0500 Jonas Fonseca      o Reformat code using Scala IDE
+2013-11-05 20:41 -0500 Jonas Fonseca      o Update exports.js files to use new S
+2013-11-03 23:48 -0500 Jonas Fonseca      o Add support for PhantomJS
+2013-11-03 23:11 -0500 Jonas Fonseca      o Make the engine stubs file optional
+2013-11-03 22:44 -0500 Jonas Fonseca      o Refactor the benchmark shell code
+2013-10-29 18:48 +0100 Sébastien Doeraene o Remove workaround to support Node.js
+2013-10-29 18:46 +0100 Sébastien Doeraene o Update for new groupId and package s
+2013-10-27 23:05 -0400 Jonas Fonseca      o Add JavaScript benchmark reference c
+2013-10-27 18:12 -0400 Jonas Fonseca      o Add check sum calculation for verify
+2013-10-26 12:54 -0400 Jonas Fonseca      o Add Scala.js LICENSE file and a cool
+2013-10-25 20:29 -0400 Jonas Fonseca      o Support node as a JavaScript engine
+2013-10-25 00:34 -0400 Jonas Fonseca      o Run benchmarks for a fixed number of
+2013-10-24 23:44 -0400 Jonas Fonseca      o Rework the benchmark runner and add
+2013-10-18 11:39 +0200 Sébastien Doeraene o Fix the "./run.sh opt" invocation.
+2013-10-17 20:29 -0400 Jonas Fonseca      o Simplify render scene loop by using
+2013-10-17 20:27 -0400 Jonas Fonseca      o Make the run shell script infrastruc
+2013-10-14 13:15 -0400 Jonas Fonseca      I Initial import of Tracer benchmark
  
  
  

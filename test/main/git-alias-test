@@ -49,8 +49,8 @@ GIT_PREFIX=deltablue/
 EOF
 
 assert_equals 'main.screen' <<EOF
-2014-03-01 17:26 -0500 Jonas Fonseca [work-branch] [master] WIP: Upgrade to 0.4-
-2014-01-16 22:51 -0500 Jonas Fonseca Move classes under org.scalajs.benchmark pa
+2014-03-01 17:26 -0500 Jonas Fonseca * [work-branch] [master] WIP: Upgrade to 0.
+2014-01-16 22:51 -0500 Jonas Fonseca I Move classes under org.scalajs.benchmark
  
 [main] ee912870202200a0b9cf4fd86ba57243212d341e - commit 1 of 2             100%
 EOF
