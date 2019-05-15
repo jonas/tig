@@ -179,6 +179,7 @@ union view_column_options {
 extern iconv_t opt_iconv_out;
 extern char opt_editor[SIZEOF_STR];
 extern const char **opt_cmdline_args;
+extern bool opt_log_follow;
 
 /*
  * Mapping between options and command argument mapping.

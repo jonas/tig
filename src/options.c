@@ -122,6 +122,7 @@ find_column_option_info(enum view_column_type type, union view_column_options *o
 iconv_t opt_iconv_out		= ICONV_NONE;
 char opt_editor[SIZEOF_STR]	= "";
 const char **opt_cmdline_args	= NULL;
+bool opt_log_follow		= false;
 
 /*
  * Mapping between options and command argument mapping.
@@ -1464,7 +1465,9 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	} else if (!strcmp(name, "format.pretty")) {
 		if (!prefixcmp(value, "format:") && strstr(value, "%C("))
 			argv_append(&opt_log_options, "--pretty=medium");
-	}
+
+	} else if (!strcmp(name, "log.follow") && opt_file_args && !opt_file_args[1])
+		parse_bool(&opt_log_follow, value);
 
 	return SUCCESS;
 }

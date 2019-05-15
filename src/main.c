@@ -254,7 +254,7 @@ main_check_argv(struct view *view, const char *argv[])
 static enum graph_display
 main_with_graph(struct view *view, struct view_column *column, enum open_flags flags)
 {
-	return column && opt_commit_order != COMMIT_ORDER_REVERSE && !open_in_pager_mode(flags)
+	return column && opt_commit_order != COMMIT_ORDER_REVERSE && !open_in_pager_mode(flags) && !opt_log_follow
 	       ? column->opt.commit_title.graph : GRAPH_DISPLAY_NO;
 }
 
