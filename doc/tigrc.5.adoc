@@ -846,6 +846,7 @@ View manipulation
 |view-close              |Close the current view
 |view-close-no-quit      |Close the current view without quitting
 |quit                    |Close all views and quit
+|toggle-bp-mark          |Toggle BP mark
 |=============================================================================
 
 View-specific actions
@@ -1038,6 +1039,7 @@ setting the *default* color option.
 |main-local-tag		|Label of a local tag.
 |main-ref		|Label of any other reference.
 |main-replace		|Label of replaced reference.
+|main-bp-mark		|Title of marked commit (BP mark)
 |=============================================================================
 
 .Status view

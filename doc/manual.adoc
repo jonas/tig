@@ -237,6 +237,33 @@ be appended:
 [main] 77d9e40fbcea3238015aea403e06f61542df9a31 - commit 1 of 779 (0%) 5s
 -----------------------------------------------------------------------------
 
+[[bp-mark-list]]
+Commit Marks
+------------
+
+When doing large backports or similar work that involves a lot of
+cherry picking, it can be useful to maintain lists of commits. While
+in the main view, Tig can mark commits via the toggle-bp-mark action,
+which is bound to <C-b> by default. Marked commits title will be
+displayed using an alternative style (main-bp-mark).
+
+If a path is specified when running Tig (see `-l` option). Tig can
+read and write marked commits. Tig tries to import that file on
+startup if it exists, and writes to that file on exit.
+
+The format of this file is simple, each line must have the following format:
+
+-----------------------------------------------------------------------------
+<sha1>[ <optional text>]
+-----------------------------------------------------------------------------
+
+Tig tries to keep the content of each line when it imports
+it. Additional commits added during the Tig session will use the
+commit title as text when exporting.
+
+On exit, Tig sorts the marked commits by commit date (not author date)
+and exports the marked lists to the file specified by the `-l` option.
+
 [[env-variables]]
 Environment Variables
 ---------------------
@@ -465,6 +492,7 @@ Misc
 |:	|Open prompt. This allows you to specify what command to run and also to
 	 jump to a specific line, e.g. `:23`
 |e	|Open file in editor.
+|<C-b>	|Toggle the BP mark on current commit.
 |=============================================================================
 
 [[prompt]]
