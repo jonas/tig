@@ -66,7 +66,7 @@ refs_request(struct view *view, enum request request, struct line *line)
 		const char *all_references_argv[] = {
 			GIT_MAIN_LOG(encoding_arg, commit_order_arg(),
 				"%(mainargs)", "",
-				refs_is_all(reference) ? "--all" : ref->name, "",
+				refs_is_all(reference) ? "--all" : ref->name, "", "",
 				log_custom_pretty_arg())
 		};
 

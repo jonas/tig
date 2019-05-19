@@ -437,7 +437,7 @@ draw_graph(struct view *view, const struct graph *graph, const struct graph_canv
 }
 
 static bool
-draw_commit_title(struct view *view, struct view_column *column,
+draw_commit_title(struct view *view, struct view_column *column, enum line_type type,
 		  const struct graph *graph, const struct graph_canvas *graph_canvas,
 		  const struct ref *refs, const char *commit_title)
 {
@@ -446,7 +446,7 @@ draw_commit_title(struct view *view, struct view_column *column,
 		return true;
 	if (draw_refs(view, column, refs))
 		return true;
-	return draw_text_overflow(view, commit_title, LINE_DEFAULT,
+	return draw_text_overflow(view, commit_title, type,
 			column->opt.commit_title.overflow, 0);
 }
 
@@ -509,8 +509,8 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_COMMIT_TITLE:
-			if (draw_commit_title(view, column, column_data.graph, column_data.graph_canvas,
-					      column_data.refs, column_data.commit_title))
+			if (draw_commit_title(view, column, line->type == LINE_MAIN_ANNOTATED ? LINE_MAIN_ANNOTATED : LINE_MAIN_COMMIT,
+					      column_data.graph, column_data.graph_canvas, column_data.refs, column_data.commit_title))
 				return true;
 			continue;
 
