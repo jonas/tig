@@ -699,6 +699,13 @@ update_view_title(struct view *view)
 void
 split_view(struct view *prev, struct view *view)
 {
+	int height, width;
+	bool vsplit;
+	int nviews = displayed_views();
+
+	getmaxyx(stdscr, height, width);
+	vsplit = vertical_split_is_enabled(opt_vertical_split, height, width);
+
 	display[1] = view;
 	current_view = opt_focus_child ? 1 : 0;
 	view->parent = prev;
@@ -718,13 +725,20 @@ split_view(struct view *prev, struct view *view)
 		update_view_title(prev);
 	}
 
-	if (view_has_flags(prev, VIEW_FLEX_WIDTH))
+	if (view_has_flags(prev, VIEW_FLEX_WIDTH) && vsplit && nviews == 1)
 		load_view(prev, NULL, OPEN_RELOAD);
 }
 
 void
 maximize_view(struct view *view, bool redraw)
 {
+	int height, width;
+	bool vsplit;
+	int nviews = displayed_views();
+
+	getmaxyx(stdscr, height, width);
+	vsplit = vertical_split_is_enabled(opt_vertical_split, height, width);
+
 	memset(display, 0, sizeof(display));
 	current_view = 0;
 	display[current_view] = view;
@@ -732,10 +746,10 @@ maximize_view(struct view *view, bool redraw)
 	if (redraw) {
 		redraw_display(false);
 		report_clear();
-
-		if (view_has_flags(view, VIEW_FLEX_WIDTH))
-			load_view(view, NULL, OPEN_RELOAD);
 	}
+
+	if (view_has_flags(view, VIEW_FLEX_WIDTH) && vsplit && nviews > 1)
+		load_view(view, NULL, OPEN_RELOAD);
 }
 
 void
