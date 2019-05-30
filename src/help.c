@@ -28,6 +28,7 @@ struct help_state {
 struct help {
 	struct keymap *keymap;
 	enum request request;
+	const char *key;
 	union {
 		const char *text;
 		const struct request_info *req_info;
@@ -50,9 +51,8 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 
 	} else if (help->request > REQ_RUN_REQUESTS) {
 		struct run_request *req = get_run_request(help->request);
-		const char *key = get_keys(keymap, help->request, true);
 
-		if (draw_field(view, LINE_DEFAULT, key, state->keys_width + 2, ALIGN_RIGHT, false))
+		if (draw_field(view, LINE_DEFAULT, help->key, state->keys_width + 2, ALIGN_RIGHT, false))
 			return true;
 
 		/* If there is req->help text to draw, then first draw req->name as a fixed-width field */
@@ -67,9 +67,8 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 
 	} else {
 		const struct request_info *req_info = help->data.req_info;
-		const char *key = get_keys(keymap, req_info->request, true);
 
-		if (draw_field(view, LINE_DEFAULT, key, state->keys_width + 2, ALIGN_RIGHT, false))
+		if (draw_field(view, LINE_DEFAULT, help->key, state->keys_width + 2, ALIGN_RIGHT, false))
 			return true;
 
 		/* If there is req_info->help text to draw, then first draw req_info->name as a fixed-width field */
@@ -104,16 +103,13 @@ help_grep(struct view *view, struct line *line)
 
 	} else if (help->request > REQ_RUN_REQUESTS) {
 		struct run_request *req = get_run_request(help->request);
-		const char *key = get_keys(keymap, help->request, true);
-
-		const char *text[] = { key, req->name, req->help, NULL };
+		const char *text[] = { help->key, req->name, req->help, NULL };
 
 		return grep_text(view, text);
 
 	} else {
 		const struct request_info *req_info = help->data.req_info;
-		const char *key = get_keys(keymap, req_info->request, true);
-		const char *text[] = { key, enum_name(req_info->name), req_info->help, NULL };
+		const char *text[] = { help->key, enum_name(req_info->name), req_info->help, NULL };
 
 		return grep_text(view, text);
 	}
@@ -165,7 +161,11 @@ help_keys_visitor(void *data, const char *group, struct keymap *keymap,
 	if (!add_help_line(view, &help, keymap, LINE_DEFAULT))
 		return false;
 
-	state->keys_width = MAX(state->keys_width, strlen(key));
+	int len = strlen(key);
+	state->keys_width = MAX(state->keys_width, len);
+	/* Since the key string is available, cache it for when help lines need to be drawn */
+	help->key = len > 0 ? strdup(key) : NULL;
+
 	help->request = request;
 
 	if (req_info) {
@@ -189,6 +189,12 @@ help_open(struct view *view, enum open_flags flags)
 {
 	struct help_request_iterator iterator = { view };
 	struct help *help;
+
+	/* Need to free any key strings that have been cached */
+	int i; for (i = 0; i < view->lines; i++) {
+		const struct help *h = view->line[i].data;
+		free((void *)h->key);
+	}
 
 	reset_view(view);
 
