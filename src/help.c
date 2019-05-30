@@ -105,11 +105,8 @@ help_grep(struct view *view, struct line *line)
 	} else if (help->request > REQ_RUN_REQUESTS) {
 		struct run_request *req = get_run_request(help->request);
 		const char *key = get_keys(keymap, help->request, true);
-		char buf[SIZEOF_STR] = "";
-		const char *text[] = { key, buf, NULL };
 
-		if (!argv_to_string(req->argv, buf, sizeof(buf), " "))
-			return false;
+		const char *text[] = { key, req->name, req->help, NULL };
 
 		return grep_text(view, text);
 
