@@ -490,8 +490,8 @@ add_run_request(struct keymap *keymap, const struct key key[],
 {
 	struct run_request *req;
 	struct run_request_flags flags = {0};
-	enum status_code code = parse_run_request_flags(&flags, argv);
 
+	enum status_code code = parse_run_request_flags(&flags, argv);
 	if (code != SUCCESS)
 		return code;
 
@@ -504,6 +504,13 @@ add_run_request(struct keymap *keymap, const struct key key[],
 	req = &run_request[run_requests++];
 	req->flags = flags;
 	req->keymap = keymap;
+
+	/* Duplicate a displayable version of **argv into the run_request struct */
+	req->name = NULL;
+	if (argv) {
+		if ((req->name = argv_to_string_alloc_prefix(argv, " ", format_run_request_flags(req))) == NULL)
+			return ERROR_OUT_OF_MEMORY;
+	}
 
 	/* If there is help text, then dupe it into the run_request struct */
 	req->help = NULL;

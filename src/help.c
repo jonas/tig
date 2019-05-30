@@ -51,18 +51,19 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 	} else if (help->request > REQ_RUN_REQUESTS) {
 		struct run_request *req = get_run_request(help->request);
 		const char *key = get_keys(keymap, help->request, true);
-		const char *sep = format_run_request_flags(req);
-		int i;
 
 		if (draw_field(view, LINE_DEFAULT, key, state->keys_width + 2, ALIGN_RIGHT, false))
 			return true;
 
-		for (i = 0; req->argv[i]; i++) {
-			if (draw_formatted(view, LINE_HELP_ACTION, "%s%s", sep, req->argv[i]))
+		/* If there is req->help text to draw, then first draw req->name as a fixed-width field */
+		if (req->help) {
+			if (draw_field(view, LINE_HELP_ACTION, req->name, state->name_width, ALIGN_LEFT, false))
 				return true;
-			sep = " ";
+			draw_text(view, LINE_DEFAULT, req->help);
 		}
-		if (req->help) draw_text(view, LINE_DEFAULT, req->help);
+
+		/* Else just draw req->name as free-form text */
+		else draw_text(view, LINE_HELP_ACTION, req->name);
 
 	} else {
 		const struct request_info *req_info = help->data.req_info;
@@ -71,10 +72,15 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 		if (draw_field(view, LINE_DEFAULT, key, state->keys_width + 2, ALIGN_RIGHT, false))
 			return true;
 
-		if (draw_field(view, LINE_HELP_ACTION, enum_name(req_info->name), state->name_width, ALIGN_LEFT, false))
-			return true;
+		/* If there is req_info->help text to draw, then first draw req_info->name as a fixed-width field */
+		if (req_info->help) {
+			if (draw_field(view, LINE_HELP_ACTION, enum_name(req_info->name), state->name_width, ALIGN_LEFT, false))
+				return true;
+			draw_text(view, LINE_DEFAULT, req_info->help);
+		}
 
-		draw_text(view, LINE_DEFAULT, req_info->help);
+		/* Else just draw req_info->name as free-form text */
+		else draw_text(view, LINE_HELP_ACTION, enum_name(req_info->name));
 	}
 
 	return true;
@@ -166,8 +172,16 @@ help_keys_visitor(void *data, const char *group, struct keymap *keymap,
 	help->request = request;
 
 	if (req_info) {
-		state->name_width = MAX(state->name_width, strlen(enum_name(req_info->name)));
 		help->data.req_info = req_info;
+		/* Include req_info->name in the MAX calculation but only if there is help text */
+		if (req_info->help && strlen(req_info->help) > 0)
+			state->name_width = MAX(state->name_width, strlen(enum_name(req_info->name)));
+	}
+
+	if (run_req) {
+		/* Include run_req->name in the MAX calculation but only if there is help text */
+		if (run_req->help && strlen(run_req->help) > 0)
+			state->name_width = MAX(state->name_width, strlen(run_req->name));
 	}
 
 	return true;

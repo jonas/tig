@@ -90,6 +90,7 @@ struct run_request {
 	struct keymap *keymap;
 	struct run_request_flags flags;
 	const char **argv;
+	char *name;
 	char *help;
 };
 
