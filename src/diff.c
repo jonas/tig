@@ -278,9 +278,10 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		state->reading_diff_chunk = false;
 
 	} else if (type == LINE_DIFF_CHUNK) {
-		const char *context = strstr(data + STRING_SIZE("@@"), "@@");
+		const int len = state->combined_diff ? STRING_SIZE("@@@") : STRING_SIZE("@@");
+		const char *context = strstr(data + len, state->combined_diff ? "@@@" : "@@");
 		struct line *line =
-			context ? add_line_text_at(view, view->lines, data, LINE_DIFF_CHUNK, 2)
+			context ? add_line_text_at(view, view->lines, data, LINE_DIFF_CHUNK, len)
 				: NULL;
 		struct box *box;
 
@@ -288,8 +289,8 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 			return false;
 
 		box = line->data;
-		box->cell[0].length = (context + 2) - data;
-		box->cell[1].length = strlen(context + 2);
+		box->cell[0].length = (context + len) - data;
+		box->cell[1].length = strlen(context + len);
 		box->cell[box->cells++].type = LINE_DIFF_STAT;
 		state->reading_diff_chunk = true;
 		return true;
