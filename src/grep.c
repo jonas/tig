@@ -129,6 +129,7 @@ grep_open(struct view *view, enum open_flags flags)
 {
 	struct grep_state *state = view->private;
 	const char **argv = NULL;
+	enum status_code code;
 
 	if (is_initial_view(view)) {
 		grep_argv = opt_cmdline_args;
@@ -145,7 +146,10 @@ grep_open(struct view *view, enum open_flags flags)
 		state->no_file_group = !column || column->opt.file_name.display != FILENAME_NO;
 	}
 
-	return begin_update(view, NULL, argv, flags);
+	code = begin_update(view, NULL, argv, flags);
+	argv_free(argv);
+	free(argv);
+	return code;
 }
 
 static enum request
