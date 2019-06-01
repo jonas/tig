@@ -145,7 +145,10 @@ grep_open(struct view *view, enum open_flags flags)
 		state->no_file_group = !column || column->opt.file_name.display != FILENAME_NO;
 	}
 
-	return begin_update(view, NULL, argv, flags);
+	enum status_code r = begin_update(view, NULL, argv, flags);
+	argv_free(argv);
+	free(argv);
+	return r;
 }
 
 static enum request
