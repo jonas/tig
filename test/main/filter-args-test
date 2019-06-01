@@ -38,7 +38,7 @@ git rev-parse --git-dir --is-inside-work-tree --show-cdup --show-prefix HEAD --s
 EOF
 
 assert_equals 'log.trace' <<EOF
-git log --encoding=UTF-8 --topo-order --exclude=refs/remotes/origin/* --exclude=refs/heads/master --all --date=raw --parents --no-color --pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s -- common tracer
+git log --encoding=UTF-8 --topo-order --exclude=refs/remotes/origin/* --exclude=refs/heads/master --all --date=raw --parents --no-color --show-notes --pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s%x00%N -- common tracer
 EOF
 
 assert_equals 'filtered.screen' <<EOF

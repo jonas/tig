@@ -64,6 +64,7 @@ struct ref;
 	_(HEADER,		""), \
 	_(SECTION,		""), \
 	_(MAIN_COMMIT,		""), \
+	_(MAIN_ANNOTATED,	""), \
 	_(MAIN_TAG,		""), \
 	_(MAIN_LOCAL_TAG,	""), \
 	_(MAIN_REMOTE,		""), \

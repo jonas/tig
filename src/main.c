@@ -266,11 +266,12 @@ main_open(struct view *view, enum open_flags flags)
 	const char *pretty_custom_argv[] = {
 		GIT_MAIN_LOG(encoding_arg, commit_order_arg_with_graph(graph_display),
 			"%(mainargs)", "%(cmdlineargs)", "%(revargs)", "%(fileargs)",
-			log_custom_pretty_arg())
+			show_notes_arg(), log_custom_pretty_arg())
 	};
 	const char *pretty_raw_argv[] = {
 		GIT_MAIN_LOG_RAW(encoding_arg, commit_order_arg_with_graph(graph_display),
-			"%(mainargs)", "%(cmdlineargs)", "%(revargs)", "%(fileargs)")
+			"%(mainargs)", "%(cmdlineargs)", "%(revargs)", "%(fileargs)",
+			show_notes_arg())
 	};
 	struct main_state *state = view->private;
 	const char **main_argv = pretty_custom_argv;
@@ -459,8 +460,12 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 			parse_author_line(author, &commit->author, &commit->time);
 			if (state->with_graph)
 				graph->render_parents(graph, &commit->graph);
-			if (title)
-				main_add_commit(view, LINE_MAIN_COMMIT, commit, title, false);
+			if (title) {
+				char *notes = io_memchr(buf, title, 0);
+
+				main_add_commit(view, notes && *notes ? LINE_MAIN_ANNOTATED : LINE_MAIN_COMMIT,
+						commit, title, false);
+			}
 		}
 
 		return true;

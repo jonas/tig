@@ -1031,6 +1031,7 @@ setting the *default* color option.
 			 attribute enabled to give a brighter color.
 			 Example: palette-0 = red
 |main-commit		|The commit comment.
+|main-annotated		|The commit comment of an annotated commit.
 |main-head		|Label of the current branch.
 |main-remote		|Label of a remote.
 |main-tracked		|Label of the remote tracked by the current branch.

@@ -384,6 +384,7 @@ color line-number		cyan	default
 color title-blur		white	blue
 color title-focus		white	blue	bold
 color main-commit		default	default
+color main-annotated		default	default	bold
 color main-tag			magenta	default	bold
 color main-local-tag		magenta	default
 color main-remote		yellow	default

@@ -150,8 +150,8 @@ const char *
 log_custom_pretty_arg(void)
 {
 	return opt_mailmap
-		? "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%s"
-		: "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s";
+		? "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%s%x00%N"
+		: "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s%x00%N";
 }
 
 #define ENUM_ARG(enum_name, arg_string) ENUM_MAP_ENTRY(arg_string, enum_name)
