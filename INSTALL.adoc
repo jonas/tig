@@ -43,6 +43,7 @@ Installation using `configure`
 
 Optionally, you can use the `configure` script to detect dependencies:
 
+	$ make configure	# if you're building from the Tig repository (requires `autoconf`)
 	$ ./configure
 	$ make
 	$ make install
