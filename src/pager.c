@@ -155,7 +155,8 @@ pager_request(struct view *view, enum request request, struct line *line)
 	/* Always scroll the view even if it was split. That way
 	 * you can use Enter to scroll through the log view and
 	 * split open each commit diff. */
-	scroll_view(view, REQ_SCROLL_LINE_DOWN);
+	if (view == display[current_view])
+		scroll_view(view, REQ_SCROLL_LINE_DOWN);
 
 	/* FIXME: A minor workaround. Scrolling the view will call report_clear()
 	 * but if we are scrolling a non-current view this won't properly
