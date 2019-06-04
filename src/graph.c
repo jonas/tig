@@ -15,7 +15,7 @@
 #include "tig/graph.h"
 
 struct graph *init_graph_v1(void);
-struct graph *init_graph_v2(void);
+struct graph *init_graph_v2(bool);
 
 struct graph *
 init_graph(enum graph_display display)
@@ -23,7 +23,9 @@ init_graph(enum graph_display display)
 	if (display == GRAPH_DISPLAY_V1)
 		return init_graph_v1();
 	if (display == GRAPH_DISPLAY_V2)
-		return init_graph_v2();
+		return init_graph_v2(false);
+	if (display == GRAPH_DISPLAY_V2_HORIZONTAL_CROSSOVER)
+		return init_graph_v2(true);
 	return NULL;
 }
 
