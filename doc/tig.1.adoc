@@ -14,6 +14,7 @@ _______________________________________________________________________
 tig        [options] [revisions] [--] [paths]
 tig log    [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
+tig reflog [options] [revisions]
 tig blame  [options] [rev] [--] path
 tig grep   [options] [pattern]
 tig refs
@@ -52,6 +53,9 @@ status::
 
 log::
 	Start up in log view, displaying git-log(1) output.
+
+reflog::
+	Start up in reflog view.
 
 refs::
 	Start up in refs view.

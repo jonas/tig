@@ -54,6 +54,7 @@ typedef struct view_column *view_settings;
 	_(line_graphics,		enum graphic,		VIEW_RESET_DISPLAY) \
 	_(log_options,			const char **,		VIEW_LOG_LIKE) \
 	_(log_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(reflog_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(mailmap,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
 	_(main_options,			const char **,		VIEW_LOG_LIKE) \
 	_(main_view,			view_settings,		VIEW_NO_FLAGS) \

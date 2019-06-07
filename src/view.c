@@ -1721,6 +1721,7 @@ append_line_format(struct view *view, struct line *line, const char *fmt, ...)
 #include "tig/main.h"
 #include "tig/diff.h"
 #include "tig/log.h"
+#include "tig/reflog.h"
 #include "tig/tree.h"
 #include "tig/blob.h"
 #include "tig/blame.h"

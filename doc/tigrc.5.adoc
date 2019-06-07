@@ -436,7 +436,7 @@ they support:
 blob-view, diff-view, log-view, pager-view, stage-view:: line-number, text
 blame-view:: author, date, file-name, id, line-number, text
 grep-view:: file-name, line-number, text
-main-view:: author, date, commit-title, id, line-number
+main-view, reflog-view:: author, date, commit-title, id, line-number, ref
 refs-view:: author, date, commit-title, id, line-number, ref
 stash-view:: author, date, commit-title, id, line-number
 status-view:: file-name, line-number, status
@@ -592,10 +592,10 @@ Tig respects but does not require an `$if tig` section in `~/.inputrc`.
 
 Keymaps::
 
-Valid keymaps are: *main*, *diff*, *log*, *help*, *pager*, *status*, *stage*,
-*tree*, *blob*, *blame*, *refs*, *stash*, *grep* and *generic*. Use *generic*
-to set key mapping in all keymaps. Use *search* to define keys for navigating
-search results during search.
+Valid keymaps are: *main*, *diff*, *log*, *reflog*, *help*, *pager*, *status*,
+*stage*, *tree*, *blob*, *blame*, *refs*, *stash*, *grep* and *generic*. Use
+*generic* to set key mapping in all keymaps. Use *search* to define keys for
+navigating search results during search.
 
 Key values::
 
@@ -818,6 +818,7 @@ View switching
 |view-main               |Show main view
 |view-diff               |Show diff view
 |view-log                |Show log view
+|view-reflog             |Show reflog view
 |view-tree               |Show tree view
 |view-blob               |Show blob view
 |view-blame              |Show blame view

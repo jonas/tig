@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+# Test display and options specific to the reflog view.
+
+. libtest.sh
+. libgit.sh
+
+tigrc <<EOF
+set line-graphics = ascii
+EOF
+
+steps '
+	:exec @git checkout r1.0
+	:exec @git checkout r1.1.2
+	:enter
+	:save-display reflog-default.screen
+'
+
+in_work_dir create_repo_from_tgz "$base_dir/files/refs-repo.tgz"
+
+test_tig reflog
+
+assert_equals 'reflog-default.screen' <<EOF
+HEAD@{0} [r1.1.2] [r1.1.x] <v1.1> checkout: moving from r1.0 to r1.1.2
+HEAD@{1} [r1.0] <v1.0> checkout: moving from master to r1.0
+HEAD@{2} [master] {origin/master} {max-power/master} {origin/HEAD} reset: moving
+HEAD@{3} [master] {origin/master} {max-power/master} {origin/HEAD} clone: from /
+
+
+
+
+
+[reflog] b45b5704c34dbd4c5fd89d58d45238ad136ae166 - reference 1 of 4        100%
+2009-12-26 01:11 +0000 作者                  * [r1.1.2] [r1.1.x] <v1.1> Commit 8
+2009-12-17 12:49 +0000 René Lévesque         * [r1.0] <v1.0> Commit 8 B
+2009-12-09 00:27 +0000 A. U. Thor            * Commit 8 A
+2009-11-30 12:05 +0000 Max Power             * {max-power/mp/gh-123} Commit 7 E
+2009-11-21 23:43 +0000 Jørgen Thygesen Brahe * Commit 7 D
+2009-11-13 11:20 +0000 作者                  * Commit 7 C
+2009-11-04 22:58 +0000 René Lévesque         * Commit 7 B
+2009-10-27 10:36 +0000 A. U. Thor            * Commit 7 A
+2009-10-18 22:14 +0000 Max Power             * Commit 6 E
+2009-10-10 09:52 +0000 Jørgen Thygesen Brahe * Commit 6 D
+2009-10-01 21:30 +0000 作者                  * Commit 6 C
+2009-09-23 09:07 +0000 René Lévesque         * Commit 6 B
+2009-09-14 20:45 +0000 A. U. Thor            * Commit 6 A
+2009-09-06 08:23 +0000 Max Power             * Commit 5 E
+2009-08-28 20:01 +0000 Jørgen Thygesen Brahe * Commit 5 D
+2009-08-20 07:39 +0000 作者                  * Commit 5 C
+2009-08-11 19:17 +0000 René Lévesque         * Commit 5 B
+2009-08-03 06:54 +0000 A. U. Thor            * Commit 5 A
+[main] b45b5704c34dbd4c5fd89d58d45238ad136ae166 - commit 1 of 38             47%
+EOF
