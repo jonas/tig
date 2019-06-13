@@ -120,22 +120,24 @@ watch_index_handler(struct watch_handler *handler, enum watch_event event, enum 
 			? check : WATCH_NONE;
 
 	if (check & WATCH_INDEX_STAGED && diff.staged != handler->diff.staged) {
-		changed |= WATCH_INDEX_STAGED;
+		if (handler->last_modified)
+			changed |= WATCH_INDEX_STAGED;
 		handler->diff.staged = diff.staged;
 	}
 
 	if (check & WATCH_INDEX_UNSTAGED && diff.unstaged != handler->diff.unstaged) {
-		changed |= WATCH_INDEX_UNSTAGED;
+		if (handler->last_modified)
+			changed |= WATCH_INDEX_UNSTAGED;
 		handler->diff.unstaged = diff.unstaged;
 	}
 
 	if (check & WATCH_INDEX_UNTRACKED && diff.untracked != handler->diff.untracked) {
-		changed |= WATCH_INDEX_UNTRACKED;
+		if (handler->last_modified)
+			changed |= WATCH_INDEX_UNTRACKED;
 		handler->diff.untracked = diff.untracked;
 	}
 
-	if (changed)
-		handler->last_modified = time(NULL);
+	handler->last_modified = time(NULL);
 
 	return changed;
 }
