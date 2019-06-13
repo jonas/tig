@@ -272,9 +272,7 @@ watch_periodic(int interval)
 	if (watches && interval > 0) {
 		time_t now = time(NULL);
 
-		if (!last_update)
-			last_update = now;
-		if (last_update + interval <= now) {
+		if (!last_update || last_update + interval <= now) {
 			watch_update(WATCH_EVENT_PERIODIC);
 			last_update = now;
 		}
