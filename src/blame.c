@@ -125,7 +125,7 @@ blame_open(struct view *view, enum open_flags flags)
 
 	if (!view->env->file[0] && opt_file_args && !opt_file_args[1]) {
 		const char *ls_tree_argv[] = {
-			"git", "ls-tree", "-d", "-z", opt_rev_args ? opt_rev_args[0] : "HEAD", opt_file_args[0], NULL
+			"git", "ls-tree", "-d", "-z", *view->env->ref ? view->env->ref : view->env->commit, opt_file_args[0], NULL
 		};
 		char buf[SIZEOF_STR] = "";
 
