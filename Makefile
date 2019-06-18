@@ -299,6 +299,7 @@ TIG_OBJS = \
 	src/watch.o \
 	src/pager.o \
 	src/log.o \
+	src/reflog.o \
 	src/diff.o \
 	src/help.o \
 	src/tree.o \

@@ -70,6 +70,7 @@
 set blame-view	= id:yes,color file-name:auto author:full date:default line-number:yes,interval=1 text
 set grep-view	= file-name:no line-number:yes,interval=1 text
 set main-view	= line-number:no,interval=5 id:no date:default author:full commit-title:yes,graph,refs,overflow=no
+set reflog-view	= line-number:no,interval=5 id:yes date:no author:no commit-title:yes,refs,overflow=no
 set refs-view	= line-number:no id:no date:default author:full ref commit-title
 set stash-view	= line-number:no,interval=5 id:no date:default author:full commit-title
 set status-view	= line-number:no,interval=5 status:short file-name
@@ -183,6 +184,8 @@ bind stash	P	?git stash pop %(stash)
 bind stash	!	?git stash drop %(stash)
 bind refs	C	?git checkout %(branch)
 bind refs	!	?git branch -D %(branch)
+bind reflog	C	?git checkout %(branch)
+bind reflog	!	?git reset --hard %(commit)
 
 # Normal commands
 # ---------------
@@ -191,6 +194,7 @@ bind refs	!	?git branch -D %(branch)
 bind generic	m	view-main
 bind generic	d	view-diff
 bind generic	l	view-log
+bind generic	L	view-reflog
 bind generic	t	view-tree
 bind generic	f	view-blob
 bind generic	b	view-blame

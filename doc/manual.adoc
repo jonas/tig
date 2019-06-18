@@ -96,6 +96,10 @@ The log view::
 	Presents a more rich view of the revision log showing the whole log
 	message and the diffstat.
 
+The reflog view::
+	Presents a view of the reflog allowing to navigate the repo
+	history.
+
 The diff view::
 	Shows either the diff of the current working tree, that is, what
 	has changed since the last commit, or the commit diff complete

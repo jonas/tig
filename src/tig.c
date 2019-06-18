@@ -41,6 +41,7 @@
 #include "tig/grep.h"
 #include "tig/help.h"
 #include "tig/log.h"
+#include "tig/reflog.h"
 #include "tig/main.h"
 #include "tig/pager.h"
 #include "tig/refs.h"
@@ -208,6 +209,9 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_LOG:
 		open_log_view(view, OPEN_DEFAULT);
 		break;
+	case REQ_VIEW_REFLOG:
+		open_reflog_view(view, OPEN_DEFAULT);
+		break;
 	case REQ_VIEW_TREE:
 		open_tree_view(view, OPEN_DEFAULT);
 		break;
@@ -370,6 +374,7 @@ static const char usage_string[] =
 "Usage: tig        [options] [revs] [--] [paths]\n"
 "   or: tig log    [options] [revs] [--] [paths]\n"
 "   or: tig show   [options] [revs] [--] [paths]\n"
+"   or: tig reflog [options] [revs]\n"
 "   or: tig blame  [options] [rev] [--] path\n"
 "   or: tig grep   [options] [pattern]\n"
 "   or: tig refs\n"
@@ -505,6 +510,9 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 
 	} else if (!strcmp(subcommand, "log")) {
 		request = REQ_VIEW_LOG;
+
+	} else if (!strcmp(subcommand, "reflog")) {
+		request = REQ_VIEW_REFLOG;
 
 	} else if (!strcmp(subcommand, "stash")) {
 		request = REQ_VIEW_STASH;

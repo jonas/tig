@@ -160,6 +160,7 @@ void TIG_NORETURN usage(const char *message);
 	_(MAIN,   main), \
 	_(DIFF,   diff), \
 	_(LOG,    log), \
+	_(REFLOG, reflog), \
 	_(TREE,   tree), \
 	_(BLOB,   blob), \
 	_(BLAME,  blame), \
