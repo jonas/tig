@@ -78,6 +78,8 @@ Searching
 Option toggling:
                            G :toggle commit-title-graph
                            F :toggle commit-title-refs
+Internal commands:
+                           H :goto HEAD
 External commands:
                            C ?git cherry-pick %(commit)
 [-] diff bindings
@@ -119,6 +121,4 @@ External commands:
                            ! ?git stash drop %(stash)
 
 
-
-
-[help] - line 1 of 119                                                                100%
+[help] - line 1 of 121                                                                100%
