@@ -858,6 +858,14 @@ main(int argc, const char *argv[])
 		run_prompt_command(NULL, script_command);
 	}
 
+	if ((opt_refresh_mode == REFRESH_MODE_ENTR) && repo.git_dir[0]) {
+		const char *watcher_argv[] = { "sh", "-c", NULL, NULL };
+		char watcher_cmd[SIZEOF_STR] = "";
+		string_format(watcher_cmd, "%s -quiet -find_root -tig_pid=%d &", LIBEXECDIR "/tig-refresh-watcher", getpid());
+		watcher_argv[2] = watcher_cmd;
+		io_run_bg(watcher_argv, repo.cdup);
+	}
+
 	while (view_driver(display[current_view], request)) {
 		view = display[current_view];
 		request = read_key_combo(view->keymap);

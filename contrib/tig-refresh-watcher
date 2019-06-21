@@ -1,0 +1,416 @@
+#!/bin/sh
+#
+# tig-refresh-watcher
+#
+# Copyright (c) 2006-2017 Jonas Fonseca <jonas.fonseca@gmail.com>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of
+# the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# notes
+#
+#     entr has two categories of event
+#      * modifications to known files
+#      * modifications to known directories (optional, given -d)
+#
+#     Entr responds differently to each category.  For a file-event, entr
+#     invokes a command.  For a directory-event, entr exits.  This script
+#     arranges to send tig a SIGWINCH in both cases.
+#
+#     See comments in _tig_refresh_watcher about tradeoffs WRT the number
+#     of signals forwarded to tig on directory-events.
+#
+#     This script expects to be run from tig like
+#
+#         /full/path/to/libexec/tig-refresh-watcher -quiet -find_root -tig_pid=<pid>
+#
+
+###
+### settings
+###
+
+set -e
+set -u
+
+###
+### global variables
+###
+
+opt_tig_pid=''
+opt_watch_path="$(pwd 2>/dev/null)"
+opt_entr="$(which entr 2>/dev/null)"
+opt_restart=300                # seconds
+opt_quiet=''                   # -n boolean
+opt_find_root=''               # -n boolean
+opt_debug=''                   # -n boolean
+
+timer_granularity=5            # seconds
+tig_standup_grace=1            # seconds
+throttle_interval=1.0          # seconds, optimistically as a float
+tig_signal_event='WINCH'
+entr_signal_shutdown='INT'
+timer_signal_shutdown='HUP'
+floatsleep_method=''
+
+###
+### functions
+###
+
+warn ()
+{
+	if [ -n "$opt_quiet" ]; then
+		return
+	fi
+
+	printf 'tig-refresh-watcher: %s\n' "$*" 1>&2
+}
+
+die ()
+{
+	warn "$@"
+	exit 1
+}
+
+process_arguments ()
+{
+	usage="[ -watch_path=<path> | -find_root | -entr=<path> | -restart=<sec> | -quiet ] -tig_pid=<pid>
+
+Used internally by tig to monitor filesystem events in a git repository.
+
+Requires the external utility \"entr\".
+
+Required arguments
+
+    -tig_pid=<pid>
+
+                 Signal filesystem events to the given tig process ID, and
+                 quit if that process ID ceases to exist.
+
+Options
+
+    -watch_path=<path>
+
+                 Monitor all files, recursively, under the given path,
+                 typically a git repository root.  Defaults to the current
+                 working directory.
+
+    -find_root
+
+                 Coerce the -watch_path value upward to a repository root.
+
+    -entr=<path>
+
+                 Optional full path to the entr executable.
+
+    -restart=<sec>
+
+                 Hard restart entr every <sec> seconds.  Defaults to $opt_restart.
+
+    -quiet       Give minimal output, but exit with a nonzero status code on
+                 error.
+
+    -debug       Emit debug details, including output passed through from entr
+                 and git.
+"
+
+	if [ "$#" -eq 0 ]; then
+		die "$usage"
+	fi
+
+	while [ "$#" -ge 1 ]; do
+		elt="$1" && shift
+		case "$elt" in
+			-help|--help|-h)
+				printf 'tig-refresh-watcher %s' "$usage"
+				exit
+				;;
+			-tig[_-]pid|--tig[_-]pid|-tig[_-]pid=|--tig[_-]pid=)
+				[ "$#" -ge 1 ] || die '-tig_pid requires a value'
+				opt_tig_pid="$1" && shift
+				;;
+			-tig[_-]pid=?*|--tig[_-]pid=?*)
+				opt_tig_pid="$(expr "$elt" : '--*tig[_-]pid=\(..*\)')"
+				;;
+			-watch[_-]path|--watch[_-]path|-watch[_-]path=|--watch[_-]path=)
+				[ "$#" -ge 1 ] || die '-watch_path requires a value'
+				opt_watch_path="$1" && shift
+				;;
+			-watch[_-]path=?*|--watch[_-]path=?*)
+				opt_watch_path="$(expr "$elt" : '--*watch[_-]path=\(..*\)')"
+				;;
+			-entr|--entr|-entr=|--entr=)
+				[ "$#" -ge 1 ] || die '-entr requires a value'
+				opt_entr="$1" && shift
+				;;
+			-entr=?*|--entr=?*)
+				opt_entr="$(expr "$elt" : '--*entr=\(..*\)')"
+				;;
+			-restart|--restart|-restart=|--restart=)
+				[ "$#" -ge 1 ] || die '-restart requires a value'
+				opt_restart="$1" && shift
+				;;
+			-restart=?*|--restart=?*)
+				opt_restart="$(expr "$elt" : '--*restart=\(..*\)')"
+				;;
+			-quiet|--quiet)
+				opt_quiet='yes'
+				;;
+			-debug|--debug)
+				opt_debug='yes'
+				;;
+			-find[_-]root|--find[_-]root)
+				opt_find_root='yes'
+				;;
+			*)
+				die "No such option: '$elt'"
+				;;
+		esac
+	done
+
+	case "$opt_tig_pid$opt_restart" in
+		*[!0-9]*) die '-tig_pid/-restart values must be integers';;
+	esac
+
+	if ! [ 0"$opt_tig_pid" -ge 1 ]; then
+		die "bad or missing -tig_pid value: '$opt_tig_pid'"
+	fi
+
+	if ! [ 0"$opt_restart" -ge 1 ]; then
+		die "bad -restart value: '$opt_restart'"
+	fi
+
+	if [ -z "$opt_entr" ]; then
+		die 'could not find entr executable'
+	fi
+
+	if ! [ -x "$opt_entr" ]; then
+		die "bad -entr value: '$opt_entr'"
+	fi
+
+	# -watch_path value handled separately
+}
+
+ensure_watch_path ()
+{
+	if [ -n "$opt_find_root" ]; then
+		if [ -z "$opt_watch_path" ]; then
+			opt_watch_path="$(pwd 2>/dev/null)"
+		fi
+		if [ -z "$opt_watch_path" ]; then
+			die "can't find repository root"
+		fi
+		if ! [ -d "$opt_watch_path" ]; then
+			opt_watch_path="$(dirname -- "$opt_watch_path" 2>/dev/null)"
+		fi
+		opt_watch_path="$(cd "$opt_watch_path" 2>/dev/null && git rev-parse --show-toplevel 2>/dev/null)"
+		if ! [ -d "$opt_watch_path" ]; then
+			die "can't find repository root"
+		fi
+	fi
+
+	if ! [ -d "$opt_watch_path" ]; then
+		die "bad -watch_path value: '$opt_watch_path'"
+	fi
+
+	opt_watch_path="$(cd "$opt_watch_path" 2>/dev/null && pwd 2>/dev/null)"
+	cd "$opt_watch_path" || die "can't cd to '$opt_watch_path'"
+
+	if ! git ls-files "$opt_watch_path" >/dev/null 2>&1; then
+		die "failed to run git ls-files"
+	fi
+
+	if [ -z "$(git ls-files "$opt_watch_path" 2>/dev/null)" ]; then
+		die "no files to monitor"
+	fi
+}
+
+ensure_tig_pid ()
+{
+	kill -0 "$opt_tig_pid" 2>/dev/null || die "no tig process at '$opt_tig_pid'"
+}
+
+find_floatsleep ()
+{
+	if sleep .01 >/dev/null 2>&1; then
+		floatsleep_method='sleep'
+		return
+	fi
+	for program in 'gsleep' 'ksh' 'zsh' 'perl' 'python'; do
+		if which "$program" >/dev/null 2>&1; then
+			floatsleep_method="$program"
+			return
+		fi
+	done
+}
+
+# necessarily imperfect
+floatsleep ()
+{
+	case "$floatsleep_method" in
+		sleep)  sleep "$1";;
+		gsleep) gsleep "$1";;
+		ksh)    ksh -c "sleep '$1'";;
+		zsh)    zsh -c "sleep '$1'";;
+		perl)   perl -e "select(undef, undef, undef, $1)";;
+		python) python -c "import time; time.sleep($1)";;
+		*)
+		_as_integer="$(printf '%d' "$1")"
+		if [ "$_as_integer" -eq 0 ]; then
+			_as_integer=1
+		fi
+		sleep "$_as_integer"
+		;;
+	esac
+}
+
+init_redirects ()
+{
+	if [ -n "$opt_debug" ]; then
+		exec 3>&1
+	else
+		exec 3>/dev/null
+	fi
+}
+
+install_timer ()
+{
+	entr_pid="$1"
+
+	(
+		counter=0
+		while [ "$counter" -lt "$opt_restart" ]; do
+			counter="$((counter + timer_granularity))"
+			sleep "$timer_granularity"
+			kill -0 "$opt_tig_pid" && kill -0 "$entr_pid" || break
+		done
+		if [ -n "$opt_debug" ] && [ "$counter" -ge "$opt_restart" ]; then
+			warn "restart timer expired"
+		fi
+		kill -"$entr_signal_shutdown" "$entr_pid" || true
+	) >&3 2>&1 &
+
+	timer_pid="$!"
+	printf '%s' "$timer_pid"
+}
+
+pid_report ()
+{
+	if [ -z "$opt_debug" ]; then
+		return
+	fi
+
+	if kill -0 "${1:-}" >/dev/null 2>&1; then
+		warn "tig process is up"
+	else
+		warn "tig process is down"
+	fi
+
+	if kill -0 "${2:-}" >/dev/null 2>&1; then
+		warn "entr process is up"
+	else
+		warn "entr process is down"
+	fi
+
+	if kill -0 "${3:-}" >/dev/null 2>&1; then
+		warn "timer process is up"
+	else
+		warn "timer process is down"
+	fi
+}
+
+###
+### main
+###
+
+_tig_refresh_watcher ()
+{
+	# On the first pass through the loop, don't let entr fire one "hello
+	# signal" as soon as it starts ("-p" option).  Otherwise allow the
+	# hello signal.
+	#
+	# Allowing hellos does result in extra signals being sent to tig for
+	# the case of directory-events, with a ceiling of 2X the number of
+	# signals, spaced by $throttle_interval.
+	#
+	# This compromise is a consequence of entr exiting in response to
+	# directory-events.  The "while true" loop will restart entr, but
+	# there is no way of knowing whether some additional filesystem change
+	# occurred during the brief interval during which entr was not
+	# running.  The hello signal covers that case.
+	#
+	# Alternatively, the hello signal could be used as the only method for
+	# directory-event notification, by removing the shell line
+	#
+	#     kill -"$tig_signal_event" "$opt_tig_pid"
+	#
+	# That would eliminate the extra signal chatter, at the cost of
+	# substantial added latency before tig receives any notification.
+	#
+	# Tig's TUI refresh logic should also be throttled.  floatsleep() is
+	# provided here in case of some tricky interaction between the two
+	# throttles.
+	entr_flags_first_run='-dp'
+	entr_flags_later_runs='-d'
+
+	entr_flags="$entr_flags_first_run"
+
+	{
+		while true; do
+
+			if [ -n "$opt_debug" ]; then
+				git ls-files "$opt_watch_path" | \
+				exec "$opt_entr" "$entr_flags" sh -c "printf '%s\n' 'entr: file altered'; kill -'$tig_signal_event' '$opt_tig_pid'" &
+				entr_pid="$!"
+			else
+				git ls-files "$opt_watch_path" | \
+				exec "$opt_entr" "$entr_flags" kill -"$tig_signal_event" "$opt_tig_pid" &
+				entr_pid="$!"
+			fi
+
+			timer_pid="$(install_timer "$entr_pid")"
+			wait "$entr_pid"                              || true
+
+			entr_flags="$entr_flags_later_runs"
+
+			kill -"$tig_signal_event"      "$opt_tig_pid" || true
+			kill -"$timer_signal_shutdown" "$timer_pid"   || true
+			kill -0                        "$opt_tig_pid" || break
+
+			floatsleep "$throttle_interval"
+		done
+
+		pid_report "$opt_tig_pid" "$entr_pid" "$timer_pid"
+
+	} >&3 2>&1
+}
+
+###
+### initialization
+###
+
+process_arguments "$@"
+
+ensure_watch_path
+
+ensure_tig_pid
+
+find_floatsleep
+
+init_redirects
+
+sleep "$tig_standup_grace"
+
+###
+### dispatch
+###
+
+_tig_refresh_watcher
+
+# vim: set ts=8 sw=8 noexpandtab:

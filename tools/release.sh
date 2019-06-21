@@ -65,7 +65,7 @@ git checkout release
 HEAD="$(git rev-parse release)"
 git merge master
 if test -n "$(git rev-list -1 release ^$HEAD)"; then
-	make distclean doc-man doc-html sysconfdir=++SYSCONFDIR++
+	make distclean doc-man doc-html sysconfdir=++SYSCONFDIR++ libexecdir=++LIBEXECDIR++
 	git commit -a -m "Update for version $TAG"
 fi
 
