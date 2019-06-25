@@ -22,6 +22,7 @@ steps '
 	:save-display main-no-refs.screen
 	:toggle commit-title-graph
 	:toggle commit-title-graph
+	:toggle commit-title-graph
 	:save-display main-no-graph.screen
 
 	:957f2b368e6fa5c0757f36b1441e32729ee5e9c7
