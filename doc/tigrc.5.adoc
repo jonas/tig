@@ -460,8 +460,13 @@ author::
 	  sizing content, up to this limit.
 
 commit-title::
-	- 'graph' (mixed) [no|v2|v1]: Whether to show the revision graph in the
-	  main view on start-up. "v1" refers to the old graph rendering, which
+	- 'graph' (mixed) [no|v2|v2-horizontal-crossover|v1]:
+	  Whether to show the revision graph in the main view on start-up.
+	  "v2" refers to the newer graph rendering where a vertical path is placed over a horizontal path,
+	  but the horizontal path is miscolored.
+	  "v2-horizontal-crossover" refers to the newer graph rendering where a horizontal path is placed over a vertical path,
+	  and the horizontal path is correctly colored.
+	  "v1" refers to the old graph rendering, which
 	  is less accurate but faster and thus recommended in large
 	  repositories.  See also the 'line-graphics' options.
 	- 'refs' (bool): Whether to show references (branches, tags, and
