@@ -466,6 +466,7 @@ Misc
 |%	|Toggle file filtering in order to see the full diff instead of only
 	 the diff concerning the currently selected file.
 |$	|Toggle highlighting of commit title overflow.
+|H	|Go to the HEAD commit.
 |:	|Open prompt. This allows you to specify what command to run and also to
 	 jump to a specific line, e.g. `:23`
 |e	|Open file in editor.

@@ -51,7 +51,7 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-[help] - line 1 of 119                                                       23%
+[help] - line 1 of 121                                                       23%
 EOF
 
 assert_equals 'help-search.screen' <<EOF
@@ -83,7 +83,7 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-[help] - line 19 of 119                                                      23%
+[help] - line 19 of 121                                                      23%
 EOF
 
 assert_equals 'help-collapsed.screen' <<EOF
@@ -95,6 +95,8 @@ Quick reference for tig keybindings:
 Option toggling:
   G :toggle commit-title-graph
   F :toggle commit-title-refs
+Internal commands:
+  H :goto HEAD
 External commands:
   C ?git cherry-pick %(commit)
 [-] diff bindings
@@ -113,7 +115,5 @@ External commands:
   ! ?git branch -D %(branch)
 [-] status bindings
 View-specific actions
-  u status-update     Stage/unstage chunk or file changes
-  ! status-revert     Revert chunk or file changes
-[help] - line 4 of 47                                                        59%
+[help] - line 4 of 49                                                        57%
 EOF

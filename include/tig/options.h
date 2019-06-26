@@ -74,6 +74,7 @@ typedef struct view_column *view_settings;
 	_(split_view_height,		double,			VIEW_RESET_DISPLAY) \
 	_(split_view_width,		double,			VIEW_RESET_DISPLAY) \
 	_(stage_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(start_on_head,		bool,			VIEW_NO_FLAGS) \
 	_(stash_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(status_show_untracked_dirs,	bool,			VIEW_STATUS_LIKE) \
 	_(status_show_untracked_files,	bool,			VIEW_STATUS_LIKE) \
