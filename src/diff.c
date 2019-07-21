@@ -685,7 +685,12 @@ diff_common_edit(struct view *view, enum request request, struct line *line)
 		lineno = diff_get_lineno(view, line);
 	}
 
-	if (!file || !string_concat_path(path, repo.cdup, file) || access(path, R_OK)) {
+	if (!file) {
+		report("Nothing to edit");
+		return REQ_NONE;
+	}
+
+	if (!string_concat_path(path, repo.cdup, file) || access(path, R_OK)) {
 		report("Failed to open file: %s", file);
 		return REQ_NONE;
 	}
