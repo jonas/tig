@@ -369,9 +369,10 @@ The following variables can be set:
 	Configures how views are refreshed based on modifications to watched
 	files in the repository. When set to 'manual', nothing is refreshed
 	automatically. When set to 'auto', views are refreshed when a
-	modification is detected. When set to 'after-command' only refresh after
-	returning from an external command. When set to 'periodic', visible
-	views are refreshed periodically using 'refresh-interval'.
+	modification is detected in another view. When set to 'after-command'
+	only refresh after returning from an external command. When set to
+	'periodic', visible views are refreshed periodically using
+	'refresh-interval'.
 
 'refresh-interval' (int)::
 
