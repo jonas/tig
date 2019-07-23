@@ -331,11 +331,17 @@ DEPS_CFLAGS ?= -MMD -MP -MF .deps/$*.d
 %: %.o
 	$(QUIET_LINK)$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-%.o: %.c $(CONFIG_H)
+%.o: %.c $(CONFIG_H) compat/compat.h include/tig/$*.h
 	@mkdir -p .deps/$(*D)
 	$(QUIET_CC)$(CC) -I. -Iinclude $(CFLAGS) $(DEPS_CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 -include $(OBJS:%.o=.deps/%.d)
+
+src/draw.o src/graph-v2.o src/map.o: compat/hashtab.h
+compat/hashtab.o: compat/ansidecl.h compat/hashtab.h
+compat/utf8proc.o: compat/utf8proc.h compat/utf8proc_data.c
+test/tools/test-graph.o: test
+src/string.o: compat/utf8proc.h
 
 src/builtin-config.c: tigrc tools/make-builtin-config.sh
 	$(QUIET_GEN)tools/make-builtin-config.sh $< > $@
