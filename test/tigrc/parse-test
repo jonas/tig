@@ -115,7 +115,7 @@ Misc
    : prompt    Open the prompt
 [-] main bindings
 Internal commands:
-   # :/s e a r c h
+   # :/s e a r c h    Toggle option
 External commands:
    1 !external command
    2 @silent command
