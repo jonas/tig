@@ -247,7 +247,9 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	if (!view->lines && type != LINE_COMMIT)
 		state->reading_diff_stat = true;
 
-	if (state->combined_diff && !state->after_diff && data[0] == ' ' && data[1] != ' ')
+	/* combined diffs lack LINE_DIFF_START and we don't know
+	 * if this is a combined diff until we see a "@@@" */
+	if (!state->after_diff && data[0] == ' ' && data[1] != ' ')
 		state->reading_diff_stat = true;
 
 	if (state->reading_diff_stat) {
@@ -269,15 +271,11 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	}
 
 	if (type == LINE_DIFF_HEADER) {
-		const int len = STRING_SIZE("diff --");
-
 		state->after_diff = true;
-		if (!strncmp(data + len, "combined ", strlen("combined ")) ||
-		    !strncmp(data + len, "cc ", strlen("cc ")))
-			state->combined_diff = true;
 		state->reading_diff_chunk = false;
 
 	} else if (type == LINE_DIFF_CHUNK) {
+		state->combined_diff = (strstr(data, "@@@") == data);
 		const int len = state->combined_diff ? STRING_SIZE("@@@") : STRING_SIZE("@@");
 		const char *context = strstr(data + len, state->combined_diff ? "@@@" : "@@");
 		struct line *line =
@@ -294,9 +292,6 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		box->cell[box->cells++].type = LINE_DIFF_STAT;
 		state->reading_diff_chunk = true;
 		return true;
-
-	} else if (type == LINE_PP_MERGE) {
-		state->combined_diff = true;
 
 	} else if (type == LINE_COMMIT) {
 		state->reading_diff_chunk = false;
