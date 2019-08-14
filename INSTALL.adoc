@@ -96,7 +96,10 @@ You can use link:https://nixos.org/nix/[Nix] to install Tig on NixOS, or any Lin
 Installation on Windows
 -----------------------
 
-To run on Windows, you will need link:https://www.cygwin.com/[cygwin].
+Easiest way is to install link:https://gitforwindows.org/[Git-for-Windows]. As 
+of version `2.14.2`, it comes bundled with `tig`.
+
+Alternatively, you can also use it by installing link:https://www.cygwin.com/[cygwin].
 You must then install the packages `git`, `gcc-core`, `make`, `libiconv-devel`
 and `libncurses-devel`. Extract the tarball and install by using `configure`
 as explained above.
