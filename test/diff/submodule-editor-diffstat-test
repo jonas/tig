@@ -73,9 +73,9 @@ include/api.h
 EOF
 
 assert_equals 'exec-env' <<EOF
- - pwd=ROOT/work dir/repo-two-a
- - git-dir=ROOT/work dir/.git/modules/repo-two-a
+ - pwd=ROOT/work-dir/repo-two-a
+ - git-dir=ROOT/work-dir/.git/modules/repo-two-a
  - show-cdup=
  - is-inside-work-tree=true
- - show-superproject-working-tree=ROOT/work dir
+ - show-superproject-working-tree=ROOT/work-dir
 EOF

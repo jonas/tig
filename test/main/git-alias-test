@@ -43,8 +43,8 @@ test_tig -- src/main/scala
 in_work_dir git alias-vars
 
 assert_equals 'alias-vars' <<EOF
-PWD=ROOT/work dir
-GIT_DIR=ROOT/base/.git/worktrees/work dir
+PWD=ROOT/work-dir
+GIT_DIR=ROOT/base/.git/worktrees/work-dir
 GIT_PREFIX=deltablue/
 EOF
 

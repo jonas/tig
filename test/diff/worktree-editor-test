@@ -355,38 +355,38 @@ EOF
 
 assert_equals 'exec-env' <<EOF
 default
- - pwd=ROOT/work dir
- - git-dir=ROOT/base/.git/worktrees/work dir
+ - pwd=ROOT/work-dir
+ - git-dir=ROOT/base/.git/worktrees/work-dir
  - show-cdup=
  - is-inside-work-tree=true
  - show-superproject-working-tree=
 default::exec
- - pwd=ROOT/work dir
- - git-dir=ROOT/base/.git/worktrees/work dir
+ - pwd=ROOT/work-dir
+ - git-dir=ROOT/base/.git/worktrees/work-dir
  - show-cdup=
  - is-inside-work-tree=true
  - show-superproject-working-tree=
 sub-directory
- - pwd=ROOT/work dir/some/subdir
- - git-dir=ROOT/base/.git/worktrees/work dir
+ - pwd=ROOT/work-dir/some/subdir
+ - git-dir=ROOT/base/.git/worktrees/work-dir
  - show-cdup=../../
  - is-inside-work-tree=true
  - show-superproject-working-tree=
 sub-directory::exec
- - pwd=ROOT/work dir
- - git-dir=ROOT/base/.git/worktrees/work dir
+ - pwd=ROOT/work-dir
+ - git-dir=ROOT/base/.git/worktrees/work-dir
  - show-cdup=
  - is-inside-work-tree=true
  - show-superproject-working-tree=
 sub-directory-diffstat
- - pwd=ROOT/work dir/some/subdir
- - git-dir=ROOT/base/.git/worktrees/work dir
+ - pwd=ROOT/work-dir/some/subdir
+ - git-dir=ROOT/base/.git/worktrees/work-dir
  - show-cdup=../../
  - is-inside-work-tree=true
  - show-superproject-working-tree=
 sub-directory-diffstat::exec
- - pwd=ROOT/work dir
- - git-dir=ROOT/base/.git/worktrees/work dir
+ - pwd=ROOT/work-dir
+ - git-dir=ROOT/base/.git/worktrees/work-dir
  - show-cdup=
  - is-inside-work-tree=true
  - show-superproject-working-tree=
