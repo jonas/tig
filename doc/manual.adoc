@@ -266,7 +266,7 @@ TIGRC_SYSTEM::
 
 [[history-files]]
 History Files
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 If compiled with readline support, Tig writes a persistent command and search
 history to `~/.tig_history` or `$XDG_DATA_HOME/tig/history`.
