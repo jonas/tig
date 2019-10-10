@@ -45,11 +45,17 @@ build_valgrind() {
 	make all-debug test TEST_OPTS=valgrind
 }
 
+build_brew() {
+	brew update
+	brew install --HEAD tig
+}
+
 case "$TIG_BUILD" in
 	config.make)		build_config_make ;;
 	autoconf)		build_autoconf ;;
 	address-sanitizer)	build_address_sanitizer ;;
 	valgrind)		build_valgrind ;;
+	brew)			build_brew ;;
 
 	*)
 		echo "Unknown config: $TIG_BUILD"
