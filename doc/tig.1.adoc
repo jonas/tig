@@ -17,7 +17,7 @@ tig show   [options] [revisions] [--] [paths]
 tig reflog [options] [revisions]
 tig blame  [options] [rev] [--] path
 tig grep   [options] [pattern]
-tig refs
+tig refs   [options]
 tig stash
 tig status
 tig <      [Git command output]

@@ -377,7 +377,7 @@ static const char usage_string[] =
 "   or: tig reflog [options] [revs]\n"
 "   or: tig blame  [options] [rev] [--] path\n"
 "   or: tig grep   [options] [pattern]\n"
-"   or: tig refs\n"
+"   or: tig refs   [options]\n"
 "   or: tig stash\n"
 "   or: tig status\n"
 "   or: tig <      [git command output]\n"
@@ -519,6 +519,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 
 	} else if (!strcmp(subcommand, "refs")) {
 		request = REQ_VIEW_REFS;
+		rev_parse = false;
 
 	} else {
 		subcommand = NULL;
