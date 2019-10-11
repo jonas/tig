@@ -32,8 +32,18 @@ struct reference {
 };
 
 static const struct ref *refs_all;
-#define REFS_ALL_NAME	"All references"
+#define REFS_ALL_NAME "All references"
+#define REFS_TAGS_NAME "All tags"
+#define REFS_BRANCHES_NAME "All branches"
+#define REFS_REMOTES_NAME "All remotes"
 #define refs_is_all(reference) ((reference)->ref == refs_all)
+
+enum refs_filter {
+	REFS_FILTER_NONE     = 0,
+	REFS_FILTER_TAGS     = 1 << 0,
+	REFS_FILTER_BRANCHES = 1 << 1,
+	REFS_FILTER_REMOTES  = 1 << 2,
+} refs_filter = REFS_FILTER_NONE;
 
 static bool
 refs_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
@@ -128,6 +138,25 @@ refs_open_visitor(void *data, const struct ref *ref)
 	bool is_all = ref == refs_all;
 	struct line *line;
 
+        if (!is_all)
+		switch (refs_filter) {
+		case REFS_FILTER_TAGS:
+			if (ref->type != REFERENCE_TAG && ref->type != REFERENCE_LOCAL_TAG)
+				return true;
+			break;
+		case REFS_FILTER_BRANCHES:
+			if (ref->type != REFERENCE_BRANCH && ref->type != REFERENCE_HEAD)
+				return true;
+			break;
+		case REFS_FILTER_REMOTES:
+			if (ref->type != REFERENCE_TRACKED_REMOTE && ref->type != REFERENCE_REMOTE)
+				return true;
+			break;
+		case REFS_FILTER_NONE:
+		default:
+			break;
+		}
+
 	line = add_line_alloc(view, &reference, LINE_DEFAULT, 0, is_all);
 	if (!line)
 		return false;
@@ -137,6 +166,8 @@ refs_open_visitor(void *data, const struct ref *ref)
 
 	return true;
 }
+
+static const char **refs_argv;
 
 static enum status_code
 refs_open(struct view *view, enum open_flags flags)
@@ -149,13 +180,33 @@ refs_open(struct view *view, enum open_flags flags)
 	};
 	enum status_code code;
 
+	if (is_initial_view(view)) {
+		refs_argv = opt_cmdline_args;
+		opt_cmdline_args = NULL;
+	}
+
+	const char *name = REFS_ALL_NAME;
+	for (int i = 0; refs_argv && refs_argv[i]; ++i) {
+		if (!strncmp(refs_argv[i], "--tags", 6)) {
+			refs_filter = REFS_FILTER_TAGS;
+			name = REFS_TAGS_NAME;
+		} else if (!strncmp(refs_argv[i], "--branches", 10)) {
+			refs_filter = REFS_FILTER_BRANCHES;
+			name = REFS_BRANCHES_NAME;
+		} else if (!strncmp(refs_argv[i], "--remotes", 9)) {
+			refs_filter = REFS_FILTER_REMOTES;
+			name = REFS_REMOTES_NAME;
+		}
+	}
+
 	if (!refs_all) {
-		struct ref *ref = calloc(1, sizeof(*refs_all) + strlen(REFS_ALL_NAME));
+		int name_length = strlen(name);
+		struct ref *ref = calloc(1, sizeof(*refs_all) + name_length);
 
 		if (!ref)
 			return ERROR_OUT_OF_MEMORY;
 
-		strncpy(ref->name, REFS_ALL_NAME, strlen(REFS_ALL_NAME));
+		strncpy(ref->name, name, name_length);
 		refs_all = ref;
 	}
 
