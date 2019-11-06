@@ -1,6 +1,54 @@
 Release notes
 =============
 
+master
+------
+
+Improvements:
+
+ - Single file view enters blame mode on "b". (#804)
+ - Show untracked files in the default view. (#762)
+ - Disable graph if log.follow is enabled and there is only one pathspec. (#881)
+ - Disable graph for author searches.
+ - git_colors: interpret 'ul' as 'underline'.
+ - Add refname variable. (#900)
+ - Add -C option to specify the working directory. (#570)
+ - Improve behaviour of auto and periodic refresh modes. (#389, #441, #482, #794, #888, #932)
+ - Add support for repos created with git --work-tree. (#872)
+ - Add diff-highlight to pager mode.
+ - Show annotated commits in main view. (#819)
+ - Introduce reflog view. (#538)
+ - Add option to start with cursor on HEAD commit. (#755)
+ - Support combined diffs with more than 2 parents.
+ - Improve how a toggle option value is shown on the status line. (#879)
+ - Add options to filter refs output. (#694)
+
+Bug fixes:
+
+ - Fix garbled cursor line with older ncurses versions.
+ - Fix diff highlighting of removed lines starting with -- and added lines
+   starting with ++. (#871, #875)
+ - Fix loop when displaying search result if regex matches an empty string. (#866)
+ - Add synchronous command description in tigrc.
+ - Fix parsing of git rev-parse output. (#884)
+ - Propagate --first-parent to diff arguments. (#861)
+ - Use proper type for hash table size. (#858)
+ - Fix incorrect cppcheck warning about realloc() use.
+ - Don't shift signed int by 31 bits.
+ - Fix Vim going background after running Tig outside of a git repository. (#906)
+ - make-builtin-config: use "read -r". (#912)
+ - Fix segfaults with readline 8.0. (#893)
+ - Reset state before closing stage view automatically.
+ - Don't use a child view as previous view.
+ - Force reload of VIEW_FLEX_WIDTH views only when needed.
+ - Combined diff uses @@@ as hunk marker.
+ - Fix memory leak induced by 'tig grep'.
+ - Fix memory leak in main view.
+ - Exit gracefully if refs view was defined without ref column. (#897)
+ - Fix pager view not moving up when child view is open.
+ - make-builtin-config: Fix unportable sed usage in read_tigrc().
+ - Properly detect combined diffs. (#942)
+
 tig-2.4.1
 ---------
 
