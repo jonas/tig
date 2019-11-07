@@ -179,14 +179,15 @@ refs_open(struct view *view, enum open_flags flags)
 			"--all", "--simplify-by-decoration", NULL
 	};
 	enum status_code code;
+	const char *name = REFS_ALL_NAME;
+	int i;
 
 	if (is_initial_view(view)) {
 		refs_argv = opt_cmdline_args;
 		opt_cmdline_args = NULL;
 	}
 
-	const char *name = REFS_ALL_NAME;
-	for (int i = 0; refs_argv && refs_argv[i]; ++i) {
+	for (i = 0; refs_argv && refs_argv[i]; ++i) {
 		if (!strncmp(refs_argv[i], "--tags", 6)) {
 			refs_filter = REFS_FILTER_TAGS;
 			name = REFS_TAGS_NAME;
