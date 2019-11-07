@@ -79,6 +79,11 @@ SED ?= gsed
 else
 SED ?= sed
 endif
+ifneq (,$(shell which gtar 2>/dev/null))
+TAR ?= gtar
+else
+TAR ?= tar
+endif
 
 all: $(EXE) $(TOOLS)
 all-debug: all
@@ -174,8 +179,8 @@ dist: configure tig.spec
 	cp Makefile tig.spec configure config.h.in aclocal.m4 $(TARNAME) && \
 	$(SED) -i "s/VERSION\s\+=\s\+[0-9]\+\([.][0-9]\+\)\+/VERSION	= $(VERSION)/" $(TARNAME)/Makefile
 	git archive --format=tar --prefix=$(TARNAME)/ HEAD | \
-	tar --delete $(TARNAME)/Makefile > $(TARNAME).tar && \
-	tar rf $(TARNAME).tar `find $(TARNAME)/*` && \
+	$(TAR) --delete $(TARNAME)/Makefile > $(TARNAME).tar && \
+	$(TAR) rf $(TARNAME).tar `find $(TARNAME)/*` && \
 	gzip -f -9 $(TARNAME).tar && \
 	md5sum $(TARNAME).tar.gz > $(TARNAME).tar.gz.md5
 	$(Q)$(RM) -r $(TARNAME)
