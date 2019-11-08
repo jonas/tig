@@ -180,7 +180,7 @@ dist: configure tig.spec
 	$(SED) -i "s/VERSION\s\+=\s\+[0-9]\+\([.][0-9]\+\)\+/VERSION	= $(VERSION)/" $(TARNAME)/Makefile
 	git archive --format=tar --prefix=$(TARNAME)/ HEAD | \
 	$(TAR) --delete $(TARNAME)/Makefile > $(TARNAME).tar && \
-	$(TAR) rf $(TARNAME).tar `find $(TARNAME)/*` && \
+	find $(TARNAME) -type f -print0 | LC_ALL=C sort -z | $(TAR) --mtime=$(shell git show -s --format=@%ct) --mode=o=rX,ug+rw,a-s --owner=root --group=root --null -T - -rf $(TARNAME).tar && \
 	gzip -f -9 $(TARNAME).tar && \
 	md5sum $(TARNAME).tar.gz > $(TARNAME).tar.gz.md5
 	$(Q)$(RM) -r $(TARNAME)
