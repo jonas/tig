@@ -7,7 +7,7 @@ whose copyright and license statements are reproduced below, all new
 work on the utf8proc library is licensed under the [MIT "expat"
 license](http://opensource.org/licenses/MIT):
 
-*Copyright &copy; 2014-2015 by Steven G. Johnson, Jiahao Chen, Tony Kelman, Jonas Fonseca, and other contributors listed in the git history.*
+*Copyright &copy; 2014-2019 by Steven G. Johnson, Jiahao Chen, Tony Kelman, Jonas Fonseca, and other contributors listed in the git history.*
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),

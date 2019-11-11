@@ -22,6 +22,7 @@ Improvements:
  - Support combined diffs with more than 2 parents.
  - Improve how a toggle option value is shown on the status line. (#879)
  - Add options to filter refs output. (#694)
+ - Update utf8proc to v2.4.0. (#961)
 
 Bug fixes:
 

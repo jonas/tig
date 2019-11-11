@@ -43,7 +43,7 @@ EOF
 test_case emoji-commit-titles-col-unset \
 	--subshell='unset COLUMNS' \
 	<<EOF
-2009-04-06 01:44 +0000 Committer o [master] 🌏💧✋🕋🗡🚀🏜☀️🌡🌶💯🚱⏳🌅🌑😡💉😱
+2009-04-06 01:44 +0000 Committer o [master] 🌏💧✋🕋🗡🚀🏜☀️🌡🌶💯🚱⏳🌅🌑😡💉😱😈💀
 2009-03-28 13:22 +0000 Committer o 💄 Polish the UI
 2009-03-20 01:00 +0000 Committer o 📚 Document new feature
 2009-03-11 12:38 +0000 Committer o 🎨 Reformat the code
