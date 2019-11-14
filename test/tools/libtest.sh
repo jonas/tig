@@ -17,6 +17,8 @@
 set -eu
 if [ -n "${BASH_VERSION:-}" ]; then
 	set -o pipefail
+	# Prevent bash from changing LINES and COLUMNS variables
+	shopt -u checkwinsize || true
 fi
 IFS='
 	'
