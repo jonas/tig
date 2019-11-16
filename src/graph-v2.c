@@ -214,7 +214,7 @@ static void
 colors_init(struct colors *colors)
 {
 	if (colors->id_map == NULL) {
-		uint size = 500;
+		size_t size = 500;
 
 		colors->id_map = htab_create_alloc(size, id_color_hash, id_color_eq, key_del, calloc, free);
 	}
@@ -256,6 +256,8 @@ static void
 done_graph(struct graph *graph_ref)
 {
 	struct graph_v2 *graph = graph_ref->private;
+
+	htab_delete(graph->colors.id_map);
 
 	free(graph);
 

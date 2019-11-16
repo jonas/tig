@@ -41,6 +41,7 @@
 #include "tig/grep.h"
 #include "tig/help.h"
 #include "tig/log.h"
+#include "tig/reflog.h"
 #include "tig/main.h"
 #include "tig/pager.h"
 #include "tig/refs.h"
@@ -208,6 +209,9 @@ view_driver(struct view *view, enum request request)
 	case REQ_VIEW_LOG:
 		open_log_view(view, OPEN_DEFAULT);
 		break;
+	case REQ_VIEW_REFLOG:
+		open_reflog_view(view, OPEN_DEFAULT);
+		break;
 	case REQ_VIEW_TREE:
 		open_tree_view(view, OPEN_DEFAULT);
 		break;
@@ -224,7 +228,7 @@ view_driver(struct view *view, enum request request)
 		open_blob_view(view, OPEN_DEFAULT);
 		break;
 	case REQ_VIEW_STATUS:
-		open_status_view(view, OPEN_DEFAULT);
+		open_status_view(view, false, OPEN_DEFAULT);
 		break;
 	case REQ_VIEW_STAGE:
 		open_stage_view(view, NULL, 0, OPEN_DEFAULT);
@@ -340,7 +344,6 @@ view_driver(struct view *view, enum request request)
 		if (view->prev && view->prev != view) {
 			maximize_view(view->prev, true);
 			view->prev = view;
-			watch_unregister(&view->watch);
 			view->parent = NULL;
 			break;
 		}
@@ -371,9 +374,10 @@ static const char usage_string[] =
 "Usage: tig        [options] [revs] [--] [paths]\n"
 "   or: tig log    [options] [revs] [--] [paths]\n"
 "   or: tig show   [options] [revs] [--] [paths]\n"
+"   or: tig reflog [options] [revs]\n"
 "   or: tig blame  [options] [rev] [--] path\n"
 "   or: tig grep   [options] [pattern]\n"
-"   or: tig refs\n"
+"   or: tig refs   [options]\n"
 "   or: tig stash\n"
 "   or: tig status\n"
 "   or: tig <      [git command output]\n"
@@ -381,7 +385,8 @@ static const char usage_string[] =
 "Options:\n"
 "  +<number>       Select line <number> in the first view\n"
 "  -v, --version   Show version and exit\n"
-"  -h, --help      Show help message and exit";
+"  -h, --help      Show help message and exit\n"
+"  -C<path>        Start in <path>";
 
 void
 usage(const char *message)
@@ -474,10 +479,22 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 
 	request = pager_mode ? REQ_VIEW_PAGER : REQ_VIEW_MAIN;
 
-	if (argc <= 1)
+	/* Options that must come before any subcommand. */
+	for (i = 1; i < argc; i++) {
+		const char *opt = argv[i];
+		if (!strncmp(opt, "-C", 2)) {
+			if (chdir(opt + 2))
+				die("Failed to change directory to %s", opt + 2);
+			continue;
+		} else {
+			break;
+		}
+	}
+
+	if (i >= argc)
 		return request;
 
-	subcommand = argv[1];
+	subcommand = argv[i++];
 	if (!strcmp(subcommand, "status")) {
 		request = REQ_VIEW_STATUS;
 
@@ -494,17 +511,22 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 	} else if (!strcmp(subcommand, "log")) {
 		request = REQ_VIEW_LOG;
 
+	} else if (!strcmp(subcommand, "reflog")) {
+		request = REQ_VIEW_REFLOG;
+
 	} else if (!strcmp(subcommand, "stash")) {
 		request = REQ_VIEW_STASH;
 
 	} else if (!strcmp(subcommand, "refs")) {
 		request = REQ_VIEW_REFS;
+		rev_parse = false;
 
 	} else {
 		subcommand = NULL;
+		i--; /* revisit option in loop below */
 	}
 
-	for (i = 1 + !!subcommand; i < argc; i++) {
+	for (; i < argc; i++) {
 		const char *opt = argv[i];
 
 		// stop parsing our options after -- and let rev-parse handle the rest

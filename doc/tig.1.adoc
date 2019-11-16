@@ -14,9 +14,10 @@ _______________________________________________________________________
 tig        [options] [revisions] [--] [paths]
 tig log    [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
+tig reflog [options] [revisions]
 tig blame  [options] [rev] [--] path
 tig grep   [options] [pattern]
-tig refs
+tig refs   [options]
 tig stash
 tig status
 tig <      [Git command output]
@@ -53,6 +54,9 @@ status::
 log::
 	Start up in log view, displaying git-log(1) output.
 
+reflog::
+	Start up in reflog view.
+
 refs::
 	Start up in refs view.
 
@@ -70,6 +74,9 @@ grep::
 
 -h, --help::
 	Show help message and exit.
+
+-C<path>::
+	Run as if Tig was started in <path> instead of the current working directory.
 
 PAGER MODE
 ----------

@@ -28,7 +28,7 @@ prefix_dir="$(printf '%s\n' "$source_dir" | sed -n 's#\(.*/test/\)\([/].*\)*#\2#
 output_dir="$base_dir/tmp/$prefix_dir/$test"
 tmp_dir="$base_dir/tmp"
 output_dir="$tmp_dir/$prefix_dir/$test"
-work_dir="work dir"
+work_dir="work-dir"
 tty_attrs="$(stty -g </dev/tty)"
 
 # The locale must specify UTF-8 for Ncurses to output correctly. Since C.UTF-8

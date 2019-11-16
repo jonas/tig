@@ -2,7 +2,7 @@
 
 # The last tagged version. Can be overridden either by the version from
 # git or from the value of the DIST_VERSION environment variable.
-VERSION	= 2.4.1
+VERSION	= 2.5.0
 
 all:
 
@@ -78,6 +78,11 @@ ifneq (,$(shell which gsed 2>/dev/null))
 SED ?= gsed
 else
 SED ?= sed
+endif
+ifneq (,$(shell which gtar 2>/dev/null))
+TAR ?= gtar
+else
+TAR ?= tar
 endif
 
 all: $(EXE) $(TOOLS)
@@ -174,9 +179,9 @@ dist: configure tig.spec
 	cp Makefile tig.spec configure config.h.in aclocal.m4 $(TARNAME) && \
 	$(SED) -i "s/VERSION\s\+=\s\+[0-9]\+\([.][0-9]\+\)\+/VERSION	= $(VERSION)/" $(TARNAME)/Makefile
 	git archive --format=tar --prefix=$(TARNAME)/ HEAD | \
-	tar --delete $(TARNAME)/Makefile > $(TARNAME).tar && \
-	tar rf $(TARNAME).tar `find $(TARNAME)/*` && \
-	gzip -f -9 $(TARNAME).tar && \
+	$(TAR) --delete $(TARNAME)/Makefile > $(TARNAME).tar && \
+	find $(TARNAME) -type f -print0 | LC_ALL=C sort -z | $(TAR) --mtime=$(shell git show -s --format=@%ct) --mode=o=rX,ug+rw,a-s --owner=root --group=root --null -T - -rf $(TARNAME).tar && \
+	gzip -f -n -9 $(TARNAME).tar && \
 	md5sum $(TARNAME).tar.gz > $(TARNAME).tar.gz.md5
 	$(Q)$(RM) -r $(TARNAME)
 
@@ -299,6 +304,7 @@ TIG_OBJS = \
 	src/watch.o \
 	src/pager.o \
 	src/log.o \
+	src/reflog.o \
 	src/diff.o \
 	src/help.o \
 	src/tree.o \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Steven G. Johnson, Jiahao Chen, Peter Colberg, Tony Kelman, Scott P. Jones, and other contributors.
+ * Copyright (c) 2018 Steven G. Johnson, Jiahao Chen, Peter Colberg, Tony Kelman, Scott P. Jones, and other contributors.
  * Copyright (c) 2009 Public Software Group e. V., Berlin, Germany
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -71,7 +71,7 @@
 /** The MAJOR version number (increased when backwards API compatibility is broken). */
 #define UTF8PROC_VERSION_MAJOR 2
 /** The MINOR version number (increased when new functionality is added in a backwards-compatible manner). */
-#define UTF8PROC_VERSION_MINOR 2
+#define UTF8PROC_VERSION_MINOR 4
 /** The PATCH version (increased for fixes that do not change the API). */
 #define UTF8PROC_VERSION_PATCH 0
 /** @} */
@@ -138,14 +138,6 @@ typedef bool utf8proc_bool;
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifndef SSIZE_MAX
-#define SSIZE_MAX ((size_t)SIZE_MAX/2)
-#endif
-
-#ifndef UINT16_MAX
-#  define UINT16_MAX 65535U
 #endif
 
 /**
@@ -382,10 +374,18 @@ typedef enum {
   UTF8PROC_BOUNDCLASS_SPACINGMARK        = 12, /**< Spacingmark */
   UTF8PROC_BOUNDCLASS_PREPEND            = 13, /**< Prepend */
   UTF8PROC_BOUNDCLASS_ZWJ                = 14, /**< Zero Width Joiner */
+
+  /* the following are no longer used in Unicode 11, but we keep
+     the constants here for backward compatibility */
   UTF8PROC_BOUNDCLASS_E_BASE             = 15, /**< Emoji Base */
   UTF8PROC_BOUNDCLASS_E_MODIFIER         = 16, /**< Emoji Modifier */
   UTF8PROC_BOUNDCLASS_GLUE_AFTER_ZWJ     = 17, /**< Glue_After_ZWJ */
   UTF8PROC_BOUNDCLASS_E_BASE_GAZ         = 18, /**< E_BASE + GLUE_AFTER_ZJW */
+
+  /* the Extended_Pictographic property is used in the Unicode 11
+     grapheme-boundary rules, so we store it in the boundclass field */
+  UTF8PROC_BOUNDCLASS_EXTENDED_PICTOGRAPHIC = 19,
+  UTF8PROC_BOUNDCLASS_E_ZWG = 20, /* UTF8PROC_BOUNDCLASS_EXTENDED_PICTOGRAPHIC + ZWJ */
 } utf8proc_boundclass_t;
 
 /**
@@ -407,6 +407,11 @@ UTF8PROC_DLLEXPORT extern const utf8proc_int8_t utf8proc_utf8class[256];
  * development versions.
  */
 UTF8PROC_DLLEXPORT const char *utf8proc_version(void);
+
+/**
+ * Returns the utf8proc supported Unicode version as a string MAJOR.MINOR.PATCH.
+ */
+UTF8PROC_DLLEXPORT const char *utf8proc_unicode_version(void);
 
 /**
  * Returns an informative error string for the given utf8proc error code
@@ -585,6 +590,8 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_reencode(utf8proc_int32_t *buffer, 
  * Given a pair of consecutive codepoints, return whether a grapheme break is
  * permitted between them (as defined by the extended grapheme clusters in UAX#29).
  *
+ * @param codepoint1 The first codepoint.
+ * @param codepoint2 The second codepoint, occurring consecutively after `codepoint1`.
  * @param state Beginning with Version 29 (Unicode 9.0.0), this algorithm requires
  *              state to break graphemes. This state can be passed in as a pointer
  *              in the `state` argument and should initially be set to 0. If the
@@ -593,7 +600,8 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_reencode(utf8proc_int32_t *buffer, 
  *              matching the rules in Unicode 8.0.0.
  *
  * @warning If the state parameter is used, `utf8proc_grapheme_break_stateful` must
- *          be called IN ORDER on ALL potential breaks in a string.
+ *          be called IN ORDER on ALL potential breaks in a string.  However, it
+ *          is safe to reset the state to zero after a grapheme break.
  */
 UTF8PROC_DLLEXPORT utf8proc_bool utf8proc_grapheme_break_stateful(
     utf8proc_int32_t codepoint1, utf8proc_int32_t codepoint2, utf8proc_int32_t *state);
@@ -660,7 +668,7 @@ UTF8PROC_DLLEXPORT const char *utf8proc_category_string(utf8proc_int32_t codepoi
  * contain NULL characters with the string if `str` contained NULL
  * characters). Other flags in the `options` field are passed to the
  * functions defined above, and regarded as described.  See also
- * @ref utfproc_map_custom to supply a custom codepoint transformation.
+ * @ref utf8proc_map_custom to supply a custom codepoint transformation.
  *
  * In case of success the length of the new string is returned,
  * otherwise a negative error code is returned.

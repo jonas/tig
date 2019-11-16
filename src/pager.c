@@ -127,10 +127,16 @@ pager_common_read(struct view *view, const char *data, enum line_type type, stru
 bool
 pager_read(struct view *view, struct buffer *buf, bool force_stop)
 {
-	if (!buf)
-		return true;
+	if (!buf) {
+		if (!diff_done_highlight(view->private)) {
+			report("Failed run the diff-highlight program: %s", opt_diff_highlight);
+			return false;
+		}
 
-	return pager_common_read(view, buf->data, get_line_type(buf->data), NULL);
+		return true;
+	}
+
+	return diff_common_read(view, buf->data, view->private);
 }
 
 enum request
@@ -149,7 +155,8 @@ pager_request(struct view *view, enum request request, struct line *line)
 	/* Always scroll the view even if it was split. That way
 	 * you can use Enter to scroll through the log view and
 	 * split open each commit diff. */
-	scroll_view(view, REQ_SCROLL_LINE_DOWN);
+	if (view == display[current_view])
+		scroll_view(view, REQ_SCROLL_LINE_DOWN);
 
 	/* FIXME: A minor workaround. Scrolling the view will call report_clear()
 	 * but if we are scrolling a non-current view this won't properly
@@ -177,18 +184,24 @@ pager_select(struct view *view, struct line *line)
 static enum status_code
 pager_open(struct view *view, enum open_flags flags)
 {
+	enum status_code code;
+
 	if (!open_from_stdin(flags) && !view->lines && !(flags & OPEN_PREPARED))
 		return error("No pager content, press %s to run command from prompt",
 			     get_view_key(view, REQ_PROMPT));
 
-	return begin_update(view, NULL, NULL, flags);
+	code = begin_update(view, NULL, NULL, flags);
+	if (code != SUCCESS)
+		return code;
+
+	return diff_init_highlight(view, view->private);
 }
 
 static struct view_ops pager_ops = {
 	"line",
 	"",
 	VIEW_OPEN_DIFF | VIEW_NO_REF | VIEW_NO_GIT_DIR,
-	0,
+	sizeof(struct diff_state),
 	pager_open,
 	pager_read,
 	view_column_draw,

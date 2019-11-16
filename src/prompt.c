@@ -475,11 +475,14 @@ readline_init(void)
 	/* Let ncurses deal with the LINES and COLUMNS environment variables */
 	rl_change_environment = 0;
 	rl_catch_sigwinch = 0;
+	rl_deprep_term_function = NULL;
+	rl_prep_term_function = NULL;
 }
 
 static void sigint_absorb_handler(int sig) {
 	signal(SIGINT, SIG_DFL);
 	prompt_interrupted = true;
+	rl_done = 1;
 }
 
 char *
@@ -496,7 +499,9 @@ read_prompt(const char *prompt)
 	curs_set(1);
 	if (signal(SIGINT, sigint_absorb_handler) == SIG_ERR)
 		die("Failed to setup sigint handler");
+	cbreak();
 	line = readline(prompt);
+	raw();
 	if (signal(SIGINT, SIG_DFL) == SIG_ERR)
 		die("Failed to remove sigint handler");
 	curs_set(0);
@@ -507,6 +512,7 @@ read_prompt(const char *prompt)
 	if (prompt_interrupted) {
 		free(line);
 		line = NULL;
+		report_clear();
 	}
 
 	prompt_interrupted = false;
@@ -712,6 +718,11 @@ static enum status_code
 prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 		     struct option_info *toggle, enum view_flag *flags)
 {
+/* Define a partial version of success() to format the option name as a suffix to the view name,
+ * thereby reducing the arguments needed by success() to only the option value and its format string.
+ */
+#define Success(opt_fmt, opt_val) success(":set %s-view-%s = " opt_fmt, view->name, name, opt_val)
+
 	char name[SIZEOF_STR];
 
 	if (!enum_name_prefixed(name, sizeof(name), prefix, toggle->name))
@@ -725,7 +736,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 		*opt = !*opt;
 		if (opt == &opt_mouse)
 			enable_mouse(*opt);
-		return success("set %s = %s", name, *opt ? "yes" : "no");
+		return Success("%s", *opt ? "yes" : "no");
 
 	} else if (!strncmp(toggle->type, "enum", 4)) {
 		const char *type = toggle->type + STRING_SIZE("enum ");
@@ -733,7 +744,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 		const struct enum_map *map = find_enum_map(type);
 
 		*opt = (*opt + 1) % map->size;
-		return success("set %s = %s", name, enum_name(map->entries[*opt].name));
+		return Success("%s", enum_name(map->entries[*opt].name));
 
 	} else if (!strcmp(toggle->type, "int")) {
 		const char *arg = argv[2] ? argv[2] : "1";
@@ -755,12 +766,12 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 		if (strstr(name, "commit-title-overflow")) {
 			*opt = *opt ? -*opt : 50;
 			if (*opt < 0)
-				return success("set %s = no", name);
+				return Success("%s", "no");
 			diff = 0;
 		}
 
 		*opt += diff;
-		return success("set %s = %d", name, *opt);
+		return Success("%d", *opt);
 
 	} else if (!strcmp(toggle->type, "double")) {
 		const char *arg = argv[2] ? argv[2] : "1.0";
@@ -777,7 +788,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 			diff = strtod(arg, NULL);
 
 		*opt += sign * diff;
-		return success("set %s = %.2f", name, *opt);
+		return Success("%.2f", *opt);
 
 	} else if (!strcmp(toggle->type, "const char **")) {
 		const char ***opt = toggle->value;
@@ -820,6 +831,7 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 	} else {
 		return error("Unsupported `:toggle %s` (%s)", name, toggle->type);
 	}
+#undef Success
 }
 
 static enum status_code

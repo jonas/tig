@@ -70,6 +70,7 @@
 set blame-view	= id:yes,color file-name:auto author:full date:default line-number:yes,interval=1 text
 set grep-view	= file-name:no line-number:yes,interval=1 text
 set main-view	= line-number:no,interval=5 id:no date:default author:full commit-title:yes,graph,refs,overflow=no
+set reflog-view	= line-number:no,interval=5 id:yes date:no author:no commit-title:yes,refs,overflow=no
 set refs-view	= line-number:no id:no date:default author:full ref commit-title
 set stash-view	= line-number:no,interval=5 id:no date:default author:full commit-title
 set status-view	= line-number:no,interval=5 status:short file-name
@@ -84,6 +85,7 @@ set diff-view	= line-number:no,interval=5 text:yes,commit-title-overflow=no
 
 # UI display settings
 set show-changes		= yes		# Show changes commits in the main view?
+set show-untracked		= yes		# Show also untracked changes?
 set wrap-lines			= no		# Wrap long lines in pager views?
 set tab-size			= 8		# Number of spaces to use when expanding tabs
 set line-graphics		= default	# Enum: ascii, default, utf-8
@@ -119,6 +121,7 @@ set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set mailmap			= yes		# Use .mailmap to show canonical name and email address
 
 # Misc
+set start-on-head		= no		# Start with cursor on HEAD commit
 set refresh-mode		= auto		# Enum: manual, auto, after-command, periodic
 set refresh-interval		= 10		# Interval in seconds between refreshes
 set ignore-case			= no		# Enum: no, yes, smart-case
@@ -150,6 +153,7 @@ set mouse-wheel-cursor		= no		# Prefer moving the cursor to scrolling the view?
 #   !	Run the command in the foreground with output shown.
 #   @	Run the command in the background with no output.
 #   ?	Prompt the user before executing the command.
+#   +   Run the command synchronously, and echo the first line of output to the status bar.
 #   <	Exit Tig after executing the command.
 #   >	Re-open Tig instantly in the last displayed view after executing the command.
 #
@@ -181,6 +185,8 @@ bind stash	P	?git stash pop %(stash)
 bind stash	!	?git stash drop %(stash)
 bind refs	C	?git checkout %(branch)
 bind refs	!	?git branch -D %(branch)
+bind reflog	C	?git checkout %(branch)
+bind reflog	!	?git reset --hard %(commit)
 
 # Normal commands
 # ---------------
@@ -189,6 +195,7 @@ bind refs	!	?git branch -D %(branch)
 bind generic	m	view-main
 bind generic	d	view-diff
 bind generic	l	view-log
+bind generic	L	view-reflog
 bind generic	t	view-tree
 bind generic	f	view-blob
 bind generic	b	view-blame
@@ -234,6 +241,7 @@ bind stage	]	:toggle diff-context +1	# Increase the diff context
 bind diff	@	:/^@@			# Jump to next (c)hunk
 bind diff	[	:toggle diff-context -1
 bind diff	]	:toggle diff-context +1
+bind main	H	:goto HEAD
 bind main	G	:toggle commit-title-graph # Toggle revision graph visualization
 bind main	F	:toggle commit-title-refs  # Toggle reference display (tags/branches)
 
@@ -382,6 +390,7 @@ color line-number		cyan	default
 color title-blur		white	blue
 color title-focus		white	blue	bold
 color main-commit		default	default
+color main-annotated		default	default	bold
 color main-tag			magenta	default	bold
 color main-local-tag		magenta	default
 color main-remote		yellow	default

@@ -122,6 +122,7 @@ find_column_option_info(enum view_column_type type, union view_column_options *o
 iconv_t opt_iconv_out		= ICONV_NONE;
 char opt_editor[SIZEOF_STR]	= "";
 const char **opt_cmdline_args	= NULL;
+bool opt_log_follow		= false;
 
 /*
  * Mapping between options and command argument mapping.
@@ -149,8 +150,8 @@ const char *
 log_custom_pretty_arg(void)
 {
 	return opt_mailmap
-		? "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%s"
-		: "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s";
+		? "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%s%x00%N"
+		: "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s%x00%N";
 }
 
 #define ENUM_ARG(enum_name, arg_string) ENUM_MAP_ENTRY(arg_string, enum_name)
@@ -1354,6 +1355,9 @@ parse_git_color_option(struct line_info *info, char *value)
 	for (i = 0; i < argc; i++) {
 		int attr = 0;
 
+		if (!strncmp(argv[i], "ul", 2)) {
+			argv[i] = "underline";
+		}
 		if (set_attribute(&attr, argv[i])) {
 			info->attr |= attr;
 
@@ -1461,7 +1465,9 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	} else if (!strcmp(name, "format.pretty")) {
 		if (!prefixcmp(value, "format:") && strstr(value, "%C("))
 			argv_append(&opt_log_options, "--pretty=medium");
-	}
+
+	} else if (!strcmp(name, "log.follow") && opt_file_args && !opt_file_args[1])
+		parse_bool(&opt_log_follow, value);
 
 	return SUCCESS;
 }

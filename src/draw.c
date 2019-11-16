@@ -44,6 +44,9 @@ set_view_attr(struct view *view, enum line_type type)
 	if (!view->curline->selected && view->curtype != type) {
 		(void) wattrset(view->win, get_view_attr(view, type));
 		wchgat(view->win, -1, 0, get_view_color(view, type), NULL);
+#if defined(NCURSES_VERSION_PATCH) && NCURSES_VERSION_PATCH < 20061217
+		touchwin(view->win);
+#endif
 		view->curtype = type;
 	}
 }
@@ -434,7 +437,7 @@ draw_graph(struct view *view, const struct graph *graph, const struct graph_canv
 }
 
 static bool
-draw_commit_title(struct view *view, struct view_column *column,
+draw_commit_title(struct view *view, struct view_column *column, enum line_type type,
 		  const struct graph *graph, const struct graph_canvas *graph_canvas,
 		  const struct ref *refs, const char *commit_title)
 {
@@ -443,7 +446,7 @@ draw_commit_title(struct view *view, struct view_column *column,
 		return true;
 	if (draw_refs(view, column, refs))
 		return true;
-	return draw_text_overflow(view, commit_title, LINE_DEFAULT,
+	return draw_text_overflow(view, commit_title, type,
 			column->opt.commit_title.overflow, 0);
 }
 
@@ -506,8 +509,8 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_COMMIT_TITLE:
-			if (draw_commit_title(view, column, column_data.graph, column_data.graph_canvas,
-					      column_data.refs, column_data.commit_title))
+			if (draw_commit_title(view, column, line->type == LINE_MAIN_ANNOTATED ? LINE_MAIN_ANNOTATED : LINE_MAIN_COMMIT,
+					      column_data.graph, column_data.graph_canvas, column_data.refs, column_data.commit_title))
 				return true;
 			continue;
 
@@ -590,7 +593,7 @@ draw_view_line_search_result(struct view *view, unsigned int lineno)
 		regoff_t end = pmatch[0].rm_eo;
 
 		if (start == -1 || end <= 0 || end <= start)
-			continue;
+			break;
 
 		mvwchgat(view->win, lineno,
 			 utf8_width_of(buf, bufpos + start, -1),

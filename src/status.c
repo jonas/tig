@@ -24,6 +24,7 @@
 #include "tig/git.h"
 #include "tig/watch.h"
 #include "tig/status.h"
+#include "tig/main.h"
 #include "tig/stage.h"
 
 /*
@@ -31,6 +32,17 @@
  */
 
 static char status_onbranch[SIZEOF_STR];
+static bool show_untracked_only = false;
+
+void
+open_status_view(struct view *prev, bool untracked_only, enum open_flags flags)
+{
+	if (show_untracked_only != untracked_only) {
+		show_untracked_only = untracked_only;
+		flags |= OPEN_RELOAD;
+	}
+	open_view(prev, &status_view, flags);
+}
 
 /* This should work even for the "On branch" line. */
 static inline bool
@@ -79,7 +91,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	struct buffer buf;
 	struct io io;
 
-	if (!io_run(&io, IO_RD, repo.cdup, NULL, argv))
+	if (!io_run(&io, IO_RD, repo.exec_dir, NULL, argv))
 		return false;
 
 	add_line_nodata(view, type);
@@ -148,11 +160,15 @@ error_out:
 			watch_apply(&view->watch, WATCH_INDEX_STAGED_NO);
 		else if (type == LINE_STAT_UNSTAGED)
 			watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_NO);
+		else if (type == LINE_STAT_UNTRACKED)
+			watch_apply(&view->watch, WATCH_INDEX_UNTRACKED_NO);
 	} else {
 		if (type == LINE_STAT_STAGED)
 			watch_apply(&view->watch, WATCH_INDEX_STAGED_YES);
 		else if (type == LINE_STAT_UNSTAGED)
 			watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_YES);
+		else if (type == LINE_STAT_UNTRACKED)
+			watch_apply(&view->watch, WATCH_INDEX_UNTRACKED_YES);
 	}
 
 	io_done(&io);
@@ -214,7 +230,7 @@ status_branch_tracking_info(char *buf, size_t buf_len, const char *head,
 
 	struct io io;
 
-	if (!io_run(&io, IO_RD, repo.cdup, NULL, tracking_info_argv)) {
+	if (!io_run(&io, IO_RD, repo.exec_dir, NULL, tracking_info_argv)) {
 		return false;
 	}
 
@@ -357,7 +373,7 @@ status_open(struct view *view, enum open_flags flags)
 		status_list_no_head_argv : status_diff_index_argv;
 	char staged_status = staged_argv == status_list_no_head_argv ? 'A' : 0;
 
-	if (repo.is_inside_work_tree == false)
+	if (!(repo.is_inside_work_tree || *repo.worktree))
 		return error("The status view requires a working tree");
 
 	reset_view(view);
@@ -370,8 +386,8 @@ status_open(struct view *view, enum open_flags flags)
 
 	update_index();
 
-	if (!status_run(view, staged_argv, staged_status, LINE_STAT_STAGED) ||
-	    !status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED) ||
+	if ((!show_untracked_only && !status_run(view, staged_argv, staged_status, LINE_STAT_STAGED)) ||
+	    (!show_untracked_only && !status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED)) ||
 	    !status_read_untracked(view))
 		return error("Failed to load status data");
 
@@ -513,11 +529,11 @@ status_update_prepare(struct io *io, enum line_type type)
 
 	switch (type) {
 	case LINE_STAT_STAGED:
-		return io_run(io, IO_WR, repo.cdup, NULL, staged_argv);
+		return io_run(io, IO_WR, repo.exec_dir, NULL, staged_argv);
 
 	case LINE_STAT_UNSTAGED:
 	case LINE_STAT_UNTRACKED:
-		return io_run(io, IO_WR, repo.cdup, NULL, others_argv);
+		return io_run(io, IO_WR, repo.exec_dir, NULL, others_argv);
 
 	default:
 		die("line type %d not handled in switch", type);
@@ -553,7 +569,7 @@ status_update_file(struct status *status, enum line_type type)
 	if (type == LINE_STAT_UNTRACKED && !suffixcmp(name, strlen(name), "/")) {
 		const char *add_argv[] = { "git", "add", "--", name, NULL };
 
-		return io_run_bg(add_argv, repo.cdup);
+		return io_run_bg(add_argv, repo.exec_dir);
 	}
 
 	if (!status_update_prepare(&io, type))
@@ -659,13 +675,13 @@ status_revert(struct status *status, enum line_type type, bool has_none)
 				reset_argv[4] = NULL;
 			}
 
-			if (!io_run_fg(reset_argv, repo.cdup))
+			if (!io_run_fg(reset_argv, repo.exec_dir))
 				return false;
 			if (status->old.mode == 0 && status->new.mode == 0)
 				return true;
 		}
 
-		return io_run_fg(checkout_argv, repo.cdup);
+		return io_run_fg(checkout_argv, repo.exec_dir);
 	}
 
 	return false;
@@ -676,7 +692,7 @@ open_mergetool(const char *file)
 {
 	const char *mergetool_argv[] = { "git", "mergetool", file, NULL };
 
-	open_external_viewer(mergetool_argv, repo.cdup, false, true, false, true, true, "");
+	open_external_viewer(mergetool_argv, repo.exec_dir, false, true, false, true, true, "");
 }
 
 static enum request
@@ -737,6 +753,9 @@ status_request(struct view *view, enum request request, struct line *line)
 	default:
 		return request;
 	}
+
+	if (show_untracked_only && view->parent == &main_view && !main_status_exists(view->parent, LINE_STAT_UNTRACKED))
+		return REQ_VIEW_CLOSE;
 
 	refresh_view(view);
 

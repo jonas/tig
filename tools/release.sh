@@ -20,8 +20,10 @@ set -x
 
 VERSION="$1"
 
+if which gsed >/dev/null; then SED=gsed; else SED=sed; fi
+
 TAG="tig-$VERSION"
-TITLE="$TAG\n$(echo "$TAG" | sed 's/./-/g')"
+TITLE="$TAG\n$(echo "$TAG" | $SED 's/./-/g')"
 NEWS="NEWS.adoc"
 
 # Require a clean repository.
@@ -34,8 +36,8 @@ if test -n "$VERSION"; then
 		git checkout master
 
 	# Update files which should reference the version.
-	sed -i "s/VERSION\s*=\s*[0-9.]\+/VERSION	= $VERSION/" Makefile
-	sed -i "s#tig-[0-9.]\+[0-9]\+#tig-$VERSION#g" INSTALL.adoc
+	$SED -i "s/VERSION\s*=\s*[0-9.]\+/VERSION	= $VERSION/" Makefile
+	$SED -i "s#tig-[0-9.]\+[0-9]\+#tig-$VERSION#g" INSTALL.adoc
 	perl -pi -e 's/^master$/RELEASE_TITLE/ms' "$NEWS"
 	perl -pi -e 's/^RELEASE_TITLE.*/RELEASE_TITLE/ms' "$NEWS"
 	perl -pi -e "s/^RELEASE_TITLE.*/$TITLE/" "$NEWS"
@@ -44,7 +46,7 @@ if test -n "$VERSION"; then
 	make spell-check
 
 	# Last review.
-	$EDITOR "$NEWS"
+	${EDITOR:-vi} "$NEWS"
 
 	# Create release commit and tag.
 	git commit -a -m "$TAG"
@@ -63,7 +65,7 @@ fi
 # Update the release branch.
 git checkout release
 HEAD="$(git rev-parse release)"
-git merge master
+git merge --ff master
 if test -n "$(git rev-list -1 release ^$HEAD)"; then
 	make distclean doc-man doc-html sysconfdir=++SYSCONFDIR++
 	git commit -a -m "Update for version $TAG"

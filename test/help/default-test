@@ -30,6 +30,7 @@ View switching
                            m view-main           Show main view
                            d view-diff           Show diff view
                            l view-log            Show log view
+                           L view-reflog         Show reflog view
                            t view-tree           Show tree view
                            f view-blob           Show blob view
                            b view-blame          Show blame view
@@ -50,8 +51,7 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-                 Q, <Ctrl-C> quit                Close all views and quit
-[help] - line 1 of 114                                                       24%
+[help] - line 1 of 121                                                       23%
 EOF
 
 assert_equals 'help-search.screen' <<EOF
@@ -62,6 +62,7 @@ View switching
                            m view-main           Show main view
                            d view-diff           Show diff view
                            l view-log            Show log view
+                           L view-reflog         Show reflog view
                            t view-tree           Show tree view
                            f view-blob           Show blob view
                            b view-blame          Show blame view
@@ -82,8 +83,7 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-                 Q, <Ctrl-C> quit                Close all views and quit
-[help] - line 18 of 114                                                      24%
+[help] - line 19 of 121                                                      23%
 EOF
 
 assert_equals 'help-collapsed.screen' <<EOF
@@ -95,6 +95,8 @@ Quick reference for tig keybindings:
 Option toggling:
   G :toggle commit-title-graph
   F :toggle commit-title-refs
+Internal commands:
+  H :goto HEAD
 External commands:
   C ?git cherry-pick %(commit)
 [-] diff bindings
@@ -103,17 +105,15 @@ Option toggling:
   ] :toggle diff-context +1
 Internal commands:
   @ :/^@@
+[-] reflog bindings
+External commands:
+  C ?git checkout %(branch)
+  ! ?git reset --hard %(commit)
 [-] refs bindings
 External commands:
   C ?git checkout %(branch)
   ! ?git branch -D %(branch)
 [-] status bindings
 View-specific actions
-  u status-update     Stage/unstage chunk or file changes
-  ! status-revert     Revert chunk or file changes
-  M status-merge      Merge file using external tool
-External commands:
-  C !git commit
-[-] stage bindings
-[help] - line 4 of 43                                                        65%
+[help] - line 4 of 49                                                        57%
 EOF

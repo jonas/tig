@@ -45,6 +45,8 @@ main_status_exists(struct view *view, enum line_type type)
 		return true;
 	if (type == LINE_STAT_UNSTAGED && state->add_changes_unstaged)
 		return true;
+	if (type == LINE_STAT_UNTRACKED && state->add_changes_untracked)
+		return true;
 
 	return false;
 }
@@ -60,9 +62,9 @@ main_register_commit(struct view *view, struct commit *commit, const char *ids, 
 	string_copy_rev(commit->id, ids);
 
 	/* FIXME: lazily check index state here instead of in main_open. */
-	if ((state->add_changes_unstaged || state->add_changes_staged) && is_head_commit(commit->id)) {
+	if ((state->add_changes_untracked || state->add_changes_unstaged || state->add_changes_staged) && is_head_commit(commit->id)) {
 		main_add_changes(view, state, ids);
-		state->add_changes_unstaged = state->add_changes_staged = false;
+		state->add_changes_untracked = state->add_changes_unstaged = state->add_changes_staged = false;
 	}
 
 	if (state->with_graph)
@@ -95,6 +97,10 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 	state->reflogmsg[0] = 0;
 
 	view_column_info_update(view, line);
+
+	if (opt_start_on_head && is_head_commit(commit->id))
+		select_view_line(view, line->lineno + 1);
+
 	return commit;
 }
 
@@ -147,8 +153,15 @@ main_check_index(struct view *view, struct main_state *state)
 {
 	struct index_diff diff;
 
-	if (!index_diff(&diff, false, false))
+	if (!index_diff(&diff, opt_show_untracked, false))
 		return false;
+
+	if (!diff.untracked) {
+		watch_apply(&view->watch, WATCH_INDEX_UNTRACKED_NO);
+	} else {
+		watch_apply(&view->watch, WATCH_INDEX_UNTRACKED_YES);
+		state->add_changes_untracked = true;
+	}
 
 	if (!diff.unstaged) {
 		watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_NO);
@@ -172,6 +185,7 @@ main_add_changes(struct view *view, struct main_state *state, const char *parent
 {
 	const char *staged_parent = parent;
 	const char *unstaged_parent = NULL_ID;
+	const char *untracked_parent = NULL_ID;
 
 	if (!state->add_changes_staged) {
 		staged_parent = NULL;
@@ -180,9 +194,16 @@ main_add_changes(struct view *view, struct main_state *state, const char *parent
 
 	if (!state->add_changes_unstaged) {
 		unstaged_parent = NULL;
+		if (!state->add_changes_staged)
+			untracked_parent = parent;
 	}
 
-	return main_add_changes_commit(view, LINE_STAT_UNSTAGED, unstaged_parent, "Unstaged changes")
+	if (!state->add_changes_untracked) {
+		untracked_parent = NULL;
+	}
+
+	return main_add_changes_commit(view, LINE_STAT_UNTRACKED, untracked_parent, "Untracked changes")
+	    && main_add_changes_commit(view, LINE_STAT_UNSTAGED, unstaged_parent, "Unstaged changes")
 	    && main_add_changes_commit(view, LINE_STAT_STAGED, staged_parent, "Staged changes");
 }
 
@@ -214,8 +235,10 @@ main_check_argv(struct view *view, const char *argv[])
 			continue;
 		}
 
-		if (!strcmp(arg, "--first-parent"))
+		if (!strcmp(arg, "--first-parent")) {
 			state->first_parent = true;
+			argv_append(&opt_diff_options, arg);
+		}
 
 		if (!argv_parse_rev_flag(arg, &rev_flags))
 			continue;
@@ -235,7 +258,7 @@ main_check_argv(struct view *view, const char *argv[])
 static enum graph_display
 main_with_graph(struct view *view, struct view_column *column, enum open_flags flags)
 {
-	return column && opt_commit_order != COMMIT_ORDER_REVERSE && !open_in_pager_mode(flags)
+	return column && opt_commit_order != COMMIT_ORDER_REVERSE && !open_in_pager_mode(flags) && !opt_log_follow
 	       ? column->opt.commit_title.graph : GRAPH_DISPLAY_NO;
 }
 
@@ -247,17 +270,18 @@ main_open(struct view *view, enum open_flags flags)
 	const char *pretty_custom_argv[] = {
 		GIT_MAIN_LOG(encoding_arg, commit_order_arg_with_graph(graph_display),
 			"%(mainargs)", "%(cmdlineargs)", "%(revargs)", "%(fileargs)",
-			log_custom_pretty_arg())
+			show_notes_arg(), log_custom_pretty_arg())
 	};
 	const char *pretty_raw_argv[] = {
 		GIT_MAIN_LOG_RAW(encoding_arg, commit_order_arg_with_graph(graph_display),
-			"%(mainargs)", "%(cmdlineargs)", "%(revargs)", "%(fileargs)")
+			"%(mainargs)", "%(cmdlineargs)", "%(revargs)", "%(fileargs)",
+			show_notes_arg())
 	};
 	struct main_state *state = view->private;
 	const char **main_argv = pretty_custom_argv;
 	enum watch_trigger changes_triggers = WATCH_NONE;
 
-	if (opt_show_changes && repo.is_inside_work_tree)
+	if (opt_show_changes && (repo.is_inside_work_tree || *repo.worktree))
 		changes_triggers |= WATCH_INDEX;
 
 	state->with_graph = graph_display != GRAPH_DISPLAY_NO;
@@ -440,8 +464,12 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 			parse_author_line(author, &commit->author, &commit->time);
 			if (state->with_graph)
 				graph->render_parents(graph, &commit->graph);
-			if (title)
-				main_add_commit(view, LINE_MAIN_COMMIT, commit, title, false);
+			if (title) {
+				char *notes = io_memchr(buf, title, 0);
+
+				main_add_commit(view, notes && *notes ? LINE_MAIN_ANNOTATED : LINE_MAIN_COMMIT,
+						commit, title, false);
+			}
 		}
 
 		return true;
@@ -528,6 +556,8 @@ main_request(struct view *view, enum request request, struct line *line)
 		if (line->type == LINE_STAT_UNSTAGED
 		    || line->type == LINE_STAT_STAGED)
 			open_stage_view(view, NULL, line->type, flags);
+		else if (line->type == LINE_STAT_UNTRACKED)
+			open_status_view(view, true, flags);
 		else
 			open_diff_view(view, flags);
 		break;
@@ -558,7 +588,7 @@ main_select(struct view *view, struct line *line)
 {
 	struct commit *commit = line->data;
 
-	if (line->type == LINE_STAT_STAGED || line->type == LINE_STAT_UNSTAGED) {
+	if (line->type == LINE_STAT_STAGED || line->type == LINE_STAT_UNSTAGED || line->type == LINE_STAT_UNTRACKED) {
 		string_ncopy(view->ref, commit->title, strlen(commit->title));
 		status_stage_info(view->env->status, line->type, NULL);
 	} else {

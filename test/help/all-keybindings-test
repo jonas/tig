@@ -3,7 +3,7 @@
 . libtest.sh
 
 export COLUMNS=90
-export LINES=120
+export LINES=125
 
 steps '
 	:view-help

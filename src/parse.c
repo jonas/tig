@@ -212,8 +212,8 @@ parse_chunk_header(struct chunk_header *header, const char *line)
 
 	if (!prefixcmp(line, "@@ -"))
 		line += STRING_SIZE("@@ -") - 1;
-	else if (!prefixcmp(line, "@@@ -") &&
-		 (line = strchr(line + STRING_SIZE("@@@ -"), '-')))
+	else if (!prefixcmp(line, "@@@") &&
+		 (line = strrchr(line, '-')))
 		/* Stay at that '-'. */ ;
 	else
 		return false;

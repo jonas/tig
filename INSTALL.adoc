@@ -6,8 +6,8 @@ Download a tarball from https://github.com/jonas/tig/releases[] or clone the Tig
 repository http://github.com/jonas/tig[git://github.com/jonas/tig.git].
 
 The latest version is:
-https://github.com/jonas/tig/releases/download/tig-2.4.1/tig-2.4.1.tar.gz[tig-2.4.1]
-https://github.com/jonas/tig/releases/download/tig-2.4.1/tig-2.4.1.tar.gz.md5[(md5)]
+https://github.com/jonas/tig/releases/download/tig-2.5.0/tig-2.5.0.tar.gz[tig-2.5.0]
+https://github.com/jonas/tig/releases/download/tig-2.5.0/tig-2.5.0.tar.gz.md5[(md5)]
 
 *Note:* Do not use the tar.gz file for version 2.0 because it will fail
 to compile due to issue https://github.com/jonas/tig/pull/283[#283] and
@@ -96,7 +96,10 @@ You can use link:https://nixos.org/nix/[Nix] to install Tig on NixOS, or any Lin
 Installation on Windows
 -----------------------
 
-To run on Windows, you will need link:https://www.cygwin.com/[cygwin].
+Easiest way is to install link:https://gitforwindows.org/[Git-for-Windows]. As 
+of version `2.14.2`, it comes bundled with `tig`.
+
+Alternatively, you can also use it by installing link:https://www.cygwin.com/[cygwin].
 You must then install the packages `git`, `gcc-core`, `make`, `libiconv-devel`
 and `libncurses-devel`. Extract the tarball and install by using `configure`
 as explained above.

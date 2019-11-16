@@ -5,6 +5,7 @@ View switching
                            m view-main           Show main view
                            d view-diff           Show diff view
                            l view-log            Show log view
+                           L view-reflog         Show reflog view
                            t view-tree           Show tree view
                            f view-blob           Show blob view
                            b view-blame          Show blame view
@@ -77,6 +78,8 @@ Searching
 Option toggling:
                            G :toggle commit-title-graph
                            F :toggle commit-title-refs
+Internal commands:
+                           H :goto HEAD
 External commands:
                            C ?git cherry-pick %(commit)
 [-] diff bindings
@@ -85,6 +88,10 @@ Option toggling:
                            ] :toggle diff-context +1
 Internal commands:
                            @ :/^@@
+[-] reflog bindings
+External commands:
+                           C ?git checkout %(branch)
+                           ! ?git reset --hard %(commit)
 [-] refs bindings
 External commands:
                            C ?git checkout %(branch)
@@ -114,6 +121,4 @@ External commands:
                            ! ?git stash drop %(stash)
 
 
-
-
-[help] - line 1 of 114                                                                100%
+[help] - line 1 of 121                                                                100%

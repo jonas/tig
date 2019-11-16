@@ -54,6 +54,7 @@ typedef struct view_column *view_settings;
 	_(line_graphics,		enum graphic,		VIEW_RESET_DISPLAY) \
 	_(log_options,			const char **,		VIEW_LOG_LIKE) \
 	_(log_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(reflog_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(mailmap,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
 	_(main_options,			const char **,		VIEW_LOG_LIKE) \
 	_(main_view,			view_settings,		VIEW_NO_FLAGS) \
@@ -69,9 +70,11 @@ typedef struct view_column *view_settings;
 	_(send_child_enter,		bool,			VIEW_NO_FLAGS) \
 	_(show_changes,			bool,			VIEW_NO_FLAGS) \
 	_(show_notes,			bool,			VIEW_NO_FLAGS) \
+	_(show_untracked,		bool,			VIEW_NO_FLAGS) \
 	_(split_view_height,		double,			VIEW_RESET_DISPLAY) \
 	_(split_view_width,		double,			VIEW_RESET_DISPLAY) \
 	_(stage_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(start_on_head,		bool,			VIEW_NO_FLAGS) \
 	_(stash_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(status_show_untracked_dirs,	bool,			VIEW_STATUS_LIKE) \
 	_(status_show_untracked_files,	bool,			VIEW_STATUS_LIKE) \
@@ -178,6 +181,7 @@ union view_column_options {
 extern iconv_t opt_iconv_out;
 extern char opt_editor[SIZEOF_STR];
 extern const char **opt_cmdline_args;
+extern bool opt_log_follow;
 
 /*
  * Mapping between options and command argument mapping.

@@ -386,6 +386,7 @@ ref_update_env(struct argv_env *env, const struct ref *ref, bool recurse)
 		env->tag[0] = env->remote[0] = env->branch[0] = 0;
 
 	string_copy_rev(env->commit, ref->id);
+	string_ncopy(env->refname, ref->name, strlen(ref->name));
 
 	if (ref_is_tag(ref)) {
 		string_ncopy(env->tag, ref->name, strlen(ref->name));

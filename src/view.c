@@ -699,6 +699,13 @@ update_view_title(struct view *view)
 void
 split_view(struct view *prev, struct view *view)
 {
+	int height, width;
+	bool vsplit;
+	int nviews = displayed_views();
+
+	getmaxyx(stdscr, height, width);
+	vsplit = vertical_split_is_enabled(opt_vertical_split, height, width);
+
 	display[1] = view;
 	current_view = opt_focus_child ? 1 : 0;
 	view->parent = prev;
@@ -718,13 +725,20 @@ split_view(struct view *prev, struct view *view)
 		update_view_title(prev);
 	}
 
-	if (view_has_flags(prev, VIEW_FLEX_WIDTH))
+	if (view_has_flags(prev, VIEW_FLEX_WIDTH) && vsplit && nviews == 1)
 		load_view(prev, NULL, OPEN_RELOAD);
 }
 
 void
 maximize_view(struct view *view, bool redraw)
 {
+	int height, width;
+	bool vsplit;
+	int nviews = displayed_views();
+
+	getmaxyx(stdscr, height, width);
+	vsplit = vertical_split_is_enabled(opt_vertical_split, height, width);
+
 	memset(display, 0, sizeof(display));
 	current_view = 0;
 	display[current_view] = view;
@@ -732,10 +746,10 @@ maximize_view(struct view *view, bool redraw)
 	if (redraw) {
 		redraw_display(false);
 		report_clear();
-
-		if (view_has_flags(view, VIEW_FLEX_WIDTH))
-			load_view(view, NULL, OPEN_RELOAD);
 	}
+
+	if (view_has_flags(view, VIEW_FLEX_WIDTH) && vsplit && nviews > 1)
+		load_view(view, NULL, OPEN_RELOAD);
 }
 
 void
@@ -823,6 +837,10 @@ open_view(struct view *prev, struct view *view, enum open_flags flags)
 		report("The %s view is disabled in pager mode", view->name);
 		return;
 	}
+
+	/* don't use a child view as previous view */
+	if (prev && prev->parent && prev == display[1])
+		prev = prev->parent;
 
 	if (!view->keymap)
 		view->keymap = get_keymap(view->name, strlen(view->name));
@@ -1663,8 +1681,8 @@ add_line_format(struct view *view, enum line_type type, const char *fmt, ...)
 bool
 append_line_format(struct view *view, struct line *line, const char *fmt, ...)
 {
-	struct box *box = line->data;
-	size_t textlen = box_text_length(box);
+	struct box *box;
+	size_t textlen = box_text_length(line->data);
 	int fmtlen, retval;
 	va_list args;
 	char *text;
@@ -1676,7 +1694,7 @@ append_line_format(struct view *view, struct line *line, const char *fmt, ...)
 	if (fmtlen <= 0)
 		return false;
 
-	box = realloc(box, box_sizeof(box, 0, fmtlen));
+	box = realloc(line->data, box_sizeof(line->data, 0, fmtlen));
 	if (!box)
 		return false;
 
@@ -1703,6 +1721,7 @@ append_line_format(struct view *view, struct line *line, const char *fmt, ...)
 #include "tig/main.h"
 #include "tig/diff.h"
 #include "tig/log.h"
+#include "tig/reflog.h"
 #include "tig/tree.h"
 #include "tig/blob.h"
 #include "tig/blame.h"

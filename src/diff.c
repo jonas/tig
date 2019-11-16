@@ -232,10 +232,24 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 {
 	enum line_type type = get_line_type(data);
 
+	/* ADD2 and DEL2 are only valid in combined diff hunks */
+	if (!state->combined_diff && (type == LINE_DIFF_ADD2 || type == LINE_DIFF_DEL2))
+		type = LINE_DEFAULT;
+
+	/* DEL_FILE, ADD_FILE and START are only valid outside diff chunks */
+	if (state->reading_diff_chunk) {
+		if (type == LINE_DIFF_DEL_FILE || type == LINE_DIFF_START)
+			type = LINE_DIFF_DEL;
+		else if (type == LINE_DIFF_ADD_FILE)
+			type = LINE_DIFF_ADD;
+	}
+
 	if (!view->lines && type != LINE_COMMIT)
 		state->reading_diff_stat = true;
 
-	if (state->combined_diff && !state->after_diff && data[0] == ' ' && data[1] != ' ')
+	/* combined diffs lack LINE_DIFF_START and we don't know
+	 * if this is a combined diff until we see a "@@@" */
+	if (!state->after_diff && data[0] == ' ' && data[1] != ' ')
 		state->reading_diff_stat = true;
 
 	if (state->reading_diff_stat) {
@@ -243,7 +257,7 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 			return true;
 		state->reading_diff_stat = false;
 
-	} else if (!strcmp(data, "---")) {
+	} else if (type == LINE_DIFF_START) {
 		state->reading_diff_stat = true;
 	}
 
@@ -257,17 +271,14 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	}
 
 	if (type == LINE_DIFF_HEADER) {
-		const int len = STRING_SIZE("diff --");
-
 		state->after_diff = true;
-		if (!strncmp(data + len, "combined ", strlen("combined ")) ||
-		    !strncmp(data + len, "cc ", strlen("cc ")))
-			state->combined_diff = true;
+		state->reading_diff_chunk = false;
 
 	} else if (type == LINE_DIFF_CHUNK) {
-		const char *context = strstr(data + STRING_SIZE("@@"), "@@");
+		const int len = chunk_header_marker_length(data);
+		const char *context = strstr(data + len, "@@");
 		struct line *line =
-			context ? add_line_text_at(view, view->lines, data, LINE_DIFF_CHUNK, 2)
+			context ? add_line_text_at(view, view->lines, data, LINE_DIFF_CHUNK, len)
 				: NULL;
 		struct box *box;
 
@@ -275,21 +286,20 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 			return false;
 
 		box = line->data;
-		box->cell[0].length = (context + 2) - data;
-		box->cell[1].length = strlen(context + 2);
+		box->cell[0].length = (context + len) - data;
+		box->cell[1].length = strlen(context + len);
 		box->cell[box->cells++].type = LINE_DIFF_STAT;
+		state->combined_diff = (len > 2);
+		state->reading_diff_chunk = true;
 		return true;
+
+	} else if (type == LINE_COMMIT) {
+		state->reading_diff_chunk = false;
 
 	} else if (state->highlight && strchr(data, 0x1b)) {
 		return diff_common_highlight(view, data, type);
 
-	} else if (type == LINE_PP_MERGE) {
-		state->combined_diff = true;
 	}
-
-	/* ADD2 and DEL2 are only valid in combined diff hunks */
-	if (!state->combined_diff && (type == LINE_DIFF_ADD2 || type == LINE_DIFF_DEL2))
-		type = LINE_DEFAULT;
 
 	return pager_common_read(view, data, type, NULL);
 }
@@ -493,7 +503,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	if (!string_format(line_arg, "-L%ld,+1", lineno))
 		return false;
 
-	if (!io_run(&io, IO_RD, repo.cdup, NULL, blame_argv))
+	if (!io_run(&io, IO_RD, repo.exec_dir, NULL, blame_argv))
 		return false;
 
 	while (io_get(&io, &buf, '\n', true)) {
@@ -675,7 +685,12 @@ diff_common_edit(struct view *view, enum request request, struct line *line)
 		lineno = diff_get_lineno(view, line);
 	}
 
-	if (file && string_format(path, "%s%s", repo.cdup, file) && access(path, R_OK)) {
+	if (!file) {
+		report("Nothing to edit");
+		return REQ_NONE;
+	}
+
+	if (!string_concat_path(path, repo.cdup, file) || access(path, R_OK)) {
 		report("Failed to open file: %s", file);
 		return REQ_NONE;
 	}

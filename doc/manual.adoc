@@ -96,6 +96,10 @@ The log view::
 	Presents a more rich view of the revision log showing the whole log
 	message and the diffstat.
 
+The reflog view::
+	Presents a view of the reflog allowing to navigate the repo
+	history.
+
 The diff view::
 	Shows either the diff of the current working tree, that is, what
 	has changed since the last commit, or the commit diff complete
@@ -262,7 +266,7 @@ TIGRC_SYSTEM::
 
 [[history-files]]
 History Files
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 If compiled with readline support, Tig writes a persistent command and search
 history to `~/.tig_history` or `$XDG_DATA_HOME/tig/history`.
@@ -358,12 +362,12 @@ View Manipulation
 |R	|Reload and refresh the current view.
 |O	|Maximize the current view to fill the whole display.
 |Up	|This key is "context sensitive" and will move the cursor one
-	line up. However, if you opened a diff view from the main view
-	(split- or full-screen) it will change the cursor to point to
-	the previous commit in the main view and update the diff view
-	to display it. If you prefer this key to move the cursor or
-	scroll within the diff view instead, use `bind diff <Up> move-up`
-	or `bind diff <Up> scroll-line-up`, respectively.
+	line up. However, if you opened a split view it will change the
+	cursor to point to the previous commit in the parent view and
+	update the child view to display it. If you prefer this key to
+	move the cursor or scroll within the diff view instead,
+	use `bind diff <Up> move-up` or `bind diff <Up> scroll-line-up`,
+	respectively.
 |Down	|Similar to 'Up' but will move down.
 |,	|Move to parent. In the tree view, this means switch to the parent
 	directory. In the blame view it will load blame for the parent
@@ -462,6 +466,7 @@ Misc
 |%	|Toggle file filtering in order to see the full diff instead of only
 	 the diff concerning the currently selected file.
 |$	|Toggle highlighting of commit title overflow.
+|H	|Go to the HEAD commit.
 |:	|Open prompt. This allows you to specify what command to run and also to
 	 jump to a specific line, e.g. `:23`
 |e	|Open file in editor.

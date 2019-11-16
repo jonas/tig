@@ -98,15 +98,15 @@ EOF
 
 assert_equals 'exec-env' <<EOF
 start
- - pwd=ROOT/work dir/bench/common/src
- - git-dir=ROOT/work dir/.git/modules/bench
+ - pwd=ROOT/work-dir/bench/common/src
+ - git-dir=ROOT/work-dir/.git/modules/bench
  - show-cdup=../../
  - is-inside-work-tree=true
- - show-superproject-working-tree=ROOT/work dir
+ - show-superproject-working-tree=ROOT/work-dir
 end
- - pwd=ROOT/work dir/bench
- - git-dir=ROOT/work dir/.git/modules/bench
+ - pwd=ROOT/work-dir/bench
+ - git-dir=ROOT/work-dir/.git/modules/bench
  - show-cdup=
  - is-inside-work-tree=true
- - show-superproject-working-tree=ROOT/work dir
+ - show-superproject-working-tree=ROOT/work-dir
 EOF

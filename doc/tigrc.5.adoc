@@ -225,6 +225,10 @@ The following variables can be set:
 
 	Whether to show staged and unstaged changes in the main view.
 
+'show-untracked' (bool)::
+
+	Whether to show also untracked changes in the main view.
+
 'vertical-split' (mixed) [auto|<bool>]::
 
 	Whether to split the view horizontally or vertically.
@@ -356,14 +360,19 @@ The following variables can be set:
 	Mouse support requires that ncurses itself support mouse events and that
 	you have enabled mouse support in ~/.tigrc with `set mouse = true`.
 
+'start-on-head' (bool)::
+
+	Start with cursor on HEAD commit.
+
 'refresh-mode' (mixed) [manual|auto|after-command|periodic|<bool>]::
 
 	Configures how views are refreshed based on modifications to watched
 	files in the repository. When set to 'manual', nothing is refreshed
 	automatically. When set to 'auto', views are refreshed when a
-	modification is detected. When set to 'after-command' only refresh after
-	returning from an external command. When set to 'periodic', visible
-	views are refreshed periodically using 'refresh-interval'.
+	modification is detected in another view. When set to 'after-command'
+	only refresh after returning from an external command. When set to
+	'periodic', visible views are refreshed periodically using
+	'refresh-interval'.
 
 'refresh-interval' (int)::
 
@@ -432,7 +441,7 @@ they support:
 blob-view, diff-view, log-view, pager-view, stage-view:: line-number, text
 blame-view:: author, date, file-name, id, line-number, text
 grep-view:: file-name, line-number, text
-main-view:: author, date, commit-title, id, line-number
+main-view, reflog-view:: author, date, commit-title, id, line-number, ref
 refs-view:: author, date, commit-title, id, line-number, ref
 stash-view:: author, date, commit-title, id, line-number
 status-view:: file-name, line-number, status
@@ -588,10 +597,10 @@ Tig respects but does not require an `$if tig` section in `~/.inputrc`.
 
 Keymaps::
 
-Valid keymaps are: *main*, *diff*, *log*, *help*, *pager*, *status*, *stage*,
-*tree*, *blob*, *blame*, *refs*, *stash*, *grep* and *generic*. Use *generic*
-to set key mapping in all keymaps. Use *search* to define keys for navigating
-search results during search.
+Valid keymaps are: *main*, *diff*, *log*, *reflog*, *help*, *pager*, *status*,
+*stage*, *tree*, *blob*, *blame*, *refs*, *stash*, *grep* and *generic*. Use
+*generic* to set key mapping in all keymaps. Use *search* to define keys for
+navigating search results during search.
 
 Key values::
 
@@ -688,6 +697,8 @@ following variable names, which are substituted before commands are run:
 |%(remote)		|The currently selected remote name. For remote
 			 branches %(branch) will contain the branch name.
 |%(tag)			|The currently selected tag name.
+|%(refname)		|The currently selected reference name including the
+			 remote name for remote branches.
 |%(stash)		|The currently selected stash name.
 |%(directory)		|The current directory path in the tree view or
 			 "." if undefined.
@@ -812,6 +823,7 @@ View switching
 |view-main               |Show main view
 |view-diff               |Show diff view
 |view-log                |Show log view
+|view-reflog             |Show reflog view
 |view-tree               |Show tree view
 |view-blob               |Show blob view
 |view-blame              |Show blame view
@@ -1025,6 +1037,7 @@ setting the *default* color option.
 			 attribute enabled to give a brighter color.
 			 Example: palette-0 = red
 |main-commit		|The commit comment.
+|main-annotated		|The commit comment of an annotated commit.
 |main-head		|Label of the current branch.
 |main-remote		|Label of a remote.
 |main-tracked		|Label of the remote tracked by the current branch.
