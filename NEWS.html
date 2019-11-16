@@ -738,6 +738,213 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_5_0">tig-2.5.0</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Single file view enters blame mode on "b". (#804)
+</p>
+</li>
+<li>
+<p>
+Show untracked files in the default view. (#762)
+</p>
+</li>
+<li>
+<p>
+Disable graph if log.follow is enabled and there is only one pathspec. (#881)
+</p>
+</li>
+<li>
+<p>
+Disable graph for author searches.
+</p>
+</li>
+<li>
+<p>
+git_colors: interpret <em>ul</em> as <em>underline</em>.
+</p>
+</li>
+<li>
+<p>
+Add refname variable. (#900)
+</p>
+</li>
+<li>
+<p>
+Add -C option to specify the working directory. (#570)
+</p>
+</li>
+<li>
+<p>
+Improve behaviour of auto and periodic refresh modes. (#389, #441, #482, #794, #888, #932)
+</p>
+</li>
+<li>
+<p>
+Add support for repos created with git --work-tree. (#872)
+</p>
+</li>
+<li>
+<p>
+Add diff-highlight to pager mode.
+</p>
+</li>
+<li>
+<p>
+Show annotated commits in main view. (#819)
+</p>
+</li>
+<li>
+<p>
+Introduce reflog view. (#538)
+</p>
+</li>
+<li>
+<p>
+Add option to start with cursor on HEAD commit. (#755)
+</p>
+</li>
+<li>
+<p>
+Support combined diffs with more than 2 parents.
+</p>
+</li>
+<li>
+<p>
+Improve how a toggle option value is shown on the status line. (#879)
+</p>
+</li>
+<li>
+<p>
+Add options to filter refs output. (#694)
+</p>
+</li>
+<li>
+<p>
+Update utf8proc to v2.4.0. (#961)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix garbled cursor line with older ncurses versions.
+</p>
+</li>
+<li>
+<p>
+Fix diff highlighting of removed lines starting with&#8201;&#8212;&#8201;and added lines
+   starting with ++. (#871, #875)
+</p>
+</li>
+<li>
+<p>
+Fix loop when displaying search result if regex matches an empty string. (#866)
+</p>
+</li>
+<li>
+<p>
+Add synchronous command description in tigrc.
+</p>
+</li>
+<li>
+<p>
+Fix parsing of git rev-parse output. (#884)
+</p>
+</li>
+<li>
+<p>
+Propagate --first-parent to diff arguments. (#861)
+</p>
+</li>
+<li>
+<p>
+Use proper type for hash table size. (#858)
+</p>
+</li>
+<li>
+<p>
+Fix incorrect cppcheck warning about realloc() use.
+</p>
+</li>
+<li>
+<p>
+Don&#8217;t shift signed int by 31 bits.
+</p>
+</li>
+<li>
+<p>
+Fix Vim going background after running Tig outside of a git repository. (#906)
+</p>
+</li>
+<li>
+<p>
+make-builtin-config: use "read -r". (#912)
+</p>
+</li>
+<li>
+<p>
+Fix segfaults with readline 8.0. (#893)
+</p>
+</li>
+<li>
+<p>
+Reset state before closing stage view automatically.
+</p>
+</li>
+<li>
+<p>
+Don&#8217;t use a child view as previous view.
+</p>
+</li>
+<li>
+<p>
+Force reload of VIEW_FLEX_WIDTH views only when needed.
+</p>
+</li>
+<li>
+<p>
+Combined diff uses @@@ as hunk marker.
+</p>
+</li>
+<li>
+<p>
+Fix memory leak induced by <em>tig grep</em>.
+</p>
+</li>
+<li>
+<p>
+Fix memory leak in main view.
+</p>
+</li>
+<li>
+<p>
+Exit gracefully if refs view was defined without ref column. (#897)
+</p>
+</li>
+<li>
+<p>
+Fix pager view not moving up when child view is open.
+</p>
+</li>
+<li>
+<p>
+make-builtin-config: Fix unportable sed usage in read_tigrc().
+</p>
+</li>
+<li>
+<p>
+Properly detect combined diffs. (#942)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_4_1">tig-2.4.1</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Bug fixes:</p></div>
@@ -4056,7 +4263,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2018-07-26 23:17:59 EDT
+ 2019-11-16 15:54:47 CET
 </div>
 </div>
 </body>

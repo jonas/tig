@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: tigmanual
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 07/26/2018
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 11/16/2019
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.4.1
+.\"    Source: Tig 2.5.0
 .\"  Language: English
 .\"
-.TH "TIGMANUAL" "7" "07/26/2018" "Tig 2\&.4\&.1" "Tig Manual"
+.TH "TIGMANUAL" "7" "11/16/2019" "Tig 2\&.5\&.0" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -125,6 +125,11 @@ Is the default view, and it shows a one line summary of each commit in the chose
 The log view
 .RS 4
 Presents a more rich view of the revision log showing the whole log message and the diffstat\&.
+.RE
+.PP
+The reflog view
+.RS 4
+Presents a view of the reflog allowing to navigate the repo history\&.
 .RE
 .PP
 The diff view
@@ -570,23 +575,10 @@ TIGRC_SYSTEM
 .RS 4
 Path of the system wide configuration file\&.
 .RE
+.SS "History Files"
 .sp
-History Files
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-If compiled with readline support, Tig writes a persistent command and search
-history to `~/\&.tig_history` or `$XDG_DATA_HOME/tig/history`\&.
-
-[[repo\-refs]]
-Repository References
-.fi
-.if n \{\
-.RE
-.\}
-.sp
+If compiled with readline support, Tig writes a persistent command and search history to ~/\&.tig_history or $XDG_DATA_HOME/tig/history\&.
+.SS "Repository References"
 .sp
 Commits that are referenced by tags and branch heads will be marked by the reference name surrounded by \fI[\fR and \fI]\fR:
 .sp
@@ -824,7 +816,7 @@ T{
 Up
 T}:T{
 .sp
-This key is "context sensitive" and will move the cursor one line up\&. However, if you opened a diff view from the main view (split\- or full\-screen) it will change the cursor to point to the previous commit in the main view and update the diff view to display it\&. If you prefer this key to move the cursor or scroll within the diff view instead, use bind diff <Up> move\-up or bind diff <Up> scroll\-line\-up, respectively\&.
+This key is "context sensitive" and will move the cursor one line up\&. However, if you opened a split view it will change the cursor to point to the previous commit in the parent view and update the child view to display it\&. If you prefer this key to move the cursor or scroll within the diff view instead, use bind diff <Up> move\-up or bind diff <Up> scroll\-line\-up, respectively\&.
 T}
 T{
 .sp
@@ -1108,6 +1100,7 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1213,6 +1206,13 @@ $
 T}:T{
 .sp
 Toggle highlighting of commit title overflow\&.
+T}
+T{
+.sp
+H
+T}:T{
+.sp
+Go to the HEAD commit\&.
 T}
 T{
 .sp
@@ -1546,7 +1546,6 @@ Manpages:
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fBtig\fR(1)
 .RE
 .sp
@@ -1558,7 +1557,6 @@ Manpages:
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fBtigrc\fR(5)
 .RE
 .SH "NOTES"

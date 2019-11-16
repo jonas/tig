@@ -1074,6 +1074,14 @@ branch               : Any other reference.
 </p>
 </dd>
 <dt class="hdlist1">
+<em>show-untracked</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to show also untracked changes in the main view.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>vertical-split</em> (mixed) [auto|&lt;bool&gt;]
 </dt>
 <dd>
@@ -1285,6 +1293,14 @@ branch               : Any other reference.
 </p>
 </dd>
 <dt class="hdlist1">
+<em>start-on-head</em> (bool)
+</dt>
+<dd>
+<p>
+        Start with cursor on HEAD commit.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>refresh-mode</em> (mixed) [manual|auto|after-command|periodic|&lt;bool&gt;]
 </dt>
 <dd>
@@ -1292,9 +1308,10 @@ branch               : Any other reference.
         Configures how views are refreshed based on modifications to watched
         files in the repository. When set to <em>manual</em>, nothing is refreshed
         automatically. When set to <em>auto</em>, views are refreshed when a
-        modification is detected. When set to <em>after-command</em> only refresh after
-        returning from an external command. When set to <em>periodic</em>, visible
-        views are refreshed periodically using <em>refresh-interval</em>.
+        modification is detected in another view. When set to <em>after-command</em>
+        only refresh after returning from an external command. When set to
+        <em>periodic</em>, visible views are refreshed periodically using
+        <em>refresh-interval</em>.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1395,11 +1412,11 @@ file-name, line-number, text
 </p>
 </dd>
 <dt class="hdlist1">
-main-view
+main-view, reflog-view
 </dt>
 <dd>
 <p>
-author, date, commit-title, id, line-number
+author, date, commit-title, id, line-number, ref
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1750,10 +1767,10 @@ Keymaps
 </dt>
 <dd>
 <p>
-Valid keymaps are: <strong>main</strong>, <strong>diff</strong>, <strong>log</strong>, <strong>help</strong>, <strong>pager</strong>, <strong>status</strong>, <strong>stage</strong>,
-<strong>tree</strong>, <strong>blob</strong>, <strong>blame</strong>, <strong>refs</strong>, <strong>stash</strong>, <strong>grep</strong> and <strong>generic</strong>. Use <strong>generic</strong>
-to set key mapping in all keymaps. Use <strong>search</strong> to define keys for navigating
-search results during search.
+Valid keymaps are: <strong>main</strong>, <strong>diff</strong>, <strong>log</strong>, <strong>reflog</strong>, <strong>help</strong>, <strong>pager</strong>, <strong>status</strong>,
+<strong>stage</strong>, <strong>tree</strong>, <strong>blob</strong>, <strong>blame</strong>, <strong>refs</strong>, <strong>stash</strong>, <strong>grep</strong> and <strong>generic</strong>. Use
+<strong>generic</strong> to set key mapping in all keymaps. Use <strong>search</strong> to define keys for
+navigating search results during search.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1920,6 +1937,11 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(tag)</code></p></td>
 <td align="left" valign="top"><p class="table">The currently selected tag name.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(refname)</code></p></td>
+<td align="left" valign="top"><p class="table">The currently selected reference name including the
+                         remote name for remote branches.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(stash)</code></p></td>
@@ -2115,6 +2137,10 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><code>view-log</code></p></td>
 <td align="left" valign="top"><p class="table">Show log view</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>view-reflog</code></p></td>
+<td align="left" valign="top"><p class="table">Show reflog view</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>view-tree</code></p></td>
@@ -2620,6 +2646,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">The commit comment.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><code>main-annotated</code></p></td>
+<td align="left" valign="top"><p class="table">The commit comment of an annotated commit.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><code>main-head</code></p></td>
 <td align="left" valign="top"><p class="table">Label of the current branch.</p></td>
 </tr>
@@ -2822,7 +2852,7 @@ git(7), git-config(1)</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2018-07-21 15:08:50 EDT
+ 2019-11-16 15:54:47 CET
 </div>
 </div>
 </body>

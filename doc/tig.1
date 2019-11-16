@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: tig
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 07/26/2018
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 11/16/2019
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.4.1
+.\"    Source: Tig 2.5.0
 .\"  Language: English
 .\"
-.TH "TIG" "1" "07/26/2018" "Tig 2\&.4\&.1" "Tig Manual"
+.TH "TIG" "1" "11/16/2019" "Tig 2\&.5\&.0" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -35,9 +35,10 @@ tig \- text\-mode interface for Git
 tig        [options] [revisions] [\-\-] [paths]
 tig log    [options] [revisions] [\-\-] [paths]
 tig show   [options] [revisions] [\-\-] [paths]
+tig reflog [options] [revisions]
 tig blame  [options] [rev] [\-\-] path
 tig grep   [options] [pattern]
-tig refs
+tig refs   [options]
 tig stash
 tig status
 tig <      [Git command output]
@@ -70,6 +71,11 @@ log
 Start up in log view, displaying git\-log(1) output\&.
 .RE
 .PP
+reflog
+.RS 4
+Start up in reflog view\&.
+.RE
+.PP
 refs
 .RS 4
 Start up in refs view\&.
@@ -98,6 +104,11 @@ Show version and exit\&.
 \-h, \-\-help
 .RS 4
 Show help message and exit\&.
+.RE
+.PP
+\-C<path>
+.RS 4
+Run as if Tig was started in <path> instead of the current working directory\&.
 .RE
 .SH "PAGER MODE"
 .sp

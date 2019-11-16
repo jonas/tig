@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.78.0 <http://docbook.sf.net/>
-.\"      Date: 07/26/2018
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 11/16/2019
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.4.1
+.\"    Source: Tig 2.5.0
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "07/26/2018" "Tig 2\&.4\&.1" "Tig Manual"
+.TH "TIGRC" "5" "11/16/2019" "Tig 2\&.5\&.0" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -332,6 +332,11 @@ git show \-\-notes=\&. Notes are enabled by default\&.
 Whether to show staged and unstaged changes in the main view\&.
 .RE
 .PP
+\fIshow\-untracked\fR (bool)
+.RS 4
+Whether to show also untracked changes in the main view\&.
+.RE
+.PP
 \fIvertical\-split\fR (mixed) [auto|<bool>]
 .RS 4
 Whether to split the view horizontally or vertically\&. "auto" (which is the default) means that it will depend on the window dimensions\&. When true vertical orientation is used, and false sets the orientation to horizontal\&.
@@ -479,11 +484,16 @@ set mouse\-scroll = 1\&. Mouse support requires that ncurses itself support mous
 set mouse = true\&.
 .RE
 .PP
+\fIstart\-on\-head\fR (bool)
+.RS 4
+Start with cursor on HEAD commit\&.
+.RE
+.PP
 \fIrefresh\-mode\fR (mixed) [manual|auto|after\-command|periodic|<bool>]
 .RS 4
 Configures how views are refreshed based on modifications to watched files in the repository\&. When set to
 \fImanual\fR, nothing is refreshed automatically\&. When set to
-\fIauto\fR, views are refreshed when a modification is detected\&. When set to
+\fIauto\fR, views are refreshed when a modification is detected in another view\&. When set to
 \fIafter\-command\fR
 only refresh after returning from an external command\&. When set to
 \fIperiodic\fR, visible views are refreshed periodically using
@@ -566,9 +576,9 @@ grep\-view
 file\-name, line\-number, text
 .RE
 .PP
-main\-view
+main\-view, reflog\-view
 .RS 4
-author, date, commit\-title, id, line\-number
+author, date, commit\-title, id, line\-number, ref
 .RE
 .PP
 refs\-view
@@ -604,7 +614,6 @@ author
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIdisplay\fR
 (mixed) [full|abbreviated|email|email\-user|<bool>]: How to display author names\&. If set to "abbreviated" author initials will be shown\&.
 .RE
@@ -617,7 +626,6 @@ author
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIwidth\fR
 (int): Fixed width for the column\&. When set to a value between 1 and 10, the author name will be abbreviated to the author\(cqs initials\&. When set to zero, the width is automatically sized to fit the content\&.
 .RE
@@ -630,7 +638,6 @@ author
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fImaxwidth\fR
 (int): Maximum width of the column\&. Permit automatically sizing content, up to this limit\&.
 .RE
@@ -647,7 +654,6 @@ commit\-title
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIgraph\fR
 (mixed) [no|v2|v1]: Whether to show the revision graph in the main view on start\-up\&. "v1" refers to the old graph rendering, which is less accurate but faster and thus recommended in large repositories\&. See also the
 \fIline\-graphics\fR
@@ -662,7 +668,6 @@ options\&.
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIrefs\fR
 (bool): Whether to show references (branches, tags, and remotes) in the main view\&. Can be toggled\&.
 .RE
@@ -675,7 +680,6 @@ options\&.
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIoverflow\fR
 (bool or int): Whether to highlight text in commit titles exceeding a given width\&. When set to a boolean, it enables or disables the highlighting using the default width of 50 character\&. When set to an int, the assigned value is used as the maximum character width\&.
 .RE
@@ -692,7 +696,6 @@ date
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIdisplay\fR
 (mixed) [relative|relative\-compact|custom|default|<bool>]: How to display dates\&. If set to "relative" or "relative\-compact" a relative date will be used, e\&.g\&. "2 minutes ago" or "2m"\&. If set to "custom", the strftime(3) string format specified in the "format" option is used\&.
 .RE
@@ -705,7 +708,6 @@ date
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIlocal\fR
 (bool): If true, use localtime(3) to convert to local timezone\&. Note that relative dates always use local offsets\&.
 .RE
@@ -718,7 +720,6 @@ date
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIformat\fR
 (string): format string to pass to strftime(3) when
 \fIcustom\fR
@@ -733,7 +734,6 @@ display mode has been selected\&.
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIwidth\fR
 (int): Fixed width for the column\&. When set to zero, the width is automatically sized to fit the content\&.
 .RE
@@ -750,7 +750,6 @@ file\-name
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIdisplay\fR
 (mixed) [auto|always|<bool>]: When to display file names\&. If set to "auto" file names are shown only when needed, e\&.g\&. when running: tig blame \-C <file>\&.
 .RE
@@ -763,7 +762,6 @@ file\-name
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIwidth\fR
 (int): Width of the column\&. When set to zero, the width is automatically sized to fit the content\&.
 .RE
@@ -776,7 +774,6 @@ file\-name
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fImaxwidth\fR
 (int): Maximum width of the column\&. Permit automatically sizing content, up to this limit\&.
 .RE
@@ -793,7 +790,6 @@ file\-size
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIdisplay\fR
 (mixed) [default|units|<bool>]: How to display file sizes\&. When set to "units", sizes are shown using binary prefixes, e\&.g\&. 12524 bytes is shown as "12\&.2K"\&.
 .RE
@@ -806,7 +802,6 @@ file\-size
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIwidth\fR
 (int): Fixed width for the filename column\&. When set to zero, the width is automatically sized to fit the content\&.
 .RE
@@ -823,7 +818,6 @@ id
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIdisplay\fR
 (bool): Whether to show commit IDs in the main view\&.
 .RE
@@ -836,7 +830,6 @@ id
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIwidth\fR
 (int) : Fixed width for the commit ID column\&. When unset Tig will use the value of
 \fIcore\&.abbrev\fR
@@ -857,7 +850,6 @@ line\-number
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIdisplay\fR
 (bool): Whether to show line numbers\&.
 .RE
@@ -870,7 +862,6 @@ line\-number
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIinterval\fR
 (int): Interval between line numbers\&.
 .RE
@@ -883,7 +874,6 @@ line\-number
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIwidth\fR
 (int): Fixed width for the column\&. When set to zero, the width is automatically sized to fit the content\&.
 .RE
@@ -900,7 +890,6 @@ mode
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIdisplay\fR
 (bool): Whether to show file modes\&.
 .RE
@@ -913,7 +902,6 @@ mode
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIwidth\fR
 (int): Fixed width for the column\&. When set to zero, the width is automatically sized to fit the content\&.
 .RE
@@ -930,7 +918,6 @@ ref
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIdisplay\fR
 (bool): Whether to show the reference name\&.
 .RE
@@ -943,7 +930,6 @@ ref
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIwidth\fR
 (int): Fixed width for the column\&. When set to zero, the width is automatically sized to fit the content\&.
 .RE
@@ -956,7 +942,6 @@ ref
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fImaxwidth\fR
 (int): Maximum width of the column\&. Permit automatically sizing content, up to this limit\&.
 .RE
@@ -973,7 +958,6 @@ status
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIdisplay\fR
 (mixed) [no|short|long|<bool>]: How to display the status label\&.
 .RE
@@ -990,7 +974,6 @@ text
 .sp -1
 .IP \(bu 2.3
 .\}
-
 \fIcommit\-title\-overflow\fR
 (bool or int): Whether to highlight commit titles exceeding a given width in the diff view\&. When set to a boolean, it enables or disables the highlighting using the default width of 50 character\&. When set to an int, the assigned value is used as the maximum character width\&.
 .RE
@@ -1065,6 +1048,7 @@ Valid keymaps are:
 \fBmain\fR,
 \fBdiff\fR,
 \fBlog\fR,
+\fBreflog\fR,
 \fBhelp\fR,
 \fBpager\fR,
 \fBstatus\fR,
@@ -1142,7 +1126,6 @@ and
 .sp -1
 .IP \(bu 2.3
 .\}
-
 Ctrl\-m
 and
 Ctrl\-i
@@ -1175,7 +1158,6 @@ Ctrl\-F\&.
 .sp -1
 .IP \(bu 2.3
 .\}
-
 Ctrl\-<Space>
 is typically translated to
 Ctrl\-@, which is available for binding\&.
@@ -1202,7 +1184,6 @@ will be available in any given terminal emulator\&.
 .sp -1
 .IP \(bu 2.3
 .\}
-
 Ctrl\-z
 is automatically used for process control and will suspend Tig and open a subshell (use
 fg
@@ -1309,6 +1290,7 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1351,6 +1333,13 @@ T{
 T}:T{
 .sp
 The currently selected tag name\&.
+T}
+T{
+.sp
+%(refname)
+T}:T{
+.sp
+The currently selected reference name including the remote name for remote branches\&.
 T}
 T{
 .sp
@@ -1541,7 +1530,7 @@ bind main U +sh \-c \*(Aqgit \-\-no\-pager shortlog \-s \-\-author="$(git show \
 .sp
 If your command requires use of dynamic features, such as subshells, expansion of environment variables and process control, this can be achieved by using a shell command:
 .PP
-\fBExample\ \&1.\ \&Configure a binding to copy the current commit ID to the clipboard.\fR
+\fBExample\ \&1.\ \&Configure a binding to copy the current commit ID to the clipboard\&.\fR
 .sp
 .if n \{\
 .RS 4
@@ -1557,7 +1546,7 @@ bind generic I @sh \-c "echo \-n %(commit) | xclip \-selection c"
 .sp
 Or by using a combination of Git aliases and Tig external commands\&. The following example entries can be put in either the \&.gitconfig or \&.git/config file:
 .PP
-\fBExample\ \&2.\ \&Git configuration which binds Tig keys to Git command aliases.\fR
+\fBExample\ \&2.\ \&Git configuration which binds Tig keys to Git command aliases\&.\fR
 .sp
 .if n \{\
 .RS 4
@@ -1635,6 +1624,7 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1656,6 +1646,13 @@ view\-log
 T}:T{
 .sp
 Show log view
+T}
+T{
+.sp
+view\-reflog
+T}:T{
+.sp
+Show reflog view
 T}
 T{
 .sp
@@ -2433,6 +2430,7 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -2454,6 +2452,13 @@ main\-commit
 T}:T{
 .sp
 The commit comment\&.
+T}
+T{
+.sp
+main\-annotated
+T}:T{
+.sp
+The commit comment of an annotated commit\&.
 T}
 T{
 .sp
@@ -2612,7 +2617,6 @@ is pretty much omnipresent\&.
 .PP
 Commit message
 .RS 4
-
 Signed\-off\-by,
 Acked\-by,
 Reviewed\-by

@@ -752,9 +752,10 @@ tig(1) Manual Page
 <pre class="content">tig        [options] [revisions] [--] [paths]
 tig log    [options] [revisions] [--] [paths]
 tig show   [options] [revisions] [--] [paths]
+tig reflog [options] [revisions]
 tig blame  [options] [rev] [--] path
 tig grep   [options] [pattern]
-tig refs
+tig refs   [options]
 tig stash
 tig status
 tig &lt;      [Git command output]</pre>
@@ -815,6 +816,14 @@ log
 </p>
 </dd>
 <dt class="hdlist1">
+reflog
+</dt>
+<dd>
+<p>
+        Start up in reflog view.
+</p>
+</dd>
+<dt class="hdlist1">
 refs
 </dt>
 <dd>
@@ -860,6 +869,14 @@ grep
 <dd>
 <p>
         Show help message and exit.
+</p>
+</dd>
+<dt class="hdlist1">
+-C&lt;path&gt;
+</dt>
+<dd>
+<p>
+        Run as if Tig was started in &lt;path&gt; instead of the current working directory.
 </p>
 </dd>
 </dl></div>
@@ -1164,7 +1181,7 @@ git(7)</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2018-05-20 21:31:00 EDT
+ 2019-11-16 15:54:47 CET
 </div>
 </div>
 </body>

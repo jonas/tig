@@ -1000,6 +1000,15 @@ The log view
 </p>
 </dd>
 <dt class="hdlist1">
+The reflog view
+</dt>
+<dd>
+<p>
+        Presents a view of the reflog allowing to navigate the repo
+        history.
+</p>
+</dd>
+<dt class="hdlist1">
 The diff view
 </dt>
 <dd>
@@ -1339,15 +1348,14 @@ TIGRC_SYSTEM
 </p>
 </dd>
 </dl></div>
-<div class="paragraph" id="history-files"><p>History Files</p></div>
-<div class="listingblock">
-<div class="content">
-<pre><code>If compiled with readline support, Tig writes a persistent command and search
-history to `~/.tig_history` or `$XDG_DATA_HOME/tig/history`.
-
-[[repo-refs]]
-Repository References</code></pre>
-</div></div>
+</div>
+<div class="sect2">
+<h3 id="history-files">3.2. History Files</h3>
+<div class="paragraph"><p>If compiled with readline support, Tig writes a persistent command and search
+history to <code>~/.tig_history</code> or <code>$XDG_DATA_HOME/tig/history</code>.</p></div>
+</div>
+<div class="sect2">
+<h3 id="repo-refs">3.3. Repository References</h3>
 <div class="paragraph"><p>Commits that are referenced by tags and branch heads will be marked by the
 reference name surrounded by <em>[</em> and <em>]</em>:</p></div>
 <div class="listingblock">
@@ -1382,7 +1390,7 @@ TIG_LS_REMOTE
 </div></div>
 </div>
 <div class="sect2">
-<h3 id="diff-options">3.2. Diff options</h3>
+<h3 id="diff-options">3.4. Diff options</h3>
 <div class="paragraph"><p>It is possible to alter how diffs are shown by the diff view. If for example
 you prefer to have commit and author dates shown as relative dates, use:</p></div>
 <div class="listingblock">
@@ -1513,12 +1521,12 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table">Up</p></td>
 <td align="left" valign="top"><p class="table">This key is "context sensitive" and will move the cursor one
-        line up. However, if you opened a diff view from the main view
-        (split- or full-screen) it will change the cursor to point to
-        the previous commit in the main view and update the diff view
-        to display it. If you prefer this key to move the cursor or
-        scroll within the diff view instead, use <code>bind diff &lt;Up&gt; move-up</code>
-        or <code>bind diff &lt;Up&gt; scroll-line-up</code>, respectively.</p></td>
+        line up. However, if you opened a split view it will change the
+        cursor to point to the previous commit in the parent view and
+        update the child view to display it. If you prefer this key to
+        move the cursor or scroll within the diff view instead,
+        use <code>bind diff &lt;Up&gt; move-up</code> or <code>bind diff &lt;Up&gt; scroll-line-up</code>,
+        respectively.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">Down</p></td>
@@ -1797,6 +1805,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Toggle highlighting of commit title overflow.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table">H</p></td>
+<td align="left" valign="top"><p class="table">Go to the HEAD commit.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table">:</p></td>
 <td align="left" valign="top"><p class="table">Open prompt. This allows you to specify what command to run and also to
          jump to a specific line, e.g. <code>:23</code></p></td>
@@ -2070,7 +2082,7 @@ the Free Software Foundation; either version 2 of the License, or
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2018-07-21 15:08:50 EDT
+ 2019-11-16 15:54:47 CET
 </div>
 </div>
 </body>
