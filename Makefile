@@ -68,7 +68,8 @@ override CPPFLAGS += '-DTIG_USER_CONFIG="$(TIG_USER_CONFIG)"'
 endif
 
 ASCIIDOC ?= asciidoc
-ASCIIDOC_FLAGS = -aversion=$(VERSION) -asysconfdir=$(sysconfdir) -f doc/asciidoc.conf
+ASCIIDOC_FLAGS = -aversion=$(VERSION) -asysconfdir=$(sysconfdir) \
+		-arevdate=$(shell git show -s --format=%cs) -f doc/asciidoc.conf
 XMLTO ?= xmlto
 DOCBOOK2PDF ?= docbook2pdf
 
@@ -432,7 +433,7 @@ test/API.adoc: test/tools/libtest.sh
 %.7.xml : %.7.adoc doc/asciidoc.conf
 	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b docbook -d manpage $<
 
-%.html: ASCIIDOC_FLAGS += -adocext=html
+%.html: ASCIIDOC_FLAGS += -adocext=html -afooter-style=revdate
 %.html : %.adoc doc/asciidoc.conf
 	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -n $<
 
