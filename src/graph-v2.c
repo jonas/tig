@@ -257,7 +257,8 @@ done_graph(struct graph *graph_ref)
 {
 	struct graph_v2 *graph = graph_ref->private;
 
-	htab_delete(graph->colors.id_map);
+	if (graph->colors.id_map)
+		htab_delete(graph->colors.id_map);
 
 	free(graph);
 
