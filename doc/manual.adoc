@@ -264,6 +264,9 @@ TIGRC_USER::
 TIGRC_SYSTEM::
 	Path of the system wide configuration file.
 
+TIGRC_EXTRA::
+	Path of the additional configuration file.
+
 [[history-files]]
 History Files
 ~~~~~~~~~~~~~
