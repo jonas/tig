@@ -425,7 +425,7 @@ blame_go_forward(struct view *view, struct blame *blame, bool parent)
 	string_ncopy(view->env->file, filename, strlen(filename));
 	if (parent)
 		setup_blame_parent_line(view, blame);
-	view->env->goto_lineno = blame->lineno;
+	view->env->goto_lineno = view->pos.lineno;
 	reload_view(view);
 }
 
