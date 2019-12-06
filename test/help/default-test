@@ -51,7 +51,7 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-[help] - line 1 of 121                                                       23%
+[help] - line 1 of 123                                                       22%
 EOF
 
 assert_equals 'help-search.screen' <<EOF
@@ -83,7 +83,7 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-[help] - line 19 of 121                                                      23%
+[help] - line 19 of 123                                                      22%
 EOF
 
 assert_equals 'help-collapsed.screen' <<EOF
@@ -106,6 +106,8 @@ Option toggling:
 Internal commands:
   @ :/^@@
 [-] reflog bindings
+Option toggling:
+  F :toggle commit-title-refs
 External commands:
   C ?git checkout %(branch)
   ! ?git reset --hard %(commit)
@@ -113,7 +115,5 @@ External commands:
 External commands:
   C ?git checkout %(branch)
   ! ?git branch -D %(branch)
-[-] status bindings
-View-specific actions
-[help] - line 4 of 49                                                        57%
+[help] - line 4 of 51                                                        54%
 EOF

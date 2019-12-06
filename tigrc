@@ -244,6 +244,7 @@ bind diff	]	:toggle diff-context +1
 bind main	H	:goto HEAD
 bind main	G	:toggle commit-title-graph # Toggle revision graph visualization
 bind main	F	:toggle commit-title-refs  # Toggle reference display (tags/branches)
+bind reflog	F	:toggle commit-title-refs  # Toggle reference display (tags/branches)
 
 # Cursor navigation
 bind generic	j	move-down
