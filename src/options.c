@@ -1475,9 +1475,10 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 enum status_code
 load_git_config(void)
 {
+	struct io io;
 	const char *config_list_argv[] = { "git", "config", "--list", NULL };
 
-	return io_run_load(config_list_argv, "=", read_repo_config_option, NULL);
+	return io_run_load(&io, config_list_argv, "=", read_repo_config_option, NULL);
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

@@ -702,14 +702,12 @@ io_load(struct io *io, const char *separators,
 }
 
 enum status_code
-io_run_load(const char **argv, const char *separators,
+io_run_load(struct io *io, const char **argv, const char *separators,
 	    io_read_fn read_property, void *data)
 {
-	struct io io;
-
-	if (!io_run(&io, IO_RD, NULL, NULL, argv))
+	if (!io_run(io, IO_RD, NULL, NULL, argv))
 		return error("Failed to open IO");
-	return io_load(&io, separators, read_property, data);
+	return io_load(io, separators, read_property, data);
 }
 
 bool
