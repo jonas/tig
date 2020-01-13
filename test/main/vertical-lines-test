@@ -1,0 +1,90 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export WIDTH=40
+export LINES=18
+
+tigrc <<EOF
+set vertical-split = auto
+EOF
+
+steps '
+	:set main-view-line-number-display = yes
+	:set diff-view-line-number-display = yes
+	:enter
+
+	:set line-graphics = ascii
+	:save-display main-verticals-ascii.screen
+
+	:set line-graphics = default
+	:save-display main-verticals-default.screen
+
+	:set line-graphics = utf-8
+	:save-display main-verticals-utf8.screen
+'
+
+git_clone 'repo-one'
+
+test_tig
+
+assert_equals 'main-verticals-ascii.screen' <<EOF
+  1| 2010-04-07 05:37 +0000 Max Power   |  1| commit 5cb3412a5e06e506840495b91ac
+   | 2010-03-29 17:15 +0000 Jørgen Thy~ |   | Refs: [master], {origin/master}, {
+   | 2010-03-21 04:53 +0000 作者        |   | Author:     Max Power <power123@ex
+   | 2010-03-12 16:31 +0000 René Léves~ |   | AuthorDate: Wed Apr 7 05:37:40 201
+  5| 2010-03-04 04:09 +0000 A. U. Thor  |  5| Commit:     Committer <c.ommitter@
+   | 2010-02-23 15:46 +0000 Max Power   |   | CommitDate: Wed Apr 7 05:37:40 201
+   | 2010-02-15 03:24 +0000 Jørgen Thy~ |   |
+   | 2010-02-06 15:02 +0000 作者        |   |     Commit 10 E
+   | 2010-01-29 02:40 +0000 René Léves~ |
+ 10| 2010-01-20 14:18 +0000 A. U. Thor  |
+   | 2010-01-12 01:56 +0000 Max Power   |
+   | 2010-01-03 13:33 +0000 Jørgen Thy~ |
+   | 2009-12-26 01:11 +0000 作者        |
+   | 2009-12-17 12:49 +0000 René Léves~ |
+ 15| 2009-12-09 00:27 +0000 A. U. Thor  |
+   | 2009-11-30 12:05 +0000 Max Power   |
+[main] 5cb3412a5e06e506840495b91acc8832%|[diff] 5cb3412a5e06e506840495b91acc100%
+EOF
+
+assert_equals 'main-verticals-default.screen' <<EOF
+  1x 2010-04-07 05:37 +0000 Max Power   |  1x commit 5cb3412a5e06e506840495b91ac
+   x 2010-03-29 17:15 +0000 Jørgen Thy~ |   x Refs: [master], {origin/master}, {
+   x 2010-03-21 04:53 +0000 作者        |   x Author:     Max Power <power123@ex
+   x 2010-03-12 16:31 +0000 René Léves~ |   x AuthorDate: Wed Apr 7 05:37:40 201
+  5x 2010-03-04 04:09 +0000 A. U. Thor  |  5x Commit:     Committer <c.ommitter@
+   x 2010-02-23 15:46 +0000 Max Power   |   x CommitDate: Wed Apr 7 05:37:40 201
+   x 2010-02-15 03:24 +0000 Jørgen Thy~ |   x
+   x 2010-02-06 15:02 +0000 作者        |   x     Commit 10 E
+   x 2010-01-29 02:40 +0000 René Léves~ |
+ 10x 2010-01-20 14:18 +0000 A. U. Thor  |
+   x 2010-01-12 01:56 +0000 Max Power   |
+   x 2010-01-03 13:33 +0000 Jørgen Thy~ |
+   x 2009-12-26 01:11 +0000 作者        |
+   x 2009-12-17 12:49 +0000 René Léves~ |
+ 15x 2009-12-09 00:27 +0000 A. U. Thor  |
+   x 2009-11-30 12:05 +0000 Max Power   |
+[main] 5cb3412a5e06e506840495b91acc8832%|[diff] 5cb3412a5e06e506840495b91acc100%
+EOF
+
+assert_equals 'main-verticals-utf8.screen' <<EOF
+  1│ 2010-04-07 05:37 +0000 Max Power   |  1│ commit 5cb3412a5e06e506840495b91ac
+   │ 2010-03-29 17:15 +0000 Jørgen Thy~ |   │ Refs: [master], {origin/master}, {
+   │ 2010-03-21 04:53 +0000 作者        |   │ Author:     Max Power <power123@ex
+   │ 2010-03-12 16:31 +0000 René Léves~ |   │ AuthorDate: Wed Apr 7 05:37:40 201
+  5│ 2010-03-04 04:09 +0000 A. U. Thor  |  5│ Commit:     Committer <c.ommitter@
+   │ 2010-02-23 15:46 +0000 Max Power   |   │ CommitDate: Wed Apr 7 05:37:40 201
+   │ 2010-02-15 03:24 +0000 Jørgen Thy~ |   │
+   │ 2010-02-06 15:02 +0000 作者        |   │     Commit 10 E
+   │ 2010-01-29 02:40 +0000 René Léves~ |
+ 10│ 2010-01-20 14:18 +0000 A. U. Thor  |
+   │ 2010-01-12 01:56 +0000 Max Power   |
+   │ 2010-01-03 13:33 +0000 Jørgen Thy~ |
+   │ 2009-12-26 01:11 +0000 作者        |
+   │ 2009-12-17 12:49 +0000 René Léves~ |
+ 15│ 2009-12-09 00:27 +0000 A. U. Thor  |
+   │ 2009-11-30 12:05 +0000 Max Power   |
+[main] 5cb3412a5e06e506840495b91acc8832%|[diff] 5cb3412a5e06e506840495b91acc100%
+EOF
