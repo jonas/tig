@@ -594,10 +594,24 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 		return parse_step(option->value, arg);
 
 	if (!strncmp(option->type, "enum", 4)) {
-		const char *type = option->type + STRING_SIZE("enum ");
-		const struct enum_map *map = find_enum_map(type);
+		if (!strcmp(name, "line-graphics") && !strcasecmp(arg, "auto")) {
+			const char *locale;
+			int *value = option->value;
 
-		return parse_enum(name, option->value, arg, map);
+			if ((((locale = getenv("LC_ALL")) && *locale) ||
+			     ((locale = getenv("LC_CTYPE")) && *locale) ||
+			     ((locale = getenv("LANG")) && *locale)) &&
+			    (strstr(locale, "UTF") || strstr(locale, "utf")))
+				*value = GRAPHIC_UTF_8;
+			else
+				*value = GRAPHIC_DEFAULT;
+			return SUCCESS;
+		} else {
+			const char *type = option->type + STRING_SIZE("enum ");
+			const struct enum_map *map = find_enum_map(type);
+
+			return parse_enum(name, option->value, arg, map);
+		}
 	}
 
 	if (!strcmp(option->type, "int")) {
