@@ -396,11 +396,11 @@ graph_symbol_to_chtype(const struct graph_symbol *symbol)
 		if (symbol->boundary)
 			graphics[1] = 'o';
 		else if (symbol->initial)
-			graphics[1] = 'I';
+			graphics[1] = '@';
 		else if (symbol->merge)
-			graphics[1] = 'M';
+			graphics[1] = ACS_DIAMOND;
 		else
-			graphics[1] = 'o'; //ACS_DIAMOND; //'*';
+			graphics[1] = ACS_BULLET;
 		return graphics;
 	}
 
