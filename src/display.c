@@ -573,9 +573,11 @@ done_display(void)
 		free(opt_tty.attr);
 		opt_tty.attr = NULL;
 	}
-	signal(SIGTTOU, SIG_IGN);
-	tcsetpgrp(opt_tty.fd, opt_tty.opgrp);
-	signal(SIGTTOU, SIG_DFL);
+	if (opt_tty.opgrp != -1) {
+		signal(SIGTTOU, SIG_IGN);
+		tcsetpgrp(opt_tty.fd, opt_tty.opgrp);
+		signal(SIGTTOU, SIG_DFL);
+	}
 }
 
 static void
@@ -603,12 +605,14 @@ init_tty(void)
 		die("Failed allocation for tty attributes");
 	tcgetattr(opt_tty.fd, opt_tty.attr);
 
-	/* process-group leader */
-	signal(SIGTTOU, SIG_IGN);
-	setpgid(getpid(), getpid());
-	opt_tty.opgrp = tcgetpgrp(opt_tty.fd);
-	tcsetpgrp(opt_tty.fd, getpid());
-	signal(SIGTTOU, SIG_DFL);
+	if (opt_pgrp) {
+		/* process-group leader */
+		setpgid(getpid(), getpid());
+		opt_tty.opgrp = tcgetpgrp(opt_tty.fd);
+		signal(SIGTTOU, SIG_IGN);
+		tcsetpgrp(opt_tty.fd, getpid());
+		signal(SIGTTOU, SIG_DFL);
+	}
 
 	die_callback = done_display;
 }
