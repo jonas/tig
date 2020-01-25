@@ -1475,10 +1475,17 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 enum status_code
 load_git_config(void)
 {
+	enum status_code code;
 	struct io io;
 	const char *config_list_argv[] = { "git", "config", "--list", NULL };
+	const char *git_worktree = getenv("GIT_WORK_TREE");
 
-	return io_run_load(&io, config_list_argv, "=", read_repo_config_option, NULL);
+	code = io_run_load(&io, config_list_argv, "=", read_repo_config_option, NULL);
+
+	if (git_worktree && *git_worktree)
+		string_ncopy(repo.worktree, git_worktree, strlen(git_worktree));
+
+	return code;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */
