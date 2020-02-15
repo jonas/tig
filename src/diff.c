@@ -113,6 +113,7 @@ diff_common_add_line(struct view *view, const char *text, enum line_type type, s
 
 	free(cell_text);
 	argv_free(context->cell_text);
+	free(context->cell_text);
 
 	if (!line)
 		return NULL;
