@@ -471,7 +471,7 @@ update_status_window(struct view *view, const char *context, const char *msg, va
 		if (view && view->has_scrolled && use_scroll_status_wclear)
 			wclear(status_win);
 		if (*msg) {
-			vwprintw(status_win, msg, args);
+			vw_printw(status_win, msg, args);
 			status_empty = false;
 		} else {
 			status_empty = true;
