@@ -1,6 +1,27 @@
 Release notes
 =============
 
+master
+------
+
+Improvements:
+
+ - bash/zsh completion: reimplement and decrease runtime by factor 1863. (#795)
+ - Add binding to reflog view to toggle reference display.
+ - Fail if tig is given an invalid or ambiguous ref. (#980)
+ - Make tig process-group leader an option. (#986, #951)
+ - Handle GIT_WORK_TREE environment variable.
+ - The blame view requires a working tree.
+ - Fix use of deprecated vwprintw() function.
+
+Bug fixes:
+
+ - Fix segmentation fault. (#971)
+ - Fix cursor position after "Move to parent" in blame view. (#973)
+ - Fix crash on adding a line to a view. (#523)
+ - Fix memory leak in diff unit.
+ - Fix loop after refresh or change in refs/main split view. (#991)
+
 tig-2.5.0
 ---------
 
