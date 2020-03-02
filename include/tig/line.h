@@ -36,6 +36,7 @@ struct ref;
 	_(DIFF_NEWMODE,		"new file mode "), \
 	_(DIFF_DELMODE,		"deleted file mode "), \
 	_(DIFF_SIMILARITY,	"similarity "), \
+	_(DIFF_NO_NEWLINE,	"\\ No newline at end of file"), \
 	_(DIFF_ADD_HIGHLIGHT,	""), \
 	_(DIFF_DEL_HIGHLIGHT,	""), \
 	_(PP_MERGE,		"Merge: "), \

@@ -110,6 +110,7 @@ View-specific actions
                            u status-update       Stage/unstage chunk or file changes
                            ! status-revert       Revert chunk or file changes
                            1 stage-update-line   Stage/unstage single line
+                           2 stage-update-part   Stage/unstage part of a chunk
                            \ stage-split-chunk   Split current diff chunk
 Option toggling:
                            [ :toggle diff-context -1
@@ -121,4 +122,7 @@ External commands:
                            A ?git stash apply %(stash)
                            P ?git stash pop %(stash)
                            ! ?git stash drop %(stash)
-[help] - line 1 of 126                                                                 97%
+[-] pager bindings
+Internal commands:
+                           @ :/^@@
+[help] - line 1 of 127                                                                100%

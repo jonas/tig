@@ -234,6 +234,7 @@ bind status	M	status-merge		# Open git-mergetool(1)
 # bind status	???	:toggle status		# Show short or long status labels
 bind stage	u	status-update		# Stage/unstage current diff (c)hunk
 bind stage	1	stage-update-line	# Stage/unstage current line
+bind stage	2	stage-update-part	# Stage/unstage part of chunk
 bind stage	!	status-revert		# Revert current diff (c)hunk
 bind stage	\	stage-split-chunk	# Split current diff (c)hunk
 bind stage	@	:/^@@			# Jump to next (c)hunk
@@ -355,6 +356,7 @@ color "rename from "		yellow	default
 color "rename to "		yellow	default
 color "similarity "		yellow	default
 color "dissimilarity "		yellow	default
+color "\ No newline at end of file"	blue	default
 color "diff-tree "		blue	default
 color "Author: "		cyan	default
 color "Commit: "		magenta	default
