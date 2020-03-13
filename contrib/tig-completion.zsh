@@ -14,6 +14,10 @@
 
 _tig () {
   local e
+  e=$(dirname ${funcsourcetrace[1]%:*})/git-completion.bash
+  if [ -f $e ]; then
+    GIT_SOURCING_ZSH_COMPLETION=y . $e
+  fi
   e=$(dirname ${funcsourcetrace[1]%:*})/tig-completion.bash
   if [ -f $e ]; then
     . $e
