@@ -13,6 +13,7 @@ Improvements:
  - Handle GIT_WORK_TREE environment variable.
  - The blame view requires a working tree.
  - Fix use of deprecated vwprintw() function.
+ - Update utf8proc to v2.5.0.
 
 Bug fixes:
 

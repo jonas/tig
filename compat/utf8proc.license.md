@@ -51,7 +51,7 @@ DEALINGS IN THE SOFTWARE.
 
 ## Unicode data license ##
 
-This software distribution contains derived data from a modified version of
+This software contains data (`utf8proc_data.c`) derived from processing
 the Unicode data files. The following license applies to that data:
 
 **COPYRIGHT AND PERMISSION NOTICE**
