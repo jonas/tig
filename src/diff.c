@@ -276,11 +276,15 @@ diff_common_read_diff_wdiff(struct view *view, const char *text)
 	 *	there could be [-one-] diff part{+s+} in the {+any +} line
 	 */
 
-	while (diff_common_read_diff_wdiff_group(&context));
+	while (diff_common_read_diff_wdiff_group(&context)) {}
 
+    // It's not a word-diff line, continue parsing
+    if (context.text == text)
+        return NULL;
+    
 	diff_common_add_cell(&context, strlen(context.text), false);
-
-	return diff_common_add_line(view, text, LINE_DEFAULT, &context);
+    
+	return diff_common_add_line(view, text, LINE_WDIFF_PLAIN, &context);
 }
 
 static bool
@@ -346,7 +350,9 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	if (state->reading_diff_chunk && type == LINE_DEFAULT) {
 		if (diff_common_read_diff_wdiff(view, data))
 			return true;
-	} else if (type == LINE_DIFF_HEADER) {
+	}
+	
+	if (type == LINE_DIFF_HEADER) {
 		state->after_diff = true;
 		state->reading_diff_chunk = false;
 
