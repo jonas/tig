@@ -123,6 +123,7 @@ iconv_t opt_iconv_out		= ICONV_NONE;
 char opt_editor[SIZEOF_STR]	= "";
 const char **opt_cmdline_args	= NULL;
 bool opt_log_follow		= false;
+bool opt_word_diff		= false;
 
 /*
  * Mapping between options and command argument mapping.
@@ -251,6 +252,11 @@ update_options_from_argv(const char *argv[])
 			opt_diff_context = value;
 			mark_option_seen(&opt_diff_context);
 			continue;
+		}
+
+		if (!strcmp(flag, "--word-diff") ||
+		    !strcmp(flag, "--word-diff=plain")) {
+			opt_word_diff = true;
 		}
 
 		argv[flags_pos++] = flag;
@@ -1063,6 +1069,11 @@ load_options(void)
 			return error("TIG_DIFF_OPTS contains too many arguments");
 		else if (!argv_copy(&opt_diff_options, diff_opts))
 			return error("Failed to format TIG_DIFF_OPTS arguments");
+	}
+
+	if (argv_contains(opt_diff_options, "--word-diff") ||
+	    argv_contains(opt_diff_options, "--word-diff=plain")) {
+		opt_word_diff = true;
 	}
 
 	return SUCCESS;

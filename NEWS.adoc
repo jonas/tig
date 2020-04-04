@@ -14,6 +14,7 @@ Improvements:
  - The blame view requires a working tree.
  - Fix use of deprecated vwprintw() function.
  - Update utf8proc to v2.5.0.
+ - Add --word-diff=plain colorizing support. (#221)
 
 Bug fixes:
 

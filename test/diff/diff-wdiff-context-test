@@ -1,0 +1,213 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+steps '
+	:save-display diff-default.screen
+
+	:21
+	]
+	:save-display diff-u4.screen
+
+	]
+	:save-display diff-u5.screen
+
+	:toggle diff-context +5
+	:save-display diff-u10.screen
+
+	[
+	[
+	:save-display diff-u8.screen
+
+	:0
+	:set diff-context = 3
+	:view-main
+	:view-diff
+	:save-display diff-default-from-main.screen
+
+	:21
+	]
+	:save-display diff-u4-from-main.screen
+
+	]
+	:save-display diff-u5-from-main.screen
+
+	:toggle diff-context +5
+	:save-display diff-u10-from-main.screen
+
+	[
+	[
+	:save-display diff-u8-from-main.screen
+'
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+test_tig show master^ --word-diff
+
+assert_equals 'diff-default.screen' <<EOF
+commit a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff
+Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
+AuthorDate: Sat Mar 1 15:59:02 2014 -0500
+Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
+CommitDate: Sat Mar 1 15:59:02 2014 -0500
+
+    Add type parameter for js.Dynamic
+---
+ common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala b/commo
+index 65f914a..3aa4320 100644
+--- a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
++++ b/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
+@@ -15,7 +15,7 @@ object Benchmark {
+  val benchmarks = js.Array[Benchmark]()
+  val benchmarkApps = js.Array[BenchmarkApp]()
+
+  val global = [-js.Dynamic.global.asInstanceOf[js.Dictionary]-]{+js.Dynamic.glo
+  global("runScalaJSBenchmarks") = runBenchmarks _
+  global("initScalaJSBenchmarkApps") = initBenchmarkApps _
+
+
+
+
+
+
+[diff] a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff - line 1 of 23              100%
+EOF
+
+assert_equals 'diff-u4.screen' <<EOF
+Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
+AuthorDate: Sat Mar 1 15:59:02 2014 -0500
+Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
+CommitDate: Sat Mar 1 15:59:02 2014 -0500
+
+    Add type parameter for js.Dynamic
+---
+ common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala b/commo
+index 65f914a..3aa4320 100644
+--- a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
++++ b/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
+@@ -14,9 +14,9 @@ import scala.scalajs.js
+object Benchmark {
+   val benchmarks = js.Array[Benchmark]()
+   val benchmarkApps = js.Array[BenchmarkApp]()
+
+   val global = [-js.Dynamic.global.asInstanceOf[js.Dictionary]-]{+js.Dynamic.glo
+   global("runScalaJSBenchmarks") = runBenchmarks _
+   global("initScalaJSBenchmarkApps") = initBenchmarkApps _
+
+   def add(benchmark: Benchmark) {
+
+
+
+
+[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sca100%
+EOF
+
+assert_equals 'diff-u5.screen' <<EOF
+AuthorDate: Sat Mar 1 15:59:02 2014 -0500
+Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
+CommitDate: Sat Mar 1 15:59:02 2014 -0500
+
+    Add type parameter for js.Dynamic
+---
+ common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala b/commo
+index 65f914a..3aa4320 100644
+--- a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
++++ b/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
+@@ -13,11 +13,11 @@ import scala.scalajs.js
+
+object Benchmark {
+  val benchmarks = js.Array[Benchmark]()
+  val benchmarkApps = js.Array[BenchmarkApp]()
+
+  val global = [-js.Dynamic.global.asInstanceOf[js.Dictionary]-]{+js.Dynamic.glo
+  global("runScalaJSBenchmarks") = runBenchmarks _
+  global("initScalaJSBenchmarkApps") = initBenchmarkApps _
+
+  def add(benchmark: Benchmark) {
+    benchmarks.push(benchmark)
+
+
+
+[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sca100%
+EOF
+
+assert_equals 'diff-u10.screen' <<EOF
+---
+ common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala b/commo
+index 65f914a..3aa4320 100644
+--- a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
++++ b/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
+@@ -8,21 +8,21 @@
+
+package org.scalajs.benchmark
+
+import scala.compat.Platform
+import scala.scalajs.js
+
+object Benchmark {
+  val benchmarks = js.Array[Benchmark]()
+  val benchmarkApps = js.Array[BenchmarkApp]()
+
+  val global = [-js.Dynamic.global.asInstanceOf[js.Dictionary]-]{+js.Dynamic.glo
+  global("runScalaJSBenchmarks") = runBenchmarks _
+  global("initScalaJSBenchmarkApps") = initBenchmarkApps _
+
+  def add(benchmark: Benchmark) {
+    benchmarks.push(benchmark)
+    if (benchmark.isInstanceOf[BenchmarkApp]) {
+      benchmarkApps.push(benchmark.asInstanceOf[BenchmarkApp])
+    }
+[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.scal94%
+EOF
+
+assert_equals 'diff-u8.screen' <<EOF
+
+    Add type parameter for js.Dynamic
+---
+ common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala b/commo
+index 65f914a..3aa4320 100644
+--- a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
++++ b/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
+@@ -10,17 +10,17 @@ package org.scalajs.benchmark
+
+import scala.compat.Platform
+import scala.scalajs.js
+
+object Benchmark {
+  val benchmarks = js.Array[Benchmark]()
+  val benchmarkApps = js.Array[BenchmarkApp]()
+
+  val global = [-js.Dynamic.global.asInstanceOf[js.Dictionary]-]{+js.Dynamic.glo
+  global("runScalaJSBenchmarks") = runBenchmarks _
+  global("initScalaJSBenchmarkApps") = initBenchmarkApps _
+
+  def add(benchmark: Benchmark) {
+    benchmarks.push(benchmark)
+    if (benchmark.isInstanceOf[BenchmarkApp]) {
+      benchmarkApps.push(benchmark.asInstanceOf[BenchmarkApp])
+    }
+[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sca100%
+EOF
+
+for i in expected/*.screen; do
+	diff_file="$(basename -- "$i" | sed 's/[.]screen/-from-main.screen/')"
+	assert_equals "$diff_file" <<EOF
+$(cat < "$i")
+EOF
+done

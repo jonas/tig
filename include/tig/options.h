@@ -183,6 +183,7 @@ extern iconv_t opt_iconv_out;
 extern char opt_editor[SIZEOF_STR];
 extern const char **opt_cmdline_args;
 extern bool opt_log_follow;
+extern bool opt_word_diff;
 
 /*
  * Mapping between options and command argument mapping.

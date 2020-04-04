@@ -46,7 +46,7 @@ diff_open(struct view *view, enum open_flags flags)
 enum status_code
 diff_init_highlight(struct view *view, struct diff_state *state)
 {
-	if (!opt_diff_highlight || !*opt_diff_highlight)
+	if (!opt_diff_highlight || !*opt_diff_highlight || opt_word_diff)
 		return SUCCESS;
 
 	struct app_external *app = app_diff_highlight_load(opt_diff_highlight);
@@ -212,6 +212,77 @@ diff_common_add_diff_stat(struct view *view, const char *text, size_t offset)
 }
 
 static bool
+diff_common_read_diff_wdiff_group(struct diff_stat_context *context)
+{
+	const char *sep_add = strstr(context->text, "{+");
+	const char *sep_del = strstr(context->text, "[-");
+	const char *sep;
+	enum line_type next_type;
+	const char *end_delimiter;
+	const char *end_sep;
+	size_t len;
+
+	if (sep_add == NULL && sep_del == NULL)
+		return false;
+
+	if (sep_del == NULL || (sep_add != NULL && sep_add < sep_del)) {
+		sep = sep_add;
+		next_type = LINE_DIFF_ADD;
+		end_delimiter = "+}";
+	} else {
+		sep = sep_del;
+		next_type = LINE_DIFF_DEL;
+		end_delimiter = "-]";
+	}
+
+	diff_common_add_cell(context, sep - context->text, false);
+
+	context->type = next_type;
+	context->text = sep;
+
+	// workaround for a single }/] change
+	end_sep = strstr(context->text + sizeof("{+") - 1, end_delimiter);
+
+	if (end_sep == NULL) {
+		// diff is not terminated
+		len = strlen(context->text);
+	} else {
+		// separators are included in the add/del highlight
+		len = end_sep - context->text + sizeof("+}") - 1;
+	}
+
+	diff_common_add_cell(context, len, false);
+
+	if (end_sep == NULL) {
+		context->text += len;
+	} else {
+		context->text = end_sep + sizeof("+}") - 1;
+	}
+	context->type = LINE_DEFAULT;
+
+	return true;
+}
+
+static bool
+diff_common_read_diff_wdiff(struct view *view, const char *text)
+{
+	struct diff_stat_context context = { text, LINE_DEFAULT };
+
+	/* Detect remaining part of a word diff line:
+	 *
+	 *	added {+new +} text
+	 *	removed[- something -] from the file
+	 *	replaced [-some-]{+same+} text
+	 *	there could be [-one-] diff part{+s+} in the {+any +} line
+	 */
+	while (diff_common_read_diff_wdiff_group(&context))
+		;
+
+	diff_common_add_cell(&context, strlen(context.text), true);
+	return diff_common_add_line(view, text, LINE_DEFAULT, &context);
+}
+
+static bool
 diff_common_highlight(struct view *view, const char *text, enum line_type type)
 {
 	struct diff_stat_context context = { text, type, true };
@@ -300,6 +371,13 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	} else if (state->highlight && strchr(data, 0x1b)) {
 		return diff_common_highlight(view, data, type);
 
+	} else if (opt_word_diff && state->reading_diff_chunk &&
+		   /* combined diff format is not using word diff */
+		   !state->combined_diff &&
+		   (type = LINE_DEFAULT ||
+		    /* ADD and DEL are only valid in regular diff hunks */
+		    type == LINE_DIFF_ADD || type == LINE_DIFF_DEL)) {
+		return diff_common_read_diff_wdiff(view, data);
 	}
 
 	return pager_common_read(view, data, type, NULL);
