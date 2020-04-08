@@ -1293,6 +1293,18 @@ branch               : Any other reference.
 </p>
 </dd>
 <dt class="hdlist1">
+<em>pgrp</em> (bool)
+</dt>
+<dd>
+<p>
+        Make tig process-group leader when starting and clean all processes
+        when exiting. Off by default. Do not enable this option if you are
+        using a Zsh version affected by zsh-workers/43379. Run <code>xclip</code> with
+        <code>setsid</code> to keep clipboard content after exiting tig. If you are using
+        git-credential-cache helper, set option <code>credentialCache.ignoreSIGHUP</code>.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>start-on-head</em> (bool)
 </dt>
 <dd>
@@ -2852,7 +2864,7 @@ git(7), git-config(1)</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2019-11-16 15:54:47 CET
+ 2020-04-08 18:17:14 CEST
 </div>
 </div>
 </body>

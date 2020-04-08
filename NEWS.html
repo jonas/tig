@@ -738,6 +738,92 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_5_1">tig-2.5.1</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+bash/zsh completion: reimplement and decrease runtime by factor 1863. (#795)
+</p>
+</li>
+<li>
+<p>
+Add binding to reflog view to toggle reference display.
+</p>
+</li>
+<li>
+<p>
+Fail if tig is given an invalid or ambiguous ref. (#980)
+</p>
+</li>
+<li>
+<p>
+Make tig process-group leader an option. (#986, #951)
+</p>
+</li>
+<li>
+<p>
+Handle GIT_WORK_TREE environment variable.
+</p>
+</li>
+<li>
+<p>
+The blame view requires a working tree.
+</p>
+</li>
+<li>
+<p>
+Fix use of deprecated vwprintw() function.
+</p>
+</li>
+<li>
+<p>
+Update utf8proc to v2.5.0.
+</p>
+</li>
+<li>
+<p>
+Add --word-diff=plain colorizing support. (#221)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix segmentation fault. (#971)
+</p>
+</li>
+<li>
+<p>
+Fix cursor position after "Move to parent" in blame view. (#973)
+</p>
+</li>
+<li>
+<p>
+Fix crash on adding a line to a view. (#523)
+</p>
+</li>
+<li>
+<p>
+Fix memory leak in diff unit.
+</p>
+</li>
+<li>
+<p>
+Fix loop after refresh or change in refs/main split view. (#991)
+</p>
+</li>
+<li>
+<p>
+Fix occasional crash on custom key bindings. (#1001)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_5_0">tig-2.5.0</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Improvements:</p></div>
@@ -4263,7 +4349,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2019-11-16 15:54:47 CET
+ 2020-04-08 18:17:14 CEST
 </div>
 </div>
 </body>

@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: tig
-.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 11/16/2019
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 04/08/2020
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.5.0
+.\"    Source: Tig 2.5.1
 .\"  Language: English
 .\"
-.TH "TIG" "1" "11/16/2019" "Tig 2\&.5\&.0" "Tig Manual"
+.TH "TIG" "1" "04/08/2020" "Tig 2\&.5\&.1" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -354,6 +354,19 @@ Show references (branches, remotes and tags):
 .\}
 .nf
 $ tig refs
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.sp
+Use word diff in the diff view:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ tig \-\-word\-diff=plain
 .fi
 .if n \{\
 .RE

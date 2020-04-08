@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: tigrc
-.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 11/16/2019
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 04/08/2020
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.5.0
+.\"    Source: Tig 2.5.1
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "11/16/2019" "Tig 2\&.5\&.0" "Tig Manual"
+.TH "TIGRC" "5" "04/08/2020" "Tig 2\&.5\&.1" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -482,6 +482,16 @@ set mouse = true\&.
 Whether to prefer moving the cursor to scrolling the view when using the mouse wheel\&. Off by default\&. Combines well with
 set mouse\-scroll = 1\&. Mouse support requires that ncurses itself support mouse events and that you have enabled mouse support in ~/\&.tigrc with
 set mouse = true\&.
+.RE
+.PP
+\fIpgrp\fR (bool)
+.RS 4
+Make tig process\-group leader when starting and clean all processes when exiting\&. Off by default\&. Do not enable this option if you are using a Zsh version affected by zsh\-workers/43379\&. Run
+xclip
+with
+setsid
+to keep clipboard content after exiting tig\&. If you are using git\-credential\-cache helper, set option
+credentialCache\&.ignoreSIGHUP\&.
 .RE
 .PP
 \fIstart\-on\-head\fR (bool)
