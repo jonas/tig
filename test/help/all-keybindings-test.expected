@@ -89,6 +89,8 @@ Option toggling:
 Internal commands:
                            @ :/^@@
 [-] reflog bindings
+Option toggling:
+                           F :toggle commit-title-refs
 External commands:
                            C ?git checkout %(branch)
                            ! ?git reset --hard %(commit)
@@ -119,6 +121,4 @@ External commands:
                            A ?git stash apply %(stash)
                            P ?git stash pop %(stash)
                            ! ?git stash drop %(stash)
-
-
-[help] - line 1 of 121                                                                100%
+[help] - line 1 of 123                                                                100%

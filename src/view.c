@@ -1592,7 +1592,7 @@ add_line_at(struct view *view, unsigned long pos, const void *data, enum line_ty
 		line = view->line + pos;
 		lineno = line->lineno;
 
-		memmove(line + 1, line, (view->lines - pos) * sizeof(*view->line));
+		memmove(line + 1, line, (view->lines - 1 - pos) * sizeof(*view->line));
 		while (pos < view->lines) {
 			view->line[pos].lineno++;
 			view->line[pos++].dirty = 1;

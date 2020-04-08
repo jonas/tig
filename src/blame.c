@@ -80,6 +80,9 @@ blame_open(struct view *view, enum open_flags flags)
 	const char *file_argv[] = { repo.exec_dir, view->env->file , NULL };
 	size_t i;
 
+	if (!(repo.is_inside_work_tree || *repo.worktree))
+		return error("The blame view requires a working tree");
+
 	if (is_initial_view(view)) {
 		/* Finish validating and setting up blame options */
 		if (!opt_file_args || opt_file_args[1])
@@ -425,7 +428,7 @@ blame_go_forward(struct view *view, struct blame *blame, bool parent)
 	string_ncopy(view->env->file, filename, strlen(filename));
 	if (parent)
 		setup_blame_parent_line(view, blame);
-	view->env->goto_lineno = blame->lineno;
+	view->env->goto_lineno = view->pos.lineno;
 	reload_view(view);
 }
 

@@ -471,7 +471,7 @@ update_status_window(struct view *view, const char *context, const char *msg, va
 		if (view && view->has_scrolled && use_scroll_status_wclear)
 			wclear(status_win);
 		if (*msg) {
-			vwprintw(status_win, msg, args);
+			vw_printw(status_win, msg, args);
 			status_empty = false;
 		} else {
 			status_empty = true;
@@ -573,9 +573,11 @@ done_display(void)
 		free(opt_tty.attr);
 		opt_tty.attr = NULL;
 	}
-	signal(SIGTTOU, SIG_IGN);
-	tcsetpgrp(opt_tty.fd, opt_tty.opgrp);
-	signal(SIGTTOU, SIG_DFL);
+	if (opt_tty.opgrp != -1) {
+		signal(SIGTTOU, SIG_IGN);
+		tcsetpgrp(opt_tty.fd, opt_tty.opgrp);
+		signal(SIGTTOU, SIG_DFL);
+	}
 }
 
 static void
@@ -603,12 +605,14 @@ init_tty(void)
 		die("Failed allocation for tty attributes");
 	tcgetattr(opt_tty.fd, opt_tty.attr);
 
-	/* process-group leader */
-	signal(SIGTTOU, SIG_IGN);
-	setpgid(getpid(), getpid());
-	opt_tty.opgrp = tcgetpgrp(opt_tty.fd);
-	tcsetpgrp(opt_tty.fd, getpid());
-	signal(SIGTTOU, SIG_DFL);
+	if (opt_pgrp) {
+		/* process-group leader */
+		setpgid(getpid(), getpid());
+		opt_tty.opgrp = tcgetpgrp(opt_tty.fd);
+		signal(SIGTTOU, SIG_IGN);
+		tcsetpgrp(opt_tty.fd, getpid());
+		signal(SIGTTOU, SIG_DFL);
+	}
 
 	die_callback = done_display;
 }
@@ -781,7 +785,6 @@ get_input(int prompt_position, struct key *key)
 		int delay = -1;
 
 		if (opt_refresh_mode != REFRESH_MODE_MANUAL) {
-			bool refs_refreshed = false;
 
 			if (opt_refresh_mode == REFRESH_MODE_PERIODIC)
 				delay = watch_periodic(opt_refresh_interval);
@@ -790,10 +793,6 @@ get_input(int prompt_position, struct key *key)
 				if (view_can_refresh(view) &&
 					!view->pipe &&
 					watch_dirty(&view->watch)) {
-					if (!refs_refreshed) {
-						load_refs(true);
-						refs_refreshed = true;
-					}
 					refresh_view(view);
 				}
 			}

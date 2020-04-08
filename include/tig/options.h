@@ -62,6 +62,7 @@ typedef struct view_column *view_settings;
 	_(mouse_scroll,			int,			VIEW_NO_FLAGS) \
 	_(mouse_wheel_cursor,		bool,			VIEW_NO_FLAGS) \
 	_(pager_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(pgrp,				bool,			VIEW_NO_FLAGS) \
 	_(reference_format,		struct ref_format **,	VIEW_NO_FLAGS) \
 	_(refresh_interval,		int,			VIEW_NO_FLAGS) \
 	_(refresh_mode,			enum refresh_mode,	VIEW_NO_FLAGS) \
@@ -182,6 +183,7 @@ extern iconv_t opt_iconv_out;
 extern char opt_editor[SIZEOF_STR];
 extern const char **opt_cmdline_args;
 extern bool opt_log_follow;
+extern bool opt_word_diff;
 
 /*
  * Mapping between options and command argument mapping.

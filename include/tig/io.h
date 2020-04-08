@@ -103,7 +103,7 @@ enum status_code io_load(struct io *io, const char *separators,
 	    io_read_fn read_property, void *data);
 enum status_code io_load_span(struct io *io, const char *separators,
 	     size_t *lineno, io_read_fn read_property, void *data);
-enum status_code io_run_load(const char **argv, const char *separators,
+enum status_code io_run_load(struct io *io, const char **argv, const char *separators,
 		io_read_fn read_property, void *data);
 char *io_memchr(struct buffer *buf, char *data, int c);
 

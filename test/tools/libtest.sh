@@ -17,6 +17,8 @@
 set -eu
 if [ -n "${BASH_VERSION:-}" ]; then
 	set -o pipefail
+	# Prevent bash from changing LINES and COLUMNS variables
+	shopt -u checkwinsize || true
 fi
 IFS='
 	'
@@ -503,7 +505,7 @@ require_git_version()
 	required_minor="$(expr "$required_version" : '[0-9]*\.\([0-9]*\).*')"
 
 	if [ "$required_major" -gt "$actual_major" ] ||
-	   [ "$required_minor" -gt "$actual_minor" ]; then
+	   [ "$required_major" -eq "$actual_major" -a "$required_minor" -gt "$actual_minor" ]; then
 		test_skip "$@"
 	fi
 }

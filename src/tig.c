@@ -402,29 +402,32 @@ read_filter_args(char *name, size_t namelen, char *value, size_t valuelen, void 
 	return argv_append(filter_args, name) ? SUCCESS : ERROR_OUT_OF_MEMORY;
 }
 
-static void
+static bool
 filter_rev_parse(const char ***args, const char *arg1, const char *arg2, const char *argv[])
 {
 	const char *rev_parse_argv[SIZEOF_ARG] = { "git", "rev-parse", arg1, arg2 };
 	const char **all_argv = NULL;
+	struct io io;
 
 	if (!argv_append_array(&all_argv, rev_parse_argv) ||
 	    !argv_append_array(&all_argv, argv) ||
-	    io_run_load(all_argv, "\n", read_filter_args, args) != SUCCESS)
+	    io_run_load(&io, all_argv, "\n", read_filter_args, args) != SUCCESS)
 		die("Failed to split arguments");
 	argv_free(all_argv);
 	free(all_argv);
+
+	return !io.status;
 }
 
 static void
-filter_options(const char *argv[], bool rev_parse)
+filter_options(const char *argv[], enum request request)
 {
 	const char **flags = NULL;
 	int next, flags_pos;
 
 	update_options_from_argv(argv);
 
-	if (!rev_parse) {
+	if (request == REQ_VIEW_GREP || request == REQ_VIEW_REFS) {
 		opt_cmdline_args = argv;
 		return;
 	}
@@ -446,7 +449,9 @@ filter_options(const char *argv[], bool rev_parse)
 
 	argv[flags_pos] = NULL;
 
-	filter_rev_parse(&opt_file_args, "--no-revs", "--no-flags", argv);
+	if (!filter_rev_parse(&opt_file_args, "--no-revs", "--no-flags", argv) &&
+	    request != REQ_VIEW_BLAME)
+		die("No revisions match the given arguments.");
 	filter_rev_parse(&flags, "--flags", "--no-revs", argv);
 
 	if (flags) {
@@ -473,7 +478,6 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 	enum request request;
 	const char *subcommand;
 	bool seen_dashdash = false;
-	bool rev_parse = true;
 	const char **filter_argv = NULL;
 	int i;
 
@@ -503,7 +507,6 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 
 	} else if (!strcmp(subcommand, "grep")) {
 		request = REQ_VIEW_GREP;
-		rev_parse = false;
 
 	} else if (!strcmp(subcommand, "show")) {
 		request = REQ_VIEW_DIFF;
@@ -519,7 +522,6 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 
 	} else if (!strcmp(subcommand, "refs")) {
 		request = REQ_VIEW_REFS;
-		rev_parse = false;
 
 	} else {
 		subcommand = NULL;
@@ -568,7 +570,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 	}
 
 	if (filter_argv)
-		filter_options(filter_argv, rev_parse);
+		filter_options(filter_argv, request);
 
 	return request;
 }
@@ -805,10 +807,6 @@ main(int argc, const char *argv[])
 	enum request request = parse_options(argc, argv, pager_mode);
 	struct view *view;
 
-	init_tty();
-
-	atexit(hangup_children);
-
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
 		die("Failed to setup signal handler");
 
@@ -828,6 +826,11 @@ main(int argc, const char *argv[])
 	die_if_failed(load_repo_info(), "Failed to load repo info.");
 	die_if_failed(load_options(), "Failed to load user config.");
 	die_if_failed(load_git_config(), "Failed to load repo config.");
+
+	init_tty();
+
+	if (opt_pgrp)
+		atexit(hangup_children);
 
 	prompt_init();
 

@@ -3,6 +3,8 @@
 . libtest.sh
 . libgit.sh
 
+require_git_version 2.26 "Requires merge backend for non-interactive rebase"
+
 export LINES=10
 
 test_setup_work_dir()
@@ -111,7 +113,7 @@ test_case rebasing-master \
 	--after=" git rebase --abort
 		  git checkout master" \
 <<EOF
-Rebasing conflict-branch
+Interactive rebase conflict-branch
 Changes to be committed:
   (no files)
 Changes not staged for commit:

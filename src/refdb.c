@@ -311,6 +311,7 @@ cleanup_refs(void *data, void *ref_)
 static enum status_code
 reload_refs(bool force)
 {
+	struct io io;
 	const char *ls_remote_argv[SIZEOF_ARG] = {
 		"git", "show-ref", "--head", "--dereference", NULL
 	};
@@ -342,7 +343,7 @@ reload_refs(bool force)
 	string_map_clear(&refs_by_id);
 	string_map_foreach(&refs_by_name, invalidate_refs, NULL);
 
-	code = io_run_load(ls_remote_argv, " \t", read_ref, &opt);
+	code = io_run_load(&io, ls_remote_argv, " \t", read_ref, &opt);
 	if (code != SUCCESS)
 		return code;
 

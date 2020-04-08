@@ -360,6 +360,14 @@ The following variables can be set:
 	Mouse support requires that ncurses itself support mouse events and that
 	you have enabled mouse support in ~/.tigrc with `set mouse = true`.
 
+'pgrp' (bool)::
+
+	Make tig process-group leader when starting and clean all processes
+	when exiting. Off by default. Do not enable this option if you are
+	using a Zsh version affected by zsh-workers/43379. Run `xclip` with
+	`setsid` to keep clipboard content after exiting tig. If you are using
+	git-credential-cache helper, set option `credentialCache.ignoreSIGHUP`.
+
 'start-on-head' (bool)::
 
 	Start with cursor on HEAD commit.

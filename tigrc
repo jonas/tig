@@ -140,6 +140,7 @@ set history-size		= 500		# Size of persistent history, 0 to disable
 set mouse			= no		# Enable mouse support?
 set mouse-scroll		= 3		# Number of lines to scroll via the mouse
 set mouse-wheel-cursor		= no		# Prefer moving the cursor to scrolling the view?
+set pgrp			= no		# Make tig process-group leader
 
 # User-defined commands
 # ---------------------
@@ -244,6 +245,7 @@ bind diff	]	:toggle diff-context +1
 bind main	H	:goto HEAD
 bind main	G	:toggle commit-title-graph # Toggle revision graph visualization
 bind main	F	:toggle commit-title-refs  # Toggle reference display (tags/branches)
+bind reflog	F	:toggle commit-title-refs  # Toggle reference display (tags/branches)
 
 # Cursor navigation
 bind generic	j	move-down

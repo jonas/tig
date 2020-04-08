@@ -1096,6 +1096,9 @@ exec_run_request(struct view *view, struct run_request *req)
 	char cmd[SIZEOF_MED_STR];
 	const char *req_argv[SIZEOF_ARG];
 	int req_argc = 0;
+	/* req may be invalid after run_prompt_command if run_request
+	 * is reallocated, so use a copy of the flags. */
+	struct run_request_flags req_flags = req->flags;
 
 	if (!argv_to_string(req->argv, cmd, sizeof(cmd), " ")
 	    || !argv_from_string_no_quotes(req_argv, &req_argc, cmd)
@@ -1132,13 +1135,13 @@ exec_run_request(struct view *view, struct run_request *req)
 	free(argv);
 
 	if (request == REQ_NONE) {
-		if (req->flags.confirm && !confirmed)
+		if (req_flags.confirm && !confirmed)
 			request = REQ_NONE;
 
-		else if (req->flags.exit)
+		else if (req_flags.exit)
 			request = REQ_QUIT;
 
-		else if (!req->flags.internal && watch_dirty(&view->watch))
+		else if (!req_flags.internal && watch_dirty(&view->watch))
 			request = REQ_REFRESH;
 
 	}
