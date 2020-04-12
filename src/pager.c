@@ -73,8 +73,10 @@ pager_wrap_line(struct view *view, const char *data, enum line_type type)
 	size_t lineno = 0;
 
 	while (datalen > 0 || !has_first_line) {
+		int width;
+		int trimmed;
 		bool wrapped = !!first_line;
-		size_t linelen = string_expanded_length(data, datalen, opt_tab_size, view->width - !!wrapped);
+		size_t linelen = utf8_length(&data, datalen, 0, &width, view->width, &trimmed, wrapped, opt_tab_size);
 		struct line *line;
 
 		line = add_line_text_at_(view, view->lines, data, linelen, type, 1, wrapped);

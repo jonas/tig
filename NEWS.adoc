@@ -1,6 +1,13 @@
 Release notes
 =============
 
+master
+------
+
+Bug fixes:
+
+ - Fix wrapping of lines with multibyte characters. (#988)
+
 tig-2.5.1
 ---------
 

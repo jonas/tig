@@ -86,24 +86,6 @@ string_copy_rev_from_commit_line(char *dst, const char *src)
 }
 
 size_t
-string_expanded_length(const char *src, size_t srclen, size_t tabsize, size_t max_size)
-{
-	size_t size, pos;
-
-	for (size = pos = 0; pos < srclen && size < max_size; pos++) {
-		if (src[pos] == '\t') {
-			size_t expanded = tabsize - (size % tabsize);
-
-			size += expanded;
-		} else {
-			size++;
-		}
-	}
-
-	return pos;
-}
-
-size_t
 string_expand(char *dst, size_t dstlen, const char *src, int srclen, int tabsize)
 {
 	size_t size, pos;
@@ -330,7 +312,8 @@ utf8_length(const char **start, int max_chars, size_t skip, int *width, size_t m
 		if (!unicode)
 			break;
 
-		ucwidth = unicode_width(unicode, tab_size);
+		ucwidth = unicode == '\t' ? tab_size - (*width % tab_size) :
+					    utf8proc_charwidth((utf8proc_int32_t) unicode);
 		if (skip > 0) {
 			skip -= ucwidth <= skip ? ucwidth : skip;
 			*start += bytes;
