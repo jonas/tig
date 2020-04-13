@@ -582,11 +582,21 @@ draw_view_line_search_result(struct view *view, unsigned int lineno)
 	char *buf = malloc(bufsize + 1);
 	regmatch_t pmatch[1];
 	regoff_t bufpos = 0;
+#if defined(NCURSES_VERSION_PATCH) && NCURSES_VERSION_PATCH < 20070721
+	int width;
+	int trimmed;
+#endif
 
 	if (!buf || mvwinnstr(view->win, lineno, 0, buf, bufsize) == ERR) {
 		free(buf);
 		return;
 	}
+
+#if defined(NCURSES_VERSION_PATCH) && NCURSES_VERSION_PATCH < 20070721
+	/* Older winnstr() did not always stop at the end of the line. */
+	buf[utf8_length((const char **) &buf, bufsize, 0, &width, view->width, &trimmed, false, 1)] = 0;
+#endif
+	bufsize = strlen(string_trim_end(buf));
 
 	while (bufpos < bufsize && !regexec(view->regex, buf + bufpos, ARRAY_SIZE(pmatch), pmatch, 0)) {
 		regoff_t start = pmatch[0].rm_so;

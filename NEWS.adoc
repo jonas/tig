@@ -7,6 +7,7 @@ master
 Bug fixes:
 
  - Fix wrapping of lines with multibyte characters. (#988)
+ - Improve highlighting of search with $ regex. (#1000)
 
 tig-2.5.1
 ---------
