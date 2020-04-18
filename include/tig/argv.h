@@ -60,6 +60,7 @@ typedef unsigned long argv_number;
 struct argv_env {
 	ARGV_ENV_INFO(ARGV_ENV_FIELDS)
 	unsigned long goto_lineno;
+	char goto_id[SIZEOF_REV];
 	char search[SIZEOF_STR];
 	char none[1];
 };

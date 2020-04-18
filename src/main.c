@@ -98,7 +98,8 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 
 	view_column_info_update(view, line);
 
-	if (opt_start_on_head && is_head_commit(commit->id))
+	if ((opt_start_on_head && is_head_commit(commit->id)) ||
+	    (view->env->goto_id[0] && !strncmp(view->env->goto_id, commit->id, SIZEOF_REV - 1)))
 		select_view_line(view, line->lineno + 1);
 
 	return commit;
