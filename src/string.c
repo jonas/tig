@@ -82,7 +82,10 @@ string_copy_rev(char *dst, const char *src)
 void
 string_copy_rev_from_commit_line(char *dst, const char *src)
 {
-	string_copy_rev(dst, src + STRING_SIZE("commit "));
+	src += STRING_SIZE("commit ");
+	while (*src && !isalnum(*src))
+		src++;
+	string_copy_rev(dst, src);
 }
 
 size_t
