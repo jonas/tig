@@ -7,6 +7,7 @@ master
 Improvements:
 
  - Jump from blame to commit. (#355)
+ - Start blame of an uncommitted deleted line from HEAD so the line's origin can be traced. (#1008)
 
 Bug fixes:
 
