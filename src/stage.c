@@ -420,7 +420,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 		if (stage_line_type == LINE_STAT_UNTRACKED) {
 			open_editor(stage_status.new.name, (line - view->line) + 1);
 		} else {
-			open_editor(stage_status.new.name, diff_get_lineno(view, line));
+			open_editor(stage_status.new.name, diff_get_lineno(view, line, false));
 		}
 		break;
 
@@ -445,7 +445,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 		}
 
 		view->env->ref[0] = 0;
-		view->env->goto_lineno = diff_get_lineno(view, line);
+		view->env->goto_lineno = diff_get_lineno(view, line, false);
 		if (view->env->goto_lineno > 0)
 			view->env->goto_lineno--;
 		return request;

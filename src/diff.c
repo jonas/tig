@@ -451,7 +451,7 @@ diff_save_line(struct view *view, struct diff_state *state, enum open_flags flag
 
 		if (file) {
 			state->file = get_path(file);
-			state->lineno = diff_get_lineno(view, line);
+			state->lineno = diff_get_lineno(view, line, false);
 			state->pos = view->pos;
 		}
 	}
@@ -479,7 +479,7 @@ diff_restore_line(struct view *view, struct diff_state *state)
 		return;
 
 	while ((line = find_next_line_by_type(view, line, LINE_DIFF_CHUNK))) {
-		unsigned int lineno = diff_get_lineno(view, line);
+		unsigned int lineno = diff_get_lineno(view, line, false);
 
 		for (line++; view_has_line(view, line) && line->type != LINE_DIFF_CHUNK; line++) {
 			if (lineno == state->lineno) {
@@ -605,7 +605,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 }
 
 unsigned int
-diff_get_lineno(struct view *view, struct line *line)
+diff_get_lineno(struct view *view, struct line *line, bool old)
 {
 	const struct line *header, *chunk;
 	unsigned int lineno;
@@ -625,11 +625,11 @@ diff_get_lineno(struct view *view, struct line *line)
 	if (!parse_chunk_header(&chunk_header, box_text(chunk)))
 		return 0;
 
-	lineno = chunk_header.new.position;
+	lineno = old ? chunk_header.old.position : chunk_header.new.position;
 
 	for (chunk++; chunk < line; chunk++)
-		if (chunk->type != LINE_DIFF_DEL &&
-		    chunk->type != LINE_DIFF_DEL2)
+		if (old ? chunk->type != LINE_DIFF_ADD && chunk->type != LINE_DIFF_ADD2
+			: chunk->type != LINE_DIFF_DEL && chunk->type != LINE_DIFF_DEL2)
 			lineno++;
 
 	return lineno;
@@ -761,7 +761,7 @@ diff_common_edit(struct view *view, enum request request, struct line *line)
 		lineno = view->env->lineno;
 	} else {
 		file = diff_get_pathname(view, line);
-		lineno = diff_get_lineno(view, line);
+		lineno = diff_get_lineno(view, line, false);
 	}
 
 	if (!file) {
@@ -827,7 +827,7 @@ diff_common_select(struct view *view, struct line *line, const char *changes_msg
 			if (changes_msg)
 				string_format(view->ref, "%s to '%s'", changes_msg, file);
 			string_format(view->env->file, "%s", file);
-			view->env->lineno = view->env->goto_lineno = diff_get_lineno(view, line);
+			view->env->lineno = view->env->goto_lineno = diff_get_lineno(view, line, false);
 			view->env->blob[0] = 0;
 		} else {
 			string_ncopy(view->ref, view->ops->id, strlen(view->ops->id));
