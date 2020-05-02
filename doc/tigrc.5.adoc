@@ -780,8 +780,7 @@ file:
 	gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &"
 	publish = !"for i in origin public; do git push $i; done"
 [tig "bind"]
-	# @-prefix means that the console output will not be shown.
-	generic = V !@git gitk-bg
+	generic = V @git gitk-bg
 	generic = > !git publish
 --------------------------------------------------------------------------
 

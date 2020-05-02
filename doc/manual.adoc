@@ -208,7 +208,7 @@ Example user-defined commands:
 
  - Copy commit ID to clipboard:
 
-	bind generic 9 !@sh -c "echo -n %(commit) | xclip -selection c"
+	bind generic 9 @sh -c "echo -n %(commit) | xclip -selection c"
 
  - Add/edit notes for the current commit used during a review:
 
