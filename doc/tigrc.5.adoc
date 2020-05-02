@@ -690,6 +690,9 @@ console output shown (as if '!' was specified). When multiple command options
 are specified their behavior are combined, e.g. "?<git commit" will prompt the
 user whether to execute the command and will exit Tig after completion.
 
+Note that if you want to use pipes or redirection in your commands then you
+must run them in a subshell, i.e. embed your commands in `sh -c '<commands>'`.
+
 Browsing state variables
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
