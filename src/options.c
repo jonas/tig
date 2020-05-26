@@ -631,6 +631,16 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 			}
 		}
 
+		if (strstr(name, "-maxwidth") && strchr(arg, '%') &&
+		    parse_int(option->value, arg, 0, 100) == SUCCESS) {
+			int *value = option->value;
+
+			/* Use negative values to signify maxwidth is
+			 * not fixed but is a % of the view width. */
+			*value *= -1;
+			return SUCCESS;
+		}
+
 		if (!strcmp(name, "line-number-interval") ||
 		    !strcmp(name, "tab-size"))
 			return parse_int(option->value, arg, 1, 1024);

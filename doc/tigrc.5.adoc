@@ -467,7 +467,9 @@ author::
 	  1 and 10, the author name will be abbreviated to the author's initials.
 	  When set to zero, the width is automatically sized to fit the content.
 	- 'maxwidth' (int): Maximum width of the column. Permit automatically
-	  sizing content, up to this limit.
+	  sizing content, up to this limit. Can be specified either as the number
+	  of columns, e.g. '15', or as a percentage of the view width, e.g. '20%',
+	  where the maximum is 100%.
 
 commit-title::
 	- 'graph' (mixed) [no|v2|v1]: Whether to show the revision graph in the
@@ -501,7 +503,9 @@ file-name::
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
 	- 'maxwidth' (int): Maximum width of the column. Permit automatically
-	  sizing content, up to this limit.
+	  sizing content, up to this limit. Can be specified either as the number
+	  of columns, e.g. '15', or as a percentage of the view width, e.g. '20%',
+	  where the maximum is 100%.
 
 file-size::
 	- 'display' (mixed) [default|units|<bool>]: How to display file sizes.
@@ -534,7 +538,9 @@ ref::
 	- 'width' (int): Fixed width for the column. When set to zero, the width
 	  is automatically sized to fit the content.
 	- 'maxwidth' (int): Maximum width of the column. Permit automatically
-	  sizing content, up to this limit.
+	  sizing content, up to this limit. Can be specified either as the number
+	  of columns, e.g. '15', or as a percentage of the view width, e.g. '20%',
+	  where the maximum is 100%.
 
 status::
 	- 'display' (mixed) [no|short|long|<bool>]: How to display the status
