@@ -314,7 +314,7 @@ draw_lineno_custom(struct view *view, struct view_column *column, unsigned int l
 	unsigned long digits3 = MIN(9,MAX(3,column->width));
 	int max = MIN(VIEW_MAX_LEN(view), digits3);
 	char *text = NULL;
-	chtype separator = opt_line_graphics ? ACS_VLINE : '|';
+	chtype separator = ACS_VLINE;
 	struct line_number_options *opts = &column->opt.line_number;
 	int interval = opts->interval > 0 ? opts->interval : 5;
 
@@ -332,7 +332,17 @@ draw_lineno_custom(struct view *view, struct view_column *column, unsigned int l
 		draw_chars(view, LINE_LINE_NUMBER, text, -1, max, true);
 	else
 		draw_space(view, LINE_LINE_NUMBER, max, digits3);
-	return draw_graphic(view, LINE_DEFAULT, &separator, 1, true);
+
+	switch (opt_line_graphics) {
+	case GRAPHIC_ASCII:
+		return draw_chars(view, LINE_DEFAULT, "| ", -1, 2, false);
+	case GRAPHIC_DEFAULT:
+		return draw_graphic(view, LINE_DEFAULT, &separator, 1, true);
+	case GRAPHIC_UTF_8:
+		return draw_chars(view, LINE_DEFAULT, "│ ", -1, 2, false);
+	}
+
+	return false;
 }
 
 bool
