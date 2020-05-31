@@ -41,7 +41,16 @@ Before upgrading, you are advised to read link:NEWS.{docext}[the release notes].
 Installation using `configure`
 ------------------------------
 
-Optionally, you can use the `configure` script to detect dependencies:
+Optionally, you can use the `configure` script to detect dependencies.  If you
+downloaded the Tig sources from https://github.com/jonas/tig/releases/[a
+release] there's already a `configure` script. However, if you are building from
+the Tig repository, you need to generate the `configure` script yourself. First,
+ensure that `autoconf` is installed on your system, and then run the following
+command:
+
+	$ make configure
+
+To install using `configure`, run the following commands:
 
 	$ ./configure
 	$ make
@@ -55,12 +64,6 @@ flags to have it properly detected (note this done out of the box if you
 build without `configure`):
 
         $ ./configure LDFLAGS=-L/usr/local/opt/ncurses/lib CPPFLAGS=-I/usr/local/opt/ncurses/include
-
-Note, if you are building from the Tig repository, you need to generate
-`configure` yourself. First, ensure that `autoconf` is installed on your system,
-and then run the following command:
-
-	$ make configure
 
 Installation using Homebrew
 ---------------------------
