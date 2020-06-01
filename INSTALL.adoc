@@ -24,6 +24,12 @@ By default, `tig` is installed in `$HOME/bin`. To install `tig` elsewhere set
 	$ make prefix=/usr/local
 	$ sudo make install prefix=/usr/local
 
+Additional build options can be defined in the `config.make` file, which is
+loaded automatically when running `make` if it exists. By default,
+`contrib/config.make-$kernel_name` is loaded if it exists (currently only
+available for macOS [`Darwin`] and Cygwin). See `contrib/config.make` for
+example build options.
+
 Documentation files, such as manpages, are distributed in the release tarballs,
 and can be installed using:
 
@@ -41,17 +47,16 @@ Before upgrading, you are advised to read link:NEWS.{docext}[the release notes].
 Installation using `configure`
 ------------------------------
 
-Optionally, you can use the `configure` script to detect dependencies.  If you
-downloaded the Tig sources from https://github.com/jonas/tig/releases/[a
-release] there's already a `configure` script. However, if you are building from
-the Tig repository, you need to generate the `configure` script yourself. First,
-ensure that `autoconf` is installed on your system, and then run the following
-command:
-
-	$ make configure
+If you prefer an autotools-based installation process, you can use the
+`configure` script to detect dependencies and enable features. If you downloaded
+the Tig sources from https://github.com/jonas/tig/releases/[a release tarball]
+there's already a `configure` script. However, if you are building from the Tig
+repository, you need to ensure that `autoconf` is installed on your system and
+generate the `configure` script yourself.
 
 To install using `configure`, run the following commands:
 
+	$ make configure # Only run if you are building from the Git repository
 	$ ./configure
 	$ make
 	$ make install
