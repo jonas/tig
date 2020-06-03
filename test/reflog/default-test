@@ -23,8 +23,8 @@ test_tig reflog
 assert_equals 'reflog-default.screen' <<EOF
 HEAD@{0} [r1.1.2] [r1.1.x] <v1.1> checkout: moving from r1.0 to r1.1.2
 HEAD@{1} [r1.0] <v1.0> checkout: moving from master to r1.0
-HEAD@{2} [master] {origin/master} {max-power/master} {origin/HEAD} reset: moving
-HEAD@{3} [master] {origin/master} {max-power/master} {origin/HEAD} clone: from /
+HEAD@{2} [master] {max-power/master} {origin/HEAD} {origin/master} reset: moving
+HEAD@{3} [master] {max-power/master} {origin/HEAD} {origin/master} clone: from /
 
 
 
