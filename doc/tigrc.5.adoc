@@ -607,8 +607,9 @@ Keymaps::
 
 Valid keymaps are: *main*, *diff*, *log*, *reflog*, *help*, *pager*, *status*,
 *stage*, *tree*, *blob*, *blame*, *refs*, *stash*, *grep* and *generic*. Use
-*generic* to set key mapping in all keymaps. Use *search* to define keys for
-navigating search results during search.
+*generic* to set key mapping in all keymaps (which may still be overridden by a
+specific view keybinding). Use *search* to define keys for navigating search
+results during search.
 
 Key values::
 
