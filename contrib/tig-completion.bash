@@ -28,6 +28,9 @@
 #       is performed while the script loads.  If git isn't found
 #       at source time then all lookups will be done on demand,
 #       which may be slightly slower.
+#
+#    4) This completion file depends on git completion already being
+#       loaded. Make sure git-completion.bash happens first.
 
 __tig_options="
 	-v --version
@@ -93,13 +96,15 @@ if [ -n "$ZSH_VERSION" ]; then
 	bashcompinit
 fi
 
-# we use internal git-completion functions, so wrap _tig for all necessary
+# we use internal git-completion functions (if available), so wrap _tig for all necessary
 # variables (like cword and prev) to be defined
-__git_complete tig _tig 
+if type '__git_complete' 2>/dev/null | grep -q 'function'; then
+	__git_complete tig _tig
 
-# The following are necessary only for Cygwin, and only are needed
-# when the user has tab-completed the executable name and consequently
-# included the '.exe' suffix.
-if [ Cygwin = "$(uname -o 2>/dev/null)" ]; then
-	__git_complete tig.exe _tig
+	# The following are necessary only for Cygwin, and only are needed
+	# when the user has tab-completed the executable name and consequently
+	# included the '.exe' suffix.
+	if [ Cygwin = "$(uname -o 2>/dev/null)" ]; then
+		__git_complete tig.exe _tig
+	fi
 fi
