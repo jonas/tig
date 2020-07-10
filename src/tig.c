@@ -378,7 +378,7 @@ static const char usage_string[] =
 "   or: tig blame  [options] [rev] [--] path\n"
 "   or: tig grep   [options] [pattern]\n"
 "   or: tig refs   [options]\n"
-"   or: tig stash\n"
+"   or: tig stash  [options]\n"
 "   or: tig status\n"
 "   or: tig <      [git command output]\n"
 "\n"

@@ -10,6 +10,7 @@ Improvements:
  - Start blame of an uncommitted deleted line from HEAD so the line's origin can be traced. (#1008)
  - Add line-graphics = auto. (#834)
  - Allow maxwidth to be expressed in % of the view width.
+ - Pass stash args through. (#1022)
 
 Bug fixes:
 

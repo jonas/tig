@@ -18,7 +18,7 @@ tig reflog [options] [revisions]
 tig blame  [options] [rev] [--] path
 tig grep   [options] [pattern]
 tig refs   [options]
-tig stash
+tig stash  [options]
 tig status
 tig <      [Git command output]
 _______________________________________________________________________
