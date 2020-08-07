@@ -19,6 +19,7 @@ Resources
  - Homepage:	https://jonas.github.io/tig/[]
  - Manual:	https://jonas.github.io/tig/doc/manual.html[]
  - Tarballs:	https://github.com/jonas/tig/releases[]
+ - Repository:	https://github.com/jonas/tig[]
  - Git URL:	git://github.com/jonas/tig.git
  - Gitter:	https://gitter.im/jonas/tig[]
  - Q&A:		https://stackoverflow.com/questions/tagged/tig[]
