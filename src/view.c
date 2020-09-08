@@ -1661,7 +1661,14 @@ add_line_text_at_(struct view *view, unsigned long pos, const char *text, size_t
 struct line *
 add_line_text_at(struct view *view, unsigned long pos, const char *text, enum line_type type, size_t cells)
 {
-	return add_line_text_at_(view, pos, text, strlen(text), type, cells, false);
+	size_t textlen = strlen(text);
+
+	/* If the filename contains a space, Git adds a tab at the end of
+	 * the line, to satisfy GNU patch. Drop it to correct the filename. */
+	if ((type == LINE_DIFF_ADD_FILE || type == LINE_DIFF_DEL_FILE) && text[textlen - 1] == '\t')
+		textlen--;
+
+	return add_line_text_at_(view, pos, text, textlen, type, cells, false);
 }
 
 struct line *
