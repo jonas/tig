@@ -15,6 +15,7 @@
 #include "tig/draw.h"
 #include "tig/main.h"
 #include "tig/diff.h"
+#include "tig/repo.h"
 
 static enum status_code
 stash_open(struct view *view, enum open_flags flags)
@@ -22,6 +23,9 @@ stash_open(struct view *view, enum open_flags flags)
 	static const char *stash_argv[] = { "git", "stash", "list",
 		encoding_arg, "--no-color", "--pretty=raw", "%(revargs)", NULL };
 	struct main_state *state = view->private;
+
+	if (!(repo.is_inside_work_tree || *repo.worktree))
+		return error("The stash view requires a working tree");
 
 	state->with_graph = false;
 	watch_register(&view->watch, WATCH_STASH);
