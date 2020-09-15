@@ -705,7 +705,7 @@ sigsegv_handler(int sig)
 }
 #endif
 
-void
+static void
 sighup_handler(int sig)
 {
 	if (die_callback)
@@ -748,7 +748,7 @@ key_combo_handler(struct input *input, struct key *key)
 	return INPUT_STOP;
 }
 
-enum request
+static enum request
 read_key_combo(struct keymap *keymap)
 {
 	struct key_combo combo = { REQ_NONE, keymap, 0 };
@@ -764,7 +764,7 @@ die_if_failed(enum status_code code, const char *msg)
 		die("%s: %s", msg, get_status_message(code));
 }
 
-void
+static void
 hangup_children(void)
 {
 	if (signal(SIGHUP, SIG_IGN) == SIG_ERR)

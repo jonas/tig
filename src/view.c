@@ -817,9 +817,6 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 	}
 }
 
-#define refresh_view(view) load_view(view, NULL, OPEN_REFRESH)
-#define reload_view(view) load_view(view, NULL, OPEN_RELOAD)
-
 void
 open_view(struct view *prev, struct view *view, enum open_flags flags)
 {

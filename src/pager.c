@@ -12,6 +12,7 @@
  */
 
 #include "tig/tig.h"
+#include "tig/pager.h"
 #include "tig/options.h"
 #include "tig/request.h"
 #include "tig/line.h"

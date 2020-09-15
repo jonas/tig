@@ -366,7 +366,7 @@ stage_chunk_is_wrapped(struct view *view, struct line *line)
 	return false;
 }
 
-bool
+static bool
 find_deleted_line_in_head(struct view *view, struct line *line) {
 	struct io io;
 	struct buffer buffer;

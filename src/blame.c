@@ -329,7 +329,7 @@ blame_read(struct view *view, struct buffer *buf, bool force_stop)
 	return true;
 }
 
-bool
+static bool
 blame_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
 	struct blame *blame = line->data;

@@ -79,7 +79,7 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 	return true;
 }
 
-bool
+static bool
 help_grep(struct view *view, struct line *line)
 {
 	struct help *help = line->data;
@@ -216,7 +216,7 @@ help_request(struct view *view, enum request request, struct line *line)
 	}
 }
 
-void
+static void
 help_select(struct view *view, struct line *line)
 {
 }
