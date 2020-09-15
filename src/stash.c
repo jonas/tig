@@ -44,7 +44,7 @@ stash_select(struct view *view, struct line *line)
 	string_copy(view->ref, view->env->stash);
 }
 
-enum request
+static enum request
 stash_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags = (view_is_displayed(view) && request != REQ_VIEW_DIFF)

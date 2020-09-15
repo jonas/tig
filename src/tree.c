@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include "tig/tree.h"
 #include "tig/util.h"
 #include "tig/repo.h"
 #include "tig/io.h"

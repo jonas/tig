@@ -115,7 +115,7 @@ struct id_color {
 	size_t color;
 };
 
-struct id_color *
+static struct id_color *
 id_color_new(const char *id, size_t color)
 {
 	struct id_color *node = malloc(sizeof(struct id_color));
