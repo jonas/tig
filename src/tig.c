@@ -653,6 +653,9 @@ handle_mouse_event(void)
 	if (event.bstate & BUTTON1_PRESSED) {
 		if (event.y == view->pos.lineno - view->pos.offset) {
 			/* Click is on the same line, perform an "ENTER" */
+			// unless we are in diff as that might move/scroll ...
+			if (view_has_flags(view, VIEW_DIFF_LIKE))
+				return REQ_NONE;
 			return REQ_ENTER;
 
 		} else {
