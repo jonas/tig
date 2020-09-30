@@ -98,7 +98,7 @@ fi
 
 # we use internal git-completion functions (if available), so wrap _tig for all necessary
 # variables (like cword and prev) to be defined
-if type '__git_complete' 2>/dev/null | grep -q 'function'; then
+if [ "$(type -t __git_complete)" = function ]; then
 	__git_complete tig _tig
 
 	# The following are necessary only for Cygwin, and only are needed
