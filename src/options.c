@@ -606,7 +606,7 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 			int *value = option->value;
 
 			/* We try to parse it as a boolean (and set the
-			 * value to 0 if fale), otherwise we parse it as
+			 * value to 0 if false), otherwise we parse it as
 			 * an integer and use the given value. */
 			if (parse_bool(&enabled, arg) == SUCCESS) {
 				if (!enabled) {
