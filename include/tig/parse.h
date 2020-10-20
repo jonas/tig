@@ -31,19 +31,19 @@ bool parse_chunk_header(struct chunk_header *header, const char *line);
 bool parse_chunk_lineno(unsigned long *lineno, const char *chunk, int marker);
 
 struct blame_commit {
-	char id[SIZEOF_REV];		/* SHA1 ID. */
+	char id[SIZEOF_REV];		/* Hash ID. */
 	char title[128];		/* First line of the commit message. */
 	const struct ident *author;	/* Author of the commit. */
 	struct time author_time;	/* Date from the author ident. */
 	const struct ident *committer;	/* Committer. */
 	struct time commit_time;	/* Date from the committer ident. */
 	const char *filename;		/* Name of file. */
-	char parent_id[SIZEOF_REV];	/* Parent/previous SHA1 ID. */
+	char parent_id[SIZEOF_REV];	/* Parent/previous hash ID. */
 	const char *parent_filename;	/* Parent/previous name of file. */
 };
 
 struct blame_header {
-	char id[SIZEOF_REV];		/* SHA1 ID. */
+	char id[SIZEOF_REV];		/* Hash ID. */
 	size_t orig_lineno;
 	size_t lineno;
 	size_t group;

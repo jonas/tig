@@ -719,9 +719,16 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 		if (!strcmp(name, "line-number-interval") ||
 		    !strcmp(name, "tab-size"))
 			return parse_int(option->value, arg, 1, 1024);
-		else if (!strcmp(name, "id-width"))
-			return parse_int(option->value, arg, 0, SIZEOF_REV - 1);
-		else
+		else if (!strcmp(name, "id-width")) {
+			enum status_code code = parse_int(option->value, arg, 0, SIZEOF_REV - 1);
+			if (code == SUCCESS) {
+				int *value = option->value;
+				/* Limit id-width to the length of the hash used for the repository. */
+				if (*value > REPO_INFO_SIZEOF_REV - 1)
+					*value = REPO_INFO_SIZEOF_REV - 1;
+			}
+			return code;
+		} else
 			return parse_int(option->value, arg, 0, 1024);
 	}
 
@@ -1544,8 +1551,15 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	else if (!strcmp(name, "core.worktree"))
 		string_ncopy(repo.worktree, value, valuelen);
 
-	else if (!strcmp(name, "core.abbrev"))
-		parse_int(&opt_id_width, value, 0, SIZEOF_REV - 1);
+	else if (!strcmp(name, "core.abbrev")) {
+		/* We cannot use REPO_INFO_SIZEOF_REV until we parse extensions.objectformat. */
+		if (!strcmp(value, "no"))
+			opt_id_width = SIZEOF_REV - 1;
+		else if (strcmp(value, "auto"))
+			parse_int(&opt_id_width, value, 0, SIZEOF_REV - 1);
+
+	} else if (!strcmp(name, "extensions.objectformat"))
+		repo.object_format = !strcmp(value, "sha256") ? REPO_INFO_SHA256 : REPO_INFO_SHA1;
 
 	else if (!strcmp(name, "diff.noprefix")) {
 		if (!find_option_info_by_value(&opt_diff_noprefix)->seen)
@@ -1594,6 +1608,10 @@ load_git_config(void)
 	const char *git_worktree = getenv("GIT_WORK_TREE");
 
 	code = io_run_load(&io, config_list_argv, "=", read_repo_config_option, NULL);
+
+	/* Limit id-width to the length of the hash used for the repository. */
+	if (opt_id_width > REPO_INFO_SIZEOF_REV - 1)
+		opt_id_width = REPO_INFO_SIZEOF_REV - 1;
 
 	if (git_worktree && *git_worktree)
 		string_ncopy(repo.worktree, git_worktree, strlen(git_worktree));

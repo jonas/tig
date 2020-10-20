@@ -85,7 +85,7 @@ void string_ncopy_do(char *dst, size_t dstlen, const char *src, size_t srclen);
 void string_copy_rev(char *dst, const char *src);
 void string_copy_rev_from_commit_line(char *dst, const char *src);
 
-#define string_rev_is_null(rev) !strncmp(rev, NULL_ID, STRING_SIZE(NULL_ID))
+#define string_rev_is_null(rev) !strncmp(rev, NULL_ID, REPO_INFO_SIZEOF_REV - 1)
 
 #define string_add(dst, from, src) \
 	string_ncopy_do(dst + (from), sizeof(dst) - (from), src, sizeof(src))
