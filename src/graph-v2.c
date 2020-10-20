@@ -48,7 +48,7 @@ struct graph_symbol {
 
 struct graph_column {
 	struct graph_symbol symbol;
-	const char *id;			/* Parent SHA1 ID. */
+	const char *id;			/* Parent hash ID. */
 };
 
 struct graph_row {
