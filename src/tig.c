@@ -89,32 +89,10 @@ view_request(struct view *view, enum request request)
  * Option management
  */
 
-#define TOGGLE_MENU_INFO(_) \
-	_('.', "line numbers",			"line-number"), \
-	_('D', "dates",				"date"), \
-	_('A', "author",			"author"), \
-	_('~', "graphics",			"line-graphics"), \
-	_('g', "revision graph",		"commit-title-graph"), \
-	_('#', "file names",			"file-name"), \
-	_('*', "file sizes",			"file-size"), \
-	_('W', "space changes",			"ignore-space"), \
-	_('l', "commit order",			"commit-order"), \
-	_('F', "reference display",		"commit-title-refs"), \
-	_('C', "local change display",		"show-changes"), \
-	_('X', "commit ID display",		"id"), \
-	_('%', "file filtering",		"file-filter"), \
-	_('$', "commit title overflow display",	"commit-title-overflow"), \
-	_('d', "untracked directory info",	"status-show-untracked-dirs"), \
-	_('|', "view split",			"vertical-split"), \
-
 static void
 toggle_option(struct view *view)
 {
-	const struct menu_item menu[] = {
-#define DEFINE_TOGGLE_MENU(key, help, name) { key, help, name }
-		TOGGLE_MENU_INFO(DEFINE_TOGGLE_MENU)
-		{ 0 }
-	};
+	const struct menu_item *menu = get_prompt_options_menu_items();
 	const char *toggle_argv[] = { "toggle", NULL, NULL };
 	int i = 0;
 

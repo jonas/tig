@@ -14,7 +14,14 @@
 #include "tig/argv.h"
 #include "tig/view.h"
 #include "tig/search.h"
+#include "tig/prompt.h"
 #include "tig/draw.h"
+
+#define REQ_MENU_ITEM   -1
+
+static struct keymap toggle_menu_keymap = {
+	"Toggle options menu", NULL, 0, false
+};
 
 /*
  * Help backend
@@ -26,8 +33,11 @@ struct help_state {
 };
 
 struct help {
-	struct keymap *keymap;
 	enum request request;
+	union {
+		struct keymap *keymap;
+		struct menu_item *menu;
+	} item;
 	union {
 		const char *text;
 		const struct request_info *req_info;
@@ -38,15 +48,29 @@ static bool
 help_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct help *help = line->data;
-	const struct keymap *keymap = help->keymap;
+	const struct keymap *keymap = help->item.keymap;
 	struct help_state *state = view->private;
 
-	if (line->type == LINE_SECTION) {
+	if (line->type == LINE_SECTION && keymap) {
 		draw_formatted(view, line->type, "[%c] %s bindings",
 			       keymap->hidden ? '+' : '-', keymap->name);
 
 	} else if (line->type == LINE_HELP_GROUP || !keymap) {
 		draw_text(view, line->type, help->data.text);
+
+	} else if (help->request == REQ_MENU_ITEM) {
+		struct menu_item *item = help->item.menu;
+		char text_buf[40];
+
+		snprintf(text_buf, sizeof(text_buf), "%c", item->hotkey);
+		if (draw_field(view, LINE_DEFAULT, text_buf, 28, ALIGN_RIGHT, false))
+			return true;
+
+		if (draw_field(view, LINE_HELP_ACTION, (char*)item->data, 28, ALIGN_LEFT, false))
+			return true;
+
+		snprintf(text_buf, sizeof(text_buf), "Toggle %s", item->text);
+		draw_text(view, LINE_DEFAULT, text_buf);
 
 	} else if (help->request > REQ_RUN_REQUESTS) {
 		struct run_request *req = get_run_request(help->request);
@@ -83,9 +107,9 @@ bool
 help_grep(struct view *view, struct line *line)
 {
 	struct help *help = line->data;
-	const struct keymap *keymap = help->keymap;
+	const struct keymap *keymap = help->item.keymap;
 
-	if (line->type == LINE_SECTION) {
+	if (line->type == LINE_SECTION && keymap) {
 		const char *text[] = { keymap->name, NULL };
 
 		return grep_text(view, text);
@@ -95,6 +119,10 @@ help_grep(struct view *view, struct line *line)
 
 		return grep_text(view, text);
 
+	} else if (help->request == REQ_MENU_ITEM) {
+		const char *text[] = { help->item.menu->text, NULL };
+
+		return grep_text(view, text);
 	} else if (help->request > REQ_RUN_REQUESTS) {
 		struct run_request *req = get_run_request(help->request);
 		const char *key = get_keys(keymap, help->request, true);
@@ -127,7 +155,8 @@ add_help_line(struct view *view, struct help **help_ptr, struct keymap *keymap, 
 
 	if (!add_line_alloc(view, &help, type, 0, false))
 		return false;
-	help->keymap = keymap;
+	help->item.keymap = keymap;
+	help->request = 0;
 	if (help_ptr)
 		*help_ptr = help;
 	return true;
@@ -145,7 +174,7 @@ help_keys_visitor(void *data, const char *group, struct keymap *keymap,
 
 	if (iterator->keymap != keymap) {
 		iterator->keymap = keymap;
-		if (!add_help_line(iterator->view, &help, keymap, LINE_SECTION))
+		if (!add_help_line(view, &help, keymap, LINE_SECTION))
 			return false;
 	}
 
@@ -153,7 +182,7 @@ help_keys_visitor(void *data, const char *group, struct keymap *keymap,
 		return true;
 
 	if (group) {
-		if (!add_help_line(iterator->view, &help, keymap, LINE_HELP_GROUP))
+		if (!add_help_line(view, &help, keymap, LINE_HELP_GROUP))
 			return false;
 		help->data.text = group;
 	}
@@ -177,19 +206,41 @@ help_open(struct view *view, enum open_flags flags)
 {
 	struct help_request_iterator iterator = { view };
 	struct help *help;
+	const struct menu_item *menu = get_prompt_options_menu_items();
+	int i;
 
 	reset_view(view);
 
 	if (!add_help_line(view, &help, NULL, LINE_HEADER))
 		return ERROR_OUT_OF_MEMORY;
 	help->data.text = "Quick reference for tig keybindings:";
-
 	if (!add_help_line(view, &help, NULL, LINE_DEFAULT))
 		return ERROR_OUT_OF_MEMORY;
 	help->data.text = "";
 
-	return foreach_key(help_keys_visitor, &iterator, true)
-		? SUCCESS : error("Failed to render key bindings");
+	if (!foreach_key(help_keys_visitor, &iterator, true)) {
+		error("Failed to render key bindings");
+		return ERROR_OUT_OF_MEMORY;
+	}
+
+	if (!add_help_line(view, &help, &toggle_menu_keymap, LINE_SECTION))
+		return ERROR_OUT_OF_MEMORY;
+	if (!toggle_menu_keymap.hidden) {
+		if (!add_help_line(view, &help, NULL, LINE_HELP_GROUP))
+			return ERROR_OUT_OF_MEMORY;
+		help->data.text = "toggle key:";
+
+		i = 0;
+		while (menu[i].data)
+		{
+			if (!add_help_line(view, &help, (struct keymap *)&menu[i], LINE_DEFAULT))
+				return ERROR_OUT_OF_MEMORY;
+			help->request = REQ_MENU_ITEM;
+			i++;
+		}
+	}
+
+	return SUCCESS;
 }
 
 static enum request
@@ -200,7 +251,7 @@ help_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_ENTER:
 		if (line->type == LINE_SECTION) {
-			struct keymap *keymap = help->keymap;
+			struct keymap *keymap = help->item.keymap;
 
 			keymap->hidden = !keymap->hidden;
 			refresh_view(view);

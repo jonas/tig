@@ -123,16 +123,16 @@ External commands:
    4 <quitting command
    5 +echoed command
    0 @?<+all modifiers
-
-
-
-
-
-
-
-
-
-
-
-[help] - line 1 of 17                                                       100%
+[-] Toggle options menu bindings
+toggle key:
+                           . line-number                  Toggle line numbers
+                           D date                         Toggle dates
+                           A author                       Toggle author
+                           ~ line-graphics                Toggle graphics
+                           g commit-title-graph           Toggle revision graph
+                           # file-name                    Toggle file names
+                           * file-size                    Toggle file sizes
+                           W ignore-space                 Toggle space changes
+                           l commit-order                 Toggle commit order
+[help] - line 1 of 35                                                        80%
 EOF
