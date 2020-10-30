@@ -83,21 +83,23 @@
 	_('d', "untracked directory info",	"status-show-untracked-dirs"), \
 	_('|', "view split",			"vertical-split"), \
 
+
+const struct menu_item toggle_menu_items[] = {
+#define DEFINE_TOGGLE_MENU(key, help, name) { key, help, name }
+        TOGGLE_MENU_INFO(DEFINE_TOGGLE_MENU)
+        { 0 }
+};
+
 static void
 toggle_option(struct view *view)
 {
-	const struct menu_item menu[] = {
-#define DEFINE_TOGGLE_MENU(key, help, name) { key, help, name }
-		TOGGLE_MENU_INFO(DEFINE_TOGGLE_MENU)
-		{ 0 }
-	};
 	const char *toggle_argv[] = { "toggle", NULL, NULL };
 	int i = 0;
 
-	if (!prompt_menu("Toggle option", menu, &i))
+	if (!prompt_menu("Toggle option", toggle_menu_items, &i))
 		return;
 
-	toggle_argv[1] = menu[i].data;
+	toggle_argv[1] = toggle_menu_items[i].data;
 	run_prompt_command(view, toggle_argv);
 }
 

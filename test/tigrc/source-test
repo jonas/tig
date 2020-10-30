@@ -2,7 +2,7 @@
 
 . libtest.sh
 
-LINES=9
+export LINES=9
 
 # Disable built-in configuration
 export TIGRC_SYSTEM=does-not-exist
@@ -28,7 +28,7 @@ View manipulation
   q quit   Close all views and quit
 Misc
   : prompt Open the prompt
-[help] - line 1 of 7                                                        100%
+[help] - line 1 of 26                                                        26%
 EOF
 
 test_case source-file-quietly \
@@ -48,7 +48,7 @@ View manipulation
   q quit   Close all views and quit
 Misc
   : prompt Open the prompt
-[help] - line 1 of 7                                                        100%
+[help] - line 1 of 26                                                        26%
 EOF
 
 test_case source-nonexistent-file \
@@ -68,9 +68,9 @@ Quick reference for tig keybindings:
 [-] generic bindings
 Misc
   : prompt Open the prompt
-
-
-[help] - line 1 of 5                                                        100%
+[-] toggle bindings
+Toggle keys (enter: o <key>):
+[help] - line 1 of 24                                                        29%
 EOF
 
 test_case source-nonexistent-file-quietly \
@@ -88,9 +88,9 @@ Quick reference for tig keybindings:
 [-] generic bindings
 Misc
   : prompt Open the prompt
-
-
-[help] - line 1 of 5                                                        100%
+[-] toggle bindings
+Toggle keys (enter: o <key>):
+[help] - line 1 of 24                                                        29%
 EOF
 
 test_case source-tilde-path \
@@ -110,7 +110,7 @@ View manipulation
   q quit   Close all views and quit
 Misc
   : prompt Open the prompt
-[help] - line 1 of 7                                                        100%
+[help] - line 1 of 26                                                        26%
 EOF
 
 run_test_cases

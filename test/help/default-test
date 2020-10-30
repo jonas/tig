@@ -2,6 +2,8 @@
 
 . libtest.sh
 
+export COLUMNS=100
+
 steps '
 	:view-help
 	:save-display help-default.screen
@@ -43,7 +45,7 @@ View switching
                            h view-help           Show help view
 View manipulation
                      <Enter> enter               Enter and open selected line
-                           < back                Go back to the previous view st
+                           < back                Go back to the previous view state
          <Down>, <Ctrl-N>, J next                Move to next
            <Up>, <Ctrl-P>, K previous            Move to previous
                          ',' parent              Move to parent
@@ -51,7 +53,7 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-[help] - line 1 of 128                                                       21%
+[help] - line 1 of 147                                                       19%
 EOF
 
 assert_equals 'help-search.screen' <<EOF
@@ -75,7 +77,7 @@ View switching
                            h view-help           Show help view
 View manipulation
                      <Enter> enter               Enter and open selected line
-                           < back                Go back to the previous view st
+                           < back                Go back to the previous view state
          <Down>, <Ctrl-N>, J next                Move to next
            <Up>, <Ctrl-P>, K previous            Move to previous
                          ',' parent              Move to parent
@@ -83,7 +85,7 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-[help] - line 19 of 128                                                      21%
+[help] - line 19 of 147                                                      19%
 EOF
 
 assert_equals 'help-collapsed.screen' <<EOF
@@ -115,5 +117,5 @@ External commands:
 External commands:
   C ?git checkout %(branch)
   ! ?git branch -D %(branch)
-[help] - line 4 of 55                                                        50%
+[help] - line 4 of 74                                                        37%
 EOF

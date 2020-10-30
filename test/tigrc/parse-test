@@ -4,6 +4,8 @@
 
 . libtest.sh
 
+export LINES=20
+
 tigrc <<EOF
 s				# Unknown command
 set				# Missing name, equals and value
@@ -123,16 +125,6 @@ External commands:
    4 <quitting command
    5 +echoed command
    0 @?<+all modifiers
-
-
-
-
-
-
-
-
-
-
-
-[help] - line 1 of 17                                                       100%
+[-] toggle bindings
+[help] - line 1 of 36                                                        50%
 EOF
