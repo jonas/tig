@@ -72,6 +72,7 @@ enum view_flag {
 	VIEW_SORTABLE		= 1 << 15,
 	VIEW_FLEX_WIDTH		= 1 << 16,
 	VIEW_RESET_DISPLAY	= 1 << 17,
+	VIEW_COMMIT_NAMEDATE	= 1 << 18,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))

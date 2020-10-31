@@ -29,7 +29,7 @@ assert_equals 'log-submodule.screen' <<EOF
 commit feeb2dfd5e09e887e4b6c901e7d91a4c85a7831d
 Refs: [master], {origin/master}, {origin/HEAD}
 Author: A. U. Thor <a.u.thor@example.com>
-Date:   Sun Sep 6 08:23:30 2009 +0000
+AuthorDate: Sun Sep 6 08:23:30 2009 +0000
 
     [repo-two] Integrate feature from repo-two-a, repo-two-b, repo-two-c
 
@@ -40,7 +40,7 @@ Date:   Sun Sep 6 08:23:30 2009 +0000
 
 commit 7f9d74d1b554e99059334799f56b1307f9c324d4
 Author: A. U. Thor <a.u.thor@example.com>
-Date:   Mon Aug 3 06:54:50 2009 +0000
+AuthorDate: Mon Aug 3 06:54:50 2009 +0000
 
     [repo-two] Integrate feature from repo-two-b
 
@@ -49,7 +49,7 @@ Date:   Mon Aug 3 06:54:50 2009 +0000
 
 commit 2bbde7f66edbac9b45b86ad75e6b1e8e02970a67
 Author: A. U. Thor <a.u.thor@example.com>
-Date:   Wed Jul 8 17:48:20 2009 +0000
+AuthorDate: Wed Jul 8 17:48:20 2009 +0000
 
     [repo-two] Integrate feature from repo-two-a, repo-two-c
 
@@ -59,7 +59,7 @@ Date:   Wed Jul 8 17:48:20 2009 +0000
 
 commit 3a2603a2ea55ef06860f8d8ec33ee10d95d08117
 Author: A. U. Thor <a.u.thor@example.com>
-Date:   Wed May 27 03:57:30 2009 +0000
+AuthorDate: Wed May 27 03:57:30 2009 +0000
 
     [repo-two] Creating repository
 
@@ -78,7 +78,7 @@ assert_equals 'log-submodule-diff.screen' <<EOF
 commit feeb2dfd5e09e887e4b6c901e7d91a4c85a7831d
 Refs: [master], {origin/master}, {origin/HEAD}
 Author: A. U. Thor <a.u.thor@example.com>
-Date:   Sun Sep 6 08:23:30 2009 +0000
+AuthorDate: Sun Sep 6 08:23:30 2009 +0000
 
     [repo-two] Integrate feature from repo-two-a, repo-two-b, repo-two-c
 ---
@@ -96,7 +96,7 @@ Submodule repo-two-c cd41885..e4b7821:
 
 commit 7f9d74d1b554e99059334799f56b1307f9c324d4
 Author: A. U. Thor <a.u.thor@example.com>
-Date:   Mon Aug 3 06:54:50 2009 +0000
+AuthorDate: Mon Aug 3 06:54:50 2009 +0000
 
     [repo-two] Integrate feature from repo-two-b
 ---
@@ -109,7 +109,7 @@ Submodule repo-two-b e795b27..f3866fb:
 
 commit 2bbde7f66edbac9b45b86ad75e6b1e8e02970a67
 Author: A. U. Thor <a.u.thor@example.com>
-Date:   Wed Jul 8 17:48:20 2009 +0000
+AuthorDate: Wed Jul 8 17:48:20 2009 +0000
 
     [repo-two] Integrate feature from repo-two-a, repo-two-c
 ---

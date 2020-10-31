@@ -25,7 +25,7 @@ assert_equals 'diff-stat.screen' <<EOF
 commit ee912870202200a0b9cf4fd86ba57243212d341e                                            |commit ee912870202200a0b9cf4fd86ba57243212d341e
 Refs: [master]                                                                             |Refs: [master]
 Author: Jonas Fonseca <jonas.fonseca@gmail.com>                                            |Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
-Date:   Sat Mar 1 17:26:01 2014 -0500                                                      |AuthorDate: Sat Mar 1 17:26:01 2014 -0500
+AuthorDate: Sat Mar 1 17:26:01 2014 -0500                                                  |AuthorDate: Sat Mar 1 17:26:01 2014 -0500
                                                                                            |Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
     WIP: Upgrade to 0.4-SNAPSHOT and DCE                                                   |CommitDate: Sat Mar 1 17:26:01 2014 -0500
                                                                                            |
@@ -57,7 +57,7 @@ assert_equals 'diff-stat-after-refresh.screen' <<EOF
 commit ee912870202200a0b9cf4fd86ba57243212d341e                                            |commit ee912870202200a0b9cf4fd86ba57243212d341e
 Refs: [master]                                                                             |Refs: [master]
 Author: Jonas Fonseca <jonas.fonseca@gmail.com>                                            |Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
-Date:   Sat Mar 1 17:26:01 2014 -0500                                                      |AuthorDate: Sat Mar 1 17:26:01 2014 -0500
+AuthorDate: Sat Mar 1 17:26:01 2014 -0500                                                  |AuthorDate: Sat Mar 1 17:26:01 2014 -0500
                                                                                            |Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
     WIP: Upgrade to 0.4-SNAPSHOT and DCE                                                   |CommitDate: Sat Mar 1 17:26:01 2014 -0500
                                                                                            |
