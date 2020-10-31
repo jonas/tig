@@ -2,7 +2,7 @@
 
 . libtest.sh
 
-LINES=7
+export LINES=8
 
 # Disable built-in configuration
 export TIGRC_SYSTEM=does-not-exist
@@ -31,9 +31,10 @@ EOF
 
 assert_equals help.screen <<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 Misc
   : prompt Open the prompt
-[help] - line 1 of 24                                                        20%
+[help] - line 1 of 25                                                        24%
 EOF

@@ -109,6 +109,7 @@ EOF
 
 assert_equals help.screen <<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 View switching
@@ -125,6 +126,5 @@ External commands:
    4 <quitting command
    5 +echoed command
    0 @?<+all modifiers
-[-] toggle bindings
-[help] - line 1 of 36                                                        50%
+[help] - line 1 of 37                                                        48%
 EOF
