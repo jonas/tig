@@ -7,7 +7,7 @@ export LINES=16
 
 tigrc <<EOF
 set vertical-split = no
-set tree-view-date-use-author = yes
+set committer = yes
 EOF
 
 steps '
@@ -27,6 +27,7 @@ steps '
 	:save-display tree-default-date.screen
 
 	:toggle sort-field
+	:toggle committer
 	:enter
 	:save-display tree-common.screen
 

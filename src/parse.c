@@ -14,6 +14,7 @@
 #include "tig/tig.h"
 #include "tig/parse.h"
 #include "tig/map.h"
+#include "tig/options.h"
 
 size_t
 parse_size(const char *text)
@@ -139,12 +140,12 @@ match_blame_header(const char *name, char **line)
 }
 
 bool
-parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *line, bool use_author_date)
+parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *line)
 {
-	if (match_blame_header("author ", &line)) {
+	if (match_blame_header(opt_committer ? "committer " : "author ", &line)) {
 		string_ncopy_do(author, SIZEOF_STR, line, strlen(line));
 
-	} else if (match_blame_header("author-mail ", &line)) {
+	} else if (match_blame_header(opt_committer ? "committer-mail " : "author-mail ", &line)) {
 		char *end = strchr(line, '>');
 
 		if (end)
@@ -154,10 +155,10 @@ parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *lin
 		commit->author = get_author(author, line);
 		author[0] = 0;
 
-	} else if (match_blame_header(use_author_date ? "author-time " : "committer-time ", &line)) {
+	} else if (match_blame_header(opt_committer ? "committer-time " : "author-time ", &line)) {
 		parse_timesec(&commit->time, line);
 
-	} else if (match_blame_header(use_author_date ? "author-tz " : "committer-tz ", &line)) {
+	} else if (match_blame_header(opt_committer ? "committer-tz " : "author-tz ", &line)) {
 		parse_timezone(&commit->time, line);
 
 	} else if (match_blame_header("summary ", &line)) {

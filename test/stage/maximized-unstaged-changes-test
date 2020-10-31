@@ -23,6 +23,7 @@ steps '
 tigrc <<EOF
 set vertical-split = no
 set vertical-split = horizontal
+set committer = no
 EOF
 
 in_work_dir create_dirty_workdir

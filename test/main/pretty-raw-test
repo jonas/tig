@@ -9,6 +9,10 @@ export LINES=16
 
 git_clone 'repo-one'
 
+tigrc <<EOF
+set committer = no
+EOF
+
 steps '
 	:save-display main-pretty-raw.screen
 '

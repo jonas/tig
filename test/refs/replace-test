@@ -8,6 +8,7 @@ export LINES=18
 tigrc <<EOF
 set refs-view-id = yes
 set main-view-id = yes
+set committer = no
 EOF
 
 steps '

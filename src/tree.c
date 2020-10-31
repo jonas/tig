@@ -71,8 +71,8 @@ struct tree_entry {
 
 struct tree_state {
 	char commit[SIZEOF_REV];
-	const struct ident *author;
-	struct time author_time;
+	const struct ident *author; /* Author/Committer */
+	struct time author_time; /* Author data/Commit date */
 	bool read_date;
 };
 
@@ -135,8 +135,6 @@ static bool
 tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 {
 	char *text = buf ? buf->data : NULL;
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
-	bool use_author_date = column && column->opt.date.use_author;
 
 	if (!text && state->read_date) {
 		state->read_date = false;
@@ -164,17 +162,18 @@ tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 		state->read_date = true;
 		return false;
 
-	} else if (*text == 'c' && get_line_type(text) == LINE_COMMIT) {
-		string_copy_rev_from_commit_line(state->commit, text);
+	} else if (*text == 'c') {
+		enum line_type ltype = get_line_type(text);
+		if (ltype == LINE_COMMIT) {
+			string_copy_rev_from_commit_line(state->commit, text);
+		} else if (ltype == LINE_COMMITTER && opt_committer) {
+			parse_author_line(text + STRING_SIZE("committer "),
+				&state->author, &state->author_time);
+		}
 
-	} else if (*text == 'a' && get_line_type(text) == LINE_AUTHOR) {
+	} else if (*text == 'a' && get_line_type(text) == LINE_AUTHOR && !opt_committer) {
 		parse_author_line(text + STRING_SIZE("author "),
-				  &state->author, use_author_date ? &state->author_time : NULL);
-
-	} else if (*text == 'c' && get_line_type(text) == LINE_COMMITTER) {
-		parse_author_line(text + STRING_SIZE("committer "),
-				  NULL, use_author_date ? NULL : &state->author_time);
-
+			&state->author, &state->author_time);
 	} else if (*text == ':') {
 		char *pos;
 		size_t annotated = 1;
@@ -488,7 +487,7 @@ tree_open(struct view *view, enum open_flags flags)
 static struct view_ops tree_ops = {
 	"file",
 	argv_env.commit,
-	VIEW_SEND_CHILD_ENTER | VIEW_SORTABLE | VIEW_BLAME_LIKE | VIEW_REFRESH,
+	VIEW_SEND_CHILD_ENTER | VIEW_SORTABLE | VIEW_BLAME_LIKE | VIEW_REFRESH | VIEW_COMMIT_NAMEDATE,
 	sizeof(struct tree_state),
 	tree_open,
 	tree_read,

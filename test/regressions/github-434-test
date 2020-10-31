@@ -8,6 +8,7 @@ export LINES=30
 
 tigrc <<EOF
 set vertical-split = auto
+set committer = no
 EOF
 
 steps '

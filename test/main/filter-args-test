@@ -22,7 +22,7 @@ test_setup_work_dir()
 }
 
 tigrc <<EOF
-set main-view-date-use-author = yes
+set committer = no
 EOF
 
 steps '

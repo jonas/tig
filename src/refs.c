@@ -74,13 +74,11 @@ refs_request(struct view *view, enum request request, struct line *line)
 	case REQ_ENTER:
 	{
 		const struct ref *ref = reference->ref;
-		struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
-		bool use_author_date = column && column->opt.date.use_author;
 		const char *all_references_argv[] = {
 			GIT_MAIN_LOG(encoding_arg, commit_order_arg(),
 				"%(mainargs)", "",
 				refs_is_all(reference) ? "--all" : ref->id, "",
-				show_notes_arg(), log_custom_pretty_arg(use_author_date))
+				show_notes_arg(), log_custom_pretty_arg())
 		};
 		enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 
@@ -179,23 +177,31 @@ refs_open_visitor(void *data, const struct ref *ref)
 	return true;
 }
 
+static const char *
+refs_custom_pretty_arg()
+{
+	switch ((opt_committer*2) + opt_mailmap)
+	{
+	case 0x3:
+		return "--pretty=format:%H%x00%cN <%cE> %cd%x00%s";
+	case 0x2:
+		return "--pretty=format:%H%x00%cn <%ce> %cd%x00%s";
+	case 0x1:
+		return "--pretty=format:%H%x00%aN <%aE> %ad%x00%s";
+	case 0x0:
+	default:
+		return "--pretty=format:%H%x00%an <%ae> %ad%x00%s";
+	}
+}
+
 static const char **refs_argv;
 
 static enum status_code
 refs_open(struct view *view, enum open_flags flags)
 {
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
-	bool use_author_date = column && column->opt.date.use_author;
 	const char *refs_log[] = {
-		"git", "log", encoding_arg, "--no-color", "--date=raw", use_author_date
-			? opt_mailmap
-				? "--pretty=format:%H%x00%aN <%aE> %ad%x00%s"
-				: "--pretty=format:%H%x00%an <%ae> %ad%x00%s"
-			: opt_mailmap
-				? "--pretty=format:%H%x00%aN <%aE> %cd%x00%s"
-				: "--pretty=format:%H%x00%an <%ae> %cd%x00%s",
-			"--all", "--decorate-refs=", "--simplify-by-decoration",
-			NULL
+		"git", "log", encoding_arg, "--no-color", "--date=raw",
+		refs_custom_pretty_arg(), "--all", "--simplify-by-decoration", NULL
 	};
 	enum status_code code;
 	const char *name = REFS_ALL_NAME;
@@ -267,7 +273,7 @@ refs_select(struct view *view, struct line *line)
 static struct view_ops refs_ops = {
 	"reference",
 	argv_env.head,
-	VIEW_REFRESH | VIEW_SORTABLE | VIEW_LOG_LIKE,
+	VIEW_REFRESH | VIEW_SORTABLE | VIEW_LOG_LIKE | VIEW_COMMIT_NAMEDATE,
 	0,
 	refs_open,
 	refs_read,

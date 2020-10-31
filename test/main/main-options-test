@@ -9,6 +9,7 @@ export LINES=16
 
 tigrc <<EOF
 set main-options = -n 10
+set committer = no
 EOF
 
 steps '

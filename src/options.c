@@ -159,15 +159,20 @@ use_mailmap_arg()
 }
 
 const char *
-log_custom_pretty_arg(bool use_author_date)
+log_custom_pretty_arg()
 {
-	return use_author_date
-		? opt_mailmap
-			? "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%s%x00%N"
-			: "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s%x00%N"
-		: opt_mailmap
-			? "--pretty=format:commit %m %H %P%x00%aN <%aE> %cd%x00%s%x00%N"
-			: "--pretty=format:commit %m %H %P%x00%an <%ae> %cd%x00%s%x00%N";
+	switch ((opt_committer*2) + opt_mailmap)
+	{
+	case 0x3:
+		return "--pretty=format:commit %m %H %P%x00%cN <%cE> %cd%x00%s%x00%N";
+	case 0x2:
+		return "--pretty=format:commit %m %H %P%x00%cn <%ce> %cd%x00%s%x00%N";
+	case 0x1:
+		return "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%s%x00%N";
+	case 0x0:
+	default:
+		return "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s%x00%N";
+	}
 }
 
 #define ENUM_ARG(enum_name, arg_string) ENUM_MAP_ENTRY(arg_string, enum_name)
@@ -959,6 +964,7 @@ option_bind_command(int argc, const char *argv[])
 			{ "toggle-title-overflow",	"commit-title-overflow" },
 			{ "toggle-untracked-dirs",	"status-show-untracked-dirs" },
 			{ "toggle-vertical-split",	"show-vertical-split" },
+			{ "toggle-committer",		"committer" },
 		};
 		int alias;
 

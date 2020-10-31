@@ -12,6 +12,7 @@ test_setup_work_dir()
 }
 
 steps '
+	:set committer = yes
 	:save-display position.screen
 '
 

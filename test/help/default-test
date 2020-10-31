@@ -51,7 +51,7 @@ View manipulation
                        <Tab> view-next           Move focus to the next view
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
-[help] - line 1 of 148                                                       18%
+[help] - line 1 of 151                                                       18%
 EOF
 
 assert_equals 'help-search.screen' <<EOF
@@ -83,7 +83,7 @@ View manipulation
                        <Tab> view-next           Move focus to the next view
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
-[help] - line 20 of 148                                                      18%
+[help] - line 20 of 151                                                      18%
 EOF
 
 assert_equals 'help-collapsed.screen' <<EOF
@@ -115,5 +115,5 @@ External commands:
 [-] refs bindings
 External commands:
   C ?git checkout %(branch)
-[help] - line 5 of 75                                                        37%
+[help] - line 5 of 78                                                        35%
 EOF

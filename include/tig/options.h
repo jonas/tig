@@ -90,6 +90,7 @@ typedef struct view_column *view_settings;
 	_(vertical_split,		enum vertical_split,	VIEW_RESET_DISPLAY | VIEW_DIFF_LIKE) \
 	_(wrap_lines,			bool,			VIEW_DIFF_LIKE) \
 	_(wrap_search,			bool,			VIEW_NO_FLAGS) \
+	_(committer,			bool,			VIEW_LOG_LIKE | VIEW_BLAME_LIKE) \
 
 #define DEFINE_OPTION_EXTERNS(name, type, flags) extern type opt_##name;
 OPTION_INFO(DEFINE_OPTION_EXTERNS)
@@ -111,7 +112,6 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 
 #define DATE_COLUMN_OPTIONS(_) \
 	_(display,			enum date,		VIEW_NO_FLAGS) \
-	_(use_author,			bool,			VIEW_BLAME_LIKE | VIEW_LOG_LIKE) \
 	_(local,			bool,			VIEW_NO_FLAGS) \
 	_(format,			const char *,		VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
@@ -198,7 +198,7 @@ void update_options_from_argv(const char *argv[]);
 const char *ignore_space_arg();
 const char *commit_order_arg();
 const char *commit_order_arg_with_graph(enum graph_display graph_display);
-const char *log_custom_pretty_arg(bool use_author_date);
+const char *log_custom_pretty_arg();
 const char *use_mailmap_arg();
 const char *diff_context_arg();
 const char *diff_prefix_arg();

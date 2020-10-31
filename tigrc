@@ -26,7 +26,6 @@
 #   date
 #    - display (enum) [no|default|relative|relative-compact|custom]
 #					: Show dates?
-#    - use-author (bool)		: Show author date instead of committer date?
 #    - local (bool)			: Show local dates?
 #    - format (string)			: Custom strftime(3) format
 #					  Note: %Z is formatted as %z
@@ -129,6 +128,7 @@ set diff-indicator		= yes		# Show diff +/- signs?
 set log-options			= --cc --stat	# User-defined options for `tig log` (git-log)
 #set main-options		= -n 1000	# User-defined options for `tig` (git-log)
 set mailmap			= yes		# Use .mailmap to show canonical name and email address?
+set committer			= yes		# Show commit name/date instead of author name/date
 
 # Misc
 set start-on-head		= no		# Start with cursor on HEAD commit?
