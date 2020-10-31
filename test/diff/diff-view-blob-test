@@ -1,0 +1,139 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=10
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+# content window scrolled to avoid trailing backslash and single quote
+first_file_blob='
+# Run a benchmark against a JavaScript VM.
+
+# set -x
+
+RUN_DIR="$(dirname "$0")"
+ROOT_DIR="./$(git rev-parse --show-cdup)"
+ENGINES="d8 node"
+[blob] common/benchmark-runner.sh - line 9 of 143                            11%'
+
+last_file_blob='// The ray tracer code in this file is written by Adam Burmister. It
+// is available in its original form from:
+//
+//   http://labs.flog.co.nz/raytracer/
+//
+// Ported from the v8 benchmark suite by Google 2012.
+// Ported from the Dart benchmark_harness to Scala.js by Jonas Fonseca 2013
+
+[blob] tracer/src/main/scala/org/scalajs/benchmark/tracer/Tracer.scala - line38%'
+
+test_case view-blob-goto-line-1 \
+	--args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+	--script='
+		:1
+		:view-blob
+		:scroll-page-down
+	' \
+	<<EOF
+$first_file_blob
+EOF
+
+test_case view-blob-goto-first-stat-entry \
+	--args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+	--script='
+		:10
+		:view-blob
+		:scroll-page-down
+	' \
+	<<EOF
+$first_file_blob
+EOF
+
+test_case view-blob-goto-last-stat-entry \
+	--args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+	--script='
+		:26
+		:view-blob
+		:scroll-page-down
+	' \
+	<<EOF
+$last_file_blob
+EOF
+
+test_case view-blob-motion-past-stat-entries \
+	--args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+	--script='
+		:26
+		:move-down
+		:view-blob
+		:scroll-page-down
+	' \
+	<<EOF
+$first_file_blob
+EOF
+
+test_case view-blob-goto-past-stat-entries \
+	--args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+	--script='
+		:27
+		:view-blob
+		:scroll-page-down
+	' \
+	<<EOF
+$first_file_blob
+EOF
+
+test_case view-blob-goto-first-file-header \
+	--args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+	--script='
+		:29
+		:view-blob
+		:scroll-page-down
+	' \
+	<<EOF
+$first_file_blob
+EOF
+
+test_case view-blob-motion-first-content \
+	--args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+	--script='
+		:29
+		:move-down
+		:move-down
+		:move-down
+		:move-down
+		:move-down
+		:view-blob
+		:move-first-line
+		:scroll-page-down
+	' \
+	<<EOF
+$first_file_blob
+EOF
+
+test_case view-blob-goto-first-content \
+	--args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+	--script='
+		:35
+		:view-blob
+		:move-first-line
+		:scroll-page-down
+	' \
+	<<EOF
+$first_file_blob
+EOF
+
+test_case view-blob-goto-last-line \
+	--args='show ee912870202200a0b9cf4fd86ba57243212d341e' \
+	--script='
+		:367
+		:view-blob
+		:move-first-line
+		:scroll-page-down
+	' \
+	<<EOF
+$last_file_blob
+EOF
+
+run_test_cases
