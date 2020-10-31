@@ -2,7 +2,7 @@
 
 . libtest.sh
 
-export LINES=9
+export LINES=10
 
 # Disable built-in configuration
 export TIGRC_SYSTEM=does-not-exist
@@ -22,13 +22,14 @@ test_case source-file-plain \
 		" \
 	<<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 View manipulation
   q quit   Close all views and quit
 Misc
   : prompt Open the prompt
-[help] - line 1 of 26                                                        26%
+[help] - line 1 of 27                                                        29%
 EOF
 
 test_case source-file-quietly \
@@ -42,13 +43,14 @@ test_case source-file-quietly \
 		" \
 	<<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 View manipulation
   q quit   Close all views and quit
 Misc
   : prompt Open the prompt
-[help] - line 1 of 26                                                        26%
+[help] - line 1 of 27                                                        29%
 EOF
 
 test_case source-nonexistent-file \
@@ -64,13 +66,14 @@ test_case source-nonexistent-file \
 tig warning: Errors while loading HOME/.tigrc." \
 	<<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 Misc
   : prompt Open the prompt
 [-] toggle bindings
 Toggle keys (enter: o <key>):
-[help] - line 1 of 24                                                        29%
+[help] - line 1 of 25                                                        32%
 EOF
 
 test_case source-nonexistent-file-quietly \
@@ -84,13 +87,14 @@ test_case source-nonexistent-file-quietly \
 		" \
 	<<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 Misc
   : prompt Open the prompt
 [-] toggle bindings
 Toggle keys (enter: o <key>):
-[help] - line 1 of 24                                                        29%
+[help] - line 1 of 25                                                        32%
 EOF
 
 test_case source-tilde-path \
@@ -104,13 +108,14 @@ test_case source-tilde-path \
 		" \
 	<<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 View manipulation
   q quit   Close all views and quit
 Misc
   : prompt Open the prompt
-[help] - line 1 of 26                                                        26%
+[help] - line 1 of 27                                                        29%
 EOF
 
 run_test_cases

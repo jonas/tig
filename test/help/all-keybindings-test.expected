@@ -1,4 +1,5 @@
 Quick reference for tig keybindings:
+[-] Collapse all sections
  
 [-] generic bindings
 View switching
@@ -125,5 +126,4 @@ External commands:
                            ! ?git stash drop %(stash)
 [-] pager bindings
 Internal commands:
-                           @ :/^@@
-[help] - line 1 of 147                                                                 87%
+[help] - line 1 of 148                                                                 86%

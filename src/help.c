@@ -19,6 +19,12 @@
 
 extern const struct menu_item toggle_menu_items[];
 
+static const char collapse_expand_names[2][14] = {
+	"Collapse all", "Expand all"
+};
+static struct keymap collapse_expand_keymap = {
+	collapse_expand_names[0], NULL, 0, false
+};
 static struct keymap toggle_menu_keymap = {
 	"toggle", NULL, 0, false
 };
@@ -52,8 +58,9 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 	struct help_state *state = view->private;
 
 	if (line->type == LINE_SECTION && keymap) {
-		draw_formatted(view, line->type, "[%c] %s bindings",
-			       keymap->hidden ? '+' : '-', keymap->name);
+		draw_formatted(view, line->type, "[%c] %s %s",
+				keymap->hidden ? '+' : '-', keymap->name,
+				(keymap == &collapse_expand_keymap) ? "sections" : "bindings" );
 
 	} else if (line->type == LINE_HELP_GROUP || !keymap) {
 		draw_text(view, line->type, help->data.text);
@@ -200,6 +207,21 @@ help_keys_visitor(void *data, const char *group, struct keymap *keymap,
 	return true;
 }
 
+static bool
+help_collapse_expand_keys_visitor(void *data, const char *group, struct keymap *keymap,
+		  enum request request, const char *key,
+		  const struct request_info *req_info, const struct run_request *run_req)
+{
+	struct help_request_iterator *iterator = data;
+
+	if (iterator->keymap != keymap) {
+		iterator->keymap = keymap;
+		keymap->hidden = collapse_expand_keymap.hidden;
+	}
+
+	return true;
+}
+
 static enum status_code
 help_open(struct view *view, enum open_flags flags)
 {
@@ -213,6 +235,9 @@ help_open(struct view *view, enum open_flags flags)
 	if (!add_help_line(view, &help, NULL, LINE_HEADER))
 		return ERROR_OUT_OF_MEMORY;
 	help->data.text = "Quick reference for tig keybindings:";
+
+	if (!add_help_line(view, &help, &collapse_expand_keymap, LINE_SECTION))
+		return ERROR_OUT_OF_MEMORY;
 
 	if (!add_help_line(view, &help, NULL, LINE_DEFAULT))
 		return ERROR_OUT_OF_MEMORY;
@@ -253,6 +278,13 @@ help_request(struct view *view, enum request request, struct line *line)
 			struct keymap *keymap = help->item.keymap;
 
 			keymap->hidden = !keymap->hidden;
+			if (keymap == &collapse_expand_keymap) {
+				struct help_request_iterator iterator = { view };
+
+				collapse_expand_keymap.name = collapse_expand_names[keymap->hidden];
+				foreach_key(help_collapse_expand_keys_visitor, &iterator, true);
+				toggle_menu_keymap.hidden = keymap->hidden;
+			}
 			refresh_view(view);
 		}
 		return REQ_NONE;

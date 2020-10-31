@@ -9,9 +9,9 @@ steps '
 	:/View manipulation
 	:save-display help-search.screen
 
-	:3
-	:enter
 	:4
+	:enter
+	:5
 	:enter
 	:save-display help-collapsed.screen
 '
@@ -24,6 +24,7 @@ test_tig
 
 assert_equals 'help-default.screen' <<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 View switching
@@ -50,12 +51,12 @@ View manipulation
                        <Tab> view-next           Move focus to the next view
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
-                           q view-close          Close the current view
-[help] - line 1 of 147                                                       19%
+[help] - line 1 of 148                                                       18%
 EOF
 
 assert_equals 'help-search.screen' <<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 View switching
@@ -82,12 +83,12 @@ View manipulation
                        <Tab> view-next           Move focus to the next view
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
-                           q view-close          Close the current view
-[help] - line 19 of 147                                                      19%
+[help] - line 20 of 148                                                      18%
 EOF
 
 assert_equals 'help-collapsed.screen' <<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [+] generic bindings
 [+] search bindings
@@ -114,6 +115,5 @@ External commands:
 [-] refs bindings
 External commands:
   C ?git checkout %(branch)
-  ! ?git branch -D %(branch)
-[help] - line 4 of 74                                                        37%
+[help] - line 5 of 75                                                        37%
 EOF
