@@ -262,7 +262,7 @@ get_path(const char *path)
 			free(entry);
 			return NULL;
 		}
-		strncpy(entry->path, path, strlen(path));
+		strcpy(entry->path, path);
 	}
 
 	return entry->path;

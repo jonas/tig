@@ -207,7 +207,7 @@ refs_open(struct view *view, enum open_flags flags)
 		if (!ref)
 			return ERROR_OUT_OF_MEMORY;
 
-		strncpy(ref->name, name, name_length);
+		strcpy(ref->name, name);
 		refs_all = ref;
 	}
 
