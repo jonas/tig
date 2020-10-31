@@ -24,6 +24,7 @@ test_tig
 
 assert_equals 'help-default.screen' <<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 View switching
@@ -50,12 +51,12 @@ View manipulation
                        <Tab> view-next           Move focus to the next view
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
-                           q view-close          Close the current view
-[help] - line 1 of 141                                                       19%
+[help] - line 1 of 142                                                       19%
 EOF
 
 assert_equals 'help-search.screen' <<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 View switching
@@ -82,15 +83,20 @@ View manipulation
                        <Tab> view-next           Move focus to the next view
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
-                           q view-close          Close the current view
-[help] - line 19 of 141                                                      19%
+[help] - line 20 of 142                                                      19%
 EOF
 
 assert_equals 'help-collapsed.screen' <<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [+] generic bindings
-[+] search bindings
+[-] search bindings
+View manipulation
+                    <Ctrl-C> view-close          Close the current view
+Searching
+  <Down>, <Ctrl-N>, <Ctrl-J> find-next           Find next search match
+    <Up>, <Ctrl-P>, <Ctrl-K> find-prev           Find previous search match
 [-] main bindings
 Option toggling:
   G :toggle commit-title-graph
@@ -109,11 +115,5 @@ Internal commands:
 Option toggling:
   F :toggle commit-title-refs
 External commands:
-  C ?git checkout %(branch)
-  ! ?git reset --hard %(commit)
-[-] refs bindings
-External commands:
-  C ?git checkout %(branch)
-  ! ?git branch -D %(branch)
-[help] - line 4 of 69                                                        40%
+[help] - line 4 of 75                                                        37%
 EOF

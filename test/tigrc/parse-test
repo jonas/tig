@@ -107,6 +107,7 @@ EOF
 
 assert_equals help.screen <<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 View switching
@@ -133,6 +134,5 @@ toggle key:
                            # file-name                    Toggle file names
                            * file-size                    Toggle file sizes
                            W ignore-space                 Toggle space changes
-                           l commit-order                 Toggle commit order
-[help] - line 1 of 35                                                        80%
+[help] - line 1 of 36                                                        77%
 EOF

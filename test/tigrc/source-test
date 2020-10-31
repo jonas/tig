@@ -22,13 +22,13 @@ test_case source-file-plain \
 		" \
 	<<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 View manipulation
   q quit   Close all views and quit
 Misc
-  : prompt Open the prompt
-[help] - line 1 of 25                                                        28%
+[help] - line 1 of 26                                                        26%
 EOF
 
 test_case source-file-quietly \
@@ -42,13 +42,13 @@ test_case source-file-quietly \
 		" \
 	<<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 View manipulation
   q quit   Close all views and quit
 Misc
-  : prompt Open the prompt
-[help] - line 1 of 25                                                        28%
+[help] - line 1 of 26                                                        26%
 EOF
 
 test_case source-nonexistent-file \
@@ -64,13 +64,13 @@ test_case source-nonexistent-file \
 tig warning: Errors while loading HOME/.tigrc." \
 	<<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 Misc
   : prompt Open the prompt
 [-] Toggle options menu bindings
-toggle key:
-[help] - line 1 of 23                                                        30%
+[help] - line 1 of 24                                                        29%
 EOF
 
 test_case source-nonexistent-file-quietly \
@@ -84,13 +84,13 @@ test_case source-nonexistent-file-quietly \
 		" \
 	<<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 Misc
   : prompt Open the prompt
 [-] Toggle options menu bindings
-toggle key:
-[help] - line 1 of 23                                                        30%
+[help] - line 1 of 24                                                        29%
 EOF
 
 test_case source-tilde-path \
@@ -104,13 +104,13 @@ test_case source-tilde-path \
 		" \
 	<<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 View manipulation
   q quit   Close all views and quit
 Misc
-  : prompt Open the prompt
-[help] - line 1 of 25                                                        28%
+[help] - line 1 of 26                                                        26%
 EOF
 
 run_test_cases

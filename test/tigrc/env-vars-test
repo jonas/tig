@@ -31,9 +31,9 @@ EOF
 
 assert_equals help.screen <<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 Misc
-  : prompt Open the prompt
-[help] - line 1 of 23                                                        21%
+[help] - line 1 of 24                                                        20%
 EOF
