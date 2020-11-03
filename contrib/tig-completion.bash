@@ -33,8 +33,6 @@ __tig_options="
 	-v --version
 	-h --help
 	-C
-	--
-	+
 "
 __tig_commands="
 	blame
@@ -47,38 +45,31 @@ __tig_commands="
 	show
 "
 
-_tig() {
+__tig_main () {
 	# parse already existing parameters
 	local i c=1 command
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
 		case "$i" in
 		--)	command="log"; break;;
+		-C)	return;;
 		-*)	;;
 		*)	command="$i"; break ;;
 		esac
 		c=$((++c))
 	done
 
-	# options -- only before command
-	case "$command$cur" in
-		-C*)
-			COMPREPLY=( $(compgen -d -P '-C' -- ${cur##-C}) )
-			return
-			;;
-	esac
-
 	# commands
 	case "$command" in
 		refs|status|stash)
-			COMPREPLY=( $(compgen -W "$__tig_options" -- "$cur") )
+			__gitcomp "$__tig_options"
 			;;
 		reflog)
 			__git_complete_command log
 			;;
 		"")
 			__git_complete_command log
-			__gitcompappend "$(compgen -W "$__tig_options $__tig_commands" -- "$cur")"
+			__gitcomp "$__tig_options $__tig_commands"
 			;;
 		*)
 			__git_complete_command $command
@@ -88,11 +79,11 @@ _tig() {
 
 # we use internal git-completion functions, so wrap _tig for all necessary
 # variables (like cword and prev) to be defined
-__git_complete tig _tig 
+__git_complete tig __tig_main
 
 # The following are necessary only for Cygwin, and only are needed
 # when the user has tab-completed the executable name and consequently
 # included the '.exe' suffix.
 if [ Cygwin = "$(uname -o 2>/dev/null)" ]; then
-	__git_complete tig.exe _tig
+	__git_complete tig.exe __tig_main
 fi
