@@ -86,13 +86,6 @@ _tig() {
 	esac
 }
 
-# Detect if current shell is ZSH, and if so, load this file in bash
-# compatibility mode.
-if [ -n "$ZSH_VERSION" ]; then
-	autoload bashcompinit
-	bashcompinit
-fi
-
 # we use internal git-completion functions, so wrap _tig for all necessary
 # variables (like cword and prev) to be defined
 __git_complete tig _tig 

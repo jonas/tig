@@ -14,6 +14,7 @@
 
 _tig () {
   local e
+  autoload -U bashcompinit && bashcompinit
   e=$(dirname ${funcsourcetrace[1]%:*})/git-completion.bash
   if [ -f $e ]; then
     GIT_SOURCING_ZSH_COMPLETION=y . $e
