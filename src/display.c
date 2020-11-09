@@ -20,6 +20,7 @@
 #include "tig/draw.h"
 #include "tig/display.h"
 #include "tig/watch.h"
+#include "tig/keys.h"
 
 static void set_terminal_modes(void);
 
@@ -571,7 +572,14 @@ report_clear(void)
 static void
 done_display(void)
 {
+    char el[256] = { "" };
+
 	if (cursed) {
+        char *tp;
+        tp = tigetstr("el");
+        if ((tp != NULL) && (tp != (char *)-1)) {
+            strcpy(el, tp);
+        }
 		if (status_win) {
 			werase(status_win);
 			doupdate();
@@ -591,6 +599,8 @@ done_display(void)
 		tcsetpgrp(opt_tty.fd, opt_tty.opgrp);
 		signal(SIGTTOU, SIG_DFL);
 	}
+
+    print_exit_msg(el);
 }
 
 static void
@@ -708,6 +718,8 @@ init_display(void)
 		use_scroll_redrawwin = true;
 		use_scroll_status_wclear = false;
 	}
+
+    init_extended_keys(1);
 }
 
 static bool
@@ -883,16 +895,22 @@ get_input(int prompt_position, struct key *key)
 			 * is set and the key value is updated to the proper
 			 * ASCII value.
 			 */
-			if (KEY_CTL('@') <= key_value && key_value <= KEY_CTL('y') &&
+			if (KEY_CTL('@') <= key_value && key_value <= KEY_CTL('_') &&
 			    key_value != KEY_RETURN && key_value != KEY_TAB) {
 				key->modifiers.control = 1;
 				key_value = key_value | 0x40;
 			}
 
-			if ((key_value >= KEY_MIN && key_value < KEY_MAX) || key_value < 0x1F) {
+			if ((key_value >= KEY_MIN && key_value < KEY_MAX) || key_value <= 0x1F) {
 				key->data.value = key_value;
 				return key->data.value;
 			}
+
+            int ext_value = is_extended_key_value(key_value);
+            if (ext_value) {
+                key->data.value = ext_value;
+                return key->data.value;
+            }
 
 			key->modifiers.multibytes = 1;
 			key->data.bytes[0] = key_value;

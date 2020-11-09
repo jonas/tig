@@ -247,6 +247,9 @@ static const struct key_mapping key_mappings[] = {
 	{ "DoubleQuote", '"' },
 };
 
+static int num_extended_keys = 0;
+static struct key_mapping *ext_key_mappings = NULL;
+
 static const struct key_mapping *
 get_key_mapping(const char *name, size_t namelen)
 {
@@ -257,6 +260,12 @@ get_key_mapping(const char *name, size_t namelen)
 		    !strncasecmp(key_mappings[i].name, name, namelen))
 			return &key_mappings[i];
 	}
+
+    for (i = 0; i < num_extended_keys; i++) {
+        if (namelen == strlen(ext_key_mappings[i].name) &&
+            !strncasecmp(ext_key_mappings[i].name, name, namelen))
+            return &ext_key_mappings[i];
+    }
 
 	return NULL;
 }
@@ -299,6 +308,15 @@ get_key_value(const char **name_ptr, struct key *key)
 		if (!end)
 			return error("Missing '>' from key mapping: %s", name);
 
+        const char *start = name + 1;
+        int len = end - start;
+        int ext_value = is_extended_key_name(start, len);
+        if (ext_value) {
+            *name_ptr = end + 1;
+            key->data.value = ext_value;
+            return SUCCESS;
+        }
+
 		if (!prefixcmp(name, "<Ctrl-")) {
 			key->modifiers.control = 1;
 			return parse_key_value(key, name_ptr, 6, NULL, end);
@@ -309,8 +327,6 @@ get_key_value(const char **name_ptr, struct key *key)
 
 		} else {
 			const struct key_mapping *mapping;
-			const char *start = name + 1;
-			int len = end - start;
 
 			mapping = get_key_mapping(start, len);
 			if (!mapping)
@@ -380,6 +396,14 @@ get_key_name(const struct key key[], size_t keys, bool quote_comma)
 					name = key_mappings[j].name;
 					break;
 				}
+
+            for (j = 0; j < num_extended_keys; j++)
+                if (ext_key_mappings[j].value == value) {
+                    start = "<";
+                    end = ">";
+                    name = ext_key_mappings[j].name;
+                    break;
+                }
 		}
 
 		if (!string_format_from(buf, &pos, "%s%s%s", start, name, end))
@@ -655,6 +679,182 @@ foreach_key(key_visitor_fn visitor, void *data, bool combine_keys)
 	}
 
 	return true;
+}
+
+struct ext_key_table {
+    const char *tname;
+    const char *mname;
+    const char *mname2;
+};
+
+static struct ext_key_table ext_keys[] = {
+    { "kUP3",   "Alt-Up",              "A-Up"          },
+    { "kUP4",   "Alt-Shift-Up",        "A-S-Up"        },
+    { "kUP5",   "Ctrl-Up",             "C-Up"          },
+    { "kUP6",   "Ctrl-Shift-Up",       "C-S-Up"        },
+    { "kUP7",   "Alt-Ctrl-Up",         "A-C-Up"        },
+    { "kDN3",   "Alt-Down",            "A-Down"        },
+    { "kDN4",   "Alt-Shift-Down",      "A-S-Down"      },
+    { "kDN5",   "Ctrl-Down",           "C-Down"        },
+    { "kDN6",   "Ctrl-Shift-Down" ,    "C-S-Down"      },
+    { "kDN7",   "Alt-Ctrl-Down",       "A-C-Down"      },
+    { "kRIT3",  "Alt-Right",           "A-Right"       },
+    { "kRIT4",  "Alt-Shift-Right",     "A-S-Right"     },
+    { "kRIT5",  "Ctrl-Right",          "C-Right"       },
+    { "kRIT6",  "Ctrl-Shift-Right",    "C-S-Right"     },
+    { "kRIT7",  "Alt-Ctrl-Right",      "A-C-Right"     },
+    { "kLFT3",  "Alt-Left",            "A-Left"        },
+    { "kLFT4",  "Alt-Shift-Left",      "A-S-Left"      },
+    { "kLFT5",  "Ctrl-Left",           "C-Left"        },
+    { "kLFT6",  "Ctrl-Shift-Left",     "C-S-Left"      },
+    { "kLFT7",  "Alt-Ctrl-Left",       "A-C-Left"      },
+    { "kIC3",   "Alt-Insert",          "A-Insert"      },
+    { "kIC4",   "Alt-Shift-Insert",    "A-S-Insert"    },
+    { "kIC5",   "Ctrl-Insert",         "C-Insert"      },
+    { "kIC6",   "Ctrl-Shift-Insert",   "C-S-Insert"    },
+    { "kIC7",   "Alt-Ctrl-Insert",     "A-C-Insert"    },
+    { "kDC3",   "Alt-Delete",          "A-Delete"      },
+    { "kDC4",   "Alt-Shift-Delete",    "A-S-Delete"    },
+    { "kDC5",   "Ctrl-Delete",         "C-Delete"      },
+    { "kDC6",   "Ctrl-Shift-Delete",   "C-S-Delete"    },
+    { "kDC7",   "Alt-Ctrl-Delete",     "A-C-Delete"    },
+    { "kHOM3",  "Alt-Home",            "A-Home"        },
+    { "kHOM4",  "Alt-Shift-Home",      "A-S-Home"      },
+    { "kHOM5",  "Ctrl-Home",           "C-Home"        },
+    { "kHOM6",  "Ctrl-Shift-Home",     "C-S-Home"      },
+    { "kHOM7",  "Alt-Ctrl-Home",       "A-C-Home"      },
+    { "kEND3",  "Alt-End",             "A-End"         },
+    { "kEND4",  "Alt-Shift-End",       "A-S-End"       },
+    { "kEND5",  "Ctrl-End",            "C-End"         },
+    { "kEND6",  "Ctrl-Shift-End",      "C-S-End"       },
+    { "kEND7",  "Alt-Ctrl-End",        "A-C-End"       },
+    { "kNXT3",  "Alt-PageDown",        "A-PageDown"    },
+    { "kNXT4",  "Alt-Shift-PageDown",  "A-S-PageDown"  },
+    { "kNXT5",  "Ctrl-PageDown",       "C-PageDown"    },
+    { "kNXT6",  "Ctrl-Shift-PageDown", "C-S-PageDown"  },
+    { "kNXT7",  "Alt-Ctrl-PageDown",   "A-C-PageDown"  },
+    { "kPRV3",  "Alt-PageUp",          "A-PageUp"      },
+    { "kPRV4",  "Alt-Shift-PageUp",    "A-S-PageUp"    },
+    { "kPRV5",  "Ctrl-PageUp",         "C-PageUp"      },
+    { "kPRV6",  "Ctrl-Shift-PageUp",   "C-S-PageUp"    },
+    { "kPRV7",  "Alt-Ctrl-PageUp",     "A-C-PageUp"    }
+};
+
+struct ext_key_table2 {
+    const char *tname;
+    const char *mname;
+    const char *mname2;
+    int valid;
+    int value;
+    int value2;
+};
+
+static struct ext_key_table2 *ext_key_valmap = NULL;
+
+void
+init_extended_keys(int pass)
+{
+    int i, j;
+
+    num_extended_keys = ARRAY_SIZE(ext_keys);
+
+    if (pass == 0) {
+        ext_key_valmap = (struct ext_key_table2 *)malloc(num_extended_keys * sizeof(struct ext_key_table2));
+        ext_key_mappings = (struct key_mapping *)malloc(num_extended_keys * sizeof(struct key_mapping));
+
+        for (i = 0; i < num_extended_keys; i++) {
+            ext_key_mappings[i].name = &ext_keys[i].mname[0];
+            ext_key_mappings[i].value = 1000000 + i;
+            ext_key_valmap[i].tname = &ext_keys[i].tname[0];
+            ext_key_valmap[i].mname = &ext_keys[i].mname[0];
+            ext_key_valmap[i].mname2 = &ext_keys[i].mname2[0];
+            ext_key_valmap[i].valid = 0;
+            ext_key_valmap[i].value = 0;
+            ext_key_valmap[i].value2 = ext_key_mappings[i].value;
+        }
+
+        return;
+    }
+
+    char *tp;
+    int num_valid = 0;
+    for (i = 0; i < num_extended_keys; i++) {
+        tp = tigetstr(ext_key_valmap[i].tname);
+        if ((tp != NULL) && (tp != (char *)-1)) {
+            ext_key_valmap[i].valid |= 2;
+            num_valid++;
+        }
+    }
+
+    const char *kn;
+    int num_added = 0;
+    for(i=KEY_MAX;i<1023;i++) {
+        kn = keyname(i);
+        if (kn != NULL) {
+            for (j = 0; j < num_extended_keys; j++) {
+                if (ext_key_valmap[j].valid & 2) {
+                    if (!strcmp(kn, ext_key_valmap[j].tname)) {
+                        ext_key_valmap[j].value = i;
+                        ext_key_valmap[j].valid |= 4;
+                        num_added++;
+                        if (num_added == num_valid)
+                        {
+                            i = 1024;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    char warn_msg[256] = { "" };
+    for (i = 0; i < num_extended_keys; i++) {
+        if ((ext_key_valmap[i].valid & 1) && !(ext_key_valmap[i].valid & 4)) {
+            sprintf(warn_msg, "tig warning: <%s> key binding not supported in terminfo (%s)\n",
+                ext_key_mappings[i].name, ext_key_valmap[i].tname);
+            add_to_exit_msg(warn_msg);
+        }
+    }
+}
+
+int
+is_extended_key_name(const char *name, int namelen)
+{
+    int i;
+    int ret = 0;
+
+    for(i=0; i<num_extended_keys; i++) {
+        if (namelen == strlen(ext_key_valmap[i].mname) &&
+            !strncasecmp(ext_key_valmap[i].mname, name, namelen)) {
+            ret = ext_key_mappings[i].value;
+            ext_key_valmap[i].valid |= 1;
+            break;
+        } else if (namelen == strlen(ext_key_valmap[i].mname2) &&
+            !strncasecmp(ext_key_valmap[i].mname2, name, namelen)) {
+            ret = ext_key_mappings[i].value;
+            ext_key_valmap[i].valid |= 1;
+            break;
+        }
+    }
+
+    return ret;
+}
+
+int
+is_extended_key_value(int value)
+{
+    int i;
+    int ret = 0;
+
+    for(i=0; i<num_extended_keys; i++) {
+        if ((ext_key_valmap[i].valid & 4) && (ext_key_valmap[i].value == value)) {
+            ret = ext_key_valmap[i].value2;
+            break;
+        }
+    }
+
+    return ret;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

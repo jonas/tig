@@ -174,4 +174,7 @@ void TIG_NORETURN usage(const char *message);
 
 #endif
 
+void add_to_exit_msg(char *msg);
+void print_exit_msg(char *el);
+
 /* vim: set ts=8 sw=8 noexpandtab: */

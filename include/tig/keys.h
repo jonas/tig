@@ -102,5 +102,8 @@ typedef bool (*key_visitor_fn)(void *data, const char *group, struct keymap *key
 			       const struct request_info *req_info, const struct run_request *run_req);
 bool foreach_key(key_visitor_fn fn, void *data, bool combine_keys);
 
+void init_extended_keys(int pass);
+int is_extended_key_name(const char *name, int namelen);
+int is_extended_key_value(int value);
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

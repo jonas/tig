@@ -799,6 +799,56 @@ handle_git_prefix(void)
 	return SUCCESS;
 }
 
+static size_t exit_len = 0;
+static char *exit_msg = NULL;
+
+void
+add_to_exit_msg(char *msg)
+{
+    if (msg) {
+        size_t len = strlen(msg);
+        if (len == 0)
+            return;
+        if (len >= exit_len) {
+            exit_len = len + 1000;
+            exit_msg = (char *)realloc(exit_msg, exit_len+1);
+            if (exit_msg == NULL) {
+                exit_len = 0;
+            } else {
+                strcat(exit_msg, msg);
+            }
+        } else {
+            exit_len += len;
+            strcat(exit_msg, msg);
+        }
+    }
+}
+
+void
+print_exit_msg(char *el)
+{
+    size_t lel = 0;
+
+    if (exit_msg) {
+        size_t len = strlen(exit_msg);
+        if (len > 0) {
+            if (el) {
+                lel = strlen(el);
+            }
+            if (lel > 0) {
+                char *line = strtok(exit_msg, "\n");
+                while (line != NULL) {
+                    write(fileno(stdout), el, lel);
+                    fprintf(stderr, "%s\n", line);
+                    line = strtok(NULL, "\n");
+                }
+            } else {
+                fprintf(stderr, "%s", exit_msg);
+            }
+        }
+    }
+}
+
 int
 main(int argc, const char *argv[])
 {
@@ -821,6 +871,8 @@ main(int argc, const char *argv[])
 	if (setlocale(LC_ALL, "")) {
 		codeset = nl_langinfo(CODESET);
 	}
+
+    init_extended_keys(0);
 
 	die_if_failed(handle_git_prefix(), "Failed to handle GIT_PREFIX");
 	die_if_failed(load_repo_info(), "Failed to load repo info.");
