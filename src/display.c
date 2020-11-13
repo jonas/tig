@@ -708,6 +708,17 @@ init_display(void)
 		use_scroll_redrawwin = true;
 		use_scroll_status_wclear = false;
 	}
+
+#if defined(NCURSES_EXT_FUNCS)
+    // Disable extended keys so that esc-codes will be received
+    // instead of extended key values (> KEY_MAX).
+    // Then these keys can be mapped in .tigrc etc.
+    int i;
+    for (i=KEY_MAX; i<2000; i++) {
+        keyok(i, false);
+    }
+#endif
+
 }
 
 static bool
