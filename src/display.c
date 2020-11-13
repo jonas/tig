@@ -21,6 +21,8 @@
 #include "tig/display.h"
 #include "tig/watch.h"
 
+#define MAX_KEYS 2000
+
 static void set_terminal_modes(void);
 
 struct view *display[2];
@@ -638,6 +640,7 @@ init_display(void)
 	bool no_display = !!getenv("TIG_NO_DISPLAY");
 	const char *term;
 	int x, y;
+	int code;
 
 	if (!opt_tty.file)
 		die("Can't initialize display without tty");
@@ -674,6 +677,15 @@ init_display(void)
 	keypad(status_win, true);
 	wbkgdset(status_win, get_line_attr(NULL, LINE_STATUS));
 	enable_mouse(opt_mouse);
+
+#ifdef NCURSES_VERSION
+	/* Disable extended keys so that esc-codes will be received
+	 * instead of extended key values (> KEY_MAX).
+	 * Then these keys can be mapped in .tigrc etc. */
+	for (code = KEY_MAX; code < MAX_KEYS; code++) {
+		keyok(code, false);
+	}
+#endif
 
 #if defined(NCURSES_VERSION_PATCH) && (NCURSES_VERSION_PATCH >= 20080119)
 	set_tabsize(opt_tab_size);
