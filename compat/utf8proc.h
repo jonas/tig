@@ -71,7 +71,7 @@
 /** The MAJOR version number (increased when backwards API compatibility is broken). */
 #define UTF8PROC_VERSION_MAJOR 2
 /** The MINOR version number (increased when new functionality is added in a backwards-compatible manner). */
-#define UTF8PROC_VERSION_MINOR 5
+#define UTF8PROC_VERSION_MINOR 6
 /** The PATCH version (increased for fixes that do not change the API). */
 #define UTF8PROC_VERSION_PATCH 0
 /** @} */
@@ -502,7 +502,7 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_decompose_char(
  * string and orders the decomposed sequences correctly.
  *
  * If the @ref UTF8PROC_NULLTERM flag in `options` is set, processing
- * will be stopped, when a NULL byte is encounted, otherwise `strlen`
+ * will be stopped, when a NULL byte is encountered, otherwise `strlen`
  * bytes are processed.  The result (in the form of 32-bit unicode
  * codepoints) is written into the buffer being pointed to by
  * `buffer` (which must contain at least `bufsize` entries).  In case of
@@ -634,6 +634,18 @@ UTF8PROC_DLLEXPORT utf8proc_int32_t utf8proc_toupper(utf8proc_int32_t c);
  * variant, or if `c` is not a valid codepoint) return `c`.
  */
 UTF8PROC_DLLEXPORT utf8proc_int32_t utf8proc_totitle(utf8proc_int32_t c);
+
+/**
+ * Given a codepoint `c`, return `1` if the codepoint corresponds to a lower-case character
+ * and `0` otherwise.
+ */
+UTF8PROC_DLLEXPORT int utf8proc_islower(utf8proc_int32_t c);
+
+/**
+ * Given a codepoint `c`, return `1` if the codepoint corresponds to an upper-case character
+ * and `0` otherwise.
+ */
+UTF8PROC_DLLEXPORT int utf8proc_isupper(utf8proc_int32_t c);
 
 /**
  * Given a codepoint, return a character width analogous to `wcwidth(codepoint)`,
