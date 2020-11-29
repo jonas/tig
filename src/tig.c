@@ -242,7 +242,7 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_NEXT:
 	case REQ_PREVIOUS:
-		if (view->parent && view == display[1]) {
+		if (view->parent) {
 			int line;
 
 			view = view->parent;
@@ -344,7 +344,6 @@ view_driver(struct view *view, enum request request)
 		if (view->prev && view->prev != view) {
 			maximize_view(view->prev, true);
 			view->prev = view;
-			view->parent = NULL;
 			break;
 		}
 		if (request == REQ_VIEW_CLOSE_NO_QUIT) {

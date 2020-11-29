@@ -8,10 +8,12 @@ export LINES=12
 steps '
 	<Enter>
 	:save-display split.screen
-	:maximize
-	:save-display maximized.screen
 	:next
-	:save-display maximized-after-next.screen
+	:save-display split-after-next.screen
+	:view-diff
+	:save-display diff.screen
+	:next
+	:save-display diff-after-next.screen
 '
 
 tigrc <<EOF
@@ -37,21 +39,21 @@ CommitDate: Sat Mar 1 17:26:01 2014 -0500
 [diff] ee912870202200a0b9cf4fd86ba57243212d341e - line 1 of 367               1%
 EOF
 
-assert_equals 'maximized.screen' <<EOF
-commit ee912870202200a0b9cf4fd86ba57243212d341e
-Refs: [master]
+assert_equals 'split-after-next.screen' <<EOF
+2014-03-01 17:26 -0500 Jonas Fonseca ∙ [master] WIP: Upgrade to 0.4-SNAPSHOT and
+2014-03-01 15:59 -0500 Jonas Fonseca ∙ Add type parameter for js.Dynamic
+2014-01-16 22:51 -0500 Jonas Fonseca ∙ Move classes under org.scalajs.benchmark
+[main] a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff - commit 2 of 3             100%
+commit a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff
 Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
-AuthorDate: Sat Mar 1 17:26:01 2014 -0500
+AuthorDate: Sat Mar 1 15:59:02 2014 -0500
 Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
-CommitDate: Sat Mar 1 17:26:01 2014 -0500
+CommitDate: Sat Mar 1 15:59:02 2014 -0500
  
-    WIP: Upgrade to 0.4-SNAPSHOT and DCE
----
- common/benchmark-runner.sh                                  |  5 +++--
-[diff] ee912870202200a0b9cf4fd86ba57243212d341e - line 1 of 367               2%
+[diff] a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff - line 1 of 24               25%
 EOF
 
-assert_equals 'maximized-after-next.screen' <<EOF
+assert_equals 'diff.screen' <<EOF
 commit a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff
 Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
 AuthorDate: Sat Mar 1 15:59:02 2014 -0500
@@ -63,4 +65,18 @@ CommitDate: Sat Mar 1 15:59:02 2014 -0500
  common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 [diff] a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff - line 1 of 24               41%
+EOF
+
+assert_equals 'diff-after-next.screen' <<EOF
+commit a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff
+Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
+AuthorDate: Sat Mar 1 15:59:02 2014 -0500
+Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
+CommitDate: Sat Mar 1 15:59:02 2014 -0500
+ 
+    Add type parameter for js.Dynamic
+---
+ common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[diff] a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff - line 2 of 24               41%
 EOF

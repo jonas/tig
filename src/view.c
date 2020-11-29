@@ -842,6 +842,9 @@ open_view(struct view *prev, struct view *view, enum open_flags flags)
 	if (prev && prev->parent && prev == display[1])
 		prev = prev->parent;
 
+	if (view != display[0])
+		view->parent = NULL;
+
 	if (!view->keymap)
 		view->keymap = get_keymap(view->name, strlen(view->name));
 	load_view(view, prev ? prev : view, flags);
