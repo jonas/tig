@@ -1,5 +1,5 @@
 # bash/zsh completion for tig
-# 
+#
 # Copyright (C) 2019 Roland Hieber, Pengutronix
 # Copyright (C) 2007-2010 Jonas fonseca
 #
@@ -32,22 +32,22 @@
 #tig-completion requires __git_complete
 #* If not defined, source git completions script so __git_complete is available
 if ! declare -f __git_complete &>/dev/null; then
-  _bash_completion=$(pkg-config --variable=completionsdir bash-completion 2>/dev/null) ||
-    _bash_completion='/usr/share/bash-completion/completions/'
-  _locations=(
-    "$(dirname "${BASH_SOURCE[0]%:*}")"/git-completion.bash #in same dir as this
-    "$HOME/.local/share/bash-completion/completions/git"
-    "$_bash_completion/git"
-    '/etc/bash_completion.d/git' # old debian
-    )
-  for _e in "${_locations[@]}"; do
-    # shellcheck disable=1090
-    test -f "$_e" && . "$_e" && break
-  done
-  unset _bash_completion _locations _e
-  if ! declare -f __git_complete &>/dev/null; then
-    return #silently return without completions
-  fi
+	_bash_completion=$(pkg-config --variable=completionsdir bash-completion 2>/dev/null) ||
+		_bash_completion='/usr/share/bash-completion/completions/'
+			_locations=(
+				"$(dirname "${BASH_SOURCE[0]%:*}")"/git-completion.bash #in same dir as this
+				"$HOME/.local/share/bash-completion/completions/git"
+				"$_bash_completion/git"
+				'/etc/bash_completion.d/git' # old debian
+			)
+			for _e in "${_locations[@]}"; do
+				# shellcheck disable=1090
+				test -f "$_e" && . "$_e" && break
+			done
+			unset _bash_completion _locations _e
+			if ! declare -f __git_complete &>/dev/null; then
+				return #silently return without completions
+			fi
 fi
 
 __tig_options="
@@ -116,7 +116,7 @@ fi
 
 # we use internal git-completion functions, so wrap _tig for all necessary
 # variables (like cword and prev) to be defined
-__git_complete tig _tig 
+__git_complete tig _tig
 
 # The following are necessary only for Cygwin, and only are needed
 # when the user has tab-completed the executable name and consequently
