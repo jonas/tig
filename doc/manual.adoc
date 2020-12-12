@@ -168,6 +168,8 @@ following variables.
 |%(remote)		|The currently selected remote name. For remote
 			 branches %(branch) will contain the branch name.
 |%(tag)			|The currently selected tag name.
+|%(refname)		|The currently selected reference name including the
+			 remote name for remote branches.
 |%(stash)		|The currently selected stash name.
 |%(directory)		|The current directory path in the tree view or
 			 "." if undefined.
