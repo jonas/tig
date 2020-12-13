@@ -23,6 +23,7 @@
 #define REPO_INFO_SHOW_PREFIX	"--show-prefix"
 #define REPO_INFO_SYMBOLIC_HEAD	"--symbolic-full-name"
 #define REPO_INFO_RESOLVED_HEAD	"HEAD"
+#define REPO_INFO_REMOTE	"--abbrev-ref"
 
 struct repo_info_state {
 	const char **argv;
@@ -72,6 +73,10 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 			add_ref(repo.head_id, name, repo.remote, repo.head);
 		}
 		state->argv++;
+
+	} else if (!strcmp(arg, REPO_INFO_REMOTE)) {
+		string_ncopy(repo.remote, name, namelen);
+		state->argv++;
 	}
 
 	return SUCCESS;
@@ -103,11 +108,16 @@ load_repo_info(void)
 enum status_code
 load_repo_head(void)
 {
+	const char *rev_parse_remote_argv[] = {
+		"git", "rev-parse", REPO_INFO_REMOTE, "@{upstream}", NULL
+	};
 	const char *rev_parse_argv[] = {
 		"git", "rev-parse", REPO_INFO_RESOLVED_HEAD,
 			REPO_INFO_SYMBOLIC_HEAD, "HEAD", NULL
 	};
 
+	memset(repo.remote, 0, sizeof(repo.remote));
+	reload_repo_info(rev_parse_remote_argv);
 	memset(repo.head, 0, sizeof(repo.head));
 	memset(repo.head_id, 0, sizeof(repo.head_id));
 	return reload_repo_info(rev_parse_argv);

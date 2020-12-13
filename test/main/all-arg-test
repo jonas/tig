@@ -46,7 +46,7 @@ EOF
 
 assert_equals 'detached.screen' <<EOF
 2009-02-13 23:31 +0000 Max Power             * {max-power/mp/feature} WIP: featu
-2010-04-07 05:37 +0000 Max Power             * [master] {origin/master} {max-pow
+2010-04-07 05:37 +0000 Max Power             * [master] {max-power/master} {orig
 2010-03-29 17:15 +0000 Jørgen Thygesen Brahe * Commit 10 D
 2010-03-21 04:53 +0000 作者                  * [HEAD] Commit 10 C
 2010-03-12 16:31 +0000 René Lévesque         * <v2.0.1> Commit 10 B
