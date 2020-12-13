@@ -20,7 +20,7 @@ static enum status_code
 stash_open(struct view *view, enum open_flags flags)
 {
 	static const char *stash_argv[] = { "git", "stash", "list",
-		encoding_arg, "--no-color", "--pretty=raw", NULL };
+		encoding_arg, "--no-color", "--pretty=raw", "%(revargs)", NULL };
 	struct main_state *state = view->private;
 
 	state->with_graph = false;
@@ -31,8 +31,12 @@ stash_open(struct view *view, enum open_flags flags)
 static void
 stash_select(struct view *view, struct line *line)
 {
+	struct main_state *state = view->private;
+
 	main_select(view, line);
-	string_format(view->env->stash, "stash@{%d}", line->lineno - 1);
+	assert(state->reflogs >= line->lineno);
+	string_ncopy(view->env->stash, state->reflog[line->lineno - 1] + STRING_SIZE("refs/"),
+		     strlen(state->reflog[line->lineno - 1]) - STRING_SIZE("refs/"));
 	string_copy(view->ref, view->env->stash);
 }
 
