@@ -366,6 +366,118 @@ stage_chunk_is_wrapped(struct view *view, struct line *line)
 	return false;
 }
 
+bool
+find_deleted_line_in_head(struct view *view, struct line *line) {
+	struct io io;
+	struct buffer buffer;
+	unsigned long line_number_in_head, line_number = 0;
+	long bias_by_staged_changes = 0;
+	char buf[SIZEOF_STR] = "";
+	char file_in_head_pathspec[sizeof("HEAD:") + SIZEOF_STR],
+		file_in_index_pathspec[sizeof(":") + SIZEOF_STR];
+	const char *file_in_head = NULL;
+	const char *ls_tree_argv[] = {
+		"git", "ls-tree", "-z", "HEAD", view->env->file, NULL
+	};
+	const char *diff_argv[] = {
+		"git", "diff", "--root", file_in_head_pathspec, file_in_index_pathspec,
+		"--no-color", NULL
+	};
+
+	if (line->type != LINE_DIFF_DEL)
+		return false;
+
+	// Check if the file exists in HEAD.
+	io_run_buf(ls_tree_argv, buf, sizeof(buf), repo.exec_dir, false);
+	if (buf[0]) {
+		file_in_head = view->env->file;
+	} else { // The file might might be renamed in the index. Find its old name.
+		struct status file_status;
+		const char *diff_index_argv[] = {
+			"git", "diff-index", "--root", "--cached", "-C",
+			"--diff-filter=ACR", "-z", "HEAD", NULL
+		};
+		if (!io_run(&io, IO_RD, repo.exec_dir, NULL, diff_index_argv) || io.status)
+			return false;
+		while (io_get(&io, &buffer, 0, true)) {
+			if (!status_get_diff(&file_status, buffer.data, buffer.size))
+				return false;
+			if (file_status.status != 'A') {
+				if (!io_get(&io, &buffer, 0, true))
+					return false;
+				string_ncopy(file_status.old.name, buffer.data, buffer.size);
+			}
+			if (!io_get(&io, &buffer, 0, true))
+				return false;
+			string_ncopy(file_status.new.name, buffer.data, buffer.size);
+			if (strcmp(file_status.new.name, view->env->file))
+				continue;
+			// Quit if the file does not exist in HEAD.
+			if (file_status.status == 'A') {
+				return false;
+			}
+			file_in_head = file_status.old.name;
+			break;
+		}
+	}
+
+	if (!file_in_head)
+		return false;
+
+	// We want to compute the line number in HEAD. The current view is a diff
+	// of (un)staged changes on top of HEAD.
+	line_number_in_head = diff_get_lineno(view, line, /*old=*/true);
+	assert(line_number_in_head);
+
+	// When looking at staged changes, we already have the correct
+	// line number in HEAD.
+	if (stage_line_type == LINE_STAT_STAGED)
+		goto found_line;
+
+	// If we are in an unstaged diff, we also need to take into
+	// account the staged changes to this file, since they happened
+	// between HEAD and our diff.
+	sprintf(file_in_head_pathspec, "HEAD:%s", file_in_head);
+	sprintf(file_in_index_pathspec, ":%s", view->env->file);
+	if (!io_run(&io, IO_RD, repo.exec_dir, NULL, diff_argv) || io.status)
+		return false;
+	// line_number_in_head is still the line number in the staged
+	// version of the file. Go through the staged changes up to our
+	// line number and count the additions and deletions on the way,
+	// to compute the line number before the staged changes.
+	while (line_number < line_number_in_head && io_get(&io, &buffer, '\n', true)) {
+		enum line_type type = get_line_type(buffer.data);
+		if (type == LINE_DIFF_CHUNK) {
+			struct chunk_header header;
+			if (!parse_chunk_header(&header, buffer.data))
+				return false;
+			line_number = header.new.position;
+			continue;
+		}
+		if (!line_number) {
+			continue;
+		}
+		if (type == LINE_DIFF_DEL) {
+			bias_by_staged_changes--;
+			continue;
+		}
+		assert(type == LINE_DIFF_ADD || type == LINE_DEFAULT ||
+		       // These are just context lines that happen to start with [-+].
+		       type == LINE_DIFF_ADD2 || type == LINE_DIFF_DEL2);
+		if (type == LINE_DIFF_ADD)
+			bias_by_staged_changes++;
+		line_number++;
+	}
+
+	line_number_in_head -= bias_by_staged_changes;
+
+found_line:
+	if (file_in_head != view->env->file)
+		string_ncopy(view->env->file, file_in_head, strlen(file_in_head));
+	view->env->goto_lineno = line_number_in_head;
+	return true;
+}
+
 static enum request
 stage_request(struct view *view, enum request request, struct line *line)
 {
@@ -420,7 +532,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 		if (stage_line_type == LINE_STAT_UNTRACKED) {
 			open_editor(stage_status.new.name, (line - view->line) + 1);
 		} else {
-			open_editor(stage_status.new.name, diff_get_lineno(view, line));
+			open_editor(stage_status.new.name, diff_get_lineno(view, line, false));
 		}
 		break;
 
@@ -445,7 +557,10 @@ stage_request(struct view *view, enum request request, struct line *line)
 		}
 
 		view->env->ref[0] = 0;
-		view->env->goto_lineno = diff_get_lineno(view, line);
+		if (find_deleted_line_in_head(view, line))
+			string_copy(view->env->ref, "HEAD");
+		else
+			view->env->goto_lineno = diff_get_lineno(view, line, false);
 		if (view->env->goto_lineno > 0)
 			view->env->goto_lineno--;
 		return request;

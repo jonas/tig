@@ -33,6 +33,7 @@ struct status {
 
 bool status_update_file(struct status *status, enum line_type type);
 bool status_update_files(struct view *view, struct line *line);
+bool status_get_diff(struct status *file, const char *buf, size_t bufsize);
 
 bool status_revert(struct status *status, enum line_type type, bool has_none);
 bool status_exists(struct view *view, struct status *status, enum line_type type);
