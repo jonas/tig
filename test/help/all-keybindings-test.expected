@@ -31,9 +31,9 @@ Cursor navigation
                            k move-up             Move cursor one line up
                            j move-down           Move cursor one line down
          <PageDown>, <Space> move-page-down      Move cursor one page down
-                 <PageUp>, - move-page-up        Move cursor half a page up
+                 <PageUp>, - move-page-up        Move cursor one page up
                     <Ctrl-D> move-half-page-down Move cursor half a page down
-                    <Ctrl-U> move-half-page-up   Move cursor one page up
+                    <Ctrl-U> move-half-page-up   Move cursor half a page up
                       <Home> move-first-line     Move cursor to first line
                        <End> move-last-line      Move cursor to last line
 Scrolling

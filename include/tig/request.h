@@ -50,9 +50,9 @@
 	REQ_(MOVE_UP,		"Move cursor one line up"), \
 	REQ_(MOVE_DOWN,		"Move cursor one line down"), \
 	REQ_(MOVE_PAGE_DOWN,	"Move cursor one page down"), \
-	REQ_(MOVE_PAGE_UP,	"Move cursor half a page up"), \
+	REQ_(MOVE_PAGE_UP,	"Move cursor one page up"), \
 	REQ_(MOVE_HALF_PAGE_DOWN,	"Move cursor half a page down"), \
-	REQ_(MOVE_HALF_PAGE_UP,	"Move cursor one page up"), \
+	REQ_(MOVE_HALF_PAGE_UP,	"Move cursor half a page up"), \
 	REQ_(MOVE_FIRST_LINE,	"Move cursor to first line"), \
 	REQ_(MOVE_LAST_LINE,	"Move cursor to last line"), \
 	REQ_(MOVE_NEXT_MERGE,	"Move cursor to next merge commit"), \
