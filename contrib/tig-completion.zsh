@@ -10,16 +10,23 @@
 # then add following to your ~/.zshrc file:
 #
 #  fpath=(~/.zsh $fpath)
+#
+# You also need Git's Zsh completion installed:
+#
+# https://github.com/felipec/git-completion/blob/master/git-completion.zsh
 
 
 _tig () {
   local e
-  e=$(dirname ${funcsourcetrace[1]%:*})/git-completion.bash
-  if [ -f $e ]; then
-    GIT_SOURCING_ZSH_COMPLETION=y . $e
-  fi
+
+  compdef _git tig
+
   e=$(dirname ${funcsourcetrace[1]%:*})/tig-completion.bash
   if [ -f $e ]; then
+    # Temporarily override __git_complete so the bash script doesn't complain
+    local old="$functions[__git_complete]"
+    functions[__git_complete]=:
     . $e
+    functions[__git_complete]="$old"
   fi
 }
