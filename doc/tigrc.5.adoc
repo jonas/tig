@@ -191,9 +191,10 @@ The following variables can be set:
 	 - replace		: A replaced reference.
 	 - branch		: Any other reference.
 
-'line-graphics' (mixed) [ascii|default|utf-8|<bool>]::
+'line-graphics' (mixed) [ascii|default|utf-8|auto|<bool>]::
 
-	What type of character graphics for line drawing.
+	What type of character graphics for line drawing. "auto" means "utf-8"
+	if the locale is UTF-8, "default" otherwise.
 
 'truncation-delimiter' (mixed) [utf-8|<string>]::
 

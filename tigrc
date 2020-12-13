@@ -88,7 +88,7 @@ set show-changes		= yes		# Show changes commits in the main view?
 set show-untracked		= yes		# Show also untracked changes?
 set wrap-lines			= no		# Wrap long lines in pager views?
 set tab-size			= 8		# Number of spaces to use when expanding tabs
-set line-graphics		= default	# Enum: ascii, default, utf-8
+set line-graphics		= default	# Enum: ascii, default, utf-8, auto
 set truncation-delimiter	= ~		# Character drawn for truncations, or "utf-8"
 
 # Format reference names based on type.
