@@ -290,13 +290,14 @@ static utf8proc_bool grapheme_break_simple(int lbc, int tbc) {
 
 static utf8proc_bool grapheme_break_extended(int lbc, int tbc, utf8proc_int32_t *state)
 {
-  int lbc_override;
-  if (*state == UTF8PROC_BOUNDCLASS_START)
-    *state = lbc_override = lbc; 
-  else
-    lbc_override = *state;
-  utf8proc_bool break_permitted = grapheme_break_simple(lbc_override, tbc);
   if (state) {
+    int lbc_override;
+    if (*state == UTF8PROC_BOUNDCLASS_START)
+      *state = lbc_override = lbc;
+    else
+      lbc_override = *state;
+    utf8proc_bool break_permitted = grapheme_break_simple(lbc_override, tbc);
+
     // Special support for GB 12/13 made possible by GB999. After two RI
     // class codepoints we want to force a break. Do this by resetting the
     // second RI's bound class to UTF8PROC_BOUNDCLASS_OTHER, to force a break
@@ -315,8 +316,11 @@ static utf8proc_bool grapheme_break_extended(int lbc, int tbc, utf8proc_int32_t 
     }
     else
       *state = tbc;
+
+    return break_permitted;
   }
-  return break_permitted;
+  else
+    return grapheme_break_simple(lbc, tbc);
 }
 
 UTF8PROC_DLLEXPORT utf8proc_bool utf8proc_grapheme_break_stateful(
