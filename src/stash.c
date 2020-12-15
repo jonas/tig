@@ -70,7 +70,7 @@ stash_request(struct view *view, enum request request, struct line *line)
 			if (!argv_format(diff_view.env, &diff_view.argv, diff_argv, false, false))
 				report("Failed to format argument");
 			else
-				open_view(view, &diff_view, flags | OPEN_PREPARED);
+				open_diff_view(view, flags | OPEN_PREPARED);
 		}
 		return REQ_NONE;
 

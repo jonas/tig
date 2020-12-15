@@ -46,11 +46,12 @@ reflog_request(struct view *view, enum request request, struct line *line)
 				"%(mainargs)", "", commit->id, "",
 				show_notes_arg(), log_custom_pretty_arg())
 		};
+		enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 
 		if (!argv_format(main_view.env, &main_view.argv, main_argv, false, false))
 			report("Failed to format argument");
 		else
-			open_view(view, &main_view, OPEN_SPLIT | OPEN_PREPARED);
+			open_main_view(view, flags | OPEN_PREPARED);
 		return REQ_NONE;
 	}
 

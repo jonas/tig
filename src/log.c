@@ -75,6 +75,8 @@ log_open(struct view *view, enum open_flags flags)
 static enum request
 log_request(struct view *view, enum request request, struct line *line)
 {
+	enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
+
 	switch (request) {
 	case REQ_REFRESH:
 		load_refs(true);
@@ -83,7 +85,7 @@ log_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_ENTER:
 		if (!display[1] || strcmp(display[1]->vid, view->ref))
-			open_diff_view(view, OPEN_SPLIT);
+			open_diff_view(view, flags);
 		return REQ_NONE;
 
 	default:

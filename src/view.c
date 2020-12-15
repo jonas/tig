@@ -829,7 +829,10 @@ open_view(struct view *prev, struct view *view, enum open_flags flags)
 	assert(flags ^ OPEN_REFRESH);
 
 	if (view == prev && nviews == 1 && !reload) {
-		report("Already in %s view", view->name);
+		if (view->parent)
+			view->parent = NULL;
+		else
+			report("Already in %s view", view->name);
 		return;
 	}
 

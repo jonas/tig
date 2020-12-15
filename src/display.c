@@ -408,7 +408,9 @@ save_view(struct view *view, const char *path)
 		return false;
 
 	fprintf(file, "View: %s\n", view->name);
-	if (view->parent && view->parent != view)
+	if (view->prev && view->prev != view)
+		fprintf(file, "Prev: %s\n", view->prev->name);
+	if (view->parent)
 		fprintf(file, "Parent: %s\n", view->parent->name);
 	fprintf(file, "Ref: %s\n", view->ref);
 	fprintf(file, "Dimensions: height=%d width=%d\n", view->height, view->width);
