@@ -57,7 +57,11 @@ filter=<file-glob>:<case-glob>::
 
 trace::
 
-	Show trace information.
+	Show tig trace information.
+
+trace_keys::
+
+	Show which keystrokes will be sent before each test.
 
 todos::
 

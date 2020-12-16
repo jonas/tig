@@ -1,0 +1,43 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+LINES=12
+COLUMNS=200
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+export TIGRC_SYSTEM=does-not-exist
+
+file "$HOME/.tigrc.bind.q.for.help.screen" <<EOF
+:bind generic q quit
+:view-help
+:save-display $HOME/help.screen
+EOF
+
+tigrc <<EOF
+bind generic : prompt		# Must have prompt mapping to execute script
+bind generic S :script $HOME/.tigrc.bind.q.for.help.screen
+EOF
+
+keystrokes 'Sq'
+
+test_tig
+
+assert_equals stderr <<EOF
+EOF
+
+assert_equals "$HOME/help.screen" <<EOF
+Quick reference for tig keybindings:
+
+[-] generic bindings
+View manipulation
+  q quit   Close all views and quit
+Misc
+  : prompt Open the prompt
+Internal commands:
+  S :script $HOME/.tigrc.bind.q.for.help.screen
+
+[help] - line 1 of 9                                                        100%
+EOF

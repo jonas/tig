@@ -5,8 +5,6 @@
 
 test_require diff-highlight
 
-export PATH="$(dirname -- "$diff_highlight_path"):$PATH"
-
 gitconfig <<EOF
 [color.diff-highlight]
   oldnormal=red bold

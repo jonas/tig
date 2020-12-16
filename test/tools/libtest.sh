@@ -75,6 +75,7 @@ export ASAN_OPTIONS=detect_leaks=false
 export TEST_OPTS="${TEST_OPTS:-}"
 # Used by tig_script to set the test "scope" used by test_tig.
 export TEST_NAME=
+export TEST_KEYSTROKES=
 
 [ -e "$output_dir" ] && rm -rf -- "$output_dir"
 mkdir -p -- "$output_dir/$work_dir"
@@ -140,6 +141,20 @@ tty_reset()
 	fi
 }
 
+tempfile_name()
+{
+	temp_base="${1:-tempfile}"
+	if which mktemp >/dev/null 2>&1; then
+		temp_file="$(mktemp "$tmp_dir/${temp_base}.XXXXXX")"
+	else
+		temp_file="$tmp_dir/${temp_base}.$$"
+		while [ -e "$temp_file" ]; do
+			temp_file="${temp_file}.alt"
+		done
+	fi
+	printf '%s\n' "$temp_file"
+}
+
 ### Testing API AsciiDoc
 #|
 #| file(filename, [content, ...]) [< content]::
@@ -170,8 +185,15 @@ tig_script() {
 	export TIG_SCRIPT="$HOME/${prefix}steps"
 	export TEST_NAME="$name"
 
-	# Ensure that the steps finish by quitting
-	printf '%s\n:quit\n' "$*" \
+	if [ -z "${TEST_KEYSTROKES:-}" ]; then
+		# ensure that the steps finish by quitting
+		quit_str=':quit'
+	else
+		# unless simulated keystrokes are also to be sent
+		quit_str=''
+	fi
+
+	printf '%s\n%s\n' "$*" "$quit_str" \
 		| sed -e 's/^[ 	]*//' \
 		| sed "s|:save-display[ 	]\{1,\}\([^ 	]\{1,\}\)|:save-display $HOME/\1|" \
 		| sed "s|:save-options[ 	]\{1,\}\([^ 	]\{1,\}\)|:save-options $HOME/\1|" \
@@ -185,6 +207,144 @@ tig_script() {
 #|
 steps() {
 	tig_script "" "$@"
+}
+
+_tig_keystrokes_driver()
+{
+	file="$1"; shift
+	append_mode="$1"; shift
+
+	if [ -n "$append_mode" ]; then
+		printf '%s' "$*" >> "$file"
+	else
+		printf '%s' "$*" > "$file"
+	fi
+}
+
+tig_keystrokes()
+{
+	name="$1"; shift
+	prefix="${name:+$name.}"
+
+	export TEST_KEYSTROKES="$HOME/${prefix}keystrokes"
+	export TEST_NAME="$name"
+
+	append_mode=''
+	keysym_mode=''
+	repeat_mode=''
+	while [ "$#" -gt 0 ]; do
+		case "$1" in
+			-append|--append) append_mode=yes && shift;;
+			-keysym|--keysym|-keysyms|--keysyms) keysym_mode=yes && shift;;
+			-repeat=*|--repeat=*) repeat_mode="$(expr "$1" : '--*repeat=\([0-9][0-9]*\)')" && shift || die "bad value $1";;
+			*) break;;
+		esac
+	done
+
+	if [ -n "${TIG_SCRIPT:-}" ] && [ -s "$TIG_SCRIPT" ] && [ "$(tail -1 < "${TIG_SCRIPT}")" = ':quit'  ]; then
+		# remove the trailing :quit from a script if it already was defined
+		head -n "$(expr "$(grep -c '^' < "$TIG_SCRIPT")" - 1)" < "${TIG_SCRIPT}" > "${TIG_SCRIPT}.tmp"
+		mv -f -- "${TIG_SCRIPT}.tmp" "$TIG_SCRIPT"
+	fi
+
+	if [ -n "$repeat_mode" ] && [ "$#" -gt 1 ]; then
+		die "tig_keystrokes -repeat can only be used with a single argument"
+	fi
+
+	if [ -n "$repeat_mode" ]; then
+		test "$#" -gt 1 && die "tig_keystrokes -repeat can only be used with a single key-sequence argument"
+		test "$repeat_mode" -lt 1 && repeat_mode=1
+
+		chunk="$1"
+		if [ -n "$keysym_mode" ]; then
+			chunk="%(keysym:$1)"
+		fi
+
+		while [ "$repeat_mode" -gt 0 ]; do
+			_tig_keystrokes_driver "$TEST_KEYSTROKES" "$append_mode" "$chunk"
+			append_mode=yes
+			repeat_mode="$((repeat_mode - 1))"
+		done
+	elif [ -n "$keysym_mode" ]; then
+		for chunk in "$@"; do
+			_tig_keystrokes_driver "$TEST_KEYSTROKES" "$append_mode" "%(keysym:$chunk)"
+			append_mode=yes
+		done
+	else
+		_tig_keystrokes_driver "$TEST_KEYSTROKES" "$append_mode" "$@"
+	fi
+
+	if [ -n "$valgrind" ]; then
+		test_skip "simulated keystrokes are not yet reliable under valgrind"
+	fi
+
+	test_require python
+	test_require python-termios
+}
+
+### Testing API AsciiDoc
+#|
+#| keystrokes([-append | -keysym | -repeat=<int>] key-sequence, [key-sequence, ...])::
+#|
+#|	Key sequences are given as Python strings, and accept
+#|	https://docs.python.org/2.0/ref/strings.html[the same string escapes as
+#|	Python]. Example: `'\134'` encodes a literal backslash. +
+#|	+
+#|	The key sequence may also contain special embedded codes:
+#|	`%(keysym:<name>)`, `%(keypause:<seconds>)`, or `%(keysignal:<signal>)`. +
+#|	+
+#|	*`%(keysym:<name>)`* will be translated into the raw characters
+#|	associated with the symbolic key name. <name> may be any form accepted
+#|	by 'bind' in `~/.tigrc`, or any terminal capability name known to
+#|	`tput`. Examples: `%(keysym:Left)`, `%(keysym:Ctrl-A)`. +
+#|	+
+#|	As a convenience, the `-keysym` option causes subsequent arguments to
+#|	be interpreted as a series of keysym names.  Example:
+#| -----------------------------------------------------------------------------
+#|	keystrokes -keysym 'Down' 'Up'
+#| -----------------------------------------------------------------------------
+#|	::
+#|	*`%(keypause:<seconds>)`* will insert a pause in the simulated
+#|	keystrokes. If pauses are added, the test timeout may also need to be
+#|	increased. +
+#|	+
+#|	*`%(keysignal:<signal>)`* will send a Unix signal to tig.  The signal
+#|	may be given as a number or symbol. Example: `%(keysignal:SIGWINCH)` +
+#|	+
+#|	To send tig a literal sequence matching the characters of an embedded
+#|	code, escape it with a backslash: `\%(keypause:1)`. +
+#|	+
+#|	Exiting: The passed key sequence should always arrange a clean exit.
+#|	Tig will otherwise be shut down by a signal, which is less consistent
+#|	for the purpose of testing. +
+#|	+
+#|	Appending: keystrokes may be defined in multiple passes using `-append`.
+#|	This enables composing keystrokes with and without `-keysym`.  The last
+#|	call to `keystrokes()` should arrange a clean exit from tig. +
+#|	+
+#|	Repeating: `-repeat=<int>` can be used to define repeated sequences.
+#|	Only one key-sequence argument may be used with `-repeat`.  Example:
+#| -----------------------------------------------------------------------------
+#|	keystrokes -keysym -repeat=20 'Down'
+#| -----------------------------------------------------------------------------
+#|	::
+#|	Interaction with `steps()`: It is possible to use both `steps()` and
+#|	`keystrokes()` in the same test: during test execution, the `steps()`
+#|	script will run first, and the simulated keystrokes will be sent to tig
+#|	after the script finishes. When used together, `steps()` is modified so
+#|	that it does not imply `:quit`. +
+#|	+
+#|	Whitespace handling: The "Enter" key will be fed to tig as a carriage
+#|	return (`\r`). Interior newlines in key sequences, whether literal or
+#|	encoded, will be translated to carriage returns before sending them to
+#|	tig. But note that leading or trailing whitespace on the key-sequence
+#|	argument is ignored. To send "Enter", "Tab", or "Space" as the first or
+#|	last key in the sequence, use escape codes or keysyms (_ie_ `\r`,`\t`,
+#|	`\040`, `%(keysym:Enter)`, `%(keysym:Tab)`, or `%(keysym:Space)`.) +
+#|
+keystrokes()
+{
+	tig_keystrokes "" "$@"
 }
 
 ### Testing API AsciiDoc
@@ -259,6 +419,77 @@ filter_file_ok()
 	esac
 }
 
+process_tree()
+{
+	pid="${1:-0}"; shift
+	pid="$(expr "$pid")"
+	test "$pid" -gt 0 || return
+
+	depth="${1:-0}"
+	maxdepth=20
+
+	printf '%s\n' "$pid"
+
+	depth="$((depth + 1))"
+	test "$depth" -ge "$maxdepth" && return
+
+	last_pid=-1
+	while [ "$pid" != "$last_pid" ]; do
+		last_pid="$pid"
+		proc_tmp="$(tempfile_name 'process_tree')"
+		ps -e -o ppid=,pid= | grep "^[ 0]*$pid[^0-9]" > "$proc_tmp" || continue
+		while read -r child_proc; do
+			test -z "$child_proc" && continue
+			ORIG_IFS="$IFS"; IFS=' '
+			set -- $child_proc
+			IFS="$ORIG_IFS"
+			test "$#" -ne 2 && continue
+			test "$pid" = "$2" && continue
+			pid="$2"
+			( process_tree "$pid" "$depth" )
+		done < "$proc_tmp"
+		rm -f -- "$proc_tmp"
+	done
+}
+
+descend_to_pg_leader()
+{
+	parent_pid="$1"; shift
+	enforce_shortcmd="${1:-}"
+
+	leader_pgid='-1'
+	leader_shortcmd=''
+
+	# A short delay is enough to ensure that all relevant processes are up,
+	# have completed any initial fork/execs, and allows for some irrelevant
+	# processes to be cleared.
+	sleep 1
+
+	for pid in $(process_tree "$parent_pid"); do
+		test "$pid" -lt 1 && continue
+		ORIG_IFS="$IFS"; IFS=' '
+		set -- $(ps -o pgid=,command= "$pid" 2>/dev/null)
+		IFS="$ORIG_IFS"
+		test "$#" -lt 2 && continue
+
+		# By convention a process-group leader uses its own PID as PGID
+		test "$pid" -ne "$1" && continue
+
+		leader_pgid="$1"
+		leader_shortcmd="$(basename -- "$2")"
+		break
+	done
+
+	if [ "$leader_pgid" -lt 1 ]; then
+		die "could not find a process-group leader"
+	fi
+	if [ -n "$enforce_shortcmd" ] && [ "$leader_shortcmd" != "$enforce_shortcmd" ]; then
+		die "expected process-group leader named $enforce_shortcmd"
+	fi
+
+	printf '%s\n' "$leader_pgid"
+}
+
 #
 # Parse TEST_OPTS
 #
@@ -271,6 +502,7 @@ indent='            '
 verbose=
 debugger=
 runner=exec
+trace_keys=
 trace=
 todos=
 valgrind=
@@ -290,6 +522,7 @@ for arg in ${MAKE_TEST_OPTS:-} ${TEST_OPTS:-}; do
 		debugger=*) debugger="$(expr "$arg" : 'debugger=\(.*\)')" ;;
 		debugger) debugger="$(auto_detect_debugger)" ;;
 		timeout=*) timeout="$(expr "$arg" : 'timeout=\(.*\)')" ;;
+		trace[-_]keys|trace[-_]keystrokes) trace_keys=yes ;;
 		trace) trace=yes ;;
 		todo|todos) todos=yes ;;
 		valgrind) valgrind="$HOME/valgrind.log" ;;
@@ -538,14 +771,23 @@ test_require()
 				test_skip "The test requires clang and is only run via \`make test-address-sanitizer\`"
 			fi
 			;;
-		diff-highlight)
-			diff_highlight_path="$(git --exec-path)/../../share/git-core/contrib/diff-highlight/diff-highlight"
-			if [ ! -e "$diff_highlight_path" ]; then
-				# alt path
-				diff_highlight_path="$(git --exec-path)/../../share/git/contrib/diff-highlight/diff-highlight"
+		diff-highlight|python)
+			if [ "$feature" = "diff-highlight" ]; then
+				for elt in "$(git --exec-path)/../../share/git-core/contrib/diff-highlight" \
+					   "$(git --exec-path)/../../share/git/contrib/diff-highlight" \
+					   ; do
+					if [ -d "$elt" ]; then
+						PATH="$PATH":"$elt"
+					fi
+				done
 			fi
-			if [ ! -e "$diff_highlight_path" ]; then
-				test_skip "The test requires diff-highlight, usually found in share/git-core-contrib"
+			if ! which "$feature" >/dev/null 2>&1; then
+				test_skip "The test requires a '$feature' executable"
+			fi
+			;;
+		python-termios)
+			if ! python -c 'import termios; termios.TIOCSTI' >/dev/null 2>&1; then
+				test_skip "The test requires python with termios.TIOCSTI support"
 			fi
 			;;
 		readline)
@@ -618,6 +860,40 @@ install_pid_timeout() {
 	done
 	kill -0 "$pid" && kill -"$signal" "$pid" || true
 	) >/dev/null 2>&1 &
+}
+
+simulate_keystrokes()
+{
+	if [ -z "${TEST_KEYSTROKES:-}" ] || ! [ -s "$TEST_KEYSTROKES" ]; then
+		return
+	fi
+
+	if ! [ "${1:-}" -gt 1 ]; then
+		die "simulate_keystrokes requires an argument: the pgid to attach to"
+	else
+		# We were probably passed the PID, and can assume PID == PGID.
+		# Calling descend_to_pg_leader is safe but not usually needed.
+		tig_pgid="$1"; shift
+	fi
+
+	if [ -n "$valgrind" ]; then
+
+		# valgrind needs a generous delay to warm up
+		# todo: it might need extra time on its first run
+		sleep 5
+
+		tig_pgid="$(descend_to_pg_leader "$tig_pgid" valgrind 2>/dev/null)"
+		if [ -z "$tig_pgid" ]; then
+			die "could not find a process-group leader"
+		fi
+	fi
+
+	if [ -n "$trace_keys" ]; then
+		printf '%s%s %s %s %s\n' "$indent" keystroke-stuffer --with-shutdown "$tig_pgid" "$TEST_KEYSTROKES"
+		keystroke-stuffer --debug --debug "$tig_pgid" "$TEST_KEYSTROKES" | sed "s/^/$indent$indent/"
+	fi
+
+	keystroke-stuffer --with-shutdown "$tig_pgid" "$TEST_KEYSTROKES"
 }
 
 valgrind_exec()
@@ -704,6 +980,7 @@ test_tig()
 			tig_pid="$!"
 			signal=14
 			install_pid_timeout "$tig_pid" "$signal"
+			simulate_keystrokes "$tig_pid"
 			wait "$tig_pid"
 		fi
 		status_code="$?"
@@ -752,7 +1029,8 @@ test_case()
 	printf '%s\n' "$name" >> test-cases
 	cat > "$name.expected"
 
-	touch -- "$name-before" "$name-after" "$name-script" "$name-args" "$name-tigrc" "$name-assert-stderr" "$name-todo" "$name-subshell" "$name-timeout"
+	touch -- "$name-before" "$name-after" "$name-script" "$name-args" "$name-tigrc" "$name-assert-stderr" \
+		 "$name-todo" "$name-subshell" "$name-timeout" "$name-keystrokes"
 
 	while [ "$#" -gt 0 ]; do
 		arg="$1"; shift
@@ -760,7 +1038,7 @@ test_case()
 		value="$(expr "X$arg" : 'X--[^=]*=\(.*\)')"
 
 		case "$key" in
-		before|after|script|args|cwd|tigrc|assert-stderr|todo|subshell|timeout)
+		before|after|script|args|cwd|tigrc|assert-stderr|todo|subshell|timeout|keystrokes)
 			printf '%s\n' "$value" > "$name-$key" ;;
 		assert-equals)
 			filename="$(expr "X$value" : 'X\([^=]*\)')"
@@ -770,6 +1048,12 @@ test_case()
 		*)	die "Unknown test_case argument: $arg"
 		esac
 	done
+
+	# hack to stop tests from wedging.  unsatisfactory that the script
+	# file is modified implicitly in multiple places.
+	if ! [ -s "$name-script" ] && ! [ -s "$name-keystrokes" ]; then
+		printf ':none\n' > "$name-script"
+	fi
 }
 
 ### Testing API AsciiDoc
@@ -804,10 +1088,6 @@ run_test_cases()
 			test_todo_message "$(cat < "$name-todo")" >> ".test-skipped-subtest-$name"
 			continue;
 		fi
-		tig_script "$name" "
-			$(if [ -e "$name-script" ]; then cat < "$name-script"; fi)
-			:save-display $name.screen
-		"
 		if [ -s "$name-tigrc" ]; then
 			tigrc "$(cat < "$name-tigrc")"
 		fi
@@ -815,6 +1095,15 @@ run_test_cases()
 			test_exec_work_dir "$SHELL" "$HOME/$name-before"
 		fi
 		(
+			if [ -s "$name-script" ]; then
+				tig_script "$name" "
+					   $(cat < "$name-script")
+					   :save-display $name.screen
+					   "
+			fi
+			if [ -s "$name-keystrokes" ]; then
+				tig_keystrokes "$name" "$(cat < "$name-keystrokes")"
+			fi
 			if [ -e "$name-cwd" ]; then
 				work_dir="$work_dir/$(cat < "$name-cwd")"
 			fi
@@ -830,8 +1119,9 @@ run_test_cases()
 		if [ -e "$name-after" ]; then
 			test_exec_work_dir "$SHELL" "$HOME/$name-after"
 		fi
-
-		assert_equals "$name.screen" < "$name.expected"
+		if [ -s "$name-script" ]; then
+			assert_equals "$name.screen" < "$name.expected"
+		fi
 		if [ -s "$name-assert-stderr" ]; then
 			assert_equals "$name.stderr" < "$name-assert-stderr"
 		else
