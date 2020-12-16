@@ -79,8 +79,8 @@ struct tree_entry {
 
 struct tree_state {
 	char commit[SIZEOF_REV];
-	const struct ident *author;
-	struct time author_time;
+	const struct ident *author; /* Author/Committer */
+	struct time author_time; /* Author data/Commit date */
 	bool read_date;
 };
 
@@ -170,13 +170,26 @@ tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 		state->read_date = true;
 		return false;
 
-	} else if (*text == 'c' && get_line_type(text) == LINE_COMMIT) {
-		string_copy_rev_from_commit_line(state->commit, text);
-
-	} else if (*text == 'a' && get_line_type(text) == LINE_AUTHOR) {
-		parse_author_line(text + STRING_SIZE("author "),
-				  &state->author, &state->author_time);
-
+	} else if (*text == 'c' || *text == 'a') {
+		enum line_type type = get_line_type(text);
+		switch (type)
+		{
+		case LINE_COMMIT:
+			string_copy_rev_from_commit_line(state->commit, text);
+			break;
+		case LINE_AUTHOR:
+		case LINE_COMMITTER:
+		{
+			bool committer_line = (type == LINE_COMMITTER);
+			parse_author_line(text +
+				(committer_line ? STRING_SIZE("committer ") : STRING_SIZE("author ")),
+				(opt_committer ^ committer_line) ? NULL : &state->author,
+				(opt_commit_date ^ committer_line) ? NULL : &state->author_time);
+			break;
+		}
+		default:
+			break;
+		}
 	} else if (*text == ':') {
 		char *pos;
 		size_t annotated = 1;
@@ -463,7 +476,7 @@ tree_open(struct view *view, enum open_flags flags)
 static struct view_ops tree_ops = {
 	"file",
 	argv_env.commit,
-	VIEW_SEND_CHILD_ENTER | VIEW_SORTABLE,
+	VIEW_SEND_CHILD_ENTER | VIEW_SORTABLE | VIEW_LOG_LIKE | VIEW_REFRESH | VIEW_COMMIT_NAMEDATE,
 	sizeof(struct tree_state),
 	tree_open,
 	tree_read,

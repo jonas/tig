@@ -28,6 +28,7 @@ struct log_state {
 	bool commit_title_read;
 	bool after_commit_header;
 	bool reading_diff_stat;
+	bool external_format;
 };
 
 static inline void
@@ -63,12 +64,16 @@ log_select(struct view *view, struct line *line)
 static enum status_code
 log_open(struct view *view, enum open_flags flags)
 {
+	struct log_state *state = view->private;
+	bool external_format = (opt_log_options &&
+		(argv_containsn(opt_log_options, "--pretty", 0) ||
+		 argv_containsn(opt_log_options, "--format", 0)));
 	const char *log_argv[] = {
 		"git", "log", encoding_arg, commit_order_arg(), "--cc",
-			"--stat", "%(logargs)", "%(cmdlineargs)", "%(revargs)",
-			"--no-color", "--", "%(fileargs)", NULL
+			"--stat", "%(logargs)", "%(cmdlineargs)", "%(revargs)", "--no-color",
+			external_format ? "" : "--pretty=fuller", "--", "%(fileargs)", NULL
 	};
-
+	state->external_format = external_format;
 	return begin_update(view, NULL, log_argv, flags);
 }
 
@@ -132,6 +137,25 @@ log_read(struct view *view, struct buffer *buf, bool force_stop)
 		state->reading_diff_stat = false;
 	}
 
+	switch (type)
+	{
+	case LINE_PP_AUTHOR:
+	case LINE_PP_COMMITTER:
+		if (!state->external_format &&
+			(opt_committer ^ (type == LINE_PP_COMMITTER)))
+			return true;
+		break;
+	case LINE_PP_AUTHORDATE:
+	case LINE_PP_AUTHORDATE2:
+	case LINE_PP_COMMITDATE:
+		if (!state->external_format &&
+			(opt_commit_date ^ (type == LINE_PP_COMMITDATE)))
+			return true;
+		break;
+	default:
+		break;
+	}
+
 	if (!pager_common_read(view, data, type, &line))
 		return false;
 	if (line && state->graph_indent)
@@ -142,7 +166,8 @@ log_read(struct view *view, struct buffer *buf, bool force_stop)
 static struct view_ops log_ops = {
 	"line",
 	argv_env.head,
-	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER | VIEW_LOG_LIKE | VIEW_REFRESH | VIEW_FLEX_WIDTH,
+	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER | VIEW_LOG_LIKE | VIEW_REFRESH | \
+	VIEW_FLEX_WIDTH | VIEW_COMMIT_NAMEDATE,
 	sizeof(struct log_state),
 	log_open,
 	log_read,

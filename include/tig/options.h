@@ -86,6 +86,8 @@ typedef struct view_column *view_settings;
 	_(vertical_split,		enum vertical_split,	VIEW_RESET_DISPLAY | VIEW_DIFF_LIKE) \
 	_(wrap_lines,			bool,			VIEW_NO_FLAGS) \
 	_(wrap_search,			bool,			VIEW_NO_FLAGS) \
+	_(committer,			bool,			VIEW_LOG_LIKE | VIEW_BLAME_LIKE) \
+	_(commit_date,			bool,			VIEW_LOG_LIKE | VIEW_BLAME_LIKE) \
 
 #define DEFINE_OPTION_EXTERNS(name, type, flags) extern type opt_##name;
 OPTION_INFO(DEFINE_OPTION_EXTERNS)

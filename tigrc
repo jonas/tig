@@ -119,6 +119,8 @@ set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set log-options		= --pretty=raw	# User-defined options for `tig log` (git-log)
 #set main-options		= -n 1000	# User-defined options for `tig` (git-log)
 #set mailmap			= yes		# Use .mailmap to show canonical name and email address
+#set commit-date		= no		# Show commit date instead of author date
+#set committer			= no		# Show committer name instead of author name
 
 # Misc
 set start-on-head		= no		# Start with cursor on HEAD commit

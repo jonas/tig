@@ -46,9 +46,9 @@ Dimensions: height=28 width=181
 Position: offset=0 column=0 lineno=0
 line[  0] type=commit selected=1
 line[  0] cells=1 text=[commit 1b4c64b595aeb4de1d317d669faacd3c1d82f0b0]
-line[  1] type= selected=0
+line[  1] type=pp-author selected=0
 line[  1] cells=1 text=[Author: A. U. Thor <author@example.com>]
-line[  2] type= selected=0
+line[  2] type=pp-authordate selected=0
 line[  2] cells=1 text=[Date:   Sun Jul 2 15:01:24 2017 +0200]
 line[  3] type=default selected=0
 line[  3] cells=1 text=[]

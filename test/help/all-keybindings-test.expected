@@ -1,5 +1,6 @@
 Quick reference for tig keybindings:
-
+[-] Collapse all sections
+ 
 [-] generic bindings
 View switching
                            m view-main           Show main view
@@ -120,5 +121,4 @@ Internal commands:
 External commands:
                            A ?git stash apply %(stash)
                            P ?git stash pop %(stash)
-                           ! ?git stash drop %(stash)
-[help] - line 1 of 123                                                                100%
+[help] - line 1 of 146                                                                 84%

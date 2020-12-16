@@ -150,9 +150,14 @@ use_mailmap_arg()
 const char *
 log_custom_pretty_arg(void)
 {
-	return opt_mailmap
-		? "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%s%x00%N"
-		: "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s%x00%N";
+	static char pretty_arg[64];
+	char name_c = opt_committer ? 'c' : 'a';
+	sprintf(pretty_arg,
+		"--pretty=format:commit %%m %%H %%P%%x00%%%c%c <%%%c%c> %s%%x00%%s%%x00%%N",
+		name_c, opt_mailmap ? 'N' : 'n',
+		name_c, opt_mailmap ? 'E' : 'e',
+		opt_commit_date ? "%cd" : "%ad");
+	return pretty_arg;
 }
 
 #define ENUM_ARG(enum_name, arg_string) ENUM_MAP_ENTRY(arg_string, enum_name)
@@ -879,6 +884,8 @@ option_bind_command(int argc, const char *argv[])
 			{ "toggle-title-overflow",	"commit-title-overflow" },
 			{ "toggle-untracked-dirs",	"status-show-untracked-dirs" },
 			{ "toggle-vertical-split",	"show-vertical-split" },
+			{ "toggle-committer",		"committer" },
+			{ "toggle-commit-date",		"commit-date" },
 		};
 		int alias;
 

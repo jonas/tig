@@ -534,7 +534,7 @@ blame_select(struct view *view, struct line *line)
 static struct view_ops blame_ops = {
 	"line",
 	argv_env.commit,
-	VIEW_SEND_CHILD_ENTER | VIEW_BLAME_LIKE,
+	VIEW_SEND_CHILD_ENTER | VIEW_BLAME_LIKE | VIEW_REFRESH | VIEW_COMMIT_NAMEDATE,
 	sizeof(struct blame_state),
 	blame_open,
 	blame_read,

@@ -862,6 +862,13 @@ prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 		}
 	}
 
+	if (enum_equals_static("committer", option, optionlen) ||
+	    enum_equals_static("commit-date", option, optionlen)) {
+		if (!view_has_flags(view, VIEW_COMMIT_NAMEDATE)) {
+			return error("`:toggle %s` is not supported for the %s view", option, view->name);
+		}
+	}
+
 	toggle = find_option_info(option_toggles, ARRAY_SIZE(option_toggles), "", option);
 	if (toggle)
 		return prompt_toggle_option(view, argv, "", toggle, flags);
@@ -1172,6 +1179,44 @@ open_prompt(struct view *view)
 	}
 
 	return run_prompt_command(view, argv);
+}
+
+/*
+ * Toggle options menu
+ */
+
+#define TOGGLE_MENU_INFO(_) \
+	_('.', "line numbers",          "line-number"), \
+	_('D', "dates",             "date"), \
+	_('A', "author",            "author"), \
+	_('~', "graphics",          "line-graphics"), \
+	_('g', "revision graph",        "commit-title-graph"), \
+	_('#', "file names",            "file-name"), \
+	_('*', "file sizes",            "file-size"), \
+	_('W', "space changes",         "ignore-space"), \
+	_('l', "commit order",          "commit-order"), \
+	_('F', "reference display",     "commit-title-refs"), \
+	_('C', "local change display",      "show-changes"), \
+	_('X', "commit ID display",     "id"), \
+	_('%', "file filtering",        "file-filter"), \
+	_('$', "commit title overflow display", "commit-title-overflow"), \
+	_('d', "untracked directory info",  "status-show-untracked-dirs"), \
+	_('|', "view split",            "vertical-split"), \
+	_('E', "mail map",          "mailmap"), \
+	_('L', "local date",            "date-local"), \
+	_('M', "committer",         "committer"), \
+	_('m', "commit date",           "commit-date"), \
+
+static const struct menu_item toggle_menu_items[] = {
+#define DEFINE_TOGGLE_MENU(key, help, name) { key, help, name }
+		TOGGLE_MENU_INFO(DEFINE_TOGGLE_MENU)
+		{ 0 }
+};
+
+const struct menu_item*
+get_prompt_options_menu_items(void)
+{
+	return toggle_menu_items;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

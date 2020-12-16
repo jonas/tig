@@ -206,6 +206,18 @@ argv_contains(const char **argv, const char *arg)
 	return false;
 }
 
+bool
+argv_containsn(const char **argv, const char *arg, size_t arglen)
+{
+	int i;
+
+	if (arglen == 0) arglen = strlen(arg);
+	for (i = 0; argv && argv[i]; i++)
+		if (!strncmp(argv[i], arg, arglen))
+			return true;
+	return false;
+}
+
 DEFINE_ALLOCATOR(argv_realloc, const char *, SIZEOF_ARG)
 
 bool
