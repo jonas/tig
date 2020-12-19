@@ -891,9 +891,9 @@ Cursor navigation
 |move-up                 |Move cursor one line up
 |move-down               |Move cursor one line down
 |move-page-down          |Move cursor one page down
-|move-page-up            |Move cursor half a page up
+|move-page-up            |Move cursor one page up
 |move-half-page-down     |Move cursor half a page down
-|move-half-page-up       |Move cursor one page up
+|move-half-page-up       |Move cursor half a page up
 |move-first-line         |Move cursor to first line
 |move-last-line          |Move cursor to last line
 |move-next-merge         |Move cursor to next merge commit
