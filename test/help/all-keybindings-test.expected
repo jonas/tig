@@ -121,4 +121,4 @@ External commands:
                            A ?git stash apply %(stash)
                            P ?git stash pop %(stash)
                            ! ?git stash drop %(stash)
-[help] - line 1 of 123                                                                100%
+[help] - line 1 of 126                                                                 97%

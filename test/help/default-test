@@ -51,7 +51,7 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-[help] - line 1 of 123                                                       22%
+[help] - line 1 of 126                                                       22%
 EOF
 
 assert_equals 'help-search.screen' <<EOF
@@ -83,7 +83,7 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-[help] - line 19 of 123                                                      22%
+[help] - line 19 of 126                                                      22%
 EOF
 
 assert_equals 'help-collapsed.screen' <<EOF
@@ -115,5 +115,5 @@ External commands:
 External commands:
   C ?git checkout %(branch)
   ! ?git branch -D %(branch)
-[help] - line 4 of 51                                                        54%
+[help] - line 4 of 54                                                        51%
 EOF

@@ -154,7 +154,7 @@ set pgrp			= no		# Make tig process-group leader
 #   !	Run the command in the foreground with output shown.
 #   @	Run the command in the background with no output.
 #   ?	Prompt the user before executing the command.
-#   +   Run the command synchronously, and echo the first line of output to the status bar.
+#   +	Run the command synchronously, and echo the first line of output to the status bar.
 #   <	Exit Tig after executing the command.
 #   >	Re-open Tig instantly in the last displayed view after executing the command.
 #
@@ -240,9 +240,10 @@ bind stage	@	:/^@@			# Jump to next (c)hunk
 bind stage	[	:toggle diff-context -1	# Decrease the diff context
 bind stage	]	:toggle diff-context +1	# Increase the diff context
 bind diff	@	:/^@@			# Jump to next (c)hunk
-bind diff	[	:toggle diff-context -1
-bind diff	]	:toggle diff-context +1
-bind main	H	:goto HEAD
+bind diff	[	:toggle diff-context -1	# Decrease the diff context
+bind diff	]	:toggle diff-context +1	# Increase the diff context
+bind pager	@	:/^@@			# Jump to next (c)hunk
+bind main	H	:goto HEAD		# Jump to HEAD commit
 bind main	G	:toggle commit-title-graph # Toggle revision graph visualization
 bind main	F	:toggle commit-title-refs  # Toggle reference display (tags/branches)
 bind reflog	F	:toggle commit-title-refs  # Toggle reference display (tags/branches)
@@ -323,7 +324,7 @@ bind generic	v	show-version		# Show Tig version
 #
 # Prefix the name of a view to set a color only for that view, e.g.
 #
-#	color grep.file blue default
+#	color grep.file			blue	default
 #
 # As an example, this setting will to color Signed-off-by lines with a
 # yellow foreground color and use the default background color.
