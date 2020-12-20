@@ -68,7 +68,7 @@ __tig_commands="
 
 __tig_main () {
 	# parse already existing parameters
-	local i c=1 command
+	local i c=1 command __git_repo_path
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
 		case "$i" in
