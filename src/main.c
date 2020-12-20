@@ -249,7 +249,9 @@ main_check_argv(struct view *view, const char *argv[])
 		if (!rev_flags.with_graph)
 			state->with_graph = false;
 		arg += rev_flags.search_offset;
-		if (*arg && !*view->env->search)
+		/* Copy the pattern to search buffer only when starting
+		 * from the main view. */
+		if (*arg && !*view->ref && !view->prev)
 			string_ncopy(view->env->search, arg, strlen(arg));
 	}
 
