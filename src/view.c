@@ -893,8 +893,6 @@ compare_view_column(enum view_column_type column, bool use_file_mode,
 		return apply_comparator(timecmp, column_data1->date, column_data2->date);
 
 	case VIEW_COLUMN_ID:
-		if (column_data1->reflog && column_data2->reflog)
-			return apply_comparator(strcmp, column_data1->reflog, column_data2->reflog);
 		return apply_comparator(strcmp, column_data1->id, column_data2->id);
 
 	case VIEW_COLUMN_FILE_NAME:
@@ -1054,7 +1052,7 @@ view_column_text(struct view *view, struct view_column_data *column_data,
 
 	case VIEW_COLUMN_ID:
 		if (column->opt.id.display)
-			text = column_data->reflog ? column_data->reflog : column_data->id;
+			text = column_data->id;
 		break;
 
 	case VIEW_COLUMN_LINE_NUMBER:
@@ -1492,7 +1490,7 @@ view_column_info_update(struct view *view, struct line *line)
 			width = column->opt.id.width;
 			if (!width)
 				width = opt_id_width;
-			if (!column_data.reflog && !width)
+			if (!width)
 				width = 7;
 			break;
 

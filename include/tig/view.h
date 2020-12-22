@@ -195,7 +195,6 @@ struct view_column_data {
 	const unsigned long *line_number;
 	const mode_t *mode;
 	const struct ref *ref;
-	const char *reflog;
 	const struct ref *refs;
 	const char *status;
 	const char *text;
