@@ -885,13 +885,13 @@ get_input(int prompt_position, struct key *key)
 			 * is set and the key value is updated to the proper
 			 * ASCII value.
 			 */
-			if (KEY_CTL('@') <= key_value && key_value <= KEY_CTL('y') &&
+			if (KEY_CTL('@') <= key_value && key_value <= KEY_CTL('_') &&
 			    key_value != KEY_RETURN && key_value != KEY_TAB) {
 				key->modifiers.control = 1;
 				key_value = key_value | 0x40;
 			}
 
-			if ((key_value >= KEY_MIN && key_value < KEY_MAX) || key_value < 0x1F) {
+			if ((key_value >= KEY_MIN && key_value < KEY_MAX) || key_value <= 0x1F) {
 				key->data.value = key_value;
 				return key->data.value;
 			}
