@@ -101,6 +101,8 @@ void
 scroll_view(struct view *view, enum request request)
 {
 	int lines = 1;
+	unsigned long orig_offset, orig_lineno;
+	unsigned long new_offset, new_lineno;
 
 	assert(view_is_displayed(view));
 
@@ -138,8 +140,14 @@ scroll_view(struct view *view, enum request request)
 		if (view->pos.offset + lines > view->lines)
 			lines = view->lines - view->pos.offset;
 
+		// do not scroll past bottom ...
+		if ((view->pos.offset + view->height + lines) > view->lines)
+			lines = view->lines - view->pos.offset - view->height;
+
 		if (lines == 0 || view->pos.offset + view->height >= view->lines) {
 			report("Cannot scroll beyond the last line");
+			// if wanted to move down when can no longer scroll ...
+			// move_view(view, REQ_MOVE_DOWN);
 			return;
 		}
 		break;
@@ -154,6 +162,8 @@ scroll_view(struct view *view, enum request request)
 
 		if (lines == 0) {
 			report("Cannot scroll beyond the first line");
+			// if wanted to move up when can no longer scroll ...
+			// move_view(view, REQ_MOVE_UP);
 			return;
 		}
 
@@ -164,7 +174,24 @@ scroll_view(struct view *view, enum request request)
 		die("request %d not handled in switch", request);
 	}
 
+	orig_offset = view->pos.offset;
+	orig_lineno = view->pos.lineno;
+
 	do_scroll_view(view, lines);
+
+	new_offset = view->pos.offset;
+	new_lineno = view->pos.lineno;
+
+	int move_lines = (new_offset - orig_offset) - (new_lineno - orig_lineno);
+
+	int i;
+	if (move_lines < 0) {
+		for(i=0; i<-move_lines; i++)
+			move_view(view, REQ_MOVE_UP);
+	} else if (move_lines > 0) {
+		for(i=0; i<move_lines; i++)
+			move_view(view, REQ_MOVE_DOWN);
+	}
 }
 
 /* Cursor moving */
@@ -204,11 +231,13 @@ move_view(struct view *view, enum request request)
 		break;
 
 	case REQ_MOVE_WHEEL_DOWN:
-		steps = opt_mouse_scroll;
+		steps = view->pos.lineno + opt_mouse_scroll >= view->lines
+		      ? view->lines - view->pos.lineno - 1 : opt_mouse_scroll;
 		break;
 
 	case REQ_MOVE_WHEEL_UP:
-		steps = -opt_mouse_scroll;
+		steps = opt_mouse_scroll > view->pos.lineno
+		      ? -view->pos.lineno : -opt_mouse_scroll;
 		break;
 
 	case REQ_MOVE_UP:
