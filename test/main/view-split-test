@@ -69,11 +69,11 @@ assert_equals 'main-vsplit-25-75.screen' <<EOF
 EOF
 
 assert_equals 'main-hsplit-default.screen' <<EOF
-2010-04-07 05:37 +0000 Max Power             o [master] {origin/master} {origin/
-2010-03-29 17:15 +0000 Jørgen Thygesen Brahe o Commit 10 D
-2010-03-21 04:53 +0000 作者                  o Commit 10 C
-2010-03-12 16:31 +0000 René Lévesque         o Commit 10 B
-2010-03-04 04:09 +0000 A. U. Thor            o Commit 10 A
+2010-04-07 05:37 +0000 Max Power             ~ [master] {origin/master} {origin/
+2010-03-29 17:15 +0000 Jørgen Thygesen Brahe ~ Commit 10 D
+2010-03-21 04:53 +0000 作者                  ~ Commit 10 C
+2010-03-12 16:31 +0000 René Lévesque         ~ Commit 10 B
+2010-03-04 04:09 +0000 A. U. Thor            ~ Commit 10 A
 [main] 5cb3412a5e06e506840495b91acc885037a48b72 - commit 1 of 50             10%
 commit 5cb3412a5e06e506840495b91acc885037a48b72
 Refs: [master], {origin/master}, {origin/HEAD}
@@ -89,14 +89,14 @@ CommitDate: Wed Apr 7 05:37:40 2010 +0000
 EOF
 
 assert_equals 'main-hsplit-50-50.screen' <<EOF
-2010-04-07 05:37 +0000 Max Power             o [master] {origin/master} {origin/
-2010-03-29 17:15 +0000 Jørgen Thygesen Brahe o Commit 10 D
-2010-03-21 04:53 +0000 作者                  o Commit 10 C
-2010-03-12 16:31 +0000 René Lévesque         o Commit 10 B
-2010-03-04 04:09 +0000 A. U. Thor            o Commit 10 A
-2010-02-23 15:46 +0000 Max Power             o Commit 9 E
-2010-02-15 03:24 +0000 Jørgen Thygesen Brahe o Commit 9 D
-2010-02-06 15:02 +0000 作者                  o Commit 9 C
+2010-04-07 05:37 +0000 Max Power             ~ [master] {origin/master} {origin/
+2010-03-29 17:15 +0000 Jørgen Thygesen Brahe ~ Commit 10 D
+2010-03-21 04:53 +0000 作者                  ~ Commit 10 C
+2010-03-12 16:31 +0000 René Lévesque         ~ Commit 10 B
+2010-03-04 04:09 +0000 A. U. Thor            ~ Commit 10 A
+2010-02-23 15:46 +0000 Max Power             ~ Commit 9 E
+2010-02-15 03:24 +0000 Jørgen Thygesen Brahe ~ Commit 9 D
+2010-02-06 15:02 +0000 作者                  ~ Commit 9 C
 [main] 5cb3412a5e06e506840495b91acc885037a48b72 - commit 1 of 50             16%
 commit 5cb3412a5e06e506840495b91acc885037a48b72
 Refs: [master], {origin/master}, {origin/HEAD}
