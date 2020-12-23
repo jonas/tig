@@ -766,6 +766,8 @@ split_view(struct view *prev, struct view *view)
 	if (view != prev && view_is_displayed(prev)) {
 		/* "Blur" the previous view. */
 		update_view_title(prev);
+		draw_view_line(prev, prev->pos.lineno - prev->pos.offset);
+		wnoutrefresh(prev->win);
 	}
 
 	if (view_has_flags(prev, VIEW_FLEX_WIDTH) && vsplit && nviews == 1)

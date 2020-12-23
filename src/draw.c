@@ -15,6 +15,7 @@
 #include "tig/graph.h"
 #include "tig/draw.h"
 #include "tig/options.h"
+#include "tig/display.h"
 #include "compat/hashtab.h"
 
 static const enum line_type palette_colors[] = {
@@ -667,7 +668,7 @@ draw_view_line(struct view *view, unsigned int lineno)
 	line->dirty = line->cleareol = 0;
 
 	if (selected) {
-		set_view_attr(view, LINE_CURSOR);
+		set_view_attr(view, view == display[current_view] ? LINE_CURSOR : LINE_CURSOR_BLUR);
 		line->selected = true;
 		view->ops->select(view, line);
 	}

@@ -8,6 +8,13 @@ Bug fixes:
 
  - Initialise %(head) from command line arguments. (#1366)
  - Make `$GIT_EDITOR` value interpreted by the shell. (#1367)
+ - Use correct line from recursively blamed commit. (#1369, #1370)
+ - Use correct line when using `:parent` in blame view. (#1372)
+ - Fix the incorrect line shift after stage file. (#1371)
+
+Improvements:
+
+ - Add color for cursor in backgrounded view. (#1374)
 
 tig-2.5.12
 ----------

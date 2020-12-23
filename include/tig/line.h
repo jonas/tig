@@ -50,6 +50,7 @@ struct ref;
 	_(COMMITTER,		"committer "), \
 	_(DEFAULT,		""), \
 	_(CURSOR,		""), \
+	_(CURSOR_BLUR,		""), \
 	_(STATUS,		""), \
 	_(DELIMITER,		""), \
 	_(DATE,			""), \

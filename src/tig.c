@@ -244,6 +244,7 @@ view_driver(struct view *view, enum request request)
 	{
 		int nviews = displayed_views();
 		int next_view = nviews ? (current_view + 1) % nviews : current_view;
+		struct view *next = display[next_view];
 
 		if (next_view == current_view) {
 			report("Only one view is displayed");
@@ -251,9 +252,14 @@ view_driver(struct view *view, enum request request)
 		}
 
 		current_view = next_view;
-		/* Blur out the title of the previous view. */
+		/* Blur out the title and cursor of the previous view. */
 		update_view_title(view);
+		draw_view_line(view, view->pos.lineno - view->pos.offset);
+		wnoutrefresh(view->win);
+		/* Brighten the title and cursor of the next view. */
 		report_clear();
+		draw_view_line(next, next->pos.lineno - next->pos.offset);
+		wnoutrefresh(next->win);
 		break;
 	}
 	case REQ_REFRESH:
@@ -613,9 +619,6 @@ find_clicked_view(MEVENT *event)
 
 		if (beg_y <= event->y && event->y < beg_y + view->height
 		    && beg_x <= event->x && event->x < beg_x + view->width) {
-			if (i != current_view) {
-				current_view = i;
-			}
 			return view;
 		}
 	}
@@ -635,6 +638,9 @@ handle_mouse_event(void)
 	view = find_clicked_view(&event);
 	if (!view)
 		return REQ_NONE;
+
+	if (view != display[current_view])
+		return REQ_VIEW_NEXT;
 
 #ifdef BUTTON5_PRESSED
 	if (event.bstate & (BUTTON2_PRESSED | BUTTON5_PRESSED))

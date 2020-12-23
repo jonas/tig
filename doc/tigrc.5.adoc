@@ -1060,7 +1060,8 @@ setting the *default* color option.
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |default		|Override default terminal colors (see above).
-|cursor			|The cursor line.
+|cursor			|The cursor line for the current view.
+|cursor-blur		|The cursor line of any backgrounded view.
 |status			|The status window showing info messages.
 |title-focus		|The title window for the current view.
 |title-blur		|The title window of any backgrounded view.
@@ -1097,8 +1098,12 @@ setting the *default* color option.
 |main-tracked		|Label of the remote tracked by the current branch.
 |main-tag		|Label of a signed tag.
 |main-local-tag		|Label of a local tag.
-|main-ref		|Label of any other reference.
+|main-ref		|Label of a branch.
 |main-replace		|Label of replaced reference.
+|main-stash		|Label of the stash.
+|main-note		|Label of notes.
+|main-prefetch		|Label of reference prefetched by `git maintenance`.
+|main-other		|Label of any other reference.
 |=============================================================================
 
 .Status view
