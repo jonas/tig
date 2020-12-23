@@ -898,7 +898,7 @@ get_input(int prompt_position, struct key *key)
 			 * ASCII value.
 			 */
 			if (KEY_CTL('@') <= key_value && key_value <= KEY_CTL('_') &&
-			    key_value != KEY_RETURN && key_value != KEY_TAB) {
+			    key_value != KEY_RETURN && key_value != KEY_TAB && key_value != KEY_ESC) {
 				key->modifiers.control = 1;
 				key_value = key_value | 0x40;
 			}
