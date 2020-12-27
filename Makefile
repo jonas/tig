@@ -85,12 +85,51 @@ else
 TAR ?= tar
 endif
 
+GENERATE_COMPILATION_DATABASE ?= no
+ifeq ($(GENERATE_COMPILATION_DATABASE),yes)
+compdb_check = $(shell $(CC) $(ALL_CFLAGS) \
+	-c -MJ /dev/null \
+	-x c /dev/null -o /dev/null 2>&1; \
+	echo $$?)
+ifneq ($(compdb_check),0)
+override GENERATE_COMPILATION_DATABASE = no
+$(warning GENERATE_COMPILATION_DATABASE is set to "yes", but your compiler does not \
+support generating compilation database entries)
+endif
+else
+ifneq ($(GENERATE_COMPILATION_DATABASE),no)
+$(error please set GENERATE_COMPILATION_DATABASE to "yes" or "no" \
+(not "$(GENERATE_COMPILATION_DATABASE)"))
+endif
+endif
+
+compdb_dir = compile_commands
+ifeq ($(GENERATE_COMPILATION_DATABASE),yes)
+missing_compdb_dir = $(compdb_dir)
+$(missing_compdb_dir):
+	@mkdir -p $@
+
+compdb_file = $(compdb_dir)/$(subst /,-,$@.json)
+compdb_args = -MJ $(compdb_file)
+else
+missing_compdb_dir = 
+compdb_args =
+endif
+
 all: $(EXE) $(TOOLS)
 all-debug: all
 all-debug: CFLAGS += $(DFLAGS)
 doc: $(ALLDOC)
 doc-man: $(MANDOC)
 doc-html: $(HTMLDOC)
+
+ifeq ($(GENERATE_COMPILATION_DATABASE),yes)
+all: compile_commands.json
+compile_commands.json:
+	@rm -f $@
+	$(QUIET_GEN)sed -e '1s/^/[/' -e '$$s/,$$/]/' $(compdb_dir)/*.o.json > $@+
+	@if test -s $@+; then mv $@+ $@; else $(RM) $@+; fi
+endif
 
 export sysconfdir
 
@@ -139,6 +178,7 @@ uninstall:
 
 clean: clean-test clean-coverage
 	$(Q)$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5 .deps _book node_modules
+	$(Q)$(RM) -r $(compdb_dir) compile_commands.json
 	$(Q)$(RM) $(EXE) $(TOOLS) $(OBJS) core doc/*.xml src/builtin-config.c
 	$(Q)$(RM) $(OBJS:%.o=%.gcda) $(OBJS:%.o=%.gcno)
 
@@ -336,9 +376,9 @@ DEPS_CFLAGS ?= -MMD -MP -MF .deps/$*.d
 %: %.o
 	$(QUIET_LINK)$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-%.o: %.c $(CONFIG_H)
+%.o: %.c $(CONFIG_H) $(missing_compdb_dir)
 	@mkdir -p .deps/$(*D)
-	$(QUIET_CC)$(CC) -I. -Iinclude $(CFLAGS) $(DEPS_CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(QUIET_CC)$(CC) -I. -Iinclude $(compdb_args) $(CFLAGS) $(DEPS_CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 -include $(OBJS:%.o=.deps/%.d)
 
