@@ -831,9 +831,9 @@ diff_common_select(struct view *view, struct line *line, const char *changes_msg
 			view->env->blob[0] = 0;
 		} else {
 			string_ncopy(view->ref, view->ops->id, strlen(view->ops->id));
-			pager_select(view, line);
 		}
 	}
+	pager_select(view, line);
 }
 
 static void
