@@ -222,7 +222,7 @@ parse_chunk_header(struct chunk_header *header, const char *line)
 	return  parse_ulong(&line, &header->old.position, '-', false) &&
 		parse_ulong(&line, &header->old.lines, ',', true) &&
 		parse_ulong(&line, &header->new.position, '+', false) &&
-		parse_ulong(&line, &header->new.lines, ',', false);
+		parse_ulong(&line, &header->new.lines, ',', true);
 }
 
 bool
