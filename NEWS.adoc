@@ -11,6 +11,7 @@ Improvements:
  - Add line-graphics = auto. (#834)
  - Allow maxwidth to be expressed in % of the view width.
  - Pass stash args through. (#1022)
+ - The line number before a diff was applied is exposed as `%(lineno_old)` (#1081)
 
 Bug fixes:
 
