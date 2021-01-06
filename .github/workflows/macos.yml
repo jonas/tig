@@ -1,0 +1,38 @@
+name: macOS
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  install:
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        compiler: [clang, gcc]
+
+    steps:
+      - name: Patch
+        run: |
+          cd "$(brew --repo homebrew/core)" && patch -p1 <<\EOF
+          diff --git a/Formula/tig.rb b/Formula/tig.rb
+          index 2e8c125660..f76d6bca1c 100644
+          --- a/Formula/tig.rb
+          +++ b/Formula/tig.rb
+          @@ -26,9 +26,11 @@ class Tig < Formula
+             depends_on "readline"
+           
+             def install
+          +    ENV.deparallelize
+               system "./autogen.sh" if build.head?
+               system "./configure", "--prefix=#{prefix}", "--sysconfdir=#{etc}"
+               system "make"
+          +    system "make", "test"
+               # Ensure the configured `sysconfdir` is used during runtime by
+               # installing in a separate step.
+               system "make", "install", "sysconfdir=#{pkgshare}/examples"
+          EOF
+      - name: Install latest Tig
+        shell: 'script -q typescript sh {0}' # Workaround to get a TTY, see https://github.com/gfx/example-github-actions-with-tty
+        run: HOMEBREW_CC=${{ matrix.compiler }} HOMEBREW_NO_AUTO_UPDATE=1 brew install --HEAD tig
