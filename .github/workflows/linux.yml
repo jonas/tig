@@ -1,0 +1,32 @@
+name: Linux
+
+on: [push, pull_request]
+
+jobs:
+  ci:
+    runs-on: ubuntu-20.04
+
+    strategy:
+      matrix:
+        compiler: [clang, gcc]
+        tig_build: [autoconf, "config.make"]
+        include:
+          - name: Address Sanitizer
+            compiler: clang
+            tig_build: "address-sanitizer"
+
+          - name: Valgrind
+            compiler: gcc
+            tig_build: valgrind
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Test Tig
+        shell: 'script -q -e -c "sh {0}"' # Workaround to get a TTY, see https://github.com/gfx/example-github-actions-with-tty
+        run: |
+          set -ex
+          export LANG=en_US.utf8
+          sudo apt update
+          sudo DEBIAN_FRONTEND=noninteractive apt -yq install --no-install-recommends \
+            asciidoc valgrind xmlto
+          CC=${{ matrix.compiler }} TIG_BUILD=${{ matrix.tig_build }} tools/travis.sh

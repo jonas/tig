@@ -812,7 +812,7 @@ run_test_cases()
 			tigrc "$(cat < "$name-tigrc")"
 		fi
 		if [ -e "$name-before" ]; then
-			test_exec_work_dir "$SHELL" "$HOME/$name-before"
+			test_exec_work_dir "${SHELL:-/bin/sh}" "$HOME/$name-before"
 		fi
 		(
 			if [ -e "$name-cwd" ]; then
@@ -828,7 +828,7 @@ run_test_cases()
 			test_tig $(if [ -e "$name-args" ]; then cat < "$name-args"; fi)
 		)
 		if [ -e "$name-after" ]; then
-			test_exec_work_dir "$SHELL" "$HOME/$name-after"
+			test_exec_work_dir "${SHELL:-/bin/sh}" "$HOME/$name-after"
 		fi
 
 		assert_equals "$name.screen" < "$name.expected"
