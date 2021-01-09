@@ -373,10 +373,7 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 
 	} else if (opt_word_diff && state->reading_diff_chunk &&
 		   /* combined diff format is not using word diff */
-		   !state->combined_diff &&
-		   (type = LINE_DEFAULT ||
-		    /* ADD and DEL are only valid in regular diff hunks */
-		    type == LINE_DIFF_ADD || type == LINE_DIFF_DEL)) {
+		   !state->combined_diff) {
 		return diff_common_read_diff_wdiff(view, data);
 	}
 
