@@ -53,7 +53,7 @@ if test "X$_bash_needmsg" = "Xyes"; then
 AC_MSG_CHECKING(which library has the termcap functions)
 fi
 AC_MSG_RESULT(using $bash_cv_termcap_lib)
-if test $bash_cv_termcap_lib = gnutermcap && test -z "$prefer_curses"; then
+if test X$bash_cv_termcap_lib = Xgnutermcap && test -z "$prefer_curses"; then
 LDFLAGS="$LDFLAGS -L./lib/termcap"
 TERMCAP_LIB="./lib/termcap/libtermcap.a"
 TERMCAP_DEP="./lib/termcap/libtermcap.a"
