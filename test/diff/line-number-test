@@ -1,0 +1,31 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export COLUMNS=40
+export LINES=3
+
+steps '
+	:view-diff
+	:move-last-line
+	:!echo %(lineno)
+	:save-display added-line-number.screen
+'
+
+
+git_init "$work_dir"
+
+test_setup_work_dir()
+{
+	git_commit --allow-empty-message
+	printf 'new line 1\n' > README.md
+	git add README.md
+}
+
+test_tig
+
+assert_equals 'added-line-number.screen' <<EOF
+1
+[pager] echo 1 - line 1 of 1 100%
+EOF
