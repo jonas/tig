@@ -102,7 +102,8 @@ scroll_view(struct view *view, enum request request)
 {
 	int lines = 1;
 	unsigned long orig_offset, orig_lineno;
-	unsigned long new_offset, new_lineno;
+	int move_lines;
+	int i;
 
 	assert(view_is_displayed(view));
 
@@ -179,19 +180,10 @@ scroll_view(struct view *view, enum request request)
 
 	do_scroll_view(view, lines);
 
-	new_offset = view->pos.offset;
-	new_lineno = view->pos.lineno;
+	move_lines = (view->pos.offset - orig_offset) - (view->pos.lineno - orig_lineno);
 
-	int move_lines = (new_offset - orig_offset) - (new_lineno - orig_lineno);
-
-	int i;
-	if (move_lines < 0) {
-		for(i=0; i<-move_lines; i++)
-			move_view(view, REQ_MOVE_UP);
-	} else if (move_lines > 0) {
-		for(i=0; i<move_lines; i++)
-			move_view(view, REQ_MOVE_DOWN);
-	}
+	for (i = 0; i < ABS(move_lines); i++)
+		move_view(view, move_lines < 0 ? REQ_MOVE_UP : REQ_MOVE_DOWN);
 }
 
 /* Cursor moving */
