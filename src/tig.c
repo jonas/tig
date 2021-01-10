@@ -243,16 +243,18 @@ view_driver(struct view *view, enum request request)
 	case REQ_NEXT:
 	case REQ_PREVIOUS:
 		if (view->parent) {
+			struct view *parent = view->parent;
 			int line;
 
-			view = view->parent;
-			line = view->pos.lineno;
-			view_request(view, request);
-			move_view(view, request);
-			if (view_is_displayed(view))
-				update_view_title(view);
-			if (line != view->pos.lineno)
-				view_request(view, REQ_ENTER);
+			line = parent->pos.lineno;
+			view_request(parent, request);
+			move_view(parent, request);
+			if (view_is_displayed(parent))
+				update_view_title(parent);
+			if (line != parent->pos.lineno) {
+				end_update(view, true);
+				view_request(parent, REQ_ENTER);
+			}
 		} else {
 			move_view(view, request);
 		}
