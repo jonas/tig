@@ -537,13 +537,19 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 enum request
 main_request(struct view *view, enum request request, struct line *line)
 {
-	enum open_flags flags = (view_is_displayed(view) && request != REQ_VIEW_DIFF)
+	enum open_flags flags = (request != REQ_VIEW_DIFF &&
+				 (view_is_displayed(view) ||
+				  (line->type == LINE_MAIN_COMMIT && !view_is_displayed(&diff_view)) ||
+				  line->type == LINE_STAT_UNSTAGED ||
+				  line->type == LINE_STAT_STAGED ||
+				  line->type == LINE_STAT_UNTRACKED))
 				? OPEN_SPLIT : OPEN_DEFAULT;
 
 	switch (request) {
 	case REQ_VIEW_DIFF:
 	case REQ_ENTER:
-		if (view_is_displayed(view) && display[0] != view)
+		if ((view_is_displayed(view) && display[0] != view) ||
+		    (!view_is_displayed(view) && flags == OPEN_SPLIT))
 			maximize_view(view, true);
 
 		if (line->type == LINE_STAT_UNSTAGED
