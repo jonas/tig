@@ -648,6 +648,19 @@ init_display(void)
 	if (atexit(done_display))
 		die("Failed to register done_display");
 
+#ifdef NCURSES_VERSION
+	/* Disable 'unsupported' extended keys so that esc-codes will be
+	 * received instead of unnamed extended keycode values (> KEY_MAX).
+	 * These keys can then be mapped with esc-codes in .tigrc.
+	 * An example would be <c-down>:
+	 *     bind  generic  <esc>[1;5B  scroll-line-down
+	 * Without this change <c-down> could return a keycode value of 531
+	 * (terminfo name kDN5), which is larger than KEY_MAX and has no
+	 * pre-defined curses key name.
+	 * NOTE: this MUST be called before initscr() */
+	use_extended_names(false);
+#endif
+
 	/* Initialize the curses library */
 	if (!no_display && isatty(STDIN_FILENO)) {
 		/* Needed for ncurses 5.4 compatibility. */
@@ -677,15 +690,6 @@ init_display(void)
 	keypad(status_win, true);
 	wbkgdset(status_win, get_line_attr(NULL, LINE_STATUS));
 	enable_mouse(opt_mouse);
-
-#ifdef NCURSES_VERSION
-	/* Disable extended keys so that esc-codes will be received
-	 * instead of extended key values (> KEY_MAX).
-	 * Then these keys can be mapped in .tigrc etc. */
-	for (code = KEY_MAX; code < MAX_KEYS; code++) {
-		keyok(code, false);
-	}
-#endif
 
 #if defined(NCURSES_VERSION_PATCH) && (NCURSES_VERSION_PATCH >= 20080119)
 	set_tabsize(opt_tab_size);
