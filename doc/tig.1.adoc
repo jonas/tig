@@ -58,7 +58,8 @@ reflog::
 	Start up in reflog view.
 
 refs::
-	Start up in refs view.
+	Start up in refs view. All refs are displayed unless limited by using
+	one of the '--branches', '--remotes', or '--tags' parameters.
 
 stash::
 	Start up in stash view.
