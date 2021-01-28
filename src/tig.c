@@ -389,7 +389,7 @@ static const char usage_string[] =
 "  +<number>       Select line <number> in the first view\n"
 "  -v, --version   Show version and exit\n"
 "  -h, --help      Show help message and exit\n"
-"  -C<path>        Start in <path>";
+"  -C <path>       Start in <path>";
 
 void
 usage(const char *message)
@@ -489,9 +489,10 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 	/* Options that must come before any subcommand. */
 	for (i = 1; i < argc; i++) {
 		const char *opt = argv[i];
-		if (!strncmp(opt, "-C", 2)) {
-			if (chdir(opt + 2))
-				die("Failed to change directory to %s", opt + 2);
+		if (!strcmp(opt, "-C") && i + 1 < argc && *argv[i + 1] != '-') {
+			const char *dir = argv[++i];
+			if (chdir(dir))
+				die("Failed to change directory to %s", dir);
 			continue;
 		} else {
 			break;
