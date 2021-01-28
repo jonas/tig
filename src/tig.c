@@ -488,8 +488,10 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 	for (i = 1; i < argc; i++) {
 		const char *opt = argv[i];
 		if (!strncmp(opt, "-C", 2)) {
-			if (chdir(opt + 2))
-				die("Failed to change directory to %s", opt + 2);
+			const char *dir = strlen(opt) == 2 && i + 1 < argc ? \
+					  argv[++i] : opt + 2;
+			if (chdir(dir))
+				die("Failed to change directory to %s", dir);
 			continue;
 		} else {
 			break;
