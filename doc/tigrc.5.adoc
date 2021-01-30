@@ -1091,8 +1091,8 @@ Diff markup::
 
 Options concerning diff start, chunks and lines added and deleted.
 
-*diff-header*, *diff-chunk*, *diff-add*, *diff-add2*, *diff-del*,
-*diff-del2*, *diff-add-highlight*, *diff-del-highlight*
+*diff-header*, *diff-chunk*, *diff-stat*, *diff-add*, *diff-add2*,
+*diff-del*, *diff-del2*, *diff-add-highlight*, *diff-del-highlight*
 
 Enhanced Git diff markup::
 
