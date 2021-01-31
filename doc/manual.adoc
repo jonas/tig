@@ -408,10 +408,10 @@ Cursor Navigation
 |Key		|Action
 |k		|Move cursor one line up.
 |j		|Move cursor one line down.
-|PgUp,-,a	|Move cursor one page up.
+|PgUp, -	|Move cursor one page up.
 |PgDown, Space	|Move cursor one page down.
-|End		|Jump to last line.
 |Home		|Jump to first line.
+|End		|Jump to last line.
 |=============================================================================
 
 [[view-scrolling]]

@@ -231,7 +231,7 @@ bind generic	<C-C>	quit			# Close all views and quit
 bind status	u	status-update		# Stage/unstage changes in file
 bind status	!	status-revert		# Revert changes in file
 bind status	M	status-merge		# Open git-mergetool(1)
-#bind status	???	:toggle status		# Show short or long status labels
+# bind status	???	:toggle status		# Show short or long status labels
 bind stage	u	status-update		# Stage/unstage current diff (c)hunk
 bind stage	1	stage-update-line	# Stage/unstage current line
 bind stage	!	status-revert		# Revert current diff (c)hunk
@@ -270,6 +270,8 @@ bind generic	<Del>	scroll-line-down
 bind generic	<C-E>	scroll-line-down
 bind generic	<SBack>	scroll-page-up
 bind generic	<SFwd>	scroll-page-down
+# bind generic	???	scroll-half-page-up
+# bind generic	???	scroll-half-page-down
 
 # Searching
 bind generic	/	search
@@ -295,9 +297,9 @@ bind generic	D	:toggle date		# Toggle date display
 bind generic	A	:toggle author		# Toggle author display
 bind generic	~	:toggle line-graphics	# Toggle (line) graphics mode
 bind generic	F	:toggle file-name	# Toggle file name display
-# bind generic	???	:toogle show-changes	# Toggle local changes display in the main view
+# bind generic	???	:toggle show-changes	# Toggle local changes display in the main view
 bind generic	W	:toggle ignore-space	# Toggle ignoring whitespace in diffs
-# bind generic	?	:toggle commit-order	# Toggle commit ordering
+# bind generic	???	:toggle commit-order	# Toggle commit ordering
 bind generic	X	:toggle id		# Toggle commit ID display
 bind generic	$	:toggle commit-title-overflow
 						# Toggle highlighting of commit title overflow

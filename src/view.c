@@ -134,7 +134,8 @@ scroll_view(struct view *view, enum request request)
 		report_clear();
 		return;
 	case REQ_SCROLL_PAGE_DOWN:
-		lines = view->height;
+	case REQ_SCROLL_HALF_PAGE_DOWN:
+		lines = request == REQ_SCROLL_PAGE_DOWN ? view->height : view->height / 2;
 		/* Fall-through */
 	case REQ_SCROLL_WHEEL_DOWN:
 	case REQ_SCROLL_LINE_DOWN:
@@ -154,7 +155,8 @@ scroll_view(struct view *view, enum request request)
 		break;
 
 	case REQ_SCROLL_PAGE_UP:
-		lines = view->height;
+	case REQ_SCROLL_HALF_PAGE_UP:
+		lines = request == REQ_SCROLL_PAGE_UP ? view->height : view->height / 2;
 		/* Fall-through */
 	case REQ_SCROLL_LINE_UP:
 	case REQ_SCROLL_WHEEL_UP:

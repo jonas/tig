@@ -188,6 +188,8 @@ view_driver(struct view *view, enum request request)
 	case REQ_SCROLL_LINE_UP:
 	case REQ_SCROLL_PAGE_DOWN:
 	case REQ_SCROLL_PAGE_UP:
+	case REQ_SCROLL_HALF_PAGE_DOWN:
+	case REQ_SCROLL_HALF_PAGE_UP:
 	case REQ_SCROLL_WHEEL_DOWN:
 	case REQ_SCROLL_WHEEL_UP:
 		scroll_view(view, request);

@@ -890,10 +890,10 @@ Cursor navigation
 |=============================================================================
 |move-up                 |Move cursor one line up
 |move-down               |Move cursor one line down
-|move-page-down          |Move cursor one page down
 |move-page-up            |Move cursor one page up
-|move-half-page-down     |Move cursor half a page down
+|move-page-down          |Move cursor one page down
 |move-half-page-up       |Move cursor half a page up
+|move-half-page-down     |Move cursor half a page down
 |move-first-line         |Move cursor to first line
 |move-last-line          |Move cursor to last line
 |move-next-merge         |Move cursor to next merge commit
@@ -909,6 +909,8 @@ Scrolling
 |scroll-line-down        |Scroll one line down
 |scroll-page-up          |Scroll one page up
 |scroll-page-down        |Scroll one page down
+|scroll-half-page-up     |Scroll half a page up
+|scroll-half-page-down   |Scroll half a page down
 |scroll-first-col        |Scroll to the first line columns
 |scroll-left             |Scroll two columns left
 |scroll-right            |Scroll two columns right
