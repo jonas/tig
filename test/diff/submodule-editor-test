@@ -320,12 +320,12 @@ EOF
 run_test_cases
 
 assert_equals 'editor.log' <<EOF
-+51 project/Build.scala
-  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(common)
++52 project/Build.scala
+  lazy val richards = project("Richards", defaultSettings).dependsOn(common)
 +2 project/build.sbt
     url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatterns)
-+51 project/Build.scala
-  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(common)
++52 project/Build.scala
+  lazy val richards = project("Richards", defaultSettings).dependsOn(common)
 +2 project/build.sbt
     url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatterns)
 common/benchmark-runner.sh
@@ -340,12 +340,12 @@ tracer/src/main/scala/org/scalajs/benchmark/tracer/Tracer.scala
 **    / __/ __// _ | / /  / _ | __ / // __/  Adam Burmister             **
 **  __\\ \\/ /__/ __ |/ /__/ __ |/_// /_\\ \\    2012, Google, Inc          **
 ** /____/\\___/_/ |_/____/_/ | |__/ /____/    2013, Jonas Fonseca        **
-+51 project/Build.scala
-  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(common)
++52 project/Build.scala
+  lazy val richards = project("Richards", defaultSettings).dependsOn(common)
 +2 project/build.sbt
     url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatterns)
-+51 project/Build.scala
-  lazy val deltablue = project("DeltaBlue", defaultSettings).dependsOn(common)
++52 project/Build.scala
+  lazy val richards = project("Richards", defaultSettings).dependsOn(common)
 +2 project/build.sbt
     url("http://repo.scala-js.org/repo/snapshots/"))(Resolver.ivyStylePatterns)
 +2 conflict-file
