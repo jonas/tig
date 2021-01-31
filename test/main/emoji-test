@@ -21,7 +21,7 @@ test_setup_work_dir()
 	git_commit -m "🎨 Reformat the code"
 	git_commit -m "📚 Document new feature"
 	git_commit -m "💄 Polish the UI"
-	git_commit -m "🌏💧✋🕋🗡🚀🏜☀️🌡🌶💯🚱⏳🌅🌑😡💉😱😈💀💥🌛🌙🐭💥🚶🏻〰🐛️⌛️👳🙏💥😴🛌😳💥🐛💥👊⚔👑 "
+	git_commit -m "🌏💧✋🕋🗡🚀🏜☀🌡🌶💯🚱⏳🌅🌑😡💉😱😈💀💥🌛🌙🐭💥🚶🏻〰🐛⌛👳🙏💥😴🛌😳💥🐛💥👊⚔👑 "
 }
 
 git_init
@@ -37,13 +37,13 @@ test_case emoji-commit-titles-col-46 \
 2009-02-22 11:53 +0000 Committer o 🐧 Fix Linu
 2009-02-13 23:31 +0000 Committer I 🚑 Fix bug
 
-[main] 50a10e108b44c34548b9ba9e318416b3027100%
+[main] 237d747db3f85d2ae36127ecd0371feb4ca100%
 EOF
 
 test_case emoji-commit-titles-col-unset \
 	--subshell='unset COLUMNS' \
 	<<EOF
-2009-04-06 01:44 +0000 Committer o [master] 🌏💧✋🕋🗡🚀🏜☀️🌡🌶💯🚱⏳🌅🌑😡💉😱😈💀
+2009-04-06 01:44 +0000 Committer o [master] 🌏💧✋🕋🗡🚀🏜☀🌡🌶💯🚱⏳🌅🌑😡💉😱😈💀
 2009-03-28 13:22 +0000 Committer o 💄 Polish the UI
 2009-03-20 01:00 +0000 Committer o 📚 Document new feature
 2009-03-11 12:38 +0000 Committer o 🎨 Reformat the code
@@ -51,13 +51,13 @@ test_case emoji-commit-titles-col-unset \
 2009-02-22 11:53 +0000 Committer o 🐧 Fix Linux issue
 2009-02-13 23:31 +0000 Committer I 🚑 Fix bug
 
-[main] 50a10e108b44c34548b9ba9e318416b3027a0627 - commit 1 of 7             100%
+[main] 237d747db3f85d2ae36127ecd0371feb4ca986e3 - commit 1 of 7             100%
 EOF
 
 test_case emoji-commit-titles-col-300 \
 	--subshell='export COLUMNS=300' \
 	<<EOF
-2009-04-06 01:44 +0000 Committer o [master] 🌏💧✋🕋🗡🚀🏜☀️🌡🌶💯🚱⏳🌅🌑😡💉😱😈💀💥🌛🌙🐭💥🚶🏻〰🐛️⌛️👳🙏💥😴🛌😳💥🐛💥👊⚔👑
+2009-04-06 01:44 +0000 Committer o [master] 🌏💧✋🕋🗡🚀🏜☀🌡🌶💯🚱⏳🌅🌑😡💉😱😈💀💥🌛🌙🐭💥🚶🏻〰🐛⌛👳🙏💥😴🛌😳💥🐛💥👊⚔👑
 2009-03-28 13:22 +0000 Committer o 💄 Polish the UI
 2009-03-20 01:00 +0000 Committer o 📚 Document new feature
 2009-03-11 12:38 +0000 Committer o 🎨 Reformat the code
@@ -65,7 +65,7 @@ test_case emoji-commit-titles-col-300 \
 2009-02-22 11:53 +0000 Committer o 🐧 Fix Linux issue
 2009-02-13 23:31 +0000 Committer I 🚑 Fix bug
 
-[main] 50a10e108b44c34548b9ba9e318416b3027a0627 - commit 1 of 7                                                                                                                                                                                                                                         100%
+[main] 237d747db3f85d2ae36127ecd0371feb4ca986e3 - commit 1 of 7                                                                                                                                                                                                                                         100%
 EOF
 
 run_test_cases
