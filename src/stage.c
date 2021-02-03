@@ -565,6 +565,12 @@ stage_request(struct view *view, enum request request, struct line *line)
 			view->env->goto_lineno--;
 		return request;
 
+	case REQ_VIEW_BLOB:
+		view->env->goto_lineno = diff_get_lineno(view, line, true);
+		if (view->env->goto_lineno > 0)
+			view->env->goto_lineno--;
+		return request;
+
 	case REQ_ENTER:
 		return diff_common_enter(view, request, line);
 

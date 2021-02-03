@@ -825,6 +825,8 @@ diff_common_select(struct view *view, struct line *line, const char *changes_msg
 				string_format(view->ref, "%s to '%s'", changes_msg, file);
 			string_format(view->env->file, "%s", file);
 			view->env->lineno = view->env->goto_lineno = diff_get_lineno(view, line, false);
+			if (view->env->goto_lineno > 0)
+				view->env->goto_lineno--;
 			view->env->blob[0] = 0;
 		} else {
 			string_ncopy(view->ref, view->ops->id, strlen(view->ops->id));
