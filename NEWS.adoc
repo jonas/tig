@@ -4,21 +4,52 @@ Release notes
 master
 ------
 
+Incompatibilities:
+
+ - Change directory from the next argument, from now use `tig -C /path/to/repo`. (#1079)
+
 Improvements:
 
  - Jump from blame to commit. (#355)
- - Start blame of an uncommitted deleted line from HEAD so the line's origin can be traced. (#1008)
- - Add line-graphics = auto. (#834)
- - Allow maxwidth to be expressed in % of the view width.
- - Pass stash args through. (#1022)
- - The line number before a diff was applied is exposed as `%(lineno_old)` (#1081)
+ - Start blame of an uncommitted deleted line from HEAD so the line's origin can be traced. (#1008, #1009)
+ - Add line-graphics = auto. (#834, #1019)
+ - Allow maxwidth to be expressed in % of the view width. (#1021)
+ - Pass stash args through. (#1022, #1030)
+ - Make build work on IBM i. (#1051, #1052)
+ - Restore fullscreen navigation. (#1053)
+ - Update utf8proc to v2.6.1.
+ - Add some range so control chars ^^ and ^_ are also supported. (#1041, #1058)
+ - Disable ncurses extended key values so that esc-codes can be used. (#1046, #1049)
+ - Use id column for commit id only. (#1025, #1056)
+ - Some minor updates for scrolling and for a double-click in diff. (#1060)
+ - Add scroll-half-page-up and scroll-half-page-down actions. (#531, #1075)
+ - Allow to generate a compilation database. (#1064)
+ - New command stage-update-part.
+ - The line number before a diff was applied is exposed as `%(lineno_old)`. (#1081)
 
 Bug fixes:
 
  - Fix wrapping of lines with multibyte characters. (#988)
  - Improve highlighting of search with $ regex. (#1000)
  - Update tracking branch when refreshing status view. (#1015)
- - Use id column for commit id only. (#1025)
+ - Fix vertical lines in Putty with UTF-8 graphics. (#981, #983)
+ - Fix parsing of three-way chunk headers with extra dashes.
+ - Update tracking branch when refreshing status view. (#1015, #1020)
+ - Handle filename with space in diff view. (#1035)
+ - The stash view requires a working tree.
+ - Replace useless strncpy to avoid compilation warning. (#1036)
+ - Zsh completion fixes. (#940, #1047)
+ - Handle undefined __git_complete. (#1011, #1055)
+ - Fix help messages for half-page and page up. (#1054)
+ - Let `-S`, `-G` and `--grep=` pattern override readline history.
+ - Fix bash completion issue with worktrees (#1018).
+ - Fix parsing of commit line from `git log --left-right` output in pager view.
+ - Fix %(lineno) computation for hunk postimages that span only one line. (#1062)
+ - Align relative-compact dates to the right. (#1067)
+ - Fix empty split diff view when navigating quickly in the stash view.
+ - Avoid depending on wcwidth in test by removing Variation Selector. (#1065)
+ - Open the blob view with the cursor correctly positioned.
+ - Update %(text) when navigating diff contents. (#1082)
 
 tig-2.5.1
 ---------
