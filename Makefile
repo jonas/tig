@@ -177,7 +177,7 @@ uninstall:
 		$(QUIET_UNINSTALL_EACH)tools/uninstall.sh "$(DESTDIR)$(docdir)/tig/$(doc)";)
 
 clean: clean-test clean-coverage
-	$(Q)$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.md5 .deps _book node_modules
+	$(Q)$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.sha256 .deps _book node_modules
 	$(Q)$(RM) -r $(compdb_dir) compile_commands.json
 	$(Q)$(RM) $(EXE) $(TOOLS) $(OBJS) core doc/*.xml src/builtin-config.c
 	$(Q)$(RM) $(OBJS:%.o=%.gcda) $(OBJS:%.o=%.gcno)
@@ -222,7 +222,7 @@ dist: configure tig.spec
 	$(TAR) --delete $(TARNAME)/Makefile > $(TARNAME).tar && \
 	find $(TARNAME) -type f -print0 | LC_ALL=C sort -z | $(TAR) --mtime=$(shell git show -s --format=@%ct) --mode=o=rX,ug+rw,a-s --owner=root --group=root --null -T - -rf $(TARNAME).tar && \
 	gzip -f -n -9 $(TARNAME).tar && \
-	md5sum $(TARNAME).tar.gz > $(TARNAME).tar.gz.md5
+	sha256sum $(TARNAME).tar.gz > $(TARNAME).tar.gz.sha256
 	$(Q)$(RM) -r $(TARNAME)
 
 rpm: dist
