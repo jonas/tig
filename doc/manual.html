@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.10" />
+<meta name="generator" content="AsciiDoc 9.1.0" />
 <title>The Tig Manual</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -436,7 +436,7 @@ thead, p.table.header {
 p.table {
   margin-top: 0;
 }
-/* Because the table frame attribute is overriden by CSS in most browsers. */
+/* Because the table frame attribute is overridden by CSS in most browsers. */
 div.tableblock > table[frame="void"] {
   border-style: none;
 }
@@ -1154,6 +1154,11 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">The currently selected tag name.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><code>%(refname)</code></p></td>
+<td align="left" valign="top"><p class="table">The currently selected reference name including the
+                         remote name for remote branches.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><code>%(stash)</code></p></td>
 <td align="left" valign="top"><p class="table">The currently selected stash name.</p></td>
 </tr>
@@ -1169,6 +1174,11 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(lineno)</code></p></td>
 <td align="left" valign="top"><p class="table">The currently selected line number. Defaults to 0.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(lineno_old)</code></p></td>
+<td align="left" valign="top"><p class="table">The currently selected line number, before the diff
+                         was applied. Defaults to 0.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(ref)</code></p></td>
@@ -1268,7 +1278,7 @@ Copy commit ID to clipboard:
 </p>
 <div class="literalblock">
 <div class="content">
-<pre><code>bind generic 9 !@sh -c "echo -n %(commit) | xclip -selection c"</code></pre>
+<pre><code>bind generic 9 @sh -c "echo -n %(commit) | xclip -selection c"</code></pre>
 </div></div>
 </li>
 <li>
@@ -1622,7 +1632,7 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Move cursor one line down.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">PgUp,-,a</p></td>
+<td align="left" valign="top"><p class="table">PgUp, -</p></td>
 <td align="left" valign="top"><p class="table">Move cursor one page up.</p></td>
 </tr>
 <tr>
@@ -1630,12 +1640,12 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Move cursor one page down.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">End</p></td>
-<td align="left" valign="top"><p class="table">Jump to last line.</p></td>
-</tr>
-<tr>
 <td align="left" valign="top"><p class="table">Home</p></td>
 <td align="left" valign="top"><p class="table">Jump to first line.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">End</p></td>
+<td align="left" valign="top"><p class="table">Jump to last line.</p></td>
 </tr>
 </tbody>
 </table>
@@ -2082,7 +2092,7 @@ the Free Software Foundation; either version 2 of the License, or
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2020-03-07 14:00:09 CET
+ 2021-02-12 21:07:31 CET
 </div>
 </div>
 </body>

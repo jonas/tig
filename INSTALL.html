@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.10" />
+<meta name="generator" content="AsciiDoc 9.1.0" />
 <title>Installation instructions</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -436,7 +436,7 @@ thead, p.table.header {
 p.table {
   margin-top: 0;
 }
-/* Because the table frame attribute is overriden by CSS in most browsers. */
+/* Because the table frame attribute is overridden by CSS in most browsers. */
 div.tableblock > table[frame="void"] {
   border-style: none;
 }
@@ -742,8 +742,8 @@ asciidoc.install();
 <div class="paragraph"><p>Download a tarball from <a href="https://github.com/jonas/tig/releases">https://github.com/jonas/tig/releases</a> or clone the Tig
 repository <a href="http://github.com/jonas/tig">git://github.com/jonas/tig.git</a>.</p></div>
 <div class="paragraph"><p>The latest version is:
-<a href="https://github.com/jonas/tig/releases/download/tig-2.5.1/tig-2.5.1.tar.gz">tig-2.5.1</a>
-<a href="https://github.com/jonas/tig/releases/download/tig-2.5.1/tig-2.5.1.tar.gz.md5">(md5)</a></p></div>
+<a href="https://github.com/jonas/tig/releases/download/tig-2.5.2/tig-2.5.2.tar.gz">tig-2.5.2</a>
+<a href="https://github.com/jonas/tig/releases/download/tig-2.5.2/tig-2.5.2.tar.gz.md5">(md5)</a></p></div>
 <div class="paragraph"><p><strong>Note:</strong> Do not use the tar.gz file for version 2.0 because it will fail
 to compile due to issue <a href="https://github.com/jonas/tig/pull/283">#283</a> and
 <a href="https://github.com/jonas/tig/issues/337">#337</a></p></div>
@@ -760,6 +760,11 @@ $ make install</code></pre>
 <pre><code>$ make prefix=/usr/local
 $ sudo make install prefix=/usr/local</code></pre>
 </div></div>
+<div class="paragraph"><p>Additional build options can be defined in the <code>config.make</code> file, which is
+loaded automatically when running <code>make</code> if it exists. By default,
+<code>contrib/config.make-$kernel_name</code> is loaded if it exists (currently only
+available for macOS [<code>Darwin</code>] and Cygwin). See <code>contrib/config.make</code> for
+example build options.</p></div>
 <div class="paragraph"><p>Documentation files, such as manpages, are distributed in the release tarballs,
 and can be installed using:</p></div>
 <div class="literalblock">
@@ -780,10 +785,17 @@ can be installed from the <em>release</em> branch using:</p></div>
 <div class="sect1">
 <h2 id="_installation_using_code_configure_code">Installation using <code>configure</code></h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Optionally, you can use the <code>configure</code> script to detect dependencies:</p></div>
+<div class="paragraph"><p>If you prefer an autotools-based installation process, you can use the
+<code>configure</code> script to detect dependencies and enable features. If you downloaded
+the Tig sources from <a href="https://github.com/jonas/tig/releases/">a release tarball</a>
+there&#8217;s already a <code>configure</code> script. However, if you are building from the Tig
+repository, you need to ensure that <code>autoconf</code> is installed on your system and
+generate the <code>configure</code> script yourself.</p></div>
+<div class="paragraph"><p>To install using <code>configure</code>, run the following commands:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>$ ./configure
+<pre><code>$ make configure # Only run if you are building from the Git repository
+$ ./configure
 $ make
 $ make install</code></pre>
 </div></div>
@@ -795,13 +807,6 @@ build without <code>configure</code>):</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ ./configure LDFLAGS=-L/usr/local/opt/ncurses/lib CPPFLAGS=-I/usr/local/opt/ncurses/include</code></pre>
-</div></div>
-<div class="paragraph"><p>Note, if you are building from the Tig repository, you need to generate
-<code>configure</code> yourself. First, ensure that <code>autoconf</code> is installed on your system,
-and then run the following command:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>$ make configure</code></pre>
 </div></div>
 </div>
 </div>
@@ -1010,7 +1015,7 @@ cellspacing="0" cellpadding="4">
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2020-04-08 18:17:14 CEST
+ 2021-02-12 21:07:31 CET
 </div>
 </div>
 </body>

@@ -2,12 +2,12 @@
 .\"     Title: tigmanual
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 04/08/2020
+.\"      Date: 02/12/2021
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.5.1
+.\"    Source: Tig 2.5.2
 .\"  Language: English
 .\"
-.TH "TIGMANUAL" "7" "04/08/2020" "Tig 2\&.5\&.1" "Tig Manual"
+.TH "TIGMANUAL" "7" "02/12/2021" "Tig 2\&.5\&.2" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -226,6 +226,8 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -271,6 +273,13 @@ The currently selected tag name\&.
 T}
 T{
 .sp
+%(refname)
+T}:T{
+.sp
+The currently selected reference name including the remote name for remote branches\&.
+T}
+T{
+.sp
 %(stash)
 T}:T{
 .sp
@@ -296,6 +305,13 @@ T{
 T}:T{
 .sp
 The currently selected line number\&. Defaults to 0\&.
+T}
+T{
+.sp
+%(lineno_old)
+T}:T{
+.sp
+The currently selected line number, before the diff was applied\&. Defaults to 0\&.
 T}
 T{
 .sp
@@ -463,7 +479,7 @@ Copy commit ID to clipboard:
 .RS 4
 .\}
 .nf
-bind generic 9 !@sh \-c "echo \-n %(commit) | xclip \-selection c"
+bind generic 9 @sh \-c "echo \-n %(commit) | xclip \-selection c"
 .fi
 .if n \{\
 .RE
@@ -934,7 +950,7 @@ Move cursor one line down\&.
 T}
 T{
 .sp
-PgUp,\-,a
+PgUp, \-
 T}:T{
 .sp
 Move cursor one page up\&.
@@ -948,17 +964,17 @@ Move cursor one page down\&.
 T}
 T{
 .sp
-End
-T}:T{
-.sp
-Jump to last line\&.
-T}
-T{
-.sp
 Home
 T}:T{
 .sp
 Jump to first line\&.
+T}
+T{
+.sp
+End
+T}:T{
+.sp
+Jump to last line\&.
 T}
 .TE
 .sp 1

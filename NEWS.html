@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.10" />
+<meta name="generator" content="AsciiDoc 9.1.0" />
 <title>Release notes</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -436,7 +436,7 @@ thead, p.table.header {
 p.table {
   margin-top: 0;
 }
-/* Because the table frame attribute is overriden by CSS in most browsers. */
+/* Because the table frame attribute is overridden by CSS in most browsers. */
 div.tableblock > table[frame="void"] {
   border-style: none;
 }
@@ -737,6 +737,210 @@ asciidoc.install();
 <h1>Release notes</h1>
 </div>
 <div id="content">
+<div class="sect1">
+<h2 id="_tig_2_5_2">tig-2.5.2</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Incompatibilities:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Change directory from the next argument, from now use <code>tig -C /path/to/repo</code>. (#1079)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Jump from blame to commit. (#355)
+</p>
+</li>
+<li>
+<p>
+Start blame of an uncommitted deleted line from HEAD so the line&#8217;s origin can be traced. (#1008, #1009)
+</p>
+</li>
+<li>
+<p>
+Add line-graphics = auto. (#834, #1019)
+</p>
+</li>
+<li>
+<p>
+Allow maxwidth to be expressed in % of the view width. (#1021)
+</p>
+</li>
+<li>
+<p>
+Pass stash args through. (#1022, #1030)
+</p>
+</li>
+<li>
+<p>
+Make build work on IBM i. (#1051, #1052)
+</p>
+</li>
+<li>
+<p>
+Restore fullscreen navigation. (#1053)
+</p>
+</li>
+<li>
+<p>
+Update utf8proc to v2.6.1.
+</p>
+</li>
+<li>
+<p>
+Add some range so control chars <sup>^ and </sup>_ are also supported. (#1041, #1058)
+</p>
+</li>
+<li>
+<p>
+Disable ncurses extended key values so that esc-codes can be used. (#1046, #1049)
+</p>
+</li>
+<li>
+<p>
+Use id column for commit id only. (#1025, #1056)
+</p>
+</li>
+<li>
+<p>
+Some minor updates for scrolling and for a double-click in diff. (#1060)
+</p>
+</li>
+<li>
+<p>
+Add scroll-half-page-up and scroll-half-page-down actions. (#531, #1075)
+</p>
+</li>
+<li>
+<p>
+Allow to generate a compilation database. (#1064)
+</p>
+</li>
+<li>
+<p>
+New command stage-update-part.
+</p>
+</li>
+<li>
+<p>
+The line number before a diff was applied is exposed as <code>%(lineno_old)</code>. (#1081)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix wrapping of lines with multibyte characters. (#988)
+</p>
+</li>
+<li>
+<p>
+Improve highlighting of search with $ regex. (#1000)
+</p>
+</li>
+<li>
+<p>
+Update tracking branch when refreshing status view. (#1015)
+</p>
+</li>
+<li>
+<p>
+Fix vertical lines in Putty with UTF-8 graphics. (#981, #983)
+</p>
+</li>
+<li>
+<p>
+Fix parsing of three-way chunk headers with extra dashes.
+</p>
+</li>
+<li>
+<p>
+Update tracking branch when refreshing status view. (#1015, #1020)
+</p>
+</li>
+<li>
+<p>
+Handle filename with space in diff view. (#1035)
+</p>
+</li>
+<li>
+<p>
+The stash view requires a working tree.
+</p>
+</li>
+<li>
+<p>
+Replace useless strncpy to avoid compilation warning. (#1036)
+</p>
+</li>
+<li>
+<p>
+Zsh completion fixes. (#940, #1047)
+</p>
+</li>
+<li>
+<p>
+Handle undefined __git_complete. (#1011, #1055)
+</p>
+</li>
+<li>
+<p>
+Fix help messages for half-page and page up. (#1054)
+</p>
+</li>
+<li>
+<p>
+Let <code>-S</code>, <code>-G</code> and <code>--grep=</code> pattern override readline history.
+</p>
+</li>
+<li>
+<p>
+Fix bash completion issue with worktrees (#1018).
+</p>
+</li>
+<li>
+<p>
+Fix parsing of commit line from <code>git log --left-right</code> output in pager view.
+</p>
+</li>
+<li>
+<p>
+Fix %(lineno) computation for hunk postimages that span only one line. (#1062)
+</p>
+</li>
+<li>
+<p>
+Align relative-compact dates to the right. (#1067)
+</p>
+</li>
+<li>
+<p>
+Fix empty split diff view when navigating quickly in the stash view.
+</p>
+</li>
+<li>
+<p>
+Avoid depending on wcwidth in test by removing Variation Selector. (#1065)
+</p>
+</li>
+<li>
+<p>
+Open the blob view with the cursor correctly positioned.
+</p>
+</li>
+<li>
+<p>
+Update %(text) when navigating diff contents. (#1082)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
 <div class="sect1">
 <h2 id="_tig_2_5_1">tig-2.5.1</h2>
 <div class="sectionbody">
@@ -4349,7 +4553,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2020-04-08 18:17:14 CEST
+ 2021-02-12 21:07:31 CET
 </div>
 </div>
 </body>

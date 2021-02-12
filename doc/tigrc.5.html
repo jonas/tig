@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.10" />
+<meta name="generator" content="AsciiDoc 9.1.0" />
 <title>tigrc(5)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -436,7 +436,7 @@ thead, p.table.header {
 p.table {
   margin-top: 0;
 }
-/* Because the table frame attribute is overriden by CSS in most browsers. */
+/* Because the table frame attribute is overridden by CSS in most browsers. */
 div.tableblock > table[frame="void"] {
   border-style: none;
 }
@@ -1016,11 +1016,12 @@ branch               : Any other reference.
 </ul></div>
 </dd>
 <dt class="hdlist1">
-<em>line-graphics</em> (mixed) [ascii|default|utf-8|&lt;bool&gt;]
+<em>line-graphics</em> (mixed) [ascii|default|utf-8|auto|&lt;bool&gt;]
 </dt>
 <dd>
 <p>
-        What type of character graphics for line drawing.
+        What type of character graphics for line drawing. "auto" means "utf-8"
+        if the locale is UTF-8, "default" otherwise.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1488,7 +1489,9 @@ author
 <li>
 <p>
 <em>maxwidth</em> (int): Maximum width of the column. Permit automatically
-          sizing content, up to this limit.
+          sizing content, up to this limit. Can be specified either as the number
+          of columns, e.g. <em>15</em>, or as a percentage of the view width, e.g. <em>20%</em>,
+          where the maximum is 100%.
 </p>
 </li>
 </ul></div>
@@ -1577,7 +1580,9 @@ file-name
 <li>
 <p>
 <em>maxwidth</em> (int): Maximum width of the column. Permit automatically
-          sizing content, up to this limit.
+          sizing content, up to this limit. Can be specified either as the number
+          of columns, e.g. <em>15</em>, or as a percentage of the view width, e.g. <em>20%</em>,
+          where the maximum is 100%.
 </p>
 </li>
 </ul></div>
@@ -1683,7 +1688,9 @@ ref
 <li>
 <p>
 <em>maxwidth</em> (int): Maximum width of the column. Permit automatically
-          sizing content, up to this limit.
+          sizing content, up to this limit. Can be specified either as the number
+          of columns, e.g. <em>15</em>, or as a percentage of the view width, e.g. <em>20%</em>,
+          where the maximum is 100%.
 </p>
 </li>
 </ul></div>
@@ -1913,6 +1920,8 @@ cellspacing="0" cellpadding="4">
 console output shown (as if <em>!</em> was specified). When multiple command options
 are specified their behavior are combined, e.g. "?&lt;git commit" will prompt the
 user whether to execute the command and will exit Tig after completion.</p></div>
+<div class="paragraph"><p>Note that if you want to use pipes or redirection in your commands then you
+must run them in a subshell, i.e. embed your commands in <code>sh -c '&lt;commands&gt;'</code>.</p></div>
 <div class="sect3">
 <h4 id="_browsing_state_variables">Browsing state variables</h4>
 <div class="paragraph"><p>User-defined commands can optionally refer to Tig&#8217;s internal state using the
@@ -1971,6 +1980,11 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(lineno)</code></p></td>
 <td align="left" valign="top"><p class="table">The currently selected line number. Defaults to 0.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(lineno_old)</code></p></td>
+<td align="left" valign="top"><p class="table">The currently selected line number, before the diff
+                         was applied. Defaults to 0.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(ref)</code></p></td>
@@ -2087,8 +2101,7 @@ file:</p></div>
         gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &amp;"
         publish = !"for i in origin public; do git push $i; done"
 [tig "bind"]
-        # @-prefix means that the console output will not be shown.
-        generic = V !@git gitk-bg
+        generic = V @git gitk-bg
         generic = &gt; !git publish</code></pre>
 </div></div>
 </div>
@@ -2283,6 +2296,10 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Stage/unstage single line</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><code>stage-update-part</code></p></td>
+<td align="left" valign="top"><p class="table">Stage/unstage part of a chunk</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><code>stage-split-chunk</code></p></td>
 <td align="left" valign="top"><p class="table">Split current diff chunk</p></td>
 </tr>
@@ -2309,20 +2326,20 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Move cursor one line down</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><code>move-page-up</code></p></td>
+<td align="left" valign="top"><p class="table">Move cursor one page up</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><code>move-page-down</code></p></td>
 <td align="left" valign="top"><p class="table">Move cursor one page down</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table"><code>move-page-up</code></p></td>
+<td align="left" valign="top"><p class="table"><code>move-half-page-up</code></p></td>
 <td align="left" valign="top"><p class="table">Move cursor half a page up</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>move-half-page-down</code></p></td>
 <td align="left" valign="top"><p class="table">Move cursor half a page down</p></td>
-</tr>
-<tr>
-<td align="left" valign="top"><p class="table"><code>move-half-page-up</code></p></td>
-<td align="left" valign="top"><p class="table">Move cursor one page up</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>move-first-line</code></p></td>
@@ -2369,6 +2386,14 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><code>scroll-page-down</code></p></td>
 <td align="left" valign="top"><p class="table">Scroll one page down</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>scroll-half-page-up</code></p></td>
+<td align="left" valign="top"><p class="table">Scroll half a page up</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>scroll-half-page-down</code></p></td>
+<td align="left" valign="top"><p class="table">Scroll half a page down</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>scroll-first-col</code></p></td>
@@ -2755,8 +2780,8 @@ Options concerning diff start, chunks and lines added and deleted.
 </p>
 </dd>
 </dl></div>
-<div class="paragraph"><p><strong>diff-header</strong>, <strong>diff-chunk</strong>, <strong>diff-add</strong>, <strong>diff-add2</strong>, <strong>diff-del</strong>,
-<strong>diff-del2</strong>, <strong>diff-add-highlight</strong>, <strong>diff-del-highlight</strong></p></div>
+<div class="paragraph"><p><strong>diff-header</strong>, <strong>diff-chunk</strong>, <strong>diff-stat</strong>, <strong>diff-add</strong>, <strong>diff-add2</strong>,
+<strong>diff-del</strong>, <strong>diff-del2</strong>, <strong>diff-add-highlight</strong>, <strong>diff-del-highlight</strong></p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
 Enhanced Git diff markup
@@ -2864,7 +2889,7 @@ git(7), git-config(1)</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2020-04-08 18:17:14 CEST
+ 2021-02-12 21:07:31 CET
 </div>
 </div>
 </body>

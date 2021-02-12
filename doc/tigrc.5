@@ -2,12 +2,12 @@
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 04/08/2020
+.\"      Date: 02/12/2021
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.5.1
+.\"    Source: Tig 2.5.2
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "04/08/2020" "Tig 2\&.5\&.1" "Tig Manual"
+.TH "TIGRC" "5" "02/12/2021" "Tig 2\&.5\&.2" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -297,9 +297,9 @@ branch : Any other reference\&.
 .RE
 .RE
 .PP
-\fIline\-graphics\fR (mixed) [ascii|default|utf\-8|<bool>]
+\fIline\-graphics\fR (mixed) [ascii|default|utf\-8|auto|<bool>]
 .RS 4
-What type of character graphics for line drawing\&.
+What type of character graphics for line drawing\&. "auto" means "utf\-8" if the locale is UTF\-8, "default" otherwise\&.
 .RE
 .PP
 \fItruncation\-delimiter\fR (mixed) [utf\-8|<string>]
@@ -649,7 +649,9 @@ author
 .IP \(bu 2.3
 .\}
 \fImaxwidth\fR
-(int): Maximum width of the column\&. Permit automatically sizing content, up to this limit\&.
+(int): Maximum width of the column\&. Permit automatically sizing content, up to this limit\&. Can be specified either as the number of columns, e\&.g\&.
+\fI15\fR, or as a percentage of the view width, e\&.g\&.
+\fI20%\fR, where the maximum is 100%\&.
 .RE
 .RE
 .PP
@@ -785,7 +787,9 @@ file\-name
 .IP \(bu 2.3
 .\}
 \fImaxwidth\fR
-(int): Maximum width of the column\&. Permit automatically sizing content, up to this limit\&.
+(int): Maximum width of the column\&. Permit automatically sizing content, up to this limit\&. Can be specified either as the number of columns, e\&.g\&.
+\fI15\fR, or as a percentage of the view width, e\&.g\&.
+\fI20%\fR, where the maximum is 100%\&.
 .RE
 .RE
 .PP
@@ -953,7 +957,9 @@ ref
 .IP \(bu 2.3
 .\}
 \fImaxwidth\fR
-(int): Maximum width of the column\&. Permit automatically sizing content, up to this limit\&.
+(int): Maximum width of the column\&. Permit automatically sizing content, up to this limit\&. Can be specified either as the number of columns, e\&.g\&.
+\fI15\fR, or as a percentage of the view width, e\&.g\&.
+\fI20%\fR, where the maximum is 100%\&.
 .RE
 .RE
 .PP
@@ -1262,6 +1268,8 @@ T}
 .sp
 Unless otherwise specified, commands are run in the foreground with their console output shown (as if \fI!\fR was specified)\&. When multiple command options are specified their behavior are combined, e\&.g\&. "?<git commit" will prompt the user whether to execute the command and will exit Tig after completion\&.
 .sp
+Note that if you want to use pipes or redirection in your commands then you must run them in a subshell, i\&.e\&. embed your commands in sh \-c \*(Aq<commands>\*(Aq\&.
+.sp
 .it 1 an-trap
 .nr an-no-space-flag 1
 .nr an-break-flag 1
@@ -1273,6 +1281,7 @@ Unless otherwise specified, commands are run in the foreground with their consol
 User\-defined commands can optionally refer to Tig\(cqs internal state using the following variable names, which are substituted before commands are run:
 .TS
 tab(:);
+lt lt
 lt lt
 lt lt
 lt lt
@@ -1378,6 +1387,13 @@ T{
 T}:T{
 .sp
 The currently selected line number\&. Defaults to 0\&.
+T}
+T{
+.sp
+%(lineno_old)
+T}:T{
+.sp
+The currently selected line number, before the diff was applied\&. Defaults to 0\&.
 T}
 T{
 .sp
@@ -1566,8 +1582,7 @@ Or by using a combination of Git aliases and Tig external commands\&. The follow
         gitk\-bg = !"gitk HEAD \-\-not $(git rev\-parse \-\-remotes) &"
         publish = !"for i in origin public; do git push $i; done"
 [tig "bind"]
-        # @\-prefix means that the console output will not be shown\&.
-        generic = V !@git gitk\-bg
+        generic = V @git gitk\-bg
         generic = > !git publish
 .fi
 .if n \{\
@@ -1852,6 +1867,7 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1880,6 +1896,13 @@ stage\-update\-line
 T}:T{
 .sp
 Stage/unstage single line
+T}
+T{
+.sp
+stage\-update\-part
+T}:T{
+.sp
+Stage/unstage part of a chunk
 T}
 T{
 .sp
@@ -1927,6 +1950,13 @@ Move cursor one line down
 T}
 T{
 .sp
+move\-page\-up
+T}:T{
+.sp
+Move cursor one page up
+T}
+T{
+.sp
 move\-page\-down
 T}:T{
 .sp
@@ -1934,7 +1964,7 @@ Move cursor one page down
 T}
 T{
 .sp
-move\-page\-up
+move\-half\-page\-up
 T}:T{
 .sp
 Move cursor half a page up
@@ -1945,13 +1975,6 @@ move\-half\-page\-down
 T}:T{
 .sp
 Move cursor half a page down
-T}
-T{
-.sp
-move\-half\-page\-up
-T}:T{
-.sp
-Move cursor one page up
 T}
 T{
 .sp
@@ -2000,6 +2023,8 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -2028,6 +2053,20 @@ scroll\-page\-down
 T}:T{
 .sp
 Scroll one page down
+T}
+T{
+.sp
+scroll\-half\-page\-up
+T}:T{
+.sp
+Scroll half a page up
+T}
+T{
+.sp
+scroll\-half\-page\-down
+T}:T{
+.sp
+Scroll half a page down
 T}
 T{
 .sp
@@ -2596,7 +2635,7 @@ Diff markup
 Options concerning diff start, chunks and lines added and deleted\&.
 .RE
 .sp
-\fBdiff\-header\fR, \fBdiff\-chunk\fR, \fBdiff\-add\fR, \fBdiff\-add2\fR, \fBdiff\-del\fR, \fBdiff\-del2\fR, \fBdiff\-add\-highlight\fR, \fBdiff\-del\-highlight\fR
+\fBdiff\-header\fR, \fBdiff\-chunk\fR, \fBdiff\-stat\fR, \fBdiff\-add\fR, \fBdiff\-add2\fR, \fBdiff\-del\fR, \fBdiff\-del2\fR, \fBdiff\-add\-highlight\fR, \fBdiff\-del\-highlight\fR
 .PP
 Enhanced Git diff markup
 .RS 4
