@@ -18,7 +18,7 @@ tig reflog [options] [revisions]
 tig blame  [options] [rev] [--] path
 tig grep   [options] [pattern]
 tig refs   [options]
-tig stash
+tig stash  [options]
 tig status
 tig <      [Git command output]
 _______________________________________________________________________
@@ -75,7 +75,7 @@ grep::
 -h, --help::
 	Show help message and exit.
 
--C<path>::
+-C <path>::
 	Run as if Tig was started in <path> instead of the current working directory.
 
 PAGER MODE

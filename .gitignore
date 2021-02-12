@@ -10,6 +10,8 @@
 /node_modules/
 aclocal.m4
 autom4te.cache
+/compile_commands/
+/compile_commands.json
 config.h
 config.h.in
 config.log

@@ -79,11 +79,12 @@ refs_request(struct view *view, enum request request, struct line *line)
 				refs_is_all(reference) ? "--all" : ref->name, "",
 				show_notes_arg(), log_custom_pretty_arg())
 		};
+		enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 
 		if (!argv_format(main_view.env, &main_view.argv, all_references_argv, false, false))
 			report("Failed to format argument");
 		else
-			open_view(view, &main_view, OPEN_SPLIT | OPEN_PREPARED);
+			open_main_view(view, flags | OPEN_PREPARED);
 		return REQ_NONE;
 	}
 	default:
@@ -207,7 +208,7 @@ refs_open(struct view *view, enum open_flags flags)
 		if (!ref)
 			return ERROR_OUT_OF_MEMORY;
 
-		strncpy(ref->name, name, name_length);
+		strcpy(ref->name, name);
 		refs_all = ref;
 	}
 

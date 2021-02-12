@@ -1,5 +1,5 @@
 # bash/zsh completion for tig
-# 
+#
 # Copyright (C) 2019 Roland Hieber, Pengutronix
 # Copyright (C) 2007-2010 Jonas fonseca
 #
@@ -29,12 +29,31 @@
 #       at source time then all lookups will be done on demand,
 #       which may be slightly slower.
 
+#tig-completion requires __git_complete
+#* If not defined, source git completions script so __git_complete is available
+if ! declare -f __git_complete &>/dev/null; then
+	_bash_completion=$(pkg-config --variable=completionsdir bash-completion 2>/dev/null) ||
+		_bash_completion='/usr/share/bash-completion/completions/'
+			_locations=(
+				"$(dirname "${BASH_SOURCE[0]%:*}")"/git-completion.bash #in same dir as this
+				"$HOME/.local/share/bash-completion/completions/git"
+				"$_bash_completion/git"
+				'/etc/bash_completion.d/git' # old debian
+			)
+			for _e in "${_locations[@]}"; do
+				# shellcheck disable=1090
+				test -f "$_e" && . "$_e" && break
+			done
+			unset _bash_completion _locations _e
+			if ! declare -f __git_complete &>/dev/null; then
+				return #silently return without completions
+			fi
+fi
+
 __tig_options="
 	-v --version
 	-h --help
 	-C
-	--
-	+
 "
 __tig_commands="
 	blame
@@ -47,38 +66,31 @@ __tig_commands="
 	show
 "
 
-_tig() {
+__tig_main () {
 	# parse already existing parameters
-	local i c=1 command
+	local i c=1 command __git_repo_path
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
 		case "$i" in
 		--)	command="log"; break;;
+		-C)	return;;
 		-*)	;;
 		*)	command="$i"; break ;;
 		esac
 		c=$((++c))
 	done
 
-	# options -- only before command
-	case "$command$cur" in
-		-C*)
-			COMPREPLY=( $(compgen -d -P '-C' -- ${cur##-C}) )
-			return
-			;;
-	esac
-
 	# commands
 	case "$command" in
 		refs|status|stash)
-			COMPREPLY=( $(compgen -W "$__tig_options" -- "$cur") )
+			__gitcomp "$__tig_options"
 			;;
 		reflog)
 			__git_complete_command log
 			;;
 		"")
 			__git_complete_command log
-			__gitcompappend "$(compgen -W "$__tig_options $__tig_commands" -- "$cur")"
+			__gitcomp "$__tig_options $__tig_commands"
 			;;
 		*)
 			__git_complete_command $command
@@ -86,20 +98,13 @@ _tig() {
 	esac
 }
 
-# Detect if current shell is ZSH, and if so, load this file in bash
-# compatibility mode.
-if [ -n "$ZSH_VERSION" ]; then
-	autoload bashcompinit
-	bashcompinit
-fi
-
 # we use internal git-completion functions, so wrap _tig for all necessary
 # variables (like cword and prev) to be defined
-__git_complete tig _tig 
+__git_complete tig __tig_main
 
 # The following are necessary only for Cygwin, and only are needed
 # when the user has tab-completed the executable name and consequently
 # included the '.exe' suffix.
 if [ Cygwin = "$(uname -o 2>/dev/null)" ]; then
-	__git_complete tig.exe _tig
+	__git_complete tig.exe __tig_main
 fi

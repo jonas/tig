@@ -12,11 +12,5 @@
       "google": false,
       "all": false
     }
-  },
-  "plugins": ["ga"],
-  "pluginsConfig": {
-    "ga": {
-      "token": "UA-7492166-1"
-    }
   }
 }

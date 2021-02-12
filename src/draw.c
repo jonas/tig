@@ -233,7 +233,7 @@ draw_date(struct view *view, struct view_column *column, const struct time *time
 	struct date_options *opt = &column->opt.date;
 	enum date date = opt->display;
 	const char *text = mkdate(time, date, opt->local, opt->format);
-	enum align align = date == DATE_RELATIVE ? ALIGN_RIGHT : ALIGN_LEFT;
+	enum align align = (date == DATE_RELATIVE || date == DATE_RELATIVE_COMPACT) ? ALIGN_RIGHT : ALIGN_LEFT;
 
 	if (date == DATE_NO)
 		return false;
@@ -314,7 +314,7 @@ draw_lineno_custom(struct view *view, struct view_column *column, unsigned int l
 	unsigned long digits3 = MIN(9,MAX(3,column->width));
 	int max = MIN(VIEW_MAX_LEN(view), digits3);
 	char *text = NULL;
-	chtype separator = opt_line_graphics ? ACS_VLINE : '|';
+	chtype separator = ACS_VLINE;
 	struct line_number_options *opts = &column->opt.line_number;
 	int interval = opts->interval > 0 ? opts->interval : 5;
 
@@ -332,7 +332,17 @@ draw_lineno_custom(struct view *view, struct view_column *column, unsigned int l
 		draw_chars(view, LINE_LINE_NUMBER, text, -1, max, true);
 	else
 		draw_space(view, LINE_LINE_NUMBER, max, digits3);
-	return draw_graphic(view, LINE_DEFAULT, &separator, 1, true);
+
+	switch (opt_line_graphics) {
+	case GRAPHIC_ASCII:
+		return draw_chars(view, LINE_DEFAULT, "| ", -1, 2, false);
+	case GRAPHIC_DEFAULT:
+		return draw_graphic(view, LINE_DEFAULT, &separator, 1, true);
+	case GRAPHIC_UTF_8:
+		return draw_chars(view, LINE_DEFAULT, "│ ", -1, 2, false);
+	}
+
+	return false;
 }
 
 bool
@@ -485,7 +495,7 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_ID:
-			if (draw_id(view, column, column_data.reflog ? column_data.reflog : column_data.id))
+			if (draw_id(view, column, column_data.id))
 				return true;
 			continue;
 
@@ -582,11 +592,21 @@ draw_view_line_search_result(struct view *view, unsigned int lineno)
 	char *buf = malloc(bufsize + 1);
 	regmatch_t pmatch[1];
 	regoff_t bufpos = 0;
+#if defined(NCURSES_VERSION_PATCH) && NCURSES_VERSION_PATCH < 20070721
+	int width;
+	int trimmed;
+#endif
 
 	if (!buf || mvwinnstr(view->win, lineno, 0, buf, bufsize) == ERR) {
 		free(buf);
 		return;
 	}
+
+#if defined(NCURSES_VERSION_PATCH) && NCURSES_VERSION_PATCH < 20070721
+	/* Older winnstr() did not always stop at the end of the line. */
+	buf[utf8_length((const char **) &buf, bufsize, 0, &width, view->width, &trimmed, false, 1)] = 0;
+#endif
+	bufsize = strlen(string_trim_end(buf));
 
 	while (bufpos < bufsize && !regexec(view->regex, buf + bufpos, ARRAY_SIZE(pmatch), pmatch, 0)) {
 		regoff_t start = pmatch[0].rm_so;

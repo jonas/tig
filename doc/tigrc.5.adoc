@@ -191,9 +191,10 @@ The following variables can be set:
 	 - replace		: A replaced reference.
 	 - branch		: Any other reference.
 
-'line-graphics' (mixed) [ascii|default|utf-8|<bool>]::
+'line-graphics' (mixed) [ascii|default|utf-8|auto|<bool>]::
 
-	What type of character graphics for line drawing.
+	What type of character graphics for line drawing. "auto" means "utf-8"
+	if the locale is UTF-8, "default" otherwise.
 
 'truncation-delimiter' (mixed) [utf-8|<string>]::
 
@@ -466,7 +467,9 @@ author::
 	  1 and 10, the author name will be abbreviated to the author's initials.
 	  When set to zero, the width is automatically sized to fit the content.
 	- 'maxwidth' (int): Maximum width of the column. Permit automatically
-	  sizing content, up to this limit.
+	  sizing content, up to this limit. Can be specified either as the number
+	  of columns, e.g. '15', or as a percentage of the view width, e.g. '20%',
+	  where the maximum is 100%.
 
 commit-title::
 	- 'graph' (mixed) [no|v2|v1]: Whether to show the revision graph in the
@@ -500,7 +503,9 @@ file-name::
 	- 'width' (int): Width of the column. When set to zero, the width is
 	  automatically sized to fit the content.
 	- 'maxwidth' (int): Maximum width of the column. Permit automatically
-	  sizing content, up to this limit.
+	  sizing content, up to this limit. Can be specified either as the number
+	  of columns, e.g. '15', or as a percentage of the view width, e.g. '20%',
+	  where the maximum is 100%.
 
 file-size::
 	- 'display' (mixed) [default|units|<bool>]: How to display file sizes.
@@ -533,7 +538,9 @@ ref::
 	- 'width' (int): Fixed width for the column. When set to zero, the width
 	  is automatically sized to fit the content.
 	- 'maxwidth' (int): Maximum width of the column. Permit automatically
-	  sizing content, up to this limit.
+	  sizing content, up to this limit. Can be specified either as the number
+	  of columns, e.g. '15', or as a percentage of the view width, e.g. '20%',
+	  where the maximum is 100%.
 
 status::
 	- 'display' (mixed) [no|short|long|<bool>]: How to display the status
@@ -690,6 +697,9 @@ console output shown (as if '!' was specified). When multiple command options
 are specified their behavior are combined, e.g. "?<git commit" will prompt the
 user whether to execute the command and will exit Tig after completion.
 
+Note that if you want to use pipes or redirection in your commands then you
+must run them in a subshell, i.e. embed your commands in `sh -c '<commands>'`.
+
 Browsing state variables
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -712,6 +722,8 @@ following variable names, which are substituted before commands are run:
 			 "." if undefined.
 |%(file)		|The currently selected file.
 |%(lineno)		|The currently selected line number. Defaults to 0.
+|%(lineno_old)		|The currently selected line number, before the diff
+			 was applied. Defaults to 0.
 |%(ref)			|The reference given to blame or HEAD if undefined.
 |%(revargs)		|The revision arguments passed on the command line.
 |%(fileargs)		|The file arguments passed on the command line.
@@ -777,8 +789,7 @@ file:
 	gitk-bg = !"gitk HEAD --not $(git rev-parse --remotes) &"
 	publish = !"for i in origin public; do git push $i; done"
 [tig "bind"]
-	# @-prefix means that the console output will not be shown.
-	generic = V !@git gitk-bg
+	generic = V @git gitk-bg
 	generic = > !git publish
 --------------------------------------------------------------------------
 
@@ -871,6 +882,7 @@ View-specific actions
 |status-revert           |Revert chunk or file changes
 |status-merge            |Merge file using external tool
 |stage-update-line       |Stage/unstage single line
+|stage-update-part       |Stage/unstage part of a chunk
 |stage-split-chunk       |Split current diff chunk
 |=============================================================================
 
@@ -881,10 +893,10 @@ Cursor navigation
 |=============================================================================
 |move-up                 |Move cursor one line up
 |move-down               |Move cursor one line down
+|move-page-up            |Move cursor one page up
 |move-page-down          |Move cursor one page down
-|move-page-up            |Move cursor half a page up
+|move-half-page-up       |Move cursor half a page up
 |move-half-page-down     |Move cursor half a page down
-|move-half-page-up       |Move cursor one page up
 |move-first-line         |Move cursor to first line
 |move-last-line          |Move cursor to last line
 |move-next-merge         |Move cursor to next merge commit
@@ -900,6 +912,8 @@ Scrolling
 |scroll-line-down        |Scroll one line down
 |scroll-page-up          |Scroll one page up
 |scroll-page-down        |Scroll one page down
+|scroll-half-page-up     |Scroll half a page up
+|scroll-half-page-down   |Scroll half a page down
 |scroll-first-col        |Scroll to the first line columns
 |scroll-left             |Scroll two columns left
 |scroll-right            |Scroll two columns right
@@ -1080,8 +1094,8 @@ Diff markup::
 
 Options concerning diff start, chunks and lines added and deleted.
 
-*diff-header*, *diff-chunk*, *diff-add*, *diff-add2*, *diff-del*,
-*diff-del2*, *diff-add-highlight*, *diff-del-highlight*
+*diff-header*, *diff-chunk*, *diff-stat*, *diff-add*, *diff-add2*,
+*diff-del*, *diff-del2*, *diff-add-highlight*, *diff-del-highlight*
 
 Enhanced Git diff markup::
 

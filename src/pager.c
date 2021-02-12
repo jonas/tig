@@ -12,6 +12,7 @@
  */
 
 #include "tig/tig.h"
+#include "tig/pager.h"
 #include "tig/options.h"
 #include "tig/request.h"
 #include "tig/line.h"
@@ -73,8 +74,10 @@ pager_wrap_line(struct view *view, const char *data, enum line_type type)
 	size_t lineno = 0;
 
 	while (datalen > 0 || !has_first_line) {
+		int width;
+		int trimmed;
 		bool wrapped = !!first_line;
-		size_t linelen = string_expanded_length(data, datalen, opt_tab_size, view->width - !!wrapped);
+		size_t linelen = utf8_length(&data, datalen, 0, &width, view->width, &trimmed, wrapped, opt_tab_size);
 		struct line *line;
 
 		line = add_line_text_at_(view, view->lines, data, linelen, type, 1, wrapped);
@@ -118,8 +121,12 @@ pager_common_read(struct view *view, const char *data, enum line_type type, stru
 	if (line_ptr)
 		*line_ptr = line;
 
-	if (line->type == LINE_COMMIT && view_has_flags(view, VIEW_ADD_PAGER_REFS))
-		add_pager_refs(view, data + STRING_SIZE("commit "));
+	if (line->type == LINE_COMMIT && view_has_flags(view, VIEW_ADD_PAGER_REFS)) {
+		data += STRING_SIZE("commit ");
+		while (*data && !isalnum(*data))
+			data++;
+		add_pager_refs(view, data);
+	}
 
 	return true;
 }
@@ -142,13 +149,14 @@ pager_read(struct view *view, struct buffer *buf, bool force_stop)
 enum request
 pager_request(struct view *view, enum request request, struct line *line)
 {
+	enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 	int split = 0;
 
 	if (request != REQ_ENTER)
 		return request;
 
 	if (line->type == LINE_COMMIT && view_has_flags(view, VIEW_OPEN_DIFF)) {
-		open_diff_view(view, OPEN_SPLIT);
+		open_diff_view(view, flags);
 		split = 1;
 	}
 

@@ -213,15 +213,16 @@ parse_chunk_header(struct chunk_header *header, const char *line)
 	if (!prefixcmp(line, "@@ -"))
 		line += STRING_SIZE("@@ -") - 1;
 	else if (!prefixcmp(line, "@@@") &&
-		 (line = strrchr(line, '-')))
-		/* Stay at that '-'. */ ;
+		 (line = strstr(line, " @@@")))
+		while (*line != '-')
+			line--;
 	else
 		return false;
 
 	return  parse_ulong(&line, &header->old.position, '-', false) &&
 		parse_ulong(&line, &header->old.lines, ',', true) &&
 		parse_ulong(&line, &header->new.position, '+', false) &&
-		parse_ulong(&line, &header->new.lines, ',', false);
+		parse_ulong(&line, &header->new.lines, ',', true);
 }
 
 bool
@@ -261,7 +262,7 @@ get_path(const char *path)
 			free(entry);
 			return NULL;
 		}
-		strncpy(entry->path, path, strlen(path));
+		strcpy(entry->path, path);
 	}
 
 	return entry->path;

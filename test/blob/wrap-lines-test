@@ -17,38 +17,45 @@ set line-graphics = utf-8
 set wrap-lines = true
 EOF
 
-in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+git_init
+
+test_setup_work_dir()
+{
+	printf 'Как пуст, и вял, и ничтожен почти всякий прожитой день! Как мало следов оставляет он за собою! Как бессмысленно глупо пробежали эти часы за часами!\tИван Сергеевич Тургенев\n' >README.md
+	git add README.md
+	git_commit -m "tomorrow"
+}
 
 test_tig
 
 assert_equals 'wrapped.screen' <<EOF
-# Scala.js Benchmarks
-
-This is a port of the Dart
-[benchmark harness](https://github.com/d
-+art-lang/benchmark_harness) to
-[Scala.js](https://github.com/scala-js/s
-+cala-js).
-
-You can see the benchmarks in action
-[here](http://jonas.github.io/scala-js-b
-+enchmarks/).
-
-All derivative work is the copyright of
-+their respective authors and
-distributed under their original license
-+. All original work unless otherwise
-stated is distributed under the [same li
-+cense as
-Scala.js](https://github.com/jonas/scala
-+-js-benchmarks/LICENSE).
-
-## Get started
-
-To run the benchmarks, first install the
-+ Scala.js compiler by following the
-instructions in the [Scala.js README](ht
-+tps://github.com/lampepfl/scala-js).
-
-[blob] README.md - line 1 of 62      28%
+Как пуст, и вял, и ничтожен почти всякий
+ прожитой день! Как мало следов оставляе
+т он за собою! Как бессмысленно глупо пр
+обежали эти часы за часами!       Иван С
+геевич Тургенев
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+[blob] README.md - line 1 of 5      100%
 EOF

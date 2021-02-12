@@ -125,7 +125,7 @@ graph_insert_column(struct graph_v1 *graph, struct graph_row *row, size_t pos, c
 	return column;
 }
 
-bool
+static bool
 graph_add_parent(struct graph *graph_, const char *parent)
 {
 	struct graph_v1 *graph = graph_->private;

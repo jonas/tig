@@ -1,4 +1,4 @@
-personal_ws-1.1 en 303 
+personal_ws-1.1 en 320 
 ACDMRTXB
 AIX
 AsciiDoc
@@ -87,12 +87,14 @@ XXXXXX
 Yi
 Yy
 ZSH
+Zsh
 abspath
 acked
 adate
 adoc
 alloc
 altscreen
+arg
 args
 ascii
 asciidoc
@@ -101,6 +103,7 @@ autobuild
 autoconf
 automake
 autoreconf
+autotools
 backend
 backgrounded
 backtraces
@@ -131,11 +134,13 @@ concat
 config
 configs
 contrib
+credentialCache
 cwd
 del
 delim
 dereferences
 dev
+devel
 diffargs
 diffstat
 dir
@@ -153,12 +158,14 @@ eol
 erasechar
 errno
 extdiff
+fg
 fgcolor
 fileargs
 filename
 filesystem
 frontend
 gc
+gcc
 getch
 gitattributes
 gitconfig
@@ -173,6 +180,7 @@ iconv
 ident
 ifdef
 ifndef
+ignoreSIGHUP
 inputrc
 jsh
 keybinding
@@ -183,6 +191,7 @@ ld
 lds
 libexecdir
 libiconv
+libncurses
 lineno
 linenumber
 lncursesw
@@ -190,6 +199,7 @@ localtime
 logargs
 lookup
 lrwxrwxrwx
+macOS
 mailmap
 mainargs
 manpage
@@ -199,6 +209,7 @@ mergetool
 mkstemps
 multi
 multibyte
+mv
 namespace
 nav
 ncurses
@@ -214,6 +225,7 @@ nowarn
 oldmode
 optimizations
 pbcopy
+pgrp
 printf
 qgit
 reachability
@@ -223,6 +235,7 @@ rebase
 rebasing
 reflog
 reflogmsg
+refname
 refspec
 renderer
 repo
@@ -235,10 +248,12 @@ runtime
 rwxr
 sed
 setenv
+setsid
 sha
 shortlog
 showUntrackedFiles
 signoff
+src
 startup
 stderr
 stdin
@@ -286,6 +301,7 @@ unstage
 unstaged
 unstanged
 untracked
+usr
 utf
 utils
 waddch
@@ -302,3 +318,4 @@ xhtml
 xmlto
 xpm
 xrvt
+zsh

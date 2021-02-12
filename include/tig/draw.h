@@ -25,8 +25,6 @@ enum align {
 	ALIGN_RIGHT
 };
 
-#define VIEW_MAX_LEN(view) ((view)->width + (view)->pos.col - (view)->col)
-
 bool draw_text(struct view *view, enum line_type type, const char *string);
 bool PRINTF_LIKE(3, 4) draw_formatted(struct view *view, enum line_type type, const char *format, ...);
 bool draw_graphic(struct view *view, enum line_type type, const chtype graphic[], size_t size, bool separator);

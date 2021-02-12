@@ -82,25 +82,10 @@ string_copy_rev(char *dst, const char *src)
 void
 string_copy_rev_from_commit_line(char *dst, const char *src)
 {
-	string_copy_rev(dst, src + STRING_SIZE("commit "));
-}
-
-size_t
-string_expanded_length(const char *src, size_t srclen, size_t tabsize, size_t max_size)
-{
-	size_t size, pos;
-
-	for (size = pos = 0; pos < srclen && size < max_size; pos++) {
-		if (src[pos] == '\t') {
-			size_t expanded = tabsize - (size % tabsize);
-
-			size += expanded;
-		} else {
-			size++;
-		}
-	}
-
-	return pos;
+	src += STRING_SIZE("commit ");
+	while (*src && !isalnum(*src))
+		src++;
+	string_copy_rev(dst, src);
 }
 
 size_t
@@ -330,7 +315,8 @@ utf8_length(const char **start, int max_chars, size_t skip, int *width, size_t m
 		if (!unicode)
 			break;
 
-		ucwidth = unicode_width(unicode, tab_size);
+		ucwidth = unicode == '\t' ? tab_size - (*width % tab_size) :
+					    utf8proc_charwidth((utf8proc_int32_t) unicode);
 		if (skip > 0) {
 			skip -= ucwidth <= skip ? ucwidth : skip;
 			*start += bytes;

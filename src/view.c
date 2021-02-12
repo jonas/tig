@@ -101,6 +101,9 @@ void
 scroll_view(struct view *view, enum request request)
 {
 	int lines = 1;
+	unsigned long orig_offset, orig_lineno;
+	int move_lines;
+	int i;
 
 	assert(view_is_displayed(view));
 
@@ -131,21 +134,29 @@ scroll_view(struct view *view, enum request request)
 		report_clear();
 		return;
 	case REQ_SCROLL_PAGE_DOWN:
-		lines = view->height;
+	case REQ_SCROLL_HALF_PAGE_DOWN:
+		lines = request == REQ_SCROLL_PAGE_DOWN ? view->height : view->height / 2;
 		/* Fall-through */
 	case REQ_SCROLL_WHEEL_DOWN:
 	case REQ_SCROLL_LINE_DOWN:
 		if (view->pos.offset + lines > view->lines)
 			lines = view->lines - view->pos.offset;
 
+		// do not scroll past bottom ...
+		if ((view->pos.offset + view->height + lines) > view->lines)
+			lines = view->lines - view->pos.offset - view->height;
+
 		if (lines == 0 || view->pos.offset + view->height >= view->lines) {
 			report("Cannot scroll beyond the last line");
+			// if wanted to move down when can no longer scroll ...
+			// move_view(view, REQ_MOVE_DOWN);
 			return;
 		}
 		break;
 
 	case REQ_SCROLL_PAGE_UP:
-		lines = view->height;
+	case REQ_SCROLL_HALF_PAGE_UP:
+		lines = request == REQ_SCROLL_PAGE_UP ? view->height : view->height / 2;
 		/* Fall-through */
 	case REQ_SCROLL_LINE_UP:
 	case REQ_SCROLL_WHEEL_UP:
@@ -154,6 +165,8 @@ scroll_view(struct view *view, enum request request)
 
 		if (lines == 0) {
 			report("Cannot scroll beyond the first line");
+			// if wanted to move up when can no longer scroll ...
+			// move_view(view, REQ_MOVE_UP);
 			return;
 		}
 
@@ -164,7 +177,15 @@ scroll_view(struct view *view, enum request request)
 		die("request %d not handled in switch", request);
 	}
 
+	orig_offset = view->pos.offset;
+	orig_lineno = view->pos.lineno;
+
 	do_scroll_view(view, lines);
+
+	move_lines = (view->pos.offset - orig_offset) - (view->pos.lineno - orig_lineno);
+
+	for (i = 0; i < ABS(move_lines); i++)
+		move_view(view, move_lines < 0 ? REQ_MOVE_UP : REQ_MOVE_DOWN);
 }
 
 /* Cursor moving */
@@ -204,11 +225,13 @@ move_view(struct view *view, enum request request)
 		break;
 
 	case REQ_MOVE_WHEEL_DOWN:
-		steps = opt_mouse_scroll;
+		steps = view->pos.lineno + opt_mouse_scroll >= view->lines
+		      ? view->lines - view->pos.lineno - 1 : opt_mouse_scroll;
 		break;
 
 	case REQ_MOVE_WHEEL_UP:
-		steps = -opt_mouse_scroll;
+		steps = opt_mouse_scroll > view->pos.lineno
+		      ? -view->pos.lineno : -opt_mouse_scroll;
 		break;
 
 	case REQ_MOVE_UP:
@@ -817,9 +840,6 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 	}
 }
 
-#define refresh_view(view) load_view(view, NULL, OPEN_REFRESH)
-#define reload_view(view) load_view(view, NULL, OPEN_RELOAD)
-
 void
 open_view(struct view *prev, struct view *view, enum open_flags flags)
 {
@@ -829,7 +849,10 @@ open_view(struct view *prev, struct view *view, enum open_flags flags)
 	assert(flags ^ OPEN_REFRESH);
 
 	if (view == prev && nviews == 1 && !reload) {
-		report("Already in %s view", view->name);
+		if (view->parent)
+			view->parent = NULL;
+		else
+			report("Already in %s view", view->name);
 		return;
 	}
 
@@ -841,6 +864,9 @@ open_view(struct view *prev, struct view *view, enum open_flags flags)
 	/* don't use a child view as previous view */
 	if (prev && prev->parent && prev == display[1])
 		prev = prev->parent;
+
+	if (view != display[0])
+		view->parent = NULL;
 
 	if (!view->keymap)
 		view->keymap = get_keymap(view->name, strlen(view->name));
@@ -887,8 +913,6 @@ compare_view_column(enum view_column_type column, bool use_file_mode,
 		return apply_comparator(timecmp, column_data1->date, column_data2->date);
 
 	case VIEW_COLUMN_ID:
-		if (column_data1->reflog && column_data2->reflog)
-			return apply_comparator(strcmp, column_data1->reflog, column_data2->reflog);
 		return apply_comparator(strcmp, column_data1->id, column_data2->id);
 
 	case VIEW_COLUMN_FILE_NAME:
@@ -1048,7 +1072,7 @@ view_column_text(struct view *view, struct view_column_data *column_data,
 
 	case VIEW_COLUMN_ID:
 		if (column->opt.id.display)
-			text = column_data->reflog ? column_data->reflog : column_data->id;
+			text = column_data->id;
 		break;
 
 	case VIEW_COLUMN_LINE_NUMBER:
@@ -1443,6 +1467,8 @@ get_view_column(struct view *view, enum view_column_type type)
 	return NULL;
 }
 
+#define MAXWIDTH(maxwidth)	(width == 0 ? maxwidth < 0 ? -maxwidth * view->width / 100 : maxwidth : 0)
+
 bool
 view_column_info_update(struct view *view, struct line *line)
 {
@@ -1461,7 +1487,7 @@ view_column_info_update(struct view *view, struct line *line)
 		switch (column->type) {
 		case VIEW_COLUMN_AUTHOR:
 			width = column->opt.author.width;
-			maxwidth = width == 0 ? column->opt.author.maxwidth : 0;
+			maxwidth = MAXWIDTH(column->opt.author.maxwidth);
 			break;
 
 		case VIEW_COLUMN_COMMIT_TITLE:
@@ -1473,7 +1499,7 @@ view_column_info_update(struct view *view, struct line *line)
 
 		case VIEW_COLUMN_FILE_NAME:
 			width = column->opt.file_name.width;
-			maxwidth = width == 0 ? column->opt.file_name.maxwidth : 0;
+			maxwidth = MAXWIDTH(column->opt.file_name.maxwidth);
 			break;
 
 		case VIEW_COLUMN_FILE_SIZE:
@@ -1484,7 +1510,7 @@ view_column_info_update(struct view *view, struct line *line)
 			width = column->opt.id.width;
 			if (!width)
 				width = opt_id_width;
-			if (!column_data.reflog && !width)
+			if (!width)
 				width = 7;
 			break;
 
@@ -1506,7 +1532,7 @@ view_column_info_update(struct view *view, struct line *line)
 
 		case VIEW_COLUMN_REF:
 			width = column->opt.ref.width;
-			maxwidth = width == 0 ? column->opt.ref.maxwidth : 0;
+			maxwidth = MAXWIDTH(column->opt.ref.maxwidth);
 			break;
 
 		case VIEW_COLUMN_SECTION:
@@ -1659,7 +1685,14 @@ add_line_text_at_(struct view *view, unsigned long pos, const char *text, size_t
 struct line *
 add_line_text_at(struct view *view, unsigned long pos, const char *text, enum line_type type, size_t cells)
 {
-	return add_line_text_at_(view, pos, text, strlen(text), type, cells, false);
+	size_t textlen = strlen(text);
+
+	/* If the filename contains a space, Git adds a tab at the end of
+	 * the line, to satisfy GNU patch. Drop it to correct the filename. */
+	if ((type == LINE_DIFF_ADD_FILE || type == LINE_DIFF_DEL_FILE) && text[textlen - 1] == '\t')
+		textlen--;
+
+	return add_line_text_at_(view, pos, text, textlen, type, cells, false);
 }
 
 struct line *

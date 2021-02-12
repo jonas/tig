@@ -34,6 +34,8 @@ open_blob_view(struct view *prev, enum open_flags flags)
 	bool has_blob_selection = view->env->blob[0] || view->env->file[0];
 
 	if (!in_blob_view && (view->lines || has_blob_selection)) {
+		if (view->env->goto_lineno > 0)
+			flags |= OPEN_RELOAD;
 		open_view(prev, view, flags);
 
 	} else {

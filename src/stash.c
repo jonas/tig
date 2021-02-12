@@ -15,13 +15,17 @@
 #include "tig/draw.h"
 #include "tig/main.h"
 #include "tig/diff.h"
+#include "tig/repo.h"
 
 static enum status_code
 stash_open(struct view *view, enum open_flags flags)
 {
 	static const char *stash_argv[] = { "git", "stash", "list",
-		encoding_arg, "--no-color", "--pretty=raw", NULL };
+		encoding_arg, "--no-color", "--pretty=raw", "%(revargs)", NULL };
 	struct main_state *state = view->private;
+
+	if (!(repo.is_inside_work_tree || *repo.worktree))
+		return error("The stash view requires a working tree");
 
 	state->with_graph = false;
 	watch_register(&view->watch, WATCH_STASH);
@@ -31,12 +35,16 @@ stash_open(struct view *view, enum open_flags flags)
 static void
 stash_select(struct view *view, struct line *line)
 {
+	struct main_state *state = view->private;
+
 	main_select(view, line);
-	string_format(view->env->stash, "stash@{%d}", line->lineno - 1);
+	assert(state->reflogs >= line->lineno);
+	string_ncopy(view->env->stash, state->reflog[line->lineno - 1] + STRING_SIZE("refs/"),
+		     strlen(state->reflog[line->lineno - 1]) - STRING_SIZE("refs/"));
 	string_copy(view->ref, view->env->stash);
 }
 
-enum request
+static enum request
 stash_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags = (view_is_displayed(view) && request != REQ_VIEW_DIFF)
@@ -62,7 +70,7 @@ stash_request(struct view *view, enum request request, struct line *line)
 			if (!argv_format(diff_view.env, &diff_view.argv, diff_argv, false, false))
 				report("Failed to format argument");
 			else
-				open_view(view, &diff_view, flags | OPEN_PREPARED);
+				open_diff_view(view, flags | OPEN_PREPARED);
 		}
 		return REQ_NONE;
 

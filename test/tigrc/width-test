@@ -175,6 +175,29 @@ c819b08eb5b05dde4df5        10| 2013-11-26 23:39 -05 Jonas Fonseca      * Extrac
 [main] ee912870202200a0b9cf4fd86ba57243212d341e - commit 1 of 48                                                                                                                                     29%
 EOF
 
+test_case main-maxwidths-10% \
+	--script='
+	:set main-view = id:yes,width=20 line-number:yes,interval=5,width=20 date:default,width=20 author:full,maxwidth=10% commit-title:yes,graph,refs,overflow=no
+	:refresh
+	' \
+	<<EOF
+ee912870202200a0b9cf         1| 2014-03-01 17:26 -05 Jonas Fonseca      * [master] WIP: Upgrade to 0.4-SNAPSHOT and DCE
+a1dcf1aaa11470978db1          | 2014-03-01 15:59 -05 Jonas Fonseca      * Add type parameter for js.Dynamic
+296fc90ba2c47ba3d2b6          | 2014-01-16 22:51 -05 Jonas Fonseca      * Move classes under org.scalajs.benchmark package scope
+b4ad81f17b4c3fc33ed5          | 2014-01-16 17:43 -05 Jonas Fonseca      * Bump Scala.js version to 0.3-SNAPSHOT
+4a68cf3c338f5724d838         5| 2014-01-16 17:39 -05 Jonas Fonseca      * Integrate app code into the benchmark infrastructure
+e59a941c4e7d51cd172e          | 2014-01-16 07:47 -08 Jonas Fonseca      M-. Merge pull request #4 from phaller/patch-1
+940efafc379db7c6df99          | 2014-01-16 15:32 +01 Philipp Haller     | * Fix link to Dart benchmark harness
+110e090f815f40d649f5          | 2013-12-17 00:02 +01 Jonas Fonseca      *-' Update links to reflect project name change
+894a53e03a017642abdc          | 2013-12-03 23:35 -05 Jonas Fonseca      * Use Scala.js 0.2-SNAPSHOT
+c819b08eb5b05dde4df5        10| 2013-11-26 23:39 -05 Jonas Fonseca      * Extract the benchmark list variable name; fix push to use scoped variable
+5bd6df6603f25ff035f1          | 2013-11-26 23:31 -05 Jonas Fonseca      * Solve the easiest sudoku grid
+988c77aad5798f1e087e          | 2013-11-26 23:22 -05 Jonas Fonseca      * Disable phantomjs by default
+5d84af022bc87ef13c29          | 2013-11-26 22:55 -05 Jonas Fonseca      * Exclude Sudoku when running all benchmarks
+5d80606b72b490e213a0          | 2013-11-26 22:52 -05 Jonas Fonseca      * Fix reference setup to work for node
+[main] ee912870202200a0b9cf4fd86ba57243212d341e - commit 1 of 48                                                                                                                                     29%
+EOF
+
 ### tree-view
 
 test_case tree-widths-default \

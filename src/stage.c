@@ -29,6 +29,13 @@
 static struct status stage_status;
 static enum line_type stage_line_type;
 
+typedef enum
+{
+	UPDATE_NORMAL,
+	UPDATE_SINGLE_LINE,
+	UPDATE_PART
+} update_t;
+
 void
 open_stage_view(struct view *prev, struct status *status, enum line_type type, enum open_flags flags)
 {
@@ -73,8 +80,9 @@ stage_diff_write(struct io *io, struct line *line, struct line *end)
 }
 
 static bool
-stage_diff_single_write(struct io *io, bool staged,
-			struct line *line, struct line *single, struct line *end)
+stage_diff_range_write(struct io *io, bool staged,
+		       struct line *line, struct line *first,
+		       struct line *last, struct line *end)
 {
 	enum line_type write_as_normal = staged ? LINE_DIFF_ADD : LINE_DIFF_DEL;
 	enum line_type ignore = staged ? LINE_DIFF_DEL : LINE_DIFF_ADD;
@@ -83,7 +91,7 @@ stage_diff_single_write(struct io *io, bool staged,
 		const char *prefix = "";
 		const char *data = box_text(line);
 
-		if (line == single) {
+		if (line >= first && line <= last) {
 			/* Write the complete line. */
 
 		} else if (line->type == write_as_normal) {
@@ -124,11 +132,66 @@ stage_apply_line(struct io *io, struct line *diff_hdr, struct line *chunk, struc
 	       io_printf(io, "@@ -%lu,%lu +%lu,%lu @@\n",
 		       header.old.position, header.old.lines,
 		       header.new.position, header.new.lines) &&
-	       stage_diff_single_write(io, staged, chunk + 1, single, end);
+	       stage_diff_range_write(io, staged, chunk + 1, single, single, end);
 }
 
 static bool
-stage_apply_chunk(struct view *view, struct line *chunk, struct line *single, bool revert)
+stage_apply_part(struct io *io, struct line *diff_hdr, struct line *chunk,
+		 struct line *current, struct line *end)
+{
+	struct chunk_header header;
+	struct line *first, *last, *line;
+	bool staged = stage_line_type == LINE_STAT_STAGED;
+	int diff;
+
+	if (!parse_chunk_header(&header, box_text(chunk)))
+		return false;
+
+	/* find beginning of the partial chunk */
+	for (first = NULL, line = chunk; line < current; line++) {
+		bool change;
+
+		change = (line->type == LINE_DIFF_DEL || line->type == LINE_DIFF_ADD);
+		if (!first && change)
+			first = line;
+		else if (first && !change)
+			first = NULL;
+	}
+	if (!first)
+		first = current;
+	/* find the end of the partial chunk */
+	last = first;
+	for (line = first, diff = 0; line < end; line++)
+	{
+		if (line->type == LINE_DIFF_DEL) {
+			last = line;
+			diff--;
+		}
+		else if (line->type == LINE_DIFF_ADD) {
+			last = line;
+			diff++;
+		}
+		else if (line->type == LINE_DIFF_NO_NEWLINE) {
+			last = line;
+		}
+		else
+			break;
+	}
+	if (staged)
+		header.old.lines = header.new.lines - diff;
+	else
+		header.new.lines = header.old.lines + diff;
+
+	return stage_diff_write(io, diff_hdr, chunk) &&
+	       io_printf(io, "@@ -%lu,%lu +%lu,%lu @@\n",
+		       header.old.position, header.old.lines,
+		       header.new.position, header.new.lines) &&
+	       stage_diff_range_write(io, staged, chunk + 1, first, last, end);
+}
+
+static bool
+stage_apply_chunk(struct view *view, struct line *chunk, struct line *single,
+		  bool revert, update_t update_type)
 {
 	const char *apply_argv[SIZEOF_ARG] = {
 		"git", "apply", "--whitespace=nowarn", NULL
@@ -150,14 +213,21 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *single, bo
 	if (!io_run(&io, IO_WR, repo.exec_dir, NULL, apply_argv))
 		return false;
 
-	if (single != NULL) {
+	switch (update_type)
+	{
+	case UPDATE_SINGLE_LINE:
 		if (!stage_apply_line(&io, diff_hdr, chunk, single, view->line + view->lines))
 			chunk = NULL;
-
-	} else {
+		break;
+	case UPDATE_PART:
+		if (!stage_apply_part(&io, diff_hdr, chunk, single, view->line + view->lines))
+			chunk = NULL;
+		break;
+	case UPDATE_NORMAL:
 		if (!stage_diff_write(&io, diff_hdr, chunk) ||
 		    !stage_diff_write(&io, chunk, view->line + view->lines))
 			chunk = NULL;
+		break;
 	}
 
 	return io_done(&io) && chunk;
@@ -172,7 +242,7 @@ stage_update_files(struct view *view, enum line_type type)
 		bool updated = false;
 
 		for (line = view->line; (line = find_next_line_by_type(view, line, LINE_DIFF_CHUNK)); line++) {
-			if (!stage_apply_chunk(view, line, NULL, false)) {
+			if (!stage_apply_chunk(view, line, NULL, false, UPDATE_NORMAL)) {
 				report("Failed to apply chunk");
 				return false;
 			}
@@ -188,7 +258,7 @@ stage_update_files(struct view *view, enum line_type type)
 }
 
 static bool
-stage_update(struct view *view, struct line *line, bool single)
+stage_update(struct view *view, struct line *line, update_t update_type)
 {
 	struct line *chunk = NULL;
 
@@ -196,7 +266,7 @@ stage_update(struct view *view, struct line *line, bool single)
 		chunk = find_prev_line_by_type(view, line, LINE_DIFF_CHUNK);
 
 	if (chunk) {
-		if (!stage_apply_chunk(view, chunk, single ? line : NULL, false)) {
+		if (!stage_apply_chunk(view, chunk, line, false, update_type)) {
 			report("Failed to apply chunk");
 			return false;
 		}
@@ -227,7 +297,7 @@ stage_revert(struct view *view, struct line *line)
 		if (!prompt_yesno("Are you sure you want to revert changes?"))
 			return false;
 
-		if (!stage_apply_chunk(view, chunk, NULL, true)) {
+		if (!stage_apply_chunk(view, chunk, NULL, true, UPDATE_NORMAL)) {
 			report("Failed to revert chunk");
 			return false;
 		}
@@ -366,12 +436,124 @@ stage_chunk_is_wrapped(struct view *view, struct line *line)
 	return false;
 }
 
+static bool
+find_deleted_line_in_head(struct view *view, struct line *line) {
+	struct io io;
+	struct buffer buffer;
+	unsigned long line_number_in_head, line_number = 0;
+	long bias_by_staged_changes = 0;
+	char buf[SIZEOF_STR] = "";
+	char file_in_head_pathspec[sizeof("HEAD:") + SIZEOF_STR],
+		file_in_index_pathspec[sizeof(":") + SIZEOF_STR];
+	const char *file_in_head = NULL;
+	const char *ls_tree_argv[] = {
+		"git", "ls-tree", "-z", "HEAD", view->env->file, NULL
+	};
+	const char *diff_argv[] = {
+		"git", "diff", "--root", file_in_head_pathspec, file_in_index_pathspec,
+		"--no-color", NULL
+	};
+
+	if (line->type != LINE_DIFF_DEL)
+		return false;
+
+	// Check if the file exists in HEAD.
+	io_run_buf(ls_tree_argv, buf, sizeof(buf), repo.exec_dir, false);
+	if (buf[0]) {
+		file_in_head = view->env->file;
+	} else { // The file might might be renamed in the index. Find its old name.
+		struct status file_status;
+		const char *diff_index_argv[] = {
+			"git", "diff-index", "--root", "--cached", "-C",
+			"--diff-filter=ACR", "-z", "HEAD", NULL
+		};
+		if (!io_run(&io, IO_RD, repo.exec_dir, NULL, diff_index_argv) || io.status)
+			return false;
+		while (io_get(&io, &buffer, 0, true)) {
+			if (!status_get_diff(&file_status, buffer.data, buffer.size))
+				return false;
+			if (file_status.status != 'A') {
+				if (!io_get(&io, &buffer, 0, true))
+					return false;
+				string_ncopy(file_status.old.name, buffer.data, buffer.size);
+			}
+			if (!io_get(&io, &buffer, 0, true))
+				return false;
+			string_ncopy(file_status.new.name, buffer.data, buffer.size);
+			if (strcmp(file_status.new.name, view->env->file))
+				continue;
+			// Quit if the file does not exist in HEAD.
+			if (file_status.status == 'A') {
+				return false;
+			}
+			file_in_head = file_status.old.name;
+			break;
+		}
+	}
+
+	if (!file_in_head)
+		return false;
+
+	// We want to compute the line number in HEAD. The current view is a diff
+	// of (un)staged changes on top of HEAD.
+	line_number_in_head = diff_get_lineno(view, line, /*old=*/true);
+	assert(line_number_in_head);
+
+	// When looking at staged changes, we already have the correct
+	// line number in HEAD.
+	if (stage_line_type == LINE_STAT_STAGED)
+		goto found_line;
+
+	// If we are in an unstaged diff, we also need to take into
+	// account the staged changes to this file, since they happened
+	// between HEAD and our diff.
+	sprintf(file_in_head_pathspec, "HEAD:%s", file_in_head);
+	sprintf(file_in_index_pathspec, ":%s", view->env->file);
+	if (!io_run(&io, IO_RD, repo.exec_dir, NULL, diff_argv) || io.status)
+		return false;
+	// line_number_in_head is still the line number in the staged
+	// version of the file. Go through the staged changes up to our
+	// line number and count the additions and deletions on the way,
+	// to compute the line number before the staged changes.
+	while (line_number < line_number_in_head && io_get(&io, &buffer, '\n', true)) {
+		enum line_type type = get_line_type(buffer.data);
+		if (type == LINE_DIFF_CHUNK) {
+			struct chunk_header header;
+			if (!parse_chunk_header(&header, buffer.data))
+				return false;
+			line_number = header.new.position;
+			continue;
+		}
+		if (!line_number) {
+			continue;
+		}
+		if (type == LINE_DIFF_DEL) {
+			bias_by_staged_changes--;
+			continue;
+		}
+		assert(type == LINE_DIFF_ADD || type == LINE_DEFAULT ||
+		       // These are just context lines that happen to start with [-+].
+		       type == LINE_DIFF_ADD2 || type == LINE_DIFF_DEL2);
+		if (type == LINE_DIFF_ADD)
+			bias_by_staged_changes++;
+		line_number++;
+	}
+
+	line_number_in_head -= bias_by_staged_changes;
+
+found_line:
+	if (file_in_head != view->env->file)
+		string_ncopy(view->env->file, file_in_head, strlen(file_in_head));
+	view->env->goto_lineno = line_number_in_head;
+	return true;
+}
+
 static enum request
 stage_request(struct view *view, enum request request, struct line *line)
 {
 	switch (request) {
 	case REQ_STATUS_UPDATE:
-		if (!stage_update(view, line, false))
+		if (!stage_update(view, line, UPDATE_NORMAL))
 			return REQ_NONE;
 		break;
 
@@ -394,7 +576,26 @@ stage_request(struct view *view, enum request request, struct line *line)
 			report("Staging is not supported for wrapped lines");
 			return REQ_NONE;
 		}
-		if (!stage_update(view, line, true))
+		if (!stage_update(view, line, UPDATE_SINGLE_LINE))
+			return REQ_NONE;
+		break;
+
+
+	case REQ_STAGE_UPDATE_PART:
+		if (stage_line_type == LINE_STAT_UNTRACKED ||
+		    stage_status.status == 'A') {
+			report("Staging partial chunks is not supported for new files");
+			return REQ_NONE;
+		}
+		if (line->type != LINE_DIFF_DEL && line->type != LINE_DIFF_ADD) {
+			report("Please select a change to stage");
+			return REQ_NONE;
+		}
+		if (stage_chunk_is_wrapped(view, line)) {
+			report("Staging is not supported for wrapped lines");
+			return REQ_NONE;
+		}
+		if (!stage_update(view, line, UPDATE_PART))
 			return REQ_NONE;
 		break;
 
@@ -420,7 +621,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 		if (stage_line_type == LINE_STAT_UNTRACKED) {
 			open_editor(stage_status.new.name, (line - view->line) + 1);
 		} else {
-			open_editor(stage_status.new.name, diff_get_lineno(view, line));
+			open_editor(stage_status.new.name, diff_get_lineno(view, line, false));
 		}
 		break;
 
@@ -445,7 +646,16 @@ stage_request(struct view *view, enum request request, struct line *line)
 		}
 
 		view->env->ref[0] = 0;
-		view->env->goto_lineno = diff_get_lineno(view, line);
+		if (find_deleted_line_in_head(view, line))
+			string_copy(view->env->ref, "HEAD");
+		else
+			view->env->goto_lineno = diff_get_lineno(view, line, false);
+		if (view->env->goto_lineno > 0)
+			view->env->goto_lineno--;
+		return request;
+
+	case REQ_VIEW_BLOB:
+		view->env->goto_lineno = diff_get_lineno(view, line, true);
 		if (view->env->goto_lineno > 0)
 			view->env->goto_lineno--;
 		return request;

@@ -47,6 +47,7 @@ typedef unsigned long argv_number;
 	_(argv_string,	 file,		"",		"") \
 	_(argv_string,	 head,		"",		"HEAD") \
 	_(argv_number,	 lineno,	"",		0) \
+	_(argv_number,	 lineno_old,	"",		0) \
 	_(argv_string,	 ref,		"HEAD",		"") \
 	_(argv_string,	 remote,	"origin",	"") \
 	_(argv_string,	 stash,		"",		"") \
@@ -60,6 +61,7 @@ typedef unsigned long argv_number;
 struct argv_env {
 	ARGV_ENV_INFO(ARGV_ENV_FIELDS)
 	unsigned long goto_lineno;
+	char goto_id[SIZEOF_REV];
 	char search[SIZEOF_STR];
 	char none[1];
 };

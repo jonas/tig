@@ -168,11 +168,15 @@ following variables.
 |%(remote)		|The currently selected remote name. For remote
 			 branches %(branch) will contain the branch name.
 |%(tag)			|The currently selected tag name.
+|%(refname)		|The currently selected reference name including the
+			 remote name for remote branches.
 |%(stash)		|The currently selected stash name.
 |%(directory)		|The current directory path in the tree view or
 			 "." if undefined.
 |%(file)		|The currently selected file.
 |%(lineno)		|The currently selected line number. Defaults to 0.
+|%(lineno_old)		|The currently selected line number, before the diff
+			 was applied. Defaults to 0.
 |%(ref)			|The reference given to blame or HEAD if undefined.
 |%(revargs)		|The revision arguments passed on the command line.
 |%(fileargs)		|The file arguments passed on the command line.
@@ -208,7 +212,7 @@ Example user-defined commands:
 
  - Copy commit ID to clipboard:
 
-	bind generic 9 !@sh -c "echo -n %(commit) | xclip -selection c"
+	bind generic 9 @sh -c "echo -n %(commit) | xclip -selection c"
 
  - Add/edit notes for the current commit used during a review:
 
@@ -406,10 +410,10 @@ Cursor Navigation
 |Key		|Action
 |k		|Move cursor one line up.
 |j		|Move cursor one line down.
-|PgUp,-,a	|Move cursor one page up.
+|PgUp, -	|Move cursor one page up.
 |PgDown, Space	|Move cursor one page down.
-|End		|Jump to last line.
 |Home		|Jump to first line.
+|End		|Jump to last line.
 |=============================================================================
 
 [[view-scrolling]]

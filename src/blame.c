@@ -21,6 +21,7 @@
 #include "tig/draw.h"
 #include "tig/git.h"
 #include "tig/diff.h"
+#include "tig/main.h"
 
 /*
  * Blame backend
@@ -328,7 +329,7 @@ blame_read(struct view *view, struct buffer *buf, bool force_stop)
 	return true;
 }
 
-bool
+static bool
 blame_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
 	struct blame *blame = line->data;
@@ -497,6 +498,11 @@ blame_request(struct view *view, enum request request, struct line *line)
 		} else {
 			open_diff_view(view, flags);
 		}
+		break;
+
+	case REQ_VIEW_MAIN:
+		string_copy_rev(view->env->goto_id, view->env->commit);
+		open_main_view(view, OPEN_RELOAD);
 		break;
 
 	default:

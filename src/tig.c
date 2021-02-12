@@ -188,6 +188,8 @@ view_driver(struct view *view, enum request request)
 	case REQ_SCROLL_LINE_UP:
 	case REQ_SCROLL_PAGE_DOWN:
 	case REQ_SCROLL_PAGE_UP:
+	case REQ_SCROLL_HALF_PAGE_DOWN:
+	case REQ_SCROLL_HALF_PAGE_UP:
 	case REQ_SCROLL_WHEEL_DOWN:
 	case REQ_SCROLL_WHEEL_UP:
 		scroll_view(view, request);
@@ -242,17 +244,19 @@ view_driver(struct view *view, enum request request)
 
 	case REQ_NEXT:
 	case REQ_PREVIOUS:
-		if (view->parent && view == display[1]) {
+		if (view->parent) {
+			struct view *parent = view->parent;
 			int line;
 
-			view = view->parent;
-			line = view->pos.lineno;
-			view_request(view, request);
-			move_view(view, request);
-			if (view_is_displayed(view))
-				update_view_title(view);
-			if (line != view->pos.lineno)
-				view_request(view, REQ_ENTER);
+			line = parent->pos.lineno;
+			view_request(parent, request);
+			move_view(parent, request);
+			if (view_is_displayed(parent))
+				update_view_title(parent);
+			if (line != parent->pos.lineno) {
+				end_update(view, true);
+				view_request(parent, REQ_ENTER);
+			}
 		} else {
 			move_view(view, request);
 		}
@@ -344,7 +348,6 @@ view_driver(struct view *view, enum request request)
 		if (view->prev && view->prev != view) {
 			maximize_view(view->prev, true);
 			view->prev = view;
-			view->parent = NULL;
 			break;
 		}
 		if (request == REQ_VIEW_CLOSE_NO_QUIT) {
@@ -378,7 +381,7 @@ static const char usage_string[] =
 "   or: tig blame  [options] [rev] [--] path\n"
 "   or: tig grep   [options] [pattern]\n"
 "   or: tig refs   [options]\n"
-"   or: tig stash\n"
+"   or: tig stash  [options]\n"
 "   or: tig status\n"
 "   or: tig <      [git command output]\n"
 "\n"
@@ -386,7 +389,7 @@ static const char usage_string[] =
 "  +<number>       Select line <number> in the first view\n"
 "  -v, --version   Show version and exit\n"
 "  -h, --help      Show help message and exit\n"
-"  -C<path>        Start in <path>";
+"  -C <path>       Start in <path>";
 
 void
 usage(const char *message)
@@ -486,9 +489,10 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 	/* Options that must come before any subcommand. */
 	for (i = 1; i < argc; i++) {
 		const char *opt = argv[i];
-		if (!strncmp(opt, "-C", 2)) {
-			if (chdir(opt + 2))
-				die("Failed to change directory to %s", opt + 2);
+		if (!strcmp(opt, "-C") && i + 1 < argc && *argv[i + 1] != '-') {
+			const char *dir = argv[++i];
+			if (chdir(dir))
+				die("Failed to change directory to %s", dir);
 			continue;
 		} else {
 			break;
@@ -651,14 +655,19 @@ handle_mouse_event(void)
 		return opt_mouse_wheel_cursor ? REQ_MOVE_WHEEL_UP : REQ_SCROLL_WHEEL_UP;
 
 	if (event.bstate & BUTTON1_PRESSED) {
-		if (event.y == view->pos.lineno - view->pos.offset) {
-			/* Click is on the same line, perform an "ENTER" */
+		int y = getbegy(view->win);
+		unsigned long lineno = (event.y - y) + view->pos.offset;
+
+		if (lineno == view->pos.lineno) {
+			/* Click is on the same line, perform an "ENTER"
+			 * unless we are outside of diffstat in diff as
+			 * that might move/scroll ... */
+			if (view_has_flags(view, VIEW_DIFF_LIKE) &&
+			    view->line[lineno].type != LINE_DIFF_STAT)
+				return REQ_NONE;
 			return REQ_ENTER;
 
 		} else {
-			int y = getbegy(view->win);
-			unsigned long lineno = (event.y - y) + view->pos.offset;
-
 			select_view_line(view, lineno);
 			update_view_title(view);
 			report_clear();
@@ -706,7 +715,7 @@ sigsegv_handler(int sig)
 }
 #endif
 
-void
+static void
 sighup_handler(int sig)
 {
 	if (die_callback)
@@ -749,7 +758,7 @@ key_combo_handler(struct input *input, struct key *key)
 	return INPUT_STOP;
 }
 
-enum request
+static enum request
 read_key_combo(struct keymap *keymap)
 {
 	struct key_combo combo = { REQ_NONE, keymap, 0 };
@@ -765,7 +774,7 @@ die_if_failed(enum status_code code, const char *msg)
 		die("%s: %s", msg, get_status_message(code));
 }
 
-void
+static void
 hangup_children(void)
 {
 	if (signal(SIGHUP, SIG_IGN) == SIG_ERR)

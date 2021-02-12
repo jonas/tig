@@ -54,7 +54,7 @@ status_has_none(struct view *view, struct line *line)
 /* Get fields from the diff line:
  * :100644 100644 06a5d6ae9eca55be2e0e585a152e6b1336f2b20e 0000000000000000000000000000000000000000 M
  */
-static inline bool
+inline bool
 status_get_diff(struct status *file, const char *buf, size_t bufsize)
 {
 	const char *old_mode = buf +  1;

@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include "tig/tree.h"
 #include "tig/util.h"
 #include "tig/repo.h"
 #include "tig/io.h"
@@ -129,7 +130,7 @@ tree_entry(struct view *view, enum line_type type, const char *path,
 	if (!line)
 		return NULL;
 
-	strncpy(entry->name, path, strlen(path));
+	strcpy(entry->name, path);
 	if (mode)
 		entry->mode = strtoul(mode, NULL, 8);
 	if (id)

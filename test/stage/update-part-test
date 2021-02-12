@@ -1,0 +1,219 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=35
+
+steps '
+	:6
+	:enter
+	:maximize
+	:save-display default-diff.screen
+
+	:13
+	:stage-update-part
+	:save-display update-part-any.screen
+
+	:9
+	:stage-update-part
+	:save-display update-part-first.screen
+
+	:15
+	:stage-update-part
+	:save-display update-part-last.screen
+
+	:12
+	:stage-update-part
+	:save-display update-part-single.screen
+'
+
+in_work_dir create_dirty_workdir
+in_work_dir sh -c 'printf "a CHANGED\n1\n2\nedited-too\n4\n5\nedited-too\n7\n8" > a'
+
+test_tig status
+
+assert_equals 'default-diff.screen' <<EOF
+ a | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
+
+diff --git a/a b/a
+index 12d1d9e..931fee6 100644
+--- a/a
++++ b/a
+@@ -1,11 +1,9 @@
+-a
++a CHANGED
+ 1
+ 2
+-3
++edited-too
+ 4
+ 5
+-6
++edited-too
+ 7
+-8
+-9
+-10
+\ No newline at end of file
++8
+\ No newline at end of file
+
+
+
+
+
+
+
+
+[stage] Press '<Enter>' to jump to file diff - line 1 of 25                 100%
+EOF
+
+assert_equals 'update-part-any.screen' <<EOF
+ a | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/a b/a
+index 622c590..931fee6 100644
+--- a/a
++++ b/a
+@@ -1,11 +1,9 @@
+-a
++a CHANGED
+ 1
+ 2
+ edited-too
+ 4
+ 5
+-6
++edited-too
+ 7
+-8
+-9
+-10
+\ No newline at end of file
++8
+\ No newline at end of file
+
+
+
+
+
+
+
+
+
+[stage] Unstaged changes to 'a' - line 13 of 24                             100%
+EOF
+
+assert_equals 'update-part-first.screen' <<EOF
+ a | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/a b/a
+index e37b402..931fee6 100644
+--- a/a
++++ b/a
+@@ -4,8 +4,6 @@ a CHANGED
+ edited-too
+ 4
+ 5
+-6
++edited-too
+ 7
+-8
+-9
+-10
+\ No newline at end of file
++8
+\ No newline at end of file
+
+
+
+
+
+
+
+
+
+
+
+
+
+[stage] Unstaged changes to 'a' - line 9 of 20                              100%
+EOF
+
+assert_equals 'update-part-last.screen' <<EOF
+ a | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/a b/a
+index 56081f5..931fee6 100644
+--- a/a
++++ b/a
+@@ -4,6 +4,6 @@ a CHANGED
+ edited-too
+ 4
+ 5
+-6
++edited-too
+ 7
+ 8
+\ No newline at end of file
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[stage] Unstaged changes to 'a' - line 15 of 16                             100%
+EOF
+
+assert_equals 'update-part-single.screen' <<EOF
+On branch master
+Changes to be committed:
+M a
+Changes not staged for commit:
+M .j
+M b.c
+M e/f
+M g h
+Untracked files:
+  (no files)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[status] Press u to stage 'b.c' for commit                                  100%
+EOF

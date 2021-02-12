@@ -36,6 +36,12 @@ AX_LIB_READLINE(6.3)
 
 AM_ICONV
 
+dnl OS-specific
+case $(uname -s 2>/dev/null || echo unknown) in "OS400")
+	AC_CHECK_LIB(util, main, [LIBS="$LIBS -lutil"], AC_MSG_ERROR([Please install the libutil-devel package]))
+	;;
+esac
+    
 AC_CHECK_PROGS(SED, [gsed], [sed])
 AC_TDD_GCOV
 AC_SUBST(COVERAGE_CFLAGS)

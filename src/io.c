@@ -49,7 +49,7 @@ encoding_open(const char *fromcode)
 	}
 
 	encoding = calloc(1, sizeof(*encoding) + len);
-	strncpy(encoding->fromcode, fromcode, len);
+	strcpy(encoding->fromcode, fromcode);
 	encoding->cd = iconv_open(ENCODING_UTF8, fromcode);
 	if (encoding->cd == ICONV_NONE) {
 		free(encoding);
@@ -420,7 +420,7 @@ io_run(struct io *io, enum io_type type, const char *dir, char * const env[], co
 	return io_exec(io, type, dir, env, argv, 0);
 }
 
-bool
+static bool
 io_complete(enum io_type type, const char **argv, const char *dir, int fd)
 {
 	struct io io;
