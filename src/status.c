@@ -603,7 +603,7 @@ status_update_files(struct view *view, struct line *line)
 
 		if (almost_done > done && view_is_displayed(view)) {
 			done = almost_done;
-			string_format(view->ref, "updating file %u of %u (%d%% done)",
+			string_format(view->ref, "updating file %d of %d (%d%% done)",
 				      file, files, done);
 			update_view_title(view);
 			set_cursor_pos(cursor_y, cursor_x);

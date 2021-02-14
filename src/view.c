@@ -690,7 +690,7 @@ update_view_title(struct view *view)
 
 	if (!view_has_flags(view, VIEW_CUSTOM_STATUS) && view_has_line(view, line) &&
 	    line->lineno) {
-		wprintw(window, " - %s %d of %zd",
+		wprintw(window, " - %s %u of %zu",
 					   view->ops->type,
 					   line->lineno,
 					   MAX(line->lineno,
@@ -701,16 +701,16 @@ update_view_title(struct view *view)
 	}
 
 	if (view->pipe) {
-		time_t secs = time(NULL) - view->start_time;
+		long long secs = (long long) difftime(time(NULL), view->start_time);
 
 		/* Three git seconds are a long time ... */
 		if (secs > 2)
-			wprintw(window, " loading %lds", secs);
+			wprintw(window, " loading %llds", secs);
 	}
 
 	view_lines = view->pos.offset + view->height;
 	lines = view->lines ? MIN(view_lines, view->lines) * 100 / view->lines : 0;
-	mvwprintw(window, 0, view->width - count_digits(lines) - 1, "%d%%", lines);
+	mvwprintw(window, 0, view->width - count_digits(lines) - 1, "%u%%", lines);
 
 	wnoutrefresh(window);
 }
