@@ -293,7 +293,7 @@ blame_read(struct view *view, struct buffer *buf, bool force_stop)
 
 	if (!state->commit) {
 		state->commit = read_blame_commit(view, buf->data, state);
-		string_format(view->ref, "%s %2zd%%", view->vid,
+		string_format(view->ref, "%s %2zu%%", view->vid,
 			      view->lines ? 5 * (size_t) (state->blamed * 20 / view->lines) : 0);
 
 	} else if (parse_blame_info(state->commit, state->author, buf->data)) {

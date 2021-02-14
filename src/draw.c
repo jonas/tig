@@ -322,7 +322,7 @@ draw_lineno_custom(struct view *view, struct view_column *column, unsigned int l
 		return false;
 
 	if (lineno == 1 || (lineno % interval) == 0) {
-		static char fmt[] = "%ld";
+		static char fmt[] = "%3u";
 
 		fmt[1] = '0' + digits3;
 		if (string_format(number, fmt, lineno))

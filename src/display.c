@@ -416,7 +416,7 @@ save_view(struct view *view, const char *path)
 		fprintf(file, "Parent: %s\n", view->parent->name);
 	fprintf(file, "Ref: %s\n", view->ref);
 	fprintf(file, "Dimensions: height=%d width=%d\n", view->height, view->width);
-	fprintf(file, "Position: offset=%ld column=%ld lineno=%ld\n",
+	fprintf(file, "Position: offset=%lu column=%lu lineno=%lu\n",
 		view->pos.offset,
 		view->pos.col,
 		view->pos.lineno);
@@ -424,7 +424,7 @@ save_view(struct view *view, const char *path)
 	for (i = 0; i < view->lines; i++) {
 		struct line *line = &view->line[i];
 
-		fprintf(file, "line[%3zu] type=%s selected=%d\n",
+		fprintf(file, "line[%3zu] type=%s selected=%u\n",
 			i,
 			enum_name(get_line_type_name(line->type)),
 			line->selected);

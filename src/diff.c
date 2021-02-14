@@ -576,7 +576,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	bool ok = false;
 	struct buffer buf;
 
-	if (!string_format(line_arg, "-L%ld,+1", lineno))
+	if (!string_format(line_arg, "-L%lu,+1", lineno))
 		return false;
 
 	if (!io_run(&io, IO_RD, repo.exec_dir, NULL, blame_argv))

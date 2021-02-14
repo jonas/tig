@@ -170,7 +170,7 @@ file_finder_draw(struct file_finder *finder)
 
 	wmove(finder->win, finder->height - 1, 0);
 	wbkgdset(finder->win, get_line_attr(NULL, LINE_TITLE_FOCUS));
-	wprintw(finder->win, "[finder] file %d of %d", pos->lineno + 1, finder->lines);
+	wprintw(finder->win, "[finder] file %lu of %zu", pos->lineno + 1, finder->lines);
 	wclrtoeol(finder->win);
 	wrefresh(finder->win);
 }

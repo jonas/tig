@@ -389,7 +389,7 @@ argv_number_formatter(struct format_context *format, struct format_var *var)
 {
 	unsigned long value = *(unsigned long *) var->value_ref;
 
-	return string_format_from(format->buf, &format->bufpos, "%ld", value);
+	return string_format_from(format->buf, &format->bufpos, "%lu", value);
 }
 
 static bool
