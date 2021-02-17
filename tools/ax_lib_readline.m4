@@ -120,18 +120,18 @@ AC_CACHE_VAL(ac_cv_rl_version,
 
 extern int rl_gnu_readline_p;
 
-main()
+int main(void)
 {
 	FILE *fp;
 	fp = fopen("conftest.rlv", "w");
 	if (fp == 0)
-		exit(1);
+		${cf_cv_main_return:-return}(1);
 	if (rl_gnu_readline_p != 1)
 		fprintf(fp, "0.0\n");
 	else
 		fprintf(fp, "%s\n", rl_library_version ? rl_library_version : "0.0");
 	fclose(fp);
-	exit(0);
+	${cf_cv_main_return:-return}(0);
 }
 ]])],
 ac_cv_rl_version=`cat conftest.rlv`,
