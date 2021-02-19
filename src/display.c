@@ -429,12 +429,9 @@ save_view(struct view *view, const char *path)
 			enum_name(get_line_type_name(line->type)),
 			line->selected);
 
-		if (!view->ops->get_column_data(view, line, &column_data)) {
-			fclose(file);
-			return true;
-		}
-
-		if (column_data.box) {
+		if (view->columns &&
+		    view->ops->get_column_data(view, line, &column_data) &&
+		    column_data.box) {
 			const struct box *box = column_data.box;
 			size_t j;
 			size_t offset;
