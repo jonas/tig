@@ -549,8 +549,11 @@ main_request(struct view *view, enum request request, struct line *line)
 	case REQ_VIEW_DIFF:
 	case REQ_ENTER:
 		if ((view_is_displayed(view) && display[0] != view) ||
-		    (!view_is_displayed(view) && flags == OPEN_SPLIT))
+		    (!view_is_displayed(view) && flags == OPEN_SPLIT)) {
 			maximize_view(view, true);
+			if (view->parent)
+				view->parent = NULL;
+		}
 
 		if (line->type == LINE_STAT_UNSTAGED
 		    || line->type == LINE_STAT_STAGED)
