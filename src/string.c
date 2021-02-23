@@ -214,72 +214,25 @@ unicode_width(unsigned long c, int tab_size)
 
 /* Number of bytes used for encoding a UTF-8 character indexed by first byte.
  * Illegal bytes are set one. */
-static const unsigned char utf8_bytes[256] = {
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-	2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2,
-	3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 4,4,4,4,4,4,4,4, 5,5,5,5,6,6,1,1,
-};
-
 unsigned char
 utf8_char_length(const char *string)
 {
-	int c = *(unsigned char *) string;
+	utf8proc_int8_t length = utf8proc_utf8class[*(utf8proc_uint8_t *) string];
 
-	return utf8_bytes[c];
+	return length ? length : 1;
 }
 
 /* Decode UTF-8 multi-byte representation into a Unicode character. */
 unsigned long
 utf8_to_unicode(const char *string, size_t length)
 {
-	unsigned long unicode;
+	utf8proc_int32_t unicode;
 
-	switch (length) {
-	case 1:
-		unicode  =   string[0];
-		break;
-	case 2:
-		unicode  =  (string[0] & 0x1f) << 6;
-		unicode +=  (string[1] & 0x3f);
-		break;
-	case 3:
-		unicode  =  (string[0] & 0x0f) << 12;
-		unicode += ((string[1] & 0x3f) << 6);
-		unicode +=  (string[2] & 0x3f);
-		break;
-	case 4:
-		unicode  =  (string[0] & 0x0f) << 18;
-		unicode += ((string[1] & 0x3f) << 12);
-		unicode += ((string[2] & 0x3f) << 6);
-		unicode +=  (string[3] & 0x3f);
-		break;
-	case 5:
-		unicode  =  (string[0] & 0x0f) << 24;
-		unicode += ((string[1] & 0x3f) << 18);
-		unicode += ((string[2] & 0x3f) << 12);
-		unicode += ((string[3] & 0x3f) << 6);
-		unicode +=  (string[4] & 0x3f);
-		break;
-	case 6:
-		unicode  =  (string[0] & 0x01) << 30;
-		unicode += ((string[1] & 0x3f) << 24);
-		unicode += ((string[2] & 0x3f) << 18);
-		unicode += ((string[3] & 0x3f) << 12);
-		unicode += ((string[4] & 0x3f) << 6);
-		unicode +=  (string[5] & 0x3f);
-		break;
-	default:
-		return 0;
-	}
+	utf8proc_iterate((const utf8proc_uint8_t *) string, length, &unicode);
 
 	/* Invalid characters could return the special 0xfffd value but NUL
 	 * should be just as good. */
-	return unicode > 0x10FFFF ? 0 : unicode;
+	return unicode < 0 ? 0 : unicode;
 }
 
 /* Calculates how much of string can be shown within the given maximum width
@@ -293,30 +246,27 @@ utf8_length(const char **start, int max_chars, size_t skip, int *width, size_t m
 {
 	const char *string = *start;
 	const char *end = max_chars < 0 ? strchr(string, '\0') : string + max_chars;
-	unsigned char last_bytes = 0;
-	size_t last_ucwidth = 0;
+	utf8proc_ssize_t last_bytes = 0;
+	int last_ucwidth = 0;
 
 	*width = 0;
 	*trimmed = 0;
 
 	while (string < end) {
-		unsigned char bytes = utf8_char_length(string);
-		size_t ucwidth;
-		unsigned long unicode;
+		/* Change representation to figure out whether it is a
+		 * single- or double-width character and assume a width
+		 * and size of 1 for invalid UTF-8 encoding (can be
+		 * ISO-8859-1, Windows-1252, ...). */
+		utf8proc_int32_t unicode;
+		utf8proc_ssize_t bytes = utf8proc_iterate((const utf8proc_uint8_t *) string,
+							  end - string, &unicode);
+		int ucwidth;
 
-		if (string + bytes > end)
-			break;
-
-		/* Change representation to figure out whether
-		 * it is a single- or double-width character. */
-
-		unicode = utf8_to_unicode(string, bytes);
-		/* FIXME: Graceful handling of invalid Unicode character. */
-		if (!unicode)
-			break;
-
-		ucwidth = unicode == '\t' ? tab_size - (*width % tab_size) :
-					    utf8proc_charwidth((utf8proc_int32_t) unicode);
+		if (unicode < 0)
+			ucwidth = bytes = 1;
+		else
+			ucwidth = unicode == '\t' ? tab_size - (*width % tab_size)
+						  : utf8proc_charwidth(unicode);
 		if (skip > 0) {
 			skip -= ucwidth <= skip ? ucwidth : skip;
 			*start += bytes;
@@ -361,8 +311,9 @@ utf8_string_contains(const char *text, int category)
 	ssize_t textlen = strlen(text);
 
 	while (textlen > 0) {
-		int32_t unicode;
-		ssize_t slen = utf8proc_iterate((uint8_t *) text, textlen, &unicode);
+		utf8proc_int32_t unicode;
+		utf8proc_ssize_t slen = utf8proc_iterate((const utf8proc_uint8_t *) text,
+							 textlen, &unicode);
 		const utf8proc_property_t *property;
 
 		if (slen <= 0)
