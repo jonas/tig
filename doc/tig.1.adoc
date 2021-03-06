@@ -229,6 +229,8 @@ TIG_SCRIPT::
 	from stdin. The script is interpreted line-by-line and can contain
 	prompt commands and key mappings.
 
+	E.g. TIG_SCRIPT=<(echo :set main-view-commit-title-graph = no) tig
+
 TIG_NO_DISPLAY::
 	Open Tig without rendering anything to the terminal. This force Ncurses
 	to write to /dev/null. The main use is for automated testing of Tig.
