@@ -1,6 +1,19 @@
 Release notes
 =============
 
+master
+------
+
+Bug fixes:
+
+ - Fix autoconf checking for readline. (#1072)
+ - Fix segfault when saving a view with no column.
+ - Reset view->parent when main view is promoted.
+ - Fix segfault when pressing Enter in a child main view.
+ - Restore lazy navigation.
+ - Format time_t values portably and fix other values too. (#1084, #1085)
+ - Fix loop when wrapping line with ISO-8859-1 character. (#1087, #1088)
+
 tig-2.5.2
 ---------
 
