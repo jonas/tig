@@ -1,8 +1,8 @@
 Release notes
 =============
 
-master
-------
+tig-2.5.3
+---------
 
 Bug fixes:
 
