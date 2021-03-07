@@ -67,7 +67,8 @@ view_request(struct view *view, enum request request)
 	if (!view || !view->lines)
 		return request;
 
-	if (request == REQ_ENTER && !opt_focus_child && opt_send_child_enter &&
+	if (request == REQ_ENTER && view == display[0] &&
+	    !opt_focus_child && opt_send_child_enter &&
 	    view_has_flags(view, VIEW_SEND_CHILD_ENTER)) {
 		struct view *child = display[1];
 

@@ -146,13 +146,13 @@ get_relative_date(const struct time *time, char *buf, size_t buflen, bool compac
 {
 	struct timeval now;
 	time_t timestamp = time->sec + time->tz;
-	time_t seconds;
+	long long seconds;
 	int i;
 
 	if (time_now(&now, NULL))
 		return "";
 
-	seconds = now.tv_sec < timestamp ? timestamp - now.tv_sec : now.tv_sec - timestamp;
+	seconds = now.tv_sec < timestamp ? (long long) difftime(timestamp, now.tv_sec) : (long long) difftime(now.tv_sec, timestamp);
 
 	for (i = 0; i < ARRAY_SIZE(reldate); i++) {
 		if (seconds >= reldate[i].interval && reldate[i].interval)
@@ -160,12 +160,12 @@ get_relative_date(const struct time *time, char *buf, size_t buflen, bool compac
 
 		seconds /= reldate[i].in_seconds;
 		if (compact) {
-			if (!string_nformat(buf, buflen, NULL, "%s%ld%c",
+			if (!string_nformat(buf, buflen, NULL, "%s%lld%c",
 				    now.tv_sec >= timestamp ? "" : "-",
 				    seconds, reldate[i].compact_symbol))
 				return "";
 
-		} else if (!string_nformat(buf, buflen, NULL, "%ld %s%s %s",
+		} else if (!string_nformat(buf, buflen, NULL, "%lld %s%s %s",
 				    seconds, reldate[i].name,
 				    seconds > 1 ? "s" : "",
 				    now.tv_sec >= timestamp ? "ago" : "ahead"))
@@ -293,7 +293,7 @@ mkfilesize(unsigned long size, enum file_size format)
 		}
 	}
 
-	return string_format(buf, "%ld", size) ? buf : NULL;
+	return string_format(buf, "%lu", size) ? buf : NULL;
 }
 
 const struct ident unknown_ident = {

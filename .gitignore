@@ -32,7 +32,7 @@ test/coverage
 test/tools/test-graph
 test/tmp
 tig-*.tar.gz
-tig-*.tar.gz.md5
+tig-*.tar.gz.sha256
 tig.spec
 tools/doc-gen
 tig.dSYM
