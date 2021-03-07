@@ -2,12 +2,12 @@
 .\"     Title: tig
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 02/12/2021
+.\"      Date: 03/07/2021
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.5.2
+.\"    Source: Tig 2.5.3
 .\"  Language: English
 .\"
-.TH "TIG" "1" "02/12/2021" "Tig 2\&.5\&.2" "Tig Manual"
+.TH "TIG" "1" "03/07/2021" "Tig 2\&.5\&.3" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -410,6 +410,16 @@ Path for trace file where information about Git commands are logged\&.
 TIG_SCRIPT
 .RS 4
 Path to script that should be executed automatically on startup\&. If this environment variable is defined to the empty string, the script is read from stdin\&. The script is interpreted line\-by\-line and can contain prompt commands and key mappings\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+E\&.g\&. TIG_SCRIPT=<(echo :set main\-view\-commit\-title\-graph = no) tig
+.fi
+.if n \{\
+.RE
+.\}
 .RE
 .PP
 TIG_NO_DISPLAY

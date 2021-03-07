@@ -738,6 +738,49 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_5_3">tig-2.5.3</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix autoconf checking for readline. (#1072)
+</p>
+</li>
+<li>
+<p>
+Fix segfault when saving a view with no column.
+</p>
+</li>
+<li>
+<p>
+Reset view&#8594;parent when main view is promoted.
+</p>
+</li>
+<li>
+<p>
+Fix segfault when pressing Enter in a child main view.
+</p>
+</li>
+<li>
+<p>
+Restore lazy navigation.
+</p>
+</li>
+<li>
+<p>
+Format time_t values portably and fix other values too. (#1084, #1085)
+</p>
+</li>
+<li>
+<p>
+Fix loop when wrapping line with ISO-8859-1 character. (#1087, #1088)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_5_2">tig-2.5.2</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Incompatibilities:</p></div>
@@ -4553,7 +4596,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2021-02-12 21:07:31 CET
+ 2021-03-07 11:29:01 CET
 </div>
 </div>
 </body>
