@@ -491,6 +491,8 @@ struct graph *
 init_graph_v1(void)
 {
 	struct graph_v1 *graph = calloc(1, sizeof(*graph));
+	if (!graph)
+		return NULL;
 	struct graph *api = &graph->api;
 
 	api->private = graph;

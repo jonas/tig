@@ -119,7 +119,8 @@ static struct id_color *
 id_color_new(const char *id, size_t color)
 {
 	struct id_color *node = malloc(sizeof(struct id_color));
-
+	if (!node)
+		die("out of memory");
 	node->id = (char *) malloc(strlen(id) + 1);
 	strcpy(node->id, id);
 	node->color = color;
