@@ -576,6 +576,7 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 		"--grep=",
 		"-G",
 		"-S",
+		"-L",
 	};
 	size_t arglen = strlen(arg);
 	bool graph = true;
