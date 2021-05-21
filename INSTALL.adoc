@@ -100,6 +100,13 @@ Installation using Nix
 You can use link:https://nixos.org/nix/[Nix] to install Tig on NixOS, or any Linux/OSX distribution with Nix installed:
 
         $ nix-env -i tig
+	
+Installation on FreeBSD
+-----------------------
+
+You can use link:https://man.freebsd.org/pkg/8[pkg] to install Tig on FreeBSD:
+
+        $ pkg install tig
 
 Installation on Windows
 -----------------------
