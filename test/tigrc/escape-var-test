@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+tigrc <<EOF
+bind generic 1 @sh -c "echo '%%(refname)=%(refname)' > $HOME/shell-command.txt"
+EOF
+
+steps '
+	1
+'
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+test_tig
+
+assert_equals 'shell-command.txt' <<EOF
+%(refname)=master
+EOF
