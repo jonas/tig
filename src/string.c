@@ -320,7 +320,7 @@ utf8_string_contains(const char *text, int category)
 			break;
 
 		property = utf8proc_get_property(unicode);
-		if (property->category & category)
+		if (property->category == category)
 			return true;
 
 		text += slen;
