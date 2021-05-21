@@ -67,7 +67,8 @@ the Git configuration:
 
 'core.editor'::
 
-	The editor command. Can be overridden by setting GIT_EDITOR.
+	The editor command. Can be overridden by setting TIG_EDITOR or
+	GIT_EDITOR.
 
 'core.worktree'::
 
