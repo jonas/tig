@@ -1,0 +1,8 @@
+# Example configuration for Linux.
+#
+# Use ncursesw.
+
+TIG_LDLIBS = -lncursesw
+TIG_CPPFLAGS = -DHAVE_NCURSESW_CURSES_H
+
+# vim: ft=make:

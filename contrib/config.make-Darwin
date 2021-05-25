@@ -1,4 +1,4 @@
-# Example configuration for Darwin / Mac OS X.
+# Example configuration for Darwin / macOS.
 
 # Work-around for Homebrew-based xmlto.
 export XML_CATALOG_FILES=/usr/local/etc/xml/catalog

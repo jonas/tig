@@ -26,9 +26,10 @@ By default, `tig` is installed in `$HOME/bin`. To install `tig` elsewhere set
 
 Additional build options can be defined in the `config.make` file, which is
 loaded automatically when running `make` if it exists. By default,
-`contrib/config.make-$kernel_name` is loaded if it exists (currently only
-available for macOS [`Darwin`] and Cygwin). See `contrib/config.make` for
-example build options.
+`contrib/config.make-$kernel_name` is loaded if it exists (currently
+available for Linux, macOS [`Darwin`] and Cygwin but Linux users should
+prefer the `configure` script). See `contrib/config.make` for example build
+options.
 
 Documentation files, such as manpages, are distributed in the release tarballs,
 and can be installed using:
@@ -97,7 +98,7 @@ never made any changes to it.
 Installation using Nix
 ----------------------
 
-You can use link:https://nixos.org/nix/[Nix] to install Tig on NixOS, or any Linux/OSX distribution with Nix installed:
+You can use link:https://nixos.org/nix/[Nix] to install Tig on NixOS, or any Linux/macOS distribution with Nix installed:
 
         $ nix-env -i tig
 	
@@ -127,7 +128,7 @@ Build configuration
 -------------------
 
 Build settings are read from the file `config.make` and for certain systems also
-from `contrib/config.make-$kernel`. An example of the latter is Mac OS X, where
+from `contrib/config.make-$kernel`. An example of the latter is macOS, where
 `contrib/config.make-Darwin` provides out-of-the-box configuration for using the
 system ncurses library and linking with the iconv library. This makes it easy to
 configure the build without having to use the `configure` script. As a side
