@@ -1,7 +1,7 @@
 AC_INIT([tig],[0],[jonas.fonseca@gmail.com],[tig])
 
 AC_LANG([C])
-AC_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_SRCDIR(src)
 
 dnl  Document where we keep our .m4 file.

@@ -17,6 +17,7 @@ Bug fixes:
  - Fix parsing of -L argument. (#1100)
  - Bugfix: smart-case does not work when search term contains a space. (#1108)
  - Use ncursesw by default on Linux. (#920)
+ - Replace obsolete macro `AC_CONFIG_HEADER' in configure.ac.
 
 tig-2.5.3
 ---------
