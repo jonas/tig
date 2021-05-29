@@ -56,16 +56,43 @@ concat_argv(const char *argv[], char *buf, size_t buflen, const char *sep, bool 
 }
 
 char *
-argv_to_string_alloc(const char *argv[], const char *sep)
+argv_to_string_alloc_prefix(const char *argv[], const char *sep, const char *prefix)
 {
-	size_t i, size = 0;
-	char *buf;
-
+	size_t i, size = 1;
 	for (i = 0; argv[i]; i++)
 		size += strlen(argv[i]);
 
-	buf = malloc(size + 1);
-	if (buf && argv_to_string(argv, buf, size + 1, sep))
+	/* Increase buffer size by separator size and number of separators */
+	if (sep) if (i) size += strlen(sep) * (i - 1);
+
+	/* Increase buffer size by prefix size */
+	if (prefix) size += strlen(prefix);
+
+	char *buf = malloc(size);
+	if (buf) {
+
+		/* Preload buffer with prefix */
+		for (i = 0; prefix[i]; i++) buf[i] = prefix[i];
+
+		/* Load buffer after prefix with concatenated version of argv */
+		if (concat_argv(argv, buf + i, size, sep, false)) return buf;
+	}
+	free(buf);
+	return NULL;
+}
+
+char *
+argv_to_string_alloc(const char *argv[], const char *sep)
+{
+	size_t i, size = 1;
+	for (i = 0; argv[i]; i++)
+		size += strlen(argv[i]);
+
+	/* Increase buffer size by separator size and number of separators */
+	if (sep) if (i) size += strlen(sep) * (i - 1);
+
+	char *buf = malloc(size);
+	if (buf && concat_argv(argv, buf, size, sep, false))
 		return buf;
 	free(buf);
 	return NULL;
