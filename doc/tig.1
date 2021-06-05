@@ -2,12 +2,12 @@
 .\"     Title: tig
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 03/07/2021
+.\"      Date: 06/05/2021
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.5.3
+.\"    Source: Tig 2.5.4
 .\"  Language: English
 .\"
-.TH "TIG" "1" "03/07/2021" "Tig 2\&.5\&.3" "Tig Manual"
+.TH "TIG" "1" "06/05/2021" "Tig 2\&.5\&.4" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -425,6 +425,11 @@ E\&.g\&. TIG_SCRIPT=<(echo :set main\-view\-commit\-title\-graph = no) tig
 TIG_NO_DISPLAY
 .RS 4
 Open Tig without rendering anything to the terminal\&. This force Ncurses to write to /dev/null\&. The main use is for automated testing of Tig\&.
+.RE
+.PP
+TIG_EDITOR
+.RS 4
+The editor command to use when visiting files\&. This environment variable overrides $GIT_EDITOR, $EDITOR and $VISUAL, so it allows to use a different editor from the one Git uses\&.
 .RE
 .SH "FILES"
 .PP

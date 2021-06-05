@@ -742,8 +742,8 @@ asciidoc.install();
 <div class="paragraph"><p>Download a tarball from <a href="https://github.com/jonas/tig/releases">https://github.com/jonas/tig/releases</a> or clone the Tig
 repository <a href="http://github.com/jonas/tig">git://github.com/jonas/tig.git</a>.</p></div>
 <div class="paragraph"><p>The latest version is:
-<a href="https://github.com/jonas/tig/releases/download/tig-2.5.3/tig-2.5.3.tar.gz">tig-2.5.3</a>
-<a href="https://github.com/jonas/tig/releases/download/tig-2.5.3/tig-2.5.3.tar.gz.sha256">(sha256)</a></p></div>
+<a href="https://github.com/jonas/tig/releases/download/tig-2.5.4/tig-2.5.4.tar.gz">tig-2.5.4</a>
+<a href="https://github.com/jonas/tig/releases/download/tig-2.5.4/tig-2.5.4.tar.gz.sha256">(sha256)</a></p></div>
 <div class="paragraph"><p><strong>Note:</strong> Do not use the tar.gz file for version 2.0 because it will fail
 to compile due to issue <a href="https://github.com/jonas/tig/pull/283">#283</a> and
 <a href="https://github.com/jonas/tig/issues/337">#337</a></p></div>
@@ -762,9 +762,10 @@ $ sudo make install prefix=/usr/local</code></pre>
 </div></div>
 <div class="paragraph"><p>Additional build options can be defined in the <code>config.make</code> file, which is
 loaded automatically when running <code>make</code> if it exists. By default,
-<code>contrib/config.make-$kernel_name</code> is loaded if it exists (currently only
-available for macOS [<code>Darwin</code>] and Cygwin). See <code>contrib/config.make</code> for
-example build options.</p></div>
+<code>contrib/config.make-$kernel_name</code> is loaded if it exists (currently
+available for Linux, macOS [<code>Darwin</code>] and Cygwin but Linux users should
+prefer the <code>configure</code> script). See <code>contrib/config.make</code> for example build
+options.</p></div>
 <div class="paragraph"><p>Documentation files, such as manpages, are distributed in the release tarballs,
 and can be installed using:</p></div>
 <div class="literalblock">
@@ -841,10 +842,20 @@ never made any changes to it.</p></div>
 <div class="sect1">
 <h2 id="_installation_using_nix">Installation using Nix</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>You can use <a href="https://nixos.org/nix/">Nix</a> to install Tig on NixOS, or any Linux/OSX distribution with Nix installed:</p></div>
+<div class="paragraph"><p>You can use <a href="https://nixos.org/nix/">Nix</a> to install Tig on NixOS, or any Linux/macOS distribution with Nix installed:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ nix-env -i tig</code></pre>
+</div></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_installation_on_freebsd">Installation on FreeBSD</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>You can use <a href="https://man.freebsd.org/pkg/8">pkg</a> to install Tig on FreeBSD:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ pkg install tig</code></pre>
 </div></div>
 </div>
 </div>
@@ -866,7 +877,7 @@ by using <code>configure</code> as explained above.</p></div>
 <h2 id="_build_configuration">Build configuration</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Build settings are read from the file <code>config.make</code> and for certain systems also
-from <code>contrib/config.make-$kernel</code>. An example of the latter is Mac OS X, where
+from <code>contrib/config.make-$kernel</code>. An example of the latter is macOS, where
 <code>contrib/config.make-Darwin</code> provides out-of-the-box configuration for using the
 system ncurses library and linking with the iconv library. This makes it easy to
 configure the build without having to use the <code>configure</code> script. As a side
@@ -1015,7 +1026,7 @@ cellspacing="0" cellpadding="4">
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2021-03-07 11:29:01 CET
+ 2021-06-05 18:08:08 CEST
 </div>
 </div>
 </body>

@@ -738,6 +738,62 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_5_4">tig-2.5.4</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Add FreeBSD installation instructions. (#1093)
+</p>
+</li>
+<li>
+<p>
+Add TIG_EDITOR environment variable to configure editor. (#889, #1098)
+</p>
+</li>
+<li>
+<p>
+Enable mailmap by default to match git log&#8217;s behaviour. (#1104, #1105)
+</p>
+</li>
+<li>
+<p>
+Enable tilde expansion for diff-highlight. (#1107)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Escape variables with %% in external commands. (#1091, #1095)
+</p>
+</li>
+<li>
+<p>
+Fix parsing of -L argument. (#1100)
+</p>
+</li>
+<li>
+<p>
+Bugfix: smart-case does not work when search term contains a space. (#1108)
+</p>
+</li>
+<li>
+<p>
+Use ncursesw by default on Linux. (#920)
+</p>
+</li>
+<li>
+<p>
+Replace obsolete macro &#8216;AC_CONFIG_HEADER&#8217; in configure.ac.
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_5_3">tig-2.5.3</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Bug fixes:</p></div>
@@ -4596,7 +4652,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2021-03-07 11:29:01 CET
+ 2021-06-05 18:08:08 CEST
 </div>
 </div>
 </body>
