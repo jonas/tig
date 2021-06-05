@@ -335,9 +335,10 @@ format_append_arg(struct format_context *format, const char ***dst_argv, const c
 
 	while (arg) {
 		const char *var = strstr(arg, "%(");
+		const char *esc = var > arg && *(var - 1) == '%' ? var - 1 : NULL;
 		const char *closing = var ? strchr(var, ')') : NULL;
-		const char *next = closing ? closing + 1 : NULL;
-		const int len = var ? var - arg : strlen(arg);
+		const char *next = esc > arg ? esc : closing ? closing + 1 : NULL;
+		const int len = var && !esc ? var - arg : esc > arg ? esc - arg : next ? next - ++arg : strlen(arg);
 
 		if (var && !closing)
 			return false;
@@ -345,7 +346,7 @@ format_append_arg(struct format_context *format, const char ***dst_argv, const c
 		if (len && !string_format_from(format->buf, &format->bufpos, "%.*s", len, arg))
 			return false;
 
-		if (var && !format_expand_arg(format, var, next))
+		if (var && !esc && !format_expand_arg(format, var, next))
 			return false;
 
 		arg = next;
@@ -576,6 +577,7 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 		"--grep=",
 		"-G",
 		"-S",
+		"-L",
 	};
 	size_t arglen = strlen(arg);
 	bool graph = true;

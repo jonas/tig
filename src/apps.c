@@ -57,18 +57,21 @@ app_git_exec_path(char *path, size_t path_len)
 static bool
 app_diff_highlight_path_search(char *dest, size_t destlen, const char *query)
 {
+	const char *env_path = getenv("PATH");
+	char env_path_plus[SIZEOF_MED_STR];
+	char exec_path[SIZEOF_STR];
+
 	if (!query || !*query)
 		return false;
+
+	if (strchr(query, '~'))
+		return path_expand(dest, destlen, query);
 
 	if (strchr(query, '/')) {
 		/* can only be interpreted as a fully qualified path */
 		string_ncopy_do(dest, destlen, query, strlen(query));
 		return true;
 	}
-
-	const char *env_path = getenv("PATH");
-	char env_path_plus[SIZEOF_MED_STR];
-	char exec_path[SIZEOF_STR];
 
 	if (!env_path || !*env_path)
 		env_path = _PATH_DEFPATH;

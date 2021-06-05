@@ -144,7 +144,7 @@ diff_context_arg()
 const char *
 use_mailmap_arg()
 {
-	return opt_mailmap ? "--use-mailmap" : "";
+	return opt_mailmap ? "--use-mailmap" : "--no-use-mailmap";
 }
 
 const char *

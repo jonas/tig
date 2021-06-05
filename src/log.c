@@ -65,8 +65,8 @@ log_open(struct view *view, enum open_flags flags)
 {
 	const char *log_argv[] = {
 		"git", "log", encoding_arg, commit_order_arg(), "--cc",
-			"--stat", "%(logargs)", "%(cmdlineargs)", "%(revargs)",
-			"--no-color", "--", "%(fileargs)", NULL
+			"--stat", use_mailmap_arg(), "%(logargs)", "%(cmdlineargs)",
+			"%(revargs)", "--no-color", "--", "%(fileargs)", NULL
 	};
 
 	return begin_update(view, NULL, log_argv, flags);

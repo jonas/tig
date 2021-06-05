@@ -235,6 +235,11 @@ TIG_NO_DISPLAY::
 	Open Tig without rendering anything to the terminal. This force Ncurses
 	to write to /dev/null. The main use is for automated testing of Tig.
 
+TIG_EDITOR::
+	The editor command to use when visiting files. This environment
+	variable overrides $GIT_EDITOR, $EDITOR and $VISUAL, so it allows
+	to use a different editor from the one Git uses.
+
 FILES
 -----
 '$XDG_CONFIG_HOME/tig/config'::
