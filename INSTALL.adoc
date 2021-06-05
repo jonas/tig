@@ -6,8 +6,8 @@ Download a tarball from https://github.com/jonas/tig/releases[] or clone the Tig
 repository http://github.com/jonas/tig[git://github.com/jonas/tig.git].
 
 The latest version is:
-https://github.com/jonas/tig/releases/download/tig-2.5.3/tig-2.5.3.tar.gz[tig-2.5.3]
-https://github.com/jonas/tig/releases/download/tig-2.5.3/tig-2.5.3.tar.gz.sha256[(sha256)]
+https://github.com/jonas/tig/releases/download/tig-2.5.4/tig-2.5.4.tar.gz[tig-2.5.4]
+https://github.com/jonas/tig/releases/download/tig-2.5.4/tig-2.5.4.tar.gz.sha256[(sha256)]
 
 *Note:* Do not use the tar.gz file for version 2.0 because it will fail
 to compile due to issue https://github.com/jonas/tig/pull/283[#283] and
