@@ -1,0 +1,97 @@
+Troubleshooting
+===============
+:docext: adoc
+
+Display
+-------
+
+Tig is based on ncurses and relies on the terminal characteristics
+stored in the terminfo database. If you are lying about the capabilities
+of your terminal, you cannot expect Tig to work properly.
+
+ncursesw
+~~~~~~~~
+
+If you did not compile Tig with `ncursesw` (or default `ncurses` on
+macOS) then Unicode characters cannot be displayed.
+
+To make sure which ncurses version you are using, first confirm
+which `tig` executable you are running and then use `ldd -r` (Linux) or
+`otool -L` (macOS).
+
+If mouse scroll down does not work, check that ncurses was compiled
+with `--enable-ext-mouse`. See https://bugs.debian.org/838376 for
+more details.
+
+TERM
+~~~~
+
+The `TERM` variable must be set in accordance with your terminal type.
+
+If you are using a terminal multiplexer like GNU screen or tmux (but not
+dtach), then the `TERM` variable *before* starting the terminal multiplexer
+must be set in accordance with your terminal type and the `TERM` variable
+*inside* the terminal multiplexer must be set to `screen` or any
+compatible variant.
+
+You can check with `infocmp` that you have the proper entry for your
+terminal type in your terminfo database.
+If you want to use an alternate terminfo database, you can use
+`export TERMINFO=/path/to/terminfo`.
+
+Some OS (e.g. OS X 10.11) are shipping with an incomplete terminfo
+description for screen resulting, for example, in the diff-highlight
+option not working when running Tig inside screen/tmux. It can be
+fixed locally (for the current user) with:
+```
+curl -O https://invisible-island.net/datafiles/current/terminfo.src.gz
+gunzip terminfo.src
+tic -x -o "$HOME/.terminfo" -e screen terminfo.src
+```
+
+Note that macOS still comes with and old version of ncurses (5.7) which
+may not work well with newer 256-color terminfo entries.
+
+Note that while PuTTY identifies itself by default as `xterm`, it is
+not fully compatible with it. If you have problems with the keyboard
+mapping (e.g. Home/End), try to use `putty` instead. Check out
+https://invisible-island.net/xterm/xterm.faq.html#known_bugs[XTerm FAQ]
+for more details and information on other terminal emulators.
+
+LANG
+~~~~
+
+The `LANG` variable must be set in accordance with your terminal
+encoding settings. If the `LANG` variable is not properly set,
+accented characters will be distorted.
+
+Use `locale -a` to check if your `LANG` variable is present in the
+list of available locales (on Linux, you may find that `UTF-8` has
+been substituted for `utf8` but they are equivalent).
+
+Note that the ability to set the `LANG` variable to values such as
+`en_DE` with KDE does not imply their validity.
+
+Also check the `LC_ALL` variable as it has precedence over `LANG`.
+
+ESCDELAY
+~~~~~~~~
+
+See ESCDELAY environment variable in ncurses(3x) to reduce the one
+second delay after pressing the escape key. Nowadays,
+`export ESCDELAY=100` should be more than enough.
+
+Git
+---
+
+Tig relies entirely on Git to access your repository data. If Tig fails
+to show any commit, first check the corresponding `git log` command. To
+find out which options Tig is using, try `TIG_TRACE=/tmp/tig.log tig`.
+
+Note that Tig's command line parser is not as permissive as that of Git.
+For example, arguments such as -S/-G or --grep must be passed without
+space:
+```
+tig -G"<string>"
+tig --grep="<string>"
+```
