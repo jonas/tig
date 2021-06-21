@@ -39,6 +39,7 @@ typedef struct view_column *view_settings;
 	_(diff_noprefix,		bool,			VIEW_NO_FLAGS) \
 	_(diff_options,			const char **,		VIEW_DIFF_LIKE) \
 	_(diff_highlight,		const char *,		VIEW_DIFF_LIKE) \
+	_(word_diff,			bool,			VIEW_DIFF_LIKE) \
 	_(diff_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(editor_line_number,		bool,			VIEW_NO_FLAGS) \
 	_(file_args,			const char **,		VIEW_NO_FLAGS) \
@@ -183,7 +184,6 @@ extern iconv_t opt_iconv_out;
 extern char opt_editor[SIZEOF_STR];
 extern const char **opt_cmdline_args;
 extern bool opt_log_follow;
-extern bool opt_word_diff;
 
 /*
  * Mapping between options and command argument mapping.
@@ -197,6 +197,7 @@ const char *commit_order_arg_with_graph(enum graph_display graph_display);
 const char *log_custom_pretty_arg();
 const char *use_mailmap_arg();
 const char *diff_context_arg();
+const char *word_diff_arg();
 const char *show_notes_arg();
 
 /*

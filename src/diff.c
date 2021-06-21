@@ -29,8 +29,8 @@ diff_open(struct view *view, enum open_flags flags)
 		"git", "show", encoding_arg, "--pretty=fuller", "--root",
 			"--patch-with-stat", use_mailmap_arg(),
 			show_notes_arg(), diff_context_arg(), ignore_space_arg(),
-			DIFF_ARGS, "%(cmdlineargs)", "--no-color", "%(commit)",
-			"--", "%(fileargs)", NULL
+			DIFF_ARGS, "%(cmdlineargs)", "--no-color", word_diff_arg(),
+			"%(commit)", "--", "%(fileargs)", NULL
 	};
 	enum status_code code;
 
