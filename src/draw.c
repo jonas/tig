@@ -543,12 +543,13 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 		{
 			enum line_type type = line->type;
 			const char *text = column_data.text;
+			size_t indent;
 
 			if (line->wrapped && draw_text(view, LINE_DELIMITER, "+"))
 				return true;
 
 			if (line->graph_indent) {
-				size_t indent = get_graph_indent(text);
+				indent = get_graph_indent(text);
 
 				if (draw_text_expanded(view, LINE_DEFAULT, text, -1, indent, false))
 					return true;
@@ -567,11 +568,17 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 
 				for (i = 0; i < box->cells; i++) {
 					const struct box_cell *cell = &box->cell[i];
+					int length = cell->length;
 
-					if (draw_textn(view, cell->type, text, cell->length))
+					if (line->graph_indent && i == 0) {
+						text += indent;
+						length -= indent;
+					}
+
+					if (draw_textn(view, cell->type, text, length))
 						return true;
 
-					text += cell->length;
+					text += length;
 				}
 
 			} else if (draw_text(view, type, text)) {

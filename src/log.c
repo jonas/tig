@@ -68,8 +68,15 @@ log_open(struct view *view, enum open_flags flags)
 			"--stat", use_mailmap_arg(), "%(logargs)", "%(cmdlineargs)",
 			"%(revargs)", "--no-color", "--", "%(fileargs)", NULL
 	};
+	enum status_code code;
 
-	return begin_update(view, NULL, log_argv, flags);
+	code = begin_update(view, NULL, log_argv, flags);
+	if (code != SUCCESS)
+		return code;
+
+	watch_register(&view->watch, WATCH_HEAD | WATCH_REFS);
+
+	return SUCCESS;
 }
 
 static enum request
@@ -97,7 +104,7 @@ static bool
 log_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct line *line = NULL;
-	enum line_type type;
+	enum line_type type = LINE_DEFAULT;
 	struct log_state *state = view->private;
 	size_t len;
 	char *commit;
@@ -111,8 +118,11 @@ log_read(struct view *view, struct buffer *buf, bool force_stop)
 	if (commit && get_graph_indent(data) == commit - data)
 		state->graph_indent = commit - data;
 
-	type = get_line_type(data + state->graph_indent);
-	len = strlen(data + state->graph_indent);
+	len = strlen(data);
+	if (len >= state->graph_indent) {
+		type = get_line_type(data + state->graph_indent);
+		len -= state->graph_indent;
+	}
 
 	if (type == LINE_COMMIT)
 		state->commit_title_read = true;

@@ -1,0 +1,44 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+steps '
+	:save-display log-graph.screen
+'
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+test_tig log --graph e59a941
+
+assert_equals 'log-graph.screen' <<EOF
+*   commit e59a941c4e7d51cd172ee2767a031f5f3fd25d05
+|\  Merge: 110e090 940efaf
+| | Author: Jonas Fonseca <jonas.fonseca@gmail.com>
+| | Date:   Thu Jan 16 07:47:58 2014 -0800
+| |
+| |     Merge pull request #4 from phaller/patch-1
+| |
+| |     Fix link to Dart benchmark harness
+| |
+| |  README.md | 2 +-
+| |  1 file changed, 1 insertion(+), 1 deletion(-)
+| |
+| * commit 940efafc379db7c6df99449d6c4da98c6a2b3d07
+|/  Author: Philipp Haller <hallerp@gmail.com>
+|   Date:   Thu Jan 16 15:32:52 2014 +0100
+|
+|       Fix link to Dart benchmark harness
+|
+|    README.md | 2 +-
+|    1 file changed, 1 insertion(+), 1 deletion(-)
+|
+* commit 110e090f815f40d649f5432172584057b550a160
+| Author: Jonas Fonseca <jonas.fonseca@gmail.com>
+| Date:   Tue Dec 17 00:02:15 2013 +0100
+|
+|     Update links to reflect project name change
+|
+|     scalajs-benchmarks -> scala-js-benchmarks
+[log] e59a941c4e7d51cd172ee2767a031f5f3fd25d05 - line 1 of 559                5%
+EOF
