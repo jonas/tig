@@ -68,8 +68,15 @@ log_open(struct view *view, enum open_flags flags)
 			"--stat", use_mailmap_arg(), "%(logargs)", "%(cmdlineargs)",
 			"%(revargs)", "--no-color", "--", "%(fileargs)", NULL
 	};
+	enum status_code code;
 
-	return begin_update(view, NULL, log_argv, flags);
+	code = begin_update(view, NULL, log_argv, flags);
+	if (code != SUCCESS)
+		return code;
+
+	watch_register(&view->watch, WATCH_HEAD | WATCH_REFS);
+
+	return SUCCESS;
 }
 
 static enum request
