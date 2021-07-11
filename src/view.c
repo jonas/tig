@@ -393,7 +393,7 @@ push_view_history_state(struct view_history *history, struct position *position,
 
 	if (state && data && history->state_alloc &&
 	    !memcmp(state->data, data, history->state_alloc))
-		return NULL;
+		return state;
 
 	state = calloc(1, sizeof(*state) + history->state_alloc);
 	if (!state)
