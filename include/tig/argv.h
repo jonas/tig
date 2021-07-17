@@ -45,6 +45,7 @@ typedef unsigned long argv_number;
 	_(argv_string,	 branch,	"",		"") \
 	_(argv_string,	 directory,	".",		"") \
 	_(argv_string,	 file,		"",		"") \
+	_(argv_string,	 file_old,	"",		"") \
 	_(argv_string,	 head,		"",		"HEAD") \
 	_(argv_number,	 lineno,	"",		0) \
 	_(argv_number,	 lineno_old,	"",		0) \

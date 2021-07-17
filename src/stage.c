@@ -639,7 +639,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 		if (stage_status.new.name[0]) {
 			string_copy(view->env->file, stage_status.new.name);
 		} else {
-			const char *file = diff_get_pathname(view, line);
+			const char *file = diff_get_pathname(view, line, false);
 
 			if (file)
 				string_ncopy(view->env->file, file, strlen(file));
