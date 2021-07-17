@@ -539,7 +539,9 @@ main_request(struct view *view, enum request request, struct line *line)
 {
 	enum open_flags flags = (request != REQ_VIEW_DIFF &&
 				 (view_is_displayed(view) ||
-				  (line->type == LINE_MAIN_COMMIT && !view_is_displayed(&diff_view)) ||
+				  ((line->type == LINE_MAIN_COMMIT ||
+				    line->type == LINE_MAIN_ANNOTATED) &&
+				   !view_is_displayed(&diff_view)) ||
 				  line->type == LINE_STAT_UNSTAGED ||
 				  line->type == LINE_STAT_STAGED ||
 				  line->type == LINE_STAT_UNTRACKED))
