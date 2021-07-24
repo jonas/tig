@@ -361,7 +361,7 @@ format_append_argv(struct format_context *format, const char ***dst_argv, const 
 	int argc;
 
 	if (!src_argv)
-		return true;
+		return argv_append(dst_argv, "");
 
 	for (argc = 0; src_argv[argc]; argc++)
 		if (!format_append_arg(format, dst_argv, src_argv[argc]))
