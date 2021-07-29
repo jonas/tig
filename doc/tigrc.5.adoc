@@ -364,6 +364,11 @@ The following variables can be set:
 	Mouse support requires that ncurses itself support mouse events and that
 	you have enabled mouse support in ~/.tigrc with `set mouse = true`.
 
+'pager-autoscroll' (bool)::
+
+	Whether to scroll automatically the pager view while loading. Move the
+	cursor out of the last line to stop scrolling and back in to resume.
+
 'pgrp' (bool)::
 
 	Make tig process-group leader when starting and clean all processes

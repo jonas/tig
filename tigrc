@@ -143,6 +143,7 @@ set mouse			= no		# Enable mouse support?
 set mouse-scroll		= 3		# Number of lines to scroll via the mouse
 set mouse-wheel-cursor		= no		# Prefer moving the cursor to scrolling the view?
 set pgrp			= no		# Make tig process-group leader?
+set pager-autoscroll		= no		# Scroll the pager view automatically while loading?
 
 # User-defined commands
 # ---------------------
