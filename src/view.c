@@ -600,6 +600,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 bool
 update_view(struct view *view)
 {
+        bool should_autoscroll = false;
 	/* Clear the view and redraw everything since the tree sorting
 	 * might have rearranged things. */
 	bool redraw = view->lines == 0;
@@ -630,12 +631,18 @@ update_view(struct view *view)
 			end_update(view, true);
 			return false;
 		}
-
+		
+		if ((view->pos.offset + view->height + 1) == view->lines)
+		    should_autoscroll = true;
+		
 		if (!view->ops->read(view, &line, false)) {
 			report("Allocation failure");
 			end_update(view, true);
 			return false;
 		}
+
+		if (should_autoscroll)
+		    do_scroll_view(view, 1);
 	}
 
 	if (io_error(view->pipe)) {
