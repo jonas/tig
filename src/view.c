@@ -621,6 +621,7 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 bool
 update_view(struct view *view)
 {
+        bool should_autoscroll = false;
 	/* Clear the view and redraw everything since the tree sorting
 	 * might have rearranged things. */
 	bool redraw = view->lines == 0;
@@ -652,11 +653,19 @@ update_view(struct view *view)
 			return false;
 		}
 
+		if ((view->pos.offset + view->height + 1) == view->lines)
+		    should_autoscroll = true;
+
 		if (!view->ops->read(view, &line, false)) {
 			report("Allocation failure");
 			end_update(view, true);
 			return false;
 		}
+
+		/* Autoscroll is available only in pager */
+		if (should_autoscroll && opt_pager_autoscroll &&
+                    !strcmp(view->name, "pager"))
+		        do_scroll_view(view, 2);
 	}
 
 	if (io_error(view->pipe)) {
