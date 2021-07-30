@@ -641,8 +641,10 @@ update_view(struct view *view)
 			return false;
 		}
 
-		if (should_autoscroll)
-		    do_scroll_view(view, 1);
+		/* Autoscroll is available only in pager */
+		if (should_autoscroll && !strcmp(view->name, "pager"))
+
+		        do_scroll_view(view, 1);
 	}
 
 	if (io_error(view->pipe)) {
