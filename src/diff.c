@@ -302,12 +302,33 @@ diff_common_highlight(struct view *view, const char *text, enum line_type type)
 bool
 diff_common_read(struct view *view, const char *data, struct diff_state *state)
 {
+        const char *regex_txt;
+        regex_t regex;
+        regmatch_t pmatch[10];
+	int regex_flags = REG_EXTENDED, regex_err;
 	enum line_type type = get_line_type(data);
 
 	/* ADD2 and DEL2 are only valid in combined diff hunks */
 	if (!state->combined_diff && (type == LINE_DIFF_ADD2 || type == LINE_DIFF_DEL2))
 		type = LINE_DEFAULT;
 
+
+        if (type == LINE_DEFAULT)
+        {
+            /* Parse all compiler message lines, ie. such as:
+             *
+             * {file}:{line}:{col}: (note|warning|error):{message} 
+             *
+             */
+            regex_txt = "([^:]+):([0-9]+):(|([0-9]+):)[ \t]+(note|warning|error): (.*)(\\[-W([a-zA-Z0-8_-]+)\\]|)";
+            regex_err = regcomp(&regex, regex_txt, regex_flags);
+
+            if (!regex_err)
+                regex_err = regexec(&regex, data, 8, pmatch, 0);
+
+            if (!regex_err) 
+                type = LINE_COMPILER_MSG;
+        }
 	/* DEL_FILE, ADD_FILE and START are only valid outside diff chunks */
 	if (state->reading_diff_chunk) {
 		if (type == LINE_DIFF_DEL_FILE || type == LINE_DIFF_START)

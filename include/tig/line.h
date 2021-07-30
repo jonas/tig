@@ -22,6 +22,7 @@ struct ref;
  */
 
 #define LINE_INFO(_) \
+        _(COMPILER_MSG,     ""), \
 	_(DIFF_HEADER,		"diff --"), \
 	_(DIFF_DEL_FILE,	"--- "), \
 	_(DIFF_ADD_FILE,	"+++ "), \
