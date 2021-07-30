@@ -143,6 +143,7 @@ set mouse			= no		# Enable mouse support?
 set mouse-scroll		= 3		# Number of lines to scroll via the mouse
 set mouse-wheel-cursor		= no		# Prefer moving the cursor to scrolling the view?
 set pgrp			= no		# Make tig process-group leader
+set color-pager-regex           = ""
 
 # User-defined commands
 # ---------------------
@@ -447,6 +448,7 @@ color palette-12		white	default	bold
 color palette-13		red	default	bold
 color graph-commit		blue	default
 color search-result		black	yellow
+color color-match               magenta  default bold
 
 # Mappings for colors read from git configuration.
 # Set to "no" to disable.

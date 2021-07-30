@@ -302,12 +302,28 @@ diff_common_highlight(struct view *view, const char *text, enum line_type type)
 bool
 diff_common_read(struct view *view, const char *data, struct diff_state *state)
 {
+        const char *regex_txt;
+        regex_t regex;
+        regmatch_t pmatch[10];
+	int regex_flags = REG_EXTENDED, regex_err;
 	enum line_type type = get_line_type(data);
 
 	/* ADD2 and DEL2 are only valid in combined diff hunks */
 	if (!state->combined_diff && (type == LINE_DIFF_ADD2 || type == LINE_DIFF_DEL2))
 		type = LINE_DEFAULT;
 
+
+        if (type == LINE_DEFAULT && opt_color_pager_regex != NULL && *opt_color_pager_regex)
+        {
+            regex_err = regcomp(&regex, opt_color_pager_regex, regex_flags);
+
+            if (!regex_err)
+                regex_err = regexec(&regex, data, 8, pmatch, 0);
+
+            if (!regex_err) 
+                type = LINE_COLOR_MATCH;
+            regfree(&regex);
+        }
 	/* DEL_FILE, ADD_FILE and START are only valid outside diff chunks */
 	if (state->reading_diff_chunk) {
 		if (type == LINE_DIFF_DEL_FILE || type == LINE_DIFF_START)

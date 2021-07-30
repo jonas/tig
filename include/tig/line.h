@@ -22,6 +22,7 @@ struct ref;
  */
 
 #define LINE_INFO(_) \
+        _(COLOR_MATCH,     ""), \
 	_(DIFF_HEADER,		"diff --"), \
 	_(DIFF_DEL_FILE,	"--- "), \
 	_(DIFF_ADD_FILE,	"+++ "), \
