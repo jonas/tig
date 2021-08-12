@@ -32,6 +32,8 @@
 
 DEFINE_ALLOCATOR(realloc_reflogs, char *, 32)
 
+static struct view_history main_view_history = { 0 };
+
 bool
 main_status_exists(struct view *view, enum line_type type)
 {
@@ -570,7 +572,19 @@ main_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_PARENT:
-		goto_id(view, "%(commit)^", true, false);
+		if (push_view_history_state(&main_view_history, &view->pos, NULL)) {
+			goto_id(view, "%(commit)^", true, false);
+		} else {
+			report("Failed to save current view state");
+		}
+		break;
+
+	case REQ_BACK:
+		if (pop_view_history_state(&main_view_history, &view->pos, NULL)) {
+			redraw_view(view);
+		} else {
+			report("Already at start of history");
+		}
 		break;
 
 	case REQ_MOVE_NEXT_MERGE:
