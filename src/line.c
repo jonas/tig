@@ -239,12 +239,12 @@ init_colors(void)
 	// if we compiled with --ext-colors, but it doesn't work.
 	// https://github.com/mirror/ncurses/blob/56a81c7e79f73d397cc8074401d039f59c34cad5/ncurses/base/lib_color.c#L382-L391
 	// Currently we skip the odd number upper than 15.
-	short cnt = COLOR_ID(LINE_NONE);
+	short cnt = COLOR_ID(LINE_NONE) + 1;
 	for (short bg = 0; bg < 256; bg++) {
 	for (short fg = 0; fg < 256; fg++) {
 		if ((fg > 15 && fg % 2 == 1) || (bg > 15 && bg % 2 == 1))
 			continue;
-		init_extended_pair(cnt++, fg, bg);
+		init_extended_pair(++cnt, fg, bg);
 		color_pairs_map[fg][bg] = cnt;
 	}
 	}
