@@ -175,7 +175,7 @@ wattrset_by_ansi_status(struct view *view, struct ansi_status* cur_ansi_status) 
 	if (cur_ansi_status->bg > 15 && cur_ansi_status->bg % 2 == 1)
 		cur_ansi_status->bg -= 1;
 	short id = color_pairs_map[cur_ansi_status->fg][cur_ansi_status->bg];
-	wattrset(view->win, COLOR_PAIR(id)|cur_ansi_status->attr);
+	wattr_set(view->win, cur_ansi_status->attr, id, NULL);
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */
