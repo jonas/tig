@@ -107,8 +107,14 @@ struct app_external
 	    && app_diff_highlight_path_search(dhlt_path, sizeof(dhlt_path), query)
 	    && *dhlt_path) {
 		if (suffixcmp(dhlt_path, strlen(dhlt_path), "/diff-highlight.perl")) {
-			dhlt_app.argv[0] = dhlt_path;
-			dhlt_app.argv[1] = NULL;
+			if (strcmp(strrchr(dhlt_path, '/'), "/delta") == 0) {
+				dhlt_app.argv[0] = dhlt_path;
+				dhlt_app.argv[1] = "--true-color=never";
+				dhlt_app.argv[2] = NULL;
+			} else {
+				dhlt_app.argv[0] = dhlt_path;
+				dhlt_app.argv[1] = NULL;
+			}
 		} else if (path_search(perl_path, sizeof(perl_path), "perl", getenv("PATH"), X_OK)) {
 			/* if the package manager failed to "make install" within the contrib dir, rescue via */
 			/* perl -MDiffHighlight -I/path/containing /path/containing/diff-highlight.perl */
