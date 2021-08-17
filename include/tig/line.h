@@ -17,6 +17,8 @@
 #include "tig/tig.h"
 struct ref;
 
+extern short color_pairs_map[256][256];
+
 /*
  * Line-oriented content detection.
  */

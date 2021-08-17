@@ -23,6 +23,8 @@ static size_t line_rules;
 static struct line_info **color_pair;
 static size_t color_pairs;
 
+short color_pairs_map[256][256];
+
 DEFINE_ALLOCATOR(realloc_line_rule, struct line_rule, 8)
 DEFINE_ALLOCATOR(realloc_color_pair, struct line_info *, 8)
 
@@ -231,6 +233,20 @@ init_colors(void)
 		for (info = &rule->info; info; info = info->next) {
 			init_line_info_color_pair(info, type, default_bg, default_fg);
 		}
+	}
+
+	// TODO: init_extended_pair must be able to accept more than 256 here
+	// if we compiled with --ext-colors, but it doesn't work.
+	// https://github.com/mirror/ncurses/blob/56a81c7e79f73d397cc8074401d039f59c34cad5/ncurses/base/lib_color.c#L382-L391
+	// Currently we skip the odd number upper than 15.
+	short cnt = COLOR_ID(LINE_NONE);
+	for (short bg = 0; bg < 256; bg++) {
+	for (short fg = 0; fg < 256; fg++) {
+		if ((fg > 15 && fg % 2 == 1) || (bg > 15 && bg % 2 == 1))
+			continue;
+		init_extended_pair(cnt++, fg, bg);
+		color_pairs_map[fg][bg] = cnt;
+	}
 	}
 }
 

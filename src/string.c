@@ -103,7 +103,7 @@ string_expand(char *dst, size_t dstlen, const char *src, int srclen, int tabsize
 				expanded = dstlen - size - 1;
 			memcpy(dst + size, "        ", expanded);
 			size += expanded;
-		} else if (isspace(c) || iscntrl(c)) {
+		} else if ((isspace(c) || iscntrl(c)) && !(c == '\033' && src[pos+1] == '[')) {
 			dst[size++] = ' ';
 		} else {
 			dst[size++] = src[pos];
