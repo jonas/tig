@@ -13,6 +13,7 @@
 
 #include "tig/tig.h"
 #include "tig/graph.h"
+#include "tig/ansi.h"
 #include "tig/draw.h"
 #include "tig/options.h"
 #include "compat/hashtab.h"
@@ -78,9 +79,25 @@ draw_chars(struct view *view, enum line_type type, const char *string, int lengt
 	len = utf8_length(&string, length, skip, &col, max_width, &trimmed, use_tilde, opt_tab_size);
 
 	set_view_attr(view, type);
-	if (len > 0)
-		waddnstr(view->win, string, len);
+	if (len > 0) {
+		int ansi_num = 0;
+		int len_with_ansi = strlen(string);
+		int max_num = (len_with_ansi / 4) + 1;
+		int max_len = (len_with_ansi - 4) + 1;
+		char **ansi_ptrs = (char **)malloc(sizeof(char *) * max_num);
+		char *ansi_ptrs_for_free = (char *)malloc(sizeof(char) * max_num * max_len);
+		for (int i = 0; i < max_num; i++)
+			ansi_ptrs[i] = ansi_ptrs_for_free + i * max_len;
+		split_ansi(string, &ansi_num, ansi_ptrs);
 
+		if (ansi_num > 0)
+			draw_ansi(view, &ansi_num, ansi_ptrs);
+		else
+			waddnstr(view->win, string, len);
+
+		free(ansi_ptrs_for_free);
+		free(ansi_ptrs);
+	}
 	if (trimmed && use_tilde) {
 		set_view_attr(view, LINE_DELIMITER);
 		waddstr(view->win, opt_truncation_delimiter ? opt_truncation_delimiter : "~");
