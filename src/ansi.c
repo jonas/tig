@@ -19,15 +19,15 @@
 
 void
 split_ansi(const char *string, int *ansi_num, char **ansi_ptrs) {
-	char *needle = "\033[";
+	char *head_of_ansi = "\033[";
 	int current_ansi_idx = 0;
-	char *next_ansi_ptr = strstr(string + current_ansi_idx, needle);
+	char *next_ansi_ptr = strstr(string + current_ansi_idx, head_of_ansi);
 
 	if (next_ansi_ptr == NULL)
 		return;
 	while (next_ansi_ptr != NULL) {
 		if (strcmp(string, next_ansi_ptr) == 0) {
-			next_ansi_ptr = strstr(string + current_ansi_idx + strlen(needle), needle);
+			next_ansi_ptr = strstr(string + current_ansi_idx + strlen(head_of_ansi), head_of_ansi);
 			continue;
 		}
 		int current_ansi_length = strlen(string + current_ansi_idx) - strlen(next_ansi_ptr);
@@ -35,7 +35,7 @@ split_ansi(const char *string, int *ansi_num, char **ansi_ptrs) {
 		ansi_ptrs[*ansi_num][current_ansi_length] = '\0';
 		*ansi_num += 1;
 		current_ansi_idx += current_ansi_length / sizeof(char);
-		next_ansi_ptr = strstr(string + current_ansi_idx + strlen(needle), needle);
+		next_ansi_ptr = strstr(string + current_ansi_idx + strlen(head_of_ansi), head_of_ansi);
 	}
 
 	strcpy(ansi_ptrs[*ansi_num], string + current_ansi_idx);
@@ -49,8 +49,7 @@ draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs) {
 	cur_ansi_status.bg = COLOR_BLACK;
 	cur_ansi_status.attr = A_NORMAL;
 
-	for (int i = 0; i < *ansi_num; i++)
-	{
+	for (int i = 0; i < *ansi_num; i++) {
 		int len = strlen(ansi_ptrs[i]);
 		char text[len + 1];
 		strcpy(text, ansi_ptrs[i]);
@@ -131,7 +130,7 @@ draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs) {
 			strcpy(token, ansi_code);
 			char *ansi_code_part = strtok(token, ";");
 
-			while(ansi_code_part != NULL) {
+			while (ansi_code_part != NULL) {
 				char *color_method_mark = strtok(NULL, ";");
 				if (strcmp(color_method_mark, "5") == 0) {
 					char *c256 = strtok(NULL, ";");
