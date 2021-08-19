@@ -176,6 +176,8 @@ draw_ansi_line(struct view *view, char *text, int len) {
 
 void
 wattrset_by_ansi_status(struct view *view, struct ansi_status* cur_ansi_status) {
+	// Because init_extended_pair can't accept more than 32768 pairs,
+	// we skip the colors with color codes odd numbered and greater than 15 currently.
 	if (cur_ansi_status->fg > 15 && cur_ansi_status->fg % 2 == 1)
 		cur_ansi_status->fg -= 1;
 	if (cur_ansi_status->bg > 15 && cur_ansi_status->bg % 2 == 1)
