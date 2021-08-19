@@ -67,10 +67,16 @@ draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs) {
 		char *ansi_end_ptr = strchr(text, 'm');
 		int after_ansi_len = strlen(ansi_end_ptr);
 		int ansi_code_len = len - after_ansi_len - 2;
+		ansi_end_ptr += 1;
+
+		if (view->curline->selected) {
+			draw_ansi_line(view, ansi_end_ptr, after_ansi_len);
+			continue;
+		}
+
 		char *ansi_code = malloc(sizeof(char) * (ansi_code_len + 1));
 		strncpy(ansi_code, text + 2, ansi_code_len);
 		ansi_code[ansi_code_len] = '\0';
-		ansi_end_ptr += 1;
 
 		if (strchr(ansi_code, ';') == NULL) {
 			if (strcmp(ansi_code, "0") == 0)
