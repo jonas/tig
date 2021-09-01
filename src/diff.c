@@ -635,6 +635,8 @@ diff_get_lineno(struct view *view, struct line *line, bool old)
 static enum request
 diff_trace_origin(struct view *view, struct line *line)
 {
+	struct line *commit_line = find_prev_line_by_type(view, line, LINE_COMMIT);
+	char id[SIZEOF_REV];
 	struct line *diff = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
 	struct line *chunk = find_prev_line_by_type(view, line, LINE_DIFF_CHUNK);
 	const char *chunk_data;
@@ -645,7 +647,7 @@ diff_trace_origin(struct view *view, struct line *line)
 	struct blame_header header;
 	struct blame_commit commit;
 
-	if (!diff || !chunk || chunk == line) {
+	if (!diff || !chunk || chunk == line || diff < commit_line) {
 		report("The line to trace must be inside a diff chunk");
 		return REQ_NONE;
 	}
@@ -686,26 +688,24 @@ diff_trace_origin(struct view *view, struct line *line)
 		}
 	}
 
-	if (chunk_marker == '+')
-		string_copy(ref, view->vid);
+	if (commit_line)
+		string_copy_rev_from_commit_line(id, box_text(commit_line));
 	else
-		string_format(ref, "%s^", view->vid);
+		string_copy(id, view->vid);
 
-	if (string_rev_is_null(ref)) {
-		string_ncopy(view->env->file, file, strlen(file));
-		string_copy(view->env->ref, "");
-		view->env->goto_lineno = lineno - 1;
+	if (chunk_marker == '-')
+		string_format(ref, "%s^", id);
+	else
+		string_copy(ref, id);
 
-	} else {
-		if (!diff_blame_line(ref, file, lineno, &header, &commit)) {
-			report("Failed to read blame data");
-			return REQ_NONE;
-		}
-
-		string_ncopy(view->env->file, commit.filename, strlen(commit.filename));
-		string_copy(view->env->ref, header.id);
-		view->env->goto_lineno = header.orig_lineno - 1;
+	if (!diff_blame_line(ref, file, lineno, &header, &commit)) {
+		report("Failed to read blame data");
+		return REQ_NONE;
 	}
+
+	string_ncopy(view->env->file, commit.filename, strlen(commit.filename));
+	string_copy(view->env->ref, header.id);
+	view->env->goto_lineno = header.orig_lineno - 1;
 
 	return REQ_VIEW_BLAME;
 }
@@ -789,10 +789,7 @@ diff_request(struct view *view, enum request request, struct line *line)
 		return diff_common_enter(view, request, line);
 
 	case REQ_REFRESH:
-		if (string_rev_is_null(view->vid))
-			refresh_view(view);
-		else
-			reload_view(view);
+		reload_view(view);
 		return REQ_NONE;
 
 	default:
