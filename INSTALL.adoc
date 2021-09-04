@@ -193,6 +193,8 @@ configure script and building documentation:
 |Tool				|Description
 |readline			|Adds support for completion and history in
 				 search and command prompts.
+|PCRE				|Adds support for Perl Compatible Regular
+				 Expressions in searches.
 |autoconf			|Contains autoreconf for generating configure
 				 from configure.ac.
 |asciidoc (>= 8.4)		|Generates HTML and (DocBook) XML from text.
