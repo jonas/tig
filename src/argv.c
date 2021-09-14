@@ -367,7 +367,7 @@ format_append_argv(struct format_context *format, const char ***dst_argv, const 
 		if (!format_append_arg(format, dst_argv, src_argv[argc]))
 			return false;
 
-	return src_argv[argc] == NULL;
+	return true;
 }
 
 static bool
