@@ -1,12 +1,11 @@
 name: macOS
 
-on:
-  push:
-    branches: [ master ]
+on: [push, pull_request]
 
 jobs:
   install:
     runs-on: macos-latest
+    if: github.ref == 'refs/heads/master'
 
     strategy:
       matrix:
@@ -36,3 +35,15 @@ jobs:
       - name: Install latest Tig
         shell: 'script -q typescript sh {0}' # Workaround to get a TTY, see https://github.com/gfx/example-github-actions-with-tty
         run: HOMEBREW_CC=${{ matrix.compiler }} HOMEBREW_NO_AUTO_UPDATE=1 brew install --HEAD tig
+
+  ci:
+    runs-on: macos-latest
+    if: github.ref != 'refs/heads/master'
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Test Tig
+        shell: 'script -q typescript sh {0}' # Workaround to get a TTY, see https://github.com/gfx/example-github-actions-with-tty
+        run: |
+          brew install asciidoc autoconf automake coreutils gnu-sed ncurses xmlto
+          TIG_BUILD=autoconf tools/travis.sh
