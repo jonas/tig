@@ -21,15 +21,35 @@ static enum status_code
 stash_open(struct view *view, enum open_flags flags)
 {
 	static const char *stash_argv[] = { "git", "stash", "list",
-		encoding_arg, "--no-color", "--pretty=raw", "%(revargs)", NULL };
+		encoding_arg, "--no-color", "--pretty=raw", NULL };
+	const char **argv = NULL;
 	struct main_state *state = view->private;
+	enum status_code code;
 
 	if (!(repo.is_inside_work_tree || *repo.worktree))
 		return error("The stash view requires a working tree");
 
+	/* git stash list only works well with commit limiting options,
+	 * so filter --all, --branches, --remotes and revisions from
+	 * %(revargs). */
+	if (!argv_append_array(&argv, stash_argv))
+		return ERROR_OUT_OF_MEMORY;
+	if (opt_rev_args) {
+		int i;
+		for (i = 0; opt_rev_args[i]; i++) {
+			const char *arg = opt_rev_args[i];
+			if (arg[0] == '-' && strcmp(arg, "--all") &&
+			    strcmp(arg, "--branches") && strcmp(arg, "--remotes"))
+				argv_append(&argv, arg);
+		}
+	}
+
 	state->with_graph = false;
 	watch_register(&view->watch, WATCH_STASH);
-	return begin_update(view, NULL, stash_argv, flags | OPEN_RELOAD);
+	code = begin_update(view, NULL, argv, flags | OPEN_RELOAD);
+	argv_free(argv);
+	free(argv);
+	return code;
 }
 
 static void
