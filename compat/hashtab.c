@@ -812,7 +812,7 @@ htab_collisions (htab_t htab)
    to applicability, though note that unlike hashtable.c, this hash table
    implementation re-hashes rather than chain buckets.
 
-   http://gcc.gnu.org/ml/gcc-patches/2001-08/msg01021.html
+   https://gcc.gnu.org/ml/gcc-patches/2001-08/msg01021.html
    From: Zack Weinberg <zackw@panix.com>
    Date: Fri, 17 Aug 2001 02:15:56 -0400
 
@@ -827,7 +827,7 @@ htab_collisions (htab_t htab)
    as good at arbitrary strings.
 
    I'll add that it thoroughly trounces the hash functions recommended
-   for this use at http://burtleburtle.net/bob/hash/index.html, both
+   for this use at https://burtleburtle.net/bob/hash/index.html, both
    on speed and bucket distribution.  I haven't tried it against the
    function they just started using for Perl's hashes.  */
 
@@ -915,7 +915,7 @@ If you are hashing n strings (ub1 **)k, do it like this:
 By Bob Jenkins, 1996.  bob_jenkins@burtleburtle.net.  You may use this
 code any way you wish, private, educational, or commercial.  It's free.
 
-See http://burtleburtle.net/bob/hash/evahash.html
+See https://burtleburtle.net/bob/hash/evahash.html
 Use for hash table lookup, or anything where one collision in 2^32 is
 acceptable.  Do NOT use for cryptographic purposes.
 --------------------------------------------------------------------

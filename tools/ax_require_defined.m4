@@ -1,5 +1,5 @@
 # ===========================================================================
-#    http://www.gnu.org/software/autoconf-archive/ax_require_defined.html
+#    https://www.gnu.org/software/autoconf-archive/ax_require_defined.html
 # ===========================================================================
 #
 # SYNOPSIS

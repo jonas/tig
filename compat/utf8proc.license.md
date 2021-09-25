@@ -5,7 +5,7 @@ by Jan Behrens and the rest of the Public Software Group, who
 deserve nearly all of the credit for this library, that is now maintained by the Julia-language developers.  Like the original utf8proc,
 whose copyright and license statements are reproduced below, all new
 work on the utf8proc library is licensed under the [MIT "expat"
-license](http://opensource.org/licenses/MIT):
+license](https://opensource.org/licenses/MIT):
 
 *Copyright &copy; 2014-2019 by Steven G. Johnson, Jiahao Chen, Tony Kelman, Jonas Fonseca, and other contributors listed in the git history.*
 
@@ -57,7 +57,7 @@ the Unicode data files. The following license applies to that data:
 **COPYRIGHT AND PERMISSION NOTICE**
 
 *Copyright (c) 1991-2007 Unicode, Inc. All rights reserved. Distributed
-under the Terms of Use in http://www.unicode.org/copyright.html.*
+under the Terms of Use in https://www.unicode.org/copyright.html.*
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of the Unicode data files and any associated documentation (the "Data
