@@ -11,9 +11,9 @@ dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 dnl GNU General Public License for more details.
 dnl
 dnl You should have received a copy of the GNU General Public License
-dnl along with this program.  If not, see <http://www.gnu.org/licenses/>.
+dnl along with this program.  If not, see <https://www.gnu.org/licenses/>.
 dnl
-dnl Taken from http://git.savannah.gnu.org/cgit/readline.git/tree/examples/autoconf/
+dnl Taken from https://git.savannah.gnu.org/cgit/readline.git/tree/examples/autoconf/
 dnl commit 835a39225c6bd4784c0d7f775b0cd44dd7c57f35 (Readline 6.3, version 2.73)
 dnl
 dnl Configuration of --with-readline and result check at EOF.

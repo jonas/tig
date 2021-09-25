@@ -247,7 +247,7 @@ UTF8PROC_DLLEXPORT const utf8proc_property_t *utf8proc_get_property(utf8proc_int
    (according to the definition of extended grapheme clusters)
 
   Rule numbering refers to TR29 Version 29 (Unicode 9.0.0):
-  http://www.unicode.org/reports/tr29/tr29-29.html
+  https://www.unicode.org/reports/tr29/tr29-29.html
 
   CAVEATS:
    Please note that evaluation of GB10 (grapheme breaks between emoji zwj sequences)

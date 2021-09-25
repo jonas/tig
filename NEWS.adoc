@@ -698,7 +698,7 @@ tig-1.2
 -------
 
  - Tig now has its own tag on Stack Overflow, where users are invited to
-   ask questions: http://stackoverflow.com/questions/tagged/tig
+   ask questions: https://stackoverflow.com/questions/tagged/tig
 
 Improvements:
 
