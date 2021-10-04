@@ -173,8 +173,6 @@ blame_open(struct view *view, enum open_flags flags)
 			free(blame->commit);
 	}
 
-	if (!(flags & OPEN_RELOAD))
-		reset_view_history(&blame_view_history);
 	string_copy_rev(state->history_state.id, view->env->ref);
 	state->history_state.filename = get_path(view->env->file);
 	if (!state->history_state.filename)
@@ -455,6 +453,8 @@ blame_request(struct view *view, enum request request, struct line *line)
 	enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 	struct blame *blame = line->data;
 	struct view *diff = &diff_view;
+	struct blame_state *state = view->private;
+	struct blame_history_state *history_state = &state->history_state;
 
 	switch (request) {
 	case REQ_VIEW_BLAME:
@@ -475,6 +475,11 @@ blame_request(struct view *view, enum request request, struct line *line)
 		if (view_is_displayed(diff) &&
 		    !strcmp(blame->commit->id, diff->ref))
 			break;
+
+		if (!push_view_history_state(&blame_view_history, &view->pos, history_state)) {
+			report("Failed to save current view state");
+			break;
+		}
 
 		if (string_rev_is_null(blame->commit->id)) {
 			const char *diff_parent_argv[] = {
