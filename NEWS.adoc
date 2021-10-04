@@ -1,6 +1,14 @@
 Release notes
 =============
 
+master
+------
+
+Improvements:
+ - Expose `%(file_old)`, useful for deleted and renamed files. 
+
+Bug fixes:
+
 tig-2.5.4
 ---------
 
