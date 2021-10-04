@@ -1,0 +1,49 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+tigrc <<EOF
+set blame-view = text
+EOF
+
+steps '
+	:view-stash
+	:view-diff
+	:move-last-line
+	:move-up
+	:save-display diff.screen
+	:view-blame
+	:save-display blame1.screen
+	:view-close
+	:view-blame
+	:save-display blame2.screen
+'
+
+git_init
+
+test_setup_work_dir()
+{
+	echo "original line" > file
+	git add file
+	git commit -m "Initial commit"
+	echo "changed line" > file
+	git stash
+}
+
+LINES=3 test_tig
+
+assert_equals 'diff.screen' <<EOF
+-original line
+[diff] Changes to 'file' - line 9 of 10  90%
+EOF
+
+assert_equals 'blame1.screen' <<EOF
+original line
+[blame] file - line 1 of 1 100%
+EOF
+
+assert_equals 'blame2.screen' <<EOF
+original line
+[blame] file - line 1 of 1 100%
+EOF
