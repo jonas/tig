@@ -56,7 +56,13 @@
 #include <libgen.h>
 #include <termios.h>
 
+#if defined HAVE_PCRE2
+#include <pcre2posix.h>
+#elif defined HAVE_PCRE
+#include <pcreposix.h>
+#else
 #include <regex.h>
+#endif
 
 #include <locale.h>
 #include <langinfo.h>
