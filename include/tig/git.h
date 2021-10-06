@@ -39,7 +39,7 @@
 	"git", "diff-index", (output_arg), "--diff-filter=ACDMRTXB", "-C", "--cached", "HEAD", "--", NULL
 
 #define GIT_DIFF_UNSTAGED_FILES(output_arg) \
-	"git", "diff-files", (output_arg), NULL
+	"git", "diff-files", "%(cmdlineargs)", (output_arg), NULL
 
 #define GIT_DIFF_BLAME(encoding_arg, context_arg, space_arg, new_name) \
 	GIT_DIFF_UNSTAGED(encoding_arg, context_arg, space_arg, "", new_name)
