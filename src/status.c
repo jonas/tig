@@ -90,8 +90,13 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	struct status *unmerged = NULL;
 	struct buffer buf;
 	struct io io;
+	const char **status_argv = NULL;
+	bool ok = argv_format(view->env, &status_argv, argv, false, false) &&
+		  io_run(&io, IO_RD, repo.exec_dir, NULL, status_argv);
 
-	if (!io_run(&io, IO_RD, repo.exec_dir, NULL, argv))
+	argv_free(status_argv);
+	free(status_argv);
+	if (!ok)
 		return false;
 
 	add_line_nodata(view, type);
@@ -372,8 +377,6 @@ status_open(struct view *view, enum open_flags flags)
 	const char **staged_argv = is_initial_commit() ?
 		status_list_no_head_argv : status_diff_index_argv;
 	char staged_status = staged_argv == status_list_no_head_argv ? 'A' : 0;
-	const char **argv = NULL;
-	enum status_code code = SUCCESS;
 
 	if (!(repo.is_inside_work_tree || *repo.worktree))
 		return error("The status view requires a working tree");
@@ -389,18 +392,14 @@ status_open(struct view *view, enum open_flags flags)
 	update_index();
 
 	if ((!show_untracked_only && !status_run(view, staged_argv, staged_status, LINE_STAT_STAGED)) ||
-	    (!show_untracked_only && !(argv_format(view->env, &argv, status_diff_files_argv, false, false) &&
-	     status_run(view, argv, 0, LINE_STAT_UNSTAGED))) ||
+	    (!show_untracked_only && !status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED)) ||
 	    !status_read_untracked(view))
-		code = error("Failed to load status data");
-	argv_free(argv);
-	free(argv);
+		return error("Failed to load status data");
 
 	/* Restore the exact position or use the specialized restore
 	 * mode? */
-	if (code == SUCCESS)
-		status_restore(view);
-	return code;
+	status_restore(view);
+	return SUCCESS;
 }
 
 static bool
