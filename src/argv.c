@@ -361,7 +361,7 @@ format_append_argv(struct format_context *format, const char ***dst_argv, const 
 	int argc;
 
 	if (!src_argv)
-		return argv_append(dst_argv, "");
+		return true;
 
 	for (argc = 0; src_argv[argc]; argc++)
 		if (!format_append_arg(format, dst_argv, src_argv[argc]))
@@ -472,7 +472,17 @@ argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_a
 		}
 	}
 
-	return src_argv[argc] == NULL;
+	if (src_argv[argc] != NULL)
+		return false;
+
+	// Make sure to return an argv-style array even if we have not formatted anything.
+	if (!*dst_argv) {
+		if (!argv_realloc(dst_argv, 1, 1))
+			return false;
+		(*dst_argv)[0] = NULL;
+	}
+
+	return true;
 }
 
 static inline bool

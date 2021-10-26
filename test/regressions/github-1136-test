@@ -13,21 +13,54 @@ test_case bang-cmdlineargs-doesnt-crash \
 	--script='
 	:!%(cmdlineargs)
 	' <<EOF
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
 
-
-
-
-
-
-
-
-[pager]                                                                       0%
+[status] Nothing to update                                                  100%
 EOF
 
 test_case echo-cmdlineargs-doesnt-crash \
 	--args='status' \
 	--script='
 	:echo %(cmdlineargs)
+	' <<EOF
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
+[status] Nothing to update                                                  100%
+EOF
+
+# This runs an empty command, hence the empty pager.
+test_case bang-fileargs-doesnt-crash \
+	--args='status' \
+	--script='
+	:!%(fileargs)
+	' <<EOF
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
+[status] Nothing to update                                                  100%
+EOF
+
+test_case echo-fileargs-doesnt-crash \
+	--args='status' \
+	--script='
+	:echo %(fileargs)
 	' <<EOF
 On branch master
 Changes to be committed:
