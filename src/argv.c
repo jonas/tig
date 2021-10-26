@@ -441,7 +441,7 @@ argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_a
 		const char *arg = src_argv[argc];
 
 		if (!strcmp(arg, "%(fileargs)")) {
-			if ((flags & argv_flag_file_filter) && !argv_append_array(dst_argv, opt_file_args))
+			if ((flags & argv_flag_file_filter) && !format_append_argv(&format, dst_argv, opt_file_args))
 				break;
 
 		} else if (!strcmp(arg, DIFF_ARGS)) {
@@ -466,7 +466,7 @@ argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_a
 
 		} else if (!strcmp(arg, "%(revargs)") ||
 			   ((flags & argv_flag_first) && !strcmp(arg, "%(commit)"))) {
-			if ((flags & argv_flag_rev_filter) && !argv_append_array(dst_argv, opt_rev_args))
+			if ((flags & argv_flag_rev_filter) && !format_append_argv(&format, dst_argv, opt_rev_args))
 				break;
 
 		} else if (!format_append_arg(&format, dst_argv, arg)) {
