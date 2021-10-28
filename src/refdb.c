@@ -325,7 +325,7 @@ reload_refs(bool force)
 		int argc = 0;
 
 		string_ncopy(ls_remote_cmd, env, strlen(env));
-		if (!argv_from_string(ls_remote_argv, &argc, ls_remote_cmd))
+		if (!argv_from_string_no_quotes(ls_remote_argv, &argc, ls_remote_cmd))
 			return error("Failed to parse TIG_LS_REMOTE: %s", env);
 	}
 

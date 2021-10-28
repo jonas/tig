@@ -1,0 +1,55 @@
+#!/bin/sh
+#
+# Test ref filtering (GitHub issue #1160)
+
+. libtest.sh
+. libgit.sh
+
+export LINES=9
+export COLUMNS=120
+
+git_init
+
+test_setup_work_dir() {
+	git_commit --allow-empty -m Initial\ commit
+	git branch my-branch1 HEAD
+	git branch my-branch2 HEAD
+	git update-ref refs/remotes/origin/my-branch1 HEAD
+	git update-ref refs/remotes/origin/my-branch2 HEAD
+	git tag my-tag1 HEAD
+	git tag my-tag2 HEAD
+	git update-ref refs/my-raw-ref1 HEAD
+	git update-ref refs/my-raw-ref2 HEAD
+}
+
+export TIG_LS_REMOTE='sh -c "git show-ref --head --dereference | grep -v refs/.\\*1"'
+
+steps '
+	:save-display main.screen
+	:view-refs
+	:save-display refs.screen
+'
+
+test_tig
+
+assert_equals 'main.screen' <<EOF
+2009-02-13 23:31 +0000 Committer I [master] [my-branch2] [refs/my-raw-ref2] {origin/my-branch2} <my-tag2> Initial commit
+
+
+
+
+
+
+[main] 174877369ea7af366da2ebcedd63d7a00d8046ea - commit 1 of 1  100%
+EOF
+
+assert_equals 'refs.screen' <<EOF
+  All references
+  master
+  my-branch2
+  refs/my-raw-ref2
+  origin/my-branch2
+  my-tag2
+
+[refs] All references  100%
+EOF
