@@ -1124,7 +1124,7 @@ omnipresent.
 
 Commit message::
 
-`Signed-off-by`, `Acked-by`, `Reviewed-by` and `Tested-by` lines are colorized.
+Most common trailer lines (e.g. `Signed-off-by`) are colorized.
 Characters in the commit title exceeding a predefined width can be highlighted.
 
 
