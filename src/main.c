@@ -502,11 +502,17 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 		break;
 
 	case LINE_AUTHOR:
-		parse_author_line(line + STRING_SIZE("author "),
-				  &commit->author, &commit->time);
-		if (state->with_graph)
+	case LINE_COMMITTER:
+	{
+		bool committer_line = (type == LINE_COMMITTER);
+		parse_author_line(line +
+			(committer_line ? STRING_SIZE("committer ") : STRING_SIZE("author ")),
+			(opt_committer ^ committer_line) ? NULL : &commit->author,
+			(opt_commit_date ^ committer_line) ? NULL : &commit->time);
+		if (committer_line && state->with_graph)
 			graph->render_parents(graph, &commit->graph);
 		break;
+	}
 
 	default:
 		/* Fill in the commit title if it has not already been set. */
@@ -629,7 +635,7 @@ main_select(struct view *view, struct line *line)
 static struct view_ops main_ops = {
 	"commit",
 	argv_env.head,
-	VIEW_SEND_CHILD_ENTER | VIEW_FILE_FILTER | VIEW_LOG_LIKE | VIEW_REFRESH,
+	VIEW_SEND_CHILD_ENTER | VIEW_FILE_FILTER | VIEW_LOG_LIKE | VIEW_REFRESH | VIEW_COMMIT_NAMEDATE,
 	sizeof(struct main_state),
 	main_open,
 	main_read,

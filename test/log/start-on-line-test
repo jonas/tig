@@ -13,7 +13,7 @@ test_tig log +42
 
 assert_equals 'position.screen' <<EOF
 Author: Jonas Fonseca <jonas.fonseca@gmail.com>
-Date:   Sat Mar 1 15:59:02 2014 -0500
+AuthorDate: Sat Mar 1 15:59:02 2014 -0500
 
     Add type parameter for js.Dynamic
 
@@ -22,7 +22,7 @@ Date:   Sat Mar 1 15:59:02 2014 -0500
 
 commit 296fc90ba2c47ba3d2b6ab8e984ea3a82bb4cd6e
 Author: Jonas Fonseca <jonas.fonseca@gmail.com>
-Date:   Thu Jan 16 22:51:27 2014 -0500
+AuthorDate: Thu Jan 16 22:51:27 2014 -0500
 
     Move classes under org.scalajs.benchmark package scope
 

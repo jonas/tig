@@ -107,6 +107,10 @@ view_request(struct view *view, enum request request)
 	_('$', "commit title overflow display",	"commit-title-overflow"), \
 	_('d', "untracked directory info",	"status-show-untracked-dirs"), \
 	_('|', "view split",			"vertical-split"), \
+	_('E', "mail map",          "mailmap"), \
+	_('L', "local date",            "date-local"), \
+	_('M', "committer",         "committer"), \
+	_('m', "commit date",           "commit-date"), \
 
 static void
 toggle_option(struct view *view)

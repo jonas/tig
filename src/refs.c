@@ -139,7 +139,7 @@ refs_open_visitor(void *data, const struct ref *ref)
 	bool is_all = ref == refs_all;
 	struct line *line;
 
-        if (!is_all)
+	if (!is_all)
 		switch (refs_filter) {
 		case REFS_FILTER_TAGS:
 			if (ref->type != REFERENCE_TAG && ref->type != REFERENCE_LOCAL_TAG)
@@ -173,11 +173,11 @@ static const char **refs_argv;
 static enum status_code
 refs_open(struct view *view, enum open_flags flags)
 {
+	char pretty_arg[50] = {0};
+	char name_c = opt_committer ? 'c' : 'a';
 	const char *refs_log[] = {
 		"git", "log", encoding_arg, "--no-color", "--date=raw",
-			opt_mailmap ? "--pretty=format:%H%x00%aN <%aE> %ad%x00%s"
-				    : "--pretty=format:%H%x00%an <%ae> %ad%x00%s",
-			"--all", "--simplify-by-decoration", NULL
+		pretty_arg, "--all", "--simplify-by-decoration", NULL
 	};
 	enum status_code code;
 	const char *name = REFS_ALL_NAME;
@@ -201,6 +201,11 @@ refs_open(struct view *view, enum open_flags flags)
 		}
 	}
 
+	snprintf(pretty_arg, sizeof(pretty_arg)-1,
+		"--pretty=format:%%H%%x00%%%c%c <%%%c%c> %s%%x00%%s",
+		name_c, opt_mailmap ? 'N' : 'n',
+		name_c, opt_mailmap ? 'E' : 'e',
+		opt_commit_date ? "%cd" : "%ad");
 	if (!refs_all) {
 		int name_length = strlen(name);
 		struct ref *ref = calloc(1, sizeof(*refs_all) + name_length);
@@ -246,7 +251,7 @@ refs_select(struct view *view, struct line *line)
 static struct view_ops refs_ops = {
 	"reference",
 	argv_env.head,
-	VIEW_REFRESH | VIEW_SORTABLE,
+	VIEW_SORTABLE | VIEW_BLAME_LIKE | VIEW_REFRESH | VIEW_COMMIT_NAMEDATE,
 	0,
 	refs_open,
 	refs_read,
