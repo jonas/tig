@@ -11,6 +11,10 @@ CPPFLAGS = -DHAVE_NCURSESW_CURSES_H
 #LDLIBS += -lreadline
 #CPPFLAGS += -DHAVE_READLINE
 
+# Use PCRE2.
+#LDLIBS += -lpcre2-posix -lpcre2-8
+#CPPFLAGS += -DHAVE_PCRE2 -DPCRE2_CODE_UNIT_WIDTH=8
+
 # Uncomment to enable work-around for missing setenv().
 #NO_SETENV=y
 

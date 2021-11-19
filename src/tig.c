@@ -54,6 +54,12 @@
 #include <readline/readline.h>
 #endif /* HAVE_READLINE */
 
+#if defined HAVE_PCRE2
+#include <pcre2.h>
+#elif defined HAVE_PCRE
+#include <pcre.h>
+#endif
+
 static bool
 forward_request_to_child(struct view *child, enum request request)
 {
@@ -542,6 +548,9 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 				seen_dashdash = true;
 
 			} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
+#if defined HAVE_PCRE2
+				char pcre2_version[64];
+#endif
 				printf("tig version %s\n", TIG_VERSION);
 #ifdef NCURSES_VERSION
 				printf("%s version %s.%d\n",
@@ -554,6 +563,12 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 #endif
 #ifdef HAVE_READLINE
 				printf("readline version %s\n", rl_library_version);
+#endif
+#if defined HAVE_PCRE2
+				pcre2_config(PCRE2_CONFIG_VERSION, pcre2_version);
+				printf("PCRE2 version %s\n", pcre2_version);
+#elif defined HAVE_PCRE
+				printf("PCRE version %s\n", pcre_version());
 #endif
 				exit(EXIT_SUCCESS);
 
