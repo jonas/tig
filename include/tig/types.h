@@ -143,7 +143,9 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 
 #define REFERENCE_ENUM(_) \
 	_(REFERENCE, HEAD), \
+	_(REFERENCE, STASH), \
 	_(REFERENCE, BRANCH), \
+	_(REFERENCE, OTHER), \
 	_(REFERENCE, TRACKED_REMOTE), \
 	_(REFERENCE, REMOTE), \
 	_(REFERENCE, TAG), \
