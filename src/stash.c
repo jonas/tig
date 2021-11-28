@@ -87,7 +87,7 @@ stash_request(struct view *view, enum request request, struct line *line)
 					"--no-color", "%(stash)", NULL
 			};
 
-			if (!argv_format(diff_view.env, &diff_view.argv, diff_argv, false, false))
+			if (!argv_format(diff_view.env, &diff_view.argv, diff_argv, 0))
 				report("Failed to format argument");
 			else
 				open_diff_view(view, flags | OPEN_PREPARED);
