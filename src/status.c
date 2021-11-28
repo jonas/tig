@@ -91,7 +91,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	struct buffer buf;
 	struct io io;
 	const char **status_argv = NULL;
-	bool ok = argv_format(view->env, &status_argv, argv, false, false) &&
+	bool ok = argv_format(view->env, &status_argv, argv, 0) &&
 		  io_run(&io, IO_RD, repo.exec_dir, NULL, status_argv);
 
 	argv_free(status_argv);

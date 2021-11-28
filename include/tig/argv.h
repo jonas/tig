@@ -69,7 +69,12 @@ struct argv_env {
 
 extern struct argv_env argv_env;
 
-bool argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter);
+enum argv_flag {
+	argv_flag_first = 1 << 0,
+	argv_flag_file_filter = 1 << 1,
+};
+
+bool argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_argv[], int flags);
 char *argv_format_arg(struct argv_env *argv_env, const char *src_arg);
 
 struct rev_flags {

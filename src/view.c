@@ -575,10 +575,14 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 	view->unrefreshable = open_in_pager_mode(flags);
 
 	if (!refresh && argv) {
-		bool file_filter = !view_has_flags(view, VIEW_FILE_FILTER) || opt_file_filter;
+		int flags = 0;
+		if (!view->prev)
+			flags |= argv_flag_first;
+		if (!view_has_flags(view, VIEW_FILE_FILTER) || opt_file_filter)
+			flags |= argv_flag_file_filter;
 
 		view->dir = dir;
-		if (!argv_format(view->env, &view->argv, argv, !view->prev, file_filter))
+		if (!argv_format(view->env, &view->argv, argv, flags))
 			return error("Failed to format %s arguments", view->name);
 	}
 
