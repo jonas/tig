@@ -51,7 +51,7 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-[help] - line 1 of 127                                                       22%
+[help] - line 1 of 128                                                       21%
 EOF
 
 assert_equals 'help-search.screen' <<EOF
@@ -83,7 +83,7 @@ View manipulation
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
                            q view-close          Close the current view
-[help] - line 19 of 127                                                      22%
+[help] - line 19 of 128                                                      21%
 EOF
 
 assert_equals 'help-collapsed.screen' <<EOF

@@ -941,7 +941,7 @@ run_prompt_command(struct view *view, const char *argv[])
 
 		/* Trim the leading '!'. */
 		argv[0] = cmd + 1;
-		copied = argv_format(view->env, &next->argv, argv, argv_flag_file_filter);
+		copied = argv_format(view->env, &next->argv, argv, argv_flag_file_filter | argv_flag_rev_filter);
 		argv[0] = cmd;
 
 		if (!copied) {
@@ -969,7 +969,7 @@ run_prompt_command(struct view *view, const char *argv[])
 
 		if (argv[1]
 		    && strlen(argv[1]) > 0
-		    && (!argv_format(view->env, &fmt_argv, &argv[1], argv_flag_file_filter)
+		    && (!argv_format(view->env, &fmt_argv, &argv[1], argv_flag_file_filter | argv_flag_rev_filter)
 			|| !argv_to_string(fmt_argv, text, sizeof(text), " ")
 			)) {
 			report("Failed to format echo string");
@@ -1104,7 +1104,7 @@ exec_run_request(struct view *view, struct run_request *req)
 
 	if (!argv_to_string(req->argv, cmd, sizeof(cmd), " ")
 	    || !argv_from_string_no_quotes(req_argv, &req_argc, cmd)
-	    || !argv_format(view->env, &argv, req_argv, argv_flag_file_filter)
+	    || !argv_format(view->env, &argv, req_argv, argv_flag_file_filter | argv_flag_rev_filter)
 	    || !argv) {
 		report("Failed to format arguments");
 		return REQ_NONE;

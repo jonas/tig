@@ -68,6 +68,7 @@ Option toggling:
                            X :toggle id
                            $ :toggle commit-title-overflow
                            % :toggle file-filter
+                           ^ :toggle rev-filter
 [-] search bindings
 View manipulation
                     <Ctrl-C> view-close          Close the current view
@@ -125,4 +126,4 @@ External commands:
 [-] pager bindings
 Internal commands:
                            @ :/^@@
-[help] - line 1 of 127                                                                100%
+[help] - line 1 of 128                                                                 100%

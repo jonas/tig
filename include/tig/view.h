@@ -65,13 +65,14 @@ enum view_flag {
 	VIEW_BLAME_LIKE		= 1 << 8,
 	VIEW_SEND_CHILD_ENTER	= 1 << 9,
 	VIEW_FILE_FILTER	= 1 << 10,
-	VIEW_LOG_LIKE		= 1 << 11,
-	VIEW_STATUS_LIKE	= 1 << 12,
-	VIEW_REFRESH		= 1 << 13,
-	VIEW_GREP_LIKE		= 1 << 14,
-	VIEW_SORTABLE		= 1 << 15,
-	VIEW_FLEX_WIDTH		= 1 << 16,
-	VIEW_RESET_DISPLAY	= 1 << 17,
+	VIEW_REV_FILTER		= 1 << 11,
+	VIEW_LOG_LIKE		= 1 << 12,
+	VIEW_STATUS_LIKE	= 1 << 13,
+	VIEW_REFRESH		= 1 << 14,
+	VIEW_GREP_LIKE		= 1 << 15,
+	VIEW_SORTABLE		= 1 << 16,
+	VIEW_FLEX_WIDTH		= 1 << 17,
+	VIEW_RESET_DISPLAY	= 1 << 18,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))

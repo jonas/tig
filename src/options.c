@@ -873,6 +873,7 @@ option_bind_command(int argc, const char *argv[])
 			{ "toggle-date",		"date" },
 			{ "toggle-files",		"file-filter" },
 			{ "toggle-file-filter",		"file-filter" },
+			{ "toggle-rev-filter",		"rev-filter" },
 			{ "toggle-file-size",		"file-size" },
 			{ "toggle-filename",		"filename" },
 			{ "toggle-graphic",		"show-graphic" },
@@ -1058,6 +1059,7 @@ load_options(void)
 	char buf[SIZEOF_STR];
 
 	opt_file_filter = true;
+	opt_rev_filter = true;
 	if (!find_option_info_by_value(&opt_diff_context)->seen)
 		opt_diff_context = -3;
 

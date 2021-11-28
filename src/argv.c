@@ -466,7 +466,7 @@ argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_a
 
 		} else if (!strcmp(arg, "%(revargs)") ||
 			   ((flags & argv_flag_first) && !strcmp(arg, "%(commit)"))) {
-			if (!argv_append_array(dst_argv, opt_rev_args))
+			if ((flags & argv_flag_rev_filter) && !argv_append_array(dst_argv, opt_rev_args))
 				break;
 
 		} else if (!format_append_arg(&format, dst_argv, arg)) {
@@ -608,7 +608,7 @@ argv_format_arg(struct argv_env *argv_env, const char *src_arg)
 	const char **dst_argv = NULL;
 	char *dst_arg = NULL;
 
-	if (argv_format(argv_env, &dst_argv, src_argv, argv_flag_file_filter))
+	if (argv_format(argv_env, &dst_argv, src_argv, argv_flag_file_filter | argv_flag_rev_filter))
 		dst_arg = (char *) dst_argv[0];
 
 	free(dst_argv);

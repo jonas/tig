@@ -580,6 +580,8 @@ begin_update(struct view *view, const char *dir, const char **argv, enum open_fl
 			flags |= argv_flag_first;
 		if (!view_has_flags(view, VIEW_FILE_FILTER) || opt_file_filter)
 			flags |= argv_flag_file_filter;
+		if (!view_has_flags(view, VIEW_REV_FILTER) || opt_rev_filter)
+			flags |= argv_flag_rev_filter;
 
 		view->dir = dir;
 		if (!argv_format(view->env, &view->argv, argv, flags))

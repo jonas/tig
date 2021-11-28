@@ -110,6 +110,7 @@ view_request(struct view *view, enum request request)
 	_('C', "local change display",		"show-changes"), \
 	_('X', "commit ID display",		"id"), \
 	_('%', "file filtering",		"file-filter"), \
+	_('^', "revision filtering",		"rev-filter"), \
 	_('$', "commit title overflow display",	"commit-title-overflow"), \
 	_('d', "untracked directory info",	"status-show-untracked-dirs"), \
 	_('|', "view split",			"vertical-split"), \
