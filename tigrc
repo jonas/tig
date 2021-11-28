@@ -309,7 +309,8 @@ bind generic	$	:toggle commit-title-overflow
 # bind generic	???	:toggle status-show-untracked-dirs
 						# Toggle display of file in untracked directories
 # bind generic	???	:toggle vertical-split	# Toggle vertical split
-bind generic	%	:toggle file-filter
+bind generic	%	:toggle file-filter	# Toggle filtering by pathspecs in file-args
+bind generic	^	:toggle rev-filter	# Toggle filtering by revisions in rev-args
 
 # Misc
 bind generic	e	edit			# Open in editor
