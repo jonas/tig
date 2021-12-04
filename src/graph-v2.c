@@ -696,7 +696,6 @@ graph_generate_symbols(struct graph_v2 *graph, struct graph_canvas *canvas)
 	for (pos = 0; pos < row->size; pos++) {
 		struct graph_column *column = &row->columns[pos];
 		struct graph_symbol *symbol = &column->symbol;
-		const char *id = next_row->columns[pos].id;
 
 		symbol->commit            = (pos == graph->position);
 		symbol->boundary          = (pos == graph->position && next_row->columns[pos].symbol.boundary);
@@ -724,10 +723,8 @@ graph_generate_symbols(struct graph_v2 *graph, struct graph_canvas *canvas)
 		symbol->new_column        = new_column(row, prev_row, pos);
 		symbol->empty             = (!graph_column_has_commit(&row->columns[pos]));
 
-		if (graph_column_has_commit(column)) {
-			id = column->id;
-		}
-		symbol->color = get_color(graph, id);
+		// Do initial assignment of symbol colors
+		symbol->color = get_color(graph, column->id ? column->id : next_row->columns[pos].id);
 
 		graph_canvas_append_symbol(graph, canvas, symbol);
 	}
@@ -1086,6 +1083,15 @@ graph_symbol_to_utf8(const struct graph_symbol *symbol)
 	return "  ";
 }
 
+static const char *
+graph_symbol_to_utf8_horiz(const struct graph_symbol *symbol)
+{
+	return
+	  graph_symbol_cross_over(symbol)           ? "──"
+	: graph_symbol_turn_down_cross_over(symbol) ? " ╭"
+	: graph_symbol_to_utf8(symbol);
+}
+
 static const chtype *
 graph_symbol_to_chtype(const struct graph_symbol *symbol)
 {
@@ -1157,6 +1163,16 @@ graph_symbol_to_chtype(const struct graph_symbol *symbol)
 	return graphics;
 }
 
+static const chtype *
+graph_symbol_to_chtype_horiz(const struct graph_symbol *symbol)
+{
+	static chtype graphics[2];
+	return
+	  graph_symbol_cross_over(symbol)           ? (graphics[0] = ACS_HLINE, graphics[1] = ACS_HLINE,    graphics)
+	: graph_symbol_turn_down_cross_over(symbol) ? (graphics[0] = ' ',       graphics[1] = ACS_ULCORNER, graphics)
+	: graph_symbol_to_chtype(symbol);
+}
+
 static const char *
 graph_symbol_to_ascii(const struct graph_symbol *symbol)
 {
@@ -1209,6 +1225,33 @@ graph_symbol_to_ascii(const struct graph_symbol *symbol)
 	return "  ";
 }
 
+static const char *
+graph_symbol_to_ascii_horiz(const struct graph_symbol *symbol)
+{
+	return
+	  graph_symbol_cross_over(symbol)           ? "--"
+	: graph_symbol_turn_down_cross_over(symbol) ? " ."
+	: graph_symbol_to_ascii(symbol);
+}
+
+/* Re-color the symbols array of the given graph_canvas
+ * so that horizontal cross-over symbols are properly colored
+ */
+static void
+graph_symbol_recolor(const struct graph_canvas *canvas)
+{
+	struct graph_symbol *sy = &canvas->symbols[canvas->size - 1];
+	size_t merge_c = 0;
+	int i;
+
+	for (i = canvas->size - 1; i >= 0; i--, sy--) {
+		if (graph_symbol_merge(sy) || graph_symbol_turn_left(sy))
+			if (!merge_c) merge_c = sy->color;
+		if (graph_symbol_cross_over(sy))
+			sy->color = merge_c;
+	}
+}
+
 static void
 graph_foreach_symbol(const struct graph *graph, const struct graph_canvas *canvas,
 		     graph_symbol_iterator_fn fn, void *data)
@@ -1224,8 +1267,16 @@ graph_foreach_symbol(const struct graph *graph, const struct graph_canvas *canva
 	}
 }
 
+static void
+graph_foreach_symbol_horiz(const struct graph *graph, const struct graph_canvas *canvas,
+		     graph_symbol_iterator_fn fn, void *data)
+{
+	graph_symbol_recolor(canvas);
+	graph_foreach_symbol(graph, canvas, fn, data);
+}
+
 struct graph *
-init_graph_v2(void)
+init_graph_v2(bool crossover)
 {
 	struct graph_v2 *graph = calloc(1, sizeof(*graph));
 	struct graph *api;
@@ -1241,10 +1292,10 @@ init_graph_v2(void)
 	api->add_parent = graph_add_parent;
 	api->is_merge = graph_is_merge;
 	api->render_parents = graph_render_parents;
-	api->foreach_symbol = graph_foreach_symbol;
-	api->symbol_to_ascii = graph_symbol_to_ascii;
-	api->symbol_to_utf8 = graph_symbol_to_utf8;
-	api->symbol_to_chtype = graph_symbol_to_chtype;
+	api->foreach_symbol   = crossover ? graph_foreach_symbol_horiz   : graph_foreach_symbol   ;
+	api->symbol_to_ascii  = crossover ? graph_symbol_to_ascii_horiz  : graph_symbol_to_ascii  ;
+	api->symbol_to_utf8   = crossover ? graph_symbol_to_utf8_horiz   : graph_symbol_to_utf8   ;
+	api->symbol_to_chtype = crossover ? graph_symbol_to_chtype_horiz : graph_symbol_to_chtype ;
 
 	return api;
 }

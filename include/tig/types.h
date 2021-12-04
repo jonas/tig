@@ -82,6 +82,7 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 #define GRAPH_DISPLAY_ENUM(_) \
 	_(GRAPH_DISPLAY, NO), \
 	_(GRAPH_DISPLAY, V2), \
+	_(GRAPH_DISPLAY, V2_HORIZONTAL_CROSSOVER), \
 	_(GRAPH_DISPLAY, V1)
 
 #define DATE_ENUM(_) \
