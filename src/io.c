@@ -646,7 +646,7 @@ io_from_string(struct io *io, const char *str)
 	io->bufsize = io->bufalloc = len;
 	io->bufpos = io->buf;
 	io->eof = true;
-	strncpy(io->buf, str, len);
+	strcpy(io->buf, str);
 
 	return true;
 }

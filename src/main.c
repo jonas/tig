@@ -94,7 +94,7 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 		return NULL;
 
 	*commit = *template;
-	strncpy(commit->title, title, titlelen);
+	strcpy(commit->title, title);
 	memset(template, 0, sizeof(*template));
 	state->reflogmsg[0] = 0;
 
