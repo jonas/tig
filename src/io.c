@@ -50,7 +50,7 @@ encoding_open(const char *fromcode)
 
 	encoding = calloc(1, sizeof(*encoding) + len);
 	if (!encoding)
-		die("out of memory");
+		die("Failed to allocate encoding");
 	strcpy(encoding->fromcode, fromcode);
 	encoding->cd = iconv_open(ENCODING_UTF8, fromcode);
 	if (encoding->cd == ICONV_NONE) {

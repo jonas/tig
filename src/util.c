@@ -447,7 +447,7 @@ chunk_allocator(void *mem, size_t type_size, size_t chunk_size, size_t size, siz
 		char *tmp = realloc(mem, newsize);
 
 		if (!tmp)
-			return NULL;
+			die("Failed to allocate chunk");
 
 		if (num_chunks_new > num_chunks) {
 			size_t oldsize = num_chunks * chunk_size * type_size;

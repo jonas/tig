@@ -64,7 +64,7 @@ main(int argc, const char *argv[])
 	}
 
 	if (!(graph = init_graph(GRAPH_DISPLAY_V2)))
-		die("Failed to allocated graph");
+		die("Failed to allocate graph");
 
 	if (argc > 1 && !strcmp(argv[1], "--ascii"))
 		graph_fn = graph->symbol_to_ascii;

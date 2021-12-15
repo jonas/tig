@@ -221,11 +221,13 @@ argv_appendn(const char ***argv, const char *arg, size_t arglen)
 		return false;
 
 	alloc = strndup(arg, arglen);
+	if (!alloc)
+		die("Failed to allocate arg");
 
 	(*argv)[argc++] = alloc;
 	(*argv)[argc] = NULL;
 
-	return alloc != NULL;
+	return true;
 }
 
 
