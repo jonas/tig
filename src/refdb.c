@@ -230,6 +230,12 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		if (*opt->head)
 			return SUCCESS;
 		type = REFERENCE_HEAD;
+
+	} else if (!strcmp(name, "refs/stash")) {
+		type = REFERENCE_STASH;
+
+	} else if (!prefixcmp(name, "refs/")) {
+		type = REFERENCE_OTHER;
 	}
 
 	/* If we are reloading or it's an annotated tag, replace the
