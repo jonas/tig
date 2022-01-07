@@ -721,7 +721,9 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 /* Define a partial version of success() to format the option name as a suffix to the view name,
  * thereby reducing the arguments needed by success() to only the option value and its format string.
  */
-#define Success(opt_fmt, opt_val) success(":set %s-view-%s = " opt_fmt, view->name, name, opt_val)
+#define Success(opt_fmt, opt_val) *prefix \
+	? success(":set %s-view-%s = " opt_fmt, view->name, name, opt_val) \
+	: success(":set %s = " opt_fmt, name, opt_val)
 
 	char name[SIZEOF_STR];
 

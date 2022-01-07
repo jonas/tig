@@ -176,15 +176,18 @@ uninstall:
 		$(QUIET_UNINSTALL_EACH)tools/uninstall.sh "$(DESTDIR)$(docdir)/tig/$(doc)";)
 
 clean: clean-test clean-coverage
-	$(Q)$(RM) -r $(TARNAME) *.spec tig-*.tar.gz tig-*.tar.gz.sha256 .deps _book node_modules
+	$(Q)$(RM) -r $(TARNAME) tig-*.tar.gz tig-*.tar.gz.sha256 .deps _book node_modules
 	$(Q)$(RM) -r $(compdb_dir) compile_commands.json
 	$(Q)$(RM) $(EXE) $(TOOLS) $(OBJS) core doc/*.xml src/builtin-config.c
 	$(Q)$(RM) $(OBJS:%.o=%.gcda) $(OBJS:%.o=%.gcno)
 
 distclean: clean
 	$(RM) -r doc/manual.html-chunked autom4te.cache
-	$(RM) doc/*.toc $(ALLDOC) aclocal.m4 configure
-	$(RM) config.h config.log config.make config.status config.h.in
+	$(RM) doc/*.toc configure~
+	$(RM) config.h config.log config.make config.status config.h.in~
+
+veryclean: distclean
+	$(RM) tig.spec $(ALLDOC) aclocal.m4 configure config.h.in
 
 spell-check:
 	for file in $(TXTDOC) src/tig.c; do \
@@ -213,7 +216,7 @@ update-docs: tools/doc-gen
 	$(SED) -n '/endif::DOC_GEN_ACTIONS/,$$p' < "$$doc" >> "$$doc.gen" ; \
 	mv "$$doc.gen" "$$doc"
 
-dist: configure tig.spec
+dist: configure config.h.in aclocal.m4 tig.spec
 	$(Q)mkdir -p $(TARNAME) && \
 	cp Makefile tig.spec configure config.h.in aclocal.m4 $(TARNAME) && \
 	$(SED) -i "s/VERSION\s\+=\s\+[0-9]\+\([.][0-9]\+\)\+/VERSION	= $(VERSION)/" $(TARNAME)/Makefile
@@ -279,7 +282,7 @@ test-todo: $(TESTS_TODO)
 
 # Other autoconf-related rules are hidden in config.make.in so that
 # they don't confuse Make when we aren't actually using ./configure
-configure: configure.ac tools/*.m4
+configure config.h.in aclocal.m4: configure.ac tools/*.m4
 	$(QUIET_GEN)./autogen.sh
 
 site:
@@ -291,7 +294,7 @@ site:
 	doc-man doc-html dist distclean install install-doc \
 	install-doc-man install-doc-html install-release-doc-html \
 	install-release-doc-man rpm spell-check strip test \
-	test-coverage update-docs update-headers $(TESTS)
+	test-coverage update-docs update-headers veryclean $(TESTS)
 
 ifdef NO_MKSTEMPS
 COMPAT_CPPFLAGS += -DNO_MKSTEMPS

@@ -194,7 +194,7 @@ init_line_info_color_pair(struct line_info *info, enum line_type type,
 	}
 
 	if (!realloc_color_pair(&color_pair, color_pairs, 1))
-		die("Failed to alloc color pair");
+		die("Failed to allocate color pair");
 
 	color_pair[color_pairs] = info;
 	info->color_pair = color_pairs++;

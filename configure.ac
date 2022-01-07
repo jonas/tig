@@ -43,6 +43,7 @@ AS_IF([test "x$with_pcre" != xno], [
 	AS_IF([test "x$ac_cv_header_pcre2posix_h" = xyes], [
 		AC_CHECK_LIB([pcre2-posix], [regexec], [
 			AC_DEFINE([HAVE_PCRE2], [1], [Define if you have PCRE2])
+			AC_DEFINE([PCRE2_CODE_UNIT_WIDTH], [8], [ ])
 			LIBS="$LIBS -lpcre2-posix -lpcre2-8"
 		])
 	])

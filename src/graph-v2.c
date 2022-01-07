@@ -111,16 +111,17 @@ static const char *intern_string(const char *str)
 }
 
 struct id_color {
-	char *id;
 	size_t color;
+	char id[1];
 };
 
 static struct id_color *
 id_color_new(const char *id, size_t color)
 {
-	struct id_color *node = malloc(sizeof(struct id_color));
+	struct id_color *node = malloc(sizeof(struct id_color) + strlen(id));
 
-	node->id = (char *) malloc(strlen(id) + 1);
+	if (!node)
+		die("Failed to allocate color");
 	strcpy(node->id, id);
 	node->color = color;
 
@@ -130,7 +131,6 @@ id_color_new(const char *id, size_t color)
 static void
 id_color_delete(struct id_color *node)
 {
-	free(node->id);
 	free(node);
 }
 
@@ -1228,23 +1228,23 @@ struct graph *
 init_graph_v2(void)
 {
 	struct graph_v2 *graph = calloc(1, sizeof(*graph));
-	struct graph *api;
+	struct graph *api = NULL;
 
-	if (!graph)
-		return NULL;
+	if (graph) {
+		api = &graph->api;
 
-	api = &graph->api;
-	api->private = graph;
-	api->done = done_graph;
-	api->done_rendering = done_graph_rendering;
-	api->add_commit = graph_add_commit;
-	api->add_parent = graph_add_parent;
-	api->is_merge = graph_is_merge;
-	api->render_parents = graph_render_parents;
-	api->foreach_symbol = graph_foreach_symbol;
-	api->symbol_to_ascii = graph_symbol_to_ascii;
-	api->symbol_to_utf8 = graph_symbol_to_utf8;
-	api->symbol_to_chtype = graph_symbol_to_chtype;
+		api->private = graph;
+		api->done = done_graph;
+		api->done_rendering = done_graph_rendering;
+		api->add_commit = graph_add_commit;
+		api->add_parent = graph_add_parent;
+		api->render_parents = graph_render_parents;
+		api->is_merge = graph_is_merge;
+		api->foreach_symbol = graph_foreach_symbol;
+		api->symbol_to_ascii = graph_symbol_to_ascii;
+		api->symbol_to_utf8 = graph_symbol_to_utf8;
+		api->symbol_to_chtype = graph_symbol_to_chtype;
+	}
 
 	return api;
 }

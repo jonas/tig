@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Steven G. Johnson, Jiahao Chen, Peter Colberg, Tony Kelman, Scott P. Jones, and other contributors.
+ * Copyright (c) 2014-2021 Steven G. Johnson, Jiahao Chen, Peter Colberg, Tony Kelman, Scott P. Jones, and other contributors.
  * Copyright (c) 2009 Public Software Group e. V., Berlin, Germany
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,7 +28,7 @@
  * utf8proc is a free/open-source (MIT/expat licensed) C library
  * providing Unicode normalization, case-folding, and other operations
  * for strings in the UTF-8 encoding, supporting up-to-date Unicode versions.
- * See the utf8proc home page (https://juliastrings.github.io/utf8proc/)
+ * See the utf8proc home page (http://julialang.org/utf8proc/)
  * for downloads and other information, or the source code on github
  * (https://github.com/JuliaLang/utf8proc).
  *
@@ -37,7 +37,7 @@
  * The features of utf8proc include:
  *
  * - Transformation of strings (@ref utf8proc_map) to:
- *    - decompose (@ref UTF8PROC_DECOMPOSE) or compose (@ref UTF8PROC_COMPOSE) Unicode combining characters (https://en.wikipedia.org/wiki/Combining_character)
+ *    - decompose (@ref UTF8PROC_DECOMPOSE) or compose (@ref UTF8PROC_COMPOSE) Unicode combining characters (http://en.wikipedia.org/wiki/Combining_character)
  *    - canonicalize Unicode compatibility characters (@ref UTF8PROC_COMPAT)
  *    - strip "ignorable" (@ref UTF8PROC_IGNORE) characters, control characters (@ref UTF8PROC_STRIPCC), or combining characters such as accents (@ref UTF8PROC_STRIPMARK)
  *    - case-folding (@ref UTF8PROC_CASEFOLD)
@@ -56,7 +56,7 @@
 /** @name API version
  *
  * The utf8proc API version MAJOR.MINOR.PATCH, following
- * semantic-versioning rules (https://semver.org) based on API
+ * semantic-versioning rules (http://semver.org) based on API
  * compatibility.
  *
  * This is also returned at runtime by @ref utf8proc_version; however, the
@@ -71,9 +71,9 @@
 /** The MAJOR version number (increased when backwards API compatibility is broken). */
 #define UTF8PROC_VERSION_MAJOR 2
 /** The MINOR version number (increased when new functionality is added in a backwards-compatible manner). */
-#define UTF8PROC_VERSION_MINOR 6
+#define UTF8PROC_VERSION_MINOR 7
 /** The PATCH version (increased for fixes that do not change the API). */
-#define UTF8PROC_VERSION_PATCH 1
+#define UTF8PROC_VERSION_PATCH 0
 /** @} */
 
 #include <stdlib.h>
@@ -403,7 +403,7 @@ UTF8PROC_DLLEXPORT extern const utf8proc_int8_t utf8proc_utf8class[256];
 
 /**
  * Returns the utf8proc API version as a string MAJOR.MINOR.PATCH
- * (https://semver.org format), possibly with a "-dev" suffix for
+ * (http://semver.org format), possibly with a "-dev" suffix for
  * development versions.
  */
 UTF8PROC_DLLEXPORT const char *utf8proc_version(void);

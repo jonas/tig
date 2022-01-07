@@ -32,7 +32,7 @@
 
 DEFINE_ALLOCATOR(realloc_reflogs, char *, 32)
 
-static struct view_history main_view_history = { 0 };
+static struct view_history main_view_history = { sizeof(unsigned long) };
 
 bool
 main_status_exists(struct view *view, enum line_type type)
@@ -94,7 +94,7 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 		return NULL;
 
 	*commit = *template;
-	strncpy(commit->title, title, titlelen);
+	strcpy(commit->title, title);
 	memset(template, 0, sizeof(*template));
 	state->reflogmsg[0] = 0;
 
@@ -574,7 +574,7 @@ main_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_PARENT:
-		if (push_view_history_state(&main_view_history, &view->pos, NULL)) {
+		if (push_view_history_state(&main_view_history, &view->pos, &view->pos.lineno)) {
 			goto_id(view, "%(commit)^", true, false);
 		} else {
 			report("Failed to save current view state");
