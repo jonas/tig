@@ -798,8 +798,10 @@ prompt_toggle_option(struct view *view, const char *argv[], const char *prefix,
 		int i;
 
 		if (argv_size(argv) <= 2) {
-			argv_free(*opt);
-			(*opt)[0] = NULL;
+			if (*opt) {
+				argv_free(*opt);
+				(*opt)[0] = NULL;
+			}
 			return SUCCESS;
 		}
 

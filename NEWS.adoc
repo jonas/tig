@@ -35,6 +35,7 @@ Bug fixes:
  - Fix navigation between chunks after splitting chunk. (#1101, #1162)
  - Fix status line when toggling general options. (#1163, #1164)
  - Honor reference-format = hide:tag in diff view. (#1168, #1170)
+ - Fix crash on :toggle file-args.
 
 tig-2.5.4
 ---------
