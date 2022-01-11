@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 9.1.0" />
+<meta name="generator" content="AsciiDoc 10.1.1" />
 <title>Release notes</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -737,6 +737,152 @@ asciidoc.install();
 <h1>Release notes</h1>
 </div>
 <div id="content">
+<div class="sect1">
+<h2 id="_tig_2_5_5">tig-2.5.5</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Make word-diff a toggleable option. (#1119, #1125)
+</p>
+</li>
+<li>
+<p>
+Add Linux installation instructions. (#1121, #1126)
+</p>
+</li>
+<li>
+<p>
+Allow :back to work across separate blame views. (#1123, #1127)
+</p>
+</li>
+<li>
+<p>
+Add auto-refresh to log view. (#1128)
+</p>
+</li>
+<li>
+<p>
+Expose <code>%(file_old)</code>, useful for deleted and renamed files. (#1132)
+</p>
+</li>
+<li>
+<p>
+Enable jumping back in main view. (#628, #1138)
+</p>
+</li>
+<li>
+<p>
+Add PCRE (Perl Compatible Regular Expressions) support. (#1137, #1143)
+</p>
+</li>
+<li>
+<p>
+Pass command line args through to diff-files in status view. (#1152, #1155)
+</p>
+</li>
+<li>
+<p>
+Remove quotes from TIG_LS_REMOTE to allow inline shell commands. (#1160, #1161)
+</p>
+</li>
+<li>
+<p>
+Avoid pushing identical history state in main view.
+</p>
+</li>
+<li>
+<p>
+Replace useless strncpy to avoid compilation warning with GCC 8.
+</p>
+</li>
+<li>
+<p>
+Update utf8proc to v2.7.0.
+</p>
+</li>
+<li>
+<p>
+Update distclean rule to preserve tarball contents. (#1167, #1169)
+</p>
+</li>
+<li>
+<p>
+Add reference types stash and other. (#1160, #1172)
+</p>
+</li>
+<li>
+<p>
+Auto refresh view upon option change.
+</p>
+</li>
+<li>
+<p>
+Allow to toggle revision filtering. (#1173)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix null dereferences on unset format strings. (#1136, #1159)
+</p>
+</li>
+<li>
+<p>
+Fix invalid read in log_read. (#1128)
+</p>
+</li>
+<li>
+<p>
+Restore support for tig log --graph. (#1128)
+</p>
+</li>
+<li>
+<p>
+Further fix to fullscreen navigation.
+</p>
+</li>
+<li>
+<p>
+Fix blame when opened from an initial diff view. (#1135)
+</p>
+</li>
+<li>
+<p>
+Fix stash view when using tig --all or tig revs. (#1146, #1147)
+</p>
+</li>
+<li>
+<p>
+Avoiding null pointer dereference. (#1096)
+</p>
+</li>
+<li>
+<p>
+Fix navigation between chunks after splitting chunk. (#1101, #1162)
+</p>
+</li>
+<li>
+<p>
+Fix status line when toggling general options. (#1163, #1164)
+</p>
+</li>
+<li>
+<p>
+Honor reference-format = hide:tag in diff view. (#1168, #1170)
+</p>
+</li>
+<li>
+<p>
+Fix crash on :toggle file-args.
+</p>
+</li>
+</ul></div>
+</div>
+</div>
 <div class="sect1">
 <h2 id="_tig_2_5_4">tig-2.5.4</h2>
 <div class="sectionbody">
@@ -3034,7 +3180,7 @@ Fix submodule-related setup to check for non-zero return value from
 <li>
 <p>
 Tig now has its own tag on Stack Overflow, where users are invited to
-   ask questions: <a href="http://stackoverflow.com/questions/tagged/tig">http://stackoverflow.com/questions/tagged/tig</a>
+   ask questions: <a href="https://stackoverflow.com/questions/tagged/tig">https://stackoverflow.com/questions/tagged/tig</a>
 </p>
 </li>
 </ul></div>
@@ -4652,7 +4798,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2021-06-05 18:08:08 CEST
+ 2022-01-11 19:50:17 CET
 </div>
 </div>
 </body>

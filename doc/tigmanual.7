@@ -2,12 +2,12 @@
 .\"     Title: tigmanual
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 06/05/2021
+.\"      Date: 01/11/2022
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.5.4
+.\"    Source: Tig 2.5.5
 .\"  Language: English
 .\"
-.TH "TIGMANUAL" "7" "06/05/2021" "Tig 2\&.5\&.4" "Tig Manual"
+.TH "TIGMANUAL" "7" "01/11/2022" "Tig 2\&.5\&.5" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -228,6 +228,7 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -298,6 +299,13 @@ T{
 T}:T{
 .sp
 The currently selected file\&.
+T}
+T{
+.sp
+%(file_old)
+T}:T{
+.sp
+The old filename of the currently selected file\&.
 T}
 T{
 .sp
@@ -1117,6 +1125,7 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1215,6 +1224,13 @@ T{
 T}:T{
 .sp
 Toggle file filtering in order to see the full diff instead of only the diff concerning the currently selected file\&.
+T}
+T{
+.sp
+^
+T}:T{
+.sp
+Toggle revision filtering in the main view\&.
 T}
 T{
 .sp

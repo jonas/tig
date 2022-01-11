@@ -2,12 +2,12 @@
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 06/05/2021
+.\"      Date: 01/11/2022
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.5.4
+.\"    Source: Tig 2.5.5
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "06/05/2021" "Tig 2\&.5\&.4" "Tig Manual"
+.TH "TIGRC" "5" "01/11/2022" "Tig 2\&.5\&.5" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -238,7 +238,7 @@ head : The current HEAD\&.
 .sp -1
 .IP \(bu 2.3
 .\}
-tag : A signed tag\&.
+tag : An annotated tag\&.
 .RE
 .sp
 .RS 4
@@ -249,7 +249,7 @@ tag : A signed tag\&.
 .sp -1
 .IP \(bu 2.3
 .\}
-local\-tag : An unsigned tag\&.
+local\-tag : A lightweight tag\&.
 .RE
 .sp
 .RS 4
@@ -293,7 +293,29 @@ replace : A replaced reference\&.
 .sp -1
 .IP \(bu 2.3
 .\}
-branch : Any other reference\&.
+branch : A branch\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+stash : The stash\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+other : Any other reference\&.
 .RE
 .RE
 .PP
@@ -1078,7 +1100,7 @@ Valid keymaps are:
 and
 \fBgeneric\fR\&. Use
 \fBgeneric\fR
-to set key mapping in all keymaps\&. Use
+to set key mapping in all keymaps (which may still be overridden by a specific view keybinding)\&. Use
 \fBsearch\fR
 to define keys for navigating search results during search\&.
 .RE
@@ -1310,6 +1332,7 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1380,6 +1403,13 @@ T{
 T}:T{
 .sp
 The currently selected file\&.
+T}
+T{
+.sp
+%(file_old)
+T}:T{
+.sp
+The old filename of the currently selected file\&.
 T}
 T{
 .sp
@@ -2666,12 +2696,8 @@ is pretty much omnipresent\&.
 .PP
 Commit message
 .RS 4
-Signed\-off\-by,
-Acked\-by,
-Reviewed\-by
-and
-Tested\-by
-lines are colorized\&. Characters in the commit title exceeding a predefined width can be highlighted\&.
+Most common trailer lines (e\&.g\&.
+Signed\-off\-by) are colorized\&. Characters in the commit title exceeding a predefined width can be highlighted\&.
 .RE
 .PP
 Tree markup

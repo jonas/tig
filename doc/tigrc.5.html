@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 9.1.0" />
+<meta name="generator" content="AsciiDoc 10.1.1" />
 <title>tigrc(5)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -986,12 +986,12 @@ head                 : The current HEAD.
 </li>
 <li>
 <p>
-tag                  : A signed tag.
+tag                  : An annotated tag.
 </p>
 </li>
 <li>
 <p>
-local-tag            : An unsigned tag.
+local-tag            : A lightweight tag.
 </p>
 </li>
 <li>
@@ -1011,7 +1011,17 @@ replace              : A replaced reference.
 </li>
 <li>
 <p>
-branch               : Any other reference.
+branch               : A branch.
+</p>
+</li>
+<li>
+<p>
+stash                : The stash.
+</p>
+</li>
+<li>
+<p>
+other                : Any other reference.
 </p>
 </li>
 </ul></div>
@@ -1789,8 +1799,9 @@ Keymaps
 <p>
 Valid keymaps are: <strong>main</strong>, <strong>diff</strong>, <strong>log</strong>, <strong>reflog</strong>, <strong>help</strong>, <strong>pager</strong>, <strong>status</strong>,
 <strong>stage</strong>, <strong>tree</strong>, <strong>blob</strong>, <strong>blame</strong>, <strong>refs</strong>, <strong>stash</strong>, <strong>grep</strong> and <strong>generic</strong>. Use
-<strong>generic</strong> to set key mapping in all keymaps. Use <strong>search</strong> to define keys for
-navigating search results during search.
+<strong>generic</strong> to set key mapping in all keymaps (which may still be overridden by a
+specific view keybinding). Use <strong>search</strong> to define keys for navigating search
+results during search.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1977,6 +1988,10 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(file)</code></p></td>
 <td align="left" valign="top"><p class="table">The currently selected file.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(file_old)</code></p></td>
+<td align="left" valign="top"><p class="table">The old filename of the currently selected file.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(lineno)</code></p></td>
@@ -2827,7 +2842,7 @@ Commit message
 </dt>
 <dd>
 <p>
-<code>Signed-off-by</code>, <code>Acked-by</code>, <code>Reviewed-by</code> and <code>Tested-by</code> lines are colorized.
+Most common trailer lines (e.g. <code>Signed-off-by</code>) are colorized.
 Characters in the commit title exceeding a predefined width can be highlighted.
 </p>
 </dd>
@@ -2890,7 +2905,7 @@ git(7), git-config(1)</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2021-06-05 18:08:08 CEST
+ 2022-01-11 19:50:17 CET
 </div>
 </div>
 </body>

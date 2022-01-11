@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 9.1.0" />
+<meta name="generator" content="AsciiDoc 10.1.1" />
 <title>Installation instructions</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -740,10 +740,10 @@ asciidoc.install();
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph"><p>Download a tarball from <a href="https://github.com/jonas/tig/releases">https://github.com/jonas/tig/releases</a> or clone the Tig
-repository <a href="http://github.com/jonas/tig">git://github.com/jonas/tig.git</a>.</p></div>
+repository <a href="https://github.com/jonas/tig">git://github.com/jonas/tig.git</a>.</p></div>
 <div class="paragraph"><p>The latest version is:
-<a href="https://github.com/jonas/tig/releases/download/tig-2.5.4/tig-2.5.4.tar.gz">tig-2.5.4</a>
-<a href="https://github.com/jonas/tig/releases/download/tig-2.5.4/tig-2.5.4.tar.gz.sha256">(sha256)</a></p></div>
+<a href="https://github.com/jonas/tig/releases/download/tig-2.5.5/tig-2.5.5.tar.gz">tig-2.5.5</a>
+<a href="https://github.com/jonas/tig/releases/download/tig-2.5.5/tig-2.5.5.tar.gz.sha256">(sha256)</a></p></div>
 <div class="paragraph"><p><strong>Note:</strong> Do not use the tar.gz file for version 2.0 because it will fail
 to compile due to issue <a href="https://github.com/jonas/tig/pull/283">#283</a> and
 <a href="https://github.com/jonas/tig/issues/337">#337</a></p></div>
@@ -814,7 +814,7 @@ build without <code>configure</code>):</p></div>
 <div class="sect1">
 <h2 id="_installation_using_homebrew">Installation using Homebrew</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>You can use <a href="http://brew.sh">Homebrew</a> to install Tig on OS X:</p></div>
+<div class="paragraph"><p>You can use <a href="https://brew.sh">Homebrew</a> to install Tig on macOS and Linux:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ brew install tig</code></pre>
@@ -846,6 +846,19 @@ never made any changes to it.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ nix-env -i tig</code></pre>
+</div></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_installation_on_linux">Installation on Linux</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Depending on your distribution, you may be able to use one of the following commands to install Tig on Linux:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ apt-get install tig (Debian, Ubuntu)
+$ dnf install tig (Fedora)
+$ pacman -S tig (Arch Linux)
+$ apk add tig (Alpine)</code></pre>
 </div></div>
 </div>
 </div>
@@ -995,6 +1008,11 @@ cellspacing="0" cellpadding="4">
                                  search and command prompts.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table">PCRE</p></td>
+<td align="left" valign="top"><p class="table">Adds support for Perl Compatible Regular
+                                 Expressions in searches.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table">autoconf</p></td>
 <td align="left" valign="top"><p class="table">Contains autoreconf for generating configure
                                  from configure.ac.</p></td>
@@ -1026,7 +1044,7 @@ cellspacing="0" cellpadding="4">
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2021-06-05 18:08:08 CEST
+ 2022-01-11 19:50:17 CET
 </div>
 </div>
 </body>
