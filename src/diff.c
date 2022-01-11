@@ -29,8 +29,8 @@ diff_open(struct view *view, enum open_flags flags)
 		"git", "show", encoding_arg, "--pretty=fuller", "--root",
 			"--patch-with-stat", use_mailmap_arg(),
 			show_notes_arg(), diff_context_arg(), ignore_space_arg(),
-			DIFF_ARGS, "%(cmdlineargs)", "--no-color", "%(commit)",
-			"--", "%(fileargs)", NULL
+			DIFF_ARGS, "%(cmdlineargs)", "--no-color", word_diff_arg(),
+			"%(commit)", "--", "%(fileargs)", NULL
 	};
 	enum status_code code;
 
@@ -444,7 +444,7 @@ diff_save_line(struct view *view, struct diff_state *state, enum open_flags flag
 {
 	if (flags & OPEN_RELOAD) {
 		struct line *line = &view->line[view->pos.lineno];
-		const char *file = view_has_line(view, line) ? diff_get_pathname(view, line) : NULL;
+		const char *file = view_has_line(view, line) ? diff_get_pathname(view, line, false) : NULL;
 
 		if (file) {
 			state->file = get_path(file);
@@ -463,7 +463,7 @@ diff_restore_line(struct view *view, struct diff_state *state)
 		return;
 
 	while ((line = find_prev_line_by_type(view, line, LINE_DIFF_HEADER))) {
-		const char *file = diff_get_pathname(view, line);
+		const char *file = diff_get_pathname(view, line, false);
 
 		if (file && !strcmp(file, state->file))
 			break;
@@ -635,6 +635,8 @@ diff_get_lineno(struct view *view, struct line *line, bool old)
 static enum request
 diff_trace_origin(struct view *view, struct line *line)
 {
+	struct line *commit_line = find_prev_line_by_type(view, line, LINE_COMMIT);
+	char id[SIZEOF_REV];
 	struct line *diff = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
 	struct line *chunk = find_prev_line_by_type(view, line, LINE_DIFF_CHUNK);
 	const char *chunk_data;
@@ -645,7 +647,7 @@ diff_trace_origin(struct view *view, struct line *line)
 	struct blame_header header;
 	struct blame_commit commit;
 
-	if (!diff || !chunk || chunk == line) {
+	if (!diff || !chunk || chunk == line || diff < commit_line) {
 		report("The line to trace must be inside a diff chunk");
 		return REQ_NONE;
 	}
@@ -686,32 +688,30 @@ diff_trace_origin(struct view *view, struct line *line)
 		}
 	}
 
-	if (chunk_marker == '+')
-		string_copy(ref, view->vid);
+	if (commit_line)
+		string_copy_rev_from_commit_line(id, box_text(commit_line));
 	else
-		string_format(ref, "%s^", view->vid);
+		string_copy(id, view->vid);
 
-	if (string_rev_is_null(ref)) {
-		string_ncopy(view->env->file, file, strlen(file));
-		string_copy(view->env->ref, "");
-		view->env->goto_lineno = lineno - 1;
+	if (chunk_marker == '-')
+		string_format(ref, "%s^", id);
+	else
+		string_copy(ref, id);
 
-	} else {
-		if (!diff_blame_line(ref, file, lineno, &header, &commit)) {
-			report("Failed to read blame data");
-			return REQ_NONE;
-		}
-
-		string_ncopy(view->env->file, commit.filename, strlen(commit.filename));
-		string_copy(view->env->ref, header.id);
-		view->env->goto_lineno = header.orig_lineno - 1;
+	if (!diff_blame_line(ref, file, lineno, &header, &commit)) {
+		report("Failed to read blame data");
+		return REQ_NONE;
 	}
+
+	string_ncopy(view->env->file, commit.filename, strlen(commit.filename));
+	string_copy(view->env->ref, header.id);
+	view->env->goto_lineno = header.orig_lineno - 1;
 
 	return REQ_VIEW_BLAME;
 }
 
 const char *
-diff_get_pathname(struct view *view, struct line *line)
+diff_get_pathname(struct view *view, struct line *line, bool old)
 {
 	struct line *header;
 	const char *dst;
@@ -723,26 +723,28 @@ diff_get_pathname(struct view *view, struct line *line)
 	if (!header)
 		return NULL;
 
-	for (i = 0; i < ARRAY_SIZE(prefixes); i++) {
-		dst = strstr(box_text(header), prefixes[i]);
-		if (dst)
-			return dst + strlen(prefixes[i]);
+	if (!old) {
+		for (i = 0; i < ARRAY_SIZE(prefixes); i++) {
+			dst = strstr(box_text(header), prefixes[i]);
+			if (dst)
+				return dst + strlen(prefixes[i]);
+		}
 	}
 
-	header = find_next_line_by_type(view, header, LINE_DIFF_ADD_FILE);
+	header = find_next_line_by_type(view, header, old ? LINE_DIFF_DEL_FILE : LINE_DIFF_ADD_FILE);
 	if (!header)
 		return NULL;
 
 	name = box_text(header);
-	if (!prefixcmp(name, "+++ "))
+	if (old ? !prefixcmp(name, "--- ") : !prefixcmp(name, "+++ "))
 		name += STRING_SIZE("+++ ");
 
 	if (opt_diff_noprefix)
 		return name;
 
 	/* Handle mnemonic prefixes, such as "b/" and "w/". */
-	if (!prefixcmp(name, "b/") || !prefixcmp(name, "w/"))
-		name += STRING_SIZE("b/");
+	if (!prefixcmp(name, "a/") || !prefixcmp(name, "b/") || !prefixcmp(name, "i/") || !prefixcmp(name, "w/"))
+		name += STRING_SIZE("a/");
 	return name;
 }
 
@@ -757,7 +759,7 @@ diff_common_edit(struct view *view, enum request request, struct line *line)
 		file = view->env->file;
 		lineno = view->env->lineno;
 	} else {
-		file = diff_get_pathname(view, line);
+		file = diff_get_pathname(view, line, false);
 		lineno = diff_get_lineno(view, line, false);
 	}
 
@@ -789,10 +791,7 @@ diff_request(struct view *view, enum request request, struct line *line)
 		return diff_common_enter(view, request, line);
 
 	case REQ_REFRESH:
-		if (string_rev_is_null(view->vid))
-			refresh_view(view);
-		else
-			reload_view(view);
+		reload_view(view);
 		return REQ_NONE;
 
 	default:
@@ -806,9 +805,12 @@ diff_common_select(struct view *view, struct line *line, const char *changes_msg
 	if (line->type == LINE_DIFF_STAT) {
 		struct line *header = diff_find_header_from_stat(view, line);
 		if (header) {
-			const char *file = diff_get_pathname(view, header);
+			const char *file = diff_get_pathname(view, header, false);
 
 			if (file) {
+				const char *old_file = diff_get_pathname(view, header, true);
+				if (old_file)
+					string_format(view->env->file_old, "%s", old_file);
 				string_format(view->env->file, "%s", file);
 				view->env->lineno = view->env->goto_lineno = 0;
 				view->env->blob[0] = 0;
@@ -818,9 +820,12 @@ diff_common_select(struct view *view, struct line *line, const char *changes_msg
 		string_format(view->ref, "Press '%s' to jump to file diff",
 			      get_view_key(view, REQ_ENTER));
 	} else {
-		const char *file = diff_get_pathname(view, line);
+		const char *file = diff_get_pathname(view, line, false);
 
 		if (file) {
+			const char *old_file = diff_get_pathname(view, line, true);
+			if (old_file)
+				string_format(view->env->file_old, "%s", old_file);
 			if (changes_msg)
 				string_format(view->ref, "%s to '%s'", changes_msg, file);
 			string_format(view->env->file, "%s", file);

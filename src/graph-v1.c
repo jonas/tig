@@ -474,7 +474,8 @@ graph_symbol_to_ascii(const struct graph_symbol *symbol)
 }
 
 static void
-graph_foreach_symbol(const struct graph *graph, const struct graph_canvas *canvas, graph_symbol_iterator_fn fn, void *data)
+graph_foreach_symbol(const struct graph *graph, const struct graph_canvas *canvas,
+		     graph_symbol_iterator_fn fn, void *data)
 {
 	int i;
 
@@ -491,19 +492,23 @@ struct graph *
 init_graph_v1(void)
 {
 	struct graph_v1 *graph = calloc(1, sizeof(*graph));
-	struct graph *api = &graph->api;
+	struct graph *api = NULL;
 
-	api->private = graph;
-	api->done = done_graph;
-	api->done_rendering = done_graph_rendering;
-	api->add_commit = graph_add_commit;
-	api->add_parent = graph_add_parent;
-	api->render_parents = graph_render_parents;
-	api->is_merge = graph_is_merge;
-	api->foreach_symbol = graph_foreach_symbol;
-	api->symbol_to_ascii = graph_symbol_to_ascii;
-	api->symbol_to_utf8 = graph_symbol_to_utf8;
-	api->symbol_to_chtype = graph_symbol_to_chtype;
+	if (graph) {
+		api = &graph->api;
+
+		api->private = graph;
+		api->done = done_graph;
+		api->done_rendering = done_graph_rendering;
+		api->add_commit = graph_add_commit;
+		api->add_parent = graph_add_parent;
+		api->render_parents = graph_render_parents;
+		api->is_merge = graph_is_merge;
+		api->foreach_symbol = graph_foreach_symbol;
+		api->symbol_to_ascii = graph_symbol_to_ascii;
+		api->symbol_to_utf8 = graph_symbol_to_utf8;
+		api->symbol_to_chtype = graph_symbol_to_chtype;
+	}
 
 	return api;
 }

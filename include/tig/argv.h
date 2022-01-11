@@ -45,6 +45,7 @@ typedef unsigned long argv_number;
 	_(argv_string,	 branch,	"",		"") \
 	_(argv_string,	 directory,	".",		"") \
 	_(argv_string,	 file,		"",		"") \
+	_(argv_string,	 file_old,	"",		"") \
 	_(argv_string,	 head,		"",		"HEAD") \
 	_(argv_number,	 lineno,	"",		0) \
 	_(argv_number,	 lineno_old,	"",		0) \
@@ -68,7 +69,13 @@ struct argv_env {
 
 extern struct argv_env argv_env;
 
-bool argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter);
+enum argv_flag {
+	argv_flag_first = 1 << 0,
+	argv_flag_file_filter = 1 << 1,
+	argv_flag_rev_filter = 1 << 2,
+};
+
+bool argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_argv[], int flags);
 char *argv_format_arg(struct argv_env *argv_env, const char *src_arg);
 
 struct rev_flags {

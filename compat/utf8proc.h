@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Steven G. Johnson, Jiahao Chen, Peter Colberg, Tony Kelman, Scott P. Jones, and other contributors.
+ * Copyright (c) 2014-2021 Steven G. Johnson, Jiahao Chen, Peter Colberg, Tony Kelman, Scott P. Jones, and other contributors.
  * Copyright (c) 2009 Public Software Group e. V., Berlin, Germany
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -71,9 +71,9 @@
 /** The MAJOR version number (increased when backwards API compatibility is broken). */
 #define UTF8PROC_VERSION_MAJOR 2
 /** The MINOR version number (increased when new functionality is added in a backwards-compatible manner). */
-#define UTF8PROC_VERSION_MINOR 6
+#define UTF8PROC_VERSION_MINOR 7
 /** The PATCH version (increased for fixes that do not change the API). */
-#define UTF8PROC_VERSION_PATCH 1
+#define UTF8PROC_VERSION_PATCH 0
 /** @} */
 
 #include <stdlib.h>

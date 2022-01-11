@@ -221,11 +221,13 @@ argv_appendn(const char ***argv, const char *arg, size_t arglen)
 		return false;
 
 	alloc = strndup(arg, arglen);
+	if (!alloc)
+		die("Failed to allocate arg");
 
 	(*argv)[argc++] = alloc;
 	(*argv)[argc] = NULL;
 
-	return alloc != NULL;
+	return true;
 }
 
 
@@ -277,7 +279,7 @@ struct format_context {
 	size_t vars_size;
 	char buf[SIZEOF_MED_STR];
 	size_t bufpos;
-	bool file_filter;
+	int argv_flags;
 };
 
 #define ARGV_ENV_INIT(type, name, ifempty, initval)	initval,
@@ -318,7 +320,7 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 		if (string_enum_compare(name, vars[i].name, vars[i].namelen))
 			continue;
 
-		if (vars[i].value_ref == &argv_env.file && !format->file_filter)
+		if (vars[i].value_ref == &argv_env.file && !(format->argv_flags & argv_flag_file_filter))
 			return true;
 
 		return vars[i].formatter(format, &vars[i]);
@@ -361,13 +363,13 @@ format_append_argv(struct format_context *format, const char ***dst_argv, const 
 	int argc;
 
 	if (!src_argv)
-		return true;
+		return argv_append(dst_argv, "");
 
 	for (argc = 0; src_argv[argc]; argc++)
 		if (!format_append_arg(format, dst_argv, src_argv[argc]))
 			return false;
 
-	return src_argv[argc] == NULL;
+	return true;
 }
 
 static bool
@@ -420,7 +422,7 @@ repo_rev_formatter(struct format_context *format, struct format_var *var)
 }
 
 bool
-argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_argv[], bool first, bool file_filter)
+argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_argv[], int flags)
 {
 	struct format_var vars[] = {
 #define FORMAT_VAR(type, name, ifempty, initval) \
@@ -430,7 +432,7 @@ argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_a
 	{ "%(repo:" #name ")", STRING_SIZE("%(repo:" #name ")"), type ## _formatter, &repo.name, "" },
 		REPO_INFO(FORMAT_REPO_VAR)
 	};
-	struct format_context format = { vars, ARRAY_SIZE(vars), "", 0, file_filter };
+	struct format_context format = { vars, ARRAY_SIZE(vars), "", 0, flags };
 	int argc;
 
 	argv_free(*dst_argv);
@@ -439,7 +441,9 @@ argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_a
 		const char *arg = src_argv[argc];
 
 		if (!strcmp(arg, "%(fileargs)")) {
-			if (file_filter && !argv_append_array(dst_argv, opt_file_args))
+			if ((flags & argv_flag_file_filter) &&
+			    !(opt_file_args ? argv_append_array(dst_argv, opt_file_args)
+					    : argv_append(dst_argv, "")))
 				break;
 
 		} else if (!strcmp(arg, DIFF_ARGS)) {
@@ -463,8 +467,10 @@ argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_a
 				break;
 
 		} else if (!strcmp(arg, "%(revargs)") ||
-			   (first && !strcmp(arg, "%(commit)"))) {
-			if (!argv_append_array(dst_argv, opt_rev_args))
+			   ((flags & argv_flag_first) && !strcmp(arg, "%(commit)"))) {
+			if ((flags & argv_flag_rev_filter) &&
+			    !(opt_rev_args ? argv_append_array(dst_argv, opt_rev_args)
+					   : argv_append(dst_argv, "")))
 				break;
 
 		} else if (!format_append_arg(&format, dst_argv, arg)) {
@@ -606,7 +612,7 @@ argv_format_arg(struct argv_env *argv_env, const char *src_arg)
 	const char **dst_argv = NULL;
 	char *dst_arg = NULL;
 
-	if (argv_format(argv_env, &dst_argv, src_argv, false, true))
+	if (argv_format(argv_env, &dst_argv, src_argv, argv_flag_file_filter | argv_flag_rev_filter))
 		dst_arg = (char *) dst_argv[0];
 
 	free(dst_argv);

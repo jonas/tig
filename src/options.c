@@ -142,6 +142,12 @@ diff_context_arg()
 }
 
 const char *
+word_diff_arg()
+{
+	return opt_word_diff ? "--word-diff=plain" : "--word-diff=none";
+}
+
+const char *
 use_mailmap_arg()
 {
 	return opt_mailmap ? "--use-mailmap" : "--no-use-mailmap";
@@ -257,6 +263,8 @@ update_options_from_argv(const char *argv[])
 		if (!strcmp(flag, "--word-diff") ||
 		    !strcmp(flag, "--word-diff=plain")) {
 			opt_word_diff = true;
+			mark_option_seen(&opt_word_diff);
+			continue;
 		}
 
 		argv[flags_pos++] = flag;
@@ -865,6 +873,7 @@ option_bind_command(int argc, const char *argv[])
 			{ "toggle-date",		"date" },
 			{ "toggle-files",		"file-filter" },
 			{ "toggle-file-filter",		"file-filter" },
+			{ "toggle-rev-filter",		"rev-filter" },
 			{ "toggle-file-size",		"file-size" },
 			{ "toggle-filename",		"filename" },
 			{ "toggle-graphic",		"show-graphic" },
@@ -1050,6 +1059,7 @@ load_options(void)
 	char buf[SIZEOF_STR];
 
 	opt_file_filter = true;
+	opt_rev_filter = true;
 	if (!find_option_info_by_value(&opt_diff_context)->seen)
 		opt_diff_context = -3;
 

@@ -39,16 +39,17 @@ typedef struct view_column *view_settings;
 	_(diff_noprefix,		bool,			VIEW_NO_FLAGS) \
 	_(diff_options,			const char **,		VIEW_DIFF_LIKE) \
 	_(diff_highlight,		const char *,		VIEW_DIFF_LIKE) \
+	_(word_diff,			bool,			VIEW_DIFF_LIKE) \
 	_(diff_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(editor_line_number,		bool,			VIEW_NO_FLAGS) \
-	_(file_args,			const char **,		VIEW_NO_FLAGS) \
+	_(file_args,			const char **,		VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
 	_(file_filter,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
 	_(focus_child,			bool,			VIEW_NO_FLAGS) \
 	_(git_colors,			const char **,		VIEW_NO_FLAGS) \
 	_(grep_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(history_size,			int,			VIEW_NO_FLAGS) \
 	_(horizontal_scroll,		double,			VIEW_NO_FLAGS) \
-	_(id_width,			int,			VIEW_NO_FLAGS) \
+	_(id_width,			int,			VIEW_LOG_LIKE) \
 	_(ignore_case,			enum ignore_case,	VIEW_NO_FLAGS) \
 	_(ignore_space,			enum ignore_space,	VIEW_DIFF_LIKE) \
 	_(line_graphics,		enum graphic,		VIEW_RESET_DISPLAY) \
@@ -67,11 +68,12 @@ typedef struct view_column *view_settings;
 	_(refresh_interval,		int,			VIEW_NO_FLAGS) \
 	_(refresh_mode,			enum refresh_mode,	VIEW_NO_FLAGS) \
 	_(refs_view,			view_settings,		VIEW_NO_FLAGS) \
-	_(rev_args,			const char **,		VIEW_NO_FLAGS) \
+	_(rev_args,			const char **,		VIEW_LOG_LIKE) \
+	_(rev_filter,			bool,			VIEW_LOG_LIKE) \
 	_(send_child_enter,		bool,			VIEW_NO_FLAGS) \
-	_(show_changes,			bool,			VIEW_NO_FLAGS) \
-	_(show_notes,			bool,			VIEW_NO_FLAGS) \
-	_(show_untracked,		bool,			VIEW_NO_FLAGS) \
+	_(show_changes,			bool,			VIEW_LOG_LIKE) \
+	_(show_notes,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
+	_(show_untracked,		bool,			VIEW_LOG_LIKE) \
 	_(split_view_height,		double,			VIEW_RESET_DISPLAY) \
 	_(split_view_width,		double,			VIEW_RESET_DISPLAY) \
 	_(stage_view,			view_settings,		VIEW_NO_FLAGS) \
@@ -84,7 +86,7 @@ typedef struct view_column *view_settings;
 	_(tree_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(truncation_delimiter,		const char *,		VIEW_NO_FLAGS) \
 	_(vertical_split,		enum vertical_split,	VIEW_RESET_DISPLAY | VIEW_DIFF_LIKE) \
-	_(wrap_lines,			bool,			VIEW_NO_FLAGS) \
+	_(wrap_lines,			bool,			VIEW_DIFF_LIKE) \
 	_(wrap_search,			bool,			VIEW_NO_FLAGS) \
 
 #define DEFINE_OPTION_EXTERNS(name, type, flags) extern type opt_##name;
@@ -183,7 +185,6 @@ extern iconv_t opt_iconv_out;
 extern char opt_editor[SIZEOF_STR];
 extern const char **opt_cmdline_args;
 extern bool opt_log_follow;
-extern bool opt_word_diff;
 
 /*
  * Mapping between options and command argument mapping.
@@ -197,6 +198,7 @@ const char *commit_order_arg_with_graph(enum graph_display graph_display);
 const char *log_custom_pretty_arg();
 const char *use_mailmap_arg();
 const char *diff_context_arg();
+const char *word_diff_arg();
 const char *show_notes_arg();
 
 /*

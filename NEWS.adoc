@@ -1,6 +1,42 @@
 Release notes
 =============
 
+tig-2.5.5
+---------
+
+Improvements:
+
+ - Make word-diff a toggleable option. (#1119, #1125)
+ - Add Linux installation instructions. (#1121, #1126)
+ - Allow :back to work across separate blame views. (#1123, #1127)
+ - Add auto-refresh to log view. (#1128)
+ - Expose `%(file_old)`, useful for deleted and renamed files. (#1132)
+ - Enable jumping back in main view. (#628, #1138)
+ - Add PCRE (Perl Compatible Regular Expressions) support. (#1137, #1143)
+ - Pass command line args through to diff-files in status view. (#1152, #1155)
+ - Remove quotes from TIG_LS_REMOTE to allow inline shell commands. (#1160, #1161)
+ - Avoid pushing identical history state in main view.
+ - Replace useless strncpy to avoid compilation warning with GCC 8.
+ - Update utf8proc to v2.7.0.
+ - Update distclean rule to preserve tarball contents. (#1167, #1169)
+ - Add reference types stash and other. (#1160, #1172)
+ - Auto refresh view upon option change.
+ - Allow to toggle revision filtering. (#1173)
+
+Bug fixes:
+
+ - Fix null dereferences on unset format strings. (#1136, #1159)
+ - Fix invalid read in log_read. (#1128)
+ - Restore support for tig log --graph. (#1128)
+ - Further fix to fullscreen navigation.
+ - Fix blame when opened from an initial diff view. (#1135)
+ - Fix stash view when using tig --all or tig revs. (#1146, #1147)
+ - Avoiding null pointer dereference. (#1096)
+ - Fix navigation between chunks after splitting chunk. (#1101, #1162)
+ - Fix status line when toggling general options. (#1163, #1164)
+ - Honor reference-format = hide:tag in diff view. (#1168, #1170)
+ - Fix crash on :toggle file-args.
+
 tig-2.5.4
 ---------
 
@@ -698,7 +734,7 @@ tig-1.2
 -------
 
  - Tig now has its own tag on Stack Overflow, where users are invited to
-   ask questions: http://stackoverflow.com/questions/tagged/tig
+   ask questions: https://stackoverflow.com/questions/tagged/tig
 
 Improvements:
 

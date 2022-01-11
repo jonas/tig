@@ -185,12 +185,14 @@ The following variables can be set:
 	Prefix with `hide:` to not show that reference type, e.g. `hide:remote`.
 	Supported reference types are:
 	 - head			: The current HEAD.
-	 - tag			: A signed tag.
-	 - local-tag		: An unsigned tag.
+	 - tag			: An annotated tag.
+	 - local-tag		: A lightweight tag.
 	 - remote		: A remote.
 	 - tracked-remote	: The remote tracked by current HEAD.
 	 - replace		: A replaced reference.
-	 - branch		: Any other reference.
+	 - branch		: A branch.
+	 - stash		: The stash.
+	 - other		: Any other reference.
 
 'line-graphics' (mixed) [ascii|default|utf-8|auto|<bool>]::
 
@@ -615,8 +617,9 @@ Keymaps::
 
 Valid keymaps are: *main*, *diff*, *log*, *reflog*, *help*, *pager*, *status*,
 *stage*, *tree*, *blob*, *blame*, *refs*, *stash*, *grep* and *generic*. Use
-*generic* to set key mapping in all keymaps. Use *search* to define keys for
-navigating search results during search.
+*generic* to set key mapping in all keymaps (which may still be overridden by a
+specific view keybinding). Use *search* to define keys for navigating search
+results during search.
 
 Key values::
 
@@ -722,6 +725,7 @@ following variable names, which are substituted before commands are run:
 |%(directory)		|The current directory path in the tree view or
 			 "." if undefined.
 |%(file)		|The currently selected file.
+|%(file_old)		|The old filename of the currently selected file.
 |%(lineno)		|The currently selected line number. Defaults to 0.
 |%(lineno_old)		|The currently selected line number, before the diff
 			 was applied. Defaults to 0.
@@ -1123,7 +1127,7 @@ omnipresent.
 
 Commit message::
 
-`Signed-off-by`, `Acked-by`, `Reviewed-by` and `Tested-by` lines are colorized.
+Most common trailer lines (e.g. `Signed-off-by`) are colorized.
 Characters in the commit title exceeding a predefined width can be highlighted.
 
 

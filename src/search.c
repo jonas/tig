@@ -67,13 +67,15 @@ setup_and_find_next(struct view *view, enum request request)
 	    && !utf8_string_contains_uppercase(view->env->search))
 		regex_flags |= REG_ICASE;
 
-	if (view->regex) {
-		regfree(view->regex);
-		*view->grep = 0;
-	} else {
+	if (!view->regex) {
 		view->regex = calloc(1, sizeof(*view->regex));
 		if (!view->regex)
 			return ERROR_OUT_OF_MEMORY;
+	}
+
+	if (*view->grep) {
+		regfree(view->regex);
+		*view->grep = 0;
 	}
 
 	regex_err = regcomp(view->regex, view->env->search, REG_EXTENDED | regex_flags);

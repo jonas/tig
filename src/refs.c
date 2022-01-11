@@ -81,7 +81,7 @@ refs_request(struct view *view, enum request request, struct line *line)
 		};
 		enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 
-		if (!argv_format(main_view.env, &main_view.argv, all_references_argv, false, false))
+		if (!argv_format(main_view.env, &main_view.argv, all_references_argv, 0))
 			report("Failed to format argument");
 		else
 			open_main_view(view, flags | OPEN_PREPARED);

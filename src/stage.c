@@ -25,6 +25,7 @@
 #include "tig/status.h"
 #include "tig/main.h"
 #include "tig/stage.h"
+#include "tig/search.h"
 
 static struct status stage_status;
 static enum line_type stage_line_type;
@@ -320,8 +321,10 @@ stage_insert_chunk(struct view *view, struct chunk_header *header,
 	int i;
 
 	box = from->data;
-	for (i = 0; i < box->cells; i++)
+	for (i = 0; i < box->cells; i++) {
 		box->cell[i].length = 0;
+		box->cell[i].type = LINE_DIFF_CHUNK;
+	}
 
 	if (!append_line_format(view, from, "@@ -%lu,%lu +%lu,%lu @@",
 			header->old.position, header->old.lines,
@@ -401,6 +404,7 @@ stage_split_chunk(struct view *view, struct line *chunk_start)
 	if (chunks) {
 		stage_insert_chunk(view, &header, chunk_start, NULL, NULL);
 		redraw_view(view);
+		reset_search(view);
 		report("Split the chunk in %d", chunks + 1);
 	} else {
 		report("The chunk cannot be split");
@@ -639,7 +643,7 @@ stage_request(struct view *view, enum request request, struct line *line)
 		if (stage_status.new.name[0]) {
 			string_copy(view->env->file, stage_status.new.name);
 		} else {
-			const char *file = diff_get_pathname(view, line);
+			const char *file = diff_get_pathname(view, line, false);
 
 			if (file)
 				string_ncopy(view->env->file, file, strlen(file));

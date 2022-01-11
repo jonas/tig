@@ -90,8 +90,13 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	struct status *unmerged = NULL;
 	struct buffer buf;
 	struct io io;
+	const char **status_argv = NULL;
+	bool ok = argv_format(view->env, &status_argv, argv, 0) &&
+		  io_run(&io, IO_RD, repo.exec_dir, NULL, status_argv);
 
-	if (!io_run(&io, IO_RD, repo.exec_dir, NULL, argv))
+	argv_free(status_argv);
+	free(status_argv);
+	if (!ok)
 		return false;
 
 	add_line_nodata(view, type);

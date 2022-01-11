@@ -36,10 +36,11 @@
 
 /* Don't show staged unmerged entries. */
 #define GIT_DIFF_STAGED_FILES(output_arg) \
-	"git", "diff-index", (output_arg), "--diff-filter=ACDMRTXB", "-C", "--cached", "HEAD", "--", NULL
+	"git", "diff-index", (output_arg), "%(cmdlineargs)", "--diff-filter=ACDMRTXB", \
+		"-C", "--cached", "HEAD", "--", NULL
 
 #define GIT_DIFF_UNSTAGED_FILES(output_arg) \
-	"git", "diff-files", (output_arg), NULL
+	"git", "diff-files", (output_arg), "%(cmdlineargs)", NULL
 
 #define GIT_DIFF_BLAME(encoding_arg, context_arg, space_arg, new_name) \
 	GIT_DIFF_UNSTAGED(encoding_arg, context_arg, space_arg, "", new_name)

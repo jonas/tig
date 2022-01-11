@@ -3,11 +3,11 @@ Installation instructions
 :docext: adoc
 
 Download a tarball from https://github.com/jonas/tig/releases[] or clone the Tig
-repository http://github.com/jonas/tig[git://github.com/jonas/tig.git].
+repository https://github.com/jonas/tig[git://github.com/jonas/tig.git].
 
 The latest version is:
-https://github.com/jonas/tig/releases/download/tig-2.5.4/tig-2.5.4.tar.gz[tig-2.5.4]
-https://github.com/jonas/tig/releases/download/tig-2.5.4/tig-2.5.4.tar.gz.sha256[(sha256)]
+https://github.com/jonas/tig/releases/download/tig-2.5.5/tig-2.5.5.tar.gz[tig-2.5.5]
+https://github.com/jonas/tig/releases/download/tig-2.5.5/tig-2.5.5.tar.gz.sha256[(sha256)]
 
 *Note:* Do not use the tar.gz file for version 2.0 because it will fail
 to compile due to issue https://github.com/jonas/tig/pull/283[#283] and
@@ -73,7 +73,8 @@ build without `configure`):
 
 Installation using Homebrew
 ---------------------------
-You can use link:http://brew.sh[Homebrew] to install Tig on OS X:
+
+You can use link:https://brew.sh[Homebrew] to install Tig on macOS and Linux:
 
         $ brew install tig
 
@@ -102,6 +103,16 @@ You can use link:https://nixos.org/nix/[Nix] to install Tig on NixOS, or any Lin
 
         $ nix-env -i tig
 	
+Installation on Linux
+---------------------
+
+Depending on your distribution, you may be able to use one of the following commands to install Tig on Linux:
+
+        $ apt-get install tig (Debian, Ubuntu)
+        $ dnf install tig (Fedora)
+        $ pacman -S tig (Arch Linux)
+        $ apk add tig (Alpine)
+
 Installation on FreeBSD
 -----------------------
 
@@ -193,6 +204,8 @@ configure script and building documentation:
 |Tool				|Description
 |readline			|Adds support for completion and history in
 				 search and command prompts.
+|PCRE				|Adds support for Perl Compatible Regular
+				 Expressions in searches.
 |autoconf			|Contains autoreconf for generating configure
 				 from configure.ac.
 |asciidoc (>= 8.4)		|Generates HTML and (DocBook) XML from text.

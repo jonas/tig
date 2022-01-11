@@ -1,0 +1,76 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+LINES=10
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+# This runs an empty command, hence the empty pager.
+test_case bang-cmdlineargs-doesnt-crash \
+	--args='status' \
+	--script='
+	:!%(cmdlineargs)
+	' <<EOF
+
+
+
+
+
+
+
+
+[pager]                                                                       0%
+EOF
+
+test_case echo-cmdlineargs-doesnt-crash \
+	--args='status' \
+	--script='
+	:echo %(cmdlineargs)
+	' <<EOF
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
+[status] Nothing to update                                                  100%
+EOF
+
+# This runs an empty command, hence the empty pager.
+test_case bang-fileargs-doesnt-crash \
+	--args='status' \
+	--script='
+	:!%(fileargs)
+	' <<EOF
+
+
+
+
+
+
+
+
+[pager]                                                                       0%
+EOF
+
+test_case echo-fileargs-doesnt-crash \
+	--args='status' \
+	--script='
+	:echo %(fileargs)
+	' <<EOF
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
+[status] Nothing to update                                                  100%
+EOF
+
+run_test_cases

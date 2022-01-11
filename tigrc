@@ -93,12 +93,14 @@ set truncation-delimiter	= ~		# Character drawn for truncations, or "utf-8"
 
 # Format reference names based on type.
 #  - head		: The current HEAD.
-#  - tag		: A signed tag.
-#  - local-tag		: An unsigned tag.
+#  - tag		: An annotated tag.
+#  - local-tag		: A lightweight tag.
 #  - remote		: A remote.
 #  - tracked-remote	: The remote tracked by current HEAD.
 #  - replace		: A replaced reference.
-#  - branch		: Any other reference.
+#  - branch		: A branch.
+#  - stash		: The stash.
+#  - other		: Any other reference.
 # If no format is defined for `local-tag` then the one for `tag` is used.
 # Similarly, `remote` is used if no `tracked-remote` format exists.
 # Prefix with `hide:` to not show that reference type, e.g. `hide:remote`.
@@ -309,7 +311,8 @@ bind generic	$	:toggle commit-title-overflow
 # bind generic	???	:toggle status-show-untracked-dirs
 						# Toggle display of file in untracked directories
 # bind generic	???	:toggle vertical-split	# Toggle vertical split
-bind generic	%	:toggle file-filter
+bind generic	%	:toggle file-filter	# Toggle filtering by pathspecs in file-args
+bind generic	^	:toggle rev-filter	# Toggle filtering by revisions in rev-args
 
 # Misc
 bind generic	e	edit			# Open in editor
@@ -375,10 +378,24 @@ color "parent "			blue	default
 color "tree "			blue	default
 color "author "			green	default
 color "committer "		magenta	default
-color "    Signed-off-by"	yellow	default
-color "    Acked-by"		yellow	default
-color "    Tested-by"		yellow	default
-color "    Reviewed-by"		yellow	default
+color "    Signed-off-by:"	yellow	default
+color "    Acked-by:"		yellow	default
+color "    Reviewed-by:"	yellow	default
+color "    Helped-by:"		yellow	default
+color "    Reported-by:"	yellow	default
+color "    Mentored-by:"	yellow	default
+color "    Suggested-by:"	yellow	default
+color "    Cc:"			yellow	default
+color "    Noticed-by:"		yellow	default
+color "    Tested-by:"		yellow	default
+color "    Improved-by:"	yellow	default
+color "    Thanks-to:"		yellow	default
+color "    Based-on-patch-by:"	yellow	default
+color "    Contributions-by:"	yellow	default
+color "    Co-authored-by:"	yellow	default
+color "    Requested-by:"	yellow	default
+color "    Original-patch-by:"	yellow	default
+color "    Inspired-by:"	yellow	default
 color default			default	default	normal
 color cursor			white	green	bold
 color status			green	default

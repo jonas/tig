@@ -6,7 +6,7 @@ export XML_CATALOG_FILES=/usr/local/etc/xml/catalog
 TIG_CFLAGS += -DHAVE_EXECINFO_H
 TIG_LDLIBS = -liconv
 
-NCURSES_DIR = $(wildcard /usr/local/opt/ncurses)
+NCURSES_DIR ?= $(wildcard /usr/local/opt/ncurses)
 
 ifneq ($(NCURSES_DIR),)
 	TIG_NCURSES = -lncursesw
@@ -16,12 +16,20 @@ else
 	TIG_CPPFLAGS += -DHAVE_CURSES_H
 endif
 
-READLINE_DIR = $(wildcard /usr/local/opt/readline)
+READLINE_DIR ?= $(wildcard /usr/local/opt/readline)
 
 ifneq ($(READLINE_DIR),)
 	TIG_LDLIBS += -lreadline
 	TIG_LDFLAGS += -L$(READLINE_DIR)/lib
 	TIG_CPPFLAGS += -I$(READLINE_DIR)/include -DHAVE_READLINE
+endif
+
+PCRE2_DIR ?= $(wildcard /usr/local/opt/pcre2)
+
+ifneq ($(PCRE2_DIR),)
+	TIG_LDLIBS += -lpcre2-posix -lpcre2-8
+	TIG_LDFLAGS += -L$(PCRE2_DIR)/lib
+	TIG_CPPFLAGS += -I$(PCRE2_DIR)/include -DHAVE_PCRE2 -DPCRE2_CODE_UNIT_WIDTH=8
 endif
 
 # vim: ft=make:

@@ -230,6 +230,12 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		if (*opt->head)
 			return SUCCESS;
 		type = REFERENCE_HEAD;
+
+	} else if (!strcmp(name, "refs/stash")) {
+		type = REFERENCE_STASH;
+
+	} else if (!prefixcmp(name, "refs/")) {
+		type = REFERENCE_OTHER;
 	}
 
 	/* If we are reloading or it's an annotated tag, replace the
@@ -325,7 +331,7 @@ reload_refs(bool force)
 		int argc = 0;
 
 		string_ncopy(ls_remote_cmd, env, strlen(env));
-		if (!argv_from_string(ls_remote_argv, &argc, ls_remote_cmd))
+		if (!argv_from_string_no_quotes(ls_remote_argv, &argc, ls_remote_cmd))
 			return error("Failed to parse TIG_LS_REMOTE: %s", env);
 	}
 

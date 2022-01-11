@@ -36,12 +36,34 @@ AX_LIB_READLINE(6.3)
 
 AM_ICONV
 
+dnl Check for PCRE (Perl Compatible Regular Expressions) library
+AC_ARG_WITH(pcre, [AS_HELP_STRING([--without-pcre], [do not use PCRE (Perl Compatible Regular Expressions) library])])
+AS_IF([test "x$with_pcre" != xno], [
+	AC_CHECK_HEADERS([pcre2posix.h])
+	AS_IF([test "x$ac_cv_header_pcre2posix_h" = xyes], [
+		AC_CHECK_LIB([pcre2-posix], [regexec], [
+			AC_DEFINE([HAVE_PCRE2], [1], [Define if you have PCRE2])
+			AC_DEFINE([PCRE2_CODE_UNIT_WIDTH], [8], [ ])
+			LIBS="$LIBS -lpcre2-posix -lpcre2-8"
+		])
+	])
+	AS_IF([test "x$ac_cv_lib_pcre2_posix_regexec" != xyes], [
+		AC_CHECK_HEADERS([pcreposix.h])
+		AS_IF([test "x$ac_cv_header_pcreposix_h" = xyes], [
+			AC_CHECK_LIB([pcreposix], [regexec], [
+				AC_DEFINE([HAVE_PCRE], [1], [Define if you have PCRE])
+				LIBS="$LIBS -lpcreposix -lpcre"
+			])
+		])
+	])
+])
+
 dnl OS-specific
 case $(uname -s 2>/dev/null || echo unknown) in "OS400")
 	AC_CHECK_LIB(util, main, [LIBS="$LIBS -lutil"], AC_MSG_ERROR([Please install the libutil-devel package]))
 	;;
 esac
-    
+
 AC_CHECK_PROGS(SED, [gsed], [sed])
 AC_TDD_GCOV
 AC_SUBST(COVERAGE_CFLAGS)
