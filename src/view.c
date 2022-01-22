@@ -333,7 +333,8 @@ goto_id(struct view *view, const char *expr, bool from_start, bool save_search)
 		report("Jumping to ID is not supported by the %s view", view->name);
 		return;
 	} else {
-		char *rev = argv_format_arg(view->env, expr);
+		char tmp[SIZEOF_STR];
+		char *rev = (snprintf(tmp, SIZEOF_STR, "%s^{}", expr), argv_format_arg(view->env, tmp));
 		const char *rev_parse_argv[] = {
 			"git", "rev-parse", "--revs-only", rev, NULL
 		};
