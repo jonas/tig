@@ -300,7 +300,7 @@ open_file_finder(const char *commit)
 		return false;
 	}
 
-	finder.keymap = get_keymap("search", STRING_SIZE("search")),
+	finder.keymap = get_keymap("search", STRING_SIZE("search"));
 	file_finder_update(&finder);
 	file_finder_draw(&finder);
 	if (read_prompt_incremental("Find file: ", false, true, file_finder_input_handler, &finder) && finder.pos.lineno < finder.lines)
