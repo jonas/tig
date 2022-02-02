@@ -145,7 +145,6 @@ struct view {
 	struct line *curline;	/* Line currently being drawn. */
 	enum line_type curtype;	/* Attribute currently used for drawing. */
 	unsigned long col;	/* Column when drawing. */
-	bool has_scrolled;	/* View was scrolled. */
 	bool force_redraw;	/* Whether to force a redraw after reading. */
 
 	/* Loading */
