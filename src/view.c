@@ -92,7 +92,6 @@ do_scroll_view(struct view *view, int lines)
 		wnoutrefresh(view->win);
 	}
 
-	view->has_scrolled = true;
 	report_clear();
 }
 
