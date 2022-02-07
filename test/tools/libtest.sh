@@ -440,7 +440,12 @@ show_test_results()
 		fi
 
 		# Replace CR used by Git progress messages
-		tr '\r' '\n' < .test-result
+	  kernel="$(uname -s 2>/dev/null || printf 'unknown\n')"
+	  case "$kernel" in
+	  	Darwin)	LC_ALL=C tr '\r' '\n' < .test-result ;;
+	  	*)	tr '\r' '\n' < .test-result ;;
+	  esac
+
 	elif [ -n "$verbose" ]; then
 		count="$(grep -c '^ *\[OK\]' < .test-result || true)"
 		printf 'Passed %d assertions\n' "$count"
@@ -546,6 +551,12 @@ test_require()
 			fi
 			if [ ! -e "$diff_highlight_path" ]; then
 				test_skip "The test requires diff-highlight, usually found in share/git-core-contrib"
+			fi
+			;;
+		delta)
+			delta_path="/usr/local/bin/delta"
+			if [ ! -e "$delta_path" ]; then
+				test_skip "The test requires git-delta, https://dandavison.github.io/delta/installation.html"
 			fi
 			;;
 		readline)
