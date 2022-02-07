@@ -16,6 +16,7 @@
 #include "tig/line.h"
 #include "tig/tig.h"
 #include "tig/view.h"
+#include "compat/utf8proc.h"
 
 void
 split_ansi(const char *string, int *ansi_num, char **ansi_ptrs) {
@@ -43,13 +44,17 @@ split_ansi(const char *string, int *ansi_num, char **ansi_ptrs) {
 }
 
 void
-draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs) {
+draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs, int max_width, size_t skip) {
 	static struct ansi_status cur_ansi_status;
 	cur_ansi_status.fg = COLOR_WHITE;
 	cur_ansi_status.bg = COLOR_BLACK;
 	cur_ansi_status.attr = A_NORMAL;
+	int cur_width = 0;
 
 	for (int i = 0; i < *ansi_num; i++) {
+		if (cur_width >= view->width)
+			break;
+
 		int len = strlen(ansi_ptrs[i]);
 		char text[len + 1];
 		strcpy(text, ansi_ptrs[i]);
@@ -69,15 +74,21 @@ draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs) {
 		int ansi_code_len = len - after_ansi_len - 2;
 		ansi_end_ptr += 1;
 
+		int widths_of_display = utf8_width_of(ansi_end_ptr, after_ansi_len, after_ansi_len);
+		if (skip > widths_of_display) {
+			skip -= widths_of_display;
+			continue;
+		}
+
 		if (view->curline->selected) {
-			draw_ansi_line(view, ansi_end_ptr, after_ansi_len);
+			draw_ansi_line(view, ansi_end_ptr, after_ansi_len, &skip, &cur_width, &widths_of_display);
+			cur_width += widths_of_display;
 			continue;
 		}
 
 		char *ansi_code = malloc(sizeof(char) * (ansi_code_len + 1));
 		strncpy(ansi_code, text + 2, ansi_code_len);
 		ansi_code[ansi_code_len] = '\0';
-
 		if (strchr(ansi_code, ';') == NULL) {
 			if (strcmp(ansi_code, "0") == 0)
 				cur_ansi_status.attr = A_NORMAL;
@@ -156,22 +167,30 @@ draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs) {
 				// }
 				ansi_code_part = strtok(NULL, ";");
 			}
-
 			free(token);
 			token = NULL;
 		}
-
 		wattrset_by_ansi_status(view, &cur_ansi_status);
-		draw_ansi_line(view, ansi_end_ptr, after_ansi_len);
+
+		draw_ansi_line(view, ansi_end_ptr, after_ansi_len, &skip, &cur_width, &widths_of_display);
+		cur_width += widths_of_display;
+
 		free(ansi_code);
 		ansi_code = NULL;
 	}
 }
 
 void
-draw_ansi_line(struct view *view, char *text, int len) {
-	if (len > 1)
-		waddnstr(view->win, text, len);
+draw_ansi_line(struct view *view, char *ansi_end_ptr, int after_ansi_len, size_t *skip, int *cur_width, int *widths_of_display) {
+	while (*skip > 0) {
+		utf8proc_int32_t unicode;
+		int bytes_to_skip = utf8proc_iterate((const utf8proc_uint8_t *) ansi_end_ptr, strlen(ansi_end_ptr), &unicode);
+		ansi_end_ptr += bytes_to_skip;
+		after_ansi_len -= bytes_to_skip;
+		*skip -= 1;
+		*widths_of_display -= 1;
+	}
+	waddnstr(view->win, ansi_end_ptr, after_ansi_len);
 }
 
 void
