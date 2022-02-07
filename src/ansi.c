@@ -190,7 +190,20 @@ draw_ansi_line(struct view *view, char *ansi_end_ptr, int after_ansi_len, size_t
 		*skip -= 1;
 		*widths_of_display -= 1;
 	}
-	waddnstr(view->win, ansi_end_ptr, after_ansi_len);
+
+	if (*cur_width + *widths_of_display > view->width) {
+		int left_widths = view->width - *cur_width;
+		while (left_widths > 0) {
+			utf8proc_int32_t unicode;
+			int bytes_to_display = utf8proc_iterate((const utf8proc_uint8_t *) ansi_end_ptr, strlen(ansi_end_ptr), &unicode);
+			waddnstr(view->win, ansi_end_ptr, bytes_to_display);
+			ansi_end_ptr += bytes_to_display;
+			after_ansi_len -= bytes_to_display;
+			left_widths -= 1;
+		}
+	} else {
+		waddnstr(view->win, ansi_end_ptr, after_ansi_len);
+	}
 }
 
 void
