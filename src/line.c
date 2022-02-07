@@ -246,6 +246,14 @@ init_colors(void)
 		color_pairs_map[fg][bg] = cnt;
 	}
 	}
+	for (short bg = 0; bg < 256; bg++) {
+		init_extended_pair(++cnt, COLOR_DEFAULT, bg);
+		color_pairs_map[256][bg] = cnt;
+	}
+	for (short fg = 0; fg < 256; fg++) {
+		init_extended_pair(++cnt, fg, COLOR_DEFAULT);
+		color_pairs_map[fg][256] = cnt;
+	}
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

@@ -46,8 +46,8 @@ split_ansi(const char *string, int *ansi_num, char **ansi_ptrs) {
 void
 draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs, int max_width, size_t skip) {
 	static struct ansi_status cur_ansi_status;
-	cur_ansi_status.fg = COLOR_WHITE;
-	cur_ansi_status.bg = COLOR_BLACK;
+	cur_ansi_status.fg = 256;
+	cur_ansi_status.bg = 256;
 	cur_ansi_status.attr = A_NORMAL;
 	int cur_width = 0;
 
@@ -210,9 +210,9 @@ void
 wattrset_by_ansi_status(struct view *view, struct ansi_status* cur_ansi_status) {
 	// Because init_extended_pair can't accept more than 32768 pairs,
 	// we skip the colors with color codes odd numbered and greater than 15 currently.
-	if (cur_ansi_status->fg > 15 && cur_ansi_status->fg % 2 == 1)
+	if (cur_ansi_status->fg < 256 && cur_ansi_status->fg > 15 && cur_ansi_status->fg % 2 == 1)
 		cur_ansi_status->fg -= 1;
-	if (cur_ansi_status->bg > 15 && cur_ansi_status->bg % 2 == 1)
+	if (cur_ansi_status->bg < 256 && cur_ansi_status->bg > 15 && cur_ansi_status->bg % 2 == 1)
 		cur_ansi_status->bg -= 1;
 	short id = color_pairs_map[cur_ansi_status->fg][cur_ansi_status->bg];
 	wattr_set(view->win, cur_ansi_status->attr, id, NULL);
