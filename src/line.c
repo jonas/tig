@@ -23,7 +23,7 @@ static size_t line_rules;
 static struct line_info **color_pair;
 static size_t color_pairs;
 
-short color_pairs_map[256][256];
+short color_pairs_map[257][257];
 
 DEFINE_ALLOCATOR(realloc_line_rule, struct line_rule, 8)
 DEFINE_ALLOCATOR(realloc_color_pair, struct line_info *, 8)
@@ -254,6 +254,8 @@ init_colors(void)
 		init_extended_pair(++cnt, fg, COLOR_DEFAULT);
 		color_pairs_map[fg][256] = cnt;
 	}
+	init_extended_pair(++cnt, COLOR_DEFAULT, COLOR_DEFAULT);
+	color_pairs_map[256][256] = cnt;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */
