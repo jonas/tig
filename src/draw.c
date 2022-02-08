@@ -125,7 +125,7 @@ draw_chars_with_ansi(struct view *view, enum line_type type, const char *string,
 	if (ansi_num > 0)
 		draw_ansi(view, &ansi_num, ansi_ptrs, max_width, skip);
 	else {
-		len = utf8_length(&string, length, skip, &col, view->width, &trimmed, use_tilde, opt_tab_size);
+		len = utf8_length(&string, length, skip, &col, max_width, &trimmed, use_tilde, opt_tab_size);
 		waddnstr(view->win, string, len);
 	}
 
