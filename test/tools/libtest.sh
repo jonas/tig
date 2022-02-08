@@ -440,11 +440,11 @@ show_test_results()
 		fi
 
 		# Replace CR used by Git progress messages
-	  kernel="$(uname -s 2>/dev/null || printf 'unknown\n')"
-	  case "$kernel" in
-	  	Darwin)	LC_ALL=C tr '\r' '\n' < .test-result ;;
-	  	*)	tr '\r' '\n' < .test-result ;;
-	  esac
+		kernel="$(uname -s 2>/dev/null || printf 'unknown\n')"
+		case "$kernel" in
+			Darwin)	LC_ALL=C tr '\r' '\n' < .test-result ;;
+			*)	tr '\r' '\n' < .test-result ;;
+		esac
 
 	elif [ -n "$verbose" ]; then
 		count="$(grep -c '^ *\[OK\]' < .test-result || true)"

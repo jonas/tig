@@ -172,7 +172,7 @@ draw_text_expanded(struct view *view, enum line_type type, const char *string, i
 		size_t pos = string_expand(text, sizeof(text), string, length, opt_tab_size);
 		size_t col = view->col;
 
-		if (opt_diff_highlight && *opt_diff_highlight && strcmp(opt_diff_highlight, "delta") == 0) {
+		if (opt_diff_highlight && *opt_diff_highlight && strcmp(opt_diff_highlight, "delta") == 0 && strstr(string, "\033[") != NULL) {
 			if (draw_chars_with_ansi(view, type, text, -1, max_width, use_tilde))
 				return true;
 		} else {

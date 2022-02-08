@@ -82,7 +82,6 @@ draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs, int max_width, siz
 
 		if (view->curline->selected) {
 			draw_ansi_line(view, ansi_end_ptr, after_ansi_len, &skip, &cur_width, &widths_of_display);
-			cur_width += widths_of_display;
 			continue;
 		}
 
@@ -173,7 +172,6 @@ draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs, int max_width, siz
 		wattrset_by_ansi_status(view, &cur_ansi_status);
 
 		draw_ansi_line(view, ansi_end_ptr, after_ansi_len, &skip, &cur_width, &widths_of_display);
-		cur_width += widths_of_display;
 
 		free(ansi_code);
 		ansi_code = NULL;
@@ -204,6 +202,8 @@ draw_ansi_line(struct view *view, char *ansi_end_ptr, int after_ansi_len, size_t
 	} else {
 		waddnstr(view->win, ansi_end_ptr, after_ansi_len);
 	}
+
+	*cur_width += *widths_of_display;
 }
 
 void
