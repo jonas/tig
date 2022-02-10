@@ -81,7 +81,7 @@ draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs, int max_width, siz
 		}
 
 		if (view->curline->selected) {
-			draw_ansi_line(view, ansi_end_ptr, after_ansi_len, &skip, &cur_width, &widths_of_display);
+			draw_ansi_line(view, ansi_end_ptr, &after_ansi_len, &skip, &cur_width, &widths_of_display);
 			continue;
 		}
 
@@ -171,7 +171,7 @@ draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs, int max_width, siz
 		}
 		wattrset_by_ansi_status(view, &cur_ansi_status);
 
-		draw_ansi_line(view, ansi_end_ptr, after_ansi_len, &skip, &cur_width, &widths_of_display);
+		draw_ansi_line(view, ansi_end_ptr, &after_ansi_len, &skip, &cur_width, &widths_of_display);
 
 		free(ansi_code);
 		ansi_code = NULL;
@@ -179,12 +179,12 @@ draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs, int max_width, siz
 }
 
 void
-draw_ansi_line(struct view *view, char *ansi_end_ptr, int after_ansi_len, size_t *skip, int *cur_width, int *widths_of_display) {
+draw_ansi_line(struct view *view, char *ansi_end_ptr, int *after_ansi_len, size_t *skip, int *cur_width, int *widths_of_display) {
 	while (*skip > 0) {
 		utf8proc_int32_t unicode;
-		int bytes_to_skip = utf8proc_iterate((const utf8proc_uint8_t *) ansi_end_ptr, strlen(ansi_end_ptr), &unicode);
+		int bytes_to_skip = utf8proc_iterate((const utf8proc_uint8_t *) ansi_end_ptr, *after_ansi_len, &unicode);
 		ansi_end_ptr += bytes_to_skip;
-		after_ansi_len -= bytes_to_skip;
+		*after_ansi_len -= bytes_to_skip;
 		*skip -= 1;
 		*widths_of_display -= 1;
 	}
@@ -193,14 +193,14 @@ draw_ansi_line(struct view *view, char *ansi_end_ptr, int after_ansi_len, size_t
 		int left_widths = view->width - *cur_width;
 		while (left_widths > 0) {
 			utf8proc_int32_t unicode;
-			int bytes_to_display = utf8proc_iterate((const utf8proc_uint8_t *) ansi_end_ptr, strlen(ansi_end_ptr), &unicode);
+			int bytes_to_display = utf8proc_iterate((const utf8proc_uint8_t *) ansi_end_ptr, *after_ansi_len, &unicode);
 			waddnstr(view->win, ansi_end_ptr, bytes_to_display);
 			ansi_end_ptr += bytes_to_display;
-			after_ansi_len -= bytes_to_display;
+			*after_ansi_len -= bytes_to_display;
 			left_widths -= 1;
 		}
 	} else {
-		waddnstr(view->win, ansi_end_ptr, after_ansi_len);
+		waddnstr(view->win, ansi_end_ptr, *after_ansi_len);
 	}
 
 	*cur_width += *widths_of_display;
