@@ -26,7 +26,7 @@ struct ansi_status {
 
 void split_ansi(const char *string, int *ansi_num, char **ansi_ptrs);
 void draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs, int max_width, size_t skip);
-void draw_ansi_line(struct view *view, char *ansi_end_ptr, int after_ansi_len, size_t *skip, int *cur_width, int *widths_of_display);
+void draw_ansi_line(struct view *view, char *ansi_end_ptr, int *after_ansi_len, size_t *skip, int *cur_width, int *widths_of_display);
 void wattrset_by_ansi_status(struct view *view, struct ansi_status* cur_ansi_status);
 
 #endif
