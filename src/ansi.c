@@ -133,7 +133,7 @@ draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs, int max_width, siz
 			if (strcmp(ansi_code_part, "37") == 0)
 				cur_ansi_status.fg = COLOR_WHITE;
 			if (strcmp(ansi_code_part, "38") == 0) {
-				short c256 = convert_ansi_into_256_color(saveptr);
+				short c256 = convert_ansi_into_256_color(&saveptr);
 				if (c256 != -1)
 					cur_ansi_status.fg = c256;
 			}
@@ -152,7 +152,7 @@ draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs, int max_width, siz
 			if (strcmp(ansi_code_part, "46") == 0)
 				cur_ansi_status.bg = COLOR_CYAN;
 			if (strcmp(ansi_code_part, "48") == 0) {
-				short c256 = convert_ansi_into_256_color(saveptr);
+				short c256 = convert_ansi_into_256_color(&saveptr);
 				if (c256 != -1)
 					cur_ansi_status.bg = c256;
 			}
@@ -208,11 +208,11 @@ wattrset_by_ansi_status(struct view *view, struct ansi_status* cur_ansi_status) 
 }
 
 short
-convert_ansi_into_256_color(char *save_ptr) {
-	char *color_method_mark = strtok_r(NULL, ";", &save_ptr);
+convert_ansi_into_256_color(char **save_ptr) {
+	char *color_method_mark = strtok_r(NULL, ";", save_ptr);
 	short c256 = -1;
 	if (strcmp(color_method_mark, "5") == 0) {
-		char *color_code = strtok_r(NULL, ";", &save_ptr);
+		char *color_code = strtok_r(NULL, ";", save_ptr);
 		c256 = atoi(color_code);
 	}
 
