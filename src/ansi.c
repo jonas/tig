@@ -151,6 +151,8 @@ draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs, int max_width, siz
 				cur_ansi_status.bg = COLOR_MAGENTA;
 			if (strcmp(ansi_code_part, "46") == 0)
 				cur_ansi_status.bg = COLOR_CYAN;
+			if (strcmp(ansi_code_part, "47") == 0)
+				cur_ansi_status.bg = COLOR_WHITE;
 			if (strcmp(ansi_code_part, "48") == 0) {
 				short c256 = convert_ansi_into_256_color(&saveptr);
 				if (c256 != -1)
