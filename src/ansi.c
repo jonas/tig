@@ -85,92 +85,81 @@ draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs, int max_width, siz
 			continue;
 		}
 
+		// ncurses can't handle multiple attribute such as BOLD & UNDERLINE.
+		// If input-ansi has "\033[1;4" we'll give priority to the latter one.
+		char *saveptr;
 		char *ansi_code = malloc(sizeof(char) * (ansi_code_len + 1));
 		strncpy(ansi_code, text + 2, ansi_code_len);
 		ansi_code[ansi_code_len] = '\0';
-		if (strchr(ansi_code, ';') == NULL) {
-			if (strcmp(ansi_code, "0") == 0)
+		char *ansi_code_part = strtok_r(ansi_code, ";", &saveptr);
+		while (ansi_code_part != NULL) {
+			if (strcmp(ansi_code_part, "0") == 0) {
+				cur_ansi_status.fg = 256;
+				cur_ansi_status.bg = 256;
 				cur_ansi_status.attr = A_NORMAL;
-			if (strcmp(ansi_code, "1") == 0)
-				cur_ansi_status.attr = A_BOLD;
-			if (strcmp(ansi_code, "2") == 0)
-				cur_ansi_status.attr = A_DIM;
-			if (strcmp(ansi_code, "3") == 0)
-				cur_ansi_status.attr = A_ITALIC;
-			if (strcmp(ansi_code, "4") == 0)
-				cur_ansi_status.attr = A_UNDERLINE;
-			if (strcmp(ansi_code, "5") == 0)
-				cur_ansi_status.attr = A_BLINK;
-			if (strcmp(ansi_code, "6") == 0)
-				cur_ansi_status.attr = A_BLINK; // This is supposed to be faster than normal blink, but ncurses doesn't have any way to achieve.
-			if (strcmp(ansi_code, "7") == 0)
-				cur_ansi_status.attr = A_REVERSE;
-			if (strcmp(ansi_code, "8") == 0)
-				cur_ansi_status.attr = A_INVIS;
-			if (strcmp(ansi_code, "9") == 0)
-				// This is supposed to be strikethrough, but ncurses doesn't have any way to achieve.
-			if (strcmp(ansi_code, "30") == 0)
-				cur_ansi_status.fg = COLOR_BLACK;
-			if (strcmp(ansi_code, "31") == 0)
-				cur_ansi_status.fg = COLOR_RED;
-			if (strcmp(ansi_code, "32") == 0)
-				cur_ansi_status.fg = COLOR_GREEN;
-			if (strcmp(ansi_code, "33") == 0)
-				cur_ansi_status.fg = COLOR_YELLOW;
-			if (strcmp(ansi_code, "34") == 0)
-				cur_ansi_status.fg = COLOR_BLUE;
-			if (strcmp(ansi_code, "35") == 0)
-				cur_ansi_status.fg = COLOR_MAGENTA;
-			if (strcmp(ansi_code, "36") == 0)
-				cur_ansi_status.fg = COLOR_CYAN;
-			if (strcmp(ansi_code, "37") == 0)
-				cur_ansi_status.fg = COLOR_WHITE;
-			if (strcmp(ansi_code, "40") == 0)
-				cur_ansi_status.bg = COLOR_BLACK;
-			if (strcmp(ansi_code, "41") == 0)
-				cur_ansi_status.bg = COLOR_RED;
-			if (strcmp(ansi_code, "42") == 0)
-				cur_ansi_status.bg = COLOR_GREEN;
-			if (strcmp(ansi_code, "43") == 0)
-				cur_ansi_status.bg = COLOR_YELLOW;
-			if (strcmp(ansi_code, "44") == 0)
-				cur_ansi_status.bg = COLOR_BLUE;
-			if (strcmp(ansi_code, "45") == 0)
-				cur_ansi_status.bg = COLOR_MAGENTA;
-			if (strcmp(ansi_code, "46") == 0)
-				cur_ansi_status.bg = COLOR_CYAN;
-			if (strcmp(ansi_code, "47") == 0)
-				cur_ansi_status.bg = COLOR_WHITE;
-		} else {
-			char *token = malloc(sizeof(char) * (ansi_code_len + 1));
-			strcpy(token, ansi_code);
-			char *ansi_code_part = strtok(token, ";");
-
-			while (ansi_code_part != NULL) {
-				char *color_method_mark = strtok(NULL, ";");
-				if (strcmp(color_method_mark, "5") == 0) {
-					char *c256 = strtok(NULL, ";");
-					if (strcmp(ansi_code_part, "38") == 0)
-						cur_ansi_status.fg = atoi(c256);
-					if (strcmp(ansi_code_part, "48") == 0)
-						cur_ansi_status.bg = atoi(c256);
-				}
-				// WONTFIX: You can't init_color with numerous RGB code in ncurses.
-				// I decided to force delta users to use "true-color = never" when using tig,
-				// so the process never comes to this condition.
-				// I leave the code for someone who wants to implements in the future.
-				// if (strcmp(color_method_mark, "2") == 0) {
-					// char *r = strtok(NULL, ";");
-					// char *g = strtok(NULL, ";");
-					// char *b = strtok(NULL, ";");
-				// }
-				ansi_code_part = strtok(NULL, ";");
 			}
-			free(token);
-			token = NULL;
+			if (strcmp(ansi_code_part, "1") == 0)
+				cur_ansi_status.attr = A_BOLD;
+			if (strcmp(ansi_code_part, "2") == 0)
+				cur_ansi_status.attr = A_DIM;
+			if (strcmp(ansi_code_part, "3") == 0)
+				cur_ansi_status.attr = A_ITALIC;
+			if (strcmp(ansi_code_part, "4") == 0)
+				cur_ansi_status.attr = A_UNDERLINE;
+			if (strcmp(ansi_code_part, "5") == 0)
+				cur_ansi_status.attr = A_BLINK;
+			if (strcmp(ansi_code_part, "6") == 0)
+				cur_ansi_status.attr = A_BLINK; // This is supposed to be faster than normal blink, but ncurses doesn't have any way to achieve.
+			if (strcmp(ansi_code_part, "7") == 0)
+				cur_ansi_status.attr = A_REVERSE;
+			if (strcmp(ansi_code_part, "8") == 0)
+				cur_ansi_status.attr = A_INVIS;
+			if (strcmp(ansi_code_part, "9") == 0)
+				// This is supposed to be strikethrough, but ncurses doesn't have any way to achieve.
+			if (strcmp(ansi_code_part, "30") == 0)
+				cur_ansi_status.fg = COLOR_BLACK;
+			if (strcmp(ansi_code_part, "31") == 0)
+				cur_ansi_status.fg = COLOR_RED;
+			if (strcmp(ansi_code_part, "32") == 0)
+				cur_ansi_status.fg = COLOR_GREEN;
+			if (strcmp(ansi_code_part, "33") == 0)
+				cur_ansi_status.fg = COLOR_YELLOW;
+			if (strcmp(ansi_code_part, "34") == 0)
+				cur_ansi_status.fg = COLOR_BLUE;
+			if (strcmp(ansi_code_part, "35") == 0)
+				cur_ansi_status.fg = COLOR_MAGENTA;
+			if (strcmp(ansi_code_part, "36") == 0)
+				cur_ansi_status.fg = COLOR_CYAN;
+			if (strcmp(ansi_code_part, "37") == 0)
+				cur_ansi_status.fg = COLOR_WHITE;
+			if (strcmp(ansi_code_part, "38") == 0) {
+				short c256 = convert_ansi_into_256_color(saveptr);
+				if (c256 != -1)
+					cur_ansi_status.fg = c256;
+			}
+			if (strcmp(ansi_code_part, "40") == 0)
+				cur_ansi_status.bg = COLOR_BLACK;
+			if (strcmp(ansi_code_part, "41") == 0)
+				cur_ansi_status.bg = COLOR_RED;
+			if (strcmp(ansi_code_part, "42") == 0)
+				cur_ansi_status.bg = COLOR_GREEN;
+			if (strcmp(ansi_code_part, "43") == 0)
+				cur_ansi_status.bg = COLOR_YELLOW;
+			if (strcmp(ansi_code_part, "44") == 0)
+				cur_ansi_status.bg = COLOR_BLUE;
+			if (strcmp(ansi_code_part, "45") == 0)
+				cur_ansi_status.bg = COLOR_MAGENTA;
+			if (strcmp(ansi_code_part, "46") == 0)
+				cur_ansi_status.bg = COLOR_CYAN;
+			if (strcmp(ansi_code_part, "48") == 0) {
+				short c256 = convert_ansi_into_256_color(saveptr);
+				if (c256 != -1)
+					cur_ansi_status.bg = c256;
+			}
+
+			ansi_code_part = strtok_r(NULL, ";", &saveptr);
 		}
 		wattrset_by_ansi_status(view, &cur_ansi_status);
-
 		draw_ansi_line(view, ansi_end_ptr, &after_ansi_len, &skip, &cur_width, &widths_of_display);
 
 		free(ansi_code);
@@ -216,6 +205,29 @@ wattrset_by_ansi_status(struct view *view, struct ansi_status* cur_ansi_status) 
 		cur_ansi_status->bg -= 1;
 	short id = color_pairs_map[cur_ansi_status->fg][cur_ansi_status->bg];
 	wattr_set(view->win, cur_ansi_status->attr, id, NULL);
+}
+
+short
+convert_ansi_into_256_color(char *save_ptr) {
+	char *color_method_mark = strtok_r(NULL, ";", &save_ptr);
+	short c256 = -1;
+	if (strcmp(color_method_mark, "5") == 0) {
+		char *color_code = strtok_r(NULL, ";", &save_ptr);
+		c256 = atoi(color_code);
+	}
+
+	// WONTFIX: You can't init_color with numerous RGB code in ncurses.
+	// I decided to force delta users to use "true-color = never" when using tig,
+	// so the process never comes to this condition.
+	// I leave the code for someone who wants to implements in the future.
+	// if (strcmp(color_method_mark, "2") == 0) {
+		// char *r = strtok(NULL, ";");
+		// char *g = strtok(NULL, ";");
+		// char *b = strtok(NULL, ";");
+	// }
+	// Do some process to convert those color infos for ncurses.
+
+	return c256;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */
