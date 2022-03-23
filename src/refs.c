@@ -76,7 +76,7 @@ refs_request(struct view *view, enum request request, struct line *line)
 		const char *all_references_argv[] = {
 			GIT_MAIN_LOG(encoding_arg, commit_order_arg(),
 				"%(mainargs)", "",
-				refs_is_all(reference) ? "--all" : ref->name, "",
+				refs_is_all(reference) ? "--all" : ref->id, "",
 				show_notes_arg(), log_custom_pretty_arg())
 		};
 		enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
