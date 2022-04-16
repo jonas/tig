@@ -667,6 +667,7 @@ update_view(struct view *view)
 	/* Update the title _after_ the redraw so that if the redraw picks up a
 	 * commit reference in view->ref it'll be available here. */
 	update_view_title(view);
+	reset_search(view);
 	return true;
 }
 
