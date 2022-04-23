@@ -524,17 +524,10 @@ view_no_refresh(struct view *view, enum open_flags flags)
 	       ((flags & OPEN_REFRESH) && !view_can_refresh(view));
 }
 
-bool
-view_exec(struct view *view, enum open_flags flags)
+static const char *
+stat_arg(struct view *view, enum open_flags flags)
 {
-	char opt_env_lines[64] = "";
-	char opt_env_columns[64] = "";
-	char * const opt_env[]	= { opt_env_lines, opt_env_columns, NULL };
-
-	enum io_flags forward_stdin = (flags & OPEN_FORWARD_STDIN) ? IO_RD_FORWARD_STDIN : 0;
-	enum io_flags with_stderr = (flags & OPEN_WITH_STDERR) ? IO_RD_WITH_STDERR : 0;
-	enum io_flags io_flags = forward_stdin | with_stderr;
-
+	static char opt_stat_arg[64] = "";
 	int views = displayed_views();
 	bool split = (views == 1 && !!(flags & OPEN_SPLIT)) || views == 2;
 	int height, width;
@@ -550,10 +543,32 @@ view_exec(struct view *view, enum open_flags flags)
 			width = split_width - 1;
 	}
 
-	string_format(opt_env_columns, "COLUMNS=%d", MAX(0, width));
-	string_format(opt_env_lines, "LINES=%d", height);
+	string_format(opt_stat_arg, "--stat=%d", MAX(0, width));
+	return opt_stat_arg;
+}
 
-	return io_exec(&view->io, IO_RD, view->dir, opt_env, view->argv, io_flags);
+bool
+view_exec(struct view *view, enum open_flags flags)
+{
+	const char **argv = NULL;
+	int i;
+	bool ok;
+
+	enum io_flags forward_stdin = (flags & OPEN_FORWARD_STDIN) ? IO_RD_FORWARD_STDIN : 0;
+	enum io_flags with_stderr = (flags & OPEN_WITH_STDERR) ? IO_RD_WITH_STDERR : 0;
+	enum io_flags io_flags = forward_stdin | with_stderr;
+
+	for (i = 0; view->argv[i]; i++) {
+		const char *arg = view->argv[i];
+		if (strcmp(arg, "--stat"))
+			argv_append(&argv, arg);
+		if (!strcmp(arg, "--stat") || !strcmp(arg, "--patch-with-stat"))
+			argv_append(&argv, stat_arg(view, flags));
+	}
+	ok = io_exec(&view->io, IO_RD, view->dir, NULL, argv, io_flags);
+	argv_free(argv);
+	free(argv);
+	return ok;
 }
 
 enum status_code
