@@ -1,6 +1,17 @@
 Release notes
 =============
 
+master
+------
+
+Bug fixes:
+ - Fix `:goto <tag>`. (#1178)
+ - Fix typo in ui.c.
+ - Revert terminal hacks and workarounds. (#1180, #1182)
+ - Fix opening of an ambiguous ref in refs view.
+ - Fix search when view is loading.
+ - Use the full width for diffstat in the stage view.
+
 tig-2.5.5
 ---------
 
