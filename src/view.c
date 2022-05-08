@@ -1489,7 +1489,12 @@ get_view_column(struct view *view, enum view_column_type type)
 	return NULL;
 }
 
-#define MAXWIDTH(maxwidth)	(width == 0 ? maxwidth < 0 ? -maxwidth * view->width / 100 : maxwidth : 0)
+#define MAXWIDTH(maxwidth) \
+	(width == 0 \
+		? maxwidth < 0 \
+			? -maxwidth * view->width / 100 \
+			: maxwidth \
+		: 0)
 
 bool
 view_column_info_update(struct view *view, struct line *line)

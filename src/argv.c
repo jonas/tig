@@ -339,8 +339,24 @@ format_append_arg(struct format_context *format, const char ***dst_argv, const c
 		const char *var = strstr(arg, "%(");
 		const char *esc = var > arg && *(var - 1) == '%' ? var - 1 : NULL;
 		const char *closing = var ? strchr(var, ')') : NULL;
-		const char *next = esc > arg ? esc : closing ? closing + 1 : NULL;
-		const int len = var && !esc ? var - arg : esc > arg ? esc - arg : next ? next - ++arg : strlen(arg);
+		const char *next;
+		int len;
+
+		if (esc > arg)
+			next = esc;
+		else if (closing)
+			next = closing + 1;
+		else
+			next = NULL;
+
+		if (var && !esc)
+			len = var - arg;
+		else if (esc > arg)
+			len = esc - arg;
+		else if (next)
+			len = next - ++arg;
+		else
+			len = strlen(arg);
 
 		if (var && !closing)
 			return false;
