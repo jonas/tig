@@ -4,7 +4,7 @@
 . libgit.sh
 
 tigrc <<EOF
-bind generic 1 @sh -c "echo '%%(refname)=%(refname)' > $HOME/shell-command.txt"
+bind generic 1 @sh -c "echo '%%(refname)=%(refname) %%%%%%(refname)=%%%(refname)' > $HOME/shell-command.txt"
 EOF
 
 steps '
@@ -15,5 +15,5 @@ in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
 test_tig
 
 assert_equals 'shell-command.txt' <<EOF
-%(refname)=master
+%(refname)=master %%%(refname)=%master
 EOF

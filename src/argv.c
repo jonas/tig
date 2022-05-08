@@ -337,18 +337,19 @@ format_append_arg(struct format_context *format, const char ***dst_argv, const c
 
 	while (arg) {
 		const char *var = strstr(arg, "%(");
-		const char *esc = var > arg && *(var - 1) == '%' ? var - 1 : NULL;
-		const char *closing = var ? strchr(var, ')') : NULL;
-		const char *next = esc > arg ? esc : closing ? closing + 1 : NULL;
-		const int len = var && !esc ? var - arg : esc > arg ? esc - arg : next ? next - ++arg : strlen(arg);
+		const char *esc = strstr(arg, "%%");
+		bool is_escaped = esc && (esc < var || !var);
+		const char *closing = var && !is_escaped ? strchr(var, ')') : NULL;
+		const char *next = is_escaped ? esc + 2 : closing ? closing + 1 : NULL;
+		int len = var && !is_escaped ? var - arg : esc ? esc - arg + 1 : strlen(arg);
 
-		if (var && !closing)
+		if (var && !is_escaped && !closing)
 			return false;
 
 		if (len && !string_format_from(format->buf, &format->bufpos, "%.*s", len, arg))
 			return false;
 
-		if (var && !esc && !format_expand_arg(format, var, next))
+		if (var && !is_escaped && !format_expand_arg(format, var, next))
 			return false;
 
 		arg = next;

@@ -11,6 +11,7 @@ Bug fixes:
  - Fix opening of an ambiguous ref in refs view.
  - Fix search when view is loading.
  - Use the full width for diffstat in the stage view.
+ - Improve escaping of variables in external commands.
 
 tig-2.5.5
 ---------
