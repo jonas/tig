@@ -3,7 +3,7 @@
 # Aggregate test results.
 # Usage: $0
 #
-# Copyright (c) 2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+# Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
