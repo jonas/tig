@@ -1,7 +1,7 @@
 name: tig
 version: git
 summary: Text-mode interface for git
-license: GPL-2.0
+license: GPL-2.0-or-later
 description: |
   Tig is an ncurses-based text-mode interface for Git. It functions mainly as a
   Git repository browser, but can also assist in staging changes for commit at

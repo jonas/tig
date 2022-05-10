@@ -5,7 +5,7 @@ Summary: 	Tig: text-mode interface for git
 Name: 		tig
 Version: 	@@VERSION@@
 Release: 	@@RELEASE@@%{?dist}
-License: 	GPL
+License: 	GPLv2+
 Group: 		Development/Tools
 Vendor: 	Jonas Fonseca <jonas.fonseca@gmail.com>
 URL: 		https://jonas.github.io/tig
