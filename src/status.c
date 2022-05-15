@@ -33,6 +33,7 @@
 
 static char status_onbranch[SIZEOF_STR];
 static bool show_untracked_only = false;
+static bool no_files_staged;
 
 void
 open_status_view(struct view *prev, bool untracked_only, enum open_flags flags)
@@ -161,19 +162,23 @@ error_out:
 
 	if (!view->line[view->lines - 1].data) {
 		add_line_nodata(view, LINE_STAT_NONE);
-		if (type == LINE_STAT_STAGED)
+		if (type == LINE_STAT_STAGED) {
 			watch_apply(&view->watch, WATCH_INDEX_STAGED_NO);
-		else if (type == LINE_STAT_UNSTAGED)
+			no_files_staged = true;
+		} else if (type == LINE_STAT_UNSTAGED) {
 			watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_NO);
-		else if (type == LINE_STAT_UNTRACKED)
+		} else if (type == LINE_STAT_UNTRACKED) {
 			watch_apply(&view->watch, WATCH_INDEX_UNTRACKED_NO);
+		}
 	} else {
-		if (type == LINE_STAT_STAGED)
+		if (type == LINE_STAT_STAGED) {
 			watch_apply(&view->watch, WATCH_INDEX_STAGED_YES);
-		else if (type == LINE_STAT_UNSTAGED)
+			no_files_staged = false;
+		} else if (type == LINE_STAT_UNSTAGED) {
 			watch_apply(&view->watch, WATCH_INDEX_UNSTAGED_YES);
-		else if (type == LINE_STAT_UNTRACKED)
+		} else if (type == LINE_STAT_UNTRACKED) {
 			watch_apply(&view->watch, WATCH_INDEX_UNTRACKED_YES);
+		}
 	}
 
 	io_done(&io);
@@ -643,6 +648,9 @@ status_update(struct view *view)
 		report("Failed to update file status");
 		return false;
 	}
+
+	if (line->type != LINE_STAT_STAGED && !no_files_staged)
+		view->pos.lineno += 1;
 
 	return true;
 }

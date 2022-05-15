@@ -12,6 +12,7 @@ Bug fixes:
  - Fix search when view is loading.
  - Use the full width for diffstat in the stage view.
  - Improve escaping of variables in external commands.
+ - Fix cursor behaviour during staging. (#842, #1028)
 
 tig-2.5.5
 ---------
