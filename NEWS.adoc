@@ -13,6 +13,7 @@ Bug fixes:
  - Use the full width for diffstat in the stage view.
  - Improve escaping of variables in external commands.
  - Fix cursor behaviour during staging. (#842, #1028)
+ - Fix navigation in split tree view.
 
 tig-2.5.5
 ---------
