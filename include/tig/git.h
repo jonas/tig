@@ -26,12 +26,12 @@
 	GIT_DIFF_INITIAL(encoding_arg, "--cached", context_arg, space_arg, "", new_name)
 
 #define GIT_DIFF_STAGED(encoding_arg, context_arg, space_arg, old_name, new_name) \
-	"git", "diff-index", (encoding_arg), "--root", "--patch-with-stat", "-C", "-M", \
+	"git", "diff-index", (encoding_arg), "--root", "--textconv", "--patch-with-stat", "-C", "-M", \
 		"--cached", "--diff-filter=ACDMRTXB", DIFF_ARGS, "%(cmdlineargs)", (context_arg), (space_arg), "HEAD", \
 		"--", (old_name), (new_name), NULL
 
 #define GIT_DIFF_UNSTAGED(encoding_arg, context_arg, space_arg, old_name, new_name) \
-	"git", "diff-files", (encoding_arg), "--root", "--patch-with-stat", "-C", "-M", \
+	"git", "diff-files", (encoding_arg), "--root", "--textconv", "--patch-with-stat", "-C", "-M", \
 		DIFF_ARGS, "%(cmdlineargs)", (context_arg), (space_arg), "--", (old_name), (new_name), NULL
 
 /* Don't show staged unmerged entries. */

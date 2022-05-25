@@ -711,7 +711,7 @@ stage_open(struct view *view, enum open_flags flags)
 	/* Diffs for unmerged entries are empty when passing the new
 	 * path, so leave out the new path. */
 	const char *files_unmerged_argv[] = {
-		"git", "diff-files", encoding_arg, "--root", "--patch-with-stat",
+		"git", "diff-files", encoding_arg, "--root", "--textconv", "--patch-with-stat",
 			DIFF_ARGS, diff_context_arg(), ignore_space_arg(), "--",
 			stage_status.old.name, NULL
 	};

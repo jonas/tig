@@ -14,6 +14,7 @@ Bug fixes:
  - Improve escaping of variables in external commands.
  - Fix cursor behaviour during staging. (#842, #1028)
  - Fix navigation in split tree view.
+ - Enable textconv in the stage view.
 
 tig-2.5.5
 ---------
