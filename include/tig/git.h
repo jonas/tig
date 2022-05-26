@@ -43,7 +43,8 @@
 	"git", "diff-files", (output_arg), "%(cmdlineargs)", NULL
 
 #define GIT_DIFF_BLAME(encoding_arg, context_arg, space_arg, new_name) \
-	GIT_DIFF_UNSTAGED(encoding_arg, context_arg, space_arg, "", new_name)
+	"git", "diff-files", (encoding_arg), "--root", "--textconv", "--patch-with-stat", "-C", "-M", \
+		(context_arg), (space_arg), "--", (new_name), NULL
 
 #define GIT_DIFF_BLAME_NO_PARENT(encoding_arg, context_arg, space_arg, new_name) \
 	GIT_DIFF_INITIAL(encoding_arg, "", context_arg, space_arg, "/dev/null", new_name)

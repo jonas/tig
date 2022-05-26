@@ -15,6 +15,7 @@ Bug fixes:
  - Fix cursor behaviour during staging. (#842, #1028)
  - Fix navigation in split tree view.
  - Enable textconv in the stage view.
+ - Enable textconv in the blame view and fix blame -L. (#978, #1189)
 
 tig-2.5.5
 ---------

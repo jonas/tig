@@ -584,7 +584,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 
 	while (io_get(&io, &buf, '\n', true)) {
 		if (header) {
-			if (!parse_blame_header(header, buf.data, 9999999))
+			if (!parse_blame_header(header, buf.data))
 				break;
 			header = NULL;
 
