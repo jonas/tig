@@ -19,13 +19,15 @@ steps '
 	:enter
 	:save-display status-with-file-1.screen
 	:status-update
+	:save-display status-with-file-2.screen
+	:view-close
 
 	:7
 	:status-update
 
 	:9
 	:enter
-	:save-display status-with-file-2.screen
+	:save-display status-with-file-3.screen
 '
 
 git_init
@@ -104,6 +106,23 @@ Untracked files:                                            |ø
 EOF
 
 assert_equals 'status-with-file-2.screen' <<EOF
+Initial commit                                              |我
+Changes to be committed:                                    |树
+A a                                                         |漢
+Changes not staged for commit:                              |
+  (no files)                                                |
+Untracked files:                                            |
+? 0                                                         |
+? as测试asd                                                 |
+? øå                                                        |
+? 可愛いコー特集                                            |
+                                                            |
+                                                            |
+                                                            |
+[status] Press u to stage 'as测试asd' for addition      100%|[stage] Untracked file as测试asd - line 1 of 3         100%
+EOF
+
+assert_equals 'status-with-file-3.screen' <<EOF
 Initial commit                                              |
 Changes to be committed:                                    |
 A 0                                                         |

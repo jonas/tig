@@ -680,7 +680,9 @@ stage_request(struct view *view, enum request request, struct line *line)
 	 * stage view if it doesn't. */
 	if (view->parent && !stage_exists(view, &stage_status, stage_line_type)) {
 		stage_line_type = 0;
-		return REQ_VIEW_CLOSE;
+		return view->parent == &status_view
+				? view_request(view->parent, REQ_ENTER)
+				: REQ_VIEW_CLOSE;
 	}
 
 	refresh_view(view);

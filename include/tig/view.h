@@ -329,6 +329,8 @@ find_line_by_type(struct view *view, struct line *line, enum line_type type, int
 #define get_view_color(view, type)	get_line_color((view)->keymap->name, type)
 #define get_view_attr(view, type)	get_line_attr((view)->keymap->name, type)
 
+enum request view_request(struct view *view, enum request request);
+
 /*
  * Incremental updating
  */
