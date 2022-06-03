@@ -66,8 +66,8 @@ static enum status_code
 log_open(struct view *view, enum open_flags flags)
 {
 	const char *log_argv[] = {
-		"git", "log", encoding_arg, commit_order_arg(), "--cc",
-			"--stat", use_mailmap_arg(), "%(logargs)", "%(cmdlineargs)",
+		"git", "log", encoding_arg, commit_order_arg(),
+			use_mailmap_arg(), "%(logargs)", "%(cmdlineargs)",
 			"%(revargs)", "--no-color", "--", "%(fileargs)", NULL
 	};
 	enum status_code code;

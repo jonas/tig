@@ -12,7 +12,7 @@ EOF
 steps '
 	:save-display log-submodule.screen
 
-	:toggle log-options --submodule -p
+	:toggle log-options --cc --stat --submodule -p
 	:save-display log-submodule-diff.screen
 '
 
