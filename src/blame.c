@@ -228,6 +228,11 @@ blame_read(struct view *view, struct buffer *buf, bool force_stop)
 		if (failed_to_load_initial_view(view))
 			die("No blame exist for %s", view->vid);
 
+		if (view->env->goto_lineno > 0) {
+			select_view_line(view, view->env->goto_lineno);
+			view->env->goto_lineno = 0;
+		}
+
 		string_format(view->ref, "%s", view->vid);
 		if (view_is_displayed(view)) {
 			update_view_title(view);
