@@ -835,6 +835,7 @@ diff_common_select(struct view *view, struct line *line, const char *changes_msg
 			view->env->lineno_old = diff_get_lineno(view, line, true);
 			view->env->blob[0] = 0;
 		} else {
+			view->env->lineno = view->env->goto_lineno = (line - view->line) + 1;
 			string_ncopy(view->ref, view->ops->id, strlen(view->ops->id));
 		}
 	}
