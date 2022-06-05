@@ -13,16 +13,55 @@ steps '
 
 in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
 
-test_tig show a1dcf1a
-
-sed -i.old -n /asInstanceOf/p *.screen
+LINES=23 test_tig show a1dcf1a
 
 assert_equals 'initial-diff.screen' <<EOF
+commit a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff
+Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
+AuthorDate: Sat Mar 1 15:59:02 2014 -0500
+Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
+CommitDate: Sat Mar 1 15:59:02 2014 -0500
+
+    Add type parameter for js.Dynamic
+---
+ common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala b/commo
+index 65f914a..3aa4320 100644
+--- a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
++++ b/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
+@@ -15,7 +15,7 @@ object Benchmark {
+   val benchmarks = js.Array[Benchmark]()
+   val benchmarkApps = js.Array[BenchmarkApp]()
+
 -  val global = js.Dynamic.global.asInstanceOf[js.Dictionary]
 +  val global = js.Dynamic.global.asInstanceOf[js.Dictionary[js.Any]]
+[diff] a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff - line 1 of 24               87%
 EOF
 
 # Make sure that we find the commit that introduce the deleted line.
 assert_equals 'blame-deleted-line.screen' <<EOF
-0500  17x  val global = js.Dynamic.global.asInstanceOf[js.Dictionary]
+0400   1x /*                     __
+0400   2x **     ________ ___   / /  ___      __ ____  Scala.js Benchmarks
+0400   3x **    / __/ __// _ | / /  / _ | __ / // __/  (c) 2003-2013, LAMP/EPFL
+0400   4x **  __\ \/ /__/ __ |/ /__/ __ |/_// /_\ \    (c) 2013, Jonas Fonseca
+0400   5x ** /____/\___/_/ |_/____/_/ | |__/ /____/
+0400   6x **                          |/____/
+0400   7x \*
+0400   8x
+0400   9x package benchmarks
+0400  10x
+0400  11x import scala.compat.Platform
+0500  12x import scala.scalajs.js
+0500  13x
+0500  14x object Benchmark {
+0500  15x   val benchmarks = js.Array[js.Function0[Unit]]()
+0500  16x
+0500  17x   val global = js.Dynamic.global.asInstanceOf[js.Dictionary]
+0500  18x   global("ScalaJSBenchmarks") = benchmarks
+0500  19x
+0500  20x   def add(benchmark: Benchmark) {
+0500  21x     benchmarks.push {
+[blame] common/Benchmark.scala - line 17 of 99                               21%
 EOF
