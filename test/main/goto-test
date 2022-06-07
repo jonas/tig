@@ -35,96 +35,96 @@ in_work_dir setup-conflict.sh > repo.log 2>&1
 test_tig --merge
 
 assert_equals 'commit-1.screen' <<EOF
-2009-03-28 13:22 +0000 Committer * [conflict-branch] Change: d'
-2009-03-20 01:00 +0000 Committer * Change: d
-2014-05-25 19:42 +0000 Unknown   | * Unstaged changes
-2009-03-11 12:38 +0000 Committer | * [conflict-master] Change: c'
-2009-03-03 00:15 +0000 Committer | * Change: c
-2009-02-22 11:53 +0000 Committer o-' [master] Change: b
+2009-03-28 13:22 +0000 Committer         * [conflict-branch] Change: d'
+2009-03-20 01:00 +0000 Committer         * Change: d
+2014-05-25 19:42 +0000 Not Committed Yet | * Unstaged changes
+2009-03-11 12:38 +0000 Committer         | * [conflict-master] Change: c'
+2009-03-03 00:15 +0000 Committer         | * Change: c
+2009-02-22 11:53 +0000 Committer         o-' [master] Change: b
  
  
 [main] 9d2a1bbf0046ec6b5e7a6faebb9ba9374bdbdee7 - commit 1 of 5             100%
 EOF
 
 assert_equals 'commit-1-back.screen' <<EOF
-2009-03-28 13:22 +0000 Committer * [conflict-branch] Change: d'
-2009-03-20 01:00 +0000 Committer * Change: d
-2014-05-25 19:42 +0000 Unknown   | * Unstaged changes
-2009-03-11 12:38 +0000 Committer | * [conflict-master] Change: c'
-2009-03-03 00:15 +0000 Committer | * Change: c
-2009-02-22 11:53 +0000 Committer o-' [master] Change: b
+2009-03-28 13:22 +0000 Committer         * [conflict-branch] Change: d'
+2009-03-20 01:00 +0000 Committer         * Change: d
+2014-05-25 19:42 +0000 Not Committed Yet | * Unstaged changes
+2009-03-11 12:38 +0000 Committer         | * [conflict-master] Change: c'
+2009-03-03 00:15 +0000 Committer         | * Change: c
+2009-02-22 11:53 +0000 Committer         o-' [master] Change: b
  
  
 [main] 9d2a1bbf0046ec6b5e7a6faebb9ba9374bdbdee7 - commit 1 of 5             100%
 EOF
 
 assert_equals 'commit-2.screen' <<EOF
-2009-03-28 13:22 +0000 Committer * [conflict-branch] Change: d'
-2009-03-20 01:00 +0000 Committer * Change: d
-2014-05-25 19:42 +0000 Unknown   | * Unstaged changes
-2009-03-11 12:38 +0000 Committer | * [conflict-master] Change: c'
-2009-03-03 00:15 +0000 Committer | * Change: c
-2009-02-22 11:53 +0000 Committer o-' [master] Change: b
+2009-03-28 13:22 +0000 Committer         * [conflict-branch] Change: d'
+2009-03-20 01:00 +0000 Committer         * Change: d
+2014-05-25 19:42 +0000 Not Committed Yet | * Unstaged changes
+2009-03-11 12:38 +0000 Committer         | * [conflict-master] Change: c'
+2009-03-03 00:15 +0000 Committer         | * Change: c
+2009-02-22 11:53 +0000 Committer         o-' [master] Change: b
  
  
 [main] fa878e5e6d838243fa59025ef314395fbebc790f - commit 2 of 5             100%
 EOF
 
 assert_equals 'commit-2-again.screen' <<EOF
-2009-03-28 13:22 +0000 Committer * [conflict-branch] Change: d'
-2009-03-20 01:00 +0000 Committer * Change: d
-2014-05-25 19:42 +0000 Unknown   | * Unstaged changes
-2009-03-11 12:38 +0000 Committer | * [conflict-master] Change: c'
-2009-03-03 00:15 +0000 Committer | * Change: c
-2009-02-22 11:53 +0000 Committer o-' [master] Change: b
+2009-03-28 13:22 +0000 Committer         * [conflict-branch] Change: d'
+2009-03-20 01:00 +0000 Committer         * Change: d
+2014-05-25 19:42 +0000 Not Committed Yet | * Unstaged changes
+2009-03-11 12:38 +0000 Committer         | * [conflict-master] Change: c'
+2009-03-03 00:15 +0000 Committer         | * Change: c
+2009-02-22 11:53 +0000 Committer         o-' [master] Change: b
  
  
 [main] fa878e5e6d838243fa59025ef314395fbebc790f - commit 2 of 5             100%
 EOF
 
 assert_equals 'commit-5.screen' <<EOF
-2009-03-28 13:22 +0000 Committer * [conflict-branch] Change: d'
-2009-03-20 01:00 +0000 Committer * Change: d
-2014-05-25 19:42 +0000 Unknown   | * Unstaged changes
-2009-03-11 12:38 +0000 Committer | * [conflict-master] Change: c'
-2009-03-03 00:15 +0000 Committer | * Change: c
-2009-02-22 11:53 +0000 Committer o-' [master] Change: b
+2009-03-28 13:22 +0000 Committer         * [conflict-branch] Change: d'
+2009-03-20 01:00 +0000 Committer         * Change: d
+2014-05-25 19:42 +0000 Not Committed Yet | * Unstaged changes
+2009-03-11 12:38 +0000 Committer         | * [conflict-master] Change: c'
+2009-03-03 00:15 +0000 Committer         | * Change: c
+2009-02-22 11:53 +0000 Committer         o-' [master] Change: b
  
  
 [main] 74e56ba07b2ab229b9da9f87f586e880c1300854 - commit 5 of 5             100%
 EOF
 
 assert_equals 'commit-5-still.screen' <<EOF
-2009-03-28 13:22 +0000 Committer * [conflict-branch] Change: d'
-2009-03-20 01:00 +0000 Committer * Change: d
-2014-05-25 19:42 +0000 Unknown   | * Unstaged changes
-2009-03-11 12:38 +0000 Committer | * [conflict-master] Change: c'
-2009-03-03 00:15 +0000 Committer | * Change: c
-2009-02-22 11:53 +0000 Committer o-' [master] Change: b
+2009-03-28 13:22 +0000 Committer         * [conflict-branch] Change: d'
+2009-03-20 01:00 +0000 Committer         * Change: d
+2014-05-25 19:42 +0000 Not Committed Yet | * Unstaged changes
+2009-03-11 12:38 +0000 Committer         | * [conflict-master] Change: c'
+2009-03-03 00:15 +0000 Committer         | * Change: c
+2009-02-22 11:53 +0000 Committer         o-' [master] Change: b
  
  
 [main] 74e56ba07b2ab229b9da9f87f586e880c1300854 - commit 5 of 5             100%
 EOF
 
 assert_equals 'unstaged-changes.screen' <<EOF
-2009-03-28 13:22 +0000 Committer * [conflict-branch] Change: d'
-2009-03-20 01:00 +0000 Committer * Change: d
-2014-05-25 19:42 +0000 Unknown   | * Unstaged changes
-2009-03-11 12:38 +0000 Committer | * [conflict-master] Change: c'
-2009-03-03 00:15 +0000 Committer | * Change: c
-2009-02-22 11:53 +0000 Committer o-' [master] Change: b
+2009-03-28 13:22 +0000 Committer         * [conflict-branch] Change: d'
+2009-03-20 01:00 +0000 Committer         * Change: d
+2014-05-25 19:42 +0000 Not Committed Yet | * Unstaged changes
+2009-03-11 12:38 +0000 Committer         | * [conflict-master] Change: c'
+2009-03-03 00:15 +0000 Committer         | * Change: c
+2009-02-22 11:53 +0000 Committer         o-' [master] Change: b
  
  
 [main] Unstaged changes                                                     100%
 EOF
 
 assert_equals 'commit-3.screen' <<EOF
-2009-03-28 13:22 +0000 Committer * [conflict-branch] Change: d'
-2009-03-20 01:00 +0000 Committer * Change: d
-2014-05-25 19:42 +0000 Unknown   | * Unstaged changes
-2009-03-11 12:38 +0000 Committer | * [conflict-master] Change: c'
-2009-03-03 00:15 +0000 Committer | * Change: c
-2009-02-22 11:53 +0000 Committer o-' [master] Change: b
+2009-03-28 13:22 +0000 Committer         * [conflict-branch] Change: d'
+2009-03-20 01:00 +0000 Committer         * Change: d
+2014-05-25 19:42 +0000 Not Committed Yet | * Unstaged changes
+2009-03-11 12:38 +0000 Committer         | * [conflict-master] Change: c'
+2009-03-03 00:15 +0000 Committer         | * Change: c
+2009-02-22 11:53 +0000 Committer         o-' [master] Change: b
  
  
 [main] 42f17bb0393458bc27b5f512022aabb15d3935fd - commit 3 of 5             100%

@@ -297,9 +297,9 @@ mkfilesize(unsigned long size, enum file_size format)
 }
 
 const struct ident unknown_ident = {
-	"unknown@localhostUnknown",	// key
-	"Unknown",			// name
-	"unknown@localhost"		// email
+	"not.committed.yetNot Committed Yet",	// key
+	"Not Committed Yet",			// name
+	"not.committed.yet"			// email
 };
 
 int

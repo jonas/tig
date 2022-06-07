@@ -26,7 +26,7 @@ test_setup_work_dir() {
 test_tig
 
 assert_equals 'default.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown   o Staged changes
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Staged changes
 2009-02-13 23:31 +0000 Committer I [master] commit1
 [main] Staged changes                                                       100%
 EOF

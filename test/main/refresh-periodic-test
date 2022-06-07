@@ -41,30 +41,30 @@ test_timeout 30
 test_tig
 
 assert_equals 'main-with-unstaged.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
-2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Unstaged changes
+2009-02-13 23:31 +0000 A. U. Thor        I [master] Initial commit
  
 [main] Unstaged changes                                                     100%
 EOF
 
 assert_equals 'main-after-add-a.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
-$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
-2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Unstaged changes
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Staged changes
+2009-02-13 23:31 +0000 A. U. Thor        I [master] Initial commit
 [main] Unstaged changes                                                     100%
 EOF
 
 assert_equals 'main-after-commit.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
-2009-02-22 11:53 +0000 Committer  o [master] Commit changes
-2009-02-13 23:31 +0000 A. U. Thor I Initial commit
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Unstaged changes
+2009-02-22 11:53 +0000 Committer         o [master] Commit changes
+2009-02-13 23:31 +0000 A. U. Thor        I Initial commit
 [main] Unstaged changes                                                     100%
 EOF
 
 assert_equals 'main-after-commiting-change-and-sleeping-hello.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
-2009-02-22 11:53 +0000 Committer  o [master] Another change: hello
-2009-02-22 11:53 +0000 Committer  o Commit changes
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Unstaged changes
+2009-02-22 11:53 +0000 Committer         o [master] Another change: hello
+2009-02-22 11:53 +0000 Committer         o Commit changes
 [main] Unstaged changes                                                      75%
 EOF
 
