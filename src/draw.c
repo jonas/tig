@@ -65,13 +65,16 @@ draw_chars(struct view *view, enum line_type type, const char *string, int lengt
 	if (max_width <= 0)
 		return VIEW_MAX_LEN(view) <= 0;
 
-	len = utf8_length(&string, length, skip, &col, max_width, &trimmed, use_tilde, opt_tab_size);
+	if (length == -1)
+		length = strlen(string);
 
 	if (opt_iconv_out != ICONV_NONE) {
-		string = encoding_iconv(opt_iconv_out, string, len);
+		string = encoding_iconv(opt_iconv_out, string, length);
 		if (!string)
 			return VIEW_MAX_LEN(view) <= 0;
 	}
+
+	len = utf8_length(&string, length, skip, &col, max_width, &trimmed, use_tilde, opt_tab_size);
 
 	set_view_attr(view, type);
 	if (len > 0)
