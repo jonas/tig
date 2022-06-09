@@ -72,6 +72,7 @@ draw_chars(struct view *view, enum line_type type, const char *string, int lengt
 		string = encoding_iconv(opt_iconv_out, string, length);
 		if (!string)
 			return VIEW_MAX_LEN(view) <= 0;
+		length = strlen(string);
 	}
 
 	len = utf8_length(&string, length, skip, &col, max_width, &trimmed, use_tilde, opt_tab_size);
