@@ -454,7 +454,7 @@ find_deleted_line_in_head(struct view *view, struct line *line) {
 		"git", "ls-tree", "-z", "HEAD", view->env->file, NULL
 	};
 	const char *diff_argv[] = {
-		"git", "diff", "--root", file_in_head_pathspec, file_in_index_pathspec,
+		"git", "diff", file_in_head_pathspec, file_in_index_pathspec,
 		"--no-color", NULL
 	};
 
@@ -468,7 +468,7 @@ find_deleted_line_in_head(struct view *view, struct line *line) {
 	} else { // The file might might be renamed in the index. Find its old name.
 		struct status file_status;
 		const char *diff_index_argv[] = {
-			"git", "diff-index", "--root", "--cached", "-C",
+			"git", "diff-index", "--cached", "-C",
 			"--diff-filter=ACR", "-z", "HEAD", NULL
 		};
 		if (!io_run(&io, IO_RD, repo.exec_dir, NULL, diff_index_argv) || io.status)
@@ -702,16 +702,16 @@ stage_open(struct view *view, enum open_flags flags)
 	};
 	const char *index_show_argv[] = {
 		GIT_DIFF_STAGED(encoding_arg, diff_context_arg(), ignore_space_arg(),
-			stage_status.old.name, stage_status.new.name)
+			word_diff_arg(), stage_status.old.name, stage_status.new.name)
 	};
 	const char *files_show_argv[] = {
 		GIT_DIFF_UNSTAGED(encoding_arg, diff_context_arg(), ignore_space_arg(),
-			stage_status.old.name, stage_status.new.name)
+			word_diff_arg(), stage_status.old.name, stage_status.new.name)
 	};
 	/* Diffs for unmerged entries are empty when passing the new
 	 * path, so leave out the new path. */
 	const char *files_unmerged_argv[] = {
-		"git", "diff-files", encoding_arg, "--root", "--textconv", "--patch-with-stat",
+		"git", "diff-files", encoding_arg, "--textconv", "--patch-with-stat",
 			DIFF_ARGS, diff_context_arg(), ignore_space_arg(), "--",
 			stage_status.old.name, NULL
 	};
