@@ -1484,7 +1484,7 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	else if (!strcmp(name, "diff.noprefix"))
 		parse_bool(&opt_diff_noprefix, value);
 
-	else if (!strcmp(name, "status.showUntrackedFiles"))
+	else if (!strcmp(name, "status.showuntrackedfiles"))
 		parse_bool(&opt_status_show_untracked_files, value);
 
 	else if (!prefixcmp(name, "tig.color."))
