@@ -298,6 +298,8 @@ bind generic	i	:toggle sort-field	# Toggle field to sort by
 bind generic	<Hash>	:toggle line-number	# Toggle line numbers
 bind generic	D	:toggle date		# Toggle date display
 bind generic	A	:toggle author		# Toggle author display
+#bind generic	???	:toggle commit-title-display
+						# Toggle commit title display
 bind generic	~	:toggle line-graphics	# Toggle (line) graphics mode
 bind generic	F	:toggle file-name	# Toggle file name display
 # bind generic	???	:toggle show-changes	# Toggle local changes display in the main view

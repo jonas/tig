@@ -370,9 +370,6 @@ draw_ref(struct view *view, struct view_column *column, const struct ref *ref)
 static bool
 draw_refs(struct view *view, struct view_column *column, const struct ref *refs)
 {
-	if (!column->opt.commit_title.refs || !refs)
-		return false;
-
 	for (; refs; refs = refs->next) {
 		const struct ref *ref = refs;
 		enum line_type type = get_line_type_from_ref(ref);
@@ -455,10 +452,13 @@ draw_commit_title(struct view *view, struct view_column *column, enum line_type 
 		  const struct graph *graph, const struct graph_canvas *graph_canvas,
 		  const struct ref *refs, const char *commit_title)
 {
-	if (graph && graph_canvas && column->opt.commit_title.graph &&
+	if (!column->opt.commit_title.display)
+		return false;
+	if (column->opt.commit_title.graph && graph && graph_canvas &&
 	    draw_graph(view, graph, graph_canvas))
 		return true;
-	if (draw_refs(view, column, refs))
+	if (column->opt.commit_title.refs && refs &&
+	    draw_refs(view, column, refs))
 		return true;
 	return draw_text_overflow(view, commit_title, type,
 			column->opt.commit_title.overflow, 0);
