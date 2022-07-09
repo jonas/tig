@@ -673,7 +673,7 @@ draw_view_line(struct view *view, unsigned int lineno)
 
 	ok = view->ops->draw(view, line, lineno);
 
-	if (ok && line->search_result && view->regex)
+	if (ok && line->search_result && *view->grep)
 		draw_view_line_search_result(view, lineno);
 
 	return ok;

@@ -39,13 +39,14 @@ find_matches(struct view *view)
 	/* Note, lineno is unsigned long so will wrap around in which case it
 	 * will become bigger than view->lines. */
 	for (lineno = 0; lineno < view->lines; lineno++) {
-		if (!view->ops->grep(view, &view->line[lineno]))
+		view->line[lineno].search_result = view->ops->grep(view, &view->line[lineno]);
+
+		if (!view->line[lineno].search_result)
 			continue;
 
 		if (!realloc_unsigned_ints(&view->matched_line, view->matched_lines, 1))
 			return false;
 
-		view->line[lineno].search_result = true;
 		view->matched_line[view->matched_lines++] = lineno;
 	}
 
@@ -81,6 +82,9 @@ setup_and_find_next(struct view *view, enum request request)
 	regex_err = regcomp(view->regex, view->env->search, REG_EXTENDED | regex_flags);
 	if (regex_err != 0) {
 		char buf[SIZEOF_STR] = "unknown error";
+
+		/* Clear highlighted results. */
+		redraw_view_from(view, 0);
 
 		regerror(regex_err, view->regex, buf, sizeof(buf));
 		return error("Search failed: %s", buf);
