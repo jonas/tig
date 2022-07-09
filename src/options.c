@@ -579,24 +579,25 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 	if (!enum_name_prefixed(name, sizeof(name), prefix, option->name))
 		return error("Failed to parse option");
 
-	if (!strcmp("show-notes", name)) {
-		bool *value = option->value;
-		enum status_code res;
+	if (!strcmp(option->type, "bool")) {
+		if (!strcmp("show-notes", name)) {
+			bool *value = option->value;
+			enum status_code res;
 
-		if (parse_bool(option->value, arg) == SUCCESS)
-			return SUCCESS;
+			if (parse_bool(option->value, arg) == SUCCESS)
+				return SUCCESS;
 
-		*value = true;
-		string_copy(opt_notes_arg, NOTES_EQ_ARG);
-		res = parse_string(opt_notes_arg + STRING_SIZE(NOTES_EQ_ARG), arg,
-				   sizeof(opt_notes_arg) - STRING_SIZE(NOTES_EQ_ARG));
-		if (res == SUCCESS && !opt_notes_arg[STRING_SIZE(NOTES_EQ_ARG)])
-			opt_notes_arg[STRING_SIZE(NOTES_ARG)] = 0;
-		return res;
-	}
+			*value = true;
+			string_copy(opt_notes_arg, NOTES_EQ_ARG);
+			res = parse_string(opt_notes_arg + STRING_SIZE(NOTES_EQ_ARG), arg,
+					   sizeof(opt_notes_arg) - STRING_SIZE(NOTES_EQ_ARG));
+			if (res == SUCCESS && !opt_notes_arg[STRING_SIZE(NOTES_EQ_ARG)])
+				opt_notes_arg[STRING_SIZE(NOTES_ARG)] = 0;
+			return res;
+		}
 
-	if (!strcmp(option->type, "bool"))
 		return parse_bool(option->value, arg);
+	}
 
 	if (!strcmp(option->type, "double"))
 		return parse_step(option->value, arg);

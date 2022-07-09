@@ -771,7 +771,7 @@ split_view(struct view *prev, struct view *view)
 	}
 
 	if (view_has_flags(prev, VIEW_FLEX_WIDTH) && vsplit && nviews == 1)
-		load_view(prev, NULL, OPEN_RELOAD);
+		reload_view(prev);
 }
 
 void
@@ -794,7 +794,7 @@ maximize_view(struct view *view, bool redraw)
 	}
 
 	if (view_has_flags(view, VIEW_FLEX_WIDTH) && vsplit && nviews > 1)
-		load_view(view, NULL, OPEN_RELOAD);
+		reload_view(view);
 }
 
 void

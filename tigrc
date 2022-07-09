@@ -127,7 +127,7 @@ set start-on-head		= no		# Start with cursor on HEAD commit
 set refresh-mode		= auto		# Enum: manual, auto, after-command, periodic
 set refresh-interval		= 10		# Interval in seconds between refreshes
 set ignore-case			= no		# Enum: no, yes, smart-case
-						# Ignore case when searching? Smart-case option will
+						# Ignore case when searching?
 set wrap-search			= yes		# Wrap around to top/bottom of view when searching
 set focus-child			= yes		# Move focus to child view when opened?
 set send-child-enter		= yes		# Propagate "enter" keypresses to child views?
@@ -298,12 +298,13 @@ bind generic	i	:toggle sort-field	# Toggle field to sort by
 bind generic	<Hash>	:toggle line-number	# Toggle line numbers
 bind generic	D	:toggle date		# Toggle date display
 bind generic	A	:toggle author		# Toggle author display
-#bind generic	???	:toggle commit-title-display
+# bind generic	???	:toggle commit-title-display
 						# Toggle commit title display
 bind generic	~	:toggle line-graphics	# Toggle (line) graphics mode
 bind generic	F	:toggle file-name	# Toggle file name display
 # bind generic	???	:toggle show-changes	# Toggle local changes display in the main view
 bind generic	W	:toggle ignore-space	# Toggle ignoring whitespace in diffs
+# bind generic	???	:toggle ignore-case	# Toggle ignoring case when searching
 # bind generic	???	:toggle commit-order	# Toggle commit ordering
 bind generic	X	:toggle id		# Toggle commit ID display
 bind generic	$	:toggle commit-title-overflow
@@ -313,6 +314,7 @@ bind generic	$	:toggle commit-title-overflow
 # bind generic	???	:toggle status-show-untracked-dirs
 						# Toggle display of file in untracked directories
 # bind generic	???	:toggle vertical-split	# Toggle vertical split
+# bind generic	???	:toggle word-diff	# Toggle word diff
 bind generic	%	:toggle file-filter	# Toggle filtering by pathspecs in file-args
 bind generic	^	:toggle rev-filter	# Toggle filtering by revisions in rev-args
 

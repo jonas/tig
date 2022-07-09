@@ -25,13 +25,6 @@
 
 /*
  * Blame backend
- *
- * Loading the blame view is a two phase job:
- *
- *  1. File content is read either using argv_env.file from the
- *     filesystem or using git-cat-file.
- *  2. Then blame information is incrementally added by
- *     reading output from git-blame.
  */
 
 struct blame_history_state {
