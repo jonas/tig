@@ -2,12 +2,12 @@
 .\"     Title: tig
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 01/11/2022
+.\"      Date: 07/11/2022
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.5.5
+.\"    Source: Tig 2.5.6
 .\"  Language: English
 .\"
-.TH "TIG" "1" "01/11/2022" "Tig 2\&.5\&.5" "Tig Manual"
+.TH "TIG" "1" "07/11/2022" "Tig 2\&.5\&.6" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -468,8 +468,10 @@ Git configuration files\&. Read on start\-up with the help of git\-config(1)\&.
 When compiled with readline support, Tig writes a persistent command and search history\&. The location of the history file is determined in the following way\&. If
 $XDG_DATA_HOME
 is set and
+$XDG_DATA_HOME/
+exists, create
 $XDG_DATA_HOME/tig/
-exists, store history to
+if needed and store history to
 $XDG_DATA_HOME/tig/history\&. If
 $XDG_DATA_HOME
 is empty or undefined, store history to
@@ -485,7 +487,7 @@ if it does not exist\&.
 Please visit Tig\(cqs \m[blue]\fBhome page\fR\m[]\&\s-2\u[1]\d\s+2 or \m[blue]\fBmain Git repository\fR\m[]\&\s-2\u[2]\d\s+2 for information about new releases and how to report bugs or feature request\&.
 .SH "COPYRIGHT"
 .sp
-Copyright (c) 2006\-2014 Jonas Fonseca <\m[blue]\fBjonas\&.fonseca@gmail\&.com\fR\m[]\&\s-2\u[3]\d\s+2>
+Copyright (c) 2006\-2022 Jonas Fonseca <\m[blue]\fBjonas\&.fonseca@gmail\&.com\fR\m[]\&\s-2\u[3]\d\s+2>
 .sp
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version\&.
 .SH "SEE ALSO"

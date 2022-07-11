@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 10.1.1" />
+<meta name="generator" content="AsciiDoc 10.2.0" />
 <title>Release notes</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -737,6 +737,99 @@ asciidoc.install();
 <h1>Release notes</h1>
 </div>
 <div id="content">
+<div class="sect1">
+<h2 id="_tig_2_5_6">tig-2.5.6</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix <code>:goto &lt;tag&gt;</code>. (#1178)
+</p>
+</li>
+<li>
+<p>
+Fix typo in ui.c.
+</p>
+</li>
+<li>
+<p>
+Revert terminal hacks and workarounds. (#748, #943, #1180, #1182)
+</p>
+</li>
+<li>
+<p>
+Fix opening of an ambiguous ref in refs view.
+</p>
+</li>
+<li>
+<p>
+Fix search when view is loading.
+</p>
+</li>
+<li>
+<p>
+Use the full width for diffstat in the stage view.
+</p>
+</li>
+<li>
+<p>
+Improve escaping of variables in external commands.
+</p>
+</li>
+<li>
+<p>
+Fix cursor behaviour during staging. (#842, #1028)
+</p>
+</li>
+<li>
+<p>
+Fix navigation in split tree view.
+</p>
+</li>
+<li>
+<p>
+Enable textconv in the stage view.
+</p>
+</li>
+<li>
+<p>
+Enable textconv in the blame view and fix blame -L. (#978, #1189)
+</p>
+</li>
+<li>
+<p>
+Update lineno for untracked files. (#1192)
+</p>
+</li>
+<li>
+<p>
+Fix alignment of transliterated text. (#1195)
+</p>
+</li>
+<li>
+<p>
+Fix word diff in the stage, stash and blame views. (#1207)
+</p>
+</li>
+<li>
+<p>
+Fix reading the value of status.showUntrackedFiles. (#1211)
+</p>
+</li>
+<li>
+<p>
+Honor commit_title:no in view settings.
+</p>
+</li>
+<li>
+<p>
+Fix segfault with PCRE.
+</p>
+</li>
+</ul></div>
+</div>
+</div>
 <div class="sect1">
 <h2 id="_tig_2_5_5">tig-2.5.5</h2>
 <div class="sectionbody">
@@ -4798,7 +4891,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2022-01-11 19:50:17 CET
+ 2022-07-11 23:15:48 CEST
 </div>
 </div>
 </body>

@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 10.1.1" />
+<meta name="generator" content="AsciiDoc 10.2.0" />
 <title>tig(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -1160,11 +1160,12 @@ TIG_EDITOR
 <p>
         When compiled with readline support, Tig writes a persistent command and
         search history. The location of the history file is determined in the
-        following way. If <code>$XDG_DATA_HOME</code> is set and <code>$XDG_DATA_HOME/tig/</code>
-        exists, store history to <code>$XDG_DATA_HOME/tig/history</code>. If
-        <code>$XDG_DATA_HOME</code> is empty or undefined, store history to
-        <code>~/.local/share/tig/history</code> if the directory <code>~/.local/share/tig/</code>
-        exists, and fall back to <code>~/.tig_history</code> if it does not exist.
+        following way. If <code>$XDG_DATA_HOME</code> is set and <code>$XDG_DATA_HOME/</code> exists,
+        create <code>$XDG_DATA_HOME/tig/</code> if needed and store history to
+        <code>$XDG_DATA_HOME/tig/history</code>. If <code>$XDG_DATA_HOME</code> is empty or undefined,
+        store history to <code>~/.local/share/tig/history</code> if the directory
+        <code>~/.local/share/tig/</code> exists, and fall back to <code>~/.tig_history</code> if it
+        does not exist.
 </p>
 </dd>
 </dl></div>
@@ -1181,7 +1182,7 @@ new releases and how to report bugs or feature request.</p></div>
 <div class="sect1">
 <h2 id="_copyright">COPYRIGHT</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Copyright (c) 2006-2014 Jonas Fonseca &lt;<a href="mailto:jonas.fonseca@gmail.com">jonas.fonseca@gmail.com</a>&gt;</p></div>
+<div class="paragraph"><p>Copyright (c) 2006-2022 Jonas Fonseca &lt;<a href="mailto:jonas.fonseca@gmail.com">jonas.fonseca@gmail.com</a>&gt;</p></div>
 <div class="paragraph"><p>This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -1201,7 +1202,7 @@ git(7)</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2022-01-11 19:50:17 CET
+ 2022-07-11 23:15:48 CEST
 </div>
 </div>
 </body>
