@@ -1,13 +1,14 @@
 Release notes
 =============
 
-master
-------
+tig-2.5.6
+---------
 
 Bug fixes:
+
  - Fix `:goto <tag>`. (#1178)
  - Fix typo in ui.c.
- - Revert terminal hacks and workarounds. (#1180, #1182)
+ - Revert terminal hacks and workarounds. (#748, #943, #1180, #1182)
  - Fix opening of an ambiguous ref in refs view.
  - Fix search when view is loading.
  - Use the full width for diffstat in the stage view.
@@ -16,6 +17,12 @@ Bug fixes:
  - Fix navigation in split tree view.
  - Enable textconv in the stage view.
  - Enable textconv in the blame view and fix blame -L. (#978, #1189)
+ - Update lineno for untracked files. (#1192)
+ - Fix alignment of transliterated text. (#1195)
+ - Fix word diff in the stage, stash and blame views. (#1207)
+ - Fix reading the value of status.showUntrackedFiles. (#1211)
+ - Honor commit_title:no in view settings.
+ - Fix segfault with PCRE.
 
 tig-2.5.5
 ---------
