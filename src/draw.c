@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -65,13 +65,17 @@ draw_chars(struct view *view, enum line_type type, const char *string, int lengt
 	if (max_width <= 0)
 		return VIEW_MAX_LEN(view) <= 0;
 
-	len = utf8_length(&string, length, skip, &col, max_width, &trimmed, use_tilde, opt_tab_size);
+	if (length == -1)
+		length = strlen(string);
 
 	if (opt_iconv_out != ICONV_NONE) {
-		string = encoding_iconv(opt_iconv_out, string, len);
+		string = encoding_iconv(opt_iconv_out, string, length);
 		if (!string)
 			return VIEW_MAX_LEN(view) <= 0;
+		length = strlen(string);
 	}
+
+	len = utf8_length(&string, length, skip, &col, max_width, &trimmed, use_tilde, opt_tab_size);
 
 	set_view_attr(view, type);
 	if (len > 0)
@@ -366,9 +370,6 @@ draw_ref(struct view *view, struct view_column *column, const struct ref *ref)
 static bool
 draw_refs(struct view *view, struct view_column *column, const struct ref *refs)
 {
-	if (!column->opt.commit_title.refs || !refs)
-		return false;
-
 	for (; refs; refs = refs->next) {
 		const struct ref *ref = refs;
 		enum line_type type = get_line_type_from_ref(ref);
@@ -451,10 +452,13 @@ draw_commit_title(struct view *view, struct view_column *column, enum line_type 
 		  const struct graph *graph, const struct graph_canvas *graph_canvas,
 		  const struct ref *refs, const char *commit_title)
 {
-	if (graph && graph_canvas && column->opt.commit_title.graph &&
+	if (!column->opt.commit_title.display)
+		return false;
+	if (column->opt.commit_title.graph && graph && graph_canvas &&
 	    draw_graph(view, graph, graph_canvas))
 		return true;
-	if (draw_refs(view, column, refs))
+	if (column->opt.commit_title.refs && refs &&
+	    draw_refs(view, column, refs))
 		return true;
 	return draw_text_overflow(view, commit_title, type,
 			column->opt.commit_title.overflow, 0);
@@ -669,7 +673,7 @@ draw_view_line(struct view *view, unsigned int lineno)
 
 	ok = view->ops->draw(view, line, lineno);
 
-	if (ok && line->search_result && view->regex)
+	if (ok && line->search_result && *view->grep)
 		draw_view_line_search_result(view, lineno);
 
 	return ok;

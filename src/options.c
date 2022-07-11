@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -579,24 +579,25 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 	if (!enum_name_prefixed(name, sizeof(name), prefix, option->name))
 		return error("Failed to parse option");
 
-	if (!strcmp("show-notes", name)) {
-		bool *value = option->value;
-		enum status_code res;
+	if (!strcmp(option->type, "bool")) {
+		if (!strcmp("show-notes", name)) {
+			bool *value = option->value;
+			enum status_code res;
 
-		if (parse_bool(option->value, arg) == SUCCESS)
-			return SUCCESS;
+			if (parse_bool(option->value, arg) == SUCCESS)
+				return SUCCESS;
 
-		*value = true;
-		string_copy(opt_notes_arg, NOTES_EQ_ARG);
-		res = parse_string(opt_notes_arg + STRING_SIZE(NOTES_EQ_ARG), arg,
-				   sizeof(opt_notes_arg) - STRING_SIZE(NOTES_EQ_ARG));
-		if (res == SUCCESS && !opt_notes_arg[STRING_SIZE(NOTES_EQ_ARG)])
-			opt_notes_arg[STRING_SIZE(NOTES_ARG)] = 0;
-		return res;
-	}
+			*value = true;
+			string_copy(opt_notes_arg, NOTES_EQ_ARG);
+			res = parse_string(opt_notes_arg + STRING_SIZE(NOTES_EQ_ARG), arg,
+					   sizeof(opt_notes_arg) - STRING_SIZE(NOTES_EQ_ARG));
+			if (res == SUCCESS && !opt_notes_arg[STRING_SIZE(NOTES_EQ_ARG)])
+				opt_notes_arg[STRING_SIZE(NOTES_ARG)] = 0;
+			return res;
+		}
 
-	if (!strcmp(option->type, "bool"))
 		return parse_bool(option->value, arg);
+	}
 
 	if (!strcmp(option->type, "double"))
 		return parse_step(option->value, arg);
@@ -1484,7 +1485,7 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	else if (!strcmp(name, "diff.noprefix"))
 		parse_bool(&opt_diff_noprefix, value);
 
-	else if (!strcmp(name, "status.showUntrackedFiles"))
+	else if (!strcmp(name, "status.showuntrackedfiles"))
 		parse_bool(&opt_status_show_untracked_files, value);
 
 	else if (!prefixcmp(name, "tig.color."))

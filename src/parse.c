@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -92,7 +92,7 @@ parse_author_line(char *ident, const struct ident **author, struct time *time)
  */
 
 static bool
-parse_number(const char **posref, size_t *number, size_t min, size_t max)
+parse_number(const char **posref, size_t *number)
 {
 	const char *pos = *posref;
 
@@ -101,15 +101,13 @@ parse_number(const char **posref, size_t *number, size_t min, size_t max)
 	if (!pos || !isdigit(pos[1]))
 		return false;
 	*number = atoi(pos + 1);
-	if (*number < min || *number > max)
-		return false;
 
 	*posref = pos;
 	return true;
 }
 
 bool
-parse_blame_header(struct blame_header *header, const char *text, size_t max_lineno)
+parse_blame_header(struct blame_header *header, const char *text)
 {
 	const char *pos = text + SIZEOF_REV - 2;
 
@@ -118,10 +116,11 @@ parse_blame_header(struct blame_header *header, const char *text, size_t max_lin
 
 	string_ncopy(header->id, text, SIZEOF_REV);
 
-	if (!parse_number(&pos, &header->orig_lineno, 1, 9999999) ||
-	    !parse_number(&pos, &header->lineno, 1, max_lineno) ||
-	    !parse_number(&pos, &header->group, 1, max_lineno - header->lineno + 1))
+	if (!parse_number(&pos, &header->orig_lineno) ||
+	    !parse_number(&pos, &header->lineno))
 		return false;
+	if (!parse_number(&pos, &header->group))
+		header->group = 0;
 
 	return true;
 }

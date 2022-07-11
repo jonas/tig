@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -81,9 +81,8 @@ stash_request(struct view *view, enum request request, struct line *line)
 		    strcmp(view->env->stash, diff->ref)) {
 			const char *diff_argv[] = {
 				"git", "stash", "show", encoding_arg, "--pretty=fuller",
-					"--root", "--patch-with-stat",
-					show_notes_arg(), diff_context_arg(),
-					ignore_space_arg(), DIFF_ARGS,
+					"--patch-with-stat", diff_context_arg(),
+					ignore_space_arg(), word_diff_arg(), DIFF_ARGS,
 					"--no-color", "%(stash)", NULL
 			};
 

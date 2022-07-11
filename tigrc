@@ -67,14 +67,14 @@
 #    - commit-title-overflow (boolint)	: Highlight overflow in log and diff view?
 #
 
-set blame-view	= id:yes,color file-name:auto author:full date:default line-number:yes,interval=1 text
+set blame-view	= id:yes,color file-name:auto author:full date:default,format="%Y-%m-%d" line-number:yes,interval=1 text
 set grep-view	= file-name:no line-number:yes,interval=1 text
-set main-view	= line-number:no,interval=5 id:no date:default author:full commit-title:yes,graph,refs,overflow=no
-set reflog-view	= line-number:no,interval=5 id:yes date:no author:no commit-title:yes,refs,overflow=no
-set refs-view	= line-number:no id:no date:default author:full ref commit-title
-set stash-view	= line-number:no,interval=5 id:no date:default author:full commit-title
+set main-view	= line-number:no,interval=5 id:no date:default,format="%Y-%m-%d" author:full commit-title:yes,graph,refs,overflow=no
+set reflog-view	= line-number:no,interval=5 id:yes date:no,format="%Y-%m-%d" author:no commit-title:yes,refs,overflow=no
+set refs-view	= line-number:no id:no date:default,format="%Y-%m-%d" author:full ref commit-title
+set stash-view	= line-number:no,interval=5 id:no date:default,format="%Y-%m-%d" author:full commit-title
 set status-view	= line-number:no,interval=5 status:short file-name
-set tree-view	= line-number:no,interval=5 mode author:full file-size date:default id:no file-name
+set tree-view	= line-number:no,interval=5 mode author:full file-size date:default,format="%Y-%m-%d" id:no file-name
 
 # Pager based views
 set pager-view	= line-number:no,interval=5 text
@@ -127,7 +127,7 @@ set start-on-head		= no		# Start with cursor on HEAD commit
 set refresh-mode		= auto		# Enum: manual, auto, after-command, periodic
 set refresh-interval		= 10		# Interval in seconds between refreshes
 set ignore-case			= no		# Enum: no, yes, smart-case
-						# Ignore case when searching? Smart-case option will
+						# Ignore case when searching?
 set wrap-search			= yes		# Wrap around to top/bottom of view when searching
 set focus-child			= yes		# Move focus to child view when opened?
 set send-child-enter		= yes		# Propagate "enter" keypresses to child views?
@@ -298,10 +298,13 @@ bind generic	i	:toggle sort-field	# Toggle field to sort by
 bind generic	<Hash>	:toggle line-number	# Toggle line numbers
 bind generic	D	:toggle date		# Toggle date display
 bind generic	A	:toggle author		# Toggle author display
+# bind generic	???	:toggle commit-title-display
+						# Toggle commit title display
 bind generic	~	:toggle line-graphics	# Toggle (line) graphics mode
 bind generic	F	:toggle file-name	# Toggle file name display
 # bind generic	???	:toggle show-changes	# Toggle local changes display in the main view
 bind generic	W	:toggle ignore-space	# Toggle ignoring whitespace in diffs
+# bind generic	???	:toggle ignore-case	# Toggle ignoring case when searching
 # bind generic	???	:toggle commit-order	# Toggle commit ordering
 bind generic	X	:toggle id		# Toggle commit ID display
 bind generic	$	:toggle commit-title-overflow
@@ -311,6 +314,7 @@ bind generic	$	:toggle commit-title-overflow
 # bind generic	???	:toggle status-show-untracked-dirs
 						# Toggle display of file in untracked directories
 # bind generic	???	:toggle vertical-split	# Toggle vertical split
+# bind generic	???	:toggle word-diff	# Toggle word diff
 bind generic	%	:toggle file-filter	# Toggle filtering by pathspecs in file-args
 bind generic	^	:toggle rev-filter	# Toggle filtering by revisions in rev-args
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -25,13 +25,6 @@
 
 /*
  * Blame backend
- *
- * Loading the blame view is a two phase job:
- *
- *  1. File content is read either using argv_env.file from the
- *     filesystem or using git-cat-file.
- *  2. Then blame information is incrementally added by
- *     reading output from git-blame.
  */
 
 struct blame_history_state {
@@ -49,9 +42,8 @@ struct blame {
 
 struct blame_state {
 	struct blame_commit *commit;
+	struct blame_header header;
 	char author[SIZEOF_STR];
-	int blamed;
-	bool done_reading;
 	bool auto_filename_display;
 	const char *filename;
 	/* The history state for the current view is cached in the view
@@ -78,7 +70,11 @@ static enum status_code
 blame_open(struct view *view, enum open_flags flags)
 {
 	struct blame_state *state = view->private;
-	const char *file_argv[] = { repo.exec_dir, view->env->file , NULL };
+	const char *blame_argv[] = {
+		"git", "blame", encoding_arg, "%(blameargs)", "-p",
+			view->env->ref, "--", view->env->file, NULL
+	};
+	enum status_code code;
 	size_t i;
 
 	if (!(repo.is_inside_work_tree || *repo.worktree))
@@ -145,15 +141,9 @@ blame_open(struct view *view, enum open_flags flags)
 		return error("No file chosen, press %s to open tree view",
 			     get_view_key(view, REQ_VIEW_TREE));
 
-	if (*view->env->ref || begin_update(view, repo.exec_dir, file_argv, flags) != SUCCESS) {
-		const char *blame_cat_file_argv[] = {
-			"git", "cat-file", "blob", "%(ref):%(file)", NULL
-		};
-		enum status_code code = begin_update(view, repo.exec_dir, blame_cat_file_argv, flags);
-
-		if (code != SUCCESS)
-			return code;
-	}
+	code = begin_update(view, repo.exec_dir, blame_argv, flags);
+	if (code != SUCCESS)
+		return code;
 
 	/* First pass: remove multiple references to the same commit. */
 	for (i = 0; i < view->lines; i++) {
@@ -210,66 +200,16 @@ get_blame_commit(struct view *view, const char *id)
 static struct blame_commit *
 read_blame_commit(struct view *view, const char *text, struct blame_state *state)
 {
-	struct blame_header header;
 	struct blame_commit *commit;
-	struct blame *blame;
 
-	if (!parse_blame_header(&header, text, view->lines))
+	if (!parse_blame_header(&state->header, text))
 		return NULL;
 
 	commit = get_blame_commit(view, text);
 	if (!commit)
 		return NULL;
 
-	state->blamed += header.group;
-	while (header.group--) {
-		struct line *line = &view->line[header.lineno + header.group - 1];
-
-		blame = line->data;
-		blame->commit = commit;
-		blame->lineno = header.orig_lineno + header.group - 1;
-		line->dirty = 1;
-	}
-
 	return commit;
-}
-
-static bool
-blame_read_file(struct view *view, struct buffer *buf, struct blame_state *state)
-{
-	if (!buf) {
-		const char *blame_argv[] = {
-			"git", "blame", encoding_arg, "%(blameargs)", "--incremental",
-				*view->env->ref ? view->env->ref : "--incremental", "--", view->env->file, NULL
-		};
-
-		if (failed_to_load_initial_view(view))
-			die("No blame exist for %s", view->vid);
-
-		if (view->lines == 0 || begin_update(view, repo.exec_dir, blame_argv, OPEN_EXTRA) != SUCCESS) {
-			report("Failed to load blame data");
-			return true;
-		}
-
-		if (view->env->goto_lineno > 0) {
-			select_view_line(view, view->env->goto_lineno);
-			view->env->goto_lineno = 0;
-		}
-
-		state->done_reading = true;
-		return false;
-
-	} else {
-		struct blame *blame;
-
-		if (!add_line_alloc(view, &blame, LINE_DEFAULT, buf->size, false))
-			return false;
-
-		blame->commit = NULL;
-		strncpy(blame->text, buf->data, buf->size);
-		blame->text[buf->size] = 0;
-		return true;
-	}
 }
 
 static bool
@@ -277,10 +217,15 @@ blame_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct blame_state *state = view->private;
 
-	if (!state->done_reading)
-		return blame_read_file(view, buf, state);
-
 	if (!buf) {
+		if (failed_to_load_initial_view(view))
+			die("No blame exist for %s", view->vid);
+
+		if (view->env->goto_lineno > 0) {
+			select_view_line(view, view->env->goto_lineno);
+			view->env->goto_lineno = 0;
+		}
+
 		string_format(view->ref, "%s", view->vid);
 		if (view_is_displayed(view)) {
 			update_view_title(view);
@@ -291,13 +236,24 @@ blame_read(struct view *view, struct buffer *buf, bool force_stop)
 
 	if (!state->commit) {
 		state->commit = read_blame_commit(view, buf->data, state);
-		string_format(view->ref, "%s %2zu%%", view->vid,
-			      view->lines ? 5 * (size_t) (state->blamed * 20 / view->lines) : 0);
+
+	} else if (*buf->data == '\t') {
+		struct blame *blame;
+		struct line *line = add_line_alloc(view, &blame, LINE_DEFAULT, buf->size - 1, false);
+
+		if (!line)
+			return false;
+
+		blame->commit = state->commit;
+		blame->lineno = state->header.orig_lineno;
+		strncpy(blame->text, buf->data + 1, buf->size - 1);
+		blame->text[buf->size - 1] = 0;
+
+		view_column_info_update(view, line);
+
+		state->commit = NULL;
 
 	} else if (parse_blame_info(state->commit, state->author, buf->data)) {
-		bool update_view_columns = true;
-		int i;
-
 		if (!state->commit->filename)
 			return false;
 
@@ -309,19 +265,6 @@ blame_read(struct view *view, struct buffer *buf, bool force_stop)
 			blame_update_file_name_visibility(view);
 		}
 
-		for (i = 0; i < view->lines; i++) {
-			struct line *line = &view->line[i];
-			struct blame *blame = line->data;
-
-			if (blame && blame->commit == state->commit) {
-				line->dirty = 1;
-				if (update_view_columns)
-					view_column_info_update(view, line);
-				update_view_columns = false;
-			}
-		}
-
-		state->commit = NULL;
 	}
 
 	return true;
@@ -363,7 +306,7 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 	char from[SIZEOF_REF + SIZEOF_STR];
 	char to[SIZEOF_REF + SIZEOF_STR];
 	const char *diff_tree_argv[] = {
-		"git", "diff", encoding_arg, "--no-textconv", "--no-ext-diff",
+		"git", "diff", encoding_arg, "--no-ext-diff",
 			"--no-color", "-U0", from, to, "--", NULL
 	};
 	struct io io;
@@ -486,6 +429,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 				GIT_DIFF_BLAME(encoding_arg,
 					diff_context_arg(),
 					ignore_space_arg(),
+					word_diff_arg(),
 					blame->commit->filename)
 			};
 			const char *diff_no_parent_argv[] = {

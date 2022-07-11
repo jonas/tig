@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -103,12 +103,8 @@ file_finder_move(struct file_finder *finder, int direction)
 	else
 		finder->pos.lineno += direction;
 
-	if (finder->pos.lineno >= finder->lines) {
-		if (finder->lines > 0)
-			finder->pos.lineno = finder->lines - 1;
-		else
-			finder->pos.lineno = 0;
-        }
+	if (finder->pos.lineno >= finder->lines)
+		finder->pos.lineno = finder->lines > 0 ? finder->lines - 1 : 0;
 
 	if (finder->pos.offset + finder->height <= finder->pos.lineno)
 		finder->pos.offset = finder->pos.lineno - (finder->height / 2);
@@ -300,7 +296,7 @@ open_file_finder(const char *commit)
 		return false;
 	}
 
-	finder.keymap = get_keymap("search", STRING_SIZE("search")),
+	finder.keymap = get_keymap("search", STRING_SIZE("search"));
 	file_finder_update(&finder);
 	file_finder_draw(&finder);
 	if (read_prompt_incremental("Find file: ", false, true, file_finder_input_handler, &finder) && finder.pos.lineno < finder.lines)

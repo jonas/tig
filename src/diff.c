@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -584,7 +584,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 
 	while (io_get(&io, &buf, '\n', true)) {
 		if (header) {
-			if (!parse_blame_header(header, buf.data, 9999999))
+			if (!parse_blame_header(header, buf.data))
 				break;
 			header = NULL;
 
@@ -835,6 +835,7 @@ diff_common_select(struct view *view, struct line *line, const char *changes_msg
 			view->env->lineno_old = diff_get_lineno(view, line, true);
 			view->env->blob[0] = 0;
 		} else {
+			view->env->lineno = view->env->goto_lineno = (line - view->line) + 1;
 			string_ncopy(view->ref, view->ops->id, strlen(view->ops->id));
 		}
 	}

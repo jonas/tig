@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -463,10 +463,6 @@ save_view(struct view *view, const char *path)
 /* Whether or not the curses interface has been initialized. */
 static bool cursed = false;
 
-/* Terminal hacks and workarounds. */
-static bool use_scroll_redrawwin;
-static bool use_scroll_status_wclear;
-
 /* The status window is used for polling keystrokes. */
 WINDOW *status_win;
 
@@ -484,8 +480,6 @@ update_status_window(struct view *view, const char *context, const char *msg, va
 
 	if (!status_empty || *msg) {
 		wmove(status_win, 0, 0);
-		if (view && view->has_scrolled && use_scroll_status_wclear)
-			wclear(status_win);
 		if (*msg) {
 			vw_printw(status_win, msg, args);
 			status_empty = false;
@@ -637,7 +631,6 @@ void
 init_display(void)
 {
 	bool no_display = !!getenv("TIG_NO_DISPLAY");
-	const char *term;
 	int x, y;
 	int code;
 
@@ -691,36 +684,6 @@ init_display(void)
 #else
 	TABSIZE = opt_tab_size;
 #endif
-
-	term = getenv("XTERM_VERSION")
-		   ? NULL
-		   : (getenv("TERM_PROGRAM") ? getenv("TERM_PROGRAM") : getenv("COLORTERM"));
-	if (term && !strcmp(term, "gnome-terminal")) {
-		/* In the gnome-terminal-emulator, the warning message
-		 * shown when scrolling up one line while the cursor is
-		 * on the first line followed by scrolling down one line
-		 * corrupts the status line. This is fixed by calling
-		 * wclear. */
-		use_scroll_status_wclear = true;
-		use_scroll_redrawwin = false;
-
-	} else if (term &&
-			   (!strcmp(term, "xrvt-xpm") || !strcmp(term, "Apple_Terminal") ||
-				!strcmp(term, "iTerm.app"))) {
-		/* No problems with full optimizations in
-		 * xrvt-(unicode)
-		 * aterm
-		 * Terminal.app
-		 * iTerm2 */
-		use_scroll_status_wclear = use_scroll_redrawwin = false;
-
-	} else {
-		/* When scrolling in (u)xterm the last line in the
-		 * scrolling direction will update slowly.  This is
-		 * the conservative default. */
-		use_scroll_redrawwin = true;
-		use_scroll_status_wclear = false;
-	}
 }
 
 static bool
@@ -785,11 +748,8 @@ update_views(void)
 
 	foreach_view (view, i) {
 		update_view(view);
-		if (view_is_displayed(view) && view->has_scrolled &&
-		    use_scroll_redrawwin)
-			redrawwin(view->win);
-		view->has_scrolled = false;
-		if (view->pipe)
+		if (view->pipe ||
+		    (view_is_displayed(view) && view->watch.changed))
 			is_loading = true;
 	}
 
@@ -826,13 +786,6 @@ get_input(int prompt_position, struct key *key)
 
 		if (update_views())
 			delay = 0;
-		else
-			/* Check there is no pending update after update_views() */
-			foreach_displayed_view (view, i)
-				if (view->watch.changed) {
-					delay = 0;
-					break;
-				}
 
 		/* Update the cursor position. */
 		if (prompt_position) {
@@ -891,6 +844,7 @@ get_input(int prompt_position, struct key *key)
 			 * - Ctrl-Z is handled separately for job control.
 			 * - Ctrl-m is the same as Return/Enter.
 			 * - Ctrl-i is the same as Tab.
+			 * - Ctrl-[ is the same as Esc.
 			 *
 			 * For all other key values in the range the Ctrl flag
 			 * is set and the key value is updated to the proper

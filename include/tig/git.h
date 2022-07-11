@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -25,14 +25,15 @@
 #define GIT_DIFF_STAGED_INITIAL(encoding_arg, context_arg, space_arg, new_name) \
 	GIT_DIFF_INITIAL(encoding_arg, "--cached", context_arg, space_arg, "", new_name)
 
-#define GIT_DIFF_STAGED(encoding_arg, context_arg, space_arg, old_name, new_name) \
-	"git", "diff-index", (encoding_arg), "--root", "--patch-with-stat", "-C", "-M", \
-		"--cached", "--diff-filter=ACDMRTXB", DIFF_ARGS, "%(cmdlineargs)", (context_arg), (space_arg), "HEAD", \
-		"--", (old_name), (new_name), NULL
+#define GIT_DIFF_STAGED(encoding_arg, context_arg, space_arg, word_diff_arg, old_name, new_name) \
+	"git", "diff-index", (encoding_arg), "--textconv", "--patch-with-stat", "-C", \
+		"--cached", "--diff-filter=ACDMRTXB", DIFF_ARGS, "%(cmdlineargs)", (context_arg), \
+		(space_arg), (word_diff_arg), "HEAD", "--", (old_name), (new_name), NULL
 
-#define GIT_DIFF_UNSTAGED(encoding_arg, context_arg, space_arg, old_name, new_name) \
-	"git", "diff-files", (encoding_arg), "--root", "--patch-with-stat", "-C", "-M", \
-		DIFF_ARGS, "%(cmdlineargs)", (context_arg), (space_arg), "--", (old_name), (new_name), NULL
+#define GIT_DIFF_UNSTAGED(encoding_arg, context_arg, space_arg, word_diff_arg, old_name, new_name) \
+	"git", "diff-files", (encoding_arg), "--textconv", "--patch-with-stat", "-C", \
+		DIFF_ARGS, "%(cmdlineargs)", (context_arg), (space_arg), (word_diff_arg), \
+		"--", (old_name), (new_name), NULL
 
 /* Don't show staged unmerged entries. */
 #define GIT_DIFF_STAGED_FILES(output_arg) \
@@ -42,8 +43,9 @@
 #define GIT_DIFF_UNSTAGED_FILES(output_arg) \
 	"git", "diff-files", (output_arg), "%(cmdlineargs)", NULL
 
-#define GIT_DIFF_BLAME(encoding_arg, context_arg, space_arg, new_name) \
-	GIT_DIFF_UNSTAGED(encoding_arg, context_arg, space_arg, "", new_name)
+#define GIT_DIFF_BLAME(encoding_arg, context_arg, space_arg, word_diff_arg, new_name) \
+	"git", "diff-files", (encoding_arg), "--textconv", "--patch-with-stat", "-C", \
+		(context_arg), (space_arg), (word_diff_arg), "--", (new_name), NULL
 
 #define GIT_DIFF_BLAME_NO_PARENT(encoding_arg, context_arg, space_arg, new_name) \
 	GIT_DIFF_INITIAL(encoding_arg, "", context_arg, space_arg, "/dev/null", new_name)

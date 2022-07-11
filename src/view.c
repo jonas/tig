@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -92,7 +92,6 @@ do_scroll_view(struct view *view, int lines)
 		wnoutrefresh(view->win);
 	}
 
-	view->has_scrolled = true;
 	report_clear();
 }
 
@@ -333,7 +332,8 @@ goto_id(struct view *view, const char *expr, bool from_start, bool save_search)
 		report("Jumping to ID is not supported by the %s view", view->name);
 		return;
 	} else {
-		char *rev = argv_format_arg(view->env, expr);
+		char tmp[SIZEOF_STR];
+		char *rev = (snprintf(tmp, SIZEOF_STR, "%s^{}", expr), argv_format_arg(view->env, tmp));
 		const char *rev_parse_argv[] = {
 			"git", "rev-parse", "--revs-only", rev, NULL
 		};
@@ -524,17 +524,10 @@ view_no_refresh(struct view *view, enum open_flags flags)
 	       ((flags & OPEN_REFRESH) && !view_can_refresh(view));
 }
 
-bool
-view_exec(struct view *view, enum open_flags flags)
+static const char *
+stat_arg(struct view *view, enum open_flags flags)
 {
-	char opt_env_lines[64] = "";
-	char opt_env_columns[64] = "";
-	char * const opt_env[]	= { opt_env_lines, opt_env_columns, NULL };
-
-	enum io_flags forward_stdin = (flags & OPEN_FORWARD_STDIN) ? IO_RD_FORWARD_STDIN : 0;
-	enum io_flags with_stderr = (flags & OPEN_WITH_STDERR) ? IO_RD_WITH_STDERR : 0;
-	enum io_flags io_flags = forward_stdin | with_stderr;
-
+	static char opt_stat_arg[64] = "";
 	int views = displayed_views();
 	bool split = (views == 1 && !!(flags & OPEN_SPLIT)) || views == 2;
 	int height, width;
@@ -550,10 +543,32 @@ view_exec(struct view *view, enum open_flags flags)
 			width = split_width - 1;
 	}
 
-	string_format(opt_env_columns, "COLUMNS=%d", MAX(0, width));
-	string_format(opt_env_lines, "LINES=%d", height);
+	string_format(opt_stat_arg, "--stat=%d", MAX(0, width));
+	return opt_stat_arg;
+}
 
-	return io_exec(&view->io, IO_RD, view->dir, opt_env, view->argv, io_flags);
+bool
+view_exec(struct view *view, enum open_flags flags)
+{
+	const char **argv = NULL;
+	int i;
+	bool ok;
+
+	enum io_flags forward_stdin = (flags & OPEN_FORWARD_STDIN) ? IO_RD_FORWARD_STDIN : 0;
+	enum io_flags with_stderr = (flags & OPEN_WITH_STDERR) ? IO_RD_WITH_STDERR : 0;
+	enum io_flags io_flags = forward_stdin | with_stderr;
+
+	for (i = 0; view->argv[i]; i++) {
+		const char *arg = view->argv[i];
+		if (strcmp(arg, "--stat"))
+			argv_append(&argv, arg);
+		if (!strcmp(arg, "--stat") || !strcmp(arg, "--patch-with-stat"))
+			argv_append(&argv, stat_arg(view, flags));
+	}
+	ok = io_exec(&view->io, IO_RD, view->dir, NULL, argv, io_flags);
+	argv_free(argv);
+	free(argv);
+	return ok;
 }
 
 enum status_code
@@ -667,6 +682,7 @@ update_view(struct view *view)
 	/* Update the title _after_ the redraw so that if the redraw picks up a
 	 * commit reference in view->ref it'll be available here. */
 	update_view_title(view);
+	reset_search(view);
 	return true;
 }
 
@@ -755,7 +771,7 @@ split_view(struct view *prev, struct view *view)
 	}
 
 	if (view_has_flags(prev, VIEW_FLEX_WIDTH) && vsplit && nviews == 1)
-		load_view(prev, NULL, OPEN_RELOAD);
+		reload_view(prev);
 }
 
 void
@@ -778,7 +794,7 @@ maximize_view(struct view *view, bool redraw)
 	}
 
 	if (view_has_flags(view, VIEW_FLEX_WIDTH) && vsplit && nviews > 1)
-		load_view(view, NULL, OPEN_RELOAD);
+		reload_view(view);
 }
 
 void

@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -186,13 +186,6 @@ strcmp_numeric(const char *s1, const char *s2)
 
 /*
  * Unicode / UTF-8 handling
- *
- * NOTE: Much of the following code for dealing with Unicode is derived from
- * ELinks' UTF-8 code developed by Scrool <scroolik@gmail.com>. Origin file is
- * src/intl/charset.c from the UTF-8 branch commit elinks-0.11.0-g31f2c28.
- *
- * unicode_width() is driven by xterm's mk_wcwidth(), which is the work of
- * Markus Kuhn and Thomas Dickey.
  */
 
 int

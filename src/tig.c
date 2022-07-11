@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -261,7 +261,9 @@ view_driver(struct view *view, enum request request)
 			move_view(parent, request);
 			if (view_is_displayed(parent))
 				update_view_title(parent);
-			if (line != parent->pos.lineno) {
+			if (line != parent->pos.lineno &&
+			    !(parent == &tree_view && 
+			      parent->line[parent->pos.lineno].type == LINE_DIRECTORY)) {
 				end_update(view, true);
 				view_request(parent, REQ_ENTER);
 			}

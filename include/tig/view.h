@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2015 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -145,7 +145,6 @@ struct view {
 	struct line *curline;	/* Line currently being drawn. */
 	enum line_type curtype;	/* Attribute currently used for drawing. */
 	unsigned long col;	/* Column when drawing. */
-	bool has_scrolled;	/* View was scrolled. */
 	bool force_redraw;	/* Whether to force a redraw after reading. */
 
 	/* Loading */
