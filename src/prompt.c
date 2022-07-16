@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <string.h>
 #include "tig/tig.h"
 #include "tig/repo.h"
 #include "tig/view.h"
@@ -538,8 +539,11 @@ prompt_histfile(void)
 			die("Failed to expand $HOME");
 	} else if (!string_format(path, "%s/tig/history", xdg_data_home))
 		die("Failed to expand $XDG_DATA_HOME");
-	else
-		mkdir(dirname(path), 0777);
+	else {
+		static char path_copy[SIZEOF_STR] = "";
+		strncpy(path_copy, path, SIZEOF_STR);
+		mkdir(dirname(path_copy), 0777);
+	}
 
 	fd = open(path, O_RDWR | O_CREAT | O_APPEND, 0666);
 	if (fd > 0)
