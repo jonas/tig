@@ -63,9 +63,8 @@ draw_ansi(struct view *view, int *ansi_num, char **ansi_ptrs, int max_width, siz
 			waddnstr(view->win, text, len);
 			continue;
 		}
-		// delta won't add moving ansi codes which are
-		// A, B, C, D, E, F, G, H, f, S, T.
-		// J, K exists for filling lines with a color, but ncurses can't do.
+
+		// ncurses can't handle J and K of ANSI code behavior.
 		if ((text[3] == 'J') || (text[3] == 'K'))
 			continue;
 
@@ -219,15 +218,14 @@ convert_ansi_into_256_color(char **save_ptr) {
 	}
 
 	// WONTFIX: You can't init_color with numerous RGB code in ncurses.
-	// I decided to force delta users to use "true-color = never" when using tig,
-	// so the process never comes to this condition.
-	// I leave the code for someone who wants to implements in the future.
+	// Therefore, \e[(3 or 4)8;2;r;g;bm syntax is disabled currently.
+	// The below code is left for when it is someday implemented.
 	// if (strcmp(color_method_mark, "2") == 0) {
 		// char *r = strtok(NULL, ";");
 		// char *g = strtok(NULL, ";");
 		// char *b = strtok(NULL, ";");
 	// }
-	// Do some process to convert those color infos for ncurses.
+	// Return a color pair ID that matches this rgb combination.
 
 	return c256;
 }

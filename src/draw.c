@@ -13,10 +13,13 @@
 
 #include "tig/tig.h"
 #include "tig/graph.h"
-#include "tig/ansi.h"
 #include "tig/draw.h"
 #include "tig/options.h"
 #include "compat/hashtab.h"
+
+#if defined(NCURSES_VERSION_PATCH) && NCURSES_VERSION_PATCH >= 20180127
+#include "tig/ansi.h"
+#endif
 
 static const enum line_type palette_colors[] = {
 	LINE_PALETTE_0,
@@ -172,13 +175,18 @@ draw_text_expanded(struct view *view, enum line_type type, const char *string, i
 		size_t pos = string_expand(text, sizeof(text), string, length, opt_tab_size);
 		size_t col = view->col;
 
-		if (opt_diff_highlight && *opt_diff_highlight && strcmp(opt_diff_highlight, "delta") == 0 && strstr(string, "\033[") != NULL) {
+#if defined(NCURSES_VERSION_PATCH) && NCURSES_VERSION_PATCH >= 20180127
+		if (strstr(string, "\033[") != NULL) {
 			if (draw_chars_with_ansi(view, type, text, -1, max_width, use_tilde))
 				return true;
 		} else {
 			if (draw_chars(view, type, text, -1, max_width, use_tilde))
 				return true;
 		}
+#else
+		if (draw_chars(view, type, text, -1, max_width, use_tilde))
+			return true;
+#endif
 
 		string += pos;
 		length -= pos;

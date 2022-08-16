@@ -17,7 +17,9 @@
 #include "tig/tig.h"
 struct ref;
 
+#if defined(NCURSES_VERSION_PATCH) && NCURSES_VERSION_PATCH >= 20180127
 extern short color_pairs_map[257][257];
+#endif
 
 /*
  * Line-oriented content detection.

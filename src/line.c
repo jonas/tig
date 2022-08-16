@@ -23,7 +23,9 @@ static size_t line_rules;
 static struct line_info **color_pair;
 static size_t color_pairs;
 
+#if defined(NCURSES_VERSION_PATCH) && NCURSES_VERSION_PATCH >= 20180127
 short color_pairs_map[257][257];
+#endif
 
 DEFINE_ALLOCATOR(realloc_line_rule, struct line_rule, 8)
 DEFINE_ALLOCATOR(realloc_color_pair, struct line_info *, 8)
@@ -243,6 +245,7 @@ init_colors(void)
 		}
 	}
 
+#if defined(NCURSES_VERSION_PATCH) && NCURSES_VERSION_PATCH >= 20180127
 	// Because init_extended_pair can't accept more than 32768 pairs,
 	// we skip the colors with color codes odd numbered and greater than 15 currently.
 	short cnt = COLOR_ID(LINE_NONE) + 1;
@@ -264,6 +267,7 @@ init_colors(void)
 	}
 	init_extended_pair(++cnt, COLOR_DEFAULT, COLOR_DEFAULT);
 	color_pairs_map[256][256] = cnt;
+#endif
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */
