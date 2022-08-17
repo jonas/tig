@@ -646,11 +646,8 @@ update_view(struct view *view)
 	}
 
 	for (; io_get(view->pipe, &line, '\n', can_read); can_read = false) {
-		if (encoding && !encoding_convert(encoding, &line)) {
+		if (encoding && !encoding_convert(encoding, &line))
 			report("Encoding failure");
-			end_update(view, true);
-			return false;
-		}
 
 		if (!view->ops->read(view, &line, false)) {
 			report("Allocation failure");
