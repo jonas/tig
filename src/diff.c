@@ -811,6 +811,8 @@ diff_common_select(struct view *view, struct line *line, const char *changes_msg
 				const char *old_file = diff_get_pathname(view, header, true);
 				if (old_file)
 					string_format(view->env->file_old, "%s", old_file);
+				else
+					view->env->file_old[0] = '\0';
 				string_format(view->env->file, "%s", file);
 				view->env->lineno = view->env->goto_lineno = 0;
 				view->env->blob[0] = 0;
@@ -826,6 +828,8 @@ diff_common_select(struct view *view, struct line *line, const char *changes_msg
 			const char *old_file = diff_get_pathname(view, line, true);
 			if (old_file)
 				string_format(view->env->file_old, "%s", old_file);
+			else
+				view->env->file_old[0] = '\0';
 			if (changes_msg)
 				string_format(view->ref, "%s to '%s'", changes_msg, file);
 			string_format(view->env->file, "%s", file);
