@@ -540,7 +540,7 @@ prompt_histfile(void)
 	} else if (!string_format(path, "%s/tig/history", xdg_data_home))
 		die("Failed to expand $XDG_DATA_HOME");
 	else {
-		static char path_copy[SIZEOF_STR] = "";
+		char path_copy[SIZEOF_STR] = "";
 		strncpy(path_copy, path, SIZEOF_STR);
 		mkdir(dirname(path_copy), 0777);
 	}
