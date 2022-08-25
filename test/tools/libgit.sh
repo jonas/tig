@@ -110,7 +110,7 @@ create_worktree()
 create_repo_from_tgz()
 {
 	git_init .
-	tar zxf "$1"
+	tar zxof "$1"
 	git reset -q --hard
 }
 
@@ -121,7 +121,7 @@ git_clone()
 		clone_dir="${2:-$work_dir}"
 		(cd "$clone_dir" && {
 			git_init .
-			tar zxf "$repo_tgz"
+			tar zxof "$repo_tgz"
 			git reset -q --hard
 		})
 	else

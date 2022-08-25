@@ -1486,7 +1486,8 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 		parse_bool(&opt_diff_noprefix, value);
 
 	else if (!strcmp(name, "status.showuntrackedfiles"))
-		parse_bool(&opt_status_show_untracked_files, value);
+		opt_status_show_untracked_files = !!strcmp(value, "no"),
+		opt_status_show_untracked_dirs = !strcmp(value, "all");
 
 	else if (!prefixcmp(name, "tig.color."))
 		set_repo_config_option(name + 10, value, option_color_command);
