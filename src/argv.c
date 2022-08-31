@@ -315,6 +315,29 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 			return false;
 		return string_format_from(format->buf, &format->bufpos, "%s", value);
 	}
+	if (!prefixcmp(name, "%(sh")) {
+		char cbuf[SIZEOF_STR];
+		const char *c="";
+		char value[SIZEOF_STR]={0};
+		const char *cstart = name + STRING_SIZE("%(sh");
+		const int clen = end - cstart - 1;
+		int size;
+		FILE *cp;
+		if (end && clen > 0 && string_format(cbuf, "%.*s", clen, cstart)) {
+			c=cbuf;
+			while (isspace(*c))
+				c++;
+		}
+		if (!*c||strlen(c)==8)
+			return false;
+		cp=popen(c,"r");
+		size=fread(value,1,SIZEOF_STR-1,cp);
+		if (value[0]==0 || size==0)
+			return false;
+		if (value[size-1]=='\n')
+			value[size-1]='\0';
+		return string_format_from(format->buf, &format->bufpos, "%s", value);
+    	}
 
 	for (i = 0; i < format->vars_size; i++) {
 		if (string_enum_compare(name, vars[i].name, vars[i].namelen))
