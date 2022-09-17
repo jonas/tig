@@ -50,7 +50,7 @@ EOF
 
 assert_equals 'mailmapped-diff.screen' <<EOF
 commit 5cb3412a5e06e506840495b91acc885037a48b72
-Refs: [master], {origin/master}, {origin/HEAD}
+Refs: [master], {origin/master}, {origin/HEAD}, v1.0-13-g5cb3412
 Author:     Full Throttle <f.throttle@example.org>
 AuthorDate: Wed Apr 7 05:37:40 2010 +0000
 Commit:     ¯\_(ツ)_/¯ <omitter@example.net>

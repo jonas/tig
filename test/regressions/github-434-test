@@ -28,7 +28,7 @@ test_tig
 
 assert_equals 'vsplit-auto.screen' <<EOF
 2010-04-07 05:37 +0000 Max Power             o [master] {origin/master} {origin/|commit 5cb3412a5e06e506840495b91acc885037a48b72
-2010-03-29 17:15 +0000 Jørgen Thygesen Brahe o Commit 10 D                      |Refs: [master], {origin/master}, {origin/HEAD}
+2010-03-29 17:15 +0000 Jørgen Thygesen Brahe o Commit 10 D                      |Refs: [master], {origin/master}, {origin/HEAD}, v1.0-13-g5cb3412
 2010-03-21 04:53 +0000 作者                  o Commit 10 C                      |Author:     Max Power <power123@example.org>
 2010-03-12 16:31 +0000 René Lévesque         o Commit 10 B                      |AuthorDate: Wed Apr 7 05:37:40 2010 +0000
 2010-03-04 04:09 +0000 A. U. Thor            o Commit 10 A                      |Commit:     Committer <c.ommitter@example.net>

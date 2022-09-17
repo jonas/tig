@@ -50,7 +50,7 @@ EOF
 
 assert_equals 'main-vsplit-25-75.screen' <<EOF
 2010-04-07 05:37 +0 |commit 5cb3412a5e06e506840495b91acc885037a48b72
-2010-03-29 17:15 +0 |Refs: [master], {origin/master}, {origin/HEAD}
+2010-03-29 17:15 +0 |Refs: [master], {origin/master}, {origin/HEAD}, v1.0-13-g5c
 2010-03-21 04:53 +0 |Author:     Max Power <power123@example.org>
 2010-03-12 16:31 +0 |AuthorDate: Wed Apr 7 05:37:40 2010 +0000
 2010-03-04 04:09 +0 |Commit:     Committer <c.ommitter@example.net>
@@ -76,7 +76,7 @@ assert_equals 'main-hsplit-default.screen' <<EOF
 2010-03-04 04:09 +0000 A. U. Thor            o Commit 10 A
 [main] 5cb3412a5e06e506840495b91acc885037a48b72 - commit 1 of 50             10%
 commit 5cb3412a5e06e506840495b91acc885037a48b72
-Refs: [master], {origin/master}, {origin/HEAD}
+Refs: [master], {origin/master}, {origin/HEAD}, v1.0-13-g5cb3412
 Author:     Max Power <power123@example.org>
 AuthorDate: Wed Apr 7 05:37:40 2010 +0000
 Commit:     Committer <c.ommitter@example.net>
@@ -99,7 +99,7 @@ assert_equals 'main-hsplit-50-50.screen' <<EOF
 2010-02-06 15:02 +0000 作者                  o Commit 9 C
 [main] 5cb3412a5e06e506840495b91acc885037a48b72 - commit 1 of 50             16%
 commit 5cb3412a5e06e506840495b91acc885037a48b72
-Refs: [master], {origin/master}, {origin/HEAD}
+Refs: [master], {origin/master}, {origin/HEAD}, v1.0-13-g5cb3412
 Author:     Max Power <power123@example.org>
 AuthorDate: Wed Apr 7 05:37:40 2010 +0000
 Commit:     Committer <c.ommitter@example.net>
