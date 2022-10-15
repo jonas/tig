@@ -678,12 +678,6 @@ init_display(void)
 		keyok(code, false);
 	}
 #endif
-
-#if defined(NCURSES_VERSION_PATCH) && (NCURSES_VERSION_PATCH >= 20080119)
-	set_tabsize(opt_tab_size);
-#else
-	TABSIZE = opt_tab_size;
-#endif
 }
 
 static bool
