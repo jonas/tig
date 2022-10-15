@@ -206,6 +206,8 @@ configure script and building documentation:
 				 search and command prompts.
 |PCRE				|Adds support for Perl Compatible Regular
 				 Expressions in searches.
+|EditorConfig core library      |Adds support for setting tab-size based on
+                                 an .editorconfig file.
 |autoconf			|Contains autoreconf for generating configure
 				 from configure.ac.
 |asciidoc (>= 8.4)		|Generates HTML and (DocBook) XML from text.

@@ -471,6 +471,12 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct view_column *column = view->columns;
 	struct view_column_data column_data = {0};
+	int tab_size;
+#if defined HAVE_EDITORCONFIG
+	tab_size = line->tab_size ? line->tab_size : opt_tab_size;
+#else
+	tab_size = opt_tab_size;
+#endif
 
 	if (!view->ops->get_column_data(view, line, &column_data))
 		return true;
@@ -582,13 +588,13 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 						indent = 0;
 					}
 
-					if (draw_textn(view, cell->type, text, length, opt_tab_size))
+					if (draw_textn(view, cell->type, text, length, tab_size))
 						return true;
 
 					text += length;
 				}
 
-			} else if (draw_text(view, type, text, opt_tab_size)) {
+			} else if (draw_text(view, type, text, tab_size)) {
 				return true;
 			}
 		}

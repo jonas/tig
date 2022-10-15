@@ -28,5 +28,8 @@ jobs:
           export LANG=en_US.utf8
           sudo apt update
           sudo DEBIAN_FRONTEND=noninteractive apt -yq install --no-install-recommends \
-            asciidoc valgrind xmlto
+            asciidoc \
+            libeditorconfig-dev \
+            valgrind \
+            xmlto
           CC=${{ matrix.compiler }} TIG_BUILD=${{ matrix.tig_build }} tools/travis.sh

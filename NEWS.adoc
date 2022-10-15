@@ -1,6 +1,13 @@
 Release notes
 =============
 
+master
+------
+
+Improvements:
+
+- Honor tab width from EditorConfig by linking against the EditorConfig core library. (#1239)
+
 tig-2.5.8
 ---------
 

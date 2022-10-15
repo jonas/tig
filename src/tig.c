@@ -60,6 +60,10 @@
 #include <pcre.h>
 #endif
 
+#if defined HAVE_EDITORCONFIG
+#include <editorconfig/editorconfig.h>
+#endif
+
 /*
  * Option management
  */
@@ -543,6 +547,14 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 				printf("PCRE2 version %s\n", pcre2_version);
 #elif defined HAVE_PCRE
 				printf("PCRE version %s\n", pcre_version());
+#endif
+#if defined HAVE_EDITORCONFIG
+				{
+					int major, minor, patch;
+					const char *suffix = editorconfig_get_version_suffix();
+					editorconfig_get_version(&major, &minor, &patch);
+					printf("EditorConfig version %d.%d.%d%s\n", major, minor, patch, suffix);
+				}
 #endif
 				exit(EXIT_SUCCESS);
 

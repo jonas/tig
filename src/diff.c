@@ -263,7 +263,7 @@ diff_common_read_diff_wdiff_group(struct diff_stat_context *context)
 	return true;
 }
 
-static bool
+static struct line *
 diff_common_read_diff_wdiff(struct view *view, const char *text)
 {
 	struct diff_stat_context context = { text, LINE_DEFAULT };
@@ -282,7 +282,7 @@ diff_common_read_diff_wdiff(struct view *view, const char *text)
 	return diff_common_add_line(view, text, LINE_DEFAULT, &context);
 }
 
-static bool
+static struct line *
 diff_common_highlight(struct view *view, const char *text, enum line_type type)
 {
 	struct diff_stat_context context = { text, type, true };
@@ -303,6 +303,7 @@ bool
 diff_common_read(struct view *view, const char *data, struct diff_state *state)
 {
 	enum line_type type = get_line_type(data);
+	struct line *line;
 
 	/* ADD2 and DEL2 are only valid in combined diff hunks */
 	if (!state->combined_diff && (type == LINE_DIFF_ADD2 || type == LINE_DIFF_DEL2))
@@ -334,7 +335,7 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	}
 
 	if (!state->after_commit_title && !prefixcmp(data, "    ")) {
-		struct line *line = add_line_text(view, data, LINE_DEFAULT);
+		line = add_line_text(view, data, LINE_DEFAULT);
 
 		if (line)
 			line->commit_title = 1;
@@ -345,13 +346,11 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	if (type == LINE_DIFF_HEADER) {
 		state->after_diff = true;
 		state->reading_diff_chunk = false;
-
 	} else if (type == LINE_DIFF_CHUNK) {
 		const int len = chunk_header_marker_length(data);
 		const char *context = strstr(data + len, "@@");
-		struct line *line =
-			context ? add_line_text_at(view, view->lines, data, LINE_DIFF_CHUNK, len)
-				: NULL;
+		line = context ? add_line_text_at(view, view->lines, data, LINE_DIFF_CHUNK, len)
+			       : NULL;
 		struct box *box;
 
 		if (!line)
@@ -363,21 +362,34 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		box->cell[box->cells++].type = LINE_DIFF_STAT;
 		state->combined_diff = (len > 2);
 		state->reading_diff_chunk = true;
-		return true;
+		goto set_tab_width;
 
 	} else if (type == LINE_COMMIT) {
 		state->reading_diff_chunk = false;
 
 	} else if (state->highlight && strchr(data, 0x1b)) {
-		return diff_common_highlight(view, data, type);
-
+		if (!(line = diff_common_highlight(view, data, type)))
+			return false;
+		goto set_tab_width;
 	} else if (opt_word_diff && state->reading_diff_chunk &&
 		   /* combined diff format is not using word diff */
 		   !state->combined_diff) {
-		return diff_common_read_diff_wdiff(view, data);
+		if (!(line = diff_common_read_diff_wdiff(view, data)))
+			return false;
+		goto set_tab_width;
 	}
 
-	return pager_common_read(view, data, type, NULL);
+	return pager_common_read(view, data, type, true, &line);
+
+set_tab_width:
+#if defined HAVE_EDITORCONFIG
+	if (type == LINE_DIFF_CHUNK || type == LINE_DEFAULT ||
+	    type == LINE_DIFF_ADD || type == LINE_DIFF_ADD2 ||
+	    type == LINE_DIFF_DEL || type == LINE_DIFF_DEL2) {
+		line->tab_size = state->common.tab_size;
+	}
+#endif
+	return true;
 }
 
 static bool

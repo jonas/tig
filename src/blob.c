@@ -14,6 +14,7 @@
 #include "tig/refdb.h"
 #include "tig/parse.h"
 #include "tig/repo.h"
+#include "tig/diff.h"
 #include "tig/display.h"
 #include "tig/draw.h"
 #include "tig/ui.h"
@@ -22,6 +23,9 @@
 #include "tig/blob.h"
 
 struct blob_state {
+#if defined HAVE_EDITORCONFIG
+	struct diff_common_state common;
+#endif
 	char commit[SIZEOF_REF];
 	const char *file;
 };
@@ -90,6 +94,10 @@ blob_open(struct view *view, enum open_flags flags)
 	else
 		string_copy_rev(view->ref, view->ops->id);
 
+#if defined HAVE_EDITORCONFIG
+	state->common.tab_size = editorconfig_tab_size(view->env->file);
+#endif
+
 	return begin_update(view, NULL, argv, flags);
 }
 
@@ -104,7 +112,7 @@ blob_read(struct view *view, struct buffer *buf, bool force_stop)
 		return true;
 	}
 
-	return pager_common_read(view, buf->data, LINE_DEFAULT, NULL);
+	return pager_common_read(view, buf->data, LINE_DEFAULT, false, NULL);
 }
 
 static void

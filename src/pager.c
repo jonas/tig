@@ -15,12 +15,16 @@
 #include "tig/pager.h"
 #include "tig/options.h"
 #include "tig/request.h"
+#include "tig/repo.h"
 #include "tig/line.h"
 #include "tig/keys.h"
 #include "tig/display.h"
 #include "tig/view.h"
 #include "tig/draw.h"
 #include "tig/diff.h"
+#if defined HAVE_EDITORCONFIG
+	#include "editorconfig/editorconfig.h"
+#endif
 
 /*
  * Pager backend
@@ -75,12 +79,19 @@ pager_wrap_line(struct view *view, const char *data, enum line_type type)
 	bool has_first_line = false;
 	size_t datalen = strlen(data);
 	size_t lineno = 0;
+	int tab_size;
+#if defined HAVE_EDITORCONFIG
+	struct diff_common_state *state = view->private;
+	tab_size = state->tab_size ? state->tab_size : opt_tab_size;
+#else
+	tab_size = opt_tab_size;
+#endif
 
 	while (datalen > 0 || !has_first_line) {
 		int width;
 		int trimmed;
 		bool wrapped = !!first_line;
-		size_t linelen = utf8_length(&data, datalen, 0, &width, view->width, &trimmed, wrapped, opt_tab_size);
+		size_t linelen = utf8_length(&data, datalen, 0, &width, view->width, &trimmed, wrapped, tab_size);
 		struct line *line;
 
 		line = add_line_text_at_(view, view->lines, data, linelen, type, 1, wrapped);
@@ -105,7 +116,7 @@ pager_wrap_line(struct view *view, const char *data, enum line_type type)
 }
 
 bool
-pager_common_read(struct view *view, const char *data, enum line_type type, struct line **line_ptr)
+pager_common_read(struct view *view, const char *data, enum line_type type, bool is_diff, struct line **line_ptr)
 {
 	struct line *line;
 
@@ -130,7 +141,18 @@ pager_common_read(struct view *view, const char *data, enum line_type type, stru
 			data++;
 		add_pager_refs(view, data);
 	}
-
+#if defined HAVE_EDITORCONFIG
+	else if (is_diff && type == LINE_DIFF_ADD_FILE) {
+		struct diff_common_state *state = view->private;
+		const char *file = diff_get_pathname(view, line, false);
+		state->tab_size = file ? editorconfig_tab_size(file) : 0;
+	} else if  (type == LINE_DIFF_CHUNK || type == LINE_DEFAULT ||
+		    type == LINE_DIFF_ADD || type == LINE_DIFF_ADD2 ||
+		    type == LINE_DIFF_DEL || type == LINE_DIFF_DEL2) {
+		struct diff_common_state *state = view->private;
+		line->tab_size = state->tab_size;
+	}
+#endif
 	return true;
 }
 
@@ -213,6 +235,64 @@ pager_open(struct view *view, enum open_flags flags)
 
 	return diff_init_highlight(view, view->private);
 }
+
+#if defined HAVE_EDITORCONFIG
+static editorconfig_handle the_editorconfig_handle;
+
+static void
+destroy_the_editorconfig_handle() {
+	editorconfig_handle_destroy(the_editorconfig_handle);
+}
+
+uint8_t
+editorconfig_tab_size(const char file[]) {
+	static argv_string abspath;
+	static int worktree_path_size;
+	int tab_size, i, n;
+	const char *indent_size_str = NULL, *tab_width_str = NULL;
+	const char *name, *value;
+
+	if (!*file)
+		return 0;
+
+	if (!*abspath) {
+		the_editorconfig_handle = editorconfig_handle_init();
+		atexit(destroy_the_editorconfig_handle);
+
+		if (!*repo.worktree) {
+			const char *rev_parse_argv[] = {
+				"git", "rev-parse", "--show-toplevel", NULL
+			};
+			if (!io_run_buf(rev_parse_argv, repo.worktree, sizeof(repo.worktree) - strlen("/"), NULL, false))
+				die("Not a git repository"); // should never happen
+		}
+
+		strcpy(abspath, repo.worktree);
+		abspath[strlen(abspath)] = '/';
+		worktree_path_size = strlen(abspath);
+	}
+
+	if (worktree_path_size + strlen(file) + 1 >= sizeof(abspath))
+		return 0;
+	strcpy(abspath + worktree_path_size, file);
+	if (editorconfig_parse(abspath, the_editorconfig_handle))
+		return 0;
+
+	n = editorconfig_handle_get_name_value_count(the_editorconfig_handle);
+	for (i = 0; i < n; i++) {
+		editorconfig_handle_get_name_value(the_editorconfig_handle, i, &name, &value);
+		if (!strcmp(name, "indent_size"))
+			indent_size_str = value;
+		if (!strcmp(name, "tab_width"))
+			tab_width_str = value;
+	}
+	if (!tab_width_str)
+		tab_width_str = indent_size_str;
+	if (!tab_width_str || parse_int(&tab_size, tab_width_str, 1, 255) != SUCCESS)
+		return 0;
+	return tab_size;
+}
+#endif
 
 static struct view_ops pager_ops = {
 	"line",
