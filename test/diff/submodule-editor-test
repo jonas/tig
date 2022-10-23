@@ -40,7 +40,7 @@ setup_submodule_project()
 	cd "$output_dir"
 	git_init
 	cd "$output_dir/$work_dir"
-	git submodule add "$output_dir/base" bench
+	git -c protocol.file.allow=always submodule add "$output_dir/base" bench
   git_commit -m "Adding benchmark"
 }
 
