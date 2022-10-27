@@ -155,6 +155,9 @@ pager_request(struct view *view, enum request request, struct line *line)
 	enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 	int split = 0;
 
+	if (request == REQ_EDIT)
+		return diff_common_edit(view, request, line);
+
 	if (request != REQ_ENTER)
 		return request;
 
