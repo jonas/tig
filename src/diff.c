@@ -719,7 +719,7 @@ diff_get_pathname(struct view *view, struct line *line, bool old)
 	const char *name;
 	int i;
 
-	header = find_prev_line_by_type(view, line, LINE_DIFF_HEADER);
+	header = find_prev_line_in_commit_by_type(view, line, LINE_DIFF_HEADER);
 	if (!header)
 		return NULL;
 

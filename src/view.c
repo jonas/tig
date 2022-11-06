@@ -1585,11 +1585,13 @@ view_column_info_update(struct view *view, struct line *line)
 }
 
 struct line *
-find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction)
+find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction, enum line_type fence)
 {
 	for (; view_has_line(view, line); line += direction)
 		if (line->type == type)
 			return line;
+		else if (line->type == fence)
+			break;
 
 	return NULL;
 }

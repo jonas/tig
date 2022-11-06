@@ -90,6 +90,9 @@ log_request(struct view *view, enum request request, struct line *line)
 		refresh_view(view);
 		return REQ_NONE;
 
+	case REQ_EDIT:
+		return diff_common_edit(view, request, line);
+
 	case REQ_ENTER:
 		if (!display[1] || strcmp(display[1]->vid, view->ref))
 			open_diff_view(view, flags);
