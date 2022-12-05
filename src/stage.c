@@ -664,6 +664,11 @@ stage_request(struct view *view, enum request request, struct line *line)
 			view->env->goto_lineno--;
 		return request;
 
+	case REQ_VIEW_CLOSE:
+	case REQ_VIEW_CLOSE_NO_QUIT:
+		stage_line_type = 0;
+		return request;
+
 	case REQ_ENTER:
 		return diff_common_enter(view, request, line);
 
@@ -776,6 +781,9 @@ stage_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct stage_state *state = view->private;
 
+	if (!stage_line_type)
+		return true;
+
 	if (stage_line_type == LINE_STAT_UNTRACKED)
 		return pager_common_read(view, buf ? buf->data : NULL, LINE_DEFAULT, NULL);
 
@@ -786,9 +794,11 @@ stage_read(struct view *view, struct buffer *buf, bool force_stop)
 		}
 	}
 
-	if (!buf && !view->lines && view->parent) {
-		maximize_view(view->parent, true);
-		return true;
+	if (!buf && !view->lines && !force_stop && view->prev) {
+		watch_apply(&view->watch, WATCH_INDEX);
+		stage_line_type = 0;
+		maximize_view(view->prev, false);
+		return false;
 	}
 
 	if (!buf)
