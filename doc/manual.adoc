@@ -189,7 +189,7 @@ following variables.
 |%(mainargs)		|Options from 'main-options' used by the main view.
 |%(prompt)		|Prompt for the argument value. Optionally specify a
 			 custom prompt using `"%(prompt Enter branch name: )"`
-|%(text)		|The text of the currently selected line.
+|%(text)		|The text column of the currently selected line.
 |%(repo:head)		|The name of the checked out branch, e.g. `master`
 |%(repo:head-id)	|The commit ID of the checked out branch.
 |%(repo:remote)		|The remote associated with the checked out branch,
@@ -445,6 +445,12 @@ Searching
 |n	|Find next match for the current search regexp.
 |N	|Find previous match for the current search regexp.
 |=============================================================================
+
+The format for patterns is either POSIX.2 ``extended'' REs or PCRE / PCRE2 if
+Tig was compiled with PCRE / PCRE2 support (check with `tig -v`). See the
+manpage of re_format(7) or pcrepattern(3) / pcre2pattern(3).
+
+Case sensitivity can be controlled with variable ignore-case.
 
 [[misc-keys]]
 Misc
