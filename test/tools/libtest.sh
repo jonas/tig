@@ -24,7 +24,7 @@ IFS='
 	'
 
 test="$(basename -- "$0")"
-source_dir="$(cd "$(dirname -- "$0")" >/dev/null && pwd)"
+source_dir="$(cd "$(dirname -- "$0")" >/dev/null && pwd -P)"
 base_dir="$(printf '%s\n' "$source_dir" | sed -n 's#\(.*/test\)\([/].*\)*#\1#p')"
 prefix_dir="$(printf '%s\n' "$source_dir" | sed -n 's#\(.*/test/\)\([/].*\)*#\2#p')"
 output_dir="$base_dir/tmp/$prefix_dir/$test"
