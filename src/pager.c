@@ -134,7 +134,7 @@ pager_common_read(struct view *view, const char *data, enum line_type type, stru
 	return true;
 }
 
-bool
+static bool
 pager_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	if (!buf) {

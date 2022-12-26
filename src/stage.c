@@ -790,24 +790,22 @@ stage_read(struct view *view, struct buffer *buf, bool force_stop)
 	if (!buf) {
 		if (!diff_done_highlight(&state->diff)) {
 			report("Failed run the diff-highlight program: %s", opt_diff_highlight);
-			return true;
+			return false;
 		}
-	}
 
-	if (!buf && !view->lines && !force_stop && view->prev) {
-		watch_apply(&view->watch, WATCH_INDEX);
-		stage_line_type = 0;
-		maximize_view(view->prev, false);
-		return false;
-	}
+		if (!view->lines && !force_stop && view->prev) {
+			watch_apply(&view->watch, WATCH_INDEX);
+			stage_line_type = 0;
+			maximize_view(view->prev, false);
+			return false;
+		}
 
-	if (!buf)
 		diff_restore_line(view, &state->diff);
 
-	if (buf && diff_common_read(view, buf->data, &state->diff))
 		return true;
+	}
 
-	return pager_read(view, buf, force_stop);
+	return diff_common_read(view, buf->data, &state->diff);
 }
 
 static struct view_ops stage_ops = {
