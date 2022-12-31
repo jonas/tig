@@ -132,7 +132,7 @@ log_read(struct view *view, struct buffer *buf, bool force_stop)
 	else if (state->commit_title_read && len < 1) {
 		state->commit_title_read = false;
 		state->after_commit_header = true;
-	} else if (state->after_commit_header && len < 1) {
+	} else if ((state->after_commit_header && len < 1) || type == LINE_DIFF_START) {
 		state->after_commit_header = false;
 		state->reading_diff_stat = true;
 	} else if (state->reading_diff_stat) {
