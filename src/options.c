@@ -373,9 +373,46 @@ parse_color_name(const char *color, struct line_rule *rule, const char **prefix_
 
 	memset(rule, 0, sizeof(*rule));
 	if (is_quoted(*color)) {
-		rule->line = color + 1;
-		rule->linelen = strlen(color) - 2;
+		/* Interpret strings of the form "/.../" as regular expressions. */
+		if (strlen(color) >= 4 && color[1] == '/' && color[strlen(color) - 2] == '/') {
+			int regex_err;
+
+			/* rule->line and rule->regex are allocated here rather
+			 * than in add_line_rule() to allow proper error reporting.
+			 * Though only rule->regex will be used for matching regular
+			 * expressions, rule->line and rule->linelen are still filled
+			 * to look up exiting rules when defining view-specific
+			 * colors. */
+			rule->linelen = strlen(color) - 4;
+			rule->line = strndup(color + 2, rule->linelen);
+			if (!rule->line)
+				return ERROR_OUT_OF_MEMORY;
+
+			rule->regex = calloc(1, sizeof(*rule->regex));
+			if (!rule->regex) {
+				free((void *) rule->line);
+				return ERROR_OUT_OF_MEMORY;
+			}
+
+			regex_err = regcomp(rule->regex, rule->line, REG_EXTENDED);
+
+			if (regex_err != 0) {
+				char buf[SIZEOF_STR];
+				regerror(regex_err, rule->regex, buf, sizeof(buf));
+				free((void *) rule->line);
+				free(rule->regex);
+				return error("Invalid color mapping: %s", buf);
+			}
+		} else {
+			rule->linelen = strlen(color) - 2;
+			rule->line = strndup(color + 1, rule->linelen);
+			if (!rule->line)
+				return ERROR_OUT_OF_MEMORY;
+		}
 	} else {
+		/* Built-in area names are preloaded on first call to
+		 * find_line_rule(), so rule->name is only used to look
+		 * up an existing rule and does not need to persist. */
 		rule->name = color;
 		rule->namelen = strlen(color);
 	}

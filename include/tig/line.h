@@ -115,6 +115,7 @@ struct line_rule {
 	int namelen;		/* Size of option name. */
 	const char *line;	/* The start of line to match. */
 	int linelen;		/* Size of string to match. */
+	regex_t *regex;		/* Pre-compiled regexp. */
 	struct line_info info;	/* List of line info matching this rule. */
 };
 

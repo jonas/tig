@@ -978,6 +978,8 @@ color diff-chunk	magenta	default
 color "Reported-by:"	green	default
 # View-specific color
 color tree.date		black	cyan	bold
+# Custom color
+color "/(note|warning|error):/"	yellow	default	bold
 --------------------------------------------------------------------------
 
 Or in the Git configuration files:
@@ -998,7 +1000,8 @@ Area names::
 
 	Can be either a built-in area name or a custom quoted string. The
 	latter allows custom color rules to be added for lines matching a
-	quoted string.
+	quoted string. Strings of the form "/.../" are interpreted as
+	regular expressions.
 	Valid built-in area names are described below. Note, all names are
 	case-insensitive, and you may use '-', and '_' interchangeably,
 	e.g. "Diff-Header" and "DIFF_HEADER" are the same.
