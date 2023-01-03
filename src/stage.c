@@ -444,6 +444,7 @@ static bool
 find_deleted_line_in_head(struct view *view, struct line *line) {
 	struct io io;
 	struct buffer buffer;
+	struct status file_status;
 	unsigned long line_number_in_head, line_number = 0;
 	long bias_by_staged_changes = 0;
 	char buf[SIZEOF_STR] = "";
@@ -466,7 +467,6 @@ find_deleted_line_in_head(struct view *view, struct line *line) {
 	if (buf[0]) {
 		file_in_head = view->env->file;
 	} else { // The file might might be renamed in the index. Find its old name.
-		struct status file_status;
 		const char *diff_index_argv[] = {
 			"git", "diff-index", "--cached", "-C",
 			"--diff-filter=ACR", "-z", "HEAD", NULL
