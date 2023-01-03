@@ -72,13 +72,13 @@ argv_to_string_alloc(const char *argv[], const char *sep)
 }
 
 bool
-argv_to_string_quoted(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep)
+argv_to_string_quoted(const char *argv[], char *buf, size_t buflen, const char *sep)
 {
 	return concat_argv(argv, buf, buflen, sep, true);
 }
 
 bool
-argv_to_string(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep)
+argv_to_string(const char *argv[], char *buf, size_t buflen, const char *sep)
 {
 	return concat_argv(argv, buf, buflen, sep, false);
 }
@@ -144,7 +144,7 @@ parse_arg(char **cmd, bool remove_quotes)
 }
 
 static bool
-split_argv_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd, bool remove_quotes)
+split_argv_string(const char *argv[], int *argc, char *cmd, bool remove_quotes)
 {
 	while (*cmd && *argc < SIZEOF_ARG) {
 		char *arg = parse_arg(&cmd, remove_quotes);
@@ -161,13 +161,13 @@ split_argv_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd, bool remov
 }
 
 bool
-argv_from_string_no_quotes(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
+argv_from_string_no_quotes(const char *argv[], int *argc, char *cmd)
 {
 	return split_argv_string(argv, argc, cmd, true);
 }
 
 bool
-argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
+argv_from_string(const char *argv[], int *argc, char *cmd)
 {
 	return split_argv_string(argv, argc, cmd, false);
 }
