@@ -324,6 +324,7 @@ view_driver(struct view *view, enum request request)
 		 * view itself. Parents to closed view should never be
 		 * followed. */
 		if (view->prev && view->prev != view) {
+			end_update(view, true);
 			maximize_view(view->prev, true);
 			view->prev = view;
 			break;
@@ -334,6 +335,8 @@ view_driver(struct view *view, enum request request)
 		}
 		/* Fall-through */
 	case REQ_QUIT:
+		foreach_view(view, i)
+			end_update(view, true);
 		return false;
 
 	default:
