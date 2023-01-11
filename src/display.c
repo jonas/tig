@@ -21,6 +21,10 @@
 #include "tig/display.h"
 #include "tig/watch.h"
 
+#ifdef HAVE_READLINE
+#include <readline/readline.h>
+#endif /* HAVE_READLINE */
+
 #define MAX_KEYS 2000
 
 static void set_terminal_modes(void);
@@ -608,6 +612,9 @@ init_tty(void)
 	if (!opt_tty.file)
 		die("Failed to open tty for input");
 	opt_tty.fd = fileno(opt_tty.file);
+#ifdef HAVE_READLINE
+	rl_instream = opt_tty.file;
+#endif /* HAVE_READLINE */
 
 	/* attributes */
 	opt_tty.attr = calloc(1, sizeof(struct termios));
