@@ -123,7 +123,6 @@ iconv_t opt_iconv_out		= ICONV_NONE;
 char opt_editor[SIZEOF_STR]	= "";
 const char **opt_cmdline_args	= NULL;
 bool opt_log_follow		= false;
-bool opt_word_diff		= false;
 
 /*
  * Mapping between options and command argument mapping.
@@ -260,11 +259,23 @@ update_options_from_argv(const char *argv[])
 			continue;
 		}
 
+		if (!strcmp(flag, "--word-diff=none")) {
+			/* opt_word_diff = false; */
+			mark_option_seen(&opt_word_diff);
+			continue;
+		}
+
 		if (!strcmp(flag, "--word-diff") ||
 		    !strcmp(flag, "--word-diff=plain")) {
 			opt_word_diff = true;
 			mark_option_seen(&opt_word_diff);
 			continue;
+		}
+
+		if (!prefixcmp(flag, "--word-diff-regex=")) {
+			opt_word_diff = true;
+			mark_option_seen(&opt_word_diff);
+			/* Keep the flag in argv. */
 		}
 
 		argv[flags_pos++] = flag;
@@ -1143,10 +1154,11 @@ load_options(void)
 			return error("Failed to format TIG_DIFF_OPTS arguments");
 	}
 
-	if (argv_contains(opt_diff_options, "--word-diff") ||
-	    argv_contains(opt_diff_options, "--word-diff=plain")) {
+	if (!find_option_info_by_value(&opt_word_diff)->seen &&
+	    (argv_contains(opt_diff_options, "--word-diff") ||
+	     argv_contains(opt_diff_options, "--word-diff=plain") ||
+	     argv_containsn(opt_diff_options, "--word-diff-regex=", STRING_SIZE("--word-diff-regex="))))
 		opt_word_diff = true;
-	}
 
 	return SUCCESS;
 }
