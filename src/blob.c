@@ -141,7 +141,7 @@ blob_request(struct view *view, enum request request, struct line *line)
 		if (state->file)
 			open_editor(state->file, (line - view->line) + 1);
 		else
-			open_blob_editor(view->vid, NULL, (line - view->line) + 1);
+			open_blob_editor(view->vid, basename(view->ref), (line - view->line) + 1);
 		return REQ_NONE;
 
 	default:
