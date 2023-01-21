@@ -511,8 +511,8 @@ find_deleted_line_in_head(struct view *view, struct line *line) {
 	// If we are in an unstaged diff, we also need to take into
 	// account the staged changes to this file, since they happened
 	// between HEAD and our diff.
-	sprintf(file_in_head_pathspec, "HEAD:%s", file_in_head);
-	sprintf(file_in_index_pathspec, ":%s", view->env->file);
+	snprintf(file_in_head_pathspec, sizeof(file_in_head_pathspec), "HEAD:%s", file_in_head);
+	snprintf(file_in_index_pathspec, sizeof(file_in_index_pathspec), ":%s", view->env->file);
 	if (!io_run(&io, IO_RD, repo.exec_dir, NULL, diff_argv) || io.status)
 		return false;
 	// line_number_in_head is still the line number in the staged
