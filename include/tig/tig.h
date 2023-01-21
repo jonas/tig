@@ -18,6 +18,10 @@
 #include "config.h"
 #endif
 
+/* required for struct timezone */
+#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
+
 #include "compat/compat.h"
 
 #ifndef TIG_VERSION
@@ -44,6 +48,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
