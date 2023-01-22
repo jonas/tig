@@ -1,6 +1,31 @@
 Release notes
 =============
 
+master
+------
+
+Improvements:
+
+ - Update utf8proc to v2.8.0, supporting Unicode 15.
+ - Support editing from the pager and the log (-p) views. (#1243)
+ - Adjust build for native Apple Silicon.
+ - Autoscroll the pager view while loading. (#1223)
+ - Automatically show next diff in the status view. (#413, #469)
+ - Replace `Unknown` author with `Not Committed Yet`.
+ - Allow use of regular expressions for coloring. (#1249)
+ - Add support for option word-diff-regex. (#1252)
+ - Include original blob name in temporary filename. (#1254)
+
+Bug fixes:
+
+ - Use %(file_old) for old filename in the blame view. (#1226)
+ - Correctly report which version of libncurses was linked. (#1240, #1241)
+ - Fix stage view closing when holding the ] key. (#1245)
+ - Make tests work from a path with symlinks.
+ - Fix encoding of very long lines. (#1227)
+ - Fix diffstat color for tig log -p.
+ - Clean IO before closing a view or quitting.
+
 tig-2.5.7
 ---------
 
