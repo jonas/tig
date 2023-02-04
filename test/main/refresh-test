@@ -40,21 +40,21 @@ export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
 test_tig
 
 assert_equals 'main-with-unstaged.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Unstaged changes
 2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
 
 [main] Unstaged changes                                                     100%
 EOF
 
 assert_equals 'main-after-add-a.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
-$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Unstaged changes
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Staged changes
 2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
 [main] Unstaged changes                                                     100%
 EOF
 
 assert_equals 'main-after-add-all.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Staged changes
 2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
 
 [main] Staged changes                                                       100%
@@ -68,15 +68,15 @@ assert_equals 'main-after-commit.screen' <<EOF
 EOF
 
 assert_equals 'main-after-reset-soft.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Staged changes
 2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
 
 [main] Staged changes                                                       100%
 EOF
 
 assert_equals 'main-after-reset-a-and-bc.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
-$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Unstaged changes
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Staged changes
 2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
 [main] Unstaged changes                                                     100%
 EOF

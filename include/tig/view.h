@@ -312,19 +312,24 @@ enum status_code format_view_config(struct view_column *column, char buf[], size
 bool view_has_wrapped_lines(struct view *view);
 
 struct line *
-find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction);
+find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction, enum line_type fence);
 
 #define find_prev_line_by_type(view, line, type) \
-	find_line_by_type(view, line, type, -1)
+	find_line_by_type(view, line, type, -1, LINE_NONE)
 
 #define find_next_line_by_type(view, line, type) \
-	find_line_by_type(view, line, type, 1)
+	find_line_by_type(view, line, type, 1, LINE_NONE)
+
+#define find_prev_line_in_commit_by_type(view, line, type) \
+	find_line_by_type(view, line, type, -1, LINE_COMMIT)
 
 #define is_initial_view(view) (!(view)->prev && !(view)->argv)
 #define failed_to_load_initial_view(view) (!(view)->prev && !(view)->lines)
 
 #define get_view_color(view, type)	get_line_color((view)->keymap->name, type)
 #define get_view_attr(view, type)	get_line_attr((view)->keymap->name, type)
+
+enum request view_request(struct view *view, enum request request);
 
 /*
  * Incremental updating

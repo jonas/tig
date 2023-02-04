@@ -120,15 +120,15 @@ set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set blame-options		= -C -C -C	# User-defined options for `tig blame` (git-blame)
 #set log-options		= --pretty=raw	# User-defined options for `tig log` (git-log)
 #set main-options		= -n 1000	# User-defined options for `tig` (git-log)
-set mailmap			= yes		# Use .mailmap to show canonical name and email address
+set mailmap			= yes		# Use .mailmap to show canonical name and email address?
 
 # Misc
-set start-on-head		= no		# Start with cursor on HEAD commit
+set start-on-head		= no		# Start with cursor on HEAD commit?
 set refresh-mode		= auto		# Enum: manual, auto, after-command, periodic
 set refresh-interval		= 10		# Interval in seconds between refreshes
 set ignore-case			= no		# Enum: no, yes, smart-case
 						# Ignore case when searching?
-set wrap-search			= yes		# Wrap around to top/bottom of view when searching
+set wrap-search			= yes		# Wrap around to top/bottom of view when searching?
 set focus-child			= yes		# Move focus to child view when opened?
 set send-child-enter		= yes		# Propagate "enter" keypresses to child views?
 set horizontal-scroll		= 50%		# Number of columns to scroll as % of width
@@ -142,7 +142,8 @@ set history-size		= 500		# Size of persistent history, 0 to disable
 set mouse			= no		# Enable mouse support?
 set mouse-scroll		= 3		# Number of lines to scroll via the mouse
 set mouse-wheel-cursor		= no		# Prefer moving the cursor to scrolling the view?
-set pgrp			= no		# Make tig process-group leader
+set pgrp			= no		# Make tig process-group leader?
+set pager-autoscroll		= no		# Scroll the pager view automatically while loading?
 
 # User-defined commands
 # ---------------------

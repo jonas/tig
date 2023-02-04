@@ -364,6 +364,11 @@ The following variables can be set:
 	Mouse support requires that ncurses itself support mouse events and that
 	you have enabled mouse support in ~/.tigrc with `set mouse = true`.
 
+'pager-autoscroll' (bool)::
+
+	Whether to scroll automatically the pager view while loading. Move the
+	cursor out of the last line to stop scrolling and back in to resume.
+
 'pgrp' (bool)::
 
 	Make tig process-group leader when starting and clean all processes
@@ -740,7 +745,7 @@ following variable names, which are substituted before commands are run:
 |%(mainargs)		|Options from 'main-options' used by the main view.
 |%(prompt)		|Prompt for the argument value. Optionally specify a
 			 custom prompt using `"%(prompt Enter branch name: )"`
-|%(text)		|The text of the currently selected line.
+|%(text)		|The text column of the currently selected line.
 |%(repo:head)		|The name of the checked out branch, e.g. `master`
 |%(repo:head-id)	|The commit ID of the checked out branch.
 |%(repo:remote)		|The remote associated with the checked out branch,
@@ -973,6 +978,8 @@ color diff-chunk	magenta	default
 color "Reported-by:"	green	default
 # View-specific color
 color tree.date		black	cyan	bold
+# Custom color
+color "/(note|warning|error):/"	yellow	default	bold
 --------------------------------------------------------------------------
 
 Or in the Git configuration files:
@@ -993,7 +1000,8 @@ Area names::
 
 	Can be either a built-in area name or a custom quoted string. The
 	latter allows custom color rules to be added for lines matching a
-	quoted string.
+	quoted string. Strings of the form "/.../" are interpreted as
+	regular expressions.
 	Valid built-in area names are described below. Note, all names are
 	case-insensitive, and you may use '-', and '_' interchangeably,
 	e.g. "Diff-Header" and "DIFF_HEADER" are the same.

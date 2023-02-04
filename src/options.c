@@ -123,7 +123,6 @@ iconv_t opt_iconv_out		= ICONV_NONE;
 char opt_editor[SIZEOF_STR]	= "";
 const char **opt_cmdline_args	= NULL;
 bool opt_log_follow		= false;
-bool opt_word_diff		= false;
 
 /*
  * Mapping between options and command argument mapping.
@@ -260,11 +259,23 @@ update_options_from_argv(const char *argv[])
 			continue;
 		}
 
+		if (!strcmp(flag, "--word-diff=none")) {
+			/* opt_word_diff = false; */
+			mark_option_seen(&opt_word_diff);
+			continue;
+		}
+
 		if (!strcmp(flag, "--word-diff") ||
 		    !strcmp(flag, "--word-diff=plain")) {
 			opt_word_diff = true;
 			mark_option_seen(&opt_word_diff);
 			continue;
+		}
+
+		if (!prefixcmp(flag, "--word-diff-regex=")) {
+			opt_word_diff = true;
+			mark_option_seen(&opt_word_diff);
+			/* Keep the flag in argv. */
 		}
 
 		argv[flags_pos++] = flag;
@@ -373,9 +384,46 @@ parse_color_name(const char *color, struct line_rule *rule, const char **prefix_
 
 	memset(rule, 0, sizeof(*rule));
 	if (is_quoted(*color)) {
-		rule->line = color + 1;
-		rule->linelen = strlen(color) - 2;
+		/* Interpret strings of the form "/.../" as regular expressions. */
+		if (strlen(color) >= 4 && color[1] == '/' && color[strlen(color) - 2] == '/') {
+			int regex_err;
+
+			/* rule->line and rule->regex are allocated here rather
+			 * than in add_line_rule() to allow proper error reporting.
+			 * Though only rule->regex will be used for matching regular
+			 * expressions, rule->line and rule->linelen are still filled
+			 * to look up exiting rules when defining view-specific
+			 * colors. */
+			rule->linelen = strlen(color) - 4;
+			rule->line = strndup(color + 2, rule->linelen);
+			if (!rule->line)
+				return ERROR_OUT_OF_MEMORY;
+
+			rule->regex = calloc(1, sizeof(*rule->regex));
+			if (!rule->regex) {
+				free((void *) rule->line);
+				return ERROR_OUT_OF_MEMORY;
+			}
+
+			regex_err = regcomp(rule->regex, rule->line, REG_EXTENDED);
+
+			if (regex_err != 0) {
+				char buf[SIZEOF_STR];
+				regerror(regex_err, rule->regex, buf, sizeof(buf));
+				free((void *) rule->line);
+				free(rule->regex);
+				return error("Invalid color mapping: %s", buf);
+			}
+		} else {
+			rule->linelen = strlen(color) - 2;
+			rule->line = strndup(color + 1, rule->linelen);
+			if (!rule->line)
+				return ERROR_OUT_OF_MEMORY;
+		}
 	} else {
+		/* Built-in area names are preloaded on first call to
+		 * find_line_rule(), so rule->name is only used to look
+		 * up an existing rule and does not need to persist. */
 		rule->name = color;
 		rule->namelen = strlen(color);
 	}
@@ -1106,10 +1154,11 @@ load_options(void)
 			return error("Failed to format TIG_DIFF_OPTS arguments");
 	}
 
-	if (argv_contains(opt_diff_options, "--word-diff") ||
-	    argv_contains(opt_diff_options, "--word-diff=plain")) {
+	if (!find_option_info_by_value(&opt_word_diff)->seen &&
+	    (argv_contains(opt_diff_options, "--word-diff") ||
+	     argv_contains(opt_diff_options, "--word-diff=plain") ||
+	     argv_containsn(opt_diff_options, "--word-diff-regex=", STRING_SIZE("--word-diff-regex="))))
 		opt_word_diff = true;
-	}
 
 	return SUCCESS;
 }

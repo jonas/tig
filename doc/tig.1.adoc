@@ -40,6 +40,11 @@ options. The first command line parameter not starting with "-" is interpreted
 as being either a revision specification or a path and will end the option
 parsing. All additional options will be passed to the underlying Git command.
 
+Note that this means that any arguments to options should be specified
+together. For example, run tig -Sfoo instead of tig -S foo, and tig --grep=foo
+instead of tig --grep foo, otherwise foo will be interpreted as a revision
+rather than an argument.
+
 show::
 	Open diff view using the given git-show(1) options.
 

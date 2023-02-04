@@ -475,8 +475,11 @@ blame_select(struct view *view, struct line *line)
 	else
 		string_copy_rev(view->env->commit, commit->id);
 
-	if (commit->filename)
-		string_format(view->env->file, "%s", commit->filename);
+	if (strcmp(commit->filename, view->env->file))
+		string_format(view->env->file_old, "%s", commit->filename);
+	else
+		view->env->file_old[0] = '\0';
+
 	view->env->lineno = view->pos.lineno + 1;
 }
 

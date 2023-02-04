@@ -60,38 +60,6 @@
 #include <pcre.h>
 #endif
 
-static bool
-forward_request_to_child(struct view *child, enum request request)
-{
-	return displayed_views() == 2 && view_is_displayed(child) &&
-		!strcmp(child->vid, child->ops->id);
-}
-
-static enum request
-view_request(struct view *view, enum request request)
-{
-	if (!view || !view->lines)
-		return request;
-
-	if (request == REQ_ENTER && view == display[0] &&
-	    !opt_focus_child && opt_send_child_enter &&
-	    view_has_flags(view, VIEW_SEND_CHILD_ENTER)) {
-		struct view *child = display[1];
-
-		if (forward_request_to_child(child, request)) {
-			view_request(child, request);
-			return REQ_NONE;
-		}
-	}
-
-	if (request == REQ_REFRESH && !view_can_refresh(view)) {
-		report("This view can not be refreshed");
-		return REQ_NONE;
-	}
-
-	return view->ops->request(view, request, &view->line[view->pos.lineno]);
-}
-
 /*
  * Option management
  */
@@ -356,6 +324,7 @@ view_driver(struct view *view, enum request request)
 		 * view itself. Parents to closed view should never be
 		 * followed. */
 		if (view->prev && view->prev != view) {
+			end_update(view, true);
 			maximize_view(view->prev, true);
 			view->prev = view;
 			break;
@@ -366,6 +335,8 @@ view_driver(struct view *view, enum request request)
 		}
 		/* Fall-through */
 	case REQ_QUIT:
+		foreach_view(view, i)
+			end_update(view, true);
 		return false;
 
 	default:
@@ -557,7 +528,7 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 				printf("tig version %s\n", TIG_VERSION);
 #ifdef NCURSES_VERSION
 				printf("%s version %s.%d\n",
-#ifdef NCURSES_WIDECHAR
+#if defined(HAVE_NCURSESW_CURSES_H) || defined(HAVE_NCURSESW_H)
 				       "ncursesw",
 #else
 				       "ncurses",

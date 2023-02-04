@@ -646,11 +646,8 @@ update_view(struct view *view)
 	}
 
 	for (; io_get(view->pipe, &line, '\n', can_read); can_read = false) {
-		if (encoding && !encoding_convert(encoding, &line)) {
+		if (encoding && !encoding_convert(encoding, &line))
 			report("Encoding failure");
-			end_update(view, true);
-			return false;
-		}
 
 		if (!view->ops->read(view, &line, false)) {
 			report("Allocation failure");
@@ -1585,13 +1582,47 @@ view_column_info_update(struct view *view, struct line *line)
 }
 
 struct line *
-find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction)
+find_line_by_type(struct view *view, struct line *line, enum line_type type, int direction, enum line_type fence)
 {
 	for (; view_has_line(view, line); line += direction)
 		if (line->type == type)
 			return line;
+		else if (line->type == fence)
+			break;
 
 	return NULL;
+}
+
+static inline bool
+forward_request_to_child(struct view *child, enum request request)
+{
+	return displayed_views() == 2 && view_is_displayed(child) &&
+		!strcmp(child->vid, child->ops->id);
+}
+
+enum request
+view_request(struct view *view, enum request request)
+{
+	if (!view || !view->lines)
+		return request;
+
+	if (request == REQ_ENTER && view == display[0] &&
+	    !opt_focus_child && opt_send_child_enter &&
+	    view_has_flags(view, VIEW_SEND_CHILD_ENTER)) {
+		struct view *child = display[1];
+
+		if (forward_request_to_child(child, request)) {
+			view_request(child, request);
+			return REQ_NONE;
+		}
+	}
+
+	if (request == REQ_REFRESH && !view_can_refresh(view)) {
+		report("This view can not be refreshed");
+		return REQ_NONE;
+	}
+
+	return view->ops->request(view, request, &view->line[view->pos.lineno]);
 }
 
 /*

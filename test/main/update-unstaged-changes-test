@@ -26,8 +26,8 @@ in_work_dir create_dirty_workdir
 test_tig
 
 assert_equals 'start.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
-2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Unstaged changes
+2009-02-13 23:31 +0000 A. U. Thor        I [master] Initial commit
 
 [main] Unstaged changes                                                     100%
 EOF

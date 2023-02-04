@@ -18,6 +18,16 @@
 #include "config.h"
 #endif
 
+/* required for struct timezone */
+#ifdef _BSD_SOURCE
+#undef _BSD_SOURCE
+#endif
+#define _BSD_SOURCE 1
+#ifdef _DEFAULT_SOURCE
+#undef _DEFAULT_SOURCE
+#endif
+#define _DEFAULT_SOURCE 1
+
 #include "compat/compat.h"
 
 #ifndef TIG_VERSION
@@ -44,6 +54,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -77,6 +88,9 @@
 #endif
 
 /* ncurses(3): Must be defined to have extended wide-character functions. */
+#ifdef _XOPEN_SOURCE_EXTENDED
+#undef _XOPEN_SOURCE_EXTENDED
+#endif
 #define _XOPEN_SOURCE_EXTENDED 1
 
 #if defined HAVE_NCURSESW_CURSES_H

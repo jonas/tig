@@ -35,6 +35,9 @@ get_line_type(const char *line)
 	for (type = 0; type < line_rules; type++) {
 		struct line_rule *rule = &line_rule[type];
 
+		if (rule->regex && !regexec(rule->regex, line, 0, NULL, 0))
+			return type;
+
 		/* Case insensitive search matches Signed-off-by lines better. */
 		if (rule->linelen && linelen >= rule->linelen &&
 		    !strncasecmp(rule->line, line, rule->linelen))
@@ -89,7 +92,7 @@ get_line_info(const char *prefix, enum line_type type)
 }
 
 static struct line_info *
-init_line_info(const char *prefix, const char *name, size_t namelen, const char *line, size_t linelen)
+init_line_info(const char *prefix, const char *name, size_t namelen, const char *line, size_t linelen, regex_t *regex)
 {
 	struct line_rule *rule;
 
@@ -101,6 +104,7 @@ init_line_info(const char *prefix, const char *name, size_t namelen, const char 
 	rule->namelen = namelen;
 	rule->line = line;
 	rule->linelen = linelen;
+	rule->regex = regex;
 
 	rule->info.prefix = prefix;
 	rule->info.fg = COLOR_DEFAULT;
@@ -110,7 +114,7 @@ init_line_info(const char *prefix, const char *name, size_t namelen, const char 
 }
 
 #define INIT_BUILTIN_LINE_INFO(type, line) \
-	init_line_info(NULL, #type, STRING_SIZE(#type), (line), STRING_SIZE(line))
+	init_line_info(NULL, #type, STRING_SIZE(#type), (line), STRING_SIZE(line), NULL)
 
 static struct line_rule *
 find_line_rule(struct line_rule *query)
@@ -145,11 +149,15 @@ add_line_rule(const char *prefix, struct line_rule *query)
 		if (query->name)
 			return NULL;
 
-		/* Quoted line. */
-		query->line = strndup(query->line, query->linelen);
-		if (!query->line)
-			return NULL;
-		return init_line_info(prefix, "", 0, query->line, query->linelen);
+		return init_line_info(prefix, "", 0, query->line, query->linelen, query->regex);
+	}
+
+	/* When a rule already exists and we are just adding view-specific
+	 * colors, query->line and query->regex can be freed. */
+	free((void *) query->line);
+	if (query->regex) {
+		regfree(query->regex);
+		free(query->regex);
 	}
 
 	for (info = &rule->info; info; last = info, info = info->next)

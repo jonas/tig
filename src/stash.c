@@ -74,9 +74,6 @@ stash_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_VIEW_DIFF:
 	case REQ_ENTER:
-		if (view_is_displayed(view) && display[0] != view)
-			maximize_view(view, true);
-
 		if (!view_is_displayed(diff) ||
 		    strcmp(view->env->stash, diff->ref)) {
 			const char *diff_argv[] = {

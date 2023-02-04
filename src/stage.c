@@ -511,8 +511,8 @@ find_deleted_line_in_head(struct view *view, struct line *line) {
 	// If we are in an unstaged diff, we also need to take into
 	// account the staged changes to this file, since they happened
 	// between HEAD and our diff.
-	sprintf(file_in_head_pathspec, "HEAD:%s", file_in_head);
-	sprintf(file_in_index_pathspec, ":%s", view->env->file);
+	snprintf(file_in_head_pathspec, sizeof(file_in_head_pathspec), "HEAD:%s", file_in_head);
+	snprintf(file_in_index_pathspec, sizeof(file_in_index_pathspec), ":%s", view->env->file);
 	if (!io_run(&io, IO_RD, repo.exec_dir, NULL, diff_argv) || io.status)
 		return false;
 	// line_number_in_head is still the line number in the staged
@@ -664,6 +664,11 @@ stage_request(struct view *view, enum request request, struct line *line)
 			view->env->goto_lineno--;
 		return request;
 
+	case REQ_VIEW_CLOSE:
+	case REQ_VIEW_CLOSE_NO_QUIT:
+		stage_line_type = 0;
+		return request;
+
 	case REQ_ENTER:
 		return diff_common_enter(view, request, line);
 
@@ -675,7 +680,9 @@ stage_request(struct view *view, enum request request, struct line *line)
 	 * stage view if it doesn't. */
 	if (view->parent && !stage_exists(view, &stage_status, stage_line_type)) {
 		stage_line_type = 0;
-		return REQ_VIEW_CLOSE;
+		return view->parent == &status_view
+				? view_request(view->parent, REQ_ENTER)
+				: REQ_VIEW_CLOSE;
 	}
 
 	refresh_view(view);
@@ -776,28 +783,31 @@ stage_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct stage_state *state = view->private;
 
+	if (!stage_line_type)
+		return true;
+
 	if (stage_line_type == LINE_STAT_UNTRACKED)
 		return pager_common_read(view, buf ? buf->data : NULL, LINE_DEFAULT, NULL);
 
 	if (!buf) {
 		if (!diff_done_highlight(&state->diff)) {
 			report("Failed run the diff-highlight program: %s", opt_diff_highlight);
-			return true;
+			return false;
 		}
-	}
 
-	if (!buf && !view->lines && view->parent) {
-		maximize_view(view->parent, true);
-		return true;
-	}
+		if (!view->lines && !force_stop && view->prev) {
+			watch_apply(&view->watch, WATCH_INDEX);
+			stage_line_type = 0;
+			maximize_view(view->prev, false);
+			return false;
+		}
 
-	if (!buf)
 		diff_restore_line(view, &state->diff);
 
-	if (buf && diff_common_read(view, buf->data, &state->diff))
 		return true;
+	}
 
-	return pager_read(view, buf, force_stop);
+	return diff_common_read(view, buf->data, &state->diff);
 }
 
 static struct view_ops stage_ops = {

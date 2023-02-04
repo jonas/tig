@@ -56,8 +56,8 @@ in_work_dir create_dirty_workdir
 test_tig
 
 assert_equals 'main-with-unstaged.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
-2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Unstaged changes
+2009-02-13 23:31 +0000 A. U. Thor        I [master] Initial commit
 
 
 
@@ -74,8 +74,8 @@ $YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
 EOF
 
 assert_equals 'main-with-unstaged-split.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
-2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Unstaged changes
+2009-02-13 23:31 +0000 A. U. Thor        I [master] Initial commit
 
 
 [main] Unstaged changes                                                     100%
@@ -92,9 +92,9 @@ index e697dfd..9d8ef3d 100644
 EOF
 
 assert_equals 'main-with-unstaged-and-staged-split.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
-$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
-2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Unstaged changes
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Staged changes
+2009-02-13 23:31 +0000 A. U. Thor        I [master] Initial commit
 
 [main] Unstaged changes                                                     100%
  .j  | 6 ++----
@@ -110,8 +110,8 @@ index e697dfd..9d8ef3d 100644
 EOF
 
 assert_equals 'main-with-staged.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
-2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Staged changes
+2009-02-13 23:31 +0000 A. U. Thor        I [master] Initial commit
 
 
 
@@ -128,8 +128,8 @@ $YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
 EOF
 
 assert_equals 'main-with-staged-split.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
-2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Staged changes
+2009-02-13 23:31 +0000 A. U. Thor        I [master] Initial commit
 
 
 [main] Staged changes                                                       100%
@@ -146,9 +146,9 @@ index e697dfd..9d8ef3d 100644
 EOF
 
 assert_equals 'main-with-staged-and-unstaged.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
-$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
-2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Unstaged changes
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Staged changes
+2009-02-13 23:31 +0000 A. U. Thor        I [master] Initial commit
 
 
 
@@ -164,8 +164,8 @@ $YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
 EOF
 
 assert_equals 'main-with-renamed.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
-2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Staged changes
+2009-02-13 23:31 +0000 A. U. Thor        I [master] Initial commit
 
 
 
@@ -182,12 +182,12 @@ $YYY_MM_DD_HH_MM +0000 Unknown    o Staged changes
 EOF
 
 assert_equals 'main-with-conflict.screen' <<EOF
-$YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
-2009-03-11 12:38 +0000 Committer  o [conflict-master] Change: c'
-2009-03-03 00:15 +0000 Committer  o Change: c
-2009-02-22 11:53 +0000 Committer  o [master] Change: b
-2009-02-13 23:31 +0000 Committer  o Change: a
-2009-02-13 23:31 +0000 A. U. Thor I Initial commit
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet o Unstaged changes
+2009-03-11 12:38 +0000 Committer         o [conflict-master] Change: c'
+2009-03-03 00:15 +0000 Committer         o Change: c
+2009-02-22 11:53 +0000 Committer         o [master] Change: b
+2009-02-13 23:31 +0000 Committer         o Change: a
+2009-02-13 23:31 +0000 A. U. Thor        I Initial commit
 
 
 
@@ -200,14 +200,14 @@ $YYY_MM_DD_HH_MM +0000 Unknown    o Unstaged changes
 EOF
 
 assert_equals 'main-all-refs.screen' <<EOF
-2009-03-28 13:22 +0000 Committer  * [conflict-branch] Change: d'
-2009-03-20 01:00 +0000 Committer  * Change: d
-$YYY_MM_DD_HH_MM +0000 Unknown    | * Unstaged changes
-2009-03-11 12:38 +0000 Committer  | * [conflict-master] Change: c'
-2009-03-03 00:15 +0000 Committer  | * Change: c
-2009-02-22 11:53 +0000 Committer  *-' [master] Change: b
-2009-02-13 23:31 +0000 Committer  * Change: a
-2009-02-13 23:31 +0000 A. U. Thor I Initial commit
+2009-03-28 13:22 +0000 Committer         * [conflict-branch] Change: d'
+2009-03-20 01:00 +0000 Committer         * Change: d
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet | * Unstaged changes
+2009-03-11 12:38 +0000 Committer         | * [conflict-master] Change: c'
+2009-03-03 00:15 +0000 Committer         | * Change: c
+2009-02-22 11:53 +0000 Committer         *-' [master] Change: b
+2009-02-13 23:31 +0000 Committer         * Change: a
+2009-02-13 23:31 +0000 A. U. Thor        I Initial commit
 
 
 
