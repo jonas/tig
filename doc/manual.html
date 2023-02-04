@@ -1224,7 +1224,7 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(text)</code></p></td>
-<td align="left" valign="top"><p class="table">The text of the currently selected line.</p></td>
+<td align="left" valign="top"><p class="table">The text column of the currently selected line.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(repo:head)</code></p></td>
@@ -1738,6 +1738,10 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
+<div class="paragraph"><p>The format for patterns is either POSIX.2 &#8220;extended&#8221; REs or PCRE / PCRE2 if
+Tig was compiled with PCRE / PCRE2 support (check with <code>tig -v</code>). See the
+manpage of re_format(7) or pcrepattern(3) / pcre2pattern(3).</p></div>
+<div class="paragraph"><p>Case sensitivity can be controlled with variable ignore-case.</p></div>
 </div>
 <div class="sect2">
 <h3 id="misc-keys">4.7. Misc</h3>
@@ -2100,7 +2104,7 @@ the Free Software Foundation; either version 2 of the License, or
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2022-07-12 19:53:26 CEST
+ 2023-02-04 13:30:10 CET
 </div>
 </div>
 </body>

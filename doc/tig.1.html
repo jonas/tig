@@ -780,6 +780,10 @@ git-diff(1) options, as well as the following subcommands and Tig-specific
 options. The first command line parameter not starting with "-" is interpreted
 as being either a revision specification or a path and will end the option
 parsing. All additional options will be passed to the underlying Git command.</p></div>
+<div class="paragraph"><p>Note that this means that any arguments to options should be specified
+together. For example, run tig -Sfoo instead of tig -S foo, and tig --grep=foo
+instead of tig --grep foo, otherwise foo will be interpreted as a revision
+rather than an argument.</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
 show
@@ -1202,7 +1206,7 @@ git(7)</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2022-08-16 23:31:11 CEST
+ 2023-02-04 13:30:10 CET
 </div>
 </div>
 </body>

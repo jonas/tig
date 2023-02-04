@@ -2,12 +2,12 @@
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 08/25/2022
+.\"      Date: 02/04/2023
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.5.7
+.\"    Source: Tig 2.5.8
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "08/25/2022" "Tig 2\&.5\&.7" "Tig Manual"
+.TH "TIGRC" "5" "02/04/2023" "Tig 2\&.5\&.8" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -504,6 +504,11 @@ set mouse = true\&.
 Whether to prefer moving the cursor to scrolling the view when using the mouse wheel\&. Off by default\&. Combines well with
 set mouse\-scroll = 1\&. Mouse support requires that ncurses itself support mouse events and that you have enabled mouse support in ~/\&.tigrc with
 set mouse = true\&.
+.RE
+.PP
+\fIpager\-autoscroll\fR (bool)
+.RS 4
+Whether to scroll automatically the pager view while loading\&. Move the cursor out of the last line to stop scrolling and back in to resume\&.
 .RE
 .PP
 \fIpgrp\fR (bool)
@@ -1493,7 +1498,7 @@ T{
 %(text)
 T}:T{
 .sp
-The text of the currently selected line\&.
+The text column of the currently selected line\&.
 T}
 T{
 .sp
@@ -2266,6 +2271,8 @@ color diff\-chunk        magenta default
 color "Reported\-by:"    green   default
 # View\-specific color
 color tree\&.date         black   cyan    bold
+# Custom color
+color "/(note|warning|error):/" yellow  default bold
 .fi
 .if n \{\
 .RE
@@ -2296,7 +2303,7 @@ Or in the Git configuration files:
 .PP
 Area names
 .RS 4
-Can be either a built\-in area name or a custom quoted string\&. The latter allows custom color rules to be added for lines matching a quoted string\&. Valid built\-in area names are described below\&. Note, all names are case\-insensitive, and you may use
+Can be either a built\-in area name or a custom quoted string\&. The latter allows custom color rules to be added for lines matching a quoted string\&. Strings of the form "/\&.../" are interpreted as regular expressions\&. Valid built\-in area names are described below\&. Note, all names are case\-insensitive, and you may use
 \fI\-\fR, and
 \fI_\fR
 interchangeably, e\&.g\&. "Diff\-Header" and "DIFF_HEADER" are the same\&. View\-specific colors can be defined by prefixing the view name to the area name, e\&.g\&. "stage\&.diff\-chunk" and "diff\&.diff\-chunk"\&.

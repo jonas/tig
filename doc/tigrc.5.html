@@ -1305,6 +1305,15 @@ other                : Any other reference.
 </p>
 </dd>
 <dt class="hdlist1">
+<em>pager-autoscroll</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to scroll automatically the pager view while loading. Move the
+        cursor out of the last line to stop scrolling and back in to resume.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>pgrp</em> (bool)
 </dt>
 <dd>
@@ -2042,7 +2051,7 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(text)</code></p></td>
-<td align="left" valign="top"><p class="table">The text of the currently selected line.</p></td>
+<td align="left" valign="top"><p class="table">The text column of the currently selected line.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(repo:head)</code></p></td>
@@ -2524,7 +2533,9 @@ color diff-index        blue    default
 color diff-chunk        magenta default
 color "Reported-by:"    green   default
 # View-specific color
-color tree.date         black   cyan    bold</code></pre>
+color tree.date         black   cyan    bold
+# Custom color
+color "/(note|warning|error):/" yellow  default bold</code></pre>
 </div></div>
 <div class="paragraph"><p>Or in the Git configuration files:</p></div>
 <div class="listingblock">
@@ -2547,7 +2558,8 @@ Area names
 <p>
         Can be either a built-in area name or a custom quoted string. The
         latter allows custom color rules to be added for lines matching a
-        quoted string.
+        quoted string. Strings of the form "/&#8230;/" are interpreted as
+        regular expressions.
         Valid built-in area names are described below. Note, all names are
         case-insensitive, and you may use <em>-</em>, and <em>_</em> interchangeably,
         e.g. "Diff-Header" and "DIFF_HEADER" are the same.
@@ -2905,7 +2917,7 @@ git(7), git-config(1)</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2022-08-16 23:31:39 CEST
+ 2023-02-04 13:30:10 CET
 </div>
 </div>
 </body>

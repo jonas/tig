@@ -738,6 +738,97 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_5_8">tig-2.5.8</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Update utf8proc to v2.8.0, supporting Unicode 15.
+</p>
+</li>
+<li>
+<p>
+Support editing from the pager and the log (-p) views. (#1243)
+</p>
+</li>
+<li>
+<p>
+Adjust build for native Apple Silicon.
+</p>
+</li>
+<li>
+<p>
+Autoscroll the pager view while loading. (#1223)
+</p>
+</li>
+<li>
+<p>
+Automatically show next diff in the status view. (#413, #469)
+</p>
+</li>
+<li>
+<p>
+Replace <code>Unknown</code> author with <code>Not Committed Yet</code>.
+</p>
+</li>
+<li>
+<p>
+Allow use of regular expressions for coloring. (#1249)
+</p>
+</li>
+<li>
+<p>
+Add support for option word-diff-regex. (#1252)
+</p>
+</li>
+<li>
+<p>
+Include original blob name in temporary filename. (#1254)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Use %(file_old) for old filename in the blame view. (#1226)
+</p>
+</li>
+<li>
+<p>
+Correctly report which version of libncurses was linked. (#1240, #1241)
+</p>
+</li>
+<li>
+<p>
+Fix stage view closing when holding the ] key. (#1245)
+</p>
+</li>
+<li>
+<p>
+Make tests work from a path with symlinks.
+</p>
+</li>
+<li>
+<p>
+Fix encoding of very long lines. (#1227)
+</p>
+</li>
+<li>
+<p>
+Fix diffstat color for tig log -p.
+</p>
+</li>
+<li>
+<p>
+Clean IO before closing a view or quitting.
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_5_7">tig-2.5.7</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Bug fixes:</p></div>
@@ -4914,7 +5005,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2022-08-25 19:27:00 CEST
+ 2023-02-04 13:30:10 CET
 </div>
 </div>
 </body>
