@@ -19,8 +19,14 @@
 #endif
 
 /* required for struct timezone */
-#define _BSD_SOURCE
-#define _DEFAULT_SOURCE
+#ifdef _BSD_SOURCE
+#undef _BSD_SOURCE
+#endif
+#define _BSD_SOURCE 1
+#ifdef _DEFAULT_SOURCE
+#undef _DEFAULT_SOURCE
+#endif
+#define _DEFAULT_SOURCE 1
 
 #include "compat/compat.h"
 
@@ -82,6 +88,9 @@
 #endif
 
 /* ncurses(3): Must be defined to have extended wide-character functions. */
+#ifdef _XOPEN_SOURCE_EXTENDED
+#undef _XOPEN_SOURCE_EXTENDED
+#endif
 #define _XOPEN_SOURCE_EXTENDED 1
 
 #if defined HAVE_NCURSESW_CURSES_H
