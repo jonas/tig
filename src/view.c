@@ -730,7 +730,7 @@ update_view_title(struct view *view)
 
 	view_lines = view->pos.offset + view->height;
 	lines = view->lines ? MIN(view_lines, view->lines) * 100 / view->lines : 0;
-	mvwprintw(window, 0, view->width - count_digits(lines) - 1, "%u%%", lines);
+	mvwprintw(window, 0, view->width - count_digits(lines) - 2, " %u%%", lines);
 
 	wnoutrefresh(window);
 }

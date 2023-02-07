@@ -106,7 +106,7 @@ index 65f914a..3aa4320 100644
    def add(benchmark: Benchmark) {
 
 
-[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sca100%
+[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sc 100%
 EOF
 
 assert_equals 'diff-u5.screen' <<EOF
@@ -138,7 +138,7 @@ index 65f914a..3aa4320 100644
    def add(benchmark: Benchmark) {
      benchmarks.push(benchmark)
 
-[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sca100%
+[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sc 100%
 EOF
 
 assert_equals 'diff-u10.screen' <<EOF
@@ -170,7 +170,7 @@ index 65f914a..3aa4320 100644
    def add(benchmark: Benchmark) {
      benchmarks.push(benchmark)
      if (benchmark.isInstanceOf[BenchmarkApp]) {
-[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.scal89%
+[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sca 89%
 EOF
 
 assert_equals 'diff-u8.screen' <<EOF
@@ -202,7 +202,7 @@ index 65f914a..3aa4320 100644
    def add(benchmark: Benchmark) {
      benchmarks.push(benchmark)
      if (benchmark.isInstanceOf[BenchmarkApp]) {
-[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.scal94%
+[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sca 94%
 EOF
 
 for i in expected/*.screen; do

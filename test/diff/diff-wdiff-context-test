@@ -106,7 +106,7 @@ object Benchmark {
 
 
 
-[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sca100%
+[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sc 100%
 EOF
 
 assert_equals 'diff-u5.screen' <<EOF
@@ -138,7 +138,7 @@ object Benchmark {
 
 
 
-[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sca100%
+[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sc 100%
 EOF
 
 assert_equals 'diff-u10.screen' <<EOF
@@ -170,7 +170,7 @@ object Benchmark {
     if (benchmark.isInstanceOf[BenchmarkApp]) {
       benchmarkApps.push(benchmark.asInstanceOf[BenchmarkApp])
     }
-[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.scal94%
+[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sca 94%
 EOF
 
 assert_equals 'diff-u8.screen' <<EOF
@@ -202,7 +202,7 @@ object Benchmark {
     if (benchmark.isInstanceOf[BenchmarkApp]) {
       benchmarkApps.push(benchmark.asInstanceOf[BenchmarkApp])
     }
-[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sca100%
+[diff] Changes to 'common/src/main/scala/org/scalajs/benchmark/Benchmark.sc 100%
 EOF
 
 for i in expected/*.screen; do

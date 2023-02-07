@@ -45,7 +45,7 @@ assert_equals 'main-vsplit-default.screen' <<EOF
 2009-12-17 12:49 +0000 René Lévesque    |
 2009-12-09 00:27 +0000 A. U. Thor       |
 2009-11-30 12:05 +0000 Max Power        |
-[main] 5cb3412a5e06e506840495b91acc8832%|[diff] 5cb3412a5e06e506840495b91acc100%
+[main] 5cb3412a5e06e506840495b91acc8 32%|[diff] 5cb3412a5e06e506840495b91ac 100%
 EOF
 
 assert_equals 'main-vsplit-25-75.screen' <<EOF
@@ -65,7 +65,7 @@ assert_equals 'main-vsplit-25-75.screen' <<EOF
 2009-12-17 12:49 +0 |
 2009-12-09 00:27 +0 |
 2009-11-30 12:05 +0 |
-[main] 5cb3412a5e32%|[diff] 5cb3412a5e06e506840495b91acc885037a48b72 - line 100%
+[main] 5cb3412a5 32%|[diff] 5cb3412a5e06e506840495b91acc885037a48b72 - line 100%
 EOF
 
 assert_equals 'main-hsplit-default.screen' <<EOF
