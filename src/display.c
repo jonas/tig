@@ -771,6 +771,7 @@ get_input(int prompt_position, struct key *key)
 		int delay = -1;
 
 		if (opt_refresh_mode != REFRESH_MODE_MANUAL) {
+			bool refs_refreshed = false;
 
 			if (opt_refresh_mode == REFRESH_MODE_PERIODIC)
 				delay = watch_periodic(opt_refresh_interval);
@@ -778,6 +779,10 @@ get_input(int prompt_position, struct key *key)
 			foreach_displayed_view (view, i) {
 				if (view_can_refresh(view) &&
 					watch_dirty(&view->watch)) {
+					if (!refs_refreshed) {
+						load_refs(true);
+						refs_refreshed = true;
+					}
 					refresh_view(view);
 				}
 			}
