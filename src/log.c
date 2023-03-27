@@ -44,6 +44,7 @@ log_select(struct view *view, struct line *line)
 {
 	struct log_state *state = view->private;
 	int last_lineno = state->last_lineno;
+	const char *text = box_text(line);
 
 	if (!last_lineno || abs(last_lineno - line->lineno) > 1
 	    || (state->last_type == LINE_COMMIT && last_lineno > line->lineno)) {
@@ -56,6 +57,7 @@ log_select(struct view *view, struct line *line)
 	if (line->type == LINE_COMMIT && !view_has_flags(view, VIEW_NO_REF))
 		log_copy_rev(view, line);
 	string_copy_rev(view->env->commit, view->ref);
+	string_ncopy(view->env->text, text, strlen(text));
 	state->last_lineno = line->lineno;
 	state->last_type = line->type;
 }

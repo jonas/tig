@@ -466,6 +466,7 @@ blame_select(struct view *view, struct line *line)
 {
 	struct blame *blame = line->data;
 	struct blame_commit *commit = blame->commit;
+	const char *text = blame->text;
 
 	if (!commit)
 		return;
@@ -481,6 +482,7 @@ blame_select(struct view *view, struct line *line)
 		view->env->file_old[0] = '\0';
 
 	view->env->lineno = view->pos.lineno + 1;
+	string_ncopy(view->env->text, text, strlen(text));
 }
 
 static struct view_ops blame_ops = {

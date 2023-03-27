@@ -111,10 +111,12 @@ static void
 blob_select(struct view *view, struct line *line)
 {
 	struct blob_state *state = view->private;
+	const char *text = box_text(line);
 
 	if (state->file)
 		string_format(view->env->file, "%s", state->file);
 	view->env->lineno = view->pos.lineno + 1;
+	string_ncopy(view->env->text, text, strlen(text));
 }
 
 static enum request

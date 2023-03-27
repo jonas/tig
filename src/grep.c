@@ -77,6 +77,7 @@ static void
 grep_select(struct view *view, struct line *line)
 {
 	struct grep_line *grep = grep_get_line(line);
+	const char *text = grep->text;
 
 	if (!*grep->file)
 		return;
@@ -84,6 +85,7 @@ grep_select(struct view *view, struct line *line)
 	string_ncopy(view->env->file, grep->file, strlen(grep->file));
 	string_ncopy(view->ref, grep->file, strlen(grep->file));
 	view->env->lineno = grep->lineno + 1;
+	string_ncopy(view->env->text, text, strlen(text));
 }
 
 static const char *grep_args[] = {
