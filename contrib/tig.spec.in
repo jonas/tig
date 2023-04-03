@@ -56,7 +56,7 @@ CFLAGS="$RPM_OPT_FLAGS -DVERSION=tig-%{version}-%{release}"
 %{?_without_docs:  %doc doc/*.txt}
 
 %changelog
-* Sun 23 Feb 2014 Jonas Fonseca <jonas.fonseca@gmail.com>
+* Sun Feb 23 2014 Jonas Fonseca <jonas.fonseca@gmail.com>
 - Add tigrc installed in /etc
 
 * Tue Jan  8 2013 Joakim Sernbrant <serbaut@gmail.com>
