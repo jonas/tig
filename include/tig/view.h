@@ -49,6 +49,7 @@ struct line {
 	unsigned int no_commit_refs:1;
 	unsigned int graph_indent:1;
 	unsigned int search_result:1;
+	unsigned int stat_header:1;
 
 	void *data;		/* User data */
 };

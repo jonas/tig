@@ -9,6 +9,35 @@ steps '
 	:save-display status.screen
 
 	:2
+	:view-stage
+	:save-display staged-changes-shortcut.screen
+	:view-close
+
+	:5
+	:view-stage
+	:save-display unstaged-changes-shortcut.screen
+	:view-close
+
+	:view-main
+
+	:1
+	:view-stage
+	:save-display unstaged-changes-shortcut-from-main.screen
+	:view-close
+
+	:2
+	:view-stage
+	:save-display staged-changes-shortcut-from-main.screen
+	:view-close
+
+	:view-close
+
+	:4
+	:view-stage
+	:save-display staged-changes-for-a-shortcut.screen
+	:view-close
+
+	:2
 	:enter
 	:maximize
 	:save-display staged-changes.screen
@@ -39,6 +68,7 @@ steps '
 	:4
 	:status-update
 	:save-display unstaged-changes-staged-all.screen
+
 '
 
 in_work_dir create_dirty_workdir
@@ -66,6 +96,33 @@ Untracked files:
 
 
 [status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'staged-changes.screen' < 'staged-changes-shortcut.screen'
+assert_equals 'unstaged-changes.screen' < 'unstaged-changes-shortcut.screen'
+assert_equals 'staged-changes.screen' < 'staged-changes-shortcut-from-main.screen'
+assert_equals 'unstaged-changes.screen' < 'unstaged-changes-shortcut-from-main.screen'
+
+assert_equals 'staged-changes-for-a-shortcut.screen' <<EOF
+ a | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+ 
+diff --git a/a b/a
+index 12d1d9e..0a4a332 100644
+--- a/a
++++ b/a
+@@ -1,4 +1,4 @@
+-a
++a CHANGED
+ 1
+ 2
+ 3
+@@ -6,6 +6,4 @@ a
+ 5
+ 6
+ 7
+-8
+[stage] Press '<Enter>' to jump to file diff - line 1 of 23                  78%
 EOF
 
 assert_equals 'staged-changes.screen' <<EOF

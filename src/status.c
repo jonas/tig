@@ -94,13 +94,14 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	const char **status_argv = NULL;
 	bool ok = argv_format(view->env, &status_argv, argv, 0) &&
 		  io_run(&io, IO_RD, repo.exec_dir, NULL, status_argv);
+	size_t header_offset;
 
 	argv_free(status_argv);
 	free(status_argv);
 	if (!ok)
 		return false;
 
-	add_line_nodata(view, type);
+	header_offset = add_line_nodata(view, type) - view->line;
 
 	while (io_get(&io, &buf, 0, true)) {
 		struct line *line;
@@ -171,6 +172,7 @@ error_out:
 			watch_apply(&view->watch, WATCH_INDEX_UNTRACKED_NO);
 		}
 	} else {
+		view->line[header_offset].stat_header = 1;
 		if (type == LINE_STAT_STAGED) {
 			watch_apply(&view->watch, WATCH_INDEX_STAGED_YES);
 			no_files_staged = false;
@@ -498,7 +500,7 @@ status_enter(struct view *view, struct line *line)
 		return REQ_NONE;
 	}
 
-	open_stage_view(view, status, line->type, flags);
+	open_stage_view(view, status, flags);
 	return REQ_NONE;
 }
 

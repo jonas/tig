@@ -38,16 +38,8 @@ typedef enum
 } update_t;
 
 void
-open_stage_view(struct view *prev, struct status *status, enum line_type type, enum open_flags flags)
+open_stage_view(struct view *prev, struct status *status, enum open_flags flags)
 {
-	if (type) {
-		stage_line_type = type;
-		if (status)
-			stage_status = *status;
-		else
-			memset(&stage_status, 0, sizeof(stage_status));
-	}
-
 	open_view(prev, &stage_view, flags);
 }
 
@@ -700,9 +692,37 @@ stage_select(struct view *view, struct line *line)
 	diff_common_select(view, line, changes_msg);
 }
 
+static void select_stage_status(struct view *prev)
+{
+	struct line *line = &prev->line[prev->pos.lineno];
+	if (!line)
+		return;
+	stage_line_type = 0;
+	switch (line->type) {
+		case LINE_STAT_STAGED:
+		case LINE_STAT_UNSTAGED:
+			if (!line->stat_header && !line->data)
+				return;
+			break;
+		case LINE_STAT_UNTRACKED:
+			if (line->stat_header)
+				return;
+			break;
+		default:
+			return;
+	}
+	stage_line_type = line->type;
+	if (line->data && !line->stat_header) {
+		struct status *status = line->data;
+		stage_status = *status;
+	} else
+		memset(&stage_status, 0, sizeof(stage_status));
+}
+
 static enum status_code
 stage_open(struct view *view, enum open_flags flags)
 {
+	enum line_type line_type = (select_stage_status(view->prev), stage_line_type);
 	const char *no_head_diff_argv[] = {
 		GIT_DIFF_STAGED_INITIAL(encoding_arg, diff_context_arg(), ignore_space_arg(),
 			stage_status.new.name)
@@ -727,13 +747,13 @@ stage_open(struct view *view, enum open_flags flags)
 	struct stage_state *state = view->private;
 	enum status_code code;
 
-	if (!stage_line_type)
+	if (!line_type)
 		return error("No stage content, press %s to open the status view and choose file",
 			     get_view_key(view, REQ_VIEW_STATUS));
 
 	view->encoding = NULL;
 
-	switch (stage_line_type) {
+	switch (line_type) {
 	case LINE_STAT_STAGED:
 		watch_register(&view->watch, WATCH_INDEX_STAGED);
 		if (is_initial_commit()) {
@@ -758,18 +778,18 @@ stage_open(struct view *view, enum open_flags flags)
 		break;
 
 	default:
-		die("line type %d not handled in switch", stage_line_type);
+		die("line type %d not handled in switch", line_type);
 	}
 
-	if (!status_stage_info(view->ref, stage_line_type, &stage_status))
+	if (!status_stage_info(view->ref, line_type, &stage_status))
 		return error("Failed to open staged view");
 
-	if (stage_line_type != LINE_STAT_UNTRACKED)
+	if (line_type != LINE_STAT_UNTRACKED)
 		diff_save_line(view, &state->diff, flags);
 
 	view->vid[0] = 0;
 	code = begin_update(view, repo.exec_dir, argv, flags);
-	if (code == SUCCESS && stage_line_type != LINE_STAT_UNTRACKED) {
+	if (code == SUCCESS && line_type != LINE_STAT_UNTRACKED) {
 		struct stage_state *state = view->private;
 
 		return diff_init_highlight(view, &state->diff);

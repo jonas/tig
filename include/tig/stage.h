@@ -20,7 +20,7 @@ struct status;
 
 extern struct view stage_view;
 
-void open_stage_view(struct view *prev, struct status *status, enum line_type type, enum open_flags flags);
+void open_stage_view(struct view *prev, struct status *status, enum open_flags flags);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

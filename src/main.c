@@ -92,6 +92,8 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 	line = add_line_alloc(view, &commit, type, titlelen, custom);
 	if (!line)
 		return NULL;
+	if (custom)
+		line->stat_header = 1;
 
 	*commit = *template;
 	strcpy(commit->title, title);
@@ -561,7 +563,7 @@ main_request(struct view *view, enum request request, struct line *line)
 
 		if (line->type == LINE_STAT_UNSTAGED
 		    || line->type == LINE_STAT_STAGED)
-			open_stage_view(view, NULL, line->type, flags);
+			open_stage_view(view, NULL, flags);
 		else if (line->type == LINE_STAT_UNTRACKED)
 			open_status_view(view, true, flags);
 		else

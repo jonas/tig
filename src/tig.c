@@ -180,7 +180,7 @@ view_driver(struct view *view, enum request request)
 		break;
 	case REQ_VIEW_DIFF:
 		if (view && string_rev_is_null(view->env->commit))
-			open_stage_view(view, NULL, 0, OPEN_DEFAULT);
+			open_stage_view(view, NULL, OPEN_DEFAULT);
 		else
 			open_diff_view(view, OPEN_DEFAULT);
 		break;
@@ -209,7 +209,7 @@ view_driver(struct view *view, enum request request)
 		open_status_view(view, false, OPEN_DEFAULT);
 		break;
 	case REQ_VIEW_STAGE:
-		open_stage_view(view, NULL, 0, OPEN_DEFAULT);
+		open_stage_view(view, NULL, OPEN_DEFAULT);
 		break;
 	case REQ_VIEW_PAGER:
 		open_pager_view(view, OPEN_DEFAULT);
