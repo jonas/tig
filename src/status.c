@@ -465,10 +465,9 @@ status_get_column_data(struct view *view, const struct line *line, struct view_c
 }
 
 static enum request
-status_enter(struct view *view, struct line *line)
+status_enter(struct view *view, struct line *line, enum open_flags flags)
 {
 	struct status *status = line->data;
-	enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 
 	if (line->type == LINE_STAT_NONE ||
 	    (!status && line[1].type == LINE_STAT_NONE)) {
@@ -760,7 +759,10 @@ status_request(struct view *view, enum request request, struct line *line)
 		/* After returning the status view has been split to
 		 * show the stage view. No further reloading is
 		 * necessary. */
-		return status_enter(view, line);
+		return status_enter(view, line, OPEN_SPLIT);
+
+	case REQ_VIEW_STAGE:
+		return status_enter(view, line, OPEN_DEFAULT);
 
 	case REQ_REFRESH:
 		/* Load the current branch information and then the view. */

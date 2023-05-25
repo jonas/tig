@@ -568,6 +568,14 @@ main_request(struct view *view, enum request request, struct line *line)
 			open_diff_view(view, flags);
 		break;
 
+	case REQ_VIEW_STAGE:
+		if (line->type == LINE_STAT_UNSTAGED
+		    || line->type == LINE_STAT_STAGED)
+			open_stage_view(view, NULL, line->type, OPEN_DEFAULT);
+		else
+			return request;
+		break;
+
 	case REQ_REFRESH:
 		load_refs(true);
 		refresh_view(view);
