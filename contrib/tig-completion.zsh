@@ -21,8 +21,8 @@ _tig () {
 
   compdef _git tig
 
-  e=$(dirname ${funcsourcetrace[1]%:*})/tig-completion.bash
-  if [ -f $e ]; then
+  e="${${funcsourcetrace[1]%:*}:h}/tig-completion.bash"
+  if [ -f "$e" ]; then
     # Temporarily override __git_complete so the bash script doesn't complain
     local old="$functions[__git_complete]"
     functions[__git_complete]=:
