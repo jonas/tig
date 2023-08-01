@@ -687,6 +687,8 @@ void
 update_view_title(struct view *view)
 {
 	WINDOW *window = view->title;
+	if (view->line == NULL)
+		return;
 	struct line *line = &view->line[view->pos.lineno];
 	unsigned int view_lines, lines;
 	int update_increment = view_has_flags(view, VIEW_LOG_LIKE | VIEW_GREP_LIKE)
