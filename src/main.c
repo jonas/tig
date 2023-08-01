@@ -122,7 +122,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 	struct graph *graph = state->graph;
 	struct commit commit = {{0}};
 	struct timeval now;
-	struct timezone tz;
+	struct timezone tz = {0};
 
 	if (!parent)
 		return true;
