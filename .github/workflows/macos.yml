@@ -14,12 +14,13 @@ jobs:
     steps:
       - name: Patch
         run: |
+          brew tap homebrew/core
           cd "$(brew --repo homebrew/core)" && patch -p1 <<\EOF
-          diff --git a/Formula/tig.rb b/Formula/tig.rb
-          index 2e8c125660..f76d6bca1c 100644
-          --- a/Formula/tig.rb
-          +++ b/Formula/tig.rb
-          @@ -26,9 +26,11 @@ class Tig < Formula
+          diff --git a/Formula/t/tig.rb b/Formula/t/tig.rb
+          index c726e53c519..920b0fbc1c2 100644
+          --- a/Formula/t/tig.rb
+          +++ b/Formula/t/tig.rb
+          @@ -31,9 +31,11 @@ class Tig < Formula
              depends_on "readline"
            
              def install
@@ -34,7 +35,7 @@ jobs:
           EOF
       - name: Install latest Tig
         shell: 'script -q typescript sh {0}' # Workaround to get a TTY, see https://github.com/gfx/example-github-actions-with-tty
-        run: HOMEBREW_CC=${{ matrix.compiler }} HOMEBREW_NO_AUTO_UPDATE=1 brew install --HEAD tig
+        run: HOMEBREW_NO_INSTALL_FROM_API=1 HOMEBREW_CC=${{ matrix.compiler }} HOMEBREW_NO_AUTO_UPDATE=1 brew install --HEAD tig
 
   ci:
     runs-on: macos-latest
