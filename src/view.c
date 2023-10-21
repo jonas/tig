@@ -687,7 +687,6 @@ void
 update_view_title(struct view *view)
 {
 	WINDOW *window = view->title;
-	struct line *line = &view->line[view->pos.lineno];
 	unsigned int view_lines, lines;
 	int update_increment = view_has_flags(view, VIEW_LOG_LIKE | VIEW_GREP_LIKE)
 			       ? 100
@@ -707,16 +706,18 @@ update_view_title(struct view *view)
 		wprintw(window, " %s", view->ref);
 	}
 
-	if (!view_has_flags(view, VIEW_CUSTOM_STATUS) && view_has_line(view, line) &&
-	    line->lineno) {
-		wprintw(window, " - %s %u of %zu",
-					   view->ops->type,
-					   line->lineno,
-					   MAX(line->lineno,
-					       view->pipe
-					       ? update_increment *
-						 (size_t) ((view->lines - view->custom_lines) / update_increment)
-					       : view->lines - view->custom_lines));
+	if (!view_has_flags(view, VIEW_CUSTOM_STATUS) && view->line != NULL) {
+		struct line *line = &view->line[view->pos.lineno];
+		if (view_has_line(view, line) && line->lineno) {
+			wprintw(window, " - %s %u of %zu",
+						   view->ops->type,
+						   line->lineno,
+						   MAX(line->lineno,
+						       view->pipe
+						       ? update_increment *
+							 (size_t) ((view->lines - view->custom_lines) / update_increment)
+						       : view->lines - view->custom_lines));
+		}
 	}
 
 	if (view->pipe) {
