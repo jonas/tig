@@ -1,0 +1,52 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+test_require delta
+
+export PATH="$(dirname -- "$delta_path"):$PATH"
+
+tigrc <<EOF
+set diff-highlight = "delta"
+EOF
+
+steps '
+	:save-display diff-highlight-with-delta.screen
+'
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+test_tig show master^
+
+assert_equals 'diff-highlight-with-delta.screen' <<EOF
+commit a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff
+Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
+AuthorDate: Sat Mar 1 15:59:02 2014 -0500
+Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
+CommitDate: Sat Mar 1 15:59:02 2014 -0500
+ 
+    Add type parameter for js.Dynamic
+---
+ common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+ 
+ 
+common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
+────────────────────────────────────────────────────────────────────────────────
+ 
+───────────────────────┐
+15: object Benchmark { │
+───────────────────────┘
+  val benchmarks = js.Array[Benchmark]()
+  val benchmarkApps = js.Array[BenchmarkApp]()
+ 
+  val global = js.Dynamic.global.asInstanceOf[js.Dictionary]
+  val global = js.Dynamic.global.asInstanceOf[js.Dictionary[js.Any]]
+  global("runScalaJSBenchmarks") = runBenchmarks _
+  global("initScalaJSBenchmarkApps") = initBenchmarkApps _
+ 
+ 
+ 
+[diff] a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff - line 1 of 26              100%
+EOF

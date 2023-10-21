@@ -17,6 +17,10 @@
 #include "tig/options.h"
 #include "compat/hashtab.h"
 
+#if defined(NCURSES_VERSION_PATCH) && NCURSES_VERSION_PATCH >= 20180127
+#include "tig/ansi.h"
+#endif
+
 static const enum line_type palette_colors[] = {
 	LINE_PALETTE_0,
 	LINE_PALETTE_1,
@@ -92,6 +96,56 @@ draw_chars(struct view *view, enum line_type type, const char *string, int lengt
 }
 
 static bool
+draw_chars_with_ansi(struct view *view, enum line_type type, const char *string, int length,
+	   int max_width, bool use_tilde)
+{
+	int len = 0;
+	int col = 0;
+	int trimmed = false;
+	size_t skip = view->pos.col > view->col ? view->pos.col - view->col : 0;
+
+	if (max_width <= 0)
+		return VIEW_MAX_LEN(view) <= 0;
+
+	if (opt_iconv_out != ICONV_NONE) {
+		string = encoding_iconv(opt_iconv_out, string, len);
+		if (!string)
+			return VIEW_MAX_LEN(view) <= 0;
+	}
+
+	set_view_attr(view, type);
+
+	int ansi_num = 0;
+	int len_with_ansi = strlen(string);
+	int max_num = (len_with_ansi / 4) + 1;
+	int max_len = (len_with_ansi - 4) + 1;
+	char **ansi_ptrs = (char **)malloc(sizeof(char *) * max_num);
+	char *ansi_ptrs_for_free = (char *)malloc(sizeof(char) * max_num * max_len);
+	for (int i = 0; i < max_num; i++)
+		ansi_ptrs[i] = ansi_ptrs_for_free + i * max_len;
+	split_ansi(string, &ansi_num, ansi_ptrs);
+
+	if (ansi_num > 0)
+		draw_ansi(view, &ansi_num, ansi_ptrs, max_width, skip);
+	else {
+		len = utf8_length(&string, length, skip, &col, max_width, &trimmed, use_tilde, opt_tab_size);
+		waddnstr(view->win, string, len);
+	}
+
+	free(ansi_ptrs_for_free);
+	free(ansi_ptrs);
+
+	if (trimmed && use_tilde) {
+		set_view_attr(view, LINE_DELIMITER);
+		waddstr(view->win, opt_truncation_delimiter ? opt_truncation_delimiter : "~");
+		col++;
+	}
+
+	view->col += col;
+	return VIEW_MAX_LEN(view) <= 0;
+}
+
+static bool
 draw_space(struct view *view, enum line_type type, int max, int spaces)
 {
 	static char space[] = "                    ";
@@ -121,8 +175,19 @@ draw_text_expanded(struct view *view, enum line_type type, const char *string, i
 		size_t pos = string_expand(text, sizeof(text), string, length, opt_tab_size);
 		size_t col = view->col;
 
+#if defined(NCURSES_VERSION_PATCH) && NCURSES_VERSION_PATCH >= 20180127
+		if (strstr(string, "\033[") != NULL) {
+			if (draw_chars_with_ansi(view, type, text, -1, max_width, use_tilde))
+				return true;
+		} else {
+			if (draw_chars(view, type, text, -1, max_width, use_tilde))
+				return true;
+		}
+#else
 		if (draw_chars(view, type, text, -1, max_width, use_tilde))
 			return true;
+#endif
+
 		string += pos;
 		length -= pos;
 		max_width -= view->col - col;

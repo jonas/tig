@@ -360,6 +360,7 @@ TIG_OBJS = \
 	src/grep.o \
 	src/ui.o \
 	src/apps.o \
+	src/ansi.o \
 	$(GRAPH_OBJS) \
 	$(COMPAT_OBJS)
 
