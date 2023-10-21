@@ -71,7 +71,7 @@
 /** The MAJOR version number (increased when backwards API compatibility is broken). */
 #define UTF8PROC_VERSION_MAJOR 2
 /** The MINOR version number (increased when new functionality is added in a backwards-compatible manner). */
-#define UTF8PROC_VERSION_MINOR 8
+#define UTF8PROC_VERSION_MINOR 9
 /** The PATCH version (increased for fixes that do not change the API). */
 #define UTF8PROC_VERSION_PATCH 0
 /** @} */
@@ -273,7 +273,8 @@ typedef struct utf8proc_property_struct {
    * Boundclass.
    * @see utf8proc_boundclass_t.
    */
-  unsigned boundclass:8;
+  unsigned boundclass:6;
+  unsigned indic_conjunct_break:2;
 } utf8proc_property_t;
 
 /** Unicode categories. */
@@ -388,6 +389,14 @@ typedef enum {
   UTF8PROC_BOUNDCLASS_E_ZWG = 20, /* UTF8PROC_BOUNDCLASS_EXTENDED_PICTOGRAPHIC + ZWJ */
 } utf8proc_boundclass_t;
 
+/** Indic_Conjunct_Break property. (TR44) */
+typedef enum {
+  UTF8PROC_INDIC_CONJUNCT_BREAK_NONE = 0,
+  UTF8PROC_INDIC_CONJUNCT_BREAK_LINKER = 1,
+  UTF8PROC_INDIC_CONJUNCT_BREAK_CONSONANT = 2,
+  UTF8PROC_INDIC_CONJUNCT_BREAK_EXTEND = 3,
+} utf8proc_indic_conjunct_break_t;
+
 /**
  * Function pointer type passed to @ref utf8proc_map_custom and
  * @ref utf8proc_decompose_custom, which is used to specify a user-defined
@@ -481,8 +490,9 @@ UTF8PROC_DLLEXPORT const utf8proc_property_t *utf8proc_get_property(utf8proc_int
  * - @ref UTF8PROC_STRIPNA   - remove unassigned codepoints
  * @param last_boundclass
  * Pointer to an integer variable containing
- * the previous codepoint's boundary class if the @ref UTF8PROC_CHARBOUND
- * option is used.  Otherwise, this parameter is ignored.
+ * the previous codepoint's (boundclass + indic_conjunct_break << 1) if the @ref UTF8PROC_CHARBOUND
+ * option is used.  If the string is being processed in order, this can be initialized to 0 for
+ * the beginning of the string, and is thereafter updated automatically.  Otherwise, this parameter is ignored.
  *
  * @return
  * In case of success, the number of codepoints written is returned; in case
