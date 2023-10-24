@@ -25,7 +25,7 @@ string_isnumber(const char *str)
 	int pos;
 
 	for (pos = 0; str[pos]; pos++) {
-		if (!isdigit(str[pos]))
+		if (!isdigit((unsigned char)str[pos]))
 			return false;
 	}
 
@@ -38,7 +38,7 @@ iscommit(const char *str)
 	int pos;
 
 	for (pos = 0; str[pos]; pos++) {
-		if (!isxdigit(str[pos]))
+		if (!isxdigit((unsigned char)str[pos]))
 			return false;
 	}
 
@@ -73,7 +73,7 @@ string_copy_rev(char *dst, const char *src)
 		return;
 
 	for (srclen = 0; srclen < SIZEOF_REV; srclen++)
-		if (!src[srclen] || isspace(src[srclen]))
+		if (!src[srclen] || isspace((unsigned char)src[srclen]))
 			break;
 
 	string_ncopy_do(dst, SIZEOF_REV, src, srclen);
@@ -83,7 +83,7 @@ void
 string_copy_rev_from_commit_line(char *dst, const char *src)
 {
 	src += STRING_SIZE("commit ");
-	while (*src && !isalnum(*src))
+	while (*src && !isalnum((unsigned char)*src))
 		src++;
 	string_copy_rev(dst, src);
 }
@@ -103,7 +103,7 @@ string_expand(char *dst, size_t dstlen, const char *src, int srclen, int tabsize
 				expanded = dstlen - size - 1;
 			memcpy(dst + size, "        ", expanded);
 			size += expanded;
-		} else if (isspace(c) || iscntrl(c)) {
+		} else if (isspace((unsigned char)c) || iscntrl((unsigned char)c)) {
 			dst[size++] = ' ';
 		} else {
 			dst[size++] = src[pos];
@@ -119,7 +119,7 @@ string_trim_end(char *name)
 {
 	int namelen = strlen(name) - 1;
 
-	while (namelen > 0 && isspace(name[namelen]))
+	while (namelen > 0 && isspace((unsigned char)name[namelen]))
 		name[namelen--] = 0;
 
 	return name;
@@ -128,7 +128,7 @@ string_trim_end(char *name)
 char *
 string_trim(char *name)
 {
-	while (isspace(*name))
+	while (isspace((unsigned char)*name))
 		name++;
 
 	return string_trim_end(name);
@@ -166,7 +166,7 @@ strcmp_numeric(const char *s1, const char *s2)
 	for (; *s1 && *s2 && *s1 == *s2; s1++, s2++) {
 		int c = *s1;
 
-		if (isdigit(c)) {
+		if (isdigit((unsigned char)c)) {
 			number = 10 * number + (c - '0');
 		} else {
 			number = 0;
