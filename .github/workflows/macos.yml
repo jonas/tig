@@ -42,7 +42,7 @@ jobs:
     if: github.ref != 'refs/heads/master'
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test Tig
         shell: 'script -q typescript sh {0}' # Workaround to get a TTY, see https://github.com/gfx/example-github-actions-with-tty
         run: |
