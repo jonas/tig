@@ -129,7 +129,7 @@ parse_arg(char **cmd, bool remove_quotes)
 				break;
 		}
 
-		if (!quote && isspace(c))
+		if (!quote && isspace((unsigned char)c))
 			break;
 
 		*next++ = *pos;
@@ -315,7 +315,7 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 		if (end && msglen > 0 && string_format(msgbuf, "%.*s", msglen, msgstart)) {
 			const char *msg = msgbuf;
 
-			while (isspace(*msg))
+			while (isspace((unsigned char)*msg))
 				msg++;
 			if (*msg)
 				prompt = msg;

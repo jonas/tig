@@ -23,7 +23,7 @@ parse_size(const char *text)
 	while (*text == ' ')
 		text++;
 
-	while (isdigit(*text))
+	while (isdigit((unsigned char)*text))
 		size = (size * 10) + (*text++ - '0');
 
 	return size;
@@ -98,7 +98,7 @@ parse_number(const char **posref, size_t *number)
 
 	*posref = NULL;
 	pos = strchr(pos + 1, ' ');
-	if (!pos || !isdigit(pos[1]))
+	if (!pos || !isdigit((unsigned char)pos[1]))
 		return false;
 	*number = atoi(pos + 1);
 
@@ -197,7 +197,7 @@ parse_ulong(const char **pos_ptr, unsigned long *value, char skip, bool optional
 	if (end == start)
 		return false;
 
-	while (isspace(*end))
+	while (isspace((unsigned char)*end))
 		end++;
 	*pos_ptr = end;
 	return true;

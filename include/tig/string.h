@@ -15,11 +15,20 @@
 #define TIG_STRING_H
 
 #include "tig/tig.h"
-#include "tig/string.h"
 
 /*
  * Strings.
  */
+
+#if defined(__APPLE__)
+/* See COMPATIBILITY in isspace(3). */
+#define isalnum(c) iswalnum(btowc(c))
+#define iscntrl(c) iswcntrl(btowc(c))
+#define isdigit(c) iswdigit(btowc(c))
+#define ispunct(c) iswpunct(btowc(c))
+#define isspace(c) iswspace(btowc(c))
+#define isxdigit(c) iswxdigit(btowc(c))
+#endif
 
 #define prefixcmp(str1, str2) \
 	strncmp(str1, str2, STRING_SIZE(str2))

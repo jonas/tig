@@ -319,7 +319,7 @@ parse_step(double *opt, const char *arg)
 {
 	int value = atoi(arg);
 
-	if (!value && !isdigit(*arg))
+	if (!value && !isdigit((unsigned char)*arg))
 		return error("Invalid double or percentage");
 
 	*opt = value;

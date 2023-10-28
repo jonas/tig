@@ -444,7 +444,7 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 		state->in_header = true;
 		line += STRING_SIZE("commit ");
 		is_boundary = *line == '-';
-		while (*line && !isalnum(*line))
+		while (*line && !isalnum((unsigned char)*line))
 			line++;
 
 		main_flush_commit(view, commit);
@@ -524,7 +524,7 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 		line += 4;
 		/* Well, if the title starts with a whitespace character,
 		 * try to be forgiving.  Otherwise we end up with no title. */
-		while (isspace(*line))
+		while (isspace((unsigned char)*line))
 			line++;
 		if (*line == '\0')
 			break;

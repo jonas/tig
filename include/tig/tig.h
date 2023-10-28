@@ -67,6 +67,10 @@
 #include <libgen.h>
 #include <termios.h>
 
+#if defined(__APPLE__)
+#include <wchar.h>
+#endif
+
 #if defined HAVE_PCRE2
 #include <pcre2posix.h>
 #elif defined HAVE_PCRE
