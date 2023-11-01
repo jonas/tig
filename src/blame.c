@@ -90,6 +90,9 @@ blame_open(struct view *view, enum open_flags flags)
 			opt_cmdline_args = NULL;
 		}
 
+		if (opt_commit_order == COMMIT_ORDER_REVERSE)
+			argv_append(&opt_blame_options, "--reverse");
+
 		/*
 		 * flags (like "--max-age=123") and bottom limits (like "^foo")
 		 * will be passed as-is, and retained even if we re-blame from
