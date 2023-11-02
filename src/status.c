@@ -472,6 +472,8 @@ status_enter(struct view *view, struct line *line)
 
 	if (line->type == LINE_STAT_NONE ||
 	    (!status && line[1].type == LINE_STAT_NONE)) {
+		if (displayed_views() == 2)
+			maximize_view(view, true);
 		report("No file to diff");
 		return REQ_NONE;
 	}
@@ -494,6 +496,8 @@ status_enter(struct view *view, struct line *line)
 		break;
 
 	default:
+		if (displayed_views() == 2)
+			maximize_view(view, true);
 		report("Nothing to enter");
 		return REQ_NONE;
 	}
