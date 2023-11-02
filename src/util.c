@@ -319,7 +319,7 @@ get_author_initials(const char *author)
 	size_t pos = 0;
 	const char *end = strchr(author, '\0');
 
-#define is_initial_sep(c) (isspace(c) || ispunct(c) || (c) == '@' || (c) == '-')
+#define is_initial_sep(c) (isspace((unsigned char)(c)) || ispunct((unsigned char)(c)) || (c) == '@' || (c) == '-')
 
 	memset(initials, 0, sizeof(initials));
 	while (author < end) {
