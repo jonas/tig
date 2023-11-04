@@ -85,7 +85,7 @@ Bug fixes:
  - Fix null dereferences on unset format strings. (#1136, #1159)
  - Fix invalid read in log_read. (#1128)
  - Restore support for tig log --graph. (#1128)
- - Further fix to fullscreen navigation.
+ - Further fix to full screen navigation.
  - Fix blame when opened from an initial diff view. (#1135)
  - Fix stash view when using tig --all or tig revs. (#1146, #1147)
  - Avoiding null pointer dereference. (#1096)
@@ -122,7 +122,7 @@ Bug fixes:
  - Reset view->parent when main view is promoted.
  - Fix segfault when pressing Enter in a child main view.
  - Restore lazy navigation.
- - Format time_t values portably and fix other values too. (#1084, #1085)
+ - Format time_t values portability and fix other values too. (#1084, #1085)
  - Fix loop when wrapping line with ISO-8859-1 character. (#1087, #1088)
 
 tig-2.5.2
@@ -140,7 +140,7 @@ Improvements:
  - Allow maxwidth to be expressed in % of the view width. (#1021)
  - Pass stash args through. (#1022, #1030)
  - Make build work on IBM i. (#1051, #1052)
- - Restore fullscreen navigation. (#1053)
+ - Restore full screen navigation. (#1053)
  - Update utf8proc to v2.6.1.
  - Add some range so control chars ^^ and ^_ are also supported. (#1041, #1058)
  - Disable ncurses extended key values so that esc-codes can be used. (#1046, #1049)
