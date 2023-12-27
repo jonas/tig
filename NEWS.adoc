@@ -122,7 +122,7 @@ Bug fixes:
  - Reset view->parent when main view is promoted.
  - Fix segfault when pressing Enter in a child main view.
  - Restore lazy navigation.
- - Format time_t values portability and fix other values too. (#1084, #1085)
+ - Format time_t values portably and fix other values too. (#1084, #1085)
  - Fix loop when wrapping line with ISO-8859-1 character. (#1087, #1088)
 
 tig-2.5.2
@@ -361,7 +361,7 @@ Improvements:
  - Expand tilde ('~') in `:script` paths. (GH #674)
  - Show single-line output of external command in status bar. (GH #200, #557,
    #678)
- - Disable the graph when `--no-merges` is passed. (GH #687) 
+ - Disable the graph when `--no-merges` is passed. (GH #687)
  - Print backtraces on segfault in debug mode.
  - Ignore script lines starting with `#` (comment). (GH #705)
  - Complete `repo:*` variables when readline is enabled. (GH #702)
