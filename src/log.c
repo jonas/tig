@@ -19,6 +19,9 @@
 #include "tig/pager.h"
 
 struct log_state {
+#if defined HAVE_EDITORCONFIG
+	struct diff_common_state common;
+#endif
 	/* Used for tracking when we need to recalculate the previous
 	 * commit, for example when the user scrolls up or uses the page
 	 * up/down in the log view. */
@@ -147,7 +150,7 @@ log_read(struct view *view, struct buffer *buf, bool force_stop)
 		state->reading_diff_stat = false;
 	}
 
-	if (!pager_common_read(view, data, type, &line))
+	if (!pager_common_read(view, data, type, true, &line))
 		return false;
 	if (line && state->graph_indent)
 		line->graph_indent = 1;

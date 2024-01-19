@@ -16,7 +16,16 @@
 
 #include "tig/view.h"
 
+#if defined HAVE_EDITORCONFIG
+struct diff_common_state {
+		uint8_t tab_size;
+};
+#endif
+
 struct diff_state {
+#if defined HAVE_EDITORCONFIG
+	struct diff_common_state common;
+#endif
 	bool after_commit_title;
 	bool after_diff;
 	bool reading_diff_chunk;

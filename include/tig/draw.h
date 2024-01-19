@@ -25,7 +25,7 @@ enum align {
 	ALIGN_RIGHT
 };
 
-bool draw_text(struct view *view, enum line_type type, const char *string);
+bool draw_text(struct view *view, enum line_type type, const char *string, int tab_size);
 bool PRINTF_LIKE(3, 4) draw_formatted(struct view *view, enum line_type type, const char *format, ...);
 bool draw_graphic(struct view *view, enum line_type type, const chtype graphic[], size_t size, bool separator);
 bool draw_field(struct view *view, enum line_type type, const char *text, int width, enum align align, bool trim);

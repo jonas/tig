@@ -269,6 +269,7 @@ The following variables can be set:
 'tab-size' (int)::
 
 	Number of spaces per tab. The default is 8 spaces.
+        This may be overridden by an EditorConfig file.
 
 'diff-context' (int)::
 

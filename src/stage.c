@@ -767,6 +767,11 @@ stage_open(struct view *view, enum open_flags flags)
 	if (stage_line_type != LINE_STAT_UNTRACKED)
 		diff_save_line(view, &state->diff, flags);
 
+#if defined HAVE_EDITORCONFIG
+	if (stage_line_type == LINE_STAT_UNTRACKED)
+		state->diff.common.tab_size = editorconfig_tab_size(stage_status.new.name);
+#endif
+
 	view->vid[0] = 0;
 	code = begin_update(view, repo.exec_dir, argv, flags);
 	if (code == SUCCESS && stage_line_type != LINE_STAT_UNTRACKED) {
@@ -787,7 +792,7 @@ stage_read(struct view *view, struct buffer *buf, bool force_stop)
 		return true;
 
 	if (stage_line_type == LINE_STAT_UNTRACKED)
-		return pager_common_read(view, buf ? buf->data : NULL, LINE_DEFAULT, NULL);
+		return pager_common_read(view, buf ? buf->data : NULL, LINE_DEFAULT, false, NULL);
 
 	if (!buf) {
 		if (!diff_done_highlight(&state->diff)) {

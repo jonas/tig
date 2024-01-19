@@ -46,5 +46,13 @@ jobs:
       - name: Test Tig
         shell: 'script -q typescript sh {0}' # Workaround to get a TTY, see https://github.com/gfx/example-github-actions-with-tty
         run: |
-          brew install asciidoc autoconf automake coreutils gnu-sed ncurses xmlto
+          brew install \
+            asciidoc \
+            autoconf \
+            automake \
+            coreutils \
+            editorconfig \
+            gnu-sed \
+            ncurses \
+            xmlto
           TIG_BUILD=autoconf tools/travis.sh

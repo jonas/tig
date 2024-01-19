@@ -46,7 +46,7 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 			       keymap->hidden ? '+' : '-', keymap->name);
 
 	} else if (line->type == LINE_HELP_GROUP || !keymap) {
-		draw_text(view, line->type, help->data.text);
+		draw_text(view, line->type, help->data.text, opt_tab_size);
 
 	} else if (help->request > REQ_RUN_REQUESTS) {
 		struct run_request *req = get_run_request(help->request);
@@ -73,7 +73,7 @@ help_draw(struct view *view, struct line *line, unsigned int lineno)
 		if (draw_field(view, LINE_HELP_ACTION, enum_name(req_info->name), state->name_width, ALIGN_LEFT, false))
 			return true;
 
-		draw_text(view, LINE_DEFAULT, req_info->help);
+		draw_text(view, LINE_DEFAULT, req_info->help, opt_tab_size);
 	}
 
 	return true;

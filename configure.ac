@@ -58,6 +58,16 @@ AS_IF([test "x$with_pcre" != xno], [
 	])
 ])
 
+dnl Check for EditorConfig library
+AC_ARG_WITH(editorconfig, [AS_HELP_STRING([--without-editorconfig], [do not use the EditorConfig library])])
+AS_IF([test "x$with_editorconfig" != xno], [
+	AC_CHECK_HEADERS([editorconfig/editorconfig.h])
+	AS_IF([test "x$ac_cv_header_editorconfig_editorconfig_h" = xyes], [
+		AC_DEFINE([HAVE_EDITORCONFIG], [1], [Define if you have EditorConfig])
+		LIBS="$LIBS -leditorconfig"
+	])
+])
+
 dnl OS-specific
 case $(uname -s 2>/dev/null || echo unknown) in "OS400")
 	AC_CHECK_LIB(util, main, [LIBS="$LIBS -lutil"], AC_MSG_ERROR([Please install the libutil-devel package]))

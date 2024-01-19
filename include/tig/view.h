@@ -39,6 +39,9 @@ struct box {
 struct line {
 	enum line_type type;
 	unsigned int lineno:24;
+#if defined HAVE_EDITORCONFIG
+	unsigned int tab_size:8;
+#endif
 
 	/* State flags */
 	unsigned int selected:1;
