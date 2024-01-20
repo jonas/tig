@@ -1,6 +1,33 @@
 Release notes
 =============
 
+master
+------
+
+Improvements:
+
+ - Update utf8proc to v2.9.0, supporting Unicode 15.1.
+ - Also use lightweight tags in the Refs line of the diff view. (#1235)
+ - Support %(text) in all views with a text column. (#1275)
+ - Use HTTPS for GitHub clone URLs. (#1310)
+ - Move default log view options to tigrc.
+ - Allow to go to stage view without Enter. (#1284)
+
+Bug fixes:
+
+ - Fix "dangling pointer" warning. (#1268)
+ - Don't use array size in function arguments. (#1269)
+ - Fix rpmbuild -ta. (#1276)
+ - Initialise struct timezone. (#1291)
+ - Fix NULL dereference at startup. (#1293)
+ - Enforce a blank before view scroll percentage.
+ - Fix refresh-mode periodic not updating branch labels. (#1270)
+ - Fix display non-ascii character. (#1299)
+ - Fix readline echo when stdin is redirected. (#1229)
+ - Fix tig blame --reverse. (#1300)
+ - Fix status view lockup.
+ - Fix chunk staging behaviour in plain stage view.
+
 tig-2.5.8
 ---------
 
