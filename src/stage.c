@@ -283,6 +283,10 @@ stage_update(struct view *view, struct line *line, update_t update_type)
 		return false;
 	}
 
+	watch_apply(&view->watch, stage_line_type == LINE_STAT_STAGED
+				  ? WATCH_INDEX_UNSTAGED_YES | WATCH_INDEX_UNTRACKED_YES
+				  : WATCH_INDEX_STAGED_YES);
+
 	return true;
 }
 
@@ -795,7 +799,8 @@ stage_read(struct view *view, struct buffer *buf, bool force_stop)
 			return false;
 		}
 
-		if (!view->lines && !force_stop && view->prev) {
+		/* After git apply, git diff-files can sometimes return an empty line. */
+		if (view->lines <= 1 && !force_stop && view->prev) {
 			watch_apply(&view->watch, WATCH_INDEX);
 			stage_line_type = 0;
 			maximize_view(view->prev, false);
