@@ -37,6 +37,8 @@ typedef struct view_column *view_settings;
 	_(commit_order,			enum commit_order,	VIEW_LOG_LIKE) \
 	_(diff_context,			int,			VIEW_DIFF_LIKE) \
 	_(diff_noprefix,		bool,			VIEW_NO_FLAGS) \
+	_(diff_show_signs,		bool,			VIEW_NO_FLAGS) \
+	_(diff_column_highlight,	enum diff_column_highlight,	VIEW_NO_FLAGS) \
 	_(diff_options,			const char **,		VIEW_DIFF_LIKE) \
 	_(diff_highlight,		const char *,		VIEW_DIFF_LIKE) \
 	_(word_diff,			bool,			VIEW_DIFF_LIKE) \
