@@ -274,6 +274,10 @@ The following variables can be set:
 
 	Number of context lines to show for diffs.
 
+'word-diff' (bool)::
+
+	Show a word diff. Only plain mode is supported. Off by default.
+
 'diff-highlight' (mixed)::
 
 	Whether to highlight diffs using Git's 'diff-highlight' program. Defaults
@@ -319,6 +323,10 @@ The following variables can be set:
 
 	Wrap long lines. By default, lines are not wrapped.
 	Not compatible with line numbers enabled.
+
+'wrap-search' (bool)::
+
+	Wrap around to top/bottom of view when searching. On by default.
 
 'focus-child' (bool)::
 

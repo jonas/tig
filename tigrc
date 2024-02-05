@@ -114,6 +114,7 @@ set status-show-untracked-files	= yes		# Show untracked files?
 set ignore-space		= no		# Enum: no, all, some, at-eol (diff)
 set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set diff-context		= 3		# Number of lines to show around diff changes (diff)
+#set word-diff			= yes		# Show a word diff? (diff)
 #set diff-options		= -C		# User-defined options for `tig show` (git-diff)
 #set diff-highlight		= true		# String (or bool): Path to diff-highlight script,
 						#                   defaults to `diff-highlight`.
