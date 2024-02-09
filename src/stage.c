@@ -283,9 +283,7 @@ stage_update(struct view *view, struct line *line, update_t update_type)
 		return false;
 	}
 
-	watch_apply(&view->watch, stage_line_type == LINE_STAT_STAGED
-				  ? WATCH_INDEX_UNSTAGED_YES | WATCH_INDEX_UNTRACKED_YES
-				  : WATCH_INDEX_STAGED_YES);
+	watch_apply(&view->watch, WATCH_INDEX);
 
 	return true;
 }
@@ -684,10 +682,11 @@ stage_request(struct view *view, enum request request, struct line *line)
 	 * stage view if it doesn't. */
 	if (view->parent && !stage_exists(view, &stage_status, stage_line_type)) {
 		stage_line_type = 0;
-		return view->parent == &status_view
+		return view->parent == &status_view && view_is_displayed(view->parent)
 				? view_request(view->parent, REQ_ENTER)
 				: REQ_VIEW_CLOSE;
-	}
+	} else if (stage_line_type == LINE_STAT_UNTRACKED)
+		return REQ_VIEW_CLOSE;
 
 	refresh_view(view);
 

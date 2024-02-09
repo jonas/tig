@@ -26,7 +26,7 @@ Bug fixes:
  - Fix readline echo when stdin is redirected. (#1229)
  - Fix tig blame --reverse. (#1300)
  - Fix status view lockup.
- - Fix chunk staging behaviour in plain stage view.
+ - Fix untracked changes and chunk staging behaviour in plain stage view.
 
 tig-2.5.8
 ---------
