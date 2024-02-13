@@ -355,12 +355,12 @@ blame_go_forward(struct view *view, struct blame *blame, bool parent)
 	const char *filename = parent ? commit->parent_filename : commit->filename;
 
 	if (!*id && parent) {
-		report("The selected commit has no parents");
+		report("Commit %.8s has no ancestors modifying the selected line", commit->id);
 		return;
 	}
 
 	if (!strcmp(history_state->id, id) && !strcmp(history_state->filename, filename)) {
-		report("The selected commit is already displayed");
+		report("Commit %.8s is already being displayed", commit->id);
 		return;
 	}
 
