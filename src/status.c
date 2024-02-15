@@ -759,7 +759,7 @@ status_request(struct view *view, enum request request, struct line *line)
 		/* After returning the status view has been split to
 		 * show the stage view. No further reloading is
 		 * necessary. */
-		return status_enter(view, line, OPEN_SPLIT);
+		return status_enter(view, line, view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT);
 
 	case REQ_VIEW_STAGE:
 		return status_enter(view, line, OPEN_DEFAULT);
