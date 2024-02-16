@@ -460,7 +460,7 @@ readline_init(void)
 	/* Allow conditional parsing of the ~/.inputrc file. */
 	rl_readline_name = "tig";
 
-	/* Word break caracters (we removed '(' to match variables) */
+	/* Word break characters (we removed '(' to match variables) */
 	rl_basic_word_break_characters = " \t\n\"\\'`@$><=;|&{";
 
 	/* Custom display function */
