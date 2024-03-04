@@ -100,6 +100,7 @@ set truncation-delimiter	= ~		# Character drawn for truncations, or "utf-8"
 #  - replace		: A replaced reference.
 #  - branch		: A branch.
 #  - stash		: The stash.
+#  - prefetch		: Refs prefetched by `git maintenance`.
 #  - other		: Any other reference.
 # If no format is defined for `local-tag` then the one for `tag` is used.
 # Similarly, `remote` is used if no `tracked-remote` format exists.

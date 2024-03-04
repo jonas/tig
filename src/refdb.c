@@ -224,6 +224,9 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		    !strncmp(opt->head, name, namelen))
 			type = REFERENCE_HEAD;
 
+	} else if (!prefixcmp(name, "refs/prefetch/")) {
+		type = REFERENCE_PREFETCH;
+
 	} else if (!strcmp(name, "HEAD")) {
 		/* Handle the case of HEAD not being a symbolic ref,
 		 * i.e. during a rebase. */
