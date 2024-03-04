@@ -12,8 +12,8 @@ Improvements:
  - Use HTTPS for GitHub clone URLs. (#1310)
  - Move default log view options to tigrc.
  - Allow to go to stage view without Enter. (#1284)
- - Add new "prefetch" reference type for refs created by `git maintenance`.
-   (#1318)
+ - Add new "prefetch" reference type for refs created by `git maintenance`
+   (hidden in default config). (#1318)
 
 Bug fixes:
 
