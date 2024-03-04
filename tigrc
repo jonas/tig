@@ -91,7 +91,7 @@ set tab-size			= 8		# Number of spaces to use when expanding tabs
 set line-graphics		= default	# Enum: ascii, default, utf-8, auto
 set truncation-delimiter	= ~		# Character drawn for truncations, or "utf-8"
 
-# Format reference names based on type.
+# Format reference names based on type:
 #  - head		: The current HEAD.
 #  - tag		: An annotated tag.
 #  - local-tag		: A lightweight tag.
@@ -100,12 +100,16 @@ set truncation-delimiter	= ~		# Character drawn for truncations, or "utf-8"
 #  - replace		: A replaced reference.
 #  - branch		: A branch.
 #  - stash		: The stash.
+#  - prefetch		: Refs prefetched by `git maintenance`.
 #  - other		: Any other reference.
-# If no format is defined for `local-tag` then the one for `tag` is used.
-# Similarly, `remote` is used if no `tracked-remote` format exists.
-# Prefix with `hide:` to not show that reference type, e.g. `hide:remote`.
+#
 # Expects a space-separated list of format strings.
-set reference-format		= [branch] <tag> {remote} ~replace~
+# If no format is specified for `local-tag`, the format for `tag` is used.
+# Similarly, if no format is specified for `tracked-remote`, the format for
+# `remote` is used, and if no format is specified for any other reference
+# type, the format for `branch` is used.
+# Prefix with `hide:` to not show that reference type, e.g. `hide:remote`.
+set reference-format		= [branch] <tag> {remote} ~replace~ hide:prefetch
 
 # Settings controlling how content is read from Git
 set commit-order		= auto		# Enum: auto, default, topo, date, reverse (main)
