@@ -26,6 +26,8 @@ test_setup_work_dir()
 {
 	echo "original line" > file
 	git add file
+	export GIT_AUTHOR_DATE="1486403695"
+	export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
 	git commit -m "Initial commit"
 	echo "changed line" > file
 	git stash
@@ -40,10 +42,10 @@ EOF
 
 assert_equals 'blame1.screen' <<EOF
 original line
-[blame] file - line 1 of 1 100%
+[blame] 973a46fa50e2704ee2d550a931ad8edb1c50731c changed file - line 1 of 1 100%
 EOF
 
 assert_equals 'blame2.screen' <<EOF
 original line
-[blame] file - line 1 of 1 100%
+[blame] 973a46fa50e2704ee2d550a931ad8edb1c50731c changed file - line 1 of 1 100%
 EOF

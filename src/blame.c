@@ -355,7 +355,7 @@ blame_go_forward(struct view *view, struct blame *blame, bool parent)
 	const char *filename = parent ? commit->parent_filename : commit->filename;
 
 	if (!*id && parent) {
-		report("The selected commit has no parents");
+		report("The selected commit has no parents with this file");
 		return;
 	}
 
@@ -474,10 +474,13 @@ blame_select(struct view *view, struct line *line)
 	if (!commit)
 		return;
 
-	if (string_rev_is_null(commit->id))
+	if (string_rev_is_null(commit->id)) {
 		string_ncopy(view->env->commit, "HEAD", 4);
-	else
+		string_format(view->ref, "%s", commit->filename);
+	} else {
 		string_copy_rev(view->env->commit, commit->id);
+		string_format(view->ref, "%s changed %s", commit->id, commit->filename);
+	}
 
 	if (strcmp(commit->filename, view->env->file))
 		string_format(view->env->file_old, "%s", commit->filename);
