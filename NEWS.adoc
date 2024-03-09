@@ -30,6 +30,7 @@ Bug fixes:
  - Fix tig blame --reverse. (#1300)
  - Fix status view lockup.
  - Fix untracked changes and chunk staging behaviour in plain stage view.
+ - Reset state variables when selecting a commit with no reference.
 
 tig-2.5.8
 ---------
