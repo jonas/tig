@@ -856,8 +856,10 @@ status_select(struct view *view, struct line *line)
 
 	string_format(view->ref, text, key, file);
 	status_stage_info(view->env->status, line->type, status);
-	if (status)
+	if (status) {
 		string_copy(view->env->file, status->new.name);
+		view->env->blob[0] = 0;
+	}
 }
 
 static struct view_ops status_ops = {

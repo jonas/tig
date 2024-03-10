@@ -37,6 +37,7 @@ log_copy_rev(struct view *view, struct line *line)
 	size_t offset = get_graph_indent(text);
 
 	string_copy_rev_from_commit_line(view->ref, text + offset);
+	view->env->blob[0] = 0;
 }
 
 static void

@@ -634,6 +634,7 @@ main_select(struct view *view, struct line *line)
 			view->env->tag[0] = view->env->remote[0] = view->env->branch[0] = view->env->refname[0] = 0;
 	}
 	string_copy_rev(view->env->commit, commit->id);
+	view->env->blob[0] = 0;
 }
 
 static struct view_ops main_ops = {

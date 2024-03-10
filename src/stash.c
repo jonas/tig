@@ -62,6 +62,7 @@ stash_select(struct view *view, struct line *line)
 	string_ncopy(view->env->stash, state->reflog[line->lineno - 1] + STRING_SIZE("refs/"),
 		     strlen(state->reflog[line->lineno - 1]) - STRING_SIZE("refs/"));
 	string_copy(view->ref, view->env->stash);
+	view->env->blob[0] = 0;
 }
 
 static enum request

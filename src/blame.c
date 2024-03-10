@@ -482,13 +482,11 @@ blame_select(struct view *view, struct line *line)
 		string_format(view->ref, "%s changed %s", commit->id, commit->filename);
 	}
 
-	if (strcmp(commit->filename, view->env->file))
-		string_format(view->env->file_old, "%s", commit->filename);
-	else
-		view->env->file_old[0] = '\0';
+	string_ncopy(view->env->file, commit->filename, strlen(commit->filename));
 
 	view->env->lineno = view->pos.lineno + 1;
 	string_ncopy(view->env->text, text, strlen(text));
+	view->env->blob[0] = 0;
 }
 
 static struct view_ops blame_ops = {
