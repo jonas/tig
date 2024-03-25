@@ -16,6 +16,7 @@ Improvements:
    (hidden in default config). (#1318)
  - Show the selected commit in the blame view title window.
  - Improve the blob view experience.
+ - Clear keybinding from all keymaps (unbind) with `bind generic <key> none`.
 
 Bug fixes:
 

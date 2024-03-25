@@ -613,15 +613,18 @@ Or in the Git configuration files:
 --------------------------------------------------------------------------
 [tig "bind"]
 	# 'unbind' the default quit key binding
-	main = Q none
+	generic = Q none
 	# Cherry-pick current commit onto current branch
-	generic = C !git cherry-pick %(commit)
+	main = C !git cherry-pick %(commit)
 --------------------------------------------------------------------------
 
 Keys are mapped by first searching the keybindings for the current view, then
 the keybindings for the *generic* keymap, and last the default keybindings.
 Thus, the view keybindings override the generic keybindings which override the
 built-in keybindings.
+
+Clear keybinding (unbind) from all keymaps at once with bind *generic* 'key'
+*none*.
 
 Keybindings at the line-entry prompt are typically governed by the readline
 library, and are configured separately in `~/.inputrc`.  See 'readline(1)'.
