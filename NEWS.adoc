@@ -33,6 +33,7 @@ Bug fixes:
  - Fix status view lockup.
  - Fix untracked changes and chunk staging behaviour in plain stage view.
  - Reset state variables when selecting a commit with no reference.
+ - Fix parsing of `git ls-tree` for submodules. (#1282)
 
 tig-2.5.8
 ---------
