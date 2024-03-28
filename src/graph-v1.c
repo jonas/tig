@@ -32,7 +32,7 @@ struct graph_symbol {
 
 struct graph_column {
 	struct graph_symbol symbol;
-	char id[SIZEOF_REV];		/* Parent SHA1 ID. */
+	char id[SIZEOF_REV];		/* Parent hash ID. */
 };
 
 struct graph_row {
