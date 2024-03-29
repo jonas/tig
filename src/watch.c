@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -146,8 +146,14 @@ static enum watch_trigger
 watch_refs_handler(struct watch_handler *handler, enum watch_event event,
 		   enum watch_trigger check)
 {
-	if (event == WATCH_EVENT_AFTER_COMMAND)
-		load_refs(true);
+	if (event == WATCH_EVENT_AFTER_COMMAND ||
+	    check_file_mtime(&handler->last_modified, "%s/refs/heads", repo.git_dir) ||
+	    check_file_mtime(&handler->last_modified, "%s/refs/tags", repo.git_dir) ||
+	    check_file_mtime(&handler->last_modified, "%s/refs/notes", repo.git_dir) ||
+	    check_file_mtime(&handler->last_modified, "%s/packed-refs", repo.git_dir)) {
+		handler->last_modified = time(NULL);
+		return WATCH_REFS;
+	}
 
 	return WATCH_NONE;
 }

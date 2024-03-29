@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -56,15 +56,6 @@ push_tree_stack_entry(struct view *view, const char *name, struct position *posi
  *
  * 100644 blob 95925677ca47beb0b8cce7c0e0011bcc3f61470f  213045	tig.c
  */
-
-#define SIZEOF_TREE_ATTR \
-	STRING_SIZE("100644 blob f931e1d229c3e185caad4449bf5b66ed72462657\t")
-
-#define SIZEOF_TREE_MODE \
-	STRING_SIZE("100644 ")
-
-#define TREE_ID_OFFSET \
-	STRING_SIZE("100644 blob ")
 
 #define tree_path_is_parent(path)	(!strcmp("..", (path)))
 
@@ -222,21 +213,50 @@ tree_read(struct view *view, struct buffer *buf, bool force_stop)
 	struct tree_entry *data;
 	struct line *entry, *line;
 	enum line_type type;
+	char *pos;
+	char *mode;
+	char *id;
 	char *path;
 	size_t size;
 
 	if (state->read_date || !buf)
 		return tree_read_date(view, buf, state);
 
-	if (buf->size <= SIZEOF_TREE_ATTR)
-		return false;
 	if (view->lines == 0 &&
 	    !tree_entry(view, LINE_HEADER, view->env->directory, NULL, NULL, 0))
 		return false;
 
-	size = parse_size(buf->data + SIZEOF_TREE_ATTR);
-	path = strchr(buf->data + SIZEOF_TREE_ATTR, '\t');
-	if (!path)
+	/* 100644 */
+	mode = buf->data;
+
+	/* blob */
+	pos = strchr(mode, ' ');
+	if (!pos || !*pos)
+		return false;
+	pos++;
+	if (!strncmp(pos, "blob", STRING_SIZE("blob")))
+		type = LINE_FILE;
+	else if (!strncmp(pos, "tree", STRING_SIZE("tree")))
+		type = LINE_DIRECTORY;
+	else
+		type = LINE_DEFAULT;
+
+	/* 95925677ca47beb0b8cce7c0e0011bcc3f61470f */
+	id = strchr(pos, ' ');
+	if (!id || !*id)
+		return false;
+	id++;
+
+	/* 213045 */
+	pos = strchr(id, ' ');
+	if (!pos || !*pos)
+		return false;
+	pos++;
+	size = parse_size(pos);
+
+	/* tig.c */
+	path = strchr(pos, '\t');
+	if (!path || !*path)
 		return false;
 	path++;
 
@@ -255,8 +275,7 @@ tree_read(struct view *view, struct buffer *buf, bool force_stop)
 			return false;
 	}
 
-	type = buf->data[SIZEOF_TREE_MODE] == 't' ? LINE_DIRECTORY : LINE_FILE;
-	entry = tree_entry(view, type, path, buf->data, buf->data + TREE_ID_OFFSET, size);
+	entry = tree_entry(view, type, path, mode, id, size);
 	if (!entry)
 		return false;
 	data = entry->data;

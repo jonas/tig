@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -319,7 +319,7 @@ get_author_initials(const char *author)
 	size_t pos = 0;
 	const char *end = strchr(author, '\0');
 
-#define is_initial_sep(c) (isspace(c) || ispunct(c) || (c) == '@' || (c) == '-')
+#define is_initial_sep(c) (isspace((unsigned char)(c)) || ispunct((unsigned char)(c)) || (c) == '@' || (c) == '-')
 
 	memset(initials, 0, sizeof(initials));
 	while (author < end) {

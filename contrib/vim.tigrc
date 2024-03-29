@@ -60,8 +60,7 @@ bind generic @k :?^@@
 bind generic @- :toggle diff-context -1
 bind generic @+ :toggle diff-context +1
 
-bind status  u  none
-bind stage   u  none
+bind generic u  none
 bind generic uu status-update
 bind generic ur status-revert
 bind generic um status-merge

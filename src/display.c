@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,6 +20,10 @@
 #include "tig/draw.h"
 #include "tig/display.h"
 #include "tig/watch.h"
+
+#ifdef HAVE_READLINE
+#include <readline/readline.h>
+#endif /* HAVE_READLINE */
 
 #define MAX_KEYS 2000
 
@@ -608,6 +612,9 @@ init_tty(void)
 	if (!opt_tty.file)
 		die("Failed to open tty for input");
 	opt_tty.fd = fileno(opt_tty.file);
+#ifdef HAVE_READLINE
+	rl_instream = opt_tty.file;
+#endif /* HAVE_READLINE */
 
 	/* attributes */
 	opt_tty.attr = calloc(1, sizeof(struct termios));
@@ -771,6 +778,7 @@ get_input(int prompt_position, struct key *key)
 		int delay = -1;
 
 		if (opt_refresh_mode != REFRESH_MODE_MANUAL) {
+			bool refs_refreshed = false;
 
 			if (opt_refresh_mode == REFRESH_MODE_PERIODIC)
 				delay = watch_periodic(opt_refresh_interval);
@@ -778,6 +786,10 @@ get_input(int prompt_position, struct key *key)
 			foreach_displayed_view (view, i) {
 				if (view_can_refresh(view) &&
 					watch_dirty(&view->watch)) {
+					if (!refs_refreshed) {
+						load_refs(true);
+						refs_refreshed = true;
+					}
 					refresh_view(view);
 				}
 			}

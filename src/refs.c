@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -241,6 +241,7 @@ refs_select(struct view *view, struct line *line)
 	string_copy_rev(view->env->head, reference->ref->id);
 	string_ncopy(view->env->ref, reference->ref->name, strlen(reference->ref->name));
 	ref_update_env(view->env, reference->ref, false);
+	view->env->blob[0] = 0;
 }
 
 static struct view_ops refs_ops = {

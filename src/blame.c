@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -89,6 +89,9 @@ blame_open(struct view *view, enum open_flags flags)
 			opt_blame_options = opt_cmdline_args;
 			opt_cmdline_args = NULL;
 		}
+
+		if (opt_commit_order == COMMIT_ORDER_REVERSE)
+			argv_append(&opt_blame_options, "--reverse");
 
 		/*
 		 * flags (like "--max-age=123") and bottom limits (like "^foo")
@@ -352,7 +355,7 @@ blame_go_forward(struct view *view, struct blame *blame, bool parent)
 	const char *filename = parent ? commit->parent_filename : commit->filename;
 
 	if (!*id && parent) {
-		report("The selected commit has no parents");
+		report("The selected commit has no parents with this file");
 		return;
 	}
 
@@ -466,21 +469,24 @@ blame_select(struct view *view, struct line *line)
 {
 	struct blame *blame = line->data;
 	struct blame_commit *commit = blame->commit;
+	const char *text = blame->text;
 
 	if (!commit)
 		return;
 
-	if (string_rev_is_null(commit->id))
+	if (string_rev_is_null(commit->id)) {
 		string_ncopy(view->env->commit, "HEAD", 4);
-	else
+		string_format(view->ref, "%s", commit->filename);
+	} else {
 		string_copy_rev(view->env->commit, commit->id);
+		string_format(view->ref, "%s changed %s", commit->id, commit->filename);
+	}
 
-	if (strcmp(commit->filename, view->env->file))
-		string_format(view->env->file_old, "%s", commit->filename);
-	else
-		view->env->file_old[0] = '\0';
+	string_ncopy(view->env->file, commit->filename, strlen(commit->filename));
 
 	view->env->lineno = view->pos.lineno + 1;
+	string_ncopy(view->env->text, text, strlen(text));
+	view->env->blob[0] = 0;
 }
 
 static struct view_ops blame_ops = {

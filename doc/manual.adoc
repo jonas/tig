@@ -234,17 +234,17 @@ Title Windows
 Each view has a title window which shows the name of the view, current commit
 ID if available, and where the view is positioned:
 
------------------------------------------------------------------------------
-[main] c622eefaa485995320bc743431bae0d497b1d875 - commit 1 of 61 (1%)
------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+[main] c622eefaa485995320bc743431bae0d497b1d875 - commit 1 of 61             1%
+-------------------------------------------------------------------------------
 
 By default, the title of the current view is highlighted using bold font.  For
 long loading views (taking over 3 seconds) the time since loading started will
 be appended:
 
------------------------------------------------------------------------------
-[main] 77d9e40fbcea3238015aea403e06f61542df9a31 - commit 1 of 779 (0%) 5s
------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+[main] 77d9e40fbcea3238015aea403e06f61542df9a31 - commit 1 of 779 loading 5s 0%
+-------------------------------------------------------------------------------
 
 [[env-variables]]
 Environment Variables
@@ -655,7 +655,7 @@ new releases and how to report bugs and feature requests.
 Copyright
 ---------
 
-Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

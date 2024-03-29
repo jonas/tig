@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -25,9 +25,9 @@
 
 bool argv_to_string(const char *argv[], char *buf, size_t buflen, const char *sep);
 char *argv_to_string_alloc(const char *argv[], const char *sep);
-bool argv_to_string_quoted(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep);
-bool argv_from_string_no_quotes(const char *argv[SIZEOF_ARG], int *argc, char *cmd);
-bool argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd);
+bool argv_to_string_quoted(const char *argv[], char *buf, size_t buflen, const char *sep);
+bool argv_from_string_no_quotes(const char *argv[], int *argc, char *cmd);
+bool argv_from_string(const char *argv[], int *argc, char *cmd);
 void argv_free(const char *argv[]);
 size_t argv_size(const char **argv);
 bool argv_append(const char ***argv, const char *arg);

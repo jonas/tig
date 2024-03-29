@@ -39,7 +39,7 @@ richards/src/main/scala/org/scalajs/benchmark/richards/Richards.scala
  48| import scala.scalajs.js.annotation.JSExport
  53| @JSExport
 sudoku/src/main/scala/org/scalajs/benchmark/sudoku/Sudoku.scala
-[grep] common/src/main/scala/org/scalajs/benchmark/Benchmark.scala - line 1 o73%
+[grep] common/src/main/scala/org/scalajs/benchmark/Benchmark.scala - line 1  73%
 EOF
 
 assert_equals 'editor.log' <<EOF

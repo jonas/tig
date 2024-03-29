@@ -181,7 +181,9 @@ The following variables can be set:
 	names. Wrap the name of the reference type with the characters you would
 	like to use for formatting, e.g. `[tag]` and `<remote>`. If no format is
 	specified for `local-tag`, the format for `tag` is used. Similarly, if no
-	format is specified for `tracked-remote` the `remote` format is used.
+	format is specified for `tracked-remote`, the format for `remote` is used,
+	and if no format is specified for any other reference type, the format for
+	`branch` is used.
 	Prefix with `hide:` to not show that reference type, e.g. `hide:remote`.
 	Supported reference types are:
 	 - head			: The current HEAD.
@@ -192,6 +194,7 @@ The following variables can be set:
 	 - replace		: A replaced reference.
 	 - branch		: A branch.
 	 - stash		: The stash.
+	 - prefetch		: Refs prefetched by `git maintenance`.
 	 - other		: Any other reference.
 
 'line-graphics' (mixed) [ascii|default|utf-8|auto|<bool>]::
@@ -274,6 +277,10 @@ The following variables can be set:
 
 	Number of context lines to show for diffs.
 
+'word-diff' (bool)::
+
+	Show a word diff. Only plain mode is supported. Off by default.
+
 'diff-highlight' (mixed)::
 
 	Whether to highlight diffs using Git's 'diff-highlight' program. Defaults
@@ -319,6 +326,10 @@ The following variables can be set:
 
 	Wrap long lines. By default, lines are not wrapped.
 	Not compatible with line numbers enabled.
+
+'wrap-search' (bool)::
+
+	Wrap around to top/bottom of view when searching. On by default.
 
 'focus-child' (bool)::
 
@@ -602,15 +613,18 @@ Or in the Git configuration files:
 --------------------------------------------------------------------------
 [tig "bind"]
 	# 'unbind' the default quit key binding
-	main = Q none
+	generic = Q none
 	# Cherry-pick current commit onto current branch
-	generic = C !git cherry-pick %(commit)
+	main = C !git cherry-pick %(commit)
 --------------------------------------------------------------------------
 
 Keys are mapped by first searching the keybindings for the current view, then
 the keybindings for the *generic* keymap, and last the default keybindings.
 Thus, the view keybindings override the generic keybindings which override the
 built-in keybindings.
+
+Clear keybinding (unbind) from all keymaps at once with bind *generic* 'key'
+*none*.
 
 Keybindings at the line-entry prompt are typically governed by the readline
 library, and are configured separately in `~/.inputrc`.  See 'readline(1)'.
@@ -1172,7 +1186,7 @@ source ~/.tig/keybindings.tigrc
 
 COPYRIGHT
 ---------
-Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

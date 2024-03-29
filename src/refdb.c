@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -223,6 +223,9 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		if (strlen(opt->head) == namelen &&
 		    !strncmp(opt->head, name, namelen))
 			type = REFERENCE_HEAD;
+
+	} else if (!prefixcmp(name, "refs/prefetch/")) {
+		type = REFERENCE_PREFETCH;
 
 	} else if (!strcmp(name, "HEAD")) {
 		/* Handle the case of HEAD not being a symbolic ref,

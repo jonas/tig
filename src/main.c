@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -122,7 +122,7 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 	struct graph *graph = state->graph;
 	struct commit commit = {{0}};
 	struct timeval now;
-	struct timezone tz;
+	struct timezone tz = {0};
 
 	if (!parent)
 		return true;
@@ -444,7 +444,7 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 		state->in_header = true;
 		line += STRING_SIZE("commit ");
 		is_boundary = *line == '-';
-		while (*line && !isalnum(*line))
+		while (*line && !isalnum((unsigned char)*line))
 			line++;
 
 		main_flush_commit(view, commit);
@@ -524,7 +524,7 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 		line += 4;
 		/* Well, if the title starts with a whitespace character,
 		 * try to be forgiving.  Otherwise we end up with no title. */
-		while (isspace(*line))
+		while (isspace((unsigned char)*line))
 			line++;
 		if (*line == '\0')
 			break;
@@ -566,6 +566,14 @@ main_request(struct view *view, enum request request, struct line *line)
 			open_status_view(view, true, flags);
 		else
 			open_diff_view(view, flags);
+		break;
+
+	case REQ_VIEW_STAGE:
+		if (line->type == LINE_STAT_UNSTAGED
+		    || line->type == LINE_STAT_STAGED)
+			open_stage_view(view, NULL, line->type, OPEN_DEFAULT);
+		else
+			return request;
 		break;
 
 	case REQ_REFRESH:
@@ -622,8 +630,11 @@ main_select(struct view *view, struct line *line)
 		}
 		if (ref)
 			ref_update_env(view->env, ref, true);
+		else
+			view->env->tag[0] = view->env->remote[0] = view->env->branch[0] = view->env->refname[0] = 0;
 	}
 	string_copy_rev(view->env->commit, commit->id);
+	view->env->blob[0] = 0;
 }
 
 static struct view_ops main_ops = {

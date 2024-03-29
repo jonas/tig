@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -545,7 +545,7 @@ diff_read(struct view *view, struct buffer *buf, bool force_stop)
 		diff_restore_line(view, state);
 
 		if (!state->adding_describe_ref && !ref_list_contains_tag(view->vid)) {
-			const char *describe_argv[] = { "git", "describe", view->vid, NULL };
+			const char *describe_argv[] = { "git", "describe", "--tags", view->vid, NULL };
 			enum status_code code = begin_update(view, NULL, describe_argv, OPEN_EXTRA);
 
 			if (code != SUCCESS) {

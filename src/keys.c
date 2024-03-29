@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -94,6 +94,30 @@ keybinding_equals(const struct keybinding *keybinding, const struct key key[],
 	return keybinding_matches(keybinding, key, keys, conflict_ptr);
 }
 
+static enum status_code
+del_keybinding(const struct key key[], size_t keys)
+{
+	bool found = false;
+	size_t i;
+
+	for (i = 0; i < ARRAY_SIZE(keymaps); i++) {
+		struct keymap *table = &keymaps[i];
+		size_t j;
+
+		for (j = 0; j < table->size; j++)
+			if (keybinding_equals(table->data[j], key, keys, NULL)) {
+				found = true;
+				free(table->data[j]);
+				table->size--;
+				for (; j < table->size; j++)
+					table->data[j] = table->data[j + 1];
+				table->data = realloc(table->data, table->size * sizeof(*table->data));
+			}
+	}
+
+	return found ? SUCCESS : error("No keybinding found for %s", get_key_name(key, keys, false));
+}
+
 enum status_code
 add_keybinding(struct keymap *table, enum request request,
 	       const struct key key[], size_t keys)
@@ -102,6 +126,9 @@ add_keybinding(struct keymap *table, enum request request,
 	char buf[SIZEOF_STR];
 	bool conflict = false;
 	size_t i;
+
+	if (is_generic_keymap(table) && request == REQ_NONE)
+		return del_keybinding(key, keys);
 
 	for (i = 0; i < table->size; i++) {
 		if (keybinding_equals(table->data[i], key, keys, &conflict)) {

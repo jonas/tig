@@ -37,7 +37,7 @@ test_case emoji-commit-titles-col-46 \
 2009-02-22 11:53 +0000 Committer o 🐧 Fix Linu
 2009-02-13 23:31 +0000 Committer I 🚑 Fix bug
 
-[main] 237d747db3f85d2ae36127ecd0371feb4ca100%
+[main] 237d747db3f85d2ae36127ecd0371feb4c 100%
 EOF
 
 test_case emoji-commit-titles-col-unset \

@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -37,6 +37,7 @@ log_copy_rev(struct view *view, struct line *line)
 	size_t offset = get_graph_indent(text);
 
 	string_copy_rev_from_commit_line(view->ref, text + offset);
+	view->env->blob[0] = 0;
 }
 
 static void
@@ -44,6 +45,7 @@ log_select(struct view *view, struct line *line)
 {
 	struct log_state *state = view->private;
 	int last_lineno = state->last_lineno;
+	const char *text = box_text(line);
 
 	if (!last_lineno || abs(last_lineno - line->lineno) > 1
 	    || (state->last_type == LINE_COMMIT && last_lineno > line->lineno)) {
@@ -56,6 +58,7 @@ log_select(struct view *view, struct line *line)
 	if (line->type == LINE_COMMIT && !view_has_flags(view, VIEW_NO_REF))
 		log_copy_rev(view, line);
 	string_copy_rev(view->env->commit, view->ref);
+	string_ncopy(view->env->text, text, strlen(text));
 	state->last_lineno = line->lineno;
 	state->last_type = line->type;
 }
@@ -64,8 +67,8 @@ static enum status_code
 log_open(struct view *view, enum open_flags flags)
 {
 	const char *log_argv[] = {
-		"git", "log", encoding_arg, commit_order_arg(), "--cc",
-			"--stat", use_mailmap_arg(), "%(logargs)", "%(cmdlineargs)",
+		"git", "log", encoding_arg, commit_order_arg(),
+			use_mailmap_arg(), "%(logargs)", "%(cmdlineargs)",
 			"%(revargs)", "--no-color", "--", "%(fileargs)", NULL
 	};
 	enum status_code code;

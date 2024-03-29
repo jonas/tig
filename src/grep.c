@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -77,6 +77,7 @@ static void
 grep_select(struct view *view, struct line *line)
 {
 	struct grep_line *grep = grep_get_line(line);
+	const char *text = grep->text;
 
 	if (!*grep->file)
 		return;
@@ -84,6 +85,8 @@ grep_select(struct view *view, struct line *line)
 	string_ncopy(view->env->file, grep->file, strlen(grep->file));
 	string_ncopy(view->ref, grep->file, strlen(grep->file));
 	view->env->lineno = grep->lineno + 1;
+	string_ncopy(view->env->text, text, strlen(text));
+	view->env->blob[0] = 0;
 }
 
 static const char *grep_args[] = {

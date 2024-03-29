@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -66,6 +66,10 @@
 #include <fcntl.h>
 #include <libgen.h>
 #include <termios.h>
+
+#if defined(__APPLE__)
+#include <wchar.h>
+#endif
 
 #if defined HAVE_PCRE2
 #include <pcre2posix.h>

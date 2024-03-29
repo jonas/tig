@@ -91,7 +91,7 @@ set tab-size			= 8		# Number of spaces to use when expanding tabs
 set line-graphics		= default	# Enum: ascii, default, utf-8, auto
 set truncation-delimiter	= ~		# Character drawn for truncations, or "utf-8"
 
-# Format reference names based on type.
+# Format reference names based on type:
 #  - head		: The current HEAD.
 #  - tag		: An annotated tag.
 #  - local-tag		: A lightweight tag.
@@ -100,12 +100,16 @@ set truncation-delimiter	= ~		# Character drawn for truncations, or "utf-8"
 #  - replace		: A replaced reference.
 #  - branch		: A branch.
 #  - stash		: The stash.
+#  - prefetch		: Refs prefetched by `git maintenance`.
 #  - other		: Any other reference.
-# If no format is defined for `local-tag` then the one for `tag` is used.
-# Similarly, `remote` is used if no `tracked-remote` format exists.
-# Prefix with `hide:` to not show that reference type, e.g. `hide:remote`.
+#
 # Expects a space-separated list of format strings.
-set reference-format		= [branch] <tag> {remote} ~replace~
+# If no format is specified for `local-tag`, the format for `tag` is used.
+# Similarly, if no format is specified for `tracked-remote`, the format for
+# `remote` is used, and if no format is specified for any other reference
+# type, the format for `branch` is used.
+# Prefix with `hide:` to not show that reference type, e.g. `hide:remote`.
+set reference-format		= [branch] <tag> {remote} ~replace~ hide:prefetch
 
 # Settings controlling how content is read from Git
 set commit-order		= auto		# Enum: auto, default, topo, date, reverse (main)
@@ -114,11 +118,12 @@ set status-show-untracked-files	= yes		# Show untracked files?
 set ignore-space		= no		# Enum: no, all, some, at-eol (diff)
 set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set diff-context		= 3		# Number of lines to show around diff changes (diff)
+#set word-diff			= yes		# Show a word diff? (diff)
 #set diff-options		= -C		# User-defined options for `tig show` (git-diff)
 #set diff-highlight		= true		# String (or bool): Path to diff-highlight script,
 						#                   defaults to `diff-highlight`.
 #set blame-options		= -C -C -C	# User-defined options for `tig blame` (git-blame)
-#set log-options		= --pretty=raw	# User-defined options for `tig log` (git-log)
+set log-options			= --cc --stat	# User-defined options for `tig log` (git-log)
 #set main-options		= -n 1000	# User-defined options for `tig` (git-log)
 set mailmap			= yes		# Use .mailmap to show canonical name and email address?
 

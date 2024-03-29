@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -126,7 +126,7 @@ pager_common_read(struct view *view, const char *data, enum line_type type, stru
 
 	if (line->type == LINE_COMMIT && view_has_flags(view, VIEW_ADD_PAGER_REFS)) {
 		data += STRING_SIZE("commit ");
-		while (*data && !isalnum(*data))
+		while (*data && !isalnum((unsigned char)*data))
 			data++;
 		add_pager_refs(view, data);
 	}

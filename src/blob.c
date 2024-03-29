@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -31,9 +31,19 @@ open_blob_view(struct view *prev, enum open_flags flags)
 {
 	struct view *view = &blob_view;
 	bool in_blob_view = prev == view;
-	bool has_blob_selection = view->env->blob[0] || view->env->file[0];
 
-	if (!in_blob_view && (view->lines || has_blob_selection)) {
+	if (!view->env->file[0] && opt_file_args && !opt_file_args[1]) {
+		const char *ls_tree_argv[] = {
+			"git", "ls-tree", "-d", "-z",  view->env->commit, opt_file_args[0], NULL
+		};
+		char buf[SIZEOF_STR] = "";
+
+		/* Check that opt_file_args[0] is not a directory */
+		if (!io_run_buf(ls_tree_argv, buf, sizeof(buf), NULL, false))
+			string_concat_path(view->env->file, repo.prefix, opt_file_args[0]);
+	}
+
+	if (!in_blob_view && (view->lines || view->env->blob[0] || view->env->file[0])) {
 		if (view->env->goto_lineno > 0)
 			flags |= OPEN_RELOAD;
 		open_view(prev, view, flags);
@@ -111,10 +121,12 @@ static void
 blob_select(struct view *view, struct line *line)
 {
 	struct blob_state *state = view->private;
+	const char *text = box_text(line);
 
 	if (state->file)
 		string_format(view->env->file, "%s", state->file);
 	view->env->lineno = view->pos.lineno + 1;
+	string_ncopy(view->env->text, text, strlen(text));
 }
 
 static enum request

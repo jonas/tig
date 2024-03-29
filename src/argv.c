@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -72,13 +72,13 @@ argv_to_string_alloc(const char *argv[], const char *sep)
 }
 
 bool
-argv_to_string_quoted(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep)
+argv_to_string_quoted(const char *argv[], char *buf, size_t buflen, const char *sep)
 {
 	return concat_argv(argv, buf, buflen, sep, true);
 }
 
 bool
-argv_to_string(const char *argv[SIZEOF_ARG], char *buf, size_t buflen, const char *sep)
+argv_to_string(const char *argv[], char *buf, size_t buflen, const char *sep)
 {
 	return concat_argv(argv, buf, buflen, sep, false);
 }
@@ -129,7 +129,7 @@ parse_arg(char **cmd, bool remove_quotes)
 				break;
 		}
 
-		if (!quote && isspace(c))
+		if (!quote && isspace((unsigned char)c))
 			break;
 
 		*next++ = *pos;
@@ -144,7 +144,7 @@ parse_arg(char **cmd, bool remove_quotes)
 }
 
 static bool
-split_argv_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd, bool remove_quotes)
+split_argv_string(const char *argv[], int *argc, char *cmd, bool remove_quotes)
 {
 	while (*cmd && *argc < SIZEOF_ARG) {
 		char *arg = parse_arg(&cmd, remove_quotes);
@@ -161,13 +161,13 @@ split_argv_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd, bool remov
 }
 
 bool
-argv_from_string_no_quotes(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
+argv_from_string_no_quotes(const char *argv[], int *argc, char *cmd)
 {
 	return split_argv_string(argv, argc, cmd, true);
 }
 
 bool
-argv_from_string(const char *argv[SIZEOF_ARG], int *argc, char *cmd)
+argv_from_string(const char *argv[], int *argc, char *cmd)
 {
 	return split_argv_string(argv, argc, cmd, false);
 }
@@ -315,7 +315,7 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 		if (end && msglen > 0 && string_format(msgbuf, "%.*s", msglen, msgstart)) {
 			const char *msg = msgbuf;
 
-			while (isspace(*msg))
+			while (isspace((unsigned char)*msg))
 				msg++;
 			if (*msg)
 				prompt = msg;

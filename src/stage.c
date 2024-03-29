@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -283,6 +283,8 @@ stage_update(struct view *view, struct line *line, update_t update_type)
 		return false;
 	}
 
+	watch_apply(&view->watch, WATCH_INDEX);
+
 	return true;
 }
 
@@ -444,6 +446,7 @@ static bool
 find_deleted_line_in_head(struct view *view, struct line *line) {
 	struct io io;
 	struct buffer buffer;
+	struct status file_status;
 	unsigned long line_number_in_head, line_number = 0;
 	long bias_by_staged_changes = 0;
 	char buf[SIZEOF_STR] = "";
@@ -466,7 +469,6 @@ find_deleted_line_in_head(struct view *view, struct line *line) {
 	if (buf[0]) {
 		file_in_head = view->env->file;
 	} else { // The file might might be renamed in the index. Find its old name.
-		struct status file_status;
 		const char *diff_index_argv[] = {
 			"git", "diff-index", "--cached", "-C",
 			"--diff-filter=ACR", "-z", "HEAD", NULL
@@ -680,10 +682,11 @@ stage_request(struct view *view, enum request request, struct line *line)
 	 * stage view if it doesn't. */
 	if (view->parent && !stage_exists(view, &stage_status, stage_line_type)) {
 		stage_line_type = 0;
-		return view->parent == &status_view
+		return view->parent == &status_view && view_is_displayed(view->parent)
 				? view_request(view->parent, REQ_ENTER)
 				: REQ_VIEW_CLOSE;
-	}
+	} else if (stage_line_type == LINE_STAT_UNTRACKED)
+		return REQ_VIEW_CLOSE;
 
 	refresh_view(view);
 
@@ -795,7 +798,8 @@ stage_read(struct view *view, struct buffer *buf, bool force_stop)
 			return false;
 		}
 
-		if (!view->lines && !force_stop && view->prev) {
+		/* After git apply, git diff-files can sometimes return an empty line. */
+		if (view->lines <= 1 && !force_stop && view->prev) {
 			watch_apply(&view->watch, WATCH_INDEX);
 			stage_line_type = 0;
 			maximize_view(view->prev, false);

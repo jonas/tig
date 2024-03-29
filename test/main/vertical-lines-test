@@ -46,7 +46,7 @@ assert_equals 'main-verticals-ascii.screen' <<EOF
    | 2009-12-17 12:49 +0000 René Léves~ |
  15| 2009-12-09 00:27 +0000 A. U. Thor  |
    | 2009-11-30 12:05 +0000 Max Power   |
-[main] 5cb3412a5e06e506840495b91acc8832%|[diff] 5cb3412a5e06e506840495b91acc100%
+[main] 5cb3412a5e06e506840495b91acc8 32%|[diff] 5cb3412a5e06e506840495b91ac 100%
 EOF
 
 assert_equals 'main-verticals-default.screen' <<EOF
@@ -66,7 +66,7 @@ assert_equals 'main-verticals-default.screen' <<EOF
    x 2009-12-17 12:49 +0000 René Léves~ |
  15x 2009-12-09 00:27 +0000 A. U. Thor  |
    x 2009-11-30 12:05 +0000 Max Power   |
-[main] 5cb3412a5e06e506840495b91acc8832%|[diff] 5cb3412a5e06e506840495b91acc100%
+[main] 5cb3412a5e06e506840495b91acc8 32%|[diff] 5cb3412a5e06e506840495b91ac 100%
 EOF
 
 assert_equals 'main-verticals-utf8.screen' <<EOF
@@ -86,5 +86,5 @@ assert_equals 'main-verticals-utf8.screen' <<EOF
    │ 2009-12-17 12:49 +0000 René Léves~ |
  15│ 2009-12-09 00:27 +0000 A. U. Thor  |
    │ 2009-11-30 12:05 +0000 Max Power   |
-[main] 5cb3412a5e06e506840495b91acc8832%|[diff] 5cb3412a5e06e506840495b91acc100%
+[main] 5cb3412a5e06e506840495b91acc8 32%|[diff] 5cb3412a5e06e506840495b91ac 100%
 EOF

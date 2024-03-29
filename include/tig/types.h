@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -150,7 +150,8 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 	_(REFERENCE, REMOTE), \
 	_(REFERENCE, TAG), \
 	_(REFERENCE, LOCAL_TAG), \
-	_(REFERENCE, REPLACE)
+	_(REFERENCE, REPLACE), \
+	_(REFERENCE, PREFETCH)
 
 #define STATUS_LABEL_ENUM(_) \
 	_(STATUS_LABEL, NO), \

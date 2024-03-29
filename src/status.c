@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2022 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -465,13 +465,14 @@ status_get_column_data(struct view *view, const struct line *line, struct view_c
 }
 
 static enum request
-status_enter(struct view *view, struct line *line)
+status_enter(struct view *view, struct line *line, enum open_flags flags)
 {
 	struct status *status = line->data;
-	enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 
 	if (line->type == LINE_STAT_NONE ||
 	    (!status && line[1].type == LINE_STAT_NONE)) {
+		if (displayed_views() == 2)
+			maximize_view(view, true);
 		report("No file to diff");
 		return REQ_NONE;
 	}
@@ -494,6 +495,8 @@ status_enter(struct view *view, struct line *line)
 		break;
 
 	default:
+		if (displayed_views() == 2)
+			maximize_view(view, true);
 		report("Nothing to enter");
 		return REQ_NONE;
 	}
@@ -756,7 +759,10 @@ status_request(struct view *view, enum request request, struct line *line)
 		/* After returning the status view has been split to
 		 * show the stage view. No further reloading is
 		 * necessary. */
-		return status_enter(view, line);
+		return status_enter(view, line, view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT);
+
+	case REQ_VIEW_STAGE:
+		return status_enter(view, line, OPEN_DEFAULT);
 
 	case REQ_REFRESH:
 		/* Load the current branch information and then the view. */
@@ -850,8 +856,10 @@ status_select(struct view *view, struct line *line)
 
 	string_format(view->ref, text, key, file);
 	status_stage_info(view->env->status, line->type, status);
-	if (status)
+	if (status) {
 		string_copy(view->env->file, status->new.name);
+		view->env->blob[0] = 0;
+	}
 }
 
 static struct view_ops status_ops = {
