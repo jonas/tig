@@ -2,12 +2,12 @@
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 02/04/2023
+.\"      Date: 03/29/2024
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.5.8
+.\"    Source: Tig 2.5.9
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "02/04/2023" "Tig 2\&.5\&.8" "Tig Manual"
+.TH "TIGRC" "5" "03/29/2024" "Tig 2\&.5\&.9" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -211,10 +211,11 @@ and
 local\-tag, the format for
 tag
 is used\&. Similarly, if no format is specified for
-tracked\-remote
-the
+tracked\-remote, the format for
 remote
-format is used\&. Prefix with
+is used, and if no format is specified for any other reference type, the format for
+branch
+is used\&. Prefix with
 hide:
 to not show that reference type, e\&.g\&.
 hide:remote\&. Supported reference types are:
@@ -315,6 +316,18 @@ stash : The stash\&.
 .sp -1
 .IP \(bu 2.3
 .\}
+prefetch : Refs prefetched by
+git maintenance\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 other : Any other reference\&.
 .RE
 .RE
@@ -404,6 +417,11 @@ Number of spaces per tab\&. The default is 8 spaces\&.
 Number of context lines to show for diffs\&.
 .RE
 .PP
+\fIword\-diff\fR (bool)
+.RS 4
+Show a word diff\&. Only plain mode is supported\&. Off by default\&.
+.RE
+.PP
 \fIdiff\-highlight\fR (mixed)
 .RS 4
 Whether to highlight diffs using Git\(cqs
@@ -460,6 +478,11 @@ git\-shortlog(1)\&.
 \fIwrap\-lines\fR (bool)
 .RS 4
 Wrap long lines\&. By default, lines are not wrapped\&. Not compatible with line numbers enabled\&.
+.RE
+.PP
+\fIwrap\-search\fR (bool)
+.RS 4
+Wrap around to top/bottom of view when searching\&. On by default\&.
 .RE
 .PP
 \fIfocus\-child\fR (bool)
@@ -1072,9 +1095,9 @@ Or in the Git configuration files:
 .nf
 [tig "bind"]
         # \*(Aqunbind\*(Aq the default quit key binding
-        main = Q none
+        generic = Q none
         # Cherry\-pick current commit onto current branch
-        generic = C !git cherry\-pick %(commit)
+        main = C !git cherry\-pick %(commit)
 .fi
 .if n \{\
 .RE
@@ -1082,6 +1105,8 @@ Or in the Git configuration files:
 .sp
 .sp
 Keys are mapped by first searching the keybindings for the current view, then the keybindings for the \fBgeneric\fR keymap, and last the default keybindings\&. Thus, the view keybindings override the generic keybindings which override the built\-in keybindings\&.
+.sp
+Clear keybinding (unbind) from all keymaps at once with bind \fBgeneric\fR \fIkey\fR \fBnone\fR\&.
 .sp
 Keybindings at the line\-entry prompt are typically governed by the readline library, and are configured separately in ~/\&.inputrc\&. See \fIreadline(1)\fR\&. Tig respects but does not require an $if tig section in ~/\&.inputrc\&.
 .PP
@@ -2747,7 +2772,7 @@ source ~/\&.tig/keybindings\&.tigrc
 .sp
 .SH "COPYRIGHT"
 .sp
-Copyright (c) 2006\-2022 Jonas Fonseca <\m[blue]\fBjonas\&.fonseca@gmail\&.com\fR\m[]\&\s-2\u[1]\d\s+2>
+Copyright (c) 2006\-2024 Jonas Fonseca <\m[blue]\fBjonas\&.fonseca@gmail\&.com\fR\m[]\&\s-2\u[1]\d\s+2>
 .sp
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version\&.
 .SH "SEE ALSO"

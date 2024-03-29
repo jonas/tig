@@ -738,6 +738,138 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_5_9">tig-2.5.9</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Update utf8proc to v2.9.0, supporting Unicode 15.1.
+</p>
+</li>
+<li>
+<p>
+Also use lightweight tags in the Refs line of the diff view. (#1235)
+</p>
+</li>
+<li>
+<p>
+Support %(text) in all views with a text column. (#1275)
+</p>
+</li>
+<li>
+<p>
+Use HTTPS for GitHub clone URLs. (#1310)
+</p>
+</li>
+<li>
+<p>
+Move default log view options to tigrc.
+</p>
+</li>
+<li>
+<p>
+Allow to go to stage view without Enter. (#1284)
+</p>
+</li>
+<li>
+<p>
+Add new "prefetch" reference type for refs created by <code>git maintenance</code>
+   (hidden in default config). (#1318)
+</p>
+</li>
+<li>
+<p>
+Show the selected commit in the blame view title window.
+</p>
+</li>
+<li>
+<p>
+Improve the blob view experience.
+</p>
+</li>
+<li>
+<p>
+Clear keybinding from all keymaps (unbind) with <code>bind generic &lt;key&gt; none</code>.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix "dangling pointer" warning. (#1268)
+</p>
+</li>
+<li>
+<p>
+Don&#8217;t use array size in function arguments. (#1269)
+</p>
+</li>
+<li>
+<p>
+Fix rpmbuild -ta. (#1276)
+</p>
+</li>
+<li>
+<p>
+Initialise struct timezone. (#1291)
+</p>
+</li>
+<li>
+<p>
+Fix NULL dereference at startup. (#1293)
+</p>
+</li>
+<li>
+<p>
+Enforce a blank before view scroll percentage.
+</p>
+</li>
+<li>
+<p>
+Fix refresh-mode periodic not updating branch labels. (#1270)
+</p>
+</li>
+<li>
+<p>
+Fix display non-ascii character. (#1299)
+</p>
+</li>
+<li>
+<p>
+Fix readline echo when stdin is redirected. (#1229)
+</p>
+</li>
+<li>
+<p>
+Fix tig blame --reverse. (#1300)
+</p>
+</li>
+<li>
+<p>
+Fix status view lockup.
+</p>
+</li>
+<li>
+<p>
+Fix untracked changes and chunk staging behaviour in plain stage view.
+</p>
+</li>
+<li>
+<p>
+Reset state variables when selecting a commit with no reference.
+</p>
+</li>
+<li>
+<p>
+Fix parsing of <code>git ls-tree</code> for submodules. (#1282)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_5_8">tig-2.5.8</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Improvements:</p></div>
@@ -5005,7 +5137,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2023-02-04 13:30:10 CET
+ 2024-03-29 20:35:47 CET
 </div>
 </div>
 </body>

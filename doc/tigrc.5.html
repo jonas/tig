@@ -974,7 +974,9 @@ Valid mixed values
         names. Wrap the name of the reference type with the characters you would
         like to use for formatting, e.g. <code>[tag]</code> and <code>&lt;remote&gt;</code>. If no format is
         specified for <code>local-tag</code>, the format for <code>tag</code> is used. Similarly, if no
-        format is specified for <code>tracked-remote</code> the <code>remote</code> format is used.
+        format is specified for <code>tracked-remote</code>, the format for <code>remote</code> is used,
+        and if no format is specified for any other reference type, the format for
+        <code>branch</code> is used.
         Prefix with <code>hide:</code> to not show that reference type, e.g. <code>hide:remote</code>.
         Supported reference types are:
 </p>
@@ -1017,6 +1019,11 @@ branch               : A branch.
 <li>
 <p>
 stash                : The stash.
+</p>
+</li>
+<li>
+<p>
+prefetch             : Refs prefetched by <code>git maintenance</code>.
 </p>
 </li>
 <li>
@@ -1163,6 +1170,14 @@ other                : Any other reference.
 </p>
 </dd>
 <dt class="hdlist1">
+<em>word-diff</em> (bool)
+</dt>
+<dd>
+<p>
+        Show a word diff. Only plain mode is supported. Off by default.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>diff-highlight</em> (mixed)
 </dt>
 <dd>
@@ -1230,6 +1245,14 @@ other                : Any other reference.
 <p>
         Wrap long lines. By default, lines are not wrapped.
         Not compatible with line numbers enabled.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>wrap-search</em> (bool)
+</dt>
+<dd>
+<p>
+        Wrap around to top/bottom of view when searching. On by default.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1787,14 +1810,16 @@ bind generic ø @sh -c "printf '%s' %(commit) | pbcopy"</code></pre>
 <div class="content">
 <pre><code>[tig "bind"]
         # 'unbind' the default quit key binding
-        main = Q none
+        generic = Q none
         # Cherry-pick current commit onto current branch
-        generic = C !git cherry-pick %(commit)</code></pre>
+        main = C !git cherry-pick %(commit)</code></pre>
 </div></div>
 <div class="paragraph"><p>Keys are mapped by first searching the keybindings for the current view, then
 the keybindings for the <strong>generic</strong> keymap, and last the default keybindings.
 Thus, the view keybindings override the generic keybindings which override the
 built-in keybindings.</p></div>
+<div class="paragraph"><p>Clear keybinding (unbind) from all keymaps at once with bind <strong>generic</strong> <em>key</em>
+<strong>none</strong>.</p></div>
 <div class="paragraph"><p>Keybindings at the line-entry prompt are typically governed by the readline
 library, and are configured separately in <code>~/.inputrc</code>.  See <em>readline(1)</em>.
 Tig respects but does not require an <code>$if tig</code> section in <code>~/.inputrc</code>.</p></div>
@@ -2897,7 +2922,7 @@ source ~/.tig/keybindings.tigrc</code></pre>
 <div class="sect1">
 <h2 id="_copyright">COPYRIGHT</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Copyright (c) 2006-2022 Jonas Fonseca &lt;<a href="mailto:jonas.fonseca@gmail.com">jonas.fonseca@gmail.com</a>&gt;</p></div>
+<div class="paragraph"><p>Copyright (c) 2006-2024 Jonas Fonseca &lt;<a href="mailto:jonas.fonseca@gmail.com">jonas.fonseca@gmail.com</a>&gt;</p></div>
 <div class="paragraph"><p>This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -2917,7 +2942,7 @@ git(7), git-config(1)</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2023-02-04 13:30:10 CET
+ 2024-03-29 20:35:47 CET
 </div>
 </div>
 </body>
