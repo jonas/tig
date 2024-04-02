@@ -851,9 +851,10 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 		 * the screen. */
 		werase(view->win);
 		/* Do not clear the position if it is the first view. */
-		if (view->prev && !(flags & (OPEN_RELOAD | OPEN_REFRESH)))
+		if (view->prev && !(flags & (OPEN_RELOAD | OPEN_REFRESH))) {
 			clear_position(&view->prev_pos);
-		report_clear();
+			report_clear();
+		}
 	} else if (view_is_displayed(view)) {
 		redraw_view(view);
 		report_clear();
