@@ -73,16 +73,13 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 	bool ok;
 
 	if (echo) {
+		struct io io;
 		char buf[SIZEOF_STR] = "";
 
-		io_run_buf(argv, buf, sizeof(buf), dir, false);
-		if (*buf) {
+		ok = io_exec(&io, IO_RD, dir, NULL, argv, IO_RD_WITH_STDERR) && io_read_buf(&io, buf, sizeof(buf), true);
+		if (*buf)
 			report("%s", buf);
-			return true;
-		} else {
-			report("No output");
-			return false;
-		}
+
 	} else if (silent || is_script_executing()) {
 		ok = io_run_bg(argv, dir);
 
