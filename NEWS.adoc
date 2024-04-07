@@ -1,6 +1,14 @@
 Release notes
 =============
 
+tig-2.5.10
+----------
+
+Bug fixes:
+
+ - Fix `stat-*` coloring file names in `tig status` instead of just
+   markers (regression in 2.5.9).
+
 tig-2.5.9
 ---------
 

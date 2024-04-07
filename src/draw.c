@@ -276,10 +276,11 @@ draw_id(struct view *view, struct view_column *column, const char *id)
 }
 
 static bool
-draw_filename(struct view *view, struct view_column *column, enum line_type type, const char *filename)
+draw_filename(struct view *view, struct view_column *column, const char *filename, mode_t mode)
 {
 	size_t width = filename ? utf8_width(filename) : 0;
 	bool trim = width >= column->width;
+	enum line_type type = S_ISDIR(mode) ? LINE_DIRECTORY : LINE_FILE;
 	int column_width = column->width ? column->width : width;
 
 	if (column->opt.file_name.display == FILENAME_NO)
@@ -528,7 +529,7 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_FILE_NAME:
-			if (draw_filename(view, column, line->type, column_data.file_name))
+			if (draw_filename(view, column, column_data.file_name, mode))
 				return true;
 			continue;
 
