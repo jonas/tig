@@ -548,6 +548,7 @@ main_request(struct view *view, enum request request, struct line *line)
 				  line->type == LINE_STAT_STAGED ||
 				  line->type == LINE_STAT_UNTRACKED))
 				? OPEN_SPLIT : OPEN_DEFAULT;
+	struct commit *commit = line->data;
 
 	switch (request) {
 	case REQ_VIEW_DIFF:
@@ -575,6 +576,13 @@ main_request(struct view *view, enum request request, struct line *line)
 		else
 			return request;
 		break;
+
+	case REQ_VIEW_BLAME:
+		if (string_rev_is_null(commit->id))
+			view->env->ref[0] = 0;
+		else
+			string_copy_rev(view->env->ref, commit->id);
+		return request;
 
 	case REQ_REFRESH:
 		load_refs(true);
