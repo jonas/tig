@@ -88,7 +88,7 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 		refresh();
 		endwin();                  /* restore original tty modes */
 		tcsetattr(opt_tty.fd, TCSAFLUSH, opt_tty.attr);
-		ok = io_run_fg(argv, dir);
+		ok = io_run_fg(argv, dir, opt_tty.fd);
 		if (confirm || !ok) {
 			if (!ok && *notice)
 				fprintf(stderr, "%s", notice);

@@ -340,7 +340,7 @@ open_trace(int devnull, const char *argv[])
 bool
 io_trace(const char *fmt, ...)
 {
-	static FILE *trace_out; /* Intensionally leaked. */
+	static FILE *trace_out; /* Intentionally leaked. */
 	va_list args;
 	int retval;
 
@@ -418,6 +418,11 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 				close(pipefds[0]);
 			if (pipefds[1] != -1)
 				close(pipefds[1]);
+		} else {
+			if (custom != -1) {
+				dup2(custom, STDIN_FILENO);
+				close(custom);
+			}
 		}
 
 		if (dir && *dir && chdir(dir) == -1)
@@ -463,9 +468,9 @@ io_run_bg(const char **argv, const char *dir)
 }
 
 bool
-io_run_fg(const char **argv, const char *dir)
+io_run_fg(const char **argv, const char *dir, int fd)
 {
-	return io_complete(IO_FG, argv, dir, -1);
+	return io_complete(IO_FG, argv, dir, fd);
 }
 
 bool

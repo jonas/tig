@@ -10,6 +10,7 @@ Bug fixes:
    markers (regression in 2.5.9). (#1326)
  - Fix keybinding with +[cmd] not triggering view refreshing. (#1324)
  - Fix reopening the blame view from the main view.
+ - Fix editing when stdin is redirected. (#1330)
 
 tig-2.5.9
 ---------
