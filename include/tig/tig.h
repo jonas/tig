@@ -39,10 +39,12 @@
 #endif
 
 /* necessary on Snow Leopard to use WINDOW struct */
+#if defined(NCURSES_VERSION_PATCH) && NCURSES_VERSION_PATCH < 20110226
 #ifdef NCURSES_OPAQUE
 #undef NCURSES_OPAQUE
 #endif
 #define NCURSES_OPAQUE 0
+#endif
 
 
 #include <assert.h>
