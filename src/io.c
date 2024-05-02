@@ -436,6 +436,13 @@ io_exec(struct io *io, enum io_type type, const char *dir, char * const env[], c
 					putenv(env[i]);
 		}
 
+		signal(SIGHUP, SIG_DFL);
+		signal(SIGINT, SIG_DFL);
+		signal(SIGPIPE, SIG_DFL);
+#ifdef DEBUG
+		signal(SIGSEGV, SIG_DFL);
+#endif
+
 		execvp(argv[0], (char *const*) argv);
 
 		close(STDOUT_FILENO);

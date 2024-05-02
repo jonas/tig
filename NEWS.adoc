@@ -12,6 +12,7 @@ Bug fixes:
  - Fix reopening the blame view from the main view.
  - Fix editing when stdin is redirected. (#1330)
  - Fix compilation warnings with ncurses 6.5.
+ - Make `Ctrl-C` to kill only the command running in the foreground. (#1331)
 
 tig-2.5.9
 ---------

@@ -84,6 +84,7 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 		ok = io_run_bg(argv, dir);
 
 	} else {
+		signal(SIGINT, SIG_IGN);
 		clear();
 		refresh();
 		endwin();                  /* restore original tty modes */
@@ -101,6 +102,7 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 		fseek(opt_tty.file, 0, SEEK_END);
 		tcsetattr(opt_tty.fd, TCSAFLUSH, opt_tty.attr);
 		set_terminal_modes();
+		signal(SIGINT, SIG_DFL);
 	}
 
 	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && do_refresh) {
