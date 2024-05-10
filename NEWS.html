@@ -738,6 +738,45 @@ asciidoc.install();
 </div>
 <div id="content">
 <div class="sect1">
+<h2 id="_tig_2_5_10">tig-2.5.10</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix <code>stat-*</code> coloring file names in <code>tig status</code> instead of just
+   markers (regression in 2.5.9). (#1326)
+</p>
+</li>
+<li>
+<p>
+Fix keybinding with +[cmd] not triggering view refreshing. (#1324)
+</p>
+</li>
+<li>
+<p>
+Fix reopening the blame view from the main view.
+</p>
+</li>
+<li>
+<p>
+Fix editing when stdin is redirected. (#1330)
+</p>
+</li>
+<li>
+<p>
+Fix compilation warnings with ncurses 6.5.
+</p>
+</li>
+<li>
+<p>
+Make <code>Ctrl-C</code> to kill only the command running in the foreground. (#1331)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_tig_2_5_9">tig-2.5.9</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Improvements:</p></div>
@@ -5137,7 +5176,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2024-03-29 20:35:47 CET
+ 2024-05-10 19:51:19 CEST
 </div>
 </div>
 </body>
