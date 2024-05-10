@@ -150,8 +150,8 @@
 
 #define SIZEOF_STR	1024	/* Default string size. */
 #define SIZEOF_MED_STR	8192	/* Medium string size. */
-#define SIZEOF_REF	256	/* Size of symbolic or SHA1 ID. */
-#define SIZEOF_REV	41	/* Holds a SHA-1 and an ending NUL. */
+#define SIZEOF_REF	256	/* Size of symbolic or hash ID. */
+#define SIZEOF_REV	65	/* Holds a SHA-1 or SHA-256 and an ending NUL. */
 
 /* This color name can be used to refer to the default term colors. */
 #define COLOR_DEFAULT	(-1)
@@ -166,7 +166,7 @@
 #define MIN_VIEW_WIDTH  4
 #define VSPLIT_SCALE	0.5
 
-#define NULL_ID		"0000000000000000000000000000000000000000"
+#define NULL_ID		"0000000000000000000000000000000000000000000000000000000000000000"
 
 #define S_ISGITLINK(mode) (((mode) & S_IFMT) == 0160000)
 
