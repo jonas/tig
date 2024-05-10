@@ -691,13 +691,13 @@ status_revert(struct status *status, enum line_type type, bool has_none)
 				reset_argv[4] = NULL;
 			}
 
-			if (!io_run_fg(reset_argv, repo.exec_dir))
+			if (!io_run_fg(reset_argv, repo.exec_dir, -1))
 				return false;
 			if (status->old.mode == 0 && status->new.mode == 0)
 				return true;
 		}
 
-		return io_run_fg(checkout_argv, repo.exec_dir);
+		return io_run_fg(checkout_argv, repo.exec_dir, -1);
 	}
 
 	return false;

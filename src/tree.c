@@ -212,7 +212,8 @@ tree_read(struct view *view, struct buffer *buf, bool force_stop)
 	struct tree_state *state = view->private;
 	struct tree_entry *data;
 	struct line *entry, *line;
-	enum line_type type;
+	/* Note, type computed here is only used for sorting, not for drawing. */
+	enum line_type type = LINE_DEFAULT;
 	char *pos;
 	char *mode;
 	char *id;
@@ -238,8 +239,6 @@ tree_read(struct view *view, struct buffer *buf, bool force_stop)
 		type = LINE_FILE;
 	else if (!strncmp(pos, "tree", STRING_SIZE("tree")))
 		type = LINE_DIRECTORY;
-	else
-		type = LINE_DEFAULT;
 
 	/* 95925677ca47beb0b8cce7c0e0011bcc3f61470f */
 	id = strchr(pos, ' ');

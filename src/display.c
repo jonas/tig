@@ -73,25 +73,23 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 	bool ok;
 
 	if (echo) {
+		struct io io;
 		char buf[SIZEOF_STR] = "";
 
-		io_run_buf(argv, buf, sizeof(buf), dir, false);
-		if (*buf) {
+		ok = io_exec(&io, IO_RD, dir, NULL, argv, IO_RD_WITH_STDERR) && io_read_buf(&io, buf, sizeof(buf), true);
+		if (*buf)
 			report("%s", buf);
-			return true;
-		} else {
-			report("No output");
-			return false;
-		}
+
 	} else if (silent || is_script_executing()) {
 		ok = io_run_bg(argv, dir);
 
 	} else {
+		signal(SIGINT, SIG_IGN);
 		clear();
 		refresh();
 		endwin();                  /* restore original tty modes */
 		tcsetattr(opt_tty.fd, TCSAFLUSH, opt_tty.attr);
-		ok = io_run_fg(argv, dir);
+		ok = io_run_fg(argv, dir, opt_tty.fd);
 		if (confirm || !ok) {
 			if (!ok && *notice)
 				fprintf(stderr, "%s", notice);
@@ -104,6 +102,7 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 		fseek(opt_tty.file, 0, SEEK_END);
 		tcsetattr(opt_tty.fd, TCSAFLUSH, opt_tty.attr);
 		set_terminal_modes();
+		signal(SIGINT, SIG_DFL);
 	}
 
 	if (watch_update(WATCH_EVENT_AFTER_COMMAND) && do_refresh) {

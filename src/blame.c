@@ -128,7 +128,7 @@ blame_open(struct view *view, enum open_flags flags)
 
 	if (!view->env->file[0] && opt_file_args && !opt_file_args[1]) {
 		const char *ls_tree_argv[] = {
-			"git", "ls-tree", "-d", "-z", *view->env->ref ? view->env->ref : view->env->commit, opt_file_args[0], NULL
+			"git", "ls-tree", "-d", "-z", *view->env->ref ? view->env->ref : "HEAD", opt_file_args[0], NULL
 		};
 		char buf[SIZEOF_STR] = "";
 
@@ -457,6 +457,10 @@ blame_request(struct view *view, enum request request, struct line *line)
 		open_main_view(view, OPEN_RELOAD);
 		break;
 
+	case REQ_VIEW_BLOB:
+		string_ncopy(view->env->file, blame->commit->filename, strlen(blame->commit->filename));
+		return request;
+
 	default:
 		return request;
 	}
@@ -482,7 +486,10 @@ blame_select(struct view *view, struct line *line)
 		string_format(view->ref, "%s changed %s", commit->id, commit->filename);
 	}
 
-	string_ncopy(view->env->file, commit->filename, strlen(commit->filename));
+	if (strcmp(commit->filename, view->env->file))
+		string_format(view->env->file_old, "%s", commit->filename);
+	else
+		view->env->file_old[0] = '\0';
 
 	view->env->lineno = view->pos.lineno + 1;
 	string_ncopy(view->env->text, text, strlen(text));
