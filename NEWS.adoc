@@ -1,6 +1,13 @@
 Release notes
 =============
 
+master
+------
+
+Improvements:
+
+ - Open the blob corresponding to the diff line. (#1334)
+
 tig-2.5.10
 ----------
 
