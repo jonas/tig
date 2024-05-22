@@ -460,7 +460,7 @@ readline_init(void)
 	/* Allow conditional parsing of the ~/.inputrc file. */
 	rl_readline_name = "tig";
 
-	/* Word break caracters (we removed '(' to match variables) */
+	/* Word break characters (we removed '(' to match variables) */
 	rl_basic_word_break_characters = " \t\n\"\\'`@$><=;|&{";
 
 	/* Custom display function */
@@ -872,8 +872,13 @@ prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 	}
 
 	toggle = find_option_info(option_toggles, ARRAY_SIZE(option_toggles), "", option);
-	if (toggle)
+	if (toggle) {
+		if (!strcmp(toggle->name, "file_filter") &&
+		    view_has_flags(view, VIEW_FILE_FILTER) &&
+		    view_has_flags(view, VIEW_LOG_LIKE))
+			string_copy_rev(view->env->goto_id, view->env->commit);
 		return prompt_toggle_option(view, argv, "", toggle, flags);
+	}
 
 	for (column = view->columns; column; column = column->next) {
 		toggle = find_column_option_info(column->type, &column->opt, option, &template, &column_name);

@@ -7,6 +7,7 @@ master
 Improvements:
 
  - Open the blob corresponding to the diff line. (#1334)
+ - Keep cursor position when toggling file-filter in the main view.
 
 tig-2.5.10
 ----------
