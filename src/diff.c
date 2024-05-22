@@ -657,7 +657,7 @@ diff_trace_origin(struct view *view, struct line *line)
 		if (!prefixcmp(data, "--- ")) {
 			const char *data_n1 = box_text(diff+1);
 			const char *data_n2 = box_text(diff+2);
-			if(!prefixcmp(data_n1, "+++ ") && prefixcmp(data_n2, "@@ ")){
+			if(!prefixcmp(data_n1, "+++ ") && !prefixcmp(data_n2, "@@ ")){
 				file = data + STRING_SIZE("--- ");
 				break;
 			}
