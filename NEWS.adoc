@@ -4,6 +4,10 @@ Release notes
 master
 ------
 
+Bug fixes:
+
+ - Fix parsing of `--no-prefix` argument.
+
 Improvements:
 
  - Open the blob corresponding to the diff line. (#1334)

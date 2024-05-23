@@ -278,6 +278,12 @@ update_options_from_argv(const char *argv[])
 			/* Keep the flag in argv. */
 		}
 
+		if (!strcmp(flag, "--no-prefix")) {
+			opt_diff_noprefix = true;
+			mark_option_seen(&opt_diff_noprefix);
+			/* Keep the flag in argv. */
+		}
+
 		argv[flags_pos++] = flag;
 	}
 
@@ -1531,10 +1537,11 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	else if (!strcmp(name, "core.abbrev"))
 		parse_int(&opt_id_width, value, 0, SIZEOF_REV - 1);
 
-	else if (!strcmp(name, "diff.noprefix"))
-		parse_bool(&opt_diff_noprefix, value);
+	else if (!strcmp(name, "diff.noprefix")) {
+		if (!find_option_info_by_value(&opt_diff_noprefix)->seen)
+			parse_bool(&opt_diff_noprefix, value);
 
-	else if (!strcmp(name, "status.showuntrackedfiles"))
+	} else if (!strcmp(name, "status.showuntrackedfiles"))
 		opt_status_show_untracked_files = !!strcmp(value, "no"),
 		opt_status_show_untracked_dirs = !strcmp(value, "all");
 
