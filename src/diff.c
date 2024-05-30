@@ -655,8 +655,9 @@ diff_trace_origin(struct view *view, struct line *line)
 	for (; diff < line && !file; diff++) {
 		const char *data = box_text(diff);
 
-		if (!prefixcmp(data, "--- a/")) {
-			file = data + STRING_SIZE("--- a/");
+		// TODO: make a diff file name parser generic
+		if (!prefixcmp(data, "--- ")) {
+			file = data + (opt_diff_noprefix ? STRING_SIZE("--- ") : STRING_SIZE("--- a/"));
 			break;
 		}
 	}
@@ -735,6 +736,7 @@ diff_get_pathname(struct view *view, struct line *line, bool old)
 	if (!header)
 		return NULL;
 
+	// TODO: make a diff file name parser generic
 	name = box_text(header);
 	if (old ? !prefixcmp(name, "--- ") : !prefixcmp(name, "+++ "))
 		name += STRING_SIZE("+++ ");
