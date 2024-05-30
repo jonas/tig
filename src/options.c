@@ -1534,6 +1534,10 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	else if (!strcmp(name, "diff.noprefix"))
 		parse_bool(&opt_diff_noprefix, value);
 
+	// TODO: else if (!strcmp(name, "diff.dstprefix")) and store it somewhere
+
+	// TODO: else if (!strcmp(name, "diff.srcprefix")) and store it somewhere
+
 	else if (!strcmp(name, "status.showuntrackedfiles"))
 		opt_status_show_untracked_files = !!strcmp(value, "no"),
 		opt_status_show_untracked_dirs = !strcmp(value, "all");
