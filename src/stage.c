@@ -205,6 +205,8 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *single,
 	if (!diff_hdr)
 		return false;
 
+	if (opt_diff_noprefix)
+		apply_argv[argc++] = "-p0";
 	if (!revert)
 		apply_argv[argc++] = "--cached";
 	if (revert || stage_line_type == LINE_STAT_STAGED)
@@ -711,19 +713,21 @@ stage_open(struct view *view, enum open_flags flags)
 			stage_status.new.name)
 	};
 	const char *index_show_argv[] = {
-		GIT_DIFF_STAGED(encoding_arg, diff_context_arg(), ignore_space_arg(),
-			word_diff_arg(), stage_status.old.name, stage_status.new.name)
+		GIT_DIFF_STAGED(encoding_arg, diff_context_arg(), diff_prefix_arg(),
+			ignore_space_arg(), word_diff_arg(), stage_status.old.name,
+			stage_status.new.name)
 	};
 	const char *files_show_argv[] = {
-		GIT_DIFF_UNSTAGED(encoding_arg, diff_context_arg(), ignore_space_arg(),
-			word_diff_arg(), stage_status.old.name, stage_status.new.name)
+		GIT_DIFF_UNSTAGED(encoding_arg, diff_context_arg(), diff_prefix_arg(),
+			ignore_space_arg(), word_diff_arg(), stage_status.old.name,
+			stage_status.new.name)
 	};
 	/* Diffs for unmerged entries are empty when passing the new
 	 * path, so leave out the new path. */
 	const char *files_unmerged_argv[] = {
 		"git", "diff-files", encoding_arg, "--textconv", "--patch-with-stat",
-			DIFF_ARGS, diff_context_arg(), ignore_space_arg(), "--",
-			stage_status.old.name, NULL
+			DIFF_ARGS, diff_context_arg(), diff_prefix_arg(),
+			ignore_space_arg(), "--", stage_status.old.name, NULL
 	};
 	static const char *file_argv[] = { repo.exec_dir, stage_status.new.name, NULL };
 	const char **argv = NULL;

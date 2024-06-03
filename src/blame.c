@@ -431,6 +431,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 			const char *diff_parent_argv[] = {
 				GIT_DIFF_BLAME(encoding_arg,
 					diff_context_arg(),
+					diff_prefix_arg(),
 					ignore_space_arg(),
 					word_diff_arg(),
 					blame->commit->filename)

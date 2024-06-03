@@ -81,7 +81,7 @@ stash_request(struct view *view, enum request request, struct line *line)
 				"git", "stash", "show", encoding_arg, "--pretty=fuller",
 					"--patch-with-stat", diff_context_arg(),
 					ignore_space_arg(), word_diff_arg(), DIFF_ARGS,
-					"--no-color", "%(stash)", NULL
+					"%(cmdlineargs)", "--no-color", "%(stash)", NULL
 			};
 
 			if (!argv_format(diff_view.env, &diff_view.argv, diff_argv, 0))

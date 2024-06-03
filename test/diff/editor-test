@@ -258,8 +258,8 @@ test_case noprefix-conflict \
 ' << EOF
   1| diff --cc conflict-file
    | index 86c5a05,b4c3de6..0000000
-   | --- a/conflict-file
-   | +++ b/conflict-file
+   | --- conflict-file
+   | +++ conflict-file
   5| @@@ -1,1 -1,1 +1,5 @@@
    | ++<<<<<<< HEAD
    |  +c'

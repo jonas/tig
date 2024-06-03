@@ -6,7 +6,7 @@ master
 
 Bug fixes:
 
- - Fix parsing of `--no-prefix` argument.
+ - Fix various issues with `diff.noprefix` and `--no-prefix`.
 
 Improvements:
 

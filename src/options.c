@@ -141,6 +141,12 @@ diff_context_arg()
 }
 
 const char *
+diff_prefix_arg()
+{
+	return opt_diff_noprefix ? "--no-prefix" : ""; /* --default-prefix did not exist before Git 2.41. */
+}
+
+const char *
 word_diff_arg()
 {
 	return opt_word_diff ? "--word-diff=plain" : "--word-diff=none";
@@ -260,7 +266,7 @@ update_options_from_argv(const char *argv[])
 		}
 
 		if (!strcmp(flag, "--word-diff=none")) {
-			/* opt_word_diff = false; */
+			opt_word_diff = false;
 			mark_option_seen(&opt_word_diff);
 			continue;
 		}
@@ -280,6 +286,12 @@ update_options_from_argv(const char *argv[])
 
 		if (!strcmp(flag, "--no-prefix")) {
 			opt_diff_noprefix = true;
+			mark_option_seen(&opt_diff_noprefix);
+			/* Keep the flag in argv. */
+		}
+
+		if (!strcmp(flag, "--default-prefix")) {
+			opt_diff_noprefix = false;
 			mark_option_seen(&opt_diff_noprefix);
 			/* Keep the flag in argv. */
 		}

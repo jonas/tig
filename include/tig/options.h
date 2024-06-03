@@ -199,6 +199,7 @@ const char *commit_order_arg_with_graph(enum graph_display graph_display);
 const char *log_custom_pretty_arg();
 const char *use_mailmap_arg();
 const char *diff_context_arg();
+const char *diff_prefix_arg();
 const char *word_diff_arg();
 const char *show_notes_arg();
 
