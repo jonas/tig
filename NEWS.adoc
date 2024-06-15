@@ -7,6 +7,7 @@ master
 Bug fixes:
 
  - Fix various issues with `diff.noprefix` and `--no-prefix`.
+ - Fix `Ctrl-C` behavior within the Readline prompt. (#1342)
 
 Improvements:
 
