@@ -499,8 +499,10 @@ read_prompt(const char *prompt)
 	curs_set(1);
 	if (signal(SIGINT, sigint_absorb_handler) == SIG_ERR)
 		die("Failed to setup sigint handler");
+	noraw();
 	cbreak();
 	line = readline(prompt);
+	nocbreak();
 	raw();
 	if (signal(SIGINT, SIG_DFL) == SIG_ERR)
 		die("Failed to remove sigint handler");
