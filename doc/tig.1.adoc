@@ -217,6 +217,9 @@ TIGRC_SYSTEM::
 	`{sysconfdir}/tigrc`). Define to empty string to use built-in
 	configuration.
 
+TIGRC_EXTRA::
+	Path of the additional configuration file.
+
 TIG_LS_REMOTE::
 	Command for retrieving all repository references. The command
 	should output data in the same format as git-ls-remote(1).

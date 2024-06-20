@@ -1119,6 +1119,7 @@ enum status_code
 load_options(void)
 {
 	const char *tigrc_user = getenv("TIGRC_USER");
+	const char *tigrc_extra = getenv("TIGRC_EXTRA");
 	const char *tigrc_system = getenv("TIGRC_SYSTEM");
 	const char *tig_diff_opts = getenv("TIG_DIFF_OPTS");
 	const bool diff_opts_from_args = !!opt_diff_options;
@@ -1158,6 +1159,10 @@ load_options(void)
 
 		if (load_option_file(tigrc_user) == ERROR_FILE_DOES_NOT_EXIST)
 			load_option_file(TIG_USER_CONFIG);
+	}
+
+	if (tigrc_extra) {
+		load_option_file(tigrc_extra);
 	}
 
 	if (!diff_opts_from_args && tig_diff_opts && *tig_diff_opts) {
