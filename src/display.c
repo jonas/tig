@@ -32,6 +32,8 @@ static void set_terminal_modes(void);
 struct view *display[2];
 unsigned int current_view;
 
+struct display_lineage *display_lineage = NULL;
+
 static WINDOW *display_win[2];
 static WINDOW *display_title[2];
 static WINDOW *display_sep;
@@ -898,6 +900,17 @@ enable_mouse(bool enable)
 		enabled = enable;
 	}
 #endif
+}
+
+void
+free_display_lineage()
+{
+	struct display_lineage *lineage = display_lineage;
+	while(lineage != NULL) {
+		struct display_lineage *prev = lineage->prev;
+		free(lineage);
+		lineage = prev;
+	}
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

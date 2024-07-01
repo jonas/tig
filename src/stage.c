@@ -670,7 +670,6 @@ stage_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_VIEW_CLOSE:
 	case REQ_VIEW_CLOSE_NO_QUIT:
-		stage_line_type = 0;
 		return request;
 
 	case REQ_ENTER:
