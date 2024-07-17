@@ -475,8 +475,13 @@ readline_init(void)
 	/* Let ncurses deal with the LINES and COLUMNS environment variables */
 	rl_change_environment = 0;
 	rl_catch_sigwinch = 0;
+	/* Fix “Piping to tig segfaults on exit” (#893),
+	 * except on macOS inhibits `readline()` Ctrl-C.
+	 */
+#ifndef __APPLE__
 	rl_deprep_term_function = NULL;
 	rl_prep_term_function = NULL;
+#endif
 }
 
 static void sigint_absorb_handler(int sig) {
