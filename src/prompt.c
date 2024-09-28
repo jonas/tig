@@ -874,9 +874,8 @@ prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 
 	toggle = find_option_info(option_toggles, ARRAY_SIZE(option_toggles), "", option);
 	if (toggle) {
-		if (!strcmp(toggle->name, "file_filter") &&
-		    view_has_flags(view, VIEW_FILE_FILTER) &&
-		    view_has_flags(view, VIEW_LOG_LIKE))
+		if (view_has_flags(view, VIEW_FILE_FILTER) &&
+		    !strcmp(toggle->name, "file_filter"))
 			string_copy_rev(view->env->goto_id, view->env->commit);
 		return prompt_toggle_option(view, argv, "", toggle, flags);
 	}
