@@ -60,6 +60,14 @@ get_line_type_from_ref(const struct ref *ref)
 		return LINE_MAIN_TRACKED;
 	else if (ref->type == REFERENCE_REMOTE)
 		return LINE_MAIN_REMOTE;
+	else if (ref->type == REFERENCE_STASH)
+		return LINE_MAIN_STASH;
+	else if (ref->type == REFERENCE_NOTE)
+		return LINE_MAIN_NOTE;
+	else if (ref->type == REFERENCE_PREFETCH)
+		return LINE_MAIN_PREFETCH;
+	else if (ref->type == REFERENCE_OTHER)
+		return LINE_MAIN_OTHER;
 	else if (ref->type == REFERENCE_REPLACE)
 		return LINE_MAIN_REPLACE;
 

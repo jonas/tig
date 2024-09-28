@@ -100,6 +100,7 @@ set truncation-delimiter	= ~		# Character drawn for truncations, or "utf-8"
 #  - replace		: A replaced reference.
 #  - branch		: A branch.
 #  - stash		: The stash.
+#  - note		: Notes.
 #  - prefetch		: Refs prefetched by `git maintenance`.
 #  - other		: Any other reference.
 #
@@ -108,8 +109,8 @@ set truncation-delimiter	= ~		# Character drawn for truncations, or "utf-8"
 # Similarly, if no format is specified for `tracked-remote`, the format for
 # `remote` is used, and if no format is specified for any other reference
 # type, the format for `branch` is used.
-# Prefix with `hide:` to not show that reference type, e.g. `hide:remote`.
-set reference-format		= [branch] <tag> {remote} ~replace~ hide:prefetch
+# Prefix with `hide:` to not show that reference type, e.g. `hide:prefetch`.
+set reference-format		= [branch] <tag> {remote} ~replace~
 
 # Settings controlling how content is read from Git
 set commit-order		= auto		# Enum: auto, default, topo, date, reverse (main)
@@ -428,6 +429,10 @@ color main-annotated		default	default	bold
 color main-tag			magenta	default	bold
 color main-local-tag		magenta	default
 color main-remote		yellow	default
+color main-stash		blue	default
+color main-note			blue	default
+color main-prefetch		blue	default
+color main-other		blue	default
 color main-replace		cyan	default
 color main-tracked		yellow	default	bold
 color main-ref			cyan	default

@@ -194,6 +194,7 @@ The following variables can be set:
 	 - replace		: A replaced reference.
 	 - branch		: A branch.
 	 - stash		: The stash.
+	 - note			: Notes.
 	 - prefetch		: Refs prefetched by `git maintenance`.
 	 - other		: Any other reference.
 

@@ -33,7 +33,7 @@ steps '
 test_tig
 
 assert_equals 'main.screen' <<EOF
-2009-02-13 23:31 +0000 Committer I [master] [my-branch2] [refs/my-raw-ref2] {origin/my-branch2} <my-tag2> Initial commit
+2009-02-13 23:31 +0000 Committer I [master] [my-branch2] {origin/my-branch2} <my-tag2> [refs/my-raw-ref2] Initial commit
 
 
 
@@ -47,9 +47,9 @@ assert_equals 'refs.screen' <<EOF
   All references
   master
   my-branch2
-  refs/my-raw-ref2
   origin/my-branch2
   my-tag2
+  refs/my-raw-ref2
 
 [refs] All references  100%
 EOF

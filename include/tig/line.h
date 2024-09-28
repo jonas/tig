@@ -69,6 +69,10 @@ struct ref;
 	_(MAIN_TAG,		""), \
 	_(MAIN_LOCAL_TAG,	""), \
 	_(MAIN_REMOTE,		""), \
+	_(MAIN_STASH,		""), \
+	_(MAIN_NOTE,		""), \
+	_(MAIN_PREFETCH,	""), \
+	_(MAIN_OTHER,		""), \
 	_(MAIN_REPLACE,		""), \
 	_(MAIN_TRACKED,		""), \
 	_(MAIN_REF,		""), \
