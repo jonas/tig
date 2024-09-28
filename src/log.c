@@ -73,7 +73,7 @@ log_open(struct view *view, enum open_flags flags)
 	};
 	enum status_code code;
 
-	code = begin_update(view, NULL, log_argv, flags);
+	code = begin_update(view, NULL, log_argv, flags | OPEN_WITH_STDERR);
 	if (code != SUCCESS)
 		return code;
 

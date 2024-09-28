@@ -36,7 +36,7 @@ diff_open(struct view *view, enum open_flags flags)
 
 	diff_save_line(view, view->private, flags);
 
-	code = begin_update(view, NULL, diff_argv, flags);
+	code = begin_update(view, NULL, diff_argv, flags | OPEN_WITH_STDERR);
 	if (code != SUCCESS)
 		return code;
 

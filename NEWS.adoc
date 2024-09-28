@@ -13,6 +13,7 @@ Improvements:
 
  - Open the blob corresponding to the diff line. (#1334)
  - Keep cursor position when toggling file-filter in the main view.
+ - Make errors visible in views showing Git output. (#1346)
 
 tig-2.5.10
 ----------
