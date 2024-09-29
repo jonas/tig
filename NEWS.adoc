@@ -16,6 +16,7 @@ Improvements:
  - Keep cursor position when toggling file-filter in the main view.
  - Make errors visible in views showing Git output. (#1346)
  - Allow different colors for all references types.
+ - Enable search in sections titles. (#1043)
 
 tig-2.5.10
 ----------

@@ -1144,6 +1144,15 @@ view_column_grep(struct view *view, struct line *line)
 	if (!ok)
 		return false;
 
+	if (column_data.section) {
+		const char *text[] = {
+			column_data.section->opt.section.text,
+			NULL
+		};
+
+		return grep_text(view, text);
+	}
+
 	for (column = view->columns; column; column = column->next) {
 		const char *text[] = {
 			view_column_text(view, &column_data, column),
