@@ -756,7 +756,7 @@ diff_common_edit(struct view *view, enum request request, struct line *line)
 		lineno = diff_get_lineno(view, line, false);
 	}
 
-	if (!file) {
+	if (!file || !*file) {
 		report("Nothing to edit");
 		return REQ_NONE;
 	}
