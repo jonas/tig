@@ -135,6 +135,8 @@ static bool
 tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 {
 	char *text = buf ? buf->data : NULL;
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
+	bool use_author_date = column && column->opt.date.use_author;
 
 	if (!text && state->read_date) {
 		state->read_date = false;
@@ -167,7 +169,11 @@ tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 
 	} else if (*text == 'a' && get_line_type(text) == LINE_AUTHOR) {
 		parse_author_line(text + STRING_SIZE("author "),
-				  &state->author, &state->author_time);
+				  &state->author, use_author_date ? &state->author_time : NULL);
+
+	} else if (*text == 'c' && get_line_type(text) == LINE_COMMITTER) {
+		parse_author_line(text + STRING_SIZE("committer "),
+				  NULL, use_author_date ? NULL : &state->author_time);
 
 	} else if (*text == ':') {
 		char *pos;

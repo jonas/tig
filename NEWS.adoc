@@ -17,6 +17,7 @@ Improvements:
  - Make errors visible in views showing Git output. (#1346)
  - Allow different colors for all references types.
  - Enable search in sections titles. (#1043)
+ - Show committer date by default in the date column. (#294)
 
 tig-2.5.10
 ----------

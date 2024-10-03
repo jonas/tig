@@ -509,6 +509,8 @@ date::
 	  relative date will be used, e.g. "2 minutes ago" or "2m". If set to
 	  "custom", the strftime(3) string format specified in the "format"
 	  option is used.
+	- 'use-author' (bool): Whether to show author date instead of committer
+	  date.
 	- 'local' (bool): If true, use localtime(3) to convert to local
 	  timezone. Note that relative dates always use local offsets.
 	- 'format' (string): format string to pass to strftime(3) when 'custom'
@@ -1068,7 +1070,7 @@ setting the *default* color option.
 			 sections in the help view.
 |line-number		|Line numbers.
 |id			|The commit ID.
-|date			|The author date.
+|date			|The committer date or author date.
 |author			|The commit author.
 |mode			|The file mode holding the permissions and type.
 |overflow		|Title text overflow.

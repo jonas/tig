@@ -588,7 +588,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 				break;
 			header = NULL;
 
-		} else if (parse_blame_info(commit, author, buf.data)) {
+		} else if (parse_blame_info(commit, author, buf.data, false)) {
 			ok = commit->filename != NULL;
 			break;
 		}

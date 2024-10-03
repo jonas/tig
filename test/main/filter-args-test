@@ -21,6 +21,10 @@ test_setup_work_dir()
 	git commit -a -m "Feature X"
 }
 
+tigrc <<EOF
+set main-view-date-use-author = yes
+EOF
+
 steps '
 	:save-display filtered.screen
 '

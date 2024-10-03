@@ -88,9 +88,9 @@ from an external command, most often 'git log', 'git diff', or 'git show'.
 
 The main view::
 	Is the default view, and it shows a one line summary of each commit
-	in the chosen list of revisions. The summary includes author date,
-	author, and the first line of the log message. Additionally, any
-	repository references, such as tags, will be shown.
+	in the chosen list of revisions. The summary includes committer date
+	or author date, author, and the first line of the log message.
+	Additionally, any repository references, such as tags, will be shown.
 
 The log view::
 	Presents a more rich view of the revision log showing the whole log

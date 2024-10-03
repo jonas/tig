@@ -276,10 +276,12 @@ main_open(struct view *view, enum open_flags flags)
 {
 	struct view_column *commit_title_column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
 	enum graph_display graph_display = main_with_graph(view, commit_title_column, flags);
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
+	bool use_author_date = column && column->opt.date.use_author;
 	const char *pretty_custom_argv[] = {
 		GIT_MAIN_LOG(encoding_arg, commit_order_arg_with_graph(graph_display),
 			"%(mainargs)", "%(cmdlineargs)", "%(revargs)", "%(fileargs)",
-			show_notes_arg(), log_custom_pretty_arg())
+			show_notes_arg(), log_custom_pretty_arg(use_author_date))
 	};
 	const char *pretty_raw_argv[] = {
 		GIT_MAIN_LOG_RAW(encoding_arg, commit_order_arg_with_graph(graph_display),
