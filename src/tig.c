@@ -341,8 +341,8 @@ view_driver(struct view *view, enum request request)
 				if (dl->current_view == 1) {
 					load_view(dl->display[1], dl->display[0], OPEN_SPLIT);
 				}
-				free(display_lineage);
 				display_lineage = display_lineage->prev;
+				free(dl);
 			break;
 			}
 
