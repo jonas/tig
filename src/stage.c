@@ -806,9 +806,7 @@ stage_read(struct view *view, struct buffer *buf, bool force_stop)
 			watch_apply(&view->watch, WATCH_INDEX);
 			stage_line_type = 0;
 			maximize_view(display_lineage->display[0], false);
-			struct display_lineage * exiting_dl = display_lineage;
-			display_lineage = display_lineage->prev;
-			free(exiting_dl);
+			rewind_lineage();
 			return false;
 		}
 

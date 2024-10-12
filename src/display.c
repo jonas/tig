@@ -902,6 +902,11 @@ enable_mouse(bool enable)
 #endif
 }
 
+void rewind_lineage() {
+	struct display_lineage *exited = display_lineage;
+	display_lineage = display_lineage->prev;
+	free(exited);
+}
 void
 free_display_lineage()
 {

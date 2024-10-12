@@ -53,6 +53,7 @@ struct display_lineage {
 };
 extern struct display_lineage *display_lineage;
 
+void rewind_lineage();
 void free_display_lineage();
 
 void init_tty(void);
