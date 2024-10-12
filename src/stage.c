@@ -802,10 +802,13 @@ stage_read(struct view *view, struct buffer *buf, bool force_stop)
 		}
 
 		/* After git apply, git diff-files can sometimes return an empty line. */
-		if (view->lines <= 1 && !force_stop && view->prev) {
+		if (view->lines <= 1 && !force_stop && display_lineage) {
 			watch_apply(&view->watch, WATCH_INDEX);
 			stage_line_type = 0;
-			maximize_view(view->prev, false);
+			maximize_view(display_lineage->display[0], false);
+			struct display_lineage * exiting_dl = display_lineage;
+			display_lineage = display_lineage->prev;
+			free(exiting_dl);
 			return false;
 		}
 
