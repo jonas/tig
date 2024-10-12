@@ -18,6 +18,8 @@ steps '
 	:save-display split.screen
 	:view-diff
 	:save-display maximized.screen
+	:status-update
+	:save-display closed.screen
 '
 
 tigrc <<EOF
@@ -55,4 +57,18 @@ diff --git a/.j b/.j
 index e697dfd..9d8ef3d 100644
 --- a/.j
 [stage] Press '<Enter>' to jump to file diff - line 1 of 107                  9%
+EOF
+
+assert_equals 'closed.screen' <<EOF
+2014-05-25 19:42 +0000 Not Committed Yet o Staged changes
+2009-02-13 23:31 +0000 A. U. Thor        I [master] Initial commit
+
+
+
+
+
+
+
+
+[main] Staged changes                                                       100%
 EOF
