@@ -185,7 +185,8 @@ refs_open(struct view *view, enum open_flags flags)
 			: opt_mailmap
 				? "--pretty=format:%H%x00%aN <%aE> %cd%x00%s"
 				: "--pretty=format:%H%x00%an <%ae> %cd%x00%s",
-			"--all", "--simplify-by-decoration", NULL
+			"--all", "--decorate-refs=", "--simplify-by-decoration",
+			NULL
 	};
 	enum status_code code;
 	const char *name = REFS_ALL_NAME;

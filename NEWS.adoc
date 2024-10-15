@@ -9,6 +9,7 @@ Bug fixes:
  - Fix various issues with `diff.noprefix` and `--no-prefix`.
  - Fix `Ctrl-C` behavior within the Readline prompt. (#1342)
  - Fix message upon edit from diffstat without patch.
+ - Fix missing dates in the refs view.
 
 Improvements:
 
