@@ -14,7 +14,8 @@ Bug fixes:
 Improvements:
 
  - Open the blob corresponding to the diff line. (#1334)
- - Keep cursor position when toggling file-filter in the main view.
+ - Keep cursor position in the main view when toggling
+   file-filter and rev-filter.
  - Make errors visible in views showing Git output. (#1346)
  - Allow different colors for all references types.
  - Enable search in sections titles. (#1043)
