@@ -26,6 +26,8 @@ Improvements:
  - Allow different colors for all references types.
  - Enable search in sections titles. (#1043)
  - Show committer date by default in the date column. (#294)
+ - Only show stash, notes and prefetch in the refs view when
+   invoked with `tig refs --all`. (#1359)
 
 tig-2.5.10
 ----------

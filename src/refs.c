@@ -43,6 +43,7 @@ enum refs_filter {
 	REFS_FILTER_TAGS     = 1 << 0,
 	REFS_FILTER_BRANCHES = 1 << 1,
 	REFS_FILTER_REMOTES  = 1 << 2,
+	REFS_FILTER_ALL	     = 1 << 3,
 } refs_filter = REFS_FILTER_NONE;
 
 static bool
@@ -139,9 +140,10 @@ refs_open_visitor(void *data, const struct ref *ref)
 	struct view *view = data;
 	struct reference *reference;
 	bool is_all = ref == refs_all;
+	const struct ref_format *fmt = get_ref_format(opt_reference_format, ref);
 	struct line *line;
 
-        if (!is_all)
+	if (!is_all)
 		switch (refs_filter) {
 		case REFS_FILTER_TAGS:
 			if (ref->type != REFERENCE_TAG && ref->type != REFERENCE_LOCAL_TAG)
@@ -156,6 +158,13 @@ refs_open_visitor(void *data, const struct ref *ref)
 				return true;
 			break;
 		case REFS_FILTER_NONE:
+			if (ref->type == REFERENCE_STASH ||
+			    ref->type == REFERENCE_NOTE ||
+			    ref->type == REFERENCE_PREFETCH ||
+			    (!strcmp(fmt->start, "hide:") && !*fmt->end))
+				return true;
+			break;
+		case REFS_FILTER_ALL:
 		default:
 			break;
 		}
@@ -207,6 +216,8 @@ refs_open(struct view *view, enum open_flags flags)
 		} else if (!strncmp(refs_argv[i], "--remotes", 9)) {
 			refs_filter = REFS_FILTER_REMOTES;
 			name = REFS_REMOTES_NAME;
+		} else if (!strncmp(refs_argv[i], "--all", 5)) {
+			refs_filter = REFS_FILTER_ALL;
 		}
 	}
 
@@ -256,7 +267,7 @@ refs_select(struct view *view, struct line *line)
 static struct view_ops refs_ops = {
 	"reference",
 	argv_env.head,
-	VIEW_REFRESH | VIEW_SORTABLE | VIEW_BLAME_LIKE,
+	VIEW_REFRESH | VIEW_SORTABLE | VIEW_LOG_LIKE,
 	0,
 	refs_open,
 	refs_read,

@@ -65,7 +65,7 @@ typedef struct view_column *view_settings;
 	_(pager_autoscroll,		bool,			VIEW_NO_FLAGS) \
 	_(pager_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(pgrp,				bool,			VIEW_NO_FLAGS) \
-	_(reference_format,		struct ref_format **,	VIEW_NO_FLAGS) \
+	_(reference_format,		struct ref_format **,	VIEW_LOG_LIKE) \
 	_(refresh_interval,		int,			VIEW_NO_FLAGS) \
 	_(refresh_mode,			enum refresh_mode,	VIEW_NO_FLAGS) \
 	_(refs_view,			view_settings,		VIEW_NO_FLAGS) \
