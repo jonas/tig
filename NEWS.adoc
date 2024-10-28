@@ -10,6 +10,7 @@ Bug fixes:
  - Fix `Ctrl-C` behavior within the Readline prompt. (#1342)
  - Fix message upon edit from diffstat without patch.
  - Fix missing dates in the refs view.
+ - Don't report an error when diff-highlight is killed intentionally.
 
 Improvements:
 

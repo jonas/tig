@@ -520,7 +520,8 @@ diff_read(struct view *view, struct buffer *buf, bool force_stop)
 
 	if (!buf) {
 		if (!diff_done_highlight(state)) {
-			report("Failed run the diff-highlight program: %s", opt_diff_highlight);
+			if (!force_stop)
+				report("Failed to run the diff-highlight program: %s", opt_diff_highlight);
 			return false;
 		}
 
