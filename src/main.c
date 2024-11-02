@@ -415,6 +415,8 @@ main_add_reflog(struct view *view, struct main_state *state, char *reflog)
 bool
 main_read(struct view *view, struct buffer *buf, bool force_stop)
 {
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
+	bool use_author_date = column && column->opt.date.use_author;
 	struct main_state *state = view->private;
 	struct graph *graph = state->graph;
 	enum line_type type;
@@ -509,9 +511,14 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 
 	case LINE_AUTHOR:
 		parse_author_line(line + STRING_SIZE("author "),
-				  &commit->author, &commit->time);
+				  &commit->author, use_author_date ? &commit->time : NULL);
 		if (state->with_graph)
 			graph->render_parents(graph, &commit->graph);
+		break;
+
+	case LINE_COMMITTER:
+		parse_author_line(line + STRING_SIZE("committer "),
+				  NULL, use_author_date ? NULL : &commit->time);
 		break;
 
 	default:
