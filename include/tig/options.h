@@ -110,7 +110,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 
 #define DATE_COLUMN_OPTIONS(_) \
 	_(display,			enum date,		VIEW_NO_FLAGS) \
-	_(use_author,			bool,			VIEW_NO_FLAGS) \
+	_(use_author,			bool,			VIEW_BLAME_LIKE | VIEW_LOG_LIKE) \
 	_(local,			bool,			VIEW_NO_FLAGS) \
 	_(format,			const char *,		VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
