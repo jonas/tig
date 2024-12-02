@@ -784,7 +784,7 @@ handle_git_prefix(void)
 	/*
 	 * GIT_PREFIX is set when tig is invoked as a git alias.
 	 * Tig expects to run from the subdirectory so clear the prefix
-	 * and set GIT_WORK_TREE accordinglyt.
+	 * and set GIT_WORK_TREE accordingly.
 	 */
 	if (!getcwd(cwd, sizeof(cwd)))
 		return error("Failed to read CWD");
