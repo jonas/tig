@@ -340,9 +340,9 @@ status_update_onbranch(void)
 
 			if (ref && strcmp(ref->name, "HEAD"))
 				head = ref->name;
-		} else if (!paths[i][1] && *repo.remote) {
+		} else if (!paths[i][1] && *repo.upstream) {
 			if (status_branch_tracking_info(buf, sizeof(buf),
-							head, repo.remote)) {
+							head, repo.upstream)) {
 				tracking_info = buf;
 			}
 		}

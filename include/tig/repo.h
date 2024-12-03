@@ -24,6 +24,7 @@ typedef char repo_str[SIZEOF_STR];
 	_(repo_ref, head) \
 	_(repo_rev, head_id) \
 	_(repo_ref, remote) \
+	_(repo_ref, upstream) \
 	_(repo_str, cdup) \
 	_(repo_str, prefix) \
 	_(repo_str, git_dir) \

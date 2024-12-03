@@ -170,7 +170,7 @@ set pager-autoscroll		= no		# Scroll the pager view automatically while loading?
 #
 # User-defined commands can optionally refer to Tig's internal state
 # using the following variable names, which are substituted before
-# commands are run:
+# commands are run (see 'man tigrc' for the full list):
 #
 #   %(head)		The current ref ID. Defaults to HEAD
 #   %(commit)		The current commit ID.
@@ -188,6 +188,9 @@ set pager-autoscroll		= no		# Scroll the pager view automatically while loading?
 #   %(cmdlineargs)	All other options passed on the command line.
 #   %(diffargs)		The diff options from `diff-options` or `TIG_DIFF_OPTS`
 #   %(prompt)		Prompt for the argument value.
+#   %(repo:head)	The name of the checked out branch.
+#   %(repo:remote)	The remote name associated with the checked out branch.
+#   %(repo:upstream)	The upstream branch associated with the checked out branch.
 
 bind main	C	?git cherry-pick %(commit)
 bind status	C	!git commit

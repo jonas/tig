@@ -192,8 +192,10 @@ following variables.
 |%(text)		|The text column of the currently selected line.
 |%(repo:head)		|The name of the checked out branch, e.g. `master`
 |%(repo:head-id)	|The commit ID of the checked out branch.
-|%(repo:remote)		|The remote associated with the checked out branch,
-			 e.g. `origin/master`.
+|%(repo:remote)		|The remote name associated with the checked out
+			 branch, e.g. `origin`.
+|%(repo:upstream)	|The upstream branch associated with the checked out
+			 branch, e.g. `origin/master`.
 |%(repo:cdup)		|The path to change directory to the repository root,
 			 e.g. `../`
 |%(repo:prefix)		|The path prefix of the current work directory,

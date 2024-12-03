@@ -332,7 +332,7 @@ reload_refs(bool force)
 		"git", "show-ref", "--head", "--dereference", NULL
 	};
 	char ls_remote_cmd[SIZEOF_STR];
-	struct ref_opt opt = { repo.remote, repo.head, WATCH_NONE };
+	struct ref_opt opt = { repo.upstream, repo.head, WATCH_NONE };
 	struct repo_info old_repo = repo;
 	enum status_code code;
 	const char *env = getenv("TIG_LS_REMOTE");

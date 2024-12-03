@@ -4,6 +4,10 @@ Release notes
 master
 ------
 
+Incompatibilities:
+
+ - Update remote repo variables. (#1358)
+
 Bug fixes:
 
  - Fix various issues with `diff.noprefix` and `--no-prefix`.

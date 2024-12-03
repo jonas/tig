@@ -70,12 +70,15 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 			const char *head = name + STRING_SIZE("refs/heads/");
 
 			string_ncopy(repo.head, head, strlen(head) + 1);
-			add_ref(repo.head_id, name, repo.remote, repo.head);
+			add_ref(repo.head_id, name, repo.upstream, repo.head);
 		}
 		state->argv++;
 
 	} else if (!strcmp(arg, REPO_INFO_REMOTE)) {
-		string_ncopy(repo.remote, name, namelen);
+		char *sep = strchr(name, '/');
+
+		string_ncopy(repo.remote, name, sep - name);
+		string_ncopy(repo.upstream, name, namelen);
 		state->argv++;
 	}
 
@@ -117,6 +120,7 @@ load_repo_head(void)
 	};
 
 	memset(repo.remote, 0, sizeof(repo.remote));
+	memset(repo.upstream, 0, sizeof(repo.upstream));
 	reload_repo_info(rev_parse_remote_argv);
 	memset(repo.head, 0, sizeof(repo.head));
 	memset(repo.head_id, 0, sizeof(repo.head_id));

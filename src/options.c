@@ -1428,13 +1428,11 @@ set_remote_branch(const char *name, const char *value, size_t valuelen)
 		string_ncopy(repo.remote, value, valuelen);
 
 	} else if (*repo.remote && !strcmp(name, ".merge")) {
-		size_t from = strlen(repo.remote);
-
 		if (!prefixcmp(value, "refs/heads/"))
 			value += STRING_SIZE("refs/heads/");
 
-		if (!string_format_from(repo.remote, &from, "/%s", value))
-			repo.remote[0] = 0;
+		if (!string_format(repo.upstream, "%s/%s", repo.remote, value))
+			repo.upstream[0] = 0;
 	}
 }
 
