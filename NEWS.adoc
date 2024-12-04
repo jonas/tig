@@ -15,6 +15,7 @@ Bug fixes:
  - Fix message upon edit from diffstat without patch.
  - Fix missing dates in the refs view.
  - Don't report an error when diff-highlight is killed intentionally.
+ - Fix parsing of reflog designator in timestamp format.
 
 Improvements:
 

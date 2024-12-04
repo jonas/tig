@@ -387,12 +387,12 @@ main_get_column_data(struct view *view, const struct line *line, struct view_col
 static bool
 main_add_reflog(struct view *view, struct main_state *state, char *reflog)
 {
-	char *end = strchr(reflog, ' ');
+	char *end = strchr(reflog, '}');
 	int id_width;
 
 	if (!end)
 		return false;
-	*end = 0;
+	*++end = 0;
 
 	if (!realloc_reflogs(&state->reflog, state->reflogs, 1)
 	    || !(reflog = strdup(reflog)))
