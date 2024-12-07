@@ -111,7 +111,7 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 		if (status) {
 			file->status = status;
 			if (status == 'A')
-				string_copy(file->old.rev, NULL_ID);
+				string_copy_rev(file->old.rev, NULL_ID);
 
 		} else {
 			if (!status_get_diff(&parsed, buf.data, buf.size))

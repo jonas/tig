@@ -19,7 +19,7 @@
 #include "tig/util.h"
 
 struct commit {
-	char id[SIZEOF_REV];		/* SHA1 ID. */
+	char id[SIZEOF_REV];		/* Hash ID. */
 	const struct ident *author;	/* Author of the commit. */
 	struct time time;		/* Date from the author ident. */
 	struct graph_canvas graph;	/* Ancestry chain graphics. */
