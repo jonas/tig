@@ -8,7 +8,6 @@ export COLUMNS=200
 
 tigrc <<EOF
 set line-graphics = ascii
-set main-view-date-use-author = yes
 EOF
 
 in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
@@ -17,7 +16,7 @@ in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
 
 test_case main-widths-default \
 	--script='
-	:set main-view = id:yes line-number:yes,interval=5 date:default author:full commit-title:yes,graph,refs,overflow=no
+	:set main-view = id:yes line-number:yes,interval=5 date:default,use-author=yes author:full commit-title:yes,graph,refs,overflow=no
 	:refresh
 	' \
 	<<EOF
@@ -109,7 +108,7 @@ EOF
 
 test_case main-widths-20 \
 	--script='
-	:set main-view = id:yes,width=20 line-number:yes,interval=5,width=20 date:default,width=20 author:full,width=20 commit-title:yes,graph,refs,overflow=no
+	:set main-view = id:yes,width=20 line-number:yes,interval=5,width=20 date:default,use-author=yes,width=20 author:full,width=20 commit-title:yes,graph,refs,overflow=no
 	:refresh
 	' \
 	<<EOF
@@ -155,7 +154,7 @@ EOF
 
 test_case main-maxwidths-20 \
 	--script='
-	:set main-view = id:yes,width=20 line-number:yes,interval=5,width=20 date:default,width=20 author:full,maxwidth=20 commit-title:yes,graph,refs,overflow=no
+	:set main-view = id:yes,width=20 line-number:yes,interval=5,width=20 date:default,use-author=yes,width=20 author:full,maxwidth=20 commit-title:yes,graph,refs,overflow=no
 	:refresh
 	' \
 	<<EOF
@@ -178,7 +177,7 @@ EOF
 
 test_case main-maxwidths-10% \
 	--script='
-	:set main-view = id:yes,width=20 line-number:yes,interval=5,width=20 date:default,width=20 author:full,maxwidth=10% commit-title:yes,graph,refs,overflow=no
+	:set main-view = id:yes,width=20 line-number:yes,interval=5,width=20 date:default,use-author=yes,width=20 author:full,maxwidth=10% commit-title:yes,graph,refs,overflow=no
 	:refresh
 	' \
 	<<EOF

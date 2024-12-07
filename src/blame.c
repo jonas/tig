@@ -44,6 +44,7 @@ struct blame_state {
 	struct blame_commit *commit;
 	struct blame_header header;
 	char author[SIZEOF_STR];
+	char committer[SIZEOF_STR];
 	bool auto_filename_display;
 	const char *filename;
 	/* The history state for the current view is cached in the view
@@ -216,8 +217,6 @@ static bool
 blame_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct blame_state *state = view->private;
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
-	bool use_author_date = column && column->opt.date.use_author;
 
 	if (!buf) {
 		if (failed_to_load_initial_view(view))
@@ -255,7 +254,7 @@ blame_read(struct view *view, struct buffer *buf, bool force_stop)
 
 		state->commit = NULL;
 
-	} else if (parse_blame_info(state->commit, state->author, buf->data, use_author_date)) {
+	} else if (parse_blame_info(state->commit, state->author, state->committer, buf->data)) {
 		if (!state->commit->filename)
 			return false;
 
@@ -276,12 +275,17 @@ static bool
 blame_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
 	struct blame *blame = line->data;
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
+	bool use_author_date = column && column->opt.date.use_author;
 
 	if (blame->commit) {
 		column_data->id = blame->commit->id;
 		column_data->author = blame->commit->author;
+		column_data->committer = blame->commit->committer;
 		column_data->file_name = blame->commit->filename;
-		column_data->date = &blame->commit->time;
+		column_data->date = use_author_date
+					? &blame->commit->author_time
+					: &blame->commit->commit_time;
 		column_data->commit_title = blame->commit->title;
 	}
 
@@ -504,7 +508,7 @@ blame_select(struct view *view, struct line *line)
 static struct view_ops blame_ops = {
 	"line",
 	argv_env.commit,
-	VIEW_SEND_CHILD_ENTER | VIEW_BLAME_LIKE | VIEW_REFRESH,
+	VIEW_SEND_CHILD_ENTER | VIEW_BLAME_LIKE,
 	sizeof(struct blame_state),
 	blame_open,
 	blame_read,
@@ -513,7 +517,7 @@ static struct view_ops blame_ops = {
 	view_column_grep,
 	blame_select,
 	NULL,
-	view_column_bit(AUTHOR) | view_column_bit(DATE) |
+	view_column_bit(AUTHOR) | view_column_bit(COMMITTER) | view_column_bit(DATE) |
 		view_column_bit(FILE_NAME) | view_column_bit(ID) |
 		view_column_bit(LINE_NUMBER) | view_column_bit(TEXT),
 	blame_get_column_data,

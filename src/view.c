@@ -932,6 +932,9 @@ compare_view_column(enum view_column_type column, bool use_file_mode,
 	case VIEW_COLUMN_AUTHOR:
 		return apply_comparator(ident_compare, column_data1->author, column_data2->author);
 
+	case VIEW_COLUMN_COMMITTER:
+		return apply_comparator(ident_compare, column_data1->committer, column_data2->committer);
+
 	case VIEW_COLUMN_DATE:
 		return apply_comparator(timecmp, column_data1->date, column_data2->date);
 
@@ -982,6 +985,7 @@ static enum view_column_type view_column_order[] = {
 	VIEW_COLUMN_FILE_SIZE,
 	VIEW_COLUMN_DATE,
 	VIEW_COLUMN_AUTHOR,
+	VIEW_COLUMN_COMMITTER,
 	VIEW_COLUMN_COMMIT_TITLE,
 	VIEW_COLUMN_LINE_NUMBER,
 	VIEW_COLUMN_SECTION,
@@ -1066,6 +1070,11 @@ view_column_text(struct view *view, struct view_column_data *column_data,
 	case VIEW_COLUMN_AUTHOR:
 		if (column_data->author)
 			text = mkauthor(column_data->author, column->opt.author.width, column->opt.author.display);
+		break;
+
+	case VIEW_COLUMN_COMMITTER:
+		if (column_data->committer)
+			text = mkauthor(column_data->committer, column->opt.committer.width, column->opt.committer.display);
 		break;
 
 	case VIEW_COLUMN_COMMIT_TITLE:
@@ -1520,6 +1529,11 @@ view_column_info_update(struct view *view, struct line *line)
 		case VIEW_COLUMN_AUTHOR:
 			width = column->opt.author.width;
 			maxwidth = MAXWIDTH(column->opt.author.maxwidth);
+			break;
+
+		case VIEW_COLUMN_COMMITTER:
+			width = column->opt.committer.width;
+			maxwidth = MAXWIDTH(column->opt.committer.maxwidth);
 			break;
 
 		case VIEW_COLUMN_COMMIT_TITLE:

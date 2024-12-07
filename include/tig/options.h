@@ -111,7 +111,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 
 #define DATE_COLUMN_OPTIONS(_) \
 	_(display,			enum date,		VIEW_NO_FLAGS) \
-	_(use_author,			bool,			VIEW_BLAME_LIKE | VIEW_LOG_LIKE) \
+	_(use_author,			bool,			VIEW_NO_FLAGS) \
 	_(local,			bool,			VIEW_NO_FLAGS) \
 	_(format,			const char *,		VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
@@ -157,6 +157,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 
 #define COLUMN_OPTIONS(_) \
 	_(author, AUTHOR, AUTHOR_COLUMN_OPTIONS) \
+	_(committer, COMMITTER, AUTHOR_COLUMN_OPTIONS) \
 	_(commit_title, COMMIT_TITLE, COMMIT_TITLE_COLUMN_OPTIONS) \
 	_(date, DATE, DATE_COLUMN_OPTIONS) \
 	_(file_name, FILE_NAME, FILE_NAME_COLUMN_OPTIONS) \
@@ -198,7 +199,7 @@ void update_options_from_argv(const char *argv[]);
 const char *ignore_space_arg();
 const char *commit_order_arg();
 const char *commit_order_arg_with_graph(enum graph_display graph_display);
-const char *log_custom_pretty_arg(bool use_author_date);
+const char *log_custom_pretty_arg();
 const char *use_mailmap_arg();
 const char *diff_context_arg();
 const char *diff_prefix_arg();

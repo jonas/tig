@@ -107,6 +107,7 @@ set reference-format = (branch) <tag>
 set blame-view = \
 	date:default \
 	author:abbreviated \
+	committer:abbreviated \
 	file-name:auto \
 	id:yes,color \
 	line-number:yes,interval=5 text
@@ -447,14 +448,14 @@ Examples:
 // TEST: tigrc
 --------------------------------------------------------------------------
 # Enable both ID and line numbers in the blame view
-set blame-view = date:default author:full file-name:auto id:yes,color \
-		 line-number:yes,interval=5 text
+set blame-view = date:default author:full committer:no file-name:auto \
+		 id:yes,color line-number:yes,interval=5 text
 
 # Change grep view to be similar to `git grep` format
 set grep-view = file-name:yes line-number:yes,interval=1 text
 
 # Show file sizes as units
-set tree-view = line-number:no,interval=5 mode author:full \
+set tree-view = line-number:no,interval=5 mode author:full committer:no \
 		file-size:units date:default id:no file-name
 
 # Show line numbers for every 10th line in the pager view
@@ -472,23 +473,24 @@ The following list shows which the available view settings and what column types
 they support:
 
 blob-view, diff-view, log-view, pager-view, stage-view:: line-number, text
-blame-view:: author, date, file-name, id, line-number, text
+blame-view:: author, committer, date, file-name, id, line-number, text
 grep-view:: file-name, line-number, text
-main-view, reflog-view:: author, date, commit-title, id, line-number, ref
-refs-view:: author, date, commit-title, id, line-number, ref
+main-view, reflog-view:: author, committer, date, commit-title, id, line-number, ref
+refs-view:: author, committer, date, commit-title, id, line-number, ref
 stash-view:: author, date, commit-title, id, line-number
 status-view:: file-name, line-number, status
-tree-view:: author, date, id, file-name, file-size, line-number, mode
+tree-view:: author, committer, date, id, file-name, file-size, line-number, mode
 
 Supported column types and their respective column options:
 
-author::
+author, committer::
 
 	- 'display' (mixed) [full|abbreviated|email|email-user|<bool>]: How to
-	  display author names. If set to "abbreviated" author initials will be
-	  shown.
+	  display author/committer names. If set to "abbreviated"
+	  author/committer initials will be shown.
 	- 'width' (int): Fixed width for the column. When set to a value between
-	  1 and 10, the author name will be abbreviated to the author's initials.
+	  1 and 10, the author/committer name will be abbreviated to the
+	  author/committer's initials.
 	  When set to zero, the width is automatically sized to fit the content.
 	- 'maxwidth' (int): Maximum width of the column. Permit automatically
 	  sizing content, up to this limit. Can be specified either as the number
@@ -1079,6 +1081,7 @@ setting the *default* color option.
 |id			|The commit ID.
 |date			|The committer date or author date.
 |author			|The commit author.
+|committer		|The committer.
 |mode			|The file mode holding the permissions and type.
 |overflow		|Title text overflow.
 |directory		|The directory name.

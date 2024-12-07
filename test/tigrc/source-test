@@ -29,7 +29,7 @@ View manipulation
   q quit   Close all views and quit
 Misc
   : prompt Open the prompt
-[help] - line 1 of 27                                                        29%
+[help] - line 1 of 28                                                        28%
 EOF
 
 test_case source-file-quietly \
@@ -50,7 +50,7 @@ View manipulation
   q quit   Close all views and quit
 Misc
   : prompt Open the prompt
-[help] - line 1 of 27                                                        29%
+[help] - line 1 of 28                                                        28%
 EOF
 
 test_case source-nonexistent-file \
@@ -73,7 +73,7 @@ Misc
   : prompt Open the prompt
 [-] toggle bindings
 Toggle keys (enter: o <key>):
-[help] - line 1 of 25                                                        32%
+[help] - line 1 of 26                                                        30%
 EOF
 
 test_case source-nonexistent-file-quietly \
@@ -94,7 +94,7 @@ Misc
   : prompt Open the prompt
 [-] toggle bindings
 Toggle keys (enter: o <key>):
-[help] - line 1 of 25                                                        32%
+[help] - line 1 of 26                                                        30%
 EOF
 
 test_case source-tilde-path \
@@ -115,7 +115,7 @@ View manipulation
   q quit   Close all views and quit
 Misc
   : prompt Open the prompt
-[help] - line 1 of 27                                                        29%
+[help] - line 1 of 28                                                        28%
 EOF
 
 run_test_cases

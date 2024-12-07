@@ -63,6 +63,7 @@ Option toggling:
                            # :toggle line-number
                            D :toggle date
                            A :toggle author
+                           T :toggle committer
                            ~ :toggle line-graphics
                            F :toggle file-name
                            W :toggle ignore-space
@@ -126,4 +127,33 @@ External commands:
                            ! ?git stash drop %(stash)
 [-] pager bindings
 Internal commands:
-[help] - line 2 of 148                                                                 86%
+                           @ :/^@@
+[-] toggle bindings
+Toggle keys (enter: o <key>):
+                           . line-number                Toggle line numbers
+                           D date                       Toggle dates
+                           A author                     Toggle author
+                           T committer                  Toggle committer
+                           ~ line-graphics              Toggle graphics
+                           g commit-title-graph         Toggle revision graph
+                           # file-name                  Toggle file names
+                           * file-size                  Toggle file sizes
+                           W ignore-space               Toggle space changes
+                           l commit-order               Toggle commit order
+                           F commit-title-refs          Toggle reference display
+                           C show-changes               Toggle local change display
+                           X id                         Toggle commit ID display
+                           % file-filter                Toggle file filtering
+                           ^ rev-filter                 Toggle revision filtering
+                           $ commit-title-overflow      Toggle commit title overflow display
+                           d status-show-untracked-dirs Toggle untracked directory info
+                           | vertical-split             Toggle view split
+
+
+
+
+
+
+
+
+[help] - line 2 of 150                                                                          100%

@@ -26,7 +26,9 @@
 
 struct reference {
 	const struct ident *author;	/* Author of the last commit. */
-	struct time time;		/* Date of the last activity. */
+	struct time author_time;	/* Date of the last activity. */
+	const struct ident *committer;	/* Last committer. */
+	struct time commit_time;	/* Date of the last activity. */
 	char title[128];		/* First line of the commit message. */
 	const struct ref *ref;		/* Name and commit ID information. */
 };
@@ -50,9 +52,14 @@ static bool
 refs_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
 	const struct reference *reference = line->data;
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
+	bool use_author_date = column && column->opt.date.use_author;
 
 	column_data->author = reference->author;
-	column_data->date = &reference->time;
+	column_data->committer = reference->committer;
+	column_data->date = use_author_date
+				? &reference->author_time
+				: &reference->commit_time;
 	column_data->id = reference->ref->id;
 	column_data->ref = reference->ref;
 	column_data->commit_title = reference->title;
@@ -74,13 +81,11 @@ refs_request(struct view *view, enum request request, struct line *line)
 	case REQ_ENTER:
 	{
 		const struct ref *ref = reference->ref;
-		struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
-		bool use_author_date = column && column->opt.date.use_author;
 		const char *all_references_argv[] = {
 			GIT_MAIN_LOG(encoding_arg, commit_order_arg(),
 				"%(mainargs)", "",
 				refs_is_all(reference) ? "--all" : ref->id, "",
-				show_notes_arg(), log_custom_pretty_arg(use_author_date))
+				show_notes_arg(), log_custom_pretty_arg())
 		};
 		enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 
@@ -100,6 +105,7 @@ refs_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct reference template = {0};
 	char *author;
+	char *committer;
 	char *title;
 	size_t i;
 
@@ -110,10 +116,14 @@ refs_read(struct view *view, struct buffer *buf, bool force_stop)
 		return false;
 
 	author = io_memchr(buf, buf->data, 0);
-	title = io_memchr(buf, author, 0);
+	committer = io_memchr(buf, author, 0);
+	title = io_memchr(buf, committer, 0);
 
 	if (author)
-		parse_author_line(author, &template.author, &template.time);
+		parse_author_line(author, &template.author, &template.author_time);
+
+	if (committer)
+		parse_author_line(committer, &template.committer, &template.commit_time);
 
 	for (i = 0; i < view->lines; i++) {
 		struct reference *reference = view->line[i].data;
@@ -122,7 +132,9 @@ refs_read(struct view *view, struct buffer *buf, bool force_stop)
 			continue;
 
 		reference->author = template.author;
-		reference->time = template.time;
+		reference->author_time = template.author_time;
+		reference->committer = template.committer;
+		reference->commit_time = template.commit_time;
 
 		if (title)
 			string_expand(reference->title, sizeof(reference->title), title, strlen(title), 1);
@@ -184,16 +196,10 @@ static const char **refs_argv;
 static enum status_code
 refs_open(struct view *view, enum open_flags flags)
 {
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
-	bool use_author_date = column && column->opt.date.use_author;
 	const char *refs_log[] = {
-		"git", "log", encoding_arg, "--no-color", "--date=raw", use_author_date
-			? opt_mailmap
-				? "--pretty=format:%H%x00%aN <%aE> %ad%x00%s"
-				: "--pretty=format:%H%x00%an <%ae> %ad%x00%s"
-			: opt_mailmap
-				? "--pretty=format:%H%x00%aN <%aE> %cd%x00%s"
-				: "--pretty=format:%H%x00%an <%ae> %cd%x00%s",
+		"git", "log", encoding_arg, "--no-color", "--date=raw",
+			opt_mailmap ? "--pretty=format:%H%x00%aN <%aE> %ad%x00%cN <%cE> %cd%x00%s"
+				    : "--pretty=format:%H%x00%an <%ae> %ad%x00%cn <%ce> %cd%x00%s",
 			"--all", "--decorate-refs=", "--simplify-by-decoration",
 			NULL
 	};
@@ -276,7 +282,7 @@ static struct view_ops refs_ops = {
 	view_column_grep,
 	refs_select,
 	NULL,
-	view_column_bit(AUTHOR) | view_column_bit(COMMIT_TITLE) |
+	view_column_bit(AUTHOR) | view_column_bit(COMMITTER) | view_column_bit(COMMIT_TITLE) |
 		view_column_bit(DATE) | view_column_bit(ID) |
 		view_column_bit(LINE_NUMBER) | view_column_bit(REF),
 	refs_get_column_data,

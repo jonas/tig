@@ -137,11 +137,11 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 		ids[STRING_SIZE(NULL_ID)] = 0;
 
 	if (!time_now(&now, &tz)) {
-		commit.time.tz = tz.tz_minuteswest * 60;
-		commit.time.sec = now.tv_sec - commit.time.tz;
+		commit.author_time.tz = commit.commit_time.tz = tz.tz_minuteswest * 60;
+		commit.author_time.sec = commit.commit_time.sec = now.tv_sec - commit.author_time.tz;
 	}
 
-	commit.author = &unknown_ident;
+	commit.author = commit.committer = &unknown_ident;
 	main_register_commit(view, &commit, ids, false);
 	if (state->with_graph && *parent)
 		graph->render_parents(graph, &commit.graph);
@@ -276,12 +276,10 @@ main_open(struct view *view, enum open_flags flags)
 {
 	struct view_column *commit_title_column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
 	enum graph_display graph_display = main_with_graph(view, commit_title_column, flags);
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
-	bool use_author_date = column && column->opt.date.use_author;
 	const char *pretty_custom_argv[] = {
 		GIT_MAIN_LOG(encoding_arg, commit_order_arg_with_graph(graph_display),
 			"%(mainargs)", "%(cmdlineargs)", "%(revargs)", "%(fileargs)",
-			show_notes_arg(), log_custom_pretty_arg(use_author_date))
+			show_notes_arg(), log_custom_pretty_arg())
 	};
 	const char *pretty_raw_argv[] = {
 		GIT_MAIN_LOG_RAW(encoding_arg, commit_order_arg_with_graph(graph_display),
@@ -368,9 +366,14 @@ main_get_column_data(struct view *view, const struct line *line, struct view_col
 {
 	struct main_state *state = view->private;
 	struct commit *commit = line->data;
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
+	bool use_author_date = column && column->opt.date.use_author;
 
 	column_data->author = commit->author;
-	column_data->date = &commit->time;
+	column_data->committer = commit->committer;
+	column_data->date = use_author_date
+				? &commit->author_time
+				: &commit->commit_time;
 	column_data->id = commit->id;
 
 	column_data->commit_title = commit->title;
@@ -415,8 +418,6 @@ main_add_reflog(struct view *view, struct main_state *state, char *reflog)
 bool
 main_read(struct view *view, struct buffer *buf, bool force_stop)
 {
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
-	bool use_author_date = column && column->opt.date.use_author;
 	struct main_state *state = view->private;
 	struct graph *graph = state->graph;
 	enum line_type type;
@@ -470,9 +471,12 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 		main_register_commit(view, &state->current, line, is_boundary);
 
 		if (author) {
-			char *title = io_memchr(buf, author, 0);
+			char *committer = io_memchr(buf, author, 0);
+			char *title = io_memchr(buf, committer, 0);
 
-			parse_author_line(author, &commit->author, &commit->time);
+			parse_author_line(author, &commit->author, &commit->author_time);
+			if (committer)
+				parse_author_line(committer, &commit->committer, &commit->commit_time);
 			if (state->with_graph)
 				graph->render_parents(graph, &commit->graph);
 			if (title) {
@@ -511,14 +515,14 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 
 	case LINE_AUTHOR:
 		parse_author_line(line + STRING_SIZE("author "),
-				  &commit->author, use_author_date ? &commit->time : NULL);
+				  &commit->author, &commit->author_time);
 		if (state->with_graph)
 			graph->render_parents(graph, &commit->graph);
 		break;
 
 	case LINE_COMMITTER:
 		parse_author_line(line + STRING_SIZE("committer "),
-				  NULL, use_author_date ? NULL : &commit->time);
+				  &commit->committer, &commit->commit_time);
 		break;
 
 	default:
@@ -670,7 +674,7 @@ static struct view_ops main_ops = {
 	view_column_grep,
 	main_select,
 	main_done,
-	view_column_bit(AUTHOR) | view_column_bit(COMMIT_TITLE) |
+	view_column_bit(AUTHOR) | view_column_bit(COMMITTER) | view_column_bit(COMMIT_TITLE) |
 		view_column_bit(DATE) |	view_column_bit(ID) |
 		view_column_bit(LINE_NUMBER),
 	main_get_column_data,

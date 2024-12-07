@@ -53,7 +53,7 @@ View manipulation
                        <Tab> view-next           Move focus to the next view
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
-[help] - line 1 of 107                                                       26%
+[help] - line 1 of 109                                                                           25%
 EOF
 
 assert_equals 'help-search.screen' <<EOF
@@ -85,7 +85,7 @@ View manipulation
                        <Tab> view-next           Move focus to the next view
                      R, <F5> refresh             Reload and refresh view
                            O maximize            Maximize the current view
-[help] - line 20 of 107                                                      26%
+[help] - line 20 of 109                                                                          25%
 EOF
 
 assert_equals 'help-collapsed.screen' <<EOF
@@ -106,16 +106,16 @@ Internal commands:
   @ :/^@@
 [-] toggle bindings
 Toggle keys (enter: o <key>):
-                           . line-number                  Toggle line numbers
-                           D date                         Toggle dates
-                           A author                       Toggle author
-                           ~ line-graphics                Toggle graphics
-                           g commit-title-graph           Toggle revision graph
-                           # file-name                    Toggle file names
-                           * file-size                    Toggle file sizes
-                           W ignore-space                 Toggle space changes
-                           l commit-order                 Toggle commit order
-                           F commit-title-refs            Toggle reference display
-                           C show-changes                 Toggle local change display
-[help] - line 5 of 34                                                        82%
+                          . line-number                Toggle line numbers
+                          D date                       Toggle dates
+                          A author                     Toggle author
+                          T committer                  Toggle committer
+                          ~ line-graphics              Toggle graphics
+                          g commit-title-graph         Toggle revision graph
+                          # file-name                  Toggle file names
+                          * file-size                  Toggle file sizes
+                          W ignore-space               Toggle space changes
+                          l commit-order               Toggle commit order
+                          F commit-title-refs          Toggle reference display
+[help] - line 5 of 35                                                                            80%
 EOF

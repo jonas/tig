@@ -34,7 +34,9 @@ struct blame_commit {
 	char id[SIZEOF_REV];		/* SHA1 ID. */
 	char title[128];		/* First line of the commit message. */
 	const struct ident *author;	/* Author of the commit. */
-	struct time time;		/* Date from the author ident. */
+	struct time author_time;	/* Date from the author ident. */
+	const struct ident *committer;	/* Committer. */
+	struct time commit_time;	/* Date from the committer ident. */
 	const char *filename;		/* Name of file. */
 	char parent_id[SIZEOF_REV];	/* Parent/previous SHA1 ID. */
 	const char *parent_filename;	/* Parent/previous name of file. */
@@ -48,7 +50,7 @@ struct blame_header {
 };
 
 bool parse_blame_header(struct blame_header *header, const char *text);
-bool parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *line, bool use_author_date);
+bool parse_blame_info(struct blame_commit *commit, char *author, char *committer, char *line);
 
 /* Parse author lines where the name may be empty:
  *	author  <email@address.tld> 1138474660 +0100

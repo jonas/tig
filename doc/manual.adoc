@@ -88,8 +88,8 @@ from an external command, most often 'git log', 'git diff', or 'git show'.
 
 The main view::
 	Is the default view, and it shows a one line summary of each commit
-	in the chosen list of revisions. The summary includes committer date
-	or author date, author, and the first line of the log message.
+	in the chosen list of revisions. The summary includes committer or
+	author date, author, committer, and the first line of the log message.
 	Additionally, any repository references, such as tags, will be shown.
 
 The log view::
@@ -471,6 +471,7 @@ Misc
 |#	|Toggle line numbers on/off.
 |D	|Toggle date display on/off/relative/relative-compact/custom
 |A	|Toggle author display on/off/abbreviated/email/email user name.
+|T	|Toggle committer display on/off/abbreviated/email/email user name.
 |G	|Toggle revision graph visualization on/off.
 |~	|Toggle (line) graphics mode
 |F	|Toggle reference display on/off (tag and branch names).

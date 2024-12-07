@@ -139,7 +139,7 @@ match_blame_header(const char *name, char **line)
 }
 
 bool
-parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *line, bool use_author_date)
+parse_blame_info(struct blame_commit *commit, char *author, char *committer, char *line)
 {
 	if (match_blame_header("author ", &line)) {
 		string_ncopy_do(author, SIZEOF_STR, line, strlen(line));
@@ -154,11 +154,30 @@ parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *lin
 		commit->author = get_author(author, line);
 		author[0] = 0;
 
-	} else if (match_blame_header(use_author_date ? "author-time " : "committer-time ", &line)) {
-		parse_timesec(&commit->time, line);
+	} else if (match_blame_header("author-time ", &line)) {
+		parse_timesec(&commit->author_time, line);
 
-	} else if (match_blame_header(use_author_date ? "author-tz " : "committer-tz ", &line)) {
-		parse_timezone(&commit->time, line);
+	} else if (match_blame_header("author-tz ", &line)) {
+		parse_timezone(&commit->author_time, line);
+
+	} else if (match_blame_header("committer ", &line)) {
+		string_ncopy_do(committer, SIZEOF_STR, line, strlen(line));
+
+	} else if (match_blame_header("committer-mail ", &line)) {
+		char *end = strchr(line, '>');
+
+		if (end)
+			*end = 0;
+		if (*line == '<')
+			line++;
+		commit->committer = get_author(committer, line);
+		committer[0] = 0;
+
+	} else if (match_blame_header("committer-time ", &line)) {
+		parse_timesec(&commit->commit_time, line);
+
+	} else if (match_blame_header("committer-tz ", &line)) {
+		parse_timezone(&commit->commit_time, line);
 
 	} else if (match_blame_header("summary ", &line)) {
 		string_ncopy(commit->title, line, strlen(line));

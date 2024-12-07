@@ -260,6 +260,19 @@ draw_author(struct view *view, struct view_column *column, const struct ident *a
 }
 
 static bool
+draw_committer(struct view *view, struct view_column *column, const struct ident *committer)
+{
+	bool trim = author_trim(column->width);
+	const char *text = mkauthor(committer, MAX(column->opt.committer.width, column->opt.committer.maxwidth),
+				    column->opt.committer.display);
+
+	if (column->opt.committer.display == AUTHOR_NO)
+		return false;
+
+	return draw_field(view, LINE_COMMITTER, text, column->width, ALIGN_LEFT, trim);
+}
+
+static bool
 draw_id(struct view *view, struct view_column *column, const char *id)
 {
 	enum line_type type = LINE_ID;
@@ -492,6 +505,11 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 
 		case VIEW_COLUMN_AUTHOR:
 			if (draw_author(view, column, column_data.author))
+				return true;
+			continue;
+
+		case VIEW_COLUMN_COMMITTER:
+			if (draw_committer(view, column, column_data.committer))
 				return true;
 			continue;
 
