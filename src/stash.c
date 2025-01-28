@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -81,7 +81,7 @@ stash_request(struct view *view, enum request request, struct line *line)
 				"git", "stash", "show", encoding_arg, "--pretty=fuller",
 					"--patch-with-stat", diff_context_arg(),
 					ignore_space_arg(), word_diff_arg(), DIFF_ARGS,
-					"--no-color", "%(stash)", NULL
+					"%(cmdlineargs)", "--no-color", "%(stash)", NULL
 			};
 
 			if (!argv_format(diff_view.env, &diff_view.argv, diff_argv, 0))

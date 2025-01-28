@@ -6,6 +6,7 @@
 tigrc <<EOF
 set vertical-split = no
 set line-graphics = ascii
+set blame-view-date-use-author = yes
 EOF
 
 steps '

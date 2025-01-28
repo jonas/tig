@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -340,9 +340,9 @@ status_update_onbranch(void)
 
 			if (ref && strcmp(ref->name, "HEAD"))
 				head = ref->name;
-		} else if (!paths[i][1] && *repo.remote) {
+		} else if (!paths[i][1] && *repo.upstream) {
 			if (status_branch_tracking_info(buf, sizeof(buf),
-							head, repo.remote)) {
+							head, repo.upstream)) {
 				tracking_info = buf;
 			}
 		}

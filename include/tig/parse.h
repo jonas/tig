@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -48,7 +48,7 @@ struct blame_header {
 };
 
 bool parse_blame_header(struct blame_header *header, const char *text);
-bool parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *line);
+bool parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *line, bool use_author_date);
 
 /* Parse author lines where the name may be empty:
  *	author  <email@address.tld> 1138474660 +0100

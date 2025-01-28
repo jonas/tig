@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  * Copyright (c) 2013 Drew Northup <n1xim.email@gmail.com>
  *
  * This program is free software; you can redistribute it and/or

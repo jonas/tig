@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -219,6 +219,8 @@ static bool
 blame_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct blame_state *state = view->private;
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
+	bool use_author_date = column && column->opt.date.use_author;
 
 	if (!buf) {
 		if (failed_to_load_initial_view(view))
@@ -256,7 +258,7 @@ blame_read(struct view *view, struct buffer *buf, bool force_stop)
 
 		state->commit = NULL;
 
-	} else if (parse_blame_info(state->commit, state->author, buf->data)) {
+	} else if (parse_blame_info(state->commit, state->author, buf->data, use_author_date)) {
 		if (!state->commit->filename)
 			return false;
 
@@ -431,6 +433,7 @@ blame_request(struct view *view, enum request request, struct line *line)
 			const char *diff_parent_argv[] = {
 				GIT_DIFF_BLAME(encoding_arg,
 					diff_context_arg(),
+					diff_prefix_arg(),
 					ignore_space_arg(),
 					word_diff_arg(),
 					blame->commit->filename)
@@ -499,7 +502,7 @@ blame_select(struct view *view, struct line *line)
 static struct view_ops blame_ops = {
 	"line",
 	argv_env.commit,
-	VIEW_SEND_CHILD_ENTER | VIEW_BLAME_LIKE,
+	VIEW_SEND_CHILD_ENTER | VIEW_BLAME_LIKE | VIEW_REFRESH,
 	sizeof(struct blame_state),
 	blame_open,
 	blame_read,

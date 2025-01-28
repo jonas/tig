@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -183,7 +183,7 @@ static enum status_code
 add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref_opt *opt)
 {
 	struct ref *ref = NULL;
-	enum reference_type type = REFERENCE_BRANCH;
+	enum reference_type type = REFERENCE_OTHER;
 	void **ref_slot = NULL;
 
 	if (!prefixcmp(name, "refs/tags/")) {
@@ -218,14 +218,27 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		namelen	= strlen(name);
 
 	} else if (!prefixcmp(name, "refs/heads/")) {
+		type = REFERENCE_BRANCH;
 		namelen -= STRING_SIZE("refs/heads/");
 		name	+= STRING_SIZE("refs/heads/");
 		if (strlen(opt->head) == namelen &&
 		    !strncmp(opt->head, name, namelen))
 			type = REFERENCE_HEAD;
 
+	} else if (!strcmp(name, "refs/stash")) {
+		type = REFERENCE_STASH;
+		namelen -= STRING_SIZE("refs/");
+		name	+= STRING_SIZE("refs/");
+
+	} else if (!prefixcmp(name, "refs/notes/")) {
+		type = REFERENCE_NOTE;
+		namelen -= STRING_SIZE("refs/");
+		name	+= STRING_SIZE("refs/");
+
 	} else if (!prefixcmp(name, "refs/prefetch/")) {
 		type = REFERENCE_PREFETCH;
+		namelen -= STRING_SIZE("refs/");
+		name	+= STRING_SIZE("refs/");
 
 	} else if (!strcmp(name, "HEAD")) {
 		/* Handle the case of HEAD not being a symbolic ref,
@@ -233,12 +246,6 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 		if (*opt->head)
 			return SUCCESS;
 		type = REFERENCE_HEAD;
-
-	} else if (!strcmp(name, "refs/stash")) {
-		type = REFERENCE_STASH;
-
-	} else if (!prefixcmp(name, "refs/")) {
-		type = REFERENCE_OTHER;
 	}
 
 	/* If we are reloading or it's an annotated tag, replace the
@@ -325,7 +332,7 @@ reload_refs(bool force)
 		"git", "show-ref", "--head", "--dereference", NULL
 	};
 	char ls_remote_cmd[SIZEOF_STR];
-	struct ref_opt opt = { repo.remote, repo.head, WATCH_NONE };
+	struct ref_opt opt = { repo.upstream, repo.head, WATCH_NONE };
 	struct repo_info old_repo = repo;
 	enum status_code code;
 	const char *env = getenv("TIG_LS_REMOTE");

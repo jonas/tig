@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -24,6 +24,7 @@ typedef char repo_str[SIZEOF_STR];
 	_(repo_ref, head) \
 	_(repo_rev, head_id) \
 	_(repo_ref, remote) \
+	_(repo_ref, upstream) \
 	_(repo_str, cdup) \
 	_(repo_str, prefix) \
 	_(repo_str, git_dir) \

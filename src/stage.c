@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -205,6 +205,8 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *single,
 	if (!diff_hdr)
 		return false;
 
+	if (opt_diff_noprefix)
+		apply_argv[argc++] = "-p0";
 	if (!revert)
 		apply_argv[argc++] = "--cached";
 	if (revert || stage_line_type == LINE_STAT_STAGED)
@@ -711,19 +713,21 @@ stage_open(struct view *view, enum open_flags flags)
 			stage_status.new.name)
 	};
 	const char *index_show_argv[] = {
-		GIT_DIFF_STAGED(encoding_arg, diff_context_arg(), ignore_space_arg(),
-			word_diff_arg(), stage_status.old.name, stage_status.new.name)
+		GIT_DIFF_STAGED(encoding_arg, diff_context_arg(), diff_prefix_arg(),
+			ignore_space_arg(), word_diff_arg(), stage_status.old.name,
+			stage_status.new.name)
 	};
 	const char *files_show_argv[] = {
-		GIT_DIFF_UNSTAGED(encoding_arg, diff_context_arg(), ignore_space_arg(),
-			word_diff_arg(), stage_status.old.name, stage_status.new.name)
+		GIT_DIFF_UNSTAGED(encoding_arg, diff_context_arg(), diff_prefix_arg(),
+			ignore_space_arg(), word_diff_arg(), stage_status.old.name,
+			stage_status.new.name)
 	};
 	/* Diffs for unmerged entries are empty when passing the new
 	 * path, so leave out the new path. */
 	const char *files_unmerged_argv[] = {
 		"git", "diff-files", encoding_arg, "--textconv", "--patch-with-stat",
-			DIFF_ARGS, diff_context_arg(), ignore_space_arg(), "--",
-			stage_status.old.name, NULL
+			DIFF_ARGS, diff_context_arg(), diff_prefix_arg(),
+			ignore_space_arg(), "--", stage_status.old.name, NULL
 	};
 	static const char *file_argv[] = { repo.exec_dir, stage_status.new.name, NULL };
 	const char **argv = NULL;
@@ -771,7 +775,7 @@ stage_open(struct view *view, enum open_flags flags)
 		diff_save_line(view, &state->diff, flags);
 
 	view->vid[0] = 0;
-	code = begin_update(view, repo.exec_dir, argv, flags);
+	code = begin_update(view, repo.exec_dir, argv, flags | OPEN_WITH_STDERR);
 	if (code == SUCCESS && stage_line_type != LINE_STAT_UNTRACKED) {
 		struct stage_state *state = view->private;
 
@@ -794,7 +798,8 @@ stage_read(struct view *view, struct buffer *buf, bool force_stop)
 
 	if (!buf) {
 		if (!diff_done_highlight(&state->diff)) {
-			report("Failed run the diff-highlight program: %s", opt_diff_highlight);
+			if (!force_stop)
+				report("Failed to run the diff-highlight program: %s", opt_diff_highlight);
 			return false;
 		}
 

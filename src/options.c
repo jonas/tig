@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -141,6 +141,12 @@ diff_context_arg()
 }
 
 const char *
+diff_prefix_arg()
+{
+	return opt_diff_noprefix ? "--no-prefix" : ""; /* --default-prefix did not exist before Git 2.41. */
+}
+
+const char *
 word_diff_arg()
 {
 	return opt_word_diff ? "--word-diff=plain" : "--word-diff=none";
@@ -153,11 +159,15 @@ use_mailmap_arg()
 }
 
 const char *
-log_custom_pretty_arg(void)
+log_custom_pretty_arg(bool use_author_date)
 {
-	return opt_mailmap
-		? "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%s%x00%N"
-		: "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s%x00%N";
+	return use_author_date
+		? opt_mailmap
+			? "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%s%x00%N"
+			: "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s%x00%N"
+		: opt_mailmap
+			? "--pretty=format:commit %m %H %P%x00%aN <%aE> %cd%x00%s%x00%N"
+			: "--pretty=format:commit %m %H %P%x00%an <%ae> %cd%x00%s%x00%N";
 }
 
 #define ENUM_ARG(enum_name, arg_string) ENUM_MAP_ENTRY(arg_string, enum_name)
@@ -260,7 +270,7 @@ update_options_from_argv(const char *argv[])
 		}
 
 		if (!strcmp(flag, "--word-diff=none")) {
-			/* opt_word_diff = false; */
+			opt_word_diff = false;
 			mark_option_seen(&opt_word_diff);
 			continue;
 		}
@@ -275,6 +285,18 @@ update_options_from_argv(const char *argv[])
 		if (!prefixcmp(flag, "--word-diff-regex=")) {
 			opt_word_diff = true;
 			mark_option_seen(&opt_word_diff);
+			/* Keep the flag in argv. */
+		}
+
+		if (!strcmp(flag, "--no-prefix")) {
+			opt_diff_noprefix = true;
+			mark_option_seen(&opt_diff_noprefix);
+			/* Keep the flag in argv. */
+		}
+
+		if (!strcmp(flag, "--default-prefix")) {
+			opt_diff_noprefix = false;
+			mark_option_seen(&opt_diff_noprefix);
 			/* Keep the flag in argv. */
 		}
 
@@ -1406,13 +1428,11 @@ set_remote_branch(const char *name, const char *value, size_t valuelen)
 		string_ncopy(repo.remote, value, valuelen);
 
 	} else if (*repo.remote && !strcmp(name, ".merge")) {
-		size_t from = strlen(repo.remote);
-
 		if (!prefixcmp(value, "refs/heads/"))
 			value += STRING_SIZE("refs/heads/");
 
-		if (!string_format_from(repo.remote, &from, "/%s", value))
-			repo.remote[0] = 0;
+		if (!string_format(repo.upstream, "%s/%s", repo.remote, value))
+			repo.upstream[0] = 0;
 	}
 }
 
@@ -1531,10 +1551,11 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 	else if (!strcmp(name, "core.abbrev"))
 		parse_int(&opt_id_width, value, 0, SIZEOF_REV - 1);
 
-	else if (!strcmp(name, "diff.noprefix"))
-		parse_bool(&opt_diff_noprefix, value);
+	else if (!strcmp(name, "diff.noprefix")) {
+		if (!find_option_info_by_value(&opt_diff_noprefix)->seen)
+			parse_bool(&opt_diff_noprefix, value);
 
-	else if (!strcmp(name, "status.showuntrackedfiles"))
+	} else if (!strcmp(name, "status.showuntrackedfiles"))
 		opt_status_show_untracked_files = !!strcmp(value, "no"),
 		opt_status_show_untracked_dirs = !strcmp(value, "all");
 

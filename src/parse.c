@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -73,7 +73,8 @@ parse_author_line(char *ident, const struct ident **author, struct time *time)
 	if (!*email)
 		email = *name ? name : unknown_ident.email;
 
-	*author = get_author(name, email);
+	if (author)
+		*author = get_author(name, email);
 
 	/* Parse epoch and timezone */
 	if (time && emailend && emailend[1] == ' ') {
@@ -138,7 +139,7 @@ match_blame_header(const char *name, char **line)
 }
 
 bool
-parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *line)
+parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *line, bool use_author_date)
 {
 	if (match_blame_header("author ", &line)) {
 		string_ncopy_do(author, SIZEOF_STR, line, strlen(line));
@@ -153,10 +154,10 @@ parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *lin
 		commit->author = get_author(author, line);
 		author[0] = 0;
 
-	} else if (match_blame_header("author-time ", &line)) {
+	} else if (match_blame_header(use_author_date ? "author-time " : "committer-time ", &line)) {
 		parse_timesec(&commit->time, line);
 
-	} else if (match_blame_header("author-tz ", &line)) {
+	} else if (match_blame_header(use_author_date ? "author-tz " : "committer-tz ", &line)) {
 		parse_timezone(&commit->time, line);
 
 	} else if (match_blame_header("summary ", &line)) {

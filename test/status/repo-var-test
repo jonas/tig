@@ -8,7 +8,8 @@ export LINES=10
 steps "
 	:exec !assert-var '%(repo:head)' == master
 	:exec !assert-var '%(repo:head-id)' == feeb2dfd5e09e887e4b6c901e7d91a4c85a7831d
-	:exec !assert-var '%(repo:remote)' == origin/master
+	:exec !assert-var '%(repo:remote)' == origin
+	:exec !assert-var '%(repo:upstream)' == origin/master
 	:exec !assert-var '%(repo:cdup)' == ../
 	:exec !assert-var '%(repo:prefix)' == repo-two-a/
 	:exec !assert-var '%(repo:git-dir)' == '$HOME/$work_dir/.git'
@@ -33,4 +34,4 @@ Untracked files:
 [status] Nothing to update                                                  100%
 EOF
 
-assert_vars 7
+assert_vars 8

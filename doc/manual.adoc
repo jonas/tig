@@ -88,9 +88,9 @@ from an external command, most often 'git log', 'git diff', or 'git show'.
 
 The main view::
 	Is the default view, and it shows a one line summary of each commit
-	in the chosen list of revisions. The summary includes author date,
-	author, and the first line of the log message. Additionally, any
-	repository references, such as tags, will be shown.
+	in the chosen list of revisions. The summary includes committer date
+	or author date, author, and the first line of the log message.
+	Additionally, any repository references, such as tags, will be shown.
 
 The log view::
 	Presents a more rich view of the revision log showing the whole log
@@ -192,8 +192,10 @@ following variables.
 |%(text)		|The text column of the currently selected line.
 |%(repo:head)		|The name of the checked out branch, e.g. `master`
 |%(repo:head-id)	|The commit ID of the checked out branch.
-|%(repo:remote)		|The remote associated with the checked out branch,
-			 e.g. `origin/master`.
+|%(repo:remote)		|The remote name associated with the checked out
+			 branch, e.g. `origin`.
+|%(repo:upstream)	|The upstream branch associated with the checked out
+			 branch, e.g. `origin/master`.
 |%(repo:cdup)		|The path to change directory to the repository root,
 			 e.g. `../`
 |%(repo:prefix)		|The path prefix of the current work directory,
@@ -655,7 +657,7 @@ new releases and how to report bugs and feature requests.
 Copyright
 ---------
 
-Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

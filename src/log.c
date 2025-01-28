@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -73,7 +73,7 @@ log_open(struct view *view, enum open_flags flags)
 	};
 	enum status_code code;
 
-	code = begin_update(view, NULL, log_argv, flags);
+	code = begin_update(view, NULL, log_argv, flags | OPEN_WITH_STDERR);
 	if (code != SUCCESS)
 		return code;
 

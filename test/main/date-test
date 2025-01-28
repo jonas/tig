@@ -8,6 +8,7 @@ export LINES=27
 
 tigrc <<EOF
 set vertical-split = no
+set main-view-date-use-author = yes
 EOF
 
 steps '

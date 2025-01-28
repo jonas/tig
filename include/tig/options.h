@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -65,7 +65,7 @@ typedef struct view_column *view_settings;
 	_(pager_autoscroll,		bool,			VIEW_NO_FLAGS) \
 	_(pager_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(pgrp,				bool,			VIEW_NO_FLAGS) \
-	_(reference_format,		struct ref_format **,	VIEW_NO_FLAGS) \
+	_(reference_format,		struct ref_format **,	VIEW_LOG_LIKE) \
 	_(refresh_interval,		int,			VIEW_NO_FLAGS) \
 	_(refresh_mode,			enum refresh_mode,	VIEW_NO_FLAGS) \
 	_(refs_view,			view_settings,		VIEW_NO_FLAGS) \
@@ -110,6 +110,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 
 #define DATE_COLUMN_OPTIONS(_) \
 	_(display,			enum date,		VIEW_NO_FLAGS) \
+	_(use_author,			bool,			VIEW_BLAME_LIKE | VIEW_LOG_LIKE) \
 	_(local,			bool,			VIEW_NO_FLAGS) \
 	_(format,			const char *,		VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
@@ -196,9 +197,10 @@ void update_options_from_argv(const char *argv[]);
 const char *ignore_space_arg();
 const char *commit_order_arg();
 const char *commit_order_arg_with_graph(enum graph_display graph_display);
-const char *log_custom_pretty_arg();
+const char *log_custom_pretty_arg(bool use_author_date);
 const char *use_mailmap_arg();
 const char *diff_context_arg();
+const char *diff_prefix_arg();
 const char *word_diff_arg();
 const char *show_notes_arg();
 

@@ -1,6 +1,34 @@
 Release notes
 =============
 
+tig-2.5.11
+----------
+
+Incompatibilities:
+
+ - Update remote repo variables. (#1358)
+
+Bug fixes:
+
+ - Fix various issues with `diff.noprefix` and `--no-prefix`.
+ - Fix `Ctrl-C` behavior within the Readline prompt. (#1342)
+ - Fix message upon edit from diffstat without patch.
+ - Fix missing dates in the refs view.
+ - Don't report an error when diff-highlight is killed intentionally.
+ - Fix parsing of reflog designator in timestamp format.
+
+Improvements:
+
+ - Open the blob corresponding to the diff line. (#1334)
+ - Keep cursor position in the main view when toggling
+   file-filter and rev-filter.
+ - Make errors visible in views showing Git output. (#1346)
+ - Allow different colors for all references types.
+ - Enable search in sections titles. (#1043)
+ - Show committer date by default in the date column. (#294)
+ - Only show stash, notes and prefetch in the refs view when
+   invoked with `tig refs --all`. (#1359)
+
 tig-2.5.10
 ----------
 

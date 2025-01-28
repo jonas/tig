@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -100,9 +100,13 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 
 	view_column_info_update(view, line);
 
-	if ((opt_start_on_head && is_head_commit(commit->id)) ||
-	    (view->env->goto_id[0] && !strncmp(view->env->goto_id, commit->id, SIZEOF_REV - 1)))
+	if (view->env->goto_id[0] && !strncmp(view->env->goto_id, commit->id, SIZEOF_REV - 1)) {
 		select_view_line(view, line->lineno + 1);
+		view->env->goto_id[0] = 0;
+	} else if (opt_start_on_head && is_head_commit(commit->id)) {
+		select_view_line(view, line->lineno + 1);
+		opt_start_on_head = false;
+	}
 
 	return commit;
 }
@@ -272,10 +276,12 @@ main_open(struct view *view, enum open_flags flags)
 {
 	struct view_column *commit_title_column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
 	enum graph_display graph_display = main_with_graph(view, commit_title_column, flags);
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
+	bool use_author_date = column && column->opt.date.use_author;
 	const char *pretty_custom_argv[] = {
 		GIT_MAIN_LOG(encoding_arg, commit_order_arg_with_graph(graph_display),
 			"%(mainargs)", "%(cmdlineargs)", "%(revargs)", "%(fileargs)",
-			show_notes_arg(), log_custom_pretty_arg())
+			show_notes_arg(), log_custom_pretty_arg(use_author_date))
 	};
 	const char *pretty_raw_argv[] = {
 		GIT_MAIN_LOG_RAW(encoding_arg, commit_order_arg_with_graph(graph_display),
@@ -381,12 +387,12 @@ main_get_column_data(struct view *view, const struct line *line, struct view_col
 static bool
 main_add_reflog(struct view *view, struct main_state *state, char *reflog)
 {
-	char *end = strchr(reflog, ' ');
+	char *end = strchr(reflog, '}');
 	int id_width;
 
 	if (!end)
 		return false;
-	*end = 0;
+	*++end = 0;
 
 	if (!realloc_reflogs(&state->reflog, state->reflogs, 1)
 	    || !(reflog = strdup(reflog)))
@@ -409,6 +415,8 @@ main_add_reflog(struct view *view, struct main_state *state, char *reflog)
 bool
 main_read(struct view *view, struct buffer *buf, bool force_stop)
 {
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
+	bool use_author_date = column && column->opt.date.use_author;
 	struct main_state *state = view->private;
 	struct graph *graph = state->graph;
 	enum line_type type;
@@ -503,9 +511,14 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 
 	case LINE_AUTHOR:
 		parse_author_line(line + STRING_SIZE("author "),
-				  &commit->author, &commit->time);
+				  &commit->author, use_author_date ? &commit->time : NULL);
 		if (state->with_graph)
 			graph->render_parents(graph, &commit->graph);
+		break;
+
+	case LINE_COMMITTER:
+		parse_author_line(line + STRING_SIZE("committer "),
+				  NULL, use_author_date ? NULL : &commit->time);
 		break;
 
 	default:

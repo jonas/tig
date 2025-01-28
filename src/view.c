@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -1143,6 +1143,15 @@ view_column_grep(struct view *view, struct line *line)
 
 	if (!ok)
 		return false;
+
+	if (column_data.section) {
+		const char *text[] = {
+			column_data.section->opt.section.text,
+			NULL
+		};
+
+		return grep_text(view, text);
+	}
 
 	for (column = view->columns; column; column = column->next) {
 		const char *text[] = {

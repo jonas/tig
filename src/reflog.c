@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -44,7 +44,7 @@ reflog_request(struct view *view, enum request request, struct line *line)
 		const char *main_argv[] = {
 			GIT_MAIN_LOG(encoding_arg, commit_order_arg(),
 				"%(mainargs)", "", commit->id, "",
-				show_notes_arg(), log_custom_pretty_arg())
+				show_notes_arg(), log_custom_pretty_arg(false))
 		};
 		enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 

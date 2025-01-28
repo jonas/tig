@@ -20,14 +20,14 @@ test_tig refs +42
 assert_equals 'position.screen' <<EOF
 2013-11-19 21:56 -0500 Jonas Fonseca ref-15         sudoku: use iterator instead
 2013-11-26 20:13 -0500 Jonas Fonseca ref-14         Rename projects to be groupe
-2013-11-26 22:03 -0500 Jonas Fonseca ref-13         Move benchmark registration
+2013-11-26 22:24 -0500 Jonas Fonseca ref-13         Move benchmark registration
 2013-11-26 22:52 -0500 Jonas Fonseca ref-12         Fix reference setup to work
 2013-11-26 22:55 -0500 Jonas Fonseca ref-11         Exclude Sudoku when running
 2013-11-26 23:22 -0500 Jonas Fonseca ref-10         Disable phantomjs by default
-2013-11-26 23:31 -0500 Jonas Fonseca ref-9          Solve the easiest sudoku gri
+2013-11-26 23:33 -0500 Jonas Fonseca ref-9          Solve the easiest sudoku gri
 2013-11-26 23:39 -0500 Jonas Fonseca ref-8          Extract the benchmark list v
 2013-12-03 23:35 -0500 Jonas Fonseca ref-7          Use Scala.js 0.2-SNAPSHOT
-2013-12-17 00:02 +0100 Jonas Fonseca ref-6          Update links to reflect proj
+2013-12-17 00:10 +0100 Jonas Fonseca ref-6          Update links to reflect proj
 2014-01-16 07:47 -0800 Jonas Fonseca ref-5          Merge pull request #4 from p
 2014-01-16 17:39 -0500 Jonas Fonseca ref-4          Integrate app code into the
 2014-01-16 17:43 -0500 Jonas Fonseca ref-3          Bump Scala.js version to 0.3

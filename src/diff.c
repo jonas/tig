@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -36,7 +36,7 @@ diff_open(struct view *view, enum open_flags flags)
 
 	diff_save_line(view, view->private, flags);
 
-	code = begin_update(view, NULL, diff_argv, flags);
+	code = begin_update(view, NULL, diff_argv, flags | OPEN_WITH_STDERR);
 	if (code != SUCCESS)
 		return code;
 
@@ -520,7 +520,8 @@ diff_read(struct view *view, struct buffer *buf, bool force_stop)
 
 	if (!buf) {
 		if (!diff_done_highlight(state)) {
-			report("Failed run the diff-highlight program: %s", opt_diff_highlight);
+			if (!force_stop)
+				report("Failed to run the diff-highlight program: %s", opt_diff_highlight);
 			return false;
 		}
 
@@ -588,7 +589,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 				break;
 			header = NULL;
 
-		} else if (parse_blame_info(commit, author, buf.data)) {
+		} else if (parse_blame_info(commit, author, buf.data, false)) {
 			ok = commit->filename != NULL;
 			break;
 		}
@@ -633,7 +634,7 @@ diff_get_lineno(struct view *view, struct line *line, bool old)
 }
 
 static enum request
-diff_trace_origin(struct view *view, struct line *line)
+diff_trace_origin(struct view *view, enum request request, struct line *line)
 {
 	struct line *commit_line = find_prev_line_by_type(view, line, LINE_COMMIT);
 	char id[SIZEOF_REV];
@@ -652,16 +653,9 @@ diff_trace_origin(struct view *view, struct line *line)
 		return REQ_NONE;
 	}
 
-	for (; diff < line && !file; diff++) {
-		const char *data = box_text(diff);
+	file = diff_get_pathname(view, line, line->type == LINE_DIFF_DEL);
 
-		if (!prefixcmp(data, "--- a/")) {
-			file = data + STRING_SIZE("--- a/");
-			break;
-		}
-	}
-
-	if (diff == line || !file) {
+	if (!file) {
 		report("Failed to read the file name");
 		return REQ_NONE;
 	}
@@ -704,10 +698,10 @@ diff_trace_origin(struct view *view, struct line *line)
 	}
 
 	string_ncopy(view->env->file, commit.filename, strlen(commit.filename));
-	string_copy(view->env->ref, header.id);
+	string_copy(request == REQ_VIEW_BLAME ? view->env->ref : view->env->commit, header.id);
 	view->env->goto_lineno = header.orig_lineno - 1;
 
-	return REQ_VIEW_BLAME;
+	return request;
 }
 
 const char *
@@ -763,7 +757,7 @@ diff_common_edit(struct view *view, enum request request, struct line *line)
 		lineno = diff_get_lineno(view, line, false);
 	}
 
-	if (!file) {
+	if (!file || !*file) {
 		report("Nothing to edit");
 		return REQ_NONE;
 	}
@@ -782,7 +776,8 @@ diff_request(struct view *view, enum request request, struct line *line)
 {
 	switch (request) {
 	case REQ_VIEW_BLAME:
-		return diff_trace_origin(view, line);
+	case REQ_VIEW_BLOB:
+		return diff_trace_origin(view, request, line);
 
 	case REQ_EDIT:
 		return diff_common_edit(view, request, line);

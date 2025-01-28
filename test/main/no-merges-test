@@ -5,6 +5,10 @@
 
 export LINES=16
 
+tigrc <<EOF
+set main-view-date-use-author = yes
+EOF
+
 in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
 
 steps '

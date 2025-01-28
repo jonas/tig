@@ -26,6 +26,7 @@
 #   date
 #    - display (enum) [no|default|relative|relative-compact|custom]
 #					: Show dates?
+#    - use-author (bool)		: Show author date instead of committer date?
 #    - local (bool)			: Show local dates?
 #    - format (string)			: Custom strftime(3) format
 #					  Note: %Z is formatted as %z
@@ -100,6 +101,7 @@ set truncation-delimiter	= ~		# Character drawn for truncations, or "utf-8"
 #  - replace		: A replaced reference.
 #  - branch		: A branch.
 #  - stash		: The stash.
+#  - note		: Notes.
 #  - prefetch		: Refs prefetched by `git maintenance`.
 #  - other		: Any other reference.
 #
@@ -108,8 +110,8 @@ set truncation-delimiter	= ~		# Character drawn for truncations, or "utf-8"
 # Similarly, if no format is specified for `tracked-remote`, the format for
 # `remote` is used, and if no format is specified for any other reference
 # type, the format for `branch` is used.
-# Prefix with `hide:` to not show that reference type, e.g. `hide:remote`.
-set reference-format		= [branch] <tag> {remote} ~replace~ hide:prefetch
+# Prefix with `hide:` to not show that reference type, e.g. `hide:prefetch`.
+set reference-format		= [branch] <tag> {remote} ~replace~
 
 # Settings controlling how content is read from Git
 set commit-order		= auto		# Enum: auto, default, topo, date, reverse (main)
@@ -168,7 +170,7 @@ set pager-autoscroll		= no		# Scroll the pager view automatically while loading?
 #
 # User-defined commands can optionally refer to Tig's internal state
 # using the following variable names, which are substituted before
-# commands are run:
+# commands are run (see 'man tigrc' for the full list):
 #
 #   %(head)		The current ref ID. Defaults to HEAD
 #   %(commit)		The current commit ID.
@@ -186,6 +188,9 @@ set pager-autoscroll		= no		# Scroll the pager view automatically while loading?
 #   %(cmdlineargs)	All other options passed on the command line.
 #   %(diffargs)		The diff options from `diff-options` or `TIG_DIFF_OPTS`
 #   %(prompt)		Prompt for the argument value.
+#   %(repo:head)	The name of the checked out branch.
+#   %(repo:remote)	The remote name associated with the checked out branch.
+#   %(repo:upstream)	The upstream branch associated with the checked out branch.
 
 bind main	C	?git cherry-pick %(commit)
 bind status	C	!git commit
@@ -428,6 +433,10 @@ color main-annotated		default	default	bold
 color main-tag			magenta	default	bold
 color main-local-tag		magenta	default
 color main-remote		yellow	default
+color main-stash		blue	default
+color main-note			blue	default
+color main-prefetch		blue	default
+color main-other		blue	default
 color main-replace		cyan	default
 color main-tracked		yellow	default	bold
 color main-ref			cyan	default

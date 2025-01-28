@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -43,6 +43,7 @@ enum refs_filter {
 	REFS_FILTER_TAGS     = 1 << 0,
 	REFS_FILTER_BRANCHES = 1 << 1,
 	REFS_FILTER_REMOTES  = 1 << 2,
+	REFS_FILTER_ALL	     = 1 << 3,
 } refs_filter = REFS_FILTER_NONE;
 
 static bool
@@ -73,11 +74,13 @@ refs_request(struct view *view, enum request request, struct line *line)
 	case REQ_ENTER:
 	{
 		const struct ref *ref = reference->ref;
+		struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
+		bool use_author_date = column && column->opt.date.use_author;
 		const char *all_references_argv[] = {
 			GIT_MAIN_LOG(encoding_arg, commit_order_arg(),
 				"%(mainargs)", "",
 				refs_is_all(reference) ? "--all" : ref->id, "",
-				show_notes_arg(), log_custom_pretty_arg())
+				show_notes_arg(), log_custom_pretty_arg(use_author_date))
 		};
 		enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 
@@ -137,9 +140,10 @@ refs_open_visitor(void *data, const struct ref *ref)
 	struct view *view = data;
 	struct reference *reference;
 	bool is_all = ref == refs_all;
+	const struct ref_format *fmt = get_ref_format(opt_reference_format, ref);
 	struct line *line;
 
-        if (!is_all)
+	if (!is_all)
 		switch (refs_filter) {
 		case REFS_FILTER_TAGS:
 			if (ref->type != REFERENCE_TAG && ref->type != REFERENCE_LOCAL_TAG)
@@ -154,6 +158,13 @@ refs_open_visitor(void *data, const struct ref *ref)
 				return true;
 			break;
 		case REFS_FILTER_NONE:
+			if (ref->type == REFERENCE_STASH ||
+			    ref->type == REFERENCE_NOTE ||
+			    ref->type == REFERENCE_PREFETCH ||
+			    (!strcmp(fmt->start, "hide:") && !*fmt->end))
+				return true;
+			break;
+		case REFS_FILTER_ALL:
 		default:
 			break;
 		}
@@ -173,11 +184,18 @@ static const char **refs_argv;
 static enum status_code
 refs_open(struct view *view, enum open_flags flags)
 {
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
+	bool use_author_date = column && column->opt.date.use_author;
 	const char *refs_log[] = {
-		"git", "log", encoding_arg, "--no-color", "--date=raw",
-			opt_mailmap ? "--pretty=format:%H%x00%aN <%aE> %ad%x00%s"
-				    : "--pretty=format:%H%x00%an <%ae> %ad%x00%s",
-			"--all", "--simplify-by-decoration", NULL
+		"git", "log", encoding_arg, "--no-color", "--date=raw", use_author_date
+			? opt_mailmap
+				? "--pretty=format:%H%x00%aN <%aE> %ad%x00%s"
+				: "--pretty=format:%H%x00%an <%ae> %ad%x00%s"
+			: opt_mailmap
+				? "--pretty=format:%H%x00%aN <%aE> %cd%x00%s"
+				: "--pretty=format:%H%x00%an <%ae> %cd%x00%s",
+			"--all", "--decorate-refs=", "--simplify-by-decoration",
+			NULL
 	};
 	enum status_code code;
 	const char *name = REFS_ALL_NAME;
@@ -198,6 +216,8 @@ refs_open(struct view *view, enum open_flags flags)
 		} else if (!strncmp(refs_argv[i], "--remotes", 9)) {
 			refs_filter = REFS_FILTER_REMOTES;
 			name = REFS_REMOTES_NAME;
+		} else if (!strncmp(refs_argv[i], "--all", 5)) {
+			refs_filter = REFS_FILTER_ALL;
 		}
 	}
 
@@ -247,7 +267,7 @@ refs_select(struct view *view, struct line *line)
 static struct view_ops refs_ops = {
 	"reference",
 	argv_env.head,
-	VIEW_REFRESH | VIEW_SORTABLE,
+	VIEW_REFRESH | VIEW_SORTABLE | VIEW_LOG_LIKE,
 	0,
 	refs_open,
 	refs_read,

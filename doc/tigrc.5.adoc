@@ -194,6 +194,7 @@ The following variables can be set:
 	 - replace		: A replaced reference.
 	 - branch		: A branch.
 	 - stash		: The stash.
+	 - note			: Notes.
 	 - prefetch		: Refs prefetched by `git maintenance`.
 	 - other		: Any other reference.
 
@@ -508,6 +509,8 @@ date::
 	  relative date will be used, e.g. "2 minutes ago" or "2m". If set to
 	  "custom", the strftime(3) string format specified in the "format"
 	  option is used.
+	- 'use-author' (bool): Whether to show author date instead of committer
+	  date.
 	- 'local' (bool): If true, use localtime(3) to convert to local
 	  timezone. Note that relative dates always use local offsets.
 	- 'format' (string): format string to pass to strftime(3) when 'custom'
@@ -762,8 +765,10 @@ following variable names, which are substituted before commands are run:
 |%(text)		|The text column of the currently selected line.
 |%(repo:head)		|The name of the checked out branch, e.g. `master`
 |%(repo:head-id)	|The commit ID of the checked out branch.
-|%(repo:remote)		|The remote associated with the checked out branch,
-			 e.g. `origin/master`.
+|%(repo:remote)		|The remote name associated with the checked out
+			 branch, e.g. `origin`.
+|%(repo:upstream)	|The upstream branch associated with the checked out
+			 branch, e.g. `origin/master`.
 |%(repo:cdup)		|The path to change directory to the repository root,
 			 e.g. `../`
 |%(repo:prefix)		|The path prefix of the current work directory,
@@ -1067,7 +1072,7 @@ setting the *default* color option.
 			 sections in the help view.
 |line-number		|Line numbers.
 |id			|The commit ID.
-|date			|The author date.
+|date			|The committer date or author date.
 |author			|The commit author.
 |mode			|The file mode holding the permissions and type.
 |overflow		|Title text overflow.
@@ -1186,7 +1191,7 @@ source ~/.tig/keybindings.tigrc
 
 COPYRIGHT
 ---------
-Copyright (c) 2006-2024 Jonas Fonseca <jonas.fonseca@gmail.com>
+Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
