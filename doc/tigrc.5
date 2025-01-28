@@ -2,12 +2,12 @@
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 05/10/2024
+.\"      Date: 2025-01-28
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.5.10
+.\"    Source: Tig 2.5.11
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "05/10/2024" "Tig 2\&.5\&.10" "Tig Manual"
+.TH "TIGRC" "5" "2025\-01\-28" "Tig 2\&.5\&.11" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -306,6 +306,17 @@ branch : A branch\&.
 .IP \(bu 2.3
 .\}
 stash : The stash\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+note : Notes\&.
 .RE
 .sp
 .RS 4
@@ -760,6 +771,18 @@ date
 .\}
 \fIdisplay\fR
 (mixed) [relative|relative\-compact|custom|default|<bool>]: How to display dates\&. If set to "relative" or "relative\-compact" a relative date will be used, e\&.g\&. "2 minutes ago" or "2m"\&. If set to "custom", the strftime(3) string format specified in the "format" option is used\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIuse\-author\fR
+(bool): Whether to show author date instead of committer date\&.
 .RE
 .sp
 .RS 4
@@ -1363,6 +1386,7 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -1544,7 +1568,14 @@ T{
 %(repo:remote)
 T}:T{
 .sp
-The remote associated with the checked out branch, e\&.g\&. origin/master\&.
+The remote name associated with the checked out branch, e\&.g\&. origin\&.
+T}
+T{
+.sp
+%(repo:upstream)
+T}:T{
+.sp
+The upstream branch associated with the checked out branch, e\&.g\&. origin/master\&.
 T}
 T{
 .sp
@@ -2478,7 +2509,7 @@ T{
 date
 T}:T{
 .sp
-The author date\&.
+The committer date or author date\&.
 T}
 T{
 .sp
@@ -2772,7 +2803,7 @@ source ~/\&.tig/keybindings\&.tigrc
 .sp
 .SH "COPYRIGHT"
 .sp
-Copyright (c) 2006\-2024 Jonas Fonseca <\m[blue]\fBjonas\&.fonseca@gmail\&.com\fR\m[]\&\s-2\u[1]\d\s+2>
+Copyright (c) 2006\-2025 Jonas Fonseca <\m[blue]\fBjonas\&.fonseca@gmail\&.com\fR\m[]\&\s-2\u[1]\d\s+2>
 .sp
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version\&.
 .SH "SEE ALSO"

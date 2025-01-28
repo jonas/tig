@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 10.2.0" />
+<meta name="generator" content="AsciiDoc 10.2.1" />
 <title>tigrc(5)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -1023,6 +1023,11 @@ stash                : The stash.
 </li>
 <li>
 <p>
+note                 : Notes.
+</p>
+</li>
+<li>
+<p>
 prefetch             : Refs prefetched by <code>git maintenance</code>.
 </p>
 </li>
@@ -1584,6 +1589,12 @@ date
 </li>
 <li>
 <p>
+<em>use-author</em> (bool): Whether to show author date instead of committer
+          date.
+</p>
+</li>
+<li>
+<p>
 <em>local</em> (bool): If true, use localtime(3) to convert to local
           timezone. Note that relative dates always use local offsets.
 </p>
@@ -2088,8 +2099,13 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(repo:remote)</code></p></td>
-<td align="left" valign="top"><p class="table">The remote associated with the checked out branch,
-                         e.g. <code>origin/master</code>.</p></td>
+<td align="left" valign="top"><p class="table">The remote name associated with the checked out
+                         branch, e.g. <code>origin</code>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>%(repo:upstream)</code></p></td>
+<td align="left" valign="top"><p class="table">The upstream branch associated with the checked out
+                         branch, e.g. <code>origin/master</code>.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>%(repo:cdup)</code></p></td>
@@ -2681,7 +2697,7 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>date</code></p></td>
-<td align="left" valign="top"><p class="table">The author date.</p></td>
+<td align="left" valign="top"><p class="table">The committer date or author date.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>author</code></p></td>
@@ -2922,7 +2938,7 @@ source ~/.tig/keybindings.tigrc</code></pre>
 <div class="sect1">
 <h2 id="_copyright">COPYRIGHT</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Copyright (c) 2006-2024 Jonas Fonseca &lt;<a href="mailto:jonas.fonseca@gmail.com">jonas.fonseca@gmail.com</a>&gt;</p></div>
+<div class="paragraph"><p>Copyright (c) 2006-2025 Jonas Fonseca &lt;<a href="mailto:jonas.fonseca@gmail.com">jonas.fonseca@gmail.com</a>&gt;</p></div>
 <div class="paragraph"><p>This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -2942,7 +2958,7 @@ git(7), git-config(1)</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2024-05-09 23:39:08 CEST
+ 2025-01-28
 </div>
 </div>
 </body>

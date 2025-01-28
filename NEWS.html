@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 10.2.0" />
+<meta name="generator" content="AsciiDoc 10.2.1" />
 <title>Release notes</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -735,8 +735,95 @@ asciidoc.install();
 <body class="article">
 <div id="header">
 <h1>Release notes</h1>
+<span id="revdate">2025-01-28</span>
 </div>
 <div id="content">
+<div class="sect1">
+<h2 id="_tig_2_5_11">tig-2.5.11</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Incompatibilities:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Update remote repo variables. (#1358)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix various issues with <code>diff.noprefix</code> and <code>--no-prefix</code>.
+</p>
+</li>
+<li>
+<p>
+Fix <code>Ctrl-C</code> behavior within the Readline prompt. (#1342)
+</p>
+</li>
+<li>
+<p>
+Fix message upon edit from diffstat without patch.
+</p>
+</li>
+<li>
+<p>
+Fix missing dates in the refs view.
+</p>
+</li>
+<li>
+<p>
+Don&#8217;t report an error when diff-highlight is killed intentionally.
+</p>
+</li>
+<li>
+<p>
+Fix parsing of reflog designator in timestamp format.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Open the blob corresponding to the diff line. (#1334)
+</p>
+</li>
+<li>
+<p>
+Keep cursor position in the main view when toggling
+   file-filter and rev-filter.
+</p>
+</li>
+<li>
+<p>
+Make errors visible in views showing Git output. (#1346)
+</p>
+</li>
+<li>
+<p>
+Allow different colors for all references types.
+</p>
+</li>
+<li>
+<p>
+Enable search in sections titles. (#1043)
+</p>
+</li>
+<li>
+<p>
+Show committer date by default in the date column. (#294)
+</p>
+</li>
+<li>
+<p>
+Only show stash, notes and prefetch in the refs view when
+   invoked with <code>tig refs --all</code>. (#1359)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
 <div class="sect1">
 <h2 id="_tig_2_5_10">tig-2.5.10</h2>
 <div class="sectionbody">
@@ -5176,7 +5263,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2024-05-10 19:51:19 CEST
+ 2025-01-28
 </div>
 </div>
 </body>
