@@ -1,6 +1,13 @@
 Release notes
 =============
 
+tig-2.5.12
+----------
+
+Bug fixes:
+
+ - Fix empty blame view when opened from the diff view on i586. (#1362)
+
 tig-2.5.11
 ----------
 
@@ -26,6 +33,7 @@ Improvements:
  - Allow different colors for all references types.
  - Enable search in sections titles. (#1043)
  - Show committer date by default in the date column. (#294)
+ - Update utf8proc to v2.10.0, supporting Unicode 16.
  - Only show stash, notes and prefetch in the refs view when
    invoked with `tig refs --all`. (#1359)
 
