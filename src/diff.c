@@ -698,7 +698,7 @@ diff_trace_origin(struct view *view, enum request request, struct line *line)
 	}
 
 	string_ncopy(view->env->file, commit.filename, strlen(commit.filename));
-	string_copy(request == REQ_VIEW_BLAME ? view->env->ref : view->env->commit, header.id);
+	string_copy_rev(request == REQ_VIEW_BLAME ? view->env->ref : view->env->commit, header.id);
 	view->env->goto_lineno = header.orig_lineno - 1;
 
 	return request;
