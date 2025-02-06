@@ -412,7 +412,7 @@ color "    Requested-by:"	yellow	default
 color "    Original-patch-by:"	yellow	default
 color "    Inspired-by:"	yellow	default
 color default			default	default	normal
-color cursor			white	green	bold
+color cursor			color15	green	bold
 color status			green	default
 color delimiter			magenta	default
 color date			blue	default
