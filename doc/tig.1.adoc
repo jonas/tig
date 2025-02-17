@@ -282,9 +282,8 @@ FILES
 BUGS
 ----
 
-Please visit Tig's https://jonas.github.io/tig[home page] or
-https://github.com/jonas/tig[main Git repository] for information about
-new releases and how to report bugs or feature request.
+Please visit Tig's https://github.com/jonas/tig[home page] for information
+about new releases and how to report bugs or feature request.
 
 COPYRIGHT
 ---------
