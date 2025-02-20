@@ -1,6 +1,13 @@
 Release notes
 =============
 
+master
+------
+
+Bug fixes:
+
+ - Initialise %(head) from command line arguments. (#1366)
+
 tig-2.5.12
 ----------
 

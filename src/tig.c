@@ -427,8 +427,10 @@ filter_options(const char *argv[], enum request request)
 				argv[flags_pos++] = argv[next++];
 		else if (argv_parse_rev_flag(arg, NULL))
 			argv_append(&opt_rev_args, arg);
-		else
+		else {
 			argv[flags_pos++] = arg;
+			string_copy_rev(argv_env.head, arg);
+		}
 	}
 
 	argv[flags_pos] = NULL;
