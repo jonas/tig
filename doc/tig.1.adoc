@@ -243,8 +243,10 @@ TIG_NO_DISPLAY::
 
 TIG_EDITOR::
 	The editor command to use when visiting files. This environment
-	variable overrides $GIT_EDITOR, $EDITOR and $VISUAL, so it allows
-	to use a different editor from the one Git uses.
+	variable overrides (in order of precedence) '$GIT_EDITOR',
+	'core.editor' configuration, '$VISUAL' and '$EDITOR', so it
+	allows to use a different editor from the one Git uses. The
+	value is meant to be interpreted by the shell when it is used.
 
 FILES
 -----

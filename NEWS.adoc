@@ -7,6 +7,7 @@ master
 Bug fixes:
 
  - Initialise %(head) from command line arguments. (#1366)
+ - Make `$GIT_EDITOR` value interpreted by the shell. (#1367)
 
 tig-2.5.12
 ----------
