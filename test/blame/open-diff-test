@@ -65,14 +65,6 @@ EOF
 
 # This shows that TODO
 assert_equals 'diff-from-blame.screen' <<EOF
-commit 90286e0752016a6bca30dfa7ca236d1f99345eb8
-Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
-AuthorDate: Mon Oct 14 13:15:42 2013 -0400
-Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
-CommitDate: Mon Oct 14 14:56:27 2013 -0400
- 
-    Initial import of Tracer benchmark
----
  project/Build.scala | 66 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  1 file changed, 66 insertions(+)
  
@@ -93,19 +85,18 @@ index 0000000..c028aca
 +
 +  val scalajsScalaVersion = "2.10.2"
 +
-[diff] 90286e0752016a6bca30dfa7ca236d1f99345eb8 - line 1 of 83                                                                                                                                       33%
++  val projectSettings = Defaults.defaultSettings ++ Seq(
++      organization := "scalajs-benchmarks",
++      version := "0.1-SNAPSHOT"
++  )
++
++  val defaultSettings = projectSettings ++ scalaJSSettings ++ Seq(
++      scalaVersion := scalajsScalaVersion,
++      scalacOptions ++= Seq(
+[diff] Changes to 'project/Build.scala' - line 23 of 83                                                                                                                                              43%
 EOF
 
-
 assert_equals 'diff-from-blame-down-down-down.screen' <<EOF
-commit 90286e0752016a6bca30dfa7ca236d1f99345eb8
-Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
-AuthorDate: Mon Oct 14 13:15:42 2013 -0400
-Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
-CommitDate: Mon Oct 14 14:56:27 2013 -0400
- 
-    Initial import of Tracer benchmark
----
  project/Build.scala | 66 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  1 file changed, 66 insertions(+)
  
@@ -126,5 +117,13 @@ index 0000000..c028aca
 +
 +  val scalajsScalaVersion = "2.10.2"
 +
-[diff] 90286e0752016a6bca30dfa7ca236d1f99345eb8 - line 1 of 83                                                                                                                                       33%
++  val projectSettings = Defaults.defaultSettings ++ Seq(
++      organization := "scalajs-benchmarks",
++      version := "0.1-SNAPSHOT"
++  )
++
++  val defaultSettings = projectSettings ++ scalaJSSettings ++ Seq(
++      scalaVersion := scalajsScalaVersion,
++      scalacOptions ++= Seq(
+[diff] Changes to 'project/Build.scala' - line 26 of 83                                                                                                                                              43%
 EOF
