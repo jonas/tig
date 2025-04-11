@@ -335,7 +335,7 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 				blamed_lineno = atoi(pos + 1);
 
 		} else if (*line == '+' && parent_lineno != -1) {
-			if (blame->lineno == blamed_lineno - 1 &&
+			if (blame->lineno == blamed_lineno &&
 			    !strcmp(blame->text, line + 1)) {
 				view->pos.lineno = parent_lineno ? parent_lineno - 1 : 0;
 				break;
