@@ -12,6 +12,7 @@
  */
 
 #include "tig/argv.h"
+#include "tig/blame.h"
 #include "tig/refdb.h"
 #include "tig/repo.h"
 #include "tig/options.h"
@@ -450,6 +451,14 @@ diff_save_line(struct view *view, struct diff_state *state, enum open_flags flag
 			state->file = get_path(file);
 			state->lineno = diff_get_lineno(view, line, false);
 			state->pos = view->pos;
+		}
+	}
+	if (flags & OPEN_BLAMED_LINE) {
+		const char *file = filename_from_blame;
+		if (file) {
+			state->file = get_path(file);
+			state->lineno = lineno_from_blame;
+			state->pos.offset = 5; // TODO: Should be half screen
 		}
 	}
 }
