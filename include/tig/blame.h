@@ -17,8 +17,6 @@
 #include "tig/view.h"
 
 extern struct view blame_view;
-extern char *filename_from_blame;
-extern unsigned long lineno_from_blame;
 
 static inline void
 open_blame_view(struct view *prev, enum open_flags flags)
