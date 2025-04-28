@@ -111,7 +111,8 @@ del_keybinding(const struct key key[], size_t keys)
 				table->size--;
 				for (; j < table->size; j++)
 					table->data[j] = table->data[j + 1];
-				table->data = realloc(table->data, table->size * sizeof(*table->data));
+				if (table->size)
+					table->data = realloc(table->data, table->size * sizeof(*table->data));
 			}
 	}
 
