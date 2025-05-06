@@ -51,7 +51,7 @@ typedef unsigned long argv_number;
 	_(argv_number,	 lineno,	"",		0) \
 	_(argv_number,	 lineno_old,	"",		0) \
 	_(argv_string,	 ref,		"HEAD",		"") \
-	_(argv_string,	 remote,	"origin",	"") \
+	_(argv_string,	 remote,	"",		"") \
 	_(argv_string,	 stash,		"",		"") \
 	_(argv_string,	 status,	"",		"") \
 	_(argv_string,	 tag,		"",		"") \
