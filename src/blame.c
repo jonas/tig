@@ -77,9 +77,6 @@ blame_open(struct view *view, enum open_flags flags)
 	enum status_code code;
 	size_t i;
 
-	if (!(repo.is_inside_work_tree || *repo.worktree))
-		return error("The blame view requires a working tree");
-
 	if (is_initial_view(view)) {
 		/* Finish validating and setting up blame options */
 		if (!opt_file_args || opt_file_args[1])
