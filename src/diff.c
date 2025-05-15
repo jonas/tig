@@ -543,6 +543,15 @@ diff_read(struct view *view, struct buffer *buf, bool force_stop)
 			}
 		}
 
+		if (view->env->blame_lineno) {
+			state->file = get_path(view->env->file);
+			state->lineno = view->env->blame_lineno;
+			state->pos.offset = 0;
+			state->pos.lineno = view->lines - 1;
+
+			view->env->blame_lineno = 0;
+		}
+
 		diff_restore_line(view, state);
 
 		if (!state->adding_describe_ref && !ref_list_contains_tag(view->vid)) {
