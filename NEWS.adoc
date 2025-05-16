@@ -11,10 +11,27 @@ Bug fixes:
  - Use correct line from recursively blamed commit. (#1369, #1370)
  - Use correct line when using `:parent` in blame view. (#1372)
  - Fix the incorrect line shift after stage file. (#1371)
+ - Update display after setting column option. (#1384)
+ - Fix file mode diff header handling.
+ - Fix crash caused by too many diff cells. (#1389)
+ - Fix issue with blame when using absolute file paths. (#1391)
 
 Improvements:
 
  - Add color for cursor in backgrounded view. (#1374)
+ - Blame view now works without a working tree.
+ - Open diff view from blame at the correct line. (#1375)
+ - Document how to get a `<` within TIG_SCRIPT. (#1357)
+ - Allow to hide +/- signs in the diff view. (#855, #901)
+ - Add toggle options to help. (#1381)
+ - Add expand/collapse all options to help. (#1382)
+ - Expand relevant sections only when opening the help view. (#782, #886)
+ - Introduce committer column.
+ - Open the blame and blob views from diffstat.
+ - Update utf8proc to v2.11.0, supporting Unicode 17.
+
+Note: Users should update the settings for the blame, main, reflog, and
+refs views in their ~/.tigrc file to include the committer column.
 
 tig-2.5.12
 ----------
