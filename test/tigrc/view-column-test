@@ -28,6 +28,8 @@ set main-view-id = yes
 set main-view-id-width = 12
 set main-view-committer = short
 set main-view-committer-display = short
+
+set committer = no
 EOF
 
 steps '

@@ -9,6 +9,7 @@ in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
 
 tigrc <<EOF
 set line-graphics = ascii
+set committer = no
 EOF
 
 steps '
@@ -23,33 +24,33 @@ steps '
 test_tig blame project/Build.scala
 
 assert_equals 'recursive-blame.screen' <<EOF
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  22|           "-feature",
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  23|           "-encoding", "utf8"
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  24|       )
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  25|   )
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  26|
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  27|   lazy val benchmarkSettings = defaultSettings ++ Seq(
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  28|       unmanagedSources in (Compile, packageJS) +=
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  29|           baseDirectory.value / "exports.js"
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  30|   )
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  31|
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  32|   lazy val parent: Project = Project(
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  33|       id = "parent",
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  34|       base = file("."),
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  35|       settings = projectSettings ++ Seq(
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  36|           name := "Scala.js Benchmarks",
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  37|           publishArtifact in Compile := false,
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  38|
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  39|           clean := clean.dependsOn(
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  40|              clean in common,
-b103989 Jonas Fonseca 2013-10-20 00:23 -0700  41|              clean in deltablue,
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  22|           "-feature",
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  23|           "-encoding", "utf8"
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  24|       )
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  25|   )
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  26|
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  27|   lazy val benchmarkSettings = defaultSettings ++ Seq(
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  28|       unmanagedSources in (Compile, packageJS) +=
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  29|           baseDirectory.value / "exports.js"
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  30|   )
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  31|
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  32|   lazy val parent: Project = Project(
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  33|       id = "parent",
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  34|       base = file("."),
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  35|       settings = projectSettings ++ Seq(
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  36|           name := "Scala.js Benchmarks",
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  37|           publishArtifact in Compile := false,
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  38|
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  39|           clean := clean.dependsOn(
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  40|              clean in common,
+b103989 Jonas Fonseca 2013-10-18 18:00 -0400  41|              clean in deltablue,
 4edd069 Jonas Fonseca 2013-10-17 20:34 -0400  42|              clean in richards,
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  43|              clean in tracer
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  44|           ).value
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  45|       )
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  46|   ).aggregate(
-90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  47|       common,
-b103989 Jonas Fonseca 2013-10-20 00:23 -0700  48|       deltablue,
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  43|              clean in tracer
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  44|           ).value
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  45|       )
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  46|   ).aggregate(
+90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  47|       common,
+b103989 Jonas Fonseca 2013-10-18 18:00 -0400  48|       deltablue,
 4edd069 Jonas Fonseca 2013-10-17 20:34 -0400  49|       richards,
 [blame] b103989d59edab3adc312ff5408fa3d344ea0201 changed project/Build.scala - line 41 of 66                                                                                                         74%
 EOF

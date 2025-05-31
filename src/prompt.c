@@ -872,6 +872,12 @@ prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 		}
 	}
 
+	if (enum_equals_static("committer", option, optionlen)) {
+		if (!view_has_flags(view, VIEW_COMMIT_NAMEDATE)) {
+			return error("`:toggle %s` is not supported for the %s view", option, view->name);
+		}
+	}
+
 	toggle = find_option_info(option_toggles, ARRAY_SIZE(option_toggles), "", option);
 	if (toggle) {
 		if ((view_has_flags(view, VIEW_FILE_FILTER) &&

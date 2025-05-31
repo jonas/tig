@@ -82,15 +82,21 @@
 	_('$', "commit title overflow display",	"commit-title-overflow"), \
 	_('d', "untracked directory info",	"status-show-untracked-dirs"), \
 	_('|', "view split",			"vertical-split"), \
+	_('E', "mail map",          "mailmap"), \
+	_('L', "local date",            "date-local"), \
+	_('m', "committer",         "committer"), \
+
+
+const struct menu_item toggle_menu_items[] = {
+#define DEFINE_TOGGLE_MENU(key, help, name) { key, help, name }
+        TOGGLE_MENU_INFO(DEFINE_TOGGLE_MENU)
+        { 0 }
+};
 
 static void
 toggle_option(struct view *view)
 {
-	const struct menu_item menu[] = {
-#define DEFINE_TOGGLE_MENU(key, help, name) { key, help, name }
-		TOGGLE_MENU_INFO(DEFINE_TOGGLE_MENU)
-		{ 0 }
-	};
+	const struct menu_item *menu = toggle_menu_items;
 	const char *toggle_argv[] = { "toggle", NULL, NULL };
 	int i = 0;
 

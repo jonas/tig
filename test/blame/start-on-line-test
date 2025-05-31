@@ -13,6 +13,7 @@ steps '
 
 tigrc <<EOF
 set line-graphics = ascii
+set committer = yes
 EOF
 
 test_tig blame deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala +42

@@ -43,6 +43,11 @@ struct ref;
 	_(PP_REFS,		"Refs: "), \
 	_(PP_REFLOG,		"Reflog: "), \
 	_(PP_REFLOGMSG,		"Reflog message: "), \
+	_(PP_AUTHOR,		"Author: "	), \
+	_(PP_DATE,		"Date: "), \
+	_(PP_AUTHORDATE,		"AuthorDate: "), \
+	_(PP_COMMITTER,		"Commit: "	), \
+	_(PP_COMMITDATE,		"CommitDate: "), \
 	_(COMMIT,		"commit "), \
 	_(PARENT,		"parent "), \
 	_(TREE,			"tree "), \
@@ -84,6 +89,7 @@ struct ref;
 	_(STAT_UNTRACKED,	""), \
 	_(HELP_GROUP,		""), \
 	_(HELP_ACTION,		""), \
+	_(HELP_TOGGLE,		""), \
 	_(DIFF_STAT,		""), \
 	_(PALETTE_0,		""), \
 	_(PALETTE_1,		""), \

@@ -8,6 +8,7 @@ export LINES=16
 
 steps '
 	:set line-graphics = ascii
+	:set committer = no
 	:exec !assert-var "%(revargs)" == "--all"
 	:exec !git branch -D mp/feature
 	:save-display final.screen

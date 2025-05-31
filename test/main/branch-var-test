@@ -8,6 +8,7 @@ export LINES=18
 tigrc <<EOF
 set line-graphics = ascii
 set refresh-mode = manual
+set committer = no
 EOF
 
 steps '

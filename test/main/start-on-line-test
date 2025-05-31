@@ -11,6 +11,7 @@ steps '
 
 tigrc <<EOF
 set line-graphics = utf-8
+set committer = yes
 EOF
 
 test_tig +42

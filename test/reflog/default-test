@@ -7,6 +7,7 @@
 
 tigrc <<EOF
 set line-graphics = ascii
+set committer = no
 EOF
 
 steps '

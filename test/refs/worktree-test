@@ -10,6 +10,10 @@ test_require git-worktree
 
 export LINES=9
 
+tigrc <<EOF
+set committer = no
+EOF
+
 test_setup_work_dir()
 {
 	create_worktree

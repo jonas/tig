@@ -9,6 +9,7 @@ export LINES=5
 
 tigrc <<EOF
 set vertical-split = no
+set committer = no
 EOF
 
 steps '

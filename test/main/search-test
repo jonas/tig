@@ -34,6 +34,10 @@ steps '
 
 git_clone 'repo-one'
 
+tigrc <<EOM
+set committer = no
+EOM
+
 test_tig
 
 assert_equals 'main-search-author.screen' <<EOF

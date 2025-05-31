@@ -8,6 +8,10 @@
 export LINES=9
 export COLUMNS=100
 
+tigrc <<EOF
+set committer = no
+EOF
+
 steps '
 	:save-display refs-init.screen
 	:3

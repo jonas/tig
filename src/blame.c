@@ -216,8 +216,6 @@ static bool
 blame_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct blame_state *state = view->private;
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
-	bool use_author_date = column && column->opt.date.use_author;
 
 	if (!buf) {
 		if (failed_to_load_initial_view(view))
@@ -255,7 +253,7 @@ blame_read(struct view *view, struct buffer *buf, bool force_stop)
 
 		state->commit = NULL;
 
-	} else if (parse_blame_info(state->commit, state->author, buf->data, use_author_date)) {
+	} else if (parse_blame_info(state->commit, state->author, buf->data)) {
 		if (!state->commit->filename)
 			return false;
 
@@ -504,7 +502,7 @@ blame_select(struct view *view, struct line *line)
 static struct view_ops blame_ops = {
 	"line",
 	argv_env.commit,
-	VIEW_SEND_CHILD_ENTER | VIEW_BLAME_LIKE | VIEW_REFRESH,
+	VIEW_SEND_CHILD_ENTER | VIEW_BLAME_LIKE | VIEW_REFRESH | VIEW_COMMIT_NAMEDATE,
 	sizeof(struct blame_state),
 	blame_open,
 	blame_read,

@@ -19,6 +19,7 @@ EOF
 tigrc <<EOF
 set show-untracked = no
 set mailmap = yes
+set committer = no
 # set diff-options = --use-mailmap
 # set main-options = --use-mailmap
 EOF

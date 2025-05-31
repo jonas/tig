@@ -5,6 +5,10 @@
 
 export LINES=18
 
+tigrc <<EOF
+set committer = no
+EOF
+
 steps '
 	:save-display refs-initial.screen
 '

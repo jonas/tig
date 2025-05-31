@@ -4,6 +4,7 @@
 . libgit.sh
 
 steps '
+	:set committer = no
 	:save-display log-graph.screen
 '
 
@@ -14,8 +15,8 @@ test_tig log --graph e59a941
 assert_equals 'log-graph.screen' <<EOF
 *   commit e59a941c4e7d51cd172ee2767a031f5f3fd25d05
 |\  Merge: 110e090 940efaf
-| | Author: Jonas Fonseca <jonas.fonseca@gmail.com>
-| | Date:   Thu Jan 16 07:47:58 2014 -0800
+| | Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
+| | AuthorDate: Thu Jan 16 07:47:58 2014 -0800
 | |
 | |     Merge pull request #4 from phaller/patch-1
 | |
@@ -25,8 +26,8 @@ assert_equals 'log-graph.screen' <<EOF
 | |  1 file changed, 1 insertion(+), 1 deletion(-)
 | |
 | * commit 940efafc379db7c6df99449d6c4da98c6a2b3d07
-|/  Author: Philipp Haller <hallerp@gmail.com>
-|   Date:   Thu Jan 16 15:32:52 2014 +0100
+|/  Author:     Philipp Haller <hallerp@gmail.com>
+|   AuthorDate: Thu Jan 16 15:32:52 2014 +0100
 |
 |       Fix link to Dart benchmark harness
 |
@@ -34,8 +35,8 @@ assert_equals 'log-graph.screen' <<EOF
 |    1 file changed, 1 insertion(+), 1 deletion(-)
 |
 * commit 110e090f815f40d649f5432172584057b550a160
-| Author: Jonas Fonseca <jonas.fonseca@gmail.com>
-| Date:   Tue Dec 17 00:02:15 2013 +0100
+| Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
+| AuthorDate: Tue Dec 17 00:02:15 2013 +0100
 |
 |     Update links to reflect project name change
 |
