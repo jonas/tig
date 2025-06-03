@@ -82,6 +82,10 @@
 	_('$', "commit title overflow display",	"commit-title-overflow"), \
 	_('d', "untracked directory info",	"status-show-untracked-dirs"), \
 	_('|', "view split",			"vertical-split"), \
+	_('E', "mail map",          "mailmap"), \
+	_('L', "local date",            "date-local"), \
+	_('M', "use author date",         "date-use-author"), \
+	_('m', "author as committer",         "author-as-committer"), \
 
 
 const struct menu_item toggle_menu_items[] = {

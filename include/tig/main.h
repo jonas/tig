@@ -29,6 +29,7 @@ struct commit {
 struct main_state {
 	struct graph *graph;
 	struct commit current;
+	struct option_common optcom;
 	char **reflog;
 	size_t reflogs;
 	int reflog_width;

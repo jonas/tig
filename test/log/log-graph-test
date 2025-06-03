@@ -35,7 +35,7 @@ assert_equals 'log-graph.screen' <<EOF
 |
 * commit 110e090f815f40d649f5432172584057b550a160
 | Author: Jonas Fonseca <jonas.fonseca@gmail.com>
-| Date:   Tue Dec 17 00:02:15 2013 +0100
+| Date:   Tue Dec 17 00:10:36 2013 +0100
 |
 |     Update links to reflect project name change
 |

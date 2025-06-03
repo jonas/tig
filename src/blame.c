@@ -43,6 +43,7 @@ struct blame {
 struct blame_state {
 	struct blame_commit *commit;
 	struct blame_header header;
+	struct option_common optcom;
 	char author[SIZEOF_STR];
 	bool auto_filename_display;
 	const char *filename;
@@ -76,6 +77,8 @@ blame_open(struct view *view, enum open_flags flags)
 	};
 	enum status_code code;
 	size_t i;
+
+	read_option_common(view, &state->optcom);
 
 	if (is_initial_view(view)) {
 		/* Finish validating and setting up blame options */
@@ -216,8 +219,6 @@ static bool
 blame_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct blame_state *state = view->private;
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
-	bool use_author_date = column && column->opt.date.use_author;
 
 	if (!buf) {
 		if (failed_to_load_initial_view(view))
@@ -255,7 +256,7 @@ blame_read(struct view *view, struct buffer *buf, bool force_stop)
 
 		state->commit = NULL;
 
-	} else if (parse_blame_info(state->commit, state->author, buf->data, use_author_date)) {
+	} else if (parse_blame_info(state->commit, state->author, buf->data, &state->optcom)) {
 		if (!state->commit->filename)
 			return false;
 

@@ -48,7 +48,7 @@ struct blame_header {
 };
 
 bool parse_blame_header(struct blame_header *header, const char *text);
-bool parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *line, bool use_author_date);
+bool parse_blame_info(struct blame_commit *commit, char author[SIZEOF_STR], char *line, struct option_common *optcom);
 
 /* Parse author lines where the name may be empty:
  *	author  <email@address.tld> 1138474660 +0100
