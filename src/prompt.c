@@ -872,6 +872,12 @@ prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 		}
 	}
 
+	for (column = view->columns; column; column = column->next) {
+		toggle = find_column_option_info(column->type, &column->opt, option, &template, &column_name);
+		if (toggle)
+			return prompt_toggle_option(view, argv, column_name, toggle, flags);
+	}
+
 	toggle = find_option_info(option_toggles, ARRAY_SIZE(option_toggles), "", option);
 	if (toggle) {
 		if ((view_has_flags(view, VIEW_FILE_FILTER) &&
@@ -880,12 +886,6 @@ prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 		     !strcmp(toggle->name, "rev_filter")))
 			string_copy_rev(view->env->goto_id, view->env->commit);
 		return prompt_toggle_option(view, argv, "", toggle, flags);
-	}
-
-	for (column = view->columns; column; column = column->next) {
-		toggle = find_column_option_info(column->type, &column->opt, option, &template, &column_name);
-		if (toggle)
-			return prompt_toggle_option(view, argv, column_name, toggle, flags);
 	}
 
 	return error("`:toggle %s` not supported", option);
@@ -898,23 +898,19 @@ prompt_option_flags(struct view *view, const char *option)
 	struct option_info *toggle;
 	struct view_column *column;
 	const char *column_name;
+	const char *prefixed;
 
-	toggle = find_option_info(option_toggles, ARRAY_SIZE(option_toggles), "", option);
-
-	if (!toggle || !toggle->flags) {
-		const char *prefixed;
-
-		if ((prefixed = strstr(option, "-view-"))) {
-			option = prefixed + STRING_SIZE("-view-");
-			for (column = view->columns; column; column = column->next) {
-				toggle = find_column_option_info(column->type, &column->opt,
-								 option, &template, &column_name);
-				if (toggle)
-					return toggle->flags;
-			}
+	if ((prefixed = strstr(option, "-view-"))) {
+		option = prefixed + STRING_SIZE("-view-");
+		for (column = view->columns; column; column = column->next) {
+			toggle = find_column_option_info(column->type, &column->opt,
+							 option, &template, &column_name);
+			if (toggle)
+				return toggle->flags;
 		}
 	}
 
+	toggle = find_option_info(option_toggles, ARRAY_SIZE(option_toggles), "", option);
 	if (toggle)
 		return toggle->flags;
 

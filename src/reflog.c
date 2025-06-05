@@ -41,10 +41,12 @@ reflog_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_ENTER:
 	{
-		const char *main_argv[] = {
+		struct option_common optcom;
+		read_option_common(view, &optcom);
+ 		const char *main_argv[] = {
 			GIT_MAIN_LOG(encoding_arg, commit_order_arg(),
 				"%(mainargs)", "", commit->id, "",
-				show_notes_arg(), log_custom_pretty_arg(false))
+				show_notes_arg(), log_custom_pretty_arg(&optcom))
 		};
 		enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 

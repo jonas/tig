@@ -30,30 +30,30 @@ Quick reference for tig keybindings:
 
 [-] generic bindings
 View switching
-                           m view-main           Show main view
-                           d view-diff           Show diff view
-                           l view-log            Show log view
-                           L view-reflog         Show reflog view
-                           t view-tree           Show tree view
-                           f view-blob           Show blob view
-                           b view-blame          Show blame view
-                           r view-refs           Show refs view
-                        s, S view-status         Show status view
-                           c view-stage          Show stage view
-                           y view-stash          Show stash view
-                           g view-grep           Show grep view
-                           p view-pager          Show pager view
-                           h view-help           Show help view
+                           m view-main                  Show main view
+                           d view-diff                  Show diff view
+                           l view-log                   Show log view
+                           L view-reflog                Show reflog view
+                           t view-tree                  Show tree view
+                           f view-blob                  Show blob view
+                           b view-blame                 Show blame view
+                           r view-refs                  Show refs view
+                        s, S view-status                Show status view
+                           c view-stage                 Show stage view
+                           y view-stash                 Show stash view
+                           g view-grep                  Show grep view
+                           p view-pager                 Show pager view
+                           h view-help                  Show help view
 View manipulation
-                     <Enter> enter               Enter and open selected line
-                           < back                Go back to the previous view state
-         <Down>, <Ctrl-N>, J next                Move to next
-           <Up>, <Ctrl-P>, K previous            Move to previous
-                         ',' parent              Move to parent
-                       <Tab> view-next           Move focus to the next view
-                     R, <F5> refresh             Reload and refresh view
-                           O maximize            Maximize the current view
-[help] - line 1 of 107                                                       26%
+                     <Enter> enter                      Enter and open selected line
+                           < back                       Go back to the previous view state
+         <Down>, <Ctrl-N>, J next                       Move to next
+           <Up>, <Ctrl-P>, K previous                   Move to previous
+                         ',' parent                     Move to parent
+                       <Tab> view-next                  Move focus to the next view
+                     R, <F5> refresh                    Reload and refresh view
+                           O maximize                   Maximize the current view
+[help] - line 1 of 111                                                       25%
 EOF
 
 assert_equals 'help-search.screen' <<EOF
@@ -62,30 +62,30 @@ Quick reference for tig keybindings:
 
 [-] generic bindings
 View switching
-                           m view-main           Show main view
-                           d view-diff           Show diff view
-                           l view-log            Show log view
-                           L view-reflog         Show reflog view
-                           t view-tree           Show tree view
-                           f view-blob           Show blob view
-                           b view-blame          Show blame view
-                           r view-refs           Show refs view
-                        s, S view-status         Show status view
-                           c view-stage          Show stage view
-                           y view-stash          Show stash view
-                           g view-grep           Show grep view
-                           p view-pager          Show pager view
-                           h view-help           Show help view
+                           m view-main                  Show main view
+                           d view-diff                  Show diff view
+                           l view-log                   Show log view
+                           L view-reflog                Show reflog view
+                           t view-tree                  Show tree view
+                           f view-blob                  Show blob view
+                           b view-blame                 Show blame view
+                           r view-refs                  Show refs view
+                        s, S view-status                Show status view
+                           c view-stage                 Show stage view
+                           y view-stash                 Show stash view
+                           g view-grep                  Show grep view
+                           p view-pager                 Show pager view
+                           h view-help                  Show help view
 View manipulation
-                     <Enter> enter               Enter and open selected line
-                           < back                Go back to the previous view state
-         <Down>, <Ctrl-N>, J next                Move to next
-           <Up>, <Ctrl-P>, K previous            Move to previous
-                         ',' parent              Move to parent
-                       <Tab> view-next           Move focus to the next view
-                     R, <F5> refresh             Reload and refresh view
-                           O maximize            Maximize the current view
-[help] - line 20 of 107                                                      26%
+                     <Enter> enter                      Enter and open selected line
+                           < back                       Go back to the previous view state
+         <Down>, <Ctrl-N>, J next                       Move to next
+           <Up>, <Ctrl-P>, K previous                   Move to previous
+                         ',' parent                     Move to parent
+                       <Tab> view-next                  Move focus to the next view
+                     R, <F5> refresh                    Reload and refresh view
+                           O maximize                   Maximize the current view
+[help] - line 20 of 111                                                      25%
 EOF
 
 assert_equals 'help-collapsed.screen' <<EOF
@@ -106,16 +106,16 @@ Internal commands:
   @ :/^@@
 [-] toggle bindings
 Toggle keys (enter: o <key>):
-                           . line-number                  Toggle line numbers
-                           D date                         Toggle dates
-                           A author                       Toggle author
-                           ~ line-graphics                Toggle graphics
-                           g commit-title-graph           Toggle revision graph
-                           # file-name                    Toggle file names
-                           * file-size                    Toggle file sizes
-                           W ignore-space                 Toggle space changes
-                           l commit-order                 Toggle commit order
-                           F commit-title-refs            Toggle reference display
-                           C show-changes                 Toggle local change display
-[help] - line 5 of 34                                                        82%
+                           . line-number                Toggle line numbers
+                           D date                       Toggle dates
+                           A author                     Toggle author
+                           ~ line-graphics              Toggle graphics
+                           g commit-title-graph         Toggle revision graph
+                           # file-name                  Toggle file names
+                           * file-size                  Toggle file sizes
+                           W ignore-space               Toggle space changes
+                           l commit-order               Toggle commit order
+                           F commit-title-refs          Toggle reference display
+                           C show-changes               Toggle local change display
+[help] - line 5 of 38                                                        73%
 EOF

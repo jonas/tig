@@ -118,5 +118,14 @@ name(type **mem, size_t size, size_t increase)					\
 
 void sigsegv_handler(int sig);
 
+/*
+ * Common structures
+ */
+
+struct option_common {
+    bool author_as_committer;
+    bool use_author_date;
+};
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

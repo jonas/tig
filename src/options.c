@@ -115,6 +115,30 @@ find_column_option_info(enum view_column_type type, union view_column_options *o
 	return NULL;
 }
 
+void read_option_common(void *_view, struct option_common *opt)
+{
+	extern struct view log_view;
+	struct view *view = _view;
+	bool as_committer = false;
+	bool use_author_date = false;
+
+	if (view == &log_view) {
+		as_committer = opt_author_as_committer;
+		use_author_date = opt_date_use_author;
+	} else {
+		struct view_column *column1 = get_view_column(view, VIEW_COLUMN_AUTHOR);
+		struct view_column *column2 = get_view_column(view, VIEW_COLUMN_DATE);
+
+		if (column1)
+			as_committer = column1->opt.author.as_committer;
+		if (column2)
+			use_author_date = column2->opt.date.use_author;
+	}
+
+	opt->author_as_committer = as_committer;
+	opt->use_author_date = use_author_date;
+}
+
 /*
  * State variables.
  */
@@ -159,15 +183,28 @@ use_mailmap_arg()
 }
 
 const char *
-log_custom_pretty_arg(bool use_author_date)
+log_custom_pretty_arg(struct option_common *optcom)
 {
-	return use_author_date
-		? opt_mailmap
-			? "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%s%x00%N"
-			: "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s%x00%N"
-		: opt_mailmap
-			? "--pretty=format:commit %m %H %P%x00%aN <%aE> %cd%x00%s%x00%N"
-			: "--pretty=format:commit %m %H %P%x00%an <%ae> %cd%x00%s%x00%N";
+	switch ((optcom->author_as_committer*2) + opt_mailmap)
+	{
+	case 0x3:
+		return optcom->use_author_date ?
+				"--pretty=format:commit %m %H %P%x00%cN <%cE> %ad%x00%s%x00%N" :
+				"--pretty=format:commit %m %H %P%x00%cN <%cE> %cd%x00%s%x00%N";
+	case 0x2:
+		return optcom->use_author_date ?
+				"--pretty=format:commit %m %H %P%x00%cn <%ce> %ad%x00%s%x00%N" :
+				"--pretty=format:commit %m %H %P%x00%cn <%ce> %cd%x00%s%x00%N";
+	case 0x1:
+		return optcom->use_author_date ?
+				"--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%s%x00%N" :
+				"--pretty=format:commit %m %H %P%x00%aN <%aE> %cd%x00%s%x00%N";
+	case 0x0:
+	default:
+		return optcom->use_author_date ?
+				"--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s%x00%N" :
+				"--pretty=format:commit %m %H %P%x00%an <%ae> %cd%x00%s%x00%N";
+	}
 }
 
 #define ENUM_ARG(enum_name, arg_string) ENUM_MAP_ENTRY(arg_string, enum_name)

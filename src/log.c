@@ -24,10 +24,12 @@ struct log_state {
 	 * up/down in the log view. */
 	int last_lineno;
 	size_t graph_indent;
+	struct option_common optcom;
 	enum line_type last_type;
 	bool commit_title_read;
 	bool after_commit_header;
 	bool reading_diff_stat;
+	bool external_format;
 };
 
 static inline void
@@ -63,16 +65,39 @@ log_select(struct view *view, struct line *line)
 	state->last_type = line->type;
 }
 
+static bool
+log_check_external_formatter()
+{
+	/* check if any formatter arugments in "%(logargs)", "%(cmdlineargs)" */
+	const char ** opt_list[] = {
+		opt_log_options,
+		opt_cmdline_args,
+	};
+	for (int i=0; i<ARRAY_SIZE(opt_list); i++) {
+		if (opt_list[i] &&
+			(argv_containsn(opt_list[i], "--pretty", STRING_SIZE("--pretty")) ||
+				argv_containsn(opt_list[i], "--format", STRING_SIZE("--format"))))
+			return true;
+	}
+	return false;
+}
+
 static enum status_code
 log_open(struct view *view, enum open_flags flags)
 {
+	struct log_state *state = view->private;
+	bool external_format = log_check_external_formatter();
 	const char *log_argv[] = {
 		"git", "log", encoding_arg, commit_order_arg(),
 			use_mailmap_arg(), "%(logargs)", "%(cmdlineargs)",
-			"%(revargs)", "--no-color", "--", "%(fileargs)", NULL
+			"%(revargs)", "--no-color",
+			external_format ? "" : "--pretty=fuller",
+			"--", "%(fileargs)", NULL
 	};
 	enum status_code code;
 
+	read_option_common(view, &state->optcom);
+	state->external_format = external_format;
 	code = begin_update(view, NULL, log_argv, flags | OPEN_WITH_STDERR);
 	if (code != SUCCESS)
 		return code;
@@ -115,6 +140,7 @@ log_read(struct view *view, struct buffer *buf, bool force_stop)
 	size_t len;
 	char *commit;
 	char *data;
+	bool swap_lines = false;
 
 	if (!buf)
 		return true;
@@ -148,10 +174,71 @@ log_read(struct view *view, struct buffer *buf, bool force_stop)
 		state->reading_diff_stat = false;
 	}
 
+	if (!state->external_format) {
+		switch (type)
+		{
+		case LINE_PP_AUTHOR:
+			if (state->optcom.author_as_committer)
+				return true;
+			break;
+		case LINE_PP_COMMITTER:
+			if (!state->optcom.author_as_committer)
+				return true;
+			swap_lines = state->optcom.use_author_date;
+			break;
+		case LINE_PP_AUTHORDATE:
+		case LINE_PP_DATE:
+			if (!state->optcom.use_author_date)
+				return true;
+			break;
+		case LINE_PP_COMMITDATE:
+			if (state->optcom.use_author_date)
+				return true;
+			break;
+		default:
+			break;
+		}
+		/* remove 4 spaces after Commit:/Author:, or
+		 * convert CommitDate:/AuthorDate: to Date: */
+		switch (type)
+		{
+		case LINE_PP_AUTHOR:
+		case LINE_PP_COMMITTER:
+			{
+				char *p = strchr(data, ':');
+				if (p && p[5]==' ')
+					memmove(p+1, p+5, strlen(p+5)+1);
+				break;
+			}
+		case LINE_PP_AUTHORDATE:
+		case LINE_PP_COMMITDATE:
+			{
+				char *p = strchr(data, ':');
+				if (p && p[1]==' ' && (p - data) >= 10) {
+					memcpy(p - 10, "Date:   ", STRING_SIZE("Date:   "));
+					memmove(p - 10 + STRING_SIZE("Date:   "), p+2, strlen(p+2)+1);
+				}
+				break;
+			}
+		default:
+			break;
+		}
+	}
+
 	if (!pager_common_read(view, data, type, &line))
 		return false;
 	if (line && state->graph_indent)
 		line->graph_indent = 1;
+	if (swap_lines && view->lines >= 2) {
+		size_t last_idx = view->lines - 1;
+		struct line *line1 = &view->line[last_idx];
+		struct line *line2 = &view->line[last_idx - 1];
+		struct line buf = *line1;
+		*line1 = *line2;
+		*line2 = buf;
+		line1->lineno--;
+		line2->lineno++;
+	}
 	return true;
 }
 

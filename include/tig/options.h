@@ -90,6 +90,8 @@ typedef struct view_column *view_settings;
 	_(vertical_split,		enum vertical_split,	VIEW_RESET_DISPLAY | VIEW_DIFF_LIKE) \
 	_(wrap_lines,			bool,			VIEW_DIFF_LIKE) \
 	_(wrap_search,			bool,			VIEW_NO_FLAGS) \
+	_(date_use_author,			bool,			VIEW_LOG_LIKE) \
+	_(author_as_committer,			bool,			VIEW_LOG_LIKE) \
 
 #define DEFINE_OPTION_EXTERNS(name, type, flags) extern type opt_##name;
 OPTION_INFO(DEFINE_OPTION_EXTERNS)
@@ -102,6 +104,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 	_(display,			enum author,		VIEW_NO_FLAGS) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 	_(maxwidth,			int,			VIEW_NO_FLAGS) \
+	_(as_committer,			bool,			VIEW_BLAME_LIKE | VIEW_LOG_LIKE) \
 
 #define COMMIT_TITLE_COLUMN_OPTIONS(_) \
 	_(display,			bool,			VIEW_NO_FLAGS) \
@@ -198,7 +201,7 @@ void update_options_from_argv(const char *argv[]);
 const char *ignore_space_arg();
 const char *commit_order_arg();
 const char *commit_order_arg_with_graph(enum graph_display graph_display);
-const char *log_custom_pretty_arg(bool use_author_date);
+const char *log_custom_pretty_arg(struct option_common *optcom);
 const char *use_mailmap_arg();
 const char *diff_context_arg();
 const char *diff_prefix_arg();
@@ -222,6 +225,7 @@ struct option_info *find_option_info(struct option_info *option, size_t options,
 enum status_code parse_option(struct option_info *option, const char *prefix, const char *arg);
 struct option_info *find_column_option_info(enum view_column_type type, union view_column_options *opts,
 					const char *option, struct option_info *column_info, const char **column_name);
+void read_option_common(void *view, struct option_common *optcom);
 enum status_code parse_int(int *opt, const char *arg, int min, int max);
 enum status_code parse_step(double *opt, const char *arg);
 enum status_code set_option(const char *opt, int argc, const char *argv[]);
