@@ -1146,24 +1146,23 @@ exec_run_request(struct view *view, struct run_request *req)
 		return REQ_NONE;
 	}
 
-	if (req->flags.internal) {
-		request = run_prompt_command(view, argv);
+	confirmed = !req->flags.confirm;
 
-	} else {
-		confirmed = !req->flags.confirm;
+	if (req->flags.confirm) {
+		char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
+		const char *and_exit = req->flags.exit ? " and exit" : "";
 
-		if (req->flags.confirm) {
-			char cmd[SIZEOF_STR], prompt[SIZEOF_STR];
-			const char *and_exit = req->flags.exit ? " and exit" : "";
-
-			if (argv_to_string_quoted(argv, cmd, sizeof(cmd), " ") &&
-			    string_format(prompt, "Run `%s`%s?", cmd, and_exit) &&
-			    prompt_yesno(prompt)) {
-				confirmed = true;
-			}
+		if (argv_to_string_quoted(argv, cmd, sizeof(cmd), " ") &&
+		    string_format(prompt, "Run `%s`%s?", cmd, and_exit) &&
+		    prompt_yesno(prompt)) {
+			confirmed = true;
 		}
+	}
 
-		if (confirmed)
+	if (confirmed) {
+		if (req->flags.internal)
+			request = run_prompt_command(view, argv);
+		else
 			open_external_viewer(argv, repo.cdup, req->flags.silent,
 					     !req->flags.exit, req->flags.echo, req->flags.quick, false, "");
 	}
