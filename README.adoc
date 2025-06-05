@@ -26,6 +26,9 @@ Resources
 
 Bugs and Feature Requests
 -------------------------
+Please check out link:TROUBLESHOOTING.{docext}[the troubleshooting guide]
+if you are experiencing issues with Tig.
+
 Bugs and feature requests can be reported using the
 https://github.com/jonas/tig/issues[issue tracker] or by mail to the
 https://lore.kernel.org/git/[Git mailing list]. Ensure that the word
