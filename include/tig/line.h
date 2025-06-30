@@ -32,9 +32,10 @@ struct ref;
 	_(DIFF_DEL,		"-"), \
 	_(DIFF_DEL2,		" -"), \
 	_(DIFF_INDEX,		"index "), \
-	_(DIFF_OLDMODE,		"old file mode "), \
-	_(DIFF_NEWMODE,		"new file mode "), \
-	_(DIFF_DELMODE,		"deleted file mode "), \
+	_(DIFF_OLDMODE,		"old mode "), \
+	_(DIFF_NEWMODE,		"new mode "), \
+	_(DIFF_NEWFMODE,	"new file mode "), \
+	_(DIFF_DELFMODE,	"deleted file mode "), \
 	_(DIFF_SIMILARITY,	"similarity "), \
 	_(DIFF_NO_NEWLINE,	"\\ No newline at end of file"), \
 	_(DIFF_ADD_HIGHLIGHT,	""), \

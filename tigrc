@@ -367,7 +367,8 @@ color " +"			green	default
 color "-"			red	default
 color " -"			red	default
 color "index "			blue	default
-color "old file mode "		yellow	default
+color "old mode "		yellow	default
+color "new mode "		yellow	default
 color "new file mode "		yellow	default
 color "deleted file mode "	yellow	default
 color "copy from "		yellow	default

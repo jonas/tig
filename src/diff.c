@@ -412,6 +412,7 @@ diff_find_header_from_stat(struct view *view, struct line *line)
 				break;
 
 			if (diff_find_stat_entry(view, line, LINE_DIFF_INDEX)
+			    || diff_find_stat_entry(view, line, LINE_DIFF_OLDMODE)
 			    || diff_find_stat_entry(view, line, LINE_DIFF_SIMILARITY)) {
 				if (file_number == 1) {
 					break;
