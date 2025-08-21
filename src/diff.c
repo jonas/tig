@@ -86,15 +86,18 @@ struct diff_stat_context {
 	bool skip;
 	size_t cells;
 	const char **cell_text;
-	struct box_cell cell[256];
+	struct box_cell cell[8192];
 };
 
 static bool
 diff_common_add_cell(struct diff_stat_context *context, size_t length, bool allow_empty)
 {
-	assert(ARRAY_SIZE(context->cell) > context->cells);
 	if (!allow_empty && (length == 0))
 		return true;
+	if (context->cells > ARRAY_SIZE(context->cell) - 1) {
+		report("Too many diff cells, truncating");
+		return false;
+	}
 	if (context->skip && !argv_appendn(&context->cell_text, context->text, length))
 		return false;
 	context->cell[context->cells].length = length;
