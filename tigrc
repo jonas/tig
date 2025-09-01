@@ -16,6 +16,7 @@
 #					: Show author information?
 #    - width (int)			: Fixed width when nonzero
 #    - maxwidth (int)			: Autosize limit
+#    - as_committer (bool)			: Show committer instead of author?
 #
 #   commit-title
 #    - display (bool)			: Show the commit title?
@@ -129,6 +130,8 @@ set diff-indicator		= yes		# Show diff +/- signs?
 set log-options			= --cc --stat	# User-defined options for `tig log` (git-log)
 #set main-options		= -n 1000	# User-defined options for `tig` (git-log)
 set mailmap			= yes		# Use .mailmap to show canonical name and email address?
+set author-as-committer = no		# Show committer instead of author?
+set date-use-author = no		# Show author date instead of committer date?
 
 # Misc
 set start-on-head		= no		# Start with cursor on HEAD commit?

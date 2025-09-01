@@ -595,6 +595,10 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 	struct io io;
 	bool ok = false;
 	struct buffer buf;
+	struct option_common optcom = {
+		.author_as_committer = false,
+		.use_author_date = false,
+	};
 
 	if (!string_format(line_arg, "-L%lu,+1", lineno))
 		return false;
@@ -608,7 +612,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 				break;
 			header = NULL;
 
-		} else if (parse_blame_info(commit, author, buf.data, false)) {
+		} else if (parse_blame_info(commit, author, buf.data, &optcom)) {
 			ok = commit->filename != NULL;
 			break;
 		}

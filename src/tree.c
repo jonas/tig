@@ -71,8 +71,9 @@ struct tree_entry {
 
 struct tree_state {
 	char commit[SIZEOF_REV];
-	const struct ident *author;
-	struct time author_time;
+	const struct ident *author; /* Author/Committer */
+	struct time author_time; /* Author data/Commit date */
+	struct option_common optcom;
 	bool read_date;
 };
 
@@ -135,8 +136,6 @@ static bool
 tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 {
 	char *text = buf ? buf->data : NULL;
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
-	bool use_author_date = column && column->opt.date.use_author;
 
 	if (!text && state->read_date) {
 		state->read_date = false;
@@ -164,17 +163,19 @@ tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 		state->read_date = true;
 		return false;
 
-	} else if (*text == 'c' && get_line_type(text) == LINE_COMMIT) {
-		string_copy_rev_from_commit_line(state->commit, text);
-
+	} else if (*text == 'c') {
+		enum line_type ltype = get_line_type(text);
+		if (ltype == LINE_COMMIT) {
+			string_copy_rev_from_commit_line(state->commit, text);
+		} else if (ltype == LINE_COMMITTER) {
+			parse_author_line(text + STRING_SIZE("committer "),
+				state->optcom.author_as_committer ? &state->author : NULL,
+				state->optcom.use_author_date ? NULL : &state->author_time);
+		}
 	} else if (*text == 'a' && get_line_type(text) == LINE_AUTHOR) {
 		parse_author_line(text + STRING_SIZE("author "),
-				  &state->author, use_author_date ? &state->author_time : NULL);
-
-	} else if (*text == 'c' && get_line_type(text) == LINE_COMMITTER) {
-		parse_author_line(text + STRING_SIZE("committer "),
-				  NULL, use_author_date ? NULL : &state->author_time);
-
+			state->optcom.author_as_committer ? NULL : &state->author,
+			state->optcom.use_author_date ? &state->author_time : NULL);
 	} else if (*text == ':') {
 		char *pos;
 		size_t annotated = 1;
@@ -455,9 +456,12 @@ tree_select(struct view *view, struct line *line)
 static enum status_code
 tree_open(struct view *view, enum open_flags flags)
 {
+	struct tree_state *state = view->private;
 	static const char *tree_argv[] = {
 		"git", "ls-tree", "-l", "%(commit)", "--", "%(directory)", NULL
 	};
+
+	read_option_common(view, &state->optcom);
 
 	if (string_rev_is_null(view->env->commit))
 		return error("No tree exists for this commit");

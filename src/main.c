@@ -274,21 +274,20 @@ main_with_graph(struct view *view, struct view_column *column, enum open_flags f
 static enum status_code
 main_open(struct view *view, enum open_flags flags)
 {
+	struct main_state *state = view->private;
 	struct view_column *commit_title_column = get_view_column(view, VIEW_COLUMN_COMMIT_TITLE);
 	enum graph_display graph_display = main_with_graph(view, commit_title_column, flags);
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
-	bool use_author_date = column && column->opt.date.use_author;
+	read_option_common(view, &state->optcom);
 	const char *pretty_custom_argv[] = {
 		GIT_MAIN_LOG(encoding_arg, commit_order_arg_with_graph(graph_display),
 			"%(mainargs)", "%(cmdlineargs)", "%(revargs)", "%(fileargs)",
-			show_notes_arg(), log_custom_pretty_arg(use_author_date))
+			show_notes_arg(), log_custom_pretty_arg(&state->optcom))
 	};
 	const char *pretty_raw_argv[] = {
 		GIT_MAIN_LOG_RAW(encoding_arg, commit_order_arg_with_graph(graph_display),
 			"%(mainargs)", "%(cmdlineargs)", "%(revargs)", "%(fileargs)",
 			show_notes_arg())
 	};
-	struct main_state *state = view->private;
 	const char **main_argv = pretty_custom_argv;
 	enum watch_trigger changes_triggers = WATCH_NONE;
 
@@ -415,8 +414,6 @@ main_add_reflog(struct view *view, struct main_state *state, char *reflog)
 bool
 main_read(struct view *view, struct buffer *buf, bool force_stop)
 {
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
-	bool use_author_date = column && column->opt.date.use_author;
 	struct main_state *state = view->private;
 	struct graph *graph = state->graph;
 	enum line_type type;
@@ -510,16 +507,17 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 		break;
 
 	case LINE_AUTHOR:
-		parse_author_line(line + STRING_SIZE("author "),
-				  &commit->author, use_author_date ? &commit->time : NULL);
-		if (state->with_graph)
+	case LINE_COMMITTER:
+	{
+		bool committer_line = (type == LINE_COMMITTER);
+		if ((state->optcom.author_as_committer ^ committer_line) == 0)
+			parse_author_line(line +
+				(committer_line ? STRING_SIZE("committer ") : STRING_SIZE("author ")),
+				&commit->author, &commit->time);
+		if (committer_line && state->with_graph)
 			graph->render_parents(graph, &commit->graph);
 		break;
-
-	case LINE_COMMITTER:
-		parse_author_line(line + STRING_SIZE("committer "),
-				  NULL, use_author_date ? NULL : &commit->time);
-		break;
+	}
 
 	default:
 		/* Fill in the commit title if it has not already been set. */
