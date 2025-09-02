@@ -132,7 +132,7 @@ blame_open(struct view *view, enum open_flags flags)
 
 		/* Check that opt_file_args[0] is not a directory */
 		if (!io_run_buf(ls_tree_argv, buf, sizeof(buf), NULL, false)) {
-			if (!string_concat_path(view->env->file, repo.prefix, opt_file_args[0]))
+			if (!string_concat_path(view->env->file, (opt_file_args[0][0] == '/' ? "" : repo.prefix), opt_file_args[0]))
 				return error("Failed to setup the blame view");
 		} else if (is_initial_view(view))
 			return error("Cannot blame %s", opt_file_args[0]);
