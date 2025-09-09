@@ -48,9 +48,9 @@ RPM_RELEASE = $(word 2,$(RPM_VERLIST))$(if $(WTDIRTY),.dirty)
 DFLAGS	= -g -DDEBUG -Werror -O0
 EXE	= src/tig
 TOOLS	= test/tools/test-graph tools/doc-gen
-TXTDOC	= doc/tig.1.adoc doc/tigrc.5.adoc doc/manual.adoc NEWS.adoc README.adoc INSTALL.adoc test/API.adoc
+TXTDOC	= doc/tig.1.adoc doc/tigrc.5.adoc doc/manual.adoc NEWS.adoc README.adoc TROUBLESHOOTING.adoc INSTALL.adoc test/API.adoc
 MANDOC	= doc/tig.1 doc/tigrc.5 doc/tigmanual.7
-HTMLDOC = doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html INSTALL.html NEWS.html
+HTMLDOC = doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html TROUBLESHOOTING.html INSTALL.html NEWS.html
 ALLDOC	= $(MANDOC) $(HTMLDOC) doc/manual.html-chunked doc/manual.pdf
 
 # Never include the release number in the tarname for tagged
@@ -405,6 +405,9 @@ doc/manual.html: ASCIIDOC_FLAGS += -ainclude-manual-toc
 
 README.html: README.adoc doc/asciidoc.conf
 	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -a readme $<
+
+TROUBLESHOOTING.html: TROUBLESHOOTING.adoc doc/asciidoc.conf
+	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<
 
 INSTALL.html: INSTALL.adoc doc/asciidoc.conf
 	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article $<
