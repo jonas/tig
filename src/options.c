@@ -895,7 +895,7 @@ option_set_command(int argc, const char *argv[])
 
 /* Wants: mode request key */
 static enum status_code
-option_bind_command(int argc, const char *argv[])
+option_bind_command(int argc, const char *argv[], const char *help)
 {
 	struct key key[16];
 	size_t keys = 0;
@@ -976,7 +976,7 @@ option_bind_command(int argc, const char *argv[])
 			const char *toggle[] = { ":toggle", mapped, arg, NULL};
 			const char *other[] = { mapped, NULL };
 			const char **prompt = *mapped == ':' ? other : toggle;
-			enum status_code code = add_run_request(keymap, key, keys, prompt);
+			enum status_code code = add_run_request(keymap, key, keys, prompt, NULL);
 
 			if (code == SUCCESS)
 				code = error("%s has been replaced by `%s%s%s%s'",
@@ -988,7 +988,7 @@ option_bind_command(int argc, const char *argv[])
 	}
 
 	if (request == REQ_UNKNOWN)
-		return add_run_request(keymap, key, keys, argv + 2);
+		return add_run_request(keymap, key, keys, argv + 2, help);
 
 	return add_keybinding(keymap, request, key, keys);
 }
@@ -1022,7 +1022,7 @@ option_source_command(int argc, const char *argv[])
 }
 
 enum status_code
-set_option(const char *opt, int argc, const char *argv[])
+set_option(const char *opt, int argc, const char *argv[], const char *help)
 {
 	if (!strcmp(opt, "color"))
 		return option_color_command(argc, argv);
@@ -1031,7 +1031,7 @@ set_option(const char *opt, int argc, const char *argv[])
 		return option_set_command(argc, argv);
 
 	if (!strcmp(opt, "bind"))
-		return option_bind_command(argc, argv);
+		return option_bind_command(argc, argv, help);
 
 	if (!strcmp(opt, "source"))
 		return option_source_command(argc, argv);
@@ -1063,7 +1063,8 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 		const char *argv[SIZEOF_ARG];
 		int argc = 0;
 
-		if (len < valuelen) {
+		bool have_comments = len < valuelen;
+		if (have_comments) {
 			valuelen = len;
 			value[valuelen] = 0;
 		}
@@ -1071,7 +1072,7 @@ read_option(char *opt, size_t optlen, char *value, size_t valuelen, void *data)
 		if (!argv_from_string(argv, &argc, value))
 			status = error("Too many option arguments for %s", opt);
 		else
-			status = set_option(opt, argc, argv);
+			status = set_option(opt, argc, argv, have_comments ? string_trim(value + len + 1) : NULL);
 	}
 
 	if (status != SUCCESS) {
@@ -1433,16 +1434,15 @@ set_remote_branch(const char *name, const char *value, size_t valuelen)
 }
 
 static void
-set_repo_config_option(char *name, char *value, enum status_code (*cmd)(int, const char **))
+set_repo_config_option(char *name, char *value, const char *cmd)
 {
-	const char *argv[SIZEOF_ARG] = { name, "=" };
-	int argc = 1 + (cmd == option_set_command);
-	enum status_code code;
+	const char *argv[SIZEOF_ARG]; int argc;
+	if (!strcmp(cmd, "set")) { argv[0] = name; argv[1] = "=";  argc = 2; }
+	else                     { argv[0] = name;                 argc = 1; }
 
-	if (!argv_from_string(argv, &argc, value))
-		code = error("Too many arguments");
-	else
-		code = cmd(argc, argv);
+	enum status_code code = !argv_from_string(argv, &argc, value)
+		? error("Too many arguments")
+		: set_option(cmd, argc, argv, NULL);
 
 	if (code != SUCCESS)
 		warn("Option 'tig.%s': %s", name, get_status_message(code));
@@ -1556,13 +1556,13 @@ read_repo_config_option(char *name, size_t namelen, char *value, size_t valuelen
 		opt_status_show_untracked_dirs = !strcmp(value, "all");
 
 	else if (!prefixcmp(name, "tig.color."))
-		set_repo_config_option(name + 10, value, option_color_command);
+		set_repo_config_option(name + 10, value, "color");
 
 	else if (!prefixcmp(name, "tig.bind."))
-		set_repo_config_option(name + 9, value, option_bind_command);
+		set_repo_config_option(name + 9, value, "bind");
 
 	else if (!prefixcmp(name, "tig."))
-		set_repo_config_option(name + 4, value, option_set_command);
+		set_repo_config_option(name + 4, value, "set");
 
 	else if (!prefixcmp(name, "color."))
 		set_git_color_option(name + STRING_SIZE("color."), value);
