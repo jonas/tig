@@ -797,6 +797,11 @@ diff_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_VIEW_BLAME:
 	case REQ_VIEW_BLOB:
+		if (line->type == LINE_DIFF_STAT) {
+			string_copy_rev(request == REQ_VIEW_BLAME ? view->env->ref : view->env->commit, view->vid);
+			view->env->goto_lineno = 0;
+			return request;
+		}
 		return diff_trace_origin(view, request, line);
 
 	case REQ_EDIT:
