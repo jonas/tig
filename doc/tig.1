@@ -2,12 +2,12 @@
 .\"     Title: tig
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 2025-02-05
+.\"      Date: 2025-09-16
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.5.12
+.\"    Source: Tig 2.6.0
 .\"  Language: English
 .\"
-.TH "TIG" "1" "2025\-02\-05" "Tig 2\&.5\&.12" "Tig Manual"
+.TH "TIG" "1" "2025\-09\-16" "Tig 2\&.6\&.0" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -415,7 +415,11 @@ Path for trace file where information about Git commands are logged\&.
 .PP
 TIG_SCRIPT
 .RS 4
-Path to script that should be executed automatically on startup\&. If this environment variable is defined to the empty string, the script is read from stdin\&. The script is interpreted line\-by\-line and can contain prompt commands and key mappings\&.
+Path to script that should be executed automatically on startup\&. If this environment variable is defined to the empty string, the script is read from stdin\&. The script is interpreted line\-by\-line and can contain prompt commands and key mappings\&. Note that the
+\fI<\fR
+character must be encoded as
+\fI<LT>\fR
+within the script\&.
 .sp
 .if n \{\
 .RS 4
@@ -435,7 +439,13 @@ Open Tig without rendering anything to the terminal\&. This force Ncurses to wri
 .PP
 TIG_EDITOR
 .RS 4
-The editor command to use when visiting files\&. This environment variable overrides $GIT_EDITOR, $EDITOR and $VISUAL, so it allows to use a different editor from the one Git uses\&.
+The editor command to use when visiting files\&. This environment variable overrides (in order of precedence)
+\fI$GIT_EDITOR\fR,
+\fIcore\&.editor\fR
+configuration,
+\fI$VISUAL\fR
+and
+\fI$EDITOR\fR, so it allows to use a different editor from the one Git uses\&. The value is meant to be interpreted by the shell when it is used\&.
 .RE
 .SH "FILES"
 .PP
@@ -486,10 +496,10 @@ if it does not exist\&.
 .RE
 .SH "BUGS"
 .sp
-Please visit Tig\(cqs \m[blue]\fBhome page\fR\m[]\&\s-2\u[1]\d\s+2 or \m[blue]\fBmain Git repository\fR\m[]\&\s-2\u[2]\d\s+2 for information about new releases and how to report bugs or feature request\&.
+Please visit Tig\(cqs \m[blue]\fBhome page\fR\m[]\&\s-2\u[1]\d\s+2 for information about new releases and how to report bugs or feature request\&.
 .SH "COPYRIGHT"
 .sp
-Copyright (c) 2006\-2025 Jonas Fonseca <\m[blue]\fBjonas\&.fonseca@gmail\&.com\fR\m[]\&\s-2\u[3]\d\s+2>
+Copyright (c) 2006\-2025 Jonas Fonseca <\m[blue]\fBjonas\&.fonseca@gmail\&.com\fR\m[]\&\s-2\u[2]\d\s+2>
 .sp
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version\&.
 .SH "SEE ALSO"
@@ -499,14 +509,9 @@ This program is free software; you can redistribute it and/or modify it under th
 .IP " 1." 4
 home page
 .RS 4
-\%https://jonas.github.io/tig
-.RE
-.IP " 2." 4
-main Git repository
-.RS 4
 \%https://github.com/jonas/tig
 .RE
-.IP " 3." 4
+.IP " 2." 4
 jonas.fonseca@gmail.com
 .RS 4
 \%mailto:jonas.fonseca@gmail.com

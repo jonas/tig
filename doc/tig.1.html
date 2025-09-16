@@ -1076,7 +1076,8 @@ TIG_SCRIPT
         Path to script that should be executed automatically on startup. If this
         environment variable is defined to the empty string, the script is read
         from stdin. The script is interpreted line-by-line and can contain
-        prompt commands and key mappings.
+        prompt commands and key mappings. Note that the <em>&lt;</em> character must be
+        encoded as <em>&lt;LT&gt;</em> within the script.
 </p>
 <div class="literalblock">
 <div class="content">
@@ -1098,8 +1099,10 @@ TIG_EDITOR
 <dd>
 <p>
         The editor command to use when visiting files. This environment
-        variable overrides $GIT_EDITOR, $EDITOR and $VISUAL, so it allows
-        to use a different editor from the one Git uses.
+        variable overrides (in order of precedence) <em>$GIT_EDITOR</em>,
+        <em>core.editor</em> configuration, <em>$VISUAL</em> and <em>$EDITOR</em>, so it
+        allows to use a different editor from the one Git uses. The
+        value is meant to be interpreted by the shell when it is used.
 </p>
 </dd>
 </dl></div>
@@ -1178,9 +1181,8 @@ TIG_EDITOR
 <div class="sect1">
 <h2 id="_bugs">BUGS</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Please visit Tig&#8217;s <a href="https://jonas.github.io/tig">home page</a> or
-<a href="https://github.com/jonas/tig">main Git repository</a> for information about
-new releases and how to report bugs or feature request.</p></div>
+<div class="paragraph"><p>Please visit Tig&#8217;s <a href="https://github.com/jonas/tig">home page</a> for information
+about new releases and how to report bugs or feature request.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -1206,7 +1208,7 @@ git(7)</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2025-02-05
+ 2025-09-16
 </div>
 </div>
 </body>

@@ -735,9 +735,122 @@ asciidoc.install();
 <body class="article">
 <div id="header">
 <h1>Release notes</h1>
-<span id="revdate">2025-02-05</span>
+<span id="revdate">2025-09-16</span>
 </div>
 <div id="content">
+<div class="sect1">
+<h2 id="_tig_2_6_0">tig-2.6.0</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Initialise %(head) from command line arguments. (#1366)
+</p>
+</li>
+<li>
+<p>
+Make <code>$GIT_EDITOR</code> value interpreted by the shell. (#1367)
+</p>
+</li>
+<li>
+<p>
+Use correct line from recursively blamed commit. (#1369, #1370)
+</p>
+</li>
+<li>
+<p>
+Use correct line when using <code>:parent</code> in blame view. (#1372)
+</p>
+</li>
+<li>
+<p>
+Fix the incorrect line shift after stage file. (#1371)
+</p>
+</li>
+<li>
+<p>
+Update display after setting column option. (#1384)
+</p>
+</li>
+<li>
+<p>
+Fix file mode diff header handling.
+</p>
+</li>
+<li>
+<p>
+Fix crash caused by too many diff cells. (#1389)
+</p>
+</li>
+<li>
+<p>
+Fix issue with blame when using absolute file paths. (#1391)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Add color for cursor in backgrounded view. (#1374)
+</p>
+</li>
+<li>
+<p>
+Blame view now works without a working tree.
+</p>
+</li>
+<li>
+<p>
+Open diff view from blame at the correct line. (#1375)
+</p>
+</li>
+<li>
+<p>
+Document how to get a <code>&lt;</code> within TIG_SCRIPT. (#1357)
+</p>
+</li>
+<li>
+<p>
+Allow to hide +/- signs in the diff view. (#855, #901)
+</p>
+</li>
+<li>
+<p>
+Add toggle options to help. (#1381)
+</p>
+</li>
+<li>
+<p>
+Add expand/collapse all options to help. (#1382)
+</p>
+</li>
+<li>
+<p>
+Expand relevant sections only when opening the help view. (#782, #886)
+</p>
+</li>
+<li>
+<p>
+Introduce committer column.
+</p>
+</li>
+<li>
+<p>
+Open the blame and blob views from diffstat.
+</p>
+</li>
+<li>
+<p>
+Update utf8proc to v2.11.0, supporting Unicode 17.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Note: Users should update the settings for the blame, main, reflog, and
+refs views in their ~/.tigrc file to include the committer column.</p></div>
+</div>
+</div>
 <div class="sect1">
 <h2 id="_tig_2_5_12">tig-2.5.12</h2>
 <div class="sectionbody">
@@ -5281,7 +5394,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2025-02-05
+ 2025-09-16
 </div>
 </div>
 </body>

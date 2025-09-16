@@ -2,12 +2,12 @@
 .\"     Title: tigrc
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 2025-02-05
+.\"      Date: 2025-09-16
 .\"    Manual: Tig Manual
-.\"    Source: Tig 2.5.12
+.\"    Source: Tig 2.6.0
 .\"  Language: English
 .\"
-.TH "TIGRC" "5" "2025\-02\-05" "Tig 2\&.5\&.12" "Tig Manual"
+.TH "TIGRC" "5" "2025\-09\-16" "Tig 2\&.6\&.0" "Tig Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -132,6 +132,7 @@ set reference\-format = (branch) <tag>
 set blame\-view = \e
         date:default \e
         author:abbreviated \e
+        committer:abbreviated \e
         file\-name:auto \e
         id:yes,color \e
         line\-number:yes,interval=5 text
@@ -445,6 +446,11 @@ and
 color diff\-del\-highlight\&.
 .RE
 .PP
+\fIdiff\-indicator\fR (bool)
+.RS 4
+Show +/\- signs in the diff view\&. On by default\&.
+.RE
+.PP
 \fIignore\-space\fR (mixed) [no|all|some|at\-eol|<bool>]
 .RS 4
 Ignore space changes in diff view\&. By default no space changes are ignored\&. Changing this to "all", "some" or "at\-eol" is equivalent to passing "\-\-ignore\-all\-space", "\-\-ignore\-space" or "\-\-ignore\-space\-at\-eol" respectively to
@@ -466,7 +472,7 @@ and
 \fBstatus\-revert\fR
 may fail when updating or reverting chunks containing lines with space changes\&. Similarly,
 \fBstage\-update\-line\fR
-may fail when updating a line adjacent to a line with space changes
+may fail when updating a line adjacent to a line with space changes\&.
 .RE
 .PP
 \fIcommit\-order\fR (enum) [auto|default|topo|date|author\-date|reverse]
@@ -605,14 +611,14 @@ Examples:
 .\}
 .nf
 # Enable both ID and line numbers in the blame view
-set blame\-view = date:default author:full file\-name:auto id:yes,color \e
-                 line\-number:yes,interval=5 text
+set blame\-view = date:default author:full committer:no file\-name:auto \e
+                 id:yes,color line\-number:yes,interval=5 text
 
 # Change grep view to be similar to `git grep` format
 set grep\-view = file\-name:yes line\-number:yes,interval=1 text
 
 # Show file sizes as units
-set tree\-view = line\-number:no,interval=5 mode author:full \e
+set tree\-view = line\-number:no,interval=5 mode author:full committer:no \e
                 file\-size:units date:default id:no file\-name
 
 # Show line numbers for every 10th line in the pager view
@@ -639,7 +645,7 @@ line\-number, text
 .PP
 blame\-view
 .RS 4
-author, date, file\-name, id, line\-number, text
+author, committer, date, file\-name, id, line\-number, text
 .RE
 .PP
 grep\-view
@@ -649,12 +655,12 @@ file\-name, line\-number, text
 .PP
 main\-view, reflog\-view
 .RS 4
-author, date, commit\-title, id, line\-number, ref
+author, committer, date, commit\-title, id, line\-number, ref
 .RE
 .PP
 refs\-view
 .RS 4
-author, date, commit\-title, id, line\-number, ref
+author, committer, date, commit\-title, id, line\-number, ref
 .RE
 .PP
 stash\-view
@@ -669,12 +675,12 @@ file\-name, line\-number, status
 .PP
 tree\-view
 .RS 4
-author, date, id, file\-name, file\-size, line\-number, mode
+author, committer, date, id, file\-name, file\-size, line\-number, mode
 .RE
 .sp
 Supported column types and their respective column options:
 .PP
-author
+author, committer
 .RS 4
 .sp
 .RS 4
@@ -686,7 +692,7 @@ author
 .IP \(bu 2.3
 .\}
 \fIdisplay\fR
-(mixed) [full|abbreviated|email|email\-user|<bool>]: How to display author names\&. If set to "abbreviated" author initials will be shown\&.
+(mixed) [full|abbreviated|email|email\-user|<bool>]: How to display author/committer names\&. If set to "abbreviated" author/committer initials will be shown\&.
 .RE
 .sp
 .RS 4
@@ -698,7 +704,7 @@ author
 .IP \(bu 2.3
 .\}
 \fIwidth\fR
-(int): Fixed width for the column\&. When set to a value between 1 and 10, the author name will be abbreviated to the author\(cqs initials\&. When set to zero, the width is automatically sized to fit the content\&.
+(int): Fixed width for the column\&. When set to a value between 1 and 10, the author/committer name will be abbreviated to the author/committer\(cqs initials\&. When set to zero, the width is automatically sized to fit the content\&.
 .RE
 .sp
 .RS 4
@@ -2433,6 +2439,8 @@ lt lt
 lt lt
 lt lt
 lt lt
+lt lt
+lt lt
 lt lt.
 T{
 .sp
@@ -2446,7 +2454,14 @@ T{
 cursor
 T}:T{
 .sp
-The cursor line\&.
+The cursor line for the current view\&.
+T}
+T{
+.sp
+cursor\-blur
+T}:T{
+.sp
+The cursor line of any backgrounded view\&.
 T}
 T{
 .sp
@@ -2520,6 +2535,13 @@ The commit author\&.
 T}
 T{
 .sp
+committer
+T}:T{
+.sp
+The committer\&.
+T}
+T{
+.sp
 mode
 T}:T{
 .sp
@@ -2563,6 +2585,10 @@ T}
 .B Table\ \&2.\ \&Main view colors
 .TS
 tab(:);
+lt lt
+lt lt
+lt lt
+lt lt
 lt lt
 lt lt
 lt lt
@@ -2642,7 +2668,7 @@ T{
 main\-ref
 T}:T{
 .sp
-Label of any other reference\&.
+Label of a branch\&.
 T}
 T{
 .sp
@@ -2650,6 +2676,34 @@ main\-replace
 T}:T{
 .sp
 Label of replaced reference\&.
+T}
+T{
+.sp
+main\-stash
+T}:T{
+.sp
+Label of the stash\&.
+T}
+T{
+.sp
+main\-note
+T}:T{
+.sp
+Label of notes\&.
+T}
+T{
+.sp
+main\-prefetch
+T}:T{
+.sp
+Label of reference prefetched by git maintenance\&.
+T}
+T{
+.sp
+main\-other
+T}:T{
+.sp
+Label of any other reference\&.
 T}
 .TE
 .sp 1

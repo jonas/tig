@@ -868,6 +868,7 @@ set reference-format = (branch) &lt;tag&gt;
 set blame-view = \
         date:default \
         author:abbreviated \
+        committer:abbreviated \
         file-name:auto \
         id:yes,color \
         line-number:yes,interval=5 text</code></pre>
@@ -1195,6 +1196,14 @@ other                : Any other reference.
 </p>
 </dd>
 <dt class="hdlist1">
+<em>diff-indicator</em> (bool)
+</dt>
+<dd>
+<p>
+        Show +/- signs in the diff view. On by default.
+</p>
+</dd>
+<dt class="hdlist1">
 <em>ignore-space</em> (mixed) [no|all|some|at-eol|&lt;bool&gt;]
 </dt>
 <dd>
@@ -1208,7 +1217,7 @@ other                : Any other reference.
         the <strong>status-update</strong> and <strong>status-revert</strong> may fail when updating or
         reverting chunks containing lines with space changes. Similarly,
         <strong>stage-update-line</strong> may fail when updating a line adjacent to a line
-        with space changes
+        with space changes.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1425,14 +1434,14 @@ allow to set the date in the main view.</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><code># Enable both ID and line numbers in the blame view
-set blame-view = date:default author:full file-name:auto id:yes,color \
-                 line-number:yes,interval=5 text
+set blame-view = date:default author:full committer:no file-name:auto \
+                 id:yes,color line-number:yes,interval=5 text
 
 # Change grep view to be similar to `git grep` format
 set grep-view = file-name:yes line-number:yes,interval=1 text
 
 # Show file sizes as units
-set tree-view = line-number:no,interval=5 mode author:full \
+set tree-view = line-number:no,interval=5 mode author:full committer:no \
                 file-size:units date:default id:no file-name
 
 # Show line numbers for every 10th line in the pager view
@@ -1461,7 +1470,7 @@ blame-view
 </dt>
 <dd>
 <p>
-author, date, file-name, id, line-number, text
+author, committer, date, file-name, id, line-number, text
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1477,7 +1486,7 @@ main-view, reflog-view
 </dt>
 <dd>
 <p>
-author, date, commit-title, id, line-number, ref
+author, committer, date, commit-title, id, line-number, ref
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1485,7 +1494,7 @@ refs-view
 </dt>
 <dd>
 <p>
-author, date, commit-title, id, line-number, ref
+author, committer, date, commit-title, id, line-number, ref
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1509,28 +1518,29 @@ tree-view
 </dt>
 <dd>
 <p>
-author, date, id, file-name, file-size, line-number, mode
+author, committer, date, id, file-name, file-size, line-number, mode
 </p>
 </dd>
 </dl></div>
 <div class="paragraph"><p>Supported column types and their respective column options:</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
-author
+author, committer
 </dt>
 <dd>
 <div class="ulist"><ul>
 <li>
 <p>
 <em>display</em> (mixed) [full|abbreviated|email|email-user|&lt;bool&gt;]: How to
-          display author names. If set to "abbreviated" author initials will be
-          shown.
+          display author/committer names. If set to "abbreviated"
+          author/committer initials will be shown.
 </p>
 </li>
 <li>
 <p>
 <em>width</em> (int): Fixed width for the column. When set to a value between
-          1 and 10, the author name will be abbreviated to the author&#8217;s initials.
+          1 and 10, the author/committer name will be abbreviated to the
+          author/committer&#8217;s initials.
           When set to zero, the width is automatically sized to fit the content.
 </p>
 </li>
@@ -2658,7 +2668,11 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>cursor</code></p></td>
-<td align="left" valign="top"><p class="table">The cursor line.</p></td>
+<td align="left" valign="top"><p class="table">The cursor line for the current view.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>cursor-blur</code></p></td>
+<td align="left" valign="top"><p class="table">The cursor line of any backgrounded view.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>status</code></p></td>
@@ -2702,6 +2716,10 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table"><code>author</code></p></td>
 <td align="left" valign="top"><p class="table">The commit author.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>committer</code></p></td>
+<td align="left" valign="top"><p class="table">The committer.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>mode</code></p></td>
@@ -2777,11 +2795,27 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>main-ref</code></p></td>
-<td align="left" valign="top"><p class="table">Label of any other reference.</p></td>
+<td align="left" valign="top"><p class="table">Label of a branch.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table"><code>main-replace</code></p></td>
 <td align="left" valign="top"><p class="table">Label of replaced reference.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>main-stash</code></p></td>
+<td align="left" valign="top"><p class="table">Label of the stash.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>main-note</code></p></td>
+<td align="left" valign="top"><p class="table">Label of notes.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>main-prefetch</code></p></td>
+<td align="left" valign="top"><p class="table">Label of reference prefetched by <code>git maintenance</code>.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table"><code>main-other</code></p></td>
+<td align="left" valign="top"><p class="table">Label of any other reference.</p></td>
 </tr>
 </tbody>
 </table>
@@ -2958,7 +2992,7 @@ git(7), git-config(1)</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2025-02-05
+ 2025-09-16
 </div>
 </div>
 </body>
