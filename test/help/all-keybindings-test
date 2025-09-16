@@ -2,11 +2,14 @@
 
 . libtest.sh
 
-export COLUMNS=90
-export LINES=130
+export COLUMNS=100
+export LINES=160
 
 steps '
 	:view-help
+	:2
+	:enter
+	:enter
 	:save-display help-default.screen
 '
 

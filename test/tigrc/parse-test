@@ -4,6 +4,8 @@
 
 . libtest.sh
 
+export LINES=20
+
 tigrc <<EOF
 s				# Unknown command
 set				# Missing name, equals and value
@@ -65,6 +67,8 @@ EOF
 
 steps "
 	:view-help
+	:9
+	:enter
 	:save-display help.screen
 "
 
@@ -107,6 +111,7 @@ EOF
 
 assert_equals help.screen <<EOF
 Quick reference for tig keybindings:
+[-] Collapse all sections
 
 [-] generic bindings
 View switching
@@ -123,16 +128,5 @@ External commands:
    4 <quitting command
    5 +echoed command
    0 @?<+all modifiers
-
-
-
-
-
-
-
-
-
-
-
-[help] - line 1 of 17                                                       100%
+[help] - line 9 of 38                                                        47%
 EOF

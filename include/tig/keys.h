@@ -65,6 +65,7 @@ key_to_control(const struct key *key)
 }
 
 struct keymap *get_keymap(const char *name, size_t namelen);
+bool update_keymap_visibility(const char *name, size_t namelen);
 
 const char *get_key_name(const struct key key[], size_t keys, bool quote_comma);
 enum status_code get_key_value(const char **name, struct key *key);

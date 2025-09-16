@@ -11,9 +11,9 @@
 #
 # Supported column types and their options:
 #
-#   author
+#   author, committer
 #    - display (enum) [no|full|abbreviated|email|email-user]
-#					: Show author information?
+#					: Show author/committer information?
 #    - width (int)			: Fixed width when nonzero
 #    - maxwidth (int)			: Autosize limit
 #
@@ -68,14 +68,14 @@
 #    - commit-title-overflow (boolint)	: Highlight overflow in log and diff view?
 #
 
-set blame-view	= id:yes,color file-name:auto author:full date:default,format="%Y-%m-%d" line-number:yes,interval=1 text
+set blame-view	= id:yes,color file-name:auto author:full committer:no date:default,format="%Y-%m-%d" line-number:yes,interval=1 text
 set grep-view	= file-name:no line-number:yes,interval=1 text
-set main-view	= line-number:no,interval=5 id:no date:default,format="%Y-%m-%d" author:full commit-title:yes,graph,refs,overflow=no
-set reflog-view	= line-number:no,interval=5 id:yes date:no,format="%Y-%m-%d" author:no commit-title:yes,refs,overflow=no
-set refs-view	= line-number:no id:no date:default,format="%Y-%m-%d" author:full ref commit-title
+set main-view	= line-number:no,interval=5 id:no date:default,format="%Y-%m-%d" author:full committer:no commit-title:yes,graph,refs,overflow=no
+set reflog-view	= line-number:no,interval=5 id:yes date:no,format="%Y-%m-%d" author:no committer:no commit-title:yes,refs,overflow=no
+set refs-view	= line-number:no id:no date:default,format="%Y-%m-%d" author:full committer:no ref commit-title
 set stash-view	= line-number:no,interval=5 id:no date:default,format="%Y-%m-%d" author:full commit-title
 set status-view	= line-number:no,interval=5 status:short file-name
-set tree-view	= line-number:no,interval=5 mode author:full file-size date:default,format="%Y-%m-%d" id:no file-name
+set tree-view	= line-number:no,interval=5 mode author:full committer:no file-size date:default,format="%Y-%m-%d" id:no file-name
 
 # Pager based views
 set pager-view	= line-number:no,interval=5 text
@@ -122,8 +122,9 @@ set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set diff-context		= 3		# Number of lines to show around diff changes (diff)
 #set word-diff			= yes		# Show a word diff? (diff)
 #set diff-options		= -C		# User-defined options for `tig show` (git-diff)
-#set diff-highlight		= true		# String (or bool): Path to diff-highlight script,
+#set diff-highlight		= yes		# String (or bool): Path to diff-highlight script,
 						#                   defaults to `diff-highlight`.
+set diff-indicator		= yes		# Show diff +/- signs?
 #set blame-options		= -C -C -C	# User-defined options for `tig blame` (git-blame)
 set log-options			= --cc --stat	# User-defined options for `tig log` (git-log)
 #set main-options		= -n 1000	# User-defined options for `tig` (git-log)
@@ -309,6 +310,7 @@ bind generic	i	:toggle sort-field	# Toggle field to sort by
 bind generic	<Hash>	:toggle line-number	# Toggle line numbers
 bind generic	D	:toggle date		# Toggle date display
 bind generic	A	:toggle author		# Toggle author display
+bind generic	T	:toggle committer	# Toggle committer display
 # bind generic	???	:toggle commit-title-display
 						# Toggle commit title display
 bind generic	~	:toggle line-graphics	# Toggle (line) graphics mode
@@ -326,6 +328,7 @@ bind generic	$	:toggle commit-title-overflow
 						# Toggle display of file in untracked directories
 # bind generic	???	:toggle vertical-split	# Toggle vertical split
 # bind generic	???	:toggle word-diff	# Toggle word diff
+# bind generic	???	:toggle diff-indicator	# Toggle display of diff +/- signs
 bind generic	%	:toggle file-filter	# Toggle filtering by pathspecs in file-args
 bind generic	^	:toggle rev-filter	# Toggle filtering by revisions in rev-args
 
@@ -365,7 +368,8 @@ color " +"			green	default
 color "-"			red	default
 color " -"			red	default
 color "index "			blue	default
-color "old file mode "		yellow	default
+color "old mode "		yellow	default
+color "new mode "		yellow	default
 color "new file mode "		yellow	default
 color "deleted file mode "	yellow	default
 color "copy from "		yellow	default
@@ -413,6 +417,7 @@ color "    Original-patch-by:"	yellow	default
 color "    Inspired-by:"	yellow	default
 color default			default	default	normal
 color cursor			white	green	bold
+color cursor-blur		white	green
 color status			green	default
 color delimiter			magenta	default
 color date			blue	default

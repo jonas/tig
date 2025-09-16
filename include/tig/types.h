@@ -129,6 +129,7 @@ bool map_enum_do(const struct enum_map_entry *map, size_t map_size, int *value, 
 
 #define VIEW_COLUMN_ENUM(_) \
 	_(VIEW_COLUMN, AUTHOR), \
+	_(VIEW_COLUMN, COMMITTER), \
 	_(VIEW_COLUMN, COMMIT_TITLE), \
 	_(VIEW_COLUMN, DATE), \
 	_(VIEW_COLUMN, FILE_NAME), \

@@ -3,6 +3,8 @@
 . libtest.sh
 . libgit.sh
 
+export GIT_EDITOR=\$EDITOR
+
 tigrc <<EOF
 set show-untracked = no
 set line-graphics = ascii

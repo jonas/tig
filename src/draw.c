@@ -15,6 +15,7 @@
 #include "tig/graph.h"
 #include "tig/draw.h"
 #include "tig/options.h"
+#include "tig/display.h"
 #include "compat/hashtab.h"
 
 static const enum line_type palette_colors[] = {
@@ -259,6 +260,19 @@ draw_author(struct view *view, struct view_column *column, const struct ident *a
 }
 
 static bool
+draw_committer(struct view *view, struct view_column *column, const struct ident *committer)
+{
+	bool trim = author_trim(column->width);
+	const char *text = mkauthor(committer, MAX(column->opt.committer.width, column->opt.committer.maxwidth),
+				    column->opt.committer.display);
+
+	if (column->opt.committer.display == AUTHOR_NO)
+		return false;
+
+	return draw_field(view, LINE_COMMITTER, text, column->width, ALIGN_LEFT, trim);
+}
+
+static bool
 draw_id(struct view *view, struct view_column *column, const char *id)
 {
 	enum line_type type = LINE_ID;
@@ -494,6 +508,11 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 				return true;
 			continue;
 
+		case VIEW_COLUMN_COMMITTER:
+			if (draw_committer(view, column, column_data.committer))
+				return true;
+			continue;
+
 		case VIEW_COLUMN_REF:
 			if (draw_ref(view, column, column_data.ref))
 				return true;
@@ -667,7 +686,7 @@ draw_view_line(struct view *view, unsigned int lineno)
 	line->dirty = line->cleareol = 0;
 
 	if (selected) {
-		set_view_attr(view, LINE_CURSOR);
+		set_view_attr(view, view == display[current_view] ? LINE_CURSOR : LINE_CURSOR_BLUR);
 		line->selected = true;
 		view->ops->select(view, line);
 	}

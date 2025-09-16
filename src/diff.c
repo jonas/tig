@@ -86,15 +86,18 @@ struct diff_stat_context {
 	bool skip;
 	size_t cells;
 	const char **cell_text;
-	struct box_cell cell[256];
+	struct box_cell cell[8192];
 };
 
 static bool
 diff_common_add_cell(struct diff_stat_context *context, size_t length, bool allow_empty)
 {
-	assert(ARRAY_SIZE(context->cell) > context->cells);
 	if (!allow_empty && (length == 0))
 		return true;
+	if (context->cells > ARRAY_SIZE(context->cell) - 1) {
+		report("Too many diff cells, truncating");
+		return false;
+	}
 	if (context->skip && !argv_appendn(&context->cell_text, context->text, length))
 		return false;
 	context->cell[context->cells].length = length;
@@ -347,7 +350,7 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		state->reading_diff_chunk = false;
 
 	} else if (type == LINE_DIFF_CHUNK) {
-		const int len = chunk_header_marker_length(data);
+		const unsigned int len = chunk_header_marker_length(data);
 		const char *context = strstr(data + len, "@@");
 		struct line *line =
 			context ? add_line_text_at(view, view->lines, data, LINE_DIFF_CHUNK, len)
@@ -362,20 +365,26 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		box->cell[1].length = strlen(context + len);
 		box->cell[box->cells++].type = LINE_DIFF_STAT;
 		state->combined_diff = (len > 2);
+		state->parents = len - 1;
 		state->reading_diff_chunk = true;
 		return true;
 
 	} else if (type == LINE_COMMIT) {
 		state->reading_diff_chunk = false;
 
-	} else if (state->highlight && strchr(data, 0x1b)) {
-		return diff_common_highlight(view, data, type);
-
-	} else if (opt_word_diff && state->reading_diff_chunk &&
-		   /* combined diff format is not using word diff */
-		   !state->combined_diff) {
-		return diff_common_read_diff_wdiff(view, data);
 	}
+
+	if (opt_word_diff && state->reading_diff_chunk &&
+	    /* combined diff format is not using word diff */
+	    !state->combined_diff)
+		return diff_common_read_diff_wdiff(view, data);
+
+	if (!opt_diff_indicator && state->reading_diff_chunk &&
+	    !state->stage)
+		data += state->parents;
+
+	if (state->highlight && strchr(data, 0x1b))
+		return diff_common_highlight(view, data, type);
 
 	return pager_common_read(view, data, type, NULL);
 }
@@ -406,6 +415,7 @@ diff_find_header_from_stat(struct view *view, struct line *line)
 				break;
 
 			if (diff_find_stat_entry(view, line, LINE_DIFF_INDEX)
+			    || diff_find_stat_entry(view, line, LINE_DIFF_OLDMODE)
 			    || diff_find_stat_entry(view, line, LINE_DIFF_SIMILARITY)) {
 				if (file_number == 1) {
 					break;
@@ -543,6 +553,15 @@ diff_read(struct view *view, struct buffer *buf, bool force_stop)
 			}
 		}
 
+		if (view->env->blame_lineno) {
+			state->file = get_path(view->env->file);
+			state->lineno = view->env->blame_lineno;
+			state->pos.offset = 0;
+			state->pos.lineno = view->lines - 1;
+
+			view->env->blame_lineno = 0;
+		}
+
 		diff_restore_line(view, state);
 
 		if (!state->adding_describe_ref && !ref_list_contains_tag(view->vid)) {
@@ -569,6 +588,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 		struct blame_header *header, struct blame_commit *commit)
 {
 	char author[SIZEOF_STR] = "";
+	char committer[SIZEOF_STR] = "";
 	char line_arg[SIZEOF_STR];
 	const char *blame_argv[] = {
 		"git", "blame", encoding_arg, "-p", line_arg, ref, "--", file, NULL
@@ -589,7 +609,7 @@ diff_blame_line(const char *ref, const char *file, unsigned long lineno,
 				break;
 			header = NULL;
 
-		} else if (parse_blame_info(commit, author, buf.data, false)) {
+		} else if (parse_blame_info(commit, author, committer, buf.data)) {
 			ok = commit->filename != NULL;
 			break;
 		}
@@ -777,6 +797,11 @@ diff_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_VIEW_BLAME:
 	case REQ_VIEW_BLOB:
+		if (line->type == LINE_DIFF_STAT) {
+			string_copy_rev(request == REQ_VIEW_BLAME ? view->env->ref : view->env->commit, view->vid);
+			view->env->goto_lineno = 0;
+			return request;
+		}
 		return diff_trace_origin(view, request, line);
 
 	case REQ_EDIT:

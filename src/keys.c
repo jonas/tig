@@ -48,6 +48,23 @@ get_keymap(const char *name, size_t namelen)
 	return NULL;
 }
 
+bool
+update_keymap_visibility(const char *name, size_t namelen)
+{
+	bool changed = false;
+	int i;
+
+	/* Skip generic and search keymaps. */
+	for (i = 2; i < ARRAY_SIZE(keymaps); i++) {
+		bool hidden = !!strncmp(keymaps[i].name, name, namelen);
+		if (keymaps[i].hidden != hidden) {
+			keymaps[i].hidden = hidden;
+			changed = true;
+		}
+	}
+	return changed;
+}
+
 static bool
 keybinding_matches(const struct keybinding *keybinding, const struct key key[],
 		  size_t keys, bool *conflict_ptr)
@@ -111,7 +128,8 @@ del_keybinding(const struct key key[], size_t keys)
 				table->size--;
 				for (; j < table->size; j++)
 					table->data[j] = table->data[j + 1];
-				table->data = realloc(table->data, table->size * sizeof(*table->data));
+				if (table->size)
+					table->data = realloc(table->data, table->size * sizeof(*table->data));
 			}
 	}
 

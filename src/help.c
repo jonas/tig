@@ -14,7 +14,21 @@
 #include "tig/argv.h"
 #include "tig/view.h"
 #include "tig/search.h"
+#include "tig/prompt.h"
 #include "tig/draw.h"
+
+extern const struct menu_item toggle_menu_items[];
+
+static const char collapse_expand_names[2][13] = {
+	"Collapse all",
+	"Expand all"
+};
+static struct keymap collapse_expand_keymap = {
+	collapse_expand_names[0], NULL, 0, false
+};
+static struct keymap toggle_menu_keymap = {
+	"toggle", NULL, 0, false
+};
 
 /*
  * Help backend
@@ -26,8 +40,11 @@ struct help_state {
 };
 
 struct help {
-	struct keymap *keymap;
 	enum request request;
+	union {
+		struct keymap *keymap;
+		struct menu_item *menu;
+	} item;
 	union {
 		const char *text;
 		const struct request_info *req_info;
@@ -38,15 +55,30 @@ static bool
 help_draw(struct view *view, struct line *line, unsigned int lineno)
 {
 	struct help *help = line->data;
-	const struct keymap *keymap = help->keymap;
+	const struct keymap *keymap = help->item.keymap;
 	struct help_state *state = view->private;
 
 	if (line->type == LINE_SECTION) {
-		draw_formatted(view, line->type, "[%c] %s bindings",
-			       keymap->hidden ? '+' : '-', keymap->name);
+		draw_formatted(view, line->type, "[%c] %s %s",
+				keymap->hidden ? '+' : '-', keymap->name,
+				keymap == &collapse_expand_keymap ? "sections" : "bindings");
 
 	} else if (line->type == LINE_HELP_GROUP || !keymap) {
 		draw_text(view, line->type, help->data.text);
+
+	} else if (line->type == LINE_HELP_TOGGLE) {
+		struct menu_item *item = help->item.menu;
+		char key[2];
+
+		if (!string_nformat(key, sizeof(key), NULL, "%c", item->hotkey))
+			return true;
+		if (draw_field(view, LINE_DEFAULT, key, state->keys_width + 2, ALIGN_RIGHT, false))
+			return true;
+
+		if (draw_field(view, LINE_HELP_ACTION, item->data, state->name_width, ALIGN_LEFT, false))
+			return true;
+
+		draw_formatted(view, LINE_DEFAULT, "Toggle %s", item->text);
 
 	} else if (help->request > REQ_RUN_REQUESTS) {
 		struct run_request *req = get_run_request(help->request);
@@ -83,7 +115,7 @@ static bool
 help_grep(struct view *view, struct line *line)
 {
 	struct help *help = line->data;
-	const struct keymap *keymap = help->keymap;
+	const struct keymap *keymap = help->item.keymap;
 
 	if (line->type == LINE_SECTION) {
 		const char *text[] = { keymap->name, NULL };
@@ -92,6 +124,15 @@ help_grep(struct view *view, struct line *line)
 
 	} else if (line->type == LINE_HELP_GROUP || !keymap) {
 		const char *text[] = { help->data.text, NULL };
+
+		return grep_text(view, text);
+
+	} else if (line->type == LINE_HELP_TOGGLE) {
+		char key[2];
+		const char *text[] = { key, help->item.menu->data, "Toggle", help->item.menu->text, NULL };
+
+		if (!string_nformat(key, sizeof(key), NULL, "%c", help->item.menu->hotkey))
+			return false;
 
 		return grep_text(view, text);
 
@@ -127,7 +168,7 @@ add_help_line(struct view *view, struct help **help_ptr, struct keymap *keymap, 
 
 	if (!add_line_alloc(view, &help, type, 0, false))
 		return false;
-	help->keymap = keymap;
+	help->item.keymap = keymap;
 	if (help_ptr)
 		*help_ptr = help;
 	return true;
@@ -145,7 +186,7 @@ help_keys_visitor(void *data, const char *group, struct keymap *keymap,
 
 	if (iterator->keymap != keymap) {
 		iterator->keymap = keymap;
-		if (!add_help_line(iterator->view, &help, keymap, LINE_SECTION))
+		if (!add_help_line(view, &help, keymap, LINE_SECTION))
 			return false;
 	}
 
@@ -153,7 +194,7 @@ help_keys_visitor(void *data, const char *group, struct keymap *keymap,
 		return true;
 
 	if (group) {
-		if (!add_help_line(iterator->view, &help, keymap, LINE_HELP_GROUP))
+		if (!add_help_line(view, &help, keymap, LINE_HELP_GROUP))
 			return false;
 		help->data.text = group;
 	}
@@ -172,10 +213,26 @@ help_keys_visitor(void *data, const char *group, struct keymap *keymap,
 	return true;
 }
 
+static bool
+help_collapse_expand_keys_visitor(void *data, const char *group, struct keymap *keymap,
+		  enum request request, const char *key,
+		  const struct request_info *req_info, const struct run_request *run_req)
+{
+	struct help_request_iterator *iterator = data;
+
+	if (iterator->keymap != keymap) {
+		iterator->keymap = keymap;
+		keymap->hidden = collapse_expand_keymap.hidden;
+	}
+
+	return true;
+}
+
 static enum status_code
 help_open(struct view *view, enum open_flags flags)
 {
 	struct help_request_iterator iterator = { view };
+	struct help_state *state = view->private;
 	struct help *help;
 
 	reset_view(view);
@@ -184,12 +241,33 @@ help_open(struct view *view, enum open_flags flags)
 		return ERROR_OUT_OF_MEMORY;
 	help->data.text = "Quick reference for tig keybindings:";
 
+	if (!add_help_line(view, &help, &collapse_expand_keymap, LINE_SECTION))
+		return ERROR_OUT_OF_MEMORY;
+
 	if (!add_help_line(view, &help, NULL, LINE_DEFAULT))
 		return ERROR_OUT_OF_MEMORY;
 	help->data.text = "";
 
-	return foreach_key(help_keys_visitor, &iterator, true)
-		? SUCCESS : error("Failed to render key bindings");
+	if (!foreach_key(help_keys_visitor, &iterator, true))
+		return error("Failed to render key bindings");
+
+	if (!add_help_line(view, &help, &toggle_menu_keymap, LINE_SECTION))
+		return ERROR_OUT_OF_MEMORY;
+	if (!toggle_menu_keymap.hidden) {
+		int i;
+
+		if (!add_help_line(view, &help, NULL, LINE_HELP_GROUP))
+			return ERROR_OUT_OF_MEMORY;
+		help->data.text = "Toggle keys (enter: o <key>):";
+
+		for (i = 0; toggle_menu_items[i].data; i++) {
+			state->name_width = MAX(state->name_width, strlen(toggle_menu_items[i].data));
+			if (!add_help_line(view, &help, (struct keymap *)&toggle_menu_items[i], LINE_HELP_TOGGLE))
+				return ERROR_OUT_OF_MEMORY;
+		}
+	}
+
+	return SUCCESS;
 }
 
 static enum request
@@ -200,9 +278,16 @@ help_request(struct view *view, enum request request, struct line *line)
 	switch (request) {
 	case REQ_ENTER:
 		if (line->type == LINE_SECTION) {
-			struct keymap *keymap = help->keymap;
+			struct keymap *keymap = help->item.keymap;
 
 			keymap->hidden = !keymap->hidden;
+			if (keymap == &collapse_expand_keymap) {
+				struct help_request_iterator iterator = { view };
+
+				collapse_expand_keymap.name = collapse_expand_names[keymap->hidden];
+				foreach_key(help_collapse_expand_keys_visitor, &iterator, true);
+				toggle_menu_keymap.hidden = keymap->hidden;
+			}
 			refresh_view(view);
 		}
 		return REQ_NONE;

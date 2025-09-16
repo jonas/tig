@@ -44,6 +44,7 @@ struct blame_state {
 	struct blame_commit *commit;
 	struct blame_header header;
 	char author[SIZEOF_STR];
+	char committer[SIZEOF_STR];
 	bool auto_filename_display;
 	const char *filename;
 	/* The history state for the current view is cached in the view
@@ -76,9 +77,6 @@ blame_open(struct view *view, enum open_flags flags)
 	};
 	enum status_code code;
 	size_t i;
-
-	if (!(repo.is_inside_work_tree || *repo.worktree))
-		return error("The blame view requires a working tree");
 
 	if (is_initial_view(view)) {
 		/* Finish validating and setting up blame options */
@@ -134,7 +132,7 @@ blame_open(struct view *view, enum open_flags flags)
 
 		/* Check that opt_file_args[0] is not a directory */
 		if (!io_run_buf(ls_tree_argv, buf, sizeof(buf), NULL, false)) {
-			if (!string_concat_path(view->env->file, repo.prefix, opt_file_args[0]))
+			if (!string_concat_path(view->env->file, (opt_file_args[0][0] == '/' ? "" : repo.prefix), opt_file_args[0]))
 				return error("Failed to setup the blame view");
 		} else if (is_initial_view(view))
 			return error("Cannot blame %s", opt_file_args[0]);
@@ -219,8 +217,6 @@ static bool
 blame_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct blame_state *state = view->private;
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
-	bool use_author_date = column && column->opt.date.use_author;
 
 	if (!buf) {
 		if (failed_to_load_initial_view(view))
@@ -258,7 +254,7 @@ blame_read(struct view *view, struct buffer *buf, bool force_stop)
 
 		state->commit = NULL;
 
-	} else if (parse_blame_info(state->commit, state->author, buf->data, use_author_date)) {
+	} else if (parse_blame_info(state->commit, state->author, state->committer, buf->data)) {
 		if (!state->commit->filename)
 			return false;
 
@@ -279,12 +275,17 @@ static bool
 blame_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
 	struct blame *blame = line->data;
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
+	bool use_author_date = column && column->opt.date.use_author;
 
 	if (blame->commit) {
 		column_data->id = blame->commit->id;
 		column_data->author = blame->commit->author;
+		column_data->committer = blame->commit->committer;
 		column_data->file_name = blame->commit->filename;
-		column_data->date = &blame->commit->time;
+		column_data->date = use_author_date
+					? &blame->commit->author_time
+					: &blame->commit->commit_time;
 		column_data->commit_title = blame->commit->title;
 	}
 
@@ -335,7 +336,7 @@ setup_blame_parent_line(struct view *view, struct blame *blame)
 				blamed_lineno = atoi(pos + 1);
 
 		} else if (*line == '+' && parent_lineno != -1) {
-			if (blame->lineno == blamed_lineno - 1 &&
+			if (blame->lineno == blamed_lineno &&
 			    !strcmp(blame->text, line + 1)) {
 				view->pos.lineno = parent_lineno ? parent_lineno - 1 : 0;
 				break;
@@ -373,9 +374,12 @@ blame_go_forward(struct view *view, struct blame *blame, bool parent)
 
 	string_ncopy(view->env->ref, id, sizeof(commit->id));
 	string_ncopy(view->env->file, filename, strlen(filename));
-	if (parent)
+	if (parent) {
 		setup_blame_parent_line(view, blame);
-	view->env->goto_lineno = view->pos.lineno;
+		view->env->goto_lineno = view->pos.lineno;
+	} else {
+		view->env->goto_lineno = blame->lineno - 1;
+	}
 	reload_view(view);
 }
 
@@ -451,7 +455,9 @@ blame_request(struct view *view, enum request request, struct line *line)
 			if (diff->pipe)
 				string_copy_rev(diff->ref, NULL_ID);
 		} else {
-			open_diff_view(view, flags);
+			string_ncopy(view->env->file, blame->commit->filename, strlen(blame->commit->filename));
+			view->env->blame_lineno = blame->lineno;
+			open_diff_view(view, flags | OPEN_RELOAD);
 		}
 		break;
 
@@ -502,7 +508,7 @@ blame_select(struct view *view, struct line *line)
 static struct view_ops blame_ops = {
 	"line",
 	argv_env.commit,
-	VIEW_SEND_CHILD_ENTER | VIEW_BLAME_LIKE | VIEW_REFRESH,
+	VIEW_SEND_CHILD_ENTER | VIEW_BLAME_LIKE,
 	sizeof(struct blame_state),
 	blame_open,
 	blame_read,
@@ -511,7 +517,7 @@ static struct view_ops blame_ops = {
 	view_column_grep,
 	blame_select,
 	NULL,
-	view_column_bit(AUTHOR) | view_column_bit(DATE) |
+	view_column_bit(AUTHOR) | view_column_bit(COMMITTER) | view_column_bit(DATE) |
 		view_column_bit(FILE_NAME) | view_column_bit(ID) |
 		view_column_bit(LINE_NUMBER) | view_column_bit(TEXT),
 	blame_get_column_data,

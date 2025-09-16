@@ -17,20 +17,29 @@ commands.
 Resources
 ---------
 
- - Homepage:	https://jonas.github.io/tig/[]
- - Manual:	https://jonas.github.io/tig/doc/manual.html[]
+ - Homepage:	https://github.com/jonas/tig[]
+ - Manual:	https://github.com/jonas/tig/blob/master/doc/manual.adoc[]
  - Tarballs:	https://github.com/jonas/tig/releases[]
- - Git URL:	https://github.com/jonas/tig.git
+ - Git URL:	https://github.com/jonas/tig.git[]
  - Gitter:	https://gitter.im/jonas/tig[]
  - Q&A:		https://stackoverflow.com/questions/tagged/tig[]
 
 Bugs and Feature Requests
 -------------------------
 Bugs and feature requests can be reported using the
-https://github.com/jonas/tig/issues[issue tracker] or by mail to either
-the Git mailing list or directly to the maintainer. Ensure that the word
+https://github.com/jonas/tig/issues[issue tracker] or by mail to the
+https://lore.kernel.org/git/[Git mailing list]. Ensure that the word
 "tig" is in the subject. For other Tig related questions please use
 Stack Overflow: https://stackoverflow.com/questions/tagged/tig[].
+
+If you are sending a bug report, please include the following information:
+
+- What Tig and ncurses versions are you using?
+  (`tig -v`)
+- What system do you have?
+  (`uname -a`, `lsb_release -a`)
+- What Git version are you using?
+  (`git -v`)
 
 Installation and News
 ---------------------

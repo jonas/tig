@@ -129,11 +129,9 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 void
 open_editor(const char *file, unsigned int lineno)
 {
-	const char *editor_argv[SIZEOF_ARG + 3] = { "vi", file, NULL };
 	char editor_cmd[SIZEOF_STR];
-	char lineno_cmd[SIZEOF_STR];
+	const char *editor_argv[] = { "sh", "-c", editor_cmd, NULL };
 	const char *editor;
-	int argc = 0;
 
 	editor = getenv("TIG_EDITOR");
 	if (!editor)
@@ -147,15 +145,16 @@ open_editor(const char *file, unsigned int lineno)
 	if (!editor)
 		editor = "vi";
 
-	string_ncopy(editor_cmd, editor, strlen(editor));
-	if (!argv_from_string_no_quotes(editor_argv, &argc, editor_cmd)) {
-		report("Failed to read editor command");
-		return;
-	}
+	if (lineno && opt_editor_line_number)
+		string_format(editor_cmd, "%s +%u '%s'",
+			editor,
+			lineno,
+			file);
+	else
+		string_format(editor_cmd, "%s '%s'",
+			editor,
+			file);
 
-	if (lineno && opt_editor_line_number && string_format(lineno_cmd, "+%u", lineno))
-		editor_argv[argc++] = lineno_cmd;
-	editor_argv[argc] = file;
 	if (!open_external_viewer(editor_argv, repo.cdup, false, false, false, false, true, EDITOR_LINENO_MSG))
 		opt_editor_line_number = false;
 }

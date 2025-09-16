@@ -159,15 +159,11 @@ use_mailmap_arg()
 }
 
 const char *
-log_custom_pretty_arg(bool use_author_date)
+log_custom_pretty_arg(void)
 {
-	return use_author_date
-		? opt_mailmap
-			? "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%s%x00%N"
-			: "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%s%x00%N"
-		: opt_mailmap
-			? "--pretty=format:commit %m %H %P%x00%aN <%aE> %cd%x00%s%x00%N"
-			: "--pretty=format:commit %m %H %P%x00%an <%ae> %cd%x00%s%x00%N";
+	return opt_mailmap
+		? "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%cN <%cE> %cd%x00%s%x00%N"
+		: "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%cn <%ce> %cd%x00%s%x00%N";
 }
 
 #define ENUM_ARG(enum_name, arg_string) ENUM_MAP_ENTRY(arg_string, enum_name)

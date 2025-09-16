@@ -63,8 +63,10 @@ struct tree_entry {
 	char id[SIZEOF_REV];
 	char commit[SIZEOF_REV];
 	mode_t mode;
-	struct time time;		/* Date from the author ident. */
+	struct time author_time;	/* Date from the author ident. */
 	const struct ident *author;	/* Author of the commit. */
+	struct time commit_time;	/* Date from the committer ident. */
+	const struct ident *committer;	/* Committer. */
 	unsigned long size;
 	char name[1];
 };
@@ -73,6 +75,8 @@ struct tree_state {
 	char commit[SIZEOF_REV];
 	const struct ident *author;
 	struct time author_time;
+	const struct ident *committer;
+	struct time commit_time;
 	bool read_date;
 };
 
@@ -94,12 +98,17 @@ static bool
 tree_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data)
 {
 	const struct tree_entry *entry = line->data;
+	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
+	bool use_author_date = column && column->opt.date.use_author;
 
 	if (line->type == LINE_HEADER)
 		return false;
 
 	column_data->author = entry->author;
-	column_data->date = &entry->time;
+	column_data->committer = entry->committer;
+	column_data->date = use_author_date
+				? &entry->author_time
+				: &entry->commit_time;
 	if (line->type != LINE_DIRECTORY)
 		column_data->file_size = &entry->size;
 	column_data->id = entry->commit;
@@ -135,8 +144,6 @@ static bool
 tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 {
 	char *text = buf ? buf->data : NULL;
-	struct view_column *column = get_view_column(view, VIEW_COLUMN_DATE);
-	bool use_author_date = column && column->opt.date.use_author;
 
 	if (!text && state->read_date) {
 		state->read_date = false;
@@ -169,11 +176,11 @@ tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 
 	} else if (*text == 'a' && get_line_type(text) == LINE_AUTHOR) {
 		parse_author_line(text + STRING_SIZE("author "),
-				  &state->author, use_author_date ? &state->author_time : NULL);
+				  &state->author, &state->author_time);
 
 	} else if (*text == 'c' && get_line_type(text) == LINE_COMMITTER) {
 		parse_author_line(text + STRING_SIZE("committer "),
-				  NULL, use_author_date ? NULL : &state->author_time);
+				  &state->committer, &state->commit_time);
 
 	} else if (*text == ':') {
 		char *pos;
@@ -200,7 +207,9 @@ tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 
 			string_copy_rev(entry->commit, state->commit);
 			entry->author = state->author;
-			entry->time = state->author_time;
+			entry->author_time = state->author_time;
+			entry->committer = state->committer;
+			entry->commit_time = state->commit_time;
 			line->dirty = 1;
 			view_column_info_update(view, line);
 			break;
@@ -488,7 +497,7 @@ tree_open(struct view *view, enum open_flags flags)
 static struct view_ops tree_ops = {
 	"file",
 	argv_env.commit,
-	VIEW_SEND_CHILD_ENTER | VIEW_SORTABLE | VIEW_BLAME_LIKE | VIEW_REFRESH,
+	VIEW_SEND_CHILD_ENTER | VIEW_SORTABLE,
 	sizeof(struct tree_state),
 	tree_open,
 	tree_read,
@@ -497,7 +506,7 @@ static struct view_ops tree_ops = {
 	view_column_grep,
 	tree_select,
 	NULL,
-	view_column_bit(AUTHOR) | view_column_bit(DATE) |
+	view_column_bit(AUTHOR) | view_column_bit(COMMITTER) | view_column_bit(DATE) |
 		view_column_bit(FILE_NAME) | view_column_bit(FILE_SIZE) |
 		view_column_bit(ID) | view_column_bit(LINE_NUMBER) |
 		view_column_bit(MODE),

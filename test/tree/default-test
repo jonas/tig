@@ -21,6 +21,8 @@ steps '
 	:save-display tree-default-author.screen
 
 	:toggle sort-field
+
+	:toggle sort-field
 	:save-display tree-default-file-size.screen
 
 	:toggle sort-field

@@ -233,7 +233,8 @@ TIG_SCRIPT::
 	Path to script that should be executed automatically on startup. If this
 	environment variable is defined to the empty string, the script is read
 	from stdin. The script is interpreted line-by-line and can contain
-	prompt commands and key mappings.
+	prompt commands and key mappings. Note that the '<' character must be
+	encoded as '<LT>' within the script.
 
 	E.g. TIG_SCRIPT=<(echo :set main-view-commit-title-graph = no) tig
 
@@ -243,8 +244,10 @@ TIG_NO_DISPLAY::
 
 TIG_EDITOR::
 	The editor command to use when visiting files. This environment
-	variable overrides $GIT_EDITOR, $EDITOR and $VISUAL, so it allows
-	to use a different editor from the one Git uses.
+	variable overrides (in order of precedence) '$GIT_EDITOR',
+	'core.editor' configuration, '$VISUAL' and '$EDITOR', so it
+	allows to use a different editor from the one Git uses. The
+	value is meant to be interpreted by the shell when it is used.
 
 FILES
 -----
@@ -282,9 +285,8 @@ FILES
 BUGS
 ----
 
-Please visit Tig's https://jonas.github.io/tig[home page] or
-https://github.com/jonas/tig[main Git repository] for information about
-new releases and how to report bugs or feature request.
+Please visit Tig's https://github.com/jonas/tig[home page] for information
+about new releases and how to report bugs or feature request.
 
 COPYRIGHT
 ---------

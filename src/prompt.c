@@ -891,6 +891,36 @@ prompt_toggle(struct view *view, const char *argv[], enum view_flag *flags)
 	return error("`:toggle %s` not supported", option);
 }
 
+static enum view_flag
+prompt_option_flags(struct view *view, const char *option)
+{
+	struct option_info template;
+	struct option_info *toggle;
+	struct view_column *column;
+	const char *column_name;
+
+	toggle = find_option_info(option_toggles, ARRAY_SIZE(option_toggles), "", option);
+
+	if (!toggle || !toggle->flags) {
+		const char *prefixed;
+
+		if ((prefixed = strstr(option, "-view-"))) {
+			option = prefixed + STRING_SIZE("-view-");
+			for (column = view->columns; column; column = column->next) {
+				toggle = find_column_option_info(column->type, &column->opt,
+								 option, &template, &column_name);
+				if (toggle)
+					return toggle->flags;
+			}
+		}
+	}
+
+	if (toggle)
+		return toggle->flags;
+
+	return VIEW_NO_FLAGS;
+}
+
 static void
 prompt_update_display(enum view_flag flags)
 {
@@ -1059,7 +1089,6 @@ run_prompt_command(struct view *view, const char *argv[])
 	} else {
 		struct key key = {{0}};
 		enum status_code code;
-		enum view_flag flags = VIEW_NO_FLAGS;
 
 		/* Try :<key> */
 		key.modifiers.multibytes = 1;
@@ -1080,25 +1109,18 @@ run_prompt_command(struct view *view, const char *argv[])
 		}
 
 		if (!strcmp(cmd, "set")) {
-			struct option_info *toggle;
+			enum view_flag flags = prompt_option_flags(view, argv[1]);
 
-			toggle = find_option_info(option_toggles, ARRAY_SIZE(option_toggles),
-						  "", argv[1]);
-
-			if (toggle)
-				flags = toggle->flags;
+			if (flags) {
+				prompt_update_display(flags);
+				return REQ_NONE;
+			}
 		}
 
-		if (flags) {
-			prompt_update_display(flags);
-
-		} else {
-			if (!strcmp(cmd, "color"))
-				init_colors();
-			resize_display();
-			redraw_display(true);
-		}
-
+		if (!strcmp(cmd, "color"))
+			init_colors();
+		resize_display();
+		redraw_display(true);
 	}
 	return REQ_NONE;
 }

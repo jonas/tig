@@ -44,7 +44,7 @@ reflog_request(struct view *view, enum request request, struct line *line)
 		const char *main_argv[] = {
 			GIT_MAIN_LOG(encoding_arg, commit_order_arg(),
 				"%(mainargs)", "", commit->id, "",
-				show_notes_arg(), log_custom_pretty_arg(false))
+				show_notes_arg(), log_custom_pretty_arg())
 		};
 		enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 
@@ -72,7 +72,7 @@ static struct view_ops reflog_ops = {
 	view_column_grep,
 	main_select,
 	main_done,
-	view_column_bit(AUTHOR) | view_column_bit(COMMIT_TITLE) |
+	view_column_bit(AUTHOR) | view_column_bit(COMMITTER) | view_column_bit(COMMIT_TITLE) |
 		view_column_bit(DATE) | view_column_bit(ID) |
 		view_column_bit(LINE_NUMBER),
 	main_get_column_data,

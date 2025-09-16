@@ -68,6 +68,7 @@
 	_('.', "line numbers",			"line-number"), \
 	_('D', "dates",				"date"), \
 	_('A', "author",			"author"), \
+	_('T', "committer",			"committer"), \
 	_('~', "graphics",			"line-graphics"), \
 	_('g', "revision graph",		"commit-title-graph"), \
 	_('#', "file names",			"file-name"), \
@@ -83,21 +84,23 @@
 	_('d', "untracked directory info",	"status-show-untracked-dirs"), \
 	_('|', "view split",			"vertical-split"), \
 
+
+const struct menu_item toggle_menu_items[] = {
+#define DEFINE_TOGGLE_MENU(key, help, name) { key, help, name }
+        TOGGLE_MENU_INFO(DEFINE_TOGGLE_MENU)
+        { 0 }
+};
+
 static void
 toggle_option(struct view *view)
 {
-	const struct menu_item menu[] = {
-#define DEFINE_TOGGLE_MENU(key, help, name) { key, help, name }
-		TOGGLE_MENU_INFO(DEFINE_TOGGLE_MENU)
-		{ 0 }
-	};
 	const char *toggle_argv[] = { "toggle", NULL, NULL };
 	int i = 0;
 
-	if (!prompt_menu("Toggle option", menu, &i))
+	if (!prompt_menu("Toggle option", toggle_menu_items, &i))
 		return;
 
-	toggle_argv[1] = menu[i].data;
+	toggle_argv[1] = toggle_menu_items[i].data;
 	run_prompt_command(view, toggle_argv);
 }
 
@@ -244,6 +247,7 @@ view_driver(struct view *view, enum request request)
 	{
 		int nviews = displayed_views();
 		int next_view = nviews ? (current_view + 1) % nviews : current_view;
+		struct view *next = display[next_view];
 
 		if (next_view == current_view) {
 			report("Only one view is displayed");
@@ -251,9 +255,14 @@ view_driver(struct view *view, enum request request)
 		}
 
 		current_view = next_view;
-		/* Blur out the title of the previous view. */
+		/* Blur out the title and cursor of the previous view. */
 		update_view_title(view);
+		draw_view_line(view, view->pos.lineno - view->pos.offset);
+		wnoutrefresh(view->win);
+		/* Brighten the title and cursor of the next view. */
 		report_clear();
+		draw_view_line(next, next->pos.lineno - next->pos.offset);
+		wnoutrefresh(next->win);
 		break;
 	}
 	case REQ_REFRESH:
@@ -427,8 +436,10 @@ filter_options(const char *argv[], enum request request)
 				argv[flags_pos++] = argv[next++];
 		else if (argv_parse_rev_flag(arg, NULL))
 			argv_append(&opt_rev_args, arg);
-		else
+		else {
 			argv[flags_pos++] = arg;
+			string_copy_rev(argv_env.head, arg);
+		}
 	}
 
 	argv[flags_pos] = NULL;
@@ -611,9 +622,6 @@ find_clicked_view(MEVENT *event)
 
 		if (beg_y <= event->y && event->y < beg_y + view->height
 		    && beg_x <= event->x && event->x < beg_x + view->width) {
-			if (i != current_view) {
-				current_view = i;
-			}
 			return view;
 		}
 	}
@@ -633,6 +641,9 @@ handle_mouse_event(void)
 	view = find_clicked_view(&event);
 	if (!view)
 		return REQ_NONE;
+
+	if (view != display[current_view])
+		return REQ_VIEW_NEXT;
 
 #ifdef BUTTON5_PRESSED
 	if (event.bstate & (BUTTON2_PRESSED | BUTTON5_PRESSED))
@@ -784,7 +795,7 @@ handle_git_prefix(void)
 	/*
 	 * GIT_PREFIX is set when tig is invoked as a git alias.
 	 * Tig expects to run from the subdirectory so clear the prefix
-	 * and set GIT_WORK_TREE accordinglyt.
+	 * and set GIT_WORK_TREE accordingly.
 	 */
 	if (!getcwd(cwd, sizeof(cwd)))
 		return error("Failed to read CWD");

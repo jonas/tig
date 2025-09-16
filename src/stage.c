@@ -769,18 +769,17 @@ stage_open(struct view *view, enum open_flags flags)
 	}
 
 	if (!status_stage_info(view->ref, stage_line_type, &stage_status))
-		return error("Failed to open staged view");
+		return error("Failed to open stage view");
+
+	state->diff.stage = true;
 
 	if (stage_line_type != LINE_STAT_UNTRACKED)
 		diff_save_line(view, &state->diff, flags);
 
 	view->vid[0] = 0;
 	code = begin_update(view, repo.exec_dir, argv, flags | OPEN_WITH_STDERR);
-	if (code == SUCCESS && stage_line_type != LINE_STAT_UNTRACKED) {
-		struct stage_state *state = view->private;
-
+	if (code == SUCCESS && stage_line_type != LINE_STAT_UNTRACKED)
 		return diff_init_highlight(view, &state->diff);
-	}
 
 	return code;
 }

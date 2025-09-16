@@ -24,6 +24,8 @@ struct diff_state {
 	bool combined_diff;
 	bool adding_describe_ref;
 	bool highlight;
+	bool stage;
+	unsigned int parents;
 	const char *file;
 	unsigned int lineno;
 	struct position pos;
