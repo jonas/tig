@@ -100,7 +100,7 @@ main_add_commit(struct view *view, enum line_type type, struct commit *template,
 
 	view_column_info_update(view, line);
 
-	if (view->env->goto_id[0] && !strncmp(view->env->goto_id, commit->id, SIZEOF_REV - 1)) {
+	if (view->env->goto_id[0] && !strncmp(view->env->goto_id, commit->id, REPO_INFO_SIZEOF_REV - 1)) {
 		select_view_line(view, line->lineno + 1);
 		view->env->goto_id[0] = 0;
 	} else if (opt_start_on_head && is_head_commit(commit->id)) {
@@ -121,7 +121,7 @@ main_flush_commit(struct view *view, struct commit *commit)
 static bool
 main_add_changes_commit(struct view *view, enum line_type type, const char *parent, const char *title)
 {
-	char ids[SIZEOF_STR] = NULL_ID " ";
+	char ids[SIZEOF_STR] = NULL_ID;
 	struct main_state *state = view->private;
 	struct graph *graph = state->graph;
 	struct commit commit = {{0}};
@@ -131,10 +131,11 @@ main_add_changes_commit(struct view *view, enum line_type type, const char *pare
 	if (!parent)
 		return true;
 
-	if (*parent)
-		string_copy_rev(ids + STRING_SIZE(NULL_ID " "), parent);
-	else
-		ids[STRING_SIZE(NULL_ID)] = 0;
+	if (*parent) {
+		ids[REPO_INFO_SIZEOF_REV - 1] = ' ';
+		string_copy_rev(ids + REPO_INFO_SIZEOF_REV, parent);
+	} else
+		ids[REPO_INFO_SIZEOF_REV - 1] = 0;
 
 	if (!time_now(&now, &tz)) {
 		commit.author_time.tz = commit.commit_time.tz = tz.tz_minuteswest * 60;

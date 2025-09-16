@@ -416,6 +416,14 @@ bool_formatter(struct format_context *format, struct format_var *var)
 }
 
 static bool
+repo_object_format_formatter(struct format_context *format, struct format_var *var)
+{
+	repo_object_format value = *(repo_object_format *)var->value_ref;
+
+	return string_format_from(format->buf, &format->bufpos, "%s", value == REPO_INFO_SHA256 ? "sha256" : "sha1");
+}
+
+static bool
 repo_str_formatter(struct format_context *format, struct format_var *var)
 {
 	return argv_string_formatter(format, var);
