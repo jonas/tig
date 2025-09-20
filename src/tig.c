@@ -338,6 +338,23 @@ view_driver(struct view *view, enum request request)
 			view->prev = view;
 			break;
 		}
+		// If we try to quit the first view of the display lineage
+		// and there is a previous views configuration,
+		// restore this last
+		else if(view->prev && view->prev == view) {
+			if(display_lineage) {
+				foreach_view(view, i)
+					end_update(view, true);
+				struct display_lineage * dl = display_lineage;
+					load_view(dl->display[0], dl->display[0], OPEN_DEFAULT | OPEN_RELOAD);
+				if (dl->current_view == 1) {
+					load_view(dl->display[1], dl->display[0], OPEN_SPLIT);
+				}
+				rewind_lineage();
+			break;
+			}
+
+		}
 		if (request == REQ_VIEW_CLOSE_NO_QUIT) {
 			report("Can't close last remaining view");
 			break;
@@ -346,6 +363,7 @@ view_driver(struct view *view, enum request request)
 	case REQ_QUIT:
 		foreach_view(view, i)
 			end_update(view, true);
+		free_display_lineage();
 		return false;
 
 	default:

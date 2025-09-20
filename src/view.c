@@ -802,9 +802,24 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 {
 	bool refresh = !view_no_refresh(view, flags);
 
-	/* When prev == view it means this is the first loaded view. */
 	if (prev && view != prev) {
-		view->prev = prev;
+		bool split = !!(flags & OPEN_SPLIT);
+		if (split) {
+			view->prev = prev;
+		} else {
+			// A new maximized view is up to be opened,
+			// so let's create a new lineage element
+			struct display_lineage *prev_dl = display_lineage;
+
+			display_lineage = malloc(sizeof(struct display_lineage));
+			display_lineage->prev = prev_dl;
+			display_lineage->display[0] = display[0];
+			display_lineage->display[1] = display[1];
+			display_lineage->current_view = current_view;
+			//Mimic that we are on the first view of the lineage element
+			view->prev = view;
+
+		}
 	}
 
 	if (!refresh && view_can_refresh(view) &&
