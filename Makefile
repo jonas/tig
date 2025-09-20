@@ -261,12 +261,15 @@ test-address-sanitizer: export TIG_ADDRESS_SANITIZER_ENABLED=yes
 
 TESTS  = $(sort $(shell find test -type f -name '*-test'))
 TESTS_TODO = $(sort $(shell find test -type f -name '*-test' -exec grep -l '\(test_todo\|-todo=\)' {} \+))
+TESTS_TMP = $(patsubst test/%,test/tmp/%,$(TESTS))
 
 clean-test:
 	$(Q)$(RM) -r test/tmp
 
 test: clean-test $(TESTS)
 	$(QUIET_SUMMARY)test/tools/show-results.sh
+
+fix-test: $(TESTS_TMP)
 
 ifneq (,$(strip $(V:@=)))
 export MAKE_TEST_OPTS = no-indent
@@ -277,6 +280,29 @@ endif
 $(TESTS): PATH := $(CURDIR)/test/tools:$(CURDIR)/src:$(PATH)
 $(TESTS): $(EXE) test/tools/test-graph
 	$(QUIET_TEST)$(TEST_SHELL) $@
+
+$(TESTS_TMP):
+	@ test -z "$$DEBUG" || set -x ; \
+	if egrep -q '^ *\[FAIL\]+' $@/.test-result 2>/dev/null; then \
+		name=$(patsubst test/tmp/%,test/%,$@); \
+		! test -f $$name.expected || name=$$name.expected; \
+		if git diff --quiet $$name; then \
+			perm=$$(stat -c %a $$name); \
+			cat $@/.test-result | { \
+				sed -r -e 's/\x1b\[.{0,5}m//g' \
+					-e '/^ *\[(OK|FAIL)\]+ .*/d' \
+					-e 's/^  $$/ /' \
+					-e "s# a/expected/\S+# a/$$name#" \
+					-e "s# b/\S+# b/$$name#" \
+					-e "s#^(index .*? 100)...#\1$$perm#" | { \
+					test -n "$$DEBUG" && cat || { \
+						git apply --verbose --ignore-whitespace --unidiff-zero && \
+						echo "Updated for $@!" || true; \
+					}; \
+				}; \
+			}; \
+		fi; \
+	fi
 
 test-todo: MAKE_TEST_OPTS += todo
 test-todo: $(TESTS_TODO)
@@ -295,7 +321,7 @@ site:
 	doc-man doc-html dist distclean install install-doc \
 	install-doc-man install-doc-html install-release-doc-html \
 	install-release-doc-man rpm spell-check strip test \
-	test-coverage update-docs update-headers veryclean $(TESTS)
+	test-coverage update-docs update-headers veryclean $(TESTS) $(TESTS_TMP)
 
 ifdef NO_MKSTEMPS
 COMPAT_CPPFLAGS += -DNO_MKSTEMPS
