@@ -1,6 +1,40 @@
 Release notes
 =============
 
+master
+------
+
+Security fixes:
+
+ - Fix editor command injection vulnerability (only affects
+   version 2.6.0). (#1432)
+
+Bug fixes:
+
+ - Fix notes handling in the main view. (#1394)
+ - Honor init_size in string_map_put_to().
+ - Reset view->parent both when switching and closing view.
+ - Fix grep with revision argument. (#1398)
+ - Minor tweaks to the blame view.
+ - Fix repo info in bare repository with no HEAD.
+ - Document `%(status)`. (#1406)
+ - Update Cygwin build.
+ - Fix "DU" conflicts showing as 'Staged changes' in the main view. (#471)
+ - Ensure consistent blame view access from the blob view.
+ - Fix compiler warning with glibc-2.43.
+ - contrib: chocolate-theme: Fix cursor color in backgrounded view. (#1419)
+ - Fix date for 'Not Committed Yet' changes. (#1423)
+ - Fix slow tig status when given a subdirectory path. (#1424)
+ - Handle pure file rename in the diff view. (#1426)
+
+Improvements:
+
+ - Handle the NO_COLOR environment variable. (#1402)
+ - Run tests against system's tig when SYSTEM_TIG=1. (#1400)
+ - Support option append. (#1413)
+ - Add an option to make the tree view recursive.
+ - Enable direct blob edits in clean HEAD state. (#1415, #1416)
+
 tig-2.6.0
 ---------
 
@@ -30,8 +64,8 @@ Improvements:
  - Open the blame and blob views from diffstat.
  - Update utf8proc to v2.11.0, supporting Unicode 17.
 
-Note: Users should update the settings for the blame, main, reflog, and
-refs views in their ~/.tigrc file to include the committer column.
+Note: Users should update the settings for the blame, main, reflog, refs
+and tree views in their ~/.tigrc file to include the committer column.
 
 tig-2.5.12
 ----------
