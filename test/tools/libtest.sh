@@ -553,7 +553,10 @@ test_require()
 				test_skip "The test requires a tig compiled with readline"
 			fi
 			;;
-
+		sha256)
+			require_git_version 2.29 \
+				"The test requires sha256 object format, available in git version 2.29 or newer"
+			;;
 		*)
 			test_skip "Unknown feature requirement: $feature"
 		esac

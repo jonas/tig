@@ -57,7 +57,7 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 		 * this special case by looking at the emitted value. If it looks
 		 * like a commit ID and there's no cdup path assume that no value
 		 * was emitted. */
-		if (!*repo.cdup && namelen == 40 && iscommit(name))
+		if (!*repo.cdup && namelen == REPO_INFO_SIZEOF_REV - 1 && iscommit(name))
 			return read_repo_info(name, namelen, value, valuelen, data);
 
 		string_ncopy(repo.prefix, name, namelen);
@@ -105,6 +105,8 @@ load_repo_info(void)
 	};
 
 	memset(&repo, 0, sizeof(repo));
+	/* defaults to SHA-1 as older Git versions don't have extensions.objectFormat */
+	repo.object_format = REPO_INFO_SHA1;
 	return reload_repo_info(rev_parse_argv);
 }
 

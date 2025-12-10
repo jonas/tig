@@ -16,6 +16,7 @@
 #include "tig/draw.h"
 #include "tig/options.h"
 #include "tig/display.h"
+#include "tig/repo.h"
 #include "compat/hashtab.h"
 
 static const enum line_type palette_colors[] = {
@@ -281,7 +282,7 @@ draw_id(struct view *view, struct view_column *column, const char *id)
 		return false;
 
 	if (column->opt.id.color && id) {
-		hashval_t color = iterative_hash(id, SIZEOF_REV - 1, 0);
+		hashval_t color = iterative_hash(id, REPO_INFO_SIZEOF_REV - 1, 0);
 
 		type = palette_colors[color % ARRAY_SIZE(palette_colors)];
 	}

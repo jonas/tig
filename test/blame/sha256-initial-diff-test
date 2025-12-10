@@ -1,0 +1,69 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+test_require sha256
+
+steps '
+	:save-display initial-diff.screen
+	:20 # Move to a deleted line.
+	:view-blame
+	:scroll-right
+	:save-display blame-deleted-line.screen
+'
+
+in_work_dir create_repo_from_tgz "$base_dir/files/sha256-scala-js-benchmarks.tgz"
+
+LINES=23 test_tig show ed3277a
+
+assert_equals 'initial-diff.screen' <<EOF
+commit ed3277a31a5a48def23854db7eaa7356871a29cbf26ba279cb8f1e4f93cf54fb
+Author:     Jonas Fonseca <jonas.fonseca@gmail.com>
+AuthorDate: Sat Mar 1 15:59:02 2014 -0500
+Commit:     Jonas Fonseca <jonas.fonseca@gmail.com>
+CommitDate: Sat Mar 1 15:59:02 2014 -0500
+
+    Add type parameter for js.Dynamic
+---
+ common/src/main/scala/org/scalajs/benchmark/Benchmark.scala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala b/commo
+index 4abd433..aa90cdf 100644
+--- a/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
++++ b/common/src/main/scala/org/scalajs/benchmark/Benchmark.scala
+@@ -15,7 +15,7 @@ object Benchmark {
+   val benchmarks = js.Array[Benchmark]()
+   val benchmarkApps = js.Array[BenchmarkApp]()
+
+-  val global = js.Dynamic.global.asInstanceOf[js.Dictionary]
++  val global = js.Dynamic.global.asInstanceOf[js.Dictionary[js.Any]]
+[diff] ed3277a31a5a48def23854db7eaa7356871a29cbf26ba279cb8f1e4f93cf54fb - li 87%
+EOF
+
+# Make sure that we find the commit that introduce the deleted line.
+assert_equals 'blame-deleted-line.screen' <<EOF
+0400   1x /*                     __
+0400   2x **     ________ ___   / /  ___      __ ____  Scala.js Benchmarks
+0400   3x **    / __/ __// _ | / /  / _ | __ / // __/  (c) 2003-2013, LAMP/EPFL
+0400   4x **  __\ \/ /__/ __ |/ /__/ __ |/_// /_\ \    (c) 2013, Jonas Fonseca
+0400   5x ** /____/\___/_/ |_/____/_/ | |__/ /____/
+0400   6x **                          |/____/
+0400   7x \*
+0400   8x
+0400   9x package benchmarks
+0400  10x
+0400  11x import scala.compat.Platform
+0500  12x import scala.scalajs.js
+0500  13x
+0500  14x object Benchmark {
+0500  15x   val benchmarks = js.Array[js.Function0[Unit]]()
+0500  16x
+0500  17x   val global = js.Dynamic.global.asInstanceOf[js.Dictionary]
+0500  18x   global("ScalaJSBenchmarks") = benchmarks
+0500  19x
+0500  20x   def add(benchmark: Benchmark) {
+0500  21x     benchmarks.push {
+[blame] bf7a4c4b17c1414cc88ca497bd750b12959a503c91b41e1f939c09be1999ff00 cha 21%
+EOF
