@@ -274,8 +274,13 @@ else
 export MAKE_TEST_OPTS =
 endif
 
+ifeq ($(SYSTEM_TIG),1)
+$(TESTS): PATH := $(CURDIR)/test/tools:$(PATH)
+$(TESTS): test/tools/test-graph
+else
 $(TESTS): PATH := $(CURDIR)/test/tools:$(CURDIR)/src:$(PATH)
 $(TESTS): $(EXE) test/tools/test-graph
+endif
 	$(QUIET_TEST)$(TEST_SHELL) $@
 
 test-todo: MAKE_TEST_OPTS += todo
