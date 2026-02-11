@@ -257,6 +257,7 @@ bind stage	]	:toggle diff-context +1	# Increase the diff context
 bind diff	@	:/^@@			# Jump to next (c)hunk
 bind diff	[	:toggle diff-context -1	# Decrease the diff context
 bind diff	]	:toggle diff-context +1	# Increase the diff context
+bind diff	C	@sh -c "echo -n %(commit) | xclip -selection c"	# Copy commit SHA to clipboard
 bind pager	@	:/^@@			# Jump to next (c)hunk
 bind main	H	:goto HEAD		# Jump to HEAD commit
 bind main	G	:toggle commit-title-graph # Toggle revision graph visualization
