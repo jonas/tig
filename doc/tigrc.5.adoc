@@ -757,6 +757,7 @@ following variable names, which are substituted before commands are run:
 |%(lineno)		|The currently selected line number. Defaults to 0.
 |%(lineno_old)		|The currently selected line number, before the diff
 			 was applied. Defaults to 0.
+|%(status)		|The staging status of the currently selected line.
 |%(ref)			|The reference given to blame or HEAD if undefined.
 |%(revargs)		|The revision arguments passed on the command line.
 |%(fileargs)		|The file arguments passed on the command line.
