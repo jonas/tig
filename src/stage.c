@@ -382,6 +382,42 @@ stage_refresh_after_update(struct view *view)
 }
 
 static bool
+stage_update_current_file(struct view *view)
+{
+	struct line *cur = &view->line[view->pos.lineno];
+	struct line *hdr, *next_hdr, *chunk, *line, *end;
+
+	if (view->pos.lineno >= view->lines)
+		return false;
+
+	if (cur->type == LINE_DIFF_HEADER)
+		hdr = cur;
+	else
+		hdr = find_prev_line_by_type(view, cur, LINE_DIFF_HEADER);
+
+	if (!hdr)
+		hdr = find_next_line_by_type(view, view->line, LINE_DIFF_HEADER);
+
+	if (!hdr)
+		return false;
+
+	next_hdr = find_next_line_by_type(view, hdr + 1, LINE_DIFF_HEADER);
+	end = next_hdr ? next_hdr : view->line + view->lines;
+	chunk = find_next_line_by_type(view, hdr + 1, LINE_DIFF_CHUNK);
+
+	if (!chunk || chunk >= end)
+		return stage_update_file_no_chunk(hdr, end);
+
+	for (line = chunk; line && line < end;
+	     line = find_next_line_by_type(view, line + 1, LINE_DIFF_CHUNK)) {
+		if (!stage_apply_chunk(view, line, NULL, false, UPDATE_NORMAL))
+			return false;
+	}
+
+	return true;
+}
+
+static bool
 stage_update_files(struct view *view, enum line_type type)
 {
 	struct line *line;
@@ -445,8 +481,8 @@ stage_update(struct view *view, struct line *line, update_t update_type)
 		}
 
 	} else if (!stage_status.status) {
-		if (!stage_update_files(view, stage_line_type)) {
-			report("Failed to update files");
+		if (!stage_update_current_file(view)) {
+			report("Failed to update file");
 			return false;
 		}
 
