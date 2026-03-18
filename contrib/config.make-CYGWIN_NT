@@ -17,4 +17,18 @@ TIG_NCURSES = $(NCURSESW_LIBS)
 TIG_LDLIBS = -liconv
 TIG_CPPFLAGS = -DHAVE_NCURSESW_CURSES_H
 
+HAS_READLINE = $(shell test -e "/usr/include/readline/readline.h" && echo true)
+
+ifeq ($(HAS_READLINE),true)
+	TIG_LDLIBS += -lreadline
+	TIG_CPPFLAGS += -DHAVE_READLINE
+endif
+
+HAS_PCRE2 = $(shell test -e "/usr/include/pcre2posix.h" && echo true)
+
+ifeq ($(HAS_PCRE2),true)
+	TIG_LDLIBS += -lpcre2-posix -lpcre2-8
+	TIG_CPPFLAGS += -DHAVE_PCRE2 -DPCRE2_CODE_UNIT_WIDTH=8
+endif
+
 # vim: ft=make:

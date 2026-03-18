@@ -1,0 +1,30 @@
+NAME="tig"
+VERSION=@@VERSION@@
+RELEASE=@@RELEASE@@
+CATEGORY="Devel"
+SUMMARY="Tig: text-mode interface for git"
+DESCRIPTION="Tig is a git repository browser that additionally can act as a pager
+for output from various git commands.
+
+When browsing repositories, it uses the underlying git commands to
+present the user with various views, such as summarized revision log
+and showing the commit with the log message, diffstat, and the diff.
+
+Using it as a pager, it will display input from stdin and colorize it."
+HOMEPAGE="https://github.com/jonas/tig"
+LICENSE="GPL-2.0-or-later"
+SRC_URI="https://github.com/jonas/tig/releases/download/tig-${VERSION}/tig-${VERSION}.tar.gz"
+BUILD_REQUIRES="gcc-core make sed libiconv-devel libncurses-devel libreadline-devel libpcre2-devel"
+REQUIRES="git libiconv2 libncursesw10 libreadline7 libpcre2-posix3 libpcre2_8_0"
+
+src_compile() {
+	lndirs
+	cd ${B}
+	cygconf
+	cygmake
+}
+
+src_install() {
+	cd ${B}
+	cyginstall install install-doc
+}
