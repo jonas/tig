@@ -91,6 +91,8 @@ is:
 [verse]
 *set* variables *=* value
 
+Use *+=* to append value to a string variable.
+
 Examples:
 
 // TEST: tigrc
@@ -99,6 +101,7 @@ set commit-order = topo		# Order commits topologically
 set git-colors = no		# Do not read Git's color settings.
 set horizontal-scroll = 33%	# Scroll 33% of the view width
 set blame-options = -C -C -C	# Blame lines from other files
+set log-options += --minimal  	# Use minimal diff algorithm
 
 # Wrap branch names with () and tags with <>
 set reference-format = (branch) <tag>
