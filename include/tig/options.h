@@ -84,6 +84,7 @@ typedef struct view_column *view_settings;
 	_(status_show_untracked_dirs,	bool,			VIEW_STATUS_LIKE) \
 	_(status_show_untracked_files,	bool,			VIEW_STATUS_LIKE) \
 	_(status_view,			view_settings,		VIEW_NO_FLAGS) \
+	_(syntax_highlight,		const char *,		VIEW_NO_FLAGS) \
 	_(tab_size,			int,			VIEW_NO_FLAGS) \
 	_(tree_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(truncation_delimiter,		const char *,		VIEW_NO_FLAGS) \

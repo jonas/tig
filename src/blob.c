@@ -20,10 +20,14 @@
 #include "tig/pager.h"
 #include "tig/tree.h"
 #include "tig/blob.h"
+#include "tig/apps.h"
+#include "tig/ansi.h"
 
 struct blob_state {
 	char commit[SIZEOF_REF];
 	const char *file;
+	bool highlight;
+	struct io view_io;
 };
 
 void
@@ -58,6 +62,41 @@ open_blob_view(struct view *prev, enum open_flags flags)
 			open_view(prev, view, OPEN_RELOAD);
 		}
 	}
+}
+
+static enum status_code
+blob_init_highlight(struct view *view, struct blob_state *state)
+{
+	struct app_external *app;
+	struct io io;
+	const char *filename;
+
+	if (!opt_syntax_highlight || !*opt_syntax_highlight || COLORS < 256)
+		return SUCCESS;
+
+	filename = state->file ? state->file : view->env->file;
+	app = app_syntax_highlight_load(opt_syntax_highlight, filename);
+
+	if (!app->argv[0] || !*app->argv[0])
+		return SUCCESS;
+
+	if (!io_exec(&io, IO_RP, view->dir, app->env, app->argv, view->io.pipe))
+		return SUCCESS;
+
+	state->view_io = view->io;
+	view->io = io;
+	state->highlight = true;
+
+	return SUCCESS;
+}
+
+static bool
+blob_done_highlight(struct blob_state *state)
+{
+	if (!state->highlight)
+		return true;
+	io_kill(&state->view_io);
+	return io_done(&state->view_io);
 }
 
 static enum status_code
@@ -100,18 +139,74 @@ blob_open(struct view *view, enum open_flags flags)
 	else
 		string_copy_rev(view->ref, view->ops->id);
 
-	return begin_update(view, NULL, argv, flags);
+	state->highlight = false;
+
+	{
+		enum status_code code = begin_update(view, NULL, argv, flags);
+		if (code != SUCCESS)
+			return code;
+	}
+
+	return blob_init_highlight(view, state);
+}
+
+static bool
+blob_add_highlighted_line(struct view *view, const char *stripped,
+			  struct ansi_span *spans, int nspans)
+{
+	struct line *line;
+	struct box *box;
+	struct ansi_color default_bg = { ANSI_COLOR_DEFAULT, { .index = 0 } };
+	int i;
+
+	line = add_line_text_at(view, view->lines, stripped, LINE_DEFAULT, nspans);
+	if (!line)
+		return false;
+
+	box = line->data;
+
+	/* Overwrite the single cell that add_line_text_at created
+	 * with our per-span cells (same pattern as diff_common_add_line) */
+	for (i = 0; i < nspans; i++) {
+		memset(&box->cell[i], 0, sizeof(box->cell[i]));
+		box->cell[i].type = LINE_DEFAULT;
+		box->cell[i].length = spans[i].length;
+		box->cell[i].direct = 1;
+		box->cell[i].color_pair = get_dynamic_color_pair(&spans[i].fg, &default_bg);
+		box->cell[i].attr = spans[i].attr;
+	}
+	box->cells = nspans;
+
+	return true;
 }
 
 static bool
 blob_read(struct view *view, struct buffer *buf, bool force_stop)
 {
+	struct blob_state *state = view->private;
+
 	if (!buf) {
+		if (!blob_done_highlight(state)) {
+			if (!force_stop)
+				report("Failed to run syntax highlighter: %s", opt_syntax_highlight);
+			return false;
+		}
 		if (view->env->goto_lineno > 0) {
 			select_view_line(view, view->env->goto_lineno);
 			view->env->goto_lineno = 0;
 		}
 		return true;
+	}
+
+	if (state->highlight && ansi_has_escapes(buf->data)) {
+		char stripped[SIZEOF_STR];
+		struct ansi_span spans[ANSI_MAX_SPANS];
+		int nspans;
+
+		nspans = ansi_parse_line(buf->data, stripped, sizeof(stripped),
+					 spans, ANSI_MAX_SPANS);
+		if (nspans > 0)
+			return blob_add_highlighted_line(view, stripped, spans, nspans);
 	}
 
 	return pager_common_read(view, buf->data, LINE_DEFAULT, NULL);
