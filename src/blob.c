@@ -81,10 +81,19 @@ blob_open(struct view *view, enum open_flags flags)
 		const char *rev_parse_argv[] = {
 			"git", "rev-parse", blob_spec, NULL
 		};
+		const char *status_argv[] = {
+			"git", "status", "-s", view->env->file, NULL
+		};
+		char buf[SIZEOF_STR] = "";
+
 
 		if (!string_format(blob_spec, "%s:%s", commit, view->env->file) ||
 		    !io_run_buf(rev_parse_argv, view->env->blob, sizeof(view->env->blob), NULL, false))
 			return error("Failed to resolve blob from file name");
+
+		if (is_head_commit(view->env->commit) && view->env->file[0] &&
+		    !io_run_buf(status_argv, buf, sizeof(buf), NULL, false))
+			state->file = get_path(view->env->file);
 
 		string_ncopy(state->commit, commit, strlen(commit));
 	}
