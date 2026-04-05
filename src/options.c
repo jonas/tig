@@ -159,6 +159,12 @@ use_mailmap_arg()
 }
 
 const char *
+recurse_tree_arg()
+{
+	return opt_recurse_tree ? "-r" : "";
+}
+
+const char *
 log_custom_pretty_arg(void)
 {
 	return opt_show_notes
