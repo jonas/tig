@@ -167,7 +167,7 @@ index_diff(struct index_diff *diff, bool untracked, bool count_all)
 		if (buf.data[0] == '?')
 			diff->untracked++;
 		/* Ignore staged but unmerged entries. */
-		else if (buf.data[0] != ' ' && buf.data[0] != 'U')
+		else if (buf.data[0] != ' ' && buf.data[0] != 'U' && buf.data[1] != 'U')
 			diff->staged++;
 		if (buf.data[1] != ' ' && buf.data[1] != '?')
 			diff->unstaged++;
