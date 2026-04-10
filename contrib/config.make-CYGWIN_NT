@@ -31,4 +31,7 @@ ifeq ($(HAS_PCRE2),true)
 	TIG_CPPFLAGS += -DHAVE_PCRE2 -DPCRE2_CODE_UNIT_WIDTH=8
 endif
 
+# Avoid Cygwin's wordexp() as it spawns a bash shell each time it is called.
+NO_WORDEXP=y
+
 # vim: ft=make:
