@@ -72,30 +72,33 @@ blob_open(struct view *view, enum open_flags flags)
 	if (argv != blob_argv) {
 		state->file = get_path(view->env->file);
 		state->commit[0] = 0;
-	}
-
-	if (!state->file && !view->env->blob[0] && view->env->file[0]) {
-		const char *commit = view->env->commit[0] && !string_rev_is_null(view->env->commit)
-				   ? view->env->commit : "HEAD";
-		char blob_spec[SIZEOF_STR];
-		const char *rev_parse_argv[] = {
-			"git", "rev-parse", blob_spec, NULL
-		};
+	} else {
 		const char *status_argv[] = {
 			"git", "status", "-s", view->env->file, NULL
 		};
 		char buf[SIZEOF_STR] = "";
 
-
-		if (!string_format(blob_spec, "%s:%s", commit, view->env->file) ||
-		    !io_run_buf(rev_parse_argv, view->env->blob, sizeof(view->env->blob), NULL, false))
-			return error("Failed to resolve blob from file name");
-
 		if (is_head_commit(view->env->commit) && view->env->file[0] &&
 		    !io_run_buf(status_argv, buf, sizeof(buf), NULL, false))
 			state->file = get_path(view->env->file);
 
-		string_ncopy(state->commit, commit, strlen(commit));
+		if (!string_rev_is_null(view->env->commit)) {
+			string_ncopy(state->commit, view->env->commit, strlen(view->env->commit));
+		} else {
+			state->commit[0] = 0;
+		}
+
+		if (!view->env->blob[0] && view->env->file[0]) {
+			const char *commit = state->commit[0] ? state->commit : "HEAD";
+			char blob_spec[SIZEOF_STR];
+			const char *rev_parse_argv[] = {
+				"git", "rev-parse", blob_spec, NULL
+			};
+
+			if (!string_format(blob_spec, "%s:%s", commit, view->env->file) ||
+			    !io_run_buf(rev_parse_argv, view->env->blob, sizeof(view->env->blob), NULL, false))
+				return error("Failed to resolve blob from file name");
+		}
 	}
 
 	if (!state->file && !view->env->blob[0])
