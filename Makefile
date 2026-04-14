@@ -51,7 +51,8 @@ TOOLS	= test/tools/test-graph tools/doc-gen
 TXTDOC	= doc/tig.1.adoc doc/tigrc.5.adoc doc/manual.adoc NEWS.adoc README.adoc INSTALL.adoc test/API.adoc
 MANDOC	= doc/tig.1 doc/tigrc.5 doc/tigmanual.7
 HTMLDOC = doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html INSTALL.html NEWS.html
-ALLDOC	= $(MANDOC) $(HTMLDOC) doc/manual.html-chunked doc/manual.pdf
+ALLDOC	= $(MANDOC) $(HTMLDOC) doc/manual.html-chunked
+PDFDOC	= doc/manual.pdf
 
 # Never include the release number in the tarname for tagged
 # versions.
@@ -123,6 +124,7 @@ all-debug: CFLAGS += $(DFLAGS)
 doc: $(ALLDOC)
 doc-man: $(MANDOC)
 doc-html: $(HTMLDOC)
+doc-pdf: $(PDFDOC)
 
 ifeq ($(GENERATE_COMPILATION_DATABASE),yes)
 all: compile_commands.json
