@@ -154,5 +154,12 @@ get_line_attr(const char *prefix, enum line_type type)
 	return COLOR_PAIR(COLOR_ID(info->color_pair)) | info->attr;
 }
 
+/*
+ * Dynamic color pair allocation for syntax highlighting.
+ */
+struct ansi_color;
+int ansi_color_to_ncurses(const struct ansi_color *color);
+int get_dynamic_color_pair(const struct ansi_color *fg, const struct ansi_color *bg);
+
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

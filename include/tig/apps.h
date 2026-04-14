@@ -33,6 +33,12 @@ struct app_external {
 
 struct app_external *app_diff_highlight_load(const char *query);
 
+/*
+ * syntax-highlight (bat)
+ */
+
+struct app_external *app_syntax_highlight_load(const char *query, const char *filename);
+
 #endif
 
 /* vim: set ts=8 sw=8 noexpandtab: */

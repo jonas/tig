@@ -757,6 +757,18 @@ parse_option(struct option_info *option, const char *prefix, const char *arg)
 			}
 		}
 
+		if (option->value == &opt_syntax_highlight) {
+			bool enabled = false;
+
+			if (parse_bool(&enabled, arg) == SUCCESS) {
+				if (!enabled) {
+					*value = NULL;
+					return SUCCESS;
+				}
+				arg = "bat";
+			}
+		}
+
 		if (strlen(arg)) {
 			if (arg[0] == '"' && arg[strlen(arg) - 1] == '"')
 				alloc = strndup(arg + 1, strlen(arg + 1) - 1);

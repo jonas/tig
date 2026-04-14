@@ -30,6 +30,12 @@ struct diff_state {
 	unsigned int lineno;
 	struct position pos;
 	struct io view_io;
+	/* Syntax highlighting state */
+	bool syntax_highlight;
+	char syntax_file[SIZEOF_STR];	/* Current file from diff +++ header */
+	pid_t syntax_pid;		/* Persistent bat process */
+	int syntax_write_fd;		/* Write content to bat stdin */
+	FILE *syntax_read_fp;		/* Read highlighted output from bat stdout */
 };
 
 enum request diff_common_edit(struct view *view, enum request request, struct line *line);
@@ -41,6 +47,8 @@ void diff_save_line(struct view *view, struct diff_state *state, enum open_flags
 void diff_restore_line(struct view *view, struct diff_state *state);
 enum status_code diff_init_highlight(struct view *view, struct diff_state *state);
 bool diff_done_highlight(struct diff_state *state);
+void diff_init_syntax_highlight(struct diff_state *state);
+void diff_done_syntax_highlight(struct diff_state *state);
 
 unsigned int diff_get_lineno(struct view *view, struct line *line, bool old);
 const char *diff_get_pathname(struct view *view, struct line *line, bool old);

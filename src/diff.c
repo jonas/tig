@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <sys/wait.h>
 #include "tig/argv.h"
 #include "tig/refdb.h"
 #include "tig/repo.h"
@@ -21,6 +22,7 @@
 #include "tig/diff.h"
 #include "tig/draw.h"
 #include "tig/apps.h"
+#include "tig/ansi.h"
 
 static enum status_code
 diff_open(struct view *view, enum open_flags flags)
@@ -39,6 +41,8 @@ diff_open(struct view *view, enum open_flags flags)
 	code = begin_update(view, NULL, diff_argv, flags | OPEN_WITH_STDERR);
 	if (code != SUCCESS)
 		return code;
+
+	diff_init_syntax_highlight(view->private);
 
 	return diff_init_highlight(view, view->private);
 }
@@ -80,6 +84,545 @@ diff_done_highlight(struct diff_state *state)
 	return io_done(&state->view_io);
 }
 
+/*
+ * Syntax highlighting for diff content lines.
+ * Composes syntax foreground colors with diff background colors.
+ */
+
+void
+diff_init_syntax_highlight(struct diff_state *state)
+{
+	state->syntax_highlight = opt_syntax_highlight && *opt_syntax_highlight
+				  && COLORS >= 256;
+	state->syntax_file[0] = '\0';
+	state->syntax_pid = 0;
+	state->syntax_write_fd = -1;
+	state->syntax_read_fp = NULL;
+}
+
+static void
+syntax_pipe_close(struct diff_state *state)
+{
+	if (state->syntax_write_fd >= 0) {
+		close(state->syntax_write_fd);
+		state->syntax_write_fd = -1;
+	}
+	if (state->syntax_read_fp) {
+		fclose(state->syntax_read_fp);
+		state->syntax_read_fp = NULL;
+	}
+	if (state->syntax_pid > 0) {
+		kill(state->syntax_pid, SIGTERM);
+		waitpid(state->syntax_pid, NULL, 0);
+		state->syntax_pid = 0;
+	}
+}
+
+static bool
+syntax_pipe_open(struct diff_state *state, const char *filename)
+{
+	int stdin_pipe[2], stdout_pipe[2];
+	pid_t pid;
+	char bat_path[SIZEOF_STR];
+	const char *env_path;
+
+	/* Close existing pipe if any */
+	syntax_pipe_close(state);
+
+	/* Find bat */
+	env_path = getenv("PATH");
+	if (!env_path || !*env_path)
+		env_path = _PATH_DEFPATH;
+	if (!path_search(bat_path, sizeof(bat_path), opt_syntax_highlight, env_path, X_OK))
+		return false;
+
+	if (pipe(stdin_pipe) < 0)
+		return false;
+	if (pipe(stdout_pipe) < 0) {
+		close(stdin_pipe[0]);
+		close(stdin_pipe[1]);
+		return false;
+	}
+
+	pid = fork();
+	if (pid < 0) {
+		close(stdin_pipe[0]); close(stdin_pipe[1]);
+		close(stdout_pipe[0]); close(stdout_pipe[1]);
+		return false;
+	}
+
+	if (pid == 0) {
+		/* Child: bat process */
+		char file_arg[SIZEOF_STR];
+
+		close(stdin_pipe[1]);
+		close(stdout_pipe[0]);
+		dup2(stdin_pipe[0], STDIN_FILENO);
+		dup2(stdout_pipe[1], STDOUT_FILENO);
+		close(stdin_pipe[0]);
+		close(stdout_pipe[1]);
+
+		string_format(file_arg, "--file-name=%s", filename);
+		execlp("stdbuf", "stdbuf", "-oL",
+			bat_path, "--color=always", "--style=plain",
+			"--paging=never", file_arg, "-", NULL);
+		/* If stdbuf not available, try without */
+		execlp(bat_path, bat_path, "--color=always", "--style=plain",
+			"--paging=never", file_arg, "-", NULL);
+		_exit(127);
+	}
+
+	/* Parent */
+	close(stdin_pipe[0]);
+	close(stdout_pipe[1]);
+
+	state->syntax_pid = pid;
+	state->syntax_write_fd = stdin_pipe[1];
+	state->syntax_read_fp = fdopen(stdout_pipe[0], "r");
+	if (!state->syntax_read_fp) {
+		syntax_pipe_close(state);
+		return false;
+	}
+
+	return true;
+}
+
+void
+diff_done_syntax_highlight(struct diff_state *state)
+{
+	syntax_pipe_close(state);
+}
+
+static void
+diff_track_filename(struct diff_state *state, const char *data, enum line_type type)
+{
+	/* Extract filename from "+++ b/path" header lines */
+	if (type == LINE_DIFF_ADD_FILE && !state->reading_diff_chunk) {
+		const char *path = data;
+
+		/* Skip "+++ " prefix */
+		if (!prefixcmp(path, "+++ "))
+			path += 4;
+		/* Skip "b/" prefix from git diffs */
+		if (!prefixcmp(path, "b/"))
+			path += 2;
+
+		/* Open new bat pipe if file changed */
+		if (strcmp(state->syntax_file, path)) {
+			string_ncopy(state->syntax_file, path, strlen(path));
+			syntax_pipe_open(state, state->syntax_file);
+		}
+	}
+}
+
+static int
+diff_bg_color_for_type(enum line_type type)
+{
+	/* Map diff line types to background color indices.
+	 * Use dark 256-color shades so syntax fg colors remain readable.
+	 * 22 = dark green, 52 = dark red */
+	switch (type) {
+	case LINE_DIFF_ADD:
+	case LINE_DIFF_ADD2:
+		return 22;   /* dark green background */
+	case LINE_DIFF_DEL:
+	case LINE_DIFF_DEL2:
+		return 52;   /* dark red background */
+	default:
+		return -1;   /* default background */
+	}
+}
+
+static int
+diff_bg_emphasis_for_type(enum line_type type)
+{
+	/* Brighter background for diff-highlight emphasized regions.
+	 * 28 = medium green, 88 = medium red */
+	switch (type) {
+	case LINE_DIFF_ADD:
+	case LINE_DIFF_ADD2:
+		return 65;   /* muted olive-green background */
+	case LINE_DIFF_DEL:
+	case LINE_DIFF_DEL2:
+		return 88;   /* medium red background */
+	default:
+		return -1;
+	}
+}
+
+static int
+diff_prefix_fg_for_type(enum line_type type)
+{
+	/* Bright green/red for the +/- prefix characters */
+	switch (type) {
+	case LINE_DIFF_ADD:
+	case LINE_DIFF_ADD2:
+		return 2;    /* COLOR_GREEN */
+	case LINE_DIFF_DEL:
+	case LINE_DIFF_DEL2:
+		return 1;    /* COLOR_RED */
+	default:
+		return -1;
+	}
+}
+
+static bool
+diff_syntax_highlight_line(struct view *view, const char *data,
+			   enum line_type type, struct diff_state *state)
+{
+	char highlighted[SIZEOF_STR * 2] = "";
+	char stripped[SIZEOF_STR];
+	char full_line[SIZEOF_STR];
+	struct ansi_span spans[ANSI_MAX_SPANS];
+	int nspans, i;
+	int diff_bg;
+	struct ansi_color bg_color;
+	struct line *line;
+	struct box *box;
+	size_t prefix_len = 0;
+	const char *content = data;
+	int total_cells;
+
+	if (!state->syntax_read_fp || state->syntax_write_fd < 0)
+		return false;
+
+	/* Detect and strip the +/- prefix before sending to bat */
+	if (type == LINE_DIFF_ADD || type == LINE_DIFF_ADD2 ||
+		type == LINE_DIFF_DEL || type == LINE_DIFF_DEL2) {
+		prefix_len = state->parents;
+		content = data + prefix_len;
+	} else if (data[0] == ' ') {
+		/* Context line */
+		prefix_len = state->parents;
+		content = data + prefix_len;
+	}
+
+	/* Empty content (e.g. bare "+" or "-" line): skip bat,
+	 * just create a line with the prefix and background fill */
+	if (!*content) {
+		diff_bg = diff_bg_color_for_type(type);
+		bg_color.type = (diff_bg >= 0) ? ANSI_COLOR_256 : ANSI_COLOR_DEFAULT;
+		bg_color.index = diff_bg;
+		total_cells = 1;
+
+		line = add_line_text_at(view, view->lines, data, type, total_cells);
+		if (!line)
+			return false;
+		box = line->data;
+
+		if (prefix_len > 0) {
+			int pfx_fg = diff_prefix_fg_for_type(type);
+			struct ansi_color pfx_fg_color;
+
+			pfx_fg_color.type = (pfx_fg >= 0) ? ANSI_COLOR_BASIC : ANSI_COLOR_DEFAULT;
+			pfx_fg_color.index = pfx_fg;
+
+			memset(&box->cell[0], 0, sizeof(box->cell[0]));
+			box->cell[0].type = type;
+			box->cell[0].length = prefix_len;
+			box->cell[0].direct = 1;
+			box->cell[0].color_pair = get_dynamic_color_pair(&pfx_fg_color, &bg_color);
+			box->cell[0].attr = A_BOLD;
+		} else {
+			memset(&box->cell[0], 0, sizeof(box->cell[0]));
+			box->cell[0].type = type;
+			box->cell[0].length = strlen(data);
+			box->cell[0].direct = 1;
+			box->cell[0].color_pair = get_dynamic_color_pair(
+				&(struct ansi_color){ ANSI_COLOR_DEFAULT, { .index = 0 } }, &bg_color);
+		}
+		box->cells = total_cells;
+		return true;
+	}
+
+	/* If diff-highlight added reverse-video codes, strip them before
+	 * sending to bat, but record which byte ranges are emphasized */
+	{
+		char clean_content[SIZEOF_STR];
+		struct ansi_span dh_spans[ANSI_MAX_SPANS];
+		int dh_nspans = 0;
+		bool has_emphasis = ansi_has_escapes(content);
+
+		if (has_emphasis) {
+			dh_nspans = ansi_parse_line(content, clean_content,
+							sizeof(clean_content),
+							dh_spans, ANSI_MAX_SPANS);
+			content = clean_content;
+		}
+
+		/* Write clean content (no ANSI) to bat's stdin */
+		{
+			size_t content_len = strlen(content);
+
+			if (write(state->syntax_write_fd, content, content_len) < 0 ||
+				write(state->syntax_write_fd, "\n", 1) < 0) {
+				syntax_pipe_close(state);
+				return false;
+			}
+		}
+
+		/* Read highlighted line from bat's stdout */
+		if (!fgets(highlighted, sizeof(highlighted), state->syntax_read_fp)) {
+			syntax_pipe_close(state);
+			return false;
+		}
+
+		/* Strip trailing newline */
+		{
+			size_t len = strlen(highlighted);
+			if (len > 0 && highlighted[len - 1] == '\n')
+				highlighted[len - 1] = '\0';
+		}
+
+		/* Parse ANSI from bat's output */
+		nspans = ansi_parse_line(highlighted, stripped, sizeof(stripped),
+					 spans, ANSI_MAX_SPANS);
+		if (nspans <= 0)
+			return false;
+
+		/* Merge diff-highlight emphasis: split syntax spans at
+		 * emphasis boundaries so only the changed characters
+		 * get the brighter background */
+		if (has_emphasis && dh_nspans > 0) {
+			int emph_bg = diff_bg_emphasis_for_type(type);
+			struct ansi_span merged[ANSI_MAX_SPANS];
+			int nmerged = 0;
+
+			/* Build a reverse-video bitmap */
+			char is_emph[SIZEOF_STR] = {0};
+			int j;
+
+			for (j = 0; j < dh_nspans; j++) {
+				if (!(dh_spans[j].attr & A_REVERSE))
+					continue;
+				size_t k;
+				for (k = dh_spans[j].offset;
+					k < dh_spans[j].offset + dh_spans[j].length
+					&& k < sizeof(is_emph); k++)
+					is_emph[k] = 1;
+			}
+
+			/* Split each syntax span at emphasis boundaries */
+			for (i = 0; i < nspans && nmerged < ANSI_MAX_SPANS - 1; i++) {
+				size_t pos = spans[i].offset;
+				size_t end = pos + spans[i].length;
+
+				while (pos < end && nmerged < ANSI_MAX_SPANS - 1) {
+					bool emph = pos < sizeof(is_emph) && is_emph[pos];
+					size_t run = pos;
+
+					/* Find run of same emphasis state */
+					while (run < end && run < sizeof(is_emph)
+						&& (is_emph[run] ? 1 : 0) == emph)
+						run++;
+					if (run >= sizeof(is_emph))
+						run = end;
+
+					merged[nmerged] = spans[i];
+					merged[nmerged].offset = pos;
+					merged[nmerged].length = run - pos;
+					if (emph && emph_bg >= 0) {
+						merged[nmerged].bg.type = ANSI_COLOR_256;
+						merged[nmerged].bg.index = emph_bg;
+					}
+					nmerged++;
+					pos = run;
+				}
+			}
+
+			memcpy(spans, merged, sizeof(spans[0]) * nmerged);
+			nspans = nmerged;
+		}
+	}
+
+	/* Reconstruct full line: prefix + highlighted content */
+	if (prefix_len > 0) {
+		memcpy(full_line, data, prefix_len);
+		memcpy(full_line + prefix_len, stripped, strlen(stripped) + 1);
+		/* Adjust span offsets to account for prefix */
+		for (i = 0; i < nspans; i++)
+			spans[i].offset += prefix_len;
+	} else {
+		memcpy(full_line, stripped, strlen(stripped) + 1);
+	}
+
+	/* Determine background color for this diff line type */
+	diff_bg = diff_bg_color_for_type(type);
+	bg_color.type = (diff_bg >= 0) ? ANSI_COLOR_256 : ANSI_COLOR_DEFAULT;
+	bg_color.index = diff_bg;
+
+	/*
+	 * Build cells and wrap long lines GitHub-style:
+	 * - First line: prefix (+/-) + content, up to view width
+	 * - Continuation lines: 2-space indent + content, marked as wrapped
+	 */
+	{
+		const char *text_ptr = full_line;
+		size_t text_remaining = strlen(full_line);
+		int wrap_indent = 2;  /* spaces for continuation indent */
+		bool first_line = true;
+		bool has_first = false;
+		unsigned int lineno = 0;
+
+		/* Pre-compute color pairs for all spans + prefix */
+		struct box_cell all_cells[ANSI_MAX_SPANS + 1];
+		int ncells = 0;
+
+		if (prefix_len > 0) {
+			int pfx_fg = diff_prefix_fg_for_type(type);
+			struct ansi_color pfx_fg_color;
+
+			pfx_fg_color.type = (pfx_fg >= 0) ? ANSI_COLOR_BASIC : ANSI_COLOR_DEFAULT;
+			pfx_fg_color.index = pfx_fg;
+
+			memset(&all_cells[0], 0, sizeof(all_cells[0]));
+			all_cells[0].type = type;
+			all_cells[0].length = prefix_len;
+			all_cells[0].direct = 1;
+			all_cells[0].color_pair = get_dynamic_color_pair(&pfx_fg_color, &bg_color);
+			all_cells[0].attr = A_BOLD;
+			ncells = 1;
+		}
+
+		for (i = 0; i < nspans; i++) {
+			memset(&all_cells[ncells], 0, sizeof(all_cells[0]));
+			all_cells[ncells].type = type;
+			all_cells[ncells].length = spans[i].length;
+			all_cells[ncells].direct = 1;
+			all_cells[ncells].color_pair = get_dynamic_color_pair(&spans[i].fg,
+				spans[i].bg.type != ANSI_COLOR_DEFAULT ? &spans[i].bg : &bg_color);
+			all_cells[ncells].attr = spans[i].attr;
+			ncells++;
+		}
+
+		/* Check total text width */
+		{
+			int total_width = 0;
+			const char *p = full_line;
+			while (*p) {
+				if (*p == '\t')
+					total_width += opt_tab_size - (total_width % opt_tab_size);
+				else
+					total_width++;
+				p++;
+			}
+
+			/* If it fits in one line, just create a single line */
+			if (total_width <= view->width) {
+				line = add_line_text_at(view, view->lines, full_line, type, ncells);
+				if (!line)
+					return false;
+				box = line->data;
+				memcpy(box->cell, all_cells, sizeof(all_cells[0]) * ncells);
+				box->cells = ncells;
+				return true;
+			}
+		}
+
+		/* Wrap: split text into chunks that fit view width */
+		int cell_idx = 0;
+		size_t cell_offset = 0;  /* bytes consumed within current cell */
+
+		while (text_remaining > 0 && cell_idx < ncells) {
+			int avail_width = view->width;
+			char line_buf[SIZEOF_STR];
+			size_t line_len = 0;
+			int line_width = 0;
+			struct box_cell line_cell_buf[ANSI_MAX_SPANS + 2];
+			int line_ncells = 0;
+
+			/* On continuation lines, add a colored indent
+			 * (we handle this ourselves instead of using
+			 * line->wrapped to keep the diff background) */
+			if (!first_line) {
+				int indent = wrap_indent < avail_width ? wrap_indent : 1;
+
+				/* Leading spaces for indent */
+				memset(line_buf, ' ', indent);
+				line_len = indent;
+				line_width = indent;
+
+				/* Indent cell with diff background */
+				memset(&line_cell_buf[0], 0, sizeof(line_cell_buf[0]));
+				line_cell_buf[0].type = type;
+				line_cell_buf[0].length = indent;
+				line_cell_buf[0].direct = 1;
+				line_cell_buf[0].color_pair = get_dynamic_color_pair(
+					&(struct ansi_color){ ANSI_COLOR_DEFAULT, { .index = 0 } },
+					&bg_color);
+				line_ncells = 1;
+			}
+
+			/* Fill line with text from cells until we hit the width */
+			while (cell_idx < ncells && line_width < avail_width) {
+				size_t cell_remaining = all_cells[cell_idx].length - cell_offset;
+				const char *cell_text = text_ptr;
+				size_t bytes_to_take = 0;
+				int width_taken = 0;
+
+				/* Measure how much of this cell fits */
+				for (size_t b = 0; b < cell_remaining && line_width + width_taken < avail_width; b++) {
+					if (cell_text[b] == '\t')
+						width_taken += opt_tab_size - ((line_width + width_taken) % opt_tab_size);
+					else
+						width_taken++;
+					bytes_to_take = b + 1;
+				}
+
+				if (bytes_to_take > 0 && line_len + bytes_to_take < sizeof(line_buf) - 1) {
+					memcpy(line_buf + line_len, cell_text, bytes_to_take);
+					line_len += bytes_to_take;
+					line_width += width_taken;
+					text_ptr += bytes_to_take;
+					text_remaining -= bytes_to_take;
+
+					/* Add a cell for this chunk */
+					memset(&line_cell_buf[line_ncells], 0, sizeof(line_cell_buf[0]));
+					line_cell_buf[line_ncells].type = all_cells[cell_idx].type;
+					line_cell_buf[line_ncells].length = bytes_to_take;
+					line_cell_buf[line_ncells].direct = 1;
+					line_cell_buf[line_ncells].color_pair = all_cells[cell_idx].color_pair;
+					line_cell_buf[line_ncells].attr = all_cells[cell_idx].attr;
+					line_ncells++;
+
+					cell_offset += bytes_to_take;
+					if (cell_offset >= all_cells[cell_idx].length) {
+						cell_idx++;
+						cell_offset = 0;
+					}
+				} else {
+					break;
+				}
+			}
+
+			if (line_len == 0)
+				break;
+
+			line_buf[line_len] = '\0';
+
+			/* Create the view line */
+			line = add_line_text_at_(view, view->lines, line_buf, line_len,
+						 type, line_ncells, false);
+			if (!line)
+				return false;
+
+			box = line->data;
+			memcpy(box->cell, line_cell_buf, sizeof(line_cell_buf[0]) * line_ncells);
+			box->cells = line_ncells;
+
+			if (!has_first) {
+				has_first = true;
+				lineno = line->lineno;
+			}
+
+			line->lineno = lineno;
+			first_line = false;
+		}
+
+		return has_first;
+	}
+}
+
 struct diff_stat_context {
 	const char *text;
 	enum line_type type;
@@ -100,6 +643,7 @@ diff_common_add_cell(struct diff_stat_context *context, size_t length, bool allo
 	}
 	if (context->skip && !argv_appendn(&context->cell_text, context->text, length))
 		return false;
+	memset(&context->cell[context->cells], 0, sizeof(context->cell[0]));
 	context->cell[context->cells].length = length;
 	context->cell[context->cells].type = context->type;
 	context->cells++;
@@ -305,7 +849,20 @@ diff_common_highlight(struct view *view, const char *text, enum line_type type)
 bool
 diff_common_read(struct view *view, const char *data, struct diff_state *state)
 {
-	enum line_type type = get_line_type(data);
+	char stripped_buf[SIZEOF_STR];
+	const char *clean_data = data;
+	enum line_type type;
+
+	/* If data contains ANSI codes (from bat pipe), strip them for
+	 * line type detection, but keep original for rendering. */
+	if (state->syntax_highlight && ansi_has_escapes(data)) {
+		struct ansi_span spans[1];
+
+		ansi_parse_line(data, stripped_buf, sizeof(stripped_buf), spans, 0);
+		clean_data = stripped_buf;
+	}
+
+	type = get_line_type(clean_data);
 
 	/* ADD2 and DEL2 are only valid in combined diff hunks */
 	if (!state->combined_diff && (type == LINE_DIFF_ADD2 || type == LINE_DIFF_DEL2))
@@ -324,11 +881,11 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 
 	/* combined diffs lack LINE_DIFF_START and we don't know
 	 * if this is a combined diff until we see a "@@@" */
-	if (!state->after_diff && data[0] == ' ' && data[1] != ' ')
+	if (!state->after_diff && clean_data[0] == ' ' && clean_data[1] != ' ')
 		state->reading_diff_stat = true;
 
 	if (state->reading_diff_stat) {
-		if (diff_common_add_diff_stat(view, data, 0))
+		if (diff_common_add_diff_stat(view, clean_data, 0))
 			return true;
 		state->reading_diff_stat = false;
 
@@ -336,8 +893,8 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		state->reading_diff_stat = true;
 	}
 
-	if (!state->after_commit_title && !prefixcmp(data, "    ")) {
-		struct line *line = add_line_text(view, data, LINE_DEFAULT);
+	if (!state->after_commit_title && !prefixcmp(clean_data, "    ")) {
+		struct line *line = add_line_text(view, clean_data, LINE_DEFAULT);
 
 		if (line)
 			line->commit_title = 1;
@@ -345,15 +902,19 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 		return line != NULL;
 	}
 
+	/* Track filename from +++ headers for syntax highlighting */
+	if (state->syntax_highlight && !state->reading_diff_chunk)
+		diff_track_filename(state, clean_data, type);
+
 	if (type == LINE_DIFF_HEADER) {
 		state->after_diff = true;
 		state->reading_diff_chunk = false;
 
 	} else if (type == LINE_DIFF_CHUNK) {
-		const unsigned int len = chunk_header_marker_length(data);
-		const char *context = strstr(data + len, "@@");
+		const unsigned int len = chunk_header_marker_length(clean_data);
+		const char *context = strstr(clean_data + len, "@@");
 		struct line *line =
-			context ? add_line_text_at(view, view->lines, data, LINE_DIFF_CHUNK, len)
+			context ? add_line_text_at(view, view->lines, clean_data, LINE_DIFF_CHUNK, len)
 				: NULL;
 		struct box *box;
 
@@ -361,7 +922,7 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 			return false;
 
 		box = line->data;
-		box->cell[0].length = (context + len) - data;
+		box->cell[0].length = (context + len) - clean_data;
 		box->cell[1].length = strlen(context + len);
 		box->cell[box->cells++].type = LINE_DIFF_STAT;
 		state->combined_diff = (len > 2);
@@ -377,16 +938,29 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	if (opt_word_diff && state->reading_diff_chunk &&
 	    /* combined diff format is not using word diff */
 	    !state->combined_diff)
-		return diff_common_read_diff_wdiff(view, data);
+		return diff_common_read_diff_wdiff(view, clean_data);
 
 	if (!opt_diff_indicator && state->reading_diff_chunk &&
-	    !state->stage)
+		!state->stage) {
 		data += state->parents;
+		clean_data += state->parents;
+	}
 
-	if (state->highlight && strchr(data, 0x1b))
-		return diff_common_highlight(view, data, type);
+	/* Syntax highlight content lines via bat.
+	 * Pass original data (not clean_data) so diff-highlight's
+	 * reverse-video codes can be detected and preserved. */
+	if (state->syntax_highlight && state->reading_diff_chunk
+		&& (type == LINE_DIFF_ADD || type == LINE_DIFF_DEL || type == LINE_DEFAULT)
+		&& diff_syntax_highlight_line(view, data, type, state))
+		return true;
 
-	return pager_common_read(view, data, type, NULL);
+	if (strchr(data, 0x1b)) {
+		/* diff-highlight: parse reverse-video codes */
+		if (state->highlight)
+			return diff_common_highlight(view, data, type);
+	}
+
+	return pager_common_read(view, clean_data, type, NULL);
 }
 
 static bool
@@ -529,6 +1103,7 @@ diff_read(struct view *view, struct buffer *buf, bool force_stop)
 		return diff_read_describe(view, buf, state);
 
 	if (!buf) {
+		diff_done_syntax_highlight(state);
 		if (!diff_done_highlight(state)) {
 			if (!force_stop)
 				report("Failed to run the diff-highlight program: %s", opt_diff_highlight);
