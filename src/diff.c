@@ -188,7 +188,7 @@ diff_common_add_diff_stat(struct view *view, const char *text, size_t offset)
 	const char *start = text + offset;
 	const char *data = start + strspn(start, " ");
 	size_t len = strlen(data);
-	char *pipe = strchr(data, '|');
+	const char *pipe = strchr(data, '|');
 
 	/* Ensure that '|' is present and the file name part contains
 	 * non-space characters. */
