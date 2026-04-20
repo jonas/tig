@@ -248,6 +248,30 @@ be appended:
 [main] 77d9e40fbcea3238015aea403e06f61542df9a31 - commit 1 of 779 loading 5s 0%
 -------------------------------------------------------------------------------
 
+[[blame]]
+Blame and diff navigation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Tig allows quick navigation between blame views and related diff views.
+
+In the diff view, navigating to an added line in a diff and pressing
+'b' will open the blame view of the commit that was shown and select
+the corresponding line in that view. Navigating to a removed line in the
+diff and pressing 'b' takes you to the blame view of the parent commit.
+
+The blame view can also be opened directly with the 'tig blame' command.
+
+In the blame view, the blame commit for the current line is considered
+"selected", and is shown in the status bar.  In this view, the 'b'
+command will jump to the corresponding line in the blame view for that
+commit. The ',' AKA ':parent' command will jump to the corresponding line
+in the parent of the blame commit (or the nearest line Tig can find,
+if there is no corresponding line). The '<' AKA ':back' command can be
+used to undo jumps within the blame view.
+
+Pressing 'Enter' in the blame view will take you to the corresponding
+line in the diff of the blamed commit.
+
 [[env-variables]]
 Environment Variables
 ---------------------
