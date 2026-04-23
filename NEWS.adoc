@@ -200,7 +200,7 @@ Bug fixes:
  - Fix null dereferences on unset format strings. (#1136, #1159)
  - Fix invalid read in log_read. (#1128)
  - Restore support for tig log --graph. (#1128)
- - Further fix to fullscreen navigation.
+ - Further fix to full screen navigation.
  - Fix blame when opened from an initial diff view. (#1135)
  - Fix stash view when using tig --all or tig revs. (#1146, #1147)
  - Avoiding null pointer dereference. (#1096)
@@ -255,7 +255,7 @@ Improvements:
  - Allow maxwidth to be expressed in % of the view width. (#1021)
  - Pass stash args through. (#1022, #1030)
  - Make build work on IBM i. (#1051, #1052)
- - Restore fullscreen navigation. (#1053)
+ - Restore full screen navigation. (#1053)
  - Update utf8proc to v2.6.1.
  - Add some range so control chars ^^ and ^_ are also supported. (#1041, #1058)
  - Disable ncurses extended key values so that esc-codes can be used. (#1046, #1049)
@@ -476,7 +476,7 @@ Improvements:
  - Expand tilde ('~') in `:script` paths. (GH #674)
  - Show single-line output of external command in status bar. (GH #200, #557,
    #678)
- - Disable the graph when `--no-merges` is passed. (GH #687) 
+ - Disable the graph when `--no-merges` is passed. (GH #687)
  - Print backtraces on segfault in debug mode.
  - Ignore script lines starting with `#` (comment). (GH #705)
  - Complete `repo:*` variables when readline is enabled. (GH #702)
