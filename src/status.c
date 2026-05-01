@@ -185,7 +185,6 @@ error_out:
 	return true;
 }
 
-static const char *status_diff_index_argv[] = { GIT_DIFF_STAGED_FILES("-z") };
 static const char *status_diff_files_argv[] = { GIT_DIFF_UNSTAGED_FILES("-z") };
 
 static const char *status_list_other_argv[] = {
@@ -352,6 +351,14 @@ status_update_onbranch(void)
 		if (!string_format(status_onbranch, fmt,
 				   prefix, head, tracking_info))
 			string_copy(status_onbranch, repo.head);
+		if (repo_amend_mode_enabled()) {
+			char amend_status[SIZEOF_STR];
+
+			if (string_nformat(amend_status, sizeof(amend_status), NULL,
+			     "%s [amend]", status_onbranch)) {
+				string_copy(status_onbranch, amend_status);
+			}
+		}
 		return;
 	}
 
@@ -379,6 +386,10 @@ status_read_untracked(struct view *view)
 static enum status_code
 status_open(struct view *view, enum open_flags flags)
 {
+	const char *status_diff_index_argv[] = {
+		"git", "diff-index", "-z", "%(cmdlineargs)", "--diff-filter=ACDMRTXB",
+		"-C", "--cached", repo_staged_parent(), "--", NULL
+	};
 	const char **staged_argv = is_initial_commit() ?
 		status_list_no_head_argv : status_diff_index_argv;
 	char staged_status = staged_argv == status_list_no_head_argv ? 'A' : 0;
@@ -423,7 +434,9 @@ status_get_column_data(struct view *view, const struct line *line, struct view_c
 		switch (line->type) {
 		case LINE_STAT_STAGED:
 			type = LINE_SECTION;
-			text = "Changes to be committed:";
+			text = repo_amend_mode_enabled() ?
+				"Changes to be amended:" :
+				"Changes to be committed:";
 			break;
 
 		case LINE_STAT_UNSTAGED:
@@ -722,6 +735,12 @@ status_request(struct view *view, enum request request, struct line *line)
 			return REQ_NONE;
 		break;
 
+	case REQ_STATUS_AMEND:
+		if (!repo_toggle_amend_mode())
+			return REQ_NONE;
+		load_repo_head();
+		break;
+
 	case REQ_STATUS_REVERT:
 		if (!status_revert(status, line->type, status_has_none(view, line)))
 			return REQ_NONE;
@@ -791,9 +810,13 @@ status_stage_info_(char *buf, size_t bufsize,
 	switch (type) {
 	case LINE_STAT_STAGED:
 		if (status && status->status)
-			info = "Staged changes to %s";
+			info = repo_amend_mode_enabled() ?
+				"Amend changes to %s" :
+				"Staged changes to %s";
 		else
-			info = "Staged changes";
+			info = repo_amend_mode_enabled() ?
+				"Amend changes" :
+				"Staged changes";
 		break;
 
 	case LINE_STAT_UNSTAGED:
@@ -831,15 +854,21 @@ status_select(struct view *view, struct line *line)
 
 	switch (line->type) {
 	case LINE_STAT_STAGED:
-		text = "Press %s to unstage %s for commit";
+		text = repo_amend_mode_enabled() ?
+			"Press %s to unstage %s from amend commit" :
+			"Press %s to unstage %s for commit";
 		break;
 
 	case LINE_STAT_UNSTAGED:
-		text = "Press %s to stage %s for commit";
+		text = repo_amend_mode_enabled() ?
+			"Press %s to stage %s for amend commit" :
+			"Press %s to stage %s for commit";
 		break;
 
 	case LINE_STAT_UNTRACKED:
-		text = "Press %s to stage %s for addition";
+		text = repo_amend_mode_enabled() ?
+			"Press %s to stage %s for amend commit" :
+			"Press %s to stage %s for addition";
 		break;
 
 	default:
