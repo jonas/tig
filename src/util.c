@@ -116,7 +116,19 @@ time_now(struct timeval *timeval, struct timezone *tz)
 		check_env = false;
 	}
 
-	return gettimeofday(timeval, tz);
+	if (gettimeofday(timeval, NULL) == -1)
+		return -1;
+
+	if (tz) {
+		struct tm tm;
+
+		memset(tz, 0, sizeof(*tz));
+		gmtime_r(&timeval->tv_sec, &tm);
+		tm.tm_isdst = -1;
+		tz->tz_minuteswest = (mktime(&tm) - timeval->tv_sec) / 60;
+	}
+
+	return 0;
 }
 
 int
