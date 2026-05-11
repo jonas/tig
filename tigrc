@@ -417,6 +417,8 @@ color "    Co-authored-by:"	yellow	default
 color "    Requested-by:"	yellow	default
 color "    Original-patch-by:"	yellow	default
 color "    Inspired-by:"	yellow	default
+color "    Generated-by:"	yellow	default
+color "    Assisted-by:"	yellow	default
 color default			default	default	normal
 color cursor			white	green	bold
 color cursor-blur		white	green
