@@ -43,8 +43,8 @@ typedef struct view_column *view_settings;
 	_(word_diff,			bool,			VIEW_DIFF_LIKE) \
 	_(diff_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(editor_line_number,		bool,			VIEW_NO_FLAGS) \
-	_(file_args,			const char **,		VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
-	_(file_filter,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
+	_(file_args,			const char **,		VIEW_FILE_FILTER) \
+	_(file_filter,			bool,			VIEW_FILE_FILTER) \
 	_(focus_child,			bool,			VIEW_NO_FLAGS) \
 	_(git_colors,			const char **,		VIEW_NO_FLAGS) \
 	_(grep_view,			view_settings,		VIEW_NO_FLAGS) \
@@ -71,8 +71,8 @@ typedef struct view_column *view_settings;
 	_(refresh_interval,		int,			VIEW_NO_FLAGS) \
 	_(refresh_mode,			enum refresh_mode,	VIEW_NO_FLAGS) \
 	_(refs_view,			view_settings,		VIEW_NO_FLAGS) \
-	_(rev_args,			const char **,		VIEW_LOG_LIKE) \
-	_(rev_filter,			bool,			VIEW_LOG_LIKE) \
+	_(rev_args,			const char **,		VIEW_REV_FILTER) \
+	_(rev_filter,			bool,			VIEW_REV_FILTER) \
 	_(send_child_enter,		bool,			VIEW_NO_FLAGS) \
 	_(show_changes,			bool,			VIEW_LOG_LIKE) \
 	_(show_notes,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \

@@ -158,7 +158,7 @@ log_read(struct view *view, struct buffer *buf, bool force_stop)
 static struct view_ops log_ops = {
 	"line",
 	argv_env.head,
-	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER | VIEW_LOG_LIKE | VIEW_REFRESH | VIEW_FLEX_WIDTH,
+	VIEW_ADD_PAGER_REFS | VIEW_OPEN_DIFF | VIEW_SEND_CHILD_ENTER | VIEW_FILE_FILTER | VIEW_REV_FILTER | VIEW_LOG_LIKE | VIEW_REFRESH | VIEW_FLEX_WIDTH,
 	sizeof(struct log_state),
 	log_open,
 	log_read,
