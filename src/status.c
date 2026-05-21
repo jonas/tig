@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include "tig/argv.h"
 #include "tig/io.h"
 #include "tig/refdb.h"
 #include "tig/repo.h"
@@ -92,8 +93,14 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	struct buffer buf;
 	struct io io;
 	const char **status_argv = NULL;
-	bool ok = argv_format(view->env, &status_argv, argv, 0) &&
-		  io_run(&io, IO_RD, repo.exec_dir, NULL, status_argv);
+	int format_flags = 0;
+	bool ok;
+
+	if (!view_has_flags(view, VIEW_FILE_FILTER) || opt_file_filter)
+		format_flags |= argv_flag_file_filter;
+
+	ok = argv_format(view->env, &status_argv, argv, format_flags) &&
+	    io_run(&io, IO_RD, repo.exec_dir, NULL, status_argv);
 
 	argv_free(status_argv);
 	free(status_argv);
@@ -188,12 +195,8 @@ error_out:
 static const char *status_diff_index_argv[] = { GIT_DIFF_STAGED_FILES("-z") };
 static const char *status_diff_files_argv[] = { GIT_DIFF_UNSTAGED_FILES("-z") };
 
-static const char *status_list_other_argv[] = {
-	"git", "ls-files", "-z", "--others", "--exclude-standard", NULL, NULL, NULL
-};
-
 static const char *status_list_no_head_argv[] = {
-	"git", "ls-files", "-z", "--cached", "--exclude-standard", NULL
+	"git", "ls-files", "-z", "--cached", "--exclude-standard", "%(fileargs)", NULL
 };
 
 /* Restore the previous line number to stay in the context or select a
@@ -361,16 +364,26 @@ status_update_onbranch(void)
 static bool
 status_read_untracked(struct view *view)
 {
+	const char *argv[16];
+	int argc = 0;
+
 	if (!opt_status_show_untracked_files)
 		return add_line_nodata(view, LINE_STAT_UNTRACKED)
 		    && add_line_nodata(view, LINE_STAT_NONE);
 
-	status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 3] =
-		opt_status_show_untracked_dirs ? NULL : "--directory";
-	status_list_other_argv[ARRAY_SIZE(status_list_other_argv) - 2] =
-		opt_status_show_untracked_dirs ? NULL : "--no-empty-directory";
+	argv[argc++] = "git";
+	argv[argc++] = "ls-files";
+	argv[argc++] = "-z";
+	argv[argc++] = "--others";
+	argv[argc++] = "--exclude-standard";
+	if (!opt_status_show_untracked_dirs) {
+		argv[argc++] = "--directory";
+		argv[argc++] = "--no-empty-directory";
+	}
+	argv[argc++] = "%(fileargs)";
+	argv[argc] = NULL;
 
-	return status_run(view, status_list_other_argv, '?', LINE_STAT_UNTRACKED);
+	return status_run(view, argv, '?', LINE_STAT_UNTRACKED);
 }
 
 /* First parse staged info using git-diff-index(1), then parse unstaged
@@ -394,7 +407,8 @@ status_open(struct view *view, enum open_flags flags)
 	add_line_nodata(view, LINE_HEADER);
 	status_update_onbranch();
 
-	update_index();
+	if (!opt_file_args || !opt_file_filter)
+		update_index();
 
 	if ((!show_untracked_only && !status_run(view, staged_argv, staged_status, LINE_STAT_STAGED)) ||
 	    (!show_untracked_only && !status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED)) ||
@@ -865,7 +879,7 @@ status_select(struct view *view, struct line *line)
 static struct view_ops status_ops = {
 	"file",
 	"",
-	VIEW_CUSTOM_STATUS | VIEW_SEND_CHILD_ENTER | VIEW_STATUS_LIKE | VIEW_REFRESH,
+	VIEW_CUSTOM_STATUS | VIEW_SEND_CHILD_ENTER | VIEW_STATUS_LIKE | VIEW_FILE_FILTER | VIEW_REFRESH,
 	0,
 	status_open,
 	NULL,

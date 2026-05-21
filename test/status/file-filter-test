@@ -1,0 +1,80 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=15
+export COLUMNS=120
+
+# This test uses the trace output so do not show trace for this test.
+trace=
+export TIG_TRACE="$HOME/trace"
+
+test_setup_work_dir()
+{
+	git_init .
+
+	git_add subdir/staged <<EOF
+staged in subdir
+EOF
+
+	git_add other/staged <<EOF
+staged in other
+EOF
+
+	git_commit -m "Initial commit"
+	git branch -M master
+
+	printf 'unstaged in subdir\n' >> subdir/staged
+	printf 'unstaged in other\n' >> other/staged
+	touch -- subdir/untracked other/untracked
+}
+
+test_case 'status-path-filter' \
+	--args='status subdir' \
+<<EXPECTED_SCREEN
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+M subdir/staged
+Untracked files:
+? subdir/untracked
+
+
+
+
+
+
+[status] Nothing to update                                                                                          100%
+EXPECTED_SCREEN
+
+run_test_cases
+
+grep 'git rev-parse' < "$TIG_TRACE" > rev-parse.trace
+grep 'git diff-index' < "$TIG_TRACE" > diff-index.trace
+grep 'git diff-files' < "$TIG_TRACE" > diff-files.trace
+grep 'git ls-files' < "$TIG_TRACE" > ls-files.trace
+
+if grep -q 'update-index' < "$TIG_TRACE"; then
+	die "update-index should not run when status is path-filtered"
+fi
+
+assert_equals 'rev-parse.trace' <<EOF
+git rev-parse --no-revs --no-flags subdir
+git rev-parse --flags --no-revs subdir
+git rev-parse --symbolic --revs-only subdir
+git rev-parse --git-dir --is-inside-work-tree --show-cdup --show-prefix HEAD --symbolic-full-name HEAD
+EOF
+
+assert_equals 'diff-index.trace' <<EOF
+git diff-index -z --diff-filter=ACDMRTXB -C --cached HEAD -- subdir
+EOF
+
+assert_equals 'diff-files.trace' <<EOF
+git diff-files -z -- subdir
+EOF
+
+assert_equals 'ls-files.trace' <<EOF
+git ls-files -z --others --exclude-standard subdir
+EOF
