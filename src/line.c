@@ -16,6 +16,7 @@
 #include "tig/refdb.h"
 #include "tig/line.h"
 #include "tig/ansi.h"
+#include "tig/color_mode.h"
 #include "tig/util.h"
 
 static struct line_rule *line_rule;
@@ -215,7 +216,7 @@ init_line_info_color_pair(struct line_info *info, enum line_type type,
 
 	color_pair[color_pairs] = info;
 	info->color_pair = color_pairs++;
-	init_pair(COLOR_ID(info->color_pair), fg, bg);
+	init_extended_pair(COLOR_ID(info->color_pair), fg, bg);
 }
 
 void
@@ -279,57 +280,23 @@ dyn_pair_hash(int fg, int bg)
 	return h % DYN_PAIR_BUCKETS;
 }
 
-/*
- * Convert an RGB color to the nearest xterm-256 color index.
- * Uses the 6x6x6 color cube (indices 16-231) and grayscale ramp (232-255).
- */
-static int
-rgb_to_256(unsigned char r, unsigned char g, unsigned char b)
+static enum tig_color_mode
+get_color_mode(void)
 {
-	int ri, gi, bi, ci;
-	int gray, gray_idx;
-	int cube_r, cube_g, cube_b;
-	int cube_dist, gray_dist;
+	static enum tig_color_mode cached;
+	static bool initialized;
 
-	/* Map to 6x6x6 cube */
-	ri = (r < 48) ? 0 : (r < 115) ? 1 : (r - 35) / 40;
-	gi = (g < 48) ? 0 : (g < 115) ? 1 : (g - 35) / 40;
-	bi = (b < 48) ? 0 : (b < 115) ? 1 : (b - 35) / 40;
-	ci = 16 + 36 * ri + 6 * gi + bi;
-
-	/* Cube color values for comparison */
-	cube_r = ri ? 55 + ri * 40 : 0;
-	cube_g = gi ? 55 + gi * 40 : 0;
-	cube_b = bi ? 55 + bi * 40 : 0;
-	cube_dist = (r - cube_r) * (r - cube_r)
-		  + (g - cube_g) * (g - cube_g)
-		  + (b - cube_b) * (b - cube_b);
-
-	/* Check grayscale ramp (232-255, values 8,18,28,...,238) */
-	gray = (r + g + b) / 3;
-	gray_idx = (gray < 4) ? 0 : (gray > 243) ? 23 : (gray - 4) / 10;
-	gray = 8 + gray_idx * 10;
-	gray_dist = (r - gray) * (r - gray)
-		  + (g - gray) * (g - gray)
-		  + (b - gray) * (b - gray);
-
-	return (gray_dist < cube_dist) ? 232 + gray_idx : ci;
+	if (!initialized) {
+		cached = tig_classify_color_mode(COLORS);
+		initialized = true;
+	}
+	return cached;
 }
 
 int
 ansi_color_to_ncurses(const struct ansi_color *color)
 {
-	switch (color->type) {
-	case ANSI_COLOR_DEFAULT:
-		return -1;  /* COLOR_DEFAULT in ncurses */
-	case ANSI_COLOR_BASIC:
-		return color->index;  /* 0-7 maps directly to ncurses COLOR_* */
-	case ANSI_COLOR_256:
-		return color->index;
-	case ANSI_COLOR_RGB:
-		return rgb_to_256(color->rgb.r, color->rgb.g, color->rgb.b);
-	}
-	return -1;
+	return ansi_color_to_ncurses_for_mode(color, get_color_mode());
 }
 
 int
@@ -366,7 +333,7 @@ get_dynamic_color_pair(const struct ansi_color *fg, const struct ansi_color *bg)
 	entry->next = dyn_pair_table[bucket];
 	dyn_pair_table[bucket] = entry;
 
-	init_pair(COLOR_ID(entry->pair_id), ncurses_fg, ncurses_bg);
+	init_extended_pair(COLOR_ID(entry->pair_id), ncurses_fg, ncurses_bg);
 	return entry->pair_id;
 }
 
