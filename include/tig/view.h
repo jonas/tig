@@ -325,6 +325,9 @@ find_line_by_type(struct view *view, struct line *line, enum line_type type, int
 #define find_prev_line_in_commit_by_type(view, line, type) \
 	find_line_by_type(view, line, type, -1, LINE_COMMIT)
 
+#define find_next_line_in_diff_by_type(view, line, type) \
+	find_line_by_type(view, line, type, 1, LINE_DIFF_HEADER)
+
 #define is_initial_view(view) (!(view)->prev && !(view)->argv)
 #define failed_to_load_initial_view(view) (!(view)->prev && !(view)->lines)
 
