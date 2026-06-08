@@ -699,7 +699,6 @@ init_display(void)
 
 	set_terminal_modes();
 	save_terminal_title();
-	set_terminal_title("tig");
 	init_colors();
 
 	getmaxyx(stdscr, y, x);
