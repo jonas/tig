@@ -118,6 +118,28 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 	return ok;
 }
 
+static void
+shell_escape(char *dst, size_t dstlen, const char *src)
+{
+	size_t pos = 0;
+
+	dst[pos++] = '\'';			/* opening quote */
+	for (; *src && pos < dstlen - 2; ++src) {
+		if (*src == '\'') {
+			if (pos + 4 >= dstlen)
+				break;
+			dst[pos++] = '\'';	/* close current quote */
+			dst[pos++] = '\\'; dst[pos++] = '\'';
+						/* insert escaped quote */
+			dst[pos++] = '\'';	/* reopen quote */
+		} else {
+			dst[pos++] = *src;
+		}
+	}
+	dst[pos++] = '\'';			/* closing quote */
+	dst[pos] = '\0';
+}
+
 #define EDITOR_LINENO_MSG \
 	"*** Your editor reported an error while opening the file.\n" \
 	"*** This is probably because it doesn't support the line\n" \
@@ -129,6 +151,7 @@ open_external_viewer(const char *argv[], const char *dir, bool silent, bool conf
 void
 open_editor(const char *file, unsigned int lineno)
 {
+	char escaped_file[SIZEOF_STR];
 	char editor_cmd[SIZEOF_STR];
 	const char *editor_argv[] = { "sh", "-c", editor_cmd, NULL };
 	const char *editor;
@@ -145,15 +168,17 @@ open_editor(const char *file, unsigned int lineno)
 	if (!editor)
 		editor = "vi";
 
+	shell_escape(escaped_file, sizeof(escaped_file), file);
+
 	if (lineno && opt_editor_line_number)
-		string_format(editor_cmd, "%s +%u '%s'",
+		string_format(editor_cmd, "%s +%u %s",
 			editor,
 			lineno,
-			file);
+			escaped_file);
 	else
-		string_format(editor_cmd, "%s '%s'",
+		string_format(editor_cmd, "%s %s",
 			editor,
-			file);
+			escaped_file);
 
 	if (!open_external_viewer(editor_argv, repo.cdup, false, false, false, false, true, EDITOR_LINENO_MSG))
 		opt_editor_line_number = false;
