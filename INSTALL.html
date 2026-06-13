@@ -735,7 +735,7 @@ asciidoc.install();
 <body class="article">
 <div id="header">
 <h1>Installation instructions</h1>
-<span id="revdate">2025-09-16</span>
+<span id="revdate">2026-06-13</span>
 </div>
 <div id="content">
 <div id="preamble">
@@ -743,11 +743,8 @@ asciidoc.install();
 <div class="paragraph"><p>Download a tarball from <a href="https://github.com/jonas/tig/releases">https://github.com/jonas/tig/releases</a> or clone the Tig
 repository <a href="https://github.com/jonas/tig">https://github.com/jonas/tig.git</a>.</p></div>
 <div class="paragraph"><p>The latest version is:
-<a href="https://github.com/jonas/tig/releases/download/tig-2.6.0/tig-2.6.0.tar.gz">tig-2.6.0</a>
-<a href="https://github.com/jonas/tig/releases/download/tig-2.6.0/tig-2.6.0.tar.gz.sha256">(sha256)</a></p></div>
-<div class="paragraph"><p><strong>Note:</strong> Do not use the tar.gz file for version 2.0 because it will fail
-to compile due to issue <a href="https://github.com/jonas/tig/pull/283">#283</a> and
-<a href="https://github.com/jonas/tig/issues/337">#337</a></p></div>
+<a href="https://github.com/jonas/tig/releases/download/tig-2.6.1/tig-2.6.1.tar.gz">tig-2.6.1</a>
+<a href="https://github.com/jonas/tig/releases/download/tig-2.6.1/tig-2.6.1.tar.gz.sha256">(sha256)</a></p></div>
 <div class="paragraph"><p>The quick and simple way to install Tig is:</p></div>
 <div class="literalblock">
 <div class="content">
@@ -820,24 +817,6 @@ build without <code>configure</code>):</p></div>
 <div class="content">
 <pre><code>$ brew install tig</code></pre>
 </div></div>
-<div class="paragraph"><p>Note, for older installations of Tig, Homebrew does not automatically
-update the system-wide <code>tigrc</code> file when upgrading Tig and the
-<a href="https://github.com/Homebrew/homebrew-core/commit/5600463d68620d68c9745acc490af7f8a16a75cb">behavior</a>
-was changed in 2015 to install the system-wide <code>tigrc</code> in the
-<code>/usr/local/share/tig/examples</code> directory so Tig always uses the
-defaults compiled into the binary.</p></div>
-<div class="paragraph"><p>If you see warnings when starting Tig after upgrading, e.g.:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>tig warning: Errors while loading /usr/local/etc/tigrc</code></pre>
-</div></div>
-<div class="paragraph"><p>It means you either need to manually update <code>/usr/local/etc/tigrc</code> with
-changes from <code>/usr/local/share/tig/examples</code> rename the file if you
-never made any changes to it.</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>$ mv /usr/local/etc/tigrc{,.old}</code></pre>
-</div></div>
 </div>
 </div>
 <div class="sect1">
@@ -876,15 +855,16 @@ $ apk add tig (Alpine)</code></pre>
 <div class="sect1">
 <h2 id="_installation_on_windows">Installation on Windows</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Easiest way is to install <a href="https://gitforwindows.org/">Git-for-Windows</a>. As
-of version <code>2.14.2</code>, it comes bundled with <code>tig</code>.</p></div>
-<div class="paragraph"><p>Alternatively, you can also use it by installing <a href="https://www.cygwin.com/">cygwin</a>.
-You must then install the packages <code>git</code>, <code>gcc-core</code>, <code>make</code>, <code>libiconv-devel</code>
-and <code>libncurses-devel</code>. Extract the tarball and install by using <code>configure</code>
-as explained above.</p></div>
-<div class="paragraph"><p>If you want to install from the sources, then you will also need the <code>automake</code>
-package (which will also install <code>autoconf</code>). Then run <code>make configure</code> and install
-by using <code>configure</code> as explained above.</p></div>
+<div class="paragraph"><p>Easiest way is to install <a href="https://gitforwindows.org/">Git-for-Windows</a>,
+it comes bundled with <code>tig</code>.</p></div>
+<div class="paragraph"><p>Alternatively, you can also use it by installing <a href="https://www.cygwin.com/">Cygwin</a>.</p></div>
+<div class="paragraph"><p>If you want to install from the sources, you must then install the packages <code>git</code>,
+<code>gcc-core</code>, <code>make</code>, <code>sed</code>, <code>libiconv-devel</code> and <code>libncurses-devel</code>, and optionally
+<code>libreadline-devel</code> and <code>libpcre2-devel</code>. Use <code>cygport</code> or extract the tarball and
+install by using <code>configure</code> as explained above.</p></div>
+<div class="paragraph"><p>If you want to install from the Git repository, then you will also need the
+<code>automake</code> and <code>autoconf</code> packages. Then run <code>make configure</code> and install by
+using <code>configure</code> as explained above.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -1009,12 +989,12 @@ cellspacing="0" cellpadding="4">
                                  search and command prompts.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">PCRE</p></td>
+<td align="left" valign="top"><p class="table">PCRE / PCRE2</p></td>
 <td align="left" valign="top"><p class="table">Adds support for Perl Compatible Regular
                                  Expressions in searches.</p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">autoconf</p></td>
+<td align="left" valign="top"><p class="table">automake and autoconf</p></td>
 <td align="left" valign="top"><p class="table">Contains autoreconf for generating configure
                                  from configure.ac.</p></td>
 </tr>
@@ -1045,7 +1025,7 @@ cellspacing="0" cellpadding="4">
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2025-09-16
+ 2026-06-13
 </div>
 </div>
 </body>

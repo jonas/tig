@@ -735,9 +735,129 @@ asciidoc.install();
 <body class="article">
 <div id="header">
 <h1>Release notes</h1>
-<span id="revdate">2025-09-16</span>
+<span id="revdate">2026-06-13</span>
 </div>
 <div id="content">
+<div class="sect1">
+<h2 id="_tig_2_6_1">tig-2.6.1</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Security fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix editor command injection vulnerability (only affects
+   version 2.6.0). (#1432)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Bug fixes:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Fix notes handling in the main view. (#1394)
+</p>
+</li>
+<li>
+<p>
+Honor init_size in string_map_put_to().
+</p>
+</li>
+<li>
+<p>
+Reset view&#8594;parent both when switching and closing view.
+</p>
+</li>
+<li>
+<p>
+Fix grep with revision argument. (#1398)
+</p>
+</li>
+<li>
+<p>
+Minor tweaks to the blame view.
+</p>
+</li>
+<li>
+<p>
+Fix repo info in bare repository with no HEAD.
+</p>
+</li>
+<li>
+<p>
+Document <code>%(status)</code>. (#1406)
+</p>
+</li>
+<li>
+<p>
+Update Cygwin build.
+</p>
+</li>
+<li>
+<p>
+Fix "DU" conflicts showing as <em>Staged changes</em> in the main view. (#471)
+</p>
+</li>
+<li>
+<p>
+Ensure consistent blame view access from the blob view.
+</p>
+</li>
+<li>
+<p>
+Fix compiler warning with glibc-2.43.
+</p>
+</li>
+<li>
+<p>
+contrib: chocolate-theme: Fix cursor color in backgrounded view. (#1419)
+</p>
+</li>
+<li>
+<p>
+Fix date for <em>Not Committed Yet</em> changes. (#1423)
+</p>
+</li>
+<li>
+<p>
+Fix slow tig status when given a subdirectory path. (#1424)
+</p>
+</li>
+<li>
+<p>
+Handle pure file rename in the diff view. (#1426)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Improvements:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Handle the NO_COLOR environment variable. (#1402)
+</p>
+</li>
+<li>
+<p>
+Run tests against system&#8217;s tig when SYSTEM_TIG=1. (#1400)
+</p>
+</li>
+<li>
+<p>
+Support option append. (#1413)
+</p>
+</li>
+<li>
+<p>
+Add an option to make the tree view recursive.
+</p>
+</li>
+<li>
+<p>
+Enable direct blob edits in clean HEAD state. (#1415, #1416)
+</p>
+</li>
+</ul></div>
+</div>
+</div>
 <div class="sect1">
 <h2 id="_tig_2_6_0">tig-2.6.0</h2>
 <div class="sectionbody">
@@ -847,8 +967,8 @@ Update utf8proc to v2.11.0, supporting Unicode 17.
 </p>
 </li>
 </ul></div>
-<div class="paragraph"><p>Note: Users should update the settings for the blame, main, reflog, and
-refs views in their ~/.tigrc file to include the committer column.</p></div>
+<div class="paragraph"><p>Note: Users should update the settings for the blame, main, reflog, refs
+and tree views in their ~/.tigrc file to include the committer column.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -5394,7 +5514,7 @@ Tree view: use a stack for remembering the lines for parent tree.
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2025-09-16
+ 2026-06-13
 </div>
 </div>
 </body>

@@ -853,6 +853,7 @@ is:</p></div>
 <pre class="content"><strong>set</strong> variables <strong>=</strong> value</pre>
 <div class="attribution">
 </div></div>
+<div class="paragraph"><p>Use <strong>+=</strong> to append value to a string variable.</p></div>
 <div class="paragraph"><p>Examples:</p></div>
 <div class="listingblock">
 <div class="content">
@@ -860,6 +861,7 @@ is:</p></div>
 set git-colors = no             # Do not read Git's color settings.
 set horizontal-scroll = 33%     # Scroll 33% of the view width
 set blame-options = -C -C -C    # Blame lines from other files
+set log-options += --minimal    # Use minimal diff algorithm
 
 # Wrap branch names with () and tags with &lt;&gt;
 set reference-format = (branch) &lt;tag&gt;
@@ -1348,6 +1350,14 @@ other                : Any other reference.
 <p>
         Whether to scroll automatically the pager view while loading. Move the
         cursor out of the last line to stop scrolling and back in to resume.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>recurse-tree</em> (bool)
+</dt>
+<dd>
+<p>
+        Whether to show all files recursively in the tree view.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -2058,6 +2068,10 @@ cellspacing="0" cellpadding="4">
                          was applied. Defaults to 0.</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table"><code>%(status)</code></p></td>
+<td align="left" valign="top"><p class="table">The staging status of the currently selected line.</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table"><code>%(ref)</code></p></td>
 <td align="left" valign="top"><p class="table">The reference given to blame or HEAD if undefined.</p></td>
 </tr>
@@ -2566,9 +2580,10 @@ cellspacing="0" cellpadding="4">
 <h2 id="_color_command">Color command</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Color commands control highlighting and the user interface styles. If your
-terminal supports color, these commands can be used to assign foreground and
-background combinations to certain areas. Optionally, an attribute can be
-given as the last parameter. The syntax is:</p></div>
+terminal supports color and the NO_COLOR environment variable is unset
+or empty, these commands can be used to assign foreground and background
+combinations to certain areas. Optionally, an attribute can be given as
+the last parameter. The syntax is:</p></div>
 <div class="verseblock">
 <pre class="content"><strong>color</strong> <em>area</em> <em>fgcolor</em> <em>bgcolor</em> <em>[attributes]</em></pre>
 <div class="attribution">
@@ -2972,7 +2987,7 @@ source ~/.tig/keybindings.tigrc</code></pre>
 <div class="sect1">
 <h2 id="_copyright">COPYRIGHT</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Copyright (c) 2006-2025 Jonas Fonseca &lt;<a href="mailto:jonas.fonseca@gmail.com">jonas.fonseca@gmail.com</a>&gt;</p></div>
+<div class="paragraph"><p>Copyright (c) 2006-2026 Jonas Fonseca &lt;<a href="mailto:jonas.fonseca@gmail.com">jonas.fonseca@gmail.com</a>&gt;</p></div>
 <div class="paragraph"><p>This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -2992,7 +3007,7 @@ git(7), git-config(1)</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2025-09-16
+ 2026-06-13
 </div>
 </div>
 </body>
