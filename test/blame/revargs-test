@@ -49,7 +49,7 @@ assert_equals 'limit.screen' <<EOF
 74537d9 Sébastien Doeraene 2013-10-29 18:46 +0100  26|
 74537d9 Sébastien Doeraene 2013-10-29 18:46 +0100  27|   lazy val parent: Projec
 74537d9 Sébastien Doeraene 2013-10-29 18:46 +0100  28|       id = "parent",
-[blame] 74537d9b257954056d3caa19eb3837500aded883 changed project/Build.scala 43%
+[blame] 74537d9b257954056d3caa19eb3837500aded883:project/Build.scala - line  43%
 EOF
 
 # confirm that we kept our lower bound
@@ -82,5 +82,5 @@ assert_equals 'parent-of-4779f9b.screen' <<EOF
 74537d9 Sébastien Doeraene 2013-10-29 18:46 +0100  26|
 74537d9 Sébastien Doeraene 2013-10-29 18:46 +0100  27|   lazy val benchmarkSetti
 74537d9 Sébastien Doeraene 2013-10-29 18:46 +0100  28|       unmanagedSources in
-[blame] 74537d9b257954056d3caa19eb3837500aded883 changed project/Build.scala 40%
+[blame] 74537d9b257954056d3caa19eb3837500aded883:project/Build.scala - line  40%
 EOF

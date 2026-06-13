@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -220,6 +220,7 @@ init_line_info_color_pair(struct line_info *info, enum line_type type,
 void
 init_colors(void)
 {
+	char *no_color = getenv("NO_COLOR");
 	struct line_rule query = { "default", STRING_SIZE("default") };
 	struct line_rule *rule = find_line_rule(&query);
 	int default_bg = rule ? rule->info.bg : COLOR_BLACK;
@@ -230,7 +231,7 @@ init_colors(void)
 	 * TERM=dumb) init_colors() must ensure that the built-in rules
 	 * have been initialized. This is done by the above call to
 	 * find_line_rule(). */
-	if (!has_colors())
+	if (!has_colors() || (no_color != NULL && no_color[0] != '\0'))
 		return;
 
 	start_color();

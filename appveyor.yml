@@ -5,7 +5,7 @@ environment:
 
 install:
  - appveyor DownloadFile https://cygwin.com/setup-%ARCH%.exe -FileName C:\%TARGET%\setup-%ARCH%.exe
- - cmd: C:\%TARGET%\setup-%ARCH%.exe -qgnNdO -l C:\%TARGET%\var\cache\setup -R C:\%TARGET% -s https://cygwin.mirror.constant.com -P git -P gcc-code -P make -P automake -P libiconv-devel -P libncurses-devel
+ - cmd: C:\%TARGET%\setup-%ARCH%.exe -qgnNdO -l C:\%TARGET%\var\cache\setup -R C:\%TARGET% -s https://cygwin.mirror.constant.com -P git -P gcc-core -P make -P sed -P automake -P autoconf -P libncurses-devel -P libreadline-devel -P libpcre2-devel
  - cmd: SET PATH=C:\%TARGET%\bin;%PATH%
  - git config --global --add safe.directory /cygdrive/c/projects/tig
 

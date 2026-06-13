@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -116,7 +116,19 @@ time_now(struct timeval *timeval, struct timezone *tz)
 		check_env = false;
 	}
 
-	return gettimeofday(timeval, tz);
+	if (gettimeofday(timeval, NULL) == -1)
+		return -1;
+
+	if (tz) {
+		struct tm tm;
+
+		memset(tz, 0, sizeof(*tz));
+		gmtime_r(&timeval->tv_sec, &tm);
+		tm.tm_isdst = -1;
+		tz->tz_minuteswest = (mktime(&tm) - timeval->tv_sec) / 60;
+	}
+
+	return 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -194,7 +194,7 @@ tree_read_date(struct view *view, struct buffer *buf, struct tree_state *state)
 		if (*view->env->directory && !strncmp(text, view->env->directory, strlen(view->env->directory)))
 			text += strlen(view->env->directory);
 		pos = strchr(text, '/');
-		if (pos)
+		if (pos && !opt_recurse_tree)
 			*pos = 0;
 
 		for (i = 1; i < view->lines; i++) {
@@ -464,8 +464,8 @@ tree_select(struct view *view, struct line *line)
 static enum status_code
 tree_open(struct view *view, enum open_flags flags)
 {
-	static const char *tree_argv[] = {
-		"git", "ls-tree", "-l", "%(commit)", "--", "%(directory)", NULL
+	const char *tree_argv[] = {
+		"git", "ls-tree", recurse_tree_arg(), "-l", "%(commit)", "--", "%(directory)", NULL
 	};
 
 	if (string_rev_is_null(view->env->commit))
@@ -497,7 +497,7 @@ tree_open(struct view *view, enum open_flags flags)
 static struct view_ops tree_ops = {
 	"file",
 	argv_env.commit,
-	VIEW_SEND_CHILD_ENTER | VIEW_SORTABLE,
+	VIEW_SEND_CHILD_ENTER | VIEW_SORTABLE | VIEW_TREE_LIKE | VIEW_REFRESH,
 	sizeof(struct tree_state),
 	tree_open,
 	tree_read,

@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -445,6 +445,14 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 	}
 
 	line = buf->data;
+
+	/* Skip remaining lines of notes until <ETX>. */
+	if (state->has_notes) {
+		if (!strcmp(line, "\x03"))
+			state->has_notes = false;
+		return true;
+	}
+
 	type = get_line_type(line);
 	if (type == LINE_COMMIT) {
 		bool is_boundary;
@@ -482,7 +490,8 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 			if (title) {
 				char *notes = io_memchr(buf, title, 0);
 
-				main_add_commit(view, notes && *notes ? LINE_MAIN_ANNOTATED : LINE_MAIN_COMMIT,
+				state->has_notes = (notes && *notes != '\x03');
+				main_add_commit(view, state->has_notes ? LINE_MAIN_ANNOTATED : LINE_MAIN_COMMIT,
 						commit, title, false);
 			}
 		}
@@ -657,6 +666,7 @@ main_select(struct view *view, struct line *line)
 			ref_update_env(view->env, ref, true);
 		else
 			view->env->tag[0] = view->env->remote[0] = view->env->branch[0] = view->env->refname[0] = 0;
+		view->env->status[0] = 0;
 	}
 	string_copy_rev(view->env->commit, commit->id);
 	view->env->blob[0] = 0;

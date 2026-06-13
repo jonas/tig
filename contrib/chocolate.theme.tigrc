@@ -5,7 +5,9 @@ color graph-commit		red	default
 color id			167	default
 color "author "			95	default
 color "Commit: "		90	default
+
 color cursor			white	101	bold
+color cursor-blur		white	101
 
 color palette-0			93	default
 color palette-1			95	default

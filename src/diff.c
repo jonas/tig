@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -188,7 +188,7 @@ diff_common_add_diff_stat(struct view *view, const char *text, size_t offset)
 	const char *start = text + offset;
 	const char *data = start + strspn(start, " ");
 	size_t len = strlen(data);
-	char *pipe = strchr(data, '|');
+	const char *pipe = strchr(data, '|');
 
 	/* Ensure that '|' is present and the file name part contains
 	 * non-space characters. */
@@ -728,16 +728,17 @@ const char *
 diff_get_pathname(struct view *view, struct line *line, bool old)
 {
 	struct line *header;
-	const char *dst;
-	const char *prefixes[] = { "diff --cc ", "diff --combined " };
-	const char *name;
-	int i;
+	struct line *file;
 
 	header = find_prev_line_in_commit_by_type(view, line, LINE_DIFF_HEADER);
 	if (!header)
 		return NULL;
 
 	if (!old) {
+		const char *dst;
+		const char *prefixes[] = { "diff --cc ", "diff --combined " };
+		int i;
+
 		for (i = 0; i < ARRAY_SIZE(prefixes); i++) {
 			dst = strstr(box_text(header), prefixes[i]);
 			if (dst)
@@ -745,21 +746,33 @@ diff_get_pathname(struct view *view, struct line *line, bool old)
 		}
 	}
 
-	header = find_next_line_by_type(view, header, old ? LINE_DIFF_DEL_FILE : LINE_DIFF_ADD_FILE);
-	if (!header)
-		return NULL;
+	file = find_next_line_in_diff_by_type(view, header + 1, old ? LINE_DIFF_DEL_FILE : LINE_DIFF_ADD_FILE);
+	if (file) {
+		const char *name;
 
-	name = box_text(header);
-	if (old ? !prefixcmp(name, "--- ") : !prefixcmp(name, "+++ "))
-		name += STRING_SIZE("+++ ");
+		name = box_text(file);
+		if (old ? !prefixcmp(name, "--- ") : !prefixcmp(name, "+++ "))
+			name += STRING_SIZE("+++ ");
 
-	if (opt_diff_noprefix)
+		if (opt_diff_noprefix)
+			return name;
+
+		/* Handle mnemonic prefixes, such as "b/" and "w/". */
+		if (!prefixcmp(name, "a/") || !prefixcmp(name, "b/") || !prefixcmp(name, "i/") || !prefixcmp(name, "w/"))
+			name += STRING_SIZE("a/");
 		return name;
+	}
 
-	/* Handle mnemonic prefixes, such as "b/" and "w/". */
-	if (!prefixcmp(name, "a/") || !prefixcmp(name, "b/") || !prefixcmp(name, "i/") || !prefixcmp(name, "w/"))
-		name += STRING_SIZE("a/");
-	return name;
+	file = find_next_line_in_diff_by_type(view, header + 1, old ? LINE_DIFF_RENAME_FROM : LINE_DIFF_RENAME_TO);
+	if (file) {
+		const char *name;
+
+		name = box_text(file);
+		name += old ? STRING_SIZE("rename from ") : STRING_SIZE("rename to ");
+		return name;
+	}
+
+	return NULL;
 }
 
 enum request

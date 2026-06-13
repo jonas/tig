@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -38,10 +38,10 @@
 /* Don't show staged unmerged entries. */
 #define GIT_DIFF_STAGED_FILES(output_arg) \
 	"git", "diff-index", (output_arg), "%(cmdlineargs)", "--diff-filter=ACDMRTXB", \
-		"-C", "--cached", "HEAD", "--", NULL
+		"-C", "--cached", "HEAD", "--", "%(fileargs)", NULL
 
 #define GIT_DIFF_UNSTAGED_FILES(output_arg) \
-	"git", "diff-files", (output_arg), "%(cmdlineargs)", NULL
+	"git", "diff-files", (output_arg), "%(cmdlineargs)", "--", "%(fileargs)", NULL
 
 #define GIT_DIFF_BLAME(encoding_arg, context_arg, prefix_arg, space_arg, word_diff_arg, new_name) \
 	"git", "diff-files", (encoding_arg), "--textconv", "--patch-with-stat", "-C", \

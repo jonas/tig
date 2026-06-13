@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -463,6 +463,14 @@ blame_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_VIEW_MAIN:
 		string_copy_rev(view->env->goto_id, view->env->commit);
+		if (opt_file_args && opt_file_filter) {
+			opt_file_filter = false;
+			update_status(":set file-filter = no");
+		}
+		if (opt_rev_args && opt_rev_filter) {
+			opt_rev_filter = false;
+			update_status(":set rev-filter = no");
+		}
 		open_main_view(view, OPEN_RELOAD);
 		break;
 
@@ -488,11 +496,11 @@ blame_select(struct view *view, struct line *line)
 		return;
 
 	if (string_rev_is_null(commit->id)) {
-		string_ncopy(view->env->commit, "HEAD", 4);
-		string_format(view->ref, "%s", commit->filename);
+		view->env->commit[0] = 0;
+		string_ncopy(view->ref, commit->filename, strlen(commit->filename));
 	} else {
 		string_copy_rev(view->env->commit, commit->id);
-		string_format(view->ref, "%s changed %s", commit->id, commit->filename);
+		string_format(view->ref, "%s:%s", commit->id, commit->filename);
 	}
 
 	if (strcmp(commit->filename, view->env->file))
@@ -508,7 +516,7 @@ blame_select(struct view *view, struct line *line)
 static struct view_ops blame_ops = {
 	"line",
 	argv_env.commit,
-	VIEW_SEND_CHILD_ENTER | VIEW_BLAME_LIKE,
+	VIEW_SEND_CHILD_ENTER | VIEW_BLAME_LIKE | VIEW_REFRESH,
 	sizeof(struct blame_state),
 	blame_open,
 	blame_read,

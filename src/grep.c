@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -78,11 +78,18 @@ grep_select(struct view *view, struct line *line)
 {
 	struct grep_line *grep = grep_get_line(line);
 	const char *text = grep->text;
+	const char *sep;
 
 	if (!*grep->file)
 		return;
-	view->env->ref[0] = 0;
-	string_ncopy(view->env->file, grep->file, strlen(grep->file));
+	sep = strchr(grep->file, ':');
+	if (sep) {
+		string_ncopy(view->env->ref, grep->file, sep - grep->file);
+		string_ncopy(view->env->file, sep + 1, strlen(sep + 1));
+	} else {
+		view->env->ref[0] = 0;
+		string_ncopy(view->env->file, grep->file, strlen(grep->file));
+	}
 	string_ncopy(view->ref, grep->file, strlen(grep->file));
 	view->env->lineno = grep->lineno + 1;
 	string_ncopy(view->env->text, text, strlen(text));
@@ -178,24 +185,32 @@ grep_request(struct view *view, enum request request, struct line *line)
 			}
 
 		} else {
-			const char *file_argv[] = { repo.exec_dir, grep->file, NULL };
+			enum open_flags flags = view_is_displayed(view) ? OPEN_SPLIT : OPEN_DEFAULT;
 
 			clear_position(&file_view->pos);
 			view->env->goto_lineno = grep->lineno;
 			view->env->blob[0] = 0;
-			open_argv(view, file_view, file_argv, repo.exec_dir, OPEN_SPLIT | OPEN_RELOAD);
+
+			if (view->env->ref[0]) {
+				string_copy_rev(view->env->commit, view->env->ref);
+				open_blob_view(view, flags);
+
+			} else {
+				const char *file_argv[] = { repo.exec_dir, grep->file, NULL };
+
+				open_argv(view, file_view, file_argv, repo.exec_dir, flags | OPEN_RELOAD);
+			}
 		}
 		state->last_file = grep->file;
 		return REQ_NONE;
 
 	case REQ_EDIT:
-		if (!*grep->file)
+		if (!*view->env->file)
 			return request;
-		open_editor(grep->file, grep->lineno + 1);
+		open_editor(view->env->file, view->env->lineno);
 		return REQ_NONE;
 
 	case REQ_VIEW_BLAME:
-		view->env->ref[0] = 0;
 		view->env->goto_lineno = grep->lineno;
 		return request;
 

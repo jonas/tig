@@ -1,0 +1,33 @@
+#!/bin/sh
+
+. libtest.sh
+
+steps "
+	:save-options saved-tigrc
+"
+
+test_tig status
+cp stderr stderr.1
+
+tigrc <<EOF
+set log-options += --minimal
+set mailmap += no
+EOF
+
+steps "
+	:save-options append-tigrc
+"
+
+test_tig status
+cp stderr stderr.2
+
+cat stderr.* > stderr
+
+assert_equals stderr <<EOF
+tig warning: ~/.tigrc:2: Option mailmap does not support +=
+tig warning: Errors while loading HOME/.tigrc.
+EOF
+
+assert_equals "append-tigrc" <<EOF
+$(sed '/^set log-options *=/s/$/ --minimal/' saved-tigrc)
+EOF

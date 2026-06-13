@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -54,7 +54,7 @@ void **
 string_map_put_to(struct string_map *map, const char *key)
 {
 	if (!map->htab) {
-		map->htab = htab_create_alloc(16, map->hash_fn, string_map_equal, NULL, calloc, free);
+		map->htab = htab_create_alloc(map->init_size, map->hash_fn, string_map_equal, NULL, calloc, free);
 		if (!map->htab)
 			return NULL;
 	}

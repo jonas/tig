@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -43,8 +43,8 @@ typedef struct view_column *view_settings;
 	_(word_diff,			bool,			VIEW_DIFF_LIKE) \
 	_(diff_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(editor_line_number,		bool,			VIEW_NO_FLAGS) \
-	_(file_args,			const char **,		VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
-	_(file_filter,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
+	_(file_args,			const char **,		VIEW_FILE_FILTER) \
+	_(file_filter,			bool,			VIEW_FILE_FILTER) \
 	_(focus_child,			bool,			VIEW_NO_FLAGS) \
 	_(git_colors,			const char **,		VIEW_NO_FLAGS) \
 	_(grep_view,			view_settings,		VIEW_NO_FLAGS) \
@@ -66,12 +66,13 @@ typedef struct view_column *view_settings;
 	_(pager_autoscroll,		bool,			VIEW_NO_FLAGS) \
 	_(pager_view,			view_settings,		VIEW_NO_FLAGS) \
 	_(pgrp,				bool,			VIEW_NO_FLAGS) \
+	_(recurse_tree,			bool,			VIEW_TREE_LIKE) \
 	_(reference_format,		struct ref_format **,	VIEW_LOG_LIKE) \
 	_(refresh_interval,		int,			VIEW_NO_FLAGS) \
 	_(refresh_mode,			enum refresh_mode,	VIEW_NO_FLAGS) \
 	_(refs_view,			view_settings,		VIEW_NO_FLAGS) \
-	_(rev_args,			const char **,		VIEW_LOG_LIKE) \
-	_(rev_filter,			bool,			VIEW_LOG_LIKE) \
+	_(rev_args,			const char **,		VIEW_REV_FILTER) \
+	_(rev_filter,			bool,			VIEW_REV_FILTER) \
 	_(send_child_enter,		bool,			VIEW_NO_FLAGS) \
 	_(show_changes,			bool,			VIEW_LOG_LIKE) \
 	_(show_notes,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
@@ -117,7 +118,7 @@ OPTION_INFO(DEFINE_OPTION_EXTERNS)
 	_(width,			int,			VIEW_NO_FLAGS) \
 
 #define FILE_NAME_COLUMN_OPTIONS(_) \
-	_(display,			enum filename,		VIEW_GREP_LIKE) \
+	_(display,			enum filename,		VIEW_GREP_LIKE | VIEW_BLAME_LIKE) \
 	_(width,			int,			VIEW_NO_FLAGS) \
 	_(maxwidth,			int,			VIEW_NO_FLAGS) \
 
@@ -205,6 +206,7 @@ const char *diff_context_arg();
 const char *diff_prefix_arg();
 const char *word_diff_arg();
 const char *show_notes_arg();
+const char *recurse_tree_arg();
 
 /*
  * Option loading and parsing.

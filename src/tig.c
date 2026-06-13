@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -336,6 +336,7 @@ view_driver(struct view *view, enum request request)
 			end_update(view, true);
 			maximize_view(view->prev, true);
 			view->prev = view;
+			view->parent = NULL;
 			break;
 		}
 		if (request == REQ_VIEW_CLOSE_NO_QUIT) {

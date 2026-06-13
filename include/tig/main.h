@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -42,6 +42,7 @@ struct main_state {
 	bool add_changes_staged;
 	bool add_changes_unstaged;
 	bool add_changes_untracked;
+	bool has_notes;
 };
 
 bool main_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data);

@@ -91,6 +91,8 @@ is:
 [verse]
 *set* variables *=* value
 
+Use *+=* to append value to a string variable.
+
 Examples:
 
 // TEST: tigrc
@@ -99,6 +101,7 @@ set commit-order = topo		# Order commits topologically
 set git-colors = no		# Do not read Git's color settings.
 set horizontal-scroll = 33%	# Scroll 33% of the view width
 set blame-options = -C -C -C	# Blame lines from other files
+set log-options += --minimal  	# Use minimal diff algorithm
 
 # Wrap branch names with () and tags with <>
 set reference-format = (branch) <tag>
@@ -385,6 +388,10 @@ The following variables can be set:
 
 	Whether to scroll automatically the pager view while loading. Move the
 	cursor out of the last line to stop scrolling and back in to resume.
+
+'recurse-tree' (bool)::
+
+	Whether to show all files recursively in the tree view.
 
 'pgrp' (bool)::
 
@@ -757,6 +764,7 @@ following variable names, which are substituted before commands are run:
 |%(lineno)		|The currently selected line number. Defaults to 0.
 |%(lineno_old)		|The currently selected line number, before the diff
 			 was applied. Defaults to 0.
+|%(status)		|The staging status of the currently selected line.
 |%(ref)			|The reference given to blame or HEAD if undefined.
 |%(revargs)		|The revision arguments passed on the command line.
 |%(fileargs)		|The file arguments passed on the command line.
@@ -984,9 +992,10 @@ Color command
 -------------
 
 Color commands control highlighting and the user interface styles. If your
-terminal supports color, these commands can be used to assign foreground and
-background combinations to certain areas. Optionally, an attribute can be
-given as the last parameter. The syntax is:
+terminal supports color and the NO_COLOR environment variable is unset
+or empty, these commands can be used to assign foreground and background
+combinations to certain areas. Optionally, an attribute can be given as
+the last parameter. The syntax is:
 
 [verse]
 *color* 'area' 'fgcolor' 'bgcolor' '[attributes]'
@@ -1203,7 +1212,7 @@ source ~/.tig/keybindings.tigrc
 
 COPYRIGHT
 ---------
-Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

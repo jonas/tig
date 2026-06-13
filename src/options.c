@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -159,11 +159,21 @@ use_mailmap_arg()
 }
 
 const char *
+recurse_tree_arg()
+{
+	return opt_recurse_tree ? "-r" : "";
+}
+
+const char *
 log_custom_pretty_arg(void)
 {
-	return opt_mailmap
-		? "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%cN <%cE> %cd%x00%s%x00%N"
-		: "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%cn <%ce> %cd%x00%s%x00%N";
+	return opt_show_notes
+		? opt_mailmap
+			? "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%cN <%cE> %cd%x00%s%x00%N%x03"
+			: "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%cn <%ce> %cd%x00%s%x00%N%x03"
+		: opt_mailmap
+			? "--pretty=format:commit %m %H %P%x00%aN <%aE> %ad%x00%cN <%cE> %cd%x00%s"
+			: "--pretty=format:commit %m %H %P%x00%an <%ae> %ad%x00%cn <%ce> %cd%x00%s";
 }
 
 #define ENUM_ARG(enum_name, arg_string) ENUM_MAP_ENTRY(arg_string, enum_name)
@@ -630,8 +640,14 @@ parse_encoding(struct encoding **encoding_ref, const char *arg, bool priority)
 }
 
 static enum status_code
-parse_args(const char ***args, const char *argv[])
+parse_args(const char ***args, const char *argv[], bool append)
 {
+	if (append) {
+		if (!argv_append_array(args, argv))
+			return ERROR_OUT_OF_MEMORY;
+		return SUCCESS;
+	}
+
 	if (!argv_copy(args, argv))
 		return ERROR_OUT_OF_MEMORY;
 	return SUCCESS;
@@ -801,7 +817,7 @@ parse_view_settings(struct view_column **view_column, const char *name_, const c
 }
 
 static enum status_code
-option_update(struct option_info *option, int argc, const char *argv[])
+option_update(struct option_info *option, int argc, const char *argv[], bool append)
 {
 	enum status_code code;
 
@@ -809,7 +825,10 @@ option_update(struct option_info *option, int argc, const char *argv[])
 		return SUCCESS;
 
 	if (!strcmp(option->type, "const char **"))
-		return parse_args(option->value, argv + 2);
+		return parse_args(option->value, argv + 2, append);
+
+	if (append)
+		return error("Option %s does not support +=", argv[0]);
 
 	if (argc < 3)
 		return error("Invalid set command: set option = value");
@@ -832,16 +851,22 @@ static enum status_code
 option_set_command(int argc, const char *argv[])
 {
 	struct option_info *option;
+	bool append = false;
 
 	if (argc < 2)
 		return error("Invalid set command: set option = value");
 
-	if (strcmp(argv[1], "="))
+	if (!strcmp(argv[1], "=")) {
+		append = false;
+	} else if (!strcmp(argv[1], "+=")) {
+		append = true;
+	} else {
 		return error("No value assigned to %s", argv[0]);
+	}
 
 	option = find_option_info(option_info, ARRAY_SIZE(option_info), "", argv[0]);
 	if (option)
-		return option_update(option, argc, argv);
+		return option_update(option, argc, argv, append);
 
 	{
 		const char *obsolete[][2] = {
@@ -852,7 +877,7 @@ option_set_command(int argc, const char *argv[])
 		if (index != -1) {
 			option = find_option_info(option_info, ARRAY_SIZE(option_info), "", obsolete[index][1]);
 			if (option) {
-				enum status_code code = option_update(option, argc, argv);
+				enum status_code code = option_update(option, argc, argv, append);
 
 				if (code != SUCCESS)
 					return code;

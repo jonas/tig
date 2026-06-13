@@ -46,5 +46,5 @@ ee91287 deltablue/src/main/scala/org/scalajs/benchmark/deltablue/DeltaBlue.scala
 b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-20 00:23 -0700  53|
 b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-20 00:23 -0700  54|   override def prefix = "DeltaBlue"
 b103989 deltablue/DeltaBlue.scala                                                Jonas Fonseca 2013-10-20 00:23 -0700  55|
-[blame] b103989d59edab3adc312ff5408fa3d344ea0201 changed deltablue/DeltaBlue.scala - line 42 of 711                                                                                                   7%
+[blame] b103989d59edab3adc312ff5408fa3d344ea0201:deltablue/DeltaBlue.scala - line 42 of 711                                                                                                           7%
 EOF

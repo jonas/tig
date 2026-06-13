@@ -1,0 +1,59 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=16
+
+tigrc <<EOF
+set vertical-split = no
+set line-graphics = ascii
+EOF
+
+steps '
+	:save-display grep-sudoku.screen
+
+	:2
+	:enter
+	:save-display grep-split.screen
+'
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+
+test_tig grep sudoku d92a308941e6ccb79cb02f96417cab7b67b998c2
+
+assert_equals 'grep-sudoku.screen' <<EOF
+d92a308941e6ccb79cb02f96417cab7b67b998c2:project/Build.scala
+ 43|              clean in sudoku,
+ 51|       sudoku,
+ 58|   lazy val sudoku = project("Sudoku", benchmarkSettings).dependsOn(common)
+d92a308941e6ccb79cb02f96417cab7b67b998c2:sudoku/Sudoku.scala
+ 11| package benchmarks.sudoku
+d92a308941e6ccb79cb02f96417cab7b67b998c2:sudoku/exports.js
+ 22|     var benchmark = new ScalaJS.classes.benchmarks_sudoku_Sudoku();
+
+
+
+
+
+
+[grep] d92a308941e6ccb79cb02f96417cab7b67b998c2:project/Build.scala - line  100%
+EOF
+
+assert_equals 'grep-split.screen' <<EOF
+d92a308941e6ccb79cb02f96417cab7b67b998c2:project/Build.scala
+ 43|              clean in sudoku,
+ 51|       sudoku,
+ 58|   lazy val sudoku = project("Sudoku", benchmarkSettings).dependsOn(common)
+[grep] d92a308941e6ccb79cb02f96417cab7b67b998c2:project/Build.scala - line 2 50%
+          clean := clean.dependsOn(
+             clean in common,
+             clean in deltablue,
+             clean in richards,
+             clean in sudoku,
+             clean in tracer
+          ).value
+      )
+  ).aggregate(
+[blob] project/Build.scala - line 43 of 69                                   68%
+EOF

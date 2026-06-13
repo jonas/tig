@@ -57,7 +57,7 @@ assert_equals 'blame-default.screen' <<EOF
 90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  26|
 90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  27|   lazy val parent: Projec
 90286e0 Jonas Fonseca      2013-10-14 13:15 -0400  28|       id = "parent",
-[blame] 90286e0752016a6bca30dfa7ca236d1f99345eb8 changed project/Build.scala 43%
+[blame] 90286e0752016a6bca30dfa7ca236d1f99345eb8:project/Build.scala - line  43%
 EOF
 
 assert_equals 'blame-with-diff.screen' <<EOF
@@ -70,7 +70,7 @@ assert_equals 'blame-with-diff.screen' <<EOF
 90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   7|
 4779f9b Jonas Fonseca      2013-11-26 20:13 -0500   8| object ScalaJSBenchmarks
 90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   9|
-[blame] 74537d9b257954056d3caa19eb3837500aded883 changed project/Build.scala 14%
+[blame] 74537d9b257954056d3caa19eb3837500aded883:project/Build.scala - line  14%
 
 diff --git a/project/Build.scala b/project/Build.scala
 index 560bca1..1713681 100644
@@ -102,7 +102,7 @@ assert_equals 'blame-with-diff-no-file-filter.screen' <<EOF
 90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   7|
 4779f9b Jonas Fonseca      2013-11-26 20:13 -0500   8| object ScalaJSBenchmarks
 90286e0 Jonas Fonseca      2013-10-14 13:15 -0400   9|
-[blame] 74537d9b257954056d3caa19eb3837500aded883 changed project/Build.scala 14%
+[blame] 74537d9b257954056d3caa19eb3837500aded883:project/Build.scala - line  14%
 
 diff --git a/project/Build.scala b/project/Build.scala
 index 560bca1..1713681 100644
@@ -153,5 +153,5 @@ assert_equals 'blame-parent-of-74537d9.screen' <<EOF
 90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  26|
 90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  27|   lazy val benchmarkSettings =
 90286e0 Jonas Fonseca 2013-10-14 13:15 -0400  28|       unmanagedSources in (Com
-[blame] 90286e0752016a6bca30dfa7ca236d1f99345eb8 changed project/Build.scala 42%
+[blame] 90286e0752016a6bca30dfa7ca236d1f99345eb8:project/Build.scala - line  42%
 EOF

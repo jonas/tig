@@ -2,12 +2,12 @@
 
 # The last tagged version. Can be overridden either by the version from
 # git or from the value of the DIST_VERSION environment variable.
-VERSION	= 2.6.0
+VERSION	= 2.6.1
 
 all:
 
 # Include kernel specific configuration
-kernel_name := $(shell sh -c 'uname -s 2>/dev/null || echo unknown')
+kernel_name := $(shell sh -c 'uname -s 2>/dev/null || echo unknown' | sed 's/\(CYGWIN_NT\)-.*/\1/')
 -include contrib/config.make-$(kernel_name)
 
 # Include setting from the configure script
@@ -25,7 +25,7 @@ prefix ?= $(HOME)
 bindir ?= $(prefix)/bin
 datarootdir ?= $(prefix)/share
 sysconfdir ?= $(prefix)/etc
-docdir ?= $(datarootdir)/doc
+docdir ?= $(datarootdir)/doc/tig
 mandir ?= $(datarootdir)/man
 # DESTDIR=
 
@@ -51,7 +51,8 @@ TOOLS	= test/tools/test-graph tools/doc-gen
 TXTDOC	= doc/tig.1.adoc doc/tigrc.5.adoc doc/manual.adoc NEWS.adoc README.adoc INSTALL.adoc test/API.adoc
 MANDOC	= doc/tig.1 doc/tigrc.5 doc/tigmanual.7
 HTMLDOC = doc/tig.1.html doc/tigrc.5.html doc/manual.html README.html INSTALL.html NEWS.html
-ALLDOC	= $(MANDOC) $(HTMLDOC) doc/manual.html-chunked doc/manual.pdf
+ALLDOC	= $(MANDOC) $(HTMLDOC) doc/manual.html-chunked
+PDFDOC	= doc/manual.pdf
 
 # Never include the release number in the tarname for tagged
 # versions.
@@ -123,6 +124,7 @@ all-debug: CFLAGS += $(DFLAGS)
 doc: $(ALLDOC)
 doc-man: $(MANDOC)
 doc-html: $(HTMLDOC)
+doc-pdf: $(PDFDOC)
 
 ifeq ($(GENERATE_COMPILATION_DATABASE),yes)
 all: compile_commands.json
@@ -153,7 +155,7 @@ install-release-doc-man:
 
 install-doc-html: doc-html
 	$(Q)$(foreach doc, $(HTMLDOC), \
-		$(QUIET_INSTALL_EACH)tools/install.sh data $(doc) "$(DESTDIR)$(docdir)/tig";)
+		$(QUIET_INSTALL_EACH)tools/install.sh data $(doc) "$(DESTDIR)$(docdir)";)
 
 install-release-doc-html:
 	GIT_INDEX_FILE=.tmp-doc-index git read-tree origin/release
@@ -174,7 +176,7 @@ uninstall:
 	$(Q)$(foreach doc, $(filter %.7, $(MANDOC:doc/%=%)), \
 		$(QUIET_UNINSTALL_EACH)tools/uninstall.sh "$(DESTDIR)$(mandir)/man7/$(doc)";)
 	$(Q)$(foreach doc, $(HTMLDOC:doc/%=%), \
-		$(QUIET_UNINSTALL_EACH)tools/uninstall.sh "$(DESTDIR)$(docdir)/tig/$(doc)";)
+		$(QUIET_UNINSTALL_EACH)tools/uninstall.sh "$(DESTDIR)$(docdir)/$(doc)";)
 
 clean: clean-test clean-coverage
 	$(Q)$(RM) -r $(TARNAME) tig-*.tar.gz tig-*.tar.gz.sha256 .deps _book node_modules
@@ -188,7 +190,7 @@ distclean: clean
 	$(RM) config.h config.log config.make config.status config.h.in~
 
 veryclean: distclean
-	$(RM) tig.spec $(ALLDOC) aclocal.m4 configure config.h.in
+	$(RM) tig.spec tig.cygport $(ALLDOC) aclocal.m4 configure config.h.in
 
 spell-check:
 	for file in $(TXTDOC) src/tig.c; do \
@@ -217,9 +219,9 @@ update-docs: tools/doc-gen
 	$(SED) -n '/endif::DOC_GEN_ACTIONS/,$$p' < "$$doc" >> "$$doc.gen" ; \
 	mv "$$doc.gen" "$$doc"
 
-dist: configure config.h.in aclocal.m4 tig.spec
+dist: configure config.h.in aclocal.m4 tig.spec tig.cygport
 	$(Q)mkdir -p $(TARNAME) && \
-	cp Makefile tig.spec configure config.h.in aclocal.m4 $(TARNAME) && \
+	cp Makefile tig.spec tig.cygport configure config.h.in aclocal.m4 $(TARNAME) && \
 	$(SED) -i "s/VERSION\s\+=\s\+[0-9]\+\([.][0-9]\+\)\+/VERSION	= $(VERSION)/" $(TARNAME)/Makefile
 	git archive --format=tar --prefix=$(TARNAME)/ HEAD | \
 	$(TAR) --delete $(TARNAME)/Makefile > $(TARNAME).tar && \
@@ -274,8 +276,13 @@ else
 export MAKE_TEST_OPTS =
 endif
 
+ifeq ($(SYSTEM_TIG),1)
+$(TESTS): PATH := $(CURDIR)/test/tools:$(PATH)
+$(TESTS): test/tools/test-graph
+else
 $(TESTS): PATH := $(CURDIR)/test/tools:$(CURDIR)/src:$(PATH)
 $(TESTS): $(EXE) test/tools/test-graph
+endif
 	$(QUIET_TEST)$(TEST_SHELL) $@
 
 test-todo: MAKE_TEST_OPTS += todo
@@ -388,20 +395,19 @@ DEPS_CFLAGS ?= -MMD -MP -MF .deps/$*.d
 src/builtin-config.c: tigrc tools/make-builtin-config.sh
 	$(QUIET_GEN)tools/make-builtin-config.sh $< > $@
 
-tig.spec: contrib/tig.spec.in
+%: contrib/%.in
 	$(QUIET_GEN)$(SED) -e 's/@@VERSION@@/$(RPM_VERSION)/g' \
 	    -e 's/@@RELEASE@@/$(RPM_RELEASE)/g' < $< > $@
 
-doc/manual.html: doc/manual.toc
-doc/manual.html: ASCIIDOC_FLAGS += -ainclude-manual-toc
-%.toc: %.adoc
-	$(QUIET_GEN)$(SED) -n '/^\[\[/,/\(---\|~~~\)/p' < $< | while read line; do \
+doc/manual.html: doc/manual.adoc doc/asciidoc.conf
+	@$(SED) -n '/^\[\[/,/\(---\|~~~\)/p' < $< | while read line; do \
 		case "$$line" in \
 		"----"*)  echo ". <<$$ref>>"; ref= ;; \
 		"~~~~"*)  echo "- <<$$ref>>"; ref= ;; \
 		"[["*"]]") ref="$$line" ;; \
 		*)	   ref="$$ref, $$line" ;; \
-		esac; done | $(SED) 's/\[\[\(.*\)\]\]/\1/' > $@
+		esac; done | $(SED) 's/\[\[\(.*\)\]\]/\1/' > $(<:%.adoc=%.toc)
+	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -ainclude-manual-toc -n $<
 
 README.html: README.adoc doc/asciidoc.conf
 	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_FLAGS) -b xhtml11 -d article -a readme $<

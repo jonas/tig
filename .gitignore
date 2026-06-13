@@ -34,5 +34,6 @@ test/tmp
 tig-*.tar.gz
 tig-*.tar.gz.sha256
 tig.spec
+tig.cygport
 tools/doc-gen
 tig.dSYM

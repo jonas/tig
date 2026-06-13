@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -57,13 +57,15 @@ read_repo_info(char *name, size_t namelen, char *value, size_t valuelen, void *d
 		 * this special case by looking at the emitted value. If it looks
 		 * like a commit ID and there's no cdup path assume that no value
 		 * was emitted. */
-		if (!*repo.cdup && namelen == 40 && iscommit(name))
+		if (!*repo.cdup && ((namelen == 40 && iscommit(name)) ||
+				    !strcmp(name, REPO_INFO_RESOLVED_HEAD)))
 			return read_repo_info(name, namelen, value, valuelen, data);
 
 		string_ncopy(repo.prefix, name, namelen);
 
 	} else if (!strcmp(arg, REPO_INFO_RESOLVED_HEAD)) {
-		string_ncopy(repo.head_id, name, namelen);
+		if (strcmp(name, REPO_INFO_RESOLVED_HEAD))
+			string_ncopy(repo.head_id, name, namelen);
 
 	} else if (!strcmp(arg, REPO_INFO_SYMBOLIC_HEAD)) {
 		if (!prefixcmp(name, "refs/heads/")) {
@@ -165,7 +167,7 @@ index_diff(struct index_diff *diff, bool untracked, bool count_all)
 		if (buf.data[0] == '?')
 			diff->untracked++;
 		/* Ignore staged but unmerged entries. */
-		else if (buf.data[0] != ' ' && buf.data[0] != 'U')
+		else if (buf.data[0] != ' ' && buf.data[0] != 'U' && buf.data[1] != 'U')
 			diff->staged++;
 		if (buf.data[1] != ' ' && buf.data[1] != '?')
 			diff->unstaged++;

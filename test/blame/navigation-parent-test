@@ -54,5 +54,5 @@ assert_equals 'recursive-blame.screen' <<EOF
 4edd069 Jonas Fonseca 2013-10-17 20:34 -0400  47|       richards,
 90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  48|       tracer
 90286e0 Jonas Fonseca 2013-10-14 14:56 -0400  49|   )
-[blame] 90286e0752016a6bca30dfa7ca236d1f99345eb8 changed project/Build.scala - line 40 of 63                                                                                                         77%
+[blame] 90286e0752016a6bca30dfa7ca236d1f99345eb8:project/Build.scala - line 40 of 63                                                                                                                 77%
 EOF

@@ -42,10 +42,10 @@ EOF
 
 assert_equals 'blame1.screen' <<EOF
 original line
-[blame] 973a46fa50e2704ee2d550a931ad8edb1c50731c changed file - line 1 of 1 100%
+[blame] 973a46fa50e2704ee2d550a931ad8edb1c50731c:file - line 1 of 1         100%
 EOF
 
 assert_equals 'blame2.screen' <<EOF
 original line
-[blame] 973a46fa50e2704ee2d550a931ad8edb1c50731c changed file - line 1 of 1 100%
+[blame] 973a46fa50e2704ee2d550a931ad8edb1c50731c:file - line 1 of 1         100%
 EOF

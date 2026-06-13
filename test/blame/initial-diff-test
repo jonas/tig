@@ -63,5 +63,5 @@ assert_equals 'blame-deleted-line.screen' <<EOF
 0500  19x
 0500  20x   def add(benchmark: Benchmark) {
 0500  21x     benchmarks.push {
-[blame] 34d6868cfae60a7cc2494d282eaee27efa900059 changed common/Benchmark.sc 21%
+[blame] 34d6868cfae60a7cc2494d282eaee27efa900059:common/Benchmark.scala - li 21%
 EOF

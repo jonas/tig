@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -73,6 +73,7 @@ enum view_flag {
 	VIEW_SORTABLE		= 1 << 16,
 	VIEW_FLEX_WIDTH		= 1 << 17,
 	VIEW_RESET_DISPLAY	= 1 << 18,
+	VIEW_TREE_LIKE		= 1 << 19,
 };
 
 #define view_has_flags(view, flag)	((view)->ops->flags & (flag))
@@ -323,6 +324,9 @@ find_line_by_type(struct view *view, struct line *line, enum line_type type, int
 
 #define find_prev_line_in_commit_by_type(view, line, type) \
 	find_line_by_type(view, line, type, -1, LINE_COMMIT)
+
+#define find_next_line_in_diff_by_type(view, line, type) \
+	find_line_by_type(view, line, type, 1, LINE_DIFF_HEADER)
 
 #define is_initial_view(view) (!(view)->prev && !(view)->argv)
 #define failed_to_load_initial_view(view) (!(view)->prev && !(view)->lines)

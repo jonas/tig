@@ -1,4 +1,4 @@
-/* Copyright (c) 2006-2025 Jonas Fonseca <jonas.fonseca@gmail.com>
+/* Copyright (c) 2006-2026 Jonas Fonseca <jonas.fonseca@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -36,6 +36,8 @@ struct ref;
 	_(DIFF_NEWMODE,		"new mode "), \
 	_(DIFF_NEWFMODE,	"new file mode "), \
 	_(DIFF_DELFMODE,	"deleted file mode "), \
+	_(DIFF_RENAME_FROM,	"rename from "), \
+	_(DIFF_RENAME_TO,	"rename to "), \
 	_(DIFF_SIMILARITY,	"similarity "), \
 	_(DIFF_NO_NEWLINE,	"\\ No newline at end of file"), \
 	_(DIFF_ADD_HIGHLIGHT,	""), \
