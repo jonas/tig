@@ -79,6 +79,7 @@ blob_open(struct view *view, enum open_flags flags)
 		char buf[SIZEOF_STR] = "";
 
 		if (is_head_commit(view->env->commit) && view->env->file[0] &&
+		    (repo.is_inside_work_tree || *repo.worktree) &&
 		    !io_run_buf(status_argv, buf, sizeof(buf), NULL, false))
 			state->file = get_path(view->env->file);
 
