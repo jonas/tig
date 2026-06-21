@@ -28,6 +28,9 @@ struct view_ops;
 struct box_cell {
 	enum line_type type;
 	size_t length;
+	unsigned int direct : 1;	/* If set, use color_pair/attr directly */
+	int color_pair;			/* Dynamic ncurses color pair ID */
+	int attr;			/* A_BOLD | A_UNDERLINE | ... */
 };
 
 struct box {

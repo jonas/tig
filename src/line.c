@@ -15,6 +15,8 @@
 #include "tig/types.h"
 #include "tig/refdb.h"
 #include "tig/line.h"
+#include "tig/ansi.h"
+#include "tig/color_mode.h"
 #include "tig/util.h"
 
 static struct line_rule *line_rule;
@@ -214,7 +216,7 @@ init_line_info_color_pair(struct line_info *info, enum line_type type,
 
 	color_pair[color_pairs] = info;
 	info->color_pair = color_pairs++;
-	init_pair(COLOR_ID(info->color_pair), fg, bg);
+	init_extended_pair(COLOR_ID(info->color_pair), fg, bg);
 }
 
 void
@@ -249,6 +251,90 @@ init_colors(void)
 			init_line_info_color_pair(info, type, default_bg, default_fg);
 		}
 	}
+}
+
+/*
+ * Dynamic color pair allocation for syntax highlighting.
+ *
+ * Maps arbitrary (fg, bg) ncurses color indices to color pair IDs,
+ * allocating new pairs on demand via init_pair().
+ */
+
+#define DYN_PAIR_BUCKETS	256
+
+struct dyn_pair_entry {
+	int fg;
+	int bg;
+	int pair_id;
+	struct dyn_pair_entry *next;
+};
+
+static struct dyn_pair_entry *dyn_pair_table[DYN_PAIR_BUCKETS];
+static int dyn_pair_next_id;
+static bool dyn_pair_initialized;
+
+static unsigned int
+dyn_pair_hash(int fg, int bg)
+{
+	unsigned int h = (unsigned int)(fg * 257 + bg);
+	return h % DYN_PAIR_BUCKETS;
+}
+
+static enum tig_color_mode
+get_color_mode(void)
+{
+	static enum tig_color_mode cached;
+	static bool initialized;
+
+	if (!initialized) {
+		cached = tig_classify_color_mode(COLORS);
+		initialized = true;
+	}
+	return cached;
+}
+
+int
+ansi_color_to_ncurses(const struct ansi_color *color)
+{
+	return ansi_color_to_ncurses_for_mode(color, get_color_mode());
+}
+
+int
+get_dynamic_color_pair(const struct ansi_color *fg, const struct ansi_color *bg)
+{
+	int ncurses_fg = ansi_color_to_ncurses(fg);
+	int ncurses_bg = ansi_color_to_ncurses(bg);
+	unsigned int bucket = dyn_pair_hash(ncurses_fg, ncurses_bg);
+	struct dyn_pair_entry *entry;
+
+	if (!dyn_pair_initialized) {
+		/* Start dynamic IDs after the static ones */
+		dyn_pair_next_id = color_pairs;
+		dyn_pair_initialized = true;
+	}
+
+	/* Look up in hash table */
+	for (entry = dyn_pair_table[bucket]; entry; entry = entry->next) {
+		if (entry->fg == ncurses_fg && entry->bg == ncurses_bg)
+			return entry->pair_id;
+	}
+
+	/* Allocate a new pair if we haven't exhausted them */
+	if (COLOR_ID(dyn_pair_next_id) >= COLOR_PAIRS)
+		return 0;  /* fallback to default pair */
+
+	entry = calloc(1, sizeof(*entry));
+	if (!entry)
+		return 0;
+
+	entry->fg = ncurses_fg;
+	entry->bg = ncurses_bg;
+	entry->pair_id = dyn_pair_next_id++;
+	entry->next = dyn_pair_table[bucket];
+	dyn_pair_table[bucket] = entry;
+
+	init_extended_pair(COLOR_ID(entry->pair_id), ncurses_fg, ncurses_bg);
+	return entry->pair_id;
 }
 
 /* vim: set ts=8 sw=8 noexpandtab: */

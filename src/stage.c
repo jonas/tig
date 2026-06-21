@@ -778,8 +778,10 @@ stage_open(struct view *view, enum open_flags flags)
 
 	view->vid[0] = 0;
 	code = begin_update(view, repo.exec_dir, argv, flags | OPEN_WITH_STDERR);
-	if (code == SUCCESS && stage_line_type != LINE_STAT_UNTRACKED)
+	if (code == SUCCESS && stage_line_type != LINE_STAT_UNTRACKED) {
+		diff_init_syntax_highlight(&state->diff);
 		return diff_init_highlight(view, &state->diff);
+	}
 
 	return code;
 }
@@ -796,6 +798,7 @@ stage_read(struct view *view, struct buffer *buf, bool force_stop)
 		return pager_common_read(view, buf ? buf->data : NULL, LINE_DEFAULT, NULL);
 
 	if (!buf) {
+		diff_done_syntax_highlight(&state->diff);
 		if (!diff_done_highlight(&state->diff)) {
 			if (!force_stop)
 				report("Failed to run the diff-highlight program: %s", opt_diff_highlight);
