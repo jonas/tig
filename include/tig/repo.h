@@ -30,7 +30,8 @@ typedef char repo_str[SIZEOF_STR];
 	_(repo_str, git_dir) \
 	_(repo_str, worktree) \
 	_(repo_str, exec_dir) \
-	_(bool,     is_inside_work_tree)
+	_(bool,     is_inside_work_tree) \
+	_(bool,     amend_mode)
 
 #define REPO_INFO_FIELDS(type, name)	type name;
 
@@ -51,6 +52,9 @@ struct index_diff {
 
 bool index_diff(struct index_diff *diff, bool untracked, bool count_all);
 bool update_index(void);
+const char *repo_staged_parent(void);
+bool repo_amend_mode_enabled(void);
+bool repo_toggle_amend_mode(void);
 
 #endif
 /* vim: set ts=8 sw=8 noexpandtab: */

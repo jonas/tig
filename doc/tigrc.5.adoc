@@ -617,6 +617,9 @@ bind generic G none
 # User-defined external command to amend the last commit
 bind status + !git commit --amend
 
+# Toggle amend mode in the status or stage view
+bind status a status-amend
+
 # User-defined internal command that reloads ~/.tigrc
 bind generic S :source ~/.tigrc
 
@@ -922,6 +925,7 @@ View-specific actions
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |status-update           |Stage/unstage chunk or file changes
+|status-amend            |Toggle amend mode
 |status-revert           |Revert chunk or file changes
 |status-merge            |Merge file using external tool
 |stage-update-line       |Stage/unstage single line
