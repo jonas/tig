@@ -307,4 +307,4 @@ ifdef::backend-docbook[]
 manpage:tigrc[5],
 manpage:tigmanual[7],
 endif::backend-docbook[]
-git(7)
+git(1)
