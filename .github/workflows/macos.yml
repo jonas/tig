@@ -12,39 +12,16 @@ jobs:
         compiler: [clang, gcc]
 
     steps:
-      - name: Patch
-        run: |
-          brew tap homebrew/core
-          cd "$(brew --repo homebrew/core)" && patch -p1 <<\EOF
-          diff --git a/Formula/t/tig.rb b/Formula/t/tig.rb
-          index c726e53c519..920b0fbc1c2 100644
-          --- a/Formula/t/tig.rb
-          +++ b/Formula/t/tig.rb
-          @@ -31,9 +31,11 @@ class Tig < Formula
-             depends_on "readline"
-           
-             def install
-          +    ENV.deparallelize
-               system "./autogen.sh" if build.head?
-               system "./configure", "--prefix=#{prefix}", "--sysconfdir=#{etc}"
-               system "make"
-          +    system "make", "test"
-               # Ensure the configured `sysconfdir` is used during runtime by
-               # installing in a separate step.
-               system "make", "install", "sysconfdir=#{pkgshare}/examples"
-          EOF
       - name: Install latest Tig
-        shell: 'script -q typescript sh {0}' # Workaround to get a TTY, see https://github.com/gfx/example-github-actions-with-tty
-        run: HOMEBREW_NO_INSTALL_FROM_API=1 HOMEBREW_CC=${{ matrix.compiler }} HOMEBREW_NO_AUTO_UPDATE=1 brew install --HEAD tig
+        run: HOMEBREW_CC=${{ matrix.compiler }} HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ASK=1 brew install --HEAD tig
 
   ci:
     runs-on: macos-latest
-    if: github.ref != 'refs/heads/master'
 
     steps:
       - uses: actions/checkout@v4
       - name: Test Tig
         shell: 'script -q typescript sh {0}' # Workaround to get a TTY, see https://github.com/gfx/example-github-actions-with-tty
         run: |
-          brew install asciidoc autoconf automake coreutils gnu-sed ncurses xmlto
+          HOMEBREW_NO_ASK=1 brew install asciidoc autoconf automake coreutils gnu-sed ncurses xmlto
           TIG_BUILD=autoconf tools/travis.sh
