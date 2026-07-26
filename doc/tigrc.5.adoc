@@ -449,7 +449,7 @@ setting resolve to 'auto'.
 Specifications can also be given for a single column, for example to override
 the defaults in the system tigrc file. To override a single column, use the
 column name as a suffix after the view setting name, e.g. `main-view-date` will
-allow to set the date in the main view.
+allow setting the date in the main view.
 
 Examples:
 // TEST: tigrc

@@ -56,7 +56,7 @@ Improvements:
  - Blame view now works without a working tree.
  - Open diff view from blame at the correct line. (#1375)
  - Document how to get a `<` within TIG_SCRIPT. (#1357)
- - Allow to hide +/- signs in the diff view. (#855, #901)
+ - Allow hiding +/- signs in the diff view. (#855, #901)
  - Add toggle options to help. (#1381)
  - Add expand/collapse all options to help. (#1382)
  - Expand relevant sections only when opening the help view. (#782, #886)
@@ -126,7 +126,7 @@ Improvements:
  - Support %(text) in all views with a text column. (#1275)
  - Use HTTPS for GitHub clone URLs. (#1310)
  - Move default log view options to tigrc.
- - Allow to go to stage view without Enter. (#1284)
+ - Allow going to stage view without Enter. (#1284)
  - Add new "prefetch" reference type for refs created by `git maintenance`
    (hidden in default config). (#1318)
  - Show the selected commit in the blame view title window.
@@ -227,7 +227,7 @@ Improvements:
  - Update distclean rule to preserve tarball contents. (#1167, #1169)
  - Add reference types stash and other. (#1160, #1172)
  - Auto refresh view upon option change.
- - Allow to toggle revision filtering. (#1173)
+ - Allow toggling revision filtering. (#1173)
 
 Bug fixes:
 
@@ -296,7 +296,7 @@ Improvements:
  - Use id column for commit id only. (#1025, #1056)
  - Some minor updates for scrolling and for a double-click in diff. (#1060)
  - Add scroll-half-page-up and scroll-half-page-down actions. (#531, #1075)
- - Allow to generate a compilation database. (#1064)
+ - Allow generating a compilation database. (#1064)
  - New command stage-update-part.
  - The line number before a diff was applied is exposed as `%(lineno_old)`. (#1081)
 
@@ -746,7 +746,7 @@ Improvements:
    takes the width of the right-most view either as a number or a percentage.
  - Expose settings holding command line argument lists: `file-args`, `rev-args`,
    and `cmdline-args`. They are mainly intended for testing purposes but also
-   allows to change the filtering arguments dynamically. (GH #306)
+   allow changing the filtering arguments dynamically. (GH #306)
  - Add `log-options` setting for specifying default log view options.
    Example: `set log-options = --pretty=fuller`.
  - Use option specific view flags to reload view after `:set` commands.
@@ -1019,12 +1019,12 @@ Improvements:
  - Open editor when requesting edit action from within a file diff.
  - Update AX_WITH_CURSES to build under Cygwin.
  - Improve tigrc(5) documentation. (Debian #682766)
- - Allow to build on Mac OS 10.7 without the configure script. (GH #25)
+ - Allow building on Mac OS 10.7 without the configure script. (GH #25)
  - Add option to split the view vertically instead of horizontally.
    Example: `set vertical-split = yes'. (GH #76)
  - Add 'show-id' and 'id-width' options to configure the display of
    commit IDs in the main view and ID width in the blame view. (GH #77)
- - Allow to override Git based encoding to UTF-8 by setting
+ - Allow overriding Git based encoding to UTF-8 by setting
    'i18n.commitencoding' or 'gui.encoding'.
  - Improve autobuild support to track generated files and work with
    autoreconf 2.61.
@@ -1032,7 +1032,7 @@ Improvements:
    and diff view, e.g. `tig --no-walk --stdin < cherry-picks.txt`.
  - Add option to disable focusing of the child view when it's opened.
    Disable using: `set focus-child = no`. (GH #83)
- - Allow to open blob related with added content in a diff. (GH #91)
+ - Allow opening blob related to added content in a diff. (GH #91)
 
 Bug fixes:
 

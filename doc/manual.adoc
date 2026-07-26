@@ -97,7 +97,7 @@ The log view::
 	message and the diffstat.
 
 The reflog view::
-	Presents a view of the reflog allowing to navigate the repo
+	Presents a view of the reflog allowing navigation of the repo
 	history.
 
 The diff view::
@@ -209,7 +209,7 @@ following variables.
 
 Example user-defined commands:
 
- - Allow to amend the last commit:
+ - Allow amending the last commit:
 
 	bind generic + !git commit --amend
 
