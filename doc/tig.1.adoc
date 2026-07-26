@@ -227,7 +227,7 @@ TIG_DIFF_OPTS::
 	may also set the `diff-options` setting in the configuration file.
 
 TIG_TRACE::
-	Path for trace file where information about Git commands are logged.
+	Path for trace file where information about Git commands is logged.
 
 TIG_SCRIPT::
 	Path to script that should be executed automatically on startup. If this
@@ -239,7 +239,7 @@ TIG_SCRIPT::
 	E.g. TIG_SCRIPT=<(echo :set main-view-commit-title-graph = no) tig
 
 TIG_NO_DISPLAY::
-	Open Tig without rendering anything to the terminal. This force Ncurses
+	Open Tig without rendering anything to the terminal. This forces Ncurses
 	to write to /dev/null. The main use is for automated testing of Tig.
 
 TIG_EDITOR::
@@ -286,7 +286,7 @@ BUGS
 ----
 
 Please visit Tig's https://github.com/jonas/tig[home page] for information
-about new releases and how to report bugs or feature request.
+about new releases and how to report bugs or feature requests.
 
 COPYRIGHT
 ---------

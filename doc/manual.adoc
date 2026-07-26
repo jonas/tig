@@ -93,7 +93,7 @@ The main view::
 	Additionally, any repository references, such as tags, will be shown.
 
 The log view::
-	Presents a more rich view of the revision log showing the whole log
+	Presents a richer view of the revision log showing the whole log
 	message and the diffstat.
 
 The reflog view::
@@ -132,7 +132,7 @@ The stash view::
 	Displays the list of stashes in the repository.
 
 The grep view::
-	Displays a list of files and all the lines that matches a search
+	Displays a list of files and all the lines that match a search
 	pattern.
 
 The pager view::
@@ -199,7 +199,7 @@ following variables.
 |%(repo:cdup)		|The path to change directory to the repository root,
 			 e.g. `../`
 |%(repo:prefix)		|The path prefix of the current work directory,
-			 e.g `subdir/`.
+			 e.g. `subdir/`.
 |%(repo:git-dir)	|The path to the Git directory, e.g. `/src/repo/.git`.
 |%(repo:worktree)	|The worktree path, if defined.
 |%(repo:is-inside-work-tree)
@@ -253,7 +253,7 @@ Environment Variables
 ---------------------
 
 Several options related to the interface with Git can be configured via
-environment options.
+environment variables.
 
 [[configuration-files]]
 Configuration Files
@@ -397,7 +397,7 @@ View Specific Actions
 	 correctly this might require some initial configuration of your
 	 preferred merge tool. See the manpage of git-mergetool(1).
 |!	|Checkout file with unstaged changes. This will reset the file to
-	 contain the content it had at last commit.
+	 contain the content it had at the last commit.
 |1	|Stage single diff line.
 |@	|Move to next chunk in the stage view.
 |]	|Increase the diff context.
@@ -500,8 +500,8 @@ Prompt
 |:!<command>		|Execute a system command in a pager, e.g. `:!git log -p`.
 |:<action>		|Execute a Tig command, e.g. `:edit`.
 |:goto <rev>		|Jump to a specific revision, e.g. `:goto %(commit)^2`
-			 to goto the current commit's 2nd parent or
-			 `:goto some/branch` to goto the commit denoting the
+			 to go to the current commit's 2nd parent or
+			 `:goto some/branch` to go to the commit denoting the
 			 branch `some/branch`.
 |:save-display <file>	|Save current display to `<file>`.
 |:save-options <file>	|Save current options to `<file>`.
@@ -567,7 +567,7 @@ $ tig -- status
 Limit by Date or Number
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-To speed up interaction with Git, you can limit the amount of commits to show
+To speed up interaction with Git, you can limit the number of commits to show
 both for the log and main view. Either limit by date using e.g.
 `--since=1.month` or limit by the number of commits using `-n400`.
 
@@ -608,7 +608,7 @@ Limiting by Reachability
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Git interprets the range specifier "tag-1.0..tag-2.0" as "all commits
-reachable from 'tag-2.0' but not from 'tag-1.0'".  Where reachability refers
+reachable from 'tag-2.0' but not from 'tag-1.0'", where reachability refers
 to what commits are ancestors (or part of the history) of the branch or tagged
 revision in question.
 
@@ -623,7 +623,7 @@ You can think of '^' as a negation operator. Using this alternate syntax, it
 is possible to further prune commits by specifying multiple branch cut offs.
 
 [[refspec-combi]]
-Combining Revisions Specification
+Combining Revision Specifications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Revision options can to some degree be combined, which makes it possible to
