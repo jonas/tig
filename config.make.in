@@ -5,6 +5,7 @@ exec_prefix = @exec_prefix@
 bindir = @bindir@
 mandir = @mandir@
 docdir = @docdir@
+PACKAGE_TARNAME = @PACKAGE_TARNAME@
 datarootdir = @datarootdir@
 sysconfdir = @sysconfdir@
 
