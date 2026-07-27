@@ -43,7 +43,7 @@ Git configuration
 
 Alternatively to using `~/.tigrc`, Tig options can be set by putting them in
 one of the Git configuration files, which are read by Tig on startup. See
-'git-config(1)' for which files to use. The following example show the basic
+'git-config(1)' for which files to use. The following example shows the basic
 syntax to use for settings, bindings and colors.
 
 // TEST: gitconfig
@@ -76,7 +76,7 @@ the Git configuration:
 
 'gui.encoding'::
 
-	The encoding to use for displaying of file content.
+	The encoding to use for displaying file content.
 
 'i18n.commitencoding'::
 
@@ -89,7 +89,7 @@ A few selective variables can be configured via the set command. The syntax
 is:
 
 [verse]
-*set* variables *=* value
+*set* variable *=* value
 
 Use *+=* to append value to a string variable.
 
@@ -170,7 +170,7 @@ The following variables can be set:
 
 	A space-separated string of default options that should be passed to the
 	git-log(1) command used by the log view. Options can be overridden by
-	command line options. Used internally override custom `pretty.format'
+	command line options. Used internally to override custom `pretty.format'
 	settings that break the log view.
 
 'main-options' (string)::
@@ -239,7 +239,7 @@ The following variables can be set:
 
 'show-untracked' (bool)::
 
-	Whether to show also untracked changes in the main view.
+	Whether to also show untracked changes in the main view.
 
 'vertical-split' (mixed) [auto|<bool>]::
 
@@ -259,14 +259,14 @@ The following variables can be set:
 'split-view-width' (mixed)::
 
 	Width of the right-most view in a vertically split display. Can be
-	specified either as the number of column, e.g. '5', or as a percentage
+	specified either as the number of columns, e.g. '5', or as a percentage
 	of the view width, e.g. '80%', where the maximum is 100%. It is always
 	ensured that the smaller of the views is at least four columns wide. The
 	default is '50%'.
 
 'status-show-untracked-dirs' (bool)::
 
-	Show untracked directories contents in the status view (analog to
+	Show untracked directory contents in the status view (analogous to
 	`git ls-files --directory` option). On by default.
 
 'status-show-untracked-files' (bool)::
@@ -313,7 +313,7 @@ The following variables can be set:
 
 'commit-order' (enum) [auto|default|topo|date|author-date|reverse]::
 
-	Commit ordering using the default (chronological reverse) order,
+	Commit ordering using the default (reverse chronological) order,
 	topological order, date order or reverse order. When set to "auto"
 	(which is the default), topological order is automatically used in the
 	main view when the commit graph is enabled. In repositories with a long
@@ -386,7 +386,7 @@ The following variables can be set:
 
 'pager-autoscroll' (bool)::
 
-	Whether to scroll automatically the pager view while loading. Move the
+	Whether to automatically scroll the pager view while loading. Move the
 	cursor out of the last line to stop scrolling and back in to resume.
 
 'recurse-tree' (bool)::
@@ -395,7 +395,7 @@ The following variables can be set:
 
 'pgrp' (bool)::
 
-	Make tig process-group leader when starting and clean all processes
+	Make tig the process-group leader when starting and clean all processes
 	when exiting. Off by default. Do not enable this option if you are
 	using a Zsh version affected by zsh-workers/43379. Run `xclip` with
 	`setsid` to keep clipboard content after exiting tig. If you are using
@@ -435,7 +435,7 @@ View settings
 
 The view settings define the order and options for the different columns of a
 view. Each view setting expects a space-separated list of column specifications.
-Column specifications starts with the column type, and can optionally be
+Column specifications start with the column type, and can optionally be
 followed by a colon (`:`) and a list of column options. E.g. the following
 column specification defines an 'author' column displaying the author email and
 with a fixed width of 20 characters: `author:email,width=20`.
@@ -449,7 +449,7 @@ setting resolve to 'auto'.
 Specifications can also be given for a single column, for example to override
 the defaults in the system tigrc file. To override a single column, use the
 column name as a suffix after the view setting name, e.g. `main-view-date` will
-allow to set the date in the main view.
+allow setting the date in the main view.
 
 Examples:
 // TEST: tigrc
@@ -476,7 +476,7 @@ set blame-view-line-number = no
 set commit-order = default
 --------------------------------------------------------------------------
 
-The following list shows which the available view settings and what column types
+The following list shows the available view settings and what column types
 they support:
 
 blob-view, diff-view, log-view, pager-view, stage-view:: line-number, text
@@ -508,12 +508,12 @@ commit-title::
 	- 'graph' (mixed) [no|v2|v1]: Whether to show the revision graph in the
 	  main view on start-up. "v1" refers to the old graph rendering, which
 	  is less accurate but faster and thus recommended in large
-	  repositories.  See also the 'line-graphics' options.
+	  repositories.  See also the 'line-graphics' option.
 	- 'refs' (bool): Whether to show references (branches, tags, and
 	  remotes) in the main view. Can be toggled.
 	- 'overflow' (bool or int): Whether to highlight text in commit titles
 	  exceeding a given width. When set to a boolean, it enables or disables
-	  the highlighting using the default width of 50 character. When set to
+	  the highlighting using the default width of 50 characters. When set to
 	  an int, the assigned value is used as the maximum character width.
 
 date::
@@ -551,11 +551,11 @@ file-size::
 
 id::
 	- 'display' (bool): Whether to show commit IDs in the main view.
-	- 'width' (int) : Fixed width for the commit ID column. When unset Tig
+	- 'width' (int): Fixed width for the commit ID column. When unset Tig
 	  will use the value of 'core.abbrev' if found. See git-config(1) on how
 	  to set 'core.abbrev'. When set to zero the width is automatically sized
 	  to fit the content of reflog (e.g.  `ref/stash@{4}`) IDs and otherwise
-	  default to 7.
+	  defaults to 7.
 
 line-number::
 	- 'display' (bool): Whether to show line numbers.
@@ -585,7 +585,7 @@ text::
 	- 'commit-title-overflow' (bool or int): Whether to highlight commit
 	  titles exceeding a given width in the diff view. When set to a
 	  boolean, it enables or disables the highlighting using the default
-	  width of 50 character. When set to an int, the assigned value is used
+	  width of 50 characters. When set to an int, the assigned value is used
 	  as the maximum character width.
 
 All column options can be toggled. For 'display' options, use the
@@ -660,7 +660,7 @@ Key values::
 
 Key values should never be quoted. Use either an ASCII or UTF8-encoded character
 or one of the following symbolic key names. Symbolic key names are case
-insensitive and starts with "<" and ends with ">". Use *<Hash>* to bind to the
+insensitive and start with "<" and end with ">". Use *<Hash>* to bind to the
 `#` key, since the hash mark is used as a comment character. Use *<LessThan>* to
 bind to the `<` key.
 
@@ -733,7 +733,7 @@ the command that should be executed.
 
 Unless otherwise specified, commands are run in the foreground with their
 console output shown (as if '!' was specified). When multiple command options
-are specified their behavior are combined, e.g. "?<git commit" will prompt the
+are specified their behavior is combined, e.g. "?<git commit" will prompt the
 user whether to execute the command and will exit Tig after completion.
 
 Note that if you want to use pipes or redirection in your commands then you
@@ -786,7 +786,7 @@ following variable names, which are substituted before commands are run:
 |%(repo:cdup)		|The path to change directory to the repository root,
 			 e.g. `../`
 |%(repo:prefix)		|The path prefix of the current work directory,
-			 e.g `subdir/`.
+			 e.g. `subdir/`.
 |%(repo:git-dir)	|The path to the Git directory, e.g. `/src/repo/.git`.
 |%(repo:worktree)	|The worktree path, if defined.
 |%(repo:is-inside-work-tree)
@@ -1037,7 +1037,7 @@ Area names::
 	quoted string. Strings of the form "/.../" are interpreted as
 	regular expressions.
 	Valid built-in area names are described below. Note, all names are
-	case-insensitive, and you may use '-', and '_' interchangeably,
+	case-insensitive, and you may use '-' and '_' interchangeably,
 	e.g. "Diff-Header" and "DIFF_HEADER" are the same.
 	View-specific colors can be defined by prefixing the view name to
 	the area name, e.g. "stage.diff-chunk" and "diff.diff-chunk".
@@ -1161,7 +1161,7 @@ changes, rename detection, and similarity.
 Pretty print commit headers::
 
 Commit diffs and the revision logs are usually formatted using pretty printed
-headers , unless `--pretty=raw` was given. This includes lines, such as merge
+headers, unless `--pretty=raw` was given. This includes lines, such as merge
 info, commit ID, and author and committer date.
 
 *pp-refs*, *pp-reflog*, *pp-reflogmsg*, *pp-merge*
