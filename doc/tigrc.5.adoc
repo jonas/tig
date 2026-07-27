@@ -1229,5 +1229,5 @@ ifdef::backend-docbook[]
 manpage:tig[1],
 manpage:tigmanual[7],
 endif::backend-docbook[]
-git(7), git-config(1)
+git(1), git-config(1)
 // vim: tw=80
