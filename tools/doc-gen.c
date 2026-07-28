@@ -14,6 +14,9 @@
 #include "tig/tig.h"
 #include "tig/request.h"
 #include "tig/util.h"
+#include "tig/repo.h"
+
+struct repo_info repo = {REPO_INFO_SHA1};
 
 struct doc_action_iterator {
 	bool end_group;

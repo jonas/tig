@@ -17,19 +17,20 @@
 #include "tig/tig.h"
 #include "tig/types.h"
 #include "tig/util.h"
+#include "tig/repo.h"
 
 struct argv_env;
 
 struct ref {
 	struct ref *next;
 	enum reference_type type;
-	char id[SIZEOF_REV];	/* Commit SHA1 ID */
+	char id[SIZEOF_REV];	/* Commit hash ID */
 	unsigned int valid:1;	/* Is the ref still valid? */
 	char name[1];		/* Ref name; tag or head names are shortened. */
 };
 
 #define is_initial_commit()	(!get_ref_head())
-#define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, SIZEOF_REV - 1)))
+#define is_head_commit(rev)	(!strcmp((rev), "HEAD") || (get_ref_head() && !strncmp(rev, get_ref_head()->id, REPO_INFO_SIZEOF_REV - 1)))
 #define ref_is_tag(ref)		((ref)->type == REFERENCE_TAG || (ref)->type == REFERENCE_LOCAL_TAG)
 #define ref_is_remote(ref)	((ref)->type == REFERENCE_REMOTE || (ref)->type == REFERENCE_TRACKED_REMOTE)
 

@@ -1,0 +1,146 @@
+#!/bin/sh
+#
+# Test display and options specific to the main view with sha256 object format.
+
+. libtest.sh
+. libgit.sh
+
+test_require sha256
+
+export LINES=16
+
+tigrc <<EOF
+set vertical-split = no
+EOF
+
+steps '
+	:save-display main-default.screen
+	:set reference-format = (branch) [tag] @remote
+	:save-display main-ref-format.screen
+	:set reference-format = (branch) [tag] hide:remote
+	:save-display main-remotes-hidden.screen
+
+	:toggle commit-title-refs
+	:save-display main-no-refs.screen
+	:toggle commit-title-graph
+	:toggle commit-title-graph
+	:save-display main-no-graph.screen
+
+	:4bf5f7eaa968deef5c5b67412ad79a3ba32de876a30ff7227751d72f7f39fb11
+	<Enter>
+	:save-display main-with-diff.screen
+	<Down>
+	:save-display main-with-diff-next.screen
+'
+
+git_clone 'sha256-repo-one'
+
+test_tig
+
+assert_equals 'main-default.screen' <<EOF
+2010-04-07 05:37 +0000 Max Power             o [master] {origin/master} {origin/
+2010-03-29 17:15 +0000 Jørgen Thygesen Brahe o Commit 10 D
+2010-03-21 04:53 +0000 作者                  o Commit 10 C
+2010-03-12 16:31 +0000 René Lévesque         o Commit 10 B
+2010-03-04 04:09 +0000 A. U. Thor            o Commit 10 A
+2010-02-23 15:46 +0000 Max Power             o Commit 9 E
+2010-02-15 03:24 +0000 Jørgen Thygesen Brahe o Commit 9 D
+2010-02-06 15:02 +0000 作者                  o Commit 9 C
+2010-01-29 02:40 +0000 René Lévesque         o Commit 9 B
+2010-01-20 14:18 +0000 A. U. Thor            o Commit 9 A
+2010-01-12 01:56 +0000 Max Power             o Commit 8 E
+2010-01-03 13:33 +0000 Jørgen Thygesen Brahe o Commit 8 D
+2009-12-26 01:11 +0000 作者                  o Commit 8 C
+2009-12-17 12:49 +0000 René Lévesque         o <v1.0> Commit 8 B
+[main] eac7f3b2335d4e51865229144ae34be34f8a2ae1b8a88ee82c86f22b4ad57688 - co 28%
+EOF
+
+assert_equals 'main-ref-format.screen' <<EOF
+2010-04-07 05:37 +0000 Max Power             o (master) @origin/master @origin/H
+2010-03-29 17:15 +0000 Jørgen Thygesen Brahe o Commit 10 D
+2010-03-21 04:53 +0000 作者                  o Commit 10 C
+2010-03-12 16:31 +0000 René Lévesque         o Commit 10 B
+2010-03-04 04:09 +0000 A. U. Thor            o Commit 10 A
+2010-02-23 15:46 +0000 Max Power             o Commit 9 E
+2010-02-15 03:24 +0000 Jørgen Thygesen Brahe o Commit 9 D
+2010-02-06 15:02 +0000 作者                  o Commit 9 C
+2010-01-29 02:40 +0000 René Lévesque         o Commit 9 B
+2010-01-20 14:18 +0000 A. U. Thor            o Commit 9 A
+2010-01-12 01:56 +0000 Max Power             o Commit 8 E
+2010-01-03 13:33 +0000 Jørgen Thygesen Brahe o Commit 8 D
+2009-12-26 01:11 +0000 作者                  o Commit 8 C
+2009-12-17 12:49 +0000 René Lévesque         o [v1.0] Commit 8 B
+[main] eac7f3b2335d4e51865229144ae34be34f8a2ae1b8a88ee82c86f22b4ad57688 - co 28%
+EOF
+
+assert_equals 'main-remotes-hidden.screen' <<EOF
+2010-04-07 05:37 +0000 Max Power             o (master) Commit 10 E
+2010-03-29 17:15 +0000 Jørgen Thygesen Brahe o Commit 10 D
+2010-03-21 04:53 +0000 作者                  o Commit 10 C
+2010-03-12 16:31 +0000 René Lévesque         o Commit 10 B
+2010-03-04 04:09 +0000 A. U. Thor            o Commit 10 A
+2010-02-23 15:46 +0000 Max Power             o Commit 9 E
+2010-02-15 03:24 +0000 Jørgen Thygesen Brahe o Commit 9 D
+2010-02-06 15:02 +0000 作者                  o Commit 9 C
+2010-01-29 02:40 +0000 René Lévesque         o Commit 9 B
+2010-01-20 14:18 +0000 A. U. Thor            o Commit 9 A
+2010-01-12 01:56 +0000 Max Power             o Commit 8 E
+2010-01-03 13:33 +0000 Jørgen Thygesen Brahe o Commit 8 D
+2009-12-26 01:11 +0000 作者                  o Commit 8 C
+2009-12-17 12:49 +0000 René Lévesque         o [v1.0] Commit 8 B
+[main] eac7f3b2335d4e51865229144ae34be34f8a2ae1b8a88ee82c86f22b4ad57688 - co 28%
+EOF
+
+assert_equals 'main-no-refs.screen' <<EOF
+2010-04-07 05:37 +0000 Max Power             o Commit 10 E
+2010-03-29 17:15 +0000 Jørgen Thygesen Brahe o Commit 10 D
+2010-03-21 04:53 +0000 作者                  o Commit 10 C
+2010-03-12 16:31 +0000 René Lévesque         o Commit 10 B
+2010-03-04 04:09 +0000 A. U. Thor            o Commit 10 A
+2010-02-23 15:46 +0000 Max Power             o Commit 9 E
+2010-02-15 03:24 +0000 Jørgen Thygesen Brahe o Commit 9 D
+2010-02-06 15:02 +0000 作者                  o Commit 9 C
+2010-01-29 02:40 +0000 René Lévesque         o Commit 9 B
+2010-01-20 14:18 +0000 A. U. Thor            o Commit 9 A
+2010-01-12 01:56 +0000 Max Power             o Commit 8 E
+2010-01-03 13:33 +0000 Jørgen Thygesen Brahe o Commit 8 D
+2009-12-26 01:11 +0000 作者                  o Commit 8 C
+2009-12-17 12:49 +0000 René Lévesque         o Commit 8 B
+[main] eac7f3b2335d4e51865229144ae34be34f8a2ae1b8a88ee82c86f22b4ad57688 - co 28%
+EOF
+
+assert_equals 'main-no-graph.screen' <<EOF
+2010-04-07 05:37 +0000 Max Power             Commit 10 E
+2010-03-29 17:15 +0000 Jørgen Thygesen Brahe Commit 10 D
+2010-03-21 04:53 +0000 作者                  Commit 10 C
+2010-03-12 16:31 +0000 René Lévesque         Commit 10 B
+2010-03-04 04:09 +0000 A. U. Thor            Commit 10 A
+2010-02-23 15:46 +0000 Max Power             Commit 9 E
+2010-02-15 03:24 +0000 Jørgen Thygesen Brahe Commit 9 D
+2010-02-06 15:02 +0000 作者                  Commit 9 C
+2010-01-29 02:40 +0000 René Lévesque         Commit 9 B
+2010-01-20 14:18 +0000 A. U. Thor            Commit 9 A
+2010-01-12 01:56 +0000 Max Power             Commit 8 E
+2010-01-03 13:33 +0000 Jørgen Thygesen Brahe Commit 8 D
+2009-12-26 01:11 +0000 作者                  Commit 8 C
+2009-12-17 12:49 +0000 René Lévesque         Commit 8 B
+[main] eac7f3b2335d4e51865229144ae34be34f8a2ae1b8a88ee82c86f22b4ad57688 - co 28%
+EOF
+
+assert_equals 'main-with-diff.screen' <<EOF
+2010-01-12 01:56 +0000 Max Power             Commit 8 E
+2010-01-03 13:33 +0000 Jørgen Thygesen Brahe Commit 8 D
+2009-12-26 01:11 +0000 作者                  Commit 8 C
+2009-12-17 12:49 +0000 René Lévesque         Commit 8 B
+[main] 4bf5f7eaa968deef5c5b67412ad79a3ba32de876a30ff7227751d72f7f39fb11 - co 28%
+commit 4bf5f7eaa968deef5c5b67412ad79a3ba32de876a30ff7227751d72f7f39fb11
+Refs: [v1.0]
+Author:     René Lévesque <rene.levesque@example.qc.ca>
+AuthorDate: Thu Dec 17 12:49:30 2009 +0000
+Commit:     Committer <c.ommitter@example.net>
+CommitDate: Thu Dec 17 12:49:30 2009 +0000
+ 
+    Commit 8 B
+ 
+[diff] 4bf5f7eaa968deef5c5b67412ad79a3ba32de876a30ff7227751d72f7f39fb11 - l 100%
+EOF

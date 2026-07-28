@@ -16,11 +16,21 @@
 
 #include "tig/tig.h"
 
+typedef enum {
+	REPO_INFO_SHA1 = 40,
+	REPO_INFO_SHA256 = 64
+} repo_object_format;
+
+/* Holds a hash ID and an ending NUL. */
+#define REPO_INFO_SIZEOF_REV	(repo.object_format + 1)
+
 typedef char repo_ref[SIZEOF_REF];
 typedef char repo_rev[SIZEOF_REV];
 typedef char repo_str[SIZEOF_STR];
 
+/* Leave object_format in first position. */
 #define REPO_INFO(_) \
+	_(repo_object_format, object_format) \
 	_(repo_ref, head) \
 	_(repo_rev, head_id) \
 	_(repo_ref, remote) \
