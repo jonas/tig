@@ -520,6 +520,16 @@ diff_read_describe(struct view *view, struct buffer *buffer, struct diff_state *
 	return true;
 }
 
+static char *trim_quotes(char *start, char *end)
+{
+	if ( (*start == '\'' && *(end - 1) == '\'') ||
+	     (*start == '"'  && *(end - 1) == '"' ) ) {
+		start += 1;
+		*(end - 1) = '\0';
+	}
+	return start;
+}
+
 static bool
 diff_read(struct view *view, struct buffer *buf, bool force_stop)
 {
@@ -565,8 +575,28 @@ diff_read(struct view *view, struct buffer *buf, bool force_stop)
 		diff_restore_line(view, state);
 
 		if (!state->adding_describe_ref && !ref_list_contains_tag(view->vid)) {
-			const char *describe_argv[] = { "git", "describe", "--tags", view->vid, NULL };
+			const char *describe_args[] = { "git", "describe", "--tags", NULL };
+			const char **describe_argv = NULL;
+			argv_append_array(&describe_argv, describe_args);
+			if (argv_env.describe && strlen(argv_env.describe) > 0) {
+				char *p, *start;
+				for (p = argv_env.describe, start = p; *p; ++p) {
+					if (*p == ' ') {
+						*p = '\0';
+						start = trim_quotes(start, p);
+						argv_append(&describe_argv, start);
+						start = p + 1;
+					}
+				}
+				if (start < p) {
+					start = trim_quotes(start, p);
+					argv_append(&describe_argv, start);
+				}
+			}
+			argv_append(&describe_argv, view->vid);
 			enum status_code code = begin_update(view, NULL, describe_argv, OPEN_EXTRA);
+			argv_free(describe_argv);
+			free(describe_argv);
 
 			if (code != SUCCESS) {
 				report("Failed to load describe data: %s", get_status_message(code));

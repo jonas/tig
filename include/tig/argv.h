@@ -67,6 +67,7 @@ struct argv_env {
 	char goto_id[SIZEOF_REV];
 	char search[SIZEOF_STR];
 	char none[1];
+	char *describe;
 };
 
 extern struct argv_env argv_env;
