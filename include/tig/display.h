@@ -43,6 +43,19 @@ extern unsigned int current_view;
 #define view_is_displayed(view) \
 	(view == display[0] || view == display[1])
 
+// Save the succession of the array of active views
+struct display_lineage;
+struct display_lineage {
+	struct view *display[2];
+	unsigned int current_view;
+
+	struct display_lineage *prev;
+};
+extern struct display_lineage *display_lineage;
+
+void rewind_lineage();
+void free_display_lineage();
+
 void init_tty(void);
 void init_display(void);
 void resize_display(void);
