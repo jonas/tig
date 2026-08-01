@@ -1,0 +1,114 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=15
+export COLUMNS=120
+
+steps '
+	:save-display start.screen
+	a
+	:3
+	:save-display amend.screen
+	<Enter>
+	:save-display amend-stage.screen
+	:view-close
+	C
+	a
+	:save-display final.screen
+'
+
+tigrc <<EOF
+bind status C @git commit -q -m "Amended commit"
+EOF
+
+git_init
+
+(
+cd "$work_dir"
+
+git_add hello.txt <<EOF
+one
+EOF
+git_commit --author="$IDENT_A" -m "Initial commit"
+
+git_add hello.txt <<EOF
+one
+two
+EOF
+git_commit --author="$IDENT_A" -m "Second commit"
+)
+
+test_tig status
+
+assert_equals 'start.screen' <<EOF
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
+
+
+
+
+
+[status] Nothing to update                                                                                          100%
+EOF
+
+assert_equals 'amend.screen' <<EOF
+On branch master [amend]
+Changes to be amended:
+M hello.txt
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
+
+
+
+
+
+[status] Press u to unstage 'hello.txt' from amend commit                                                           100%
+EOF
+
+assert_equals 'amend-stage.screen' <<EOF
+On branch master [amend]                                    | hello.txt | 1 +
+Changes to be amended:                                      | 1 file changed, 1 insertion(+)
+M hello.txt                                                 |
+Changes not staged for commit:                              |diff --git a/hello.txt b/hello.txt
+  (no files)                                                |index 5626abf..814f4a4 100644
+Untracked files:                                            |--- a/hello.txt
+  (no files)                                                |+++ b/hello.txt
+                                                            |@@ -1 +1,2 @@
+                                                            | one
+                                                            |+two
+                                                            |
+                                                            |
+                                                            |
+[status] Press u to unstage 'hello.txt' from amend comm 100%|[stage] Press '<Enter>' to jump to file diff - line 1  100%
+EOF
+
+assert_equals 'final.screen' <<EOF
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
+
+
+
+
+
+[status] Nothing to update                                                                                          100%
+EOF
+
+test "$(cd "$work_dir" && git rev-list --count HEAD)" = 2
+test "$(cd "$work_dir" && git log -1 --format=%s)" = "Amended commit"

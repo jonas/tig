@@ -244,10 +244,12 @@ bind generic	<C-C>	quit			# Close all views and quit
 
 # View specific
 bind status	u	status-update		# Stage/unstage changes in file
+bind status	a	status-amend		# Toggle amend mode
 bind status	!	status-revert		# Revert changes in file
 bind status	M	status-merge		# Open git-mergetool(1)
 # bind status	???	:toggle status		# Show short or long status labels
 bind stage	u	status-update		# Stage/unstage current diff (c)hunk
+bind stage	a	status-amend		# Toggle amend mode
 bind stage	1	stage-update-line	# Stage/unstage current line
 bind stage	2	stage-update-part	# Stage/unstage part of chunk
 bind stage	!	status-revert		# Revert current diff (c)hunk

@@ -211,7 +211,8 @@ main_add_changes(struct view *view, struct main_state *state, const char *parent
 
 	return main_add_changes_commit(view, LINE_STAT_UNTRACKED, untracked_parent, "Untracked changes")
 	    && main_add_changes_commit(view, LINE_STAT_UNSTAGED, unstaged_parent, "Unstaged changes")
-	    && main_add_changes_commit(view, LINE_STAT_STAGED, staged_parent, "Staged changes");
+	    && main_add_changes_commit(view, LINE_STAT_STAGED, staged_parent,
+	     repo_amend_mode_enabled() ? "Amend changes" : "Staged changes");
 }
 
 static bool

@@ -452,11 +452,14 @@ find_deleted_line_in_head(struct view *view, struct line *line) {
 	unsigned long line_number_in_head, line_number = 0;
 	long bias_by_staged_changes = 0;
 	char buf[SIZEOF_STR] = "";
+	const char *staged_parent = repo_staged_parent();
 	char file_in_head_pathspec[sizeof("HEAD:") + SIZEOF_STR],
 		file_in_index_pathspec[sizeof(":") + SIZEOF_STR];
 	const char *file_in_head = NULL;
 	const char *ls_tree_argv[] = {
-		"git", "ls-tree", "-z", "HEAD", view->env->file, NULL
+		"git", "ls-tree", "-z",
+		stage_line_type == LINE_STAT_STAGED ? staged_parent : "HEAD",
+		view->env->file, NULL
 	};
 	const char *diff_argv[] = {
 		"git", "diff", file_in_head_pathspec, file_in_index_pathspec,
@@ -473,7 +476,9 @@ find_deleted_line_in_head(struct view *view, struct line *line) {
 	} else { // The file might might be renamed in the index. Find its old name.
 		const char *diff_index_argv[] = {
 			"git", "diff-index", "--cached", "-C",
-			"--diff-filter=ACR", "-z", "HEAD", NULL
+			"--diff-filter=ACR", "-z",
+			stage_line_type == LINE_STAT_STAGED ? staged_parent : "HEAD",
+			NULL
 		};
 		if (!io_run(&io, IO_RD, repo.exec_dir, NULL, diff_index_argv) || io.status)
 			return false;
@@ -563,6 +568,12 @@ stage_request(struct view *view, enum request request, struct line *line)
 	case REQ_STATUS_UPDATE:
 		if (!stage_update(view, line, UPDATE_NORMAL))
 			return REQ_NONE;
+		break;
+
+	case REQ_STATUS_AMEND:
+		if (!repo_toggle_amend_mode())
+			return REQ_NONE;
+		load_repo_head();
 		break;
 
 	case REQ_STATUS_REVERT:
@@ -655,7 +666,8 @@ stage_request(struct view *view, enum request request, struct line *line)
 
 		view->env->ref[0] = 0;
 		if (find_deleted_line_in_head(view, line))
-			string_copy(view->env->ref, "HEAD");
+			string_copy(view->env->ref,
+			 stage_line_type == LINE_STAT_STAGED ? repo_staged_parent() : "HEAD");
 		else
 			view->env->goto_lineno = diff_get_lineno(view, line, false);
 		if (view->env->goto_lineno > 0)
@@ -698,7 +710,8 @@ stage_request(struct view *view, enum request request, struct line *line)
 static void
 stage_select(struct view *view, struct line *line)
 {
-	const char *changes_msg = stage_line_type == LINE_STAT_STAGED ? "Staged changes"
+	const char *changes_msg = stage_line_type == LINE_STAT_STAGED
+				? repo_amend_mode_enabled() ? "Amend changes" : "Staged changes"
 				: stage_line_type == LINE_STAT_UNSTAGED ? "Unstaged changes"
 				: NULL;
 
@@ -713,9 +726,11 @@ stage_open(struct view *view, enum open_flags flags)
 			stage_status.new.name)
 	};
 	const char *index_show_argv[] = {
-		GIT_DIFF_STAGED(encoding_arg, diff_context_arg(), diff_prefix_arg(),
-			ignore_space_arg(), word_diff_arg(), stage_status.old.name,
-			stage_status.new.name)
+		"git", "diff-index", encoding_arg, "--textconv", "--patch-with-stat", "-C",
+			"--cached", "--diff-filter=ACDMRTXB", DIFF_ARGS, "%(cmdlineargs)",
+			diff_context_arg(), diff_prefix_arg(), ignore_space_arg(),
+			word_diff_arg(), repo_staged_parent(), "--",
+			stage_status.old.name, stage_status.new.name, NULL
 	};
 	const char *files_show_argv[] = {
 		GIT_DIFF_UNSTAGED(encoding_arg, diff_context_arg(), diff_prefix_arg(),
