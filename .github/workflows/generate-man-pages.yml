@@ -1,0 +1,41 @@
+name: Generate Man Pages
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-man-pages:
+    runs-on: ubuntu-latest
+    container:
+      image: asciidoctor/docker-asciidoctor
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Generate Man Pages
+        run: |
+          mkdir -p man_pages
+          asciidoctor -b manpage -o man_pages/tig.1 doc/tig.1.adoc
+          asciidoctor -b manpage -o man_pages/tigmanual.7 doc/tigmanual.7.adoc
+          asciidoctor -b manpage -o man_pages/tigrc.5 doc/tigrc.5.adoc
+          ls -l man_pages/
+
+      # - name: Upload Man Pages as Artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: man-pages
+      #     path: man_pages/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest-man-pages
+          release_name: "Latest Man Pages"
+          files: man_pages/*
+          token: ${{ secrets.GITHUB_TOKEN }}
