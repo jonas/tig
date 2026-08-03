@@ -311,7 +311,7 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 		const char *value;
 		const char *msgstart = name + STRING_SIZE("%(prompt");
 		const int msglen = end - msgstart - 1;
-
+		char *tmp;
 		if (end && msglen > 0 && string_format(msgbuf, "%.*s", msglen, msgstart)) {
 			const char *msg = msgbuf;
 
@@ -321,11 +321,39 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 				prompt = msg;
 		}
 
-		value = read_prompt(prompt);
+		tmp=argv_format_arg(&argv_env, prompt);
+		value = read_prompt(tmp);
+		free(tmp);
 		if (value == NULL)
 			return false;
 		return string_format_from(format->buf, &format->bufpos, "%s", value);
 	}
+	if (!prefixcmp(name, "%(sh")) {
+		char cbuf[SIZEOF_STR];
+		const char *c="";
+		char value[SIZEOF_STR]={0};
+		const char *cstart = name + STRING_SIZE("%(sh");
+		const int clen = end - cstart - 1;
+		int size;
+		char *tmp;
+		FILE *cp;
+		if (end && clen > 0 && string_format(cbuf, "%.*s", clen, cstart)) {
+			c=cbuf;
+			while (isspace(*c))
+				c++;
+		}
+		if (!*c||strlen(c)==8)
+			return false;
+		tmp=argv_format_arg(&argv_env, c);
+		cp=popen(tmp,"r");
+		free(tmp);
+		size=fread(value,1,SIZEOF_STR-1,cp);
+		if (value[0]==0 || size==0)
+			return false;
+		if (value[size-1]=='\n')
+			value[size-1]='\0';
+		return string_format_from(format->buf, &format->bufpos, "%s", value);
+    	}
 
 	for (i = 0; i < format->vars_size; i++) {
 		if (string_enum_compare(name, vars[i].name, vars[i].namelen))
@@ -340,6 +368,64 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 	return false;
 }
 
+static const char*
+get_closing_brace(const char *input)
+{
+	const char *s=input,*cur, *tmp;
+	int idx,level=0,pair_idx;
+	int level_to_pos[3000]={[0 ... 2998]=-1, -2};
+	int pos_to_level[256]={[0 ... 254]=-1, -2};
+	int pair_map[3000]={[0 ... 2998]=-1, -2};
+	int final_pairs[3000]={[0 ... 2998]=-1, -2};
+	int first=-1;
+        while ( (cur = strstr(s,"(")), (tmp = strstr(s,")")), (cur&&cur<tmp?cur:(cur=tmp))) {
+		s=cur+1;
+		idx=cur-input;
+                if ( *cur == '(' ) {
+                    pos_to_level[idx]=++level;
+                    level_to_pos[level]=idx;
+        	} else if ( *cur == ')' ) {
+                    if ( level > 0 ) {
+                        pair_idx=level_to_pos[level];
+                        pos_to_level[idx]=level --;
+                        if (input[pair_idx]=='(' && input[idx]==')' ||
+				input[pair_idx]==')' && input[idx]=='(' ) {
+                            final_pairs[idx]=pair_idx;
+                            final_pairs[pair_idx]=idx;
+                        }
+            	    } else {
+                        pos_to_level[idx]=-1;
+                    }
+                }
+            }
+
+    for (idx=0;pos_to_level[idx]!=-2; idx++) {
+    	bool ok=false;
+    	if (pos_to_level[idx]==-1)
+    		continue;
+    	for (int j=0; final_pairs[j]!=-2;j++) {
+    		if  (final_pairs[j]==-1)
+			continue;
+		if (final_pairs[j]==idx) {
+			if (idx==0)
+				first=j;
+			ok=true;
+			break;
+		}
+	}
+	if (!ok)
+		return NULL;
+    }
+
+    if (pos_to_level[0] < 0)
+    	return NULL;
+    if (first<0)
+    	return NULL;
+    
+    return input+first;
+}
+
+
 static bool
 format_append_arg(struct format_context *format, const char ***dst_argv, const char *arg)
 {
@@ -350,7 +436,7 @@ format_append_arg(struct format_context *format, const char ***dst_argv, const c
 		const char *var = strstr(arg, "%(");
 		const char *esc = strstr(arg, "%%");
 		bool is_escaped = esc && (esc < var || !var);
-		const char *closing = var && !is_escaped ? strchr(var, ')') : NULL;
+		const char *closing = var && !is_escaped ? get_closing_brace(var+1) : NULL;
 		const char *next = is_escaped ? esc + 2 : closing ? closing + 1 : NULL;
 		int len = var && !is_escaped ? var - arg : esc ? esc - arg + 1 : strlen(arg);
 
@@ -360,7 +446,7 @@ format_append_arg(struct format_context *format, const char ***dst_argv, const c
 		if (len && !string_format_from(format->buf, &format->bufpos, "%.*s", len, arg))
 			return false;
 
-		if (var && !is_escaped && !format_expand_arg(format, var, next))
+   		if (var && !is_escaped && !format_expand_arg(format, var, next))
 			return false;
 
 		arg = next;
