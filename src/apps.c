@@ -125,4 +125,52 @@ struct app_external
 	return &dhlt_app;
 }
 
+/*
+ * syntax-highlight (bat)
+ */
+
+struct app_external
+*app_syntax_highlight_load(const char *query, const char *filename)
+{
+	static struct app_external bat_app = { { NULL }, { NULL } };
+	static char bat_path[SIZEOF_STR];
+	static char file_arg[SIZEOF_STR];
+
+	bat_app.argv[0] = NULL;
+
+	if (!query || !*query)
+		return &bat_app;
+
+	/* If query contains a path separator, use it directly */
+	if (strchr(query, '/') || strchr(query, '~')) {
+		if (strchr(query, '~'))
+			path_expand(bat_path, sizeof(bat_path), query);
+		else
+			string_ncopy(bat_path, query, strlen(query));
+	} else {
+		const char *env_path = getenv("PATH");
+
+		if (!env_path || !*env_path)
+			env_path = _PATH_DEFPATH;
+		if (!path_search(bat_path, sizeof(bat_path), query, env_path, X_OK))
+			return &bat_app;
+	}
+
+	bat_app.argv[0] = bat_path;
+	bat_app.argv[1] = "--color=always";
+	bat_app.argv[2] = "--style=plain";
+	bat_app.argv[3] = "--paging=never";
+	if (filename && *filename) {
+		string_format(file_arg, "--file-name=%s", filename);
+		bat_app.argv[4] = file_arg;
+		bat_app.argv[5] = "-";	/* Explicitly read from stdin */
+		bat_app.argv[6] = NULL;
+	} else {
+		bat_app.argv[4] = "-";
+		bat_app.argv[5] = NULL;
+	}
+
+	return &bat_app;
+}
+
 /* vim: set ts=8 sw=8 noexpandtab: */

@@ -46,3 +46,79 @@ link:INSTALL.{docext}[the installation instructions].
 
 News about releases and latest features and bug fixes are found in
 link:NEWS.{docext}[the release notes].
+
+Fork-specific features
+----------------------
+
+This fork (`me/syntax-and-diff-bg-highlighting`) adds two diff-view changes
+on top of upstream tig:
+
+* Full-row red/green background bars on `-`/`+` lines (in place of upstream's
+  single-glyph coloring).
+* Syntax-highlighted diff text, piped through https://github.com/sharkdp/bat[`bat`]
+  for the file's language. Requires `bat` on `$PATH`.
+
+Recommended terminal setup
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The background bars look best in 24-bit direct color. The bar still works
+at lower color tiers but uses coarser hues — see "Graceful degradation"
+below.
+
+In a normal terminal (alacritty, kitty, foot, xterm, wezterm, etc.):
+
+[source,sh]
+----
+export TERM=xterm-direct
+----
+
+Inside neovim's `:terminal` (libvterm-based):
+
+[source,sh]
+----
+export TERM=xterm-direct2
+----
+
+Why the split: stock `xterm-direct`'s `setab`/`setaf` strings emit SGR
+sequences in the ITU T.416 pedantic form `CSI 48:2::R:G:B m` (two colons
+after `2`). libvterm doesn't parse the empty colorspace-ID slot and
+mis-reads the RGB triplet, producing garbled backgrounds. The
+`xterm-direct2` entry drops that slot — `CSI 48:2:R:G:B m` — which every
+libvterm-based terminal handles correctly. xterm and other emulators
+parse either form.
+
+If `xterm-direct`/`xterm-direct2` is not present on your system, the
+ncurses package usually provides it under `/usr/share/terminfo` or
+`/opt/homebrew/opt/ncurses/share/terminfo` (`infocmp xterm-direct` to
+verify). On Linux, the brewed ncurses ships these:
+
+[source,sh]
+----
+export TERMINFO_DIRS=/home/linuxbrew/.linuxbrew/share/terminfo:
+----
+
+Graceful degradation
+~~~~~~~~~~~~~~~~~~~~
+
+The diff-bg code picks colors at runtime based on ncurses' `COLORS`
+report. There are three tiers:
+
+[cols="1,2,3"]
+|===
+| Tier | Condition | Behaviour
+
+| Truecolor   | `COLORS >= 16777216`
+| Renders the bar in the GitHub-style dark red / dark green RGB values
+  (`#5f0000` / `#005f00`). diff-highlight emphasis ranges get brighter
+  variants (`#870000` / `#5f875f`).
+| 256-palette | `COLORS >= 256`
+| Renders the bar using the xterm-256 palette indices the truecolor RGB
+  values are derived from (22, 52, 65, 88). Hues match exactly when the
+  terminal uses the canonical xterm color cube.
+| Basic       | `COLORS < 256`
+| Falls back to the 8 basic ANSI colors. The dark/medium emphasis
+  distinction is lost (52 and 88 both render as red); the bar is still
+  full-row.
+|===
+
+The classification logic is exercised by `test/tools/test-color-mode.c`.

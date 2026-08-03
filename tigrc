@@ -124,6 +124,9 @@ set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set diff-options		= -C		# User-defined options for `tig show` (git-diff)
 #set diff-highlight		= yes		# String (or bool): Path to diff-highlight script,
 						#                   defaults to `diff-highlight`.
+#set syntax-highlight		= yes		# String (or bool): Path to syntax highlighter,
+						#                   defaults to `bat`. Requires
+						#                   256-color terminal support.
 set diff-indicator		= yes		# Show diff +/- signs?
 #set blame-options		= -C -C -C	# User-defined options for `tig blame` (git-blame)
 set log-options			= --cc --stat	# User-defined options for `tig log` (git-log)

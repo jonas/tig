@@ -368,6 +368,8 @@ TIG_OBJS = \
 	src/grep.o \
 	src/ui.o \
 	src/apps.o \
+	src/ansi.o \
+	src/color_mode.o \
 	$(GRAPH_OBJS) \
 	$(COMPAT_OBJS)
 
@@ -376,10 +378,16 @@ src/tig: $(TIG_OBJS)
 TEST_GRAPH_OBJS = test/tools/test-graph.o src/string.o src/util.o src/io.o $(GRAPH_OBJS) $(COMPAT_OBJS)
 test/tools/test-graph: $(TEST_GRAPH_OBJS)
 
+TEST_ANSI_OBJS = test/tools/test-ansi.o src/ansi.o $(COMPAT_OBJS)
+test/tools/test-ansi: $(TEST_ANSI_OBJS)
+
+TEST_COLOR_MODE_OBJS = test/tools/test-color-mode.o src/color_mode.o $(COMPAT_OBJS)
+test/tools/test-color-mode: $(TEST_COLOR_MODE_OBJS)
+
 DOC_GEN_OBJS = tools/doc-gen.o src/string.o src/types.o src/util.o src/request.o $(COMPAT_OBJS)
 tools/doc-gen: $(DOC_GEN_OBJS)
 
-OBJS = $(sort $(TIG_OBJS) $(TEST_GRAPH_OBJS) $(DOC_GEN_OBJS))
+OBJS = $(sort $(TIG_OBJS) $(TEST_GRAPH_OBJS) $(TEST_ANSI_OBJS) $(TEST_COLOR_MODE_OBJS) $(DOC_GEN_OBJS))
 
 DEPS_CFLAGS ?= -MMD -MP -MF .deps/$*.d
 
