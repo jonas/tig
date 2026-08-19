@@ -807,11 +807,18 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 		view->prev = prev;
 	}
 
-	if (!refresh && view_can_refresh(view) &&
-	    watch_update_single(&view->watch, WATCH_EVENT_SWITCH_VIEW)) {
-		refresh = watch_dirty(&view->watch);
-		if (refresh)
-			flags |= OPEN_REFRESH;
+	if (!refresh && view_can_refresh(view)) {
+		enum watch_trigger changed =
+			watch_update_single(&view->watch, WATCH_EVENT_SWITCH_VIEW);
+
+		if (changed) {
+			if (changed & WATCH_REFS)
+				load_refs(true);
+
+			refresh = watch_dirty(&view->watch);
+			if (refresh)
+				flags |= OPEN_REFRESH;
+		}
 	}
 
 	if (refresh) {

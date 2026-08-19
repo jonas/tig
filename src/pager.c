@@ -21,6 +21,7 @@
 #include "tig/view.h"
 #include "tig/draw.h"
 #include "tig/diff.h"
+#include "tig/watch.h"
 
 /*
  * Pager backend
@@ -146,6 +147,11 @@ pager_read(struct view *view, struct buffer *buf, bool force_stop)
 				report("Failed to run the diff-highlight program: %s", opt_diff_highlight);
 			return false;
 		}
+
+		/* Commands entered as :! are run in this view instead of through
+		 * open_external_viewer(), so notify repository watchers here. */
+		if (view->argv && view->argv[0])
+			watch_update(WATCH_EVENT_AFTER_COMMAND);
 
 		return true;
 	}

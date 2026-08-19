@@ -26,6 +26,10 @@ steps '
 
 	:exec @git reset --hard
 	:save-display main-after-reset-hard.screen
+
+	:!git tag test
+	q
+	:save-display main-after-tag.screen
 '
 
 tigrc <<EOF
@@ -83,6 +87,13 @@ EOF
 
 assert_equals 'main-after-reset-hard.screen' <<EOF
 2009-02-13 23:31 +0000 A. U. Thor I [master] Initial commit
+
+
+[main] ca34b8bb5a0034fc5b5ab9840f74cae1fab2c3a9 - commit 1 of 1             100%
+EOF
+
+assert_equals 'main-after-tag.screen' <<EOF
+2009-02-13 23:31 +0000 A. U. Thor I [master] <test> Initial commit
 
 
 [main] ca34b8bb5a0034fc5b5ab9840f74cae1fab2c3a9 - commit 1 of 1             100%
