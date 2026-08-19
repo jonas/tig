@@ -118,6 +118,23 @@ syntax_pipe_close(struct diff_state *state)
 	}
 }
 
+/*
+ * Discard the remainder of the current line from bat's output.  fgets(3)
+ * leaves the tail in the pipe when a colorized line overflows the read
+ * buffer, which would misalign every line read after it.
+ */
+static bool
+syntax_skip_rest_of_line(struct diff_state *state)
+{
+	int c;
+
+	while ((c = fgetc(state->syntax_read_fp)) != EOF)
+		if (c == '\n')
+			return true;
+
+	return false;
+}
+
 static bool
 syntax_pipe_open(struct diff_state *state, const char *filename)
 {
@@ -354,6 +371,14 @@ diff_syntax_highlight_line(struct view *view, const char *data,
 		{
 			size_t content_len = strlen(content);
 
+			/* Give up before writing: the reply has to round-trip
+			 * through `stripped`, which must also hold the +/-
+			 * prefix.  Writing first would leave a line in the pipe
+			 * that nobody reads back, desyncing the rest of the
+			 * file. */
+			if (content_len + prefix_len >= sizeof(stripped))
+				return false;
+
 			if (write(state->syntax_write_fd, content, content_len) < 0 ||
 				write(state->syntax_write_fd, "\n", 1) < 0) {
 				syntax_pipe_close(state);
@@ -370,12 +395,24 @@ diff_syntax_highlight_line(struct view *view, const char *data,
 		/* Strip trailing newline */
 		{
 			size_t len = strlen(highlighted);
-			if (len > 0 && highlighted[len - 1] == '\n')
-				highlighted[len - 1] = '\0';
+
+			if (len == 0 || highlighted[len - 1] != '\n') {
+				/* Colorized line outgrew `highlighted`; drop its
+				 * tail to keep the pipe aligned and let the plain
+				 * pager render this line. */
+				if (!syntax_skip_rest_of_line(state))
+					syntax_pipe_close(state);
+				return false;
+			}
+			highlighted[len - 1] = '\0';
 		}
 
-		/* Parse ANSI from bat's output */
-		nspans = ansi_parse_line(highlighted, stripped, sizeof(stripped),
+		/* Parse ANSI from bat's output, reserving room for the +/-
+		 * prefix prepended below.  bat can return more plain text than
+		 * it was sent (it expands tabs), so the cap is load-bearing —
+		 * checking the input length alone is not enough. */
+		nspans = ansi_parse_line(highlighted, stripped,
+					 sizeof(stripped) - prefix_len,
 					 spans, ANSI_MAX_SPANS);
 		if (nspans <= 0)
 			return false;
