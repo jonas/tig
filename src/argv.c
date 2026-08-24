@@ -561,6 +561,7 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 		"--perl-regexp",
 		"--pickaxe-all",
 		"--pickaxe-regex",
+		"--reflog",
 		"--regexp-ignore-case",
 		"--remotes",
 		"--remotes=",
