@@ -26,6 +26,7 @@
 #include "tig/main.h"
 #include "tig/stage.h"
 #include "tig/search.h"
+#include "tig/apps.h"
 
 static struct status stage_status;
 static enum line_type stage_line_type;
@@ -64,10 +65,21 @@ stage_diff_done(struct line *line, struct line *end)
 }
 
 static bool
-stage_diff_write(struct io *io, struct line *line, struct line *end)
+stage_diff_write(struct io *io, struct view *view, struct line *line, struct line *end)
 {
 	while (line < end) {
-		const char *text = box_text(line);
+		char buf[SIZEOF_STR];
+		const char *text;
+
+		/* Continuations repeat text the first row already wrote */
+		if (diff_is_wrapped_continuation(view, line)) {
+			line++;
+			if (stage_diff_done(line, end))
+				break;
+			continue;
+		}
+
+		text = diff_original_text(view, line, buf, sizeof(buf));
 
 		if (!io_write(io, text, strlen(text)) ||
 		    !io_write(io, "\n", 1))
@@ -81,7 +93,7 @@ stage_diff_write(struct io *io, struct line *line, struct line *end)
 }
 
 static bool
-stage_diff_range_write(struct io *io, bool staged,
+stage_diff_range_write(struct io *io, struct view *view, bool staged,
 		       struct line *line, struct line *first,
 		       struct line *last, struct line *end)
 {
@@ -89,8 +101,18 @@ stage_diff_range_write(struct io *io, bool staged,
 	enum line_type ignore = staged ? LINE_DIFF_DEL : LINE_DIFF_ADD;
 
 	while (line < end) {
+		char buf[SIZEOF_STR];
 		const char *prefix = "";
-		const char *data = box_text(line);
+		const char *data;
+
+		if (diff_is_wrapped_continuation(view, line)) {
+			line++;
+			if (stage_diff_done(line, end))
+				break;
+			continue;
+		}
+
+		data = diff_original_text(view, line, buf, sizeof(buf));
 
 		if (line >= first && line <= last) {
 			/* Write the complete line. */
@@ -115,7 +137,8 @@ stage_diff_range_write(struct io *io, bool staged,
 }
 
 static bool
-stage_apply_line(struct io *io, struct line *diff_hdr, struct line *chunk, struct line *single, struct line *end)
+stage_apply_line(struct io *io, struct view *view, struct line *diff_hdr,
+		 struct line *chunk, struct line *single, struct line *end)
 {
 	struct chunk_header header;
 	bool staged = stage_line_type == LINE_STAT_STAGED;
@@ -129,16 +152,16 @@ stage_apply_line(struct io *io, struct line *diff_hdr, struct line *chunk, struc
 	else
 		header.new.lines = header.old.lines + diff;
 
-	return stage_diff_write(io, diff_hdr, chunk) &&
+	return stage_diff_write(io, view, diff_hdr, chunk) &&
 	       io_printf(io, "@@ -%lu,%lu +%lu,%lu @@\n",
 		       header.old.position, header.old.lines,
 		       header.new.position, header.new.lines) &&
-	       stage_diff_range_write(io, staged, chunk + 1, single, single, end);
+	       stage_diff_range_write(io, view, staged, chunk + 1, single, single, end);
 }
 
 static bool
-stage_apply_part(struct io *io, struct line *diff_hdr, struct line *chunk,
-		 struct line *current, struct line *end)
+stage_apply_part(struct io *io, struct view *view, struct line *diff_hdr,
+		 struct line *chunk, struct line *current, struct line *end)
 {
 	struct chunk_header header;
 	struct line *first, *last, *line;
@@ -152,6 +175,11 @@ stage_apply_part(struct io *io, struct line *diff_hdr, struct line *chunk,
 	for (first = NULL, line = chunk; line < current; line++) {
 		bool change;
 
+		/* A wrapped line's continuations share its type; counting them
+		 * would inflate the chunk header and the patch would not apply */
+		if (diff_is_wrapped_continuation(view, line))
+			continue;
+
 		change = (line->type == LINE_DIFF_DEL || line->type == LINE_DIFF_ADD);
 		if (!first && change)
 			first = line;
@@ -164,6 +192,10 @@ stage_apply_part(struct io *io, struct line *diff_hdr, struct line *chunk,
 	last = first;
 	for (line = first, diff = 0; line < end; line++)
 	{
+		if (diff_is_wrapped_continuation(view, line)) {
+			last = line;
+			continue;
+		}
 		if (line->type == LINE_DIFF_DEL) {
 			last = line;
 			diff--;
@@ -183,11 +215,11 @@ stage_apply_part(struct io *io, struct line *diff_hdr, struct line *chunk,
 	else
 		header.new.lines = header.old.lines + diff;
 
-	return stage_diff_write(io, diff_hdr, chunk) &&
+	return stage_diff_write(io, view, diff_hdr, chunk) &&
 	       io_printf(io, "@@ -%lu,%lu +%lu,%lu @@\n",
 		       header.old.position, header.old.lines,
 		       header.new.position, header.new.lines) &&
-	       stage_diff_range_write(io, staged, chunk + 1, first, last, end);
+	       stage_diff_range_write(io, view, staged, chunk + 1, first, last, end);
 }
 
 static bool
@@ -219,16 +251,16 @@ stage_apply_chunk(struct view *view, struct line *chunk, struct line *single,
 	switch (update_type)
 	{
 	case UPDATE_SINGLE_LINE:
-		if (!stage_apply_line(&io, diff_hdr, chunk, single, view->line + view->lines))
+		if (!stage_apply_line(&io, view, diff_hdr, chunk, single, view->line + view->lines))
 			chunk = NULL;
 		break;
 	case UPDATE_PART:
-		if (!stage_apply_part(&io, diff_hdr, chunk, single, view->line + view->lines))
+		if (!stage_apply_part(&io, view, diff_hdr, chunk, single, view->line + view->lines))
 			chunk = NULL;
 		break;
 	case UPDATE_NORMAL:
-		if (!stage_diff_write(&io, diff_hdr, chunk) ||
-		    !stage_diff_write(&io, chunk, view->line + view->lines))
+		if (!stage_diff_write(&io, view, diff_hdr, chunk) ||
+		    !stage_diff_write(&io, view, chunk, view->line + view->lines))
 			chunk = NULL;
 		break;
 	}
@@ -413,6 +445,37 @@ stage_split_chunk(struct view *view, struct line *chunk_start)
 	} else {
 		report("The chunk cannot be split");
 	}
+}
+
+/*
+ * An untracked file is shown as raw content rather than a diff, so it is
+ * highlighted the way the blob view does it: pipe the view's input through the
+ * highlighter and colorize whole lines, with no diff background involved.
+ *
+ * Reuses diff_state's highlight/view_io pair so diff_done_highlight() tears
+ * this down on the same path as diff-highlight.
+ */
+static enum status_code
+stage_init_syntax_highlight(struct view *view, struct diff_state *state)
+{
+	struct app_external *app;
+	struct io io;
+
+	if (!state->syntax_highlight)
+		return SUCCESS;
+
+	app = app_syntax_highlight_load(opt_syntax_highlight, stage_status.new.name);
+	if (!app->argv[0] || !*app->argv[0])
+		return SUCCESS;
+
+	if (!io_exec(&io, IO_RP, view->dir, app->env, app->argv, view->io.pipe))
+		return SUCCESS;
+
+	state->view_io = view->io;
+	view->io = io;
+	state->highlight = true;
+
+	return SUCCESS;
 }
 
 static bool
@@ -778,10 +841,18 @@ stage_open(struct view *view, enum open_flags flags)
 
 	view->vid[0] = 0;
 	code = begin_update(view, repo.exec_dir, argv, flags | OPEN_WITH_STDERR);
-	if (code == SUCCESS && stage_line_type != LINE_STAT_UNTRACKED)
-		return diff_init_highlight(view, &state->diff);
+	if (code != SUCCESS)
+		return code;
 
-	return code;
+	/* Reset unconditionally: the untracked path records no lines of its
+	 * own, and leaving the previous file's state in place would let the
+	 * draw hook rewrite lines using stale line numbers. */
+	diff_init_syntax_highlight(&state->diff);
+
+	if (stage_line_type == LINE_STAT_UNTRACKED)
+		return stage_init_syntax_highlight(view, &state->diff);
+
+	return diff_init_highlight(view, &state->diff);
 }
 
 static bool
@@ -792,10 +863,21 @@ stage_read(struct view *view, struct buffer *buf, bool force_stop)
 	if (!stage_line_type)
 		return true;
 
-	if (stage_line_type == LINE_STAT_UNTRACKED)
-		return pager_common_read(view, buf ? buf->data : NULL, LINE_DEFAULT, NULL);
+	if (stage_line_type == LINE_STAT_UNTRACKED) {
+		if (!buf) {
+			if (!diff_done_highlight(&state->diff) && !force_stop)
+				report("Failed to run syntax highlighter: %s",
+				       opt_syntax_highlight);
+			return true;
+		}
+		if (state->diff.highlight)
+			return pager_add_ansi_line(view, buf->data, LINE_DEFAULT);
+		return pager_common_read(view, buf->data, LINE_DEFAULT, NULL);
+	}
 
 	if (!buf) {
+		/* Syntax highlighting runs at draw time, so its state is
+		 * released by the view's done hook rather than here. */
 		if (!diff_done_highlight(&state->diff)) {
 			if (!force_stop)
 				report("Failed to run the diff-highlight program: %s", opt_diff_highlight);
@@ -825,11 +907,11 @@ static struct view_ops stage_ops = {
 	sizeof(struct stage_state),
 	stage_open,
 	stage_read,
-	view_column_draw,
+	diff_draw,
 	stage_request,
 	view_column_grep,
 	stage_select,
-	NULL,
+	diff_done,
 	view_column_bit(LINE_NUMBER) | view_column_bit(TEXT),
 	pager_get_column_data,
 };

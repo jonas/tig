@@ -600,10 +600,111 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 						indent = 0;
 					}
 
-					if (draw_textn(view, cell->type, text, length))
+					if (cell->direct && !view->curline->selected) {
+						int pair_attr = COLOR_PAIR(COLOR_ID(cell->color_pair)) | cell->attr;
+						int max_width = VIEW_MAX_LEN(view);
+
+						(void) wattrset(view->win, pair_attr);
+						view->curtype = LINE_NONE;
+
+						if (max_width > 0 && length > 0) {
+							/* Expand tabs relative to current screen
+							 * column so alignment matches normal tig. */
+							char expanded[1024];
+							size_t esize = 0;
+							int pos = 0;
+							int cur_col = view->col;
+							int width = 0;	/* display columns emitted */
+							int col = 0;
+							int trimmed = false;
+							size_t skip = view->pos.col > view->col
+								? view->pos.col - view->col : 0;
+							const char *s;
+							int len;
+
+							while (pos < length && esize < sizeof(expanded) - 1) {
+								if (text[pos] == '\t') {
+									/* Tab stops are columns, not bytes */
+									int exp = opt_tab_size - ((cur_col + width) % opt_tab_size);
+
+									if (esize + exp >= sizeof(expanded) - 1)
+										exp = sizeof(expanded) - 1 - esize;
+									memset(expanded + esize, ' ', exp);
+									esize += exp;
+									width += exp;
+									pos++;
+								} else {
+									unsigned char clen = utf8_char_length(text + pos);
+
+									if (clen > length - pos)
+										clen = 1;
+									if (esize + clen > sizeof(expanded) - 1)
+										break;
+									memcpy(expanded + esize, text + pos, clen);
+									width += unicode_width(utf8_to_unicode(text + pos, clen),
+											       opt_tab_size);
+									esize += clen;
+									pos += clen;
+								}
+							}
+							expanded[esize] = '\0';
+
+							s = expanded;
+							len = utf8_length(&s, esize, skip,
+								&col, max_width, &trimmed,
+								false, opt_tab_size);
+							if (len > 0)
+								waddnstr(view->win, s, len);
+							view->col += col;
+						}
+
+						if (VIEW_MAX_LEN(view) <= 0) {
+							text += length;
+							break;
+						}
+					} else if (draw_textn(view, cell->type, text, length)) {
 						return true;
+					}
 
 					text += length;
+				}
+
+				/* Fill rest of line with the last direct cell's
+				 * background color for full-width diff bars.
+				 * Skip when selected — the cursor bar already
+				 * extends to end of line via wchgat(-1). */
+				if (box->cells > 0 && box->cell[0].direct
+					&& !view->curline->selected) {
+					int remaining = VIEW_MAX_LEN(view);
+
+					if (remaining > 0) {
+						int pair = box->cell[box->cells - 1].color_pair;
+						int attr = COLOR_PAIR(COLOR_ID(pair));
+						static const char spaces[] =
+							"                                "
+							"                                "
+							"                                "
+							"                                "
+							"                                "
+							"                                "
+							"                                "
+							"                                ";
+
+						(void) wattrset(view->win, attr);
+						view->curtype = LINE_NONE;
+						/* Loop rather than one waddnstr: the buffer is
+						 * fixed but the view can be wider than it, and
+						 * a short line would then leave the tail of the
+						 * bar unpainted. */
+						while (remaining > 0) {
+							int fill = remaining < (int) sizeof(spaces) - 1
+								 ? remaining : (int) sizeof(spaces) - 1;
+
+							waddnstr(view->win, spaces, fill);
+							view->col += fill;
+							remaining -= fill;
+						}
+					}
 				}
 
 			} else if (draw_text(view, type, text)) {

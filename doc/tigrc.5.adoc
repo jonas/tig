@@ -294,6 +294,23 @@ The following variables can be set:
 	regions are governed by `color diff-add-highlight` and
 	`color diff-del-highlight`.
 
+'syntax-highlight' (mixed)::
+
+	Whether to syntax-highlight file contents in diff, stage, blob, and
+	pager views using an external highlighter. Defaults to false. When set
+	to true then 'bat' is used, else the option value is used as the path
+	to the highlighter command. Requires a terminal with 256-color support
+	(TERM=xterm-256color or equivalent); silently disabled on terminals
+	with fewer than 256 colors. +
+	 +
+	When enabled, diff views show syntax-colored code on dark green
+	(additions) or dark red (deletions) backgrounds. Can be combined with
+	'diff-highlight' for intra-line change emphasis. Long lines are wrapped
+	with a 2-space indent on continuation lines. +
+	 +
+	The highlighter must accept `--color=always --style=plain --paging=never
+	--file-name=<name> -` arguments and read from stdin.
+
 'diff-indicator' (bool)::
 
 	Show +/- signs in the diff view. On by default.
