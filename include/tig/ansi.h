@@ -18,6 +18,10 @@
 
 #define ANSI_MAX_SPANS	512
 
+/* Parameters in one SGR sequence.  The colon form needs six per color, so
+ * a reset plus attributes plus fg and bg can reach the high teens. */
+#define ANSI_MAX_SGR_CODES	32
+
 enum ansi_color_type {
 	ANSI_COLOR_DEFAULT,
 	ANSI_COLOR_BASIC,	/* 0-7: standard ANSI colors */

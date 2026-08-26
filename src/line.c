@@ -257,7 +257,8 @@ init_colors(void)
  * Dynamic color pair allocation for syntax highlighting.
  *
  * Maps arbitrary (fg, bg) ncurses color indices to color pair IDs,
- * allocating new pairs on demand via init_pair().
+ * allocating new pairs on demand via init_extended_pair(), which unlike
+ * init_pair() accepts direct-color values outside the 256-color range.
  */
 
 #define DYN_PAIR_BUCKETS	256
@@ -276,8 +277,13 @@ static bool dyn_pair_initialized;
 static unsigned int
 dyn_pair_hash(int fg, int bg)
 {
-	unsigned int h = (unsigned int)(fg * 257 + bg);
-	return h % DYN_PAIR_BUCKETS;
+	/* In direct-color mode fg/bg are packed 0xRRGGBB, so the mixing
+	 * constants have to spread the high bytes down into the bucket
+	 * index; a small multiplier would key on the blue channel alone. */
+	unsigned int h = (unsigned int) fg * 2654435761u
+		       ^ (unsigned int) bg * 2246822519u;
+
+	return (h ^ (h >> 16)) % DYN_PAIR_BUCKETS;
 }
 
 static enum tig_color_mode

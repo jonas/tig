@@ -27,29 +27,73 @@
  * Parse a semicolon-separated list of SGR parameters.
  * Updates the current fg, bg, and attr state.
  */
+/*
+ * Consume an extended-color run starting at codes[*i] (38 or 48) and update
+ * `color`, leaving *i on the last parameter consumed.
+ *
+ * Accepts both the legacy semicolon form (38;5;N and 38;2;R;G;B) and the
+ * ITU T.416 colon form (38:5:N and 38:2:CS:R:G:B), which carries an extra
+ * colorspace field ahead of the components.
+ */
+static void
+ansi_parse_extended_color(const int *codes, const bool *subparam, int ncodes,
+			  size_t *i, struct ansi_color *color)
+{
+	size_t sel = *i + 1;	/* selects 256-palette (5) or truecolor (2) */
+
+	if (sel >= (size_t) ncodes)
+		return;
+
+	if (codes[sel] == 5 && sel + 1 < (size_t) ncodes) {
+		color->type = ANSI_COLOR_256;
+		color->index = codes[sel + 1];
+		*i = sel + 1;
+
+	} else if (codes[sel] == 2) {
+		size_t r = subparam[sel] ? sel + 2 : sel + 1;
+
+		if (r + 2 < (size_t) ncodes) {
+			color->type = ANSI_COLOR_RGB;
+			color->rgb.r = codes[r];
+			color->rgb.g = codes[r + 1];
+			color->rgb.b = codes[r + 2];
+			*i = r + 2;
+		}
+	}
+}
+
 static void
 ansi_parse_sgr(const char *params, size_t len,
 		struct ansi_color *fg, struct ansi_color *bg, int *attr)
 {
-	int codes[16];
+	int codes[ANSI_MAX_SGR_CODES];
+	/* Whether the separator *before* codes[i] was a colon.  The colon
+	 * form of 38/48 carries an extra colorspace field, so the RGB
+	 * components sit one slot further along than in the semicolon form. */
+	bool subparam[ANSI_MAX_SGR_CODES] = { false };
 	int ncodes = 0;
 	int val = 0;
 	bool has_val = false;
+	bool colon = false;
 	size_t i;
 
-	/* Parse semicolon-separated integers */
-	for (i = 0; i < len && ncodes < 16; i++) {
+	/* Parse the parameter list; both ';' and ':' separate values */
+	for (i = 0; i < len && ncodes < ANSI_MAX_SGR_CODES; i++) {
 		if (params[i] >= '0' && params[i] <= '9') {
 			val = val * 10 + (params[i] - '0');
 			has_val = true;
-		} else if (params[i] == ';') {
+		} else if (params[i] == ';' || params[i] == ':') {
+			subparam[ncodes] = colon;
 			codes[ncodes++] = has_val ? val : 0;
+			colon = params[i] == ':';
 			val = 0;
 			has_val = false;
 		}
 	}
-	if (has_val && ncodes < 16)
+	if (has_val && ncodes < ANSI_MAX_SGR_CODES) {
+		subparam[ncodes] = colon;
 		codes[ncodes++] = val;
+	}
 
 	/* Empty CSI m is equivalent to CSI 0 m (reset) */
 	if (ncodes == 0) {
@@ -134,38 +178,13 @@ ansi_parse_sgr(const char *params, size_t len,
 			bg->index = code - 100 + 8;
 			break;
 
-		/* Extended color: 38;5;N (256-color) or 38;2;R;G;B (truecolor) */
+		/* Extended color: 38;5;N, 38;2;R;G;B or the colon variants */
 		case 38:
-			if (i + 1 < (size_t) ncodes && codes[i + 1] == 5
-				&& i + 2 < (size_t) ncodes) {
-				fg->type = ANSI_COLOR_256;
-				fg->index = codes[i + 2];
-				i += 2;
-			} else if (i + 1 < (size_t) ncodes && codes[i + 1] == 2
-				   && i + 4 < (size_t) ncodes) {
-				fg->type = ANSI_COLOR_RGB;
-				fg->rgb.r = codes[i + 2];
-				fg->rgb.g = codes[i + 3];
-				fg->rgb.b = codes[i + 4];
-				i += 4;
-			}
+			ansi_parse_extended_color(codes, subparam, ncodes, &i, fg);
 			break;
 
-		/* Extended color: 48;5;N or 48;2;R;G;B */
 		case 48:
-			if (i + 1 < (size_t) ncodes && codes[i + 1] == 5
-				&& i + 2 < (size_t) ncodes) {
-				bg->type = ANSI_COLOR_256;
-				bg->index = codes[i + 2];
-				i += 2;
-			} else if (i + 1 < (size_t) ncodes && codes[i + 1] == 2
-				   && i + 4 < (size_t) ncodes) {
-				bg->type = ANSI_COLOR_RGB;
-				bg->rgb.r = codes[i + 2];
-				bg->rgb.g = codes[i + 3];
-				bg->rgb.b = codes[i + 4];
-				i += 4;
-			}
+			ansi_parse_extended_color(codes, subparam, ncodes, &i, bg);
 			break;
 		}
 	}
@@ -183,6 +202,9 @@ ansi_parse_line(const char *raw, char *stripped, size_t stripped_size,
 	int nspans = 0;
 	const char *p = raw;
 
+	if (!stripped_size)
+		return 0;
+
 	while (*p && out < stripped_size - 1) {
 		if (*p == 0x1b && *(p + 1) == '[') {
 			const char *seq_start = p + 2;
@@ -191,9 +213,10 @@ ansi_parse_line(const char *raw, char *stripped, size_t stripped_size,
 			struct ansi_color prev_bg = cur_bg;
 			int prev_attr = cur_attr;
 
-			/* Find the end of the CSI sequence (terminated by a letter) */
-			while (*seq_end && ((*seq_end >= '0' && *seq_end <= '9')
-				|| *seq_end == ';'))
+			/* A CSI runs until its final byte in 0x40-0x7e; the
+			 * parameter and intermediate bytes ahead of it are all
+			 * below that range.  'm' selects SGR. */
+			while (*seq_end && (*seq_end < 0x40 || *seq_end > 0x7e))
 				seq_end++;
 
 			if (*seq_end == 'm') {
@@ -214,8 +237,9 @@ ansi_parse_line(const char *raw, char *stripped, size_t stripped_size,
 				continue;
 			}
 
-			/* Not an SGR sequence; skip the ESC[ but copy rest */
-			p = seq_start;
+			/* Not an SGR sequence; drop the whole thing rather than
+			 * letting its parameters show up as text */
+			p = *seq_end ? seq_end + 1 : seq_end;
 			continue;
 		}
 
@@ -223,6 +247,11 @@ ansi_parse_line(const char *raw, char *stripped, size_t stripped_size,
 	}
 
 	stripped[out] = '\0';
+
+	/* Ran out of room: the caller must not treat `stripped` as the whole
+	 * line, so report it rather than silently truncating */
+	if (*p)
+		return -1;
 
 	/* Finish the last span */
 	if (out > span_start && nspans < max_spans) {

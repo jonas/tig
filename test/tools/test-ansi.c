@@ -583,6 +583,105 @@ test_bat_pipe_integration(void)
 	ASSERT_EQ("bat_pipe: span0 has color", spans[0].fg.type != ANSI_COLOR_DEFAULT, 1);
 }
 
+/*
+ * ITU T.416 colon form.  The colorspace field between the "2" selector and
+ * the components means R sits one slot later than in the semicolon form.
+ */
+static void
+test_colon_truecolor(void)
+{
+	char stripped[1024];
+	struct ansi_span spans[16];
+	int n;
+
+	n = ansi_parse_line("\x1b[38:2::255:128:0morange\x1b[0m",
+			    stripped, sizeof(stripped), spans, 16);
+
+	ASSERT_EQ("colon_truecolor: nspans", n, 1);
+	ASSERT_STR("colon_truecolor: text", stripped, "orange");
+	ASSERT_EQ("colon_truecolor: fg type", spans[0].fg.type, ANSI_COLOR_RGB);
+	ASSERT_EQ("colon_truecolor: r", spans[0].fg.rgb.r, 255);
+	ASSERT_EQ("colon_truecolor: g", spans[0].fg.rgb.g, 128);
+	ASSERT_EQ("colon_truecolor: b", spans[0].fg.rgb.b, 0);
+}
+
+static void
+test_colon_256_color(void)
+{
+	char stripped[1024];
+	struct ansi_span spans[16];
+	int n;
+
+	n = ansi_parse_line("\x1b[38:5:149mgreen\x1b[0m",
+			    stripped, sizeof(stripped), spans, 16);
+
+	ASSERT_EQ("colon_256: nspans", n, 1);
+	ASSERT_STR("colon_256: text", stripped, "green");
+	ASSERT_EQ("colon_256: fg type", spans[0].fg.type, ANSI_COLOR_256);
+	ASSERT_EQ("colon_256: index", spans[0].fg.index, 149);
+}
+
+static void
+test_colon_bg_and_fg(void)
+{
+	char stripped[1024];
+	struct ansi_span spans[16];
+	int n;
+
+	n = ansi_parse_line("\x1b[38:2::1:2:3;48:2::4:5:6mx\x1b[0m",
+			    stripped, sizeof(stripped), spans, 16);
+
+	ASSERT_EQ("colon_both: nspans", n, 1);
+	ASSERT_STR("colon_both: text", stripped, "x");
+	ASSERT_EQ("colon_both: fg type", spans[0].fg.type, ANSI_COLOR_RGB);
+	ASSERT_EQ("colon_both: fg r", spans[0].fg.rgb.r, 1);
+	ASSERT_EQ("colon_both: fg b", spans[0].fg.rgb.b, 3);
+	ASSERT_EQ("colon_both: bg type", spans[0].bg.type, ANSI_COLOR_RGB);
+	ASSERT_EQ("colon_both: bg r", spans[0].bg.rgb.r, 4);
+	ASSERT_EQ("colon_both: bg b", spans[0].bg.rgb.b, 6);
+}
+
+/* Non-SGR CSI sequences must vanish entirely, parameters included */
+static void
+test_non_sgr_csi_dropped(void)
+{
+	char stripped[1024];
+	struct ansi_span spans[16];
+
+	ansi_parse_line("ab\x1b[Kcd", stripped, sizeof(stripped), spans, 16);
+	ASSERT_STR("non_sgr: erase-line dropped", stripped, "abcd");
+
+	ansi_parse_line("ab\x1b[2Jcd", stripped, sizeof(stripped), spans, 16);
+	ASSERT_STR("non_sgr: erase-display dropped", stripped, "abcd");
+
+	ansi_parse_line("ab\x1b[?25lcd", stripped, sizeof(stripped), spans, 16);
+	ASSERT_STR("non_sgr: private mode dropped", stripped, "abcd");
+
+	ansi_parse_line("\x1b[31mab\x1b[K\x1b[0mcd", stripped, sizeof(stripped), spans, 16);
+	ASSERT_STR("non_sgr: mixed with SGR", stripped, "abcd");
+}
+
+/* Truncation must be reported so callers can fall back instead of
+ * silently rendering a partial line */
+static void
+test_truncation_reported(void)
+{
+	char stripped[8];
+	struct ansi_span spans[16];
+	int n;
+
+	n = ansi_parse_line("0123456789abcdef", stripped, sizeof(stripped), spans, 16);
+	ASSERT_EQ("truncation: reports -1", n, -1);
+
+	n = ansi_parse_line("0123456", stripped, sizeof(stripped), spans, 16);
+	ASSERT_EQ("truncation: exact fit ok", n, 1);
+	ASSERT_STR("truncation: exact fit text", stripped, "0123456");
+
+	/* A zero-sized destination must not underflow the bound */
+	n = ansi_parse_line("anything", stripped, 0, spans, 16);
+	ASSERT_EQ("truncation: zero size", n, 0);
+}
+
 int
 main(int argc, const char *argv[])
 {
@@ -599,6 +698,13 @@ main(int argc, const char *argv[])
 	test_empty_string();
 	test_only_escapes();
 	test_bat_real_output();
+
+	/* Colon-form SGR, non-SGR sequences and buffer limits */
+	test_colon_truecolor();
+	test_colon_256_color();
+	test_colon_bg_and_fg();
+	test_non_sgr_csi_dropped();
+	test_truncation_reported();
 
 	/* Real bat integration */
 	test_bat_pipe_integration();

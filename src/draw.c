@@ -612,8 +612,9 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 							 * column so alignment matches normal tig. */
 							char expanded[1024];
 							size_t esize = 0;
-							int pos;
+							int pos = 0;
 							int cur_col = view->col;
+							int width = 0;	/* display columns emitted */
 							int col = 0;
 							int trimmed = false;
 							size_t skip = view->pos.col > view->col
@@ -621,15 +622,29 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 							const char *s;
 							int len;
 
-							for (pos = 0; pos < length && esize < sizeof(expanded) - 1; pos++) {
+							while (pos < length && esize < sizeof(expanded) - 1) {
 								if (text[pos] == '\t') {
-									int exp = opt_tab_size - ((cur_col + esize) % opt_tab_size);
+									/* Tab stops are columns, not bytes */
+									int exp = opt_tab_size - ((cur_col + width) % opt_tab_size);
+
 									if (esize + exp >= sizeof(expanded) - 1)
 										exp = sizeof(expanded) - 1 - esize;
 									memset(expanded + esize, ' ', exp);
 									esize += exp;
+									width += exp;
+									pos++;
 								} else {
-									expanded[esize++] = text[pos];
+									unsigned char clen = utf8_char_length(text + pos);
+
+									if (clen > length - pos)
+										clen = 1;
+									if (esize + clen > sizeof(expanded) - 1)
+										break;
+									memcpy(expanded + esize, text + pos, clen);
+									width += unicode_width(utf8_to_unicode(text + pos, clen),
+											       opt_tab_size);
+									esize += clen;
+									pos += clen;
 								}
 							}
 							expanded[esize] = '\0';
@@ -674,13 +689,21 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 							"                                "
 							"                                "
 							"                                ";
-						int fill = remaining < (int) sizeof(spaces) - 1
-							 ? remaining : (int) sizeof(spaces) - 1;
 
 						(void) wattrset(view->win, attr);
 						view->curtype = LINE_NONE;
-						waddnstr(view->win, spaces, fill);
-						view->col += fill;
+						/* Loop rather than one waddnstr: the buffer is
+						 * fixed but the view can be wider than it, and
+						 * a short line would then leave the tail of the
+						 * bar unpainted. */
+						while (remaining > 0) {
+							int fill = remaining < (int) sizeof(spaces) - 1
+								 ? remaining : (int) sizeof(spaces) - 1;
+
+							waddnstr(view->win, spaces, fill);
+							view->col += fill;
+							remaining -= fill;
+						}
 					}
 				}
 

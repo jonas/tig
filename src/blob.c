@@ -151,36 +151,6 @@ blob_open(struct view *view, enum open_flags flags)
 }
 
 static bool
-blob_add_highlighted_line(struct view *view, const char *stripped,
-			  struct ansi_span *spans, int nspans)
-{
-	struct line *line;
-	struct box *box;
-	struct ansi_color default_bg = { ANSI_COLOR_DEFAULT, { .index = 0 } };
-	int i;
-
-	line = add_line_text_at(view, view->lines, stripped, LINE_DEFAULT, nspans);
-	if (!line)
-		return false;
-
-	box = line->data;
-
-	/* Overwrite the single cell that add_line_text_at created
-	 * with our per-span cells (same pattern as diff_common_add_line) */
-	for (i = 0; i < nspans; i++) {
-		memset(&box->cell[i], 0, sizeof(box->cell[i]));
-		box->cell[i].type = LINE_DEFAULT;
-		box->cell[i].length = spans[i].length;
-		box->cell[i].direct = 1;
-		box->cell[i].color_pair = get_dynamic_color_pair(&spans[i].fg, &default_bg);
-		box->cell[i].attr = spans[i].attr;
-	}
-	box->cells = nspans;
-
-	return true;
-}
-
-static bool
 blob_read(struct view *view, struct buffer *buf, bool force_stop)
 {
 	struct blob_state *state = view->private;
@@ -198,16 +168,8 @@ blob_read(struct view *view, struct buffer *buf, bool force_stop)
 		return true;
 	}
 
-	if (state->highlight && ansi_has_escapes(buf->data)) {
-		char stripped[SIZEOF_STR];
-		struct ansi_span spans[ANSI_MAX_SPANS];
-		int nspans;
-
-		nspans = ansi_parse_line(buf->data, stripped, sizeof(stripped),
-					 spans, ANSI_MAX_SPANS);
-		if (nspans > 0)
-			return blob_add_highlighted_line(view, stripped, spans, nspans);
-	}
+	if (state->highlight)
+		return pager_add_ansi_line(view, buf->data, LINE_DEFAULT);
 
 	return pager_common_read(view, buf->data, LINE_DEFAULT, NULL);
 }

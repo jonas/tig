@@ -21,6 +21,7 @@
 #include "tig/view.h"
 #include "tig/draw.h"
 #include "tig/diff.h"
+#include "tig/ansi.h"
 
 /*
  * Pager backend
@@ -134,6 +135,53 @@ pager_common_read(struct view *view, const char *data, enum line_type type, stru
 	return true;
 }
 
+/*
+ * Add a line of pre-colored text from a syntax highlighter, using one cell per
+ * ANSI span.  Used wherever a view shows raw file content rather than a diff,
+ * so the highlighter's colors land on the default background.
+ *
+ * Falls back to the plain reader when there is nothing to colorize.
+ */
+bool
+pager_add_ansi_line(struct view *view, const char *data, enum line_type type)
+{
+	struct ansi_color default_bg = { ANSI_COLOR_DEFAULT, { .index = 0 } };
+	struct ansi_span spans[ANSI_MAX_SPANS];
+	char stripped[SIZEOF_STR];
+	struct line *line;
+	struct box *box;
+	int nspans, i;
+
+	if (!data || !ansi_has_escapes(data))
+		return pager_common_read(view, data, type, NULL);
+
+	nspans = ansi_parse_line(data, stripped, sizeof(stripped),
+				 spans, ANSI_MAX_SPANS);
+	if (nspans < 0)
+		/* Too long to strip; show it as-is rather than truncated */
+		return pager_common_read(view, data, type, NULL);
+	if (nspans == 0)
+		return pager_common_read(view, stripped, type, NULL);
+
+	line = add_line_text_at(view, view->lines, stripped, type, nspans);
+	if (!line)
+		return false;
+
+	/* Replace the single cell add_line_text_at created with one per span */
+	box = line->data;
+	for (i = 0; i < nspans; i++) {
+		memset(&box->cell[i], 0, sizeof(box->cell[i]));
+		box->cell[i].type = type;
+		box->cell[i].length = spans[i].length;
+		box->cell[i].direct = 1;
+		box->cell[i].color_pair = get_dynamic_color_pair(&spans[i].fg, &default_bg);
+		box->cell[i].attr = spans[i].attr;
+	}
+	box->cells = nspans;
+
+	return true;
+}
+
 static bool
 pager_read(struct view *view, struct buffer *buf, bool force_stop)
 {
@@ -141,7 +189,8 @@ pager_read(struct view *view, struct buffer *buf, bool force_stop)
 		do_scroll_view(view, 1);
 
 	if (!buf) {
-		diff_done_syntax_highlight(view->private);
+		/* Syntax highlighting outlives the read: it runs when lines are
+		 * drawn, so its state is released by the view's done hook. */
 		if (!diff_done_highlight(view->private)) {
 			if (!force_stop)
 				report("Failed to run the diff-highlight program: %s", opt_diff_highlight);
@@ -224,11 +273,11 @@ static struct view_ops pager_ops = {
 	sizeof(struct diff_state),
 	pager_open,
 	pager_read,
-	view_column_draw,
+	diff_draw,
 	pager_request,
 	view_column_grep,
 	pager_select,
-	NULL,
+	diff_done,
 	view_column_bit(LINE_NUMBER) | view_column_bit(TEXT),
 	pager_get_column_data,
 };

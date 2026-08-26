@@ -156,18 +156,24 @@ struct app_external
 			return &bat_app;
 	}
 
-	bat_app.argv[0] = bat_path;
-	bat_app.argv[1] = "--color=always";
-	bat_app.argv[2] = "--style=plain";
-	bat_app.argv[3] = "--paging=never";
-	if (filename && *filename) {
-		string_format(file_arg, "--file-name=%s", filename);
-		bat_app.argv[4] = file_arg;
-		bat_app.argv[5] = "-";	/* Explicitly read from stdin */
-		bat_app.argv[6] = NULL;
-	} else {
-		bat_app.argv[4] = "-";
-		bat_app.argv[5] = NULL;
+	{
+		size_t argc = 0;
+
+		bat_app.argv[argc++] = bat_path;
+		bat_app.argv[argc++] = "--color=always";
+		bat_app.argv[argc++] = "--style=plain";
+		bat_app.argv[argc++] = "--paging=never";
+		/* Callers pair one input line with one output line, so bat
+		 * must not fold long lines.  Pass this explicitly: a user's
+		 * ~/.config/bat/config can otherwise set --wrap, and config
+		 * only loses to flags we actually supply. */
+		bat_app.argv[argc++] = "--wrap=never";
+		if (filename && *filename) {
+			string_format(file_arg, "--file-name=%s", filename);
+			bat_app.argv[argc++] = file_arg;
+		}
+		bat_app.argv[argc++] = "-";	/* Explicitly read from stdin */
+		bat_app.argv[argc] = NULL;
 	}
 
 	return &bat_app;
