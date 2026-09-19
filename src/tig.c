@@ -378,6 +378,7 @@ static const char usage_string[] =
 "\n"
 "Options:\n"
 "  +<number>       Select line <number> in the first view\n"
+"  --describe      git-describe arguments e.g: --describe=\"--exclude 'next-*' --contains\"\n"
 "  -v, --version   Show version and exit\n"
 "  -h, --help      Show help message and exit\n"
 "  -C <path>       Start in <path>";
@@ -525,13 +526,19 @@ parse_options(int argc, const char *argv[], bool pager_mode)
 		i--; /* revisit option in loop below */
 	}
 
+	argv_env.describe = NULL;
+
 	for (; i < argc; i++) {
 		const char *opt = argv[i];
 
 		// stop parsing our options after -- and let rev-parse handle the rest
 		if (!seen_dashdash) {
-			if (!strcmp(opt, "--")) {
+			if (strlen(opt) == 2 && !strcmp(opt, "--")) {
 				seen_dashdash = true;
+
+			} else if (!strncmp(opt, "--describe=", 11)) {
+				argv_env.describe = (char *)opt + 11;
+				continue;
 
 			} else if (!strcmp(opt, "-v") || !strcmp(opt, "--version")) {
 #if defined HAVE_PCRE2
