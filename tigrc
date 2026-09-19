@@ -152,6 +152,7 @@ set mouse-scroll		= 3		# Number of lines to scroll via the mouse
 set mouse-wheel-cursor		= no		# Prefer moving the cursor to scrolling the view?
 set pgrp			= no		# Make tig process-group leader?
 set pager-autoscroll		= no		# Scroll the pager view automatically while loading?
+set show-loading		= yes		# Clear empty loading views and show the loading timer?
 set recurse-tree		= no		# Show all files recursively in the tree view?
 
 # User-defined commands
