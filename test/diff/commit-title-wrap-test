@@ -1,0 +1,55 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export COLUMNS=40
+
+steps '
+	:save-display wrapped-commit-title.screen
+'
+
+tigrc <<EOF
+set line-graphics = utf-8
+set wrap-lines = true
+EOF
+
+test_tig show <<EOF
+commit 1b4c64b595aeb4de1d317d669faacd3c1d82f0b0
+Author: A. U. Thor <author@example.com>
+Date:   Sun Jul 2 15:01:24 2017 +0200
+
+    A deliberately long commit title that wraps onto a second visual line
+EOF
+
+assert_equals 'wrapped-commit-title.screen' <<EOF
+commit 1b4c64b595aeb4de1d317d669faacd3c1
+d82f0b0
+Author: A. U. Thor <author@example.com>
+Date:   Sun Jul 2 15:01:24 2017 +0200
+
+    A deliberately long commit title tha
++t wraps onto a second visual line
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[diff] 1b4c64b595aeb4de1d317d669faa 100%
+EOF

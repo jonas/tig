@@ -337,12 +337,13 @@ diff_common_read(struct view *view, const char *data, struct diff_state *state)
 	}
 
 	if (!state->after_commit_title && !prefixcmp(data, "    ")) {
-		struct line *line = add_line_text(view, data, LINE_DEFAULT);
+		struct line *line;
 
-		if (line)
-			line->commit_title = 1;
+		if (!pager_common_read(view, data, LINE_DEFAULT, &line))
+			return false;
+		line->commit_title = 1;
 		state->after_commit_title = true;
-		return line != NULL;
+		return true;
 	}
 
 	if (type == LINE_DIFF_HEADER) {
