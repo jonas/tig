@@ -64,9 +64,20 @@ main_register_commit(struct view *view, struct commit *commit, const char *ids, 
 	string_copy_rev(commit->id, ids);
 
 	/* FIXME: lazily check index state here instead of in main_open. */
-	if ((state->add_changes_untracked || state->add_changes_unstaged || state->add_changes_staged) && is_head_commit(commit->id)) {
-		main_add_changes(view, state, ids);
-		state->add_changes_untracked = state->add_changes_unstaged = state->add_changes_staged = false;
+	if (state->add_changes_untracked || state->add_changes_unstaged || state->add_changes_staged) {
+		/* When filtering by file, history simplification may prune
+		 * the HEAD commit from the log. Anchor the changes commits
+		 * to the first commit of the filtered log instead, so they
+		 * stay at the top of the view. The changes commits have a
+		 * null id and must not trigger this themselves. */
+		bool anchor = is_head_commit(commit->id) ||
+			      (opt_file_args && opt_file_filter &&
+			       strcmp(commit->id, NULL_ID));
+
+		if (anchor) {
+			main_add_changes(view, state, ids);
+			state->add_changes_untracked = state->add_changes_unstaged = state->add_changes_staged = false;
+		}
 	}
 
 	if (state->with_graph)
@@ -160,7 +171,8 @@ main_check_index(struct view *view, struct main_state *state)
 {
 	struct index_diff diff;
 
-	if (!index_diff(&diff, opt_show_untracked, false))
+	if (!index_diff(&diff, opt_show_untracked, false,
+		    opt_file_filter ? opt_file_args : NULL))
 		return false;
 
 	if (!diff.untracked) {
@@ -426,6 +438,16 @@ main_read(struct view *view, struct buffer *buf, bool force_stop)
 
 	if (!buf) {
 		main_flush_commit(view, commit);
+
+		/* The filtered log may be empty, e.g. when the paths have no
+		 * commit history; add the changes commits on their own. */
+		if (opt_file_args && opt_file_filter &&
+		    (state->add_changes_untracked || state->add_changes_unstaged ||
+		     state->add_changes_staged)) {
+			main_add_changes(view, state, repo.head_id);
+			state->add_changes_untracked = state->add_changes_unstaged =
+				state->add_changes_staged = false;
+		}
 
 		if (!force_stop && failed_to_load_initial_view(view))
 			die("No revisions match the given arguments.");

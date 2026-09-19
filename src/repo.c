@@ -12,6 +12,7 @@
  */
 
 #include "tig/tig.h"
+#include "tig/argv.h"
 #include "tig/repo.h"
 #include "tig/io.h"
 #include "tig/refdb.h"
@@ -146,22 +147,34 @@ update_index(void)
 }
 
 bool
-index_diff(struct index_diff *diff, bool untracked, bool count_all)
+index_diff(struct index_diff *diff, bool untracked, bool count_all, const char **files)
 {
 	const char *untracked_arg = !untracked ? "--untracked-files=no" :
 				     count_all ? "--untracked-files=all" :
 						 "--untracked-files=normal";
 	const char *status_argv[] = {
-		"git", "status", "--porcelain", "-z", untracked_arg, NULL
+		"git", "status", "--porcelain", "-z", untracked_arg, "--", NULL
 	};
+	const char **argv = NULL;
 	struct io io;
 	struct buffer buf;
 	bool ok = true;
 
 	memset(diff, 0, sizeof(*diff));
 
-	if (!io_run(&io, IO_RD, repo.exec_dir, NULL, status_argv))
+	/* Run in the current directory so relative pathspecs in the file
+	 * arguments resolve like they do for the views, which do not use
+	 * repo.exec_dir either (e.g. the main view). */
+	if (!argv_append_array(&argv, status_argv) ||
+	    (files && !argv_append_array(&argv, files)) ||
+	    !io_run(&io, IO_RD, NULL, NULL, argv)) {
+		argv_free(argv);
+		free(argv);
 		return false;
+	}
+
+	argv_free(argv);
+	free(argv);
 
 	while (io_get(&io, &buf, 0, true) && (ok = buf.size > 3)) {
 		if (buf.data[0] == '?')
