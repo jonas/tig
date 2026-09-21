@@ -1,0 +1,53 @@
+#!/bin/sh
+
+. libtest.sh
+
+export TIGRC_SYSTEM=does-not-exist
+
+test_case user-command-comment \
+	--args='status' \
+	--tigrc="
+		bind generic : prompt # User comment for a builtin command is not exposed
+		bind generic , none # User comment does not interfere with a null binding
+		bind generic u1 !user
+		bind generic u2 !user # This is a user commentary for a simple user command
+		bind generic u3 !user 1 2 3 # This is a user commentary for a user command with parameters
+		bind generic u4 !user command with a long parameter list but no user commentary
+		" \
+	--script="
+		:bind generic p1 !true
+		:view-help
+		" \
+	<<EXPECTED_HELP_VIEW
+Quick reference for tig keybindings:
+ 
+[-] generic bindings
+Misc
+   : prompt      Open the prompt
+External commands:
+  u1 !user
+  u2 !user       This is a user commentary for a simple user command
+  u3 !user 1 2 3 This is a user commentary for a user command with parameters
+  u4 !user command with a long parameter list but no user commentary
+  p1 !true
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+[help] - line 1 of 11                                                       100%
+EXPECTED_HELP_VIEW
+
+run_test_cases

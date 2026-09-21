@@ -91,10 +91,12 @@ struct run_request {
 	struct keymap *keymap;
 	struct run_request_flags flags;
 	const char **argv;
+	char *name;
+	char *help;
 };
 
 struct run_request *get_run_request(enum request request);
-enum status_code add_run_request(struct keymap *keymap, const struct key key[], size_t keys, const char **argv);
+enum status_code add_run_request(struct keymap *keymap, const struct key key[], size_t keys, const char **argv, const char *help);
 enum status_code parse_run_request_flags(struct run_request_flags *flags, const char **argv);
 const char *format_run_request_flags(const struct run_request *req);
 
