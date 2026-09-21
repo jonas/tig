@@ -14,6 +14,7 @@
 #include "tig/tig.h"
 #include "tig/parse.h"
 #include "tig/map.h"
+#include "tig/repo.h"
 
 size_t
 parse_size(const char *text)
@@ -110,12 +111,12 @@ parse_number(const char **posref, size_t *number)
 bool
 parse_blame_header(struct blame_header *header, const char *text)
 {
-	const char *pos = text + SIZEOF_REV - 2;
+	const char *pos = text + REPO_INFO_SIZEOF_REV - 2;
 
-	if (strlen(text) <= SIZEOF_REV || pos[1] != ' ')
+	if (strlen(text) <= REPO_INFO_SIZEOF_REV || pos[1] != ' ')
 		return false;
 
-	string_ncopy(header->id, text, SIZEOF_REV);
+	string_copy_rev(header->id, text);
 
 	if (!parse_number(&pos, &header->orig_lineno) ||
 	    !parse_number(&pos, &header->lineno))
@@ -183,10 +184,10 @@ parse_blame_info(struct blame_commit *commit, char *author, char *committer, cha
 		string_ncopy(commit->title, line, strlen(line));
 
 	} else if (match_blame_header("previous ", &line)) {
-		if (strlen(line) <= SIZEOF_REV)
+		if (strlen(line) <= REPO_INFO_SIZEOF_REV)
 			return false;
 		string_copy_rev(commit->parent_id, line);
-		line += SIZEOF_REV;
+		line += REPO_INFO_SIZEOF_REV;
 		commit->parent_filename = get_path(line);
 		if (!commit->parent_filename)
 			return true;

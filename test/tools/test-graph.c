@@ -15,6 +15,7 @@
 #include "tig/util.h"
 #include "tig/io.h"
 #include "tig/graph.h"
+#include "tig/repo.h"
 
 #define USAGE \
 "test-graph [--ascii]\n" \
@@ -22,6 +23,8 @@
 "Example usage:\n" \
 "	# git log --pretty=raw --parents | ./test-graph\n" \
 "	# git log --pretty=raw --parents | ./test-graph --ascii"
+
+struct repo_info repo = {REPO_INFO_SHA1};
 
 struct commit {
 	char id[SIZEOF_REV];

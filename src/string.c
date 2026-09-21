@@ -13,6 +13,7 @@
 
 #include "tig/tig.h"
 #include "tig/string.h"
+#include "tig/repo.h"
 #include "compat/utf8proc.h"
 
 /*
@@ -42,7 +43,7 @@ iscommit(const char *str)
 			return false;
 	}
 
-	return 7 <= pos && pos < SIZEOF_REV;
+	return 7 <= pos && pos < REPO_INFO_SIZEOF_REV;
 }
 
 int
@@ -72,11 +73,11 @@ string_copy_rev(char *dst, const char *src)
 	if (!*src)
 		return;
 
-	for (srclen = 0; srclen < SIZEOF_REV; srclen++)
+	for (srclen = 0; srclen < REPO_INFO_SIZEOF_REV; srclen++)
 		if (!src[srclen] || isspace((unsigned char)src[srclen]))
 			break;
 
-	string_ncopy_do(dst, SIZEOF_REV, src, srclen);
+	string_ncopy_do(dst, REPO_INFO_SIZEOF_REV, src, srclen);
 }
 
 void
