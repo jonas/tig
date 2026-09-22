@@ -578,6 +578,7 @@ argv_parse_rev_flag(const char *arg, struct rev_flags *rev_flags)
 		"--no-max-parents",
 		"--no-min-parents",
 		"--no-walk",
+		"--not",
 		"--perl-regexp",
 		"--pickaxe-all",
 		"--pickaxe-regex",
