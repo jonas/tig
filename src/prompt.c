@@ -1125,6 +1125,31 @@ run_prompt_command(struct view *view, const char *argv[])
 	return REQ_NONE;
 }
 
+static bool
+run_request_should_amend(const char **argv)
+{
+	return repo_amend_mode_enabled() &&
+	       argv && argv[0] && argv[1] &&
+	       !strcmp(argv[0], "git") &&
+	       !strcmp(argv[1], "commit") &&
+	       !argv_contains(argv, "--amend");
+}
+
+static bool
+run_request_add_amend(const char ***dst_argv, const char **src_argv)
+{
+	size_t i;
+
+	for (i = 0; src_argv[i]; i++) {
+		if (!argv_append(dst_argv, src_argv[i]))
+			return false;
+		if (i == 1 && !argv_append(dst_argv, "--amend"))
+			return false;
+	}
+
+	return true;
+}
+
 enum request
 exec_run_request(struct view *view, struct run_request *req)
 {
@@ -1144,6 +1169,23 @@ exec_run_request(struct view *view, struct run_request *req)
 	    || !argv) {
 		report("Failed to format arguments");
 		return REQ_NONE;
+	}
+
+	if (run_request_should_amend(argv)) {
+		const char **amend_argv = NULL;
+
+		if (!run_request_add_amend(&amend_argv, argv)) {
+			argv_free(argv);
+			free(argv);
+			argv_free(amend_argv);
+			free(amend_argv);
+			report("Failed to prepare amend commit command");
+			return REQ_NONE;
+		}
+
+		argv_free(argv);
+		free(argv);
+		argv = amend_argv;
 	}
 
 	if (req->flags.internal) {

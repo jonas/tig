@@ -16,6 +16,8 @@
 #include "tig/io.h"
 #include "tig/refdb.h"
 #include "tig/git.h"
+#include "tig/display.h"
+#include "tig/status.h"
 
 #define REPO_INFO_GIT_DIR	"--git-dir"
 #define REPO_INFO_WORK_TREE	"--is-inside-work-tree"
@@ -131,6 +133,31 @@ load_repo_head(void)
 
 struct repo_info repo;
 
+const char *
+repo_staged_parent(void)
+{
+	return repo.amend_mode ? "HEAD^" : "HEAD";
+}
+
+bool
+repo_amend_mode_enabled(void)
+{
+	return repo.amend_mode;
+}
+
+bool
+repo_toggle_amend_mode(void)
+{
+	if (!repo.amend_mode && is_initial_commit()) {
+		report("Amend mode requires an existing commit");
+		return false;
+	}
+
+	repo.amend_mode = !repo.amend_mode;
+	report("Amend mode %s", repo.amend_mode ? "enabled" : "disabled");
+	return true;
+}
+
 /*
  * Git index utils.
  */
@@ -154,6 +181,7 @@ index_diff(struct index_diff *diff, bool untracked, bool count_all)
 	const char *status_argv[] = {
 		"git", "status", "--porcelain", "-z", untracked_arg, NULL
 	};
+	const char *staged_parent = repo_staged_parent();
 	struct io io;
 	struct buffer buf;
 	bool ok = true;
@@ -185,6 +213,41 @@ index_diff(struct index_diff *diff, bool untracked, bool count_all)
 		ok = false;
 
 	io_done(&io);
+	if (!ok || !repo.amend_mode || is_initial_commit())
+		return ok;
+
+	{
+		const char *diff_index_argv[] = {
+			"git", "diff-index", "--cached", "--diff-filter=ACDMRTXB",
+			"-z", staged_parent, "--", NULL
+		};
+		int staged = 0;
+		struct status parsed = {0};
+
+		if (!io_run(&io, IO_RD, repo.exec_dir, NULL, diff_index_argv))
+			return false;
+
+		while (io_get(&io, &buf, 0, true) && (ok = buf.size > 3)) {
+			if (!status_get_diff(&parsed, buf.data, buf.size)) {
+				ok = false;
+				break;
+			}
+			staged++;
+			if (parsed.status == 'R' || parsed.status == 'C')
+				io_get(&io, &buf, 0, true);
+			if (!io_get(&io, &buf, 0, true))
+				break;
+			if (!count_all && staged && diff->unstaged &&
+			    (!untracked || diff->untracked))
+				break;
+		}
+
+		if (io_error(&io))
+			ok = false;
+		io_done(&io);
+		diff->staged = staged;
+	}
+
 	return ok;
 }
 
