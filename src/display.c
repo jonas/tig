@@ -593,6 +593,15 @@ report_clear(void)
 }
 
 static void
+restore_terminal_title(void)
+{
+	static const char restore_seq[] = "\033[23;2t";
+
+	if (opt_tty.fd >= 0)
+		write(opt_tty.fd, restore_seq, sizeof(restore_seq) - 1);
+}
+
+static void
 done_display(void)
 {
 	if (cursed) {
@@ -602,6 +611,7 @@ done_display(void)
 		}
 		curs_set(1);
 		endwin();
+		restore_terminal_title();
 	}
 	cursed = false;
 
@@ -625,6 +635,29 @@ set_terminal_modes(void)
 	noecho();	/* Don't echo input */
 	curs_set(0);
 	leaveok(stdscr, false);
+}
+
+void
+set_terminal_title(const char *title)
+{
+	char buf[SIZEOF_STR];
+	int len;
+
+	if (opt_tty.fd < 0)
+		return;
+
+	len = snprintf(buf, sizeof(buf), "\033]0;%s\007", title);
+	if (len > 0 && (size_t) len < sizeof(buf))
+		write(opt_tty.fd, buf, len);
+}
+
+static void
+save_terminal_title(void)
+{
+	static const char save_seq[] = "\033[22;2t";
+
+	if (opt_tty.fd >= 0)
+		write(opt_tty.fd, save_seq, sizeof(save_seq) - 1);
 }
 
 void
@@ -688,6 +721,7 @@ init_display(void)
 		die("Failed to initialize curses");
 
 	set_terminal_modes();
+	save_terminal_title();
 	init_colors();
 
 	getmaxyx(stdscr, y, x);
