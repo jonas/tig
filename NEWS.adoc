@@ -1,6 +1,14 @@
 Release notes
 =============
 
+master
+------
+
+Improvements:
+
+ - Add `status-tree` option to show the status view files as a directory
+   tree. (#1441)
+
 tig-2.6.1
 ---------
 

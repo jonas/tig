@@ -1598,8 +1598,12 @@ view_column_info_update(struct view *view, struct line *line)
 			break;
 		}
 
-		if (*text && !width)
+		if (*text && !width) {
 			width = utf8_width(text);
+			/* Tree connectors are drawn as part of the file name. */
+			if (column->type == VIEW_COLUMN_FILE_NAME && column_data.file_name_tree)
+				width += strlen(column_data.file_name_tree) * 4;
+		}
 
 		if ((maxwidth > 0) && (width > maxwidth))
 			width = maxwidth;

@@ -274,6 +274,14 @@ The following variables can be set:
 	Show untracked files in the status view (mirrors Git's
 	`status.showUntrackedFiles` option). On by default.
 
+'status-tree' (bool)::
+
+	Show the files of each status view section as a directory tree instead
+	of a flat list of paths. Directories only containing a single
+	subdirectory are collapsed into one line. Pressing *status-update* on a
+	directory line stages or unstages all files below it. Can be toggled
+	in the status view with 't'. Off by default.
+
 'tab-size' (int)::
 
 	Number of spaces per tab. The default is 8 spaces.

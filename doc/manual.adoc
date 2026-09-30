@@ -398,6 +398,8 @@ View Specific Actions
 	 preferred merge tool. See the manpage of git-mergetool(1).
 |!	|Checkout file with unstaged changes. This will reset the file to
 	 contain the content it had at the last commit.
+|t	|Toggle between showing the status view files as a flat list and as a
+	 directory tree.
 |1	|Stage single diff line.
 |@	|Move to next chunk in the stage view.
 |]	|Increase the diff context.

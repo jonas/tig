@@ -1,0 +1,246 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=22
+
+tigrc <<EOF
+set vertical-split = no
+set line-graphics = utf-8
+set status-tree = yes
+EOF
+
+test_setup_work_dir() {
+	create_dirty_workdir
+	mkdir -p dir-a dir-b x/y/z
+	for i in $(seq 1 3); do
+		touch "dir-a/aa.$i"
+	done
+	touch dir-b/bb.1 x/y/z/xyz.1 x/y/z/xyz.2 root.1
+	git add x
+}
+
+test_case 'utf-8' \
+	--args='status' \
+<<EXPECTED_SCREEN
+On branch master
+Changes to be committed:
+  └── x/y/z/
+A     ├── xyz.1
+A     └── xyz.2
+Changes not staged for commit:
+  ├── e/
+M │   └── f
+M ├── .j
+M ├── a
+M ├── b.c
+M └── g h
+Untracked files:
+  ├── dir-a/
+? │   ├── aa.1
+? │   ├── aa.2
+? │   └── aa.3
+  ├── dir-b/
+? │   └── bb.1
+? └── root.1
+[status] Nothing to update                                                  100%
+EXPECTED_SCREEN
+
+test_case 'search-full-path' \
+	--args='status' \
+	--script=':/dir-b/bb' \
+<<EXPECTED_SCREEN
+On branch master
+Changes to be committed:
+  └── x/y/z/
+A     ├── xyz.1
+A     └── xyz.2
+Changes not staged for commit:
+  ├── e/
+M │   └── f
+M ├── .j
+M ├── a
+M ├── b.c
+M └── g h
+Untracked files:
+  ├── dir-a/
+? │   ├── aa.1
+? │   ├── aa.2
+? │   └── aa.3
+  ├── dir-b/
+? │   └── bb.1
+? └── root.1
+[status] Press u to stage 'dir-b/bb.1' for addition                         100%
+EXPECTED_SCREEN
+
+test_case 'toggle-off' \
+	--args='status' \
+	--script=':toggle status-tree' \
+<<EXPECTED_SCREEN
+On branch master
+Changes to be committed:
+A x/y/z/xyz.1
+A x/y/z/xyz.2
+Changes not staged for commit:
+M .j
+M a
+M b.c
+M e/f
+M g h
+Untracked files:
+? dir-a/aa.1
+? dir-a/aa.2
+? dir-a/aa.3
+? dir-b/bb.1
+? root.1
+
+
+
+
+[status] Nothing to update                                                  100%
+EXPECTED_SCREEN
+
+test_case 'toggle-key' \
+	--args='status' \
+	--script='t' \
+<<EXPECTED_SCREEN
+On branch master
+Changes to be committed:
+A x/y/z/xyz.1
+A x/y/z/xyz.2
+Changes not staged for commit:
+M .j
+M a
+M b.c
+M e/f
+M g h
+Untracked files:
+? dir-a/aa.1
+? dir-a/aa.2
+? dir-a/aa.3
+? dir-b/bb.1
+? root.1
+
+
+
+
+[status] Nothing to update                                                  100%
+EXPECTED_SCREEN
+
+test_case 'untracked-dirs-off' \
+	--args='status' \
+	--script=':toggle status-show-untracked-dirs' \
+<<EXPECTED_SCREEN
+On branch master
+Changes to be committed:
+  └── x/y/z/
+A     ├── xyz.1
+A     └── xyz.2
+Changes not staged for commit:
+  ├── e/
+M │   └── f
+M ├── .j
+M ├── a
+M ├── b.c
+M └── g h
+Untracked files:
+? ├── dir-a/
+? ├── dir-b/
+? └── root.1
+
+
+
+
+[status] Nothing to update                                                  100%
+EXPECTED_SCREEN
+
+test_case 'update-directory' \
+	--args='status' \
+	--script='
+		:14
+		:status-update
+	' \
+<<EXPECTED_SCREEN
+On branch master
+Changes to be committed:
+  ├── dir-a/
+A │   ├── aa.1
+A │   ├── aa.2
+A │   └── aa.3
+  └── x/y/z/
+A     ├── xyz.1
+A     └── xyz.2
+Changes not staged for commit:
+  ├── e/
+M │   └── f
+M ├── .j
+M ├── a
+M ├── b.c
+M └── g h
+Untracked files:
+  ├── dir-b/
+? │   └── bb.1
+? └── root.1
+[status] Press u to stage 'b.c' for commit                                  100%
+EXPECTED_SCREEN
+
+test_case 'ascii' \
+	--args='status' \
+	--tigrc='
+		set vertical-split = no
+		set line-graphics = ascii
+		set status-tree = yes
+	' \
+<<EXPECTED_SCREEN
+On branch master
+Changes to be committed:
+  |-- dir-a/
+A |   |-- aa.1
+A |   |-- aa.2
+A |   \`-- aa.3
+  \`-- x/y/z/
+A     |-- xyz.1
+A     \`-- xyz.2
+Changes not staged for commit:
+  |-- e/
+M |   \`-- f
+M |-- .j
+M |-- a
+M |-- b.c
+M \`-- g h
+Untracked files:
+  |-- dir-b/
+? |   \`-- bb.1
+? \`-- root.1
+[status] Nothing to update                                                  100%
+EXPECTED_SCREEN
+
+test_case 'no-staged-files' \
+	--args='status' \
+	--script=':exec @git reset -q' \
+<<EXPECTED_SCREEN
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+  |-- e/
+M |   \`-- f
+M |-- .j
+M |-- a
+M |-- b.c
+M \`-- g h
+Untracked files:
+  |-- dir-a/
+? |   |-- aa.1
+? |   |-- aa.2
+? |   \`-- aa.3
+  |-- dir-b/
+? |   \`-- bb.1
+  |-- x/y/z/
+? |   |-- xyz.1
+? |   \`-- xyz.2
+[status] Nothing to update                                                   95%
+EXPECTED_SCREEN
+
+run_test_cases
