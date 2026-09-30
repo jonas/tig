@@ -64,6 +64,13 @@ status_entry_is_directory(const struct line *line)
 	return entry && entry->directory;
 }
 
+/* Whether a status view line is a directory line in tree mode. */
+bool
+status_is_directory(const struct line *line)
+{
+	return status_entry_is_directory(line);
+}
+
 void
 open_status_view(struct view *prev, bool untracked_only, enum open_flags flags)
 {

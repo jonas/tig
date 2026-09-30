@@ -74,6 +74,38 @@ Untracked files:
 [status] Press u to stage 'dir-b/bb.1' for addition                         100%
 EXPECTED_SCREEN
 
+test_case 'stage-next-skips-directory' \
+	--args='status' \
+	--script='
+		:5
+		:enter
+		:next
+		:next
+	' \
+<<EXPECTED_SCREEN
+  └── x/y/z/
+A     ├── xyz.1
+A     └── xyz.2
+Changes not staged for commit:
+  ├── e/
+M │   └── f
+[status] Press u to stage 'e/f' for commit                                   40%
+ e/f | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/e/f b/e/f
+index 7a93606..8cee1bb 100644
+--- a/e/f
++++ b/e/f
+@@ -1,4 +1,4 @@
+-e/f
++e/f CHANGED
+ 1
+ 2
+ 3
+[stage] Press '<Enter>' to jump to file diff - line 1 of 23                  56%
+EXPECTED_SCREEN
+
 test_case 'toggle-off' \
 	--args='status' \
 	--script=':toggle status-tree' \
