@@ -235,6 +235,8 @@ struct view_ops {
 	unsigned long column_bits;
 	/* Extract line information. */
 	bool (*get_column_data)(struct view *view, const struct line *line, struct view_column_data *column_data);
+	/* Custom ordering of lines by a column; returns false to use the default. */
+	bool (*compare)(struct view *view, enum view_column_type column, const struct line *line1, const struct line *line2, int *cmp);
 };
 
 /*

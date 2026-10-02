@@ -1,0 +1,118 @@
+#!/bin/sh
+#
+# Test the default ordering of the refs view: the current branch first, then
+# master and main, then local branches by most recent commit, then remote
+# branches by name. The cursor follows the selected ref when the order changes.
+
+. libtest.sh
+. libgit.sh
+
+export LINES=12
+
+tigrc <<EOF
+set line-graphics = ascii
+EOF
+
+git_init
+
+test_setup_work_dir()
+{
+	git_add README "Sort test"
+	for i in 1 2 3; do
+		git_commit -m "Commit $i"
+	done
+
+	# Committed last, although the author date says otherwise.
+	export GIT_COMMITTER_DATE="1300000000 +0000"
+	git_commit -m "Commit 4"
+	git_commit -m "Commit 5"
+
+	git branch -M zulu
+	git branch main HEAD~4
+	git branch master HEAD~3
+	git branch alpha HEAD~2
+	git branch beta HEAD~1
+	git checkout -q alpha
+
+	git update-ref refs/remotes/upstream/main main
+	git update-ref refs/remotes/origin/zulu zulu
+	git update-ref refs/remotes/origin/alpha alpha
+	git config branch.alpha.remote origin
+	git config branch.alpha.merge refs/heads/zulu
+
+	git tag v1.0 main
+}
+
+steps '
+	:save-display refs-default.screen
+
+	:set refs-view-date-use-author = yes
+	:save-display refs-author-date.screen
+	:set refs-view-date-use-author = no
+
+	:toggle sort-order
+	:save-display refs-reversed.screen
+	:toggle sort-order
+
+	:5
+	:exec @git branch -f beta main
+	:save-display refs-after-move.screen
+'
+
+test_tig refs
+
+assert_equals 'refs-default.screen' <<EOF
+                                 All references
+2009-03-03 00:15 +0000 Committer alpha          Commit 3
+2009-02-22 11:53 +0000 Committer master         Commit 2
+2009-02-13 23:31 +0000 Committer main           Commit 1
+2011-03-13 07:06 +0000 Committer beta           Commit 4
+2009-03-20 01:00 +0000 Committer zulu           Commit 5
+2009-03-03 00:15 +0000 Committer origin/alpha   Commit 3
+2009-03-20 01:00 +0000 Committer origin/zulu    Commit 5
+2009-02-13 23:31 +0000 Committer upstream/main  Commit 1
+2009-02-13 23:31 +0000 Committer v1.0           Commit 1
+[refs] All references                                                       100%
+EOF
+
+assert_equals 'refs-author-date.screen' <<EOF
+                                 All references
+2009-03-03 00:15 +0000 Committer alpha          Commit 3
+2009-02-22 11:53 +0000 Committer master         Commit 2
+2009-02-13 23:31 +0000 Committer main           Commit 1
+2009-03-11 12:38 +0000 Committer beta           Commit 4
+2009-03-20 01:00 +0000 Committer zulu           Commit 5
+2009-03-03 00:15 +0000 Committer origin/alpha   Commit 3
+2009-03-20 01:00 +0000 Committer origin/zulu    Commit 5
+2009-02-13 23:31 +0000 Committer upstream/main  Commit 1
+2009-02-13 23:31 +0000 Committer v1.0           Commit 1
+[refs] All references                                                       100%
+EOF
+
+assert_equals 'refs-reversed.screen' <<EOF
+2009-02-13 23:31 +0000 Committer v1.0           Commit 1
+2009-02-13 23:31 +0000 Committer upstream/main  Commit 1
+2009-03-20 01:00 +0000 Committer origin/zulu    Commit 5
+2009-03-03 00:15 +0000 Committer origin/alpha   Commit 3
+2009-03-20 01:00 +0000 Committer zulu           Commit 5
+2011-03-13 07:06 +0000 Committer beta           Commit 4
+2009-02-13 23:31 +0000 Committer main           Commit 1
+2009-02-22 11:53 +0000 Committer master         Commit 2
+2009-03-03 00:15 +0000 Committer alpha          Commit 3
+                                 All references
+[refs] c5af4fecdd65ab3bf895d0de9d2afdda1d306212 - reference 9 of 9          100%
+EOF
+
+assert_equals 'refs-after-move.screen' <<EOF
+                                 All references
+2009-03-03 00:15 +0000 Committer alpha          Commit 3
+2009-02-22 11:53 +0000 Committer master         Commit 2
+2009-02-13 23:31 +0000 Committer main           Commit 1
+2009-03-20 01:00 +0000 Committer zulu           Commit 5
+2009-02-13 23:31 +0000 Committer beta           Commit 1
+2009-03-03 00:15 +0000 Committer origin/alpha   Commit 3
+2009-03-20 01:00 +0000 Committer origin/zulu    Commit 5
+2009-02-13 23:31 +0000 Committer upstream/main  Commit 1
+2009-02-13 23:31 +0000 Committer v1.0           Commit 1
+[refs] c5af4fecdd65ab3bf895d0de9d2afdda1d306212 - reference 5 of 9          100%
+EOF

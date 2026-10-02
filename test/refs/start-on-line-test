@@ -18,21 +18,21 @@ steps '
 test_tig refs +42
 
 assert_equals 'position.screen' <<EOF
-2013-11-19 21:56 -0500 Jonas Fonseca ref-15         sudoku: use iterator instead
-2013-11-26 20:13 -0500 Jonas Fonseca ref-14         Rename projects to be groupe
-2013-11-26 22:24 -0500 Jonas Fonseca ref-13         Move benchmark registration
-2013-11-26 22:52 -0500 Jonas Fonseca ref-12         Fix reference setup to work
-2013-11-26 22:55 -0500 Jonas Fonseca ref-11         Exclude Sudoku when running
-2013-11-26 23:22 -0500 Jonas Fonseca ref-10         Disable phantomjs by default
-2013-11-26 23:33 -0500 Jonas Fonseca ref-9          Solve the easiest sudoku gri
-2013-11-26 23:39 -0500 Jonas Fonseca ref-8          Extract the benchmark list v
-2013-12-03 23:35 -0500 Jonas Fonseca ref-7          Use Scala.js 0.2-SNAPSHOT
-2013-12-17 00:10 +0100 Jonas Fonseca ref-6          Update links to reflect proj
-2014-01-16 07:47 -0800 Jonas Fonseca ref-5          Merge pull request #4 from p
-2014-01-16 17:39 -0500 Jonas Fonseca ref-4          Integrate app code into the
-2014-01-16 17:43 -0500 Jonas Fonseca ref-3          Bump Scala.js version to 0.3
-2014-01-16 22:51 -0500 Jonas Fonseca ref-2          Move classes under org.scala
-2014-03-01 15:59 -0500 Jonas Fonseca ref-1          Add type parameter for js.Dy
+2013-10-27 18:12 -0400 Jonas Fonseca ref-26         Add check sum calculation fo
+2013-10-26 12:54 -0400 Jonas Fonseca ref-27         Add Scala.js LICENSE file an
+2013-10-25 22:08 -0400 Jonas Fonseca ref-28         Add script to build and run
+2013-10-25 20:29 -0400 Jonas Fonseca ref-29         Support node as a JavaScript
+2013-10-25 00:34 -0400 Jonas Fonseca ref-30         Run benchmarks for a fixed n
+2013-10-24 23:50 -0400 Jonas Fonseca ref-31         Rework the benchmark runner
+2013-10-20 00:23 -0700 Jonas Fonseca ref-32         Add DeltaBlue benchmark
+2013-10-18 17:18 -0400 Jonas Fonseca ref-34         Use case class apply constru
+2013-10-18 17:18 -0400 Jonas Fonseca ref-33         Tidyup indentation
+2013-10-18 07:00 -0700 Jonas Fonseca ref-35         Merge pull request #1 from s
+2013-10-17 20:34 -0400 Jonas Fonseca ref-36         Add Richards benchmark
+2013-10-17 20:29 -0400 Jonas Fonseca ref-37         Simplify render scene loop b
+2013-10-17 20:27 -0400 Jonas Fonseca ref-38         Make the run shell script in
+2013-10-17 20:25 -0400 Jonas Fonseca ref-39         Simplify creation of new ben
+2013-10-14 16:37 -0400 Jonas Fonseca ref-40         Add link to the github pages
  
  
  
@@ -46,5 +46,5 @@ assert_equals 'position.screen' <<EOF
  
  
  
-[refs] a1dcf1aaa11470978db1d5d8bcf9e16201eb70ff - reference 41 of 41        100%
+[refs] 47b3bf58e19dceae53294e8d110828bd537f3752 - reference 41 of 41        100%
 EOF

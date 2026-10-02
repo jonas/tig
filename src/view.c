@@ -935,6 +935,12 @@ compare_view_column(enum view_column_type column, bool use_file_mode,
 		    const struct line *line1, struct view_column_data *column_data1,
 		    const struct line *line2, struct view_column_data *column_data2)
 {
+	int cmp;
+
+	if (sorting_view->ops->compare &&
+	    sorting_view->ops->compare(sorting_view, column, line1, line2, &cmp))
+		return cmp;
+
 	switch (column) {
 	case VIEW_COLUMN_AUTHOR:
 		return apply_comparator(ident_compare, column_data1->author, column_data2->author);

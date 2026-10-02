@@ -65,8 +65,8 @@ assert_equals 'refs-init.screen' <<EOF
                                      All references
 2010-04-07 05:37 +0000 Max Power     master                                                     Comm
 2010-03-04 04:09 +0000 A. U. Thor    this_is_really_a_long_long_long_long_long_long_long_branch Comm
-2010-04-07 05:37 +0000 Max Power     origin/master                                              Comm
 2010-04-07 05:37 +0000 Max Power     origin/HEAD                                                Comm
+2010-04-07 05:37 +0000 Max Power     origin/master                                              Comm
 2010-01-20 14:18 +0000 A. U. Thor    this_is_really_a_long_long_long_long_long_long_long_tag    Comm
 2009-12-17 12:49 +0000 René Lévesque v1.0                                                       Comm
 [refs] All references                                                                           100%
@@ -91,5 +91,5 @@ assert_equals 'refs-checked-out-tag.screen' <<EOF
 2010-04-07 05:37 +0000 Max Power     origin/HEAD                                                Comm
 2010-04-07 05:37 +0000 Max Power     origin/master                                              Comm
 2010-01-20 14:18 +0000 A. U. Thor    this_is_really_a_long_long_long_long_long_long_long_tag    Comm
-[refs] 5cb3412a5e06e506840495b91acc885037a48b72 - reference 5 of 7                               87%
+[refs] a3f25ca556c1cef1ef3a0704f5deaec8687c84b9 - reference 6 of 7                               87%
 EOF

@@ -41,8 +41,8 @@ test_tig refs
 assert_equals 'refs.screen' <<EOF
                                              All references
 5cb3412 2010-04-07 05:37 +0000 Max Power     master         Commit 10 E
-5cb3412 2010-04-07 05:37 +0000 Max Power     origin/master  Commit 10 E
 5cb3412 2010-04-07 05:37 +0000 Max Power     origin/HEAD    Commit 10 E
+5cb3412 2010-04-07 05:37 +0000 Max Power     origin/master  Commit 10 E
 957f2b3 2009-12-17 12:49 +0000 René Lévesque v1.0           Commit 8 B
 d9a8c8b 2009-10-18 22:14 +0000 Max Power     not-replace    Commit 6 E
  

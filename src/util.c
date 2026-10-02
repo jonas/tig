@@ -134,7 +134,10 @@ time_now(struct timeval *timeval, struct timezone *tz)
 int
 timecmp(const struct time *t1, const struct time *t2)
 {
-	return (t1->sec + t1->tz) - (t2->sec + t2->tz);
+	time_t time1 = t1->sec + t1->tz;
+	time_t time2 = t2->sec + t2->tz;
+
+	return time1 < time2 ? -1 : time1 > time2;
 }
 
 struct reldate {

@@ -33,6 +33,11 @@ struct reference {
 	const struct ref *ref;		/* Name and commit ID information. */
 };
 
+struct refs_state {
+	bool keep_lineno;		/* Keep the cursor on the line it was opened at? */
+	unsigned long lineno;		/* The line the cursor was opened at. */
+};
+
 static const struct ref *refs_all;
 #define REFS_ALL_NAME "All references"
 #define REFS_TAGS_NAME "All tags"
@@ -65,6 +70,98 @@ refs_get_column_data(struct view *view, const struct line *line, struct view_col
 	column_data->commit_title = reference->title;
 
 	return true;
+}
+
+/* The order in which the refs are grouped when sorting by the ref column. */
+enum refs_group {
+	REFS_GROUP_ALL,
+	REFS_GROUP_HEAD,
+	REFS_GROUP_MASTER,
+	REFS_GROUP_MAIN,
+	REFS_GROUP_BRANCH,
+	REFS_GROUP_REMOTE,
+	REFS_GROUP_OTHER,
+};
+
+static enum refs_group
+refs_get_group(const struct ref *ref)
+{
+	if (ref == refs_all)
+		return REFS_GROUP_ALL;
+
+	if (ref_is_remote(ref))
+		return REFS_GROUP_REMOTE;
+
+	if (ref->type == REFERENCE_HEAD)
+		return REFS_GROUP_HEAD;
+
+	if (ref->type != REFERENCE_BRANCH)
+		return REFS_GROUP_OTHER;
+
+	if (!strcmp(ref->name, "master"))
+		return REFS_GROUP_MASTER;
+
+	if (!strcmp(ref->name, "main"))
+		return REFS_GROUP_MAIN;
+
+	return REFS_GROUP_BRANCH;
+}
+
+static bool
+refs_compare(struct view *view, enum view_column_type column,
+	     const struct line *line1, const struct line *line2, int *cmp)
+{
+	const struct reference *reference1 = line1->data;
+	const struct reference *reference2 = line2->data;
+	enum refs_group group1, group2;
+
+	if (column != VIEW_COLUMN_REF)
+		return false;
+
+	group1 = refs_get_group(reference1->ref);
+	group2 = refs_get_group(reference2->ref);
+	*cmp = group1 - group2;
+
+	/* List the branches with the most recent commits first. This uses the
+	 * commit date regardless of which date the date column displays. */
+	if (!*cmp && group1 == REFS_GROUP_BRANCH)
+		*cmp = timecmp(&reference2->commit_time, &reference1->commit_time);
+
+	if (!*cmp)
+		*cmp = group1 == REFS_GROUP_REMOTE
+			? strcmp(reference1->ref->name, reference2->ref->name)
+			: ref_compare(reference1->ref, reference2->ref);
+
+	return true;
+}
+
+static const struct ref *
+refs_get_selected(struct view *view)
+{
+	const struct reference *reference;
+
+	if (view->pos.lineno >= view->lines)
+		return NULL;
+
+	reference = view->line[view->pos.lineno].data;
+	return reference->ref;
+}
+
+/* Sort the lines while keeping the cursor on the selected reference. */
+static void
+refs_resort(struct view *view, const struct ref *selected)
+{
+	size_t i;
+
+	resort_view(view, true);
+
+	for (i = 0; i < view->lines; i++) {
+		struct reference *reference = view->line[i].data;
+
+		view->line[i].dirty = view->line[i].cleareol = 1;
+		if (reference->ref == selected)
+			goto_view_line(view, view->pos.offset, i);
+	}
 }
 
 static enum request
@@ -103,14 +200,27 @@ refs_request(struct view *view, enum request request, struct line *line)
 static bool
 refs_read(struct view *view, struct buffer *buf, bool force_stop)
 {
+	struct refs_state *state = view->private;
 	struct reference template = {0};
 	char *author;
 	char *committer;
 	char *title;
 	size_t i;
 
-	if (!buf)
+	if (!buf) {
+		/* The commit dates used for ordering the branches are only
+		 * known once everything has been read. Nothing is redrawn
+		 * when loading is stopped, so leave the lines as displayed. */
+		if (force_stop)
+			return true;
+
+		/* Follow the selected reference if the cursor was moved. */
+		if (state->keep_lineno && view->pos.lineno == state->lineno)
+			refs_resort(view, NULL);
+		else
+			refs_resort(view, refs_get_selected(view));
 		return true;
+	}
 
 	if (!*buf->data)
 		return false;
@@ -203,8 +313,11 @@ refs_open(struct view *view, enum open_flags flags)
 			"--all", "--decorate-refs=", "--simplify-by-decoration",
 			NULL
 	};
+	struct refs_state *state = view->private;
+	const struct ref *selected = refs_get_selected(view);
 	enum status_code code;
 	const char *name = REFS_ALL_NAME;
+	size_t lineno;
 	int i;
 
 	if (is_initial_view(view)) {
@@ -249,6 +362,20 @@ refs_open(struct view *view, enum open_flags flags)
 	foreach_ref(refs_open_visitor, view);
 	resort_view(view, true);
 
+	/* When reloading, restore the cursor to the reference it was on
+	 * rather than to the line, which can now hold another reference. */
+	state->keep_lineno = true;
+	for (lineno = 0; selected && lineno < view->lines; lineno++) {
+		const struct reference *reference = view->line[lineno].data;
+
+		if (reference->ref == selected) {
+			view->prev_pos.lineno = lineno;
+			state->keep_lineno = false;
+			break;
+		}
+	}
+	state->lineno = view->prev_pos.lineno;
+
 	watch_register(&view->watch, WATCH_HEAD | WATCH_REFS);
 
 	return SUCCESS;
@@ -274,7 +401,7 @@ static struct view_ops refs_ops = {
 	"reference",
 	argv_env.head,
 	VIEW_REFRESH | VIEW_SORTABLE | VIEW_LOG_LIKE,
-	0,
+	sizeof(struct refs_state),
 	refs_open,
 	refs_read,
 	view_column_draw,
@@ -286,6 +413,7 @@ static struct view_ops refs_ops = {
 		view_column_bit(DATE) | view_column_bit(ID) |
 		view_column_bit(LINE_NUMBER) | view_column_bit(REF),
 	refs_get_column_data,
+	refs_compare,
 };
 
 DEFINE_VIEW(refs);
