@@ -1,0 +1,266 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=18
+
+tigrc <<EOF
+set refresh-mode = after-command
+EOF
+
+setup_selection_repo() {
+	git_init .
+	for name in s1 s2 u1 u2; do
+		git_add "$name" original
+	done
+	git_commit --message="Initial commit"
+	for name in s1 s2 u1 u2; do
+		file "$name" changed
+	done
+	git add s1 s2
+	file n1 untracked
+	file n2 untracked
+}
+
+executable snapshot <<'EOF'
+#!/bin/sh
+git status --porcelain=v1 > "$HOME/$1.index"
+EOF
+
+executable modify <<'EOF'
+#!/bin/sh
+printf '\nmore changes\n' >> u1
+EOF
+
+in_work_dir setup_selection_repo
+
+steps '
+	:3
+	+
+	:6
+	+
+	:9
+	+
+	:save-display selected.screen
+	:6
+	+
+	:save-display toggled.screen
+	+
+	:refresh
+	:save-display refreshed.screen
+	:6
+	U
+	:save-display staged.screen
+	:exec @snapshot staged
+	:3
+	U
+	:save-display unstaged.screen
+	:exec @snapshot unstaged
+	:9
+	U
+	:save-display added.screen
+	:exec @snapshot added
+	:2
+	*
+	:save-display all-staged.screen
+	:6
+	U
+	:exec @snapshot no-selection
+	:4
+	u
+	:save-display single.screen
+	:exec @snapshot single
+	:2
+	U
+	:exec @snapshot all-unstaged
+	:4
+	*
+	U
+	:exec @snapshot all-restaged
+	:9
+	*
+	U
+	:exec @snapshot all-added
+	:3
+	+
+	+
+	:save-display deselected.screen
+	:exec @modify
+	:7
+	+
+	:10
+	+
+	U
+	:save-display same-file.screen
+'
+
+test_tig status
+
+for name in selected toggled refreshed staged unstaged added all-staged single deselected same-file; do
+	if [ -f "$name.screen" ]; then
+		sed -n '/^[AM?][* ]/ { s/ *$//; p; }' "$name.screen" > "$name.rows"
+	fi
+done
+
+assert_equals selected.rows strict <<EOF
+M* s1
+M  s2
+M* u1
+M  u2
+?* n1
+?  n2
+EOF
+
+assert_equals toggled.rows strict <<EOF
+M* s1
+M  s2
+M  u1
+M  u2
+?* n1
+?  n2
+EOF
+
+assert_equals refreshed.rows strict <<EOF
+M* s1
+M  s2
+M* u1
+M  u2
+?* n1
+?  n2
+EOF
+
+assert_equals staged.rows strict <<EOF
+M* s1
+M  s2
+M  u1
+M  u2
+?* n1
+?  n2
+EOF
+
+assert_equals staged.index strict <<EOF
+M  s1
+M  s2
+M  u1
+ M u2
+?? n1
+?? n2
+EOF
+
+assert_equals unstaged.rows strict <<EOF
+M  s2
+M  u1
+M  s1
+M  u2
+?* n1
+?  n2
+EOF
+
+assert_equals unstaged.index strict <<EOF
+ M s1
+M  s2
+M  u1
+ M u2
+?? n1
+?? n2
+EOF
+
+assert_equals added.rows strict <<EOF
+A n1
+M s2
+M u1
+M s1
+M u2
+? n2
+EOF
+
+assert_equals added.index strict <<EOF
+A  n1
+ M s1
+M  s2
+M  u1
+ M u2
+?? n2
+EOF
+
+assert_equals all-staged.rows strict <<EOF
+A* n1
+M* s2
+M* u1
+M  s1
+M  u2
+?  n2
+EOF
+
+assert_equals no-selection.index strict <<EOF
+A  n1
+ M s1
+M  s2
+M  u1
+ M u2
+?? n2
+EOF
+
+assert_equals single.rows strict <<EOF
+A* n1
+M* u1
+M  s1
+M  s2
+M  u2
+?  n2
+EOF
+
+assert_equals single.index strict <<EOF
+A  n1
+ M s1
+ M s2
+M  u1
+ M u2
+?? n2
+EOF
+
+assert_equals all-unstaged.index strict <<EOF
+ M s1
+ M s2
+ M u1
+ M u2
+?? n1
+?? n2
+EOF
+
+assert_equals all-restaged.index strict <<EOF
+M  s1
+M  s2
+M  u1
+M  u2
+?? n1
+?? n2
+EOF
+
+assert_equals all-added.index strict <<EOF
+A  n1
+A  n2
+M  s1
+M  s2
+M  u1
+M  u2
+EOF
+
+assert_equals deselected.rows strict <<EOF
+A n1
+A n2
+M s1
+M s2
+M u1
+M u2
+EOF
+
+assert_equals same-file.rows strict <<EOF
+A  n1
+A  n2
+M  s1
+M  s2
+M* u1
+M  u2
+EOF
