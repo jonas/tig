@@ -95,7 +95,25 @@ steps '
 	:save-display same-file.screen
 '
 
+trace=
+export TIG_TRACE="$HOME/selection.trace"
+
 test_tig status
+
+if [ -f "$TIG_TRACE" ]; then
+	sed -n '/^git update-index -z / { s/ *$//; p; }' "$TIG_TRACE" > batch.trace
+fi
+
+assert_equals batch.trace strict <<EOF
+git update-index -z --add --remove --stdin
+git update-index -z --index-info
+git update-index -z --add --remove --stdin
+git update-index -z --index-info
+git update-index -z --index-info
+git update-index -z --add --remove --stdin
+git update-index -z --add --remove --stdin
+git update-index -z --add --remove --stdin
+EOF
 
 for name in selected toggled refreshed staged unstaged added all-staged single deselected same-file; do
 	if [ -f "$name.screen" ]; then

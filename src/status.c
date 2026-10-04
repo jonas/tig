@@ -649,8 +649,8 @@ status_update_file(struct status *status, enum line_type type)
 	return io_done(&io) && result;
 }
 
-bool
-status_update_files(struct view *view, struct line *line)
+static bool
+status_update_files_(struct view *view, struct line *line, bool selected_only)
 {
 	char buf[sizeof(view->ref)];
 	struct io io;
@@ -660,16 +660,34 @@ status_update_files(struct view *view, struct line *line)
 	int file, done;
 	int cursor_y = -1, cursor_x = -1;
 
+	for (pos = line; view_has_line(view, pos) && pos->data; pos++) {
+		struct status *status = pos->data;
+
+		if (selected_only && !pos->marked)
+			continue;
+		if (selected_only && pos->type == LINE_STAT_UNTRACKED &&
+		    !suffixcmp(status->new.name, strlen(status->new.name), "/")) {
+			if (!status_update_file(status, pos->type))
+				return false;
+			pos->marked = false;
+			continue;
+		}
+		files++;
+	}
+	if (!files)
+		return true;
 	if (!status_update_prepare(&io, line->type))
 		return false;
 
-	for (pos = line; view_has_line(view, pos) && pos->data; pos++)
-		files++;
-
 	string_copy(buf, view->ref);
 	get_cursor_pos(cursor_y, cursor_x);
-	for (file = 0, done = 5; result && file < files; line++, file++) {
-		int almost_done = file * 100 / files;
+	for (pos = line, file = 0, done = 5;
+	     result && view_has_line(view, pos) && pos->data; pos++) {
+		int almost_done;
+
+		if (selected_only && !pos->marked)
+			continue;
+		almost_done = file * 100 / files;
 
 		if (almost_done > done && view_is_displayed(view)) {
 			done = almost_done;
@@ -679,11 +697,22 @@ status_update_files(struct view *view, struct line *line)
 			set_cursor_pos(cursor_y, cursor_x);
 			doupdate();
 		}
-		result = status_update_write(&io, line->data, line->type);
+		result = status_update_write(&io, pos->data, pos->type);
+		file++;
 	}
 	string_copy(view->ref, buf);
 
-	return io_done(&io) && result;
+	result = io_done(&io) && result;
+	if (result && selected_only)
+		for (pos = line; view_has_line(view, pos) && pos->data; pos++)
+			pos->marked = false;
+	return result;
+}
+
+bool
+status_update_files(struct view *view, struct line *line)
+{
+	return status_update_files_(view, line, false);
 }
 
 static bool
@@ -795,23 +824,25 @@ status_request(struct view *view, enum request request, struct line *line)
 
 	case REQ_STATUS_UPDATE_SELECTED: {
 		unsigned long lineno;
-		bool updated = false;
+		struct line *first = NULL;
 
 		for (lineno = 0; lineno < view->lines; lineno++) {
 			struct line *pos = &view->line[lineno];
 
 			if (!pos->data || !pos->marked || pos->type != line->type)
 				continue;
-			if (!status_update_file(pos->data, pos->type)) {
-				report("Failed to update selected file status");
-				refresh_view(view);
-				return REQ_NONE;
-			}
-			pos->marked = false;
-			updated = true;
+			first = pos;
+			break;
 		}
-		if (!updated) {
+		if (!first) {
 			report("No selected files in this section");
+			return REQ_NONE;
+		}
+		while (first > view->line && first[-1].data && first[-1].type == line->type)
+			first--;
+		if (!status_update_files_(view, first, true)) {
+			report("Failed to update selected file status");
+			refresh_view(view);
 			return REQ_NONE;
 		}
 		break;
