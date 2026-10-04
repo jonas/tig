@@ -103,12 +103,12 @@ External commands:
                            ! ?git branch -D %(branch)
 [-] status bindings
 View-specific actions
-                           u status-update       Stage/unstage chunk or file changes
-                           + status-select       Toggle file selection
-                           * status-select-all   Select all files in the current category
-                           U status-update-selected Stage/unstage selected files in the current category
-                           ! status-revert       Revert chunk or file changes
-                           M status-merge        Merge file using external tool
+                           u status-update            Stage/unstage chunk or file changes
+                           + status-select            Toggle file selection
+                           * status-select-all        Select all files in the section
+                           U status-update-selected   Stage/unstage selected files in the section
+                           ! status-revert            Revert chunk or file changes
+                           M status-merge             Merge file using external tool
 External commands:
                            C !git commit
 [-] stage bindings

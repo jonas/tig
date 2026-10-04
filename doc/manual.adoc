@@ -393,6 +393,16 @@ View Specific Actions
 	 running git-add <filename>). In the stage view, when pressing this on
 	 a diff chunk line stages only that chunk for next commit, when not on
 	 a diff chunk line all changes in the displayed diff are staged.
+|+	|Toggle selection of the current file in the status view. Selected files
+	 are highlighted and marked with `*` after their change indicator.
+|*	|Select all files in the current status section: staged, unstaged, or
+	 untracked. This also works on the section heading.
+|U	|Update selected files only in the cursor's status section. Unstage
+	 selected staged files, or stage selected unstaged or untracked files.
+	 Successful updates clear their selections; selections in other
+	 sections survive refreshes. If the section has no selected files,
+	 nothing is updated. Lowercase `u` ignores file selections and retains
+	 its existing single-file or section-heading behavior.
 |M	|Resolve unmerged file by launching git-mergetool(1). Note, to work
 	 correctly this might require some initial configuration of your
 	 preferred merge tool. See the manpage of git-mergetool(1).
