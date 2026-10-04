@@ -104,6 +104,9 @@ External commands:
 [-] status bindings
 View-specific actions
                            u status-update       Stage/unstage chunk or file changes
+                           + status-select       Toggle file selection
+                           * status-select-all   Select all files in the current category
+                           U status-update-selected Stage/unstage selected files in the current category
                            ! status-revert       Revert chunk or file changes
                            M status-merge        Merge file using external tool
 External commands:
@@ -153,7 +156,4 @@ Toggle keys (enter: o <key>):
 
 
 
-
-
-
-[help] - line 2 of 150                                                                          100%
+[help] - line 2 of 153                                                                          100%
