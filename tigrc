@@ -245,8 +245,8 @@ bind generic	<C-C>	quit			# Close all views and quit
 # View specific
 bind status	u	status-update		# Stage/unstage changes in file
 bind status	+	status-select		# Toggle file selection
-bind status	*	status-select-all	# Select every file in category
-bind status	U	status-update-selected	 # Stage/unstage selected files in category
+bind status	*	status-select-all	# Select every file in section
+bind status	U	status-update-selected	 # Stage/unstage selected files in section
 bind status	!	status-revert		# Revert changes in file
 bind status	M	status-merge		# Open git-mergetool(1)
 # bind status	???	:toggle status		# Show short or long status labels

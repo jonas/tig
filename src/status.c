@@ -811,7 +811,7 @@ status_request(struct view *view, enum request request, struct line *line)
 			updated = true;
 		}
 		if (!updated) {
-			report("No selected files in this category");
+			report("No selected files in this section");
 			return REQ_NONE;
 		}
 		break;
