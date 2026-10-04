@@ -36,6 +36,15 @@ static char status_onbranch[SIZEOF_STR];
 static bool show_untracked_only = false;
 static bool no_files_staged;
 
+struct status_state {
+	bool selection_active;
+};
+
+struct status_selection {
+	enum line_type type;
+	char name[SIZEOF_STR];
+};
+
 void
 open_status_view(struct view *prev, bool untracked_only, enum open_flags flags)
 {
@@ -384,9 +393,33 @@ status_open(struct view *view, enum open_flags flags)
 	const char **staged_argv = is_initial_commit() ?
 		status_list_no_head_argv : status_diff_index_argv;
 	char staged_status = staged_argv == status_list_no_head_argv ? 'A' : 0;
+	struct status_state *state = view->private;
+	struct status_selection *selections = NULL;
+	size_t selected = 0;
+	size_t lineno, index;
+	bool loaded;
 
 	if (!(repo.is_inside_work_tree || *repo.worktree))
 		return error("The status view requires a working tree");
+
+	for (lineno = 0; lineno < view->lines; lineno++)
+		if (view->line[lineno].marked)
+			selected++;
+	if (selected) {
+		selections = calloc(selected, sizeof(*selections));
+		if (!selections)
+			return error("Failed to preserve file selections");
+		for (lineno = 0, index = 0; lineno < view->lines; lineno++) {
+			struct line *line = &view->line[lineno];
+			struct status *status = line->data;
+
+			if (!line->marked || !status)
+				continue;
+			selections[index].type = line->type;
+			string_copy(selections[index].name, status->new.name);
+			index++;
+		}
+	}
 
 	reset_view(view);
 
@@ -399,9 +432,27 @@ status_open(struct view *view, enum open_flags flags)
 	if (!opt_file_args || !opt_file_filter)
 		update_index();
 
-	if ((!show_untracked_only && !status_run(view, staged_argv, staged_status, LINE_STAT_STAGED)) ||
-	    (!show_untracked_only && !status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED)) ||
-	    !status_read_untracked(view))
+	loaded = (show_untracked_only || status_run(view, staged_argv, staged_status, LINE_STAT_STAGED)) &&
+		 (show_untracked_only || status_run(view, status_diff_files_argv, 0, LINE_STAT_UNSTAGED)) &&
+		 status_read_untracked(view);
+	state->selection_active = false;
+	for (lineno = 0; lineno < view->lines; lineno++) {
+		struct line *line = &view->line[lineno];
+		struct status *status = line->data;
+
+		if (!status)
+			continue;
+		for (index = 0; index < selected; index++) {
+			if (line->type == selections[index].type &&
+			    !strcmp(status->new.name, selections[index].name)) {
+				line->marked = true;
+				state->selection_active = true;
+				break;
+			}
+		}
+	}
+	free(selections);
+	if (!loaded)
 		return error("Failed to load status data");
 
 	/* Restore the exact position or use the specialized restore
@@ -461,7 +512,10 @@ status_get_column_data(struct view *view, const struct line *line, struct view_c
 		column_data->section->opt.section.type = type;
 
 	} else {
+		struct status_state *state = view->private;
+
 		column_data->status = &status->status;
+		column_data->selection_active = state->selection_active;
 		column_data->file_name = status->new.name;
 	}
 	return true;
@@ -718,8 +772,51 @@ static enum request
 status_request(struct view *view, enum request request, struct line *line)
 {
 	struct status *status = line->data;
+	struct status_state *state = view->private;
 
 	switch (request) {
+	case REQ_STATUS_SELECT:
+	case REQ_STATUS_SELECT_ALL: {
+		unsigned long lineno;
+
+		if (request == REQ_STATUS_SELECT && status)
+			line->marked = !line->marked;
+		state->selection_active = false;
+		for (lineno = 0; lineno < view->lines; lineno++) {
+			struct line *pos = &view->line[lineno];
+
+			if (request == REQ_STATUS_SELECT_ALL && pos->data && pos->type == line->type)
+				pos->marked = true;
+			state->selection_active |= pos->marked;
+			pos->dirty = pos->cleareol = true;
+		}
+		return REQ_NONE;
+	}
+
+	case REQ_STATUS_UPDATE_SELECTED: {
+		unsigned long lineno;
+		bool updated = false;
+
+		for (lineno = 0; lineno < view->lines; lineno++) {
+			struct line *pos = &view->line[lineno];
+
+			if (!pos->data || !pos->marked || pos->type != line->type)
+				continue;
+			if (!status_update_file(pos->data, pos->type)) {
+				report("Failed to update selected file status");
+				refresh_view(view);
+				return REQ_NONE;
+			}
+			pos->marked = false;
+			updated = true;
+		}
+		if (!updated) {
+			report("No selected files in this category");
+			return REQ_NONE;
+		}
+		break;
+	}
+
 	case REQ_STATUS_UPDATE:
 		if (!status_update(view))
 			return REQ_NONE;
@@ -869,7 +966,7 @@ static struct view_ops status_ops = {
 	"file",
 	"",
 	VIEW_CUSTOM_STATUS | VIEW_SEND_CHILD_ENTER | VIEW_STATUS_LIKE | VIEW_FILE_FILTER | VIEW_REFRESH,
-	0,
+	sizeof(struct status_state),
 	status_open,
 	NULL,
 	view_column_draw,

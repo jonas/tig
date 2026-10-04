@@ -41,6 +41,9 @@
 	\
 	REQ_GROUP("View-specific actions") \
 	REQ_(STATUS_UPDATE,	"Stage/unstage chunk or file changes"), \
+	REQ_(STATUS_SELECT,	"Toggle file selection"), \
+	REQ_(STATUS_SELECT_ALL,	"Select all files in the current category"), \
+	REQ_(STATUS_UPDATE_SELECTED, "Stage/unstage selected files in the current category"), \
 	REQ_(STATUS_REVERT,	"Revert chunk or file changes"), \
 	REQ_(STATUS_MERGE,	"Merge file using external tool"), \
 	REQ_(STAGE_UPDATE_LINE,	"Stage/unstage single line"), \
