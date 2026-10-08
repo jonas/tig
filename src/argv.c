@@ -343,6 +343,12 @@ format_expand_arg(struct format_context *format, const char *name, const char *e
 static bool
 format_append_arg(struct format_context *format, const char ***dst_argv, const char *arg)
 {
+	/* Only for run-request formatting (argv_flag_preserve_empty): keep
+	 * originally empty argv elements from bind ... ''. Internal command
+	 * templates still use "" as omittable placeholders via argv_appendn. */
+	bool preserve_empty = arg && !*arg &&
+		(format->argv_flags & argv_flag_preserve_empty);
+
 	memset(format->buf, 0, sizeof(format->buf));
 	format->bufpos = 0;
 
@@ -364,6 +370,20 @@ format_append_arg(struct format_context *format, const char ***dst_argv, const c
 			return false;
 
 		arg = next;
+	}
+
+	if (!format->buf[0] && preserve_empty) {
+		size_t argc = argv_size(*dst_argv);
+		char *alloc;
+
+		if (!argv_realloc(dst_argv, argc, 2))
+			return false;
+		alloc = strdup("");
+		if (!alloc)
+			die("Failed to allocate arg");
+		(*dst_argv)[argc++] = alloc;
+		(*dst_argv)[argc] = NULL;
+		return true;
 	}
 
 	return argv_append(dst_argv, format->buf);

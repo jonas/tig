@@ -75,6 +75,8 @@ enum argv_flag {
 	argv_flag_first = 1 << 0,
 	argv_flag_file_filter = 1 << 1,
 	argv_flag_rev_filter = 1 << 2,
+	/* Keep originally empty argv elements (e.g. bind ... ''). */
+	argv_flag_preserve_empty = 1 << 3,
 };
 
 bool argv_format(struct argv_env *argv_env, const char ***dst_argv, const char *src_argv[], int flags);

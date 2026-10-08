@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# Test that empty quoted arguments in bind commands are preserved.
+# Regression for https://github.com/jonas/tig/issues/1410
+
+. libtest.sh
+. libgit.sh
+
+LINES=3
+
+cat > "$HOME/print_args_count" <<'HELPER'
+#!/usr/bin/env bash
+set -euf -o pipefail
+echo "$#" >> "$HOME/args_count.txt"
+HELPER
+chmod +x "$HOME/print_args_count"
+
+: > "$HOME/args_count.txt"
+
+tigrc <<EOF
+bind generic 1 >$HOME/print_args_count --status '' ''
+bind generic 2 >$HOME/print_args_count --status "" ""
+bind generic 3 >$HOME/print_args_count --status '  ' '    '
+EOF
+
+steps "
+	1
+	2
+	3
+"
+
+in_work_dir create_repo_from_tgz "$base_dir/files/scala-js-benchmarks.tgz"
+test_tig
+
+assert_equals stderr <<EOF
+EOF
+
+# Each invocation should see 3 arguments.
+assert_equals 'args_count.txt' <<EOF
+3
+3
+3
+EOF
