@@ -115,7 +115,7 @@ watch_index_handler(struct watch_handler *handler, enum watch_event event, enum 
 	if (event == WATCH_EVENT_SWITCH_VIEW)
 		return WATCH_NONE;
 
-	if (!index_diff(&diff, opt_show_untracked, opt_status_show_untracked_files))
+	if (!index_diff(&diff, opt_show_untracked, opt_status_show_untracked_files, NULL))
 		return check_file_mtime(&handler->last_modified, "%s/index", repo.git_dir)
 			? check : WATCH_NONE;
 

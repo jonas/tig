@@ -49,7 +49,7 @@ struct index_diff {
 	int untracked;
 };
 
-bool index_diff(struct index_diff *diff, bool untracked, bool count_all);
+bool index_diff(struct index_diff *diff, bool untracked, bool count_all, const char **files);
 bool update_index(void);
 
 #endif
