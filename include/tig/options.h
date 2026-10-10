@@ -75,6 +75,7 @@ typedef struct view_column *view_settings;
 	_(rev_filter,			bool,			VIEW_REV_FILTER) \
 	_(send_child_enter,		bool,			VIEW_NO_FLAGS) \
 	_(show_changes,			bool,			VIEW_LOG_LIKE) \
+	_(show_loading,			bool,			VIEW_NO_FLAGS) \
 	_(show_notes,			bool,			VIEW_DIFF_LIKE | VIEW_LOG_LIKE) \
 	_(show_untracked,		bool,			VIEW_LOG_LIKE) \
 	_(split_view_height,		double,			VIEW_RESET_DISPLAY) \

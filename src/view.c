@@ -632,7 +632,7 @@ update_view(struct view *view)
 		return true;
 
 	if (!io_can_read(view->pipe, false)) {
-		if (view->lines == 0 && view_is_displayed(view)) {
+		if (opt_show_loading && view->lines == 0 && view_is_displayed(view)) {
 			time_t secs = time(NULL) - view->start_time;
 
 			if (secs > 1 && secs > view->update_secs) {
@@ -670,6 +670,8 @@ update_view(struct view *view)
 	if (!view_is_displayed(view))
 		return true;
 
+	if (redraw && !opt_show_loading)
+		werase(view->win);
 	if (redraw || view->force_redraw)
 		redraw_view_from(view, 0);
 	else
@@ -858,7 +860,8 @@ load_view(struct view *view, struct view *prev, enum open_flags flags)
 	if (view->pipe && view->lines == 0) {
 		/* Clear the old view and let the incremental updating refill
 		 * the screen. */
-		werase(view->win);
+		if (opt_show_loading)
+			werase(view->win);
 		/* Do not clear the position if it is the first view. */
 		if (view->prev && !(flags & (OPEN_RELOAD | OPEN_REFRESH))) {
 			clear_position(&view->prev_pos);
