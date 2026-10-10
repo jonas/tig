@@ -26,6 +26,7 @@ void update_status(const char *msg, ...) PRINTF_LIKE(1, 2);
 void update_status_with_context(const char *context, const char *msg, ...) PRINTF_LIKE(2, 3);
 void report(const char *msg, ...) PRINTF_LIKE(1, 2);
 void report_clear(void);
+void set_terminal_title(const char *title);
 
 /*
  * Display management.

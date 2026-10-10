@@ -683,6 +683,37 @@ update_view(struct view *view)
 	return true;
 }
 
+static const char *
+get_repo_name(void)
+{
+	static char name[SIZEOF_REF];
+	char *resolved, *base, *dir;
+
+	if (*name)
+		return name;
+
+	if (!*repo.git_dir) {
+		string_ncopy(name, "unknown", 7);
+		return name;
+	}
+
+	resolved = realpath(repo.git_dir, NULL);
+	if (!resolved) {
+		string_ncopy(name, "unknown", 7);
+		return name;
+	}
+
+	base = basename(resolved);
+	if (!strcmp(base, ".git")) {
+		dir = dirname(resolved);
+		base = basename(dir);
+	}
+
+	string_ncopy(name, base, strlen(base));
+	free(resolved);
+	return name;
+}
+
 void
 update_view_title(struct view *view)
 {
@@ -731,6 +762,14 @@ update_view_title(struct view *view)
 	view_lines = view->pos.offset + view->height;
 	lines = view->lines ? MIN(view_lines, view->lines) * 100 / view->lines : 0;
 	mvwprintw(window, 0, view->width - count_digits(lines) - 2, " %u%%", lines);
+
+	if (view == display[current_view]) {
+		char title[SIZEOF_STR];
+
+		snprintf(title, sizeof(title), "tig (%s): %s",
+			 get_repo_name(), view->name);
+		set_terminal_title(title);
+	}
 
 	wnoutrefresh(window);
 }
