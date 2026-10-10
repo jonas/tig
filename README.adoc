@@ -20,6 +20,7 @@ Resources
  - Manual:	https://www.mankier.com/7/tigmanual[]
  - Tarballs:	https://github.com/jonas/tig/releases[]
  - Q&A:		https://stackoverflow.com/questions/tagged/tig[]
+ - Online demo: image:https://build.demoshell.com/v1/embed/badge-adoc.svg["Live demo by Demoshell",link=https://build.demoshell.com/launch?snapshot=demoshell%2Ftui%3Atig]
 
 Bugs and Feature Requests
 -------------------------
