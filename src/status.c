@@ -36,6 +36,41 @@ static char status_onbranch[SIZEOF_STR];
 static bool show_untracked_only = false;
 static bool no_files_staged;
 
+/* Line data of the status view file and directory lines. */
+struct status_entry {
+	struct status status;	/* Must be first. */
+	bool directory;		/* Directory line in tree mode. */
+	size_t name_offset;	/* Offset of the displayed name. */
+	size_t depth;		/* Depth in tree mode. */
+	char tree[1];		/* Tree connectors, one per depth level. */
+};
+
+DEFINE_ALLOCATOR(realloc_status_files, struct status, 32)
+
+/* Get the file of a line, NULL for sections and directories. */
+static inline struct status *
+status_entry_file(const struct line *line)
+{
+	struct status_entry *entry = line->data;
+
+	return entry && !entry->directory ? &entry->status : NULL;
+}
+
+static inline bool
+status_entry_is_directory(const struct line *line)
+{
+	struct status_entry *entry = line->data;
+
+	return entry && entry->directory;
+}
+
+/* Whether a status view line is a directory line in tree mode. */
+bool
+status_is_directory(const struct line *line)
+{
+	return status_entry_is_directory(line);
+}
+
 void
 open_status_view(struct view *prev, bool untracked_only, enum open_flags flags)
 {
@@ -86,10 +121,175 @@ status_get_diff(struct status *file, const char *buf, size_t bufsize)
 	return true;
 }
 
+static struct line *
+status_add_entry(struct view *view, struct status *file, enum line_type type,
+		 bool directory, size_t name_offset, size_t depth)
+{
+	struct status_entry *entry;
+	struct line *line = add_line_alloc(view, &entry, type, depth + 1, false);
+
+	if (!line)
+		return NULL;
+	entry->status = *file;
+	entry->directory = directory;
+	entry->name_offset = name_offset;
+	entry->depth = depth;
+	view_column_info_update(view, line);
+	return line;
+}
+
+/* Returns the length of the first path component of @name including
+ * the trailing slash, or 0 if @name is a file (or an untracked directory
+ * such as "dir/", which is shown as a file). */
+static size_t
+status_tree_dirlen(const char *name)
+{
+	const char *sep = strchr(name, '/');
+
+	return sep && sep[1] ? sep - name + 1 : 0;
+}
+
+/* Sort paths component by component listing directories before files. */
+static int
+status_tree_compare(const void *a_, const void *b_)
+{
+	const char *a = (*(const struct status **) a_)->new.name;
+	const char *b = (*(const struct status **) b_)->new.name;
+
+	while (true) {
+		size_t a_dir = status_tree_dirlen(a);
+		size_t b_dir = status_tree_dirlen(b);
+		int cmp;
+
+		if (!a_dir || !b_dir)
+			return !a_dir == !b_dir ? strcmp(a, b) : a_dir ? -1 : 1;
+
+		cmp = strncmp(a, b, MIN(a_dir, b_dir));
+		if (cmp)
+			return cmp;
+		if (a_dir != b_dir)
+			return a_dir < b_dir ? -1 : 1;
+
+		a += a_dir;
+		b += b_dir;
+	}
+}
+
+/* Add the files[lo..hi), which all share the first @prefix bytes of
+ * their path, as a tree at @depth. Directories only containing a
+ * single subdirectory are collapsed into one line. */
+static bool
+status_tree_add(struct view *view, struct status **files, size_t lo, size_t hi,
+		size_t prefix, size_t depth, enum line_type type)
+{
+	size_t i = lo;
+
+	while (i < hi) {
+		const char *name = files[i]->new.name;
+		size_t dirlen = status_tree_dirlen(name + prefix);
+		struct status dir = {0};
+		size_t end, j;
+
+		if (!dirlen) {
+			if (!status_add_entry(view, files[i], type, false, prefix, depth))
+				return false;
+			i++;
+			continue;
+		}
+
+		end = prefix + dirlen;
+		for (j = i + 1; j < hi && !strncmp(files[j]->new.name, name, end); j++)
+			;
+
+		while (true) {
+			size_t sublen = status_tree_dirlen(name + end);
+			size_t k;
+
+			if (!sublen)
+				break;
+			for (k = i; k < j; k++)
+				if (status_tree_dirlen(files[k]->new.name + end) != sublen ||
+				    strncmp(files[k]->new.name, name, end + sublen))
+					break;
+			if (k < j)
+				break;
+			end += sublen;
+		}
+
+		string_ncopy(dir.new.name, name, end);
+		string_copy(dir.old.name, dir.new.name);
+		if (!status_add_entry(view, &dir, type, true, prefix, depth) ||
+		    !status_tree_add(view, files, i, j, end, depth + 1, type))
+			return false;
+		i = j;
+	}
+
+	return true;
+}
+
+/* Fill in the tree connectors of the section lines starting at @first. */
+static void
+status_tree_connect(struct view *view, size_t first)
+{
+	/* Whether a later line exists at a depth level before the next
+	 * line with a lower depth, i.e. whether the level continues. */
+	bool more[SIZEOF_STR / 2] = {0};
+	size_t max_depth = 0;
+	size_t lineno;
+
+	for (lineno = view->lines; lineno > first; lineno--) {
+		struct status_entry *entry = view->line[lineno - 1].data;
+		size_t depth = MIN(entry->depth, ARRAY_SIZE(more) - 1);
+		size_t level;
+
+		for (level = 0; level < depth; level++)
+			entry->tree[level] = more[level] ? '|' : ' ';
+		entry->tree[depth] = more[depth] ? '+' : '`';
+
+		more[depth] = true;
+		for (level = depth + 1; level <= max_depth; level++)
+			more[level] = false;
+		max_depth = MAX(max_depth, depth);
+
+		view_column_info_update(view, &view->line[lineno - 1]);
+	}
+}
+
+static bool
+status_add_files(struct view *view, struct status *files, size_t count, enum line_type type)
+{
+	struct status **sorted;
+	size_t first = view->lines;
+	size_t i;
+	bool ok;
+
+	if (!opt_status_tree || !count) {
+		for (i = 0; i < count; i++)
+			if (!status_add_entry(view, &files[i], type, false, 0, 0))
+				return false;
+		return true;
+	}
+
+	sorted = calloc(count, sizeof(*sorted));
+	if (!sorted)
+		return false;
+	for (i = 0; i < count; i++)
+		sorted[i] = &files[i];
+	qsort(sorted, count, sizeof(*sorted), status_tree_compare);
+
+	ok = status_tree_add(view, sorted, 0, count, 0, 0, type);
+	free(sorted);
+	if (ok)
+		status_tree_connect(view, first);
+	return ok;
+}
+
 static bool
 status_run(struct view *view, const char *argv[], char status, enum line_type type)
 {
-	struct status *unmerged = NULL;
+	struct status *files = NULL;
+	size_t count = 0;
+	size_t unmerged = 0;	/* One past the last unmerged entry. */
 	struct buffer buf;
 	struct io io;
 	const char **status_argv = NULL;
@@ -105,7 +305,6 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 	add_line_nodata(view, type);
 
 	while (io_get(&io, &buf, 0, true)) {
-		struct line *line;
 		struct status parsed = {0};
 		struct status *file = &parsed;
 
@@ -141,26 +340,26 @@ status_run(struct view *view, const char *argv[], char status, enum line_type ty
 
 		/* Collapse all modified entries that follow an associated
 		 * unmerged entry. */
-		if (unmerged && !strcmp(unmerged->new.name, file->new.name)) {
-			unmerged->status = 'U';
-			unmerged = NULL;
+		if (unmerged && !strcmp(files[unmerged - 1].new.name, file->new.name)) {
+			files[unmerged - 1].status = 'U';
+			unmerged = 0;
 			continue;
 		}
 
-		line = add_line_alloc(view, &file, type, 0, false);
-		if (!line)
+		if (!realloc_status_files(&files, count, 1))
 			goto error_out;
-		*file = parsed;
-		view_column_info_update(view, line);
-		if (file->status == 'U')
-			unmerged = file;
+		files[count++] = parsed;
+		if (parsed.status == 'U')
+			unmerged = count;
 	}
 
-	if (io_error(&io)) {
+	if (io_error(&io) || !status_add_files(view, files, count, type)) {
 error_out:
+		free(files);
 		io_done(&io);
 		return false;
 	}
+	free(files);
 
 	if (!view->line[view->lines - 1].data) {
 		add_line_nodata(view, LINE_STAT_NONE);
@@ -461,10 +660,30 @@ status_get_column_data(struct view *view, const struct line *line, struct view_c
 		column_data->section->opt.section.type = type;
 
 	} else {
-		column_data->status = &status->status;
-		column_data->file_name = status->new.name;
+		struct status_entry *entry = line->data;
+
+		if (entry->directory) {
+			static const mode_t directory_mode = S_IFDIR;
+
+			column_data->mode = &directory_mode;
+		} else {
+			column_data->status = &status->status;
+		}
+		column_data->file_name = status->new.name + entry->name_offset;
+		column_data->file_name_tree = entry->tree;
 	}
 	return true;
+}
+
+static bool
+status_grep(struct view *view, struct line *line)
+{
+	struct status *status = line->data;
+	regmatch_t pmatch;
+
+	/* Also match the full path of tree mode entries. */
+	return view_column_grep(view, line) ||
+	       (status && !regexec(view->regex, status->new.name, 1, &pmatch, 0));
 }
 
 static enum request
@@ -477,6 +696,11 @@ status_enter(struct view *view, struct line *line, enum open_flags flags)
 		if (displayed_views() == 2)
 			maximize_view(view, true);
 		report("No file to diff");
+		return REQ_NONE;
+	}
+
+	if (status_entry_is_directory(line)) {
+		report("Cannot display a directory");
 		return REQ_NONE;
 	}
 
@@ -519,7 +743,7 @@ status_exists(struct view *view, struct status *status, enum line_type type)
 		struct line *line = &view->line[lineno];
 		struct status *pos = line->data;
 
-		if (line->type != type)
+		if (line->type != type || status_entry_is_directory(line))
 			continue;
 		if ((!pos && (!status || !status->status) && line[1].data) ||
 		    (pos && status && !strcmp(status->new.name, pos->new.name))) {
@@ -595,27 +819,32 @@ status_update_file(struct status *status, enum line_type type)
 	return io_done(&io) && result;
 }
 
-bool
-status_update_files(struct view *view, struct line *line)
+/* Update the files among the @lines lines starting at @line, skipping
+ * directory lines. */
+static bool
+status_update_range(struct view *view, struct line *line, int lines)
 {
 	char buf[sizeof(view->ref)];
 	struct io io;
 	bool result = true;
-	struct line *pos;
 	int files = 0;
-	int file, done;
+	int file, done, i;
 	int cursor_y = -1, cursor_x = -1;
 
 	if (!status_update_prepare(&io, line->type))
 		return false;
 
-	for (pos = line; view_has_line(view, pos) && pos->data; pos++)
-		files++;
+	for (i = 0; i < lines; i++)
+		if (status_entry_file(&line[i]))
+			files++;
 
 	string_copy(buf, view->ref);
 	get_cursor_pos(cursor_y, cursor_x);
-	for (file = 0, done = 5; result && file < files; line++, file++) {
+	for (file = 0, done = 5; result && file < files; line++) {
 		int almost_done = file * 100 / files;
+
+		if (!status_entry_file(line))
+			continue;
 
 		if (almost_done > done && view_is_displayed(view)) {
 			done = almost_done;
@@ -626,10 +855,42 @@ status_update_files(struct view *view, struct line *line)
 			doupdate();
 		}
 		result = status_update_write(&io, line->data, line->type);
+		file++;
 	}
 	string_copy(view->ref, buf);
 
 	return io_done(&io) && result;
+}
+
+bool
+status_update_files(struct view *view, struct line *line)
+{
+	struct line *pos;
+	int lines = 0;
+
+	for (pos = line; view_has_line(view, pos) && pos->data; pos++)
+		lines++;
+
+	return status_update_range(view, line, lines);
+}
+
+/* Update all files below a directory line in tree mode. */
+static bool
+status_update_directory(struct view *view, struct line *line)
+{
+	struct status_entry *dir = line->data;
+	struct line *pos;
+	int lines = 0;
+
+	for (pos = line + 1; view_has_line(view, pos) && pos->data; pos++) {
+		struct status_entry *entry = pos->data;
+
+		if (entry->depth <= dir->depth)
+			break;
+		lines++;
+	}
+
+	return status_update_range(view, line + 1, lines);
 }
 
 static bool
@@ -646,6 +907,12 @@ status_update(struct view *view)
 		}
 
 		if (!status_update_files(view, line + 1)) {
+			report("Failed to update file status");
+			return false;
+		}
+
+	} else if (status_entry_is_directory(line)) {
+		if (!status_update_directory(view, line)) {
 			report("Failed to update file status");
 			return false;
 		}
@@ -717,7 +984,7 @@ open_mergetool(const char *file)
 static enum request
 status_request(struct view *view, enum request request, struct line *line)
 {
-	struct status *status = line->data;
+	struct status *status = status_entry_file(line);
 
 	switch (request) {
 	case REQ_STATUS_UPDATE:
@@ -739,6 +1006,10 @@ status_request(struct view *view, enum request request, struct line *line)
 		break;
 
 	case REQ_EDIT:
+		if (status_entry_is_directory(line)) {
+			report("Cannot edit a directory");
+			return REQ_NONE;
+		}
 		if (!status)
 			return request;
 		if (status->status == 'D') {
@@ -859,7 +1130,7 @@ status_select(struct view *view, struct line *line)
 
 	string_format(view->ref, text, key, file);
 	status_stage_info(view->env->status, line->type, status);
-	if (status) {
+	if (status && !status_entry_is_directory(line)) {
 		string_copy(view->env->file, status->new.name);
 		view->env->blob[0] = 0;
 	}
@@ -874,7 +1145,7 @@ static struct view_ops status_ops = {
 	NULL,
 	view_column_draw,
 	status_request,
-	view_column_grep,
+	status_grep,
 	status_select,
 	NULL,
 	view_column_bit(FILE_NAME) | view_column_bit(LINE_NUMBER) |

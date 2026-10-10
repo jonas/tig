@@ -230,6 +230,16 @@ view_driver(struct view *view, enum request request)
 			line = parent->pos.lineno;
 			view_request(parent, request);
 			move_view(parent, request);
+			/* Skip directory lines of the status tree, which
+			 * have no diff to show. */
+			while (parent == &status_view &&
+			       status_is_directory(&parent->line[parent->pos.lineno])) {
+				unsigned long lineno = parent->pos.lineno;
+
+				move_view(parent, request);
+				if (lineno == parent->pos.lineno)
+					break;
+			}
 			if (view_is_displayed(parent))
 				update_view_title(parent);
 			if (line != parent->pos.lineno &&
