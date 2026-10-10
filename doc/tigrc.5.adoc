@@ -922,6 +922,9 @@ View-specific actions
 [frame="none",grid="none",cols="25<m,75<"]
 |=============================================================================
 |status-update           |Stage/unstage chunk or file changes
+|status-select           |Toggle file selection in the status view
+|status-select-all       |Select all files in the current status section
+|status-update-selected  |Stage/unstage selected files in the current status section
 |status-revert           |Revert chunk or file changes
 |status-merge            |Merge file using external tool
 |stage-update-line       |Stage/unstage single line
@@ -1129,6 +1132,7 @@ setting the *default* color option.
 |stat-staged		|Status flag of staged files.
 |stat-unstaged		|Status flag of unstaged files.
 |stat-untracked		|Status flag of untracked files.
+|stat-selected		|Highlight of selected files in the status view.
 |=============================================================================
 
 .Help view

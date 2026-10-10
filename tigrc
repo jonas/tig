@@ -244,6 +244,9 @@ bind generic	<C-C>	quit			# Close all views and quit
 
 # View specific
 bind status	u	status-update		# Stage/unstage changes in file
+bind status	+	status-select		# Toggle file selection
+bind status	*	status-select-all	# Select every file in section
+bind status	U	status-update-selected	 # Stage/unstage selected files in section
 bind status	!	status-revert		# Revert changes in file
 bind status	M	status-merge		# Open git-mergetool(1)
 # bind status	???	:toggle status		# Show short or long status labels
@@ -452,6 +455,7 @@ color main-ref			cyan	default
 color main-head			cyan	default	bold
 color stat-none			default	default
 color stat-staged		magenta	default
+color status.stat-selected	black	cyan	bold
 color stat-unstaged		magenta	default
 color stat-untracked		magenta	default
 color help-group		blue	default
