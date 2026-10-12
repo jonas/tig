@@ -419,6 +419,8 @@ color "    Original-patch-by:"	yellow	default
 color "    Inspired-by:"	yellow	default
 color "    Generated-by:"	yellow	default
 color "    Assisted-by:"	yellow	default
+color "    Fixes:"		yellow	default
+color "    Link:"		yellow	default
 color default			default	default	normal
 color cursor			white	green	bold
 color cursor-blur		white	green
