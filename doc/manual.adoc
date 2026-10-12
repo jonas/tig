@@ -205,6 +205,8 @@ following variables.
 |%(repo:is-inside-work-tree)
 			|Whether Tig is running inside a work tree,
 			 either `true` or `false`.
+|%(repo:object-format)	|The hash algorithm used for the repository, e.g. `sha1`
+			 or `sha256`.
 |=============================================================================
 
 Example user-defined commands:

@@ -28,7 +28,7 @@
  */
 
 struct blame_history_state {
-	char id[SIZEOF_REV];		/* SHA1 ID. */
+	char id[SIZEOF_REV];		/* Hash ID. */
 	const char *filename;		/* Name of file. */
 };
 
@@ -185,7 +185,7 @@ get_blame_commit(struct view *view, const char *id)
 		if (!blame->commit)
 			continue;
 
-		if (!strncmp(blame->commit->id, id, SIZEOF_REV - 1))
+		if (!strncmp(blame->commit->id, id, REPO_INFO_SIZEOF_REV - 1))
 			return blame->commit;
 	}
 
@@ -193,7 +193,7 @@ get_blame_commit(struct view *view, const char *id)
 		struct blame_commit *commit = calloc(1, sizeof(*commit));
 
 		if (commit)
-			string_ncopy(commit->id, id, SIZEOF_REV);
+			string_copy_rev(commit->id, id);
 		return commit;
 	}
 }
