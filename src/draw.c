@@ -42,6 +42,8 @@ static const enum line_type palette_colors[] = {
 static inline void
 set_view_attr(struct view *view, enum line_type type)
 {
+	if (view->curline->marked && type != LINE_CURSOR && type != LINE_CURSOR_BLUR)
+		type = LINE_STAT_SELECTED;
 	if (!view->curline->selected && view->curtype != type) {
 		(void) wattrset(view->win, get_view_attr(view, type));
 		wchgat(view->win, -1, 0, get_view_color(view, type), NULL);
@@ -405,10 +407,16 @@ draw_refs(struct view *view, struct view_column *column, const struct ref *refs)
 
 static bool
 draw_status(struct view *view, struct view_column *column,
-	    enum line_type type, const char *status)
+	    enum line_type type, const char *status, bool selection_active)
 {
 	const char *label = mkstatus(status ? *status : 0, column->opt.status.display);
 
+	if (selection_active) {
+		if (draw_text(view, type, label) ||
+		    draw_text(view, type, view->curline->marked ? "*" : " "))
+			return true;
+		return draw_field(view, type, "", column->width - strlen(label), ALIGN_LEFT, false);
+	}
 	return draw_field(view, type, label, column->width, ALIGN_LEFT, false);
 }
 
@@ -559,7 +567,7 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_STATUS:
-			if (draw_status(view, column, line->type, column_data.status))
+			if (draw_status(view, column, line->type, column_data.status, column_data.selection_active))
 				return true;
 			continue;
 

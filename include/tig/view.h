@@ -42,6 +42,7 @@ struct line {
 
 	/* State flags */
 	unsigned int selected:1;
+	unsigned int marked:1;
 	unsigned int dirty:1;
 	unsigned int cleareol:1;
 	unsigned int wrapped:1;
@@ -199,6 +200,7 @@ struct view_column_data {
 	const struct ref *ref;
 	const struct ref *refs;
 	const char *status;
+	bool selection_active;
 	const char *text;
 	const struct box *box;
 };
