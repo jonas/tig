@@ -1,0 +1,27 @@
+
+#!/bin/sh
+#
+# Test display and options specific to the main view.
+
+. libtest.sh
+. libgit.sh
+
+export LINES=16
+
+tigrc <<EOF
+set vertical-split = no
+EOF
+
+steps '
+	<Enter>
+	:save-display main-and-diff.screen
+	:view-help
+	:view-close
+	:save-display main-and-diff-back.screen
+'
+
+git_clone 'repo-one'
+
+test_tig
+
+assert_equals 'main-and-diff.screen' < main-and-diff-back.screen
