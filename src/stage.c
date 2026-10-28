@@ -319,9 +319,6 @@ stage_insert_chunk(struct view *view, struct chunk_header *header,
 		   struct line *from, struct line *to, struct line *last_unchanged_line)
 {
 	struct box *box;
-	unsigned long from_lineno = last_unchanged_line - view->line;
-	unsigned long to_lineno = to - view->line;
-	unsigned long after_lineno = to_lineno;
 	int i;
 
 	box = from->data;
@@ -337,6 +334,10 @@ stage_insert_chunk(struct view *view, struct chunk_header *header,
 
 	if (!to)
 		return from;
+
+	unsigned long from_lineno = last_unchanged_line - view->line;
+	unsigned long to_lineno = to - view->line;
+	unsigned long after_lineno = to_lineno;
 
 	// Next diff chunk line
 	if (!add_line_text_at(view, after_lineno++, "", LINE_DIFF_CHUNK, 1))
