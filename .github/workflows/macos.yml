@@ -19,9 +19,11 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Test Tig
         shell: 'script -q typescript sh {0}' # Workaround to get a TTY, see https://github.com/gfx/example-github-actions-with-tty
         run: |
           HOMEBREW_NO_ASK=1 brew install asciidoc autoconf automake coreutils gnu-sed ncurses xmlto
+          export LDFLAGS="-L$HOMEBREW_PREFIX/opt/ncurses/lib -L$HOMEBREW_PREFIX/opt/readline/lib -L$HOMEBREW_PREFIX/opt/pcre2/lib"
+          export CPPFLAGS="-I$HOMEBREW_PREFIX/opt/ncurses/include -I$HOMEBREW_PREFIX/opt/readline/include -I$HOMEBREW_PREFIX/opt/pcre2/include"
           TIG_BUILD=autoconf tools/travis.sh

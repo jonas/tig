@@ -1,0 +1,47 @@
+#!/bin/sh
+
+. libtest.sh
+
+export LINES=8
+
+printf 'left\tright\n\tleading\none\t\ttwo\n12345678\tboundary\n' > stdin
+
+steps ':save-display tabs.screen'
+
+for tab_size in 8 9 16 32; do
+	tigrc <<EOF
+set tab-size = $tab_size
+EOF
+
+	test_tig
+	sed -n '1,4p' tabs.screen > "tabs-$tab_size"
+	assert_equals stderr < /dev/null
+done
+
+assert_equals tabs-8 strict <<EOF
+left    right
+        leading
+one             two
+12345678        boundary
+EOF
+
+assert_equals tabs-9 strict <<EOF
+left     right
+         leading
+one               two
+12345678 boundary
+EOF
+
+assert_equals tabs-16 strict <<EOF
+left            right
+                leading
+one                             two
+12345678        boundary
+EOF
+
+assert_equals tabs-32 strict <<EOF
+left                            right
+                                leading
+one                                                             two
+12345678                        boundary
+EOF

@@ -1,0 +1,160 @@
+#!/bin/sh
+#
+# Test that the main view shows index changes commits when filtering by
+# file, also when history simplification prunes the HEAD commit from the
+# filtered log.
+
+. libtest.sh
+. libgit.sh
+. "$source_dir/util.sh"
+
+export LINES=10
+
+tigrc <<EOF
+set vertical-split = no
+set line-graphics = ascii
+EOF
+
+commit()
+{
+	GIT_AUTHOR_NAME="A. U. Thor" \
+	GIT_AUTHOR_EMAIL="a.u.thor@example.net" \
+	GIT_AUTHOR_DATE="$1" \
+	GIT_COMMITTER_NAME="A. U. Thor" \
+	GIT_COMMITTER_EMAIL="a.u.thor@example.net" \
+	GIT_COMMITTER_DATE="$1" \
+		git commit -q -m "$2"
+}
+
+test_setup_work_dir()
+{
+	git init -q .
+	git_config
+
+	echo "a 1" > a
+	echo "b 1" > b
+	echo "root foo" > foo
+	mkdir sub
+	echo "sub foo" > sub/foo
+	git add .
+	commit "2009-02-13 23:31 +0000" "change a and b"
+
+	echo "b 2" >> b
+	git add b
+	commit "2009-02-22 11:53 +0000" "change b"
+
+	# Staged changes to a, c and sub/foo; the root foo stays clean.
+	echo "a 2" >> a
+	git add a
+	echo "c 1" > c
+	git add c
+	echo "sub foo 2" >> sub/foo
+	git add sub/foo
+}
+
+test_tig_script() {
+	name="$1"; shift
+
+	tig_script "$name" "
+		:view-main
+		:save-display $name.screen
+	"
+
+	cat > "$name.expected"
+
+	test_tig "$@"
+
+	assert_equals "$name.screen" < "$name.expected"
+}
+
+# HEAD ("change b") is pruned from the filtered log; the changes commit
+# is expected at the top of the view, anchored to the first commit.
+test_tig_script 'filtered-with-staged' -- a <<EOF
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet * Staged changes
+2009-02-13 23:31 +0000 A. U. Thor        I change a and b
+
+
+
+
+
+
+[main] Staged changes                                                       100%
+EOF
+
+# The changes do not touch the filtered path; no changes commit is shown.
+test_tig_script 'filtered-without-changes' -- b <<EOF
+2009-02-22 11:53 +0000 A. U. Thor * [master] change b
+2009-02-13 23:31 +0000 A. U. Thor I change a and b
+
+
+
+
+
+
+[main] 97114c6c2d9599d316e26ed8f6bd2e922e5ba0f5 - commit 1 of 2             100%
+EOF
+
+# The filtered path has no history; only the changes commit is shown.
+test_tig_script 'filtered-without-log' -- c <<EOF
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet * Staged changes
+
+
+
+
+
+
+
+[main] Staged changes                                                       100%
+EOF
+
+# Disabling the file filter must show changes outside the former filter.
+tig_script 'filtered-toggle' "
+	:view-main
+	:save-display filtered-toggle-before.screen
+	:set file-filter = no
+	:view-main
+	:save-display filtered-toggle-after.screen
+"
+
+test_tig -- b
+
+assert_equals 'filtered-toggle-before.screen' <<EOF
+2009-02-22 11:53 +0000 A. U. Thor * [master] change b
+2009-02-13 23:31 +0000 A. U. Thor I change a and b
+
+
+
+
+
+
+[main] 97114c6c2d9599d316e26ed8f6bd2e922e5ba0f5 - commit 1 of 2             100%
+EOF
+
+assert_equals 'filtered-toggle-after.screen' <<EOF
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet * Staged changes
+2009-02-22 11:53 +0000 A. U. Thor * [master] change b
+2009-02-13 23:31 +0000 A. U. Thor I change a and b
+
+
+
+
+
+[main] Staged changes                                                       100%
+EOF
+
+# From a subdirectory the relative file argument must resolve against
+# the subdirectory, not the repository root: sub/foo has staged changes
+# while the root foo is clean.
+work_dir="$work_dir/sub"
+
+test_tig_script 'filtered-subdir' -- foo <<EOF
+$YYY_MM_DD_HH_MM +0000 Not Committed Yet * Staged changes
+2009-02-13 23:31 +0000 A. U. Thor        I change a and b
+
+
+
+
+
+
+[main] Staged changes                                                       100%
+EOF

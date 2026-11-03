@@ -101,7 +101,7 @@ string_expand(char *dst, size_t dstlen, const char *src, int srclen, int tabsize
 
 			if (expanded + size >= dstlen - 1)
 				expanded = dstlen - size - 1;
-			memcpy(dst + size, "        ", expanded);
+			memset(dst + size, ' ', expanded);
 			size += expanded;
 		} else if (isspace((unsigned char)c) || iscntrl((unsigned char)c)) {
 			dst[size++] = ' ';
