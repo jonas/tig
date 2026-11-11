@@ -157,6 +157,7 @@ struct view {
 	time_t update_secs;
 	struct encoding *encoding;
 	bool unrefreshable;
+	bool watch_after_command;
 	struct watch watch;
 
 	/* Private data */
