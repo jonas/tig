@@ -1,0 +1,135 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+git_init
+
+in_work_dir git_add f.txt "$(printf 'a\nb\nc\nd\ne')"
+in_work_dir git_commit -m "Initial commit"
+in_work_dir git checkout -q -b side
+in_work_dir git_add f.txt "$(printf 'a\nB2\nc\nd\nS2\ne')"
+in_work_dir git_commit -m "Change the side branch"
+in_work_dir git checkout -q -
+in_work_dir git_add f.txt "$(printf 'a\nM1\nb\nc\nd\ne')"
+in_work_dir git_commit -m "Change the main branch"
+in_work_dir git merge -q --no-commit side > /dev/null || :
+in_work_dir git_add f.txt "$(printf 'a\nM1\nb\nc\nS2\ne')"
+in_work_dir git_commit -m "Merge the side branch"
+
+steps '
+	:/[-][-]d
+	:exec !sh -c "echo d %(lineno_old) >> $HOME/lineno.log"
+	:view-blame
+	:save-display blame-old.screen
+	:view-close
+	:/[+] S2
+	:exec !sh -c "echo S2 %(lineno) >> $HOME/lineno.log"
+	:view-blame
+	:save-display blame-new.screen
+	:view-close
+	:save-display diff.screen
+'
+
+test_tig show HEAD
+
+assert_equals 'lineno.log' <<EOF
+d 5
+S2 5
+EOF
+
+assert_equals 'diff.screen' <<EOF
+commit 9d0d7772da5682dee0e5204d095ff04b447f0f41
+Refs: [master]
+Merge: c757c6d 7fcd220
+Author:     Committer <c.ommitter@example.net>
+AuthorDate: Fri Feb 13 23:31:30 2009 +0000
+Commit:     Committer <c.ommitter@example.net>
+CommitDate: Fri Feb 13 23:31:30 2009 +0000
+
+    Merge the side branch
+
+ f.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --cc f.txt
+index fb3cc49,41a5e29..eacfa21
+--- a/f.txt
++++ b/f.txt
+@@@ -1,6 -1,6 +1,6 @@@
+  a
+ -B2
+ +M1
+ +b
+  c
+--d
++ S2
+  e
+
+
+[diff] Changes to 'f.txt' - line 25 of 26                                   100%
+EOF
+
+assert_equals 'blame-old.screen' <<EOF
+8050efc Committer 2009-02-13 23:31 +0000   1x a
+8050efc Committer 2009-02-13 23:31 +0000   2x b
+8050efc Committer 2009-02-13 23:31 +0000   3x c
+8050efc Committer 2009-02-13 23:31 +0000   4x d
+8050efc Committer 2009-02-13 23:31 +0000   5x e
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[blame] 8050efcbc06a61d957d2c191f8eb95b01d3d65b8:f.txt - line 4 of 5        100%
+EOF
+
+assert_equals 'blame-new.screen' <<EOF
+8050efc Committer 2009-02-13 23:31 +0000   1x a
+7fcd220 Committer 2009-02-13 23:31 +0000   2x B2
+8050efc Committer 2009-02-13 23:31 +0000   3x c
+8050efc Committer 2009-02-13 23:31 +0000   4x d
+7fcd220 Committer 2009-02-13 23:31 +0000   5x S2
+8050efc Committer 2009-02-13 23:31 +0000   6x e
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[blame] 7fcd220ecbb1f9c23db6ba30c860c6d21ff3efea:f.txt - line 5 of 6        100%
+EOF

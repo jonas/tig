@@ -1,0 +1,72 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export GIT_EDITOR=\$EDITOR
+
+git_init
+
+in_work_dir git_add a.txt "$(printf 'one\ntwo\nthree')"
+in_work_dir git_commit -m "Initial commit"
+in_work_dir file a.txt <<EOF
+one
+two
+three
+four
+EOF
+in_work_dir git add a.txt
+in_work_dir git_commit -m "Add a line and a trailing newline"
+
+steps '
+	:/[+]three
+	:exec !vim +%(lineno) %(file)
+	:/[+]four
+	:exec !vim +%(lineno) %(file)
+	:/[-]three
+	:exec !vim +%(lineno_old) %(file)
+	:save-display no-newline.screen
+'
+
+test_tig show HEAD
+
+assert_equals 'editor.log' <<EOF
++3 a.txt
+three
++4 a.txt
+four
++3 a.txt
+three
+EOF
+
+assert_equals 'no-newline.screen' <<EOF
+commit cd20b61d3dcc66864c6ee2f48f667484402f4bb2
+Refs: [master]
+Author:     Committer <c.ommitter@example.net>
+AuthorDate: Fri Feb 13 23:31:30 2009 +0000
+Commit:     Committer <c.ommitter@example.net>
+CommitDate: Fri Feb 13 23:31:30 2009 +0000
+
+    Add a line and a trailing newline
+---
+ a.txt | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/a.txt b/a.txt
+index 54d55bf..f384549 100644
+--- a/a.txt
++++ b/a.txt
+@@ -1,3 +1,4 @@
+ one
+ two
+-three
+\ No newline at end of file
++three
++four
+
+
+
+
+
+[diff] Changes to 'a.txt' - line 20 of 23                                   100%
+EOF
