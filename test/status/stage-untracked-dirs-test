@@ -1,0 +1,24 @@
+#!/bin/sh
+
+. libtest.sh
+
+tigrc <<EOF
+set status-show-untracked-dirs = no
+EOF
+
+steps '
+	:6
+	:status-update
+'
+
+in_work_dir git init -q .
+in_work_dir mkdir 'new dir'
+in_work_dir touch 'new dir/file' standalone
+
+test_tig status
+
+in_work_dir git ls-files > staged
+assert_equals 'staged' strict <<EOF
+new dir/file
+standalone
+EOF
