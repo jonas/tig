@@ -102,6 +102,7 @@ struct app_external
 	static char dhlt_path[SIZEOF_STR];
 	static char perl_path[SIZEOF_STR];
 	static char perl_include[SIZEOF_STR];
+	char dhlt_dir[SIZEOF_STR];
 
 	if (!did_search
 	    && app_diff_highlight_path_search(dhlt_path, sizeof(dhlt_path), query)
@@ -112,7 +113,8 @@ struct app_external
 		} else if (path_search(perl_path, sizeof(perl_path), "perl", getenv("PATH"), X_OK)) {
 			/* if the package manager failed to "make install" within the contrib dir, rescue via */
 			/* perl -MDiffHighlight -I/path/containing /path/containing/diff-highlight.perl */
-			string_format(perl_include, "-I%s", dirname(dhlt_path));
+			string_ncopy(dhlt_dir, dhlt_path, strlen(dhlt_path));
+			string_format(perl_include, "-I%s", dirname(dhlt_dir));
 			dhlt_app.argv[0] = perl_path;
 			dhlt_app.argv[1] = "-MDiffHighlight";
 			dhlt_app.argv[2] = perl_include;
