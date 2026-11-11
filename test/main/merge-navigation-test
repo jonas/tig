@@ -1,0 +1,60 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+create_merge_history()
+{
+	printf 'base\n' > base.txt
+	git add base.txt
+	git_commit -m base
+	git branch side
+	git_commit --allow-empty -m main
+	git checkout -q side
+	printf 'side\n' > side.txt
+	git add side.txt
+	git_commit -m side
+	git checkout -q master
+	git merge -q --no-ff side -m 'Merge side branch'
+}
+
+git_init
+in_work_dir create_merge_history
+merge_id="$(in_work_dir git rev-parse HEAD)"
+second_id="$(in_work_dir git log --topo-order --format=%H --skip=1 -1)"
+
+tigrc <<EOF
+set wrap-search = no
+EOF
+
+steps "
+	# Find the merge on the first line from the following commit.
+	:2
+	:move-prev-merge
+	:exec @assert-var %(commit) == $merge_id
+
+	# At the first line, do not wrap when searching backwards.
+	:1
+	:move-prev-merge
+	:exec @assert-var %(commit) == $merge_id
+
+	# There is no later merge to find without wrapping.
+	:2
+	:move-next-merge
+	:exec @assert-var %(commit) == $second_id
+
+	:set wrap-search = yes
+	:2
+	:move-prev-merge
+	:exec @assert-var %(commit) == $merge_id
+
+	# Searching forwards should wrap to the merge on the first line.
+	:2
+	:move-next-merge
+	:exec @assert-var %(commit) == $merge_id
+"
+
+test_tig
+
+assert_equals stderr < /dev/null
+assert_vars 5

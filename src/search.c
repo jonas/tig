@@ -181,7 +181,7 @@ find_next_merge_line(struct view *view, int direction, bool wrapped)
 		max = view->lines;
 	else
 		max = direction > 0 ? view->lines - view->pos.lineno
-				    : view->pos.lineno;
+				    : view->pos.lineno + 1;
 
 	for (dist = direction; abs(dist) < max; dist += direction) {
 		ssize_t lineno = view->pos.lineno + dist;
