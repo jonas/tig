@@ -575,6 +575,14 @@ status_update_write(struct io *io, struct status *status, enum line_type type)
 	}
 }
 
+static bool
+status_is_untracked_dir(const struct status *status, enum line_type type)
+{
+	const char *name = status->new.name;
+
+	return type == LINE_STAT_UNTRACKED && !suffixcmp(name, strlen(name), "/");
+}
+
 bool
 status_update_file(struct status *status, enum line_type type)
 {
@@ -582,7 +590,7 @@ status_update_file(struct status *status, enum line_type type)
 	struct io io;
 	bool result;
 
-	if (type == LINE_STAT_UNTRACKED && !suffixcmp(name, strlen(name), "/")) {
+	if (status_is_untracked_dir(status, type)) {
 		const char *add_argv[] = { "git", "add", "--", name, NULL };
 
 		return io_run_bg(add_argv, repo.exec_dir);
@@ -606,17 +614,31 @@ status_update_files(struct view *view, struct line *line)
 	int file, done;
 	int cursor_y = -1, cursor_x = -1;
 
+	/* Stage collapsed directories before opening the update-index batch. */
+	for (pos = line; view_has_line(view, pos) && pos->data; pos++) {
+		if (status_is_untracked_dir(pos->data, pos->type)) {
+			if (!status_update_file(pos->data, pos->type))
+				return false;
+		} else {
+			files++;
+		}
+	}
+
+	if (!files)
+		return true;
+
 	if (!status_update_prepare(&io, line->type))
 		return false;
 
-	for (pos = line; view_has_line(view, pos) && pos->data; pos++)
-		files++;
-
 	string_copy(buf, view->ref);
 	get_cursor_pos(cursor_y, cursor_x);
-	for (file = 0, done = 5; result && file < files; line++, file++) {
-		int almost_done = file * 100 / files;
+	for (file = 0, done = 5; result && file < files; line++) {
+		int almost_done;
 
+		if (status_is_untracked_dir(line->data, line->type))
+			continue;
+
+		almost_done = file * 100 / files;
 		if (almost_done > done && view_is_displayed(view)) {
 			done = almost_done;
 			string_format(view->ref, "updating file %d of %d (%d%% done)",
@@ -626,6 +648,7 @@ status_update_files(struct view *view, struct line *line)
 			doupdate();
 		}
 		result = status_update_write(&io, line->data, line->type);
+		file++;
 	}
 	string_copy(view->ref, buf);
 
