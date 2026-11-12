@@ -769,6 +769,24 @@ get_input_char(void)
 	return getc(opt_tty.file);
 }
 
+/*
+ * Check whether the terminal has gone away, e.g. because the terminal
+ * emulator was closed. Once the tty has been hung up, every read on it
+ * returns immediately, so wgetch() keeps returning ERR without blocking.
+ * A revoked tty also rejects terminal ioctls, which makes tcgetattr()
+ * a cheap and portable way to detect this state.
+ */
+static bool
+is_tty_gone(void)
+{
+	struct termios attr;
+
+	if (tcgetattr(opt_tty.fd, &attr) == 0)
+		return false;
+
+	return errno != EINTR;
+}
+
 static bool
 update_views(void)
 {
@@ -847,8 +865,13 @@ get_input(int prompt_position, struct key *key)
 		}
 
 		/* wgetch() with nodelay() enabled returns ERR when
-		 * there's no input. */
+		 * there's no input. It also returns ERR without
+		 * waiting when the tty has been hung up, which would
+		 * turn this loop into a busy loop, so exit if no
+		 * terminal is left to read from. */
 		if (key_value == ERR) {
+			if (is_tty_gone())
+				die("Lost connection to the terminal");
 
 		} else if (key_value == KEY_RESIZE) {
 			int height, width;
