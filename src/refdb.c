@@ -249,7 +249,7 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 	}
 
 	/* If we are reloading or it's an annotated tag, replace the
-	 * previous SHA1 with the resolved commit id; relies on the fact
+	 * previous hash with the resolved commit id; relies on the fact
 	 * git-ls-remote lists the commit id of an annotated tag right
 	 * before the commit id it points to. */
 	if (type == REFERENCE_REPLACE) {
@@ -279,7 +279,7 @@ add_to_refs(const char *id, size_t idlen, char *name, size_t namelen, struct ref
 
 	ref->valid = true;
 	ref->type = type;
-	string_ncopy_do(ref->id, SIZEOF_REV, id, idlen);
+	string_ncopy_do(ref->id, REPO_INFO_SIZEOF_REV, id, idlen);
 
 	if (type == REFERENCE_HEAD) {
 		if (!refs_head ||
