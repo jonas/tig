@@ -389,6 +389,12 @@ The following variables can be set:
 	Whether to automatically scroll the pager view while loading. Move the
 	cursor out of the last line to stop scrolling and back in to resume.
 
+'show-loading' (bool)::
+
+	Whether to clear a view while waiting for its first line of output and
+	show the elapsed loading time in its title. Enabled by default. When
+	disabled, the previous contents remain visible until new output arrives.
+
 'recurse-tree' (bool)::
 
 	Whether to show all files recursively in the tree view.
@@ -735,6 +741,14 @@ Unless otherwise specified, commands are run in the foreground with their
 console output shown (as if '!' was specified). When multiple command options
 are specified their behavior is combined, e.g. "?<git commit" will prompt the
 user whether to execute the command and will exit Tig after completion.
+
+When entered at the prompt, `:!<command>` opens a pager view. By default, the
+pager is cleared before command output is read, and its title shows the elapsed
+loading time after three seconds. Set `show-loading` to `no` to retain the
+previous contents until output arrives and hide the timer. Use
+`:exec @<command>` to avoid opening the pager by running the command silently in
+the background, or `:exec +<command>` to run it synchronously and show only its
+first output line in the status bar.
 
 Note that if you want to use pipes or redirection in your commands then you
 must run them in a subshell, i.e. embed your commands in `sh -c '<commands>'`.

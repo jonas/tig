@@ -3,6 +3,7 @@
 . libtest.sh
 
 steps "
+	:set show-loading = no
 	:save-options saved-tigrc
 "
 

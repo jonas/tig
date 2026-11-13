@@ -498,6 +498,8 @@ Prompt
 |:<sha>			|Jump to a specific commit, e.g. `:2f12bcc`.
 |:<x>			|Execute the corresponding key binding, e.g. `:q`.
 |:!<command>		|Execute a system command in a pager, e.g. `:!git log -p`.
+			 Set `show-loading` to `no` to keep the previous contents visible
+			 while waiting for output and hide the elapsed-time counter.
 |:<action>		|Execute a Tig command, e.g. `:edit`.
 |:goto <rev>		|Jump to a specific revision, e.g. `:goto %(commit)^2`
 			 to go to the current commit's 2nd parent or
