@@ -85,6 +85,7 @@ struct ref;
 	_(STAT_STAGED,		""), \
 	_(STAT_UNSTAGED,	""), \
 	_(STAT_UNTRACKED,	""), \
+	_(STAT_SELECTED,		""), \
 	_(HELP_GROUP,		""), \
 	_(HELP_ACTION,		""), \
 	_(HELP_TOGGLE,		""), \

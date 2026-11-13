@@ -1,0 +1,57 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=15
+
+tigrc <<EOF
+set status-show-untracked-dirs = no
+EOF
+
+setup_selection_repo() {
+	git_init .
+	file dir/nested original
+	file x original
+	file y original
+}
+
+executable snapshot <<'EOF'
+#!/bin/sh
+git ls-files > "$HOME/$1.files"
+EOF
+
+in_work_dir setup_selection_repo
+
+steps '
+	:7
+	+
+	:8
+	+
+	U
+	:exec @snapshot selected
+	:2
+	*
+	U
+	:exec @snapshot unstaged
+	:6
+	*
+	U
+	:exec @snapshot all
+'
+
+test_tig status
+
+assert_equals selected.files strict <<EOF
+dir/nested
+x
+EOF
+
+assert_equals unstaged.files strict <<EOF
+EOF
+
+assert_equals all.files strict <<EOF
+dir/nested
+x
+y
+EOF
