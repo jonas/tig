@@ -33,10 +33,7 @@ struct log_state {
 static inline void
 log_copy_rev(struct view *view, struct line *line)
 {
-	const char *text = box_text(line);
-	size_t offset = get_graph_indent(text);
-
-	string_copy_rev_from_commit_line(view->ref, text + offset);
+	string_copy_rev_from_commit_line(view->ref, box_text(line));
 	view->env->blob[0] = 0;
 }
 
@@ -94,6 +91,8 @@ log_request(struct view *view, enum request request, struct line *line)
 		return REQ_NONE;
 
 	case REQ_EDIT:
+		if (diff_common_reword(view, line))
+			return REQ_NONE;
 		return diff_common_edit(view, request, line);
 
 	case REQ_ENTER:

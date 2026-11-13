@@ -1,0 +1,60 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+test_require git-history
+
+export GIT_EDITOR="printf 'Second, reworded\n' >"
+
+# Keep the rewritten commit IDs stable.
+export GIT_COMMITTER_DATE="1234567890 +0000"
+
+steps '
+	:11
+	:edit
+	:save-display reword.screen
+'
+
+git_init
+
+test_setup_work_dir()
+{
+	git_commit --author="$IDENT_A" --message="First"
+	git_commit --author="$IDENT_A" --message="Second"
+	git_commit --author="$IDENT_A" --message="Third"
+}
+
+test_tig log --graph
+
+assert_equals 'reword.screen' <<EOF
+* commit 7a98220054ebb1faed134bd7295c74f4dd813668
+| Author: A. U. Thor <a.u.thor@example.com>
+| Date:   Tue Mar 3 00:15:50 2009 +0000
+|
+|     Third
+|
+* commit 4ad875b63d33bb0913b969ae5fc0d55d991a74f5
+| Author: A. U. Thor <a.u.thor@example.com>
+| Date:   Sun Feb 22 11:53:40 2009 +0000
+|
+|     Second, reworded
+|
+* commit 53ea13ccffffdc12ffdc7da9b025066a9f970680
+  Author: A. U. Thor <a.u.thor@example.com>
+  Date:   Fri Feb 13 23:31:30 2009 +0000
+ 
+      First
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+[log] 4ad875b63d33bb0913b969ae5fc0d55d991a74f5 - line 11 of 17              100%
+EOF

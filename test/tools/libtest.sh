@@ -521,7 +521,7 @@ has_readline()
 
 ### Testing API AsciiDoc
 #|
-#| test_require(git-worktree, address-sanitizer, diff-highlight, readline)::
+#| test_require(git-worktree, git-history, address-sanitizer, diff-highlight, readline)::
 #|
 test_require()
 {
@@ -532,6 +532,10 @@ test_require()
 		git-worktree)
 			require_git_version 2.5 \
 				"The test requires git-worktree, available in git version 2.5 or newer"
+			;;
+		git-history)
+			require_git_version 2.54 \
+				"The test requires git-history, available in git version 2.54 or newer"
 			;;
 		address-sanitizer)
 			if [ "${TIG_ADDRESS_SANITIZER_ENABLED:-no}" != yes ]; then

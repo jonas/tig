@@ -33,6 +33,7 @@ struct diff_state {
 };
 
 enum request diff_common_edit(struct view *view, enum request request, struct line *line);
+bool diff_common_reword(struct view *view, struct line *line);
 bool diff_common_read(struct view *view, const char *data, struct diff_state *state);
 enum request diff_common_enter(struct view *view, enum request request, struct line *line);
 struct line *diff_common_add_diff_stat(struct view *view, const char *text, size_t offset);

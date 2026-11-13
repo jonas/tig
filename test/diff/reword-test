@@ -1,0 +1,45 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+test_require git-history
+
+export LINES=10
+export GIT_EDITOR="printf 'Reworded title\n' >"
+
+# Keep the rewritten commit ID stable.
+export GIT_COMMITTER_DATE="1234567890 +0000"
+
+steps '
+	:8
+	:edit
+	:save-display reword.screen
+'
+
+git_init
+
+test_setup_work_dir()
+{
+	git_commit --author="$IDENT_A" --message="Original title"
+}
+
+test_tig show HEAD
+
+assert_equals 'reword.screen' <<EOF
+commit 687d4d9071d924f4b0b1887b618caf73b9a58ffe
+Refs: [master]
+Author:     A. U. Thor <a.u.thor@example.com>
+AuthorDate: Fri Feb 13 23:31:30 2009 +0000
+Commit:     Committer <c.ommitter@example.net>
+CommitDate: Fri Feb 13 23:31:30 2009 +0000
+ 
+    Reworded title
+[diff] 53395529352a5f4c769017eb646976fb15972d8c - line 8 of 8               100%
+EOF
+
+in_work_dir git log -1 --format=%s > log
+
+assert_equals 'log' <<EOF
+Reworded title
+EOF

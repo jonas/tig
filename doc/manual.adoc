@@ -484,7 +484,9 @@ Misc
 |H	|Go to the HEAD commit.
 |:	|Open prompt. This allows you to specify what command to run and also to
 	 jump to a specific line, e.g. `:23`
-|e	|Open file in editor.
+|e	|Open file in editor. In the diff and log views, pressing it on the
+	 commit header or message rewords the commit using `git history
+	 reword`, which requires git version 2.54 or newer.
 |=============================================================================
 
 [[prompt]]

@@ -82,7 +82,7 @@ string_copy_rev(char *dst, const char *src)
 void
 string_copy_rev_from_commit_line(char *dst, const char *src)
 {
-	src += STRING_SIZE("commit ");
+	src += get_graph_indent(src) + STRING_SIZE("commit ");
 	while (*src && !isalnum((unsigned char)*src))
 		src++;
 	string_copy_rev(dst, src);

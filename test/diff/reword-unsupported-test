@@ -1,0 +1,53 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+# Pretend to be a git version without the history command.
+executable 'git' <<EOF
+#!/bin/sh
+
+case "\$1" in
+--list-cmds=*)
+	"$(command -v git)" "\$@" | grep -vx history
+	exit
+	;;
+history)
+	printf '%s\\n' "\$*" >> "$HOME/history.log"
+	exit 1
+	;;
+esac
+
+exec "$(command -v git)" "\$@"
+EOF
+
+export LINES=10
+
+steps '
+	:8
+	:edit
+	:save-display reword.screen
+'
+
+git_init
+
+test_setup_work_dir()
+{
+	git_commit --author="$IDENT_A" --message="Original title"
+}
+
+test_tig show HEAD
+
+assert_equals 'reword.screen' <<EOF
+commit 53395529352a5f4c769017eb646976fb15972d8c
+Refs: [master]
+Author:     A. U. Thor <a.u.thor@example.com>
+AuthorDate: Fri Feb 13 23:31:30 2009 +0000
+Commit:     Committer <c.ommitter@example.net>
+CommitDate: Fri Feb 13 23:31:30 2009 +0000
+ 
+    Original title
+[diff] 53395529352a5f4c769017eb646976fb15972d8c - line 8 of 8               100%
+EOF
+
+assert_not_exists history.log
