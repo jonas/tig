@@ -190,6 +190,7 @@ struct view_column_data {
 	const char *commit_title;
 	const struct time *date;
 	const char *file_name;
+	const char *file_name_tree;
 	const unsigned long *file_size;
 	const struct graph *graph;
 	const struct graph_canvas *graph_canvas;

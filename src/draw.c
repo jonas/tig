@@ -289,8 +289,50 @@ draw_id(struct view *view, struct view_column *column, const char *id)
 	return draw_field(view, type, id, column->width, ALIGN_LEFT, false);
 }
 
+/* Draw the tree connectors preceding a file name. Each character of
+ * @shape describes one depth level: '|' for an ancestor with more
+ * siblings below, ' ' for one without, '+' for an entry with more
+ * siblings below and '`' for the last entry. */
 static bool
-draw_filename(struct view *view, struct view_column *column, const char *filename, mode_t mode)
+draw_tree_prefix(struct view *view, const char *shape)
+{
+	static const char *ascii[] = { "|   ", "    ", "|-- ", "`-- " };
+	static const char *utf8[] = { "│   ", "    ", "├── ", "└── " };
+
+	for (; *shape; shape++) {
+		int symbol = *shape == '|' ? 0 : *shape == ' ' ? 1 : *shape == '+' ? 2 : 3;
+		chtype graphic[4] = { ' ', ' ', ' ', ' ' };
+
+		switch (opt_line_graphics) {
+		case GRAPHIC_ASCII:
+			if (draw_chars(view, LINE_DEFAULT, ascii[symbol], -1, 4, false))
+				return true;
+			break;
+
+		case GRAPHIC_DEFAULT:
+			if (symbol == 0)
+				graphic[0] = ACS_VLINE;
+			else if (symbol >= 2) {
+				graphic[0] = symbol == 2 ? ACS_LTEE : ACS_LLCORNER;
+				graphic[1] = graphic[2] = ACS_HLINE;
+			}
+			if (draw_graphic(view, LINE_DEFAULT, graphic, ARRAY_SIZE(graphic), false))
+				return true;
+			break;
+
+		case GRAPHIC_UTF_8:
+			if (draw_chars(view, LINE_DEFAULT, utf8[symbol], -1, 4, false))
+				return true;
+			break;
+		}
+	}
+
+	return VIEW_MAX_LEN(view) <= 0;
+}
+
+static bool
+draw_filename(struct view *view, struct view_column *column, const char *filename, mode_t mode,
+	      const char *tree)
 {
 	size_t width = filename ? utf8_width(filename) : 0;
 	bool trim = width >= column->width;
@@ -300,6 +342,17 @@ draw_filename(struct view *view, struct view_column *column, const char *filenam
 
 	if (column->opt.file_name.display == FILENAME_NO)
 		return false;
+
+	if (tree && *tree) {
+		int tree_width = strlen(tree) * 4;
+
+		if (draw_tree_prefix(view, tree))
+			return true;
+		if (column->width) {
+			column_width = MAX(column->width - tree_width, 1);
+			trim = width >= column_width;
+		}
+	}
 
 	return draw_field(view, type, filename, column_width, ALIGN_LEFT, trim);
 }
@@ -549,7 +602,7 @@ view_column_draw(struct view *view, struct line *line, unsigned int lineno)
 			continue;
 
 		case VIEW_COLUMN_FILE_NAME:
-			if (draw_filename(view, column, column_data.file_name, mode))
+			if (draw_filename(view, column, column_data.file_name, mode, column_data.file_name_tree))
 				return true;
 			continue;
 

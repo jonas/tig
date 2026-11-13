@@ -117,6 +117,7 @@ set reference-format		= [branch] <tag> {remote} ~replace~
 set commit-order		= auto		# Enum: auto, default, topo, date, reverse (main)
 set status-show-untracked-dirs	= yes		# Show files in untracked directories? (status)
 set status-show-untracked-files	= yes		# Show untracked files?
+set status-tree			= no		# Show changed files as a directory tree? (status)
 set ignore-space		= no		# Enum: no, all, some, at-eol (diff)
 set show-notes			= yes		# When non-bool passed as `--show-notes=...` (diff)
 #set diff-context		= 3		# Number of lines to show around diff changes (diff)
@@ -246,6 +247,7 @@ bind generic	<C-C>	quit			# Close all views and quit
 bind status	u	status-update		# Stage/unstage changes in file
 bind status	!	status-revert		# Revert changes in file
 bind status	M	status-merge		# Open git-mergetool(1)
+bind status	t	:toggle status-tree	# Toggle directory tree layout
 # bind status	???	:toggle status		# Show short or long status labels
 bind stage	u	status-update		# Stage/unstage current diff (c)hunk
 bind stage	1	stage-update-line	# Stage/unstage current line

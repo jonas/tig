@@ -106,6 +106,8 @@ View-specific actions
                            u status-update       Stage/unstage chunk or file changes
                            ! status-revert       Revert chunk or file changes
                            M status-merge        Merge file using external tool
+Option toggling:
+                           t :toggle status-tree
 External commands:
                            C !git commit
 [-] stage bindings
@@ -154,6 +156,4 @@ Toggle keys (enter: o <key>):
 
 
 
-
-
-[help] - line 2 of 150                                                                          100%
+[help] - line 2 of 152                                                                          100%
