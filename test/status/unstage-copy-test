@@ -1,0 +1,52 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=10
+
+steps '
+	:view-status
+	:save-display status-with-copy.screen
+
+	:4
+	:status-update
+	:save-display status-after-unstage-copy.screen
+'
+
+test_setup_work_dir()
+{
+	git_init .
+	git_add a "$(seq 1 30)"
+	git_commit --message="Initial commit"
+	git branch -M master
+	seq 1 31 > a
+	seq 1 32 > c
+	git add a c
+}
+
+test_tig
+
+assert_equals 'status-with-copy.screen' <<EOF
+On branch master
+Changes to be committed:
+M a
+C c
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'status-after-unstage-copy.screen' <<EOF
+On branch master
+Changes to be committed:
+M a
+Changes not staged for commit:
+  (no files)
+Untracked files:
+? c
+
+[status] Press u to stage 'c' for addition                                    100%
+EOF

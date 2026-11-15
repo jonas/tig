@@ -562,6 +562,14 @@ status_update_write(struct io *io, struct status *status, enum line_type type)
 {
 	switch (type) {
 	case LINE_STAT_STAGED:
+		/* A rename or copy also added the new path; mode 0 removes it. */
+		if (status->status == 'R' || status->status == 'C') {
+			if (!io_printf(io, "0 %s\t%s%c", NULL_ID, status->new.name, 0))
+				return false;
+			/* The source of a copy is its own entry; leave it. */
+			if (status->status == 'C')
+				return true;
+		}
 		return io_printf(io, "%06o %s\t%s%c", status->old.mode,
 				 status->old.rev, status->old.name, 0);
 

@@ -1,0 +1,50 @@
+#!/bin/sh
+
+. libtest.sh
+. libgit.sh
+
+export LINES=10
+
+steps '
+	:view-status
+	:save-display status-with-rename.screen
+
+	:3
+	:status-update
+	:save-display status-after-unstage-rename.screen
+'
+
+test_setup_work_dir()
+{
+	git_init .
+	git_add a "$(seq 1 30)"
+	git_commit --message="Initial commit"
+	git branch -M master
+	git mv a c
+}
+
+test_tig
+
+assert_equals 'status-with-rename.screen' <<EOF
+On branch master
+Changes to be committed:
+R c
+Changes not staged for commit:
+  (no files)
+Untracked files:
+  (no files)
+
+[status] Nothing to update                                                  100%
+EOF
+
+assert_equals 'status-after-unstage-rename.screen' <<EOF
+On branch master
+Changes to be committed:
+  (no files)
+Changes not staged for commit:
+D a
+Untracked files:
+? c
+
+[status] Press u to stage 'a' for commit                                    100%
+EOF
