@@ -69,24 +69,74 @@ add_pager_refs(struct view *view, const char *commit_id)
 	add_line_text(view, buf, LINE_PP_REFS);
 }
 
-static struct line *
-pager_wrap_line(struct view *view, const char *data, enum line_type type)
+/* Count the non-empty cells needed to cover length bytes, starting offset
+ * bytes into the first cell. */
+static size_t
+pager_wrap_count_cells(const struct box_cell *cell, size_t cells, size_t offset, size_t length)
+{
+	size_t count = 0;
+
+	for (; cells > 0 && length > 0; cell++, cells--, offset = 0) {
+		size_t celllen = cell->length - offset;
+
+		if (!celllen)
+			continue;
+		count++;
+		length -= MIN(celllen, length);
+	}
+
+	return count;
+}
+
+/* Fill the box of a wrapped line segment with the cells that cover its text,
+ * splitting cells that cross the segment boundary. */
+static void
+pager_wrap_fill_cells(struct box *box, const struct box_cell **cell, size_t *cells, size_t *offset, size_t length)
+{
+	box->cells = 0;
+
+	while (*cells > 0 && length > 0) {
+		size_t celllen = MIN((*cell)->length - *offset, length);
+
+		if (celllen) {
+			box->cell[box->cells].type = (*cell)->type;
+			box->cell[box->cells++].length = celllen;
+			length -= celllen;
+			*offset += celllen;
+		}
+
+		if (*offset == (*cell)->length) {
+			(*cell)++;
+			(*cells)--;
+			*offset = 0;
+		}
+	}
+}
+
+struct line *
+pager_wrap_line(struct view *view, const char *data, enum line_type type,
+		const struct box_cell *cell, size_t cells)
 {
 	size_t first_line = 0;
 	bool has_first_line = false;
 	size_t datalen = strlen(data);
 	size_t lineno = 0;
+	size_t cell_offset = 0;
 
 	while (datalen > 0 || !has_first_line) {
 		int width;
 		int trimmed;
 		bool wrapped = !!first_line;
 		size_t linelen = utf8_length(&data, datalen, 0, &width, view->width, &trimmed, wrapped, opt_tab_size);
+		size_t linecells = cell ? pager_wrap_count_cells(cell, cells, cell_offset, linelen) : 1;
 		struct line *line;
 
-		line = add_line_text_at_(view, view->lines, data, linelen, type, 1, wrapped);
+		/* Always reserve one cell, else the text overlaps it. */
+		line = add_line_text_at_(view, view->lines, data, linelen, type, MAX(linecells, 1), wrapped);
 		if (!line)
 			break;
+		if (cell)
+			pager_wrap_fill_cells(line->data, &cell, &cells, &cell_offset, linelen);
 		if (!has_first_line) {
 			first_line = view->lines - 1;
 			has_first_line = true;
@@ -114,7 +164,7 @@ pager_common_read(struct view *view, const char *data, enum line_type type, stru
 		return true;
 
 	if (opt_wrap_lines) {
-		line = pager_wrap_line(view, data, type);
+		line = pager_wrap_line(view, data, type, NULL, 0);
 	} else {
 		line = add_line_text(view, data, type);
 	}

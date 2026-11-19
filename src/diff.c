@@ -107,24 +107,30 @@ diff_common_add_cell(struct diff_stat_context *context, size_t length, bool allo
 }
 
 static struct line *
-diff_common_add_line(struct view *view, const char *text, enum line_type type, struct diff_stat_context *context)
+diff_common_add_line(struct view *view, const char *text, enum line_type type, struct diff_stat_context *context, bool wrap)
 {
 	char *cell_text = context->cell_text ? argv_to_string_alloc(context->cell_text, "") : NULL;
 	const char *line_text = cell_text ? cell_text : text;
-	struct line *line = add_line_text_at(view, view->lines, line_text, type, context->cells);
-	struct box *box;
+	struct line *line;
+
+	if (wrap && opt_wrap_lines) {
+		line = pager_wrap_line(view, line_text, type, context->cell, context->cells);
+
+	} else {
+		line = add_line_text_at(view, view->lines, line_text, type, context->cells);
+		if (line) {
+			struct box *box = line->data;
+
+			if (context->cells)
+				memcpy(box->cell, context->cell, sizeof(struct box_cell) * context->cells);
+			box->cells = context->cells;
+		}
+	}
 
 	free(cell_text);
 	argv_free(context->cell_text);
 	free(context->cell_text);
 
-	if (!line)
-		return NULL;
-
-	box = line->data;
-	if (context->cells)
-		memcpy(box->cell, context->cell, sizeof(struct box_cell) * context->cells);
-	box->cells = context->cells;
 	return line;
 }
 
@@ -179,7 +185,7 @@ diff_common_read_diff_stat(struct view *view, const char *text)
 	}
 	diff_common_add_cell(&context, strlen(context.text), false);
 
-	return diff_common_add_line(view, text, LINE_DIFF_STAT, &context);
+	return diff_common_add_line(view, text, LINE_DIFF_STAT, &context, false);
 }
 
 struct line *
@@ -282,7 +288,7 @@ diff_common_read_diff_wdiff(struct view *view, const char *text)
 		;
 
 	diff_common_add_cell(&context, strlen(context.text), true);
-	return diff_common_add_line(view, text, LINE_DEFAULT, &context);
+	return diff_common_add_line(view, text, LINE_DEFAULT, &context, true);
 }
 
 static bool
@@ -299,7 +305,7 @@ diff_common_highlight(struct view *view, const char *text, enum line_type type)
 		;
 
 	diff_common_add_cell(&context, strlen(context.text), true);
-	return diff_common_add_line(view, text, type, &context);
+	return diff_common_add_line(view, text, type, &context, true);
 }
 
 bool

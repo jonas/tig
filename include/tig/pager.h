@@ -18,6 +18,8 @@
 
 bool pager_get_column_data(struct view *view, const struct line *line, struct view_column_data *column_data);
 bool pager_common_read(struct view *view, const char *data, enum line_type type, struct line **line);
+struct line *pager_wrap_line(struct view *view, const char *data, enum line_type type,
+			     const struct box_cell *cell, size_t cells);
 enum request pager_request(struct view *view, enum request request, struct line *line);
 void pager_select(struct view *view, struct line *line);
 
